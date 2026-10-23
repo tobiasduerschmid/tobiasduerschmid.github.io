@@ -2375,6 +2375,8 @@
 
 .quiz-answer.ih-quiz-answer {
   opacity: 1;
+  /* The redaction tape slides off inside the answer box, never past the card. */
+  overflow: hidden;
 }
 
 .ih-quiz-label {

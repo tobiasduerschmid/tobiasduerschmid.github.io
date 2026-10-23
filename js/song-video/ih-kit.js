@@ -798,9 +798,11 @@
     }
     const S = (parentNode, cls, attrs) => svg(attrs.d ? 'path' : attrs.r !== undefined ? 'circle' : attrs.rx !== undefined && attrs.width === undefined ? 'ellipse' : 'rect', { class: cls, ...attrs }, parentNode);
     function label(parentNode, text, lx, ly, width) {
-      S(parentNode, 'ih-power-pill', { x: lx, y: ly, width, height: 32, rx: 16 });
-      const textNode = svg('text', { class: 'ih-power-label', x: lx + width / 2, y: ly + 23, 'text-anchor': 'middle' }, parentNode);
+      const g = svg('g', {}, parentNode);
+      S(g, 'ih-power-pill', { x: lx, y: ly, width, height: 32, rx: 16 });
+      const textNode = svg('text', { class: 'ih-power-label', x: lx + width / 2, y: ly + 23, 'text-anchor': 'middle' }, g);
       textNode.textContent = text;
+      return g;
     }
     const dayPaint = gradient('day', ['day-top', 'day-bottom']);
     const nightPaint = gradient('night', ['night-top', 'night-bottom']);
@@ -836,7 +838,7 @@
       S(rack, 'ih-power-panel-grid', { d: 'M6 -13 H102 M11 -29 H107 M24 2 L40 -44 M48 2 L64 -44 M72 2 L88 -44' });
       glints.push(S(rack, 'ih-power-glint', { d: 'M30 2 L46 -44 H58 L42 2Z' }));
     }
-    label(day, 'Solar · noon', 26, 246, 150);
+    const dayLabel = label(day, 'Solar · noon', 26, 246, 150);
 
     const night = svg('g', { class: 'ih-power-source ih-power-source--wind', 'data-testid': 'ih-power-source', 'data-source': 'wind', opacity: 0 }, landscape);
     S(night, '', { x: 14, y: 34, width: 330, height: 250, fill: nightPaint });
@@ -858,7 +860,7 @@
       S(rotor, 'ih-power-rotor-hub', { cx: 0, cy: 0, r: 6 });
       return rotor;
     });
-    label(night, 'Wind · midnight', 26, 246, 178);
+    const nightLabel = label(night, 'Wind · midnight', 26, 246, 178);
     S(node, 'ih-power-frame-ink', { x: 14, y: 34, width: 330, height: 250, rx: 16 });
     S(node, 'ih-power-frame', { x: 14, y: 34, width: 330, height: 250, rx: 16 });
 
@@ -952,6 +954,10 @@
       const nightOpacity = (previous.kind === 'wind' ? 1 : 0) * (1 - blend) + (current.kind === 'wind' ? 1 : 0) * blend;
       day.setAttribute('opacity', (1 - nightOpacity).toFixed(2));
       night.setAttribute('opacity', nightOpacity.toFixed(2));
+      // The two labels share one spot: swap them at the midpoint of the
+      // cross-fade instead of blending two texts into one garbled label.
+      dayLabel.setAttribute('opacity', nightOpacity < 0.5 ? '1' : '0');
+      nightLabel.setAttribute('opacity', nightOpacity < 0.5 ? '0' : '1');
       const m = reduce ? 0 : Math.max(0, t - at);
       rays.setAttribute('transform', `rotate(${(m * 14 % 360).toFixed(1)})`);
       cloud.setAttribute('transform', `translate(${(40 + (m * 9) % 340).toFixed(1)} 70)`);

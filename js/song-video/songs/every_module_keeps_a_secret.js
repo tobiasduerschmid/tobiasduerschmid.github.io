@@ -39,9 +39,19 @@
     function intro() {
       badge('Case file · The Y2K bug', 'intro');
 
+      // Opening title while the music starts: the song's case file.
+      const opening = kit.scene(content, 0.3, mark('intro-1', 'y2k') - 0.1, { exit: 'fade' });
+      ih.spotlight(opening, { x: 480, y: 250, w: 640, h: 420, at: 0.3 });
+      ih.dossier(opening, {
+        x: 230, y: 150, w: 500, tab: 'Case file № 001 · SE Book',
+        title: 'Every module should keep a secret', sub: 'A song about information hiding',
+        at: 0.6, rotate: -1.5,
+      });
+      kit.stamp(opening, 'Classified', { x: 646, y: 168, at: 1.6, rotate: -8, shake: false, from: 1.6 });
+
       // "Y2K. Maybe the most famous bug."
-      const a = kit.scene(content, 0, line('intro-2').start - 0.1);
-      ih.spotlight(a, { x: 480, y: 200, w: 620, h: 420, at: 3.4 });
+      const a = kit.scene(content, mark('intro-1', 'y2k') - 0.15, line('intro-2').start - 0.1);
+      ih.spotlight(a, { x: 480, y: 200, w: 620, h: 420, at: mark('intro-1', 'y2k') - 0.15 });
       kit.kinetic(a, [{ text: 'Y2K', at: mark('intro-1', 'y2k'), color: 'gold' }], { y: 112, size: 140 });
       // One label under the title; it slams from a small scale so it never sweeps over "Y2K".
       kit.stamp(a, 'The most famous bug', { x: 196, y: 292, at: mark('intro-1', 'most') - 0.2, rotate: -4, shake: false, from: 1.3 });
@@ -126,7 +136,7 @@
         x: 600, y: 96, w: 300, who: '1970s programmer', whoIcon: 'user', thought: true,
         text: 'This code will be replaced long before 2000.', at: nobody,
       });
-      kit.stamp(d, 'Still running', { x: 600, y: 300, at: mark('intro-11', 'did'), color: 'gold', rotate: -6, shake: false });
+      kit.stamp(d, 'Still running', { x: 530, y: 300, at: mark('intro-11', 'did'), color: 'gold', rotate: -6, shake: false });
 
       // The two-digit year wasn't hidden in one module: every file has it.
       const e = kit.scene(content, line('intro-12').start - 0.1, line('intro-16').start - 0.1);
@@ -326,7 +336,8 @@
       const paperAt = mark('pre-chorus-1-3', '1972');
       const lead = 0.3; // visuals land just ahead of the word that names them
       const noAt = mark('pre-chorus-1-2', 'first') - 0.2; // the verdict lands a beat early
-      ih.heading(s, ['How do you split a system into ', 'modules', '?'], { x: 120, y: 76, at: line('pre-chorus-1-1').start, until: paperAt - 0.1 });
+      const clearAt = paperAt - 0.45;  // the split scene clears before the paper arrives
+      ih.heading(s, ['How do you split a system into ', 'modules', '?'], { x: 120, y: 76, at: line('pre-chorus-1-1').start, until: clearAt });
       ih.systemSplit(s, {
         x: 200, y: 168, w: 560, h: 160, parts: ['Module A', 'Module B', 'Module C'],
         at: line('pre-chorus-1-1').start, cutAt: mark('pre-chorus-1-1', 'split') - 0.55, apartAt: mark('pre-chorus-1-1', 'split'),
@@ -336,9 +347,9 @@
           noAt: noAt + 0.1,
           labels: [{ text: '1 · Read input', iconName: 'file' }, { text: '2 · Process', iconName: 'gear' }, { text: '3 · Print', iconName: 'receipt' }],
         },
-        until: paperAt - 0.1,
+        until: clearAt,
       });
-      kit.stamp(s, 'Not by steps', { x: 330, y: 392, at: noAt, rotate: -5, shake: false, until: paperAt - 0.1 });
+      kit.stamp(s, 'Not by steps', { x: 330, y: 392, at: noAt, rotate: -5, shake: false, until: clearAt });
       ih.spotlight(s, { x: 480, y: 220, w: 760, h: 400, at: paperAt - 0.2 });
       ih.paper(s, {
         x: 180, y: 116, w: 600, kicker: 'Communications of the ACM · December 1972',
@@ -651,9 +662,13 @@
     function changeTest() {
       badge('Change Impact Analysis', 'change-test');
       const graphAt = mark('change-test-3', 'count');
-      const briefing = kit.scene(content, song.sectionStart('change-test'), graphAt, { exit: 'fade' });
+      const briefing = kit.scene(content, song.sectionStart('change-test'), graphAt + 0.3, { exit: 'fade' });
+      kit.kinetic(briefing, [
+        { text: 'Hid it', at: mark('change-test-1', 'hid'), color: 'pink' },
+        { text: 'well?', at: mark('change-test-1', 'well') },
+      ], { y: 190, size: 64, until: mark('change-test-1', 'analysis') - 0.15 });
       ih.list(briefing, {
-        x: 50, y: 96, w: 380, title: 'Change Impact Analysis', at: line('change-test-1').start,
+        x: 50, y: 96, w: 380, title: 'Change Impact Analysis', at: mark('change-test-1', 'analysis'),
         items: [
           { text: 'List the likely changes', iconName: 'list', at: mark('change-test-2', 'list') },
           { text: 'Pick one', iconName: 'pin', at: mark('change-test-3', 'pick') },
@@ -708,6 +723,7 @@
     // ----------------------------------------------------------------
 
     function outro() {
+      badge('Outro · Case closed', 'outro');
       const start = song.sectionStart('outro');
       const end = song.duration;
       const a = kit.scene(content, start, line('outro-2').start - 0.1);
@@ -733,7 +749,7 @@
       // The take's last line was cut, so this plays over the silent tail.
       const c = kit.scene(content, line('outro-3').start - 0.1, end);
       kit.kinetic(c, [
-        { text: 'Designing', at: mark('outro-3', 'designing') },
+        { text: 'Designing', at: line('outro-3').start },
         { text: 'for change', at: mark('outro-3', 'change'), color: 'gold' },
       ], { y: 56, size: 48 });
       ih.spotlight(c, { x: 451, y: 270, w: 480, h: 360, at: line('outro-3').start });
@@ -752,7 +768,7 @@
       ih.spotlight(c, { x: 800, y: 250, w: 300, h: 400, at: done - 0.1 });
       ih.agent(c, { x: 720, y: 108, scale: 0.72, role: 'Agent 007', look: 'tuxedo', flip: true, at: done });
       ih.show(ih.envelope(c, { text: 'every module keeps a secret', x: 552, y: 384 }), done + 0.5, undefined, { rotate: -1, from: 1.6 });
-      kit.stamp(c, 'Case closed', { x: 44, y: 312, at: done + 0.9, color: 'green', rotate: -8, shake: false });
+      kit.stamp(c, 'Case closed', { x: 26, y: 334, at: done + 0.9, color: 'green', rotate: -8, shake: false });
       const credit = kit.el('div', 'end-credit is-staged', c, 'SE Book · Information Hiding');
       credit.style.top = '428px';
       fx.fadeIn(credit, done + 1.3, 0.4);
