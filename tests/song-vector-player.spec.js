@@ -1,4 +1,5 @@
 // @ts-check
+const { openPlayerSettings } = require('./song-player-helpers');
 const { test, expect } = require('@playwright/test');
 const { a11yCheckpoint } = require('./a11y-helpers');
 const fs = require('node:fs');
@@ -74,6 +75,7 @@ test('the chapter embeds the player and retains audio description and transcript
     element.contentDocument.documentElement.scrollHeight - element.contentWindow.innerHeight
   )), { message: 'the embedded player must fit its frame without an internal vertical scrollbar' }).toBeLessThanOrEqual(1);
   await page.getByText('Full transcript', { exact: true }).click();
+  await openPlayerSettings(frameElement.contentFrame());
   await expect(frameElement.contentFrame().getByRole('combobox', { name: 'Audio track', exact: true })).toBeVisible();
   await expect(page.getByText(lines[0].visual, { exact: false })).toBeVisible();
   await expect(page.locator('video')).toHaveCount(0);
@@ -98,6 +100,7 @@ test('printing the chapter reveals the transcript and hides the media controls',
 test('audio description holds the picture during narration and preserves position when switching tracks', async ({ page }) => {
   const audio = await loadAudioThenPause(page);
   await seek(audio, 0);
+  await openPlayerSettings(page);
   const track = page.getByRole('combobox', { name: 'Audio track', exact: true });
   await track.selectOption('described');
   await expect.poll(() => audio.evaluate((element) => element.duration)).toBeCloseTo(describedPlan.duration, 1);
@@ -110,6 +113,7 @@ test('audio description holds the picture during narration and preserves positio
   const songAt = 12;
   await seek(audio, describedPlan.holds[0].outputEnd + songAt);
   await expect(lyrics(page)).toContainText("software engineer's Time Stone");
+  await openPlayerSettings(page);
   await track.selectOption('original');
   await expect.poll(() => audio.evaluate((element) => element.duration)).toBeCloseTo(storyboard.duration, 1);
   await expect.poll(() => audio.evaluate((element) => element.currentTime)).toBeCloseTo(songAt, 1);
@@ -122,6 +126,7 @@ test('switching audio tracks during playback continues at the same song position
   const audio = await loadAudioThenPause(page);
   await seek(audio, 119.8);
   await page.getByRole('button', { name: 'Play song', exact: true }).click();
+  await openPlayerSettings(page);
   await page.getByRole('combobox', { name: 'Audio track', exact: true }).selectOption('described');
   await expect.poll(() => audio.evaluate((element) => element.duration)).toBeCloseTo(describedPlan.duration, 1);
   await expect(page.getByRole('button', { name: 'Pause song', exact: true })).toBeEnabled();
@@ -134,9 +139,11 @@ test('a failed described track can recover the original song at the same positio
   const audio = await loadAudioThenPause(page);
   await seek(audio, 120);
   await page.route('**/assets/audio/snapshots-and-pointers-described.m4a', (route) => route.abort('failed'));
+  await openPlayerSettings(page);
   const track = page.getByRole('combobox', { name: 'Audio track', exact: true });
   await track.selectOption('described');
   await expect(page.getByRole('status')).toContainText('audio could not load');
+  await openPlayerSettings(page);
   await track.selectOption('original');
   await expect.poll(() => audio.evaluate((element) => element.currentTime)).toBeCloseTo(120, 1);
   await expect(audio).toHaveJSProperty('paused', true);
@@ -220,6 +227,7 @@ test('five-second buttons seek both tracks and stop at the beginning and end', a
   await expect(audio).toHaveJSProperty('currentTime', 0);
   await forward.click();
   await expect(audio).toHaveJSProperty('currentTime', 5);
+  await openPlayerSettings(page);
   await page.getByRole('combobox', { name: 'Audio track', exact: true }).selectOption('described');
   await expect.poll(() => audio.evaluate((element) => element.duration)).toBeCloseTo(describedPlan.duration, 1);
   await seek(audio, 5);
@@ -446,3 +454,53 @@ test.describe('without JavaScript', () => {
     await expect(page.locator('video')).toHaveCount(0);
   });
 });
+
+for (const width of [320, 1024]) {
+  test(`player settings and volume are usable at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    const audio = await loadAudioThenPause(page);
+    const settings = page.getByRole('region', { name: 'Player settings', exact: true });
+    const trigger = page.getByRole('button', { name: 'Player settings', exact: true });
+    const volume = page.getByRole('slider', { name: 'Volume', exact: true });
+    await expect(settings).toBeHidden();
+    await volume.fill('40');
+    await expect(audio).toHaveJSProperty('volume', 0.4);
+    await expect(audio).toHaveJSProperty('muted', false);
+    await volume.press('ArrowRight');
+    await expect(audio).toHaveJSProperty('volume', 0.41);
+    await page.getByRole('button', { name: 'Mute song', exact: true }).click();
+    await expect(volume).toHaveValue('0');
+    await page.getByRole('button', { name: 'Unmute song', exact: true }).click();
+    await expect(volume).toHaveValue('41');
+    if (width === 1024) {
+      const play = await page.getByRole('button', { name: 'Play song', exact: true }).boundingBox();
+      const settingsButton = await trigger.boundingBox();
+      expect(Math.abs(play.y - settingsButton.y)).toBeLessThan(5);
+    }
+    await trigger.focus();
+    await trigger.press('Space');
+    await expect(page.getByRole('button', { name: 'Close settings' })).toBeFocused();
+    await page.keyboard.press('Tab');
+    await expect(page.getByRole('combobox', { name: 'Playback speed' })).toBeFocused();
+    await page.getByRole('combobox', { name: 'Playback speed' }).selectOption('1.5');
+    await expect(audio).toHaveJSProperty('playbackRate', 1.5);
+    const baseline = await lyrics(page).evaluate(el => parseFloat(getComputedStyle(el).fontSize));
+    const size = page.getByRole('combobox', { name: 'Subtitle font size' });
+    await size.selectOption('2');
+    expect(await lyrics(page).evaluate(el => parseFloat(getComputedStyle(el).fontSize))).toBeCloseTo(baseline * 2, 1);
+    await page.getByRole('button', { name: 'Close settings' }).focus();
+    await page.keyboard.press('Escape');
+    await expect(settings).toBeHidden();
+    await expect(trigger).toBeFocused();
+    await openPlayerSettings(page);
+    await a11yCheckpoint(page, `player settings at ${width}px`, { feature: 'song-vector-player' });
+    for (const control of await settings.getByRole('combobox').all()) {
+      await control.focus();
+      const box = await control.boundingBox();
+      expect(box.x).toBeGreaterThanOrEqual(0);
+      expect(box.x + box.width).toBeLessThanOrEqual(width);
+    }
+    await page.getByRole('button', { name: 'Close settings' }).click();
+    await expect(settings).toBeHidden();
+  });
+}

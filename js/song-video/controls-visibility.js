@@ -28,8 +28,9 @@
       // shortcuts can give pointer-focused buttons that state too. Only actual
       // keyboard navigation should pin the toolbar for the rest of playback.
       const usingControl = controls.contains(focused) && keyboardNavigation;
+      const settingsOpen = controls.querySelector('.song-player-settings-toggle[aria-expanded="true"]');
       return fullscreen && !audio.paused && !audio.ended && !audio.seeking
-        && !loading && !buffering && !hoveringControls && !usingControl && pointersDown.size === 0;
+        && !loading && !buffering && !hoveringControls && !usingControl && !settingsOpen && pointersDown.size === 0;
     }
 
     function hide() {
@@ -124,6 +125,11 @@
 
     return {
       reveal,
+      focusControl(target) {
+        // Closing a panel restores focus without changing the input modality.
+        if (!keyboardNavigation) pointerFocusTarget = target;
+        target.focus({ preventScroll: true });
+      },
       setFullscreen(value) {
         fullscreen = value;
         // Entering presentation starts a fresh idle period, including through F.

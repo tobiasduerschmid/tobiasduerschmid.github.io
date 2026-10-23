@@ -1,4 +1,5 @@
 // @ts-check
+const { openPlayerSettings } = require('./song-player-helpers');
 /**
  * Song videos in SE Book chapters keep their accessibility contract: captions
  * of exactly the sung lyrics, an audio-described cut whose captions carry the
@@ -57,6 +58,7 @@ for (const { id, page: pagePath } of SONGS) {
     const frame = frameElement.contentFrame();
     await expect(frame.getByRole('button', { name: 'Play song', exact: true })).toBeVisible();
     if (described) {
+      await openPlayerSettings(frame);
       await frame.getByRole('combobox', { name: 'Audio track', exact: true }).selectOption('described');
       await expect(frame.locator('audio source')).toHaveAttribute('src', new RegExp(storyboard.described_soundtrack));
       await expect(frame.locator('audio track')).toHaveAttribute('src', storyboard.described_captions);

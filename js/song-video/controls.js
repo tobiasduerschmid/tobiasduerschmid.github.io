@@ -20,6 +20,9 @@
     const speed = player.querySelector('.song-player-speed');
     const feedback = player.querySelector('.song-player-gesture-feedback');
     const visibility = window.SongControlsVisibility.bind({ player, audio, listen });
+    window.SongPlayerSettings.bind({
+      player, audio, listen, onResize, onActivity: visibility.reveal, focusControl: visibility.focusControl,
+    });
     let loading = false;
     let feedbackTimer = null;
 

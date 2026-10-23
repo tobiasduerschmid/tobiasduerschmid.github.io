@@ -1,4 +1,5 @@
 // @ts-check
+const { openPlayerSettings } = require('./song-player-helpers');
 const { test, expect } = require('@playwright/test');
 const { a11yCheckpoint } = require('./a11y-helpers');
 
@@ -103,7 +104,7 @@ test.describe('desktop fullscreen idle controls', () => {
       await page.clock.fastForward(4000);
       await expect(controls).toBeHidden();
       await page.keyboard.press('Shift+Tab');
-      await expect(page.getByRole('combobox', { name: 'Audio track', exact: true })).toBeFocused();
+      await expect(exit(page)).toBeFocused();
       await page.keyboard.press('Tab');
       await expect(controls).toBeVisible();
       await expect(page.getByRole('button', { name: 'Pause video', exact: true })).toBeFocused();
@@ -165,6 +166,7 @@ test.describe('desktop fullscreen idle controls', () => {
     await page.clock.fastForward(4000);
     await expect(controls).toBeHidden();
     await page.mouse.move(110, 100);
+    await openPlayerSettings(page);
     const speed = page.getByRole('combobox', { name: 'Playback speed' });
     // Native pickers may consume pointerup; deliver only their opening event,
     // then choose through the native select API instead of OS popup coordinates.
@@ -172,6 +174,7 @@ test.describe('desktop fullscreen idle controls', () => {
     await speed.focus();
     await speed.selectOption('1.5');
     await expect(speed).toHaveValue('1.5');
+    await page.getByRole('button', { name: 'Close settings' }).click();
     await page.mouse.move(120, 100);
     await page.clock.fastForward(4000);
     await expect(controls).toBeHidden();
@@ -187,17 +190,21 @@ test.describe('desktop fullscreen idle controls', () => {
       const supports = CSS.supports.bind(CSS);
       CSS.supports = (...args) => args[0] === 'selector(select:open)' ? false : supports(...args);
     });
+    await openPlayerSettings(page);
     const speed = page.getByRole('combobox', { name: 'Playback speed' });
     await page.mouse.move(100, 100);
     await speed.dispatchEvent('pointerdown', { pointerType: 'mouse', pointerId: 1 });
     await speed.focus();
     await speed.dispatchEvent('keydown', { key: 'Enter' });
     await expect(speed).toHaveValue('1');
+    await page.getByRole('button', { name: 'Close settings' }).click();
+    await page.mouse.move(100, 100);
     await page.clock.fastForward(4000);
     await expect(page.getByRole('region', { name: 'Song controls', exact: true })).toBeHidden();
     await expect(audio).toHaveJSProperty('paused', false);
     // Keyboard editing can reopen a still-focused picker without a new Tab.
     await page.mouse.move(110, 100);
+    await openPlayerSettings(page);
     await speed.dispatchEvent('pointerdown', { pointerType: 'mouse', pointerId: 1 });
     await speed.focus();
     await speed.dispatchEvent('keydown', { key: 'Enter' });
@@ -258,9 +265,11 @@ for (const viewport of [{ width: 390, height: 844 }, { width: 844, height: 390 }
     await expect.poll(() => audio.evaluate((media) => media.currentTime)).toBeGreaterThan(position + 4);
     await expect(audio).toHaveJSProperty('paused', false);
     await page.keyboard.press('Shift'); // Reveal controls before moving assistive focus.
+    await openPlayerSettings(page);
     await page.getByRole('combobox', { name: 'Playback speed' }).focus();
     await page.clock.fastForward(4000);
     await expect(controls).toBeVisible();
+    if (await page.getByRole('button', { name: 'Close settings' }).isVisible()) await page.getByRole('button', { name: 'Close settings' }).tap();
     await exit(page).tap();
     await expect(enter(page)).toBeVisible();
   });
@@ -289,7 +298,7 @@ test('portrait full screen remains usable without a native API and adapts when t
   await expectFramed(page, true);
   await page.screenshot({ path: `/tmp/git-mv-fullscreen-fallback-${testInfo.project.name}.png` });
   // The fallback is modal even though browser chrome remains present.
-  await page.getByRole('combobox', { name: 'Audio track', exact: true }).focus();
+  await exit(page).focus();
   await page.keyboard.press('Tab');
   await expect(page.getByRole('button', { name: 'Play video', exact: true })).toBeFocused();
 
@@ -357,7 +366,7 @@ for (const lockResult of ['resolve', 'reject']) {
     // Even a granted lock need not rotate the display immediately; keep the
     // picture usable while portrait, then react to the platform's resize.
     await expectFramed(page, true);
-    await page.getByRole('combobox', { name: 'Audio track', exact: true }).focus();
+    await exit(page).focus();
     await page.keyboard.press('Tab');
     await expect(page.getByRole('button', { name: 'Play video', exact: true })).toBeFocused();
     // Rotate the emulated display without resizing Chromium's native fullscreen
@@ -408,17 +417,21 @@ for (const native of [false, true]) {
   test(`an audio-track failure exposes recovery after leaving ${native ? 'native full screen @chromium' : 'fallback full screen'}`, async ({ page }) => {
     await page.goto(PLAYER_PATH);
     if (!native) await noNativeFullscreen(page);
+    await openPlayerSettings(page);
     const track = page.getByRole('combobox', { name: 'Audio track', exact: true });
     const describedUrl = await track.evaluate((element) => new URL(element.dataset.describedSrc, location.href).href);
+    await page.getByRole('button', { name: 'Close settings' }).click();
     // An unavailable media asset is a real recoverable network failure; the
     // player, audio-track controller, and fullscreen controller remain real.
     await page.route(describedUrl, (route) => route.abort('failed'));
     await enter(page).click();
     await expect(exit(page)).toBeVisible();
+    await openPlayerSettings(page);
     await track.selectOption('described');
     await expect(enter(page)).toBeVisible();
     await expect(page.getByRole('status').filter({ hasText: /could not load|failed/i })).toBeVisible();
     await expect(page.getByRole('link', { name: 'Download song audio', exact: true })).toBeVisible();
+    await openPlayerSettings(page);
     await expect(track).toBeEnabled();
   });
 }
@@ -472,3 +485,23 @@ for (const native of [false, true]) {
     await expect(page.locator('#playlist-frame')).toBeHidden();
   });
 }
+
+test('settings stay open during playback and Escape closes only settings', async ({ page }) => {
+  const audio = await startFullscreen(page);
+  await openPlayerSettings(page);
+  const panel = page.getByRole('region', { name: 'Player settings', exact: true });
+  await page.mouse.move(100, 100);
+  await page.clock.fastForward(4000);
+  await expect(panel).toBeVisible();
+  await expect(audio).toHaveJSProperty('paused', false);
+  await page.getByRole('button', { name: 'Close settings' }).focus();
+  await page.keyboard.press('Escape');
+  await expect(panel).toBeHidden();
+  await expect(exit(page)).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Player settings', exact: true })).toBeFocused();
+  await openPlayerSettings(page);
+  await page.getByRole('button', { name: 'Pause song', exact: true }).click();
+  await expect(panel).toBeHidden();
+  await exit(page).click();
+  await expect(enter(page)).toBeVisible();
+});

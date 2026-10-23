@@ -1,3 +1,4 @@
+const { openPlayerSettings } = require('./song-player-helpers');
 const { test, expect } = require('@playwright/test');
 const { a11yCheckpoint } = require('./a11y-helpers');
 const fs = require('node:fs');
@@ -67,6 +68,7 @@ for (const song of [git, network]) {
     await expect(cc).toHaveAttribute('aria-keyshortcuts', 'c');
     await page.keyboard.press('Control+c');
     await expect(captions).toBeVisible();
+    await openPlayerSettings(page);
     await page.getByRole('combobox', { name: 'Audio track', exact: true }).focus();
     await page.keyboard.press('c');
     await expect(captions).toBeVisible();
@@ -137,17 +139,21 @@ for (const song of [git, network]) {
   test(`${song.title}: speed survives a track switch and reload without changing the paused position`, async ({ page }) => {
     const audio = await openPaused(page, song);
     await seek(audio, 40);
+    await openPlayerSettings(page);
     await page.getByRole('combobox', { name: 'Playback speed' }).selectOption('1.5');
     await expect(audio).toHaveJSProperty('playbackRate', 1.5);
     await expect(audio).toHaveJSProperty('currentTime', 40);
     const originalDuration = await audio.evaluate((media) => media.duration);
+    await openPlayerSettings(page);
     await page.getByRole('combobox', { name: 'Audio track', exact: true }).selectOption('described');
     await expect.poll(() => audio.evaluate((media) => media.duration)).toBeGreaterThan(originalDuration);
     await expect(audio).toHaveJSProperty('playbackRate', 1.5);
+    await openPlayerSettings(page);
     await page.getByRole('combobox', { name: 'Audio track', exact: true }).selectOption('original');
     await expect.poll(() => audio.evaluate((media) => media.currentTime)).toBeCloseTo(40, 1);
     await expect(audio).toHaveJSProperty('playbackRate', 1.5);
     await page.reload();
+    await openPlayerSettings(page);
     await expect(page.getByRole('combobox', { name: 'Playback speed' })).toHaveValue('1.5');
     await expect(audio).toHaveJSProperty('paused', true);
   });
@@ -181,6 +187,7 @@ for (const song of [git, network]) {
     await expect.poll(() => audio.evaluate((media) => media.currentTime)).toBeCloseTo(20.375, 2);
     await page.keyboard.press('k');
     await expect(audio).toHaveJSProperty('paused', true);
+    await openPlayerSettings(page);
     await page.getByRole('combobox', { name: 'Playback speed' }).focus();
     await page.keyboard.press('f');
     await expect(page.getByRole('button', { name: 'Enter full screen', exact: true })).toBeVisible();
@@ -195,6 +202,7 @@ for (const song of [git, network]) {
     const audio = await openPaused(page, song);
     const originalDuration = await audio.evaluate((media) => media.duration);
     for (const track of ['original', 'described']) {
+      await openPlayerSettings(page);
       await page.getByRole('combobox', { name: 'Audio track', exact: true }).selectOption(track);
       if (track === 'described') {
         await expect.poll(() => audio.evaluate((media) => media.duration)).toBeGreaterThan(originalDuration);
@@ -217,6 +225,7 @@ for (const song of [git, network]) {
   test(`${song.title}: number shortcuts leave dropdowns and outside focus alone`, async ({ page }) => {
     const audio = await openPaused(page, song);
     await seek(audio, 30);
+    await openPlayerSettings(page);
     for (const control of [
       page.getByRole('combobox', { name: 'Playback speed' }),
       page.getByRole('combobox', { name: 'Audio track', exact: true }),
@@ -355,6 +364,7 @@ test('speed settings are shared with the players and storage entries are deletab
   await page.goto('/settings/');
   await page.getByLabel('Music video playback speed', { exact: true }).selectOption('2');
   await page.goto(network.path);
+  await openPlayerSettings(page);
   await expect(page.getByRole('combobox', { name: 'Playback speed' })).toHaveValue('2');
   await page.goto(playlistPath);
   await page.getByRole('button', { name: 'Load playlist', exact: true }).click();
@@ -366,6 +376,7 @@ test('speed settings are shared with the players and storage entries are deletab
     await expect(row).toContainText('not set');
   }
   await page.goto(network.path);
+  await openPlayerSettings(page);
   await expect(page.getByRole('combobox', { name: 'Playback speed' })).toHaveValue('1');
 });
 
@@ -480,6 +491,7 @@ for (const song of [git, network, shell, uml]) {
       };
     });
     const questions = await frame.locator('#song-data').evaluate((element) => JSON.parse(element.textContent).sections.flatMap((section) => section.lines).filter((line) => line.answer_at));
+    await openPlayerSettings(frame);
     await frame.getByRole('combobox', { name: 'Playback speed' }).selectOption('2');
     for (const question of questions) {
       await seek(audio, (question.pause_at ?? question.answer_at - 0.12) - 0.4);
@@ -497,13 +509,16 @@ for (const song of [git, network, shell, uml]) {
     const first = questions[0];
     await seek(audio, first.start - 0.1); // Rewind before the question to re-arm it.
     const originalDuration = await audio.evaluate((media) => media.duration);
+    await openPlayerSettings(frame);
     await frame.getByRole('combobox', { name: 'Audio track', exact: true }).selectOption('described');
     await expect.poll(() => audio.evaluate((media) => media.duration)).toBeGreaterThan(originalDuration);
     // Start after the section's spoken description; test the question at slow speed.
+    await openPlayerSettings(frame);
     const timelineUrl = await frame.getByRole('combobox', { name: 'Audio track', exact: true }).getAttribute('data-described-timeline');
     const timeline = await (await page.request.get(timelineUrl)).json();
     const hold = timeline.holds.findLast((item) => item.songTime <= first.start + 0.01);
     await seek(audio, hold.outputEnd + first.start + 0.01 - hold.songTime);
+    await openPlayerSettings(frame);
     await frame.getByRole('combobox', { name: 'Playback speed' }).selectOption('0.5');
     await frame.getByRole('button', { name: 'Play song', exact: true }).click();
     await expect(frame.getByRole('status')).toContainText('Paused before the answer', { timeout: 15000 });

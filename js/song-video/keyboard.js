@@ -12,6 +12,7 @@
       // Timeline seeking uses the media clock, not the range input's rounded
       // value or native 0.1-second step. Other inputs keep their native keys.
       if (target.isContentEditable) return;
+      if (target.closest('.song-player-settings, .song-player-settings-toggle')) return;
       if (target.closest('input, select, textarea') && !(target === positionControl && seekKey)) return;
       // Space always controls playback on player buttons, even after fullscreen
       // returns focus to its button. Enter retains native button activation.
