@@ -1318,14 +1318,35 @@
    * hat-band colour (red | gold | cyan). The figure is 160×300 at scale 1.
    */
   /**
+   * How far the martini arm's upper arm and forearm rise from hanging, in
+   * degrees (180 is straight up).
+   */
+  const TOAST_POSES = {
+    high: { upper: 145, forearm: 178 },   // the glass held high overhead
+    cheers: { upper: 95, forearm: 175 },  // elbow out, glass up at head height
+  };
+
+  /**
+   * Shows the shading strip on the side of a sleeve segment that faces away
+   * from the upper-left light, `raise` degrees up from hanging: the outer
+   * strip when it hangs, the inner one once it is raised past 45 degrees.
+   */
+  function shadeArm([outer, inner], raise) {
+    const a = raise * Math.PI / 180;
+    const away = Math.cos(a) - Math.sin(a);
+    outer.setAttribute('fill-opacity', Math.min(1, Math.max(0, away)).toFixed(2));
+    inner.setAttribute('fill-opacity', Math.min(1, Math.max(0, -away)).toFixed(2));
+  }
+
+  /**
    * A secret agent with a name tag. look = 'trench' (fedora, trench coat,
    * sunglasses, briefcase) or 'tuxedo' (white dinner jacket, bow tie, slicked
    * hair, raised eyebrow, martini): the suave-spy-film look. With `code`,
    * role and code show as one name in the red split-flap cells of `digits`.
-   * From `toastAt`, the tuxedo agent raises his martini: `toastAngle`
-   * degrees from his side (180 is straight up).
+   * From `toastAt`, the tuxedo agent raises his martini into `toastPose`
+   * (a key of TOAST_POSES).
    */
-  function agent(parent, { x, y, scale = 1, name, role, code, at, until, toastAt, toastAngle = 170, tie = 'red', briefcase = true, flip = false, look = 'trench' }) {
+  function agent(parent, { x, y, scale = 1, name, role, code, at, until, toastAt, toastPose = 'high', tie = 'red', briefcase = true, flip = false, look = 'trench' }) {
     const wrap = place(el('div', 'ih-agent is-staged', parent), x, y);
     wrap.style.width = `${160 * scale}px`;
     const fig = svg('svg', { class: `ih-agent-art ih-agent-art--${tie}`, viewBox: '0 0 160 300', width: 160 * scale, height: 300 * scale, 'aria-hidden': 'true' }, wrap);
@@ -1333,12 +1354,13 @@
     svg('ellipse', { class: 'ih-agent-shadow', cx: 80, cy: 292, rx: 60, ry: 7 }, body);
     const sway = svg('g', {}, body);
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-    let glint, toastArm, glass;
+    let glint, toastArm, forearm, glass, upperShade, forearmShade, creaseMask;
     if (look === 'tuxedo') {
       // White dinner jacket, lit from the upper left: one gradient spans the
       // body and both sleeves so the light reads continuously across them.
       const cloth = `ih-agent-cloth-${++uid}`;
-      const gradient = svg('linearGradient', { id: cloth, gradientUnits: 'userSpaceOnUse', x1: 40, y1: 92, x2: 122, y2: 212 }, svg('defs', {}, fig));
+      const defs = svg('defs', {}, fig);
+      const gradient = svg('linearGradient', { id: cloth, gradientUnits: 'userSpaceOnUse', x1: 40, y1: 92, x2: 122, y2: 212 }, defs);
       for (const [index, offset] of ['0', '0.45', '0.8', '1'].entries()) svg('stop', { offset, class: `ih-agent-cloth-stop-${index}` }, gradient);
       const jacket = (className, d, parent = sway) => svg('path', { class: className, d, fill: `url(#${cloth})` }, parent);
       // Trousers with a satin braid down each outer seam, glossy shoes.
@@ -1350,10 +1372,12 @@
       // A pleated black cummerbund shows where the jacket's fronts part.
       svg('path', { class: 'ih-agent-cummerbund', d: 'M60 176 L100 176 L101 200 L59 200 Z' }, sway);
       svg('path', { class: 'ih-agent-cummerbund-pleat', d: 'M68 184 H92 M67 191 H93' }, sway);
-      // The martini arm's sleeve head: a circle on the arm's pivot looks the
-      // same at any angle, so it sits under the body and only its outer curve
-      // shows, rounding the shoulder however high the arm is raised.
-      svg('circle', { class: 'ih-agent-tux', cx: 116, cy: 114, r: 8, fill: `url(#${cloth})` }, sway);
+      // The martini arm's sleeve head: the top half of a circle on the arm's
+      // pivot. It sits under the body, so only its outer curve shows, rounding
+      // the shoulder however high the arm is raised; with no lower half, the
+      // raised arm meets the torso in a crisp armpit instead of a knob.
+      jacket('ih-agent-tux-fill', 'M108 114 A8 8 0 0 1 124 114 Z');
+      svg('path', { class: 'ih-agent-tux-edge', d: 'M108 114 A8 8 0 0 1 124 114' }, sway);
       // Jacket body: shoulders, a slightly suppressed waist, and fronts that
       // curve away below the single button.
       jacket('ih-agent-tux', 'M66 92 Q50 94 44 108 C41 140 43 170 40 204 Q57 211 74 209 Q79 196 80 180 Q81 196 86 209 Q103 211 120 204 C117 170 119 140 116 108 Q110 94 94 92 L80 90 Z');
@@ -1384,24 +1408,51 @@
       svg('rect', { class: 'ih-agent-cuff', x: 36, y: 192, width: 13, height: 6, rx: 1.5 }, sway);
       svg('circle', { class: 'ih-agent-cufflink', cx: 42.5, cy: 195, r: 1.1 }, sway);
       svg('circle', { class: 'ih-agent-hand', cx: 42, cy: 204, r: 7 }, sway);
-      // The martini arm: sleeve, cuff, and hand pivot at the shoulder
-      // (116, 114) to raise a toast; the glass pivots at the hand
-      // (125, 198) so it stays upright.
+      // The martini arm bends: the upper arm turns at the shoulder
+      // (116, 114), the forearm at the elbow (123, 156), and the glass at
+      // the hand (125, 198) so it stays upright. Each joint is a circle on
+      // its pivot, drawn under the segments, so its outer curve rounds the
+      // joint at any angle. The segments' fills have no outline at their
+      // jointed ends; only their long edges are inked.
+      // Each sleeve segment has a shading strip down both sides; per frame
+      // the side turned away from the upper-left light shows (shadeArm).
+      // The strips taper to a point at the elbow, so the two segments' shading
+      // meets without a seam.
+      const UPPER_ARM = 'M108.4 115.3 L123.6 112.7 Q128 133 129.9 154.85 L116.1 157.15 Q113.8 135 108.4 115.3 Z';
       toastArm = svg('g', { class: 'ih-agent-toast-arm' }, sway);
-      // The sleeve's fill has no outline at the shoulder end, so it blends
-      // into the sleeve head below at any angle; only its long edges are inked.
-      jacket('ih-agent-tux-fill', 'M108.3 116 L123.8 116 C127 140 130 166 130 194 L117 196 C116 172 112 146 108.3 116 Z', toastArm);
-      svg('path', { class: 'ih-agent-tux-edge', d: 'M123.8 116 C127 140 130 166 130 194 M117 196 C116 172 112 146 108.3 116' }, toastArm);
-      svg('path', { class: 'ih-agent-tux-shade', d: 'M122 128 C127 148 129.5 170 130 194 L124 194.6 C124 172 123.5 150 122 128 Z' }, toastArm);
-      svg('path', { class: 'ih-agent-tux-fold', d: 'M119 158 Q123.5 156 128 158.5' }, toastArm);
-      svg('rect', { class: 'ih-agent-cuff', x: 118, y: 190, width: 13, height: 6, rx: 1.5 }, toastArm);
-      svg('circle', { class: 'ih-agent-cufflink', cx: 124.5, cy: 193, r: 1.1 }, toastArm);
+      svg('circle', { class: 'ih-agent-tux', cx: 123, cy: 156, r: 6.9, fill: `url(#${cloth})` }, toastArm);
+      jacket('ih-agent-tux-fill', UPPER_ARM, toastArm);
+      upperShade = [
+        svg('path', { class: 'ih-agent-tux-shade', d: 'M119.6 115.8 Q125.2 134 129.9 154.85 Q128 133 123.6 112.7 Z' }, toastArm),
+        svg('path', { class: 'ih-agent-tux-shade', d: 'M108.4 115.3 Q113.8 135 116.1 157.15 Q116.8 134 112.9 114.6 Z' }, toastArm),
+      ];
+      svg('path', { class: 'ih-agent-tux-edge', d: 'M123.6 112.7 Q128 133 129.9 154.85 M116.1 157.15 Q113.8 135 108.4 115.3' }, toastArm);
+      forearm = svg('g', { class: 'ih-agent-forearm' }, toastArm);
+      // The forearm starts on the upper arm's end line.
+      jacket('ih-agent-tux-fill', 'M116.1 157.15 L129.9 154.85 C131 170 131.5 182 131.5 193.66 L118.5 194.34 C118 182 117.6 170 116.1 157.15 Z', forearm);
+      forearmShade = [
+        svg('path', { class: 'ih-agent-tux-shade', d: 'M129.9 154.85 Q126.6 174 126.6 194 L131.5 193.66 C131.5 182 131 170 129.9 154.85 Z' }, forearm),
+        svg('path', { class: 'ih-agent-tux-shade', d: 'M116.1 157.15 C117.6 170 118 182 118.5 194.34 L123 194.1 Q121.8 172 116.1 157.15 Z' }, forearm),
+      ];
+      // The forearm's outline is masked off where it crosses the upper arm,
+      // so in a bent elbow the inner crease stops where the outlines meet.
+      // The mask's copy of the upper arm turns back by the forearm's bend.
+      const crease = `ih-agent-crease-${++uid}`;
+      const mask = svg('mask', { id: crease, maskUnits: 'userSpaceOnUse', x: -100, y: -100, width: 400, height: 500 }, defs);
+      svg('rect', { class: 'ih-agent-mask-keep', x: -100, y: -100, width: 400, height: 500 }, mask);
+      creaseMask = svg('path', { class: 'ih-agent-mask-cut', d: UPPER_ARM }, mask);
+      svg('path', { class: 'ih-agent-tux-edge', d: 'M129.9 154.85 C131 170 131.5 182 131.5 190 M118.6 190 C118 182 117.6 170 116.1 157.15', mask: `url(#${crease})` }, forearm);
+      svg('path', { class: 'ih-agent-tux-fold', d: 'M117.6 160.5 Q120.8 158.6 124 160' }, forearm);
+      shadeArm(upperShade, 0);
+      shadeArm(forearmShade, 0);
+      svg('rect', { class: 'ih-agent-cuff', x: 118, y: 190, width: 13, height: 6, rx: 1.5 }, forearm);
+      svg('circle', { class: 'ih-agent-cufflink', cx: 124.5, cy: 193, r: 1.1 }, forearm);
       // A martini, shaken: glass, olive, stem, base, held at the hip.
-      glass = svg('g', { class: 'ih-agent-glass' }, toastArm);
+      glass = svg('g', { class: 'ih-agent-glass' }, forearm);
       svg('path', { class: 'ih-agent-martini', d: 'M112 170 L138 170 L125 186 Z' }, glass);
       svg('circle', { class: 'ih-agent-olive', cx: 121, cy: 175, r: 3 }, glass);
       svg('path', { class: 'ih-agent-martini-stem', d: 'M125 186 V202 M118 202 H132' }, glass);
-      svg('circle', { class: 'ih-agent-hand', cx: 125, cy: 198, r: 7 }, toastArm);
+      svg('circle', { class: 'ih-agent-hand', cx: 125, cy: 198, r: 7 }, forearm);
       // Neck, with the chin's shadow, wing collar, and a sculpted bow tie.
       svg('rect', { class: 'ih-agent-neck', x: 72, y: 80, width: 16, height: 14 }, sway);
       svg('ellipse', { class: 'ih-agent-face-shade', cx: 80, cy: 85, rx: 8, ry: 3 }, sway);
@@ -1485,10 +1536,18 @@
       const gx = gx0 + gspan * (cycle / 0.18);
       glint.setAttribute('transform', `translate(${gx.toFixed(1)} ${gy})`);
       if (toastAt !== undefined && toastArm) {
-        // The arm swings up from the shoulder; the glass stays upright.
-        const raise = -toastAngle * (reducedMotion.matches ? Number(t >= toastAt) : backOut(progress(t, toastAt, 0.45)));
-        toastArm.setAttribute('transform', `rotate(${raise.toFixed(1)} 116 114)`);
-        glass.setAttribute('transform', `rotate(${(-raise).toFixed(1)} 125 198)`);
+        // The upper arm swings up and the elbow bends a beat later; the bend
+        // eases from zero, so the elbow never flexes backwards.
+        const pose = TOAST_POSES[toastPose];
+        const swing = (delay) => (reducedMotion.matches ? Number(t >= toastAt) : backOut(progress(t, toastAt + delay, 0.45)));
+        const upper = pose.upper * swing(0);
+        const fore = upper + (pose.forearm - pose.upper) * swing(0.08);
+        toastArm.setAttribute('transform', `rotate(${(-upper).toFixed(1)} 116 114)`);
+        forearm.setAttribute('transform', `rotate(${(upper - fore).toFixed(1)} 123 156)`);
+        creaseMask.setAttribute('transform', `rotate(${(fore - upper).toFixed(1)} 123 156)`);
+        glass.setAttribute('transform', `rotate(${fore.toFixed(1)} 125 198)`);
+        shadeArm(upperShade, upper);
+        shadeArm(forearmShade, fore);
       }
     });
     fx.rise(wrap, at, { distance: 24, duration: 0.45 });
@@ -1802,7 +1861,7 @@
       // A snap of light as the beams switch on, a bow-tie gleam, a toast.
       sparkle(snapGleam, postAt, 591, 236, 0.45);
       sparkle(tieGleam, postAt + 0.45, post + 2, 277);
-      sparkle(glassGleam, T.toast + 0.3, post - 52.8 + 118 * 0.66, 212 + 14 * 0.66, 0.6);
+      sparkle(glassGleam, T.toast + 0.3, post - 52.8 + 134 * 0.66, 212 + 14 * 0.66, 0.6);
     });
     return stage;
   }

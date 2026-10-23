@@ -643,6 +643,9 @@
 .ih-agent-tux-fill { stroke: none; }
 .ih-agent-tux-edge { fill: none; stroke: var(--ink); stroke-width: 2.5; stroke-linecap: round; }
 .ih-agent-tux-shade { fill: #b9ad94; opacity: 0.32; }
+/* Luminance mask for the martini forearm's outline: kept, then cut away. */
+.ih-agent-mask-keep { fill: #fff; }
+.ih-agent-mask-cut { fill: #000; }
 .ih-agent-tux-rim { fill: none; stroke: #ffffff; stroke-width: 1.6; stroke-linecap: round; opacity: 0.85; }
 .ih-agent-tux-fold { fill: none; stroke: #9c8f74; stroke-width: 1.1; stroke-linecap: round; opacity: 0.75; }
 .ih-agent-pleat { fill: none; stroke: #dcd6c8; stroke-width: 1; stroke-linecap: round; }

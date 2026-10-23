@@ -96,7 +96,7 @@
       // martini to it on "zero", and slips out before the terminal opens.
       ih.agent(c, {
         x: 314, y: 104, scale: 0.66, role: 'Agent', code: '00', look: 'tuxedo', flip: true,
-        at: mark('intro-6', 'double') - 0.15, toastAt: mark('intro-6', 'zero'), toastAngle: 125,
+        at: mark('intro-6', 'double') - 0.15, toastAt: mark('intro-6', 'zero'), toastPose: 'cheers',
         until: mark('intro-7', 'computer') - 0.35,
       });
       ih.code(c, {
@@ -200,7 +200,8 @@
       const caperEnd = line('verse-1-1').start - 0.1;
       const h = kit.scene(content, line('intro-19').start - 0.1, caperEnd, { exit: 'fade' });
       const lesson = kit.el('div', 'ih-title-layer', h);
-      kit.kinetic(lesson, [{ text: 'Lesson one', at: mark('intro-19', 'lesson'), color: 'gold' }], { y: 52, size: 34, punch: false });
+      // High enough to clear the case file's tab below it.
+      kit.kinetic(lesson, [{ text: 'Lesson one', at: mark('intro-19', 'lesson'), color: 'gold' }], { y: 40, size: 34, punch: false });
       ih.spotlight(lesson, { x: 320, y: 250, w: 640, h: 420, at: mark('intro-19', 'every') - 0.2 });
       const card = ih.dossier(h, {
         x: 60, y: 112, w: 520, tab: 'Case file · Information hiding',
@@ -506,7 +507,7 @@
       // He stays until the PayPal contact card needs his corner.
       const agentTo = mark('verse-2-9', 'exists') - 0.5;
       ih.spotlight(s, { x: 800, y: 210, w: 320, h: 420, at: agentFrom, until: agentTo });
-      ih.agent(s, { x: 742, y: 100, scale: 0.66, role: 'Agent', code: '00', look: 'tuxedo', at: agentFrom, until: agentTo, toastAt: mark('verse-2-8', 'gateway_2') - 0.15, toastAngle: 125 });
+      ih.agent(s, { x: 742, y: 100, scale: 0.66, role: 'Agent', code: '00', look: 'tuxedo', at: agentFrom, until: agentTo, toastAt: mark('verse-2-8', 'gateway_2') - 0.15, toastPose: 'cheers' });
       ih.bubble(s, { x: 700, y: 12, text: 'Gateway,\nPayment Gateway.', tailX: 95, at: mark('verse-2-8', 'names') - 0.1, until: agentTo });
       kit.sticker(s, 'Secret: which provider', { x: 690, y: 376, at: mark('verse-2-8', 'gateway_2'), until: agentTo, variant: 'red', iconName: 'lock', rotate: -3 });
 
