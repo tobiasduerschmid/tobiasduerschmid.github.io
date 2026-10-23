@@ -625,26 +625,45 @@
 .ih-agent-brim { fill: #2b2116; stroke: var(--ink); stroke-width: 2; }
 .ih-agent-hat { fill: #3d2f1f; stroke: var(--ink); stroke-width: 2.5; stroke-linejoin: round; }
 .ih-agent-dent { fill: none; stroke: #241a10; stroke-width: 2; }
-/* The tuxedo look: white dinner jacket, bow tie, martini. Thin white rims
-   keep the dark trousers and shoes visible on the dark stage. */
+/* The tuxedo look: white dinner jacket, satin shawl lapels, carnation,
+   bow tie, martini. Thin white rims keep the dark trousers and shoes
+   visible on the dark stage. The jacket's fill is a gradient (attribute). */
+.ih-agent-cloth-stop-0 { stop-color: #fffdf8; }
+.ih-agent-cloth-stop-1 { stop-color: #f4efe4; }
+.ih-agent-cloth-stop-2 { stop-color: #e6dece; }
+.ih-agent-cloth-stop-3 { stop-color: #d6ccb6; }
 .ih-agent-trousers { fill: #12141c; stroke: #f8fafc; stroke-width: 1.5; stroke-linejoin: round; }
+.ih-agent-braid { fill: none; stroke: #2e3546; stroke-width: 2.4; stroke-linecap: round; }
+.ih-agent-crease { fill: none; stroke: #262c3a; stroke-width: 1; stroke-linecap: round; }
 .ih-agent-shoe--gloss { stroke: #f8fafc; stroke-width: 1.2; stroke-linejoin: round; }
-.ih-agent-tux { fill: #e8e2d4; stroke: var(--ink); stroke-width: 2.5; stroke-linejoin: round; }
-.ih-agent-tux-light { fill: #f7f4ec; }
-.ih-agent-tux-sleeve { stroke: var(--ink); stroke-width: 2.5; stroke-linejoin: round; }
-.ih-agent-satin { fill: #dcd4c2; stroke: var(--ink); stroke-width: 2; stroke-linejoin: round; }
-.ih-agent-satin-sheen { fill: none; stroke: #fffdf7; stroke-width: 2; stroke-linecap: round; }
+.ih-agent-shoe-shine { fill: none; stroke: rgba(255, 255, 255, 0.55); stroke-width: 1.1; stroke-linecap: round; }
+.ih-agent-cummerbund { fill: #0b0d14; stroke: var(--ink); stroke-width: 1.5; }
+.ih-agent-cummerbund-pleat { fill: none; stroke: #343b4d; stroke-width: 1.2; stroke-linecap: round; }
+.ih-agent-tux { stroke: var(--ink); stroke-width: 2.5; stroke-linejoin: round; }
+.ih-agent-tux-shade { fill: #b9ad94; opacity: 0.32; }
+.ih-agent-tux-rim { fill: none; stroke: #ffffff; stroke-width: 1.6; stroke-linecap: round; opacity: 0.85; }
+.ih-agent-tux-fold { fill: none; stroke: #9c8f74; stroke-width: 1.1; stroke-linecap: round; opacity: 0.75; }
+.ih-agent-pleat { fill: none; stroke: #dcd6c8; stroke-width: 1; stroke-linecap: round; }
+.ih-agent-satin { fill: #ece5d6; stroke: var(--ink); stroke-width: 1.6; stroke-linejoin: round; }
+.ih-agent-satin-sheen { fill: none; stroke: #ffffff; stroke-width: 1.8; stroke-linecap: round; opacity: 0.9; }
 .ih-agent-stud, .ih-agent-tux-button { fill: #0b0f1a; }
-.ih-agent-pocket-square { fill: #b3121b; stroke: var(--ink); stroke-width: 1; }
-.ih-agent-cuff { fill: #f4f1ea; stroke: var(--ink); stroke-width: 1; }
-.ih-agent-collar--shirt { fill: #f4f1ea; }
-.ih-agent-bowtie { fill: #0b0d14; stroke: #3b4152; stroke-width: 1.2; stroke-linejoin: round; }
+.ih-agent-stud-glint { fill: #ffffff; opacity: 0.8; }
+.ih-agent-carnation { fill: #c8102e; stroke: #5c0815; stroke-width: 0.8; }
+.ih-agent-carnation-light { fill: #f05a6e; }
+.ih-agent-stem { fill: none; stroke: #3f6212; stroke-width: 1.4; stroke-linecap: round; }
+.ih-agent-cuff { fill: #fbfaf6; stroke: var(--ink); stroke-width: 1; }
+.ih-agent-cufflink { fill: #e5bf62; stroke: #7a5a12; stroke-width: 0.5; }
+.ih-agent-collar--shirt { fill: #fbfaf6; }
+.ih-agent-bowtie { fill: #0b0d14; stroke: var(--ink); stroke-width: 1.2; stroke-linejoin: round; }
+.ih-agent-bowtie-fold { fill: none; stroke: #4b5468; stroke-width: 0.9; stroke-linecap: round; }
+.ih-agent-hair-sheen { fill: none; stroke: #6b5240; stroke-width: 2; stroke-linecap: round; opacity: 0.8; }
+.ih-agent-catchlight { fill: #ffffff; }
 .ih-agent-hair { fill: #2a1d14; stroke: var(--ink); stroke-width: 2; stroke-linejoin: round; }
 .ih-agent-part { fill: none; stroke: #4a3526; stroke-width: 1.5; stroke-linecap: round; }
 .ih-agent-brow { fill: none; stroke: #2a1d14; stroke-width: 2.5; stroke-linecap: round; }
 .ih-agent-eye { fill: #0b0f1a; }
-.ih-agent-martini { fill: rgba(220, 238, 255, 0.55); stroke: #e5edf7; stroke-width: 1.8; stroke-linejoin: round; }
-.ih-agent-martini-stem { fill: none; stroke: #e5edf7; stroke-width: 2; stroke-linecap: round; }
+.ih-agent-martini { fill: rgba(191, 227, 250, 0.85); stroke: #475569; stroke-width: 1.6; stroke-linejoin: round; }
+.ih-agent-martini-stem { fill: none; stroke: #94a3b8; stroke-width: 2; stroke-linecap: round; }
 .ih-agent-olive { fill: #6b8e23; stroke: var(--ink); stroke-width: 1; }
 
 .ih-agent-tag {

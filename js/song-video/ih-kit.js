@@ -1329,42 +1329,84 @@
     const sway = svg('g', {}, body);
     let glint;
     if (look === 'tuxedo') {
-      svg('path', { class: 'ih-agent-trousers', d: 'M54 196 L56 288 L77 288 L80 214 L83 288 L104 288 L106 196 Z' }, sway);
+      // White dinner jacket, lit from the upper left: one gradient spans the
+      // body and both sleeves so the light reads continuously across them.
+      const cloth = `ih-agent-cloth-${++uid}`;
+      const gradient = svg('linearGradient', { id: cloth, gradientUnits: 'userSpaceOnUse', x1: 40, y1: 92, x2: 122, y2: 212 }, svg('defs', {}, fig));
+      for (const [index, offset] of ['0', '0.45', '0.8', '1'].entries()) svg('stop', { offset, class: `ih-agent-cloth-stop-${index}` }, gradient);
+      const jacket = (className, d, parent = sway) => svg('path', { class: className, d, fill: `url(#${cloth})` }, parent);
+      // Trousers with a satin braid down each outer seam, glossy shoes.
+      svg('path', { class: 'ih-agent-trousers', d: 'M54 196 C54 230 55 260 56 287 L77 287 L80 216 L83 287 L104 287 C105 260 106 230 106 196 Z' }, sway);
+      svg('path', { class: 'ih-agent-braid', d: 'M57.5 200 C57.5 232 58 260 58.8 285 M102.5 200 C102.5 232 102 260 101.2 285' }, sway);
+      svg('path', { class: 'ih-agent-crease', d: 'M67 216 L67.5 284 M93 216 L92.5 284' }, sway);
       svg('path', { class: 'ih-agent-shoe ih-agent-shoe--gloss', d: 'M52 285 H77 Q80 292 73 293 H50 Q48 289 52 285 Z M83 285 H108 Q112 289 110 293 H87 Q80 292 83 285 Z' }, sway);
-      svg('path', { class: 'ih-agent-tux', d: 'M44 110 Q52 92 80 90 Q108 92 116 110 L122 204 Q80 214 38 204 Z' }, sway);
-      svg('path', { class: 'ih-agent-tux-light', d: 'M80 90 Q108 92 116 110 L122 204 Q104 208 90 209 L86 128 Z' }, sway);
+      svg('path', { class: 'ih-agent-shoe-shine', d: 'M55 287.6 Q61 286.6 67 287.6 M93 287.6 Q99 286.6 105 287.6' }, sway);
+      // A pleated black cummerbund shows where the jacket's fronts part.
+      svg('path', { class: 'ih-agent-cummerbund', d: 'M60 176 L100 176 L101 200 L59 200 Z' }, sway);
+      svg('path', { class: 'ih-agent-cummerbund-pleat', d: 'M68 184 H92 M67 191 H93' }, sway);
+      // Jacket body: shoulders, a slightly suppressed waist, and fronts that
+      // curve away below the single button.
+      jacket('ih-agent-tux', 'M66 92 Q50 94 44 108 C41 140 43 170 40 204 Q57 211 74 209 Q79 196 80 180 Q81 196 86 209 Q103 211 120 204 C117 170 119 140 116 108 Q110 94 94 92 L80 90 Z');
+      svg('path', { class: 'ih-agent-tux-shade', d: 'M101 100 Q113 103 116 109 C119 140 117 170 120 204 Q109 208 97 209 Q104 160 101 100 Z' }, sway);
+      svg('path', { class: 'ih-agent-tux-rim', d: 'M51 99 Q46 104 45.5 113 M43.6 140 C43.2 156 43 168 42 182' }, sway);
+      svg('path', { class: 'ih-agent-tux-fold', d: 'M78 177 Q69 171 60 170 M82 177 Q91 171 100 169' }, sway);
+      // Pleated dress shirt with studs.
       svg('path', { class: 'ih-agent-shirt', d: 'M66 94 L80 91 L94 94 L84 160 L80 168 L76 160 Z' }, sway);
-      svg('path', { class: 'ih-agent-satin', d: 'M64 94 L80 166 L54 116 Z M96 94 L80 166 L106 116 Z' }, sway);
-      svg('path', { class: 'ih-agent-satin-sheen', d: 'M62 102 L74 140 M98 102 L86 140' }, sway);
-      for (const sy of [124, 140]) svg('circle', { class: 'ih-agent-stud', cx: 80, cy: sy, r: 1.8 }, sway);
-      svg('circle', { class: 'ih-agent-tux-button', cx: 80, cy: 178, r: 3 }, sway);
-      svg('path', { class: 'ih-agent-pocket-square', d: 'M98 126 L110 122 L107 130 Z' }, sway);
-      svg('path', { class: 'ih-agent-tux', d: 'M44 112 Q32 150 36 196 L48 196 Q48 160 56 128 Z' }, sway);
+      svg('path', { class: 'ih-agent-pleat', d: 'M75 104 L78.6 158 M85 104 L81.4 158' }, sway);
+      for (const sy of [118, 134, 150]) {
+        svg('circle', { class: 'ih-agent-stud', cx: 80, cy: sy, r: 1.7 }, sway);
+        svg('circle', { class: 'ih-agent-stud-glint', cx: 80.5, cy: sy - 0.5, r: 0.55 }, sway);
+      }
+      // Satin shawl lapels rolling down to the button, each with a sheen.
+      svg('path', { class: 'ih-agent-satin', d: 'M64 92 C56 102 53 120 58 136 C63 152 72 166 80 177 L80 168 C76 150 71 120 69 96 Z M96 92 C104 102 107 120 102 136 C97 152 88 166 80 177 L80 168 C84 150 89 120 91 96 Z' }, sway);
+      svg('path', { class: 'ih-agent-satin-sheen', d: 'M61 101 C57.5 112 57.5 124 60.5 134 M99 101 C101.5 110 102 118 101 126' }, sway);
+      svg('circle', { class: 'ih-agent-tux-button', cx: 80, cy: 180, r: 3 }, sway);
+      svg('circle', { class: 'ih-agent-stud-glint', cx: 79.2, cy: 179.2, r: 0.8 }, sway);
+      // A red carnation on the lapel.
+      svg('path', { class: 'ih-agent-stem', d: 'M98 116 L95.5 122' }, sway);
+      for (const [cx, cy, r] of [[95.6, 112.8, 2.5], [100.4, 113.2, 2.5], [98, 115, 2.4], [98, 110.8, 3]]) {
+        svg('circle', { class: 'ih-agent-carnation', cx, cy, r }, sway);
+      }
+      svg('circle', { class: 'ih-agent-carnation-light', cx: 97, cy: 110.4, r: 1.1 }, sway);
+      // The far arm hangs at the side; a crease marks the elbow.
+      jacket('ih-agent-tux', 'M45 111 C36 132 33 162 36 196 L49 196 C48 172 50 148 57 128 Z');
+      svg('path', { class: 'ih-agent-tux-fold', d: 'M38.5 158 Q43 156 47.5 159.5' }, sway);
       svg('rect', { class: 'ih-agent-cuff', x: 36, y: 192, width: 13, height: 6, rx: 1.5 }, sway);
+      svg('circle', { class: 'ih-agent-cufflink', cx: 42.5, cy: 195, r: 1.1 }, sway);
       svg('circle', { class: 'ih-agent-hand', cx: 42, cy: 204, r: 7 }, sway);
       // The martini arm: sleeve, cuff, and hand pivot at the shoulder
       // (116, 114) to raise a toast; the glass pivots at the hand
       // (125, 198) so it stays upright.
       const toastArm = svg('g', { class: 'ih-agent-toast-arm' }, sway);
-      svg('path', { class: 'ih-agent-tux-light ih-agent-tux-sleeve', d: 'M116 112 Q130 150 130 194 L118 196 Q114 160 104 128 Z' }, toastArm);
+      jacket('ih-agent-tux', 'M115 111 C126 132 130 162 130 194 L117 196 C116 172 111 148 104 128 Z', toastArm);
+      svg('path', { class: 'ih-agent-tux-shade', d: 'M122 128 C127 148 129.5 170 130 194 L124 194.6 C124 172 123.5 150 122 128 Z' }, toastArm);
+      svg('path', { class: 'ih-agent-tux-fold', d: 'M119 158 Q123.5 156 128 158.5' }, toastArm);
       svg('rect', { class: 'ih-agent-cuff', x: 118, y: 190, width: 13, height: 6, rx: 1.5 }, toastArm);
+      svg('circle', { class: 'ih-agent-cufflink', cx: 124.5, cy: 193, r: 1.1 }, toastArm);
       // A martini, shaken: glass, olive, stem, base, held at the hip.
       const glass = svg('g', { class: 'ih-agent-glass' }, toastArm);
       svg('path', { class: 'ih-agent-martini', d: 'M112 170 L138 170 L125 186 Z' }, glass);
       svg('circle', { class: 'ih-agent-olive', cx: 121, cy: 175, r: 3 }, glass);
       svg('path', { class: 'ih-agent-martini-stem', d: 'M125 186 V202 M118 202 H132' }, glass);
       svg('circle', { class: 'ih-agent-hand', cx: 125, cy: 198, r: 7 }, toastArm);
+      // Neck, with the chin's shadow, wing collar, and a sculpted bow tie.
       svg('rect', { class: 'ih-agent-neck', x: 72, y: 80, width: 16, height: 14 }, sway);
+      svg('ellipse', { class: 'ih-agent-face-shade', cx: 80, cy: 85, rx: 8, ry: 3 }, sway);
       svg('path', { class: 'ih-agent-collar ih-agent-collar--shirt', d: 'M66 94 L72 84 L78 98 Z M94 94 L88 84 L82 98 Z' }, sway);
-      svg('path', { class: 'ih-agent-bowtie', d: 'M80 99 L66 92 L66 106 Z M80 99 L94 92 L94 106 Z' }, sway);
-      svg('rect', { class: 'ih-agent-bowtie', x: 76.5, y: 95.5, width: 7, height: 7, rx: 1.5 }, sway);
+      svg('path', { class: 'ih-agent-bowtie', d: 'M80 99 C74 94 68 91 64.5 92.5 C62.5 96.5 62.5 101.5 64.5 105.5 C68 107 74 104 80 99 Z M80 99 C86 94 92 91 95.5 92.5 C97.5 96.5 97.5 101.5 95.5 105.5 C92 107 86 104 80 99 Z' }, sway);
+      svg('path', { class: 'ih-agent-bowtie-fold', d: 'M69 95.5 L73.5 98.6 M69 102.5 L73.5 99.4 M91 95.5 L86.5 98.6 M91 102.5 L86.5 99.4' }, sway);
+      svg('rect', { class: 'ih-agent-bowtie', x: 76.5, y: 95.5, width: 7, height: 7, rx: 2 }, sway);
       svg('circle', { class: 'ih-agent-face', cx: 61, cy: 66, r: 4.5 }, sway);
       svg('circle', { class: 'ih-agent-face', cx: 99, cy: 66, r: 4.5 }, sway);
       svg('ellipse', { class: 'ih-agent-face', cx: 80, cy: 64, rx: 19, ry: 22 }, sway);
       svg('path', { class: 'ih-agent-hair', d: 'M60 60 Q57 38 76 35 Q97 33 101 52 Q100 58 99 61 Q96 47 84 46 Q73 45 66 51 Q62 55 60 60 Z' }, sway);
+      svg('path', { class: 'ih-agent-hair-sheen', d: 'M63.5 52 Q66.5 43 75 40' }, sway);
       svg('path', { class: 'ih-agent-part', d: 'M68 44 Q78 39 92 40' }, sway);
       svg('path', { class: 'ih-agent-brow', d: 'M66 56 Q71 54 76 56 M84 53 Q89 49 94 52' }, sway);
-      for (const ex of [71, 89]) svg('ellipse', { class: 'ih-agent-eye', cx: ex, cy: 62, rx: 2.2, ry: 2.6 }, sway);
+      for (const ex of [71, 89]) {
+        svg('ellipse', { class: 'ih-agent-eye', cx: ex, cy: 62, rx: 2.2, ry: 2.6 }, sway);
+        svg('circle', { class: 'ih-agent-catchlight', cx: ex + 0.8, cy: 61, r: 0.75 }, sway);
+      }
       svg('path', { class: 'ih-agent-mouth', d: 'M73 77 Q81 81 88 74' }, sway);
       glint = svg('line', { class: 'ih-agent-glint', x1: 0, y1: 0, x2: 4, y2: -7, opacity: 0 }, glass);
     }
