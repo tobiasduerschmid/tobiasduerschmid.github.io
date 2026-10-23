@@ -1928,10 +1928,11 @@
 
   /**
    * A soft-flat person in a 120×200 box who rewinds through life: young man
-   * → teen → kid → baby → a puff of smoke with a "?". stages = { teen, kid,
-   * baby, gone } are song times; each swap squashes and pops like a rewind.
-   * Pure function of song time; with reduced motion the swaps cut without
-   * the squash.
+   * → teen → kid → baby → swaddled newborn → egg cell → a puff of smoke with
+   * a "?". stages = { teen, kid, baby, newborn, egg, gone } are song times;
+   * each step is a slow cross-dissolve in which the older stage shrinks into
+   * the younger one. Pure function of song time; with reduced motion the
+   * steps cut without the dissolve.
    */
   function agingPerson(parent, { x, y, scale = 1, at, stages, until, tag }) {
     const node = art(parent, { x, y, w: 120 * scale, h: 210 * scale, viewBox: '0 0 120 210', className: 'ih-aging' });
@@ -2036,25 +2037,71 @@
     C(baby, 'ih-aging-pacifier-ring', 60, 158.5, 3.6);
     svg('ellipse', { class: 'ih-aging-pacifier', cx: 60, cy: 155.5, rx: 6, ry: 3 }, baby);
 
-    const frames = [man, teen, kid, baby];
+    // Newborn: swaddled in a blanket, eyes closed, a tuft of hair.
+    const newborn = svg('g', { class: 'ih-aging-newborn' }, node);
+    svg('ellipse', { class: 'ih-aging-shadow', cx: 60, cy: 190, rx: 20, ry: 3 }, newborn);
+    P(newborn, 'ih-aging-swaddle', 'M44 188 Q38 165 46 150 Q60 140 74 150 Q82 165 76 188 Q60 193 44 188 Z');
+    P(newborn, 'ih-aging-swaddle-fold', 'M46 162 Q60 172 75 158 M48 176 Q61 184 74 171');
+    C(newborn, 'ih-aging-skin', 60, 150, 11.5);
+    P(newborn, 'ih-aging-swaddle-hood', 'M46 156 Q44 134 60 133 Q76 134 74 156 Q70 143 60 142 Q50 143 46 156 Z');
+    for (const side of [-1, 1]) P(newborn, 'ih-aging-sleep', `M${60 + side * 4.5 - 2.4} 150.5 Q${60 + side * 4.5} 152.6 ${60 + side * 4.5 + 2.4} 150.5`);
+    for (const side of [-1, 1]) C(newborn, 'ih-aging-cheek', 60 + side * 7, 154.5, 2);
+    P(newborn, 'ih-aging-mouth', 'M58.6 157 Q60 158 61.4 157');
+    P(newborn, 'ih-aging-cowlick', 'M60 143.5 Q61 140 63.5 141');
+
+    // Egg cell: a single cell with its clear outer shell, cytoplasm, and nucleus.
+    const egg = svg('g', { class: 'ih-aging-egg' }, node);
+    C(egg, 'ih-aging-egg-zona', 60, 168, 21);
+    C(egg, 'ih-aging-egg-cell', 60, 168, 15.5);
+    for (const [gx, gy] of [[51, 163], [66, 160], [69, 174], [54, 177], [62, 170]]) C(egg, 'ih-aging-egg-granule', gx, gy, 1.3);
+    C(egg, 'ih-aging-egg-nucleus', 57, 166, 5.2);
+    C(egg, 'ih-aging-egg-nucleolus', 58.5, 165, 1.6);
+
+    const frames = [man, teen, kid, baby, newborn, egg];
     const puff = svg('g', { class: 'ih-aging-puff' }, node);
     for (const [cx, cy, r] of [[42, 172, 18], [62, 162, 22], [82, 174, 17], [58, 184, 18]]) svg('circle', { cx, cy, r }, puff);
     const mark = svg('text', { class: 'ih-aging-question', x: 60, y: 120, 'text-anchor': 'middle' }, node);
     mark.textContent = '?';
     const label = tag ? el('div', 'ih-aging-tag is-staged', parent, tag) : null;
     if (label) place(label, x + 8 * scale, y + 214 * scale);
-    const times = [at, stages.teen, stages.kid, stages.baby, stages.gone];
+    const times = [at, stages.teen, stages.kid, stages.baby, stages.newborn, stages.egg, stages.gone];
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    // Standing height of each stage above the floor (y = 190), so each step
+    // can shrink the older figure into the younger one.
+    const heights = [178, 141, 93, 66, 57, 44];
+    const blend = 0.6;
+    // A gentle ease (sine in-out) for the dissolve, softer than a cubic.
+    const gentle = (u) => 0.5 - 0.5 * Math.cos(Math.PI * Math.min(1, Math.max(0, u)));
+    const sizeAt = (g, scale) => g.setAttribute('transform', `translate(60 190) scale(${scale.toFixed(3)}) translate(-60 -190)`);
     onFrame((t) => {
       const index = times.reduce((k, time, i) => (t >= time ? i : k), -1);
-      frames.forEach((g, i) => g.setAttribute('opacity', i === index ? '1' : '0'));
+      const reduce = reducedMotion.matches;
+      // Inside a step: the previous stage shrinks and fades while the next
+      // one fades in from the previous stage's size, both easing to rest.
+      const since = index >= 1 ? t - times[index] : Infinity;
+      const p = reduce ? 1 : gentle(since / blend);
+      frames.forEach((g, i) => {
+        let opacity = 0, scale = 1;
+        if (i === index) {
+          opacity = p;
+          scale = index >= 1 ? heights[i - 1] / heights[i] + (1 - heights[i - 1] / heights[i]) * p : 1;
+        } else if (i === index - 1 && p < 1) {
+          opacity = 1 - p;
+          scale = 1 + (heights[Math.min(index, frames.length - 1)] / heights[i] - 1) * p;
+        }
+        g.setAttribute('opacity', opacity.toFixed(3));
+        sizeAt(g, scale);
+      });
       const gone = t >= stages.gone;
-      puff.setAttribute('opacity', gone ? Math.max(0, 1 - (t - stages.gone) / 0.7).toFixed(2) : '0');
-      mark.setAttribute('opacity', gone ? Math.min(1, (t - stages.gone) / 0.2).toFixed(2) : '0');
-      // Each rewind step squashes and springs back like a tape jump.
-      const since = index >= 1 ? t - times[index] : 1;
-      const squash = reducedMotion.matches ? 0 : Math.max(0, 1 - since / 0.2) * 0.18;
-      node.style.transform = `scale(${(1 + squash).toFixed(3)}, ${(1 - squash).toFixed(3)})`;
+      const puffAge = gone ? t - stages.gone : 0;
+      puff.setAttribute('opacity', gone ? Math.max(0, Math.min(1, puffAge / 0.12) * (1 - Math.max(0, puffAge - 0.25) / 0.6)).toFixed(2) : '0');
+      puff.setAttribute('transform', `translate(60 175) scale(${(0.6 + 0.5 * easeInOutCubic(Math.min(1, puffAge / 0.5))).toFixed(3)}) translate(-60 -175)`);
+      mark.setAttribute('opacity', gone ? Math.min(1, puffAge / 0.25).toFixed(2) : '0');
+      mark.setAttribute('transform', `translate(0 ${(gone && !reduce ? 10 * (1 - easeInOutCubic(Math.min(1, puffAge / 0.35))) : 0).toFixed(1)})`);
+      // A very soft settle at the end of each step.
+      const settle = Math.min(1, Math.max(0, (since - blend * 0.6) / 0.45));
+      const bounce = reduce || !Number.isFinite(since) ? 0 : Math.sin(settle * Math.PI) * 0.025 * (1 - settle);
+      node.style.transform = `scale(${(1 + bounce).toFixed(3)}, ${(1 - bounce).toFixed(3)})`;
       if (label) label.textContent = gone ? `${tag} → ?` : tag;
     });
     node.style.transformOrigin = '50% 100%';
@@ -2068,20 +2115,11 @@
   }
 
   // ------------------------------------------------------------------
-  // Cash: a shower of dollar bills that piles up, then drops away
+  // Cash: dollar bills spent on memory, and money flying away
   // ------------------------------------------------------------------
 
-  /**
-   * `count` dollar bills flutter down from above the stage from `at` and
-   * settle into a heap whose base spans x … x + w at y; at `dropAt` the whole
-   * heap falls out of the bottom of the frame. One bill is drawn once as a
-   * <symbol> and reused. Positions are a pure function of song time; with
-   * reduced motion the bills fade into the heap and fade out instead.
-   * flood: a top y — the bills pile all the way up to it, filling the frame.
-   * tone: 'green' or 'red' (money lost). heap: how high the heap rises.
-   * until: when the scene ends (bills stop updating after it).
-   */
-  function cash(parent, { x, y, w, count = 40, at, dropAt, flood, tone = 'green', spread = 1.4, heap = 46, until }) {
+  /** A layer of `count` bill <svg>s that all reuse one bill <symbol>. */
+  function billLayer(parent, count, tone) {
     const id = `ih-bill-${++uid}`;
     const node = el('div', `ih-cash ih-cash--${tone}`, parent);
     const defs = svg('svg', { class: 'ih-cash-defs', 'aria-hidden': 'true' }, node);
@@ -2092,63 +2130,118 @@
     svg('ellipse', { class: 'ih-bill-seal', cx: 32, cy: 15, rx: 7.5, ry: 8.5 }, bill);
     svg('path', { class: 'ih-bill-sign', d: 'M35 10.6C34 9.6 30.6 9.4 29.6 11C28.4 13 31.4 13.9 32.4 14.3C33.8 14.9 35.6 15.9 34.4 18.2C33.4 20 29.8 19.7 28.6 18.4M32 8.4V21.6' }, bill);
     for (const [cx, cy] of [[9.5, 9], [54.5, 9], [9.5, 21], [54.5, 21]]) svg('circle', { class: 'ih-bill-corner', cx, cy, r: 2.4 }, bill);
-    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const bills = Array.from({ length: count }, (_, i) => {
-      // A heap: bills near the middle of the base rest higher.
-      const u = hash01(i * 31 + 7);
-      const across = (u - 0.5) * 2;
-      const rest = {
-        x: x + u * (w - 64),
-        y: flood === undefined
-          ? y - 30 - (1 - across * across) * heap * hash01(i * 17 + 3)
-          : flood + (y - 30 - flood) * hash01(i * 17 + 3),
-        rotate: (hash01(i * 11 + 5) - 0.5) * 50,
-      };
+    const arts = Array.from({ length: count }, () => {
       const art = svg('svg', { class: 'ih-bill', viewBox: '0 0 64 30', width: 64, height: 30, 'aria-hidden': 'true' }, node);
       svg('use', { href: `#${id}` }, art);
+      return art;
+    });
+    return { node, arts };
+  }
+
+  function poseBill(art, x, y, rotate, scale, opacity) {
+    art.style.opacity = opacity.toFixed(2);
+    art.style.transform = `translate(${(x - 32).toFixed(1)}px, ${(y - 15).toFixed(1)}px) rotate(${rotate.toFixed(1)}deg) scale(${scale.toFixed(3)})`;
+  }
+
+  /**
+   * Money spent on memory: from `at`, `count` bills fly in from off stage
+   * and shrink into the slot `into` = { x, y, w, h } (the core-memory bed),
+   * which glows brighter as it fills. At `refundAt` a few bills (`dropCount`)
+   * fall out of the bottom of the slot and drop off the stage: some of the
+   * money was not needed after all. With reduced motion the bills stay
+   * hidden and only the glow fills and dims a little.
+   */
+  function cashIntoMemory(parent, { into, count = 36, at, spread = 2, refundAt, dropCount = 7, until }) {
+    const glow = place(el('div', 'ih-core-glow', parent), into.x, into.y);
+    glow.style.width = `${into.w}px`;
+    glow.style.height = `${into.h}px`;
+    const { node, arts } = billLayer(parent, count, 'green');
+    const tx = into.x + into.w / 2, ty = into.y + into.h / 2;
+    const bills = arts.map((art, i) => {
+      // Start off stage, to the right of and below the mainframe.
+      const angle = (-70 + 180 * hash01(i * 31 + 7)) * Math.PI / 180;
+      const reach = 470 + 160 * hash01(i * 17 + 3);
       return {
-        art, rest,
-        startX: rest.x + (hash01(i * 23 + 1) - 0.5) * 160,
-        startY: -60 - hash01(i * 5 + 9) * 120,
-        fallAt: at + hash01(i * 13 + 2) * spread,
-        fallFor: 0.9 + hash01(i * 19 + 4) * 0.6,
-        spin: (hash01(i * 29 + 6) - 0.5) * 540,
-        dropDelay: hash01(i * 37 + 8) * 0.35,
+        art,
+        sx: tx + Math.cos(angle) * reach, sy: ty + Math.sin(angle) * reach,
+        bend: (hash01(i * 23 + 1) - 0.5) * 180,
+        spin: (hash01(i * 29 + 6) - 0.5) * 720,
+        inAt: at + hash01(i * 13 + 2) * spread,
+        inFor: 1 + hash01(i * 19 + 4) * 0.35,
+        refunded: refundAt !== undefined && i % Math.max(1, Math.floor(count / dropCount)) === 0 && i / Math.max(1, Math.floor(count / dropCount)) < dropCount,
+        outAt: (refundAt ?? 0) + hash01(i * 37 + 8) * 0.7,
+        dropX: (hash01(i * 43 + 2) - 0.5) * into.w * 0.8,
+        drift: (hash01(i * 47 + 5) - 0.5) * 60,
+        tumble: (hash01(i * 53 + 1) - 0.5) * 360,
       };
     });
-    // Back bills (higher in the heap) are drawn first, so lower ones overlap them.
-    bills.sort((a, b) => a.rest.y - b.rest.y).forEach((b) => node.append(b.art));
-    // Hundreds of bills: only move them while their scene can show them.
-    const activeTo = until ?? (dropAt !== undefined ? dropAt + 1.6 : Infinity);
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    // A point on the curved path from the start (p = 0) into the slot (p = 1).
+    const along = (b, p) => {
+      const nx = -(ty - b.sy), ny = tx - b.sx, len = Math.hypot(nx, ny) || 1;
+      const arc = Math.sin(p * Math.PI) * b.bend;
+      return [b.sx + (tx - b.sx) * p + (nx / len) * arc, b.sy + (ty - b.sy) * p + (ny / len) * arc];
+    };
+    const activeTo = until ?? Infinity;
     onFrame((t) => {
       if (t < at - 0.2 || t > activeTo) return;
-      const reduce = reducedMotion.matches;
+      let inside = 0;
       for (const b of bills) {
-        let px = b.rest.x, py = b.rest.y, rot = b.rest.rotate, opacity = 1;
-        if (t < b.fallAt) {
-          opacity = 0;
-        } else if (t < b.fallAt + b.fallFor) {
-          const p = progress(t, b.fallAt, b.fallFor);
-          if (reduce) opacity = p;
-          else {
-            // Flutter: sway side to side while sinking, settling as it lands.
-            const ease = 1 - (1 - p) * (1 - p);
-            px = b.startX + (b.rest.x - b.startX) * ease + Math.sin(p * Math.PI * 3) * 18 * (1 - p);
-            py = b.startY + (b.rest.y - b.startY) * ease;
-            rot = b.rest.rotate + b.spin * (1 - ease) + Math.sin(p * Math.PI * 4) * 12 * (1 - p);
-          }
+        let p = 0, visible = false;
+        if (t >= b.inAt) {
+          const q = progress(t, b.inAt, b.inFor);
+          p = q * q;  // speeds up as it is pulled into the slot
+          visible = q < 1;
+          if (q >= 1) inside += 1;
         }
-        if (dropAt !== undefined && t >= dropAt + b.dropDelay) {
-          const d = t - dropAt - b.dropDelay;
-          if (reduce) opacity = Math.max(0, 1 - d / 0.4);
-          else {
-            py += 900 * d * d;
-            rot += 80 * d * (b.rest.rotate < 0 ? -1 : 1);
-            if (py > 560) opacity = 0;
-          }
+        if (b.refunded && t >= b.outAt) {
+          // Slips out of the bottom of the core and falls off the stage.
+          inside -= 1;
+          const age = t - b.outAt;
+          const py = ty + into.h / 2 + 260 * age * age;
+          if (py > 600 || reducedMotion.matches) { b.art.style.opacity = '0'; continue; }
+          const grow = Math.min(1, age / 0.5);
+          poseBill(b.art, tx + b.dropX + b.drift * age + 8 * Math.sin(age * 9), py, b.tumble * age + 14 * Math.sin(age * 7), 0.2 + 0.6 * grow, Math.min(1, age / 0.08));
+          continue;
         }
-        b.art.style.opacity = opacity.toFixed(2);
-        b.art.style.transform = `translate(${px.toFixed(1)}px, ${py.toFixed(1)}px) rotate(${rot.toFixed(1)}deg)`;
+        if (!visible || reducedMotion.matches) { b.art.style.opacity = '0'; continue; }
+        const [px, py] = along(b, p);
+        poseBill(b.art, px, py, b.spin * (1 - p), 1 - 0.82 * p, p > 0.85 ? (1 - p) / 0.15 : 1);
+      }
+      glow.style.opacity = (0.9 * Math.max(0, inside) / count).toFixed(3);
+    });
+    return node;
+  }
+
+  /**
+   * Money flying away: from `at` to `until`, `count` bills burst out from
+   * behind (x, y) in every direction, tumbling as they leave the frame.
+   * Reduced motion shows nothing moving.
+   */
+  function cashBurst(parent, { x, y, count = 200, at, until, tone = 'red' }) {
+    const { node, arts } = billLayer(parent, count, tone);
+    const span = Math.max(0.5, until - at - 1.1);
+    const bills = arts.map((art, i) => {
+      const angle = hash01(i * 31 + 7) * Math.PI * 2;
+      const speed = 280 + 300 * hash01(i * 17 + 3);
+      return {
+        art, angle, speed,
+        ox: (hash01(i * 23 + 1) - 0.5) * 300, oy: (hash01(i * 41 + 5) - 0.5) * 160,
+        launch: at + hash01(i * 13 + 2) * span,
+        spin: (hash01(i * 29 + 6) - 0.5) * 1100,
+        tilt: (hash01(i * 11 + 9) - 0.5) * 60,
+      };
+    });
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    onFrame((t) => {
+      if (t < at - 0.2 || t > until + 0.2) return;
+      for (const b of bills) {
+        const age = t - b.launch;
+        if (age < 0 || age > 3 || reducedMotion.matches) { b.art.style.opacity = '0'; continue; }
+        // Thrown outward, then carried up and away by a draft.
+        const px = x + b.ox + Math.cos(b.angle) * b.speed * age + 30 * age * age;
+        const py = y + b.oy + Math.sin(b.angle) * b.speed * age - 70 * age * age;
+        poseBill(b.art, px, py, b.tilt + b.spin * 0.55 * age, 0.8 + 0.35 * Math.min(1, age / 0.6), Math.min(1, age / 0.08));
       }
     });
     return node;
@@ -2437,7 +2530,7 @@
   }
 
   window.InfoHidingKit = {
-    latest, show, during, note, heading, paper, list, bubble, publicTag, digits, clock, counter, cash, agingPerson, apolloCount,
+    latest, show, during, note, heading, paper, list, bubble, publicTag, digits, clock, counter, cashIntoMemory, cashBurst, agingPerson, apolloCount,
     apolloPortrait, car, overflowingHead, steps, systemSplit, calendar, iceberg, toggle, waterline, outlet, dossier,
     decrypt, module, envelope, courier, laser, spotlight, lamp, agent, transmission, code, search,
     contractExchange, changeImpactGraph, mainframeMemory, stringWeb, mud, bug, stampTool, grid, vault, submarine, slip, iris,
