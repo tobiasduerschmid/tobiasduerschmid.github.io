@@ -599,7 +599,7 @@ for (const [skin, hair, darkHair, darkSkin] of [
       for (const time of [2, 120, 343]) {
         await tddBodyGeometry(page, time);
         await expect(page.locator('.tdd-page-grad .tdd-stop--bottom')).toHaveCSS('stop-color', rgb);
-        for (const part of ['.tdd-paper', '.tdd-arm--code .tdd-arm-fore']) {
+        for (const part of ['.tdd-paper', '.tdd-arm--code .tdd-arm-fore', '.tdd-code-shin']) {
           for (const node of await page.locator(part).all()) await expect(node).toHaveCSS('fill', rgb);
         }
         const hairRgb = `rgb(${hair.slice(1).match(/../g).map((part) => parseInt(part, 16)).join(', ')})`;
@@ -607,8 +607,8 @@ for (const [skin, hair, darkHair, darkSkin] of [
         for (const rim of await page.locator('.tdd-brace-rim').all()) {
           await expect(rim).toHaveCSS('stroke', darkHair ? 'rgb(255, 241, 217)' : 'none');
         }
-        // Four arm segments plus the neck use an independent outer rim.
-        await expect(page.locator('.tdd-skin-rim')).toHaveCount(5);
+        // Four arm segments, the neck, and the two ankles use an independent outer rim.
+        await expect(page.locator('.tdd-skin-rim')).toHaveCount(7);
         for (const rim of await page.locator('.tdd-skin-rim').all()) {
           await expect(rim).toHaveCSS('stroke', darkSkin ? 'rgb(255, 241, 217)' : 'none');
         }

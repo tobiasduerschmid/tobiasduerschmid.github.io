@@ -381,6 +381,7 @@
     svg('path', { class: 'tdd-coat-shade', d: 'M6 -178.5 L12 -178.5 C22 -178.5 29 -175 27 -168 C29.5 -152 25 -134 20.5 -122 C19.5 -114 20.5 -106 20 -100 Q13 -97.5 6 -97 Z' }, torso);
     svg('path', { class: 'tdd-coat-seam', d: 'M-20.5 -122 Q0 -117 20.5 -122' }, torso);
     svg('path', { class: 'tdd-shirt', d: 'M-11 -177 L0 -128 L11 -177 Q0 -180 -11 -177 Z' }, torso);
+    for (const y of [-163, -152]) svg('circle', { class: 'tdd-stud', cx: 0, cy: y, r: 1.3 }, torso);
     svg('path', { class: 'tdd-lapel', fill: `url(#${id}-satin)`, d: 'M-11 -177 L-2 -132 L-16 -156 L-12 -162 L-19 -170 Z' }, torso);
     svg('path', { class: 'tdd-lapel tdd-lapel--shade', d: 'M11 -177 L2 -132 L16 -156 L12 -162 L19 -170 Z' }, torso);
     for (const y of [-124, -114]) {
@@ -511,6 +512,19 @@
     { indent: 1, bars: [[22, 'cm']] },
   ];
 
+  /** Code's gown is ankle-length: the hem's sides hang this high off the floor. */
+  const HEM_SIDE = -22;
+  /** The hem is a circle on the floor seen from a little above: its near side dips this share of its radius below its sides. */
+  const HEM_PERSPECTIVE = 0.1;
+  /** Scallops around the hem's full circle (about half of them face the viewer). */
+  const HEM_WAVES = 5;
+  /** Soft folds fall from the waist at these angles around the skirt (radians, 0 faces the viewer). */
+  const GOWN_FOLDS = Array.from({ length: 7 }, (_, i) => 0.35 + (i * 2 * Math.PI) / 7);
+  /** Spacing of the gown's code rows. */
+  const ROW_STEP = 10.8;
+  /** An angle wrapped into (-π, π]. */
+  const wrapAngle = (a) => a - 2 * Math.PI * Math.ceil((a - Math.PI) / (2 * Math.PI));
+
   /** A four-point sparkle of radius 1, scaled per use. */
   const SPARKLE = 'M0 -1 L0.22 -0.22 L1 0 L0.22 0.22 L0 1 L-0.22 0.22 L-1 0 L-0.22 -0.22 Z';
   /** Where the refactoring sparkles twinkle around the gown (rig-local). */
@@ -524,27 +538,44 @@
     const spot = svg('path', { class: 'tdd-tidy-spot', fill: `url(#${id}-spot)`, d: 'M-24 -440 L24 -440 L92 4 L-92 4 Z', opacity: 0 }, root);
     const glow = svg('ellipse', { class: 'tdd-tidy-glow', fill: `url(#${id}-tidy)`, cx: 0, cy: -72, rx: 86, ry: 100, opacity: 0 }, root);
     const shadow = svg('ellipse', { class: 'tdd-shadow', cx: 0, cy: 0, rx: 46, ry: 6.5 }, root);
-    const spin = svg('g', {}, root);
-    const shoes = svg('g', {}, spin);
-    const slippers = ['L', 'R'].map((side, i) => ({
-      side, node: (() => {
-        const g = svg('g', {}, shoes);
-        const m = i ? 1 : -1;
-        // A dancing slipper: a small rounded body tucked under the hem and a
-        // tapered toe turned out a little.
-        svg('path', { class: 'tdd-slipper-toe', d: `M${m * 12} -5.6 C${m * 16} -4.6 ${m * 18} -2.6 ${m * 16.5} -1 L${m * 12} -0.8 Z` }, g);
-        svg('ellipse', { class: 'tdd-slipper', cx: m * 11, cy: -3, rx: 6, ry: 3.2 }, g);
-        svg('path', { class: 'tdd-slipper-shine', d: `M${m * 8} -4.6 Q${m * 11.5} -5.8 ${m * 14.5} -4.4` }, g);
-        return g;
-      })(),
-    }));
-    const skirtClip = svg('clipPath', { id: `${id}-skirt` }, svg('defs', {}, spin));
+    // The gown hangs from the waist on its own layer: a round skirt keeps
+    // its silhouette while she turns, and only the cloth's pattern travels
+    // around it. The bodice, arms, and head turn on `spin`.
+    const gown = svg('g', {}, root);
+    // Legs and slippers stand behind the gown, so only the ankles and
+    // slippers show beneath the hem.
+    const shoes = svg('g', {}, gown);
+    const feet = ['L', 'R'].map((side, i) => {
+      const m = i ? 1 : -1;
+      const leg = svg('g', { class: 'tdd-code-leg' }, shoes);
+      const rim = svg('path', { class: 'tdd-skin-rim' }, leg);
+      const skin = svg('path', { class: 'tdd-code-shin' }, leg);
+      // The hem's shadow falls across the ankles.
+      const shade = svg('path', { class: 'tdd-code-shin-shade', fill: `url(#${id}-legshade)` }, leg);
+      const shine = svg('path', { class: 'tdd-code-shin-shine' }, leg);
+      const node = svg('g', {}, shoes);
+      // A dancing slipper seen from the front: a rounded body, a tapered toe
+      // turned out a little, and a thin strap across the ankle.
+      svg('path', { class: 'tdd-slipper-toe', d: `M${m * 12} -5.6 C${m * 16} -4.6 ${m * 18} -2.6 ${m * 16.5} -1 L${m * 12} -0.8 Z` }, node);
+      svg('ellipse', { class: 'tdd-slipper', cx: m * 11, cy: -3, rx: 6, ry: 3.2 }, node);
+      svg('path', { class: 'tdd-slipper-shine', d: `M${m * 8} -4.6 Q${m * 11.5} -5.8 ${m * 14.5} -4.4` }, node);
+      svg('path', { class: 'tdd-slipper-strap', d: `M${f(m * 10.5 - 2.9)} -8.6 Q${m * 10.5} -7.2 ${f(m * 10.5 + 2.9)} -8.6` }, node);
+      return { side, m, rim, skin, shade, shine, node };
+    });
+    const gownDefs = svg('defs', {}, gown);
+    const skirtClip = svg('clipPath', { id: `${id}-skirt` }, gownDefs);
     const clipShape = svg('path', {}, skirtClip);
-    const skirt = svg('path', { class: 'tdd-gown', fill: `url(#${id}-gown)` }, spin);
-    const skirtShade = svg('path', { class: 'tdd-gown-fold' }, spin);
-    // Soft folds fall from the waist through the skirt.
-    const skirtFolds = [-0.55, -0.15, 0.3].map(() => svg('path', { class: 'tdd-gown-crease' }, spin));
-    const page = svg('g', { 'clip-path': `url(#${id}-skirt)` }, spin);
+    // The hem's shadow on the ankles follows the hem as it lifts.
+    const legShade = svg('linearGradient', { id: `${id}-legshade`, class: 'tdd-legshade-grad', gradientUnits: 'userSpaceOnUse', x1: 0, y1: -24, x2: 0, y2: -10 }, gownDefs);
+    svg('stop', { class: 'tdd-stop--top', offset: 0 }, legShade);
+    svg('stop', { class: 'tdd-stop--bottom', offset: 1 }, legShade);
+    const skirt = svg('path', { class: 'tdd-gown', fill: `url(#${id}-gown)` }, gown);
+    // Satin catches the light down the left flank; the right falls into shade.
+    const skirtSheen = svg('path', { class: 'tdd-gown-sheen', fill: `url(#${id}-sheen)`, 'clip-path': `url(#${id}-skirt)` }, gown);
+    const skirtShade = svg('path', { class: 'tdd-gown-fold', 'clip-path': `url(#${id}-skirt)` }, gown);
+    // Soft folds fall from the waist through the skirt and turn with it.
+    const skirtFolds = GOWN_FOLDS.map(() => svg('path', { class: 'tdd-gown-crease', 'clip-path': `url(#${id}-skirt)` }, gown));
+    const page = svg('g', { 'clip-path': `url(#${id}-skirt)` }, gown);
     // Messy code is spaghetti: rows out of order, at the wrong indentation
     // and tilted; inside each row, tokens scattered, turned, and of uneven
     // length. Clean code is one neat row per line. Every offset is seeded,
@@ -552,7 +583,7 @@
     // as the code is cleaned.
     const ORDER = [2, 0, 5, 1, 7, 3, 6, 4];
     const rows = CODE_ROWS.map((row, i) => {
-      const y = -106 + i * 11.5;
+      const y = -106 + i * ROW_STEP;
       const group = svg('g', {}, page);
       let x = 0;
       const bars = row.bars.map(([w, tone], k) => {
@@ -569,18 +600,19 @@
         return { node: bar, x: x - width - 4, width, messy };
       });
       return {
-        group, y, indent: row.indent, bars,
+        group, y, indent: row.indent, bars, width: x - 4,
         jitter: (hash01(i * 17 + 3) - 0.5) * 40,
         tilt: (hash01(i * 29 + 5) - 0.5) * 30,
         // Out of order: a messy row sits on another row's line, nudged off it.
-        drop: (ORDER[i] - i) * 11.5 + (hash01(i * 13 + 7) - 0.5) * 6,
+        drop: (ORDER[i] - i) * ROW_STEP + (hash01(i * 13 + 7) - 0.5) * 6,
       };
     });
     // A bright band sweeps down the gown with the rows as they snap clean.
     const sweep = svg('rect', { class: 'tdd-tidy-sweep', x: -80, y: -9, width: 160, height: 18, fill: `url(#${id}-sweep)`, opacity: 0 }, page);
-    const hem = svg('path', { class: 'tdd-gown-hem' }, spin);
-    // The toes peek in front of the hem, so a lifted step stays visible.
-    spin.appendChild(shoes);
+    // A satin band just inside the hem follows its scallops.
+    const hemTrim = svg('path', { class: 'tdd-gown-trim', 'clip-path': `url(#${id}-skirt)` }, gown);
+    const hem = svg('path', { class: 'tdd-gown-hem' }, gown);
+    const spin = svg('g', {}, root);
     const sparkles = SPARKLES.map(([x, y, r]) => ({ x, y, r, node: svg('path', { class: 'tdd-sparkle', d: SPARKLE, opacity: 0 }, root) }));
     // The hem stays on the floor; the waist and everything above it ride on
     // `upper`, so the gown stretches and gathers with the rise and fall.
@@ -588,6 +620,7 @@
     const lean = svg('g', {}, upper);
     // Bodice, sash, and the paper-white neck.
     svg('path', { class: 'tdd-bodice', fill: `url(#${id}-gown)`, d: 'M-18.5 -166 C-19.5 -171 -12 -172 -8 -170 Q0 -166 8 -170 C12 -172 19.5 -171 18.5 -166 C20 -150 15 -134 11.5 -118 L-11.5 -118 C-15 -134 -20 -150 -18.5 -166 Z' }, lean);
+    svg('path', { class: 'tdd-bodice-sheen', fill: `url(#${id}-sheen)`, d: 'M-16.5 -165 C-17.5 -151 -14 -135 -10.5 -119.5 L-5 -119.5 C-7 -135 -9 -151 -8 -167.5 Z' }, lean);
     svg('path', { class: 'tdd-bodice-seam', d: 'M-6 -160 Q-4 -138 -3 -120 M6 -160 Q4 -138 3 -120' }, lean);
     svg('path', { class: 'tdd-neckline', d: 'M-13 -169 Q-6 -158 0 -165 Q6 -158 13 -169' }, lean);
     svg('rect', { class: 'tdd-sash', x: -14, y: -123, width: 28, height: 8, rx: 3 }, lean);
@@ -605,8 +638,9 @@
     // The page's own faint ruled lines, and the shadow under its folded corner.
     for (const y of [-188, -183]) svg('line', { class: 'tdd-page-line', x1: -16, y1: y, x2: 17, y2: y }, head);
     svg('path', { class: 'tdd-page-fold-shadow', d: 'M10 -222 Q10 -219 13 -219 H22 V-217 H12 Q9 -217 9 -220 Z' }, head);
+    const blushes = [];
     for (const side of [-1, 1]) {
-      svg('circle', { class: 'tdd-blush', cx: side * 12, cy: -195, r: 3.4 }, head);
+      blushes.push(svg('circle', { class: 'tdd-blush', cx: side * 12, cy: -195, r: 3.4 }, head));
       const d = side < 0
         ? 'M-26 -222 Q-31 -222 -31 -216 V-210 Q-31 -205 -35 -205 Q-31 -205 -31 -200 V-194 Q-31 -188 -26 -188'
         : 'M26 -222 Q31 -222 31 -216 V-210 Q31 -205 35 -205 Q31 -205 31 -200 V-194 Q31 -188 26 -188';
@@ -624,19 +658,63 @@
     const frontArms = svg('g', { class: 'tdd-arms-front' }, lean);
     const arms = { L: arm(rearArms, frontArms, 'code', 'L', body, id), R: arm(rearArms, frontArms, 'code', 'R', body, id) };
 
-    /** The gown from the waist (which rises and falls at waistY) to a scalloped hem on the floor. */
-    function skirtPath(sway, flare, waistY) {
+    /**
+     * The gown from the waist (which rises and falls at waistY, and narrows
+     * to the waist's depth as she turns side-on) to an ankle-length hem.
+     * The hem is a circle seen from a little above, so its near side dips
+     * below its sides; its scallops belong to the cloth, so they travel
+     * around the skirt as it turns (by `turn`), bunching up toward the
+     * sides. A lifted foot carries the hem up with it ({ x, lift } each).
+     * Returns the outline and the hem's point at any angle around it.
+     */
+    function skirtShape(sway, flare, waistY, waist, turn, steps) {
       const hw = 54 + flare;
       const sx = sway * 9;
-      const waves = 5;
-      let d = `M-11.5 ${f(waistY)} C-22 -82 ${f(-hw * 0.82 + sx * 0.5)} -40 ${f(-hw + sx)} -8`;
-      for (let i = 0; i < waves; i++) {
-        const x0 = -hw + sx + ((2 * hw) / waves) * i;
-        const x1 = x0 + (2 * hw) / waves;
-        d += ` Q${f((x0 + x1) / 2)} ${f(i % 2 ? -14 : -2)} ${f(x1)} -8`;
+      // A swirling skirt lifts off the floor as it flares.
+      const side = HEM_SIDE - flare * 0.3;
+      const amp = 3 + flare * 0.05;
+      const hemAt = (a) => {
+        const x = sx + hw * Math.sin(a);
+        const kick = steps.reduce((sum, step) => sum + 0.7 * step.lift * Math.exp(-(((x - step.x) / 15) ** 2)), 0);
+        return [x, side + HEM_PERSPECTIVE * hw * Math.cos(a) + amp * Math.cos(HEM_WAVES * (a - turn)) - kick];
+      };
+      const points = Array.from({ length: 25 }, (_, i) => hemAt(-Math.PI / 2 + (Math.PI * i) / 24));
+      const wx = 11.5 * waist;
+      const hip = 22 * (0.4 + 0.6 * waist);
+      const left = points[0];
+      const d = `M${f(-wx)} ${f(waistY)} C${f(-hip)} -82 ${f(-hw * 0.82 + sx * 0.5)} -48 ${f(left[0])} ${f(left[1])}`
+        + smoothThrough(points)
+        + ` C${f(hw * 0.82 + sx * 0.5)} -48 ${f(hip)} -82 ${f(wx)} ${f(waistY)} Z`;
+      const band = points.map(([x, y]) => [sx + (x - sx) * 0.985, y - 4.2]);
+      const trim = `M${f(band[0][0])} ${f(band[0][1])}${smoothThrough(band)}`;
+      return { d, trim, hemAt, hw, sx, front: side + HEM_PERSPECTIVE * hw };
+    }
+
+    /** Cubic Béziers through points (Catmull-Rom), continuing a path at the first point. */
+    function smoothThrough(points) {
+      let d = '';
+      for (let i = 0; i < points.length - 1; i++) {
+        const [p0, p1, p2, p3] = [points[Math.max(0, i - 1)], points[i], points[i + 1], points[Math.min(points.length - 1, i + 2)]];
+        d += ` C${f(p1[0] + (p2[0] - p0[0]) / 6)} ${f(p1[1] + (p2[1] - p0[1]) / 6)} ${f(p2[0] - (p3[0] - p1[0]) / 6)} ${f(p2[1] - (p3[1] - p1[1]) / 6)} ${f(p2[0])} ${f(p2[1])}`;
       }
-      d += ` C${f(hw * 0.82 + sx * 0.5)} -40 22 -82 11.5 ${f(waistY)} Z`;
       return d;
+    }
+
+    /** A slim leg from inside the skirt down to the ankle: a soft calf, then a narrow ankle. */
+    function shin(top, ankle, m) {
+      const dx = ankle[0] - top[0];
+      const dy = ankle[1] - top[1];
+      const len = Math.hypot(dx, dy) || 1;
+      // Away from the other leg.
+      const out = [(m * dy) / len, (-m * dx) / len];
+      const at = (k, w) => [top[0] + dx * k + out[0] * w, top[1] + dy * k + out[1] * w];
+      const pt = ([x, y]) => `${f(x)} ${f(y)}`;
+      const outline = `M${pt(at(0, 4.4))} C${pt(at(0.32, 5.4))} ${pt(at(0.7, 3.4))} ${pt(at(0.97, 2.3))}`
+        + ` Q${pt(at(1.06, 0))} ${pt(at(0.97, -2.3))}`
+        + ` C${pt(at(0.72, -2.9))} ${pt(at(0.34, -4.6))} ${pt(at(0, -4.2))} Z`;
+      // The light comes from the left: a soft highlight down the shin.
+      const shine = `M${pt(at(0.5, -m * 1.3))} Q${pt(at(0.74, -m * 1))} ${pt(at(0.92, -m * 0.6))}`;
+      return { outline, shine };
     }
 
     return {
@@ -648,21 +726,47 @@
         spin.setAttribute('transform', `scale(${f(s.spin)} 1)`);
         upper.setAttribute('transform', `translate(0 ${f(s.bob)})`);
         lean.setAttribute('transform', `rotate(${f(s.lean)} 0 ${body.hipY})`);
-        for (const slipper of slippers) {
-          const foot = s[`foot${slipper.side}`];
-          slipper.node.setAttribute('transform', `translate(${f(foot.dx)} ${f(-foot.lift)})`);
+        // The feet turn with the body; a lifted foot points its toe.
+        shoes.setAttribute('transform', `scale(${f(s.spin)} 1)`);
+        for (const foot of feet) {
+          const { dx, lift } = s[`foot${foot.side}`];
+          const { outline, shine } = shin([foot.m * 6.5 + dx * 0.35, -62], [foot.m * 10.5 + dx, -5.5 - lift], foot.m);
+          foot.rim.setAttribute('d', outline);
+          foot.skin.setAttribute('d', outline);
+          foot.shade.setAttribute('d', outline);
+          foot.shine.setAttribute('d', shine);
+          foot.node.setAttribute('transform', `translate(${f(dx)} ${f(-lift)}) rotate(${f(foot.m * lift * 1.6)} ${foot.m * 11} -3)`);
         }
         const waistY = body.hipY + 2 + s.bob;
-        const d = skirtPath(s.sway, s.flare, waistY);
-        skirt.setAttribute('d', d);
-        clipShape.setAttribute('d', d);
-        hem.setAttribute('d', d);
-        [-0.55, -0.15, 0.3].forEach((k, i) => {
-          const hw = 54 + s.flare;
-          const bottomX = k * hw + s.sway * 9 * (0.6 + 0.2 * i);
-          skirtFolds[i].setAttribute('d', `M${f(k * 9)} ${f(waistY + 6)} Q${f(k * hw * 0.55 + s.sway * 4)} -60 ${f(bottomX)} -12`);
+        const waist = Math.min(1, Math.abs(s.spin));
+        const skirtTurn = wrapAngle(s.turnSkirt || 0);
+        const steps = feet.map((foot) => ({ x: (foot.m * 11 + s[`foot${foot.side}`].dx) * s.spin, lift: s[`foot${foot.side}`].lift }));
+        const shape = skirtShape(s.sway, s.flare, waistY, waist, skirtTurn, steps);
+        skirt.setAttribute('d', shape.d);
+        clipShape.setAttribute('d', shape.d);
+        hem.setAttribute('d', shape.d);
+        hemTrim.setAttribute('d', shape.trim);
+        legShade.setAttribute('y1', f(shape.front - 6));
+        legShade.setAttribute('y2', f(shape.front + 6));
+        // In a turn the waist turns with the body and the hem a moment
+        // later, so the folds (and the code) twist around the skirt and
+        // untwist as it settles.
+        const bodyTurn = s.turn || 0;
+        const turnedAt = (down) => wrapAngle(bodyTurn + ((s.turnSkirt || 0) - bodyTurn) * down);
+        GOWN_FOLDS.forEach((angle, i) => {
+          const a = wrapAngle(angle + skirtTurn);
+          const facing = Math.cos(a);
+          skirtFolds[i].setAttribute('opacity', f(clamp((facing - 0.08) / 0.3, 0, 1)));
+          if (facing <= 0.08) return;
+          const [bx, by] = shape.hemAt(a);
+          const top = angle + turnedAt(0);
+          const middle = angle + turnedAt(0.55);
+          skirtFolds[i].setAttribute('d', `M${f(11.5 * waist * Math.sin(top) * 0.8)} ${f(waistY + 6)} Q${f(shape.hw * 0.55 * Math.sin(middle) + s.sway * 4)} -64 ${f(bx)} ${f(by - 3)}`);
         });
-        skirtShade.setAttribute('d', `M2 ${f(waistY)} C10 -80 ${f(30 + s.sway * 6)} -40 ${f(44 + s.sway * 9 + s.flare)} -10 L${f(20 + s.sway * 6)} -8 C16 -40 8 -80 2 ${f(waistY)} Z`);
+        skirtSheen.setAttribute('d', `M-4 ${f(waistY)} C-14 -86 ${f(-shape.hw * 0.72 + shape.sx)} -52 ${f(-shape.hw * 0.64 + shape.sx)} 4 L${f(-shape.hw * 0.18 + shape.sx)} 4 C${f(-shape.hw * 0.16 + shape.sx * 0.5)} -50 -6 -86 0 ${f(waistY)} Z`);
+        // The light comes from the left, so the right flank is in shadow
+        // (clipped to the skirt, it follows the hem wherever it swings).
+        skirtShade.setAttribute('d', `M2 ${f(waistY)} C14 -84 ${f(shape.hw + shape.sx + 10)} -50 ${f(shape.hw + shape.sx + 10)} 4 L${f(20 + s.sway * 7)} 4 C16 -40 8 -80 2 ${f(waistY)} Z`);
         const clean = clamp(s.clean, 0, 1);
         // Rows snap clean one after another, top to bottom, each with a
         // small overshoot, so a refactoring reads as code clicking into place.
@@ -673,13 +777,28 @@
           const mess = 1 - c;
           // While messy, the code never quite settles: a slow, restless wobble.
           const restless = Math.max(0, mess) * Math.sin(t * 2.6 + i * 1.7);
-          const halfWidth = 12 + ((row.y - body.hipY) / (-8 - body.hipY)) * (40 + s.flare * 0.8);
+          const down = (row.y - body.hipY) / (HEM_SIDE - body.hipY);
+          const halfWidth = 12 + down * (40 + s.flare * 0.8);
           const tidyX = -halfWidth + 7 + row.indent * 8 + s.sway * 9 * ((row.y - body.hipY) / 110);
           const x = tidyX + mess * row.jitter + restless * 1.5;
           const y = row.y + mess * row.drop;
           const tilt = mess * row.tilt + restless * 2.5;
-          const down = (row.y - body.hipY) / (-8 - body.hipY);
-          row.group.setAttribute('transform', `translate(${f(x)} ${f(y + s.bob * (1 - down))}) rotate(${f(tilt)})`);
+          let transform = `translate(${f(x)} ${f(y + s.bob * (1 - down))}) rotate(${f(tilt)})`;
+          let shown = 1;
+          if (s.turn || s.turnSkirt) {
+            // The code is printed on the round skirt: as it turns, each row
+            // slides around the cloth, narrowing toward the side and passing
+            // out of sight behind it.
+            const radius = halfWidth + 4;
+            const centre = x + row.width / 2;
+            const a = Math.asin(clamp(centre / radius, -0.95, 0.95));
+            const b = a + turnedAt(down);
+            const squeeze = Math.max(0.02, Math.cos(b)) / Math.cos(a);
+            transform = `translate(${f(radius * Math.sin(b) - centre * squeeze)} 0) scale(${f(squeeze)} 1) ${transform}`;
+            shown = clamp(Math.cos(b) / 0.3, 0, 1);
+          }
+          row.group.setAttribute('transform', transform);
+          row.group.setAttribute('opacity', f(shown));
           for (const bar of row.bars) {
             const m = bar.messy;
             const width = bar.width * (1 + (m.stretch - 1) * mess);
@@ -699,9 +818,20 @@
           const life = (t * 1.35 + i * 0.37) % 1;
           const size = spark.r * shine * Math.sin(Math.PI * life);
           spark.node.setAttribute('opacity', f(shine > 0.02 ? Math.min(1, 1.6 * Math.sin(Math.PI * life)) * shine : 0));
-          spark.node.setAttribute('transform', `translate(${f(spark.x * s.spin)} ${f(spark.y + s.bob)}) rotate(${f(life * 90)}) scale(${f(Math.max(0.01, size))})`);
+          spark.node.setAttribute('transform', `translate(${f(spark.x)} ${f(spark.y + s.bob)}) rotate(${f(life * 90)}) scale(${f(Math.max(0.01, size))})`);
         });
-        head.setAttribute('transform', `rotate(${f(s.head)} 0 -176)`);
+        // Spotting: in a turn the head keeps its own facing (headSpin, its
+        // width as seen from the front) while the body turns under it. The
+        // head is unscaled from the body's turn, then given its own, about
+        // the same upright axis.
+        const headScale = (s.headSpin ?? s.spin) / s.spin;
+        head.setAttribute('transform', headScale === 1
+          ? `rotate(${f(s.head)} 0 -176)`
+          : `rotate(${f(-s.lean)} 0 ${body.hipY}) scale(${f(headScale)} 1) rotate(${f(s.lean)} 0 ${body.hipY}) rotate(${f(s.head)} 0 -176)`);
+        // Facing away, the face is out of sight: only the back of the page shows.
+        const facing = f(clamp((Math.cos(s.turnHead || 0) + 0.25) / 0.4, 0, 1));
+        faceGroup.setAttribute('opacity', facing);
+        for (const blush of blushes) blush.setAttribute('opacity', facing);
         arms.L.apply(s.armL);
         arms.R.apply(s.armR);
         faceRig.apply(t, s.face, s.look);
@@ -722,6 +852,7 @@
     }
     stops(svg('linearGradient', { id: `${id}-gown`, class: 'tdd-gown-grad', x1: 0, y1: 0, x2: 0.35, y2: 1 }, node), ['top', 'bottom']);
     stops(svg('linearGradient', { id: `${id}-page`, class: 'tdd-page-grad', x1: 0, y1: 0, x2: 0.4, y2: 1 }, node), ['top', 'bottom']);
+    stops(svg('linearGradient', { id: `${id}-sheen`, class: 'tdd-sheen-grad', x1: 0, y1: 0, x2: 1, y2: 0 }, node), ['edge', 'core', 'edge']);
     // Cloth: the tailcoat and trousers catch light at the shoulders and
     // fall into shadow below; the gold lapel has a satin sheen.
     stops(svg('linearGradient', { id: `${id}-coat`, class: 'tdd-coat-grad', x1: 0.2, y1: 0, x2: 0.5, y2: 1 }, node), ['top', 'mid', 'bottom']);
@@ -872,6 +1003,79 @@
       return smooth((t - turn.at + 0.5) / 0.5) * smooth((turn.at + turn.dur + 0.5 - t) / 0.5);
     }
 
+    /**
+     * A turn as a dancer does it. Preparation: she sinks into a plié and
+     * winds a little against the turn, arms opening. On the beat she pushes
+     * up onto her standing foot (relevé), draws the other foot to its ankle,
+     * and turns: a sharp push, an even spin, a controlled finish into a
+     * plié. Her head spots, holding the front until the body has turned
+     * away, then whipping round ahead of it. The skirt follows the body a
+     * moment late, flares with its speed, swirls past the finish and swings
+     * back as it settles. Times in seconds, angles in radians; `depth` is
+     * how wide the body (and the head) still looks side-on.
+     */
+    const TURN = { prep: 0.42, finish: 0.7, wind: 0.32, accel: 0.12, decel: 0.28, lag: 0.14, swish: 0.32, depth: 0.38, headDepth: 0.3 };
+
+    /** The twirl whose preparation, turn, or finish covers t, if any. */
+    function twirlAt(kind, t) {
+      return twirls.find((tw) => tw.who === kind && t >= tw.at - TURN.prep && t <= tw.at + tw.dur + TURN.finish);
+    }
+
+    /** 0–1 through a turn's rotation: constant acceleration, an even spin, constant deceleration. */
+    function spinProgress(p) {
+      const { accel: a, decel: d } = TURN;
+      const v = 1 / (1 - a / 2 - d / 2);
+      if (p <= 0) return 0;
+      if (p >= 1) return 1;
+      if (p < a) return (v * p * p) / (2 * a);
+      if (p < 1 - d) return v * (a / 2 + p - a);
+      return 1 - (v * (1 - p) ** 2) / (2 * d);
+    }
+
+    /** The body's angle through a twirl at `time`: the wind-up against the turn, then the turn. */
+    function turnAngle(tw, time) {
+      if (time <= tw.at - TURN.prep) return 0;
+      if (time < tw.at) return -TURN.wind * smooth((time - tw.at + TURN.prep) / TURN.prep);
+      return -TURN.wind + (2 * Math.PI * tw.turns + TURN.wind) * spinProgress((time - tw.at) / tw.dur);
+    }
+
+    /** The skirt's angle: the body's, a moment late, plus a damped swirl past the finish. */
+    function skirtAngle(tw, time) {
+      const q = time - tw.at - tw.dur;
+      const swirl = q > 0 ? TURN.swish * Math.sin((2 * Math.PI * q) / TURN.finish) * Math.exp(-q / 0.3) : 0;
+      return turnAngle(tw, time - TURN.lag) + swirl;
+    }
+
+    /** Spotting: the head holds the front while the body turns away, then whips round ahead of it. */
+    function spotAngle(angle) {
+      const rev = angle / (2 * Math.PI);
+      const whole = Math.floor(rev);
+      return 2 * Math.PI * (whole + smooth((rev - whole - 0.4) / 0.32));
+    }
+
+    /** How wide a body turned by `angle` looks from the front: 1 facing us, `depth` side-on, mirrored facing away. */
+    function turnedWidth(angle, depth) {
+      const c = Math.cos(angle);
+      return (c < 0 ? -1 : 1) * Math.sqrt(c * c + depth * depth * (1 - c * c));
+    }
+
+    /** Arm lines through a turn: open to prepare, drawn in to turn, opened out to finish. */
+    const TURN_ARMS = {
+      solo: {
+        prep: { armL: { sh: 70, el: -12, wr: 12 }, armR: { sh: -70, el: 12, wr: -12 } },
+        // First position: arms rounded in front of the chest, hands almost
+        // touching, which keeps the turn tight and fast.
+        turn: { armL: { sh: 52, el: -134, wr: 8 }, armR: { sh: -52, el: 134, wr: -8 } },
+        finish: { armL: { sh: 118, el: -10, wr: 18 }, armR: { sh: -74, el: 8, wr: -24 } },
+      },
+      // Under his arm only her free arm is hers: it wraps in to the waist.
+      partnered: {
+        prep: { armR: { sh: -64, el: 14, wr: -12 } },
+        turn: { armR: { sh: -22, el: 74, wr: -10 } },
+        finish: { armR: { sh: -112, el: -14, wr: -18 } },
+      },
+    };
+
     function stateOf(dancer, t, couple, w) {
       const isTest = dancer.kind === 'test';
       let s = dancer.state.value(t);
@@ -964,29 +1168,46 @@
           }
         }
       }
-      for (const twirl of twirls) {
-        if (dancer.kind !== twirl.who || t < twirl.at || t > twirl.at + twirl.dur) continue;
-        const p = (t - twirl.at) / twirl.dur;
-        const lift = Math.sin(Math.PI * p);
-        // Turning: the figure narrows through edge-on and widens again
-        // and widens again, while the gown flares and the body rises. The
-        // inner hands stay joined above her head (archAt), so she turns
-        // under Test's raised arm; her free arm stays rounded and low.
-        const c = Math.cos(2 * Math.PI * twirl.turns * ease.inOut(p));
-        // Continuous through edge-on (like a card turning), so the figure
-        // never jumps from one side to its mirror image.
-        s.spin = Math.abs(c) < 1e-3 ? 1e-3 : c;
-        s.flare += 20 * lift;
-        s.bob -= 4 * lift;
-        s.head -= 6 * lift;
-        // Her free arm wraps in close to the waist while she turns, so the
-        // hand stays near the body's centre line as the figure narrows.
-        const armsIn = smooth(p / 0.35) * smooth((1 - p) / 0.35);
-        if (twirl.solo) {
-          // Free spin: both arms rise into a rounded crown over the head.
-          s.armL = mix(s.armL, { sh: 158, el: -46, wr: 10 }, armsIn);
-          s.armR = mix(s.armR, { sh: -158, el: 46, wr: -10 }, armsIn);
-        } else if (twirl.who === 'code') s.armR = mix(s.armR, { sh: -22, el: 74, wr: -10 }, armsIn);
+      const tw = twirlAt(dancer.kind, t);
+      if (tw) {
+        const end = tw.at + tw.dur;
+        s.turn = turnAngle(tw, t);
+        s.turnHead = spotAngle(s.turn);
+        s.turnSkirt = skirtAngle(tw, t);
+        s.spin = turnedWidth(s.turn, TURN.depth);
+        s.headSpin = turnedWidth(s.turnHead, TURN.headDepth);
+        // The axis stands straight up through the turn.
+        const axis = smooth((t - tw.at + TURN.prep) / 0.3) * smooth((end + 0.4 - t) / 0.4);
+        s.lean *= 1 - axis;
+        s.head *= 1 - axis;
+        // A plié to prepare, the relevé to turn, a plié again to land.
+        const bump = (x) => (x <= 0 || x >= 1 ? 0 : Math.sin(Math.PI * x) ** 2);
+        const up = smooth((t - tw.at) / 0.12) * smooth((end - t) / 0.14);
+        s.bob += 5 * bump((t - tw.at + TURN.prep) / (TURN.prep + 0.06)) - 5 * up + 4 * bump((t - end + 0.04) / 0.5);
+        // The skirt flares with its own speed and twists a moment behind the body.
+        const skirtSpeed = Math.abs(s.turnSkirt - skirtAngle(tw, t - 0.05)) / 0.05;
+        const peak = (2 * Math.PI * tw.turns + TURN.wind) / tw.dur / (1 - TURN.accel / 2 - TURN.decel / 2);
+        s.flare += 22 * clamp(skirtSpeed / peak, 0, 1);
+        s.sway += clamp(-1.1 * (s.turn - s.turnSkirt), -1.6, 1.6);
+        // The standing foot under the axis, the other drawn up to its ankle.
+        const feet = smooth((t - tw.at + 0.16) / 0.16) * smooth((end + 0.02 - t) / 0.16);
+        s.footL = mix(s.footL, { dx: 9, lift: 0 }, feet);
+        s.footR = mix(s.footR, { dx: -6, lift: 11 }, feet);
+        // Each arm stage takes over from the one before; the last hands
+        // back to the keyed pose.
+        const lines = TURN_ARMS[tw.solo ? 'solo' : 'partnered'];
+        const stages = [
+          [lines.prep, smooth((t - tw.at + TURN.prep) / (TURN.prep * 0.85))],
+          [lines.turn, smooth((t - tw.at + 0.04) / 0.2)],
+          [lines.finish, smooth((t - end + 0.38) / 0.3)],
+        ];
+        const release = smooth((t - end - TURN.finish + 0.4) / 0.4);
+        for (const key of Object.keys(lines.turn)) {
+          const keyed = s[key];
+          let line = keyed;
+          for (const [stage, weight] of stages) line = mix(line, stage[key], weight);
+          s[key] = mix(line, keyed, release);
+        }
       }
       if (couple && s.hold > 0) {
         const target = isTest ? couple.test : couple.code;
@@ -1058,8 +1279,10 @@
         const palm = rotateAbout([0, 7.2], [0, 0], raw.test.lean);
         // IK targets the wrist; the palm, not the cuff, rests on the shoulder.
         const shoulder = [contact[0] - palm[0], contact[1] - palm[1]];
-        // Underarm turn: the joined hands rise above Code's head.
-        const arch = [raw.code.x - 20, raw.code.y + raw.code.bob - 222];
+        // Underarm turn: the joined hands rise beside Code's head, his arm
+        // straight up, and draw in a little as she turns side-on beneath them.
+        const side = 1 - Math.min(1, Math.abs(raw.code.spin));
+        const arch = [raw.code.x - 44 + 10 * side, raw.code.y + raw.code.bob - 224 + 4 * side];
         const k = archAt(t);
         couple = {
           palm, drape: raw.code.embrace * (1 - k),
@@ -1185,12 +1408,15 @@
         waltzes.push({ from, to, travel, roam: who ? 0 : roam, calm, who });
         return api;
       },
-      /** Code spins under Test's raised arm: from a beat, for whole beats. */
+      /**
+       * Code turns under Test's raised arm: pushing off on a beat, for whole
+       * beats, with a preparation before and a finish after (see TURN).
+       */
       twirl(atTime, { dur = 1, turns = 1, who = 'code', solo = false } = {}) {
         const start = nearestBeat(atTime);
         const length = wholeBeats(start, dur);
         // The joined hands rise into an arch over her head (see archAt);
-        // a solo spin is free, with her arms rounded overhead instead.
+        // a solo turn is a free pirouette, her arms rounded in front.
         twirls.push({ at: start, dur: length, turns, who, solo });
         return api;
       },
