@@ -1316,7 +1316,7 @@
    */
   /**
    * A secret agent with a name tag. look = 'trench' (fedora, trench coat,
-   * sunglasses, briefcase) or 'tuxedo' (dinner jacket, bow tie, slicked
+   * sunglasses, briefcase) or 'tuxedo' (white dinner jacket, bow tie, slicked
    * hair, raised eyebrow, martini): the suave-spy-film look. With `code`,
    * role and code show as one name in the red split-flap cells of `digits`.
    */
@@ -1327,21 +1327,6 @@
     const body = svg('g', { transform: flip ? 'translate(160 0) scale(-1 1)' : '' }, fig);
     svg('ellipse', { class: 'ih-agent-shadow', cx: 80, cy: 292, rx: 60, ry: 7 }, body);
     const sway = svg('g', {}, body);
-    if (look === 'tuxedo') {
-      // A soft white halo keeps the dark dinner jacket visible on the dark
-      // stage: the blurred silhouette, boosted so it hugs the outline.
-      const id = `ih-agent-rim-${++uid}`;
-      const rim = svg('filter', { id, x: '-15%', y: '-10%', width: '130%', height: '120%' }, svg('defs', {}, fig));
-      svg('feGaussianBlur', { in: 'SourceAlpha', stdDeviation: 2.6, result: 'blur' }, rim);
-      const boost = svg('feComponentTransfer', { in: 'blur', result: 'grown' }, rim);
-      svg('feFuncA', { type: 'linear', slope: 2.4 }, boost);
-      svg('feFlood', { class: 'ih-agent-rim' }, rim);
-      svg('feComposite', { in2: 'grown', operator: 'in', result: 'ring' }, rim);
-      const merge = svg('feMerge', {}, rim);
-      svg('feMergeNode', { in: 'ring' }, merge);
-      svg('feMergeNode', { in: 'SourceGraphic' }, merge);
-      sway.setAttribute('filter', `url(#${id})`);
-    }
     let glint;
     if (look === 'tuxedo') {
       svg('path', { class: 'ih-agent-trousers', d: 'M54 196 L56 288 L77 288 L80 214 L83 288 L104 288 L106 196 Z' }, sway);
@@ -1361,7 +1346,7 @@
       // (116, 114) to raise a toast; the glass pivots at the hand
       // (125, 198) so it stays upright.
       const toastArm = svg('g', { class: 'ih-agent-toast-arm' }, sway);
-      svg('path', { class: 'ih-agent-tux-light', d: 'M116 112 Q130 150 130 194 L118 196 Q114 160 104 128 Z' }, toastArm);
+      svg('path', { class: 'ih-agent-tux-light ih-agent-tux-sleeve', d: 'M116 112 Q130 150 130 194 L118 196 Q114 160 104 128 Z' }, toastArm);
       svg('rect', { class: 'ih-agent-cuff', x: 118, y: 190, width: 13, height: 6, rx: 1.5 }, toastArm);
       // A martini, shaken: glass, olive, stem, base, held at the hip.
       const glass = svg('g', { class: 'ih-agent-glass' }, toastArm);
