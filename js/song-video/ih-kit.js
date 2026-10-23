@@ -32,6 +32,9 @@
   const { el, svg, place, icon } = kit;
   let uid = 0;
 
+  /** Ease out with a small overshoot past 1 before settling. */
+  const backOut = (u) => { const c = 1.70158; return 1 + (c + 1) * Math.pow(u - 1, 3) + c * Math.pow(u - 1, 2); };
+
   /** The newest entry of a time-sorted list at or before t (or undefined). */
   function latest(entries, t) {
     let found;
@@ -1319,15 +1322,18 @@
    * sunglasses, briefcase) or 'tuxedo' (white dinner jacket, bow tie, slicked
    * hair, raised eyebrow, martini): the suave-spy-film look. With `code`,
    * role and code show as one name in the red split-flap cells of `digits`.
+   * From `toastAt`, the tuxedo agent raises his martini: `toastAngle`
+   * degrees from his side (180 is straight up).
    */
-  function agent(parent, { x, y, scale = 1, name, role, code, at, until, tie = 'red', briefcase = true, flip = false, look = 'trench' }) {
+  function agent(parent, { x, y, scale = 1, name, role, code, at, until, toastAt, toastAngle = 170, tie = 'red', briefcase = true, flip = false, look = 'trench' }) {
     const wrap = place(el('div', 'ih-agent is-staged', parent), x, y);
     wrap.style.width = `${160 * scale}px`;
     const fig = svg('svg', { class: `ih-agent-art ih-agent-art--${tie}`, viewBox: '0 0 160 300', width: 160 * scale, height: 300 * scale, 'aria-hidden': 'true' }, wrap);
     const body = svg('g', { transform: flip ? 'translate(160 0) scale(-1 1)' : '' }, fig);
     svg('ellipse', { class: 'ih-agent-shadow', cx: 80, cy: 292, rx: 60, ry: 7 }, body);
     const sway = svg('g', {}, body);
-    let glint;
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    let glint, toastArm, glass;
     if (look === 'tuxedo') {
       // White dinner jacket, lit from the upper left: one gradient spans the
       // body and both sleeves so the light reads continuously across them.
@@ -1377,14 +1383,14 @@
       // The martini arm: sleeve, cuff, and hand pivot at the shoulder
       // (116, 114) to raise a toast; the glass pivots at the hand
       // (125, 198) so it stays upright.
-      const toastArm = svg('g', { class: 'ih-agent-toast-arm' }, sway);
+      toastArm = svg('g', { class: 'ih-agent-toast-arm' }, sway);
       jacket('ih-agent-tux', 'M115 111 C126 132 130 162 130 194 L117 196 C116 172 111 148 104 128 Z', toastArm);
       svg('path', { class: 'ih-agent-tux-shade', d: 'M122 128 C127 148 129.5 170 130 194 L124 194.6 C124 172 123.5 150 122 128 Z' }, toastArm);
       svg('path', { class: 'ih-agent-tux-fold', d: 'M119 158 Q123.5 156 128 158.5' }, toastArm);
       svg('rect', { class: 'ih-agent-cuff', x: 118, y: 190, width: 13, height: 6, rx: 1.5 }, toastArm);
       svg('circle', { class: 'ih-agent-cufflink', cx: 124.5, cy: 193, r: 1.1 }, toastArm);
       // A martini, shaken: glass, olive, stem, base, held at the hip.
-      const glass = svg('g', { class: 'ih-agent-glass' }, toastArm);
+      glass = svg('g', { class: 'ih-agent-glass' }, toastArm);
       svg('path', { class: 'ih-agent-martini', d: 'M112 170 L138 170 L125 186 Z' }, glass);
       svg('circle', { class: 'ih-agent-olive', cx: 121, cy: 175, r: 3 }, glass);
       svg('path', { class: 'ih-agent-martini-stem', d: 'M125 186 V202 M118 202 H132' }, glass);
@@ -1471,6 +1477,12 @@
       const [gx0, gspan, gy] = look === 'tuxedo' ? [112, 26, 172] : [64, 32, 66];
       const gx = gx0 + gspan * (cycle / 0.18);
       glint.setAttribute('transform', `translate(${gx.toFixed(1)} ${gy})`);
+      if (toastAt !== undefined && toastArm) {
+        // The arm swings up from the shoulder; the glass stays upright.
+        const raise = -toastAngle * (reducedMotion.matches ? Number(t >= toastAt) : backOut(progress(t, toastAt, 0.45)));
+        toastArm.setAttribute('transform', `rotate(${raise.toFixed(1)} 116 114)`);
+        glass.setAttribute('transform', `rotate(${(-raise).toFixed(1)} 125 198)`);
+      }
     });
     fx.rise(wrap, at, { distance: 24, duration: 0.45 });
     if (until !== undefined) fx.fadeOut(wrap, until, 0.3);
@@ -1689,9 +1701,8 @@
     // wrapper (position, so the name tag travels with him) move separately.
     // His guard post is x = 395, right beside the barrier at 590.
     const post = 515;
-    const bond = agent(parent, { x: post - 52.8, y: 212, scale: 0.66, role: 'Agent', code: '00', look: 'tuxedo', at: T.bondIn });
-    const toastArm = bond.querySelector('.ih-agent-toast-arm');
-    const glassGroup = bond.querySelector('.ih-agent-glass');
+    // In the end he raises his martini.
+    const bond = agent(parent, { x: post - 52.8, y: 212, scale: 0.66, role: 'Agent', code: '00', look: 'tuxedo', at: T.bondIn, toastAt: T.toast });
     const figure = bond.querySelector('svg');
     figure.style.transformOrigin = '52.8px 99px';
     const bondTag = bond.querySelector('.ih-agent-tag');
@@ -1714,7 +1725,6 @@
     const snapGleam = gleam();
     const tieGleam = gleam();
     const glassGleam = gleam();
-    const backOut = (u) => { const c = 1.70158; return 1 + (c + 1) * Math.pow(u - 1, 3) + c * Math.pow(u - 1, 2); };
     const hangDy = -172;
     const barrierDx = 590 - post;
     const sparkle = (g, at, x, y, dur = 0.5) => {
@@ -1768,10 +1778,6 @@
       }
       bond.style.transform = `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px)`;
       figure.style.transform = `rotate(${r.toFixed(1)}deg) scale(${sx.toFixed(3)}, ${sy.toFixed(3)})`;
-      // In the end he raises his martini straight up; the glass stays upright.
-      const raise = -170 * (reduced ? Number(t >= T.toast) : backOut(progress(t, T.toast, 0.45)));
-      toastArm?.setAttribute('transform', `rotate(${raise.toFixed(1)} 116 114)`);
-      glassGroup?.setAttribute('transform', `rotate(${(-raise).toFixed(1)} 125 198)`);
       // The rope: tied to his feet while he hangs, whipped away when he lets go.
       const up = progress(t, T.bondFlip, 0.35);
       rope.setAttribute('y2', (t < T.bondFlip ? 212 + dy + 6 : (212 + hangDy + 6) * (1 - ease(up)) - 20 * ease(up)).toFixed(1));

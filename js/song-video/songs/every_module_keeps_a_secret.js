@@ -491,12 +491,13 @@
       });
       kit.sticker(s, 'No PayPal in sight', { x: 420, y: 60, at: mark('verse-2-7', 'sight'), until: mark('verse-2-9', 'only'), variant: 'green', iconName: 'eye', rotate: -3 });
 
-      // "The name's Gateway. Payment Gateway."
+      // "The name's Gateway. Payment Gateway." He raises his martini on the
+      // second "Gateway", out to the side, clear of the speech bubble.
       const agentFrom = mark('verse-2-8', 'names') - 0.1;
       // He stays until the PayPal contact card needs his corner.
       const agentTo = mark('verse-2-9', 'exists') - 0.5;
       ih.spotlight(s, { x: 800, y: 210, w: 320, h: 420, at: agentFrom, until: agentTo });
-      ih.agent(s, { x: 742, y: 100, scale: 0.66, role: 'Agent', code: '00', look: 'tuxedo', at: agentFrom, until: agentTo });
+      ih.agent(s, { x: 742, y: 100, scale: 0.66, role: 'Agent', code: '00', look: 'tuxedo', at: agentFrom, until: agentTo, toastAt: mark('verse-2-8', 'gateway_2') - 0.15, toastAngle: 125 });
       ih.bubble(s, { x: 700, y: 12, text: 'Gateway,\nPayment Gateway.', tailX: 95, at: mark('verse-2-8', 'names') - 0.1, until: agentTo });
       kit.sticker(s, 'Secret: which provider', { x: 690, y: 376, at: mark('verse-2-8', 'gateway_2'), until: agentTo, variant: 'red', iconName: 'lock', rotate: -3 });
 
