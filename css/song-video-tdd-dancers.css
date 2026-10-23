@@ -150,7 +150,6 @@
 /* ------------------------------------------------------------------ */
 
 .tdd-coat {
-  fill: #1d2756;
   stroke: var(--tdd-rim);
   stroke-width: 1.7;
 }
@@ -176,10 +175,6 @@
   fill: #f4f6ff;
 }
 
-.tdd-lapel {
-  fill: #f2c14e;
-}
-
 .tdd-lapel--shade {
   fill: #c9962d;
 }
@@ -200,7 +195,6 @@
 }
 
 .tdd-trouser {
-  fill: #18204a;
   stroke: var(--tdd-rim);
   stroke-width: 1.5;
   stroke-linejoin: round;
@@ -404,6 +398,14 @@
   stroke-width: 3.4;
 }
 
+/* A thin highlight along each brace clip's upper edge. */
+.tdd-brace-shine {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.5);
+  stroke-width: 1;
+  stroke-linecap: round;
+}
+
 .tdd-brace-rim {
   stroke: none;
   stroke-width: 4.8;
@@ -433,3 +435,15 @@
 .tdd-dancer--code .tdd-lash,
 .tdd-dancer--code .tdd-brow,
 .tdd-dancer--code .tdd-mouth { stroke: var(--tdd-code-ink, #1b1640); }
+
+
+/* Cloth: the tailcoat and trousers catch light at the shoulders and fall
+   into shadow below; the gold lapel has a satin sheen. */
+.tdd-coat-grad .tdd-stop--top { stop-color: #2a3674; }
+.tdd-coat-grad .tdd-stop--mid { stop-color: #1d2756; }
+.tdd-coat-grad .tdd-stop--bottom { stop-color: #141a43; }
+.tdd-trouser-grad .tdd-stop--top { stop-color: #1d2657; }
+.tdd-trouser-grad .tdd-stop--bottom { stop-color: #121839; }
+.tdd-satin-grad .tdd-stop--top { stop-color: #ffe08a; }
+.tdd-satin-grad .tdd-stop--mid { stop-color: #f2c14e; }
+.tdd-satin-grad .tdd-stop--bottom { stop-color: #d6a23a; }

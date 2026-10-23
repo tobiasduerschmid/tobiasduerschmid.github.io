@@ -329,7 +329,7 @@
     svg('path', { class: 'tdd-coat-tail', d: 'M-18 -114 C-21 -92 -26 -72 -24 -48 C-20 -50 -15 -54 -12 -58 C-10 -78 -8 -96 -6 -108 Z M18 -114 C21 -92 26 -72 24 -48 C20 -50 15 -54 12 -58 C10 -78 8 -96 6 -108 Z' }, back);
     const legs = ['L', 'R'].map((side) => {
       const leg = svg('g', { class: 'tdd-leg' }, spin);
-      const thigh = svg('path', { class: 'tdd-trouser' }, leg);
+      const thigh = svg('path', { class: 'tdd-trouser', fill: `url(#${id}-trouser)` }, leg);
       const stripe = svg('path', { class: 'tdd-trouser-stripe' }, leg);
       // A patent oxford: heel under the ankle, toe turned a little outward.
       const shoe = svg('g', {}, leg);
@@ -343,11 +343,11 @@
     const lean = svg('g', {}, upper);
     // Torso: tailcoat front over a white shirt, gold lapels, bow tie.
     const torso = svg('g', {}, lean);
-    svg('path', { class: 'tdd-coat', d: 'M-27 -168 C-29 -175 -22 -178.5 -12 -178.5 L12 -178.5 C22 -178.5 29 -175 27 -168 C29.5 -152 25 -134 20.5 -122 C19.5 -114 20.5 -106 20 -100 Q0 -95 -20 -100 C-20.5 -106 -19.5 -114 -20.5 -122 C-25 -134 -29.5 -152 -27 -168 Z' }, torso);
+    svg('path', { class: 'tdd-coat', fill: `url(#${id}-coat)`, d: 'M-27 -168 C-29 -175 -22 -178.5 -12 -178.5 L12 -178.5 C22 -178.5 29 -175 27 -168 C29.5 -152 25 -134 20.5 -122 C19.5 -114 20.5 -106 20 -100 Q0 -95 -20 -100 C-20.5 -106 -19.5 -114 -20.5 -122 C-25 -134 -29.5 -152 -27 -168 Z' }, torso);
     svg('path', { class: 'tdd-coat-shade', d: 'M6 -178.5 L12 -178.5 C22 -178.5 29 -175 27 -168 C29.5 -152 25 -134 20.5 -122 C19.5 -114 20.5 -106 20 -100 Q13 -97.5 6 -97 Z' }, torso);
     svg('path', { class: 'tdd-coat-seam', d: 'M-20.5 -122 Q0 -117 20.5 -122' }, torso);
     svg('path', { class: 'tdd-shirt', d: 'M-11 -177 L0 -128 L11 -177 Q0 -180 -11 -177 Z' }, torso);
-    svg('path', { class: 'tdd-lapel', d: 'M-11 -177 L-2 -132 L-16 -156 L-12 -162 L-19 -170 Z' }, torso);
+    svg('path', { class: 'tdd-lapel', fill: `url(#${id}-satin)`, d: 'M-11 -177 L-2 -132 L-16 -156 L-12 -162 L-19 -170 Z' }, torso);
     svg('path', { class: 'tdd-lapel tdd-lapel--shade', d: 'M11 -177 L2 -132 L16 -156 L12 -162 L19 -170 Z' }, torso);
     for (const y of [-124, -114]) svg('circle', { class: 'tdd-button', cx: 0, cy: y, r: 1.9 }, torso);
     svg('path', { class: 'tdd-bowtie', d: 'M0 -175 L-10 -181 L-10 -168 Z M0 -175 L10 -181 L10 -168 Z' }, torso);
@@ -548,6 +548,7 @@
       // A wider under-stroke gives dark hair a thin rim without changing its color.
       svg('path', { class: 'tdd-brace-rim', d }, head);
       svg('path', { class: 'tdd-brace', d }, head);
+      svg('path', { class: 'tdd-brace-shine', d, transform: 'translate(-0.7 -0.7)' }, head);
     }
     const faceGroup = svg('g', { transform: 'translate(0 -202)' }, head);
     const faceRig = face(faceGroup, { eyeX: 8, eyeY: -2, mouthY: 9, browY: -9, lashes: true, seed: uid * 7 + 23 });
@@ -651,6 +652,11 @@
     }
     stops(svg('linearGradient', { id: `${id}-gown`, class: 'tdd-gown-grad', x1: 0, y1: 0, x2: 0.35, y2: 1 }, node), ['top', 'bottom']);
     stops(svg('linearGradient', { id: `${id}-page`, class: 'tdd-page-grad', x1: 0, y1: 0, x2: 0.4, y2: 1 }, node), ['top', 'bottom']);
+    // Cloth: the tailcoat and trousers catch light at the shoulders and
+    // fall into shadow below; the gold lapel has a satin sheen.
+    stops(svg('linearGradient', { id: `${id}-coat`, class: 'tdd-coat-grad', x1: 0.2, y1: 0, x2: 0.5, y2: 1 }, node), ['top', 'mid', 'bottom']);
+    stops(svg('linearGradient', { id: `${id}-trouser`, class: 'tdd-trouser-grad', x1: 0, y1: 0, x2: 0, y2: 1 }, node), ['top', 'bottom']);
+    stops(svg('linearGradient', { id: `${id}-satin`, class: 'tdd-satin-grad', x1: 0, y1: 0, x2: 1, y2: 1 }, node), ['top', 'mid', 'bottom']);
     stops(svg('linearGradient', { id: `${id}-spot`, class: 'tdd-spot-grad', x1: 0, y1: 0, x2: 0, y2: 1 }, node), ['top', 'bottom']);
     stops(svg('radialGradient', { id: `${id}-tidy`, class: 'tdd-tidy-grad' }, node), ['core', 'edge']);
     stops(svg('linearGradient', { id: `${id}-sweep`, class: 'tdd-sweep-grad', x1: 0, y1: 0, x2: 0, y2: 1 }, node), ['edge', 'core', 'edge']);
@@ -751,8 +757,10 @@
         roam: { x: active.roam * 0.5 * (1 - Math.cos(around)), y: 6 * Math.sin(around), scale: 1 + 0.03 * Math.sin(around) },
         rise: riseOf(phase),
         x: travel * dir * (2 * glide - 1),
-        lead: { from: -travel * dir, to: travel * dir, at: smooth(phase / 0.42), lift: Math.sin(Math.PI * clamp(phase / 0.42, 0, 1)) },
-        trail: { from: -travel * dir, to: travel * dir, at: smooth((phase - 0.55) / 0.35), lift: Math.sin(Math.PI * clamp((phase - 0.55) / 0.35, 0, 1)) },
+        // Legato footwork: the leading foot glides through most of "1",
+        // the other brushes in to close on "2–3".
+        lead: { from: -travel * dir, to: travel * dir, at: smooth(phase / 0.52), lift: Math.sin(Math.PI * clamp(phase / 0.52, 0, 1)) },
+        trail: { from: -travel * dir, to: travel * dir, at: smooth((phase - 0.54) / 0.4), lift: Math.sin(Math.PI * clamp((phase - 0.54) / 0.4, 0, 1)) },
         sway: Math.sin(swing),
         lag: (delay) => Math.sin(swing - delay),
         depth: 1 + 0.022 * Math.sin((Math.PI / 2) * (index + phase)),
@@ -809,6 +817,9 @@
       const arch = archAt(t);
       const closer = Math.max(s.embrace * Math.max(0, Math.abs(dancer.home) - 40), arch * Math.max(0, Math.abs(dancer.home) - 34));
       if (closer > 0) s.x -= Math.sign(dancer.home) * closer;
+      // The ballroom head line: in the hold each partner looks out over the
+      // other's shoulder, Code's head tilted away from Test, his to his left.
+      s.head += (isTest ? -3 : 5) * s.embrace;
       if (arch > 0) s.hold = Math.max(s.hold, arch);
       if (!isTest) {
         // Cleaning up: the spotlight follows the rate of the tidy, with a
@@ -849,7 +860,8 @@
           const trailSide = w.dir > 0 ? 'L' : 'R';
           const leadX = w.lead.from + (w.lead.to - w.lead.from) * w.lead.at;
           const trailX = w.trail.from + (w.trail.to - w.trail.from) * w.trail.at;
-          const heel = isTest ? 2.5 * w.rise : 0;
+          // Rising onto the toes through "2–3", lowering on "1".
+          const heel = isTest ? 4 * w.rise : 0;
           const lead = s[`foot${leadSide}`];
           const trail = s[`foot${trailSide}`];
           // A clear box step: the leading foot lifts and reaches, the closing

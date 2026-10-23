@@ -43,7 +43,7 @@
 }
 
 .br-wall-panel {
-  fill: rgba(255, 214, 140, 0.025);
+  fill: url(#br-panel-grad);
   stroke: rgba(255, 214, 140, 0.11);
   stroke-width: 1.4;
 }
@@ -60,6 +60,27 @@
 .br-wall-rail {
   stroke: rgba(255, 214, 140, 0.08);
   stroke-width: 2;
+}
+
+/* The arch bevel: a faint inner line, part of each existing wall panel. */
+.br-wall-bevel {
+  fill: none;
+  stroke: rgba(255, 214, 140, 0.05);
+  stroke-width: 1;
+}
+
+.br-drape-fold {
+  fill: none;
+  stroke: rgba(190, 170, 255, 0.07);
+  stroke-width: 6;
+  stroke-linecap: round;
+}
+
+.br-drape-crease {
+  fill: none;
+  stroke: rgba(0, 0, 0, 0.18);
+  stroke-width: 3;
+  stroke-linecap: round;
 }
 
 .br-floor-seam {
@@ -141,6 +162,48 @@
 
 .br-ch-drop {
   fill: rgba(220, 236, 255, 0.55);
+}
+
+.br-ch-arm-shine {
+  fill: none;
+  stroke: rgba(255, 236, 170, 0.55);
+  stroke-width: 0.9;
+  stroke-linecap: round;
+}
+
+.br-ch-body-ring {
+  fill: none;
+  stroke: #8a6416;
+  stroke-width: 1.2;
+}
+
+.br-ch-body-shine {
+  fill: none;
+  stroke: rgba(255, 240, 190, 0.7);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+
+.br-ch-wick {
+  stroke: #3b2a14;
+  stroke-width: 0.9;
+}
+
+.br-ch-drip {
+  fill: none;
+  stroke: #fffaf0;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+}
+
+.br-ch-cup {
+  fill: #b48a35;
+}
+
+.br-ch-facet {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.7);
+  stroke-width: 0.6;
 }
 
 .br-drape {
