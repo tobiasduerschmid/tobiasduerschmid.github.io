@@ -42,7 +42,7 @@
       hipY: -100, shoulder: [23, -168], upper: 36, fore: 33, hip: 9.5, thigh: 48, shin: 46, foot: 12.5,
     },
     code: {
-      hipY: -118, shoulder: [17, -165], upper: 33, fore: 31,
+      hipY: -118, shoulder: [17, -165], upper: 33, fore: 31, chestY: -150, foot: 11,
     },
   };
 
@@ -52,8 +52,8 @@
    * a left arm, + lifts the hand toward up; for a right arm, − does.
    */
   const POSES = {
-    /** Poised: arms relaxed a little away from the body, elbows soft. */
-    stand: { armL: { sh: 14, el: -20, wr: 6 }, armR: { sh: -14, el: 20, wr: -6 } },
+    /** Poised: arms rounded a little away from the body, hands soft by the hips. */
+    stand: { armL: { sh: 18, el: -30, wr: 12 }, armR: { sh: -18, el: 30, wr: -12 } },
     open: { armL: { sh: 62, el: -14, wr: 10 }, armR: { sh: -62, el: 14, wr: -10 } },
     /**
      * The promenade line for the free (outer) arms: each extends from the
@@ -166,6 +166,7 @@
   function track(initial) {
     const channels = new Map();
     let compiled = null;
+    let version = 0;
     function compile() {
       compiled = new Map();
       for (const [name, keys] of channels) {
@@ -188,6 +189,11 @@
           channels.get(name).push({ at, value, dur: Math.max(0.01, dur), curve });
         }
         compiled = null;
+        version++;
+      },
+      /** Counts the keys added so far, so a cache of derived motion can tell when it is stale. */
+      get version() {
+        return version;
       },
       /**
        * The keyed state, softened by a short bell-shaped time kernel
@@ -279,12 +285,36 @@
       + ` A${f(a)} ${f(a)} 0 0 0 ${f(-a)} 0 Z`;
   }
 
-  /** A simple rounded glove without a projecting thumb. */
-  function glove(parent, size) {
+  /** The part of a quadratic Bézier ([start, control, end]) from where it reaches `y` to its end. */
+  function subQuad([p0, p1, p2], y) {
+    const at = (t) => (1 - t) * (1 - t) * p0[1] + 2 * t * (1 - t) * p1[1] + t * t * p2[1];
+    let lo = 0;
+    let hi = 1;
+    for (let i = 0; i < 24; i++) {
+      const mid = (lo + hi) / 2;
+      if (at(mid) < y) lo = mid;
+      else hi = mid;
+    }
+    const t = lo;
+    const lerp = (a, b) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+    return [lerp(lerp(p0, p1), lerp(p1, p2)), lerp(p1, p2), p2];
+  }
+
+  /**
+   * A slender glove, fingers together and tapering to soft tips, the thumb
+   * resting along the side nearest the body (`thumb`: +1 or -1 in x).
+   */
+  function glove(parent, size, thumb) {
     const g = svg('g', { class: 'tdd-glove-hand', transform: `scale(${size})` }, parent);
-    svg('path', { class: 'tdd-glove', d: 'M-4.8 0.4 C-6.8 4 -6.9 10.8 -2.5 13 C0.6 14.4 4.8 12.8 6 8.8 C6.8 5.8 5.8 2.4 4.6 0.4 Z' }, g);
-    svg('path', { class: 'tdd-glove-line', d: 'M-1.8 8.4 L-1.4 11.8 M1.4 8.6 L1.8 12' }, g);
-    svg('rect', { class: 'tdd-glove-cuff', x: -5.6, y: -2.4, width: 11.2, height: 3.8, rx: 1.9 }, g);
+    const x = (v) => f(v * thumb);
+    svg('path', {
+      class: 'tdd-glove',
+      d: `M${x(-3.6)} 0.2 C${x(-4.4)} 3.6 ${x(-4.6)} 7.6 ${x(-3.7)} 10.6 C${x(-3)} 12.8 ${x(-1)} 14.6 ${x(0.8)} 14.2`
+        + ` C${x(2.4)} 13.8 ${x(3.4)} 12.2 ${x(3.6)} 10 C${x(3.8)} 8.6 ${x(3.9)} 7.4 ${x(4.1)} 6.6`
+        + ` C${x(5.6)} 6.9 ${x(6.8)} 5.8 ${x(6.3)} 4.4 C${x(5.8)} 3 ${x(4.6)} 2.6 ${x(3.9)} 1.6 C${x(3.7)} 1 ${x(3.6)} 0.4 ${x(3.6)} 0.2 Z`,
+    }, g);
+    svg('path', { class: 'tdd-glove-line', d: `M${x(-1.6)} 9.4 Q${x(-1.7)} 11.4 ${x(-1.3)} 13.1 M${x(0.9)} 9.8 Q${x(1)} 11.7 ${x(1)} 13.3` }, g);
+    svg('rect', { class: 'tdd-glove-cuff', x: -4.4, y: -2.4, width: 8.8, height: 3.6, rx: 1.8 }, g);
   }
 
   /** Limb widths: [shoulder, elbow] for the upper arm, [elbow, wrist] below. */
@@ -299,17 +329,36 @@
     const upperPath = segmentPath(body.upper, ...upperW);
     if (kind === 'code') svg('path', { class: 'tdd-skin-rim', d: upperPath }, upperArm);
     svg('path', { class: 'tdd-arm-sleeve', d: upperPath }, upperArm);
-    svg('path', { class: 'tdd-arm-shine', d: `M${f(outer * (upperW[0] / 2 - 2))} 4 Q${f(outer * (upperW[1] / 2 - 1))} ${f(body.upper * 0.55)} ${f(outer * (upperW[1] / 2 - 2))} ${f(body.upper - 4)}` }, upperArm);
+    // One rim highlight runs down the arm's outer side, unbroken through the
+    // elbow: the upper arm's runs just past the joint and the forearm's
+    // starts just above it.
+    const reach = [[outer * (upperW[0] / 2 - 2), 4], [outer * (upperW[1] / 2 - 1), body.upper * 0.55], [outer * (upperW[1] / 2 - 2), body.upper + 1.2]];
+    const quad = ([a, b, c]) => `M${f(a[0])} ${f(a[1])} Q${f(b[0])} ${f(b[1])} ${f(c[0])} ${f(c[1])}`;
+    svg('path', { class: 'tdd-arm-shine', d: quad(reach) }, upperArm);
     const foreArm = svg('g', { class: `tdd-forearm tdd-arm--${kind}` }, front);
+    foreArm.dataset.side = side;
     const forePath = segmentPath(body.fore, ...foreW);
     if (kind === 'code') svg('path', { class: 'tdd-skin-rim', d: forePath }, foreArm);
     svg('path', { class: 'tdd-arm-fore', d: forePath }, foreArm);
+    // Where the forearm overlaps the upper arm, a fill-only copy of the upper
+    // arm's end (inset by half its outline) hides the forearm's outline, so
+    // the elbow reads as one bent limb rather than two parts. It lives in the
+    // forearm's layer, turned back into the upper arm's frame, and spans only
+    // the last stretch above the elbow, so it never covers the torso's edge
+    // beside a hanging arm. The highlight it covers is drawn again on top.
+    const elbow = svg('g', {}, foreArm);
+    const inset = kind === 'test' ? 1.5 : 1;
+    const from = body.upper - (upperW[1] / 2 + 1.5);
+    const width = (k) => upperW[0] + (upperW[1] - upperW[0]) * k - inset;
+    svg('path', { class: 'tdd-elbow-patch', d: segmentPath(body.upper - from, width(from / body.upper), width(1)), transform: `translate(0 ${f(from)})` }, elbow);
+    svg('path', { class: 'tdd-arm-shine', d: quad(subQuad(reach, from - 1)) }, elbow);
+    svg('path', { class: 'tdd-arm-shine', d: quad([[outer * (foreW[0] / 2 - 2), -1.2], [outer * (foreW[1] / 2 - 0.8), body.fore * 0.5], [outer * (foreW[1] / 2 - 1.4), body.fore - (kind === 'test' ? 8 : 5)]]) }, foreArm);
     if (kind === 'test') {
       svg('rect', { class: 'tdd-cuff', x: -5.6, y: body.fore - 6, width: 11.2, height: 5, rx: 2 }, foreArm);
       svg('circle', { class: 'tdd-cufflink', cx: outer * 3.1, cy: body.fore - 3.5, r: 0.95 }, foreArm);
     }
     const hand = svg('g', { transform: `translate(0 ${body.fore + 1})` }, foreArm);
-    glove(hand, kind === 'test' ? 0.92 : 0.8);
+    glove(hand, kind === 'test' ? 0.92 : 0.8, -outer);
     // Code's puffed cap sleeve sits on top of the shoulder and turns with it.
     const cap = kind === 'code' ? svg('g', {}, front) : null;
     if (cap) {
@@ -317,13 +366,22 @@
       svg('path', { class: 'tdd-sleeve-pleat', d: 'M-3.4 -2.4 Q-2.6 2.6 -3.2 7 M0 -3.3 Q0.5 2.6 0 7.8 M3.4 -2.4 Q2.8 2.6 3.3 7' }, cap);
     }
     return {
+      /** The arm's two layers, which the troupe may lift into the hold layers. */
+      parts: [upperArm, foreArm],
+      /** The gloved hand, which the hold may draw in front of the partner's arm. */
+      hand,
       apply(angles) {
         const x = side === 'L' ? -sx : sx;
         const shoulder = `translate(${x} ${sy}) rotate(${f(angles.sh)})`;
         upperArm.setAttribute('transform', shoulder);
         if (cap) cap.setAttribute('transform', shoulder);
-        foreArm.setAttribute('transform', `${shoulder} translate(0 ${body.upper}) rotate(${f(angles.el)})`);
-        hand.setAttribute('transform', `translate(0 ${body.fore + 1}) rotate(${f(angles.wr || 0)})`);
+        const fore = `${shoulder} translate(0 ${body.upper}) rotate(${f(angles.el)})`;
+        foreArm.setAttribute('transform', fore);
+        elbow.setAttribute('transform', `rotate(${f(-angles.el)}) translate(0 ${-body.upper})`);
+        // Lifted out of the forearm (see the troupe's hold layers), the hand
+        // carries the forearm's transform itself.
+        const palm = `translate(0 ${body.fore + 1}) rotate(${f(angles.wr || 0)})`;
+        hand.setAttribute('transform', hand.parentNode === foreArm ? palm : `${fore} ${palm}`);
       },
     };
   }
@@ -334,19 +392,25 @@
    * `lashes` adds a lined upper lid flicked out at the corner. An open
    * smile shows its upper teeth and tongue.
    */
-  function face(parent, { eyeY, eyeX, mouthY, browY, noseY, lashes = false, seed }) {
+  function face(parent, { eyeY, eyeX, mouthY, browY, noseY, lashes = false, iris, seed }) {
     const node = svg('g', { class: 'tdd-face' }, parent);
     const eyes = [-eyeX, eyeX].map((x) => {
       const out = x < 0 ? -1 : 1;
       const eye = svg('g', { transform: `translate(${x} ${eyeY})` }, node);
       const ball = svg('g', {}, eye);
+      // A dark rim, an iris that is light below and shaded under the lid,
+      // a pupil, and two catchlights.
       svg('ellipse', { class: 'tdd-eye', rx: 3.4, ry: 4.4 }, ball);
-      svg('ellipse', { class: 'tdd-eye-iris', cx: 0, cy: 1.2, rx: 2.2, ry: 2.1 }, ball);
-      svg('circle', { class: 'tdd-eye-glint', cx: 1.1, cy: -1.5, r: 1.15 }, ball);
-      svg('circle', { class: 'tdd-eye-glint tdd-eye-glint--small', cx: -1.2, cy: 1.9, r: 0.55 }, ball);
+      svg('ellipse', { class: 'tdd-eye-iris', cx: 0, cy: 0.55, rx: 2.55, ry: 3.3, fill: iris }, ball);
+      svg('circle', { class: 'tdd-eye-pupil', cx: 0, cy: 0.8, r: 1.35 }, ball);
+      svg('circle', { class: 'tdd-eye-glint', cx: 1.15, cy: -1.25, r: 1.2 }, ball);
+      svg('circle', { class: 'tdd-eye-glint tdd-eye-glint--small', cx: -1.05, cy: 2.1, r: 0.5 }, ball);
       if (lashes) {
-        svg('path', { class: 'tdd-lid', d: `M${-3.3 * out} -1.6 Q${-0.6 * out} -5.9 ${3.4 * out} -2.7 L${5.5 * out} -4.6` }, ball);
-        svg('path', { class: 'tdd-lash', d: `M${2.2 * out} -4.2 L${3.7 * out} -6.6` }, ball);
+        // Liner hugging the upper lid, thickening to a small wing at the
+        // outer corner, and two fine lashes fanning out above it.
+        const x = (v) => f(v * out);
+        svg('path', { class: 'tdd-lid', d: `M${x(-3.1)} -1.9 C${x(-2.6)} -5 ${x(2)} -6.2 ${x(3.5)} -3.9 L${x(5.3)} -4.6 L${x(3.3)} -2 C${x(2.6)} -4.6 ${x(-1.6)} -5.1 ${x(-3.1)} -1.9 Z` }, ball);
+        svg('path', { class: 'tdd-lash', d: `M${x(1.3)} -5.3 Q${x(1.5)} -6.5 ${x(2.4)} -7 M${x(2.6)} -4.9 Q${x(3)} -6 ${x(4.1)} -6.3` }, ball);
       }
       return ball;
     });
@@ -357,7 +421,7 @@
       const outer = x - 4.4 * inward;
       return svg('path', { class: 'tdd-brow', d: `M${f(inner)} ${f(browY + 0.7)} Q${x} ${f(browY - 3.6)} ${f(outer)} ${f(browY + 0.1)} Q${x} ${f(browY - 1.3)} ${f(inner)} ${f(browY - 0.9)} Z` }, node);
     });
-    svg('path', { class: 'tdd-nose', d: `M1.1 ${f(noseY - 1.1)} Q1.9 ${f(noseY + 0.3)} 0.3 ${f(noseY + 0.6)}` }, node);
+    if (noseY !== undefined) svg('path', { class: 'tdd-nose', d: `M0.5 ${f(noseY - 1.1)} Q1.5 ${f(noseY - 0.1)} 0.4 ${f(noseY + 0.7)}` }, node);
     // The open mouth is filled first, then its teeth and tongue, then the lip line on top.
     const mouthGroup = svg('g', { transform: `translate(0 ${mouthY})` }, node);
     const mouthFill = svg('path', { class: 'tdd-mouth-fill' }, mouthGroup);
@@ -457,13 +521,14 @@
     svg('path', { class: 'tdd-lamp-refraction', d: 'M-21 -206 Q-20 -196 -10 -191' }, dome);
     svg('circle', { class: 'tdd-lamp-glint', cx: 15, cy: -200, r: 1.6 }, dome);
     const faceGroup = svg('g', { transform: 'translate(0 -210)' }, dome);
-    const faceRig = face(faceGroup, { eyeX: 8, eyeY: -5, mouthY: 7, browY: -12, noseY: 1.6, seed: uid * 7 + 11 });
+    const faceRig = face(faceGroup, { eyeX: 8, eyeY: -5, mouthY: 7, browY: -12, iris: `url(#${id}-iris)`, seed: uid * 7 + 11 });
     // Upper arms emerge from behind the torso; bent forearms, cuffs, and
     // palms sit in front. Keep these layers in the same body coordinate frame.
     const rearArms = svg('g', { class: 'tdd-arms-rear' }, lean);
     lean.insertBefore(rearArms, lean.firstChild);
     const frontArms = svg('g', { class: 'tdd-arms-front' }, lean);
     const arms = { L: arm(rearArms, frontArms, 'test', 'L', body, id), R: arm(rearArms, frontArms, 'test', 'R', body, id) };
+    const armLayers = [rearArms, frontArms];
 
     /**
      * A tapered trouser leg from hip to ankle, and its side stripe. Seen from
@@ -512,6 +577,10 @@
     return {
       body,
       root,
+      arms,
+      armLayers,
+      /** The frame the arms hang in (shoulders), in the troupe's floor coordinates. */
+      armFrame: (s) => `translate(${f(s.x)} ${f(s.y)}) scale(${f(s.spin)} 1) translate(0 ${f(s.bob)}) rotate(${f(s.lean)} 0 ${body.hipY})`,
       apply(t, s) {
         root.setAttribute('transform', `translate(${f(s.x)} ${f(s.y)})`);
         shadow.setAttribute('rx', f(34 + s.bob * 0.4));
@@ -524,14 +593,19 @@
           const sign = leg.side === 'L' ? -1 : 1;
           const foot = s[`foot${leg.side}`];
           const hip = rotateAbout([sign * body.hip, body.hipY + s.bob], [0, body.hipY + s.bob], s.lean * 0.35);
-          const tip = [sign * body.foot + foot.dx, -8 - foot.lift];
+          // Rising, the heel lifts and the shoe rolls over its toe, carrying
+          // the ankle up and forward; a lifted foot points its toe down.
+          const rise = (foot.rise || 0) * 18;
+          const point = foot.lift * 2.2;
+          const footX = sign * body.foot + foot.dx;
+          const ankle = rotateAbout([0, -8], [sign * 10, 0.8], sign * rise);
+          const tip = [footX + ankle[0], ankle[1] - foot.lift];
           const { outline, stripe, crease, fold } = legShape(hip, tip, sign);
           leg.crease.setAttribute('d', crease);
           leg.fold.setAttribute('d', fold);
           leg.thigh.setAttribute('d', outline);
           leg.stripe.setAttribute('d', stripe);
-          // A lifted foot points its toe.
-          leg.shoe.setAttribute('transform', `translate(${f(sign * body.foot + foot.dx)} ${f(-foot.lift)}) rotate(${f(-sign * foot.lift * 2.4)})`);
+          leg.shoe.setAttribute('transform', `translate(${f(footX)} ${f(-foot.lift)}) rotate(${f(sign * rise)} ${sign * 10} 0.8) rotate(${f(sign * point)} 0 -8)`);
         }
         head.setAttribute('transform', `rotate(${f(s.head)} 0 -188)`);
         arms.L.apply(s.armL);
@@ -574,6 +648,44 @@
   const GOWN_FOLDS = Array.from({ length: 7 }, (_, i) => 0.35 + (i * 2 * Math.PI) / 7);
   /** Spacing of the gown's code rows. */
   const ROW_STEP = 10.8;
+  /** Code's bodice, its satin highlight, and its seams, upright (bent per frame by bendPath). */
+  const BODICE = {
+    bodice: 'M-18.5 -166 C-19.5 -171 -12 -172 -8 -170 Q0 -166 8 -170 C12 -172 19.5 -171 18.5 -166 C20 -150 15 -134 11.5 -118 L-11.5 -118 C-15 -134 -20 -150 -18.5 -166 Z',
+    sheen: 'M-16.5 -165 C-17.5 -151 -14 -135 -10.5 -119.5 L-5 -119.5 C-7 -135 -9 -151 -8 -167.5 Z',
+    seams: 'M-6 -160 Q-4 -138 -3 -120 M6 -160 Q4 -138 3 -120',
+  };
+
+  /**
+   * Bends a path (absolute M/L/Q/C/Z commands) along the spine: points from
+   * the chest up turn fully by `deg` about (0, chestY), points at the waist
+   * stay put, and the ribs between follow smoothly.
+   */
+  function bendPath(d, deg, chestY) {
+    if (!deg) return d;
+    const tokens = d.match(/[A-Za-z]|-?\d*\.?\d+/g);
+    const pair = [];
+    let out = '';
+    for (const token of tokens) {
+      if (/[A-Za-z]/.test(token)) {
+        out += token;
+        continue;
+      }
+      pair.push(Number(token));
+      if (pair.length < 2) continue;
+      const [x, y] = pair.splice(0);
+      const k = deg * ease.inOut(clamp((chestY + 18 - y) / 24, 0, 1));
+      const [bx, by] = rotateAbout([x, y], [0, chestY], k);
+      out += `${f(bx)} ${f(by)} `;
+    }
+    return out.trim();
+  }
+
+  /** A point on a cubic Bézier (four [x, y] points) at t. */
+  function cubicAt([p0, p1, p2, p3], t) {
+    const u = 1 - t;
+    return [0, 1].map((k) => u * u * u * p0[k] + 3 * u * u * t * p1[k] + 3 * u * t * t * p2[k] + t * t * t * p3[k]);
+  }
+
   /** An angle wrapped into (-π, π]. */
   const wrapAngle = (a) => a - 2 * Math.PI * Math.ceil((a - Math.PI) / (2 * Math.PI));
 
@@ -685,11 +797,16 @@
     // `upper`, so the gown stretches and gathers with the rise and fall.
     const upper = svg('g', {}, spin);
     const lean = svg('g', {}, upper);
-    // Bodice, sash, and the paper-white neck.
-    svg('path', { class: 'tdd-bodice', fill: `url(#${id}-gown)`, d: 'M-18.5 -166 C-19.5 -171 -12 -172 -8 -170 Q0 -166 8 -170 C12 -172 19.5 -171 18.5 -166 C20 -150 15 -134 11.5 -118 L-11.5 -118 C-15 -134 -20 -150 -18.5 -166 Z' }, lean);
-    svg('path', { class: 'tdd-bodice-sheen', fill: `url(#${id}-sheen)`, d: 'M-16.5 -165 C-17.5 -151 -14 -135 -10.5 -119.5 L-5 -119.5 C-7 -135 -9 -151 -8 -167.5 Z' }, lean);
-    svg('path', { class: 'tdd-bodice-seam', d: 'M-6 -160 Q-4 -138 -3 -120 M6 -160 Q4 -138 3 -120' }, lean);
-    svg('path', { class: 'tdd-neckline', d: 'M-13 -169 Q-6 -158 0 -165 Q6 -158 13 -169' }, lean);
+    // Her spine curves: the chest, shoulders, arms, and head turn on the
+    // chest groups about body.chestY, and the bodice bends between the
+    // chest and the waist (see bendPath), so her top line arcs instead of
+    // tilting as one plank.
+    const chestBack = svg('g', {}, lean);
+    const bodiceParts = [
+      [svg('path', { class: 'tdd-bodice', fill: `url(#${id}-gown)` }, lean), BODICE.bodice],
+      [svg('path', { class: 'tdd-bodice-sheen', fill: `url(#${id}-sheen)` }, lean), BODICE.sheen],
+      [svg('path', { class: 'tdd-bodice-seam' }, lean), BODICE.seams],
+    ];
     svg('rect', { class: 'tdd-sash', x: -14, y: -123, width: 28, height: 8, rx: 3 }, lean);
     svg('path', { class: 'tdd-sash-sheen', d: 'M-11 -121 H6' }, lean);
     for (const d of [
@@ -699,12 +816,25 @@
     ]) svg('path', { class: 'tdd-sash-bow', d }, lean);
     svg('path', { class: 'tdd-sash-bow-sheen', d: 'M13.4 -122.6 Q17 -126.4 19.6 -124.4' }, lean);
     svg('rect', { class: 'tdd-sash-knot', x: 9.2, y: -122.6, width: 4, height: 5, rx: 1.4 }, lean);
+    const chestFront = svg('g', {}, lean);
     const neckPath = 'M-3 -181 L3 -181 L4.2 -168.5 Q0 -166.5 -4.2 -168.5 Z';
-    svg('path', { class: 'tdd-skin-rim', d: neckPath }, lean);
-    svg('path', { class: 'tdd-paper', d: neckPath }, lean);
-    svg('path', { class: 'tdd-neck-shadow', d: 'M-3 -181 L3 -181 L3.3 -177 Q0 -175.6 -3.3 -177 Z' }, lean);
+    svg('path', { class: 'tdd-skin-rim', d: neckPath }, chestFront);
+    svg('path', { class: 'tdd-paper', d: neckPath }, chestFront);
+    svg('path', { class: 'tdd-neck-shadow', d: 'M-3 -181 L3 -181 L3.3 -177 Q0 -175.6 -3.3 -177 Z' }, chestFront);
+    // A strand of pearls on a fine gold chain rests on her collarbones, with
+    // a violet teardrop in a gold bezel at its centre that sways as she moves.
+    const strand = [[-9.6, -170.4], [-7.4, -163.2], [7.4, -163.2], [9.6, -170.4]];
+    svg('path', { class: 'tdd-necklace-chain', d: `M${strand[0].join(' ')} C${strand.slice(1).map((p) => p.join(' ')).join(' ')}` }, chestFront);
+    for (let i = 1; i <= 9; i++) {
+      const [x, y] = cubicAt(strand, i / 10);
+      svg('circle', { class: 'tdd-necklace-pearl', cx: f(x), cy: f(y), r: 1.05, fill: `url(#${id}-pearl)` }, chestFront);
+    }
+    const pendant = svg('g', {}, chestFront);
+    svg('circle', { class: 'tdd-pendant-bail', cx: 0, cy: -163.1, r: 0.75 }, pendant);
+    svg('path', { class: 'tdd-pendant-gem', fill: `url(#${id}-gem)`, d: 'M0 -162.5 C1.9 -160.3 2.1 -158.3 0 -157.4 C-2.1 -158.3 -1.9 -160.3 0 -162.5 Z' }, pendant);
+    svg('circle', { class: 'tdd-pendant-glint', cx: -0.6, cy: -160.4, r: 0.45 }, pendant);
     // The head: a page with a folded corner, a face, and brace clips.
-    const head = svg('g', {}, lean);
+    const head = svg('g', {}, chestFront);
     svg('path', { class: 'tdd-page', fill: `url(#${id}-page)`, d: 'M-21 -231 H10 L22 -219 V-184 Q22 -178 16 -178 H-15 Q-21 -178 -21 -184 Z' }, head);
     svg('path', { class: 'tdd-page-fold', d: 'M10 -231 V-222 Q10 -219 13 -219 H22 Z' }, head);
     svg('line', { class: 'tdd-page-rule', x1: -15, y1: -224, x2: 2, y2: -224 }, head);
@@ -735,13 +865,13 @@
       return { side, pivot, drop };
     });
     const faceGroup = svg('g', { transform: 'translate(0 -202)' }, head);
-    const faceRig = face(faceGroup, { eyeX: 8, eyeY: -2, mouthY: 9, browY: -9, noseY: 4, lashes: true, seed: uid * 7 + 23 });
+    const faceRig = face(faceGroup, { eyeX: 8, eyeY: -2, mouthY: 9, browY: -9, noseY: 4, lashes: true, iris: `url(#${id}-iris-code)`, seed: uid * 7 + 23 });
     // Upper arms emerge from behind the torso; bent forearms, cuffs, and
-    // palms sit in front. Keep these layers in the same body coordinate frame.
-    const rearArms = svg('g', { class: 'tdd-arms-rear' }, lean);
-    lean.insertBefore(rearArms, lean.firstChild);
-    const frontArms = svg('g', { class: 'tdd-arms-front' }, lean);
+    // palms sit in front. Both layers turn with the chest.
+    const rearArms = svg('g', { class: 'tdd-arms-rear' }, chestBack);
+    const frontArms = svg('g', { class: 'tdd-arms-front' }, chestFront);
     const arms = { L: arm(rearArms, frontArms, 'code', 'L', body, id), R: arm(rearArms, frontArms, 'code', 'R', body, id) };
+    const armLayers = [rearArms, frontArms];
 
     /**
      * The gown from the waist (which rises and falls at waistY, and narrows
@@ -805,12 +935,21 @@
     return {
       body,
       root,
+      arms,
+      armLayers,
+      /** The frame the arms hang in (shoulders, with the spine's arch), in the troupe's floor coordinates. */
+      armFrame: (s) => `translate(${f(s.x)} ${f(s.y)}) scale(${f(s.spin)} 1) translate(0 ${f(s.bob)}) rotate(${f(s.lean)} 0 ${body.hipY}) rotate(${f(s.arch || 0)} 0 ${body.chestY})`,
       apply(t, s) {
         root.setAttribute('transform', `translate(${f(s.x)} ${f(s.y)})`);
         shadow.setAttribute('rx', f(46 + s.flare * 0.5 + s.bob * 0.4));
         spin.setAttribute('transform', `scale(${f(s.spin)} 1)`);
         upper.setAttribute('transform', `translate(0 ${f(s.bob)})`);
         lean.setAttribute('transform', `rotate(${f(s.lean)} 0 ${body.hipY})`);
+        const arch = s.arch || 0;
+        const chest = `rotate(${f(arch)} 0 ${body.chestY})`;
+        chestBack.setAttribute('transform', chest);
+        chestFront.setAttribute('transform', chest);
+        for (const [node, template] of bodiceParts) node.setAttribute('d', bendPath(template, arch, body.chestY));
         // The feet turn with the body; a lifted foot points its toe.
         shoes.setAttribute('transform', `scale(${f(s.spin)} 1)`);
         for (const foot of feet) {
@@ -916,7 +1055,7 @@
         const headScale = (s.headSpin ?? s.spin) / s.spin;
         head.setAttribute('transform', headScale === 1
           ? `rotate(${f(s.head)} 0 -176)`
-          : `rotate(${f(-s.lean)} 0 ${body.hipY}) scale(${f(headScale)} 1) rotate(${f(s.lean)} 0 ${body.hipY}) rotate(${f(s.head)} 0 -176)`);
+          : `rotate(${f(-arch)} 0 ${body.chestY}) rotate(${f(-s.lean)} 0 ${body.hipY}) scale(${f(headScale)} 1) rotate(${f(s.lean)} 0 ${body.hipY}) rotate(${f(arch)} 0 ${body.chestY}) rotate(${f(s.head)} 0 -176)`);
         // Facing away, the face is out of sight: only the back of the page shows.
         const facing = f(clamp((Math.cos(s.turnHead || 0) + 0.25) / 0.4, 0, 1));
         faceGroup.setAttribute('opacity', facing);
@@ -924,9 +1063,11 @@
         // The pearls hang plumb whatever the head's tilt, swing behind the
         // motion, and fly outward in a turn.
         for (const pearl of pearls) {
-          const angle = (s.earSwing || 0) - s.lean - s.head - pearl.side * (s.earFling || 0);
+          const angle = (s.earSwing || 0) - s.lean - arch - s.head - pearl.side * (s.earFling || 0);
           pearl.drop.setAttribute('transform', `rotate(${f(angle)} ${pearl.pivot[0]} ${pearl.pivot[1]})`);
         }
+        // The pendant lies against her chest, so it swings only a little.
+        pendant.setAttribute('transform', `rotate(${f(0.35 * (s.earSwing || 0))} 0 -163.1)`);
         arms.L.apply(s.armL);
         arms.R.apply(s.armR);
         faceRig.apply(t, s.face, s.look);
@@ -951,6 +1092,9 @@
     stops(svg('linearGradient', { id: `${id}-shoe`, class: 'tdd-shoe-grad', x1: 0, y1: 0, x2: 0.3, y2: 1 }, node), ['top', 'bottom']);
     stops(svg('radialGradient', { id: `${id}-pearl`, class: 'tdd-pearl-grad', cx: 0.36, cy: 0.32, r: 0.75 }, node), ['core', 'mid', 'edge']);
     stops(svg('radialGradient', { id: `${id}-blush`, class: 'tdd-blush-grad' }, node), ['core', 'edge']);
+    stops(svg('radialGradient', { id: `${id}-gem`, class: 'tdd-gem-grad', cx: 0.4, cy: 0.35, r: 0.8 }, node), ['core', 'mid', 'edge']);
+    stops(svg('radialGradient', { id: `${id}-iris`, class: 'tdd-iris-grad', cx: 0.5, cy: 0.78, r: 0.75 }, node), ['core', 'mid', 'edge']);
+    stops(svg('radialGradient', { id: `${id}-iris-code`, class: 'tdd-iris-grad tdd-iris-grad--code', cx: 0.5, cy: 0.78, r: 0.75 }, node), ['core', 'mid', 'edge']);
     // Cloth: the tailcoat and trousers catch light at the shoulders and
     // fall into shadow below; the gold lapel has a satin sheen.
     stops(svg('linearGradient', { id: `${id}-coat`, class: 'tdd-coat-grad', x1: 0.2, y1: 0, x2: 0.5, y2: 1 }, node), ['top', 'mid', 'bottom']);
@@ -968,7 +1112,7 @@
   // ------------------------------------------------------------------
 
   const NEUTRAL = {
-    x: 0, y: 0, bob: 0, lean: 0, head: 0, spin: 1, look: 0, face: 'happy', lamp: 'idle',
+    x: 0, y: 0, bob: 0, lean: 0, arch: 0, head: 0, spin: 1, look: 0, face: 'happy', lamp: 'idle',
     armL: { ...POSES.stand.armL }, armR: { ...POSES.stand.armR },
     footL: { dx: 0, lift: 0 }, footR: { dx: 0, lift: 0 },
     sway: 0, flare: 0, clean: 1, hold: 0, embrace: 0, low: 0, idleMotion: 1,
@@ -981,6 +1125,13 @@
    * motion at song times; none of them starts a clock.
    */
   const STAGE = { w: 960, h: 540 };
+  /**
+   * How far each dancer stands from the couple's centre under an arch: wide
+   * enough that the joined hands rise between the two heads, not over one.
+   */
+  const ARCH_SPACING = 46;
+  /** The spine's bend point; only Code arches (Test's arch stays 0). */
+  const CHEST_Y = BODY.code.chestY;
 
   function troupe(parent, { x, y, scale = 1, at, until, members = ['test', 'code'], gap = 56 }) {
     const id = `tdd-troupe-${++uid}`;
@@ -1006,6 +1157,30 @@
       const state = track(merge(NEUTRAL, { x: offset, look: members.length === 2 ? (kind === 'test' ? 1 : -1) : 0 }));
       dancers[kind] = { kind, rig, state, home: offset };
     });
+    // In the hold Code's arm lies along the top of Test's arm, which reaches
+    // behind her back, so from the front her arm passes behind his, while
+    // her hand rests on top of his shoulder, in front. Both inner arms move
+    // to layers between the dancers (in front of Test's body, behind
+    // Code's): her arm, then his arm, then her hand.
+    const holdLayers = dancers.test && dancers.code
+      ? { code: svg('g', {}, floor), test: svg('g', {}, floor), codeHand: svg('g', {}, floor) }
+      : null;
+    if (holdLayers) {
+      for (const layer of [holdLayers.code, holdLayers.test, holdLayers.codeHand]) floor.insertBefore(layer, dancers.code.rig.root);
+    }
+    /** Puts an arm (and, given handLayer, its hand) in the hold layers, or back in its dancer's own layers. */
+    function layerArm(rig, side, layer, handLayer) {
+      const [upperArm, foreArm] = rig.arms[side].parts;
+      const { hand } = rig.arms[side];
+      if (layer) {
+        if (upperArm.parentNode !== layer) layer.append(upperArm, foreArm);
+      } else if (upperArm.parentNode !== rig.armLayers[0]) {
+        rig.armLayers[0].append(upperArm);
+        rig.armLayers[1].prepend(foreArm);
+      }
+      const handHome = (layer && handLayer) || foreArm;
+      if (hand.parentNode !== handHome) handHome.append(hand);
+    }
     const waltzes = [];
     const twirls = [];
     /** Rig units from the troupe's x to the middle of the couple's footprint. */
@@ -1068,10 +1243,6 @@
         roam: { x: active.roam * 0.5 * (1 - Math.cos(around)), y: 6 * Math.sin(around), scale: 1 + 0.03 * Math.sin(around) },
         rise: riseOf(phase),
         x: travel * dir * (2 * glide - 1),
-        // Legato footwork: the leading foot glides through most of "1",
-        // the other brushes in to close on "2–3".
-        lead: { from: -travel * dir, to: travel * dir, at: smooth(phase / 0.52), lift: Math.sin(Math.PI * clamp(phase / 0.52, 0, 1)) },
-        trail: { from: -travel * dir, to: travel * dir, at: smooth((phase - 0.54) / 0.4), lift: Math.sin(Math.PI * clamp((phase - 0.54) / 0.4, 0, 1)) },
         sway: Math.sin(swing),
         lag: (delay) => Math.sin(swing - delay),
         depth: 1 + 0.022 * Math.sin((Math.PI / 2) * (index + phase)),
@@ -1079,30 +1250,189 @@
     }
 
     /**
-     * Footwork while a dancer travels outside a waltz: one step per beat, so
-     * a walk between scenes is in time with the music. Speed is measured in
-     * stage pixels and counts sideways travel, travel up or down the floor,
-     * and moving toward or away from the viewer (a change of scale).
+     * Momentum: travelling, a dancer's body leans a little into the motion
+     * and into each change of speed (degrees, + leaning screen-right), so a
+     * start or a stop has weight instead of the figure gliding upright.
      */
-    function walkOf(dancer, t) {
-      const where = (time) => {
-        const pos = stagePos.value(time);
-        return [pos.x + dancer.state.value(time).x * pos.scale, pos.y, pos.scale];
-      };
-      const [x, y, sc] = where(t);
-      const [x0, y0, sc0] = where(t - 0.1);
-      const speed = Math.hypot(x - x0, (y - y0) * 1.5, (sc - sc0) * 260) / 0.1;
-      const amount = smooth((speed - 8) / 60);
-      if (amount <= 0) return null;
-      const { index, phase } = beats.at(t);
-      const cycle = Math.sin(Math.PI * (index + phase));
+    function travelLean(dancer, t) {
+      const scale = placementAt(t).scale;
+      const h = 0.12;
+      const [a, b, c] = [t - h, t, t + h].map((time) => floorPoint(dancer, time, 0) / scale);
+      return clamp(0.006 * (c - a) / (2 * h) + 0.004 * (c - 2 * b + a) / (h * h), -5, 5);
+    }
+
+    /** How far each dancer's foot may stand from under its hip (rig units). */
+    const REACH = { test: 40, code: 28 };
+
+    /** The troupe's placement at `time`: stage x and scale, with the waltz's roam. */
+    function placementAt(time) {
+      const pos = stagePos.value(time);
+      const w = waltzAt(time);
+      const roam = w && !w.who ? w : null;
       return {
-        amount,
-        liftL: Math.max(0, cycle) * 8 * amount,
-        liftR: Math.max(0, -cycle) * 8 * amount,
-        dip: Math.abs(cycle) * 2.5 * amount,
-        velocity: (x - where(t - 0.2)[0]) / 0.2 / sc,
+        x: pos.x + (roam ? roam.roam.x * roam.fade : 0),
+        scale: pos.scale * (roam ? 1 + (roam.roam.scale * roam.depth - 1) * roam.fade : 1),
       };
+    }
+
+    /**
+     * A dancer's own spot at `time` (rig x): its keyed x, drawn closer to its
+     * partner in the promenade hold and under an arch, but not its waltz sway,
+     * which is the body moving over planted feet.
+     */
+    function spotAt(dancer, time) {
+      const keyed = dancer.state.value(time);
+      const closer = Math.max(keyed.embrace * Math.max(0, Math.abs(dancer.home) - 40), archAt(time) * Math.max(0, Math.abs(dancer.home) - ARCH_SPACING));
+      return keyed.x - Math.sign(dancer.home) * closer;
+    }
+
+    /**
+     * The stage x of the floor under a point `offset` rig units from the
+     * dancer's spot at `time`. A foot that has landed keeps that stage point
+     * however the troupe travels, roams, or grows, so no planted foot skates.
+     */
+    function floorPoint(dancer, time, offset) {
+      const place = placementAt(time);
+      return place.x + (spotAt(dancer, time) + offset) * place.scale;
+    }
+
+    /** The rig offset from the dancer's spot at `time` that lands on stage x `stageX`. */
+    function offsetAt(dancer, time, stageX) {
+      const place = placementAt(time);
+      return (stageX - place.x) / place.scale - spotAt(dancer, time);
+    }
+
+    /** The waltz `dancer` dances at `time`, if any (a couple's waltz or its own solo). */
+    function waltzOf(dancer, time) {
+      const w = waltzAt(time);
+      return w && (!w.who || w.who === dancer.kind) ? w : null;
+    }
+
+    /**
+     * What a dancer's feet do during beat `b`: 'waltz' (the box step, while
+     * the floor moves no faster than a box step travels), 'walk' (the floor
+     * is moving), or 'still'. A jump faster than anyone could step (an
+     * instant setup key, eased by the tracks' smoothing) is 'still' too:
+     * a placement, not a journey. Cached: the choreography is fixed once
+     * the scenes are built, so each beat is classified once.
+     */
+    const beatPlans = new Map();
+    let plannedFor = '';
+    function beatPlan(dancer, b) {
+      // Keys added after a frame was drawn (while scenes are still being
+      // built) invalidate the cache.
+      const version = [stagePos.version, waltzes.length, ...Object.values(dancers).map((d) => d.state.version)].join(':');
+      if (version !== plannedFor) {
+        beatPlans.clear();
+        plannedFor = version;
+      }
+      const key = `${dancer.kind}:${b}`;
+      if (beatPlans.has(key)) return beatPlans.get(key);
+      const t0 = beats.time(b);
+      const t1 = beats.time(b + 1);
+      const at = (p) => t0 + p * (t1 - t0);
+      const scale = placementAt(t0).scale;
+      // The jump test looks a little past both ends of the beat, as far as
+      // the tracks' smoothing spreads an instant key.
+      const span = t1 - t0 + 0.4;
+      const xs = Array.from({ length: 13 }, (_, i) => floorPoint(dancer, t0 - 0.2 + (i / 12) * span, 0) / scale);
+      const peak = Math.max(...xs.slice(1).map((x, i) => Math.abs(x - xs[i]))) / (span / 12);
+      const travel = Math.abs(floorPoint(dancer, t1, 0) - floorPoint(dancer, t0, 0)) / scale;
+      const w = waltzOf(dancer, at(0.05));
+      let mode = 'still';
+      if (peak <= 400) {
+        if (w && w.fade > 0.5 && travel / (t1 - t0) < 55) mode = 'waltz';
+        else if (travel > 4) mode = 'walk';
+      }
+      const plan = { mode, travel, w, at };
+      beatPlans.set(key, plan);
+      return plan;
+    }
+
+    /**
+     * The steps around t, beat by beat: in a waltz the leading foot glides
+     * out on "1–2" and the other closes on "2–3"; travelling, light steps
+     * divide the beat, enough of them (two to six) that the body never
+     * passes beyond a planted foot, so the feet never cross; and the first
+     * still beat after moving closes both feet under the body again. Each
+     * step: { side, lift, land, offset (from the foot's own spot), height }.
+     */
+    function stepsAround(dancer, t) {
+      const now = beats.index(t);
+      const events = [];
+      for (let b = now - 4; b <= now + 3; b++) {
+        const { mode, travel, w, at } = beatPlan(dancer, b);
+        if (mode === 'waltz') {
+          const dir = b % 2 === 0 ? 1 : -1;
+          const offset = w.travel * dir;
+          events.push({ side: dir > 0 ? 'R' : 'L', lift: at(0), land: at(0.52), offset, height: 4.2 });
+          events.push({ side: dir > 0 ? 'L' : 'R', lift: at(0.54), land: at(0.94), offset, height: 2.4 });
+        } else if (mode === 'walk') {
+          const count = clamp(2 * Math.ceil(travel / 60), 2, 6);
+          for (let k = 0; k < count; k++) {
+            events.push({ side: k % 2 === 0 ? 'R' : 'L', lift: at(k / count), land: at((k + 1) / count), offset: 0, height: 2.6 * smooth(travel / 12) });
+          }
+        } else if (beatPlan(dancer, b - 1).mode !== 'still') {
+          // Come to rest: both feet close under the body.
+          events.push({ side: 'R', lift: at(0), land: at(0.42), offset: 0, height: 1.6 });
+          events.push({ side: 'L', lift: at(0.5), land: at(0.92), offset: 0, height: 1.6 });
+        }
+      }
+      return events;
+    }
+
+    /**
+     * Footwork as planted steps: each foot lifts, travels, lands at a spot
+     * on the floor, and stays exactly there until it lifts again, so no
+     * planted foot skates, and one figure gives way to the next (walking
+     * into a waltz, the waltz into walking) one step at a time instead of
+     * two footworks blending. A foot lands where the floor under its side of
+     * the body will be halfway through its stance, so the body passes evenly
+     * over it even while the troupe travels. Returns body-relative offsets,
+     * lifts, and the body's dip as each step lands; null at rest.
+     */
+    function footworkAt(dancer, t) {
+      const events = stepsAround(dancer, t);
+      if (!events.length) return null;
+      const w = waltzOf(dancer, t);
+      const sway = w ? w.x * w.fade : 0;
+      const reach = REACH[dancer.kind];
+      const out = { dip: 0 };
+      for (const side of ['L', 'R']) {
+        const base = (side === 'L' ? -1 : 1) * dancer.rig.body.foot;
+        const mine = events.filter((e) => e.side === side);
+        // Where a step lands: the floor under the foot's spot halfway
+        // through the stance that follows it.
+        const landing = (i) => {
+          const step = mine[i];
+          const next = mine[i + 1];
+          const stanceEnd = next ? next.lift : step.land + (beats.at(step.land).period || 1);
+          return floorPoint(dancer, (step.land + stanceEnd) / 2, base + step.offset);
+        };
+        let i = -1;
+        while (i + 1 < mine.length && mine[i + 1].lift <= t) i++;
+        let stand;
+        let lift = 0;
+        if (i < 0) stand = floorPoint(dancer, t, base);
+        else {
+          const step = mine[i];
+          const from = i > 0 ? landing(i - 1) : floorPoint(dancer, step.lift, base);
+          const to = landing(i);
+          const k = clamp((t - step.lift) / (step.land - step.lift), 0, 1);
+          stand = from + (to - from) * smooth(k);
+          lift = step.height * Math.sin(Math.PI * k);
+          if (k < 1) out.dip = Math.max(out.dip, 0.45 * step.height * (1 - Math.cos(2 * Math.PI * k)) / 2);
+        }
+        out[side] = { dx: clamp(offsetAt(dancer, t, stand) - base - sway, -reach, reach), lift };
+      }
+      return out;
+    }
+
+    /** How fast, and how much, a dancer is travelling at t (for the coat tails and gown). */
+    function travelOf(dancer, t) {
+      const scale = placementAt(t).scale;
+      const velocity = (floorPoint(dancer, t, 0) - floorPoint(dancer, t - 0.2, 0)) / 0.2 / scale;
+      return { velocity, amount: smooth((Math.abs(velocity) - 6) / 40) };
     }
 
     /** How far an underarm turn is under way at t (0 outside one, 1 in it). */
@@ -1207,11 +1537,13 @@
       // In the promenade hold (and under an arch) the partners stand close
       // enough to touch: Test's arm behind Code's back, her hand on his shoulder.
       const arch = archAt(t);
-      const closer = Math.max(s.embrace * Math.max(0, Math.abs(dancer.home) - 40), arch * Math.max(0, Math.abs(dancer.home) - 34));
+      const closer = Math.max(s.embrace * Math.max(0, Math.abs(dancer.home) - 40), arch * Math.max(0, Math.abs(dancer.home) - ARCH_SPACING));
       if (closer > 0) s.x -= Math.sign(dancer.home) * closer;
       // The ballroom head line: in the hold each partner looks out over the
       // other's shoulder, Code's head tilted away from Test, his to his left.
       s.head += (isTest ? -3 : 5) * s.embrace;
+      // Code's top line arcs back and away from him in the hold.
+      if (!isTest) s.arch += 3 * s.embrace;
       if (arch > 0) s.hold = Math.max(s.hold, arch);
       if (!isTest) {
         // Cleaning up: the spotlight follows the rate of the tidy, with a
@@ -1230,6 +1562,7 @@
       s.lean += s.idleMotion * 0.8 * Math.sin(Math.PI * (pulse.index + pulse.phase));
       const outer = isTest ? 'armL' : 'armR';
       const outerSign = isTest ? 1 : -1;
+      s.lean += travelLean(dancer, t);
       if (w) {
         const e = w.fade;
         const inward = isTest ? 1 : -1;
@@ -1237,6 +1570,7 @@
         // Test stands tall, inclined a touch toward her; Code's top line
         // curves back and away from him, as in a ballroom hold.
         s.lean += (4 * w.sway + (isTest ? 1.2 : 3.4)) * e;
+        if (!isTest) s.arch += (2 + 1.5 * w.lag(0.4)) * e;
         s.head += 3 * inward * e;
         s.x += w.x * e;
         s.head += (isTest ? 2.5 * w.lag(0.3) : -2 + 3 * w.lag(0.45)) * e;
@@ -1247,23 +1581,10 @@
           el: s[outer].el + outerSign * 12 * w.lag(1.1) * e,
           wr: (s[outer].wr || 0) + outerSign * 12 * w.lag(1.6) * e,
         };
-        {
-          // Both partners step: the leading foot glides on "1–2";
-          // the other closes on "3". Feet stay put while the body travels.
-          const leadSide = w.dir > 0 ? 'R' : 'L';
-          const trailSide = w.dir > 0 ? 'L' : 'R';
-          const leadX = w.lead.from + (w.lead.to - w.lead.from) * w.lead.at;
-          const trailX = w.trail.from + (w.trail.to - w.trail.from) * w.trail.at;
-          // Rising onto the toes through "2–3", lowering on "1".
-          const heel = isTest ? 4 * w.rise : 0;
-          const lead = s[`foot${leadSide}`];
-          const trail = s[`foot${trailSide}`];
-          // A gliding box step: the leading foot skims out low, the closing
-          // foot brushes in lower still, and a planted foot stays exactly
-          // where it stands on the floor while the body travels over it.
-          s[`foot${leadSide}`] = { dx: lead.dx + (leadX - w.x) * e, lift: lead.lift + (5.5 * w.lead.lift + heel) * e };
-          s[`foot${trailSide}`] = { dx: trail.dx + (trailX - w.x) * e, lift: trail.lift + (3.2 * w.trail.lift + heel) * e };
-        }
+        // Test rises onto the balls of his feet through "2–3" and lowers on
+        // "1": his heels lift while his toes stay down.
+        if (isTest) s.footL = { ...s.footL, rise: (s.footL.rise || 0) + w.rise * e };
+        if (isTest) s.footR = { ...s.footR, rise: (s.footR.rise || 0) + w.rise * e };
         if (isTest) s.tails = (9 * w.lag(1.0) - 0.12 * w.travel * w.dir * Math.sin(Math.PI * w.phase)) * e;
         if (!isTest) {
           // The gown trails the travel and sways with the frame.
@@ -1271,16 +1592,22 @@
           s.flare += 3 * w.rise * e;
         }
       } else {
-        const walk = walkOf(dancer, t);
-        if (walk) {
-          s.bob += walk.dip;
-          s.footL = { ...s.footL, lift: s.footL.lift + walk.liftL };
-          s.footR = { ...s.footR, lift: s.footR.lift + walk.liftR };
-          // Walking, the tails trail behind the direction of travel.
+        const walk = travelOf(dancer, t);
+        if (walk.amount > 0) {
+          // Travelling, the tails and the gown trail the direction of travel.
           if (isTest) s.tails = clamp(walk.velocity / 16, -10, 10) * walk.amount;
           if (!isTest) {
             s.sway += clamp(-walk.velocity / 140, -0.9, 0.9) * walk.amount;
           }
+        }
+      }
+      // The feet: planted steps through every figure (footworkAt).
+      const steps = footworkAt(dancer, t);
+      if (steps) {
+        s.bob += w ? 0 : steps.dip;
+        for (const side of ['L', 'R']) {
+          const foot = s[`foot${side}`];
+          s[`foot${side}`] = { ...foot, dx: foot.dx + steps[side].dx, lift: foot.lift + steps[side].lift };
         }
       }
       const tw = twirlAt(dancer.kind, t);
@@ -1294,6 +1621,7 @@
         // The axis stands straight up through the turn.
         const axis = smooth((t - tw.at + TURN.prep) / 0.3) * smooth((end + 0.4 - t) / 0.4);
         s.lean *= 1 - axis;
+        s.arch *= 1 - axis;
         s.head *= 1 - axis;
         // A plié to prepare, the relevé to turn, a plié again to land.
         const bump = (x) => (x <= 0 || x >= 1 ? 0 : Math.sin(Math.PI * x) ** 2);
@@ -1331,7 +1659,7 @@
         const side = isTest ? 'R' : 'L';
         const sign = side === 'L' ? -1 : 1;
         // Target in this dancer's un-leaned, un-turned body coordinates.
-        const local = rotateAbout([(target[0] - s.x) / (s.spin || 1), target[1] - s.y - s.bob], [0, body.hipY], -s.lean);
+        const local = rotateAbout(rotateAbout([(target[0] - s.x) / (s.spin || 1), target[1] - s.y - s.bob], [0, body.hipY], -s.lean), [0, CHEST_Y], -s.arch);
         const shoulder = [sign * body.shoulder[0], body.shoulder[1]];
         const solved = reach(shoulder, local, body.upper, body.fore, side === 'R' ? 1 : -1);
         const key = `arm${side}`;
@@ -1351,7 +1679,7 @@
         if (!isTest && couple.drape > 0) {
           // Aim the palm down over his shoulder, independent of the elbow
           // angle. During a turn the hands join overhead instead.
-          const direction = rotateAbout([couple.palm[0] / (s.spin || 1), couple.palm[1]], [0, 0], -s.lean);
+          const direction = rotateAbout([couple.palm[0] / (s.spin || 1), couple.palm[1]], [0, 0], -s.lean - s.arch);
           let wrist = Math.atan2(-direction[0], direction[1]) * 180 / Math.PI - solved.sh - solved.el;
           while (wrist - solved.wr > 180) wrist -= 360;
           while (wrist - solved.wr < -180) wrist += 360;
@@ -1375,7 +1703,7 @@
         const pos = stagePos.value(time);
         const w = waltzAt(time);
         const roam = w && !w.who ? w.roam.x * w.fade : 0;
-        return (pos.x + roam) / pos.scale + s.x + 78 * Math.sin((s.lean + s.head) * DEG);
+        return (pos.x + roam) / pos.scale + s.x + 78 * Math.sin((s.lean + s.head + 0.55 * s.arch) * DEG);
       };
       const earlier = (time) => {
         const w = waltzAt(time);
@@ -1400,7 +1728,7 @@
         // A point on a dancer's body (body-local, before lean and turn).
         const on = (kind, [px, py]) => {
           const s = raw[kind];
-          const p = rotateAbout([px, py], [0, dancers[kind].rig.body.hipY], s.lean);
+          const p = rotateAbout(rotateAbout([px, py], [0, CHEST_Y], s.arch), [0, dancers[kind].rig.body.hipY], s.lean);
           return [s.x + p[0] * s.spin, s.y + s.bob + p[1]];
         };
         const lerp = (a, b, k) => [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k];
@@ -1418,10 +1746,11 @@
         const palm = rotateAbout([0, 7.2], [0, 0], raw.test.lean);
         // IK targets the wrist; the palm, not the cuff, rests on the shoulder.
         const shoulder = [contact[0] - palm[0], contact[1] - palm[1]];
-        // Underarm turn: the joined hands rise beside Code's head, his arm
-        // straight up, and draw in a little as she turns side-on beneath them.
+        // Underarm turn: the joined hands rise into the gap between the two
+        // heads, his arm nearly straight up, and draw in a little as she
+        // turns side-on beneath them.
         const side = 1 - Math.min(1, Math.abs(raw.code.spin));
-        const arch = [raw.code.x - 44 + 4 * side, raw.code.y + raw.code.bob - 224 + 4 * side];
+        const arch = [raw.code.x - 50 + 4 * side, raw.code.y + raw.code.bob - 222 + 4 * side];
         const k = archAt(t);
         couple = {
           palm, drape: raw.code.embrace * (1 - k),
@@ -1429,11 +1758,25 @@
           code: lerp(lerp(hands, shoulder, raw.code.embrace), arch, k),
         };
       }
+      const finals = {};
       for (const dancer of Object.values(dancers)) {
         const s = stateOf(dancer, t, couple, waltzFor(dancer));
         if (dancer.kind === 'code') s.earSwing = pearlSwing(dancer, t, s);
-        dancer.rig.apply(t, s);
+        finals[dancer.kind] = s;
       }
+      // Layer the inner arms before posing them, so a hand that changes
+      // layer is placed for its new layer in the same frame.
+      if (holdLayers) {
+        const held = finals.code.hold > 0.5;
+        layerArm(dancers.code.rig, 'L', held ? holdLayers.code : null, holdLayers.codeHand);
+        layerArm(dancers.test.rig, 'R', held ? holdLayers.test : null);
+        if (held) {
+          holdLayers.code.setAttribute('transform', dancers.code.rig.armFrame(finals.code));
+          holdLayers.codeHand.setAttribute('transform', dancers.code.rig.armFrame(finals.code));
+          holdLayers.test.setAttribute('transform', dancers.test.rig.armFrame(finals.test));
+        }
+      }
+      for (const dancer of Object.values(dancers)) dancer.rig.apply(t, finals[dancer.kind]);
     });
 
     fx.fadeIn(wrap, at, 0.35);
@@ -1513,11 +1856,18 @@
        * inner hands joined between them.
        */
       hold(atTime, { pose = 'frame', dur = 0.8, release = false, style = 'promenade' } = {}) {
-        keyAll(dur < 0.1 ? atTime : nearestBeat(atTime), (dancer) => ({
-          hold: release ? 0 : 1,
-          embrace: !release && style === 'promenade' ? 1 : 0,
-          [dancer.kind === 'test' ? 'armL' : 'armR']: poseOf(pose)[dancer.kind === 'test' ? 'armL' : 'armR'],
-        }), dur);
+        keyAll(dur < 0.1 ? atTime : nearestBeat(atTime), (dancer) => {
+          const outer = dancer.kind === 'test' ? 'armL' : 'armR';
+          const inner = dancer.kind === 'test' ? 'armR' : 'armL';
+          return {
+            hold: release ? 0 : 1,
+            embrace: !release && style === 'promenade' ? 1 : 0,
+            [outer]: poseOf(pose)[outer],
+            // Letting go, the inner arm settles into the pose as well,
+            // rather than into whatever it held before the hold.
+            ...(release && poseOf(pose)[inner] ? { [inner]: poseOf(pose)[inner] } : {}),
+          };
+        }, dur);
         return api;
       },
       /**
@@ -1535,11 +1885,11 @@
         keyAll(begin, () => ({ hold: 1, embrace: 0, low: 1 }), 0.5);
         if (dancers.test) dancers.test.state.add(begin, { ...POSES.present, look: 1, face: 'joy', lean: -4 }, 0.5);
         if (dancers.code) {
-          dancers.code.state.add(begin, { ...POSES.spotlight, look: 0, face: 'joy', head: -4, lean: 2 }, 0.5);
+          dancers.code.state.add(begin, { ...POSES.spotlight, look: 0, face: 'joy', head: -4, lean: 1, arch: 4 }, 0.5);
           dancers.code.state.add(begin + 0.2, { clean }, tidyDur);
         }
         keyAll(back, (dancer) => ({
-          hold: 1, embrace: 1, low: 0, lean: 0, head: 0, look: dancer.kind === 'test' ? 1 : -1,
+          hold: 1, embrace: 1, low: 0, lean: 0, arch: 0, head: 0, look: dancer.kind === 'test' ? 1 : -1,
           [dancer.kind === 'test' ? 'armL' : 'armR']: POSES.frame[dancer.kind === 'test' ? 'armL' : 'armR'],
         }), 0.5);
         return api;
@@ -1572,7 +1922,7 @@
         keyAll(start - 0.35, (dancer) => ({ bob: -3, lean: dancer.kind === 'code' ? -3 : 0 }), 0.35);
         // Test's arm supports her back (the promenade hold) through the dip.
         keyAll(start - 0.35, () => ({ hold: 1, embrace: 1 }), 0.35);
-        if (dancers.code) dancers.code.state.add(start, { lean: 26 * depth, head: 12 * depth, bob: 5 * depth, armR: { sh: -150, el: 26 }, face: 'joy' }, dur);
+        if (dancers.code) dancers.code.state.add(start, { lean: 21 * depth, arch: 11 * depth, head: 10 * depth, bob: 5 * depth, armR: { sh: -150, el: 26 }, face: 'joy' }, dur);
         if (dancers.test) dancers.test.state.add(start, { lean: 11 * depth, head: 8 * depth, bob: 8 * depth, armL: { sh: 118, el: -28 } }, dur);
         return api;
       },
@@ -1592,7 +1942,7 @@
       },
       /** Both stand tall again after a dip or bow, from a beat. */
       rise(atTime, dur = 0.8) {
-        keyAll(nearestBeat(atTime), () => ({ lean: 0, head: 0, bob: 0 }), dur);
+        keyAll(nearestBeat(atTime), () => ({ lean: 0, arch: 0, head: 0, bob: 0 }), dur);
         return api;
       },
       /**
@@ -1601,7 +1951,7 @@
        */
       bow(atTime, { dur = 0.6 } = {}) {
         const at0 = nearestBeat(atTime);
-        keyAll(at0, (dancer) => ({ hold: 0, embrace: 0, lean: dancer.kind === 'test' ? 16 : -12, head: dancer.kind === 'test' ? 6 : -8, face: 'smile' }), dur);
+        keyAll(at0, (dancer) => ({ hold: 0, embrace: 0, lean: dancer.kind === 'test' ? 16 : -9, arch: dancer.kind === 'test' ? 0 : -5, head: dancer.kind === 'test' ? 6 : -8, face: 'smile' }), dur);
         if (dancers.test) dancers.test.state.add(at0, { armR: POSES.bow.armR, armL: { sh: 52, el: -14, wr: 28 } }, dur);
         if (dancers.code) dancers.code.state.add(at0, { armL: { sh: 40, el: 30, wr: 14 }, armR: { sh: -40, el: -30, wr: -14 }, bob: 8 }, dur);
         return api;

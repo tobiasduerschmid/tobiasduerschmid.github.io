@@ -48,10 +48,6 @@
   stroke-width: 1.5;
 }
 
-.tdd-arm--test .tdd-arm-fore {
-  fill: #1a2350;
-}
-
 .tdd-arm-shine {
   fill: none;
   stroke-linecap: round;
@@ -83,6 +79,11 @@
   stroke-width: 2.4;
   stroke-linejoin: round;
 }
+
+/* The elbow patch: the upper arm's fill, without an outline, over the
+   forearm's outline where the two overlap. */
+.tdd-arm--test .tdd-elbow-patch { fill: #1d2756; }
+.tdd-arm--code .tdd-elbow-patch { fill: var(--tdd-code-skin, #e7e0ff); }
 
 .has-dark-code-skin .tdd-skin-rim {
   stroke: #fff1d9;
@@ -125,26 +126,32 @@
   fill: #ffffff;
 }
 
-/* The iris: a soft colour low in each eye, under the glints. */
-.tdd-eye-iris {
-  fill: #4d74d9;
+/* The iris: light below, shaded under the lid; then a pupil and catchlights. */
+.tdd-iris-grad .tdd-stop--core { stop-color: #a9c6ff; }
+.tdd-iris-grad .tdd-stop--mid { stop-color: #4d74d9; }
+.tdd-iris-grad .tdd-stop--edge { stop-color: #1f2a66; }
+
+.tdd-eye-pupil {
+  fill: #110c2b;
 }
 
 .tdd-eye-glint--small {
   opacity: 0.85;
 }
 
-.tdd-lash,
-.tdd-lid {
+/* Lashes are fine strokes; the lid liner is a filled, tapering shape. */
+.tdd-lash {
   fill: none;
   stroke: #1b1640;
-  stroke-width: 1.6;
+  stroke-width: 0.85;
   stroke-linecap: round;
-  stroke-linejoin: round;
 }
 
 .tdd-lid {
-  stroke-width: 1.4;
+  fill: #1b1640;
+  stroke: #1b1640;
+  stroke-width: 0.4;
+  stroke-linejoin: round;
 }
 
 /* Brows are filled, tapering from the inner end to a fine tail. */
@@ -457,13 +464,6 @@
   stroke-linecap: round;
 }
 
-.tdd-neckline {
-  fill: none;
-  stroke: #f2c14e;
-  stroke-width: 2;
-  stroke-linecap: round;
-}
-
 .tdd-sash {
   fill: #f2c14e;
   stroke: #8a6416;
@@ -537,6 +537,39 @@
   fill: #f2c14e;
   stroke: #8a6416;
   stroke-width: 0.5;
+}
+
+/* The necklace: pearls on a fine gold chain and a violet teardrop
+   pendant in a gold bezel. */
+.tdd-necklace-chain {
+  fill: none;
+  stroke: #d9a93a;
+  stroke-width: 0.7;
+}
+
+.tdd-necklace-pearl {
+  stroke: rgba(70, 60, 120, 0.55);
+  stroke-width: 0.4;
+}
+
+.tdd-gem-grad .tdd-stop--core { stop-color: #e6dbff; }
+.tdd-gem-grad .tdd-stop--mid { stop-color: #8b63f0; }
+.tdd-gem-grad .tdd-stop--edge { stop-color: #43258f; }
+
+.tdd-pendant-gem {
+  stroke: #d9a93a;
+  stroke-width: 0.75;
+  stroke-linejoin: round;
+}
+
+.tdd-pendant-bail {
+  fill: #f2c14e;
+  stroke: #8a6416;
+  stroke-width: 0.4;
+}
+
+.tdd-pendant-glint {
+  fill: #ffffff;
 }
 
 .tdd-earring-link {
@@ -630,15 +663,17 @@
 .tdd-dancer--code .tdd-eye { fill: var(--tdd-code-ink, #1b1640); }
 .tdd-dancer--code .tdd-eye-glint { fill: var(--tdd-code-glint, #ffffff); }
 .tdd-dancer--code .tdd-lash,
-.tdd-dancer--code .tdd-lid,
 .tdd-dancer--code .tdd-nose { stroke: var(--tdd-code-ink, #1b1640); }
-.tdd-dancer--code .tdd-brow {
+.tdd-dancer--code .tdd-brow,
+.tdd-dancer--code .tdd-lid {
   fill: var(--tdd-code-ink, #1b1640);
   stroke: var(--tdd-code-ink, #1b1640);
 }
 /* Code's iris and lips mix her ink colour, so they keep their contrast
    against whichever skin she inherits. */
-.tdd-dancer--code .tdd-eye-iris { fill: color-mix(in srgb, var(--tdd-code-ink, #1b1640) 40%, #a68cff); }
+.tdd-iris-grad--code .tdd-stop--core { stop-color: color-mix(in srgb, var(--tdd-code-ink, #1b1640) 18%, #ddd0ff); }
+.tdd-iris-grad--code .tdd-stop--mid { stop-color: color-mix(in srgb, var(--tdd-code-ink, #1b1640) 35%, #9d82f5); }
+.tdd-iris-grad--code .tdd-stop--edge { stop-color: color-mix(in srgb, var(--tdd-code-ink, #1b1640) 70%, #5a43b8); }
 .tdd-dancer--code .tdd-mouth { stroke: color-mix(in srgb, var(--tdd-code-ink, #1b1640) 62%, #c2416f); }
 
 

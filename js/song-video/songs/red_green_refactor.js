@@ -128,7 +128,9 @@
       duo.waltz(line('verse-1-1').start + 0.3, mark('verse-1-2', 'rest') - 0.2, { travel: 10, who: 'test' });
       duo.waltz(mark('verse-1-2', 'rest') + 0.2, mark('verse-1-5', 'stop'), { travel: 10, roam: 8 });
       duo.waltz(line('verse-1-6').start, mark('verse-1-8', 'red'), { travel: 10, roam: 8 });
-      duo.place(line('intro-4').end + 0.3, SPOT.side, 2.4);
+      // An unhurried progressive waltz across the floor, from "guide you
+      // through" to the downbeat before Rule 1.
+      duo.place(mark('intro-4', 'guide'), SPOT.side, line('verse-1-1').start - 0.3 - mark('intro-4', 'guide'));
     }
 
     // ----------------------------------------------------------------
@@ -341,11 +343,12 @@
       const xs = { red: 650, green: 745, refactor: 840 };
       const tiles = props.floorTiles(content, { y: 446, xs, rx: 70, at: s0, until: sEnd });
       const duo = couple;
-      duo.place(s0 - 0.7, { x: xs.red, y: 446, scale: 1.06 }, 0.9);
+      duo.place(s0 - 0.8, { x: xs.red, y: 446, scale: 1.06 }, 1.1);
       duo.hold(s0, { pose: 'frame' });
-      // Each move between tiles is a glide of about a beat; the long way
-      // back (refactor → red) takes longer, so it never reads as a slide.
-      const go = (phase, at, dur = 0.7) => duo.place(at - 0.35, { x: xs[phase] }, dur);
+      // Each move between tiles is an unhurried glide centred on its word
+      // and settling on a beat, so the couple travels in step instead of
+      // darting from tile to tile.
+      const go = (phase, at, dur = 1.2) => duo.place(at - dur / 2, { x: xs[phase] }, dur);
 
       // Line 1: the cycle lights word by word. Line 2: Test takes the lead.
       const cycle = tdd.cycle(content, { x: 24, y: 128, at: s0, until: sEnd });
@@ -353,18 +356,22 @@
       // phase map, making room for the test that leads: it arrives a line
       // before it fails, so it can be read before the run.
       const testAt = mark(ln(2), 'let') + 0.25;
-      tween(cycle.node, { scale: '0.65', translate: '586px -122px' }, mark(ln(2), 'let') - 0.15, 0.5, EASE.inOut);
+      tween(cycle.node, { scale: '0.65', translate: '586px -122px' }, mark(ln(2), 'let') - 0.3, 0.8, EASE.inOut);
       cycle.light('red', mark(ln(1), 'red'), mark(ln(1), 'green'));
       cycle.light('green', mark(ln(1), 'green'), mark(ln(1), 'refactor'));
       cycle.light('refactor', mark(ln(1), 'refactor'), line(ln(2)).start + 0.2);
       tiles.light('red', mark(ln(1), 'red'), mark(ln(1), 'green'));
       tiles.light('green', mark(ln(1), 'green'), mark(ln(1), 'refactor'));
       tiles.light('refactor', mark(ln(1), 'refactor'), line(ln(2)).start + 0.2);
-      // "Red, green, refactor": one continuous glide across the three tiles,
-      // passing the green tile as "green" is sung.
-      duo.place(mark(ln(1), 'green') - 0.45, { x: xs.refactor }, mark(ln(1), 'refactor') - mark(ln(1), 'green') + 0.75);
+      // "Red, green, refactor": one continuous glide from the red tile,
+      // passing the green tile as "green" is sung and settling on the
+      // refactor tile on the next beat; then, through "let the tests lead",
+      // an unhurried glide back to red that arrives on "lead".
+      const across = mark(ln(1), 'red') + 0.2;
+      duo.place(across, { x: xs.refactor }, mark(ln(1), 'refactor') + 0.55 - across);
       duo.lamp(mark(ln(1), 'red'), 'red').lamp(mark(ln(1), 'green'), 'green');
-      go('red', mark(ln(2), 'let'), 1.0);
+      const back = mark(ln(2), 'let') - 0.5;
+      duo.place(back, { x: xs.red }, mark(ln(2), 'lead') + 0.5 - back);
       duo.hold(mark(ln(2), 'tests'), { pose: 'frame', dur: 0.6 });
       duo.waltz(mark(ln(2), 'tests'), sEnd - 0.3, { travel: 6, roam: 0 });
       cycle.light('red', mark(ln(2), 'lead'), line(ln(3)).start);
@@ -823,7 +830,14 @@
       // While the pyramid is laid, the couple waltzes small in the far
       // corner; it comes forward for the solos, then lights the bugs.
       const duo = couple;
-      duo.place(s0 - 0.3, { x: 866, y: 456, scale: 0.72 }, 1.8);
+      // The couple grows with the pyramid: small beside the unit tier, a
+      // big step taller with integration, and taller again, almost full
+      // height, with end to end. The examples keep to the centre and top, so
+      // the right of the stage is free for them to grow into.
+      duo.place(s0 - 0.3, { x: 872, y: 456, scale: 0.6 }, 1.8);
+      for (const [at, scale, x] of [[mark('bridge-3', 'integration'), 0.8, 846], [mark('bridge-5', 'end'), 1.06, 800]]) {
+        duo.place(at - 0.6, { x, scale }, 1.6);
+      }
       duo.hold(s0, { pose: 'frame' }).lamp(s0, 'idle');
       duo.waltz(s0 + 0.4, mark('bridge-6', 'fine') - 0.9, { travel: 8, roam: 10 });
       const pyramidUntil = line('bridge-7').start - 0.1;
@@ -840,7 +854,7 @@
       pyr.light(2, mark('bridge-5', 'end'), pyramidUntil);
       // A gold connector ties each sung tier to its example on the right.
       kit.flow(content, { from: pyr.anchor(0), to: [474, 190], bend: -40, color: 'gold', at: mark('bridge-1', 'check'), until: line('bridge-3').start - 0.2 });
-      kit.flow(content, { from: pyr.anchor(1), to: [456, 236], bend: -14, color: 'gold', at: mark('bridge-3', 'parts'), until: line('bridge-5').start - 0.2 });
+      kit.flow(content, { from: pyr.anchor(1), to: [456, 180], bend: -14, color: 'gold', at: mark('bridge-3', 'parts'), until: line('bridge-5').start - 0.2 });
       kit.flow(content, { from: pyr.anchor(2), to: [464, 160], bend: -20, color: 'gold', at: mark('bridge-5', 'whole'), until: mark('bridge-6', 'fine') - 0.1 });
 
       // Unit: one small part — the stack.
@@ -853,7 +867,7 @@
       // connect, and jam when the integration test turns them together.
       const b = kit.scene(content, line('bridge-3').start - 0.2, line('bridge-5').start - 0.2);
       props.gears(b, {
-        x: 380, y: 72, at: line('bridge-3').start, names: ['Editor', 'UndoHistory'],
+        x: 380, y: 16, at: line('bridge-3').start, names: ['Editor', 'UndoHistory'],
         aloneAt: [mark('bridge-3', 'integration') + 0.2, mark('bridge-3', 'parts')],
         connectAt: mark('bridge-3', 'connect') - 0.2, turnAt: mark('bridge-4', 'work'), jamAt: mark('bridge-4', 'expect'),
       });
@@ -861,7 +875,7 @@
       // End to end: the whole user flow, through the real interface.
       const c = kit.scene(content, line('bridge-5').start - 0.2, line('bridge-7').start - 0.1);
       props.browser(c, {
-        x: 470, y: 76, w: 450, at: mark('bridge-5', 'end'),
+        x: 470, y: 58, w: 450, at: mark('bridge-5', 'end'),
         steps: [
           { text: 'type “hi”', iconName: 'pencil', at: mark('bridge-5', 'whole') },
           { text: 'click Undo', iconName: 'pointer', at: mark('bridge-5', 'user') },
@@ -871,21 +885,24 @@
       // "Each part works fine solo, but solo steps aren't the whole show":
       // they come forward, part for a solo each, then join for the show.
       const show = duo;
-      show.place(mark('bridge-6', 'fine') - 1.2, { x: 700, y: 456, scale: 0.9 }, 1.2);
+      show.place(mark('bridge-6', 'fine') - 1.2, { x: 690, y: 456, scale: 1.06 }, 1.2);
       show.hold(mark('bridge-6', 'fine') - 0.3, { release: true, pose: 'stand', dur: 0.4 });
       show.step('test', mark('bridge-6', 'fine') - 0.2, -46, 0.6).step('code', mark('bridge-6', 'fine') - 0.2, 46, 0.6);
       show.pose('test', mark('bridge-6', 'fine'), 'solo').pose('code', mark('bridge-6', 'solo'), 'spotlight', { armL: { sh: 40, el: 30 } });
       tdd.note(c, 'solo ✓', { x: 440, y: 412, at: mark('bridge-6', 'solo'), until: mark('bridge-6', 'whole'), tone: 'green' });
-      tdd.note(c, 'solo ✓', { x: 836, y: 412, at: mark('bridge-6', 'steps'), until: mark('bridge-6', 'whole'), tone: 'green' });
-      show.step('test', mark('bridge-6', 'whole'), 0, 0.6).step('code', mark('bridge-6', 'whole'), 0, 0.6);
-      show.hold(mark('bridge-6', 'show'), { pose: 'flourish' }).twirl(mark('bridge-6', 'show') + 0.3, { dur: 1.7 });
+      tdd.note(c, 'solo ✓', { x: 872, y: 412, at: mark('bridge-6', 'steps'), until: mark('bridge-6', 'whole'), tone: 'green' });
+      // They step back together on "aren't", take the hold on "whole", and
+      // Code turns once under Test's arm on "show": one move at a time.
+      show.step('test', mark('bridge-6', 'arent'), 0, 0.8).step('code', mark('bridge-6', 'arent'), 0, 0.8);
+      show.hold(mark('bridge-6', 'whole'), { pose: 'flourish' }).twirl(mark('bridge-6', 'show'), { dur: 1.0 });
 
       // Tests reveal the bugs they shine on; they cannot prove there are none.
       const d = kit.scene(content, line('bridge-7').start - 0.1, line('bridge-9').start - 0.2, { exit: 'fade' });
       // Test's lamp lights the bugs it shines on; beyond the beam, more wait.
       // The couple stands at the side again and the beam shines left.
       const seeker = duo;
-      seeker.place(line('bridge-7').start - 0.6, { x: 812, y: 456, scale: 1.0 }, 1.0);
+      // The couple glides on only once Code's turn has ended.
+      seeker.place(line('bridge-7').start + 0.2, { x: 812, y: 456, scale: 1.0 }, 1.0);
       seeker.hold(line('bridge-7').start - 0.3, { pose: 'frame' });
       seeker.lamp(line('bridge-7').start, 'idle').pose('test', mark('bridge-7', 'reveal'), 'pointL');
       seeker.face('code', mark('bridge-8', 'cannot'), 'worried');
@@ -902,7 +919,7 @@
 
       // Learn the rules, then judge: not every task is Test's to lead.
       const e = kit.scene(content, line('bridge-9').start - 0.2, end('bridge'), { exit: 'fade' });
-      duo.place(line('bridge-9').start - 0.6, { x: 540, y: 456, scale: 0.8 }, 1.2);
+      duo.place(line('bridge-9').start - 0.8, { x: 540, y: 456, scale: 0.8 }, 1.8);
       duo.waltz(line('bridge-9').start, end('bridge') - 0.4, { travel: 8, roam: 10 });
       const rules = tdd.panel(e, { x: 50, y: 108, w: 420, title: 'The three rules', iconName: 'list', at: line('bridge-9').start });
       ['1 · a failing test first', '2 · only enough test to fail', '3 · only enough code to pass'].forEach((text, i) => {
@@ -954,8 +971,10 @@
       // Centre stage: they part, then Test takes Code's hand again.
       const duo = couple;
       duo.place(line('outro-3').start - 0.5, { x: 480 + 20 * 1.12, y: 446, scale: 1.12 }, 1.2);
-      duo.hold(mark('outro-3', 'test') - 0.2, { release: true, pose: 'stand', dur: 0.5 });
-      duo.step('test', mark('outro-3', 'test'), -60, 0.8).step('code', mark('outro-3', 'test'), 60, 0.8);
+      // They let go a beat before "Test-driven" and step apart through it,
+      // one change at a time.
+      duo.hold(mark('outro-3', 'test') - 0.8, { release: true, pose: 'stand', dur: 0.8 });
+      duo.step('test', mark('outro-3', 'test'), -60, 1.0).step('code', mark('outro-3', 'test'), 60, 1.0);
       duo.waltz(mark('outro-3', 'test') + 0.6, mark('outro-4', 'takes') - 0.2, { travel: 0, roam: 0, calm: 0.4 });
       duo.step('test', mark('outro-4', 'takes'), 0, 0.6).step('code', mark('outro-4', 'takes'), 0, 0.6);
       duo.hold(mark('outro-4', 'hand'), { pose: 'frame' });
