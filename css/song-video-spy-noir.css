@@ -36,6 +36,8 @@
   -webkit-mask-image: radial-gradient(ellipse 60% 60% at 60% 40%, #000 30%, transparent 80%);
 }
 
+/* Soft volumetric searchlights: a conic fan from the lamp at the bottom
+   centre fades out sideways and towards the top, so no hard wedge edges. */
 .spy-beam {
   position: absolute;
   bottom: -20px;
@@ -43,8 +45,16 @@
   height: 820px;
   margin-left: -150px;
   transform-origin: 50% 100%;
-  background: linear-gradient(0deg, rgba(255, 244, 214, 0.13), rgba(255, 244, 214, 0.03) 70%, transparent);
-  clip-path: polygon(47% 100%, 53% 100%, 100% 0, 0 0);
+  background: conic-gradient(
+    from -10deg at 50% 100%,
+    transparent 0deg,
+    rgba(255, 244, 214, 0.07) 5deg,
+    rgba(255, 244, 214, 0.13) 10deg,
+    rgba(255, 244, 214, 0.07) 15deg,
+    transparent 20deg
+  );
+  mask-image: linear-gradient(0deg, #000 0%, rgba(0, 0, 0, 0.4) 60%, transparent 100%);
+  -webkit-mask-image: linear-gradient(0deg, #000 0%, rgba(0, 0, 0, 0.4) 60%, transparent 100%);
 }
 
 .spy-beam--left { left: 120px; }
@@ -98,4 +108,20 @@
   background: #f3e2b8;
   box-shadow: 3px 3px 0 var(--ink), inset 0 0 0 2px #b91c1c;
   color: #7f1010;
+}
+
+/* Quiz cards are interrogation-room paperwork: warm paper under the lamp,
+   with a red margin rule, a square-cut count tab, and the same ink edges. */
+.theme-spy .quiz-card {
+  border-radius: 8px;
+  background:
+    linear-gradient(90deg, transparent 20px, rgba(155, 17, 17, 0.32) 20px 22px, transparent 22px),
+    radial-gradient(ellipse 70% 60% at 50% 0%, rgba(255, 238, 196, 0.7), transparent 72%),
+    linear-gradient(172deg, #fffaf0, #f1e5c8);
+}
+
+.theme-spy .quiz-count {
+  border-radius: 6px;
+  background: #9b1111;
+  color: #fbf5e4;
 }

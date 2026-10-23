@@ -341,6 +341,49 @@
   font-weight: 600;
 }
 
+/* An envelope used as a large scene label (a sealed implementation). */
+.ih-envelope--label {
+  padding: 10px 14px 7px 40px;
+  box-shadow: 4px 4px 0 var(--ink);
+}
+
+.ih-envelope--label .ih-envelope-seal {
+  left: 9px;
+  width: 24px;
+  height: 24px;
+  margin-top: -11px;
+}
+
+.ih-envelope--label .ih-envelope-band { font-size: 14px; }
+
+.ih-envelope--label .ih-envelope-text {
+  font-family: inherit;
+  font-size: 24px;
+  font-weight: 800;
+}
+
+/* A public credential tag: the interface badge as a scene label. */
+.ih-public-tag {
+  position: absolute;
+  z-index: 2;
+  min-width: 236px;
+  padding: 28px 18px 8px;
+  border: 3px solid var(--gold);
+  border-radius: 12px;
+  background: linear-gradient(160deg, #1d2337, #0e1222 70%);
+  box-shadow: 0 0 0 2px var(--ink), 0 14px 28px rgba(0, 0, 0, 0.5);
+  box-sizing: border-box;
+}
+
+.ih-public-tag .ih-badge-strip { border-radius: 8px 8px 0 0; }
+
+.ih-public-tag-name {
+  color: var(--gold);
+  font-size: 28px;
+  font-weight: 900;
+  line-height: 1.1;
+}
+
 .ih-verdict {
   position: absolute;
   z-index: 3;
@@ -828,14 +871,42 @@
   border-radius: 40px;
 }
 
+/* A thought trails off in two shrinking puffs below the bubble. */
+.ih-bubble--thought::before,
 .ih-bubble--thought::after {
-  width: 16px;
-  height: 16px;
-  bottom: -26px;
+  content: '';
+  position: absolute;
   border: 3px solid var(--ink);
   border-radius: 50%;
+  background: #f6f8ff;
+  box-shadow: 3px 3px 0 var(--ink);
+}
+
+.ih-bubble--thought::before {
+  left: 44px;
+  bottom: -26px;
+  width: 20px;
+  height: 20px;
+}
+
+.ih-bubble--thought::after {
+  left: 28px;
+  bottom: -46px;
+  width: 11px;
+  height: 11px;
   rotate: 0deg;
   skew: 0deg 0deg;
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+.ih-bubble--right.ih-bubble--thought::before {
+  left: auto;
+  right: 44px;
+}
+
+.ih-bubble--right.ih-bubble--thought::after {
+  left: auto;
+  right: 28px;
 }
 
 .ih-note {
@@ -1333,6 +1404,164 @@
   color: var(--muted);
 }
 
+/* One system case file, cut and pulled apart into module files */
+.ih-split {
+  position: absolute;
+}
+
+.ih-split-piece {
+  position: absolute;
+  box-sizing: border-box;
+  border: 2px solid var(--ink);
+  border-right-width: 0;
+  border-left-width: 0;
+  color: var(--ink);
+}
+
+/* Whole, the slab carries one continuous paper finish; apart, each file does. */
+.ih-split:not(.is-apart),
+.ih-split.is-apart .ih-split-piece {
+  background:
+    linear-gradient(175deg, rgba(255, 255, 255, 0.35), transparent 40%),
+    linear-gradient(160deg, var(--manila), var(--manila-deep));
+}
+
+.ih-split-piece--first {
+  border-left-width: 2px;
+  border-radius: 10px 0 0 10px;
+}
+
+.ih-split-piece--last {
+  border-right-width: 2px;
+  border-radius: 0 10px 10px 0;
+}
+
+.ih-split:not(.is-apart) {
+  border-radius: 10px;
+  box-shadow: 5px 5px 0 var(--ink), 0 18px 32px rgba(0, 0, 0, 0.5);
+}
+
+.ih-split.is-apart .ih-split-piece {
+  border-width: 2px;
+  border-radius: 6px 12px 10px 10px;
+  box-shadow: 4px 4px 0 var(--ink), 0 14px 26px rgba(0, 0, 0, 0.5);
+}
+
+.ih-split-title {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: var(--ink);
+  font-size: 44px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  pointer-events: none;
+}
+
+.ih-split-title svg {
+  width: 40px;
+  height: 40px;
+  color: var(--ink-red);
+}
+
+.ih-split-label {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.ih-split-label svg {
+  width: 24px;
+  height: 24px;
+  color: var(--ink-red);
+}
+
+/* As processing steps the files stack icon over label, so the longest
+   step name fits on one line. */
+.ih-split-label--step {
+  flex-direction: column;
+  gap: 6px;
+  padding: 0 8px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.ih-split-label--step svg {
+  width: 30px;
+  height: 30px;
+}
+
+.ih-belt.ih-split-belt {
+  left: -64px;
+  right: -64px;
+  bottom: auto;
+}
+
+/* The "bad idea" mark: a red no sign with an ink edge on a cream disc. */
+.ih-ban {
+  position: absolute;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.ih-ban path {
+  fill: none;
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+}
+
+.ih-ban-edge {
+  stroke: var(--ink);
+  stroke-width: 24;
+}
+
+.ih-ban-stroke {
+  stroke: #e11d2a;
+  stroke-width: 15;
+}
+
+.ih-ban-edge.ih-ban-thin { stroke-width: 15; }
+.ih-ban-stroke.ih-ban-thin { stroke-width: 9; }
+
+.ih-ban-disc {
+  fill: var(--cream);
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.ih-split-arrow {
+  position: absolute;
+}
+
+/* A dashed cut line with scissors at its top end */
+.ih-split-cut {
+  position: absolute;
+  width: 0;
+  margin-left: -1.5px;
+  border-left: 3px dashed var(--ink-red);
+}
+
+.ih-split-cut svg {
+  position: absolute;
+  left: -15px;
+  top: -26px;
+  width: 27px;
+  height: 27px;
+  padding: 2px;
+  border-radius: 50%;
+  background: var(--cream);
+  color: var(--ink-red);
+}
+
 /* A tear-off desk calendar */
 .ih-calendar {
   position: absolute;
@@ -1592,32 +1821,35 @@
   position: absolute;
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 3px;
-  border: 2px solid #64748b;
-  border-radius: 999px;
-  background: linear-gradient(180deg, #1b2130, #0b0f1a);
-  box-shadow: 0 0 0 2px var(--ink), 0 8px 16px rgba(0, 0, 0, 0.45);
+  gap: 6px;
+  padding: 4px;
+  border: 2px solid var(--ink);
+  border-radius: 8px;
+  background: linear-gradient(170deg, #fffaf0, #f1e4c6);
+  box-shadow: 3px 3px 0 var(--ink), 0 10px 18px rgba(0, 0, 0, 0.4);
 }
 
 .ih-toggle-side {
   padding: 4px 11px 3px;
-  border-radius: 999px;
-  color: #b4c3e0;
+  border: 2px solid transparent;
+  border-radius: 5px;
+  color: #4a3f2c;
   font-family: var(--font-mono);
   font-size: 20px;
   font-weight: 600;
   white-space: nowrap;
 }
 
+/* The chosen option is circled in red ink, like a marked-up file. */
 .ih-toggle-side.is-on {
-  background: var(--cyan);
-  color: var(--ink);
+  border-color: var(--ink-red);
+  background: #9b1111;
+  color: #fbf5e4;
 }
 
 .ih-toggle-or {
-  color: var(--muted);
-  font-size: 20px;
+  color: #6b5a3a;
+  font-size: 18px;
   font-weight: 800;
 }
 
@@ -1644,11 +1876,7 @@
   font-size: 22px;
   font-weight: 650;
 }
-.ih-power-label--heading { font-size: 24px; font-weight: 750; }
-.ih-power-label--gold { fill: #ffe2a0; }
 .ih-power-label--landscape { fill: #fff; font-size: 20px; font-weight: 750; }
-.ih-power-label--contract { fill: #ffe2a0; font-size: 20px; }
-.ih-power-label--charging { fill: #a9f4d0; font-size: 20px; }
 .ih-power-day-top { stop-color: #174b70; }
 .ih-power-day-bottom { stop-color: #73bdcb; }
 .ih-power-night-top { stop-color: #142442; }
@@ -1672,7 +1900,7 @@
 .ih-power-nacelle { fill: #b9d0d9; stroke: #748e9b; stroke-width: 1.2; }
 .ih-power-blade { fill: #f0f6f7; stroke: #9fb7c1; stroke-width: 1; stroke-linejoin: round; }
 .ih-power-rotor-hub { fill: #d7e7eb; stroke: #718e9c; stroke-width: 1.5; }
-.ih-power-landscape-frame { fill: none; stroke: #7199af; stroke-width: 2; }
+.ih-power-landscape-frame { fill: none; stroke: #fbf5e4; stroke-width: 6; }
 .ih-power-wire { fill: none; stroke: #7e98a8; stroke-width: 8; stroke-linecap: round; }
 .ih-power-flow { fill: none; stroke: #ffe2a0; stroke-width: 3; stroke-dasharray: 9 16; stroke-linecap: round; }
 .ih-power-grid { fill: #1e374a; stroke: #b0cfdd; stroke-width: 2; }
@@ -2117,18 +2345,10 @@
 .ih-iceberg-axle { fill: #d7f2f6; }
 .ih-iceberg-surface { fill: none; stroke: #a9e4ed; stroke-width: 2.5; stroke-linecap: round; }
 .ih-iceberg-reflection { opacity: 0.6; fill: none; stroke: #a9e4ed; stroke-width: 1.5; stroke-linecap: round; }
-.ih-ice-callout { position: absolute; left: 508px; width: 402px; color: #eaf4fa; }
-.ih-ice-callout strong { display: block; font-size: 30px; line-height: 1.2; font-weight: 800; }
-.ih-ice-callout > span { display: block; margin-top: 5px; font-size: 22px; line-height: 1.25; }
-.ih-ice-callout--tip { top: 92px; }
-.ih-ice-callout--tip strong { color: #f7da8e; }
-.ih-ice-callout--deep { top: 227px; }
-.ih-ice-callout--deep strong { color: #9ce1e6; }
-.ih-ice-callout > .ih-ice-promise { margin-top: 12px; color: #b6f0d5; font-size: 22px; font-weight: 700; }
 .ih-ice-leaders { position: absolute; inset: 0; width: 960px; height: 540px; }
 .ih-ice-leaders path { fill: none; stroke: #addce6; stroke-width: 1.5; }
 .ih-ice-leaders circle { fill: #addce6; }
-.ih-ice-change { position: absolute; top: 421px; left: 73px; width: 367px; padding: 7px 0; border-radius: 6px; background: #0a2436; color: #d9f2f6; text-align: center; font-size: 22px; font-weight: 700; }
+.ih-verdict.ih-ice-promise { left: 520px; top: 176px; font-size: 18px; }
 .ih-iceberg-scene .ih-waterline line { stroke: #7fbdce; stroke-width: 1.5; stroke-dasharray: 5 7; }
 
 /* Vintage cabinet: the song stage keeps the same dark palette in both page themes. */
@@ -2174,76 +2394,37 @@
 .ih-memory-detail span { color: #c7dce7; }
 .ih-memory-cost { position: absolute; top: 414px; left: 40px; width: 250px; box-sizing: border-box; padding: 7px 5px; border-radius: 6px; background: #f7da8e; color: #102735; text-align: center; font-size: 20px; font-weight: 800; }
 
-/* A fixed film palette, shared by light and dark host pages. */
-.ih-contract-exchange { position: absolute; inset: 0; width: 960px; height: 540px; color: #edf4f7; font-family: var(--font-sans, system-ui, sans-serif); }
-.ih-contract-heading { position: absolute; left: 64px; top: 55px; font-size: 30px; line-height: 1.2; font-weight: 800; color: #f5d986; }
-.ih-contract-client, .ih-contract-server { position: absolute; box-sizing: border-box; text-align: center; border-radius: 16px; }
-.ih-contract-client { left: 46px; top: 134px; width: 218px; padding: 17px 13px 16px; background: #142b3b; border: 2px solid #6cb8d0; }
-.ih-contract-server { left: 696px; top: 122px; width: 218px; height: 322px; padding: 17px 13px; background: #1b2938; border: 2px solid #b0c4d7; }
-.ih-contract-role { font-size: 27px; line-height: 1.1; font-weight: 800; }
-.ih-contract-sub { margin-top: 5px; font-size: 20px; line-height: 1.2; color: #c9dae7; }
-.ih-contract-app { display: block; width: 190px; height: 140px; margin-top: 12px; }
-.ih-contract-device { fill: #dcebf1; stroke: #80b5cb; stroke-width: 2; }
-.ih-contract-toolbar { fill: #4c7188; }
-.ih-contract-toolbar-dot { fill: #dcebf1; }
-.ih-contract-app-row { fill: #7098ac; }
-.ih-contract-device-foot { fill: none; stroke: #b8cfda; stroke-width: 5; stroke-linecap: round; }
-.ih-contract-client-note { margin-top: 5px; font-size: 20px; line-height: 1.2; color: #d4edf6; }
-.ih-contract-rack { display: block; width: 180px; height: 115px; margin: 8px auto 0; }
-.ih-contract-rack-shell { fill: #0d1723; stroke: #a3b9ca; stroke-width: 2; }
-.ih-contract-drive { fill: #435b71; stroke: #b7c9d5; stroke-width: 1.3; }
-.ih-contract-status { fill: #a0e3cc; }
-.ih-contract-vent { fill: none; stroke: #c8d9e4; stroke-width: 2; stroke-linecap: round; }
-.ih-contract-hidden { position: absolute; left: 13px; right: 13px; bottom: 13px; height: 100px; box-sizing: border-box; border-top: 1.5px dashed #91a6b7; padding-top: 9px; }
-.ih-contract-hidden-title { font-size: 20px; line-height: 1.2; font-weight: 700; color: #e4c4b3; }
-.ih-contract-database { position: absolute; left: 0; top: 39px; width: 42px; height: 42px; }
-.ih-contract-db-body { fill: #426477; stroke: #b8d4df; stroke-width: 2.5; }
-.ih-contract-db-top { fill: #678a9c; stroke: #b8d4df; stroke-width: 2.5; }
-.ih-contract-db-seam { fill: none; stroke: #b8d4df; stroke-width: 2; }
-.ih-contract-db-choice { position: absolute; left: 43px; right: 0; top: 50px; font-size: 20px; line-height: 1.2; font-weight: 700; white-space: nowrap; }
-.ih-contract-public { position: absolute; left: 280px; top: 129px; width: 400px; height: 315px; box-sizing: border-box; text-align: center; }
-.ih-contract-public-title { margin: 0 30px; padding: 9px 10px; border: 1.5px solid #dfc070; border-radius: 8px; background: #302b1d; color: #ffe5a5; font-size: 24px; line-height: 1.15; font-weight: 800; }
-.ih-contract-lanes { position: absolute; left: -15px; top: 43px; width: 430px; height: 160px; overflow: visible; }
-.ih-contract-request, .ih-contract-response { fill: none; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
-.ih-contract-request { stroke: #f3d47f; }
-.ih-contract-response { stroke: #8fd4e6; }
-.ih-contract-request-label, .ih-contract-response-label { position: absolute; left: 100px; right: 100px; font-size: 22px; line-height: 1.2; font-weight: 700; }
-.ih-contract-request-label { top: 56px; color: #ffe5a5; }
-.ih-contract-response-label { top: 130px; color: #b2e7f2; }
-.ih-contract-protocol { position: absolute; left: 18px; right: 18px; top: 216px; padding: 10px 8px; border: 1.5px solid #dfc070; border-radius: 10px; background: #302b1d; }
-.ih-contract-protocol-label { font-size: 20px; line-height: 1.1; color: #e8d5a7; }
-.ih-contract-protocol-value { margin-top: 4px; font-size: 24px; line-height: 1.15; font-weight: 800; color: #fff0c7; }
-.ih-contract-verdict { margin-top: 6px; font-size: 20px; line-height: 1.1; color: #b5ead2; font-weight: 700; }
-@media print {
-  .ih-contract-client, .ih-contract-server { background: #f5f8fa; border-color: #34566d; color: #172936; }
-  .ih-contract-public-title, .ih-contract-protocol { background: #fff8e9; border-color: #705a20; }
-  .ih-contract-heading, .ih-contract-public-title, .ih-contract-protocol-value { color: #604b18; }
-  .ih-contract-sub, .ih-contract-client-note, .ih-contract-db-choice { color: #27485e; }
-  .ih-contract-hidden-title, .ih-contract-protocol-label { color: #4f4433; }
-  .ih-contract-request-label, .ih-contract-response-label, .ih-contract-verdict { color: #244d60; }
-  .ih-contract-request { stroke: #705a20; }
-  .ih-contract-response { stroke: #24566b; }
+/* The bridge's contract scene: a full-stage layer for its case files. */
+.ih-contract-exchange { position: absolute; inset: 0; }
+
+/* The one clause the lyric is about reads at the size of the file names. */
+.ih-contract .ih-module-line {
+  padding-top: 12px;
+  padding-left: 18px;
+  font-size: 20px;
+  font-weight: 700;
 }
 
 /* A matched pair of dependency sketches on the always-dark song stage.
    Asterisk + weight accompany change colors; all six modules stay visible. */
 .ih-impact-legend { font-size: 20px; }
-.ih-impact { --impact-changed: #ffe2a0; }
-.ih-impact--leaky { --impact-changed: #ffb3ac; }
-.ih-impact-panel { fill: #102332; stroke: #547184; stroke-width: 1.5; }
-.ih-impact-system { fill: #162e3e; stroke: #66889b; stroke-width: 1.5; }
+.ih-impact { --impact-changed: #ffd34d; }
+.ih-impact--leaky { --impact-changed: #ff8a80; }
+.ih-impact-panel { fill: #0e1424; stroke: #e5bf62; stroke-opacity: 0.55; stroke-width: 2; }
+.ih-impact-system { fill: rgba(236, 210, 154, 0.05); stroke: #8b98ad; stroke-width: 1.5; stroke-dasharray: 6 5; }
 .ih-impact-text { fill: #edf6fa; font-family: var(--font-body, system-ui, sans-serif); font-size: 20px; font-weight: 650; }
-.ih-impact-title { font-size: 25px; font-weight: 750; }
-.ih-impact-system-label { fill: #c5d9e2; }
-.ih-impact-note { fill: #c5d9e2; font-size: 20px; }
-.ih-impact-name { font-size: 21px; font-weight: 700; }
-.ih-impact-edge { fill: none; stroke: #a6c7d7; stroke-width: 2; stroke-linecap: round; }
-.ih-impact-arrow--neutral { fill: #a6c7d7; }
-.ih-impact-arrow--changed { fill: var(--impact-changed); }
+.ih-impact-title { fill: #f5d986; font-size: 25px; font-weight: 800; }
+.ih-impact-name { fill: #0b0f1a; font-size: 21px; font-weight: 800; }
+.ih-impact-edge { fill: none; stroke: #a6c7d7; stroke-width: 2; stroke-dasharray: 7 5; }
+.ih-impact-arrow { fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.ih-impact-arrow--neutral { stroke: #a6c7d7; }
+.ih-impact-arrow--changed { stroke: var(--impact-changed); }
 .ih-impact-edge.is-changed { stroke: var(--impact-changed); stroke-width: 2.6; }
-.ih-impact-card { fill: #1c3d50; stroke: #a6c7d7; stroke-width: 1.6; }
-.ih-impact-module.is-changed .ih-impact-card { fill: #34414a; stroke: var(--impact-changed); stroke-width: 3; }
-.ih-impact-module.is-changed .ih-impact-name { fill: var(--impact-changed); }
-.ih-impact-provider-card { fill: #182735; stroke: #b0c4cf; stroke-width: 1.6; stroke-dasharray: 5 4; }
+/* Modules are manila case files; a changed one is marked in highlighter. */
+.ih-impact-card { fill: #ecd29a; stroke: #0b0f1a; stroke-width: 2; }
+.ih-impact-module.is-changed .ih-impact-card { fill: var(--impact-changed); stroke: #0b0f1a; stroke-width: 3; }
+/* The external provider is a foreign contact: dashed and outside the files. */
+.ih-impact-provider-card { fill: #293548; stroke: #cbd5e1; stroke-width: 1.6; stroke-dasharray: 5 4; }
+.ih-impact-provider .ih-impact-name { fill: #edf6fa; }
 .ih-impact-verdict { fill: #c5d9e2; font-size: 21px; font-weight: 750; }
 .ih-impact-verdict.is-changed { fill: var(--impact-changed); }

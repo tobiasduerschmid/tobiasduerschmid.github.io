@@ -432,6 +432,105 @@
   }
 
   /**
+   * One big case file labelled "System" that dashed cut lines divide into
+   * module files at `cutAt`, and that comes apart into separate files at
+   * `apartAt`: the question of how to split a system into modules.
+   * pipeline = { at, labels: [{ text, iconName }] } then straightens the
+   * same files into a row on a conveyor belt and relabels them as
+   * processing steps (the flowchart decomposition Parnas argued against).
+   */
+  function systemSplit(parent, { x, y, w, h, title = 'System', parts, at, cutAt, apartAt, pipeline, until }) {
+    const node = place(el('div', 'ih-split is-staged', parent), x, y);
+    node.style.width = `${w}px`;
+    node.style.height = `${h}px`;
+    const pieceW = w / parts.length;
+    const spread = (parts.length - 1) / 2;
+    const pieces = parts.map((name, i) => {
+      const piece = place(el('div', 'ih-split-piece', node), i * pieceW, 0);
+      piece.style.width = `${pieceW}px`;
+      piece.style.height = `${h}px`;
+      if (i === 0) piece.classList.add('ih-split-piece--first');
+      if (i === parts.length - 1) piece.classList.add('ih-split-piece--last');
+      const label = el('div', 'ih-split-label is-staged', piece);
+      label.append(icon(SERVICE_ICONS[name] || 'box'));
+      label.append(document.createTextNode(name));
+      fx.fadeIn(label, apartAt + 0.15, 0.3);
+      const offset = i - spread;
+      const apart = { translate: `${offset * 44}px ${Math.abs(offset) * 10 + 8}px`, rotate: `${offset * 3}deg` };
+      tween(piece, [{ translate: '0 0', rotate: '0deg' }, apart], apartAt, 0.6, EASE.back);
+      if (pipeline) {
+        const spec = pipeline.labels[i];
+        const stepLabel = el('div', 'ih-split-label ih-split-label--step is-staged', piece);
+        if (spec.iconName) stepLabel.append(icon(spec.iconName));
+        stepLabel.append(document.createTextNode(spec.text));
+        fx.fadeOut(label, pipeline.at, 0.2);
+        tween(stepLabel, [{ opacity: 0, scale: 0.85 }, { opacity: 1, scale: 1 }], pipeline.at + i * 0.3 + 0.15, 0.35, EASE.back);
+        tween(piece, [apart, { translate: `${offset * 44}px 0`, rotate: '0deg' }], pipeline.at, 0.5, EASE.inOut);
+      }
+      return piece;
+    });
+    if (pipeline) {
+      const belt = el('div', 'ih-belt ih-split-belt is-staged', node);
+      belt.style.top = `${h + 12}px`;
+      const tread = el('div', 'ih-belt-tread', belt);
+      fx.fadeIn(belt, pipeline.at, 0.35);
+      onFrame((t) => { tread.style.backgroundPosition = `${((t * 40) % 28).toFixed(1)}px 0`; });
+      for (let i = 1; i < parts.length; i++) {
+        const arrow = place(icon('pointer', 'ih-step-arrow ih-split-arrow is-staged'), i * pieceW + (i - 1 - spread) * 44 + 8, h / 2 - 14);
+        node.append(arrow);
+        fx.fadeIn(arrow, pipeline.at + i * 0.3, 0.25);
+      }
+      if (pipeline.verdictAt !== undefined) {
+        // A bad idea: the steps dim and a "no" sign lands left of the
+        // verdict below the flowchart.
+        const pad = 90;
+        const tall = h + 170;
+        const ban = svg('svg', { class: 'ih-ban is-staged', viewBox: `${-pad} -40 ${w + 2 * pad} ${tall + 40}`, 'aria-hidden': 'true' }, node);
+        place(ban, -pad, -40);
+        ban.style.width = `${w + 2 * pad}px`;
+        ban.style.height = `${tall + 40}px`;
+        fx.fadeIn(ban, pipeline.verdictAt, 0.1);
+        for (const piece of pieces) tween(piece, [{ opacity: 1 }, { opacity: 0.6 }], pipeline.verdictAt, 0.4, EASE.inOut);
+        const stroke = (d, at, cls = '') => {
+          for (const part of ['ih-ban-edge', 'ih-ban-stroke']) {
+            const path = svg('path', { class: `${part} ${cls}`, d }, ban);
+            path.style.strokeDashoffset = '1';
+            fx.draw(path, at, 0.35);
+          }
+        };
+        if (pipeline.noAt !== undefined) {
+          const r = 34;
+          const cx = pipeline.noX ?? 70;
+          const cy = h + 98;
+          const disc = svg('circle', { class: 'ih-ban-disc is-staged', cx, cy, r }, ban);
+          fx.pop(disc, pipeline.noAt, { from: 0.4 });
+          const k = r * Math.SQRT1_2;
+          stroke(`M${cx} ${cy - r}A${r} ${r} 0 1 1 ${cx} ${cy + r}A${r} ${r} 0 1 1 ${cx} ${cy - r}`, pipeline.noAt, 'ih-ban-thin');
+          stroke(`M${cx - k} ${cy - k}L${cx + k} ${cy + k}`, pipeline.noAt + 0.2, 'ih-ban-thin');
+        }
+      }
+    }
+    const whole = el('div', 'ih-split-title', node);
+    whole.append(icon('box'));
+    whole.append(document.createTextNode(title));
+    fx.fadeOut(whole, apartAt, 0.2);
+    for (let i = 1; i < parts.length; i++) {
+      const cut = place(el('div', 'ih-split-cut is-staged', node), i * pieceW, -16);
+      cut.style.height = `${h + 32}px`;
+      cut.append(icon('scissors'));
+      tween(cut, [
+        { opacity: 0, clipPath: 'inset(-30px -20px 100% -20px)' },
+        { opacity: 1, clipPath: 'inset(-30px -20px 0 -20px)' },
+      ], cutAt + (i - 1) * 0.12, 0.4);
+      fx.fadeOut(cut, apartAt, 0.2);
+    }
+    during(node, 'is-apart', apartAt);
+    fx.rise(node, at, { distance: 18, duration: 0.4 });
+    if (until !== undefined) fx.fadeOut(node, until, 0.25);
+    return { node, pieces };
+  }
+
+  /**
    * A tear-off desk calendar. pages = [{ at, month, day, year, tone }]; on
    * each change the old page tears off and falls away.
    */
@@ -619,9 +718,6 @@
     const landscapeClip = svg('clipPath', { id: `${id}-landscape` }, defs);
     svg('rect', { x: 20, y: 58, width: 300, height: 204, rx: 14 }, landscapeClip);
 
-    label(node, 'Hidden implementation', 170, 28, 'ih-power-label--heading');
-    label(node, 'Interface', 558, 28, 'ih-power-label--heading ih-power-label--gold');
-    label(node, 'Client', 786, 28, 'ih-power-label--heading');
     const landscape = svg('g', { 'clip-path': `url(#${id}-landscape)` }, node);
     const day = svg('g', { class: 'ih-power-source ih-power-source--solar', 'data-testid': 'ih-power-source', 'data-source': 'solar' }, landscape);
     svg('rect', { x: 20, y: 58, width: 300, height: 204, fill: dayPaint }, day);
@@ -664,7 +760,6 @@
     const supplyPath = 'M303 221 H350 M440 221 H507';
     svg('path', { class: 'ih-power-wire', d: supplyPath }, node);
     const supplyFlow = svg('path', { class: 'ih-power-flow', 'data-testid': 'ih-power-flow', d: supplyPath }, node);
-    label(node, 'Grid', 395, 166, 'ih-power-label--heading');
     svg('rect', { class: 'ih-power-grid', x: 350, y: 184, width: 90, height: 74, rx: 12 }, node);
     svg('path', { class: 'ih-power-sine', d: 'M363 221 C373 187 384 187 395 221 S417 255 427 221' }, node);
 
@@ -699,9 +794,6 @@
     const battery = svg('rect', { class: 'ih-power-battery', 'data-testid': 'ih-power-battery', x: 776, y: 180, width: 28, height: 19, rx: 2 }, node);
     svg('path', { class: 'ih-power-bolt', d: 'M793 158 L781 177 H789 L786 191 L800 171 H791Z' }, node);
     svg('path', { class: 'ih-power-phone-detail', d: 'M780 239 H800' }, node);
-    label(node, 'Source can change', 170, 309);
-    label(node, 'Same voltage + frequency', 555, 309, 'ih-power-label--contract');
-    label(node, 'Keeps charging', 786, 309, 'ih-power-label--charging');
 
     onFrame((t) => {
       const current = latest(sorted, t) || sorted[0];
@@ -891,6 +983,18 @@
     seal.append(icon('lock'));
     el('span', 'ih-envelope-band', node, 'Top secret');
     el('span', 'ih-envelope-text', node, text);
+    return node;
+  }
+
+  /**
+   * A public credential tag: the gold «interface» strip over a name, the
+   * label counterpart of the sealed envelope (what callers may see).
+   */
+  function publicTag(parent, { text, x, y }) {
+    const node = place(el('div', 'ih-public-tag is-staged', parent), x, y);
+    el('div', 'ih-badge-strip', node, '«interface» · public');
+    el('span', 'ih-badge-hole', node);
+    el('div', 'ih-public-tag-name', node, text);
     return node;
   }
 
@@ -1204,61 +1308,28 @@
     return { node, countNode };
   }
 
-  /** The public request/response contract stays outside the server's private details. */
+  /**
+   * The bridge's contract scene in the song's case-file language: a Client
+   * file talks only to a public Contract badge, which a Server file
+   * implements. The server's database choice stays sealed in a top-secret
+   * envelope; the protocol (stateless or stateful) is typed onto the badge,
+   * because callers depend on it.
+   */
   function contractExchange(parent, { at, actorsAt, contractAt, protocolAt, confirmedAt }) {
     const node = el('div', 'ih-contract-exchange', parent);
-    const heading = el('div', 'ih-contract-heading is-staged', node, 'Show what callers need to know');
-    fx.fadeIn(heading, at, 0.2);
-
-    const client = el('div', 'ih-contract-client is-staged', node);
-    el('div', 'ih-contract-role', client, 'Client');
-    el('div', 'ih-contract-sub', client, 'caller');
-    const app = svg('svg', { class: 'ih-contract-app', viewBox: '0 0 190 140', 'aria-hidden': 'true' }, client);
-    svg('rect', { class: 'ih-contract-device', x: 8, y: 8, width: 174, height: 110, rx: 9 }, app);
-    svg('path', { class: 'ih-contract-toolbar', d: 'M17 8 H173 Q182 8 182 17 V32 H8 V17 Q8 8 17 8 Z' }, app);
-    for (const x of [20, 31, 42]) svg('circle', { class: 'ih-contract-toolbar-dot', cx: x, cy: 20, r: 2.5 }, app);
-    svg('rect', { class: 'ih-contract-app-row', x: 25, y: 49, width: 93, height: 9, rx: 4 }, app);
-    svg('rect', { class: 'ih-contract-app-row', x: 25, y: 68, width: 136, height: 7, rx: 3 }, app);
-    svg('rect', { class: 'ih-contract-app-row', x: 25, y: 85, width: 115, height: 7, rx: 3 }, app);
-    svg('path', { class: 'ih-contract-device-foot', d: 'M82 118 V130 H63 M108 118 V130 H127 M63 130 H127' }, app);
-    el('div', 'ih-contract-client-note', client, 'Uses the contract');
-    fx.fadeIn(client, actorsAt, 0.2);
-
-    const server = el('div', 'ih-contract-server is-staged', node);
-    el('div', 'ih-contract-role', server, 'Server');
-    el('div', 'ih-contract-sub', server, 'module boundary');
-    const rack = svg('svg', { class: 'ih-contract-rack', viewBox: '0 0 180 115', 'aria-hidden': 'true' }, server);
-    svg('rect', { class: 'ih-contract-rack-shell', x: 23, y: 6, width: 134, height: 100, rx: 10 }, rack);
-    for (const y of [18, 47, 76]) {
-      svg('rect', { class: 'ih-contract-drive', x: 32, y, width: 116, height: 21, rx: 4 }, rack);
-      svg('circle', { class: 'ih-contract-status', cx: 44, cy: y + 10.5, r: 3 }, rack);
-      svg('path', { class: 'ih-contract-vent', d: `M108 ${y + 7} h29 M108 ${y + 13} h29` }, rack);
-    }
-    const hidden = el('div', 'ih-contract-hidden is-staged', server);
-    el('div', 'ih-contract-hidden-title', hidden, 'Hidden detail');
-    const database = svg('svg', { class: 'ih-contract-database', viewBox: '0 0 60 60', 'aria-hidden': 'true' }, hidden);
-    svg('path', { class: 'ih-contract-db-body', d: 'M9 14 V45 C9 56 51 56 51 45 V14 Z' }, database);
-    svg('ellipse', { class: 'ih-contract-db-top', cx: 30, cy: 14, rx: 21, ry: 8 }, database);
-    svg('path', { class: 'ih-contract-db-seam', d: 'M9 29 C9 40 51 40 51 29 M9 41 C9 52 51 52 51 41' }, database);
-    el('div', 'ih-contract-db-choice', hidden, 'SQL or NoSQL');
-    fx.fadeIn(server, actorsAt + 0.1, 0.2);
-    fx.fadeIn(hidden, contractAt + 0.15, 0.2);
-
-    const contract = el('div', 'ih-contract-public is-staged', node);
-    el('div', 'ih-contract-public-title', contract, 'Visible contract');
-    const lanes = svg('svg', { class: 'ih-contract-lanes', viewBox: '0 0 440 160', 'aria-hidden': 'true' }, contract);
-    svg('path', { class: 'ih-contract-request', d: 'M4 44 H422 M410 35 L423 44 L410 53' }, lanes);
-    svg('path', { class: 'ih-contract-response', d: 'M436 118 H18 M30 109 L17 118 L30 127' }, lanes);
-    el('div', 'ih-contract-request-label', contract, 'Request');
-    el('div', 'ih-contract-response-label', contract, 'Response');
-    fx.fadeIn(contract, contractAt, 0.2);
-
-    const protocol = el('div', 'ih-contract-protocol is-staged', contract);
-    el('div', 'ih-contract-protocol-label', protocol, 'Protocol');
-    el('div', 'ih-contract-protocol-value', protocol, 'Stateless or stateful?');
-    const verdict = el('div', 'ih-contract-verdict is-staged', protocol, 'Callers must know');
-    fx.fadeIn(protocol, protocolAt, 0.2);
-    fx.fadeIn(verdict, confirmedAt, 0.2);
+    heading(node, ['Show what ', 'callers', ' need to know'], { x: 64, y: 62, at });
+    module(node, { x: 40, y: 286, w: 190, h: 80, name: 'Client', iconName: 'laptop', at: actorsAt });
+    const server = module(node, { x: 668, y: 258, w: 262, h: 136, name: 'Server', iconName: 'stack', at: actorsAt + 0.15 });
+    server.secret('SQL or NoSQL', { at: contractAt + 0.3, dx: 8, dy: 66 });
+    const contract = module(node, {
+      x: 304, y: 246, w: 320, h: 132, name: 'Contract', iconName: 'file', kind: 'interface', at: contractAt,
+      lines: [{ text: 'Stateless or stateful?', at: protocolAt }],
+    });
+    contract.node.classList.add('ih-contract');
+    courier(node, { from: [234, 326], to: [300, 326], tone: 'gold', at: contractAt + 0.2, period: 1.5 });
+    courier(node, { from: [664, 326], to: [628, 326], tone: 'gold', at: contractAt + 0.35, period: 1.5, arrow: false });
+    contract.light(confirmedAt);
+    contract.verdict('In the contract', { at: confirmedAt, dx: 140, dy: 116 });
     return node;
   }
 
@@ -1277,7 +1348,8 @@
     const defs = svg('defs', {}, node);
     for (const tone of ['neutral', 'changed']) {
       const marker = svg('marker', { id: `${id}-${tone}`, viewBox: '0 0 10 10', refX: 9, refY: 5, markerWidth: 9, markerHeight: 9, markerUnits: 'userSpaceOnUse', orient: 'auto' }, defs);
-      svg('path', { class: `ih-impact-arrow ih-impact-arrow--${tone}`, d: 'M0 1 L9 5 L0 9Z' }, marker);
+      // UML dependency: a dashed line ending in an open arrowhead.
+      svg('path', { class: `ih-impact-arrow ih-impact-arrow--${tone}`, d: 'M1 1 L9 5 L1 9' }, marker);
     }
     function text(parentNode, value, tx, ty, className = '') {
       const label = svg('text', { class: `ih-impact-text ${className}`, x: tx, y: ty, 'text-anchor': 'middle' }, parentNode);
@@ -1286,8 +1358,6 @@
     }
     svg('rect', { class: 'ih-impact-panel', x: 1, y: 1, width: 438, height: 348, rx: 16 }, node);
     text(node, leaky ? 'Leaky' : 'Hidden well', 220, 32, 'ih-impact-title');
-    text(node, 'System', 63, 62, 'ih-impact-system-label');
-    text(node, leaky ? 'Provider types exposed' : 'Stable gateway interface', 280, 62, 'ih-impact-note');
     svg('rect', { class: 'ih-impact-system', x: 8, y: 70, width: 424, height: 200, rx: 9 }, node);
 
     // Edges are painted first, so arrow routes never cover module labels.
@@ -1302,7 +1372,8 @@
         : `M132 ${sy} C185 ${sy} 197 ${targetY} 249 ${targetY}`;
       edges.push({ node: svg('path', { class: 'ih-impact-edge', d, 'marker-end': `url(#${id}-neutral)` }, edgeLayer), affected: leaky });
     });
-    edges.push({ node: svg('path', { class: 'ih-impact-edge', d: 'M325 201 V284', 'marker-end': `url(#${id}-neutral)` }, edgeLayer), affected: true });
+    // Only the hidden design has a Gateway; in the leaky design callers reach the provider directly.
+    if (!leaky) edges.push({ node: svg('path', { class: 'ih-impact-edge', d: 'M325 201 V284', 'marker-end': `url(#${id}-neutral)` }, edgeLayer), affected: true });
 
     const modules = [];
     function module(name, mx, my, width, height, affected) {
@@ -1312,11 +1383,10 @@
       modules.push({ group, label, name, affected });
     }
     callers.forEach((name, i) => module(name, 20, 78 + i * 38, 112, 30, leaky));
-    module('Gateway', 250, 146, 150, 54, true);
+    if (!leaky) module('Gateway', 250, 146, 150, 54, true);
     const provider = svg('g', { class: 'ih-impact-provider' }, node);
     svg('rect', { class: 'ih-impact-provider-card', x: 250, y: 285, width: 150, height: 36, rx: 6 }, provider);
     text(provider, 'Provider', 325, 310, 'ih-impact-name');
-    text(node, 'External', 120, 310, 'ih-impact-note');
     const verdict = text(node, 'Count changed modules', 220, 344, 'ih-impact-verdict');
 
     onFrame((t) => {
@@ -1331,7 +1401,7 @@
         edge.node.classList.toggle('is-changed', hit);
         edge.node.setAttribute('marker-end', `url(#${id}-${hit ? 'changed' : 'neutral'})`);
       }
-      verdict.textContent = changed ? (leaky ? '* 6 modules must change' : '* Only Gateway changes') : 'Count changed modules';
+      verdict.textContent = changed ? (leaky ? '* 5 modules must change' : '* Only Gateway changes') : 'Count changed modules';
       verdict.classList.toggle('is-changed', changed);
     });
     fx.fadeIn(node, at, 0.25);
@@ -2006,8 +2076,8 @@
   }
 
   window.InfoHidingKit = {
-    latest, show, during, note, heading, paper, list, bubble, digits, clock, counter,
-    apolloPortrait, car, overflowingHead, steps, calendar, iceberg, toggle, waterline, outlet, dossier,
+    latest, show, during, note, heading, paper, list, bubble, publicTag, digits, clock, counter,
+    apolloPortrait, car, overflowingHead, steps, systemSplit, calendar, iceberg, toggle, waterline, outlet, dossier,
     decrypt, module, envelope, courier, laser, spotlight, lamp, agent, transmission, code, search,
     contractExchange, changeImpactGraph, mainframeMemory, stringWeb, mud, bug, stampTool, grid, vault, submarine, slip, iris,
   };

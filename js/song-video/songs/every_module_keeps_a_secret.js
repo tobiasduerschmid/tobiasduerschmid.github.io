@@ -250,9 +250,21 @@
       badge('Pre-chorus · How to split a system', 'pre-chorus-1');
       const s = kit.scene(content, song.sectionStart('pre-chorus-1'), song.sectionEnd('pre-chorus-1'));
       const paperAt = mark('pre-chorus-1-3', '1972');
+      const lead = 0.3; // visuals land just ahead of the word that names them
+      const noAt = mark('pre-chorus-1-2', 'first') - 0.2; // the verdict lands a beat early
       ih.heading(s, ['How do you split a system into ', 'modules', '?'], { x: 120, y: 76, at: line('pre-chorus-1-1').start, until: paperAt - 0.1 });
-      ih.steps(s, { x: 110, y: 168, labels: [{ text: '1 · Read input', iconName: 'file' }, { text: '2 · Process', iconName: 'gear' }, { text: '3 · Print', iconName: 'receipt' }], at: line('pre-chorus-1-1').start + 1.2, step: 0.35, until: paperAt - 0.1 });
-      kit.stamp(s, 'Not by steps', { x: 300, y: 262, at: mark('pre-chorus-1-2', 'then'), rotate: -5, shake: false, until: paperAt - 0.1 });
+      ih.systemSplit(s, {
+        x: 200, y: 168, w: 560, h: 160, parts: ['Module A', 'Module B', 'Module C'],
+        at: line('pre-chorus-1-1').start, cutAt: mark('pre-chorus-1-1', 'split') - 0.55, apartAt: mark('pre-chorus-1-1', 'split'),
+        pipeline: {
+          at: line('pre-chorus-1-2').start - lead,
+          verdictAt: noAt,
+          noAt: noAt + 0.1,
+          labels: [{ text: '1 · Read input', iconName: 'file' }, { text: '2 · Process', iconName: 'gear' }, { text: '3 · Print', iconName: 'receipt' }],
+        },
+        until: paperAt - 0.1,
+      });
+      kit.stamp(s, 'Not by steps', { x: 330, y: 392, at: noAt, rotate: -5, shake: false, until: paperAt - 0.1 });
       ih.spotlight(s, { x: 480, y: 220, w: 760, h: 400, at: paperAt - 0.2 });
       ih.paper(s, {
         x: 180, y: 116, w: 600, kicker: 'Communications of the ACM · December 1972',
@@ -462,29 +474,26 @@
       berg.swap(mark('verse-3-5', 'freely'));
       ih.waterline(a, { y: 204, x1: 470, x2: 916, at: start });
 
-      // Fixed labels anchor the two halves of the analogy throughout the swap.
-      const tip = kit.el('div', 'ih-ice-callout ih-ice-callout--tip is-staged', a);
-      kit.el('strong', '', tip, 'Interface');
-      kit.el('span', '', tip, 'What callers can rely on');
-      const promise = kit.el('span', 'ih-ice-promise is-staged', tip, '✓ Same promised behavior');
-      fx.fadeIn(tip, mark('verse-3-1', 'interface'), 0.3);
-      fx.fadeIn(promise, mark('verse-3-2', 'stable'), 0.3);
-      const deep = kit.el('div', 'ih-ice-callout ih-ice-callout--deep is-staged', a);
-      kit.el('strong', '', deep, 'Implementation');
-      kit.el('span', '', deep, 'How the promise is kept');
-      fx.fadeIn(deep, mark('verse-3-3', 'implementation'), 0.3);
+      // Case-file tags anchor the two halves of the analogy throughout the swap:
+      // the tip is public, what lies below the water is sealed.
+      fx.rise(ih.publicTag(a, { text: 'Interface', x: 508, y: 104 }), mark('verse-3-1', 'interface'), { distance: 10, duration: 0.3 });
+      const promise = kit.el('div', 'ih-verdict ih-verdict--ok ih-ice-promise is-staged', a);
+      promise.append(kit.icon('check'));
+      promise.append(document.createTextNode('Stays the same'));
+      ih.show(promise, mark('verse-3-2', 'stable'), undefined, { rotate: -2, from: 1.4 });
+      const deep = ih.envelope(a, { text: 'Implementation', x: 508, y: 232 });
+      deep.classList.add('ih-envelope--label');
+      ih.show(deep, mark('verse-3-3', 'implementation'), undefined, { rotate: -2, from: 1.6 });
       const leaders = kit.svg('svg', { class: 'ih-ice-leaders', viewBox: '0 0 960 540', 'aria-hidden': 'true' }, a);
       for (const [d, cx, cy, at] of [
-        ['M295 137 H486', 295, 137, mark('verse-3-1', 'interface')],
-        ['M359 312 H458 V249 H486', 359, 312, mark('verse-3-3', 'implementation')],
+        ['M295 137 H504', 295, 137, mark('verse-3-1', 'interface')],
+        ['M359 312 H470 V252 H504', 359, 312, mark('verse-3-3', 'implementation')],
       ]) {
         const leader = kit.svg('g', { class: 'is-staged' }, leaders);
         kit.svg('path', { d }, leader);
         kit.svg('circle', { cx, cy, r: 4 }, leader);
         fx.fadeIn(leader, at, 0.3);
       }
-      const change = kit.el('div', 'ih-ice-change is-staged', a, 'New internals. Same contract.');
-      fx.fadeIn(change, mark('verse-3-5', 'freely'), 0.3);
       const choices = [
         { a: 'array', b: 'hash table', at: mark('verse-3-7', 'array'), flips: [mark('verse-3-7', 'hash')] },
         { a: 'cache', b: 'no cache', at: mark('verse-3-7', 'cache'), flips: [mark('verse-3-7', 'no')] },
@@ -495,9 +504,14 @@
       // The outlet is the interface; the power plant is the secret.
       const b = kit.scene(content, outletAt, end);
       ih.outlet(b, {
-        x: 40, y: 90, at: outletAt + 0.1,
+        x: 40, y: 112, at: outletAt + 0.1,
         plants: [{ at: 0, kind: 'solar' }, { at: mark('verse-3-11', 'wind') - 0.1, kind: 'wind' }],
       });
+      // "The outlet's the interface. The plant's the secret."
+      fx.rise(ih.publicTag(b, { text: 'Interface', x: 480, y: 92 }), mark('verse-3-12', 'interface') - 0.2, { distance: 10, duration: 0.3 });
+      const plant = ih.envelope(b, { text: 'Power plant', x: 92, y: 116 });
+      plant.classList.add('ih-envelope--label');
+      ih.show(plant, mark('verse-3-12', 'secret') - 0.2, undefined, { rotate: -3, from: 1.6 });
     }
 
     // ----------------------------------------------------------------
@@ -526,8 +540,8 @@
       });
       kit.sticker(a, 'All private ✓', { x: 720, y: 70, at: mark('bridge-1', 'private'), until: line('bridge-2').start, variant: 'green', iconName: 'lock', rotate: 4 });
       ih.note(a, 'returns a PayPal type', { x: 700, y: 70, at: mark('bridge-2', 'returns'), tone: 'red', rotate: 2 });
-      ih.slip(a, { x: 470, y: 228, text: 'PayPalCharge', at: mark('bridge-3', 'secrets'), dx: 190, dy: 150, rotate: -10 });
-      ih.slip(a, { x: 640, y: 262, text: 'PayPalAccount', at: sig + 0.15, dx: 110, dy: 140, rotate: 9 });
+      ih.slip(a, { x: 470, y: 228, text: 'PayPalCharge', at: mark('bridge-3', 'secrets'), dx: 70, dy: 156, rotate: -7 });
+      ih.slip(a, { x: 640, y: 262, text: 'PayPalAccount', at: sig + 0.15, dx: 90, dy: 144, rotate: 6 });
       kit.stamp(a, 'Leaked!', { x: 300, y: 392, at: mark('bridge-3', 'plain'), rotate: -6, shake: false });
 
       // Private fields alone do not hide a decision exposed by the public API.
@@ -574,7 +588,7 @@
         if (i !== 0) tween(node, { opacity: 0.4 }, picked, 0.3, EASE.inOut);
       });
       const graphs = kit.scene(content, graphAt, song.sectionEnd('change-test'), { exit: 'fade' });
-      ih.heading(graphs, ['Selected change: ', 'new payment provider'], { x: 44, y: 52, at: graphAt, size: 26 });
+      ih.heading(graphs, ['Change: ', 'new payment provider'], { x: 44, y: 52, at: graphAt, size: 26 });
       const legend = ih.note(graphs, 'Arrows mean “depends on”', { x: 650, y: 57, at: graphAt, tone: 'white', rotate: 0 });
       legend.classList.add('ih-impact-legend');
       ih.changeImpactGraph(graphs, { x: 30, y: 96, mode: 'hidden', at: graphAt + 0.1, changeAt: mark('change-test-4', 'one') });
