@@ -331,13 +331,14 @@
       const leg = svg('g', { class: 'tdd-leg' }, spin);
       const thigh = svg('path', { class: 'tdd-trouser', fill: `url(#${id}-trouser)` }, leg);
       const stripe = svg('path', { class: 'tdd-trouser-stripe' }, leg);
+      const crease = svg('path', { class: 'tdd-trouser-crease' }, leg);
       // A patent oxford: heel under the ankle, toe turned a little outward.
       const shoe = svg('g', {}, leg);
       const shape = svg('g', { transform: `scale(${side === 'L' ? -1 : 1} 1)` }, shoe);
       svg('path', { class: 'tdd-shoe', d: 'M-6.5 -2 C-7.5 -8 -2 -10.5 3 -9.5 C8 -9 12.5 -7 13 -3.2 C13.4 0 10.5 1.2 6.5 1.2 L-4.2 1.2 C-6.4 1.2 -6.9 0 -6.5 -2 Z' }, shape);
       svg('path', { class: 'tdd-shoe-sole', d: 'M-6.2 0.2 L12.6 -0.6' }, shape);
       svg('path', { class: 'tdd-shoe-shine', d: 'M2 -7.6 Q6 -7.8 9.5 -5.6' }, shape);
-      return { side, thigh, stripe, shoe };
+      return { side, thigh, stripe, crease, shoe };
     });
     const upper = svg('g', {}, spin);
     const lean = svg('g', {}, upper);
@@ -349,8 +350,15 @@
     svg('path', { class: 'tdd-shirt', d: 'M-11 -177 L0 -128 L11 -177 Q0 -180 -11 -177 Z' }, torso);
     svg('path', { class: 'tdd-lapel', fill: `url(#${id}-satin)`, d: 'M-11 -177 L-2 -132 L-16 -156 L-12 -162 L-19 -170 Z' }, torso);
     svg('path', { class: 'tdd-lapel tdd-lapel--shade', d: 'M11 -177 L2 -132 L16 -156 L12 -162 L19 -170 Z' }, torso);
-    for (const y of [-124, -114]) svg('circle', { class: 'tdd-button', cx: 0, cy: y, r: 1.9 }, torso);
+    for (const y of [-124, -114]) {
+      svg('circle', { class: 'tdd-button', cx: 0, cy: y, r: 1.9 }, torso);
+      svg('circle', { class: 'tdd-button-shine', cx: -0.6, cy: y - 0.6, r: 0.6 }, torso);
+    }
+    // A satin edge where each lapel rolls over.
+    svg('path', { class: 'tdd-lapel-edge', d: 'M-11 -177 L-2 -132 M11 -177 L2 -132' }, torso);
     svg('path', { class: 'tdd-bowtie', d: 'M0 -175 L-10 -181 L-10 -168 Z M0 -175 L10 -181 L10 -168 Z' }, torso);
+    // Folds pinched into each wing of the bow tie.
+    svg('path', { class: 'tdd-bowtie-fold', d: 'M-3 -175 L-8 -177.5 M-3 -175 L-8 -172 M3 -175 L8 -177.5 M3 -175 L8 -172' }, torso);
     svg('rect', { class: 'tdd-bowtie-knot', x: -3, y: -178, width: 6, height: 6, rx: 1.5 }, torso);
     const badge = svg('g', { class: 'tdd-badge', transform: 'translate(14 -146)' }, torso);
     svg('circle', { class: 'tdd-badge-disc', r: 7.5 }, badge);
@@ -363,6 +371,9 @@
     const glass = svg('circle', { class: 'tdd-lamp-glass', cx: 0, cy: -214, r: 26 }, dome);
     svg('path', { class: 'tdd-lamp-rim', d: 'M-20 -197 Q0 -188 20 -197' }, dome);
     svg('path', { class: 'tdd-lamp-shine', d: 'M-15 -229 Q-9 -236 0 -237' }, dome);
+    // Glass depth: a soft inner rim and a small second glint low on the dome.
+    svg('path', { class: 'tdd-lamp-refraction', d: 'M-21 -206 Q-20 -196 -10 -191' }, dome);
+    svg('circle', { class: 'tdd-lamp-glint', cx: 15, cy: -200, r: 1.6 }, dome);
     const faceGroup = svg('g', { transform: 'translate(0 -210)' }, dome);
     const faceRig = face(faceGroup, { eyeX: 8, eyeY: -5, mouthY: 7, browY: -12, seed: uid * 7 + 11 });
     // Upper arms emerge from behind the torso; bent forearms, cuffs, and
@@ -407,7 +418,10 @@
       const outline = `M${pt(l0)} Q${pt(l1)} ${pt(l2)} L${pt(r2)} Q${pt(r1)} ${pt(r0)} Z`;
       const k = -bend * 0.62;
       const stripe = `M${pt(side(hip, n0, wHip / 2, k))} Q${pt(side(knee, nk, wKnee / 2, k))} ${pt(side(ankle, n2, wAnkle / 2, k))}`;
-      return { outline, stripe };
+      // The pressed front crease runs down the middle of the leg.
+      const c = bend * 0.12;
+      const crease = `M${pt(side(hip, n0, wHip / 2, c))} Q${pt(side(knee, nk, wKnee / 2, c))} ${pt(side(ankle, n2, wAnkle / 2, c))}`;
+      return { outline, stripe, crease };
     }
 
     return {
@@ -426,10 +440,12 @@
           const foot = s[`foot${leg.side}`];
           const hip = rotateAbout([sign * body.hip, body.hipY + s.bob], [0, body.hipY + s.bob], s.lean * 0.35);
           const tip = [sign * body.foot + foot.dx, -8 - foot.lift];
-          const { outline, stripe } = legShape(hip, tip, sign);
+          const { outline, stripe, crease } = legShape(hip, tip, sign);
+          leg.crease.setAttribute('d', crease);
           leg.thigh.setAttribute('d', outline);
           leg.stripe.setAttribute('d', stripe);
-          leg.shoe.setAttribute('transform', `translate(${f(sign * body.foot + foot.dx)} ${f(-foot.lift)}) rotate(${f(-sign * foot.lift * 1.6)})`);
+          // A lifted foot points its toe.
+          leg.shoe.setAttribute('transform', `translate(${f(sign * body.foot + foot.dx)} ${f(-foot.lift)}) rotate(${f(-sign * foot.lift * 2.4)})`);
         }
         head.setAttribute('transform', `rotate(${f(s.head)} 0 -188)`);
         arms.L.apply(s.armL);
@@ -478,12 +494,19 @@
     const spin = svg('g', {}, root);
     const shoes = svg('g', {}, spin);
     const slippers = ['L', 'R'].map((side, i) => ({
-      side, node: svg('ellipse', { class: 'tdd-slipper', cx: i ? 11 : -11, cy: -3, rx: 8, ry: 4 }, shoes),
+      side, node: (() => {
+        const g = svg('g', {}, shoes);
+        svg('ellipse', { class: 'tdd-slipper', cx: i ? 11 : -11, cy: -3, rx: 8, ry: 4 }, g);
+        svg('path', { class: 'tdd-slipper-shine', d: `M${i ? 6 : -16} -5 Q${i ? 10 : -12} -6.5 ${i ? 14 : -8} -5.5` }, g);
+        return g;
+      })(),
     }));
     const skirtClip = svg('clipPath', { id: `${id}-skirt` }, svg('defs', {}, spin));
     const clipShape = svg('path', {}, skirtClip);
     const skirt = svg('path', { class: 'tdd-gown', fill: `url(#${id}-gown)` }, spin);
     const skirtShade = svg('path', { class: 'tdd-gown-fold' }, spin);
+    // Soft folds fall from the waist through the skirt.
+    const skirtFolds = [-0.55, -0.15, 0.3].map(() => svg('path', { class: 'tdd-gown-crease' }, spin));
     const page = svg('g', { 'clip-path': `url(#${id}-skirt)` }, spin);
     // Messy code is spaghetti: rows out of order, at the wrong indentation
     // and tilted; inside each row, tokens scattered, turned, and of uneven
@@ -531,6 +554,7 @@
     svg('path', { class: 'tdd-bodice-seam', d: 'M-6 -160 Q-4 -138 -3 -120 M6 -160 Q4 -138 3 -120' }, lean);
     svg('path', { class: 'tdd-neckline', d: 'M-13 -169 Q-6 -158 0 -165 Q6 -158 13 -169' }, lean);
     svg('rect', { class: 'tdd-sash', x: -14, y: -123, width: 28, height: 8, rx: 3 }, lean);
+    svg('path', { class: 'tdd-sash-sheen', d: 'M-11 -121 H6' }, lean);
     svg('path', { class: 'tdd-sash-bow', d: 'M9 -119 L19 -126 L18 -112 Z' }, lean);
     const neckPath = 'M-3 -181 L3 -181 L4.2 -168.5 Q0 -166.5 -4.2 -168.5 Z';
     svg('path', { class: 'tdd-skin-rim', d: neckPath }, lean);
@@ -540,6 +564,9 @@
     svg('path', { class: 'tdd-page', fill: `url(#${id}-page)`, d: 'M-21 -231 H10 L22 -219 V-184 Q22 -178 16 -178 H-15 Q-21 -178 -21 -184 Z' }, head);
     svg('path', { class: 'tdd-page-fold', d: 'M10 -231 V-222 Q10 -219 13 -219 H22 Z' }, head);
     svg('line', { class: 'tdd-page-rule', x1: -15, y1: -224, x2: 2, y2: -224 }, head);
+    // The page's own faint ruled lines, and the shadow under its folded corner.
+    for (const y of [-188, -183]) svg('line', { class: 'tdd-page-line', x1: -16, y1: y, x2: 17, y2: y }, head);
+    svg('path', { class: 'tdd-page-fold-shadow', d: 'M10 -222 Q10 -219 13 -219 H22 V-217 H12 Q9 -217 9 -220 Z' }, head);
     for (const side of [-1, 1]) {
       svg('circle', { class: 'tdd-blush', cx: side * 12, cy: -195, r: 3.4 }, head);
       const d = side < 0
@@ -592,6 +619,11 @@
         skirt.setAttribute('d', d);
         clipShape.setAttribute('d', d);
         hem.setAttribute('d', d);
+        [-0.55, -0.15, 0.3].forEach((k, i) => {
+          const hw = 54 + s.flare;
+          const bottomX = k * hw + s.sway * 9 * (0.6 + 0.2 * i);
+          skirtFolds[i].setAttribute('d', `M${f(k * 9)} ${f(waistY + 6)} Q${f(k * hw * 0.55 + s.sway * 4)} -60 ${f(bottomX)} -12`);
+        });
         skirtShade.setAttribute('d', `M2 ${f(waistY)} C10 -80 ${f(30 + s.sway * 6)} -40 ${f(44 + s.sway * 9 + s.flare)} -10 L${f(20 + s.sway * 6)} -8 C16 -40 8 -80 2 ${f(waistY)} Z`);
         const clean = clamp(s.clean, 0, 1);
         // Rows snap clean one after another, top to bottom, each with a
@@ -842,7 +874,9 @@
         const e = w.fade;
         const inward = isTest ? 1 : -1;
         s.bob += (4 - 7 * w.rise) * e;
-        s.lean += (3.2 * w.sway + 2.2 * inward) * e;
+        // Test stands tall, inclined a touch toward her; Code's top line
+        // curves back and away from him, as in a ballroom hold.
+        s.lean += (3.2 * w.sway + (isTest ? 1.2 : 3.4)) * e;
         s.head += 3 * inward * e;
         s.x += w.x * e;
         s.head += (isTest ? 2.5 * w.lag(0.3) : -2 + 3 * w.lag(0.45)) * e;

@@ -447,3 +447,68 @@
 .tdd-satin-grad .tdd-stop--top { stop-color: #ffe08a; }
 .tdd-satin-grad .tdd-stop--mid { stop-color: #f2c14e; }
 .tdd-satin-grad .tdd-stop--bottom { stop-color: #d6a23a; }
+
+/* Finer detail on the dancers' existing parts: fabric creases and folds,
+   metal and glass highlights, and the page's faint ruling. */
+.tdd-trouser-crease {
+  fill: none;
+  stroke: rgba(160, 175, 255, 0.22);
+  stroke-width: 0.9;
+  stroke-linecap: round;
+}
+
+.tdd-button-shine,
+.tdd-lamp-glint {
+  fill: rgba(255, 255, 255, 0.85);
+}
+
+.tdd-lapel-edge {
+  fill: none;
+  stroke: rgba(255, 238, 180, 0.75);
+  stroke-width: 0.8;
+  stroke-linecap: round;
+}
+
+.tdd-bowtie-fold {
+  fill: none;
+  stroke: rgba(138, 100, 22, 0.75);
+  stroke-width: 0.7;
+  stroke-linecap: round;
+}
+
+.tdd-lamp-refraction {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.35);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+
+.tdd-page-line {
+  stroke: rgba(142, 130, 196, 0.22);
+  stroke-width: 0.8;
+}
+
+.tdd-page-fold-shadow {
+  fill: rgba(59, 47, 115, 0.18);
+}
+
+.tdd-sash-sheen {
+  fill: none;
+  stroke: rgba(255, 240, 190, 0.7);
+  stroke-width: 1;
+  stroke-linecap: round;
+}
+
+.tdd-slipper-shine {
+  fill: none;
+  stroke: rgba(255, 248, 220, 0.8);
+  stroke-width: 0.9;
+  stroke-linecap: round;
+}
+
+.tdd-gown-crease {
+  fill: none;
+  stroke: rgba(8, 4, 32, 0.22);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+}
