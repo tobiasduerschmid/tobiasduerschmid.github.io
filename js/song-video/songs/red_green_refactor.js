@@ -83,8 +83,8 @@
         duo.pose(kind, mark('intro-4', 'guide'), { idleMotion: 1 });
       }
       duo.step('test', 0, -150, 0.01).step('code', 0, 150, 0.01);
-      // Apart, each sways and steps in place to the beat until they meet.
-      duo.waltz(0.8, line('intro-1').start - 0.3, { travel: 5, roam: 0 });
+      // After the still title card, each sways and steps in place to the beat
+      // until they meet.
       duo.waltz(line('intro-2').start - 1.4, mark('intro-2', 'lead') - 0.4, { travel: 5, roam: 0 });
       duo.waltz(mark('intro-3', 'first') + 0.3, mark('intro-4', 'one') - 0.2, { travel: 5, roam: 0 });
       // After the title they come forward to meet the song.
