@@ -203,8 +203,8 @@
 /* The satin stripe down the outer seam of evening trousers. */
 .tdd-trouser-stripe {
   fill: none;
-  stroke: #36458a;
-  stroke-width: 2;
+  stroke: rgba(70, 88, 168, 0.75);
+  stroke-width: 1.6;
   stroke-linecap: round;
 }
 
@@ -415,10 +415,12 @@
   stroke: #fff1d9;
 }
 
-.tdd-slipper {
+.tdd-slipper,
+.tdd-slipper-toe {
   fill: #f2c14e;
   stroke: #8a6416;
   stroke-width: 1;
+  stroke-linejoin: round;
 }
 
 .tdd-code-bar--kw { fill: #c4b5fd; }
@@ -452,7 +454,7 @@
    metal and glass highlights, and the page's faint ruling. */
 .tdd-trouser-crease {
   fill: none;
-  stroke: rgba(160, 175, 255, 0.22);
+  stroke: rgba(160, 175, 255, 0.12);
   stroke-width: 0.9;
   stroke-linecap: round;
 }
@@ -511,4 +513,8 @@
   stroke: rgba(8, 4, 32, 0.22);
   stroke-width: 2.2;
   stroke-linecap: round;
+}
+
+.tdd-neck-shadow {
+  fill: rgba(59, 47, 115, 0.28);
 }

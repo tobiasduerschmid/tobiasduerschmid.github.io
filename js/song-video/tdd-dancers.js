@@ -282,7 +282,7 @@
   }
 
   /** Limb widths: [shoulder, elbow] for the upper arm, [elbow, wrist] below. */
-  const ARM_WIDTHS = { test: [[13.5, 10.5], [10.5, 8.5]], code: [[9, 7.2], [7.2, 5.6]] };
+  const ARM_WIDTHS = { test: [[13.5, 10.5], [10.5, 8.5]], code: [[10.4, 8], [8, 6.1]] };
 
   function arm(parent, front, kind, side, body, id) {
     const [sx, sy] = body.shoulder;
@@ -529,8 +529,12 @@
     const slippers = ['L', 'R'].map((side, i) => ({
       side, node: (() => {
         const g = svg('g', {}, shoes);
-        svg('ellipse', { class: 'tdd-slipper', cx: i ? 11 : -11, cy: -3, rx: 8, ry: 4 }, g);
-        svg('path', { class: 'tdd-slipper-shine', d: `M${i ? 6 : -16} -5 Q${i ? 10 : -12} -6.5 ${i ? 14 : -8} -5.5` }, g);
+        const m = i ? 1 : -1;
+        // A dancing slipper: a small rounded body tucked under the hem and a
+        // tapered toe turned out a little.
+        svg('path', { class: 'tdd-slipper-toe', d: `M${m * 12} -5.6 C${m * 16} -4.6 ${m * 18} -2.6 ${m * 16.5} -1 L${m * 12} -0.8 Z` }, g);
+        svg('ellipse', { class: 'tdd-slipper', cx: m * 11, cy: -3, rx: 6, ry: 3.2 }, g);
+        svg('path', { class: 'tdd-slipper-shine', d: `M${m * 8} -4.6 Q${m * 11.5} -5.8 ${m * 14.5} -4.4` }, g);
         return g;
       })(),
     }));
@@ -592,6 +596,7 @@
     const neckPath = 'M-3 -181 L3 -181 L4.2 -168.5 Q0 -166.5 -4.2 -168.5 Z';
     svg('path', { class: 'tdd-skin-rim', d: neckPath }, lean);
     svg('path', { class: 'tdd-paper', d: neckPath }, lean);
+    svg('path', { class: 'tdd-neck-shadow', d: 'M-3 -181 L3 -181 L3.3 -177 Q0 -175.6 -3.3 -177 Z' }, lean);
     // The head: a page with a folded corner, a face, and brace clips.
     const head = svg('g', {}, lean);
     svg('path', { class: 'tdd-page', fill: `url(#${id}-page)`, d: 'M-21 -231 H10 L22 -219 V-184 Q22 -178 16 -178 H-15 Q-21 -178 -21 -184 Z' }, head);
@@ -910,19 +915,19 @@
       if (w) {
         const e = w.fade;
         const inward = isTest ? 1 : -1;
-        s.bob += (4 - 7 * w.rise) * e;
+        s.bob += (5 - 9 * w.rise) * e;
         // Test stands tall, inclined a touch toward her; Code's top line
         // curves back and away from him, as in a ballroom hold.
-        s.lean += (3.2 * w.sway + (isTest ? 1.2 : 3.4)) * e;
+        s.lean += (4 * w.sway + (isTest ? 1.2 : 3.4)) * e;
         s.head += 3 * inward * e;
         s.x += w.x * e;
         s.head += (isTest ? 2.5 * w.lag(0.3) : -2 + 3 * w.lag(0.45)) * e;
         // The free arms float on the beat, the forearm a little behind.
         // The wrist follows a beat later still, so the hand finishes the line.
         s[outer] = {
-          sh: s[outer].sh + outerSign * 7 * w.lag(0.5) * e,
-          el: s[outer].el + outerSign * 9 * w.lag(1.1) * e,
-          wr: (s[outer].wr || 0) + outerSign * 8 * w.lag(1.6) * e,
+          sh: s[outer].sh + outerSign * 10 * w.lag(0.5) * e,
+          el: s[outer].el + outerSign * 12 * w.lag(1.1) * e,
+          wr: (s[outer].wr || 0) + outerSign * 12 * w.lag(1.6) * e,
         };
         {
           // Both partners step: the leading foot glides on "1–2";
