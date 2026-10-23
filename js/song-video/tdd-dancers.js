@@ -1982,6 +1982,10 @@
         stagePos.add(arrivingOnBeat(atTime, dur), target, dur);
         return api;
       },
+      /** When a dur-long move keyed at atTime really starts (moves arrive on a beat). */
+      moveStart(atTime, dur) {
+        return arrivingOnBeat(atTime, dur);
+      },
       /** Moves one dancer to x (rig-local), keeping the other in place; arrives on a beat. */
       step(kind, atTime, dx, dur = 0.6) {
         dancers[kind].state.add(arrivingOnBeat(atTime, dur), { x: dancers[kind].home + dx }, dur);

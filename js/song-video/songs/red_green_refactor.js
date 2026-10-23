@@ -916,10 +916,12 @@
       seeker.lamp(line('bridge-7').start, 'idle').pose('test', mark('bridge-7', 'reveal'), 'pointL');
       seeker.face('code', mark('bridge-8', 'cannot'), 'worried');
       // Once in place they stand still and watch what the beam reveals: no
-      // waltz, no idle sway, both looking out into the beam. They come back
-      // to life as they move on to the next scene.
+      // waltz, no idle sway, both looking out into the beam. As they start
+      // to glide on to the next scene the beam goes out, so it is never
+      // swept across the stage, and they come back to life.
       const settled = line('bridge-7').start + 1.2;
-      const moveOn = line('bridge-9').start - 0.8;
+      const glide = { at: line('bridge-9').start - 0.8, dur: 1.8 };
+      const moveOn = duo.moveStart(glide.at, glide.dur) - 0.35;
       for (const kind of ['test', 'code']) {
         seeker.pose(kind, settled, { idleMotion: 0 }, { dur: 0.8 });
         seeker.look(kind, settled, -1, 0.6);
@@ -928,7 +930,7 @@
       seeker.look('test', moveOn, 1, 0.5).look('code', moveOn, -1, 0.5);
       const lampX = 812 - 20 - 33;
       props.beam(d, {
-        x: lampX - 506, y: 242, w: 506, h: 196, mirror: true, at: inPlace, until: line('bridge-9').start - 0.8, darkAt: mark('bridge-8', 'cannot'),
+        x: lampX - 506, y: 242, w: 506, h: 196, mirror: true, at: inPlace, until: moveOn, darkAt: mark('bridge-8', 'cannot'),
         bugsIn: [[470, 360, mark('bridge-7', 'bugs')], [340, 398, mark('bridge-7', 'bugs') + 0.3], [250, 320, mark('bridge-7', 'see')]],
       });
       const dijkstra = tdd.panel(d, { x: 40, y: 60, w: 400, title: 'Edsger W. Dijkstra', iconName: 'chat', at: line('bridge-7').start + 0.3 });
@@ -937,7 +939,7 @@
 
       // Learn the rules, then judge: not every task is Test's to lead.
       const e = kit.scene(content, line('bridge-9').start - 0.2, end('bridge'), { exit: 'fade' });
-      duo.place(line('bridge-9').start - 0.8, { x: 540, y: 456, scale: 0.8 }, 1.8);
+      duo.place(glide.at, { x: 540, y: 456, scale: 0.8 }, glide.dur);
       // They waltz in place, clear of the moonshot and its caption.
       duo.waltz(line('bridge-9').start, end('bridge') - 0.4, { travel: 8, roam: 0 });
       const rules = tdd.panel(e, { x: 50, y: 108, w: 420, title: 'The three rules', iconName: 'list', at: line('bridge-9').start });
