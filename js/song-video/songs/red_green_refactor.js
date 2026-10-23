@@ -83,6 +83,10 @@
         duo.pose(kind, mark('intro-4', 'guide'), { idleMotion: 1 });
       }
       duo.step('test', 0, -150, 0.01).step('code', 0, 150, 0.01);
+      // Apart, each sways and steps in place to the beat until they meet.
+      duo.waltz(0.8, line('intro-1').start - 0.3, { travel: 5, roam: 0 });
+      duo.waltz(line('intro-2').start - 1.4, mark('intro-2', 'lead') - 0.4, { travel: 5, roam: 0 });
+      duo.waltz(mark('intro-3', 'first') + 0.3, mark('intro-4', 'one') - 0.2, { travel: 5, roam: 0 });
       // After the title they come forward to meet the song.
       duo.place(line('intro-1').start - 0.4, { x: 480 + 20 * 1.12, y: 456, scale: 1.12 }, 1.6);
       duo.pose('test', 5.6, 'wave', { dur: 0.5 }).pose('test', 7.0, 'stand');
@@ -114,7 +118,8 @@
       duo.pose('test', line('intro-4').start, 'stand', { dur: 0.6 });
       duo.step('test', mark('intro-4', 'one'), 0, 1.2).step('code', mark('intro-4', 'one'), 0, 1.2);
       duo.hold(mark('intro-4', 'step'), { pose: 'frame' });
-      duo.waltz(mark('intro-4', 'guide'), line('verse-1-1').start + 0.6, { travel: 10, roam: 14 });
+      // They keep waltzing through the rules of verse 1; gestures ride on top.
+      duo.waltz(mark('intro-4', 'guide'), mark('verse-1-8', 'red'), { travel: 10, roam: 8 });
       duo.place(line('intro-4').end + 0.3, SPOT.side, 2.4);
     }
 
@@ -202,7 +207,6 @@
       tdd.note(d, 'trace 1 small step', { x: 400, y: 88, at: line('verse-1-8').start, tone: 'green', iconName: 'search' });
       duo.lamp(line('verse-1-7').start, 'green').hold(line('verse-1-7').start, { pose: 'flourish' });
       duo.hold(mark('verse-1-7', 'small'), { pose: 'frame', dur: 0.6 });
-      duo.waltz(mark('verse-1-7', 'small'), mark('verse-1-8', 'red'), { travel: 10, roam: 14 });
       duo.lamp(mark('verse-1-8', 'red'), 'red');
     }
 
@@ -534,7 +538,8 @@
         ],
       });
       tdd.ciBadge(d, { x: 160, y: 250, at: mark('verse-4-8', 'leave'), states: [{ at: 0, status: 'pass' }] });
-      duo.waltz(mark('verse-4-7', 'run'), end('verse-4') - 0.2, { travel: 10, roam: 14 });
+      duo.waltz(s0 + 0.3, mark('verse-4-1', 'final') - 0.4, { travel: 8, roam: 10 });
+      duo.waltz(mark('verse-4-3', 'written') + 0.4, end('verse-4') - 0.2, { travel: 10, roam: 14 });
     }
 
     // ----------------------------------------------------------------
@@ -549,7 +554,7 @@
       const duo = couple;
       duo.place(s0 - 0.3, SPOT.side, 1.4);
       duo.hold(s0, { pose: 'frame' }).lamp(s0, 'idle');
-      duo.waltz(s0 + 0.3, weakAt - 0.5, { travel: 8, roam: 14 });
+      duo.waltz(s0 + 0.3, mark('verse-5-8', 'give') - 0.3, { travel: 8, roam: 14 });
       duo.lamp(mark('verse-5-3', 'three'), 'green');
       const a = kit.scene(content, s0, weakAt - 0.2);
       const aaa = tdd.code(a, {
@@ -695,7 +700,7 @@
       const duo = couple;
       duo.place(start('verse-7') - 0.3, SPOT.side, 1.4);
       duo.hold(start('verse-7'), { pose: 'frame' }).lamp(start('verse-7'), 'green');
-      duo.waltz(start('verse-7') + 0.3, line('verse-7-7').start - 0.2, { travel: 10, roam: 14 });
+      duo.waltz(start('verse-7') + 0.3, end('verse-7') - 0.2, { travel: 10, roam: 14 });
 
       const a = kit.scene(content, start('verse-7'), line('verse-7-3').start - 0.1);
       tdd.ciBadge(a, { x: 120, y: 120, at: mark('verse-7-1', 'automate'), states: [{ at: 0, status: 'pass' }] });
@@ -751,7 +756,7 @@
       duo.place(start('verse-8') - 0.3, SPOT.side, 1.4);
       duo.hold(start('verse-8'), { pose: 'frame' }).face('code', mark('verse-8-1', 'bug'), 'worried');
       duo.lamp(mark('verse-8-2', 'fail'), 'red').lamp(mark('verse-8-4', 'rest'), 'green').face('code', mark('verse-8-4', 'rest'), 'joy');
-      duo.waltz(mark('verse-8-4', 'run'), line('verse-8-6').start - 0.3, { travel: 8, roam: 14 });
+      duo.waltz(start('verse-8') + 0.3, line('verse-8-6').start - 0.3, { travel: 8, roam: 14 });
 
       // Reproduce, fix, rerun: the failing test, the fix, and one terminal
       // with both runs stay up together, so each can be read in turn.
@@ -863,6 +868,8 @@
       seeker.hold(line('bridge-7').start - 0.3, { pose: 'frame' });
       seeker.lamp(line('bridge-7').start, 'idle').pose('test', mark('bridge-7', 'reveal'), 'pointL');
       seeker.face('code', mark('bridge-8', 'cannot'), 'worried');
+      // A gentle sway in place keeps the beam on Test's lamp.
+      seeker.waltz(line('bridge-7').start + 0.4, line('bridge-9').start - 0.8, { travel: 0, roam: 0, calm: 0.35 });
       const lampX = 812 - 20 - 33;
       props.beam(d, {
         x: lampX - 506, y: 242, w: 506, h: 196, mirror: true, at: mark('bridge-7', 'tests'), darkAt: mark('bridge-8', 'cannot'),
@@ -928,6 +935,7 @@
       duo.place(line('outro-3').start - 0.5, { x: 480 + 20 * 1.12, y: 446, scale: 1.12 }, 1.2);
       duo.hold(mark('outro-3', 'test') - 0.2, { release: true, pose: 'stand', dur: 0.5 });
       duo.step('test', mark('outro-3', 'test'), -60, 0.8).step('code', mark('outro-3', 'test'), 60, 0.8);
+      duo.waltz(mark('outro-3', 'test') + 0.6, mark('outro-4', 'takes') - 0.2, { travel: 0, roam: 0, calm: 0.4 });
       duo.step('test', mark('outro-4', 'takes'), 0, 0.6).step('code', mark('outro-4', 'takes'), 0, 0.6);
       duo.hold(mark('outro-4', 'hand'), { pose: 'frame' });
       // "One, two, three": they move to the red tile, then glide across all

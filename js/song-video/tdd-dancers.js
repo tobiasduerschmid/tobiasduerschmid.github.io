@@ -61,7 +61,7 @@
      * hand lifts at the wrist. Test's line stays near shoulder height;
      * Code's rides higher. The inner arms belong to the hold (see hold()).
      */
-    frame: { armL: { sh: 96, el: 12, wr: 16 }, armR: { sh: -112, el: -8, wr: -14 } },
+    frame: { armL: { sh: 92, el: 26, wr: 14 }, armR: { sh: -112, el: -14, wr: -14 } },
     /** Presenting a partner: the free arm opens low to the side, palm up. */
     present: { armL: { sh: 58, el: -14, wr: 26 } },
     /** Code takes the spotlight: her free arm rises in a long line. */
@@ -419,7 +419,8 @@
         spin.setAttribute('transform', `scale(${f(s.spin)} 1)`);
         upper.setAttribute('transform', `translate(0 ${f(s.bob)})`);
         lean.setAttribute('transform', `rotate(${f(s.lean)} 0 ${body.hipY})`);
-        back.setAttribute('transform', `translate(0 ${f(s.bob)}) rotate(${f(s.lean)} 0 ${body.hipY})`);
+        // The coat tails hang from the waist and swing a beat behind the body.
+        back.setAttribute('transform', `translate(0 ${f(s.bob)}) rotate(${f(s.lean)} 0 ${body.hipY}) rotate(${f(s.tails || 0)} 0 -112)`);
         for (const leg of legs) {
           const sign = leg.side === 'L' ? -1 : 1;
           const foot = s[`foot${leg.side}`];
@@ -730,7 +731,8 @@
     function waltzAt(t) {
       const active = waltzes.find((w) => t >= w.from && t < w.to);
       if (!active) return null;
-      const fade = smooth((t - active.from) / 0.6) * smooth((active.to - t) / 0.6);
+      // `calm` scales the whole figure down to a gentle sway in place.
+      const fade = smooth((t - active.from) / 0.6) * smooth((active.to - t) / 0.6) * (active.calm ?? 1);
       const { index, phase } = beats.at(t);
       const dir = index % 2 === 0 ? 1 : -1;
       const travel = active.travel;
@@ -850,9 +852,12 @@
           const heel = isTest ? 2.5 * w.rise : 0;
           const lead = s[`foot${leadSide}`];
           const trail = s[`foot${trailSide}`];
-          s[`foot${leadSide}`] = { dx: lead.dx + (leadX - w.x) * e, lift: lead.lift + (5 * w.lead.lift + heel) * e };
-          s[`foot${trailSide}`] = { dx: trail.dx + (trailX - w.x) * e, lift: trail.lift + (3 * w.trail.lift + heel) * e };
+          // A clear box step: the leading foot lifts and reaches, the closing
+          // foot brushes in low.
+          s[`foot${leadSide}`] = { dx: lead.dx + (leadX - w.x) * 1.3 * e, lift: lead.lift + (8 * w.lead.lift + heel) * e };
+          s[`foot${trailSide}`] = { dx: trail.dx + (trailX - w.x) * 1.3 * e, lift: trail.lift + (4.5 * w.trail.lift + heel) * e };
         }
+        if (isTest) s.tails = (9 * w.lag(1.0) - 0.12 * w.travel * w.dir * Math.sin(Math.PI * w.phase)) * e;
         if (!isTest) {
           // The gown trails the travel and sways with the frame.
           s.sway += (0.55 * w.lag(0.9) - 0.04 * w.travel * w.dir * Math.sin(Math.PI * w.phase)) * e;
@@ -864,6 +869,8 @@
           s.bob += walk.dip;
           s.footL = { ...s.footL, lift: s.footL.lift + walk.liftL };
           s.footR = { ...s.footR, lift: s.footR.lift + walk.liftR };
+          // Walking, the tails trail behind the direction of travel.
+          if (isTest) s.tails = clamp(walk.velocity / 16, -10, 10) * walk.amount;
           if (!isTest) {
             s.sway += clamp(-walk.velocity / 140, -0.9, 0.9) * walk.amount;
           }
@@ -1076,8 +1083,8 @@
         return api;
       },
       /** The waltz box step (rise, fall, alternating feet) during [from, to). */
-      waltz(from, to, { travel = 10, roam = 26 } = {}) {
-        waltzes.push({ from, to, travel, roam });
+      waltz(from, to, { travel = 10, roam = 26, calm = 1 } = {}) {
+        waltzes.push({ from, to, travel, roam, calm });
         return api;
       },
       /** Code spins under Test's raised arm: from a beat, for whole beats. */
