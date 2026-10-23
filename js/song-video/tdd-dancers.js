@@ -197,14 +197,14 @@
       },
       /**
        * The keyed state, softened by a short bell-shaped time kernel
-       * (±0.14 s): where one move interrupts another, or a quick key
+       * (±0.21 s): where one move interrupts another, or a quick key
        * starts from rest, the motion carries its momentum through the
        * change instead of hitching. Still a pure function of t.
        */
       value(t) {
         if (!compiled) compile();
         const samples = SMOOTHING.map(([dt]) => raw(t + dt));
-        const centre = samples[2];
+        const centre = samples[(SMOOTHING.length - 1) / 2];
         const out = { ...centre };
         for (const name of Object.keys(centre)) {
           out[name] = blend(samples.map((sample) => sample[name]), SMOOTHING.map(([, weight]) => weight), centre[name]);
@@ -234,7 +234,7 @@
   }
 
   /** Binomial kernel offsets (s) and weights for track smoothing. */
-  const SMOOTHING = [[-0.14, 1 / 16], [-0.07, 4 / 16], [0, 6 / 16], [0.07, 4 / 16], [0.14, 1 / 16]];
+  const SMOOTHING = [[-0.21, 1 / 64], [-0.14, 6 / 64], [-0.07, 15 / 64], [0, 20 / 64], [0.07, 15 / 64], [0.14, 6 / 64], [0.21, 1 / 64]];
 
   /** Weighted average of numbers (recursively in objects); other values keep the centre sample. */
   function blend(values, weights, centre) {
@@ -1365,7 +1365,7 @@
       const w = waltzOf(dancer, at(0.05));
       let mode = 'still';
       if (peak <= 400) {
-        if (w && w.fade > 0.5 && travel / (t1 - t0) < 55) mode = 'waltz';
+        if (w && w.fade > 0.5 && travel / (t1 - t0) < 30) mode = 'waltz';
         else if (travel > 4) mode = 'walk';
       }
       const plan = { mode, travel, w, at };
@@ -1394,7 +1394,7 @@
         } else if (mode === 'walk') {
           const count = clamp(2 * Math.ceil(travel / 60), 2, 6);
           for (let k = 0; k < count; k++) {
-            events.push({ side: k % 2 === 0 ? 'R' : 'L', lift: at(k / count), land: at((k + 1) / count), offset: 0, height: 2.6 * smooth(travel / 12) });
+            events.push({ side: k % 2 === 0 ? 'R' : 'L', lift: at(k / count), land: at((k + 1) / count), offset: 0, height: 3.4 * smooth(travel / 12) });
           }
         } else if (beatPlan(dancer, b - 1).mode !== 'still') {
           // Come to rest: both feet close under the body.
@@ -1444,7 +1444,9 @@
           const to = landing(i);
           const k = clamp((t - step.lift) / (step.land - step.lift), 0, 1);
           stand = from + (to - from) * smooth(k);
-          lift = step.height * Math.sin(Math.PI * k);
+          // The foot peels off the floor and touches down softly (no speed
+          // at either end), skimming highest mid-step.
+          lift = 1.1 * step.height * Math.sin(Math.PI * k) ** 1.5;
           if (k < 1) out.dip = Math.max(out.dip, 0.45 * step.height * (1 - Math.cos(2 * Math.PI * k)) / 2);
         }
         out[side] = { dx: clamp(offsetAt(dancer, t, stand) - base - sway, -reach, reach), lift };
@@ -1597,7 +1599,7 @@
       if (w) {
         const e = w.fade;
         const inward = isTest ? 1 : -1;
-        s.bob += (5 - 9 * w.rise) * e;
+        s.bob += (4 - 7 * w.rise) * e;
         // Test stands tall, inclined a touch toward her; Code's top line
         // curves back and away from him, as in a ballroom hold.
         s.lean += (4 * w.sway + (isTest ? 1.2 : 3.4)) * e;

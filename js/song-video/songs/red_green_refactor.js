@@ -908,7 +908,9 @@
       // Test's lamp lights the bugs it shines on; beyond the beam, more wait.
       // The couple stands at the side again and the beam shines left.
       const seeker = duo;
-      // The couple glides on only once Code's turn has ended.
+      // The couple glides on only once Code's turn has ended, and Test's
+      // lamp shines its beam only once he stands in place.
+      const inPlace = line('bridge-7').start + 0.2 + 1.0;
       seeker.place(line('bridge-7').start + 0.2, { x: 812, y: 456, scale: 1.0 }, 1.0);
       seeker.hold(line('bridge-7').start - 0.3, { pose: 'frame' });
       seeker.lamp(line('bridge-7').start, 'idle').pose('test', mark('bridge-7', 'reveal'), 'pointL');
@@ -917,7 +919,7 @@
       seeker.waltz(line('bridge-7').start + 0.4, line('bridge-9').start - 0.8, { travel: 0, roam: 0, calm: 0.35 });
       const lampX = 812 - 20 - 33;
       props.beam(d, {
-        x: lampX - 506, y: 242, w: 506, h: 196, mirror: true, at: mark('bridge-7', 'tests'), darkAt: mark('bridge-8', 'cannot'),
+        x: lampX - 506, y: 242, w: 506, h: 196, mirror: true, at: inPlace, until: line('bridge-9').start - 0.8, darkAt: mark('bridge-8', 'cannot'),
         bugsIn: [[470, 360, mark('bridge-7', 'bugs')], [340, 398, mark('bridge-7', 'bugs') + 0.3], [250, 320, mark('bridge-7', 'see')]],
       });
       const dijkstra = tdd.panel(d, { x: 40, y: 60, w: 400, title: 'Edsger W. Dijkstra', iconName: 'chat', at: line('bridge-7').start + 0.3 });
