@@ -1408,10 +1408,10 @@
     // The upper body drops with the knees. Its layers, back to front: the
     // jacket and head; the upper arms; the armhole lines; the forearms and
     // hands. Each upper arm is masked away inside its shoulder (the
-    // "socket", the jacket above the armhole), so the shoulder joint sits
-    // inside the padded shoulder and the sleeve emerges from the armhole at
-    // any angle; below the armpit it hangs in front of the jacket. The
-    // forearms stay in front, so a hand can reach the bow tie or the brow.
+    // "socket", the jacket inside the armhole), so the shoulder joint sits
+    // inside the jacket and the sleeve emerges from the armhole at any
+    // angle; below the armpit it hangs in front of the jacket. The forearms
+    // stay in front, so a hand can reach the bow tie or the brow.
     const trunk = svg('g', {}, sway);
     const torso = svg('g', {}, trunk);
     const upperArms = svg('g', {}, trunk);
@@ -1423,33 +1423,40 @@
     // A pleated black cummerbund shows where the jacket's fronts part.
     svg('path', { class: 'ih-agent-cummerbund', d: 'M60 176 L100 176 L101 200 L59 200 Z' }, torso);
     svg('path', { class: 'ih-agent-cummerbund-pleat', d: 'M68 184 H92 M67 191 H93' }, torso);
-    // Jacket body: padded shoulders that round over each arm's joint, sides
-    // that come in from the armpit to a suppressed waist, and fronts that
-    // curve away below the single button. Fill and shading first, outline
-    // on top. The shoulder line and armhole (ARMHOLE: from the collar round
-    // the shoulder and down the front of the sleeve to the armpit, where the
-    // jacket's side begins) are drawn over the sleeves: where a sleeve lies
-    // against them they are a fine seam, elsewhere a full ink silhouette.
-    // INNER_ARMHOLE carries the seam on round the sleeve's front to where
-    // its inner contour begins, and on into the body for inward swings; it
-    // shows only over a sleeve.
-    const JACKET = 'M66 92 Q48 92.8 38 105.2 C36.4 106.6 35.7 109.4 35.7 114 C35.7 119.6 38.7 124.35 43.4 126.3 C47.4 148 45.6 174 40 204 Q57 211 74 209 Q79 196 80 180 Q81 196 86 209 Q103 211 120 204 C114.4 174 112.6 148 116.6 126.3 C121.3 124.35 124.3 119.6 124.3 114 C124.3 109.4 123.6 106.6 122 105.2 Q112 92.8 94 92 L80 90 Z';
-    const ARMHOLE = 'M116.6 126.3 C121.3 124.35 124.3 119.6 124.3 114 C124.3 109.4 123.6 106.6 122 105.2 Q112 92.8 94 92';
+    // Jacket body: a shoulder line sloping down from the collar, sides that
+    // come in from the armpit to a suppressed waist, and fronts that curve
+    // away below the single button. Fill and shading first, outline on top.
+    // The shoulder line ends at the shoulder point, tangent to the sleeve
+    // head and half a line width outside its rim (where the sleeve's ink,
+    // drawn outside its edge, is centred), so shoulder, sleeve head, and the
+    // sleeve's outer edge run on as one smooth, even contour; from the shoulder point the
+    // armhole seam runs down the front of the sleeve to the armpit, where
+    // the jacket's side begins. Shoulder line and armhole (ARMHOLE) are
+    // drawn over the sleeves: where a sleeve lies against them they are a
+    // fine seam, elsewhere a full ink silhouette. INNER_ARMHOLE carries the
+    // seam on round the sleeve's front to where its inner contour begins,
+    // and on into the body for inward swings; it shows only over a sleeve.
+    const JACKET = 'M66 92 Q52.5 99.2 39.8 106.1 C39 112 41.1 121 43.4 126.3 C47.4 148 45.6 174 40 204 Q57 211 74 209 Q79 196 80 180 Q81 196 86 209 Q103 211 120 204 C114.4 174 112.6 148 116.6 126.3 C118.9 121 121 112 120.2 106.1 Q107.5 99.2 94 92 L80 90 Z';
+    const ARMHOLE = 'M116.6 126.3 C118.9 121 121 112 120.2 106.1 Q107.5 99.2 94 92';
     // The armhole's ink starts a little down the jacket's side, so where a
     // raised arm bares both they meet in one round corner.
     const ARMHOLE_INK = `M115.9 131 Q116.1 128.5 ${ARMHOLE.slice(1)}`;
     const INNER_ARMHOLE = 'M116.6 126.3 C115 127 113.3 127.3 111.4 127.3 C109 127.3 104 126 100 124';
     const SOCKET = `${ARMHOLE} L92 100 L100 124 C104 126 109 127.3 111.4 127.3 C113.3 127.3 115 127 116.6 126.3 Z`;
     jacket('ih-agent-tux-fill', JACKET);
-    svg('path', { class: 'ih-agent-tux-shade', d: 'M101 100 Q112 101 122 105.2 C123.6 106.6 124.3 109.4 124.3 114 C124.3 119.6 121.3 124.35 116.6 126.3 C112.6 148 114.4 174 120 204 Q109 208 97 209 Q104 160 101 100 Z' }, torso);
-    svg('path', { class: 'ih-agent-tux-rim', d: 'M58 95 Q46 96 40 106 M45.4 134 C49 152 47.8 170 43.8 186' }, torso);
+    svg('path', { class: 'ih-agent-tux-shade', d: 'M100.5 95.6 Q109 100.4 120.2 106.1 C121 112 118.9 121 116.6 126.3 C112.6 148 114.4 174 120 204 Q109 208 97 209 Q104 160 100.5 96 Z' }, torso);
+    svg('path', { class: 'ih-agent-tux-rim', d: 'M61 97 Q52 102.4 44.6 107.4 M45.4 134 C49 152 47.8 170 43.8 186' }, torso);
     svg('path', { class: 'ih-agent-tux-outline', d: 'M43.4 126.3 C47.4 148 45.6 174 40 204 Q57 211 74 209 Q79 196 80 180 Q81 196 86 209 Q103 211 120 204 C114.4 174 112.6 148 116.6 126.3 M66 92 L80 90 L94 92' }, torso);
     // Masks, per side, each holding a copy of the sleeve that poseArm turns
     // with it: the armhole's ink shows only where no sleeve lies against it
     // (cut on the sleeve's edge, so it runs into the sleeve's own ink), the
-    // inner seam only over the sleeve. The socket mask hides the sleeve inside the shoulder; it lives
-    // in the turning sleeve's frame, so poseArm turns it back.
-    const UPPER_ARM = 'M108.4 115.3 L123.6 112.7 Q128 133 129.9 154.85 L116.1 157.15 Q113.8 135 108.4 115.3 Z';
+    // inner seam only over the sleeve. The socket mask hides the sleeve
+    // inside the shoulder; it lives in the turning sleeve's frame, so poseArm
+    // turns it back.
+    // The upper arm with a round sleeve head on its pivot: hidden in the
+    // jacket at rest except its outer curve (the shoulder point); raised, it
+    // rounds the armpit.
+    const UPPER_ARM = 'M108.4 115.3 A7.71 7.71 0 0 1 123.6 112.7 Q128 133 129.9 154.85 L116.1 157.15 Q113.8 135 108.4 115.3 Z';
     const maskOf = (keep, parts) => {
       const id = `ih-agent-mask-${++uid}`;
       const mask = svg('mask', { id, maskUnits: 'userSpaceOnUse', x: -100, y: -100, width: 400, height: 500 }, defs);
