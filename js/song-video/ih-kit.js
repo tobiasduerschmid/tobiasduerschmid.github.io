@@ -1383,12 +1383,19 @@
    *                  whole figure turns (minus the figure's rotation)
    */
   function tuxedoFigure(fig, sway) {
-    // White dinner jacket, lit from the upper left: one gradient spans the
-    // body and both sleeves so the light reads continuously across them.
-    const cloth = `ih-agent-cloth-${++uid}`;
+    // White dinner jacket, lit from the upper left: one gradient, fixed to
+    // the figure, so the light reads continuously across body and sleeves.
+    // A gradient in user space would turn and flip with each sleeve, so
+    // every sleeve segment gets its own copy: mirrored for the free arm, and
+    // counter-turned by poseArm each frame.
     const defs = svg('defs', {}, fig);
-    const gradient = svg('linearGradient', { id: cloth, gradientUnits: 'userSpaceOnUse', x1: 40, y1: 92, x2: 122, y2: 212 }, defs);
-    for (const [index, offset] of ['0', '0.45', '0.8', '1'].entries()) svg('stop', { offset, class: `ih-agent-cloth-stop-${index}` }, gradient);
+    const clothGradient = (side = 1) => {
+      const id = `ih-agent-cloth-${++uid}`;
+      const gradient = svg('linearGradient', { id, gradientUnits: 'userSpaceOnUse', x1: side < 0 ? 120 : 40, y1: 92, x2: side < 0 ? 38 : 122, y2: 212 }, defs);
+      for (const [index, offset] of ['0', '0.45', '0.8', '1'].entries()) svg('stop', { offset, class: `ih-agent-cloth-stop-${index}` }, gradient);
+      return { gradient, url: `url(#${id})` };
+    };
+    const cloth = clothGradient().url;
     const mirror = (side) => (side < 0 ? 'translate(160 0) scale(-1 1)' : '');
 
     // Legs: thick round-joined strokes (a white rim under the dark trouser),
@@ -1417,7 +1424,7 @@
     const upperArms = svg('g', {}, trunk);
     const armholeLines = svg('g', {}, trunk);
     const frontArms = svg('g', {}, trunk);
-    const jacket = (className, d, parent = torso) => svg('path', { class: className, d, fill: `url(#${cloth})` }, parent);
+    const jacket = (className, d, parent = torso, fill = cloth) => svg('path', { class: className, d, fill }, parent);
     // The trousers' seat hides where the legs meet the jacket.
     svg('path', { class: 'ih-agent-seat', d: 'M55.5 196 H104.5 V211 Q80 220 55.5 211 Z' }, torso);
     // A pleated black cummerbund shows where the jacket's fronts part.
@@ -1429,50 +1436,55 @@
     // The shoulder line ends at the shoulder point, tangent to the sleeve
     // head and half a line width outside its rim (where the sleeve's ink,
     // drawn outside its edge, is centred), so shoulder, sleeve head, and the
-    // sleeve's outer edge run on as one smooth, even contour; from the shoulder point the
-    // armhole seam runs down the front of the sleeve to the armpit, where
-    // the jacket's side begins. Shoulder line and armhole (ARMHOLE) are
-    // drawn over the sleeves: where a sleeve lies against them they are a
-    // fine seam, elsewhere a full ink silhouette. INNER_ARMHOLE carries the
-    // seam on round the sleeve's front to where its inner contour begins,
-    // and on into the body for inward swings; it shows only over a sleeve.
+    // sleeve's outer edge run on as one smooth, even contour. From the
+    // shoulder point the armhole (ARMHOLE) runs down the front of the sleeve
+    // to the armpit, where the jacket's side begins. Jacket and sleeve read
+    // as one surface there: no seam is drawn, the jacket's shading starts
+    // below the armpit, and the sleeve's shading tapers in from the
+    // shoulder. The armhole is inked only where it meets the background
+    // (the shoulder line, and the armpit under a raised arm); the arm's
+    // inner contour begins where it leaves the jacket, at the armpit.
     const JACKET = 'M66 92 Q52.5 99.2 39.8 106.1 C39 112 41.1 121 43.4 126.3 C47.4 148 45.6 174 40 204 Q57 211 74 209 Q79 196 80 180 Q81 196 86 209 Q103 211 120 204 C114.4 174 112.6 148 116.6 126.3 C118.9 121 121 112 120.2 106.1 Q107.5 99.2 94 92 L80 90 Z';
     const ARMHOLE = 'M116.6 126.3 C118.9 121 121 112 120.2 106.1 Q107.5 99.2 94 92';
-    // The armhole's ink starts a little down the jacket's side, so where a
-    // raised arm bares both they meet in one round corner.
-    const ARMHOLE_INK = `M115.9 131 Q116.1 128.5 ${ARMHOLE.slice(1)}`;
-    const INNER_ARMHOLE = 'M116.6 126.3 C115 127 113.3 127.3 111.4 127.3 C109 127.3 104 126 100 124';
+    // The jacket's side outline starts a little below the armpit (so its
+    // end stays under a hanging sleeve), and the armhole's ink runs down the
+    // same curve to meet it, so where a raised arm bares both they join in
+    // one round corner.
+    const ARMHOLE_INK = `M115.75 131.59 C116 129.8 116.28 128.04 ${ARMHOLE.slice(1)}`;
     const SOCKET = `${ARMHOLE} L92 100 L100 124 C104 126 109 127.3 111.4 127.3 C113.3 127.3 115 127 116.6 126.3 Z`;
     jacket('ih-agent-tux-fill', JACKET);
-    svg('path', { class: 'ih-agent-tux-shade', d: 'M100.5 95.6 Q109 100.4 120.2 106.1 C121 112 118.9 121 116.6 126.3 C112.6 148 114.4 174 120 204 Q109 208 97 209 Q104 160 100.5 96 Z' }, torso);
+    // The jacket's far side is shaded from the armpit down, in a crescent
+    // that tapers to nothing at the armpit.
+    svg('path', { class: 'ih-agent-tux-shade', d: 'M115.9 131 C112.8 150 114.4 174 120 204 Q109 208 97 209 Q103 168 115.9 131 Z' }, torso);
     svg('path', { class: 'ih-agent-tux-rim', d: 'M61 97 Q52 102.4 44.6 107.4 M45.4 134 C49 152 47.8 170 43.8 186' }, torso);
-    svg('path', { class: 'ih-agent-tux-outline', d: 'M43.4 126.3 C47.4 148 45.6 174 40 204 Q57 211 74 209 Q79 196 80 180 Q81 196 86 209 Q103 211 120 204 C114.4 174 112.6 148 116.6 126.3 M66 92 L80 90 L94 92' }, torso);
+    svg('path', { class: 'ih-agent-tux-outline', d: 'M44.25 131.59 C47.09 152.19 45.15 176.4 40 204 Q57 211 74 209 Q79 196 80 180 Q81 196 86 209 Q103 211 120 204 C114.85 176.4 112.91 152.19 115.75 131.59 M66 92 L80 90 L94 92' }, torso);
     // Masks, per side, each holding a copy of the sleeve that poseArm turns
     // with it: the armhole's ink shows only where no sleeve lies against it
-    // (cut on the sleeve's edge, so it runs into the sleeve's own ink), the
-    // inner seam only over the sleeve. The socket mask hides the sleeve
-    // inside the shoulder; it lives in the turning sleeve's frame, so poseArm
-    // turns it back.
+    // (cut on the sleeve's edge, so it runs into the sleeve's own ink). The
+    // socket mask hides the sleeve inside the jacket; it lives in the
+    // turning sleeve's frame, so poseArm turns it back. It is inset a hair,
+    // so the sleeve overlaps the jacket's same-coloured cloth at the armhole
+    // instead of meeting it edge to edge, where the two anti-aliased edges
+    // would let a hairline of background through.
     // The upper arm with a round sleeve head on its pivot: hidden in the
     // jacket at rest except its outer curve (the shoulder point); raised, it
     // rounds the armpit.
     const UPPER_ARM = 'M108.4 115.3 A7.71 7.71 0 0 1 123.6 112.7 Q128 133 129.9 154.85 L116.1 157.15 Q113.8 135 108.4 115.3 Z';
-    const maskOf = (keep, parts) => {
+    const maskOf = (parts, { inset = false } = {}) => {
       const id = `ih-agent-mask-${++uid}`;
       const mask = svg('mask', { id, maskUnits: 'userSpaceOnUse', x: -100, y: -100, width: 400, height: 500 }, defs);
-      svg('rect', { class: keep ? 'ih-agent-mask-keep' : 'ih-agent-mask-cut', x: -100, y: -100, width: 400, height: 500 }, mask);
+      svg('rect', { class: 'ih-agent-mask-keep', x: -100, y: -100, width: 400, height: 500 }, mask);
       const turn = svg('g', {}, mask);
-      svg('path', { class: keep ? 'ih-agent-mask-cut' : 'ih-agent-mask-keep', d: parts }, turn);
+      svg('path', { class: 'ih-agent-mask-cut', d: parts }, turn);
+      if (inset) svg('path', { class: 'ih-agent-mask-inset', d: parts }, turn);
       return { url: `url(#${id})`, turn };
     };
     const armholes = {};
     for (const side of [1, -1]) {
-      const open = maskOf(true, UPPER_ARM), over = maskOf(false, UPPER_ARM), socket = maskOf(true, SOCKET);
+      const open = maskOf(UPPER_ARM), socket = maskOf(SOCKET, { inset: true });
       const g = svg('g', { transform: mirror(side) }, armholeLines);
-      svg('path', { class: 'ih-agent-seam', d: ARMHOLE }, g);
       svg('path', { class: 'ih-agent-tux-outline ih-agent-armhole', d: ARMHOLE_INK, mask: open.url }, g);
-      svg('path', { class: 'ih-agent-seam', d: INNER_ARMHOLE, mask: over.url }, g);
-      armholes[side] = { sleeves: [open.turn, over.turn], socket };
+      armholes[side] = { sleeves: [open.turn], socket };
     }
     svg('path', { class: 'ih-agent-tux-fold', d: 'M78 177 Q69 171 60 170 M82 177 Q91 171 100 169' }, torso);
     // Pleated dress shirt with studs.
@@ -1527,7 +1539,8 @@
     // a straight arm shows no joint. The forearm's fill sits in the front
     // layer, so it still crosses the jacket with its outline. Each segment
     // has a shading strip down both sides; shadeArm shows the side turned
-    // away from the light, and the strips taper to a point at the elbow.
+    // away from the light. The upper arm's strips taper to a point at both
+    // ends, so they fade in from the shoulder and out before the elbow.
     const FOREARM = 'M116.1 157.15 L129.9 154.85 C131 170 131.5 182 131.5 193.66 L118.5 194.34 C118 182 117.6 170 116.1 157.15 Z';
     const ELBOW = 'M116.1 156 A6.9 6.9 0 1 0 129.9 156 A6.9 6.9 0 1 0 116.1 156 Z';
     const arm = (side) => {
@@ -1536,23 +1549,26 @@
       for (const d of [UPPER_ARM, ELBOW]) svg('path', { class: 'ih-agent-limb-ink', d }, upper);
       const foreInk = svg('g', {}, upper);
       svg('path', { class: 'ih-agent-limb-ink', d: FOREARM }, foreInk);
-      jacket('ih-agent-tux-fill', ELBOW, upper);
-      jacket('ih-agent-tux-fill', UPPER_ARM, upper);
+      const upperCloth = clothGradient(side), foreCloth = clothGradient(side);
+      jacket('ih-agent-tux-fill', ELBOW, upper, upperCloth.url);
+      jacket('ih-agent-tux-fill', UPPER_ARM, upper, upperCloth.url);
+      // The outer strip fades in from the shoulder point, the inner one from
+      // the armpit, where the arm's inner contour leaves the jacket.
       const upperShade = [
-        svg('path', { class: 'ih-agent-tux-shade', d: 'M119.6 115.8 Q124.8 132 128.8 149 Q127 131 123.6 112.7 Z' }, upper),
-        svg('path', { class: 'ih-agent-tux-shade', d: 'M108.4 115.3 Q113.2 133 115.4 150 Q116 132 112.9 114.6 Z' }, upper),
+        svg('path', { class: 'ih-agent-tux-shade', d: 'M123.6 112.7 Q127.34 129.96 129.27 148.34 Q119.45 131.24 123.6 112.7 Z' }, upper),
+        svg('path', { class: 'ih-agent-tux-shade', d: 'M111.35 127.3 Q113.82 138.55 115.34 150.56 Q120.74 137.37 111.35 127.3 Z' }, upper),
       ];
       // The forearm turns with the upper arm, then at the elbow.
       const reach = svg('g', {}, svg('g', { transform: mirror(side) }, frontArms));
       const fore = svg('g', {}, reach);
-      jacket('ih-agent-tux-fill', FOREARM, fore);
+      jacket('ih-agent-tux-fill', FOREARM, fore, foreCloth.url);
       const foreShade = [
         svg('path', { class: 'ih-agent-tux-shade', d: 'M130.4 162 Q126.6 176 126.6 194 L131.5 193.66 C131.5 182 131.2 172 130.4 162 Z' }, fore),
         svg('path', { class: 'ih-agent-tux-shade', d: 'M116.9 163 C117.8 172 118.2 182 118.5 194.34 L123 194.1 Q121.8 174 116.9 163 Z' }, fore),
       ];
       svg('rect', { class: 'ih-agent-cuff', x: 118, y: 190, width: 13, height: 6, rx: 1.5 }, fore);
       svg('circle', { class: 'ih-agent-cufflink', cx: 124.5, cy: 193, r: 1.1 }, fore);
-      return { side, upper, reach, fore, foreInk, upperShade, foreShade, armhole: armholes[side] };
+      return { side, upper, reach, fore, foreInk, upperShade, foreShade, upperCloth, foreCloth, armhole: armholes[side] };
     };
     const free = arm(-1);
     // The free hand's index finger, for a salute.
@@ -1585,6 +1601,10 @@
       const elbow = `rotate(${(up - fo).toFixed(1)} 123 156)`;
       a.fore.setAttribute('transform', elbow);
       a.foreInk.setAttribute('transform', elbow);
+      // The sleeves' cloth stays put while they turn.
+      const unturn = `rotate(${up.toFixed(1)} ${ARM.sx} ${ARM.sy})`;
+      a.upperCloth.gradient.setAttribute('gradientTransform', unturn);
+      a.foreCloth.gradient.setAttribute('gradientTransform', `rotate(${(fo - up).toFixed(1)} 123 156) ${unturn}`);
       shadeArm(a.upperShade, up, a.side);
       shadeArm(a.foreShade, fo, a.side);
     };
