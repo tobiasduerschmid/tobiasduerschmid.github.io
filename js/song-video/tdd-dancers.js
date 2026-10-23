@@ -65,7 +65,7 @@
     /** Presenting a partner: the free arm opens low to the side, palm up. */
     present: { armL: { sh: 58, el: -14, wr: 26 } },
     /** Code takes the spotlight: her free arm rises in a long line. */
-    spotlight: { armR: { sh: -142, el: 12, wr: -16 } },
+    spotlight: { armR: { sh: -134, el: 10, wr: -16 } },
     /** A solo flourish: one arm high, the other opening out at the side. */
     solo: { armL: { sh: 140, el: -18, wr: 16 }, armR: { sh: -66, el: 10, wr: -22 } },
     flourish: { armL: { sh: 126, el: -16, wr: 14 }, armR: { sh: -136, el: 16, wr: -14 } },
@@ -2053,7 +2053,10 @@
         keyAll(start - HOLD_CHANGE - 0.4, () => ({ bob: -3, lean: 0, arch: 0, head: 0 }), HOLD_CHANGE);
         // Test's arm supports her back (the promenade hold) through the dip.
         keyAll(start - 0.35, () => ({ hold: 1, embrace: 1 }), 0.35);
-        if (dancers.code) dancers.code.state.add(start, { lean: 21 * depth, arch: 11 * depth, head: 10 * depth, bob: 5 * depth, armR: { sh: -112, el: 16, wr: -18 }, face: 'joy' }, dur);
+        // She arches back through her ribs (arch) more than she tilts at
+        // the waist (lean), so her waist stays nearly level over her feet,
+        // and her head continues the curve of her spine.
+        if (dancers.code) dancers.code.state.add(start, { lean: 13 * depth, arch: 19 * depth, head: 4 * depth, bob: 5 * depth, armR: { sh: -112, el: 16, wr: -18 }, face: 'joy' }, dur);
         if (dancers.test) dancers.test.state.add(start, { lean: 11 * depth, head: 8 * depth, bob: 8 * depth, armL: { sh: 118, el: -28 } }, dur);
         return api;
       },
@@ -2067,7 +2070,7 @@
           armL: { sh: 132, el: -12, wr: 18 }, face: 'joy',
         }, dur);
         if (dancers.code) dancers.code.state.add(start, {
-          armR: { sh: -108, el: 10, wr: -22 }, flare: 14, sway: 0.55,
+          armR: { sh: -96, el: 8, wr: -16 }, flare: 14, sway: 0.55,
         }, dur);
         return api;
       },
