@@ -345,7 +345,9 @@
       const xs = { red: 650, green: 745, refactor: 840 };
       const tiles = props.floorTiles(content, { y: 446, xs, rx: 70, at: s0, until: sEnd });
       const duo = couple;
-      duo.place(s0 - 0.8, { x: xs.red, y: 446, scale: 1.06 }, 1.1);
+      // They arrive on the red tile before the chorus starts, so each cycle
+      // begins in red.
+      duo.place(s0 - 1.7, { x: xs.red, y: 446, scale: 1.06 }, 1.5);
       duo.hold(s0, { pose: 'frame' });
       // Each move between tiles is an unhurried glide centred on its word
       // and settling on a beat, so the couple travels in step instead of
@@ -369,7 +371,7 @@
       // passing the green tile as "green" is sung and settling on the
       // refactor tile on the next beat; then, through "let the tests lead",
       // an unhurried glide back to red that arrives on "lead".
-      const across = mark(ln(1), 'red') + 0.2;
+      const across = mark(ln(1), 'red') + 0.35;
       duo.place(across, { x: xs.refactor }, mark(ln(1), 'refactor') + 0.55 - across);
       duo.lamp(mark(ln(1), 'red'), 'red').lamp(mark(ln(1), 'green'), 'green');
       const back = mark(ln(2), 'let') - 0.5;
