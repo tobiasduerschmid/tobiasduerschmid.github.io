@@ -114,12 +114,12 @@
       // newborn, egg cell, gone.
       const rewind = mark('intro-8', 'zero');
       ih.agingPerson(d, {
-        x: 690, y: 92, tag: 'Born ’85', at: mark('intro-8', 'born'), until: rewind + 5.1,
-        stages: { teen: rewind, kid: rewind + 0.9, baby: rewind + 1.8, newborn: rewind + 2.7, egg: rewind + 3.6, gone: rewind + 4.5 },
+        x: 690, y: 92, tag: 'Born ’85', at: mark('intro-8', 'born'), until: rewind + 4.85,
+        stages: { teen: rewind, kid: rewind + 0.85, baby: rewind + 1.7, newborn: rewind + 2.55, egg: rewind + 3.4, gone: rewind + 4.25 },
       });
       ih.bubble(d, {
         x: 600, y: 96, w: 300, who: '1970s programmer', whoIcon: 'user', thought: true,
-        text: 'This code will be replaced long before 2000.', at: rewind + 5.25,
+        text: 'This code will be replaced long before 2000.', at: rewind + 5,
       });
       kit.stamp(d, 'Still running', { x: 600, y: 300, at: mark('intro-11', 'did'), color: 'gold', rotate: -6, shake: false });
 
