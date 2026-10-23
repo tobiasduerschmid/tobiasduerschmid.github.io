@@ -119,7 +119,11 @@
       duo.step('test', mark('intro-4', 'one'), 0, 1.2).step('code', mark('intro-4', 'one'), 0, 1.2);
       duo.hold(mark('intro-4', 'step'), { pose: 'frame' });
       // They keep waltzing through the rules of verse 1; gestures ride on top.
-      duo.waltz(mark('intro-4', 'guide'), mark('verse-1-8', 'red'), { travel: 10, roam: 8 });
+      // The dance itself obeys the lyrics: it comes to rest on "rest" and
+      // stops on "stop", holding still until the line ends.
+      duo.waltz(mark('intro-4', 'guide'), mark('verse-1-2', 'rest'), { travel: 10, roam: 8 });
+      duo.waltz(line('verse-1-3').start - 0.3, mark('verse-1-5', 'stop'), { travel: 10, roam: 8 });
+      duo.waltz(line('verse-1-6').start, mark('verse-1-8', 'red'), { travel: 10, roam: 8 });
       duo.place(line('intro-4').end + 0.3, SPOT.side, 2.4);
     }
 
