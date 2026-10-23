@@ -1148,16 +1148,19 @@
       const state = track(merge(NEUTRAL, { x: offset, look: members.length === 2 ? (kind === 'test' ? 1 : -1) : 0 }));
       dancers[kind] = { kind, rig, state, home: offset };
     });
-    // In the hold Code's arm lies along the top of Test's arm, which reaches
-    // behind her back, so from the front her arm passes behind his, while
-    // her hand rests on top of his shoulder, in front. Both inner arms move
-    // to layers between the dancers (in front of Test's body, behind
-    // Code's): her arm, then his arm, then her hand.
+    // In the hold Code's arm reaches round behind Test's shoulder and his
+    // arm reaches behind her back. From the front her inner arm is behind
+    // his body and his arm (so her hand travels behind his back whenever it
+    // moves to or from his shoulder), his inner arm is in front of his body
+    // but behind hers, and her hand, once it rests on his shoulder, lies on
+    // top of it. Back to front: her arm, Test, his arm, her resting hand,
+    // Code.
     const holdLayers = dancers.test && dancers.code
       ? { code: svg('g', {}, floor), test: svg('g', {}, floor), codeHand: svg('g', {}, floor) }
       : null;
     if (holdLayers) {
-      for (const layer of [holdLayers.code, holdLayers.test, holdLayers.codeHand]) floor.insertBefore(layer, dancers.code.rig.root);
+      floor.insertBefore(holdLayers.code, dancers.test.rig.root);
+      for (const layer of [holdLayers.test, holdLayers.codeHand]) floor.insertBefore(layer, dancers.code.rig.root);
     }
     /** Puts an arm (and, given handLayer, its hand) in the hold layers, or back in its dancer's own layers. */
     function layerArm(rig, side, layer, handLayer) {
@@ -1737,11 +1740,11 @@
         // Promenade hold: Test's hand on Code's back, behind her; Code's hand
         // resting on top of Test's near shoulder, her arm in a long line.
         const back = on('code', [-2, -150]);
-        // On top of his shoulder, inside the coat's shoulder line: clear of
-        // the root of his raised arm, so her fingers rest on the shoulder
-        // rather than across his arm.
-        const contact = on('test', [17, -178.5]);
-        const palm = rotateAbout([0, 7.2], [0, 0], raw.test.lean);
+        // Her hand lies along the top of his shoulder, fingers toward his
+        // neck: the palm's centre just above the coat's shoulder line, the
+        // wrist above the shoulder's corner, clear of his raised arm.
+        const contact = on('test', [21, -179.5]);
+        const palm = rotateAbout([-6.8, 2.2], [0, 0], raw.test.lean);
         // IK targets the wrist; the palm, not the cuff, rests on the shoulder.
         const shoulder = [contact[0] - palm[0], contact[1] - palm[1]];
         // Underarm turn: the joined hands rise into the gap between the two
@@ -1771,10 +1774,10 @@
         // own layers only once the hold has fully let go and the arms hang
         // apart, so their order never flips mid-movement.
         const held = Math.max(finals.code.hold, finals.test.hold) > 0.002;
-        // Her hand comes in front of his arm only while it rests on his
-        // shoulder (nearly there, it is already above his arm); lifting off,
-        // it passes behind his arm with the rest of hers.
-        layerArm(dancers.code.rig, 'L', held ? holdLayers.code : null, finals.code.embrace > 0.85 ? holdLayers.codeHand : null);
+        // Her hand comes in front only once it rests on his shoulder (it
+        // lies along the shoulder line, so little of it is revealed); on its
+        // way there and away it travels behind his back with her arm.
+        layerArm(dancers.code.rig, 'L', held ? holdLayers.code : null, finals.code.embrace > 0.97 ? holdLayers.codeHand : null);
         layerArm(dancers.test.rig, 'R', held ? holdLayers.test : null);
         if (held) {
           holdLayers.code.setAttribute('transform', dancers.code.rig.armFrame(finals.code));
