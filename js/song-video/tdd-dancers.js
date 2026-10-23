@@ -329,10 +329,14 @@
     // Where the forearm overlaps the upper arm, a fill-only copy of the upper
     // arm's end (inset by half its outline) hides the forearm's outline, so
     // the elbow reads as one bent limb rather than two parts. It lives in the
-    // forearm's layer, turned back into the upper arm's frame, and spans only
-    // the last stretch above the elbow, so it never covers the torso's edge
-    // beside a hanging arm.
-    const elbow = svg('g', {}, foreArm);
+    // forearm's layer, turned back into the upper arm's frame, and is clipped
+    // to the forearm (with its outline), so it can only paint where the
+    // forearm already covers: where the upper arm passes behind the torso,
+    // the patch never draws its silhouette over the coat.
+    const clip = svg('clipPath', { id: `${id}-elbow-${kind}-${side}` }, svg('defs', {}, foreArm));
+    const stroke = kind === 'test' ? 1.6 : 2.6;
+    svg('path', { d: segmentPath(body.fore, foreW[0] + stroke, foreW[1] + stroke) }, clip);
+    const elbow = svg('g', {}, svg('g', { 'clip-path': `url(#${id}-elbow-${kind}-${side})` }, foreArm));
     const inset = kind === 'test' ? 1.5 : 1;
     const from = body.upper - elbowGap;
     const width = (k) => upperW[0] + (upperW[1] - upperW[0]) * k - inset;
@@ -1733,7 +1737,10 @@
         // Promenade hold: Test's hand on Code's back, behind her; Code's hand
         // resting on top of Test's near shoulder, her arm in a long line.
         const back = on('code', [-2, -150]);
-        const contact = on('test', [25, -168]);
+        // On top of his shoulder, inside the coat's shoulder line: clear of
+        // the root of his raised arm, so her fingers rest on the shoulder
+        // rather than across his arm.
+        const contact = on('test', [17, -178.5]);
         const palm = rotateAbout([0, 7.2], [0, 0], raw.test.lean);
         // IK targets the wrist; the palm, not the cuff, rests on the shoulder.
         const shoulder = [contact[0] - palm[0], contact[1] - palm[1]];
@@ -1759,8 +1766,15 @@
       // Layer the inner arms before posing them, so a hand that changes
       // layer is placed for its new layer in the same frame.
       if (holdLayers) {
-        const held = finals.code.hold > 0.5;
-        layerArm(dancers.code.rig, 'L', held ? holdLayers.code : null, holdLayers.codeHand);
+        // The inner arms stay in the hold layers for the whole of a
+        // transition into or out of the hold, and return to their dancers'
+        // own layers only once the hold has fully let go and the arms hang
+        // apart, so their order never flips mid-movement.
+        const held = Math.max(finals.code.hold, finals.test.hold) > 0.002;
+        // Her hand comes in front of his arm only while it rests on his
+        // shoulder (nearly there, it is already above his arm); lifting off,
+        // it passes behind his arm with the rest of hers.
+        layerArm(dancers.code.rig, 'L', held ? holdLayers.code : null, finals.code.embrace > 0.85 ? holdLayers.codeHand : null);
         layerArm(dancers.test.rig, 'R', held ? holdLayers.test : null);
         if (held) {
           holdLayers.code.setAttribute('transform', dancers.code.rig.armFrame(finals.code));
