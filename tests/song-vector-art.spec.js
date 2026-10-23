@@ -6,6 +6,7 @@ const yaml = require('js-yaml');
 
 const PLAYER_PATH = '/assets/song-player/snapshots-and-pointers.html';
 const storyboard = yaml.load(fs.readFileSync(path.join(__dirname, '..', '_data/songs/snapshots_and_pointers.yml'), 'utf8'));
+const infoHidingStoryboard = yaml.load(fs.readFileSync(path.join(__dirname, '..', '_data/songs/every_module_keeps_a_secret.yml'), 'utf8'));
 const songPlayers = [
   { name: 'Git', path: PLAYER_PATH, storyboard, cameoTime: 12 },
   {
@@ -17,8 +18,9 @@ const songPlayers = [
     storyboard: yaml.load(fs.readFileSync(path.join(__dirname, '..', '_data/songs/small_tools_one_job_each.yml'), 'utf8')),
   },
   {
-    name: 'Information hiding', path: '/assets/song-player/every-module-keeps-a-secret.html', cameoTime: 70,
-    storyboard: yaml.load(fs.readFileSync(path.join(__dirname, '..', '_data/songs/every_module_keeps_a_secret.yml'), 'utf8')),
+    // The hero sits beside the title card from just after "secret" until the instrumental caper.
+    name: 'Information hiding', path: '/assets/song-player/every-module-keeps-a-secret.html', cameoTime: infoHidingStoryboard.sections[0].lines.find((line) => line.id === 'intro-19').marks.secret + 1,
+    storyboard: infoHidingStoryboard,
   },
   {
     name: 'User stories', path: '/assets/song-player/invest-in-your-stories.html', cameoTime: 5,

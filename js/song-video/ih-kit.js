@@ -987,13 +987,17 @@
   // Title card: a manila dossier
   // ------------------------------------------------------------------
 
-  function dossier(parent, { x, y, w, tab, title, sub, at, until, rotate = -2 }) {
+  /** A manila case file title card; fade: true fades it in instead of popping. */
+  function dossier(parent, { x, y, w, tab, title, sub, at, until, rotate = -2, fade = false }) {
     const node = place(el('div', 'ih-dossier is-staged', parent), x, y);
     node.style.width = `${w}px`;
     el('div', 'ih-dossier-tab', node, tab);
     el('div', 'ih-dossier-title', node, title);
     if (sub) el('div', 'ih-dossier-sub', node, sub);
-    fx.pop(node, at, { from: 0.8, rotate });
+    if (fade) {
+      node.style.rotate = `${rotate}deg`;
+      fx.fadeIn(node, at, 0.3);
+    } else fx.pop(node, at, { from: 0.8, rotate });
     if (until !== undefined) fx.fadeOut(node, until, 0.3);
     return node;
   }
@@ -1329,15 +1333,20 @@
       svg('circle', { class: 'ih-agent-tux-button', cx: 80, cy: 178, r: 3 }, sway);
       svg('path', { class: 'ih-agent-pocket-square', d: 'M98 126 L110 122 L107 130 Z' }, sway);
       svg('path', { class: 'ih-agent-tux', d: 'M44 112 Q32 150 36 196 L48 196 Q48 160 56 128 Z' }, sway);
-      svg('path', { class: 'ih-agent-tux-light', d: 'M116 112 Q130 150 130 194 L118 196 Q114 160 104 128 Z' }, sway);
       svg('rect', { class: 'ih-agent-cuff', x: 36, y: 192, width: 13, height: 6, rx: 1.5 }, sway);
-      svg('rect', { class: 'ih-agent-cuff', x: 118, y: 190, width: 13, height: 6, rx: 1.5 }, sway);
       svg('circle', { class: 'ih-agent-hand', cx: 42, cy: 204, r: 7 }, sway);
+      // The martini arm: sleeve, cuff, and hand pivot at the shoulder
+      // (116, 114) to raise a toast; the glass pivots at the hand
+      // (125, 198) so it stays upright.
+      const toastArm = svg('g', { class: 'ih-agent-toast-arm' }, sway);
+      svg('path', { class: 'ih-agent-tux-light', d: 'M116 112 Q130 150 130 194 L118 196 Q114 160 104 128 Z' }, toastArm);
+      svg('rect', { class: 'ih-agent-cuff', x: 118, y: 190, width: 13, height: 6, rx: 1.5 }, toastArm);
       // A martini, shaken: glass, olive, stem, base, held at the hip.
-      svg('path', { class: 'ih-agent-martini', d: 'M112 170 L138 170 L125 186 Z' }, sway);
-      svg('circle', { class: 'ih-agent-olive', cx: 121, cy: 175, r: 3 }, sway);
-      svg('path', { class: 'ih-agent-martini-stem', d: 'M125 186 V202 M118 202 H132' }, sway);
-      svg('circle', { class: 'ih-agent-hand', cx: 125, cy: 198, r: 7 }, sway);
+      const glass = svg('g', { class: 'ih-agent-glass' }, toastArm);
+      svg('path', { class: 'ih-agent-martini', d: 'M112 170 L138 170 L125 186 Z' }, glass);
+      svg('circle', { class: 'ih-agent-olive', cx: 121, cy: 175, r: 3 }, glass);
+      svg('path', { class: 'ih-agent-martini-stem', d: 'M125 186 V202 M118 202 H132' }, glass);
+      svg('circle', { class: 'ih-agent-hand', cx: 125, cy: 198, r: 7 }, toastArm);
       svg('rect', { class: 'ih-agent-neck', x: 72, y: 80, width: 16, height: 14 }, sway);
       svg('path', { class: 'ih-agent-collar ih-agent-collar--shirt', d: 'M66 94 L72 84 L78 98 Z M94 94 L88 84 L82 98 Z' }, sway);
       svg('path', { class: 'ih-agent-bowtie', d: 'M80 99 L66 92 L66 106 Z M80 99 L94 92 L94 106 Z' }, sway);
@@ -1350,7 +1359,7 @@
       svg('path', { class: 'ih-agent-brow', d: 'M66 56 Q71 54 76 56 M84 53 Q89 49 94 52' }, sway);
       for (const ex of [71, 89]) svg('ellipse', { class: 'ih-agent-eye', cx: ex, cy: 62, rx: 2.2, ry: 2.6 }, sway);
       svg('path', { class: 'ih-agent-mouth', d: 'M73 77 Q81 81 88 74' }, sway);
-      glint = svg('line', { class: 'ih-agent-glint', x1: 0, y1: 0, x2: 4, y2: -7, opacity: 0 }, sway);
+      glint = svg('line', { class: 'ih-agent-glint', x1: 0, y1: 0, x2: 4, y2: -7, opacity: 0 }, glass);
     }
     if (look !== 'tuxedo') {
     svg('path', { class: 'ih-agent-leg', d: 'M58 262 L60 288 L74 288 L76 262 Z M86 262 L88 288 L102 288 L102 262 Z' }, sway);
@@ -1390,10 +1399,10 @@
     svg('path', { class: 'ih-agent-dent', d: 'M70 24 Q80 32 90 24' }, sway);
     svg('path', { class: `ih-agent-band ih-agent-band--${tie}`, d: 'M56 42 Q80 37 104 42 L104 48 Q80 43 56 48 Z' }, sway);
     }
-    if (name) {
+    if (name || role) {
       const tag = el('div', 'ih-agent-tag', wrap);
       if (role) el('span', 'ih-agent-role', tag, role);
-      el('span', 'ih-agent-name', tag, name);
+      if (name) el('span', 'ih-agent-name', tag, name);
     }
     onFrame((t) => {
       const local = t - at;
@@ -1409,6 +1418,323 @@
     fx.rise(wrap, at, { distance: 24, duration: 0.45 });
     if (until !== undefined) fx.fadeOut(wrap, until, 0.3);
     return wrap;
+  }
+
+  // ------------------------------------------------------------------
+  // The spy caper: module agents on a mission (the intro instrumental)
+  // ------------------------------------------------------------------
+
+  /**
+   * A module as a secret agent: a manila case file on legs with a fedora,
+   * sunglasses, and white gloves. Drawn at its feet (60, 166)
+   * in a 120×170 box; `prop` = 'envelope' (its sealed secret) or
+   * 'magnifier' (a snoop). Returns the parts the caper poses each frame.
+   */
+  function folderAgent(parentSvg, { color, band, prop }) {
+    const root = svg('g', { class: 'ih-fa' }, parentSvg);
+    svg('ellipse', { class: 'ih-fa-shadow', cx: 60, cy: 166, rx: 34, ry: 5 }, root);
+    const leg = (hx) => {
+      const g = svg('g', {}, root);
+      svg('path', { class: 'ih-fa-limb-ink', d: `M${hx} 118 V156` }, g);
+      svg('path', { class: 'ih-fa-leg', d: `M${hx} 118 V156` }, g);
+      svg('ellipse', { class: 'ih-fa-shoe', cx: hx - 3, cy: 160, rx: 10, ry: 5 }, g);
+      return g;
+    };
+    const legL = leg(46);
+    const legR = leg(74);
+    const body = svg('g', {}, root);
+    // Limbs carry an ink edge so they read on the dark stage; arms are
+    // strips of the folder's own paper.
+    const arm = (sx, hx) => {
+      const g = svg('g', {}, body);
+      svg('path', { class: 'ih-fa-limb-ink', d: `M${sx} 72 L${hx} 104` }, g);
+      svg('path', { class: 'ih-fa-arm', d: `M${sx} 72 L${hx} 104`, style: `stroke: ${color}` }, g);
+      svg('circle', { class: 'ih-fa-glove', cx: hx, cy: 106, r: 6 }, g);
+      return g;
+    };
+    const armL = arm(22, 6);
+    svg('path', { class: 'ih-fa-tab', d: 'M20 42 V33 Q20 28 25 28 H52 Q57 28 59 33 L62 42Z' }, body);
+    svg('rect', { class: 'ih-fa-body-shadow', x: 23, y: 43, width: 84, height: 84, rx: 9 }, body);
+    svg('rect', { class: 'ih-fa-body', x: 18, y: 38, width: 84, height: 84, rx: 9, style: `fill: ${color}` }, body);
+    svg('path', { class: 'ih-fa-shine', d: 'M26 48 Q26 44 30 44 H70' }, body);
+    for (const gx of [34, 64]) svg('rect', { class: 'ih-fa-lens', x: gx, y: 56, width: 22, height: 12, rx: 4 }, body);
+    svg('path', { class: 'ih-fa-bridge', d: 'M56 61 H64' }, body);
+    const glint = svg('path', { class: 'ih-fa-glint', d: 'M38 59 L43 59' }, body);
+    const mouths = {
+      smirk: svg('path', { class: 'ih-fa-mouth', d: 'M52 82 Q60 87 69 79' }, body),
+      oh: svg('ellipse', { class: 'ih-fa-mouth-o', cx: 60, cy: 83, rx: 4, ry: 5 }, body),
+      grin: svg('path', { class: 'ih-fa-mouth-o', d: 'M49 79 Q60 94 71 79Z' }, body),
+    };
+    const hat = svg('g', {}, body);
+    svg('ellipse', { class: 'ih-fa-brim', cx: 60, cy: 37, rx: 37, ry: 6.5 }, hat);
+    svg('path', { class: 'ih-fa-crown', d: 'M37 37 Q37 13 60 12 Q83 13 83 37 Q72 32 60 32 Q48 32 37 37Z' }, hat);
+    svg('path', { class: 'ih-fa-band', d: 'M37 31 Q60 26 83 31 V36 Q60 31 37 36Z', style: `fill: ${band}` }, hat);
+    const armR = arm(98, 114);
+    if (prop === 'envelope') {
+      const env = svg('g', { transform: 'translate(-8 100) rotate(-12)' }, armL);
+      svg('rect', { class: 'ih-fa-env', x: 0, y: 0, width: 24, height: 16, rx: 2 }, env);
+      svg('path', { class: 'ih-fa-env-flap', d: 'M1 1 L12 9 L23 1' }, env);
+      svg('circle', { class: 'ih-fa-seal', cx: 12, cy: 10, r: 3 }, env);
+    }
+    if (prop === 'magnifier') {
+      svg('path', { class: 'ih-fa-handle', d: 'M114 106 L124 92' }, armR);
+      svg('circle', { class: 'ih-fa-lensglass', cx: 130, cy: 84, r: 11 }, armR);
+    }
+    const paper = svg('g', { class: 'ih-fa-paper', opacity: 0 }, body);
+    svg('rect', { class: 'ih-fa-paper-sheet', x: 12, y: 44, width: 96, height: 66, rx: 2 }, paper);
+    svg('rect', { class: 'ih-fa-paper-head', x: 20, y: 51, width: 80, height: 9 }, paper);
+    svg('path', { class: 'ih-fa-paper-lines', d: 'M20 82 H56 M20 89 H56 M20 96 H56 M20 103 H50 M64 82 H100 M64 89 H100 M64 96 H94' }, paper);
+    for (const ex of [46, 74]) svg('circle', { class: 'ih-fa-eyehole', cx: ex, cy: 70, r: 5 }, paper);
+    for (const hx of [12, 108]) svg('circle', { class: 'ih-fa-glove', cx: hx, cy: 78, r: 6 }, paper);
+    return { root, legL, legR, body, armL, armR, mouths, paper, glint, hat };
+  }
+
+  /**
+   * The intro instrumental as a beat-timed spy caper. T holds song times:
+   * steps (three beats of tiptoeing in), freeze (a searchlight finds them;
+   * newspapers up), clear (newspapers down), snoop (Payroll's two steps),
+   * zap (a laser wall stops the snoop), ask (he calls year(date) instead),
+   * reply (Dates answers), and Agent Payment Gateway's stunts: bondIn
+   * (drops in, hanging upside down from a rope), bondFlip (backflips down
+   * onto the barrier's spot), build (plants the floor emitter and tosses the
+   * ceiling emitter up, then backflips to his guard post right beside the
+   * barrier as the lasers switch on at zap), twirl, toast (raises his
+   * martini), then shh and stamp. Characters move on the beat; legs, bobs,
+   * sways, and sparkles hold still with reduced motion.
+   */
+  function spyCaper(parent, T) {
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const stage = svg('svg', { class: 'ih-caper', viewBox: '0 0 960 540', 'aria-hidden': 'true' }, parent);
+    const beam = svg('path', { class: 'ih-caper-beam' }, stage);
+    const pool = svg('ellipse', { class: 'ih-caper-pool', cx: 0, cy: 424, rx: 120, ry: 20 }, stage);
+    const lasers = svg('g', { class: 'ih-caper-lasers', opacity: 0 }, stage);
+    for (const lx of [582, 600]) {
+      svg('line', { class: 'ih-caper-laser-glow', x1: lx, y1: 246, x2: lx, y2: 420 }, lasers);
+      svg('line', { class: 'ih-caper-laser', x1: lx, y1: 246, x2: lx, y2: 420 }, lasers);
+    }
+    // The laser detectors Agent Payment Gateway installs.
+    const floorEmitter = svg('g', { opacity: 0 }, stage);
+    svg('rect', { class: 'ih-caper-emitter', x: -19, y: -5, width: 38, height: 10, rx: 3 }, floorEmitter);
+    svg('circle', { class: 'ih-caper-emitter-eye', cx: 0, cy: -5, r: 3 }, floorEmitter);
+    const topEmitter = svg('g', { opacity: 0 }, stage);
+    svg('rect', { class: 'ih-caper-emitter', x: -19, y: -6, width: 38, height: 12, rx: 3 }, topEmitter);
+    svg('circle', { class: 'ih-caper-emitter-eye', cx: 0, cy: 6, r: 3 }, topEmitter);
+    const rope = svg('line', { class: 'ih-caper-rope', x1: 590, y1: -20, x2: 590, y2: -20 }, stage);
+    const users = folderAgent(stage, { color: '#ecd29a', band: '#0ea5c6', prop: 'envelope' });
+    const dates = folderAgent(stage, { color: '#f3c97a', band: '#b3121b', prop: 'envelope' });
+    const payroll = folderAgent(stage, { color: '#c9d8e8', band: '#7c3aed', prop: 'magnifier' });
+    const spark = svg('g', { class: 'ih-caper-spark', opacity: 0 }, stage);
+    svg('path', { d: 'M0 -26 L7 -8 L26 -10 L11 3 L18 22 L0 11 L-18 22 L-11 3 L-26 -10 L-7 -8Z' }, spark);
+    const zapText = svg('text', { class: 'ih-caper-zap', x: 0, y: 0, 'text-anchor': 'middle', opacity: 0 }, stage);
+    zapText.textContent = 'ZAP!';
+    const smoke = [0, 1, 2].map((k) => svg('circle', { class: 'ih-caper-smoke', r: 9 + 3 * k, opacity: 0 }, stage));
+
+    const ease = easeInOutCubic;
+    const backOutSoft = (u) => { const c = 1.4; return 1 + (c + 1) * Math.pow(u - 1, 3) + c * Math.pow(u - 1, 2); };
+    const steps = (t, times, x0, x1) => {
+      const d = (x1 - x0) / times.length;
+      let x = x0;
+      let lift = 0;
+      let k = -1;
+      times.forEach((bt, i) => {
+        const u = progress(t, bt, 0.42);
+        x += d * ease(u);
+        if (u > 0 && u < 1) { lift = Math.sin(Math.PI * u); k = i; }
+      });
+      return { x, lift, k };
+    };
+    const pose = (a, { x, y = 420, dir = 1, lift = 0, k = 0, lean = 0, s = 1 }, reduce) => {
+      const l = reduce ? 0 : lift;
+      const swing = 30 * l * (k % 2 ? 1 : -1);
+      a.legL.setAttribute('transform', `rotate(${swing.toFixed(1)} 46 118)`);
+      a.legR.setAttribute('transform', `rotate(${(-swing).toFixed(1)} 74 118)`);
+      const bob = -10 * l;
+      a.body.setAttribute('transform', `translate(0 ${bob.toFixed(1)}) rotate(${(lean + 6 * l).toFixed(1)} 60 120)`);
+      a.root.setAttribute('transform', `translate(${x.toFixed(1)} ${y.toFixed(1)}) scale(${(dir * s).toFixed(3)} ${s.toFixed(3)}) translate(-60 -166)`);
+    };
+    const face = (a, which) => Object.entries(a.mouths).forEach(([key, m]) => m.setAttribute('opacity', key === which ? '1' : '0'));
+    const armTo = (g, deg, px, py) => g.setAttribute('transform', `rotate(${deg.toFixed(1)} ${px} ${py})`);
+
+    onFrame((t) => {
+      const reduce = reducedMotion.matches;
+      const m = reduce ? 0 : t;
+      // Act 1: tiptoe in on the beat, freeze behind newspapers in the light.
+      const su = steps(t, T.steps, -190, 130);
+      const sd = steps(t, T.steps, -50, 340);
+      const hiding = t >= T.freeze - 0.12 && t < T.clear;
+      const peek = hiding ? 0.5 + 0.5 * Math.sin(m * 6) : 0;
+      pose(users, { ...su, lean: su.lift ? 8 : 0 }, reduce);
+      pose(dates, { ...sd, lean: sd.lift ? 8 : 0 }, reduce);
+      for (const [a, flip] of [[users, true], [dates, false]]) {
+        const up = progress(t, T.freeze - 0.12, 0.12) * (1 - progress(t, T.clear, 0.18));
+        a.paper.setAttribute('opacity', up.toFixed(2));
+        // Users holds the paper upside down: the gag.
+        a.paper.setAttribute('transform', flip ? `rotate(180 60 77) translate(0 ${(-4 * peek).toFixed(1)})` : `translate(0 ${(3 * peek).toFixed(1)})`);
+      }
+      // The searchlight: in fast, lingers over the hiding agents, then away.
+      let sx;
+      if (t < T.freeze) sx = 1080 - (1080 - 400) * ease(progress(t, T.freeze - 1, 1));
+      else if (t < T.clear - 0.3) sx = 400 - 270 * progress(t, T.freeze, T.clear - 0.3 - T.freeze);
+      else sx = 130 - 420 * ease(progress(t, T.clear - 0.3, 0.7));
+      const lit = t > T.freeze - 1.1 && t < T.clear + 0.5;
+      beam.setAttribute('d', `M${(sx * 0.6 + 380).toFixed(1)} -10 L${(sx - 120).toFixed(1)} 424 L${(sx + 120).toFixed(1)} 424Z`);
+      beam.setAttribute('opacity', lit ? '1' : '0');
+      pool.setAttribute('cx', sx.toFixed(1));
+      pool.setAttribute('opacity', lit ? '1' : '0');
+
+      // Act 2: Payroll snoops, gets zapped, then asks through the interface.
+      const sp = steps(t, T.snoop, 1080, 740);
+      const recoil = progress(t, T.zap, 0.45);
+      const px = sp.x + 70 * ease(recoil);
+      const hop = Math.sin(Math.PI * recoil) * 46 + (t > T.reply + 0.7 && t < T.reply + 1.2 ? Math.sin(Math.PI * progress(t, T.reply + 0.7, 0.5)) * 18 : 0);
+      pose(payroll, { x: px, y: 420 - hop, dir: -1, lift: sp.lift, k: sp.k, lean: sp.lift ? 10 : 0 }, reduce);
+      const reach = ease(progress(t, T.zap - 0.5, 0.35)) * (1 - ease(recoil));
+      armTo(payroll.armR, -60 * reach, 98, 72);
+      // Thumbs up for the answer, then the free hand hushes with the others.
+      const thumbs = ease(progress(t, T.reply + 0.7, 0.25));
+      const payrollHush = ease(progress(t, T.shh - 0.15, 0.25));
+      armTo(payroll.armL, 140 * thumbs * (1 - payrollHush) - 99 * payrollHush, 22, 72);
+      // Detectors: the floor one is planted at build, the ceiling one tossed
+      // up into place; the beams switch on as the agent lands at his post.
+      const plant = progress(t, T.build, 0.18);
+      floorEmitter.setAttribute('opacity', plant > 0 ? '1' : '0');
+      floorEmitter.setAttribute('transform', `translate(591 421) scale(${(0.4 + 0.6 * backOutSoft(plant)).toFixed(3)})`);
+      const toss = progress(t, T.build + 0.08, 0.32);
+      topEmitter.setAttribute('opacity', toss > 0 ? '1' : '0');
+      topEmitter.setAttribute('transform', `translate(591 ${(300 - 60 * ease(toss) - 30 * Math.sin(Math.PI * toss)).toFixed(1)}) rotate(${(toss < 1 ? 540 * toss : 0).toFixed(1)})`);
+      lasers.setAttribute('opacity', progress(t, T.zap - 0.08, 0.08).toFixed(2));
+      const z = progress(t, T.zap, 0.5);
+      spark.setAttribute('opacity', z > 0 && z < 1 ? (1 - z).toFixed(2) : '0');
+      spark.setAttribute('transform', `translate(590 330) scale(${(0.6 + 0.9 * z).toFixed(2)}) rotate(${(z * 40).toFixed(1)})`);
+      const zt = progress(t, T.zap, 0.9);
+      zapText.setAttribute('opacity', zt > 0 && zt < 1 ? Math.min(1, (1 - zt) * 3).toFixed(2) : '0');
+      zapText.setAttribute('transform', `translate(720 ${(170 - 16 * zt).toFixed(1)}) rotate(-8) scale(${(0.8 + 0.3 * Math.min(1, zt * 4)).toFixed(2)})`);
+      smoke.forEach((puff, k) => {
+        const u = progress(t, T.zap + 0.25 + k * 0.08, 0.9);
+        puff.setAttribute('opacity', u > 0 && u < 1 ? (0.7 * (1 - u)).toFixed(2) : '0');
+        puff.setAttribute('cx', (px - 30 + k * 14).toFixed(1));
+        puff.setAttribute('cy', (300 - 40 * u - k * 6).toFixed(1));
+      });
+      face(payroll, t >= T.zap && t < T.ask ? 'oh' : t >= T.reply + 0.5 ? 'grin' : 'smirk');
+      face(dates, t >= T.reply ? 'grin' : 'smirk');
+      face(users, hiding ? 'oh' : 'smirk');
+
+      // Act 3: everyone hushes on the beat; glints sweep the sunglasses.
+      const hush = ease(progress(t, T.shh - 0.15, 0.25));
+      for (const a of [users, dates]) armTo(a.armR, 101 * hush, 98, 72);
+      for (const [k, a] of [users, dates, payroll].entries()) {
+        const g = ((m * 0.7 + k * 0.33) % 1);
+        a.glint.setAttribute('opacity', g < 0.12 ? (Math.sin(g / 0.12 * Math.PI)).toFixed(2) : '0');
+      }
+    });
+
+    // Agent Payment Gateway's stunts. The figure (rotation, squash) and its
+    // wrapper (position, so the name tag travels with him) move separately.
+    // His guard post is x = 395, right beside the barrier at 590.
+    const post = 515;
+    const bond = agent(parent, { x: post - 52.8, y: 212, scale: 0.66, role: 'Agent 007', look: 'tuxedo', at: T.bondIn });
+    const toastArm = bond.querySelector('.ih-agent-toast-arm');
+    const glassGroup = bond.querySelector('.ih-agent-glass');
+    const figure = bond.querySelector('svg');
+    figure.style.transformOrigin = '52.8px 99px';
+    const bondTag = bond.querySelector('.ih-agent-tag');
+    const landAt = T.bondFlip + 0.55;
+    const hopAt = T.build + 0.32;
+    const postAt = T.zap - 0.08;
+    if (bondTag) {
+      bondTag.classList.add('is-staged');
+      // The name tag joins him at his post, clear of the snoop's path.
+      fx.fadeIn(bondTag, postAt, 0.3);
+    }
+    // Effects drawn over him: dust where he lands, gleams.
+    const top = svg('svg', { class: 'ih-caper', viewBox: '0 0 960 540', 'aria-hidden': 'true' }, parent);
+    const dust = [0, 1, 2, 3, 4, 5].map((k) => svg('circle', { class: 'ih-caper-dust', r: 6 + (k % 3) * 3, opacity: 0 }, top));
+    const gleam = () => {
+      const g = svg('g', { class: 'ih-caper-gleam', opacity: 0 }, top);
+      svg('path', { d: 'M0 -14 L3 -3 L14 0 L3 3 L0 14 L-3 3 L-14 0 L-3 -3Z' }, g);
+      return g;
+    };
+    const snapGleam = gleam();
+    const tieGleam = gleam();
+    const glassGleam = gleam();
+    const backOut = (u) => { const c = 1.70158; return 1 + (c + 1) * Math.pow(u - 1, 3) + c * Math.pow(u - 1, 2); };
+    const hangDy = -172;
+    const barrierDx = 590 - post;
+    const sparkle = (g, at, x, y, dur = 0.5) => {
+      const u = progress(t0, at, dur);
+      g.setAttribute('opacity', reduced || u <= 0 || u >= 1 ? '0' : Math.sin(Math.PI * u).toFixed(2));
+      g.setAttribute('transform', `translate(${x} ${y}) rotate(${(u * 90).toFixed(1)}) scale(${(0.6 + 0.6 * Math.sin(Math.PI * u)).toFixed(2)})`);
+    };
+    let t0 = 0;
+    let reduced = false;
+    onFrame((t) => {
+      t0 = t;
+      reduced = reducedMotion.matches;
+      const m = reduced ? 0 : t;
+      let dx = 0, dy = 0, r = 0, sx = 1, sy = 1;
+      if (t < T.bondFlip) {
+        // Drops in on a rope and hangs upside down over the barrier's spot.
+        const e = reduced ? 1 : backOut(progress(t, T.bondIn, 0.55));
+        dy = -620 + (620 + hangDy) * e;
+        r = 180 + (reduced ? 0 : 5 * Math.sin(m * 2.3));
+        dx = barrierDx + (reduced ? 0 : 7 * Math.sin(m * 2.3));
+      } else if (t < landAt) {
+        // Lets go and backflips down onto the spot.
+        const u = progress(t, T.bondFlip, landAt - T.bondFlip);
+        dx = barrierDx;
+        dy = hangDy * (1 - u) - 110 * Math.sin(Math.PI * u);
+        r = 180 + 540 * ease(u);
+      } else if (t < hopAt) {
+        // Lands, then crouches to plant the floor detector and stretches up
+        // to toss the ceiling detector into place.
+        dx = barrierDx;
+        const v = progress(t, landAt, 0.28);
+        const crouch = Math.sin(Math.PI * progress(t, T.build - 0.05, 0.2));
+        const reach = Math.sin(Math.PI * progress(t, T.build + 0.12, 0.22));
+        sy = 1 - 0.12 * Math.sin(Math.PI * v) - 0.14 * crouch + 0.06 * reach;
+        sx = 1 + 0.07 * Math.sin(Math.PI * v) + 0.06 * crouch;
+      } else {
+        // Backflips to his guard post beside the barrier; the beams switch
+        // on as he lands.
+        const u = progress(t, hopAt, postAt - hopAt);
+        dx = barrierDx * (1 - ease(u));
+        dy = -130 * Math.sin(Math.PI * u);
+        r = -360 * ease(u);
+        const v = progress(t, postAt, 0.28);
+        sy = 1 - 0.1 * Math.sin(Math.PI * v);
+        // The finale twirl: a spin on the spot with a little hop.
+        const w = progress(t, T.twirl, 0.6);
+        if (w > 0 && w < 1) {
+          sx = Math.cos(2 * Math.PI * ease(w));
+          dy = -36 * Math.sin(Math.PI * w);
+        }
+      }
+      bond.style.transform = `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px)`;
+      figure.style.transform = `rotate(${r.toFixed(1)}deg) scale(${sx.toFixed(3)}, ${sy.toFixed(3)})`;
+      // In the end he raises his martini straight up; the glass stays upright.
+      const raise = -170 * (reduced ? Number(t >= T.toast) : backOut(progress(t, T.toast, 0.45)));
+      toastArm?.setAttribute('transform', `rotate(${raise.toFixed(1)} 116 114)`);
+      glassGroup?.setAttribute('transform', `rotate(${(-raise).toFixed(1)} 125 198)`);
+      // The rope: tied to his feet while he hangs, whipped away when he lets go.
+      const up = progress(t, T.bondFlip, 0.35);
+      rope.setAttribute('y2', (t < T.bondFlip ? 212 + dy + 6 : (212 + hangDy + 6) * (1 - ease(up)) - 20 * ease(up)).toFixed(1));
+      rope.setAttribute('x2', (post + dx).toFixed(1));
+      rope.setAttribute('opacity', t >= T.bondIn && up < 1 ? '1' : '0');
+      // Dust: a puff where he lands on the spot, and at his post.
+      dust.forEach((puff, k) => {
+        const first = k < 3;
+        const u = progress(t, first ? landAt : postAt, 0.6);
+        const baseX = (first ? 590 : post) + ((k % 3) - 1) * 26;
+        puff.setAttribute('opacity', reduced || u <= 0 || u >= 1 ? '0' : (0.75 * (1 - u)).toFixed(2));
+        puff.setAttribute('cx', (baseX + (k % 2 ? 1 : -1) * 18 * u).toFixed(1));
+        puff.setAttribute('cy', (408 - 14 * u).toFixed(1));
+      });
+      // A snap of light as the beams switch on, a bow-tie gleam, a toast.
+      sparkle(snapGleam, postAt, 591, 236, 0.45);
+      sparkle(tieGleam, postAt + 0.45, post + 2, 277);
+      sparkle(glassGleam, T.toast + 0.3, post - 52.8 + 118 * 0.66, 212 + 14 * 0.66, 0.6);
+    });
+    return stage;
   }
 
   // ------------------------------------------------------------------
@@ -2641,7 +2967,7 @@
   }
 
   window.InfoHidingKit = {
-    latest, show, during, note, heading, paper, list, bubble, publicTag, implementsLink, digits, clock, counter, cashIntoMemory, cashBurst, agingPerson, apolloCount,
+    latest, show, during, note, heading, paper, list, bubble, publicTag, implementsLink, spyCaper, digits, clock, counter, cashIntoMemory, cashBurst, agingPerson, apolloCount,
     apolloPortrait, car, overflowingHead, steps, systemSplit, calendar, iceberg, toggle, waterline, outlet, dossier,
     decrypt, module, envelope, courier, laser, spotlight, lamp, agent, transmission, code, search,
     contractExchange, changeImpactGraph, mainframeMemory, stringWeb, mud, bug, stampTool, grid, vault, submarine, slip, iris,

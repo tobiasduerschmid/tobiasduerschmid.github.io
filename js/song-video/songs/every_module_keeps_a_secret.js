@@ -22,7 +22,7 @@
 
   window.SongChoreographies = window.SongChoreographies || {};
   window.SongChoreographies.every_module_keeps_a_secret = function choreograph({ song, kit, layers, student }) {
-    const { fx, tween, EASE, camera } = window.Timeline;
+    const { fx, tween, EASE, camera, beats } = window.Timeline;
     const ih = window.InfoHidingKit;
     const { content, hud } = layers;
     const line = (id) => song.line(id);
@@ -62,13 +62,14 @@
         x: 666, y: 118, label: 'What gets stored', cells: 2, size: 64, at: mark('intro-4', 'stored'),
         values: [{ at: 0, text: '85', tone: 'lit' }],
       });
-      kit.sticker(b, '2 digits saved', { x: 640, y: 272, at: mark('intro-4', 'digits'), variant: 'green', iconName: 'check', rotate: 4 });
       // Memory was expensive: money flies into the core memory. On "two
       // digits" a little of it drops back out: memory saved is money saved.
       ih.cashIntoMemory(b, {
         into: { x: 79, y: 283, w: 162, h: 32 }, count: 36,
         at: mark('intro-2', 'memory'), refundAt: mark('intro-4', 'two') + 1, until: line('intro-6').start,
       });
+      // Right beside the falling bills, clear of them.
+      kit.sticker(b, 'Success: Memory saved', { x: 304, y: 352, at: mark('intro-4', 'two') + 1.2, variant: 'green', iconName: 'check', rotate: -3 });
       fx.bump(full, mark('intro-5', '1985'), 0.12);
 
       // 99 rolls over to 00, which the computer reads as 1900.
@@ -172,21 +173,71 @@
       });
       kit.stamp(g, 'Paid', { x: 560, y: 260, at: mark('intro-18', 'billions') + 0.3, color: 'red', rotate: -12, shake: false });
 
-      // Lesson one, then the case file title through the instrumental.
-      const h = kit.scene(content, line('intro-19').start - 0.1, line('verse-1-1').start - 0.1, { exit: 'fade' });
-      kit.kinetic(h, [{ text: 'Lesson one', at: mark('intro-19', 'lesson'), color: 'gold' }], { y: 52, size: 34, punch: false });
-      ih.spotlight(h, { x: 320, y: 250, w: 640, h: 420, at: mark('intro-19', 'every') - 0.2 });
-      ih.dossier(h, {
+      // Lesson one and the case file title. On the beat after it, the title
+      // card tucks into the top-left corner and the hero into the top-right
+      // to watch the instrumental's spy caper starring the modules.
+      const beat0 = beats.index(mark('intro-19', 'secret') + 1.6) + 1;
+      const beat = (k) => beats.time(beat0 + k);
+      const caperAt = beat(0) - 0.3;
+      const caperEnd = line('verse-1-1').start - 0.1;
+      const h = kit.scene(content, line('intro-19').start - 0.1, caperEnd, { exit: 'fade' });
+      const lesson = kit.el('div', 'ih-title-layer', h);
+      kit.kinetic(lesson, [{ text: 'Lesson one', at: mark('intro-19', 'lesson'), color: 'gold' }], { y: 52, size: 34, punch: false });
+      ih.spotlight(lesson, { x: 320, y: 250, w: 640, h: 420, at: mark('intro-19', 'every') - 0.2 });
+      const card = ih.dossier(h, {
         x: 60, y: 112, w: 520, tab: 'Case file · Information hiding',
         title: 'Every module should keep a secret', sub: 'A secret is a design decision that might change.',
         at: mark('intro-19', 'every'),
       });
-      kit.stamp(h, 'Top secret', { x: 340, y: 326, at: mark('intro-19', 'secret') + 0.15, rotate: -10, shake: false });
-      const titleEnd = line('verse-1-1').start - 0.4;
-      student?.appear({ from: mark('intro-19', 'secret') + 0.6, to: titleEnd, x: 640, y: 120, scale: 0.92 });
-      const credit = kit.el('div', 'end-credit is-staged', h, 'SE Book · Information Hiding');
+      const topSecret = kit.stamp(h, 'Top secret', { x: 340, y: 326, at: mark('intro-19', 'secret') + 0.15, rotate: -10, shake: false });
+      const credit = kit.el('div', 'end-credit is-staged', lesson, 'SE Book · Information Hiding');
       credit.style.top = '420px';
-      fx.fadeIn(credit, mark('intro-19', 'secret') + 1.2, 0.5);
+      fx.fadeIn(credit, mark('intro-19', 'secret') + 0.5, 0.4);
+      // The big card glides and shrinks onto the compact card's footprint in
+      // the corner; the compact copy (sized to stay readable) dissolves in
+      // over the last part of the glide, so the hand-off is seamless.
+      const shrink = 0.7;
+      tween(lesson, { opacity: 0 }, caperAt, 0.3, EASE.in);
+      card.style.transformOrigin = '0 0';
+      tween(card, [
+        { translate: '0 0', scale: 1, opacity: 1 },
+        { translate: '-40px -20px', scale: 0.577, opacity: 1, offset: 0.6 },
+        { translate: '-40px -20px', scale: 0.577, opacity: 0 },
+      ], caperAt, shrink, EASE.inOut);
+      // The stamp rides along and lands on the compact card's lower-right
+      // corner: its centre (481.5, 361.5) moves to (262, 196).
+      tween(topSecret, [{ translate: '0 0', scale: 1 }, { translate: '-219.5px -165.5px', scale: 0.5 }], caperAt, shrink * 0.75, EASE.inOut);
+      ih.dossier(h, {
+        x: 20, y: 92, w: 300, tab: 'Case file',
+        title: 'Every module should keep a secret', sub: 'A secret is a design decision that might change.',
+        at: caperAt + shrink * 0.45, rotate: -2, fade: true,
+      }).classList.add('ih-dossier--mini');
+      h.append(topSecret);  // above the compact card
+      student?.appear({
+        from: mark('intro-19', 'secret') + 0.6, to: caperEnd, x: 640, y: 120, scale: 0.92,
+        move: { at: caperAt, duration: 0.6, x: 836, y: 16, scale: 0.42 },
+      });
+
+      // The caper: modules tiptoe in and hide from a searchlight while Agent
+      // Payment Gateway drops in upside down on a rope. He backflips down,
+      // builds a laser barrier between them and the rest of the system, and
+      // backflips to guard it as a snoop arrives and gets zapped; the snoop
+      // asks the gateway instead, everyone hushes, and 007 raises his
+      // martini. Every gag is on a beat.
+      const T = {
+        steps: [beat(0), beat(1), beat(2)], freeze: beat(3), clear: beat(5),
+        bondIn: beat(4), bondFlip: beat(5), build: beat(6),
+        snoop: [beat(5) + 0.3, beat(6) + 0.25], zap: beat(7), ask: beat(8), reply: beat(9),
+        twirl: beat(10), shh: beat(11), toast: beat(12), stamp: beat(13),
+      };
+      const cap = kit.scene(content, caperAt, caperEnd, { enter: 'whip' });
+      ih.heading(cap, ['Meanwhile, at ', 'Module HQ', '…'], { x: 360, y: 70, at: caperAt + 0.35, until: T.freeze + 0.6 });
+      ih.spyCaper(cap, T);
+      // The snoop asks the gateway instead of peeking: a call over the barrier.
+      ih.courier(cap, { from: [692, 330], to: [552, 300], bend: -150, tone: 'gold', at: T.ask, until: T.reply + 0.9, period: 1 });
+      kit.sticker(cap, 'Shh…', { x: 700, y: 206, at: T.shh, variant: 'pink', iconName: 'lock', rotate: 5 });
+      kit.stamp(cap, 'Classified', { x: 440, y: 110, at: T.stamp, rotate: -6, shake: false });
+      camera.punch(T.stamp + 0.05, 0.04);
     }
 
     // ----------------------------------------------------------------
@@ -433,7 +484,7 @@
       // He stays until the PayPal contact card needs his corner.
       const agentTo = mark('verse-2-9', 'exists') - 0.5;
       ih.spotlight(s, { x: 800, y: 210, w: 320, h: 420, at: agentFrom, until: agentTo });
-      ih.agent(s, { x: 742, y: 100, scale: 0.66, name: 'Payment Gateway', role: 'Agent', look: 'tuxedo', at: agentFrom, until: agentTo });
+      ih.agent(s, { x: 742, y: 100, scale: 0.66, role: 'Agent 007', look: 'tuxedo', at: agentFrom, until: agentTo });
       ih.bubble(s, { x: 700, y: 12, text: 'Gateway,\nPayment Gateway.', tailX: 95, at: mark('verse-2-8', 'names') - 0.1, until: agentTo });
       kit.sticker(s, 'Secret: which provider', { x: 690, y: 376, at: mark('verse-2-8', 'gateway_2'), until: agentTo, variant: 'red', iconName: 'lock', rotate: -3 });
 
@@ -699,7 +750,7 @@
       });
       const done = mark('outro-3', 'change');
       ih.spotlight(c, { x: 800, y: 250, w: 300, h: 400, at: done - 0.1 });
-      ih.agent(c, { x: 720, y: 108, scale: 0.72, name: 'Payment Gateway', role: 'Agent', look: 'tuxedo', flip: true, at: done });
+      ih.agent(c, { x: 720, y: 108, scale: 0.72, role: 'Agent 007', look: 'tuxedo', flip: true, at: done });
       ih.show(ih.envelope(c, { text: 'every module keeps a secret', x: 552, y: 384 }), done + 0.5, undefined, { rotate: -1, from: 1.6 });
       kit.stamp(c, 'Case closed', { x: 44, y: 312, at: done + 0.9, color: 'green', rotate: -8, shake: false });
       const credit = kit.el('div', 'end-credit is-staged', c, 'SE Book · Information Hiding');

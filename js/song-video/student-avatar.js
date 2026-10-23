@@ -183,9 +183,18 @@
       const cue = cameos.find(({ from, to }) => time >= from && time < to);
       node.hidden = !cue;
       if (!cue) return;
-      node.style.left = `${cue.x}px`;
-      node.style.top = `${cue.y}px`;
-      node.style.transform = `scale(${cue.scale})`;
+      // A cue may glide to a second placement: move = { at, duration, x, y, scale }.
+      let { x, y, scale } = cue;
+      if (cue.move) {
+        const u = Math.min(1, Math.max(0, (time - cue.move.at) / cue.move.duration));
+        const e = u < 0.5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2;
+        x += (cue.move.x - x) * e;
+        y += (cue.move.y - y) * e;
+        scale += (cue.move.scale - scale) * e;
+      }
+      node.style.left = `${x}px`;
+      node.style.top = `${y}px`;
+      node.style.transform = `scale(${scale})`;
       node.style.opacity = String(Math.min(1, (time - cue.from) / 0.35, (cue.to - time) / 0.35));
       const localTime = time - cue.from;
       const reduced = reducedMotion.matches;
