@@ -133,27 +133,48 @@
   left: 370px;
   top: -6px;
   transform-origin: 110px 0;
-  opacity: 0.78;
+  opacity: 0.92;
 }
 
-.br-ch-chain {
-  stroke: #8a6d33;
-  stroke-width: 2;
+.br-ch-link {
+  fill: none;
+  stroke: #a7843a;
+  stroke-width: 1.1;
+}
+
+.br-ch-canopy {
+  fill: #b48a35;
+}
+
+.br-ch-beads {
+  fill: none;
+  stroke: rgba(225, 238, 255, 0.75);
+  stroke-width: 1.8;
+  stroke-dasharray: 0.1 3.2;
+  stroke-linecap: round;
+}
+
+.br-ch-thread {
+  stroke: rgba(225, 238, 255, 0.45);
+  stroke-width: 0.6;
 }
 
 .br-ch-arm {
   fill: none;
-  stroke: #c9a24a;
+  stroke: url(#br-gilt);
   stroke-width: 3;
   stroke-linecap: round;
 }
 
-.br-ch-body {
-  fill: #b48a35;
+.br-ch-body,
+.br-ch-finial {
+  stroke: #6e5019;
+  stroke-width: 0.8;
 }
 
 .br-ch-candle {
-  fill: #f3e7cf;
+  stroke: rgba(120, 100, 70, 0.35);
+  stroke-width: 0.5;
 }
 
 .br-flame-outer {
@@ -165,7 +186,9 @@
 }
 
 .br-ch-drop {
-  fill: rgba(220, 236, 255, 0.55);
+  fill: rgba(222, 236, 255, 0.62);
+  stroke: rgba(255, 255, 255, 0.5);
+  stroke-width: 0.4;
 }
 
 .br-ch-arm-shine {
@@ -177,8 +200,9 @@
 
 .br-ch-body-ring {
   fill: none;
-  stroke: #8a6416;
-  stroke-width: 1.2;
+  stroke: #f1d48a;
+  stroke-width: 1.4;
+  opacity: 0.7;
 }
 
 .br-ch-body-shine {
@@ -194,14 +218,12 @@
 }
 
 .br-ch-drip {
-  fill: none;
-  stroke: #fffaf0;
-  stroke-width: 1.4;
-  stroke-linecap: round;
+  fill: #fff6e2;
 }
 
 .br-ch-cup {
-  fill: #b48a35;
+  stroke: #6e5019;
+  stroke-width: 0.6;
 }
 
 .br-ch-facet {

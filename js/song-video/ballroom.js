@@ -102,39 +102,85 @@
     return { node, halo, body };
   }
 
-  /** A small chandelier: gold arms, crystal drops, and warm candle points. */
+  /**
+   * A small gilded chandelier, built the way a real one hangs together: a
+   * chain into an urn-shaped body; four S-curved arms that grow out of the
+   * body and end in cups that hold the candles; and a beaded garland swagged
+   * between the arms, with crystal drops hanging from it on short threads.
+   */
   function chandelier(parent) {
     const art = svg('svg', { class: 'br-chandelier', viewBox: '0 0 220 120', width: 220, height: 120, 'aria-hidden': 'true' }, parent);
-    const glow = svg('radialGradient', { id: 'br-flame-halo' }, svg('defs', {}, art));
+    const defs = svg('defs', {}, art);
+    const glow = svg('radialGradient', { id: 'br-flame-halo' }, defs);
     svg('stop', { offset: 0, 'stop-color': '#ffd27a', 'stop-opacity': 0.55 }, glow);
     svg('stop', { offset: 1, 'stop-color': '#ffd27a', 'stop-opacity': 0 }, glow);
-    svg('line', { class: 'br-ch-chain', x1: 110, y1: 0, x2: 110, y2: 34 }, art);
-    for (const d of ['M30 58 Q70 92 110 60 Q150 92 190 58', 'M62 50 Q86 74 110 52 Q134 74 158 50']) {
+    // Gilt: bright where the arms face the candles above, darker below.
+    const gilt = svg('linearGradient', { id: 'br-gilt', x1: 0, y1: 40, x2: 0, y2: 78, gradientUnits: 'userSpaceOnUse' }, defs);
+    [[0, '#f1d48a'], [0.45, '#c9a24a'], [1, '#7d5d1f']].forEach(([offset, color]) => svg('stop', { offset, 'stop-color': color }, gilt));
+    const urn = svg('radialGradient', { id: 'br-urn', cx: 0.38, cy: 0.32, r: 0.75 }, defs);
+    [[0, '#f6dc96'], [0.5, '#c39a42'], [1, '#6e5019']].forEach(([offset, color]) => svg('stop', { offset, 'stop-color': color }, urn));
+    const wax = svg('linearGradient', { id: 'br-wax', x1: 0, y1: 0, x2: 1, y2: 0 }, defs);
+    [[0, '#fff3dc'], [0.6, '#efe3c8'], [1, '#c9b998']].forEach(([offset, color]) => svg('stop', { offset, 'stop-color': color }, wax));
+
+    // The chain, link by link, into the canopy of the body.
+    for (let y = 1; y < 30; y += 5) svg('ellipse', { class: 'br-ch-link', cx: 110, cy: y + 2, rx: 1.4, ry: 2.6 }, art);
+
+    // Arms: from the body, down in an S-curve, and up into a cup.
+    const tips = [[32, 50], [70, 46], [150, 46], [188, 50]];
+    const arms = [
+      'M104 52 C88 70 44 78 32 56',
+      'M106 56 C98 66 76 70 70 52',
+      'M114 56 C122 66 144 70 150 52',
+      'M116 52 C132 70 176 78 188 56',
+    ];
+    for (const d of arms) {
       svg('path', { class: 'br-ch-arm', d }, art);
-      // A thin highlight along the top of each gilded arm.
-      svg('path', { class: 'br-ch-arm-shine', d, transform: 'translate(0 -1)' }, art);
+      svg('path', { class: 'br-ch-arm-shine', d, transform: 'translate(0 -1.2)' }, art);
     }
-    svg('ellipse', { class: 'br-ch-body', cx: 110, cy: 52, rx: 15, ry: 20 }, art);
-    svg('ellipse', { class: 'br-ch-body-ring', cx: 110, cy: 58, rx: 15, ry: 4 }, art);
-    svg('path', { class: 'br-ch-body-shine', d: 'M102 40 Q104 34 110 33' }, art);
-    const flames = [];
-    for (const x of [30, 62, 110, 158, 190]) {
-      svg('rect', { class: 'br-ch-candle', x: x - 3, y: 38, width: 6, height: 16, rx: 2 }, art);
-      // A wick and a wax drip on each candle, and a cup under it.
-      svg('line', { class: 'br-ch-wick', x1: x, y1: 36, x2: x, y2: 39 }, art);
-      svg('path', { class: 'br-ch-drip', d: `M${x + 3} 40 q-1.4 3 0 5.5` }, art);
-      svg('path', { class: 'br-ch-cup', d: `M${x - 5} 54 Q${x} 58 ${x + 5} 54 Z` }, art);
-      flames.push(flame(art, x, 37));
-    }
+
+    // Garland: beads swag from cup to cup, crystals hang at each low point.
+    const swags = [[32, 56, 70, 52], [70, 52, 110, 68], [110, 68, 150, 52], [150, 52, 188, 56]];
     const drops = [];
-    for (let i = 0; i < 9; i++) {
-      const x = 40 + i * 17.5;
-      const y = 78 + 10 * Math.sin((i / 8) * Math.PI);
-      drops.push(svg('path', { class: 'br-ch-drop', d: `M${x} ${y} l3 7 l-3 7 l-3 -7 Z` }, art));
-      // A facet line catches the light on each crystal.
-      svg('path', { class: 'br-ch-facet', d: `M${x - 1.6} ${y + 6} L${x} ${y + 2} L${x + 1} ${y + 7}` }, art);
+    for (const [x0, y0, x1, y1] of swags) {
+      const mx = (x0 + x1) / 2;
+      const my = Math.max(y0, y1) + 13;
+      svg('path', { class: 'br-ch-beads', d: `M${x0} ${y0} Q${mx} ${my + 6} ${x1} ${y1}` }, art);
+      const lowY = (y0 + 2 * (my + 6) + y1) / 4;
+      svg('line', { class: 'br-ch-thread', x1: mx, y1: lowY, x2: mx, y2: lowY + 4 }, art);
+      drops.push(crystal(art, mx, lowY + 4, 1));
+    }
+    // A pendant crystal under each cup.
+    for (const [x, y] of tips) {
+      svg('line', { class: 'br-ch-thread', x1: x, y1: y + 7, x2: x, y2: y + 10 }, art);
+      drops.push(crystal(art, x, y + 10, 0.8));
+    }
+
+    // The body: a canopy, an urn with a sheen and a band, and a finial.
+    svg('path', { class: 'br-ch-canopy', d: 'M102 33 Q110 27 118 33 Z' }, art);
+    svg('path', { class: 'br-ch-body', fill: 'url(#br-urn)', d: 'M102 34 C95 42 95 58 104 66 Q110 70 116 66 C125 58 125 42 118 34 Z' }, art);
+    svg('path', { class: 'br-ch-body-ring', d: 'M97 52 Q110 57 123 52' }, art);
+    svg('path', { class: 'br-ch-body-shine', d: 'M101 46 Q101 39 106 36' }, art);
+    svg('path', { class: 'br-ch-finial', fill: 'url(#br-urn)', d: 'M106 67 Q110 82 114 67 Z' }, art);
+    drops.push(crystal(art, 110, 82, 1.1));
+
+    // Candles stand in their cups at the arm tips.
+    const flames = [];
+    for (const [x, y] of tips) {
+      svg('rect', { class: 'br-ch-candle', fill: 'url(#br-wax)', x: x - 3, y: y - 15, width: 6, height: 15, rx: 1.4 }, art);
+      svg('path', { class: 'br-ch-drip', d: `M${x + 1.6} ${y - 14.5} v4.5 a0.9 0.9 0 0 0 1.8 0 v-4` }, art);
+      svg('line', { class: 'br-ch-wick', x1: x, y1: y - 17, x2: x, y2: y - 14.5 }, art);
+      svg('path', { class: 'br-ch-cup', fill: 'url(#br-gilt)', d: `M${x - 7} ${y} Q${x} ${y - 2.4} ${x + 7} ${y} Q${x} ${y + 5.5} ${x - 7} ${y} Z` }, art);
+      flames.push(flame(art, x, y - 16));
     }
     return { art, flames, drops };
+  }
+
+  /** A faceted crystal drop hanging from (x, y). */
+  function crystal(art, x, y, size) {
+    const g = svg('g', { transform: `translate(${x} ${y}) scale(${size})` }, art);
+    svg('path', { class: 'br-ch-drop', d: 'M0 0 L2.6 5 L0 12 L-2.6 5 Z' }, g);
+    svg('path', { class: 'br-ch-facet', d: 'M-1.4 4.6 L0 1.2 L0.9 6' }, g);
+    return g;
   }
 
   /** Mirror-ball flecks: soft dots that drift slowly across the walls. */
