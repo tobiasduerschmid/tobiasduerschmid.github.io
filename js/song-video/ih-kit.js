@@ -16,8 +16,8 @@
  *   "from the others" is a laser wall between modules;
  *   Parnas's sentence arrives as a decrypted transmission;
  *   searching code is a green-phosphor intercept console;
- *   the iceberg's hidden bulk is found by a sonar submarine, and a wall
- *     outlet hides which power plant runs behind the wall.
+ *   a cutaway iceberg keeps its exposed tip fixed while its inner mechanism
+ *     changes; an outlet keeps supplying a phone as the generation changes.
  *
  * Builds on SongKit (kit.js) and Timeline (timeline.js); every builder
  * schedules its own motion, and every pose is a pure function of song time.
@@ -486,87 +486,81 @@
   }
 
   /**
-   * An iceberg in a 420×360 box with its waterline at y = 120. The tip is the
-   * interface (what), the bulk below the implementation (how). Gears below
-   * the water turn; swap(at) replaces them (the how changes, the tip doesn't).
+   * A cutaway in a 420×360 frame. The exposed ice stays fixed while two
+   * implementations crossfade below the waterline; swap time is seekable.
    */
   function iceberg(parent, { x, y, scale = 1, at, until, gearsFrom }) {
     const id = `ih-berg-${++uid}`;
-    const node = art(parent, { x, y, w: 420 * scale, h: 360 * scale, viewBox: '0 0 420 360' });
+    const node = art(parent, { x, y, w: 420 * scale, h: 360 * scale, viewBox: '0 0 420 360', className: 'ih-iceberg' });
+    node.dataset.testid = 'ih-iceberg';
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
     const defs = svg('defs', {}, node);
-    const sea = svg('linearGradient', { id: `${id}-sea`, x1: 0, y1: 0, x2: 0, y2: 1 }, defs);
-    svg('stop', { offset: 0, 'stop-color': '#0e4d7a', 'stop-opacity': 0.75 }, sea);
-    svg('stop', { offset: 1, 'stop-color': '#04162b', 'stop-opacity': 0.95 }, sea);
-    const aboveClip = svg('path', {}, svg('clipPath', { id: `${id}-above` }, defs));
-    const belowClip = svg('path', {}, svg('clipPath', { id: `${id}-below` }, defs));
-    const seaSurface = svg('path', { fill: `url(#${id}-sea)` }, node);
-    const submerged = svg('g', { 'clip-path': `url(#${id}-below)` }, node);
-    const exposed = svg('g', { 'clip-path': `url(#${id}-above)` }, node);
-    // Below the waterline: the bulk (the implementation).
-    svg('path', { class: 'ih-ice-deep', d: 'M 124 110 L 80 190 L 104 262 L 160 330 L 236 344 L 300 300 L 334 226 L 318 162 L 292 110 Z' }, submerged);
-    svg('path', { class: 'ih-ice-deep-shade', d: 'M 236 344 L 300 300 L 334 226 L 318 162 L 292 110 L 265 110 L 290 190 L 270 280 Z' }, submerged);
-    // Above the waterline: the tip (the interface).
-    svg('path', { class: 'ih-ice-tip', d: 'M 126 130 L 176 58 L 204 28 L 230 52 L 262 76 L 296 130 Z' }, exposed);
-    svg('path', { class: 'ih-ice-tip-shade', d: 'M 204 28 L 230 52 L 262 76 L 296 130 L 248 130 L 226 70 Z' }, exposed);
-    svg('path', { class: 'ih-ice-facet', d: 'M120 124 L164 183 L104 262 L148 204 Z M164 183 L160 330 L204 288 Z M268 124 L270 280 L300 300 L290 190 Z' }, submerged);
-    svg('path', { class: 'ih-ice-tip-facet', d: 'M204 28 L190 83 L159 130 H217 L226 70 Z' }, exposed);
-    svg('path', { class: 'ih-ice-crack', d: 'M185 126 L178 156 L189 176 M300 165 L282 184 L288 204 M130 271 L147 288' }, submerged);
-    const wave = svg('path', { class: 'ih-sea-top' }, node);
-    for (const [fx0, fy] of [[60, 300], [350, 250], [370, 320]]) {
-      svg('path', { class: 'ih-fish', d: `M ${fx0} ${fy} q 10 -8 20 0 q -10 8 -20 0 Z M ${fx0 + 20} ${fy} l 7 -5 l 0 10 Z` }, node);
-    }
-    const gearSets = [[], []];
-    const gearSpecs = [
-      [{ cx: 170, cy: 210, teeth: 10, r: 30 }, { cx: 226, cy: 250, teeth: 8, r: 24 }, { cx: 262, cy: 196, teeth: 7, r: 20 }],
-      [{ cx: 160, cy: 240, teeth: 12, r: 36 }, { cx: 236, cy: 206, teeth: 9, r: 28 }, { cx: 228, cy: 286, teeth: 6, r: 18 }],
-    ];
-    gearSpecs.forEach((set, s) => {
-      for (const spec of set) {
-        const g = svg('g', { opacity: s ? 0 : 1 }, node);
-        svg('path', { class: 'ih-gear', d: gearPath(spec.teeth, spec.r, spec.r * 0.78) }, g);
-        svg('circle', { class: 'ih-gear-hub', r: spec.r * 0.32 }, g);
-        gearSets[s].push({ g, spec });
+    for (const name of ['sea', 'ice', 'tip']) {
+      const gradient = svg('linearGradient', { id: `${id}-${name}`, x1: '0%', y1: '0%', x2: '35%', y2: '100%' }, defs);
+      for (const [index, offset] of ['0%', '55%', '100%'].entries()) {
+        svg('stop', { offset, class: `ih-iceberg-${name}-stop-${index}` }, gradient);
       }
+    }
+    svg('rect', { class: 'ih-iceberg-sea', x: 0, y: 120, width: 420, height: 240, rx: 16, fill: `url(#${id}-sea)` }, node);
+    const deep = svg('g', { class: 'ih-iceberg-deep' }, node);
+    svg('path', { class: 'ih-iceberg-outline', fill: `url(#${id}-ice)`, d: 'M105 120 L81 154 L63 200 L91 255 L137 308 L204 344 L265 322 L311 272 L349 208 L332 162 L309 120 Z' }, deep);
+    svg('path', { class: 'ih-iceberg-facet-light', d: 'M105 120 L159 166 L129 244 L137 308 L91 255 L63 200 Z M159 166 L215 130 L257 203 L204 344 L192 252 Z' }, deep);
+    svg('path', { class: 'ih-iceberg-facet-dark', d: 'M309 120 L332 162 L349 208 L311 272 L265 322 L286 237 L257 203 L273 146 Z M129 244 L192 252 L204 344 L137 308 Z' }, deep);
+    svg('path', { class: 'ih-iceberg-seam', d: 'M105 120 L159 166 L129 244 L137 308 M159 166 L215 130 L257 203 L286 237 M257 203 L204 344' }, deep);
+    const tip = svg('g', { class: 'ih-iceberg-tip', 'data-testid': 'ih-iceberg-tip' }, node);
+    svg('path', { class: 'ih-iceberg-outline', fill: `url(#${id}-tip)`, d: 'M105 120 L142 76 L166 62 L205 10 L233 48 L263 67 L309 120 Z' }, tip);
+    svg('path', { class: 'ih-iceberg-tip-shadow', d: 'M205 10 L233 48 L263 67 L309 120 L239 120 L224 70 Z' }, tip);
+    svg('path', { class: 'ih-iceberg-tip-light', d: 'M205 10 L190 81 L161 120 L105 120 L142 76 L166 62 Z' }, tip);
+    svg('path', { class: 'ih-iceberg-ridge', d: 'M166 62 L151 97 M205 10 L224 70 L239 120' }, tip);
+    // A translucent inspection window separates the metaphor from literal ice.
+    const mechanism = svg('g', { class: 'ih-iceberg-mechanism', 'data-testid': 'ih-iceberg-mechanism', opacity: 0 }, deep);
+    svg('rect', { class: 'ih-iceberg-window', x: 121, y: 168, width: 169, height: 133, rx: 24 }, mechanism);
+    const specs = [
+      [{ x: 167, y: 211, r: 31, teeth: 10 }, { x: 220, y: 253, r: 31, teeth: 10 }, { x: 256, y: 204, r: 21, teeth: 7 }],
+      [],
+    ];
+    const sets = specs.map((layout, setIndex) => {
+      const group = svg('g', { class: `ih-iceberg-layout ih-iceberg-layout--${setIndex}`, opacity: setIndex ? 0 : 1 }, mechanism);
+      if (setIndex === 1) {
+        const vessel = svg('g', { transform: 'translate(111 191) scale(1.27)', 'data-testid': 'ih-iceberg-submarine' }, group);
+        const { ringNodes } = submarineBody(vessel);
+        ringNodes.forEach(ring => ring.setAttribute('opacity', '0'));
+      }
+      const gears = layout.map((spec) => {
+        const gear = svg('g', {}, group);
+        svg('path', { class: 'ih-iceberg-gear', d: gearPath(spec.teeth, spec.r, spec.r * 0.8) }, gear);
+        svg('circle', { class: 'ih-iceberg-gear-ring', r: spec.r * 0.53 }, gear);
+        svg('circle', { class: 'ih-iceberg-axle', r: 5 }, gear);
+        return { gear, spec };
+      });
+      return { group, gears };
     });
+    const surface = svg('path', { class: 'ih-iceberg-surface', 'data-testid': 'ih-iceberg-surface' }, node);
+    svg('path', { class: 'ih-iceberg-reflection', d: 'M92 131 H157 M274 134 H325 M43 146 H82 M337 149 H377' }, node);
     let swapAt = Infinity;
     const spinFrom = gearsFrom ?? at;
     onFrame((t) => {
-      let d = '';
-      for (let px = 0; px <= 420; px += 10) d += `${px ? ' L' : 'M'} ${px} ${(120 + 3 * Math.sin(px / 30 + t * 2)).toFixed(1)}`;
-      wave.setAttribute('d', d);
-      aboveClip.setAttribute('d', `${d} L420 0 H0 Z`);
-      belowClip.setAttribute('d', `${d} L420 360 H0 Z`);
-      seaSurface.setAttribute('d', `${d} V342 Q420 360 402 360 H18 Q0 360 0 342 Z`);
-      const swapped = progress(t, swapAt, 0.5);
-      gearSets.forEach((set, s) => set.forEach(({ g, spec }, i) => {
-        const spin = Math.max(0, t - spinFrom) * (i % 2 ? -50 : 60) * (s ? 1.3 : 1);
-        const vis = s ? swapped : 1 - swapped;
-        const lift = (s ? 1 - swapped : swapped) * 26;
-        g.setAttribute('transform', `translate(${spec.cx} ${(spec.cy + lift).toFixed(1)}) rotate(${spin.toFixed(1)})`);
-        g.setAttribute('opacity', vis.toFixed(2));
-      }));
+      const motionTime = reducedMotion.matches ? 0 : Math.max(0, t - at);
+      const wave = Array.from({ length: 43 }, (_, i) => `${i ? 'L' : 'M'}${i * 10} ${(120 + 1.6 * Math.sin(i / 4 + motionTime * 0.7)).toFixed(2)}`).join(' ');
+      surface.setAttribute('d', wave);
+      mechanism.setAttribute('opacity', progress(t, spinFrom, 0.4).toFixed(2));
+      const swapped = reducedMotion.matches ? Number(t >= swapAt) : progress(t, swapAt, 0.6);
+      sets.forEach(({ group, gears }, index) => {
+        group.setAttribute('opacity', (index ? swapped : 1 - swapped).toFixed(2));
+        gears.forEach(({ gear, spec }, gearIndex) => {
+          const angle = reducedMotion.matches ? 0 : Math.max(0, t - spinFrom) * (gearIndex % 2 ? -12 : 12);
+          gear.setAttribute('transform', `translate(${spec.x} ${spec.y}) rotate(${angle.toFixed(2)})`);
+        });
+      });
     });
     fx.fadeIn(node, at, 0.35);
     if (until !== undefined) fx.fadeOut(node, until, 0.3);
-    return {
-      node,
-      swap(when) { swapAt = when; return this; },
-      /** Stage point for a position in the iceberg's own 420×360 frame. */
-      point(px, py) { return [x + px * scale, y + py * scale]; },
-    };
-  }
-
-  /** A label on the iceberg: tone = tip (gold) | deep (cyan). */
-  function bergLabel(parent, { x, y, title, sub, tone = 'tip', at, until }) {
-    const node = place(el('div', `ih-berg-label ih-berg-label--${tone} is-staged`, parent), x, y);
-    node.append(document.createTextNode(title));
-    if (sub) el('small', null, node, sub);
-    return show(node, at, until, { rotate: tone === 'tip' ? -3 : 3 });
+    return { node, swap(when) { swapAt = when; return this; }, point(px, py) { return [x + px * scale, y + py * scale]; } };
   }
 
   /**
    * A two-way design choice: a pill with both options, the chosen one lit.
-   * flips = [{ at }] switch sides.
+   * flips = [absoluteSongTime, ...] switch sides.
    */
   function toggle(parent, { x, y, a, b, at, flips = [], until, start = 0 }) {
     const node = place(el('div', 'ih-toggle is-staged', parent), x, y);
@@ -579,8 +573,9 @@
       left.classList.toggle('is-on', side === 0);
       right.classList.toggle('is-on', side === 1);
     });
-    for (const f of times) fx.bump(node, f, 0.12);
-    return show(node, at, until, { rotate: 0, from: 0.7 });
+    fx.fadeIn(node, at, 0.25);
+    if (until !== undefined) fx.fadeOut(node, until, 0.25);
+    return node;
   }
 
   /** A dashed waterline across the stage at y (the iceberg's sea level). */
@@ -597,75 +592,133 @@
   // ------------------------------------------------------------------
 
   /**
-   * A cutaway wall in a 480×300 box: on the right, an outlet, a plug, and a
-   * charging phone; on the left, behind the wall, the plant that is running.
-   * plants = [{ at, kind: 'solar' | 'wind' }].
+   * A 880×350 cutaway: generation changes behind a stable grid/outlet contract.
+   * plants = [{ at, kind: 'solar' | 'wind' }], in absolute song seconds.
+   * The phone charges monotonically throughout the scene, including a source swap.
    */
   function outlet(parent, { x, y, scale = 1, at, until, plants }) {
-    const node = art(parent, { x, y, w: 480 * scale, h: 300 * scale, viewBox: '0 0 480 300' });
+    const node = art(parent, { x, y, w: 880 * scale, h: 350 * scale, viewBox: '0 0 880 350', className: 'ih-power' });
+    node.setAttribute('data-testid', 'ih-power-scene');
     const sorted = [...plants].sort((a, b) => a.at - b.at);
-    // Behind the wall: two scenes that cross-fade.
-    const day = svg('g', {}, node);
-    svg('rect', { class: 'ih-sky-day', x: 10, y: 10, width: 230, height: 280, rx: 14 }, day);
-    svg('rect', { class: 'ih-ground', x: 10, y: 230, width: 230, height: 60, rx: 4 }, day);
-    const sun = svg('g', { transform: 'translate(70 70)' }, day);
-    for (let i = 0; i < 8; i++) {
-      const a = (i * Math.PI) / 4;
-      svg('line', { class: 'ih-sun-ray', x1: (30 * Math.cos(a)).toFixed(1), y1: (30 * Math.sin(a)).toFixed(1), x2: (40 * Math.cos(a)).toFixed(1), y2: (40 * Math.sin(a)).toFixed(1) }, sun);
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const id = `ih-power-${++uid}`;
+    const defs = svg('defs', {}, node);
+    function gradient(name, tones) {
+      const gradientNode = svg('linearGradient', { id: `${id}-${name}`, x1: '0%', y1: '0%', x2: '0%', y2: '100%' }, defs);
+      tones.forEach((tone, i) => svg('stop', { offset: `${i * 100 / (tones.length - 1)}%`, class: `ih-power-${tone}` }, gradientNode));
+      return `url(#${id}-${name})`;
     }
-    svg('circle', { class: 'ih-sun', r: 22 }, sun);
-    for (const px of [60, 150]) {
-      const panel = svg('g', { transform: `translate(${px} 200)` }, day);
-      svg('line', { class: 'ih-panel-leg', x1: 30, y1: 18, x2: 30, y2: 34 }, panel);
-      svg('path', { class: 'ih-panel', d: 'M 0 18 L 12 -14 L 72 -14 L 60 18 Z' }, panel);
-      svg('path', { class: 'ih-panel-grid', d: 'M 4 8 L 64 8 M 8 -3 L 68 -3 M 24 18 L 32 -14 M 44 18 L 52 -14' }, panel);
+    function label(parentNode, text, lx, ly, modifier = '') {
+      const textNode = svg('text', { class: `ih-power-label ${modifier}`, x: lx, y: ly, 'text-anchor': 'middle' }, parentNode);
+      textNode.textContent = text;
+      return textNode;
     }
-    const night = svg('g', { opacity: 0 }, node);
-    svg('rect', { class: 'ih-sky-night', x: 10, y: 10, width: 230, height: 280, rx: 14 }, night);
-    svg('rect', { class: 'ih-ground ih-ground--night', x: 10, y: 230, width: 230, height: 60, rx: 4 }, night);
-    svg('path', { class: 'ih-moon', d: 'M 66 40 a 22 22 0 1 0 22 30 a 17 17 0 1 1 -22 -30 Z' }, night);
-    for (const [sx, sy] of [[150, 40], [190, 70], [120, 90], [210, 30], [40, 120]]) svg('circle', { class: 'ih-star', cx: sx, cy: sy, r: 2 }, night);
-    const turbines = [[90, 236, 1], [180, 236, 0.75]].map(([tx, ty, s]) => {
-      const g = svg('g', { transform: `translate(${tx} ${ty}) scale(${s})` }, night);
-      svg('path', { class: 'ih-tower', d: 'M -4 0 L -2 -120 L 2 -120 L 4 0 Z' }, g);
-      const rotor = svg('g', { transform: 'translate(0 -120)' }, g);
-      for (let i = 0; i < 3; i++) svg('path', { class: 'ih-blade', d: 'M 0 0 C 6 -16 4 -44 0 -58 C -4 -44 -6 -16 0 0 Z', transform: `rotate(${i * 120})` }, rotor);
-      svg('circle', { class: 'ih-tower', r: 5 }, rotor);
+    const dayPaint = gradient('day', ['day-top', 'day-bottom']);
+    const nightPaint = gradient('night', ['night-top', 'night-bottom']);
+    const porcelain = gradient('porcelain', ['porcelain-top', 'porcelain-bottom']);
+    const landscapeClip = svg('clipPath', { id: `${id}-landscape` }, defs);
+    svg('rect', { x: 20, y: 58, width: 300, height: 204, rx: 14 }, landscapeClip);
+
+    label(node, 'Hidden implementation', 170, 28, 'ih-power-label--heading');
+    label(node, 'Interface', 558, 28, 'ih-power-label--heading ih-power-label--gold');
+    label(node, 'Client', 786, 28, 'ih-power-label--heading');
+    const landscape = svg('g', { 'clip-path': `url(#${id}-landscape)` }, node);
+    const day = svg('g', { class: 'ih-power-source ih-power-source--solar', 'data-testid': 'ih-power-source', 'data-source': 'solar' }, landscape);
+    svg('rect', { x: 20, y: 58, width: 300, height: 204, fill: dayPaint }, day);
+    svg('path', { class: 'ih-power-hill-far', d: 'M20 193 Q90 155 161 191 Q243 144 320 183 V262 H20Z' }, day);
+    svg('path', { class: 'ih-power-hill', d: 'M20 222 Q109 189 192 216 Q265 194 320 221 V262 H20Z' }, day);
+    const sun = svg('g', { transform: 'translate(264 111)' }, day);
+    svg('circle', { class: 'ih-power-sun-halo', r: 34 }, sun);
+    svg('circle', { class: 'ih-power-sun', r: 24 }, sun);
+    for (const [px, py, s] of [[43, 208, 1], [175, 214, 0.86]]) {
+      const rack = svg('g', { transform: `translate(${px} ${py}) scale(${s})` }, day);
+      svg('path', { class: 'ih-power-rack', d: 'M14 7 V34 M98 7 V34 M14 29 H98' }, rack);
+      svg('path', { class: 'ih-power-panel-edge', d: 'M0 11 L16 -38 H120 L104 11 V17 H0Z' }, rack);
+      svg('path', { class: 'ih-power-panel', d: 'M0 11 L16 -38 H120 L104 11Z' }, rack);
+      svg('path', { class: 'ih-power-panel-grid', d: 'M5 -5 H109 M10 -21 H115 M26 11 L42 -38 M52 11 L68 -38 M78 11 L94 -38' }, rack);
+      svg('path', { class: 'ih-power-panel-reflection', d: 'M16 -38 H60 L43 11 H0Z' }, rack);
+    }
+    label(day, 'Solar · noon', 123, 91, 'ih-power-label--landscape');
+
+    const night = svg('g', { class: 'ih-power-source ih-power-source--wind', 'data-testid': 'ih-power-source', 'data-source': 'wind', opacity: 0 }, landscape);
+    svg('rect', { x: 20, y: 58, width: 300, height: 204, fill: nightPaint }, night);
+    svg('path', { class: 'ih-power-night-hill-far', d: 'M20 218 Q100 167 188 213 Q256 174 320 205 V262 H20Z' }, night);
+    svg('path', { class: 'ih-power-night-hill', d: 'M20 240 Q100 210 180 239 Q258 217 320 236 V262 H20Z' }, night);
+    svg('path', { class: 'ih-power-moon', d: 'M273 86 A24 24 0 1 0 294 121 A24 24 0 0 1 273 86Z' }, night);
+    for (const [sx, sy] of [[51, 122], [208, 89], [231, 147], [301, 167], [171, 108]]) svg('circle', { class: 'ih-power-star', cx: sx, cy: sy, r: 1.7 }, night);
+    const turbines = [[105, 246, 0.8], [232, 251, 0.62]].map(([tx, ty, size]) => {
+      const tower = svg('g', { transform: `translate(${tx} ${ty}) scale(${size})` }, night);
+      svg('ellipse', { class: 'ih-power-shadow', cx: 7, cy: 0, rx: 36, ry: 5 }, tower);
+      svg('path', { class: 'ih-power-tower', d: 'M-6 0 L-3 -112 Q0 -116 3 -112 L6 0Z' }, tower);
+      svg('path', { class: 'ih-power-tower-shade', d: 'M1 -113 L3 -112 L6 0 H1Z' }, tower);
+      svg('rect', { class: 'ih-power-nacelle', x: -11, y: -119, width: 26, height: 12, rx: 5 }, tower);
+      const rotor = svg('g', { class: 'ih-power-rotor', 'data-testid': 'ih-power-rotor', transform: 'translate(0 -113)' }, tower);
+      for (let blade = 0; blade < 3; blade++) svg('path', { class: 'ih-power-blade', d: 'M-2 0 C-7 -14 -6 -37 -2 -59 Q0 -64 2 -58 L5 -13 Q6 -4 2 0Z', transform: `rotate(${blade * 120})` }, rotor);
+      svg('circle', { class: 'ih-power-rotor-hub', r: 6 }, rotor);
       return rotor;
     });
-    // The wall and the outlet.
-    svg('path', { class: 'ih-wall', d: 'M 250 4 L 476 4 L 476 296 L 250 296 Z' }, node);
-    svg('path', { class: 'ih-wall-cut', d: 'M 240 4 L 262 4 L 252 60 L 266 120 L 250 190 L 264 250 L 252 296 L 240 296 Z' }, node);
-    svg('rect', { class: 'ih-plate', x: 300, y: 100, width: 70, height: 100, rx: 10 }, node);
-    svg('path', { class: 'ih-plate-bevel', d: 'M307 105 H363 V192' }, node);
-    for (const sy of [110, 190]) {
-      svg('circle', { class: 'ih-plate-screw', cx: 335, cy: sy, r: 2.5 }, node);
-      svg('path', { class: 'ih-plate-slot', d: `M333.5 ${sy} h3` }, node);
+    label(night, 'Wind · midnight', 126, 91, 'ih-power-label--landscape');
+    svg('rect', { class: 'ih-power-landscape-frame', x: 20, y: 58, width: 300, height: 204, rx: 14 }, node);
+
+    // The grid conditions and distributes electricity before the public outlet.
+    const supplyPath = 'M303 221 H350 M440 221 H507';
+    svg('path', { class: 'ih-power-wire', d: supplyPath }, node);
+    const supplyFlow = svg('path', { class: 'ih-power-flow', 'data-testid': 'ih-power-flow', d: supplyPath }, node);
+    label(node, 'Grid', 395, 166, 'ih-power-label--heading');
+    svg('rect', { class: 'ih-power-grid', x: 350, y: 184, width: 90, height: 74, rx: 12 }, node);
+    svg('path', { class: 'ih-power-sine', d: 'M363 221 C373 187 384 187 395 221 S417 255 427 221' }, node);
+
+    // Fixed public side: the same outlet and connected charger survive the swap.
+    svg('rect', { class: 'ih-power-wall', x: 487, y: 58, width: 143, height: 204, rx: 12 }, node);
+    svg('path', { class: 'ih-power-wall-cut', d: 'M487 58 V262 M478 72 L487 64 M478 96 L487 88 M478 120 L487 112 M478 144 L487 136 M478 168 L487 160 M478 192 L487 184 M478 216 L487 208 M478 240 L487 232 M478 260 L487 252' }, node);
+    svg('rect', { class: 'ih-power-plate-shadow', x: 511, y: 90, width: 98, height: 160, rx: 17 }, node);
+    svg('rect', { class: 'ih-power-plate', 'data-testid': 'ih-power-outlet', x: 506, y: 84, width: 98, height: 160, rx: 15, fill: porcelain }, node);
+    svg('path', { class: 'ih-power-plate-highlight', d: 'M516 108 V101 Q516 94 523 94 H587' }, node);
+    for (const sy of [99, 230]) {
+      svg('circle', { class: 'ih-power-screw', cx: 555, cy: sy, r: 3 }, node);
+      svg('path', { class: 'ih-power-screw-slot', d: `M553 ${sy + 1} l4 -2` }, node);
     }
-    for (const sy of [122, 160]) {
-      svg('rect', { class: 'ih-socket', x: 323, y: sy, width: 7, height: 16, rx: 2 }, node);
-      svg('rect', { class: 'ih-socket', x: 340, y: sy, width: 7, height: 16, rx: 2 }, node);
-    }
-    const flowing = svg('path', { class: 'ih-cable-glow', d: 'M 345 176 C 360 230 414 240 420 188' }, node);
-    svg('path', { class: 'ih-cable', d: 'M 345 176 C 360 230 414 240 420 188', opacity: 0.5 }, node);
-    svg('rect', { class: 'ih-plug', x: 316, y: 150, width: 40, height: 30, rx: 6 }, node);
-    svg('rect', { class: 'ih-phone', x: 398, y: 96, width: 44, height: 92, rx: 9 }, node);
-    svg('rect', { class: 'ih-phone-screen', x: 404, y: 106, width: 32, height: 70, rx: 4 }, node);
-    svg('rect', { class: 'ih-battery-frame', x: 409, y: 136, width: 22, height: 33, rx: 3 }, node);
-    svg('path', { class: 'ih-phone-detail', d: 'M417 101 H423 M417 181 H423 M417 133 H423' }, node);
-    const battery = svg('rect', { class: 'ih-battery', x: 412, y: 140, width: 16, height: 26, rx: 2 }, node);
+    svg('path', { class: 'ih-power-socket-outline', d: 'M533 117 Q555 105 577 117 L581 141 Q555 155 529 141Z' }, node);
+    svg('rect', { class: 'ih-power-socket', x: 541, y: 122, width: 5, height: 14, rx: 1 }, node);
+    svg('rect', { class: 'ih-power-socket', x: 562, y: 124, width: 5, height: 12, rx: 1 }, node);
+    svg('path', { class: 'ih-power-socket', d: 'M550 144 V140 Q555 133 560 140 V144Z' }, node);
+    const cablePath = 'M555 208 V231 C555 279 697 285 713 237 C719 220 709 211 731 211 H754';
+    svg('path', { class: 'ih-power-cable', d: cablePath }, node);
+    const cableFlow = svg('path', { class: 'ih-power-cable-flow', 'data-testid': 'ih-power-flow', d: cablePath }, node);
+    svg('rect', { class: 'ih-power-adapter-shadow', x: 531, y: 165, width: 54, height: 51, rx: 10 }, node);
+    svg('rect', { class: 'ih-power-adapter', x: 525, y: 159, width: 54, height: 51, rx: 10, fill: porcelain }, node);
+    svg('path', { class: 'ih-power-adapter-seam', d: 'M532 163 V195 Q532 202 539 202 H573' }, node);
+    svg('rect', { class: 'ih-power-usb', x: 546, y: 207, width: 14, height: 7, rx: 2 }, node);
+
+    svg('ellipse', { class: 'ih-power-shadow', cx: 790, cy: 265, rx: 50, ry: 7 }, node);
+    svg('rect', { class: 'ih-power-phone', x: 750, y: 87, width: 80, height: 168, rx: 17 }, node);
+    svg('rect', { class: 'ih-power-screen', x: 757, y: 94, width: 66, height: 154, rx: 11 }, node);
+    svg('rect', { class: 'ih-power-speaker', x: 777, y: 99, width: 26, height: 5, rx: 2 }, node);
+    svg('rect', { class: 'ih-power-battery-frame', x: 771, y: 146, width: 38, height: 58, rx: 5 }, node);
+    svg('rect', { class: 'ih-power-battery-cap', x: 782, y: 139, width: 16, height: 5, rx: 2 }, node);
+    const battery = svg('rect', { class: 'ih-power-battery', 'data-testid': 'ih-power-battery', x: 776, y: 180, width: 28, height: 19, rx: 2 }, node);
+    svg('path', { class: 'ih-power-bolt', d: 'M793 158 L781 177 H789 L786 191 L800 171 H791Z' }, node);
+    svg('path', { class: 'ih-power-phone-detail', d: 'M780 239 H800' }, node);
+    label(node, 'Source can change', 170, 309);
+    label(node, 'Same voltage + frequency', 555, 309, 'ih-power-label--contract');
+    label(node, 'Keeps charging', 786, 309, 'ih-power-label--charging');
+
     onFrame((t) => {
       const current = latest(sorted, t) || sorted[0];
       const index = sorted.indexOf(current);
-      const prev = index > 0 ? sorted[index - 1] : null;
-      const fade = prev ? progress(t, current.at, 0.6) : 1;
-      const nightOpacity = current.kind === 'wind' ? fade : 1 - fade;
-      night.setAttribute('opacity', (prev || current.kind === 'wind' ? nightOpacity : 0).toFixed(2));
-      turbines.forEach((rotor, i) => rotor.setAttribute('transform', `translate(0 -120) rotate(${((t * (90 + i * 30)) % 360).toFixed(1)})`));
-      flowing.setAttribute('stroke-dashoffset', (-t * 40).toFixed(1));
-      const level = 0.3 + 0.7 * ((t * 0.08) % 1);
-      battery.setAttribute('height', (26 * level).toFixed(1));
-      battery.setAttribute('y', (166 - 26 * level).toFixed(1));
+      const previous = index > 0 ? sorted[index - 1] : current;
+      const blend = reducedMotion.matches ? 1 : progress(t, current.at, 0.6);
+      const nightOpacity = (previous.kind === 'wind' ? 1 : 0) * (1 - blend) + (current.kind === 'wind' ? 1 : 0) * blend;
+      day.setAttribute('opacity', (1 - nightOpacity).toFixed(2));
+      night.setAttribute('opacity', nightOpacity.toFixed(2));
+      const elapsed = Math.max(0, t - at);
+      const motionTime = reducedMotion.matches ? 0 : elapsed;
+      turbines.forEach((rotor, i) => rotor.setAttribute('transform', `translate(0 -113) rotate(${(motionTime * (24 + i * 6) % 360).toFixed(1)})`));
+      supplyFlow.setAttribute('stroke-dashoffset', (-motionTime * 24).toFixed(1));
+      cableFlow.setAttribute('stroke-dashoffset', (-motionTime * 24).toFixed(1));
+      const level = reducedMotion.matches ? 0.7 : 0.35 + 0.55 * progress(t, at, 12);
+      battery.setAttribute('height', (48 * level).toFixed(1));
+      battery.setAttribute('y', (199 - 48 * level).toFixed(1));
     });
     fx.fadeIn(node, at, 0.35);
     if (until !== undefined) fx.fadeOut(node, until, 0.3);
@@ -1151,37 +1204,227 @@
     return { node, countNode };
   }
 
-  // ------------------------------------------------------------------
-  // The 1960s mainframe whose memory was expensive
-  // ------------------------------------------------------------------
+  /** The public request/response contract stays outside the server's private details. */
+  function contractExchange(parent, { at, actorsAt, contractAt, protocolAt, confirmedAt }) {
+    const node = el('div', 'ih-contract-exchange', parent);
+    const heading = el('div', 'ih-contract-heading is-staged', node, 'Show what callers need to know');
+    fx.fadeIn(heading, at, 0.2);
 
-  function mainframe(parent, { x, y, at, until }) {
-    const node = art(parent, { x, y, w: 230, h: 200, viewBox: '0 0 230 200' });
-    svg('rect', { class: 'ih-mf-cabinet', x: 6, y: 8, width: 218, height: 184, rx: 8 }, node);
-    svg('rect', { class: 'ih-mf-panel', x: 18, y: 20, width: 194, height: 34, rx: 4 }, node);
-    svg('path', { class: 'ih-mf-edge', d: 'M217 12 V185 H12 M11 14 H216' }, node);
-    svg('path', { class: 'ih-mf-tape-route', d: 'M62 131 V150 Q63 160 78 160 H152 Q167 160 168 148 V132' }, node);
-    const lights = Array.from({ length: 12 }, (_, i) => svg('circle', { class: 'ih-mf-light', cx: 30 + i * 15, cy: 37, r: 4.2 }, node));
-    const reels = [62, 168].map((cx) => {
-      svg('rect', { class: 'ih-mf-window', x: cx - 44, y: 66, width: 88, height: 88, rx: 6 }, node);
-      const reel = svg('g', { transform: `translate(${cx} 110)` }, node);
-      svg('circle', { class: 'ih-mf-reel', r: 34 }, reel);
-      svg('circle', { class: 'ih-mf-reel-ring', r: 29 }, reel);
-      svg('circle', { class: 'ih-mf-tape', r: 22 }, reel);
-      for (let k = 0; k < 3; k++) svg('path', { class: 'ih-mf-spoke', d: 'M0 -8 L0 -30', transform: `rotate(${k * 120})` }, reel);
-      svg('circle', { class: 'ih-mf-hub', r: 7 }, reel);
+    const client = el('div', 'ih-contract-client is-staged', node);
+    el('div', 'ih-contract-role', client, 'Client');
+    el('div', 'ih-contract-sub', client, 'caller');
+    const app = svg('svg', { class: 'ih-contract-app', viewBox: '0 0 190 140', 'aria-hidden': 'true' }, client);
+    svg('rect', { class: 'ih-contract-device', x: 8, y: 8, width: 174, height: 110, rx: 9 }, app);
+    svg('path', { class: 'ih-contract-toolbar', d: 'M17 8 H173 Q182 8 182 17 V32 H8 V17 Q8 8 17 8 Z' }, app);
+    for (const x of [20, 31, 42]) svg('circle', { class: 'ih-contract-toolbar-dot', cx: x, cy: 20, r: 2.5 }, app);
+    svg('rect', { class: 'ih-contract-app-row', x: 25, y: 49, width: 93, height: 9, rx: 4 }, app);
+    svg('rect', { class: 'ih-contract-app-row', x: 25, y: 68, width: 136, height: 7, rx: 3 }, app);
+    svg('rect', { class: 'ih-contract-app-row', x: 25, y: 85, width: 115, height: 7, rx: 3 }, app);
+    svg('path', { class: 'ih-contract-device-foot', d: 'M82 118 V130 H63 M108 118 V130 H127 M63 130 H127' }, app);
+    el('div', 'ih-contract-client-note', client, 'Uses the contract');
+    fx.fadeIn(client, actorsAt, 0.2);
+
+    const server = el('div', 'ih-contract-server is-staged', node);
+    el('div', 'ih-contract-role', server, 'Server');
+    el('div', 'ih-contract-sub', server, 'module boundary');
+    const rack = svg('svg', { class: 'ih-contract-rack', viewBox: '0 0 180 115', 'aria-hidden': 'true' }, server);
+    svg('rect', { class: 'ih-contract-rack-shell', x: 23, y: 6, width: 134, height: 100, rx: 10 }, rack);
+    for (const y of [18, 47, 76]) {
+      svg('rect', { class: 'ih-contract-drive', x: 32, y, width: 116, height: 21, rx: 4 }, rack);
+      svg('circle', { class: 'ih-contract-status', cx: 44, cy: y + 10.5, r: 3 }, rack);
+      svg('path', { class: 'ih-contract-vent', d: `M108 ${y + 7} h29 M108 ${y + 13} h29` }, rack);
+    }
+    const hidden = el('div', 'ih-contract-hidden is-staged', server);
+    el('div', 'ih-contract-hidden-title', hidden, 'Hidden detail');
+    const database = svg('svg', { class: 'ih-contract-database', viewBox: '0 0 60 60', 'aria-hidden': 'true' }, hidden);
+    svg('path', { class: 'ih-contract-db-body', d: 'M9 14 V45 C9 56 51 56 51 45 V14 Z' }, database);
+    svg('ellipse', { class: 'ih-contract-db-top', cx: 30, cy: 14, rx: 21, ry: 8 }, database);
+    svg('path', { class: 'ih-contract-db-seam', d: 'M9 29 C9 40 51 40 51 29 M9 41 C9 52 51 52 51 41' }, database);
+    el('div', 'ih-contract-db-choice', hidden, 'SQL or NoSQL');
+    fx.fadeIn(server, actorsAt + 0.1, 0.2);
+    fx.fadeIn(hidden, contractAt + 0.15, 0.2);
+
+    const contract = el('div', 'ih-contract-public is-staged', node);
+    el('div', 'ih-contract-public-title', contract, 'Visible contract');
+    const lanes = svg('svg', { class: 'ih-contract-lanes', viewBox: '0 0 440 160', 'aria-hidden': 'true' }, contract);
+    svg('path', { class: 'ih-contract-request', d: 'M4 44 H422 M410 35 L423 44 L410 53' }, lanes);
+    svg('path', { class: 'ih-contract-response', d: 'M436 118 H18 M30 109 L17 118 L30 127' }, lanes);
+    el('div', 'ih-contract-request-label', contract, 'Request');
+    el('div', 'ih-contract-response-label', contract, 'Response');
+    fx.fadeIn(contract, contractAt, 0.2);
+
+    const protocol = el('div', 'ih-contract-protocol is-staged', contract);
+    el('div', 'ih-contract-protocol-label', protocol, 'Protocol');
+    el('div', 'ih-contract-protocol-value', protocol, 'Stateless or stateful?');
+    const verdict = el('div', 'ih-contract-verdict is-staged', protocol, 'Callers must know');
+    fx.fadeIn(protocol, protocolAt, 0.2);
+    fx.fadeIn(verdict, confirmedAt, 0.2);
+    return node;
+  }
+
+  /**
+   * Matching dependency diagrams for the change test. All six system modules
+   * keep their positions; only the dependencies differ. Arrows point from
+   * the dependent module to what it depends on. The external provider is
+   * deliberately outside the system boundary and is not counted as a module.
+   */
+  function changeImpactGraph(parent, { x, y, mode, at, changeAt }) {
+    const leaky = mode === 'leaky';
+    const node = art(parent, { x, y, w: 440, h: 350, viewBox: '0 0 440 350', className: `ih-impact ih-impact--${mode}` });
+    node.setAttribute('data-testid', 'ih-impact-graph');
+    node.setAttribute('data-design', mode);
+    const id = `ih-impact-${++uid}`;
+    const defs = svg('defs', {}, node);
+    for (const tone of ['neutral', 'changed']) {
+      const marker = svg('marker', { id: `${id}-${tone}`, viewBox: '0 0 10 10', refX: 9, refY: 5, markerWidth: 9, markerHeight: 9, markerUnits: 'userSpaceOnUse', orient: 'auto' }, defs);
+      svg('path', { class: `ih-impact-arrow ih-impact-arrow--${tone}`, d: 'M0 1 L9 5 L0 9Z' }, marker);
+    }
+    function text(parentNode, value, tx, ty, className = '') {
+      const label = svg('text', { class: `ih-impact-text ${className}`, x: tx, y: ty, 'text-anchor': 'middle' }, parentNode);
+      label.textContent = value;
+      return label;
+    }
+    svg('rect', { class: 'ih-impact-panel', x: 1, y: 1, width: 438, height: 348, rx: 16 }, node);
+    text(node, leaky ? 'Leaky' : 'Hidden well', 220, 32, 'ih-impact-title');
+    text(node, 'System', 63, 62, 'ih-impact-system-label');
+    text(node, leaky ? 'Provider types exposed' : 'Stable gateway interface', 280, 62, 'ih-impact-note');
+    svg('rect', { class: 'ih-impact-system', x: 8, y: 70, width: 424, height: 200, rx: 9 }, node);
+
+    // Edges are painted first, so arrow routes never cover module labels.
+    const edgeLayer = svg('g', {}, node);
+    const edges = [];
+    const callers = ['Order', 'Refund', 'Wallet', 'Report', 'Admin'];
+    callers.forEach((name, index) => {
+      const sy = 93 + index * 38;
+      const targetY = leaky ? 290 + index * 6 : 154 + index * 9;
+      const d = leaky
+        ? `M132 ${sy} C202 ${sy} 185 ${targetY} 249 ${targetY}`
+        : `M132 ${sy} C185 ${sy} 197 ${targetY} 249 ${targetY}`;
+      edges.push({ node: svg('path', { class: 'ih-impact-edge', d, 'marker-end': `url(#${id}-neutral)` }, edgeLayer), affected: leaky });
+    });
+    edges.push({ node: svg('path', { class: 'ih-impact-edge', d: 'M325 201 V284', 'marker-end': `url(#${id}-neutral)` }, edgeLayer), affected: true });
+
+    const modules = [];
+    function module(name, mx, my, width, height, affected) {
+      const group = svg('g', { class: 'ih-impact-module', 'data-testid': 'ih-impact-module', 'data-module': name }, node);
+      svg('rect', { class: 'ih-impact-card', x: mx, y: my, width, height, rx: 6 }, group);
+      const label = text(group, name, mx + width / 2, my + height / 2 + 7, 'ih-impact-name');
+      modules.push({ group, label, name, affected });
+    }
+    callers.forEach((name, i) => module(name, 20, 78 + i * 38, 112, 30, leaky));
+    module('Gateway', 250, 146, 150, 54, true);
+    const provider = svg('g', { class: 'ih-impact-provider' }, node);
+    svg('rect', { class: 'ih-impact-provider-card', x: 250, y: 285, width: 150, height: 36, rx: 6 }, provider);
+    text(provider, 'Provider', 325, 310, 'ih-impact-name');
+    text(node, 'External', 120, 310, 'ih-impact-note');
+    const verdict = text(node, 'Count changed modules', 220, 344, 'ih-impact-verdict');
+
+    onFrame((t) => {
+      const changed = t >= changeAt;
+      for (const item of modules) {
+        const hit = changed && item.affected;
+        item.group.classList.toggle('is-changed', hit);
+        item.label.textContent = `${item.name}${hit ? ' *' : ''}`;
+      }
+      for (const edge of edges) {
+        const hit = changed && edge.affected;
+        edge.node.classList.toggle('is-changed', hit);
+        edge.node.setAttribute('marker-end', `url(#${id}-${hit ? 'changed' : 'neutral'})`);
+      }
+      verdict.textContent = changed ? (leaky ? '* 6 modules must change' : '* Only Gateway changes') : 'Count changed modules';
+      verdict.classList.toggle('is-changed', changed);
+    });
+    fx.fadeIn(node, at, 0.25);
+    return node;
+  }
+
+  // Core-memory cutaway reference: ferrite rings retain bits on crossing wires.
+  // https://www.computerhistory.org/storageengine/whirlwind-computer-debuts-core-memory/
+  /** A vintage tape cabinet with a small, enlarged core-memory cutaway below. */
+  function mainframeMemory(parent, { x, y, at, until }) {
+    const node = art(parent, { x, y, w: 250, h: 230, viewBox: '0 0 250 230', className: 'ih-mainframe-memory' });
+    node.setAttribute('data-testid', 'ih-mainframe-memory');
+    const id = `ih-mainframe-${++uid}`;
+    const defs = svg('defs', {}, node);
+    const metal = svg('linearGradient', { id: `${id}-metal`, x1: '0%', y1: '0%', x2: '100%', y2: '100%' }, defs);
+    svg('stop', { class: 'ih-mainframe-metal--light', offset: '0%' }, metal);
+    svg('stop', { class: 'ih-mainframe-metal--body', offset: '60%' }, metal);
+    svg('stop', { class: 'ih-mainframe-metal--shade', offset: '100%' }, metal);
+    const reelMetal = svg('linearGradient', { id: `${id}-reel`, x1: '0%', y1: '0%', x2: '100%', y2: '100%' }, defs);
+    svg('stop', { class: 'ih-mainframe-reel--light', offset: '0%' }, reelMetal);
+    svg('stop', { class: 'ih-mainframe-reel--shade', offset: '100%' }, reelMetal);
+
+    svg('ellipse', { class: 'ih-mainframe-shadow', cx: 126, cy: 219, rx: 112, ry: 8 }, node);
+    svg('rect', { class: 'ih-mainframe-foot', x: 28, y: 204, width: 25, height: 15, rx: 3 }, node);
+    svg('rect', { class: 'ih-mainframe-foot', x: 188, y: 204, width: 25, height: 15, rx: 3 }, node);
+    svg('path', { class: 'ih-mainframe-side', d: 'M228 15 L241 8 V201 L228 212 Z' }, node);
+    svg('path', { class: 'ih-mainframe-top', d: 'M12 15 L25 8 H241 L228 15 Z' }, node);
+    svg('rect', { class: 'ih-mainframe-cabinet', x: 12, y: 15, width: 216, height: 197, rx: 5, fill: `url(#${id}-metal)` }, node);
+    svg('path', { class: 'ih-mainframe-edge-light', d: 'M17 20 H222 M17 21 V204' }, node);
+    svg('path', { class: 'ih-mainframe-edge-shade', d: 'M223 23 V206 H19' }, node);
+
+    // Steady indicator lamps preserve the vintage face without visual flashing.
+    svg('rect', { class: 'ih-mainframe-panel', x: 25, y: 28, width: 190, height: 25, rx: 3 }, node);
+    for (let i = 0; i < 8; i++) {
+      svg('circle', { class: `ih-mainframe-lamp${i === 0 || i === 3 || i === 6 ? ' is-lit' : ''}`, cx: 38 + i * 13, cy: 40.5, r: 3.4 }, node);
+    }
+    for (let i = 0; i < 3; i++) {
+      svg('rect', { class: 'ih-mainframe-switch', x: 157 + i * 17, y: 35, width: 10, height: 11, rx: 1.5 }, node);
+      svg('path', { class: 'ih-mainframe-switch-line', d: `M${160 + i * 17} 38 h4` }, node);
+    }
+
+    // The two large reels are tape storage, distinct from the lower memory inset.
+    svg('path', { class: 'ih-mainframe-tape-route', d: 'M73 126 V141 Q73 150 85 150 H155 Q167 150 167 140 V126' }, node);
+    const reels = [73, 167].map((cx) => {
+      svg('rect', { class: 'ih-mainframe-window', x: cx - 42, y: 63, width: 84, height: 78, rx: 5 }, node);
+      svg('path', { class: 'ih-mainframe-window-edge', d: `M${cx - 38} 67 H${cx + 37}` }, node);
+      svg('circle', { class: 'ih-mainframe-tape-pack', cx, cy: 102, r: 31 }, node);
+      const reel = svg('g', { class: 'ih-mainframe-reel', transform: `translate(${cx} 102)` }, node);
+      svg('circle', { class: 'ih-mainframe-reel-rim', r: 35, fill: `url(#${id}-reel)` }, reel);
+      svg('circle', { class: 'ih-mainframe-tape', r: 28 }, reel);
+      svg('circle', { class: 'ih-mainframe-tape-groove', r: 24 }, reel);
+      for (let i = 0; i < 3; i++) {
+        svg('path', { class: 'ih-mainframe-spoke', d: 'M-4 -7 L-7 -31 Q0 -34 7 -31 L4 -7 Z', transform: `rotate(${i * 120})`, fill: `url(#${id}-reel)` }, reel);
+      }
+      svg('circle', { class: 'ih-mainframe-hub', r: 10, fill: `url(#${id}-reel)` }, reel);
+      svg('circle', { class: 'ih-mainframe-spindle', r: 3.6 }, reel);
       return reel;
     });
-    for (let vx = 32; vx < 152; vx += 10) svg('path', { class: 'ih-mf-vent', d: `M${vx} 174 v8` }, node);
-    svg('rect', { class: 'ih-mf-slot', x: 170, y: 173, width: 30, height: 10, rx: 2 }, node);
-    for (const [sx, sy] of [[13, 15], [217, 15], [13, 184], [217, 184]]) svg('circle', { class: 'ih-mf-screw', cx: sx, cy: sy, r: 2 }, node);
+    for (const cx of [73, 167]) {
+      svg('circle', { class: 'ih-mainframe-guide', cx, cy: 146, r: 4.5 }, node);
+      svg('circle', { class: 'ih-mainframe-spindle', cx, cy: 146, r: 1.6 }, node);
+    }
+
+    // A schematic cutaway: hollow ferrite cores threaded by crossing wires.
+    // It is deliberately smaller than the tape mechanism and is not to scale.
+    const memory = svg('g', { class: 'ih-mainframe-core', 'data-testid': 'ih-mainframe-core' }, node);
+    svg('rect', { class: 'ih-mainframe-core-frame', x: 33, y: 160, width: 174, height: 42, rx: 3 }, memory);
+    svg('rect', { class: 'ih-mainframe-core-bed', x: 39, y: 165, width: 162, height: 32, rx: 1.5 }, memory);
+    for (let col = 0; col < 6; col++) {
+      const cx = 50 + col * 28;
+      svg('path', { class: 'ih-mainframe-core-wire-y', d: `M${cx} 162 V200` }, memory);
+    }
+    for (const cy of [174, 189]) {
+      svg('path', { class: 'ih-mainframe-core-wire-x', d: `M36 ${cy} H204` }, memory);
+      for (let col = 0; col < 6; col++) {
+        const core = svg('g', { transform: `translate(${50 + col * 28} ${cy}) rotate(-34)` }, memory);
+        svg('path', { class: 'ih-mainframe-ferrite', 'fill-rule': 'evenodd', d: 'M0 -6 A4.7 6 0 1 1 0 6 A4.7 6 0 1 1 0 -6 Z M0 -3.1 A2 3.1 0 1 0 0 3.1 A2 3.1 0 1 0 0 -3.1 Z' }, core);
+        svg('path', { class: 'ih-mainframe-core-highlight', d: 'M-3.3 1.8 C-4.5 -2 -2.2 -5 0 -5' }, core);
+      }
+    }
+    for (const [sx, sy] of [[19, 22], [220, 22], [19, 205], [220, 205]]) {
+      svg('circle', { class: 'ih-mainframe-screw', cx: sx, cy: sy, r: 1.7 }, node);
+    }
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
     onFrame((t) => {
-      reels.forEach((reel, i) => reel.setAttribute('transform', `translate(${i ? 168 : 62} 110) rotate(${((t * (i ? -70 : 90)) % 360).toFixed(1)})`));
-      // Small panel lights change state about twice a second (no flashing area).
-      const tick = Math.floor(t * 2);
-      lights.forEach((light, i) => light.classList.toggle('is-on', hash01(tick * 31 + i * 7) > 0.45));
+      const elapsed = reducedMotion.matches ? 0 : Math.max(0, t - at);
+      reels.forEach((reel, i) => {
+        const angle = (elapsed * (i ? -35 : 42)) % 360;
+        reel.setAttribute('transform', `translate(${i ? 167 : 73} 102) rotate(${angle.toFixed(1)})`);
+      });
     });
-    show(node, at, until, { from: 0.7 });
+    fx.fadeIn(node, at, 0.35);
+    if (until !== undefined) fx.fadeOut(node, until, 0.3);
     return node;
   }
 
@@ -1190,52 +1433,84 @@
   // red string; with every pair connected, it knots into a ball of mud
   // ------------------------------------------------------------------
 
-  /** A rounded mass of wet earth, lit from the same upper left as the props. */
+  /** Sculpted wet earth, lit from the upper left, in the existing 260px envelope. */
   function mudBall(parent, cx, cy) {
     const ball = svg('g', { class: 'ih-mud-ball', transform: `translate(${cx} ${cy})`, opacity: 0 }, parent);
-    const gradientId = `ih-mud-light-${++uid}`;
-    const gradient = svg('radialGradient', { id: gradientId, gradientUnits: 'userSpaceOnUse', cx: -43, cy: -52, r: 188 }, svg('defs', {}, ball));
-    for (const [offset, tone] of [['0%', 'light'], ['48%', 'middle'], ['82%', 'shade'], ['100%', 'edge']]) {
-      svg('stop', { offset, class: `ih-mud-tone--${tone}` }, gradient);
+    const id = `ih-mud-${++uid}`;
+    const defs = svg('defs', {}, ball);
+    const surfaceLight = svg('radialGradient', { id: `${id}-earth`, gradientUnits: 'userSpaceOnUse', cx: -46, cy: -62, r: 192 }, defs);
+    for (const [offset, tone] of [['0%', 'light'], ['42%', 'middle'], ['78%', 'shade'], ['100%', 'edge']]) {
+      svg('stop', { offset, class: `ih-mud-tone--${tone}` }, surfaceLight);
     }
-    svg('ellipse', { class: 'ih-mud-ground', cx: 8, cy: 111, rx: 123, ry: 16 }, ball);
-    for (const [x, y, rx, ry] of [[-121, 93, 7, 4], [128, 97, 6, 4], [-104, 116, 9, 5], [104, 119, 12, 5]]) {
-      svg('ellipse', { class: 'ih-mud-clod', cx: x, cy: y, rx, ry }, ball);
+    const foldLight = svg('linearGradient', { id: `${id}-fold`, x1: '0%', y1: '0%', x2: '35%', y2: '100%' }, defs);
+    for (const [offset, tone] of [['0%', 'light'], ['48%', 'middle'], ['100%', 'shade']]) {
+      svg('stop', { offset, class: `ih-mud-fold-tone--${tone}` }, foldLight);
     }
-    // Small asymmetries break the edge without turning the silhouette into a splat.
-    const silhouette = 'M-118 5 C-120 -14 -114 -39 -103 -53 C-102 -67 -89 -83 -75 -86 C-61 -104 -37 -112 -20 -107 C-1 -117 25 -110 39 -104 C59 -105 79 -91 87 -77 C105 -68 114 -49 111 -34 C124 -16 123 7 119 23 C124 44 113 65 99 74 C91 94 72 107 50 106 C31 117 10 117 -7 113 C-28 119 -49 110 -60 103 C-83 102 -99 85 -102 68 C-118 52 -124 28 -118 5 Z';
-    const surface = svg('path', { class: 'ih-mud-blob', d: silhouette }, ball);
-    surface.style.fill = `url(#${gradientId})`;
-    const seams = [
-      'M-99 -28 C-91 -51 -70 -54 -57 -49 C-46 -45 -48 -33 -36 -31',
-      'M-42 -88 C-26 -97 -8 -88 -2 -78 C6 -64 20 -68 27 -59',
-      'M49 -77 C68 -70 77 -56 75 -40 C73 -30 81 -21 92 -17',
-      'M-104 28 C-88 35 -75 22 -59 27 C-49 30 -51 46 -35 48',
-      'M-15 -24 C-4 -37 20 -32 27 -16 C31 -2 43 -2 50 6',
-      'M52 42 C66 28 87 34 91 49 C91 65 80 73 68 75',
-      'M-69 70 C-54 60 -39 69 -32 81 C-20 96 1 88 13 95',
+    ball.style.setProperty('--ih-mud-earth', `url(#${id}-earth)`);
+    ball.style.setProperty('--ih-mud-fold', `url(#${id}-fold)`);
+    svg('ellipse', { class: 'ih-mud-ground', cx: 5, cy: 113, rx: 119, ry: 13 }, ball);
+    svg('ellipse', { class: 'ih-mud-contact', cx: 5, cy: 112, rx: 83, ry: 7 }, ball);
+    const clods = svg('g', { class: 'ih-mud-clods' }, ball);
+    for (const [x, y, turn, scale] of [[-114, 98, -12, 1], [119, 100, 20, 0.8], [-94, 116, 8, 0.7], [95, 115, -15, 0.9]]) {
+      svg('path', { class: 'ih-mud-clod', d: 'M-9 2 C-11 -2 -7 -7 -2 -7 C2 -10 8 -6 10 -2 C14 3 7 6 2 5 C-3 7 -7 5 -9 2 Z', transform: `translate(${x} ${y}) rotate(${turn}) scale(${scale})` }, clods);
+    }
+    const silhouette = 'M-119 5 C-123 -13 -114 -35 -105 -49 C-105 -65 -90 -80 -74 -83 C-60 -102 -37 -110 -18 -106 C0 -115 22 -108 39 -103 C61 -105 79 -89 87 -75 C105 -69 115 -49 112 -32 C123 -15 124 5 118 24 C123 45 112 65 97 75 C89 94 70 107 49 105 C29 115 10 114 -8 111 C-29 117 -47 109 -61 103 C-83 102 -99 84 -102 68 C-117 54 -125 28 -119 5 Z';
+    svg('path', { class: 'ih-mud-blob', d: silhouette }, ball);
+    // Broad folds establish volume; the smaller creases follow their edges.
+    const folds = [
+      'M-103 -41 C-105 -62 -82 -78 -60 -77 C-42 -86 -23 -79 -19 -64 C-13 -45 -38 -32 -57 -35 C-78 -27 -94 -31 -103 -41 Z',
+      'M-40 -88 C-22 -107 7 -105 26 -94 C45 -94 59 -76 52 -60 C43 -42 17 -45 4 -49 C-17 -47 -31 -61 -40 -88 Z',
+      'M51 -69 C69 -79 91 -59 94 -42 C112 -28 110 -7 95 4 C77 12 63 0 60 -14 C43 -28 40 -51 51 -69 Z',
+      'M-109 4 C-99 -15 -72 -20 -53 -6 C-33 0 -34 24 -46 39 C-53 56 -80 57 -94 42 C-111 34 -119 18 -109 4 Z',
+      'M-24 -17 C-10 -34 17 -33 28 -16 C49 -12 59 8 46 26 C38 44 14 48 -1 35 C-22 33 -37 5 -24 -17 Z',
+      'M50 40 C70 25 92 31 100 48 C98 68 78 87 61 89 C42 101 24 90 27 72 C29 57 36 48 50 40 Z',
+      'M-77 69 C-62 54 -42 58 -29 73 C-10 74 5 90 -6 103 C-26 113 -47 105 -61 100 C-76 94 -86 82 -77 69 Z',
     ];
-    seams.forEach((d) => svg('path', { class: 'ih-mud-ridge', d }, ball));
-    // Earth grains stay on the surface and remain deterministic when seeking.
-    for (let i = 0; i < 42; i++) {
-      const angle = hash01(i * 17 + 9) * Math.PI * 2;
-      const radius = 23 + Math.sqrt(hash01(i * 23 + 5)) * 79;
-      svg('ellipse', { class: i % 3 ? 'ih-mud-grain' : 'ih-mud-grain-light', cx: Math.cos(angle) * radius, cy: Math.sin(angle) * radius, rx: 0.8 + hash01(i + 1) * 1.7, ry: 0.7 + hash01(i + 3) }, ball);
-    }
-    svg('path', { class: 'ih-mud-wet', d: 'M-93 -55 Q-83 -72 -68 -72 M-46 -94 Q-30 -100 -17 -95 M11 -83 Q23 -80 28 -73 M-82 -11 Q-71 -17 -62 -11 M-15 8 Q-5 2 3 7' }, ball);
+    folds.forEach((d) => svg('path', { class: 'ih-mud-fold', d }, ball));
+    const creases = [
+      'M-99 -40 C-82 -30 -68 -33 -55 -36 C-40 -32 -25 -41 -21 -51',
+      'M-34 -87 C-30 -67 -16 -52 3 -51 C20 -43 39 -44 48 -54',
+      'M61 -65 C46 -48 52 -29 64 -16 C66 -2 79 7 93 2',
+      'M-106 17 C-106 35 -91 47 -75 47 C-62 56 -48 42 -44 32',
+      'M-24 -9 C-31 11 -17 32 1 34 C18 46 37 35 44 22',
+      'M95 46 C98 61 80 80 65 82 C51 94 32 86 30 76',
+      'M-77 76 C-74 91 -59 96 -46 97 C-32 108 -16 103 -10 98',
+    ];
+    creases.forEach((d) => {
+      svg('path', { class: 'ih-mud-crease-soft', d }, ball);
+      svg('path', { class: 'ih-mud-ridge', d }, ball);
+      svg('path', { class: 'ih-mud-crease-lip', d, transform: 'translate(-0.7 -2.2)' }, ball);
+    });
+    // Fixed clusters read as earth grain, rather than a uniform dotted texture.
+    const grains = [[-80,-56],[-69,-61],[-64,-49],[-73,-45],[-29,-89],[-15,-82],[-7,-89],[2,-78],[26,-72],[31,-61],[69,-39],[79,-29],[75,-18],[-91,7],[-80,14],[-91,24],[-65,30],[-7,-4],[5,-13],[14,-3],[7,9],[26,17],[69,49],[78,55],[58,65],[-49,77],[-42,86],[-29,90]];
+    grains.forEach(([x, y], index) => {
+      svg('path', { class: index % 3 ? 'ih-mud-grain' : 'ih-mud-grain-light', d: 'M-1.8 0 Q-0.7 -2.1 1 -1 Q2.5 0 1 1 Q-0.9 1.6 -1.8 0 Z', transform: `translate(${x} ${y}) rotate(${index * 47 % 180})` }, ball);
+    });
+    svg('path', { class: 'ih-mud-wet', d: 'M-94 -55 C-86 -65 -75 -68 -66 -65 M-27 -92 C-17 -97 -6 -96 3 -92 M53 -57 Q58 -63 65 -59 M-101 0 Q-91 -8 -80 -5 M-18 -19 Q-6 -26 4 -21 M45 45 Q57 35 69 39 M-67 68 Q-58 64 -49 69' }, ball);
+    svg('path', { class: 'ih-mud-rim-light', d: 'M-112 -19 C-109 -34 -101 -41 -100 -49 C-98 -62 -86 -73 -73 -76 M-65 -86 C-52 -98 -36 -103 -23 -100' }, ball);
+    svg('path', { class: 'ih-mud-outline', d: silhouette }, ball);
     return ball;
   }
 
-  /** The same partly buried threads remain visible when the mud is reused. */
+  /** Six partially buried dependency threads keep the existing draw timing. */
   function mudThreads(parent, cx, cy) {
+    const id = `ih-mud-thread-${++uid}`;
+    const gradient = svg('linearGradient', { id, gradientUnits: 'userSpaceOnUse', x1: -70, y1: -95, x2: 90, y2: 95 }, svg('defs', {}, parent));
+    for (const [offset, tone] of [['0%', 'light'], ['42%', 'middle'], ['67%', 'light'], ['100%', 'shade']]) {
+      svg('stop', { offset, class: `ih-mud-thread-tone--${tone}` }, gradient);
+    }
     return [
-      'M-105 -20 C-92 -40 -60 -46 -38 -38 M9 -32 C38 -31 61 -25 80 -18',
-      'M-78 -78 C-90 -48 -75 -18 -56 -5 M12 26 C43 39 88 47 106 23',
-      'M-23 -100 C-33 -76 -19 -53 -5 -39 M32 19 Q44 56 33 85',
-      'M76 -71 C58 -67 42 -54 32 -43 M-30 16 Q-58 40 -80 53',
-      'M-105 20 Q-71 5 -48 4 M39 20 Q69 35 95 53',
-      'M-65 83 Q-43 72 -30 57 M5 33 Q26 23 51 18',
-    ].map((d) => svg('path', { class: 'ih-mud-thread', d, transform: `translate(${cx} ${cy})` }, parent));
+      'M-104 -24 C-92 -48 -65 -57 -43 -47 C-32 -43 -27 -31 -30 -21 M-15 -10 C12 8 63 3 89 -18',
+      'M-75 -78 C-96 -47 -87 -17 -64 -6 M-47 0 C-24 5 -22 30 0 37 C32 48 77 39 104 18',
+      'M-24 -99 C-44 -70 -28 -47 -9 -30 M0 -21 C18 -4 28 5 25 26 M27 42 C35 59 30 80 17 96',
+      'M78 -67 C49 -74 25 -59 26 -39 M25 -26 C24 -9 2 5 -20 13 M-36 19 C-60 29 -75 43 -83 59',
+      'M-106 22 C-83 4 -58 10 -46 26 M-35 35 C-9 55 12 55 38 44 M56 41 C75 39 93 47 97 60',
+      'M-63 84 C-46 70 -35 58 -33 40 M-30 25 C-26 3 -5 -10 17 -7 M36 -2 C57 7 68 14 75 29',
+    ].map((d) => {
+      const path = svg('path', { class: 'ih-mud-thread', d, transform: `translate(${cx} ${cy})` }, parent);
+      path.style.setProperty('--ih-mud-thread-paint', `url(#${id})`);
+      return path;
+    });
   }
 
   /** A compact, labeled-scene companion using the original mud illustration. */
@@ -1642,8 +1917,7 @@
   // A sonar submarine that reveals what is below the waterline
   // ------------------------------------------------------------------
 
-  function submarine(parent, { x, y, at, until, pingFrom }) {
-    const node = art(parent, { x, y, w: 150, h: 80, viewBox: '0 0 150 80' });
+  function submarineBody(node) {
     const id = `ih-sub-${++uid}`;
     const defs = svg('defs', {}, node);
     // Keep the cylindrical lighting attached to each surface as the boat moves.
@@ -1669,15 +1943,23 @@
     }
     const prop = svg('g', { transform: 'translate(138 49)' }, node);
     svg('path', { class: 'ih-sub-prop', d: 'M0 -11 L4 0 L0 11 L-4 0 Z' }, prop);
+    return { prop, ringNodes };
+  }
+
+  function submarine(parent, { x, y, at, until, pingFrom }) {
+    const node = art(parent, { x, y, w: 150, h: 80, viewBox: '0 0 150 80' });
+    const { prop, ringNodes } = submarineBody(node);
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
     onFrame((t) => {
-      prop.setAttribute('transform', `translate(138 49) scale(1 ${Math.cos(t * 9).toFixed(2)})`);
+      const motionTime = reducedMotion.matches ? 0 : t;
+      prop.setAttribute('transform', `translate(138 49) scale(1 ${Math.cos(motionTime * 9).toFixed(2)})`);
       ringNodes.forEach((ring, i) => {
         const age = t - (pingFrom ?? at) - i * 0.9;
-        const p = age < 0 ? -1 : (age % 2.7) / 2.7;
+        const p = reducedMotion.matches || age < 0 ? -1 : (age % 2.7) / 2.7;
         ring.setAttribute('r', p < 0 ? '0' : (6 + p * 120).toFixed(1));
         ring.setAttribute('opacity', p < 0 ? '0' : (0.55 * (1 - p)).toFixed(2));
       });
-      node.style.translate = `0 ${(3 * Math.sin(t * 1.1)).toFixed(1)}px`;
+      node.style.translate = `0 ${(3 * Math.sin(motionTime * 1.1)).toFixed(1)}px`;
     });
     show(node, at, until, { from: 0.6 });
     return node;
@@ -1725,8 +2007,8 @@
 
   window.InfoHidingKit = {
     latest, show, during, note, heading, paper, list, bubble, digits, clock, counter,
-    apolloPortrait, car, overflowingHead, steps, calendar, iceberg, bergLabel, toggle, waterline, outlet, dossier,
+    apolloPortrait, car, overflowingHead, steps, calendar, iceberg, toggle, waterline, outlet, dossier,
     decrypt, module, envelope, courier, laser, spotlight, lamp, agent, transmission, code, search,
-    mainframe, stringWeb, mud, bug, stampTool, grid, vault, submarine, slip, iris,
+    contractExchange, changeImpactGraph, mainframeMemory, stringWeb, mud, bug, stampTool, grid, vault, submarine, slip, iris,
   };
 })();

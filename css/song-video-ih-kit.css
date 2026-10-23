@@ -1217,16 +1217,6 @@
 }
 
 /* The 1960s mainframe */
-.ih-mf-cabinet { fill: #c7ccd4; stroke: var(--ink); stroke-width: 3; }
-.ih-mf-panel { fill: #2a3142; stroke: var(--ink); stroke-width: 2; }
-.ih-mf-light { fill: #4b1d24; }
-.ih-mf-light.is-on { fill: #ffb347; }
-.ih-mf-window { fill: #11161f; stroke: var(--ink); stroke-width: 2; }
-.ih-mf-reel { fill: #cbd5e1; stroke: #475569; stroke-width: 2; }
-.ih-mf-tape { fill: #3b2a1a; }
-.ih-mf-spoke { stroke: #cbd5e1; stroke-width: 5; stroke-linecap: round; }
-.ih-mf-hub { fill: #64748b; }
-.ih-mf-slot { fill: #64748b; }
 
 /* Paper stack, the person beside it, and the car */
 .ih-sheet { fill: #f8f5ea; stroke: #b9b1a0; stroke-width: 1; }
@@ -1477,22 +1467,38 @@
 .ih-pin { fill: #e11d2e; stroke: #5c0a10; stroke-width: 1.5; }
 .ih-pin-shine { fill: rgba(255, 255, 255, 0.75); }
 
-/* Like the other illustrated props, the soil keeps its palette in both site themes. */
+/* The film's clay palette stays the same in light and dark page themes. */
 .ih-mud-ball { transform-box: fill-box; transform-origin: center; }
-.ih-mud-splat { fill: #5b3e27; stroke: #38281d; stroke-width: 1.2; }
+.ih-mud-splat { fill: #66432e; stroke: #38271e; stroke-width: 1.2; }
 .ih-mud-shock { fill: none; stroke: #3a2a1d; stroke-width: 3; }
-.ih-mud-blob { stroke: #38281d; stroke-width: 2.5; stroke-linejoin: round; }
-.ih-mud-tone--light { stop-color: #b28a60; }
-.ih-mud-tone--middle { stop-color: #82603e; }
-.ih-mud-tone--shade { stop-color: #543a26; }
-.ih-mud-tone--edge { stop-color: #35271e; }
-.ih-mud-ground { fill: #342418; opacity: 0.4; }
-.ih-mud-clod { fill: #67492f; stroke: #39291c; stroke-width: 1.5; }
-.ih-mud-ridge { fill: none; stroke: #3e2c20; stroke-width: 2.5; stroke-linecap: round; opacity: 0.45; }
-.ih-mud-grain { fill: #34281f; opacity: 0.45; }
-.ih-mud-grain-light { fill: #c5a073; opacity: 0.45; }
-.ih-mud-wet { fill: none; stroke: #dcc39a; stroke-width: 2.5; stroke-linecap: round; opacity: 0.65; }
-.ih-mud-thread { fill: none; stroke: #9c3b2b; stroke-width: 2.5; stroke-linecap: round; stroke-dasharray: 1; stroke-dashoffset: 1; }
+.ih-mud-blob { fill: var(--ih-mud-earth); stroke: none; }
+.ih-mud-tone--light { stop-color: #ad8056; }
+.ih-mud-tone--middle { stop-color: #805333; }
+.ih-mud-tone--shade { stop-color: #4b3023; }
+.ih-mud-tone--edge { stop-color: #291d18; }
+.ih-mud-fold { fill: var(--ih-mud-fold); opacity: 0.34; }
+.ih-mud-fold-tone--light { stop-color: #c39361; }
+.ih-mud-fold-tone--middle { stop-color: #93633d; }
+.ih-mud-fold-tone--shade { stop-color: #553724; }
+.ih-mud-ground { fill: #231a15; opacity: 0.3; }
+.ih-mud-contact { fill: #201612; opacity: 0.45; }
+.ih-mud-clod { fill: #755034; stroke: #3b291f; stroke-width: 1.3; }
+.ih-mud-crease-soft { fill: none; stroke: #37251b; stroke-width: 6; stroke-linecap: round; opacity: 0.15; }
+.ih-mud-ridge { fill: none; stroke: #38271e; stroke-width: 2; stroke-linecap: round; opacity: 0.52; }
+.ih-mud-crease-lip { fill: none; stroke: #cb9966; stroke-width: 1.2; stroke-linecap: round; opacity: 0.22; }
+.ih-mud-grain { fill: #38271c; opacity: 0.6; }
+.ih-mud-grain-light { fill: #d2ab7c; opacity: 0.45; }
+.ih-mud-wet { fill: none; stroke: #e0bd8f; stroke-width: 2.2; stroke-linecap: round; opacity: 0.55; }
+.ih-mud-rim-light { fill: none; stroke: #e0bd8f; stroke-width: 1.7; stroke-linecap: round; opacity: 0.45; }
+.ih-mud-outline { fill: none; stroke: #30231c; stroke-width: 2.5; stroke-linejoin: round; }
+.ih-mud-thread-tone--light { stop-color: #f98569; }
+.ih-mud-thread-tone--middle { stop-color: #d94f40; }
+.ih-mud-thread-tone--shade { stop-color: #b9332e; }
+.ih-mud-thread { fill: none; stroke: var(--ih-mud-thread-paint); stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1; stroke-dashoffset: 1; }
+@media print {
+  .ih-mud-ground { opacity: 0.18; }
+  .ih-mud-contact { opacity: 0.28; }
+}
 
 .ih-pincard-carrier { transform-origin: 0 0; }
 
@@ -1562,21 +1568,6 @@
 /* The iceberg, the sonar submarine, design-choice toggles              */
 /* ------------------------------------------------------------------ */
 
-.ih-sea-top {
-  fill: none;
-  stroke: #7dd3fc;
-  stroke-width: 3;
-  stroke-linecap: round;
-}
-
-.ih-ice-tip { fill: #f0f9ff; stroke: #0c4a6e; stroke-width: 3; stroke-linejoin: round; }
-.ih-ice-tip-shade { fill: #bae6fd; }
-.ih-ice-deep { fill: #1e6fa8; stroke: #0c4a6e; stroke-width: 3; stroke-linejoin: round; opacity: 0.92; }
-.ih-ice-deep-shade { fill: #155e8f; }
-.ih-fish { fill: #0f3d5e; }
-.ih-gear { fill: #e2e8f0; stroke: #0c4a6e; stroke-width: 2.5; }
-.ih-gear-hub { fill: #1e6fa8; }
-
 .ih-sonar { fill: none; stroke: #5ef08f; stroke-width: 2; }
 /* The underwater artwork keeps its palette in both page themes. */
 .ih-sub-gold-stop-0 { stop-color: #e9b93d; }
@@ -1597,27 +1588,6 @@
 .ih-sub-port { fill: var(--ih-sub-glass); stroke: var(--ink); stroke-width: 2; }
 .ih-sub-prop { fill: var(--ih-sub-metal); stroke: var(--ink); stroke-width: 1.5; }
 
-.ih-berg-label {
-  position: absolute;
-  padding: 4px 11px 3px;
-  border: 2px solid var(--ink);
-  border-radius: 6px;
-  color: var(--ink);
-  font-size: 16px;
-  font-weight: 900;
-  white-space: nowrap;
-  box-shadow: 3px 3px 0 var(--ink);
-}
-
-.ih-berg-label small {
-  display: block;
-  font-size: 14px;
-  font-weight: 700;
-}
-
-.ih-berg-label--tip { background: var(--gold); }
-.ih-berg-label--deep { background: var(--cyan); }
-
 .ih-toggle {
   position: absolute;
   display: flex;
@@ -1635,7 +1605,7 @@
   border-radius: 999px;
   color: #b4c3e0;
   font-family: var(--font-mono);
-  font-size: 16px;
+  font-size: 20px;
   font-weight: 600;
   white-space: nowrap;
 }
@@ -1647,7 +1617,7 @@
 
 .ih-toggle-or {
   color: var(--muted);
-  font-size: 14px;
+  font-size: 20px;
   font-weight: 800;
 }
 
@@ -1666,33 +1636,70 @@
   stroke-linecap: round;
 }
 
-/* ------------------------------------------------------------------ */
-/* Outlet and power plants                                              */
-/* ------------------------------------------------------------------ */
-
-.ih-wall { fill: #d9cdb8; stroke: var(--ink); stroke-width: 3; }
-.ih-wall-cut { fill: #1f2f4d; stroke: var(--ink); stroke-width: 3; }
-.ih-plate { fill: #f8fafc; stroke: var(--ink); stroke-width: 3; }
-.ih-socket { fill: #1f2937; }
-.ih-cable { fill: none; stroke: #111827; stroke-width: 6; stroke-linecap: round; }
-.ih-cable-glow { fill: none; stroke: var(--gold); stroke-width: 3; stroke-linecap: round; stroke-dasharray: 10 14; }
-.ih-plug { fill: #f8fafc; stroke: var(--ink); stroke-width: 3; }
-.ih-phone { fill: #1e293b; stroke: var(--ink); stroke-width: 3; }
-.ih-phone-screen { fill: #0ea5e9; }
-.ih-battery { fill: var(--green); }
-.ih-sun { fill: #fde047; stroke: #b45309; stroke-width: 2.5; }
-.ih-sun-ray { stroke: #fde047; stroke-width: 4; stroke-linecap: round; }
-.ih-panel { fill: #1d4ed8; stroke: #bfdbfe; stroke-width: 2; }
-.ih-panel-grid { stroke: #93c5fd; stroke-width: 1.2; }
-.ih-panel-leg { stroke: #cbd5e1; stroke-width: 3; }
-.ih-tower { fill: #e2e8f0; stroke: #475569; stroke-width: 2; }
-.ih-blade { fill: #f8fafc; stroke: #475569; stroke-width: 2; }
-.ih-moon { fill: #e0e7ff; }
-.ih-star { fill: #e0e7ff; }
-.ih-ground { fill: #14532d; }
-.ih-ground--night { fill: #0f2a1c; }
-.ih-sky-day { fill: #38bdf8; }
-.ih-sky-night { fill: #0b1736; }
+/* The song's illustrated stage stays dark in both site themes. Print uses its
+   text description; the shared player stylesheet hides the animated stage. */
+.ih-power-label {
+  fill: #edf6fa;
+  font-family: var(--font-body, system-ui, sans-serif);
+  font-size: 22px;
+  font-weight: 650;
+}
+.ih-power-label--heading { font-size: 24px; font-weight: 750; }
+.ih-power-label--gold { fill: #ffe2a0; }
+.ih-power-label--landscape { fill: #fff; font-size: 20px; font-weight: 750; }
+.ih-power-label--contract { fill: #ffe2a0; font-size: 20px; }
+.ih-power-label--charging { fill: #a9f4d0; font-size: 20px; }
+.ih-power-day-top { stop-color: #174b70; }
+.ih-power-day-bottom { stop-color: #73bdcb; }
+.ih-power-night-top { stop-color: #142442; }
+.ih-power-night-bottom { stop-color: #355470; }
+.ih-power-porcelain-top { stop-color: #fffdf3; }
+.ih-power-porcelain-bottom { stop-color: #cbd9dc; }
+.ih-power-hill-far { fill: #487d79; }
+.ih-power-hill { fill: #31594f; }
+.ih-power-night-hill-far { fill: #263d4b; }
+.ih-power-night-hill { fill: #1a303a; }
+.ih-power-sun-halo { fill: #ffda83; opacity: 0.16; }
+.ih-power-sun { fill: #ffe4a0; }
+.ih-power-moon, .ih-power-star { fill: #e0f1f6; }
+.ih-power-rack { fill: none; stroke: #b8cbd0; stroke-width: 4; stroke-linejoin: round; }
+.ih-power-panel-edge { fill: #152b48; stroke: #c9e9ec; stroke-width: 1.6; stroke-linejoin: round; }
+.ih-power-panel { fill: #174b78; stroke: #b4e5ef; stroke-width: 1.5; stroke-linejoin: round; }
+.ih-power-panel-grid { fill: none; stroke: #a6d8e8; stroke-width: 1.2; }
+.ih-power-panel-reflection { fill: #b4e7ee; opacity: 0.12; }
+.ih-power-tower { fill: #d1e3e8; stroke: #748e9b; stroke-width: 1.2; }
+.ih-power-tower-shade { fill: #8fa8b4; }
+.ih-power-nacelle { fill: #b9d0d9; stroke: #748e9b; stroke-width: 1.2; }
+.ih-power-blade { fill: #f0f6f7; stroke: #9fb7c1; stroke-width: 1; stroke-linejoin: round; }
+.ih-power-rotor-hub { fill: #d7e7eb; stroke: #718e9c; stroke-width: 1.5; }
+.ih-power-landscape-frame { fill: none; stroke: #7199af; stroke-width: 2; }
+.ih-power-wire { fill: none; stroke: #7e98a8; stroke-width: 8; stroke-linecap: round; }
+.ih-power-flow { fill: none; stroke: #ffe2a0; stroke-width: 3; stroke-dasharray: 9 16; stroke-linecap: round; }
+.ih-power-grid { fill: #1e374a; stroke: #b0cfdd; stroke-width: 2; }
+.ih-power-sine { fill: none; stroke: #ffe2a0; stroke-width: 3; stroke-linecap: round; }
+.ih-power-wall { fill: #263a48; stroke: #6f8a9a; stroke-width: 2; }
+.ih-power-wall-cut { fill: none; stroke: #8ba3b0; stroke-width: 2; }
+.ih-power-plate-shadow { fill: #091722; opacity: 0.5; }
+.ih-power-plate { stroke: #94acb5; stroke-width: 2; }
+.ih-power-plate-highlight { fill: none; stroke: #fff; stroke-width: 2; stroke-linecap: round; }
+.ih-power-screw { fill: #93a7ae; }
+.ih-power-screw-slot { fill: none; stroke: #374b59; stroke-width: 1.2; }
+.ih-power-socket-outline { fill: #e6eeeb; stroke: #9db0b4; stroke-width: 1.5; }
+.ih-power-socket, .ih-power-usb { fill: #213746; }
+.ih-power-cable { fill: none; stroke: #b4c7ce; stroke-width: 8; stroke-linecap: round; }
+.ih-power-cable-flow { fill: none; stroke: #ffe2a0; stroke-width: 3; stroke-dasharray: 9 16; stroke-linecap: round; }
+.ih-power-adapter-shadow { fill: #0c1e2b; opacity: 0.4; }
+.ih-power-adapter { stroke: #849da8; stroke-width: 1.5; }
+.ih-power-adapter-seam { fill: none; stroke: #b5c9ce; stroke-width: 1.5; }
+.ih-power-shadow { fill: #07121c; opacity: 0.5; }
+.ih-power-phone { fill: #203645; stroke: #afc7d1; stroke-width: 2.5; }
+.ih-power-screen { fill: #102c3a; }
+.ih-power-speaker { fill: #8aa8b6; }
+.ih-power-battery-frame { fill: #163c48; stroke: #c4e6e4; stroke-width: 2; }
+.ih-power-battery-cap { fill: #c4e6e4; }
+.ih-power-battery { fill: #89e3bc; }
+.ih-power-bolt { fill: #153c37; stroke: #d1ffe9; stroke-width: 1; stroke-linejoin: round; }
+.ih-power-phone-detail { fill: none; stroke: #a9c2ce; stroke-width: 3; stroke-linecap: round; }
 
 /* ------------------------------------------------------------------ */
 /* Small case files in a grid                                           */
@@ -2071,24 +2078,9 @@
 .ih-car-tail-light { fill: #f66a6d; }
 .ih-car-rim { fill: #627586; stroke: #b9cbd2; stroke-width: 1.4; }
 .ih-car-spoke { fill: none; stroke: #cbd9dd; stroke-width: 2; }
-.ih-ice-facet { fill: #4a9bc0; opacity: 0.45; }
-.ih-ice-tip-facet { fill: #d4f0fa; }
-.ih-ice-crack { fill: none; stroke: #88cce0; stroke-width: 1.5; opacity: 0.5; stroke-linecap: round; }
-.ih-mf-edge { fill: none; stroke: #eef2ef; stroke-width: 2; }
-.ih-mf-tape-route { fill: none; stroke: #695344; stroke-width: 3; }
-.ih-mf-reel-ring { fill: none; stroke: #91a1b1; stroke-width: 1.2; }
-.ih-mf-vent { fill: none; stroke: #566679; stroke-width: 2; stroke-linecap: round; }
-.ih-mf-screw { fill: #596a7d; }
 .ih-sub-fin { fill: var(--ih-sub-gold); stroke: var(--ink); stroke-width: 2; stroke-linejoin: round; }
 .ih-sub-port-rim { fill: var(--ih-sub-metal); stroke: #ffe099; stroke-width: 1; }
 .ih-sub-glass { fill: none; stroke: #dcf8ff; stroke-width: 1.4; stroke-linecap: round; }
-.ih-plate-bevel { fill: none; stroke: #d2d9df; stroke-width: 2; }
-.ih-plate-screw { fill: #a4afba; }
-.ih-plate-slot { fill: none; stroke: #4d5c6b; stroke-width: 1; }
-.ih-battery-frame { fill: none; stroke: #d3f5ed; stroke-width: 1.5; }
-.ih-phone-detail { fill: none; stroke: #bac9d5; stroke-width: 2; stroke-linecap: round; }
-
-/* Mud is a solid volume, with damp clods and a few half-buried yarn traces. */
 
 /* The spy-film iris that closes the song */
 .ih-iris {
@@ -2101,3 +2093,157 @@
 }
 .ih-iris-mask { fill: #000; }
 .ih-iris-ring { fill: none; stroke: var(--gold); stroke-width: 4; }
+/* Cutaway illustrations use a fixed dark stage in both page themes.
+ * The player substitutes the text transcript in print. */
+.ih-iceberg-sea-stop-0 { stop-color: #163f59; }
+.ih-iceberg-sea-stop-1 { stop-color: #0c2a40; }
+.ih-iceberg-sea-stop-2 { stop-color: #091d31; }
+.ih-iceberg-ice-stop-0 { stop-color: #82d7e5; }
+.ih-iceberg-ice-stop-1 { stop-color: #3693b1; }
+.ih-iceberg-ice-stop-2 { stop-color: #1e6083; }
+.ih-iceberg-tip-stop-0 { stop-color: #fff; }
+.ih-iceberg-tip-stop-1 { stop-color: #ddf5fa; }
+.ih-iceberg-tip-stop-2 { stop-color: #96d4e4; }
+.ih-iceberg-outline { stroke: #a6e3ef; stroke-width: 1.5; stroke-linejoin: round; }
+.ih-iceberg-facet-light { fill: #b7f1f3; opacity: 0.2; }
+.ih-iceberg-facet-dark { fill: #083d61; opacity: 0.4; }
+.ih-iceberg-seam { fill: none; stroke: #cdf4f7; stroke-width: 1; opacity: 0.25; }
+.ih-iceberg-tip-shadow { fill: #62afce; }
+.ih-iceberg-tip-light { fill: #f3fdff; }
+.ih-iceberg-ridge { fill: none; stroke: #fff; stroke-width: 1.2; opacity: 0.7; }
+.ih-iceberg-window { fill: #092d43; fill-opacity: 0.88; stroke: #83d3e4; stroke-width: 1.5; }
+.ih-iceberg-gear { fill: #e1f2f6; stroke: #0c3a52; stroke-width: 2; stroke-linejoin: round; }
+.ih-iceberg-gear-ring { fill: #467c94; stroke: #9dc6d6; stroke-width: 2; }
+.ih-iceberg-axle { fill: #d7f2f6; }
+.ih-iceberg-surface { fill: none; stroke: #a9e4ed; stroke-width: 2.5; stroke-linecap: round; }
+.ih-iceberg-reflection { opacity: 0.6; fill: none; stroke: #a9e4ed; stroke-width: 1.5; stroke-linecap: round; }
+.ih-ice-callout { position: absolute; left: 508px; width: 402px; color: #eaf4fa; }
+.ih-ice-callout strong { display: block; font-size: 30px; line-height: 1.2; font-weight: 800; }
+.ih-ice-callout > span { display: block; margin-top: 5px; font-size: 22px; line-height: 1.25; }
+.ih-ice-callout--tip { top: 92px; }
+.ih-ice-callout--tip strong { color: #f7da8e; }
+.ih-ice-callout--deep { top: 227px; }
+.ih-ice-callout--deep strong { color: #9ce1e6; }
+.ih-ice-callout > .ih-ice-promise { margin-top: 12px; color: #b6f0d5; font-size: 22px; font-weight: 700; }
+.ih-ice-leaders { position: absolute; inset: 0; width: 960px; height: 540px; }
+.ih-ice-leaders path { fill: none; stroke: #addce6; stroke-width: 1.5; }
+.ih-ice-leaders circle { fill: #addce6; }
+.ih-ice-change { position: absolute; top: 421px; left: 73px; width: 367px; padding: 7px 0; border-radius: 6px; background: #0a2436; color: #d9f2f6; text-align: center; font-size: 22px; font-weight: 700; }
+.ih-iceberg-scene .ih-waterline line { stroke: #7fbdce; stroke-width: 1.5; stroke-dasharray: 5 7; }
+
+/* Vintage cabinet: the song stage keeps the same dark palette in both page themes. */
+.ih-mainframe-shadow { fill: #020813; opacity: 0.35; }
+.ih-mainframe-foot { fill: #455463; stroke: #192838; stroke-width: 1.5; }
+.ih-mainframe-metal--light { stop-color: #e6e9e7; }
+.ih-mainframe-metal--body { stop-color: #c1cbd1; }
+.ih-mainframe-metal--shade { stop-color: #9cabb9; }
+.ih-mainframe-reel--light { stop-color: #f0f4f5; }
+.ih-mainframe-reel--shade { stop-color: #a2b3c2; }
+.ih-mainframe-side { fill: #6d8192; stroke: #233546; stroke-width: 2; stroke-linejoin: round; }
+.ih-mainframe-top { fill: #e4e9e8; stroke: #233546; stroke-width: 2; stroke-linejoin: round; }
+.ih-mainframe-cabinet { stroke: #233546; stroke-width: 2.5; }
+.ih-mainframe-edge-light { fill: none; stroke: #f6f8f5; stroke-width: 1.5; stroke-linecap: round; }
+.ih-mainframe-edge-shade { fill: none; stroke: #8194a4; stroke-width: 1.5; stroke-linecap: round; }
+.ih-mainframe-panel { fill: #293746; stroke: #182635; stroke-width: 1.5; }
+.ih-mainframe-lamp { fill: #674c36; stroke: #182635; stroke-width: 1; }
+.ih-mainframe-lamp.is-lit { fill: #f3c575; }
+.ih-mainframe-switch { fill: #c6d0d4; stroke: #152330; stroke-width: 1; }
+.ih-mainframe-switch-line { fill: none; stroke: #667b8d; stroke-width: 1; }
+.ih-mainframe-window { fill: #182635; stroke: #6b7b88; stroke-width: 1.5; }
+.ih-mainframe-window-edge { fill: none; stroke: #0c1722; stroke-width: 2; stroke-linecap: round; }
+.ih-mainframe-tape-pack { fill: #302c2b; }
+.ih-mainframe-reel-rim { stroke: #8195a7; stroke-width: 1.5; }
+.ih-mainframe-tape { fill: #554032; }
+.ih-mainframe-tape-groove { fill: none; stroke: #80624b; stroke-width: 1; }
+.ih-mainframe-spoke { stroke: #899aaa; stroke-width: 0.6; }
+.ih-mainframe-hub { stroke: #6b7c8d; stroke-width: 1; }
+.ih-mainframe-spindle { fill: #3c5265; }
+.ih-mainframe-guide { fill: #dbe3e5; stroke: #6b7d8c; stroke-width: 1; }
+.ih-mainframe-tape-route { fill: none; stroke: #624834; stroke-width: 2.5; }
+.ih-mainframe-core-frame { fill: #728390; stroke: #3f5263; stroke-width: 1.3; }
+.ih-mainframe-core-bed { fill: #273e49; stroke: #b2bfbd; stroke-width: 0.7; }
+.ih-mainframe-core-wire-x { fill: none; stroke: #d6aa67; stroke-width: 1.1; }
+.ih-mainframe-core-wire-y { fill: none; stroke: #a4ccd0; stroke-width: 1.1; }
+.ih-mainframe-ferrite { fill: #6a3636; stroke: #1e1e24; stroke-width: 0.7; }
+.ih-mainframe-core-highlight { fill: none; stroke: #c38872; stroke-width: 0.9; stroke-linecap: round; }
+.ih-mainframe-screw { fill: #586e80; }
+
+.ih-memory-heading { position: absolute; top: 86px; left: 40px; width: 250px; text-align: center; color: #f7da8e; font-size: 22px; font-weight: 800; }
+.ih-memory-detail { position: absolute; top: 347px; left: 40px; width: 250px; text-align: center; color: #eaf4fa; font-size: 20px; line-height: 1.4; }
+.ih-memory-detail strong, .ih-memory-detail span { display: block; }
+.ih-memory-detail span { color: #c7dce7; }
+.ih-memory-cost { position: absolute; top: 414px; left: 40px; width: 250px; box-sizing: border-box; padding: 7px 5px; border-radius: 6px; background: #f7da8e; color: #102735; text-align: center; font-size: 20px; font-weight: 800; }
+
+/* A fixed film palette, shared by light and dark host pages. */
+.ih-contract-exchange { position: absolute; inset: 0; width: 960px; height: 540px; color: #edf4f7; font-family: var(--font-sans, system-ui, sans-serif); }
+.ih-contract-heading { position: absolute; left: 64px; top: 55px; font-size: 30px; line-height: 1.2; font-weight: 800; color: #f5d986; }
+.ih-contract-client, .ih-contract-server { position: absolute; box-sizing: border-box; text-align: center; border-radius: 16px; }
+.ih-contract-client { left: 46px; top: 134px; width: 218px; padding: 17px 13px 16px; background: #142b3b; border: 2px solid #6cb8d0; }
+.ih-contract-server { left: 696px; top: 122px; width: 218px; height: 322px; padding: 17px 13px; background: #1b2938; border: 2px solid #b0c4d7; }
+.ih-contract-role { font-size: 27px; line-height: 1.1; font-weight: 800; }
+.ih-contract-sub { margin-top: 5px; font-size: 20px; line-height: 1.2; color: #c9dae7; }
+.ih-contract-app { display: block; width: 190px; height: 140px; margin-top: 12px; }
+.ih-contract-device { fill: #dcebf1; stroke: #80b5cb; stroke-width: 2; }
+.ih-contract-toolbar { fill: #4c7188; }
+.ih-contract-toolbar-dot { fill: #dcebf1; }
+.ih-contract-app-row { fill: #7098ac; }
+.ih-contract-device-foot { fill: none; stroke: #b8cfda; stroke-width: 5; stroke-linecap: round; }
+.ih-contract-client-note { margin-top: 5px; font-size: 20px; line-height: 1.2; color: #d4edf6; }
+.ih-contract-rack { display: block; width: 180px; height: 115px; margin: 8px auto 0; }
+.ih-contract-rack-shell { fill: #0d1723; stroke: #a3b9ca; stroke-width: 2; }
+.ih-contract-drive { fill: #435b71; stroke: #b7c9d5; stroke-width: 1.3; }
+.ih-contract-status { fill: #a0e3cc; }
+.ih-contract-vent { fill: none; stroke: #c8d9e4; stroke-width: 2; stroke-linecap: round; }
+.ih-contract-hidden { position: absolute; left: 13px; right: 13px; bottom: 13px; height: 100px; box-sizing: border-box; border-top: 1.5px dashed #91a6b7; padding-top: 9px; }
+.ih-contract-hidden-title { font-size: 20px; line-height: 1.2; font-weight: 700; color: #e4c4b3; }
+.ih-contract-database { position: absolute; left: 0; top: 39px; width: 42px; height: 42px; }
+.ih-contract-db-body { fill: #426477; stroke: #b8d4df; stroke-width: 2.5; }
+.ih-contract-db-top { fill: #678a9c; stroke: #b8d4df; stroke-width: 2.5; }
+.ih-contract-db-seam { fill: none; stroke: #b8d4df; stroke-width: 2; }
+.ih-contract-db-choice { position: absolute; left: 43px; right: 0; top: 50px; font-size: 20px; line-height: 1.2; font-weight: 700; white-space: nowrap; }
+.ih-contract-public { position: absolute; left: 280px; top: 129px; width: 400px; height: 315px; box-sizing: border-box; text-align: center; }
+.ih-contract-public-title { margin: 0 30px; padding: 9px 10px; border: 1.5px solid #dfc070; border-radius: 8px; background: #302b1d; color: #ffe5a5; font-size: 24px; line-height: 1.15; font-weight: 800; }
+.ih-contract-lanes { position: absolute; left: -15px; top: 43px; width: 430px; height: 160px; overflow: visible; }
+.ih-contract-request, .ih-contract-response { fill: none; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.ih-contract-request { stroke: #f3d47f; }
+.ih-contract-response { stroke: #8fd4e6; }
+.ih-contract-request-label, .ih-contract-response-label { position: absolute; left: 100px; right: 100px; font-size: 22px; line-height: 1.2; font-weight: 700; }
+.ih-contract-request-label { top: 56px; color: #ffe5a5; }
+.ih-contract-response-label { top: 130px; color: #b2e7f2; }
+.ih-contract-protocol { position: absolute; left: 18px; right: 18px; top: 216px; padding: 10px 8px; border: 1.5px solid #dfc070; border-radius: 10px; background: #302b1d; }
+.ih-contract-protocol-label { font-size: 20px; line-height: 1.1; color: #e8d5a7; }
+.ih-contract-protocol-value { margin-top: 4px; font-size: 24px; line-height: 1.15; font-weight: 800; color: #fff0c7; }
+.ih-contract-verdict { margin-top: 6px; font-size: 20px; line-height: 1.1; color: #b5ead2; font-weight: 700; }
+@media print {
+  .ih-contract-client, .ih-contract-server { background: #f5f8fa; border-color: #34566d; color: #172936; }
+  .ih-contract-public-title, .ih-contract-protocol { background: #fff8e9; border-color: #705a20; }
+  .ih-contract-heading, .ih-contract-public-title, .ih-contract-protocol-value { color: #604b18; }
+  .ih-contract-sub, .ih-contract-client-note, .ih-contract-db-choice { color: #27485e; }
+  .ih-contract-hidden-title, .ih-contract-protocol-label { color: #4f4433; }
+  .ih-contract-request-label, .ih-contract-response-label, .ih-contract-verdict { color: #244d60; }
+  .ih-contract-request { stroke: #705a20; }
+  .ih-contract-response { stroke: #24566b; }
+}
+
+/* A matched pair of dependency sketches on the always-dark song stage.
+   Asterisk + weight accompany change colors; all six modules stay visible. */
+.ih-impact-legend { font-size: 20px; }
+.ih-impact { --impact-changed: #ffe2a0; }
+.ih-impact--leaky { --impact-changed: #ffb3ac; }
+.ih-impact-panel { fill: #102332; stroke: #547184; stroke-width: 1.5; }
+.ih-impact-system { fill: #162e3e; stroke: #66889b; stroke-width: 1.5; }
+.ih-impact-text { fill: #edf6fa; font-family: var(--font-body, system-ui, sans-serif); font-size: 20px; font-weight: 650; }
+.ih-impact-title { font-size: 25px; font-weight: 750; }
+.ih-impact-system-label { fill: #c5d9e2; }
+.ih-impact-note { fill: #c5d9e2; font-size: 20px; }
+.ih-impact-name { font-size: 21px; font-weight: 700; }
+.ih-impact-edge { fill: none; stroke: #a6c7d7; stroke-width: 2; stroke-linecap: round; }
+.ih-impact-arrow--neutral { fill: #a6c7d7; }
+.ih-impact-arrow--changed { fill: var(--impact-changed); }
+.ih-impact-edge.is-changed { stroke: var(--impact-changed); stroke-width: 2.6; }
+.ih-impact-card { fill: #1c3d50; stroke: #a6c7d7; stroke-width: 1.6; }
+.ih-impact-module.is-changed .ih-impact-card { fill: #34414a; stroke: var(--impact-changed); stroke-width: 3; }
+.ih-impact-module.is-changed .ih-impact-name { fill: var(--impact-changed); }
+.ih-impact-provider-card { fill: #182735; stroke: #b0c4cf; stroke-width: 1.6; stroke-dasharray: 5 4; }
+.ih-impact-verdict { fill: #c5d9e2; font-size: 21px; font-weight: 750; }
+.ih-impact-verdict.is-changed { fill: var(--impact-changed); }

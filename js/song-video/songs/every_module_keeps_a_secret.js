@@ -49,9 +49,15 @@
 
       // Memory was expensive, so the year lost its first two digits.
       const b = kit.scene(content, line('intro-2').start - 0.1, line('intro-6').start - 0.1);
-      ih.note(b, '1960s', { x: 96, y: 70, at: mark('intro-2', 'sixties'), tone: 'gold', rotate: -4 });
-      ih.mainframe(b, { x: 40, y: 100, at: line('intro-2').start });
-      kit.sticker(b, 'Memory: $$$', { x: 76, y: 312, at: mark('intro-2', 'expensive'), variant: 'red', iconName: 'receipt', rotate: -4 });
+      ih.mainframeMemory(b, { x: 40, y: 118, at: line('intro-2').start });
+      const memory = kit.el('div', 'ih-memory-heading is-staged', b, '1960s mainframe');
+      const memoryDetail = kit.el('div', 'ih-memory-detail is-staged', b);
+      kit.el('strong', '', memoryDetail, 'Core memory inside');
+      kit.el('span', '', memoryDetail, 'Enlarged cutaway');
+      fx.fadeIn(memory, mark('intro-2', 'sixties'), 0.3);
+      fx.fadeIn(memoryDetail, mark('intro-2', 'sixties'), 0.3);
+      const cost = kit.el('div', 'ih-memory-cost is-staged', b, 'Memory was expensive');
+      fx.fadeIn(cost, mark('intro-2', 'expensive'), 0.3);
       const full = ih.digits(b, {
         x: 310, y: 118, label: 'The year', cells: 4, size: 64, at: mark('intro-3', 'programmers'),
         values: [{ at: 0, text: '1985' }],
@@ -444,39 +450,54 @@
     // ----------------------------------------------------------------
 
     function verse3() {
-      badge('Verse 3 · The iceberg', 'verse-3');
       const start = song.sectionStart('verse-3');
       const end = song.sectionEnd('verse-3');
       const outletAt = line('verse-3-10').start - 0.1;
+      kit.badge(hud, 'Verse 3 · The iceberg', start, outletAt);
+      kit.badge(hud, 'Verse 3 · Same outlet, new source', outletAt, end);
 
       const a = kit.scene(content, start, outletAt);
-      const berg = ih.iceberg(a, { x: 30, y: 84, at: line('verse-3-1').start, gearsFrom: mark('verse-3-3', 'under') });
-      ih.submarine(a, { x: 34, y: 352, at: mark('verse-3-3', 'under') - 0.3, pingFrom: mark('verse-3-3', 'water') });
-      ih.waterline(a, { y: 204, x1: 440, x2: 940, at: mark('verse-3-6', 'below') });
-      const tip = ih.bergLabel(a, { x: 290, y: 82, title: 'Interface', sub: 'what it does: a stable contract', tone: 'tip', at: mark('verse-3-1', 'interface') });
-      fx.bump(tip, mark('verse-3-2', 'contract'), 0.08);
-      ih.bergLabel(a, { x: 268, y: 384, title: 'Implementation', sub: 'how it keeps its promise', tone: 'deep', at: mark('verse-3-3', 'implementation') });
+      a.classList.add('ih-iceberg-scene');
+      const berg = ih.iceberg(a, { x: 48, y: 84, at: start, gearsFrom: mark('verse-3-3', 'under') });
       berg.swap(mark('verse-3-5', 'freely'));
-      kit.sticker(a, 'Change it freely', { x: 150, y: 430, at: mark('verse-3-5', 'freely'), until: mark('verse-3-6', 'what'), variant: 'cyan', iconName: 'gear', rotate: -3 });
-      ih.heading(a, ['What goes ', 'below', '?'], { x: 520, y: 126, at: mark('verse-3-6', 'below'), size: 28 });
-      ih.note(a, 'classified: choices that could change', { x: 520, y: 172, at: mark('verse-3-6', 'choices'), tone: 'cyan', rotate: -2 });
-      const toggles = [
-        ih.toggle(a, { x: 520, y: 236, a: 'array', b: 'hash table', at: mark('verse-3-7', 'array'), flips: [mark('verse-3-7', 'hash')] }),
-        ih.toggle(a, { x: 520, y: 296, a: 'cache', b: 'no cache', at: mark('verse-3-7', 'cache'), flips: [mark('verse-3-7', 'no')] }),
-        ih.toggle(a, { x: 520, y: 356, a: 'MongoDB', b: 'Supabase', at: mark('verse-3-8', 'mongo'), flips: [mark('verse-3-8', 'supabase'), mark('verse-3-9', 'change')] }),
+      ih.waterline(a, { y: 204, x1: 470, x2: 916, at: start });
+
+      // Fixed labels anchor the two halves of the analogy throughout the swap.
+      const tip = kit.el('div', 'ih-ice-callout ih-ice-callout--tip is-staged', a);
+      kit.el('strong', '', tip, 'Interface');
+      kit.el('span', '', tip, 'What callers can rely on');
+      const promise = kit.el('span', 'ih-ice-promise is-staged', tip, '✓ Same promised behavior');
+      fx.fadeIn(tip, mark('verse-3-1', 'interface'), 0.3);
+      fx.fadeIn(promise, mark('verse-3-2', 'stable'), 0.3);
+      const deep = kit.el('div', 'ih-ice-callout ih-ice-callout--deep is-staged', a);
+      kit.el('strong', '', deep, 'Implementation');
+      kit.el('span', '', deep, 'How the promise is kept');
+      fx.fadeIn(deep, mark('verse-3-3', 'implementation'), 0.3);
+      const leaders = kit.svg('svg', { class: 'ih-ice-leaders', viewBox: '0 0 960 540', 'aria-hidden': 'true' }, a);
+      for (const [d, cx, cy, at] of [
+        ['M295 137 H486', 295, 137, mark('verse-3-1', 'interface')],
+        ['M359 312 H458 V249 H486', 359, 312, mark('verse-3-3', 'implementation')],
+      ]) {
+        const leader = kit.svg('g', { class: 'is-staged' }, leaders);
+        kit.svg('path', { d }, leader);
+        kit.svg('circle', { cx, cy, r: 4 }, leader);
+        fx.fadeIn(leader, at, 0.3);
+      }
+      const change = kit.el('div', 'ih-ice-change is-staged', a, 'New internals. Same contract.');
+      fx.fadeIn(change, mark('verse-3-5', 'freely'), 0.3);
+      const choices = [
+        { a: 'array', b: 'hash table', at: mark('verse-3-7', 'array'), flips: [mark('verse-3-7', 'hash')] },
+        { a: 'cache', b: 'no cache', at: mark('verse-3-7', 'cache'), flips: [mark('verse-3-7', 'no')] },
+        { a: 'MongoDB', b: 'Supabase', at: mark('verse-3-8', 'mongo'), flips: [mark('verse-3-8', 'supabase'), mark('verse-3-9', 'change')] },
       ];
-      const sink = mark('verse-3-8', 'hide');
-      toggles.forEach((node, i) => fx.moveTo(node, sink + i * 0.08, 0, 14, 0.4));
-      kit.sticker(a, 'Changed later', { x: 784, y: 368, at: mark('verse-3-9', 'mind'), variant: 'gold', iconName: 'loop', rotate: 5 });
+      choices.forEach((choice, i) => ih.toggle(a, { x: 508, y: 294 + i * 54, ...choice }));
 
       // The outlet is the interface; the power plant is the secret.
       const b = kit.scene(content, outletAt, end);
       ih.outlet(b, {
-        x: 168, y: 88, scale: 1.25, at: outletAt + 0.1,
+        x: 40, y: 90, at: outletAt + 0.1,
         plants: [{ at: 0, kind: 'solar' }, { at: mark('verse-3-11', 'wind') - 0.1, kind: 'wind' }],
       });
-      ih.bergLabel(b, { x: 560, y: 52, title: 'Interface', sub: 'the outlet', tone: 'tip', at: mark('verse-3-12', 'interface') });
-      ih.show(ih.envelope(b, { text: 'the power plant', x: 262, y: 52 }), mark('verse-3-12', 'plants'), undefined, { rotate: -3, from: 1.6 });
     }
 
     // ----------------------------------------------------------------
@@ -495,8 +516,8 @@
         x: 300, y: 104, w: 640, title: 'OrderService.java', variant: 'classified', at: line('bridge-1').start + 0.2,
         lines: [
           { parts: [{ text: 'class', cls: 'keyword' }, ' OrderService {'] },
-          { parts: ['  ', { text: 'private', cls: 'keyword', mark: 'gold', at: mark('bridge-1', 'private'), until: line('bridge-2').start }, ' ', { text: 'PayPalClient', cls: 'type', mark: 'red', at: sig + 0.25 }, ' paypal;'] },
-          { parts: ['  ', { text: 'private', cls: 'keyword', mark: 'gold', at: mark('bridge-1', 'private') + 0.1, until: line('bridge-2').start }, ' ', { text: 'PayPalAuthToken', cls: 'type', mark: 'red', at: sig + 0.4 }, ' token;'] },
+          { parts: ['  ', { text: 'private', cls: 'keyword', mark: 'gold', at: mark('bridge-1', 'private'), until: line('bridge-2').start }, ' ', { text: 'PayPalClient', cls: 'type' }, ' paypal;'] },
+          { parts: ['  ', { text: 'private', cls: 'keyword', mark: 'gold', at: mark('bridge-1', 'private') + 0.1, until: line('bridge-2').start }, ' ', { text: 'PayPalAuthToken', cls: 'type' }, ' token;'] },
           { parts: ['  ', { text: 'public', cls: 'keyword' }, ' ', { text: 'PayPalCharge', cls: 'type', mark: 'red', at: mark('bridge-2', 'charge') }, ' checkout(Order o,'] },
           { parts: ['                        ', { text: 'PayPalAccount', cls: 'type', mark: 'red', at: sig }, ' acc) {'] },
           { parts: [{ text: '    … }', cls: 'comment' }] },
@@ -509,30 +530,25 @@
       ih.slip(a, { x: 640, y: 262, text: 'PayPalAccount', at: sig + 0.15, dx: 110, dy: 140, rotate: 9 });
       kit.stamp(a, 'Leaked!', { x: 300, y: 392, at: mark('bridge-3', 'plain'), rotate: -6, shake: false });
 
-      // Not hiding data: hiding decisions.
+      // Private fields alone do not hide a decision exposed by the public API.
       const b = kit.scene(content, mark('bridge-4', 'hiding') - 0.2, line('bridge-6').start - 0.1);
-      kit.kinetic(b, [{ text: 'Hiding data', at: mark('bridge-4', 'hiding'), color: 'pink' }], { y: 112, size: 56, punch: false });
-      kit.stamp(b, 'Not it', { x: 400, y: 182, at: mark('bridge-4', 'data'), rotate: -8, shake: false });
+      kit.kinetic(b, [{ text: 'Private fields', at: mark('bridge-4', 'hiding'), color: 'pink' }], { y: 112, size: 56, punch: false });
+      kit.stamp(b, 'Not enough', { x: 330, y: 182, at: mark('bridge-4', 'data'), rotate: -8, shake: false });
       kit.kinetic(b, [
         { text: 'Hiding', at: mark('bridge-5', 'hiding') },
         { text: 'decisions', at: mark('bridge-5', 'decisions'), color: 'gold' },
       ], { y: 262, size: 72 });
       ih.show(ih.envelope(b, { text: 'design decision', x: 380, y: 366 }), mark('bridge-5', 'decisions_2'), undefined, { rotate: -4, from: 1.6 });
 
-      // Don't hide what callers need: statelessness is a contract clause.
+      // The visible protocol is distinct from the server's hidden database choice.
       const c = kit.scene(content, line('bridge-6').start - 0.1, end);
-      ih.heading(c, ['Don’t hide what callers ', 'need to know'], { x: 150, y: 52, at: line('bridge-6').start });
-      ih.agent(c, { x: 60, y: 110, scale: 0.7, name: 'Client', role: 'Caller', tie: 'cyan', at: mark('bridge-6', 'callers') });
-      ih.agent(c, { x: 790, y: 110, scale: 0.7, name: 'Server', role: 'Module', tie: 'red', at: mark('bridge-6', 'callers') + 0.15, flip: true });
-      ih.show(ih.envelope(c, { text: 'SQL or NoSQL', x: 660, y: 372 }), mark('bridge-6', 'know') + 0.2, undefined, { rotate: 3, from: 1.6 });
-      ih.paper(c, {
-        x: 280, y: 130, w: 400, kicker: 'Visible contract', title: 'Client ⇄ Server', at: mark('bridge-6', 'know'), rotate: 1,
-        lines: [
-          { text: 'request → response', at: mark('bridge-6', 'know') + 0.3 },
-          { text: 'Protocol: stateless or stateful?', at: mark('bridge-7', 'stateless') },
-        ],
+      ih.contractExchange(c, {
+        at: line('bridge-6').start,
+        actorsAt: mark('bridge-6', 'callers'),
+        contractAt: mark('bridge-6', 'know'),
+        protocolAt: mark('bridge-7', 'stateless'),
+        confirmedAt: mark('bridge-7', 'contract'),
       });
-      kit.stamp(c, 'In the contract', { x: 330, y: 282, at: mark('bridge-7', 'contract'), color: 'green', rotate: -5, shake: false });
     }
 
     // ----------------------------------------------------------------
@@ -541,31 +557,28 @@
 
     function changeTest() {
       badge('Change Impact Analysis', 'change-test');
-      const s = kit.scene(content, song.sectionStart('change-test'), song.sectionEnd('change-test'));
-      ih.list(s, {
+      const graphAt = mark('change-test-3', 'count');
+      const briefing = kit.scene(content, song.sectionStart('change-test'), graphAt, { exit: 'fade' });
+      ih.list(briefing, {
         x: 50, y: 96, w: 380, title: 'Change Impact Analysis', at: line('change-test-1').start,
         items: [
           { text: 'List the likely changes', iconName: 'list', at: mark('change-test-2', 'list') },
           { text: 'Pick one', iconName: 'pin', at: mark('change-test-3', 'pick') },
-          { text: 'Count the modules it touches', iconName: 'search', at: mark('change-test-3', 'count') },
+          { text: 'Count the modules it touches', iconName: 'search', at: mark('change-test-3', 'pick') + 0.3 },
         ],
       });
       const changes = ['New payment provider', 'New database', 'Four-digit years'];
       const picked = mark('change-test-3', 'pick');
       changes.forEach((text, i) => {
-        const node = kit.sticker(s, text, { x: 480 + (i % 2) * 230, y: 86 + Math.floor(i / 2) * 48, at: mark('change-test-2', 'changes') + i * 0.2, variant: i === 0 ? 'gold' : 'white', iconName: 'sparkle', rotate: i % 2 ? 3 : -3 });
-        if (i === 0) fx.bump(node, picked, 0.2);
-        else tween(node, { opacity: 0.4 }, picked, 0.3, EASE.inOut);
+        const node = kit.sticker(briefing, text, { x: 480, y: 100 + i * 72, at: mark('change-test-2', 'changes') + i * 0.2, variant: i === 0 ? 'gold' : 'white', iconName: 'sparkle', rotate: 0 });
+        if (i !== 0) tween(node, { opacity: 0.4 }, picked, 0.3, EASE.inOut);
       });
-      const names = ['Order', 'Refund', 'Wallet', 'Report', 'Gateway', 'Admin'];
-      ih.note(s, 'Hidden well', { x: 480, y: 194, at: mark('change-test-3', 'modules'), tone: 'green', rotate: -2 });
-      const good = ih.grid(s, { x: 480, y: 232, cols: 3, cellW: 140, cellH: 36, gap: 12, names, at: mark('change-test-3', 'modules'), step: 0.04 });
-      good.light(mark('change-test-4', 'one'), [4], { tone: 'change', stamp: 'Only' });
-      kit.sticker(s, 'Just one: you’re good', { x: 70, y: 330, at: mark('change-test-4', 'good'), variant: 'green', iconName: 'check', rotate: -3 });
-      ih.note(s, 'Leaky', { x: 480, y: 326, at: mark('change-test-3', 'change'), tone: 'red', rotate: -2 });
-      const bad = ih.grid(s, { x: 480, y: 364, cols: 3, cellW: 140, cellH: 36, gap: 12, names, at: mark('change-test-3', 'change'), step: 0.04 });
-      bad.light(mark('change-test-4', 'dozens'), [0, 1, 2, 3, 4, 5], { step: 0.06, stamp: 'Hit' });
-      kit.stamp(s, 'Redesign', { x: 110, y: 390, at: mark('change-test-4', 'redesign'), rotate: -5, shake: false });
+      const graphs = kit.scene(content, graphAt, song.sectionEnd('change-test'), { exit: 'fade' });
+      ih.heading(graphs, ['Selected change: ', 'new payment provider'], { x: 44, y: 52, at: graphAt, size: 26 });
+      const legend = ih.note(graphs, 'Arrows mean “depends on”', { x: 650, y: 57, at: graphAt, tone: 'white', rotate: 0 });
+      legend.classList.add('ih-impact-legend');
+      ih.changeImpactGraph(graphs, { x: 30, y: 96, mode: 'hidden', at: graphAt + 0.1, changeAt: mark('change-test-4', 'one') });
+      ih.changeImpactGraph(graphs, { x: 490, y: 96, mode: 'leaky', at: graphAt + 0.1, changeAt: mark('change-test-4', 'dozens') });
     }
 
     // ----------------------------------------------------------------

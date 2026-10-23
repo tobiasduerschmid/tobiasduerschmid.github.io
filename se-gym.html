@@ -43,7 +43,7 @@ layout: sebook
       <p class="gym-subtitle"> Make studying fun while following <a
           href="/blog/evidence-based-study-tips-for-college-students/">evidence-based learning techniques</a>. Build
         your
-        own study gym by adding quizzes and flashcard sets, then start a workout to review the cards you practiced least recently.</p>
+        own study gym: first turn on <strong>Activate Personal Gym</strong> below, then add quizzes and flashcard sets with their <strong>+</strong> buttons. Choose <strong>Start Workout</strong> to review the cards you practiced least recently.</p>
       {% if site.gym_hero_animation %}
       <!-- ==================== HERO CUSTOMIZER ENTRY ==================== -->
       <div id="hero-customizer-section">
@@ -86,10 +86,11 @@ layout: sebook
           </span>
           <label class="switch">
             <span class="sr-only">Toggle personal gym activation</span>
-            <input type="checkbox" id="activatePersonalGymToggle" aria-label="Toggle personal gym activation">
+            <input type="checkbox" id="activatePersonalGymToggle" aria-label="Toggle personal gym activation" aria-describedby="gym-activation-help">
             <span class="slider round"></span>
           </label>
         </div>
+        <p id="gym-activation-help">Turn this on to enable quiz and flashcard selection. You need to activate Personal Gym separately in each browser or device.</p>
         <div id="gym-controls-body">
           <div class="controls-row toggle-row toggle-row-balanced u-section-gap-top">
             <span class="toggle-copy">
@@ -255,6 +256,8 @@ layout: sebook
         </div>
       </div>
 
+
+      <p id="gym-activation-prompt"><strong>Activate Personal Gym before adding quizzes or flashcards.</strong> The library below is disabled until you turn it on. <a id="gym-activation-link" href="#activatePersonalGymToggle">Go to the Activate Personal Gym switch</a>.</p>
 
       <div id="gym-entrance-sections">
 
@@ -2532,6 +2535,7 @@ layout: sebook
 
       // ---- Activate Personal Gym Toggle ----
       function applyActiveState(isActive) {
+        document.getElementById('gym-activation-prompt').classList.toggle('is-hidden', isActive);
         gymControlsBody.classList.toggle('pd-inactive', !isActive);
         gymLibrarySections.classList.toggle('pd-inactive', !isActive);
         // Match the disabled visual state semantically by making inactive
@@ -2552,6 +2556,10 @@ layout: sebook
 
       activateToggle.checked = PersonalGym.isPersonalGymActive();
       applyActiveState(activateToggle.checked);
+
+      document.getElementById('gym-activation-link').addEventListener('click', function () {
+        activateToggle.focus({ preventScroll: true });
+      });
 
       activateToggle.addEventListener('change', function () {
         if (this.checked) {

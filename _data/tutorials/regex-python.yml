@@ -214,7 +214,8 @@ steps:
       Implement the regex-based parser in `read_scores.py` using the supplied file-reading code. Given a file path, `parse_file(path)` must return the valid scores as integers.
 
       - Match only whole records consisting of `score=` followed by one or more digits, optionally preceded by a **single `+` or `-`**. Internal spaces and extra text are invalid.
-      - The named capture **`score`** must represent the signed numeric text, excluding the `score=` label.
+      - The named capture **`score`** must represent the signed numeric text, excluding the `score=`.
+      - The python script should convert the captured `score` into an `integer`.
       - Skip invalid or blank lines. Preserve file order, repeated scores, and zero. An empty file produces `[]`.
     open_file: read_scores.py
     run_file: read_scores.py
@@ -311,19 +312,19 @@ steps:
             m = re.search(
                 r"^coins=(?P<amount>[+-]?\d+)$",
                 "coins=-09")
-            print(int(m.group("amount")) + 1)
+            print(int(m.group("amount")))
             ```
           options:
             - '`-091`'
+            - '`-09`'
             - '`-9`'
-            - '`-8`'
             - 'A `ValueError`'
           correct_index: 2
           option_feedback:
             0: "int converts the captured text before addition; this is numeric addition, not string concatenation."
-            1: "Conversion produces -9, but the expression then adds one."
+            1: "The string is -09. But The integer conversion removes the 0."
             3: "int accepts a sign followed by digits; the label is outside the amount group."
-          explanation: "group('amount') returns '-09'; int turns that into -9, and adding one gives -8."
+          explanation: "group('amount') returns '-09'; integer converstion turns that into -9."
     solution:
       files:
         - path: read_scores.py
@@ -360,7 +361,7 @@ steps:
 
       ### 🎯 You will learn to
 
-      - Use RegEx named groups to retrieve specific parts of a match.
+      - Use RegEx named groups to retrieve specific parts of a match in a complex RegEx.
 
       ### Input File
 

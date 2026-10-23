@@ -735,3 +735,49 @@ test('TDD renderer-only: flow arrows do not leak tips before their cues or after
     }
   }
 });
+
+const alwaysCode = yaml.load(fs.readFileSync(path.join(__dirname, '..', '_data/songs/always_code.yml'), 'utf8'));
+const alwaysCodeLines = alwaysCode.sections.flatMap(section => section.lines);
+
+test('Always Code: each lyric makes a hard scene cut, including after rewind', async ({ page }) => {
+  await page.goto('/assets/song-player/always-code.html');
+  await expect(page.getByTestId('song-picture')).toBeVisible();
+  const scenes = page.locator('.ac-concept-scene');
+  const visible = scenes.filter({ visible: true });
+  const concepts = ['hello, code!', 'shell', 'pull request', 'before merging', 'changed',
+    'explain the change', 'parse', 'normal', 'Client', 'same interface', 'public interface', 'before'];
+  const indices = [...alwaysCodeLines.keys()];
+  for (const index of [...indices, ...indices.slice().reverse()]) {
+    const start = alwaysCodeLines[index].start;
+    if (index > 0) {
+      await page.evaluate(time => window.Timeline.seek(time), start - 0.001);
+      await expect(visible).toHaveCount(1);
+      await expect(visible).toContainText(concepts[index - 1]);
+    }
+    await page.evaluate(time => window.Timeline.seek(time), start);
+    await expect(visible).toHaveCount(1);
+    await expect(visible).toContainText(concepts[index]);
+    await expect(page.locator('.ac-lyric').filter({ visible: true }).locator('.ac-word')).toHaveText(alwaysCodeLines[index].text.split(' '));
+  }
+});
+
+test('Always Code: the system view reveals sequence calls and returns in order', async ({ page }) => {
+  await page.goto('/assets/song-player/always-code.html');
+  await expect(page.getByTestId('song-picture')).toBeVisible();
+  const start = alwaysCodeLines[8].start;
+  const visibleMessages = page.locator('.ac-sequence-message').filter({ visible: true });
+  for (const [elapsed, expected] of [
+    [0, ['request()']],
+    [0.6, ['request()', 'load()']],
+    [1.1, ['request()', 'load()', 'data']],
+    [1.6, ['request()', 'load()', 'data', 'result']],
+    [0, ['request()']],
+  ]) {
+    await page.evaluate(time => window.Timeline.seek(time), start + elapsed);
+    await expect(visibleMessages).toHaveText(expected);
+  }
+  await page.evaluate(time => window.Timeline.seek(time), alwaysCodeLines[9].start);
+  // WebKit retains a nested SVG's nonzero box under display:none. The enclosing
+  // scene controls whether it is painted (also verified by the hard-cut test).
+  await expect(page.locator('.ac-concept-scene').filter({ has: page.locator('.ac-sequence') })).toBeHidden();
+});

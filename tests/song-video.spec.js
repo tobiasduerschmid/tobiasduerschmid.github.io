@@ -25,6 +25,7 @@ const SONGS = [
   { id: 'red_green_refactor', page: '/SEBook/testing/tdd.html' },
   { id: 'let_the_object_decide', page: '/SEBook/oop-song.html' },
   { id: 'draw_it_out', page: '/SEBook/uml.html' },
+  { id: 'always_code', page: '/SEBook/always-code.html' },
 ];
 const EXTRAS_TOGGLE = 'Full transcript';
 const NARRATOR = '(narrator) ';
