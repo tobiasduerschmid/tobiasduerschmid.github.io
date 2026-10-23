@@ -427,22 +427,27 @@ for (const song of songPlayers) {
 
 // Renderer API: screenshots compare two visits to the same time, not a stored
 // pixel baseline. This pins reproducible playback without prescribing paths.
+// The midnight clock turns over on the sung "came", and the fireworks start with it.
+const infoHidingLines = songPlayers.find((song) => song.name === 'Information hiding').storyboard.sections.flatMap((section) => section.lines);
+const midnight = infoHidingLines.find((line) => line.id === 'intro-16').marks.came;
+const inVerseOne = infoHidingLines.find((line) => line.id === 'verse-1-3').start;
+
 test('information hiding renderer-only: fireworks move and reproduce the same frame after rewinding', async ({ page }, testInfo) => {
   await page.goto('/assets/song-player/every-module-keeps-a-secret.html');
   await expect(page.getByTestId('song-picture')).toBeVisible();
   const celebration = page.getByTestId('song-fireworks').first();
-  await page.evaluate(() => window.Timeline.seek(54.8));
+  await page.evaluate((time) => window.Timeline.seek(time), midnight + 0.78);
   await expect(celebration).toBeVisible();
   await page.evaluate(() => document.fonts.ready);
   const first = await celebration.screenshot({ path: testInfo.outputPath('fireworks-first.png') });
-  await page.evaluate(() => window.Timeline.seek(55.1));
+  await page.evaluate((time) => window.Timeline.seek(time), midnight + 1.08);
   expect((await celebration.screenshot()).equals(first), 'sparks must move as the song advances').toBe(false);
-  await page.evaluate(() => window.Timeline.seek(80));
+  await page.evaluate((time) => window.Timeline.seek(time), inVerseOne);
   await expect(celebration).toBeHidden();
-  await page.evaluate(() => window.Timeline.seek(54.019));
+  await page.evaluate((time) => window.Timeline.seek(time), midnight - 0.001);
   await expect(page.locator('.ih-clock-time')).toHaveText('23:59:59');
   await expect(celebration).toBeHidden();
-  await page.evaluate(() => window.Timeline.seek(54.8));
+  await page.evaluate((time) => window.Timeline.seek(time), midnight + 0.78);
   await expect(page.locator('.ih-clock-time')).toHaveText('00:00:00');
   const rewound = await celebration.screenshot({ path: testInfo.outputPath('fireworks-rewound.png') });
   // Chromium can dither background gradients by one channel level between
@@ -470,7 +475,7 @@ test('information hiding renderer-only: fireworks move and reproduce the same fr
 test('information hiding renderer-only: decorative fireworks respect reduced motion', async ({ page }) => {
   await page.goto('/assets/song-player/every-module-keeps-a-secret.html');
   await expect(page.getByTestId('song-picture')).toBeVisible();
-  await page.evaluate(() => window.Timeline.seek(54.8));
+  await page.evaluate((time) => window.Timeline.seek(time), midnight + 0.78);
   const celebration = page.getByTestId('song-fireworks').first();
   await expect(celebration).toBeVisible();
   await page.emulateMedia({ reducedMotion: 'reduce' });

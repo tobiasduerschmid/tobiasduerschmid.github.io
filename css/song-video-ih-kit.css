@@ -568,6 +568,25 @@
 .ih-agent-brim { fill: #2b2116; stroke: var(--ink); stroke-width: 2; }
 .ih-agent-hat { fill: #3d2f1f; stroke: var(--ink); stroke-width: 2.5; stroke-linejoin: round; }
 .ih-agent-dent { fill: none; stroke: #241a10; stroke-width: 2; }
+/* The tuxedo look: dinner jacket with satin lapels, bow tie, martini. */
+.ih-agent-trousers { fill: #12141c; stroke: var(--ink); stroke-width: 2; stroke-linejoin: round; }
+.ih-agent-shoe--gloss { stroke: #3b4152; stroke-width: 1; }
+.ih-agent-tux { fill: #1b1f2b; stroke: var(--ink); stroke-width: 2.5; stroke-linejoin: round; }
+.ih-agent-tux-light { fill: #2a3040; }
+.ih-agent-satin { fill: #0b0d14; stroke: var(--ink); stroke-width: 2; stroke-linejoin: round; }
+.ih-agent-satin-sheen { fill: none; stroke: #4b5468; stroke-width: 2; stroke-linecap: round; }
+.ih-agent-stud, .ih-agent-tux-button { fill: #0b0f1a; }
+.ih-agent-pocket-square { fill: #f4f1ea; stroke: var(--ink); stroke-width: 1; }
+.ih-agent-cuff { fill: #f4f1ea; stroke: var(--ink); stroke-width: 1; }
+.ih-agent-collar--shirt { fill: #f4f1ea; }
+.ih-agent-bowtie { fill: #0b0d14; stroke: #3b4152; stroke-width: 1.2; stroke-linejoin: round; }
+.ih-agent-hair { fill: #2a1d14; stroke: var(--ink); stroke-width: 2; stroke-linejoin: round; }
+.ih-agent-part { fill: none; stroke: #4a3526; stroke-width: 1.5; stroke-linecap: round; }
+.ih-agent-brow { fill: none; stroke: #2a1d14; stroke-width: 2.5; stroke-linecap: round; }
+.ih-agent-eye { fill: #0b0f1a; }
+.ih-agent-martini { fill: rgba(220, 238, 255, 0.55); stroke: #e5edf7; stroke-width: 1.8; stroke-linejoin: round; }
+.ih-agent-martini-stem { fill: none; stroke: #e5edf7; stroke-width: 2; stroke-linecap: round; }
+.ih-agent-olive { fill: #6b8e23; stroke: var(--ink); stroke-width: 1; }
 
 .ih-agent-tag {
   display: flex;
@@ -831,24 +850,29 @@
   box-shadow: 5px 5px 0 var(--ink);
 }
 
-.ih-bubble::after {
-  content: '';
-  position: absolute;
-  left: 34px;
-  bottom: -18px;
-  width: 22px;
-  height: 22px;
-  border-right: 3px solid var(--ink);
-  border-bottom: 3px solid var(--ink);
-  background: #f6f8ff;
-  rotate: 45deg;
-  skew: 12deg 12deg;
+/* Speech bubbles fit their text; the tail is an inline SVG (bubble()). */
+.ih-bubble:not(.ih-bubble--thought) {
+  width: max-content;
+  max-width: 340px;
 }
 
-.ih-bubble--right::after {
-  left: auto;
-  right: 34px;
+.ih-bubble-text {
+  white-space: pre-line;
 }
+
+.ih-bubble-tail {
+  position: absolute;
+  bottom: -27px;
+  overflow: visible;
+}
+
+.ih-bubble--right .ih-bubble-tail {
+  transform: scaleX(-1);
+}
+
+.ih-bubble-tail-shadow { fill: var(--ink); }
+.ih-bubble-tail-fill { fill: #f6f8ff; }
+.ih-bubble-tail-edge { fill: none; stroke: var(--ink); stroke-width: 3; stroke-linejoin: round; }
 
 .ih-bubble-who {
   display: flex;
@@ -2294,6 +2318,11 @@
 .ih-code-record-counter { position: relative; margin-top: 12px; }
 .ih-code-record-counter .ih-counter-value { font-size: 40px; }
 .ih-code-record-counter .ih-counter-label { font-size: 21px; letter-spacing: normal; text-transform: none; }
+.ih-apollo-count { position: absolute; overflow: visible; }
+/* A counted volume flashes gold, then keeps a faint gold edge. */
+.ih-apollo-volume { fill: rgba(255, 211, 77, 0.35); stroke: #ffd34d; stroke-width: 7; stroke-linejoin: round; }
+.ih-apollo-chip circle { fill: #ffd34d; stroke: #0b0f1a; stroke-width: 8; }
+.ih-apollo-chip text { fill: #0b0f1a; font-family: var(--font-mono); font-size: 66px; font-weight: 800; }
 
 /* Illustration finish: solid shade planes and fine hardware details stay crisp
    on the fixed dark film stage in both site themes. Print hides the player. */
@@ -2389,10 +2418,78 @@
 .ih-mainframe-screw { fill: #586e80; }
 
 .ih-memory-heading { position: absolute; top: 86px; left: 40px; width: 250px; text-align: center; color: #f7da8e; font-size: 22px; font-weight: 800; }
-.ih-memory-detail { position: absolute; top: 347px; left: 40px; width: 250px; text-align: center; color: #eaf4fa; font-size: 20px; line-height: 1.4; }
-.ih-memory-detail strong, .ih-memory-detail span { display: block; }
-.ih-memory-detail span { color: #c7dce7; }
-.ih-memory-cost { position: absolute; top: 414px; left: 40px; width: 250px; box-sizing: border-box; padding: 7px 5px; border-radius: 6px; background: #f7da8e; color: #102735; text-align: center; font-size: 20px; font-weight: 800; }
+
+/* A person rewinding through life (aging backwards), soft-flat with ink edges. */
+.ih-aging { overflow: visible; }
+.ih-aging-skin { fill: #f1c48f; stroke: #0b0f1a; stroke-width: 1.8; }
+.ih-aging-neck { fill: #d9a671; }
+.ih-aging-shadow { fill: rgba(0, 0, 0, 0.4); }
+.ih-aging-hair { fill: #4a2f1d; stroke: #0b0f1a; stroke-width: 1.5; stroke-linejoin: round; }
+.ih-aging-baby .ih-aging-hair { fill: none; stroke: #4a2f1d; stroke-width: 2.2; stroke-linecap: round; }
+.ih-aging-eye { fill: #0b0f1a; }
+.ih-aging-catchlight { fill: #ffffff; }
+.ih-aging-brow { fill: none; stroke: #3a2416; stroke-width: 1.8; stroke-linecap: round; }
+.ih-aging-nose { fill: none; stroke: #b9835a; stroke-width: 1.4; stroke-linecap: round; }
+.ih-aging-mouth { fill: none; stroke: #0b0f1a; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.ih-aging-mouth--open { fill: #7f1d1d; }
+.ih-aging-cheek { fill: #f9a8a8; opacity: 0.8; }
+.ih-aging-arm { fill: none; stroke: #f1c48f; stroke-width: 7; stroke-linecap: round; }
+.ih-aging-arm--kid { stroke-width: 6; }
+.ih-aging-arm--baby { stroke-width: 7.5; }
+.ih-aging-tee { fill: #3f6fb5; stroke: #0b0f1a; stroke-width: 2; stroke-linejoin: round; }
+.ih-aging-tee-shade { fill: #335c97; }
+.ih-aging-collar { fill: none; stroke: #0b0f1a; stroke-width: 1.6; stroke-linecap: round; }
+.ih-aging-logo { fill: #ffd34d; font-family: var(--font-mono); font-size: 11px; font-weight: 700; }
+.ih-aging-belt { fill: #3b2d18; stroke: #0b0f1a; stroke-width: 1.2; }
+.ih-aging-buckle { fill: none; stroke: #e5bf62; stroke-width: 1.5; }
+.ih-aging-jeans { fill: #2f4f86; stroke: #0b0f1a; stroke-width: 2; stroke-linejoin: round; }
+.ih-aging-seam { fill: none; stroke: #6d8fc4; stroke-width: 1; stroke-dasharray: 2 2; }
+.ih-aging-shoe { stroke: #0b0f1a; stroke-width: 1.6; stroke-linejoin: round; }
+.ih-aging-shoe--man { fill: #e5e7eb; }
+.ih-aging-shoe--teen { fill: #dc2626; }
+.ih-aging-shoe--kid { fill: #22c55e; }
+.ih-aging-sole { fill: none; stroke: #f8fafc; stroke-width: 2; stroke-linecap: round; }
+.ih-aging-hood { fill: #9a3412; stroke: #0b0f1a; stroke-width: 1.8; stroke-linejoin: round; }
+.ih-aging-hoodie { fill: #c2410c; stroke: #0b0f1a; stroke-width: 2; stroke-linejoin: round; }
+.ih-aging-hoodie-shade { fill: #a3360a; stroke: #0b0f1a; stroke-width: 2; stroke-linejoin: round; }
+.ih-aging-pocket { fill: none; stroke: #7c2d12; stroke-width: 1.6; stroke-linejoin: round; }
+.ih-aging-string { fill: none; stroke: #f8fafc; stroke-width: 1.4; stroke-linecap: round; }
+.ih-aging-joggers { fill: #4b5563; stroke: #0b0f1a; stroke-width: 2; stroke-linejoin: round; }
+.ih-aging-cuffband { fill: none; stroke: #374151; stroke-width: 3; }
+.ih-aging-headphones { fill: none; stroke: #111827; stroke-width: 3; stroke-linecap: round; }
+.ih-aging-earcup { fill: #111827; stroke: #6b7280; stroke-width: 1.2; }
+.ih-aging-stripes-shirt { fill: #fef3c7; stroke: #0b0f1a; stroke-width: 1.8; stroke-linejoin: round; }
+.ih-aging-stripe { fill: none; stroke: #ef4444; stroke-width: 2.4; }
+.ih-aging-shorts { fill: #1d4ed8; stroke: #0b0f1a; stroke-width: 1.8; stroke-linejoin: round; }
+.ih-aging-shin { fill: none; stroke: #f1c48f; stroke-width: 5.5; stroke-linecap: round; }
+.ih-aging-sock { fill: none; stroke: #f8fafc; stroke-width: 6; }
+.ih-aging-cowlick { fill: none; stroke: #4a2f1d; stroke-width: 2; stroke-linecap: round; }
+.ih-aging-onesie { fill: #fef9c3; stroke: #0b0f1a; stroke-width: 2; stroke-linejoin: round; }
+.ih-aging-onesie-shade { fill: #f3e9a4; }
+.ih-aging-snap { fill: #93c5fd; }
+.ih-aging-rattle-handle { fill: none; stroke: #f472b6; stroke-width: 2.5; stroke-linecap: round; }
+.ih-aging-rattle { fill: #fbcfe8; stroke: #0b0f1a; stroke-width: 1.5; }
+.ih-aging-pacifier { fill: #f472b6; stroke: #0b0f1a; stroke-width: 1.3; }
+.ih-aging-pacifier-ring { fill: none; stroke: #f472b6; stroke-width: 1.8; }
+.ih-aging-puff circle { fill: #cbd5e1; stroke: #0b0f1a; stroke-width: 2; }
+.ih-aging-question { fill: #ffd34d; stroke: #0b0f1a; stroke-width: 3; paint-order: stroke; font-size: 96px; font-weight: 900; }
+.ih-aging-tag { position: absolute; padding: 3px 10px 2px; border: 2px solid var(--ink); border-radius: 6px; background: var(--cream); color: var(--ink); font-family: var(--font-mono); font-size: 18px; font-weight: 700; white-space: nowrap; }
+
+/* Dollar bills: paper green with ink edges, a darker engraved frame and seal.
+   Decorative on the always-dark stage; the line's caption says what it means. */
+.ih-cash { position: absolute; inset: 0; pointer-events: none; }
+.ih-cash-defs { position: absolute; width: 0; height: 0; overflow: hidden; }
+.ih-bill { position: absolute; left: 0; top: 0; overflow: visible; transform-origin: 32px 15px; }
+.ih-cash { --bill-paper: #cfe5c3; --bill-frame: #b5d6a6; --bill-ink: #3d7a4a; --bill-line: #5f9a62; --bill-seal: #e3f0d9; --bill-sign: #24502f; }
+/* Red bills: money lost. Colors reach the reused <symbol> through these
+   inherited variables; selectors cannot style inside <use> copies. */
+.ih-cash--red { --bill-paper: #f6c6c3; --bill-frame: #eba29d; --bill-ink: #9b1111; --bill-line: #c2413b; --bill-seal: #fbe1df; --bill-sign: #7f1010; }
+.ih-bill-paper { fill: var(--bill-paper); stroke: #0b0f1a; stroke-width: 1.6; }
+.ih-bill-frame { fill: var(--bill-frame); stroke: var(--bill-ink); stroke-width: 1.2; }
+.ih-bill-guilloche { fill: none; stroke: var(--bill-line); stroke-width: 1.3; stroke-linecap: round; }
+.ih-bill-seal { fill: var(--bill-seal); stroke: var(--bill-ink); stroke-width: 1.2; }
+.ih-bill-sign { fill: none; stroke: var(--bill-sign); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.ih-bill-corner { fill: var(--bill-ink); }
 
 /* The bridge's contract scene: a full-stage layer for its case files. */
 .ih-contract-exchange { position: absolute; inset: 0; }
