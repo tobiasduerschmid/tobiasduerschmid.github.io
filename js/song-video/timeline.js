@@ -195,8 +195,12 @@
   const cameraHits = [];
 
   const camera = {
-    punch(at, amount = 0.035) {
-      cameraHits.push({ kind: 'punch', at, amount });
+    /**
+     * A punch-in: the layer zooms in by `amount` and eases back out. With
+     * `rise` (seconds) it builds smoothly instead of jumping in one frame.
+     */
+    punch(at, amount = 0.035, rise = 0) {
+      cameraHits.push({ kind: 'punch', at, amount, rise });
     },
     shake(at, amount = 7) {
       cameraHits.push({ kind: 'shake', at, amount });
@@ -208,9 +212,11 @@
         let y = 0;
         for (const hit of cameraHits) {
           const age = t - hit.at;
-          if (age < 0 || age > 0.6) continue;
+          if (age < 0 || age > 0.6 + (hit.rise || 0)) continue;
           if (hit.kind === 'punch') {
-            scale += hit.amount * Math.exp(-age / 0.14);
+            const rise = hit.rise || 0;
+            const k = rise > 0 ? Math.min(1, age / rise) : 1;
+            scale += hit.amount * k * k * (3 - 2 * k) * Math.exp(-Math.max(0, age - rise) / 0.14);
           } else {
             const fade = Math.exp(-age / 0.12);
             x += hit.amount * fade * Math.sin(age * 70);

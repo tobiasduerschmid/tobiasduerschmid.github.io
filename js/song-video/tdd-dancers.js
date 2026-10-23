@@ -39,7 +39,7 @@
 
   const BODY = {
     test: {
-      hipY: -100, shoulder: [20.5, -165], upper: 35.5, fore: 33, hip: 9.5, thigh: 48, shin: 46, foot: 12.5,
+      hipY: -100, shoulder: [18.5, -169], upper: 36, fore: 33, hip: 9.5, thigh: 48, shin: 46, foot: 12.5,
     },
     code: {
       hipY: -118, shoulder: [17, -165], upper: 33, fore: 31, chestY: -150, foot: 11,
@@ -313,7 +313,7 @@
   }
 
   /** Limb widths: [shoulder, elbow] for the upper arm, [elbow, wrist] below. */
-  const ARM_WIDTHS = { test: [[12, 10.3], [10.3, 8.5]], code: [[10.4, 8], [8, 6.1]] };
+  const ARM_WIDTHS = { test: [[10.6, 10.1], [10.1, 8.5]], code: [[10.4, 8], [8, 6.1]] };
 
   function arm(parent, front, kind, side, body, id) {
     const [sx, sy] = body.shoulder;
@@ -1456,7 +1456,10 @@
           // The foot peels off the floor and touches down softly (no speed
           // at either end), skimming highest mid-step.
           lift = 1.1 * step.height * Math.sin(Math.PI * k) ** 1.5;
-          if (k < 1) out.dip = Math.max(out.dip, 0.45 * step.height * (1 - Math.cos(2 * Math.PI * k)) / 2);
+          // A long step sinks a little through its middle; quick travelling
+          // steps barely dip, so a fast glide stays level instead of bobbing.
+          const sink = clamp((step.land - step.lift) / 0.5, 0.2, 1);
+          if (k < 1) out.dip = Math.max(out.dip, 0.45 * sink * step.height * (1 - Math.cos(2 * Math.PI * k)) / 2);
         }
         out[side] = { dx: clamp(offsetAt(dancer, t, stand) - base - sway, -reach, reach), lift };
       }
@@ -1646,7 +1649,9 @@
       // The feet: planted steps through every figure (footworkAt).
       const steps = footworkAt(dancer, t);
       if (steps) {
-        s.bob += w ? 0 : steps.dip;
+        // The step's own dip hands over to the waltz's rise and fall as the
+        // waltz fades in (and back as it fades out), never in one frame.
+        s.bob += steps.dip * (w ? 1 - w.fade : 1);
         for (const side of ['L', 'R']) {
           const foot = s[`foot${side}`];
           s[`foot${side}`] = { ...foot, dx: foot.dx + steps[side].dx, lift: foot.lift + steps[side].lift };

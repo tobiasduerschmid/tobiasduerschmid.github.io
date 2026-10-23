@@ -171,8 +171,11 @@
     return node;
   }
 
-  /** A row of words that slam in one at a time: words = [{ text, at, color, iconName }]. */
-  function kinetic(parent, words, { y, size = 64, until, punch = true }) {
+  /**
+   * A row of words that slam in one at a time: words = [{ text, at, color, iconName }].
+   * `punchRise` (s) eases each camera punch in instead of jumping in one frame.
+   */
+  function kinetic(parent, words, { y, size = 64, until, punch = true, punchRise = 0 }) {
     const row = el('div', 'kinetic', parent);
     row.style.top = `${y}px`;
     row.style.fontSize = `${size}px`;
@@ -181,7 +184,7 @@
       if (word.iconName) node.append(icon(word.iconName));
       node.append(document.createTextNode(word.text));
       fx.slam(node, word.at, { from: 2.2, rotate: word.rotate || 0 });
-      if (punch) camera.punch(word.at + 0.05, 0.03);
+      if (punch) camera.punch(word.at + 0.05 - punchRise / 2, 0.03, punchRise);
     }
     if (until !== undefined) fx.exit(row, until, { dx: 0, dy: -30, duration: 0.25 });
     return row;

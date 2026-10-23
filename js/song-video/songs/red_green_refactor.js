@@ -977,7 +977,7 @@
       kit.kinetic(b, [
         { text: 'Test-driven', at: mark('outro-3', 'test'), color: 'gold' },
         { text: 'development', at: mark('outro-3', 'development') },
-      ], { y: 60, size: 46, until: line('outro-6').start - 0.2 });
+      ], { y: 60, size: 46, until: line('outro-6').start - 0.2, punchRise: 0.12 });
       const xs = { red: 320, green: 480, refactor: 640 };
       const tiles = props.floorTiles(b, { y: 446, xs, rx: 78, at: mark('outro-3', 'test') });
       // Centre stage: they part, then Test takes Code's hand again.
@@ -1019,7 +1019,7 @@
       kit.kinetic(b, [
         { text: 'Let the tests', at: mark('outro-7', 'let') },
         { text: 'lead', at: mark('outro-7', 'lead'), color: 'gold' },
-      ], { y: 70, size: 56 });
+      ], { y: 70, size: 56, punchRise: 0.12 });
       duo.place(line('outro-7').start - 0.4, { scale: 1.04 }, 0.8);
       duo.lamp(mark('outro-7', 'lead'), 'green').dip(mark('outro-7', 'lead'), { dur: 0.7 });
       duo.rise(mark('outro-7', 'lead') + 2.2, 0.6).hold(mark('outro-7', 'lead') + 2.9, { release: true, pose: 'stand' }).bow(mark('outro-7', 'lead') + 3.2);
