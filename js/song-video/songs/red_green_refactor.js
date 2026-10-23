@@ -915,8 +915,17 @@
       seeker.hold(line('bridge-7').start - 0.3, { pose: 'frame' });
       seeker.lamp(line('bridge-7').start, 'idle').pose('test', mark('bridge-7', 'reveal'), 'pointL');
       seeker.face('code', mark('bridge-8', 'cannot'), 'worried');
-      // A gentle sway in place keeps the beam on Test's lamp.
-      seeker.waltz(line('bridge-7').start + 0.4, line('bridge-9').start - 0.8, { travel: 0, roam: 0, calm: 0.35 });
+      // Once in place they stand still and watch what the beam reveals: no
+      // waltz, no idle sway, both looking out into the beam. They come back
+      // to life as they move on to the next scene.
+      const settled = line('bridge-7').start + 1.2;
+      const moveOn = line('bridge-9').start - 0.8;
+      for (const kind of ['test', 'code']) {
+        seeker.pose(kind, settled, { idleMotion: 0 }, { dur: 0.8 });
+        seeker.look(kind, settled, -1, 0.6);
+        seeker.pose(kind, moveOn, { idleMotion: 1 }, { dur: 0.6 });
+      }
+      seeker.look('test', moveOn, 1, 0.5).look('code', moveOn, -1, 0.5);
       const lampX = 812 - 20 - 33;
       props.beam(d, {
         x: lampX - 506, y: 242, w: 506, h: 196, mirror: true, at: inPlace, until: line('bridge-9').start - 0.8, darkAt: mark('bridge-8', 'cannot'),
