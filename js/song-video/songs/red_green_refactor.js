@@ -268,7 +268,7 @@
       });
       tdd.note(a, 'same red, different reasons', { x: 180, y: 372, at: mark('verse-2-2', 'same'), until: mark('verse-2-3', 'red'), tone: 'red', iconName: 'warning' });
       tdd.note(a, 'expected: MyStack doesn’t exist yet', { x: 30, y: 340, at: mark('verse-2-3', 'red'), tone: 'green', iconName: 'check' });
-      tdd.note(a, 'typo: wrong reason', { x: 360, y: 392, at: line('verse-2-3').start + 0.6, tone: 'red', iconName: 'cross' });
+      tdd.note(a, 'typo: wrong reason', { x: 360, y: 414, at: line('verse-2-3').start + 0.6, tone: 'red', iconName: 'cross' });
 
       // See red before trusting green: the red run proves the test can see
       // the missing step. A test that was never red may check nothing.
@@ -360,7 +360,7 @@
       // phase map, making room for the test that leads: it arrives a line
       // before it fails, so it can be read before the run.
       const testAt = mark(ln(2), 'let') + 0.25;
-      tween(cycle.node, { scale: '0.65', translate: '586px -122px' }, mark(ln(2), 'let') - 0.3, 0.8, EASE.inOut);
+      tween(cycle.node, { scale: '0.65', translate: '586px -134px' }, mark(ln(2), 'let') - 0.3, 0.8, EASE.inOut);
       cycle.light('red', mark(ln(1), 'red'), mark(ln(1), 'green'));
       cycle.light('green', mark(ln(1), 'green'), mark(ln(1), 'refactor'));
       cycle.light('refactor', mark(ln(1), 'refactor'), line(ln(2)).start + 0.2);
@@ -561,7 +561,7 @@
       // Each little change is followed by a run of all the tests.
       const d = kit.scene(content, line('verse-4-7').start - 0.15, end('verse-4'), { exit: 'fade' });
       tdd.runs(d, {
-        x: 50, y: 126, w: 540, label: 'Refactoring, one step at a time', at: mark('verse-4-7', 'run'),
+        x: 50, y: 126, w: 450, label: 'Refactoring, one step at a time', at: mark('verse-4-7', 'run'),
         ticks: [
           { x: 0.1, at: mark('verse-4-7', 'tests'), status: 'pass', label: 'rename' },
           { x: 0.37, at: mark('verse-4-7', 'each'), status: 'pass', label: 'fixture' },
@@ -929,7 +929,8 @@
       // Learn the rules, then judge: not every task is Test's to lead.
       const e = kit.scene(content, line('bridge-9').start - 0.2, end('bridge'), { exit: 'fade' });
       duo.place(line('bridge-9').start - 0.8, { x: 540, y: 456, scale: 0.8 }, 1.8);
-      duo.waltz(line('bridge-9').start, end('bridge') - 0.4, { travel: 8, roam: 10 });
+      // They waltz in place, clear of the moonshot and its caption.
+      duo.waltz(line('bridge-9').start, end('bridge') - 0.4, { travel: 8, roam: 0 });
       const rules = tdd.panel(e, { x: 50, y: 108, w: 420, title: 'The three rules', iconName: 'list', at: line('bridge-9').start });
       ['1 · a failing test first', '2 · only enough test to fail', '3 · only enough code to pass'].forEach((text, i) => {
         const row = kit.el('div', 'tdd-rule is-staged', rules.body, text);
@@ -941,7 +942,9 @@
         { text: 'stack logic', who: 'Test leads', tone: 'green', at: line('bridge-9').start + 0.5 },
         { text: 'image recognition', who: 'measure accuracy', tone: 'cyan', at: line('bridge-9').start + 0.7 },
       ];
-      tdd.note(e, 'Taller towers cannot reach the moon', { x: 636, y: 420, at: line('bridge-10').start, tone: 'white', iconName: 'warning', size: 15 });
+      // The caption clears the floor before the couple glides onto the
+      // chorus's red tile, on the way to the next cycle.
+      tdd.note(e, 'Taller towers cannot reach the moon', { x: 636, y: 420, at: line('bridge-10').start, until: end('bridge') - 1.9, tone: 'white', iconName: 'warning', size: 15 });
       tasks.forEach((task, i) => tdd.note(e, `${task.text}: ${task.who}`, { x: 60, y: 312 + i * 34, at: task.at, tone: task.tone, iconName: i ? 'pin' : 'check', size: 15 }));
     }
 
@@ -995,7 +998,7 @@
       counts.forEach(([word, phase, digit], i) => {
         const at = mark('outro-5', word);
         tiles.light(phase, at, line('outro-6').start + 0.4);
-        const num = kit.place(kit.el('div', `tdd-count tdd-count--${phase} is-staged`, b, digit), xs[phase] - 22, 112);
+        const num = kit.place(kit.el('div', `tdd-count tdd-count--${phase} is-staged`, b, digit), xs[phase] - 22, 104);
         fx.slam(num, at, { from: 2 });
         fx.fadeOut(num, line('outro-6').start + 0.2, 0.3);
         if (i === 0) duo.lamp(at, 'red');

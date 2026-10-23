@@ -39,7 +39,7 @@
 
   const BODY = {
     test: {
-      hipY: -100, shoulder: [22, -165.5], upper: 35, fore: 33, hip: 9.5, thigh: 48, shin: 46, foot: 12.5,
+      hipY: -100, shoulder: [20.5, -165], upper: 35.5, fore: 33, hip: 9.5, thigh: 48, shin: 46, foot: 12.5,
     },
     code: {
       hipY: -118, shoulder: [17, -165], upper: 33, fore: 31, chestY: -150, foot: 11,
@@ -313,7 +313,7 @@
   }
 
   /** Limb widths: [shoulder, elbow] for the upper arm, [elbow, wrist] below. */
-  const ARM_WIDTHS = { test: [[13.5, 10.5], [10.5, 8.5]], code: [[10.4, 8], [8, 6.1]] };
+  const ARM_WIDTHS = { test: [[12, 10.3], [10.3, 8.5]], code: [[10.4, 8], [8, 6.1]] };
 
   function arm(parent, front, kind, side, body, id) {
     const [sx, sy] = body.shoulder;
@@ -323,12 +323,16 @@
     const outer = side === 'L' ? -1 : 1;
     const upperPath = segmentPath(body.upper, ...upperW);
     if (kind === 'code') svg('path', { class: 'tdd-skin-rim', d: upperPath }, upperArm);
-    svg('path', { class: 'tdd-arm-sleeve', d: upperPath }, upperArm);
-    // Test's sleeve shape, in the arms' frame, so his shoulder caps can draw
-    // the sleeve's outline where it passes under them.
-    const sleeveClip = kind === 'test'
-      ? svg('path', { d: upperPath }, svg('clipPath', { id: `${id}-sleeve-${side}` }, svg('defs', {}, parent)))
-      : null;
+    if (kind === 'test') {
+      // His sleeve lies on the coat with no outline across its rounded top,
+      // so it merges into the shoulder and the coat's own sloped shoulder
+      // line stays the silhouette; its sides keep their outline.
+      const top = svg('mask', { id: `${id}-sleeve-top-${side}`, maskUnits: 'userSpaceOnUse', x: -20, y: -20, width: 40, height: body.upper + 40 }, svg('defs', {}, upperArm));
+      svg('rect', { class: 'tdd-mask-show', x: -20, y: -20, width: 40, height: body.upper + 40 }, top);
+      svg('circle', { class: 'tdd-mask-hide', cx: 0, cy: 0, r: upperW[0] / 2 + 1.2 }, top);
+      svg('path', { class: 'tdd-arm-sleeve tdd-arm-sleeve--fill', d: upperPath }, upperArm);
+      svg('path', { class: 'tdd-arm-sleeve tdd-arm-sleeve--line', d: upperPath, mask: `url(#${id}-sleeve-top-${side})` }, upperArm);
+    } else svg('path', { class: 'tdd-arm-sleeve', d: upperPath }, upperArm);
     // A rim highlight runs down the arm's outer side, pausing at the elbow
     // (where the joint turns away from the light) so the two highlights
     // never cross or overlap as the elbow bends.
@@ -378,11 +382,11 @@
       homes: [parent, front],
       /** The gloved hand, which the hold may draw in front of the partner's arm. */
       hand,
+
       apply(angles) {
         const x = side === 'L' ? -sx : sx;
         const shoulder = `translate(${x} ${sy}) rotate(${f(angles.sh)})`;
         upperArm.setAttribute('transform', shoulder);
-        if (sleeveClip) sleeveClip.setAttribute('transform', shoulder);
         if (cap) cap.setAttribute('transform', shoulder);
         const fore = `${shoulder} translate(0 ${body.upper}) rotate(${f(angles.el)})`;
         foreArm.setAttribute('transform', fore);
@@ -497,7 +501,7 @@
     // Torso: tailcoat front over a white shirt, gold lapels, bow tie.
     const torso = svg('g', {}, lean);
     const coat = svg('path', { class: 'tdd-coat', fill: `url(#${id}-coat)`, d: 'M-26.5 -167 C-27.5 -171.5 -24.5 -174 -19 -175.8 C-15 -177.2 -11.5 -179.6 -8 -180.4 Q0 -181.6 8 -180.4 C11.5 -179.6 15 -177.2 19 -175.8 C24.5 -174 27.5 -171.5 26.5 -167 C29.5 -152 25 -134 20.5 -122 C19.5 -114 20.5 -106 20 -100 Q0 -95 -20 -100 C-20.5 -106 -19.5 -114 -20.5 -122 C-25 -134 -29.5 -152 -27 -168 Z' }, torso);
-    const coatShade = svg('path', { class: 'tdd-coat-shade', d: 'M6 -180.6 Q7 -180.5 8 -180.4 C11.5 -179.6 15 -177.2 19 -175.8 C24.5 -174 27.5 -171.5 26.5 -167 C29.5 -152 25 -134 20.5 -122 C19.5 -114 20.5 -106 20 -100 Q13 -97.5 6 -97 Z' }, torso);
+    svg('path', { class: 'tdd-coat-shade', d: 'M6 -180.6 Q7 -180.5 8 -180.4 C11.5 -179.6 15 -177.2 19 -175.8 C24.5 -174 27.5 -171.5 26.5 -167 C29.5 -152 25 -134 20.5 -122 C19.5 -114 20.5 -106 20 -100 Q13 -97.5 6 -97 Z' }, torso);
     svg('path', { class: 'tdd-coat-seam', d: 'M-20.5 -122 Q0 -117 20.5 -122' }, torso);
     // Where the coat's two fronts overlap, down from the lapels to the hem.
     svg('path', { class: 'tdd-coat-front', d: 'M-1.2 -131 C-0.9 -118 -1.1 -107 -1.6 -97.6' }, torso);
@@ -505,21 +509,6 @@
     // tie, and badge, which lie on top of the sleeves' shoulders; the
     // forearms (and anything a hand reaches across) come in front of all.
     const upperArms = svg('g', { class: 'tdd-arms-upper' }, lean);
-    // His sleeves are set in under the coat's shoulders: a round cap of the
-    // coat around each shoulder joint lies over the top of the sleeve, so
-    // the arm emerges from under the shoulder. Only the cap covers it, so a
-    // hanging elbow beside the coat's edge still reads as one limb.
-    const caps = svg('clipPath', { id: `${id}-shoulder-caps` }, svg('defs', {}, lean));
-    for (const side of [-1, 1]) svg('circle', { cx: side * 20.5, cy: -167, r: 9.5 }, caps);
-    const shoulderCaps = svg('g', { 'clip-path': `url(#${id}-shoulder-caps)` }, lean);
-    shoulderCaps.append(coat.cloneNode(), coatShade.cloneNode());
-    // The cap's edge, outlined only where the sleeve passes under it (and
-    // inside the coat), so the sleeve keeps a clean outline at its top.
-    svg('clipPath', { id: `${id}-coat-clip` }, svg('defs', {}, lean)).append(coat.cloneNode());
-    const armholes = svg('g', { 'clip-path': `url(#${id}-coat-clip)` }, lean);
-    for (const [side, x] of [['L', -20.5], ['R', 20.5]]) {
-      svg('circle', { class: 'tdd-armhole', cx: x, cy: -167, r: 9.5, 'clip-path': `url(#${id}-sleeve-${side})` }, armholes);
-    }
     const front = svg('g', {}, lean);
     svg('path', { class: 'tdd-shirt', d: 'M-11 -177 L0 -128 L11 -177 Q0 -180 -11 -177 Z' }, front);
     for (const y of [-163, -152]) svg('circle', { class: 'tdd-stud', cx: 0, cy: y, r: 1.3 }, front);
@@ -550,9 +539,8 @@
     svg('path', { class: 'tdd-lamp-refraction', d: 'M-21 -206 Q-20 -196 -10 -191' }, dome);
     const faceGroup = svg('g', { transform: 'translate(0 -210)' }, dome);
     const faceRig = face(faceGroup, { eyeX: 8, eyeY: -5, mouthY: 7, browY: -12, iris: `url(#${id}-iris)`, seed: uid * 7 + 11 });
-    // His sleeves are set into the tailcoat at the shoulder: each upper arm
-    // lies on the coat (so a hanging elbow beside the coat's edge reads as
-    // one limb), under the lapels, and each forearm comes in front.
+    // His sleeves lie on the tailcoat (so a hanging elbow beside the coat's
+    // edge reads as one limb), under the lapels; each forearm comes in front.
     const frontArms = svg('g', { class: 'tdd-arms-front' }, lean);
     const arms = { L: arm(upperArms, frontArms, 'test', 'L', body, id), R: arm(upperArms, frontArms, 'test', 'R', body, id) };
 
