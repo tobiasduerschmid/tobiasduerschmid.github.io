@@ -36,7 +36,9 @@
   function show(node, at, until, { rotate = 0, from = 0.6 } = {}) {
     requireTime(at, node);
     fx.pop(node, at, { from, rotate });
-    if (until !== undefined) fx.popOut(node, until);
+    // A gentle exit: the note shrinks a little and fades evenly to nothing,
+    // rather than holding and then snapping out in its last frame.
+    if (until !== undefined) tween(node, { opacity: 0, scale: 0.85 }, until, 0.3, EASE.inOut);
     return node;
   }
 

@@ -1632,18 +1632,19 @@
         if (isTest) s.footR = { ...s.footR, rise: (s.footR.rise || 0) + w.rise * e };
         if (isTest) s.tails = (9 * w.lag(1.0) - 0.12 * w.travel * w.dir * Math.sin(Math.PI * w.phase)) * e;
         if (!isTest) {
-          // The gown trails the travel and sways with the frame.
+          // The gown sways with the frame.
           s.sway += (0.55 * w.lag(0.9) - 0.04 * w.travel * w.dir * Math.sin(Math.PI * w.phase)) * e;
           s.flare += 3 * w.rise * e;
         }
-      } else {
+      }
+      {
+        // Whenever the floor carries them, in a waltz or not, the coat tails
+        // and the gown trail the direction of travel. The waltz's own swing
+        // adds on top, so nothing switches when a waltz starts or ends.
         const walk = travelOf(dancer, t);
         if (walk.amount > 0) {
-          // Travelling, the tails and the gown trail the direction of travel.
-          if (isTest) s.tails = clamp(walk.velocity / 16, -10, 10) * walk.amount;
-          if (!isTest) {
-            s.sway += clamp(-walk.velocity / 140, -0.9, 0.9) * walk.amount;
-          }
+          if (isTest) s.tails = (s.tails || 0) + clamp(walk.velocity / 16, -10, 10) * walk.amount;
+          if (!isTest) s.sway += clamp(-walk.velocity / 140, -0.9, 0.9) * walk.amount;
         }
       }
       // The feet: planted steps through every figure (footworkAt).
@@ -1675,7 +1676,10 @@
         const up = smooth((t - tw.at) / 0.12) * smooth((end - t) / 0.14);
         s.bob += 5 * bump((t - tw.at + TURN.prep) / (TURN.prep + 0.06)) - 5 * up + 4 * bump((t - end + 0.04) / 0.5);
         // The skirt flares with its own speed and twists a moment behind the body.
-        const skirtSpeed = Math.abs(s.turnSkirt - skirtAngle(tw, t - 0.05)) / 0.05;
+        // Its speed is averaged over the last 0.2 s: fabric carries its flare
+        // through the swirl's reversal instead of collapsing and rebounding.
+        let skirtSpeed = 0;
+        for (let k = 0; k < 4; k++) skirtSpeed += Math.abs(skirtAngle(tw, t - 0.05 * k) - skirtAngle(tw, t - 0.05 * (k + 1))) / 0.2;
         const peak = (2 * Math.PI * tw.turns + TURN.wind) / tw.dur / (1 - TURN.accel / 2 - TURN.decel / 2);
         s.flare += 22 * clamp(skirtSpeed / peak, 0, 1);
         s.earFling = 34 * clamp((s.turn - turnAngle(tw, t - 0.05)) / 0.05 / peak, 0, 1);
