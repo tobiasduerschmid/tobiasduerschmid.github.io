@@ -208,9 +208,11 @@
       tdd.stopSign(c, { x: 530, y: 64, at: mark('verse-1-5', 'stop'), until: mark('verse-1-6', 'batch') - 0.1, size: 92 });
       // "Then stop": Test stops dead, his hand up to the sign, while Code
       // lets go and spins on her own; she takes his hand again after.
+      // She lets go on "then", a moment before his stop, so letting go and
+      // preparing her turn don't overlap.
       duo.pose('test', mark('verse-1-5', 'stop'), 'stopL', { dur: 0.25, hold: 0, embrace: 0 });
-      duo.pose('code', mark('verse-1-5', 'stop') - 0.3, 'stand', { hold: 0, embrace: 0, face: 'joy', dur: 0.4 });
-      duo.step('code', mark('verse-1-5', 'stop') - 0.3, 20, 0.5);
+      duo.pose('code', mark('verse-1-5', 'then') - 0.3, 'stand', { hold: 0, embrace: 0, face: 'joy', dur: 0.5 });
+      duo.step('code', mark('verse-1-5', 'then') - 0.3, 20, 0.6);
       duo.twirl(mark('verse-1-5', 'stop'), { dur: 1.1, solo: true });
       duo.step('code', line('verse-1-6').start - 0.2, 0, 0.6);
       duo.hold(line('verse-1-6').start, { pose: 'frame', dur: 0.8 });
@@ -649,7 +651,9 @@
       duo.lamp(mark('verse-5-7', 'private') + 0.1, 'red').face('code', line('verse-5-7').start, 'happy');
       duo.tidy(line('verse-5-7').start, 0, 0.8);
       duo.lamp(mark('verse-5-8', 'give'), 'green');
-      duo.showcase(mark('verse-5-8', 'give'), { until: mark('verse-5-8', 'improve') - 0.1 });
+      // She turns straight out of the presentation, under their joined
+      // hands, and they close into the hold after the turn.
+      duo.showcase(mark('verse-5-8', 'give'), { until: mark('verse-5-8', 'improve') + 1.6 });
       duo.twirl(mark('verse-5-8', 'improve'), { dur: 1.3 });
     }
 
@@ -891,10 +895,10 @@
       show.pose('test', mark('bridge-6', 'fine'), 'solo').pose('code', mark('bridge-6', 'solo'), 'spotlight', { armL: { sh: 40, el: 30 } });
       tdd.note(c, 'solo ✓', { x: 440, y: 412, at: mark('bridge-6', 'solo'), until: mark('bridge-6', 'whole'), tone: 'green' });
       tdd.note(c, 'solo ✓', { x: 872, y: 412, at: mark('bridge-6', 'steps'), until: mark('bridge-6', 'whole'), tone: 'green' });
-      // They step back together on "aren't", take the hold on "whole", and
-      // Code turns once under Test's arm on "show": one move at a time.
+      // They step back together on "aren't", taking hands as they arrive,
+      // and Code turns once under Test's arm on "show": one move at a time.
       show.step('test', mark('bridge-6', 'arent'), 0, 0.8).step('code', mark('bridge-6', 'arent'), 0, 0.8);
-      show.hold(mark('bridge-6', 'whole'), { pose: 'flourish' }).twirl(mark('bridge-6', 'show'), { dur: 1.0 });
+      show.hold(mark('bridge-6', 'arent') + 0.3, { pose: 'flourish' }).twirl(mark('bridge-6', 'show'), { dur: 1.0 });
 
       // Tests reveal the bugs they shine on; they cannot prove there are none.
       const d = kit.scene(content, line('bridge-7').start - 0.1, line('bridge-9').start - 0.2, { exit: 'fade' });

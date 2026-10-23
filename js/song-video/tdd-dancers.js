@@ -357,7 +357,9 @@
       svg('rect', { class: 'tdd-cuff', x: -5.6, y: body.fore - 6, width: 11.2, height: 5, rx: 2 }, foreArm);
       svg('circle', { class: 'tdd-cufflink', cx: outer * 3.1, cy: body.fore - 3.5, r: 0.95 }, foreArm);
     }
-    const hand = svg('g', { transform: `translate(0 ${body.fore + 1})` }, foreArm);
+    const hand = svg('g', { class: 'tdd-hand', transform: `translate(0 ${body.fore + 1})` }, foreArm);
+    hand.dataset.side = side;
+    hand.dataset.kind = kind;
     glove(hand, kind === 'test' ? 0.92 : 0.8, -outer);
     // Code's puffed cap sleeve sits on top of the shoulder and turns with it.
     const cap = kind === 'code' ? svg('g', {}, front) : null;
@@ -1282,7 +1284,8 @@
      */
     function spotAt(dancer, time) {
       const keyed = dancer.state.value(time);
-      const closer = Math.max(keyed.embrace * Math.max(0, Math.abs(dancer.home) - 40), archAt(time) * Math.max(0, Math.abs(dancer.home) - ARCH_SPACING));
+      const spacing = ARCH_SPACING - (dancer.kind === 'test' ? 8 : 0);
+      const closer = Math.max(keyed.embrace * Math.max(0, Math.abs(dancer.home) - 40), archAt(time) * Math.max(0, Math.abs(dancer.home) - spacing));
       return keyed.x - Math.sign(dancer.home) * closer;
     }
 
@@ -1537,7 +1540,10 @@
       // In the promenade hold (and under an arch) the partners stand close
       // enough to touch: Test's arm behind Code's back, her hand on his shoulder.
       const arch = archAt(t);
-      const closer = Math.max(s.embrace * Math.max(0, Math.abs(dancer.home) - 40), arch * Math.max(0, Math.abs(dancer.home) - ARCH_SPACING));
+      // Under an arch Test stands a little nearer than Code, so his raised
+      // arm reaches the joined hands even when they pass over her axis.
+      const spacing = ARCH_SPACING - (isTest ? 8 : 0);
+      const closer = Math.max(s.embrace * Math.max(0, Math.abs(dancer.home) - 40), arch * Math.max(0, Math.abs(dancer.home) - spacing));
       if (closer > 0) s.x -= Math.sign(dancer.home) * closer;
       // The ballroom head line: in the hold each partner looks out over the
       // other's shoulder, Code's head tilted away from Test, his to his left.
@@ -1642,7 +1648,7 @@
         const lines = TURN_ARMS[tw.solo ? 'solo' : 'partnered'];
         const stages = [
           [lines.prep, smooth((t - tw.at + TURN.prep) / (TURN.prep * 0.85))],
-          [lines.turn, smooth((t - tw.at + 0.1) / 0.28)],
+          [lines.turn, smooth((t - tw.at + 0.16) / 0.36)],
           [lines.finish, smooth((t - end + 0.45) / 0.5)],
         ];
         const release = smooth((t - end - TURN.finish + 0.55) / 0.55);
@@ -1747,10 +1753,11 @@
         // IK targets the wrist; the palm, not the cuff, rests on the shoulder.
         const shoulder = [contact[0] - palm[0], contact[1] - palm[1]];
         // Underarm turn: the joined hands rise into the gap between the two
-        // heads, his arm nearly straight up, and draw in a little as she
-        // turns side-on beneath them.
-        const side = 1 - Math.min(1, Math.abs(raw.code.spin));
-        const arch = [raw.code.x - 50 + 4 * side, raw.code.y + raw.code.bob - 222 + 4 * side];
+        // heads, his arm nearly straight up; as she turns side-on beneath
+        // them they travel in over her own axis, where her arm can still
+        // reach them, and back out as she comes round to face front.
+        const side = clamp((1 - Math.abs(raw.code.spin)) / (1 - TURN.depth), 0, 1);
+        const arch = [raw.code.x - 50 + 34 * side, raw.code.y + raw.code.bob - 222 + 3 * side];
         const k = archAt(t);
         couple = {
           palm, drape: raw.code.embrace * (1 - k),
