@@ -41,6 +41,14 @@
 /* ------------------------------------------------------------------ */
 
 /* Limbs are tapered shapes with a thin ink edge and a highlight stroke. */
+/* Where Test's sleeve passes under his coat's shoulder cap, the cap's
+   edge carries the sleeve's outline. */
+.tdd-armhole {
+  fill: none;
+  stroke: var(--tdd-rim);
+  stroke-width: 1.5;
+}
+
 .tdd-arm--test .tdd-arm-sleeve,
 .tdd-arm--test .tdd-arm-fore {
   fill: #1d2756;

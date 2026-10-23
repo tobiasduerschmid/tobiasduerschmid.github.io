@@ -324,6 +324,11 @@
     const upperPath = segmentPath(body.upper, ...upperW);
     if (kind === 'code') svg('path', { class: 'tdd-skin-rim', d: upperPath }, upperArm);
     svg('path', { class: 'tdd-arm-sleeve', d: upperPath }, upperArm);
+    // Test's sleeve shape, in the arms' frame, so his shoulder caps can draw
+    // the sleeve's outline where it passes under them.
+    const sleeveClip = kind === 'test'
+      ? svg('path', { d: upperPath }, svg('clipPath', { id: `${id}-sleeve-${side}` }, svg('defs', {}, parent)))
+      : null;
     // A rim highlight runs down the arm's outer side, pausing at the elbow
     // (where the joint turns away from the light) so the two highlights
     // never cross or overlap as the elbow bends.
@@ -377,6 +382,7 @@
         const x = side === 'L' ? -sx : sx;
         const shoulder = `translate(${x} ${sy}) rotate(${f(angles.sh)})`;
         upperArm.setAttribute('transform', shoulder);
+        if (sleeveClip) sleeveClip.setAttribute('transform', shoulder);
         if (cap) cap.setAttribute('transform', shoulder);
         const fore = `${shoulder} translate(0 ${body.upper}) rotate(${f(angles.el)})`;
         foreArm.setAttribute('transform', fore);
@@ -491,7 +497,7 @@
     // Torso: tailcoat front over a white shirt, gold lapels, bow tie.
     const torso = svg('g', {}, lean);
     const coat = svg('path', { class: 'tdd-coat', fill: `url(#${id}-coat)`, d: 'M-26.5 -167 C-27.5 -171.5 -24.5 -174 -19 -175.8 C-15 -177.2 -11.5 -179.6 -8 -180.4 Q0 -181.6 8 -180.4 C11.5 -179.6 15 -177.2 19 -175.8 C24.5 -174 27.5 -171.5 26.5 -167 C29.5 -152 25 -134 20.5 -122 C19.5 -114 20.5 -106 20 -100 Q0 -95 -20 -100 C-20.5 -106 -19.5 -114 -20.5 -122 C-25 -134 -29.5 -152 -27 -168 Z' }, torso);
-    svg('path', { class: 'tdd-coat-shade', d: 'M6 -180.6 Q7 -180.5 8 -180.4 C11.5 -179.6 15 -177.2 19 -175.8 C24.5 -174 27.5 -171.5 26.5 -167 C29.5 -152 25 -134 20.5 -122 C19.5 -114 20.5 -106 20 -100 Q13 -97.5 6 -97 Z' }, torso);
+    const coatShade = svg('path', { class: 'tdd-coat-shade', d: 'M6 -180.6 Q7 -180.5 8 -180.4 C11.5 -179.6 15 -177.2 19 -175.8 C24.5 -174 27.5 -171.5 26.5 -167 C29.5 -152 25 -134 20.5 -122 C19.5 -114 20.5 -106 20 -100 Q13 -97.5 6 -97 Z' }, torso);
     svg('path', { class: 'tdd-coat-seam', d: 'M-20.5 -122 Q0 -117 20.5 -122' }, torso);
     // Where the coat's two fronts overlap, down from the lapels to the hem.
     svg('path', { class: 'tdd-coat-front', d: 'M-1.2 -131 C-0.9 -118 -1.1 -107 -1.6 -97.6' }, torso);
@@ -499,6 +505,21 @@
     // tie, and badge, which lie on top of the sleeves' shoulders; the
     // forearms (and anything a hand reaches across) come in front of all.
     const upperArms = svg('g', { class: 'tdd-arms-upper' }, lean);
+    // His sleeves are set in under the coat's shoulders: a round cap of the
+    // coat around each shoulder joint lies over the top of the sleeve, so
+    // the arm emerges from under the shoulder. Only the cap covers it, so a
+    // hanging elbow beside the coat's edge still reads as one limb.
+    const caps = svg('clipPath', { id: `${id}-shoulder-caps` }, svg('defs', {}, lean));
+    for (const side of [-1, 1]) svg('circle', { cx: side * 20.5, cy: -167, r: 9.5 }, caps);
+    const shoulderCaps = svg('g', { 'clip-path': `url(#${id}-shoulder-caps)` }, lean);
+    shoulderCaps.append(coat.cloneNode(), coatShade.cloneNode());
+    // The cap's edge, outlined only where the sleeve passes under it (and
+    // inside the coat), so the sleeve keeps a clean outline at its top.
+    svg('clipPath', { id: `${id}-coat-clip` }, svg('defs', {}, lean)).append(coat.cloneNode());
+    const armholes = svg('g', { 'clip-path': `url(#${id}-coat-clip)` }, lean);
+    for (const [side, x] of [['L', -20.5], ['R', 20.5]]) {
+      svg('circle', { class: 'tdd-armhole', cx: x, cy: -167, r: 9.5, 'clip-path': `url(#${id}-sleeve-${side})` }, armholes);
+    }
     const front = svg('g', {}, lean);
     svg('path', { class: 'tdd-shirt', d: 'M-11 -177 L0 -128 L11 -177 Q0 -180 -11 -177 Z' }, front);
     for (const y of [-163, -152]) svg('circle', { class: 'tdd-stud', cx: 0, cy: y, r: 1.3 }, front);
@@ -1722,6 +1743,8 @@
             let wrist = Math.atan2(-direction[0], direction[1]) * 180 / Math.PI - solved.sh - solved.el;
             while (wrist - solved.wr > 180) wrist -= 360;
             while (wrist - solved.wr < -180) wrist += 360;
+            // A wrist bends only so far; past that the hand follows the forearm.
+            wrist = clamp(wrist, -105, 105);
             solved.wr += (wrist - solved.wr) * drape;
           }
           return solved;
@@ -1738,7 +1761,10 @@
           const joined = solve(plan.joined, null, 0);
           solved = plan.ownWeight > 0 ? mix(joined, solve(plan.own, null, 0), plan.ownWeight) : joined;
         }
-        s[key] = mix(s[key], solved, s.hold);
+        // Her arm reaches its path in the first three-quarters of a change of
+        // hold, so her hand is already at the clear spot off his shoulder
+        // when it settles onto it (or lifts from it) and changes layer.
+        s[key] = mix(s[key], solved, isTest ? s.hold : smooth(s.hold / 0.75));
       }
       return s;
     }
@@ -1807,8 +1833,10 @@
         // lifted clear of him (handRests), so the change never shows.
         const k = archAt(t);
         const e = raw.code.embrace;
-        const settle = smooth((e - 0.72) / 0.28) * (1 - smooth(k / 0.3));
-        const contact = on('test', [21.5, -178 - 11 * (1 - settle)]);
+        const settle = smooth((e - 0.8) / 0.2) * (1 - smooth(k / 0.3));
+        // Lifted, the hand waits just off the corner of his shoulder, clear
+        // of his coat, his arm, and his lamp; that is where it changes layer.
+        const contact = on('test', [21.5 + 6 * (1 - settle), -178 - 9 * (1 - settle)]);
         const palm = rotateAbout([-6.6, 2.9], [0, 0], raw.test.lean);
         // IK targets the wrist; the palm, not the cuff, rests on the shoulder.
         const overShoulder = [contact[0] - palm[0], contact[1] - palm[1]];
@@ -1819,7 +1847,7 @@
         // heads, clear of both, and stay there while she turns beneath them.
         const arch = [raw.code.x - 36, raw.code.y + raw.code.bob - 220];
         couple = {
-          handRests: settle > 0.35,
+          handRests: settle > 0.15,
           test: { joined: lerp(hands, arch, k), own: back, ownWeight: raw.test.embrace * (1 - k) },
           code: { target: lerp(lerp(hands, own, smooth(e / 0.55)), arch, k), palm, drape: slide * (1 - k) },
         };
@@ -1877,7 +1905,7 @@
     }
 
     /** Taking or letting go of a hold never takes less than this (s). */
-    const HOLD_CHANGE = 0.8;
+    const HOLD_CHANGE = 1.1;
 
     /**
      * Adds a key to one dancer. Taking or letting go of the hold carries a
@@ -2023,7 +2051,9 @@
        */
       dip(atTime, { dur = 0.9, depth = 1 } = {}) {
         const start = arrivingOnBeat(atTime, dur);
-        keyAll(start - 0.35, (dancer) => ({ bob: -3, lean: dancer.kind === 'code' ? -3 : 0 }), 0.35);
+        // Both stand tall as he draws her into the hold (never still bowed
+        // toward each other, or their heads would meet), then she sinks.
+        keyAll(start - HOLD_CHANGE - 0.4, () => ({ bob: -3, lean: 0, arch: 0, head: 0 }), HOLD_CHANGE);
         // Test's arm supports her back (the promenade hold) through the dip.
         keyAll(start - 0.35, () => ({ hold: 1, embrace: 1 }), 0.35);
         if (dancers.code) dancers.code.state.add(start, { lean: 21 * depth, arch: 11 * depth, head: 10 * depth, bob: 5 * depth, armR: { sh: -112, el: 16, wr: -18 }, face: 'joy' }, dur);
