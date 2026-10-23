@@ -92,6 +92,13 @@
         ],
       });
       kit.sticker(c, 'Year 2000', { x: 120, y: 320, at: mark('intro-6', '2000'), variant: 'gold', iconName: 'timer', rotate: -4 });
+      // A cameo: Agent 00 steps in beside the 00 on "double", raises his
+      // martini to it on "zero", and slips out before the terminal opens.
+      ih.agent(c, {
+        x: 314, y: 104, scale: 0.66, role: 'Agent', code: '00', look: 'tuxedo', flip: true,
+        at: mark('intro-6', 'double') - 0.15, toastAt: mark('intro-6', 'zero'), toastAngle: 125,
+        until: mark('intro-7', 'computer') - 0.35,
+      });
       ih.code(c, {
         x: 440, y: 118, w: 430, title: 'mainframe terminal', variant: 'crt', at: mark('intro-7', 'computer'),
         lines: [

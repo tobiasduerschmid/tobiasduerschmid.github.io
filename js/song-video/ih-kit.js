@@ -1350,6 +1350,10 @@
       // A pleated black cummerbund shows where the jacket's fronts part.
       svg('path', { class: 'ih-agent-cummerbund', d: 'M60 176 L100 176 L101 200 L59 200 Z' }, sway);
       svg('path', { class: 'ih-agent-cummerbund-pleat', d: 'M68 184 H92 M67 191 H93' }, sway);
+      // The martini arm's sleeve head: a circle on the arm's pivot looks the
+      // same at any angle, so it sits under the body and only its outer curve
+      // shows, rounding the shoulder however high the arm is raised.
+      svg('circle', { class: 'ih-agent-tux', cx: 116, cy: 114, r: 8, fill: `url(#${cloth})` }, sway);
       // Jacket body: shoulders, a slightly suppressed waist, and fronts that
       // curve away below the single button.
       jacket('ih-agent-tux', 'M66 92 Q50 94 44 108 C41 140 43 170 40 204 Q57 211 74 209 Q79 196 80 180 Q81 196 86 209 Q103 211 120 204 C117 170 119 140 116 108 Q110 94 94 92 L80 90 Z');
@@ -1384,7 +1388,10 @@
       // (116, 114) to raise a toast; the glass pivots at the hand
       // (125, 198) so it stays upright.
       toastArm = svg('g', { class: 'ih-agent-toast-arm' }, sway);
-      jacket('ih-agent-tux', 'M115 111 C126 132 130 162 130 194 L117 196 C116 172 111 148 104 128 Z', toastArm);
+      // The sleeve's fill has no outline at the shoulder end, so it blends
+      // into the sleeve head below at any angle; only its long edges are inked.
+      jacket('ih-agent-tux-fill', 'M108.3 116 L123.8 116 C127 140 130 166 130 194 L117 196 C116 172 112 146 108.3 116 Z', toastArm);
+      svg('path', { class: 'ih-agent-tux-edge', d: 'M123.8 116 C127 140 130 166 130 194 M117 196 C116 172 112 146 108.3 116' }, toastArm);
       svg('path', { class: 'ih-agent-tux-shade', d: 'M122 128 C127 148 129.5 170 130 194 L124 194.6 C124 172 123.5 150 122 128 Z' }, toastArm);
       svg('path', { class: 'ih-agent-tux-fold', d: 'M119 158 Q123.5 156 128 158.5' }, toastArm);
       svg('rect', { class: 'ih-agent-cuff', x: 118, y: 190, width: 13, height: 6, rx: 1.5 }, toastArm);
