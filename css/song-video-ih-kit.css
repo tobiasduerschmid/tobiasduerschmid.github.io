@@ -452,6 +452,7 @@
 .ih-route--pink { stroke: var(--pink); }
 .ih-route--red { stroke: var(--red); }
 
+.ih-route-head { stroke: var(--ink); stroke-width: 1.6; stroke-linejoin: round; }
 .ih-route-head--gold { fill: var(--gold); }
 .ih-route-head--cyan { fill: var(--cyan); }
 .ih-route-head--pink { fill: var(--pink); }
@@ -472,6 +473,20 @@
 .ih-route-wax {
   fill: var(--wax);
 }
+
+/* "Implements" (UML realization): dashed cream line, hollow triangle head. */
+.ih-realize-art {
+  position: absolute;
+  inset: 0;
+  width: 960px;
+  height: 540px;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.ih-realize-shadow { fill: none; stroke: rgba(0, 0, 0, 0.45); stroke-width: 8; stroke-linecap: round; }
+.ih-realize-line { fill: none; stroke: var(--cream); stroke-width: 3.5; stroke-dasharray: 3 7; stroke-linecap: round; }
+.ih-realize-head { fill: var(--ink); stroke: var(--cream); stroke-width: 3.5; stroke-linejoin: round; }
 
 /* ------------------------------------------------------------------ */
 /* Security hardware                                                    */
@@ -1894,64 +1909,90 @@
 
 /* The song's illustrated stage stays dark in both site themes. Print uses its
    text description; the shared player stylesheet hides the animated stage. */
-.ih-power-label {
-  fill: #edf6fa;
-  font-family: var(--font-body, system-ui, sans-serif);
-  font-size: 22px;
-  font-weight: 650;
-}
-.ih-power-label--landscape { fill: #fff; font-size: 20px; font-weight: 750; }
-.ih-power-day-top { stop-color: #174b70; }
-.ih-power-day-bottom { stop-color: #73bdcb; }
-.ih-power-night-top { stop-color: #142442; }
-.ih-power-night-bottom { stop-color: #355470; }
+.ih-power-label { fill: #fbf5e4; font-family: var(--font-body, system-ui, sans-serif); font-size: 20px; font-weight: 800; }
+.ih-power-pill { fill: rgba(11, 15, 26, 0.78); stroke: #fbf5e4; stroke-width: 1.5; }
+.ih-power-hard-shadow { fill: #0b0f1a; }
+.ih-power-frame-ink { fill: none; stroke: #0b0f1a; stroke-width: 12; }
+.ih-power-frame { fill: none; stroke: #fbf5e4; stroke-width: 6; }
+.ih-power-day-top { stop-color: #2a7fbf; }
+.ih-power-day-bottom { stop-color: #a8e3ef; }
+.ih-power-night-top { stop-color: #0a1430; }
+.ih-power-night-bottom { stop-color: #2b4673; }
 .ih-power-porcelain-top { stop-color: #fffdf3; }
-.ih-power-porcelain-bottom { stop-color: #cbd9dc; }
-.ih-power-hill-far { fill: #487d79; }
-.ih-power-hill { fill: #31594f; }
-.ih-power-night-hill-far { fill: #263d4b; }
-.ih-power-night-hill { fill: #1a303a; }
-.ih-power-sun-halo { fill: #ffda83; opacity: 0.16; }
-.ih-power-sun { fill: #ffe4a0; }
-.ih-power-moon, .ih-power-star { fill: #e0f1f6; }
-.ih-power-rack { fill: none; stroke: #b8cbd0; stroke-width: 4; stroke-linejoin: round; }
-.ih-power-panel-edge { fill: #152b48; stroke: #c9e9ec; stroke-width: 1.6; stroke-linejoin: round; }
-.ih-power-panel { fill: #174b78; stroke: #b4e5ef; stroke-width: 1.5; stroke-linejoin: round; }
-.ih-power-panel-grid { fill: none; stroke: #a6d8e8; stroke-width: 1.2; }
-.ih-power-panel-reflection { fill: #b4e7ee; opacity: 0.12; }
-.ih-power-tower { fill: #d1e3e8; stroke: #748e9b; stroke-width: 1.2; }
-.ih-power-tower-shade { fill: #8fa8b4; }
-.ih-power-nacelle { fill: #b9d0d9; stroke: #748e9b; stroke-width: 1.2; }
-.ih-power-blade { fill: #f0f6f7; stroke: #9fb7c1; stroke-width: 1; stroke-linejoin: round; }
-.ih-power-rotor-hub { fill: #d7e7eb; stroke: #718e9c; stroke-width: 1.5; }
-.ih-power-landscape-frame { fill: none; stroke: #fbf5e4; stroke-width: 6; }
-.ih-power-wire { fill: none; stroke: #7e98a8; stroke-width: 8; stroke-linecap: round; }
-.ih-power-flow { fill: none; stroke: #ffe2a0; stroke-width: 3; stroke-dasharray: 9 16; stroke-linecap: round; }
-.ih-power-grid { fill: #1e374a; stroke: #b0cfdd; stroke-width: 2; }
-.ih-power-sine { fill: none; stroke: #ffe2a0; stroke-width: 3; stroke-linecap: round; }
-.ih-power-wall { fill: #263a48; stroke: #6f8a9a; stroke-width: 2; }
-.ih-power-wall-cut { fill: none; stroke: #8ba3b0; stroke-width: 2; }
-.ih-power-plate-shadow { fill: #091722; opacity: 0.5; }
-.ih-power-plate { stroke: #94acb5; stroke-width: 2; }
+.ih-power-porcelain-bottom { stop-color: #d7e1e3; }
+.ih-power-screen-top { stop-color: #134e4a; }
+.ih-power-screen-bottom { stop-color: #0b2a33; }
+.ih-power-wood-top { stop-color: #c08a52; }
+.ih-power-wood-bottom { stop-color: #8a5a2f; }
+.ih-power-sun-halo { fill: #ffe08a; opacity: 0.22; }
+.ih-power-ray { stroke: #ffd34d; stroke-width: 4; stroke-linecap: round; }
+.ih-power-sun { fill: #ffd34d; stroke: #0b0f1a; stroke-width: 2.5; }
+.ih-power-cloud circle { fill: #f8fafc; }
+.ih-power-hill-far { fill: #5aa073; stroke: #0b0f1a; stroke-width: 2; }
+.ih-power-hill { fill: #2f7a50; stroke: #0b0f1a; stroke-width: 2; }
+.ih-power-rack { fill: none; stroke: #cbd5e1; stroke-width: 4; stroke-linecap: round; }
+.ih-power-panel-edge { fill: #0f2744; stroke: #0b0f1a; stroke-width: 2.5; stroke-linejoin: round; }
+.ih-power-panel { fill: #1e4f8a; stroke: #0b0f1a; stroke-width: 2.5; stroke-linejoin: round; }
+.ih-power-panel-grid { fill: none; stroke: #8cc2ec; stroke-width: 1.3; }
+.ih-power-glint { fill: #e0f2fe; }
+.ih-power-star { fill: #fff7d6; }
+.ih-power-moon-glow { fill: #e0f2fe; opacity: 0.16; }
+.ih-power-moon { fill: #f1f5f9; stroke: #0b0f1a; stroke-width: 2; }
+.ih-power-night-hill-far { fill: #22394f; stroke: #0b0f1a; stroke-width: 2; }
+.ih-power-night-hill { fill: #16283a; stroke: #0b0f1a; stroke-width: 2; }
+.ih-power-tower { fill: #e2e8f0; stroke: #0b0f1a; stroke-width: 1.6; }
+.ih-power-tower-shade { fill: #94a3b8; }
+.ih-power-nacelle { fill: #cbd5e1; stroke: #0b0f1a; stroke-width: 1.6; }
+.ih-power-beacon { fill: #ef4444; }
+.ih-power-blade { fill: #f8fafc; stroke: #0b0f1a; stroke-width: 1.4; stroke-linejoin: round; }
+.ih-power-rotor-hub { fill: #e2e8f0; stroke: #0b0f1a; stroke-width: 1.6; }
+.ih-power-ground { fill: rgba(0, 0, 0, 0.45); }
+.ih-power-pylon { fill: none; stroke: #b6c4d1; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.ih-power-insulator { fill: #e5bf62; stroke: #0b0f1a; stroke-width: 1.2; }
+.ih-power-wire { fill: none; stroke: #0b0f1a; stroke-width: 7; stroke-linecap: round; stroke-linejoin: round; }
+.ih-power-flow { fill: none; stroke: #ffd34d; stroke-width: 3.5; stroke-dasharray: 8 14; stroke-linecap: round; stroke-linejoin: round; }
+.ih-power-brick { fill: #9a4a33; stroke: #0b0f1a; stroke-width: 2.5; }
+.ih-power-mortar { fill: none; stroke: #d6b79c; stroke-width: 1.6; }
+.ih-power-room { fill: #2b2442; }
+.ih-power-wallpaper { fill: none; stroke: #342c50; stroke-width: 8; }
+.ih-power-room-edge { fill: none; stroke: #0b0f1a; stroke-width: 3; }
+.ih-power-lamp-light { fill: rgba(255, 214, 120, 0.1); }
+.ih-power-lamp-cord { fill: none; stroke: #0b0f1a; stroke-width: 2.5; }
+.ih-power-lamp-shade { fill: #e5bf62; stroke: #0b0f1a; stroke-width: 2.5; stroke-linejoin: round; }
+.ih-power-baseboard { fill: #cdb68a; stroke: #0b0f1a; stroke-width: 2; }
+.ih-power-floor { fill: #4a3424; }
+.ih-power-plate-shadow { fill: #0b0f1a; }
+.ih-power-plate { stroke: #0b0f1a; stroke-width: 2.5; }
 .ih-power-plate-highlight { fill: none; stroke: #fff; stroke-width: 2; stroke-linecap: round; }
-.ih-power-screw { fill: #93a7ae; }
-.ih-power-screw-slot { fill: none; stroke: #374b59; stroke-width: 1.2; }
-.ih-power-socket-outline { fill: #e6eeeb; stroke: #9db0b4; stroke-width: 1.5; }
-.ih-power-socket, .ih-power-usb { fill: #213746; }
-.ih-power-cable { fill: none; stroke: #b4c7ce; stroke-width: 8; stroke-linecap: round; }
-.ih-power-cable-flow { fill: none; stroke: #ffe2a0; stroke-width: 3; stroke-dasharray: 9 16; stroke-linecap: round; }
-.ih-power-adapter-shadow { fill: #0c1e2b; opacity: 0.4; }
-.ih-power-adapter { stroke: #849da8; stroke-width: 1.5; }
-.ih-power-adapter-seam { fill: none; stroke: #b5c9ce; stroke-width: 1.5; }
-.ih-power-shadow { fill: #07121c; opacity: 0.5; }
-.ih-power-phone { fill: #203645; stroke: #afc7d1; stroke-width: 2.5; }
-.ih-power-screen { fill: #102c3a; }
-.ih-power-speaker { fill: #8aa8b6; }
-.ih-power-battery-frame { fill: #163c48; stroke: #c4e6e4; stroke-width: 2; }
-.ih-power-battery-cap { fill: #c4e6e4; }
-.ih-power-battery { fill: #89e3bc; }
-.ih-power-bolt { fill: #153c37; stroke: #d1ffe9; stroke-width: 1; stroke-linejoin: round; }
-.ih-power-phone-detail { fill: none; stroke: #a9c2ce; stroke-width: 3; stroke-linecap: round; }
+.ih-power-screw { fill: #94a3b8; stroke: #0b0f1a; stroke-width: 1; }
+.ih-power-screw-slot { fill: none; stroke: #0b0f1a; stroke-width: 1.2; }
+.ih-power-socket-outline { fill: #e6eeeb; stroke: #8fa3ab; stroke-width: 1.5; }
+.ih-power-socket { fill: #1f2937; }
+.ih-power-cable { fill: none; stroke: #0b0f1a; stroke-width: 9; stroke-linecap: round; }
+.ih-power-cable-flow { fill: none; stroke: #ffd34d; stroke-width: 3.5; stroke-dasharray: 8 14; stroke-linecap: round; }
+.ih-power-adapter-shadow { fill: #0b0f1a; }
+.ih-power-adapter { stroke: #0b0f1a; stroke-width: 2.5; }
+.ih-power-led { fill: #22c55e; }
+.ih-power-charger-eye { fill: #0b0f1a; }
+.ih-power-charger-smile { fill: none; stroke: #0b0f1a; stroke-width: 2; stroke-linecap: round; }
+.ih-power-blindfold-band { fill: #0b0f1a; stroke: #3b4152; stroke-width: 1.2; stroke-linejoin: round; }
+.ih-power-desk { stroke: #0b0f1a; stroke-width: 2.5; }
+.ih-power-desk-leg { fill: #6b4423; stroke: #0b0f1a; stroke-width: 2; }
+.ih-power-mug { fill: #f97316; stroke: #0b0f1a; stroke-width: 2.2; stroke-linejoin: round; }
+.ih-power-mug-handle { fill: none; stroke: #0b0f1a; stroke-width: 4; }
+.ih-power-steam { fill: none; stroke: #e2e8f0; stroke-width: 2.4; stroke-linecap: round; }
+.ih-power-pot { fill: #c2410c; stroke: #0b0f1a; stroke-width: 2; stroke-linejoin: round; }
+.ih-power-leaf { fill: #22c55e; stroke: #0b0f1a; stroke-width: 1.6; stroke-linejoin: round; }
+.ih-power-screen-glow { fill: #5eead4; opacity: 0.4; filter: blur(14px); }
+.ih-power-stand { fill: #475569; stroke: #0b0f1a; stroke-width: 2; stroke-linejoin: round; }
+.ih-power-phone { fill: #1e293b; stroke: #0b0f1a; stroke-width: 3; }
+.ih-power-screen { stroke: #0b0f1a; stroke-width: 1; }
+.ih-power-speaker { fill: #64748b; }
+.ih-power-battery-frame { fill: #0f2f33; stroke: #a7f3d0; stroke-width: 2.2; }
+.ih-power-battery-cap { fill: #a7f3d0; }
+.ih-power-battery { fill: #4ade80; }
+.ih-power-bolt { fill: #fef08a; stroke: #0b0f1a; stroke-width: 1.4; stroke-linejoin: round; }
+.ih-power-percent { fill: #ecfdf5; font-family: var(--font-mono); font-size: 20px; font-weight: 700; }
 
 /* ------------------------------------------------------------------ */
 /* Small case files in a grid                                           */
