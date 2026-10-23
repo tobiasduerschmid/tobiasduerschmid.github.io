@@ -112,7 +112,7 @@
       // Age = 00 − 85 = −85; nobody expected the code to live that long.
       const d = kit.scene(content, line('intro-8').start - 0.1, line('intro-12').start - 0.1);
       ih.code(d, {
-        x: 70, y: 96, w: 480, title: 'AGE.CBL', variant: 'crt', at: mark('intro-8', 'born'),
+        x: 330, y: 96, w: 480, title: 'AGE.CBL', variant: 'crt', at: mark('intro-8', 'born'),
         lines: [
           { parts: ['BORN = ', { text: '85', mark: 'gold', at: mark('intro-8', '85') }] },
           { at: mark('intro-8', 'zero') - 0.1, parts: ['NOW  = ', { text: '00', mark: 'red', at: mark('intro-8', 'zero') }] },
@@ -120,23 +120,23 @@
           { at: mark('intro-9', 'negative'), parts: ['     = ', { text: '-85', mark: 'red', at: mark('intro-9', 'negative') }] },
         ],
       });
-      kit.stamp(d, '−85 years old?', { x: 120, y: 330, at: mark('intro-9', 'years'), rotate: -5, shake: false });
+      kit.stamp(d, '−85 years old?', { x: 480, y: 330, at: mark('intro-9', 'years'), rotate: -5, shake: false });
       // Born in '85, then from "zero minus" he rewinds: teen, kid, baby,
       // newborn, egg cell, gone.
       const rewind = mark('intro-8', 'zero');
-      // Five steps and the puff fit between "zero minus" and "nobody", when
+      // A brisk rewind: gone by "negative 85", well before "nobody", when
       // the 1970s programmer's thought bubble takes this corner.
       const nobody = mark('intro-10', 'nobody');
-      const step = (nobody - 0.55 - rewind) / 5;
+      const step = 0.4;
       ih.agingPerson(d, {
-        x: 690, y: 92, tag: 'Born ’85', at: mark('intro-8', 'born'), until: nobody - 0.05,
+        x: 110, y: 92, tag: 'Born ’85', at: mark('intro-8', 'born'), until: nobody - 0.05,
         stages: { teen: rewind, kid: rewind + step, baby: rewind + 2 * step, newborn: rewind + 3 * step, egg: rewind + 4 * step, gone: rewind + 5 * step },
       });
       ih.bubble(d, {
-        x: 600, y: 96, w: 300, who: '1970s programmer', whoIcon: 'user', thought: true,
+        x: 40, y: 96, w: 270, who: '1970s programmer', whoIcon: 'user', thought: true,
         text: 'This code will be replaced long before 2000.', at: nobody,
       });
-      kit.stamp(d, 'Still running', { x: 530, y: 300, at: mark('intro-11', 'did'), color: 'gold', rotate: -6, shake: false });
+      kit.stamp(d, 'Still running', { x: 40, y: 320, at: mark('intro-11', 'did'), color: 'gold', rotate: -6, shake: false });
 
       // The two-digit year wasn't hidden in one module: every file has it.
       const e = kit.scene(content, line('intro-12').start - 0.1, line('intro-16').start - 0.1);
@@ -169,8 +169,9 @@
       window.SongFireworks.celebrate(f, { at: mark('intro-16', 'came') + 0.05, seed: 7 });
       const g = kit.scene(content, line('intro-18').start - 0.1, line('intro-19').start - 0.1);
       // "Billions": red money bursts out from behind the expense sheet and
-      // flies away; it keeps flying briefly over the start of the next scene.
-      const burst = kit.scene(content, mark('intro-18', 'billions') - 0.1, line('intro-19').start + 0.9, { exit: 'fade' });
+      // flies away; the last bills fly on, behind the next scene's case
+      // file, until they have nearly all left the stage.
+      const burst = kit.scene(content, mark('intro-18', 'billions') - 0.1, line('intro-19').start + 1.8, { exit: 'fade' });
       content.insertBefore(burst, g);  // behind the expense sheet
       ih.cashBurst(burst, { x: 480, y: 200, count: 240, at: mark('intro-18', 'billions'), until: line('intro-19').start, tone: 'red' });
       ih.paper(g, {
@@ -232,7 +233,7 @@
       // Payment Gateway drops in upside down on a rope. He backflips down,
       // builds a laser barrier between them and the rest of the system, and
       // backflips to guard it as a snoop arrives and gets zapped; the snoop
-      // asks the gateway instead, everyone hushes, and 007 raises his
+      // asks the gateway instead, everyone hushes, and 00 raises his
       // martini. Every gag is on a beat.
       const T = {
         steps: [beat(0), beat(1), beat(2)], freeze: beat(3), clear: beat(5),
@@ -495,7 +496,7 @@
       // He stays until the PayPal contact card needs his corner.
       const agentTo = mark('verse-2-9', 'exists') - 0.5;
       ih.spotlight(s, { x: 800, y: 210, w: 320, h: 420, at: agentFrom, until: agentTo });
-      ih.agent(s, { x: 742, y: 100, scale: 0.66, role: 'Agent 007', look: 'tuxedo', at: agentFrom, until: agentTo });
+      ih.agent(s, { x: 742, y: 100, scale: 0.66, role: 'Agent', code: '00', look: 'tuxedo', at: agentFrom, until: agentTo });
       ih.bubble(s, { x: 700, y: 12, text: 'Gateway,\nPayment Gateway.', tailX: 95, at: mark('verse-2-8', 'names') - 0.1, until: agentTo });
       kit.sticker(s, 'Secret: which provider', { x: 690, y: 376, at: mark('verse-2-8', 'gateway_2'), until: agentTo, variant: 'red', iconName: 'lock', rotate: -3 });
 
@@ -766,7 +767,7 @@
       });
       const done = mark('outro-3', 'change');
       ih.spotlight(c, { x: 800, y: 250, w: 300, h: 400, at: done - 0.1 });
-      ih.agent(c, { x: 720, y: 108, scale: 0.72, role: 'Agent 007', look: 'tuxedo', flip: true, at: done });
+      ih.agent(c, { x: 720, y: 108, scale: 0.72, role: 'Agent', code: '00', look: 'tuxedo', flip: true, at: done });
       ih.show(ih.envelope(c, { text: 'every module keeps a secret', x: 552, y: 384 }), done + 0.5, undefined, { rotate: -1, from: 1.6 });
       kit.stamp(c, 'Case closed', { x: 26, y: 334, at: done + 0.9, color: 'green', rotate: -8, shake: false });
       const credit = kit.el('div', 'end-credit is-staged', c, 'SE Book · Information Hiding');

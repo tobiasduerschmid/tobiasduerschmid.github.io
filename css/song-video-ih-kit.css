@@ -626,6 +626,7 @@
 .ih-agent-hat { fill: #3d2f1f; stroke: var(--ink); stroke-width: 2.5; stroke-linejoin: round; }
 .ih-agent-dent { fill: none; stroke: #241a10; stroke-width: 2; }
 /* The tuxedo look: dinner jacket with satin lapels, bow tie, martini. */
+.ih-agent-rim { flood-color: #f8fafc; flood-opacity: 0.7; }
 .ih-agent-trousers { fill: #12141c; stroke: var(--ink); stroke-width: 2; stroke-linejoin: round; }
 .ih-agent-shoe--gloss { stroke: #3b4152; stroke-width: 1; }
 .ih-agent-tux { fill: #1b1f2b; stroke: var(--ink); stroke-width: 2.5; stroke-linejoin: round; }
@@ -659,6 +660,24 @@
   letter-spacing: 0.12em;
   text-transform: uppercase;
   text-shadow: 0 2px 0 rgba(0, 0, 0, 0.6);
+}
+
+/* "Agent 00": every letter in the red split-flap cells of the Y2K year. */
+.ih-agent-code {
+  display: flex;
+  gap: 2px;
+  font-size: 17px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.55));
+}
+
+.ih-agent-code .ih-digit {
+  border-radius: 3px;
+}
+
+.ih-agent-code-gap {
+  width: 0.3em;
 }
 
 .ih-agent-name {

@@ -1317,15 +1317,31 @@
   /**
    * A secret agent with a name tag. look = 'trench' (fedora, trench coat,
    * sunglasses, briefcase) or 'tuxedo' (dinner jacket, bow tie, slicked
-   * hair, raised eyebrow, martini): the suave-spy-film look.
+   * hair, raised eyebrow, martini): the suave-spy-film look. With `code`,
+   * role and code show as one name in the red split-flap cells of `digits`.
    */
-  function agent(parent, { x, y, scale = 1, name, role, at, until, tie = 'red', briefcase = true, flip = false, look = 'trench' }) {
+  function agent(parent, { x, y, scale = 1, name, role, code, at, until, tie = 'red', briefcase = true, flip = false, look = 'trench' }) {
     const wrap = place(el('div', 'ih-agent is-staged', parent), x, y);
     wrap.style.width = `${160 * scale}px`;
     const fig = svg('svg', { class: `ih-agent-art ih-agent-art--${tie}`, viewBox: '0 0 160 300', width: 160 * scale, height: 300 * scale, 'aria-hidden': 'true' }, wrap);
     const body = svg('g', { transform: flip ? 'translate(160 0) scale(-1 1)' : '' }, fig);
+    svg('ellipse', { class: 'ih-agent-shadow', cx: 80, cy: 292, rx: 60, ry: 7 }, body);
     const sway = svg('g', {}, body);
-    svg('ellipse', { class: 'ih-agent-shadow', cx: 80, cy: 292, rx: 60, ry: 7 }, sway);
+    if (look === 'tuxedo') {
+      // A soft white halo keeps the dark dinner jacket visible on the dark
+      // stage: the blurred silhouette, boosted so it hugs the outline.
+      const id = `ih-agent-rim-${++uid}`;
+      const rim = svg('filter', { id, x: '-15%', y: '-10%', width: '130%', height: '120%' }, svg('defs', {}, fig));
+      svg('feGaussianBlur', { in: 'SourceAlpha', stdDeviation: 2.6, result: 'blur' }, rim);
+      const boost = svg('feComponentTransfer', { in: 'blur', result: 'grown' }, rim);
+      svg('feFuncA', { type: 'linear', slope: 2.4 }, boost);
+      svg('feFlood', { class: 'ih-agent-rim' }, rim);
+      svg('feComposite', { in2: 'grown', operator: 'in', result: 'ring' }, rim);
+      const merge = svg('feMerge', {}, rim);
+      svg('feMergeNode', { in: 'ring' }, merge);
+      svg('feMergeNode', { in: 'SourceGraphic' }, merge);
+      sway.setAttribute('filter', `url(#${id})`);
+    }
     let glint;
     if (look === 'tuxedo') {
       svg('path', { class: 'ih-agent-trousers', d: 'M54 196 L56 288 L77 288 L80 214 L83 288 L104 288 L106 196 Z' }, sway);
@@ -1407,7 +1423,15 @@
     }
     if (name || role) {
       const tag = el('div', 'ih-agent-tag', wrap);
-      if (role) el('span', 'ih-agent-role', tag, role);
+      if (code) {
+        // The whole name, role and code, in one row of split-flap cells.
+        const row = el('span', 'ih-agent-code', tag);
+        for (const ch of `${role ?? ''} ${code}`.trim()) {
+          el('span', ch === ' ' ? 'ih-agent-code-gap' : 'ih-digit ih-digit--bad', row, ch);
+        }
+      } else if (role) {
+        el('span', 'ih-agent-role', tag, role);
+      }
       if (name) el('span', 'ih-agent-name', tag, name);
     }
     onFrame((t) => {
@@ -1638,7 +1662,7 @@
     // wrapper (position, so the name tag travels with him) move separately.
     // His guard post is x = 395, right beside the barrier at 590.
     const post = 515;
-    const bond = agent(parent, { x: post - 52.8, y: 212, scale: 0.66, role: 'Agent 007', look: 'tuxedo', at: T.bondIn });
+    const bond = agent(parent, { x: post - 52.8, y: 212, scale: 0.66, role: 'Agent', code: '00', look: 'tuxedo', at: T.bondIn });
     const toastArm = bond.querySelector('.ih-agent-toast-arm');
     const glassGroup = bond.querySelector('.ih-agent-glass');
     const figure = bond.querySelector('svg');
@@ -2512,7 +2536,9 @@
     // Standing height of each stage above the floor (y = 190), so each step
     // can shrink the older figure into the younger one.
     const heights = [178, 141, 93, 66, 57, 44];
-    const blend = 0.6;
+    // Each dissolve finishes before the next step starts, however brisk.
+    const shortestStep = Math.min(...times.slice(2).map((time, i) => time - times[i + 1]));
+    const blend = Math.min(0.6, 0.85 * shortestStep);
     // A gentle ease (sine in-out) for the dissolve, softer than a cubic.
     const gentle = (u) => 0.5 - 0.5 * Math.cos(Math.PI * Math.min(1, Math.max(0, u)));
     const sizeAt = (g, scale) => g.setAttribute('transform', `translate(60 190) scale(${scale.toFixed(3)}) translate(-60 -190)`);
@@ -2676,8 +2702,10 @@
       };
     });
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    // Bills launched last keep flying after `until`, so a scene that fades
+    // out over them never freezes them mid-air.
     onFrame((t) => {
-      if (t < at - 0.2 || t > until + 0.2) return;
+      if (t < at - 0.2 || t > until + 3.2) return;
       for (const b of bills) {
         const age = t - b.launch;
         if (age < 0 || age > 3 || reducedMotion.matches) { b.art.style.opacity = '0'; continue; }
