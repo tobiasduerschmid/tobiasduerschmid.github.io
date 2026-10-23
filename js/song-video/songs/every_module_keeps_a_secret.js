@@ -63,9 +63,12 @@
         values: [{ at: 0, text: '85', tone: 'lit' }],
       });
       kit.sticker(b, '2 digits saved', { x: 640, y: 272, at: mark('intro-4', 'digits'), variant: 'green', iconName: 'check', rotate: 4 });
-      // Memory was expensive: money piles up under the mainframe, and the
-      // two saved digits drop the whole pile out of the picture.
-      ih.cash(b, { x: 20, y: 466, w: 560, count: 44, heap: 22, at: mark('intro-2', 'memory'), dropAt: mark('intro-4', 'digits') });
+      // Memory was expensive: money flies into the core memory. On "two
+      // digits" a little of it drops back out: memory saved is money saved.
+      ih.cashIntoMemory(b, {
+        into: { x: 79, y: 283, w: 162, h: 32 }, count: 36,
+        at: mark('intro-2', 'memory'), refundAt: mark('intro-4', 'two') + 1, until: line('intro-6').start,
+      });
       fx.bump(full, mark('intro-5', '1985'), 0.12);
 
       // 99 rolls over to 00, which the computer reads as 1900.
@@ -107,16 +110,20 @@
         ],
       });
       kit.stamp(d, '−85 years old?', { x: 120, y: 330, at: mark('intro-9', 'years'), rotate: -5, shake: false });
-      // Born in '85, then on "you're negative" he rewinds in one fast burst:
-      // teen, kid, baby, gone.
-      const rewind = mark('intro-9', 'youre');
+      // Born in '85, then from "zero minus" he rewinds: teen, kid, baby,
+      // newborn, egg cell, gone.
+      const rewind = mark('intro-8', 'zero');
+      // Five steps and the puff fit between "zero minus" and "nobody", when
+      // the 1970s programmer's thought bubble takes this corner.
+      const nobody = mark('intro-10', 'nobody');
+      const step = (nobody - 0.55 - rewind) / 5;
       ih.agingPerson(d, {
-        x: 690, y: 92, tag: 'Born ’85', at: mark('intro-8', 'born'), until: line('intro-10').start - 0.2,
-        stages: { teen: rewind, kid: rewind + 0.3, baby: rewind + 0.6, gone: rewind + 0.92 },
+        x: 690, y: 92, tag: 'Born ’85', at: mark('intro-8', 'born'), until: nobody - 0.05,
+        stages: { teen: rewind, kid: rewind + step, baby: rewind + 2 * step, newborn: rewind + 3 * step, egg: rewind + 4 * step, gone: rewind + 5 * step },
       });
       ih.bubble(d, {
         x: 600, y: 96, w: 300, who: '1970s programmer', whoIcon: 'user', thought: true,
-        text: 'This code will be replaced long before 2000.', at: mark('intro-10', 'thought'),
+        text: 'This code will be replaced long before 2000.', at: nobody,
       });
       kit.stamp(d, 'Still running', { x: 600, y: 300, at: mark('intro-11', 'did'), color: 'gold', rotate: -6, shake: false });
 
@@ -150,8 +157,11 @@
       kit.sticker(f, 'Fixed in time', { x: 580, y: 300, at: mark('intro-17', 'fixed'), variant: 'gold', iconName: 'timer', rotate: 4 });
       window.SongFireworks.celebrate(f, { at: mark('intro-16', 'came') + 0.05, seed: 7 });
       const g = kit.scene(content, line('intro-18').start - 0.1, line('intro-19').start - 0.1);
-      // The bill floods the frame with red money, behind the expense sheet.
-      ih.cash(g, { x: -30, y: 560, w: 1020, count: 300, flood: -20, tone: 'red', at: line('intro-18').start, spread: 1.6, until: line('intro-19').start });
+      // "Billions": red money bursts out from behind the expense sheet and
+      // flies away; it keeps flying briefly over the start of the next scene.
+      const burst = kit.scene(content, mark('intro-18', 'billions') - 0.1, line('intro-19').start + 0.9, { exit: 'fade' });
+      content.insertBefore(burst, g);  // behind the expense sheet
+      ih.cashBurst(burst, { x: 480, y: 200, count: 240, at: mark('intro-18', 'billions'), until: line('intro-19').start, tone: 'red' });
       ih.paper(g, {
         x: 290, y: 78, w: 380, kicker: 'Classified expenses', title: 'Operation Y2K', at: line('intro-18').start,
         lines: [

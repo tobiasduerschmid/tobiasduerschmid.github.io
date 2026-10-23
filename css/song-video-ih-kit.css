@@ -2471,6 +2471,15 @@
 .ih-aging-rattle { fill: #fbcfe8; stroke: #0b0f1a; stroke-width: 1.5; }
 .ih-aging-pacifier { fill: #f472b6; stroke: #0b0f1a; stroke-width: 1.3; }
 .ih-aging-pacifier-ring { fill: none; stroke: #f472b6; stroke-width: 1.8; }
+.ih-aging-swaddle { fill: #bfdbfe; stroke: #0b0f1a; stroke-width: 2; stroke-linejoin: round; }
+.ih-aging-swaddle-hood { fill: #93c5fd; stroke: #0b0f1a; stroke-width: 1.8; stroke-linejoin: round; }
+.ih-aging-swaddle-fold { fill: none; stroke: #60a5fa; stroke-width: 1.6; stroke-linecap: round; }
+.ih-aging-sleep { fill: none; stroke: #0b0f1a; stroke-width: 1.4; stroke-linecap: round; }
+.ih-aging-egg-zona { fill: rgba(254, 226, 226, 0.35); stroke: #fda4af; stroke-width: 3; }
+.ih-aging-egg-cell { fill: #fecdd3; stroke: #0b0f1a; stroke-width: 1.8; }
+.ih-aging-egg-granule { fill: #fda4af; }
+.ih-aging-egg-nucleus { fill: #f9a8d4; stroke: #9d174d; stroke-width: 1.4; }
+.ih-aging-egg-nucleolus { fill: #9d174d; }
 .ih-aging-puff circle { fill: #cbd5e1; stroke: #0b0f1a; stroke-width: 2; }
 .ih-aging-question { fill: #ffd34d; stroke: #0b0f1a; stroke-width: 3; paint-order: stroke; font-size: 96px; font-weight: 900; }
 .ih-aging-tag { position: absolute; padding: 3px 10px 2px; border: 2px solid var(--ink); border-radius: 6px; background: var(--cream); color: var(--ink); font-family: var(--font-mono); font-size: 18px; font-weight: 700; white-space: nowrap; }
@@ -2480,6 +2489,8 @@
 .ih-cash { position: absolute; inset: 0; pointer-events: none; }
 .ih-cash-defs { position: absolute; width: 0; height: 0; overflow: hidden; }
 .ih-bill { position: absolute; left: 0; top: 0; overflow: visible; transform-origin: 32px 15px; }
+/* The core memory filling up with money: a gold glow over the core bed. */
+.ih-core-glow { position: absolute; border-radius: 3px; background: radial-gradient(ellipse at 50% 50%, rgba(255, 211, 77, 0.95), rgba(255, 170, 40, 0.45) 60%, rgba(255, 170, 40, 0) 100%); box-shadow: 0 0 22px rgba(255, 211, 77, 0.8); opacity: 0; pointer-events: none; }
 .ih-cash { --bill-paper: #cfe5c3; --bill-frame: #b5d6a6; --bill-ink: #3d7a4a; --bill-line: #5f9a62; --bill-seal: #e3f0d9; --bill-sign: #24502f; }
 /* Red bills: money lost. Colors reach the reused <symbol> through these
    inherited variables; selectors cannot style inside <use> copies. */
