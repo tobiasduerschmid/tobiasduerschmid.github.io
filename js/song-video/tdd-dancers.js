@@ -490,7 +490,7 @@
     const lean = svg('g', {}, upper);
     // Torso: tailcoat front over a white shirt, gold lapels, bow tie.
     const torso = svg('g', {}, lean);
-    svg('path', { class: 'tdd-coat', fill: `url(#${id}-coat)`, d: 'M-27 -168 C-29 -175 -22 -178.5 -12 -178.5 L12 -178.5 C22 -178.5 29 -175 27 -168 C29.5 -152 25 -134 20.5 -122 C19.5 -114 20.5 -106 20 -100 Q0 -95 -20 -100 C-20.5 -106 -19.5 -114 -20.5 -122 C-25 -134 -29.5 -152 -27 -168 Z' }, torso);
+    const coat = svg('path', { class: 'tdd-coat', fill: `url(#${id}-coat)`, d: 'M-27 -168 C-29 -175 -22 -178.5 -12 -178.5 L12 -178.5 C22 -178.5 29 -175 27 -168 C29.5 -152 25 -134 20.5 -122 C19.5 -114 20.5 -106 20 -100 Q0 -95 -20 -100 C-20.5 -106 -19.5 -114 -20.5 -122 C-25 -134 -29.5 -152 -27 -168 Z' }, torso);
     svg('path', { class: 'tdd-coat-shade', d: 'M6 -178.5 L12 -178.5 C22 -178.5 29 -175 27 -168 C29.5 -152 25 -134 20.5 -122 C19.5 -114 20.5 -106 20 -100 Q13 -97.5 6 -97 Z' }, torso);
     svg('path', { class: 'tdd-coat-seam', d: 'M-20.5 -122 Q0 -117 20.5 -122' }, torso);
     // Where the coat's two fronts overlap, down from the lapels to the hem.
@@ -583,6 +583,7 @@
       body,
       root,
       arms,
+      coat,
       apply(t, s) {
         root.setAttribute('transform', `translate(${f(s.x)} ${f(s.y)})`);
         shadow.setAttribute('rx', f(34 + s.bob * 0.4));
@@ -1832,23 +1833,37 @@
       }
       // Layer the inner arms before posing them, so a hand that changes
       // layer is placed for its new layer in the same frame.
-      if (holdLayers) {
-        // The inner arms stay in the hold layers for the whole of a
-        // transition into or out of the hold, and return to their dancers'
-        // own layers only once the hold has fully let go and the arms hang
-        // apart, so their order never flips mid-movement.
-        const held = Math.max(finals.code.hold, finals.test.hold) > 0.002;
-        // Her hand comes in front of him only while it rests on his shoulder,
-        // switching while lifted clear of him; on its way there and away it
-        // travels behind his back with her arm.
-        layerArm(dancers.code.rig, 'L', held ? holdLayers.code : null, couple.handRests ? holdLayers.codeHand : null);
+      const placeArm = (held) => {
+        // Her hand comes in front of him only while it rests on his
+        // shoulder, switching while lifted clear of him; on its way there
+        // and away it travels behind his back with her arm.
+        layerArm(dancers.code.rig, 'L', held ? holdLayers.code : null, held && couple.handRests ? holdLayers.codeHand : null);
         if (held) {
           holdLayers.code.setAttribute('transform', dancers.code.rig.armFrame(finals.code));
           holdLayers.codeHand.setAttribute('transform', dancers.code.rig.armFrame(finals.code));
         }
-      }
+      };
+      // Her inner arm is behind him (in the hold layers) for the whole of
+      // any hold and any change of hold.
+      const holding = holdLayers && Math.max(finals.code.hold, finals.test.hold) > 0.002;
+      if (holdLayers) placeArm(holding);
       for (const dancer of Object.values(dancers)) dancer.rig.apply(t, finals[dancer.kind]);
+      // Out of the hold it comes back in front of him only once it is clear
+      // of him: while it still crosses his arm or his body it stays behind,
+      // so its order never flips where the two overlap.
+      if (holdLayers && !holding && crossesTest()) {
+        placeArm(true);
+        dancers.code.rig.apply(t, finals.code);
+      }
     });
+
+    /** Whether Code's inner arm overlaps Test's arms or body (screen boxes). */
+    function crossesTest() {
+      const boxes = (nodes) => nodes.map((node) => node.getBoundingClientRect()).filter((r) => r.width > 0 && r.height > 0);
+      const mine = boxes(dancers.code.rig.arms.L.parts);
+      const his = boxes([...dancers.test.rig.arms.L.parts, ...dancers.test.rig.arms.R.parts, dancers.test.rig.coat]);
+      return mine.some((a) => his.some((b) => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom));
+    }
 
     fx.fadeIn(wrap, at, 0.35);
     if (until !== undefined) fx.fadeOut(wrap, until, 0.35);
