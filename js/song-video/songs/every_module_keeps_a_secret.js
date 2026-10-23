@@ -439,14 +439,14 @@
 
       // Only PayPalGateway knows PayPal exists; Stripe plugs in beside it.
       const paypal = ih.module(s, { x: 396, y: 318, w: 260, h: 74, name: 'PayPalGateway', at: mark('verse-2-9', 'paypal') });
-      ih.courier(s, { from: [526, 312], to: [526, 246], tone: 'gold', at: mark('verse-2-9', 'gateway'), period: 1.4 });
+      ih.implementsLink(s, { from: [526, 316], to: [526, 246], at: mark('verse-2-9', 'gateway') });
       ih.note(s, 'implements', { x: 538, y: 262, at: mark('verse-2-9', 'gateway') + 0.1, tone: 'gold', rotate: 0 });
       paypal.secret('PayPal decision', { at: mark('verse-2-9', 'knows'), dx: 6, dy: 56 });
       paypal.light(mark('verse-2-9', 'knows'), mark('verse-2-10', 'plug'));
       ih.module(s, { x: 724, y: 228, w: 200, h: 80, name: 'PayPal', kind: 'external', at: mark('verse-2-9', 'exists') - 0.2, until: mark('verse-2-10', 'stripe') });
       ih.courier(s, { from: [660, 346], to: [722, 288], tone: 'cyan', at: mark('verse-2-9', 'exists'), until: mark('verse-2-10', 'stripe'), period: 1.2 });
       const stripe = ih.module(s, { x: 688, y: 318, w: 250, h: 74, name: 'StripeGateway', at: mark('verse-2-10', 'write') });
-      ih.courier(s, { from: [700, 314], to: [646, 242], tone: 'gold', at: mark('verse-2-10', 'plug'), period: 1.4 });
+      ih.implementsLink(s, { from: [702, 316], to: [646, 244], at: mark('verse-2-10', 'plug') });
       stripe.light(mark('verse-2-10', 'plug'), end - 0.4, 'green');
       paypal.dim(mark('verse-2-10', 'plug'));
       kit.sticker(s, 'Plugged in: 1 line of wiring', { x: 640, y: 414, at: mark('verse-2-10', 'in'), variant: 'gold', iconName: 'plug', rotate: -3 });
@@ -532,12 +532,12 @@
       // The outlet is the interface; the power plant is the secret.
       const b = kit.scene(content, outletAt, end);
       ih.outlet(b, {
-        x: 40, y: 112, at: outletAt + 0.1,
+        x: 40, y: 98, at: outletAt + 0.1, blindAt: mark('verse-3-10', 'cant'),
         plants: [{ at: 0, kind: 'solar' }, { at: mark('verse-3-11', 'wind') - 0.1, kind: 'wind' }],
       });
       // "The outlet's the interface. The plant's the secret."
-      fx.rise(ih.publicTag(b, { text: 'Interface', x: 480, y: 92 }), mark('verse-3-12', 'interface') - 0.2, { distance: 10, duration: 0.3 });
-      const plant = ih.envelope(b, { text: 'Power plant', x: 92, y: 106 });
+      fx.rise(ih.publicTag(b, { text: 'Interface', x: 500, y: 172 }), mark('verse-3-12', 'interface') - 0.2, { distance: 10, duration: 0.3 });
+      const plant = ih.envelope(b, { text: 'Power plant', x: 100, y: 108 });
       plant.classList.add('ih-envelope--label');
       ih.show(plant, mark('verse-3-12', 'secret') - 0.2, undefined, { rotate: -3, from: 1.6 });
     }

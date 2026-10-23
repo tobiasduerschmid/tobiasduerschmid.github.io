@@ -775,12 +775,17 @@
   // ------------------------------------------------------------------
 
   /**
-   * A 880×350 cutaway: generation changes behind a stable grid/outlet contract.
-   * plants = [{ at, kind: 'solar' | 'wind' }], in absolute song seconds.
-   * The phone charges monotonically throughout the scene, including a source swap.
+   * An 880×360 cutaway of the outlet analogy. Left, behind the wall: the
+   * hidden power plant, a framed landscape that changes from a solar farm at
+   * noon to a wind farm at midnight (plants = [{ at, kind }]), with current
+   * running over a pylon into the brick wall. Right, in the room: the outlet
+   * (the stable interface), a charger, and a phone on a desk that keeps
+   * charging through every swap. On `blindAt` the charger gets a spy's
+   * blindfold: it can't tell where the power comes from. Pure function of
+   * song time; with reduced motion all decorative motion holds still.
    */
-  function outlet(parent, { x, y, scale = 1, at, until, plants }) {
-    const node = art(parent, { x, y, w: 880 * scale, h: 350 * scale, viewBox: '0 0 880 350', className: 'ih-power' });
+  function outlet(parent, { x, y, scale = 1, at, until, plants, blindAt }) {
+    const node = art(parent, { x, y, w: 880 * scale, h: 360 * scale, viewBox: '0 0 880 360', className: 'ih-power' });
     node.setAttribute('data-testid', 'ih-power-scene');
     const sorted = [...plants].sort((a, b) => a.at - b.at);
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -791,110 +796,187 @@
       tones.forEach((tone, i) => svg('stop', { offset: `${i * 100 / (tones.length - 1)}%`, class: `ih-power-${tone}` }, gradientNode));
       return `url(#${id}-${name})`;
     }
-    function label(parentNode, text, lx, ly, modifier = '') {
-      const textNode = svg('text', { class: `ih-power-label ${modifier}`, x: lx, y: ly, 'text-anchor': 'middle' }, parentNode);
+    const S = (parentNode, cls, attrs) => svg(attrs.d ? 'path' : attrs.r !== undefined ? 'circle' : attrs.rx !== undefined && attrs.width === undefined ? 'ellipse' : 'rect', { class: cls, ...attrs }, parentNode);
+    function label(parentNode, text, lx, ly, width) {
+      S(parentNode, 'ih-power-pill', { x: lx, y: ly, width, height: 32, rx: 16 });
+      const textNode = svg('text', { class: 'ih-power-label', x: lx + width / 2, y: ly + 23, 'text-anchor': 'middle' }, parentNode);
       textNode.textContent = text;
-      return textNode;
     }
     const dayPaint = gradient('day', ['day-top', 'day-bottom']);
     const nightPaint = gradient('night', ['night-top', 'night-bottom']);
     const porcelain = gradient('porcelain', ['porcelain-top', 'porcelain-bottom']);
-    const landscapeClip = svg('clipPath', { id: `${id}-landscape` }, defs);
-    svg('rect', { x: 20, y: 58, width: 300, height: 204, rx: 14 }, landscapeClip);
+    const screen = gradient('screen', ['screen-top', 'screen-bottom']);
+    const wood = gradient('wood', ['wood-top', 'wood-bottom']);
+    const clip = svg('clipPath', { id: `${id}-landscape` }, defs);
+    S(clip, '', { x: 14, y: 34, width: 330, height: 250, rx: 16 });
 
+    // ---- Behind the wall: the hidden plant -------------------------------
+    S(node, 'ih-power-hard-shadow', { x: 21, y: 41, width: 330, height: 250, rx: 16 });
     const landscape = svg('g', { 'clip-path': `url(#${id}-landscape)` }, node);
     const day = svg('g', { class: 'ih-power-source ih-power-source--solar', 'data-testid': 'ih-power-source', 'data-source': 'solar' }, landscape);
-    svg('rect', { x: 20, y: 58, width: 300, height: 204, fill: dayPaint }, day);
-    svg('path', { class: 'ih-power-hill-far', d: 'M20 193 Q90 155 161 191 Q243 144 320 183 V262 H20Z' }, day);
-    svg('path', { class: 'ih-power-hill', d: 'M20 222 Q109 189 192 216 Q265 194 320 221 V262 H20Z' }, day);
-    const sun = svg('g', { transform: 'translate(264 111)' }, day);
-    svg('circle', { class: 'ih-power-sun-halo', r: 34 }, sun);
-    svg('circle', { class: 'ih-power-sun', r: 24 }, sun);
-    for (const [px, py, s] of [[43, 208, 1], [175, 214, 0.86]]) {
-      const rack = svg('g', { transform: `translate(${px} ${py}) scale(${s})` }, day);
-      svg('path', { class: 'ih-power-rack', d: 'M14 7 V34 M98 7 V34 M14 29 H98' }, rack);
-      svg('path', { class: 'ih-power-panel-edge', d: 'M0 11 L16 -38 H120 L104 11 V17 H0Z' }, rack);
-      svg('path', { class: 'ih-power-panel', d: 'M0 11 L16 -38 H120 L104 11Z' }, rack);
-      svg('path', { class: 'ih-power-panel-grid', d: 'M5 -5 H109 M10 -21 H115 M26 11 L42 -38 M52 11 L68 -38 M78 11 L94 -38' }, rack);
-      svg('path', { class: 'ih-power-panel-reflection', d: 'M16 -38 H60 L43 11 H0Z' }, rack);
+    S(day, '', { x: 14, y: 34, width: 330, height: 250, fill: dayPaint });
+    const sun = svg('g', { transform: 'translate(282 92)' }, day);
+    S(sun, 'ih-power-sun-halo', { cx: 0, cy: 0, r: 44 });
+    const rays = svg('g', {}, sun);
+    for (let k = 0; k < 12; k++) {
+      const a = (k * 30) * Math.PI / 180;
+      S(rays, 'ih-power-ray', { d: `M${(31 * Math.cos(a)).toFixed(1)} ${(31 * Math.sin(a)).toFixed(1)} L${(40 * Math.cos(a)).toFixed(1)} ${(40 * Math.sin(a)).toFixed(1)}` });
     }
-    label(day, 'Solar · noon', 123, 91, 'ih-power-label--landscape');
+    S(sun, 'ih-power-sun', { cx: 0, cy: 0, r: 24 });
+    const cloud = svg('g', { class: 'ih-power-cloud' }, day);
+    for (const [cx, cy, r] of [[0, 0, 15], [18, -8, 19], [38, 0, 15], [18, 6, 14]]) S(cloud, '', { cx, cy, r });
+    S(day, 'ih-power-hill-far', { d: 'M14 200 Q92 160 172 196 Q252 156 344 190 V284 H14Z' });
+    S(day, 'ih-power-hill', { d: 'M14 234 Q110 204 200 230 Q280 210 344 228 V284 H14Z' });
+    const glints = [];
+    for (const [px, py, sc] of [[34, 236, 0.92], [142, 250, 0.84], [244, 240, 0.88]]) {
+      const rack = svg('g', { transform: `translate(${px} ${py}) scale(${sc})` }, day);
+      S(rack, 'ih-power-rack', { d: 'M18 0 V24 M90 0 V24 M12 24 H96' });
+      S(rack, 'ih-power-panel-edge', { d: 'M0 2 L16 -44 H112 L96 2 V8 H0Z' });
+      S(rack, 'ih-power-panel', { d: 'M0 2 L16 -44 H112 L96 2Z' });
+      S(rack, 'ih-power-panel-grid', { d: 'M6 -13 H102 M11 -29 H107 M24 2 L40 -44 M48 2 L64 -44 M72 2 L88 -44' });
+      glints.push(S(rack, 'ih-power-glint', { d: 'M30 2 L46 -44 H58 L42 2Z' }));
+    }
+    label(day, 'Solar · noon', 26, 246, 150);
 
     const night = svg('g', { class: 'ih-power-source ih-power-source--wind', 'data-testid': 'ih-power-source', 'data-source': 'wind', opacity: 0 }, landscape);
-    svg('rect', { x: 20, y: 58, width: 300, height: 204, fill: nightPaint }, night);
-    svg('path', { class: 'ih-power-night-hill-far', d: 'M20 218 Q100 167 188 213 Q256 174 320 205 V262 H20Z' }, night);
-    svg('path', { class: 'ih-power-night-hill', d: 'M20 240 Q100 210 180 239 Q258 217 320 236 V262 H20Z' }, night);
-    svg('path', { class: 'ih-power-moon', d: 'M273 86 A24 24 0 1 0 294 121 A24 24 0 0 1 273 86Z' }, night);
-    for (const [sx, sy] of [[51, 122], [208, 89], [231, 147], [301, 167], [171, 108]]) svg('circle', { class: 'ih-power-star', cx: sx, cy: sy, r: 1.7 }, night);
-    const turbines = [[105, 246, 0.8], [232, 251, 0.62]].map(([tx, ty, size]) => {
+    S(night, '', { x: 14, y: 34, width: 330, height: 250, fill: nightPaint });
+    const stars = [[44, 64], [92, 96], [140, 58], [196, 84], [230, 52], [118, 132], [58, 140], [318, 140], [176, 128], [252, 124]]
+      .map(([sx, sy], k) => S(night, 'ih-power-star', { cx: sx, cy: sy, r: 1.4 + (k % 3) * 0.5 }));
+    S(night, 'ih-power-moon-glow', { cx: 282, cy: 88, r: 38 });
+    S(night, 'ih-power-moon', { d: 'M282 62 A26 26 0 1 0 306 102 A22 22 0 0 1 282 62Z' });
+    S(night, 'ih-power-night-hill-far', { d: 'M14 214 Q100 168 188 210 Q256 172 344 202 V284 H14Z' });
+    S(night, 'ih-power-night-hill', { d: 'M14 244 Q100 214 180 240 Q258 220 344 238 V284 H14Z' });
+    const lights = [];
+    const turbines = [[70, 262, 0.78], [178, 270, 0.6], [282, 258, 0.7]].map(([tx, ty, size]) => {
       const tower = svg('g', { transform: `translate(${tx} ${ty}) scale(${size})` }, night);
-      svg('ellipse', { class: 'ih-power-shadow', cx: 7, cy: 0, rx: 36, ry: 5 }, tower);
-      svg('path', { class: 'ih-power-tower', d: 'M-6 0 L-3 -112 Q0 -116 3 -112 L6 0Z' }, tower);
-      svg('path', { class: 'ih-power-tower-shade', d: 'M1 -113 L3 -112 L6 0 H1Z' }, tower);
-      svg('rect', { class: 'ih-power-nacelle', x: -11, y: -119, width: 26, height: 12, rx: 5 }, tower);
+      S(tower, 'ih-power-tower', { d: 'M-6 0 L-3 -112 Q0 -116 3 -112 L6 0Z' });
+      S(tower, 'ih-power-tower-shade', { d: 'M1 -113 L3 -112 L6 0 H1Z' });
+      S(tower, 'ih-power-nacelle', { x: -11, y: -119, width: 26, height: 12, rx: 5 });
+      lights.push(S(tower, 'ih-power-beacon', { cx: 2, cy: -122, r: 3 }));
       const rotor = svg('g', { class: 'ih-power-rotor', 'data-testid': 'ih-power-rotor', transform: 'translate(0 -113)' }, tower);
-      for (let blade = 0; blade < 3; blade++) svg('path', { class: 'ih-power-blade', d: 'M-2 0 C-7 -14 -6 -37 -2 -59 Q0 -64 2 -58 L5 -13 Q6 -4 2 0Z', transform: `rotate(${blade * 120})` }, rotor);
-      svg('circle', { class: 'ih-power-rotor-hub', r: 6 }, rotor);
+      for (let blade = 0; blade < 3; blade++) S(rotor, 'ih-power-blade', { d: 'M-2 0 C-7 -14 -6 -37 -2 -59 Q0 -64 2 -58 L5 -13 Q6 -4 2 0Z', transform: `rotate(${blade * 120})` });
+      S(rotor, 'ih-power-rotor-hub', { cx: 0, cy: 0, r: 6 });
       return rotor;
     });
-    label(night, 'Wind · midnight', 126, 91, 'ih-power-label--landscape');
-    svg('rect', { class: 'ih-power-landscape-frame', x: 20, y: 58, width: 300, height: 204, rx: 14 }, node);
+    label(night, 'Wind · midnight', 26, 246, 178);
+    S(node, 'ih-power-frame-ink', { x: 14, y: 34, width: 330, height: 250, rx: 16 });
+    S(node, 'ih-power-frame', { x: 14, y: 34, width: 330, height: 250, rx: 16 });
 
-    // The grid conditions and distributes electricity before the public outlet.
-    const supplyPath = 'M303 221 H350 M440 221 H507';
-    svg('path', { class: 'ih-power-wire', d: supplyPath }, node);
-    const supplyFlow = svg('path', { class: 'ih-power-flow', 'data-testid': 'ih-power-flow', d: supplyPath }, node);
-    svg('rect', { class: 'ih-power-grid', x: 350, y: 184, width: 90, height: 74, rx: 12 }, node);
-    svg('path', { class: 'ih-power-sine', d: 'M363 221 C373 187 384 187 395 221 S417 255 427 221' }, node);
+    // ---- The pylon and the current running into the wall ------------------
+    S(node, 'ih-power-ground', { cx: 412, cy: 302, rx: 34, ry: 5 });
+    S(node, 'ih-power-pylon', { d: 'M396 300 L406 134 M428 300 L418 134 M406 134 L412 112 L418 134 M398 268 L426 232 L400 200 L424 170 L406 146 M426 268 L398 232 L424 200 L400 170 L418 146 M390 140 H434 M394 164 H430' });
+    for (const ix of [392, 432]) S(node, 'ih-power-insulator', { x: ix - 3, y: 140, width: 6, height: 9, rx: 2 });
+    const supplyPath = 'M344 172 Q368 204 392 149 M432 149 Q452 196 470 186 H494 V220 H536';
+    S(node, 'ih-power-wire', { d: supplyPath });
+    const supplyFlow = S(node, 'ih-power-flow', { 'data-testid': 'ih-power-flow', d: supplyPath });
 
-    // Fixed public side: the same outlet and connected charger survive the swap.
-    svg('rect', { class: 'ih-power-wall', x: 487, y: 58, width: 143, height: 204, rx: 12 }, node);
-    svg('path', { class: 'ih-power-wall-cut', d: 'M487 58 V262 M478 72 L487 64 M478 96 L487 88 M478 120 L487 112 M478 144 L487 136 M478 168 L487 160 M478 192 L487 184 M478 216 L487 208 M478 240 L487 232 M478 260 L487 252' }, node);
-    svg('rect', { class: 'ih-power-plate-shadow', x: 511, y: 90, width: 98, height: 160, rx: 17 }, node);
-    svg('rect', { class: 'ih-power-plate', 'data-testid': 'ih-power-outlet', x: 506, y: 84, width: 98, height: 160, rx: 15, fill: porcelain }, node);
-    svg('path', { class: 'ih-power-plate-highlight', d: 'M516 108 V101 Q516 94 523 94 H587' }, node);
-    for (const sy of [99, 230]) {
-      svg('circle', { class: 'ih-power-screw', cx: 555, cy: sy, r: 3 }, node);
-      svg('path', { class: 'ih-power-screw-slot', d: `M553 ${sy + 1} l4 -2` }, node);
+    // ---- The wall, cut open --------------------------------------------
+    S(node, 'ih-power-brick', { x: 470, y: 18, width: 50, height: 312 });
+    let mortar = '';
+    for (let by = 32; by < 330; by += 16) mortar += `M470 ${by} H520 `;
+    for (let row = 0, by = 18; by < 330; by += 16, row++) for (const bx of row % 2 ? [482, 506] : [494]) mortar += `M${bx} ${by} V${Math.min(330, by + 16)} `;
+    S(node, 'ih-power-mortar', { d: mortar });
+    S(node, 'ih-power-wire', { d: 'M470 186 H494 V220 H536' });
+    S(node, 'ih-power-flow ih-power-flow--wall', { d: 'M470 186 H494 V220 H536' });
+
+    // ---- The room: outlet, charger, desk, phone -------------------------
+    S(node, 'ih-power-hard-shadow', { d: 'M520 25 H860 Q873 25 873 38 V330 Q873 343 860 343 H520Z' });
+    S(node, 'ih-power-room', { d: 'M520 18 H853 Q866 18 866 31 V323 Q866 336 853 336 H520Z' });
+    let stripes = '';
+    for (let sx = 538; sx < 866; sx += 22) stripes += `M${sx} 18 V300 `;
+    S(node, 'ih-power-wallpaper', { d: stripes });
+    S(node, 'ih-power-lamp-light', { d: 'M686 74 L736 74 L812 250 L610 250Z' });
+    S(node, 'ih-power-lamp-cord', { d: 'M711 18 V52' });
+    S(node, 'ih-power-lamp-shade', { d: 'M690 74 Q692 52 711 52 Q730 52 732 74Z' });
+    S(node, 'ih-power-baseboard', { x: 520, y: 300, width: 346, height: 14 });
+    S(node, 'ih-power-floor', { d: 'M520 314 H866 V323 Q866 336 853 336 H520Z' });
+    S(node, 'ih-power-room-edge', { d: 'M520 18 H853 Q866 18 866 31 V323 Q866 336 853 336 H520Z' });
+
+    const outletGroup = svg('g', { 'data-testid': 'ih-power-outlet' }, node);
+    S(outletGroup, 'ih-power-plate-shadow', { x: 545, y: 156, width: 74, height: 116, rx: 12 });
+    S(outletGroup, 'ih-power-plate', { x: 540, y: 150, width: 74, height: 116, rx: 12, fill: porcelain });
+    S(outletGroup, 'ih-power-plate-highlight', { d: 'M549 172 V162 Q549 157 555 157 H600' });
+    for (const sy of [161, 255]) {
+      S(outletGroup, 'ih-power-screw', { cx: 577, cy: sy, r: 3 });
+      S(outletGroup, 'ih-power-screw-slot', { d: `M575 ${sy + 1} l4 -2` });
     }
-    svg('path', { class: 'ih-power-socket-outline', d: 'M533 117 Q555 105 577 117 L581 141 Q555 155 529 141Z' }, node);
-    svg('rect', { class: 'ih-power-socket', x: 541, y: 122, width: 5, height: 14, rx: 1 }, node);
-    svg('rect', { class: 'ih-power-socket', x: 562, y: 124, width: 5, height: 12, rx: 1 }, node);
-    svg('path', { class: 'ih-power-socket', d: 'M550 144 V140 Q555 133 560 140 V144Z' }, node);
-    const cablePath = 'M555 208 V231 C555 279 697 285 713 237 C719 220 709 211 731 211 H754';
-    svg('path', { class: 'ih-power-cable', d: cablePath }, node);
-    const cableFlow = svg('path', { class: 'ih-power-cable-flow', 'data-testid': 'ih-power-flow', d: cablePath }, node);
-    svg('rect', { class: 'ih-power-adapter-shadow', x: 531, y: 165, width: 54, height: 51, rx: 10 }, node);
-    svg('rect', { class: 'ih-power-adapter', x: 525, y: 159, width: 54, height: 51, rx: 10, fill: porcelain }, node);
-    svg('path', { class: 'ih-power-adapter-seam', d: 'M532 163 V195 Q532 202 539 202 H573' }, node);
-    svg('rect', { class: 'ih-power-usb', x: 546, y: 207, width: 14, height: 7, rx: 2 }, node);
+    for (const oy of [172, 214]) {
+      S(outletGroup, 'ih-power-socket-outline', { d: `M557 ${oy} Q577 ${oy - 9} 597 ${oy} L600 ${oy + 21} Q577 ${oy + 31} 554 ${oy + 21}Z` });
+      S(outletGroup, 'ih-power-socket', { x: 565, y: oy + 4, width: 4, height: 12, rx: 1 });
+      S(outletGroup, 'ih-power-socket', { x: 585, y: oy + 5, width: 4, height: 10, rx: 1 });
+      S(outletGroup, 'ih-power-socket', { d: `M573 ${oy + 23} V${oy + 19} Q577 ${oy + 13} 581 ${oy + 19} V${oy + 23}Z` });
+    }
 
-    svg('ellipse', { class: 'ih-power-shadow', cx: 790, cy: 265, rx: 50, ry: 7 }, node);
-    svg('rect', { class: 'ih-power-phone', x: 750, y: 87, width: 80, height: 168, rx: 17 }, node);
-    svg('rect', { class: 'ih-power-screen', x: 757, y: 94, width: 66, height: 154, rx: 11 }, node);
-    svg('rect', { class: 'ih-power-speaker', x: 777, y: 99, width: 26, height: 5, rx: 2 }, node);
-    svg('rect', { class: 'ih-power-battery-frame', x: 771, y: 146, width: 38, height: 58, rx: 5 }, node);
-    svg('rect', { class: 'ih-power-battery-cap', x: 782, y: 139, width: 16, height: 5, rx: 2 }, node);
-    const battery = svg('rect', { class: 'ih-power-battery', 'data-testid': 'ih-power-battery', x: 776, y: 180, width: 28, height: 19, rx: 2 }, node);
-    svg('path', { class: 'ih-power-bolt', d: 'M793 158 L781 177 H789 L786 191 L800 171 H791Z' }, node);
-    svg('path', { class: 'ih-power-phone-detail', d: 'M780 239 H800' }, node);
+    // The charger: a cheerful plug-in cube that never sees the power plant.
+    // Down from the charger, under the desk, and up into the phone's stand.
+    const cablePath = 'M577 262 C580 318 776 322 786 248';
+    S(node, 'ih-power-cable', { d: cablePath });
+    const cableFlow = S(node, 'ih-power-cable-flow', { 'data-testid': 'ih-power-flow', d: cablePath });
+    const charger = svg('g', { class: 'ih-power-charger' }, node);
+    S(charger, 'ih-power-adapter-shadow', { x: 554, y: 214, width: 52, height: 48, rx: 10 });
+    S(charger, 'ih-power-adapter', { x: 550, y: 210, width: 54, height: 50, rx: 10, fill: porcelain });
+    const led = S(charger, 'ih-power-led', { cx: 596, cy: 218, r: 2.6 });
+    for (const ex of [568, 586]) S(charger, 'ih-power-charger-eye', { cx: ex, cy: 232, r: 2.8 });
+    S(charger, 'ih-power-charger-smile', { d: 'M570 243 Q577 249 584 243' });
+    const blindfold = svg('g', { class: 'ih-power-blindfold', opacity: 0 }, charger);
+    S(blindfold, 'ih-power-blindfold-band', { x: 546, y: 225, width: 62, height: 13, rx: 4 });
+    S(blindfold, 'ih-power-blindfold-band', { d: 'M606 230 L620 222 L616 233 L622 242 L606 236Z' });
+
+    S(node, 'ih-power-desk-leg', { x: 658, y: 260, width: 8, height: 54 });
+    S(node, 'ih-power-desk-leg', { x: 846, y: 260, width: 8, height: 54 });
+    S(node, 'ih-power-desk', { x: 640, y: 250, width: 226, height: 12, rx: 3, fill: wood });
+    // A mug with gently rising steam, and a small potted plant.
+    S(node, 'ih-power-mug', { d: 'M676 222 H704 V244 Q704 250 698 250 H682 Q676 250 676 244Z' });
+    S(node, 'ih-power-mug-handle', { d: 'M704 228 Q714 228 714 236 Q714 244 704 244' });
+    const steam = [S(node, 'ih-power-steam', { d: 'M684 214 Q680 206 686 198 Q690 190 686 182' }), S(node, 'ih-power-steam', { d: 'M696 214 Q692 206 698 198 Q702 190 698 182' })];
+    S(node, 'ih-power-pot', { d: 'M832 232 H856 L852 250 H836Z' });
+    for (const d of ['M844 232 Q834 214 840 204 Q846 214 844 232', 'M844 232 Q852 212 862 210 Q858 224 844 232', 'M844 232 Q830 222 826 210 Q838 214 844 232']) S(node, 'ih-power-leaf', { d });
+
+    const glow = S(node, 'ih-power-screen-glow', { cx: 785, cy: 178, rx: 58, ry: 74 });
+    S(node, 'ih-power-stand', { d: 'M760 250 L772 232 H798 L810 250Z' });
+    S(node, 'ih-power-phone', { x: 748, y: 104, width: 74, height: 140, rx: 14 });
+    S(node, 'ih-power-screen', { x: 754, y: 112, width: 62, height: 124, rx: 9, fill: screen });
+    S(node, 'ih-power-speaker', { x: 774, y: 116, width: 22, height: 4, rx: 2 });
+    S(node, 'ih-power-battery-frame', { x: 769, y: 136, width: 32, height: 54, rx: 5 });
+    S(node, 'ih-power-battery-cap', { x: 778, y: 130, width: 14, height: 5, rx: 2 });
+    const battery = S(node, 'ih-power-battery', { 'data-testid': 'ih-power-battery', x: 773, y: 172, width: 24, height: 14, rx: 2 });
+    S(node, 'ih-power-bolt', { d: 'M788 146 L777 166 H785 L782 180 L795 158 H787Z' });
+    const percent = svg('text', { class: 'ih-power-percent', x: 785, y: 222, 'text-anchor': 'middle' }, node);
 
     onFrame((t) => {
+      const reduce = reducedMotion.matches;
       const current = latest(sorted, t) || sorted[0];
       const index = sorted.indexOf(current);
       const previous = index > 0 ? sorted[index - 1] : current;
-      const blend = reducedMotion.matches ? 1 : progress(t, current.at, 0.6);
+      const blend = reduce ? 1 : progress(t, current.at, 0.6);
       const nightOpacity = (previous.kind === 'wind' ? 1 : 0) * (1 - blend) + (current.kind === 'wind' ? 1 : 0) * blend;
       day.setAttribute('opacity', (1 - nightOpacity).toFixed(2));
       night.setAttribute('opacity', nightOpacity.toFixed(2));
-      const elapsed = Math.max(0, t - at);
-      const motionTime = reducedMotion.matches ? 0 : elapsed;
-      turbines.forEach((rotor, i) => rotor.setAttribute('transform', `translate(0 -113) rotate(${(motionTime * (24 + i * 6) % 360).toFixed(1)})`));
-      supplyFlow.setAttribute('stroke-dashoffset', (-motionTime * 24).toFixed(1));
-      cableFlow.setAttribute('stroke-dashoffset', (-motionTime * 24).toFixed(1));
-      const level = reducedMotion.matches ? 0.7 : 0.35 + 0.55 * progress(t, at, 12);
-      battery.setAttribute('height', (48 * level).toFixed(1));
-      battery.setAttribute('y', (199 - 48 * level).toFixed(1));
+      const m = reduce ? 0 : Math.max(0, t - at);
+      rays.setAttribute('transform', `rotate(${(m * 14 % 360).toFixed(1)})`);
+      cloud.setAttribute('transform', `translate(${(40 + (m * 9) % 340).toFixed(1)} 70)`);
+      glints.forEach((g, k) => g.setAttribute('opacity', (0.15 + 0.5 * Math.max(0, Math.sin(m * 1.6 - k * 1.1))).toFixed(2)));
+      stars.forEach((star, k) => star.setAttribute('opacity', (reduce ? 0.85 : 0.55 + 0.45 * Math.sin(m * 1.7 + k * 1.9)).toFixed(2)));
+      lights.forEach((light, k) => light.setAttribute('opacity', (reduce ? 1 : 0.35 + 0.65 * (Math.sin(m * 2.4 + k * 2) > 0 ? 1 : 0.2)).toFixed(2)));
+      turbines.forEach((rotor, k) => rotor.setAttribute('transform', `translate(0 -113) rotate(${(m * (30 + k * 7) % 360).toFixed(1)})`));
+      supplyFlow.setAttribute('stroke-dashoffset', (-m * 30).toFixed(1));
+      cableFlow.setAttribute('stroke-dashoffset', (-m * 30).toFixed(1));
+      led.setAttribute('opacity', (reduce ? 1 : 0.55 + 0.45 * Math.sin(m * 3)).toFixed(2));
+      glow.setAttribute('opacity', (reduce ? 0.5 : 0.4 + 0.15 * Math.sin(m * 2)).toFixed(2));
+      steam.forEach((wisp, k) => {
+        const phase = (m * 0.5 + k * 0.5) % 1;
+        wisp.setAttribute('opacity', (reduce ? 0.6 : Math.sin(phase * Math.PI) * 0.8).toFixed(2));
+        wisp.setAttribute('transform', `translate(0 ${(reduce ? 0 : -8 * phase).toFixed(1)})`);
+      });
+      // Blindfolded on "can't tell": it slides down over the charger's eyes.
+      const b = blindAt === undefined ? 0 : reduce ? Number(t >= blindAt) : easeInOutCubic(progress(t, blindAt, 0.35));
+      blindfold.setAttribute('opacity', Math.min(1, b * 1.5).toFixed(2));
+      blindfold.setAttribute('transform', `translate(0 ${(-14 * (1 - b)).toFixed(1)})`);
+      const level = reduce ? 0.7 : 0.35 + 0.55 * progress(t, at, 12);
+      battery.setAttribute('height', (46 * level).toFixed(1));
+      battery.setAttribute('y', (186 - 46 * level).toFixed(1));
+      const text = `${Math.round(level * 100)}%`;
+      if (percent.textContent !== text) percent.textContent = text;
     });
     fx.fadeIn(node, at, 0.35);
     if (until !== undefined) fx.fadeOut(node, until, 0.3);
@@ -1089,9 +1171,10 @@
   /**
    * A route from `from` to `to` (bowed by `bend`), drawn on at `at`, along
    * which envelopes travel every `period` seconds until `until`. tone =
-   * gold | cyan | pink | red. arrow adds a head at `to`.
+   * gold | cyan | pink | red. Every route ends in an arrowhead at `to`:
+   * a call always shows which way the message goes.
    */
-  function courier(parent, { from, to, bend = 0, at, until, tone = 'gold', period = 1.8, carriers = 1, arrow = true }) {
+  function courier(parent, { from, to, bend = 0, at, until, tone = 'gold', period = 1.8, carriers = 1 }) {
     const art = svg('svg', { class: 'ih-route-art is-staged', viewBox: '0 0 960 540', 'aria-hidden': 'true' }, parent);
     const [x1, y1] = from;
     const [x2, y2] = to;
@@ -1102,11 +1185,6 @@
     const ink = svg('path', { class: `ih-route-draw ih-route--${tone}`, d: `M ${x1} ${y1} Q ${cx} ${cy} ${x2} ${y2}` }, art);
     fx.draw(ink, at, 0.35);
     tween(path, [{ opacity: 0 }, { opacity: 1 }], at + 0.3, 0.1, EASE.out);
-    if (arrow) {
-      const angle = Math.atan2(y2 - cy, x2 - cx) * 180 / Math.PI;
-      const head = svg('path', { class: `ih-route-head ih-route-head--${tone} is-staged`, d: 'M 0 0 L -13 -7 L -13 7 Z', transform: `translate(${x2} ${y2}) rotate(${angle.toFixed(1)})` }, art);
-      fx.fadeIn(head, at + 0.3, 0.1);
-    }
     const letters = Array.from({ length: carriers }, () => {
       const g = svg('g', { class: 'ih-route-letter', opacity: 0 }, art);
       svg('rect', { x: -9, y: -6.5, width: 18, height: 13, rx: 1.5 }, g);
@@ -1114,6 +1192,13 @@
       svg('circle', { class: 'ih-route-wax', cx: 0, cy: 1.5, r: 2.4 }, g);
       return g;
     });
+    // A message always has a direction: a filled arrowhead with an ink edge,
+    // drawn above the envelopes, which deliver just short of it.
+    const angle = Math.atan2(y2 - cy, x2 - cx) * 180 / Math.PI;
+    const head = svg('path', { class: `ih-route-head ih-route-head--${tone} is-staged`, d: 'M 1 0 L -15 -8.5 L -15 8.5 Z', transform: `translate(${x2} ${y2}) rotate(${angle.toFixed(1)})` }, art);
+    fx.fadeIn(head, at + 0.3, 0.1);
+    const length = Math.hypot(cx - x1, cy - y1) + Math.hypot(x2 - cx, y2 - cy);
+    const reach = Math.max(0.5, 1 - 24 / Math.max(1, length));
     const end = until ?? Infinity;
     onFrame((t) => {
       letters.forEach((g, k) => {
@@ -1122,15 +1207,40 @@
           g.setAttribute('opacity', '0');
           return;
         }
-        const p = (age % period) / period;
+        const phase = (age % period) / period;
+        const p = phase * reach;
         const q = 1 - p;
         const px = q * q * x1 + 2 * q * p * cx + p * p * x2;
         const py = q * q * y1 + 2 * q * p * cy + p * p * y2;
         g.setAttribute('transform', `translate(${px.toFixed(1)} ${py.toFixed(1)})`);
-        g.setAttribute('opacity', Math.min(1, p * 6, (1 - p) * 6).toFixed(2));
+        g.setAttribute('opacity', Math.min(1, phase * 6, (1 - phase) * 6).toFixed(2));
       });
     });
     fx.fadeIn(art, at, 0.05);
+    if (until !== undefined) fx.fadeOut(art, until - 0.25, 0.25);
+    return art;
+  }
+
+  /**
+   * "Implements" (UML realization): a dashed cream line from the
+   * implementing module to the interface it fulfils, ending in a hollow
+   * triangle. No envelopes travel on it: it is a promise kept, not a call.
+   */
+  function implementsLink(parent, { from, to, at, until }) {
+    const art = svg('svg', { class: 'ih-realize-art is-staged', viewBox: '0 0 960 540', 'aria-hidden': 'true' }, parent);
+    const [x1, y1] = from;
+    const [x2, y2] = to;
+    const angle = Math.atan2(y2 - y1, x2 - x1);
+    // The line stops at the triangle's base, so the hollow head stays empty.
+    const bx = x2 - Math.cos(angle) * 20;
+    const by = y2 - Math.sin(angle) * 20;
+    svg('path', { class: 'ih-realize-shadow', d: `M ${x1} ${y1} L ${bx.toFixed(1)} ${by.toFixed(1)}` }, art);
+    svg('path', { class: 'ih-realize-line', d: `M ${x1} ${y1} L ${bx.toFixed(1)} ${by.toFixed(1)}` }, art);
+    // The head's placement lives on a wrapper group, so animating the
+    // triangle itself never overrides where it points.
+    const anchor = svg('g', { transform: `translate(${x2} ${y2}) rotate(${(angle * 180 / Math.PI).toFixed(1)})` }, art);
+    svg('path', { class: 'ih-realize-head', d: 'M 0 0 L -20 -12 L -20 12 Z' }, anchor);
+    fx.fadeIn(art, at, 0.3);
     if (until !== undefined) fx.fadeOut(art, until - 0.25, 0.25);
     return art;
   }
@@ -1447,16 +1557,17 @@
   function contractExchange(parent, { at, actorsAt, contractAt, protocolAt, confirmedAt }) {
     const node = el('div', 'ih-contract-exchange', parent);
     heading(node, ['Show what ', 'callers', ' need to know'], { x: 64, y: 62, at });
-    module(node, { x: 40, y: 286, w: 190, h: 80, name: 'Client', iconName: 'laptop', at: actorsAt });
-    const server = module(node, { x: 668, y: 258, w: 262, h: 136, name: 'Server', iconName: 'stack', at: actorsAt + 0.15 });
+    module(node, { x: 36, y: 286, w: 176, h: 80, name: 'Client', iconName: 'laptop', at: actorsAt });
+    const server = module(node, { x: 684, y: 258, w: 248, h: 136, name: 'Server', iconName: 'stack', at: actorsAt + 0.15 });
     server.secret('SQL or NoSQL', { at: contractAt + 0.3, dx: 8, dy: 66 });
     const contract = module(node, {
-      x: 304, y: 246, w: 320, h: 132, name: 'Contract', iconName: 'file', kind: 'interface', at: contractAt,
+      x: 278, y: 246, w: 320, h: 132, name: 'Contract', iconName: 'file', kind: 'interface', at: contractAt,
       lines: [{ text: 'Stateless or stateful?', at: protocolAt }],
     });
     contract.node.classList.add('ih-contract');
-    courier(node, { from: [234, 326], to: [300, 326], tone: 'gold', at: contractAt + 0.2, period: 1.5 });
-    courier(node, { from: [664, 326], to: [628, 326], tone: 'gold', at: contractAt + 0.35, period: 1.5, arrow: false });
+    courier(node, { from: [216, 326], to: [272, 326], tone: 'gold', at: contractAt + 0.2, period: 1.5 });
+    // The server is not a caller: it implements the contract.
+    implementsLink(node, { from: [680, 326], to: [604, 326], at: contractAt + 0.35 });
     contract.light(confirmedAt);
     contract.verdict('In the contract', { at: confirmedAt, dx: 140, dy: 116 });
     return node;
@@ -2530,7 +2641,7 @@
   }
 
   window.InfoHidingKit = {
-    latest, show, during, note, heading, paper, list, bubble, publicTag, digits, clock, counter, cashIntoMemory, cashBurst, agingPerson, apolloCount,
+    latest, show, during, note, heading, paper, list, bubble, publicTag, implementsLink, digits, clock, counter, cashIntoMemory, cashBurst, agingPerson, apolloCount,
     apolloPortrait, car, overflowingHead, steps, systemSplit, calendar, iceberg, toggle, waterline, outlet, dossier,
     decrypt, module, envelope, courier, laser, spotlight, lamp, agent, transmission, code, search,
     contractExchange, changeImpactGraph, mainframeMemory, stringWeb, mud, bug, stampTool, grid, vault, submarine, slip, iris,
