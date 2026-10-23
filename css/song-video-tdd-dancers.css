@@ -697,8 +697,7 @@
   stroke-linecap: round;
 }
 
-.tdd-button-shine,
-.tdd-lamp-glint {
+.tdd-button-shine {
   fill: rgba(255, 255, 255, 0.85);
 }
 

@@ -890,8 +890,9 @@
       // they come forward, part for a solo each, then join for the show.
       const show = duo;
       show.place(mark('bridge-6', 'fine') - 1.2, { x: 690, y: 456, scale: 1.06 }, 1.2);
-      show.hold(mark('bridge-6', 'fine') - 0.3, { release: true, pose: 'stand', dur: 0.4 });
-      show.step('test', mark('bridge-6', 'fine') - 0.2, -46, 0.6).step('code', mark('bridge-6', 'fine') - 0.2, 46, 0.6);
+      // They let go first, then step apart into their solos.
+      show.hold(mark('bridge-6', 'fine') - 0.9, { release: true, pose: 'stand', dur: 0.8 });
+      show.step('test', mark('bridge-6', 'fine'), -46, 0.8).step('code', mark('bridge-6', 'fine'), 46, 0.8);
       show.pose('test', mark('bridge-6', 'fine'), 'solo').pose('code', mark('bridge-6', 'solo'), 'spotlight', { armL: { sh: 40, el: 30 } });
       tdd.note(c, 'solo ✓', { x: 440, y: 412, at: mark('bridge-6', 'solo'), until: mark('bridge-6', 'whole'), tone: 'green' });
       tdd.note(c, 'solo ✓', { x: 872, y: 412, at: mark('bridge-6', 'steps'), until: mark('bridge-6', 'whole'), tone: 'green' });

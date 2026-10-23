@@ -250,11 +250,21 @@
     return centre;
   }
 
-  /** Two-bone IK: rotations that bring a hand from the shoulder to target. */
+  /**
+   * Two-bone IK: rotations that bring a hand from the shoulder to target.
+   * Near full extension the reach eases in (it never locks straight in a
+   * single frame), so an arm stretching for a target out of reach slows
+   * into a long line instead of snapping into it.
+   */
   function reach(shoulder, target, upper, fore, bendSign) {
     const dx = target[0] - shoulder[0];
     const dy = target[1] - shoulder[1];
-    const d = clamp(Math.hypot(dx, dy), Math.abs(upper - fore) + 1, upper + fore - 0.5);
+    const full = upper + fore - 0.5;
+    const knee = full - 6;
+    const span = Math.hypot(dx, dy);
+    const d = span <= knee
+      ? Math.max(span, Math.abs(upper - fore) + 1)
+      : knee + (full - knee) * (1 - Math.exp(-(span - knee) / (full - knee)));
     const toTarget = Math.atan2(dy, dx);
     const atShoulder = Math.acos(clamp((upper * upper + d * d - fore * fore) / (2 * upper * d), -1, 1));
     const atElbow = Math.acos(clamp((upper * upper + fore * fore - d * d) / (2 * upper * fore), -1, 1));
@@ -485,21 +495,26 @@
     svg('path', { class: 'tdd-coat-seam', d: 'M-20.5 -122 Q0 -117 20.5 -122' }, torso);
     // Where the coat's two fronts overlap, down from the lapels to the hem.
     svg('path', { class: 'tdd-coat-front', d: 'M-1.2 -131 C-0.9 -118 -1.1 -107 -1.6 -97.6' }, torso);
-    svg('path', { class: 'tdd-shirt', d: 'M-11 -177 L0 -128 L11 -177 Q0 -180 -11 -177 Z' }, torso);
-    for (const y of [-163, -152]) svg('circle', { class: 'tdd-stud', cx: 0, cy: y, r: 1.3 }, torso);
-    svg('path', { class: 'tdd-lapel', fill: `url(#${id}-satin)`, d: 'M-11 -177 L-2 -132 L-16 -156 L-12 -162 L-19 -170 Z' }, torso);
-    svg('path', { class: 'tdd-lapel tdd-lapel--shade', d: 'M11 -177 L2 -132 L16 -156 L12 -162 L19 -170 Z' }, torso);
+    // The upper arms sit on the coat, under the shirt front, lapels, bow
+    // tie, and badge, which lie on top of the sleeves' shoulders; the
+    // forearms (and anything a hand reaches across) come in front of all.
+    const upperArms = svg('g', { class: 'tdd-arms-upper' }, lean);
+    const front = svg('g', {}, lean);
+    svg('path', { class: 'tdd-shirt', d: 'M-11 -177 L0 -128 L11 -177 Q0 -180 -11 -177 Z' }, front);
+    for (const y of [-163, -152]) svg('circle', { class: 'tdd-stud', cx: 0, cy: y, r: 1.3 }, front);
+    svg('path', { class: 'tdd-lapel', fill: `url(#${id}-satin)`, d: 'M-11 -177 L-2 -132 L-16 -156 L-12 -162 L-19 -170 Z' }, front);
+    svg('path', { class: 'tdd-lapel tdd-lapel--shade', d: 'M11 -177 L2 -132 L16 -156 L12 -162 L19 -170 Z' }, front);
     for (const y of [-124, -114]) {
-      svg('circle', { class: 'tdd-button', cx: 0, cy: y, r: 1.9 }, torso);
-      svg('circle', { class: 'tdd-button-shine', cx: -0.6, cy: y - 0.6, r: 0.6 }, torso);
+      svg('circle', { class: 'tdd-button', cx: 0, cy: y, r: 1.9 }, front);
+      svg('circle', { class: 'tdd-button-shine', cx: -0.6, cy: y - 0.6, r: 0.6 }, front);
     }
     // A satin edge where each lapel rolls over.
-    svg('path', { class: 'tdd-lapel-edge', d: 'M-11 -177 L-2 -132 M11 -177 L2 -132' }, torso);
-    svg('path', { class: 'tdd-bowtie', d: 'M0 -175 L-10 -181 L-10 -168 Z M0 -175 L10 -181 L10 -168 Z' }, torso);
+    svg('path', { class: 'tdd-lapel-edge', d: 'M-11 -177 L-2 -132 M11 -177 L2 -132' }, front);
+    svg('path', { class: 'tdd-bowtie', d: 'M0 -175 L-10 -181 L-10 -168 Z M0 -175 L10 -181 L10 -168 Z' }, front);
     // Folds pinched into each wing of the bow tie.
-    svg('path', { class: 'tdd-bowtie-fold', d: 'M-3 -175 L-8 -177.5 M-3 -175 L-8 -172 M3 -175 L8 -177.5 M3 -175 L8 -172' }, torso);
-    svg('rect', { class: 'tdd-bowtie-knot', x: -3, y: -178, width: 6, height: 6, rx: 1.5 }, torso);
-    const badge = svg('g', { class: 'tdd-badge', transform: 'translate(14 -146)' }, torso);
+    svg('path', { class: 'tdd-bowtie-fold', d: 'M-3 -175 L-8 -177.5 M-3 -175 L-8 -172 M3 -175 L8 -177.5 M3 -175 L8 -172' }, front);
+    svg('rect', { class: 'tdd-bowtie-knot', x: -3, y: -178, width: 6, height: 6, rx: 1.5 }, front);
+    const badge = svg('g', { class: 'tdd-badge', transform: 'translate(14 -146)' }, front);
     svg('circle', { class: 'tdd-badge-disc', r: 7.5 }, badge);
     const badgeGlyph = svg('path', { class: 'tdd-badge-glyph' }, badge);
     // The lamp head: a brass socket and a glass dome with a face on it.
@@ -510,17 +525,15 @@
     const glass = svg('circle', { class: 'tdd-lamp-glass', cx: 0, cy: -214, r: 26 }, dome);
     svg('path', { class: 'tdd-lamp-rim', d: 'M-20 -197 Q0 -188 20 -197' }, dome);
     svg('path', { class: 'tdd-lamp-shine', d: 'M-15 -229 Q-9 -236 0 -237' }, dome);
-    // Glass depth: a soft inner rim and a small second glint low on the dome.
+    // Glass depth: a soft inner rim low on the dome.
     svg('path', { class: 'tdd-lamp-refraction', d: 'M-21 -206 Q-20 -196 -10 -191' }, dome);
-    svg('circle', { class: 'tdd-lamp-glint', cx: 15, cy: -200, r: 1.6 }, dome);
     const faceGroup = svg('g', { transform: 'translate(0 -210)' }, dome);
     const faceRig = face(faceGroup, { eyeX: 8, eyeY: -5, mouthY: 7, browY: -12, iris: `url(#${id}-iris)`, seed: uid * 7 + 11 });
-    // His sleeves are set into the tailcoat at the shoulder: each whole arm
-    // is drawn in front of the coat, so a hanging elbow beside the coat's
-    // edge reads as one limb (an upper arm behind the coat with a forearm in
-    // front of it broke the coat's edge at the elbow).
+    // His sleeves are set into the tailcoat at the shoulder: each upper arm
+    // lies on the coat (so a hanging elbow beside the coat's edge reads as
+    // one limb), under the lapels, and each forearm comes in front.
     const frontArms = svg('g', { class: 'tdd-arms-front' }, lean);
-    const arms = { L: arm(frontArms, frontArms, 'test', 'L', body, id), R: arm(frontArms, frontArms, 'test', 'R', body, id) };
+    const arms = { L: arm(upperArms, frontArms, 'test', 'L', body, id), R: arm(upperArms, frontArms, 'test', 'R', body, id) };
 
     /**
      * A tapered trouser leg from hip to ankle, and its side stripe. Seen from
@@ -570,8 +583,6 @@
       body,
       root,
       arms,
-      /** The frame the arms hang in (shoulders), in the troupe's floor coordinates. */
-      armFrame: (s) => `translate(${f(s.x)} ${f(s.y)}) scale(${f(s.spin)} 1) translate(0 ${f(s.bob)}) rotate(${f(s.lean)} 0 ${body.hipY})`,
       apply(t, s) {
         root.setAttribute('transform', `translate(${f(s.x)} ${f(s.y)})`);
         shadow.setAttribute('rx', f(34 + s.bob * 0.4));
@@ -675,6 +686,12 @@
   function cubicAt([p0, p1, p2, p3], t) {
     const u = 1 - t;
     return [0, 1].map((k) => u * u * u * p0[k] + 3 * u * u * t * p1[k] + 3 * u * t * t * p2[k] + t * t * t * p3[k]);
+  }
+
+  /** Where Code's inner (left) shoulder is, in the troupe's floor coordinates. */
+  function heldShoulder(s, body) {
+    const p = rotateAbout(rotateAbout([-body.shoulder[0], body.shoulder[1]], [0, body.chestY], s.arch || 0), [0, body.hipY], s.lean);
+    return [s.x + s.spin * p[0], s.y + s.bob + p[1]];
   }
 
   /** An angle wrapped into (-π, π]. */
@@ -926,8 +943,18 @@
       body,
       root,
       arms,
-      /** The frame the arms hang in (shoulders, with the spine's arch), in the troupe's floor coordinates. */
-      armFrame: (s) => `translate(${f(s.x)} ${f(s.y)}) scale(${f(s.spin)} 1) translate(0 ${f(s.bob)}) rotate(${f(s.lean)} 0 ${body.hipY}) rotate(${f(s.arch || 0)} 0 ${body.chestY})`,
+      /**
+       * The frame her inner arm hangs in while it is held (troupe floor
+       * coordinates): pinned at her shoulder as her body turns, but never
+       * narrowed with the body, so an arm raised to her partner keeps its
+       * length while she turns beneath it. Front-on it is exactly her body's
+       * own frame.
+       */
+      armFrame: (s) => {
+        const [sx, sy] = heldShoulder(s, body);
+        const [px, py] = [-body.shoulder[0], body.shoulder[1]];
+        return `translate(${f(sx)} ${f(sy)}) rotate(${f(s.lean + (s.arch || 0))}) translate(${f(-px)} ${f(-py)})`;
+      },
       apply(t, s) {
         root.setAttribute('transform', `translate(${f(s.x)} ${f(s.y)})`);
         shadow.setAttribute('rx', f(46 + s.flare * 0.5 + s.bob * 0.4));
@@ -1148,17 +1175,16 @@
     });
     // In the hold Code's arm reaches round behind Test's shoulder and his
     // arm reaches behind her back. From the front her inner arm is behind
-    // his body and his arm (so her hand travels behind his back whenever it
-    // moves to or from his shoulder), his inner arm is in front of his body
-    // but behind hers, and her hand, once it rests on his shoulder, lies on
-    // top of it. Back to front: her arm, Test, his arm, her resting hand,
-    // Code.
+    // his body and arms (so her hand travels behind his back whenever it
+    // moves to or from his shoulder); his arms keep their own layers, all
+    // behind her; and her hand, once it rests on his shoulder, lies on top
+    // of it. Back to front: her arm, Test, her resting hand, Code.
     const holdLayers = dancers.test && dancers.code
-      ? { code: svg('g', {}, floor), test: svg('g', {}, floor), codeHand: svg('g', {}, floor) }
+      ? { code: svg('g', {}, floor), codeHand: svg('g', {}, floor) }
       : null;
     if (holdLayers) {
       floor.insertBefore(holdLayers.code, dancers.test.rig.root);
-      for (const layer of [holdLayers.test, holdLayers.codeHand]) floor.insertBefore(layer, dancers.code.rig.root);
+      floor.insertBefore(holdLayers.codeHand, dancers.code.rig.root);
     }
     /** Puts an arm (and, given handLayer, its hand) in the hold layers, or back in its dancer's own layers. */
     function layerArm(rig, side, layer, handLayer) {
@@ -1432,11 +1458,15 @@
       return { velocity, amount: smooth((Math.abs(velocity) - 6) / 40) };
     }
 
-    /** How far an underarm turn is under way at t (0 outside one, 1 in it). */
+    /**
+     * How far an underarm turn is under way at t (0 outside one, 1 in it):
+     * the joined hands rise into the arch over the turn's preparation and
+     * come down again through its finish, unhurried at both ends.
+     */
     function archAt(t) {
-      const turn = twirls.find((tw) => tw.who === 'code' && !tw.solo && t >= tw.at - 0.5 && t <= tw.at + tw.dur + 0.5);
+      const turn = twirls.find((tw) => tw.who === 'code' && !tw.solo && t >= tw.at - 0.8 && t <= tw.at + tw.dur + 0.8);
       if (!turn || !dancers.test || !dancers.code) return 0;
-      return smooth((t - turn.at + 0.5) / 0.5) * smooth((turn.at + turn.dur + 0.5 - t) / 0.5);
+      return smooth((t - turn.at + 0.8) / 0.75) * smooth((turn.at + turn.dur + 0.8 - t) / 0.75);
     }
 
     /**
@@ -1642,7 +1672,7 @@
         const lines = TURN_ARMS[tw.solo ? 'solo' : 'partnered'];
         const stages = [
           [lines.prep, smooth((t - tw.at + TURN.prep) / (TURN.prep * 0.85))],
-          [lines.turn, smooth((t - tw.at + 0.16) / 0.36)],
+          [lines.turn, smooth((t - tw.at + 0.2) / 0.46)],
           [lines.finish, smooth((t - end + 0.45) / 0.5)],
         ];
         const release = smooth((t - end - TURN.finish + 0.55) / 0.55);
@@ -1654,38 +1684,53 @@
         }
       }
       if (couple && s.hold > 0) {
-        const target = isTest ? couple.test : couple.code;
+        const plan = isTest ? couple.test : couple.code;
         const body = dancer.rig.body;
         const side = isTest ? 'R' : 'L';
         const sign = side === 'L' ? -1 : 1;
-        // Target in this dancer's un-leaned, un-turned body coordinates.
-        const local = rotateAbout(rotateAbout([(target[0] - s.x) / (s.spin || 1), target[1] - s.y - s.bob], [0, body.hipY], -s.lean), [0, CHEST_Y], -s.arch);
-        const shoulder = [sign * body.shoulder[0], body.shoulder[1]];
-        const solved = reach(shoulder, local, body.upper, body.fore, side === 'R' ? 1 : -1);
         const key = `arm${side}`;
-        // atan2 wraps at ±180°, so the solver's shoulder angle can come back a
-        // whole turn from the poses it blends with. Keep it in the arm's own
-        // range (the one every pose is written in: a left arm from across the
-        // chest, through hanging and out, up to just past overhead; a right
-        // arm mirrored), so the blend into and out of the hold never snaps.
-        if (side === 'L') {
-          while (solved.sh > 240) solved.sh -= 360;
-          while (solved.sh <= -120) solved.sh += 360;
-        } else {
-          while (solved.sh < -240) solved.sh += 360;
-          while (solved.sh >= 120) solved.sh -= 360;
-        }
-        solved.wr = s[key].wr || 0;
-        if (!isTest && couple.drape > 0) {
-          // Aim the palm down over his shoulder, independent of the elbow
-          // angle. During a turn the hands join overhead instead.
-          const direction = rotateAbout([couple.palm[0] / (s.spin || 1), couple.palm[1]], [0, 0], -s.lean - s.arch);
-          let wrist = Math.atan2(-direction[0], direction[1]) * 180 / Math.PI - solved.sh - solved.el;
-          while (wrist - solved.wr > 180) wrist -= 360;
-          while (wrist - solved.wr < -180) wrist += 360;
-          solved.wr += (wrist - solved.wr) * couple.drape;
-        }
-        s[key] = mix(s[key], solved, s.hold);
+        const shoulder = [sign * body.shoulder[0], body.shoulder[1]];
+        const solve = (target, palm) => {
+          // Target in this dancer's un-leaned, un-turned body coordinates;
+          // her held arm (see Code's armFrame) is never narrowed by her turn.
+          let local;
+          if (isTest) local = rotateAbout(rotateAbout([(target[0] - s.x) / (s.spin || 1), target[1] - s.y - s.bob], [0, body.hipY], -s.lean), [0, CHEST_Y], -s.arch);
+          else {
+            const [sx, sy] = heldShoulder(s, body);
+            local = rotateAbout([target[0] - sx + shoulder[0], target[1] - sy + shoulder[1]], shoulder, -s.lean - s.arch);
+          }
+          const solved = reach(shoulder, local, body.upper, body.fore, side === 'R' ? 1 : -1);
+          // atan2 wraps at ±180°, so the solver's shoulder angle can come back
+          // a whole turn from the poses it blends with. Keep it in the arm's
+          // own range (the one every pose is written in: a left arm from
+          // across the chest, through hanging and out, up to just past
+          // overhead; a right arm mirrored), so blends never snap.
+          if (side === 'L') {
+            while (solved.sh > 240) solved.sh -= 360;
+            while (solved.sh <= -120) solved.sh += 360;
+          } else {
+            while (solved.sh < -240) solved.sh += 360;
+            while (solved.sh >= 120) solved.sh -= 360;
+          }
+          solved.wr = s[key].wr || 0;
+          if (palm) {
+            // Aim the hand along his shoulder, independent of the elbow.
+            const direction = rotateAbout(palm, [0, 0], -s.lean - s.arch);
+            let wrist = Math.atan2(-direction[0], direction[1]) * 180 / Math.PI - solved.sh - solved.el;
+            while (wrist - solved.wr > 180) wrist -= 360;
+            while (wrist - solved.wr < -180) wrist += 360;
+            solved.wr = wrist;
+          }
+          return solved;
+        };
+        // The joined hands (low between them, or raised into an arch) are
+        // one shared point, so both partners reach for it exactly. Moving
+        // between that and the partner's own hold (his hand on her back, hers
+        // on his shoulder), the arm swings in joint space, an arc about the
+        // shoulder, never along a straight line through a head.
+        const joined = solve(plan.joined, null);
+        const own = plan.ownWeight > 0 ? solve(plan.own, plan.palm) : joined;
+        s[key] = mix(s[key], mix(joined, own, plan.ownWeight), s.hold);
       }
       return s;
     }
@@ -1740,26 +1785,23 @@
         const drop = 30 + 26 * Math.max(raw.test.low, raw.code.low) - (w ? 16 * w.fade : 0);
         const hands = [(a[0] + b[0]) / 2, Math.max(a[1], b[1]) + drop];
         // Promenade hold: Test's hand on Code's back, behind her; Code's hand
-        // resting on top of Test's near shoulder, her arm in a long line.
+        // resting on his near shoulder.
         const back = on('code', [-2, -150]);
-        // Her hand lies along the top of his shoulder, fingers toward his
-        // neck: the palm's centre just above the coat's shoulder line, the
-        // wrist above the shoulder's corner, clear of his raised arm.
-        const contact = on('test', [21, -179.5]);
-        const palm = rotateAbout([-6.8, 2.2], [0, 0], raw.test.lean);
+        // Her hand rests on the cap of his shoulder, its fingers following the
+        // shoulder's slope up toward his neck: the palm's centre on the slope,
+        // the wrist on the top of his upper arm, clear of the lapel.
+        const contact = on('test', [23.5, -174]);
+        const palm = rotateAbout([-5.4, -4.7], [0, 0], raw.test.lean);
         // IK targets the wrist; the palm, not the cuff, rests on the shoulder.
         const shoulder = [contact[0] - palm[0], contact[1] - palm[1]];
         // Underarm turn: the joined hands rise into the gap between the two
-        // heads, his arm nearly straight up; as she turns side-on beneath
-        // them they travel in over her own axis, where her arm can still
-        // reach them, and back out as she comes round to face front.
-        const side = clamp((1 - Math.abs(raw.code.spin)) / (1 - TURN.depth), 0, 1);
-        const arch = [raw.code.x - 50 + 34 * side, raw.code.y + raw.code.bob - 222 + 3 * side];
+        // heads, clear of both, and stay there while she turns beneath them.
+        const arch = [raw.code.x - 36, raw.code.y + raw.code.bob - 220];
         const k = archAt(t);
+        const joined = lerp(hands, arch, k);
         couple = {
-          palm, drape: raw.code.embrace * (1 - k),
-          test: lerp(lerp(hands, back, raw.test.embrace), arch, k),
-          code: lerp(lerp(hands, shoulder, raw.code.embrace), arch, k),
+          test: { joined, own: back, ownWeight: raw.test.embrace * (1 - k), palm: null },
+          code: { joined, own: shoulder, ownWeight: raw.code.embrace * (1 - k), palm },
         };
       }
       const finals = {};
@@ -1780,11 +1822,9 @@
         // lies along the shoulder line, so little of it is revealed); on its
         // way there and away it travels behind his back with her arm.
         layerArm(dancers.code.rig, 'L', held ? holdLayers.code : null, finals.code.embrace > 0.97 ? holdLayers.codeHand : null);
-        layerArm(dancers.test.rig, 'R', held ? holdLayers.test : null);
         if (held) {
           holdLayers.code.setAttribute('transform', dancers.code.rig.armFrame(finals.code));
           holdLayers.codeHand.setAttribute('transform', dancers.code.rig.armFrame(finals.code));
-          holdLayers.test.setAttribute('transform', dancers.test.rig.armFrame(finals.test));
         }
       }
       for (const dancer of Object.values(dancers)) dancer.rig.apply(t, finals[dancer.kind]);
@@ -1893,16 +1933,16 @@
         const begin = nearestBeat(atTime);
         const back = nearestBeat(until ?? begin + 2.4);
         const tidyDur = clamp(back - begin - 0.4, 1.1, 2.2);
-        keyAll(begin, () => ({ hold: 1, embrace: 0, low: 1 }), 0.5);
-        if (dancers.test) dancers.test.state.add(begin, { ...POSES.present, look: 1, face: 'joy', lean: -4 }, 0.5);
+        keyAll(begin, () => ({ hold: 1, embrace: 0, low: 1 }), 0.8);
+        if (dancers.test) dancers.test.state.add(begin, { ...POSES.present, look: 1, face: 'joy', lean: -4 }, 0.8);
         if (dancers.code) {
-          dancers.code.state.add(begin, { ...POSES.spotlight, look: 0, face: 'joy', head: -4, lean: 1, arch: 4 }, 0.5);
+          dancers.code.state.add(begin, { ...POSES.spotlight, look: 0, face: 'joy', head: -4, lean: 1, arch: 4 }, 0.8);
           dancers.code.state.add(begin + 0.2, { clean }, tidyDur);
         }
         keyAll(back, (dancer) => ({
           hold: 1, embrace: 1, low: 0, lean: 0, arch: 0, head: 0, look: dancer.kind === 'test' ? 1 : -1,
           [dancer.kind === 'test' ? 'armL' : 'armR']: POSES.frame[dancer.kind === 'test' ? 'armL' : 'armR'],
-        }), 0.5);
+        }), 0.8);
         return api;
       },
       /** The waltz box step (rise, fall, alternating feet) during [from, to). */
