@@ -285,21 +285,6 @@
       + ` A${f(a)} ${f(a)} 0 0 0 ${f(-a)} 0 Z`;
   }
 
-  /** The part of a quadratic Bézier ([start, control, end]) from where it reaches `y` to its end. */
-  function subQuad([p0, p1, p2], y) {
-    const at = (t) => (1 - t) * (1 - t) * p0[1] + 2 * t * (1 - t) * p1[1] + t * t * p2[1];
-    let lo = 0;
-    let hi = 1;
-    for (let i = 0; i < 24; i++) {
-      const mid = (lo + hi) / 2;
-      if (at(mid) < y) lo = mid;
-      else hi = mid;
-    }
-    const t = lo;
-    const lerp = (a, b) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
-    return [lerp(lerp(p0, p1), lerp(p1, p2)), lerp(p1, p2), p2];
-  }
-
   /**
    * A slender glove, fingers together and tapering to soft tips, the thumb
    * resting along the side nearest the body (`thumb`: +1 or -1 in x).
@@ -329,10 +314,11 @@
     const upperPath = segmentPath(body.upper, ...upperW);
     if (kind === 'code') svg('path', { class: 'tdd-skin-rim', d: upperPath }, upperArm);
     svg('path', { class: 'tdd-arm-sleeve', d: upperPath }, upperArm);
-    // One rim highlight runs down the arm's outer side, unbroken through the
-    // elbow: the upper arm's runs just past the joint and the forearm's
-    // starts just above it.
-    const reach = [[outer * (upperW[0] / 2 - 2), 4], [outer * (upperW[1] / 2 - 1), body.upper * 0.55], [outer * (upperW[1] / 2 - 2), body.upper + 1.2]];
+    // A rim highlight runs down the arm's outer side, pausing at the elbow
+    // (where the joint turns away from the light) so the two highlights
+    // never cross or overlap as the elbow bends.
+    const elbowGap = upperW[1] / 2 + 1.5;
+    const reach = [[outer * (upperW[0] / 2 - 2), 4], [outer * (upperW[1] / 2 - 1), body.upper * 0.5], [outer * (upperW[1] / 2 - 1.8), body.upper - elbowGap - 0.8]];
     const quad = ([a, b, c]) => `M${f(a[0])} ${f(a[1])} Q${f(b[0])} ${f(b[1])} ${f(c[0])} ${f(c[1])}`;
     svg('path', { class: 'tdd-arm-shine', d: quad(reach) }, upperArm);
     const foreArm = svg('g', { class: `tdd-forearm tdd-arm--${kind}` }, front);
@@ -345,14 +331,13 @@
     // the elbow reads as one bent limb rather than two parts. It lives in the
     // forearm's layer, turned back into the upper arm's frame, and spans only
     // the last stretch above the elbow, so it never covers the torso's edge
-    // beside a hanging arm. The highlight it covers is drawn again on top.
+    // beside a hanging arm.
     const elbow = svg('g', {}, foreArm);
     const inset = kind === 'test' ? 1.5 : 1;
-    const from = body.upper - (upperW[1] / 2 + 1.5);
+    const from = body.upper - elbowGap;
     const width = (k) => upperW[0] + (upperW[1] - upperW[0]) * k - inset;
     svg('path', { class: 'tdd-elbow-patch', d: segmentPath(body.upper - from, width(from / body.upper), width(1)), transform: `translate(0 ${f(from)})` }, elbow);
-    svg('path', { class: 'tdd-arm-shine', d: quad(subQuad(reach, from - 1)) }, elbow);
-    svg('path', { class: 'tdd-arm-shine', d: quad([[outer * (foreW[0] / 2 - 2), -1.2], [outer * (foreW[1] / 2 - 0.8), body.fore * 0.5], [outer * (foreW[1] / 2 - 1.4), body.fore - (kind === 'test' ? 8 : 5)]]) }, foreArm);
+    svg('path', { class: 'tdd-arm-shine', d: quad([[outer * (foreW[0] / 2 - 2), foreW[0] / 2 + 1], [outer * (foreW[1] / 2 - 0.8), body.fore * 0.5], [outer * (foreW[1] / 2 - 1.4), body.fore - (kind === 'test' ? 8 : 5)]]) }, foreArm);
     if (kind === 'test') {
       svg('rect', { class: 'tdd-cuff', x: -5.6, y: body.fore - 6, width: 11.2, height: 5, rx: 2 }, foreArm);
       svg('circle', { class: 'tdd-cufflink', cx: outer * 3.1, cy: body.fore - 3.5, r: 0.95 }, foreArm);
