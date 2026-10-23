@@ -148,13 +148,13 @@ sections:
         end: 31.54
         text: "First, a failing unit test;"
         marks: {"first": 28.5, "a": 29.38, "failing": 29.72, "unit": 30.14, "test": 30.78}
-        visual: "“Rule 1”: test_push appears line by line; pytest prints E AttributeError: no attribute 'push', 1 failed; Test’s lamp turns red with a ✗."
+        visual: "“Rule 1”: test_push appears line by line; pytest prints E AttributeError: no attribute 'push', 1 failed; Test’s lamp turns red with a ✗. Code rests at his side while Test waltzes on alone, framing an imaginary partner."
       - id: verse-1-2
         start: 32.14
         end: 35.64
         text: "till then, production code must rest."
         marks: {"till": 32.14, "then": 32.96, "production": 33.7, "code": 34.12, "must": 34.7, "rest": 35.1}
-        visual: "An empty my_stack.py (class MyStack: pass) is labeled “production code waits”; Code steps out of the hold and puts her hands on her hips."
+        visual: "An empty my_stack.py (class MyStack: pass) is labeled “production code waits”; on “must rest” Code steps back into Test’s arms and they waltz together."
       - id: verse-1-3
         start: 36.48
         end: 39.76

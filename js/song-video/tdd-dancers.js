@@ -819,7 +819,7 @@
       const measure = index - beats.index(active.from) + smooth(phase / 0.8);
       const around = (2 * Math.PI * measure) / 8;
       return {
-        fade, index, phase, dir, travel,
+        fade, index, phase, dir, travel, who: active.who,
         roam: { x: active.roam * 0.5 * (1 - Math.cos(around)), y: 6 * Math.sin(around), scale: 1 + 0.03 * Math.sin(around) },
         rise: riseOf(phase),
         x: travel * dir * (2 * glide - 1),
@@ -1019,11 +1019,12 @@
       if (t < at - 0.5 || (until !== undefined && t > until + 0.5)) return;
       const pos = stagePos.value(t);
       const w = waltzAt(t);
-      const roam = w ? { x: w.roam.x * w.fade, y: w.roam.y * w.fade, scale: 1 + (w.roam.scale * w.depth - 1) * w.fade } : { x: 0, y: 0, scale: 1 };
+      const roam = w && !w.who ? { x: w.roam.x * w.fade, y: w.roam.y * w.fade, scale: 1 + (w.roam.scale * w.depth - 1) * w.fade } : { x: 0, y: 0, scale: 1 };
+      const waltzFor = (dancer) => (w && (!w.who || w.who === dancer.kind) ? w : null);
       const scaleNow = pos.scale * roam.scale;
       floor.setAttribute('transform', `translate(${f(pos.x + roam.x)} ${f(pos.y + roam.y)}) scale(${scaleNow.toFixed(4)})`);
       const raw = {};
-      for (const dancer of Object.values(dancers)) raw[dancer.kind] = stateOf(dancer, t, null, w);
+      for (const dancer of Object.values(dancers)) raw[dancer.kind] = stateOf(dancer, t, null, waltzFor(dancer));
       let couple = null;
       if (dancers.test && dancers.code) {
         // A point on a dancer's body (body-local, before lean and turn).
@@ -1056,7 +1057,7 @@
           code: lerp(lerp(hands, shoulder, raw.code.embrace), arch, k),
         };
       }
-      for (const dancer of Object.values(dancers)) dancer.rig.apply(t, stateOf(dancer, t, couple, w));
+      for (const dancer of Object.values(dancers)) dancer.rig.apply(t, stateOf(dancer, t, couple, waltzFor(dancer)));
     });
 
     fx.fadeIn(wrap, at, 0.35);
@@ -1168,8 +1169,10 @@
         return api;
       },
       /** The waltz box step (rise, fall, alternating feet) during [from, to). */
-      waltz(from, to, { travel = 10, roam = 26, calm = 1 } = {}) {
-        waltzes.push({ from, to, travel, roam, calm });
+      waltz(from, to, { travel = 10, roam = 26, calm = 1, who } = {}) {
+        // `who` ('test' or 'code') makes it a solo: only that dancer steps,
+        // and the couple's floor position stays put.
+        waltzes.push({ from, to, travel, roam: who ? 0 : roam, calm, who });
         return api;
       },
       /** Code spins under Test's raised arm: from a beat, for whole beats. */

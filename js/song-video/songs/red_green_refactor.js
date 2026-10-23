@@ -121,8 +121,12 @@
       // They keep waltzing through the rules of verse 1; gestures ride on top.
       // The dance itself obeys the lyrics: it comes to rest on "rest" and
       // stops on "stop", holding still until the line ends.
-      duo.waltz(mark('intro-4', 'guide'), mark('verse-1-2', 'rest'), { travel: 10, roam: 8 });
-      duo.waltz(line('verse-1-3').start - 0.3, mark('verse-1-5', 'stop'), { travel: 10, roam: 8 });
+      duo.waltz(mark('intro-4', 'guide'), line('verse-1-1').start - 0.1, { travel: 10, roam: 8 });
+      // Rule 1, "production code must rest": Code rests at his side while
+      // Test dances on alone, framing an imaginary partner; on "must rest"
+      // she steps back into his arms and they waltz together.
+      duo.waltz(line('verse-1-1').start + 0.3, mark('verse-1-2', 'rest') - 0.2, { travel: 10, who: 'test' });
+      duo.waltz(mark('verse-1-2', 'rest') + 0.2, mark('verse-1-5', 'stop'), { travel: 10, roam: 8 });
       duo.waltz(line('verse-1-6').start, mark('verse-1-8', 'red'), { travel: 10, roam: 8 });
       duo.place(line('intro-4').end + 0.3, SPOT.side, 2.4);
     }
@@ -157,9 +161,14 @@
         lines: ['class MyStack:', '    pass'],
       });
       tdd.note(a, 'production code waits', { x: 250, y: 64, at: line('verse-1-2').start, tone: 'gold', iconName: 'hourglass' });
-      // "Production code must rest": Code steps out of the hold, hands on hips.
-      duo.pose('code', mark('verse-1-2', 'must'), 'hips', { face: 'smile', hold: 0, embrace: 0 });
-      duo.pose('code', line('verse-1-3').start, 'frame', { hold: 1, embrace: 1, face: 'happy' });
+      // Code rests: she lets go, steps aside, and watches Test dance alone.
+      duo.pose('code', line('verse-1-1').start - 0.2, 'stand', { hold: 0, embrace: 0, face: 'smile', look: -1, dur: 1.0 });
+      duo.pose('test', line('verse-1-1').start - 0.2, 'frame', { hold: 0, embrace: 0, dur: 1.0, armR: { sh: -80, el: -46, wr: -10 } });
+      duo.step('code', line('verse-1-1').start - 0.2, 26, 1.0);
+      // "Must rest": she steps back in and takes the hold.
+      duo.step('code', mark('verse-1-2', 'must') - 0.2, 0, 0.8);
+      duo.hold(mark('verse-1-2', 'rest'), { pose: 'frame', dur: 0.9 });
+      duo.face('code', mark('verse-1-2', 'rest'), 'happy');
 
       // The test says what we need, from the caller's side of the interface.
       const b = kit.scene(content, line('verse-1-3').start - 0.1, line('verse-1-5').start - 0.1);
