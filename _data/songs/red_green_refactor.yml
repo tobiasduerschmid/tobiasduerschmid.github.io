@@ -172,7 +172,7 @@ sections:
         end: 47.68
         text: "Write test code till it fails, then stop."
         marks: {"write": 44.3, "test": 44.96, "code": 45.34, "till": 45.7, "it": 45.92, "fails": 46.08, "then": 46.76, "stop": 47.08}
-        visual: "“Rule 2”: test_pop is typed line by line; at element = stack.pop() pytest fails, and a STOP sign appears as Test raises a hand."
+        visual: "“Rule 2”: test_pop is typed line by line; at element = stack.pop() pytest fails, and a STOP sign appears as Test stops and raises a hand, while Code lets go and spins on her own."
       - id: verse-1-6
         start: 48.2
         end: 51.74

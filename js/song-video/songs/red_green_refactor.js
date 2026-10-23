@@ -204,7 +204,15 @@
       });
       duo.lamp(mark('verse-1-5', 'fails'), 'red');
       tdd.stopSign(c, { x: 530, y: 64, at: mark('verse-1-5', 'stop'), until: mark('verse-1-6', 'batch') - 0.1, size: 92 });
-      duo.pose('test', mark('verse-1-5', 'stop'), 'stopL', { dur: 0.25 });
+      // "Then stop": Test stops dead, his hand up to the sign, while Code
+      // lets go and spins on her own; she takes his hand again after.
+      duo.pose('test', mark('verse-1-5', 'stop'), 'stopL', { dur: 0.25, hold: 0, embrace: 0 });
+      duo.pose('code', mark('verse-1-5', 'stop') - 0.3, 'stand', { hold: 0, embrace: 0, face: 'joy', dur: 0.4 });
+      duo.step('code', mark('verse-1-5', 'stop') - 0.3, 20, 0.5);
+      duo.twirl(mark('verse-1-5', 'stop'), { dur: 1.1, solo: true });
+      duo.step('code', line('verse-1-6').start - 0.2, 0, 0.6);
+      duo.hold(line('verse-1-6').start, { pose: 'frame', dur: 0.8 });
+      duo.face('code', line('verse-1-6').start + 0.6, 'happy');
       const batch = kit.el('div', 'tdd-batch is-staged', c);
       kit.place(batch, 480, 40);
       for (const name of ['test_peek', 'test_size', 'test_sort']) kit.el('div', 'tdd-batch-card', batch, name);

@@ -862,7 +862,7 @@
 
     /** How far an underarm turn is under way at t (0 outside one, 1 in it). */
     function archAt(t) {
-      const turn = twirls.find((tw) => tw.who === 'code' && t >= tw.at - 0.5 && t <= tw.at + tw.dur + 0.5);
+      const turn = twirls.find((tw) => tw.who === 'code' && !tw.solo && t >= tw.at - 0.5 && t <= tw.at + tw.dur + 0.5);
       if (!turn || !dancers.test || !dancers.code) return 0;
       return smooth((t - turn.at + 0.5) / 0.5) * smooth((turn.at + turn.dur + 0.5 - t) / 0.5);
     }
@@ -976,7 +976,12 @@
         s.head -= 6 * lift;
         // Her free arm wraps in close to the waist while she turns, so the
         // hand stays near the body's centre line as the figure narrows.
-        if (twirl.who === 'code') s.armR = mix(s.armR, { sh: -22, el: 74, wr: -10 }, smooth(p / 0.35) * smooth((1 - p) / 0.35));
+        const armsIn = smooth(p / 0.35) * smooth((1 - p) / 0.35);
+        if (twirl.solo) {
+          // Free spin: both arms rise into a rounded crown over the head.
+          s.armL = mix(s.armL, { sh: 158, el: -46, wr: 10 }, armsIn);
+          s.armR = mix(s.armR, { sh: -158, el: 46, wr: -10 }, armsIn);
+        } else if (twirl.who === 'code') s.armR = mix(s.armR, { sh: -22, el: 74, wr: -10 }, armsIn);
       }
       if (couple && s.hold > 0) {
         const target = isTest ? couple.test : couple.code;
@@ -1176,11 +1181,12 @@
         return api;
       },
       /** Code spins under Test's raised arm: from a beat, for whole beats. */
-      twirl(atTime, { dur = 1, turns = 1, who = 'code' } = {}) {
+      twirl(atTime, { dur = 1, turns = 1, who = 'code', solo = false } = {}) {
         const start = nearestBeat(atTime);
         const length = wholeBeats(start, dur);
-        // The joined hands rise into an arch over her head (see archAt).
-        twirls.push({ at: start, dur: length, turns, who });
+        // The joined hands rise into an arch over her head (see archAt);
+        // a solo spin is free, with her arms rounded overhead instead.
+        twirls.push({ at: start, dur: length, turns, who, solo });
         return api;
       },
       /**
