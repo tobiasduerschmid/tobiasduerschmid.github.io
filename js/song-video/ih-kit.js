@@ -112,7 +112,12 @@
   }
 
   /** A speech (or thought) bubble with an optional speaker line. */
-  function bubble(parent, { x, y, w, text, who, whoIcon = 'user', at, until, side = 'left', thought = false }) {
+  /**
+   * A speech (or thought) bubble with an optional speaker line. Without `w`
+   * a speech bubble is as wide as its longest line; "\n" in `text` breaks a
+   * line. tailX is where the tail's tip sits, from the bubble's left edge.
+   */
+  function bubble(parent, { x, y, w, text, who, whoIcon = 'user', at, until, side = 'left', thought = false, tailX = 40 }) {
     const node = place(el('div', `ih-bubble${side === 'right' ? ' ih-bubble--right' : ''}${thought ? ' ih-bubble--thought' : ''} is-staged`, parent), x, y);
     if (w) node.style.width = `${w}px`;
     if (who) {
@@ -120,7 +125,17 @@
       head.append(icon(whoIcon));
       head.append(document.createTextNode(who));
     }
-    el('div', null, node, text);
+    el('div', 'ih-bubble-text', node, text);
+    if (!thought) {
+      // A curved tail whose fill covers the bubble's border where they join,
+      // so the bubble and its tail read as one outline.
+      const tail = svg('svg', { class: 'ih-bubble-tail', viewBox: '0 0 40 30', width: 40, height: 30, 'aria-hidden': 'true' }, node);
+      tail.style.left = `${tailX - 6}px`;
+      const wedge = 'M8 0 Q14 16 6 27 Q27 19 33 0Z';
+      svg('path', { class: 'ih-bubble-tail-shadow', d: wedge, transform: 'translate(4 4)' }, tail);
+      svg('path', { class: 'ih-bubble-tail-fill', d: wedge }, tail);
+      svg('path', { class: 'ih-bubble-tail-edge', d: 'M8 0 Q14 16 6 27 Q27 19 33 0' }, tail);
+    }
     return show(node, at, until, { rotate: side === 'right' ? 2 : -2, from: 0.5 });
   }
 
@@ -224,6 +239,75 @@
     node.alt = '';
     node.setAttribute('aria-hidden', 'true');
     fx.fadeIn(node, at, 0.5);
+    if (until !== undefined) fx.fadeOut(node, until, 0.3);
+    return node;
+  }
+
+  // The 17 bound volumes of the Apollo listing, top to bottom, traced from
+  // the hand-drawn stack in /assets/song-art/margaret-hamilton-apollo.svg.
+  const APOLLO_VOLUMES = [
+    'M653 80 C729 87 830 85 894 80 Q889 146 913 220 C835 225 736 218 671 212 Q658 146 653 80 Z',
+    'M671 212 C747 219 849 225 913 220 Q908 256.5 936 298 C858 303 743 307 678 301 Q676 256.5 671 212 Z',
+    'M678 301 C754 308 872 303 936 298 Q931 340 920 381 C842 386 731 385 666 379 Q683 340 678 301 Z',
+    'M666 379 C742 386 856 386 920 381 Q915 406 915 429 C837 434 746 439 681 433 Q671 406 666 379 Z',
+    'M681 433 C757 440 851 434 915 429 Q910 472 940 499 C862 504 747 517 682 511 Q686 472 681 433 Z',
+    'M682 511 C758 518 876 504 940 499 Q935 541 926 564 C848 569 745 577 680 571 Q687 541 682 511 Z',
+    'M680 571 C756 578 862 569 926 564 Q921 598 930 629 C852 634 735 631 670 625 Q685 598 680 571 Z',
+    'M670 625 C746 632 866 634 930 629 Q925 654.5 929 681 C851 686 723 690 658 684 Q675 654.5 670 625 Z',
+    'M658 684 C734 691 865 686 929 681 Q924 712 934 733 C856 738 715 746 650 740 Q663 712 658 684 Z',
+    'M650 740 C726 747 870 738 934 733 Q929 786.5 916 834 C838 839 721 839 656 833 Q655 786.5 650 740 Z',
+    'M656 833 C732 840 852 839 916 834 Q911 875 900 914 C822 919 714 923 649 917 Q661 875 656 833 Z',
+    'M649 917 C725 924 836 919 900 914 Q895 954 916 987 C838 992 724 997 659 991 Q654 954 649 917 Z',
+    'M659 991 C735 998 852 992 916 987 Q911 1029.5 943 1052 C865 1057 740 1074 675 1068 Q664 1029.5 659 991 Z',
+    'M675 1068 C751 1075 879 1057 943 1052 Q938 1105.5 933 1143 C855 1148 735 1149 670 1143 Q680 1105.5 675 1068 Z',
+    'M670 1143 C746 1150 869 1148 933 1143 Q928 1172.5 931 1204 C853 1209 725 1208 660 1202 Q675 1172.5 670 1143 Z',
+    'M660 1202 C736 1209 867 1209 931 1204 Q926 1241.5 932 1280 C854 1285 730 1287 665 1281 Q665 1241.5 660 1202 Z',
+    'M665 1281 C741 1288 868 1285 932 1280 Q927 1320.5 938 1360 C860 1365 728 1366 663 1360 Q670 1320.5 665 1281 Z',
+  ];
+
+  /**
+   * Hamilton counts the printout: an overlay that fits the portrait image
+   * exactly (same box, same viewBox) lights the volumes one by one from the
+   * floor up to her raised hand, while a gold chip beside the stack ticks
+   * 1 … 17. The count follows the same easing as a counter() over
+   * [at, at + duration], so a lines-of-code counter stays in step.
+   */
+  function apolloCount(parent, { x, y, at, duration, until }) {
+    const node = art(parent, { x, y, w: 230, h: 350, viewBox: '225 25 750 1360', className: 'ih-apollo-count' });
+    const total = APOLLO_VOLUMES.length;
+    // Bottom volume first: volumes are listed top to bottom.
+    const marks = APOLLO_VOLUMES.map((d, i) => svg('path', { class: 'ih-apollo-volume', d, 'data-order': total - 1 - i }, node));
+    const centers = APOLLO_VOLUMES.map((d) => {
+      const ys = d.match(/-?\d+(\.\d+)?/g).map(Number).filter((_, k) => k % 2);
+      return (Math.min(...ys) + Math.max(...ys)) / 2;
+    });
+    const chip = svg('g', { class: 'ih-apollo-chip' }, node);
+    svg('circle', { r: 52 }, chip);
+    const number = svg('text', { 'text-anchor': 'middle', y: 24 }, chip);
+    onFrame((t) => {
+      const counted = total * easeInOutCubic(progress(t, at, duration));
+      marks.forEach((path, i) => {
+        const order = total - 1 - i;
+        // Seconds since this volume was counted, on the eased count.
+        const lit = counted - order;
+        const flash = lit <= 0 ? 0 : Math.max(0.28, 1 - lit / 1.6);
+        path.setAttribute('opacity', lit <= 0 ? '0' : flash.toFixed(2));
+      });
+      const n = Math.min(total, Math.floor(counted + 1e-6));
+      // The chip leaves once the count is done; the total lives in the record.
+      const done = at + duration;
+      chip.setAttribute('opacity', t < at ? '0' : t < done ? '1' : Math.max(0, 1 - (t - done) / 0.3).toFixed(2));
+      if (n >= 1) {
+        // The chip glides up to the volume being counted.
+        const k = Math.min(total - 1, Math.max(0, counted - 0.5));
+        const lo = Math.floor(k), hi = Math.min(total - 1, lo + 1), f = k - lo;
+        const cy = centers[total - 1 - lo] + (centers[total - 1 - hi] - centers[total - 1 - lo]) * f;
+        chip.setAttribute('transform', `translate(990 ${cy.toFixed(1)})`);
+      } else chip.setAttribute('transform', `translate(990 ${centers[total - 1].toFixed(1)})`);
+      const text = String(Math.max(1, n));
+      if (number.textContent !== text) number.textContent = text;
+    });
+    fx.fadeIn(node, at, 0.2);
     if (until !== undefined) fx.fadeOut(node, until, 0.3);
     return node;
   }
@@ -432,6 +516,105 @@
   }
 
   /**
+   * One big case file labelled "System" that dashed cut lines divide into
+   * module files at `cutAt`, and that comes apart into separate files at
+   * `apartAt`: the question of how to split a system into modules.
+   * pipeline = { at, labels: [{ text, iconName }] } then straightens the
+   * same files into a row on a conveyor belt and relabels them as
+   * processing steps (the flowchart decomposition Parnas argued against).
+   */
+  function systemSplit(parent, { x, y, w, h, title = 'System', parts, at, cutAt, apartAt, pipeline, until }) {
+    const node = place(el('div', 'ih-split is-staged', parent), x, y);
+    node.style.width = `${w}px`;
+    node.style.height = `${h}px`;
+    const pieceW = w / parts.length;
+    const spread = (parts.length - 1) / 2;
+    const pieces = parts.map((name, i) => {
+      const piece = place(el('div', 'ih-split-piece', node), i * pieceW, 0);
+      piece.style.width = `${pieceW}px`;
+      piece.style.height = `${h}px`;
+      if (i === 0) piece.classList.add('ih-split-piece--first');
+      if (i === parts.length - 1) piece.classList.add('ih-split-piece--last');
+      const label = el('div', 'ih-split-label is-staged', piece);
+      label.append(icon(SERVICE_ICONS[name] || 'box'));
+      label.append(document.createTextNode(name));
+      fx.fadeIn(label, apartAt + 0.15, 0.3);
+      const offset = i - spread;
+      const apart = { translate: `${offset * 44}px ${Math.abs(offset) * 10 + 8}px`, rotate: `${offset * 3}deg` };
+      tween(piece, [{ translate: '0 0', rotate: '0deg' }, apart], apartAt, 0.6, EASE.back);
+      if (pipeline) {
+        const spec = pipeline.labels[i];
+        const stepLabel = el('div', 'ih-split-label ih-split-label--step is-staged', piece);
+        if (spec.iconName) stepLabel.append(icon(spec.iconName));
+        stepLabel.append(document.createTextNode(spec.text));
+        fx.fadeOut(label, pipeline.at, 0.2);
+        tween(stepLabel, [{ opacity: 0, scale: 0.85 }, { opacity: 1, scale: 1 }], pipeline.at + i * 0.3 + 0.15, 0.35, EASE.back);
+        tween(piece, [apart, { translate: `${offset * 44}px 0`, rotate: '0deg' }], pipeline.at, 0.5, EASE.inOut);
+      }
+      return piece;
+    });
+    if (pipeline) {
+      const belt = el('div', 'ih-belt ih-split-belt is-staged', node);
+      belt.style.top = `${h + 12}px`;
+      const tread = el('div', 'ih-belt-tread', belt);
+      fx.fadeIn(belt, pipeline.at, 0.35);
+      onFrame((t) => { tread.style.backgroundPosition = `${((t * 40) % 28).toFixed(1)}px 0`; });
+      for (let i = 1; i < parts.length; i++) {
+        const arrow = place(icon('pointer', 'ih-step-arrow ih-split-arrow is-staged'), i * pieceW + (i - 1 - spread) * 44 + 8, h / 2 - 14);
+        node.append(arrow);
+        fx.fadeIn(arrow, pipeline.at + i * 0.3, 0.25);
+      }
+      if (pipeline.verdictAt !== undefined) {
+        // A bad idea: the steps dim and a "no" sign lands left of the
+        // verdict below the flowchart.
+        const pad = 90;
+        const tall = h + 170;
+        const ban = svg('svg', { class: 'ih-ban is-staged', viewBox: `${-pad} -40 ${w + 2 * pad} ${tall + 40}`, 'aria-hidden': 'true' }, node);
+        place(ban, -pad, -40);
+        ban.style.width = `${w + 2 * pad}px`;
+        ban.style.height = `${tall + 40}px`;
+        fx.fadeIn(ban, pipeline.verdictAt, 0.1);
+        for (const piece of pieces) tween(piece, [{ opacity: 1 }, { opacity: 0.6 }], pipeline.verdictAt, 0.4, EASE.inOut);
+        const stroke = (d, at, cls = '') => {
+          for (const part of ['ih-ban-edge', 'ih-ban-stroke']) {
+            const path = svg('path', { class: `${part} ${cls}`, d }, ban);
+            path.style.strokeDashoffset = '1';
+            fx.draw(path, at, 0.35);
+          }
+        };
+        if (pipeline.noAt !== undefined) {
+          const r = 34;
+          const cx = pipeline.noX ?? 70;
+          const cy = h + 98;
+          const disc = svg('circle', { class: 'ih-ban-disc is-staged', cx, cy, r }, ban);
+          fx.pop(disc, pipeline.noAt, { from: 0.4 });
+          const k = r * Math.SQRT1_2;
+          stroke(`M${cx} ${cy - r}A${r} ${r} 0 1 1 ${cx} ${cy + r}A${r} ${r} 0 1 1 ${cx} ${cy - r}`, pipeline.noAt, 'ih-ban-thin');
+          stroke(`M${cx - k} ${cy - k}L${cx + k} ${cy + k}`, pipeline.noAt + 0.2, 'ih-ban-thin');
+        }
+      }
+    }
+    const whole = el('div', 'ih-split-title', node);
+    whole.append(icon('box'));
+    whole.append(document.createTextNode(title));
+    fx.fadeOut(whole, apartAt, 0.2);
+    for (let i = 1; i < parts.length; i++) {
+      const cut = place(el('div', 'ih-split-cut is-staged', node), i * pieceW, -16);
+      cut.style.height = `${h + 32}px`;
+      cut.append(icon('scissors'));
+      tween(cut, [
+        { opacity: 0, clipPath: 'inset(-30px -20px 100% -20px)' },
+        { opacity: 1, clipPath: 'inset(-30px -20px 0 -20px)' },
+      ], cutAt + (i - 1) * 0.12, 0.4);
+      fx.fadeOut(cut, apartAt, 0.2);
+    }
+    during(node, 'is-apart', apartAt);
+    fx.rise(node, at, { distance: 18, duration: 0.4 });
+    if (until !== undefined) fx.fadeOut(node, until, 0.25);
+    return { node, pieces };
+  }
+
+  /**
    * A tear-off desk calendar. pages = [{ at, month, day, year, tone }]; on
    * each change the old page tears off and falls away.
    */
@@ -619,9 +802,6 @@
     const landscapeClip = svg('clipPath', { id: `${id}-landscape` }, defs);
     svg('rect', { x: 20, y: 58, width: 300, height: 204, rx: 14 }, landscapeClip);
 
-    label(node, 'Hidden implementation', 170, 28, 'ih-power-label--heading');
-    label(node, 'Interface', 558, 28, 'ih-power-label--heading ih-power-label--gold');
-    label(node, 'Client', 786, 28, 'ih-power-label--heading');
     const landscape = svg('g', { 'clip-path': `url(#${id}-landscape)` }, node);
     const day = svg('g', { class: 'ih-power-source ih-power-source--solar', 'data-testid': 'ih-power-source', 'data-source': 'solar' }, landscape);
     svg('rect', { x: 20, y: 58, width: 300, height: 204, fill: dayPaint }, day);
@@ -664,7 +844,6 @@
     const supplyPath = 'M303 221 H350 M440 221 H507';
     svg('path', { class: 'ih-power-wire', d: supplyPath }, node);
     const supplyFlow = svg('path', { class: 'ih-power-flow', 'data-testid': 'ih-power-flow', d: supplyPath }, node);
-    label(node, 'Grid', 395, 166, 'ih-power-label--heading');
     svg('rect', { class: 'ih-power-grid', x: 350, y: 184, width: 90, height: 74, rx: 12 }, node);
     svg('path', { class: 'ih-power-sine', d: 'M363 221 C373 187 384 187 395 221 S417 255 427 221' }, node);
 
@@ -699,9 +878,6 @@
     const battery = svg('rect', { class: 'ih-power-battery', 'data-testid': 'ih-power-battery', x: 776, y: 180, width: 28, height: 19, rx: 2 }, node);
     svg('path', { class: 'ih-power-bolt', d: 'M793 158 L781 177 H789 L786 191 L800 171 H791Z' }, node);
     svg('path', { class: 'ih-power-phone-detail', d: 'M780 239 H800' }, node);
-    label(node, 'Source can change', 170, 309);
-    label(node, 'Same voltage + frequency', 555, 309, 'ih-power-label--contract');
-    label(node, 'Keeps charging', 786, 309, 'ih-power-label--charging');
 
     onFrame((t) => {
       const current = latest(sorted, t) || sorted[0];
@@ -894,6 +1070,18 @@
     return node;
   }
 
+  /**
+   * A public credential tag: the gold «interface» strip over a name, the
+   * label counterpart of the sealed envelope (what callers may see).
+   */
+  function publicTag(parent, { text, x, y }) {
+    const node = place(el('div', 'ih-public-tag is-staged', parent), x, y);
+    el('div', 'ih-badge-strip', node, '«interface» · public');
+    el('span', 'ih-badge-hole', node);
+    el('div', 'ih-public-tag-name', node, text);
+    return node;
+  }
+
   // ------------------------------------------------------------------
   // Couriers: a dashed route with sealed envelopes travelling along it
   // ------------------------------------------------------------------
@@ -1006,13 +1194,55 @@
    * briefcase; sways a little and the lenses glint now and then. tie =
    * hat-band colour (red | gold | cyan). The figure is 160×300 at scale 1.
    */
-  function agent(parent, { x, y, scale = 1, name, role, at, until, tie = 'red', briefcase = true, flip = false }) {
+  /**
+   * A secret agent with a name tag. look = 'trench' (fedora, trench coat,
+   * sunglasses, briefcase) or 'tuxedo' (dinner jacket, bow tie, slicked
+   * hair, raised eyebrow, martini): the suave-spy-film look.
+   */
+  function agent(parent, { x, y, scale = 1, name, role, at, until, tie = 'red', briefcase = true, flip = false, look = 'trench' }) {
     const wrap = place(el('div', 'ih-agent is-staged', parent), x, y);
     wrap.style.width = `${160 * scale}px`;
     const fig = svg('svg', { class: `ih-agent-art ih-agent-art--${tie}`, viewBox: '0 0 160 300', width: 160 * scale, height: 300 * scale, 'aria-hidden': 'true' }, wrap);
     const body = svg('g', { transform: flip ? 'translate(160 0) scale(-1 1)' : '' }, fig);
     const sway = svg('g', {}, body);
     svg('ellipse', { class: 'ih-agent-shadow', cx: 80, cy: 292, rx: 60, ry: 7 }, sway);
+    let glint;
+    if (look === 'tuxedo') {
+      svg('path', { class: 'ih-agent-trousers', d: 'M54 196 L56 288 L77 288 L80 214 L83 288 L104 288 L106 196 Z' }, sway);
+      svg('path', { class: 'ih-agent-shoe ih-agent-shoe--gloss', d: 'M52 285 H77 Q80 292 73 293 H50 Q48 289 52 285 Z M83 285 H108 Q112 289 110 293 H87 Q80 292 83 285 Z' }, sway);
+      svg('path', { class: 'ih-agent-tux', d: 'M44 110 Q52 92 80 90 Q108 92 116 110 L122 204 Q80 214 38 204 Z' }, sway);
+      svg('path', { class: 'ih-agent-tux-light', d: 'M80 90 Q108 92 116 110 L122 204 Q104 208 90 209 L86 128 Z' }, sway);
+      svg('path', { class: 'ih-agent-shirt', d: 'M66 94 L80 91 L94 94 L84 160 L80 168 L76 160 Z' }, sway);
+      svg('path', { class: 'ih-agent-satin', d: 'M64 94 L80 166 L54 116 Z M96 94 L80 166 L106 116 Z' }, sway);
+      svg('path', { class: 'ih-agent-satin-sheen', d: 'M62 102 L74 140 M98 102 L86 140' }, sway);
+      for (const sy of [124, 140]) svg('circle', { class: 'ih-agent-stud', cx: 80, cy: sy, r: 1.8 }, sway);
+      svg('circle', { class: 'ih-agent-tux-button', cx: 80, cy: 178, r: 3 }, sway);
+      svg('path', { class: 'ih-agent-pocket-square', d: 'M98 126 L110 122 L107 130 Z' }, sway);
+      svg('path', { class: 'ih-agent-tux', d: 'M44 112 Q32 150 36 196 L48 196 Q48 160 56 128 Z' }, sway);
+      svg('path', { class: 'ih-agent-tux-light', d: 'M116 112 Q130 150 130 194 L118 196 Q114 160 104 128 Z' }, sway);
+      svg('rect', { class: 'ih-agent-cuff', x: 36, y: 192, width: 13, height: 6, rx: 1.5 }, sway);
+      svg('rect', { class: 'ih-agent-cuff', x: 118, y: 190, width: 13, height: 6, rx: 1.5 }, sway);
+      svg('circle', { class: 'ih-agent-hand', cx: 42, cy: 204, r: 7 }, sway);
+      // A martini, shaken: glass, olive, stem, base, held at the hip.
+      svg('path', { class: 'ih-agent-martini', d: 'M112 170 L138 170 L125 186 Z' }, sway);
+      svg('circle', { class: 'ih-agent-olive', cx: 121, cy: 175, r: 3 }, sway);
+      svg('path', { class: 'ih-agent-martini-stem', d: 'M125 186 V202 M118 202 H132' }, sway);
+      svg('circle', { class: 'ih-agent-hand', cx: 125, cy: 198, r: 7 }, sway);
+      svg('rect', { class: 'ih-agent-neck', x: 72, y: 80, width: 16, height: 14 }, sway);
+      svg('path', { class: 'ih-agent-collar ih-agent-collar--shirt', d: 'M66 94 L72 84 L78 98 Z M94 94 L88 84 L82 98 Z' }, sway);
+      svg('path', { class: 'ih-agent-bowtie', d: 'M80 99 L66 92 L66 106 Z M80 99 L94 92 L94 106 Z' }, sway);
+      svg('rect', { class: 'ih-agent-bowtie', x: 76.5, y: 95.5, width: 7, height: 7, rx: 1.5 }, sway);
+      svg('circle', { class: 'ih-agent-face', cx: 61, cy: 66, r: 4.5 }, sway);
+      svg('circle', { class: 'ih-agent-face', cx: 99, cy: 66, r: 4.5 }, sway);
+      svg('ellipse', { class: 'ih-agent-face', cx: 80, cy: 64, rx: 19, ry: 22 }, sway);
+      svg('path', { class: 'ih-agent-hair', d: 'M60 60 Q57 38 76 35 Q97 33 101 52 Q100 58 99 61 Q96 47 84 46 Q73 45 66 51 Q62 55 60 60 Z' }, sway);
+      svg('path', { class: 'ih-agent-part', d: 'M68 44 Q78 39 92 40' }, sway);
+      svg('path', { class: 'ih-agent-brow', d: 'M66 56 Q71 54 76 56 M84 53 Q89 49 94 52' }, sway);
+      for (const ex of [71, 89]) svg('ellipse', { class: 'ih-agent-eye', cx: ex, cy: 62, rx: 2.2, ry: 2.6 }, sway);
+      svg('path', { class: 'ih-agent-mouth', d: 'M73 77 Q81 81 88 74' }, sway);
+      glint = svg('line', { class: 'ih-agent-glint', x1: 0, y1: 0, x2: 4, y2: -7, opacity: 0 }, sway);
+    }
+    if (look !== 'tuxedo') {
     svg('path', { class: 'ih-agent-leg', d: 'M58 262 L60 288 L74 288 L76 262 Z M86 262 L88 288 L102 288 L102 262 Z' }, sway);
     svg('path', { class: 'ih-agent-shoe', d: 'M54 286 H76 Q78 292 72 293 H52 Q50 289 54 286 Z M86 286 H108 Q112 289 110 293 H90 Q84 292 86 286 Z' }, sway);
     svg('path', { class: 'ih-agent-coat', d: 'M44 110 Q52 92 80 90 Q108 92 116 110 L134 266 Q80 278 26 266 Z' }, sway);
@@ -1044,11 +1274,12 @@
     svg('rect', { class: 'ih-agent-lens', x: 63, y: 58, width: 15, height: 9, rx: 3 }, glasses);
     svg('rect', { class: 'ih-agent-lens', x: 82, y: 58, width: 15, height: 9, rx: 3 }, glasses);
     svg('line', { class: 'ih-agent-bridge', x1: 78, y1: 61, x2: 82, y2: 61 }, glasses);
-    const glint = svg('line', { class: 'ih-agent-glint', x1: 0, y1: 0, x2: 4, y2: -7, opacity: 0 }, glasses);
+    glint = svg('line', { class: 'ih-agent-glint', x1: 0, y1: 0, x2: 4, y2: -7, opacity: 0 }, glasses);
     svg('ellipse', { class: 'ih-agent-brim', cx: 80, cy: 50, rx: 40, ry: 8 }, sway);
     svg('path', { class: 'ih-agent-hat', d: 'M56 49 Q56 22 80 20 Q104 22 104 49 Q92 44 80 44 Q68 44 56 49 Z' }, sway);
     svg('path', { class: 'ih-agent-dent', d: 'M70 24 Q80 32 90 24' }, sway);
     svg('path', { class: `ih-agent-band ih-agent-band--${tie}`, d: 'M56 42 Q80 37 104 42 L104 48 Q80 43 56 48 Z' }, sway);
+    }
     if (name) {
       const tag = el('div', 'ih-agent-tag', wrap);
       if (role) el('span', 'ih-agent-role', tag, role);
@@ -1060,8 +1291,10 @@
       const cycle = (local % 3.4) / 3.4;
       const on = cycle < 0.18 && local > 0.4;
       glint.setAttribute('opacity', on ? (Math.sin((cycle / 0.18) * Math.PI) * 0.9).toFixed(2) : '0');
-      const gx = 64 + 32 * (cycle / 0.18);
-      glint.setAttribute('transform', `translate(${gx.toFixed(1)} 66)`);
+      // The glint crosses the sunglasses, or the rim of the martini glass.
+      const [gx0, gspan, gy] = look === 'tuxedo' ? [112, 26, 172] : [64, 32, 66];
+      const gx = gx0 + gspan * (cycle / 0.18);
+      glint.setAttribute('transform', `translate(${gx.toFixed(1)} ${gy})`);
     });
     fx.rise(wrap, at, { distance: 24, duration: 0.45 });
     if (until !== undefined) fx.fadeOut(wrap, until, 0.3);
@@ -1204,61 +1437,28 @@
     return { node, countNode };
   }
 
-  /** The public request/response contract stays outside the server's private details. */
+  /**
+   * The bridge's contract scene in the song's case-file language: a Client
+   * file talks only to a public Contract badge, which a Server file
+   * implements. The server's database choice stays sealed in a top-secret
+   * envelope; the protocol (stateless or stateful) is typed onto the badge,
+   * because callers depend on it.
+   */
   function contractExchange(parent, { at, actorsAt, contractAt, protocolAt, confirmedAt }) {
     const node = el('div', 'ih-contract-exchange', parent);
-    const heading = el('div', 'ih-contract-heading is-staged', node, 'Show what callers need to know');
-    fx.fadeIn(heading, at, 0.2);
-
-    const client = el('div', 'ih-contract-client is-staged', node);
-    el('div', 'ih-contract-role', client, 'Client');
-    el('div', 'ih-contract-sub', client, 'caller');
-    const app = svg('svg', { class: 'ih-contract-app', viewBox: '0 0 190 140', 'aria-hidden': 'true' }, client);
-    svg('rect', { class: 'ih-contract-device', x: 8, y: 8, width: 174, height: 110, rx: 9 }, app);
-    svg('path', { class: 'ih-contract-toolbar', d: 'M17 8 H173 Q182 8 182 17 V32 H8 V17 Q8 8 17 8 Z' }, app);
-    for (const x of [20, 31, 42]) svg('circle', { class: 'ih-contract-toolbar-dot', cx: x, cy: 20, r: 2.5 }, app);
-    svg('rect', { class: 'ih-contract-app-row', x: 25, y: 49, width: 93, height: 9, rx: 4 }, app);
-    svg('rect', { class: 'ih-contract-app-row', x: 25, y: 68, width: 136, height: 7, rx: 3 }, app);
-    svg('rect', { class: 'ih-contract-app-row', x: 25, y: 85, width: 115, height: 7, rx: 3 }, app);
-    svg('path', { class: 'ih-contract-device-foot', d: 'M82 118 V130 H63 M108 118 V130 H127 M63 130 H127' }, app);
-    el('div', 'ih-contract-client-note', client, 'Uses the contract');
-    fx.fadeIn(client, actorsAt, 0.2);
-
-    const server = el('div', 'ih-contract-server is-staged', node);
-    el('div', 'ih-contract-role', server, 'Server');
-    el('div', 'ih-contract-sub', server, 'module boundary');
-    const rack = svg('svg', { class: 'ih-contract-rack', viewBox: '0 0 180 115', 'aria-hidden': 'true' }, server);
-    svg('rect', { class: 'ih-contract-rack-shell', x: 23, y: 6, width: 134, height: 100, rx: 10 }, rack);
-    for (const y of [18, 47, 76]) {
-      svg('rect', { class: 'ih-contract-drive', x: 32, y, width: 116, height: 21, rx: 4 }, rack);
-      svg('circle', { class: 'ih-contract-status', cx: 44, cy: y + 10.5, r: 3 }, rack);
-      svg('path', { class: 'ih-contract-vent', d: `M108 ${y + 7} h29 M108 ${y + 13} h29` }, rack);
-    }
-    const hidden = el('div', 'ih-contract-hidden is-staged', server);
-    el('div', 'ih-contract-hidden-title', hidden, 'Hidden detail');
-    const database = svg('svg', { class: 'ih-contract-database', viewBox: '0 0 60 60', 'aria-hidden': 'true' }, hidden);
-    svg('path', { class: 'ih-contract-db-body', d: 'M9 14 V45 C9 56 51 56 51 45 V14 Z' }, database);
-    svg('ellipse', { class: 'ih-contract-db-top', cx: 30, cy: 14, rx: 21, ry: 8 }, database);
-    svg('path', { class: 'ih-contract-db-seam', d: 'M9 29 C9 40 51 40 51 29 M9 41 C9 52 51 52 51 41' }, database);
-    el('div', 'ih-contract-db-choice', hidden, 'SQL or NoSQL');
-    fx.fadeIn(server, actorsAt + 0.1, 0.2);
-    fx.fadeIn(hidden, contractAt + 0.15, 0.2);
-
-    const contract = el('div', 'ih-contract-public is-staged', node);
-    el('div', 'ih-contract-public-title', contract, 'Visible contract');
-    const lanes = svg('svg', { class: 'ih-contract-lanes', viewBox: '0 0 440 160', 'aria-hidden': 'true' }, contract);
-    svg('path', { class: 'ih-contract-request', d: 'M4 44 H422 M410 35 L423 44 L410 53' }, lanes);
-    svg('path', { class: 'ih-contract-response', d: 'M436 118 H18 M30 109 L17 118 L30 127' }, lanes);
-    el('div', 'ih-contract-request-label', contract, 'Request');
-    el('div', 'ih-contract-response-label', contract, 'Response');
-    fx.fadeIn(contract, contractAt, 0.2);
-
-    const protocol = el('div', 'ih-contract-protocol is-staged', contract);
-    el('div', 'ih-contract-protocol-label', protocol, 'Protocol');
-    el('div', 'ih-contract-protocol-value', protocol, 'Stateless or stateful?');
-    const verdict = el('div', 'ih-contract-verdict is-staged', protocol, 'Callers must know');
-    fx.fadeIn(protocol, protocolAt, 0.2);
-    fx.fadeIn(verdict, confirmedAt, 0.2);
+    heading(node, ['Show what ', 'callers', ' need to know'], { x: 64, y: 62, at });
+    module(node, { x: 40, y: 286, w: 190, h: 80, name: 'Client', iconName: 'laptop', at: actorsAt });
+    const server = module(node, { x: 668, y: 258, w: 262, h: 136, name: 'Server', iconName: 'stack', at: actorsAt + 0.15 });
+    server.secret('SQL or NoSQL', { at: contractAt + 0.3, dx: 8, dy: 66 });
+    const contract = module(node, {
+      x: 304, y: 246, w: 320, h: 132, name: 'Contract', iconName: 'file', kind: 'interface', at: contractAt,
+      lines: [{ text: 'Stateless or stateful?', at: protocolAt }],
+    });
+    contract.node.classList.add('ih-contract');
+    courier(node, { from: [234, 326], to: [300, 326], tone: 'gold', at: contractAt + 0.2, period: 1.5 });
+    courier(node, { from: [664, 326], to: [628, 326], tone: 'gold', at: contractAt + 0.35, period: 1.5, arrow: false });
+    contract.light(confirmedAt);
+    contract.verdict('In the contract', { at: confirmedAt, dx: 140, dy: 116 });
     return node;
   }
 
@@ -1277,7 +1477,8 @@
     const defs = svg('defs', {}, node);
     for (const tone of ['neutral', 'changed']) {
       const marker = svg('marker', { id: `${id}-${tone}`, viewBox: '0 0 10 10', refX: 9, refY: 5, markerWidth: 9, markerHeight: 9, markerUnits: 'userSpaceOnUse', orient: 'auto' }, defs);
-      svg('path', { class: `ih-impact-arrow ih-impact-arrow--${tone}`, d: 'M0 1 L9 5 L0 9Z' }, marker);
+      // UML dependency: a dashed line ending in an open arrowhead.
+      svg('path', { class: `ih-impact-arrow ih-impact-arrow--${tone}`, d: 'M1 1 L9 5 L1 9' }, marker);
     }
     function text(parentNode, value, tx, ty, className = '') {
       const label = svg('text', { class: `ih-impact-text ${className}`, x: tx, y: ty, 'text-anchor': 'middle' }, parentNode);
@@ -1286,8 +1487,6 @@
     }
     svg('rect', { class: 'ih-impact-panel', x: 1, y: 1, width: 438, height: 348, rx: 16 }, node);
     text(node, leaky ? 'Leaky' : 'Hidden well', 220, 32, 'ih-impact-title');
-    text(node, 'System', 63, 62, 'ih-impact-system-label');
-    text(node, leaky ? 'Provider types exposed' : 'Stable gateway interface', 280, 62, 'ih-impact-note');
     svg('rect', { class: 'ih-impact-system', x: 8, y: 70, width: 424, height: 200, rx: 9 }, node);
 
     // Edges are painted first, so arrow routes never cover module labels.
@@ -1302,7 +1501,8 @@
         : `M132 ${sy} C185 ${sy} 197 ${targetY} 249 ${targetY}`;
       edges.push({ node: svg('path', { class: 'ih-impact-edge', d, 'marker-end': `url(#${id}-neutral)` }, edgeLayer), affected: leaky });
     });
-    edges.push({ node: svg('path', { class: 'ih-impact-edge', d: 'M325 201 V284', 'marker-end': `url(#${id}-neutral)` }, edgeLayer), affected: true });
+    // Only the hidden design has a Gateway; in the leaky design callers reach the provider directly.
+    if (!leaky) edges.push({ node: svg('path', { class: 'ih-impact-edge', d: 'M325 201 V284', 'marker-end': `url(#${id}-neutral)` }, edgeLayer), affected: true });
 
     const modules = [];
     function module(name, mx, my, width, height, affected) {
@@ -1312,11 +1512,10 @@
       modules.push({ group, label, name, affected });
     }
     callers.forEach((name, i) => module(name, 20, 78 + i * 38, 112, 30, leaky));
-    module('Gateway', 250, 146, 150, 54, true);
+    if (!leaky) module('Gateway', 250, 146, 150, 54, true);
     const provider = svg('g', { class: 'ih-impact-provider' }, node);
     svg('rect', { class: 'ih-impact-provider-card', x: 250, y: 285, width: 150, height: 36, rx: 6 }, provider);
     text(provider, 'Provider', 325, 310, 'ih-impact-name');
-    text(node, 'External', 120, 310, 'ih-impact-note');
     const verdict = text(node, 'Count changed modules', 220, 344, 'ih-impact-verdict');
 
     onFrame((t) => {
@@ -1331,7 +1530,7 @@
         edge.node.classList.toggle('is-changed', hit);
         edge.node.setAttribute('marker-end', `url(#${id}-${hit ? 'changed' : 'neutral'})`);
       }
-      verdict.textContent = changed ? (leaky ? '* 6 modules must change' : '* Only Gateway changes') : 'Count changed modules';
+      verdict.textContent = changed ? (leaky ? '* 5 modules must change' : '* Only Gateway changes') : 'Count changed modules';
       verdict.classList.toggle('is-changed', changed);
     });
     fx.fadeIn(node, at, 0.25);
@@ -1724,6 +1923,238 @@
   }
 
   // ------------------------------------------------------------------
+  // Aging backwards: born in '85, then 00 − 85 rewinds him out of existence
+  // ------------------------------------------------------------------
+
+  /**
+   * A soft-flat person in a 120×200 box who rewinds through life: young man
+   * → teen → kid → baby → a puff of smoke with a "?". stages = { teen, kid,
+   * baby, gone } are song times; each swap squashes and pops like a rewind.
+   * Pure function of song time; with reduced motion the swaps cut without
+   * the squash.
+   */
+  function agingPerson(parent, { x, y, scale = 1, at, stages, until, tag }) {
+    const node = art(parent, { x, y, w: 120 * scale, h: 210 * scale, viewBox: '0 0 120 210', className: 'ih-aging' });
+    const P = (g, cls, d) => svg('path', { class: cls, d }, g);
+    const C = (g, cls, cx, cy, r) => svg('circle', { class: cls, cx, cy, r }, g);
+    /** Ears, head, hair, brows, eyes with catchlights, nose, mouth (and cheeks). */
+    function face(g, cx, cy, r, { hair, mouth, open = false, brows = true, cheeks = false }) {
+      for (const side of [-1, 1]) C(g, 'ih-aging-skin', cx + side * r * 0.96, cy + 2, r * 0.24);
+      C(g, 'ih-aging-skin', cx, cy, r);
+      P(g, 'ih-aging-hair', hair);
+      for (const side of [-1, 1]) {
+        const ex = cx + side * r * 0.36;
+        svg('ellipse', { class: 'ih-aging-eye', cx: ex, cy: cy + r * 0.08, rx: r * 0.11, ry: r * 0.15 }, g);
+        C(g, 'ih-aging-catchlight', ex + r * 0.04, cy + r * 0.02, r * 0.045);
+        if (brows) P(g, 'ih-aging-brow', `M${ex - r * 0.16} ${cy - r * 0.2} Q${ex} ${cy - r * 0.3} ${ex + r * 0.16} ${cy - r * 0.2}`);
+        if (cheeks) C(g, 'ih-aging-cheek', cx + side * r * 0.58, cy + r * 0.38, r * 0.16);
+      }
+      P(g, 'ih-aging-nose', `M${cx + r * 0.02} ${cy + r * 0.18} Q${cx - r * 0.12} ${cy + r * 0.38} ${cx + r * 0.08} ${cy + r * 0.4}`);
+      P(g, open ? 'ih-aging-mouth ih-aging-mouth--open' : 'ih-aging-mouth', mouth);
+    }
+    const sneaker = (g, x, y, w, cls) => {
+      P(g, `ih-aging-shoe ${cls}`, `M${x} ${y} H${x + w * 0.62} Q${x + w} ${y + 3} ${x + w} ${y + 8} H${x - 2} Q${x - 3} ${y + 3} ${x} ${y}Z`);
+      P(g, 'ih-aging-sole', `M${x - 2} ${y + 8} H${x + w}`);
+    };
+
+    // Young man: quiff, T-shirt with a code logo, belt, jeans, sneakers.
+    const man = svg('g', { class: 'ih-aging-man' }, node);
+    svg('ellipse', { class: 'ih-aging-shadow', cx: 60, cy: 189, rx: 30, ry: 4 }, man);
+    P(man, 'ih-aging-jeans', 'M44 113 L76 113 L75 179 L63 179 L60 128 L57 179 L45 179 Z');
+    P(man, 'ih-aging-seam', 'M51 120 L50.5 177 M69 120 L69.5 177');
+    sneaker(man, 44, 178, 15, 'ih-aging-shoe--man');
+    sneaker(man, 62, 178, 15, 'ih-aging-shoe--man');
+    P(man, 'ih-aging-arm', 'M39 72 Q35 92 35 111');
+    P(man, 'ih-aging-arm', 'M81 72 Q85 92 85 111');
+    C(man, 'ih-aging-skin', 35, 114, 4.5);
+    C(man, 'ih-aging-skin', 85, 114, 4.5);
+    svg('rect', { class: 'ih-aging-neck', x: 55, y: 41, width: 10, height: 9 }, man);
+    P(man, 'ih-aging-tee', 'M40 54 Q48 48 60 48 Q72 48 80 54 L85 72 L77 75 L76 112 L44 112 L43 75 L35 72 Z');
+    P(man, 'ih-aging-tee-shade', 'M60 48 Q72 48 80 54 L85 72 L77 75 L76 112 L63 112 Z');
+    P(man, 'ih-aging-collar', 'M53 49 Q60 56 67 49');
+    const logo = svg('text', { class: 'ih-aging-logo', x: 60, y: 86, 'text-anchor': 'middle' }, man);
+    logo.textContent = '</>';
+    svg('rect', { class: 'ih-aging-belt', x: 44, y: 109, width: 32, height: 6, rx: 1.5 }, man);
+    svg('rect', { class: 'ih-aging-buckle', x: 57, y: 109, width: 6, height: 6, rx: 1 }, man);
+    face(man, 60, 30, 15, { hair: 'M44 31 Q42 12 60 12 Q78 12 76 31 Q74 23 69 21 Q65 26 57 23 Q50 21 47 26 Q45 28 44 31Z', mouth: 'M55 35.5 Q60 39.5 65 35.5' });
+
+    // Teen: messy fringe, hoodie with drawstrings and pocket, headphones, joggers.
+    const teen = svg('g', { class: 'ih-aging-teen' }, node);
+    svg('ellipse', { class: 'ih-aging-shadow', cx: 60, cy: 189, rx: 27, ry: 4 }, teen);
+    P(teen, 'ih-aging-joggers', 'M43 129 L77 129 L75 180 L64 180 L60 144 L56 180 L45 180 Z');
+    P(teen, 'ih-aging-cuffband', 'M45 176 H56 M64 176 H75');
+    sneaker(teen, 45, 179, 14, 'ih-aging-shoe--teen');
+    sneaker(teen, 63, 179, 14, 'ih-aging-shoe--teen');
+    P(teen, 'ih-aging-hood', 'M44 90 Q43 77 52 74 L68 74 Q77 77 76 90 Z');
+    P(teen, 'ih-aging-hoodie', 'M42 90 Q50 84 60 84 Q70 84 78 90 L82 131 L38 131 Z');
+    P(teen, 'ih-aging-hoodie-shade', 'M60 84 Q70 84 78 90 L82 131 L62 131 Z');
+    P(teen, 'ih-aging-hoodie', 'M42 91 Q34 109 36 129 L44 129 Q44 110 48 99Z');
+    P(teen, 'ih-aging-hoodie-shade', 'M78 91 Q86 109 84 129 L76 129 Q76 110 72 99Z');
+    C(teen, 'ih-aging-skin', 40, 132, 4.2);
+    C(teen, 'ih-aging-skin', 80, 132, 4.2);
+    P(teen, 'ih-aging-pocket', 'M48 114 L72 114 L76 129 L44 129 Z');
+    P(teen, 'ih-aging-string', 'M56 88 L55 104 M64 88 L65 104');
+    svg('rect', { class: 'ih-aging-neck', x: 55.5, y: 76, width: 9, height: 8 }, teen);
+    face(teen, 60, 64, 14, { hair: 'M45 65 Q44 49 60 49 Q76 49 75 65 Q71 58 67 61 Q64 55 59 59 Q54 55 50 60 Q47 60 45 65Z', mouth: 'M55 69.5 Q60 71.5 66 68' });
+    P(teen, 'ih-aging-headphones', 'M49 86 Q60 96 71 86');
+    C(teen, 'ih-aging-earcup', 48.5, 85, 4);
+    C(teen, 'ih-aging-earcup', 71.5, 85, 4);
+
+    // Kid: cowlick, striped shirt, shorts, socks, big open smile.
+    const kid = svg('g', { class: 'ih-aging-kid' }, node);
+    svg('ellipse', { class: 'ih-aging-shadow', cx: 60, cy: 189, rx: 22, ry: 3.5 }, kid);
+    P(kid, 'ih-aging-shin', 'M51 175 V182 M69 175 V182');
+    P(kid, 'ih-aging-sock', 'M51 180 V183 M69 180 V183');
+    sneaker(kid, 46, 182, 11, 'ih-aging-shoe--kid');
+    sneaker(kid, 64, 182, 11, 'ih-aging-shoe--kid');
+    P(kid, 'ih-aging-shorts', 'M48 163 L72 163 L73 176 L62 176 L60 169 L58 176 L47 176 Z');
+    P(kid, 'ih-aging-arm ih-aging-arm--kid', 'M44 149 Q41 157 42 164');
+    P(kid, 'ih-aging-arm ih-aging-arm--kid', 'M76 149 Q79 157 78 164');
+    C(kid, 'ih-aging-skin', 42, 166, 3.8);
+    C(kid, 'ih-aging-skin', 78, 166, 3.8);
+    P(kid, 'ih-aging-stripes-shirt', 'M45 140 Q52 136 60 136 Q68 136 75 140 L78 151 L73 152 L72 165 L48 165 L47 152 L42 151 Z');
+    P(kid, 'ih-aging-stripe', 'M45 144 H75 M47 150 H73 M48 156 H72 M48 162 H72');
+    svg('rect', { class: 'ih-aging-neck', x: 56, y: 131, width: 8, height: 6 }, kid);
+    face(kid, 60, 120, 15, { hair: 'M45 121 Q44 104 60 104 Q76 104 75 121 Q72 112 64 113 Q58 108 52 113 Q48 114 45 121Z', mouth: 'M54 125 Q60 132 66 125 Z', open: true });
+    P(kid, 'ih-aging-cowlick', 'M60 104 Q61 97 66 99');
+
+    // Baby: sitting in a onesie, curl, rosy cheeks, pacifier, rattle.
+    const baby = svg('g', { class: 'ih-aging-baby' }, node);
+    svg('ellipse', { class: 'ih-aging-shadow', cx: 60, cy: 190, rx: 24, ry: 3.5 }, baby);
+    svg('ellipse', { class: 'ih-aging-skin', cx: 46, cy: 187, rx: 6.5, ry: 4 }, baby);
+    svg('ellipse', { class: 'ih-aging-skin', cx: 74, cy: 187, rx: 6.5, ry: 4 }, baby);
+    P(baby, 'ih-aging-onesie', 'M44 186 Q41 169 50 163 Q60 159 70 163 Q79 169 76 186 Q60 191 44 186 Z');
+    P(baby, 'ih-aging-onesie-shade', 'M60 160 Q70 162 70 163 Q79 169 76 186 Q68 189 62 189 Z');
+    for (const by of [170, 177]) C(baby, 'ih-aging-snap', 60, by, 1.4);
+    P(baby, 'ih-aging-arm ih-aging-arm--baby', 'M48 168 Q41 172 40 178');
+    P(baby, 'ih-aging-arm ih-aging-arm--baby', 'M72 168 Q79 172 80 177');
+    P(baby, 'ih-aging-rattle-handle', 'M80 177 L86 167');
+    C(baby, 'ih-aging-rattle', 88, 164, 5);
+    C(baby, 'ih-aging-skin', 40, 180, 4.3);
+    C(baby, 'ih-aging-skin', 80, 178, 4.3);
+    face(baby, 60, 146, 17, { hair: 'M58 129.5 Q56 125 60.5 124.5 Q65 125 62.5 129.5', mouth: 'M57 155 H63', brows: false, cheeks: true });
+    C(baby, 'ih-aging-pacifier-ring', 60, 158.5, 3.6);
+    svg('ellipse', { class: 'ih-aging-pacifier', cx: 60, cy: 155.5, rx: 6, ry: 3 }, baby);
+
+    const frames = [man, teen, kid, baby];
+    const puff = svg('g', { class: 'ih-aging-puff' }, node);
+    for (const [cx, cy, r] of [[42, 172, 18], [62, 162, 22], [82, 174, 17], [58, 184, 18]]) svg('circle', { cx, cy, r }, puff);
+    const mark = svg('text', { class: 'ih-aging-question', x: 60, y: 120, 'text-anchor': 'middle' }, node);
+    mark.textContent = '?';
+    const label = tag ? el('div', 'ih-aging-tag is-staged', parent, tag) : null;
+    if (label) place(label, x + 8 * scale, y + 214 * scale);
+    const times = [at, stages.teen, stages.kid, stages.baby, stages.gone];
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    onFrame((t) => {
+      const index = times.reduce((k, time, i) => (t >= time ? i : k), -1);
+      frames.forEach((g, i) => g.setAttribute('opacity', i === index ? '1' : '0'));
+      const gone = t >= stages.gone;
+      puff.setAttribute('opacity', gone ? Math.max(0, 1 - (t - stages.gone) / 0.7).toFixed(2) : '0');
+      mark.setAttribute('opacity', gone ? Math.min(1, (t - stages.gone) / 0.2).toFixed(2) : '0');
+      // Each rewind step squashes and springs back like a tape jump.
+      const since = index >= 1 ? t - times[index] : 1;
+      const squash = reducedMotion.matches ? 0 : Math.max(0, 1 - since / 0.2) * 0.18;
+      node.style.transform = `scale(${(1 + squash).toFixed(3)}, ${(1 - squash).toFixed(3)})`;
+      if (label) label.textContent = gone ? `${tag} → ?` : tag;
+    });
+    node.style.transformOrigin = '50% 100%';
+    fx.rise(node, at, { distance: 16, duration: 0.35 });
+    if (label) fx.fadeIn(label, at + 0.2, 0.25);
+    if (until !== undefined) {
+      fx.fadeOut(node, until, 0.25);
+      if (label) fx.fadeOut(label, until, 0.25);
+    }
+    return node;
+  }
+
+  // ------------------------------------------------------------------
+  // Cash: a shower of dollar bills that piles up, then drops away
+  // ------------------------------------------------------------------
+
+  /**
+   * `count` dollar bills flutter down from above the stage from `at` and
+   * settle into a heap whose base spans x … x + w at y; at `dropAt` the whole
+   * heap falls out of the bottom of the frame. One bill is drawn once as a
+   * <symbol> and reused. Positions are a pure function of song time; with
+   * reduced motion the bills fade into the heap and fade out instead.
+   * flood: a top y — the bills pile all the way up to it, filling the frame.
+   * tone: 'green' or 'red' (money lost). heap: how high the heap rises.
+   * until: when the scene ends (bills stop updating after it).
+   */
+  function cash(parent, { x, y, w, count = 40, at, dropAt, flood, tone = 'green', spread = 1.4, heap = 46, until }) {
+    const id = `ih-bill-${++uid}`;
+    const node = el('div', `ih-cash ih-cash--${tone}`, parent);
+    const defs = svg('svg', { class: 'ih-cash-defs', 'aria-hidden': 'true' }, node);
+    const bill = svg('symbol', { id, viewBox: '0 0 64 30' }, defs);
+    svg('rect', { class: 'ih-bill-paper', x: 1, y: 1, width: 62, height: 28, rx: 3 }, bill);
+    svg('rect', { class: 'ih-bill-frame', x: 5, y: 4.5, width: 54, height: 21, rx: 2 }, bill);
+    svg('path', { class: 'ih-bill-guilloche', d: 'M13 10.5H23M13 15H23M13 19.5H23M41 10.5H51M41 15H51M41 19.5H51' }, bill);
+    svg('ellipse', { class: 'ih-bill-seal', cx: 32, cy: 15, rx: 7.5, ry: 8.5 }, bill);
+    svg('path', { class: 'ih-bill-sign', d: 'M35 10.6C34 9.6 30.6 9.4 29.6 11C28.4 13 31.4 13.9 32.4 14.3C33.8 14.9 35.6 15.9 34.4 18.2C33.4 20 29.8 19.7 28.6 18.4M32 8.4V21.6' }, bill);
+    for (const [cx, cy] of [[9.5, 9], [54.5, 9], [9.5, 21], [54.5, 21]]) svg('circle', { class: 'ih-bill-corner', cx, cy, r: 2.4 }, bill);
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const bills = Array.from({ length: count }, (_, i) => {
+      // A heap: bills near the middle of the base rest higher.
+      const u = hash01(i * 31 + 7);
+      const across = (u - 0.5) * 2;
+      const rest = {
+        x: x + u * (w - 64),
+        y: flood === undefined
+          ? y - 30 - (1 - across * across) * heap * hash01(i * 17 + 3)
+          : flood + (y - 30 - flood) * hash01(i * 17 + 3),
+        rotate: (hash01(i * 11 + 5) - 0.5) * 50,
+      };
+      const art = svg('svg', { class: 'ih-bill', viewBox: '0 0 64 30', width: 64, height: 30, 'aria-hidden': 'true' }, node);
+      svg('use', { href: `#${id}` }, art);
+      return {
+        art, rest,
+        startX: rest.x + (hash01(i * 23 + 1) - 0.5) * 160,
+        startY: -60 - hash01(i * 5 + 9) * 120,
+        fallAt: at + hash01(i * 13 + 2) * spread,
+        fallFor: 0.9 + hash01(i * 19 + 4) * 0.6,
+        spin: (hash01(i * 29 + 6) - 0.5) * 540,
+        dropDelay: hash01(i * 37 + 8) * 0.35,
+      };
+    });
+    // Back bills (higher in the heap) are drawn first, so lower ones overlap them.
+    bills.sort((a, b) => a.rest.y - b.rest.y).forEach((b) => node.append(b.art));
+    // Hundreds of bills: only move them while their scene can show them.
+    const activeTo = until ?? (dropAt !== undefined ? dropAt + 1.6 : Infinity);
+    onFrame((t) => {
+      if (t < at - 0.2 || t > activeTo) return;
+      const reduce = reducedMotion.matches;
+      for (const b of bills) {
+        let px = b.rest.x, py = b.rest.y, rot = b.rest.rotate, opacity = 1;
+        if (t < b.fallAt) {
+          opacity = 0;
+        } else if (t < b.fallAt + b.fallFor) {
+          const p = progress(t, b.fallAt, b.fallFor);
+          if (reduce) opacity = p;
+          else {
+            // Flutter: sway side to side while sinking, settling as it lands.
+            const ease = 1 - (1 - p) * (1 - p);
+            px = b.startX + (b.rest.x - b.startX) * ease + Math.sin(p * Math.PI * 3) * 18 * (1 - p);
+            py = b.startY + (b.rest.y - b.startY) * ease;
+            rot = b.rest.rotate + b.spin * (1 - ease) + Math.sin(p * Math.PI * 4) * 12 * (1 - p);
+          }
+        }
+        if (dropAt !== undefined && t >= dropAt + b.dropDelay) {
+          const d = t - dropAt - b.dropDelay;
+          if (reduce) opacity = Math.max(0, 1 - d / 0.4);
+          else {
+            py += 900 * d * d;
+            rot += 80 * d * (b.rest.rotate < 0 ? -1 : 1);
+            if (py > 560) opacity = 0;
+          }
+        }
+        b.art.style.opacity = opacity.toFixed(2);
+        b.art.style.transform = `translate(${px.toFixed(1)}px, ${py.toFixed(1)}px) rotate(${rot.toFixed(1)}deg)`;
+      }
+    });
+    return node;
+  }
+
+  // ------------------------------------------------------------------
   // Bugs: a beetle that crawls in; squash(at) flattens it
   // ------------------------------------------------------------------
 
@@ -2006,8 +2437,8 @@
   }
 
   window.InfoHidingKit = {
-    latest, show, during, note, heading, paper, list, bubble, digits, clock, counter,
-    apolloPortrait, car, overflowingHead, steps, calendar, iceberg, toggle, waterline, outlet, dossier,
+    latest, show, during, note, heading, paper, list, bubble, publicTag, digits, clock, counter, cash, agingPerson, apolloCount,
+    apolloPortrait, car, overflowingHead, steps, systemSplit, calendar, iceberg, toggle, waterline, outlet, dossier,
     decrypt, module, envelope, courier, laser, spotlight, lamp, agent, transmission, code, search,
     contractExchange, changeImpactGraph, mainframeMemory, stringWeb, mud, bug, stampTool, grid, vault, submarine, slip, iris,
   };
