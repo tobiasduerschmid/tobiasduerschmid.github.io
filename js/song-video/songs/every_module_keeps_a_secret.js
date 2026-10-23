@@ -437,7 +437,9 @@
       const only = mark(ln(9), 'only');
       kit.stamp(t, 'Only one!', { x: 300, y: 386, at: only, color: 'green', rotate: -6, shake: false });
       camera.punch(only + 0.05, 0.035);
-      if (final) window.SongFireworks.celebrate(t, { at: only + 0.1, seed: 33 });
+      // The final chorus celebrates: three bursts bloom on "one module", as
+      // the counter lands, and burn out before the outro.
+      if (final) window.SongFireworks.celebrate(t, { at: mark(ln(9), 'one'), seed: 33, count: 3 });
     }
 
     // ----------------------------------------------------------------

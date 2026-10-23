@@ -2632,7 +2632,7 @@
    Decorative on the always-dark stage; the line's caption says what it means. */
 .ih-cash { position: absolute; inset: 0; pointer-events: none; }
 .ih-cash-defs { position: absolute; width: 0; height: 0; overflow: hidden; }
-.ih-bill { position: absolute; left: 0; top: 0; overflow: visible; transform-origin: 32px 15px; }
+.ih-bill { position: absolute; left: 0; top: 0; overflow: visible; transform-origin: 32px 15px; opacity: 0; }
 /* The core memory filling up with money: a gold glow over the core bed. */
 .ih-core-glow { position: absolute; border-radius: 3px; background: radial-gradient(ellipse at 50% 50%, rgba(255, 211, 77, 0.95), rgba(255, 170, 40, 0.45) 60%, rgba(255, 170, 40, 0) 100%); box-shadow: 0 0 22px rgba(255, 211, 77, 0.8); opacity: 0; pointer-events: none; }
 .ih-cash { --bill-paper: #cfe5c3; --bill-frame: #b5d6a6; --bill-ink: #3d7a4a; --bill-line: #5f9a62; --bill-seal: #e3f0d9; --bill-sign: #24502f; }

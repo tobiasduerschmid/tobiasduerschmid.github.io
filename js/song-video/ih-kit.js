@@ -2644,7 +2644,18 @@
       svg('use', { href: `#${id}` }, art);
       return art;
     });
-    return { node, arts };
+    // Outside its flight window a layer hides every bill once, so none is
+    // left unposed in the corner or frozen where a seek left it.
+    let parked = false;
+    const park = (active) => {
+      if (active) parked = false;
+      else if (!parked) {
+        for (const art of arts) art.style.opacity = '0';
+        parked = true;
+      }
+      return active;
+    };
+    return { node, arts, park };
   }
 
   function poseBill(art, x, y, rotate, scale, opacity) {
@@ -2664,7 +2675,7 @@
     const glow = place(el('div', 'ih-core-glow', parent), into.x, into.y);
     glow.style.width = `${into.w}px`;
     glow.style.height = `${into.h}px`;
-    const { node, arts } = billLayer(parent, count, 'green');
+    const { node, arts, park } = billLayer(parent, count, 'green');
     const tx = into.x + into.w / 2, ty = into.y + into.h / 2;
     const bills = arts.map((art, i) => {
       // Start off stage, to the right of and below the mainframe.
@@ -2693,7 +2704,7 @@
     };
     const activeTo = until ?? Infinity;
     onFrame((t) => {
-      if (t < at - 0.2 || t > activeTo) return;
+      if (!park(t >= at - 0.2 && t <= activeTo)) return;
       let inside = 0;
       for (const b of bills) {
         let p = 0, visible = false;
@@ -2728,7 +2739,7 @@
    * Reduced motion shows nothing moving.
    */
   function cashBurst(parent, { x, y, count = 200, at, until, tone = 'red' }) {
-    const { node, arts } = billLayer(parent, count, tone);
+    const { node, arts, park } = billLayer(parent, count, tone);
     const span = Math.max(0.5, until - at - 1.1);
     const bills = arts.map((art, i) => {
       const angle = hash01(i * 31 + 7) * Math.PI * 2;
@@ -2745,7 +2756,7 @@
     // Bills launched last keep flying after `until`, so a scene that fades
     // out over them never freezes them mid-air.
     onFrame((t) => {
-      if (t < at - 0.2 || t > until + 3.2) return;
+      if (!park(t >= at - 0.2 && t <= until + 3.2)) return;
       for (const b of bills) {
         const age = t - b.launch;
         if (age < 0 || age > 3 || reducedMotion.matches) { b.art.style.opacity = '0'; continue; }

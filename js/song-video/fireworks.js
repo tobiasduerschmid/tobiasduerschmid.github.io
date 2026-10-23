@@ -97,7 +97,8 @@
     burst.embers.setAttribute('d', dust.join(''));
   }
 
-  function celebrate(parent, { at, seed = 7 }) {
+  /** `count` (1–5) bursts; fewer make a shorter show for a scene that ends soon. */
+  function celebrate(parent, { at, seed = 7, count = 5 }) {
     const layer = svg('svg', { class: 'song-fireworks', 'data-testid': 'song-fireworks', viewBox: '0 0 960 450', 'aria-hidden': 'true', focusable: 'false' });
     parent.prepend(layer);
     const bursts = [
@@ -106,11 +107,12 @@
       { x: 485, y: 125, delay: 1.12, tone: 'teal', scale: 0.9 },
       { x: 190, y: 295, delay: 1.85, tone: 'rose', scale: 0.7 },
       { x: 768, y: 290, delay: 2.3, tone: 'gold', scale: 0.85 },
-    ].map((spec, i) => makeBurst(layer, spec, seed + i));
+    ].slice(0, count).map((spec, i) => makeBurst(layer, spec, seed + i));
+    const lastDelay = bursts[bursts.length - 1].delay;
     let active = false;
     onFrame((time) => {
       const age = time - at - FLIGHT;
-      const visible = age >= -FLIGHT && age < 2.3 + LIFETIME;
+      const visible = age >= -FLIGHT && age < lastDelay + LIFETIME;
       if (visible !== active) {
         layer.classList.toggle('is-active', visible);
         active = visible;
