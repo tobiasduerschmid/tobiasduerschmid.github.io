@@ -189,20 +189,53 @@
         }
         compiled = null;
       },
+      /**
+       * The keyed state, softened by a short bell-shaped time kernel
+       * (±0.14 s): where one move interrupts another, or a quick key
+       * starts from rest, the motion carries its momentum through the
+       * change instead of hitching. Still a pure function of t.
+       */
       value(t) {
         if (!compiled) compile();
-        const out = { ...initial };
-        for (const [name, keys] of compiled) {
-          let current = null;
-          for (const key of keys) {
-            if (key.at > t) break;
-            current = key;
-          }
-          if (current) out[name] = mix(current.start, current.target, current.curve(clamp((t - current.at) / current.dur, 0, 1)));
+        const samples = SMOOTHING.map(([dt]) => raw(t + dt));
+        const centre = samples[2];
+        const out = { ...centre };
+        for (const name of Object.keys(centre)) {
+          out[name] = blend(samples.map((sample) => sample[name]), SMOOTHING.map(([, weight]) => weight), centre[name]);
         }
         return out;
       },
     };
+
+    function raw(t) {
+      const out = { ...initial };
+      for (const [name, keys] of compiled) {
+        let current = null;
+        for (const key of keys) {
+          if (key.at > t) break;
+          current = key;
+        }
+        if (current) out[name] = mix(current.start, current.target, current.curve(clamp((t - current.at) / current.dur, 0, 1)));
+      }
+      return out;
+    }
+  }
+
+  /** Binomial kernel offsets (s) and weights for track smoothing. */
+  const SMOOTHING = [[-0.14, 1 / 16], [-0.07, 4 / 16], [0, 6 / 16], [0.07, 4 / 16], [0.14, 1 / 16]];
+
+  /** Weighted average of numbers (recursively in objects); other values keep the centre sample. */
+  function blend(values, weights, centre) {
+    if (typeof centre === 'number') {
+      if (!values.every((v) => typeof v === 'number')) return centre;
+      return values.reduce((sum, v, i) => sum + v * weights[i], 0);
+    }
+    if (isObject(centre)) {
+      const out = {};
+      for (const key of Object.keys(centre)) out[key] = blend(values.map((v) => (isObject(v) ? v[key] : undefined)), weights, centre[key]);
+      return out;
+    }
+    return centre;
   }
 
   /** Two-bone IK: rotations that bring a hand from the shoulder to target. */
@@ -770,7 +803,8 @@
       const active = waltzes.find((w) => t >= w.from && t < w.to);
       if (!active) return null;
       // `calm` scales the whole figure down to a gentle sway in place.
-      const fade = smooth((t - active.from) / 0.6) * smooth((active.to - t) / 0.6) * (active.calm ?? 1);
+      // A full second to settle into the waltz and out of it again.
+      const fade = smooth((t - active.from) / 1.0) * smooth((active.to - t) / 1.0) * (active.calm ?? 1);
       const { index, phase } = beats.at(t);
       const dir = index % 2 === 0 ? 1 : -1;
       const travel = active.travel;
@@ -828,21 +862,24 @@
 
     /** How far an underarm turn is under way at t (0 outside one, 1 in it). */
     function archAt(t) {
-      const turn = twirls.find((tw) => tw.who === 'code' && t >= tw.at - 0.35 && t <= tw.at + tw.dur + 0.35);
+      const turn = twirls.find((tw) => tw.who === 'code' && t >= tw.at - 0.5 && t <= tw.at + tw.dur + 0.5);
       if (!turn || !dancers.test || !dancers.code) return 0;
-      return smooth((t - turn.at + 0.35) / 0.35) * smooth((turn.at + turn.dur + 0.35 - t) / 0.35);
+      return smooth((t - turn.at + 0.5) / 0.5) * smooth((turn.at + turn.dur + 0.5 - t) / 0.5);
     }
 
     function stateOf(dancer, t, couple, w) {
       const isTest = dancer.kind === 'test';
       let s = dancer.state.value(t);
       // Follow-through: forearms and the head trail the body's keyed motion.
-      const lagged = dancer.state.value(t - 0.08);
+      // Overlapping action: the forearm trails the upper arm, the hand
+      // trails the forearm, and the head settles last.
+      const lagged = dancer.state.value(t - 0.12);
+      const wristLag = dancer.state.value(t - 0.2);
       s = {
         ...s,
-        armL: { ...s.armL, el: lagged.armL.el },
-        armR: { ...s.armR, el: lagged.armR.el },
-        head: dancer.state.value(t - 0.05).head,
+        armL: { ...s.armL, el: lagged.armL.el, wr: wristLag.armL.wr },
+        armR: { ...s.armR, el: lagged.armR.el, wr: wristLag.armR.wr },
+        head: dancer.state.value(t - 0.1).head,
       };
       // In the promenade hold (and under an arch) the partners stand close
       // enough to touch: Test's arm behind Code's back, her hand on his shoulder.
@@ -926,12 +963,14 @@
         if (dancer.kind !== twirl.who || t < twirl.at || t > twirl.at + twirl.dur) continue;
         const p = (t - twirl.at) / twirl.dur;
         const lift = Math.sin(Math.PI * p);
-        // Turning: the figure narrows to a profile (never a paper-thin line)
+        // Turning: the figure narrows through edge-on and widens again
         // and widens again, while the gown flares and the body rises. The
         // inner hands stay joined above her head (archAt), so she turns
         // under Test's raised arm; her free arm stays rounded and low.
         const c = Math.cos(2 * Math.PI * twirl.turns * ease.inOut(p));
-        s.spin = Math.sign(c || 1) * Math.max(0.24, Math.abs(c));
+        // Continuous through edge-on (like a card turning), so the figure
+        // never jumps from one side to its mirror image.
+        s.spin = Math.abs(c) < 1e-3 ? 1e-3 : c;
         s.flare += 20 * lift;
         s.bob -= 4 * lift;
         s.head -= 6 * lift;
@@ -1056,7 +1095,7 @@
        * Keys one dancer: a pose name and/or a partial state. A gesture starts
        * on the triplet nearest its sung word (at most a sixth of a beat away).
        */
-      pose(kind, atTime, pose, { dur = 0.5, curve = ease.inOut, ...extra } = {}) {
+      pose(kind, atTime, pose, { dur = 0.75, curve = ease.inOut, ...extra } = {}) {
         const dancer = dancers[kind];
         const partial = typeof pose === 'string' ? { ...poseOf(pose), ...extra } : { ...pose, ...extra };
         dancer.state.add(dur < 0.1 ? atTime : nearestTriplet(atTime), partial, dur, curve);
@@ -1096,7 +1135,7 @@
        * back and her hand on his shoulder, standing close; 'hands': the
        * inner hands joined between them.
        */
-      hold(atTime, { pose = 'frame', dur = 0.5, release = false, style = 'promenade' } = {}) {
+      hold(atTime, { pose = 'frame', dur = 0.8, release = false, style = 'promenade' } = {}) {
         keyAll(dur < 0.1 ? atTime : nearestBeat(atTime), (dancer) => ({
           hold: release ? 0 : 1,
           embrace: !release && style === 'promenade' ? 1 : 0,

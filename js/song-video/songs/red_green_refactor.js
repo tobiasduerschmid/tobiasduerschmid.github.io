@@ -268,7 +268,7 @@
       tdd.note(b, 'can it fail at all?', { x: 288, y: 386, at: mark('verse-2-6', 'seen'), tone: 'gold', iconName: 'question' });
       duo.lamp(mark('verse-2-5', 'red'), 'red').lamp(mark('verse-2-5', 'green'), 'green');
       duo.waltz(mark('verse-2-5', 'green'), end('verse-2') - 0.2, { travel: 10, roam: 14 });
-      duo.twirl(line('verse-2-6').end + 0.4, { dur: 1.4 });
+      duo.twirl(line('verse-2-6').end + 0.4, { dur: 2.0 });
     }
 
     // ----------------------------------------------------------------
@@ -411,7 +411,7 @@
         // open stage and never cover the code, the cycle, or the dancers.
         window.SongFireworks.celebrate(content, { at: mark(ln(8), 'routine') + 0.1, seed: 41 });
       } else {
-        duo.twirl(mark(ln(8), 'routine') - 0.2, { dur: 1.1 });
+        duo.twirl(mark(ln(8), 'routine') - 0.2, { dur: 1.6 });
       }
     }
 
@@ -515,7 +515,7 @@
         calls: [{ input: 'push(1), push(2)', output: 'ok' }, { input: 'pop()', output: '2' }, { input: 'pop()', output: '1' }],
       });
       tdd.note(b, 'same outputs', { x: 480, y: 222, at: mark('verse-4-4', 'same'), tone: 'green', iconName: 'check' });
-      duo.twirl(line('verse-4-4').end + 0.5, { dur: 1.6, turns: 2 });
+      duo.twirl(line('verse-4-4').end + 0.5, { dur: 2.4, turns: 2 });
 
       // Remove duplication in the tests too: a fixture makes a fresh stack.
       const c = kit.scene(content, line('verse-4-5').start - 0.2, line('verse-4-7').start - 0.15);
@@ -626,7 +626,7 @@
       duo.tidy(line('verse-5-7').start, 0, 0.8);
       duo.lamp(mark('verse-5-8', 'give'), 'green');
       duo.showcase(mark('verse-5-8', 'give'), { until: mark('verse-5-8', 'improve') - 0.1 });
-      duo.twirl(mark('verse-5-8', 'improve'), { dur: 1.0 });
+      duo.twirl(mark('verse-5-8', 'improve'), { dur: 1.3 });
     }
 
     // ----------------------------------------------------------------
@@ -861,7 +861,7 @@
       tdd.note(c, 'solo ✓', { x: 440, y: 412, at: mark('bridge-6', 'solo'), until: mark('bridge-6', 'whole'), tone: 'green' });
       tdd.note(c, 'solo ✓', { x: 836, y: 412, at: mark('bridge-6', 'steps'), until: mark('bridge-6', 'whole'), tone: 'green' });
       show.step('test', mark('bridge-6', 'whole'), 0, 0.6).step('code', mark('bridge-6', 'whole'), 0, 0.6);
-      show.hold(mark('bridge-6', 'show'), { pose: 'flourish' }).twirl(mark('bridge-6', 'show') + 0.3, { dur: 1.2 });
+      show.hold(mark('bridge-6', 'show'), { pose: 'flourish' }).twirl(mark('bridge-6', 'show') + 0.3, { dur: 1.7 });
 
       // Tests reveal the bugs they shine on; they cannot prove there are none.
       const d = kit.scene(content, line('bridge-7').start - 0.1, line('bridge-9').start - 0.2, { exit: 'fade' });
