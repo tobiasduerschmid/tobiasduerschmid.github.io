@@ -39,7 +39,7 @@
 
   const BODY = {
     test: {
-      hipY: -100, shoulder: [23, -168], upper: 36, fore: 33, hip: 9.5, thigh: 48, shin: 46, foot: 12.5,
+      hipY: -100, shoulder: [22, -165.5], upper: 35, fore: 33, hip: 9.5, thigh: 48, shin: 46, foot: 12.5,
     },
     code: {
       hipY: -118, shoulder: [17, -165], upper: 33, fore: 31, chestY: -150, foot: 11,
@@ -490,8 +490,8 @@
     const lean = svg('g', {}, upper);
     // Torso: tailcoat front over a white shirt, gold lapels, bow tie.
     const torso = svg('g', {}, lean);
-    const coat = svg('path', { class: 'tdd-coat', fill: `url(#${id}-coat)`, d: 'M-27 -168 C-29 -175 -22 -178.5 -12 -178.5 L12 -178.5 C22 -178.5 29 -175 27 -168 C29.5 -152 25 -134 20.5 -122 C19.5 -114 20.5 -106 20 -100 Q0 -95 -20 -100 C-20.5 -106 -19.5 -114 -20.5 -122 C-25 -134 -29.5 -152 -27 -168 Z' }, torso);
-    svg('path', { class: 'tdd-coat-shade', d: 'M6 -178.5 L12 -178.5 C22 -178.5 29 -175 27 -168 C29.5 -152 25 -134 20.5 -122 C19.5 -114 20.5 -106 20 -100 Q13 -97.5 6 -97 Z' }, torso);
+    const coat = svg('path', { class: 'tdd-coat', fill: `url(#${id}-coat)`, d: 'M-26.5 -167 C-27.5 -171.5 -24.5 -174 -19 -175.8 C-15 -177.2 -11.5 -179.6 -8 -180.4 Q0 -181.6 8 -180.4 C11.5 -179.6 15 -177.2 19 -175.8 C24.5 -174 27.5 -171.5 26.5 -167 C29.5 -152 25 -134 20.5 -122 C19.5 -114 20.5 -106 20 -100 Q0 -95 -20 -100 C-20.5 -106 -19.5 -114 -20.5 -122 C-25 -134 -29.5 -152 -27 -168 Z' }, torso);
+    svg('path', { class: 'tdd-coat-shade', d: 'M6 -180.6 Q7 -180.5 8 -180.4 C11.5 -179.6 15 -177.2 19 -175.8 C24.5 -174 27.5 -171.5 26.5 -167 C29.5 -152 25 -134 20.5 -122 C19.5 -114 20.5 -106 20 -100 Q13 -97.5 6 -97 Z' }, torso);
     svg('path', { class: 'tdd-coat-seam', d: 'M-20.5 -122 Q0 -117 20.5 -122' }, torso);
     // Where the coat's two fronts overlap, down from the lapels to the hem.
     svg('path', { class: 'tdd-coat-front', d: 'M-1.2 -131 C-0.9 -118 -1.1 -107 -1.6 -97.6' }, torso);
@@ -1736,10 +1736,7 @@
           const joined = solve(plan.joined, null, 0);
           solved = plan.ownWeight > 0 ? mix(joined, solve(plan.own, null, 0), plan.ownWeight) : joined;
         }
-        // Her arm keeps to its path through the first half of a change of
-        // hold and hands over to her own pose only after that, so her hand
-        // never drifts off its path while it is near him.
-        s[key] = mix(s[key], solved, isTest ? s.hold : smooth(s.hold / 0.5));
+        s[key] = mix(s[key], solved, s.hold);
       }
       return s;
     }
@@ -1808,13 +1805,13 @@
         // lifted clear of him (handRests), so the change never shows.
         const k = archAt(t);
         const e = raw.code.embrace;
-        const settle = smooth((e - 0.8) / 0.2) * (1 - smooth(k / 0.3));
+        const settle = smooth((e - 0.72) / 0.28) * (1 - smooth(k / 0.3));
         const contact = on('test', [21.5, -178 - 11 * (1 - settle)]);
         const palm = rotateAbout([-6.6, 2.9], [0, 0], raw.test.lean);
         // IK targets the wrist; the palm, not the cuff, rests on the shoulder.
         const overShoulder = [contact[0] - palm[0], contact[1] - palm[1]];
         const underArm = lerp(on('test', [BODY.test.shoulder[0], BODY.test.shoulder[1]]), back, 0.5);
-        const slide = smooth((e - 0.35) / 0.45);
+        const slide = smooth((e - 0.2) / 0.7);
         const own = lerp(underArm, overShoulder, slide);
         // Underarm turn: the joined hands rise into the gap between the two
         // heads, clear of both, and stay there while she turns beneath them.
@@ -1822,7 +1819,7 @@
         couple = {
           handRests: settle > 0.35,
           test: { joined: lerp(hands, arch, k), own: back, ownWeight: raw.test.embrace * (1 - k) },
-          code: { target: lerp(lerp(hands, own, smooth(e / 0.35)), arch, k), palm, drape: slide * (1 - k) },
+          code: { target: lerp(lerp(hands, own, smooth(e / 0.55)), arch, k), palm, drape: slide * (1 - k) },
         };
       }
       const finals = {};
@@ -1874,7 +1871,26 @@
     }
 
     function keyAll(atTime, partialFor, dur, curve) {
-      for (const dancer of Object.values(dancers)) dancer.state.add(atTime, partialFor(dancer), dur, curve);
+      for (const dancer of Object.values(dancers)) addKey(dancer, atTime, partialFor(dancer), dur, curve);
+    }
+
+    /** Taking or letting go of a hold never takes less than this (s). */
+    const HOLD_CHANGE = 0.8;
+
+    /**
+     * Adds a key to one dancer. Taking or letting go of the hold carries a
+     * whole arm from one place to another (round behind a partner, onto or
+     * off a shoulder), so those changes take at least HOLD_CHANGE, starting
+     * earlier and arriving at the same moment as the rest of the key.
+     */
+    function addKey(dancer, atTime, partial, dur, curve) {
+      const holdKeys = {};
+      const rest = {};
+      for (const [name, value] of Object.entries(partial)) (name === 'hold' || name === 'embrace' ? holdKeys : rest)[name] = value;
+      if (Object.keys(holdKeys).length && dur >= 0.1 && dur < HOLD_CHANGE) {
+        dancer.state.add(atTime + dur - HOLD_CHANGE, holdKeys, HOLD_CHANGE, curve);
+        if (Object.keys(rest).length) dancer.state.add(atTime, rest, dur, curve);
+      } else dancer.state.add(atTime, partial, dur, curve);
     }
 
     const api = {
@@ -1904,7 +1920,7 @@
       pose(kind, atTime, pose, { dur = 0.75, curve = ease.inOut, ...extra } = {}) {
         const dancer = dancers[kind];
         const partial = typeof pose === 'string' ? { ...poseOf(pose), ...extra } : { ...pose, ...extra };
-        dancer.state.add(dur < 0.1 ? atTime : nearestTriplet(atTime), partial, dur, curve);
+        addKey(dancer, dur < 0.1 ? atTime : nearestTriplet(atTime), partial, dur, curve);
         return api;
       },
       /**

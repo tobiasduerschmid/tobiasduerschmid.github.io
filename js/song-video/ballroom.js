@@ -70,7 +70,7 @@
     return art;
   }
 
-  /** Velvet drapes, gathered toward the walls, with gold tassels. */
+  /** Velvet drapes, gathered toward the walls. */
   function drape(parent, side) {
     const art = svg('svg', { class: `br-drape br-drape--${side}`, viewBox: '0 0 130 470', width: 130, height: 470, 'aria-hidden': 'true' }, parent);
     const defs = svg('defs', {}, art);
@@ -83,9 +83,6 @@
       svg('path', { class: cls, d }, art);
     }
     svg('path', { class: 'br-drape-hem', d: 'M0 0 H124 Q96 150 74 300 Q66 360 88 470' }, art);
-    svg('path', { class: 'br-drape-tie', d: 'M58 300 Q74 296 84 306' }, art);
-    svg('circle', { class: 'br-drape-tassel', cx: 86, cy: 312, r: 6 }, art);
-    svg('path', { class: 'br-drape-tassel', d: 'M80 316 L78 340 H94 L92 316 Z' }, art);
     return art;
   }
 
