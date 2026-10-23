@@ -125,12 +125,42 @@
   fill: #ffffff;
 }
 
+/* The iris: a soft colour low in each eye, under the glints. */
+.tdd-eye-iris {
+  fill: #4d74d9;
+}
+
+.tdd-eye-glint--small {
+  opacity: 0.85;
+}
+
 .tdd-lash,
-.tdd-brow {
+.tdd-lid {
   fill: none;
   stroke: #1b1640;
   stroke-width: 1.6;
   stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.tdd-lid {
+  stroke-width: 1.4;
+}
+
+/* Brows are filled, tapering from the inner end to a fine tail. */
+.tdd-brow {
+  fill: #1b1640;
+  stroke: #1b1640;
+  stroke-width: 0.5;
+  stroke-linejoin: round;
+}
+
+.tdd-nose {
+  fill: none;
+  stroke: #1b1640;
+  stroke-width: 1;
+  stroke-linecap: round;
+  opacity: 0.42;
 }
 
 .tdd-mouth {
@@ -141,8 +171,17 @@
   stroke-linejoin: round;
 }
 
-.tdd-mouth.is-open {
+/* An open mouth: the dark fill, then upper teeth and tongue, under the lip line. */
+.tdd-mouth-fill {
   fill: #7a1d3a;
+}
+
+.tdd-teeth {
+  fill: #fffaf4;
+}
+
+.tdd-tongue {
+  fill: #e0607e;
 }
 
 /* ------------------------------------------------------------------ */
@@ -232,6 +271,51 @@
   stroke: #8c98c6;
   stroke-width: 1.4;
   stroke-linecap: round;
+}
+
+.tdd-shoe-shine--toe {
+  stroke-width: 0.9;
+}
+
+.tdd-shoe-heel-block {
+  fill: #05060f;
+}
+
+/* The toe cap's seam on Test's oxfords. */
+.tdd-shoe-cap {
+  fill: none;
+  stroke: rgba(167, 180, 255, 0.35);
+  stroke-width: 0.7;
+  stroke-linecap: round;
+}
+
+/* Tailoring: the trouser hem's break over the shoe, the coat's
+   overlapping fronts, folds down the tails, and gold cufflinks. */
+.tdd-trouser-break {
+  fill: none;
+  stroke: rgba(6, 8, 26, 0.45);
+  stroke-width: 0.9;
+  stroke-linecap: round;
+}
+
+.tdd-coat-front {
+  fill: none;
+  stroke: rgba(6, 8, 26, 0.6);
+  stroke-width: 1;
+  stroke-linecap: round;
+}
+
+.tdd-coat-tail-fold {
+  fill: none;
+  stroke: rgba(167, 180, 255, 0.16);
+  stroke-width: 0.9;
+  stroke-linecap: round;
+}
+
+.tdd-cufflink {
+  fill: #f2c14e;
+  stroke: #8a6416;
+  stroke-width: 0.4;
 }
 
 .tdd-socket {
@@ -333,6 +417,21 @@
   fill: rgba(10, 6, 40, 0.28);
 }
 
+/* A tulle petticoat peeking below the hem. */
+.tdd-petticoat {
+  fill: rgba(205, 196, 255, 0.24);
+  stroke: rgba(226, 220, 255, 0.5);
+  stroke-width: 0.8;
+  stroke-linejoin: round;
+}
+
+.tdd-sleeve-pleat {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.16);
+  stroke-width: 0.8;
+  stroke-linecap: round;
+}
+
 /* Satin volume: a soft band of light down the gown's left flank, and a
    pale band just inside the hem that follows its scallops. */
 .tdd-sheen-grad .tdd-stop--edge { stop-color: rgba(214, 236, 255, 0); }
@@ -373,6 +472,22 @@
 
 .tdd-sash-bow {
   fill: #c9962d;
+  stroke: #8a6416;
+  stroke-width: 0.6;
+  stroke-linejoin: round;
+}
+
+.tdd-sash-knot {
+  fill: #dcad45;
+  stroke: #8a6416;
+  stroke-width: 0.6;
+}
+
+.tdd-sash-bow-sheen {
+  fill: none;
+  stroke: rgba(255, 240, 190, 0.7);
+  stroke-width: 0.9;
+  stroke-linecap: round;
 }
 
 .tdd-paper {
@@ -400,8 +515,35 @@
   stroke-linecap: round;
 }
 
-.tdd-blush {
-  fill: rgba(255, 120, 170, 0.35);
+/* A soft blush that fades out at its edge. */
+.tdd-blush-grad .tdd-stop--core { stop-color: rgba(255, 120, 170, 0.5); }
+.tdd-blush-grad .tdd-stop--edge { stop-color: rgba(255, 120, 170, 0); }
+
+/* Pearl drop earrings on short gold links. */
+.tdd-pearl-grad .tdd-stop--core { stop-color: #ffffff; }
+.tdd-pearl-grad .tdd-stop--mid { stop-color: #efe9fa; }
+.tdd-pearl-grad .tdd-stop--edge { stop-color: #b4aad3; }
+
+.tdd-pearl {
+  stroke: rgba(70, 60, 120, 0.55);
+  stroke-width: 0.5;
+}
+
+.tdd-pearl-glint {
+  fill: #ffffff;
+}
+
+.tdd-earring-stud {
+  fill: #f2c14e;
+  stroke: #8a6416;
+  stroke-width: 0.5;
+}
+
+.tdd-earring-link {
+  fill: none;
+  stroke: #d9a93a;
+  stroke-width: 0.8;
+  stroke-linecap: round;
 }
 
 .tdd-brace,
@@ -433,12 +575,47 @@
   stroke: #fff1d9;
 }
 
-.tdd-slipper,
-.tdd-slipper-toe {
-  fill: #f2c14e;
-  stroke: #8a6416;
-  stroke-width: 1;
+/* Code's gold satin court shoes: the parts are outlined together, then
+   filled with the satin gradient on top, so they read as one shoe. */
+.tdd-shoe-grad .tdd-stop--top { stop-color: #ffe39a; }
+.tdd-shoe-grad .tdd-stop--bottom { stop-color: #d29a32; }
+
+.tdd-shoe-outline {
+  fill: #b8862b;
+  stroke: #6e5214;
+  stroke-width: 1.5;
   stroke-linejoin: round;
+}
+
+.tdd-shoe-heel {
+  fill: #a37722;
+  stroke: #6e5214;
+  stroke-width: 0.6;
+  stroke-linejoin: round;
+}
+
+.tdd-slipper-sole {
+  fill: none;
+  stroke: #6e5214;
+  stroke-width: 0.9;
+  stroke-linecap: round;
+}
+
+.tdd-shoe-buckle {
+  fill: #fff3c4;
+  stroke: #8a6416;
+  stroke-width: 0.45;
+}
+
+.tdd-code-instep {
+  fill: var(--tdd-code-skin, #e7e0ff);
+  stroke: var(--tdd-code-skin-shadow, #8e82c4);
+  stroke-width: 0.7;
+  stroke-linejoin: round;
+}
+
+.tdd-foot-contact {
+  fill: rgba(6, 4, 20, 0.45);
 }
 
 .tdd-code-bar--kw { fill: #c4b5fd; }
@@ -453,8 +630,16 @@
 .tdd-dancer--code .tdd-eye { fill: var(--tdd-code-ink, #1b1640); }
 .tdd-dancer--code .tdd-eye-glint { fill: var(--tdd-code-glint, #ffffff); }
 .tdd-dancer--code .tdd-lash,
-.tdd-dancer--code .tdd-brow,
-.tdd-dancer--code .tdd-mouth { stroke: var(--tdd-code-ink, #1b1640); }
+.tdd-dancer--code .tdd-lid,
+.tdd-dancer--code .tdd-nose { stroke: var(--tdd-code-ink, #1b1640); }
+.tdd-dancer--code .tdd-brow {
+  fill: var(--tdd-code-ink, #1b1640);
+  stroke: var(--tdd-code-ink, #1b1640);
+}
+/* Code's iris and lips mix her ink colour, so they keep their contrast
+   against whichever skin she inherits. */
+.tdd-dancer--code .tdd-eye-iris { fill: color-mix(in srgb, var(--tdd-code-ink, #1b1640) 40%, #a68cff); }
+.tdd-dancer--code .tdd-mouth { stroke: color-mix(in srgb, var(--tdd-code-ink, #1b1640) 62%, #c2416f); }
 
 
 /* Cloth: the tailcoat and trousers catch light at the shoulders and fall

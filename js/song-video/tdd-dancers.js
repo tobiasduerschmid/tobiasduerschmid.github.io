@@ -210,10 +210,16 @@
     function raw(t) {
       const out = { ...initial };
       for (const [name, keys] of compiled) {
+        // The last key at or before t (keys are sorted by time).
         let current = null;
-        for (const key of keys) {
-          if (key.at > t) break;
-          current = key;
+        let lo = 0;
+        let hi = keys.length - 1;
+        while (lo <= hi) {
+          const mid = (lo + hi) >> 1;
+          if (keys[mid].at <= t) {
+            current = keys[mid];
+            lo = mid + 1;
+          } else hi = mid - 1;
         }
         if (current) out[name] = mix(current.start, current.target, current.curve(clamp((t - current.at) / current.dur, 0, 1)));
       }
@@ -298,12 +304,18 @@
     const forePath = segmentPath(body.fore, ...foreW);
     if (kind === 'code') svg('path', { class: 'tdd-skin-rim', d: forePath }, foreArm);
     svg('path', { class: 'tdd-arm-fore', d: forePath }, foreArm);
-    if (kind === 'test') svg('rect', { class: 'tdd-cuff', x: -5.6, y: body.fore - 6, width: 11.2, height: 5, rx: 2 }, foreArm);
+    if (kind === 'test') {
+      svg('rect', { class: 'tdd-cuff', x: -5.6, y: body.fore - 6, width: 11.2, height: 5, rx: 2 }, foreArm);
+      svg('circle', { class: 'tdd-cufflink', cx: outer * 3.1, cy: body.fore - 3.5, r: 0.95 }, foreArm);
+    }
     const hand = svg('g', { transform: `translate(0 ${body.fore + 1})` }, foreArm);
     glove(hand, kind === 'test' ? 0.92 : 0.8);
     // Code's puffed cap sleeve sits on top of the shoulder and turns with it.
     const cap = kind === 'code' ? svg('g', {}, front) : null;
-    if (cap) svg('path', { class: 'tdd-sleeve-puff', fill: `url(#${id}-gown)`, d: 'M-7.5 3 C-8.5 -5.5 8.5 -5.5 7.5 3 C6.4 9.5 -6.4 9.5 -7.5 3 Z' }, cap);
+    if (cap) {
+      svg('path', { class: 'tdd-sleeve-puff', fill: `url(#${id}-gown)`, d: 'M-7.5 3 C-8.5 -5.5 8.5 -5.5 7.5 3 C6.4 9.5 -6.4 9.5 -7.5 3 Z' }, cap);
+      svg('path', { class: 'tdd-sleeve-pleat', d: 'M-3.4 -2.4 Q-2.6 2.6 -3.2 7 M0 -3.3 Q0.5 2.6 0 7.8 M3.4 -2.4 Q2.8 2.6 3.3 7' }, cap);
+    }
     return {
       apply(angles) {
         const x = side === 'L' ? -sx : sx;
@@ -316,19 +328,42 @@
     };
   }
 
-  /** Eyes (with a blink), brows, and an expression mouth around (0, 0). */
-  function face(parent, { eyeY, eyeX, mouthY, browY, lashes = false, seed }) {
+  /**
+   * Eyes (with a blink), brows, a nose, and an expression mouth around
+   * (0, 0). Each eye has a coloured iris low in it under two glints;
+   * `lashes` adds a lined upper lid flicked out at the corner. An open
+   * smile shows its upper teeth and tongue.
+   */
+  function face(parent, { eyeY, eyeX, mouthY, browY, noseY, lashes = false, seed }) {
     const node = svg('g', { class: 'tdd-face' }, parent);
     const eyes = [-eyeX, eyeX].map((x) => {
+      const out = x < 0 ? -1 : 1;
       const eye = svg('g', { transform: `translate(${x} ${eyeY})` }, node);
       const ball = svg('g', {}, eye);
       svg('ellipse', { class: 'tdd-eye', rx: 3.4, ry: 4.4 }, ball);
+      svg('ellipse', { class: 'tdd-eye-iris', cx: 0, cy: 1.2, rx: 2.2, ry: 2.1 }, ball);
       svg('circle', { class: 'tdd-eye-glint', cx: 1.1, cy: -1.5, r: 1.15 }, ball);
-      if (lashes) svg('path', { class: 'tdd-lash', d: x < 0 ? 'M-3.4 -3 L-6 -5.4' : 'M3.4 -3 L6 -5.4' }, eye);
+      svg('circle', { class: 'tdd-eye-glint tdd-eye-glint--small', cx: -1.2, cy: 1.9, r: 0.55 }, ball);
+      if (lashes) {
+        svg('path', { class: 'tdd-lid', d: `M${-3.3 * out} -1.6 Q${-0.6 * out} -5.9 ${3.4 * out} -2.7 L${5.5 * out} -4.6` }, ball);
+        svg('path', { class: 'tdd-lash', d: `M${2.2 * out} -4.2 L${3.7 * out} -6.6` }, ball);
+      }
       return ball;
     });
-    const brows = [-eyeX, eyeX].map((x) => svg('path', { class: 'tdd-brow', d: `M${x - 4} ${browY} Q${x} ${browY - 2.5} ${x + 4} ${browY}` }, node));
-    const mouth = svg('path', { class: 'tdd-mouth', transform: `translate(0 ${mouthY})` }, node);
+    // Brows taper from a blunt inner end to a fine outer tail.
+    const brows = [-eyeX, eyeX].map((x) => {
+      const inward = x < 0 ? 1 : -1;
+      const inner = x + 4 * inward;
+      const outer = x - 4.4 * inward;
+      return svg('path', { class: 'tdd-brow', d: `M${f(inner)} ${f(browY + 0.7)} Q${x} ${f(browY - 3.6)} ${f(outer)} ${f(browY + 0.1)} Q${x} ${f(browY - 1.3)} ${f(inner)} ${f(browY - 0.9)} Z` }, node);
+    });
+    svg('path', { class: 'tdd-nose', d: `M1.1 ${f(noseY - 1.1)} Q1.9 ${f(noseY + 0.3)} 0.3 ${f(noseY + 0.6)}` }, node);
+    // The open mouth is filled first, then its teeth and tongue, then the lip line on top.
+    const mouthGroup = svg('g', { transform: `translate(0 ${mouthY})` }, node);
+    const mouthFill = svg('path', { class: 'tdd-mouth-fill' }, mouthGroup);
+    const teeth = svg('path', { class: 'tdd-teeth', d: 'M-5.6 -0.75 L5.6 -0.75 Q0 1.5 -5.6 -0.75 Z' }, mouthGroup);
+    const tongue = svg('path', { class: 'tdd-tongue', d: 'M-2.7 3.5 Q0 1.4 2.7 3.5 Q0 5 -2.7 3.5 Z' }, mouthGroup);
+    const mouth = svg('path', { class: 'tdd-mouth' }, mouthGroup);
     const blinkAt = 1.3 + hash01(seed) * 2.4;
     return {
       apply(t, expression, look) {
@@ -338,9 +373,14 @@
         eyes.forEach((ball) => ball.setAttribute('transform', `translate(${f(lookX)} 0) scale(1 ${open})`));
         const lift = BROWS[expression] ?? 0;
         brows.forEach((brow, i) => brow.setAttribute('transform', `translate(${f(lookX)} ${lift}) rotate(${(i ? -1 : 1) * (expression === 'worried' ? -8 : expression === 'focus' ? 8 : 0)} ${i ? eyeX : -eyeX} ${browY})`));
-        mouth.setAttribute('d', MOUTHS[expression] || MOUTHS.happy);
-        mouth.setAttribute('transform', `translate(${f(lookX * 0.8)} ${mouthY})`);
-        mouth.classList.toggle('is-open', expression === 'joy' || expression === 'o');
+        const shape = MOUTHS[expression] || MOUTHS.happy;
+        const opened = expression === 'joy' || expression === 'o';
+        mouth.setAttribute('d', shape);
+        mouthFill.setAttribute('d', opened ? shape : '');
+        teeth.setAttribute('opacity', expression === 'joy' ? 1 : 0);
+        tongue.setAttribute('opacity', expression === 'joy' ? 1 : 0);
+        mouthGroup.setAttribute('transform', `translate(${f(lookX * 0.8)} ${mouthY})`);
+        mouth.classList.toggle('is-open', opened);
       },
     };
   }
@@ -360,18 +400,24 @@
     // and fall bends the knees instead of lifting the feet.
     const back = svg('g', {}, spin);
     svg('path', { class: 'tdd-coat-tail', d: 'M-18 -114 C-21 -92 -26 -72 -24 -48 C-20 -50 -15 -54 -12 -58 C-10 -78 -8 -96 -6 -108 Z M18 -114 C21 -92 26 -72 24 -48 C20 -50 15 -54 12 -58 C10 -78 8 -96 6 -108 Z' }, back);
+    svg('path', { class: 'tdd-coat-tail-fold', d: 'M-13 -108 C-15 -92 -18 -74 -19.5 -54 M13 -108 C15 -92 18 -74 19.5 -54' }, back);
     const legs = ['L', 'R'].map((side) => {
       const leg = svg('g', { class: 'tdd-leg' }, spin);
       const thigh = svg('path', { class: 'tdd-trouser', fill: `url(#${id}-trouser)` }, leg);
       const stripe = svg('path', { class: 'tdd-trouser-stripe' }, leg);
       const crease = svg('path', { class: 'tdd-trouser-crease' }, leg);
+      const fold = svg('path', { class: 'tdd-trouser-break' }, leg);
       // A patent oxford: heel under the ankle, toe turned a little outward.
       const shoe = svg('g', {}, leg);
       const shape = svg('g', { transform: `scale(${side === 'L' ? -1 : 1} 1)` }, shoe);
       svg('path', { class: 'tdd-shoe', d: 'M-6.5 -2 C-7.5 -8 -2 -10.5 3 -9.5 C8 -9 12.5 -7 13 -3.2 C13.4 0 10.5 1.2 6.5 1.2 L-4.2 1.2 C-6.4 1.2 -6.9 0 -6.5 -2 Z' }, shape);
+      svg('path', { class: 'tdd-shoe-heel-block', d: 'M-6.4 -1.6 Q-6.6 1.2 -4.2 1.2 L-1.4 1.2 L-1.2 -1.4 Z' }, shape);
       svg('path', { class: 'tdd-shoe-sole', d: 'M-6.2 0.2 L12.6 -0.6' }, shape);
+      // The toe cap's seam, and the patent leather's highlights.
+      svg('path', { class: 'tdd-shoe-cap', d: 'M7.2 -8.7 Q9 -5 8 -0.2' }, shape);
       svg('path', { class: 'tdd-shoe-shine', d: 'M2 -7.6 Q6 -7.8 9.5 -5.6' }, shape);
-      return { side, thigh, stripe, crease, shoe };
+      svg('path', { class: 'tdd-shoe-shine tdd-shoe-shine--toe', d: 'M10.6 -5.4 Q11.8 -4.4 11.9 -3' }, shape);
+      return { side, thigh, stripe, crease, fold, shoe };
     });
     const upper = svg('g', {}, spin);
     const lean = svg('g', {}, upper);
@@ -380,6 +426,8 @@
     svg('path', { class: 'tdd-coat', fill: `url(#${id}-coat)`, d: 'M-27 -168 C-29 -175 -22 -178.5 -12 -178.5 L12 -178.5 C22 -178.5 29 -175 27 -168 C29.5 -152 25 -134 20.5 -122 C19.5 -114 20.5 -106 20 -100 Q0 -95 -20 -100 C-20.5 -106 -19.5 -114 -20.5 -122 C-25 -134 -29.5 -152 -27 -168 Z' }, torso);
     svg('path', { class: 'tdd-coat-shade', d: 'M6 -178.5 L12 -178.5 C22 -178.5 29 -175 27 -168 C29.5 -152 25 -134 20.5 -122 C19.5 -114 20.5 -106 20 -100 Q13 -97.5 6 -97 Z' }, torso);
     svg('path', { class: 'tdd-coat-seam', d: 'M-20.5 -122 Q0 -117 20.5 -122' }, torso);
+    // Where the coat's two fronts overlap, down from the lapels to the hem.
+    svg('path', { class: 'tdd-coat-front', d: 'M-1.2 -131 C-0.9 -118 -1.1 -107 -1.6 -97.6' }, torso);
     svg('path', { class: 'tdd-shirt', d: 'M-11 -177 L0 -128 L11 -177 Q0 -180 -11 -177 Z' }, torso);
     for (const y of [-163, -152]) svg('circle', { class: 'tdd-stud', cx: 0, cy: y, r: 1.3 }, torso);
     svg('path', { class: 'tdd-lapel', fill: `url(#${id}-satin)`, d: 'M-11 -177 L-2 -132 L-16 -156 L-12 -162 L-19 -170 Z' }, torso);
@@ -409,7 +457,7 @@
     svg('path', { class: 'tdd-lamp-refraction', d: 'M-21 -206 Q-20 -196 -10 -191' }, dome);
     svg('circle', { class: 'tdd-lamp-glint', cx: 15, cy: -200, r: 1.6 }, dome);
     const faceGroup = svg('g', { transform: 'translate(0 -210)' }, dome);
-    const faceRig = face(faceGroup, { eyeX: 8, eyeY: -5, mouthY: 7, browY: -12, seed: uid * 7 + 11 });
+    const faceRig = face(faceGroup, { eyeX: 8, eyeY: -5, mouthY: 7, browY: -12, noseY: 1.6, seed: uid * 7 + 11 });
     // Upper arms emerge from behind the torso; bent forearms, cuffs, and
     // palms sit in front. Keep these layers in the same body coordinate frame.
     const rearArms = svg('g', { class: 'tdd-arms-rear' }, lean);
@@ -455,7 +503,10 @@
       // The pressed front crease runs down the middle of the leg.
       const c = bend * 0.12;
       const crease = `M${pt(side(hip, n0, wHip / 2, c))} Q${pt(side(knee, nk, wKnee / 2, c))} ${pt(side(ankle, n2, wAnkle / 2, c))}`;
-      return { outline, stripe, crease };
+      // A soft break where the trouser hem rests on the shoe.
+      const above = [ankle[0] - (ankle[0] - knee[0]) * 0.12, ankle[1] - (ankle[1] - knee[1]) * 0.12];
+      const fold = `M${pt(side(above, n2, wAnkle / 2, 0.92))} Q${pt([above[0], above[1] + 2.4])} ${pt(side(above, n2, wAnkle / 2, -0.92))}`;
+      return { outline, stripe, crease, fold };
     }
 
     return {
@@ -474,8 +525,9 @@
           const foot = s[`foot${leg.side}`];
           const hip = rotateAbout([sign * body.hip, body.hipY + s.bob], [0, body.hipY + s.bob], s.lean * 0.35);
           const tip = [sign * body.foot + foot.dx, -8 - foot.lift];
-          const { outline, stripe, crease } = legShape(hip, tip, sign);
+          const { outline, stripe, crease, fold } = legShape(hip, tip, sign);
           leg.crease.setAttribute('d', crease);
+          leg.fold.setAttribute('d', fold);
           leg.thigh.setAttribute('d', outline);
           leg.stripe.setAttribute('d', stripe);
           // A lifted foot points its toe.
@@ -547,6 +599,8 @@
     const shoes = svg('g', {}, gown);
     const feet = ['L', 'R'].map((side, i) => {
       const m = i ? 1 : -1;
+      // A soft contact shadow stays on the floor and fades as the foot lifts.
+      const contact = svg('ellipse', { class: 'tdd-foot-contact', cx: m * 11.5, cy: -0.2, rx: 7.5, ry: 1.5 }, shoes);
       const leg = svg('g', { class: 'tdd-code-leg' }, shoes);
       const rim = svg('path', { class: 'tdd-skin-rim' }, leg);
       const skin = svg('path', { class: 'tdd-code-shin' }, leg);
@@ -554,13 +608,25 @@
       const shade = svg('path', { class: 'tdd-code-shin-shade', fill: `url(#${id}-legshade)` }, leg);
       const shine = svg('path', { class: 'tdd-code-shin-shine' }, leg);
       const node = svg('g', {}, shoes);
-      // A dancing slipper seen from the front: a rounded body, a tapered toe
-      // turned out a little, and a thin strap across the ankle.
-      svg('path', { class: 'tdd-slipper-toe', d: `M${m * 12} -5.6 C${m * 16} -4.6 ${m * 18} -2.6 ${m * 16.5} -1 L${m * 12} -0.8 Z` }, node);
-      svg('ellipse', { class: 'tdd-slipper', cx: m * 11, cy: -3, rx: 6, ry: 3.2 }, node);
-      svg('path', { class: 'tdd-slipper-shine', d: `M${m * 8} -4.6 Q${m * 11.5} -5.8 ${m * 14.5} -4.4` }, node);
-      svg('path', { class: 'tdd-slipper-strap', d: `M${f(m * 10.5 - 2.9)} -8.6 Q${m * 10.5} -7.2 ${f(m * 10.5 + 2.9)} -8.6` }, node);
-      return { side, m, rim, skin, shade, shine, node };
+      // A gold satin court shoe, its toe turned out: a slim heel, the heel
+      // counter behind, a low vamp that shows the instep, a pointed toe, and
+      // an ankle strap with a small buckle. The parts are outlined together
+      // first and filled on top, so they read as one shoe.
+      const x = (v) => f(m * v);
+      const heel = `M${x(5.6)} -2.6 L${x(7.8)} -2.6 L${x(7.2)} -0.15 L${x(6.3)} -0.15 Z`;
+      const counter = `M${x(4.8)} -6.1 C${x(4.2)} -4.4 ${x(4.6)} -2.4 ${x(6)} -1.7 L${x(8.5)} -1.5 L${x(8.2)} -4.8 C${x(7.2)} -5.4 ${x(6)} -6.3 ${x(4.8)} -6.1 Z`;
+      const toe = `M${x(13)} -5.1 C${x(16.2)} -4.6 ${x(18.6)} -2.6 ${x(18.5)} -1.1 C${x(18.3)} -0.2 ${x(15.4)} -0.2 ${x(12.6)} -0.5 Z`;
+      svg('path', { class: 'tdd-shoe-heel', d: heel }, node);
+      svg('path', { class: 'tdd-code-instep', d: `M${x(8.6)} -9.2 C${x(8.4)} -7.4 ${x(7.4)} -5.8 ${x(6.6)} -4.6 L${x(14.6)} -4.6 C${x(13.2)} -5.6 ${x(12.6)} -7.4 ${x(12.8)} -9.2 Z` }, node);
+      for (const d of [counter, toe]) svg('path', { class: 'tdd-shoe-outline', d }, node);
+      svg('ellipse', { class: 'tdd-shoe-outline', cx: m * 11, cy: -3, rx: 5.6, ry: 2.4 }, node);
+      for (const d of [counter, toe]) svg('path', { class: 'tdd-shoe-satin', fill: `url(#${id}-shoe)`, d }, node);
+      svg('ellipse', { class: 'tdd-slipper', fill: `url(#${id}-shoe)`, cx: m * 11, cy: -3, rx: 5.6, ry: 2.4 }, node);
+      svg('path', { class: 'tdd-slipper-sole', d: `M${x(6)} -1.2 C${x(9)} -0.4 ${x(14)} -0.1 ${x(18.1)} -0.6` }, node);
+      svg('path', { class: 'tdd-slipper-shine', d: `M${x(8)} -4.3 Q${x(12)} -5.3 ${x(16)} -3.5` }, node);
+      svg('path', { class: 'tdd-slipper-strap', d: `M${x(8.3)} -9 Q${x(10.7)} -7.7 ${x(13.1)} -9` }, node);
+      svg('rect', { class: 'tdd-shoe-buckle', x: f(m * 12.5 - 0.9), y: -9.8, width: 1.8, height: 1.5, rx: 0.35 }, node);
+      return { side, m, contact, rim, skin, shade, shine, node };
     });
     const gownDefs = svg('defs', {}, gown);
     const skirtClip = svg('clipPath', { id: `${id}-skirt` }, gownDefs);
@@ -569,6 +635,7 @@
     const legShade = svg('linearGradient', { id: `${id}-legshade`, class: 'tdd-legshade-grad', gradientUnits: 'userSpaceOnUse', x1: 0, y1: -24, x2: 0, y2: -10 }, gownDefs);
     svg('stop', { class: 'tdd-stop--top', offset: 0 }, legShade);
     svg('stop', { class: 'tdd-stop--bottom', offset: 1 }, legShade);
+    const petticoat = svg('path', { class: 'tdd-petticoat' }, gown);
     const skirt = svg('path', { class: 'tdd-gown', fill: `url(#${id}-gown)` }, gown);
     // Satin catches the light down the left flank; the right falls into shade.
     const skirtSheen = svg('path', { class: 'tdd-gown-sheen', fill: `url(#${id}-sheen)`, 'clip-path': `url(#${id}-skirt)` }, gown);
@@ -625,7 +692,13 @@
     svg('path', { class: 'tdd-neckline', d: 'M-13 -169 Q-6 -158 0 -165 Q6 -158 13 -169' }, lean);
     svg('rect', { class: 'tdd-sash', x: -14, y: -123, width: 28, height: 8, rx: 3 }, lean);
     svg('path', { class: 'tdd-sash-sheen', d: 'M-11 -121 H6' }, lean);
-    svg('path', { class: 'tdd-sash-bow', d: 'M9 -119 L19 -126 L18 -112 Z' }, lean);
+    for (const d of [
+      'M11.6 -117.6 C13 -112 13.4 -106 12.6 -100.5 L15.4 -101.6 C15.6 -107 14.8 -113 12.8 -117.8 Z',
+      'M11 -120.5 C14 -127.5 20.5 -128.5 21 -123.8 C21.3 -120.6 16 -119.6 11 -120 Z',
+      'M11 -119.2 C15.5 -118.6 21 -117.4 20.4 -113.8 C19.8 -110.8 14.6 -114 11 -118 Z',
+    ]) svg('path', { class: 'tdd-sash-bow', d }, lean);
+    svg('path', { class: 'tdd-sash-bow-sheen', d: 'M13.4 -122.6 Q17 -126.4 19.6 -124.4' }, lean);
+    svg('rect', { class: 'tdd-sash-knot', x: 9.2, y: -122.6, width: 4, height: 5, rx: 1.4 }, lean);
     const neckPath = 'M-3 -181 L3 -181 L4.2 -168.5 Q0 -166.5 -4.2 -168.5 Z';
     svg('path', { class: 'tdd-skin-rim', d: neckPath }, lean);
     svg('path', { class: 'tdd-paper', d: neckPath }, lean);
@@ -640,7 +713,7 @@
     svg('path', { class: 'tdd-page-fold-shadow', d: 'M10 -222 Q10 -219 13 -219 H22 V-217 H12 Q9 -217 9 -220 Z' }, head);
     const blushes = [];
     for (const side of [-1, 1]) {
-      blushes.push(svg('circle', { class: 'tdd-blush', cx: side * 12, cy: -195, r: 3.4 }, head));
+      blushes.push(svg('circle', { class: 'tdd-blush', cx: side * 12, cy: -195, r: 4.6, fill: `url(#${id}-blush)` }, head));
       const d = side < 0
         ? 'M-26 -222 Q-31 -222 -31 -216 V-210 Q-31 -205 -35 -205 Q-31 -205 -31 -200 V-194 Q-31 -188 -26 -188'
         : 'M26 -222 Q31 -222 31 -216 V-210 Q31 -205 35 -205 Q31 -205 31 -200 V-194 Q31 -188 26 -188';
@@ -649,8 +722,20 @@
       svg('path', { class: 'tdd-brace', d }, head);
       svg('path', { class: 'tdd-brace-shine', d, transform: 'translate(-0.7 -0.7)' }, head);
     }
+    // Pearl drops hang from the page's edges on short gold links; they
+    // keep hanging straight down as she tilts, and swing as she moves.
+    const pearls = [-1, 1].map((side) => {
+      const pivot = [side * 21.8, -192.4];
+      const ring = svg('g', { class: 'tdd-earring' }, head);
+      svg('circle', { class: 'tdd-earring-stud', cx: pivot[0], cy: pivot[1], r: 1.1 }, ring);
+      const drop = svg('g', {}, ring);
+      svg('path', { class: 'tdd-earring-link', d: `M${pivot[0]} ${f(pivot[1] + 0.9)} V${f(pivot[1] + 3.3)}` }, drop);
+      svg('circle', { class: 'tdd-pearl', cx: pivot[0], cy: f(pivot[1] + 5.7), r: 2.5, fill: `url(#${id}-pearl)` }, drop);
+      svg('circle', { class: 'tdd-pearl-glint', cx: f(pivot[0] - 0.8), cy: f(pivot[1] + 4.8), r: 0.65 }, drop);
+      return { side, pivot, drop };
+    });
     const faceGroup = svg('g', { transform: 'translate(0 -202)' }, head);
-    const faceRig = face(faceGroup, { eyeX: 8, eyeY: -2, mouthY: 9, browY: -9, lashes: true, seed: uid * 7 + 23 });
+    const faceRig = face(faceGroup, { eyeX: 8, eyeY: -2, mouthY: 9, browY: -9, noseY: 4, lashes: true, seed: uid * 7 + 23 });
     // Upper arms emerge from behind the torso; bent forearms, cuffs, and
     // palms sit in front. Keep these layers in the same body coordinate frame.
     const rearArms = svg('g', { class: 'tdd-arms-rear' }, lean);
@@ -667,11 +752,11 @@
      * sides. A lifted foot carries the hem up with it ({ x, lift } each).
      * Returns the outline and the hem's point at any angle around it.
      */
-    function skirtShape(sway, flare, waistY, waist, turn, steps) {
-      const hw = 54 + flare;
+    function skirtShape(sway, flare, waistY, waist, turn, steps, drop = 0) {
+      const hw = 54 + flare + drop * 0.6;
       const sx = sway * 9;
       // A swirling skirt lifts off the floor as it flares.
-      const side = HEM_SIDE - flare * 0.3;
+      const side = HEM_SIDE - flare * 0.3 + drop;
       const amp = 3 + flare * 0.05;
       const hemAt = (a) => {
         const x = sx + hw * Math.sin(a);
@@ -736,12 +821,16 @@
           foot.shade.setAttribute('d', outline);
           foot.shine.setAttribute('d', shine);
           foot.node.setAttribute('transform', `translate(${f(dx)} ${f(-lift)}) rotate(${f(foot.m * lift * 1.6)} ${foot.m * 11} -3)`);
+          foot.contact.setAttribute('transform', `translate(${f(dx)} 0)`);
+          foot.contact.setAttribute('opacity', f(clamp(1 - lift / 7, 0, 1)));
         }
         const waistY = body.hipY + 2 + s.bob;
         const waist = Math.min(1, Math.abs(s.spin));
         const skirtTurn = wrapAngle(s.turnSkirt || 0);
         const steps = feet.map((foot) => ({ x: (foot.m * 11 + s[`foot${foot.side}`].dx) * s.spin, lift: s[`foot${foot.side}`].lift }));
         const shape = skirtShape(s.sway, s.flare, waistY, waist, skirtTurn, steps);
+        // The petticoat hangs a little lower and its ruffles sit between the gown's scallops.
+        petticoat.setAttribute('d', skirtShape(s.sway * 0.85, s.flare * 0.9, waistY + 4, waist, skirtTurn * 0.92 + Math.PI / HEM_WAVES, steps, 2.8).d);
         skirt.setAttribute('d', shape.d);
         clipShape.setAttribute('d', shape.d);
         hem.setAttribute('d', shape.d);
@@ -832,6 +921,12 @@
         const facing = f(clamp((Math.cos(s.turnHead || 0) + 0.25) / 0.4, 0, 1));
         faceGroup.setAttribute('opacity', facing);
         for (const blush of blushes) blush.setAttribute('opacity', facing);
+        // The pearls hang plumb whatever the head's tilt, swing behind the
+        // motion, and fly outward in a turn.
+        for (const pearl of pearls) {
+          const angle = (s.earSwing || 0) - s.lean - s.head - pearl.side * (s.earFling || 0);
+          pearl.drop.setAttribute('transform', `rotate(${f(angle)} ${pearl.pivot[0]} ${pearl.pivot[1]})`);
+        }
         arms.L.apply(s.armL);
         arms.R.apply(s.armR);
         faceRig.apply(t, s.face, s.look);
@@ -853,6 +948,9 @@
     stops(svg('linearGradient', { id: `${id}-gown`, class: 'tdd-gown-grad', x1: 0, y1: 0, x2: 0.35, y2: 1 }, node), ['top', 'bottom']);
     stops(svg('linearGradient', { id: `${id}-page`, class: 'tdd-page-grad', x1: 0, y1: 0, x2: 0.4, y2: 1 }, node), ['top', 'bottom']);
     stops(svg('linearGradient', { id: `${id}-sheen`, class: 'tdd-sheen-grad', x1: 0, y1: 0, x2: 1, y2: 0 }, node), ['edge', 'core', 'edge']);
+    stops(svg('linearGradient', { id: `${id}-shoe`, class: 'tdd-shoe-grad', x1: 0, y1: 0, x2: 0.3, y2: 1 }, node), ['top', 'bottom']);
+    stops(svg('radialGradient', { id: `${id}-pearl`, class: 'tdd-pearl-grad', cx: 0.36, cy: 0.32, r: 0.75 }, node), ['core', 'mid', 'edge']);
+    stops(svg('radialGradient', { id: `${id}-blush`, class: 'tdd-blush-grad' }, node), ['core', 'edge']);
     // Cloth: the tailcoat and trousers catch light at the shoulders and
     // fall into shadow below; the gold lapel has a satin sheen.
     stops(svg('linearGradient', { id: `${id}-coat`, class: 'tdd-coat-grad', x1: 0.2, y1: 0, x2: 0.5, y2: 1 }, node), ['top', 'mid', 'bottom']);
@@ -935,6 +1033,15 @@
      * two measures; and the box step travels side to side and, every two
      * measures, slightly toward and away from the viewer.
      */
+    /**
+     * 0–1 through a measure of travel that never stops: a little quicker
+     * just after the downbeat and a little slower on "3", like the swing of
+     * a real waltz (the speed varies by ±30 % and matches across measures).
+     */
+    function surge(phase) {
+      return phase + (0.3 / (2 * Math.PI)) * (Math.sin(2 * Math.PI * (phase - 0.2)) + Math.sin(2 * Math.PI * 0.2));
+    }
+
     function waltzAt(t) {
       const active = waltzes.find((w) => t >= w.from && t < w.to);
       if (!active) return null;
@@ -944,7 +1051,9 @@
       const { index, phase } = beats.at(t);
       const dir = index % 2 === 0 ? 1 : -1;
       const travel = active.travel;
-      const glide = smooth(phase / 0.7);
+      // The body swings through the whole measure, arriving over the new
+      // foot just as the next measure begins: no stop at either end.
+      const glide = (1 - Math.cos(Math.PI * phase)) / 2;
       const swing = Math.PI * (index + phase);
       // Progressive travel: over eight measures the couple circles the
       // floor, out toward stage centre's far side and back, and toward and
@@ -952,7 +1061,7 @@
       // rocking in place. The loop starts and ends where the couple was
       // placed and only ever drifts away from the teaching boxes (to +x).
       // Each measure advances on its "1" and settles by "3", like the box step.
-      const measure = index - beats.index(active.from) + smooth(phase / 0.8);
+      const measure = index - beats.index(active.from) + surge(phase);
       const around = (2 * Math.PI * measure) / 8;
       return {
         fade, index, phase, dir, travel, who: active.who,
@@ -1053,10 +1162,15 @@
       return 2 * Math.PI * (whole + smooth((rev - whole - 0.4) / 0.32));
     }
 
-    /** How wide a body turned by `angle` looks from the front: 1 facing us, `depth` side-on, mirrored facing away. */
+    /**
+     * How wide a body turned by `angle` looks from the front: 1 facing us or
+     * away, `depth` side-on. The figure is never mirrored, so nothing jumps
+     * from one side to the other mid-turn; the travelling skirt pattern and
+     * the spotting head (blank while it faces away) show the rotation.
+     */
     function turnedWidth(angle, depth) {
       const c = Math.cos(angle);
-      return (c < 0 ? -1 : 1) * Math.sqrt(c * c + depth * depth * (1 - c * c));
+      return Math.sqrt(c * c + depth * depth * (1 - c * c));
     }
 
     /** Arm lines through a turn: open to prepare, drawn in to turn, opened out to finish. */
@@ -1144,10 +1258,11 @@
           const heel = isTest ? 4 * w.rise : 0;
           const lead = s[`foot${leadSide}`];
           const trail = s[`foot${trailSide}`];
-          // A clear box step: the leading foot lifts and reaches, the closing
-          // foot brushes in low.
-          s[`foot${leadSide}`] = { dx: lead.dx + (leadX - w.x) * 1.3 * e, lift: lead.lift + (8 * w.lead.lift + heel) * e };
-          s[`foot${trailSide}`] = { dx: trail.dx + (trailX - w.x) * 1.3 * e, lift: trail.lift + (4.5 * w.trail.lift + heel) * e };
+          // A gliding box step: the leading foot skims out low, the closing
+          // foot brushes in lower still, and a planted foot stays exactly
+          // where it stands on the floor while the body travels over it.
+          s[`foot${leadSide}`] = { dx: lead.dx + (leadX - w.x) * e, lift: lead.lift + (5.5 * w.lead.lift + heel) * e };
+          s[`foot${trailSide}`] = { dx: trail.dx + (trailX - w.x) * e, lift: trail.lift + (3.2 * w.trail.lift + heel) * e };
         }
         if (isTest) s.tails = (9 * w.lag(1.0) - 0.12 * w.travel * w.dir * Math.sin(Math.PI * w.phase)) * e;
         if (!isTest) {
@@ -1188,9 +1303,10 @@
         const skirtSpeed = Math.abs(s.turnSkirt - skirtAngle(tw, t - 0.05)) / 0.05;
         const peak = (2 * Math.PI * tw.turns + TURN.wind) / tw.dur / (1 - TURN.accel / 2 - TURN.decel / 2);
         s.flare += 22 * clamp(skirtSpeed / peak, 0, 1);
+        s.earFling = 34 * clamp((s.turn - turnAngle(tw, t - 0.05)) / 0.05 / peak, 0, 1);
         s.sway += clamp(-1.1 * (s.turn - s.turnSkirt), -1.6, 1.6);
         // The standing foot under the axis, the other drawn up to its ankle.
-        const feet = smooth((t - tw.at + 0.16) / 0.16) * smooth((end + 0.02 - t) / 0.16);
+        const feet = smooth((t - tw.at + 0.16) / 0.16) * smooth((end + 0.1 - t) / 0.26);
         s.footL = mix(s.footL, { dx: 9, lift: 0 }, feet);
         s.footR = mix(s.footR, { dx: -6, lift: 11 }, feet);
         // Each arm stage takes over from the one before; the last hands
@@ -1198,10 +1314,10 @@
         const lines = TURN_ARMS[tw.solo ? 'solo' : 'partnered'];
         const stages = [
           [lines.prep, smooth((t - tw.at + TURN.prep) / (TURN.prep * 0.85))],
-          [lines.turn, smooth((t - tw.at + 0.04) / 0.2)],
-          [lines.finish, smooth((t - end + 0.38) / 0.3)],
+          [lines.turn, smooth((t - tw.at + 0.1) / 0.28)],
+          [lines.finish, smooth((t - end + 0.45) / 0.5)],
         ];
-        const release = smooth((t - end - TURN.finish + 0.4) / 0.4);
+        const release = smooth((t - end - TURN.finish + 0.55) / 0.55);
         for (const key of Object.keys(lines.turn)) {
           const keyed = s[key];
           let line = keyed;
@@ -1246,6 +1362,29 @@
       return s;
     }
 
+    /**
+     * Code's pearl drops are small pendulums: when her head accelerates one
+     * way they swing the other, a moment late. The ear's sideways position
+     * (the troupe's travel, her own, and her sway about the hips) is
+     * sampled three times to find that acceleration. Degrees, + swings the
+     * drops toward screen-left.
+     */
+    function pearlSwing(dancer, t, now) {
+      const h = 0.12;
+      const earX = (time, s) => {
+        const pos = stagePos.value(time);
+        const w = waltzAt(time);
+        const roam = w && !w.who ? w.roam.x * w.fade : 0;
+        return (pos.x + roam) / pos.scale + s.x + 78 * Math.sin((s.lean + s.head) * DEG);
+      };
+      const earlier = (time) => {
+        const w = waltzAt(time);
+        return earX(time, stateOf(dancer, time, null, w && (!w.who || w.who === dancer.kind) ? w : null));
+      };
+      const accel = (earX(t, now) - 2 * earlier(t - h) + earlier(t - 2 * h)) / (h * h);
+      return clamp(0.04 * accel, -26, 26);
+    }
+
     onFrame((t) => {
       if (t < at - 0.5 || (until !== undefined && t > until + 0.5)) return;
       const pos = stagePos.value(t);
@@ -1282,7 +1421,7 @@
         // Underarm turn: the joined hands rise beside Code's head, his arm
         // straight up, and draw in a little as she turns side-on beneath them.
         const side = 1 - Math.min(1, Math.abs(raw.code.spin));
-        const arch = [raw.code.x - 44 + 10 * side, raw.code.y + raw.code.bob - 224 + 4 * side];
+        const arch = [raw.code.x - 44 + 4 * side, raw.code.y + raw.code.bob - 224 + 4 * side];
         const k = archAt(t);
         couple = {
           palm, drape: raw.code.embrace * (1 - k),
@@ -1290,7 +1429,11 @@
           code: lerp(lerp(hands, shoulder, raw.code.embrace), arch, k),
         };
       }
-      for (const dancer of Object.values(dancers)) dancer.rig.apply(t, stateOf(dancer, t, couple, waltzFor(dancer)));
+      for (const dancer of Object.values(dancers)) {
+        const s = stateOf(dancer, t, couple, waltzFor(dancer));
+        if (dancer.kind === 'code') s.earSwing = pearlSwing(dancer, t, s);
+        dancer.rig.apply(t, s);
+      }
     });
 
     fx.fadeIn(wrap, at, 0.35);
