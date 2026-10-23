@@ -565,14 +565,29 @@
 .ih-caper-gleam path { fill: #fff7d6; stroke: #ffd34d; stroke-width: 1.5; stroke-linejoin: round; }
 .ih-fa-shadow { fill: rgba(0, 0, 0, 0.45); }
 .ih-fa-limb-ink { fill: none; stroke: var(--ink); stroke-width: 10; stroke-linecap: round; }
-.ih-fa-leg { fill: none; stroke: #64748b; stroke-width: 5.5; stroke-linecap: round; }
-.ih-fa-shoe { fill: #1f2937; stroke: #94a3b8; stroke-width: 1.5; }
+.ih-fa-leg-rim { fill: none; stroke: #f8fafc; stroke-width: 8.6; stroke-linecap: round; }
+.ih-fa-leg { fill: none; stroke: #12141c; stroke-width: 6; stroke-linecap: round; }
 .ih-fa-arm { fill: none; stroke-width: 5.5; stroke-linecap: round; }
 .ih-fa-glove { fill: #f8fafc; stroke: var(--ink); stroke-width: 2; }
+.ih-fa-glove-thumb { fill: none; stroke: var(--ink); stroke-width: 1.4; stroke-linecap: round; }
 .ih-fa-tab { fill: #d7b46a; stroke: var(--ink); stroke-width: 2.5; stroke-linejoin: round; }
 .ih-fa-body-shadow { fill: var(--ink); }
 .ih-fa-body { stroke: var(--ink); stroke-width: 3; }
-.ih-fa-shine { fill: none; stroke: rgba(255, 255, 255, 0.55); stroke-width: 3; stroke-linecap: round; }
+/* The folder: a shaded back panel and tab, a sheet peeking out, a lit cover. */
+.ih-fa-back { stroke: var(--ink); stroke-width: 3; }
+.ih-fa-back-shade, .ih-fa-tab-shade { fill: rgba(60, 40, 10, 0.22); }
+.ih-fa-sheet { fill: #fbf8f0; stroke: var(--ink); stroke-width: 1.5; }
+.ih-fa-sheet-lines { fill: none; stroke: #b8b2a2; stroke-width: 1.4; stroke-linecap: round; }
+.ih-fa-cover { stroke: none; }
+.ih-fa-sheen-stop-0 { stop-color: #fff; stop-opacity: 0.34; }
+.ih-fa-sheen-stop-1 { stop-color: #fff; stop-opacity: 0; }
+.ih-fa-sheen-stop-2 { stop-color: #000; stop-opacity: 0.16; }
+.ih-fa-shine { fill: none; stroke: rgba(255, 255, 255, 0.6); stroke-width: 2.6; stroke-linecap: round; }
+.ih-fa-crease { fill: none; stroke: rgba(60, 40, 10, 0.25); stroke-width: 1.4; stroke-linecap: round; }
+.ih-fa-label { fill: #fbf8f0; stroke: var(--ink); stroke-width: 1.2; }
+.ih-fa-label-stripe { fill: none; stroke: #b3121b; stroke-width: 2.2; }
+.ih-fa-label-lines { fill: none; stroke: #9a948a; stroke-width: 1.4; stroke-linecap: round; }
+.ih-fa-lens-glare { fill: rgba(255, 255, 255, 0.2); }
 .ih-fa-lens { fill: #0b0f1a; stroke: #0b0f1a; stroke-width: 1.5; }
 .ih-fa-bridge { fill: none; stroke: #0b0f1a; stroke-width: 2.5; }
 .ih-fa-glint { fill: none; stroke: #f8fafc; stroke-width: 2.5; stroke-linecap: round; }
@@ -580,12 +595,16 @@
 .ih-fa-mouth-o { fill: #4a0f14; stroke: var(--ink); stroke-width: 2; stroke-linejoin: round; }
 .ih-fa-brim { fill: #2b2116; stroke: var(--ink); stroke-width: 2; }
 .ih-fa-crown { fill: #3d2f1f; stroke: var(--ink); stroke-width: 2.5; stroke-linejoin: round; }
+.ih-fa-brim-light { fill: none; stroke: #5a4630; stroke-width: 1.6; stroke-linecap: round; }
+.ih-fa-crown-light { fill: none; stroke: #5e4a33; stroke-width: 2.4; stroke-linecap: round; }
+.ih-fa-dent { fill: none; stroke: #241a10; stroke-width: 1.8; stroke-linecap: round; }
 .ih-fa-band { stroke: var(--ink); stroke-width: 1; }
 .ih-fa-env { fill: var(--cream); stroke: var(--ink); stroke-width: 1.8; }
 .ih-fa-env-flap { fill: none; stroke: var(--ink); stroke-width: 1.4; }
 .ih-fa-seal { fill: var(--wax); }
 .ih-fa-handle { fill: none; stroke: #6b4423; stroke-width: 4; stroke-linecap: round; }
 .ih-fa-lensglass { fill: rgba(186, 230, 253, 0.45); stroke: var(--ink); stroke-width: 3; }
+.ih-fa-lensglass-glare { fill: none; stroke: rgba(255, 255, 255, 0.75); stroke-width: 2; stroke-linecap: round; }
 .ih-fa-paper-sheet { fill: #f1ece0; stroke: var(--ink); stroke-width: 2; }
 .ih-fa-paper-head { fill: var(--ink); }
 .ih-fa-paper-lines { fill: none; stroke: #8a8577; stroke-width: 2; }
@@ -611,6 +630,11 @@
 .ih-agent-buckle { fill: none; stroke: #e5bf62; stroke-width: 2.5; }
 .ih-agent-button { fill: #3b2d18; }
 .ih-agent-hand { fill: #e7b98e; stroke: var(--ink); stroke-width: 2; }
+.ih-agent-thumb { fill: #e7b98e; stroke: var(--ink); stroke-width: 1.4; stroke-linejoin: round; }
+.ih-agent-knuckle, .ih-agent-ear { fill: none; stroke: #b98863; stroke-width: 1.1; stroke-linecap: round; }
+.ih-agent-nose { fill: none; stroke: #b9875f; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.ih-agent-finger-ink { fill: none; stroke: var(--ink); stroke-width: 5.6; stroke-linecap: round; }
+.ih-agent-finger { fill: none; stroke: #e7b98e; stroke-width: 3.2; stroke-linecap: round; }
 .ih-agent-case { fill: #4a2f17; stroke: var(--ink); stroke-width: 2.5; }
 .ih-agent-case-handle { fill: none; stroke: var(--ink); stroke-width: 3; }
 .ih-agent-case-lock { fill: #e5bf62; }
@@ -632,7 +656,9 @@
 .ih-agent-cloth-stop-1 { stop-color: #f4efe4; }
 .ih-agent-cloth-stop-2 { stop-color: #e6dece; }
 .ih-agent-cloth-stop-3 { stop-color: #d6ccb6; }
-.ih-agent-trousers { fill: #12141c; stroke: #f8fafc; stroke-width: 1.5; stroke-linejoin: round; }
+.ih-agent-leg-rim { fill: none; stroke: #f8fafc; stroke-width: 24.5; stroke-linejoin: round; }
+.ih-agent-leg-cloth { fill: none; stroke: #12141c; stroke-width: 22; stroke-linejoin: round; }
+.ih-agent-seat { fill: #12141c; }
 .ih-agent-braid { fill: none; stroke: #2e3546; stroke-width: 2.4; stroke-linecap: round; }
 .ih-agent-crease { fill: none; stroke: #262c3a; stroke-width: 1; stroke-linecap: round; }
 .ih-agent-shoe--gloss { stroke: #f8fafc; stroke-width: 1.2; stroke-linejoin: round; }
