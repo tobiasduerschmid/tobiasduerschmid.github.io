@@ -1827,23 +1827,26 @@
         // Promenade hold: Test's hand on Code's back, behind her; Code's hand
         // resting on his near shoulder.
         const back = on('code', [-2, -150]);
-        // Her hand's path. Resting, it lies along the top of his shoulder,
-        // draped a little toward his neck, its wrist just above the
-        // shoulder's corner, clear of his raised arm, so the hand (in front
-        // of him) and her forearm (behind his arm) meet where nothing of him
-        // covers them. Coming to rest it slides up from under his arm,
-        // hidden behind it, rises clear above his shoulder, and settles onto
-        // it; leaving it lifts off first and slides back down under his arm,
+        // Her hand's path. Resting, it lies along the line of his shoulder,
+        // fingertips toward his collar and palm over the shoulder's edge, so
+        // it bears a little weight instead of hovering; the wrist bends
+        // softly just outside the shoulder's rounded corner, where her
+        // forearm drops behind his sleeve. So the hand (in front of him) and
+        // her forearm (behind his arm) meet where nothing of him covers
+        // them. Coming to rest it slides up from under his arm, hidden
+        // behind it, rises clear above his shoulder, and settles onto it;
+        // leaving it lifts off first and slides back down under his arm,
         // then on to their joined hands or to her side. Rising into an arch
         // it lifts off and goes straight up. It changes layer only while
         // lifted clear of him (handRests), so the change never shows.
         const k = archAt(t);
         const e = raw.code.embrace;
         const settle = smooth((e - 0.8) / 0.2) * (1 - smooth(k / 0.3));
-        // Lifted, the hand waits just off the corner of his shoulder, clear
-        // of his coat, his arm, and his lamp; that is where it changes layer.
-        const contact = on('test', [21.5 + 6 * (1 - settle), -178 - 9 * (1 - settle)]);
-        const palm = rotateAbout([-6.6, 2.9], [0, 0], raw.test.lean);
+        // Lifted, the hand waits above and outside the corner of his
+        // shoulder, clear of his coat, his arm, and his lamp (even on its way
+        // down from an arch, past the lamp); that is where it changes layer.
+        const contact = on('test', [20.5 + 10 * (1 - settle), -174.8 - 9 * (1 - settle)]);
+        const palm = rotateAbout([-7, -1.4], [0, 0], raw.test.lean);
         // IK targets the wrist; the palm, not the cuff, rests on the shoulder.
         const overShoulder = [contact[0] - palm[0], contact[1] - palm[1]];
         const underArm = lerp(on('test', [BODY.test.shoulder[0], BODY.test.shoulder[1]]), back, 0.5);
