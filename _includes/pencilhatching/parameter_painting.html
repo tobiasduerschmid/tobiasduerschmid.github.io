@@ -1,7 +1,9 @@
 <script>
-  $(".btn-group > .btn").click(function(){
-    $(this).addClass("active").parent().siblings().children().removeClass("active");
-    $(this).siblings().addClass("active");
+  document.addEventListener('DOMContentLoaded', function () {
+    $(".btn-group > .btn").click(function(){
+      $(this).addClass("active").parent().siblings().children().removeClass("active");
+      $(this).siblings().addClass("active");
+    });
   });
 
   function changeImage(image, src, alt)

@@ -90,3 +90,42 @@ test('pencil gallery keyboard comparison describes the active image in both stat
   await expect(comparison).toHaveAttribute('aria-pressed', 'false');
   await expect(comparison).toHaveAttribute('src', drawingSrc);
 });
+
+test('pencil parameter painting keeps keyboard image selection synchronized across responsive controls', async ({ page }) => {
+  const pageErrors = [];
+  page.on('pageerror', (error) => pageErrors.push(error.message));
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto('/pencilhatching.html');
+
+  const painting = page.locator('#ParameterPainting');
+  const image = painting.getByRole('img');
+  const controls = painting.getByRole('group', { name: 'Exchange image' });
+  const original = controls.getByRole('button', { name: 'Original', exact: true });
+  const global = controls.getByRole('button', { name: 'global adjustment', exact: true });
+  await expect(global).toHaveClass(/\bactive\b/);
+
+  await original.focus();
+  await page.keyboard.press('Enter');
+  await expect(image).toHaveAttribute('src', /\/painting_org\.jpg$/);
+  await expect(image).toHaveAccessibleName('Original photo before parameter painting.');
+  expect.soft(pageErrors, 'Loading and activating the painting controls must not throw').toEqual([]);
+  await expect(original).toHaveClass(/\bactive\b/);
+  await expect(global).not.toHaveClass(/\bactive\b/);
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  const local = controls.getByRole('button', { name: 'local', exact: true });
+  await expect(local).toBeVisible();
+  await local.focus();
+  await page.keyboard.press('Enter');
+  await expect(image).toHaveAttribute('src', /\/painting_local\.jpg$/);
+  await expect(image).toHaveAccessibleName('Local parameter painting selectively adjusts different areas of the pencil-hatched image.');
+  await expect(local).toHaveClass(/\bactive\b/);
+  await expect(original).not.toHaveClass(/\bactive\b/);
+
+  await page.setViewportSize({ width: 1280, height: 900 });
+  const desktopLocal = controls.getByRole('button', { name: 'local adjustment', exact: true });
+  await expect(desktopLocal).toBeVisible();
+  await expect(desktopLocal).toHaveClass(/\bactive\b/);
+  await expect(global).not.toHaveClass(/\bactive\b/);
+  expect(pageErrors, 'Resizing and activating responsive aliases must not throw').toEqual([]);
+});
