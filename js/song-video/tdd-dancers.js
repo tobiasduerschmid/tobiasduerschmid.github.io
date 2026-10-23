@@ -2026,7 +2026,7 @@
         keyAll(start - 0.35, (dancer) => ({ bob: -3, lean: dancer.kind === 'code' ? -3 : 0 }), 0.35);
         // Test's arm supports her back (the promenade hold) through the dip.
         keyAll(start - 0.35, () => ({ hold: 1, embrace: 1 }), 0.35);
-        if (dancers.code) dancers.code.state.add(start, { lean: 21 * depth, arch: 11 * depth, head: 10 * depth, bob: 5 * depth, armR: { sh: -150, el: 26 }, face: 'joy' }, dur);
+        if (dancers.code) dancers.code.state.add(start, { lean: 21 * depth, arch: 11 * depth, head: 10 * depth, bob: 5 * depth, armR: { sh: -112, el: 16, wr: -18 }, face: 'joy' }, dur);
         if (dancers.test) dancers.test.state.add(start, { lean: 11 * depth, head: 8 * depth, bob: 8 * depth, armL: { sh: 118, el: -28 } }, dur);
         return api;
       },
@@ -2040,7 +2040,7 @@
           armL: { sh: 132, el: -12, wr: 18 }, face: 'joy',
         }, dur);
         if (dancers.code) dancers.code.state.add(start, {
-          armR: { sh: -154, el: 12, wr: -20 }, flare: 14, sway: 0.55,
+          armR: { sh: -108, el: 10, wr: -22 }, flare: 14, sway: 0.55,
         }, dur);
         return api;
       },
