@@ -156,8 +156,12 @@
   fill: #f3e7cf;
 }
 
-.br-ch-flame {
-  fill: #ffd27a;
+.br-flame-outer {
+  fill: #ffb547;
+}
+
+.br-flame-core {
+  fill: #fff6d8;
 }
 
 .br-ch-drop {

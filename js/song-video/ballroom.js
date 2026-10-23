@@ -89,9 +89,25 @@
     return art;
   }
 
+  /**
+   * A candle flame anchored at its base (x, y): a soft halo, a teardrop of
+   * warm flame, and a pale core. Its group is animated by the room.
+   */
+  function flame(art, x, y) {
+    const node = svg('g', { transform: `translate(${x} ${y})` }, art);
+    const halo = svg('circle', { class: 'br-flame-halo', cx: 0, cy: -6, r: 10, fill: 'url(#br-flame-halo)' }, node);
+    const body = svg('g', {}, node);
+    svg('path', { class: 'br-flame-outer', d: 'M0 0 C-4.2 -2 -4 -7 -1.2 -11 C-0.5 -12.6 0 -14 0 -15 C0.6 -13 4.4 -8.5 3.9 -4.4 C3.6 -1.6 2 0 0 0 Z' }, body);
+    svg('path', { class: 'br-flame-core', d: 'M0 -1 C-1.9 -2 -1.8 -5 -0.3 -7.4 C0.4 -5.8 1.9 -4 1.6 -2.4 C1.4 -1.3 0.8 -1 0 -1 Z' }, body);
+    return { node, halo, body };
+  }
+
   /** A small chandelier: gold arms, crystal drops, and warm candle points. */
   function chandelier(parent) {
     const art = svg('svg', { class: 'br-chandelier', viewBox: '0 0 220 120', width: 220, height: 120, 'aria-hidden': 'true' }, parent);
+    const glow = svg('radialGradient', { id: 'br-flame-halo' }, svg('defs', {}, art));
+    svg('stop', { offset: 0, 'stop-color': '#ffd27a', 'stop-opacity': 0.55 }, glow);
+    svg('stop', { offset: 1, 'stop-color': '#ffd27a', 'stop-opacity': 0 }, glow);
     svg('line', { class: 'br-ch-chain', x1: 110, y1: 0, x2: 110, y2: 34 }, art);
     for (const d of ['M30 58 Q70 92 110 60 Q150 92 190 58', 'M62 50 Q86 74 110 52 Q134 74 158 50']) {
       svg('path', { class: 'br-ch-arm', d }, art);
@@ -108,7 +124,7 @@
       svg('line', { class: 'br-ch-wick', x1: x, y1: 36, x2: x, y2: 39 }, art);
       svg('path', { class: 'br-ch-drip', d: `M${x + 3} 40 q-1.4 3 0 5.5` }, art);
       svg('path', { class: 'br-ch-cup', d: `M${x - 5} 54 Q${x} 58 ${x + 5} 54 Z` }, art);
-      flames.push(svg('ellipse', { class: 'br-ch-flame', cx: x, cy: 34, rx: 3.5, ry: 6 }, art));
+      flames.push(flame(art, x, 37));
     }
     const drops = [];
     for (let i = 0; i < 9; i++) {
@@ -159,8 +175,15 @@
       spots[1].style.transform = `rotate(${(22 + 8 * Math.sin(t * 0.13 + 1.7)).toFixed(2)}deg)`;
       lamp.style.transform = `rotate(${(0.8 * Math.sin(t * 0.5)).toFixed(2)}deg)`;
       const pulse = beats.pulse(t, 0.35);
-      flames.forEach((flame, i) => {
-        flame.setAttribute('opacity', (0.75 + 0.15 * Math.sin(t * 3.1 + i * 1.7) + 0.1 * pulse).toFixed(3));
+      // Each flame flickers on its own: it stretches and settles, leans in a
+      // slow draught with a quicker tremble on top, and its halo breathes.
+      // Small and smooth, never a flash.
+      flames.forEach((f, i) => {
+        const lean = 7 * Math.sin(t * 1.9 + i * 1.7) + 3 * Math.sin(t * 5.3 + i * 2.9);
+        const tall = 1 + 0.14 * Math.sin(t * 6.1 + i * 2.3) + 0.07 * Math.sin(t * 11.7 + i * 0.9);
+        const wide = 1 - 0.06 * Math.sin(t * 6.1 + i * 2.3);
+        f.body.setAttribute('transform', `rotate(${lean.toFixed(2)}) scale(${wide.toFixed(3)} ${tall.toFixed(3)})`);
+        f.halo.setAttribute('opacity', (0.75 + 0.15 * Math.sin(t * 3.1 + i * 1.7) + 0.1 * pulse).toFixed(3));
       });
       // Now and then one crystal catches the light: a slow, small glint.
       drops.forEach((drop, i) => {
