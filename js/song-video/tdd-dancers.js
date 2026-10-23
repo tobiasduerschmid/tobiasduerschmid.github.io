@@ -1225,11 +1225,13 @@
     }
 
     const smooth = (p) => ease.inOut(clamp(p, 0, 1));
-    /** Rise and fall within a measure: lowest on the downbeat, highest near "3". */
-    const RISE_PEAK = 0.62;
+    /**
+     * Rise and fall within a measure, as in a real waltz, "low, high, high":
+     * down on "1", rising through "2", up through "3", and lowering only at
+     * the end of "3" into the next downbeat.
+     */
     function riseOf(phase) {
-      const g = phase < RISE_PEAK ? 0.5 * (phase / RISE_PEAK) : 0.5 + 0.5 * ((phase - RISE_PEAK) / (1 - RISE_PEAK));
-      return (1 - Math.cos(2 * Math.PI * g)) / 2;
+      return smooth(phase / 0.46) * (1 - smooth((phase - 0.78) / 0.22));
     }
 
     /**
@@ -1294,7 +1296,7 @@
     }
 
     /** How far each dancer's foot may stand from under its hip (rig units). */
-    const REACH = { test: 40, code: 28 };
+    const REACH = { test: 58, code: 46 };
 
     /** The troupe's placement at `time`: stage x and scale, with the waltz's roam. */
     function placementAt(time) {
@@ -1401,9 +1403,12 @@
           events.push({ side: dir > 0 ? 'R' : 'L', lift: at(0), land: at(0.52), offset, height: 4.2 });
           events.push({ side: dir > 0 ? 'L' : 'R', lift: at(0.54), land: at(0.94), offset, height: 2.4 });
         } else if (mode === 'walk') {
-          const count = clamp(2 * Math.ceil(travel / 60), 2, 6);
-          for (let k = 0; k < count; k++) {
-            events.push({ side: k % 2 === 0 ? 'R' : 'L', lift: at(k / count), land: at((k + 1) / count), offset: 0, height: 3.4 * smooth(travel / 12) });
+          // Travelling is waltzed too: three steps a measure, one on each of
+          // "1, 2, 3", feet alternating across measures, each stride as long
+          // as the travel needs.
+          for (let k = 0; k < 3; k++) {
+            const side = ((b * 3 + k) % 2 + 2) % 2 === 0 ? 'R' : 'L';
+            events.push({ side, lift: at(k / 3), land: at((k + 0.94) / 3), offset: 0, height: 3.4 * smooth(travel / 12) });
           }
         } else if (beatPlan(dancer, b - 1).mode !== 'still') {
           // Come to rest: both feet close under the body.
@@ -1422,7 +1427,7 @@
      * two footworks blending. A foot lands where the floor under its side of
      * the body will be halfway through its stance, so the body passes evenly
      * over it even while the troupe travels. Returns body-relative offsets,
-     * lifts, and the body's dip as each step lands; null at rest.
+     * lifts, and the body's waltz rise and fall while travelling; null at rest.
      */
     function footworkAt(dancer, t) {
       const events = stepsAround(dancer, t);
@@ -1456,13 +1461,15 @@
           // The foot peels off the floor and touches down softly (no speed
           // at either end), skimming highest mid-step.
           lift = 1.1 * step.height * Math.sin(Math.PI * k) ** 1.5;
-          // A long step sinks a little through its middle; quick travelling
-          // steps barely dip, so a fast glide stays level instead of bobbing.
-          const sink = clamp((step.land - step.lift) / 0.5, 0.2, 1);
-          if (k < 1) out.dip = Math.max(out.dip, 0.45 * sink * step.height * (1 - Math.cos(2 * Math.PI * k)) / 2);
         }
         out[side] = { dx: clamp(offsetAt(dancer, t, stand) - base - sway, -reach, reach), lift };
       }
+      // The rise and fall of a waltz, travelling or not: low on "1", rising
+      // through "2", high on "2–3", lowering into the next "1". Its size
+      // follows the travel smoothly, so it never jumps at a beat.
+      const travel = travelOf(dancer, t).amount;
+      out.rise = travel * riseOf(beats.at(t).phase);
+      out.dip = travel * 1.8 - 4 * out.rise;
       return out;
     }
 
@@ -1652,10 +1659,12 @@
       if (steps) {
         // The step's own dip hands over to the waltz's rise and fall as the
         // waltz fades in (and back as it fades out), never in one frame.
-        s.bob += steps.dip * (w ? 1 - w.fade : 1);
+        const own = w ? 1 - w.fade : 1;
+        s.bob += steps.dip * own;
         for (const side of ['L', 'R']) {
           const foot = s[`foot${side}`];
-          s[`foot${side}`] = { ...foot, dx: foot.dx + steps[side].dx, lift: foot.lift + steps[side].lift };
+          // Test rises onto the balls of his feet with the rise, as in the waltz.
+          s[`foot${side}`] = { ...foot, dx: foot.dx + steps[side].dx, lift: foot.lift + steps[side].lift, rise: (foot.rise || 0) + (isTest ? steps.rise * own : 0) };
         }
       }
       const tw = twirlAt(dancer.kind, t);
