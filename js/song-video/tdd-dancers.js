@@ -1690,7 +1690,7 @@
         const sign = side === 'L' ? -1 : 1;
         const key = `arm${side}`;
         const shoulder = [sign * body.shoulder[0], body.shoulder[1]];
-        const solve = (target, palm) => {
+        const solve = (target, palm, drape) => {
           // Target in this dancer's un-leaned, un-turned body coordinates;
           // her held arm (see Code's armFrame) is never narrowed by her turn.
           let local;
@@ -1713,24 +1713,32 @@
             while (solved.sh >= 120) solved.sh -= 360;
           }
           solved.wr = s[key].wr || 0;
-          if (palm) {
+          if (palm && drape > 0) {
             // Aim the hand along his shoulder, independent of the elbow.
             const direction = rotateAbout(palm, [0, 0], -s.lean - s.arch);
             let wrist = Math.atan2(-direction[0], direction[1]) * 180 / Math.PI - solved.sh - solved.el;
             while (wrist - solved.wr > 180) wrist -= 360;
             while (wrist - solved.wr < -180) wrist += 360;
-            solved.wr = wrist;
+            solved.wr += (wrist - solved.wr) * drape;
           }
           return solved;
         };
-        // The joined hands (low between them, or raised into an arch) are
-        // one shared point, so both partners reach for it exactly. Moving
-        // between that and the partner's own hold (his hand on her back, hers
-        // on his shoulder), the arm swings in joint space, an arc about the
-        // shoulder, never along a straight line through a head.
-        const joined = solve(plan.joined, null);
-        const own = plan.ownWeight > 0 ? solve(plan.own, plan.palm) : joined;
-        s[key] = mix(s[key], mix(joined, own, plan.ownWeight), s.hold);
+        let solved;
+        if (plan.target) {
+          // Her hand follows one planned path (see the couple's targets).
+          solved = solve(plan.target, plan.palm, plan.drape);
+        } else {
+          // His joined hand (low between them, or raised into an arch) is
+          // the point she reaches for too; moving between that and his hand
+          // on her back, his arm swings in joint space, an arc about the
+          // shoulder, never along a straight line through a head.
+          const joined = solve(plan.joined, null, 0);
+          solved = plan.ownWeight > 0 ? mix(joined, solve(plan.own, null, 0), plan.ownWeight) : joined;
+        }
+        // Her arm keeps to its path through the first half of a change of
+        // hold and hands over to her own pose only after that, so her hand
+        // never drifts off its path while it is near him.
+        s[key] = mix(s[key], solved, isTest ? s.hold : smooth(s.hold / 0.5));
       }
       return s;
     }
@@ -1787,21 +1795,33 @@
         // Promenade hold: Test's hand on Code's back, behind her; Code's hand
         // resting on his near shoulder.
         const back = on('code', [-2, -150]);
-        // Her hand rests on the cap of his shoulder, its fingers following the
-        // shoulder's slope up toward his neck: the palm's centre on the slope,
-        // the wrist on the top of his upper arm, clear of the lapel.
-        const contact = on('test', [23.5, -174]);
-        const palm = rotateAbout([-5.4, -4.7], [0, 0], raw.test.lean);
+        // Her hand's path. Resting, it lies along the top of his shoulder,
+        // draped a little toward his neck, its wrist just above the
+        // shoulder's corner, clear of his raised arm, so the hand (in front
+        // of him) and her forearm (behind his arm) meet where nothing of him
+        // covers them. Coming to rest it slides up from under his arm,
+        // hidden behind it, rises clear above his shoulder, and settles onto
+        // it; leaving it lifts off first and slides back down under his arm,
+        // then on to their joined hands or to her side. Rising into an arch
+        // it lifts off and goes straight up. It changes layer only while
+        // lifted clear of him (handRests), so the change never shows.
+        const k = archAt(t);
+        const e = raw.code.embrace;
+        const settle = smooth((e - 0.8) / 0.2) * (1 - smooth(k / 0.3));
+        const contact = on('test', [21.5, -178 - 11 * (1 - settle)]);
+        const palm = rotateAbout([-6.6, 2.9], [0, 0], raw.test.lean);
         // IK targets the wrist; the palm, not the cuff, rests on the shoulder.
-        const shoulder = [contact[0] - palm[0], contact[1] - palm[1]];
+        const overShoulder = [contact[0] - palm[0], contact[1] - palm[1]];
+        const underArm = lerp(on('test', [BODY.test.shoulder[0], BODY.test.shoulder[1]]), back, 0.5);
+        const slide = smooth((e - 0.35) / 0.45);
+        const own = lerp(underArm, overShoulder, slide);
         // Underarm turn: the joined hands rise into the gap between the two
         // heads, clear of both, and stay there while she turns beneath them.
         const arch = [raw.code.x - 36, raw.code.y + raw.code.bob - 220];
-        const k = archAt(t);
-        const joined = lerp(hands, arch, k);
         couple = {
-          test: { joined, own: back, ownWeight: raw.test.embrace * (1 - k), palm: null },
-          code: { joined, own: shoulder, ownWeight: raw.code.embrace * (1 - k), palm },
+          handRests: settle > 0.35,
+          test: { joined: lerp(hands, arch, k), own: back, ownWeight: raw.test.embrace * (1 - k) },
+          code: { target: lerp(lerp(hands, own, smooth(e / 0.35)), arch, k), palm, drape: slide * (1 - k) },
         };
       }
       const finals = {};
@@ -1818,10 +1838,10 @@
         // own layers only once the hold has fully let go and the arms hang
         // apart, so their order never flips mid-movement.
         const held = Math.max(finals.code.hold, finals.test.hold) > 0.002;
-        // Her hand comes in front only once it rests on his shoulder (it
-        // lies along the shoulder line, so little of it is revealed); on its
-        // way there and away it travels behind his back with her arm.
-        layerArm(dancers.code.rig, 'L', held ? holdLayers.code : null, finals.code.embrace > 0.97 ? holdLayers.codeHand : null);
+        // Her hand comes in front of him only while it rests on his shoulder,
+        // switching while lifted clear of him; on its way there and away it
+        // travels behind his back with her arm.
+        layerArm(dancers.code.rig, 'L', held ? holdLayers.code : null, couple.handRests ? holdLayers.codeHand : null);
         if (held) {
           holdLayers.code.setAttribute('transform', dancers.code.rig.armFrame(finals.code));
           holdLayers.codeHand.setAttribute('transform', dancers.code.rig.armFrame(finals.code));
