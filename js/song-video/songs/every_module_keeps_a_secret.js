@@ -113,13 +113,17 @@
       // Born in '85, then from "zero minus" he rewinds: teen, kid, baby,
       // newborn, egg cell, gone.
       const rewind = mark('intro-8', 'zero');
+      // Five steps and the puff fit between "zero minus" and "nobody", when
+      // the 1970s programmer's thought bubble takes this corner.
+      const nobody = mark('intro-10', 'nobody');
+      const step = (nobody - 0.55 - rewind) / 5;
       ih.agingPerson(d, {
-        x: 690, y: 92, tag: 'Born ’85', at: mark('intro-8', 'born'), until: rewind + 4.85,
-        stages: { teen: rewind, kid: rewind + 0.85, baby: rewind + 1.7, newborn: rewind + 2.55, egg: rewind + 3.4, gone: rewind + 4.25 },
+        x: 690, y: 92, tag: 'Born ’85', at: mark('intro-8', 'born'), until: nobody - 0.05,
+        stages: { teen: rewind, kid: rewind + step, baby: rewind + 2 * step, newborn: rewind + 3 * step, egg: rewind + 4 * step, gone: rewind + 5 * step },
       });
       ih.bubble(d, {
         x: 600, y: 96, w: 300, who: '1970s programmer', whoIcon: 'user', thought: true,
-        text: 'This code will be replaced long before 2000.', at: rewind + 5,
+        text: 'This code will be replaced long before 2000.', at: nobody,
       });
       kit.stamp(d, 'Still running', { x: 600, y: 300, at: mark('intro-11', 'did'), color: 'gold', rotate: -6, shake: false });
 
