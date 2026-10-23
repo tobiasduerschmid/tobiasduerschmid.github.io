@@ -3,8 +3,6 @@ title: Security and Authentication
 layout: sebook
 ---
 
-<script src="/js/ArchUML/uml-bundle.js"></script>
-
 # Background & Motivation
 
 ## Why Security Matters

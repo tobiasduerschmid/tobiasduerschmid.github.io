@@ -4,7 +4,6 @@ layout: sebook
 program_output_labs: true
 ---
 
-<script src="/js/ArchUML/uml-bundle.js"></script>
 <script src="/js/fs-command-lab.js"></script>
 
 <link rel="stylesheet" href="/css/fs-command-lab.css">

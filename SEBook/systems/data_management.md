@@ -3,8 +3,6 @@ title: Data Management
 layout: sebook
 ---
 
-<script src="/js/ArchUML/uml-bundle.js"></script>
-
 # Background and Motivation
 
 ## A Motivating Story: The Bank that Lost \\$100
