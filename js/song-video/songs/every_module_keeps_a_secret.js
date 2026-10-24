@@ -27,6 +27,10 @@
     const { content, hud } = layers;
     const line = (id) => song.line(id);
     const mark = (id, word) => song.mark(id, word);
+    // Agent 00 wears the viewer's saved human or Prof SE Gym face in every
+    // scene (student-avatar.js); without one, or for a Bruin, the Gym's
+    // default human face.
+    const AGENT_00 = { role: 'Agent', code: '00', look: 'tuxedo', hero: student?.heroHead() };
 
     function badge(text, sectionId) {
       kit.badge(hud, text, song.sectionStart(sectionId), song.sectionEnd(sectionId));
@@ -92,11 +96,13 @@
         ],
       });
       kit.sticker(c, 'Year 2000', { x: 120, y: 320, at: mark('intro-6', '2000'), variant: 'gold', iconName: 'timer', rotate: -4 });
-      // A cameo: Agent 00 steps in beside the 00 on "double", raises his
-      // martini to it on "zero", and slips out before the terminal opens.
+      // A cameo: Agent 00 glides in as the year runs out, checks his watch
+      // on "year 2000", raises his martini to his namesake as 99 rolls over
+      // to 00 on "zero", with a wink, and is gone before the terminal opens.
       ih.agent(c, {
-        x: 314, y: 104, scale: 0.66, role: 'Agent', code: '00', look: 'tuxedo', flip: true,
-        at: mark('intro-6', 'double') - 0.15, toastAt: mark('intro-6', 'zero'), toastPose: 'cheers',
+        ...AGENT_00, x: 298, y: 80, scale: 1, flip: true, entrance: 'right',
+        at: line('intro-6').start + 0.05, toastAt: mark('intro-6', 'zero'), toastPose: 'cheers',
+        moves: [[mark('intro-6', 'year') - 0.15, 'watch'], [mark('intro-6', 'zero') + 0.6, 'wink']],
         until: mark('intro-7', 'computer') - 0.35,
       });
       ih.code(c, {
@@ -191,9 +197,9 @@
       });
       kit.stamp(g, 'Paid', { x: 560, y: 260, at: mark('intro-18', 'billions') + 0.3, color: 'red', rotate: -12, shake: false });
 
-      // Lesson one and the case file title. On the beat after it, the title
-      // card tucks into the top-left corner and the hero into the top-right
-      // to watch the instrumental's spy caper starring the modules.
+      // Lesson one and the case file title, toasted by Agent 00. On the beat
+      // after it, he slips away and the title card tucks into the top-left
+      // corner for the instrumental's spy caper, where he drops back in.
       const beat0 = beats.index(mark('intro-19', 'secret') + 1.6) + 1;
       const beat = (k) => beats.time(beat0 + k);
       const caperAt = beat(0) - 0.3;
@@ -232,10 +238,16 @@
         at: caperAt + shrink * 0.45, rotate: -2, fade: true,
       }).classList.add('ih-dossier--mini');
       h.append(topSecret);  // above the compact card
-      student?.appear({
-        from: mark('intro-19', 'secret') + 0.6, to: caperEnd, x: 640, y: 120, scale: 0.92,
-        move: { at: caperAt, duration: 0.6, x: 836, y: 16, scale: 0.42 },
+      // A cameo: Agent 00 glides in beside the case file, into a spotlight,
+      // leans in with a finger across the lips through "keep a secret"
+      // (Shh…), winks, and is gone as the caper begins.
+      ih.spotlight(lesson, { x: 772, y: 250, w: 300, h: 420, at: mark('intro-19', 'every') + 0.1 });
+      ih.agent(h, {
+        ...AGENT_00, x: 684, y: 54, scale: 1.1, flip: true, entrance: 'right',
+        at: mark('intro-19', 'every') + 0.3, until: caperAt,
+        moves: [[mark('intro-19', 'should'), 'shh'], [mark('intro-19', 'secret') + 0.75, 'wink']],
       });
+      kit.sticker(h, 'Shh…', { x: 628, y: 66, at: mark('intro-19', 'keep') - 0.1, until: mark('intro-19', 'secret') + 0.4, variant: 'pink', iconName: 'lock', rotate: -6 });
 
       // The caper: modules tiptoe in and hide from a searchlight while Agent
       // Payment Gateway drops in upside down on a rope. He backflips down,
@@ -251,7 +263,7 @@
       };
       const cap = kit.scene(content, caperAt, caperEnd, { enter: 'whip' });
       ih.heading(cap, ['Meanwhile, at ', 'Module HQ', '…'], { x: 360, y: 70, at: caperAt + 0.35, until: T.freeze + 0.6 });
-      ih.spyCaper(cap, T);
+      ih.spyCaper(cap, T, { hero: AGENT_00.hero });
       // The snoop asks the gateway instead of peeking: a call over the barrier.
       ih.courier(cap, { from: [692, 330], to: [552, 300], bend: -150, tone: 'gold', at: T.ask, until: T.reply + 0.9, period: 1 });
       kit.sticker(cap, 'Shh…', { x: 700, y: 206, at: T.shh, variant: 'pink', iconName: 'lock', rotate: 5 });
@@ -507,9 +519,16 @@
       // He stays until the PayPal contact card needs his corner.
       const agentTo = mark('verse-2-9', 'exists') - 0.5;
       ih.spotlight(s, { x: 800, y: 210, w: 320, h: 420, at: agentFrom, until: agentTo });
-      ih.agent(s, { x: 742, y: 100, scale: 0.66, role: 'Agent', code: '00', look: 'tuxedo', at: agentFrom, until: agentTo, toastAt: mark('verse-2-8', 'gateway_2') - 0.15, toastPose: 'cheers' });
+      // He tugs his bow tie square on the first "Gateway", toasts on the
+      // second with a wink, and brings his glass down as PayPal comes in:
+      // he glances at PayPalGateway and back, with a knowing nod on "knows".
+      ih.agent(s, {
+        ...AGENT_00, x: 722, y: 104, scale: 0.9, entrance: 'right', at: agentFrom, until: agentTo,
+        toastAt: mark('verse-2-8', 'gateway_2') - 0.15, toastPose: 'cheers', toastHold: 1.2,
+        moves: [[mark('verse-2-8', 'gateway'), 'tie'], [mark('verse-2-8', 'gateway_2') + 0.55, 'wink'], [mark('verse-2-9', 'knows') - 0.8, 'glance']],
+      });
       ih.bubble(s, { x: 700, y: 12, text: 'Gateway,\nPayment Gateway.', tailX: 95, at: mark('verse-2-8', 'names') - 0.1, until: agentTo });
-      kit.sticker(s, 'Secret: which provider', { x: 690, y: 376, at: mark('verse-2-8', 'gateway_2'), until: agentTo, variant: 'red', iconName: 'lock', rotate: -3 });
+      kit.sticker(s, 'Secret: which provider', { x: 690, y: 414, at: mark('verse-2-8', 'gateway_2'), until: agentTo, variant: 'red', iconName: 'lock', rotate: -3 });
 
       // Only PayPalGateway knows PayPal exists; Stripe plugs in beside it.
       const paypal = ih.module(s, { x: 396, y: 318, w: 260, h: 74, name: 'PayPalGateway', at: mark('verse-2-9', 'paypal') });
@@ -756,16 +775,22 @@
       one.light(mark('outro-2', 'change'));
       ih.counter(b, { x: 590, y: 316, label: 'module changed', from: 1, to: 1, at: mark('outro-2', 'module_2'), duration: 0.3 });
 
-      // The finale: the case summary is stamped closed, Agent Payment
-      // Gateway keeps the last secret, and an iris closes on the hero.
-      // The take's last line was cut, so this plays over the silent tail.
+      // The finale: Agent 00 glides into the centre spotlight, raises his
+      // martini on "change" and winks as the last secret is sealed, then
+      // buttons his jacket while the case summary is stamped closed and an
+      // iris closes on his face. The take's last line was cut, so this plays
+      // over the silent tail.
       const c = kit.scene(content, line('outro-3').start - 0.1, end);
       kit.kinetic(c, [
         { text: 'Designing', at: line('outro-3').start },
         { text: 'for change', at: mark('outro-3', 'change'), color: 'gold' },
       ], { y: 56, size: 48 });
       ih.spotlight(c, { x: 451, y: 270, w: 480, h: 360, at: line('outro-3').start });
-      student?.appear({ from: line('outro-3').start + 0.4, to: end, x: 360, y: 150, scale: 0.7 });
+      const done = mark('outro-3', 'change');
+      ih.agent(c, {
+        ...AGENT_00, x: 371, y: 98, scale: 1, entrance: 'right', at: line('outro-3').start + 0.4, toastAt: done,
+        moves: [[done + 0.55, 'wink'], [done + 1.25, 'button']],
+      });
       const summaryAt = mark('outro-3', 'designing');
       ih.paper(c, {
         x: 30, y: 136, w: 320, kicker: 'Case summary', title: 'Information hiding', clip: true, rotate: -2,
@@ -776,15 +801,12 @@
           { text: '3. 1 change → 1 module', at: mark('outro-3', 'change') + 0.3 },
         ],
       });
-      const done = mark('outro-3', 'change');
-      ih.spotlight(c, { x: 800, y: 250, w: 300, h: 400, at: done - 0.1 });
-      ih.agent(c, { x: 720, y: 108, scale: 0.72, role: 'Agent', code: '00', look: 'tuxedo', flip: true, at: done });
       ih.show(ih.envelope(c, { text: 'every module keeps a secret', x: 552, y: 384 }), done + 0.5, undefined, { rotate: -1, from: 1.6 });
       kit.stamp(c, 'Case closed', { x: 26, y: 334, at: done + 0.9, color: 'green', rotate: -8, shake: false });
       const credit = kit.el('div', 'end-credit is-staged', c, 'SE Book · Information Hiding');
       credit.style.top = '428px';
       fx.fadeIn(credit, done + 1.3, 0.4);
-      ih.iris(c, { cx: 451, cy: 255, from: end - 1.9, to: end - 0.1 });
+      ih.iris(c, { cx: 451, cy: 190, from: end - 1.9, to: end - 0.1 });
     }
 
     // ----------------------------------------------------------------

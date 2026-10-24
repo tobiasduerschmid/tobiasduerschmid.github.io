@@ -59,8 +59,9 @@ standalone player keeps a transcript link. Live visual descriptions appear
 in lyrics-only mode or when animation fails, without repeating them below
 the normal picture.
 Without JavaScript, a native audio control is provided. The player reads the
-existing SE Gym hero appearance for optional student-at-laptop cameos; it never
-saves or changes that appearance. Missing or unavailable saved data uses the
+existing SE Gym hero appearance for optional student-at-laptop cameos (and for
+the face a song character can wear, below); it never saves or changes that
+appearance. Missing or unavailable saved data uses the
 default Bruin; an unavailable avatar asset leaves a laptop illustration. Nothing autoplays, and media is not fetched
 until the reader presses play or chooses another audio track.
 
@@ -81,6 +82,37 @@ adds another animation loop. A storyboard can set `student.laptop_logo` to a loc
 to use a song-specific laptop emblem in both the live player and exports;
 without it, the shared Git mark is retained. The shell song uses the official
 Bash logo, with attribution and license in `assets/icons/bash/`.
+
+A song character can also wear a hero's own head: `student.heroHead()`
+resolves, on first request, to the saved human or Prof head, neck up, or,
+without one (no saved hero, or the Bruin), to the SE Gym's default human
+hero's (`HeroAvatar.DEFAULTS`, never saved). It resolves to null on an export
+stage, which never loads the renderer, or if the renderer fails, and the
+character then keeps its own drawn face. The information-hiding song's
+Agent 00 (`ih-kit.js`) wears it in every scene, including the case-file and
+finale cameos that replaced two laptop cameos. One render is pruned to the
+head assembly and neck, without body-bound accessories or unreferenced
+definitions, then copied per wearer with `HeroAvatar.cloneSvg`, so every copy
+owns its IDs and style scope and a hidden scene never breaks another copy's
+paints. The neck layer sits under the wearer's collar and the face, hair, and
+beard over it (the Prof's fixed portrait keeps its own neck under the collar).
+The copy blinks on the song clock (not under reduced motion); the wearer
+directs its glance and wink, which masks split per eye, and lifts one brow
+(the brows are split per side the same way). Agent 00's fists take
+the hero's skin tokens, and a hairline bright halo outlines very dark skin or
+hair against the noir stage.
+
+Each Agent 00 cameo is choreographed to its lyric with `ih.agent({ moves })`,
+a list of `[songTime, move]` pairs from `MOVES` in `ih-kit.js`: `tie`, `lapel`,
+`shh` (an index finger upright across pursed lips, the other fingers curled
+under the chin, one brow raised and eyes darting), `button`, `watch`, `glance`
+(with a knowing nod), and `wink` (a raised brow, a head tilt, and a glint off
+the smile). The lips purse by drawing the hero's own mouth in about its
+centre, so the gesture works for every saved mouth. `entrance: 'left' |
+'right'` glides the agent in and settles the knees; `toastHold` brings a
+raised martini down to the chest after that many seconds. Every pose is
+computed from song time; with reduced motion the moves snap into place and the
+glide, sway, and glint stay still.
 
 Celebration confetti uses seeded paper ribbons and tickets with varied sizes,
 scattered launch positions, subdued shading, and tumbling. Every pose is

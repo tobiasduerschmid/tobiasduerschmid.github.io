@@ -4281,6 +4281,12 @@
   function uniquifySvgIds(svg, seed) {
     var token = safeIdToken(seed) + '-' + (++heroTemplateMountCount);
     var styleScope = 'se-gym-hero-instance-' + token;
+    // A copy of a mounted avatar arrives scoped like its source; rescope it.
+    var sourceScope = svg.getAttribute('data-hero-style-scope');
+    var scopeSelector = sourceScope
+      ? new RegExp('\\.' + sourceScope + '\\b', 'g')
+      : /\.se-gym-hero-svg-avatar-template\b/g;
+    if (sourceScope) svg.classList.remove(sourceScope);
     svg.classList.add(styleScope);
     svg.setAttribute('data-hero-style-scope', styleScope);
     var idMap = Object.create(null);
@@ -4303,8 +4309,16 @@
     });
     svg.querySelectorAll('style').forEach(function (styleEl) {
       styleEl.textContent = rewriteSvgReferences(styleEl.textContent, idMap)
-        .replace(/\.se-gym-hero-svg-avatar-template\b/g, '.' + styleScope);
+        .replace(scopeSelector, '.' + styleScope);
     });
+  }
+
+  // A rendered avatar's private copy. Its own IDs and style scope mean that
+  // hiding or removing one copy never breaks another copy's clips or paints.
+  function cloneAvatarSvg(svg, seed) {
+    var copy = svg.cloneNode(true);
+    uniquifySvgIds(copy, seed);
+    return copy;
   }
 
   function buildAvatarSvg(seed) {
@@ -4504,6 +4518,7 @@
     applyAvatarToScope: applyAvatarToScope,
     applyToSvg: applyToSvg,
     createSvg: buildAvatarSvg,
+    cloneSvg: cloneAvatarSvg,
     syncMotion: applyReducedMotionToSvg,
     mountSavedAvatar: mountSavedAvatar,
     consolidatePracticeHeroGroups: consolidatePracticeHeroGroups,

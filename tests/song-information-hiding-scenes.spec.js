@@ -161,3 +161,244 @@ test('reduced motion freezes decorative motion while keeping the source change u
   await seek(page, windAt + 2.7);
   expect(await paintedGeometry(power), 'wind rotors and energy dashes must stop their decorative motion').toEqual(wind);
 });
+
+// ------------------------------------------------------------------
+// Agent 00 wears the viewer's saved SE Gym face
+// ------------------------------------------------------------------
+
+const STORAGE_KEY = 'se-gym-hero-avatar';
+// A descriptor as the SE Gym saves it, with traits a default face lacks. The
+// pendant is body-bound, so it must stay off a head worn neck up.
+const savedHuman = {
+  version: 1,
+  kind: 'human',
+  appearance: {
+    skin: '#35241f', hairColor: '#66418c', eyebrowColor: '#3d2818', facialHairColor: '#b7bdc8',
+    hairStyle: 'locs', eyeColor: '#3a5a7a', eyebrowStyle: 'arched', headStyle: 'broad',
+    eyeShape: 'round', earShape: 'oval', eyelashStyle: 'none', noseShape: 'soft',
+    mouthStyle: 'smile', blushStyle: 'natural', facialHair: 'none', faceFeature: 'none',
+  },
+  body: { type: 'average' },
+  outfit: {
+    style: 'hoodie', suit: '#BD1F6E', capeOuter: '#5a158f', capeInner: '#FFD100',
+    accessory: 'round-rim-glasses', accessories: ['round-rim-glasses', 'chain-necklace'], emblem: '',
+  },
+};
+// Agent 00's scenes: the Y2K cameo, the case-file cameo and the finale
+// (both once laptop cameos), the caper's toast, and verse 2's gateway.
+const agentTimes = [
+  mark('intro-6', 'zero') + 0.6,
+  mark('intro-19', 'secret') + 0.9,
+  lineStart('verse-1-1') - 1.2,
+  mark('verse-2-8', 'gateway_2') + 0.5,
+  lineStart('outro-3') + 1.2,
+];
+// The finale: he steps in, raises his martini on "change", then winks.
+const finale = lineStart('outro-3') + 0.4;
+const toast = mark('outro-3', 'change');
+
+/** Reloads the player with `setup` running before any page script. */
+async function reopenWith(page, setup, arg) {
+  await page.addInitScript(setup, arg);
+  await page.reload();
+  await expect(page.getByTestId('song-picture')).toBeVisible();
+}
+
+const luminance = (hex) => [0.2126, 0.7152, 0.0722]
+  .reduce((sum, weight, i) => sum + weight * parseInt(hex.slice(1 + 2 * i, 3 + 2 * i), 16), 0);
+
+/** The picture's mean luminance (0–255) in a 2×2 px square centred on (x, y). */
+async function paintedLuminance(page, { x, y }) {
+  const png = await page.screenshot({ clip: { x: x - 1, y: y - 1, width: 2, height: 2 } });
+  return page.evaluate(async (base64) => {
+    const bitmap = await createImageBitmap(await (await fetch(`data:image/png;base64,${base64}`)).blob());
+    const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
+    const context = canvas.getContext('2d');
+    context.drawImage(bitmap, 0, 0);
+    const { data } = context.getImageData(0, 0, bitmap.width, bitmap.height);
+    let sum = 0;
+    for (let i = 0; i < data.length; i += 4) sum += 0.2126 * data[i] + 0.7152 * data[i + 1] + 0.0722 * data[i + 2];
+    return sum / (data.length / 4);
+  }, png.toString('base64'));
+}
+
+/** The Agent 00 on stage: painted, not faded out with an earlier scene. */
+async function agentOnStage(page) {
+  const agents = page.getByTestId('ih-agent');
+  const painted = await agents.evaluateAll((nodes) => nodes.map((node) => {
+    for (let ancestor = node; ancestor; ancestor = ancestor.parentElement) {
+      const style = getComputedStyle(ancestor);
+      if (style.display === 'none' || style.visibility === 'hidden' || Number(style.opacity) === 0) return false;
+    }
+    return true;
+  }));
+  expect(painted.filter(Boolean), 'exactly one Agent 00 is on stage').toHaveLength(1);
+  return agents.nth(painted.indexOf(true));
+}
+
+/**
+ * Whether each eye of the visible worn face (picture left to right) is
+ * shut: the painted centre of its iris shows nearer the saved skin's
+ * lightness than the dark iris's.
+ */
+async function shutEyes(page, { skin, iris }) {
+  await page.getByTestId('song-picture').scrollIntoViewIfNeeded();
+  const centres = await page.getByTestId('song-hero-head').filter({ visible: true })
+    .locator('[data-hero-slot="eye-shape"] circle[fill*="--hero-eye"]')
+    .evaluateAll((irises) => irises.map((node) => node.getBoundingClientRect())
+      .filter((box) => box.width > 0)
+      .map((box) => ({ x: box.x + box.width / 2, y: box.y + box.height / 2 }))
+      .sort((a, b) => a.x - b.x));
+  expect(centres, 'the worn face shows two eyes').toHaveLength(2);
+  const threshold = (luminance(skin) + luminance(iris)) / 2;
+  const shut = [];
+  for (const centre of centres) shut.push(await paintedLuminance(page, centre) > threshold);
+  return shut;
+}
+
+for (const sample of [
+  // Very dark skin: a hairline bright halo keeps the face and hands readable.
+  { name: 'human hero', hero: savedHuman, skin: '#35241f', hand: 'rgb(53, 36, 31)', traits: ['[data-hero-slot="hair"][data-hero-option="locs"]', '[data-hero-slot="accessory"][data-hero-option="round-rim-glasses"]'], halo: true },
+  // Prof is the Gym's fixed portrait, whatever editable traits were saved.
+  { name: 'Prof', hero: { ...savedHuman, kind: 'tobias' }, skin: '#edbea5', hand: 'rgb(237, 190, 165)', traits: ['[data-hero-tobias="portrait"]'], halo: false },
+]) {
+  test(`every Agent 00 wears the saved ${sample.name}'s own face, neck up, with matching hands`, async ({ page }) => {
+    const saved = JSON.stringify(sample.hero);
+    await reopenWith(page, ({ key, value }) => localStorage.setItem(key, value), { key: STORAGE_KEY, value: saved });
+    const heads = page.getByTestId('song-hero-head');
+    await expect(heads, 'each Agent 00 wears his own copy').toHaveCount(await page.getByTestId('ih-agent').count());
+    for (const time of agentTimes) {
+      await seek(page, time);
+      const agent = await agentOnStage(page);
+      const face = agent.getByTestId('song-hero-head');
+      await expect(face, `Agent 00 at ${time}s wears the saved face`).toBeVisible();
+      await expect(face).toHaveAttribute('data-hero-kind', sample.hero.kind);
+      await expect(face).toHaveCSS('--hero-skin-light', sample.skin);
+      for (const trait of sample.traits) await expect(face.locator(trait), `the saved ${trait}`).toBeVisible();
+      await expect(agent.getByTestId('ih-agent-drawn-face')).toBeHidden();
+      const handTones = await agent.getByTestId('ih-agent-hand').first().evaluate((hand) => {
+        const gradient = document.getElementById(getComputedStyle(hand).fill.match(/#([^"')]+)/)?.[1]);
+        return gradient ? Array.from(gradient.querySelectorAll('stop'), (stop) => getComputedStyle(stop).stopColor) : [];
+      });
+      expect(handTones, 'his hands are shaded in the saved skin tone').toContain(sample.hand);
+      await expect(face.locator('xpath=..'), 'the halo marks only very dark skin or hair').toHaveCSS('filter', sample.halo ? /^url\(/ : 'none');
+    }
+    await expect(heads.locator('[data-hero-slot="outfit-style"], [data-hero-human-arms], [data-hero-barbell], [data-hero-option="chain-necklace"]').filter({ visible: true }),
+      'only the head and neck are worn').toHaveCount(0);
+    await expect(heads.locator('animate, animateTransform, animateMotion, set'), 'the song clock drives the face').toHaveCount(0);
+    const sharedIds = await heads.evaluateAll((copies) => {
+      const seen = new Set();
+      return copies.flatMap((copy) => [...copy.querySelectorAll('[id]')].map((node) => node.id))
+        .filter((id) => seen.has(id) || !seen.add(id));
+    });
+    expect(sharedIds, 'hiding one scene must never break another copy\'s clips and paints').toEqual([]);
+    expect(await page.evaluate((key) => localStorage.getItem(key), STORAGE_KEY), 'the song never changes the Gym hero').toBe(saved);
+  });
+}
+
+for (const { name, setup, arg } of [
+  { name: 'no saved hero', setup: () => {} },
+  {
+    name: 'a saved Bruin',
+    setup: ({ key, value }) => localStorage.setItem(key, value),
+    arg: {
+      key: STORAGE_KEY,
+      value: JSON.stringify({
+        ...savedHuman, kind: 'bruin',
+        appearance: { ...savedHuman.appearance, skin: '#512d22', hairStyle: 'bald', hairColor: '#3d2818' },
+        outfit: { ...savedHuman.outfit, style: 'super-suit', accessory: 'none', accessories: [] },
+      }),
+    },
+  },
+  {
+    name: 'blocked storage',
+    setup: () => Object.defineProperty(window, 'localStorage', {
+      get() { throw new DOMException('Storage disabled by browser policy', 'SecurityError'); },
+    }),
+  },
+]) {
+  test(`with ${name}, Agent 00 wears the SE Gym's default human face`, async ({ page }) => {
+    await reopenWith(page, setup, arg);
+    const before = await page.evaluate((key) => { try { return localStorage.getItem(key); } catch { return 'blocked'; } }, STORAGE_KEY);
+    const heads = page.getByTestId('song-hero-head');
+    await expect(heads, 'each Agent 00 wears his own copy').toHaveCount(await page.getByTestId('ih-agent').count());
+    const defaultSkin = await page.evaluate(() => window.HeroAvatar.DEFAULTS.appearance.skin);
+    for (const time of [agentTimes[0], agentTimes.at(-1)]) {
+      await seek(page, time);
+      const agent = await agentOnStage(page);
+      const face = agent.getByTestId('song-hero-head');
+      await expect(face, `Agent 00 at ${time}s wears the default face`).toBeVisible();
+      await expect(face).toHaveAttribute('data-hero-kind', 'human');
+      await expect(face).toHaveCSS('--hero-skin-light', defaultSkin);
+      await expect(agent.getByTestId('ih-agent-drawn-face')).toBeHidden();
+    }
+    expect(await page.evaluate((key) => { try { return localStorage.getItem(key); } catch { return 'blocked'; } }, STORAGE_KEY),
+      'the default face is never saved as the viewer\'s hero').toBe(before);
+  });
+}
+
+test('without the SE Gym renderer, Agent 00 keeps a drawn face', async ({ page }) => {
+  // The hero artwork never arrives: the song stays whole, with the drawn face.
+  const failed = page.waitForEvent('requestfailed', (request) => request.url().includes('se-gym-hero-template.svg'));
+  await page.route('**/se-gym-hero-template.svg', (route) => route.abort());
+  await page.reload();
+  await expect(page.getByTestId('song-picture')).toBeVisible();
+  await failed;
+  for (const time of [agentTimes[0], agentTimes.at(-1)]) {
+    await seek(page, time);
+    await expect((await agentOnStage(page)).getByTestId('ih-agent-drawn-face')).toBeVisible();
+  }
+  await expect(page.getByTestId('song-hero-head')).toHaveCount(0);
+});
+
+test('a saved beard falls over Agent 00\'s bow tie', async ({ page }) => {
+  // A long, light beard on a bald head: where it hangs over the bow tie,
+  // the picture shows the beard, not the black tie.
+  const bearded = {
+    ...savedHuman,
+    appearance: { ...savedHuman.appearance, hairStyle: 'bald', facialHair: 'long-rounded-beard', facialHairColor: '#d8b074' },
+    outfit: { ...savedHuman.outfit, accessory: 'none', accessories: [] },
+  };
+  await reopenWith(page, ({ key, value }) => localStorage.setItem(key, value), { key: STORAGE_KEY, value: JSON.stringify(bearded) });
+  await expect(page.getByTestId('song-hero-head').first()).toBeAttached();
+  await seek(page, finale + 0.6);
+  const agent = await agentOnStage(page);
+  await page.getByTestId('song-picture').scrollIntoViewIfNeeded();
+  const tie = await agent.getByTestId('ih-agent-bow-tie').boundingBox();
+  const centre = { x: tie.x + tie.width / 2, y: tie.y + tie.height / 2 };
+  expect(await paintedLuminance(page, centre), 'the beard covers the knot').toBeGreaterThan((luminance('#d8b074') + luminance('#0b0d14')) / 2);
+});
+
+// Light skin and dark eyes, so open and shut eyes differ clearly in the picture.
+const lightSkinned = {
+  ...savedHuman,
+  appearance: { ...savedHuman.appearance, skin: '#f4d0c4', eyeColor: '#1f140c', hairStyle: 'short' },
+  outfit: { ...savedHuman.outfit, accessory: 'none', accessories: [] },
+};
+const lightEyes = { skin: '#f4d0c4', iris: '#1f140c' };
+// A worn face blinks 2.4 s into each appearance (student-avatar.js blinkAt).
+const finaleBlink = finale + 2.48;
+
+test('the worn face winks and blinks on the song clock', async ({ page }) => {
+  await reopenWith(page, ({ key, value }) => localStorage.setItem(key, value), { key: STORAGE_KEY, value: JSON.stringify(lightSkinned) });
+  await expect(page.getByTestId('song-hero-head').first()).toBeAttached();
+  await seek(page, toast + 0.35);
+  expect(await shutEyes(page, lightEyes), 'both eyes are open as he raises his martini').toEqual([false, false]);
+  await seek(page, toast + 0.9);
+  expect(await shutEyes(page, lightEyes), 'he winks his left eye, on the picture\'s right').toEqual([false, true]);
+  await seek(page, finaleBlink);
+  expect(await shutEyes(page, lightEyes), 'a blink shuts both eyes').toEqual([true, true]);
+  await seek(page, elsewhere);
+  await seek(page, toast + 0.9);
+  expect(await shutEyes(page, lightEyes), 'seeking back reproduces the wink').toEqual([false, true]);
+});
+
+test('with reduced motion the worn face stops blinking but still winks', async ({ page }) => {
+  await reopenWith(page, ({ key, value }) => localStorage.setItem(key, value), { key: STORAGE_KEY, value: JSON.stringify(lightSkinned) });
+  await showReducedMotionVideo(page);
+  await expect(page.getByTestId('song-hero-head').first()).toBeAttached();
+  await seek(page, finaleBlink);
+  expect(await shutEyes(page, lightEyes), 'no decorative blinking').toEqual([false, false]);
+  await seek(page, toast + 0.9);
+  expect(await shutEyes(page, lightEyes), 'the choreographed wink remains').toEqual([false, true]);
+});

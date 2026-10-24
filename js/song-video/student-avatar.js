@@ -1,4 +1,6 @@
-/* Saved SE Gym character or default Bruin, posed at a laptop on the song's clock.
+/* Saved SE Gym character or default Bruin, posed at a laptop on the song's clock,
+ * and a human or Prof hero's head (the saved one, else the Gym's default
+ * human), neck up, for a song character to wear.
  * The saved descriptor and shared renderer remain owned by HeroAvatar.
  */
 (function (root) {
@@ -77,35 +79,56 @@
     return group;
   }
 
-  /** Compose outside the shared fit transforms; move pupils inside fixed clips. */
-  function portraitMotion(svg) {
+  /**
+   * Two brief, unequally spaced blinks per 9.6 s cycle, from 0 (open) to 1
+   * (shut). Song time is the entire state, so seeking backward restores
+   * open or closed eyes too.
+   */
+  function blinkAt(time) {
+    const phase = time % 9.6;
+    const elapsed = phase - (phase >= 6.8 ? 6.8 : 2.4);
+    return Math.max(0, Math.min(1, elapsed / 0.06, (0.2 - elapsed) / 0.1));
+  }
+
+  /**
+   * A hero's eye layers: open eyes, lashes, closed lids, and the parts that
+   * glance. Contact shading and the eye opening stay fixed; only each iris,
+   * pupil, its fibers and catchlights move inside their clips.
+   */
+  function eyeParts(svg) {
     const kind = svg.getAttribute('data-hero-kind');
-    const isBruin = kind === 'bruin';
-    const head = motionWrapper(svg.querySelector(isBruin ? '[data-hero-bruin-anatomy="head"]' : '[data-hero-head-assembly]'), 'head');
-    const eyeAttribute = isBruin ? 'data-hero-bruin-expression' : kind === 'tobias' ? 'data-hero-tobias' : 'data-hero-motion';
-    const open = svg.querySelector(`[${eyeAttribute}="${kind === 'human' ? 'eye-blink' : 'eyes-open'}"]`);
-    const closed = svg.querySelector(`[${eyeAttribute}="${kind === 'human' ? 'closed-eyelids' : 'eyes-closed'}"]`);
+    const attribute = kind === 'bruin' ? 'data-hero-bruin-expression' : kind === 'tobias' ? 'data-hero-tobias' : 'data-hero-motion';
+    const open = svg.querySelector(`[${attribute}="${kind === 'human' ? 'eye-blink' : 'eyes-open'}"]`);
+    const closed = svg.querySelector(`[${attribute}="${kind === 'human' ? 'closed-eyelids' : 'eyes-closed'}"]`);
     const lashes = kind === 'human' ? svg.querySelector('[data-hero-motion="eyelash-blink"]') : null;
     const gaze = [];
-    if (open) {
-      open.dataset.studentMotion = 'blink-open';
-      open.querySelectorAll('g[clip-path]').forEach((clip) => {
-        // Contact shading and the eye opening stay fixed. Only the iris,
-        // pupil, its fibers and catchlights track the student's screen.
-        const parts = Array.from(clip.children).filter((child) =>
-          ['circle', 'ellipse', 'g'].includes(child.localName) ||
-          (child.localName === 'path' && (child.getAttribute('stroke') || '').includes('--hero-eye-light')));
-        if (!parts.length) return;
-        // Keep the renderer's direct-child CSS selectors and paint order.
-        // Compose motion onto each part's saved transform instead of adding
-        // a wrapper between the clip and its iris/pupil artwork.
-        parts.forEach((part) => {
-          part.dataset.studentMotion = 'gaze';
+    open?.querySelectorAll('g[clip-path]').forEach((clip) => {
+      // Keep the renderer's direct-child CSS selectors and paint order.
+      // Motion composes onto each part's saved transform instead of adding
+      // a wrapper between the clip and its iris/pupil artwork.
+      for (const part of clip.children) {
+        if (['circle', 'ellipse', 'g'].includes(part.localName) ||
+          (part.localName === 'path' && (part.getAttribute('stroke') || '').includes('--hero-eye-light'))) {
           gaze.push({ node: part, transform: part.getAttribute('transform') || '' });
-        });
-      });
-    }
+        }
+      }
+    });
+    return { open, closed, lashes, gaze };
+  }
+
+  /** Moves every gazing part by (dx, dy) hero units over its own transform. */
+  function glance(gaze, dx, dy) {
+    for (const { node, transform } of gaze) node.setAttribute('transform', `translate(${dx} ${dy}) ${transform}`.trim());
+  }
+
+  /** Compose outside the shared fit transforms; move pupils inside fixed clips. */
+  function portraitMotion(svg) {
+    const isBruin = svg.getAttribute('data-hero-kind') === 'bruin';
+    const head = motionWrapper(svg.querySelector(isBruin ? '[data-hero-bruin-anatomy="head"]' : '[data-hero-head-assembly]'), 'head');
+    const { open, closed, lashes, gaze } = eyeParts(svg);
+    if (open) open.dataset.studentMotion = 'blink-open';
     if (closed) closed.dataset.studentMotion = 'blink-closed';
+    for (const { node } of gaze) node.dataset.studentMotion = 'gaze';
     return (time, reduced) => {
       const nod = reduced ? 0 : Math.sin(time * 1.23) * 2.2;
       const tilt = reduced ? 0 : Math.sin(time * 0.79) * 1.2;
@@ -113,48 +136,289 @@
         const pivot = isBruin ? 257 : 236;
         head.setAttribute('transform', `translate(0 ${2.4 + nod}) rotate(${tilt} 400 ${pivot}) translate(400 ${pivot}) scale(1 .975) translate(-400 -${pivot})`);
       }
-      const glance = reduced ? 0 : Math.sin(time * 0.91) * 0.7;
+      // The eyes track the student's screen.
+      const across = reduced ? 0 : Math.sin(time * 0.91) * 0.7;
       const down = (isBruin ? 2.3 : 1.3) + (reduced ? 0 : Math.sin(time * 0.63) * 0.3);
-      gaze.forEach(({ node, transform }) => node.setAttribute('transform', `translate(${glance} ${down}) ${transform}`.trim()));
-      // Two brief, unequally spaced blinks per cycle. Absolute song time is
-      // the entire state, so seeking backward restores open/closed eyes too.
-      const phase = time % 9.6;
-      const blinkAt = phase >= 6.8 ? 6.8 : 2.4;
-      const elapsed = phase - blinkAt;
-      const blink = reduced ? 0 : Math.max(0, Math.min(1, elapsed / 0.06, (0.2 - elapsed) / 0.1));
+      glance(gaze, across, down);
+      const blink = reduced ? 0 : blinkAt(time);
       if (open) open.setAttribute('opacity', String(1 - blink));
       if (closed) closed.setAttribute('opacity', String(blink));
       if (lashes) lashes.setAttribute('opacity', String(1 - blink));
     };
   }
 
-  /** Modify only the newly mounted copy; the Gym template stays unchanged. */
-  function preparePortrait(svg, host) {
+  /** Song time drives every pose: stop the copy's own clock for good. */
+  function stopOwnMotion(svg) {
     if (typeof svg.pauseAnimations === 'function') svg.pauseAnimations();
     if (svg._seGymStandaloneMotionTimer) root.clearTimeout(svg._seGymStandaloneMotionTimer);
     svg._seGymStandaloneMotionTimer = null;
     svg._seGymStandaloneMotionStopped = true;
     svg.querySelectorAll('animate, animateTransform, animateMotion, set').forEach((node) => node.remove());
+  }
+
+  /** Removes a layer, or only hides it: a kept clip or use may name an ID inside. */
+  function discard(node) {
+    if (node.id || node.querySelector('[id]')) node.setAttribute('display', 'none');
+    else node.remove();
+  }
+
+  /**
+   * Discard unselected options only after the shared renderer has resolved
+   * body/head fitting, accessories, and fine tuning. Definitions stay.
+   */
+  function dropUnselected(svg) {
+    svg.querySelectorAll('[data-hero-slot][display="none"], [data-hero-kind-layer][display="none"]').forEach((node) => {
+      if (!node.closest('defs')) discard(node);
+    });
+  }
+
+  /** The renderer's colour tokens, for artwork drawn outside the hero's SVG. */
+  function heroTokens(svg) {
+    return Array.from(svg.style).filter((name) => name.startsWith('--hero-'))
+      .map((name) => [name, svg.style.getPropertyValue(name)]);
+  }
+
+  /** Modify only the newly mounted copy; the Gym template stays unchanged. */
+  function preparePortrait(svg, host) {
+    stopOwnMotion(svg);
     svg.querySelectorAll('[data-hero-human-arms], [data-hero-slot="mascot-arms"], [data-hero-motion="barbell-lift"], [data-hero-motion="cape-rock"]').forEach((node) => node.remove());
     // Gym stage glows/rings are siblings of the figure. Cropping them to a
     // portrait produces a rectangular aura, so keep only the character here.
     Array.from(svg.children).forEach((child) => {
       if (child.getAttribute('pointer-events') === 'none' || child.getAttribute('data-hero-slot') === 'milestone-power') child.remove();
     });
-    // Discard unselected options only after the shared renderer has resolved
-    // body/head fitting, accessories, and fine tuning. Groups with IDs may be
-    // referenced by a surviving clip/use, so retain those and all definitions.
-    svg.querySelectorAll('[data-hero-slot][display="none"], [data-hero-kind-layer][display="none"]').forEach((node) => {
-      if (!node.closest('defs') && !node.id && !node.querySelector('[id]')) node.remove();
-    });
+    dropUnselected(svg);
     svg.setAttribute('viewBox', '210 40 380 365');
     svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
-    for (let index = 0; index < svg.style.length; index += 1) {
-      const property = svg.style[index];
-      if (property.startsWith('--hero-')) host.style.setProperty(property, svg.style.getPropertyValue(property));
-    }
+    for (const [name, value] of heroTokens(svg)) host.style.setProperty(name, value);
     host.dataset.heroKind = svg.getAttribute('data-hero-kind');
     return portraitMotion(svg);
+  }
+
+  // ------------------------------------------------------------------
+  // A hero's head, neck up, for another song character to wear
+  // ------------------------------------------------------------------
+
+  // The default face in the Gym's own coordinates: centred on x = 400, chin
+  // at y = 240.6, and 100 units wide (with the head assembly's 1.16 scale).
+  // Saved head shapes and fine tuning keep their offsets from it.
+  const FACE = { x: 400, chin: 240.6, width: 100 };
+
+  /**
+   * Keeps everything neck up: the head assembly (face, hair, ears, and head
+   * accessories) and the neck beneath it. Body-bound accessories inside the
+   * assembly (pendants, lanyards, bags, companions) leave with the body.
+   * Returns false when the template has no head assembly.
+   */
+  function pruneToHead(svg, bodyBound) {
+    const kept = [svg.querySelector('[data-hero-head-assembly]'), svg.querySelector('[data-hero-neck-base]')];
+    if (!kept[0]) return false;
+    const ancestors = new Set();
+    for (const node of kept) for (let up = node?.parentElement; up && up !== svg; up = up.parentElement) ancestors.add(up);
+    (function keepHead(parent) {
+      for (const child of Array.from(parent.children)) {
+        if (kept.includes(child) || child.localName === 'defs' || child.localName === 'style') continue;
+        if (ancestors.has(child)) keepHead(child);
+        else discard(child);
+      }
+    })(svg);
+    svg.querySelectorAll('[data-hero-slot="accessory"]').forEach((group) => {
+      if (bodyBound.includes(group.getAttribute('data-hero-option'))) discard(group);
+    });
+    dropUnselected(svg);
+    return true;
+  }
+
+  // A paint, clip, mask, or use reference to an ID: url(#id), or "#id".
+  const REFERENCE = /url\((["']?)#([^"')\s]+)\1\)|^#(\S+)$/g;
+
+  /**
+   * Removes definitions and hidden layers that nothing shown refers to, so a
+   * copy carries only its own artwork. References are followed through
+   * referenced definitions; style sheets and <defs> elements stay.
+   */
+  function dropUnreferenced(svg) {
+    const byId = new Map(Array.from(svg.querySelectorAll('[id]'), (node) => [node.id, node]));
+    const referenced = new Set();
+    const pending = [svg, ...Array.from(svg.querySelectorAll('*')).filter((node) =>
+      node.localName === 'style' || !node.closest('defs, [display="none"]'))];
+    while (pending.length) {
+      const node = pending.pop();
+      const texts = Array.from(node.attributes, (attribute) => attribute.value);
+      if (node.localName === 'style') texts.push(node.textContent);
+      for (const text of texts) {
+        for (const match of text.matchAll(REFERENCE)) {
+          const id = match[2] || match[3];
+          const target = byId.get(id);
+          if (!target || referenced.has(id)) continue;
+          referenced.add(id);
+          pending.push(target, ...target.querySelectorAll('*'));
+        }
+      }
+    }
+    const holdsReference = (node) => Array.from(node.querySelectorAll('[id]')).some((child) => referenced.has(child.id));
+    (function prune(parent, unseen) {
+      for (const child of Array.from(parent.children)) {
+        if (child.localName === 'style') continue;
+        if (child.localName === 'defs') prune(child, true);
+        else if (!unseen && child.getAttribute('display') !== 'none') prune(child, false);
+        else if (referenced.has(child.id)) continue;
+        else if (holdsReference(child)) prune(child, true);
+        else child.remove();
+      }
+    })(svg, false);
+  }
+
+  /**
+   * One copy's eyes. Masks split the open and closed eye layers at the
+   * face's centre line, x = 400 in the head assembly's own units, so a wink
+   * shuts one eye while a blink shuts both. Returns shut(left, right), each
+   * 0 (open) to 1 (shut), for the eye on that side of the picture.
+   */
+  function eyelids(svg, { open, closed, lashes }) {
+    const defs = svg.querySelector('defs');
+    const scope = svg.getAttribute('data-hero-style-scope');
+    const element = (name, attributes, parent) => {
+      const node = document.createElementNS(SVG_NS, name);
+      for (const [key, value] of Object.entries(attributes)) node.setAttribute(key, value);
+      parent.appendChild(node);
+      return node;
+    };
+    // Both eyes start open, until the wearer's first frame.
+    const split = (name, layers, shown) => {
+      const mask = element('mask', { id: `${scope}-${name}`, maskUnits: 'userSpaceOnUse', x: 0, y: 0, width: 800, height: 480 }, defs);
+      const halves = [0, 400].map((x) => element('rect', { x, y: 0, width: 400, height: 480, fill: '#fff', 'fill-opacity': shown }, mask));
+      for (const layer of layers) {
+        // A wrapper applies the mask in the assembly's units; the layer
+        // keeps its own transform (the blink pivot).
+        const wrapper = document.createElementNS(SVG_NS, 'g');
+        wrapper.setAttribute('mask', `url(#${mask.id})`);
+        layer.before(wrapper);
+        wrapper.appendChild(layer);
+        layer.setAttribute('opacity', '1');
+      }
+      return halves;
+    };
+    const opened = split('eyes-open', [open, lashes].filter(Boolean), 1);
+    const shut = split('eyes-shut', [closed].filter(Boolean), 0);
+    return (left, right) => {
+      [left, right].forEach((amount, side) => {
+        opened[side].setAttribute('fill-opacity', String(1 - amount));
+        shut[side].setAttribute('fill-opacity', String(amount));
+      });
+    };
+  }
+
+  /**
+   * Splits a copy's brows into a group per side of the face's centre line,
+   * so each can move on its own: every brow part starts on its own side.
+   * Returns [left, right] in the picture, or null without brows.
+   */
+  function browSides(svg) {
+    const slot = svg.querySelector('[data-hero-slot="eyebrow"]:not([display="none"])');
+    if (!slot) return null;
+    const sides = [0, 1].map(() => document.createElementNS(SVG_NS, 'g'));
+    for (const part of Array.from(slot.children)) {
+      const start = parseFloat((part.getAttribute('d') || '').replace(/^\s*M\s*/i, ''));
+      if (!Number.isNaN(start)) sides[start < FACE.x ? 0 : 1].appendChild(part);
+    }
+    slot.append(...sides);
+    return sides;
+  }
+
+  /**
+   * A copy's mouth in a wrapper that can draw it in to a small pucker about
+   * its own centre (measured once it is on screen). Returns pucker(amount),
+   * 0 (as drawn) to 1, or null without a mouth slot (the Prof's portrait).
+   */
+  function mouthPucker(svg) {
+    const mouth = svg.querySelector('[data-hero-slot="mouth-style"]:not([display="none"])');
+    if (!mouth) return null;
+    const wrapper = document.createElementNS(SVG_NS, 'g');
+    mouth.before(wrapper);
+    wrapper.appendChild(mouth);
+    let centre = null;
+    return (amount) => {
+      if (!centre) {
+        if (!amount) return;
+        const box = wrapper.getBBox();
+        if (!box.width) return;
+        centre = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+      }
+      const { x, y } = centre;
+      wrapper.setAttribute('transform', `translate(${x} ${y}) scale(${(1 - 0.6 * amount).toFixed(3)} ${(1 - 0.35 * amount).toFixed(3)}) translate(${-x} ${-y})`);
+    };
+  }
+
+  /**
+   * The worn head's motion at song time: it blinks by itself (not under
+   * reduced motion), look −1 … 1 glances to the picture's left … right,
+   * down 0–1 looks down, wink 0–1 shuts the character's left eye (the
+   * picture's right), its brow dipping, brow 0–1 raises the other brow, and
+   * hush 0–1 purses the lips.
+   */
+  function wornMotion(svg) {
+    const eyes = eyeParts(svg);
+    const shut = eyelids(svg, eyes);
+    const brows = browSides(svg);
+    const pucker = mouthPucker(svg);
+    let drawn = '';
+    return (time, { look = 0, down = 0, wink = 0, brow = 0, hush = 0 } = {}, reduced = false) => {
+      const blink = reduced ? 0 : blinkAt(time);
+      const state = `${look}|${down}|${blink}|${wink}|${brow}|${hush}`;
+      if (state === drawn) return;
+      drawn = state;
+      glance(eyes.gaze, look * 2.8, down * 2.4);
+      shut(blink, Math.max(blink, wink));
+      brows?.[0].setAttribute('transform', `translate(0 ${(-6 * brow).toFixed(2)})`);
+      brows?.[1].setAttribute('transform', `translate(0 ${(2 * wink).toFixed(2)})`);
+      pucker?.(hush);
+    };
+  }
+
+  /**
+   * A hero's head as a source for wearers. wear(layers, face) adds private
+   * copies (their own IDs) whose default face is centred on face.x with its
+   * chin at face.chin, face.width wide, in the wearer's units: the neck in
+   * layers.underCollar, beneath the wearer's collar, and the face with its
+   * hair, beard, and head accessories in layers.overCollar, so a beard or
+   * long hair falls over the collar. The Prof's fixed portrait paints its
+   * own neck as part of the face (and has no beard or long hair), so all of
+   * it goes under the collar. wear returns the eyes' motion; tokens are the
+   * hero's colour tokens, for the wearer's own skin (hands) to match.
+   */
+  function wearableHead(avatar, master) {
+    const ownNeck = master.getAttribute('data-hero-kind') === 'tobias';
+    const neck = ownNeck ? null : master.cloneNode(true);
+    if (neck) {
+      neck.querySelector('[data-hero-head-assembly]').remove();
+      neck.dataset.testid = 'song-hero-neck';
+      master.querySelector('[data-hero-neck-base]')?.remove();
+      dropUnreferenced(neck);
+    }
+    master.dataset.testid = 'song-hero-head';
+    dropUnreferenced(master);
+    const box = master.viewBox.baseVal;
+    return {
+      kind: master.getAttribute('data-hero-kind'),
+      tokens: heroTokens(master),
+      wear({ underCollar, overCollar }, { x, chin, width }) {
+        const scale = width / FACE.width;
+        const placed = (layer) => {
+          const copy = avatar.cloneSvg(layer, 'song-head');
+          copy.setAttribute('x', String(x + (box.x - FACE.x) * scale));
+          copy.setAttribute('y', String(chin + (box.y - FACE.chin) * scale));
+          copy.setAttribute('width', String(box.width * scale));
+          copy.setAttribute('height', String(box.height * scale));
+          return copy;
+        };
+        const face = placed(master);
+        const motion = wornMotion(face);
+        if (neck) underCollar.appendChild(placed(neck));
+        (ownNeck ? underCollar : overCollar).appendChild(face);
+        return motion;
+      },
+    };
   }
 
   /** One portrait is reused for every scheduled cameo. Never saves. */
@@ -255,6 +519,41 @@
       }
     }
 
+    // A hero's head for song characters to wear, rendered once on the first
+    // request: the saved human or Prof hero's, else (no saved hero, or the
+    // Bruin) the SE Gym's default human hero's, which is never saved. It
+    // resolves to null on export stages, which never load the renderer, or
+    // if the renderer fails.
+    let wearable;
+    function heroHead() {
+      if (!wearable) {
+        wearable = savedAvatar.then(async (result) => {
+          if (disposed || !result) return null;
+          const { avatar, saved } = result;
+          const state = saved && ['human', 'tobias'].includes(saved.kind) ? saved : JSON.parse(JSON.stringify(avatar.DEFAULTS));
+          const host = document.createElement('div');
+          host.className = 'song-student-source';
+          host.setAttribute('aria-hidden', 'true');
+          document.body.appendChild(host);
+          try {
+            const master = await avatar.createSvg('song-head');
+            if (!master) return null;
+            host.appendChild(master);
+            avatar.applyToSvg(master, state);
+            stopOwnMotion(master);
+            if (!pruneToHead(master, avatar.ACCESSORY_COMPATIBILITY.bodyBoundAccessories)) return null;
+            // Scope-wide renderer updates must never re-dress the pruned head.
+            master.removeAttribute('data-gym-hero-svg');
+            master.classList.add('song-hero-head');
+            return wearableHead(avatar, master);
+          } finally {
+            host.remove();
+          }
+        }).catch(() => null);
+      }
+      return wearable;
+    }
+
     root.Timeline.onFrame(draw);
     root.Timeline.onDispose(() => {
       disposed = true;
@@ -263,7 +562,7 @@
     });
     // Promise work is deliberately detached from SongScene.build/playback.
     void hydrate();
-    return { appear: (cue) => cameos.push(cue), savedAppearance };
+    return { appear: (cue) => cameos.push(cue), savedAppearance, heroHead };
   }
 
   root.SongStudentAvatar = { create };

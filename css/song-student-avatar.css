@@ -14,14 +14,29 @@
 .song-student-props { position: absolute; inset: 0; width: 260px; height: 300px; overflow: visible; }
 .song-student-source,
 .hero-avatar-measure-host { position: absolute; left: -10000px; top: -10000px; width: 640px; height: 665px; opacity: 0; pointer-events: none; }
-.song-student-portrait [data-hero-slot] { filter: none; }
+/* The laptop portrait and a hero head worn by another song character
+   (.song-hero-head) both keep the Gym's own line weights. */
+.song-student-portrait [data-hero-slot],
+.song-hero-head [data-hero-slot] { filter: none; }
 .song-student-portrait [data-hero-slot="head-shape"] path[fill*="--hero-face-line"],
-.song-student-portrait [data-hero-slot="head-features"] path[stroke*="--hero-face-line"] { opacity: var(--hero-contour-opacity, .18); }
+.song-student-portrait [data-hero-slot="head-features"] path[stroke*="--hero-face-line"],
+.song-hero-head [data-hero-slot="head-shape"] path[fill*="--hero-face-line"],
+.song-hero-head [data-hero-slot="head-features"] path[stroke*="--hero-face-line"] { opacity: var(--hero-contour-opacity, .18); }
 .song-student-portrait [data-hero-slot="hair"] path[stroke*="--hero-hair-rim"],
 .song-student-portrait [data-hero-slot="hairline"] path[stroke*="--hero-hair-rim"],
-.song-student-portrait [data-hero-slot="hair-root"] path[stroke*="--hero-hair-rim"] { opacity: var(--hero-hair-detail-opacity, .5); }
+.song-student-portrait [data-hero-slot="hair-root"] path[stroke*="--hero-hair-rim"],
+.song-hero-head [data-hero-slot="hair"] path[stroke*="--hero-hair-rim"],
+.song-hero-head [data-hero-slot="hairline"] path[stroke*="--hero-hair-rim"],
+.song-hero-head [data-hero-slot="hair-root"] path[stroke*="--hero-hair-rim"] { opacity: var(--hero-hair-detail-opacity, .5); }
 .song-student-portrait [data-hero-slot="face-feature"] path[stroke*="--hero-face-line"],
-.song-student-portrait [data-hero-slot="face-feature"] circle[fill*="--hero-face-line"] { opacity: var(--hero-subtle-line-opacity, .34); }
+.song-student-portrait [data-hero-slot="face-feature"] circle[fill*="--hero-face-line"],
+.song-hero-head [data-hero-slot="face-feature"] path[stroke*="--hero-face-line"],
+.song-hero-head [data-hero-slot="face-feature"] circle[fill*="--hero-face-line"] { opacity: var(--hero-subtle-line-opacity, .34); }
+/* A worn head is far smaller than the Gym's hero, so its hair outlines
+   scale with it instead of keeping their full on-screen width. */
+svg.song-hero-head [data-hero-slot="hair"] path,
+svg.song-hero-head [data-hero-slot="hairline"] path,
+svg.song-hero-head [data-hero-slot="hair-root"] path { vector-effect: none; }
 .student-ground { fill: #030913; opacity: .42; }
 .student-arms { transform-box: view-box; transform-origin: 130px 160px; transform: scaleX(var(--hero-body-fit-x, 1)); }
 .student-sleeve { fill: var(--hero-arm, var(--hero-suit, #218bb3)); stroke: var(--hero-arm-dark, var(--hero-suit-dark, #0e4d69)); stroke-width: 2; stroke-linejoin: round; }
