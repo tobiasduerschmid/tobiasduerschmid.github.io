@@ -281,7 +281,11 @@ for (const sample of [
         return gradient ? Array.from(gradient.querySelectorAll('stop'), (stop) => getComputedStyle(stop).stopColor) : [];
       });
       expect(handTones, 'his hands are shaded in the saved skin tone').toContain(sample.hand);
-      await expect(face.locator('xpath=..'), 'the halo marks only very dark skin or hair').toHaveCSS('filter', sample.halo ? /^url\(/ : 'none');
+      const halo = agent.getByTestId('ih-agent-worn-halo').first();
+      if (sample.halo) await expect(halo, 'very dark skin or hair gets a halo').toBeAttached();
+      else await expect(halo, 'the halo marks only very dark skin or hair').not.toBeAttached();
+      // Safari redraws filtered artwork that moves every frame inconsistently.
+      await expect(face.locator('xpath=..'), 'the moving head carries no SVG filter').toHaveCSS('filter', 'none');
     }
     await expect(heads.locator('[data-hero-slot="outfit-style"], [data-hero-human-arms], [data-hero-barbell], [data-hero-option="chain-necklace"]').filter({ visible: true }),
       'only the head and neck are worn').toHaveCount(0);

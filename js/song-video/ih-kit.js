@@ -1901,8 +1901,14 @@
     };
     const hand = (a) => {
       const palm = svg('g', {}, a.grip);
+      // A light edge behind the ink, shown only for very dark skin (CSS).
+      const halo = svg('g', {}, palm);
       const ink = svg('g', {}, palm);
-      const part = (d, attrs = {}) => [svg('path', { class: 'ih-agent-hand-ink', d }, ink), svg('path', { class: 'ih-agent-skin', d, fill: a.skin.url, ...attrs }, palm)];
+      const part = (d, attrs = {}) => [
+        svg('path', { class: 'ih-agent-hand-halo', d }, halo),
+        svg('path', { class: 'ih-agent-hand-ink', d }, ink),
+        svg('path', { class: 'ih-agent-skin', d, fill: a.skin.url, ...attrs }, palm),
+      ];
       part(FIST, { 'data-testid': 'ih-agent-hand' });
       const fingers = FINGERS.map((knuckle) => part(fingerPath(knuckle)));
       const creases = svg('path', { class: 'ih-agent-knuckle', d: 'M121.6 200 V203.8 M125 200.2 V204.4 M128.45 200.2 V203.4' }, palm);
@@ -2114,24 +2120,23 @@
       drawnHead.setAttribute('display', 'none');
       // A very thin bright halo keeps very dark skin or hair readable on the
       // dark stage: around the worn head, and the hands when the skin is.
+      // It is artwork, not an SVG filter: Safari redraws filtered artwork
+      // that moves every frame inconsistently, so a filter halo flickered.
+      // Behind the head goes a second copy of it as a light silhouette, its
+      // outline grown by a hairline (CSS); the hands show their light edge.
       const tone = (name) => head.tokens.find(([token]) => token === name)?.[1];
       const darkSkin = sinksIntoStage(tone('--hero-skin-light'));
       if (darkSkin || sinksIntoStage(tone('--hero-hair'))) {
-        const halo = haloFilter();
-        for (const layer of [wornUnder, wornOver]) layer.setAttribute('filter', halo);
-        if (darkSkin) for (const { palm } of hands) palm.setAttribute('filter', halo);
+        const halos = [wornUnder, wornOver].map((layer) => {
+          const halo = svg('g', { class: 'ih-agent-worn-halo', 'data-testid': 'ih-agent-worn-halo' });
+          layer.prepend(halo);
+          return halo;
+        });
+        head.wear({ underCollar: halos[0], overCollar: halos[1] }, { x: 80, chin: 84.5, width: 38 });
+        // The silhouette is no face of its own.
+        for (const halo of halos) halo.querySelectorAll('[data-testid]').forEach((node) => node.removeAttribute('data-testid'));
+        if (darkSkin) fig.classList.add('ih-agent-art--dark-skin');
       }
-    }
-    // The halo: the artwork's silhouette, grown by a hairline, in light.
-    function haloFilter() {
-      const filter = svg('filter', { id: `ih-agent-halo-${++uid}`, 'color-interpolation-filters': 'sRGB' }, defs);
-      svg('feMorphology', { in: 'SourceAlpha', operator: 'dilate', radius: 0.45, result: 'grown' }, filter);
-      svg('feFlood', { class: 'ih-agent-halo-light' }, filter);
-      svg('feComposite', { in2: 'grown', operator: 'in' }, filter);
-      const merge = svg('feMerge', {}, filter);
-      svg('feMergeNode', {}, merge);
-      svg('feMergeNode', { in: 'SourceGraphic' }, merge);
-      return `url(#${filter.id})`;
     }
     pose(AT_EASE);
     return { glass, pose, face, wear };

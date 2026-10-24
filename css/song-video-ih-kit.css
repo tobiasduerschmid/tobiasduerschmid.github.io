@@ -654,8 +654,22 @@
 .ih-agent-art--hero .ih-agent-knuckle { stroke: var(--hero-skin); }
 .ih-agent-art--hero .ih-agent-knuckle-light { fill: var(--hero-skin-highlight-soft); opacity: 0.8; }
 .ih-agent-art--hero .ih-agent-nail { fill: var(--hero-skin-highlight-soft); stroke: var(--hero-skin-mid); }
-/* The thin bright halo around very dark skin or hair (a filter's flood colour). */
-.ih-agent-halo-light { flood-color: #fff4e3; flood-opacity: 0.7; }
+/* The thin bright halo around very dark skin or hair: a copy of the worn
+   head behind it, painted as one light silhouette whose outline is grown by
+   a hairline (2.4 hero units, about 0.45 figure units each side), and a
+   light edge round the hands. Drawn as artwork rather than an SVG filter,
+   which Safari redraws inconsistently while the figure moves. */
+.ih-agent-worn-halo { opacity: 0.7; }
+.ih-agent-worn-halo * {
+  fill: #fff4e3 !important;
+  stroke: #fff4e3 !important;
+  stroke-width: 2.4px !important;
+  stroke-linejoin: round !important;
+  stroke-linecap: round !important;
+  vector-effect: none !important;
+}
+.ih-agent-hand-halo { display: none; fill: none; stroke: #fff4e3; stroke-opacity: 0.7; stroke-width: 2.7; stroke-linejoin: round; }
+.ih-agent-art--dark-skin .ih-agent-hand-halo { display: inline; }
 .ih-agent-case { fill: #4a2f17; stroke: var(--ink); stroke-width: 2.5; }
 .ih-agent-case-handle { fill: none; stroke: var(--ink); stroke-width: 3; }
 .ih-agent-case-lock { fill: #e5bf62; }
