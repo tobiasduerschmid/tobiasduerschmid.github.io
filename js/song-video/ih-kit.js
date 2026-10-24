@@ -1367,15 +1367,6 @@
    * hat-band colour (red | gold | cyan). The figure is 160×300 at scale 1.
    */
   /**
-   * How far the martini arm's upper arm and forearm rise from hanging, in
-   * degrees (180 is straight up).
-   */
-  const TOAST_POSES = {
-    high: { upper: 145, forearm: 178 },   // the glass held high overhead
-    cheers: { upper: 95, forearm: 175 },  // elbow out, glass up at head height
-  };
-
-  /**
    * Shows the shading strip on the side of a sleeve segment that faces away
    * from the upper-left light, `raise` degrees up from hanging: the outer
    * strip when it hangs, the inner one once it is raised. `side` is -1 for
@@ -1399,22 +1390,54 @@
    * elbow away from the body, 'in' across it, 'down' or 'up' below or above
    * the hand, 'low' out to the side and below the shoulder (so the elbow
    * stays clear of the body when the hand crosses it). Out of reach, the
-   * arm points at the target.
+   * arm points at the target. `foreshorten` (0.4–1) shortens the upper arm
+   * as when it points towards the viewer, so the hand can come up to the
+   * face or the bow tie with the elbow down in front of the chest, as a
+   * person's does, rather than with the upper arm swung across the chest.
+   * Returns [upper, forearm, foreshorten], the pose agent() expects.
    */
-  function armReach([x, y], side = 1, elbow = 'out') {
+  function armReach([x, y], side = 1, elbow = 'out', foreshorten = 1) {
+    const upperLength = ARM.upper * foreshorten;
     const tx = side > 0 ? x : 160 - x;
     const dx = tx - ARM.sx, dy = y - ARM.sy;
-    const d = Math.min(ARM.upper + ARM.fore - 0.5, Math.max(Math.abs(ARM.upper - ARM.fore) + 0.5, Math.hypot(dx, dy)));
+    const d = Math.min(upperLength + ARM.fore - 0.5, Math.max(Math.abs(upperLength - ARM.fore) + 0.5, Math.hypot(dx, dy)));
     const toTarget = Math.atan2(dy, dx);
-    const bend = Math.acos((ARM.upper ** 2 + d ** 2 - ARM.fore ** 2) / (2 * ARM.upper * d));
-    const elbows = [toTarget + bend, toTarget - bend].map((dir) => ({ dir, ex: ARM.sx + ARM.upper * Math.cos(dir), ey: ARM.sy + ARM.upper * Math.sin(dir) }));
+    const bend = Math.acos((upperLength ** 2 + d ** 2 - ARM.fore ** 2) / (2 * upperLength * d));
+    const elbows = [toTarget + bend, toTarget - bend].map((dir) => ({ dir, ex: ARM.sx + upperLength * Math.cos(dir), ey: ARM.sy + upperLength * Math.sin(dir) }));
     const prefer = { out: (e) => e.ex, in: (e) => -e.ex, down: (e) => e.ey, up: (e) => -e.ey, low: (e) => e.ex + (e.ey > ARM.sy ? 1000 : 0) }[elbow];
     elbows.sort((a, b) => prefer(b) - prefer(a));
     const { dir, ex, ey } = elbows[0];
     const reach = Math.min(1, d / Math.hypot(dx, dy));
     const foreDir = Math.atan2(ARM.sy + dy * reach - ey, ARM.sx + dx * reach - ex);
     const raise = (rest, rad) => ((rest - rad * 180 / Math.PI + 540) % 360) - 180;
-    return [raise(ARM.upperDir, dir), raise(ARM.foreDir, foreDir)];
+    return [raise(ARM.upperDir, dir), raise(ARM.foreDir, foreDir), foreshorten];
+  }
+
+  /**
+   * The [upper, forearm, foreshorten] pose that puts a tuxedo agent's elbow
+   * at `elbow` and points his forearm at `hand` (figure coordinates; side -1
+   * mirrors them for the free arm), for posing an arm as a person would
+   * hold it. An elbow nearer the shoulder than the upper arm is long
+   * foreshortens the upper arm: it points towards the viewer.
+   */
+  function armVia([ex, ey], [hx, hy], side = 1) {
+    const local = (x) => (side > 0 ? x : 160 - x);
+    const angle = (dx, dy) => Math.atan2(dy, dx) * 180 / Math.PI;
+    const raise = (rest, at) => ((rest - at + 540) % 360) - 180;
+    const foreshorten = Math.min(1, Math.hypot(local(ex) - ARM.sx, ey - ARM.sy) / ARM.upper);
+    return [
+      raise(ARM.upperDir, angle(local(ex) - ARM.sx, ey - ARM.sy)),
+      raise(ARM.foreDir, angle(local(hx) - local(ex), hy - ey)),
+      foreshorten,
+    ];
+  }
+
+  /**
+   * The wrist bend (degrees, in the arm's own frame) that turns the hand on
+   * a forearm posed at `pose` to point at `angle` (SVG degrees: -90 is up).
+   */
+  function wristToward(pose, angle) {
+    return ((angle - (ARM.foreDir - pose[1]) + 540) % 360) - 180;
   }
 
   /**
@@ -1444,15 +1467,31 @@
   // and the free arm relaxed at his side, its elbow softly bent so the hand
   // hangs in by his thigh.
   const GLASS_HELD = armReach([105, 166]);
-  const ARM_RELAXED = [6, 2];
-  // The free wrist raised across his chest, its watch in view.
-  const WATCH_CHECK = armReach([62, 128], -1);
-  // Shh: the free fist under his chin, its index finger upright across his
-  // lips to his nose, the forearm come up in front of him.
-  const SHH_HAND = armReach([85, 87], -1, 'down');
+  const ARM_RELAXED = [6, 2, 1];
+  // A watch check: the elbow stays at his side and the forearm comes up
+  // level across his waist, the watch on top of the wrist in view.
+  const WATCH_CHECK = armVia([40, 152], [80, 146], -1);
+  // Shh: the elbow comes forward and down in front of his chest (the upper
+  // arm foreshortened), the forearm rises to his face, and the wrist turns
+  // the index finger upright across his lips.
+  const SHH_HAND = armVia([64, 133], [81, 95], -1);
+  const SHH_WRIST = wristToward(SHH_HAND, -90);
+  // A bow-tie tug: the elbow forward and down by his side, the hand up to
+  // the knot.
+  const TIE_HAND = armVia([52, 140], [70, 102], -1);
+  // Toasts, the martini rising from his chest. cheers: the elbow down at
+  // his side, the forearm upright, the glass at face height beside his
+  // head; high: the elbow raised out, the forearm up and in, the glass held
+  // above his head. Either way the hand cocks at the wrist (see
+  // tuxedoFigure), so the glass stands upright with its stem across the
+  // curled fingers.
+  const TOAST_POSES = {
+    cheers: armVia([138, 150], [137, 108]),
+    high: armVia([147, 85], [126, 48]),
+  };
 
   /** The tuxedo agent standing at ease: every pose field agent() applies. */
-  const AT_EASE = { martini: [0, 0], free: [0, 0], finger: 0, middle: 0, crouch: 0, tie: 0, look: 0, down: 0, wink: 0, brow: 0, hush: 0, tilt: 0, nod: 0, sparkle: 0, glassTilt: 0 };
+  const AT_EASE = { martini: [0, 0], free: [0, 0], freeWrist: 0, finger: 0, middle: 0, crouch: 0, tie: 0, look: 0, down: 0, wink: 0, brow: 0, hush: 0, tilt: 0, nod: 0, sparkle: 0, glassTilt: 0 };
   /** The cameos' stance: the glass held at his chest, the free arm relaxed. */
   const STANCE = { ...AT_EASE, martini: GLASS_HELD, free: ARM_RELAXED };
 
@@ -1468,12 +1507,12 @@
    * brow, tilting his head towards the wink (and agent() flashes a glint off
    * his smile). Each returns the free arm (or the face) to rest.
    */
-  const toRest = (at, duration = 0.42) => [at, duration, { free: ARM_RELAXED }];
+  const toRest = (at, duration = 0.42) => [at, duration, { free: ARM_RELAXED, freeWrist: 0 }];
   const MOVES = {
-    tie: [[0, 0.38, { free: armReach([70, 101], -1, 'down') }], [0.32, 0.18, { tie: -10 }], [0.58, 0.25, { tie: 0 }], toRest(0.88)],
+    tie: [[0, 0.38, { free: TIE_HAND }], [0.32, 0.18, { tie: -10 }], [0.58, 0.25, { tie: 0 }], toRest(0.88)],
     lapel: [[0, 0.3, { free: armReach([61, 104], -1, 'out') }], [0.3, 0.5, { free: armReach([62, 140], -1, 'out') }], toRest(0.85)],
     shh: [
-      [0, 0.42, { free: SHH_HAND, finger: 1, hush: 1, nod: 0.5 }],
+      [0, 0.42, { free: SHH_HAND, freeWrist: SHH_WRIST, finger: 1, hush: 1, nod: 0.5 }],
       [0.38, 0.24, { look: -1, brow: 1 }], [0.74, 0.28, { look: 1 }], [1.12, 0.22, { look: 0 }],
       [1.32, 0.3, { finger: 0, hush: 0, nod: 0, brow: 0 }], toRest(1.32),
     ],
@@ -1484,13 +1523,16 @@
   };
   // The fields the moves animate, at rest; everything else is left to the
   // toast and the caper's rig.
-  const MOVES_AT_REST = { free: ARM_RELAXED, finger: 0, tie: 0, look: 0, down: 0, wink: 0, brow: 0, hush: 0, tilt: 0, nod: 0 };
+  const MOVES_AT_REST = { free: ARM_RELAXED, freeWrist: 0, finger: 0, tie: 0, look: 0, down: 0, wink: 0, brow: 0, hush: 0, tilt: 0, nod: 0 };
 
   /**
    * Draws the tuxedo agent into `sway` (160×300 figure space) and returns
    * { glass, pose, face, wear }. pose(p) places every joint from an
    * AT_EASE-shaped p:
-   *   martini, free  [upper, forearm] raise in degrees (0 hangs, 180 is up)
+   *   martini, free  [upper, forearm, foreshorten] raise in degrees (0
+   *                  hangs, 180 is up), and how far the upper arm points
+   *                  towards the viewer (1 not at all, 0.4 well forward)
+   *   freeWrist      degrees the free hand bends at the wrist
    *   finger         0–1, the free hand's index finger pointing on (the
    *                  fingers left curled close into a tight fist)
    *   middle         0–1, its middle finger straightening beside it
@@ -1644,16 +1686,16 @@
       const mask = svg('mask', { id, maskUnits: 'userSpaceOnUse', x: -100, y: -100, width: 400, height: 500 }, defs);
       svg('rect', { class: 'ih-agent-mask-keep', x: -100, y: -100, width: 400, height: 500 }, mask);
       const turn = svg('g', {}, mask);
-      svg('path', { class: 'ih-agent-mask-cut', d: parts }, turn);
+      const cut = svg('path', { class: 'ih-agent-mask-cut', d: parts }, turn);
       if (inset) svg('path', { class: 'ih-agent-mask-inset', d: parts }, turn);
-      return { url: `url(#${id})`, turn };
+      return { url: `url(#${id})`, turn, cut };
     };
     const armholes = {};
     for (const side of [1, -1]) {
       const open = maskOf(UPPER_ARM), socket = maskOf(SOCKET, { inset: true });
       const g = svg('g', { transform: mirror(side) }, armholeLines);
       svg('path', { class: 'ih-agent-tux-outline ih-agent-armhole', d: ARMHOLE_INK, mask: open.url }, g);
-      armholes[side] = { sleeves: [open.turn], socket };
+      armholes[side] = { sleeves: [open.turn], sleeveShape: open.cut, socket };
     }
     svg('path', { class: 'ih-agent-tux-fold', d: 'M78 177 Q69 171 60 170 M82 177 Q91 171 100 169' }, torso);
     // The fronts' darts, tailored in from the chest to the hip pockets.
@@ -1759,26 +1801,38 @@
     const FOREARM_SIDES = ['M129.9 154.85 C131 170 131.5 181 131.5 190.6', 'M118.5 191.2 C118 181 117.6 170 116.1 157.15'];
     const FOREARM = `M116.1 157.15 L${FOREARM_SIDES[0].slice(1)} L${FOREARM_SIDES[1].slice(1)} Z`;
     const ELBOW = 'M116.1 156 A6.9 6.9 0 1 0 129.9 156 A6.9 6.9 0 1 0 116.1 156 Z';
+    // A foreshortened upper arm (as when it points towards the viewer) has
+    // its outline redrawn shorter along its own axis (upperArmPath), its
+    // round head, the shoulder, unchanged; the elbow joint, the forearm, and
+    // its ink move up the arm with it, the elbow staying round.
     const arm = (side) => {
       const upper = svg('g', {}, svg('g', { transform: mirror(side) }, upperArms));
       upper.setAttribute('mask', armholes[side].socket.url);
-      for (const d of [UPPER_ARM, ELBOW]) svg('path', { class: 'ih-agent-limb-ink', d }, upper);
+      const upperInk = svg('path', { class: 'ih-agent-limb-ink', d: UPPER_ARM }, upper);
+      const elbowInk = svg('g', {}, upper);
+      svg('path', { class: 'ih-agent-limb-ink', d: ELBOW }, elbowInk);
       const foreInk = svg('g', {}, upper);
       svg('path', { class: 'ih-agent-limb-ink', d: FOREARM }, foreInk);
-      const upperCloth = clothGradient(side), foreCloth = clothGradient(side);
-      jacket('ih-agent-tux-fill', ELBOW, upper, upperCloth.url);
-      jacket('ih-agent-tux-fill', UPPER_ARM, upper, upperCloth.url);
+      const upperCloth = clothGradient(side), elbowCloth = clothGradient(side), foreCloth = clothGradient(side);
+      const elbowFill = svg('g', {}, upper);
+      jacket('ih-agent-tux-fill', ELBOW, elbowFill, elbowCloth.url);
+      const upperFill = jacket('ih-agent-tux-fill', UPPER_ARM, upper, upperCloth.url);
       // The outer strip fades in from the shoulder point, the inner one from
-      // the armpit, where the arm's inner contour leaves the jacket.
+      // the armpit, where the arm's inner contour leaves the jacket. These
+      // details simply scale with a foreshortened arm.
+      const upperDetail = svg('g', {}, upper);
       const upperShade = [
-        svg('path', { class: 'ih-agent-tux-shading', d: 'M123.6 112.7 Q127.34 129.96 129.27 148.34 Q119.45 131.24 123.6 112.7 Z', fill: edgeShade.outer }, upper),
-        svg('path', { class: 'ih-agent-tux-shading', d: 'M111.35 127.3 Q113.82 138.55 115.34 150.56 Q120.74 137.37 111.35 127.3 Z', fill: edgeShade.inner }, upper),
+        svg('path', { class: 'ih-agent-tux-shading', d: 'M123.6 112.7 Q127.34 129.96 129.27 148.34 Q119.45 131.24 123.6 112.7 Z', fill: edgeShade.outer }, upperDetail),
+        svg('path', { class: 'ih-agent-tux-shading', d: 'M111.35 127.3 Q113.82 138.55 115.34 150.56 Q120.74 137.37 111.35 127.3 Z', fill: edgeShade.inner }, upperDetail),
       ];
       // A soft fold on each segment, near the elbow.
-      svg('path', { class: 'ih-agent-tux-fold', d: 'M117.4 145.8 Q121.6 148.4 126.8 146.6' }, upper);
-      // The forearm turns with the upper arm, then at the elbow.
+      svg('path', { class: 'ih-agent-tux-fold', d: 'M117.4 145.8 Q121.6 148.4 126.8 146.6' }, upperDetail);
+      // The forearm turns with the upper arm, then at the elbow. The hand
+      // goes in first, under the sleeve and the shirt cuff, so its wrist
+      // stays tucked into the cuff however far it bends.
       const reach = svg('g', {}, svg('g', { transform: mirror(side) }, frontArms));
       const fore = svg('g', {}, reach);
+      const grip = svg('g', {}, fore);
       jacket('ih-agent-tux-fill', FOREARM, fore, foreCloth.url);
       const foreShade = [
         svg('path', { class: 'ih-agent-tux-shading', d: 'M130.4 162 Q126.2 175 126.2 190.8 L131.5 190.6 C131.5 181 131.2 172 130.4 162 Z', fill: edgeShade.outer }, fore),
@@ -1792,11 +1846,10 @@
         svg('circle', { class: 'ih-agent-sleeve-button', cx: 129.3, cy: by, r: 0.85 }, fore);
         svg('circle', { class: 'ih-agent-sleeve-button-light', cx: 129.05, cy: by - 0.25, r: 0.28 }, fore);
       }
-      const grip = svg('g', {}, fore);
       svg('rect', { class: 'ih-agent-cuff', x: 118.2, y: 189.2, width: 13, height: 4.9, rx: 1.1 }, fore);
       svg('path', { class: 'ih-agent-cuff-shadow', d: 'M118.8 191.4 Q124.7 192.2 130.6 191.2' }, fore);
       svg('circle', { class: 'ih-agent-cufflink', cx: 124.7, cy: 192.3, r: 1.05, fill: paint('radialGradient', 'gold', { cx: 0.35, cy: 0.3, r: 0.8 }, ['0', '1']) }, fore);
-      return { side, upper, reach, fore, foreInk, grip, upperShade, foreShade, upperCloth, foreCloth, skin: skinGradient(side), armhole: armholes[side] };
+      return { side, upper, upperOutline: [upperInk, upperFill], upperDetail, elbowParts: [elbowInk, elbowFill], reach, fore, foreInk, grip, upperShade, foreShade, upperCloth, elbowCloth, foreCloth, skin: skinGradient(side), armhole: armholes[side] };
     };
     const free = arm(-1);
     // Hands, seen from the back: four curled fingers below the knuckles and
@@ -1884,22 +1937,73 @@
     const hands = [hand(free), hand(martini)];
 
     const pt = (x, y) => `${x.toFixed(1)} ${y.toFixed(1)}`;
-    const poseArm = (a, [up, fo]) => {
+    // The upper arm's axis, shoulder to elbow (a unit vector), and its lean
+    // from vertical.
+    const AXIS = [7 / Math.hypot(7, 42), 42 / Math.hypot(7, 42)];
+    const AXIS_LEAN = Math.atan2(7, 42) * 180 / Math.PI;
+    const alongArm = (k) => `translate(${ARM.sx} ${ARM.sy}) rotate(${(-AXIS_LEAN).toFixed(3)}) scale(1 ${k.toFixed(3)}) rotate(${AXIS_LEAN.toFixed(3)}) translate(${-ARM.sx} ${-ARM.sy})`;
+    // The upper arm's outline foreshortened by k: points move towards the
+    // shoulder along the arm's axis, while the round head (at the shoulder's
+    // level) keeps its shape.
+    const upperArmPath = (k) => {
+      const at = ([x, y]) => {
+        const along = (x - ARM.sx) * AXIS[0] + (y - ARM.sy) * AXIS[1];
+        return pt(x + (k - 1) * along * AXIS[0], y + (k - 1) * along * AXIS[1]);
+      };
+      return `M108.4 115.3 A7.71 7.71 0 0 1 123.6 112.7 Q${at([128, 133])} ${at([129.9, 154.85])} L${at([116.1, 157.15])} Q${at([113.8, 135])} 108.4 115.3 Z`;
+    };
+    const poseArm = (a, [up, fo, k = 1]) => {
       const shoulder = `rotate(${(-up).toFixed(1)} ${ARM.sx} ${ARM.sy})`;
+      // Foreshortened, the elbow moves up the arm by `shift`.
+      const shift = `translate(${(7 * (k - 1)).toFixed(2)} ${(42 * (k - 1)).toFixed(2)})`;
+      const unshift = `translate(${(7 * (1 - k)).toFixed(2)} ${(42 * (1 - k)).toFixed(2)})`;
       a.upper.setAttribute('transform', shoulder);
-      a.reach.setAttribute('transform', shoulder);
+      const outline = upperArmPath(k);
+      for (const path of a.upperOutline) path.setAttribute('d', outline);
+      a.armhole.sleeveShape.setAttribute('d', outline);
+      a.upperDetail.setAttribute('transform', alongArm(k));
+      for (const part of a.elbowParts) part.setAttribute('transform', shift);
+      a.reach.setAttribute('transform', `${shoulder} ${shift}`);
       for (const sleeve of a.armhole.sleeves) sleeve.setAttribute('transform', shoulder);
-      a.armhole.socket.turn.setAttribute('transform', `rotate(${up.toFixed(1)} ${ARM.sx} ${ARM.sy})`);
+      // Coming forward (foreshortened, or swung in across the body), the arm
+      // is in front of the jacket: the socket that hides its root inside the
+      // shoulder shrinks away to its pivot, so the whole sleeve shows, its
+      // round head the shoulder, and the arm never seems to grow out of the
+      // chest.
+      const forward = Math.min(1, Math.max(0, (1 - k) / 0.25, (-up - 6) / 24));
+      const keep = Math.max(0.001, 1 - forward);
+      a.armhole.socket.turn.setAttribute('transform', `rotate(${up.toFixed(1)} ${ARM.sx} ${ARM.sy}) translate(${ARM.sx} ${ARM.sy}) scale(${keep.toFixed(3)}) translate(${-ARM.sx} ${-ARM.sy})`);
       const elbow = `rotate(${(up - fo).toFixed(1)} 123 156)`;
       a.fore.setAttribute('transform', elbow);
-      a.foreInk.setAttribute('transform', elbow);
-      // The sleeves' cloth stays put while they turn.
+      a.foreInk.setAttribute('transform', `${shift} ${elbow}`);
+      // The sleeves' cloth stays put while they turn (and foreshorten).
       const unturn = `rotate(${up.toFixed(1)} ${ARM.sx} ${ARM.sy})`;
       a.upperCloth.gradient.setAttribute('gradientTransform', unturn);
-      a.foreCloth.gradient.setAttribute('gradientTransform', `rotate(${(fo - up).toFixed(1)} 123 156) ${unturn}`);
-      a.skin.gradient.setAttribute('gradientTransform', `rotate(${fo.toFixed(1)} .5 .5)`);
+      a.elbowCloth.gradient.setAttribute('gradientTransform', `${unshift} ${unturn}`);
+      a.foreCloth.gradient.setAttribute('gradientTransform', `rotate(${(fo - up).toFixed(1)} 123 156) ${unshift} ${unturn}`);
       shadeArm(a.upperShade, up, a.side);
       shadeArm(a.foreShade, fo, a.side);
+    };
+    // A wrist bends `bend` degrees about the middle of the shirt cuff; the
+    // hand's skin light turns back by as much as the hand turns.
+    const WRIST = [124.7, 191.65];
+    const bendWrist = (a, bend, fo) => {
+      a.grip.setAttribute('transform', `rotate(${bend.toFixed(1)} ${WRIST[0]} ${WRIST[1]})`);
+      a.skin.gradient.setAttribute('gradientTransform', `rotate(${(fo - bend).toFixed(1)} .5 .5)`);
+    };
+    // The martini hand cocks so its curled fingers point in towards his
+    // chest (LEVEL, SVG degrees in his own frame, a little below level): the
+    // glass then stands upright with its stem across the fingers, whatever
+    // the forearm does, as a person holds a glass up. The cock follows the
+    // forearm exactly up to 56 degrees, eases to its limit of 76, and only
+    // eases back to straight as the forearm turns to point outward, so it
+    // never jumps, even while he tumbles.
+    const LEVEL = 168;
+    const cockFor = (forearmAt) => {
+      const d = ((LEVEL - forearmAt + 540) % 360) - 180, a = Math.abs(d), sign = Math.sign(d);
+      if (a <= 56) return d;
+      if (a <= 110) return sign * (56 + 20 * Math.sin((a - 56) / 54 * Math.PI / 2));
+      return sign * 76 * (180 - a) / 70;
     };
     function pose(p) {
       // A knee bend seen from the front: thighs and shins tilt towards the
@@ -1921,6 +2025,9 @@
       trunk.setAttribute('transform', `translate(0 ${drop.toFixed(1)})`);
       poseArm(free, p.free);
       poseArm(martini, p.martini);
+      const cock = cockFor(ARM.foreDir - p.martini[1]);
+      bendWrist(martini, cock, p.martini[1]);
+      bendWrist(free, p.freeWrist, p.free[1]);
       const reach = [p.finger, p.middle, 0, 0];
       FINGERS.forEach(([x0, x1, y0, y1], i) => {
         // A finger curled tight shows little more than its knuckle.
@@ -1929,7 +2036,7 @@
         for (const path of hands[0].fingers[i]) path.setAttribute('d', d);
       });
       hands[0].creases.setAttribute('opacity', (1 - p.finger).toFixed(2));
-      glass.setAttribute('transform', `rotate(${(p.martini[1] + p.glassTilt).toFixed(1)} 125 198)`);
+      glass.setAttribute('transform', `rotate(${(p.martini[1] + p.glassTilt - cock).toFixed(1)} 125 198)`);
       bowTie.setAttribute('transform', `rotate(${p.tie.toFixed(1)} 80 99)`);
       // The head tilts about the chin, and dips in a nod. A worn head is
       // never mirrored, so its layers tilt in picture space, towards its
@@ -2134,7 +2241,7 @@
           // weight. After `toastHold` seconds the glass comes back down the
           // same way to his chest.
           const toast = TOAST_POSES[toastPose];
-          const raised = [toast.upper, nearTurn(GLASS_HELD[1], toast.forearm)];
+          const raised = [toast[0], nearTurn(GLASS_HELD[1], toast[1]), toast[2]];
           const swing = (delay) => (reduced ? Number(t >= toastAt) : backOut(progress(t, toastAt + delay, 0.45)));
           martini = GLASS_HELD.map((held, i) => held + (raised[i] - held) * swing(0.08 * i));
           if (toastHold !== undefined) {
@@ -2264,7 +2371,14 @@
    * are arm raises in degrees, each eased the shorter way round (nearTurn).
    */
   function poseTrack(keys, { turns = false } = {}) {
-    const mix = (a, b, u) => (Array.isArray(a) ? a.map((v, i) => v + ((turns ? nearTurn(v, b[i]) : b[i]) - v) * u) : a + (b - a) * u);
+    const mix = (a, b, u) => {
+      if (!Array.isArray(a)) return a + (b - a) * u;
+      // An arm pose's third value, its foreshortening, defaults to 1.
+      return Array.from({ length: Math.max(a.length, b.length) }, (_, i) => {
+        const from = a[i] ?? 1, to = b[i] ?? 1;
+        return from + ((turns && i < 2 ? nearTurn(from, to) : to) - from) * u;
+      });
+    };
     return (t, hold) => {
       let pose = { ...keys[0][2] };
       for (const [at, duration, fields] of keys.slice(1)) {
@@ -2475,9 +2589,9 @@
     };
     // His limbs, keyed to the stunts: unhurried, overlapping moves, the
     // martini always level. Hand targets are figure coordinates.
-    const tieHand = armReach([70, 101], -1, 'down');
+    const tieHand = TIE_HAND;
     const buttonHand = armReach([76, 182], -1, 'out');
-    const levelGlass = [TOAST_POSES.cheers.upper, TOAST_POSES.cheers.forearm];
+    const levelGlass = TOAST_POSES.cheers;
     const glide = { free: armReach([74, 160], -1, 'out'), martini: levelGlass, crouch: 22 };
     const limbs = poseTrack([
       // Hanging upside down, he calmly straightens his crooked bow tie; the
@@ -3951,7 +4065,7 @@
   window.InfoHidingKit = {
     latest, show, during, note, heading, paper, list, bubble, publicTag, implementsLink, spyCaper, digits, clock, counter, cashIntoMemory, cashBurst, agingPerson, apolloCount,
     apolloPortrait, car, overflowingHead, steps, systemSplit, calendar, iceberg, toggle, waterline, outlet, dossier,
-    decrypt, module, envelope, courier, laser, spotlight, lamp, agent, armReach, transmission, code, search,
+    decrypt, module, envelope, courier, laser, spotlight, lamp, agent, armReach, armVia, transmission, code, search,
     contractExchange, changeImpactGraph, mainframeMemory, stringWeb, mud, bug, stampTool, grid, vault, submarine, slip, iris,
   };
 })();
