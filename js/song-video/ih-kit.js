@@ -34,6 +34,13 @@
 
   /** Ease out with a small overshoot past 1 before settling. */
   const backOut = (u) => { const c = 1.70158; return 1 + (c + 1) * Math.pow(u - 1, 3) + c * Math.pow(u - 1, 2); };
+  /** Eases in and out over u in [0, 1], holding 0 before and 1 after. */
+  const smooth = (u) => { const v = Math.min(1, Math.max(0, u)); return v * v * (3 - 2 * v); };
+  /**
+   * Starts from rest, swings a little past 1 (about 5 %), and settles at
+   * rest: a limb's flourish without backOut's sudden start.
+   */
+  const softBack = (u) => u * u * (3 - 2 * u) + 6 * u * u * (1 - u) * (1 - u);
 
   /** The newest entry of a time-sorted list at or before t (or undefined). */
   function latest(entries, t) {
@@ -353,7 +360,10 @@
     const over = overflowAt ?? at + 1.5;
     const CUT = 66;       // the skull's cut plane
     const HINGE = [46, CUT];
-    const skull = 'M46 96 C40 46 78 14 118 18 C156 22 176 52 172 86 L171 98 L182 118 Q186 124 178 126 L172 127 L174 134 Q177 138 172 141 Q176 146 171 150 C166 160 152 163 138 158 L110 152 C88 150 70 140 62 126 C52 120 47 110 46 96 Z';
+    // The profile, front to chin: brow, a softly convex nose with a rounded
+    // tip, the philtrum, both lips meeting at the mouth's corner, the fold
+    // under the lower lip, and the chin.
+    const skull = 'M46 96 C40 46 78 14 118 18 C156 22 176 52 172 86 L171 98 C173.6 104.4 179.4 112.6 182.8 117.6 C185.6 121.8 184.6 125.8 179.8 126.4 C177.2 126.8 174.6 126.6 172.6 127.4 C172.8 130.2 174.4 133 175.2 135.2 C176 137.6 175.2 139.8 172.6 140.8 C175.4 142.4 175.8 145.8 173.8 148 C172.6 149.2 171.2 149.8 171 151.4 C170.8 155.6 168.2 159.6 162 161.4 C154 163.4 145 161.2 138 158 L110 152 C88 150 70 140 62 126 C52 120 47 110 46 96 Z';
     const defs = svg('defs', {}, node);
     const below = svg('clipPath', { id: `${id}-below` }, defs);
     svg('rect', { x: -50, y: CUT, width: 400, height: 300 }, below);
@@ -380,10 +390,11 @@
     // the sideburn, the ear with its folds, and the face.
     const lower = svg('g', { 'clip-path': `url(#${id}-below)` }, node);
     svg('path', { class: 'ih-head', d: skull, fill: `url(#${id}-skin)` }, lower);
-    svg('path', { class: 'ih-head-jaw-shade', d: 'M62 126 C72 142 92 150 112 152 L138 158 C150 162 162 158 170 150 C160 156 146 155 134 150 L110 145 C90 142 74 134 62 118 Z' }, lower);
+    svg('path', { class: 'ih-head-jaw-shade', d: 'M62 126 C72 142 92 150 112 152 L138 158 C146 160.8 155 161.6 162 160.2 C166 159 169 156.4 170.4 153 C162 157 148 156 134 150 L110 145 C90 142 74 134 62 118 Z' }, lower);
     svg('path', { class: 'ih-head-hair', d: 'M40 60 C40 84 44 102 54 114 C58 104 66 97 76 94 C80 84 86 74 94 60 Z' }, lower);
     svg('path', { class: 'ih-head-hair-strand', d: 'M47 70 Q49 88 55 102 M56 70 Q60 82 66 92 M66 68 Q72 78 78 86' }, lower);
-    svg('path', { class: 'ih-head-hair', d: 'M68.4 100.2 Q73.6 95.4 78.6 94.6 Q81.4 103.6 79 112.6 Q75.6 112.2 73.6 109.4 Q73 104 68.4 100.2 Z' }, lower);
+    // The sideburn: a slim strip down from the hairline in front of the ear.
+    svg('path', { class: 'ih-head-hair', d: 'M70.4 97.6 C73.6 95 76.6 93.8 79.4 94 C80.2 99.6 79.8 105 78.6 109.4 C78 110.8 76.4 110.8 75.8 109.4 C74.8 105.4 73.2 101 70.4 97.6 Z' }, lower);
     svg('ellipse', { class: 'ih-head-cheek', cx: 149, cy: 124, rx: 10, ry: 6.4 }, lower);
     svg('path', { class: 'ih-head-ear', d: 'M70 112 C66 100 52 104 52 116 C52 128 60 136 68 132 Q74 128 72 120 Z' }, node);
     svg('path', { class: 'ih-head-ear-detail', d: 'M66.6 113.4 C64.6 106.8 57.4 107.4 57.4 115.6 C57.4 121.6 61.2 126.6 65.4 124.8 M61.6 116.4 Q64.4 118.4 62 121.6' }, node);
@@ -393,9 +404,10 @@
     svg('circle', { class: 'ih-head-catchlight', cx: 162.1, cy: 100.5, r: 0.85 }, node);
     svg('path', { class: 'ih-head-lid', d: 'M149.6 101.4 Q158 95 166.4 101.4 M149.4 98.6 Q157.6 93.2 165 97.2' }, node);
     svg('path', { class: 'ih-head-lash', d: 'M165.6 100.8 L168 99.4 M166 102 L168.6 101.6' }, node);
-    // The nostril's wing and the lips.
-    svg('path', { class: 'ih-head-feature', d: 'M176.6 120.4 Q171.4 121.4 172.6 125.4' }, node);
-    svg('path', { class: 'ih-head-lips', d: 'M168.6 143.6 Q172.4 144.6 174.4 142.4' }, node);
+    // The nose's wing curls round the nostril; the lips are tinted just
+    // inside the profile, and the mouth runs back from their corner.
+    svg('path', { class: 'ih-head-nose-wing', d: 'M178.8 121 C175 118.8 171.6 120.6 172 123.6 C172.3 125.4 174.2 126.2 176 125.8' }, node);
+    svg('path', { class: 'ih-head-lips', d: 'M173.6 136.4 C173.9 137.9 173.3 139 172 139.6 C171 139.3 170.6 138.6 170.9 137.9 C171.9 137.6 172.8 137.1 173.6 136.4 Z M172.6 142.6 C173.9 143.7 174 145.6 172.8 146.7 C171.4 146.4 170.6 145.2 170.8 144 C171.3 143.3 171.9 142.9 172.6 142.6 Z' }, node);
     const mouth = svg('path', { class: 'ih-head-feature' }, node);
 
     // The open skull: a dark hole with a lit rim.
@@ -463,8 +475,8 @@
 
     const CALM_BROW = 'M148 92 Q158 87 166 92';
     const WORRIED_BROW = 'M148 94 Q157 89 166 85';
-    const CALM_MOUTH = 'M160 140 Q166 143 171 141';
-    const WORRIED_MOUTH = 'M158 142 Q161 139 164 142 Q167 145 171 141';
+    const CALM_MOUTH = 'M172.4 141 Q168.8 142.8 164.6 140.6';
+    const WORRIED_MOUTH = 'M172.4 141.4 Q169.6 139.8 167.4 141.2 Q165.4 142.6 163.4 141.2';
     const PERIOD = 1.3;
     onFrame((t) => {
       const open = easeInOutCubic(progress(t, at + 0.15, 0.4));
@@ -1506,20 +1518,24 @@
    * back with a knowing nod; wink shuts his left eye and raises the other
    * brow, tilting his head towards the wink (and agent() flashes a glint off
    * his smile). Each returns the free arm (or the face) to rest.
+   *
+   * The arm sets off a little before the sung moment, unhurried (half a
+   * second or more), so the hand arrives on the word; the eyes and head
+   * follow the hand a beat behind rather than all at once.
    */
-  const toRest = (at, duration = 0.42) => [at, duration, { free: ARM_RELAXED, freeWrist: 0 }];
+  const toRest = (at, duration = 0.58) => [at, duration, { free: ARM_RELAXED, freeWrist: 0 }];
   const MOVES = {
-    tie: [[0, 0.38, { free: TIE_HAND }], [0.32, 0.18, { tie: -10 }], [0.58, 0.25, { tie: 0 }], toRest(0.88)],
-    lapel: [[0, 0.3, { free: armReach([61, 104], -1, 'out') }], [0.3, 0.5, { free: armReach([62, 140], -1, 'out') }], toRest(0.85)],
+    tie: [[-0.12, 0.52, { free: TIE_HAND }], [0.02, 0.36, { down: 0.4 }], [0.32, 0.2, { tie: -10 }], [0.6, 0.3, { tie: 0, down: 0 }], toRest(0.92)],
+    lapel: [[-0.06, 0.4, { free: armReach([61, 104], -1, 'out') }], [0.34, 0.52, { free: armReach([62, 140], -1, 'out') }], toRest(0.9)],
     shh: [
-      [0, 0.42, { free: SHH_HAND, freeWrist: SHH_WRIST, finger: 1, hush: 1, nod: 0.5 }],
-      [0.38, 0.24, { look: -1, brow: 1 }], [0.74, 0.28, { look: 1 }], [1.12, 0.22, { look: 0 }],
-      [1.32, 0.3, { finger: 0, hush: 0, nod: 0, brow: 0 }], toRest(1.32),
+      [-0.14, 0.56, { free: SHH_HAND, freeWrist: SHH_WRIST, finger: 1 }], [0.02, 0.4, { hush: 1, nod: 0.5 }],
+      [0.4, 0.26, { look: -1, brow: 1 }], [0.76, 0.3, { look: 1 }], [1.12, 0.24, { look: 0 }],
+      [1.32, 0.34, { finger: 0, hush: 0, nod: 0, brow: 0 }], toRest(1.3),
     ],
-    button: [[0, 0.4, { free: armReach([76, 182], -1, 'out') }], toRest(0.9)],
-    watch: [[0, 0.4, { free: WATCH_CHECK, look: -0.6, down: 1, nod: 0.6 }], [0.8, 0.36, { look: 0, down: 0, nod: 0 }], toRest(0.8)],
-    glance: [[0, 0.22, { look: -1, tilt: -2 }], [0.75, 0.24, { look: 0, tilt: 0 }], [0.85, 0.14, { nod: 1 }], [1.0, 0.22, { nod: 0 }]],
-    wink: [[0, 0.12, { wink: 1 }], [0, 0.24, { tilt: 6, brow: 1 }], [0.45, 0.16, { wink: 0 }], [0.5, 0.34, { tilt: 0, brow: 0 }]],
+    button: [[-0.08, 0.52, { free: armReach([76, 182], -1, 'out') }], [0.04, 0.36, { down: 0.5 }], [0.6, 0.34, { down: 0 }], toRest(0.95)],
+    watch: [[-0.1, 0.54, { free: WATCH_CHECK }], [0.08, 0.4, { look: -0.6, down: 1, nod: 0.6 }], [0.82, 0.4, { look: 0, down: 0, nod: 0 }], toRest(0.84)],
+    glance: [[0, 0.26, { look: -1, tilt: -2 }], [0.75, 0.28, { look: 0, tilt: 0 }], [0.84, 0.2, { nod: 1 }], [1.04, 0.3, { nod: 0 }]],
+    wink: [[0, 0.12, { wink: 1 }], [0, 0.26, { tilt: 6, brow: 1 }], [0.45, 0.16, { wink: 0 }], [0.5, 0.38, { tilt: 0, brow: 0 }]],
   };
   // The fields the moves animate, at rest; everything else is left to the
   // toast and the caper's rig.
@@ -2237,12 +2253,14 @@
         if (toastAt !== undefined) {
           // The glass rises from his chest: the upper arm swings up and the
           // elbow follows a beat later, the forearm taking the shorter way
-          // round, up across his chest. A small knee dip lends the raise its
-          // weight. After `toastHold` seconds the glass comes back down the
-          // same way to his chest.
+          // round, up across his chest. It sets off just before the word,
+          // eases out of rest, lifts a touch past the pose and settles, so it
+          // is up on the word. A small knee dip lends the raise its weight.
+          // After `toastHold` seconds the glass comes back down the same way
+          // to his chest.
           const toast = TOAST_POSES[toastPose];
           const raised = [toast[0], nearTurn(GLASS_HELD[1], toast[1]), toast[2]];
-          const swing = (delay) => (reduced ? Number(t >= toastAt) : backOut(progress(t, toastAt + delay, 0.45)));
+          const swing = (delay) => (reduced ? Number(t >= toastAt) : softBack(progress(t, toastAt - 0.12 + delay, 0.55)));
           martini = GLASS_HELD.map((held, i) => held + (raised[i] - held) * swing(0.08 * i));
           if (toastHold !== undefined) {
             const lower = reduced ? Number(t >= toastAt + toastHold) : easeInOutCubic(progress(t, toastAt + toastHold, 0.6));
@@ -2598,15 +2616,17 @@
       // martini arm hangs towards the floor.
       [-Infinity, 0, { ...AT_EASE, free: tieHand, martini: [170, 170], tie: -16 }],
       [T.bondIn + 0.25, 0.45, { tie: 0 }],
-      // Rolls over, knees drawn up, glass held close.
-      [T.bondFlip - 0.05, 0.3, { free: armReach([74, 150], -1, 'out'), martini: armReach([96, 146], 1, 'out'), crouch: 45 }],
+      // Gathers himself and rolls over, knees drawn up, glass held close:
+      // the arms fold in as he lets go, not after.
+      [T.bondFlip - 0.22, 0.46, { free: armReach([74, 150], -1, 'out'), martini: armReach([96, 146], 1, 'out'), crouch: 45 }],
       // Lands in a crouch, the free hand swept low out to the side for
       // balance, the martini held up level.
-      [landAt - 0.2, 0.3, { free: [34, 26], martini: levelGlass, crouch: 38 }],
+      [landAt - 0.26, 0.38, { free: [34, 26], martini: levelGlass, crouch: 38 }],
       // Rises and flicks the ceiling detector up.
-      [T.build + 0.02, 0.3, { free: [160, 172], crouch: 0 }],
-      // Glides to his post, knees softly drawn up.
-      [hopAt - 0.02, 0.22, glide],
+      [T.build - 0.06, 0.28, { free: [150, 160], crouch: 0 }],
+      // Glides to his post, knees softly drawn up, the free arm sweeping
+      // down in front of him.
+      [hopAt - 0.04, 0.36, glide],
       // Lands softly, rises, and glances at the snoop.
       [postAt - 0.06, 0.2, { crouch: 16 }],
       // He brings the glass down across his chest to hold it there (the
@@ -3571,7 +3591,6 @@
       for (let i = 1; i < keys.length; i += 1) if (t < keys[i]) return i - 1 + (t - keys[i - 1]) / (keys[i] - keys[i - 1]);
       return keys.length - 1;
     };
-    const smooth = (u) => { const v = Math.min(1, Math.max(0, u)); return v * v * (3 - 2 * v); };
     const sizeAt = (g, factor) => g.setAttribute('transform', `translate(60 190) scale(${factor.toFixed(3)}) translate(-60 -190)`);
     onFrame((t) => {
       const reduce = reducedMotion.matches;
@@ -3759,43 +3778,89 @@
   }
 
   // ------------------------------------------------------------------
-  // Bugs: a beetle that crawls in; squash(at) flattens it
+  // Bugs: a ladybird that crawls in; squashAt flattens it
   // ------------------------------------------------------------------
 
+  /**
+   * A ladybird, seen from above, head up in a 64×64 box: a glossy red shell
+   * of two wing cases with seven spots, the black shield behind its head
+   * with white patches, round eyes with catchlights, clubbed feelers, and
+   * six jointed legs. It crawls in from `from` over 0.9 s, legs scurrying,
+   * then idles (feelers twitch, legs shift); squashAt flattens it. Reduced
+   * motion stills its legs and feelers.
+   */
   function bug(parent, { x, y, at, squashAt, until, size = 64, rotate = 0, from }) {
+    const id = `ih-bug-${++uid}`;
     const node = art(parent, { x, y, w: size, h: size, viewBox: '0 0 64 64' });
-    node.style.rotate = `${rotate}deg`;
+    const P = (g, cls, d, attrs = {}) => svg('path', { class: cls, d, ...attrs }, g);
+    const defs = svg('defs', {}, node);
+    // The shell's lacquer, lit from the upper left.
+    const lacquer = svg('radialGradient', { id: `${id}-shell`, cx: 0.34, cy: 0.3, r: 0.8 }, defs);
+    for (const [index, offset] of ['0', '0.55', '1'].entries()) svg('stop', { offset, class: `ih-bug-shell-stop-${index}` }, lacquer);
+    // Everything squashes together, its shadow on the ground too.
     const body = svg('g', {}, node);
+    svg('ellipse', { class: 'ih-bug-ground', cx: 33.4, cy: 40.6, rx: 16.6, ry: 18.6 }, body);
+    // Legs: femur, knee, shin, and foot, each pair mirrored about the middle.
     const legs = [];
     for (const side of [-1, 1]) {
-      const limb = svg('g', { transform: `translate(32 0) scale(${side} 1)` }, body);
-      for (const [k, d] of [
-        'M10 28 Q18 25 20 18 Q21 15 24 15',
-        'M13 37 Q22 35 25 39 L27 44',
-        'M11 46 Q19 48 19 54 L23 58',
+      const pair = svg('g', { transform: `translate(32 0) scale(${side} 1) translate(-32 0)` }, body);
+      for (const [k, [hip, d]] of [
+        [[36, 25], 'M36 25 L43.4 19.6 L46.6 11.6 L48.6 9.8'],
+        [[38.4, 33.6], 'M38.4 33.6 L47.6 31.4 L52.4 35.6 L54.8 36.8'],
+        [[37.6, 42], 'M37.6 42 L45.8 46.8 L48.6 54.6 L50.2 57.4'],
       ].entries()) {
-        legs.push({ g: svg('path', { class: 'ih-bug-leg', d }, limb), side, k });
+        const g = svg('g', {}, pair);
+        P(g, 'ih-bug-leg', d);
+        P(g, 'ih-bug-leg-light', d);
+        legs.push({ g, side, k, hip });
       }
     }
-    svg('path', { class: 'ih-bug-antenna', d: 'M28 15 C27 9 24 5 20 5 M36 15 C37 9 40 5 44 5' }, body);
-    svg('path', { class: 'ih-bug-head', d: 'M24 20 C22 9 42 9 40 20 L38 27 H26 Z' }, body);
-    svg('path', { class: 'ih-bug-body', d: 'M32 23 C20 20 16 31 17 40 C18 51 24 57 32 58 C40 57 46 51 47 40 C48 31 44 20 32 23 Z' }, body);
-    svg('path', { class: 'ih-bug-shadow', d: 'M39 25 C48 35 44 50 32 56 L32 58 C42 56 47 49 47 39 C47 32 44 27 39 25 Z' }, body);
-    svg('path', { class: 'ih-bug-shell-line', d: 'M32 25 C31 37 31 49 32 56' }, body);
-    svg('path', { class: 'ih-bug-shine', d: 'M21 34 C21 28 25 25 28 27 C29 29 25 30 24 35 C23 38 20 38 21 34 Z' }, body);
+    const feelers = [-1, 1].map((side) => {
+      const g = svg('g', { transform: `translate(32 0) scale(${side} 1) translate(-32 0)` }, body);
+      const twitch = svg('g', {}, g);
+      P(twitch, 'ih-bug-antenna', 'M34.2 12 C35.4 8.6 37.8 6.2 40.8 5.4');
+      svg('circle', { class: 'ih-bug-antenna-tip', cx: 41.2, cy: 5.3, r: 1.3 }, twitch);
+      return twitch;
+    });
+    // Head with round, friendly eyes.
+    P(body, 'ih-bug-head', 'M25.6 19.4 C25.2 14.2 28.2 10.8 32 10.8 C35.8 10.8 38.8 14.2 38.4 19.4 Z');
     for (const side of [-1, 1]) {
-      svg('ellipse', { class: 'ih-bug-eye', cx: 32 + side * 5, cy: 17, rx: 1.5, ry: 2 }, body);
-      for (const [dx, cy, r] of [[7, 39, 2.8], [5, 49, 2.1]]) {
-        svg('circle', { class: 'ih-bug-spot', cx: 32 + side * dx, cy, r }, body);
-      }
+      svg('ellipse', { class: 'ih-bug-eye', cx: 32 + side * 3.6, cy: 15, rx: 2.2, ry: 2.5 }, body);
+      svg('circle', { class: 'ih-bug-pupil', cx: 32 + side * 3.3, cy: 15.6, r: 1.25 }, body);
+      svg('circle', { class: 'ih-bug-catchlight', cx: 32 + side * 3.3 + 0.5, cy: 15, r: 0.5 }, body);
     }
-    show(node, at, until, { from: 0.3 });
+    // The black shield behind the head, with its white patches.
+    P(body, 'ih-bug-shield', 'M21.4 24.8 C21.2 20.4 25.8 17.8 32 17.8 C38.2 17.8 42.8 20.4 42.6 24.8 C38.6 26.6 25.4 26.6 21.4 24.8 Z');
+    P(body, 'ih-bug-patch', 'M22.6 23.8 C22.5 21.8 23.8 20.3 25.8 19.6 C25.3 21.2 25.3 23 25.9 24.7 C24.6 24.6 23.5 24.3 22.6 23.8 Z M41.4 23.8 C41.5 21.8 40.2 20.3 38.2 19.6 C38.7 21.2 38.7 23 38.1 24.7 C39.4 24.6 40.5 24.3 41.4 23.8 Z');
+    // Two wing cases meeting down the middle, each shaded at its far edge.
+    const shell = svg('g', {}, body);
+    P(shell, 'ih-bug-body', 'M32 23.4 C24.4 23.2 18.2 28.8 18 38 C17.8 47.6 23.6 56.4 32 58.2 C40.4 56.4 46.2 47.6 46 38 C45.8 28.8 39.6 23.2 32 23.4 Z', { fill: `url(#${id}-shell)` });
+    P(shell, 'ih-bug-shadow', 'M41.4 27.4 C45.4 32 46.6 40.6 44.2 47.4 C41.8 53.4 37.4 57 32.6 58 L32.6 56.2 C37 54.8 40.6 50.8 42.2 45.6 C43.8 40.2 43.4 32.8 41.4 27.4 Z');
+    P(shell, 'ih-bug-shadow ih-bug-shadow--soft', 'M31.4 56.8 C26.8 55.6 22.8 52 20.6 47 C22.8 50.6 26.6 53.6 31.4 54.6 Z');
+    for (const [cx, cy, r] of [[32, 26.8, 2.7], [25.4, 33.4, 3], [38.6, 33.4, 3], [23.4, 44.6, 2.6], [40.6, 44.6, 2.6], [28.4, 51.2, 2.2], [35.6, 51.2, 2.2]]) {
+      svg('circle', { class: 'ih-bug-spot', cx, cy, r }, shell);
+      svg('circle', { class: 'ih-bug-spot-light', cx: cx - r * 0.35, cy: cy - r * 0.4, r: r * 0.32 }, shell);
+    }
+    P(shell, 'ih-bug-shell-line', 'M32 24.2 C31.8 36 31.8 47.4 32 57.4');
+    P(shell, 'ih-bug-seam-light', 'M33.2 26.4 C33 37 33 46.8 33.2 55.4');
+    P(shell, 'ih-bug-shine', 'M21.4 35.6 C21.4 30.6 24.4 27 28 26 C25.8 28.6 24.6 31.8 24.2 35.6 C23.6 37 21.8 37 21.4 35.6 Z');
+    P(shell, 'ih-bug-shine-line', 'M36.6 26.4 C39 26.8 41 28.2 42.2 30.4');
+    // It pops in already facing the way it crawls (`rotate`).
+    show(node, at, until, { from: 0.3, rotate });
     const squashed = squashAt ?? Infinity;
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
     onFrame((t) => {
-      const crawling = t >= at && t < squashed;
-      legs.forEach(({ g, side, k }) => {
-        const wiggle = crawling ? 14 * Math.sin(t * 16 + k * 2.1 + (side > 0 ? Math.PI : 0)) : 0;
-        g.setAttribute('transform', `rotate(${wiggle.toFixed(1)} 10 36)`);
+      const still = reducedMotion.matches || t < at || t >= squashed;
+      // Scurrying while it travels, then only small shifts of weight.
+      const scurry = from ? 1 - progress(t, at + 0.75, 0.3) : 0.35;
+      legs.forEach(({ g, side, k, hip }) => {
+        const phase = t * 16 + k * 2.1 + (side > 0 ? Math.PI : 0);
+        const swing = still ? 0 : 13 * scurry * Math.sin(phase) + 2.5 * (1 - scurry) * Math.sin(t * 2.3 + k * 1.7 + side);
+        g.setAttribute('transform', `rotate(${swing.toFixed(1)} ${hip[0]} ${hip[1]})`);
+      });
+      feelers.forEach((g, i) => {
+        const twitch = still ? 0 : 7 * Math.sin(t * 5.3 + i * 1.9) * Math.max(0, Math.sin(t * 1.3 + i));
+        g.setAttribute('transform', `rotate(${twitch.toFixed(1)} 34.2 12)`);
       });
       if (from) {
         const p = easeInOutCubic(progress(t, at, 0.9));

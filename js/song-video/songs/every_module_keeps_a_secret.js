@@ -32,8 +32,8 @@
     // default human face.
     const AGENT_00 = { role: 'Agent', code: '00', look: 'tuxedo', hero: student?.heroHead() };
 
-    function badge(text, sectionId) {
-      kit.badge(hud, text, song.sectionStart(sectionId), song.sectionEnd(sectionId));
+    function badge(text, sectionId, until = song.sectionEnd(sectionId)) {
+      kit.badge(hud, text, song.sectionStart(sectionId), until);
     }
 
     // ----------------------------------------------------------------
@@ -262,7 +262,8 @@
         twirl: beat(10), shh: beat(11), toast: beat(12), stamp: beat(13),
       };
       const cap = kit.scene(content, caperAt, caperEnd, { enter: 'whip' });
-      ih.heading(cap, ['Meanwhile, at ', 'Module HQ', '…'], { x: 360, y: 70, at: caperAt + 0.35, until: T.freeze + 0.6 });
+      // The heading is gone before Agent 00 drops in through its spot.
+      ih.heading(cap, ['Meanwhile, at ', 'Module HQ', '…'], { x: 360, y: 70, at: caperAt + 0.35, until: T.bondIn - 0.3 });
       ih.spyCaper(cap, T, { hero: AGENT_00.hero });
       // The snoop asks the gateway instead of peeking: a call over the barrier.
       ih.courier(cap, { from: [692, 330], to: [552, 300], bend: -150, tone: 'gold', at: T.ask, until: T.reply + 0.9, period: 1 });
@@ -403,7 +404,8 @@
       const tagStart = line(ln(6)).start;
 
       // Parnas's sentence decrypts line by line; its key phrases are marked.
-      const q = kit.scene(content, start, mark(ln(6), 'every') + 0.25, { exit: 'fade' });
+      // It has faded by the time the title slams in over its header.
+      const q = kit.scene(content, start, mark(ln(6), 'every') - 0.02, { exit: 'fade' });
       ih.transmission(q, {
         x: 64, y: 60, w: 832, at: line(ln(1)).start - 0.3, origin: 'CACM · 1972',
         header: 'On the Criteria To Be Used in Decomposing Systems into Modules',
@@ -697,7 +699,7 @@
       kit.kinetic(briefing, [
         { text: 'Hid it', at: mark('change-test-1', 'hid'), color: 'pink' },
         { text: 'well?', at: mark('change-test-1', 'well') },
-      ], { y: 190, size: 64, until: mark('change-test-1', 'analysis') - 0.15 });
+      ], { y: 190, size: 64, until: mark('change-test-1', 'analysis') - 0.3 });
       ih.list(briefing, {
         x: 50, y: 96, w: 380, title: 'Change Impact Analysis', at: mark('change-test-1', 'analysis'),
         items: [
@@ -754,9 +756,11 @@
     // ----------------------------------------------------------------
 
     function outro() {
-      badge('Outro · Case closed', 'outro');
       const start = song.sectionStart('outro');
       const end = song.duration;
+      // The badge pops out as the closing iris reaches the corner, so the
+      // picture ends on black.
+      badge('Outro · Case closed', 'outro', end - 0.9);
       const a = kit.scene(content, start, line('outro-2').start - 0.1);
       const names = ['Payroll', 'Billing', 'Interest', 'Reports', 'Loans', 'Taxes', 'Grades', 'Shipping'];
       const grid = ih.grid(a, { x: 76, y: 110, cols: 4, cellW: 190, cellH: 46, gap: 14, names, at: start + 0.1, step: 0.03, tag: 'YY', tagAt: start + 0.3, tagStep: 0.03 });
@@ -779,8 +783,9 @@
       // martini on "change" and winks as the last secret is sealed, then
       // buttons his jacket while the case summary is stamped closed and an
       // iris closes on his face. The take's last line was cut, so this plays
-      // over the silent tail.
-      const c = kit.scene(content, line('outro-3').start - 0.1, end);
+      // over the silent tail. The scene never exits: the song ends on the
+      // closed iris's black.
+      const c = kit.scene(content, line('outro-3').start - 0.1);
       kit.kinetic(c, [
         { text: 'Designing', at: line('outro-3').start },
         { text: 'for change', at: mark('outro-3', 'change'), color: 'gold' },
