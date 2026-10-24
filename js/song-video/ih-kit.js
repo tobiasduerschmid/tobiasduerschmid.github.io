@@ -1129,7 +1129,13 @@
     Cart: 'cart', Order: 'box', Pay: 'card', Ship: 'truck', Auth: 'key', Mail: 'envelope', Tax: 'percent', Stock: 'stack',
   };
 
-  let fileNumber = 0;
+  // Each case file keeps one number wherever it turns up again: numbered
+  // in order of first appearance, by name.
+  const fileNumbers = new Map();
+  const fileNumberOf = (name) => {
+    if (!fileNumbers.has(name)) fileNumbers.set(name, fileNumbers.size + 1);
+    return fileNumbers.get(name);
+  };
 
   /**
    * A module drawn as a case file: a manila folder with a typed name label,
@@ -1147,7 +1153,7 @@
       el('div', 'ih-file-tab', node);
       const clip = svg('svg', { class: 'ih-clip', viewBox: '0 0 16 40', 'aria-hidden': 'true' }, node);
       svg('path', { d: 'M5 38V8a3 3 0 0 1 6 0v26a5 5 0 0 1-10 0V6a7 7 0 0 1 14 0v22' }, clip);
-      el('span', 'ih-file-no', node, `№ ${String(++fileNumber % 100).padStart(2, '0')}`);
+      el('span', 'ih-file-no', node, `№ ${String(fileNumberOf(name) % 100).padStart(2, '0')}`);
     }
     if (variant === 'interface') {
       el('div', 'ih-badge-strip', node, '«interface» · public');
@@ -1176,10 +1182,18 @@
 
     return {
       node, x, y, w, h,
-      /** A sealed red "top secret" envelope pinned to the file: the decision it hides. */
+      /**
+       * A sealed red "top secret" envelope pinned to the file: the decision
+       * it hides. The file's number fades as the envelope seals over it.
+       */
       secret(text, { at: when, until: gone, dx, dy } = {}) {
         const env = envelope(node, { text, x: dx ?? 14, y: dy ?? h - 18 });
         show(env, when, gone, { rotate: -3, from: 1.6 });
+        const number = node.querySelector('.ih-file-no');
+        if (number) {
+          fx.fadeOut(number, when, 0.2);
+          if (gone !== undefined) fx.fadeIn(number, gone, 0.2);
+        }
         return env;
       },
       verdict(text, { at: when, until: gone, ok = true, dx, dy } = {}) {
@@ -1254,9 +1268,11 @@
     const [x2, y2] = to;
     const cx = (x1 + x2) / 2;
     const cy = (y1 + y2) / 2 + bend;
-    svg('path', { class: 'ih-route-shadow', d: `M ${x1} ${y1} Q ${cx} ${cy} ${x2} ${y2}` }, art);
+    // The route's dark edge draws in with its line, not ahead of it.
+    const shadow = svg('path', { class: 'ih-route-shadow', d: `M ${x1} ${y1} Q ${cx} ${cy} ${x2} ${y2}` }, art);
     const path = svg('path', { class: `ih-route ih-route--${tone}`, d: `M ${x1} ${y1} Q ${cx} ${cy} ${x2} ${y2}` }, art);
     const ink = svg('path', { class: `ih-route-draw ih-route--${tone}`, d: `M ${x1} ${y1} Q ${cx} ${cy} ${x2} ${y2}` }, art);
+    fx.draw(shadow, at, 0.35);
     fx.draw(ink, at, 0.35);
     tween(path, [{ opacity: 0 }, { opacity: 1 }], at + 0.3, 0.1, EASE.out);
     const letters = Array.from({ length: carriers }, () => {

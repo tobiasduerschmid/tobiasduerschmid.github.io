@@ -243,7 +243,7 @@
       // (Shh…), winks, and is gone as the caper begins.
       ih.spotlight(lesson, { x: 828, y: 268, w: 340, h: 470, at: mark('intro-19', 'every') + 0.1 });
       ih.agent(h, {
-        ...AGENT_00, x: 716, y: 40, scale: 1.4, flip: true, entrance: 'right',
+        ...AGENT_00, x: 721, y: 34, scale: 1.34, flip: true, entrance: 'right',
         at: mark('intro-19', 'every') + 0.3, until: caperAt,
         moves: [[mark('intro-19', 'should'), 'shh'], [mark('intro-19', 'secret') + 0.75, 'wink']],
       });
@@ -314,7 +314,8 @@
 
       // The corkboard: 4 modules → 6 strings, 8 modules → 28; then mud.
       const handoff = line('verse-1-10').start - 0.35;
-      const c = kit.scene(content, line('verse-1-6').start - 0.1, handoff + 0.3, { exit: 'fade' });
+      const c = kit.scene(content, line('verse-1-6').start - 0.1);
+      tween(c, { opacity: 0 }, handoff, 0.4, EASE.inOut);
       ih.stringWeb(c, { x: 24, y: 76, w: 350, h: 340, names: ['Cart', 'Order', 'Pay', 'Ship'], title: 'Case: 4 modules', at: mark('verse-1-6', 'four'), drawFor: 0.9, until: mark('verse-1-8', 'let') });
       const board = ih.stringWeb(c, { x: 392, y: 64, w: 548, h: 384, names: ['Cart', 'Order', 'Pay', 'Ship', 'Auth', 'Mail', 'Tax', 'Stock'], title: 'Case: 8 modules', at: mark('verse-1-7', 'eight'), drawFor: 1.8 });
       fx.moveTo(board.node, mark('verse-1-8', 'let'), -200, 0, 0.6);
@@ -330,11 +331,12 @@
       board.handOff(handoff + 0.01);
       ih.mud(m, { x: 300, y: 290, size: 150, at: handoff, from: [192 + 10 + bx, 64 + 10 + by], delay: 0.05, move: 0.55 });
       // One label rides with the ball: stamped on the board, then it glides
-      // down and shrinks with the ball to sit under it beside the files.
+      // down and shrinks with the ball to sit on its lower edge, above the
+      // caption strip.
       const label = kit.scene(content, mark('verse-1-9', 'big') - 0.05, song.sectionEnd('verse-1'));
-      const mudStamp = kit.stamp(label, 'Big Ball of Mud', { x: 250, y: 396, at: mark('verse-1-9', 'big'), color: 'gold', rotate: -4, shake: false });
+      const mudStamp = kit.stamp(label, 'Big Ball of Mud', { x: 250, y: 376, at: mark('verse-1-9', 'big'), color: 'gold', rotate: -4, shake: false });
       mudStamp.style.transformOrigin = '50% 50%';
-      tween(mudStamp, [{ translate: '0 0', scale: 1 }, { translate: '-38px 24px', scale: 0.55 }], handoff + 0.05, 0.55, EASE.inOut);
+      tween(mudStamp, [{ translate: '0 0', scale: 1 }, { translate: '-78px 4px', scale: 0.52 }], handoff + 0.05, 0.55, EASE.inOut);
       const d = kit.scene(content, line('verse-1-10').start - 0.1, song.sectionEnd('verse-1'));
       const files = ['cart.js', 'order.js', 'refund.js', 'wallet.js', 'auth.js', 'mail.js', 'tax.js', 'report.js', 'admin.js', 'search.js', 'ship.js', 'stock.js'];
       // The files arrive once the carried ball has cleared their rows.
@@ -372,7 +374,7 @@
         },
         until: clearAt,
       });
-      kit.stamp(s, 'Not by steps', { x: 330, y: 392, at: noAt, rotate: -5, shake: false, until: clearAt });
+      kit.stamp(s, 'Not by steps', { x: 330, y: 378, at: noAt, rotate: -5, shake: false, until: clearAt });
       ih.spotlight(s, { x: 480, y: 220, w: 760, h: 400, at: paperAt - 0.2 });
       ih.paper(s, {
         x: 180, y: 116, w: 600, kicker: 'Communications of the ACM · December 1972',
@@ -405,8 +407,10 @@
       const tagStart = line(ln(6)).start;
 
       // Parnas's sentence decrypts line by line; its key phrases are marked.
-      // It has faded by the time the title slams in over its header.
-      const q = kit.scene(content, start, mark(ln(6), 'every') - 0.02, { exit: 'fade' });
+      // It dissolves smoothly as the title comes, gone as it slams in over
+      // the card's header.
+      const q = kit.scene(content, start);
+      tween(q, { opacity: 0 }, mark(ln(6), 'every') - 0.45, 0.43, EASE.inOut);
       ih.transmission(q, {
         x: 64, y: 60, w: 832, at: line(ln(1)).start - 0.3, origin: 'CACM · 1972',
         header: 'On the Criteria To Be Used in Decomposing Systems into Modules',
@@ -451,7 +455,7 @@
       box.light(mark(ln(9), 'module'));
       ih.counter(t, { x: 60, y: 384, label: 'module changed', from: 1, to: 1, at: mark(ln(9), 'module'), duration: 0.3 });
       const only = mark(ln(9), 'only');
-      kit.stamp(t, 'Only one!', { x: 300, y: 386, at: only, color: 'green', rotate: -6, shake: false });
+      kit.stamp(t, 'Only one!', { x: 300, y: 374, at: only, color: 'green', rotate: -6, shake: false });
       camera.punch(only + 0.05, 0.035);
       // The final chorus celebrates: three bursts bloom on "one module", as
       // the counter lands, and burn out before the outro.
@@ -549,7 +553,7 @@
 
       // The services don't change at all.
       services.forEach((service, i) => service.box.verdict('unchanged', { at: mark('verse-2-11', 'dont') + i * 0.18, dx: 150, dy: -14 }));
-      kit.sticker(s, 'Services changed: 0', { x: 40, y: 430, at: mark('verse-2-11', 'all'), variant: 'green', iconName: 'check', rotate: -2 });
+      kit.sticker(s, 'Services changed: 0', { x: 40, y: 424, at: mark('verse-2-11', 'all'), variant: 'green', iconName: 'check', rotate: -2 });
     }
 
     // ----------------------------------------------------------------
@@ -666,7 +670,7 @@
       ih.note(a, 'returns a PayPal type', { x: 700, y: 62, at: mark('bridge-2', 'returns'), tone: 'red', rotate: 2 });
       ih.slip(a, { x: 470, y: 228, text: 'PayPalCharge', at: mark('bridge-3', 'secrets'), dx: 70, dy: 156, rotate: -7 });
       ih.slip(a, { x: 640, y: 262, text: 'PayPalAccount', at: sig + 0.15, dx: 90, dy: 144, rotate: 6 });
-      kit.stamp(a, 'Leaked!', { x: 300, y: 392, at: mark('bridge-3', 'plain'), rotate: -6, shake: false });
+      kit.stamp(a, 'Leaked!', { x: 300, y: 378, at: mark('bridge-3', 'plain'), rotate: -6, shake: false });
 
       // Private fields alone do not hide a decision exposed by the public API.
       const b = kit.scene(content, mark('bridge-4', 'hiding') - 0.2, line('bridge-6').start - 0.1);
@@ -731,10 +735,13 @@
       badge('Pop quiz, agent', 'quiz');
       const { lines } = song.storyboard.sections.find((section) => section.id === 'quiz');
       const QUIZ_ICONS = ['copy', 'lock', 'receipt', 'eye', 'warning', 'gear'];
-      ih.lamp(content, { x: 480, y: -6, w: 720, h: 470, at: song.sectionStart('quiz'), until: song.sectionEnd('quiz') });
+      // The lamp goes out with the last card.
+      ih.lamp(content, { x: 480, y: -6, w: 720, h: 470, at: song.sectionStart('quiz'), until: song.sectionEnd('quiz') - 0.3 });
       lines.forEach((entry, i) => {
         const from = entry.start - 0.15;
-        const to = i + 1 < lines.length ? lines[i + 1].start - 0.15 : song.sectionEnd('quiz');
+        // Each card whips out under the next one as it whips in, so the
+        // lamp's beam never shows through between them.
+        const to = i + 1 < lines.length ? lines[i + 1].start + 0.15 : song.sectionEnd('quiz');
         const s = kit.scene(content, from, to, { enter: 'whip' });
         const cardNode = kit.el('div', 'quiz-card', s);
         kit.el('div', 'quiz-count', cardNode, `Quiz ${i + 1} / ${lines.length}`);
@@ -796,7 +803,7 @@
       // Larger here: his raised glass stops just under the title, and his
       // name tag ends above the end credit (moved clear, bottom left).
       ih.agent(c, {
-        ...AGENT_00, x: 355, y: 92, scale: 1.2, entrance: 'right', at: line('outro-3').start + 0.4, toastAt: done,
+        ...AGENT_00, x: 357, y: 84, scale: 1.17, entrance: 'right', at: line('outro-3').start + 0.4, toastAt: done,
         moves: [[done + 0.55, 'wink'], [done + 1.25, 'button']],
       });
       const summaryAt = mark('outro-3', 'designing');
@@ -812,9 +819,9 @@
       ih.show(ih.envelope(c, { text: 'every module keeps a secret', x: 552, y: 384 }), done + 0.5, undefined, { rotate: -1, from: 1.6 });
       kit.stamp(c, 'Case closed', { x: 26, y: 334, at: done + 0.9, color: 'green', rotate: -8, shake: false });
       const credit = kit.el('div', 'end-credit end-credit--left is-staged', c, 'SE Book · Information Hiding');
-      credit.style.top = '464px';
+      credit.style.top = '436px';
       fx.fadeIn(credit, done + 1.3, 0.4);
-      ih.iris(c, { cx: 451, cy: 169, from: end - 1.9, to: end - 0.1 });
+      ih.iris(c, { cx: 451, cy: 162, from: end - 1.9, to: end - 0.1 });
     }
 
     // ----------------------------------------------------------------
