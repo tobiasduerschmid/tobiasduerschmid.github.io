@@ -18,19 +18,27 @@ test.beforeEach(async ({ context }) => {
 async function expectRenderingBudget(page, label) {
   const result = await page.evaluate(() => {
     const renderedAnimations = document.getAnimations().filter(animation => animation.effect.target.getClientRects().length).length;
-    // Temporarily restore layout to let WebKit resolve the authored opacity.
-    // Culling must never suppress visible artwork, even after a backward seek.
-    const suppressedOpacities = Array.from(document.querySelectorAll('.song-picture-inactive'), node => {
-      node.classList.remove('song-picture-inactive');
+    // WebKit can keep allocating style data for every pose of an animation
+    // inside a display:none subtree that was once rendered, until a phone runs
+    // out of memory. Transparent pictures must leave the document instead.
+    const stage = document.getElementById('stage');
+    const hiddenInPlace = Array.from(stage.querySelectorAll(':scope > .layer > *'))
+      .filter(picture => getComputedStyle(picture).display === 'none' && picture.getAnimations({ subtree: true }).length)
+      .length;
+    // Put each culled picture back to read its authored opacity: culling must
+    // never remove visible artwork, even after a backward seek.
+    const culledOpacities = window.SongScene.culledPictures(stage).map(({ node, placeholder }) => {
+      placeholder.replaceWith(node);
       const opacity = Number(getComputedStyle(node).opacity);
-      node.classList.add('song-picture-inactive');
+      node.replaceWith(placeholder);
       return opacity;
     }).filter(opacity => opacity !== 0);
-    return { renderedAnimations, suppressedOpacities };
+    return { renderedAnimations, hiddenInPlace, culledOpacities };
   });
   // A ceiling on rendering work, not an exact count of authored artwork.
   expect(result.renderedAnimations, label).toBeLessThan(200);
-  expect(result.suppressedOpacities, 'only transparent pictures may leave layout').toEqual([]);
+  expect(result.hiddenInPlace, `${label}: animated pictures hidden in place`).toBe(0);
+  expect(result.culledOpacities, 'only transparent pictures may leave the document').toEqual([]);
 }
 
 for (const song of songs) {

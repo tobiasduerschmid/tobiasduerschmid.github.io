@@ -49,15 +49,24 @@
     await root.document.fonts.ready;
   }
 
+  // Each stage's top-level pictures and whether they are shown; see culledPictures().
+  const cullings = new WeakMap();
+
   /**
-   * Transparent, absolutely positioned artwork must not retain compositor
-   * surfaces for the entire song. Keep its DOM/timeline for arbitrary seeks,
-   * but remove invisible top-level pictures from layout before the first paint.
-   * Nested words/cards are not culled: they can reserve space in flex layouts.
+   * Transparent top-level pictures leave the document until they show again;
+   * a comment keeps each one's place. Their DOM and timeline stay in memory
+   * for arbitrary seeks, but out of the document they cost no style, layout,
+   * paint, or compositor surface. Hiding them with display: none is not
+   * enough: WebKit keeps allocating style data for paused animations posed
+   * inside a display:none subtree that was once rendered, until an iPhone
+   * runs out of memory within seconds. Nested words/cards are not culled:
+   * they can reserve space in flex layouts.
    */
   function manageVisibility(layers) {
     const pictures = layers.flatMap(layer => Array.from(layer.children)).map(node => ({
       node,
+      placeholder: root.document.createComment(' culled picture '),
+      shown: true,
       opacity: Number(root.getComputedStyle(node).opacity),
       effects: node.getAnimations().flatMap(animation => {
         const frames = animation.effect.getKeyframes().filter(frame => frame.opacity !== undefined);
@@ -68,18 +77,33 @@
       for (const picture of pictures) {
         let opacity = picture.node.style.opacity === '' ? picture.opacity : Number(picture.node.style.opacity);
         for (const { effect, first, last } of picture.effects) {
+          // Effect timing resolves in or out of the document; computed styles
+          // do not. Only cull known zero endpoints; retain every in-between
+          // pose, including overshooting easing curves.
           const { progress } = effect.getComputedTiming();
           if (progress === null) continue;
-          // WebKit does not resolve animated computed styles under display:none.
-          // Native effect timing still works. Only cull known zero endpoints;
-          // retain every in-between pose, including overshooting easing curves.
           if (progress === 0 && first.computedOffset === 0) opacity = Number(first.opacity);
           else if (progress === 1 && last.computedOffset === 1) opacity = Number(last.opacity);
           else opacity = 1;
         }
-        picture.node.classList.toggle('song-picture-inactive', opacity === 0);
+        const shown = opacity !== 0;
+        if (shown === picture.shown) continue;
+        picture.shown = shown;
+        if (shown) picture.placeholder.replaceWith(picture.node);
+        else picture.node.replaceWith(picture.placeholder);
       }
     });
+    return pictures;
+  }
+
+  /**
+   * The stage's top-level pictures that are out of the document at the
+   * current pose, each with the comment that keeps its place: for tests and
+   * checks that inspect a song's whole artwork.
+   */
+  function culledPictures(stage) {
+    return (cullings.get(stage) || []).filter(picture => !picture.shown)
+      .map(({ node, placeholder }) => ({ node, placeholder }));
   }
 
   /** Build a song once; seek accepts absolute audio seconds, never frame deltas. */
@@ -92,6 +116,7 @@
     if (!theme) throw new Error(`No stage theme "${themeName}".`);
     function dispose() {
       Timeline.dispose();
+      cullings.delete(stage);
       stage.replaceChildren();
       stage.classList.remove(`theme-${themeName}`);
     }
@@ -108,7 +133,7 @@
       }) : null;
       choreograph({ song: songData(storyboard), kit, layers: { stage, content, hud }, terminal, student });
       root.SongRoundedSurfaces.prepare(stage);
-      manageVisibility([content, hud]);
+      cullings.set(stage, manageVisibility([content, hud]));
       Timeline.seek(0);
     } catch (error) {
       dispose();
@@ -121,7 +146,7 @@
     };
   }
 
-  const api = { build, loadFonts, songData };
+  const api = { build, culledPictures, loadFonts, songData };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.SongScene = api;
 })(typeof window === 'undefined' ? globalThis : window);

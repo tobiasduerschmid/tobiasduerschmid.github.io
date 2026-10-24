@@ -3,6 +3,7 @@ const { test, expect } = require('@playwright/test');
 const fs = require('node:fs');
 const path = require('node:path');
 const yaml = require('js-yaml');
+const { countInArtwork } = require('./song-player-helpers');
 
 const PLAYER = '/assets/song-player/every-module-keeps-a-secret.html';
 
@@ -73,7 +74,8 @@ async function showReducedMotionVideo(page) {
   await expect(lyricsOnly).toBeChecked();
   await lyricsOnly.uncheck();
   await expect(page.getByTestId('song-picture')).toBeVisible();
-  await expect(page.getByTestId('ih-iceberg')).toBeAttached();
+  // The iceberg's scene waits out of the document until its verse.
+  await expect.poll(() => countInArtwork(page, '[data-testid="ih-iceberg"]')).toBe(1);
 }
 
 test('iceberg keeps its public interface while its hidden implementation changes', async ({ page }) => {
@@ -204,6 +206,15 @@ async function reopenWith(page, setup, arg) {
   await expect(page.getByTestId('song-picture')).toBeVisible();
 }
 
+const HERO_HEAD = '[data-testid="song-hero-head"]';
+
+/** Waits until every Agent 00 in the song, on stage or not, wears a face of his own. */
+async function expectEveryAgentWearsAHead(page) {
+  const agents = await countInArtwork(page, '[data-testid="ih-agent"]');
+  expect(agents, 'the song casts Agent 00').toBeGreaterThan(0);
+  await expect.poll(() => countInArtwork(page, HERO_HEAD), { message: 'each Agent 00 wears his own copy' }).toBe(agents);
+}
+
 const luminance = (hex) => [0.2126, 0.7152, 0.0722]
   .reduce((sum, weight, i) => sum + weight * parseInt(hex.slice(1 + 2 * i, 3 + 2 * i), 16), 0);
 
@@ -266,7 +277,7 @@ for (const sample of [
     const saved = JSON.stringify(sample.hero);
     await reopenWith(page, ({ key, value }) => localStorage.setItem(key, value), { key: STORAGE_KEY, value: saved });
     const heads = page.getByTestId('song-hero-head');
-    await expect(heads, 'each Agent 00 wears his own copy').toHaveCount(await page.getByTestId('ih-agent').count());
+    await expectEveryAgentWearsAHead(page);
     for (const time of agentTimes) {
       await seek(page, time);
       const agent = await agentOnStage(page);
@@ -289,12 +300,16 @@ for (const sample of [
     }
     await expect(heads.locator('[data-hero-slot="outfit-style"], [data-hero-human-arms], [data-hero-barbell], [data-hero-option="chain-necklace"]').filter({ visible: true }),
       'only the head and neck are worn').toHaveCount(0);
-    await expect(heads.locator('animate, animateTransform, animateMotion, set'), 'the song clock drives the face').toHaveCount(0);
-    const sharedIds = await heads.evaluateAll((copies) => {
+    const smil = ['animate', 'animateTransform', 'animateMotion', 'set'].map((name) => `${HERO_HEAD} ${name}`).join(', ');
+    expect(await countInArtwork(page, smil), 'the song clock drives the face').toBe(0);
+    const sharedIds = await page.evaluate((selector) => {
+      const stage = document.getElementById('stage');
+      const copies = [stage, ...window.SongScene.culledPictures(stage).map(({ node }) => node)]
+        .flatMap((root) => [...root.querySelectorAll(selector)]);
       const seen = new Set();
       return copies.flatMap((copy) => [...copy.querySelectorAll('[id]')].map((node) => node.id))
         .filter((id) => seen.has(id) || !seen.add(id));
-    });
+    }, HERO_HEAD);
     expect(sharedIds, 'hiding one scene must never break another copy\'s clips and paints').toEqual([]);
     expect(await page.evaluate((key) => localStorage.getItem(key), STORAGE_KEY), 'the song never changes the Gym hero').toBe(saved);
   });
@@ -324,8 +339,7 @@ for (const { name, setup, arg } of [
   test(`with ${name}, Agent 00 wears the SE Gym's default human face`, async ({ page }) => {
     await reopenWith(page, setup, arg);
     const before = await page.evaluate((key) => { try { return localStorage.getItem(key); } catch { return 'blocked'; } }, STORAGE_KEY);
-    const heads = page.getByTestId('song-hero-head');
-    await expect(heads, 'each Agent 00 wears his own copy').toHaveCount(await page.getByTestId('ih-agent').count());
+    await expectEveryAgentWearsAHead(page);
     const defaultSkin = await page.evaluate(() => window.HeroAvatar.DEFAULTS.appearance.skin);
     for (const time of [agentTimes[0], agentTimes.at(-1)]) {
       await seek(page, time);
@@ -352,7 +366,7 @@ test('without the SE Gym renderer, Agent 00 keeps a drawn face', async ({ page }
     await seek(page, time);
     await expect((await agentOnStage(page)).getByTestId('ih-agent-drawn-face')).toBeVisible();
   }
-  await expect(page.getByTestId('song-hero-head')).toHaveCount(0);
+  expect(await countInArtwork(page, HERO_HEAD), 'no Agent 00 wears a face').toBe(0);
 });
 
 test('a saved beard falls over Agent 00\'s bow tie', async ({ page }) => {
@@ -364,7 +378,7 @@ test('a saved beard falls over Agent 00\'s bow tie', async ({ page }) => {
     outfit: { ...savedHuman.outfit, accessory: 'none', accessories: [] },
   };
   await reopenWith(page, ({ key, value }) => localStorage.setItem(key, value), { key: STORAGE_KEY, value: JSON.stringify(bearded) });
-  await expect(page.getByTestId('song-hero-head').first()).toBeAttached();
+  await expectEveryAgentWearsAHead(page);
   await seek(page, finale + 0.6);
   const agent = await agentOnStage(page);
   await page.getByTestId('song-picture').scrollIntoViewIfNeeded();
@@ -385,7 +399,7 @@ const finaleBlink = finale + 2.48;
 
 test('the worn face winks and blinks on the song clock', async ({ page }) => {
   await reopenWith(page, ({ key, value }) => localStorage.setItem(key, value), { key: STORAGE_KEY, value: JSON.stringify(lightSkinned) });
-  await expect(page.getByTestId('song-hero-head').first()).toBeAttached();
+  await expectEveryAgentWearsAHead(page);
   await seek(page, toast + 0.35);
   expect(await shutEyes(page, lightEyes), 'both eyes are open as he raises his martini').toEqual([false, false]);
   await seek(page, toast + 0.9);
@@ -400,7 +414,7 @@ test('the worn face winks and blinks on the song clock', async ({ page }) => {
 test('with reduced motion the worn face stops blinking but still winks', async ({ page }) => {
   await reopenWith(page, ({ key, value }) => localStorage.setItem(key, value), { key: STORAGE_KEY, value: JSON.stringify(lightSkinned) });
   await showReducedMotionVideo(page);
-  await expect(page.getByTestId('song-hero-head').first()).toBeAttached();
+  await expectEveryAgentWearsAHead(page);
   await seek(page, finaleBlink);
   expect(await shutEyes(page, lightEyes), 'no decorative blinking').toEqual([false, false]);
   await seek(page, toast + 0.9);

@@ -1,5 +1,5 @@
 // @ts-check
-const { openPlayerSettings } = require('./song-player-helpers');
+const { artworkHasText, openPlayerSettings } = require('./song-player-helpers');
 const { test, expect } = require('@playwright/test');
 const { a11yCheckpoint } = require('./a11y-helpers');
 const fs = require('node:fs');
@@ -68,7 +68,8 @@ test('the chapter embeds the player and retains audio description and transcript
   await frameElement.scrollIntoViewIfNeeded();
   await expect(frameElement).toBeVisible();
   await expect(frameElement.contentFrame().getByRole('button', { name: 'Play song', exact: true })).toBeEnabled();
-  await expect(frameElement.contentFrame().getByText('homework_final.txt', { exact: true })).toBeAttached();
+  const frame = await (await frameElement.elementHandle()).contentFrame();
+  await expect.poll(() => artworkHasText(frame, 'homework_final.txt'), { message: 'the embedded player builds the artwork' }).toBe(true);
   await expect(frameElement.contentFrame().getByRole('link', { name: 'Full transcript', exact: true })).toBeHidden();
   await expect(frameElement.contentFrame().getByLabel('Current visual description', { exact: true })).toBeHidden();
   await expect.poll(() => frameElement.evaluate((element) => (
@@ -163,7 +164,7 @@ test('the vector song player waits for an explicit playback action', async ({ pa
   await expect(audio).toHaveAttribute('preload', 'none');
   await expect(audio).not.toHaveAttribute('autoplay');
   await expect(page.getByRole('button', { name: 'Play song', exact: true })).toBeEnabled();
-  await expect(page.getByText('homework_final.txt', { exact: true })).toBeAttached();
+  await expect.poll(() => artworkHasText(page, 'homework_final.txt'), { message: 'the player builds the artwork' }).toBe(true);
   await expect(audio).toHaveJSProperty('paused', true);
   expect(mediaRequests, 'audio and fallback video must not download before Play').toEqual([]);
   expect(errors, 'standalone player must initialize without JavaScript or asset errors').toEqual([]);

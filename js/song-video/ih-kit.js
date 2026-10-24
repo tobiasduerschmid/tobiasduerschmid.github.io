@@ -27,7 +27,7 @@
 (function () {
   'use strict';
 
-  const { tween, fx, onFrame, EASE, progress, easeInOutCubic, hash01 } = window.Timeline;
+  const { tween, fx, onFrame, onDispose, EASE, progress, easeInOutCubic, hash01 } = window.Timeline;
   const kit = window.SongKit;
   const { el, svg, place, icon } = kit;
   let uid = 0;
@@ -2177,8 +2177,12 @@
     if (look === 'tuxedo') {
       figure = tuxedoFigure(fig, sway, { flip });
       glint = svg('line', { class: 'ih-agent-glint ih-agent-glint--glass', x1: 0, y1: 0, x2: 2.2, y2: -3.8, opacity: 0 }, figure.glass);
+      // A scene culls him out of the document while he is transparent, so
+      // only its disposal (not being disconnected) means the face is unwanted.
+      let disposed = false;
+      onDispose(() => { disposed = true; });
       hero?.then((head) => {
-        if (head && wrap.isConnected) figure.wear(head);
+        if (head && !disposed) figure.wear(head);
       }).catch(() => {
         // The saved face is optional; the drawn agent remains.
       });

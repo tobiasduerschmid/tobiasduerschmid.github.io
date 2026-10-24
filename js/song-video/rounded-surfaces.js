@@ -16,9 +16,11 @@
  * changes (a lamp lights, a cell turns new), the boxes inside the changed
  * element are repainted from their new computed style, and boxes added
  * later are repainted as they arrive; boxes whose border or fill is animated
- * keep their border. Dashed and dotted borders keep their gaps, which
- * already hide the joins. Other engines draw these borders intact and are
- * left alone.
+ * keep their border. A subtree that comes back into the stage (scene.js
+ * culls transparent pictures out of the document) repaints only the boxes
+ * whose state classes changed while it was away. Dashed and dotted borders
+ * keep their gaps, which already hide the joins. Other engines draw these
+ * borders intact and are left alone.
  */
 (function (root) {
   'use strict';
@@ -29,9 +31,8 @@
   // A border-colour layer under a translucent fill tints the interior by
   // (fill transparency × border opacity); up to this much is invisible.
   const MAX_TINT = 0.03;
-  // Class changes that never change a box's paint: scene visibility and this
-  // module's own markers.
-  const IGNORED_CLASSES = /^(song-picture-inactive|song-frame-(ring|layers)-(before|after))$/;
+  // Class changes that never change a box's paint: this module's own markers.
+  const IGNORED_CLASSES = /^song-frame-(ring|layers)-(before|after)$/;
   // A state class on a large container repaints only the container itself.
   const MAX_SUBTREE = 200;
 
@@ -188,15 +189,22 @@
     node.classList.remove(...undo.classes);
   }
 
+  /** A box's classes that can change its paint, in a comparable form. */
+  function stateOf(node) {
+    return Array.from(node.classList).filter((className) => !IGNORED_CLASSES.test(className)).sort().join(' ');
+  }
+
   /**
    * Repaints the given boxes: undoes their earlier repaints, reads every
    * computed style, then writes, so one style recalculation serves the batch.
+   * Records the state classes each box was repainted with in `states`.
    */
-  function repaint(nodes, painted) {
+  function repaint(nodes, painted, states) {
     for (const node of nodes) {
       const undo = painted.get(node);
       if (undo) restore(node, undo);
       painted.delete(node);
+      states.set(node, stateOf(node));
     }
     const plans = [];
     for (const node of nodes) {
@@ -223,6 +231,12 @@
     return boxes;
   }
 
+  /** The HTML boxes of a returning subtree whose state classes changed while it was away. */
+  function changedWhileAway(subtree, states) {
+    return [subtree, ...subtree.querySelectorAll(':not(svg, svg *)')]
+      .filter((box) => states.get(box) !== stateOf(box));
+  }
+
   const observers = new WeakMap();
 
   /**
@@ -237,24 +251,36 @@
     // Weak, so a disposed scene's boxes can be collected while the stage is
     // still observed (lyrics-only mode disposes the scene without a rebuild).
     const painted = new WeakMap();
+    const states = new WeakMap();
+    // Subtrees removed from the stage in an earlier batch of changes.
+    const away = new WeakSet();
     // SVG paths already paint as continuous shapes. Only their outer SVG box
     // can have a CSS border; inspecting thousands of inner paths is unnecessary.
-    for (const [, steps] of repaint(stage.querySelectorAll(':not(svg *)'), painted)) {
+    for (const [, steps] of repaint(stage.querySelectorAll(':not(svg *)'), painted, states)) {
       for (const step of steps) counts[step.kind === 'ring' ? 'rings' : 'layers'] += 1;
     }
     // Later changes: a state class that can change paint, or boxes added
-    // after the scene was built (GitGraph's status rows, for example).
+    // after the scene was built (GitGraph's status rows, for example). Class
+    // changes inside a subtree outside the stage are not observed, so its
+    // return repaints the boxes whose state differs from their last repaint.
     const observer = new MutationObserver((records) => {
       const boxes = new Set();
       const collect = (node) => affectedBy(node).forEach((box) => boxes.add(box));
       for (const record of records) {
         if (record.type === 'childList') {
-          record.addedNodes.forEach((node) => { if (node instanceof HTMLElement) collect(node); });
+          record.addedNodes.forEach((node) => {
+            if (!(node instanceof HTMLElement)) return;
+            if (away.delete(node)) changedWhileAway(node, states).forEach(collect);
+            else collect(node);
+          });
+          record.removedNodes.forEach((node) => {
+            if (node instanceof HTMLElement && !node.isConnected) away.add(node);
+          });
         } else if (record.target instanceof HTMLElement && changesState(record)) {
           collect(record.target);
         }
       }
-      if (boxes.size) repaint([...boxes].filter((box) => box.isConnected), painted);
+      if (boxes.size) repaint([...boxes].filter((box) => box.isConnected), painted, states);
     });
     observer.observe(stage, { subtree: true, childList: true, attributes: true, attributeFilter: ['class'], attributeOldValue: true });
     observers.set(stage, observer);

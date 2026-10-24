@@ -3,6 +3,7 @@ const { test, expect } = require('@playwright/test');
 const fs = require('node:fs');
 const path = require('node:path');
 const yaml = require('js-yaml');
+const { countInArtwork } = require('./song-player-helpers');
 
 const PLAYER_PATH = '/assets/song-player/snapshots-and-pointers.html';
 const storyboard = yaml.load(fs.readFileSync(path.join(__dirname, '..', '_data/songs/snapshots_and_pointers.yml'), 'utf8'));
@@ -148,8 +149,7 @@ async function studentGeometry(student) {
 
 test('celebration paper follows seeking without accumulating particles or persisting into other scenes', async ({ page }) => {
   await openPausedPlayer(page);
-  const pieces = page.locator('.confetti-piece');
-  const initialCount = await pieces.count();
+  const initialCount = await countInArtwork(page, '.confetti-piece');
   expect(initialCount, 'all celebrations have a small, fixed paper budget').toBeGreaterThan(0);
   expect(initialCount, 'all celebrations have a small, fixed paper budget').toBeLessThanOrEqual(150);
 
@@ -167,7 +167,7 @@ test('celebration paper follows seeking without accumulating particles or persis
       message: 'returning to an audio position must reproduce the same paper pose',
     }).toEqual(firstPicture);
   }
-  await expect(pieces).toHaveCount(initialCount);
+  expect(await countInArtwork(page, '.confetti-piece'), 'seeking never adds paper').toBe(initialCount);
   await seek(page, 240);
   await expect.poll(() => paintedConfetti(page)).toEqual([]);
 });
@@ -517,6 +517,8 @@ test('TDD renderer-only: Code alternates grounded steps instead of floating', as
   await page.goto('/assets/song-player/red-green-refactor.html');
   await expect(page.getByTestId('song-picture')).toBeVisible();
   const samples = await page.evaluate(() => {
+    // The couple's picture joins the stage as they enter, after the title.
+    window.Timeline.seek(26);
     const dancer = document.querySelector('.tdd-dancer--code');
     return Array.from({ length: 40 }, (_, i) => {
       window.Timeline.seek(26 + i * 0.05);
@@ -720,6 +722,23 @@ test('TDD renderer-only: the bug travels wholly through the open test-fence gap'
   expect(await pose(228.81)).toEqual(entry);
 });
 
+/**
+ * Each flow arrow's own opacity, in authored order. Scenes that are out of
+ * the document while transparent go back in place just long enough to be read.
+ */
+async function flowArrowOpacities(page) {
+  return page.evaluate(() => {
+    const stage = document.getElementById('stage');
+    const culled = window.SongScene.culledPictures(stage);
+    for (const { node, placeholder } of culled) placeholder.replaceWith(node);
+    try {
+      return Array.from(stage.querySelectorAll('.flow'), arrow => getComputedStyle(arrow).opacity);
+    } finally {
+      for (const { node, placeholder } of culled) node.replaceWith(placeholder);
+    }
+  });
+}
+
 test('TDD renderer-only: flow arrows do not leak tips before their cues or after rewind', async ({ page }) => {
   await page.goto('/assets/song-player/red-green-refactor.html');
   await expect(page.getByTestId('song-picture')).toBeVisible();
@@ -731,15 +750,13 @@ test('TDD renderer-only: flow arrows do not leak tips before their cues or after
     cues.get('bridge-3').marks.parts,
     cues.get('bridge-5').marks.whole,
   ];
-  const arrows = page.locator('.flow');
-  await expect(arrows).toHaveCount(entrances.length);
+  expect(await flowArrowOpacities(page)).toHaveLength(entrances.length);
   for (const [index, at] of entrances.entries()) {
-    const arrow = arrows.nth(index);
     for (const [time, opacity] of [[at - 0.1, '0'], [at + 0.4, '1'], [346, '0'], [at + 0.4, '1'], [0, '0']]) {
       await page.evaluate(time => window.Timeline.seek(time), time);
       // The first arrow belongs to a scene that handles its exit as a whole.
       if (index === 0 && time === 346) continue;
-      await expect(arrow).toHaveCSS('opacity', opacity);
+      expect((await flowArrowOpacities(page))[index], `arrow ${index} at ${time}s`).toBe(opacity);
     }
   }
 });

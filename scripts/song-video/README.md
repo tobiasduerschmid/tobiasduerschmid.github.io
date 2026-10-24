@@ -35,10 +35,16 @@ Escape or the fullscreen button restores the page, scroll position, and focus.
 Reduced-motion users start in lyrics-only mode with visual descriptions.
 
 Scene visibility is managed centrally in `scene.js` for every song and the
-exporter. Fully transparent top-level pictures leave layout so invisible
-animations do not retain compositor surfaces throughout the song. Native
-animation timing restores pictures before frame callbacks measure them,
-including backward seeks; nested words and cards retain their layout space.
+exporter. Fully transparent top-level pictures leave the document, a comment
+holding each one's place, so invisible artwork costs no style, layout, paint,
+or compositor surface throughout the song. Hiding them with `display: none`
+is not enough: WebKit keeps allocating style data for paused animations posed
+inside a once-rendered `display: none` subtree, which grew Safari's memory by
+megabytes per frame until an iPhone reloaded the page. Native animation
+timing restores pictures before frame callbacks measure them, including
+backward seeks; nested words and cards retain their layout space.
+`SongScene.culledPictures(stage)` lists the pictures currently out of the
+document, for tests that inspect a song's whole artwork.
 Lyrics-only mode avoids building the scene and disposes existing artwork.
 Turning animation back on rebuilds the scene at the current audio position.
 The catalog-wide resource tests cover startup, repeated seeks, and mode changes
@@ -164,8 +170,9 @@ its border colour as a border-box background layer under its fill, and a
 translucent or empty box draws the ring with a free pseudo-element masked to
 the border area. Layout is unchanged. The repaint copies computed colours, so
 a class change that could change paint repaints just the boxes inside the
-changed element, and boxes whose border or fill is animated keep their
-border. Dashed and dotted borders, SVG paths, and other browsers keep their
+changed element, a picture returning from culling repaints just the boxes
+whose state classes changed while it was out of the document, and boxes
+whose border or fill is animated keep their border. Dashed and dotted borders, SVG paths, and other browsers keep their
 existing rendering.
 
 ## One storyboard, many outputs
