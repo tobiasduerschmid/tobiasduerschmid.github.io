@@ -126,6 +126,10 @@
   description: The SOLID principle that high-level policy should depend on abstractions, not concrete low-level details. The abstractions should be shaped by the high-level module's needs.
   related: [SOLID, OOP, DI]
 
+- term: DM
+  definition: Direct Message
+  description: A private message sent straight to one person in a social or chat app, instead of a public post.
+
 - term: DNS
   definition: Domain Name System
   description: The distributed naming system that translates human-readable domain names, such as example.com, into IP addresses that network devices can route to.
@@ -179,6 +183,10 @@
   definition: Gang of Four
   description: The four authors of the 1994 book "Design Patterns" — Erich Gamma, Richard Helm, Ralph Johnson, and John Vlissides — and, by extension, the catalog of 23 object-oriented design patterns the book described.
   related: [OOP, MVC]
+
+- term: GPS
+  definition: Global Positioning System
+  description: The satellite navigation system a phone uses to work out where it is, for example to show a car's position on a map.
 
 - term: gRPC
   definition: gRPC Remote Procedure Calls

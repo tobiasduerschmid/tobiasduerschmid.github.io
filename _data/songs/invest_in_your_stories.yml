@@ -19,14 +19,19 @@
 # the next Jekyll build, but the captions and described audio only after
 # re-running render.js.
 #
-# Times are seconds into the Suno take, normalized to -16 LUFS. Line
-# boundaries and word marks come from local Whisper word timestamps (mlx
-# whisper-large-v3-turbo) aligned to the lyric sheet, with prompted clip
-# passes for the choruses, letter openings, and quiz answers. Captions follow
-# the recording, which differs from the lyric sheet: the chorus sings
-# "S! The smallest slice" and "T! Given, When, Then" without the words Small
-# and Testable, and verse 3 opens Small with "It fits in a single sprint" and
-# Testable with "How do we know?". The letter tiles still show every term.
+# Times are seconds into the Suno take (already about -16 LUFS; +0.3 dB of
+# static gain, AAC at 160 kb/s). Line boundaries and word marks come from
+# local Whisper word timestamps (mlx whisper-large-v3-turbo), aligned to the
+# lyric sheet by sequence alignment, with unprompted clip passes for the
+# pre-chorus, the roll calls, the final chorus, and a few unclear words.
+# Captions follow the recording, which differs from the lyric sheet: the
+# pre-chorus drops the "who? / what? / why?" interjections and the word
+# "wet"; verse 1 sings "Look at the app" without "and"; the first chorus's
+# roll call is "I! N! I! N! V! E! S! T!"; verse 3 sings "two days to learn,
+# and we size". The final chorus's "Small!" is a shout Whisper hears as
+# "oh", so its mark sits on that shout. Suno left no instrumental break
+# between a quiz question and its answer, so each `pause_at` sits right after
+# the question's last word.
 
 title: "Invest in Your Stories: a song about user stories and INVEST"   # the player's accessible name
 credit: Lyrics written for this chapter; music and vocals generated with Suno.
@@ -51,642 +56,670 @@ narrator:
   rate: 205         # words per minute
   pronounce:        # how the narrator says notation the captions keep as written
     INVEST: invest
-    HTTPS: H T T P S
-    TA: T A
-    CS 35L: C S 35 L
-    QR: Q R
+    DM: D M
+    Dijkstra’s: Dike-struhs
+    SZA: Sizza
 width: 1920
 height: 1080
 fps: 30
-duration: 266.01
+duration: 270.65
 beats:
-  bpm: 94.96   # fitted with librosa to the take's beats from verse 1 on
-  first: 0.108
+  bpm: 105.47   # median of the tracked beats; the take drifts between about 103 and 108
+  first: 0.17
+  # Every beat, in seconds: tracked on the percussion (librosa,
+  # harmonic/percussive split) and smoothed by a local linear fit over ±5
+  # beats, so pulses follow the take's tempo drift. Overrides bpm/first
+  # for Timeline.beats.
+  times: [
+    0.17, 0.72, 1.28, 1.84, 2.41, 2.97, 3.54, 4.1, 4.67, 5.23, 5.8, 6.37,
+    6.94, 7.51, 8.08, 8.65, 9.22, 9.79, 10.36, 10.92, 11.5, 12.07, 12.64, 13.21,
+    13.78, 14.35, 14.92, 15.49, 16.06, 16.63, 17.19, 17.77, 18.34, 18.9, 19.47, 20.04,
+    20.61, 21.18, 21.75, 22.32, 22.89, 23.46, 24.02, 24.59, 25.16, 25.73, 26.3, 26.87,
+    27.43, 28.0, 28.57, 29.14, 29.71, 30.28, 30.85, 31.42, 31.99, 32.56, 33.13, 33.7,
+    34.27, 34.84, 35.41, 35.98, 36.55, 37.11, 37.68, 38.25, 38.82, 39.39, 39.95, 40.52,
+    41.09, 41.66, 42.22, 42.79, 43.36, 43.93, 44.5, 45.07, 45.64, 46.21, 46.78, 47.35,
+    47.92, 48.48, 49.05, 49.62, 50.19, 50.76, 51.33, 51.9, 52.47, 53.04, 53.6, 54.17,
+    54.74, 55.31, 55.88, 56.45, 57.02, 57.59, 58.15, 58.72, 59.29, 59.86, 60.43, 61.0,
+    61.57, 62.14, 62.71, 63.28, 63.85, 64.41, 64.98, 65.55, 66.12, 66.69, 67.26, 67.83,
+    68.4, 68.96, 69.53, 70.1, 70.67, 71.24, 71.81, 72.38, 72.95, 73.51, 74.08, 74.65,
+    75.22, 75.79, 76.36, 76.92, 77.49, 78.06, 78.63, 79.2, 79.77, 80.33, 80.9, 81.47,
+    82.04, 82.61, 83.18, 83.75, 84.32, 84.89, 85.45, 86.02, 86.59, 87.16, 87.73, 88.3,
+    88.87, 89.44, 90.01, 90.58, 91.15, 91.71, 92.28, 92.85, 93.42, 93.99, 94.55, 95.12,
+    95.69, 96.25, 96.82, 97.39, 97.96, 98.53, 99.09, 99.66, 100.23, 100.8, 101.38, 101.95,
+    102.52, 103.09, 103.66, 104.23, 104.8, 105.36, 105.93, 106.5, 107.07, 107.64, 108.21, 108.77,
+    109.34, 109.91, 110.48, 111.05, 111.62, 112.19, 112.75, 113.32, 113.89, 114.46, 115.03, 115.6,
+    116.17, 116.73, 117.3, 117.87, 118.44, 119.01, 119.58, 120.15, 120.71, 121.28, 121.85, 122.42,
+    122.99, 123.55, 124.12, 124.69, 125.26, 125.83, 126.39, 126.96, 127.53, 128.1, 128.67, 129.24,
+    129.81, 130.38, 130.95, 131.52, 132.09, 132.66, 133.22, 133.79, 134.36, 134.92, 135.49, 136.06,
+    136.63, 137.2, 137.77, 138.34, 138.91, 139.48, 140.05, 140.62, 141.19, 141.76, 142.33, 142.9,
+    143.47, 144.04, 144.61, 145.18, 145.75, 146.32, 146.88, 147.45, 148.02, 148.59, 149.15, 149.72,
+    150.29, 150.86, 151.43, 152.0, 152.56, 153.13, 153.7, 154.27, 154.84, 155.41, 155.98, 156.54,
+    157.11, 157.68, 158.25, 158.82, 159.39, 159.96, 160.53, 161.09, 161.66, 162.23, 162.8, 163.37,
+    163.94, 164.51, 165.08, 165.65, 166.22, 166.78, 167.35, 167.92, 168.49, 169.06, 169.63, 170.2,
+    170.76, 171.33, 171.9, 172.47, 173.04, 173.61, 174.17, 174.74, 175.31, 175.88, 176.45, 177.02,
+    177.59, 178.15, 178.72, 179.29, 179.86, 180.43, 181.0, 181.57, 182.13, 182.7, 183.27, 183.84,
+    184.4, 184.97, 185.54, 186.11, 186.68, 187.25, 187.81, 188.38, 188.95, 189.52, 190.09, 190.66,
+    191.22, 191.79, 192.36, 192.93, 193.49, 194.06, 194.63, 195.2, 195.76, 196.33, 196.9, 197.47,
+    198.04, 198.6, 199.17, 199.74, 200.31, 200.87, 201.44, 202.01, 202.58, 203.15, 203.72, 204.29,
+    204.86, 205.43, 206.0, 206.57, 207.14, 207.72, 208.29, 208.86, 209.43, 210.0, 210.57, 211.14,
+    211.71, 212.28, 212.85, 213.42, 213.99, 214.55, 215.12, 215.69, 216.26, 216.83, 217.39, 217.96,
+    218.53, 219.1, 219.67, 220.24, 220.81, 221.38, 221.95, 222.52, 223.09, 223.67, 224.24, 224.81,
+    225.38, 225.95, 226.52, 227.09, 227.66, 228.22, 228.78, 229.35, 229.92, 230.49, 231.06, 231.63,
+    232.2, 232.77, 233.34, 233.91, 234.49, 235.07, 235.64, 236.21, 236.78, 237.35, 237.92, 238.49,
+    239.06, 239.63, 240.2, 240.77, 241.34, 241.91, 242.48, 243.05, 243.62, 244.19, 244.76, 245.33,
+    245.9, 246.46, 247.03, 247.6, 248.17, 248.74, 249.3, 249.87, 250.44, 251.01, 251.58, 252.15,
+    252.71, 253.28, 253.85, 254.42, 254.99, 255.56, 256.13, 256.7, 257.27, 257.84, 258.41, 258.99,
+    259.56, 260.13, 260.7, 261.27, 261.84, 262.41, 262.98, 263.56, 264.13, 264.71, 265.28, 265.85,
+    266.42, 267.0, 267.57, 268.14, 268.71,
+  ]
 
 sections:
   - id: intro
     title: "Intro"
     delivery: spoken
-    narration: "Audio-described version: before each section, the picture pauses while I describe it. The intro: your hero sits at a laptop on demo day. A test bar fills to 128 of 128 tests passed, all green. A user's speech bubble says: Cool… but that's not what I needed, and a red stamp reads wrong thing. Then a blank index card titled user story drops in with the question: what should we build?"
+    narration: "Audio-described version: before each section, the picture pauses while I describe it. The intro: your hero codes on demo day, and a test bar fills to 128 of 128 tests passed. A user says: Cool… but that's not what I needed, and a stamp reads wrong thing. Stickers follow: built it right, beside the tests, and not the right thing, beside the user. Then a blank ruled story card asks: what should we build?"
     lines:
       - id: intro-1
-        start: 1.42
-        end: 2.67
+        start: 0.0
+        end: 0.82
         text: "It’s demo day."
-        marks: {"its": 1.42, "demo": 1.9, "day": 2.16}
+        marks: {"its": 0.0, "demo": 0.3, "day": 0.58}
         visual: "Your hero, or the default Bruin, types at a laptop; big type reads “Demo day”."
       - id: intro-2
-        start: 3.36
-        end: 6.27
+        start: 1.52
+        end: 4.74
         text: "Your app works perfectly. Every test is green."
-        marks: {"your": 3.36, "app": 3.84, "works": 4.04, "perfectly": 4.3, "every": 5.08, "test": 5.22, "is": 5.52, "green": 5.72}
+        marks: {"your": 1.52, "app": 2.0, "works": 2.26, "perfectly": 2.58, "every": 3.84, "test": 3.98, "is": 4.24, "green": 4.46}
         visual: "A test bar fills to “128 / 128 tests passed”, all green, and a green sticker reads “Works perfectly”."
       - id: intro-3
-        start: 6.8
-        end: 10.41
+        start: 5.06
+        end: 8.82
         text: "And the user says: “Cool… but that’s not what I needed.”"
-        marks: {"and": 6.8, "the": 7.28, "user": 7.38, "says": 7.58, "cool": 8.24, "but": 8.84, "thats": 9.36, "not": 9.58, "what": 9.7, "i": 9.82, "needed": 9.92}
+        marks: {"and": 5.06, "the": 5.44, "user": 5.58, "says": 5.82, "cool": 6.46, "but": 7.56, "thats": 8.04, "not": 8.24, "what": 8.34, "i": 8.48, "needed": 8.58}
         visual: "A user’s speech bubble: “Cool… but that’s not what I needed.” A red stamp lands: “Wrong thing”."
       - id: intro-4
-        start: 11.08
-        end: 15.17
+        start: 10.16
+        end: 13.48
+        text: "Green tests prove we built it right — not that we built the right thing."
+        marks: {"green": 10.16, "tests": 10.54, "prove": 10.86, "we": 11.18, "built": 11.38, "it": 11.64, "right": 11.78, "not": 12.24, "that": 12.42, "we_2": 12.56, "built_2": 12.66, "the": 12.88, "right_2": 13.0, "thing": 13.16}
+        visual: "A green sticker, “built it right”, appears beside the test bar, and a red one, “not the right thing”, beside the user’s bubble."
+      - id: intro-5
+        start: 13.84
+        end: 17.98
         text: "So before we write a single line, let’s find out what to build."
-        marks: {"so": 11.08, "before": 11.56, "we": 11.78, "write": 12.0, "a": 12.18, "single": 12.3, "line": 12.56, "lets": 13.34, "find": 13.98, "out": 14.16, "what": 14.32, "to": 14.48, "build": 14.6}
-        visual: "A blank index card titled “User story” drops in, with a gold note: “What should we build?”"
+        marks: {"so": 13.84, "before": 14.12, "we": 14.34, "write": 14.54, "a": 14.72, "single": 14.86, "line": 15.12, "lets": 15.72, "find": 16.48, "out": 16.68, "what": 16.94, "to": 17.42, "build": 17.58}
+        visual: "A blank ruled index card titled “User story” drops in, with empty lines for As a, I want, so that, and Given, When, Then; a gold note asks “What should we build?”, and a sticker reads “not a single line yet”."
   - id: verse-1
     title: "Verse 1"
     delivery: sung
-    narration: "Verse 1, why user stories. Three chips, who, what, and why, pop up, and a grey how chip slides aside: later. The view switches to the user's eyes. An index card says short and clear, and jargon words, REST API, schema, and microservice, fall off it, leaving their own words. A Hello my name is tag reading a user is crossed out, replaced by tags for student and TA. On a board, story cards are added, changed, dropped, and reordered, each still delivering value. Acceptance criteria tick on a card: done means they pass. A commit message, add resubmit button, points back to story number 12."
+    narration: "Verse 1, why user stories. Notes for who, what, and why pop up; how is parked for later. Then one ruled story card stays all verse: As a user, I want to see my car on a map, so that I can see my car. Jargon chips fall off it: in their own plain words, a ticket to talk. User is struck out; name tags show a rider and a driver seeing different things, and the card now says rider. The I want line is marked the need and the so that line the real why; novelty glasses mock the so that, the same feature in disguise, until it's rewritten: so that I'm outside when it pulls up. Then acceptance criteria fill the card's lines: Given I booked a ride, When my driver is on the way, Then I see the car and minutes away, with a check: done means the criteria pass, clear enough to test, but not the code you run."
     lines:
       - id: verse-1-1
-        start: 15.54
-        end: 18.24
-        text: "Before you ask how, ask who, what, and why,"
-        marks: {"before": 15.54, "you": 16.02, "ask": 16.2, "how": 16.48, "ask_2": 16.88, "who": 17.12, "what": 17.52, "and": 17.66, "why": 17.76}
-        visual: "Three chips pop up on their words: “Who?”, “What?”, “Why?”; a grey “How?” chip slides aside under a sticker: “later”."
-      - id: verse-1-2
-        start: 18.24
+        start: 18.26
         end: 20.8
-        text: "and look at the app through your users’ eyes."
-        marks: {"and": 18.24, "look": 18.4, "at": 18.6, "the": 18.76, "app": 18.88, "through": 19.14, "your": 19.42, "users": 19.66, "eyes": 20.32}
-        visual: "A phone shows the app with an eye sticker: “Through the user’s eyes”."
+        text: "Before you ask how, ask who, what, and why,"
+        marks: {"before": 18.26, "you": 18.66, "ask": 18.82, "how": 19.14, "ask_2": 19.42, "who": 19.68, "what": 20.06, "and": 20.2, "why": 20.48}
+        visual: "Three notes pop up on their words: “Who?”, “What?”, “Why?”; a grey “How?” note slides aside under a sticker: “later”."
+      - id: verse-1-2
+        start: 21.0
+        end: 23.06
+        text: "Look at the app through your users’ eyes."
+        marks: {"look": 21.0, "at": 21.28, "the": 21.4, "app": 21.56, "through": 21.84, "your": 22.02, "users": 22.26, "eyes": 22.84}
+        visual: "Big type: “through your users’ eyes”."
       - id: verse-1-3
-        start: 20.8
-        end: 23.2
-        text: "So write a user story, short and clear:"
-        marks: {"so": 20.8, "write": 20.9, "a": 21.14, "user": 21.26, "story": 21.42, "short": 21.98, "and": 22.38, "clear": 22.74}
-        visual: "An index card titled “User story” lands with a gold sticker: “short & clear”."
-      - id: verse-1-4
         start: 23.2
-        end: 26.14
-        text: "what they need, in their own words — no jargon here."
-        marks: {"what": 23.2, "they": 23.28, "need": 23.42, "in": 23.76, "their": 23.94, "own": 24.1, "words": 24.34, "no": 24.88, "jargon": 25.18, "here": 25.76}
-        visual: "Jargon chips, “REST API”, “DB schema”, and “microservice”, fall off the card; a green note reads “in their own words”."
+        end: 25.38
+        text: "One need on a card, in their own plain words —"
+        marks: {"one": 23.2, "need": 23.32, "on": 23.56, "a": 23.7, "card": 23.82, "in": 24.14, "their": 24.4, "own": 24.54, "plain": 24.74, "words": 25.0}
+        visual: "A ruled index card lands: “As a user, I want to see my car on a map, so that I can see my car”. Jargon chips, “REST API” and “GPS polling”, fall off it, and a green note reads “in their own plain words”."
+      - id: verse-1-4
+        start: 25.38
+        end: 27.62
+        text: "a ticket to talk, so the “why” gets heard."
+        marks: {"a": 25.38, "ticket": 25.64, "to": 26.08, "talk": 26.34, "so": 26.34, "the": 26.62, "why": 26.78, "gets": 27.02, "heard": 27.34}
+        visual: "A sticker reads “a ticket to talk”, and the team’s speech bubble asks “Why do you need it?”"
       - id: verse-1-5
-        start: 26.14
-        end: 27.8
-        text: "Not just “a user” — say exactly who:"
-        marks: {"not": 26.14, "just": 26.28, "a": 26.44, "user": 26.58, "say": 26.9, "exactly": 27.08, "who": 27.6}
-        visual: "A “Hello, my name is” tag reads “a user” and is crossed out in red."
+        start: 27.62
+        end: 29.84
+        text: "“As a user”? Too blurry — name exactly who:"
+        marks: {"as": 27.62, "a": 27.84, "user": 27.94, "too": 28.16, "blurry": 28.4, "name": 28.74, "exactly": 28.96, "who": 29.42}
+        visual: "“user” is struck out on the card, and a red note asks “Which user?”"
       - id: verse-1-6
-        start: 27.8
-        end: 30.69
-        text: "a student? A TA? Which one of you?"
-        marks: {"a": 27.8, "student": 28.44, "a_2": 29.08, "ta": 29.1, "which": 29.62, "one": 29.76, "of": 30.0, "you": 30.18}
-        visual: "Two new name tags pop up, “student” and “TA”, with a note: “Which one?”"
+        start: 29.84
+        end: 32.14
+        text: "the rider and the driver don’t want the same view."
+        marks: {"the": 29.84, "rider": 30.2, "and": 30.42, "the_2": 30.66, "driver": 30.76, "dont": 31.02, "want": 31.26, "the_3": 31.44, "same": 31.6, "view": 31.88}
+        visual: "Two name tags pop up, “rider” and “driver”, with what each sees: “my car, 3 min away” and “pickup at 5th & Main”. The card now reads “As a rider”."
       - id: verse-1-7
-        start: 30.84
-        end: 33.16
-        text: "Add them, change them, drop them any day,"
-        marks: {"add": 30.84, "them": 31.32, "change": 31.66, "them_2": 31.88, "drop": 32.3, "them_3": 32.44, "any": 32.66, "day": 32.84}
-        visual: "On a board of story cards, a new card is added, one is rewritten, and one is dropped into a trash bin."
+        start: 32.14
+        end: 34.5
+        text: "“I want” is the need; “so that” is the real why —"
+        marks: {"i": 32.14, "want": 32.46, "is": 32.68, "the": 32.82, "need": 32.92, "so": 33.14, "that": 33.34, "is_2": 33.52, "the_2": 33.66, "real": 33.78, "why": 34.12}
+        visual: "The “I want” line is highlighted gold and labeled “the need”; the “so that” line is highlighted cyan and labeled “the real why”."
       - id: verse-1-8
-        start: 33.16
-        end: 35.58
-        text: "ship in any order — value all the way."
-        marks: {"shipping": 33.16, "any": 33.86, "order": 34.12, "value": 34.42, "all": 34.74, "the": 35.1, "way": 35.28}
-        visual: "The remaining cards swap order, and each gets a sparkle: “value every time”."
+        start: 34.5
+        end: 36.72
+        text: "not the same feature in a fresh disguise."
+        marks: {"not": 34.5, "the": 34.88, "same": 35.06, "feature": 35.28, "in": 35.56, "a": 35.78, "fresh": 35.9, "disguise": 36.12}
+        visual: "Novelty glasses with a moustache appear after “I can see my car”, and a red sticker reads “same feature, new disguise”. The line is rewritten: “so that I’m outside when it pulls up”."
       - id: verse-1-9
-        start: 35.58
-        end: 38.26
-        text: "Acceptance criteria tell us when it’s done,"
-        marks: {"acceptance": 35.58, "criteria": 36.48, "tell": 37.02, "us": 37.46, "when": 37.66, "its": 37.82, "done": 37.98}
-        visual: "A card’s acceptance criteria tick one by one, and a green note reads “done = criteria pass”."
+        start: 36.72
+        end: 39.62
+        text: "Acceptance criteria spell out when it’s done:"
+        marks: {"acceptance": 36.72, "criteria": 37.46, "spell": 37.82, "out": 38.32, "when": 38.56, "its": 38.92, "done": 39.28}
+        visual: "The acceptance criteria are written on the card’s lines: “Given I booked a ride”, “When my driver is on the way”, “Then I see the car and minutes away”. The Then line gets a green check, and a note reads “done = criteria pass”."
       - id: verse-1-10
-        start: 38.26
-        end: 40.5
-        text: "and each commit names the story it’s from."
-        marks: {"and": 38.26, "each": 38.62, "commit": 38.78, "names": 39.1, "the": 39.52, "story": 39.68, "its": 40.12, "from": 40.44}
-        visual: "A commit, “a1f3c9 Add resubmit button”, ends with a reference “#12” that lights up gold, linked to story card #12."
+        start: 40.96
+        end: 44.22
+        text: "clear enough to test, but they don’t choose the code you run."
+        marks: {"clear": 40.96, "enough": 41.44, "to": 41.82, "test": 42.0, "but": 42.26, "they": 42.42, "dont": 42.6, "choose": 42.82, "the": 43.1, "code": 43.28, "you": 43.58, "run": 43.78}
+        visual: "Stickers read “clear enough to test” and, crossed out in red, “not the code you run”."
   - id: pre-chorus
     title: "Pre-chorus"
     delivery: sung
-    narration: "Pre-chorus: an index card with three slots. As a, who: student. I want, what: to resubmit before it's due. So that, why: I can fix a mistake or two. Then the INVEST scanner rises beneath it: six lamps, I, N, V, E, S, T."
+    narration: "Pre-chorus: a story card fills in. As a student in the dorms, I want a ping when my wash is done, so that my wet clothes don't get dumped by someone. Its criteria: Given my wash is running, When the cycle ends, Then my phone pings within a minute. The INVEST scanner rises below: I, N, V, E, S, T."
     lines:
       - id: pre-chorus-1
-        start: 40.5
-        end: 41.96
-        text: "As a — who? — student,"
-        marks: {"as": 40.5, "a": 41.0, "who": 41.2, "student": 41.78}
-        visual: "A big story card: the “As a” slot asks “who?”, then fills in “student”."
+        start: 45.58
+        end: 48.18
+        text: "As a student in the dorms,"
+        marks: {"as": 45.58, "a": 46.06, "student": 46.16, "in": 46.92, "the": 47.52, "dorms": 47.76}
+        visual: "A big story card: the “As a” slot fills in “student in the dorms” as a note asks “who?”."
       - id: pre-chorus-2
-        start: 41.96
-        end: 43.82
-        text: "I want — what? — to resubmit before it’s due,"
-        marks: {"i": 42.16, "want": 42.2, "what": 42.46, "to": 42.64, "resubmit": 42.7, "before": 43.18, "its": 43.44, "due": 43.68}
-        visual: "The “I want” slot asks “what?”, then fills in “to resubmit before it’s due”."
+        start: 48.18
+        end: 50.32
+        text: "I want a ping when my wash is done,"
+        marks: {"i": 48.18, "want": 48.28, "a": 48.44, "ping": 48.88, "when": 49.2, "my": 49.4, "wash": 49.54, "is": 49.84, "done": 50.08}
+        visual: "The “I want” slot fills in “a ping when my wash is done” as a note asks “what?”."
       - id: pre-chorus-3
-        start: 43.82
-        end: 46.2
-        text: "so that — why? — I can fix a mistake or two."
-        marks: {"so": 43.9, "that": 43.98, "why": 44.32, "i": 44.64, "can": 44.72, "fix": 44.86, "a": 45.18, "mistake": 45.36, "or": 45.74, "two": 45.96}
-        visual: "The “so that” slot asks “why?”, then fills in “I can fix a mistake or two”."
+        start: 50.32
+        end: 53.16
+        text: "so that my clothes don’t get dumped by someone."
+        marks: {"so": 50.32, "that": 50.52, "my": 50.68, "clothes": 50.92, "dont": 51.44, "get": 51.82, "dumped": 52.02, "by": 52.32, "someone": 52.58}
+        visual: "The “so that” slot fills in “my wet clothes don’t get dumped by someone” as a note asks “why?”."
       - id: pre-chorus-4
-        start: 46.2
-        end: 49.3
+        start: 53.16
+        end: 55.46
         text: "Is it a good story? Check it with INVEST!"
-        marks: {"is": 46.2, "it": 46.52, "a": 46.68, "good": 46.8, "story": 47.08, "check": 47.98, "it_2": 48.22, "with": 48.38, "invest": 48.56}
-        visual: "The INVEST scanner rises below the card: six lamps labeled Independent, Negotiable, Valuable, Estimable, Small, and Testable."
+        marks: {"is": 53.16, "it": 53.58, "a": 53.7, "good": 53.82, "story": 53.98, "check": 54.4, "it_2": 54.82, "with": 54.96, "invest": 55.12}
+        visual: "The card’s acceptance criteria appear: “Given my wash is running”, “When the cycle ends”, “Then my phone pings within a minute”. The INVEST scanner rises below: six lamps labeled Independent, Negotiable, Valuable, Estimable, Small, and Testable."
   - id: chorus-1
     title: "Chorus"
     delivery: sung
-    narration: "The chorus: the INVEST scanner at the top lights one lamp per letter while a big gold tile shows the letter, its name, and what it means: I, Independent, any order. N, Negotiable, the what, not the how. V, Valuable, a user wins on its own. E, Estimable, the effort can be known. S, Small, the smallest slice that still passes. T, Testable, Given, When, Then. All six lamps flash in turn, and big type reads Invest in your stories, with interest."
+    narration: "The chorus: the INVEST scanner at the top lights one lamp per letter while a big gold tile shows the letter, its name, and its definition. I, Independent: no overlap, no waiting, any order. N, Negotiable: the need, not the design. V, Valuable: users or customers gain, not just devs. E, Estimable: scope clear enough to size. S, Small: one sprint, smallest valuable slice. T, Testable: criteria say pass or fail. All six lamps flash in turn, and big type reads Invest in your stories, with interest."
     lines:
       - id: chorus-1-1
-        start: 49.3
-        end: 52.26
-        text: "I! Independent: any order — later or now!"
-        marks: {"i": 49.3, "independent": 49.84, "any": 50.38, "order": 50.58, "later": 51.12, "or": 51.46, "now": 51.7}
-        visual: "The scanner lights its I lamp; a gold tile slams in: “I · Independent”, with “any order” and a loop icon. Two story cards swap places."
+        start: 55.46
+        end: 59.92
+        text: "Independent! No overlap, no waiting — any order!"
+        marks: {"independent": 55.46, "no": 56.08, "overlap": 56.56, "no_2": 57.14, "waiting": 57.48, "any": 57.94, "order": 58.44}
+        visual: "The scanner lights its I lamp; a gold tile slams in: “I · Independent”, with “no overlap, no waiting: any order”. Two cards, Story A and Story B, swap places."
       - id: chorus-1-2
-        start: 52.26
-        end: 54.36
-        text: "N! Negotiable: say the what, and not the how!"
-        marks: {"n": 52.26, "negotiable": 52.6, "so": 53.0, "what": 53.16, "and": 53.5, "not": 53.8, "the": 53.96, "how": 54.06}
-        visual: "The N lamp lights: “N · Negotiable”, with “the what, not the how”: a green “what” chip stays while a red “how” chip is crossed out."
+        start: 59.92
+        end: 64.62
+        text: "Negotiable! The need, not the design — talk it over!"
+        marks: {"negotiable": 59.92, "the": 60.82, "need": 60.96, "not": 61.28, "the_2": 61.46, "design": 61.7, "talk": 62.5, "it": 63.16, "over": 63.84}
+        visual: "The N lamp lights: “N · Negotiable”, with “the need, not the design”, and stickers “the need” and “the design: talk it over”."
       - id: chorus-1-3
-        start: 54.36
-        end: 57.14
-        text: "V! Valuable: a user wins on its own!"
-        marks: {"v": 54.44, "v_2": 54.76, "viable": 55.1, "a": 55.52, "user": 55.66, "wins": 55.9, "on": 56.26, "its": 56.56, "own": 56.78}
-        visual: "The V lamp lights: “V · Valuable”, with “a user wins on its own” and a user beside a sparkle."
+        start: 64.62
+        end: 69.18
+        text: "Valuable! Not just devs — users or customers gain!"
+        marks: {"valuable": 64.62, "not": 65.16, "just": 65.56, "devs": 65.86, "users": 66.46, "or": 66.86, "customers": 67.12, "gain": 68.58}
+        visual: "The V lamp lights: “V · Valuable”, with “users or customers gain”, and stickers “not just devs”, “users”, and “customers”."
       - id: chorus-1-4
-        start: 57.14
-        end: 59.22
-        text: "E! Estimable: the effort can be known!"
-        marks: {"e": 57.46, "estimable": 57.74, "the": 58.1, "effort": 58.22, "can": 58.44, "be": 58.62, "known": 58.78}
-        visual: "The E lamp lights: “E · Estimable”, with “the effort can be known” and an estimate dial settling on 5 points."
+        start: 69.18
+        end: 73.16
+        text: "Estimable! Scope’s clear, so we can size what it takes!"
+        marks: {"estimable": 69.18, "scopes": 69.96, "clear": 70.28, "so": 70.64, "we": 71.04, "can": 71.4, "size": 71.6, "what": 72.02, "it": 72.28, "takes": 72.54}
+        visual: "The E lamp lights: “E · Estimable”, with “scope clear enough to size”, and stickers “scope: clear” and “effort: 5 pts”."
       - id: chorus-1-5
-        start: 59.22
-        end: 61.6
-        text: "S! The smallest slice that still passes the rest!"
-        marks: {"s": 59.54, "the": 59.64, "smallest": 59.74, "slice": 60.0, "that": 60.34, "still": 60.52, "passes": 60.66, "the_2": 61.08, "rest": 61.32}
-        visual: "The S lamp lights: “S · Small”, with “smallest slice that still passes” and a thin slice cut from a card."
+        start: 73.16
+        end: 76.26
+        text: "Small! Fits one sprint — the smallest valuable slice there is!"
+        marks: {"small": 73.16, "fits": 73.8, "one": 74.24, "sprint": 74.48, "the": 74.76, "smallest": 74.84, "valuable": 75.08, "slice": 75.46, "there": 75.8, "is": 76.02}
+        visual: "The S lamp lights: “S · Small”, with “one sprint, smallest valuable slice”, and stickers “fits 1 sprint” and “smallest slice, still valuable”."
       - id: chorus-1-6
-        start: 61.6
-        end: 64.14
-        text: "T! Given, When, Then — put it to the test!"
-        marks: {"t": 61.84, "given": 62.02, "when": 62.4, "then": 62.68, "put": 63.26, "it": 63.4, "to": 63.56, "the": 63.68, "test": 63.82}
-        visual: "The T lamp lights: “T · Testable”, with “Given, When, Then” as three ticking checkboxes."
+        start: 76.26
+        end: 78.56
+        text: "Testable! Criteria say pass or fail — no “-ish”!"
+        marks: {"testable": 76.26, "criteria": 76.82, "say": 77.28, "pass": 77.56, "or": 77.74, "fail": 77.86, "no": 78.1, "ish": 78.28}
+        visual: "The T lamp lights: “T · Testable”, with “criteria say pass or fail”, and stickers “pass”, “fail”, and “no -ish”."
       - id: chorus-1-7
-        start: 64.14
-        end: 66.6
-        text: "I! N! V! E! S! T!"
-        marks: {"i": 64.3, "n": 64.6, "v": 65.12, "e": 65.56, "s": 65.86, "t": 66.38}
-        visual: "All six lamps flash in turn, one per sung letter, and turn green."
+        start: 78.56
+        end: 80.66
+        text: "I! N! I! N! V! E! S! T!"
+        marks: {"i": 78.56, "n": 78.8, "i_2": 79.08, "n_2": 79.38, "v": 79.64, "e": 79.9, "s": 80.24, "t": 80.5}
+        visual: "Big letters I N V E S T slam in, one per sung letter, as each lamp turns green."
       - id: chorus-1-8
-        start: 66.6
-        end: 69.2
+        start: 80.66
+        end: 83.3
         text: "Invest in your stories — they pay you back with interest!"
-        marks: {"invest": 66.6, "in": 67.14, "your": 67.48, "stories": 67.6, "they": 68.12, "pay": 68.24, "you": 68.42, "back": 68.58, "with": 68.76, "interest": 68.96}
-        visual: "Big type: “Invest in your stories”, then a gold “+ interest” sticker with a percent icon."
+        marks: {"invest": 80.66, "in": 81.0, "your": 81.26, "stories": 81.42, "they": 81.88, "pay": 82.24, "you": 82.38, "back": 82.52, "with": 82.7, "interest": 82.88}
+        visual: "Big type: “Invest in your stories”, then a green “+ interest” sticker with a percent icon."
   - id: verse-2
     title: "Verse 2"
     delivery: sung
-    narration: "Verse 2: Independent, Negotiable, Valuable. Story cards wait in a queue, then reorder freely. A three-layer cake, form, logic, and database, is split by layers into separate pieces that are stuck: neither works alone. Then a knife cuts one slice through every layer, and a sticky note on a card says depends on number 4. For Negotiable, two speech bubbles stand for a promise to talk, and a padlocked blueprint is crossed out. A card reads I want the site on HTTPS and gets a red HOW stamp; it is rewritten to keep my data private, and a separate note lists constraints. For Valuable, a user and a customer cheer, while a developer-only trophy is crossed out. A phone shows an Enroll button; tapping it does nothing, and a question mark asks where the value went. The criteria are rewritten, and tapping Enroll now shows enrolled in CS 35L, and the card is stamped valuable."
+    narration: "Verse 2: Independent, Negotiable, Valuable. Story A searches songs by artist, Story B by artist or album. They swap places, either order works, but the same three criteria on both turn red: overlap, worse than waiting. A cake split by layers gives Story 1, a sign-up screen, and Story 2, my sign-up saved, both stamped stuck. One slice through every layer becomes Story 4, sign up, beside Story 5, invite a friend, whose criterion Given I'm signed up is highlighted: depends on number 4. For Negotiable: a promise to talk, not a contract or a locked blueprint. I want my high scores saved in Firebase is stamped how; the need, they're still there next time I play, stays, and the want becomes my high scores kept. The team picks the tools, and must-use tools go on a separate constraints card. For Valuable, a developer's card, clean up the cart code, gets scissors and the question who'd complain? Only devs would notice. A hungry student's order-tracking card checks only that the order page loads; the criterion is rewritten to show the minutes till it arrives, the phone shows a delivery map, and the card is stamped valuable."
     lines:
       - id: verse-2-1
-        start: 69.2
-        end: 71.64
-        text: "I for Independent: no waiting in line —"
-        marks: {"i": 69.2, "for": 69.72, "independent": 69.86, "no": 70.6, "waiting": 70.74, "in": 71.08, "line": 71.32}
-        visual: "Badge “Verse 2 · I · N · V”. Three story cards wait in a queue under the I lamp."
+        start: 83.3
+        end: 85.54
+        text: "I for Independent: no story has to come first,"
+        marks: {"i": 83.3, "for": 83.52, "independent": 83.68, "no": 84.38, "story": 84.48, "has": 84.76, "to": 84.96, "come": 85.1, "first": 85.28}
+        visual: "Badge “Verse 2 · Independent · Negotiable · Valuable”. Two ruled cards: Story A, “As a listener, I want to search songs by artist”, and Story B, “I want to search by artist or album”, each with Given / When / Then criteria. They swap places, and a sticker reads “either order works”."
       - id: verse-2-2
-        start: 71.64
-        end: 74.06
-        text: "build it first or last, any order’s fine."
-        marks: {"build": 71.64, "it": 71.92, "first": 72.08, "or": 72.34, "last": 72.6, "any": 73.1, "orders": 73.32, "fine": 73.78}
-        visual: "The cards shuffle into a different order, and a green sticker reads “any order ✓”."
+        start: 85.54
+        end: 87.84
+        text: "and no two cards promise the same thing — overlap’s worse."
+        marks: {"and": 85.54, "no": 85.68, "two": 85.8, "cards": 85.92, "promise": 86.18, "the": 86.48, "same": 86.66, "thing": 86.8, "overlaps": 87.14, "worse": 87.62}
+        visual: "The same three criteria on both cards turn red, “Given the app has SZA songs, When I search ‘SZA’, Then only SZA songs show”; a stamp reads “Overlap”, and a note “worse than waiting”."
       - id: verse-2-3
-        start: 74.06
-        end: 76.38
-        text: "Split by layers — “form,” then “database”?"
-        marks: {"split": 74.06, "by": 74.4, "layers": 74.58, "form": 75.22, "then": 75.74, "database": 75.84}
-        visual: "A three-layer cake, “form (UI)”, “logic”, and “database”, splits apart by layers into separate stories."
+        start: 87.84
+        end: 89.56
+        text: "Split by layers? “Build the screen,” then “save the data”?"
+        marks: {"split": 87.84, "by": 88.06, "layers": 88.2, "build": 88.52, "the": 88.64, "screen": 88.74, "then": 89.02, "save": 89.06, "the_2": 89.24, "data": 89.34}
+        visual: "A three-layer cake, “screen”, “logic”, and “data”, splits apart by layers into two cards: Story 1, “I want a sign-up screen”, and Story 2, “I want my sign-up saved”."
       - id: verse-2-4
-        start: 76.38
-        end: 79.2
-        text: "Neither works alone; they’re stuck in place."
-        marks: {"neither": 76.38, "works": 77.0, "alone": 77.42, "theyre": 78.06, "stuck": 78.26, "in": 78.56, "place": 78.82}
-        visual: "Each separated layer gets a red “stuck” tag: no layer works alone."
+        start: 89.56
+        end: 91.88
+        text: "Neither works alone; they just wait on each other."
+        marks: {"neither": 89.56, "works": 89.8, "alone": 90.18, "they": 90.72, "just": 90.9, "wait": 91.06, "on": 91.32, "each": 91.5, "other": 91.7}
+        visual: "A red “Stuck” stamp lands under each card, and a note reads “neither works alone”."
       - id: verse-2-5
-        start: 79.2
-        end: 81.7
-        text: "Cut it like a cake: each slice, every layer."
-        marks: {"cut": 79.2, "it": 79.48, "like": 79.64, "a": 79.82, "cake": 79.94, "each": 80.26, "slice": 80.5, "every": 81.0, "layer": 81.24}
-        visual: "The layers restack; a knife cuts one thin slice through all three layers, and the slice slides out outlined gold: “one slice = every layer”."
+        start: 91.88
+        end: 93.88
+        text: "Slice it like a cake: one slice through every layer."
+        marks: {"slice": 91.88, "it": 92.12, "like": 92.22, "a": 92.38, "cake": 92.52, "one": 92.88, "slice_2": 92.96, "through": 93.18, "every": 93.36, "layer": 93.58}
+        visual: "The layers restack and a knife cuts one slice through all three; a note reads “one slice = every layer”. Story #4 appears: “As a new player, I want to sign up, so that my profile is there next time”, with criteria from the sign-up page to “my profile is there when I log back in”."
       - id: verse-2-6
-        start: 81.7
-        end: 84.32
-        text: "Still a link? Write it down — no surprise later."
-        marks: {"still": 81.7, "a": 81.98, "link": 82.18, "write": 82.46, "it": 82.66, "down": 82.8, "no": 83.2, "surprise": 83.32, "later": 83.8}
-        visual: "A story card gets a yellow sticky note: “depends on #4”."
+        start: 93.88
+        end: 96.44
+        text: "Still a link? Write it down, so it’s no surprise later."
+        marks: {"still": 93.88, "a": 94.3, "link": 94.5, "write": 94.78, "it": 94.94, "down": 95.06, "so": 95.26, "its": 95.44, "no": 95.62, "surprise": 95.74, "later": 96.14}
+        visual: "Story #4 slides left beside Story #5, “I want to invite a friend”; its criterion “Given I’m signed up” is highlighted, a gold note reads “depends on #4”, and a sticker “no surprise later”."
       - id: verse-2-7
-        start: 84.32
-        end: 86.78
+        start: 96.44
+        end: 98.56
         text: "N for Negotiable: a promise to talk,"
-        marks: {"n": 84.3, "for": 84.66, "negotiable": 84.92, "a": 85.86, "promise": 85.98, "to": 86.28, "talk": 86.46}
-        visual: "The N lamp lights; a user’s and a team’s speech bubbles appear: “a promise to talk”."
+        marks: {"n": 96.44, "for": 96.62, "negotiable": 96.78, "a": 97.84, "promise": 97.9, "to": 98.16, "talk": 98.32}
+        visual: "A user’s speech bubble, “Here’s what I need…”, and the team’s, “Let’s work out how.”"
       - id: verse-2-8
-        start: 86.78
-        end: 89.3
+        start: 98.56
+        end: 100.76
         text: "not a contract, not a blueprint on lock."
-        marks: {"not": 86.78, "a": 87.06, "contract": 87.2, "not_2": 87.68, "a_2": 88.32, "blueprint": 88.46, "on": 88.76, "lock": 89.1}
-        visual: "Stickers “contract” and “locked blueprint” are crossed out in red."
+        marks: {"not": 98.56, "a": 98.88, "contract": 99.04, "not_2": 99.62, "a_2": 99.76, "blueprint": 99.88, "on": 100.28, "lock": 100.28}
+        visual: "Stickers “not a contract” and “not a locked blueprint” are crossed out in red."
       - id: verse-2-9
-        start: 89.3
-        end: 91.74
-        text: "“I want the site on HTTPS”?"
-        marks: {"i": 89.3, "want": 89.4, "the": 89.58, "site": 89.72, "on": 90.0, "https": 90.3}
-        visual: "A story card reads “I want the site on HTTPS”."
+        start: 100.76
+        end: 103.02
+        text: "“I want my high scores saved in Firebase”?"
+        marks: {"i": 100.76, "want": 101.0, "my": 101.16, "high": 101.3, "scores": 101.5, "saved": 101.76, "in": 102.18, "firebase": 102.44}
+        visual: "A ruled card: “As a gamer, I want my high scores saved in Firebase, so that they’re still there next time I play”, with criteria “Given I set a high score, When I reopen the game, Then my score is still on the board”. The Firebase line is highlighted red."
       - id: verse-2-10
-        start: 91.74
-        end: 94.4
-        text: "That’s a how! Name the need; the team does the rest."
-        marks: {"thats": 91.74, "a": 92.22, "how": 92.28, "name": 92.5, "the": 92.76, "need": 92.88, "the_2": 93.12, "team": 93.36, "does": 93.62, "the_3": 93.92, "rest": 94.14}
-        visual: "A red “HOW?” stamp lands on the card; a note reads “the team picks the how”."
+        start: 103.02
+        end: 105.34
+        text: "That’s a how! The need: “they’re still there next time I play.”"
+        marks: {"thats": 103.02, "a": 103.48, "how": 103.56, "the": 103.78, "need": 103.86, "theyre": 104.08, "still": 104.16, "there": 104.28, "next": 104.44, "time": 104.68, "i": 104.9, "play": 105.12}
+        visual: "A red “HOW?” stamp lands on the Firebase line; the “so that” line is highlighted green and labeled “the need”, and the want is rewritten: “my high scores kept”."
       - id: verse-2-11
-        start: 94.4
-        end: 96.84
-        text: "“Keep my data private” — that’s the need."
-        marks: {"keep": 94.4, "my": 94.62, "data": 94.78, "private": 95.0, "thats": 95.5, "the": 96.34, "need": 96.5}
-        visual: "The request is rewritten in green: “Keep my data private”, labeled “the need”."
+        start: 105.34
+        end: 107.9
+        text: "Name the need; the team picks the tools to get there."
+        marks: {"name": 105.34, "the": 105.68, "need": 105.86, "the_2": 106.18, "team": 106.3, "picks": 106.52, "the_3": 106.82, "tools": 107.02, "to": 107.24, "get": 107.42, "there": 107.6}
+        visual: "Tool chips appear, “Firebase”, “SQL”, and “local save”, with a note: “the team picks the how”."
       - id: verse-2-12
-        start: 96.84
-        end: 98.9
-        text: "A must-have tech? Note that separately."
-        marks: {"a": 96.84, "must": 97.28, "have": 97.58, "tech": 97.9, "note": 98.14, "that": 98.4, "separately": 98.58}
-        visual: "A separate card, “Constraints: must-have tech”, slides to the side."
+        start: 107.9
+        end: 110.32
+        text: "A must-use tool? That’s a constraint — note it elsewhere."
+        marks: {"a": 107.9, "mustuse": 108.1, "tool": 108.6, "thats": 108.94, "a_2": 109.08, "constraint": 109.12, "note": 109.46, "it": 109.76, "elsewhere": 109.76}
+        visual: "A separate card, “Constraints: must-use tools”, appears with a sticker: “written down separately”."
       - id: verse-2-13
-        start: 98.9
-        end: 102.06
-        text: "V for Valuable: useful on its own,"
-        marks: {"v": 98.9, "for": 100.0, "valuable": 100.48, "useful": 100.92, "on": 101.32, "its": 101.66, "own": 101.78, "own_2": 101.78}
-        visual: "The V lamp lights; a user and a customer appear with a sparkle: “useful on its own”."
+        start: 110.32
+        end: 112.34
+        text: "V for Valuable: if we cut it, who’d complain?"
+        marks: {"v": 110.32, "for": 110.52, "valuable": 110.68, "if": 111.34, "we": 111.42, "cut": 111.56, "it": 111.72, "whod": 111.84, "complain": 112.08}
+        visual: "A ruled card: “As a developer, I want to clean up the cart code, so that it’s easier for me to change”, with criteria ending “Then they all still pass”. Scissors hover beside it, and a note asks “Who’d complain?”"
       - id: verse-2-14
-        start: 102.06
-        end: 104.46
-        text: "for users or customers — not devs alone."
-        marks: {"for": 102.06, "users": 102.34, "or": 102.68, "customers": 102.88, "not": 103.4, "devs": 103.7, "alone": 104.18}
-        visual: "A “devs only” trophy is crossed out in red."
+        start: 112.34
+        end: 114.56
+        text: "If only devs would notice, find the users’ gain."
+        marks: {"if": 112.34, "only": 112.68, "devs": 112.92, "would": 113.14, "notice": 113.28, "find": 113.58, "the": 113.68, "users": 113.82, "gain": 114.4}
+        visual: "The “As a developer” line is highlighted red; stickers read “only devs would notice” and “find the users’ gain”."
       - id: verse-2-15
-        start: 104.46
-        end: 107.18
-        text: "The only check: “an Enroll button shows”?"
-        marks: {"the": 104.46, "only": 104.9, "check": 105.16, "and": 105.52, "enroll": 106.02, "button": 106.34, "shows": 106.66}
-        visual: "A card’s only criterion reads “An Enroll button shows”, beside a phone that shows an Enroll button."
+        start: 114.56
+        end: 116.92
+        text: "“Track my order” — but the only check is “the page loads”?"
+        marks: {"track": 114.56, "my": 114.8, "order": 114.96, "but": 115.3, "the": 115.38, "only": 115.54, "check": 115.74, "is": 116.02, "the_2": 116.26, "page": 116.38, "loads": 116.72}
+        visual: "A ruled card: “As a hungry student, I want to track my order, so that I know when to head downstairs”, whose only Then line, “the order page loads”, is highlighted red; a phone shows “Order #482 · Order placed.”"
       - id: verse-2-16
-        start: 107.18
-        end: 109.38
-        text: "Click it — nothing happens. Where’d the value go?"
-        marks: {"clicking": 107.18, "nothing": 107.66, "happens": 107.96, "whered": 108.34, "the": 108.62, "value": 108.72, "go": 109.08}
-        visual: "A finger taps Enroll; nothing happens, and a question mark asks “Where’d the value go?”"
+        start: 116.92
+        end: 119.12
+        text: "So when’s my food here? Still nobody knows."
+        marks: {"so": 116.92, "whens": 117.28, "my": 117.36, "food": 117.5, "here": 117.76, "still": 118.08, "nobody": 118.28, "knows": 118.76}
+        visual: "A red note asks “When’s my food here?”"
       - id: verse-2-17
-        start: 109.38
-        end: 111.7
-        text: "So the criteria must reach the real goal:"
-        marks: {"so": 109.38, "the": 109.64, "the_2": 109.78, "criteria": 109.78, "must": 110.22, "reach": 110.7, "the_3": 111.0, "real": 111.26, "goal": 111.5}
-        visual: "The criterion is rewritten: “Click Enroll → I’m enrolled”."
+        start: 119.12
+        end: 121.46
+        text: "Criteria set the scope — so they must reach the goal:"
+        marks: {"criteria": 119.12, "set": 119.78, "the": 119.94, "scope": 120.04, "so": 120.4, "they": 120.48, "must": 120.62, "reach": 120.86, "the_2": 121.08, "goal": 121.22}
+        visual: "A note reads “criteria = the scope”, and the Then line is rewritten in green: “I see the minutes till it arrives”."
       - id: verse-2-18
-        start: 111.7
-        end: 114.3
-        text: "click “Enroll” — and you’re in. Now the story’s whole."
-        marks: {"click": 111.7, "enroll": 112.08, "and": 112.7, "youre": 112.86, "in": 113.06, "now": 113.22, "the": 113.38, "storys": 113.7, "whole": 114.22}
-        visual: "A tap on Enroll now shows “Enrolled ✓ CS 35L”, and a green “Valuable” stamp lands on the card."
+        start: 121.46
+        end: 123.74
+        text: "“Then I see the minutes till it’s here.” Now the story’s whole."
+        marks: {"then": 121.46, "i": 121.66, "see": 121.84, "the": 121.9, "minutes": 122.06, "till": 122.34, "its": 122.48, "here": 122.74, "now": 122.84, "the_2": 123.04, "storys": 123.18, "whole": 123.52}
+        visual: "The phone shows a delivery map with the courier’s route and “Arriving in 12 min”; the Then line gets a green check, and a green stamp reads “Valuable”."
   - id: chorus-2
     title: "Chorus"
     delivery: sung
-    narration: "The chorus again: the scanner lights each letter, with its gold tile, name, and meaning, and all six lamps flash before Invest in your stories."
+    narration: "The chorus again, just the letters: big letters I N V E S T light every lamp, then Invest in your stories."
     lines:
       - id: chorus-2-1
-        start: 114.3
-        end: 117.9
-        text: "I! Independent: any order — later or now!"
-        marks: {"i": 114.3, "independent": 115.48, "any": 116.2, "order": 116.22, "later": 116.82, "or": 117.18, "now": 117.38}
-        visual: "The scanner lights its I lamp; a gold tile slams in: “I · Independent”, with “any order” and a loop icon. Two story cards swap places."
-      - id: chorus-2-2
-        start: 117.9
-        end: 120.12
-        text: "N! Negotiable: the what, and not the how!"
-        marks: {"n": 117.9, "negotiable": 118.2, "n_2": 118.56, "the": 118.72, "what": 118.82, "and": 119.24, "not": 119.46, "the_2": 119.62, "how": 119.74}
-        visual: "The N lamp lights: “N · Negotiable”, with “the what, not the how”: a green “what” chip stays while a red “how” chip is crossed out."
-      - id: chorus-2-3
-        start: 120.12
-        end: 122.96
-        text: "V! Valuable: a user wins on its own!"
-        marks: {"v": 120.12, "valuable": 120.72, "a": 121.24, "user": 121.36, "wins": 121.56, "on": 121.94, "its": 122.22, "own": 122.46}
-        visual: "The V lamp lights: “V · Valuable”, with “a user wins on its own” and a user beside a sparkle."
-      - id: chorus-2-4
-        start: 122.96
-        end: 124.86
-        text: "E! Estimable: the effort can be known!"
-        marks: {"e": 122.96, "estimable": 123.44, "the": 123.82, "effort": 123.92, "can": 124.12, "be": 124.3, "known": 124.46}
-        visual: "The E lamp lights: “E · Estimable”, with “the effort can be known” and an estimate dial settling on 5 points."
-      - id: chorus-2-5
-        start: 124.86
-        end: 127.32
-        text: "S! The smallest slice that still passes the rest!"
-        marks: {"s": 125.22, "small": 125.62, "the": 125.72, "slice": 125.74, "that": 126.02, "still": 126.2, "passes": 126.36, "the_2": 126.76, "rest": 127.0}
-        visual: "The S lamp lights: “S · Small”, with “smallest slice that still passes” and a thin slice cut from a card."
-      - id: chorus-2-6
-        start: 127.32
-        end: 129.8
-        text: "T! Given, When, Then — put it to the test!"
-        marks: {"t": 127.42, "given": 127.72, "when": 128.06, "then": 128.36, "put": 128.94, "it": 129.1, "to": 129.24, "the": 129.38, "test": 129.5}
-        visual: "The T lamp lights: “T · Testable”, with “Given, When, Then” as three ticking checkboxes."
-      - id: chorus-2-7
-        start: 129.8
-        end: 132.28
+        start: 123.88
+        end: 125.6
         text: "I! N! V! E! S! T!"
-        marks: {"i": 129.8, "n": 130.24, "v": 130.82, "e": 131.22, "s": 131.52, "t": 132.08}
-        visual: "All six lamps flash in turn, one per sung letter, and turn green."
-      - id: chorus-2-8
-        start: 132.28
-        end: 135.12
+        marks: {"i": 123.88, "n": 124.24, "v": 124.6, "e": 124.82, "s": 125.1, "t": 125.44}
+        visual: "Big letters I N V E S T slam in, one per sung letter, as each lamp turns green."
+      - id: chorus-2-2
+        start: 125.6
+        end: 128.8
         text: "Invest in your stories — they pay you back with interest!"
-        marks: {"invest": 132.28, "in": 132.82, "your": 133.16, "stories": 133.28, "they": 133.84, "pay": 133.94, "you": 134.12, "back": 134.26, "with": 134.44, "interest": 134.66}
-        visual: "Big type: “Invest in your stories”, then a gold “+ interest” sticker with a percent icon."
+        marks: {"invest": 125.6, "in": 125.94, "your": 126.18, "stories": 126.32, "they": 127.34, "pay": 127.7, "you": 127.88, "back": 128.02, "with": 128.2, "interest": 128.4}
+        visual: "Big type: “Invest in your stories”, then a green “+ interest” sticker with a percent icon."
   - id: verse-3
     title: "Verse 3"
     delivery: sung
-    narration: "Verse 3: Estimable, Small, Testable. An estimate dial settles on 3 points: the scope is clear. Then a card reads read handwriting with high accuracy; fog covers the dial while question marks ask how high and which characters. A customer conversation and a time-boxed spike, two days on a stopwatch, clear the fog, and the dial settles on 5 points. For Small, a story card fits inside a one-sprint box; scissors that would cut it once more are stopped, because both halves would break the other five letters. A story wearing a trench coat, I want Piazza, Gradescope, Drive, and Zoom, drops the coat and becomes four stories. Crumb-sized cards, edit date, edit title, edit place, merge into edit an entry. For Testable, a question asks how do we know it's done; acceptance criteria appear before the code editor opens. Vague words, fast, pretty, easy, float as clouds and are replaced by a number and a state. Then three panels: Given it's before the deadline, When I upload a new file, Then my submission shows the new one, and a PASS stamp lands."
+    narration: "Verse 3: Estimable, Small, Testable. Beside the laundry card, an estimate dial settles on 3 points, rough but fair: domain, tech, and scope are clear. A professor wants to curve the exam grades; Then each grade is curved turns red, and fog covers the dial until the professor says add 5 points to everyone and it settles on 2. A singer wants the app to show the note being sung; nobody has built pitch detection, so a 2-day spike clears the fog: 5 points. For Small, a post-a-photo story fits a one-sprint box. A trench coat of three stories drops and splits at the ands into three cards, each with its own criteria. A card for editing just the bio's first line takes longer to write than to code, so the crumbs merge into edit my bio. For Testable, the laundry card's criteria come before the code. A vague criterion, the ping feels fast, can't be tested and becomes within a minute. Three panels, Given my wash is running, When the cycle ends, Then my phone pings within a minute, end in pass."
     lines:
       - id: verse-3-1
-        start: 135.12
-        end: 137.4
-        text: "E for Estimable: we can size the work —"
-        marks: {"e": 135.12, "for": 135.4, "estimable": 135.56, "we": 136.54, "can": 136.62, "size": 136.76, "the": 137.0, "work": 137.12}
-        visual: "Badge “Verse 3 · E · S · T”. The E lamp lights, and an estimate dial’s needle settles on 3 points."
+        start: 128.8
+        end: 130.9
+        text: "E for Estimable: we can size it, rough but fair —"
+        marks: {"e": 128.8, "for": 129.02, "estimable": 129.18, "we": 129.8, "can": 129.88, "size": 130.04, "it": 130.22, "rough": 130.32, "but": 130.48, "fair": 130.62}
+        visual: "Badge “Verse 3 · Estimable · Small · Testable”. The laundry story card sits beside an estimate dial whose needle settles on 3 points, with a note: “rough but fair”."
       - id: verse-3-2
-        start: 137.4
-        end: 139.82
-        text: "the scope is clear, so no surprises lurk."
-        marks: {"the": 137.4, "scope": 137.7, "is": 138.0, "clear": 138.2, "so": 138.64, "no": 138.7, "surprises": 138.84, "lurk": 139.38}
-        visual: "A green sticker: “scope: clear”."
+        start: 130.9
+        end: 132.82
+        text: "domain, tech, and scope: no fog in there."
+        marks: {"domain": 130.9, "tech": 131.5, "and": 131.76, "scope": 131.84, "no": 132.1, "fog": 132.26, "in": 132.48, "there": 132.62}
+        visual: "Green check stickers pop up: “domain”, “tech”, “scope”."
       - id: verse-3-3
-        start: 139.82
-        end: 142.08
-        text: "“Read handwriting with high accuracy”?"
-        marks: {"read": 139.82, "handwriting": 140.14, "with": 140.68, "high": 141.2, "accuracy": 141.46}
-        visual: "A card reads “Read handwriting with high accuracy”, and fog rolls over the dial."
+        start: 132.82
+        end: 134.98
+        text: "“Curve the grades”? Which curve — add points, or a bell?"
+        marks: {"curve": 132.82, "the": 133.04, "grades": 133.14, "which": 133.5, "curve_2": 133.66, "add": 134.08, "points": 134.24, "or": 134.56, "a": 134.76, "bell": 134.76}
+        visual: "A ruled card: “As a professor, I want to curve the exam grades”, whose criterion “Then each grade is curved” turns red; fog rolls over the dial, and notes ask “add points?” and “bell curve?”."
       - id: verse-3-4
-        start: 142.08
-        end: 144.76
-        text: "How high? Which characters? That’s a mystery."
-        marks: {"how": 142.08, "high": 142.64, "which": 143.12, "characters": 143.34, "thats": 144.14, "a": 144.32, "mystery": 144.38}
-        visual: "Question marks pop up: “How high?” and “Which characters?”; the needle wanders under the fog."
+        start: 135.16
+        end: 137.3
+        text: "We can’t size it yet — go ask; the prof can tell."
+        marks: {"we": 135.16, "cant": 135.18, "size": 135.4, "it": 135.62, "yet": 135.74, "go": 136.06, "ask": 136.18, "the": 136.4, "prof": 136.58, "can": 136.78, "tell": 137.0}
+        visual: "The team asks “Which curve?”, the professor answers “Add 5 points to everyone.”, the criterion is rewritten, “every score rises 5 points (max 100)”, and the dial settles on 2 points."
       - id: verse-3-5
-        start: 144.76
-        end: 147.3
-        text: "Ask the customer — pin the details down;"
-        marks: {"ask": 144.76, "the": 145.18, "customer": 145.34, "pin": 145.96, "the_2": 146.2, "details": 146.42, "down": 147.0}
-        visual: "A team’s and a customer’s speech bubbles: “Which characters? 95% of what?”"
+        start: 137.3
+        end: 139.74
+        text: "New tech nobody’s used? Run a spike, time-boxed tight —"
+        marks: {"new": 137.3, "tech": 137.6, "nobodys": 137.86, "used": 138.34, "run": 138.62, "a": 138.7, "spike": 138.82, "timeboxed": 139.16, "tight": 139.52}
+        visual: "A ruled card: “As a singer, I want the app to show the note I’m singing”, with criteria ending “Then it shows ‘A’ within a second”. Fog covers the dial, a note reads “never built pitch detection”, and a sticker “spike: 2 days max”."
       - id: verse-3-6
-        start: 147.3
-        end: 149.6
-        text: "new tech? Run a time-boxed spike to look around."
-        marks: {"new": 147.3, "tech": 147.7, "run": 148.22, "a": 148.34, "time": 148.52, "box": 148.66, "spike": 148.9, "to": 149.2, "look": 149.42}
-        visual: "A stopwatch sticker reads “time-boxed spike: 2 days”; the fog clears and the dial settles on 5 points."
+        start: 139.74
+        end: 141.88
+        text: "two days to learn, and we size the real story right."
+        marks: {"two": 139.74, "days": 139.98, "to": 140.22, "learn": 140.38, "and": 140.54, "we": 140.7, "size": 140.82, "the": 140.98, "real": 141.12, "story": 141.32, "right": 141.64}
+        visual: "The fog clears and the dial settles on 5 points; a sticker reads “now sized: 5 pts”."
       - id: verse-3-7
-        start: 149.6
-        end: 151.92
-        text: "It fits in a single sprint;"
-        marks: {"it": 149.6, "fits": 150.32, "in": 150.7, "a": 150.88, "single": 151.0, "sprint": 151.48}
-        visual: "The S lamp lights; a story card drops into a dashed box labeled “One sprint”."
+        start: 141.88
+        end: 144.02
+        text: "S for Small: it fits in a single sprint,"
+        marks: {"s": 141.88, "for": 142.08, "small": 142.22, "it": 142.7, "fits": 142.84, "in": 143.12, "a": 143.28, "single": 143.38, "sprint": 143.64}
+        visual: "A dashed box labeled “One sprint” appears, and a creator’s card, “I want to post a photo, so that my fans see it”, drops into it."
       - id: verse-3-8
-        start: 151.92
-        end: 155.0
-        text: "one more split would break the other five — that’s it."
-        marks: {"one": 151.92, "more": 152.46, "split": 152.74, "would": 153.08, "break": 153.24, "the": 153.42, "other": 153.56, "five": 153.8, "thats": 154.58, "it": 154.86}
-        visual: "Scissors approach the card and stop; a note warns “each half would break I · N · V · E · T”."
+        start: 144.02
+        end: 146.3
+        text: "the smallest slice that still gives users a win."
+        marks: {"the": 144.02, "smallest": 144.2, "slice": 144.5, "that": 144.78, "still": 144.98, "gives": 145.28, "users": 145.64, "a": 145.92, "win": 146.1}
+        visual: "A sticker reads “smallest slice, still valuable”."
       - id: verse-3-9
-        start: 155.0
-        end: 157.42
-        text: "“I want Piazza, Gradescope, Drive, and Zoom”?"
-        marks: {"i": 155.0, "want": 155.1, "piazza": 155.28, "gradesco": 155.98, "drive": 156.66, "and": 156.94, "zoom": 157.16}
-        visual: "Four story cards, Piazza, Gradescope, Drive, and Zoom, are stacked inside one trench coat and hat."
+        start: 146.3
+        end: 148.88
+        text: "“I want to post pics, and edit my bio, and DM my fans”?"
+        marks: {"i": 146.3, "want": 146.52, "to": 146.74, "post": 146.74, "pics": 147.04, "and": 147.26, "edit": 147.42, "my": 147.62, "bio": 147.78, "and_2": 148.08, "dm": 148.26, "my_2": 148.48, "fans": 148.64}
+        visual: "Three stories, “post pics”, “edit my bio”, and “DM my fans”, are stacked inside one trench coat and hat; a sticker asks “one story?”."
       - id: verse-3-10
-        start: 157.42
-        end: 160.28
-        text: "Four stories in a trench coat — give each its room!"
-        marks: {"four": 157.42, "stories": 157.8, "in": 158.26, "a": 158.46, "trench": 158.58, "coat": 158.84, "give": 159.06, "each": 159.26, "its": 159.48, "room": 159.68}
-        visual: "The coat drops, and the four cards spread into a row of four separate stories."
+        start: 148.88
+        end: 151.16
+        text: "Three stories in a trench coat — split ’em at the “and”s!"
+        marks: {"three": 148.88, "stories": 149.06, "in": 149.34, "a": 149.56, "trench": 149.66, "coat": 149.88, "split": 150.2, "em": 150.4, "at": 150.54, "the": 150.7, "ands": 150.82}
+        visual: "The coat drops, and three ruled cards appear, Story 1 “to post pics”, Story 2 “to edit my bio”, and Story 3 “to DM my fans”, each with its own Given / When / Then; stickers read “split at the ‘and’s” and “3 stories”."
       - id: verse-3-11
-        start: 160.28
-        end: 162.76
-        text: "But don’t cut crumbs: “edit just this date”?"
-        marks: {"but": 160.28, "dont": 160.5, "cut": 160.8, "crumbs": 161.04, "edit": 161.42, "just": 161.64, "this": 161.98, "date": 162.28}
-        visual: "Crumb-sized cards scatter: “edit date”, “edit title”, “edit place”, “edit hours”, “edit role”."
+        start: 151.16
+        end: 153.6
+        text: "But don’t cut crumbs: “edit just my bio’s first line”?"
+        marks: {"but": 151.16, "dont": 151.38, "cut": 151.64, "crumbs": 151.88, "edit": 152.22, "just": 152.44, "my": 152.64, "bios": 152.78, "first": 153.08, "line": 153.3}
+        visual: "A card, “As a creator, I want to edit just my bio’s first line”, appears with crumb cards: “edit bio line 2”, “edit bio line 3”, “edit bio line 4”."
       - id: verse-3-12
-        start: 162.76
-        end: 165.1
-        text: "Too tiny to track — merge it with its mates."
-        marks: {"too": 162.76, "tiny": 162.9, "to": 163.26, "track": 163.46, "merge": 163.7, "it": 164.22, "with": 164.3, "its": 164.5, "mates": 164.72}
-        visual: "The crumbs drift together and merge into one card: “Edit a service entry”."
+        start: 153.6
+        end: 155.82
+        text: "If the card takes longer than the code — combine!"
+        marks: {"if": 153.6, "the": 153.8, "card": 153.92, "takes": 154.14, "longer": 154.44, "than": 154.72, "the_2": 154.9, "code": 155.04, "combine": 155.4}
+        visual: "Stickers compare “writing the card: 10 min” with “coding it: 2 min”; the crumbs merge into one card, “Combined”: “I want to edit my bio, so that my profile stays up to date”."
       - id: verse-3-13
-        start: 165.1
-        end: 167.66
-        text: "How do we know? How do we know it’s done?"
-        marks: {"how": 165.1, "do": 165.7, "we": 165.84, "know": 166.04, "how_2": 166.38, "do_2": 166.5, "we_2": 166.62, "know_2": 166.8, "its": 166.98, "done": 167.28}
-        visual: "The T lamp lights; a gold question tile asks “Done?”"
+        start: 155.82
+        end: 158.34
+        text: "T for Testable: the criteria decide when it’s done —"
+        marks: {"t": 155.82, "for": 156.06, "testable": 156.2, "the": 156.86, "criteria": 156.92, "decide": 157.6, "when": 157.84, "its": 158.04, "done": 158.2}
+        visual: "A gold question note asks “done?”, and the laundry card’s acceptance criteria are written line by line."
       - id: verse-3-14
-        start: 167.66
-        end: 170.04
-        text: "Write the criteria before the code’s begun."
-        marks: {"write": 167.66, "the": 167.74, "criteria": 167.9, "before": 168.42, "the_2": 169.08, "codes": 169.3, "begun": 169.64}
-        visual: "A card’s acceptance-criteria checklist is written first; a sticker reads “criteria → then code”."
+        start: 158.34
+        end: 160.52
+        text: "objective pass or fail, before the code’s begun."
+        marks: {"objective": 158.34, "pass": 158.76, "or": 159.02, "fail": 159.18, "before": 159.42, "the": 159.68, "codes": 159.88, "begun": 160.24}
+        visual: "Stickers “pass”, “fail”, and “criteria → then code” appear, and a code box reads “code: not started”."
       - id: verse-3-15
-        start: 170.04
-        end: 172.7
-        text: "“Fast”? “Pretty”? “Easy”? Tests can’t check a vibe —"
-        marks: {"fast": 170.04, "pretty": 170.62, "easy": 170.86, "test": 171.3, "cant": 171.48, "check": 171.82, "a": 172.08, "vibe": 172.36}
-        visual: "Three cloud stickers, “fast?”, “pretty?”, “easy?”, are crossed out: “can’t test a vibe”."
+        start: 160.52
+        end: 162.64
+        text: "“Fast”? “Smooth”? “Easy”? Tests can’t check a vibe —"
+        marks: {"fast": 160.52, "smooth": 161.08, "easy": 161.32, "tests": 161.66, "cant": 161.82, "check": 162.12, "a": 162.3, "vibe": 162.5}
+        visual: "The laundry card again, with a vague criterion, “Then the ping feels fast”, highlighted red; cloud stickers “fast?”, “smooth?”, and “easy?” appear, and a red stamp reads “Can’t test a vibe”."
       - id: verse-3-16
-        start: 172.7
-        end: 174.94
+        start: 162.64
+        end: 164.56
         text: "name a number, a state you can verify."
-        marks: {"name": 172.7, "a": 172.94, "number": 173.12, "a_2": 173.66, "state": 173.76, "you": 173.98, "can": 174.18, "verify": 174.36}
-        visual: "They are replaced by testable chips: “≤ 2 s” and “shows the new file”."
+        marks: {"name": 162.64, "a": 162.9, "number": 163.04, "a_2": 163.48, "state": 163.6, "you": 163.78, "can": 163.98, "verify": 164.14}
+        visual: "The criterion is rewritten, “my phone pings within a minute”, and stickers read “a number: ≤ 1 min” and “a state: ‘Washer 3 done’”."
       - id: verse-3-17
-        start: 174.94
-        end: 177.0
-        text: "Given — it’s before the deadline,"
-        marks: {"given": 174.94, "its": 175.58, "before": 176.12, "the": 176.5, "deadline": 176.74}
-        visual: "A cyan “Given” panel: “it’s before the deadline”."
+        start: 164.56
+        end: 166.58
+        text: "Given — my wash is running,"
+        marks: {"given": 164.56, "my": 164.98, "wash": 165.5, "is": 165.9, "running": 166.14}
+        visual: "A cyan “Given” panel: “my wash is running”."
       - id: verse-3-18
-        start: 177.0
-        end: 179.8
-        text: "When — I upload a new file,"
-        marks: {"when": 177.0, "i": 178.04, "upload": 178.64, "a": 178.96, "new": 179.14, "file": 179.32}
-        visual: "A gold “When” panel: “I upload a new file”."
+        start: 166.58
+        end: 168.66
+        text: "When — the cycle ends,"
+        marks: {"when": 166.58, "the": 166.94, "cycle": 167.74, "ends": 168.32}
+        visual: "A gold “When” panel: “the cycle ends”."
       - id: verse-3-19
-        start: 179.8
-        end: 182.48
-        text: "Then — my submission shows the new one."
-        marks: {"then": 179.8, "my": 180.26, "submission": 180.54, "shows": 181.24, "the": 181.58, "new": 181.78, "one": 182.02}
-        visual: "A green “Then” panel: “my submission shows the new one”."
+        start: 168.66
+        end: 171.1
+        text: "Then — my phone pings within a minute."
+        marks: {"then": 168.66, "my": 168.92, "phone": 169.18, "pings": 169.52, "within": 169.98, "a": 170.3, "minute": 170.7}
+        visual: "A green “Then” panel: “my phone pings within a minute”, and a sticker: “Washer 3 is done”."
       - id: verse-3-20
-        start: 182.48
-        end: 185.61
+        start: 171.1
+        end: 173.74
         text: "Pass or fail — now we know it’s done!"
-        marks: {"pass": 182.48, "or": 182.84, "fail": 183.12, "now": 183.84, "we": 184.06, "know": 184.38, "its": 184.7, "done": 184.98}
-        visual: "A green “PASS” stamp lands under the three panels."
+        marks: {"pass": 171.1, "or": 171.48, "fail": 171.78, "now": 172.36, "we": 172.6, "know": 172.86, "its": 173.2, "done": 173.52}
+        visual: "A green “PASS” stamp lands, and big type reads “now we know it’s done”."
   - id: final-chorus
     title: "Final chorus"
     delivery: sung
-    narration: "The final chorus: the scanner lights each letter with its gold tile, name, and meaning, and all six lamps flash before Invest in your stories."
+    narration: "The final chorus: the scanner lights each letter with its gold tile, name, and definition, and all six lamps flash before Invest in your stories."
     lines:
       - id: final-chorus-1
-        start: 185.84
-        end: 188.68
-        text: "I! Independent: any order — later or now!"
-        marks: {"i": 185.84, "independent": 186.2, "any": 186.66, "order": 186.94, "later": 187.54, "or": 187.92, "now": 188.12}
-        visual: "The scanner lights its I lamp; a gold tile slams in: “I · Independent”, with “any order” and a loop icon. Two story cards swap places."
+        start: 173.74
+        end: 178.26
+        text: "Independent! No overlap, no waiting — any order!"
+        marks: {"independent": 173.74, "no": 174.7, "overlap": 174.86, "no_2": 175.56, "waiting": 175.78, "any": 177.22, "order": 177.74}
+        visual: "The scanner lights its I lamp; a gold tile slams in: “I · Independent”, with “no overlap, no waiting: any order”. Two cards, Story A and Story B, swap places."
       - id: final-chorus-2
-        start: 188.68
-        end: 190.78
-        text: "N! Negotiable: say the what, and not the how!"
-        marks: {"n": 188.68, "negotiable": 188.94, "n_2": 189.26, "the": 189.5, "what": 189.54, "and": 190.08, "not": 190.18, "the_2": 190.34, "how": 190.48}
-        visual: "The N lamp lights: “N · Negotiable”, with “the what, not the how”: a green “what” chip stays while a red “how” chip is crossed out."
+        start: 178.36
+        end: 182.78
+        text: "Negotiable! The need, not the design — talk it over!"
+        marks: {"negotiable": 178.36, "the": 179.06, "need": 179.26, "not": 179.54, "the_2": 179.76, "design": 180.0, "talk": 180.86, "it": 181.46, "over": 182.12}
+        visual: "The N lamp lights: “N · Negotiable”, with “the need, not the design”, and stickers “the need” and “the design: talk it over”."
       - id: final-chorus-3
-        start: 190.78
-        end: 193.58
-        text: "V! Valuable: a user wins on its own!"
-        marks: {"v": 190.86, "v_2": 191.16, "valuable": 191.52, "a": 191.98, "user": 192.12, "wins": 192.32, "on": 192.68, "its": 192.98, "own": 193.2}
-        visual: "The V lamp lights: “V · Valuable”, with “a user wins on its own” and a user beside a sparkle."
+        start: 183.12
+        end: 186.86
+        text: "Valuable! Not just devs — users or customers gain!"
+        marks: {"valuable": 183.12, "not": 183.56, "just": 183.86, "devs": 184.16, "users": 184.72, "or": 185.16, "customers": 185.42, "gain": 186.18}
+        visual: "The V lamp lights: “V · Valuable”, with “users or customers gain”, and stickers “not just devs”, “users”, and “customers”."
       - id: final-chorus-4
-        start: 193.58
-        end: 195.7
-        text: "E! Estimable: the effort can be known!"
-        marks: {"e": 193.7, "estimable": 194.08, "the": 194.48, "effort": 194.62, "can": 194.86, "be": 195.04, "known": 195.2}
-        visual: "The E lamp lights: “E · Estimable”, with “the effort can be known” and an estimate dial settling on 5 points."
+        start: 187.72
+        end: 191.64
+        text: "Estimable! Scope’s clear, so we can size what it takes!"
+        marks: {"estimable": 187.72, "scopes": 188.34, "clear": 188.58, "so": 188.94, "we": 189.34, "can": 189.66, "size": 189.9, "what": 190.3, "it": 190.56, "takes": 190.86}
+        visual: "The E lamp lights: “E · Estimable”, with “scope clear enough to size”, and stickers “scope: clear” and “effort: 5 pts”."
       - id: final-chorus-5
-        start: 195.7
-        end: 198.04
-        text: "S! The smallest slice that still passes the rest!"
-        marks: {"s": 195.96, "smaller": 196.36, "slice": 196.48, "that": 196.76, "still": 196.96, "passes": 197.1, "the": 197.5, "rest": 197.74}
-        visual: "The S lamp lights: “S · Small”, with “smallest slice that still passes” and a thin slice cut from a card."
+        start: 191.72
+        end: 194.54
+        text: "Small! Fits one sprint — the smallest valuable slice there is!"
+        marks: {"small": 191.72, "fits": 192.26, "one": 192.48, "sprint": 192.74, "the": 193.04, "smallest": 193.12, "valuable": 193.36, "slice": 193.78, "there": 194.08, "is": 194.32}
+        visual: "The S lamp lights: “S · Small”, with “one sprint, smallest valuable slice”, and stickers “fits 1 sprint” and “smallest slice, still valuable”."
       - id: final-chorus-6
-        start: 198.04
-        end: 200.54
-        text: "T! Given, When, Then — put it to the test!"
-        marks: {"t": 198.14, "given": 198.42, "when": 198.82, "then": 199.08, "put": 199.68, "it": 199.84, "to": 199.98, "the": 200.12, "test": 200.24}
-        visual: "The T lamp lights: “T · Testable”, with “Given, When, Then” as three ticking checkboxes."
+        start: 194.54
+        end: 196.78
+        text: "Testable! Criteria say pass or fail — no “-ish”!"
+        marks: {"testable": 194.54, "criteria": 195.2, "say": 195.46, "pass": 195.82, "or": 196.02, "fail": 196.14, "no": 196.46, "ish": 196.58}
+        visual: "The T lamp lights: “T · Testable”, with “criteria say pass or fail”, and stickers “pass”, “fail”, and “no -ish”."
       - id: final-chorus-7
-        start: 200.54
-        end: 203.02
+        start: 196.78
+        end: 198.38
         text: "I! N! V! E! S! T!"
-        marks: {"i": 200.54, "n": 201.0, "v": 201.62, "e": 201.98, "s": 202.28, "t": 202.84}
-        visual: "All six lamps flash in turn, one per sung letter, and turn green."
+        marks: {"i": 196.78, "n": 197.1, "v": 197.44, "e": 197.6, "s": 197.86, "t": 198.18}
+        visual: "Big letters I N V E S T slam in, one per sung letter, as each lamp turns green."
       - id: final-chorus-8
-        start: 203.02
-        end: 206.15
+        start: 198.56
+        end: 201.7
         text: "Invest in your stories — they pay you back with interest!"
-        marks: {"invest": 203.02, "in": 203.54, "your": 203.9, "stories": 204.04, "they": 204.52, "pay": 204.68, "you": 204.86, "back": 205.0, "with": 205.2, "interest": 205.42}
-        visual: "Big type: “Invest in your stories”, then a gold “+ interest” sticker with a percent icon."
+        marks: {"invest": 198.56, "in": 198.76, "your": 198.96, "stories": 199.08, "they": 199.62, "pay": 200.5, "you": 200.68, "back": 200.8, "with": 200.96, "interest": 201.16}
+        visual: "Big type: “Invest in your stories”, then a green “+ interest” sticker with a percent icon."
   - id: quiz-intro
     title: "Pop quiz"
     delivery: spoken
-    narration: "The pop quiz: each request appears on a story card above the INVEST scanner, which has a seventh lamp for none. When the answer is called, the broken letter lights red with a cross, or the none lamp lights green, and a sticker gives the reason."
+    narration: "The pop quiz: each request appears on a story card with its acceptance criteria, above the INVEST scanner and a seventh lamp for none. On each answer, the broken letter lights red with a reason, or none and all six light green."
     lines:
       - id: quiz-intro-1
-        start: 206.64
-        end: 210.03
-        text: "Pop quiz! Which letter breaks — or does it pass?"
-        marks: {"pop": 206.64, "quiz": 207.08, "which": 207.66, "letter": 207.78, "breaks": 208.04, "or": 208.92, "does": 209.12, "it": 209.28, "pass": 209.38}
-        visual: "The INVEST scanner, with a seventh “None” lamp, rises under the title “Pop quiz”."
+        start: 202.08
+        end: 205.74
+        text: "Pop quiz! The criteria say just what each card says."
+        marks: {"pop": 202.08, "quiz": 202.46, "the": 203.2, "criteria": 203.64, "say": 204.06, "just": 204.46, "what": 204.7, "each": 204.86, "card": 205.04, "says": 205.32}
+        visual: "Big type “Pop quiz!” over the INVEST scanner, which has a seventh “None” lamp, and a note: “criteria = what each card says”."
+      - id: quiz-intro-2
+        start: 205.98
+        end: 208.6
+        text: "Which letter breaks — or does it pass?"
+        marks: {"which": 205.98, "letter": 206.28, "breaks": 206.54, "or": 207.44, "does": 207.88, "it": 208.06, "pass": 208.16}
+        visual: "A note asks “Which letter breaks — or does it pass?”"
   - id: quiz
     title: "Pop quiz"
     delivery: call
-    narration: "Seven requests, one at a time; each answer lights its lamp."
+    narration: "Seven story cards, one at a time; each answer lights its lamp."
     lines:
       - id: quiz-1
-        start: 210.1
-        end: 214.4
-        text: "“I want a QR code on every table for the menu.”"
+        start: 209.0
+        end: 214.1
+        text: "“As a student, I want my route to class found with Dijkstra’s algorithm.”"
         answer: "N! That’s a how!"
-        answer_at: 212.8
-        marks: {"i": 210.1, "want": 210.44, "a": 210.56, "qr": 210.66, "code": 210.98, "on": 211.36, "every": 211.54, "table": 211.76, "for": 212.1, "the": 212.28, "menu": 212.42, "n": 212.8, "thats": 213.6, "a_2": 214.08, "how": 214.16}
-        visual: "Quiz card 1 of 7: “I want a QR code on every table for the menu.” When the answer is called, the N lamp lights red with a cross, and a sticker reads “QR code = a how”."
+        answer_at: 213.16
+        pause_at: 212.98
+        marks: {"as": 209.0, "a": 209.22, "student": 209.32, "i": 209.78, "want": 210.22, "my": 210.36, "route": 210.52, "to": 210.72, "class": 210.88, "found": 211.2, "with": 211.56, "dijkstras": 211.82, "algorithm": 212.46, "n": 213.16, "thats": 213.48, "a_2": 213.7, "how": 213.8}
+        visual: "Quiz card 1 of 7: “As a student, I want my route to class found with Dijkstra’s algorithm”, with criteria “Given I’m at the library, When I ask for a route to my class, Then I get the shortest walking route, And it is computed with Dijkstra’s algorithm”. On the answer, the N lamp lights red with a cross, and a sticker reads “algorithm = a how”."
       - id: quiz-2
-        start: 214.4
-        end: 218.64
-        text: "“As a dev, I want to refactor the login code.”"
-        answer: "V! Who’s it for?"
-        answer_at: 217.28
-        marks: {"as": 214.4, "a": 214.96, "dev": 215.04, "i": 215.5, "want": 215.78, "to": 215.88, "refactor": 215.96, "the": 216.38, "login": 216.56, "code": 216.84, "v": 217.28, "whos": 217.94, "it": 218.18, "for": 218.26}
-        visual: "Quiz card 2 of 7: “As a dev, I want to refactor the login code.” When the answer is called, the V lamp lights red with a cross, and a sticker reads “no user value”."
+        start: 214.32
+        end: 219.1
+        text: "“As a developer, I want ninety percent test coverage on the cart code.”"
+        answer: "V! Only devs win!"
+        answer_at: 217.96
+        pause_at: 217.82
+        marks: {"as": 214.32, "a": 214.62, "developer": 214.72, "i": 215.32, "want": 215.36, "ninety": 215.52, "percent": 215.84, "test": 216.1, "coverage": 216.5, "on": 216.92, "the": 217.16, "cart": 217.28, "code": 217.52, "v": 217.96, "only": 218.26, "devs": 218.46, "win": 218.86}
+        visual: "Quiz card 2 of 7: “As a developer, I want 90% test coverage on the cart code”, with criteria “Given the cart code, When the test suite runs, Then coverage is at least 90%”. On the answer, the V lamp lights red, and a sticker reads “only devs benefit”."
       - id: quiz-3
-        start: 218.64
-        end: 222.84
-        text: "“I want the whole checkout: cart, payment, shipping, returns.”"
-        answer: "S! Split it up!"
-        answer_at: 221.66
-        marks: {"i": 218.64, "want": 218.78, "the": 218.9, "whole": 219.02, "checkout": 219.18, "cart": 219.62, "payment": 220.16, "shipping": 220.78, "returns": 221.34, "s": 221.66, "split": 222.2, "it": 222.52, "up": 222.66}
-        visual: "Quiz card 3 of 7: “I want the whole checkout: cart, payment, shipping, returns.” When the answer is called, the S lamp lights red with a cross, and the card splits into four."
+        start: 219.38
+        end: 225.1
+        text: "“As a renter, I want to view my lease, report a repair, and message my landlord.”"
+        answer: "S! Three stories — split ’em!"
+        answer_at: 223.74
+        pause_at: 223.48
+        marks: {"as": 219.38, "a": 219.5, "renter": 219.62, "i": 220.06, "want": 220.24, "to": 220.38, "view": 220.46, "my": 220.62, "lease": 220.82, "report": 221.48, "a_2": 221.74, "repair": 221.84, "and": 222.36, "message": 222.48, "my_2": 222.8, "landlord": 223.02, "s": 223.74, "three": 224.04, "stories": 224.18, "split": 224.76, "em": 224.94}
+        visual: "Quiz card 3 of 7: “As a renter, I want to view my lease, report a repair, and message my landlord”, with criteria “Given I’m logged in, When I open the renter app, Then I can view my lease, And I can report a repair, And I can message my landlord”. On the answer, the S lamp lights red, and a sticker reads “3 stories: split it”."
       - id: quiz-4
-        start: 222.84
-        end: 229.1
-        text: "“I want to add songs to a playlist” — but no one can make playlists yet."
-        answer: "I! It’s waiting in line!"
-        answer_at: 226.7
-        marks: {"i": 222.84, "wanna": 223.26, "add": 223.42, "songs": 223.72, "to": 224.16, "a": 224.38, "playlist": 224.5, "but": 224.94, "no": 225.48, "one": 225.62, "can": 225.78, "make": 225.96, "playlist_2": 226.2, "yet": 226.58, "i_2": 226.7, "its": 227.82, "waiting": 228.26, "in": 228.5, "line": 228.74}
-        visual: "Quiz card 4 of 7: “I want to add songs to a playlist” — but no one can make playlists yet. When the answer is called, the I lamp lights red with a cross, and a sticker reads “waits for: create playlists”."
+        start: 225.26
+        end: 230.32
+        text: "“As a rider, I want to rate my driver” — but nobody can book a ride yet."
+        answer: "I! It’s waiting on booking!"
+        answer_at: 228.96
+        pause_at: 228.82
+        marks: {"as": 225.26, "a": 225.48, "rider": 225.62, "i": 226.02, "want": 226.14, "to": 226.26, "rate": 226.36, "my": 226.56, "driver": 226.72, "but": 227.18, "nobody": 227.5, "can": 227.84, "book": 228.04, "a_2": 228.24, "ride": 228.38, "yet": 228.6, "i_2": 228.96, "its": 229.22, "waiting": 229.6, "on": 229.82, "booking": 230.02}
+        visual: "Quiz card 4 of 7: “As a rider, I want to rate my driver”, with criteria “Given I finished a ride, When I give my driver 5 stars, Then the rating shows on their profile”, and a gold note: “nobody can book a ride yet”. On the answer, the I lamp lights red, and a sticker reads “waits for: book a ride”."
       - id: quiz-5
-        start: 229.1
-        end: 232.3
-        text: "“I want the app to feel snappy.”"
-        answer: "T! How fast is “snappy”?"
-        answer_at: 230.8
-        marks: {"i": 229.1, "want": 229.14, "the": 229.34, "app": 229.48, "to": 229.7, "feel": 229.8, "snappy": 230.02, "t": 230.8, "how": 231.1, "fast": 231.26, "is": 231.7, "snappy_2": 231.94}
-        visual: "Quiz card 5 of 7: “I want the app to feel snappy.” When the answer is called, the T lamp lights red with a cross, and a sticker asks “how many seconds?”."
+        start: 230.32
+        end: 235.96
+        text: "“As a club president, I want our sign-up page to look aesthetic, so more people join.”"
+        answer: "T! Define “aesthetic”!"
+        answer_at: 234.54
+        pause_at: 234.46
+        marks: {"as": 230.32, "a": 230.56, "club": 230.64, "president": 230.84, "i": 231.56, "want": 231.62, "our": 231.8, "signup": 231.98, "page": 232.44, "to": 232.72, "look": 232.92, "aesthetic": 233.06, "so": 233.44, "more": 233.66, "people": 233.82, "join": 234.1, "t": 234.54, "define": 235.2, "aesthetic_2": 235.5}
+        visual: "Quiz card 5 of 7: “As a club president, I want our sign-up page to look aesthetic, so that more people join”, with criteria “Given the sign-up page is live, When a student opens it, Then it looks aesthetic”. On the answer, the T lamp lights red, and a sticker asks “‘aesthetic’: pass or fail?”."
       - id: quiz-6
-        start: 232.3
-        end: 237.0
-        text: "“I want a wellness screening” — and nobody knows what that means."
-        answer: "E! Ask the customer!"
-        answer_at: 235.12
-        marks: {"i": 232.3, "want": 232.46, "a": 232.6, "wellness": 232.68, "screening": 232.94, "and": 233.44, "nobody": 233.72, "knows": 234.0, "what": 234.34, "that": 234.58, "means": 234.74, "e": 235.12, "ask": 235.78, "the": 236.04, "customer": 236.36}
-        visual: "Quiz card 6 of 7: “I want a wellness screening” — and nobody knows what that means. When the answer is called, the E lamp lights red with a cross, and a sticker reads “ask the customer”."
+        start: 235.96
+        end: 241.6
+        text: "“As a coach, I want each player’s readiness score” — only the coach knows the formula."
+        answer: "E! Go ask the coach!"
+        answer_at: 240.1
+        pause_at: 240.02
+        marks: {"as": 235.96, "a": 236.26, "coach": 236.36, "i": 236.96, "want": 237.04, "each": 237.2, "players": 237.36, "readiness": 238.08, "score": 238.08, "only": 238.46, "the": 238.88, "coach_2": 239.04, "knows": 239.3, "the_2": 239.52, "formula": 239.7, "e": 240.1, "go": 240.68, "ask": 240.84, "the_3": 241.12, "coach_3": 241.28}
+        visual: "Quiz card 6 of 7: “As a coach, I want each player’s readiness score”, with criteria “Given a player’s stats are in, When I open their profile, Then I see their readiness score”, and a gold note: “only the coach knows the formula”. On the answer, the E lamp lights red, and a sticker reads “ask the coach”."
       - id: quiz-7
-        start: 237.0
-        end: 243.76
-        text: "“As a reader, I want to search books by author, so that I find more by writers I love.”"
-        answer: "None! Ship it!"
-        answer_at: 242.44
-        marks: {"as": 237.0, "a": 237.44, "reader": 237.6, "i": 238.64, "wanna": 238.68, "search": 238.78, "books": 239.08, "by": 239.38, "author": 239.64, "so": 240.0, "that": 240.6, "i_2": 240.74, "find": 240.86, "more": 241.1, "by_2": 241.3, "writers": 241.48, "i_3": 241.84, "love": 242.06, "none": 242.44, "ship": 243.28, "it": 243.56}
-        visual: "Quiz card 7 of 7: “As a reader, I want to search books by author, so that I find more by writers I love.” When the answer is called, the None lamp lights green with a check, all six letters pass, and a green “Ship it” stamp lands."
+        start: 241.6
+        end: 246.92
+        text: "“As a student, I want to mute my group chat for an hour, so I can study in peace.”"
+        answer: "None! Good to go!"
+        answer_at: 245.74
+        pause_at: 245.66
+        marks: {"as": 241.6, "a": 241.98, "student": 242.1, "i": 242.54, "want": 242.68, "to": 242.8, "mute": 242.9, "my": 243.08, "group": 243.28, "chat": 243.54, "for": 243.82, "an": 244.04, "hour": 244.2, "so": 244.42, "i_2": 244.68, "can": 244.8, "study": 244.92, "in": 245.24, "peace": 245.4, "none": 245.74, "good": 246.32, "to_2": 246.52, "go": 246.64}
+        visual: "Quiz card 7 of 7: “As a student, I want to mute my group chat for an hour, so that I can study in peace”, with criteria “Given my group chat is active, When I mute it for an hour, Then I get no notifications from it for that hour”. On the answer, the None lamp and all six letters light green, and a green stamp reads “Good to go”."
   - id: quiz-close
     title: "Context"
     delivery: sung
-    narration: "After the quiz: the playlist story from question 4 turns green once a create playlists card is done beside it, because INVEST depends on context. Big type: a lens, not a checklist."
+    narration: "After the quiz: once a book a ride card is done beside the rate my driver card from question 4, its I lamp turns green: now independent. Then: a lens, not a checklist; the context changes what's true."
     lines:
       - id: quiz-close-1
-        start: 243.76
-        end: 248.35
-        text: "Build playlists first — now that one’s independent too:"
-        marks: {"build": 243.76, "playlists": 244.58, "first": 245.24, "now": 245.6, "that": 246.46, "ones": 246.76, "independent": 247.0, "too": 247.6}
-        visual: "A “Create playlists ✓ done” card appears beside the playlist story; its I lamp turns from red to green."
+        start: 246.92
+        end: 251.14
+        text: "Build ride booking first — now “rate my driver”’s independent too:"
+        marks: {"build": 246.92, "ride": 247.64, "booking": 247.86, "first": 248.04, "now": 248.32, "rate": 248.6, "my": 248.9, "drivers": 249.12, "independent": 249.7, "too": 250.7}
+        visual: "The “rate my driver” card from quiz 4 sits beside a “Book a ride” card, “Given I’m logged in, When I request a ride, Then a driver accepts it”, which is stamped “DONE”; the I lamp turns from red to green, and a sticker reads “now independent”."
       - id: quiz-close-2
-        start: 248.5
-        end: 253.24
-        text: "INVEST’s a lens, not a checklist; the context makes it true."
-        marks: {"invests": 248.5, "a": 249.58, "lens": 249.7, "not": 250.1, "a_2": 250.24, "checklist": 250.4, "the": 251.3, "context": 251.64, "makes": 252.24, "it": 252.6, "true": 252.84}
-        visual: "Big type: “a lens”, then “not a checklist”, beside a magnifying-glass icon."
+        start: 251.14
+        end: 255.16
+        text: "INVEST’s a lens, not a checklist; the context changes what’s true."
+        marks: {"invests": 251.14, "a": 251.64, "lens": 252.0, "not": 252.4, "a_2": 252.52, "checklist": 252.64, "the": 253.12, "context": 253.52, "changes": 254.02, "whats": 254.46, "true": 254.9}
+        visual: "Big type: “a lens, not a checklist”, beside a magnifying-glass icon, and a note: “the context changes what’s true”."
   - id: outro
     title: "Outro"
     delivery: spoken
-    narration: "The outro: chips for uptime, scale, and safety rules bounce off a story card into a folder labeled other specs. Then your hero sits at a laptop beside a story card stamped INVEST, and big type reads: so your team builds the right thing."
+    narration: "The outro: chips for uptime, scale, and safety rules move from beside the laundry story card into a folder labeled other specs. Then your hero sits at a laptop beside the laundry story card, stamped INVEST, and big type reads: the right thing."
     lines:
       - id: outro-1
-        start: 253.24
-        end: 259.12
+        start: 255.16
+        end: 260.36
         text: "One last thing: uptime, scale, safety rules? Those need other kinds of specs."
-        marks: {"one": 253.24, "last": 253.78, "thing": 254.06, "uptime": 254.38, "scale": 255.5, "safety": 256.14, "rules": 256.38, "those": 256.78, "need": 258.0, "other": 258.16, "kinds": 258.36, "of": 258.62, "specs": 258.76}
-        visual: "Chips “uptime”, “scale”, and “safety rules” bounce off a story card into a violet folder labeled “other specs”."
+        marks: {"one": 255.16, "last": 255.58, "thing": 255.82, "uptime": 256.82, "scale": 257.42, "safety": 257.84, "rules": 258.06, "those": 258.87, "need": 259.24, "other": 259.42, "kinds": 259.62, "of": 259.84, "specs": 260.0}
+        visual: "Beside the laundry story card, chips “uptime”, “scale”, and “safety rules” are filed into a violet folder labeled “other specs”, and a note reads “need other kinds of specs”."
       - id: outro-2
-        start: 259.12
-        end: 264.97
+        start: 260.92
+        end: 265.18
         text: "But for features users feel: INVEST, so your team builds the right thing."
-        marks: {"but": 259.12, "for": 259.82, "features": 259.96, "users": 260.34, "feel": 260.62, "invest": 261.04, "so": 262.22, "your": 263.22, "team": 263.38, "builds": 263.68, "the": 264.12, "right": 264.28, "thing": 264.46}
-        visual: "Your hero sits at a laptop beside a story card with a gold “INVEST” stamp, and big type reads “the right thing”."
+        marks: {"but": 260.92, "for": 261.26, "features": 261.44, "users": 261.8, "feel": 262.12, "invest": 262.84, "so": 263.38, "your": 263.94, "team": 264.08, "builds": 264.28, "the": 264.56, "right": 264.7, "thing": 264.9}
+        visual: "Your hero sits at a laptop beside the laundry story card, with all its criteria and a gold “INVEST” stamp, and big type reads “the right thing”."

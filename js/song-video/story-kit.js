@@ -4,18 +4,18 @@
  * Each piece carries one visual metaphor whose mapping holds for the concept
  * it teaches, and keeps the real wording on screen beside it:
  *
- *   a user story is an index card with three slots (As a / I want /
- *     so that) and its acceptance criteria as a checklist on the card;
+ *   a user story is a ruled index card with three slots (As a / I want /
+ *     so that) and its acceptance criteria as Given / When / Then lines;
  *   INVEST is a scanner of six lamps, one per letter, each with a written
  *     term and a check or cross, so nothing depends on color alone;
- *   a role is a "Hello, my name is" tag; a commit points back to its card;
+ *   a role is a "Hello, my name is" tag;
  *   slicing by layers splits a cake into a frosting-only and a sponge-only
  *     half, while a vertical slice carries every layer (Independent);
  *   a conversation is two speech bubbles, and a design choice gets a
  *     HOW? stamp (Negotiable);
  *   value is what the user sees happen on a phone (Valuable);
  *   an estimate is a dial that only settles once the fog clears (Estimable);
- *   a sprint is a box a story must fit in, an epic is four stories in a
+ *   a sprint is a box a story must fit in, an epic is several stories in a
  *     trench coat, and crumb-sized stories merge into one (Small);
  *   acceptance criteria are three Given / When / Then panels that end in
  *     PASS or FAIL (Testable).
@@ -52,26 +52,42 @@
   // ------------------------------------------------------------------
 
   const LETTERS = [
-    { letter: 'I', term: 'Independent', meaning: 'any order', iconName: 'loop' },
-    { letter: 'N', term: 'Negotiable', meaning: 'the what, not the how', iconName: 'chat' },
-    { letter: 'V', term: 'Valuable', meaning: 'a user wins on its own', iconName: 'sparkle' },
-    { letter: 'E', term: 'Estimable', meaning: 'the effort can be known', iconName: 'timer' },
-    { letter: 'S', term: 'Small', meaning: 'smallest slice that still passes', iconName: 'scissors' },
-    { letter: 'T', term: 'Testable', meaning: 'Given, When, Then', iconName: 'check' },
+    { letter: 'I', term: 'Independent', meaning: 'no overlap, no waiting: any order', iconName: 'loop' },
+    { letter: 'N', term: 'Negotiable', meaning: 'the need, not the design', iconName: 'chat' },
+    { letter: 'V', term: 'Valuable', meaning: 'users or customers gain', iconName: 'sparkle' },
+    { letter: 'E', term: 'Estimable', meaning: 'scope clear enough to size', iconName: 'timer' },
+    { letter: 'S', term: 'Small', meaning: 'one sprint, smallest valuable slice', iconName: 'scissors' },
+    { letter: 'T', term: 'Testable', meaning: 'criteria say pass or fail', iconName: 'check' },
   ];
 
   // ------------------------------------------------------------------
-  // A story card: As a / I want / so that, plus acceptance criteria
+  // A story card: As a / I want / so that, then Given / When / Then
   // ------------------------------------------------------------------
 
+  const SLOTS = [['role', 'As a'], ['want', 'I want'], ['why', 'so that']];
+
+  /** Novelty glasses, nose, and moustache: a feature "in disguise". */
+  function disguiseArt(parent) {
+    const art = svg('svg', { viewBox: '0 0 120 64', class: 'us-disguise is-staged', 'aria-hidden': 'true' }, parent);
+    svg('circle', { class: 'us-disguise-lens', cx: 33, cy: 22, r: 15 }, art);
+    svg('circle', { class: 'us-disguise-lens', cx: 87, cy: 22, r: 15 }, art);
+    svg('path', { class: 'us-disguise-frame', d: 'M18 22a15 15 0 1 0 30 0a15 15 0 1 0-30 0M72 22a15 15 0 1 0 30 0a15 15 0 1 0-30 0M48 20q12-7 24 0M18 19L5 14M102 19l13-5' }, art);
+    svg('path', { class: 'us-disguise-nose', d: 'M60 24c-6 9-10 16-7 20c3 3 11 3 14 0c3-4-1-11-7-20Z' }, art);
+    svg('path', { class: 'us-disguise-moustache', d: 'M60 47c-9-4-22-3-30 6c9-2 18 0 30-2c12 2 21 0 30 2c-8-9-21-10-30-6Z' }, art);
+    return art;
+  }
+
   /**
-   * An index card. Give `role`, `want`, `why` for the three slots (each may
-   * appear at its own time via `fill`), or `quote` for a single request
-   * under review. `criteria` adds a checklist; check(i, at) ticks one.
+   * An index card on ruled paper. Give `role`, `want`, `why` for the three
+   * slots (each may appear at its own time via `fill`), or `quote` for a
+   * single request under review. `gwt` lists the acceptance criteria, one
+   * line each, starting with its keyword ('Given I booked a ride'); they
+   * appear at `gwtAt` (one time, or one per line). Rows are addressed by
+   * slot key ('role', 'want', 'why', 'quote') or by criterion index.
    */
   function card(parent, {
-    x, y, w = 330, at, until, tilt = 0, title = 'User story',
-    role, want, why, fill = {}, quote, criteria = [], criteriaAt, size = 'normal',
+    x, y, w = 330, at, until, tilt = 0, title = 'User story', size = 'normal',
+    role, want, why, fill = {}, quote, gwt = [], gwtAt,
   }) {
     const node = place(el('div', `us-card us-card--${size} is-staged`, parent), x, y);
     node.style.width = `${w}px`;
@@ -80,72 +96,78 @@
     el('span', 'us-card-pin', head);
     el('span', 'us-card-title', head, title);
     const body = el('div', 'us-card-body', node);
-    const slots = {};
+    const rows = {};
+    function addRow(key, label, text, modifiers = []) {
+      const row = el('div', ['us-card-row', ...modifiers.map((name) => `us-card-row--${name}`)].join(' '), body);
+      if (label) el('span', 'us-card-label', row, label);
+      rows[key] = { row, value: el('span', 'us-card-value', row, text) };
+      return rows[key];
+    }
     if (quote !== undefined) {
-      slots.quote = el('div', 'us-card-quote', body, `“${quote}”`);
+      addRow('quote', null, `“${quote}”`, ['quote']);
     } else {
-      for (const [key, label] of [['role', 'As a'], ['want', 'I want'], ['why', 'so that']]) {
-        const value = { role, want, why }[key];
-        if (value === undefined) continue;
-        const row = el('div', 'us-card-row', body);
-        el('span', 'us-card-label', row, label);
-        slots[key] = reveal(el('span', 'us-card-value', row, value), fill[key]);
+      for (const [key, label] of SLOTS) {
+        const text = { role, want, why }[key];
+        if (text !== undefined) reveal(addRow(key, label, text).value, fill[key]);
       }
     }
-    const checks = [];
-    const criterionText = [];
-    if (criteria.length) {
-      const list = reveal(el('div', 'us-card-criteria', node), criteriaAt);
-      for (const text of criteria) {
-        const item = el('div', 'us-card-criterion', list);
-        const box = el('span', 'us-check', item);
-        box.append(icon('check'));
-        criterionText.push(el('span', 'us-card-criterion-text', item, text));
-        checks.push(box);
-      }
+    if (gwt.length) {
+      const times = Array.isArray(gwtAt) ? gwtAt : gwt.map(() => gwtAt);
+      const heading = el('div', 'us-card-row us-card-row--heading', body);
+      el('span', 'us-card-label', heading, 'Acceptance criteria');
+      reveal(heading, times[0]);
+      gwt.forEach((text, i) => {
+        const [keyword, ...words] = text.split(' ');
+        reveal(addRow(i, keyword, words.join(' '), ['step', keyword.toLowerCase()]).row, times[i]);
+      });
     }
     fx.pop(node, at, { from: 0.7, rotate: tilt });
     if (until !== undefined) fx.popOut(node, until);
     return {
       node,
-      slots,
-      check(i, time) {
-        checks[i].classList.add('is-ticked-pending');
-        tween(checks[i], [{ background: 'rgba(11, 15, 26, 0.04)' }, { background: '#16a34a' }], time, 0.2);
-        tween(checks[i].firstChild, [{ opacity: 0, scale: 0.3 }, { opacity: 1, scale: 1 }], time, 0.3, EASE.back);
+      /** A green check after row `key`'s current words (rewrite first). */
+      check(key, time) {
+        const tick = el('span', 'us-card-tick is-staged', rows[key].value);
+        tick.append(icon('check'));
+        fx.pop(tick, time, { from: 0.3 });
         return this;
       },
-      /** Replace criterion i's words (the old words fade, the new rise in green). */
-      rewriteCriterion(i, text, time) {
-        const old = criterionText[i];
-        const next = el('span', 'us-card-criterion-text us-card-criterion-text--new is-staged', old.parentNode, text);
-        tween(old, { opacity: 0 }, time - 0.05, 0.2, EASE.in);
-        fx.rise(next, time + 0.1, { distance: 8, duration: 0.3 });
-        return next;
+      /** A highlighter stroke behind row `key` from `time` (until `until`). */
+      highlight(key, time, { tone = 'gold', until: off } = {}) {
+        const stroke = el('span', `us-card-mark us-card-mark--${tone} is-staged`, rows[key].row);
+        tween(stroke, [{ opacity: 1, scale: '0 1' }, { opacity: 1, scale: '1 1' }], time, 0.3, EASE.out);
+        if (off !== undefined) fx.fadeOut(stroke, off, 0.25);
+        return stroke;
       },
-      /** A rubber stamp across the card (HOW?, PASS, SPLIT ME…). */
-      stamp(text, { at: time, color = 'red', rotate = -10, dx = 0, dy = 0 }) {
-        const mark = el('div', `us-card-stamp us-card-stamp--${color} is-staged`, node, text);
-        mark.style.translate = `${dx}px ${dy}px`;
-        fx.slam(mark, time, { from: 2.4, rotate });
-        return mark;
+      /** Novelty glasses worn after row `key`'s words from `time`. */
+      disguise(key, time) {
+        const art = disguiseArt(rows[key].value);
+        fx.pop(art, time, { from: 0.4, rotate: -8 });
+        return art;
       },
-      /** Strike through one slot, e.g. the design choice inside a request. */
+      /** Strike through row `key`'s words, e.g. the design choice in a request. */
       strike(key, time) {
-        const target = slots[key];
+        const target = rows[key].value;
         const line = el('span', 'us-strike is-staged', target);
         tween(line, [{ opacity: 1, scale: '0 1' }, { opacity: 1, scale: '1 1' }], time, 0.3, EASE.out);
         tween(target, { color: 'rgba(11, 15, 26, 0.45)' }, time, 0.3);
         return line;
       },
-      /** Replace a slot's words: the old text fades, the new text rises in. */
+      /** Replace row `key`'s words: the old words fade, the new rise in green. */
       rewrite(key, text, time) {
-        const target = slots[key];
-        const next = el('span', `${target.className.replace('is-staged', '')} us-card-rewrite is-staged`, target.parentNode, text);
-        tween(target, { opacity: 0, translate: '0 -6px' }, time - 0.05, 0.25, EASE.in);
+        const entry = rows[key];
+        const next = el('span', 'us-card-rewrite is-staged', entry.row, text);
+        tween(entry.value, { opacity: 0, translate: '0 -6px' }, time - 0.05, 0.25, EASE.in);
         fx.rise(next, time + 0.15, { distance: 10, duration: 0.35 });
-        slots[key] = next;
+        entry.value = next;
         return next;
+      },
+      /** A rubber stamp across the card (HOW?, PASS, DONE…). */
+      stamp(text, { at: time, color = 'red', rotate = -10, dx = 0, dy = 0 }) {
+        const mark = el('div', `us-card-stamp us-card-stamp--${color} is-staged`, node, text);
+        mark.style.translate = `${dx}px ${dy}px`;
+        fx.slam(mark, time, { from: 2.4, rotate });
+        return mark;
       },
     };
   }
@@ -214,7 +236,7 @@
   }
 
   // ------------------------------------------------------------------
-  // Roles, commits, criteria: the parts of a story in Verse 1
+  // Roles: the "As a" of a story in Verse 1
   // ------------------------------------------------------------------
 
   /** A "Hello, my name is" sticker for a specific role. */
@@ -232,22 +254,6 @@
       tween(node, { opacity: 0.55 }, crossed + 0.1, 0.3);
     }
     if (until !== undefined) fx.popOut(node, until);
-    return node;
-  }
-
-  /** A commit message whose story reference lights up. */
-  function commit(parent, { x, y, hash, message, ref, at, refAt, until }) {
-    const node = place(el('div', 'us-commit is-staged', parent), x, y);
-    el('span', 'us-commit-hash', node, hash);
-    el('span', 'us-commit-msg', node, message);
-    const tag = el('span', 'us-commit-ref', node, ref);
-    fx.rise(node, at, { distance: 14 });
-    if (refAt !== undefined) {
-      tween(tag, [{ background: 'rgba(255, 209, 0, 0)' }, { background: 'rgba(255, 209, 0, 1)' }], refAt, 0.25);
-      tween(tag, [{ color: '#ffd100' }, { color: '#0b0f1a' }], refAt, 0.25);
-      fx.bump(tag, refAt, 0.2);
-    }
-    if (until !== undefined) fx.fadeOut(node, until);
     return node;
   }
 
@@ -340,19 +346,6 @@
     fx.rise(node, at, { distance: 26, duration: 0.45 });
     if (until !== undefined) fx.fadeOut(node, until);
     return { node, screen };
-  }
-
-  /** A button that can be pressed at `pressAt` (finger ring + squash). */
-  function appButton(parent, { text, at, pressAt, iconName, variant = 'gold' }) {
-    const node = reveal(el('div', `us-button us-button--${variant}`, parent), at);
-    if (iconName) node.append(icon(iconName));
-    el('span', null, node, text);
-    if (pressAt !== undefined) {
-      const ring = el('span', 'us-tap is-staged', node);
-      tween(ring, [{ opacity: 0.9, scale: 0.3 }, { opacity: 0, scale: 1.8 }], pressAt, 0.5, EASE.out);
-      tween(node, [{ scale: 1 }, { scale: 0.92 }, { scale: 1 }], pressAt, 0.25, EASE.out);
-    }
-    return node;
   }
 
   /** A delivery map: a route that a scooter rides from `from` to `to`. */
@@ -621,8 +614,8 @@
   }
 
   window.StoryKit = {
-    LETTERS, card, miniCard, scanner, nameTag, commit, testBar, speech,
-    cake, phone, appButton, deliveryMap, notification, dropdown, dial,
+    LETTERS, card, miniCard, scanner, nameTag, testBar, speech,
+    cake, phone, deliveryMap, notification, dropdown, dial,
     sprintBox, trenchCoat, crumbs, gwt, letterPanel, latest,
   };
 })();
