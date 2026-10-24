@@ -241,13 +241,13 @@
       // A cameo: Agent 00 glides in beside the case file, into a spotlight,
       // leans in with a finger across the lips through "keep a secret"
       // (Shh…), winks, and is gone as the caper begins.
-      ih.spotlight(lesson, { x: 772, y: 250, w: 300, h: 420, at: mark('intro-19', 'every') + 0.1 });
+      ih.spotlight(lesson, { x: 828, y: 268, w: 340, h: 470, at: mark('intro-19', 'every') + 0.1 });
       ih.agent(h, {
-        ...AGENT_00, x: 684, y: 54, scale: 1.1, flip: true, entrance: 'right',
+        ...AGENT_00, x: 716, y: 40, scale: 1.4, flip: true, entrance: 'right',
         at: mark('intro-19', 'every') + 0.3, until: caperAt,
         moves: [[mark('intro-19', 'should'), 'shh'], [mark('intro-19', 'secret') + 0.75, 'wink']],
       });
-      kit.sticker(h, 'Shh…', { x: 628, y: 66, at: mark('intro-19', 'keep') - 0.1, until: mark('intro-19', 'secret') + 0.4, variant: 'pink', iconName: 'lock', rotate: -6 });
+      kit.sticker(h, 'Shh…', { x: 646, y: 74, at: mark('intro-19', 'keep') - 0.1, until: mark('intro-19', 'secret') + 0.4, variant: 'pink', iconName: 'lock', rotate: -6 });
 
       // The caper: modules tiptoe in and hide from a searchlight while Agent
       // Payment Gateway drops in upside down on a rope. He backflips down,
@@ -784,11 +784,13 @@
       kit.kinetic(c, [
         { text: 'Designing', at: line('outro-3').start },
         { text: 'for change', at: mark('outro-3', 'change'), color: 'gold' },
-      ], { y: 56, size: 48 });
-      ih.spotlight(c, { x: 451, y: 270, w: 480, h: 360, at: line('outro-3').start });
+      ], { y: 44, size: 48 });
+      ih.spotlight(c, { x: 451, y: 280, w: 520, h: 430, at: line('outro-3').start });
       const done = mark('outro-3', 'change');
+      // Larger here: his raised glass stops just under the title, and his
+      // name tag ends above the end credit (moved clear, bottom left).
       ih.agent(c, {
-        ...AGENT_00, x: 371, y: 98, scale: 1, entrance: 'right', at: line('outro-3').start + 0.4, toastAt: done,
+        ...AGENT_00, x: 355, y: 92, scale: 1.2, entrance: 'right', at: line('outro-3').start + 0.4, toastAt: done,
         moves: [[done + 0.55, 'wink'], [done + 1.25, 'button']],
       });
       const summaryAt = mark('outro-3', 'designing');
@@ -803,10 +805,10 @@
       });
       ih.show(ih.envelope(c, { text: 'every module keeps a secret', x: 552, y: 384 }), done + 0.5, undefined, { rotate: -1, from: 1.6 });
       kit.stamp(c, 'Case closed', { x: 26, y: 334, at: done + 0.9, color: 'green', rotate: -8, shake: false });
-      const credit = kit.el('div', 'end-credit is-staged', c, 'SE Book · Information Hiding');
-      credit.style.top = '428px';
+      const credit = kit.el('div', 'end-credit end-credit--left is-staged', c, 'SE Book · Information Hiding');
+      credit.style.top = '464px';
       fx.fadeIn(credit, done + 1.3, 0.4);
-      ih.iris(c, { cx: 451, cy: 190, from: end - 1.9, to: end - 0.1 });
+      ih.iris(c, { cx: 451, cy: 169, from: end - 1.9, to: end - 0.1 });
     }
 
     // ----------------------------------------------------------------

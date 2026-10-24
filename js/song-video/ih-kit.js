@@ -362,21 +362,40 @@
     // Files stand in the hole: hide whatever lies below its front rim.
     const inHole = svg('clipPath', { id: `${id}-hole` }, defs);
     svg('path', { d: `M-50 -200 H350 V${CUT} H174 A64 10 0 0 1 44 ${CUT} H-50 Z` }, inHole);
+    // Skin lit from the front, the face's side: a soft radial gradient.
+    const skin = svg('radialGradient', { id: `${id}-skin`, gradientUnits: 'userSpaceOnUse', cx: 150, cy: 96, r: 120 }, defs);
+    for (const [index, offset] of ['0', '0.55', '1'].entries()) svg('stop', { offset, class: `ih-head-skin-stop-${index}` }, skin);
 
     svg('ellipse', { class: 'ih-head-glow', cx: 100, cy: 100, rx: 118, ry: 112 }, node);
     svg('path', { class: 'ih-head-neck', d: 'M78 150 L118 160 L122 190 Q96 200 70 190 Z' }, node);
+    // The jaw's shadow on the neck, and the Adam's apple.
+    svg('path', { class: 'ih-head-neck-shade', d: 'M78 150 L118 160 L119.4 170 Q99 167 79.6 158 Z' }, node);
+    svg('path', { class: 'ih-head-neck-line', d: 'M113.6 171.4 Q117.4 176 114.6 181.2' }, node);
     svg('path', { class: 'ih-head-shirt', d: 'M44 205 Q52 184 74 182 Q97 196 124 184 Q148 188 156 205 Z' }, node);
+    svg('path', { class: 'ih-head-shirt-shade', d: 'M124 184 Q148 188 156 205 L132 205 Q132 194 124 184 Z M74 182 Q60 186 52 196 L48 205 L62 205 Q64 192 74 182 Z' }, node);
     svg('path', { class: 'ih-head-collar', d: 'M74 182 Q97 196 124 184 L128 191 Q97 207 68 190 Z' }, node);
+    svg('path', { class: 'ih-head-collar-rib', d: 'M71.4 186.6 Q97 200.6 126 187.8' }, node);
 
-    // The lower head: skin below the cut, hair at the back, ear and face.
+    // The lower head: skin below the cut, hair at the back with its strands,
+    // the sideburn, the ear with its folds, and the face.
     const lower = svg('g', { 'clip-path': `url(#${id}-below)` }, node);
-    svg('path', { class: 'ih-head', d: skull }, lower);
+    svg('path', { class: 'ih-head', d: skull, fill: `url(#${id}-skin)` }, lower);
     svg('path', { class: 'ih-head-jaw-shade', d: 'M62 126 C72 142 92 150 112 152 L138 158 C150 162 162 158 170 150 C160 156 146 155 134 150 L110 145 C90 142 74 134 62 118 Z' }, lower);
     svg('path', { class: 'ih-head-hair', d: 'M40 60 C40 84 44 102 54 114 C58 104 66 97 76 94 C80 84 86 74 94 60 Z' }, lower);
+    svg('path', { class: 'ih-head-hair-strand', d: 'M47 70 Q49 88 55 102 M56 70 Q60 82 66 92 M66 68 Q72 78 78 86' }, lower);
+    svg('path', { class: 'ih-head-hair', d: 'M68.4 100.2 Q73.6 95.4 78.6 94.6 Q81.4 103.6 79 112.6 Q75.6 112.2 73.6 109.4 Q73 104 68.4 100.2 Z' }, lower);
+    svg('ellipse', { class: 'ih-head-cheek', cx: 149, cy: 124, rx: 10, ry: 6.4 }, lower);
     svg('path', { class: 'ih-head-ear', d: 'M70 112 C66 100 52 104 52 116 C52 128 60 136 68 132 Q74 128 72 120 Z' }, node);
+    svg('path', { class: 'ih-head-ear-detail', d: 'M66.6 113.4 C64.6 106.8 57.4 107.4 57.4 115.6 C57.4 121.6 61.2 126.6 65.4 124.8 M61.6 116.4 Q64.4 118.4 62 121.6' }, node);
     const brow = svg('path', { class: 'ih-head-brow' }, node);
     svg('path', { class: 'ih-head-eye', d: 'M150 102 Q158 96 166 102 Q158 106 150 102 Z' }, node);
     svg('circle', { class: 'ih-head-iris', cx: 161, cy: 101.5, r: 2.6 }, node);
+    svg('circle', { class: 'ih-head-catchlight', cx: 162.1, cy: 100.5, r: 0.85 }, node);
+    svg('path', { class: 'ih-head-lid', d: 'M149.6 101.4 Q158 95 166.4 101.4 M149.4 98.6 Q157.6 93.2 165 97.2' }, node);
+    svg('path', { class: 'ih-head-lash', d: 'M165.6 100.8 L168 99.4 M166 102 L168.6 101.6' }, node);
+    // The nostril's wing and the lips.
+    svg('path', { class: 'ih-head-feature', d: 'M176.6 120.4 Q171.4 121.4 172.6 125.4' }, node);
+    svg('path', { class: 'ih-head-lips', d: 'M168.6 143.6 Q172.4 144.6 174.4 142.4' }, node);
     const mouth = svg('path', { class: 'ih-head-feature' }, node);
 
     // The open skull: a dark hole with a lit rim.
@@ -395,8 +414,12 @@
       const lift = f.extra ? 14 : 0;
       const top = CUT - 38 - lift;
       svg('path', { class: 'ih-head-file-tab', d: `M${f.x - 12} ${top + 2} v-6 q0 -2 2 -2 h9 l3 4 Z` }, g);
+      // A sheet of paper peeks out of each folder.
+      svg('rect', { class: 'ih-head-file-sheet', x: f.x - 9, y: top - 3.4, width: 19, height: 8, rx: 0.8 }, g);
       svg('rect', { class: `ih-head-file${f.extra ? ' ih-head-file--extra' : ''}`, x: f.x - 13, y: top, width: 26, height: 48, rx: 2 }, g);
+      svg('path', { class: 'ih-head-file-spine', d: `M${f.x - 10.4} ${top + 2.6} V${top + 45.4}` }, g);
       svg('path', { class: 'ih-head-file-line', d: `M${f.x - 8} ${top + 9} h16 M${f.x - 8} ${top + 16} h11 M${f.x - 8} ${top + 23} h14` }, g);
+      svg('rect', { class: 'ih-head-file-label', x: f.x - 7, y: top + 30, width: 14, height: 6, rx: 0.8 }, g);
       return { g, f, top };
     });
     svg('path', { class: 'ih-head-rim', d: `M45 ${CUT} A64 10 0 0 0 173 ${CUT}` }, hole);
@@ -406,9 +429,10 @@
     const lid = svg('g', {}, node);
     const underside = svg('ellipse', { class: 'ih-head-underside', cx: 109, cy: CUT, rx: 64, ry: 10, opacity: 0 }, lid);
     const cap = svg('g', { 'clip-path': `url(#${id}-above)` }, lid);
-    svg('path', { class: 'ih-head ih-head--cap', d: skull }, cap);
+    svg('path', { class: 'ih-head ih-head--cap', d: skull, fill: `url(#${id}-skin)` }, cap);
     svg('path', { class: 'ih-head-hair', d: 'M38 70 C34 36 70 10 112 12 C152 14 178 40 176 72 Z' }, cap);
     svg('path', { class: 'ih-head-hair-shine', d: 'M62 34 C78 20 104 16 124 20 C100 22 80 30 62 34 Z' }, cap);
+    svg('path', { class: 'ih-head-hair-strand', d: 'M50 52 Q76 28 116 24 M60 60 Q90 38 132 34 M86 18 Q116 14 146 26 M128 44 Q152 46 168 58 M44 64 Q60 44 84 36' }, cap);
     // Hinged at the back, the open lid stands behind the files.
     node.insertBefore(lid, files);
 
@@ -416,8 +440,9 @@
     const stream = svg('g', {}, node);
     const papers = Array.from({ length: 9 }, (_, i) => {
       const g = svg('g', { opacity: 0 }, stream);
-      svg('rect', { class: 'ih-head-overflow', x: -11, y: -14, width: 22, height: 28, rx: 2 }, g);
-      svg('path', { class: 'ih-head-code', d: 'M-6 -7 h12 M-6 0 h8 M-6 7 h11' }, g);
+      svg('path', { class: 'ih-head-overflow', d: 'M-9 -14 H5 L11 -8 V12 Q11 14 9 14 H-9 Q-11 14 -11 12 V-12 Q-11 -14 -9 -14 Z' }, g);
+      svg('path', { class: 'ih-head-dogear', d: 'M5 -14 V-8 H11 Z' }, g);
+      svg('path', { class: 'ih-head-code', d: 'M-6 -7 h8 M-6 0 h11 M-6 7 h9' }, g);
       return {
         g,
         delay: i * 0.17,
@@ -688,6 +713,14 @@
       }
     }
     svg('rect', { class: 'ih-iceberg-sea', x: 0, y: 120, width: 420, height: 240, rx: 16, fill: `url(#${id}-sea)` }, node);
+    // Under the surface: soft shafts of light fanning down, and bubbles
+    // rising behind the ice.
+    const rays = svg('g', { class: 'ih-iceberg-rays' }, node);
+    for (const d of ['M22 122 L48 122 L26 360 L-6 360 Z', 'M92 122 L112 122 L118 360 L84 360 Z', 'M318 122 L340 122 L372 360 L336 360 Z', 'M372 122 L392 122 L432 360 L402 360 Z']) {
+      svg('path', { class: 'ih-iceberg-ray', d }, rays);
+    }
+    const BUBBLES = [[30, 9, 0.2, 2.4], [52, 13, 0.55, 1.6], [70, 8, 0.8, 2], [348, 11, 0.1, 2.2], [366, 7, 0.45, 1.5], [388, 10, 0.7, 2.6], [16, 12, 0.9, 1.4], [400, 9, 0.3, 1.8]];
+    const bubbles = BUBBLES.map(([bx, speed, phase, r]) => ({ node: svg('circle', { class: 'ih-iceberg-bubble', cx: bx, cy: 300, r }, node), bx, speed, phase }));
     const deep = svg('g', { class: 'ih-iceberg-deep' }, node);
     svg('path', { class: 'ih-iceberg-outline', fill: `url(#${id}-ice)`, d: 'M105 120 L81 154 L63 200 L91 255 L137 308 L204 344 L265 322 L311 272 L349 208 L332 162 L309 120 Z' }, deep);
     svg('path', { class: 'ih-iceberg-facet-light', d: 'M105 120 L159 166 L129 244 L137 308 L91 255 L63 200 Z M159 166 L215 130 L257 203 L204 344 L192 252 Z' }, deep);
@@ -698,6 +731,12 @@
     svg('path', { class: 'ih-iceberg-tip-shadow', d: 'M205 10 L233 48 L263 67 L309 120 L239 120 L224 70 Z' }, tip);
     svg('path', { class: 'ih-iceberg-tip-light', d: 'M205 10 L190 81 L161 120 L105 120 L142 76 L166 62 Z' }, tip);
     svg('path', { class: 'ih-iceberg-ridge', d: 'M166 62 L151 97 M205 10 L224 70 L239 120' }, tip);
+    // Cracks and snow catching the light on the ice above the water.
+    svg('path', { class: 'ih-iceberg-crack', d: 'M246 62 L252 82 L247 100 M183 52 L178 70 L184 86 M140 86 L148 104' }, tip);
+    svg('path', { class: 'ih-iceberg-snow', d: 'M199 22 L206 18 L212 26 M160 70 L168 64 L174 72 M243 60 L250 64' }, tip);
+    for (const [sx, sy] of [[198, 40], [176, 92], [214, 30]]) svg('path', { class: 'ih-iceberg-glint', d: `M${sx} ${sy - 3} L${sx + 0.8} ${sy - 0.8} L${sx + 3} ${sy} L${sx + 0.8} ${sy + 0.8} L${sx} ${sy + 3} L${sx - 0.8} ${sy + 0.8} L${sx - 3} ${sy} L${sx - 0.8} ${sy - 0.8} Z` }, tip);
+    // Small floes drifting at the surface.
+    for (const d of ['M26 120 L34 113 L46 112 L54 120 Z', 'M356 120 L362 115 L374 114 L384 120 Z']) svg('path', { class: 'ih-iceberg-floe', d, fill: `url(#${id}-tip)` }, node);
     // A translucent inspection window separates the metaphor from literal ice.
     const mechanism = svg('g', { class: 'ih-iceberg-mechanism', 'data-testid': 'ih-iceberg-mechanism', opacity: 0 }, deep);
     svg('rect', { class: 'ih-iceberg-window', x: 121, y: 168, width: 169, height: 133, rx: 24 }, mechanism);
@@ -721,6 +760,8 @@
       });
       return { group, gears };
     });
+    // Foam where the ice meets the water.
+    const foam = svg('path', { class: 'ih-iceberg-foam' }, node);
     const surface = svg('path', { class: 'ih-iceberg-surface', 'data-testid': 'ih-iceberg-surface' }, node);
     svg('path', { class: 'ih-iceberg-reflection', d: 'M92 131 H157 M274 134 H325 M43 146 H82 M337 149 H377' }, node);
     let swapAt = Infinity;
@@ -729,6 +770,14 @@
       const motionTime = reducedMotion.matches ? 0 : Math.max(0, t - at);
       const wave = Array.from({ length: 43 }, (_, i) => `${i ? 'L' : 'M'}${i * 10} ${(120 + 1.6 * Math.sin(i / 4 + motionTime * 0.7)).toFixed(2)}`).join(' ');
       surface.setAttribute('d', wave);
+      foam.setAttribute('d', Array.from({ length: 22 }, (_, i) => `${i ? 'L' : 'M'}${104 + i * 9.8} ${(122.2 + 1.4 * Math.sin(i / 1.6 + motionTime * 1.3)).toFixed(2)}`).join(' '));
+      // Bubbles rise from the deep, wobbling, and fade before the surface.
+      for (const { node: bubble, bx, speed, phase } of bubbles) {
+        const rise = ((motionTime * speed / 210 + phase) % 1);
+        bubble.setAttribute('cy', (352 - rise * 210).toFixed(1));
+        bubble.setAttribute('cx', (bx + 2.4 * Math.sin(motionTime * 2 + phase * 9)).toFixed(1));
+        bubble.setAttribute('opacity', (Math.min(1, rise * 6) * Math.min(1, (1 - rise) * 4) * 0.7).toFixed(2));
+      }
       mechanism.setAttribute('opacity', progress(t, spinFrom, 0.4).toFixed(2));
       const swapped = reducedMotion.matches ? Number(t >= swapAt) : progress(t, swapAt, 0.6);
       sets.forEach(({ group, gears }, index) => {
@@ -1382,20 +1431,30 @@
     return 0.2126 * linear(0) + 0.7152 * linear(1) + 0.0722 * linear(2) < 0.04;
   }
 
-  // After a long toast, the glass held at his chest: the forearm keeps
-  // turning past straight up to lie across his body, rather than swinging
-  // back down outside.
-  const GLASS_AT_CHEST = armReach([106, 146]).map((raise, i) => (i === 1 && raise < 0 ? raise + 360 : raise));
+  /**
+   * The raise equivalent to `to` (degrees) nearest `from`, so that easing
+   * from one to the other takes the shorter way round: a glass raised from
+   * his chest comes up across it, rather than swinging down and out first.
+   */
+  function nearTurn(from, to) {
+    return to + 360 * Math.round((from - to) / 360);
+  }
 
+  // His stance at ease: the martini held up at his chest, the glass level,
+  // and the free arm relaxed at his side, its elbow softly bent so the hand
+  // hangs in by his thigh.
+  const GLASS_HELD = armReach([105, 166]);
+  const ARM_RELAXED = [6, 2];
   // The free wrist raised across his chest, its watch in view.
   const WATCH_CHECK = armReach([62, 128], -1);
   // Shh: the free fist under his chin, its index finger upright across his
-  // lips to his nose. The forearm comes up in front of him (turning inwards,
-  // a negative raise) rather than swinging out and over.
-  const SHH_HAND = armReach([85, 87], -1, 'down').map((raise, i) => (i === 1 && raise > 0 ? raise - 360 : raise));
+  // lips to his nose, the forearm come up in front of him.
+  const SHH_HAND = armReach([85, 87], -1, 'down');
 
   /** The tuxedo agent standing at ease: every pose field agent() applies. */
   const AT_EASE = { martini: [0, 0], free: [0, 0], finger: 0, middle: 0, crouch: 0, tie: 0, look: 0, down: 0, wink: 0, brow: 0, hush: 0, tilt: 0, nod: 0, sparkle: 0, glassTilt: 0 };
+  /** The cameos' stance: the glass held at his chest, the free arm relaxed. */
+  const STANCE = { ...AT_EASE, martini: GLASS_HELD, free: ARM_RELAXED };
 
   /**
    * Agent 00's signature moves for agent({ moves }), as pose keys [delay,
@@ -1407,24 +1466,25 @@
    * free hand's side, then
    * back with a knowing nod; wink shuts his left eye and raises the other
    * brow, tilting his head towards the wink (and agent() flashes a glint off
-   * his smile). Each returns the hand (or the face) to rest.
+   * his smile). Each returns the free arm (or the face) to rest.
    */
+  const toRest = (at, duration = 0.42) => [at, duration, { free: ARM_RELAXED }];
   const MOVES = {
-    tie: [[0, 0.35, { free: armReach([70, 101], -1, 'down') }], [0.3, 0.18, { tie: -10 }], [0.55, 0.25, { tie: 0 }], [0.85, 0.4, { free: [0, 0] }]],
-    lapel: [[0, 0.3, { free: armReach([61, 104], -1, 'out') }], [0.3, 0.5, { free: armReach([62, 140], -1, 'out') }], [0.85, 0.4, { free: [0, 0] }]],
+    tie: [[0, 0.38, { free: armReach([70, 101], -1, 'down') }], [0.32, 0.18, { tie: -10 }], [0.58, 0.25, { tie: 0 }], toRest(0.88)],
+    lapel: [[0, 0.3, { free: armReach([61, 104], -1, 'out') }], [0.3, 0.5, { free: armReach([62, 140], -1, 'out') }], toRest(0.85)],
     shh: [
-      [0, 0.4, { free: SHH_HAND, finger: 1, hush: 1, nod: 0.5 }],
-      [0.36, 0.24, { look: -1, brow: 1 }], [0.72, 0.28, { look: 1 }], [1.1, 0.22, { look: 0 }],
-      [1.3, 0.4, { free: [0, 0], finger: 0, hush: 0, nod: 0, brow: 0 }],
+      [0, 0.42, { free: SHH_HAND, finger: 1, hush: 1, nod: 0.5 }],
+      [0.38, 0.24, { look: -1, brow: 1 }], [0.74, 0.28, { look: 1 }], [1.12, 0.22, { look: 0 }],
+      [1.32, 0.3, { finger: 0, hush: 0, nod: 0, brow: 0 }], toRest(1.32),
     ],
-    button: [[0, 0.4, { free: armReach([76, 182], -1, 'out') }], [0.9, 0.4, { free: [0, 0] }]],
-    watch: [[0, 0.4, { free: WATCH_CHECK, look: -0.6, down: 1, nod: 0.6 }], [0.8, 0.38, { free: [0, 0], look: 0, down: 0, nod: 0 }]],
+    button: [[0, 0.4, { free: armReach([76, 182], -1, 'out') }], toRest(0.9)],
+    watch: [[0, 0.4, { free: WATCH_CHECK, look: -0.6, down: 1, nod: 0.6 }], [0.8, 0.36, { look: 0, down: 0, nod: 0 }], toRest(0.8)],
     glance: [[0, 0.22, { look: -1, tilt: -2 }], [0.75, 0.24, { look: 0, tilt: 0 }], [0.85, 0.14, { nod: 1 }], [1.0, 0.22, { nod: 0 }]],
     wink: [[0, 0.12, { wink: 1 }], [0, 0.24, { tilt: 6, brow: 1 }], [0.45, 0.16, { wink: 0 }], [0.5, 0.34, { tilt: 0, brow: 0 }]],
   };
   // The fields the moves animate, at rest; everything else is left to the
   // toast and the caper's rig.
-  const MOVES_AT_REST = { free: [0, 0], finger: 0, tie: 0, look: 0, down: 0, wink: 0, brow: 0, hush: 0, tilt: 0, nod: 0 };
+  const MOVES_AT_REST = { free: ARM_RELAXED, finger: 0, tie: 0, look: 0, down: 0, wink: 0, brow: 0, hush: 0, tilt: 0, nod: 0 };
 
   /**
    * Draws the tuxedo agent into `sway` (160×300 figure space) and returns
@@ -1472,6 +1532,18 @@
       for (const [index, offset] of ['0', '0.5', '1'].entries()) svg('stop', { offset, class: `ih-agent-skin-stop-${index}` }, gradient);
       return { gradient, url: `url(#${id})` };
     };
+    // The tailoring's other gradients, each stop coloured by its class (CSS).
+    // Without userSpaceOnUse a gradient spans its shape's own bounding box,
+    // so on a turning sleeve it turns with the shape.
+    const paint = (kind, name, attrs, offsets) => {
+      const id = `ih-agent-${name}-${++uid}`;
+      const gradient = svg(kind, { id, ...attrs }, defs);
+      offsets.forEach((offset, index) => svg('stop', { offset, class: `ih-agent-${name}-stop-${index}` }, gradient));
+      return `url(#${id})`;
+    };
+    const oxford = paint('linearGradient', 'oxford', { x1: 0, y1: 0, x2: 0, y2: 1 }, ['0', '0.5', '1']);
+    // Shading strips along a sleeve's edge fade from the edge inwards.
+    const edgeShade = { outer: paint('linearGradient', 'edge-shade', { x1: 1, y1: 0, x2: 0, y2: 0 }, ['0', '1']), inner: paint('linearGradient', 'edge-shade', { x1: 0, y1: 0, x2: 1, y2: 0 }, ['0', '1']) };
 
     // Legs: thick round-joined strokes (a white rim under the dark trouser),
     // so a bent knee stays whole, with a sheen down the side towards the
@@ -1483,13 +1555,15 @@
       const leg = {
         strokes: ['leg-rim', 'leg-cloth', 'leg-sheen', 'crease'].map((part) => svg('path', { class: `ih-agent-${part}` }, g)),
         braid: svg('path', { class: 'ih-agent-braid' }, g),
+        // The braid's satin catches the light along one edge.
+        braidSheen: svg('path', { class: 'ih-agent-braid-sheen', transform: `translate(${-0.8 * side} 0)` }, g),
       };
       // The sheen lies towards the light, whichever way the leg is mirrored.
       leg.strokes[2].setAttribute('transform', `translate(${-3.6 * side} 0)`);
       svg('path', { class: 'ih-agent-trouser-break', d: 'M58.4 282.4 Q66.5 285.4 74.8 282.2' }, g);
       leg.shoe = svg('g', {}, g);
       // Patent leather oxfords: a toe cap, the laces, a shine, and the sole.
-      svg('path', { class: 'ih-agent-shoe ih-agent-shoe--gloss', d: 'M-14.5 -1 H10.5 Q13.5 6 6.5 7 H-16.5 Q-18.5 3 -14.5 -1 Z' }, leg.shoe);
+      svg('path', { class: 'ih-agent-oxford', d: 'M-14.5 -1 H10.5 Q13.5 6 6.5 7 H-16.5 Q-18.5 3 -14.5 -1 Z', fill: oxford }, leg.shoe);
       svg('path', { class: 'ih-agent-shoe-seam', d: 'M-10.4 -0.6 Q-12.8 2.8 -11 6.4 M-15.4 5.2 H7.4' }, leg.shoe);
       svg('path', { class: 'ih-agent-shoe-lace', d: 'M-3.4 0.4 L2 0.7 M-3 1.9 L1.6 2.2' }, leg.shoe);
       svg('path', { class: 'ih-agent-shoe-shine', d: 'M-11.5 1.6 Q-5.5 0.6 0.5 1.6' }, leg.shoe);
@@ -1537,8 +1611,8 @@
     // shoulder. The armhole is inked only where it meets the background
     // (the shoulder line, and the armpit under a raised arm); the arm's
     // inner contour begins where it leaves the jacket, at the armpit.
-    const JACKET = 'M66 92 Q52.5 99.2 39.8 106.1 C39 112 41.1 121 43.4 126.3 C47.4 148 45.6 174 40 204 Q57 211 74 209 Q79 196 80 180 Q81 196 86 209 Q103 211 120 204 C114.4 174 112.6 148 116.6 126.3 C118.9 121 121 112 120.2 106.1 Q107.5 99.2 94 92 L80 90 Z';
-    const ARMHOLE = 'M116.6 126.3 C118.9 121 121 112 120.2 106.1 Q107.5 99.2 94 92';
+    const JACKET = 'M66 92 Q52.5 99.2 40.03 106.53 C39 112 41.1 121 43.4 126.3 C47.4 148 45.6 174 40 204 Q57 211 74 209 Q79 196 80 180 Q81 196 86 209 Q103 211 120 204 C114.4 174 112.6 148 116.6 126.3 C118.9 121 121 112 119.97 106.53 Q107.5 99.2 94 92 L80 90 Z';
+    const ARMHOLE = 'M116.6 126.3 C118.9 121 121 112 119.97 106.53 Q107.5 99.2 94 92';
     // The jacket's side outline starts a little below the armpit (so its
     // end stays under a hanging sleeve), and the armhole's ink runs down the
     // same curve to meet it, so where a raised arm bares both they join in
@@ -1547,8 +1621,10 @@
     const SOCKET = `${ARMHOLE} L92 100 L100 124 C104 126 109 127.3 111.4 127.3 C113.3 127.3 115 127 116.6 126.3 Z`;
     jacket('ih-agent-tux-fill', JACKET);
     // The jacket's far side is shaded from the armpit down, in a crescent
-    // that tapers to nothing at the armpit.
-    svg('path', { class: 'ih-agent-tux-shade', d: 'M115.9 131 C112.8 150 114.4 174 120 204 Q109 208 97 209 Q103 168 115.9 131 Z' }, torso);
+    // that tapers to nothing at the armpit and fades in towards the side;
+    // the near chest catches a soft light.
+    svg('path', { class: 'ih-agent-tux-shading', d: 'M115.9 131 C112.8 150 114.4 174 120 204 Q109 208 97 209 Q103 168 115.9 131 Z', fill: paint('linearGradient', 'far-shade', { gradientUnits: 'userSpaceOnUse', x1: 101, y1: 0, x2: 119, y2: 0 }, ['0', '1']) }, torso);
+    svg('ellipse', { class: 'ih-agent-chest-light', cx: 57, cy: 128, rx: 12.5, ry: 25, fill: paint('radialGradient', 'chest-light', {}, ['0', '1']) }, torso);
     svg('path', { class: 'ih-agent-tux-rim', d: 'M61 97 Q52 102.4 44.6 107.4 M45.4 134 C49 152 47.8 170 43.8 186' }, torso);
     svg('path', { class: 'ih-agent-tux-outline', d: 'M44.25 131.59 C47.09 152.19 45.15 176.4 40 204 Q57 211 74 209 Q79 196 80 180 Q81 196 86 209 Q103 211 120 204 C114.85 176.4 112.91 152.19 115.75 131.59 M66 92 L80 90 L94 92' }, torso);
     // Masks, per side, each holding a copy of the sleeve that poseArm turns
@@ -1582,17 +1658,19 @@
     svg('path', { class: 'ih-agent-tux-fold', d: 'M78 177 Q69 171 60 170 M82 177 Q91 171 100 169' }, torso);
     // The fronts' darts, tailored in from the chest to the hip pockets.
     svg('path', { class: 'ih-agent-tux-dart', d: 'M55.6 141 Q57.4 160 55.8 178.6 M104.4 141 Q102.6 160 104.2 178.6' }, torso);
-    // A welted breast pocket on his left, with a black silk pocket square
+    // A welted breast pocket on his left, with a white silk pocket square
     // folded into three points, and flapped hip pockets, each with its
     // shadow under the welt or flap.
-    svg('path', { class: 'ih-agent-pocket-square', d: 'M106 131.4 Q106.6 127.8 108 126.6 Q108.8 128.8 109.8 129.6 Q110.8 126.6 112.4 125.6 Q113 128.2 114 130.2 Z' }, torso);
-    svg('path', { class: 'ih-agent-pocket-square-sheen', d: 'M107.4 129.4 Q107.8 128 108.3 127.6 M111.4 128.6 Q111.8 127.2 112.3 126.7' }, torso);
+    svg('path', { class: 'ih-agent-pocket-square', d: 'M106 131.3 L106.9 127.6 L108.7 129.6 L110.5 126.2 L112.1 129.1 L113.8 127.5 L114.5 130.1 Z' }, torso);
+    svg('path', { class: 'ih-agent-pocket-square-fold', d: 'M108.7 129.6 L109.1 131 M112.1 129.1 L112.4 130.6 M110.5 126.2 L110.9 130.8' }, torso);
     svg('path', { class: 'ih-agent-pocket', d: 'M105.4 131.4 L114.6 130' }, torso);
     svg('path', { class: 'ih-agent-pocket-light', d: 'M105.6 132.6 L114.6 131.2' }, torso);
+    const POCKET_FLAP = 'M47.6 182.6 Q55 181.6 62.4 182 L62.6 186.4 Q55 187.6 48 186.8 Z';
+    const POCKET_SHADOW = 'M48.4 187.8 Q55.2 188.8 62.2 187.6';
     for (const side of [1, -1]) {
       const g = svg('g', { transform: mirror(side) }, torso);
-      svg('path', { class: 'ih-agent-pocket-shadow', d: 'M48.4 187.8 Q55.2 188.8 62.2 187.6' }, g);
-      jacket('ih-agent-pocket-flap', 'M47.6 182.6 Q55 181.6 62.4 182 L62.6 186.4 Q55 187.6 48 186.8 Z', g);
+      svg('path', { class: 'ih-agent-pocket-shadow', d: POCKET_SHADOW }, g);
+      jacket('ih-agent-pocket-flap', POCKET_FLAP, g);
     }
     // Pleated dress shirt with studs.
     svg('path', { class: 'ih-agent-shirt', d: 'M66 94 L80 91 L94 94 L84 160 L80 168 L76 160 Z' }, torso);
@@ -1607,27 +1685,44 @@
     const LAPELS = 'M64 92 C56 102 53 120 58 136 C63 152 72 166 80 177 L80 168 C76 150 71 120 69 96 Z M96 92 C104 102 107 120 102 136 C97 152 88 166 80 177 L80 168 C84 150 89 120 91 96 Z';
     svg('ellipse', { class: 'ih-agent-tie-shadow', cx: 81.5, cy: 107.5, rx: 13, ry: 2.4 }, torso);
     svg('path', { class: 'ih-agent-lapel-shadow', d: LAPELS, transform: 'translate(1 1.4)' }, torso);
-    svg('path', { class: 'ih-agent-satin', d: LAPELS }, torso);
+    svg('path', { class: 'ih-agent-satin', d: LAPELS, fill: paint('linearGradient', 'satin', { x1: 0, y1: 0, x2: 1, y2: 1 }, ['0', '0.5', '1']) }, torso);
     svg('path', { class: 'ih-agent-satin-sheen', d: 'M61 101 C57.5 112 57.5 124 60.5 134 M99 101 C101.5 110 102 118 101 126' }, torso);
     svg('circle', { class: 'ih-agent-tux-button', cx: 80, cy: 180, r: 3 }, torso);
     svg('circle', { class: 'ih-agent-stud-glint', cx: 79.2, cy: 179.2, r: 0.8 }, torso);
-    // A red carnation on the lapel, with a leaf.
-    svg('path', { class: 'ih-agent-stem', d: 'M98 116 L95.5 122' }, torso);
+    // A red carnation on the lapel: a ruffled, scalloped blossom with a
+    // darker heart, its green calyx, a stem, and a leaf.
+    const ruffle = (cx, cy, r, n, turn = 0) => Array.from({ length: n + 1 }, (_, k) => {
+      const at = (k + turn) * 2 * Math.PI / n, mid = at - Math.PI / n;
+      const point = `${(cx + 0.82 * r * Math.cos(at)).toFixed(2)} ${(cy + 0.82 * r * Math.sin(at)).toFixed(2)}`;
+      return k === 0 ? `M${point}` : `Q${(cx + 1.12 * r * Math.cos(mid)).toFixed(2)} ${(cy + 1.12 * r * Math.sin(mid)).toFixed(2)} ${point}`;
+    }).join(' ') + ' Z';
+    svg('path', { class: 'ih-agent-stem', d: 'M97.9 116.4 L95.6 122' }, torso);
     svg('path', { class: 'ih-agent-leaf', d: 'M96.6 119.4 Q93.2 117.8 92.4 120.4 Q94.8 121.6 96.6 119.4 Z' }, torso);
-    for (const [cx, cy, r] of [[95.6, 112.8, 2.5], [100.4, 113.2, 2.5], [98, 115, 2.4], [98, 110.8, 3]]) {
-      svg('circle', { class: 'ih-agent-carnation', cx, cy, r }, torso);
-    }
-    svg('circle', { class: 'ih-agent-carnation-light', cx: 97, cy: 110.4, r: 1.1 }, torso);
+    svg('path', { class: 'ih-agent-leaf-vein', d: 'M96.2 119.6 Q94.4 119.6 93 120.2' }, torso);
+    svg('path', { class: 'ih-agent-calyx', d: 'M96.1 115.4 Q97.2 118.4 97.9 118.8 Q98.8 118.2 99.7 115.4 Z' }, torso);
+    svg('path', { class: 'ih-agent-carnation', d: ruffle(97.9, 112.4, 3.9, 11), fill: paint('radialGradient', 'carnation', { cx: 0.4, cy: 0.35, r: 0.75 }, ['0', '0.6', '1']) }, torso);
+    svg('path', { class: 'ih-agent-carnation-heart', d: ruffle(98.2, 112.8, 2.1, 7, 0.5) }, torso);
+    svg('path', { class: 'ih-agent-carnation-light', d: 'M95.6 111.2 Q96.4 109.6 98 109.4' }, torso);
     // Neck, with the chin's shadow, wing collar, and a sculpted bow tie.
     const drawnNeck = svg('g', {}, torso);
     svg('rect', { class: 'ih-agent-neck', x: 72, y: 80, width: 16, height: 14 }, drawnNeck);
     svg('ellipse', { class: 'ih-agent-face-shade', cx: 80, cy: 85, rx: 8, ry: 3 }, drawnNeck);
-    const collar = svg('path', { class: 'ih-agent-collar ih-agent-collar--shirt', d: 'M66 94 L72 84 L78 98 Z M94 94 L88 84 L82 98 Z' }, torso);
+    // The wing collar: starched wing tips, shaded on their inner halves, with
+    // the crease where each tip folds over the band.
+    const collar = svg('g', { class: 'ih-agent-wing-collar' }, torso);
+    svg('path', { class: 'ih-agent-collar-wing', d: 'M66 94 L72 84 L78 98 Z M94 94 L88 84 L82 98 Z' }, collar);
+    svg('path', { class: 'ih-agent-collar-shade', d: 'M72 84 L78 98 L74 95.4 Z M88 84 L82 98 L86 95.4 Z' }, collar);
+    svg('path', { class: 'ih-agent-collar-crease', d: 'M68.4 92.5 L74.8 94.4 M91.6 92.5 L85.2 94.4' }, collar);
     const bowTie = svg('g', { 'data-testid': 'ih-agent-bow-tie' }, torso);
-    svg('path', { class: 'ih-agent-bowtie', d: 'M80 99 C74 94 68 91 64.5 92.5 C62.5 96.5 62.5 101.5 64.5 105.5 C68 107 74 104 80 99 Z M80 99 C86 94 92 91 95.5 92.5 C97.5 96.5 97.5 101.5 95.5 105.5 C92 107 86 104 80 99 Z' }, bowTie);
-    svg('path', { class: 'ih-agent-bowtie-fold', d: 'M69 95.5 L73.5 98.6 M69 102.5 L73.5 99.4 M91 95.5 L86.5 98.6 M91 102.5 L86.5 99.4' }, bowTie);
-    svg('path', { class: 'ih-agent-bowtie-sheen', d: 'M66.4 94 Q71.6 93.2 76.4 97 M93.6 94 Q88.4 93.2 83.6 97' }, bowTie);
-    svg('rect', { class: 'ih-agent-bowtie', x: 76.5, y: 95.5, width: 7, height: 7, rx: 2 }, bowTie);
+    const silk = paint('linearGradient', 'bowtie', { x1: 0, y1: 0, x2: 0.35, y2: 1 }, ['0', '1']);
+    svg('path', { class: 'ih-agent-bowtie', d: 'M80 99 C74 94 68 91 64.5 92.5 C62.5 96.5 62.5 101.5 64.5 105.5 C68 107 74 104 80 99 Z M80 99 C86 94 92 91 95.5 92.5 C97.5 96.5 97.5 101.5 95.5 105.5 C92 107 86 104 80 99 Z', fill: silk }, bowTie);
+    // Each wing gathers into soft pleats at the knot, and its upper edge
+    // catches the light.
+    svg('path', { class: 'ih-agent-bowtie-fold', d: 'M76.6 97.6 Q71.6 95.8 66.2 95.2 M76.6 100.4 Q71.6 102.2 66.2 102.8 M83.4 97.6 Q88.4 95.8 93.8 95.2 M83.4 100.4 Q88.4 102.2 93.8 102.8' }, bowTie);
+    svg('path', { class: 'ih-agent-bowtie-sheen', d: 'M66.6 93.6 Q71.4 93 76 96.4 M93.4 93.6 Q88.6 93 84 96.4' }, bowTie);
+    svg('rect', { class: 'ih-agent-bowtie', x: 76.5, y: 95.5, width: 7, height: 7, rx: 2, fill: silk }, bowTie);
+    svg('path', { class: 'ih-agent-bowtie-knot-light', d: 'M78 97.2 Q80 96.4 82 97.2' }, bowTie);
+    svg('path', { class: 'ih-agent-bowtie-knot-fold', d: 'M78.2 96.6 Q77.6 99 78.2 101.4 M81.8 96.6 Q82.4 99 81.8 101.4' }, bowTie);
     const drawnHead = svg('g', { 'data-testid': 'ih-agent-drawn-face' }, torso);
     svg('circle', { class: 'ih-agent-face', cx: 61, cy: 66, r: 4.5 }, drawnHead);
     svg('circle', { class: 'ih-agent-face', cx: 99, cy: 66, r: 4.5 }, drawnHead);
@@ -1661,7 +1756,7 @@
     // has a shading strip down both sides; shadeArm shows the side turned
     // away from the light. The upper arm's strips taper to a point at both
     // ends, so they fade in from the shoulder and out before the elbow.
-    const FOREARM_SIDES = ['M129.9 154.85 C131 170 131.5 182 131.5 193.66', 'M118.5 194.34 C118 182 117.6 170 116.1 157.15'];
+    const FOREARM_SIDES = ['M129.9 154.85 C131 170 131.5 181 131.5 190.6', 'M118.5 191.2 C118 181 117.6 170 116.1 157.15'];
     const FOREARM = `M116.1 157.15 L${FOREARM_SIDES[0].slice(1)} L${FOREARM_SIDES[1].slice(1)} Z`;
     const ELBOW = 'M116.1 156 A6.9 6.9 0 1 0 129.9 156 A6.9 6.9 0 1 0 116.1 156 Z';
     const arm = (side) => {
@@ -1676,8 +1771,8 @@
       // The outer strip fades in from the shoulder point, the inner one from
       // the armpit, where the arm's inner contour leaves the jacket.
       const upperShade = [
-        svg('path', { class: 'ih-agent-tux-shade', d: 'M123.6 112.7 Q127.34 129.96 129.27 148.34 Q119.45 131.24 123.6 112.7 Z' }, upper),
-        svg('path', { class: 'ih-agent-tux-shade', d: 'M111.35 127.3 Q113.82 138.55 115.34 150.56 Q120.74 137.37 111.35 127.3 Z' }, upper),
+        svg('path', { class: 'ih-agent-tux-shading', d: 'M123.6 112.7 Q127.34 129.96 129.27 148.34 Q119.45 131.24 123.6 112.7 Z', fill: edgeShade.outer }, upper),
+        svg('path', { class: 'ih-agent-tux-shading', d: 'M111.35 127.3 Q113.82 138.55 115.34 150.56 Q120.74 137.37 111.35 127.3 Z', fill: edgeShade.inner }, upper),
       ];
       // A soft fold on each segment, near the elbow.
       svg('path', { class: 'ih-agent-tux-fold', d: 'M117.4 145.8 Q121.6 148.4 126.8 146.6' }, upper);
@@ -1686,16 +1781,21 @@
       const fore = svg('g', {}, reach);
       jacket('ih-agent-tux-fill', FOREARM, fore, foreCloth.url);
       const foreShade = [
-        svg('path', { class: 'ih-agent-tux-shade', d: 'M130.4 162 Q126.6 176 126.6 194 L131.5 193.66 C131.5 182 131.2 172 130.4 162 Z' }, fore),
-        svg('path', { class: 'ih-agent-tux-shade', d: 'M116.9 163 C117.8 172 118.2 182 118.5 194.34 L123 194.1 Q121.8 174 116.9 163 Z' }, fore),
+        svg('path', { class: 'ih-agent-tux-shading', d: 'M130.4 162 Q126.2 175 126.2 190.8 L131.5 190.6 C131.5 181 131.2 172 130.4 162 Z', fill: edgeShade.outer }, fore),
+        svg('path', { class: 'ih-agent-tux-shading', d: 'M116.9 163 C117.8 172 118.2 181 118.5 191.2 L123.4 191 Q121.8 173 116.9 163 Z', fill: edgeShade.inner }, fore),
       ];
       svg('path', { class: 'ih-agent-tux-fold', d: 'M118.6 163.6 Q123 166.2 128.8 164.2' }, fore);
       // Two covered buttons on the sleeve; the hand (and a martini) go in
-      // under the shirt cuff and its link.
-      for (const by of [183.6, 187]) svg('circle', { class: 'ih-agent-sleeve-button', cx: 129.4, cy: by, r: 0.85 }, fore);
+      // under the shirt cuff, which shows below the sleeve, shaded where the
+      // sleeve overhangs it, and closed with a gold link.
+      for (const by of [180.8, 184.2]) {
+        svg('circle', { class: 'ih-agent-sleeve-button', cx: 129.3, cy: by, r: 0.85 }, fore);
+        svg('circle', { class: 'ih-agent-sleeve-button-light', cx: 129.05, cy: by - 0.25, r: 0.28 }, fore);
+      }
       const grip = svg('g', {}, fore);
-      svg('rect', { class: 'ih-agent-cuff', x: 118, y: 190, width: 13, height: 6, rx: 1.5 }, fore);
-      svg('circle', { class: 'ih-agent-cufflink', cx: 124.5, cy: 193, r: 1.1 }, fore);
+      svg('rect', { class: 'ih-agent-cuff', x: 118.2, y: 189.2, width: 13, height: 4.9, rx: 1.1 }, fore);
+      svg('path', { class: 'ih-agent-cuff-shadow', d: 'M118.8 191.4 Q124.7 192.2 130.6 191.2' }, fore);
+      svg('circle', { class: 'ih-agent-cufflink', cx: 124.7, cy: 192.3, r: 1.05, fill: paint('radialGradient', 'gold', { cx: 0.35, cy: 0.3, r: 0.8 }, ['0', '1']) }, fore);
       return { side, upper, reach, fore, foreInk, grip, upperShade, foreShade, upperCloth, foreCloth, skin: skinGradient(side), armhole: armholes[side] };
     };
     const free = arm(-1);
@@ -1727,22 +1827,60 @@
       return { palm, fingers, creases };
     };
     const martini = arm(1);
-    // A martini, shaken: glass with a cold meniscus and a shine, an olive
-    // with its pimento on a pick, stem, base; it turns at the hand
-    // (125, 198) so it stays upright.
+    // A martini, shaken: a conical glass held by its stem, its rim an
+    // ellipse; gin up to just under the rim, with a cold meniscus, tinting
+    // the olive (and its pimento) sunk on a pick; light down the near wall,
+    // on the rim and the stem; and the foot below the hand. It turns at the
+    // hand (125, 198) so it stays upright.
     const glass = svg('g', { class: 'ih-agent-glass' }, martini.grip);
-    svg('path', { class: 'ih-agent-martini', d: 'M112 170 L138 170 L125 186 Z' }, glass);
-    svg('ellipse', { class: 'ih-agent-martini-surface', cx: 125, cy: 172.6, rx: 10.9, ry: 1.1 }, glass);
-    svg('path', { class: 'ih-agent-pick', d: 'M116.2 166.4 L124 179.2' }, glass);
-    svg('circle', { class: 'ih-agent-pick-end', cx: 116.2, cy: 166.4, r: 1.1 }, glass);
-    svg('circle', { class: 'ih-agent-olive', cx: 121, cy: 175, r: 3 }, glass);
-    svg('circle', { class: 'ih-agent-pimento', cx: 122.1, cy: 174.1, r: 1.05 }, glass);
-    svg('path', { class: 'ih-agent-martini-stem', d: 'M125 186 V202 M118 202 H132' }, glass);
-    svg('path', { class: 'ih-agent-martini-shine', d: 'M114.6 171.6 L121.4 179.4' }, glass);
-    // His watch, on the free wrist, peeks out from under the cuff.
-    svg('rect', { class: 'ih-agent-watch-band', x: 128.4, y: 188.2, width: 3.6, height: 6.4, rx: 1 }, free.fore);
-    svg('circle', { class: 'ih-agent-watch', cx: 130.6, cy: 191.4, r: 2.6 }, free.fore);
-    svg('circle', { class: 'ih-agent-watch-glint', cx: 129.9, cy: 190.7, r: 0.7 }, free.fore);
+    const crystal = paint('linearGradient', 'crystal', { x1: 0, y1: 0, x2: 1, y2: 0 }, ['0', '0.45', '1']);
+    const BOWL = 'M115.4 176.6 L124.4 187.2 L125.6 187.2 L134.6 176.6 Z';
+    svg('path', { class: 'ih-agent-glass-fill', d: 'M124.45 187 L124.7 207.4 L125.3 207.4 L125.55 187 Z', fill: crystal }, glass);
+    svg('ellipse', { class: 'ih-agent-glass-fill', cx: 125, cy: 207.8, rx: 5.2, ry: 1, fill: crystal }, glass);
+    svg('path', { class: 'ih-agent-glass-fill', d: BOWL, fill: crystal }, glass);
+    svg('path', { class: 'ih-agent-pick', d: 'M118.4 172.4 L126 186' }, glass);
+    svg('ellipse', { class: 'ih-agent-olive', cx: 123, cy: 181, rx: 2.15, ry: 1.85, transform: 'rotate(-30 123 181)', fill: paint('radialGradient', 'olive', { cx: 0.35, cy: 0.3, r: 0.8 }, ['0', '1']) }, glass);
+    svg('circle', { class: 'ih-agent-pimento', cx: 123.9, cy: 180.4, r: 0.75 }, glass);
+    svg('path', { class: 'ih-agent-gin', d: 'M116.93 178.4 L133.07 178.4 L125.5 186.8 L124.5 186.8 Z' }, glass);
+    svg('ellipse', { class: 'ih-agent-gin-surface', cx: 125, cy: 178.4, rx: 8.07, ry: 0.75 }, glass);
+    svg('path', { class: 'ih-agent-pick ih-agent-pick--dry', d: 'M118.4 172.4 L119.7 174.8' }, glass);
+    svg('circle', { class: 'ih-agent-pick-end', cx: 118.4, cy: 172.4, r: 0.7 }, glass);
+    svg('path', { class: 'ih-agent-glass-line', d: `${BOWL} M124.45 187 L124.7 207 M125.55 187 L125.3 207` }, glass);
+    svg('ellipse', { class: 'ih-agent-glass-line', cx: 125, cy: 207.8, rx: 5.2, ry: 1 }, glass);
+    svg('ellipse', { class: 'ih-agent-glass-rim', cx: 125, cy: 176.6, rx: 9.6, ry: 0.95 }, glass);
+    svg('path', { class: 'ih-agent-glass-light', d: 'M117.4 177.9 L122.5 184.1 M124.8 189 V205.2 M121.6 207.2 Q123.2 206.8 124.4 206.9' }, glass);
+    svg('circle', { class: 'ih-agent-glass-spark', cx: 117.9, cy: 176.85, r: 0.42 }, glass);
+    // His watch: a steel diver on the free wrist, worn over the edge of the
+    // cuff. A link bracelet round the wrist; the case with its crown; a navy
+    // bezel with minute marks and a lume pip; a sunburst dial with hour
+    // markers; hands at ten past ten and a seconds hand; and glare on the
+    // crystal. 12 o'clock points up the arm.
+    const watch = svg('g', { class: 'ih-agent-watch', 'data-testid': 'ih-agent-watch' }, free.fore);
+    const steel = paint('linearGradient', 'steel', { x1: 0, y1: 0, x2: 0, y2: 1 }, ['0', '0.5', '1']);
+    const [wx, wy] = [125, 194];
+    const dialAt = (r, clock) => [wx + r * Math.sin(clock * Math.PI / 6), wy - r * Math.cos(clock * Math.PI / 6)];
+    svg('rect', { class: 'ih-agent-bracelet', x: 118.4, y: 192.5, width: 13.2, height: 3, rx: 0.9, fill: steel }, watch);
+    svg('path', { class: 'ih-agent-bracelet-links', d: 'M120.3 192.6 V195.4 M122 192.6 V195.4 M128 192.6 V195.4 M129.7 192.6 V195.4' }, watch);
+    svg('rect', { class: 'ih-agent-watch-crown', x: 128.4, y: 193.35, width: 1.5, height: 1.3, rx: 0.35, fill: steel }, watch);
+    svg('circle', { class: 'ih-agent-watch-case', cx: wx, cy: wy, r: 3.7, fill: paint('radialGradient', 'watch-case', { cx: 0.35, cy: 0.3, r: 0.85 }, ['0', '1']) }, watch);
+    svg('circle', { class: 'ih-agent-watch-bezel', cx: wx, cy: wy, r: 3.15 }, watch);
+    svg('path', {
+      class: 'ih-agent-watch-marks',
+      d: Array.from({ length: 12 }, (_, k) => k % 3 ? `M${dialAt(2.68, k).map((v) => v.toFixed(2)).join(' ')} L${dialAt(3.02, k).map((v) => v.toFixed(2)).join(' ')}` : '').join(' '),
+    }, watch);
+    svg('circle', { class: 'ih-agent-watch-pip', cx: wx, cy: wy - 2.85, r: 0.34 }, watch);
+    svg('circle', { class: 'ih-agent-watch-dial', cx: wx, cy: wy, r: 2.45, fill: paint('radialGradient', 'watch-dial', { cx: 0.5, cy: 0.5, r: 0.5 }, ['0', '1']) }, watch);
+    for (let k = 0; k < 12; k += 1) {
+      const [x, y] = dialAt(1.95, k);
+      svg('circle', { class: 'ih-agent-watch-index', cx: x.toFixed(2), cy: y.toFixed(2), r: k % 3 ? 0.15 : 0.24 }, watch);
+    }
+    const pointer = (clock, length) => `M${wx} ${wy} L${dialAt(length, clock).map((v) => v.toFixed(2)).join(' ')}`;
+    svg('path', { class: 'ih-agent-watch-hour', d: pointer(10, 1.3) }, watch);
+    svg('path', { class: 'ih-agent-watch-minute', d: pointer(2, 1.95) }, watch);
+    svg('path', { class: 'ih-agent-watch-second', d: pointer(6.4, 2.05) }, watch);
+    svg('circle', { class: 'ih-agent-watch-cap', cx: wx, cy: wy, r: 0.3 }, watch);
+    svg('path', { class: 'ih-agent-watch-glare', d: `M${dialAt(2.05, 8.3).map((v) => v.toFixed(2)).join(' ')} A2.05 2.05 0 0 1 ${dialAt(2.05, 11.2).map((v) => v.toFixed(2)).join(' ')}` }, watch);
+    svg('circle', { class: 'ih-agent-watch-glint', cx: 123.7, cy: 192.7, r: 0.5 }, watch);
     const hands = [hand(free), hand(martini)];
 
     const pt = (x, y) => `${x.toFixed(1)} ${y.toFixed(1)}`;
@@ -1775,7 +1913,9 @@
       const braid = 8.5, miter = braid / Math.max(0.3, Math.cos(a));
       for (const leg of legs) {
         for (const stroke of leg.strokes) stroke.setAttribute('d', `M67 ${(hipY - 8).toFixed(1)} L${pt(67, hipY)} L${pt(kneeX, kneeY)} L67 286`);
-        leg.braid.setAttribute('d', `M${pt(67 - braid * Math.cos(a), hipY - braid * Math.sin(a))} L${pt(kneeX - miter, kneeY)} L${pt(67 - braid * Math.cos(a), 285 + braid * Math.sin(a))}`);
+        const braidPath = `M${pt(67 - braid * Math.cos(a), hipY - braid * Math.sin(a))} L${pt(kneeX - miter, kneeY)} L${pt(67 - braid * Math.cos(a), 285 + braid * Math.sin(a))}`;
+        leg.braid.setAttribute('d', braidPath);
+        leg.braidSheen.setAttribute('d', braidPath);
         leg.shoe.setAttribute('transform', 'translate(66.5 286)');
       }
       trunk.setAttribute('transform', `translate(0 ${drop.toFixed(1)})`);
@@ -1892,7 +2032,7 @@
     let glint, figure;
     if (look === 'tuxedo') {
       figure = tuxedoFigure(fig, sway, { flip });
-      glint = svg('line', { class: 'ih-agent-glint', x1: 0, y1: 0, x2: 4, y2: -7, opacity: 0 }, figure.glass);
+      glint = svg('line', { class: 'ih-agent-glint ih-agent-glint--glass', x1: 0, y1: 0, x2: 2.2, y2: -3.8, opacity: 0 }, figure.glass);
       hero?.then((head) => {
         if (head && wrap.isConnected) figure.wear(head);
       }).catch(() => {
@@ -1952,7 +2092,7 @@
     }
     const moveTrack = moves && poseTrack([[-Infinity, 0, MOVES_AT_REST], ...moves
       .flatMap(([when, move]) => MOVES[move].map(([delay, duration, fields]) => [when + delay, duration, fields]))
-      .sort((a, b) => a[0] - b[0])]);
+      .sort((a, b) => a[0] - b[0])], { turns: true });
     // Just after each wink, a glint flares off his smile.
     const smiles = (moves ?? []).filter(([, move]) => move === 'wink').map(([when]) => ({ at: when + 0.1 }));
     const side = entrance === 'left' ? -1 : 1;
@@ -1978,30 +2118,34 @@
       const on = cycle < 0.18 && local > 0.4;
       glint.setAttribute('opacity', on ? (Math.sin((cycle / 0.18) * Math.PI) * 0.9).toFixed(2) : '0');
       // The glint crosses the sunglasses, or the rim of the martini glass.
-      const [gx0, gspan, gy] = look === 'tuxedo' ? [112, 26, 172] : [64, 32, 66];
+      const [gx0, gspan, gy] = look === 'tuxedo' ? [116.4, 17, 177.4] : [64, 32, 66];
       const gx = gx0 + gspan * (cycle / 0.18);
       glint.setAttribute('transform', `translate(${gx.toFixed(1)} ${gy})`);
       if (!figure) return;
       let pose = AT_EASE;
       if (toastAt !== undefined || rig || moveTrack || entrance !== 'rise') {
-        let martini = AT_EASE.martini, crouch = settle;
+        // He stands at ease, the glass held at his chest (STANCE); the
+        // caper's rig poses his limbs itself until he reaches his post.
+        let martini = STANCE.martini, crouch = settle;
         if (toastAt !== undefined) {
-          // The upper arm swings up and the elbow bends a beat later; the
-          // bend eases from zero, so the elbow never flexes backwards. A
-          // small knee dip under it lends the raise its weight.
+          // The glass rises from his chest: the upper arm swings up and the
+          // elbow follows a beat later, the forearm taking the shorter way
+          // round, up across his chest. A small knee dip lends the raise its
+          // weight. After `toastHold` seconds the glass comes back down the
+          // same way to his chest.
           const toast = TOAST_POSES[toastPose];
+          const raised = [toast.upper, nearTurn(GLASS_HELD[1], toast.forearm)];
           const swing = (delay) => (reduced ? Number(t >= toastAt) : backOut(progress(t, toastAt + delay, 0.45)));
-          const upper = toast.upper * swing(0);
-          martini = [upper, upper + (toast.forearm - toast.upper) * swing(0.08)];
+          martini = GLASS_HELD.map((held, i) => held + (raised[i] - held) * swing(0.08 * i));
           if (toastHold !== undefined) {
             const lower = reduced ? Number(t >= toastAt + toastHold) : easeInOutCubic(progress(t, toastAt + toastHold, 0.6));
-            martini = martini.map((raise, i) => raise + (GLASS_AT_CHEST[i] - raise) * lower);
+            martini = martini.map((raise, i) => raise + (GLASS_HELD[i] - raise) * lower);
           }
           if (!reduced) crouch += 6 * Math.sin(Math.PI * progress(t, toastAt - 0.18, 0.42));
         }
         const smile = latest(smiles, t);
         const sparkle = smile && !reduced ? progress(t, smile.at, 0.45) : 0;
-        pose = { ...AT_EASE, martini, crouch, sparkle, ...moveTrack?.(t, reduced), ...rig?.(t) };
+        pose = { ...STANCE, martini, crouch, sparkle, ...moveTrack?.(t, reduced), ...rig?.(t) };
         figure.pose(pose);
       }
       // His eyes (and a worn head's blinks) move only while he is on stage.
@@ -2116,10 +2260,11 @@
    * A keyframed pose: keys = [[at, duration, fields]], each easing the pose
    * so far towards its fields over [at, at + duration]; the first key's
    * fields are the starting pose. Fields are numbers or [a, b] pairs. With
-   * `hold` (reduced motion) each key snaps in at `at`.
+   * `hold` (reduced motion) each key snaps in at `at`. With `turns`, pairs
+   * are arm raises in degrees, each eased the shorter way round (nearTurn).
    */
-  function poseTrack(keys) {
-    const mix = (a, b, u) => (Array.isArray(a) ? a.map((v, i) => v + (b[i] - v) * u) : a + (b - a) * u);
+  function poseTrack(keys, { turns = false } = {}) {
+    const mix = (a, b, u) => (Array.isArray(a) ? a.map((v, i) => v + ((turns ? nearTurn(v, b[i]) : b[i]) - v) * u) : a + (b - a) * u);
     return (t, hold) => {
       let pose = { ...keys[0][2] };
       for (const [at, duration, fields] of keys.slice(1)) {
@@ -2150,13 +2295,19 @@
    */
   function spyCaper(parent, T, { hero } = {}) {
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    // Agent Payment Gateway's size: he stands with his feet on the floor
+    // (y 405.4), and the laser barrier's ceiling detector sits high enough
+    // (emitterTop) to guard someone his height.
+    const BOND = 0.86;
+    const bondY = 405.4 - 293 * BOND;
+    const emitterTop = 180;
     const stage = svg('svg', { class: 'ih-caper', viewBox: '0 0 960 540', 'aria-hidden': 'true' }, parent);
     const beam = svg('path', { class: 'ih-caper-beam' }, stage);
     const pool = svg('ellipse', { class: 'ih-caper-pool', cx: 0, cy: 424, rx: 120, ry: 20 }, stage);
     const lasers = svg('g', { class: 'ih-caper-lasers', opacity: 0 }, stage);
     for (const lx of [582, 600]) {
-      svg('line', { class: 'ih-caper-laser-glow', x1: lx, y1: 246, x2: lx, y2: 420 }, lasers);
-      svg('line', { class: 'ih-caper-laser', x1: lx, y1: 246, x2: lx, y2: 420 }, lasers);
+      svg('line', { class: 'ih-caper-laser-glow', x1: lx, y1: emitterTop + 6, x2: lx, y2: 420 }, lasers);
+      svg('line', { class: 'ih-caper-laser', x1: lx, y1: emitterTop + 6, x2: lx, y2: 420 }, lasers);
     }
     // The laser detectors Agent Payment Gateway installs.
     const floorEmitter = svg('g', { opacity: 0 }, stage);
@@ -2247,7 +2398,7 @@
       floorEmitter.setAttribute('transform', `translate(591 421) scale(${(0.4 + 0.6 * backOutSoft(plant)).toFixed(3)})`);
       const toss = progress(t, T.build + 0.08, 0.32);
       topEmitter.setAttribute('opacity', toss > 0 ? '1' : '0');
-      topEmitter.setAttribute('transform', `translate(591 ${(300 - 60 * ease(toss) - 30 * Math.sin(Math.PI * toss)).toFixed(1)}) rotate(${(toss < 1 ? 540 * toss : 0).toFixed(1)})`);
+      topEmitter.setAttribute('transform', `translate(591 ${(300 - (300 - emitterTop) * ease(toss) - 30 * Math.sin(Math.PI * toss)).toFixed(1)}) rotate(${(toss < 1 ? 540 * toss : 0).toFixed(1)})`);
       lasers.setAttribute('opacity', progress(t, T.zap - 0.08, 0.08).toFixed(2));
       const z = progress(t, T.zap, 0.5);
       spark.setAttribute('opacity', z > 0 && z < 1 ? (1 - z).toFixed(2) : '0');
@@ -2281,7 +2432,8 @@
     const landAt = T.bondFlip + 0.55;
     const hopAt = T.build + 0.24;
     const postAt = T.zap - 0.08;
-    const hangDy = -172;
+    // Hanging upside down from the rope, his feet are at y 40.
+    const hangDy = (40 + 143 * BOND) - (bondY + 150 * BOND);
     const barrierDx = 590 - post;
     const motion = (t) => {
       const reduce = reducedMotion.matches;
@@ -2343,14 +2495,16 @@
       [hopAt - 0.02, 0.22, glide],
       // Lands softly, rises, and glances at the snoop.
       [postAt - 0.06, 0.2, { crouch: 16 }],
-      [postAt + 0.1, 0.45, { free: [0, 0], martini: [0, 0], crouch: 0, look: 1 }],
+      // He brings the glass down across his chest to hold it there (the
+      // stance agent() keeps once the rig hands the martini over).
+      [postAt + 0.1, 0.45, { free: ARM_RELAXED, martini: [GLASS_HELD[0], nearTurn(levelGlass[1], GLASS_HELD[1])], crouch: 0, look: 1 }],
       // Straightens his bow tie: tugged crooked, then square (the tie gleam).
       [postAt + 0.24, 0.32, { free: tieHand, tie: -10 }],
       [postAt + 0.56, 0.3, { tie: 0 }],
-      [postAt + 0.9, 0.4, { free: [0, 0] }],
+      [postAt + 0.9, 0.4, { free: ARM_RELAXED }],
       // A two-finger salute as the reply goes back.
       [T.reply - 0.18, 0.34, { free: armReach([62, 54], -1, 'out'), finger: 1, middle: 1 }],
-      [T.reply + 0.42, 0.36, { free: [0, 0], finger: 0, middle: 0, look: 0 }],
+      [T.reply + 0.42, 0.36, { free: ARM_RELAXED, finger: 0, middle: 0, look: 0 }],
       // After the twirl he buttons his jacket, and keeps his hand there; at
       // the toast, a wink.
       [T.shh - 0.2, 0.4, { free: buttonHand }],
@@ -2362,14 +2516,14 @@
     // (postAt + 0.55), so it never jumps. Through every flip the glass stays
     // upright.
     const bond = agent(parent, {
-      x: post - 52.8, y: 212, scale: 0.66, role: 'Agent', code: '00', look: 'tuxedo', at: T.bondIn, toastAt: T.toast, hero,
+      x: post - 80 * BOND, y: bondY, scale: BOND, role: 'Agent', code: '00', look: 'tuxedo', at: T.bondIn, toastAt: T.toast, hero,
       rig: (t) => {
         const { martini, ...rest } = limbs(t, reducedMotion.matches);
         return { ...rest, ...(t < postAt + 0.6 ? { martini } : {}), glassTilt: -motion(t).r };
       },
     });
     const figure = bond.querySelector('svg');
-    figure.style.transformOrigin = '52.8px 99px';
+    figure.style.transformOrigin = `${80 * BOND}px ${150 * BOND}px`;
     const shadow = bond.querySelector('.ih-agent-shadow');
     const bondTag = bond.querySelector('.ih-agent-tag');
     if (bondTag) {
@@ -2405,7 +2559,7 @@
       shadow?.setAttribute('opacity', (t >= landAt && t < hopAt) || t >= postAt ? '1' : '0');
       // The rope: tied to his feet while he hangs, whipped away when he lets go.
       const up = progress(t, T.bondFlip, 0.35);
-      rope.setAttribute('y2', (t < T.bondFlip ? 212 + dy + 6 : (212 + hangDy + 6) * (1 - ease(up)) - 20 * ease(up)).toFixed(1));
+      rope.setAttribute('y2', (t < T.bondFlip ? bondY + dy + 7 * BOND : (bondY + hangDy + 7 * BOND) * (1 - ease(up)) - 20 * ease(up)).toFixed(1));
       rope.setAttribute('x2', (post + dx).toFixed(1));
       rope.setAttribute('opacity', t >= T.bondIn && up < 1 ? '1' : '0');
       // Dust: a puff where he lands on the spot, and at his post.
@@ -2418,9 +2572,9 @@
         puff.setAttribute('cy', (408 - 14 * u).toFixed(1));
       });
       // A snap of light as the beams switch on, a bow-tie gleam, a toast.
-      sparkle(snapGleam, postAt, 591, 236, 0.45);
-      sparkle(tieGleam, postAt + 0.45, post + 2, 277);
-      sparkle(glassGleam, T.toast + 0.3, post - 52.8 + 134 * 0.66, 212 + 14 * 0.66, 0.6);
+      sparkle(snapGleam, postAt, 591, emitterTop - 4, 0.45);
+      sparkle(tieGleam, postAt + 0.45, post + 2, bondY + 99 * BOND);
+      sparkle(glassGleam, T.toast + 0.3, post + 54 * BOND, bondY + 14 * BOND, 0.6);
     });
     return stage;
   }
@@ -2605,6 +2759,9 @@
       // UML dependency: a dashed line ending in an open arrowhead.
       svg('path', { class: `ih-impact-arrow ih-impact-arrow--${tone}`, d: 'M1 1 L9 5 L1 9' }, marker);
     }
+    // The module cards are lit from above (gradient fill attribute).
+    const cardLight = svg('linearGradient', { id: `${id}-card`, x1: 0, y1: 0, x2: 0, y2: 1 }, defs);
+    for (const [index, offset] of ['0', '1'].entries()) svg('stop', { offset, class: `ih-impact-card-stop-${index}` }, cardLight);
     function text(parentNode, value, tx, ty, className = '') {
       const label = svg('text', { class: `ih-impact-text ${className}`, x: tx, y: ty, 'text-anchor': 'middle' }, parentNode);
       label.textContent = value;
@@ -2615,32 +2772,42 @@
     svg('rect', { class: 'ih-impact-system', x: 8, y: 70, width: 424, height: 200, rx: 9 }, node);
 
     // Edges are painted first, so arrow routes never cover module labels.
+    // Each ends at its own point, so no two arrowheads overlap: along the
+    // Gateway's left side, or (leaky) along the Provider's top, nested so
+    // the routes never cross.
     const edgeLayer = svg('g', {}, node);
     const edges = [];
     const callers = ['Order', 'Refund', 'Wallet', 'Report', 'Admin'];
     callers.forEach((name, index) => {
       const sy = 93 + index * 38;
-      const targetY = leaky ? 290 + index * 6 : 154 + index * 9;
+      const targetX = 362 - index * 24;
+      const targetY = 145 + index * 13;
       const d = leaky
-        ? `M132 ${sy} C202 ${sy} 185 ${targetY} 249 ${targetY}`
+        ? `M132 ${sy} C${targetX - 34} ${sy} ${targetX} ${sy + 24} ${targetX} 284`
         : `M132 ${sy} C185 ${sy} 197 ${targetY} 249 ${targetY}`;
       edges.push({ node: svg('path', { class: 'ih-impact-edge', d, 'marker-end': `url(#${id}-neutral)` }, edgeLayer), affected: leaky });
     });
     // Only the hidden design has a Gateway; in the leaky design callers reach the provider directly.
-    if (!leaky) edges.push({ node: svg('path', { class: 'ih-impact-edge', d: 'M325 201 V284', 'marker-end': `url(#${id}-neutral)` }, edgeLayer), affected: true });
+    if (!leaky) edges.push({ node: svg('path', { class: 'ih-impact-edge', d: 'M325 211 V284', 'marker-end': `url(#${id}-neutral)` }, edgeLayer), affected: true });
 
     const modules = [];
+    // A card: its shadow, the lit card, and a highlight along its top edge.
     function module(name, mx, my, width, height, affected) {
       const group = svg('g', { class: 'ih-impact-module', 'data-testid': 'ih-impact-module', 'data-module': name }, node);
-      svg('rect', { class: 'ih-impact-card', x: mx, y: my, width, height, rx: 6 }, group);
+      svg('rect', { class: 'ih-impact-card-shadow', x: mx + 2, y: my + 3, width, height, rx: 6 }, group);
+      svg('rect', { class: 'ih-impact-card', x: mx, y: my, width, height, rx: 6, fill: `url(#${id}-card)` }, group);
+      svg('path', { class: 'ih-impact-card-light', d: `M${mx + 6} ${my + 2.6} H${mx + width - 6}` }, group);
       const label = text(group, name, mx + width / 2, my + height / 2 + 7, 'ih-impact-name');
       modules.push({ group, label, name, affected });
     }
     callers.forEach((name, i) => module(name, 20, 78 + i * 38, 112, 30, leaky));
-    if (!leaky) module('Gateway', 250, 146, 150, 54, true);
+    if (!leaky) module('Gateway', 250, 136, 150, 74, true);
+    // The external payment provider, outside the system, marked by a card.
     const provider = svg('g', { class: 'ih-impact-provider' }, node);
     svg('rect', { class: 'ih-impact-provider-card', x: 250, y: 285, width: 150, height: 36, rx: 6 }, provider);
-    text(provider, 'Provider', 325, 310, 'ih-impact-name');
+    svg('rect', { class: 'ih-impact-provider-icon', x: 258, y: 296, width: 18, height: 13, rx: 2 }, provider);
+    svg('path', { class: 'ih-impact-provider-stripe', d: 'M258 300.4 H276 M261 305.6 H266' }, provider);
+    text(provider, 'Provider', 333, 310, 'ih-impact-name');
     const verdict = text(node, 'Count changed modules', 220, 344, 'ih-impact-verdict');
 
     onFrame((t) => {
@@ -3054,131 +3221,219 @@
   /**
    * A soft-flat person in a 120×200 box who rewinds through life: young man
    * → teen → kid → baby → swaddled newborn → egg cell → a puff of smoke with
-   * a "?". stages = { teen, kid, baby, newborn, egg, gone } are song times;
-   * each step is a slow cross-dissolve in which the older stage shrinks into
-   * the younger one. Pure function of song time; with reduced motion the
-   * steps cut without the dissolve.
+   * a "?". stages = { teen, kid, baby, newborn, egg, gone } are song times:
+   * from each one, the figure morphs on into the next stage, shrinking at a
+   * steady rate as neighbouring stages dissolve into each other, so the
+   * rewind runs continuously from the young man (at `teen`) through the
+   * teen (fully there at `kid`), the kid (at `baby`), the baby (at
+   * `newborn`), and the newborn (at `egg`) to the egg cell, which goes up in
+   * smoke at `gone`. Pure function of song time; with reduced motion each
+   * stage simply replaces the last at its time.
    */
   function agingPerson(parent, { x, y, scale = 1, at, stages, until, tag }) {
     const node = art(parent, { x, y, w: 120 * scale, h: 210 * scale, viewBox: '0 0 120 210', className: 'ih-aging' });
-    const P = (g, cls, d) => svg('path', { class: cls, d }, g);
-    const C = (g, cls, cx, cy, r) => svg('circle', { class: cls, cx, cy, r }, g);
-    /** Ears, head, hair, brows, eyes with catchlights, nose, mouth (and cheeks). */
-    function face(g, cx, cy, r, { hair, mouth, open = false, brows = true, cheeks = false }) {
-      for (const side of [-1, 1]) C(g, 'ih-aging-skin', cx + side * r * 0.96, cy + 2, r * 0.24);
-      C(g, 'ih-aging-skin', cx, cy, r);
-      P(g, 'ih-aging-hair', hair);
+    const P = (g, cls, d, attrs = {}) => svg('path', { class: cls, d, ...attrs }, g);
+    const C = (g, cls, cx, cy, r, attrs = {}) => svg('circle', { class: cls, cx, cy, r, ...attrs }, g);
+    // Soft light from the upper left: gradients for skin, hair, and cloth,
+    // each stop coloured by its class (CSS).
+    const defs = svg('defs', {}, node);
+    const paint = (kind, name, attrs, offsets) => {
+      const id = `ih-aging-${name}-${++uid}`;
+      const gradient = svg(kind, { id, ...attrs }, defs);
+      offsets.forEach((offset, index) => svg('stop', { offset, class: `ih-aging-${name}-stop-${index}` }, gradient));
+      return `url(#${id})`;
+    };
+    const skinLight = paint('radialGradient', 'skin', { cx: 0.38, cy: 0.32, r: 0.78 }, ['0', '0.6', '1']);
+    const hairLight = paint('linearGradient', 'hair', { x1: 0, y1: 0, x2: 0.4, y2: 1 }, ['0', '1']);
+    const lit = (name) => paint('linearGradient', name, { x1: 0, y1: 0, x2: 1, y2: 0.35 }, ['0', '0.55', '1']);
+    const tee = lit('tee'), denim = lit('denim'), hoodie = lit('hoodie'), joggers = lit('joggers');
+    /** Ears with their inner curl, head, hair with its light, brows, eyes with catchlights, nose, mouth (and cheeks). */
+    function face(g, cx, cy, r, { hair, hairLight: strands, mouth, open = false, brows = true, cheeks = false, freckles = false }) {
+      for (const side of [-1, 1]) {
+        C(g, 'ih-aging-skin', cx + side * r * 0.96, cy + 2, r * 0.24, { fill: skinLight });
+        P(g, 'ih-aging-ear', `M${cx + side * r * 1.02} ${cy + 0.6} Q${cx + side * r * 0.9} ${cy + 2.2} ${cx + side * r * 1.0} ${cy + 3.6}`);
+      }
+      C(g, 'ih-aging-skin ih-aging-head', cx, cy, r, { fill: skinLight });
+      P(g, 'ih-aging-hair', hair, { fill: hairLight });
+      if (strands) P(g, 'ih-aging-hair-light', strands);
       for (const side of [-1, 1]) {
         const ex = cx + side * r * 0.36;
         svg('ellipse', { class: 'ih-aging-eye', cx: ex, cy: cy + r * 0.08, rx: r * 0.11, ry: r * 0.15 }, g);
         C(g, 'ih-aging-catchlight', ex + r * 0.04, cy + r * 0.02, r * 0.045);
         if (brows) P(g, 'ih-aging-brow', `M${ex - r * 0.16} ${cy - r * 0.2} Q${ex} ${cy - r * 0.3} ${ex + r * 0.16} ${cy - r * 0.2}`);
         if (cheeks) C(g, 'ih-aging-cheek', cx + side * r * 0.58, cy + r * 0.38, r * 0.16);
+        if (freckles) for (const [fx, fy] of [[0.5, 0.3], [0.62, 0.36], [0.54, 0.44]]) C(g, 'ih-aging-freckle', cx + side * r * fx, cy + r * fy, r * 0.035);
       }
       P(g, 'ih-aging-nose', `M${cx + r * 0.02} ${cy + r * 0.18} Q${cx - r * 0.12} ${cy + r * 0.38} ${cx + r * 0.08} ${cy + r * 0.4}`);
       P(g, open ? 'ih-aging-mouth ih-aging-mouth--open' : 'ih-aging-mouth', mouth);
     }
+    /** A sneaker: the upper with a toe cap, laces, and a side stripe, on a rubber sole. */
     const sneaker = (g, x, y, w, cls) => {
-      P(g, `ih-aging-shoe ${cls}`, `M${x} ${y} H${x + w * 0.62} Q${x + w} ${y + 3} ${x + w} ${y + 8} H${x - 2} Q${x - 3} ${y + 3} ${x} ${y}Z`);
-      P(g, 'ih-aging-sole', `M${x - 2} ${y + 8} H${x + w}`);
+      P(g, 'ih-aging-sole', `M${x - 2.6} ${y + 6} H${x + w + 0.6} Q${x + w + 1} ${y + 8.6} ${x + w - 0.6} ${y + 8.6} H${x - 2.2} Q${x - 3.2} ${y + 8.6} ${x - 2.6} ${y + 6} Z`);
+      P(g, `ih-aging-shoe ${cls}`, `M${x} ${y} H${x + w * 0.62} Q${x + w} ${y + 2.6} ${x + w} ${y + 6.4} H${x - 2.4} Q${x - 3} ${y + 2.6} ${x} ${y}Z`);
+      P(g, 'ih-aging-toecap', `M${x + w * 0.66} ${y + 0.6} Q${x + w * 0.62} ${y + 3.6} ${x + w * 0.74} ${y + 6.2}`);
+      P(g, 'ih-aging-lace', `M${x + 1.4} ${y + 1.4} L${x + w * 0.42} ${y + 1} M${x + 1.8} ${y + 3} L${x + w * 0.46} ${y + 2.6}`);
+      P(g, `ih-aging-stripe-side ${cls}-stripe`, `M${x - 1.6} ${y + 5} Q${x + w * 0.32} ${y + 2.6} ${x + w * 0.6} ${y + 5.2}`);
+    };
+    /** An arm in skin with its outline: the dark stroke under a narrower skin stroke. */
+    const limb = (g, d, width) => {
+      P(g, 'ih-aging-limb-ink', d, { 'stroke-width': width + 2.6 });
+      P(g, 'ih-aging-limb', d, { 'stroke-width': width });
+    };
+    /** A hand: the palm and a thumb on the side towards the body. */
+    const hand = (g, cx, cy, r, side) => {
+      C(g, 'ih-aging-skin', cx, cy, r, { fill: skinLight });
+      svg('ellipse', { class: 'ih-aging-skin', cx: cx - side * r * 0.72, cy: cy - r * 0.2, rx: r * 0.42, ry: r * 0.62, transform: `rotate(${side * 18} ${cx - side * r * 0.72} ${cy - r * 0.2})`, fill: skinLight }, g);
     };
 
-    // Young man: quiff, T-shirt with a code logo, belt, jeans, sneakers.
+    // Young man: a quiff, a crew-neck T-shirt with a code print, a belt with
+    // loops, jeans with pockets, stitching and worn knees, white sneakers.
     const man = svg('g', { class: 'ih-aging-man' }, node);
     svg('ellipse', { class: 'ih-aging-shadow', cx: 60, cy: 189, rx: 30, ry: 4 }, man);
-    P(man, 'ih-aging-jeans', 'M44 113 L76 113 L75 179 L63 179 L60 128 L57 179 L45 179 Z');
-    P(man, 'ih-aging-seam', 'M51 120 L50.5 177 M69 120 L69.5 177');
+    P(man, 'ih-aging-jeans', 'M44 113 L76 113 L75.2 179 L63 179 L60 129 L57 179 L44.8 179 Z', { fill: denim });
+    P(man, 'ih-aging-denim-shade', 'M70.4 116 L76 113 L75.2 179 L70 179 Q71.6 147 70.4 116 Z M60 129 L57 179 L54.2 179 Q56.8 150 60 129 Z');
+    for (const kx of [51, 69.4]) svg('ellipse', { class: 'ih-aging-knee', cx: kx, cy: 152, rx: 3.4, ry: 7 }, man);
+    P(man, 'ih-aging-stitch', 'M46.4 117 L45.8 177 M73.6 117 L74.2 177 M47.2 116.6 Q50.6 121.4 55.2 116.6 M72.8 116.6 Q69.4 121.4 64.8 116.6');
+    P(man, 'ih-aging-pocket-edge', 'M46.2 115.4 Q50.6 121 55.6 115.4 M73.8 115.4 Q69.4 121 64.4 115.4');
+    P(man, 'ih-aging-fly', 'M60.4 115.6 Q61.2 121.6 59.6 127.4');
+    P(man, 'ih-aging-hem', 'M45.2 175.8 H56.6 M63.4 175.8 H74.8');
     sneaker(man, 44, 178, 15, 'ih-aging-shoe--man');
     sneaker(man, 62, 178, 15, 'ih-aging-shoe--man');
-    P(man, 'ih-aging-arm', 'M39 72 Q35 92 35 111');
-    P(man, 'ih-aging-arm', 'M81 72 Q85 92 85 111');
-    C(man, 'ih-aging-skin', 35, 114, 4.5);
-    C(man, 'ih-aging-skin', 85, 114, 4.5);
+    limb(man, 'M39 73 Q35.2 91 35 108', 6);
+    limb(man, 'M81 73 Q84.8 91 85 108', 6);
+    P(man, 'ih-aging-elbow', 'M34.6 91.4 Q36.2 92.2 37.6 91.2 M85.4 91.4 Q83.8 92.2 82.4 91.2');
+    hand(man, 35, 112, 4.6, -1);
+    hand(man, 85, 112, 4.6, 1);
     svg('rect', { class: 'ih-aging-neck', x: 55, y: 41, width: 10, height: 9 }, man);
-    P(man, 'ih-aging-tee', 'M40 54 Q48 48 60 48 Q72 48 80 54 L85 72 L77 75 L76 112 L44 112 L43 75 L35 72 Z');
+    P(man, 'ih-aging-neck-shade', 'M55 41.4 H65 V44.6 Q60 46.8 55 44.6 Z');
+    P(man, 'ih-aging-tee', 'M40 54 Q48 48 60 48 Q72 48 80 54 L85 72 L77 75 L76 112 L44 112 L43 75 L35 72 Z', { fill: tee });
     P(man, 'ih-aging-tee-shade', 'M60 48 Q72 48 80 54 L85 72 L77 75 L76 112 L63 112 Z');
-    P(man, 'ih-aging-collar', 'M53 49 Q60 56 67 49');
+    P(man, 'ih-aging-hemline', 'M35.6 70.6 L43.4 73.4 M84.4 70.6 L76.6 73.4 M44.4 109.6 H75.6');
+    P(man, 'ih-aging-fold', 'M44.6 79 Q46.8 83.4 45.4 88 M75.4 79 Q73.2 83.4 74.6 88 M46.4 101 Q51 104.4 49.2 108.6 M73.6 99.4 Q69.6 103.4 71.2 108');
+    P(man, 'ih-aging-collar', 'M53 49 Q60 56.6 67 49');
+    P(man, 'ih-aging-collar-rib', 'M54.4 49.8 Q60 55 65.6 49.8');
     const logo = svg('text', { class: 'ih-aging-logo', x: 60, y: 86, 'text-anchor': 'middle' }, man);
     logo.textContent = '</>';
     svg('rect', { class: 'ih-aging-belt', x: 44, y: 109, width: 32, height: 6, rx: 1.5 }, man);
+    for (const lx of [47.6, 70.4]) svg('rect', { class: 'ih-aging-belt-loop', x: lx, y: 108.4, width: 2, height: 7.2, rx: 0.6 }, man);
     svg('rect', { class: 'ih-aging-buckle', x: 57, y: 109, width: 6, height: 6, rx: 1 }, man);
-    face(man, 60, 30, 15, { hair: 'M44 31 Q42 12 60 12 Q78 12 76 31 Q74 23 69 21 Q65 26 57 23 Q50 21 47 26 Q45 28 44 31Z', mouth: 'M55 35.5 Q60 39.5 65 35.5' });
+    P(man, 'ih-aging-buckle-pin', 'M60 110.6 V113.4');
+    face(man, 60, 30, 15, {
+      hair: 'M44 31 Q42 12 60 12 Q78 12 76 31 Q74 23 69 21 Q65 26 57 23 Q50 21 47 26 Q45 28 44 31Z',
+      hairLight: 'M49 18.4 Q55 13.4 63 14.2 M47 23.6 Q49.4 18.6 54.4 16.4 M64.6 15.4 Q70.4 16.4 73 21.6',
+      mouth: 'M55 35.5 Q60 39.5 65 35.5',
+    });
+    P(man, 'ih-aging-dimple', 'M54.2 34.8 Q54.6 35.8 55.4 36 M65.8 34.8 Q65.4 35.8 64.6 36');
 
-    // Teen: messy fringe, hoodie with drawstrings and pocket, headphones, joggers.
+    // Teen: messy fringe, a hoodie with ribbed cuffs and band, drawstrings
+    // with metal tips, a stitched pocket, headphones, striped joggers.
     const teen = svg('g', { class: 'ih-aging-teen' }, node);
     svg('ellipse', { class: 'ih-aging-shadow', cx: 60, cy: 189, rx: 27, ry: 4 }, teen);
-    P(teen, 'ih-aging-joggers', 'M43 129 L77 129 L75 180 L64 180 L60 144 L56 180 L45 180 Z');
+    P(teen, 'ih-aging-joggers', 'M43 129 L77 129 L75 180 L64 180 L60 144 L56 180 L45 180 Z', { fill: joggers });
+    P(teen, 'ih-aging-jogger-stripe', 'M44.6 133 L45.8 175 M75.4 133 L74.2 175');
     P(teen, 'ih-aging-cuffband', 'M45 176 H56 M64 176 H75');
     sneaker(teen, 45, 179, 14, 'ih-aging-shoe--teen');
     sneaker(teen, 63, 179, 14, 'ih-aging-shoe--teen');
     P(teen, 'ih-aging-hood', 'M44 90 Q43 77 52 74 L68 74 Q77 77 76 90 Z');
-    P(teen, 'ih-aging-hoodie', 'M42 90 Q50 84 60 84 Q70 84 78 90 L82 131 L38 131 Z');
+    P(teen, 'ih-aging-hoodie', 'M42 90 Q50 84 60 84 Q70 84 78 90 L82 131 L38 131 Z', { fill: hoodie });
     P(teen, 'ih-aging-hoodie-shade', 'M60 84 Q70 84 78 90 L82 131 L62 131 Z');
-    P(teen, 'ih-aging-hoodie', 'M42 91 Q34 109 36 129 L44 129 Q44 110 48 99Z');
+    P(teen, 'ih-aging-hoodie', 'M42 91 Q34 109 36 129 L44 129 Q44 110 48 99Z', { fill: hoodie });
     P(teen, 'ih-aging-hoodie-shade', 'M78 91 Q86 109 84 129 L76 129 Q76 110 72 99Z');
-    C(teen, 'ih-aging-skin', 40, 132, 4.2);
-    C(teen, 'ih-aging-skin', 80, 132, 4.2);
+    P(teen, 'ih-aging-rib', 'M36.4 125.6 L43.8 125.6 M76.2 125.6 L83.6 125.6 M38.6 127.6 H81.4');
+    hand(teen, 40, 132, 4.2, -1);
+    hand(teen, 80, 132, 4.2, 1);
     P(teen, 'ih-aging-pocket', 'M48 114 L72 114 L76 129 L44 129 Z');
+    P(teen, 'ih-aging-pocket-stitch', 'M49.2 115.6 L70.8 115.6 L74.2 127.6 M45.8 127.6 L49.2 115.6');
     P(teen, 'ih-aging-string', 'M56 88 L55 104 M64 88 L65 104');
+    for (const sx of [55, 65]) svg('rect', { class: 'ih-aging-aglet', x: sx - 0.9, y: 103.6, width: 1.8, height: 3.2, rx: 0.6 }, teen);
     svg('rect', { class: 'ih-aging-neck', x: 55.5, y: 76, width: 9, height: 8 }, teen);
-    face(teen, 60, 64, 14, { hair: 'M45 65 Q44 49 60 49 Q76 49 75 65 Q71 58 67 61 Q64 55 59 59 Q54 55 50 60 Q47 60 45 65Z', mouth: 'M55 69.5 Q60 71.5 66 68' });
+    face(teen, 60, 64, 14, {
+      hair: 'M45 65 Q44 49 60 49 Q76 49 75 65 Q71 58 67 61 Q64 55 59 59 Q54 55 50 60 Q47 60 45 65Z',
+      hairLight: 'M50 54.4 Q55.6 50.6 62.4 51.2 M66 52.4 Q71 54 73 58.4',
+      mouth: 'M55 69.5 Q60 71.5 66 68',
+    });
     P(teen, 'ih-aging-headphones', 'M49 86 Q60 96 71 86');
+    P(teen, 'ih-aging-headphones-light', 'M51.6 88.4 Q60 94.4 68.4 88.4');
     C(teen, 'ih-aging-earcup', 48.5, 85, 4);
     C(teen, 'ih-aging-earcup', 71.5, 85, 4);
+    for (const ex of [48.5, 71.5]) C(teen, 'ih-aging-earcup-light', ex - 1.2, 83.8, 1.1);
 
-    // Kid: cowlick, striped shirt, shorts, socks, big open smile.
+    // Kid: cowlick, a striped T-shirt with a round neck, shorts with a
+    // pocket, striped socks, sneakers with a strap, freckles, a big smile.
     const kid = svg('g', { class: 'ih-aging-kid' }, node);
     svg('ellipse', { class: 'ih-aging-shadow', cx: 60, cy: 189, rx: 22, ry: 3.5 }, kid);
     P(kid, 'ih-aging-shin', 'M51 175 V182 M69 175 V182');
     P(kid, 'ih-aging-sock', 'M51 180 V183 M69 180 V183');
+    P(kid, 'ih-aging-sock-stripe', 'M48 180.6 H54 M66 180.6 H72');
     sneaker(kid, 46, 182, 11, 'ih-aging-shoe--kid');
     sneaker(kid, 64, 182, 11, 'ih-aging-shoe--kid');
     P(kid, 'ih-aging-shorts', 'M48 163 L72 163 L73 176 L62 176 L60 169 L58 176 L47 176 Z');
-    P(kid, 'ih-aging-arm ih-aging-arm--kid', 'M44 149 Q41 157 42 164');
-    P(kid, 'ih-aging-arm ih-aging-arm--kid', 'M76 149 Q79 157 78 164');
-    C(kid, 'ih-aging-skin', 42, 166, 3.8);
-    C(kid, 'ih-aging-skin', 78, 166, 3.8);
+    P(kid, 'ih-aging-shorts-detail', 'M66 165 Q69.4 167.6 72.2 165.8 M60 164 V168.6 M47.6 174 H57.6 M62.4 174 H72.4');
+    limb(kid, 'M44 149 Q41 157 42 163', 5);
+    limb(kid, 'M76 149 Q79 157 78 163', 5);
+    hand(kid, 42, 166, 3.8, -1);
+    hand(kid, 78, 166, 3.8, 1);
     P(kid, 'ih-aging-stripes-shirt', 'M45 140 Q52 136 60 136 Q68 136 75 140 L78 151 L73 152 L72 165 L48 165 L47 152 L42 151 Z');
     P(kid, 'ih-aging-stripe', 'M45 144 H75 M47 150 H73 M48 156 H72 M48 162 H72');
+    P(kid, 'ih-aging-kid-collar', 'M55 137 Q60 141.4 65 137');
     svg('rect', { class: 'ih-aging-neck', x: 56, y: 131, width: 8, height: 6 }, kid);
-    face(kid, 60, 120, 15, { hair: 'M45 121 Q44 104 60 104 Q76 104 75 121 Q72 112 64 113 Q58 108 52 113 Q48 114 45 121Z', mouth: 'M54 125 Q60 132 66 125 Z', open: true });
+    face(kid, 60, 120, 15, {
+      hair: 'M45 121 Q44 104 60 104 Q76 104 75 121 Q72 112 64 113 Q58 108 52 113 Q48 114 45 121Z',
+      hairLight: 'M50 109.4 Q55.6 105.6 62 106.2',
+      mouth: 'M54 125 Q60 132 66 125 Z', open: true, freckles: true,
+    });
+    P(kid, 'ih-aging-teeth', 'M55.6 125.6 H64.4');
     P(kid, 'ih-aging-cowlick', 'M60 104 Q61 97 66 99');
 
-    // Baby: sitting in a onesie, curl, rosy cheeks, pacifier, rattle.
+    // Baby: sitting in a onesie with a star, curl, rosy cheeks, pacifier, rattle.
     const baby = svg('g', { class: 'ih-aging-baby' }, node);
     svg('ellipse', { class: 'ih-aging-shadow', cx: 60, cy: 190, rx: 24, ry: 3.5 }, baby);
-    svg('ellipse', { class: 'ih-aging-skin', cx: 46, cy: 187, rx: 6.5, ry: 4 }, baby);
-    svg('ellipse', { class: 'ih-aging-skin', cx: 74, cy: 187, rx: 6.5, ry: 4 }, baby);
+    svg('ellipse', { class: 'ih-aging-skin', cx: 46, cy: 187, rx: 6.5, ry: 4, fill: skinLight }, baby);
+    svg('ellipse', { class: 'ih-aging-skin', cx: 74, cy: 187, rx: 6.5, ry: 4, fill: skinLight }, baby);
+    P(baby, 'ih-aging-toes', 'M40.6 185.4 V186.8 M42.4 184.8 V186.4 M79.4 185.4 V186.8 M77.6 184.8 V186.4');
     P(baby, 'ih-aging-onesie', 'M44 186 Q41 169 50 163 Q60 159 70 163 Q79 169 76 186 Q60 191 44 186 Z');
     P(baby, 'ih-aging-onesie-shade', 'M60 160 Q70 162 70 163 Q79 169 76 186 Q68 189 62 189 Z');
+    P(baby, 'ih-aging-onesie-star', 'M66 168.4 L66.9 170.4 L69 170.6 L67.4 172 L67.9 174.1 L66 173 L64.1 174.1 L64.6 172 L63 170.6 L65.1 170.4 Z');
     for (const by of [170, 177]) C(baby, 'ih-aging-snap', 60, by, 1.4);
-    P(baby, 'ih-aging-arm ih-aging-arm--baby', 'M48 168 Q41 172 40 178');
-    P(baby, 'ih-aging-arm ih-aging-arm--baby', 'M72 168 Q79 172 80 177');
+    limb(baby, 'M48 168 Q41 172 40 177', 6.4);
+    limb(baby, 'M72 168 Q79 172 80 176', 6.4);
     P(baby, 'ih-aging-rattle-handle', 'M80 177 L86 167');
     C(baby, 'ih-aging-rattle', 88, 164, 5);
-    C(baby, 'ih-aging-skin', 40, 180, 4.3);
-    C(baby, 'ih-aging-skin', 80, 178, 4.3);
+    C(baby, 'ih-aging-rattle-light', 86.4, 162.4, 1.6);
+    P(baby, 'ih-aging-rattle-band', 'M83.4 165.6 Q88 167.6 92.6 165.6');
+    hand(baby, 40, 180, 4.3, -1);
+    hand(baby, 80, 178, 4.3, 1);
     face(baby, 60, 146, 17, { hair: 'M58 129.5 Q56 125 60.5 124.5 Q65 125 62.5 129.5', mouth: 'M57 155 H63', brows: false, cheeks: true });
     C(baby, 'ih-aging-pacifier-ring', 60, 158.5, 3.6);
     svg('ellipse', { class: 'ih-aging-pacifier', cx: 60, cy: 155.5, rx: 6, ry: 3 }, baby);
+    P(baby, 'ih-aging-pacifier-light', 'M56.2 154.4 Q58 153.4 60.4 153.6');
 
-    // Newborn: swaddled in a blanket, eyes closed, a tuft of hair.
+    // Newborn: swaddled in a knitted blanket with a satin edge, eyes closed,
+    // a tuft of hair.
     const newborn = svg('g', { class: 'ih-aging-newborn' }, node);
     svg('ellipse', { class: 'ih-aging-shadow', cx: 60, cy: 190, rx: 20, ry: 3 }, newborn);
     P(newborn, 'ih-aging-swaddle', 'M44 188 Q38 165 46 150 Q60 140 74 150 Q82 165 76 188 Q60 193 44 188 Z');
+    P(newborn, 'ih-aging-knit', 'M50 168 l2 2 l2 -2 M58 172 l2 2 l2 -2 M66 167 l2 2 l2 -2 M52 181 l2 2 l2 -2 M62 183 l2 2 l2 -2 M70 177 l2 2 l2 -2');
     P(newborn, 'ih-aging-swaddle-fold', 'M46 162 Q60 172 75 158 M48 176 Q61 184 74 171');
-    C(newborn, 'ih-aging-skin', 60, 150, 11.5);
+    P(newborn, 'ih-aging-swaddle-edge', 'M46.6 161.4 Q60 170.8 74.4 157.6');
+    C(newborn, 'ih-aging-skin', 60, 150, 11.5, { fill: skinLight });
     P(newborn, 'ih-aging-swaddle-hood', 'M46 156 Q44 134 60 133 Q76 134 74 156 Q70 143 60 142 Q50 143 46 156 Z');
     for (const side of [-1, 1]) P(newborn, 'ih-aging-sleep', `M${60 + side * 4.5 - 2.4} 150.5 Q${60 + side * 4.5} 152.6 ${60 + side * 4.5 + 2.4} 150.5`);
     for (const side of [-1, 1]) C(newborn, 'ih-aging-cheek', 60 + side * 7, 154.5, 2);
     P(newborn, 'ih-aging-mouth', 'M58.6 157 Q60 158 61.4 157');
     P(newborn, 'ih-aging-cowlick', 'M60 143.5 Q61 140 63.5 141');
 
-    // Egg cell: a single cell with its clear outer shell, cytoplasm, and nucleus.
+    // Egg cell: a ring of follicle cells (the corona) around the clear outer
+    // shell, the cytoplasm with its granules, and the nucleus.
     const egg = svg('g', { class: 'ih-aging-egg' }, node);
+    for (let k = 0; k < 14; k += 1) {
+      const a = (k / 14) * 2 * Math.PI;
+      C(egg, 'ih-aging-egg-corona', (60 + 24.6 * Math.cos(a)).toFixed(2), (168 + 24.6 * Math.sin(a)).toFixed(2), 3.4);
+    }
     C(egg, 'ih-aging-egg-zona', 60, 168, 21);
     C(egg, 'ih-aging-egg-cell', 60, 168, 15.5);
-    for (const [gx, gy] of [[51, 163], [66, 160], [69, 174], [54, 177], [62, 170]]) C(egg, 'ih-aging-egg-granule', gx, gy, 1.3);
+    C(egg, 'ih-aging-egg-shine', 54.6, 162.4, 4.6);
+    for (const [gx, gy] of [[51, 163], [66, 160], [69, 174], [54, 177], [62, 170], [65, 166], [57, 173]]) C(egg, 'ih-aging-egg-granule', gx, gy, 1.2);
     C(egg, 'ih-aging-egg-nucleus', 57, 166, 5.2);
     C(egg, 'ih-aging-egg-nucleolus', 58.5, 165, 1.6);
 
@@ -3189,49 +3444,51 @@
     mark.textContent = '?';
     const label = tag ? el('div', 'ih-aging-tag is-staged', parent, tag) : null;
     if (label) place(label, x + 8 * scale, y + 214 * scale);
-    const times = [at, stages.teen, stages.kid, stages.baby, stages.newborn, stages.egg, stages.gone];
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-    // Standing height of each stage above the floor (y = 190), so each step
-    // can shrink the older figure into the younger one.
+    // Standing height of each stage above the floor (y = 190).
     const heights = [178, 141, 93, 66, 57, 44];
-    // Each dissolve finishes before the next step starts, however brisk.
-    const shortestStep = Math.min(...times.slice(2).map((time, i) => time - times[i + 1]));
-    const blend = Math.min(0.6, 0.85 * shortestStep);
-    // A gentle ease (sine in-out) for the dissolve, softer than a cubic.
-    const gentle = (u) => 0.5 - 0.5 * Math.cos(Math.PI * Math.min(1, Math.max(0, u)));
-    const sizeAt = (g, scale) => g.setAttribute('transform', `translate(60 190) scale(${scale.toFixed(3)}) translate(-60 -190)`);
+    // When each stage is fully there: the man as the rewind starts, each
+    // younger stage at the next stage time, and the egg cell a little before
+    // it goes up in smoke.
+    const keys = [stages.teen, stages.kid, stages.baby, stages.newborn, stages.egg, stages.egg + 0.6 * (stages.gone - stages.egg)];
+    // The rewind's progress, 0 (man) to 5 (egg), at a steady rate between keys.
+    const progressAt = (t) => {
+      if (t <= keys[0]) return 0;
+      for (let i = 1; i < keys.length; i += 1) if (t < keys[i]) return i - 1 + (t - keys[i - 1]) / (keys[i] - keys[i - 1]);
+      return keys.length - 1;
+    };
+    const smooth = (u) => { const v = Math.min(1, Math.max(0, u)); return v * v * (3 - 2 * v); };
+    const sizeAt = (g, factor) => g.setAttribute('transform', `translate(60 190) scale(${factor.toFixed(3)}) translate(-60 -190)`);
     onFrame((t) => {
-      const index = times.reduce((k, time, i) => (t >= time ? i : k), -1);
       const reduce = reducedMotion.matches;
-      // Inside a step: the previous stage shrinks and fades while the next
-      // one fades in from the previous stage's size, both easing to rest.
-      const since = index >= 1 ? t - times[index] : Infinity;
-      const p = reduce ? 1 : gentle(since / blend);
-      frames.forEach((g, i) => {
-        let opacity = 0, scale = 1;
-        if (i === index) {
-          opacity = p;
-          scale = index >= 1 ? heights[i - 1] / heights[i] + (1 - heights[i - 1] / heights[i]) * p : 1;
-        } else if (i === index - 1 && p < 1) {
-          opacity = 1 - p;
-          scale = 1 + (heights[Math.min(index, frames.length - 1)] / heights[i] - 1) * p;
-        }
-        g.setAttribute('opacity', opacity.toFixed(3));
-        sizeAt(g, scale);
-      });
       const gone = t >= stages.gone;
+      // With reduced motion, each stage replaces the last at its time.
+      const c = reduce ? keys.reduce((k, key, i) => (t >= key ? i : k), 0) : progressAt(t);
+      const i = Math.min(frames.length - 2, Math.floor(c));
+      const f = c - i;
+      // Both neighbours stand at the shrinking height between theirs; the
+      // younger dissolves in over the middle of the step while the older
+      // fades out a moment later, so the figure never looks hollow, and the
+      // double exposure stays brief.
+      const height = heights[i] + (heights[i + 1] - heights[i]) * f;
+      const fadeIn = smooth((f - 0.3) / 0.32);
+      const fadeOut = 1 - smooth((f - 0.42) / 0.32);
+      const vanish = gone ? Math.max(0, 1 - (t - stages.gone) / 0.14) : 1;
+      frames.forEach((g, k) => {
+        let opacity = 0;
+        if (k === i) opacity = fadeOut;
+        else if (k === i + 1) opacity = fadeIn;
+        if (k === frames.length - 1) opacity *= vanish;
+        g.setAttribute('opacity', opacity.toFixed(3));
+        sizeAt(g, height / heights[k]);
+      });
       const puffAge = gone ? t - stages.gone : 0;
       puff.setAttribute('opacity', gone ? Math.max(0, Math.min(1, puffAge / 0.12) * (1 - Math.max(0, puffAge - 0.25) / 0.6)).toFixed(2) : '0');
       puff.setAttribute('transform', `translate(60 175) scale(${(0.6 + 0.5 * easeInOutCubic(Math.min(1, puffAge / 0.5))).toFixed(3)}) translate(-60 -175)`);
       mark.setAttribute('opacity', gone ? Math.min(1, puffAge / 0.25).toFixed(2) : '0');
       mark.setAttribute('transform', `translate(0 ${(gone && !reduce ? 10 * (1 - easeInOutCubic(Math.min(1, puffAge / 0.35))) : 0).toFixed(1)})`);
-      // A very soft settle at the end of each step.
-      const settle = Math.min(1, Math.max(0, (since - blend * 0.6) / 0.45));
-      const bounce = reduce || !Number.isFinite(since) ? 0 : Math.sin(settle * Math.PI) * 0.025 * (1 - settle);
-      node.style.transform = `scale(${(1 + bounce).toFixed(3)}, ${(1 - bounce).toFixed(3)})`;
       if (label) label.textContent = gone ? `${tag} → ?` : tag;
     });
-    node.style.transformOrigin = '50% 100%';
     fx.rise(node, at, { distance: 16, duration: 0.35 });
     if (label) fx.fadeIn(label, at + 0.2, 0.25);
     if (until !== undefined) {
@@ -3596,17 +3853,39 @@
     }
     const rings = svg('g', {}, node);
     const ringNodes = [0, 1, 2].map(() => svg('circle', { class: 'ih-sonar', cx: 10, cy: 48, r: 4 }, rings));
+    // The conning tower with its hatch, a porthole, and rivets; the
+    // periscope with its lens.
+    svg('rect', { class: 'ih-sub-hatch', x: 70, y: 15, width: 14, height: 4, rx: 1.5 }, node);
     svg('rect', { class: 'ih-sub-tower', x: 64, y: 18, width: 26, height: 20, rx: 6 }, node);
+    svg('circle', { class: 'ih-sub-tower-port', cx: 71.6, cy: 26.6, r: 2.6 }, node);
+    svg('path', { class: 'ih-sub-highlight', d: 'M67.4 22.4 Q68.6 20.4 71.4 20.2' }, node);
+    for (const rx of [68.4, 74.6, 80.8, 87]) svg('circle', { class: 'ih-sub-rivet', cx: rx, cy: 33.6, r: 0.75 }, node);
     svg('path', { class: 'ih-sub-scope', d: 'M80 18 V4 H92' }, node);
+    svg('rect', { class: 'ih-sub-scope-lens', x: 90.6, y: 1.4, width: 4, height: 5.2, rx: 1.2 }, node);
     svg('path', { class: 'ih-sub-fin', d: 'M114 36 L131 25 L127 45 L132 70 L113 60 Z' }, node);
+    svg('path', { class: 'ih-sub-seam', d: 'M118.4 38.4 L126.8 45 M118 57.6 L127.4 52.4' }, node);
+    // The hull: plates with their seams and rivets, a band along the
+    // waterline, a light along the top, and the keel's shadow.
     svg('rect', { class: 'ih-sub-hull', x: 14, y: 34, width: 120, height: 30, rx: 15 }, node);
+    svg('path', { class: 'ih-sub-band', d: 'M16.6 55.4 H131.4 V58.4 Q131 59.4 129.6 59.4 H18.4 Q17 59.4 16.6 58.4 Z' }, node);
+    svg('path', { class: 'ih-sub-seam', d: 'M31 34.6 V63.4 M57 34.2 V63.8 M83 34.2 V63.8 M109 34.2 V63.8' }, node);
+    for (const rx of [24, 36, 51, 63, 77, 89, 103, 115, 125]) svg('circle', { class: 'ih-sub-rivet', cx: rx, cy: 37.6, r: 0.7 }, node);
+    svg('path', { class: 'ih-sub-highlight', d: 'M24 38.6 Q74 35.6 124 38.6' }, node);
+    svg('path', { class: 'ih-sub-keel', d: 'M26 62.2 Q74 64.6 122 62.2' }, node);
     for (const px of [44, 70, 96]) {
       svg('circle', { class: 'ih-sub-port-rim', cx: px, cy: 49, r: 6.5 }, node);
+      for (let k = 0; k < 6; k += 1) {
+        const a = (k / 6) * 2 * Math.PI + 0.5;
+        svg('circle', { class: 'ih-sub-bolt', cx: (px + 5.6 * Math.cos(a)).toFixed(2), cy: (49 + 5.6 * Math.sin(a)).toFixed(2), r: 0.5 }, node);
+      }
       svg('circle', { class: 'ih-sub-port', cx: px, cy: 49, r: 4.5 }, node);
       svg('path', { class: 'ih-sub-glass', d: `M${px - 2} 50 l3 -3` }, node);
     }
+    // The propeller on its shaft and hub.
+    svg('path', { class: 'ih-sub-shaft', d: 'M132.6 49 H137' }, node);
     const prop = svg('g', { transform: 'translate(138 49)' }, node);
     svg('path', { class: 'ih-sub-prop', d: 'M0 -11 L4 0 L0 11 L-4 0 Z' }, prop);
+    svg('circle', { class: 'ih-sub-hub', cx: 138, cy: 49, r: 2.2 }, node);
     return { prop, ringNodes };
   }
 
