@@ -3778,18 +3778,35 @@
   }
 
   // ------------------------------------------------------------------
-  // Bugs: a ladybird that crawls in; squashAt flattens it
+  // Bugs: a ladybird that crawls in, and the rubber stamp that squashes it
   // ------------------------------------------------------------------
 
+  // Points on the ladybird's outline (leg and feeler tips, head, shell, and
+  // shadow) in its own frame, head up, for finding its extent once turned;
+  // and its shell's centre.
+  const BUG_OUTLINE = [
+    [48.6, 9.8], [54.8, 36.8], [50.2, 57.4], [15.4, 9.8], [9.2, 36.8], [13.8, 57.4], [42.5, 4], [21.5, 4],
+    [32, 10.8], [18, 38], [46, 38], [32, 58.2], [33.4, 59.2], [16.8, 40.6], [50, 40.6],
+  ];
+  const BUG_SHELL_CENTRE = [32, 40.8];
+
   /**
-   * A ladybird, seen from above, head up in a 64×64 box: a glossy red shell
-   * of two wing cases with seven spots, the black shield behind its head
-   * with white patches, round eyes with catchlights, clubbed feelers, and
-   * six jointed legs. It crawls in from `from` over 0.9 s, legs scurrying,
-   * then idles (feelers twitch, legs shift); squashAt flattens it. Reduced
-   * motion stills its legs and feelers.
+   * A ladybird, seen from above, in a 64×64 box, turned `rotate` degrees from
+   * head up: a glossy red shell of two wing cases with seven spots, the
+   * black shield behind its head with white patches, round eyes with
+   * catchlights, clubbed feelers, and six jointed legs. It crawls in from
+   * `from` over 0.9 s, legs scurrying, then idles (feelers twitch, legs
+   * shift). Reduced motion stills its legs and feelers.
+   *
+   * Returns { node, footprint, pressedBy }. footprint is where it rests, in
+   * stage px: its shell's centre x, its top and floor (its highest and
+   * lowest points), and how thin it is once squashed. pressedBy(padAt,
+   * landAt) puts it under a stamp: padAt(t) is the pad's bottom edge (stage
+   * y) at song time t. From the moment the pad meets its back, the bug
+   * flattens onto its floor with its top edge under the pad, spreading as
+   * it flattens, and it lies flat from `landAt` on.
    */
-  function bug(parent, { x, y, at, squashAt, until, size = 64, rotate = 0, from }) {
+  function bug(parent, { x, y, at, until, size = 64, rotate = 0, from }) {
     const id = `ih-bug-${++uid}`;
     const node = art(parent, { x, y, w: size, h: size, viewBox: '0 0 64 64' });
     const P = (g, cls, d, attrs = {}) => svg('path', { class: cls, d, ...attrs }, g);
@@ -3797,8 +3814,10 @@
     // The shell's lacquer, lit from the upper left.
     const lacquer = svg('radialGradient', { id: `${id}-shell`, cx: 0.34, cy: 0.3, r: 0.8 }, defs);
     for (const [index, offset] of ['0', '0.55', '1'].entries()) svg('stop', { offset, class: `ih-bug-shell-stop-${index}` }, lacquer);
-    // Everything squashes together, its shadow on the ground too.
-    const body = svg('g', {}, node);
+    // It flattens in the stage's axes, down onto its floor; it is turned
+    // inside that, and everything squashes together, its shadow too.
+    const squash = svg('g', {}, node);
+    const body = svg('g', { transform: `rotate(${rotate} 32 32)` }, squash);
     svg('ellipse', { class: 'ih-bug-ground', cx: 33.4, cy: 40.6, rx: 16.6, ry: 18.6 }, body);
     // Legs: femur, knee, shin, and foot, each pair mirrored about the middle.
     const legs = [];
@@ -3845,12 +3864,39 @@
     P(shell, 'ih-bug-seam-light', 'M33.2 26.4 C33 37 33 46.8 33.2 55.4');
     P(shell, 'ih-bug-shine', 'M21.4 35.6 C21.4 30.6 24.4 27 28 26 C25.8 28.6 24.6 31.8 24.2 35.6 C23.6 37 21.8 37 21.4 35.6 Z');
     P(shell, 'ih-bug-shine-line', 'M36.6 26.4 C39 26.8 41 28.2 42.2 30.4');
-    // It pops in already facing the way it crawls (`rotate`).
-    show(node, at, until, { from: 0.3, rotate });
-    const squashed = squashAt ?? Infinity;
+    show(node, at, until, { from: 0.3 });
+
+    // Where it rests: its outline turned by `rotate`, in box units, then in
+    // stage px.
+    const turn = (rotate * Math.PI) / 180;
+    const turned = ([px, py]) => [
+      32 + Math.cos(turn) * (px - 32) - Math.sin(turn) * (py - 32),
+      32 + Math.sin(turn) * (px - 32) + Math.cos(turn) * (py - 32),
+    ];
+    const heights = BUG_OUTLINE.map((point) => turned(point)[1]);
+    const topY = Math.min(...heights), floorY = Math.max(...heights);
+    const [centreX] = turned(BUG_SHELL_CENTRE);
+    const FLAT = 4;  // its thickness squashed, in box units
+    const unit = size / 64;
+    const footprint = { x: x + centreX * unit, top: y + topY * unit, floor: y + floorY * unit, flat: FLAT * unit };
+    let press = null;
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    // How flat it is under the stamp, 0 (untouched) to 1 (flat): its top
+    // edge follows the pad down from where they meet to the floor.
+    const flattened = (t) => {
+      if (!press) return 0;
+      if (t >= press.landAt) return 1;
+      if (reducedMotion.matches) return 0;
+      const pad = press.padAt(t);
+      return Math.min(1, Math.max(0, (pad - footprint.top) / (footprint.floor - footprint.flat - footprint.top)));
+    };
     onFrame((t) => {
-      const still = reducedMotion.matches || t < at || t >= squashed;
+      const flat = flattened(t);
+      const sy = 1 - flat * (1 - FLAT / (floorY - topY));
+      squash.setAttribute('transform', flat > 0
+        ? `translate(${centreX.toFixed(2)} ${floorY.toFixed(2)}) scale(${(1 + 0.4 * flat).toFixed(3)} ${sy.toFixed(3)}) translate(${(-centreX).toFixed(2)} ${(-floorY).toFixed(2)})`
+        : '');
+      const still = reducedMotion.matches || t < at || flat > 0;
       // Scurrying while it travels, then only small shifts of weight.
       const scurry = from ? 1 - progress(t, at + 0.75, 0.3) : 0.35;
       legs.forEach(({ g, side, k, hip }) => {
@@ -3867,29 +3913,44 @@
         node.style.translate = `${((from[0] - x) * (1 - p)).toFixed(1)}px ${((from[1] - y) * (1 - p)).toFixed(1)}px`;
       }
     });
-    if (squashAt !== undefined) {
-      body.style.transformOrigin = '32px 54px';
-      tween(body, [{ scale: '1 1' }, { scale: '1.3 0.12' }], squashAt, 0.15, EASE.in);
-    }
-    return node;
+    return { node, footprint, pressedBy: (padAt, landAt) => { press = { padAt, landAt }; } };
   }
 
-  /** The rubber meets the target at `at`, presses to baseline (x, y) in 0.15 s, then lifts. */
-  function stampTool(parent, { x, y, at, label = 'FIXED', pressDepth = 0 }) {
-    const node = art(parent, { x: x - 45, y: y - 120, w: 90, h: 120, viewBox: '0 0 90 120' });
+  /**
+   * A rubber stamp brought down on `onto`, a bug(): pushed down from above,
+   * it speeds up all the way, meets the bug's back, flattens it onto its
+   * floor, and stops dead there at `at` with a slight rebound. It holds a
+   * moment, then lifts away and fades. The pad's bottom edge is a pure
+   * function of song time, and the bug flattens under it. With reduced
+   * motion the stamp appears pressed home at `at` and fades without moving.
+   */
+  function stampTool(parent, { onto, at, label = 'FIXED' }) {
+    const { x, top, floor, flat } = onto.footprint;
+    // The pad's bottom edge pressed home, on the squashed bug.
+    const home = floor - flat;
+    const node = art(parent, { x: x - 45, y: home - 102, w: 90, h: 120, viewBox: '0 0 90 120' });
     svg('ellipse', { class: 'ih-stamp-knob', cx: 45, cy: 16, rx: 16, ry: 12 }, node);
     svg('rect', { class: 'ih-stamp-neck', x: 39, y: 24, width: 12, height: 40 }, node);
     svg('rect', { class: 'ih-stamp-block', x: 14, y: 62, width: 62, height: 30, rx: 4 }, node);
     svg('rect', { class: 'ih-stamp-rubber', x: 16, y: 92, width: 58, height: 10, rx: 2 }, node);
     const text = svg('text', { class: 'ih-stamp-label', x: 45, y: 82, 'text-anchor': 'middle' }, node);
     text.textContent = label;
-    tween(node, [
-      { opacity: 0, translate: '0 -90px' },
-      { opacity: 1, translate: `0 ${18 - pressDepth}px`, offset: 0.35 / 1.1 },
-      { opacity: 1, translate: '0 18px', offset: 0.5 / 1.1 },
-      { opacity: 1, translate: '0 18px', offset: 0.7 / 1.1 },
-      { opacity: 0, translate: '0 -80px' },
-    ], at - 0.35, 1.1, EASE.linear);
+    const DROP = 0.3, HOLD = 0.32, LIFT = 0.45;
+    // It starts 70 px above the bug's back.
+    const height = home - top + 70;
+    const padAt = (t) => {
+      if (t < at) return home - height * (1 - progress(t, at - DROP, DROP) ** 2);
+      return home - 2.5 * Math.sin(Math.PI * progress(t, at, 0.14)) - 110 * easeInOutCubic(progress(t, at + HOLD, LIFT));
+    };
+    onto.pressedBy(padAt, at);
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    onFrame((t) => {
+      const reduced = reducedMotion.matches;
+      node.style.translate = `0 ${(reduced ? 0 : padAt(t) - home).toFixed(1)}px`;
+      const shown = reduced ? progress(t, at, 0.15) : progress(t, at - DROP, 0.06);
+      const gone = progress(t, at + HOLD + 0.15, LIFT - 0.15);
+      node.style.opacity = (shown * (1 - gone)).toFixed(3);
+    });
     return node;
   }
 

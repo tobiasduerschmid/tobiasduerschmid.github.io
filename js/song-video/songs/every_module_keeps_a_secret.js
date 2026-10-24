@@ -342,8 +342,9 @@
       grid.light(mark('verse-1-10', 'one'), [4], { tone: 'change', stamp: 'Changed' });
       grid.light(mark('verse-1-10', 'touch'), [0, 1, 2, 3, 5, 6, 7, 8, 9, 10, 11], { step: 0.07, stamp: 'Hit' });
       ih.counter(d, { x: 50, y: 316, label: 'files touched', from: 1, to: 12, at: mark('verse-1-10', 'touch'), duration: 0.9 });
-      ih.bug(d, { x: 700, y: 170, at: mark('verse-1-11', 'fix') - 0.5, squashAt: mark('verse-1-11', 'bug') + 0.1, size: 96, rotate: 200, from: [720, 30] });
-      ih.stampTool(d, { x: 748, y: 251, pressDepth: 63, at: mark('verse-1-11', 'bug') + 0.1, label: 'FIXED' });
+      // One bug is stamped flat on "bug"; two more crawl in.
+      const fixedBug = ih.bug(d, { x: 700, y: 170, at: mark('verse-1-11', 'fix') - 0.5, size: 96, rotate: 200, from: [720, 30] });
+      ih.stampTool(d, { onto: fixedBug, at: mark('verse-1-11', 'bug') + 0.1, label: 'FIXED' });
       ih.bug(d, { x: 640, y: 290, at: mark('verse-1-11', 'two'), size: 80, rotate: 10, from: [660, 470] });
       ih.bug(d, { x: 790, y: 290, at: mark('verse-1-11', 'more'), size: 80, rotate: -60, from: [960, 340] });
     }
