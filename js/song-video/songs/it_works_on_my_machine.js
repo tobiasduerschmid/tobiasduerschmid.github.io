@@ -1068,7 +1068,7 @@
       ahead.push(() => {
         const moral = kit.scene(hud, curtain + 1.5, undefined);
         M.moral(moral, {
-          x: 230, y: 110, w: 500, at: curtain + 1.7, title: 'The moral of the opera',
+          x: 76, y: 50, w: 740, at: curtain + 1.7, title: 'The moral of the opera',
           lines: ['Ask your users what they need.', 'Pin your dependency versions.', 'Test behavior, not implementation.', 'Hide decisions likely to change.', 'Never force-push a shared branch.', 'Keep secrets out of Git.'],
         });
       });

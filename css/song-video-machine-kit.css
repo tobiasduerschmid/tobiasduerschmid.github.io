@@ -413,9 +413,9 @@
 .mk-fork-key { width: 24px; height: 24px; margin-top: 12px; color: #8a5d10; }
 
 /* The moral, over the closed curtain. */
-.mk-moral { position: absolute; padding: 14px 22px 16px; border: 3px solid #e2b54f; border-radius: 12px; background: rgba(16, 8, 10, 0.92); color: #fbf3df; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); }
-.mk-moral-title { margin-bottom: 6px; color: #ffd36b; font-size: 22px; font-weight: 900; letter-spacing: 0.06em; text-align: center; }
-.mk-moral-list { margin: 0; padding-left: 26px; font-size: 18px; font-weight: 700; line-height: 1.45; }
+.mk-moral { position: absolute; padding: 20px 34px 24px; border: 3px solid #e2b54f; border-radius: 12px; background: rgba(16, 8, 10, 0.92); color: #fbf3df; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); }
+.mk-moral-title { margin-bottom: 10px; color: #ffd36b; font-size: 32px; font-weight: 900; letter-spacing: 0.06em; text-align: center; }
+.mk-moral-list { margin: 0; padding-left: 38px; font-size: 27px; font-weight: 700; line-height: 1.4; }
 .mk-asker-fingers { fill: none; stroke: #04060b; stroke-width: 3.4; stroke-linecap: round; }
 
 /* Thought bubbles from the audience: a trail of dots growing up from a head
