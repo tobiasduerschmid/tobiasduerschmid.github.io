@@ -163,7 +163,7 @@ sections:
     title: "Verse 1: Requirements"
     delivery: sung
     voice: Teammate
-    narration: "Act one, Requirements. A long scroll of requirements unrolls behind the Teammate, and he snaps it shut with one raised finger. A giant phone running a ticket app, SeatSwap, shows a concert ticket, then one big Buy button, then the ticket locked to one name, gleaming. Silhouetted hands in the audience go up with question marks; he shushes them and taps his temple. A card for a meeting with users, What do they need?, appears, and he tears it in two and tosses the halves away. He bows to a lit Applause sign, and the house stays silent but for a cricket."
+    narration: "Act one, Requirements. A long scroll of requirements unrolls behind the Teammate, and he snaps it shut with one raised finger. A giant phone running a ticket app, SeatSwap, shows a concert ticket, then one big Buy button, then the ticket locked to one name, gleaming. Silhouetted hands in the audience go up with question marks; he shushes them and taps his temple. A card for a meeting with users, What do they need?, appears, and he tears it in two and tosses the halves away. He bows to a flashing Applause sign, but the house stays silent, and two thought bubbles swoop up from the stalls: Not what I need! Nobody asked us!"
     lines:
       - id: verse-1-1
         start: 15.92
@@ -188,7 +188,7 @@ sections:
         end: 30.25
         text: "I'll save them a meeting— They'll thank me in time!"
         marks: {"ill": 25.98, "save": 26.64, "them": 26.86, "a": 27.28, "meeting": 27.56, "theyll": 28.2, "thank": 28.61, "me": 28.92, "in": 29.22, "time": 29.64}
-        visual: "A card pops up above the phone: “Meeting with users: Monday 10:00. What do they need?”. On “meeting” he tears it in two and tosses the halves away over his shoulders. On “thank” a theatre sign lit with bulbs, “APPLAUSE”, glows, and he takes a deep bow; the house is silent, and a green cricket on the floor chirps three times. The APPLAUSE sign flashes, its bulbs chasing round, but the house is silent; just after, two thought bubbles swoop up from heads in the stalls: “Not what I need!” and “Nobody asked us!”."
+        visual: "A card pops up above the phone: “Meeting with users: Monday 10:00. What do they need?”. On “meeting” he tears it in two and tosses the halves away over his shoulders. On “thank” a theatre sign lit with bulbs, “APPLAUSE”, glows, and he takes a deep bow; the house is silent. The APPLAUSE sign flashes, its bulbs chasing round, but the house is silent; just after, two thought bubbles swoop up from heads in the stalls: “Not what I need!” and “Nobody asked us!”."
   - id: pm
     title: "The Product Manager"
     delivery: sung

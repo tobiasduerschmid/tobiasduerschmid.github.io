@@ -183,11 +183,10 @@
       });
       move('tenor', mark(v(4), 'meeting'), 'arms', { right: { reach: [124, 60], shape: 'pinch', dir: -70 }, left: { reach: [120, 66], shape: 'pinch', dir: -110 }, hold: 0.5 });
       // "They'll thank me in time!": he bows to the APPLAUSE sign; the
-      // house is silent but for a cricket.
+      // house is silent.
       ahead.push(() => {
         const bowing = kit.scene(content, mark(v(4), 'theyll'), line('pm-1').start - 0.4, { exit: 'fade' });
         M.applause(bowing, { x: 360, y: 64, at: mark(v(4), 'thank'), dimAt: line('pm-1').start - 1.2 });
-        M.cricket(bowing, { x: 610, y: 420, at: mark(v(4), 'time'), chirps: [mark(v(4), 'time') + 0.3, mark(v(4), 'time') + 1.1, mark(v(4), 'time') + 1.9] });
       });
       move('tenor', mark(v(4), 'me'), 'bow', { hold: 0.9 });
       // No applause: just after the sign lights, fans in the stalls
