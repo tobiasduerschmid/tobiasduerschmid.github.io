@@ -565,7 +565,7 @@ sections:
     title: "The Security Engineer"
     delivery: sung
     voice: Security Engineer
-    narration: "The Security Engineer glides in from the right, with your hero's face, a black tactical jacket with chest pockets, epaulettes, a gold shield badge, and an earpiece wire, black cargo trousers, and boots. The Teammate freezes, sweating. A card shows .gitignore without .env, and a red card shows Commit 4f2a, with the keys in it. Two masked burglars grab the keys from the cloud. Three server racks spin up, the board turns red, and a cloud bill climbs to minus 48,200 dollars, in the red. A rocket marked Theirs, on bags of money, launches. The Teammate adds .env to .gitignore, but the commit is still there, and five copies, each with a key, pop up. The Security Engineer stamps their keys Rotated as the bill climbs again."
+    narration: "The Security Engineer glides in from the right, with your hero's face, a black tactical jacket with chest pockets, epaulettes, a gold shield badge, and an earpiece wire, black cargo trousers, and boots. The Teammate freezes, sweating. A card shows .gitignore without .env, and a red card shows Commit 4f2a, with the keys in it. Two masked burglars grab the keys from the cloud. Three server racks spin up, the board turns red, and a cloud bill climbs to minus 48,200 dollars, in the red. A rocket marked Theirs, on bags of money, launches. The Teammate adds .env to .gitignore, but the commit is still there, and he groans as five copies, each with a key, pop up. The Security Engineer stamps their keys Rotated, and he points, aghast, as the bill climbs again."
     lines:
       - id: security-1
         start: 230.7
@@ -600,16 +600,30 @@ sections:
         visual: "Wide-eyed and sweating, the Teammate points at the “.gitignore” card, which is back; on “gitignore” its last line changes from “(no .env)” to “.env”."
       - id: security-6
         start: 245.94
-        end: 248.32
-        text: "That won't uncommit it! Old copies remain!"
-        marks: {"that": 245.94, "wont": 246.08, "uncommit": 246.42, "it": 246.96, "old": 247.22, "copies": 247.57, "remain": 247.88}
-        visual: "The red card “Commit 4f2a” is back, keys and all, and the Security Engineer wags a finger. On “copies” five cards labelled “copy”, each with a key, pop up below."
+        end: 247.18
+        text: "That won't uncommit it!"
+        marks: {"that": 245.94, "wont": 246.08, "uncommit": 246.42, "it": 246.96}
+        visual: "The red card “Commit 4f2a” is back, keys and all, and the Security Engineer wags a finger."
       - id: security-7
+        voice: Teammate
+        start: 247.22
+        end: 248.32
+        text: "Old copies remain!"
+        marks: {"old": 247.22, "copies": 247.57, "remain": 247.88}
+        visual: "On “copies” five cards labelled “copy”, each with a key, pop up below, and the Teammate, sweating, points at them in dismay."
+      - id: security-8
         start: 248.34
+        end: 249.8
+        text: "Rotate those credentials—"
+        marks: {"rotate": 248.34, "those": 248.88, "credentials": 249.14}
+        visual: "The two cards go. The Security Engineer raises a rubber stamp and brings it down: red “Rotated” stamps land on the copies’ keys, on “Rotate” and on “credentials”."
+      - id: security-9
+        voice: Teammate
+        start: 249.84
         end: 251.1
-        text: "Rotate those credentials— They're spending again!"
-        marks: {"rotate": 248.34, "those": 248.88, "credentials": 249.14, "theyre": 249.84, "spending": 250.23, "again": 250.66}
-        visual: "The two cards go. The Security Engineer raises a rubber stamp and brings it down: red “Rotated” stamps land on the copies’ keys, on “Rotate” and on “credentials”. On “spending” the cloud bill climbs to “−$61,900”, and the Security Engineer points at it."
+        text: "They're spending again!"
+        marks: {"theyre": 249.84, "spending": 250.23, "again": 250.66}
+        visual: "On “spending” the cloud bill climbs to “−$61,900”; the Teammate points up at it, aghast, and clutches his head."
   - id: refrain-3
     title: "Final refrain"
     delivery: sung

@@ -907,7 +907,7 @@
       });
       ahead.push(() => {
         const money = kit.scene(content, mark(v(3), 'were') - 0.2, line('refrain-3-1').start - 0.6, { exit: 'fade' });
-        M.bill(money, { x: 380, y: 64, at: mark(v(3), 'were') - 0.1, counts: [[mark(v(3), 'deep'), 48200, 1.2], [mark(v(7), 'spending'), 61900, 1.4]] });
+        M.bill(money, { x: 380, y: 64, at: mark(v(3), 'were') - 0.1, counts: [[mark(v(3), 'deep'), 48200, 1.2], [mark(v(9), 'spending'), 61900, 1.4]] });
       });
       move('security', mark(v(3), 'spinning') - 0.1, 'present', { to: [430, 290], hold: 1 });
       move('security', mark(v(3), 'red') - 0.2, 'facepalm', { hold: 0.9 });
@@ -929,29 +929,36 @@
         // "That won't uncommit it!": the commit, keys and all, is still there.
         commitCard(again, mark(v(6), 'wont') - 0.1);
       });
-      // "That won't uncommit it! Old copies remain!": copies of the repo,
-      // each with the keys.
+      // "That won't uncommit it!" (the Security Engineer) — "Old copies
+      // remain!" (the Teammate, groaning): copies of the repo, each with the keys.
       move('security', mark(v(6), 'wont') - 0.1, 'wag', { hold: 0.8 });
       // The copies and the stamps clear the stage before the finale's line-up comes on.
       const cleared = line('refrain-3-1').start - 1.65;
       ahead.push(() => {
-        const copies = kit.scene(content, mark(v(6), 'copies') - 0.2, cleared, { exit: 'fade' });
-        M.forks(copies, { x: 320, y: 330, at: mark(v(6), 'copies'), count: 5 });
+        const copies = kit.scene(content, mark(v(7), 'copies') - 0.2, cleared, { exit: 'fade' });
+        M.forks(copies, { x: 320, y: 330, at: mark(v(7), 'copies'), count: 5 });
       });
-      // "Rotate those credentials — they're spending again!": the old keys
-      // are stamped ROTATED.
-      plan.security.holds.push([mark(v(7), 'rotate') - 0.8, 'right', 'stamp'], [line(v(7)).end, 'right', null]);
-      move('security', mark(v(7), 'rotate') - 0.5, 'arms', { right: { reach: [124, 40], shape: 'grip', dir: -90 }, hold: 0.25 });
-      move('security', mark(v(7), 'rotate'), 'arms', { right: { reach: [130, 150], shape: 'grip', dir: 90 }, hold: 0.5 });
+      move('tenor', mark(v(7), 'old') - 0.2, 'mood', { hold: 0.9, sweat: 1, wide: 1, frown: 1, brow: 1 });
+      move('tenor', mark(v(7), 'copies') - 0.1, 'point', { to: [320, 330], hold: 0.7 });
+      // "Rotate those credentials—" (the Security Engineer): the old keys are
+      // stamped ROTATED.
+      plan.security.holds.push([mark(v(8), 'rotate') - 0.8, 'right', 'stamp'], [line(v(8)).end, 'right', null]);
+      move('security', mark(v(8), 'rotate') - 0.5, 'arms', { right: { reach: [124, 40], shape: 'grip', dir: -90 }, hold: 0.25 });
+      move('security', mark(v(8), 'rotate'), 'arms', { right: { reach: [130, 150], shape: 'grip', dir: 90 }, hold: 0.5 });
       ahead.push(() => {
-        const revoke = kit.scene(content, mark(v(7), 'rotate'), cleared, { exit: 'fade' });
-        kit.stamp(revoke, 'Rotated', { x: 330, y: 300, at: mark(v(7), 'rotate'), rotate: -8, shake: false, from: 1.5, small: true });
-        kit.stamp(revoke, 'Rotated', { x: 520, y: 360, at: mark(v(7), 'credentials'), rotate: 6, shake: false, from: 1.5, small: true });
+        const revoke = kit.scene(content, mark(v(8), 'rotate'), cleared, { exit: 'fade' });
+        kit.stamp(revoke, 'Rotated', { x: 330, y: 300, at: mark(v(8), 'rotate'), rotate: -8, shake: false, from: 1.5, small: true });
+        kit.stamp(revoke, 'Rotated', { x: 520, y: 360, at: mark(v(8), 'credentials'), rotate: 6, shake: false, from: 1.5, small: true });
       });
-      move('security', mark(v(7), 'spending') - 0.2, 'point', { to: [480, 110], hold: 1 });
+      // "They're spending again!" (the Teammate, aghast): the bill climbs.
+      move('tenor', mark(v(9), 'spending') - 0.2, 'point', { to: [480, 110], hold: 0.3 });
+      move('tenor', mark(v(9), 'again') - 0.15, 'despair', { hold: 0.5 });
       spotlight('security', line(v(1)).start - 0.3, line(v(4)).end + 0.2);
       spotlight('tenor', line(v(5)).start - 0.3, line(v(5)).end);
-      spotlight('security', line(v(6)).start - 0.2, line(v(7)).end);
+      spotlight('security', line(v(6)).start - 0.2, line(v(6)).end);
+      spotlight('tenor', line(v(7)).start - 0.1, line(v(7)).end);
+      spotlight('security', line(v(8)).start - 0.1, line(v(8)).end);
+      spotlight('tenor', line(v(9)).start - 0.1, line(v(9)).end);
     }
 
     // ----------------------------------------------------------------
@@ -979,7 +986,7 @@
       move('ui', at, 'mood', { age: 1, hold: 30 });
       ahead.push(() => {
         const party = kit.scene(content, mark('refrain-3-4', 'green'), mark('refrain-3-4', 'green') + 3);
-        kit.confetti(party, { x: 470, y: 160, at: mark('refrain-3-4', 'green') + 0.2, count: 40 });
+        kit.confetti(party, { x: 470, y: 160, at: mark('refrain-3-4', 'green') + 0.2, count: 72 });
       });
       house.footlights(line('refrain-3-4').end + 0.05, 'out', 0.15);
     }

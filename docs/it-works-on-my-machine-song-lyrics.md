@@ -56,7 +56,8 @@ sometimes handed a second stanza to another voice. The short forms are defined
 in each singer's first tag: TM = the Teammate (tenor), PM = Product Manager,
 BE = Build Engineer, TE = Test Engineer, UI = UI Developer, BD = Back-End
 Developer, SE = Security Engineer, ALL = the six teammates together. Captions
-drop the prefixes.
+drop the prefixes. The recorded take trades the last Security stanza line by
+line, with the Teammate answering; the sheet shows that split.
 
 Same meter as the first take: two stresses a line, about six syllables then
 five, rhymes on the second and fourth lines; no rhyming pair is over 14
@@ -234,9 +235,9 @@ TM: I'll add it to gitignore!
 
 [SE: SOLO FEMALE DRAMATIC CONTRALTO]
 SE: That won't uncommit it!
-Old copies remain!
-Rotate those credentials—
-They're spending again!
+TM: Old copies remain!
+SE: Rotate those credentials—
+TM: They're spending again!
 
 [Final Refrain: TM solo, soaring operatic high notes]
 TM: It works on my machine!

@@ -1324,7 +1324,9 @@
     },
     /** A palm raised to the audience: "no need to worry". */
     reassure: ({ hold = 1.4, side = 'right' }) => [
-      [-0.2, 0.5, { ...armFields(side, { arm: reach([112, 82], { shorten: 1 - LIFT * 0.7 }), lift: 0.7, shape: 'open', dir: -84 }), brow: 0.5, smile: 0.9, tilt: 2 }],
+      // Raised beside the shoulder, the whole arm in view: an arm swung
+      // toward the viewer hides its upper half behind the forearm.
+      [-0.2, 0.5, { ...armFields(side, { arm: reach([134, 70]), shape: 'open', dir: -84 }), brow: 0.5, smile: 0.9, tilt: 2 }],
       ...settle(hold, [side]),
     ],
     /** A hand pressed flat on the chest: "leave it to me". */
@@ -1402,7 +1404,8 @@
     ],
     /** A palm thrust at the viewer: "stop". */
     stop: ({ hold = 1.6, side = 'right' }) => [
-      [-0.2, 0.35, { ...armFields(side, { arm: reach([110, 96], { shorten: 1 - LIFT }), lift: 1, shape: 'open', dir: -90 }), frown: 1, brow: 0, smile: -0.4 }],
+      // Thrust out to the side at shoulder height, palm up and out.
+      [-0.2, 0.35, { ...armFields(side, { arm: reach([142, 84]), shape: 'open', dir: -88 }), frown: 1, brow: 0, smile: -0.4 }],
       ...settle(hold, [side]),
     ],
     /** A hand flat over the eyes. */

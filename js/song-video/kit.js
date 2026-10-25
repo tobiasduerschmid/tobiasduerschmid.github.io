@@ -611,46 +611,71 @@
     return art;
   }
 
-  const CONFETTI_COLORS = ['gold', 'ivory', 'teal', 'coral', 'blue'];
-  const CONFETTI_SHAPES = ['ribbon', 'ticket', 'ribbon', 'ticket', 'ribbon', 'ticket', 'ribbon'];
+  // The site's confetti (js/confetti.js), posed from song time instead of CSS
+  // keyframes so seeking replays the same burst: bright paper ribbons,
+  // tickets, and dots, tossed up and tumbling in three axes as they fall.
+  const CONFETTI_COLORS = ['#ff4f6d', '#ffb000', '#ffd84d', '#43d17d', '#14b8a6', '#3b82f6', '#8b5cf6', '#ec4899', '#f97316', '#ffffff'];
+  const CONFETTI_SHAPES = ['ribbon', 'ribbon', 'ribbon', 'ribbon', 'ticket', 'ticket', 'circle'];
+  const CONFETTI_SIZES = {
+    ribbon: (r) => [r(2, 6, 10), r(3, 20, 34)],
+    ticket: (r) => [r(2, 12, 18), r(3, 10, 16)],
+    circle: (r) => { const d = r(2, 10, 16); return [d, d]; },
+  };
+  // Keyframe stops of the site's toss: [time fraction, scale, opacity].
+  const CONFETTI_STOPS = [[0, 0.64, 0], [0.06, 0.8, 1], [0.15, 1.04, 1], [0.31, 1, 1], [0.54, 0.96, 0.98], [0.76, 0.9, 0.78], [1, 0.78, 0]];
 
-  function confettiPiece(layer, seed, index) {
+  function confettiStop(fraction, field) {
+    let i = 1;
+    while (i < CONFETTI_STOPS.length - 1 && CONFETTI_STOPS[i][0] < fraction) i++;
+    const [t0] = CONFETTI_STOPS[i - 1];
+    const [t1] = CONFETTI_STOPS[i];
+    const k = clamp((fraction - t0) / (t1 - t0), 0, 1);
+    return CONFETTI_STOPS[i - 1][field] + (CONFETTI_STOPS[i][field] - CONFETTI_STOPS[i - 1][field]) * k;
+  }
+
+  function confettiPiece(layer, seed, index, { y, stageHeight }) {
     const random = (channel, low, high) => low + (high - low) * hash01(seed * 4099 + index * 131 + channel * 17);
-    const shape = CONFETTI_SHAPES[index % CONFETTI_SHAPES.length];
+    const sign = (channel) => (hash01(seed * 4099 + index * 131 + channel * 17) < 0.5 ? -1 : 1);
+    const shape = CONFETTI_SHAPES[Math.floor(random(1, 0, CONFETTI_SHAPES.length))];
     const color = CONFETTI_COLORS[index % CONFETTI_COLORS.length];
-    const node = el('div', `confetti-piece confetti-piece--${shape} confetti-piece--${color}`, layer);
-    const depth = random(1, 0.72, 1.22);
-    const width = random(2, shape === 'ribbon' ? 7 : 13, shape === 'ribbon' ? 11 : 20) * depth;
-    const height = random(3, shape === 'ribbon' ? 23 : 10, shape === 'ribbon' ? 35 : 16) * depth;
-    node.style.setProperty('--piece-width', `${width.toFixed(2)}px`);
-    node.style.setProperty('--piece-height', `${height.toFixed(2)}px`);
+    const [width, height] = CONFETTI_SIZES[shape](random);
+    const node = el('div', `confetti-piece confetti-piece--${shape}`, layer);
+    node.style.setProperty('--piece-width', `${width.toFixed(1)}px`);
+    node.style.setProperty('--piece-height', `${height.toFixed(1)}px`);
+    node.style.setProperty('--piece-color', color);
+    const maxPeak = Math.max(24, Math.min(240, y - 28));
+    const peakTime = random(4, 0.2, 0.34);
+    const peakHeight = random(5, Math.max(24, maxPeak * 0.62), maxPeak);
+    const drop = Math.max(520, stageHeight - y + random(6, 120, 320));
+    // ballisticY(t) = a t² + b t reaches -peakHeight at peakTime and +drop at 1.
+    const a = (peakHeight + drop * peakTime) / (peakTime * (1 - peakTime));
     return {
-      node, depth, delay: random(4, 0, 0.24), duration: random(5, 2.2, 2.7),
-      vx: random(6, -220, 220), vy: random(7, -470, -260),
-      gravity: random(8, 380, 490), wind: random(9, -16, 16),
-      phase: random(10, 0, Math.PI * 2), rotation: random(11, -90, 90),
-      spin: random(12, -250, 250), tumble: random(13, 2.4, 4.2),
-      flutter: random(14, 8, 19), frequency: random(15, 3, 5),
-      offsetX: random(16, -140, 140), offsetY: random(17, -70, 20),
+      node, a, b: drop - a,
+      offsetX: random(7, -84, 84), offsetY: random(8, -46, 46),
+      velocity: sign(9) * random(10, 100, 415) + random(11, -85, 85),
+      wind: random(12, -180, 180), flutter: random(13, 12, 48),
+      phase: random(14, 0, Math.PI * 2), cycles: random(15, 1.1, 2.4),
+      spin: [
+        [random(16, -80, 80), sign(17) * random(18, 290, 960), random(19, 18, 54), 0],
+        [random(20, -70, 70), sign(21) * random(22, 780, 1860), random(23, 70, 150), 1.7],
+        [random(24, -70, 70), sign(25) * random(26, 700, 1780), random(27, 80, 170), 3.1],
+      ],
+      delay: random(28, 0, 0.11), duration: random(29, 3.4, 4.6),
     };
   }
 
   function poseConfettiPiece(piece, age, x, y) {
-    const elapsed = age - piece.delay;
-    if (elapsed <= 0 || elapsed >= piece.duration) {
+    const fraction = (age - piece.delay) / piece.duration;
+    if (fraction <= 0 || fraction >= 1) {
       piece.node.style.opacity = '0';
       return;
     }
-    const fraction = elapsed / piece.duration;
-    const flutter = (Math.sin(piece.phase + elapsed * piece.frequency) - Math.sin(piece.phase)) * piece.flutter * fraction;
-    const drift = piece.vx * (1 - Math.exp(-0.6 * elapsed)) / 0.6;
-    const px = x + piece.offsetX + drift + piece.wind * elapsed * elapsed + flutter;
-    const py = y + piece.offsetY + piece.vy * elapsed + 0.5 * piece.gravity * elapsed * elapsed;
-    const turn = piece.rotation + piece.spin * elapsed + flutter * 0.6;
-    const face = 0.18 + 0.82 * Math.abs(Math.cos(piece.phase + elapsed * piece.tumble));
-    const opacity = Math.min(clamp(elapsed / 0.12, 0, 1), clamp((1 - fraction) / 0.35, 0, 1)) * (0.68 + piece.depth * 0.25);
-    piece.node.style.opacity = opacity.toFixed(3);
-    piece.node.style.transform = `translate(${px.toFixed(1)}px, ${py.toFixed(1)}px) rotate(${turn.toFixed(1)}deg) scaleX(${face.toFixed(3)})`;
+    const wave = Math.sin(piece.phase + fraction * piece.cycles * Math.PI * 2);
+    const px = x + piece.offsetX + piece.velocity * fraction + piece.wind * fraction * fraction + wave * piece.flutter * (0.15 + fraction * 0.85);
+    const py = y + piece.offsetY + piece.a * fraction * fraction + piece.b * fraction;
+    const [rz, rx, ry] = piece.spin.map(([from, spin, flutter, shift]) => (from + spin * fraction + Math.sin(piece.phase + shift + fraction * Math.PI * 2) * flutter).toFixed(0));
+    piece.node.style.opacity = confettiStop(fraction, 2).toFixed(3);
+    piece.node.style.transform = `translate(${px.toFixed(1)}px, ${py.toFixed(1)}px) rotateZ(${rz}deg) rotateX(${rx}deg) rotateY(${ry}deg) scale(${confettiStop(fraction, 1).toFixed(3)})`;
   }
 
   /** Seeded paper pieces pose directly from song time, including backward seeks. */
@@ -658,12 +683,11 @@
     const layer = el('div', 'confetti-layer');
     layer.setAttribute('aria-hidden', 'true');
     parent.prepend(layer);
-    const pieces = Array.from({ length: Math.min(count, 46) }, (_, index) => confettiPiece(layer, seed, index));
+    const stageHeight = 540;
+    const pieces = Array.from({ length: Math.min(count, 88) }, (_, index) => confettiPiece(layer, seed, index, { y, stageHeight }));
     // Spread side celebrations around the card, rather than exposing only the
     // fastest particles from a compact burst hidden behind its opaque center.
     const originX = x + Math.sign(x - 480) * 90;
-    pieces.sort((a, b) => a.depth - b.depth);
-    layer.append(...pieces.map((piece) => piece.node));
     const end = Math.max(0, ...pieces.map((piece) => piece.delay + piece.duration));
     let visible = false;
     onFrame((t) => {

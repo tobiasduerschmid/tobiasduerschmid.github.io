@@ -1018,8 +1018,7 @@ html.dark-mode .song-graph-canvas {
 
 .confetti-layer {
   position: absolute;
-  inset: 0 0 auto;
-  height: 450px;
+  inset: 0;
   overflow: hidden;
   pointer-events: none;
   visibility: hidden;
@@ -1027,8 +1026,9 @@ html.dark-mode .song-graph-canvas {
 
 .confetti-layer.is-active { visibility: visible; }
 
-/* Warm paper colors remain stable in both site themes. The prepended layer
-   stays behind the teaching content and above the backdrop. */
+/* The site's confetti paper (js/confetti.js): a glossy sheen over each color,
+   a hairline edge, and a soft drop shadow. The paper colors stay the same in
+   both site themes; the prepended layer stays behind the teaching content. */
 .confetti-piece {
   position: absolute;
   left: 0;
@@ -1036,10 +1036,12 @@ html.dark-mode .song-graph-canvas {
   width: var(--piece-width);
   height: var(--piece-height);
   margin: calc(var(--piece-height) / -2) 0 0 calc(var(--piece-width) / -2);
-  border: 0;
-  border-radius: 1px;
-  background: var(--piece-color);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 2px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.18) 24%, var(--piece-color) 46%, var(--piece-color) 74%, rgba(0, 0, 0, 0.16));
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.34), 0 6px 16px rgba(0, 0, 0, 0.24);
+  backface-visibility: visible;
   opacity: 0;
   transform-origin: center;
 }
@@ -1047,20 +1049,14 @@ html.dark-mode .song-graph-canvas {
 .confetti-piece::after {
   content: '';
   position: absolute;
-  inset: 0;
+  inset: 1px;
   border-radius: inherit;
-  background: linear-gradient(115deg, rgba(255, 255, 255, 0.34), transparent 38%, rgba(0, 0, 0, 0.13) 76%, rgba(255, 255, 255, 0.16));
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.82), rgba(255, 255, 255, 0.16) 38%, rgba(0, 0, 0, 0.12));
+  opacity: 0.72;
 }
 
-.confetti-piece--ticket {
-  border-radius: 1.5px;
-}
-
-.confetti-piece--gold { --piece-color: #e6bd55; }
-.confetti-piece--ivory { --piece-color: #f1e5c3; }
-.confetti-piece--teal { --piece-color: #5fc6c3; }
-.confetti-piece--coral { --piece-color: #db817d; }
-.confetti-piece--blue { --piece-color: #79a9d4; }
+.confetti-piece--ticket { border-radius: 3px; }
+.confetti-piece--circle { border-radius: 50%; }
 
 .end-credit {
   position: absolute;
