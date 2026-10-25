@@ -10,12 +10,15 @@
  *     the neck, never without his stickered laptop;
  *   - six teammates who sing back, each in their own unisex clothes on a
  *     unisex build (shoulders little wider than the hips, no waist
- *     shaping), and each wearing the viewer's SE Gym hero head
- *     (SongStudentAvatar's heroHead): the Product Manager in a blazer over
+ *     shaping), each wearing an SE Gym hero head the song casts
+ *     (SongStudentAvatar's castHead): the Product Manager in a blazer over
  *     a tee, the Build Engineer in a hi-vis vest, the Test Engineer in a lab
  *     coat, the UI Developer in a painter's apron, the Back-End Developer in
- *     a hoodie, and the Security Engineer in a black field jacket. Export
- *     stages never load the hero renderer, so there each keeps a drawn face.
+ *     a hoodie, and the Security Engineer in a black field jacket;
+ *   - the viewer's own hero (SongStudentAvatar's heroHead), who joins them
+ *     at the end in a blue hoodie.
+ *   Export stages never load the hero renderer, so there each keeps a
+ *   drawn face.
  *
  * Every figure lives for the whole song: `stage` lists when it is on stage,
  * `places` where it stands (it walks there), `moves` what it does on which
@@ -673,6 +676,37 @@
   // ------------------------------------------------------------------
 
   const RIB_HEM = 'M57.8 151.6 C66 153.4 94 153.4 102.2 151.6 L102.4 157.4 C94 159.2 66 159.2 57.6 157.4 Z';
+  /**
+   * A hoodie, its hood behind the neck, drawstrings, a kangaroo pocket, and
+   * print(layer) on the chest; long sleeves and sneakers.
+   */
+  function hoodie(print) {
+    return {
+      sleeve: 'long', head: TEAMMATE_HEAD, shoes: 'sneaker',
+      back(layer) {
+        // The hood, lying behind the neck and on the shoulders.
+        inked(layer, 'M64 86 C62 76 66 66.6 73 63.4 C78 61.4 82 61.4 87 63.4 C94 66.6 98 76 96 86 C91 82.6 86 81 80 81 C74 81 69 82.6 64 86 Z', 'oc-hood', 'oc-ink oc-ink--cool');
+      },
+      top(layer, paint) {
+        inked(layer, TOP, 'oc-top', 'oc-ink oc-ink--cool', paint.top);
+        svg('path', { class: 'oc-top-shade', d: TOP_SHADE }, layer);
+        svg('path', { class: 'oc-top-light', d: TOP_LIGHT }, layer);
+        inked(layer, RIB_HEM, 'oc-rib-band', 'oc-ink oc-ink--cool');
+        svg('path', { class: 'oc-rib', d: Array.from({ length: 21 }, (_, i) => `M${59.6 + i * 2.05} 152.4 V157.6`).join(' ') }, layer);
+        inked(layer, 'M64 128.4 C72 127.4 88 127.4 96 128.4 C97.4 134 99 140 100.6 146.6 C88 148.4 72 148.4 59.4 146.6 C61 140 62.6 134 64 128.4 Z', 'oc-pocket-patch', 'oc-ink oc-ink--cool');
+        svg('path', { class: 'oc-fold', d: 'M64.4 130 C63 135.4 61.6 140.6 60.4 145.4 M95.6 130 C97 135.4 98.4 140.6 99.6 145.4' }, layer);
+        print(layer);
+      },
+      collar(layer) {
+        // The hood's front edges framing the neck, and its drawstrings.
+        svg('path', { class: 'oc-under-neck oc-hood-inside', d: 'M72.4 79 C75 83.6 85 83.6 87.6 79 C85.6 80.2 74.4 80.2 72.4 79 Z' }, layer);
+        svg('path', { class: 'oc-hood-edge', d: 'M66 86.6 C70 82 75 80.4 80 80.4 C85 80.4 90 82 94 86.6' }, layer);
+        svg('path', { class: 'oc-drawstring', d: 'M75.4 82.6 C75 92 75.6 102 76.4 110 M84.6 82.6 C85 92 84.4 102 83.6 110' }, layer);
+        svg('path', { class: 'oc-aglet', d: 'M75.6 109.4 L77.2 109.4 L77.4 113.4 L75.8 113.4 Z M82.8 109.4 L84.4 109.4 L84.2 113.4 L82.6 113.4 Z' }, layer);
+      },
+    };
+  }
+
   const COSTUMES = {
     // The Teammate: a teal quarter-zip pullover, its collar unzipped over a
     // white tee, a rocket on its chest; studio headphones round the neck.
@@ -837,33 +871,17 @@
     // The Back-End Developer: a charcoal hoodie, its hood behind the neck,
     // drawstrings, a kangaroo pocket, a little database on the chest;
     // black jeans and sneakers.
-    backend: {
-      sleeve: 'long', head: TEAMMATE_HEAD, shoes: 'sneaker',
-      back(layer) {
-        // The hood, lying behind the neck and on the shoulders.
-        inked(layer, 'M64 86 C62 76 66 66.6 73 63.4 C78 61.4 82 61.4 87 63.4 C94 66.6 98 76 96 86 C91 82.6 86 81 80 81 C74 81 69 82.6 64 86 Z', 'oc-hood', 'oc-ink oc-ink--cool');
-      },
-      top(layer, paint) {
-        inked(layer, TOP, 'oc-top', 'oc-ink oc-ink--cool', paint.top);
-        svg('path', { class: 'oc-top-shade', d: TOP_SHADE }, layer);
-        svg('path', { class: 'oc-top-light', d: TOP_LIGHT }, layer);
-        inked(layer, RIB_HEM, 'oc-rib-band', 'oc-ink oc-ink--cool');
-        svg('path', { class: 'oc-rib', d: Array.from({ length: 21 }, (_, i) => `M${59.6 + i * 2.05} 152.4 V157.6`).join(' ') }, layer);
-        inked(layer, 'M64 128.4 C72 127.4 88 127.4 96 128.4 C97.4 134 99 140 100.6 146.6 C88 148.4 72 148.4 59.4 146.6 C61 140 62.6 134 64 128.4 Z', 'oc-pocket-patch', 'oc-ink oc-ink--cool');
-        svg('path', { class: 'oc-fold', d: 'M64.4 130 C63 135.4 61.6 140.6 60.4 145.4 M95.6 130 C97 135.4 98.4 140.6 99.6 145.4' }, layer);
-        // A small database on the chest: three stacked discs.
-        const db = svg('g', { class: 'oc-print', transform: 'translate(91.6 108)' }, layer);
-        svg('path', { d: 'M-3.6 -3 C-3.6 -4.4 3.6 -4.4 3.6 -3 V3 C3.6 4.4 -3.6 4.4 -3.6 3 Z' }, db);
-        svg('path', { class: 'oc-print-line', d: 'M-3.6 -3 C-3.6 -1.6 3.6 -1.6 3.6 -3 M-3.6 0 C-3.6 1.4 3.6 1.4 3.6 0' }, db);
-      },
-      collar(layer) {
-        // The hood's front edges framing the neck, and its drawstrings.
-        svg('path', { class: 'oc-under-neck oc-hood-inside', d: 'M72.4 79 C75 83.6 85 83.6 87.6 79 C85.6 80.2 74.4 80.2 72.4 79 Z' }, layer);
-        svg('path', { class: 'oc-hood-edge', d: 'M66 86.6 C70 82 75 80.4 80 80.4 C85 80.4 90 82 94 86.6' }, layer);
-        svg('path', { class: 'oc-drawstring', d: 'M75.4 82.6 C75 92 75.6 102 76.4 110 M84.6 82.6 C85 92 84.4 102 83.6 110' }, layer);
-        svg('path', { class: 'oc-aglet', d: 'M75.6 109.4 L77.2 109.4 L77.4 113.4 L75.8 113.4 Z M82.8 109.4 L84.4 109.4 L84.2 113.4 L82.6 113.4 Z' }, layer);
-      },
-    },
+    backend: hoodie((layer) => {
+      // A small database on the chest: three stacked discs.
+      const db = svg('g', { class: 'oc-print', transform: 'translate(91.6 108)' }, layer);
+      svg('path', { d: 'M-3.6 -3 C-3.6 -4.4 3.6 -4.4 3.6 -3 V3 C3.6 4.4 -3.6 4.4 -3.6 3 Z' }, db);
+      svg('path', { class: 'oc-print-line', d: 'M-3.6 -3 C-3.6 -1.6 3.6 -1.6 3.6 -3 M-3.6 0 C-3.6 1.4 3.6 1.4 3.6 0' }, db);
+    }),
+    // The viewer's hero, who joins the team at the end: the same hoodie in
+    // blue with a gold star on the chest; jeans and sneakers.
+    hero: hoodie((layer) => {
+      svg('path', { class: 'oc-print', d: 'M91.6 102.6 L93.2 106 L96.9 106.4 L94.1 108.9 L94.9 112.6 L91.6 110.7 L88.3 112.6 L89.1 108.9 L86.3 106.4 L90 106 Z' }, layer);
+    }),
     // The Security Engineer: a black field jacket zipped to its stand
     // collar, flapped chest pockets, epaulettes, a gold shield badge, and
     // an earpiece's coiled wire; black cargo trousers and boots.
@@ -1541,7 +1559,7 @@
 
   /**
    * A cast member for the whole song:
-   *   role      'tenor', 'pm', 'build', 'test', 'ui', 'backend', 'security'
+   *   role      'tenor', 'pm', 'build', 'test', 'ui', 'backend', 'security', 'hero'
    *   hero      a promise of SongStudentAvatar's heroHead (teammates); it
    *             resolves to null on export stages, and the drawn face stays
    *   stage     [[from, to, { enter, exit }]]: when it is on stage;

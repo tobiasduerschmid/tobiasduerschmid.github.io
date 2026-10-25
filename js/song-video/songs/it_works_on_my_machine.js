@@ -34,7 +34,20 @@
     const mark = (id, word) => song.mark(id, word);
     const start = (id) => song.sectionStart(id);
     const end = (id) => song.sectionEnd(id);
-    const hero = student?.heroHead();
+    // The worried teammate at the laptop in the overture is the viewer's own
+    // hero (student.appear). The six teammates who answer him are women, one
+    // random face each, kept for the whole song: a random hero restyled with
+    // the generator's own hair and lash styles that it never pairs with
+    // facial hair, and no facial hair.
+    const womansLook = (avatar) => {
+      const pick = (values) => values[Math.floor(Math.random() * values.length)];
+      const { hairStylesWithoutFacialHair, eyelashStylesWithoutFacialHair } = avatar.RANDOM_TRAIT_POLICY.facialHairCompatibility;
+      const state = avatar.randomAvatar(null, 'human');
+      state.appearance.hairStyle = pick(hairStylesWithoutFacialHair.filter((style) => avatar.ENUMS.hairStyle.includes(style)));
+      state.appearance.eyelashStyle = pick(eyelashStylesWithoutFacialHair.filter((style) => avatar.ENUMS.eyelashStyle.includes(style)));
+      state.appearance.facialHair = 'none';
+      return avatar.normalizeAvatar(state);
+    };
 
     // The cast: where each stands when, its moves and props, and the words
     // it sings. Sections add to these; the figures are drawn after the
@@ -46,6 +59,8 @@
     const VOICES = {
       tenor: 'Teammate', pm: 'Product Manager', build: 'Build Engineer', test: 'Test Engineer',
       ui: 'UI Developer', backend: 'Back-End Developer', security: 'Security Engineer',
+      // The viewer's hero, who joins the six for the closing line.
+      hero: null,
     };
     const plan = Object.fromEntries(Object.keys(VOICES).map((role) => [role, { stage: [], places: [], moves: [], holds: [], beds: [] }]));
     const move = (role, at, name, options) => plan[role].moves.push([at, name, options]);
@@ -285,16 +300,16 @@
       });
       move('tenor', mark(v(4), 'fuss') - 0.25, 'arms', { right: { reach: [150, 60], shape: 'open', dir: -40 }, hold: 0.5 });
       // "Let new versions in!": new versions of the package march in.
-      // "New versions mean fixes": each gets a "fixes!" sticker. They
-      // march off before the Build Engineer comes on.
+      // "New versions mean fixes": each gets a "fixes!" sticker. They stay
+      // as long as the shelf of packages does.
       ahead.push(() => {
-        const parade = kit.scene(content, mark(v(4), 'new') - 0.2, line('build-1').start - 3.1, { exit: 'fade' });
+        const parade = kit.scene(content, mark(v(4), 'new') - 0.2, line(v(5)).end, { exit: 'fade' });
         M.marchers(parade, {
           y: 376, at: mark(v(4), 'new'), name: 'transfers', fixesAt: mark(v(5), 'fixes'),
-          versions: [{ version: '1.5.0', x: 470 }, { version: '2.0.0', x: 576 }, { version: '2.1.0', x: 682 }],
+          versions: [{ version: '1.5.0', x: 400 }, { version: '2.0.0', x: 506 }, { version: '2.1.0', x: 612 }],
         });
       });
-      move('tenor', mark(v(4), 'let') - 0.1, 'present', { to: [700, 380], hold: 1.2 });
+      move('tenor', mark(v(4), 'let') - 0.1, 'present', { to: [560, 380], hold: 1.2 });
       // "A sensible win!": a trophy held high on the long note.
       plan.tenor.holds.push([mark(v(5), 'a') - 0.2, 'right', 'trophy'], [line(v(5)).end - 1, 'right', null]);
       move('tenor', mark(v(5), 'a') - 0.1, 'arms', {
@@ -883,8 +898,8 @@
     function security() {
       const v = (n) => `security-${n}`;
       const enter = line(v(1)).start - 1.8;
-      // Off the right wing late in the outro, to come back from the left (see outro()).
-      plan.security.stage.push([enter, OUTRO_EXIT, { enter: 'right', exit: 'right' }]);
+      // On stage from here to the end: the finale's line-up keeps them.
+      plan.security.stage.push([enter, undefined, { enter: 'right' }]);
       placeAt('security', 0, 790, FLOOR, 0.95);
       move('tenor', enter + 1.6, 'mood', { hold: line(v(4)).end - enter - 1.6, sweat: 1, smile: 0.4, brow: 0.8, look: 0.8 });
       // "Dot-env's not in gitignore — you committed the keys!"
@@ -971,7 +986,6 @@
 
     // In the spoken outro the Security Engineer slips off the right wing and
     // comes back from the left, between him and his desk.
-    const OUTRO_EXIT = mark('outro-2', 'change') + 0.3;
     const OUTRO_RETURN = line('outro-3').start - 0.35;
 
     // The chorus line, shoulder to shoulder behind him, right of his desk.
@@ -1012,16 +1026,17 @@
       });
       move('tenor', mark(v(2), 'just'), 'mood', { hold: 1.4, lean: -5, smile: 0.9, brow: 0.6 });
       // "Step away from the keyboard!", sung by all six teammates: the
-      // Security Engineer, who left the line-up by the right wing, glides in
-      // from the left between him and the desk, palm out; the line-up holds
-      // out five more palms; he has jumped back, hands up.
-      placeAt('security', OUTRO_RETURN - 0.05, 300, FLOOR, 0.95, 0.01);
-      plan.security.stage.push([OUTRO_RETURN, undefined, { enter: 'left' }]);
-      move('security', mark(v(3), 'away') - 0.2, 'stop', { hold: 3 });
+      // viewer's hero, the worried teammate at the laptop in the overture,
+      // glides in from the left between him and the desk, palm out, and
+      // sings along; the line-up holds out six more palms; he has jumped
+      // back, hands up.
+      placeAt('hero', 0, 300, FLOOR, 0.95);
+      plan.hero.stage.push([OUTRO_RETURN, undefined, { enter: 'left' }]);
+      move('hero', mark(v(3), 'away') - 0.2, 'stop', { hold: 3 });
       placeAt('tenor', mark(v(3), 'step') - 0.1, 412, FLOOR, 0.95, 0.7);
       move('tenor', mark(v(3), 'step'), 'surrender', { hold: 4.4 });
-      LINEUP.filter(([role]) => role !== 'security').forEach(([role], i) => move(role, mark(v(3), 'away') - 0.2 + i * 0.06, 'stop', { hold: 3.2 }));
-      spotlight('security', OUTRO_RETURN + 0.1, line(v(3)).end + 1);
+      LINEUP.forEach(([role], i) => move(role, mark(v(3), 'away') - 0.2 + i * 0.06, 'stop', { hold: 3.2 }));
+      spotlight('hero', OUTRO_RETURN + 0.1, line(v(3)).end + 1);
       // The final chord: the curtain falls as the last note ends, and the
       // moral is posted on it once it has closed.
       // The ending is sung twice; the curtain falls on the second.
@@ -1060,6 +1075,12 @@
     // ----------------------------------------------------------------
 
     // A singer's words, and for the teammates the line all six sing together.
+    // The tenor keeps his drawn face; the hero wears the viewer's own.
+    const headFor = (role) => {
+      if (role === 'tenor') return undefined;
+      if (role === 'hero') return student?.heroHead();
+      return student?.castHead(womansLook);
+    };
     const wordsOf = (role, voice) => [...C.wordsFor(song.storyboard, voice), ...(role === 'tenor' ? [] : C.wordsFor(song.storyboard, ENSEMBLE))];
     for (const draw of behind) draw();
     for (const draw of lights) draw();
@@ -1068,7 +1089,7 @@
       if (!p.stage.length) continue;
       if (!p.places.length) placeAt(role, 0, ...(role === 'tenor' ? HOME.tenor : HOME.mate));
       figures[role] = C.figure(content, {
-        role, hero: role === 'tenor' ? undefined : hero, stage: p.stage, places: p.places,
+        role, hero: headFor(role), stage: p.stage, places: p.places,
         moves: p.moves, holds: p.holds, beds: p.beds, words: wordsOf(role, voice), seed: Object.keys(VOICES).indexOf(role),
       });
     }

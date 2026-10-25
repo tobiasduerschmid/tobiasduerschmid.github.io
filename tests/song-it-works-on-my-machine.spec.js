@@ -24,7 +24,9 @@ const mark = (id, word) => storyLines.get(id).marks[word];
 const TEAMMATES = [
   ['pm', 'pm'], ['build', 'build'], ['test', 'test'], ['ui', 'ui'], ['backend', 'backend'], ['security', 'security'],
 ];
-const CAST = ['tenor', ...TEAMMATES.map(([role]) => role)];
+const CAST = ['tenor', ...TEAMMATES.map(([role]) => role), 'hero'];
+// The viewer's hero pushes him from the keyboard on the closing line.
+const closingLine = () => mark('outro-3', 'keyboard');
 const midSolo = (section) => {
   const [first] = sections.get(section).lines;
   return (first.start + first.end) / 2;
@@ -57,9 +59,9 @@ async function seek(page, seconds) {
 
 const HERO_HEAD = '[data-testid="song-hero-head"]';
 
-/** Waits until every teammate wears a face of their own (the Teammate never does). */
+/** Waits until every teammate, and the hero who joins them, wears a face of their own (the Teammate never does). */
 async function expectTeammatesWearHeads(page) {
-  await expect.poll(() => countInArtwork(page, HERO_HEAD), { message: 'each teammate wears its own copy' }).toBe(TEAMMATES.length);
+  await expect.poll(() => countInArtwork(page, HERO_HEAD), { message: 'each teammate and the hero wear their own copy' }).toBe(TEAMMATES.length + 1);
 }
 
 test.beforeEach(async ({ page }) => {
@@ -69,36 +71,69 @@ test.beforeEach(async ({ page }) => {
   await page.evaluate(() => document.fonts.ready);
 });
 
-test('every teammate sings in the saved hero\'s own face; the Teammate keeps his', async ({ page }) => {
+// What tells one worn face from another: its kind, skin, hair colour, and the
+// hair and facial hair it shows. Read from the worn head itself.
+async function faceOf(page, role) {
+  return page.getByTestId(`oc-${role}`).getByTestId('song-hero-head').evaluate((head) => {
+    const shown = (slot) => [...head.querySelectorAll(`[data-hero-slot="${slot}"]`)]
+      .filter((group) => group.getAttribute('display') !== 'none' && getComputedStyle(group).display !== 'none')
+      .map((group) => group.getAttribute('data-hero-option'));
+    const style = getComputedStyle(head);
+    return {
+      kind: head.getAttribute('data-hero-kind'),
+      skin: style.getPropertyValue('--hero-skin-light').trim(),
+      hairColor: style.getPropertyValue('--hero-hair').trim(),
+      hair: shown('hair'),
+      facialHair: shown('facial-hair').filter((option) => option !== 'none'),
+    };
+  });
+}
+
+test('each teammate is a woman with a random face of her own, kept from her solo to the finale; the laptop keeps the saved hero', async ({ page }) => {
   const saved = JSON.stringify(savedHuman);
   await page.addInitScript(({ key, value }) => localStorage.setItem(key, value), { key: STORAGE_KEY, value: saved });
   await page.reload();
   await expect(page.getByTestId('song-picture')).toBeVisible();
+  await expect(page.getByTestId('song-student-avatar'), 'the overture\'s laptop shows the viewer\'s hero').toHaveAttribute('data-avatar-state', 'saved');
   await expectTeammatesWearHeads(page);
+  const finale = mark('refrain-3-2', 'finest');
+  const solos = {};
   for (const [role, section] of TEAMMATES) {
     await seek(page, midSolo(section));
-    const face = page.getByTestId(`oc-${role}`).getByTestId('song-hero-head');
-    await expect(face, `the ${role} singer wears the saved face`).toBeVisible();
-    await expect(face).toHaveAttribute('data-hero-kind', 'human');
-    await expect(face).toHaveCSS('--hero-skin-light', savedHuman.appearance.skin);
-    const teammate = page.getByTestId(`oc-${role}`);
-    await expect(teammate.getByTestId('oc-drawn-face')).toBeHidden();
+    const face = await faceOf(page, role);
+    expect(face.kind, `the ${role} wears a human hero's face`).toBe('human');
+    expect(face.facialHair, `the ${role} has no facial hair`).toEqual([]);
+    expect(face.hair.length, `the ${role} shows one hairstyle`).toBe(1);
+    await expect(page.getByTestId(`oc-${role}`).getByTestId('oc-drawn-face')).toBeHidden();
     const tenor = page.getByTestId('oc-tenor');
     await expect(tenor.getByTestId('oc-drawn-face'), 'the Teammate keeps his own face').toBeVisible();
     await expect(tenor.getByTestId('song-hero-head')).toHaveCount(0);
+    solos[role] = face;
   }
+  await seek(page, finale);
+  for (const [role] of TEAMMATES) {
+    const face = await faceOf(page, role);
+    // The UI Developer aged overnight in her solo: the same face, silver hair.
+    if (role === 'ui') expect(face.hairColor, 'the UI Developer is still silver-haired').not.toBe(solos.ui.hairColor);
+    expect({ ...face, hairColor: null }, `the ${role} keeps her face into the finale`).toEqual({ ...solos[role], hairColor: null });
+  }
+  const looks = new Set(Object.values(solos).map((face) => JSON.stringify(face)));
+  expect(looks.size, 'six teammates, six faces').toBeGreaterThan(1);
+  // For the closing line, the viewer's own hero pushes him from the keyboard.
+  await seek(page, closingLine());
+  const hero = page.getByTestId('oc-hero').getByTestId('song-hero-head');
+  await expect(hero, 'the saved hero pushes him from the keyboard').toBeVisible();
+  await expect(hero).toHaveCSS('--hero-skin-light', savedHuman.appearance.skin);
   expect(await page.evaluate((key) => localStorage.getItem(key), STORAGE_KEY), 'the song never changes the Gym hero').toBe(saved);
 });
 
-test('without a saved hero, the teammates wear the SE Gym\'s default human face, never saved', async ({ page }) => {
+test('without a saved hero, the teammates still wear random women\'s faces, and nothing is saved', async ({ page }) => {
   await expectTeammatesWearHeads(page);
-  const defaultSkin = await page.evaluate(() => window.HeroAvatar.DEFAULTS.appearance.skin);
   for (const [role, section] of [TEAMMATES[0], TEAMMATES.at(-1)]) {
     await seek(page, midSolo(section));
-    const face = page.getByTestId(`oc-${role}`).getByTestId('song-hero-head');
-    await expect(face, `the ${role} singer wears the default face`).toBeVisible();
-    await expect(face).toHaveAttribute('data-hero-kind', 'human');
-    await expect(face).toHaveCSS('--hero-skin-light', defaultSkin);
+    const face = await faceOf(page, role);
+    expect(face.kind).toBe('human');
+    expect(face.facialHair).toEqual([]);
   }
   expect(await page.evaluate((key) => localStorage.getItem(key), STORAGE_KEY)).toBeNull();
 });

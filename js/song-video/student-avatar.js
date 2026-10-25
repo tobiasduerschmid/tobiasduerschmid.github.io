@@ -697,6 +697,18 @@
       }
     }
 
+    /** Renders a hero, dressed as state, pruned to a head a character can wear; or null. */
+    function renderHead(avatar, state) {
+      return renderOffScreen((host) => mountHero(avatar, host, 'song-head', state), (master) => {
+        stopOwnMotion(master);
+        if (!pruneToHead(master, avatar.ACCESSORY_COMPATIBILITY.bodyBoundAccessories)) return null;
+        // Scope-wide renderer updates must never re-dress the pruned head.
+        master.removeAttribute('data-gym-hero-svg');
+        master.classList.add('song-hero-head');
+        return wearableHead(avatar, master);
+      });
+    }
+
     // The heads song characters wear, rendered from the first request: the
     // saved human or Prof hero's, else (no saved hero, or the Bruin) the SE
     // Gym's default human hero's, which is never saved; with randomAvatar, a
@@ -713,19 +725,27 @@
             if (randomAvatar) return avatar.randomAvatar();
             return saved && ['human', 'tobias'].includes(saved.kind) ? saved : JSON.parse(JSON.stringify(avatar.DEFAULTS));
           };
-          const render = () => renderOffScreen((host) => mountHero(avatar, host, 'song-head', state()), (master) => {
-            stopOwnMotion(master);
-            if (!pruneToHead(master, avatar.ACCESSORY_COMPATIBILITY.bodyBoundAccessories)) return null;
-            // Scope-wide renderer updates must never re-dress the pruned head.
-            master.removeAttribute('data-gym-hero-svg');
-            master.classList.add('song-hero-head');
-            return wearableHead(avatar, master);
-          });
+          const render = () => renderHead(avatar, state());
           const first = await render();
           return first && wardrobe(first, randomAvatar ? render : null);
         }).catch(() => null);
       }
       return heads;
+    }
+
+    /**
+     * A head for one cast member that keeps a single look all song, in every
+     * appearance: style(HeroAvatar) returns the hero state to draw (say, a
+     * random hero restyled for the role). Each call casts a new character.
+     * Resolves to a wardrobe, or to null on export stages or if the renderer
+     * fails. Never reads or saves the viewer's hero.
+     */
+    function castHead(style) {
+      return savedAvatar.then(async (result) => {
+        if (disposed || !result) return null;
+        const first = await renderHead(result.avatar, style(result.avatar));
+        return first && wardrobe(first, null);
+      }).catch(() => null);
     }
 
     root.Timeline.onFrame(draw);
@@ -736,7 +756,7 @@
     });
     // Promise work is deliberately detached from SongScene.build/playback.
     void hydrate();
-    return { appear: (cue) => cameos.push(cue), heroAppearance, heroHead };
+    return { appear: (cue) => cameos.push(cue), heroAppearance, heroHead, castHead };
   }
 
   if (typeof module !== 'undefined' && module.exports) module.exports = { wardrobe };

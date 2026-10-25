@@ -314,6 +314,34 @@
 .oc-print { fill: #c8d6e8; }
 .oc-print-line { fill: none; stroke: #4a505d; stroke-width: 0.7; }
 
+/* The viewer's hero, who joins the team at the end: the hoodie in blue
+   with a gold star, and jeans. */
+.oc-figure--hero {
+  --oc-cloth: #2774ae;
+  --oc-cloth-light: #6aa7d8;
+  --oc-cloth-shade: #174a73;
+}
+.oc-figure--hero .oc-top-stop-0 { stop-color: #3b8bc6; }
+.oc-figure--hero .oc-top-stop-1 { stop-color: #2774ae; }
+.oc-figure--hero .oc-top-stop-2 { stop-color: #1b5a8a; }
+.oc-figure--hero .oc-sleeve-stop-0 { stop-color: #3584bf; }
+.oc-figure--hero .oc-sleeve-stop-1 { stop-color: #256ea6; }
+.oc-figure--hero .oc-sleeve-stop-2 { stop-color: #194f7a; }
+.oc-figure--hero .oc-trouser-stop-0 { stop-color: #4a6a9a; }
+.oc-figure--hero .oc-trouser-stop-1 { stop-color: #3d5a86; }
+.oc-figure--hero .oc-trouser-stop-2 { stop-color: #31496e; }
+.oc-figure--hero .oc-trouser-stop-3 { stop-color: #253854; }
+.oc-figure--hero .oc-shoe-stop-0 { stop-color: #f2f4f7; }
+.oc-figure--hero .oc-shoe-stop-1 { stop-color: #c9ced6; }
+.oc-figure--hero .oc-shoe-stop-2 { stop-color: #8e95a1; }
+.oc-figure--hero .oc-shoes { --oc-sole: #e7eaee; --oc-laces: #2774ae; }
+.oc-figure--hero .oc-seam { --oc-seam: #d9a83a; }
+.oc-figure--hero .oc-hood { fill: #1f6399; }
+.oc-figure--hero .oc-hood-inside { stroke: #123e61; }
+.oc-figure--hero .oc-hood-edge { stroke: #164d78; }
+.oc-figure--hero .oc-pocket-patch { fill: #2269a0; }
+.oc-figure--hero .oc-print { fill: #ffd100; stroke: #b58f00; stroke-width: 0.6; }
+
 /* The Security Engineer. */
 .oc-figure--security {
   --oc-cloth: #2b2f37;

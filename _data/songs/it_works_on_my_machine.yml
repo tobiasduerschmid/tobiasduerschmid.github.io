@@ -145,7 +145,7 @@ sections:
     title: "Intro"
     delivery: sung
     voice: Teammate
-    narration: "Audio-described version: before each section, the picture pauses while I describe it. The song is a comic opera on the stage of an opera house dressed as a software team's office: red velvet drapes, a gilded arch, footlights, and a conductor in the pit. On the back wall are an arched window onto the city, a wall clock beside it, and a board headed Build status with six lamps, all green with ticks. The curtain rises, and a follow spot picks up the Teammate, the tenor, gliding in from the left: a towering brown pompadour, a twirled moustache, a teal quarter-zip pullover over a white tee, studio headphones round his neck, jeans, and orange sneakers. At a desk on the right, your hero, or the default Bruin, types at a laptop. He raises a calming palm to them and pats his chest. A sprint calendar sheds its fourteen days down to: ship today. A toy ship flagged v1.0 by 3:00 is flown in from the rafters on two wires, the clock spins to three, and he salutes it. Each teammate who answers him later wears your hero's face, or the SE Gym's default hero's."
+    narration: "Audio-described version: before each section, the picture pauses while I describe it. The song is a comic opera on the stage of an opera house dressed as a software team's office: red velvet drapes, a gilded arch, footlights, and a conductor in the pit. On the back wall are an arched window onto the city, a wall clock beside it, and a board headed Build status with six lamps, all green with ticks. The curtain rises, and a follow spot picks up the Teammate, the tenor, gliding in from the left: a towering brown pompadour, a twirled moustache, a teal quarter-zip pullover over a white tee, studio headphones round his neck, jeans, and orange sneakers. At a desk on the right, your hero, or the default Bruin, types at a laptop. He raises a calming palm to them and pats his chest. A sprint calendar sheds its fourteen days down to: ship today. A toy ship flagged v1.0 by 3:00 is flown in from the rafters on two wires, the clock spins to three, and he salutes it. Each teammate who answers him later is a woman with a face of her own, chosen at random and kept all song; at the very end your hero joins them."
     lines:
       - id: intro-1
         start: 2.04
@@ -193,14 +193,14 @@ sections:
     title: "The Product Manager"
     delivery: sung
     voice: Product Manager
-    narration: "The Product Manager glides in from the right, with your hero's face, a navy blazer over a coral tee, a lanyard and badge, grey trousers, white sneakers, and a clipboard. The Teammate freezes with a sheepish grin and a bead of sweat while they sing. A gold card headed User story writes itself out, part by part: As a fan, I want to pass my ticket on, so a friend can use my seat when I can't come along. The phone answers: Transfer? Not allowed. One name only. The Product Manager shows a card: Demo today, send a ticket to a friend. Then the phone fans out into six small phones, red, orange, gold, green, blue, and violet, each with the same one button, and the Product Manager facepalms."
+    narration: "The Product Manager glides in from the right, with a woman's face of her own, a navy blazer over a coral tee, a lanyard and badge, grey trousers, white sneakers, and a clipboard. The Teammate freezes with a sheepish grin and a bead of sweat while they sing. A gold card headed User story writes itself out, part by part: As a fan, I want to pass my ticket on, so a friend can use my seat when I can't come along. The phone answers: Transfer? Not allowed. One name only. The Product Manager shows a card: Demo today, send a ticket to a friend. Then the phone fans out into six small phones, red, orange, gold, green, blue, and violet, each with the same one button, and the Product Manager facepalms."
     lines:
       - id: pm-1
         start: 30.63
         end: 34.0
         text: "As a fan, I want To pass my ticket on,"
         marks: {"as": 30.63, "a": 31.08, "fan": 31.28, "i": 32.08, "want": 32.14, "to": 32.38, "pass": 32.52, "my": 32.78, "ticket": 32.94, "on": 33.3}
-        visual: "The Product Manager glides in from the right: your hero’s face, a navy blazer open over a coral tee, a lanyard and badge, grey trousers, white sneakers, and a clipboard in hand. The Teammate freezes with a sheepish grin, a bead of sweat on his brow, and the phone steps back to the left. A gold card headed “User story” writes itself out as they sing: “As a fan,” then “I want to pass my ticket on,”."
+        visual: "The Product Manager glides in from the right: a woman’s face of her own, a navy blazer open over a coral tee, a lanyard and badge, grey trousers, white sneakers, and a clipboard in hand. The Teammate freezes with a sheepish grin, a bead of sweat on his brow, and the phone steps back to the left. A gold card headed “User story” writes itself out as they sing: “As a fan,” then “I want to pass my ticket on,”."
       - id: pm-2
         start: 34.02
         end: 37.66
@@ -254,19 +254,19 @@ sections:
         end: 62.84
         text: "New versions mean fixes— A sensible win!"
         marks: {"new": 59.7, "versions": 59.98, "mean": 60.44, "fixes": 60.87, "a": 61.18, "sensible": 61.54, "win": 62.2}
-        visual: "Each marching box gets a gold sticker, “fixes!”. He holds a gold trophy high with the other arm flung out, beaming and blushing, and sparkles burst on “win”; the boxes march off."
+        visual: "Each marching box gets a gold sticker, “fixes!”. He holds a gold trophy high with the other arm flung out, beaming and blushing, and sparkles burst on “win”; the three new boxes stay in front of the shelf, and they fade away together."
   - id: build
     title: "The Build Engineer"
     delivery: sung
     voice: Build Engineer
-    narration: "The Build Engineer glides in from the right, with your hero's face, a hi-vis safety vest over a navy tee, olive cargo trousers, work boots, and a wrench. The Teammate freezes again, sweating. His laptop keeps the old transfers package, 1.4.2, while a blue build machine marked Clean build takes in version 2.1.0. A plug for the old call, version one, bounces off a socket for version two's new call, with a spark and a red cross. A lockfile card pins the old version, every lamp on the Build status board turns red, and a sticker says All builds failed. Last, his laptop drops into a cardboard box marked Overnight, a label slaps on, Fragile: works on my machine, and he clutches his head."
+    narration: "The Build Engineer glides in from the right, with a woman's face of her own, a hi-vis safety vest over a navy tee, olive cargo trousers, work boots, and a wrench. The Teammate freezes again, sweating. His laptop keeps the old transfers package, 1.4.2, while a blue build machine marked Clean build takes in version 2.1.0. A plug for the old call, version one, bounces off a socket for version two's new call, with a spark and a red cross. A lockfile card pins the old version, every lamp on the Build status board turns red, and a sticker says All builds failed. Last, his laptop drops into a cardboard box marked Overnight, a label slaps on, Fragile: works on my machine, and he clutches his head."
     lines:
       - id: build-1
         start: 62.86
         end: 66.34
         text: "Your laptop kept old ones; My clean build got new."
         marks: {"your": 62.86, "laptop": 63.26, "kept": 63.76, "old": 64.16, "ones": 64.52, "my": 64.8, "clean": 65.02, "build": 65.34, "got": 65.62, "new": 65.84}
-        visual: "The Build Engineer glides in from the right: your hero’s face, a hi-vis safety vest with reflective bands over a navy tee, olive cargo trousers, work boots, and a wrench; they stand with hands on hips while the Teammate freezes, sweating. His laptop shows the old “transfers 1.4.2” box, with a sticker “Kept the old one”; a blue build machine with a hopper, a chimney, and a plate “Clean build” appears, and a new “transfers 2.1.0” box rides its conveyor in, under a gold sticker “Fetched the new one”."
+        visual: "The Build Engineer glides in from the right: a woman’s face of her own, a hi-vis safety vest with reflective bands over a navy tee, olive cargo trousers, work boots, and a wrench; they stand with hands on hips while the Teammate freezes, sweating. His laptop shows the old “transfers 1.4.2” box, with a sticker “Kept the old one”; a blue build machine with a hopper, a chimney, and a plate “Clean build” appears, and a new “transfers 2.1.0” box rides its conveyor in, under a gold sticker “Fetched the new one”."
       - id: build-2
         start: 66.36
         end: 70.04
@@ -349,14 +349,14 @@ sections:
     title: "The Test Engineer"
     delivery: sung
     voice: Test Engineer
-    narration: "The Test Engineer glides in from the right, with your hero's face, a white lab coat over a lilac shirt, pens in the pocket, goggles round the neck, and a magnifying glass. The Teammate freezes, sweating. In the code, two helpers are merged into one, and a last line says Sam now holds the seat. But the test card cracks and turns red, stamped Failed; night falls in the window, and the clock runs to two. A sticker says Test the behavior, and the test rewrites itself to check only that Sam has the seat; it passes. Then four little old test cards with faces cling to the bottom of the code with hearts, and the Test Engineer tugs at the code while the tests haul it back and shriek."
+    narration: "The Test Engineer glides in from the right, with a woman's face of her own, a white lab coat over a lilac shirt, pens in the pocket, goggles round the neck, and a magnifying glass. The Teammate freezes, sweating. In the code, two helpers are merged into one, and a last line says Sam now holds the seat. But the test card cracks and turns red, stamped Failed; night falls in the window, and the clock runs to two. A sticker says Test the behavior, and the test rewrites itself to check only that Sam has the seat; it passes. Then four little old test cards with faces cling to the bottom of the code with hearts, and the Test Engineer tugs at the code while the tests haul it back and shriek."
     lines:
       - id: test-1
         start: 122.92
         end: 126.86
         text: "I merged two small helpers; The transfer worked right."
         marks: {"i": 122.92, "merged": 123.14, "two": 123.7, "small": 124.04, "helpers": 124.42, "the": 125.22, "transfer": 125.32, "worked": 125.92, "right": 126.28}
-        visual: "The Test Engineer glides in from the right: your hero’s face, a white lab coat to the knees over a lilac shirt, pens in the pocket, goggles round the neck, and a magnifying glass. The Teammate freezes, sweating. On “merged” notify and log become one helper: the notify line turns into “record(seat, friend)”, in green, and the log line is struck through; on “transfer” the code’s last line reads “# Sam now holds seat F12 ✓”. The Test Engineer points at it, then gives a thumbs-up."
+        visual: "The Test Engineer glides in from the right: a woman’s face of her own, a white lab coat to the knees over a lilac shirt, pens in the pocket, goggles round the neck, and a magnifying glass. The Teammate freezes, sweating. On “merged” notify and log become one helper: the notify line turns into “record(seat, friend)”, in green, and the log line is struck through; on “transfer” the code’s last line reads “# Sam now holds seat F12 ✓”. The Test Engineer points at it, then gives a thumbs-up."
       - id: test-2
         start: 126.88
         end: 130.53
@@ -409,14 +409,14 @@ sections:
     title: "The UI Developer"
     delivery: sung
     voice: UI Developer
-    narration: "The UI Developer glides in from the right, with your hero's face, a mustard turtleneck under a denim painter's apron with dabs of paint and a brush in its pocket, rust trousers, and a palette. The Teammate freezes, sweating. Tickets, Reminders, and Check-in crack, each with a red cross. The times glow red, and dashed red lines race out to eight chips: receipts, emails, exports, reports, calendar, search, countdown, and scanner. A gold card shows the fix, a Showtime module that alone hides the time format, and bandages go on. As day and night race past the window, the UI Developer's hair turns silver and a cane appears."
+    narration: "The UI Developer glides in from the right, with a woman's face of her own, a mustard turtleneck under a denim painter's apron with dabs of paint and a brush in its pocket, rust trousers, and a palette. The Teammate freezes, sweating. Tickets, Reminders, and Check-in crack, each with a red cross. The times glow red, and dashed red lines race out to eight chips: receipts, emails, exports, reports, calendar, search, countdown, and scanner. A gold card shows the fix, a Showtime module that alone hides the time format, and bandages go on. As day and night race past the window, the UI Developer's hair turns silver and a cane appears."
     lines:
       - id: ui-1
         start: 154.54
         end: 158.04
         text: "Now tickets, reminders, And check-in need repair!"
         marks: {"now": 154.54, "tickets": 155.03, "reminders": 155.74, "and": 156.46, "checkin": 156.68, "need": 157.06, "repair": 157.3}
-        visual: "The UI Developer glides in from the right: your hero’s face, a mustard turtleneck under a denim painter’s apron with three dabs of paint and a brush in its pocket, rust trousers, and a paint palette. The Teammate freezes, sweating. As each is named, Tickets, Reminders, and Check-in crack and get a red cross, and the UI Developer points at each."
+        visual: "The UI Developer glides in from the right: a woman’s face of her own, a mustard turtleneck under a denim painter’s apron with three dabs of paint and a brush in its pocket, rust trousers, and a paint palette. The Teammate freezes, sweating. As each is named, Tickets, Reminders, and Check-in crack and get a red cross, and the UI Developer points at each."
       - id: ui-2
         start: 158.06
         end: 161.61
@@ -499,14 +499,14 @@ sections:
     title: "The Back-End Developer"
     delivery: sung
     voice: Back-End Developer
-    narration: "The Back-End Developer glides in from the right, with your hero's face, a charcoal hoodie with a little database on the chest, black jeans, sneakers, and a coffee mug. The Teammate freezes, sweating. Dashed outlines show where their four commits were. The old base commit gets cobwebs and a tag, old; every lamp on the board turns red, under a stamp: Broken. A red card says Never force-push, then Merge first. The fix commits drop back onto main after his, dawn breaks, the clock turns to six, and the lamps turn green. The Back-End Developer points at him; two calendar cards, Saturday and Sunday, both free, drift up and vanish, and the Back-End Developer slumps."
+    narration: "The Back-End Developer glides in from the right, with a woman's face of her own, a charcoal hoodie with a little database on the chest, black jeans, sneakers, and a coffee mug. The Teammate freezes, sweating. Dashed outlines show where their four commits were. The old base commit gets cobwebs and a tag, old; every lamp on the board turns red, under a stamp: Broken. A red card says Never force-push, then Merge first. The fix commits drop back onto main after his, dawn breaks, the clock turns to six, and the lamps turn green. The Back-End Developer points at him; two calendar cards, Saturday and Sunday, both free, drift up and vanish, and the Back-End Developer slumps."
     lines:
       - id: backend-1
         start: 197.58
         end: 200.88
         text: "I pushed all our fixes! They're gone from shared main!"
         marks: {"i": 197.58, "pushed": 197.94, "all": 198.24, "our": 198.46, "fixes": 198.66, "theyre": 199.64, "gone": 199.8, "from": 200.08, "shared": 200.32, "main": 200.71}
-        visual: "The Back-End Developer glides in from the right: your hero’s face, a charcoal hoodie with drawstrings, a kangaroo pocket, and a little database on the chest, black jeans, sneakers, and a coffee mug. The Teammate freezes, sweating. On “fixes” dashed outlines appear on main where their four commits used to be; the Back-End Developer points at them, then throws up both hands on “gone”."
+        visual: "The Back-End Developer glides in from the right: a woman’s face of her own, a charcoal hoodie with drawstrings, a kangaroo pocket, and a little database on the chest, black jeans, sneakers, and a coffee mug. The Teammate freezes, sweating. On “fixes” dashed outlines appear on main where their four commits used to be; the Back-End Developer points at them, then throws up both hands on “gone”."
       - id: backend-2
         start: 200.9
         end: 203.94
@@ -565,14 +565,14 @@ sections:
     title: "The Security Engineer"
     delivery: sung
     voice: Security Engineer
-    narration: "The Security Engineer glides in from the right, with your hero's face, a black tactical jacket with chest pockets, epaulettes, a gold shield badge, and an earpiece wire, black cargo trousers, and boots. The Teammate freezes, sweating. A card shows .gitignore without .env, and a red card shows Commit 4f2a, with the keys in it. Two masked burglars grab the keys from the cloud. Three server racks spin up, the board turns red, and a cloud bill climbs to minus 48,200 dollars, in the red. A rocket marked Theirs, on bags of money, launches. The Teammate adds .env to .gitignore, but the commit is still there, and he groans as five copies, each with a key, pop up. The Security Engineer stamps their keys Rotated, and he points, aghast, as the bill climbs again."
+    narration: "The Security Engineer glides in from the right, with a woman's face of her own, a black tactical jacket with chest pockets, epaulettes, a gold shield badge, and an earpiece wire, black cargo trousers, and boots. The Teammate freezes, sweating. A card shows .gitignore without .env, and a red card shows Commit 4f2a, with the keys in it. Two masked burglars grab the keys from the cloud. Three server racks spin up, the board turns red, and a cloud bill climbs to minus 48,200 dollars, in the red. A rocket marked Theirs, on bags of money, launches. The Teammate adds .env to .gitignore, but the commit is still there, and he groans as five copies, each with a key, pop up. The Security Engineer stamps their keys Rotated, and he points, aghast, as the bill climbs again."
     lines:
       - id: security-1
         start: 230.7
         end: 233.96
         text: "Dot-env's not in gitignore— You committed the keys!"
         marks: {"dotenvs": 230.7, "not": 231.4, "in": 231.6, "gitignore": 231.78, "you": 232.52, "committed": 232.74, "the": 233.2, "keys": 233.38}
-        visual: "The Security Engineer glides in from the right: your hero’s face, a black tactical jacket with flapped chest pockets, epaulettes, a gold shield badge, and an earpiece’s coiled wire, black cargo trousers, and boots. The Teammate freezes, sweating. Below the cloud, a card “.gitignore” lists “node_modules/”, “*.log”, and “(no .env)”, and on “committed” a red card “Commit 4f2a” lists “app.py”, “README.md”, and “.env: the keys!”. The Security Engineer points at each."
+        visual: "The Security Engineer glides in from the right: a woman’s face of her own, a black tactical jacket with flapped chest pockets, epaulettes, a gold shield badge, and an earpiece’s coiled wire, black cargo trousers, and boots. The Teammate freezes, sweating. Below the cloud, a card “.gitignore” lists “node_modules/”, “*.log”, and “(no .env)”, and on “committed” a red card “Commit 4f2a” lists “app.py”, “README.md”, and “.env: the keys!”. The Security Engineer points at each."
       - id: security-2
         start: 233.98
         end: 237.08
@@ -658,7 +658,7 @@ sections:
     title: "Outro"
     delivery: spoken
     voice: Teammate
-    narration: "Outro. The music stops. His laptop now shows a red cross and the words Fatal error; he frowns at it, puzzled. He steps to the desk and reaches for the keyboard with a sly smile, and the Security Engineer slips off to the right. Then all six teammates sing together: the Security Engineer glides in from the left, between him and the desk, palm out, the five in the line-up hold out their palms too, and he jumps back with both hands up. On the closing chord the curtain falls, and the moral of the opera is posted on it: Ask your users what they need. Pin your dependency versions. Test behavior, not implementation. Hide decisions likely to change. Never force-push a shared branch. Keep secrets out of Git."
+    narration: "Outro. The music stops. His laptop now shows a red cross and the words Fatal error; he frowns at it, puzzled. He steps to the desk and reaches for the keyboard with a sly smile. Then all six teammates sing together: your hero, the worried teammate from the overture, in a blue hoodie with a gold star, glides in from the left between him and the desk, palm out, the six in the line-up hold out their palms too, and he jumps back with both hands up. On the closing chord the curtain falls, and the moral of the opera is posted on it: Ask your users what they need. Pin your dependency versions. Test behavior, not implementation. Hide decisions likely to change. Never force-push a shared branch. Keep secrets out of Git."
     lines:
       - id: outro-1
         start: 270.86
@@ -671,11 +671,11 @@ sections:
         end: 278.28
         text: "I'll just make one small change."
         marks: {"ill": 275.08, "just": 275.68, "make": 275.96, "one": 276.32, "small": 276.86, "change": 277.52}
-        visual: "He steps to the desk and reaches for the keyboard with both hands, leaning in with a sly smile. At the end of the line-up, the Security Engineer slips off the right wing."
+        visual: "He steps to the desk and reaches for the keyboard with both hands, leaning in with a sly smile."
       - id: outro-3
         voice: All six teammates
         start: 278.34
         end: 284.17
         text: "Step away from the keyboard! Step away from the keyboard!"
         marks: {"step": 278.34, "away": 278.74, "from": 279.2, "the": 279.6, "keyboard": 279.76, "step_2": 280.52, "away_2": 281.94, "from_2": 282.5, "the_2": 282.82, "keyboard_2": 283.0}
-        visual: "All six teammates sing it together, twice. The Security Engineer glides in from the left, between him and the desk, and on “away” thrusts a palm out: stop; the five in the line-up hold out their palms too. He jumps back with both hands up. On the closing chord the curtain falls, and a card on it reads “The moral of the opera”: 1. Ask your users what they need. 2. Pin your dependency versions. 3. Test behavior, not implementation. 4. Hide decisions likely to change. 5. Never force-push a shared branch. 6. Keep secrets out of Git."
+        visual: "All six teammates sing it together, twice. Your hero, the worried teammate from the overture, in a blue hoodie with a gold star, glides in from the left between him and the desk, singing along, and on “away” thrusts a palm out: stop; the six in the line-up hold out their palms too. He jumps back with both hands up. On the closing chord the curtain falls, and a card on it reads “The moral of the opera”: 1. Ask your users what they need. 2. Pin your dependency versions. 3. Test behavior, not implementation. 4. Hide decisions likely to change. 5. Never force-push a shared branch. 6. Keep secrets out of Git."
