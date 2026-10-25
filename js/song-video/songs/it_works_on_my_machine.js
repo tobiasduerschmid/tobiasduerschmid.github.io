@@ -127,7 +127,7 @@
       house.clock(mark('intro-2', 'ship'), 15, 0.9);
       ahead.push(() => {
         const dock = kit.scene(content, mark('intro-2', 'well'), cleared, { exit: 'fade' });
-        M.toyShip(dock, { x: 460, y: 318, at: mark('intro-2', 'well'), rollAt: mark('intro-2', 'well'), label: 'v1.0 by 3:00', from: 'above' });
+        M.toyShip(dock, { x: 460, y: 318, at: mark('intro-2', 'well'), rollAt: mark('intro-2', 'well'), leaveAt: cleared - 1.6, label: 'v1.0 by 3:00', from: 'above' });
       });
       move('tenor', mark('intro-2', 'three'), 'salute', { hold: 1 });
       move('tenor', mark('intro-2', 'three') + 1.1, 'operatic', { hold: 1 });
@@ -190,6 +190,19 @@
         M.cricket(bowing, { x: 610, y: 420, at: mark(v(4), 'time'), chirps: [mark(v(4), 'time') + 0.3, mark(v(4), 'time') + 1.1, mark(v(4), 'time') + 1.9] });
       });
       move('tenor', mark(v(4), 'me'), 'bow', { hold: 0.9 });
+      // No applause: in the stalls, fans think it is not what they need,
+      // until the Product Manager has come on to say what they want.
+      ahead.push(() => {
+        const grumbles = kit.scene(content, mark(v(4), 'thank'), line('pm-1').start + 1.2, { exit: 'fade' });
+        M.thoughts(grumbles, {
+          at: mark(v(4), 'thank') + 0.1, every: 0.35,
+          bubbles: [
+            { x: 340, y: 392, text: 'Not what I need…' },
+            { x: 630, y: 372, text: 'Can I give my ticket to a friend?' },
+            { x: 826, y: 392, text: 'Nobody asked us!' },
+          ],
+        });
+      });
     }
 
     // ----------------------------------------------------------------

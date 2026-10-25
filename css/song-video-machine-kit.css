@@ -416,3 +416,30 @@
 .mk-moral-title { margin-bottom: 6px; color: #ffd36b; font-size: 22px; font-weight: 900; letter-spacing: 0.06em; text-align: center; }
 .mk-moral-list { margin: 0; padding-left: 26px; font-size: 18px; font-weight: 700; line-height: 1.45; }
 .mk-asker-fingers { fill: none; stroke: #04060b; stroke-width: 3.4; stroke-linecap: round; }
+
+/* Thought bubbles from the audience: a cloud with two trailing dots that
+   point down to the thinker in the stalls. Stage colours stay the same in
+   both site themes. */
+.mk-thought { position: absolute; width: 160px; }
+.mk-thought-text {
+  position: relative;
+  padding: 8px 12px;
+  border: 2.4px solid #1b1410;
+  border-radius: 28px;
+  background: #fdfaf2;
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.18);
+  color: #1b1410;
+  font: 800 17px/1.2 var(--font-display);
+  text-align: center;
+}
+.mk-thought-dot {
+  position: absolute;
+  left: 46%;
+  top: calc(100% + 6px);
+  width: 16px;
+  height: 12px;
+  border: 2.4px solid #1b1410;
+  border-radius: 50%;
+  background: #fdfaf2;
+}
+.mk-thought-dot--small { left: 40%; top: calc(100% + 24px); width: 9px; height: 7px; }

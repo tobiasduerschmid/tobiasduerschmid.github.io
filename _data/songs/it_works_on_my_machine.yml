@@ -158,7 +158,7 @@ sections:
         end: 14.43
         text: "I'll save us a whole sprint— We'll ship it by three!"
         marks: {"ill": 8.22, "save": 8.94, "us": 9.3, "a": 9.48, "whole": 9.52, "sprint": 9.7, "well": 11.62, "ship": 12.34, "it": 12.76, "by": 13.26, "three": 13.56}
-        visual: "A wall calendar headed “Sprint” shows 14 days left; on “save” he points at it and its pages tear off one after another until it reads “Ship today!”. On “We’ll”, a toy galleon on wheels, its pennant tagged “v1.0 by 3:00”, is flown in from the rafters on two wires and swings to a stop on the floor; on “ship” the clock spins to three, and on “three” he salutes it, then flings both arms wide."
+        visual: "A wall calendar headed “Sprint” shows 14 days left; on “save” he points at it and its pages tear off one after another until it reads “Ship today!”. On “We’ll”, a toy galleon on wheels, its pennant tagged “v1.0 by 3:00”, is flown in from the rafters on two wires and swings to a stop on the floor; on “ship” the clock spins to three, and on “three” he salutes it, then flings both arms wide. Before verse one, the ship rolls off to the left on its wheels."
   - id: verse-1
     title: "Verse 1: Requirements"
     delivery: sung
@@ -188,7 +188,7 @@ sections:
         end: 30.25
         text: "I'll save them a meeting— They'll thank me in time!"
         marks: {"ill": 25.98, "save": 26.64, "them": 26.86, "a": 27.28, "meeting": 27.56, "theyll": 28.2, "thank": 28.61, "me": 28.92, "in": 29.22, "time": 29.64}
-        visual: "A card pops up above the phone: “Meeting with users: Monday 10:00. What do they need?”. On “meeting” he tears it in two and tosses the halves away over his shoulders. On “thank” a theatre sign lit with bulbs, “APPLAUSE”, glows, and he takes a deep bow; the house is silent, and a green cricket on the floor chirps three times."
+        visual: "A card pops up above the phone: “Meeting with users: Monday 10:00. What do they need?”. On “meeting” he tears it in two and tosses the halves away over his shoulders. On “thank” a theatre sign lit with bulbs, “APPLAUSE”, glows, and he takes a deep bow; the house is silent, and a green cricket on the floor chirps three times. From the stalls rise three thought bubbles: “Not what I need…”, “Can I give my ticket to a friend?”, and “Nobody asked us!”."
   - id: pm
     title: "The Product Manager"
     delivery: sung

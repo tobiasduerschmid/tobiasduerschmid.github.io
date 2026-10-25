@@ -222,11 +222,12 @@
    * to x, or (from: 'above') flown in from the rafters on two wires, like
    * opera scenery, swinging as it lands.
    */
-  function toyShip(parent, { x, y, at, until, rollAt, label, from = 'left' }) {
+  function toyShip(parent, { x, y, at, until, rollAt, leaveAt, label, from = 'left' }) {
     const node = place(el('div', 'mk-ship is-staged', parent), x, y);
     const flown = from === 'above';
+    let wires = null;
     if (flown) {
-      const wires = art(node, 'mk-ship-wires', 0, -620, 170, 720);
+      wires = art(node, 'mk-ship-wires', 0, -620, 170, 720);
       svg('path', { class: 'mk-ship-wire', d: 'M24 0 V720 M146 0 V720' }, wires);
     }
     const g = art(node, 'mk-ship-art', 0, 0, 170, 150);
@@ -267,6 +268,16 @@
         const turn = (d / 9) * 180 / Math.PI;
         for (const w of wheels) w.setAttribute('transform', `rotate(${turn.toFixed(1)})`);
       }
+      // From `leaveAt` it rolls off to the left on its wheels, its wires
+      // (if flown) let go.
+      if (leaveAt !== undefined && t > leaveAt) {
+        // Far enough that its label (which overhangs the hull) is off too.
+        const away = -(x + 420) * progress(t, leaveAt, 1.5) ** 2;
+        node.style.transform = `${node.style.transform} translateX(${away.toFixed(1)}px)`;
+        const turn = (away / 9) * 180 / Math.PI;
+        for (const w of wheels) w.setAttribute('transform', `rotate(${turn.toFixed(1)})`);
+        if (wires) wires.style.opacity = (1 - progress(t, leaveAt, 0.3)).toFixed(3);
+      } else if (wires) wires.style.opacity = '';
       const rock = still ? 0 : 2 * Math.sin(t * 5) * (u < 1 ? 1 : 0.3);
       hull.setAttribute('transform', `rotate(${(flown ? rock / 2 : rock).toFixed(2)} 85 120)`);
     });
@@ -501,6 +512,22 @@
       word.setAttribute('class', `mk-applause-word${lit > 0.5 ? ' mk-applause-word--lit' : ''}`);
     });
     return node;
+  }
+
+  /**
+   * Thought bubbles rising from the audience in the stalls: each { x, y,
+   * text } is a cloud whose trailing dots point down to the thinker, popping
+   * up `every` seconds from `at`.
+   */
+  function thoughts(parent, { at, until, every = 0.5, bubbles }) {
+    return bubbles.map(({ x, y, text }, i) => {
+      // x is the bubble's centre; it is 160 px wide (the stylesheet).
+      const node = place(el('div', 'mk-thought is-staged', parent), x - 80, y);
+      el('div', 'mk-thought-text', node, text);
+      for (const dot of ['mk-thought-dot', 'mk-thought-dot mk-thought-dot--small']) el('div', dot, node);
+      popped(node, at + i * every, until, { rotate: 0 });
+      return node;
+    });
   }
 
   /** A cricket on the stage's edge, chirping (lines fan from it) on `chirps`. */
@@ -1415,7 +1442,7 @@
 
   window.MachineKit = {
     popped, art, inked, cup, latte, spot, card, code, calendar, toyShip, audience, phone, sparkle,
-    desk, scroll, tornCard, applause, cricket, table,
+    desk, scroll, tornCard, applause, thoughts, cricket, table,
     packageBox, shelf, lockfile, marchers, laptop, tally, buildMachine, plug, shippingBox,
     tags, mold, crack, testBuddies, moduleHouse, dataTable, wrapper, client, ripple, gitGraph,
     blanket, folderToCommit, repoCloud, keyRain, burglar, serverRack, bill, rocket, forks, moral,
