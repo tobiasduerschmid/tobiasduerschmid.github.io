@@ -1,4 +1,4 @@
-# Storyboard for "It Works on My Machine", a comic opera about one teammate
+# Storyboard for "My Teammate (It Works on My Machine)", a comic opera about one teammate
 # who keeps "helping", in the CS 35L video playlist (_data/song_playlists.yml).
 # It has no chapter page: its player page (/assets/song-player/it-works-on-my-machine.html)
 # prints the transcript itself.
@@ -42,7 +42,7 @@
 # (251.2 s, after the held "again"), its last "green" (held to 270.6 s), and
 # the sung ending (278.3-284.2 s), followed by the closing chord.
 
-title: "It Works on My Machine: a comic opera about working on a team"   # the player's accessible name
+title: "My Teammate (It Works on My Machine): a comic opera about teamwork"   # the player's accessible name
 credit: Lyrics written for CS 35L; music and vocals generated with Suno.
 student:
   laptop_logo: /assets/icons/works-on-my-machine/seal.svg
