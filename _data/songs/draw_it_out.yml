@@ -158,7 +158,7 @@ sections:
   - id: intro
     title: "Intro"
     delivery: spoken
-    narration: "Audio-described version: before each section, the picture pauses while I describe it. The whole song plays on an architect's blueprint. The intro: a brick wall goes up in a hurry; one brick in the bottom row is laid crooked, and every row above leans a little further. Your hero types at a laptop while a colleague beside them says: just keep coding, we'll fix it later, and sticky notes slap onto the wall: TODO fix later, hack sorry, FIXME, and refactor later. A desk calendar shows week 1 and five laptops are linked peer-to-peer, every pair connected; at week 9 a server drops into the middle, the peer links turn red and fade, and new links run to the server; the rewired network stays up while the next line begins. Then a three-storey building in section rests on one ground-floor wall labelled peer-to-peer. A sticker says every floor rests on it, gold arrows carry every floor's weight down into it, a stamp says load-bearing, and the wall cracks. Last, a pencil drafts the same building as a white-on-blue blueprint under the words: draw it out first, while your hero comes back as the architect, in a white shirt and a camel knit vest, with a pencil and a rolled drawing, sketches along, and ticks it off in the air."
+    narration: "Audio-described version: before each section, the picture pauses while I describe it. The whole song plays on an architect's blueprint. The intro: a brick wall goes up in a hurry; one brick in the bottom row is laid crooked, and every row above leans a little further. Your hero types at a laptop while a colleague beside them says: just keep coding, we'll fix it later, and sticky notes slap onto the wall: TODO fix later, hack sorry, FIXME, and refactor later. A desk calendar shows week 1 and five laptops are linked peer-to-peer, every pair connected; at week 9 a server drops into the middle, the peer links turn red and fade, and new links run to the server; the rewired network stays up while the next line begins. Then a three-storey building in section rests on one ground-floor wall labelled peer-to-peer. A sticker says every floor rests on it, gold arrows carry every floor's weight down into it, a stamp says load-bearing, and the wall cracks. Then your hero steps in as the architect, in a white shirt and a camel knit vest, with a pencil and a rolled drawing, and shakes their head at the cracked building. Last, the architect draws the building again in the air, and a pencil copies each stroke onto the sheet as a white-on-blue blueprint, under the words: draw it out first."
     lines:
       - id: intro-1
         start: 1.18
@@ -183,11 +183,11 @@ sections:
         end: 16.56
         text: "This time, we draw it out first."
         marks: {"this": 13.62, "time": 14.18, "we": 14.5, "draw": 15.66, "it": 15.88, "out": 16.02, "first": 16.14}
-        visual: "A pencil sweeps across the stage and drafts the same building as a white-on-blue blueprint, line by line, under the big words “Draw it out first”. Your hero glides in as the architect, in a white shirt with rolled sleeves, buttoned to the collar, and a camel knit vest, a yellow pencil in one hand and a rolled drawing in the other, sketches along with the pencil, and ticks the plan off in the air after “first”."
+        visual: "Your hero steps in from the right as the architect, in a white shirt with rolled sleeves, buttoned to the collar, and a camel knit vest, a yellow pencil in one hand and a rolled drawing in the other, and shakes their head at the cracked building. Then the architect draws the building in the air, and a pencil copies every stroke onto the sheet as a white-on-blue blueprint, line by line, under the big words “Draw it out first”; the architect nods."
   - id: verse-1
     title: "Verse 1"
     delivery: sung
-    narration: "Verse 1. Four teammates, like the four on the lecture's slides, stand at the edges of the stage. Their thought bubbles show four different buildings: a tower, a mall, a factory, and a museum. A clear house drawn on the whiteboard between them makes all four bubbles show that same house, with green checks; a rough, wobbly outline of a house with no windows or chimney turns them into a shed, a garage, a doghouse, and a warehouse, with puzzled faces. Next, a floor plan drops its furniture, wiring, sizes, and labels until only the pipes are left, glowing, for the question: where do the pipes run? Beside it the architect leans in, then circles the pipes in the air. A flaw on a paper sketch, a door that swings into a wall, is circled, rubbed out with an eraser, and redrawn with a check, while the architect taps the pencil at it and nods; beside it, a shipped library app on a phone has a bug crawling on it, and four worried teammates face a stamp: rework for everyone. Then the four teammates come back around the whiteboard, which now holds a UML class box for House under the letters U M L, the Unified Modeling Language, and every bubble shows that same class box. Last, the plan, the House class diagram, goes to the four teammates and to a coding-agent robot, and a checklist tests what comes back against the plan: three checks."
+    narration: "Verse 1. Four teammates, like the four on the lecture's slides, stand at the edges of the stage. Their thought bubbles show four different buildings: a tower, a mall, a factory, and a museum. A clear house drawn on the whiteboard between them makes all four bubbles show that same house, with green checks; a rough, wobbly outline of a house with no windows or chimney turns them into a shed, a garage, a doghouse, and a warehouse, with puzzled faces. Next, a floor plan drops its furniture, wiring, sizes, and labels until only the pipes are left, glowing, for the question: where do the pipes run? Beside it the architect sweeps the pencil across the plan as the details drop, nods, and circles the pipes in the air. A flaw on a paper sketch, a door that swings into a wall, is circled, rubbed out with an eraser, and redrawn with a check, while the architect taps the pencil at it and nods; beside it, a shipped library app on a phone has a bug crawling on it, and four worried teammates face a stamp: rework for everyone. Then the four teammates come back around the whiteboard, which now holds a UML class box for House under the letters U M L, the Unified Modeling Language, and every bubble shows that same class box. Last, the architect points at the plan, the House class diagram, and hands it on: it goes to the four teammates and to a coding-agent robot, and the architect ticks off a checklist that tests what comes back against the plan: three checks."
     lines:
       - id: verse-1-1
         start: 18.36
@@ -206,7 +206,7 @@ sections:
         end: 36.58
         text: "A model leaves some details out on purpose:"
         marks: {"a": 33.88, "model": 34.48, "leaves": 34.76, "some": 35.04, "details": 35.24, "out": 35.68, "on": 35.98, "purpose": 36.16}
-        visual: "A house’s floor plan on paper, full of detail: furniture, dashed wiring with lights, blue pipes, room labels (Bedroom, Bath, Hall, Living, Kitchen), and sizes (12 m, 8 m). A gold speech bubble beside it asks “Where do the pipes run?”. The furniture, the wiring, the sizes, and the labels fade out in turn, and a sticker says “Left out on purpose”. Left of the plan, the architect leans in, pencil to chin."
+        visual: "A house’s floor plan on paper, full of detail: furniture, dashed wiring with lights, blue pipes, room labels (Bedroom, Bath, Hall, Living, Kitchen), and sizes (12 m, 8 m). A gold speech bubble beside it asks “Where do the pipes run?”. The furniture, the wiring, the sizes, and the labels fade out in turn, and a sticker says “Left out on purpose”. Left of the plan, the architect sweeps the pencil across it as the details drop, and nods on “purpose”."
       - id: verse-1-4
         start: 36.72
         end: 40.22
@@ -236,13 +236,13 @@ sections:
         end: 56.4
         text: "Hand the model to your team, your coding agent too,"
         marks: {"hand": 53.2, "the": 53.74, "model": 53.92, "to": 54.36, "your": 54.52, "team": 54.68, "your_2": 55.08, "coding": 55.14, "agent": 55.5, "too": 55.94}
-        visual: "A sheet titled “The plan” holds the House class diagram. A gold arrow carries it to the four teammates, who smile, and a second arrow to a friendly coding-agent robot, who starts typing on a laptop."
+        visual: "A sheet titled “The plan” holds the House class diagram, and the architect beside it points at it. A gold arrow carries it to the four teammates, who smile, and a second arrow to a friendly coding-agent robot, who starts typing on a laptop; the architect looks at each in turn."
       - id: verse-1-9
         start: 56.4
         end: 61.14
         text: "then test what comes back against the plan you drew."
         marks: {"then": 56.4, "test": 57.04, "what": 57.34, "comes": 57.54, "back": 58.0, "against": 58.58, "the": 59.24, "plan": 59.6, "you": 60.14, "drew": 60.62}
-        visual: "A checklist titled “Tested against the plan” fills in as a cyan arrow brings the robot’s work back: “floors”, “rooms”, and “build()”, each with a green check."
+        visual: "A checklist titled “Tested against the plan” fills in as a cyan arrow brings the robot’s work back: “floors”, “rooms”, and “build()”, each with a green check. The architect ticks them off in the air, then taps the plan."
   - id: chorus-1
     title: "Chorus"
     delivery: sung
@@ -287,32 +287,32 @@ sections:
   - id: verse-2
     title: "Verse 2"
     delivery: sung
-    narration: "Verse 2, the Class Diagram. A class box, Book, appears beside the Python file it describes, book dot py, with private title and copies and public borrow and getTitle. Two teammates picture the same box and tick it off, and a sticker says: into the design doc. Rings and labels then mark the name, the attributes, what it stores, and the operations, what you can ask. The copies field is ringed, the minus signs light up red, private, free to change, and a padlock snaps shut; the plus signs light up green, public, what others need, and Catalog and Checkout point at those operations. Next, abstract class Shape above Rectangle: the hollow triangle between them is ringed, inherit, is-a, and a sticker says a Rectangle is a Shape. Shape's italic name is ringed, abstract; a code card that makes a plain Shape is stamped no plain Shape, while making a Rectangle works: built upon Shape. Last, interface BookStore with getBook and addBook, implemented by SqlStore and MemoryStore, beside a code card, app dot py, whose app function takes any BookStore. The operations are labelled what, operations only; the dashed lines and triangle, implements, the how. SqlStore is ringed in red, the call that passes it changes to MemoryStore, and MemoryStore is ringed in green."
+    narration: "Verse 2, the Class Diagram. A class box, Book, appears beside the Python file it describes, book dot py, with private title and copies and public borrow and getTitle. At the bottom right, the architect points at the box and talks it over with a teammate, who pictures the same box and ticks it off; the architect nods and writes it into the design doc, as a sticker says. Rings and labels then mark the name, the attributes, what it stores, and the operations, what you can ask. The copies field is ringed, the minus signs light up red, private, free to change, and the architect, pencil to chin, then taps towards a padlock as it snaps shut; the plus signs light up green, public, what others need, and Catalog and Checkout point at those operations. Next, abstract class Shape above Rectangle: the hollow triangle between them is ringed, inherit, is-a, and a sticker says a Rectangle is a Shape. Shape's italic name is ringed, abstract; a code card that makes a plain Shape is stamped no plain Shape, while making a Rectangle works: built upon Shape. Last, interface BookStore with getBook and addBook, implemented by SqlStore and MemoryStore, beside a code card, app dot py, whose app function takes any BookStore. The operations are labelled what, operations only; the dashed lines and triangle, implements, the how. SqlStore is ringed in red, the architect rewrites the call that passes it, which changes to MemoryStore, and MemoryStore is ringed in green."
     lines:
       - id: verse-2-1
         start: 84.72
         end: 88.7
         text: "Class Diagram: the code view, to plan and discuss it"
         marks: {"class": 84.72, "diagram": 85.58, "the": 86.34, "code": 86.4, "view": 86.62, "to": 86.86, "plan": 87.26, "and": 87.64, "discuss": 88.08, "it": 88.46}
-        visual: "A UML class box appears: Book, with −title: String, −copies: Integer, +borrow(m: Member), and +getTitle(): String. Beside it, a dark code card, book.py, shows class Book with an __init__ that sets self.__title and self.__copies, and two methods, borrow and get_title; a gold arrow leads from the code to the box. To the right, two teammates think it over, each with a thought bubble."
+        visual: "A UML class box appears: Book, with −title: String, −copies: Integer, +borrow(m: Member), and +getTitle(): String. Beside it, a dark code card, book.py, shows class Book with an __init__ that sets self.__title and self.__copies, and two methods, borrow and get_title; a gold arrow leads from the code to the box. At the bottom right, the architect points at the box, then turns to a teammate beside it, who thinks it over in a thought bubble."
       - id: verse-2-2
         start: 88.7
         end: 92.58
         text: "with your team, then document where the pieces go."
         marks: {"with": 88.7, "your": 89.02, "team": 89.26, "then": 89.8, "document": 90.04, "where": 90.56, "the": 90.98, "pieces": 91.22, "go": 91.88}
-        visual: "Both teammates picture the same class box, smile, and their bubbles get a green tick, and a sticker says “Into the design doc”. The teammates leave; the name compartment is ringed and labelled “name”, then the two attribute rows, “attributes: what it stores”, then the two operation rows, “operations: what you can ask”. The matching lines of the code are marked at the same time."
+        visual: "The teammate pictures the same class box, smiles, and the bubble gets a green tick; the architect nods and writes in the air as a sticker says “Into the design doc”. The teammate leaves; the name compartment is ringed and labelled “name”, then the two attribute rows, “attributes: what it stores”, then the two operation rows, “operations: what you can ask”. The matching lines of the code are marked at the same time."
       - id: verse-2-3
         start: 92.84
         end: 95.34
         text: "Will it change? Make it private, hide it with a minus;"
         marks: {"will": 92.84, "it": 92.92, "change": 93.02, "make": 93.58, "it_2": 93.78, "private": 93.94, "hide": 94.48, "it_3": 94.66, "with": 94.76, "a": 94.88, "minus": 95.02}
-        visual: "The copies attribute is ringed in red and its line in the code is marked. The minus signs light up red with the label “− private: free to change”, and a padlock beside the attributes snaps shut."
+        visual: "The copies attribute is ringed in red and its line in the code is marked. The minus signs light up red with the label “− private: free to change”, and a padlock beside the attributes snaps shut. The architect wonders, pencil to chin, then taps towards the padlock."
       - id: verse-2-4
         start: 95.5
         end: 98.62
         text: "plus is just for what the others need from us."
         marks: {"plus": 95.5, "is": 95.66, "just": 95.92, "for": 96.14, "what": 96.38, "the": 96.64, "others": 96.92, "need": 97.26, "from": 97.7, "us": 98.02}
-        visual: "The plus signs light up green with the label “+ public: what others need”. Two stickers, Catalog and Checkout, appear below, with cyan arrows to the operations."
+        visual: "The plus signs light up green with the label “+ public: what others need”. Two stickers, Catalog and Checkout, appear below, with cyan arrows to the operations, and the architect looks down at them."
       - id: verse-2-5
         start: 98.62
         end: 101.62
@@ -336,7 +336,7 @@ sections:
         end: 110.56
         text: "it says what, but never how, so swap the class right now."
         marks: {"it": 106.9, "says": 107.02, "what": 107.22, "but": 107.58, "never": 107.66, "how": 107.98, "so": 108.56, "swap": 108.64, "the": 108.94, "class": 109.16, "right": 109.68, "now": 110.04}
-        visual: "The two operations are ringed and labelled “what: operations only”, and the call to get_book in the code is marked. The dashed lines and triangle are ringed in violet and labelled “implements: the how”. SqlStore is ringed in red with the code’s last line, which then changes to app(MemoryStore()), and MemoryStore is ringed in green."
+        visual: "The two operations are ringed and labelled “what: operations only”, the call to get_book in the code is marked, and the architect, under the code, points at them. The dashed lines and triangle are ringed in violet and labelled “implements: the how”. SqlStore is ringed in red with the code’s last line; the architect writes in the air as that line changes to app(MemoryStore()), MemoryStore is ringed in green, and the architect nods."
   - id: verse-3
     title: "Verse 3"
     delivery: sung
@@ -428,7 +428,7 @@ sections:
   - id: verse-4
     title: "Verse 4"
     delivery: sung
-    narration: "Verse 4, the Sequence Diagram: one scenario, get book 42, with a time arrow pointing down beside it. Client calls getBook 42 on the server, the server calls find 42 on the database, a row comes back, the book comes back, and then the client sends viewed 42 to analytics. Red bands show the client waiting on the server while the server waits on the database; the architect leans in and circles the database, which is ringed: bottleneck, both callers wait. The solid getBook line with its filled head is ringed: synchronous. Dots travel the calls and the replies, while a red band, caller waits, and an hourglass last until the dashed reply comes back. The open-headed viewed message is ringed, asynchronous; a paper plane flies along it, and the client's bar keeps going. Next, one client and one server, drawn large, while only the fragment around their messages changes: alt, with a found branch and an else branch; opt, around one call, if logged in; and loop, for each book, where a dot repeats the renew call three times. Beside them a code card for each one stacks up, alt is if else, opt is if, and loop is for or while, and each card's code lights up as its fragment is named."
+    narration: "Verse 4, the Sequence Diagram: one scenario, get book 42, with a time arrow pointing down beside it. Client calls getBook 42 on the server, the server calls find 42 on the database, a row comes back, the book comes back, and then the client sends viewed 42 to analytics. Red bands show the client waiting on the server while the server waits on the database; the architect, at the left, leans in and circles the database, which is ringed: bottleneck, both callers wait. The architect thinks, pencil to chin, and points at the solid getBook line with its filled head, ringed: synchronous. Dots travel the calls and the replies, while a red band says caller waits, and the architect checks a wristwatch and waits until the dashed reply comes back, then nods. The open-headed viewed message is ringed, asynchronous: the architect raises the pencil and flings it out, a paper plane flies along the message, and the architect carries straight on, writing in the air, as the client's bar keeps going. Next, one client and one server, drawn large, while only the fragment around their messages changes: alt, with a found branch and an else branch; opt, around one call, if logged in; and loop, for each book, where a dot repeats the renew call three times. Beside them a code card for each one stacks up, alt is if else, opt is if, and loop is for or while, and each card's code lights up as its fragment is named."
     lines:
       - id: verse-4-1
         start: 162.36
@@ -447,25 +447,25 @@ sections:
         end: 173.06
         text: "Need the answer to go on? That's a synchronous call:"
         marks: {"need": 169.48, "the": 169.9, "answer": 170.1, "to": 170.52, "go": 170.72, "on": 170.94, "thats": 171.34, "a": 171.72, "synchronous": 171.88, "call": 172.48}
-        visual: "The architect leaves. The getBook(42) message, a solid line with a filled head, is ringed and labelled “filled head: synchronous”, and a dot travels along it."
+        visual: "The architect thinks it over, pencil to chin, then points at the getBook(42) message, a solid line with a filled head, which is ringed and labelled “filled head: synchronous” as a dot travels along it."
       - id: verse-4-4
         start: 173.06
         end: 176.12
         text: "you wait right there until the reply comes back."
         marks: {"you": 173.06, "wait": 173.56, "right": 173.88, "there": 174.06, "until": 174.36, "the": 174.76, "reply": 175.0, "comes": 175.34, "back": 175.76}
-        visual: "An hourglass turns beside the client, and a red band on its lifeline is labelled “caller waits”. Dots travel find(42), row, and the dashed reply, book, which is labelled “dashed: the reply”; the hourglass stops when the reply arrives."
+        visual: "The architect checks a wristwatch, and a red band on the client’s lifeline is labelled “caller waits”. Dots travel find(42), row, and the dashed reply, book, which is labelled “dashed: the reply”; when the reply arrives, the architect nods."
       - id: verse-4-5
         start: 176.12
         end: 179.28
         text: "No need to wait around? Then send and carry on:"
         marks: {"no": 176.12, "need": 176.54, "to": 176.78, "wait": 177.02, "around": 177.36, "then": 177.78, "send": 178.02, "and": 178.36, "carry": 178.5, "on": 178.88}
-        visual: "The labels clear, the viewed(42) message is ringed in green, and a paper plane flies along it to Analytics."
+        visual: "The labels clear and the viewed(42) message is ringed in green. The architect raises the pencil and flings it out, and a paper plane flies along the message to Analytics."
       - id: verse-4-6
         start: 179.28
         end: 182.2
         text: "that's asynchronous, the sender doesn't block."
         marks: {"thats": 179.28, "asynchronous": 179.72, "the": 180.44, "sender": 181.04, "doesnt": 181.46, "block": 181.84}
-        visual: "The open arrowhead of viewed(42) is labelled “open head: asynchronous”, and the client’s bar below it is labelled “sender keeps going”."
+        visual: "The open arrowhead of viewed(42) is labelled “open head: asynchronous”, and the client’s bar below it is labelled “sender keeps going”, while the architect carries straight on, writing in the air."
       - id: verse-4-7
         start: 182.2
         end: 185.56
@@ -487,7 +487,7 @@ sections:
   - id: verse-5
     title: "Verse 5"
     delivery: sung
-    narration: "Verse 5, the State Machine Diagram. A library copy of The UML Reference Manual, copy 42, stands at the left with a status tag, Available, and a sticker: its response depends on its state. Across the top, its state machine: a black start dot, then Available, Borrowed, and Overdue. Borrow, slash set due date, moves Available to Borrowed; return goes back; day passes, with the guard today greater than due, slash send reminder, moves Borrowed to Overdue; and return, slash charge fee, goes from Overdue back to Available. The states are ringed one by one. A small Sequence Diagram below shows one run, a member borrowing the book, while dots run along every transition of the state machine: its whole life. A marker for copy 42 then walks that life, through Borrowed and Overdue and back to Available. Each state lights up, and a dot leaves each one. Three cards take one label apart: day passes is the trigger, when; today greater than due is the guard, if; slash send reminder is the action, do. Both return labels are ringed as the same trigger, charge fee as the different end, a coin pops up, and a sticker says: the current state decides. Last, a function that turns 100 Celsius into 212 Fahrenheit, twice, with the same answer each time, and a pointless one-state diagram for it, crossed out: no history, skip it."
+    narration: "Verse 5, the State Machine Diagram. A library copy of The UML Reference Manual, copy 42, stands at the left with a status tag, Available, and a sticker: its response depends on its state. Across the top, its state machine: a black start dot, then Available, Borrowed, and Overdue. Borrow, slash set due date, moves Available to Borrowed; return goes back; day passes, with the guard today greater than due, slash send reminder, moves Borrowed to Overdue; and return, slash charge fee, goes from Overdue back to Available. The states are ringed one by one. A small Sequence Diagram below shows one run, a member borrowing the book, while dots run along every transition of the state machine: its whole life. A marker for copy 42 then walks that life, through Borrowed and Overdue and back to Available. Each state lights up as the architect, at the bottom right, runs the pencil along them, and a dot leaves each one. Three cards take one label apart: day passes is the trigger, when; today greater than due is the guard, if; slash send reminder is the action, do. Both return labels are ringed as the same trigger, charge fee as the different end, a coin pops up, and a sticker says: the current state decides, as the architect points at Overdue, whose return charges the fee, and nods. Last, a function that turns 100 Celsius into 212 Fahrenheit, twice, with the same answer each time, and a pointless one-state diagram for it, crossed out: no history, skip it."
     lines:
       - id: verse-5-1
         start: 193.4
@@ -512,7 +512,7 @@ sections:
         end: 210.52
         text: "Can each state be reached? Can each state be left?"
         marks: {"can": 207.12, "each": 207.36, "state": 207.54, "be": 207.8, "reached": 208.12, "can_2": 208.88, "each_2": 208.98, "state_2": 209.38, "be_2": 209.78, "left": 210.08}
-        visual: "The three states light up in turn; then a dot leaves each one by a transition out: Available along borrow, Borrowed along day passes, and Overdue along return / charge fee."
+        visual: "At the bottom right, the architect runs the pencil along the three states as they light up in turn; then a dot leaves each one by a transition out: Available along borrow, Borrowed along day passes, and Overdue along return / charge fee."
       - id: verse-5-5
         start: 210.8
         end: 213.18
@@ -524,7 +524,7 @@ sections:
         end: 216.4
         text: "Same trigger, different end? The state it's in decides."
         marks: {"same": 213.18, "trigger": 213.46, "different": 213.92, "end": 214.28, "the": 214.62, "state": 214.84, "its": 215.22, "in": 215.56, "decides": 215.86}
-        visual: "Both return labels are ringed in teal, with the sticker “Same trigger: return”; “/ charge fee” is ringed in violet, with the sticker “Different end: a fee”, and a coin labelled fee pops up. Borrowed and Overdue are ringed in red, and a gold sticker says “The current state decides”."
+        visual: "Both return labels are ringed in teal, with the sticker “Same trigger: return”; “/ charge fee” is ringed in violet, with the sticker “Different end: a fee”, and a coin labelled fee pops up. Borrowed and Overdue are ringed in red, and a gold sticker says “The current state decides”. The architect points at Overdue, whose return charges the fee, and nods."
       - id: verse-5-7
         start: 216.4
         end: 220.92
@@ -581,26 +581,26 @@ sections:
   - id: chorus-3
     title: "Final chorus"
     delivery: sung
-    narration: "The final chorus: the same four questions and sheets, in motion as before. With all four diagrams in the corners, a card asks what you need to know, gold type says draw it out, and confetti bursts."
+    narration: "The final chorus: the same four questions and sheets, in motion as before. The architect walks in at the right, holds up the rolled drawing, ticks off the Class Diagram, and traces the Sequence Diagram's call before stepping away. With all four diagrams in the corners, a card asks what you need to know, gold type says draw it out, and confetti bursts."
     lines:
       - id: chorus-3-1
         start: 249.18
         end: 252.48
         text: "Draw it out while it's cheap to change!"
         marks: {"draw": 249.18, "it": 249.46, "out": 249.8, "while": 250.04, "its": 250.42, "cheap": 250.7, "to": 251.02, "change": 251.48}
-        visual: "Big type: a gold pencil and “Draw it out”, over the line “while it’s cheap to change”."
+        visual: "Big type: a gold pencil and “Draw it out”, over the line “while it’s cheap to change”. The architect walks in at the right and holds up the rolled drawing."
       - id: chorus-3-2
         start: 253.12
         end: 256.84
         text: "Which classes, how they relate? Class Diagram!"
         marks: {"which": 253.12, "classes": 253.44, "how": 254.42, "they": 254.64, "relate": 254.92, "class": 256.18, "diagram": 256.32}
-        visual: "A question card: “Which classes, how they relate?” On “Class Diagram!” the Class Diagram sheet slams in: Member borrows many Books."
+        visual: "A question card: “Which classes, how they relate?” On “Class Diagram!” the Class Diagram sheet slams in: Member borrows many Books. The architect ticks it off in the air."
       - id: chorus-3-3
         start: 257.16
         end: 260.84
         text: "Who calls whom, in what order? Sequence Diagram!"
         marks: {"who": 257.16, "calls": 257.32, "whom": 257.8, "in": 258.1, "what": 258.32, "order": 258.58, "sequence": 259.28, "diagram": 260.28}
-        visual: "The class sheet moves to the top-left corner. Question: “Who calls whom, in what order?” On “Sequence Diagram!” the Sequence Diagram sheet slams in, and a dot travels the getBook(42) call from client to server."
+        visual: "The class sheet moves to the top-left corner. Question: “Who calls whom, in what order?” On “Sequence Diagram!” the Sequence Diagram sheet slams in, and a dot travels the getBook(42) call from client to server as the architect traces it with the pencil, then steps away."
       - id: chorus-3-4
         start: 260.84
         end: 264.76
@@ -622,14 +622,14 @@ sections:
   - id: quiz-intro
     title: "Pop quiz"
     delivery: sung
-    narration: "The pop quiz: big gold type, pop quiz, over the line: help design it. Each question sits on a numbered quiz card labelled pizza app, and its answer slams in on a green bar when the crowd sings it."
+    narration: "The pop quiz: big gold type, pop quiz, over the line: help design it. The architect steps in at the right, holds up the rolled drawing, and nods. Each question sits on a numbered quiz card labelled pizza app, and its answer slams in on a green bar when the crowd sings it."
     lines:
       - id: quiz-intro-1
         start: 271.7
         end: 274.4
         text: "Pop quiz: a pizza app! Help design it!"
         marks: {"pop": 271.7, "quiz": 272.06, "a": 272.46, "pizza": 272.66, "app": 272.94, "help": 273.26, "design": 273.78, "it": 274.14}
-        visual: "Big gold type “Pop quiz!” with a question mark, over the line “Help design it!”."
+        visual: "Big gold type “Pop quiz!” with a question mark, over the line “Help design it!”. The architect steps in at the right, holds up the rolled drawing on “pizza”, and nods on “design”."
   - id: quiz
     title: "Pop quiz"
     delivery: call
@@ -701,17 +701,17 @@ sections:
   - id: outro
     title: "Outro"
     delivery: sung
-    narration: "The outro: gold type, draw it out, while it's cheap to change, framed by the four diagrams from the chorus, the Class, Sequence, State Machine, and Component Diagrams. In the middle, the architect holds up the rolled drawing, runs the pencil round the four diagrams, and, as the hook is sung a second time, sketches along and bows."
+    narration: "The outro: gold type, draw it out, while it's cheap to change, framed by the four diagrams from the chorus, the Class, Sequence, State Machine, and Component Diagrams. In the middle, the architect holds up the rolled drawing, looks round the four diagrams, and, as the hook is sung a second time, sketches along, bows, and waves goodbye."
     lines:
       - id: outro-1
         start: 321.14
         end: 324.54
         text: "Draw it out while it's cheap to change!"
         marks: {"draw": 321.14, "it": 321.72, "out": 322.1, "while": 322.34, "its": 322.74, "cheap": 323.0, "to": 323.3, "change": 323.76}
-        visual: "Gold type “Draw it out” with a pencil, over the line “while it’s cheap to change”, sits between the four chorus diagrams: the Class Diagram, Sequence Diagram, State Machine Diagram, and Component Diagram. In the middle, the architect holds up the rolled drawing, then runs the pencil round the four diagrams in turn."
+        visual: "Gold type “Draw it out” with a pencil, over the line “while it’s cheap to change”, sits between the four chorus diagrams: the Class Diagram, Sequence Diagram, State Machine Diagram, and Component Diagram. In the middle, the architect holds up the rolled drawing, then looks round the four diagrams in turn."
       - id: outro-2
         start: 328.84
         end: 333.04
         text: "Draw it out while it's cheap to change!"
         marks: {"draw": 328.84, "it": 329.64, "out": 330.02, "while": 330.3, "its": 330.76, "cheap": 331.0, "to": 331.4, "change": 332.14}
-        visual: "The hook again: the stage punches in, the architect sketches along in the air, and on “cheap” takes a bow."
+        visual: "The hook again: the stage punches in, the architect sketches along in the air, takes a bow on “cheap”, and waves goodbye."

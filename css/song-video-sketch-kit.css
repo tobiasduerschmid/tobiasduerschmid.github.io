@@ -1244,7 +1244,7 @@
 }
 
 /* ------------------------------------------------------------------ */
-/* Time, the hourglass, and the paper plane                            */
+/* Time and the paper plane                                            */
 /* ------------------------------------------------------------------ */
 
 .sk-time-shaft {
@@ -1264,20 +1264,6 @@
   text-anchor: middle;
   text-transform: uppercase;
 }
-
-.sk-hourglass path {
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.sk-hourglass-post { fill: none; stroke: #8a5a3b; stroke-width: 4; }
-.sk-hourglass-cap { fill: #c99a63; stroke: #6b4528; stroke-width: 2; }
-.sk-hourglass-grain { fill: none; stroke: rgba(107, 69, 40, 0.6); stroke-width: 1.2; }
-.sk-hourglass-glint { fill: none; stroke: rgba(255, 255, 255, 0.6); stroke-width: 2; }
-.sk-hourglass-glass { fill: rgba(207, 224, 255, 0.25); stroke: #e8f1ff; stroke-width: 3; }
-.sk-hourglass-sand { fill: var(--sk-gold); }
-.sk-hourglass-stream { fill: none; stroke: var(--sk-gold); stroke-width: 2.5; opacity: 0; }
-.sk-hourglass-stream.is-running { opacity: 1; }
 
 .sk-plane path {
   stroke: var(--sk-ink);

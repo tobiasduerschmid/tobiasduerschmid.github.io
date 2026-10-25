@@ -180,6 +180,48 @@ test('the architect thinks a quiz question over, then points the pencil at the s
   expect(atBar, 'the pencil\'s line meets the answer bar').toBeLessThan(bar.y + bar.height);
 });
 
+test('the architect moves smoothly: from frame to frame, its pencil never jumps', async ({ page }) => {
+  // Verse 4 holds its quickest moves: it rings the bottleneck, thinks it
+  // over, points, waits on its watch, then flings the message off.
+  const [from, to] = [mark('verse-4-2', 'whom'), mark('verse-4-6', 'block')];
+  // The pencil's tip at 30 frames a second, in stage pixels from the
+  // architect's own box, so a camera punch that moves the whole stage
+  // doesn't count as the architect's motion.
+  const tips = await page.evaluate(({ start, end }) => {
+    const painted = (node) => {
+      for (let ancestor = node; ancestor; ancestor = ancestor.parentElement) {
+        const style = getComputedStyle(ancestor);
+        if (style.display === 'none' || style.visibility === 'hidden' || Number(style.opacity) === 0) return false;
+      }
+      return true;
+    };
+    const samples = [];
+    for (let frame = Math.ceil(start * 30); frame <= end * 30; frame++) {
+      window.Timeline.seek(frame / 30);
+      const architect = [...document.querySelectorAll('[data-testid="dio-architect"]')].find(painted);
+      if (!architect) continue;
+      const box = architect.getBoundingClientRect();
+      const scale = box.width / architect.offsetWidth;
+      const tip = architect.querySelector('[data-testid="dio-arch-pencil-tip"]').getBoundingClientRect();
+      samples.push({ frame, x: (tip.x + tip.width / 2 - box.x) / scale, y: (tip.y + tip.height / 2 - box.y) / scale });
+    }
+    return samples;
+  }, { start: from, end: to });
+  expect(tips.length, 'the architect stays on stage through verse 4').toBeGreaterThan(0.9 * 30 * (to - from));
+  let path = 0;
+  let largest = { step: 0, frame: tips[0].frame };
+  for (let i = 1; i < tips.length; i++) {
+    if (tips[i].frame !== tips[i - 1].frame + 1) continue;
+    const step = Math.hypot(tips[i].x - tips[i - 1].x, tips[i].y - tips[i - 1].y);
+    path += step;
+    if (step > largest.step) largest = { step, frame: tips[i].frame };
+  }
+  expect(path, 'the pencil moves through these gestures').toBeGreaterThan(300);
+  // Its quickest flick covers a little over half of this in a frame; a pose
+  // that snapped from one place to another would cover several times as much.
+  expect(largest.step, `the pencil's largest step, at ${(largest.frame / 30).toFixed(2)}s`).toBeLessThan(60);
+});
+
 test('with reduced motion the architect holds still between its moves', async ({ page }) => {
   // Two moments of the same pose: the pencil under the chin while thinking.
   const [early, late] = [quiz4.start + 1.6, quiz4.answer_at - 0.6];

@@ -16,6 +16,17 @@
  * answer the crowd sings appears as it is sung, after the quiz pause. Each
  * line's `visual` text in the storyboard describes this file.
  *
+ * The viewer's own hero, as the architect (architect.js), carries the
+ * story. It arrives after "fix it later" has cracked the building and
+ * draws the building again; it decides what the floor plan leaves out,
+ * hands the model on and tests what comes back, talks the Class Diagram
+ * over with a teammate, rewrites the one line an interface lets it swap,
+ * and acts out every line the song sings to "you": it waits on its watch
+ * for a synchronous reply, then sends a message off and carries on. It
+ * joins each chorus, invites you to help design the quiz's pizza app,
+ * thinks the quiz over with you, and waves goodbye. It stands only where
+ * there is room beside the content, and works with what is on screen.
+ *
  * Layout: 960×540 stage; the section badge sits top-left, and nothing
  * essential goes below y = 460, where the player draws captions.
  */
@@ -110,23 +121,31 @@
       kit.sticker(c, 'Every floor rests on it', { x: 52, y: 160, at: wallAt + 0.1, variant: 'gold', iconName: 'stack', rotate: -3 });
       kit.stamp(c, 'Load-bearing', { x: 60, y: 236, at: mark('intro-3', 'load'), rotate: -8, shake: false, from: 1.6 });
 
-      // "This time, we draw it out first."
+      // "This time, we draw it out first." Your hero, now the architect,
+      // steps in while the cracked building still stands and shakes its
+      // head at it. Then it draws the building again in the air, and the
+      // drafting pencil copies every stroke onto the sheet as it goes, so
+      // the plan comes from the architect's own hand.
+      const drawAt = draft + 0.25;
+      const outline = [[350, 156], [480, 106], [610, 156], [610, 376], [350, 376], [468, 300], [492, 368]];
       const d = kit.scene(content, draft - 0.15, start('verse-1') + 0.6, { exit: 'fade' });
-      S.section(d, { x: 330, y: 110, at: draft - 0.15, blueprint: true });
-      S.pencil(d, {
-        route: [[350, 156], [480, 106], [610, 156], [610, 376], [350, 376], [468, 300], [492, 368]],
-        at: draft, duration: 1, until: mark('intro-4', 'first'),
-      });
+      S.section(d, { x: 330, y: 110, at: drawAt - 0.15, blueprint: true });
+      S.pencil(d, { route: outline, at: drawAt, duration: 1, until: mark('intro-4', 'first') });
       kit.kinetic(d, [
         { text: 'Draw', at: mark('intro-4', 'draw'), color: 'gold', iconName: 'pencil' },
         { text: 'it out', at: mark('intro-4', 'out') },
         { text: 'first', at: mark('intro-4', 'first'), color: 'gold' },
       ], { y: 30, size: 54 });
-      // The architect glides in beside the plan, sketches along with the
-      // drafting pencil, and ticks the finished plan off after "first".
-      A.architect(d, {
-        ...ARCHITECT, x: 664, y: 112, scale: 1, flip: true, entrance: 'right', at: draft - 0.15,
-        moves: [[draft, 'sketch', { to: [610, 250], duration: 0.6 }], [mark('intro-4', 'first') + 0.25, 'check', { to: [560, 230] }]],
+      // Its own layer, so the architect stays on stage from one building to the next.
+      const arrivalAt = line('intro-4').start - 0.1;
+      const arrival = kit.scene(content, arrivalAt, start('verse-1') + 0.6, { exit: 'fade' });
+      A.architect(arrival, {
+        ...ARCHITECT, x: 664, y: 112, scale: 1, flip: true, entrance: 'right', at: arrivalAt,
+        moves: [
+          [mark('intro-4', 'this') + 0.15, 'shake', { to: [480, 330], hold: 0 }],
+          [drawAt, 'draw', { route: outline, duration: 1, toward: [480, 250] }],
+          [mark('intro-4', 'first') + 0.2, 'nod'],
+        ],
       });
     }
 
@@ -195,11 +214,17 @@
       // The plumber's question comes first: it decides what the plan keeps.
       S.speech(plan, 'Where do the pipes run?', { x: 676, y: 70, w: 210, at: mark(v(3), 'leaves'), tail: 'left', tone: 'gold' });
       kit.sticker(plan, 'Left out on purpose', { x: 24, y: 150, at: mark(v(3), 'out'), variant: 'white', iconName: 'eye', rotate: -3 });
-      // Under the sticker, the architect leans in as the details drop and
-      // rings the pipes when the question picks them out.
+      // Under the sticker, the architect is the one who decides what the
+      // model keeps: it sweeps the pencil across the plan as the details
+      // drop, nods "on purpose", and rings the pipes when the question
+      // picks them out.
       A.architect(plan, {
         ...ARCHITECT, x: 46, y: 190, scale: 0.84, tag: '', at: line(v(3)).start + 0.1,
-        moves: [[mark(v(3), 'leaves'), 'inspect', { to: [480, 260], hold: 1.8 }], [mark(v(4), 'part'), 'circle', { to: [560, 300], rx: 14, ry: 10 }]],
+        moves: [
+          [mark(v(3), 'leaves') - 0.15, 'trace', { route: [[320, 170], [480, 240], [640, 320]], step: 0.3, hold: 0.2 }],
+          [mark(v(3), 'purpose'), 'nod'],
+          [mark(v(4), 'part'), 'circle', { to: [560, 300], rx: 14, ry: 10 }],
+        ],
       });
 
       // "Is there a flaw on paper? Rub it out, and you're already done."
@@ -272,10 +297,13 @@ class House {
       fx.rise(expansion, mark(v(7), 'unified'));
 
       // "Hand the model to your team and your coding agent too, then test
-      // what comes back against the plan you drew."
+      // what comes back against the plan you drew." The architect stands
+      // beside the plan it drew and hands it on: it points at the plan as
+      // the arrows carry it to the team and to the coding agent, ticks off
+      // the checks as the agent's work comes back, and nods at the plan.
       const hand = kit.scene(content, handAt, end('verse-1'), { exit: 'fade' });
-      M.diagram(hand, {
-        kind: 'class', x: 56, y: 140, w: 230, fit: { w: 202, h: 150 }, scale: 1.25, title: 'The plan', at: handAt,
+      const handPlan = M.diagram(hand, {
+        kind: 'class', x: 176, y: 140, w: 230, fit: { w: 202, h: 150 }, scale: 1.25, title: 'The plan', at: handAt,
         spec: `@startuml
 class House {
   - floors: int
@@ -290,16 +318,27 @@ class House {
           at: mark(v(8), 'team') + i * 0.06, moods: [[mark(v(8), 'team'), 'happy']],
         });
       });
-      kit.flow(hand, { from: [290, 200], to: [600, 120], bend: -40, color: 'gold', at: mark(v(8), 'team') });
+      kit.flow(hand, { from: [410, 200], to: [600, 120], bend: -40, color: 'gold', at: mark(v(8), 'team') });
       S.robot(hand, { x: 746, y: 268, size: 132, at: mark(v(8), 'agent'), typeAt: mark(v(8), 'agent') + 0.3, typeUntil: mark(v(9), 'back') });
-      kit.flow(hand, { from: [292, 236], to: [742, 300], bend: -50, color: 'gold', at: mark(v(8), 'agent') });
+      kit.flow(hand, { from: [412, 236], to: [742, 300], bend: -50, color: 'gold', at: mark(v(8), 'agent') });
       // Short rows, in right after the work comes back, so the card can be read before the chorus.
       S.checklist(hand, {
-        x: 360, y: 286, w: 250, title: 'Tested against the plan', at: mark(v(8), 'too'),
+        x: 430, y: 300, w: 250, title: 'Tested against the plan', at: mark(v(8), 'too'),
         rows: ['floors', 'rooms', 'build()'].map((text, i) => ({ text, at: mark(v(9), 'then') + 0.2 + i * 0.12, ok: true })),
       });
       // The robot's work comes back first, then each row checks it.
-      kit.flow(hand, { from: [744, 360], to: [646, 360], bend: 0, color: 'cyan', at: mark(v(9), 'then') });
+      kit.flow(hand, { from: [744, 360], to: [686, 360], bend: 0, color: 'cyan', at: mark(v(9), 'then') });
+      const planAt = handPlan.stagePoint(handPlan.box('House'), 'center');
+      A.architect(hand, {
+        ...ARCHITECT, x: 22, y: 166, scale: 0.84, tag: '', at: handAt + 0.1,
+        moves: [
+          [mark(v(8), 'model'), 'point', { to: planAt, hold: 0.3 }],
+          [mark(v(8), 'team'), 'look', { to: [700, 110], hold: 0.6 }],
+          [mark(v(8), 'agent'), 'look', { to: [812, 330], hold: 0.8 }],
+          [mark(v(9), 'test'), 'check', { to: [450, 350], size: 18 }],
+          [mark(v(9), 'plan'), 'tap', { to: planAt, times: 2, hold: 0.4 }],
+        ],
+      });
     }
 
     // ----------------------------------------------------------------
@@ -343,19 +382,18 @@ class Book {
 @enduml`,
       });
       kit.flow(a, { from: [392, 190], to: [414, 190], bend: 0, color: 'gold', at: mark(v(1), 'view') });
-      // "to plan and discuss it with your team": two teammates beside the
-      // sheet picture the same class box, gone before its labels need the room.
+      // "to plan and discuss it with your team": the architect plans with
+      // the sheet and talks it over with a teammate, who pictures the same
+      // class box; the teammate is gone before the box's labels need the room.
       const piecesAt = mark(v(2), 'where');
-      [['hoodie', 724, false], ['hijab', 834, true]].forEach(([look, x, flip], i) => {
-        S.teammate(a, {
-          look, x, y: 262, size: 100, flip, seed: i + 13, at: mark(v(1), 'discuss') + i * 0.1, until: piecesAt - 0.15,
-          moods: [[mark(v(1), 'discuss'), 'think'], [mark(v(2), 'team'), 'happy']],
-        });
-        S.thought(a, {
-          x: x - 4, y: 140, w: 108, h: 82, tail: flip ? 'right' : 'left', at: mark(v(1), 'discuss') + 0.2 + i * 0.1, until: piecesAt - 0.15,
-          pictures: [{ at: mark(v(2), 'team'), kind: 'umlClass' }],
-          badges: [{ at: mark(v(2), 'team') + 0.2, kind: 'check' }],
-        });
+      S.teammate(a, {
+        look: 'hijab', x: 704, y: 262, size: 100, flip: false, seed: 14, at: mark(v(1), 'discuss'), until: piecesAt - 0.15,
+        moods: [[mark(v(1), 'discuss'), 'think'], [mark(v(2), 'team'), 'happy']],
+      });
+      S.thought(a, {
+        x: 700, y: 140, w: 108, h: 82, tail: 'left', at: mark(v(1), 'discuss') + 0.2, until: piecesAt - 0.15,
+        pictures: [{ at: mark(v(2), 'team'), kind: 'umlClass' }],
+        badges: [{ at: mark(v(2), 'team') + 0.2, kind: 'check' }],
       });
       kit.sticker(a, 'Into the design doc', { x: 430, y: 340, at: mark(v(2), 'document'), until: mark(v(3), 'change'), variant: 'white', iconName: 'file', rotate: -2 });
 
@@ -392,6 +430,23 @@ class Book {
       [['Catalog', 446], ['Checkout', 596]].forEach(([name, x], i) => {
         kit.sticker(a, name, { x, y: 396, at: mark(v(4), 'plus') + i * 0.1, variant: 'cyan', iconName: 'user', rotate: i ? 3 : -3 });
         kit.flow(a, { from: [x + 50, 392], to: [opsX - 30 + i * 60, opsY + 6], bend: 0, color: 'cyan', at: mark(v(4), 'plus') + 0.3 + i * 0.08 });
+      });
+      // Bottom right, under the labels and beside the teammate, the architect
+      // points at the box it plans with, turns to the teammate to talk it
+      // over, nods once they agree, writes it into the design doc, wonders
+      // "will it change?", taps the padlock that hides it, and looks at the
+      // callers who rely on the plus signs.
+      A.architect(a, {
+        ...ARCHITECT, x: 826, y: 292, scale: 0.56, flip: true, tag: '', at: mark(v(1), 'plan') - 0.35,
+        moves: [
+          [mark(v(1), 'plan'), 'point', { to: book.stagePoint(book.box('Book'), 'center'), hold: 0.3 }],
+          [mark(v(1), 'discuss'), 'look', { to: [754, 312], hold: 0.9 }],
+          [mark(v(2), 'team'), 'nod'],
+          [mark(v(2), 'document'), 'sketch', { to: [520, 355], duration: 0.9 }],
+          [mark(v(3), 'will'), 'think', { hold: 0.6 }],
+          [mark(v(3), 'hide'), 'tap', { to: [lockX - 26, lockY], times: 2, hold: 0.4 }],
+          [mark(v(4), 'others'), 'look', { to: [600, 410], hold: 0.9 }],
+        ],
       });
 
       // "Is a Rectangle a Shape? Then inherit: is-a. An italic name:
@@ -466,6 +521,19 @@ MemoryStore ..|> BookStore
       app.mark(2, mark(v(8), 'swap'), undefined, 'red');
       app.rewrite(2, 'app(MemoryStore())', mark(v(8), 'the'));
       stores.ring('MemoryStore', { at: mark(v(8), 'class'), tone: 'green' });
+      // Under app.py, the architect points at what the interface promises,
+      // rewrites the one line that picks the store as the swap is sung, and
+      // nods: nothing else had to change.
+      // app.py's last line, the one that picks the store.
+      const storeLine = [700, 228];
+      A.architect(c, {
+        ...ARCHITECT, x: 744, y: 236, scale: 0.72, flip: true, tag: '', at: mark(v(8), 'it') - 0.3,
+        moves: [
+          [mark(v(8), 'what'), 'point', { to: stores.stagePoint(promised, 'right'), hold: 0.5 }],
+          [mark(v(8), 'swap'), 'sketch', { to: storeLine, duration: 0.8 }],
+          [mark(v(8), 'now'), 'nod'],
+        ],
+      });
     }
 
     // ----------------------------------------------------------------
@@ -610,13 +678,6 @@ deactivate client
       d.band({ x: serverBox.x + serverBox.w / 2 - 14, y: innerCall.y, w: 28, h: innerReply.y + innerReply.h - innerCall.y }, { at: mark(v(2), 'whom'), until: syncAt, tone: 'red' });
       d.ring('db: Database', { at: mark(v(2), 'bottlenecks'), until: syncAt, tone: 'red' });
       d.callout('db: Database', 'bottleneck: both callers wait', { side: 'below', at: mark(v(2), 'bottlenecks'), until: syncAt + 0.35, tone: 'red', gap: 200 });
-      // Left of the sheet, once the time arrow has gone, the architect leans
-      // in on "whom" and rings the database, where the bottleneck grows.
-      const [dbX, dbY] = d.stagePoint('db: Database', 'center');
-      A.architect(a, {
-        ...ARCHITECT, x: 16, y: 166, scale: 0.84, tag: '', at: whoAt + 0.1, until: syncAt + 0.3,
-        moves: [[mark(v(2), 'whom'), 'inspect', { to: [dbX, dbY + 100], hold: 0.3 }], [mark(v(2), 'bottlenecks'), 'circle', { to: [dbX, dbY] }]],
-      });
 
       // "Need the answer to go on? That's a synchronous call: you wait right
       // there until the reply comes back."
@@ -629,9 +690,6 @@ deactivate client
       d.token(d.routeOf('find(42)'), { at: mark(v(4), 'right'), duration: 0.4, until: mark(v(4), 'until') });
       d.token(d.routeOf('row'), { at: mark(v(4), 'until'), duration: 0.35, until: mark(v(4), 'reply'), tone: 'teal' });
       d.token(reply, { at: mark(v(4), 'reply'), duration: 0.6, until: mark(v(4), 'back') + 0.4, tone: 'teal' });
-      const waitTop = d.stagePoint(callBox, 'left');
-      // Between the time arrow's place and the sheet, beside the waiting caller.
-      S.hourglass(a, { x: 148, y: waitTop[1] - 4, size: 56, at: mark(v(4), 'wait'), doneAt: mark(v(4), 'back'), hideAt: asyncAt });
       const waiting = { x: clientBox.x + clientBox.w / 2 - 12, y: callBox.y, w: 24, h: replyBox.y + replyBox.h - callBox.y };
       d.band(waiting, { at: mark(v(4), 'wait'), until: asyncAt, tone: 'red' });
       d.callout(waiting, 'caller waits', { side: 'right', at: mark(v(4), 'wait'), until: asyncAt, tone: 'red', gap: 8, dy: 14 });
@@ -650,6 +708,28 @@ deactivate client
       // The client's own bar, just below the message it sent: it never stopped.
       const afterSend = { x: clientBox.x + clientBox.w / 2 - 7, y: asyncSpan.y + asyncSpan.h + 2, w: 14, h: 16 };
       d.callout(afterSend, 'sender keeps going', { side: 'right', at: mark(v(6), 'the'), tone: 'green', gap: 8 });
+
+      // Left of the sheet, once the time arrow has gone, the architect acts
+      // out each line the song sings to "you": it leans in on "whom" and
+      // rings the database where the bottleneck grows; needs the answer
+      // (thinking it over), points at the synchronous call, checks its
+      // watch and waits right there until the reply comes back; then sends
+      // the message off with a flick of the pencil and carries straight on
+      // with its own work.
+      const [dbX, dbY] = d.stagePoint('db: Database', 'center');
+      A.architect(a, {
+        ...ARCHITECT, x: 16, y: 166, scale: 0.84, tag: '', at: whoAt + 0.1, until: fragmentsAt - 0.35,
+        moves: [
+          [mark(v(2), 'whom'), 'inspect', { to: [dbX, dbY + 100], hold: 0.5 }],
+          [mark(v(2), 'bottlenecks'), 'circle', { to: [dbX, dbY] }],
+          [mark(v(3), 'answer'), 'think', { hold: 0.9 }],
+          [mark(v(3), 'synchronous'), 'point', { to: d.stagePoint(callBox, 'center'), hold: 0.5 }],
+          [mark(v(4), 'wait'), 'watch', { hold: mark(v(4), 'back') - mark(v(4), 'wait') }],
+          [mark(v(4), 'back') + 0.15, 'nod'],
+          [mark(v(5), 'send'), 'send', { to: asyncPath[0], hold: 3 }],
+          [mark(v(5), 'carry'), 'sketch', { to: [240, 330], duration: 2.4 }],
+        ],
+      });
 
       // "Exactly one path? Use an Alt Fragment. Zero or one time? Use an Opt
       // Fragment. Again while it's true? Use a Loop Fragment." The same
@@ -815,7 +895,19 @@ Overdue --> Available : return / charge fee
       kit.sticker(a, 'Different end: a fee', { x: 300, y: 226, at: mark(v(6), 'different'), variant: 'violet', iconName: 'cash', rotate: 2 });
       d.ring('Borrowed', { at: mark(v(6), 'state'), tone: 'red' });
       d.ring('Overdue', { at: mark(v(6), 'state'), tone: 'red' });
-      kit.sticker(a, 'The current state decides', { x: 600, y: 226, at: mark(v(6), 'state'), variant: 'gold', iconName: 'key', rotate: -2 });
+      // Left of the architect's place, clear of its head.
+      kit.sticker(a, 'The current state decides', { x: 530, y: 226, at: mark(v(6), 'state'), variant: 'gold', iconName: 'key', rotate: -2 });
+      // Bottom right, once the one-run sheet has gone, the architect runs
+      // the pencil along the states as each is asked about, and on "the
+      // state it's in" points at the one copy #42 has come to, then nods.
+      A.architect(a, {
+        ...ARCHITECT, x: 812, y: 240, scale: 0.7, flip: true, tag: '', at: line(v(4)).start - 0.3, until: fnAt - 0.35,
+        moves: [
+          [mark(v(4), 'reached') - 0.15, 'trace', { route: ['Available', 'Borrowed', 'Overdue'].map((state) => d.stagePoint(state, 'center')), step: 0.3, hold: 0.3 }],
+          [mark(v(6), 'state'), 'point', { to: d.stagePoint('Overdue', 'center'), hold: 0.6 }],
+          [mark(v(6), 'decides'), 'nod'],
+        ],
+      });
 
       // "Reacts the same each time? Skip the State Machine Diagram." Holds
       // through the instrumental bars, until verse 6's code view comes in.
@@ -1206,6 +1298,13 @@ r1 --> p1
       const cue = kit.el('div', 'subtitle is-staged', intro, 'Help design it!');
       cue.style.top = '262px';
       fx.rise(cue, mark('quiz-intro-1', 'quiz') + 0.2);
+      // The architect steps in beside the title and holds up the rolled
+      // drawing: here is the pizza app's plan, help draw it. It nods on
+      // "design", gone before the first card needs the room.
+      A.architect(intro, {
+        ...ARCHITECT, x: 716, y: 128, scale: 0.92, flip: true, entrance: 'right', at: start('quiz-intro') + 0.1, until: line('quiz-1').start - 0.35,
+        moves: [[mark('quiz-intro-1', 'pizza'), 'present', { hold: 1.3 }], [mark('quiz-intro-1', 'design'), 'nod']],
+      });
 
       // Each card holds its question and, once the crowd sings it, the
       // answer, until the next card slides in. The player's quiz pause
@@ -1248,18 +1347,19 @@ r1 --> p1
       // The take sings the hook twice; the stage punches in on the second.
       window.Timeline.camera.punch(mark('outro-2', 'draw') + 0.05, 0.03);
       // Framed by the four diagrams, the architect holds up the rolled
-      // drawing on the first "Draw it out", runs the pencil round the four
-      // diagrams between the hooks, sketches along with the second, and
-      // bows on its "cheap".
+      // drawing on the first "Draw it out", looks round the four diagrams
+      // between the hooks, sketches along with the second, bows on its
+      // "cheap", and waves goodbye.
       const thumbnailCentre = ({ corner: [x, y] }) => [x + 97, y + 4];
       const tour = [0, 1, 3, 2].map((i) => thumbnailCentre(ANSWERS[i]));
       A.architect(s, {
         ...ARCHITECT, x: 406, y: 152, scale: 0.92, at: outroAt() + 0.3,
         moves: [
           [mark('outro-1', 'draw'), 'present', { hold: 2.2 }],
-          [mark('outro-1', 'change') + 0.6, 'trace', { route: tour, step: 0.7 }],
+          [mark('outro-1', 'change') + 0.6, 'scan', { route: tour, step: 0.55 }],
           [mark('outro-2', 'draw'), 'sketch', { to: [600, 80], duration: 1.2 }],
           [mark('outro-2', 'cheap'), 'bow'],
+          [mark('outro-2', 'change') + 0.3, 'wave'],
         ],
       });
       ANSWERS.forEach((answer, i) => {
@@ -1279,7 +1379,7 @@ r1 --> p1
     verse4();
     verse5();
     verse6();
-    chorus('chorus-3', { recall: true, finale: true });
+    chorus('chorus-3', { recall: true, finale: true, cameo: 'right' });
     quiz();
     outro();
   };

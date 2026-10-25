@@ -299,7 +299,7 @@ teammates whose thought bubbles show different buildings
 until a clear whiteboard drawing aligns them, a load-bearing wall, a floor
 plan whose layers fade, an eraser, a coding-agent robot, a car whose wheels
 outlive it, a house whose rooms do not, a shelf of software engineering
-classics, an hourglass and a paper plane, library book #42 moving between
+classics, a paper plane, library book #42 moving between
 states, a function machine whose identical calls stay side by side, and a
 ball that snaps into a socket. `drawIn()` strokes a drawing in like a pen.
 `js/song-video/architect.js` (styles in `css/song-video-architect.css`)
@@ -327,21 +327,38 @@ passes behind the forearm. Pointing far off, the wrist bends back so the
 pencil leads along the arm (`tests/song-draw-it-out-architect.spec.js` checks
 that its line meets the quiz answer it points at).
 `ArchitectKit.architect()` places it in a scene and plays named moves on
-sung words, towards stage points: `point`, `tap`, `trace`,
-and `sketch` aim the pencil (two-bone inverse kinematics, touching the point
-when in reach); `check`, `cross`, and `circle` draw a tick, a cross, or a
-ring in the air on the way to it; `inspect` leans in, pencil to chin;
-`sight` holds the pencil out at arm's length; `think` brings the pencil
-to the chin (the upper arm foreshortened as it comes forward); and
-`present`, `aha`, `nod`, and `bow` round it out. `flip` moves the pencil to
-the other hand. The architect stands wherever a scene leaves room beside its
-content: it sketches the plan in the intro, circles the floor plan's pipes
-and taps the flaw on paper in verse 1, thinks over whether a player is part
-of a team and ticks off the safe association in verse 3, circles the
-database where the bottleneck grows in verse 4, points out the ball and the
-socket in verse 6, joins the first two choruses' opening lines, and in the
-outro holds up the drawing, runs the pencil round the four diagrams between
-the two hooks, and bows. The take sings its seven-question pop quiz as call
+sung words, towards stage points: `point`, `tap`, `trace`, and `sketch` aim
+the pencil (two-bone inverse kinematics, touching the point when in reach;
+further off the elbow stays low and the wrist lays the pencil on the line
+to the point); `check`, `cross`, and `circle` draw a tick, a cross, or a ring
+in the air in easy reach on the way to it, along smooth paths; `draw`
+draws a route of stage points small in the air, at the pace the drafting
+pencil draws it on the sheet; `inspect` leans in, pencil to chin; `sight`
+holds the pencil out at arm's length; `think` brings the pencil to the chin
+(the upper arm foreshortened as it comes forward); `look`, `scan`, and
+`shake` move only the eyes and the head; `watch` checks the wristwatch;
+`send` raises the pencil and flings it out at a point; and `present`, `aha`,
+`nod`, `bow`, and `wave` round it out. `flip` moves the pencil to the other
+hand. Its motion follows how people move: a minimum-jerk speed profile for
+every reach, the upper arm leading while the forearm, the hand, and the
+head trail it (`LAG`), the hand catching up as the arm slows
+(`followThrough()`), a lean after a sideways reach that the free arm
+balances (`balance()`), and two steps with a give at the knees when it walks
+in. A move cued while another is under way takes over the joints it uses,
+and a return to rest just before it is skipped, so the arm goes straight on
+to its next pose. The architect carries the story, standing wherever a scene
+leaves room beside its content: it steps in after "fix it later" has cracked
+the building and draws the building again for the pencil to copy; decides
+what the floor plan leaves out, taps the flaw on paper, and hands the plan
+on and ticks off what comes back in verse 1; talks the Class Diagram over
+with a teammate, taps the padlock, and rewrites the one line an interface
+lets it swap in verse 2; thinks over whether a player is part of a team in
+verse 3; acts out verse 4's "you" (it circles the bottleneck, waits on its
+watch for the synchronous reply, then sends the asynchronous message off
+and carries on); runs the pencil along the states in verse 5; points out
+the ball and the socket in verse 6; joins every chorus; invites you to the
+pop quiz; and in the outro holds up the drawing, looks round the four
+diagrams, bows, and waves goodbye. The take sings its seven-question pop quiz as call
 and response, all about one new system, a pizza app, on the quiz cards the
 other songs use: a numbered card with the question and an answer bar that
 slams in when the answer is sung. Every card is narrowed: a question about a

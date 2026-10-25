@@ -12,8 +12,8 @@
  *     left, an eraser that fixes a flaw on paper, and a shipped app whose
  *     bug sends the whole team back to work;
  *   props for the four diagrams: a car whose wheels outlive it, a house whose
- *     rooms do not, a reading list tied to books on a shelf, an hourglass and
- *     a paper plane for waiting and not waiting, a library book that moves
+ *     rooms do not, a reading list tied to books on a shelf, a paper plane
+ *     for a message sent without waiting, a library book that moves
  *     between states, and plugs whose ball snaps into a socket.
  *
  * Strokes draw themselves in like a pen (drawIn) wherever the lyric says to
@@ -1209,30 +1209,6 @@
     return node;
   }
 
-  /**
-   * An hourglass `size` px tall at (x, y) whose sand runs from `at` until
-   * `until` (the wait), when it gets a check.
-   */
-  function hourglass(parent, { x, y, size = 64, at, until, doneAt = until, hideAt }) {
-    const node = art(parent, { x, y, w: size * 0.7, h: size, viewBox: '0 0 70 100', className: 'sk-hourglass' });
-    path(node, 'sk-hourglass-post', 'M9 9 V91 M61 9 V91');
-    path(node, 'sk-hourglass-glass', 'M14 8 C14 36 32 42 32 50 C32 58 14 64 14 92 H56 C56 64 38 58 38 50 C38 42 56 36 56 8 Z');
-    path(node, 'sk-hourglass-glint', 'M19 14 C19 30 26 38 29 44');
-    path(node, 'sk-hourglass-cap', 'M4 2 H66 V9 H4 Z M4 91 H66 V98 H4 Z');
-    path(node, 'sk-hourglass-grain', 'M10 5 H30 M38 6 H58 M12 94 H34 M42 95 H60');
-    const top = path(node, 'sk-hourglass-sand', 'M18 14 H52 C52 34 37 42 35 48 C33 42 18 34 18 14 Z');
-    const bottom = path(node, 'sk-hourglass-sand', 'M18 90 C20 72 30 66 35 64 C40 66 50 72 52 90 Z');
-    const stream = path(node, 'sk-hourglass-stream', 'M35 48 V88');
-    onFrame((t) => {
-      const u = progress(t, at, Math.max(0.1, doneAt - at));
-      top.setAttribute('transform', `translate(35 48) scale(${(1 - u * 0.85).toFixed(3)}) translate(-35 -48)`);
-      bottom.setAttribute('transform', `translate(35 90) scale(${(0.15 + u * 0.85).toFixed(3)}) translate(-35 -90)`);
-      stream.classList.toggle('is-running', u > 0 && u < 1);
-    });
-    show(node, at, hideAt, { from: 0.5 });
-    return node;
-  }
-
   /** A paper plane that flies along `route` (stage points) from `at`. */
   function paperPlane(parent, { route, at, duration = 0.8, until }) {
     const layer = art(parent, { x: 0, y: 0, w: 960, h: 540, viewBox: '0 0 960 540', className: 'sk-tool-layer' });
@@ -1435,7 +1411,7 @@
     teammate, thought, whiteboard,
     speech, sticky, calendar, device, network, brickWall, section, pencil, eraser,
     floorPlan, paperFlaw, bug, robot, padlock, contract, questions, car, roomyHouse, readingList, bookshelf,
-    timeArrow, hourglass, paperPlane, libraryBook, labelParts, coin, functionMachine, plug,
+    timeArrow, paperPlane, libraryBook, labelParts, coin, functionMachine, plug,
     question, checklist,
   };
 })();

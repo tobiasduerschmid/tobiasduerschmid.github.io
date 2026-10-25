@@ -31,15 +31,21 @@
  *
  * `flip` moves the pencil to the picture's left hand and the roll to its
  * right; the figure and its light stay as drawn. Every pose is a pure
- * function of song time. Under reduced motion the architect fades in and
- * out, holds still between moves, and each move snaps to its pose.
+ * function of song time, and moves the way people move: a reach eases in
+ * and out on a minimum-jerk profile; the upper arm leads and the forearm
+ * and the hand trail it, the hand catching up as the arm slows; the body
+ * leans after a reach and the free arm balances it; a pointing arm keeps
+ * its elbow low and lets the pencil carry the line; and strokes in the air
+ * run along smooth paths instead of stopping at every point. Under reduced
+ * motion the architect fades in and out, holds still between moves, and
+ * each move snaps to its pose.
  * Coordinates are CSS pixels on the 960×540 stage.
  * Styles: css/song-video-architect.css.
  */
 (function () {
   'use strict';
 
-  const { fx, onFrame, onDispose, progress, easeInOutCubic } = window.Timeline;
+  const { fx, onFrame, onDispose, progress } = window.Timeline;
   const { el, svg, place } = window.SongKit;
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   let uid = 0;
@@ -106,17 +112,33 @@
   const POINT_TIP = onForearm(TIP_IN_HAND, POINT_HAND);
   const FORE = Math.hypot(POINT_TIP[0] - ELBOW[0], POINT_TIP[1] - ELBOW[1]);
   const FOREARM_REST = degrees(Math.atan2(WRIST[1] - ELBOW[1], WRIST[0] - ELBOW[0]));
-  // How far from the shoulder a gesture in the air is drawn, within reach.
-  const GESTURE_REACH = UPPER + FORE - 10;
+  // The pencil's tip reaches this far from the shoulder. Gestures in the
+  // air are drawn closer in, at COMFORT, where the elbow stays bent.
+  const TIP_REACH = UPPER + FORE;
+  const COMFORT = 0.68 * TIP_REACH;
   const MIRROR = 'translate(160 0) scale(-1 1)';
   // The trousers foreshorten between their waist and their hems when the
   // knees give.
   const WAIST = 150;
   const HEMS = 286;
   const clamp = (value, low, high) => Math.min(high, Math.max(low, value));
+  const smoothstep = (u) => { const v = clamp(u, 0, 1); return v * v * (3 - 2 * v); };
+  const add = ([ax, ay], [bx, by]) => [ax + bx, ay + by];
+  const sub = ([ax, ay], [bx, by]) => [ax - bx, ay - by];
+  const lerp = ([ax, ay], [bx, by], u) => [ax + (bx - ax) * u, ay + (by - ay) * u];
+  /** The SVG direction (degrees) from one point to another. */
+  const angleTo = ([ax, ay], [bx, by]) => degrees(Math.atan2(by - ay, bx - ax));
+  /** A point moved `amount` along the line from the shoulder through it (negative: back towards the shoulder). */
+  function outward(point, amount) {
+    const [vx, vy] = sub(point, SHOULDER);
+    const d = Math.hypot(vx, vy) || 1;
+    return add(point, [vx / d * amount, vy / d * amount]);
+  }
 
   /** How far (degrees, counter-clockwise) a segment hanging at `rest` turns to point along `dir`. */
   const raise = (rest, dir) => ((rest - dir + 540) % 360) - 180;
+  /** An angle as the turn of at most half a circle either way that it amounts to. */
+  const aroundZero = (angle) => ((angle % 360) + 540) % 360 - 180;
 
   /**
    * The [upper, forearm] raise that puts `end` (a point carried by the
@@ -157,13 +179,73 @@
   }
 
   /**
-   * The pencil arm's pose ({ pen, penHand }) for pointing at (x, y): within
-   * reach, the pencil's tip touches it, the wrist bent back by POINT_HAND;
-   * further off, the whole arm points at it, the elbow a little low.
+   * The pencil hand's turn at the wrist that points the pencil along `dir`
+   * (SVG degrees in the arm's own frame: −90 is up), on an arm posed at
+   * [upper, forearm].
    */
-  function aimPencil([x, y]) {
-    if (Math.hypot(x - SHOULDER[0], y - SHOULDER[1]) < UPPER + FORE - 4) return { pen: reach([x, y]), penHand: POINT_HAND };
-    return holdOutPencil(degrees(Math.atan2(y - SHOULDER[1], x - SHOULDER[0])), 12);
+  const handToward = ([, fore], dir) => aroundZero(dir - PENCIL_ANGLE + fore);
+  /** The same for the roll hand: points the roll's long end along `dir`. */
+  const rollToward = ([, fore], dir) => aroundZero(dir - ROLL_ANGLE + fore);
+
+  /** Where the wrist is on an arm posed at [upper, forearm], the upper arm come forward by `lift`. */
+  function wristOf([up, fore], lift = 0) {
+    const f = 1 - LIFT * lift;
+    const elbow = add(SHOULDER, rotate([(ELBOW[0] - SHOULDER[0]) * f, (ELBOW[1] - SHOULDER[1]) * f], -up));
+    return add(elbow, rotate(sub(WRIST, ELBOW), -fore));
+  }
+
+  /**
+   * The pencil hand's turn that lays the pencil's line through `target`, on
+   * an arm posed at `pen`, as far as a wrist turns. The line runs through
+   * the pinch, not the wrist, so it is sighted again from there.
+   */
+  function sightPencil(pen, target) {
+    const wrist = wristOf(pen);
+    let hand = handToward(pen, angleTo(wrist, target));
+    for (let i = 0; i < 2; i++) {
+      const pinch = add(wrist, rotate(PINCH, clamp(hand, ...WRIST_RANGE.pen) - pen[1]));
+      hand = handToward(pen, angleTo(pinch, target));
+    }
+    return clamp(hand, ...WRIST_RANGE.pen);
+  }
+
+  /**
+   * The pencil arm pointing at a point out of reach the way a person points
+   * with a pointer: the upper arm goes only part of the way up from
+   * hanging, so the elbow stays low; the forearm rises towards the point,
+   * a little above it, so the hand leads; and the wrist lays the pencil on
+   * the line to it. Pointing across the body, the arm comes up across the
+   * chest instead, the elbow a little above the line to the point and the
+   * forearm angled down to it, as there is no room to keep it low.
+   */
+  function pointFar(target) {
+    const toward = angleTo(SHOULDER, target);
+    const across = smoothstep((-Math.cos(radians(toward)) - 0.1) / 0.6);
+    // Negative: the upper arm goes past the line, away from hanging.
+    const low = 0.42 - 0.54 * across;
+    const up = raise(UPPER_REST, toward + low * aroundZero(UPPER_REST - toward));
+    const elbow = add(SHOULDER, rotate(sub(ELBOW, SHOULDER), -up));
+    const pen = [up, raise(FOREARM_REST, angleTo(elbow, target) - 6)];
+    return { pen, penHand: sightPencil(pen, target) };
+  }
+
+  /**
+   * The pencil arm's pose ({ pen, penHand }) for a point (figure units):
+   * within reach, the pencil's tip touches it, the wrist bent back by
+   * POINT_HAND; further off, it points there (pointFar). Near the edge of
+   * reach it passes from one to the other, so a moving point never makes
+   * the arm jump.
+   */
+  function aimPencil(target) {
+    const touch = { pen: reach(target), penHand: POINT_HAND };
+    const far = smoothstep((Math.hypot(target[0] - SHOULDER[0], target[1] - SHOULDER[1]) - (TIP_REACH - 24)) / 32);
+    if (far === 0) return touch;
+    const pointing = pointFar(target);
+    if (far === 1) return pointing;
+    return {
+      pen: touch.pen.map((value, i) => value + (pointing.pen[i] - value) * far),
+      penHand: touch.penHand + (pointing.penHand - touch.penHand) * far,
+    };
   }
 
   // ------------------------------------------------------------------
@@ -195,17 +277,6 @@
   const ARMS_AT_REST = { pen: REST.pen, penLift: 0, penHand: REST.penHand };
   const EYES_AT_REST = { look: 0, down: 0, brow: 0, tilt: 0, lean: 0 };
 
-  /** An angle as the turn of at most half a circle either way that it amounts to. */
-  const aroundZero = (angle) => ((angle % 360) + 540) % 360 - 180;
-  /**
-   * The pencil hand's turn at the wrist that points the pencil along `dir`
-   * (SVG degrees in the arm's own frame: −90 is up), on an arm posed at
-   * [upper, forearm].
-   */
-  const handToward = ([, fore], dir) => aroundZero(dir - PENCIL_ANGLE + fore);
-  /** The same for the roll hand: points the roll's long end along `dir`. */
-  const rollToward = ([, fore], dir) => aroundZero(dir - ROLL_ANGLE + fore);
-
   /**
    * The pencil arm's pose that holds the pencil's tip at (x, y), pointing
    * along `dir` (SVG degrees), the upper arm come forward by `lift` (LIFT):
@@ -228,110 +299,279 @@
   const PRESENT_ARM = reach([142, 125], { end: WRIST });
   const PRESENT = { roll: PRESENT_ARM, rollLift: 0, rollHand: rollToward(PRESENT_ARM, -90) };
   const ROLL_AT_REST = { roll: REST.roll, rollLift: 0, rollHand: REST.rollHand };
+  // Checking the watch: the elbow at the side and come forward a little,
+  // the forearm level across the chest, the watch on top for the eyes, and
+  // the roll along the forearm, below the collar.
+  const WATCH_ARM = reach([84, 133], { shorten: 1 - LIFT * 0.5, end: WRIST });
+  const WATCH = { roll: WATCH_ARM, rollLift: 0.5, rollHand: rollToward(WATCH_ARM, 160) };
+  // Drawing back to send something off: the arm raised out at the side, the
+  // forearm up, and the pencil along it, so it swings up clear of the head.
+  const WIND_UP = { pen: [118, 166], penLift: 0, penHand: REST.penHand };
+  // Waving: the elbow out at the shoulder's height and the forearm up.
+  const WAVE = { pen: [98, 156], penLift: 0, penHand: -24 };
 
-  /** Keys that end a gesture: the pencil arm, then the eyes, back at rest. */
-  const settle = (at) => [[at, 0.55, ARMS_AT_REST], [at + 0.1, 0.4, EYES_AT_REST]];
+  // ------------------------------------------------------------------
+  // Timing: how keys move the joints
+  // ------------------------------------------------------------------
+
+  /** Minimum-jerk easing (Flash and Hogan, 1985): the speed profile of a person's reach. */
+  const reachEase = (u) => u * u * u * (10 - u * (15 - 6 * u));
+  /** Eased progress through a span; under reduced motion, a snap at its start. */
+  const eased = (t, start, duration, reduced) => (reduced ? Number(t >= start) : reachEase(progress(t, start, duration)));
+  const mix = (from, to, u) => (Array.isArray(to) ? to.map((value, i) => from[i] + (value - from[i]) * u) : from + (to - from) * u);
+
+  // Joints don't all move at once: the upper arm leads, the forearm
+  // follows, and the hand trails, so a reach unfurls from the shoulder
+  // (overlapping action); the eyes lead the head, and the body comes last.
+  // Seconds after each key's own start.
+  const LAG = {
+    pen: [-0.06, 0], roll: [-0.06, 0], penLift: -0.06, rollLift: -0.06, penHand: 0.04, rollHand: 0.04,
+    look: -0.08, down: -0.08, brow: -0.04, tilt: 0.04, nod: 0.02, lean: 0.07, crouch: 0.04,
+  };
+  /** The furthest any field sets off ahead of its key. */
+  const LEAD = 0.08;
+  /** One frame at the player's 30 frames a second: how far back a motion's speed is read. */
+  const FRAME = 1 / 30;
+
+  /**
+   * The point a fraction u along a Catmull-Rom spline through `points`, at
+   * an even pace (each span takes its share of the length), round to the
+   * first point again when `closed`.
+   */
+  function splineAt(points, u, closed = false) {
+    const n = points.length;
+    if (n < 2) return points[0];
+    const spans = closed ? n : n - 1;
+    const at = (i) => (closed ? points[((i % n) + n) % n] : points[clamp(i, 0, n - 1)]);
+    const lengths = Array.from({ length: spans }, (_, i) => Math.hypot(at(i + 1)[0] - at(i)[0], at(i + 1)[1] - at(i)[1]));
+    let s = clamp(u, 0, 1) * (lengths.reduce((sum, length) => sum + length, 0) || 1);
+    let i = 0;
+    while (i < spans - 1 && s > lengths[i]) {
+      s -= lengths[i];
+      i += 1;
+    }
+    const k = lengths[i] ? clamp(s / lengths[i], 0, 1) : 0;
+    const [p0, p1, p2, p3] = [at(i - 1), at(i), at(i + 1), at(i + 2)];
+    return [0, 1].map((c) => 0.5 * (2 * p1[c] + (p2[c] - p0[c]) * k + (2 * p0[c] - 5 * p1[c] + 4 * p2[c] - p3[c]) * k * k + (3 * p1[c] - p0[c] - 3 * p2[c] + p3[c]) * k * k * k));
+  }
+
+  /**
+   * Keys that end a gesture: the pencil arm, then the eyes and the head,
+   * back at rest. They are marked as a return to rest, which the next move
+   * skips when it follows soon after (architect).
+   */
+  const settle = (at) => [[at, 0.75, ARMS_AT_REST, 'rest'], [at + 0.1, 0.6, EYES_AT_REST, 'rest']];
+  /** How soon after a return to rest a move may follow and skip it. */
+  const SKIP_REST = 0.6;
 
   /**
    * The moves, as keys [delay, duration, fields] from the moment each is
    * cued; `g` (architect) turns stage points into arm poses and glances.
-   * Arms set off a little before the cue, so a hand arrives on the word.
-   * Gestures in the air (tap, check, cross, circle) are drawn within the
-   * pencil's reach on the way to their stage point. Each pencil arm pose
-   * comes with the hand's turn at the wrist that it was aimed with.
+   * A key's fields are targets to ease to, or, for a stroke, a function of
+   * the key's progress (0 … 1) whose pose follows a smooth path with the
+   * pencil's tip. Arms set off a little before the cue, so a hand arrives
+   * on the word. Gestures in the air (tap, check, cross, circle, sketch,
+   * draw) are drawn in easy reach on the way to their stage point, the
+   * elbow bent. Each pencil arm pose comes with the hand's turn at the
+   * wrist that it was aimed with.
    */
   const MOVES = {
+    // Points the pencil at a stage point: within reach its tip touches it;
+    // further off, the elbow stays low and the pencil carries the line.
     point: ({ to, hold = 1.3 }, g) => [
-      [-0.2, 0.5, { ...g.aim(to), penLift: 0 }], [-0.05, 0.35, g.glance(to)], ...settle(hold),
+      [-0.4, 0.7, { ...g.point(to), penLift: 0 }], [-0.4, 0.55, g.attend(to)], ...settle(hold),
     ],
     // Pecks the pencil at a point, "this one".
     tap: ({ to, times = 3, hold = 0.7 }, g) => {
-      const near = g.tip(to), off = g.tip(to, [0, 0], -6);
-      const pecks = Array.from({ length: times * 2 }, (_, i) => [0.25 + i * 0.12, 0.12, i % 2 ? near : off]);
-      return [[-0.2, 0.45, { ...near, penLift: 0 }], [-0.05, 0.35, g.glance(to)], ...pecks, ...settle(0.25 + times * 0.24 + hold)];
+      const on = g.near(to);
+      const off = outward(on, -6);
+      const pecks = 0.22 * times;
+      return [
+        [-0.4, 0.65, { ...g.tipAt(off), penLift: 0 }], [-0.4, 0.5, g.attend(to)],
+        [0.25, pecks, (u) => g.tipAt(lerp(off, on, 0.5 - 0.5 * Math.cos(2 * Math.PI * times * u)))],
+        ...settle(0.25 + pecks + hold),
+      ];
     },
     // Ticks a point off in the air: a short stroke down, a long one up.
     check: ({ to, size = 16, hold = 0.7 }, g) => {
-      const [start, low, end] = [[-0.45, -0.1], [-0.12, 0.34], [0.5, -0.5]].map(([dx, dy]) => g.tip(to, [dx * size, dy * size]));
+      const [start, low, end] = [[-0.45, -0.1], [-0.12, 0.34], [0.5, -0.5]].map(([dx, dy]) => g.near(to, [dx * size, dy * size]));
       return [
-        [-0.25, 0.4, { ...start, penLift: 0 }], [-0.1, 0.35, g.glance(to)],
-        [0.15, 0.12, low], [0.27, 0.2, end], ...settle(0.47 + hold),
+        [-0.4, 0.65, { ...g.tipAt(start), penLift: 0 }], [-0.4, 0.5, g.attend(to)],
+        [0.25, 0.18, g.stroke([start, low])], [0.43, 0.28, g.stroke([low, end])], ...settle(0.71 + hold),
       ];
     },
-    // Crosses a point out in the air: two strokes.
+    // Crosses a point out in the air: two strokes, the pencil lifted between.
     cross: ({ to, size = 16, hold = 0.6 }, g) => {
-      const [a, b, c, d] = [[-0.5, -0.5], [0.5, 0.5], [0.5, -0.5], [-0.5, 0.5]].map(([dx, dy]) => g.tip(to, [dx * size, dy * size]));
+      const [a, b, c, d] = [[-0.5, -0.5], [0.5, 0.5], [0.5, -0.5], [-0.5, 0.5]].map(([dx, dy]) => g.near(to, [dx * size, dy * size]));
       return [
-        [-0.25, 0.4, { ...a, penLift: 0 }], [-0.1, 0.35, g.glance(to)],
-        [0.15, 0.16, b], [0.33, 0.12, c], [0.47, 0.16, d], ...settle(0.63 + hold),
+        [-0.4, 0.65, { ...g.tipAt(a), penLift: 0 }], [-0.4, 0.5, g.attend(to)],
+        [0.25, 0.22, g.stroke([a, b])], [0.47, 0.18, g.stroke([b, outward(lerp(b, c, 0.5), -6), c])], [0.65, 0.22, g.stroke([c, d])],
+        ...settle(0.87 + hold),
       ];
     },
-    // Rings a point in the air once.
+    // Rings a point in the air, in one smooth loop.
     circle: ({ to, rx = 12, ry = 8, hold = 0.5 }, g) => {
-      const ring = Array.from({ length: 9 }, (_, i) => {
+      const ring = Array.from({ length: 8 }, (_, i) => {
         const a = -Math.PI / 2 - i * Math.PI / 4;
-        return g.tip(to, [rx * Math.cos(a), ry * Math.sin(a)]);
+        return g.near(to, [rx * Math.cos(a), ry * Math.sin(a)]);
       });
       return [
-        [-0.25, 0.4, { ...ring[0], penLift: 0 }], [-0.1, 0.35, g.glance(to)],
-        ...ring.slice(1).map((aimed, i) => [0.15 + i * 0.09, 0.09, aimed]), ...settle(0.87 + hold),
+        [-0.4, 0.65, { ...g.tipAt(ring[0]), penLift: 0 }], [-0.4, 0.5, g.attend(to)],
+        [0.25, 0.75, (u) => g.tipAt(splineAt(ring, reachEase(u) % 1, true))], ...settle(1 + hold),
       ];
     },
-    // Follows a route of stage points with the pencil, as a message travels.
+    // Points along a route of stage points, as a message travels; the eyes
+    // go with it.
     trace: ({ route, step = 0.18, hold = 0.5 }, g) => {
-      const pens = route.map((point) => g.aim(point));
+      const span = step * route.length;
+      const along = (u) => splineAt(route, reachEase(u));
       return [
-        [-0.25, 0.4, { ...pens[0], penLift: 0 }], [-0.1, 0.35, g.glance(route[Math.floor(route.length / 2)])],
-        ...pens.slice(1).map((aimed, i) => [0.15 + i * step, step, aimed]), ...settle(0.15 + (pens.length - 1) * step + hold),
+        [-0.45, 0.6, { ...g.point(route[0]), penLift: 0 }], [-0.45, 0.5, g.attend(route[0])],
+        [0.15, span, (u) => ({ ...g.point(along(u)), ...g.attend(along(u)) })], ...settle(0.15 + span + hold),
+      ];
+    },
+    // Looks along a route of stage points, the head turning with the eyes.
+    scan: ({ route, step = 0.5, hold = 0.4 }, g) => {
+      const span = step * route.length;
+      return [
+        [-0.25, 0.5, g.attend(route[0])],
+        [0.1, span, (u) => g.attend(splineAt(route, reachEase(u)))], [0.1 + span + hold, 0.6, EYES_AT_REST, 'rest'],
+      ];
+    },
+    // Glances at a stage point and holds it there.
+    look: ({ to, hold = 1 }, g) => [[-0.2, 0.5, g.attend(to)], [hold, 0.55, EYES_AT_REST, 'rest']],
+    // Shakes the head a little at a stage point: not like that.
+    shake: ({ to, hold = 0.2 }, g) => {
+      const base = g.attend(to);
+      return [
+        [-0.15, 0.4, base],
+        [0.1, 0.8, (u) => {
+          const s = Math.sin(4 * Math.PI * u) * (1 - u);
+          return { ...base, look: base.look + 0.32 * s, tilt: base.tilt + 2.6 * s };
+        }],
+        [0.9 + hold, 0.55, EYES_AT_REST, 'rest'],
+      ];
+    },
+    // Draws `route` (the stage points the drafting pencil draws on the
+    // sheet) small in the air in front of the body, at the same even pace,
+    // so the drawing comes from the architect's hand.
+    draw: ({ route, duration = 1, toward = route[0], hold = 0.5 }, g) => {
+      const strokes = g.miniature(route, toward);
+      return [
+        [-0.6, 0.6, { ...g.tipAt(strokes[0]), penLift: 0 }], [-0.6, 0.5, g.attend(toward)],
+        [0, duration, (u) => g.tipAt(splineAt(strokes, u))], ...settle(duration + hold),
       ];
     },
     // Leans in towards a point to look it over, pencil to chin.
     inspect: ({ to, hold = 1.2 }, g) => {
       const side = g.side(to);
       return [
-        [0, 0.5, { ...g.glance(to), lean: 3.4 * side, tilt: 3 * side, brow: 0.5 }], [-0.1, 0.55, THINK],
+        [0, 0.55, { ...g.glance(to), lean: 3 * side, tilt: 3 * side, brow: 0.5 }], [-0.1, 0.6, THINK],
         ...settle(hold),
       ];
     },
     // Sizes a drawing up: the arm straight out towards it, the pencil at
     // arm's length, the head tipped.
     sight: ({ to, hold = 1.1 }, g) => [
-      [-0.2, 0.5, { ...g.straight(to), penLift: 0 }], [-0.05, 0.35, { ...g.glance(to), tilt: -4 * g.side(to) }],
+      [-0.25, 0.55, { ...g.straight(to), penLift: 0 }], [-0.1, 0.4, { ...g.glance(to), tilt: -4 * g.side(to) }],
       ...settle(hold),
     ],
     think: ({ hold = 1.6 }) => [
-      [-0.25, 0.6, THINK], [0.05, 0.4, { look: -0.45, down: -0.7, brow: 0.6, tilt: -3 }],
-      [hold, 0.55, ARMS_AT_REST], [hold, 0.4, EYES_AT_REST],
+      [-0.25, 0.6, THINK], [0.05, 0.45, { look: -0.45, down: -0.7, brow: 0.6, tilt: -3 }],
+      [hold, 0.7, ARMS_AT_REST, 'rest'], [hold + 0.05, 0.5, EYES_AT_REST, 'rest'],
     ],
-    aha: () => [[0, 0.16, { brow: 1, look: 0, down: 0 }], [0.05, 0.2, { nod: 1, crouch: 0.6 }], [0.3, 0.3, { nod: 0, crouch: 0 }], [0.6, 0.4, { brow: 0 }]],
-    nod: () => [[0, 0.22, { nod: 1 }], [0.26, 0.3, { nod: 0 }]],
-    bow: () => [[0, 0.3, { nod: 1, crouch: 0.9, brow: 0.4 }], [0.55, 0.45, { nod: 0, crouch: 0, brow: 0 }]],
-    present: ({ hold = 1.4 }) => [[-0.2, 0.55, PRESENT], [hold, 0.55, ROLL_AT_REST]],
-    // Sketching in the air towards a stage point: the pencil scribbles at
-    // the wrist for `duration` seconds.
-    sketch: ({ to, duration = 1.2 }, g) => {
-      const aimed = g.aim(to);
-      const strokes = Array.from({ length: Math.max(2, Math.round(duration / 0.2)) }, (_, i) => [0.3 + i * 0.2, 0.18, { penHand: aimed.penHand + (i % 2 ? -10 : 10) }]);
-      return [[-0.2, 0.5, { ...aimed, penLift: 0 }], [0, 0.35, g.glance(to)], ...strokes, ...settle(0.3 + duration)];
+    aha: () => [[0, 0.18, { brow: 1, look: 0, down: 0 }], [0.05, 0.22, { nod: 1, crouch: 0.6 }], [0.32, 0.36, { nod: 0, crouch: 0 }], [0.6, 0.45, { brow: 0 }]],
+    nod: () => [[0, 0.24, { nod: 1 }], [0.28, 0.36, { nod: 0 }]],
+    bow: () => [[0, 0.32, { nod: 1, crouch: 0.9, brow: 0.4 }], [0.6, 0.5, { nod: 0, crouch: 0, brow: 0 }]],
+    present: ({ hold = 1.4 }) => [[-0.2, 0.6, PRESENT], [hold, 0.65, ROLL_AT_REST, 'rest']],
+    // Sketches in the air towards a stage point: the tip writes small loops
+    // there, line after line, for `duration` seconds.
+    sketch: ({ to, duration = 1.2, hold = 0.3 }, g) => {
+      const centre = outward(g.near(to), -8);
+      const loops = Math.max(2, Math.round(duration / 0.34));
+      const write = (u) => g.tipAt(add(centre, [7 * Math.sin(2 * Math.PI * loops * u), 4 * Math.sin(4 * Math.PI * loops * u) + 6 * u - 3]));
+      return [
+        [-0.4, 0.6, { ...write(0), penLift: 0 }], [-0.4, 0.5, g.attend(to)],
+        [0.15, duration, write], ...settle(0.15 + duration + hold),
+      ];
+    },
+    // Checks the wristwatch on the other arm and waits, until `hold`: the
+    // head tips down towards it.
+    watch: ({ hold = 1.8 }, g) => [
+      [-0.35, 0.6, WATCH], [-0.2, 0.5, { look: g.flipped ? 0.2 : -0.2, down: 1, brow: 0.7, nod: 0.7, tilt: g.flipped ? 5 : -5 }],
+      [hold, 0.7, ROLL_AT_REST, 'rest'], [hold + 0.05, 0.55, { ...EYES_AT_REST, nod: 0 }, 'rest'],
+    ],
+    // Sends something off towards a point: the arm draws back with the
+    // body, then sweeps out at it.
+    send: ({ to, hold = 0.5 }, g) => [
+      [-0.7, 0.42, WIND_UP], [-0.7, 0.42, { ...g.glance(to), lean: -1.6 * g.side(to) }],
+      [-0.26, 0.4, { ...g.point(to), penLift: 0 }], [-0.26, 0.42, { lean: 1.2 * g.side(to) }],
+      ...settle(0.08 + hold),
+    ],
+    // Waves the pencil hand, raised beside the head.
+    wave: ({ times = 2, hold = 0.2 }) => {
+      const swing = 0.5 * times;
+      return [
+        [-0.3, 0.55, WAVE],
+        [0.25, swing, (u) => {
+          const s = Math.sin(2 * Math.PI * times * u);
+          return { pen: [WAVE.pen[0] + 3 * s, WAVE.pen[1] + 14 * s] };
+        }],
+        ...settle(0.25 + swing + hold),
+      ];
     },
   };
 
   /**
    * The pose at song time t: each key eases its fields from wherever they
-   * are when it starts to its values, in cue order. Under reduced motion
-   * every key snaps to its pose.
+   * are to its values, in cue order, each joint a little after the one it
+   * hangs from (LAG); a stroke's key sets them along its path, blending in
+   * over its first moment. Under reduced motion every key snaps to its pose.
    */
   function poseAt(keys, t, reduced) {
-    const pose = { ...REST };
+    const pose = { ...REST, pen: [...REST.pen], roll: [...REST.roll] };
     for (const [start, duration, fields] of keys) {
-      if (t < start) break;
-      const u = reduced ? 1 : easeInOutCubic(progress(t, start, duration));
+      if (t < start - LEAD) break;
+      if (typeof fields === 'function') {
+        if (t < start) continue;
+        const target = fields(reduced ? 1 : progress(t, start, duration));
+        const w = eased(t, start, Math.min(0.15, duration), reduced);
+        for (const [name, value] of Object.entries(target)) pose[name] = mix(pose[name], value, w);
+        continue;
+      }
       for (const [name, target] of Object.entries(fields)) {
-        const from = pose[name];
-        pose[name] = Array.isArray(target) ? target.map((value, i) => from[i] + (value - from[i]) * u) : from + (target - from) * u;
+        const lag = LAG[name] ?? 0;
+        pose[name] = Array.isArray(target)
+          ? target.map((value, i) => pose[name][i] + (value - pose[name][i]) * eased(t, start + lag[i], duration, reduced))
+          : mix(pose[name], target, eased(t, start + lag, duration, reduced));
       }
     }
     return pose;
+  }
+
+  /**
+   * Follow-through: each hand trails its forearm's swing a little, turning
+   * at the wrist against it and catching up as it slows, and the head
+   * lags the body's lean.
+   */
+  function followThrough(p, before) {
+    p.penHand += clamp((p.pen[1] - before.pen[1]) / FRAME * 0.02, -7, 7);
+    p.rollHand += clamp((p.roll[1] - before.roll[1]) / FRAME * 0.02, -7, 7);
+    p.tilt -= clamp((p.lean - before.lean) / FRAME * 0.12, -2, 2);
+  }
+
+  /**
+   * Balance: as the pencil arm reaches out to `penSide` (1: the picture's
+   * right), the body leans after it, the head tips the same way, and the
+   * free arm comes out a little, unless it is busy.
+   */
+  function balance(p, penSide) {
+    // Only a reach out to the side shifts the weight, not an arm come forward.
+    const out = clamp((p.pen[0] - REST.pen[0]) / 80, 0, 1) * (1 - p.penLift);
+    p.lean += 1.1 * penSide * out;
+    p.tilt += 1.5 * penSide * out;
+    const free = 1 - clamp((Math.abs(p.roll[0] - REST.roll[0]) + Math.abs(p.roll[1] - REST.roll[1])) / 20, 0, 1);
+    p.roll = [p.roll[0] + 5 * out * free, p.roll[1] + 12 * out * free];
   }
 
   // ------------------------------------------------------------------
@@ -1088,58 +1328,106 @@
       const fx = (sx - x) / scale;
       return [flip ? 160 - fx : fx, (sy - y) / scale];
     };
+    const side = (to) => (to[0] < x + 80 * scale ? -1 : 1);
     const g = {
       // The glance towards a stage point, in picture space, from the eyes.
       glance: (to) => ({
         look: clamp((to[0] - (x + HEAD.x * scale)) / (150 * scale), -1, 1),
         down: clamp((to[1] - (y + EYES * scale)) / (160 * scale), -0.8, 1),
       }),
+      // The glance, the head tipped a little towards the point.
+      attend: (to) => ({ ...g.glance(to), tilt: 2.2 * side(to) }),
+      // The side of the figure a stage point is on: 1 right, −1 left.
+      side,
+      // Whether the pencil is in the picture's left hand.
+      flipped: flip,
       // The pencil arm pointing at a stage point, its tip on it within reach.
-      aim: (to) => aimPencil(toFigure(to)),
-      // The pencil arm with its tip in the air on the way to a stage point,
-      // within reach, moved by `offset` (picture-space figure units) and by
-      // `back` along the way.
-      tip: (to, [dx, dy] = [0, 0], back = 0) => {
-        const [fx, fy] = toFigure(to);
-        const [vx, vy] = [fx - SHOULDER[0], fy - SHOULDER[1]];
-        const d = Math.hypot(vx, vy) || 1;
-        const r = Math.min(d, GESTURE_REACH) + back;
-        return aimPencil([SHOULDER[0] + vx / d * r + (flip ? -dx : dx), SHOULDER[1] + vy / d * r + dy]);
+      point: (to) => aimPencil(toFigure(to)),
+      // The same for a point in the arm's own figure units.
+      tipAt: aimPencil,
+      // The point in easy reach on the way to a stage point, in figure
+      // units, moved by `offset` in picture space.
+      near: (to, [dx, dy] = [0, 0]) => {
+        const target = toFigure(to);
+        const d = Math.hypot(target[0] - SHOULDER[0], target[1] - SHOULDER[1]) || 1;
+        const [nx, ny] = d > COMFORT ? lerp(SHOULDER, target, COMFORT / d) : target;
+        return [nx + (flip ? -dx : dx), ny + dy];
+      },
+      // A stroke through points in figure units: eased, along a smooth path.
+      stroke: (points) => (u) => aimPencil(splineAt(points, reachEase(u))),
+      // A route of stage points drawn `size` figure units across in front
+      // of the body, in easy reach on the way to `toward`, the right way
+      // round in the picture.
+      miniature: (route, toward, size = 40) => {
+        const xs = route.map(([px]) => px);
+        const ys = route.map(([, py]) => py);
+        const [cx, cy] = [(Math.min(...xs) + Math.max(...xs)) / 2, (Math.min(...ys) + Math.max(...ys)) / 2];
+        const k = size / Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys), 1);
+        const [ox, oy] = g.near(toward);
+        return route.map(([px, py]) => [ox + (flip ? -1 : 1) * (px - cx) * k, oy + (py - cy) * k]);
       },
       // The pencil arm held straight out towards a stage point.
       straight: (to) => {
         const [fx, fy] = toFigure(to);
         return holdOutPencil(degrees(Math.atan2(fy - SHOULDER[1], fx - SHOULDER[0])), 3);
       },
-      // The side of the figure a stage point is on: 1 right, −1 left.
-      side: (to) => (to[0] < x + 80 * scale ? -1 : 1),
     };
-    const keys = moves
-      .flatMap(([time, name, options = {}]) => MOVES[name](options, g).map(([delay, duration, fields]) => [time + delay, duration, fields]))
-      .sort((a, b) => a[0] - b[0]);
+    // A move cued while an earlier one is still under way takes over the
+    // joints it uses from its first key on: the earlier move's later keys
+    // keep only the fields the new move leaves alone, so (for one) a glance
+    // that follows a gesture is not pulled back to rest by that gesture's
+    // own ending, and a nod leaves a pointing arm where it is. A return to
+    // rest just before the new move is skipped as well, so the arm goes
+    // straight on to its next pose instead of dropping and rising again.
+    const cued = moves
+      .map(([time, name, options = {}]) => MOVES[name](options, g).map(([delay, duration, fields, kind]) => [time + delay, duration, fields, kind]))
+      .sort((a, b) => Math.min(...a.map(([s]) => s)) - Math.min(...b.map(([s]) => s)));
+    const fieldsOf = (fields) => Object.keys(typeof fields === 'function' ? fields(0) : fields);
+    cued.forEach((later, j) => {
+      const from = Math.min(...later.map(([s]) => s));
+      const taken = new Set(later.flatMap(([, , fields]) => fieldsOf(fields)));
+      for (const earlier of cued.slice(0, j)) {
+        for (let k = earlier.length - 1; k >= 0; k--) {
+          const [s, d, fields, kind] = earlier[k];
+          if (s < from - (kind === 'rest' ? SKIP_REST : 0)) continue;
+          if (typeof fields === 'function') {
+            if (fieldsOf(fields).some((name) => taken.has(name))) earlier.splice(k, 1);
+            continue;
+          }
+          const kept = Object.entries(fields).filter(([name]) => !taken.has(name));
+          if (kept.length) earlier[k] = [s, d, Object.fromEntries(kept), kind];
+          else earlier.splice(k, 1);
+        }
+      }
+    });
+    const keys = cued.flat().sort((a, b) => a[0] - b[0]);
 
-    const side = entrance === 'left' ? -1 : 1;
-    const GLIDE = 0.95;
+    const fromSide = entrance === 'left' ? -1 : 1;
+    const penSide = flip ? -1 : 1;
+    const STEP_IN = 0.7;
     onFrame((t) => {
       const local = t - at;
       const reduced = reducedMotion.matches;
       const p = poseAt(keys, t, reduced);
+      if (!reduced) followThrough(p, poseAt(keys, t - FRAME, false));
+      balance(p, penSide);
       // At ease: a slow, uneven shift of weight and a breath, and a lean
-      // towards what it inspects.
-      const shift = (reduced ? 0 : 0.6 * Math.sin(local * 0.9) + 0.3 * Math.sin(local * 2.1 + 0.7)) + p.lean;
+      // into what it reaches for or inspects.
+      const shift = (reduced ? 0 : 0.5 * Math.sin(local * 0.7) + 0.22 * Math.sin(local * 1.7 + 0.7)) + p.lean;
       const breath = reduced ? 1 : 1 + 0.004 * Math.sin(local * 1.6);
       sway.setAttribute('transform', `rotate(${shift.toFixed(2)} 80 290) translate(80 290) scale(1 ${breath.toFixed(4)}) translate(-80 -290)`);
-      // A glide in leans into the move, sways past upright, and settles with
-      // a give at the knees.
-      let glide = 0, lean = 0, settle = 0;
-      if (!reduced && entrance !== 'rise' && local < GLIDE + 0.5) {
-        const u = progress(t, at, GLIDE);
-        glide = side * 70 * (1 - u) ** 3;
-        lean = -side * 8 * Math.exp(-3.5 * u) * Math.cos(2.6 * Math.PI * u);
-        settle = 0.8 * Math.sin(Math.PI * progress(t, at + 0.5, 0.42));
+      // Stepping in from the side: two steps that lift and settle the body,
+      // a lean into the walk, and a give at the knees on arriving.
+      let travelX = 0, bob = 0, walkLean = 0, give = 0;
+      if (!reduced && entrance !== 'rise' && local < STEP_IN + 0.6) {
+        const u = clamp(local / STEP_IN, 0, 1);
+        travelX = fromSide * 56 * (1 - reachEase(u));
+        bob = -2.2 * Math.sin(2 * Math.PI * u) ** 2;
+        walkLean = -fromSide * 2.4 * Math.sin(Math.PI * u);
+        give = 0.6 * Math.sin(Math.PI * progress(t, at + STEP_IN - 0.1, 0.45));
       }
-      travel.setAttribute('transform', `translate(${(glide / scale).toFixed(2)} 0) rotate(${lean.toFixed(2)} 80 290)`);
-      p.crouch = Math.max(p.crouch, settle);
+      travel.setAttribute('transform', `translate(${(travelX / scale).toFixed(2)} ${bob.toFixed(2)}) rotate(${walkLean.toFixed(2)} 80 290)`);
+      p.crouch = Math.max(p.crouch, give);
       figure.pose(p);
       // The eyes (and a worn head's blinks) move only while on stage.
       const shown = local >= 0 && (until === undefined || t <= until + 0.3);
@@ -1148,7 +1436,7 @@
       if (shown) figure.face(local, p, reduced);
     });
     if (entrance === 'rise') fx.rise(wrap, at, { distance: 24, duration: 0.45 });
-    else fx.fadeIn(wrap, at, 0.22);
+    else fx.fadeIn(wrap, at, 0.3);
     if (until !== undefined) fx.fadeOut(wrap, until, 0.3);
     return wrap;
   }
