@@ -119,8 +119,12 @@ html.dark-mode .song-playlist {
 .song-playlist-item.is-drop-after { box-shadow: 0 5px 0 var(--playlist-focus); }
 .song-playlist-quiz-option { display: flex; align-items: center; gap: 0.5em; min-height: 44px; cursor: pointer; }
 .song-playlist-quiz-option input { flex: 0 0 auto; width: 1em; height: 1em; }
+/* The site-wide .switch (css/portfolio.css) carries its own light and dark colours. */
+.song-playlist-avatar-option { display: flex; align-items: center; gap: 0.75em; min-height: 44px; cursor: pointer; }
+.song-playlist-avatar-option .switch { flex: 0 0 auto; }
 @media print {
-  .song-playlist-drag-handle, .song-playlist-quiz-option, #playlist-quiz-help { display: none !important; }
+  .song-playlist-drag-handle, .song-playlist-quiz-option, #playlist-quiz-help,
+  .song-playlist-avatar-option, #playlist-random-avatar-help { display: none !important; }
   .song-playlist-item.is-dragging { outline: none; }
   .song-playlist-item.is-drop-before, .song-playlist-item.is-drop-after { box-shadow: none; }
 }

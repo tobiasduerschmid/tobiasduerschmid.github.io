@@ -1,6 +1,7 @@
 /* Saved SE Gym character or default Bruin, posed at a laptop on the song's clock,
  * and a human or Prof hero's head (the saved one, else the Gym's default
- * human), neck up, for a song character to wear.
+ * human), neck up, for a song character to wear. With random avatars, each
+ * appearance shows a new random human hero instead.
  * The saved descriptor and shared renderer remain owned by HeroAvatar.
  */
 (function (root) {
@@ -178,8 +179,16 @@
       .map((name) => [name, svg.style.getPropertyValue(name)]);
   }
 
-  /** Modify only the newly mounted copy; the Gym template stays unchanged. */
-  function preparePortrait(svg, host) {
+  /** Gives an element these colour tokens in place of any other hero's. */
+  function paintTokens(element, tokens) {
+    for (const name of Array.from(element.style)) {
+      if (name.startsWith('--hero-')) element.style.removeProperty(name);
+    }
+    for (const [name, value] of tokens) element.style.setProperty(name, value);
+  }
+
+  /** Modify only the newly mounted copy; the Gym template stays unchanged. Returns its pose. */
+  function preparePortrait(svg) {
     stopOwnMotion(svg);
     svg.querySelectorAll('[data-hero-human-arms], [data-hero-slot="mascot-arms"], [data-hero-motion="barbell-lift"], [data-hero-motion="cape-rock"]').forEach((node) => node.remove());
     // Gym stage glows/rings are siblings of the figure. Cropping them to a
@@ -190,9 +199,75 @@
     dropUnselected(svg);
     svg.setAttribute('viewBox', '210 40 380 365');
     svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
-    for (const [name, value] of heroTokens(svg)) host.style.setProperty(name, value);
-    host.dataset.heroKind = svg.getAttribute('data-hero-kind');
     return portraitMotion(svg);
+  }
+
+  // ------------------------------------------------------------------
+  // The hero for each appearance
+  // ------------------------------------------------------------------
+
+  /** Resolves when the page is idle (or within a second), leaving frames to the song. */
+  function idle() {
+    return new Promise((resolve) => {
+      if (root.requestIdleCallback) root.requestIdleCallback(() => resolve(), { timeout: 1000 });
+      else root.setTimeout(resolve, 0);
+    });
+  }
+
+  /**
+   * The looks characters take on stage, a rendered portrait or head each.
+   * Without renew, every appearance takes `first`. With renew (resolving to
+   * another look, or null), each appearance takes a new one. Rendering a
+   * look holds the page for about a tenth of a second, so the looks that
+   * playback will use, and one spare, are rendered ahead, one per idle
+   * period, as characters are dressed. Only an appearance that takes the
+   * last ready look, after seeking back, has another rendered; while none
+   * is ready, an appearance repeats the last.
+   *
+   * dresser(wear, appearance, appearances = 1) dresses one character at
+   * once with wear(look), plans looks for its `appearances` in playback,
+   * and then follows it: call the result every frame with the character's
+   * current appearance, a truthy value that stays the same while it remains
+   * on stage, or a falsy one while it is off (as `appearance` is, for the
+   * character when dressed). As each later appearance begins, it calls
+   * wear(look) with any look the character is not already wearing.
+   */
+  function wardrobe(first, renew) {
+    const ready = [first];
+    let last = null;
+    let wanted = renew ? 1 : 0;
+    let rendering = false;
+    function render() {
+      if (!renew || rendering || !wanted) return;
+      rendering = true;
+      wanted -= 1;
+      idle().then(renew).catch(() => null).then((look) => {
+        rendering = false;
+        if (look) ready.push(look);
+        render();
+      });
+    }
+    function next() {
+      if (ready.length) last = ready.shift();
+      if (renew && !ready.length && !wanted && !rendering) wanted = 1;
+      render();
+      return last;
+    }
+    return {
+      dresser(wear, appearance, appearances = 1) {
+        if (renew) wanted += appearances;
+        let worn = next();
+        let current = appearance || null;
+        wear(worn);
+        return (now) => {
+          if (now && now !== current) {
+            const look = next();
+            if (look !== worn) wear(worn = look);
+          }
+          current = now || null;
+        };
+      },
+    };
   }
 
   // ------------------------------------------------------------------
@@ -385,7 +460,8 @@
    * long hair falls over the collar. The Prof's fixed portrait paints its
    * own neck as part of the face (and has no beard or long hair), so all of
    * it goes under the collar. wear returns the eyes' motion; tokens are the
-   * hero's colour tokens, for the wearer's own skin (hands) to match.
+   * hero's colour tokens, for the wearer's own skin (hands) to match, and
+   * paint(element) gives an element those tokens in place of another hero's.
    */
   function wearableHead(avatar, master) {
     const ownNeck = master.getAttribute('data-hero-kind') === 'tobias';
@@ -402,6 +478,7 @@
     return {
       kind: master.getAttribute('data-hero-kind'),
       tokens: heroTokens(master),
+      paint(element) { paintTokens(element, this.tokens); },
       wear({ underCollar, overCollar }, { x, chin, width }) {
         const scale = width / FACE.width;
         const placed = (layer) => {
@@ -421,8 +498,12 @@
     };
   }
 
-  /** One portrait is reused for every scheduled cameo. Never saves. */
-  function create(parent, stage, { laptopLogo } = {}) {
+  /**
+   * The student at a laptop for every scheduled cameo: one portrait of the
+   * saved hero (or the default Bruin), or with randomAvatar a new random
+   * human hero for each cameo. Never saves.
+   */
+  function create(parent, stage, { laptopLogo, randomAvatar = false } = {}) {
     const node = document.createElement('div');
     node.className = 'song-student-avatar is-laptop-only';
     node.dataset.testid = 'song-student-avatar';
@@ -436,16 +517,21 @@
     const cameos = [];
     let disposed = false;
     let lastTime = 0;
-    let sourceHost;
+    const sources = new Set();
+    let dressPortrait;
     let posePortrait;
     const reducedMotion = root.matchMedia('(prefers-reduced-motion: reduce)');
     const leftArm = node.querySelector('[data-student-motion="arm-left"]');
     const rightArm = node.querySelector('[data-student-motion="arm-right"]');
 
+    const cueAt = (time) => cameos.find(({ from, to }) => time >= from && time < to);
+
     function draw(time) {
       lastTime = time;
-      const cue = cameos.find(({ from, to }) => time >= from && time < to);
+      const cue = cueAt(time);
       node.hidden = !cue;
+      // Each cue fades in from nothing, so each is an appearance of its own.
+      if (dressPortrait) dressPortrait(cue);
       if (!cue) return;
       // A cue may glide to a second placement: move = { at, duration, x, y, scale }.
       let { x, y, scale } = cue;
@@ -478,92 +564,129 @@
         .then((avatar) => avatar ? { avatar, saved: avatar.loadAvatar() } : null)
         .catch(() => null)
       : Promise.resolve(null);
-    const savedAppearance = savedAvatar.then((result) => {
-      if (!result || !result.saved) return null;
-      const { avatar, saved } = result;
-      const { skin, hairColor: hair } = saved.appearance;
+    // The hero's colours for characters who borrow them: the saved hero's,
+    // or with randomAvatar one random hero's for this scene.
+    const heroAppearance = savedAvatar.then((result) => {
+      const hero = result && (randomAvatar ? result.avatar.randomAvatar() : result.saved);
+      if (!hero) return null;
+      const { avatar } = result;
+      const { skin, hairColor: hair } = hero.appearance;
       const tones = avatar.avatarContrastTokens(skin, hair);
       const darkInk = '#1b1640';
       const lightInk = '#ffffff';
       const ink = avatar.contrastRatio(skin, darkInk) >= avatar.contrastRatio(skin, lightInk) ? darkInk : lightInk;
       return {
-        kind: saved.kind, skin, ink, glint: ink === darkInk ? lightInk : darkInk,
+        kind: hero.kind, skin, ink, glint: ink === darkInk ? lightInk : darkInk,
         skinShadow: tones.skinShadow, skinHighlight: tones.skinHighlightSoft,
         skinIsDark: avatar.contrastRatio(skin, lightInk) >= 4.5,
         hair, hairIsDark: avatar.contrastRatio(hair, lightInk) >= 3,
       };
     });
 
+    /**
+     * Renders off screen, where the renderer can measure: mount(host)
+     * resolves to the mounted SVG or null, and dress(svg) prepares it.
+     * Resolves to dress's result, or null.
+     */
+    async function renderOffScreen(mount, dress) {
+      if (disposed) return null;
+      const host = document.createElement('div');
+      host.className = 'song-student-source';
+      host.setAttribute('aria-hidden', 'true');
+      document.body.appendChild(host);
+      sources.add(host);
+      try {
+        const svg = await mount(host);
+        return svg && !disposed ? dress(svg) : null;
+      } finally {
+        sources.delete(host);
+        host.remove();
+      }
+    }
+
+    /** Mounts a fresh copy of the renderer's artwork in host, dressed as state. */
+    async function mountHero(avatar, host, variant, state) {
+      const svg = await avatar.createSvg(variant);
+      if (!svg) return null;
+      host.appendChild(svg);
+      avatar.applyToSvg(svg, state);
+      return svg;
+    }
+
+    function renderPortrait(avatar) {
+      return renderOffScreen(async (host) => {
+        if (randomAvatar) return mountHero(avatar, host, 'song-student', avatar.randomAvatar());
+        const mounted = await avatar.mountSavedAvatar(host, { variant: 'song-student', fallbackKind: 'bruin' });
+        return mounted ? host.querySelector('svg') : null;
+      }, (svg) => ({ svg, pose: preparePortrait(svg) }));
+    }
+
+    function wearPortrait({ svg, pose }) {
+      portrait.replaceChildren(svg);
+      paintTokens(node, heroTokens(svg));
+      node.dataset.heroKind = svg.getAttribute('data-hero-kind');
+      node.classList.remove('is-laptop-only');
+      posePortrait = pose;
+    }
+
     async function hydrate() {
       try {
         const result = await savedAvatar;
         if (disposed || !result) return;
         const { avatar, saved } = result;
-        sourceHost = document.createElement('div');
-        sourceHost.className = 'song-student-source';
-        sourceHost.setAttribute('aria-hidden', 'true');
-        document.body.appendChild(sourceHost);
-        const mounted = await avatar.mountSavedAvatar(sourceHost, { variant: 'song-student', fallbackKind: 'bruin' });
-        const svg = sourceHost.querySelector('svg');
-        if (!mounted || !svg) return;
-        posePortrait = preparePortrait(svg, node);
-        if (disposed) return;
-        portrait.appendChild(svg);
-        node.classList.remove('is-laptop-only');
-        node.dataset.avatarState = saved ? 'saved' : 'default';
+        const first = await renderPortrait(avatar);
+        if (!first) return;
+        const renew = randomAvatar ? () => renderPortrait(avatar) : null;
+        dressPortrait = wardrobe(first, renew).dresser(wearPortrait, cueAt(lastTime), cameos.length);
+        node.dataset.avatarState = randomAvatar ? 'random' : saved ? 'saved' : 'default';
         draw(lastTime);
       } catch (_) {
         // Personalization is optional; the laptop and the song remain usable.
-      } finally {
-        if (sourceHost) sourceHost.remove();
       }
     }
 
-    // A hero's head for song characters to wear, rendered once on the first
-    // request: the saved human or Prof hero's, else (no saved hero, or the
-    // Bruin) the SE Gym's default human hero's, which is never saved. It
-    // resolves to null on export stages, which never load the renderer, or
-    // if the renderer fails.
-    let wearable;
+    // The heads song characters wear, rendered from the first request: the
+    // saved human or Prof hero's, else (no saved hero, or the Bruin) the SE
+    // Gym's default human hero's, which is never saved; with randomAvatar, a
+    // new random human hero's for each appearance. It resolves to a wardrobe
+    // (see wardrobe()), or to null on export stages, which never load the
+    // renderer, or if the renderer fails.
+    let heads;
     function heroHead() {
-      if (!wearable) {
-        wearable = savedAvatar.then(async (result) => {
+      if (!heads) {
+        heads = savedAvatar.then(async (result) => {
           if (disposed || !result) return null;
           const { avatar, saved } = result;
-          const state = saved && ['human', 'tobias'].includes(saved.kind) ? saved : JSON.parse(JSON.stringify(avatar.DEFAULTS));
-          const host = document.createElement('div');
-          host.className = 'song-student-source';
-          host.setAttribute('aria-hidden', 'true');
-          document.body.appendChild(host);
-          try {
-            const master = await avatar.createSvg('song-head');
-            if (!master) return null;
-            host.appendChild(master);
-            avatar.applyToSvg(master, state);
+          const state = () => {
+            if (randomAvatar) return avatar.randomAvatar();
+            return saved && ['human', 'tobias'].includes(saved.kind) ? saved : JSON.parse(JSON.stringify(avatar.DEFAULTS));
+          };
+          const render = () => renderOffScreen((host) => mountHero(avatar, host, 'song-head', state()), (master) => {
             stopOwnMotion(master);
             if (!pruneToHead(master, avatar.ACCESSORY_COMPATIBILITY.bodyBoundAccessories)) return null;
             // Scope-wide renderer updates must never re-dress the pruned head.
             master.removeAttribute('data-gym-hero-svg');
             master.classList.add('song-hero-head');
             return wearableHead(avatar, master);
-          } finally {
-            host.remove();
-          }
+          });
+          const first = await render();
+          return first && wardrobe(first, randomAvatar ? render : null);
         }).catch(() => null);
       }
-      return wearable;
+      return heads;
     }
 
     root.Timeline.onFrame(draw);
     root.Timeline.onDispose(() => {
       disposed = true;
-      if (sourceHost) sourceHost.remove();
+      for (const host of sources) host.remove();
       node.remove();
     });
     // Promise work is deliberately detached from SongScene.build/playback.
     void hydrate();
-    return { appear: (cue) => cameos.push(cue), savedAppearance, heroHead };
+    return { appear: (cue) => cameos.push(cue), heroAppearance, heroHead };
   }
 
-  root.SongStudentAvatar = { create };
-})(window);
+  if (typeof module !== 'undefined' && module.exports) module.exports = { wardrobe };
+  else root.SongStudentAvatar = { create };
+})(typeof window === 'undefined' ? globalThis : window);

@@ -108,6 +108,18 @@ directs its glance and wink, which masks split per eye, and lifts one brow
 the hero's skin tokens, and a hairline bright halo outlines very dark skin or
 hair against the noir stage.
 
+The playlist's Random avatar switch (`song-player-random-avatar`, see
+`docs/song-playlists.md`) makes every appearance a new random human hero
+instead. `create` and `heroHead()` then hand out looks through a wardrobe.
+One render holds the main thread for about a tenth of a second, so the looks
+that playback will use, plus a spare, are rendered one per idle period once
+the scene is built; a hero's entrance never waits on one. Only a return after
+seeking back that takes the spare has another rendered. A character's
+`dresser` changes its look only as it comes on stage (a new cameo cue, or a
+wearer returning after leaving the stage or being culled), so a look never
+changes in view. A wearer's `wear(head)` must therefore replace an earlier
+head's copies and colour tokens (`head.paint`).
+
 Each Agent 00 cameo is choreographed to its lyric with `ih.agent({ moves })`,
 a list of `[songTime, move]` pairs from `MOVES` in `ih-kit.js`: `tie`, `lapel`,
 `shh` (an index finger upright across pursed lips, the other fingers curled

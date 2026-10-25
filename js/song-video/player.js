@@ -52,6 +52,7 @@
   let controls = null;
   let playlistControls = null;
   let quizPause = null;
+  let randomAvatar = window.SongPreferences.randomAvatar();
 
   function listen(target, type, handler) {
     target.addEventListener(type, handler, { signal: events.signal });
@@ -161,11 +162,33 @@
     window.parent.postMessage({ type: 'song-player:resize', height }, window.location.origin);
   }
 
+  function buildScene() {
+    scene = window.SongScene.build(stage, storyboard, player.dataset.song, { randomAvatar });
+  }
+
+  /** Rebuild the picture so every hero on stage follows the choice at once. */
+  function setRandomAvatar(value) {
+    if (value === randomAvatar) return;
+    randomAvatar = value;
+    // A scene still loading its fonts builds with the new choice.
+    if (!scene) return;
+    scene.dispose();
+    scene = null;
+    try {
+      buildScene();
+    } catch (error) {
+      failScene();
+      return;
+    }
+    resumeDrawing();
+  }
+
   function receiveParentMessage(event) {
     if (event.origin !== window.location.origin || event.source !== window.parent) return;
     if (event.data?.type === 'song-player:playlist' && event.data.song === player.dataset.song) {
       playlistControls.update(event.data);
       quizPause.setEnabled(event.data.quizPause);
+      setRandomAvatar(event.data.randomAvatar === true);
       fitScene();
       return;
     }
@@ -307,7 +330,7 @@
       await window.SongScene.loadFonts();
       // The user may choose lyrics-only while fonts are still loading.
       if (events.signal.aborted || lyricsOnly.checked) return;
-      scene = window.SongScene.build(stage, storyboard, player.dataset.song);
+      buildScene();
       updateMotion();
       updateText();
     } catch (error) {

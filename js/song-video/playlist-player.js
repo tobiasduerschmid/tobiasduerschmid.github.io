@@ -6,7 +6,7 @@
     let current = null;
     let ready = false;
     let playWhenReady = false;
-    let options = { previous: false, next: false, quizPause: false };
+    let options = { previous: false, next: false, quizPause: false, randomAvatar: false };
     let focusNavigation = null;
 
     function send(type, data = {}) {

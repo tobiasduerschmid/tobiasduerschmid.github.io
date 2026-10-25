@@ -48,10 +48,10 @@
 
     // The couple: one troupe from the title to the last bow.
     const couple = dancers.troupe(content, { x: 480, y: 452, scale: 1.0, at: 0.6, until: song.duration });
-    if (student && student.savedAppearance) {
+    if (student && student.heroAppearance) {
       let disposed = false;
       window.Timeline.onDispose(() => { disposed = true; });
-      student.savedAppearance.then((appearance) => {
+      student.heroAppearance.then((appearance) => {
         if (!disposed && appearance && appearance.kind === 'human') couple.codeAppearance(appearance);
       });
     }

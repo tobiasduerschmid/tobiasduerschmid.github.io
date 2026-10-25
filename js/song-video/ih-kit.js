@@ -2106,18 +2106,23 @@
       });
     }
     function wear(head) {
+      if (!worn) {
+        // Over a worn head, the collar and bow tie go in front of its neck.
+        wornCollar.append(collar, bowTie);
+        // The forearms cross the worn hair and face: their sides are inked
+        // again in front, open at the elbow so the joint stays seamless.
+        for (const { fore } of [free, martini]) fore.prepend(svg('path', { class: 'ih-agent-limb-ink', d: FOREARM_SIDES.join(' ') }));
+        fig.classList.add('ih-agent-art--hero');
+        drawnNeck.setAttribute('display', 'none');
+        drawnHead.setAttribute('display', 'none');
+      }
       // The hero's face sits where the drawn one was, its chin just above
       // the wing collar's tips; the hands take the hero's skin tones (CSS).
+      // A later appearance may bring another hero in place of this one.
+      for (const layer of [wornUnder, wornOver]) layer.replaceChildren();
       worn = head.wear({ underCollar: wornUnder, overCollar: wornOver }, { x: 80, chin: 84.5, width: 38 });
-      wornCollar.append(collar, bowTie);
       wornOver.append(sparkle);
-      // The forearms cross the worn hair and face: their sides are inked
-      // again in front, open at the elbow so the joint stays seamless.
-      for (const { fore } of [free, martini]) fore.prepend(svg('path', { class: 'ih-agent-limb-ink', d: FOREARM_SIDES.join(' ') }));
-      for (const [name, value] of head.tokens) fig.style.setProperty(name, value);
-      fig.classList.add('ih-agent-art--hero');
-      drawnNeck.setAttribute('display', 'none');
-      drawnHead.setAttribute('display', 'none');
+      head.paint(fig);
       // A very thin bright halo keeps very dark skin or hair readable on the
       // dark stage: around the worn head, and the hands when the skin is.
       // It is artwork, not an SVG filter: Safari redraws filtered artwork
@@ -2135,8 +2140,8 @@
         head.wear({ underCollar: halos[0], overCollar: halos[1] }, { x: 80, chin: 84.5, width: 38 });
         // The silhouette is no face of its own.
         for (const halo of halos) halo.querySelectorAll('[data-testid]').forEach((node) => node.removeAttribute('data-testid'));
-        if (darkSkin) fig.classList.add('ih-agent-art--dark-skin');
       }
+      fig.classList.toggle('ih-agent-art--dark-skin', darkSkin);
     }
     pose(AT_EASE);
     return { glass, pose, face, wear };
@@ -2152,9 +2157,9 @@
    * tuxedo agent at song time t; a martini it leaves out follows the toast.
    * `hero` (a promise of SongStudentAvatar's heroHead) gives the tuxedo
    * agent the viewer's saved human or Prof SE Gym face, or the Gym's
-   * default face; when it resolves to null (no renderer), he keeps his
-   * drawn face. `moves` = [[time, name]] plays MOVES at
-   * those song times. He arrives with `entrance` 'rise', or glides in from
+   * default face, or a new random face each time he comes on stage; when
+   * it resolves to null (no renderer), he keeps his drawn face.
+   * `moves` = [[time, name]] plays MOVES at those song times. He arrives with `entrance` 'rise', or glides in from
    * the 'left' or 'right' and settles. `toastHold` seconds after a toast,
    * he brings the glass down to his chest. With reduced motion he simply
    * fades in and out.
@@ -2174,15 +2179,20 @@
     const sway = svg('g', {}, body);
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
     let glint, figure;
+    // A scene culls him out of the document while he is transparent, so
+    // only its disposal (not being disconnected) means the face is unwanted.
+    // Being culled does take him off stage: a later return is a new
+    // appearance.
+    let onStage = false;
+    let dress = null;
     if (look === 'tuxedo') {
       figure = tuxedoFigure(fig, sway, { flip });
       glint = svg('line', { class: 'ih-agent-glint ih-agent-glint--glass', x1: 0, y1: 0, x2: 2.2, y2: -3.8, opacity: 0 }, figure.glass);
-      // A scene culls him out of the document while he is transparent, so
-      // only its disposal (not being disconnected) means the face is unwanted.
       let disposed = false;
       onDispose(() => { disposed = true; });
-      hero?.then((head) => {
-        if (head && !disposed) figure.wear(head);
+      hero?.then((heads) => {
+        if (!heads || disposed) return;
+        dress = heads.dresser(figure.wear, onStage);
       }).catch(() => {
         // The saved face is optional; the drawn agent remains.
       });
@@ -2299,7 +2309,10 @@
         figure.pose(pose);
       }
       // His eyes (and a worn head's blinks) move only while he is on stage.
-      if (local >= 0 && (until === undefined || t <= until + 0.3)) figure.face(local, pose, reduced);
+      const shown = local >= 0 && (until === undefined || t <= until + 0.3);
+      onStage = shown && wrap.isConnected;
+      dress?.(onStage);
+      if (shown) figure.face(local, pose, reduced);
     });
     if (entrance === 'rise') fx.rise(wrap, at, { distance: 24, duration: 0.45 });
     else fx.fadeIn(wrap, at, 0.22);

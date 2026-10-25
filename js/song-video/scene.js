@@ -106,8 +106,11 @@
       .map(({ node, placeholder }) => ({ node, placeholder }));
   }
 
-  /** Build a song once; seek accepts absolute audio seconds, never frame deltas. */
-  function build(stage, storyboard, songId) {
+  /**
+   * Build a song once; seek accepts absolute audio seconds, never frame deltas.
+   * With `randomAvatar`, the viewer's hero is a new random one at each appearance.
+   */
+  function build(stage, storyboard, songId, { randomAvatar = false } = {}) {
     const { Timeline, SongKit: kit } = root;
     const choreograph = root.SongChoreographies[songId];
     if (!choreograph) throw new Error(`No choreography for "${songId}".`);
@@ -129,7 +132,7 @@
       const hud = kit.el('div', 'layer hud', stage);
       const terminal = kit.terminal(hud);
       const student = root.SongStudentAvatar ? root.SongStudentAvatar.create(content, stage, {
-        laptopLogo: storyboard.student?.laptop_logo,
+        laptopLogo: storyboard.student?.laptop_logo, randomAvatar,
       }) : null;
       choreograph({ song: songData(storyboard), kit, layers: { stage, content, hud }, terminal, student });
       root.SongRoundedSurfaces.prepare(stage);

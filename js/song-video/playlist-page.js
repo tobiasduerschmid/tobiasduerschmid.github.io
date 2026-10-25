@@ -184,6 +184,16 @@
     const saved = preferences.saveQuizPause(quizCheckbox.checked);
     announce(`Quiz pauses ${quizCheckbox.checked ? 'enabled' : 'disabled'}.${saved ? '' : ' Your browser could not save this preference; it applies for this visit.'}`);
   });
+  const avatarSwitch = element('playlist-random-avatar');
+  function restoreAvatarPreference() {
+    avatarSwitch.checked = preferences.randomAvatar();
+    player.configure({ randomAvatar: avatarSwitch.checked });
+  }
+  listen(avatarSwitch, 'change', () => {
+    player.configure({ randomAvatar: avatarSwitch.checked });
+    const saved = preferences.saveRandomAvatar(avatarSwitch.checked);
+    announce(`Random avatar ${avatarSwitch.checked ? 'on' : 'off'}.${saved ? '' : ' Your browser could not save this preference; it applies for this visit.'}`);
+  });
   reorder = window.SongPlaylistReorder.bind({
     list: element('playlist-queue'), signal: events.signal,
     onMove: (id, index) => {
@@ -192,8 +202,10 @@
     },
   });
   restoreQuizPreference();
+  restoreAvatarPreference();
   listen(window, 'storage', (event) => {
     if (event.key === preferences.QUIZ_PAUSE_KEY || event.key === null) restoreQuizPreference();
+    if (event.key === preferences.RANDOM_AVATAR_KEY || event.key === null) restoreAvatarPreference();
     if (event.key !== preferences.PLAYLIST_KEY && event.key !== null) return;
     ids = model.restore(preferences.playlist(), catalogIds, defaults[0]?.songs ?? catalogIds);
     previous = null;

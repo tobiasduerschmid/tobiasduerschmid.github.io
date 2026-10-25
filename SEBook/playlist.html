@@ -25,6 +25,8 @@ song_playlist: true
       <p id="playlist-current-title">Choose a video from your playlist.</p>
       <label class="song-playlist-quiz-option"><input type="checkbox" id="playlist-quiz-pause" aria-describedby="playlist-quiz-help"> Pause before quiz answers</label>
       <p class="song-playlist-hint" id="playlist-quiz-help">Each quiz question pauses before its answer. Think it through, then press Play to reveal the answer and continue. This preference is saved in this browser.</p>
+      <label class="song-playlist-avatar-option"><span class="switch"><input type="checkbox" role="switch" id="playlist-random-avatar" aria-describedby="playlist-random-avatar-help"><span class="slider round" aria-hidden="true"></span></span> Random avatar</label>
+      <p class="song-playlist-hint" id="playlist-random-avatar-help">Each time your SE Gym hero enters a video, a new random hero takes its place and stays while it remains on screen. This applies to every music video on this site, and your saved hero is not changed. This preference is saved in this browser.</p>
       <figure class="song-video" id="playlist-video" data-song-fullscreen-host hidden>
         <iframe class="song-video-frame" id="playlist-frame" title="Playlist video player" allow="autoplay; fullscreen" allowfullscreen width="960" height="900"></iframe>
         <figcaption id="playlist-credit"></figcaption>

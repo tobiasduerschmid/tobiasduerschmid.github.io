@@ -50,10 +50,12 @@ video. Loading another course list stops playback.
   Missing/malformed/unknown-version records use the first default playlist.
   Unknown IDs and duplicates are removed; an explicit empty list stays empty.
   No playback position, history, or media is stored.
+- `song-player-quiz-pause` and `song-player-random-avatar`: JSON booleans set by
+  the playlist's options (below). Anything but `true` means off.
 
 Defaults are not written just by visiting. Save failures leave editing usable
 for the current visit with an honest status message. Storage events update
-other open pages. All three entries are documented and deletable at `/cookies/`.
+other open pages. All four entries are documented and deletable at `/cookies/`.
 
 
 Playlist-only options use validated same-origin messages to the current iframe.
@@ -72,3 +74,15 @@ re-arms it. Manual Play continues past the stopped answer, and every later
 question pauses again. Disabling the checkbox never starts playback by itself.
 With this mode enabled, hiding the tab pauses playback because browsers throttle
 background timers. Returning to the tab requires Play.
+
+The playlist's Random avatar switch stores `song-player-random-avatar` (default
+false). Unlike quiz pauses, it applies to every music video: each player reads it
+when it loads and passes it to `SongScene.build` as `randomAvatar`. The playlist
+also sends it with its other options, and a player whose value changes rebuilds
+its picture at the current time, so the switch takes effect at once without
+starting or seeking playback. With it on, `student-avatar.js` gives each
+appearance of the viewer's hero a new random human hero from
+`HeroAvatar.randomAvatar()`: every student cameo, and every entrance of a
+character that wears the hero's head. A look stays while its character
+remains on stage; seeking keeps it unless the character leaves and returns.
+The saved hero is never read for display or changed.
