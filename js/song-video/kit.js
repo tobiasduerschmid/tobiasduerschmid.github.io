@@ -611,9 +611,11 @@
     return art;
   }
 
-  // The site's confetti (js/confetti.js), posed from song time instead of CSS
-  // keyframes so seeking replays the same burst: bright paper ribbons,
-  // tickets, and dots, tossed up and tumbling in three axes as they fall.
+  // The site's confetti paper (js/confetti.js), posed from song time instead
+  // of CSS keyframes so seeking replays the same burst. Each piece bursts out
+  // against air drag, slows, then flutters down at its own terminal speed,
+  // swaying and flipping as paper does, until it drops past the stage's
+  // lower edge.
   const CONFETTI_COLORS = ['#ff4f6d', '#ffb000', '#ffd84d', '#43d17d', '#14b8a6', '#3b82f6', '#8b5cf6', '#ec4899', '#f97316', '#ffffff'];
   const CONFETTI_SHAPES = ['ribbon', 'ribbon', 'ribbon', 'ribbon', 'ticket', 'ticket', 'circle'];
   const CONFETTI_SIZES = {
@@ -621,19 +623,9 @@
     ticket: (r) => [r(2, 12, 18), r(3, 10, 16)],
     circle: (r) => { const d = r(2, 10, 16); return [d, d]; },
   };
-  // Keyframe stops of the site's toss: [time fraction, scale, opacity].
-  const CONFETTI_STOPS = [[0, 0.64, 0], [0.06, 0.8, 1], [0.15, 1.04, 1], [0.31, 1, 1], [0.54, 0.96, 0.98], [0.76, 0.9, 0.78], [1, 0.78, 0]];
+  const STAGE_HEIGHT = 540;
 
-  function confettiStop(fraction, field) {
-    let i = 1;
-    while (i < CONFETTI_STOPS.length - 1 && CONFETTI_STOPS[i][0] < fraction) i++;
-    const [t0] = CONFETTI_STOPS[i - 1];
-    const [t1] = CONFETTI_STOPS[i];
-    const k = clamp((fraction - t0) / (t1 - t0), 0, 1);
-    return CONFETTI_STOPS[i - 1][field] + (CONFETTI_STOPS[i][field] - CONFETTI_STOPS[i - 1][field]) * k;
-  }
-
-  function confettiPiece(layer, seed, index, { y, stageHeight }) {
+  function confettiPiece(layer, seed, index, y) {
     const random = (channel, low, high) => low + (high - low) * hash01(seed * 4099 + index * 131 + channel * 17);
     const sign = (channel) => (hash01(seed * 4099 + index * 131 + channel * 17) < 0.5 ? -1 : 1);
     const shape = CONFETTI_SHAPES[Math.floor(random(1, 0, CONFETTI_SHAPES.length))];
@@ -643,52 +635,77 @@
     node.style.setProperty('--piece-width', `${width.toFixed(1)}px`);
     node.style.setProperty('--piece-height', `${height.toFixed(1)}px`);
     node.style.setProperty('--piece-color', color);
-    const maxPeak = Math.max(24, Math.min(240, y - 28));
-    const peakTime = random(4, 0.2, 0.34);
-    const peakHeight = random(5, Math.max(24, maxPeak * 0.62), maxPeak);
-    const drop = Math.max(520, stageHeight - y + random(6, 120, 320));
-    // ballisticY(t) = a t² + b t reaches -peakHeight at peakTime and +drop at 1.
-    const a = (peakHeight + drop * peakTime) / (peakTime * (1 - peakTime));
+    // Drag k (per second): the burst's speed decays as e^(-kt) towards the
+    // terminal fall speed, so the burst covers (v0 - terminal) / k.
+    const drag = random(4, 2.6, 3.6);
+    const terminal = random(5, 105, 165) * (shape === 'circle' ? 1.15 : 1);
+    const maxRise = Math.max(24, Math.min(240, y - 28));
+    const rise = random(6, maxRise * 0.55, maxRise);
+    const spread = sign(9) * random(10, 90, 380) + random(11, -70, 70);
     return {
-      node, a, b: drop - a,
-      offsetX: random(7, -84, 84), offsetY: random(8, -46, 46),
-      velocity: sign(9) * random(10, 100, 415) + random(11, -85, 85),
-      wind: random(12, -180, 180), flutter: random(13, 12, 48),
-      phase: random(14, 0, Math.PI * 2), cycles: random(15, 1.1, 2.4),
+      node, drag, terminal,
+      vy: terminal - rise * drag, vx: spread * drag,
+      offsetX: random(7, -70, 70), offsetY: random(8, -40, 40),
+      wind: random(12, -14, 14),
+      // The flutter: a sideways swing that grows as the burst dies down.
+      sway: random(13, 10, 28), swing: random(14, 2.2, 4.4), phase: random(15, 0, Math.PI * 2),
       spin: [
-        [random(16, -80, 80), sign(17) * random(18, 290, 960), random(19, 18, 54), 0],
-        [random(20, -70, 70), sign(21) * random(22, 780, 1860), random(23, 70, 150), 1.7],
-        [random(24, -70, 70), sign(25) * random(26, 700, 1780), random(27, 80, 170), 3.1],
+        [random(16, -80, 80), sign(17) * random(18, 60, 220)],
+        [random(20, -70, 70), sign(21) * random(22, 260, 620)],
+        [random(24, -70, 70), sign(25) * random(26, 200, 540)],
       ],
-      delay: random(28, 0, 0.11), duration: random(29, 3.4, 4.6),
+      delay: random(28, 0, 0.11),
     };
   }
 
-  function poseConfettiPiece(piece, age, x, y) {
-    const fraction = (age - piece.delay) / piece.duration;
-    if (fraction <= 0 || fraction >= 1) {
+  function confettiAt(piece, age, x, y) {
+    const t = Math.max(0, age - piece.delay);
+    const slow = (1 - Math.exp(-piece.drag * t)) / piece.drag;
+    const settled = 1 - Math.exp(-piece.drag * t);
+    const swing = Math.sin(piece.phase + piece.swing * t);
+    return {
+      t,
+      x: x + piece.offsetX + piece.vx * slow + piece.wind * t + swing * piece.sway * settled,
+      y: y + piece.offsetY + piece.terminal * t + (piece.vy - piece.terminal) * slow,
+      // Paper tilts into each swing and flips over as it falls.
+      tilt: Math.cos(piece.phase + piece.swing * t) * 28 * settled,
+    };
+  }
+
+  /** Seconds until the piece has dropped below the stage. */
+  function confettiLife(piece, x, y) {
+    let age = piece.delay + 0.5;
+    while (confettiAt(piece, age, x, y).y < STAGE_HEIGHT + 40 && age < 20) age += 0.1;
+    return age;
+  }
+
+  function poseConfettiPiece(piece, age, x, y, life) {
+    if (age <= piece.delay || age >= life) {
       piece.node.style.opacity = '0';
       return;
     }
-    const wave = Math.sin(piece.phase + fraction * piece.cycles * Math.PI * 2);
-    const px = x + piece.offsetX + piece.velocity * fraction + piece.wind * fraction * fraction + wave * piece.flutter * (0.15 + fraction * 0.85);
-    const py = y + piece.offsetY + piece.a * fraction * fraction + piece.b * fraction;
-    const [rz, rx, ry] = piece.spin.map(([from, spin, flutter, shift]) => (from + spin * fraction + Math.sin(piece.phase + shift + fraction * Math.PI * 2) * flutter).toFixed(0));
-    piece.node.style.opacity = confettiStop(fraction, 2).toFixed(3);
-    piece.node.style.transform = `translate(${px.toFixed(1)}px, ${py.toFixed(1)}px) rotateZ(${rz}deg) rotateX(${rx}deg) rotateY(${ry}deg) scale(${confettiStop(fraction, 1).toFixed(3)})`;
+    const { t, x: px, y: py, tilt } = confettiAt(piece, age, x, y);
+    const [rz, rx, ry] = piece.spin.map(([from, spin], i) => (from + spin * t + (i ? 0 : tilt)).toFixed(0));
+    const scale = 0.64 + 0.36 * Math.min(1, t / 0.15);
+    piece.node.style.opacity = Math.min(1, t / 0.06).toFixed(3);
+    piece.node.style.transform = `translate(${px.toFixed(1)}px, ${py.toFixed(1)}px) rotateZ(${rz}deg) rotateX(${rx}deg) rotateY(${ry}deg) scale(${scale.toFixed(3)})`;
   }
 
-  /** Seeded paper pieces pose directly from song time, including backward seeks. */
+  /**
+   * Seeded paper pieces pose directly from song time, including backward
+   * seeks. Returns the seconds after `at` until the last piece has fallen
+   * off the stage, so a scene can stay up until then.
+   */
   function confetti(parent, { x, y, at, count = 46, seed = 3 }) {
     const layer = el('div', 'confetti-layer');
     layer.setAttribute('aria-hidden', 'true');
     parent.prepend(layer);
-    const stageHeight = 540;
-    const pieces = Array.from({ length: Math.min(count, 88) }, (_, index) => confettiPiece(layer, seed, index, { y, stageHeight }));
+    const pieces = Array.from({ length: Math.min(count, 88) }, (_, index) => confettiPiece(layer, seed, index, y));
     // Spread side celebrations around the card, rather than exposing only the
     // fastest particles from a compact burst hidden behind its opaque center.
     const originX = x + Math.sign(x - 480) * 90;
-    const end = Math.max(0, ...pieces.map((piece) => piece.delay + piece.duration));
+    const lives = pieces.map((piece) => confettiLife(piece, originX, y));
+    const end = Math.max(0, ...lives);
     let visible = false;
     onFrame((t) => {
       const age = t - at;
@@ -698,8 +715,9 @@
         visible = active;
       }
       if (!active) return;
-      for (const piece of pieces) poseConfettiPiece(piece, age, originX, y);
+      pieces.forEach((piece, i) => poseConfettiPiece(piece, age, originX, y, lives[i]));
     });
+    return end;
   }
 
   /** Drops a node off the bottom of the frame from `at`, tumbling. */

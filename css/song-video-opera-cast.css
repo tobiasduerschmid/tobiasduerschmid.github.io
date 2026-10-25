@@ -400,3 +400,24 @@
 .oc-art--hero .oc-crease { stroke: var(--hero-face-line, #5a3624); }
 .oc-art--hero .oc-muscle,
 .oc-art--hero .oc-wrist-crease { stroke: var(--hero-skin-mid); }
+
+/* Sleeping: a padded sleep mask, and a bed with a checked quilt. Stage
+   props keep the same colours in both site themes, like the other props. */
+.oc-sleep-mask-pad { fill: #3d2f7a; }
+.oc-sleep-mask-strap { fill: none; stroke: #2a2059; stroke-width: 3.2; stroke-linecap: round; }
+.oc-sleep-mask-sheen { fill: none; stroke: #8f80d6; stroke-width: 2; stroke-linecap: round; opacity: 0.8; }
+.oc-sleep-mask-lash { fill: none; stroke: #e9e4ff; stroke-width: 1.6; stroke-linecap: round; }
+
+.oc-bed-shadow { fill: rgba(0, 0, 0, 0.28); }
+.oc-bed-leg,
+.oc-bed-board,
+.oc-bed-rail { fill: #8a5a35; }
+.oc-bed-board-shine { fill: none; stroke: #b7845a; stroke-width: 3; stroke-linecap: round; opacity: 0.8; }
+.oc-bed-mattress { fill: #eef1f6; }
+.oc-bed-seam { fill: none; stroke: #c3cad6; stroke-width: 1.6; stroke-dasharray: 4 4; }
+.oc-bed-pillow { fill: #ffffff; }
+.oc-bed-pillow-crease { fill: none; stroke: #c9d0dc; stroke-width: 1.6; stroke-linecap: round; }
+.oc-bed-quilt { fill: #7d55d8; }
+.oc-bed-quilt-check { fill: none; stroke: #a98cf0; stroke-width: 3; opacity: 0.7; }
+.oc-bed-quilt-fold { fill: #f4f1fb; }
+.oc-z { fill: #eef3fa; font: 900 18px var(--font-display); }

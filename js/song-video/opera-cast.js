@@ -343,12 +343,13 @@
    *   crouch        0–1 a give at the knees; hop: how high it jumps
    *   lean          degrees the figure leans about its feet
    *   age           0–1 the hair (brows, beard) gone silver
+   *   mask          0–1 a sleep mask pulled down over the eyes
    */
   const REST = {
     right: [4, -6], rightLift: 0, rightHand: -8, rightShape: 'rest',
     left: [4, -6], leftLift: 0, leftHand: -8, leftShape: 'rest',
     look: 0, down: 0, brow: 0, frown: 0, smile: 0.4, wide: 0, happy: 0, sweat: 0, blush: 0,
-    nod: 0, tilt: 0, crouch: 0, hop: 0, lean: 0, age: 0,
+    nod: 0, tilt: 0, crouch: 0, hop: 0, lean: 0, age: 0, mask: 0,
   };
   const DISCRETE = new Set(['rightShape', 'leftShape']);
 
@@ -975,6 +976,7 @@
     const drawnFace = svg('g', { 'data-testid': 'oc-drawn-face' }, headGroup);
     const setFace = drawnHead(drawnFace, costume.head, paint);
     const wornOver = svg('g', {}, headGroup);
+    const sleepMask = drawSleepMask(svg('g', { class: 'oc-sleep-mask', 'data-testid': 'oc-sleep-mask' }, headGroup));
     const arms = svg('g', {}, trunk);
 
     // The arms: the sleeve turns at the shoulder; the forearm turns with it,
@@ -1072,6 +1074,9 @@
       if (worn) worn(time, { look: p.look, down: p.down, brow: p.brow, frown: p.frown, sing: open }, reducedMotion.matches);
       else setFace(p, blink, open);
       age(p.age || 0);
+      // The mask slides down from the forehead over the eyes (and glasses).
+      sleepMask.setAttribute('opacity', clamp(p.mask * 4, 0, 1).toFixed(3));
+      sleepMask.setAttribute('transform', `translate(0 ${(-18 * (1 - p.mask)).toFixed(2)})`);
     }
 
     // Silver for hair that has aged overnight: each colour token of a worn
@@ -1478,6 +1483,59 @@
   };
 
   // ------------------------------------------------------------------
+  // Sleeping: a mask over the eyes, and a bed the figure lies down in
+  // ------------------------------------------------------------------
+
+  /** A padded sleep mask across both eyes, its strap round the head, two stitched lashes. */
+  function drawSleepMask(g) {
+    svg('path', { class: 'oc-sleep-mask-strap', d: `M${HEAD.x - 36} ${EYES - 6} C${HEAD.x - 20} ${EYES - 10} ${HEAD.x + 20} ${EYES - 10} ${HEAD.x + 36} ${EYES - 6}` }, g);
+    inked(g, `M${HEAD.x} ${EYES - 9} C${HEAD.x + 10} ${EYES - 15} ${HEAD.x + 30} ${EYES - 14} ${HEAD.x + 32} ${EYES - 3}
+      C${HEAD.x + 33} ${EYES + 7} ${HEAD.x + 22} ${EYES + 11} ${HEAD.x + 11} ${EYES + 7} C${HEAD.x + 6} ${EYES + 5} ${HEAD.x + 3} ${EYES + 4} ${HEAD.x} ${EYES + 6}
+      C${HEAD.x - 3} ${EYES + 4} ${HEAD.x - 6} ${EYES + 5} ${HEAD.x - 11} ${EYES + 7} C${HEAD.x - 22} ${EYES + 11} ${HEAD.x - 33} ${EYES + 7} ${HEAD.x - 32} ${EYES - 3}
+      C${HEAD.x - 30} ${EYES - 14} ${HEAD.x - 10} ${EYES - 15} ${HEAD.x} ${EYES - 9} Z`, 'oc-sleep-mask-pad', 'oc-ink oc-ink--cool');
+    svg('path', { class: 'oc-sleep-mask-sheen', d: `M${HEAD.x - 26} ${EYES - 7} C${HEAD.x - 18} ${EYES - 11} ${HEAD.x - 8} ${EYES - 11} ${HEAD.x - 3} ${EYES - 8}` }, g);
+    for (const side of [-1, 1]) {
+      const x = HEAD.x + side * 17;
+      svg('path', { class: 'oc-sleep-mask-lash', d: `M${x - 8} ${EYES} C${x - 4} ${EYES + 4} ${x + 4} ${EYES + 4} ${x + 8} ${EYES} M${x - 6} ${EYES + 2.6} l-2 3 M${x} ${EYES + 3.4} v3.4 M${x + 6} ${EYES + 2.6} l2 3` }, g);
+    }
+    return g;
+  }
+
+  // The bed in figure units: lying down turns the figure a quarter turn
+  // about LIE_PIVOT, head to the left on the pillow, feet to the right.
+  const LIE_PIVOT = [80, 200];
+  // How far it then sinks, so the head rests in the pillow.
+  const LIE_SINK = 14;
+
+  /** The headboard, footboard, mattress, and pillow, drawn behind the figure. */
+  function drawBedBack(g) {
+    svg('ellipse', { class: 'oc-bed-shadow', cx: 36, cy: 293, rx: 188, ry: 6 }, g);
+    for (const x of [-138, -124, 194, 208]) inked(g, `M${x} 262 h6 V292 h-6 Z`, 'oc-bed-leg', 'oc-ink oc-ink--cool');
+    inked(g, 'M-146 292 V150 C-146 132 -118 132 -118 150 V292 Z', 'oc-bed-board', 'oc-ink oc-ink--cool');
+    svg('path', { class: 'oc-bed-board-shine', d: 'M-139 286 V152 C-139 144 -133 142 -129 146' }, g);
+    inked(g, 'M190 292 V206 C190 192 214 192 214 206 V292 Z', 'oc-bed-board', 'oc-ink oc-ink--cool');
+    inked(g, 'M-122 260 H192 V276 H-122 Z', 'oc-bed-rail', 'oc-ink oc-ink--cool');
+    inked(g, 'M-120 236 C-120 230 -116 228 -110 228 H186 C190 228 192 230 192 236 V262 H-120 Z', 'oc-bed-mattress', 'oc-ink oc-ink--cool');
+    svg('path', { class: 'oc-bed-seam', d: 'M-116 246 H188' }, g);
+    inked(g, 'M-118 214 C-120 196 -104 186 -76 186 C-48 186 -24 190 -20 204 C-16 220 -24 234 -54 236 C-86 238 -116 234 -118 214 Z', 'oc-bed-pillow', 'oc-ink oc-ink--cool');
+    svg('path', { class: 'oc-bed-pillow-crease', d: 'M-104 200 C-92 196 -80 196 -70 199 M-40 222 C-34 218 -30 212 -30 206' }, g);
+    return g;
+  }
+
+  /** The quilt pulled up to the chin, drawn over the figure, and a drift of Zs. */
+  function drawBedFront(g) {
+    inked(g, 'M-14 166 C20 150 120 150 186 170 C194 196 194 236 190 264 C120 270 30 270 -22 264 C-30 236 -28 190 -14 166 Z', 'oc-bed-quilt', 'oc-ink oc-ink--cool');
+    svg('path', { class: 'oc-bed-quilt-check', d: 'M-24 206 C40 200 130 200 192 210 M-22 240 C40 236 130 236 192 242 M40 158 C36 200 36 236 38 268 M110 156 C108 200 108 236 110 268' }, g);
+    inked(g, 'M-20 166 C20 150 120 150 186 170 C186 178 186 182 184 186 C120 168 20 168 -18 184 C-22 178 -22 172 -20 166 Z', 'oc-bed-quilt-fold', 'oc-ink oc-ink--cool');
+    const zs = [0, 1, 2].map((i) => {
+      const z = svg('text', { class: 'oc-z', x: -70 + i * 14, y: 150 - i * 18 }, g);
+      z.textContent = 'Z';
+      return z;
+    });
+    return zs;
+  }
+
+  // ------------------------------------------------------------------
   // A figure on stage
   // ------------------------------------------------------------------
 
@@ -1495,18 +1553,44 @@
    *   holds     [[time, side, prop]]: a prop in a hand from then on (null
    *             empties it)
    *   words     [start, end] sung word intervals (wordsFor)
+   *   beds      [[from, to]]: a bed appears behind it just before `from`;
+   *             it lies down in it, mask on, under the quilt, until `to`
+   *             (or its stage exit, when the bed glides off with it)
    * Returns the wrapper and where() (its place at a time).
    */
-  function figure(parent, { role, hero, stage = [], places, moves = [], holds = [], words = [], seed = 0 }) {
+  function figure(parent, { role, hero, stage = [], places, moves = [], holds = [], words = [], beds = [], seed = 0 }) {
     const wrap = el('div', `oc-figure oc-figure--${role} is-staged`, parent);
     wrap.dataset.testid = `oc-${role}`;
     const fig = svg('svg', { class: 'oc-art', viewBox: '0 0 160 300', width: 160, height: 300, 'aria-hidden': 'true' }, wrap);
     const travel = svg('g', {}, fig);
+    const bedBack = beds.length ? drawBedBack(svg('g', { class: 'oc-bed', 'data-testid': 'oc-bed' }, travel)) : null;
     const shadow = svg('g', { class: 'oc-shadow' }, travel);
     svg('ellipse', { cx: 84, cy: 293, rx: 40, ry: 5 }, shadow);
     const hopper = svg('g', {}, travel);
-    const sway = svg('g', {}, hopper);
+    const recline = svg('g', {}, hopper);
+    const sway = svg('g', {}, recline);
     const body = buildFigure(fig, sway, role);
+    const bedFront = beds.length ? svg('g', { class: 'oc-bed oc-bed--front' }, travel) : null;
+    const zs = bedFront ? drawBedFront(bedFront) : [];
+
+    // In bed: the bed shows from just before `from`; it lies down over
+    // LIE_DOWN seconds, then the quilt and the mask come on and the Zs drift.
+    // A bed with no `to` stays until the figure's stage exit, and goes with it.
+    const LIE_DOWN = 0.7;
+    const exitAfter = (at) => stage.map(([, to]) => to).filter((to) => to !== undefined && to > at).sort((a, b) => a - b)[0] ?? Infinity;
+    const bedWindows = beds.map(([from, to]) => (to === undefined ? { from, to: exitAfter(from), leaves: true } : { from, to, leaves: false }));
+    function inBed(t) {
+      const bed = bedWindows.find(({ from, to, leaves }) => t >= from - 0.6 && t <= to + (leaves ? 0 : 0.6));
+      if (!bed) return { shown: 0, lie: 0, tucked: 0, from: 0 };
+      const { from, leaves } = bed;
+      const up = leaves ? Infinity : bed.to;
+      return {
+        shown: progress(t, from - 0.6, 0.4) * (1 - progress(t, up, 0.6)),
+        lie: easeInOutCubic(progress(t, from, LIE_DOWN)) * (1 - easeInOutCubic(progress(t, up, LIE_DOWN))),
+        tucked: progress(t, from + LIE_DOWN * 0.7, 0.4) * (1 - progress(t, up - 0.4, 0.3)),
+        from,
+      };
+    }
 
     // Where it stands at time t: the last place reached, or on its way to
     // the next, eased, with how fast it is walking (for its step).
@@ -1624,6 +1708,19 @@
       fig.setAttribute('height', (300 * scale).toFixed(2));
 
       const p = poseAt(keys, t, reduced);
+      const bed = inBed(t);
+      if (bedBack) {
+        bedBack.setAttribute('opacity', bed.shown.toFixed(3));
+        bedFront.setAttribute('opacity', bed.tucked.toFixed(3));
+        bedFront.setAttribute('transform', `translate(0 ${(24 * (1 - bed.tucked)).toFixed(2)})`);
+        zs.forEach((z, i) => {
+          const age = t - bed.from - 1 - i * 0.45;
+          const loop = ((age % 1.8) + 1.8) % 1.8;
+          z.setAttribute('opacity', age > 0 && !reduced ? Math.max(0, 1 - loop / 1.8).toFixed(3) : '0');
+          z.setAttribute('transform', `translate(${(loop * 8).toFixed(1)} ${(-loop * 16).toFixed(1)})`);
+        });
+        p.mask = Math.max(p.mask, bed.tucked);
+      }
       for (const side of ['right', 'left']) {
         let prop = null;
         for (const [at, which, name] of holdKeys) if (which === side && at <= t) prop = name;
@@ -1643,9 +1740,15 @@
       if (!reduced && to !== undefined && exit !== 'fade' && t > to - GLIDE) {
         const side = exit === 'left' ? -1 : 1;
         const u = progress(t, to - GLIDE, GLIDE);
-        glide = side * 260 * u ** 2.2;
+        // A bed reaches far past the figure, so it glides out further.
+        glide = side * (bed.shown ? 480 : 260) * u ** 2.2;
         lean = side * 5 * Math.sin(Math.PI * Math.min(1, u * 1.4));
         step = Math.max(step, u);
+      }
+      // Lying down, the figure stays still in the bed as it glides.
+      if (bed.lie) {
+        lean *= 1 - bed.lie;
+        step *= 1 - bed.lie;
       }
       // A stroll: the hips bob twice a stride and the legs swing.
       const stride = reduced ? 0 : step;
@@ -1658,6 +1761,8 @@
       hopper.setAttribute('transform', `translate(0 ${(-p.hop).toFixed(2)})`);
       sway.setAttribute('transform', `rotate(${shift.toFixed(2)} 80 290) translate(80 290) scale(1 ${breath.toFixed(4)}) translate(-80 -290)`);
       shadow.setAttribute('transform', `translate(80 293) scale(${(1 - p.hop / 60).toFixed(3)}) translate(-80 -293)`);
+      shadow.setAttribute('opacity', (1 - bed.lie).toFixed(3));
+      recline.setAttribute('transform', bed.lie ? `translate(0 ${(LIE_SINK * bed.lie).toFixed(2)}) rotate(${(-90 * bed.lie).toFixed(2)} ${LIE_PIVOT[0]} ${LIE_PIVOT[1]})` : '');
       body.swing(stride * Math.sin(phase) * 9);
       p.crouch = Math.max(p.crouch, settleKnees);
       const open = mouthAt(sortedWords, t, reduced);

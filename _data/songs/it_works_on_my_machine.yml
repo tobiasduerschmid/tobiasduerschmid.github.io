@@ -446,7 +446,7 @@ sections:
         end: 171.9
         text: "It works on my machine!"
         marks: {"it": 169.04, "works": 169.98, "on": 170.26, "my": 170.46, "machine": 170.9}
-        visual: "A badge reads “Refrain”, and the UI Developer shuffles off to the right. The Teammate strides to the middle, beside his desk on the left, where his laptop shows a big green tick and “All tests pass”. He points at it, then lifts it high on one flat palm beside his head, the other arm flung wide, beaming in a golden light with sparkles, while the build status board behind him stays red."
+        visual: "A badge reads “Refrain”. Still silver-haired and stooped on the cane, the UI Developer lingers a moment, then shuffles off to the right on “my”. The Teammate strides to the middle, beside his desk on the left, where his laptop shows a big green tick and “All tests pass”. He points at it, then lifts it high on one flat palm beside his head, the other arm flung wide, beaming in a golden light with sparkles, while the build status board behind him stays red."
       - id: refrain-2-2
         start: 172.0
         end: 176.26
@@ -529,26 +529,26 @@ sections:
     title: "Verse 6: Committed secrets"
     delivery: sung
     voice: Teammate
-    narration: "Act six, Secrets. He pats his chest and tucks the Back-End Developer into a purple checked blanket; they yawn and doze off on their feet, with Z's drifting up, then slide off asleep. A dark card shows the key in .env, and in app.py the hard-coded key is struck out for one read from the environment. A sticker says Safer!, and he bows. Then a folder, my-app, holds app.py, a readme, and .env with a key; with git add, all three fly into a commit box, and with git push the box flies up into a cloud marked Public repo, where three keys hang. Gold keys rain down from the cloud into the audience, whose hands reach up for them."
+    narration: "Act six, Secrets. He pats his chest and sends the Back-End Developer to bed: a bed appears behind them, they yawn, lie down in it under a purple checked quilt, and pull a sleep mask over their eyes, with Z's drifting up; then the bed glides off to the right with them asleep in it. A dark card shows the key in .env, and in app.py the hard-coded key is struck out for one read from the environment. A sticker says Safer!, and he bows. Then a folder, my-app, holds app.py, a readme, and .env with a key; with git add, all three fly into a commit box, and with git push the box flies up into a cloud marked Public repo, where three keys hang. Gold keys rain down from the cloud into the audience, whose hands reach up for them."
     lines:
       - id: verse-6-1
         start: 212.28
         end: 215.28
         text: "I'll take the deployment! You get some sleep!"
         marks: {"ill": 212.28, "take": 212.6, "the": 212.9, "deployment": 213.1, "you": 214.12, "get": 214.36, "some": 214.58, "sleep": 214.84}
-        visual: "A badge reads “Act VI · Secrets”. He pats his chest, then presents the Back-End Developer, who gets a purple checked blanket round their shoulders and yawns, with Zs drifting up."
+        visual: "A badge reads “Act VI · Secrets”. He pats his chest, then presents the Back-End Developer, who steps aside; a wooden bed with a white pillow appears behind them, and they yawn."
       - id: verse-6-2
         start: 215.63
         end: 218.66
         text: "The keys live in dot-env, Not hard-coded now!"
         marks: {"the": 215.63, "keys": 215.74, "live": 216.08, "in": 216.38, "dotenv": 216.6, "not": 217.08, "hardcoded": 217.28, "now": 218.08}
-        visual: "A dark card reads “.env: API_KEY=sk-live-4f2a…”, and a code card “app.py” shows: import os; api_key = \"sk-live-4f2a…\"; on “hard-coded” that line is struck through, replaced by api_key = os.environ[\"API_KEY\"], in green. He points at them, while the Back-End Developer dozes under the blanket, eyes shut, head nodding."
+        visual: "A dark card reads “.env: API_KEY=sk-live-4f2a…”, and a code card “app.py” shows: import os; api_key = \"sk-live-4f2a…\"; on “hard-coded” that line is struck through, replaced by api_key = os.environ[\"API_KEY\"], in green. He points at them, while the Back-End Developer lies down in the bed, under a purple checked quilt pulled up to the chin, a sleep mask over their eyes, smiling, with Zs drifting up."
       - id: verse-6-3
         start: 218.68
         end: 221.94
         text: "A safer deployment— Allow me to bow!"
         marks: {"a": 218.68, "safer": 218.94, "deployment": 219.34, "allow": 220.36, "me": 220.7, "to": 221.14, "bow": 221.34}
-        visual: "The blanket goes, and the Back-End Developer slides off to the right, still asleep. A green sticker reads “Safer!”, and on “bow” he takes a deep bow."
+        visual: "The bed glides off to the right with the Back-End Developer still asleep in it, quilt, mask, and all. A green sticker reads “Safer!”, and on “bow” he takes a deep bow."
       - id: verse-6-4
         start: 221.96
         end: 225.4

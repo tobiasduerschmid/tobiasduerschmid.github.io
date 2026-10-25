@@ -47,7 +47,7 @@
       tenor: 'Teammate', pm: 'Product Manager', build: 'Build Engineer', test: 'Test Engineer',
       ui: 'UI Developer', backend: 'Back-End Developer', security: 'Security Engineer',
     };
-    const plan = Object.fromEntries(Object.keys(VOICES).map((role) => [role, { stage: [], places: [], moves: [], holds: [] }]));
+    const plan = Object.fromEntries(Object.keys(VOICES).map((role) => [role, { stage: [], places: [], moves: [], holds: [], beds: [] }]));
     const move = (role, at, name, options) => plan[role].moves.push([at, name, options]);
     const placeAt = (role, at, x, y = FLOOR, scale = 0.95, duration = 0.8) => plan[role].places.push([at, x, y, scale, duration]);
     const behind = [];
@@ -635,7 +635,10 @@
     function ui() {
       const v = (n) => `ui-${n}`;
       const enter = line(v(1)).start - 1.5;
-      plan.ui.stage.push([enter, line('refrain-2-1').start - 0.5, { enter: 'right', exit: 'right' }]);
+      // After "I've aged overnight!" the silver-haired UI Developer lingers
+      // on the cane into the refrain, so the aging can sink in.
+      const leave = mark('refrain-2-1', 'my') + 1.2;
+      plan.ui.stage.push([enter, leave, { enter: 'right', exit: 'right' }]);
       placeAt('ui', 0, 800, FLOOR, 0.95);
       plan.ui.holds.push([enter, 'left', 'palette']);
       move('tenor', enter + 1.4, 'mood', { hold: line(v(4)).end - enter - 1.6, sweat: 1, smile: 0.5, brow: 0.7, look: 0.8 });
@@ -679,9 +682,9 @@
       house.sky(mark(v(4), 'aged') + 0.3, 'day', 0.5);
       house.clock(mark(v(4), 'ive'), 26 + 24, 1.2);
       plan.ui.holds.push([mark(v(4), 'aged'), 'right', 'cane']);
-      move('ui', mark(v(4), 'aged'), 'mood', { age: 1, hold: line(v(4)).end - mark(v(4), 'aged') + 2, crouch: 0.6, nod: 0.5, lean: 3, smile: -0.4 });
-      move('ui', mark(v(4), 'overnight'), 'arms', { right: { reach: [118, 196], shape: 'grip', dir: 90 }, hold: 2.4 });
-      spotlight('ui', line(v(1)).start - 0.3, line(v(4)).end + 0.2);
+      move('ui', mark(v(4), 'aged'), 'mood', { age: 1, hold: leave - mark(v(4), 'aged') + 2, crouch: 0.6, nod: 0.5, lean: 3, smile: -0.4 });
+      move('ui', mark(v(4), 'overnight'), 'arms', { right: { reach: [118, 196], shape: 'grip', dir: 90 }, hold: leave - mark(v(4), 'overnight') + 0.4 });
+      spotlight('ui', line(v(1)).start - 0.3, leave);
     }
 
     // ----------------------------------------------------------------
@@ -738,8 +741,9 @@
     function backend() {
       const v = (n) => `backend-${n}`;
       const enter = line(v(1)).start - 1.6;
-      // They stay, dozing under a blanket, until the Teammate's next boast (see verse6()).
-      plan.backend.stage.push([enter, line('verse-6-3').start + 0.2, { enter: 'right', exit: 'right' }]);
+      // They stay, asleep in bed, until the Teammate's next boast (see
+      // verse6()); the bed glides off with them.
+      plan.backend.stage.push([enter, mark('verse-6-3', 'deployment') + 0.5, { enter: 'right', exit: 'right' }]);
       placeAt('backend', 0, 800, FLOOR, 0.95);
       plan.backend.holds.push([enter, 'left', 'mug']);
       move('tenor', enter + 1.4, 'mood', { hold: line(v(4)).end - enter - 1.6, sweat: 1, smile: 0.5, brow: 0.7, look: 0.8 });
@@ -789,18 +793,18 @@
       const v = (n) => `verse-6-${n}`;
       badge('Act VI · Secrets', start('verse-6'), end('security'));
       placeAt('tenor', start('verse-6') - 0.2, 200, FLOOR, 0.95, 1);
-      // "I'll take the deployment! You get some sleep!": a blanket for the
-      // Back-End Developer, who dozes off under it.
+      // "I'll take the deployment! You get some sleep!": a bed for the
+      // Back-End Developer, who yawns, lies down in it, and pulls a sleep
+      // mask over their eyes.
       move('tenor', mark(v(1), 'take') - 0.1, 'chest', { hold: 0.6, pats: 1 });
       move('tenor', mark(v(1), 'get') - 0.1, 'present', { to: [780, 240], hold: 1 });
-      ahead.push(() => {
-        // The blanket goes before the Back-End Developer glides off.
-        const sleepy = kit.scene(content, mark(v(1), 'some') - 0.2, line(v(3)).start - 0.95, { exit: 'fade' });
-        M.blanket(sleepy, { x: 800, y: 262, at: mark(v(1), 'some') - 0.1 });
-      });
-      move('backend', mark(v(1), 'sleep') - 0.3, 'yawn', { hold: 1 });
-      // Asleep on their feet through the next line, eyes shut, head nodding.
-      move('backend', mark(v(2), 'keys'), 'mood', { nod: 0.7, happy: 1, smile: 0.2, hold: line(v(2)).end - mark(v(2), 'keys') });
+      // Clear of the curtain: the bed reaches well to the left of them.
+      placeAt('backend', mark(v(1), 'take'), 760, FLOOR, 0.95, 0.9);
+      plan.backend.holds.push([mark(v(1), 'some'), 'left', null]);
+      move('backend', mark(v(1), 'sleep') - 0.3, 'yawn', { hold: 0.5 });
+      plan.backend.beds.push([mark(v(1), 'sleep') + 0.6, undefined]);
+      // Asleep under the quilt, smiling, head nodding.
+      move('backend', mark(v(1), 'sleep') + 1, 'mood', { nod: 0.7, happy: 1, smile: 0.6, hold: 6 });
       // "The keys live in dot-env, not hard-coded now!"
       ahead.push(() => {
         const keys = kit.scene(content, mark(v(2), 'keys') - 0.2, line(v(3)).end, { exit: 'fade' });
@@ -810,7 +814,7 @@
           lines: ['import os', 'api_key = "sk-live-4f2a…"', 'api_key = os.environ["API_KEY"]'],
           changes: [[mark(v(2), 'hardcoded'), 1, null, 'gone'], [mark(v(2), 'hardcoded'), 2, null, 'new']],
         });
-        kit.sticker(keys, 'Safer!', { x: 560, y: 322, at: mark(v(3), 'safer'), variant: 'green', iconName: 'shield', rotate: -4 });
+        kit.sticker(keys, 'Safer!', { x: 460, y: 322, at: mark(v(3), 'safer'), variant: 'green', iconName: 'shield', rotate: -4 });
       });
       move('tenor', mark(v(2), 'keys') - 0.1, 'point', { to: [420, 120], hold: 1 });
       // "A safer deployment — allow me to bow!"
@@ -985,7 +989,7 @@
       plan.ui.holds.push([at, 'right', null]);
       move('ui', at, 'mood', { age: 1, hold: 30 });
       ahead.push(() => {
-        const party = kit.scene(content, mark('refrain-3-4', 'green'), mark('refrain-3-4', 'green') + 3);
+        const party = kit.scene(content, mark('refrain-3-4', 'green'), mark('refrain-3-4', 'green') + 6.5);
         kit.confetti(party, { x: 470, y: 160, at: mark('refrain-3-4', 'green') + 0.2, count: 72 });
       });
       house.footlights(line('refrain-3-4').end + 0.05, 'out', 0.15);
@@ -1065,7 +1069,7 @@
       if (!p.places.length) placeAt(role, 0, ...(role === 'tenor' ? HOME.tenor : HOME.mate));
       figures[role] = C.figure(content, {
         role, hero: role === 'tenor' ? undefined : hero, stage: p.stage, places: p.places,
-        moves: p.moves, holds: p.holds, words: wordsOf(role, voice), seed: Object.keys(VOICES).indexOf(role),
+        moves: p.moves, holds: p.holds, beds: p.beds, words: wordsOf(role, voice), seed: Object.keys(VOICES).indexOf(role),
       });
     }
     for (const draw of ahead) draw();
