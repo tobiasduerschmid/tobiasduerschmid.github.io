@@ -202,9 +202,9 @@
         const story = kit.scene(content, line(v(1)).start - 0.2, mark(v(3), 'promised') - 0.1, { exit: 'fade' });
         const card = M.card(story, {
           x: 470, y: 56, w: 218, title: 'User story', iconName: 'user', tone: 'gold', at: line(v(1)).start,
-          lines: ['As a fan,', 'I want to pass', 'my ticket on,', 'so a friend', 'can use my seat.'],
+          lines: ['As a fan,', 'I want to pass', 'my ticket on,', 'so a friend', 'can use my seat', 'when I can\'t', 'come along.'],
         });
-        const shows = [mark(v(1), 'as'), mark(v(1), 'want'), mark(v(1), 'ticket'), mark(v(2), 'so'), mark(v(2), 'use')];
+        const shows = [mark(v(1), 'as'), mark(v(1), 'want'), mark(v(1), 'ticket'), mark(v(2), 'so'), mark(v(2), 'use'), mark(v(2), 'when'), mark(v(2), 'come')];
         onFrame((t) => card.rows.forEach((row, i) => row.classList.toggle('mk-card-line--pending', t < shows[i])));
       });
       move('pm', mark(v(1), 'fan') - 0.1, 'chest', { side: 'right', hold: 0.6, pats: 1 });

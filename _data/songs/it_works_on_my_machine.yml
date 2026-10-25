@@ -193,7 +193,7 @@ sections:
     title: "The Product Manager"
     delivery: sung
     voice: Product Manager
-    narration: "The Product Manager glides in from the right, with your hero's face, a navy blazer over a coral tee, a lanyard and badge, grey trousers, white sneakers, and a clipboard. The Teammate freezes with a sheepish grin and a bead of sweat while they sing. A gold card headed User story writes itself out, part by part: As a fan, I want to pass my ticket on, so a friend can use my seat. The phone answers: Transfer? Not allowed. One name only. The Product Manager shows a card: Demo today, send a ticket to a friend. Then the phone fans out into six small phones, red, orange, gold, green, blue, and violet, each with the same one button, and the Product Manager facepalms."
+    narration: "The Product Manager glides in from the right, with your hero's face, a navy blazer over a coral tee, a lanyard and badge, grey trousers, white sneakers, and a clipboard. The Teammate freezes with a sheepish grin and a bead of sweat while they sing. A gold card headed User story writes itself out, part by part: As a fan, I want to pass my ticket on, so a friend can use my seat when I can't come along. The phone answers: Transfer? Not allowed. One name only. The Product Manager shows a card: Demo today, send a ticket to a friend. Then the phone fans out into six small phones, red, orange, gold, green, blue, and violet, each with the same one button, and the Product Manager facepalms."
     lines:
       - id: pm-1
         start: 30.63
@@ -206,7 +206,7 @@ sections:
         end: 37.66
         text: "So a friend can use my seat When I can't come along!"
         marks: {"so": 34.02, "a": 34.38, "friend": 34.6, "can": 34.82, "use": 35.02, "my": 35.22, "seat": 35.4, "when": 35.74, "i": 35.94, "cant": 36.04, "come": 36.36, "along": 36.64}
-        visual: "The card adds “so a friend can use my seat.”, and the Product Manager presents it. On “can’t” the phone’s screen answers “Transfer? ✗ Not allowed. One name only”; the Product Manager points at it, then shrugs."
+        visual: "The card adds “so a friend can use my seat when I can’t come along.”, and the Product Manager presents it. On “can’t” the phone’s screen answers “Transfer? ✗ Not allowed. One name only”; the Product Manager points at it, then shrugs."
       - id: pm-3
         start: 37.68
         end: 41.0
