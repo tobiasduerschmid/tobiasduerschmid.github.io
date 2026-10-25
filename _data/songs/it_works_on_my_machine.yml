@@ -23,24 +23,24 @@
 # re-running render.js.
 #
 # Seven voices sing: the Teammate (a tenor) and the six teammates who answer
-# him. `voice` names the singer of a section, or of a single line within it;
-# the captions name the singer whenever the voice changes.
+# him; all six sing the last line together (`voice: All six teammates`).
+# `voice` names the singer of a section, or of a single line within it; the
+# captions name the singer whenever the voice changes. The lyric sheet and
+# the Suno prompt behind this take are in docs/it-works-on-my-machine-song-lyrics.md.
 #
-# Times are seconds into the Suno take "It Works on My Machine" (about 143
-# BPM, stereo, kept as recorded: its channels stay balanced, 95% of half-second
-# windows within 1.4 dB). Line boundaries and word marks come from local
-# Whisper word timestamps (mlx whisper-large-v3-turbo) aligned to the lyric
-# sheet, with each word's onset refined on the vocal stem (Demucs htdemucs)
-# where Whisper had swallowed the pause before it, and each line's end where
-# the voice falls silent; short clip passes checked the doubtful spots.
-# Suno's own embedded lyric timing lists the Product Manager's first couplet
-# twice, but it is sung once, from 33.7 s. Whisper heard "Revert" or
-# "Revolve" for the held "Revoke", "cloud" or "cold" for one sung "code",
-# and missed the pickup "Your" before "laptop"; the captions follow the
-# sheet there. The final refrain's "It" starts as the Security Engineer's
-# held "again" ends (252.9 s); its last "green" is held until the orchestra
-# stops (269.6 s), and the closing chord starts at 279.5 s. Beats were
-# tracked on the backing stem's percussion and smoothed over ±5 beats.
+# Times are seconds into the third Suno take, "It Works on My Machine(2)"
+# (rewritten lyrics: a concert-ticket app instead of a coffee app; about
+# 148 BPM by the percussion; stereo, kept as recorded: balanced, 95% of
+# half-second windows within 1.6 dB). It sings "Requirements?" twice and
+# the closing line twice, so the sheet does too. Line boundaries and word
+# marks come from local Whisper word timestamps (mlx whisper-large-v3-turbo)
+# aligned to the lyric sheet, with each word's onset refined on the vocal
+# stem (Demucs htdemucs) and each line's end where the voice falls silent;
+# Whisper missed "shared" (verse 5) and "main" (the Back-End Developer's
+# first line), whose marks sit between their neighbours. Clip passes on the
+# vocal stem confirmed the doubtful words and set the final refrain's "It"
+# (251.2 s, after the held "again"), its last "green" (held to 270.6 s), and
+# the sung ending (278.3-284.2 s), followed by the closing chord.
 
 title: "It Works on My Machine: a comic opera about working on a team"   # the player's accessible name
 credit: Lyrics written for CS 35L; music and vocals generated with Suno.
@@ -75,68 +75,70 @@ narrator:
 width: 1920
 height: 1080
 fps: 30
-duration: 286.82
+duration: 288.01
 beats:
-  bpm: 143.19
-  first: 0.213
+  bpm: 148.04
+  first: 0.453
   times: [
-    0.213, 0.64, 1.067, 1.495, 1.922, 2.348, 2.774, 3.195, 3.614, 4.032, 4.449, 4.864,
-    5.277, 5.69, 6.101, 6.509, 6.921, 7.336, 7.757, 8.18, 8.605, 9.033, 9.463, 9.894,
-    10.322, 10.75, 11.176, 11.598, 12.015, 12.427, 12.834, 13.239, 13.641, 14.039, 14.434, 14.831,
-    15.231, 15.634, 16.04, 16.445, 16.852, 17.262, 17.671, 18.081, 18.493, 18.905, 19.318, 19.729,
-    20.138, 20.549, 20.962, 21.377, 21.792, 22.208, 22.626, 23.045, 23.465, 23.887, 24.312, 24.739,
-    25.164, 25.589, 26.015, 26.441, 26.869, 27.295, 27.72, 28.146, 28.57, 28.992, 29.412, 29.83,
-    30.246, 30.66, 31.07, 31.479, 31.886, 32.293, 32.698, 33.102, 33.506, 33.912, 34.319, 34.729,
-    35.139, 35.551, 35.962, 36.379, 36.799, 37.223, 37.649, 38.077, 38.505, 38.935, 39.364, 39.795,
-    40.229, 40.667, 41.1, 41.533, 41.965, 42.395, 42.825, 43.253, 43.682, 44.111, 44.538, 44.964,
-    45.39, 45.816, 46.24, 46.663, 47.084, 47.506, 47.929, 48.352, 48.776, 49.2, 49.624, 50.05,
-    50.476, 50.906, 51.336, 51.767, 52.196, 52.626, 53.055, 53.484, 53.911, 54.338, 54.762, 55.184,
-    55.605, 56.027, 56.448, 56.87, 57.292, 57.713, 58.133, 58.554, 58.977, 59.401, 59.827, 60.253,
-    60.679, 61.105, 61.532, 61.958, 62.386, 62.815, 63.245, 63.674, 64.102, 64.528, 64.955, 65.38,
-    65.806, 66.232, 66.656, 67.079, 67.501, 67.923, 68.343, 68.764, 69.182, 69.6, 70.018, 70.437,
-    70.858, 71.279, 71.7, 72.123, 72.548, 72.975, 73.404, 73.835, 74.268, 74.703, 75.138, 75.571,
-    76.007, 76.444, 76.881, 77.316, 77.749, 78.179, 78.61, 79.04, 79.467, 79.892, 80.315, 80.734,
-    81.151, 81.564, 81.978, 82.391, 82.801, 83.21, 83.616, 84.02, 84.424, 84.827, 85.23, 85.635,
-    86.043, 86.452, 86.863, 87.277, 87.692, 88.108, 88.527, 88.947, 89.369, 89.792, 90.213, 90.633,
-    91.051, 91.469, 91.885, 92.301, 92.719, 93.136, 93.553, 93.97, 94.389, 94.808, 95.228, 95.65,
-    96.073, 96.496, 96.919, 97.342, 97.764, 98.183, 98.599, 99.011, 99.42, 99.828, 100.233, 100.637,
-    101.042, 101.449, 101.857, 102.268, 102.681, 103.097, 103.516, 103.94, 104.366, 104.794, 105.222, 105.65,
-    106.075, 106.499, 106.923, 107.348, 107.773, 108.2, 108.623, 109.045, 109.467, 109.889, 110.313, 110.736,
-    111.161, 111.588, 112.013, 112.438, 112.863, 113.287, 113.712, 114.139, 114.564, 114.989, 115.414, 115.836,
-    116.257, 116.679, 117.101, 117.524, 117.946, 118.368, 118.789, 119.21, 119.629, 120.048, 120.467, 120.886,
-    121.304, 121.722, 122.14, 122.558, 122.975, 123.392, 123.809, 124.227, 124.644, 125.061, 125.477, 125.894,
-    126.311, 126.728, 127.145, 127.562, 127.979, 128.396, 128.813, 129.23, 129.648, 130.066, 130.483, 130.901,
-    131.32, 131.739, 132.158, 132.577, 132.995, 133.414, 133.836, 134.256, 134.674, 135.088, 135.5, 135.909,
-    136.315, 136.719, 137.124, 137.532, 137.938, 138.343, 138.749, 139.156, 139.567, 139.98, 140.395, 140.811,
-    141.228, 141.643, 142.057, 142.469, 142.882, 143.294, 143.704, 144.114, 144.522, 144.932, 145.341, 145.752,
-    146.162, 146.572, 146.981, 147.39, 147.798, 148.207, 148.615, 149.025, 149.434, 149.846, 150.257, 150.669,
-    151.081, 151.492, 151.904, 152.317, 152.73, 153.145, 153.56, 153.975, 154.388, 154.803, 155.219, 155.636,
-    156.054, 156.473, 156.891, 157.308, 157.723, 158.135, 158.547, 158.956, 159.365, 159.773, 160.182, 160.59,
-    160.999, 161.41, 161.823, 162.237, 162.653, 163.07, 163.489, 163.908, 164.328, 164.748, 165.167, 165.586,
-    166.003, 166.421, 166.84, 167.259, 167.678, 168.097, 168.516, 168.934, 169.352, 169.771, 170.19, 170.609,
-    171.028, 171.448, 171.867, 172.284, 172.697, 173.108, 173.518, 173.929, 174.341, 174.754, 175.169, 175.583,
-    175.996, 176.41, 176.828, 177.252, 177.679, 178.107, 178.535, 178.964, 179.391, 179.818, 180.247, 180.676,
-    181.106, 181.537, 181.965, 182.393, 182.82, 183.247, 183.672, 184.096, 184.519, 184.943, 185.367, 185.789,
-    186.21, 186.631, 187.053, 187.474, 187.895, 188.316, 188.737, 189.158, 189.577, 189.994, 190.41, 190.826,
-    191.242, 191.658, 192.073, 192.489, 192.905, 193.321, 193.737, 194.153, 194.568, 194.983, 195.397, 195.812,
-    196.227, 196.642, 197.059, 197.477, 197.896, 198.316, 198.739, 199.163, 199.588, 200.014, 200.437, 200.859,
-    201.279, 201.696, 202.111, 202.523, 202.934, 203.342, 203.748, 204.152, 204.556, 204.961, 205.369, 205.778,
-    206.191, 206.607, 207.025, 207.445, 207.866, 208.29, 208.716, 209.142, 209.569, 209.994, 210.417, 210.84,
-    211.26, 211.677, 212.091, 212.504, 212.914, 213.325, 213.737, 214.149, 214.562, 214.976, 215.389, 215.805,
-    216.224, 216.646, 217.071, 217.496, 217.921, 218.347, 218.772, 219.198, 219.627, 220.057, 220.485, 220.913,
-    221.339, 221.764, 222.19, 222.615, 223.039, 223.463, 223.885, 224.305, 224.724, 225.143, 225.561, 225.978,
-    226.392, 226.806, 227.219, 227.63, 228.042, 228.454, 228.865, 229.276, 229.685, 230.095, 230.504, 230.916,
-    231.329, 231.743, 232.157, 232.572, 232.987, 233.402, 233.816, 234.232, 234.649, 235.067, 235.485, 235.903,
-    236.322, 236.741, 237.16, 237.579, 237.997, 238.414, 238.83, 239.245, 239.658, 240.071, 240.483, 240.892,
-    241.302, 241.712, 242.124, 242.539, 242.957, 243.377, 243.799, 244.222, 244.645, 245.072, 245.5, 245.931,
-    246.361, 246.789, 247.217, 247.642, 248.066, 248.49, 248.916, 249.343, 249.769, 250.194, 250.617, 251.04,
-    251.464, 251.888, 252.314, 252.741, 253.166, 253.591, 254.016, 254.441, 254.866, 255.293, 255.718, 256.144,
-    256.566, 256.987, 257.408, 257.83, 258.251, 258.672, 259.094, 259.514, 259.934, 260.356, 260.779, 261.203,
-    261.629, 262.054, 262.477, 262.901, 263.323, 263.743, 264.162, 264.579, 264.994, 265.406, 265.819, 266.228,
-    266.637, 267.044, 267.451, 267.859, 268.271, 268.684, 269.101, 269.519, 269.939, 270.359, 270.781, 271.203,
-    271.627, 272.052, 272.477, 272.899, 273.32, 273.739, 274.158, 274.576, 274.994, 275.412, 275.829, 276.246,
-    276.662, 277.076, 277.491, 277.908, 278.327, 278.745, 279.162, 279.578, 279.993, 280.406, 280.819, 281.231,
-    281.641, 282.05, 282.453, 282.852, 283.251, 283.648, 284.044, 284.438, 284.829
+    0.453, 0.844, 1.238, 1.633, 2.028, 2.423, 2.819, 3.214, 3.61, 4.009, 4.412, 4.815,
+    5.218, 5.621, 6.025, 6.428, 6.831, 7.234, 7.637, 8.038, 8.439, 8.839, 9.239, 9.642,
+    10.047, 10.454, 10.865, 11.279, 11.695, 12.116, 12.537, 12.955, 13.373, 13.789, 14.203, 14.612,
+    15.016, 15.418, 15.818, 16.214, 16.606, 16.997, 17.389, 17.78, 18.174, 18.57, 18.97, 19.374,
+    19.779, 20.186, 20.596, 21.009, 21.423, 21.836, 22.25, 22.663, 23.077, 23.492, 23.908, 24.323,
+    24.737, 25.148, 25.56, 25.972, 26.384, 26.798, 27.213, 27.625, 28.038, 28.449, 28.858, 29.266,
+    29.671, 30.074, 30.478, 30.884, 31.289, 31.693, 32.095, 32.494, 32.892, 33.289, 33.686, 34.084,
+    34.482, 34.878, 35.273, 35.666, 36.057, 36.449, 36.842, 37.235, 37.631, 38.028, 38.426, 38.825,
+    39.225, 39.625, 40.026, 40.427, 40.829, 41.232, 41.635, 42.041, 42.448, 42.857, 43.267, 43.68,
+    44.096, 44.514, 44.935, 45.358, 45.784, 46.213, 46.643, 47.072, 47.501, 47.926, 48.348, 48.767,
+    49.184, 49.598, 50.009, 50.417, 50.821, 51.222, 51.621, 52.019, 52.417, 52.815, 53.213, 53.61,
+    54.006, 54.403, 54.799, 55.194, 55.589, 55.983, 56.378, 56.774, 57.17, 57.565, 57.962, 58.36,
+    58.758, 59.16, 59.566, 59.972, 60.381, 60.793, 61.207, 61.624, 62.043, 62.463, 62.884, 63.306,
+    63.727, 64.147, 64.566, 64.982, 65.397, 65.811, 66.222, 66.633, 67.043, 67.454, 67.865, 68.274,
+    68.684, 69.094, 69.506, 69.917, 70.329, 70.742, 71.154, 71.565, 71.974, 72.383, 72.791, 73.2,
+    73.607, 74.015, 74.421, 74.826, 75.229, 75.632, 76.034, 76.435, 76.835, 77.233, 77.631, 78.027,
+    78.424, 78.824, 79.226, 79.63, 80.033, 80.434, 80.835, 81.237, 81.642, 82.049, 82.458, 82.867,
+    83.272, 83.672, 84.071, 84.471, 84.874, 85.276, 85.676, 86.074, 86.471, 86.866, 87.26, 87.653,
+    88.049, 88.447, 88.847, 89.246, 89.645, 90.045, 90.444, 90.842, 91.238, 91.633, 92.03, 92.427,
+    92.824, 93.217, 93.607, 93.996, 94.387, 94.78, 95.174, 95.57, 95.969, 96.367, 96.765, 97.16,
+    97.554, 97.951, 98.35, 98.748, 99.147, 99.545, 99.945, 100.344, 100.744, 101.144, 101.546, 101.949,
+    102.353, 102.757, 103.16, 103.56, 103.959, 104.356, 104.752, 105.146, 105.542, 105.937, 106.333, 106.728,
+    107.124, 107.523, 107.924, 108.325, 108.727, 109.131, 109.535, 109.939, 110.344, 110.749, 111.154, 111.558,
+    111.961, 112.366, 112.772, 113.18, 113.588, 113.994, 114.4, 114.806, 115.213, 115.621, 116.03, 116.441,
+    116.851, 117.262, 117.671, 118.084, 118.495, 118.903, 119.314, 119.723, 120.133, 120.543, 120.954, 121.363,
+    121.772, 122.179, 122.584, 122.992, 123.399, 123.807, 124.215, 124.625, 125.032, 125.439, 125.849, 126.26,
+    126.672, 127.085, 127.5, 127.918, 128.335, 128.749, 129.163, 129.577, 129.99, 130.401, 130.813, 131.222,
+    131.633, 132.042, 132.451, 132.859, 133.268, 133.675, 134.083, 134.489, 134.893, 135.296, 135.7, 136.103,
+    136.506, 136.909, 137.312, 137.716, 138.122, 138.527, 138.933, 139.341, 139.747, 140.152, 140.556, 140.96,
+    141.364, 141.767, 142.169, 142.573, 142.976, 143.38, 143.785, 144.192, 144.598, 145.007, 145.415, 145.824,
+    146.236, 146.65, 147.061, 147.475, 147.89, 148.305, 148.722, 149.142, 149.562, 149.982, 150.401, 150.819,
+    151.237, 151.657, 152.076, 152.494, 152.912, 153.329, 153.745, 154.16, 154.576, 154.993, 155.411, 155.827,
+    156.241, 156.653, 157.064, 157.472, 157.879, 158.283, 158.685, 159.085, 159.482, 159.877, 160.27, 160.664,
+    161.057, 161.45, 161.844, 162.238, 162.633, 163.027, 163.422, 163.818, 164.213, 164.608, 165.005, 165.403,
+    165.8, 166.197, 166.595, 166.992, 167.388, 167.786, 168.186, 168.588, 168.992, 169.399, 169.808, 170.217,
+    170.628, 171.037, 171.448, 171.859, 172.271, 172.683, 173.095, 173.508, 173.915, 174.321, 174.725, 175.128,
+    175.532, 175.935, 176.339, 176.741, 177.141, 177.54, 177.94, 178.341, 178.744, 179.148, 179.556, 179.963,
+    180.373, 180.782, 181.194, 181.606, 182.02, 182.432, 182.842, 183.251, 183.658, 184.064, 184.468, 184.87,
+    185.271, 185.671, 186.071, 186.471, 186.873, 187.277, 187.683, 188.089, 188.496, 188.905, 189.314, 189.725,
+    190.136, 190.545, 190.952, 191.358, 191.761, 192.163, 192.564, 192.963, 193.361, 193.76, 194.16, 194.561,
+    194.964, 195.37, 195.775, 196.181, 196.59, 196.999, 197.411, 197.825, 198.238, 198.652, 199.066, 199.477,
+    199.888, 200.297, 200.705, 201.109, 201.512, 201.912, 202.31, 202.705, 203.094, 203.485, 203.879, 204.274,
+    204.674, 205.08, 205.486, 205.893, 206.302, 206.71, 207.12, 207.533, 207.942, 208.348, 208.751, 209.148,
+    209.541, 209.933, 210.325, 210.719, 211.115, 211.511, 211.906, 212.303, 212.701, 213.102, 213.505, 213.911,
+    214.318, 214.724, 215.13, 215.533, 215.936, 216.34, 216.745, 217.15, 217.553, 217.955, 218.356, 218.756,
+    219.155, 219.555, 219.956, 220.357, 220.757, 221.156, 221.555, 221.956, 222.359, 222.763, 223.169, 223.579,
+    223.988, 224.398, 224.808, 225.22, 225.633, 226.044, 226.455, 226.865, 227.275, 227.683, 228.09, 228.496,
+    228.902, 229.309, 229.715, 230.12, 230.525, 230.929, 231.333, 231.737, 232.141, 232.547, 232.952, 233.356,
+    233.761, 234.166, 234.573, 234.982, 235.391, 235.802, 236.212, 236.623, 237.032, 237.442, 237.851, 238.26,
+    238.666, 239.072, 239.476, 239.879, 240.28, 240.68, 241.08, 241.48, 241.88, 242.281, 242.683, 243.087,
+    243.49, 243.894, 244.298, 244.703, 245.11, 245.516, 245.921, 246.326, 246.729, 247.13, 247.53, 247.929,
+    248.328, 248.728, 249.129, 249.532, 249.935, 250.341, 250.748, 251.159, 251.573, 251.991, 252.41, 252.829,
+    253.246, 253.663, 254.079, 254.495, 254.912, 255.329, 255.744, 256.156, 256.567, 256.978, 257.391, 257.805,
+    258.218, 258.629, 259.041, 259.452, 259.864, 260.277, 260.691, 261.107, 261.523, 261.938, 262.354, 262.772,
+    263.191, 263.611, 264.031, 264.45, 264.867, 265.282, 265.694, 266.104, 266.512, 266.92, 267.324, 267.727,
+    268.128, 268.526, 268.923, 269.322, 269.719, 270.118, 270.519, 270.921, 271.323, 271.726, 272.129, 272.533,
+    272.936, 273.342, 273.747, 274.155, 274.561, 274.966, 275.373, 275.779, 276.186, 276.592, 277.0, 277.411,
+    277.82, 278.23, 278.638, 279.048, 279.458, 279.869, 280.281, 280.692, 281.105, 281.517, 281.926, 282.337,
+    282.747, 283.161, 283.576, 283.989, 284.403, 284.817, 285.233, 285.654
   ]
 sections:
   - id: intro
@@ -146,142 +148,142 @@ sections:
     narration: "Audio-described version: before each section, the picture pauses while I describe it. The song is a comic opera on the stage of an opera house dressed as a software team's office: red velvet drapes, a gilded arch, footlights, and a conductor in the pit. On the back wall are an arched window onto the city, a wall clock beside it, and a board headed Build status with six lamps, all green with ticks. The curtain rises, and a follow spot picks up the Teammate, the tenor, gliding in from the left: a towering brown pompadour, a twirled moustache, a teal quarter-zip pullover over a white tee, studio headphones round his neck, jeans, and orange sneakers. At a desk on the right, your hero, or the default Bruin, types at a laptop. He raises a calming palm to them and pats his chest. A sprint calendar sheds its fourteen days down to: ship today. A toy ship flagged v1.0 by 3:00 is flown in from the rafters on two wires, the clock spins to three, and he salutes it. Each teammate who answers him later wears your hero's face, or the SE Gym's default hero's."
     lines:
       - id: intro-1
-        start: 1.62
-        end: 7.48
+        start: 2.04
+        end: 7.17
         text: "No need to worry! Just leave it to me!"
-        marks: {"no": 1.62, "need": 2.16, "to": 2.78, "worry": 3.14, "just": 5.17, "leave": 5.66, "it": 6.16, "to_2": 6.4, "me": 6.66}
+        marks: {"no": 2.04, "need": 2.4, "to": 3.02, "worry": 3.56, "just": 5.02, "leave": 5.8, "it": 6.2, "to_2": 6.52, "me": 6.76}
         visual: "The curtain rises on the opera-house office: an arched window onto a sunny city, a wall clock at nine, and a “Build status” board with six green lamps, each with a tick. A follow spot picks up the Teammate, the tenor, gliding in from the left: a towering brown pompadour with a curl, a twirled moustache, a teal quarter-zip pullover over a white tee with a rocket on the chest, studio headphones round his neck, jeans, and orange sneakers. At a desk on the right, your hero, or the default Bruin, types at a laptop. On “No need to worry” he raises a calming palm toward them; on “leave it to me” he pats his chest twice."
       - id: intro-2
-        start: 8.49
-        end: 14.84
-        text: "I'll save us a fortnight— We'll ship it by three!"
-        marks: {"ill": 8.49, "save": 9.14, "us": 9.62, "a": 9.84, "fortnight": 10.04, "well": 12.1, "ship": 12.76, "it": 13.18, "by": 13.42, "three": 13.74}
+        start: 8.22
+        end: 14.43
+        text: "I'll save us a whole sprint— We'll ship it by three!"
+        marks: {"ill": 8.22, "save": 8.94, "us": 9.3, "a": 9.48, "whole": 9.52, "sprint": 9.7, "well": 11.62, "ship": 12.34, "it": 12.76, "by": 13.26, "three": 13.56}
         visual: "A wall calendar headed “Sprint” shows 14 days left; on “save” he points at it and its pages tear off one after another until it reads “Ship today!”. On “We’ll”, a toy galleon on wheels, its pennant tagged “v1.0 by 3:00”, is flown in from the rafters on two wires and swings to a stop on the floor; on “ship” the clock spins to three, and on “three” he salutes it, then flings both arms wide."
   - id: verse-1
     title: "Verse 1: Requirements"
     delivery: sung
     voice: Teammate
-    narration: "Act one, Requirements. A long scroll of requirements unrolls behind the Teammate, and he snaps it shut with one raised finger. A giant phone running the coffee app, CoffeeGo, shows a cup to go, then one big order button and a latte, gleaming. Silhouetted hands in the audience go up with question marks; he shushes them and taps his temple. A card for a meeting with users, What do they need?, appears, and he tears it in two and tosses the halves away. He bows to a lit Applause sign, and the house stays silent but for a cricket."
+    narration: "Act one, Requirements. A long scroll of requirements unrolls behind the Teammate, and he snaps it shut with one raised finger. A giant phone running a ticket app, SeatSwap, shows a concert ticket, then one big Buy button, then the ticket locked to one name, gleaming. Silhouetted hands in the audience go up with question marks; he shushes them and taps his temple. A card for a meeting with users, What do they need?, appears, and he tears it in two and tosses the halves away. He bows to a lit Applause sign, and the house stays silent but for a cricket."
     lines:
       - id: verse-1-1
-        start: 17.29
-        end: 20.24
-        text: "Requirements? Quite simple! It's coffee to go!"
-        marks: {"requirements": 17.29, "quite": 17.82, "simple": 18.06, "its": 18.74, "coffee": 19.0, "to": 19.4, "go": 19.54}
-        visual: "A badge reads “Act I · Requirements”. A long scroll titled “Requirements”, ruled with line after line, unrolls down the back wall; on “simple” he raises one finger and it rolls shut. On “It’s”, a giant phone running the “CoffeeGo” app pops up in the middle, showing a coffee cup to go, and he presents it with an open palm."
+        start: 15.92
+        end: 20.0
+        text: "Requirements? Requirements? Quite simple! Tickets: buy and go!"
+        marks: {"requirements": 15.92, "requirements_2": 16.7, "quite": 17.4, "simple": 17.76, "tickets": 18.62, "buy": 18.92, "and": 19.24, "go": 19.38}
+        visual: "A badge reads “Act I · Requirements”. A long scroll titled “Requirements”, ruled with line after line, unrolls down the back wall; on “simple” he raises one finger and it rolls shut. On “Tickets”, a giant phone running a ticket app, “SeatSwap”, pops up in the middle, showing a concert ticket: “Jazz Night, Fri 8:00 PM, Row F, seat 12”, and he presents it with an open palm."
       - id: verse-1-2
-        start: 20.26
-        end: 23.7
+        start: 20.02
+        end: 23.18
         text: "No need to ask users— I'm certain I know!"
-        marks: {"no": 20.26, "need": 20.6, "to": 20.84, "ask": 21.06, "users": 21.36, "im": 22.04, "certain": 22.22, "i": 22.72, "know": 22.96}
+        marks: {"no": 20.02, "need": 20.18, "to": 20.42, "ask": 20.72, "users": 20.9, "im": 21.56, "certain": 21.97, "i": 22.28, "know": 22.52}
         visual: "Along the bottom of the picture, silhouetted heads in the audience raise hands holding question marks. He puts a finger to his lips, and the hands go down; on “certain” he taps his temple, smiling."
       - id: verse-1-3
-        start: 23.72
-        end: 27.1
-        text: "One button! One latte! How sleek! How refined!"
-        marks: {"one": 23.72, "button": 23.9, "one_2": 24.58, "latte": 24.72, "how": 25.32, "sleek": 25.5, "how_2": 25.94, "refined": 26.22}
-        visual: "The phone shows one big green “ORDER” button, and on “latte” a latte with a heart in its foam. He points at the button; a gleam sweeps the screen on “sleek” and again on “refined”, with sparkles, and he blows a chef’s kiss."
+        start: 23.2
+        end: 25.96
+        text: "One ticket! One name! How sleek! How refined!"
+        marks: {"one": 23.2, "ticket": 23.36, "one_2": 23.92, "name": 24.18, "how": 24.72, "sleek": 25.0, "how_2": 25.38, "refined": 25.58}
+        visual: "The phone shows one big green “BUY” button as he points at it, and on “name” the ticket again, now “Seat F12, Name: Alex, Locked to you”. A gleam sweeps the screen on “sleek” and again on “refined”, with sparkles, and he blows a chef’s kiss."
       - id: verse-1-4
-        start: 27.12
-        end: 31.1
+        start: 25.98
+        end: 30.25
         text: "I'll save them a meeting— They'll thank me in time!"
-        marks: {"ill": 27.12, "save": 27.4, "them": 27.86, "a": 28.08, "meeting": 28.26, "theyll": 28.88, "thank": 29.22, "me": 29.6, "in": 29.9, "time": 30.38}
+        marks: {"ill": 25.98, "save": 26.64, "them": 26.86, "a": 27.28, "meeting": 27.56, "theyll": 28.2, "thank": 28.61, "me": 28.92, "in": 29.22, "time": 29.64}
         visual: "A card pops up above the phone: “Meeting with users: Monday 10:00. What do they need?”. On “meeting” he tears it in two and tosses the halves away over his shoulders. On “thank” a theatre sign lit with bulbs, “APPLAUSE”, glows, and he takes a deep bow; the house is silent, and a green cricket on the floor chirps three times."
   - id: pm
     title: "The Product Manager"
     delivery: sung
     voice: Product Manager
-    narration: "The Product Manager glides in from the right, with your hero's face, a navy blazer over a coral tee, a lanyard and badge, grey trousers, white sneakers, and a clipboard, and stands with hands on hips. The Teammate freezes with a sheepish grin and a bead of sweat while they sing. The phone steps back behind a long counter, where twenty empty cups line up; the clock turns to ten. One cup slides out of the phone, and twenty straws fan into it. The Product Manager shows a card: Demo today, group order, 20 lattes for 10:00. Then the phone fans out into six small phones, red, orange, gold, green, blue, and violet, each with the same one button, and the Product Manager facepalms."
+    narration: "The Product Manager glides in from the right, with your hero's face, a navy blazer over a coral tee, a lanyard and badge, grey trousers, white sneakers, and a clipboard. The Teammate freezes with a sheepish grin and a bead of sweat while they sing. A gold card headed User story writes itself out, part by part: As a fan, I want to pass my ticket on, so a friend can use my seat. The phone answers: Transfer? Not allowed. One name only. The Product Manager shows a card: Demo today, send a ticket to a friend. Then the phone fans out into six small phones, red, orange, gold, green, blue, and violet, each with the same one button, and the Product Manager facepalms."
     lines:
       - id: pm-1
-        start: 33.71
-        end: 37.38
-        text: "They need twenty coffees For meetings at ten!"
-        marks: {"they": 33.71, "need": 34.24, "twenty": 34.8, "coffees": 35.18, "for": 35.72, "meetings": 35.98, "at": 36.44, "ten": 36.8}
-        visual: "The Product Manager glides in from the right: your hero’s face, a navy blazer open over a coral tee, a lanyard and badge, grey trousers, white sneakers, and a clipboard in hand; they stand with hands on hips. The Teammate freezes with a sheepish grin, a bead of sweat on his brow. The phone shrinks back to stand behind a long counter, where twenty empty cups pop up in two rows as the Product Manager points at them. A sticker “Meeting at 10:00” appears, and the clock turns to ten."
+        start: 30.63
+        end: 34.0
+        text: "As a fan, I want To pass my ticket on,"
+        marks: {"as": 30.63, "a": 31.08, "fan": 31.28, "i": 32.08, "want": 32.14, "to": 32.38, "pass": 32.52, "my": 32.78, "ticket": 32.94, "on": 33.3}
+        visual: "The Product Manager glides in from the right: your hero’s face, a navy blazer open over a coral tee, a lanyard and badge, grey trousers, white sneakers, and a clipboard in hand. The Teammate freezes with a sheepish grin, a bead of sweat on his brow, and the phone steps back to the left. A gold card headed “User story” writes itself out as they sing: “As a fan,” then “I want to pass my ticket on,”."
       - id: pm-2
-        start: 37.4
-        end: 40.8
-        text: "Your app sends one NOW— Shall they share it, then?"
-        marks: {"your": 37.4, "app": 37.74, "sends": 38.1, "one": 38.28, "now": 38.56, "shall": 39.08, "they": 39.22, "share": 39.71, "it": 39.94, "then": 40.22}
-        visual: "On “NOW” one coffee cup slides out of the phone onto the counter, and on “share” twenty straws fan into it. The Product Manager shrugs, palms up."
+        start: 34.02
+        end: 37.66
+        text: "So a friend can use my seat When I can't come along!"
+        marks: {"so": 34.02, "a": 34.38, "friend": 34.6, "can": 34.82, "use": 35.02, "my": 35.22, "seat": 35.4, "when": 35.74, "i": 35.94, "cant": 36.04, "come": 36.36, "along": 36.64}
+        visual: "The card adds “so a friend can use my seat.”, and the Product Manager presents it. On “can’t” the phone’s screen answers “Transfer? ✗ Not allowed. One name only”; the Product Manager points at it, then shrugs."
       - id: pm-3
-        start: 40.82
-        end: 44.36
+        start: 37.68
+        end: 41.0
         text: "I promised a demo Of what they could use."
-        marks: {"i": 40.82, "promised": 41.22, "a": 41.74, "demo": 42.15, "of": 42.5, "what": 42.88, "they": 43.12, "could": 43.36, "use": 43.6}
-        visual: "The Product Manager pats their chest, then presents a gold card above the phone: “Demo today. Group order: 20 lattes for 10:00”."
+        marks: {"i": 37.68, "promised": 37.9, "a": 38.62, "demo": 38.98, "of": 39.3, "what": 39.52, "they": 39.68, "could": 39.96, "use": 40.18}
+        visual: "The user story goes. The Product Manager pats their chest, then presents a gold card above the phone: “Demo today: Send a ticket to a friend”."
       - id: pm-4
-        start: 44.38
-        end: 48.12
+        start: 41.02
+        end: 45.38
         text: "You've built the wrong product— In six lovely hues!"
-        marks: {"youve": 44.38, "built": 44.7, "the": 44.98, "wrong": 45.18, "product": 45.38, "in": 45.98, "six": 46.36, "lovely": 46.76, "hues": 47.28}
-        visual: "The Product Manager points at the phone. On “six” it fans out into six small phones, red, orange, gold, green, blue, and violet, each with the same one ORDER button; the Teammate presents them proudly, and on “hues” the Product Manager facepalms."
+        marks: {"youve": 41.02, "built": 41.42, "the": 41.78, "wrong": 42.0, "product": 42.2, "in": 42.78, "six": 43.32, "lovely": 43.9, "hues": 44.64}
+        visual: "The Product Manager points at the phone. On “six” it fans out into six small phones, red, orange, gold, green, blue, and violet, each with the same one BUY button; the Teammate presents them proudly, and on “hues” the Product Manager facepalms."
   - id: verse-2
     title: "Verse 2: Reuse and lockfiles"
     delivery: sung
     voice: Teammate
-    narration: "Act two, Reuse. A wall shelf of package boxes slides in: auth, charts, orders, emoji, dates, and payments, each with its version number. A sticker says Reuse!, and a red card says Build it anew: no, thanks. The orders package flies off the shelf into the phone, which now sends a group order. He flicks away a padlocked document, package-lock.json, and new versions of the orders package march in from the right on little legs, each getting a sticker: fixes! He holds a gold trophy high, beaming."
+    narration: "Act two, Reuse. A wall shelf of package boxes slides in: auth, charts, transfers, emoji, dates, and payments, each with its version number. A sticker says Reuse!, and a red card says Build it anew: no, thanks. The transfers package, version 1.4.2, flies off the shelf into the phone, which now sends a ticket to Sam. He flicks away a padlocked document, package-lock.json, and new versions of the transfers package, 1.5.0, 2.0.0, and 2.1.0, march in from the right on little legs, each getting a sticker: fixes! He holds a gold trophy high, beaming."
     lines:
       - id: verse-2-1
-        start: 48.65
-        end: 52.32
-        text: "Group orders? Quite simple! I'll borrow the code!"
-        marks: {"group": 48.65, "orders": 49.1, "quite": 49.7, "simple": 49.86, "ill": 50.6, "borrow": 50.82, "the": 51.22, "code": 51.46}
-        visual: "A badge reads “Act II · Reuse”, and the Product Manager slides off to the right. On “simple” the Teammate raises one finger; on “borrow” a wall shelf of six package boxes slides in: “auth 1.2.0”, “charts 4.0.1”, “orders 2.4.1”, “emoji 9.0.0”, “dates 2.1.3”, and “payments 7.7.0”."
+        start: 45.4
+        end: 49.52
+        text: "Transfers? Quite simple! I'll borrow the code!"
+        marks: {"transfers": 45.4, "quite": 46.14, "simple": 46.44, "ill": 47.58, "borrow": 48.21, "the": 48.52, "code": 48.72}
+        visual: "A badge reads “Act II · Reuse”, and the Product Manager slides off to the right. On “simple” the Teammate raises one finger; on “borrow” a wall shelf of six package boxes slides in: “auth 1.2.0”, “charts 4.0.1”, “transfers 1.4.2”, “emoji 9.0.0”, “dates 2.1.3”, and “payments 7.7.0”."
       - id: verse-2-2
-        start: 52.34
-        end: 55.42
+        start: 50.2
+        end: 53.51
         text: "Design with reuse! Why build it anew?"
-        marks: {"design": 52.34, "with": 52.74, "reuse": 53.08, "why": 53.84, "build": 54.14, "it": 54.66, "anew": 54.82}
+        marks: {"design": 50.2, "with": 50.7, "reuse": 51.0, "why": 51.86, "build": 52.04, "it": 52.44, "anew": 52.68}
         visual: "A gold sticker “Reuse!” appears above the shelf, and he presents it; on “build” a red card says “Build it anew: No, thanks!”, and on “anew” he wags a finger."
       - id: verse-2-3
-        start: 55.44
-        end: 58.9
-        text: "A package for orders Will know what to do!"
-        marks: {"a": 55.44, "package": 55.8, "for": 56.38, "orders": 56.74, "will": 57.22, "know": 57.58, "what": 57.82, "to": 58.16, "do": 58.4}
-        visual: "The phone returns at the right. The “orders 2.4.1” box flies off the shelf into it, and its screen changes to “Group order, 20 × latte, for 10:00, Sent ✓”; he points at it."
+        start: 53.53
+        end: 56.44
+        text: "A package for transfers Will know what to do!"
+        marks: {"a": 53.53, "package": 53.66, "for": 54.04, "transfers": 54.3, "will": 54.84, "know": 55.22, "what": 55.5, "to": 55.78, "do": 56.0}
+        visual: "The phone returns at the right, showing the locked ticket. The “transfers 1.4.2” box flies off the shelf into it, and its screen changes to “Transfer, Seat F12, To: Sam, Sent ✓”; he points at it."
       - id: verse-2-4
-        start: 58.92
-        end: 62.38
+        start: 56.46
+        end: 59.68
         text: "No lockfile to fuss with! Let new versions in!"
-        marks: {"no": 58.92, "lockfile": 59.22, "to": 59.84, "fuss": 60.06, "with": 60.4, "let": 60.72, "new": 60.9, "versions": 61.22, "in": 61.78}
-        visual: "A document with a padlock, “package-lock.json”, appears above the shelf; on “fuss” he flicks it away, and it spins off the stage. Three new versions of the orders package, “2.5.0”, “3.0.0”, and “3.1.0”, march in from the right on little legs, and he welcomes them with an open palm."
+        marks: {"no": 56.46, "lockfile": 56.8, "to": 57.36, "fuss": 57.58, "with": 57.88, "let": 58.2, "new": 58.4, "versions": 58.64, "in": 59.14}
+        visual: "A document with a padlock, “package-lock.json”, appears above the shelf; on “fuss” he flicks it away, and it spins off the stage. Three new versions of the transfers package, “1.5.0”, “2.0.0”, and “2.1.0”, march in from the right on little legs, and he welcomes them with an open palm."
       - id: verse-2-5
-        start: 62.4
-        end: 69.83
+        start: 59.7
+        end: 62.84
         text: "New versions mean fixes— A sensible win!"
-        marks: {"new": 62.4, "versions": 62.64, "mean": 63.2, "fixes": 63.84, "a": 64.04, "sensible": 64.44, "win": 65.22}
+        marks: {"new": 59.7, "versions": 59.98, "mean": 60.44, "fixes": 60.87, "a": 61.18, "sensible": 61.54, "win": 62.2}
         visual: "Each marching box gets a gold sticker, “fixes!”. He holds a gold trophy high with the other arm flung out, beaming and blushing, and sparkles burst on “win”; the boxes march off."
   - id: build
     title: "The Build Engineer"
     delivery: sung
     voice: Build Engineer
-    narration: "The Build Engineer glides in from the right, with your hero's face, a hi-vis safety vest over a navy tee, olive cargo trousers, work boots, and a wrench. The Teammate freezes again, sweating. His laptop keeps the old orders package, while a blue build machine marked Clean build takes in the new version. A plug for the old call bounces off a socket for the new interface, with a spark and a red cross. The toy ship is stamped Can't ship, every lamp on the Build status board turns red, and a sticker says All builds failed. Last, his laptop drops into a cardboard box marked Overnight, a label slaps on, Fragile: works on my machine, and he clutches his head."
+    narration: "The Build Engineer glides in from the right, with your hero's face, a hi-vis safety vest over a navy tee, olive cargo trousers, work boots, and a wrench. The Teammate freezes again, sweating. His laptop keeps the old transfers package, 1.4.2, while a blue build machine marked Clean build takes in version 2.1.0. A plug for the old call, version one, bounces off a socket for version two's new call, with a spark and a red cross. A lockfile card pins the old version, every lamp on the Build status board turns red, and a sticker says All builds failed. Last, his laptop drops into a cardboard box marked Overnight, a label slaps on, Fragile: works on my machine, and he clutches his head."
     lines:
       - id: build-1
-        start: 69.85
-        end: 73.77
+        start: 62.86
+        end: 66.34
         text: "Your laptop kept old ones; My clean build got new."
-        marks: {"your": 69.85, "laptop": 70.2, "kept": 70.84, "old": 71.31, "ones": 71.62, "my": 71.98, "clean": 72.14, "build": 72.46, "got": 72.76, "new": 73.0}
-        visual: "The Build Engineer glides in from the right: your hero’s face, a hi-vis safety vest with reflective bands over a navy tee, olive cargo trousers, work boots, and a wrench; they stand with hands on hips while the Teammate freezes, sweating. His laptop shows the old “orders 2.4.1” box, with a sticker “Kept the old one”; a blue build machine with a hopper, a chimney, and a plate “Clean build” appears, and a new “orders 3.0.0” box rides its conveyor in, under a gold sticker “Fetched the new one”."
+        marks: {"your": 62.86, "laptop": 63.26, "kept": 63.76, "old": 64.16, "ones": 64.52, "my": 64.8, "clean": 65.02, "build": 65.34, "got": 65.62, "new": 65.84}
+        visual: "The Build Engineer glides in from the right: your hero’s face, a hi-vis safety vest with reflective bands over a navy tee, olive cargo trousers, work boots, and a wrench; they stand with hands on hips while the Teammate freezes, sweating. His laptop shows the old “transfers 1.4.2” box, with a sticker “Kept the old one”; a blue build machine with a hopper, a chimney, and a plate “Clean build” appears, and a new “transfers 2.1.0” box rides its conveyor in, under a gold sticker “Fetched the new one”."
       - id: build-2
-        start: 73.79
-        end: 76.7
-        text: "The interface changed— Your calls won't go through!"
-        marks: {"the": 73.79, "interface": 74.0, "changed": 74.76, "your": 75.42, "calls": 75.72, "wont": 76.02, "go": 76.28, "through": 76.42}
-        visual: "A socket labelled “submit(cart, user)” and a plug labelled “place(cart)”: on “calls” the plug pushes in, its prongs miss, it bounces back with a spark, and on “go” a red cross pops up. The Build Engineer points at it, then shrugs."
+        start: 66.36
+        end: 70.04
+        text: "Version two changed the API— Your calls won't go through!"
+        marks: {"version": 66.36, "two": 66.76, "changed": 67.24, "the": 67.54, "api": 67.76, "your": 68.34, "calls": 68.46, "wont": 68.94, "go": 69.2, "through": 69.36}
+        visual: "A socket labelled “v2: transfer(to)” and a plug labelled “v1: send()”: on “calls” the plug pushes in, its prongs miss, it bounces back with a spark, and on “go” a red cross pops up. The Build Engineer points at it on “Version”, then shrugs."
       - id: build-3
-        start: 76.72
-        end: 80.34
-        text: "We can't ship the software; The fresh builds all fail."
-        marks: {"we": 76.72, "cant": 77.32, "ship": 77.78, "the": 78.02, "software": 78.22, "the_2": 79.0, "fresh": 79.08, "builds": 79.38, "all": 79.74, "fail": 79.96}
-        visual: "The toy ship rolls in, and on “ship” a red stamp “Can’t ship” lands above it. On “fresh” the six lamps on the build status board turn red one by one, each with a cross, and a red sticker reads “All builds failed”; the Build Engineer points at the board."
+        start: 70.06
+        end: 73.84
+        text: "Next time, pin your versions! Till then, the builds fail."
+        marks: {"next": 70.06, "time": 70.44, "pin": 71.06, "your": 71.26, "versions": 71.42, "till": 72.12, "then": 72.26, "the": 72.56, "builds": 72.86, "fail": 73.12}
+        visual: "On “pin” a card appears, “package-lock.json”, with the line “\"transfers\": \"1.4.2\"”, and the Build Engineer points at it. On “builds” the six lamps on the build status board turn red one by one, each with a cross, and on “fail” a red sticker reads “All builds failed”; the Build Engineer points at the board."
       - id: build-4
-        start: 80.36
-        end: 84.66
+        start: 73.86
+        end: 78.88
         text: "Shall I ship them your laptop By overnight mail?"
-        marks: {"shall": 80.36, "i": 80.74, "ship": 80.9, "them": 81.24, "your": 81.48, "laptop": 81.76, "by": 82.6, "overnight": 82.8, "mail": 83.71}
+        marks: {"shall": 73.86, "i": 74.08, "ship": 74.24, "them": 74.64, "your": 74.92, "laptop": 75.16, "by": 75.68, "overnight": 76.34, "mail": 77.06}
         visual: "A cardboard box marked “OVERNIGHT” opens, and the Build Engineer presents it; on “laptop” his laptop drops into it, and on “mail” a shipping label slaps on: “FRAGILE: Works on my machine”. The Teammate clutches his head in despair."
   - id: refrain-1
     title: "Refrain"
@@ -290,148 +292,148 @@ sections:
     narration: "Refrain. The Teammate stands by his desk, where his laptop shows All tests pass. He lifts it high on one palm in a golden light while the Build status board behind him stays red. Back on the desk, it shows his code in a gilded frame, and he blows a chef's kiss. A flip counter on the desk, Tiny fixes, counts 1, then 5, then 6. Last, six lamps on his laptop's screen turn green, the footlights turn green, and he throws his arms up, while the board stays red."
     lines:
       - id: refrain-1-1
-        start: 86.73
-        end: 90.12
+        start: 79.15
+        end: 80.9
         text: "It works on my machine!"
-        marks: {"it": 86.73, "works": 87.08, "on": 87.56, "my": 87.94, "machine": 88.5}
+        marks: {"it": 79.15, "works": 79.44, "on": 79.72, "my": 79.88, "machine": 80.24}
         visual: "A badge reads “Refrain”, and the Build Engineer slides off to the right. The Teammate strides to the middle, beside his desk on the left, where his laptop shows a big green tick and “All tests pass”. He points at it, then lifts it high on one flat palm beside his head, the other arm flung wide, beaming in a golden light with sparkles, while the build status board behind him stays red."
       - id: refrain-1-2
-        start: 90.2
-        end: 93.28
+        start: 80.96
+        end: 85.4
         text: "The finest code you've seen!"
-        marks: {"the": 90.2, "finest": 90.42, "code": 91.36, "youve": 91.74, "seen": 92.12}
+        marks: {"the": 80.96, "finest": 82.62, "code": 82.98, "youve": 83.54, "seen": 83.9}
         visual: "He sets the laptop back on the desk, its screen now showing his code in a gilded frame, presents it, and blows a chef’s kiss."
       - id: refrain-1-3
-        start: 93.58
-        end: 96.49
+        start: 85.42
+        end: 88.73
         text: "One tiny fix— Or five or six—"
-        marks: {"one": 93.58, "tiny": 93.8, "fix": 94.59, "or": 95.06, "five": 95.46, "or_2": 95.78, "six": 95.98}
+        marks: {"one": 85.42, "tiny": 85.88, "fix": 86.63, "or": 87.32, "five": 87.48, "or_2": 87.72, "six": 87.86}
         visual: "A flip counter on the front of his desk, “Tiny fixes”, shows 1 on “tiny” as he raises one finger; it flips to 5 on “five” and to 6 on “six” while he shrugs."
       - id: refrain-1-4
-        start: 96.9
-        end: 100.03
+        start: 88.75
+        end: 91.07
         text: "And all the lights turn green!"
-        marks: {"and": 96.9, "all": 97.3, "the": 97.58, "lights": 97.9, "turn": 98.42, "green": 98.8}
+        marks: {"and": 88.75, "all": 89.14, "the": 89.32, "lights": 89.46, "turn": 89.84, "green": 90.18}
         visual: "The laptop’s screen shows six lamps over the words “My machine”; they turn green one by one, the footlights glow green on “turn”, and he throws his arms up high, blushing with joy. The build status board stays red; then the footlights go back to warm."
   - id: verse-3
     title: "Verse 3: Brittle tests"
     delivery: sung
     voice: Teammate
-    narration: "Act three, Testing. A code card, checkout.py, holds a function that loads a cart, takes a subtotal, adds tax, and returns the total. Gold test tags pin onto every call, and green numbers 1 to 4 onto their order. A second card, test_checkout.py, asserts that the calls come in exactly that order. A plaster mould closes round the code, sealed Cast. The add-tax line flashes red, and a big red stamp says NO! on the test."
+    narration: "Act three, Testing. A code card, transfer.py, holds a function that checks the owner, gives the seat to a friend, notifies the friend, and logs it. Gold test tags pin onto every line, and green numbers 1 to 4 onto their order. A second card, test_transfer.py, asserts that the helpers are called in exactly that order. A plaster mould closes round the code, sealed Cast. The notify line flashes red, and a big red stamp says NO! on the test."
     lines:
       - id: verse-3-1
-        start: 100.35
-        end: 103.86
+        start: 92.38
+        end: 98.0
         text: "I'll make this more solid! I'll test every call!"
-        marks: {"ill": 100.35, "make": 100.64, "this": 100.86, "more": 101.08, "solid": 101.38, "ill_2": 101.98, "test": 102.2, "every": 102.64, "call": 103.02}
-        visual: "A badge reads “Act III · Testing”, and the Teammate steps left. A code card “checkout.py” shows: def checkout(cart): items = load(cart); price = subtotal(items); price = add_tax(price); return total(price). He gives a thumbs-up on “solid”, and on “test” gold “test” tags pin onto each of the four calls as he points at them."
+        marks: {"ill": 92.38, "make": 92.7, "this": 92.92, "more": 93.14, "solid": 93.4, "ill_2": 95.48, "test": 95.84, "every": 96.24, "call": 96.48}
+        visual: "A badge reads “Act III · Testing”, and the Teammate steps left. A code card “transfer.py” shows: def transfer(seat, friend): check_owner(seat); seat.owner = friend; notify(friend); log(seat). He gives a thumbs-up on “solid”, and on “test” gold “test” tags pin onto each of its four lines as he points at them."
       - id: verse-3-2
-        start: 103.88
-        end: 107.18
+        start: 98.1
+        end: 103.99
         text: "The order of helpers— I'll check it all!"
-        marks: {"the": 103.88, "order": 104.0, "of": 104.44, "helpers": 104.74, "ill": 105.56, "check": 106.08, "it": 106.38, "all": 106.56}
-        visual: "Green tags numbered 1 to 4 pin onto the left of the four calls. A second card appears below, “test_checkout.py”: def test_checkout(spy): checkout(cart); assert spy.calls == [\"load\", \"subtotal\", \"add_tax\", \"total\"]. He points at it."
+        marks: {"the": 98.1, "order": 99.0, "of": 99.38, "helpers": 99.72, "ill": 101.52, "check": 102.52, "it": 102.82, "all": 103.04}
+        visual: "Green tags numbered 1 to 4 pin onto the left of the four lines. A second card appears below, “test_transfer.py”: def test_transfer(spy): transfer(seat, sam); assert spy.calls == [\"check_owner\", \"notify\", \"log\"]. He points at it."
       - id: verse-3-3
-        start: 107.2
-        end: 110.24
+        start: 105.1
+        end: 111.08
         text: "My implementation Is captured just so!"
-        marks: {"my": 107.2, "implementation": 107.44, "is": 108.3, "captured": 109.08, "just": 109.52, "so": 109.86}
-        visual: "On “implementation” a plaster mould closes around the checkout card, and on “captured” a red wax seal, “Cast”, presses onto it; he pats his chest."
+        marks: {"my": 105.1, "implementation": 105.52, "is": 106.46, "captured": 108.6, "just": 109.28, "so": 109.64}
+        visual: "On “implementation” a plaster mould closes around the code card, and on “captured” a red wax seal, “Cast”, presses onto it; he pats his chest."
       - id: verse-3-4
-        start: 110.26
-        end: 113.8
+        start: 111.89
+        end: 117.86
         text: "If one small step changes, The tests will say \"NO!\""
-        marks: {"if": 110.26, "one": 110.78, "small": 111.02, "step": 111.32, "changes": 111.6, "the": 112.34, "tests": 112.48, "will": 112.88, "say": 113.12, "no": 113.42}
-        visual: "The add_tax line flashes red as he points at it. On “NO!” a big red stamp, “NO!”, slams onto the test card, and he throws a palm out: stop."
+        marks: {"if": 111.89, "one": 112.06, "small": 112.34, "step": 112.72, "changes": 113.06, "the": 114.08, "tests": 115.85, "will": 116.22, "say": 116.54, "no": 116.88}
+        visual: "The notify line flashes red as he points at it. On “NO!” a big red stamp, “NO!”, slams onto the test card, and he throws a palm out: stop."
   - id: test
     title: "The Test Engineer"
     delivery: sung
     voice: Test Engineer
-    narration: "The Test Engineer glides in from the right, with your hero's face, a white lab coat over a lilac shirt, pens in the pocket, goggles round the neck, and a magnifying glass. The Teammate freezes, sweating. In the code, the subtotal line now takes tax, the add-tax line is struck out, and a last line says checkout is still 42 dollars. But the test card cracks and turns red, stamped Failed; night falls in the window, and the clock runs to two. Four little test cards with faces cling to the bottom of the code and shriek, a sticker asks Refactor?, hearts float up, and the Test Engineer tugs at the code while the tests haul it back."
+    narration: "The Test Engineer glides in from the right, with your hero's face, a white lab coat over a lilac shirt, pens in the pocket, goggles round the neck, and a magnifying glass. The Teammate freezes, sweating. In the code, two helpers are merged into one, and a last line says Sam now holds the seat. But the test card cracks and turns red, stamped Failed; night falls in the window, and the clock runs to two. A sticker says Test the behavior, and the test rewrites itself to check only that Sam has the seat; it passes. Then four little old test cards with faces cling to the bottom of the code with hearts, and the Test Engineer tugs at the code while the tests haul it back and shriek."
     lines:
       - id: test-1
-        start: 113.82
-        end: 117.91
-        text: "I moved one small helper; The results stayed right."
-        marks: {"i": 113.82, "moved": 114.44, "one": 114.86, "small": 115.1, "helper": 115.48, "the": 116.28, "results": 116.36, "stayed": 116.8, "right": 117.2}
-        visual: "The Test Engineer glides in from the right: your hero’s face, a white lab coat to the knees over a lilac shirt, pens in the pocket, goggles round the neck, and a magnifying glass. The Teammate freezes, sweating. On “moved” the subtotal line becomes “price = subtotal(items, tax=True)”, in green, and the add_tax line is struck through; on “results” the code’s last line reads “# checkout(cart): still $42.00 ✓”. The Test Engineer points at it, then gives a thumbs-up."
+        start: 122.92
+        end: 126.86
+        text: "I merged two small helpers; The transfer worked right."
+        marks: {"i": 122.92, "merged": 123.14, "two": 123.7, "small": 124.04, "helpers": 124.42, "the": 125.22, "transfer": 125.32, "worked": 125.92, "right": 126.28}
+        visual: "The Test Engineer glides in from the right: your hero’s face, a white lab coat to the knees over a lilac shirt, pens in the pocket, goggles round the neck, and a magnifying glass. The Teammate freezes, sweating. On “merged” notify and log become one helper: the notify line turns into “record(seat, friend)”, in green, and the log line is struck through; on “transfer” the code’s last line reads “# Sam now holds seat F12 ✓”. The Test Engineer points at it, then gives a thumbs-up."
       - id: test-2
-        start: 117.93
-        end: 121.38
+        start: 126.88
+        end: 130.53
         text: "Your brittle tests failed— There goes my whole night!"
-        marks: {"your": 117.93, "brittle": 118.26, "tests": 118.6, "failed": 119.28, "there": 119.84, "goes": 120.0, "my": 120.32, "whole": 120.56, "night": 120.84}
+        marks: {"your": 126.88, "brittle": 127.18, "tests": 127.56, "failed": 128.22, "there": 128.78, "goes": 128.94, "my": 129.34, "whole": 129.62, "night": 129.86}
         visual: "On “brittle” the test card cracks and turns red, and a red sticker “Failed” slaps on; the Test Engineer throws up both hands, then yawns. On “goes” the window turns to night with stars and a moon, and the clock runs on to two in the morning."
       - id: test-3
-        start: 121.4
-        end: 125.37
-        text: "They test implementation! A refactor? Oh, no!"
-        marks: {"they": 121.4, "test": 121.72, "implementation": 122.1, "a": 123.4, "refactor": 123.54, "oh": 124.34, "no": 124.56}
-        visual: "The code’s last line clears, and four little “test” cards with faces cling along the bottom of the checkout card as the Test Engineer points at them; a gold sticker asks “Refactor?”. On “Oh, no!” the tests open their mouths wide and shriek, shaking."
+        start: 130.86
+        end: 135.64
+        text: "Test what it does, not how: Then my friend's ticket should show!"
+        marks: {"test": 130.86, "what": 131.3, "it": 131.62, "does": 131.78, "not": 132.38, "how": 132.54, "then": 133.0, "my": 133.14, "friends": 133.32, "ticket": 133.76, "should": 134.1, "show": 134.42}
+        visual: "On “Test” a gold sticker reads “Test the behavior”, and the Test Engineer points at the test. On “Then” the crack and “Failed” go, and the test rewrites itself: def test_transfer(): transfer(seat, sam); assert sam.has(seat), in green. On “show” a green sticker says “Passes”, and the Test Engineer gives a thumbs-up."
       - id: test-4
-        start: 125.39
-        end: 129.19
+        start: 135.66
+        end: 140.26
         text: "They're in love with your old code And won't let it go!"
-        marks: {"theyre": 125.39, "in": 125.56, "love": 125.74, "with": 125.98, "your": 126.2, "old": 126.42, "code": 126.68, "and": 127.24, "wont": 127.46, "let": 127.92, "it": 128.2, "go": 128.47}
-        visual: "Hearts float up from the tests. On “won’t” the Test Engineer grabs the checkout card with both hands and tugs it toward them, frowning and leaning back; the card and its clinging tests lurch over, then the tests haul it back."
+        marks: {"theyre": 135.66, "in": 136.44, "love": 136.66, "with": 136.92, "your": 137.12, "old": 137.36, "code": 137.6, "and": 138.45, "wont": 138.6, "let": 139.12, "it": 139.34, "go": 139.64}
+        visual: "The code’s last line clears, and four little “test” cards with faces, his old tests, cling along the bottom of the code card with hearts floating up. On “won’t” the Test Engineer grabs the code card with both hands and tugs it toward them, frowning and leaning back; the card and its clinging tests lurch over, then the tests haul it back, and on “go” they shriek."
   - id: verse-4
     title: "Verse 4: Information hiding"
     delivery: sung
     voice: Teammate
-    narration: "Act four, Information hiding. The Orders module is a little building with two doors, which he shoves wide open. Inside is its table, orders, with an item and a date on each row, wrapped in two layers marked API and Service layer. Three other modules stand at the right as little houses, Checkout, Billing, and Mail, and each reaches a long arm straight into the table. He tears both wrappers away, gives a thumbs-up, and changes the date format, from month, day, year to year first."
+    narration: "Act four, Information hiding. The Shows module is a little building with two doors, which he shoves wide open. Inside is its table of shows, each with a showtime, like Friday 8 PM. Three pages stand at the right as little houses, Tickets, Reminders, and Check-in; each reaches a long arm straight into the times, and each gets its own time math on a tag. Then he switches the stored times to UTC, and the times change to Saturday 3 AM, and so on."
     lines:
       - id: verse-4-1
-        start: 130.06
-        end: 133.2
-        text: "Information hiding? Why shut any doors?"
-        marks: {"information": 130.06, "hiding": 130.7, "why": 131.54, "shut": 131.76, "any": 132.18, "doors": 132.48}
-        visual: "A badge reads “Act IV · Information hiding”, and the Test Engineer slides off to the right. A little building with a pediment, “ORDERS”, stands at the back: the Orders module. He shrugs, and on “shut” he shoves its two doors wide open."
+        start: 141.24
+        end: 144.08
+        text: "Information hiding? What's there to conceal?"
+        marks: {"information": 141.24, "hiding": 141.8, "whats": 142.52, "there": 142.86, "to": 143.12, "conceal": 143.3}
+        visual: "A badge reads “Act IV · Information hiding”, and the Test Engineer slides off to the right. A little building with a pediment, “SHOWS”, stands at the back: the Shows module. He shrugs, and on “conceal” he shoves its two doors wide open. Inside is its table, “shows”, with the columns id, show, and time: 1 Jazz Night Fri 8:00 PM, 2 Choir Sat 2:00 PM, 3 Comedy Sat 9:30 PM."
       - id: verse-4-2
-        start: 133.22
-        end: 136.6
-        text: "My tables are open— What's mine can be yours!"
-        marks: {"my": 133.22, "tables": 133.38, "are": 133.96, "open": 134.28, "whats": 134.86, "mine": 135.18, "can": 135.5, "be": 135.78, "yours": 135.98}
-        visual: "Inside is its table, “orders”, with the columns id, item, and date: 1 latte 10/25/26, 2 mocha 10/25/26, 3 chai 10/26/26, wrapped in two layers labelled “API” and “Service layer”. Three modules appear at the right as little houses, “Checkout” with a cart, “Billing” with a receipt, and “Mail” with an envelope; on “yours” each reaches a long arm straight into the table’s dates."
+        start: 144.1
+        end: 147.46
+        text: "Each page reads the showtime Its own way! Ideal!"
+        marks: {"each": 144.1, "page": 144.42, "reads": 144.8, "the": 145.08, "showtime": 145.22, "its": 145.7, "own": 145.88, "way": 146.08, "ideal": 146.8}
+        visual: "Three pages appear at the right as little houses, “Tickets”, “Reminders”, and “Check-in”, and on “showtime” each reaches a long arm straight into the table’s times. He presents them proudly and blows a chef’s kiss on “Ideal”."
       - id: verse-4-3
-        start: 136.62
-        end: 139.62
-        text: "No wrappers! No layers! Just read them direct!"
-        marks: {"no": 136.62, "wrappers": 136.76, "no_2": 137.46, "layers": 137.66, "just": 138.44, "read": 138.58, "them": 138.96, "direct": 139.22}
-        visual: "On “wrappers” he tears away the “API” wrapper, on “layers” the “Service layer” wrapper, and on “direct” he gives a thumbs-up."
+        start: 147.48
+        end: 150.8
+        text: "Let every page do the math! It's simple! Direct!"
+        marks: {"let": 147.48, "every": 147.74, "page": 147.98, "do": 148.32, "the": 148.54, "math": 148.64, "its": 149.14, "simple": 149.79, "direct": 150.15}
+        visual: "On “math” each page gets its own time math on a gold tag: “+ 7 h?”, “split(\":\")”, and “PM → 24 h”; he points at them, then gives a thumbs-up on “Direct”."
       - id: verse-4-4
-        start: 139.64
-        end: 143.55
-        text: "I'll change one date format— What could that affect?"
-        marks: {"ill": 139.64, "change": 140.3, "one": 140.68, "date": 140.88, "format": 141.14, "what": 141.92, "could": 142.16, "that": 142.42, "affect": 143.21}
-        visual: "On “date” the dates change format to 2026-10-25, 2026-10-25, and 2026-10-26; he points at them, then shrugs on “what could”."
+        start: 150.82
+        end: 154.26
+        text: "I'll switch them to UTC— What could that affect?"
+        marks: {"ill": 150.82, "switch": 151.14, "them": 151.36, "to": 151.66, "utc": 151.94, "what": 153.2, "could": 153.48, "that": 153.74, "affect": 153.98}
+        visual: "On “UTC” the times in the table change to “Sat 03:00Z”, “Sat 21:00Z”, and “Sun 04:30Z”; he points at them, then shrugs on “could”."
   - id: ui
     title: "The UI Developer"
     delivery: sung
     voice: UI Developer
-    narration: "The UI Developer glides in from the right, with your hero's face, a mustard turtleneck under a denim painter's apron with dabs of paint and a brush in its pocket, rust trousers, and a palette. The Teammate freezes, sweating. Checkout, Billing, and Mail crack, each with a red cross. The dates glow red, and dashed red lines race out to eight chips: receipts, reports, exports, labels, invoices, search, reminders, and analytics. Bandages go on, a counter of open bugs climbs to 42, and as day and night race past the window, the UI Developer's hair turns silver and a cane appears."
+    narration: "The UI Developer glides in from the right, with your hero's face, a mustard turtleneck under a denim painter's apron with dabs of paint and a brush in its pocket, rust trousers, and a palette. The Teammate freezes, sweating. Tickets, Reminders, and Check-in crack, each with a red cross. The times glow red, and dashed red lines race out to eight chips: receipts, emails, exports, reports, calendar, search, countdown, and scanner. A gold card shows the fix, a Showtime module that alone hides the time format, and bandages go on. As day and night race past the window, the UI Developer's hair turns silver and a cane appears."
     lines:
       - id: ui-1
-        start: 143.7
-        end: 147.47
-        text: "Now checkout and billing And mail need repair!"
-        marks: {"now": 143.7, "checkout": 143.98, "and": 144.44, "billing": 145.1, "and_2": 145.72, "mail": 145.86, "need": 146.22, "repair": 146.5}
-        visual: "The UI Developer glides in from the right: your hero’s face, a mustard turtleneck under a denim painter’s apron with three dabs of paint and a brush in its pocket, rust trousers, and a paint palette. The Teammate freezes, sweating. As each is named, Checkout, Billing, and Mail crack and get a red cross, and the UI Developer points at each."
+        start: 154.54
+        end: 158.04
+        text: "Now tickets, reminders, And check-in need repair!"
+        marks: {"now": 154.54, "tickets": 155.03, "reminders": 155.74, "and": 156.46, "checkin": 156.68, "need": 157.06, "repair": 157.3}
+        visual: "The UI Developer glides in from the right: your hero’s face, a mustard turtleneck under a denim painter’s apron with three dabs of paint and a brush in its pocket, rust trousers, and a paint palette. The Teammate freezes, sweating. As each is named, Tickets, Reminders, and Check-in crack and get a red cross, and the UI Developer points at each."
       - id: ui-2
-        start: 147.49
-        end: 150.98
+        start: 158.06
+        end: 161.61
         text: "One detail has changed— It's used EVERYWHERE!"
-        marks: {"one": 147.49, "detail": 147.66, "has": 148.14, "changed": 148.52, "its": 149.3, "used": 149.6, "everywhere": 150.3}
-        visual: "The table’s dates glow red; the UI Developer points at them, and on “used” dashed red lines race out to eight chips, “Receipts”, “Reports”, “Exports”, and “Labels” above the module and “Invoices”, “Search”, “Reminders”, and “Analytics” below it. On “EVERYWHERE” the UI Developer throws both hands up."
+        marks: {"one": 158.06, "detail": 158.34, "has": 158.8, "changed": 159.08, "its": 159.82, "used": 159.98, "everywhere": 160.48}
+        visual: "The table’s times glow red; the UI Developer points at them, and on “used” dashed red lines race out to eight chips, “Receipts”, “Emails”, “Exports”, and “Reports” above the module and “Calendar”, “Search”, “Countdown”, and “Scanner” below it. On “EVERYWHERE” the UI Developer throws both hands up."
       - id: ui-3
-        start: 151.0
-        end: 154.34
-        text: "The tests fight each patch; There's no end in sight!"
-        marks: {"the": 151.0, "tests": 151.28, "fight": 151.62, "each": 151.92, "patch": 152.18, "theres": 152.92, "no": 153.14, "end": 153.38, "in": 153.7, "sight": 154.08}
-        visual: "Bandages go on Billing on “fight”, Mail on “patch”, and Checkout on “there’s”, and the chips vanish. A counter below the module, “Open bugs”, flips to 3, 17, and 42, and the UI Developer clutches their head."
+        start: 161.63
+        end: 165.02
+        text: "Hide choices that change In one module— right?"
+        marks: {"hide": 161.63, "choices": 161.88, "that": 162.32, "change": 162.66, "in": 163.08, "one": 163.3, "module": 163.48, "right": 164.42}
+        visual: "The chips vanish. On “Hide” a gold card appears below the table, “Showtime module: showtime(show) hides the time format”, and the UI Developer presents it; bandages go on Tickets, Reminders, and Check-in, and on “right” the UI Developer raises one finger."
       - id: ui-4
-        start: 154.36
-        end: 159.15
-        text: "You changed one date format— I've aged overnight!"
-        marks: {"you": 154.36, "changed": 154.78, "one": 155.24, "date": 155.48, "format": 155.95, "ive": 156.68, "aged": 157.16, "overnight": 157.58}
+        start: 165.04
+        end: 168.59
+        text: "You moved every showtime— I've aged overnight!"
+        marks: {"you": 165.04, "moved": 165.3, "every": 165.84, "showtime": 166.1, "ive": 166.94, "aged": 167.28, "overnight": 167.72}
         visual: "The UI Developer points at the Teammate. On “I’ve” the window flashes to night and back to day as the clock spins round a whole day; on “aged” the UI Developer’s hair turns silver, they stoop with a frown, and a cane appears in their hand."
   - id: refrain-2
     title: "Refrain"
@@ -440,28 +442,28 @@ sections:
     narration: "Refrain. Again the Teammate lifts his laptop high on one palm in a golden light while the Build status board stays red, sets it back to show his code in a gilded frame, and blows a chef's kiss. This time the Tiny fixes counter goes from 1 to 26. His laptop's six lamps and the footlights turn green."
     lines:
       - id: refrain-2-1
-        start: 161.01
-        end: 164.24
+        start: 169.04
+        end: 171.9
         text: "It works on my machine!"
-        marks: {"it": 161.01, "works": 161.2, "on": 161.68, "my": 162.06, "machine": 162.66}
+        marks: {"it": 169.04, "works": 169.98, "on": 170.26, "my": 170.46, "machine": 170.9}
         visual: "A badge reads “Refrain”, and the UI Developer shuffles off to the right. The Teammate strides to the middle, beside his desk on the left, where his laptop shows a big green tick and “All tests pass”. He points at it, then lifts it high on one flat palm beside his head, the other arm flung wide, beaming in a golden light with sparkles, while the build status board behind him stays red."
       - id: refrain-2-2
-        start: 164.43
-        end: 167.32
+        start: 172.0
+        end: 176.26
         text: "The finest code you've seen!"
-        marks: {"the": 164.43, "finest": 164.54, "code": 165.47, "youve": 165.84, "seen": 166.24}
+        marks: {"the": 172.0, "finest": 173.3, "code": 173.7, "youve": 174.16, "seen": 174.56}
         visual: "He sets the laptop back on the desk, its screen now showing his code in a gilded frame, presents it, and blows a chef’s kiss."
       - id: refrain-2-3
-        start: 167.7
-        end: 170.63
+        start: 176.28
+        end: 178.5
         text: "One tiny fix— Or twenty-six—"
-        marks: {"one": 167.7, "tiny": 167.92, "fix": 168.71, "or": 169.18, "twentysix": 169.54}
+        marks: {"one": 176.28, "tiny": 176.56, "fix": 176.86, "or": 177.5, "twentysix": 177.82}
         visual: "The flip counter on his desk, “Tiny fixes”, shows 1 on “tiny” as he raises one finger, then 26 on “twenty-six” while he shrugs."
       - id: refrain-2-4
-        start: 171.13
-        end: 174.17
+        start: 178.58
+        end: 181.99
         text: "And all the lights turn green!"
-        marks: {"and": 171.13, "all": 171.4, "the": 171.72, "lights": 172.02, "turn": 172.52, "green": 172.92}
+        marks: {"and": 178.58, "all": 179.88, "the": 180.1, "lights": 180.22, "turn": 180.58, "green": 180.94}
         visual: "The laptop’s screen shows six lamps over the words “My machine”; they turn green one by one, the footlights glow green on “turn”, and he throws his arms up high, blushing with joy. The build status board stays red; then the footlights go back to warm."
   - id: verse-5
     title: "Verse 5: Force-push"
@@ -470,59 +472,59 @@ sections:
     narration: "Act five, Shared history. A commit graph shows shared main: an old base commit and four teammates' commits, each labelled fix. Below it runs his wiggly branch of six small commits: wip, oops, fix, typo, wip2, and eh. They fold into one tidy commit. He force-pushes it onto main, knocking the four fix commits off the line, under a stamp: Force push. He sweeps the fallen commits away with a broom, and a card says Code review: 1 commit to read, with a sticker, Easy!"
     lines:
       - id: verse-5-1
-        start: 174.36
-        end: 177.62
+        start: 182.29
+        end: 185.58
         text: "I'll squash all my changes To one tidy line!"
-        marks: {"ill": 174.36, "squash": 174.68, "all": 175.02, "my": 175.28, "changes": 175.48, "to": 176.06, "one": 176.44, "tidy": 176.76, "line": 177.18}
+        marks: {"ill": 182.29, "squash": 182.62, "all": 183.04, "my": 183.22, "changes": 183.4, "to": 183.96, "one": 184.24, "tidy": 184.56, "line": 185.0}
         visual: "A badge reads “Act V · Shared history”. A commit graph appears, “shared main”: an old base commit followed by four teammates’ commits labelled “fix”; below it runs his wiggly branch of six small commits, “wip”, “oops”, “fix”, “typo”, “wip2”, and “eh”. On “squash” he presses his palms together, and the six commits fold into one, “1”, tagged “one tidy line”."
       - id: verse-5-2
-        start: 177.64
-        end: 181.36
+        start: 185.6
+        end: 188.62
         text: "Then force-push to shared main— That history will shine!"
-        marks: {"then": 177.64, "forcepush": 178.08, "to": 178.72, "shared": 178.92, "main": 179.26, "that": 179.72, "history": 179.82, "will": 180.36, "shine": 180.58}
+        marks: {"then": 185.6, "forcepush": 185.82, "to": 186.54, "shared": 186.74, "main": 186.79, "that": 187.24, "history": 187.86, "will": 187.98, "shine": 188.2}
         visual: "On “force-push” he shoves with both hands: his commit jumps up onto main right after the base, and the four “fix” commits are knocked off the line and tumble to the floor, under a red stamp, “Force push”. On “shine” his commit gleams with sparkles, and he blows a chef’s kiss."
       - id: verse-5-3
-        start: 181.38
-        end: 184.34
+        start: 188.64
+        end: 192.14
         text: "One clean line of progress! Less clutter to see!"
-        marks: {"one": 181.38, "clean": 181.56, "line": 181.88, "of": 182.18, "progress": 182.36, "less": 183.1, "clutter": 183.34, "to": 183.82, "see": 184.02}
+        marks: {"one": 188.64, "clean": 189.06, "line": 189.44, "of": 189.74, "progress": 190.01, "less": 190.66, "clutter": 190.88, "to": 191.38, "see": 191.56}
         visual: "He grabs a broom, and on “clutter” sweeps the fallen “fix” commits off to the left."
       - id: verse-5-4
-        start: 184.36
-        end: 188.64
+        start: 192.16
+        end: 197.56
         text: "Review will be easy— That's teamwork from me!"
-        marks: {"review": 184.36, "will": 185.1, "be": 185.56, "easy": 185.84, "thats": 186.56, "teamwork": 186.86, "from": 187.28, "me": 187.78}
+        marks: {"review": 192.16, "will": 192.76, "be": 193.2, "easy": 193.42, "thats": 195.08, "teamwork": 195.47, "from": 196.62, "me": 196.86}
         visual: "A blue card reads “Code review: 1 commit to read”, and a green sticker “Easy!” pops up beside it; he gives a thumbs-up on “teamwork” and pats his chest twice."
   - id: backend
     title: "The Back-End Developer"
     delivery: sung
     voice: Back-End Developer
-    narration: "The Back-End Developer glides in from the right, with your hero's face, a charcoal hoodie with a little database on the chest, black jeans, sneakers, and a coffee mug. The Teammate freezes, sweating. Dashed outlines show where their four commits were. The old base commit gets cobwebs and a tag, old; every lamp on the board turns red, under a stamp: Broken. A card says My clone: 4 fixes, safe. The fix commits drop back onto main after his, dawn breaks, the clock turns to six, and the lamps turn green. Two calendar cards, Saturday and Sunday, both free, drift up and vanish, and the Back-End Developer slumps."
+    narration: "The Back-End Developer glides in from the right, with your hero's face, a charcoal hoodie with a little database on the chest, black jeans, sneakers, and a coffee mug. The Teammate freezes, sweating. Dashed outlines show where their four commits were. The old base commit gets cobwebs and a tag, old; every lamp on the board turns red, under a stamp: Broken. A red card says Never force-push, then Merge first. The fix commits drop back onto main after his, dawn breaks, the clock turns to six, and the lamps turn green. The Back-End Developer points at him; two calendar cards, Saturday and Sunday, both free, drift up and vanish, and the Back-End Developer slumps."
     lines:
       - id: backend-1
-        start: 188.66
-        end: 192.64
+        start: 197.58
+        end: 200.88
         text: "I pushed all our fixes! They're gone from shared main!"
-        marks: {"i": 188.66, "pushed": 188.74, "all": 189.2, "our": 189.5, "fixes": 189.7, "theyre": 190.58, "gone": 190.76, "from": 191.12, "shared": 191.4, "main": 191.76}
+        marks: {"i": 197.58, "pushed": 197.94, "all": 198.24, "our": 198.46, "fixes": 198.66, "theyre": 199.64, "gone": 199.8, "from": 200.08, "shared": 200.32, "main": 200.71}
         visual: "The Back-End Developer glides in from the right: your hero’s face, a charcoal hoodie with drawstrings, a kangaroo pocket, and a little database on the chest, black jeans, sneakers, and a coffee mug. The Teammate freezes, sweating. On “fixes” dashed outlines appear on main where their four commits used to be; the Back-End Developer points at them, then throws up both hands on “gone”."
       - id: backend-2
-        start: 192.66
-        end: 196.22
+        start: 200.9
+        end: 203.94
         text: "You forced your OLD history— We're broken again!"
-        marks: {"you": 192.66, "forced": 192.76, "your": 193.24, "old": 193.48, "history": 194.16, "were": 194.5, "broken": 194.86, "again": 195.28}
+        marks: {"you": 200.9, "forced": 201.27, "your": 201.56, "old": 201.74, "history": 201.96, "were": 202.58, "broken": 202.7, "again": 203.26}
         visual: "The Back-End Developer points at the Teammate; the base commit gets cobwebs and the tag “old”. On “broken” every lamp on the build status board turns red, and a red stamp, “Broken”, lands."
       - id: backend-3
-        start: 196.24
-        end: 199.91
-        text: "My commits are safe here; I'll restore them by dawn."
-        marks: {"my": 196.24, "commits": 196.4, "are": 196.76, "safe": 197.04, "here": 197.54, "ill": 197.88, "restore": 198.08, "them": 198.54, "by": 198.78, "dawn": 199.1}
-        visual: "A green card reads “My clone: 4 fixes, safe”, and the Back-End Developer presents it. On “restore” the four “fix” commits drop back onto main after his, the window turns to dawn, the clock turns to six, and the board’s lamps turn green again."
+        start: 203.96
+        end: 207.62
+        text: "Never force-push! Merge first! I'll restore them by dawn."
+        marks: {"never": 203.96, "forcepush": 204.28, "merge": 204.96, "first": 205.42, "ill": 205.86, "restore": 206.08, "them": 206.52, "by": 206.72, "dawn": 206.94}
+        visual: "On “Never” the Back-End Developer throws a palm out and a red card appears, “Never force-push”; on “Merge” it adds “Merge first.”, and they raise one finger. On “restore” the four “fix” commits drop back onto main after his, the window turns to dawn, the clock turns to six, and the board’s lamps turn green again."
       - id: backend-4
-        start: 199.93
-        end: 204.1
-        text: "Your graph is much cleaner— My weekend is gone!"
-        marks: {"your": 199.93, "graph": 200.08, "is": 200.5, "much": 200.72, "cleaner": 201.19, "my": 201.99, "weekend": 202.3, "is_2": 202.78, "gone": 203.45}
-        visual: "The Back-End Developer presents the graph. Two gold calendar cards, “Sat: free” and “Sun: free”, appear, and on “gone” they drift up and vanish; the Back-End Developer slumps, knees giving, head down."
+        start: 207.64
+        end: 212.26
+        text: "Some sprint that you saved us! My weekend is gone!"
+        marks: {"some": 207.64, "sprint": 208.13, "that": 208.38, "you": 208.62, "saved": 208.8, "us": 209.32, "my": 210.06, "weekend": 210.46, "is": 211.06, "gone": 211.6}
+        visual: "The Back-End Developer points an accusing finger at the Teammate. Two gold calendar cards, “Sat: free” and “Sun: free”, appear, and on “gone” they drift up and vanish; the Back-End Developer slumps, knees giving, head down."
   - id: verse-6
     title: "Verse 6: Committed secrets"
     delivery: sung
@@ -530,84 +532,84 @@ sections:
     narration: "Act six, Secrets. He pats his chest and tucks the Back-End Developer into a purple checked blanket; they yawn and doze off on their feet, with Z's drifting up, then slide off asleep. A dark card shows the key in .env, and in app.py the hard-coded key is struck out for one read from the environment. A sticker says Safer!, and he bows. Then a folder, my-app, holds app.py, a readme, and .env with a key; with git add, all three fly into a commit box, and with git push the box flies up into a cloud marked Public repo, where three keys hang. Gold keys rain down from the cloud into the audience, whose hands reach up for them."
     lines:
       - id: verse-6-1
-        start: 206.58
-        end: 210.08
+        start: 212.28
+        end: 215.28
         text: "I'll take the deployment! You get some sleep!"
-        marks: {"ill": 206.58, "take": 206.88, "the": 207.2, "deployment": 207.42, "you": 208.4, "get": 208.68, "some": 208.94, "sleep": 209.24}
+        marks: {"ill": 212.28, "take": 212.6, "the": 212.9, "deployment": 213.1, "you": 214.12, "get": 214.36, "some": 214.58, "sleep": 214.84}
         visual: "A badge reads “Act VI · Secrets”. He pats his chest, then presents the Back-End Developer, who gets a purple checked blanket round their shoulders and yawns, with Zs drifting up."
       - id: verse-6-2
-        start: 210.1
-        end: 213.12
+        start: 215.63
+        end: 218.66
         text: "The keys live in dot-env, Not hard-coded now!"
-        marks: {"the": 210.1, "keys": 210.22, "live": 210.58, "in": 210.94, "dotenv": 211.16, "not": 211.68, "hardcoded": 211.94, "now": 212.74}
+        marks: {"the": 215.63, "keys": 215.74, "live": 216.08, "in": 216.38, "dotenv": 216.6, "not": 217.08, "hardcoded": 217.28, "now": 218.08}
         visual: "A dark card reads “.env: API_KEY=sk-live-4f2a…”, and a code card “app.py” shows: import os; api_key = \"sk-live-4f2a…\"; on “hard-coded” that line is struck through, replaced by api_key = os.environ[\"API_KEY\"], in green. He points at them, while the Back-End Developer dozes under the blanket, eyes shut, head nodding."
       - id: verse-6-3
-        start: 213.14
-        end: 216.6
+        start: 218.68
+        end: 221.94
         text: "A safer deployment— Allow me to bow!"
-        marks: {"a": 213.14, "safer": 213.64, "deployment": 214.1, "allow": 214.92, "me": 215.58, "to": 216.0, "bow": 216.18}
+        marks: {"a": 218.68, "safer": 218.94, "deployment": 219.34, "allow": 220.36, "me": 220.7, "to": 221.14, "bow": 221.34}
         visual: "The blanket goes, and the Back-End Developer slides off to the right, still asleep. A green sticker reads “Safer!”, and on “bow” he takes a deep bow."
       - id: verse-6-4
-        start: 216.62
-        end: 220.2
+        start: 221.96
+        end: 225.4
         text: "I add the whole folder; One push, and we're done!"
-        marks: {"i": 216.62, "add": 217.14, "the": 217.44, "whole": 217.6, "folder": 217.86, "one": 218.66, "push": 218.88, "and": 219.32, "were": 219.56, "done": 219.86}
+        marks: {"i": 221.96, "add": 222.24, "the": 222.46, "whole": 222.6, "folder": 222.84, "one": 223.56, "push": 223.98, "and": 224.26, "were": 224.44, "done": 224.87}
         visual: "A folder, “my-app/”, holds three files, “app.py”, “README.md”, and “.env” with a key on it. On “add” a chip, “git add .”, pops up, and all three files fly into a box labelled “commit”, whose lid shuts. A cloud with the sign “Public repo” appears at the top; a chip, “git push”, pops up, and on “push” the box flies up into the cloud. On “done” three keys hang under the cloud, and he gives a thumbs-up."
       - id: verse-6-5
-        start: 220.22
-        end: 227.53
+        start: 225.42
+        end: 230.68
         text: "At last, a smooth handoff For everyone!"
-        marks: {"at": 220.22, "last": 220.84, "a": 221.3, "smooth": 221.56, "handoff": 222.15, "for": 223.31, "everyone": 223.7}
+        marks: {"at": 225.42, "last": 225.74, "a": 226.22, "smooth": 226.44, "handoff": 226.92, "for": 227.64, "everyone": 228.5}
         visual: "On “handoff” gold keys rain down from the cloud across the stage into the stalls, where the audience’s hands reach up to catch them; he flings his arms wide and holds the note."
   - id: security
     title: "The Security Engineer"
     delivery: sung
     voice: Security Engineer
-    narration: "The Security Engineer glides in from the right, with your hero's face, a black tactical jacket with chest pockets, epaulettes, a gold shield badge, and an earpiece wire, black cargo trousers, and boots. The Teammate freezes, sweating. A card shows .gitignore without .env, and a red card shows Commit 4f2a, with the keys in it. Two masked burglars grab the keys from the cloud. Three server racks spin up, the board turns red, and a cloud bill climbs to minus 48,200 dollars, in the red. A rocket marked Theirs, on bags of money, launches. The Teammate adds .env to .gitignore, but the commit is still there, and five copies, each with a key, pop up. The Security Engineer stamps them Revoked as the bill climbs again."
+    narration: "The Security Engineer glides in from the right, with your hero's face, a black tactical jacket with chest pockets, epaulettes, a gold shield badge, and an earpiece wire, black cargo trousers, and boots. The Teammate freezes, sweating. A card shows .gitignore without .env, and a red card shows Commit 4f2a, with the keys in it. Two masked burglars grab the keys from the cloud. Three server racks spin up, the board turns red, and a cloud bill climbs to minus 48,200 dollars, in the red. A rocket marked Theirs, on bags of money, launches. The Teammate adds .env to .gitignore, but the commit is still there, and five copies, each with a key, pop up. The Security Engineer stamps their keys Rotated as the bill climbs again."
     lines:
       - id: security-1
-        start: 227.98
-        end: 231.14
+        start: 230.7
+        end: 233.96
         text: "Dot-env's not in gitignore— You committed the keys!"
-        marks: {"dotenvs": 227.98, "not": 228.48, "in": 228.76, "gitignore": 228.92, "you": 229.6, "committed": 229.68, "the": 230.12, "keys": 230.64}
+        marks: {"dotenvs": 230.7, "not": 231.4, "in": 231.6, "gitignore": 231.78, "you": 232.52, "committed": 232.74, "the": 233.2, "keys": 233.38}
         visual: "The Security Engineer glides in from the right: your hero’s face, a black tactical jacket with flapped chest pockets, epaulettes, a gold shield badge, and an earpiece’s coiled wire, black cargo trousers, and boots. The Teammate freezes, sweating. Below the cloud, a card “.gitignore” lists “node_modules/”, “*.log”, and “(no .env)”, and on “committed” a red card “Commit 4f2a” lists “app.py”, “README.md”, and “.env: the keys!”. The Security Engineer points at each."
       - id: security-2
-        start: 231.16
-        end: 234.49
+        start: 233.98
+        end: 237.08
         text: "Our PUBLIC repo hands them To strangers with ease!"
-        marks: {"our": 231.16, "public": 231.4, "repo": 231.84, "hands": 232.26, "them": 232.66, "to": 232.9, "strangers": 233.29, "with": 233.7, "ease": 234.0}
+        marks: {"our": 233.98, "public": 234.22, "repo": 234.62, "hands": 235.0, "them": 235.4, "to": 235.6, "strangers": 235.76, "with": 236.38, "ease": 236.62}
         visual: "The Security Engineer points up at the cloud, and the two cards go. On “strangers” two burglars in masks and striped shirts pop up beside the cloud and grab its hanging keys."
       - id: security-3
-        start: 234.51
-        end: 238.53
+        start: 237.1
+        end: 240.58
         text: "Thieves are spinning up servers; We're deep in the red!"
-        marks: {"thieves": 234.51, "are": 235.0, "spinning": 235.18, "up": 235.64, "servers": 235.88, "were": 236.82, "deep": 236.98, "in": 237.28, "the": 237.54, "red": 237.72}
+        marks: {"thieves": 237.1, "are": 237.42, "spinning": 237.86, "up": 238.04, "servers": 238.31, "were": 239.0, "deep": 239.36, "in": 239.66, "the": 239.88, "red": 240.02}
         visual: "Three server racks appear, and their fans spin up, lights on; the board’s lamps turn red. Above them a meter, “Cloud bill”, counts down to “−$48,200, in the red”; the Security Engineer presents the servers, then facepalms on “red”."
       - id: security-4
-        start: 238.55
-        end: 242.2
+        start: 240.6
+        end: 244.32
         text: "You wanted a launch— We're funding THEIRS instead!"
-        marks: {"you": 238.55, "wanted": 238.68, "a": 239.12, "launch": 239.42, "were": 240.14, "funding": 240.42, "theirs": 240.9, "instead": 241.67}
+        marks: {"you": 240.6, "wanted": 240.9, "a": 241.36, "launch": 241.66, "were": 242.38, "funding": 242.83, "theirs": 243.24, "instead": 243.72}
         visual: "A rocket labelled “THEIRS”, on two bags of money, stands beside the servers; on “launch” it lifts off and flies up off the stage, and the Security Engineer throws both hands up."
       - id: security-5
         voice: Teammate
-        start: 243.11
-        end: 244.7
+        start: 244.34
+        end: 245.92
         text: "I'll add it to gitignore!"
-        marks: {"ill": 243.11, "add": 243.42, "it": 243.6, "to": 243.78, "gitignore": 244.08}
+        marks: {"ill": 244.34, "add": 244.88, "it": 245.0, "to": 245.1, "gitignore": 245.22}
         visual: "Wide-eyed and sweating, the Teammate points at the “.gitignore” card, which is back; on “gitignore” its last line changes from “(no .env)” to “.env”."
       - id: security-6
-        start: 244.72
-        end: 248.09
+        start: 245.94
+        end: 248.32
         text: "That won't uncommit it! Old copies remain!"
-        marks: {"that": 244.72, "wont": 244.96, "uncommit": 245.34, "it": 246.08, "old": 246.3, "copies": 246.6, "remain": 247.12}
+        marks: {"that": 245.94, "wont": 246.08, "uncommit": 246.42, "it": 246.96, "old": 247.22, "copies": 247.57, "remain": 247.88}
         visual: "The red card “Commit 4f2a” is back, keys and all, and the Security Engineer wags a finger. On “copies” five cards labelled “copy”, each with a key, pop up below."
       - id: security-7
-        start: 248.11
-        end: 252.7
-        text: "Revoke those credentials— They're spending again!"
-        marks: {"revoke": 248.11, "those": 248.58, "credentials": 248.96, "theyre": 249.64, "spending": 250.35, "again": 250.7}
-        visual: "The two cards go. The Security Engineer raises a rubber stamp and brings it down: red “Revoked” stamps land on the copies, on “Revoke” and on “credentials”. On “spending” the cloud bill climbs to “−$61,900”, and the Security Engineer points at it."
+        start: 248.34
+        end: 251.1
+        text: "Rotate those credentials— They're spending again!"
+        marks: {"rotate": 248.34, "those": 248.88, "credentials": 249.14, "theyre": 249.84, "spending": 250.23, "again": 250.66}
+        visual: "The two cards go. The Security Engineer raises a rubber stamp and brings it down: red “Rotated” stamps land on the copies’ keys, on “Rotate” and on “credentials”. On “spending” the cloud bill climbs to “−$61,900”, and the Security Engineer points at it."
   - id: refrain-3
     title: "Final refrain"
     delivery: sung
@@ -615,51 +617,51 @@ sections:
     narration: "Finale. All six teammates come back as a chorus line behind him, hands on hips; the UI Developer is still silver-haired. He lifts his laptop high on one palm once more, then sets it back on the desk. The Tiny fixes counter jumps from 1 to 96, and the six teammates facepalm, one after another. His laptop's lamps and the footlights turn green, confetti bursts, and he holds the last note, arms high, while the teammates despair and the board stays red."
     lines:
       - id: refrain-3-1
-        start: 252.86
-        end: 256.37
+        start: 251.2
+        end: 254.5
         text: "It works on my machine!"
-        marks: {"it": 252.86, "works": 253.4, "on": 253.9, "my": 254.26, "machine": 254.86}
+        marks: {"it": 251.2, "works": 252.26, "on": 252.56, "my": 252.76, "machine": 253.2}
         visual: "A badge reads “Finale”. The five teammates glide back in from both wings and the Security Engineer joins them: a chorus line behind him to the right of his desk, hands on hips, the UI Developer still silver-haired. The Teammate strides to the middle, beside his desk on the left, where his laptop shows a big green tick and “All tests pass”. He points at it, then lifts it high on one flat palm beside his head, the other arm flung wide, beaming in a golden light with sparkles, while the build status board behind him stays red."
       - id: refrain-3-2
-        start: 256.66
-        end: 259.61
+        start: 254.58
+        end: 258.64
         text: "The finest code you've seen!"
-        marks: {"the": 256.66, "finest": 256.76, "code": 257.71, "youve": 258.08, "seen": 258.44}
+        marks: {"the": 254.58, "finest": 255.58, "code": 255.98, "youve": 256.44, "seen": 256.88}
         visual: "He sets the laptop back on the desk, its screen now showing his code in a gilded frame, presents it, and blows a chef’s kiss."
       - id: refrain-3-3
-        start: 259.98
-        end: 262.67
+        start: 258.66
+        end: 261.75
         text: "One tiny fix— Or ninety-six—"
-        marks: {"one": 259.98, "tiny": 260.2, "fix": 261.0, "or": 261.71, "ninetysix": 261.9}
+        marks: {"one": 258.66, "tiny": 258.92, "fix": 259.22, "or": 260.32, "ninetysix": 260.52}
         visual: "The flip counter on his desk, “Tiny fixes”, shows 1 on “tiny” as he raises one finger, then 96 on “ninety-six” while he shrugs, and all six teammates facepalm, one after another."
       - id: refrain-3-4
-        start: 262.69
-        end: 269.55
+        start: 261.98
+        end: 270.6
         text: "And all the lights turn green!"
-        marks: {"and": 262.69, "all": 263.72, "the": 264.38, "lights": 265.06, "turn": 266.38, "green": 267.45}
+        marks: {"and": 261.98, "all": 262.7, "the": 263.02, "lights": 263.38, "turn": 264.79, "green": 265.1}
         visual: "The laptop’s six lamps under “My machine” turn green slowly, one by one, and the footlights glow green on “turn”. On “green” confetti bursts and he holds his arms high, blushing, through the long final note, while the six teammates throw up their hands in despair and the build status board stays red. When the orchestra stops, the footlights go out."
   - id: outro
     title: "Outro"
     delivery: spoken
     voice: Teammate
-    narration: "Outro, spoken. The music stops. His laptop now shows a red cross and the words Fatal error; he frowns at it, puzzled. He steps to the desk and reaches for the keyboard with a sly smile, and the Security Engineer slips off to the right. Then the Security Engineer glides in from the left, between him and the desk, palm out; he jumps back with both hands up, and the teammates nod. On the closing chord the curtain falls, and the moral of the opera is posted on it: Ask your users what they need. Lock your dependencies. Test behaviour, not implementation. Hide details behind interfaces. Never force-push a shared branch. Keep secrets out of Git."
+    narration: "Outro. The music stops. His laptop now shows a red cross and the words Fatal error; he frowns at it, puzzled. He steps to the desk and reaches for the keyboard with a sly smile, and the Security Engineer slips off to the right. Then all six teammates sing together: the Security Engineer glides in from the left, between him and the desk, palm out, the five in the line-up hold out their palms too, and he jumps back with both hands up. On the closing chord the curtain falls, and the moral of the opera is posted on it: Ask your users what they need. Pin your dependency versions. Test behavior, not implementation. Hide decisions likely to change. Never force-push a shared branch. Keep secrets out of Git."
     lines:
       - id: outro-1
-        start: 269.97
-        end: 273.09
+        start: 270.86
+        end: 275.06
         text: "Strange. It worked on my machine."
-        marks: {"strange": 269.97, "it": 271.6, "worked": 271.74, "on": 272.02, "my": 272.22, "machine": 272.44}
+        marks: {"strange": 270.86, "it": 272.62, "worked": 273.18, "on": 273.6, "my": 273.92, "machine": 274.44}
         visual: "The music stops. His laptop on the desk now shows a red cross and the words “Fatal error”; he frowns at it, puzzled, and points at it on “worked”."
       - id: outro-2
-        start: 273.95
-        end: 275.88
+        start: 275.08
+        end: 278.28
         text: "I'll just make one small change."
-        marks: {"ill": 273.95, "just": 274.14, "make": 274.3, "one": 274.5, "small": 274.74, "change": 275.3}
+        marks: {"ill": 275.08, "just": 275.68, "make": 275.96, "one": 276.32, "small": 276.86, "change": 277.52}
         visual: "He steps to the desk and reaches for the keyboard with both hands, leaning in with a sly smile. At the end of the line-up, the Security Engineer slips off the right wing."
       - id: outro-3
-        voice: Security Engineer
-        start: 276.57
-        end: 279.4
-        text: "Step away from the keyboard."
-        marks: {"step": 276.57, "away": 277.02, "from": 277.54, "the": 278.1, "keyboard": 278.58}
-        visual: "The Security Engineer glides in from the left, between him and the desk, and on “away” thrusts a palm out: stop. He jumps back with both hands up, and the five teammates in the line nod and smile. On the closing chord the curtain falls, and a card on it reads “The moral of the opera”: 1. Ask your users what they need. 2. Lock your dependencies. 3. Test behaviour, not implementation. 4. Hide details behind interfaces. 5. Never force-push a shared branch. 6. Keep secrets out of Git."
+        voice: All six teammates
+        start: 278.34
+        end: 284.17
+        text: "Step away from the keyboard! Step away from the keyboard!"
+        marks: {"step": 278.34, "away": 278.74, "from": 279.2, "the": 279.6, "keyboard": 279.76, "step_2": 280.52, "away_2": 281.94, "from_2": 282.5, "the_2": 282.82, "keyboard_2": 283.0}
+        visual: "All six teammates sing it together, twice. The Security Engineer glides in from the left, between him and the desk, and on “away” thrusts a palm out: stop; the five in the line-up hold out their palms too. He jumps back with both hands up. On the closing chord the curtain falls, and a card on it reads “The moral of the opera”: 1. Ask your users what they need. 2. Pin your dependency versions. 3. Test behavior, not implementation. 4. Hide decisions likely to change. 5. Never force-push a shared branch. 6. Keep secrets out of Git."

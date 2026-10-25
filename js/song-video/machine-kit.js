@@ -320,12 +320,16 @@
   // ------------------------------------------------------------------
 
   /**
-   * A giant phone on a stand running the coffee app, its screen changing
-   * on cues: [time, state], state 'blank' | 'cup' | 'button' | 'latte' |
-   * 'group' (a group order works). `shine` cues make it gleam; `hue`
-   * tints its case. Returns the node and its screen.
+   * A giant phone on a stand running an app called `label`, its screen
+   * changing on cues: [time, state], state 'blank' | 'cup' | 'button' (one
+   * big button reading `buttonText`) | 'latte' | a key of `lists` (a text
+   * screen of a heading and rows). `shine` cues make it gleam; `hue` tints
+   * its case. Returns the node and its screen.
    */
-  function phone(parent, { x, y, scale = 1, at, until, screens = [], shineAt = [], hue = '', label = 'CoffeeGo' }) {
+  function phone(parent, {
+    x, y, scale = 1, at, until, screens = [], shineAt = [], hue = '', label = 'CoffeeGo', buttonText = 'ORDER',
+    lists = { group: ['Group order', '20 × latte', 'for 10:00', 'Sent ✓'] },
+  }) {
     const node = place(el('div', `mk-phone${hue ? ` mk-phone--${hue}` : ''} is-staged`, parent), x, y);
     node.style.transform = `scale(${scale})`;
     const g = art(node, 'mk-phone-art', 0, 0, 150, 270);
@@ -340,23 +344,26 @@
     const states = {
       cup: svg('g', { opacity: 0 }, g),
       button: svg('g', { opacity: 0 }, g),
-      group: svg('g', { opacity: 0 }, g),
+      ...Object.fromEntries(Object.keys(lists).map((key) => [key, svg('g', { opacity: 0 }, g)])),
     };
     cup(states.cup, 75, 150, 64);
     // One big round button and a latte.
     inked(states.button, 'M75 96 m-46 0 a46 46 0 1 0 92 0 a46 46 0 1 0 -92 0', 'mk-big-button');
     const order = svg('text', { class: 'mk-button-text', x: 75, y: 101, 'text-anchor': 'middle' }, states.button);
-    order.textContent = 'ORDER';
+    order.textContent = buttonText;
     const latteG = svg('g', { opacity: 0 }, states.button);
     latte(latteG, 75, 196, 40);
-    // A group order: a list of twenty, ticked.
-    const list = svg('g', {}, states.group);
-    svg('path', { class: 'mk-group-card', d: 'M22 62 H128 V200 H22 Z' }, list);
-    const rows = ['Group order', '20 × latte', 'for 10:00', 'Sent ✓'];
-    rows.forEach((text, i) => {
-      const row = svg('text', { class: `mk-group-row${i === 0 ? ' mk-group-row--head' : ''}${i === 3 ? ' mk-group-row--ok' : ''}`, x: 75, y: 90 + i * 30, 'text-anchor': 'middle' }, list);
-      row.textContent = text;
-    });
+    // Text screens (`lists`: a name and up to four rows): a heading, then
+    // rows; a row ending in ✓ is good news, one starting with ✗ bad news.
+    for (const [key, rows] of Object.entries(lists)) {
+      const list = svg('g', {}, states[key]);
+      svg('path', { class: 'mk-group-card', d: 'M22 62 H128 V200 H22 Z' }, list);
+      rows.forEach((text, i) => {
+        const tone = i === 0 ? ' mk-group-row--head' : text.endsWith('✓') ? ' mk-group-row--ok' : text.startsWith('✗') ? ' mk-group-row--no' : '';
+        const row = svg('text', { class: `mk-group-row${tone}`, x: 75, y: 90 + i * 30, 'text-anchor': 'middle' }, list);
+        row.textContent = text;
+      });
+    }
     const glare = svg('path', { class: 'mk-glare', d: 'M20 30 L60 30 L20 120 Z', opacity: 0 }, g);
     const sorted = [...screens].sort((a, b) => a[0] - b[0]);
     onFrame((t) => {
@@ -663,10 +670,10 @@
    * on cues [time, state]: 'green' (a big tick: works on my machine),
    * 'code' (his code in a gilded frame), 'lamps' (six lamps that turn
    * green from `lampsAt`, one every `lampsEvery`), 'cached' (an old
-   * package kept on it), 'error' (a red cross). `path` moves it
+   * package kept on it: `cached` = { name, version }), 'error' (a red cross). `path` moves it
    * [[time, x, y, scale, duration]].
    */
-  function laptop(parent, { x, y, scale = 1, at, until, screens = [], lampsAt, lampsEvery = 0.18, path = [], stickers = true }) {
+  function laptop(parent, { x, y, scale = 1, at, until, screens = [], lampsAt, lampsEvery = 0.18, path = [], stickers = true, cached = { name: 'orders', version: '2.4.1' } }) {
     const node = place(el('div', 'mk-laptop is-staged', parent), x, y);
     node.dataset.testid = 'mk-laptop';
     node.style.transformOrigin = '50% 100%';
@@ -701,7 +708,7 @@
     });
     const lampsText = svg('text', { class: 'mk-screen-text', x: 66, y: 64, 'text-anchor': 'middle' }, screens_.lamps);
     lampsText.textContent = 'My machine';
-    packageArt(svg('g', { transform: 'translate(29 16) scale(0.86)' }, screens_.cached), { name: 'orders', version: '2.4.1', tone: 'old' });
+    packageArt(svg('g', { transform: 'translate(29 16) scale(0.86)' }, screens_.cached), { ...cached, tone: 'old' });
     svg('circle', { class: 'mk-screen-cross-disc', cx: 66, cy: 38, r: 18 }, screens_.error);
     svg('path', { class: 'mk-screen-cross', d: 'M58 30 L74 46 M74 30 L58 46' }, screens_.error);
     const err = svg('text', { class: 'mk-screen-text mk-screen-text--error', x: 66, y: 69, 'text-anchor': 'middle' }, screens_.error);

@@ -35,6 +35,8 @@
 .mk-card-head svg { flex: none; width: 18px; height: 18px; }
 .mk-card-body { padding: 6px 10px 8px; }
 .mk-card-line { font-size: 15px; line-height: 1.35; }
+/* A line not yet sung: it keeps its place, unseen. */
+.mk-card-line--pending { visibility: hidden; }
 .mk-card--gold .mk-card-head { background: #ffd100; color: #1a1410; }
 .mk-card--red .mk-card-head { background: #ff6b7d; color: #1a1410; }
 .mk-card--green .mk-card-head { background: #4ade80; color: #10261a; }
@@ -137,6 +139,7 @@
 .mk-group-row { fill: #1d1b16; font: 700 14px var(--font-display); }
 .mk-group-row--head { fill: #6b3f22; font-weight: 800; }
 .mk-group-row--ok { fill: #1a6b3e; font-weight: 800; }
+.mk-group-row--no { fill: #a8202f; font-weight: 800; }
 .mk-glare { fill: #ffffff; }
 
 /* Cups. */
