@@ -426,28 +426,80 @@
   }
 
   /**
+   * A copy's mouth that can open to sing: an open mouth drawn over the
+   * hero's own, as wide as it and centred on it (measured once it is on
+   * screen), with a dark inside, the upper teeth, and the tongue, its lips
+   * in the hero's lip colour. Returns sing(amount), 0 (the hero's own mouth)
+   * to 1 (wide open), or null without a mouth slot (the Prof's portrait).
+   */
+  function singingMouth(svg) {
+    const mouth = svg.querySelector('[data-hero-slot="mouth-style"]:not([display="none"])');
+    if (!mouth) return null;
+    const open = document.createElementNS(SVG_NS, 'g');
+    open.setAttribute('class', 'song-hero-singing-mouth');
+    mouth.after(open);
+    const part = (fill) => {
+      const node = document.createElementNS(SVG_NS, 'path');
+      node.setAttribute('fill', fill);
+      open.appendChild(node);
+      return node;
+    };
+    const lips = part('var(--hero-lip-fill, #b65c4e)');
+    const inside = part('#3a1014');
+    const teeth = part('#fbf6ee');
+    const tongue = part('#cc5a64');
+    let box = null;
+    return (amount) => {
+      if (!box) {
+        if (!amount) return;
+        const measured = mouth.getBBox();
+        if (!measured.width) return;
+        box = { x: measured.x + measured.width / 2, y: measured.y + measured.height * 0.42, w: measured.width / 2 };
+      }
+      const shown = amount > 0.08;
+      mouth.setAttribute('opacity', shown ? '0' : '1');
+      open.setAttribute('display', shown ? 'inline' : 'none');
+      if (!shown) return;
+      const { x, y, w } = box;
+      const hw = w * 0.82;
+      const depth = w * 0.95 * amount;
+      const f = (n) => n.toFixed(2);
+      const lens = (inset, top, bottom) => `M${f(x - hw + inset)} ${f(y)} C${f(x - hw * 0.5)} ${f(y - top)} ${f(x + hw * 0.5)} ${f(y - top)} ${f(x + hw - inset)} ${f(y)} C${f(x + hw * 0.62)} ${f(y + bottom)} ${f(x - hw * 0.62)} ${f(y + bottom)} ${f(x - hw + inset)} ${f(y)} Z`;
+      lips.setAttribute('d', lens(-1.4, depth * 0.24 + 3, depth + 3.4));
+      inside.setAttribute('d', lens(0.6, depth * 0.18, depth));
+      teeth.setAttribute('d', `M${f(x - hw * 0.66)} ${f(y - depth * 0.08)} C${f(x - hw * 0.3)} ${f(y - depth * 0.2)} ${f(x + hw * 0.3)} ${f(y - depth * 0.2)} ${f(x + hw * 0.66)} ${f(y - depth * 0.08)} L${f(x + hw * 0.6)} ${f(y + Math.min(4.6, depth * 0.3))} L${f(x - hw * 0.6)} ${f(y + Math.min(4.6, depth * 0.3))} Z`);
+      tongue.setAttribute('d', `M${f(x - hw * 0.5)} ${f(y + depth * 0.95)} C${f(x - hw * 0.4)} ${f(y + depth * 0.55)} ${f(x + hw * 0.4)} ${f(y + depth * 0.55)} ${f(x + hw * 0.5)} ${f(y + depth * 0.95)} Z`);
+    };
+  }
+
+  /**
    * The worn head's motion at song time: it blinks by itself (not under
    * reduced motion), look −1 … 1 glances to the picture's left … right,
    * down 0–1 looks down, wink 0–1 shuts the character's left eye (the
-   * picture's right), its brow dipping, brow 0–1 raises the other brow, and
-   * hush 0–1 purses the lips.
+   * picture's right), its brow dipping, brow 0–1 raises the other brow,
+   * frown 0–1 knits both brows down and in, hush 0–1 purses the lips, and
+   * sing 0–1 opens the mouth.
    */
   function wornMotion(svg) {
     const eyes = eyeParts(svg);
     const shut = eyelids(svg, eyes);
     const brows = browSides(svg);
     const pucker = mouthPucker(svg);
+    const singing = singingMouth(svg);
+    // Each brow knits about its inner end (FACE.x ± 10, at brow height).
+    const knit = (side, frown) => frown ? ` rotate(${(side * 9 * frown).toFixed(2)} ${FACE.x - side * 10} 176)` : '';
     let drawn = '';
-    return (time, { look = 0, down = 0, wink = 0, brow = 0, hush = 0 } = {}, reduced = false) => {
+    return (time, { look = 0, down = 0, wink = 0, brow = 0, frown = 0, hush = 0, sing = 0 } = {}, reduced = false) => {
       const blink = reduced ? 0 : blinkAt(time);
-      const state = `${look}|${down}|${blink}|${wink}|${brow}|${hush}`;
+      const state = `${look}|${down}|${blink}|${wink}|${brow}|${frown}|${hush}|${sing}`;
       if (state === drawn) return;
       drawn = state;
       glance(eyes.gaze, look * 2.8, down * 2.4);
       shut(blink, Math.max(blink, wink));
-      brows?.[0].setAttribute('transform', `translate(0 ${(-6 * brow).toFixed(2)})`);
-      brows?.[1].setAttribute('transform', `translate(0 ${(2 * wink).toFixed(2)})`);
+      brows?.[0].setAttribute('transform', `translate(0 ${(-6 * brow + 3 * frown).toFixed(2)})${knit(-1, frown)}`);
+      brows?.[1].setAttribute('transform', `translate(0 ${(2 * wink + 3 * frown).toFixed(2)})${knit(1, frown)}`);
       pucker?.(hush);
+      singing?.(sing);
     };
   }
 

@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="A seal with a tick on a laptop">
+  <!-- Song emblem for "It Works on My Machine": a gold rosette seal, a
+       laptop on it, and a green tick on the laptop's screen, the badge a
+       teammate gives his own machine. Original artwork for the SE Book. -->
+  <path d="M32 2 L37 7 L44 5 L46 12 L53 14 L51 21 L57 26 L52 32 L57 38 L51 43 L53 50 L46 52 L44 59 L37 57 L32 62 L27 57 L20 59 L18 52 L11 50 L13 43 L7 38 L12 32 L7 26 L13 21 L11 14 L18 12 L20 5 L27 7 Z" fill="#f2c14e" stroke="#7e5c1d" stroke-width="2" stroke-linejoin="round"/>
+  <circle cx="32" cy="32" r="20" fill="#fbf3df" stroke="#7e5c1d" stroke-width="2"/>
+  <rect x="20" y="22" width="24" height="16" rx="2" fill="#1b2230" stroke="#1b2230" stroke-width="2"/>
+  <path d="M16 41 H48 L46 44 H18 Z" fill="#aeb6c2" stroke="#1b2230" stroke-width="1.6" stroke-linejoin="round"/>
+  <path d="M25.5 30 L30 34.5 L38.5 26" fill="none" stroke="#34d27a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

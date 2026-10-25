@@ -58,6 +58,7 @@ extras:   # the song's own art and styles, loaded before its choreography
     - /js/ArchUML/uml-bundle.js
     - /js/song-video/model-kit.js
     - /js/song-video/sketch-kit.js
+    - /js/song-video/figure-geometry.js
     - /js/song-video/architect.js
 player: /assets/song-player/draw-it-out.html
 captions: /assets/audio/draw-it-out.vtt

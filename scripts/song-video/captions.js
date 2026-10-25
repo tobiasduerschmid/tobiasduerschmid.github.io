@@ -8,7 +8,10 @@
  *     crowd's answer from `answer_at`; a question the recording never
  *     answers (no `answer_at`) is one cue, like any sung line;
  *   - stretches of at least MUSIC_GAP seconds without words get a "[music]"
- *     cue, so captions-on viewers know the soundtrack is still playing.
+ *     cue, so captions-on viewers know the soundtrack is still playing;
+ *   - in a song with several singers (a section's or a line's `voice`),
+ *     the first cue of each change of singer names them: "(Product
+ *     Manager) They need twenty coffees…".
  */
 'use strict';
 
@@ -28,8 +31,12 @@ function timestamp(seconds) {
 function lyricCues(storyboard) {
   const sung = (section, text) => (section.delivery === 'spoken' ? text : `♪ ${text} ♪`);
   const cues = [];
+  let singer = null;
   for (const section of storyboard.sections) {
-    for (const line of section.lines) {
+    for (const rawLine of section.lines) {
+      const voice = rawLine.voice || section.voice || null;
+      const line = voice && voice !== singer ? { ...rawLine, text: `(${voice}) ${rawLine.text}` } : rawLine;
+      singer = voice;
       if (section.delivery === 'call' && Number.isFinite(line.answer_at)) {
         cues.push({ start: line.start, end: line.answer_at, text: sung(section, line.text) });
         cues.push({ start: line.answer_at, end: line.end, text: sung(section, `(crowd) ${line.answer}`) });

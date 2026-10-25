@@ -156,6 +156,12 @@ html.dark-mode .song-video-player {
   font-size: 0.9em;
 }
 
+/* The singer, where a song with several voices changes singer. */
+.song-video-voice {
+  margin-right: 0.3em;
+  font-weight: 700;
+}
+
 .song-video-lyric {
   font-weight: 600;
 }

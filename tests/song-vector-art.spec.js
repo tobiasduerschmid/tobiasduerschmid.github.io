@@ -41,6 +41,11 @@ const songPlayers = [
     name: 'UML diagrams', path: '/assets/song-player/draw-it-out.html', cameoTime: 3,
     storyboard: yaml.load(fs.readFileSync(path.join(__dirname, '..', '_data/songs/draw_it_out.yml'), 'utf8')),
   },
+  {
+    // The hero types at a desk while the Teammate sings "No need to worry".
+    name: 'Working on a team', path: '/assets/song-player/it-works-on-my-machine.html', cameoTime: 5,
+    storyboard: yaml.load(fs.readFileSync(path.join(__dirname, '..', '_data/songs/it_works_on_my_machine.yml'), 'utf8')),
+  },
 ];
 const lines = new Map(storyboard.sections.flatMap((section) => section.lines).map((line) => [line.id, line]));
 const finalCelebration = lines.get('chorus-4-8').marks.moves + 0.2;

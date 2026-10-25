@@ -107,7 +107,15 @@
       <p id="song-description">Visual descriptions appear here during the song.</p>
     </div>
     <div class="song-player-resources">
+      {%- if page.transcript %}
       <p class="song-player-transcript-link"><a href="{{ page.transcript | relative_url }}" target="_parent">Full transcript</a></p>
+      {%- else %}
+      {%- comment -%} A song with no chapter page (one only in the playlists) carries its transcript here. {%- endcomment %}
+      <details class="song-player-transcript mathjax_ignore" id="song-transcript">
+        <summary>Full transcript</summary>
+        {% include song-transcript.html song=song %}
+      </details>
+      {%- endif %}
       <p class="song-player-playlist-link"><a href="{{ '/SEBook/playlist.html' | relative_url }}" target="_parent">Video playlists</a></p>
       <details class="song-player-fallback">
         <summary>Audio downloads</summary>

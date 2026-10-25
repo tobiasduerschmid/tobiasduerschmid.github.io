@@ -1,0 +1,402 @@
+/*
+ * The cast of "It Works on My Machine" (js/song-video/opera-cast.js): the
+ * Teammate, the tenor, in a teal quarter-zip with his sleeves pushed up,
+ * and six teammates in unisex clothes who wear the viewer's SE Gym hero
+ * head. Lit from the upper left; outlines are a dark ink tinted to what
+ * they edge, under each part's fill at twice the line width, so a part
+ * keeps one outline wherever its pieces overlap. Like stage.css this styles
+ * the 960×540 stage, which keeps its artwork in both page themes; the
+ * player's print styles hide it. The figures are decorative (aria-hidden):
+ * the transcript and the described cut say what they do.
+ */
+
+.oc-figure {
+  position: absolute;
+  --oc-ink: #24160f;
+  --oc-ink-cool: #141a26;
+  --oc-skin: #e2ac88;
+  --oc-skin-shade: #c58763;
+  --oc-skin-light: #f4cdb0;
+  --oc-skin-line: #8a4f33;
+}
+
+.oc-art {
+  display: block;
+  overflow: visible;
+}
+
+.oc-ink {
+  fill: none;
+  stroke: var(--oc-ink);
+  stroke-width: 2.4;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  stroke-opacity: 0.92;
+}
+.oc-ink--cool { stroke: var(--oc-ink-cool); }
+.oc-ink--fine { stroke-width: 1.5; stroke: var(--oc-skin-line); }
+
+/* Skin: the drawn faces' own tone, or a worn hero's tokens. */
+.oc-skin { fill: var(--oc-skin); stroke: none; }
+.oc-hand-shade { fill: var(--oc-skin-shade); opacity: 0.55; }
+.oc-palm-mount { fill: var(--oc-skin-light); opacity: 0.6; }
+.oc-palm-crease { fill: none; stroke: var(--oc-skin-line); stroke-width: 0.45; stroke-linecap: round; stroke-opacity: 0.45; }
+.oc-tendon { fill: none; stroke: var(--oc-skin-light); stroke-width: 0.5; stroke-linecap: round; stroke-opacity: 0.6; }
+.oc-knuckle { fill: none; stroke: var(--oc-skin-light); stroke-width: 0.6; stroke-linecap: round; stroke-opacity: 0.85; }
+.oc-crease { fill: none; stroke: var(--oc-skin-line); stroke-width: 0.4; stroke-linecap: round; stroke-opacity: 0.5; }
+.oc-nail { fill: #f6dccb; stroke: var(--oc-skin-line); stroke-width: 0.3; stroke-opacity: 0.6; }
+.oc-ink--face { stroke: var(--oc-skin-line); stroke-width: 2; }
+
+/* Faces drawn for export stages and for the Teammate. */
+.oc-face-stop-0 { stop-color: var(--oc-skin-light); }
+.oc-face-stop-1 { stop-color: var(--oc-skin); }
+.oc-face-stop-2 { stop-color: var(--oc-skin-shade); }
+.oc-skin-stop-0 { stop-color: var(--oc-skin-light); }
+.oc-skin-stop-1 { stop-color: var(--oc-skin); }
+.oc-skin-stop-2 { stop-color: var(--oc-skin-shade); }
+.oc-face-skin,
+.oc-skin-neck,
+.oc-skin-arm { stroke: none; }
+.oc-face-shade { fill: var(--oc-skin-shade); opacity: 0.5; }
+.oc-neck-shade { fill: var(--oc-skin-shade); opacity: 0.75; }
+.oc-limb-shade { fill: var(--oc-skin-shade); opacity: 0.6; }
+.oc-muscle,
+.oc-wrist-crease { fill: none; stroke: var(--oc-skin-shade); stroke-width: 0.6; stroke-linecap: round; opacity: 0.8; }
+.oc-ear-line { fill: none; stroke: var(--oc-skin-line); stroke-width: 1.6; stroke-linecap: round; opacity: 0.55; }
+.oc-blush { fill: #e2785e; }
+.oc-nose { stroke: none; }
+.oc-nose-light { fill: none; stroke: var(--oc-skin-light); stroke-width: 2.2; stroke-linecap: round; opacity: 0.9; }
+.oc-nostril { fill: none; stroke: var(--oc-skin-line); stroke-width: 1.6; stroke-linecap: round; opacity: 0.8; }
+.oc-dimple { fill: none; stroke: var(--oc-skin-line); stroke-width: 1.4; stroke-linecap: round; opacity: 0.6; }
+.oc-sweat { fill: #bfe8ff; stroke: #3d7da6; stroke-width: 1.2; }
+
+.oc-hair { fill: var(--oc-hair, #3a2214); stroke: none; }
+.oc-hair-shade { fill: var(--oc-hair-dark, #1e100a); opacity: 0.7; }
+.oc-hair-strand { fill: none; stroke: var(--oc-hair-dark, #1e100a); stroke-width: 2; stroke-linecap: round; opacity: 0.55; }
+.oc-hair-sheen { fill: none; stroke: var(--oc-hair-light, #8a5a3c); stroke-width: 2.4; stroke-linecap: round; opacity: 0.85; }
+.oc-hair-curl { fill: none; stroke: var(--oc-hair, #3a2214); stroke-width: 3.6; stroke-linecap: round; }
+
+.oc-eye-white { fill: #fbf8f4; }
+.oc-iris { fill: var(--oc-eye, #6a4426); }
+.oc-pupil { fill: #140b06; }
+.oc-catchlight { fill: #ffffff; }
+.oc-catchlight--soft { opacity: 0.55; }
+.oc-lid { fill: var(--oc-skin); }
+.oc-lash-line { fill: none; stroke: #23140c; stroke-width: 2.4; stroke-linecap: round; }
+.oc-eye-shut { fill: none; stroke: #23140c; stroke-width: 2.6; stroke-linecap: round; }
+.oc-brow { fill: var(--oc-hair, #3a2214); stroke: var(--oc-hair-dark, #1e100a); stroke-width: 1; stroke-linejoin: round; }
+
+.oc-mouth-inside { fill: #4a1418; stroke: #2b0c0e; stroke-width: 1.4; stroke-linejoin: round; }
+.oc-teeth { fill: #fbf6ee; }
+.oc-tongue { fill: #d2626b; }
+.oc-lip-light { fill: none; stroke: #e89a86; stroke-width: 1.8; stroke-linecap: round; opacity: 0.8; }
+.oc-mouth-line { fill: none; stroke: #6b2e22; stroke-width: 2.4; stroke-linecap: round; }
+
+/* Clothes and their light. */
+.oc-top,
+.oc-sleeve,
+.oc-trousers,
+.oc-upper { stroke: none; }
+.oc-top-shade { fill: var(--oc-cloth-shade); opacity: 0.55; }
+.oc-top-light { fill: var(--oc-cloth-light); opacity: 0.35; }
+.oc-fold,
+.oc-sleeve-fold { fill: none; stroke: var(--oc-cloth-shade); stroke-width: 0.9; stroke-linecap: round; opacity: 0.7; }
+.oc-seam { fill: none; stroke: var(--oc-seam, var(--oc-cloth-shade)); stroke-width: 0.6; stroke-linecap: round; stroke-dasharray: 1.2 0.8; opacity: 0.85; }
+.oc-hem-shadow { fill: none; stroke: #07080c; stroke-width: 5; stroke-linejoin: round; stroke-opacity: 0.3; }
+.oc-rib-band { fill: var(--oc-cloth); }
+.oc-rib { fill: none; stroke: var(--oc-cloth-shade); stroke-width: 0.5; opacity: 0.8; }
+.oc-trouser-fall { stroke: none; }
+.oc-trouser-fall-stop-0 { stop-color: #08090c; stop-opacity: 0; }
+.oc-trouser-fall-stop-1 { stop-color: #08090c; stop-opacity: 0.3; }
+.oc-leg-shadow { fill: #0b0c10; opacity: 0.4; }
+.oc-pocket { fill: none; stroke: var(--oc-seam, #0b0c10); stroke-width: 0.6; stroke-linecap: round; opacity: 0.7; }
+.oc-sole { fill: var(--oc-sole, #f2f0ea); }
+.oc-shoe-turn { fill: #000; opacity: 0.22; }
+.oc-laces { fill: none; stroke: var(--oc-laces, #fffaf0); stroke-width: 0.8; stroke-linecap: round; }
+.oc-shoe-shine { fill: none; stroke: #ffffff; stroke-width: 0.9; stroke-linecap: round; opacity: 0.7; }
+.oc-cuff { fill: var(--oc-cloth-shade); }
+
+/* The Teammate. */
+.oc-figure--tenor {
+  --oc-cloth: #1f8a8a;
+  --oc-cloth-light: #66d1c9;
+  --oc-cloth-shade: #0f4f55;
+  --oc-hair: #3a2214;
+  --oc-hair-dark: #1c0f08;
+  --oc-hair-light: #8d5d3a;
+  --oc-eye: #6a4426;
+  --oc-seam: #d9963b;
+}
+.oc-figure--tenor .oc-top-stop-0 { stop-color: #33a8a4; }
+.oc-figure--tenor .oc-top-stop-1 { stop-color: #1f8a8a; }
+.oc-figure--tenor .oc-top-stop-2 { stop-color: #146468; }
+.oc-figure--tenor .oc-sleeve-stop-0 { stop-color: #2d9e9b; }
+.oc-figure--tenor .oc-sleeve-stop-1 { stop-color: #1d8285; }
+.oc-figure--tenor .oc-sleeve-stop-2 { stop-color: #135a5f; }
+.oc-figure--tenor .oc-trouser-stop-0 { stop-color: #3c5689; }
+.oc-figure--tenor .oc-trouser-stop-1 { stop-color: #4f6aa0; }
+.oc-figure--tenor .oc-trouser-stop-2 { stop-color: #2f4677; }
+.oc-figure--tenor .oc-trouser-stop-3 { stop-color: #233660; }
+.oc-figure--tenor .oc-shoe-stop-0 { stop-color: #ffa45c; }
+.oc-figure--tenor .oc-shoe-stop-1 { stop-color: #f07a2a; }
+.oc-figure--tenor .oc-shoe-stop-2 { stop-color: #b9501a; }
+.oc-tee { fill: #f6f8fb; }
+.oc-tee-neck { fill: none; stroke: #b9c4d2; stroke-width: 0.8; stroke-linecap: round; }
+.oc-collar { fill: var(--oc-cloth); }
+.oc-collar-fold { fill: none; stroke: var(--oc-cloth-light); stroke-width: 0.7; stroke-linecap: round; opacity: 0.6; }
+.oc-zip { fill: none; stroke: #c9d3dc; stroke-width: 0.9; stroke-dasharray: 0.5 0.5; }
+.oc-zip-pull { fill: #dfe6ec; stroke: #59656f; stroke-width: 0.4; }
+.oc-logo-body { fill: #fff3d6; }
+.oc-logo-flame { fill: #ff9a3c; }
+.oc-phones-band { fill: none; stroke: #1b1e24; stroke-width: 3; stroke-linecap: round; }
+.oc-phones-cup { fill: #2a2e37; }
+.oc-phones-cushion { fill: #12141a; }
+.oc-phones-accent { fill: none; stroke: #ff5a4f; stroke-width: 1.4; stroke-linecap: round; }
+
+/* Shared parts of the teammates' clothes. */
+.oc-under { fill: var(--oc-under, #f4f6fa); }
+.oc-under-neck { fill: none; stroke: var(--oc-under-shade, #a9b3c2); stroke-width: 0.9; stroke-linecap: round; }
+.oc-lapel { fill: var(--oc-cloth-light); opacity: 0.5; }
+.oc-lapel-edge { fill: none; stroke: var(--oc-cloth-shade); stroke-width: 0.8; stroke-linecap: round; }
+.oc-welt { fill: none; stroke: var(--oc-cloth-shade); stroke-width: 0.8; stroke-linecap: round; }
+.oc-button { fill: var(--oc-button, #1b1f2a); stroke: var(--oc-cloth-shade); stroke-width: 0.4; }
+.oc-zip--dark { stroke: #8e98a6; stroke-dasharray: none; stroke-width: 0.8; }
+.oc-cargo { fill: var(--oc-cargo, #4f5a38); }
+.oc-cargo-flap { fill: var(--oc-cargo-flap, #5f6b45); stroke: #1e2416; stroke-width: 0.6; }
+.oc-shoes--boot { --oc-sole: #1c140e; --oc-laces: #e3c9a0; }
+.oc-shoes--shoe { --oc-sole: #141418; }
+
+/* The Product Manager. */
+.oc-figure--pm {
+  --oc-cloth: #2b3f73;
+  --oc-cloth-light: #5c76b6;
+  --oc-cloth-shade: #172449;
+  --oc-under: #ff8a6b;
+  --oc-under-shade: #c55a42;
+}
+.oc-figure--pm .oc-top-stop-0 { stop-color: #3b528c; }
+.oc-figure--pm .oc-top-stop-1 { stop-color: #2b3f73; }
+.oc-figure--pm .oc-top-stop-2 { stop-color: #1d2c55; }
+.oc-figure--pm .oc-sleeve-stop-0 { stop-color: #384e86; }
+.oc-figure--pm .oc-sleeve-stop-1 { stop-color: #2a3d70; }
+.oc-figure--pm .oc-sleeve-stop-2 { stop-color: #1b2950; }
+.oc-figure--pm .oc-trouser-stop-0 { stop-color: #8a8f99; }
+.oc-figure--pm .oc-trouser-stop-1 { stop-color: #9da2ac; }
+.oc-figure--pm .oc-trouser-stop-2 { stop-color: #777c86; }
+.oc-figure--pm .oc-trouser-stop-3 { stop-color: #5c6069; }
+.oc-figure--pm .oc-shoe-stop-0 { stop-color: #ffffff; }
+.oc-figure--pm .oc-shoe-stop-1 { stop-color: #e8ebf0; }
+.oc-figure--pm .oc-shoe-stop-2 { stop-color: #b9bfc8; }
+.oc-figure--pm .oc-shoes { --oc-sole: #d9dde4; --oc-laces: #9aa3b0; }
+.oc-lanyard { fill: none; stroke: #ffd100; stroke-width: 1.4; stroke-linecap: round; }
+.oc-badge { fill: #f7f9fc; }
+.oc-badge-photo { fill: #7fb1e0; }
+.oc-badge-line { fill: none; stroke: #6c7686; stroke-width: 0.7; stroke-linecap: round; }
+
+/* The Build Engineer. */
+.oc-figure--build {
+  --oc-cloth: #c9ec24;
+  --oc-cloth-light: #f1ff8a;
+  --oc-cloth-shade: #7d9a0c;
+  --oc-under: #23304f;
+  --oc-under-shade: #11182b;
+  --oc-cargo: #59633c;
+}
+.oc-figure--build .oc-top-stop-0 { stop-color: #e5ff59; }
+.oc-figure--build .oc-top-stop-1 { stop-color: #c9ec24; }
+.oc-figure--build .oc-top-stop-2 { stop-color: #9fbf12; }
+.oc-figure--build .oc-sleeve-stop-0 { stop-color: #2f3e63; }
+.oc-figure--build .oc-sleeve-stop-1 { stop-color: #23304f; }
+.oc-figure--build .oc-sleeve-stop-2 { stop-color: #172038; }
+.oc-figure--build .oc-trouser-stop-0 { stop-color: #6e7a48; }
+.oc-figure--build .oc-trouser-stop-1 { stop-color: #7b8852; }
+.oc-figure--build .oc-trouser-stop-2 { stop-color: #5d683b; }
+.oc-figure--build .oc-trouser-stop-3 { stop-color: #47502c; }
+.oc-figure--build .oc-shoe-stop-0 { stop-color: #b0753f; }
+.oc-figure--build .oc-shoe-stop-1 { stop-color: #8a5528; }
+.oc-figure--build .oc-shoe-stop-2 { stop-color: #5b3415; }
+.oc-figure--build .oc-sleeve-fold { stroke: #0c1220; }
+.oc-reflective { fill: #d9dee6; }
+.oc-reflective-shine { fill: none; stroke: #ffffff; stroke-width: 0.7; opacity: 0.8; }
+
+/* The Test Engineer. */
+.oc-figure--test {
+  --oc-cloth: #f4f7fb;
+  --oc-cloth-light: #ffffff;
+  --oc-cloth-shade: #a9b6c8;
+  --oc-under: #b49ae6;
+  --oc-button: #dfe5ee;
+}
+.oc-figure--test .oc-top-stop-0 { stop-color: #ffffff; }
+.oc-figure--test .oc-top-stop-1 { stop-color: #eef2f8; }
+.oc-figure--test .oc-top-stop-2 { stop-color: #cbd4e1; }
+.oc-figure--test .oc-sleeve-stop-0 { stop-color: #ffffff; }
+.oc-figure--test .oc-sleeve-stop-1 { stop-color: #eaeff6; }
+.oc-figure--test .oc-sleeve-stop-2 { stop-color: #c3cddb; }
+.oc-figure--test .oc-trouser-stop-0 { stop-color: #3c414d; }
+.oc-figure--test .oc-trouser-stop-1 { stop-color: #474d5a; }
+.oc-figure--test .oc-trouser-stop-2 { stop-color: #31353f; }
+.oc-figure--test .oc-trouser-stop-3 { stop-color: #24272f; }
+.oc-figure--test .oc-shoe-stop-0 { stop-color: #4a4f5c; }
+.oc-figure--test .oc-shoe-stop-1 { stop-color: #262a33; }
+.oc-figure--test .oc-shoe-stop-2 { stop-color: #111318; }
+.oc-figure--test .oc-lapel { fill: #ffffff; opacity: 0.9; stroke: #b7c3d4; stroke-width: 0.6; }
+.oc-coat-seam { fill: none; stroke: #b7c3d4; stroke-width: 0.8; stroke-linecap: round; }
+.oc-shirt-v { fill: var(--oc-under); }
+.oc-pen--blue { fill: #2f6bd8; }
+.oc-pen--red { fill: #e2483d; }
+.oc-goggle-strap { fill: none; stroke: #ff8f1f; stroke-width: 1.8; stroke-linecap: round; }
+.oc-goggles { fill: #3f4756; }
+.oc-goggle-lens { fill: #9fe3f2; opacity: 0.9; }
+.oc-goggle-glint { fill: none; stroke: #ffffff; stroke-width: 0.8; stroke-linecap: round; }
+
+/* The UI Developer. */
+.oc-figure--ui {
+  --oc-cloth: #e2a92e;
+  --oc-cloth-light: #ffd776;
+  --oc-cloth-shade: #9a6c10;
+}
+.oc-figure--ui .oc-top-stop-0 { stop-color: #f0be4d; }
+.oc-figure--ui .oc-top-stop-1 { stop-color: #e2a92e; }
+.oc-figure--ui .oc-top-stop-2 { stop-color: #b8841a; }
+.oc-figure--ui .oc-sleeve-stop-0 { stop-color: #edb945; }
+.oc-figure--ui .oc-sleeve-stop-1 { stop-color: #dca42a; }
+.oc-figure--ui .oc-sleeve-stop-2 { stop-color: #ae7b16; }
+.oc-figure--ui .oc-trouser-stop-0 { stop-color: #b65a3a; }
+.oc-figure--ui .oc-trouser-stop-1 { stop-color: #c86a48; }
+.oc-figure--ui .oc-trouser-stop-2 { stop-color: #9c4a2f; }
+.oc-figure--ui .oc-trouser-stop-3 { stop-color: #7a3822; }
+.oc-figure--ui .oc-shoe-stop-0 { stop-color: #ffffff; }
+.oc-figure--ui .oc-shoe-stop-1 { stop-color: #eef0f3; }
+.oc-figure--ui .oc-shoe-stop-2 { stop-color: #c2c7cf; }
+.oc-figure--ui .oc-shoes { --oc-sole: #c8ccd3; --oc-laces: #b65a3a; }
+.oc-figure--ui .oc-cuff { fill: #b8841a; }
+.oc-apron { fill: #3d6fa8; }
+.oc-apron-shade { fill: #24476f; opacity: 0.6; }
+.oc-apron-stitch { fill: none; stroke: #f2d38a; stroke-width: 0.6; stroke-dasharray: 1.2 0.9; stroke-linecap: round; }
+.oc-apron-pocket { fill: #345f91; stroke: #1c3657; stroke-width: 0.8; }
+.oc-apron-strap { fill: none; stroke: #2f5a8a; stroke-width: 2.6; stroke-linecap: round; }
+.oc-brush-handle { fill: #c9452e; }
+.oc-brush-tip { fill: #2a1c14; }
+.oc-pencil-body { fill: #ffd100; }
+.oc-pencil-tip { fill: #f0c9a0; }
+.oc-paint--red { fill: #ef4b5b; }
+.oc-paint--blue { fill: #8fd3ff; }
+.oc-paint--gold { fill: #ffd100; }
+
+/* The Back-End Developer. */
+.oc-figure--backend {
+  --oc-cloth: #4a505d;
+  --oc-cloth-light: #8a93a3;
+  --oc-cloth-shade: #262a33;
+}
+.oc-figure--backend .oc-top-stop-0 { stop-color: #5d6474; }
+.oc-figure--backend .oc-top-stop-1 { stop-color: #4a505d; }
+.oc-figure--backend .oc-top-stop-2 { stop-color: #343843; }
+.oc-figure--backend .oc-sleeve-stop-0 { stop-color: #585f6e; }
+.oc-figure--backend .oc-sleeve-stop-1 { stop-color: #474d5a; }
+.oc-figure--backend .oc-sleeve-stop-2 { stop-color: #30343e; }
+.oc-figure--backend .oc-trouser-stop-0 { stop-color: #2b2f39; }
+.oc-figure--backend .oc-trouser-stop-1 { stop-color: #343945; }
+.oc-figure--backend .oc-trouser-stop-2 { stop-color: #23262e; }
+.oc-figure--backend .oc-trouser-stop-3 { stop-color: #191b21; }
+.oc-figure--backend .oc-shoe-stop-0 { stop-color: #f2f4f7; }
+.oc-figure--backend .oc-shoe-stop-1 { stop-color: #c9ced6; }
+.oc-figure--backend .oc-shoe-stop-2 { stop-color: #8e95a1; }
+.oc-figure--backend .oc-shoes { --oc-sole: #e7eaee; --oc-laces: #4a505d; }
+.oc-figure--backend .oc-seam { --oc-seam: #6e7685; }
+.oc-hood { fill: #3b404b; }
+.oc-hood-inside { stroke: #1d2027; }
+.oc-hood-edge { fill: none; stroke: #2a2e37; stroke-width: 3.2; stroke-linecap: round; }
+.oc-drawstring { fill: none; stroke: #e9edf2; stroke-width: 1.1; stroke-linecap: round; }
+.oc-aglet { fill: #b8c0cb; }
+.oc-pocket-patch { fill: #444a56; }
+.oc-print { fill: #c8d6e8; }
+.oc-print-line { fill: none; stroke: #4a505d; stroke-width: 0.7; }
+
+/* The Security Engineer. */
+.oc-figure--security {
+  --oc-cloth: #2b2f37;
+  --oc-cloth-light: #6c7686;
+  --oc-cloth-shade: #121418;
+  --oc-cargo: #2f333b;
+  --oc-cargo-flap: #3a3f49;
+}
+.oc-figure--security .oc-top-stop-0 { stop-color: #3d424d; }
+.oc-figure--security .oc-top-stop-1 { stop-color: #2b2f37; }
+.oc-figure--security .oc-top-stop-2 { stop-color: #1b1e24; }
+.oc-figure--security .oc-sleeve-stop-0 { stop-color: #3a3f4a; }
+.oc-figure--security .oc-sleeve-stop-1 { stop-color: #292d35; }
+.oc-figure--security .oc-sleeve-stop-2 { stop-color: #191b21; }
+.oc-figure--security .oc-trouser-stop-0 { stop-color: #262931; }
+.oc-figure--security .oc-trouser-stop-1 { stop-color: #2e323b; }
+.oc-figure--security .oc-trouser-stop-2 { stop-color: #1e2027; }
+.oc-figure--security .oc-trouser-stop-3 { stop-color: #15171c; }
+.oc-figure--security .oc-shoe-stop-0 { stop-color: #4a4f5a; }
+.oc-figure--security .oc-shoe-stop-1 { stop-color: #23262d; }
+.oc-figure--security .oc-shoe-stop-2 { stop-color: #0f1013; }
+.oc-figure--security .oc-cuff { fill: #16181d; }
+.oc-pocket-flap { fill: #353a44; stroke: #0e1013; stroke-width: 0.6; }
+.oc-epaulette { fill: #353a44; stroke: #0e1013; stroke-width: 0.5; }
+/* Cool light bounced off the stage keeps the dark jacket apart from it. */
+.oc-rim { fill: none; stroke: #7f9cc7; stroke-width: 1.2; stroke-linecap: round; opacity: 0.6; }
+.oc-shield { fill: #f2c14e; }
+.oc-shield-star { fill: #8a5d10; }
+.oc-earwire { fill: none; stroke: #c9dceb; stroke-width: 0.9; stroke-linecap: round; opacity: 0.85; }
+.oc-earwire-coil { fill: none; stroke: #c9dceb; stroke-width: 0.6; stroke-linecap: round; opacity: 0.85; }
+
+/* Props in hand. */
+.oc-board { fill: #b77b43; }
+.oc-paper { fill: #fbfaf5; }
+.oc-paper-lines { fill: none; stroke: #9aa6b6; stroke-width: 0.8; stroke-linecap: round; }
+.oc-paper-ticks { fill: none; stroke: #1f9d55; stroke-width: 1; stroke-linecap: round; stroke-linejoin: round; }
+.oc-steel { fill: #cdd5df; }
+.oc-steel-shine { fill: none; stroke: #ffffff; stroke-width: 0.7; stroke-linecap: round; opacity: 0.8; }
+.oc-mug { fill: #fbfbf8; }
+.oc-mug-handle { fill: none; stroke: #fbfbf8; stroke-width: 2.4; stroke-linecap: round; }
+.oc-mug-band { fill: #e2483d; }
+.oc-coffee { fill: #5a3420; }
+.oc-steam { fill: none; stroke: #e6eef8; stroke-width: 1; stroke-linecap: round; opacity: 0.8; }
+.oc-handle { fill: #7a4a2c; }
+.oc-brass { fill: #d7a744; }
+.oc-lens { fill: #bfe7f4; opacity: 0.85; }
+.oc-lens-glint { fill: none; stroke: #ffffff; stroke-width: 1.2; stroke-linecap: round; }
+.oc-palette { fill: #d9a96b; }
+.oc-palette-hole { fill: #24344f; }
+.oc-dab--red { fill: #ef4b5b; }
+.oc-dab--gold { fill: #ffd100; }
+.oc-dab--blue { fill: #4aa3ff; }
+.oc-dab--green { fill: #4ade80; }
+.oc-dab--violet { fill: #a78bfa; }
+.oc-stamp-base { fill: #3b3f48; }
+.oc-stamp-ink { fill: #e2483d; }
+.oc-straw { fill: #e1b85c; }
+.oc-straw-line { fill: none; stroke: #9a7426; stroke-width: 0.7; stroke-linecap: round; }
+.oc-gold { fill: #f2c14e; }
+.oc-gold-dark { fill: #b58421; }
+.oc-gold-handle { fill: none; stroke: #f2c14e; stroke-width: 2; stroke-linecap: round; }
+.oc-gold-shine { fill: none; stroke: #fff4c9; stroke-width: 1.1; stroke-linecap: round; }
+.oc-cane { fill: none; stroke: #8a5a34; stroke-width: 2.6; stroke-linecap: round; }
+.oc-cane-ink { fill: none; stroke: var(--oc-ink); stroke-width: 4; stroke-linecap: round; }
+
+/* A teammate wearing the viewer's hero head takes its skin tokens. */
+.oc-art--hero .oc-skin-stop-0,
+.oc-art--hero .oc-face-stop-0 { stop-color: var(--hero-skin-highlight-soft); }
+.oc-art--hero .oc-skin-stop-1,
+.oc-art--hero .oc-face-stop-1 { stop-color: var(--hero-skin-light); }
+.oc-art--hero .oc-skin-stop-2,
+.oc-art--hero .oc-face-stop-2 { stop-color: var(--hero-skin-mid); }
+.oc-art--hero .oc-skin { fill: var(--hero-skin-light); }
+.oc-art--hero .oc-hand-shade,
+.oc-art--hero .oc-limb-shade { fill: var(--hero-skin); }
+.oc-art--hero .oc-palm-mount,
+.oc-art--hero .oc-tendon,
+.oc-art--hero .oc-knuckle { fill: none; stroke: var(--hero-skin-highlight-soft); }
+.oc-art--hero .oc-palm-mount { fill: var(--hero-skin-highlight-soft); stroke: none; }
+.oc-art--hero .oc-nail { fill: var(--hero-skin-highlight-soft); stroke: var(--hero-skin-mid); }
+.oc-art--hero .oc-ink--fine,
+.oc-art--hero .oc-ink--face,
+.oc-art--hero .oc-palm-crease,
+.oc-art--hero .oc-crease { stroke: var(--hero-face-line, #5a3624); }
+.oc-art--hero .oc-muscle,
+.oc-art--hero .oc-wrist-crease { stroke: var(--hero-skin-mid); }

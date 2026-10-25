@@ -1,0 +1,31 @@
+{%- comment -%}
+  A song's transcript: every lyric line with its time, the singer whenever
+  the voice changes (a section's or a line's `voice`, in songs with more
+  than one singer), and what the video shows for it (`visual`), section by
+  section, from the song's storyboard (_data/songs/<song>.yml):
+
+    {% include song-transcript.html song=site.data.songs.snapshots_and_pointers %}
+
+  Used in a chapter's song figure (_includes/song-video.html) and in a
+  player page that has no chapter (_layouts/song-player.html).
+{%- endcomment -%}
+{%- assign previous_voice = '' -%}
+{%- for section in include.song.sections %}
+<p class="song-video-section">{{ section.title }}</p>
+<ol class="song-video-lines">
+  {%- for line in section.lines %}
+  {%- assign minutes = line.start | divided_by: 60 | floor -%}
+  {%- assign seconds = line.start | modulo: 60 | floor -%}
+  {%- assign voice = line.voice | default: section.voice | default: '' -%}
+  <li>
+    <span class="song-video-time">{{ minutes }}:{% if seconds < 10 %}0{% endif %}{{ seconds }}</span>
+    {%- if voice != '' and voice != previous_voice %}
+    <span class="song-video-voice">{{ voice }}:</span>
+    {%- endif %}
+    <span class="song-video-lyric">{{ line.text }}{% if line.answer %} — {{ line.answer }}{% endif %}</span>
+    <span class="song-video-visual">On screen: {{ line.visual | escape }}</span>
+  </li>
+  {%- assign previous_voice = voice -%}
+  {%- endfor %}
+</ol>
+{%- endfor %}

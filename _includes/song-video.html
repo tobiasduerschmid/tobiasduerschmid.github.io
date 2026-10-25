@@ -73,20 +73,7 @@
     </video>
     {% endunless %}
 
-    {%- for section in song.sections %}
-    <p class="song-video-section">{{ section.title }}</p>
-    <ol class="song-video-lines">
-      {%- for line in section.lines %}
-      {%- assign minutes = line.start | divided_by: 60 | floor -%}
-      {%- assign seconds = line.start | modulo: 60 | floor -%}
-      <li>
-        <span class="song-video-time">{{ minutes }}:{% if seconds < 10 %}0{% endif %}{{ seconds }}</span>
-        <span class="song-video-lyric">{{ line.text }}{% if line.answer %} — {{ line.answer }}{% endif %}</span>
-        <span class="song-video-visual">On screen: {{ line.visual | escape }}</span>
-      </li>
-      {%- endfor %}
-    </ol>
-    {%- endfor %}
+    {% include song-transcript.html song=song %}
   </details>
 </figure>
 {% if song.player %}<script src="{{ '/js/song-video/embed.js' | relative_url }}" defer></script>{% endif %}

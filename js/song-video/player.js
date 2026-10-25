@@ -201,7 +201,10 @@
       return;
     }
     if (event.data?.type !== 'song-player:theme') return;
-    player.querySelector('.song-player-transcript-link').hidden = event.data.hasTranscript === true;
+    // A chapter that prints the transcript beside the player needs no second copy.
+    for (const transcript of player.querySelectorAll('.song-player-transcript-link, .song-player-transcript')) {
+      transcript.hidden = event.data.hasTranscript === true;
+    }
     document.documentElement.classList.toggle('dark-mode', event.data.dark === true);
     if (Number.isFinite(event.data.fontSize) && event.data.fontSize >= 16) {
       document.documentElement.style.fontSize = `${event.data.fontSize}px`;

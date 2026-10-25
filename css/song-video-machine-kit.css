@@ -1,0 +1,415 @@
+/*
+ * The pictures of "It Works on My Machine" (js/song-video/machine-kit.js):
+ * stage props in the cast's ink and light. Like stage.css this styles the
+ * 960×540 stage, which keeps its artwork in both page themes; the player's
+ * print styles hide it. Every text on stage sits on its own card or plate
+ * at 12 px or more and keeps 4.5:1 against it; state never rests on colour
+ * alone (a tick, a cross, a word goes with it).
+ */
+
+.mk-art { position: absolute; display: block; overflow: visible; }
+.mk-ink { fill: none; stroke: #1a1410; stroke-width: 3; stroke-linejoin: round; stroke-linecap: round; }
+
+/* Cards: a coloured head with an icon and a title, then lines. */
+.mk-card {
+  position: absolute;
+  overflow: hidden;
+  border: 2px solid #1a1410;
+  border-radius: 8px;
+  background: #fbf7ec;
+  color: #1d1b16;
+  box-shadow: 3px 4px 0 rgba(0, 0, 0, 0.35);
+  font-weight: 700;
+  text-wrap: balance;
+}
+.mk-card-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: #e8dfc7;
+  font-size: 15px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.mk-card-head svg { flex: none; width: 18px; height: 18px; }
+.mk-card-body { padding: 6px 10px 8px; }
+.mk-card-line { font-size: 15px; line-height: 1.35; }
+.mk-card--gold .mk-card-head { background: #ffd100; color: #1a1410; }
+.mk-card--red .mk-card-head { background: #ff6b7d; color: #1a1410; }
+.mk-card--green .mk-card-head { background: #4ade80; color: #10261a; }
+.mk-card--blue .mk-card-head { background: #8ec5ff; color: #0e1c30; }
+.mk-card--dark { background: #121a26; color: #eef3fa; border-color: #4c5d78; }
+.mk-card--dark .mk-card-head { background: #0b111b; color: #eef3fa; }
+
+/* Code: Python in the shared syntax colours (.code-tok--*). */
+.mk-code {
+  position: absolute;
+  overflow: hidden;
+  border: 1px solid rgba(160, 190, 255, 0.35);
+  border-radius: 10px;
+  background: linear-gradient(155deg, #172039, #0b1122 72%);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+  color: #e6edf3;
+  font-family: var(--font-mono);
+  font-size: 14px;
+}
+.mk-code-title { padding: 6px 12px; border-bottom: 1px solid rgba(160, 190, 255, 0.25); color: #c9d6ee; font: 700 13px var(--font-display); letter-spacing: 0.04em; }
+.mk-code-body { padding: 8px 12px 10px; }
+.mk-code-line { min-height: 1.55em; line-height: 1.55; white-space: pre; border-radius: 4px; }
+.mk-code-line--new { background: rgba(74, 222, 128, 0.2); }
+.mk-code-line--gone { text-decoration: line-through; text-decoration-color: #ff6b7d; opacity: 0.6; }
+.mk-code-line--mark-red { background: rgba(255, 107, 125, 0.24); }
+.mk-code-line--mark-green { background: rgba(74, 222, 128, 0.22); }
+
+/* A small label on a prop. */
+.mk-tag {
+  position: absolute;
+  padding: 3px 9px;
+  border: 2px solid #1a1410;
+  border-radius: 6px;
+  background: #fbf7ec;
+  color: #1a1410;
+  font-size: 14px;
+  font-weight: 800;
+  white-space: nowrap;
+  box-shadow: 2px 3px 0 rgba(0, 0, 0, 0.35);
+}
+.mk-tag--gold { background: #ffd100; }
+
+/* The follow spot: a faint cone and a pool on the floor. */
+.mk-spot { position: absolute; inset: 0; pointer-events: none; }
+.mk-spot-art { left: 0; top: 0; }
+.mk-spot-stop-0 { stop-color: #fff1c4; stop-opacity: 0; }
+.mk-spot-stop-1 { stop-color: #fff1c4; stop-opacity: 0.12; }
+.mk-pool-stop-0 { stop-color: #fff1c4; stop-opacity: 0.32; }
+.mk-pool-stop-1 { stop-color: #fff1c4; stop-opacity: 0; }
+
+/* The sprint calendar. */
+.mk-calendar { position: absolute; }
+.mk-calendar-back { fill: #fbf7ec; }
+.mk-calendar-head { fill: #d6334a; }
+.mk-ring { fill: none; stroke: #9aa6b6; stroke-width: 3; stroke-linecap: round; }
+.mk-calendar-title { fill: #ffffff; font: 800 16px var(--font-display); letter-spacing: 0.12em; }
+.mk-calendar-page { fill: #fffdf6; stroke: #cfc6b0; stroke-width: 1; }
+.mk-calendar-count { fill: #1d1b16; font: 900 44px var(--font-display); }
+.mk-calendar-count--done { fill: #1a7a45; font-size: 36px; }
+.mk-calendar-unit { fill: #4a4436; font: 700 13px var(--font-display); }
+
+/* The toy ship. */
+.mk-ship { position: absolute; }
+.mk-mast { fill: none; stroke: #6b4423; stroke-width: 3; }
+.mk-sail { fill: #fbf7ec; }
+.mk-sail--back { fill: #e3d8bd; }
+.mk-hull { fill: #b5552b; }
+.mk-hull-band { fill: none; stroke: #ffd100; stroke-width: 3; }
+.mk-porthole { fill: #ffe7a3; stroke: #5a2a12; stroke-width: 1.4; }
+.mk-pennant { fill: #ffd100; }
+.mk-wheel { fill: #3a2a1e; }
+.mk-spoke { fill: none; stroke: #c9a36a; stroke-width: 2; }
+.mk-ship-wire { fill: none; stroke: #0b111b; stroke-width: 1.6; opacity: 0.7; }
+
+/* The audience in the stalls, and the users' question signs. */
+.mk-audience { position: absolute; inset: 0; pointer-events: none; }
+.mk-silhouette { fill: #04060b; }
+.mk-asker-arm { fill: none; stroke: #04060b; stroke-width: 9; stroke-linecap: round; }
+.mk-asker-hand { fill: #04060b; }
+.mk-asker-sign { fill: #fbf7ec; stroke: #04060b; stroke-width: 2; }
+.mk-asker-q { fill: #b8233a; font: 900 20px var(--font-display); }
+
+/* The giant phone and the coffee app. */
+.mk-phone { position: absolute; transform-origin: 0 0; }
+.mk-stand { fill: #59606e; }
+.mk-phone-case { fill: #1b2230; }
+.mk-phone--red .mk-phone-case { fill: #d6334a; }
+.mk-phone--orange .mk-phone-case { fill: #f07a2a; }
+.mk-phone--gold .mk-phone-case { fill: #e2b11f; }
+.mk-phone--green .mk-phone-case { fill: #2fae62; }
+.mk-phone--blue .mk-phone-case { fill: #2f7bd8; }
+.mk-phone--violet .mk-phone-case { fill: #7d55d8; }
+.mk-phone-screen { fill: #f6f3ea; }
+.mk-phone-notch { fill: none; stroke: #3a4252; stroke-width: 4; stroke-linecap: round; }
+.mk-app-bar { fill: #6b3f22; }
+.mk-app-name { fill: #ffffff; font: 800 14px var(--font-display); }
+.mk-big-button { fill: #1f8a4c; }
+.mk-button-text { fill: #ffffff; font: 900 18px var(--font-display); letter-spacing: 0.06em; }
+.mk-group-card { fill: #ffffff; stroke: #d9d2bf; stroke-width: 1.4; }
+.mk-group-row { fill: #1d1b16; font: 700 14px var(--font-display); }
+.mk-group-row--head { fill: #6b3f22; font-weight: 800; }
+.mk-group-row--ok { fill: #1a6b3e; font-weight: 800; }
+.mk-glare { fill: #ffffff; }
+
+/* Cups. */
+.mk-cup-body { fill: #fbf7ec; }
+.mk-cup-sleeve { fill: #a0612f; }
+.mk-cup-lid { fill: #3b2a20; }
+.mk-steam { fill: none; stroke: #e6eef8; stroke-width: 1.6; stroke-linecap: round; opacity: 0.8; }
+.mk-latte-glass { fill: #c08a52; }
+.mk-latte-foam { fill: #f2e3c6; }
+.mk-latte-heart { fill: #b07240; }
+.mk-latte-handle { fill: none; stroke: #e9eef5; stroke-width: 3; stroke-linecap: round; }
+
+/* Sparkles. */
+.mk-sparkles { position: absolute; inset: 0; pointer-events: none; }
+.mk-star--gold { fill: #ffe27a; }
+.mk-star--green { fill: #8cff9e; }
+
+/* A desk. */
+.mk-desk-top { fill: #8a5a34; }
+.mk-desk-panel { fill: #6b4426; }
+.mk-desk-light { fill: none; stroke: #c58c58; stroke-width: 2; }
+.mk-desk-drawer { fill: none; stroke: #3e2614; stroke-width: 1.6; }
+
+/* The requirements scroll. */
+.mk-scroll { position: absolute; }
+.mk-scroll-paper { fill: #f6edd2; }
+.mk-scroll-title { fill: #6b3f22; font: 800 18px var(--font-display); }
+.mk-scroll-line { fill: none; stroke: #a99a7c; stroke-width: 3; stroke-linecap: round; }
+.mk-scroll-bullet { fill: #a99a7c; }
+.mk-scroll-rod { fill: #8a5a34; }
+
+/* A torn card's halves. */
+.mk-torn { position: absolute; }
+.mk-torn .mk-card { position: relative; }
+
+/* The APPLAUSE sign, its bulbs lit by --mk-lit (0–1). */
+.mk-applause { position: absolute; --mk-lit: 0; }
+.mk-applause-box { fill: #1b1410; }
+.mk-applause-bulb { fill: #ffd36b; opacity: calc(0.25 + 0.75 * var(--mk-lit)); }
+.mk-applause-word { fill: #a8956a; font: 900 28px var(--font-display); letter-spacing: 0.16em; }
+.mk-applause-word--lit { fill: #ffe27a; }
+
+/* A cricket. */
+.mk-cricket { position: absolute; }
+.mk-cricket-body { fill: #3e7a3a; }
+.mk-cricket-leg { fill: none; stroke: #2a4f27; stroke-width: 2; stroke-linecap: round; }
+.mk-cricket-eye { fill: #111111; }
+.mk-cricket-antenna { fill: none; stroke: #2a4f27; stroke-width: 1.4; stroke-linecap: round; }
+.mk-chirp { fill: none; stroke: #e6eef8; stroke-width: 2; stroke-linecap: round; }
+
+/* The conference table, its twenty empty cups, the one coffee, its straws. */
+.mk-table { position: absolute; }
+.mk-empty-cup { fill: rgba(251, 247, 236, 0.12); stroke: #fbf7ec; stroke-width: 1.6; stroke-dasharray: 2 2; }
+.mk-table-top { fill: #9a6a3e; }
+.mk-table-leg { fill: #6b4426; }
+.mk-table-light { fill: none; stroke: #d09a62; stroke-width: 2; }
+.mk-straw { fill: none; stroke-width: 2.2; stroke-linecap: round; }
+.mk-straw--0 { stroke: #ef4b5b; }
+.mk-straw--1 { stroke: #4aa3ff; }
+.mk-straw--2 { stroke: #ffd100; }
+
+/* Packages: cardboard boxes with a label and a version. */
+.mk-package, .mk-shelf, .mk-lockfile, .mk-marcher, .mk-laptop, .mk-machine, .mk-plug, .mk-shipbox { position: absolute; }
+.mk-box { fill: #c9955b; }
+.mk-box--new { fill: #d8a86b; }
+.mk-box--old { fill: #a6875f; }
+.mk-box-top { fill: #e0b57c; }
+.mk-box-side { fill: #9c6c3a; }
+.mk-box-flap { fill: #b78349; }
+.mk-box-tape { fill: none; stroke: #e9d3a6; stroke-width: 5; opacity: 0.8; }
+.mk-box-label { fill: #fbf7ec; stroke: #6b4426; stroke-width: 1; }
+.mk-box-name { fill: #1a1410; font: 800 12px var(--font-display); }
+.mk-box-version { fill: #8a2a14; font: 800 12px var(--font-mono); }
+.mk-shelf-post { fill: #6b4426; }
+.mk-shelf-board { fill: #8a5a34; }
+
+/* The lockfile. */
+.mk-doc { fill: #fbf7ec; }
+.mk-doc-fold { fill: #e3d9c0; }
+.mk-doc-line { fill: none; stroke: #b9ad92; stroke-width: 3; stroke-linecap: round; }
+.mk-padlock { fill: #f2c14e; }
+.mk-padlock-shackle { fill: none; stroke: #9aa6b6; stroke-width: 5; }
+.mk-keyhole { fill: #5a3d10; }
+
+/* Marching versions on little legs. */
+.mk-leg { fill: none; stroke: #1a1410; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.mk-marcher-fix { left: 40px; top: -10px; font-size: 13px; }
+
+/* The Teammate's laptop and its screens. */
+.mk-laptop-lid { fill: #c9cfd8; }
+.mk-laptop-screen { fill: #0f1724; }
+.mk-laptop-base { fill: #aeb6c2; }
+.mk-laptop-lip { fill: none; stroke: #6f7886; stroke-width: 2; stroke-linecap: round; }
+.mk-sticker-dot--duck { fill: #ffd100; stroke: #1a1410; stroke-width: 1; }
+.mk-sticker-dot--tick { fill: none; stroke: #1f9d55; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.mk-screen-tick-disc { fill: #1f9d55; }
+.mk-screen-tick { fill: none; stroke: #ffffff; stroke-width: 4.5; stroke-linecap: round; stroke-linejoin: round; }
+.mk-screen-text { fill: #e9f6ee; font: 800 12px var(--font-display); }
+.mk-screen-text--error { fill: #ffd5da; }
+.mk-gilt { fill: #121a2b; stroke: #f2c14e; stroke-width: 3.4; }
+.mk-code-stroke { fill: none; stroke-width: 3; stroke-linecap: round; }
+.mk-code-stroke--0 { stroke: #d2a8ff; }
+.mk-code-stroke--1 { stroke: #79c0ff; }
+.mk-code-stroke--2 { stroke: #ffd166; }
+.mk-screen-lamp { fill: #39475b; stroke: #0a0f17; stroke-width: 1; }
+.mk-screen-lamp--on { fill: #34d27a; }
+.mk-screen-lamp-tick { fill: none; stroke: #0b111b; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.mk-screen-cross-disc { fill: #d6334a; }
+.mk-screen-cross { fill: none; stroke: #ffffff; stroke-width: 4.5; stroke-linecap: round; }
+
+/* The tally of tiny fixes: a flip card. */
+.mk-tally { position: absolute; width: 148px; border: 3px solid #1a1410; border-radius: 10px; background: #1b2230; box-shadow: 3px 4px 0 rgba(0, 0, 0, 0.4); text-align: center; overflow: hidden; }
+.mk-tally-title { padding: 5px 6px; background: #ffd100; color: #1a1410; font-size: 13px; font-weight: 900; letter-spacing: 0.1em; text-transform: uppercase; white-space: nowrap; }
+.mk-tally-face { padding: 4px 0 6px; color: #ffffff; font: 900 46px var(--font-display); line-height: 1.1; }
+
+/* The clean-build works. */
+.mk-chimney { fill: #6b7486; }
+.mk-works { fill: #4a6fa5; }
+.mk-hopper { fill: #8ea6c8; }
+.mk-conveyor { fill: #2a2f3a; }
+.mk-roller { fill: #9aa6b6; }
+.mk-gear { fill: none; stroke: #d7dde6; stroke-width: 6; stroke-linecap: round; }
+.mk-gear-disc { fill: #d7dde6; }
+.mk-gear-hub { fill: #4a6fa5; }
+.mk-machine-plate { fill: #fbf7ec; stroke: #1a1410; stroke-width: 1.4; }
+.mk-machine-name { fill: #1a1410; font: 800 12px var(--font-display); }
+
+/* A plug for the old call, a socket for the new interface. */
+.mk-socket { fill: #e8ecf1; }
+.mk-socket-hole { fill: #1a1410; }
+.mk-plug-body { fill: #2f3644; }
+.mk-cord { fill: none; stroke: #2f3644; stroke-width: 6; stroke-linecap: round; }
+.mk-prong { fill: #d7a744; }
+.mk-spark { fill: none; stroke: #ffe27a; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.mk-code-chip { position: absolute; padding: 3px 8px; border-radius: 6px; background: #0b1122; border: 1px solid rgba(160, 190, 255, 0.45); color: #e6edf3; font: 600 14px var(--font-mono); white-space: nowrap; }
+.mk-cross { position: absolute; width: 34px; height: 34px; border-radius: 50%; background: #d6334a; color: #ffffff; border: 2px solid #1a1410; display: grid; place-items: center; }
+.mk-cross svg { width: 22px; height: 22px; stroke-width: 3; }
+
+/* The box for overnight mail. */
+.mk-shipbox-word { fill: #2b1a0c; font: 900 16px var(--font-display); letter-spacing: 0.08em; }
+.mk-shipping-label { position: absolute; width: 154px; border: 2px solid #1a1410; background: #fbf7ec; border-radius: 4px; text-align: center; }
+.mk-shipping-label-head { background: #d6334a; color: #ffffff; font-size: 13px; font-weight: 900; letter-spacing: 0.12em; }
+.mk-shipping-label-line { color: #1a1410; font-size: 12px; font-weight: 800; padding: 2px 4px; white-space: nowrap; }
+
+/* Act III: tags, a plaster cast, cracks, the clingy tests. */
+.mk-pin { font-size: 13px; padding: 2px 7px; }
+.mk-tag--green { background: #4ade80; }
+.mk-tag--red { background: #ff6b7d; }
+.mk-mold { position: absolute; }
+.mk-plaster { fill: #c9c4b8; fill-rule: evenodd; }
+.mk-plaster-mark { fill: none; stroke: #8f8a7e; stroke-width: 2; stroke-linecap: round; }
+.mk-seal { position: absolute; width: 46px; height: 46px; border-radius: 50%; background: #b8233a; border: 2px solid #5a0f1b; color: #fff3d6; font-size: 13px; font-weight: 900; display: grid; place-items: center; }
+.mk-crack { pointer-events: none; }
+.mk-crack-line { fill: none; stroke: #1a1410; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.mk-buddy { position: absolute; }
+.mk-buddy-card { fill: #fbf7ec; }
+.mk-buddy-head { fill: #ffd100; }
+.mk-buddy-label { fill: #1a1410; font: 800 9px var(--font-display); }
+.mk-buddy-eye { fill: #1a1410; }
+.mk-buddy-mouth { fill: none; stroke: #1a1410; stroke-width: 1.8; stroke-linecap: round; }
+.mk-buddy-mouth--open { fill: #4a1418; }
+.mk-buddy-arm { fill: none; stroke: #1a1410; stroke-width: 2.2; stroke-linecap: round; }
+.mk-heart { fill: #ff5fb0; stroke: #8a1250; stroke-width: 1; }
+
+/* Act IV: a module building, its table, its readers. */
+.mk-module, .mk-client, .mk-table-card, .mk-wrapper { position: absolute; }
+.mk-pediment { fill: #d9cdb0; }
+.mk-module-wall { fill: #c8bb9a; }
+.mk-doorway { fill: #1a1410; }
+.mk-module-name { fill: #1a1410; font: 900 16px var(--font-display); letter-spacing: 0.08em; }
+.mk-door { fill: #8a5a34; }
+.mk-door-panel { fill: none; stroke: #5e3a1d; stroke-width: 2; }
+.mk-knob { fill: #f2c14e; }
+.mk-table-card { border: 2px solid #1a1410; border-radius: 6px; background: #fbf7ec; color: #1a1410; box-shadow: 3px 4px 0 rgba(0, 0, 0, 0.35); overflow: hidden; }
+.mk-table-title { padding: 4px 10px; background: #8ec5ff; font: 800 14px var(--font-mono); }
+.mk-grid { display: grid; }
+.mk-grid-head { padding: 4px 10px; background: #e8dfc7; font-size: 13px; font-weight: 800; border-bottom: 1px solid #b9ad92; }
+.mk-grid-cell { padding: 3px 10px; font: 600 14px var(--font-mono); border-bottom: 1px solid #e3d9c0; white-space: nowrap; }
+.mk-grid-cell--date.is-changed { background: #ffe9a8; }
+.mk-grid-cell--date.is-glowing { background: #ffc7cf; }
+.mk-wrapper { border: 3px dashed #ffd100; border-radius: 10px; background: rgba(255, 209, 0, 0.12); }
+.mk-wrapper-label { position: absolute; left: 50%; top: -16px; transform: translateX(-50%); padding: 2px 10px; border-radius: 6px; background: #ffd100; color: #1a1410; font: 800 14px var(--font-display); white-space: nowrap; }
+.mk-client-roof { fill: #d6334a; }
+.mk-client-wall { fill: #e8e2d0; }
+.mk-client-window { fill: #23324d; }
+.mk-client-icon { position: absolute; left: 44px; top: 47px; width: 32px; height: 30px; color: #ffd36b; }
+.mk-client-name { position: absolute; left: 0; top: 108px; width: 120px; text-align: center; color: #fbf7ec; font-size: 14px; font-weight: 800; text-shadow: 0 1px 2px #000; }
+.mk-reach { pointer-events: none; }
+.mk-reach-arm { fill: none; stroke: #ffd36b; stroke-width: 4; stroke-linecap: round; }
+.mk-reach-hand { fill: #ffd36b; stroke: #1a1410; stroke-width: 1.5; }
+.mk-bandage { fill: #f3c79a; stroke: #9a6a3e; stroke-width: 1; }
+.mk-bandage-pad { fill: #fbf7ec; }
+.mk-ripple { pointer-events: none; }
+.mk-ripple-line { fill: none; stroke: #ff6b7d; stroke-width: 2.6; stroke-dasharray: 6 5; stroke-linecap: round; }
+.mk-chip { position: absolute; display: flex; align-items: center; gap: 5px; padding: 3px 9px; border: 2px solid #8a1a2c; border-radius: 999px; background: #ffe3e7; color: #5a0f1b; font-size: 13px; font-weight: 800; white-space: nowrap; }
+.mk-chip svg { width: 16px; height: 16px; }
+
+/* Act V: the commit graph. */
+.mk-graph { position: absolute; }
+.mk-graph-line { fill: none; stroke: #e6edf3; stroke-width: 5; stroke-linecap: round; }
+.mk-graph-line--mine { stroke: #2fb5ad; }
+.mk-graph-label { fill: #e6edf3; font: 800 14px var(--font-display); }
+.mk-commit { stroke: #1a1410; stroke-width: 2.4; }
+.mk-commit--base { fill: #9aa6b6; }
+.mk-commit--mate { fill: #ffd100; }
+.mk-commit--mine { fill: #2fb5ad; }
+.mk-commit--tidy { fill: #2fb5ad; }
+.mk-commit--shine { fill: #8ff2ea; }
+.mk-commit-label { fill: #1a1410; font: 900 12px var(--font-display); }
+.mk-commit-label--dark { fill: #0b111b; }
+.mk-commit-mini { fill: #cfe9e7; font: 700 12px var(--font-mono); }
+.mk-commit-ghost { fill: none; stroke: #ffd100; stroke-width: 2.4; stroke-dasharray: 4 4; }
+.mk-cobweb { fill: none; stroke: #eef3fa; stroke-width: 1; opacity: 0.8; }
+.mk-graph-old { fill: #ffb3bd; font: 900 13px var(--font-display); }
+
+/* Act VI: a blanket, a folder, a commit box, the public repo, keys. */
+.mk-blanket, .mk-folder, .mk-commitbox, .mk-cloud, .mk-file, .mk-burglar, .mk-rack, .mk-bill, .mk-rocket, .mk-fork { position: absolute; }
+.mk-folder { width: 120px; height: 100px; }
+.mk-commitbox { width: 120px; height: 90px; }
+.mk-blanket-cloth { fill: #7d55d8; }
+.mk-blanket-check { fill: none; stroke: #a98cf0; stroke-width: 3; opacity: 0.7; }
+.mk-z { fill: #eef3fa; font: 900 16px var(--font-display); }
+.mk-folder-back { fill: #d9a43c; }
+.mk-folder-front { fill: #f2c14e; }
+.mk-folder-name, .mk-commitbox-name { position: absolute; left: 0; width: 100%; top: 60px; text-align: center; color: #1a1410; font: 800 14px var(--font-mono); }
+.mk-commitbox-name { top: 48px; color: #fbf7ec; }
+.mk-commitbox-body { fill: #4a6fa5; }
+.mk-commitbox-lid { fill: #5d82b8; }
+.mk-file { display: flex; align-items: center; gap: 4px; padding: 3px 8px; border: 2px solid #1a1410; border-radius: 4px; background: #fbf7ec; color: #1a1410; font: 700 13px var(--font-mono); white-space: nowrap; }
+.mk-file svg { width: 15px; height: 15px; color: #8a5d10; }
+.mk-file--key { background: #ffe9a8; }
+.mk-cloud-body { fill: #e8eef6; }
+.mk-cloud-sign { position: absolute; padding: 2px 10px; border: 2px solid #1a1410; border-radius: 6px; background: #ff6b7d; color: #1a1410; font-size: 14px; font-weight: 900; white-space: nowrap; }
+.mk-hung-key, .mk-falling-key { position: absolute; width: 26px; height: 26px; color: #f2c14e; }
+.mk-falling-key { left: 0; top: 0; }
+.mk-hung-key svg, .mk-falling-key svg { width: 26px; height: 26px; stroke-width: 2.6; }
+.mk-keyrain { position: absolute; inset: 0; pointer-events: none; }
+.mk-burglar-shirt { fill: #f6f3ea; }
+.mk-burglar-stripes { fill: none; stroke: #1a1410; stroke-width: 5; }
+.mk-burglar-face { fill: #e2b08c; }
+.mk-burglar-cap { fill: #1a1410; }
+.mk-burglar-mask { fill: #1a1410; }
+.mk-burglar-eye { fill: #ffffff; }
+.mk-burglar-grin { fill: none; stroke: #6b2e22; stroke-width: 2; stroke-linecap: round; }
+.mk-burglar-arm { fill: none; stroke: #f6f3ea; stroke-width: 7; stroke-linecap: round; }
+.mk-burglar-glove { fill: #1a1410; }
+.mk-burglar--flip { transform: scaleX(-1); }
+.mk-rack-body { fill: #232a36; }
+.mk-rack-unit { fill: #2f3846; stroke: #121820; stroke-width: 1; }
+.mk-fan-ring { fill: #121820; stroke: #6f7886; stroke-width: 1.4; }
+.mk-fan-blades { fill: #9aa6b6; }
+.mk-led { fill: #3d4b60; }
+.mk-led--on { fill: #ff4d5e; }
+.mk-bill { width: 190px; border: 2px solid #1a1410; border-radius: 8px; background: #fbf7ec; color: #1a1410; box-shadow: 3px 4px 0 rgba(0, 0, 0, 0.35); overflow: hidden; text-align: center; }
+.mk-bill-head { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 5px; background: #e8dfc7; font-size: 14px; font-weight: 800; }
+.mk-bill-head svg { width: 18px; height: 18px; }
+.mk-bill-figure { padding: 4px 6px 0; font: 900 30px var(--font-display); }
+.mk-bill-note { min-height: 20px; padding-bottom: 4px; font-size: 14px; font-weight: 800; }
+.mk-bill.is-red .mk-bill-figure,
+.mk-bill.is-red .mk-bill-note { color: #b8233a; }
+.mk-rocket-body { fill: #e8eef6; }
+.mk-rocket-fin { fill: #d6334a; }
+.mk-rocket-window { fill: #4aa3ff; stroke: #1a1410; stroke-width: 2.4; }
+.mk-rocket-flame { fill: #ffb35c; stroke: #ff6b3d; stroke-width: 2; }
+.mk-rope { fill: none; stroke: #c9a36a; stroke-width: 1.6; }
+.mk-moneybag { fill: #3d9a5a; }
+.mk-moneybag-sign { fill: #fbf7ec; font: 900 14px var(--font-display); }
+.mk-fork { width: 58px; height: 58px; border: 2px solid #1a1410; border-radius: 8px; background: #e8eef6; display: grid; place-items: center; }
+.mk-fork-name { position: absolute; top: 2px; width: 100%; text-align: center; color: #1a1410; font-size: 12px; font-weight: 800; }
+.mk-fork-key { width: 24px; height: 24px; margin-top: 12px; color: #8a5d10; }
+
+/* The moral, over the closed curtain. */
+.mk-moral { position: absolute; padding: 14px 22px 16px; border: 3px solid #e2b54f; border-radius: 12px; background: rgba(16, 8, 10, 0.92); color: #fbf3df; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); }
+.mk-moral-title { margin-bottom: 6px; color: #ffd36b; font-size: 22px; font-weight: 900; letter-spacing: 0.06em; text-align: center; }
+.mk-moral-list { margin: 0; padding-left: 26px; font-size: 18px; font-weight: 700; line-height: 1.45; }
+.mk-asker-fingers { fill: none; stroke: #04060b; stroke-width: 3.4; stroke-linecap: round; }

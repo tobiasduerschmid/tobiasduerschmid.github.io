@@ -1,0 +1,101 @@
+/*
+ * The "opera-house" stage theme (js/song-video/opera-house.js): a gilded
+ * proscenium with red velvet drapes and a fringed valance in front of the
+ * set of a software team's office, a panelled teal wall with an arched
+ * window, a clock, and a build-status board over a wooden stage floor.
+ * The front of house sits over the scenes and under the HUD. Like
+ * stage.css this styles the 960×540 stage, which keeps its artwork in both
+ * page themes; the player's print styles hide it. The set stays darker
+ * than the cast and the cards in front of it, so text on stage keeps 4.5:1
+ * against its own card.
+ */
+
+.stage.theme-opera-house { --bg: #0b1320; }
+.oh-art { position: absolute; inset: 0; width: 960px; height: 540px; overflow: visible; }
+.oh-front { z-index: 2; pointer-events: none; }
+.theme-opera-house > .hud { z-index: 3; }
+
+/* The office: a teal wall, wainscot panels, a chair rail. */
+.oh-wall-stop-0 { stop-color: #23425c; }
+.oh-wall-stop-1 { stop-color: #1a3349; }
+.oh-wall-stop-2 { stop-color: #142838; }
+.oh-wainscot { fill: #13212f; }
+.oh-rail { fill: none; stroke: #3c5d7a; stroke-width: 4; }
+.oh-panel { fill: none; stroke: #2a4560; stroke-width: 2; }
+
+/* The window and its skies. */
+.oh-window-frame { fill: none; stroke: #e7dfcb; stroke-width: 5; stroke-linejoin: round; }
+.oh-window-sill { fill: #d8cfb8; }
+.oh-sky-day-stop-0 { stop-color: #7cc3f2; }
+.oh-sky-day-stop-1 { stop-color: #cdeafd; }
+.oh-sky-dusk-stop-0 { stop-color: #5a3f86; }
+.oh-sky-dusk-stop-1 { stop-color: #f08f55; }
+.oh-sky-night-stop-0 { stop-color: #070d22; }
+.oh-sky-night-stop-1 { stop-color: #1b2850; }
+.oh-sky-dawn-stop-0 { stop-color: #8fbde8; }
+.oh-sky-dawn-stop-1 { stop-color: #ffb07a; }
+.oh-stars circle { fill: #f4f1dc; }
+.oh-moon circle { fill: #f6f0d6; }
+.oh-moon .oh-moon-shadow { fill: #0e1736; }
+.oh-sun { fill: #ffd94a; }
+.oh-skyline { fill: #24324d; }
+.oh-city-lights rect { fill: #ffd36b; }
+
+/* The clock: a brass rim, a cream face. */
+.oh-clock-rim { fill: #c49a45; stroke: #6e5222; stroke-width: 2; }
+.oh-clock-face { fill: #f6f0df; }
+.oh-clock-tick { fill: none; stroke: #2b2622; stroke-width: 2; stroke-linecap: round; }
+.oh-clock-hand { fill: none; stroke: #1d1a17; stroke-width: 3.4; stroke-linecap: round; }
+.oh-clock-hand--minute { stroke-width: 2.2; }
+.oh-clock-pin { fill: #c0392b; }
+
+/* The build-status board: lamps off, green with a tick, or red with a cross. */
+.oh-board-frame { fill: #121a26; stroke: #4c5d78; stroke-width: 2; }
+.oh-board-plate { fill: #0b111b; }
+.oh-board-title { fill: #e9eff8; font-family: var(--font-display); font-size: 13px; font-weight: 800; letter-spacing: 0.14em; }
+.oh-lamp-socket { fill: #0a0f17; stroke: #3d4b60; stroke-width: 1.5; }
+.oh-lamp { stroke: #0a0f17; stroke-width: 1; }
+.oh-lamp--off { fill: #39475b; }
+.oh-lamp--green { fill: #34d27a; }
+.oh-lamp--red { fill: #ff4d5e; }
+.oh-lamp-glow--green { fill: #34d27a; }
+.oh-lamp-glow--red { fill: #ff4d5e; }
+.oh-lamp-mark { fill: none; stroke: #0b111b; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+
+/* The stage floor and the footlights' warm wash on it. */
+.oh-floor-stop-0 { stop-color: #6e4b2c; }
+.oh-floor-stop-1 { stop-color: #3d2716; }
+.oh-floor-boards { fill: none; stroke: #2a1a0e; stroke-width: 1.4; opacity: 0.55; }
+.oh-floor-seam { fill: none; stroke: #2a1a0e; stroke-width: 1; opacity: 0.4; }
+.oh-footglow-stop-0 { stop-color: #ffb35c; stop-opacity: 0; }
+.oh-footglow-stop-1 { stop-color: #ffb35c; stop-opacity: 0.28; }
+
+/* Red velvet: a base, lit ridges, shadowed troughs. */
+.oh-velvet { fill: #7e1222; }
+.oh-drape--curtain .oh-velvet { fill: #8a1526; }
+.oh-fold-light { fill: none; stroke: #c3394a; stroke-width: 5; opacity: 0.45; }
+.oh-fold-shadow { fill: none; stroke: #2c040b; stroke-width: 6; opacity: 0.6; }
+.oh-curtain-hem { fill: none; stroke: #e2b54f; stroke-width: 6; stroke-dasharray: 1.5 2.5; }
+.oh-rope { fill: none; stroke: #e2b54f; stroke-width: 4; stroke-linecap: round; }
+.oh-tassel { fill: #e2b54f; stroke: #8a6420; stroke-width: 1; }
+.oh-tassel-line { fill: none; stroke: #8a6420; stroke-width: 0.8; }
+
+/* The gilded arch, its valance, and the comedy mask. */
+.oh-arch { fill: #b98d3e; }
+.oh-arch-bead { fill: none; stroke: #ffe08a; stroke-width: 2.4; }
+.oh-swag { fill: #7a1020; stroke: #4a0812; stroke-width: 1.5; }
+.oh-swag-fold { fill: none; stroke: #b52e40; stroke-width: 3; opacity: 0.5; }
+.oh-fringe { fill: none; stroke: #e2b54f; stroke-width: 6; stroke-dasharray: 1.4 2.6; }
+.oh-cartouche-shield { fill: #d4a74a; stroke: #7e5c1d; stroke-width: 1.5; }
+.oh-mask { fill: #fbf3df; stroke: #7e5c1d; stroke-width: 1; }
+.oh-mask-feature { fill: none; stroke: #4a3412; stroke-width: 1.6; stroke-linecap: round; }
+
+/* Footlights and the pit. */
+.oh-apron { fill: #24170d; }
+.oh-shell { fill: #9c7a36; stroke: #4e3a14; stroke-width: 1; }
+.oh-bulb--warm { fill: #ffe2a8; }
+.oh-bulb--green { fill: #8cff9e; }
+.oh-bulb--out { fill: #574b37; }
+.oh-pit-floor { fill: #06080e; }
+.oh-conductor { fill: #0f141f; stroke: #2a3550; stroke-width: 1.4; }
+.oh-baton { fill: none; stroke: #e8e2d0; stroke-width: 2; stroke-linecap: round; }

@@ -550,6 +550,55 @@ body {
   font-size: 0.9em;
 }
 
+/* A song with no chapter page carries its transcript in the player: every
+   line with its time, its singer where the voice changes, and what the
+   video shows. It takes the resource row's full width when open. */
+.song-player-transcript {
+  flex-basis: 100%;
+}
+
+.song-player-transcript .song-video-section {
+  margin: 1em 0 0.35em;
+  font-weight: 700;
+}
+
+.song-player-transcript .song-video-lines {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.song-player-transcript .song-video-lines > li {
+  padding: 0.4em 0 0.4em 0.75em;
+  border-left: 3px solid var(--player-border);
+}
+
+.song-player-transcript .song-video-lines > li + li {
+  margin-top: 0.25em;
+}
+
+.song-player-transcript .song-video-time {
+  margin-right: 0.4em;
+  color: var(--player-muted);
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  font-size: 0.9em;
+}
+
+.song-player-transcript .song-video-voice {
+  margin-right: 0.3em;
+  font-weight: 700;
+}
+
+.song-player-transcript .song-video-lyric {
+  font-weight: 600;
+}
+
+.song-player-transcript .song-video-visual {
+  display: block;
+  color: var(--player-muted);
+  font-size: 0.9em;
+}
+
 .song-player-skip {
   position: absolute;
   top: -12em;
@@ -582,6 +631,14 @@ body {
     --player-surface: #fff;
     --player-link: #000;
     color-scheme: light;
+  }
+
+  .song-player-transcript:not([open]) > :not(summary) {
+    display: block !important;
+  }
+
+  .song-player-transcript::details-content {
+    content-visibility: visible;
   }
 
   .song-player-screen,

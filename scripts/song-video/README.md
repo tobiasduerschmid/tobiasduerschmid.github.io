@@ -195,8 +195,14 @@ its timing (`start`, `end`), the times of the words the visuals hit
 for it; each section has a `narration` for the audio-described cut. The
 choreography draws against `marks`, `captions.js` turns the lines into
 WebVTT, `described-cut.js` builds the described cut from the `narration`s, and
-`_includes/song-video.html` prints every line with its `visual` as the
-on-page transcript.
+`_includes/song-transcript.html` prints every line with its `visual` as the
+transcript: in a chapter's song figure (`_includes/song-video.html`), or, for
+a song only in the video playlists, inside its player page (a
+`layout: song-player` page without `transcript` prints it in a "Full
+transcript" disclosure). A song with several singers gives each section a
+`voice` (a line may have its own); the captions and the transcript name the
+singer whenever the voice changes: "(Product Manager) They need twenty
+coffees…".
 
 `beats` gives the beat grid (`bpm`, `first`) that pulses and dance steps
 follow. A take whose tempo drifts can also list `times`, every beat in
@@ -214,10 +220,11 @@ Your Stories" (sticky notes and index cards in a story map), `workshop` the
 pegboard shadow board of "Small Tools, One Job Each", `ballroom` the TDD
 song's evening ballroom, `spy` the information-hiding song's noir
 operations room, `object-city` the city-builder game at dusk of "Let
-the Object Decide", and `drafting-room` the architectural blueprint of
+the Object Decide", `drafting-room` the architectural blueprint of
 "Draw It Out While It's Cheap to Change" (cyanotype paper in UCLA Blue
 with fold creases and a white grid, a bordered sheet with a title block, a plan fragment with dimension
-lines, and drafting tools at the edges). A theme script registers itself
+lines, and drafting tools at the edges), and `opera-house` the opera house of
+"It Works on My Machine". A theme script registers itself
 in `SongKit.themes`, draws its room once, and poses it only from song time;
 its stylesheet keeps the scenery faint enough that text over it keeps 4.5:1.
 `extras` lists the song's own stylesheets and scripts (`styles`, `scripts`),
@@ -368,6 +375,47 @@ at, or circling the answer. Where the lyric sheet splits a sentence across
 short lines to slow the singing, the storyboard keeps the sentence, or a
 clause of a long one, as one line.
 
+"It Works on My Machine", a comic opera about working on a team, is in the
+CS 35L video playlist only: it has no chapter page, so its player page prints
+the transcript. It uses the `opera-house` theme (`js/song-video/opera-house.js`):
+a gilded proscenium with velvet drapes, a fringed valance, a curtain,
+footlights, and a conductor in the pit, framing a software team's office.
+The curtain is flown, rising and falling: a curtain drawn sideways sweeps its
+folds' light and dark stripes across the picture, which the flash screen
+rightly counts as flashing (in JPEG frames the dark folds also turn
+saturated red).
+The choreography poses the office through `OperaHouse.of(stage)` (`curtain`,
+`clock`, `sky`, `board`, `footlights`, each a cue of song time): the wall
+clock beside the arched window, the sky in the window, and the build-status
+board's six lamps follow the story. The drapes and the curtain sit in front
+of the scenes, so the cast enters from the wings behind them.
+`js/song-video/opera-cast.js` (styles in `css/song-video-opera-cast.css`)
+draws the seven singers on one unisex rig: the Teammate, the tenor, with his
+own drawn face (a towering pompadour and a twirled moustache), and six
+teammates in the costumes of their roles (the Product Manager's blazer, the
+Build Engineer's hi-vis vest, the Test Engineer's lab coat, the UI
+Developer's painter's apron, the Back-End Developer's hoodie, the Security
+Engineer's tactical jacket), who wear `SongStudentAvatar`'s `heroHead()`
+with an open singing mouth drawn over it while they sing (`singingMouth()`).
+`OperaCast.figure()` places a singer, glides it in from a wing, poses it with
+named moves on sung words (pointing and presenting by two-bone inverse
+kinematics, with the finger and hand geometry the architect shares through
+`js/song-video/figure-geometry.js`), puts props in its hands, and opens its
+mouth on its own sung words (`wordsFor()`). A move's return to rest puts back
+only what that move posed, and gives way to a later move that has already
+posed the same arm or face, so overlapping holds never snap a pose away.
+`js/song-video/machine-kit.js` (styles in `css/song-video-machine-kit.css`)
+draws the pictures: the coffee app on a giant phone, a shelf of package
+versions and the new ones marching in, a clean-build machine, code cards
+whose lines change in place, tests as clingy little cards, the Orders module
+as a building with doors, a commit graph that squashes and force-pushes, a
+folder swept into a commit, the public repo's cloud raining keys, server
+racks, a climbing cloud bill, and the moral on the curtain. Each act places
+its props in the room its singers leave: no prop drawn in front of a singer
+may cover their face, and none covers the clock, the board, or another
+prop's text (`tests/song-it-works-on-my-machine.spec.js` checks the faces,
+every teammate's worn face, and the laptop raised on the Teammate's palm).
+
 A section's `delivery` sets its captions: `sung` and `spoken` lines are one
 cue each, while `call` lines are quiz questions with an `answer` and
 `answer_at`, captioned as two cues. A question the recording never answers
@@ -475,9 +523,12 @@ the captions and the audio-described track in under a minute; add
    `window.SongChoreographies['<song>']`. Keep the teaching rule: every visual
    shows what the line sings, so the audio and transcript carry everything.
 4. For live playback add a page with `layout: song-player`, `song: <song>` and
-   its chapter transcript link, then point the storyboard's `player` at it.
+   its chapter transcript link (a song with no chapter leaves out
+   `transcript`, and the player prints the transcript itself), then point the
+   storyboard's `player` at it.
    Render, include the video in a chapter, add the song to `SONGS` in
-   `tests/song-video.spec.js` (and to `songPlayers` in
+   `tests/song-video.spec.js` (`standalone: true` for a song tested on its
+   player page) (and to `songPlayers` in
    `tests/song-vector-art.spec.js`, and its question count to
    `scripts/tests/song-quiz-pause.test.js`), and load `css/song-video.css` on
    that page.
@@ -485,8 +536,9 @@ the captions and the audio-described track in under a minute; add
 
 ## Accessibility contract
 
-- Both cuts have captions, on by default: the sung lyrics, plus the
-  narration in the described cut (WCAG 1.2.2).
+- Both cuts have captions, on by default: the sung lyrics, naming the singer
+  at each change of voice in a song with several, plus the narration in the
+  described cut (WCAG 1.2.2).
 - The audio-described cut describes each section before it plays, and the
   transcript gives every line with a description of what the video shows
   (1.2.1, 1.2.3, 1.2.5).

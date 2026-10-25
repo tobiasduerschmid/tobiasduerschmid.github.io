@@ -2,11 +2,13 @@
 const { openPlayerSettings } = require('./song-player-helpers');
 /**
  * Song videos in SE Book chapters keep their accessibility contract: captions
- * of exactly the sung lyrics, an audio-described cut whose captions carry the
+ * of exactly the sung lyrics (naming the singer at each change of voice, in
+ * songs with several), an audio-described cut whose captions carry the
  * narration too, a transcript that describes what the video shows for every
  * line, no autoplay, and media that actually loads. Each song's storyboard in
  * _data/songs/ is the spec that the page, the captions, and the rendered
- * videos are all generated from.
+ * videos are all generated from. A song with no chapter (only in the video
+ * playlists) is tested on its player page, which prints the transcript itself.
  *
  * These tests check the captions track through the browser's TextTrack API,
  * the rendered transcript, and the served media files. Native playback is
@@ -27,6 +29,7 @@ const SONGS = [
   { id: 'let_the_object_decide', page: '/SEBook/oop-song.html' },
   { id: 'draw_it_out', page: '/SEBook/uml.html' },
   { id: 'always_code', page: '/SEBook/always-code.html' },
+  { id: 'it_works_on_my_machine', page: '/assets/song-player/it-works-on-my-machine.html', standalone: true },
 ];
 const EXTRAS_TOGGLE = 'Full transcript';
 const NARRATOR = '(narrator) ';
@@ -48,14 +51,25 @@ async function captionCues(video) {
   });
 }
 
-for (const { id, page: pagePath } of SONGS) {
+for (const { id, page: pagePath, standalone = false } of SONGS) {
   const storyboard = yaml.load(fs.readFileSync(path.join(__dirname, '..', '_data', 'songs', `${id}.yml`), 'utf8'));
   const lines = storyboard.sections.flatMap((section) => section.lines);
-  const sung = lines.flatMap((line) => (line.answer ? [line.text, `(crowd) ${line.answer}`] : [line.text]));
+  // A line's singer is its own `voice` or its section's; the first caption of
+  // each change of singer names them.
+  let singer = null;
+  const sung = storyboard.sections.flatMap((section) => section.lines.flatMap((line) => {
+    const voice = line.voice || section.voice || null;
+    const named = voice && voice !== singer ? `(${voice}) ` : '';
+    singer = voice;
+    return line.answer ? [`${named}${line.text}`, `(crowd) ${line.answer}`] : [`${named}${line.text}`];
+  }));
   async function playerAudio(page, described = false) {
-    const frameElement = page.getByTitle(`${storyboard.title}: interactive music player`);
-    await frameElement.scrollIntoViewIfNeeded();
-    const frame = frameElement.contentFrame();
+    let frame = page;
+    if (!standalone) {
+      const frameElement = page.getByTitle(`${storyboard.title}: interactive music player`);
+      await frameElement.scrollIntoViewIfNeeded();
+      frame = frameElement.contentFrame();
+    }
     await expect(frame.getByRole('button', { name: 'Play song', exact: true })).toBeVisible();
     if (described) {
       await openPlayerSettings(frame);
@@ -95,7 +109,7 @@ for (const { id, page: pagePath } of SONGS) {
     });
 
     test('transcript gives every line with what the video shows for it', async ({ page }) => {
-      await page.getByText(EXTRAS_TOGGLE).click();
+      await page.getByText(EXTRAS_TOGGLE, { exact: true }).click();
       const transcript = page.getByRole('group').filter({ hasText: EXTRAS_TOGGLE });
       await expect(transcript).toBeVisible();
 

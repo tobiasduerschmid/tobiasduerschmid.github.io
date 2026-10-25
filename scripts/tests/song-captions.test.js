@@ -83,3 +83,30 @@ test('the captions file is WebVTT with hh:mm:ss.mmm timestamps', () => {
   assert.match(vtt, /^WEBVTT\n/);
   assert.ok(parseVtt(vtt).some((cue) => cue.start === '00:02:05.250' && cue.text === '♪ Late. ♪'));
 });
+
+test('in a song with several singers, the first cue of each change of singer names them', () => {
+  const opera = {
+    duration: 30,
+    sections: [
+      { id: 'verse', delivery: 'sung', voice: 'Teammate', lines: [{ start: 1, end: 3, text: 'No need to worry!' }, { start: 3.5, end: 5, text: 'Leave it to me!' }] },
+      {
+        id: 'reply', delivery: 'sung', voice: 'Security Engineer',
+        lines: [
+          { start: 6, end: 8, text: 'You committed the keys!' },
+          { start: 8.5, end: 10, text: "I'll add it to gitignore!", voice: 'Teammate' },
+          { start: 10.5, end: 12, text: "That won't uncommit it!" },
+        ],
+      },
+      { id: 'outro', delivery: 'spoken', voice: 'Security Engineer', lines: [{ start: 13, end: 15, text: 'Step away from the keyboard.' }] },
+    ],
+  };
+
+  assert.deepEqual(lyricCues(opera).map((cue) => cue.text), [
+    '♪ (Teammate) No need to worry! ♪',
+    '♪ Leave it to me! ♪',
+    '♪ (Security Engineer) You committed the keys! ♪',
+    "♪ (Teammate) I'll add it to gitignore! ♪",
+    "♪ (Security Engineer) That won't uncommit it! ♪",
+    'Step away from the keyboard.',
+  ]);
+});
