@@ -190,17 +190,17 @@
         M.cricket(bowing, { x: 610, y: 420, at: mark(v(4), 'time'), chirps: [mark(v(4), 'time') + 0.3, mark(v(4), 'time') + 1.1, mark(v(4), 'time') + 1.9] });
       });
       move('tenor', mark(v(4), 'me'), 'bow', { hold: 0.9 });
-      // No applause: a second after the sign lights, fans in the stalls
+      // No applause: just after the sign lights, fans in the stalls
       // think it is not what they need, until the Product Manager has come
       // on to say what they want. The stalls are in front of the
       // footlights, in the HUD's layer.
       ahead.push(() => {
-        const grumbleAt = mark(v(4), 'thank') + 1;
-        const grumbles = kit.scene(hud, grumbleAt - 0.4, line('pm-1').start + 1.2, { exit: 'fade' });
+        const grumbleAt = mark(v(4), 'thank') + 0.6;
+        const grumbles = kit.scene(hud, grumbleAt - 0.4, line('pm-1').start + 2.5, { exit: 'fade' });
         M.audience(grumbles, { at: grumbleAt - 0.4, askAt: Infinity, downAt: Infinity });
         // Heads in the stalls (MachineKit.audience) sit at x = 40 + 74i, centred near y = 500.
         M.thoughts(grumbles, {
-          at: grumbleAt, every: 0.5,
+          at: grumbleAt,
           bubbles: [
             { x: 340, y: 430, from: [336, 500], text: 'Not what I need!' },
             { x: 620, y: 430, from: [632, 500], text: 'Nobody asked us!' },

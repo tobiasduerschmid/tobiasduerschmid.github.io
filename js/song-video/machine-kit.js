@@ -525,23 +525,29 @@
 
   /**
    * Thought bubbles rising from the audience in the stalls: each { x, y,
-   * from, text } starts at `from`, an audience member's head, as a trail of
-   * three growing dots, then a cloud whose bottom centre is (x, y). One
-   * thinker every `every` seconds from `at`.
+   * from, text } is a cloud whose bottom centre is (x, y), trailing three
+   * dots down to `from`, an audience member's head. From `at` (one thinker
+   * every `every` seconds), each swoops up out of the head in one motion,
+   * growing as it rises.
    */
-  function thoughts(parent, { at, until, every = 0.5, bubbles }) {
+  function thoughts(parent, { at, until, every = 0, bubbles }) {
     return bubbles.map(({ x, y, from, text }, i) => {
-      const start = at + i * every;
-      const dots = [0.12, 0.45, 0.78].map((k, d) => {
-        const dot = place(el('div', `mk-thought-dot mk-thought-dot--${d}`, parent), from[0] + (x - from[0]) * k, from[1] + (y - from[1]) * k);
-        popped(dot, start + d * 0.12, until, { rotate: 0 });
-        return dot;
-      });
-      // A zero-height anchor at the cloud's bottom centre, so it pops from there.
       const node = place(el('div', 'mk-thought is-staged', parent), x, y);
+      const [dx, dy] = [from[0] - x, from[1] - y];
+      [0.12, 0.45, 0.78].forEach((k, d) => {
+        const dot = el('div', `mk-thought-dot mk-thought-dot--${d}`, node);
+        dot.style.left = `${(dx * (1 - k)).toFixed(1)}px`;
+        dot.style.top = `${(dy * (1 - k)).toFixed(1)}px`;
+      });
       el('div', 'mk-thought-text', node, text);
-      popped(node, start + 0.36, until, { rotate: 0 });
-      return { node, dots };
+      const start = at + i * every;
+      fx.fadeIn(node, start, 0.12);
+      tween(node, [
+        { translate: `${dx.toFixed(1)}px ${dy.toFixed(1)}px`, scale: '0.15' },
+        { translate: '0 0', scale: '1' },
+      ], start, 0.55, EASE.out);
+      if (until !== undefined) fx.fadeOut(node, until - 0.3, 0.3);
+      return node;
     });
   }
 
