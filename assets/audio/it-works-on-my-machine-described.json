@@ -1,7 +1,7 @@
 {
   "fps": 30,
-  "frameCount": 26374,
-  "duration": 879.1333333333333,
+  "frameCount": 26466,
+  "duration": 882.2,
   "holds": [
     {
       "section": "intro",
@@ -97,28 +97,28 @@
     {
       "section": "verse-6",
       "outputStart": 654.4666666666667,
-      "outputEnd": 694.4,
+      "outputEnd": 697.4666666666667,
       "songTime": 212.2,
       "pictureTime": 212.86666666666667
     },
     {
       "section": "security",
-      "outputStart": 712.8333333333334,
-      "outputEnd": 757.7666666666667,
+      "outputStart": 715.9,
+      "outputEnd": 760.8333333333334,
       "songTime": 230.63333333333333,
       "pictureTime": 231.3
     },
     {
       "section": "refrain-3",
-      "outputStart": 778.2666666666667,
-      "outputEnd": 803.9666666666667,
+      "outputStart": 781.3333333333334,
+      "outputEnd": 807.0333333333333,
       "songTime": 251.13333333333333,
       "pictureTime": 251.8
     },
     {
       "section": "outro",
-      "outputStart": 823.6,
-      "outputEnd": 861.9,
+      "outputStart": 826.6666666666666,
+      "outputEnd": 864.9666666666667,
       "songTime": 270.76666666666665,
       "pictureTime": 271.46666666666664
     }

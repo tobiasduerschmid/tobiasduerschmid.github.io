@@ -808,6 +808,11 @@
       const v = (n) => `verse-6-${n}`;
       badge('Act VI · Secrets', start('verse-6'), end('security'));
       placeAt('tenor', start('verse-6') - 0.2, 200, FLOOR, 0.95, 1);
+      // Late that night: the day races by to a quarter to midnight, and the
+      // window goes dark, so "You get some sleep!" is bedtime.
+      house.sky(start('verse-6') - 0.6, 'dusk', 0.6);
+      house.sky(start('verse-6'), 'night', 0.8);
+      house.clock(start('verse-6') - 0.6, 23.75, 1.4);
       // "I'll take the deployment! You get some sleep!": a bed for the
       // Back-End Developer, who yawns, lies down in it, and pulls a sleep
       // mask over their eyes.
@@ -900,6 +905,8 @@
       const enter = line(v(1)).start - 1.8;
       // On stage from here to the end: the finale's line-up keeps them.
       plan.security.stage.push([enter, undefined, { enter: 'right' }]);
+      // Midnight strikes as the thieves spin up their servers.
+      house.clock(mark(v(3), 'thieves'), 24.1, 1.6);
       placeAt('security', 0, 790, FLOOR, 0.95);
       move('tenor', enter + 1.6, 'mood', { hold: line(v(4)).end - enter - 1.6, sweat: 1, smile: 0.4, brow: 0.8, look: 0.8 });
       // "Dot-env's not in gitignore — you committed the keys!"

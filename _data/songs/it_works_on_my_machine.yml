@@ -529,14 +529,14 @@ sections:
     title: "Verse 6: Committed secrets"
     delivery: sung
     voice: Teammate
-    narration: "Act six, Secrets. He pats his chest and sends the Back-End Developer to bed: a bed appears behind them, they yawn, lie down in it under a purple checked quilt, and pull a sleep mask over their eyes, with Z's drifting up; then the bed glides off to the right with them asleep in it. A dark card shows the key in .env, and in app.py the hard-coded key is struck out for one read from the environment. A sticker says Safer!, and he bows. Then a folder, my-app, holds app.py, a readme, and .env with a key; with git add, all three fly into a commit box, and with git push the box flies up into a cloud marked Public repo, where three keys hang. Gold keys rain down from the cloud into the audience, whose hands reach up for them."
+    narration: "Act six, Secrets. Night falls, and the clock spins to a quarter to midnight. He pats his chest and sends the Back-End Developer to bed: a bed appears behind them, they yawn, lie down in it under a purple checked quilt, and pull a sleep mask over their eyes, with Z's drifting up; then the bed glides off to the right with them asleep in it. A dark card shows the key in .env, and in app.py the hard-coded key is struck out for one read from the environment. A sticker says Safer!, and he bows. Then a folder, my-app, holds app.py, a readme, and .env with a key; with git add, all three fly into a commit box, and with git push the box flies up into a cloud marked Public repo, where three keys hang. Gold keys rain down from the cloud into the audience, whose hands reach up for them."
     lines:
       - id: verse-6-1
         start: 212.28
         end: 215.28
         text: "I'll take the deployment! You get some sleep!"
         marks: {"ill": 212.28, "take": 212.6, "the": 212.9, "deployment": 213.1, "you": 214.12, "get": 214.36, "some": 214.58, "sleep": 214.84}
-        visual: "A badge reads “Act VI · Secrets”. He pats his chest, then presents the Back-End Developer, who steps aside; a wooden bed with a white pillow appears behind them, and they yawn."
+        visual: "A badge reads “Act VI · Secrets”. The window darkens to night as the clock spins on to a quarter to midnight. He pats his chest, then presents the Back-End Developer, who steps aside; a wooden bed with a white pillow appears behind them, and they yawn."
       - id: verse-6-2
         start: 215.63
         end: 218.66
@@ -584,7 +584,7 @@ sections:
         end: 240.58
         text: "Thieves are spinning up servers; We're deep in the red!"
         marks: {"thieves": 237.1, "are": 237.42, "spinning": 237.86, "up": 238.04, "servers": 238.31, "were": 239.0, "deep": 239.36, "in": 239.66, "the": 239.88, "red": 240.02}
-        visual: "Three server racks appear, and their fans spin up, lights on; the board’s lamps turn red. Above them a meter, “Cloud bill”, counts down to “−$48,200, in the red”; the Security Engineer presents the servers, then facepalms on “red”."
+        visual: "The clock ticks past midnight. Three server racks appear, and their fans spin up, lights on; the board’s lamps turn red. Above them a meter, “Cloud bill”, counts down to “−$48,200, in the red”; the Security Engineer presents the servers, then facepalms on “red”."
       - id: security-4
         start: 240.6
         end: 244.32
