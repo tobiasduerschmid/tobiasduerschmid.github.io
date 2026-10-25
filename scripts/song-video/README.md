@@ -294,23 +294,68 @@ by shape (an edge's `polygon` head, the `stroke-dasharray` of a
 realization).
 `js/song-video/sketch-kit.js` (styles in `css/song-video-sketch-kit.css`)
 draws the pictures beside the notation from the lecture's building
-metaphors: four teammates whose thought bubbles show different buildings
+metaphors: a brick wall laid in a hurry around one crooked brick, four
+teammates whose thought bubbles show different buildings
 until a clear whiteboard drawing aligns them, a load-bearing wall, a floor
 plan whose layers fade, an eraser, a coding-agent robot, a car whose wheels
 outlive it, a house whose rooms do not, a shelf of software engineering
 classics, an hourglass and a paper plane, library book #42 moving between
 states, a function machine whose identical calls stay side by side, and a
 ball that snaps into a socket. `drawIn()` strokes a drawing in like a pen.
-The take sings its seven-question pop quiz as call and response, all about
-one new system, a pizza app, on the quiz cards the other songs use: a
-numbered card with the question and an answer bar that slams in when the
-answer is sung. A question about a diagram narrows its card and shows that
-diagram beside it, changing when the answer lands. Where the lyric sheet splits a sentence across short lines
-to slow the singing, the storyboard keeps the sentence as one line.
+`js/song-video/architect.js` (styles in `css/song-video-architect.css`)
+casts the viewer's own SE Gym hero as the song's architect, as the
+information-hiding song casts Agent 00: a detailed figure standing at ease
+in unisex clothes on a unisex build (shoulders little wider than the hips,
+no waist shaping), a white shirt buttoned to the collar with rolled sleeves,
+a camel knit vest, straight trousers, and derby shoes, holding a pencil and
+a rolled drawing, that wears `SongStudentAvatar`'s `heroHead()` (export
+stages keep its drawn face). Its sleeves turn at the shoulder inside the
+vest's armholes, which are drawn again over them until an arm comes across
+the body. Then that whole arm moves forward: its sleeve in front of the
+other shoulder, the collar, and hair or a beard on the chest, and its
+forearm and hand in front of the other arm
+(`tests/song-architect-layering.spec.js`). Unlike Agent 00 on the noir
+stage, it draws no halo round very dark skin or hair.
+Its hands are in proportion, about three quarters as long as the forearm,
+and each wrist turns only as far as a wrist can (`WRIST_RANGE`). The pencil
+hand is seen from the thumb's side, a giant pencil in a writing grip: the
+thumb's pad and nail in front, the index finger arched over the pencil, the
+middle finger under it. Its fingers are built from their joints (`finger()`),
+so a pose's knuckles stay where a hand's are. The other hand is a fist seen
+from its back, as the wristwatch on that wrist requires, round a roll that
+passes behind the forearm. Pointing far off, the wrist bends back so the
+pencil leads along the arm (`tests/song-draw-it-out-architect.spec.js` checks
+that its line meets the quiz answer it points at).
+`ArchitectKit.architect()` places it in a scene and plays named moves on
+sung words, towards stage points: `point`, `tap`, `trace`,
+and `sketch` aim the pencil (two-bone inverse kinematics, touching the point
+when in reach); `check`, `cross`, and `circle` draw a tick, a cross, or a
+ring in the air on the way to it; `inspect` leans in, pencil to chin;
+`sight` holds the pencil out at arm's length; `think` brings the pencil
+to the chin (the upper arm foreshortened as it comes forward); and
+`present`, `aha`, `nod`, and `bow` round it out. `flip` moves the pencil to
+the other hand. The architect stands wherever a scene leaves room beside its
+content: it sketches the plan in the intro, circles the floor plan's pipes
+and taps the flaw on paper in verse 1, thinks over whether a player is part
+of a team and ticks off the safe association in verse 3, circles the
+database where the bottleneck grows in verse 4, points out the ball and the
+socket in verse 6, joins the first two choruses' opening lines, and in the
+outro holds up the drawing, runs the pencil round the four diagrams between
+the two hooks, and bows. The take sings its seven-question pop quiz as call
+and response, all about one new system, a pizza app, on the quiz cards the
+other songs use: a numbered card with the question and an answer bar that
+slams in when the answer is sung. Every card is narrowed: a question about a
+diagram shows that diagram beside it, changing when the answer lands, and
+the others show the architect thinking it over, then ticking off, pointing
+at, or circling the answer. Where the lyric sheet splits a sentence across
+short lines to slow the singing, the storyboard keeps the sentence, or a
+clause of a long one, as one line.
 
 A section's `delivery` sets its captions: `sung` and `spoken` lines are one
 cue each, while `call` lines are quiz questions with an `answer` and
-`answer_at`, captioned as two cues. `answer` transcribes the recording;
+`answer_at`, captioned as two cues. A question the recording never answers
+keeps its `call` line without `answer` and `answer_at`: it is one cue, and
+the player makes no quiz pause for it. `answer` transcribes the recording;
 `answer_code` optionally supplies an executable command for the shell quiz's
 visual answer. An optional `pause_at` marks a safe stop between the question
 and the first answer sound. Check it against the recording, including answers

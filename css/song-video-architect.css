@@ -1,0 +1,265 @@
+/*
+ * The architect of "Draw It Out While It's Cheap to Change"
+ * (js/song-video/architect.js): the viewer's SE Gym hero in unisex clothes,
+ * a white shirt buttoned to the collar with rolled sleeves, a camel knit
+ * vest with ribbed edges, straight charcoal trousers, and cognac derby
+ * shoes, holding a giant UCLA Gold pencil and a rolled drawing, a
+ * wristwatch on the other wrist.
+ * Lit from the upper left; outlines are a dark ink tinted to the cloth they
+ * edge, and blue light bounced off the blueprint keeps the far side apart
+ * from it. Like stage.css this styles the 960×540 stage, which keeps its
+ * artwork in both page themes; the player's print styles hide it. The
+ * figure is decorative (aria-hidden): the transcript and the described cut
+ * say what it does.
+ */
+
+.dio-arch {
+  position: absolute;
+  --arch-ink: #2a1c12;
+  --arch-ink-cool: #1c1f29;
+  --arch-ink-leather: #241206;
+}
+
+.dio-arch-art {
+  display: block;
+  overflow: visible;
+}
+
+/* Its role, lettered like the blueprint's title block, under its feet. */
+.dio-arch-tag {
+  width: max-content;
+  margin: -4px auto 0;
+  padding: 2px 10px;
+  border: 2px solid rgba(235, 244, 255, 0.85);
+  border-radius: 3px;
+  background: #003b5c;
+  color: #ffffff;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  line-height: 1.3;
+  text-transform: uppercase;
+}
+
+.dio-arch-shadow { fill: rgba(0, 20, 45, 0.4); }
+.dio-arch-contact { fill: rgba(0, 10, 26, 0.5); }
+
+/* Every part's ink goes under its fill at twice the line width, so a limb
+   or a garment keeps one outline wherever its parts overlap. */
+.dio-arch-ink {
+  fill: none;
+  stroke: var(--arch-ink);
+  stroke-width: 2.4;
+  stroke-linejoin: round;
+  stroke-opacity: 0.9;
+}
+.dio-arch-ink--cool { stroke: var(--arch-ink-cool); }
+/* Hands and small props take a finer line. */
+.dio-arch-ink--fine { stroke-width: 1.6; }
+.dio-arch-ink--leather { stroke: var(--arch-ink-leather); }
+
+/* Steel (ferrule, watch case). */
+.dio-arch-steel-stop-0 { stop-color: #f6f8fb; }
+.dio-arch-steel-stop-1 { stop-color: #a7b0bd; }
+.dio-arch-steel-stop-2 { stop-color: #6c7583; }
+
+/* Cognac leather derbies: the upper over a dark sole, the quarter's seam,
+   the sole's lit edge, and a shine on the toe. */
+.dio-arch-leather-stop-0 { stop-color: #c78d58; }
+.dio-arch-leather-stop-1 { stop-color: #93582c; }
+.dio-arch-leather-stop-2 { stop-color: #5e3416; }
+.dio-arch-shoe { stroke: none; }
+.dio-arch-sole { fill: #2b1709; }
+.dio-arch-shoe-turn { fill: #3a1e0b; opacity: 0.35; }
+.dio-arch-shoe-seam { fill: none; stroke: #3a1e0b; stroke-width: 0.5; stroke-linecap: round; stroke-opacity: 0.55; }
+.dio-arch-welt { fill: none; stroke: #d9b38a; stroke-width: 0.45; stroke-linecap: round; stroke-opacity: 0.6; }
+.dio-arch-shoe-shine { fill: none; stroke: #fbe3c6; stroke-width: 0.8; stroke-linecap: round; stroke-opacity: 0.85; }
+
+/* Charcoal wool trousers: each leg round in the light, falling into shade
+   towards the floor, with pressed creases, soft folds, and pockets. */
+.dio-arch-trousers { stroke: none; }
+.dio-arch-trouser-stop-0 { stop-color: #4b4f5b; }
+.dio-arch-trouser-stop-1 { stop-color: #5f6472; }
+.dio-arch-trouser-stop-2 { stop-color: #3b3e48; }
+.dio-arch-trouser-stop-3 { stop-color: #2a2c34; }
+.dio-arch-trouser-fall { stroke: none; }
+.dio-arch-trouser-fall-stop-0 { stop-color: #0e0f13; stop-opacity: 0; }
+.dio-arch-trouser-fall-stop-1 { stop-color: #0e0f13; stop-opacity: 0.28; }
+.dio-arch-trouser-shadow { fill: #121318; opacity: 0.4; }
+.dio-arch-crease { fill: none; stroke: #1a1b21; stroke-width: 0.6; stroke-linecap: round; stroke-opacity: 0.55; }
+.dio-arch-crease-light { fill: none; stroke: #8e94a3; stroke-width: 0.6; stroke-linecap: round; stroke-opacity: 0.45; }
+.dio-arch-fold { fill: none; stroke: #15161b; stroke-width: 0.8; stroke-linecap: round; stroke-opacity: 0.35; }
+.dio-arch-fold-light { fill: none; stroke: #8f95a4; stroke-width: 0.55; stroke-linecap: round; stroke-opacity: 0.3; }
+.dio-arch-pocket { fill: none; stroke: #15161b; stroke-width: 0.6; stroke-linecap: round; stroke-opacity: 0.6; }
+.dio-arch-pocket-light { fill: none; stroke: #7d8392; stroke-width: 0.5; stroke-linecap: round; stroke-opacity: 0.5; }
+.dio-arch-hem-shadow { fill: none; stroke: #0c0d10; stroke-width: 5; stroke-linejoin: round; stroke-opacity: 0.3; }
+
+/* The white cotton shirt, its sleeves, and its collar, shaded towards a
+   cool blue grey; its placket and buttons. */
+.dio-arch-shirt-stop-0 { stop-color: #ffffff; }
+.dio-arch-shirt-stop-1 { stop-color: #d6dde8; }
+.dio-arch-shirt { stroke: none; }
+.dio-arch-v-shadow { fill: none; stroke: #556079; stroke-width: 1.8; stroke-linecap: round; stroke-opacity: 0.3; }
+.dio-arch-placket { fill: none; stroke: #9aa6b8; stroke-width: 0.5; stroke-linecap: round; stroke-opacity: 0.9; }
+.dio-arch-shirt-button { fill: #f7f9fc; stroke: #8d99ac; stroke-width: 0.35; }
+.dio-arch-sleeve-stop-0 { stop-color: #fbfcfe; }
+.dio-arch-sleeve-stop-1 { stop-color: #dfe5ee; }
+.dio-arch-sleeve,
+.dio-arch-cuff { stroke: none; }
+/* Strips along a limb's edges, opaque at the edge and fading inwards: the
+   shade on the side turned from the light, the light on the side towards it
+   (shadeLimb picks which by fill-opacity). */
+.dio-arch-limb-strip { stroke: none; }
+.dio-arch-sleeve-shade-out-stop-0,
+.dio-arch-sleeve-shade-in-stop-1 { stop-color: #a7b3c6; stop-opacity: 0; }
+.dio-arch-sleeve-shade-out-stop-1,
+.dio-arch-sleeve-shade-in-stop-0 { stop-color: #a7b3c6; stop-opacity: 0.9; }
+.dio-arch-sleeve-light-out-stop-0,
+.dio-arch-sleeve-light-in-stop-1 { stop-color: #ffffff; stop-opacity: 0; }
+.dio-arch-sleeve-light-out-stop-1,
+.dio-arch-sleeve-light-in-stop-0 { stop-color: #ffffff; stop-opacity: 0.9; }
+.dio-arch-sleeve-fold { fill: #8794ab; opacity: 0.38; }
+.dio-arch-sleeve-fold-light { fill: none; stroke: #ffffff; stroke-width: 0.55; stroke-linecap: round; stroke-opacity: 0.85; }
+.dio-arch-sleeve-drape { fill: none; stroke: #a3afc3; stroke-width: 0.7; stroke-linecap: round; stroke-opacity: 0.6; }
+.dio-arch-cuff-inside { fill: #b8c2d2; opacity: 0.7; }
+.dio-arch-cuff-roll { fill: none; stroke: #8592a8; stroke-width: 0.7; stroke-linecap: round; stroke-opacity: 0.7; }
+.dio-arch-cuff-light { fill: none; stroke: #ffffff; stroke-width: 0.6; stroke-linecap: round; stroke-opacity: 0.9; }
+.dio-arch-cuff-crease { fill: none; stroke: #95a2b7; stroke-width: 0.45; stroke-linecap: round; stroke-opacity: 0.8; }
+.dio-arch-collar-stop-0 { stop-color: #c9d1de; }
+.dio-arch-collar-stop-1 { stop-color: #ffffff; }
+.dio-arch-collar { stroke: none; }
+.dio-arch-collar-inside { fill: #b9c2d0; }
+.dio-arch-collar-shadow { fill: #3b2412; opacity: 0.3; }
+.dio-arch-collar-stitch { fill: none; stroke: #aab5c6; stroke-width: 0.35; stroke-dasharray: 0.8 0.6; }
+
+/* The camel knit vest, modelled by the light: a highlight on the lit chest
+   and its sides turning away. Its ribbed bands are striped across by their
+   ribs (a dashed stroke along the edge), bounded by a fine line where they
+   meet the knit, and the knit blouses a little over the hem band. */
+.dio-arch-vest { stroke: none; }
+.dio-arch-vest-stop-0 { stop-color: #f2c690; }
+.dio-arch-vest-stop-1 { stop-color: #d89e5f; }
+.dio-arch-vest-stop-2 { stop-color: #b97b41; }
+.dio-arch-vest-stop-3 { stop-color: #8c5628; }
+.dio-arch-vest-form { stroke: none; }
+.dio-arch-vest-far-stop-0 { stop-color: #4a280e; stop-opacity: 0; }
+.dio-arch-vest-far-stop-1 { stop-color: #4a280e; stop-opacity: 0.45; }
+.dio-arch-vest-near-stop-0 { stop-color: #4a280e; stop-opacity: 0.22; }
+.dio-arch-vest-near-stop-1 { stop-color: #4a280e; stop-opacity: 0; }
+.dio-arch-chest-light-stop-0 { stop-color: #fff3dc; stop-opacity: 0.5; }
+.dio-arch-chest-light-stop-1 { stop-color: #fff3dc; stop-opacity: 0; }
+.dio-arch-rib-band { fill: none; stroke: #c18a52; stroke-width: 2.4; stroke-opacity: 0.6; }
+.dio-arch-rib { fill: none; stroke: #6f421c; stroke-width: 2.4; stroke-dasharray: 0.5 0.65; stroke-opacity: 0.3; }
+.dio-arch-rib-band--hem,
+.dio-arch-rib--hem { stroke-width: 5.6; }
+.dio-arch-rib-edge { fill: none; stroke: #6a3e1a; stroke-width: 0.5; stroke-linecap: round; stroke-opacity: 0.5; }
+.dio-arch-blouse { fill: none; stroke: #4a280e; stroke-width: 1.4; stroke-linecap: round; stroke-opacity: 0.22; }
+.dio-arch-vest-rim { fill: none; stroke: #ffe6c4; stroke-width: 1; stroke-linecap: round; stroke-opacity: 0.55; }
+/* Light from the blue sheet, bounced onto the side away from the lamp. */
+.dio-arch-bounce { fill: none; stroke: #9ccaf5; stroke-width: 1; stroke-linecap: round; stroke-opacity: 0.35; }
+
+/* Skin: the drawn head's warm default, or a worn hero's own tones. */
+.dio-arch-skin { stroke: none; }
+.dio-arch-skin-stop-0 { stop-color: #f9ddc3; }
+.dio-arch-skin-stop-1 { stop-color: #ebbd93; }
+.dio-arch-skin-stop-2 { stop-color: #cf9a6c; }
+.dio-arch-skin-shade-out-stop-0,
+.dio-arch-skin-shade-in-stop-1 { stop-color: #a8744b; stop-opacity: 0; }
+.dio-arch-skin-shade-out-stop-1,
+.dio-arch-skin-shade-in-stop-0 { stop-color: #a8744b; stop-opacity: 0.85; }
+.dio-arch-skin-light-out-stop-0,
+.dio-arch-skin-light-in-stop-1 { stop-color: #fff1e2; stop-opacity: 0; }
+.dio-arch-skin-light-out-stop-1,
+.dio-arch-skin-light-in-stop-0 { stop-color: #fff1e2; stop-opacity: 0.7; }
+.dio-arch-cuff-shadow { fill: none; stroke: #9a6a45; stroke-width: 2; stroke-linecap: round; stroke-opacity: 0.35; }
+.dio-arch-muscle { fill: none; stroke: #b98863; stroke-width: 0.5; stroke-linecap: round; stroke-opacity: 0.35; }
+.dio-arch-wrist-crease { fill: none; stroke: #b98863; stroke-width: 0.5; stroke-linecap: round; stroke-opacity: 0.55; }
+.dio-arch-hand-shade { fill: #a8744b; opacity: 0.35; }
+.dio-arch-knuckle-light { fill: none; stroke: #fff3e4; stroke-width: 0.45; stroke-linecap: round; stroke-opacity: 0.8; }
+.dio-arch-tendon { fill: none; stroke: #c99a72; stroke-width: 0.35; stroke-linecap: round; stroke-opacity: 0.4; }
+.dio-arch-thumb-crease { fill: none; stroke: #9a6a45; stroke-width: 0.4; stroke-linecap: round; stroke-opacity: 0.6; }
+/* Fingers: the creases at their joints, their nails, and the palm's lighter
+   centre on the hand that holds the roll. */
+.dio-arch-finger-crease { fill: none; stroke: #9a6a45; stroke-width: 0.35; stroke-linecap: round; stroke-opacity: 0.55; }
+.dio-arch-nail { fill: #f8e4d4; stroke: #b98863; stroke-width: 0.25; }
+.dio-arch-palm { fill: #ffe9da; opacity: 0.4; }
+.dio-arch-neck-shade { fill: #a8744b; opacity: 0.4; }
+.dio-arch-neck-line { fill: none; stroke: #b98863; stroke-width: 0.5; stroke-linecap: round; stroke-opacity: 0.35; }
+.dio-arch-art--hero .dio-arch-skin-stop-0 { stop-color: var(--hero-skin-highlight-soft); }
+.dio-arch-art--hero .dio-arch-skin-stop-1 { stop-color: var(--hero-skin-light); }
+.dio-arch-art--hero .dio-arch-skin-stop-2 { stop-color: var(--hero-skin-mid); }
+.dio-arch-art--hero .dio-arch-skin-shade-out-stop-0,
+.dio-arch-art--hero .dio-arch-skin-shade-in-stop-1,
+.dio-arch-art--hero .dio-arch-skin-shade-out-stop-1,
+.dio-arch-art--hero .dio-arch-skin-shade-in-stop-0 { stop-color: var(--hero-skin-mid); }
+.dio-arch-art--hero .dio-arch-skin-light-out-stop-0,
+.dio-arch-art--hero .dio-arch-skin-light-in-stop-1,
+.dio-arch-art--hero .dio-arch-skin-light-out-stop-1,
+.dio-arch-art--hero .dio-arch-skin-light-in-stop-0 { stop-color: var(--hero-skin-highlight-soft); }
+.dio-arch-art--hero .dio-arch-cuff-shadow,
+.dio-arch-art--hero .dio-arch-finger-crease,
+.dio-arch-art--hero .dio-arch-thumb-crease { stroke: var(--hero-skin); }
+.dio-arch-art--hero .dio-arch-muscle,
+.dio-arch-art--hero .dio-arch-wrist-crease,
+.dio-arch-art--hero .dio-arch-tendon { stroke: var(--hero-skin-mid); }
+.dio-arch-art--hero .dio-arch-hand-shade { fill: var(--hero-skin); }
+.dio-arch-art--hero .dio-arch-knuckle-light { stroke: var(--hero-skin-highlight-soft); }
+.dio-arch-art--hero .dio-arch-nail { fill: var(--hero-skin-highlight-soft); stroke: var(--hero-skin-mid); }
+.dio-arch-art--hero .dio-arch-palm { fill: var(--hero-skin-highlight-soft); }
+
+/* The drawn head (export stages). */
+.dio-arch-drawn-skin { fill: #e7b98e; }
+.dio-arch-drawn-line { stroke: var(--arch-ink); stroke-width: 1.8; stroke-opacity: 0.8; }
+.dio-arch-drawn-ear { fill: none; stroke: #b98863; stroke-width: 0.9; stroke-linecap: round; }
+.dio-arch-drawn-jaw-shade { fill: #b98863; opacity: 0.35; }
+.dio-arch-drawn-hair { fill: #3b2618; stroke: var(--arch-ink); stroke-width: 1.4; stroke-linejoin: round; }
+.dio-arch-drawn-hair-strand { fill: none; stroke: #23160d; stroke-width: 0.8; stroke-linecap: round; stroke-opacity: 0.8; }
+.dio-arch-drawn-hair-sheen { fill: none; stroke: #8a603f; stroke-width: 1.4; stroke-linecap: round; }
+.dio-arch-drawn-brow { fill: none; stroke: #3b2618; stroke-width: 2.1; stroke-linecap: round; }
+.dio-arch-drawn-eye-white { fill: #fbfaf7; stroke: #6b4a32; stroke-width: 0.5; }
+.dio-arch-drawn-iris { fill: #5a3b22; }
+.dio-arch-drawn-pupil { fill: #140d08; }
+.dio-arch-drawn-catchlight { fill: #ffffff; }
+.dio-arch-drawn-lid { fill: none; stroke: #2b1d12; stroke-width: 1.2; stroke-linecap: round; }
+.dio-arch-drawn-nose { fill: none; stroke: #b9875f; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
+.dio-arch-drawn-mouth { fill: none; stroke: var(--arch-ink); stroke-width: 1.8; stroke-linecap: round; }
+.dio-arch-drawn-lip { fill: none; stroke: #c27a62; stroke-width: 0.9; stroke-linecap: round; stroke-opacity: 0.8; }
+.dio-arch-drawn-blush { fill: #e08a7a; opacity: 0.3; }
+
+/* The giant pencil, in UCLA Gold, with a pink eraser in a steel ferrule
+   and a shine down its lit facet. */
+.dio-arch-eraser { fill: #f48fb1; }
+.dio-arch-eraser-light { fill: none; stroke: #ffd3e2; stroke-width: 0.5; stroke-linecap: round; }
+.dio-arch-ferrule-crimp { fill: none; stroke: #6c7583; stroke-width: 0.4; }
+.dio-arch-ferrule-light { fill: none; stroke: #ffffff; stroke-width: 0.45; stroke-linecap: round; stroke-opacity: 0.75; }
+.dio-arch-pencil-light { fill: #ffe680; }
+.dio-arch-pencil-face { fill: #ffd100; }
+.dio-arch-pencil-dark { fill: #d9a400; }
+.dio-arch-pencil-edge { fill: none; stroke: #b58800; stroke-width: 0.2; }
+.dio-arch-pencil-shine { fill: none; stroke: #fff8d6; stroke-width: 0.4; stroke-linecap: round; stroke-opacity: 0.9; }
+.dio-arch-pencil-stamp { fill: none; stroke: #7a5a00; stroke-width: 0.45; stroke-linecap: round; }
+.dio-arch-pencil-wood { fill: #f1cf9f; }
+.dio-arch-pencil-grain { fill: none; stroke: #c9a06a; stroke-width: 0.3; stroke-linecap: round; }
+.dio-arch-pencil-lead { fill: #33333d; }
+
+/* The rolled drawing: the paper's back outside, its edge running down it,
+   two rubber bands, and the rolled layers of the blue print at its end. */
+.dio-arch-roll-paper { fill: #f3efe3; }
+.dio-arch-roll-shade { fill: #b9ab8c; fill-opacity: 0.5; }
+.dio-arch-roll-light { fill: none; stroke: #ffffff; stroke-width: 1.1; stroke-linecap: round; stroke-opacity: 0.85; }
+.dio-arch-roll-edge { fill: none; stroke: #b9ab8c; stroke-width: 0.5; stroke-linecap: round; }
+.dio-arch-roll-band { fill: none; stroke: #c8382d; stroke-width: 1.4; stroke-linecap: round; }
+.dio-arch-roll-band-light { fill: none; stroke: #f08a7e; stroke-width: 0.45; stroke-linecap: round; }
+.dio-arch-roll-end { fill: #2774ae; stroke: var(--arch-ink); stroke-width: 0.9; stroke-opacity: 0.8; }
+.dio-arch-roll-layer { fill: none; stroke: #cfe2f6; stroke-width: 0.4; }
+.dio-arch-roll-core { fill: #10314e; }
+
+/* The wristwatch. */
+.dio-arch-watch-strap { fill: #6b4226; stroke: #2a170b; stroke-width: 0.45; }
+.dio-arch-watch-stitch { fill: none; stroke: #d6b38a; stroke-width: 0.25; stroke-dasharray: 0.6 0.45; }
+.dio-arch-watch-case { stroke: #4a515d; stroke-width: 0.45; }
+.dio-arch-watch-dial { fill: #fbf6e6; }
+.dio-arch-watch-ticks { fill: none; stroke: #3a3f48; stroke-width: 0.3; }
+.dio-arch-watch-hands { fill: none; stroke: #1d2230; stroke-width: 0.4; stroke-linecap: round; }
+.dio-arch-watch-glint { fill: none; stroke: #ffffff; stroke-width: 0.35; stroke-linecap: round; stroke-opacity: 0.9; }

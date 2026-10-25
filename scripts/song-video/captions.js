@@ -5,7 +5,8 @@
  *
  *   - sung lines are framed with music notes (♪ … ♪), spoken lines are not;
  *   - a call-and-response line becomes two cues, the question and then the
- *     crowd's answer from `answer_at`;
+ *     crowd's answer from `answer_at`; a question the recording never
+ *     answers (no `answer_at`) is one cue, like any sung line;
  *   - stretches of at least MUSIC_GAP seconds without words get a "[music]"
  *     cue, so captions-on viewers know the soundtrack is still playing.
  */
@@ -29,7 +30,7 @@ function lyricCues(storyboard) {
   const cues = [];
   for (const section of storyboard.sections) {
     for (const line of section.lines) {
-      if (section.delivery === 'call') {
+      if (section.delivery === 'call' && Number.isFinite(line.answer_at)) {
         cues.push({ start: line.start, end: line.answer_at, text: sung(section, line.text) });
         cues.push({ start: line.answer_at, end: line.end, text: sung(section, `(crowd) ${line.answer}`) });
       } else {

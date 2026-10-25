@@ -302,9 +302,14 @@
       svg('circle', { class: 'sk-knob sk-no-draw', cx: 53.5, cy: 66, r: 1.2 }, g);
       path(g, 'sk-ground', 'M8 76 H92');
     },
+    // Still clearly a house, but rough: wobbly strokes, open corners, and
+    // no windows, chimney, or proportions to pin down what kind.
     vague(g) {
-      path(g, 'sk-line sk-line--loose', 'M18 44 L50 16 L82 44');
-      path(g, 'sk-line sk-line--loose', 'M42 76 V60 Q50 50 58 60 V76');
+      path(g, 'sk-line sk-line--loose', 'M14 45 Q31 31 50 15 Q68 29 86 44');
+      path(g, 'sk-line sk-line--loose', 'M23 47 Q21 61 24 75');
+      path(g, 'sk-line sk-line--loose', 'M77 46 Q80 60 76 75');
+      path(g, 'sk-line sk-line--loose', 'M19 77 Q48 74 82 77');
+      path(g, 'sk-line sk-line--loose', 'M43 75 V62 Q50 54 57 62 V75');
     },
     shed(g) {
       path(g, 'sk-wall sk-wall--wood', 'M24 76 V40 L76 32 V76 Z');
@@ -619,6 +624,55 @@
     const laptops = centres.map(([cx, cy], i) => device(parent, 'laptop', { x: cx - size / 2, y: cy - size / 2, size, at: at + i * 0.08, until }));
     if (until !== undefined) fx.fadeOut(wires, until, 0.25);
     return { wires, laptops, centres };
+  }
+
+  // ------------------------------------------------------------------
+  // A wall laid in a hurry: one crooked brick, and every course above leans
+  // ------------------------------------------------------------------
+
+  const BRICK = { w: 60, h: 26, gap: 4, lean: 5 };
+
+  /**
+   * A brick wall at (x, y), w wide and `courses` high, laid brick by brick
+   * from `at` (`every` seconds apart), bottom course first, in running bond.
+   * Brick `crooked` of the bottom course goes down tilted, and each course
+   * above sits a little further right, so the wall visibly doesn't line up.
+   * From `flagAt` a red dashed ring circles the crooked brick.
+   */
+  function brickWall(parent, { x, y, w = 300, courses = 6, at, every = 0.08, crooked = 1, flagAt, until }) {
+    const pitch = BRICK.h + BRICK.gap;
+    const height = courses * pitch;
+    const width = w - courses * BRICK.lean;
+    const node = art(parent, { x, y, w, h: height, viewBox: `0 0 ${w} ${height}`, className: 'sk-brick-wall' });
+    let n = 0;
+    for (let c = 0; c < courses; c++) {
+      const top = height - (c + 1) * pitch;
+      const course = svg('g', { transform: `translate(${c * BRICK.lean} 0)` }, node);
+      const step = BRICK.w;
+      for (let left = c % 2 ? -step / 2 : 0, i = 0; left < width; left += step, i++) {
+        const x0 = Math.max(left, 0);
+        const x1 = Math.min(left + BRICK.w, width);
+        if (x1 - x0 < 8) continue;
+        const brick = svg('g', { class: 'sk-brick is-staged' }, course);
+        if (c === 0 && i === crooked) {
+          brick.setAttribute('transform', `rotate(-8 ${(x0 + x1) / 2} ${top + BRICK.h / 2}) translate(0 -3)`);
+          brick.classList.add('sk-brick--crooked');
+        }
+        // Each brick brings its own bed of mortar, so mortar only shows where bricks are.
+        svg('rect', { class: 'sk-brick-mortar', x: x0, y: top, width: x1 - x0, height: pitch }, brick);
+        svg('rect', { class: 'sk-brick-face', x: x0 + BRICK.gap / 2, y: top + BRICK.gap / 2, width: x1 - x0 - BRICK.gap, height: BRICK.h, rx: 2 }, brick);
+        path(brick, 'sk-brick-shine', `M${x0 + 6} ${top + BRICK.gap / 2 + 4} H${x1 - 8}`);
+        tween(brick, [{ opacity: 0, translate: '0 -40px' }, { opacity: 1, translate: '0 0' }], at + n * every, 0.18, EASE.out);
+        n++;
+      }
+    }
+    if (flagAt !== undefined) {
+      const cx = crooked * BRICK.w + BRICK.w / 2;
+      const ring = svg('ellipse', { class: 'sk-brick-flag', cx, cy: height - pitch / 2 - 2, rx: BRICK.w * 0.78, ry: BRICK.h * 0.95, pathLength: 1 }, node);
+      tween(ring, [{ strokeDashoffset: 1 }, { strokeDashoffset: 0 }], flagAt, 0.35, EASE.out);
+    }
+    show(node, at - 0.05, until, { from: 1 });
+    return node;
   }
 
   // ------------------------------------------------------------------
@@ -1203,9 +1257,10 @@
   // ------------------------------------------------------------------
 
   /**
-   * Library book copy #42 at (x, y), standing upright, with a status tag on
-   * a string: states = [{ at, text, tone }] relabel the tag; at `dueAt` a
-   * due-date slip sticks out of the pages.
+   * A library copy of The UML Reference Manual, copy #42, at (x, y),
+   * standing upright, with a status tag on a string: states = [{ at, text,
+   * tone }] relabel the tag; at `dueAt` a due-date slip sticks out of the
+   * pages.
    */
   function libraryBook(parent, { x, y, size = 150, at, until, states, dueAt, dueText }) {
     const node = place(el('div', 'sk-library-book is-staged', parent), x, y);
@@ -1220,11 +1275,12 @@
     path(drawing, 'sk-lb-spine', 'M8 16 V128 Q8 134 14 134 H24 V10 H14 Q8 10 8 16 Z');
     path(drawing, 'sk-lb-ridges sk-no-draw', 'M10 22 H22 M10 26 H22 M10 118 H22 M10 122 H22');
     path(drawing, 'sk-lb-band sk-no-draw', 'M24 30 H98 M24 112 H98');
-    path(drawing, 'sk-lb-plate', 'M38 58 H86 Q90 58 90 62 V86 Q90 90 86 90 H38 Q34 90 34 86 V62 Q34 58 38 58 Z');
-    path(drawing, 'sk-lb-sticker', 'M40 98 H82 V108 H40 Z');
-    path(drawing, 'sk-lb-barcode sk-no-draw', 'M44 100 V106 M46.5 100 V106 M50 100 V106 M52 100 V106 M55.5 100 V106 M59 100 V106 M61 100 V106 M64.5 100 V106 M67 100 V106 M70.5 100 V106 M74 100 V106 M77 100 V106');
-    const label = svg('text', { class: 'sk-lb-number', x: 62, y: 81 }, drawing);
-    label.textContent = '#42';
+    // The title between the gold bands, and the copy number on the library's label.
+    for (const [text, y, size] of [['The', 46, 'small'], ['UML', 71, 'big'], ['Reference', 89, 'small'], ['Manual', 105, 'small']]) {
+      svg('text', { class: `sk-lb-title sk-lb-title--${size}`, x: 61, y }, drawing).textContent = text;
+    }
+    path(drawing, 'sk-lb-sticker', 'M34 115 H88 V129 H34 Z');
+    svg('text', { class: 'sk-lb-copy', x: 61, y: 126 }, drawing).textContent = 'COPY #42';
     if (dueAt !== undefined) {
       const slip = svg('g', { class: 'sk-lb-slip is-staged' }, drawing);
       path(slip, 'sk-lb-slip-paper', 'M70 -6 H112 V34 H70 Z');
@@ -1377,7 +1433,7 @@
 
   window.SketchKit = {
     teammate, thought, whiteboard,
-    speech, sticky, calendar, device, network, section, pencil, eraser,
+    speech, sticky, calendar, device, network, brickWall, section, pencil, eraser,
     floorPlan, paperFlaw, bug, robot, padlock, contract, questions, car, roomyHouse, readingList, bookshelf,
     timeArrow, hourglass, paperPlane, libraryBook, labelParts, coin, functionMachine, plug,
     question, checklist,

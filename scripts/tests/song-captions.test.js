@@ -48,6 +48,15 @@ test('a call-and-response line becomes the sung question, then the crowd answer 
   assert.equal(cues[1].start, 12.5);
 });
 
+test('a call line the recording never answers is one sung cue, with no crowd cue', () => {
+  const unanswered = {
+    duration: 10,
+    sections: [{ id: 'quiz', delivery: 'call', lines: [{ start: 2, end: 5, text: 'An open question?' }] }],
+  };
+
+  assert.deepEqual(lyricCues(unanswered), [{ start: 2, end: 5.5, text: '♪ An open question? ♪' }]);
+});
+
 test('a cue lingers half a second after its last word, but never into the next line', () => {
   const [spoken, one, two] = lyricCues(storyboard);
 

@@ -35,10 +35,11 @@
 /* A path drawn in like a pen (drawIn): its whole length is one dash, offset
    out of sight, and its fill clear until its tween starts. Web Animations
    only hold their end state ("forwards"), so before the start this base
-   style is what shows. */
+   style is what shows. The gap is twice the path and the offset puts no
+   dash end on it, so round caps can't paint dots before the line starts. */
 .sk-drawn {
-  stroke-dasharray: 1;
-  stroke-dashoffset: 1;
+  stroke-dasharray: 1 2;
+  stroke-dashoffset: 1.5;
   fill-opacity: 0;
 }
 
@@ -375,7 +376,8 @@
   padding: 10px 16px;
   border: 2.5px solid var(--sk-ink);
   border-radius: 18px;
-  background: var(--sk-paper);
+  --sk-bubble: var(--sk-paper);
+  background: var(--sk-bubble);
   color: var(--sk-ink);
   font-size: 22px;
   font-weight: 900;
@@ -383,24 +385,66 @@
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.4);
 }
 
-/* The tail: a rotated square whose two inked sides continue the outline. */
+/* The tail: an ink triangle under a bubble-coloured one that starts inside
+   the bubble's border, so the outline runs unbroken around both. */
+.sk-speech::before,
 .sk-speech::after {
   content: '';
   position: absolute;
-  bottom: -11px;
-  width: 18px;
-  height: 18px;
-  border-right: 2.5px solid var(--sk-ink);
-  border-bottom: 2.5px solid var(--sk-ink);
-  background: inherit;
-  transform: rotate(45deg) skew(12deg, 12deg);
+  top: 100%;
+  border-style: solid;
+  border-right-color: transparent;
+  border-left-color: transparent;
+  border-bottom: 0;
 }
 
-.sk-speech--left::after { left: 26px; }
-.sk-speech--right::after { right: 26px; }
+.sk-speech::before {
+  border-width: 20px 12px 0;
+  border-top-color: var(--sk-ink);
+}
+
+.sk-speech::after {
+  margin-top: -2.5px;
+  border-width: 17px 8.5px 0;
+  border-top-color: var(--sk-bubble);
+}
+
+.sk-speech--left::before { left: 24px; }
+.sk-speech--left::after { left: 27.5px; }
+.sk-speech--right::before { right: 24px; }
+.sk-speech--right::after { right: 27.5px; }
 
 .sk-speech--gold {
-  background: var(--sk-gold);
+  --sk-bubble: var(--sk-gold);
+}
+
+/* ------------------------------------------------------------------ */
+/* The hastily laid brick wall                                         */
+/* ------------------------------------------------------------------ */
+
+.sk-brick-mortar { fill: #cfc8b8; }
+
+.sk-brick-face {
+  fill: #b5523b;
+  stroke: #5c2416;
+  stroke-width: 1.5;
+}
+
+.sk-brick--crooked .sk-brick-face { fill: #c4643f; }
+
+.sk-brick-shine {
+  fill: none;
+  stroke: rgba(255, 214, 190, 0.6);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.sk-brick-flag {
+  fill: none;
+  stroke: #ff6b7d;
+  stroke-width: 4;
+  stroke-dasharray: 1 2;
+  stroke-dashoffset: 1.5;
 }
 
 .sk-sticky {
@@ -1272,14 +1316,26 @@
 .sk-lb-cloth { fill: none; stroke: rgba(255, 255, 255, 0.12) !important; stroke-width: 1.4 !important; }
 .sk-lb-corner { fill: #c9a227; }
 .sk-lb-ridges { fill: none; stroke: rgba(255, 255, 255, 0.35) !important; stroke-width: 1.6 !important; }
-.sk-lb-plate { fill: #1d5a8a; stroke: var(--sk-gold) !important; stroke-width: 2.2 !important; }
 .sk-lb-sticker { fill: #ffffff; }
-.sk-lb-barcode { fill: none; stroke: var(--sk-ink) !important; stroke-width: 1.4 !important; }
 
-.sk-lb-number {
+.sk-lb-title {
   fill: #ffffff;
   font-family: var(--font-display);
-  font-size: 24px;
+  font-size: 13px;
+  font-weight: 900;
+  text-anchor: middle;
+}
+
+.sk-lb-title--big {
+  fill: var(--sk-gold);
+  font-size: 26px;
+  letter-spacing: 0.04em;
+}
+
+.sk-lb-copy {
+  fill: var(--sk-ink);
+  font-family: var(--font-display);
+  font-size: 10px;
   font-weight: 900;
   text-anchor: middle;
 }

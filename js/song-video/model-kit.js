@@ -138,6 +138,48 @@
 
   const CROP_MARGIN = 10;
 
+  const polylinePoints = (line) => line.getAttribute('points').trim().split(/\s+/).map((pair) => pair.split(',').map(Number));
+
+  /**
+   * ArchUML draws a ball-and-socket joint against the component that
+   * requires it. This moves each joint (ball and socket) to the middle of
+   * the gap between its two components, centres its label under it, and
+   * stretches its two lines to meet it, so the interface sits between both
+   * parts.
+   */
+  function centreAssemblies(root) {
+    const boxes = [...root.querySelectorAll('rect.uml-component-box')].map((rect) => rect.getBBox());
+    // ArchUML draws each joint as five siblings in order: the two lines,
+    // the ball, the socket, and the label. One group can hold several.
+    for (const ball of root.querySelectorAll('circle')) {
+      if (ball.closest('defs, pattern')) continue;
+      const socket = ball.nextElementSibling;
+      const label = socket?.nextElementSibling;
+      const lines = [ball.previousElementSibling, ball.previousElementSibling?.previousElementSibling];
+      if (socket?.tagName !== 'path' || lines.some((line) => line?.tagName !== 'polyline')) continue;
+      const parts = union([ball.getBBox(), socket.getBBox()].map(({ x, y, width, height }) => ({ x, y, w: width, h: height })));
+      const cy = parts.y + parts.h / 2;
+      const beside = (box) => cy >= box.y && cy <= box.y + box.height;
+      const left = boxes.filter((box) => beside(box) && box.x + box.width <= parts.x + 1).sort((a, b) => (b.x + b.width) - (a.x + a.width))[0];
+      const right = boxes.filter((box) => beside(box) && box.x >= parts.x + parts.w - 1).sort((a, b) => a.x - b.x)[0];
+      if (!left || !right) continue;
+      const centre = parts.x + parts.w / 2;
+      const dx = (left.x + left.width + right.x) / 2 - centre;
+      for (const part of [ball, socket]) part.setAttribute('transform', `translate(${dx.toFixed(2)} 0)`);
+      // The interface's name goes centred under its joint.
+      if (label?.tagName === 'text') {
+        const box = label.getBBox();
+        label.setAttribute('transform', `translate(${(centre + dx - (box.x + box.width / 2)).toFixed(2)} 0)`);
+      }
+      for (const line of lines) {
+        const points = polylinePoints(line);
+        const near = Math.abs(points[0][0] - centre) < Math.abs(points.at(-1)[0] - centre) ? points[0] : points.at(-1);
+        near[0] += dx;
+        line.setAttribute('points', points.map((point) => point.join(',')).join(' '));
+      }
+    }
+  }
+
   function render(kind, spec) {
     const renderer = window[RENDERERS[kind]];
     if (!renderer) throw new Error(`model-kit.js cannot render "${kind}" diagrams; is uml-bundle.js loaded?`);
@@ -145,6 +187,7 @@
     renderer.render(container, spec);
     const root = container.querySelector('svg');
     if (!root) throw new Error(`ArchUML drew no ${kind} diagram:\n${spec}`);
+    if (kind === 'component') centreAssemblies(root);
     const items = indexDrawing(root);
     // Crop ArchUML's page margins so a sheet hugs its drawing; user units
     // (and so every recorded bound) stay the same.
