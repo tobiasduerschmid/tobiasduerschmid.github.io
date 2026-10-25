@@ -1038,7 +1038,10 @@
       return {
         side, root, upper, bunched, reach: reachGroup, fore, wrist, heldBehind, hand, held,
         get shown() { return shown; },
-        shape(name, force = false) {
+        shape(asked, force = false) {
+          // A hand holding a prop keeps hold of it: an open-hand gesture
+          // closes into a grip around the prop instead.
+          const name = held.node && !HANDS[asked].hold ? 'grip' : asked;
           if (name === shown && !force) return;
           if (!shapes.has(name)) {
             const g = svg('g', {}, hand);
@@ -1056,9 +1059,27 @@
             const { hold, heldBehind: behindAll } = HANDS[name];
             const parent = behindAll ? heldBehind : shapes.get(name).between;
             const [hx, hy, ha] = hold || [0, 16, 0];
-            held.node.setAttribute('transform', behindAll ? `translate(${WRIST[0] + hx} ${WRIST[1] + hy}) rotate(${ha})` : `translate(${hx} ${hy}) rotate(${ha})`);
+            held.at = behindAll ? [WRIST[0] + hx, WRIST[1] + hy] : [hx, hy];
+            held.node.setAttribute('transform', `translate(${held.at[0]} ${held.at[1]}) rotate(${ha})`);
             if (held.node.parentNode !== parent) parent.appendChild(held.node);
           }
+        },
+        /**
+         * Keeps an UPRIGHT prop level whatever the arm does: turns it so its
+         * up (-y) points up in the figure, about its grip.
+         */
+        level(fig) {
+          if (!held.node || !UPRIGHT.has(held.name)) return;
+          const parent = held.node.parentNode?.getCTM?.();
+          const base = fig.getCTM?.();
+          if (!parent || !base) return;
+          const m = base.inverse().multiply(parent);
+          // up in the figure, as seen from the hand's frame: L⁻¹ (0, -1).
+          const det = m.a * m.d - m.b * m.c;
+          if (!det) return;
+          const [vx, vy] = [m.c / det, -m.a / det];
+          const angle = degrees(Math.atan2(vx, -vy));
+          held.node.setAttribute('transform', `translate(${held.at[0]} ${held.at[1]}) rotate(${angle.toFixed(2)})`);
         },
       };
     };
@@ -1160,13 +1181,22 @@
       legGroups.forEach((leg, i) => leg.setAttribute('transform', angle ? `rotate(${(i ? -angle : angle).toFixed(2)} ${HIPS[i][0]} ${HIPS[i][1]})` : ''));
     }
 
-    return { pose, wear, hold, swing, arms: { right, left } };
+    /** Levels the upright props in both hands; call after the figure is placed and posed. */
+    function level() {
+      right.level(fig);
+      left.level(fig);
+    }
+
+    return { pose, wear, hold, swing, level, arms: { right, left } };
   }
 
   // ------------------------------------------------------------------
   // Props a hand can hold, each drawn in its own frame with its handle at
   // the origin and its long axis along +x.
   // ------------------------------------------------------------------
+
+  // Props that stay upright in the hand, whatever the arm does (see level()).
+  const UPRIGHT = new Set(['mug', 'trophy', 'stamp', 'cane']);
 
   const PROPS = {
     // A clipboard held by its side edge: the board, its steel clip, and a
@@ -1309,8 +1339,14 @@
    * or as the way the fingers point (dir, SVG degrees in the picture's
    * right arm's frame: 90 hangs, −90 is up, 0 is out to the side).
    */
-  const armFields = (side, { arm, lift = 0, hand = 0, dir, shape }) => ({
-    [side]: arm, [`${side}Lift`]: lift, [`${side}Hand`]: dir === undefined ? hand : handToward(arm, dir),
+  /**
+   * The same arm pose with its elbow bend (up - fo) within ±180°: poses ease
+   * angle by angle, so a bend stored a full turn off (+272° for -88°) would
+   * swing the forearm the long way round, across the chest.
+   */
+  const natural = ([up, fo]) => [up, up - (((up - fo) % 360) + 540) % 360 + 180];
+  const armFields = (side, { arm: pose, lift = 0, hand = 0, dir, shape }) => ({
+    [side]: natural(pose), [`${side}Lift`]: lift, [`${side}Hand`]: dir === undefined ? hand : handToward(pose, dir),
     ...(shape ? { [`${side}Shape`]: shape } : {}),
   });
   const restArm = (side) => armFields(side, { arm: REST[side], hand: REST[`${side}Hand`], shape: 'rest' });
@@ -1392,7 +1428,8 @@
     },
     /** A chef's kiss: pinched fingers to the lips, then flung open. */
     kiss: ({ hold = 0.6, side = 'right' }) => [
-      [-0.25, 0.35, { ...armFields(side, { arm: reach([LIPS[0] + 6, LIPS[1] + 22], { shorten: 1 - LIFT * 0.8 }), lift: 0.8, shape: 'pinch', dir: -110 }), happy: 1, round: 0.8 }],
+      // Pinched fingers at the lips, the elbow down (as for "shh").
+      [-0.25, 0.35, { ...armFields(side, { arm: reach([88, 94], { shorten: 1 - LIFT * 0.8 }), lift: 0.8, shape: 'pinch', dir: -100 }), happy: 1, round: 0.8 }],
       [0.25, 0.3, { ...armFields(side, { arm: reach([128, 54]), lift: 0.2, shape: 'spread', dir: -60 }), round: 0, smile: 1 }],
       ...settle(0.55 + hold, [side]),
     ],
@@ -1413,15 +1450,17 @@
     /** A shrug: hands out palm up at the hips, shoulders and brows up. */
     shrug: ({ hold = 1.1 }) => [
       [-0.15, 0.4, {
-        ...armFields('right', { arm: reach([132, 150]), shape: 'open', dir: 6 }),
-        ...armFields('left', { arm: reach([132, 150]), shape: 'open', dir: 6 }),
+        // Elbows at the sides, forearms out, palms up.
+        ...armFields('right', { arm: [raise(UPPER_REST, 78), raise(FOREARM_REST, -6)], shape: 'open', dir: -24 }),
+        ...armFields('left', { arm: [raise(UPPER_REST, 78), raise(FOREARM_REST, -6)], shape: 'open', dir: -24 }),
         brow: 1, smile: 0.2, tilt: 4, nod: -0.4,
       }],
       ...settle(hold),
     ],
     /** A crisp salute. */
     salute: ({ hold = 1, side = 'right' }) => [
-      [-0.2, 0.35, { ...armFields(side, { arm: reach([BROW[0] + 33, BROW[1] + 10], { shorten: 1 - LIFT * 0.4 }), lift: 0.4, shape: 'flat', dir: -168 }), brow: 0.3, smile: 0.8 }],
+      // The fingertips at the outer end of the brow, not over the eye.
+      [-0.2, 0.35, { ...armFields(side, { arm: reach([BROW[0] + 40, BROW[1] + 12]), shape: 'flat', dir: -166 }), brow: 0.3, smile: 0.8 }],
       ...settle(hold, [side]),
     ],
     /** Both hands up, palms out: "I surrender". */
@@ -1472,14 +1511,17 @@
       ...settle(hold),
     ],
     /** Both arms pushing out in front: a shove. */
-    shove: ({ hold = 0.9, to }, g) => [
-      [-0.2, 0.3, {
-        ...armFields('right', { arm: reach([120, 106], { shorten: 1 - LIFT * 0.6 }), lift: 0.6, shape: 'open', dir: -90 }),
-        ...armFields('left', { arm: reach([100, 106], { shorten: 1 - LIFT * 0.6 }), lift: 0.6, shape: 'open', dir: -90 }),
-        lean: to && g.side(to) === 'left' ? -4 : 4, frown: 0.6, smile: 0.6,
+    shove: ({ hold = 0.9, to }, g) => {
+      // A hard push out to the side of `to`: the near arm straight out, palm
+      // first; the other fist braced at the chest.
+      const near = to ? g.side(to) : 'right';
+      return [[-0.2, 0.3, {
+        ...armFields(near, { arm: outstretched(-4, 10), shape: 'open', dir: -84 }),
+        ...armFields(other(near), { arm: reach([CHEST[0] + 22, CHEST[1] + 14]), shape: 'fist', dir: 150 }),
+        lean: near === 'left' ? -4 : 4, frown: 0.6, smile: 0.6,
       }],
-      ...settle(hold),
-    ],
+      ...settle(hold)];
+    },
     /** A hand cupped behind an ear. */
     listen: ({ hold = 1.2, side = 'right' }) => [
       [-0.2, 0.4, { ...armFields(side, { arm: reach([104, 50]), shape: 'open', dir: -100 }), brow: 1, tilt: 6, look: side === 'right' ? 1 : -1 }],
@@ -1487,7 +1529,8 @@
     ],
     /** A hand over a yawn. */
     yawn: ({ hold = 1.4, side = 'right' }) => [
-      [-0.2, 0.4, { ...armFields(side, { arm: reach(LIPS, { shorten: 1 - LIFT }), lift: 1, shape: 'flat', dir: -160 }), happy: 1, round: 1, tilt: -4 }],
+      // The palm up at the mouth, the elbow down: the eyes stay clear.
+      [-0.2, 0.4, { ...armFields(side, { arm: reach([88, 94], { shorten: 1 - LIFT * 0.8 }), lift: 0.8, shape: 'flat', dir: -96 }), happy: 1, round: 1, tilt: -4 }],
       ...settle(hold, [side]),
     ],
     /** Knees give and the head drops: exhausted. */
@@ -1793,6 +1836,7 @@
       p.crouch = Math.max(p.crouch, settleKnees);
       const open = mouthAt(sortedWords, t, reduced);
       body.pose(p, t, open, reduced ? 0 : blinkAt(t, seed));
+      body.level();
     });
     return { node: wrap, where };
   }
