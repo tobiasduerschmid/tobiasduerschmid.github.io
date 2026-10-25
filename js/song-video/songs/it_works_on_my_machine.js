@@ -1107,7 +1107,9 @@
     const wordsOf = (role, voice) => [...C.wordsFor(song.storyboard, voice), ...(role === 'tenor' ? [] : C.wordsFor(song.storyboard, ENSEMBLE))];
     for (const draw of behind) draw();
     for (const draw of lights) draw();
-    for (const [role, voice] of Object.entries(VOICES)) {
+    // The Teammate, the lead, is drawn last: in front of everyone around him.
+    const castOrder = Object.entries(VOICES).sort(([a], [b]) => (a === 'tenor') - (b === 'tenor'));
+    for (const [role, voice] of castOrder) {
       const p = plan[role];
       if (!p.stage.length) continue;
       if (!p.places.length) placeAt(role, 0, ...(role === 'tenor' ? HOME.tenor : HOME.mate));
