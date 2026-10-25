@@ -328,14 +328,6 @@
   opacity: 0.7;
 }
 
-.oop-tok--kw { color: #d2a8ff; }
-.oop-tok--cls { color: #7ee787; }
-.oop-tok--call { color: #79c0ff; }
-.oop-tok--num { color: #8fd0ff; }
-.oop-tok--str { color: #ffab70; }
-.oop-tok--const { color: #ffd166; }
-.oop-tok--cm { color: #9aa7bd; font-style: italic; }
-
 /* ------------------------------------------------------------------ */
 /* The rule card                                                       */
 /* ------------------------------------------------------------------ */

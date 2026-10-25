@@ -37,7 +37,8 @@ const songPlayers = [
     storyboard: yaml.load(fs.readFileSync(path.join(__dirname, '..', '_data/songs/let_the_object_decide.yml'), 'utf8')),
   },
   {
-    name: 'UML and design principles', path: '/assets/song-player/draw-it-out.html', cameoTime: 5,
+    // The hero codes at a laptop while the intro sings "Just keep coding".
+    name: 'UML diagrams', path: '/assets/song-player/draw-it-out.html', cameoTime: 3,
     storyboard: yaml.load(fs.readFileSync(path.join(__dirname, '..', '_data/songs/draw_it_out.yml'), 'utf8')),
   },
 ];

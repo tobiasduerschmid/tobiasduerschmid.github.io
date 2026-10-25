@@ -201,14 +201,17 @@ pointing at the newest one), `story-wall` the team-room wall of "Invest in
 Your Stories" (sticky notes and index cards in a story map), `workshop` the
 pegboard shadow board of "Small Tools, One Job Each", `ballroom` the TDD
 song's evening ballroom, `spy` the information-hiding song's noir
-operations room, and `object-city` the city-builder game at dusk of "Let
-the Object Decide". A theme script registers itself in `SongKit.themes`, draws
-its room once, and poses it only from song time; its stylesheet keeps the
-scenery faint enough that text over it keeps 4.5:1. `extras` lists the song's own
-stylesheets and scripts (`styles`, `scripts`), which both the live player
-and the export stage load, in order, before the choreography; the networking
-song uses them for `night-sky.js`, its illustrations in `js/song-video/art/`,
-and `net-kit.js`. The illustrations are live vector art: shapes, gradients,
+operations room, `object-city` the city-builder game at dusk of "Let
+the Object Decide", and `drafting-room` the architectural blueprint of
+"Draw It Out While It's Cheap to Change" (cyanotype paper in UCLA Blue
+with fold creases and a white grid, a bordered sheet with a title block, a plan fragment with dimension
+lines, and drafting tools at the edges). A theme script registers itself
+in `SongKit.themes`, draws its room once, and poses it only from song time;
+its stylesheet keeps the scenery faint enough that text over it keeps 4.5:1.
+`extras` lists the song's own stylesheets and scripts (`styles`, `scripts`),
+which both the live player and the export stage load, in order, before the
+choreography; the networking song uses them for `night-sky.js`, its
+illustrations in `js/song-video/art/`, and `net-kit.js`. The illustrations are live vector art: shapes, gradients,
 and patterns, without filters or bitmaps. `net-kit.js` writes each drawing
 into the page once as an SVG `<symbol>` and shows every copy with `<use>`.
 
@@ -255,23 +258,43 @@ green flags for the quiz, and single-line pictures such as a vtable, a
 Rectangle/Square test bench that resizes, and the grid of classes against
 operations.
 
-"Draw It Out", the UML and design-principles song on `SEBook/uml.md`, draws
-its notation with the SE Book's own ArchUML renderer: the storyboard's
-`extras` load `js/ArchUML/uml-bundle.js` and `js/song-video/model-kit.js`
-(styles in `css/song-video-model-kit.css`). `ModelKit.diagram()` renders a
-class, sequence, state, component, or ER spec in an off-screen host, so
-ArchUML can lay it out while the player keeps the stage hidden, records the
-bounds of every drawn element (boxes, message and transition routes,
-characters of labels), crops the drawing, and moves the SVG onto a paper
-sheet. The choreography then rings, dims, reveals, traces, or labels parts
-of the real notation in an overlay inside the same SVG, so emphasis scales
-with what it points at. Objects, tables, code, and measured shapes are cards
-beside the diagrams. Use `layout portrait` for a vertical state machine.
-Its six-question quiz follows the song on the same soundtrack: spoken by
-macOS `say` and placed on an exact timeline, so its lines carry no `marks`.
-Each stem line holds the question's `answer_at` (the reveal) and a
-`pause_at` inside the eight seconds of silence before it, and
-`ModelKit.choices()` keeps the three answer cards identical until then.
+"Draw It Out While It's Cheap to Change", the UML song on `SEBook/uml.md`,
+uses the `drafting-room` theme (`js/song-video/drafting-room.js`) and draws its notation with the SE
+Book's own ArchUML renderer: the storyboard's `extras` load
+`js/ArchUML/uml-bundle.js` and `js/song-video/model-kit.js` (styles in
+`css/song-video-model-kit.css`). `ModelKit.diagram()` renders a class,
+sequence, state, or component spec in an off-screen host, so ArchUML can lay
+it out while the player keeps the stage hidden, records the bounds of every
+drawn element (boxes, message and transition routes, characters of labels),
+crops the drawing, and moves the SVG onto a paper sheet. The choreography
+then rings, dims, crosses, traces, or labels parts of the real notation in
+an overlay inside the same SVG, so emphasis scales with what it points at:
+a ring draws its outline on over a soft glow, a highlighter band sweeps in
+along its long side, and a callout sits beside its part with a leader line
+to it. A ring, band, or callout given an `until` stays up for at least
+1.5 s, or 0.6 s plus three words a second for a callout's text, a planning
+floor for reading while the song goes on. Swap one sheet for another in the
+same place, with the same spec scale, to change one thing and keep the rest
+(verse 4 changes only the alt, opt, or loop frame around the same two
+lifelines). `ModelKit.code()` puts Python source beside the notation, in the
+shared syntax colours. Class diagrams carry no route ids: find their arrows
+by shape (an edge's `polygon` head, the `stroke-dasharray` of a
+realization).
+`js/song-video/sketch-kit.js` (styles in `css/song-video-sketch-kit.css`)
+draws the pictures beside the notation from the lecture's building
+metaphors: four teammates whose thought bubbles show different buildings
+until a clear whiteboard drawing aligns them, a load-bearing wall, a floor
+plan whose layers fade, an eraser, a coding-agent robot, a car whose wheels
+outlive it, a house whose rooms do not, a shelf of software engineering
+classics, an hourglass and a paper plane, library book #42 moving between
+states, a function machine whose identical calls stay side by side, and a
+ball that snaps into a socket. `drawIn()` strokes a drawing in like a pen.
+The take sings its seven-question pop quiz as call and response, all about
+one new system, a pizza app, on the quiz cards the other songs use: a
+numbered card with the question and an answer bar that slams in when the
+answer is sung. A question about a diagram narrows its card and shows that
+diagram beside it, changing when the answer lands. Where the lyric sheet splits a sentence across short lines
+to slow the singing, the storyboard keeps the sentence as one line.
 
 A section's `delivery` sets its captions: `sung` and `spoken` lines are one
 cue each, while `call` lines are quiz questions with an `answer` and
@@ -302,7 +325,7 @@ storyboard's `narrator.pronounce` (for example `SYN-ACK: sin ack`).
 | `../../js/song-video/scene.js` | Shared scene assembly, authored timing lookup, typography loading and disposal |
 | `../../js/song-video/rounded-surfaces.js` | One-time Firefox rounded-border paint preparation for every song |
 | `../../js/song-video/timeline.js` | Paused Web Animations posed by `seek(t)`, per-frame updaters, the beat grid, camera punches and shakes |
-| `../../js/song-video/kit.js` | Builders for stickers, kinetic type, terminals, stations, paths and graphs |
+| `../../js/song-video/kit.js` | Builders for stickers, kinetic type, terminals, stations, paths and graphs; the Python highlighter (`highlightPython()`) and `writeCode()`, which every code card uses for the shared `.code-tok--*` syntax colours in `css/song-video-stage.css` |
 | `../../js/song-video/virtual-clock.js` | Independent graph clocks; never replaces browser timers |
 | `../../js/song-video/graph-track.js` | Retained graph transitions with deterministic seeking and disposal |
 | `../../js/song-video/songs/<song>.js` | The choreography: what appears on which sung word |

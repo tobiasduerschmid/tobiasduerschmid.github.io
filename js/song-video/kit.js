@@ -1,9 +1,10 @@
 /*
  * Visual kit for song-video choreographies: DOM builders for the recurring
  * pieces of a music video (stickers, stamps, kinetic type, a terminal, Git
- * stations, file chips, flow arrows, snapshot cards, GitGraph panels, the
- * Time Stone, confetti). Every builder schedules its own motion on the
- * Timeline, so a choreography reads as "what appears when".
+ * stations, file chips, flow arrows, snapshot cards, syntax colours for code
+ * cards, GitGraph panels, the Time Stone, confetti). Every builder schedules
+ * its own motion on the Timeline, so a choreography reads as "what appears
+ * when".
  *
  * Coordinates are CSS pixels on the 960×540 stage. Times are song seconds.
  */
@@ -432,6 +433,46 @@
   }
 
   // ------------------------------------------------------------------
+  // Syntax colours for code cards (.code-tok--* in song-video-stage.css)
+  // ------------------------------------------------------------------
+
+  const PYTHON_KEYWORDS = new Set(['def', 'class', 'return', 'assert', 'import', 'from', 'not', 'pass', 'if', 'else', 'raise', 'with', 'for', 'in', 'yield', 'is', 'and', 'or', 'None', 'True', 'False']);
+  const PYTHON_TOKEN = /(#.*$)|('[^']*'|"[^"]*")|(@[\w.]+)|(\b\d+(?:\.\d+)?\b)|(\b[A-Za-z_]\w*\b)|(\s+)|(.)/g;
+
+  /** Splits one line of Python into [text, tone] runs. */
+  function highlightPython(source) {
+    const runs = [];
+    let previous = '';
+    for (const match of source.matchAll(PYTHON_TOKEN)) {
+      const [text, comment, string, decorator, number, word] = match;
+      let tone = null;
+      if (comment) tone = 'cm';
+      else if (string) tone = 'str';
+      else if (decorator) tone = 'deco';
+      else if (number) tone = 'num';
+      else if (word) {
+        if (PYTHON_KEYWORDS.has(word)) tone = 'kw';
+        else if (word === 'self') tone = 'self';
+        else if (previous === 'def') tone = 'fn';
+        else if (previous === 'class' || /^[A-Z]/.test(word)) tone = 'cls';
+        else if (source[match.index + word.length] === '(') tone = 'call';
+        previous = word;
+      }
+      runs.push([text, tone]);
+    }
+    return runs;
+  }
+
+  /** Writes [text, tone] runs (from any language's highlighter) into `parent`. */
+  function writeCode(parent, runs) {
+    for (const [text, tone] of runs) {
+      if (tone) el('span', `code-tok code-tok--${tone}`, parent, text);
+      else parent.append(document.createTextNode(text));
+    }
+    return parent;
+  }
+
+  // ------------------------------------------------------------------
   // GitGraph panels
   // ------------------------------------------------------------------
 
@@ -687,7 +728,7 @@
 
   window.SongKit = {
     el, svg, place, icon, scene, sticker, stamp, kinetic, badge, terminal,
-    station, chip, flyIn, flow, polaroid, typewriter, scramble, pin, graph,
-    timeStone, confetti, fall, backdrop, themes,
+    station, chip, flyIn, flow, polaroid, typewriter, scramble, pin,
+    highlightPython, writeCode, graph, timeStone, confetti, fall, backdrop, themes,
   };
 })();

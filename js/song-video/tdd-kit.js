@@ -104,33 +104,6 @@
   // Python code cards with syntax colours
   // ------------------------------------------------------------------
 
-  const KEYWORDS = new Set(['def', 'class', 'return', 'assert', 'import', 'from', 'not', 'pass', 'if', 'else', 'raise', 'with', 'for', 'in', 'yield', 'is', 'and', 'or', 'None', 'True', 'False']);
-  const TOKEN = /(#.*$)|('[^']*'|"[^"]*")|(@[\w.]+)|(\b\d+(?:\.\d+)?\b)|(\b[A-Za-z_]\w*\b)|(\s+)|(.)/g;
-
-  /** Splits one line of Python into [text, tone] runs. */
-  function highlight(source) {
-    const runs = [];
-    let previous = '';
-    for (const match of source.matchAll(TOKEN)) {
-      const [text, comment, string, decorator, number, word] = match;
-      let tone = null;
-      if (comment) tone = 'cm';
-      else if (string) tone = 'str';
-      else if (decorator) tone = 'deco';
-      else if (number) tone = 'num';
-      else if (word) {
-        if (KEYWORDS.has(word)) tone = 'kw';
-        else if (word === 'self') tone = 'self';
-        else if (previous === 'def') tone = 'fn';
-        else if (previous === 'class' || /^[A-Z]/.test(word)) tone = 'cls';
-        else if (source[match.index + word.length] === '(') tone = 'call';
-        previous = word;
-      }
-      runs.push([text, tone]);
-    }
-    return runs;
-  }
-
   /**
    * code(parent, { x, y, w, title, lines, at, until, size }) — a code card.
    * lines = [string | { text, at, until, tone: 'add'|'del'|'dim'|'focus',
@@ -152,8 +125,7 @@
       const line = typeof spec === 'string' ? { text: spec } : spec;
       const row = el('div', `code-line tdd-code-line${line.at !== undefined ? ' is-staged' : ''}`, body);
       const versions = [{ at: -Infinity, text: line.text }, ...(line.swap || [])].map((version) => {
-        const holder = el('span', 'tdd-code-text', row);
-        for (const [text, toneName] of highlight(version.text)) el('span', toneName ? `tdd-tok tdd-tok--${toneName}` : null, holder, text);
+        const holder = kit.writeCode(el('span', 'tdd-code-text', row), kit.highlightPython(version.text));
         return { ...version, holder };
       });
       if (versions.length > 1) {
@@ -880,7 +852,7 @@
   }
 
   window.TddKit = {
-    show, enter, during, latest, glyph, statusChip, highlight,
+    show, enter, during, latest, glyph, statusChip,
     code, pytest, suite, cycle, stack, bug, bubble, note, heading, panel, todo,
     steps, hop, stopSign, blackBox, pyramid, numberLine, ciBadge, stopwatch, runs,
   };

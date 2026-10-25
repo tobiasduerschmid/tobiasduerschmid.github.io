@@ -760,6 +760,23 @@ body.is-fit {
   font-weight: 600;
 }
 
+/* Syntax colours (SongKit.writeCode), each 4.5:1 or more on the card's
+   lightest corner, #172039. */
+.code-tok--kw { color: #d2a8ff; }
+.code-tok--fn,
+.code-tok--const { color: #ffd166; }
+.code-tok--cls { color: #7ee787; }
+.code-tok--call { color: #79c0ff; }
+.code-tok--str,
+.code-tok--deco { color: #ffab70; }
+.code-tok--num { color: #8fd0ff; }
+.code-tok--self { color: #ff9ac1; }
+
+.code-tok--cm {
+  color: #9aa7bd;
+  font-style: italic;
+}
+
 .chat {
   position: absolute;
   display: flex;

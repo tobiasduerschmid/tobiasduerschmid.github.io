@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="UML class box">
+  <!-- Song emblem for "Draw It Out": a UML class box (name, fields,
+       methods) under its base type, joined by a hollow generalization
+       triangle. Original artwork for the SE Book. -->
+  <rect x="18" y="4" width="28" height="12" rx="2" fill="#dbe8f8" stroke="#4060a0" stroke-width="2.5"/>
+  <path d="M32 16 V24" stroke="#dbe8f8" stroke-width="2.5"/>
+  <path d="M32 18 L27 26 H37 Z" fill="#fbf8f0" stroke="#dbe8f8" stroke-width="2.5" stroke-linejoin="round"/>
+  <rect x="12" y="28" width="40" height="32" rx="2" fill="#fbf8f0" stroke="#4060a0" stroke-width="2.5"/>
+  <path d="M12 37 H52 M12 48 H52" stroke="#4060a0" stroke-width="2.5"/>
+  <path d="M17 42.5 H40 M17 54 H34" stroke="#b45309" stroke-width="2.5" stroke-linecap="round"/>
+</svg>

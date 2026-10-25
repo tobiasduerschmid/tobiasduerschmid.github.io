@@ -1,0 +1,217 @@
+/*
+ * The "drafting-room" stage theme (js/song-video/drafting-room.js): a real
+ * architectural blueprint behind the scenes of "Draw It Out While It's
+ * Cheap to Change". Only the backdrop changes. The paper is UCLA Blue
+ * (#2774AE) darkening to UCLA Darker Blue (#005587) at the edges, and all
+ * of its linework (graph lines, border, title block, plan fragments, tools)
+ * stays faint white at alpha ≤ 0.34 under a dimming layer. At the sheet's
+ * center white text is ≈ 6.7:1, the theme's subtitles ≈ 5.7:1, and the
+ * UCLA Gold kinetic type ≈ 4.6:1; under the lamp's pool that type, always
+ * large text, still clears 3.6:1. Nothing large changes brightness quickly. The sheet's own lettering is part of the picture,
+ * not text to read. Like stage.css this styles the 960×540 stage, which
+ * keeps its artwork in both page themes; the player's print styles hide it.
+ */
+
+.theme-drafting-room {
+  background: #003b5c;
+  /* The player page lets long words break anywhere; on this fixed stage a
+     word stays whole, and boxes are sized to fit their longest word. */
+  overflow-wrap: normal;
+}
+
+/* Subtitles read in near-white on the blueprint (the studio's muted gray is
+   too dim on mid blue). */
+.theme-drafting-room .subtitle {
+  color: #e3edff;
+}
+
+.dr-room {
+  overflow: hidden;
+}
+
+/* One knob for the whole room: dims the scenery, never the scenes above it. */
+.dr-room::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(4, 14, 34, 0.2);
+  pointer-events: none;
+}
+
+/* Cyanotype paper in UCLA Blue, mottled where the developer pooled, and
+   darker toward the edges of the sheet. */
+.dr-base {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 30% 26% at 18% 30%, rgba(120, 170, 235, 0.1), transparent 70%),
+    radial-gradient(ellipse 26% 30% at 74% 22%, rgba(10, 30, 70, 0.22), transparent 72%),
+    radial-gradient(ellipse 34% 28% at 62% 78%, rgba(120, 170, 235, 0.08), transparent 70%),
+    radial-gradient(ellipse 24% 22% at 30% 82%, rgba(10, 30, 70, 0.18), transparent 70%),
+    radial-gradient(ellipse 80% 75% at 50% 46%, #2774ae 0%, #1f68a0 55%, #005587 100%);
+}
+
+/* Where the sheet was folded into eighths: a dark crease beside a light one. */
+.dr-folds {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, transparent calc(50% - 2px), rgba(8, 24, 56, 0.2) calc(50% - 1px), rgba(170, 205, 255, 0.08) calc(50% + 1px), transparent calc(50% + 2px)),
+    linear-gradient(180deg, transparent calc(50% - 2px), rgba(8, 24, 56, 0.18) calc(50% - 1px), rgba(170, 205, 255, 0.07) calc(50% + 1px), transparent calc(50% + 2px)),
+    linear-gradient(90deg, transparent calc(25% - 1px), rgba(8, 24, 56, 0.1) 25%, transparent calc(25% + 1px)),
+    linear-gradient(90deg, transparent calc(75% - 1px), rgba(8, 24, 56, 0.1) 75%, transparent calc(75% + 1px));
+}
+
+/* White graph lines: fine every 20px, heavier every 100px. */
+.dr-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(225, 238, 255, 0.13) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(225, 238, 255, 0.13) 1px, transparent 1px),
+    linear-gradient(rgba(225, 238, 255, 0.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(225, 238, 255, 0.055) 1px, transparent 1px);
+  background-size: 100px 100px, 100px 100px, 20px 20px, 20px 20px;
+  background-position: -1px -1px, -1px -1px, -1px -1px, -1px -1px;
+}
+
+/* The lamp's pool of light, from the shade in the top left corner. */
+.dr-light {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 34% 42% at 22% 18%, rgba(235, 244, 255, 0.1), transparent 70%),
+    conic-gradient(from 118deg at 150px 46px, transparent 0deg, rgba(235, 244, 255, 0.045) 14deg, rgba(235, 244, 255, 0.045) 46deg, transparent 62deg);
+}
+
+.dr-props {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+}
+
+/* The sheet's linework: white, like the lines a cyanotype leaves unexposed. */
+.dr-border-outer,
+.dr-border-inner,
+.dr-line,
+.dr-line-fine {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.dr-border-outer {
+  stroke: rgba(235, 244, 255, 0.34);
+  stroke-width: 1.6;
+}
+
+.dr-border-inner {
+  stroke: rgba(235, 244, 255, 0.22);
+  stroke-width: 1;
+}
+
+.dr-line {
+  stroke: rgba(235, 244, 255, 0.24);
+  stroke-width: 1.5;
+}
+
+.dr-line-fine {
+  stroke: rgba(235, 244, 255, 0.17);
+  stroke-width: 1;
+}
+
+.dr-line--dashed {
+  stroke-dasharray: 3 4;
+}
+
+.dr-north {
+  fill: rgba(235, 244, 255, 0.22);
+}
+
+.dr-lettering {
+  fill: rgba(235, 244, 255, 0.3);
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.dr-lettering--title {
+  font-size: 16px;
+  letter-spacing: 0.16em;
+}
+
+/* Drafting tools in the same white linework. */
+.dr-tool-body,
+.dr-roll-body {
+  fill: rgba(235, 244, 255, 0.05);
+  stroke: rgba(235, 244, 255, 0.22);
+  stroke-width: 1.5;
+}
+
+.dr-tool-tick,
+.dr-tool-leg,
+.dr-tool-arc,
+.dr-roll-end {
+  fill: none;
+  stroke: rgba(235, 244, 255, 0.22);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+}
+
+.dr-tool-leg {
+  stroke-width: 3;
+}
+
+.dr-tool-arc {
+  stroke-dasharray: 4 6;
+}
+
+.dr-lamp-arm,
+.dr-lamp-spring {
+  fill: none;
+  stroke: rgba(235, 244, 255, 0.22);
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.dr-lamp-spring {
+  stroke-width: 1.5;
+}
+
+.dr-lamp-joint {
+  fill: rgba(235, 244, 255, 0.22);
+}
+
+.dr-lamp-shade {
+  fill: rgba(235, 244, 255, 0.12);
+  stroke: rgba(235, 244, 255, 0.26);
+  stroke-width: 1.5;
+}
+
+.dr-lamp-rim {
+  fill: none;
+  stroke: rgba(255, 246, 225, 0.42);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+.dr-dust {
+  position: absolute;
+  inset: 0;
+}
+
+.dr-mote {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: rgba(240, 246, 255, 0.7);
+}
+
+.dr-vignette {
+  background: radial-gradient(ellipse at 50% 45%, transparent 58%, rgba(4, 12, 30, 0.45) 100%);
+}

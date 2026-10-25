@@ -307,8 +307,7 @@
       const line = typeof spec === 'string' ? { text: spec } : spec;
       const row = el('div', `code-line oop-code-line${line.at !== undefined ? ' is-staged' : ''}`, body);
       const versions = [{ at: -Infinity, text: line.text }, ...(line.swap || [])].map((version) => {
-        const holder = el('span', 'oop-code-text', row);
-        for (const [text, toneName] of highlight(version.text)) el('span', toneName ? `oop-tok oop-tok--${toneName}` : null, holder, text);
+        const holder = kit.writeCode(el('span', 'oop-code-text', row), highlight(version.text));
         return { ...version, holder };
       });
       if (versions.length > 1) {

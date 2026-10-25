@@ -1,0 +1,255 @@
+/*
+ * Model kit artwork for "Draw It Out" (js/song-video/model-kit.js).
+ *
+ * Like the rest of the stage (css/song-video-stage.css), this is one video
+ * frame on a 960×540 CSS-pixel stage that the player scales as a whole, so
+ * sizes are fixed pixels. The stage is always dark in both site themes, so
+ * there are no html.dark-mode variants; print layouts hide the stage and
+ * show the transcript. UML is drawn by ArchUML on light paper sheets in its
+ * own palette (dark ink on off-white). Every text color clears 4.5:1 against
+ * its own background; emphasis rings and marks clear 3:1 against the paper,
+ * and every highlighted meaning is also written in a label, never color alone.
+ */
+
+.stage {
+  --mk-paper: #fbf8f0;
+  --mk-ink: #1b2033;
+  --mk-line: #4060a0;
+  --mk-amber: #b45309;
+  --mk-red: #be123c;
+  --mk-green: #15803d;
+  --mk-teal: #0f766e;
+  --mk-violet: #6d28d9;
+}
+
+/* ArchUML draws here first so it can measure while the stage is hidden. */
+.mk-measure {
+  position: absolute;
+  top: 0;
+  left: -20000px;
+  width: 1600px;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* ------------------------------------------------------------------ */
+/* Sheets                                                              */
+/* ------------------------------------------------------------------ */
+
+.mk-sheet {
+  position: absolute;
+  box-sizing: border-box;
+  padding: 14px;
+  border-radius: 10px;
+  background: var(--mk-paper);
+  color: var(--mk-ink);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.5), 0 3px 6px rgba(0, 0, 0, 0.35);
+}
+
+/* A drawing made on the sketch kit's whiteboard: the board is the paper. */
+.mk-sheet--whiteboard {
+  background: transparent;
+  box-shadow: none;
+}
+
+.mk-sheet-title {
+  height: 18px;
+  margin: -4px 0 8px;
+  color: var(--mk-ink);
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 18px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.mk-sheet-body {
+  position: relative;
+}
+
+.mk-diagram {
+  display: block;
+  overflow: visible;
+}
+
+/* ------------------------------------------------------------------ */
+/* Emphasis drawn over the notation (diagram units)                    */
+/* ------------------------------------------------------------------ */
+
+/* A ring: a soft glow under a marker outline that draws itself on. */
+.mk-ring {
+  --mk-ring-color: var(--mk-amber);
+  --mk-ring-glow: rgba(255, 209, 0, 0.3);
+}
+
+.mk-ring--red { --mk-ring-color: var(--mk-red); --mk-ring-glow: rgba(225, 29, 72, 0.13); }
+.mk-ring--green { --mk-ring-color: var(--mk-green); --mk-ring-glow: rgba(22, 163, 74, 0.14); }
+.mk-ring--teal { --mk-ring-color: var(--mk-teal); --mk-ring-glow: rgba(13, 148, 136, 0.14); }
+.mk-ring--violet { --mk-ring-color: var(--mk-violet); --mk-ring-glow: rgba(124, 58, 237, 0.13); }
+
+.mk-ring-glow {
+  fill: var(--mk-ring-glow);
+  stroke: var(--mk-ring-glow);
+  stroke-width: 9;
+  stroke-linejoin: round;
+}
+
+/* The outline's whole length is one dash, offset out of sight until its
+   tween draws it on (Web Animations only hold their end state). */
+.mk-ring-line {
+  fill: none;
+  stroke: var(--mk-ring-color);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+}
+
+.mk-cross-line {
+  fill: none;
+  stroke: var(--mk-red);
+  stroke-width: 5;
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+}
+
+/* A highlighter stroke: it sweeps in along its long side. */
+.mk-band {
+  fill: rgba(255, 209, 0, 0.42);
+  transform-box: fill-box;
+  transform-origin: left center;
+}
+
+.mk-band--tall { transform-origin: center top; }
+.mk-band--teal { fill: rgba(13, 148, 136, 0.24); }
+.mk-band--violet { fill: rgba(124, 58, 237, 0.22); }
+.mk-band--red { fill: rgba(225, 29, 72, 0.22); }
+.mk-band--green { fill: rgba(22, 163, 74, 0.24); }
+
+/* A leader from a named part to its label: ink with a light halo, so it
+   reads on the paper and on the blueprint around it. */
+.mk-leader-halo {
+  stroke: rgba(251, 248, 240, 0.9);
+  stroke-width: 5;
+  stroke-linecap: round;
+}
+
+.mk-leader-line {
+  stroke: var(--mk-ink);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.mk-leader-dot {
+  fill: var(--mk-ink);
+  stroke: var(--mk-paper);
+  stroke-width: 1;
+}
+
+.mk-token circle {
+  fill: var(--gold);
+  stroke: var(--mk-ink);
+  stroke-width: 2.5;
+}
+
+.mk-token--teal circle { fill: #2dd4bf; }
+.mk-token--violet circle { fill: #a78bfa; }
+.mk-token--red circle { fill: #fb7185; }
+
+.mk-token-label {
+  fill: var(--mk-ink);
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 800;
+  text-anchor: middle;
+  paint-order: stroke;
+  stroke: var(--mk-paper);
+  stroke-width: 4px;
+  stroke-linejoin: round;
+}
+
+/* A label on a sheet, beside the element it names. */
+.mk-callout {
+  position: absolute;
+  padding: 4px 11px;
+  border: 2px solid var(--mk-ink);
+  border-radius: 999px;
+  background: var(--gold);
+  color: var(--mk-ink);
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1.2;
+  white-space: nowrap;
+  box-shadow: 2px 2px 0 var(--mk-ink), 0 6px 14px rgba(0, 0, 0, 0.28);
+}
+
+.mk-callout--right { transform: translateY(-50%); }
+.mk-callout--left { transform: translate(-100%, -50%); }
+.mk-callout--above { transform: translate(-50%, -100%); }
+.mk-callout--below { transform: translateX(-50%); }
+
+.mk-callout--red { background: #fecdd3; }
+.mk-callout--green { background: #bbf7d0; }
+.mk-callout--teal { background: #99f6e4; }
+.mk-callout--violet { background: #ddd6fe; }
+.mk-callout--white { background: #fff; }
+
+/* ------------------------------------------------------------------ */
+/* Code beside the notation                                            */
+/* ------------------------------------------------------------------ */
+
+.mk-code {
+  position: absolute;
+  border: 1px solid rgba(160, 190, 255, 0.3);
+  border-radius: 10px;
+  background: linear-gradient(155deg, #172039, #080d1e 72%);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+}
+
+.mk-code-title {
+  padding: 5px 12px;
+  background: rgba(255, 255, 255, 0.07);
+  color: #dbe4f3;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+.mk-code-body {
+  padding: 8px 0 10px;
+}
+
+.mk-code-line {
+  position: relative;
+  isolation: isolate;
+  padding: 0 16px;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.6;
+  white-space: pre;
+  overflow: hidden;
+}
+
+/* A rewritten line keeps its syntax colours and is marked like a changed
+   line in a diff. */
+.mk-code-line--new {
+  background: rgba(255, 209, 0, 0.12);
+  box-shadow: inset 4px 0 0 var(--gold);
+}
+
+/* Behind the line's text, so the code keeps its colours. */
+.mk-code-mark {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  border-left: 4px solid var(--gold);
+  background: rgba(255, 209, 0, 0.14);
+}
+
+.mk-code-mark--red { border-left-color: var(--red); background: rgba(255, 107, 125, 0.16); }
+.mk-code-mark--green { border-left-color: var(--green); background: rgba(74, 222, 128, 0.14); }

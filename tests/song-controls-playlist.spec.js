@@ -10,8 +10,8 @@ const defaultSongCount = coursePlaylists.find(playlist => playlist.id === 'cs35l
 const git = { title: 'Snapshots and Pointers: a song about Git', path: '/assets/song-player/snapshots-and-pointers.html' };
 const network = { title: 'Unbox the Stack: a song about networking', path: '/assets/song-player/unbox-the-stack.html' };
 const shell = { title: 'Small Tools, One Job Each: a song about the Unix shell', path: '/assets/song-player/small-tools-one-job-each.html', addLabel: /^Add to playlist\s*: Small Tools/ };
-// Spoken after the song: its quiz checkpoints sit in the silence before each reveal.
-const uml = { title: 'Draw It Out: a song about UML models and design principles', path: '/assets/song-player/draw-it-out.html', addLabel: /^Add to playlist\s*: Draw It Out/ };
+// A sung call-and-response quiz: each checkpoint sits right after its question.
+const uml = { title: 'Draw It Out While It’s Cheap to Change: a song about UML diagrams', path: '/assets/song-player/draw-it-out.html', addLabel: /^Add to playlist\s*: Draw It Out/ };
 const playlistPath = '/SEBook/playlist.html';
 const queue = (page) => page.getByRole('list', { name: 'Your playlist', exact: true });
 const audioFor = (page, song) => page.getByLabel(`${song.title} audio`, { exact: true });

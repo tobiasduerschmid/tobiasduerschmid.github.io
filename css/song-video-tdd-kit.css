@@ -157,20 +157,6 @@
   opacity: 0.6;
 }
 
-.tdd-tok--kw { color: #d2a8ff; }
-.tdd-tok--fn { color: #ffd166; }
-.tdd-tok--cls { color: #7ee787; }
-.tdd-tok--call { color: #79c0ff; }
-.tdd-tok--str { color: #ffab70; }
-.tdd-tok--num { color: #8fd0ff; }
-.tdd-tok--self { color: #ff9ac1; }
-.tdd-tok--deco { color: #ffab70; }
-
-.tdd-tok--cm {
-  color: #9aa7bd;
-  font-style: italic;
-}
-
 /* ------------------------------------------------------------------ */
 /* pytest terminal                                                     */
 /* ------------------------------------------------------------------ */

@@ -1,0 +1,670 @@
+# Storyboard for "Draw It Out While It’s Cheap to Change", the UML song on the SE Book page
+# SEBook/uml.md (embedded with _includes/song-video.html).
+#
+# This file is the single source of truth for the song's words and timing:
+#   - js/song-video/songs/draw_it_out.js choreographs the live vector player
+#     (/assets/song-player/draw-it-out.html) against each line's `start` and
+#     its `marks` (the times of the words the visuals hit). ArchUML
+#     (js/ArchUML/uml-bundle.js) draws the UML notation through
+#     js/song-video/model-kit.js, js/song-video/sketch-kit.js draws the
+#     pictures beside it, and js/song-video/drafting-room.js the room;
+#   - render.js writes the captions and the audio-described soundtrack from
+#     `text`, `answer`, and `narration` (`node scripts/song-video/render.js
+#     draw_it_out`). This song has no MP4: it plays only in the live player;
+#   - _includes/song-video.html prints every line with its `visual`
+#     description as the on-page transcript (WCAG 1.2.1 / 1.2.3);
+#   - each section's `narration` is spoken in the audio-described track,
+#     where the picture holds at the start of the section while the narrator
+#     describes what it shows (extended audio description, WCAG 1.2.5).
+# Editing text or descriptions here updates the transcript and the player on
+# the next Jekyll build, but the captions and described audio only after
+# re-running render.js.
+#
+# Times are seconds into take 2 of the rewritten sheet, the Suno take
+# "Draw It Out First" (normalized to about -16 LUFS, AAC at 192 kb/s). Line
+# boundaries and word marks come from local Whisper word timestamps (mlx
+# whisper-large-v3-turbo) aligned to the lyric sheet in
+# docs/draw-it-out-song-lyrics.md, then refined with short clip passes around
+# each line. Where the sheet splits a sentence across lyric lines to slow the
+# singing, the storyboard keeps the sentence as one line. Captions follow the
+# recording where it differs from the sheet: verse 5's chant drops the
+# shouted "Guard:"; the quiz intro drops "Think, then shout it!"; question 6
+# is sung "Where does the price attribute live"; question 7 is sung "Your
+# payment provider"; the final chorus ends "Ask your question and draw it
+# out"; and the take ends with the hook sung once more. A short backing
+# ad-lib after "Does A reference B?" in verse 3 is not captioned, because its
+# words are unclear. Suno left little gap between a quiz question and its
+# answer, so each `pause_at` sits right after the question's last word.
+# Beats were tracked with librosa and smoothed over ±5 beats.
+
+title: "Draw It Out While It’s Cheap to Change: a song about UML diagrams"   # the player's accessible name
+credit: Lyrics written for this chapter; music and vocals generated with Suno.
+student:
+  laptop_logo: /assets/icons/uml-sheet/uml-sheet.svg
+theme: drafting-room   # stage look: the drafting room of js/song-video/drafting-room.js
+extras:   # the song's own art and styles, loaded before its choreography
+  styles:
+    - /css/song-video-drafting-room.css
+    - /css/song-video-model-kit.css
+    - /css/song-video-sketch-kit.css
+  scripts:
+    - /js/song-video/drafting-room.js
+    - /js/ArchUML/uml-bundle.js
+    - /js/song-video/model-kit.js
+    - /js/song-video/sketch-kit.js
+player: /assets/song-player/draw-it-out.html
+captions: /assets/audio/draw-it-out.vtt
+described_captions: /assets/audio/draw-it-out-described.vtt
+soundtrack: assets/audio/draw-it-out.m4a   # repo path, played by the live player
+described_soundtrack: assets/audio/draw-it-out-described.m4a
+described_timeline: /assets/audio/draw-it-out-described.json
+narrator:
+  voice: Samantha   # macOS `say` voice for the audio-described track
+  rate: 205         # words per minute
+  pronounce:        # how the narrator says notation the captions keep as written
+    getBook: get book
+    addBook: add book
+    getTitle: get title
+    BookStore: book store
+    SqlStore: S Q L store
+    MemoryStore: memory store
+    LibraryServer: library server
+    LibraryApp: library app
+    BookList: book list
+    HttpClient: H T T P client
+    CloudDB: cloud D B
+    ReadingList: reading list
+    sendReceipt: send receipt
+    CardPayCo: card pay co
+    QuickPay: quick pay
+    confirmOrder: confirm order
+    getPrice: get price
+    applyDiscount: apply discount
+width: 1920
+height: 1080
+fps: 30
+duration: 292.03
+beats:
+  bpm: 100.17   # median of the tracked beats
+  first: 0.811
+  times: [
+    0.811, 1.404, 1.99, 2.569, 3.148, 3.73, 4.319, 4.91, 5.501, 6.094, 6.688, 7.283,
+    7.879, 8.481, 9.083, 9.685, 10.285, 10.877, 11.474, 12.071, 12.666, 13.26, 13.852, 14.448,
+    15.044, 15.638, 16.224, 16.809, 17.395, 17.98, 18.565, 19.158, 19.753, 20.347, 20.943, 21.538,
+    22.135, 22.739, 23.348, 23.956, 24.561, 25.167, 25.765, 26.361, 26.952, 27.538, 28.126, 28.722,
+    29.318, 29.912, 30.508, 31.105, 31.702, 32.297, 32.894, 33.497, 34.103, 34.708, 35.306, 35.903,
+    36.5, 37.097, 37.696, 38.292, 38.89, 39.487, 40.083, 40.68, 41.277, 41.873, 42.47, 43.066,
+    43.663, 44.258, 44.855, 45.453, 46.051, 46.646, 47.243, 47.84, 48.437, 49.035, 49.633, 50.23,
+    50.828, 51.425, 52.021, 52.617, 53.216, 53.813, 54.411, 55.009, 55.606, 56.202, 56.8, 57.396,
+    57.993, 58.591, 59.188, 59.783, 60.38, 60.976, 61.57, 62.168, 62.766, 63.362, 63.96, 64.557,
+    65.155, 65.754, 66.353, 66.952, 67.551, 68.151, 68.749, 69.347, 69.946, 70.544, 71.143, 71.74,
+    72.336, 72.932, 73.528, 74.124, 74.721, 75.318, 75.914, 76.51, 77.108, 77.703, 78.301, 78.898,
+    79.496, 80.096, 80.695, 81.293, 81.892, 82.49, 83.088, 83.686, 84.285, 84.882, 85.48, 86.079,
+    86.677, 87.273, 87.871, 88.468, 89.066, 89.666, 90.268, 90.869, 91.469, 92.067, 92.665, 93.262,
+    93.861, 94.459, 95.057, 95.655, 96.251, 96.846, 97.44, 98.037, 98.626, 99.21, 99.798, 100.386,
+    100.976, 101.562, 102.15, 102.737, 103.326, 103.911, 104.503, 105.111, 105.725, 106.335, 106.943, 107.551,
+    108.162, 108.773, 109.383, 109.993, 110.605, 111.212, 111.811, 112.409, 112.999, 113.589, 114.176, 114.764,
+    115.353, 115.941, 116.539, 117.138, 117.737, 118.336, 118.936, 119.545, 120.155, 120.766, 121.376, 121.986,
+    122.596, 123.193, 123.792, 124.391, 124.99, 125.589, 126.188, 126.786, 127.386, 127.984, 128.583, 129.181,
+    129.783, 130.381, 130.981, 131.58, 132.179, 132.776, 133.375, 133.972, 134.572, 135.171, 135.77, 136.368,
+    136.966, 137.564, 138.163, 138.761, 139.36, 139.959, 140.56, 141.159, 141.758, 142.358, 142.961, 143.562,
+    144.162, 144.761, 145.363, 145.964, 146.564, 147.163, 147.764, 148.364, 148.964, 149.561, 150.161, 150.761,
+    151.361, 151.96, 152.559, 153.158, 153.759, 154.359, 154.96, 155.559, 156.159, 156.759, 157.361, 157.96,
+    158.56, 159.154, 159.751, 160.349, 160.949, 161.55, 162.153, 162.755, 163.357, 163.959, 164.562, 165.164,
+    165.773, 166.379, 166.984, 167.587, 168.189, 168.791, 169.393, 169.994, 170.596, 171.199, 171.801, 172.403,
+    173.005, 173.605, 174.207, 174.809, 175.41, 176.011, 176.614, 177.216, 177.817, 178.419, 179.022, 179.625,
+    180.228, 180.83, 181.433, 182.035, 182.638, 183.24, 183.843, 184.446, 185.049, 185.65, 186.253, 186.854,
+    187.457, 188.058, 188.661, 189.262, 189.865, 190.47, 191.073, 191.677, 192.281, 192.884, 193.488, 194.091,
+    194.695, 195.299, 195.9, 196.503, 197.103, 197.707, 198.309, 198.913, 199.517, 200.121, 200.725, 201.329,
+    201.932, 202.537, 203.141, 203.745, 204.347, 204.95, 205.553, 206.156, 206.758, 207.362, 207.965, 208.569,
+    209.185, 209.801, 210.411, 211.014, 211.616, 212.22, 212.822, 213.426, 214.028, 214.632, 215.236, 215.827,
+    216.417, 217.015, 217.618, 218.22, 218.823, 219.427, 220.03, 220.634, 221.237, 221.84, 222.444, 223.048,
+    223.65, 224.254, 224.859, 225.463, 226.066, 226.67, 227.272, 227.875, 228.477, 229.08, 229.681, 230.286,
+    230.889, 231.492, 232.095, 232.698, 233.3, 233.903, 234.505, 235.108, 235.712, 236.315, 236.916, 237.52,
+    238.122, 238.725, 239.328, 239.932, 240.533, 241.137, 241.74, 242.343, 242.946, 243.554, 244.157, 244.76,
+    245.364, 245.965, 246.568, 247.173, 247.778, 248.383, 248.99, 249.594, 250.195, 250.799, 251.404, 252.007,
+    252.613, 253.218, 253.822, 254.416, 255.005, 255.585, 256.161, 256.738, 257.313, 257.89, 258.469, 259.048,
+    259.625, 260.204, 260.791, 261.382, 261.981, 262.585, 263.19, 263.797, 264.401, 265.005, 265.608, 266.212,
+    266.813, 267.409, 268.001, 268.585, 269.161, 269.738, 270.315, 270.891, 271.467, 272.043, 272.621, 273.2,
+    273.784, 274.373, 274.97, 275.574, 276.178, 276.783, 277.39, 277.996, 278.598, 279.202, 279.808, 280.414,
+    281.02, 281.626, 282.232, 282.838, 283.444, 284.049, 284.652, 285.248, 285.834, 286.412, 286.99, 287.57,
+    288.149, 288.72, 289.283, 289.842, 290.407, 290.997,
+  ]
+
+sections:
+  - id: intro
+    title: "Intro"
+    delivery: spoken
+    narration: "Audio-described version: before each section, the picture pauses while I describe it. The whole song plays on an architect's blueprint. The intro: your hero types at a laptop and says, we'll fix it later, while sticky notes pile up: TODO fix later, hack sorry, FIXME, and refactor later. A desk calendar shows week 1 and five laptops are linked peer-to-peer, every pair connected; at week 9 a server drops into the middle, the peer links turn red and fade, and new links run to the server. Then a three-storey building in section rests on one ground-floor wall labelled peer-to-peer. A sticker says every floor rests on it, gold arrows carry every floor's weight down into it, a stamp says load-bearing, and the wall cracks. Last, a pencil drafts the same building as a white-on-blue blueprint under the words: draw it out first."
+    lines:
+      - id: intro-1
+        start: 2.94
+        end: 5.18
+        text: "Just keep coding, we'll fix it later!"
+        marks: {"just": 2.94, "keep": 3.46, "coding": 3.66, "well": 4.34, "fix": 4.52, "it": 4.76, "later": 4.92}
+        visual: "Your hero, or the default Bruin, types at a laptop and says “We’ll fix it later!” in a speech bubble, while four sticky notes slap onto the wall one by one: “TODO: fix later”, “hack, sorry”, “FIXME”, and “refactor later?”."
+      - id: intro-2
+        start: 6.06
+        end: 9.54
+        text: "Week one: peer-to-peer. Week nine: we need a server."
+        marks: {"week": 6.06, "one": 6.83, "peer": 7.26, "to": 7.52, "peer_2": 7.68, "week_2": 8.18, "nine": 8.56, "we": 8.82, "need": 8.92, "a": 9.06, "server": 9.18}
+        visual: "A desk calendar shows week 1. Five laptops appear in a ring and every pair is linked by a line, with the sticker “Peer-to-peer”. The calendar tears to week 9, a server rack drops into the middle, every peer link turns red and fades, and new gold links run from each laptop to the server."
+      - id: intro-3
+        start: 10.08
+        end: 13.08
+        text: "That first choice is a load-bearing wall now."
+        marks: {"that": 10.08, "first": 10.7, "choice": 11.02, "is": 11.42, "a": 11.7, "load": 11.8, "bearing": 12.08, "wall": 12.46, "now": 12.76}
+        visual: "A three-storey building in section: a red roof, two upper floors with furniture, and a ground floor whose middle wall carries the plate “peer-to-peer”. A gold sticker reads “Every floor rests on it”, gold arrows carry the weight of every floor down into that wall, which turns gold, and a red stamp says “Load-bearing”. The wall cracks, dust falls, and the floors above shudder."
+      - id: intro-4
+        start: 13.26
+        end: 15.46
+        text: "This time, we draw it out first."
+        marks: {"this": 13.26, "time": 13.72, "we": 14.22, "draw": 14.64, "it": 14.86, "out": 15.0, "first": 15.14}
+        visual: "A pencil sweeps across the stage and drafts the same building as a white-on-blue blueprint, line by line, under the big words “Draw it out first”."
+  - id: verse-1
+    title: "Verse 1"
+    delivery: sung
+    narration: "Verse 1. Four teammates, like the four on the lecture's slides, stand at the edges of the stage. Their thought bubbles show four different buildings: a tower, a mall, a factory, and a museum. A clear house drawn on the whiteboard between them makes all four bubbles show that same house, with green checks; a vague outline, just a roof and a door, turns them into a shed, a garage, a doghouse, and a warehouse, with puzzled faces. Then the letters U M L, the Unified Modeling Language, and a UML class box for House on the board, and every bubble shows the same class box. Next, a floor plan drops its furniture, wiring, sizes, and labels until only the pipes are left, glowing, for the question: where do the pipes run? A flaw on a paper sketch, a door that swings into a wall, is circled, rubbed out with an eraser, and redrawn with a check; beside it, a shipped library app on a phone has a bug crawling on it, and four worried teammates face a stamp: rework for everyone. Last, the plan, a class diagram of House, goes to the four teammates and to a coding-agent robot, and a checklist tests what comes back against the plan: three checks."
+    lines:
+      - id: verse-1-1
+        start: 16.98
+        end: 22.42
+        text: "Ask for a building: four teammates see a tower, a mall, a factory, a museum."
+        marks: {"ask": 16.98, "for": 17.5, "a": 17.82, "building": 18.02, "four": 18.82, "teammates": 18.88, "see": 20.02, "a_2": 20.02, "tower": 20.18, "a_3": 20.88, "mall": 20.94, "a_4": 21.28, "factory": 21.36, "a_5": 21.96, "museum": 21.98}
+        visual: "A gold speech bubble says “Build us a building!”. Four teammates rise in at the edges of the stage: a young man in a blue hoodie, a woman with curly hair in a yellow shirt, a bearded man in a brown sweater, and a woman in a green hijab. Their thought bubbles fill one by one: a glass tower, a mall with a “MALL” sign, a factory with a chimney, and a museum with columns."
+      - id: verse-1-2
+        start: 22.42
+        end: 26.92
+        text: "Draw it clearly: all four see one house. Draw it vague: they're lost again."
+        marks: {"draw": 22.42, "it": 23.16, "clearly": 23.18, "all": 23.72, "four": 24.04, "see": 24.34, "one": 24.64, "house": 24.92, "draw_2": 25.44, "it_2": 25.54, "vague": 25.7, "theyre": 25.92, "lost": 26.3, "again": 26.6}
+        visual: "A marker draws a clear house on a whiteboard between them; all four bubbles switch to that same house, each with a green check, and the teammates smile. Then the board shows only a vague outline, a roof and a door arch: the bubbles become a shed, a garage, a doghouse, and a warehouse, each with a yellow question mark, and the teammates look puzzled."
+      - id: verse-1-3
+        start: 26.94
+        end: 32.22
+        text: "So: UML, the Unified Modeling Language, one notation for all of them."
+        marks: {"so": 26.94, "uml": 27.36, "the": 28.6, "unified": 28.66, "modeling": 29.12, "language": 29.64, "one": 30.2, "notation": 30.68, "for": 31.26, "all": 31.64, "of": 31.9, "them": 31.98}
+        visual: "Gold letters U, M, L slam in above “Unified Modeling Language”. The whiteboard now holds a UML class diagram: class House with −floors: int, −rooms: int, and +build(). All four bubbles show the same class box with green checks, and the teammates smile."
+      - id: verse-1-4
+        start: 32.22
+        end: 34.94
+        text: "A model leaves some details out on purpose:"
+        marks: {"a": 32.22, "model": 32.56, "leaves": 32.8, "some": 33.1, "details": 33.3, "out": 33.72, "on": 34.18, "purpose": 34.46}
+        visual: "A house’s floor plan on paper, full of detail: furniture, dashed wiring with lights, blue pipes, room labels (Bedroom, Bath, Hall, Living, Kitchen), and sizes (12 m, 8 m). A gold speech bubble beside it asks “Where do the pipes run?”. The furniture, the wiring, the sizes, and the labels fade out in turn, and a sticker says “Left out on purpose”."
+      - id: verse-1-5
+        start: 35.28
+        end: 36.94
+        text: "it shows the part your question is about."
+        marks: {"it": 35.28, "shows": 35.52, "the": 35.7, "part": 35.84, "your": 36.02, "question": 36.14, "is": 36.42, "about": 36.66}
+        visual: "The blue pipes, the only layer left besides the walls, glow thicker: the part the question is about."
+      - id: verse-1-6
+        start: 36.94
+        end: 38.9
+        text: "A flaw on paper? Rub it out, you're done."
+        marks: {"a": 36.94, "flaw": 37.3, "on": 37.52, "paper": 37.66, "rub": 37.84, "it": 38.14, "out": 38.28, "youre": 38.42, "done": 38.74}
+        visual: "Left, under the sticker “On paper”: a pencil sketch of a room whose door swings into a wall. The flaw is circled in red, an eraser rubs it out, the door is redrawn swinging the other way, and a green check appears with the sticker “One eraser: done”."
+      - id: verse-1-7
+        start: 39.02
+        end: 41.2
+        text: "A flaw in shipped code? Rework for everyone."
+        marks: {"a": 39.02, "flaw": 39.12, "in": 39.3, "shipped": 39.46, "code": 39.54, "rework": 40.22, "for": 40.44, "everyone": 40.64}
+        visual: "Right, under the sticker “In shipped code”: a phone runs “Library app v1.0”, with a red “Shipped” stamp beside it, and a red bug crawls across its screen. The four teammates appear small and worried below it, above the stamp “Rework for everyone”."
+      - id: verse-1-8
+        start: 41.36
+        end: 43.66
+        text: "Hand the model to your team, your coding agent too,"
+        marks: {"hand": 41.36, "the": 41.7, "model": 41.84, "to": 42.08, "your": 42.24, "team": 42.4, "your_2": 42.58, "coding": 42.7, "agent": 42.98, "too": 43.36}
+        visual: "A sheet titled “The plan” holds the House class diagram. A gold arrow carries it to the four teammates, who smile, and a second arrow to a friendly coding-agent robot, who starts typing on a laptop."
+      - id: verse-1-9
+        start: 43.66
+        end: 45.9
+        text: "then test what comes back against the plan you drew."
+        marks: {"then": 43.66, "test": 43.96, "what": 44.26, "comes": 44.52, "back": 44.7, "against": 44.96, "the": 45.26, "plan": 45.38, "you": 45.66, "drew": 45.9}
+        visual: "A checklist titled “Tested against the plan” fills in as a cyan arrow brings the robot’s work back: “floors”, “rooms”, and “build()”, each with a green check."
+  - id: chorus-1
+    title: "Chorus"
+    delivery: sung
+    narration: "The chorus: big gold words, draw it out, while it's cheap to change. Then each question appears on a card at the top, and when its answer is sung, that diagram's sheet slams in, large, with the diagram's name as its title, before it shrinks into a corner. Which classes, how they relate: a Class Diagram, where a Member borrows many Books. Who calls whom, in what order: a Sequence Diagram, where client calls getBook 42 on the server and gets a book back. What state's it in, what event moves it on: a State Machine Diagram, from Available to Borrowed on borrow, and back on return. What runs, how it plugs together: a Component Diagram, where Client requires Books and LibraryServer provides it, a socket around a ball. Last, with all four in the corners, a card asks: what do you need to know? Then: draw it out."
+    lines:
+      - id: chorus-1-1
+        start: 45.9
+        end: 48.64
+        text: "Draw it out while it's cheap to change!"
+        marks: {"draw": 45.9, "it": 46.46, "out": 46.66, "while": 47.06, "its": 47.5, "cheap": 47.72, "to": 48.04, "change": 48.2}
+        visual: "Big type: a gold pencil and “Draw it out”, over the line “while it’s cheap to change”."
+      - id: chorus-1-2
+        start: 48.88
+        end: 51.8
+        text: "Which classes, how they relate? Class Diagram!"
+        marks: {"which": 48.88, "classes": 49.44, "how": 49.9, "they": 50.12, "relate": 50.4, "class": 51.02, "diagram": 51.28}
+        visual: "A question card: “Which classes, how they relate?” On “Class Diagram!” a sheet titled “Class Diagram” slams in: Member (−name: String, +borrow(b: Book)) with an arrow labelled “borrows” to many Book (−title: String)."
+      - id: chorus-1-3
+        start: 52.04
+        end: 54.96
+        text: "Who calls whom, in what order? Sequence Diagram!"
+        marks: {"who": 52.04, "calls": 52.24, "whom": 52.56, "in": 52.76, "what": 52.86, "order": 53.1, "sequence": 53.88, "diagram": 54.5}
+        visual: "The class sheet shrinks into the top-left corner. Question: “Who calls whom, in what order?” On “Sequence Diagram!” a sheet titled “Sequence Diagram” slams in: client: Client calls getBook(42) on server: LibraryServer, which replies with book."
+      - id: chorus-1-4
+        start: 55.22
+        end: 59.84
+        text: "What state's it in, what event moves it on? State Machine Diagram!"
+        marks: {"what": 55.22, "states": 55.4, "it": 55.72, "in": 56.06, "what_2": 56.52, "event": 56.64, "moves": 57.06, "it_2": 57.54, "on": 57.7, "state": 58.3, "machine": 58.46, "diagram": 59.36}
+        visual: "The sequence sheet moves to the top-right corner. Question: “What state’s it in, what event moves it on?” On “State Machine Diagram!” a sheet titled “State Machine Diagram” slams in: a black start dot, then Available, which moves to Borrowed on borrow and back on return."
+      - id: chorus-1-5
+        start: 60.1
+        end: 63.3
+        text: "What runs, how it plugs together? Component Diagram!"
+        marks: {"what": 60.1, "runs": 60.2, "how": 60.7, "it": 60.8, "plugs": 60.94, "together": 61.2, "component": 62.02, "diagram": 62.58}
+        visual: "The state sheet moves to the bottom-left corner. Question: “What runs, how it plugs together?” On “Component Diagram!” a sheet titled “Component Diagram” slams in: Client requires Books, and LibraryServer provides it, a socket around a ball."
+      - id: chorus-1-6
+        start: 63.56
+        end: 65.68
+        text: "Ask your question, then draw it out!"
+        marks: {"ask": 63.56, "your": 63.7, "question": 63.88, "then": 64.18, "draw": 64.42, "it": 64.78, "out": 65.44}
+        visual: "The component sheet joins the others in the bottom-right corner, so the four diagrams frame the stage. A card asks “What do you need to know?” and gold type says “Draw it out!”."
+  - id: verse-2
+    title: "Verse 2"
+    delivery: sung
+    narration: "Verse 2, the Class Diagram. A Python file, book dot py, sits beside the class box it becomes: Book, with private title and copies, and public borrow and getTitle. Rings and labels mark the name, the attributes, what each object stores, and the operations, what you can ask. The minus signs light up red: private. A padlock snaps shut beside the hidden fields, and the private copies field changes from an Integer to a List of Copy, in the code and in the box, with a label: no one outside sees it. The plus signs light up green: public, callers rely on them, and Catalog and Checkout call those operations. Next, abstract class Shape, its name in italics, above Rectangle. A code card tries to make a plain Shape and is stamped: no plain Shape. The hollow triangle that points up to the parent is ringed: every Rectangle is a Shape. Last, interface BookStore with getBook and addBook, operations only, beside a contract on parchment. Dashed lines with a hollow triangle join SqlStore and MemoryStore to it: implements, and each store signs the contract."
+    lines:
+      - id: verse-2-1
+        start: 65.92
+        end: 69.3
+        text: "Class Diagram, the code view: one box for every class,"
+        marks: {"class": 65.92, "diagram": 66.14, "the": 66.7, "code": 66.9, "view": 67.16, "one": 67.4, "box": 67.86, "for": 68.3, "every": 68.56, "class_2": 68.92}
+        visual: "A UML class box appears: Book, with −title: String, −copies: Integer, +borrow(m: Member), and +getTitle(): String. Beside it, a dark code card, book.py, shows class Book with an __init__ that sets self.__title and self.__copies, and two methods, borrow and get_title; a gold arrow leads from the code to the box."
+      - id: verse-2-2
+        start: 69.76
+        end: 74.16
+        text: "its name, the attributes it stores, the operations you can ask."
+        marks: {"its": 69.76, "name": 70.22, "the": 70.42, "attributes": 70.76, "it": 71.26, "stores": 71.48, "the_2": 71.92, "operations": 72.26, "you": 73.06, "can": 73.6, "ask": 73.8}
+        visual: "The name compartment is ringed and labelled “name”; then the two attribute rows, “attributes: what it stores”; then the two operation rows, “operations: what you can ask”. The matching lines of the code are marked at the same time."
+      - id: verse-2-3
+        start: 74.38
+        end: 77.1
+        text: "Minus means private: hidden, so it's free to change."
+        marks: {"minus": 74.38, "means": 74.76, "private": 75.06, "hidden": 75.9, "so": 76.22, "its": 76.3, "free": 76.5, "to": 76.66, "change": 76.88}
+        visual: "The minus signs are tinted red, with the label “− private”, and a gold padlock snaps shut beside the attributes. The code line self.__copies = 1 is rewritten to self.__copies = [], and the box now reads −copies: List<Copy>, ringed in red, with the label “changed: no one outside sees it”."
+      - id: verse-2-4
+        start: 77.28
+        end: 79.6
+        text: "Plus means public: others call it, so its promise stays the same."
+        marks: {"plus": 77.28, "means": 77.4, "public": 77.56, "others": 77.98, "call": 78.18, "it": 78.44, "so": 78.6, "its": 78.68, "promise": 78.88, "stays": 79.12, "the": 79.3, "same": 79.42}
+        visual: "The plus signs are tinted green, with the label “+ public: callers rely on it”. Two caller stickers, Catalog and Checkout, send cyan arrows up to the operations."
+      - id: verse-2-5
+        start: 79.82
+        end: 82.12
+        text: "Italic name means abstract: you can't make a plain Shape."
+        marks: {"italic": 79.82, "name": 80.04, "means": 80.22, "abstract": 80.6, "you": 81.14, "cant": 81.24, "make": 81.42, "a": 81.56, "plain": 81.66, "shape": 81.9}
+        visual: "A class diagram: «abstract» Shape (−color: Integer, +area(): Real), its name in italics, above Rectangle (−width: Integer, −height: Integer, +area(): Real). The italic name is ringed and labelled “italic: abstract”. A code card tries s = Shape(), and a red stamp says “No plain Shape”."
+      - id: verse-2-6
+        start: 82.12
+        end: 84.9
+        text: "Hollow triangle points to the parent: every Rectangle is a Shape."
+        marks: {"hollow": 82.12, "triangle": 82.36, "points": 82.74, "to": 83.08, "the": 83.24, "parent": 83.32, "every": 83.58, "rectangle": 83.9, "is": 84.34, "a": 84.58, "shape": 84.66}
+        visual: "The hollow triangle on the line from Rectangle up to Shape is ringed in violet and labelled “points to the parent”, and Rectangle gets the label “every Rectangle is a Shape”."
+      - id: verse-2-7
+        start: 85.1
+        end: 89.02
+        text: "BookStore's an interface: operations only, a contract to fulfill."
+        marks: {"bookstores": 85.1, "an": 85.92, "interface": 86.06, "operations": 86.72, "only": 87.18, "a": 87.86, "contract": 87.86, "to": 88.26, "fulfill": 88.56}
+        visual: "A class diagram: «interface» BookStore with +getBook(id: Integer): Book and +addBook(b: Book), and SqlStore and MemoryStore below it. The «interface» label is ringed, then the operations, labelled “operations only”, and a parchment contract appears: “BookStore contract: getBook(id) → Book, addBook(b)”."
+      - id: verse-2-8
+        start: 89.02
+        end: 94.04
+        text: "Dashed line, hollow triangle: implements. SQL store or memory store: either will."
+        marks: {"dashed": 89.02, "line": 89.52, "hollow": 89.86, "triangle": 90.12, "implements": 90.64, "sql": 91.3, "store": 91.76, "or": 92.18, "memory": 92.52, "store_2": 92.9, "either": 93.36, "will": 93.7}
+        visual: "The dashed lines and the hollow triangle that join SqlStore and MemoryStore to BookStore are ringed in violet and labelled “implements”. SqlStore and then MemoryStore are ringed in green, and each signs the contract."
+  - id: verse-3
+    title: "Verse 3"
+    delivery: sung
+    narration: "Verse 3, relationships in the Class Diagram. A card lists three questions, in order. One: does A reference B? An association, A with an arrow to B; the arrowhead is ringed: A holds a reference to B, a field in the code. Two: does A own B as a part? A Car with a hollow diamond to four Wheels: aggregation, the diamond at the whole; a drawn car's wheels roll away and still exist. Three: can B not exist without A? A House with a filled diamond to its Rooms: composition; a drawn house falls down, and its rooms crumble with it. Last, a ReadingList composes its entries, and each entry points to a Book: a clipboard reading list with Design Patterns, Clean Code, and Refactoring, and cyan arrows to those books on a shelf of five software engineering classics, beside The Pragmatic Programmer and The Mythical Man-Month. The list is erased, its entries go with it, ReadingList and Entry are crossed out, and the books stay on the shelf."
+    lines:
+      - id: verse-3-1
+        start: 94.16
+        end: 97.02
+        text: "Lines between classes? Ask three questions, in order."
+        marks: {"lines": 94.16, "between": 94.56, "classes": 94.76, "ask": 95.56, "three": 95.72, "questions": 95.9, "in": 96.46, "order": 96.7}
+        visual: "A card titled “Lines between classes?” rises, and a gold sticker says “Three questions, in order”."
+      - id: verse-3-2
+        start: 97.2
+        end: 102.8
+        text: "Does A reference B? Association: a plain line, the arrow points at B."
+        marks: {"does": 97.2, "a": 97.28, "reference": 97.4, "b": 97.74, "association": 98.62, "a_2": 99.2, "plain": 99.82, "line": 100.04, "the": 100.62, "arrow": 101.4, "points": 101.84, "at": 102.34, "b_2": 102.6}
+        visual: "Question 1 lights up, “Does A reference B?”, answered “association”. A class diagram: A with an arrow to B. The arrowhead at B is ringed and labelled “A holds a reference to B”, and a code card shows class A with the field b: B, the arrow in code."
+      - id: verse-3-3
+        start: 102.8
+        end: 107.72
+        text: "Does A own B as a part? Hollow diamond at the whole: aggregation, a car and its wheels."
+        marks: {"does": 102.8, "a": 103.24, "own": 103.36, "b": 103.62, "as": 103.86, "a_2": 104.32, "part": 104.46, "hollow": 104.68, "diamond": 104.96, "at": 105.34, "the": 105.64, "whole": 105.78, "aggregation": 105.94, "a_3": 106.66, "car": 106.82, "and": 107.14, "its": 107.3, "wheels": 107.42}
+        visual: "Question 2 lights up, “Does A own B as a part?”, answered “aggregation”. The diagram becomes Car with a hollow diamond to four Wheel; the diamond is ringed and labelled “hollow diamond at the whole”. A red car is drawn below, its wheels come off and roll away, and a sticker says “The wheels still exist”."
+      - id: verse-3-4
+        start: 107.72
+        end: 112.96
+        text: "Can B not exist without A? Filled diamond: composition. Delete the whole, its parts go too."
+        marks: {"can": 107.72, "b": 108.1, "not": 108.3, "exist": 108.48, "without": 108.82, "a": 109.2, "filled": 109.56, "diamond": 109.88, "composition": 110.18, "delete": 110.76, "the": 111.32, "whole": 111.6, "its": 112.06, "parts": 112.14, "go": 112.46, "too": 112.72}
+        visual: "Question 3 lights up, “Can B not exist without A?”, answered “composition”. The diagram becomes House with a filled diamond to one or more Room; the diamond is ringed in red and labelled “filled: composition”. A house cut open to show its Bedroom, Bath, Living, and Kitchen falls down, its rooms tumble after it in dust, and a red sticker says “Rooms go with the house”."
+      - id: verse-3-5
+        start: 112.96
+        end: 117.3
+        text: "A reading list and its entries: filled diamond. Each entry points to a book."
+        marks: {"a": 112.96, "reading": 113.26, "list": 113.48, "and": 113.82, "its": 114.06, "entries": 114.22, "filled": 114.44, "diamond": 114.66, "each": 115.38, "entry": 115.62, "points": 116.18, "to": 116.52, "a_2": 116.72, "book": 116.92}
+        visual: "A class diagram across the top: ReadingList with a filled diamond to many Entry, and each Entry with an arrow to one Book; the diamond and the arrowhead at Book are ringed. Below, a clipboard “Reading list” with Design Patterns, Clean Code, and Refactoring, and a shelf of five software engineering classics: Design Patterns, Clean Code, Refactoring, The Pragmatic Programmer, and The Mythical Man-Month. Cyan arrows run from each entry to its book."
+      - id: verse-3-6
+        start: 117.48
+        end: 122.52
+        text: "Delete the list, the entries go. The books stay on the shelf."
+        marks: {"delete": 117.48, "the": 117.88, "list": 118.18, "the_2": 118.7, "entries": 118.78, "go": 119.32, "the_3": 120.14, "books": 120.54, "stay": 120.88, "on": 121.3, "the_4": 121.64, "shelf": 121.82}
+        visual: "An eraser rubs out the clipboard; its rows fall away and the arrows vanish. In the diagram ReadingList and Entry are crossed out in red, Book is ringed in green and labelled “stays”, the books on the shelf glow green, and a sticker says “Still on the shelf”."
+  - id: chorus-2
+    title: "Chorus"
+    delivery: sung
+    narration: "The chorus again, with the same four questions and the same four sheets, now in motion: a dot travels the getBook 42 call, and a marker for copy 42 moves from Available to Borrowed."
+    lines:
+      - id: chorus-2-1
+        start: 122.82
+        end: 125.18
+        text: "Draw it out while it's cheap to change!"
+        marks: {"draw": 122.82, "it": 123.0, "out": 123.26, "while": 123.94, "its": 124.06, "cheap": 124.28, "to": 124.56, "change": 124.76}
+        visual: "Big type: a gold pencil and “Draw it out”, over the line “while it’s cheap to change”."
+      - id: chorus-2-2
+        start: 125.62
+        end: 128.32
+        text: "Which classes, how they relate? Class Diagram!"
+        marks: {"which": 125.62, "classes": 126.0, "how": 126.48, "they": 126.68, "relate": 126.94, "class": 127.38, "diagram": 127.74}
+        visual: "A question card: “Which classes, how they relate?” On “Class Diagram!” the Class Diagram sheet slams in: Member borrows many Books."
+      - id: chorus-2-3
+        start: 128.68
+        end: 131.6
+        text: "Who calls whom, in what order? Sequence Diagram!"
+        marks: {"who": 128.68, "calls": 128.8, "whom": 129.14, "in": 129.39, "what": 129.44, "order": 129.66, "sequence": 130.38, "diagram": 130.9}
+        visual: "The class sheet moves to the top-left corner. Question: “Who calls whom, in what order?” On “Sequence Diagram!” the Sequence Diagram sheet slams in, and a dot travels the getBook(42) call from client to server."
+      - id: chorus-2-4
+        start: 131.82
+        end: 136.24
+        text: "What state's it in, what event moves it on? State Machine Diagram!"
+        marks: {"what": 131.82, "states": 131.98, "it": 132.28, "in": 132.64, "what_2": 133.06, "event": 133.22, "moves": 133.64, "it_2": 134.1, "on": 134.26, "state": 134.8, "machine": 135.02, "diagram": 135.58}
+        visual: "The sequence sheet moves to the top-right corner. Question: “What state’s it in, what event moves it on?” On “State Machine Diagram!” the State Machine Diagram sheet slams in, and a marker moves from Available to Borrowed along borrow."
+      - id: chorus-2-5
+        start: 136.66
+        end: 139.82
+        text: "What runs, how it plugs together? Component Diagram!"
+        marks: {"what": 136.66, "runs": 136.82, "how": 137.3, "it": 137.4, "plugs": 137.52, "together": 137.78, "component": 138.5, "diagram": 139.18}
+        visual: "The state sheet moves to the bottom-left corner. Question: “What runs, how it plugs together?” On “Component Diagram!” the Component Diagram sheet slams in: Client requires Books, and LibraryServer provides it."
+  - id: verse-4
+    title: "Verse 4"
+    delivery: sung
+    narration: "Verse 4, the Sequence Diagram: one example run, with a time arrow pointing down beside it. Client calls getBook 42 on the server, the server calls find 42 on the database, a row comes back, the book comes back, and then the client sends viewed 42 to analytics. In the header client colon Client, the first word is ringed as the object and the second as its class, and the dashed lifeline below it is ringed. The solid getBook line with its filled head is ringed: synchronous. Dots travel the calls and the replies, while a red band on the client's lifeline, labelled caller waits, and an hourglass beside it last until the dashed reply comes back. The open-headed viewed message is ringed, asynchronous, and a paper plane flies along it. Next, one client and one server, client colon Client and server colon Server, drawn large, while only the frame around their messages changes: alt, with a found branch and an else branch; opt, around one call, if logged in; and loop, for each book, where a dot repeats the renew call three times. Beside them a code card for each one stacks up: alt is if else, opt is if, and loop is for or while. Last, the first run again: red bands show the client waiting on the server while the server waits on the database, which is ringed: if it is slow, everyone above waits."
+    lines:
+      - id: verse-4-1
+        start: 140.94
+        end: 144.18
+        text: "Sequence Diagram: one example run, top to bottom, in time."
+        marks: {"sequence": 140.94, "diagram": 141.6, "one": 142.08, "example": 142.46, "run": 142.82, "top": 143.14, "to": 143.34, "bottom": 143.48, "in": 143.78, "time": 143.98}
+        visual: "A sequence diagram: client: Client, server: Server, db: Database, and log: Analytics, each with a dashed lifeline. Messages run from top to bottom: getBook(42), find(42), row, book, and viewed(42). A white arrow labelled “time” draws itself downward beside it."
+      - id: verse-4-2
+        start: 144.36
+        end: 147.88
+        text: "client: Client — the object, then its class, over a dashed lifeline."
+        marks: {"client": 144.36, "colon": 144.74, "client_2": 144.94, "the": 145.54, "object": 145.6, "then": 145.94, "its": 146.08, "class": 146.2, "over": 146.84, "a": 146.92, "dashed": 147.14, "lifeline": 147.5}
+        visual: "In the header “client: Client”, “client” is ringed in teal and labelled “object”, and “Client” is ringed in violet and labelled “class”. Then the dashed lifeline under it is ringed and labelled “lifeline”."
+      - id: verse-4-3
+        start: 148.04
+        end: 150.92
+        text: "Solid line, filled head: synchronous. The caller waits till it's done,"
+        marks: {"solid": 148.04, "line": 148.24, "filled": 148.66, "head": 148.86, "synchronous": 149.2, "the": 149.68, "caller": 149.82, "waits": 150.04, "till": 150.34, "its": 150.56, "done": 150.74}
+        visual: "The solid getBook(42) line with its filled arrowhead is ringed and labelled “filled head: synchronous”. A dot travels it to the server and on to the database with find(42). A red band marks the client’s lifeline from the call to its reply, labelled “caller waits”, and a gold hourglass starts running beside it."
+      - id: verse-4-4
+        start: 151.02
+        end: 155.62
+        text: "till the dashed reply comes back. Open head: asynchronous. It sends and carries on."
+        marks: {"till": 151.02, "the": 151.14, "dashed": 151.28, "reply": 151.7, "comes": 151.98, "back": 152.46, "open": 152.72, "head": 153.06, "asynchronous": 153.44, "it": 153.94, "sends": 154.3, "and": 154.62, "carries": 154.76, "on": 155.16}
+        visual: "A teal dot brings row back to the server and then book back to the client along the dashed line, labelled “dashed: the reply”, and the hourglass runs out. Then the viewed(42) line, solid with an open arrowhead, is ringed in green and labelled “open head: asynchronous”, and a paper plane flies along it."
+      - id: verse-4-5
+        start: 155.8
+        end: 158.58
+        text: "Alt is if-else: one branch runs. Opt is if: once or none."
+        marks: {"alt": 155.8, "is": 156.12, "if": 156.16, "else": 156.3, "one": 156.46, "branch": 156.72, "runs": 156.98, "opt": 157.28, "is_2": 157.64, "if_2": 157.82, "once": 158.14, "or": 158.24, "none": 158.36}
+        visual: "The same client and server, drawn large, inside an alt frame: the [found] branch replies book and the [else] branch replies 404. [found] is ringed, and beside it a code card “alt = if / else” marks “if found: reply(book)” above “else: reply(404)”. Then the frame becomes opt [logged in] around borrow(42), and a second card, “opt = if”, stacks under the first with “if logged_in: borrow(42)” marked."
+      - id: verse-4-6
+        start: 158.72
+        end: 161.7
+        text: "Loop repeats while its guard is true: for each book, till we're done."
+        marks: {"loop": 158.72, "repeats": 158.9, "while": 159.32, "its": 159.58, "guard": 159.74, "is": 160.02, "true": 160.16, "for": 160.38, "each": 160.62, "book": 160.82, "till": 161.1, "were": 161.34, "done": 161.5}
+        visual: "The frame becomes loop [for each book] around renew(id); dots labelled #1, #2, and #3 travel the call in turn, [for each book] is ringed, and a third card, “loop = for / while”, stacks under the others with “for book in books: renew(book.id)” marked."
+      - id: verse-4-7
+        start: 161.86
+        end: 163.86
+        text: "Who waits on whom? That's where bottlenecks hide."
+        marks: {"who": 161.86, "waits": 161.98, "on": 162.22, "whom": 162.52, "thats": 162.96, "where": 163.14, "bottlenecks": 163.24, "hide": 163.86}
+        visual: "The first run again, titled “Who waits on whom?”: a red band runs down the client’s lifeline from getBook(42) to its reply, another down the server’s lifeline while find(42) waits, and the database is ringed in red and labelled “slow? everyone above waits”."
+  - id: verse-5
+    title: "Verse 5"
+    delivery: sung
+    narration: "Verse 5, the State Machine Diagram, across the top: a black start dot, then Available, Borrowed, and Overdue. Borrow, slash set due date, moves Available to Borrowed; return goes back; day passes, with the guard today greater than due, slash send reminder, moves Borrowed to Overdue; and return, slash charge fee, goes from Overdue back to Available. Library book copy 42 stands below with a status tag, and a marker for it sits on Available. The dot and the states are ringed in turn, and three cards take one label apart: day passes is the event, when; today greater than due, in brackets, is the guard, if; slash send reminder is the action, do. The marker moves to Borrowed, a due-date slip for day 8 sticks out of the book, and a desk calendar turns from day 8 to day 9. Day 9 is past day 8, so the marker moves to Overdue; a second label notes that otherwise it stays Borrowed. A dot shows a return from Borrowed to Available; then the marker returns from Overdue to Available, and a coin pops up: the fee. Both return labels are ringed as the same event, charge fee as the different action, and a sticker says: the current state decides. Last, a function that turns 100 Celsius into 212 Fahrenheit, twice, with the same answer each time, and a pointless state diagram for it, crossed out: no history, skip it."
+    lines:
+      - id: verse-5-1
+        start: 163.86
+        end: 167.48
+        text: "State Machine Diagram: one object and the states it moves through."
+        marks: {"state": 163.86, "machine": 164.32, "diagram": 164.72, "one": 165.28, "object": 165.62, "and": 166.0, "the": 166.2, "states": 166.3, "it": 166.58, "moves": 166.78, "through": 167.18}
+        visual: "A state machine diagram across the top: a black start dot, then Available, Borrowed, and Overdue, joined by “borrow / set due date”, “return”, “day passes [today > due] / send reminder”, and “return / charge fee”. Library book #42 stands below with a green status tag, “Available”, and a marker labelled #42 appears on Available."
+      - id: verse-5-2
+        start: 167.78
+        end: 172.32
+        text: "Black dot: the start. Rounded boxes are states: Available, Borrowed, Overdue."
+        marks: {"black": 167.78, "dot": 167.96, "the": 168.34, "start": 168.54, "rounded": 168.78, "boxes": 169.32, "are": 169.6, "states": 169.82, "available": 170.52, "borrowed": 171.18, "overdue": 171.76}
+        visual: "The black start dot is ringed and labelled “start”; then Available, Borrowed, and Overdue are ringed in turn."
+      - id: verse-5-3
+        start: 172.36
+        end: 176.48
+        text: "Each arrow's a transition. Event: when! If! Slash, action: do!"
+        marks: {"each": 172.36, "arrows": 172.86, "a": 173.22, "transition": 173.42, "event": 174.06, "when": 174.62, "if": 174.98, "slash": 175.24, "action": 175.58, "do": 176.02}
+        visual: "The transition from Borrowed to Overdue is ringed. Three cards light up one by one, “day passes”: event, when; “[today > due]”: guard, if; and “/ send reminder”: action, do, while the same three parts of the label are ringed in the diagram."
+      - id: verse-5-4
+        start: 176.6
+        end: 178.94
+        text: "Borrow, slash, set the due date: now it's Borrowed."
+        marks: {"borrow": 176.6, "slash": 177.08, "set": 177.48, "the": 177.6, "due": 177.74, "date": 177.92, "now": 178.16, "its": 178.26, "borrowed": 178.46}
+        visual: "“/ set due date” is ringed as the marker #42 moves along borrow to Borrowed; a slip reading “DUE DAY 8” pops out of the book, and its tag turns gold: “Borrowed”."
+      - id: verse-5-5
+        start: 179.18
+        end: 183.2
+        text: "A day passes: is the due date past? If yes, Overdue. If no, it holds fast."
+        marks: {"a": 179.18, "day": 179.28, "passes": 179.48, "is": 179.96, "the": 180.04, "due": 180.16, "date": 180.34, "past": 180.56, "if": 181.18, "yes": 181.26, "overdue": 181.78, "if_2": 182.24, "no": 182.3, "it": 182.52, "holds": 182.6, "fast": 182.82}
+        visual: "A desk calendar appears on day 8 and tears to day 9. The guard “[today > due]” is ringed and labelled “9 > 8: yes → Overdue”, the marker moves to Overdue, and the tag turns red, “Overdue”; a second label under the guard says “no → stays Borrowed”."
+      - id: verse-5-6
+        start: 183.36
+        end: 186.86
+        text: "Return from Borrowed: Available. Return from Overdue: Available, plus a fee."
+        marks: {"return": 183.36, "from": 183.58, "borrowed": 183.78, "available": 184.36, "return_2": 184.88, "from_2": 185.1, "overdue": 185.34, "available_2": 185.9, "plus": 186.26, "a": 186.5, "fee": 186.7}
+        visual: "“return” is ringed, and a teal dot travels it from Borrowed back to Available. Then “return / charge fee” is ringed, the marker travels it from Overdue to Available, the tag turns green again, and a gold coin labelled “fee” flips up beside the book."
+      - id: verse-5-7
+        start: 186.86
+        end: 189.96
+        text: "Same event, different action: the state decides. That's the key."
+        marks: {"same": 186.86, "event": 187.28, "different": 187.66, "action": 187.92, "the": 188.38, "state": 188.6, "decides": 188.84, "thats": 189.28, "the_2": 189.66, "key": 189.78}
+        visual: "Both “return” labels are ringed in teal, with the sticker “Same event: return”; “/ charge fee” is ringed in violet, with “Different action: / charge fee”; Borrowed and Overdue are ringed in red, and a gold sticker with a key says “The current state decides”."
+      - id: verse-5-8
+        start: 190.02
+        end: 193.16
+        text: "Reacts the same, whatever came before? Then skip the State Machine Diagram."
+        marks: {"reacts": 190.02, "the": 190.32, "same": 190.44, "whatever": 190.78, "came": 190.88, "before": 191.24, "then": 191.84, "skip": 191.9, "the_2": 192.06, "state": 192.18, "machine": 192.36, "diagram": 192.72}
+        visual: "A function machine, to_fahrenheit(c), takes 100 and gives 212, then takes 100 again and gives 212 again, each call on its own row, with the sticker “Same input, same answer, every time”. Beside it, a state diagram for it, Ready looping back to Ready on convert, is crossed out in red under the sticker “No history? Skip it.”"
+  - id: verse-6
+    title: "Verse 6"
+    delivery: sung
+    narration: "Verse 6, the Component Diagram. A small class diagram, LibraryApp with BookList and HttpClient, labelled code view, shrinks away into a component as the run-time view appears: Client requires Books, provided by LibraryServer, which requires Storage, provided by Database; each joint is a socket around a ball. A laptop, a server rack, and a database cylinder stand under the three components, with stickers: not classes, and each one runs on its own. The ball is ringed, provided, I offer; then the socket, required, I need. Below, two large blocks slide together until the ball snaps into the socket: client needs, server provides. A parchment card, Books interface, lists getBook and addBook, while the inside of LibraryServer is shaded as hidden; a sticker says all the client sees, and the Database dims: out of sight. Then the database cylinder drops away and a new teal one slides in. The diagram now names CloudDB, Client is ringed in green, unchanged and still right, and the client's code reads the same."
+    lines:
+      - id: verse-6-1
+        start: 193.6
+        end: 196.06
+        text: "Component Diagram: zoom out to the run-time view,"
+        marks: {"component": 193.6, "diagram": 193.96, "zoom": 194.42, "out": 194.78, "to": 195.04, "the": 195.18, "run": 195.28, "time": 195.26, "view": 195.58}
+        visual: "A class diagram titled “Code view: classes”, LibraryApp with arrows to BookList and HttpClient, shrinks into the Client box as a component diagram appears: Client, LibraryServer, and Database, each with the component icon, joined by ball-and-socket connectors labelled Books and Storage. A gold sticker says “Run-time view: running parts”."
+      - id: verse-6-2
+        start: 196.06
+        end: 201.3
+        text: "parts you deploy and run on their own, not classes: client, server, database too."
+        marks: {"parts": 196.06, "you": 196.6, "deploy": 196.82, "and": 197.32, "run": 197.52, "on": 197.76, "their": 197.98, "own": 198.26, "not": 198.46, "classes": 198.76, "client": 199.3, "server": 199.78, "database": 200.3, "too": 200.9}
+        visual: "A laptop, a server rack, and a database cylinder pop in under Client, LibraryServer, and Database. Stickers say “Each one runs on its own” and “Not classes”, and as client, server, and database are sung, each component is ringed in teal and its device bumps."
+      - id: verse-6-3
+        start: 201.3
+        end: 206.82
+        text: "The ball's a provided interface: what I offer. The socket's a required interface: what I need."
+        marks: {"the": 201.3, "balls": 201.6, "a": 201.98, "provided": 202.14, "interface": 202.84, "what": 203.56, "i": 203.98, "offer": 204.12, "the_2": 204.5, "sockets": 204.84, "a_2": 205.2, "required": 205.34, "interface_2": 205.76, "what_2": 206.14, "i_2": 206.44, "need": 206.54}
+        visual: "The ball on the Books connector is ringed in green and labelled “provided: ‘I offer’”; the socket around it is ringed and labelled “required: ‘I need’”."
+      - id: verse-6-4
+        start: 207.0
+        end: 210.46
+        text: "Ball in socket, they snap: the client needs it, the server provides."
+        marks: {"ball": 207.0, "in": 207.24, "socket": 207.3, "they": 207.58, "snap": 207.78, "the": 208.12, "client": 208.34, "needs": 208.78, "it": 209.28, "the_2": 209.46, "server": 209.66, "provides": 209.94}
+        visual: "Below, two big component blocks slide together until the left one’s gold socket closes around the right one’s green ball with a spark. Captions under them read “Client needs” and “Server provides”."
+      - id: verse-6-5
+        start: 210.54
+        end: 214.0
+        text: "An interface is a contract: what you can ask, not how it works inside."
+        marks: {"an": 210.54, "interface": 210.66, "is": 211.1, "a": 211.42, "contract": 211.56, "what": 212.04, "you": 212.12, "can": 212.24, "ask": 212.44, "not": 212.9, "how": 213.02, "it": 213.18, "works": 213.3, "inside": 213.6}
+        visual: "A parchment card titled “Books interface” lists getBook(id) → Book and addBook(b). LibraryServer is shaded violet and labelled “inside: hidden”."
+      - id: verse-6-6
+        start: 214.0
+        end: 217.78
+        text: "Get book, add book: all the client sees. The database? Out of sight:"
+        marks: {"get": 214.0, "book": 214.42, "add": 214.76, "book_2": 215.04, "all": 215.32, "the": 215.6, "client": 215.72, "sees": 216.08, "the_2": 216.42, "database": 216.66, "out": 217.02, "of": 217.44, "sight": 217.56}
+        visual: "getBook(id) and then addBook(b) bump on the card, and a cyan sticker says “All the client sees”. The Database component dims, labelled “out of sight”."
+      - id: verse-6-7
+        start: 218.1
+        end: 222.78
+        text: "swap it behind the interface, and the client code's still right."
+        marks: {"swap": 218.1, "it": 218.32, "behind": 218.54, "the": 218.96, "interface": 219.28, "and": 220.71, "the_2": 221.04, "client": 221.16, "codes": 221.52, "still": 221.94, "right": 222.32}
+        visual: "A database cylinder drops away and a new teal one slides in. The diagram now reads CloudDB in place of Database, ringed in teal; Client is ringed in green and labelled “unchanged: still right”, and a code card client.py shows book = books.get_book(42)."
+  - id: chorus-3
+    title: "Final chorus"
+    delivery: sung
+    narration: "The final chorus: the same four questions and sheets, in motion as before. With all four diagrams in the corners, a card asks what you need to know, gold type says draw it out, and confetti bursts."
+    lines:
+      - id: chorus-3-1
+        start: 222.78
+        end: 225.58
+        text: "Draw it out while it's cheap to change!"
+        marks: {"draw": 222.78, "it": 223.46, "out": 223.66, "while": 223.88, "its": 224.52, "cheap": 224.76, "to": 224.98, "change": 225.2}
+        visual: "Big type: a gold pencil and “Draw it out”, over the line “while it’s cheap to change”."
+      - id: chorus-3-2
+        start: 225.58
+        end: 228.84
+        text: "Which classes, how they relate? Class Diagram!"
+        marks: {"which": 225.58, "classes": 226.48, "how": 226.94, "they": 227.18, "relate": 227.46, "class": 227.84, "diagram": 228.26}
+        visual: "A question card: “Which classes, how they relate?” On “Class Diagram!” the Class Diagram sheet slams in: Member borrows many Books."
+      - id: chorus-3-3
+        start: 228.84
+        end: 231.98
+        text: "Who calls whom, in what order? Sequence Diagram!"
+        marks: {"who": 228.84, "calls": 229.3, "whom": 229.64, "in": 229.84, "what": 229.94, "order": 230.16, "sequence": 230.86, "diagram": 231.42}
+        visual: "The class sheet moves to the top-left corner. Question: “Who calls whom, in what order?” On “Sequence Diagram!” the Sequence Diagram sheet slams in, and a dot travels the getBook(42) call from client to server."
+      - id: chorus-3-4
+        start: 232.0
+        end: 236.82
+        text: "What state's it in, what event moves it on? State Machine Diagram!"
+        marks: {"what": 232.0, "states": 232.48, "it": 232.84, "in": 233.16, "what_2": 233.6, "event": 233.74, "moves": 234.08, "it_2": 234.62, "on": 234.8, "state": 235.4, "machine": 235.56, "diagram": 235.96}
+        visual: "The sequence sheet moves to the top-right corner. Question: “What state’s it in, what event moves it on?” On “State Machine Diagram!” the State Machine Diagram sheet slams in, and a marker moves from Available to Borrowed along borrow."
+      - id: chorus-3-5
+        start: 236.88
+        end: 240.13
+        text: "What runs, how it plugs together? Component Diagram!"
+        marks: {"what": 236.88, "runs": 237.34, "how": 237.7, "it": 237.94, "plugs": 238.08, "together": 238.34, "component": 238.76, "diagram": 239.74}
+        visual: "The state sheet moves to the bottom-left corner. Question: “What runs, how it plugs together?” On “Component Diagram!” the Component Diagram sheet slams in: Client requires Books, and LibraryServer provides it."
+      - id: chorus-3-6
+        start: 240.46
+        end: 242.76
+        text: "Ask your question and draw it out!"
+        marks: {"ask": 240.46, "your": 240.98, "question": 241.06, "and": 241.38, "draw": 241.6, "it": 241.92, "out": 242.62}
+        visual: "The component sheet joins the others in the bottom-right corner. A card asks “What do you need to know?”, gold type says “Draw it out!”, and confetti bursts."
+  - id: quiz-intro
+    title: "Pop quiz"
+    delivery: sung
+    narration: "The pop quiz: big gold type, pop quiz, over the line: think, then shout it. Each question sits on a numbered quiz card labelled pizza app, and its answer slams in on a green bar only when the crowd sings it."
+    lines:
+      - id: quiz-intro-1
+        start: 242.76
+        end: 244.76
+        text: "Pop quiz: a pizza app!"
+        marks: {"pop": 242.76, "quiz": 243.36, "a": 244.04, "pizza": 244.12, "app": 244.42}
+        visual: "Big gold type “Pop quiz!” with a question mark, over the line “Think, then shout it!”."
+  - id: quiz
+    title: "Pop quiz"
+    delivery: call
+    narration: "Seven questions about a pizza app, one card each, numbered 1 to 7 and labelled pizza app. Questions 1, 3, 5, and 7 show the diagram they ask about beside a narrower card. Each card shows its question while it is sung; when the crowd sings the answer, it slams in on a green bar with an icon, and the diagram changes to match."
+    lines:
+      - id: quiz-1
+        start: 244.9
+        end: 248.66
+        text: "Your diagram skips the database. Mistake?"
+        answer: "Not if your question doesn't need it!"
+        answer_at: 246.92
+        pause_at: 246.77
+        marks: {"your": 244.9, "diagram": 245.02, "skips": 245.42, "the": 245.76, "database": 245.9, "mistake": 246.3, "not": 246.92, "if": 247.42, "your_2": 247.58, "question": 247.68, "doesnt": 248.0, "need": 248.32, "it": 248.52}
+        visual: "Quiz card 1 of 7, labelled “Pizza app”: “Your diagram skips the database. Mistake?” Beside it, a component diagram titled “Pizza app: components”: App requires Orders from Server. A database stands outside the sheet, with the sticker “Not in the diagram”. On the answer, a green bar with a magnifying glass slams in: “Not if your question doesn’t need it!”"
+      - id: quiz-2
+        start: 248.8
+        end: 254.5
+        text: "Checkout takes ten seconds. What's it waiting for? Which diagram?"
+        answer: "Sequence Diagram! See who waits on whom!"
+        answer_at: 252.34
+        pause_at: 252.08
+        marks: {"checkout": 248.8, "takes": 249.18, "ten": 249.78, "seconds": 249.9, "whats": 250.34, "it": 250.64, "waiting": 250.74, "for": 250.96, "which": 251.52, "diagram": 251.6, "sequence": 252.34, "diagram_2": 252.6, "see": 253.36, "who": 253.56, "waits": 253.78, "on": 254.0, "whom": 254.32}
+        visual: "Quiz card 2 of 7: “Checkout takes ten seconds. What’s it waiting for? Which diagram?” On the answer, a green bar with a hourglass slams in: “Sequence Diagram! See who waits on whom!”"
+      - id: quiz-3
+        start: 254.64
+        end: 259.48
+        text: "Delete a customer, but keep their orders. Filled diamond?"
+        answer: "No! The orders outlive the customer!"
+        answer_at: 257.04
+        pause_at: 256.89
+        marks: {"delete": 254.64, "a": 254.76, "customer": 255.0, "but": 255.34, "keep": 255.58, "their": 255.74, "orders": 255.86, "filled": 256.2, "diamond": 256.56, "no": 257.04, "the": 257.88, "orders_2": 257.96, "outlive": 258.32, "the_2": 258.8, "customer_2": 259.06}
+        visual: "Quiz card 3 of 7: “Delete a customer, but keep their orders. Filled diamond?” Beside it, a class diagram: Customer with a filled diamond to many Order, and the diamond is ringed in red. On the answer, a green bar with a folder slams in: “No! The orders outlive the customer!” The diamond is crossed out, the line becomes a plain association from Customer to Order, and Order is ringed in green."
+      - id: quiz-4
+        start: 259.48
+        end: 266.64
+        text: "Press Cancel: sometimes a refund, sometimes a fee. Which diagram shows why?"
+        answer: "State Machine Diagram! The state decides!"
+        answer_at: 264.04
+        pause_at: 263.89
+        marks: {"press": 259.48, "cancel": 260.0, "sometimes": 260.48, "a": 260.86, "refund": 261.04, "sometimes_2": 261.52, "a_2": 262.1, "fee": 262.26, "which": 262.52, "diagram": 262.82, "shows": 263.24, "why": 263.7, "state": 264.04, "machine": 264.36, "diagram_2": 264.8, "the": 265.4, "state_2": 265.8, "decides": 266.06}
+        visual: "Quiz card 4 of 7: “Press Cancel: sometimes a refund, sometimes a fee. Which diagram shows why?” On the answer, a green bar with a key slams in: “State Machine Diagram! The state decides!”"
+      - id: quiz-5
+        start: 266.64
+        end: 271.54
+        text: "The receipt email is slow. Which arrowhead?"
+        answer: "Open head! Send it and carry on!"
+        answer_at: 269.52
+        pause_at: 269.36
+        marks: {"the": 266.64, "receipt": 266.92, "email": 267.26, "is": 267.88, "slow": 268.22, "which": 268.52, "arrowhead": 268.92, "open": 269.52, "head": 269.72, "send": 270.28, "it": 270.56, "and": 270.88, "carry": 270.96, "on": 271.22}
+        visual: "Quiz card 5 of 7: “The receipt email is slow. Which arrowhead?” Beside it, a sequence diagram: checkout: Checkout sends sendReceipt() to mail: Mailer, with its arrowhead hidden under a question mark. On the answer, a green bar with an envelope slams in: “Open head! Send it and carry on!”, and the question mark lifts off an open arrowhead, ringed in green."
+      - id: quiz-6
+        start: 271.54
+        end: 278.5
+        text: "Where does the price attribute live, and who may change it? Which diagram?"
+        answer: "Class Diagram! Attributes, plus and minus!"
+        answer_at: 276.48
+        pause_at: 276.18
+        marks: {"where": 271.54, "does": 271.76, "the": 272.22, "price": 272.44, "attribute": 272.9, "live": 273.46, "and": 274.14, "who": 274.3, "may": 274.46, "change": 274.66, "it": 275.14, "which": 275.36, "diagram": 275.42, "class": 276.48, "diagram_2": 276.66, "attributes": 277.14, "plus": 277.88, "and_2": 278.16, "minus": 278.46}
+        visual: "Quiz card 6 of 7: “Where does the price attribute live, and who may change it? Which diagram?” On the answer, a green bar with a price tag slams in: “Class Diagram! Attributes, plus and minus!”"
+      - id: quiz-7
+        start: 278.5
+        end: 284.38
+        text: "Your payment provider, same interface: does the app change?"
+        answer: "No! It only knows the interface!"
+        answer_at: 282.1
+        pause_at: 281.9
+        marks: {"your": 278.5, "payment": 279.1, "provider": 279.4, "same": 280.12, "interface": 280.36, "does": 280.78, "the": 281.1, "app": 281.26, "change": 281.48, "no": 282.1, "it": 282.46, "only": 283.1, "knows": 283.34, "the_2": 283.64, "interface_2": 283.84}
+        visual: "Quiz card 7 of 7: “Your payment provider, same interface: does the app change?” Beside it, a component diagram: App requires Payments from CardPayCo, ringed in red; CardPayCo is swapped for QuickPay, ringed in teal, behind the same connector. On the answer, a green bar with a plug slams in: “No! It only knows the interface!”, and App is ringed in green."
+  - id: outro
+    title: "Outro"
+    delivery: sung
+    narration: "The outro: gold type, draw it out, while it's cheap to change, framed by the four diagrams from the chorus, the Class, Sequence, State Machine, and Component Diagrams."
+    lines:
+      - id: outro-1
+        start: 285.76
+        end: 288.5
+        text: "Draw it out while it's cheap to change!"
+        marks: {"draw": 285.76, "it": 286.26, "out": 286.5, "while": 286.74, "its": 287.32, "cheap": 287.56, "to": 287.82, "change": 288.04}
+        visual: "Gold type “Draw it out” with a pencil, over the line “while it’s cheap to change”, sits between the four chorus diagrams: the Class Diagram, Sequence Diagram, State Machine Diagram, and Component Diagram."
