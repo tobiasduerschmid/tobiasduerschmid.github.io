@@ -188,7 +188,7 @@ sections:
         end: 30.25
         text: "I'll save them a meeting— They'll thank me in time!"
         marks: {"ill": 25.98, "save": 26.64, "them": 26.86, "a": 27.28, "meeting": 27.56, "theyll": 28.2, "thank": 28.61, "me": 28.92, "in": 29.22, "time": 29.64}
-        visual: "A card pops up above the phone: “Meeting with users: Monday 10:00. What do they need?”. On “meeting” he tears it in two and tosses the halves away over his shoulders. On “thank” a theatre sign lit with bulbs, “APPLAUSE”, glows, and he takes a deep bow; the house is silent, and a green cricket on the floor chirps three times. From the stalls rise three thought bubbles: “Not what I need…”, “Can I give my ticket to a friend?”, and “Nobody asked us!”."
+        visual: "A card pops up above the phone: “Meeting with users: Monday 10:00. What do they need?”. On “meeting” he tears it in two and tosses the halves away over his shoulders. On “thank” a theatre sign lit with bulbs, “APPLAUSE”, glows, and he takes a deep bow; the house is silent, and a green cricket on the floor chirps three times. The APPLAUSE sign flashes, its bulbs chasing round, but the house is silent; a second later, thought bubbles grow up from two heads in the stalls: “Not what I need!” and “Nobody asked us!”."
   - id: pm
     title: "The Product Manager"
     delivery: sung

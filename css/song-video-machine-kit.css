@@ -176,11 +176,12 @@
 .mk-torn .mk-card { position: relative; }
 
 /* The APPLAUSE sign, its bulbs lit by --mk-lit (0–1). */
-.mk-applause { position: absolute; --mk-lit: 0; }
-.mk-applause-box { fill: #1b1410; }
-.mk-applause-bulb { fill: #ffd36b; opacity: calc(0.25 + 0.75 * var(--mk-lit)); }
-.mk-applause-word { fill: #a8956a; font: 900 28px var(--font-display); letter-spacing: 0.16em; }
-.mk-applause-word--lit { fill: #ffe27a; }
+.mk-applause { position: absolute; --mk-lit: 0; transform-origin: 50% 50%; }
+.mk-applause-box { fill: #120c08; stroke: #e0a91f; stroke-width: 3; }
+.mk-applause-bulb { fill: #6b5a33; }
+.mk-applause-bulb--on { fill: #fff7c2; filter: drop-shadow(0 0 3px #ffd84d) drop-shadow(0 0 6px #ffb000); }
+.mk-applause-word { fill: #8f7f5a; font: 900 28px var(--font-display); letter-spacing: 0.16em; }
+.mk-applause-word--lit { fill: #fff36b; filter: drop-shadow(0 0 4px #ffd84d) drop-shadow(0 0 10px #ff9f1a); }
 
 /* A cricket. */
 .mk-cricket { position: absolute; }
@@ -417,12 +418,16 @@
 .mk-moral-list { margin: 0; padding-left: 26px; font-size: 18px; font-weight: 700; line-height: 1.45; }
 .mk-asker-fingers { fill: none; stroke: #04060b; stroke-width: 3.4; stroke-linecap: round; }
 
-/* Thought bubbles from the audience: a cloud with two trailing dots that
-   point down to the thinker in the stalls. Stage colours stay the same in
-   both site themes. */
-.mk-thought { position: absolute; width: 160px; }
+/* Thought bubbles from the audience: a trail of dots growing up from a head
+   in the stalls, then a cloud above it. Stage colours stay the same in both
+   site themes. */
+.mk-thought { position: absolute; width: 0; height: 0; transform-origin: 0 0; }
 .mk-thought-text {
-  position: relative;
+  position: absolute;
+  bottom: 0;
+  left: -95px;
+  width: 190px;
+  box-sizing: border-box;
   padding: 8px 12px;
   border: 2.4px solid #1b1410;
   border-radius: 28px;
@@ -434,12 +439,10 @@
 }
 .mk-thought-dot {
   position: absolute;
-  left: 46%;
-  top: calc(100% + 6px);
-  width: 16px;
-  height: 12px;
   border: 2.4px solid #1b1410;
   border-radius: 50%;
   background: #fdfaf2;
 }
-.mk-thought-dot--small { left: 40%; top: calc(100% + 24px); width: 9px; height: 7px; }
+.mk-thought-dot--0 { width: 8px; height: 6px; margin: -3px 0 0 -4px; }
+.mk-thought-dot--1 { width: 12px; height: 9px; margin: -4.5px 0 0 -6px; }
+.mk-thought-dot--2 { width: 17px; height: 13px; margin: -6.5px 0 0 -8.5px; }

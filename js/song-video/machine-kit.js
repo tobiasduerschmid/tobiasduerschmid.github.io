@@ -507,26 +507,41 @@
     word.textContent = 'APPLAUSE';
     fx.fadeIn(node, at - 0.3, 0.2);
     onFrame((t) => {
-      const lit = progress(t, at, 0.4) * (1 - progress(t, dimAt, 0.5));
+      const lit = progress(t, at, 0.25) * (1 - progress(t, dimAt, 0.5));
       node.style.setProperty('--mk-lit', lit.toFixed(3));
       word.setAttribute('class', `mk-applause-word${lit > 0.5 ? ' mk-applause-word--lit' : ''}`);
+      // While lit, the bulbs chase round in pairs, and the sign flashes on.
+      const still = reducedMotion.matches;
+      const step = Math.floor((t - at) / 0.14);
+      bulbs.forEach((bulb, i) => {
+        const on = lit > 0.5 && (still || (Math.floor(i / 2) + step) % 3 !== 0);
+        bulb.classList.toggle('mk-applause-bulb--on', on);
+      });
+      const flash = still ? 0 : Math.max(0, 1 - Math.abs(t - at - 0.12) / 0.18);
+      node.style.transform = lit > 0 ? `scale(${(1 + 0.06 * flash).toFixed(3)})` : '';
     });
     return node;
   }
 
   /**
    * Thought bubbles rising from the audience in the stalls: each { x, y,
-   * text } is a cloud whose trailing dots point down to the thinker, popping
-   * up `every` seconds from `at`.
+   * from, text } starts at `from`, an audience member's head, as a trail of
+   * three growing dots, then a cloud whose bottom centre is (x, y). One
+   * thinker every `every` seconds from `at`.
    */
   function thoughts(parent, { at, until, every = 0.5, bubbles }) {
-    return bubbles.map(({ x, y, text }, i) => {
-      // x is the bubble's centre; it is 160 px wide (the stylesheet).
-      const node = place(el('div', 'mk-thought is-staged', parent), x - 80, y);
+    return bubbles.map(({ x, y, from, text }, i) => {
+      const start = at + i * every;
+      const dots = [0.12, 0.45, 0.78].map((k, d) => {
+        const dot = place(el('div', `mk-thought-dot mk-thought-dot--${d}`, parent), from[0] + (x - from[0]) * k, from[1] + (y - from[1]) * k);
+        popped(dot, start + d * 0.12, until, { rotate: 0 });
+        return dot;
+      });
+      // A zero-height anchor at the cloud's bottom centre, so it pops from there.
+      const node = place(el('div', 'mk-thought is-staged', parent), x, y);
       el('div', 'mk-thought-text', node, text);
-      for (const dot of ['mk-thought-dot', 'mk-thought-dot mk-thought-dot--small']) el('div', dot, node);
-      popped(node, at + i * every, until, { rotate: 0 });
-      return node;
+      popped(node, start + 0.36, until, { rotate: 0 });
+      return { node, dots };
     });
   }
 
