@@ -124,8 +124,13 @@
   --oc-hair: #3a2214;
   --oc-hair-dark: #1c0f08;
   --oc-hair-light: #8d5d3a;
-  --oc-eye: #6a4426;
+  --oc-eye: #4f6f8f;
   --oc-seam: #d9963b;
+  /* Fair, pink-toned skin. */
+  --oc-skin: #f6d5c3;
+  --oc-skin-shade: #e3ad97;
+  --oc-skin-light: #fde9de;
+  --oc-skin-line: #b06f5a;
 }
 .oc-figure--tenor .oc-top-stop-0 { stop-color: #33a8a4; }
 .oc-figure--tenor .oc-top-stop-1 { stop-color: #1f8a8a; }
