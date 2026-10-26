@@ -710,8 +710,9 @@ deactivate client
       d.callout(afterSend, 'sender keeps going', { side: 'right', at: mark(v(6), 'the'), tone: 'green', gap: 8 });
 
       // Left of the sheet, once the time arrow has gone, the architect acts
-      // out each line the song sings to "you": it leans in on "whom" and
-      // rings the database where the bottleneck grows; needs the answer
+      // out each line the song sings to "you": it leans in on "whom" (the
+      // pencil stays down, wanted a moment later) and rings the database
+      // where the bottleneck grows; needs the answer
       // (thinking it over), points at the synchronous call, checks its
       // watch and waits right there until the reply comes back; then sends
       // the message off with a flick of the pencil and carries straight on
@@ -720,7 +721,7 @@ deactivate client
       A.architect(a, {
         ...ARCHITECT, x: 16, y: 166, scale: 0.84, tag: '', at: whoAt + 0.1, until: fragmentsAt - 0.35,
         moves: [
-          [mark(v(2), 'whom'), 'inspect', { to: [dbX, dbY + 100], hold: 0.5 }],
+          [mark(v(2), 'whom'), 'inspect', { to: [dbX, dbY + 100], hold: 0.5, chin: false }],
           [mark(v(2), 'bottlenecks'), 'circle', { to: [dbX, dbY] }],
           [mark(v(3), 'answer'), 'think', { hold: 0.9 }],
           [mark(v(3), 'synchronous'), 'point', { to: d.stagePoint(callBox, 'center'), hold: 0.5 }],

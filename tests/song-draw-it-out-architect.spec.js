@@ -222,6 +222,29 @@ test('the architect moves smoothly: from frame to frame, its pencil never jumps'
   expect(largest.step, `the pencil's largest step, at ${(largest.frame / 30).toFixed(2)}s`).toBeLessThan(60);
 });
 
+test('ticking, tapping, or ringing something out at its side, the architect reaches out with its whole arm', async ({ page }) => {
+  // The flaw tapped on paper, the class ticked off in the first chorus, the
+  // bottleneck ringed, and quiz answers 2 and 6 ticked and ringed.
+  const gestures = [
+    mark('verse-1-5', 'flaw') + 0.5,
+    mark('chorus-1-2', 'class') + 0.4,
+    mark('verse-4-2', 'bottlenecks') + 0.3,
+    ...['quiz-2', 'quiz-6'].map((id) => storyLines.get(id).answer_at + 0.9),
+  ];
+  for (const time of gestures) {
+    await seek(page, time);
+    const architect = await architectOnStage(page);
+    const figure = await architect.boundingBox();
+    const hand = await centre(architect.getByTestId('dio-arch-pen-forearm').getByTestId('dio-arch-hand'));
+    // Out from the figure's middle, in widths of its own frame. An elbow
+    // kept down at the side with only the forearm swung out (a turn of the
+    // shoulder no arm makes) leaves the hand about half a width out; the
+    // upper arm raised with the reach takes it well past that.
+    const out = Math.abs(hand.x - (figure.x + figure.width / 2)) / figure.width;
+    expect(out, `at ${time.toFixed(2)}s the pencil hand is out at the end of a raised arm`).toBeGreaterThan(0.58);
+  }
+});
+
 test('with reduced motion the architect holds still between its moves', async ({ page }) => {
   // Two moments of the same pose: the pencil under the chin while thinking.
   const [early, late] = [quiz4.start + 1.6, quiz4.answer_at - 0.6];

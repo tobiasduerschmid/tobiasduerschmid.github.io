@@ -141,14 +141,67 @@
   const aroundZero = (angle) => ((angle % 360) + 540) % 360 - 180;
 
   /**
+   * How far (degrees) the forearm may swing out past the line of the upper
+   * arm, in the picture's plane, with the upper arm raised `up`. A forearm
+   * drawn out sideways is a shoulder turned outwards (external rotation):
+   * with the arm hanging it goes only a little way before it looks stiff,
+   * and once the arm is lifted to the side it goes as far as a raised hand
+   * or a wave.
+   */
+  const outwardLimit = (up) => 25 + 0.85 * clamp(up, 0, 100);
+  /** How far it swings out comfortably, which a reach aims for. */
+  const outwardComfort = (up) => 15 + 0.6 * clamp(up, 0, 100);
+  /** How far an arm posed at [upper, forearm] swings its forearm out past its upper arm. */
+  const outwardFold = ([up, fore]) => aroundZero(fore - up - (FOREARM_REST - UPPER_REST));
+  /**
+   * Whether a pose turns the shoulder further out than `limit` allows. An
+   * upper arm well across the body is not checked: there a forearm swung
+   * the same way is turned in, not out.
+   */
+  const overturned = (pose, limit = outwardLimit) => pose[0] > -35 && outwardFold(pose) > limit(pose[0]);
+  /** A pose with its forearm brought back in, as far as the shoulder turns. */
+  const untwist = (pose) => (overturned(pose) ? [pose[0], pose[1] - (outwardFold(pose) - outwardLimit(pose[0]))] : pose);
+
+  /**
    * The [upper, forearm] raise that puts `end` (a point carried by the
    * forearm at rest: the pencil's tip while pointing, or the wrist) at
    * (x, y) (two-bone inverse kinematics), the elbow down and out at the
-   * side, as a person holds an arm. `shorten` is how much of its length the
-   * upper arm shows (1 when it hangs in the picture's plane). Out of reach,
-   * the arm points at the target.
+   * side, as a person holds an arm, and never turning the shoulder further
+   * out than it goes. `shorten` is how much of its length the upper arm
+   * shows (1 when it hangs in the picture's plane). Out of reach, the arm
+   * points at the target.
    */
-  function reach([x, y], { shorten = 1, end = POINT_TIP } = {}) {
+  function reach(target, { shorten = 1, end = POINT_TIP } = {}) {
+    const [vx, vy] = sub(target, SHOULDER);
+    const outside = vx > 0;
+    // Out to the side and close in, the elbow below the line to the point
+    // would fold the forearm out further than a shoulder turns easily, or
+    // (the point low) swing the upper arm in across the body. A person
+    // reaches further instead: the arm rises and straightens along the same
+    // line, just as far as it takes, so the hand lands a little beyond the
+    // point. (Just as far: a point that needs no more reach than it has
+    // moves the arm on smoothly from one that needs a little.)
+    const easy = (pose) => !overturned(pose, outwardComfort) && !(outside && pose[0] < UPPER_REST - 90);
+    const pose = solveArm(target, shorten, end, outside);
+    if (easy(pose)) return pose;
+    const d = Math.hypot(vx, vy) || 1;
+    const along = (r) => add(SHOULDER, [vx / d * r, vy / d * r]);
+    let [near, far] = [d, Math.max(d, UPPER * shorten + Math.hypot(end[0] - ELBOW[0], end[1] - ELBOW[1]) - 0.5)];
+    for (let i = 0; i < 16; i++) {
+      const mid = (near + far) / 2;
+      if (easy(solveArm(along(mid), shorten, end, outside))) far = mid;
+      else near = mid;
+    }
+    return untwist(solveArm(along(far), shorten, end, outside));
+  }
+
+  /**
+   * The two-bone solution behind reach(). For a point out at the side of
+   * the body (`outside`) the elbow goes below the line to it, so a point
+   * moving about out there never flips the elbow over; across the body,
+   * it goes wherever it is lowest without going inside the torso.
+   */
+  function solveArm([x, y], shorten, end, outside) {
     const upper = UPPER * shorten;
     const fore = Math.hypot(end[0] - ELBOW[0], end[1] - ELBOW[1]);
     const foreRest = degrees(Math.atan2(end[1] - ELBOW[1], end[0] - ELBOW[0]));
@@ -158,9 +211,10 @@
     const toward = Math.atan2(dy, dx);
     const bend = Math.acos(clamp((upper ** 2 + d ** 2 - fore ** 2) / (2 * upper * d), -1, 1));
     const elbows = [toward + bend, toward - bend].map((angle) => ({ angle, ex: SHOULDER[0] + upper * Math.cos(angle), ey: SHOULDER[1] + upper * Math.sin(angle) }));
-    // An elbow inside the torso (left of the shoulder) counts against it.
+    // Across the body: the lower elbow, and an elbow inside the torso (left
+    // of the shoulder) counts against it.
     const score = (e) => e.ey - 3 * Math.max(0, SHOULDER[0] - e.ex);
-    elbows.sort((a, b) => score(b) - score(a));
+    if (!outside) elbows.sort((a, b) => score(b) - score(a));
     const { angle, ex, ey } = elbows[0];
     const k = Math.min(1, d / distance);
     const foreDir = Math.atan2(SHOULDER[1] + dy * k - ey, SHOULDER[0] + dx * k - ex);
@@ -293,10 +347,10 @@
   // hand up at the chest, and the pencil's tip under the chin, its eraser
   // down by the waist; the eyes go up and to the side.
   const THINK = holdPencilAt([HEAD.x + 0.6, HEAD.chin + 1.2], -106, 1);
-  // Presenting the drawing: the elbow at the side, the forearm out and a
-  // little up, and the roll held upright in the fist, the back of the hand
-  // to the viewer.
-  const PRESENT_ARM = reach([142, 125], { end: WRIST });
+  // Presenting the drawing: the arm lifted out to the side, the forearm
+  // raised, and the roll held upright in the fist above the shoulder, the
+  // back of the hand to the viewer, as a hand goes up.
+  const PRESENT_ARM = [55, 118];
   const PRESENT = { roll: PRESENT_ARM, rollLift: 0, rollHand: rollToward(PRESENT_ARM, -90) };
   const ROLL_AT_REST = { roll: REST.roll, rollLift: 0, rollHand: REST.rollHand };
   // Checking the watch: the elbow at the side and come forward a little,
@@ -319,6 +373,14 @@
   /** Eased progress through a span; under reduced motion, a snap at its start. */
   const eased = (t, start, duration, reduced) => (reduced ? Number(t >= start) : reachEase(progress(t, start, duration)));
   const mix = (from, to, u) => (Array.isArray(to) ? to.map((value, i) => from[i] + (value - from[i]) * u) : from + (to - from) * u);
+  /**
+   * An arm pose [upper, forearm] with its forearm turned by whole circles
+   * so that it bends from the upper arm less than half a turn either way.
+   * Easing between two such poses straightens the elbow on the way from a
+   * forearm folded one way to one folded the other, as an elbow does,
+   * instead of folding the forearm on back through the upper arm.
+   */
+  const unfolded = (pose) => [pose[0], pose[0] + (FOREARM_REST - UPPER_REST) + outwardFold(pose)];
 
   // Joints don't all move at once: the upper arm leads, the forearm
   // follows, and the hand trails, so a reach unfurls from the shoulder
@@ -462,11 +524,12 @@
         [0, duration, (u) => g.tipAt(splineAt(strokes, u))], ...settle(duration + hold),
       ];
     },
-    // Leans in towards a point to look it over, pencil to chin.
-    inspect: ({ to, hold = 1.2 }, g) => {
+    // Leans in towards a point to look it over, pencil to chin (unless
+    // `chin` is false: the pencil is wanted for what comes next).
+    inspect: ({ to, hold = 1.2, chin = true }, g) => {
       const side = g.side(to);
       return [
-        [0, 0.55, { ...g.glance(to), lean: 3 * side, tilt: 3 * side, brow: 0.5 }], [-0.1, 0.6, THINK],
+        [0, 0.55, { ...g.glance(to), lean: 3 * side, tilt: 3 * side, brow: 0.5 }], ...(chin ? [[-0.1, 0.6, THINK]] : []),
         ...settle(hold),
       ];
     },
@@ -536,13 +599,13 @@
         if (t < start) continue;
         const target = fields(reduced ? 1 : progress(t, start, duration));
         const w = eased(t, start, Math.min(0.15, duration), reduced);
-        for (const [name, value] of Object.entries(target)) pose[name] = mix(pose[name], value, w);
+        for (const [name, value] of Object.entries(target)) pose[name] = mix(pose[name], Array.isArray(value) ? unfolded(value) : value, w);
         continue;
       }
       for (const [name, target] of Object.entries(fields)) {
         const lag = LAG[name] ?? 0;
         pose[name] = Array.isArray(target)
-          ? target.map((value, i) => pose[name][i] + (value - pose[name][i]) * eased(t, start + lag[i], duration, reduced))
+          ? unfolded(target).map((value, i) => pose[name][i] + (value - pose[name][i]) * eased(t, start + lag[i], duration, reduced))
           : mix(pose[name], target, eased(t, start + lag, duration, reduced));
       }
     }
@@ -570,7 +633,7 @@
     const out = clamp((p.pen[0] - REST.pen[0]) / 80, 0, 1) * (1 - p.penLift);
     p.lean += 1.1 * penSide * out;
     p.tilt += 1.5 * penSide * out;
-    const free = 1 - clamp((Math.abs(p.roll[0] - REST.roll[0]) + Math.abs(p.roll[1] - REST.roll[1])) / 20, 0, 1);
+    const free = 1 - clamp((Math.abs(p.roll[0] - REST.roll[0]) + Math.abs(aroundZero(p.roll[1] - REST.roll[1]))) / 20, 0, 1);
     p.roll = [p.roll[0] + 5 * out * free, p.roll[1] + 12 * out * free];
   }
 
@@ -1186,8 +1249,10 @@
       const squash = 1 - drop / (HEMS - WAIST);
       legs.setAttribute('transform', `translate(0 ${HEMS}) scale(1 ${squash.toFixed(4)}) translate(0 ${-HEMS})`);
       trunk.setAttribute('transform', `translate(0 ${drop.toFixed(2)})`);
-      poseArm(penArm, p.pen, p.penLift, p.penHand);
-      poseArm(rollArm, p.roll, p.rollLift, p.rollHand);
+      // Easing between two possible poses can pass through one that turns a
+      // shoulder too far; the forearm is held back to what it allows.
+      poseArm(penArm, untwist(p.pen), p.penLift, p.penHand);
+      poseArm(rollArm, untwist(p.roll), p.rollLift, p.rollHand);
       stackForearms();
       // The head dips in a nod and tilts about the chin.
       const tilt = `translate(0 ${(1.6 * p.nod).toFixed(2)}) rotate(${p.tilt.toFixed(2)} ${HEAD.x} ${HEAD.chin})`;

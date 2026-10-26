@@ -338,9 +338,16 @@ sung words, towards stage points: `point`, `tap`, `trace`, and `sketch` aim
 the pencil (two-bone inverse kinematics, touching the point when in reach;
 further off the elbow stays low and the wrist lays the pencil on the line
 to the point); `check`, `cross`, and `circle` draw a tick, a cross, or a ring
-in the air in easy reach on the way to it, along smooth paths; `draw`
+in the air on the way to it, along smooth paths; `draw`
 draws a route of stage points small in the air, at the pace the drafting
-pencil draws it on the sheet; `inspect` leans in, pencil to chin; `sight`
+pencil draws it on the sheet. Out at the side the elbow always goes below
+the line to the point, so it never flips over, and the shoulder turns the
+forearm out only as far as a real one does, further the higher the arm is
+raised (`outwardLimit()`); where that is not enough the arm reaches further
+along the same line instead of folding the forearm out sideways. Easing
+between two poses straightens the elbow rather than folding the forearm
+back through the upper arm (`unfolded()`). `inspect` leans in, pencil to
+chin (`chin: false` keeps the pencil down); `sight`
 holds the pencil out at arm's length; `think` brings the pencil to the chin
 (the upper arm foreshortened as it comes forward); `look`, `scan`, and
 `shake` move only the eyes and the head; `watch` checks the wristwatch;
