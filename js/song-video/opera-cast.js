@@ -1024,19 +1024,15 @@
       const heldBehind = svg('g', {}, wrist);
       const hand = svg('g', { class: 'oc-hand', 'data-testid': 'oc-hand', transform: `translate(${WRIST[0]} ${WRIST[1]})` }, wrist);
       if (costume.sleeve === 'long') inked(fore, CUFF, 'oc-cuff', 'oc-ink oc-ink--cool');
-      // A pushed-up sleeve bunches at the end of the upper arm and turns with
-      // it: in front of the forearm, wrapping the elbow, until the elbow
-      // folds sharply and the forearm crosses in front of it (poseArm).
-      const bunched = svg('g', {}, root);
       if (costume.sleeve === 'pushed') {
-        inked(bunched, PUSHED, 'oc-sleeve', 'oc-ink oc-ink--cool', paint.sleeve);
-        svg('path', { class: 'oc-sleeve-fold', d: PUSHED_FOLDS }, bunched);
+        inked(fore, PUSHED, 'oc-sleeve', 'oc-ink oc-ink--cool', paint.sleeve);
+        svg('path', { class: 'oc-sleeve-fold', d: PUSHED_FOLDS }, fore);
       }
       const shapes = new Map();
       let shown = null;
       const held = { name: null, node: null };
       return {
-        side, root, upper, bunched, reach: reachGroup, fore, wrist, heldBehind, hand, held,
+        side, root, upper, reach: reachGroup, fore, wrist, heldBehind, hand, held,
         get shown() { return shown; },
         shape(asked, force = false) {
           // A hand holding a prop keeps hold of it: an open-hand gesture
@@ -1092,10 +1088,6 @@
     function poseArm(a, [up, fo], lift, hand, shape) {
       const f = 1 - LIFT * lift;
       a.upper.setAttribute('transform', `${turn(-up, SHOULDER)} ${shorten(f)}`);
-      a.bunched.setAttribute('transform', a.upper.getAttribute('transform'));
-      const bend = Math.abs((((fo - up) % 360) + 540) % 360 - 180);
-      const behind = bend > 70;
-      if (behind !== (a.bunched.nextSibling === a.reach)) a.root.insertBefore(a.bunched, behind ? a.reach : null);
       a.reach.setAttribute('transform', turn(-up, SHOULDER));
       const [dx, dy] = [(f - 1) * (ELBOW[0] - SHOULDER[0]), (f - 1) * (ELBOW[1] - SHOULDER[1])];
       a.fore.setAttribute('transform', `translate(${dx.toFixed(2)} ${dy.toFixed(2)}) ${turn(up - fo, ELBOW)}`);
