@@ -20,6 +20,12 @@ decks:
   - uml_class_diagram_examples
   - uml_sequence_diagram_examples
   - data_management
+  - testing_overview
+  - goodtests
+  - testquality
+  - testdoubles
+  - tdd
+  - dev_practice_refactoring
 
 other:
   - design_pattern_observer
@@ -27,11 +33,6 @@ other:
   - design_principle_information_hiding
   - design_with_reuse
   - security
-  - testing_overview
-  - goodtests
-  - testquality
-  - testdoubles
-  - tdd
   - dev_practice_genai
   - debugging
   - process_people_tailoring

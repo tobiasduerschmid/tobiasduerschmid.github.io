@@ -20,6 +20,12 @@ decks:
   - design_principle_solid
   - design_principle_soc
   - data_management
+  - testing_overview
+  - goodtests
+  - testquality
+  - testdoubles
+  - tdd
+  - dev_practice_refactoring
 
 other:
   - design_pattern_observer
@@ -29,11 +35,6 @@ other:
   - uml_class_diagram_examples
   - uml_sequence_diagram_examples
   - security
-  - testing_overview
-  - goodtests
-  - testquality
-  - testdoubles
-  - tdd
   - dev_practice_genai
   - debugging
   - process_people_tailoring
