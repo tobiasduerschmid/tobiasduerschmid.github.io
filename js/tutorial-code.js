@@ -11441,6 +11441,14 @@
     this._timedPracticeTimer = setInterval(tick, 1000);
   };
 
+  TutorialCode.prototype._invalidateLaterStepSetup = function (targetStep) {
+    // A restored workspace contains setup only through its target step.
+    // Keep completion credit, but let later visits rebuild their missing state.
+    this._stepsVisited = new Set(Array.from(this._stepsVisited).filter(function (index) {
+      return index <= targetStep;
+    }));
+  };
+
   /**
    * "commands" reset: replay all solution files/commands for steps before the
    * current one, then apply the current step's starter files and run its
@@ -11495,6 +11503,7 @@
         }).then(function () {
           return self._ensureGitGraphPromptHook();
         }).then(function () {
+          self._invalidateLaterStepSetup(targetStep);
           self._autoSaveProgress();
           return self._refreshPrompt();
         }).then(function () {
@@ -11578,6 +11587,7 @@
       self._closeNonStepFiles(curStep);
       if (curStep && curStep.open_file) { self._setActiveFile(curStep.open_file); }
       self._renderTabs();
+      self._invalidateLaterStepSetup(targetStep);
       self._autoSaveProgress();
       // Clear terminal, unmute, and show a fresh prompt after the silent replay
       return self._ensureGitGraphPromptHook().then(function () {
@@ -11685,6 +11695,7 @@
           return self._updateUserCmdListener(savedStepObj);
         }).then(function () {
           self._suppressAutoSave = false;
+          self._invalidateLaterStepSetup(targetStep);
           self._autoSaveProgress();
         });
       });
@@ -11759,6 +11770,7 @@
       self._suppressAutoSave = false;
       // Persist the correctly-restored state immediately so a crash/reload
       // right after restore doesn't revert to starter-file content.
+      self._invalidateLaterStepSetup(targetStep);
       self._autoSaveProgress();
     });
     p = p.then(function () { return self._runPostFileloadSetup(savedStepObj); });

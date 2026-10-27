@@ -707,6 +707,84 @@ test.describe('tutorial asynchronous lifecycle', () => {
     });
   }
 
+  for (const operation of ['reset', 'restore']) {
+    for (const cached of [true, false]) {
+      test(`${operation} from ${cached ? 'a cached step' : 'command replay'} prepares later lessons again while preserving completion`, async ({ page }) => {
+        await loadTutorialRuntime(page);
+        const state = await page.evaluate(async ({ operation, cached }) => {
+          const tutorialId = 'rewound-step-setup';
+          const storageKey = 'tutorial-progress-' + tutorialId;
+          const tutorial = window.__installTutorialHarness([
+            { title: 'First Lesson' },
+            { title: 'Restored Lesson' },
+            { title: 'Later Lesson', setup_commands: ['prepare-later-lesson'] },
+          ], { backend: 'v86', autosaveType: 'commands-and-files', requireTests: false, tutorialId });
+          tutorial.resetType = 'commands';
+          tutorial.autoSaveEnabled = true;
+          tutorial._stepsUnlocked = new Set([0, 1, 2]);
+          const baseline = new ArrayBuffer(0);
+          tutorial._initialVMState = baseline;
+          if (cached) tutorial._stepEntrySnapshots[1] = baseline;
+          // Control the VM and snapshot persistence boundaries. A rewind
+          // removes the later lesson's setup from the guest filesystem.
+          let laterLessonExists = false;
+          let setupRuns = 0;
+          tutorial.emulator = {
+            restore_state: async () => { laterLessonExists = false; },
+            save_state: async () => baseline,
+            serial0_send() {},
+          };
+          tutorial._loadCachedSnapshot = async () => null;
+          tutorial._storeCachedSnapshot = async () => {};
+          tutorial._runSilent = async command => {
+            if (command === 'prepare-later-lesson') {
+              laterLessonExists = true;
+              setupRuns++;
+            }
+          };
+          tutorial._refreshPrompt = async () => true;
+          await tutorial.loadStep(0);
+          await tutorial.loadStep(1);
+          await tutorial.loadStep(2);
+          tutorial._stepsPassed = new Set([0, 1, 2]);
+          tutorial._quizPassed = new Set([0, 2]);
+          await tutorial.loadStep(1);
+          const saved = JSON.parse(localStorage.getItem(storageKey));
+          const before = { laterLessonExists, setupRuns, visited: saved.stepsVisited.slice().sort((a, b) => a - b) };
+
+          if (operation === 'reset') {
+            await tutorial.resetStep();
+          } else {
+            tutorial._suppressAutoSave = true;
+            tutorial._pauseBackgroundSync();
+            await tutorial._restoreCommandsAndFiles(saved);
+            tutorial._resumeBackgroundSync();
+          }
+          const persisted = JSON.parse(localStorage.getItem(storageKey));
+          const afterRewind = {
+            laterLessonExists,
+            visited: persisted.stepsVisited.sort((a, b) => a - b),
+            passed: persisted.stepsPassed.sort((a, b) => a - b),
+            quizPassed: persisted.quizPassed.sort((a, b) => a - b),
+            unlocked: persisted.stepsUnlocked.sort((a, b) => a - b),
+          };
+          await tutorial.loadStep(2);
+          return { before, afterRewind, afterReentry: { laterLessonExists, setupRuns } };
+        }, { operation, cached });
+
+        expect(state.before).toEqual({ laterLessonExists: true, setupRuns: 1, visited: [0, 1, 2] });
+        expect(state.afterRewind).toEqual({
+          laterLessonExists: false,
+          visited: [0, 1],
+          passed: [0, 1, 2],
+          quizPassed: [0, 2],
+          unlocked: [0, 1, 2],
+        });
+        expect(state.afterReentry).toEqual({ laterLessonExists: true, setupRuns: 2 });
+      });
+    }
+  }
+
   test('cached commands-and-files restoration reenables autosave after saved files are ready', async ({ page }) => {
     await loadTutorialRuntime(page);
 

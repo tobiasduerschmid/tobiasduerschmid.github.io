@@ -3457,6 +3457,13 @@ are mapped by key, so inserted lessons do not inherit unrelated test/quiz passes
 Deep links select the resume step without discarding restored completion records.
 Tutorials without this option retain the existing numeric behavior.
 
+For command-based Reset and `commands-and-files` resume, `stepsVisited` must
+reflect the restored workspace. Both cached-snapshot and replay paths discard
+visited entries after the restored step before saving progress, so opening a
+later step runs its setup again. Keep test passes, quiz passes, unlocked steps,
+and saved drafts intact. Ordinary navigation within the same workspace retains
+its visited entries and does not repeat completed setup.
+
 Python also supplies `legacy_step_keys` for its original 12-step ordering. Before
 versioning, both that ordering and the expanded ordering could produce saves.
 New-only filenames, indices outside the legacy range, or an active file matching

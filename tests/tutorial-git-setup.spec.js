@@ -16,15 +16,88 @@ async function terminalText(page) {
 }
 
 async function command(page, text) {
+  const before = await terminalText(page);
   const input = page.getByRole('textbox', { name: 'Terminal input', exact: true });
   await input.focus();
   await page.keyboard.type(text);
   await page.keyboard.press('Enter');
-  await expect.poll(() => terminalText(page), {
+  let output = '';
+  await expect.poll(async () => {
+    output = await terminalText(page);
+    return output === before ? '' : output;
+  }, {
     message: `The interactive terminal returns to its prompt after ${text}`,
     timeout: 15_000,
   }).toMatch(new RegExp(`${text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[\\s\\S]*tutorial:[^\\n]*[#\\$]$`));
+  return output.slice(output.lastIndexOf(text) + text.length);
 }
+
+async function openAdvancedGit(page) {
+  await page.goto('/SEBook/tools/git-advanced-tutorial?instructor-mode=true');
+  await waitForTutorialReady(page, {
+    readySelector: '.tvm-terminal-container', bootTimeout: 90_000,
+  });
+  await expect.poll(() => terminalText(page), { timeout: 15_000 }).toMatch(/tutorial:[^\n]*[#\$]$/);
+}
+
+async function visitStep(page, step) {
+  await page.getByRole('button', { name: new RegExp(`^Step ${step}:`) }).click();
+  await expect(page.getByRole('status').filter({ hasText: 'Preparing step' })).toBeHidden({ timeout: 30_000 });
+}
+
+async function expectBlameSetup(page) {
+  await page.getByRole('button', { name: 'Git Graph', exact: true }).click();
+  const graph = page.getByLabel(/^Live Git graph/);
+  await expect(graph.getByText('CI: auto-format via whitespace-normalize', { exact: true })).toBeVisible({ timeout: 15_000 });
+  const authors = await command(page, 'git log --all --format=%an');
+  expect(authors, 'The blame lesson must seed its formatter commit').toMatch(/\nCI-Bot\n/);
+  expect(authors, 'The blame lesson must seed its original author commit').toMatch(/\nBob\n/);
+  const clip = await command(page, "grep -n '^def clip' calculator.py");
+  expect(clip, 'The blame lesson must seed its clip function before any solution').toMatch(/\n\d+:def clip\(x, lo, hi\):\n/);
+}
+
+test('revisiting blame preserves work until resetting an earlier lesson requires fresh setup', async ({ page }) => {
+  test.setTimeout(120_000);
+  await openAdvancedGit(page);
+  await visitStep(page, 6);
+  await expectBlameSetup(page);
+  await command(page, LEARNER_COMMAND);
+
+  await visitStep(page, 1);
+  await visitStep(page, 6);
+  await page.getByRole('textbox', { name: 'Terminal input', exact: true }).focus();
+  await page.keyboard.press('ArrowUp');
+  await expect.poll(() => terminalText(page)).toMatch(/tutorial:[^\n]*[#\$] echo learner-before-setup$/);
+  await page.keyboard.press('Enter');
+  await expect.poll(() => terminalText(page)).toMatch(/learner-before-setup\ntutorial:[^\n]*[#\$]$/);
+  await expectBlameSetup(page);
+
+  await visitStep(page, 1);
+  // The native reset link stays keyboard-operable even while a long step
+  // tooltip overlaps its pointer target.
+  await page.getByRole('link', { name: 'Reset Current Step', exact: true }).focus();
+  await page.keyboard.press('Enter');
+  await page.getByRole('button', { name: 'Reset step', exact: true }).click();
+  await waitForTutorialReady(page, {
+    readySelector: '.tvm-terminal-container', bootTimeout: 90_000,
+  });
+  await visitStep(page, 6);
+  await expectBlameSetup(page);
+});
+
+test('revisiting blame after reloading an earlier lesson recreates its setup', async ({ page }) => {
+  test.setTimeout(120_000);
+  await openAdvancedGit(page);
+  await visitStep(page, 6);
+  await expectBlameSetup(page);
+  await visitStep(page, 1);
+  await page.reload();
+  await waitForTutorialReady(page, {
+    readySelector: '.tvm-terminal-container', bootTimeout: 90_000,
+  });
+  await visitStep(page, 6);
+  await expectBlameSetup(page);
+});
 
 test('step preparation stays out of terminal scrollback and learner command history', async ({ page }) => {
   test.setTimeout(120_000);
