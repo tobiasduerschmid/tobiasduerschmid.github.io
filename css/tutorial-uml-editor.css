@@ -35,12 +35,6 @@
   min-height: 0;
 }
 
-.tvm-uml-test-failures {
-  flex-basis: 100%;
-  margin: 6px 0 0 24px;
-  color: inherit;
-}
-
 .tvm-uml-editor-tutorial .tvm-step-actions {
   display: flex;
   align-items: center;

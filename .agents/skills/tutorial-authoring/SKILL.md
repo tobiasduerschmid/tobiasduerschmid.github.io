@@ -543,9 +543,11 @@ anchors. `source_*` conditions intentionally inspect the full source instead.
 the original **Hints** disclosure and flat hint-card layout; opening the collapsed
 panel shows only the applicable advice from failed checks. There is no global three-hint cap,
 manual reveal ladder, or stored reveal depth. Authored guidance takes precedence
-over generated fallback advice. UML checks retain actual assertion diagnostics
-alongside applicable authored hints, and an empty diagnostic result does not
-invent a naming nudge. Passing checks no longer contribute hints.
+over generated fallback advice. UML checks retain applicable assertion hint
+records alongside authored hints, and an empty hint result does not invent a
+naming nudge. Raw assertion failure messages are not displayed in the results;
+the results show the authored criterion description and pass/fail status.
+Passing checks no longer contribute hints.
 When several failed checks share an identical hint body and authored title,
 the flat panel shows that advice once, using the first applicable title.
 Different fallback titles derived from test descriptions do not duplicate the
@@ -2695,6 +2697,9 @@ channel.
   instruction chrome on the left and `_includes/uml-editor.html` as the
   right-side workspace editor. Step `tests[].assertions` inspect the current
   ArchUML source for elements, members, relations, transitions, and messages.
+  Test results show the authored criterion descriptions and pass/fail status,
+  without exposing precise assertion failure messages. The separate **Hints**
+  disclosure retains guidance matched to the learner's current diagram.
   The step footer exposes a confirmed "Remove All Elements" action that
   replaces the current step's active diagram draft with an empty ArchUML
   document; it does not clear drafts saved for other diagram types.

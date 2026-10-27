@@ -619,14 +619,8 @@
       var ok = results[index] === true;
       html += '<li class="tvm-test-item ' + (ok ? 'pass' : 'fail') + '">';
       html += '<span class="tvm-test-icon">' + (ok ? '&#10003;' : '&#10007;') + '</span>';
+      // Keep results at the criterion level; targeted guidance lives in Hints.
       html += '<span class="tvm-test-desc">' + escapeHtml(test.description || 'UML check') + '</span>';
-      if (!ok && test.failures && test.failures.length) {
-        html += '<ul class="tvm-uml-test-failures">';
-        test.failures.forEach(function (failure) {
-          html += '<li>' + escapeHtml(failure) + '</li>';
-        });
-        html += '</ul>';
-      }
       html += '</li>';
     });
     html += '</ul></div>';

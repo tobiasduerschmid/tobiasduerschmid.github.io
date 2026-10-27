@@ -4878,7 +4878,6 @@ PlayerState <|-- BankruptState
     await page.getByRole('button', { name: /Test My Work/ }).click();
     await expect(page.locator('.tvm-test-summary.partial')).toBeVisible();
     await expectFailedUmlCriterion(page, 'Operations support the later sequence diagram');
-    await expect(page.locator('.tvm-test-item.fail').filter({ hasText: 'argument typed as' })).toBeVisible();
     await expect(page.locator('.tvm-btn-next')).toBeEnabled();
   });
 
@@ -4904,7 +4903,6 @@ PlayerState <|-- BankruptState
     await page.getByRole('button', { name: /Test My Work/ }).click();
     await expect(page.locator('.tvm-test-summary.partial')).toBeVisible();
     await expectFailedUmlCriterion(page, 'Player owns or aggregates its current state');
-    await expect(page.locator('.tvm-test-item.fail').filter({ hasText: 'target multiplicity' })).toBeVisible();
     await expect(page.locator('.tvm-btn-next')).toBeEnabled();
   });
 
@@ -4980,7 +4978,6 @@ PlayerState <|-- BankruptState
     await page.getByRole('button', { name: /Test My Work/ }).click();
     await expect(page.locator('.tvm-test-summary.partial')).toBeVisible();
     await expectFailedUmlCriterion(page, 'Concrete states implement abstract operations');
-    await expect(page.locator('.tvm-test-item.fail').filter({ hasText: 'InJailState.takeTurn' })).toBeVisible();
     await expect(page.locator('.tvm-btn-next')).toBeEnabled();
   });
 

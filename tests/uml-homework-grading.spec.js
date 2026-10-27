@@ -29,6 +29,48 @@ async function expectFailure(page, description) {
   await expect(page.getByRole('listitem').filter({ has: page.getByText(description, { exact: true }) })).toContainText('✗');
 }
 
+for (const theme of ['light', 'dark']) {
+  test(`empty class diagram results retain criteria without revealing assertion diagnostics in ${theme} mode`, async ({ page }) => {
+    await prepareStep(page, 'class', '@startuml\n@enduml');
+    await page.evaluate(theme => document.documentElement.classList.toggle('dark-mode', theme === 'dark'), theme);
+    await checkWork(page);
+    const descriptions = [
+      'State-pattern classes are present',
+      'Operations support the later sequence diagram',
+      'Player owns or aggregates its current state',
+      'Concrete states implement the state abstraction',
+      'Concrete states implement abstract operations',
+    ];
+    for (const description of descriptions) {
+      const criterion = page.getByRole('listitem').filter({ has: page.getByText(description, { exact: true }) });
+      await expect(criterion).toBeVisible();
+      await expect(criterion).toHaveText(new RegExp('^\\s*[✓✗]\\s*' + description + '\\s*$'));
+    }
+    await expectFailure(page, 'State-pattern classes are present');
+    await expect(page.getByText('Expected matching "class" "Player".', { exact: true })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Hints', exact: true })).toHaveCount(0);
+    await a11yCheckpoint(page, `uml-homework-criterion-results-${theme}`);
+  });
+
+  test(`a partial class diagram keeps applicable hints collapsed until requested in ${theme} mode`, async ({ page }) => {
+    const source = diagrams.class.replace('setState(state: PlayerState)', 'setState(state: NormalState)');
+    await prepareStep(page, 'class', source);
+    await page.evaluate(theme => document.documentElement.classList.toggle('dark-mode', theme === 'dark'), theme);
+    await checkWork(page);
+    await expectFailure(page, 'Operations support the later sequence diagram');
+    const disclosure = page.getByRole('button', { name: 'Hints', exact: true });
+    const hint = page.getByText(/The state abstraction and Player should share the turn operation name/);
+    await expect(disclosure).toHaveAttribute('aria-expanded', 'false');
+    await expect(hint).toBeHidden();
+    await disclosure.click();
+    await expect(disclosure).toHaveAttribute('aria-expanded', 'true');
+    await expect(hint).toBeVisible();
+    await a11yCheckpoint(page, `uml-homework-expanded-hints-${theme}`);
+    await disclosure.click();
+    await expect(hint).toBeHidden();
+  });
+}
+
 test('accepts a renamed abstraction with inherited state implementations', async ({ page }) => {
   const source = diagrams.class.replaceAll('PlayerState', 'TurnBehavior').replaceAll('..|> TurnBehavior', '--|> SharedState').replace('@enduml', 'abstract class SharedState\nSharedState ..|> TurnBehavior\n@enduml');
   await prepareStep(page, 'class', source);
@@ -62,11 +104,13 @@ test('accepts a coherent alternative with leftward calls', async ({ page }) => {
   expect(errors).toEqual([]);
 });
 
-test('reports a sequence transition missing from the state diagram', async ({ page }) => {
+test('a missing sequence transition fails its criterion without revealing the assertion diagnostic', async ({ page }) => {
   await prepareStep(page, 'sequence', diagrams.sequence, { ...diagrams, state: diagrams.state.replace('NormalState --> JailState : third double\n', '') });
   await checkWork(page);
   await expectFailure(page, 'State-change call passes the next state object');
-  await expect(page.getByText('The state diagram needs the illustrated transition from NormalState to JailState.', { exact: true })).toBeVisible();
+  const criterion = page.getByRole('listitem').filter({ has: page.getByText('State-change call passes the next state object', { exact: true }) });
+  await expect(criterion).toHaveText(/^\s*✗\s*State-change call passes the next state object\s*$/);
+  await expect(page.getByText('The state diagram needs the illustrated transition from NormalState to JailState.', { exact: true })).toHaveCount(0);
   await a11yCheckpoint(page, 'uml-homework-inconsistent-transition');
 });
 
