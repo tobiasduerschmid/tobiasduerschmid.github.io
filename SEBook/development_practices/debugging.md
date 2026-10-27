@@ -35,25 +35,25 @@ Casual conversation uses *bug* to mean any of three different things. Debugging 
 
 <div class="uml-class-diagram-container" data-uml-type="state" data-uml-spec='@startuml
 [*] --> Fault
-Fault --> Error : program executes\nthe faulty location
-Error --> Failure : incorrect state\nreaches system boundary
+Fault --> Error : program executes the faulty location
+Error --> Failure : incorrect state reaches system boundary
 Failure --> [*]
 note right of Fault
-  An erroneous **location**
+  An erroneous location
   in the code.
   e.g., variable not initialized,
   string used where a number
   was expected.
 end note
 note right of Error
-  An incorrect **state** during
+  An incorrect state during
   execution.
   e.g., a variable holds the
   wrong value.
 end note
 note right of Failure
-  Observed incorrect **outside
-  behavior** at the system boundary.
+  Observed incorrect outside
+  behavior at the system boundary.
   e.g., crash, wrong output, hung UI.
 end note
 @enduml'></div>
