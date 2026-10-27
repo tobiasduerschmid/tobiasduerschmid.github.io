@@ -2921,6 +2921,29 @@ This image upgrade also invalidates older initial/step VM reset caches through
 validator, so restoring a cache cannot bring back the old PID 1 learner shell.
 Saved learner source and tutorial progress remain in their existing stores.
 
+Silent v86 shell work is serialized as one physical Readline input line, using
+base64-decoded `eval` to preserve the current shell's directory, exports, and
+hooks without recording individual setup lines or heredoc bodies in history.
+Each operation emits a separate completion record with its exit status; only
+that executed record followed by the shell prompt completes the request. Echoed
+input, wrapped lines, and prompt-like command output are not completion signals.
+A nonzero final status rejects the request. A deadline rejects active and queued
+work and keeps serial output muted; new serial requests and prompt redraws stay
+blocked until VM reset clears the failed transport state. Boot forwards setup
+rejections to its readiness promise instead of hanging.
+
+First-visit terminal loading spans file synchronization, step setup, entry-state
+snapshotting, post-fileload setup, and the authored step directory. Its opaque
+loading surface keeps the terminal hidden and inert, and input remains gated
+through that full transaction. Success and failure release the loading owner;
+only a successful prompt-readiness check enables terminal input. Preserve learner
+history across step changes; clearing all history is reserved for initial boot.
+Reset waits for active step preparation before restoring the VM, so it cannot
+abandon setup's readiness promise and leave the terminal loading indefinitely.
+Snapshot cache version 8 invalidates earlier VM reset snapshots that may retain
+leaked setup history or pending serial input. Saved learner source and progress
+remain in their separate stores; the storage inventory and controls are unchanged.
+
 The v86 VM includes `mandoc` and version-matched manuals for coreutils, Bash,
 grep, sed, gawk (`man awk` also works), findutils, diffutils, Git, and Make.
 `man [` uses the coreutils `test` manual, which documents bracket syntax.

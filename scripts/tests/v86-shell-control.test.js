@@ -87,6 +87,39 @@ function waitForGitState(emulator, pattern) {
   });
 }
 
+test('multiline setup preserves learner history and the interactive shell state', { timeout: 120_000 }, async t => {
+  const terminal = startTerminal(false);
+  t.after(() => terminal.vm.destroy());
+  await terminal.waitFor(prompt, 90_000);
+  const sandbox = { document: { cookie: '' }, AbortController, TextEncoder, TextDecoder, btoa, atob, setTimeout, clearTimeout };
+  sandbox.window = sandbox;
+  jsVm.runInNewContext(fs.readFileSync(path.join(root, 'js/tutorial-code.js'), 'utf8'), sandbox);
+  const tutorial = new sandbox.TutorialCode({}, { backend: 'v86' });
+  tutorial.emulator = terminal.vm;
+  tutorial.booted = true;
+  await tutorial._setupFilesystem();
+  await terminal.send('echo learner-before-setup\n');
+
+  await tutorial._runSilent([
+    'mkdir -p /tutorial/hidden-setup',
+    'cd /tutorial/hidden-setup',
+    "cat > fixture.txt <<'EOF'",
+    'fixture with a quote \' and $literal and # prompt-like content',
+    'EOF',
+    "printf %s '" + 'long-setup-payload'.repeat(1000) + "' > large.txt",
+    'export TUTORIAL_SETUP_VALUE=ready',
+  ].join('\n'));
+
+  const history = await terminal.send(' history\n');
+  const entries = history.split('\n').filter(line => /^\s+\d+\s/.test(line));
+  assert.equal(entries.length, 1, 'setup and transport commands must never become recallable history');
+  assert.match(entries[0], /echo learner-before-setup$/);
+  const state = await terminal.send(' printf "%s\\n" "$PWD" "$TUTORIAL_SETUP_VALUE"; cat fixture.txt\n');
+  assert.match(state, /\n\/tutorial\/hidden-setup\nready\nfixture with a quote ' and \$literal and # prompt-like content\n/);
+  assert.match(await terminal.send(' wc -c < large.txt\n'), /\n18000\n/);
+  await assert.rejects(tutorial._runSilent('false'), /exit|status|failed/i, 'unsuccessful setup must reject readiness');
+});
+
 for (const coldBoot of [false, true]) {
   test(`Git refresh leaves terminal output and history alone (${coldBoot ? 'cold boot' : 'snapshot'})`, { timeout: 120_000 }, async t => {
     const terminal = startTerminal(coldBoot);

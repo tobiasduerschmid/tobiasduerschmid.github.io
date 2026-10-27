@@ -8,6 +8,43 @@ const { spawnSync } = require('node:child_process');
 
 const source = fs.readFileSync(path.join(__dirname, '../../js/tutorial-code.js'), 'utf8');
 
+test('an unfinished shell command rejects on timeout without sending queued work', async () => {
+  const timers = new Set();
+  const listeners = new Set();
+  const sent = [];
+  const sandbox = {
+    document: { cookie: '' }, AbortController, TextEncoder, btoa,
+    setTimeout(callback) { timers.add(callback); return callback; },
+    clearTimeout(callback) { timers.delete(callback); },
+  };
+  sandbox.window = sandbox;
+  vm.runInNewContext(source, sandbox, { filename: 'tutorial-code.js' });
+  const tutorial = new sandbox.TutorialCode({}, { backend: 'v86' });
+  tutorial.emulator = {
+    add_listener(_event, listener) { listeners.add(listener); },
+    remove_listener(_event, listener) { listeners.delete(listener); },
+    serial0_send(command) { sent.push(command); },
+  };
+
+  const running = tutorial._runSilent('printf "still working # "; sleep 999');
+  const queued = tutorial._runSilent('echo must-not-run');
+  const results = Promise.allSettled([running, queued]);
+  // The guest can echo the whole submitted line and print prompt-like text
+  // before completing. Neither is evidence that it is ready for more input.
+  for (const byte of Buffer.from(sent[0] + '\r\nstill working # ')) {
+    for (const listener of [...listeners]) listener(byte);
+  }
+  for (const timeout of [...timers]) timeout();
+
+  const settled = await results;
+  assert.deepEqual(settled.map(result => result.status), ['rejected', 'rejected']);
+  for (const result of settled) assert.match(result.reason.message, /timed out/i);
+  assert.equal(sent.length, 1, 'the shell has not acknowledged readiness for queued input');
+  await assert.rejects(tutorial._runSilent('echo still-must-not-run'), /timed out/i);
+  assert.equal(await tutorial._refreshPrompt(), false, 'a prompt redraw cannot release an unacknowledged shell');
+  assert.equal(sent.length, 1);
+});
+
 function createShellHarness(t, options = {}) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'tutorial-shell-profile-'));
   const profiles = path.join(root, 'profile.d');

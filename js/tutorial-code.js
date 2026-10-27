@@ -137,6 +137,12 @@
     return new TextDecoder('utf-8').decode(bytes);
   }
 
+  // Keep the whole operation on one Readline history entry, including heredocs.
+  // eval preserves interactive-shell state such as cd, exports, and prompt hooks.
+  function interactiveShellCommand(command) {
+    return 'eval "$(printf %s ' + shellQuote(b64EncodeUtf8(command)) + ' | base64 -d)"';
+  }
+
   // Login shells reload runtime-owned hooks after init restarts the learner's
   // shell. Keep the serial command on one line so its history marker covers
   // the whole update; .new files are excluded from /etc/profile's *.sh glob.
@@ -464,9 +470,9 @@
     });
   }
 
-  // Version 7 also excludes shells without a controlling terminal. This covers
-  // cold-boot caches whose identity has no downloaded snapshot asset validator.
-  var V86_SNAPSHOT_CACHE_VERSION = 7;
+  // Exclude snapshots with leaked setup history or serial input still queued
+  // after the old echoed-marker completion check. Learner progress is separate.
+  var V86_SNAPSHOT_CACHE_VERSION = 8;
   var V86_SILENT_COMMAND_TIMEOUT_MS = 240000;
   // Instructor solution batches can contain multi-command Git workflows; keep
   // applySolution() pending until those scripts have a real chance to finish.
@@ -693,6 +699,7 @@
     this._silentQueue = [];          // queued _runSilent Promises
     this._silentRunning = false;      // true while a silent cmd is in-flight
     this._silentListeners = [];       // in-flight _runSilent listener registrations
+    this._silentFailure = null;       // unknown shell state after a command deadline
     this._resetInProgress = false;    // guard against concurrent resetStep() calls
     // Resolves when the active step's files, setup commands, and derived
     // visible files are ready. Solution application and callers of loadStep()
@@ -720,6 +727,7 @@
     this.term = null;
     this.fitAddon = null;
     this._terminalReadyForInput = false; // true once the prompt is visible to the student
+    this._terminalSetupInProgress = false;
     this._terminalPromptRevealAttempted = false;
     this._terminalReadinessTimer = null;
     this._legacySerialBackgroundSkipLogged = false;
@@ -2564,7 +2572,7 @@
       overlay = document.createElement('div');
       overlay.className = 'tvm-terminal-loading';
       overlay.innerHTML =
-        '<div class="tvm-loading-spinner"></div>' +
+        '<div class="tvm-loading-spinner" aria-hidden="true"></div>' +
         '<div class="tvm-loading-text"></div>';
       overlay.setAttribute('role', 'status');
       overlay.setAttribute('aria-live', 'polite');
@@ -2572,14 +2580,16 @@
       panel.appendChild(overlay);
     }
     overlay.querySelector('.tvm-loading-text').textContent = msg || 'Loading\u2026';
-    overlay.style.display = 'flex';
+    panel.classList.add('is-loading');
+    if (this.terminalContainerEl) this.terminalContainerEl.inert = true;
   };
 
   TutorialCode.prototype._hideTerminalLoading = function () {
+    if (this._terminalSetupInProgress) return;
     var panel = this.root && this.root.querySelector('.tvm-terminal-panel');
     if (!panel) return;
-    var overlay = panel.querySelector('.tvm-terminal-loading');
-    if (overlay) overlay.style.display = 'none';
+    panel.classList.remove('is-loading');
+    if (this.terminalContainerEl) this.terminalContainerEl.inert = false;
   };
 
   /**
@@ -3646,7 +3656,9 @@
     var backend = this.config.backend;
     if (backend === 'v86') {
       if (this.emulator && this.booted) {
-        this._runSilent('stty cols ' + cols + ' rows ' + rows);
+        this._runSilent('stty cols ' + cols + ' rows ' + rows).catch(function () {
+          // Terminal readiness owns recovery; resizing must not bypass it.
+        });
       } else {
         // Store so _setupFilesystem can apply it after boot
         this._pendingStty = { cols: cols, rows: rows };
@@ -4101,7 +4113,7 @@
           if (!promptDetected && (bootOutput.includes('$ ') || bootOutput.includes('# ') || bootOutput.includes(':~'))) {
             promptDetected = true; self.booted = true;
             self.emulator.remove_listener('serial0-output-byte', onBoot);
-            self._setupFilesystem(setupCommandsOverride).then(resolve);
+            self._setupFilesystem(setupCommandsOverride).then(resolve, reject);
           }
         }
         self.emulator.add_listener('serial0-output-byte', onBoot);
@@ -4120,7 +4132,7 @@
             self.emulator.remove_listener('serial0-output-byte', onBoot);
             self.booted = true;
             console.warn('TutorialCode: boot prompt not detected, continuing anyway.');
-            self._setupFilesystem(setupCommandsOverride).then(resolve);
+            self._setupFilesystem(setupCommandsOverride).then(resolve, reject);
           }
         }, 30000);
       } catch (err) { reject(err); }
@@ -4144,8 +4156,8 @@
     // terminal immediately via xterm so the user always starts with a clean slate.
     // HISTIGNORE pattern matches the marker suffix that every _runSilent /
     // _runVisible call appends (e.g. " #__SIL_a1b2c3d4"), so bash skips those
-    // lines at history-insert time regardless of whether HISTCONTROL is in
-    // effect yet — closes the chicken-and-egg gap on the very first boot line.
+    // operations at history-insert time. The silent transport keeps even a
+    // multiline script on one physical input line, covered by this marker.
     var histIgnore = "'*#__SIL_*:*#__VIS_*'";
     // User-command-listener PROMPT_COMMAND hook. Baked into the boot init so
     // it's captured by the post-boot snapshot used for "commands" resets.
@@ -4278,6 +4290,7 @@
     this._muteCount = 1;
     this._silentQueue = [];
     this._silentRunning = false;
+    this._silentFailure = null;
     this._gitGraphHookInstalled = false;
     this._gitGraphHookMode = null;
     this._activeUserCmdListener = '';
@@ -4312,6 +4325,7 @@
   };
 
   TutorialCode.prototype._canAcceptTerminalInput = function () {
+    if (this._terminalSetupInProgress) return false;
     if (this.config.backend !== 'v86') return true;
     return !!(this.emulator &&
       this._terminalReadyForInput &&
@@ -4320,6 +4334,7 @@
   };
 
   TutorialCode.prototype._handleTerminalInputBeforeReady = function () {
+    if (this._terminalSetupInProgress) return;
     if (this.config.backend !== 'v86') return;
     this._showTerminalLoading('Preparing terminal\u2026');
     this._scheduleTerminalReadinessRecovery(500);
@@ -4327,6 +4342,7 @@
 
   TutorialCode.prototype._scheduleTerminalReadinessRecovery = function (delayMs) {
     if (this.config.backend !== 'v86') return;
+    if (this._silentFailure) return;
     if (this._terminalReadinessTimer) return;
     var self = this;
     this._terminalReadinessTimer = setTimeout(function () {
@@ -4340,6 +4356,8 @@
   };
 
   TutorialCode.prototype._refreshPrompt = function () {
+    if (this._silentFailure) return Promise.resolve(false);
+    if (this._terminalSetupInProgress) return Promise.resolve(false);
     if (this.config.backend === 'v86') {
       var self = this;
       this._terminalPromptRevealAttempted = true;
@@ -4747,8 +4765,9 @@
       return this._runWebContainerCommand(cmd, { label: 'WebContainer command' });
     }
     if (this.config.backend !== 'v86') return Promise.resolve();
-    return new Promise(function (resolve) {
-      self._silentQueue.push({ cmd: cmd, resolve: resolve });
+    if (this._silentFailure) return Promise.reject(this._silentFailure);
+    return new Promise(function (resolve, reject) {
+      self._silentQueue.push({ cmd: cmd, resolve: resolve, reject: reject });
       if (!self._silentRunning) self._drainSilentQueue();
     });
   };
@@ -4760,6 +4779,7 @@
     var entry = this._silentQueue.shift();
     var marker = '__SIL_' + Math.random().toString(36).substr(2, 8);
     var buf = '';
+    var completion = new RegExp('(?:^|\\n)' + marker + ':(\\d+)\\r?\\n');
     // Tracked registration so _resetSerialState can clean up in-flight
     // listeners after a VM restore_state(). Without this, orphaned listeners
     // would time out later and decrement muteCount below zero,
@@ -4767,49 +4787,44 @@
     var reg = { onByte: null, timer: null, cleaned: false };
 
     self._muteCount++;
+    function finish(error, shellReady) {
+      if (reg.cleaned) return;
+      reg.cleaned = true;
+      self.emulator.remove_listener('serial0-output-byte', onByte);
+      clearTimeout(reg.timer);
+      var idx = self._silentListeners.indexOf(reg);
+      if (idx >= 0) self._silentListeners.splice(idx, 1);
+      if (shellReady) self._muteCount = Math.max(0, self._muteCount - 1);
+      else self._silentFailure = error;
+      if (error) entry.reject(error);
+      else entry.resolve();
+      if (shellReady) self._drainSilentQueue();
+      else {
+        // A deadline does not mean the shell stopped. Never send queued input
+        // into that unknown state or report unfinished work as successful.
+        self._silentRunning = false;
+        self._silentQueue.splice(0).forEach(function (pending) { pending.reject(error); });
+      }
+    }
     function onByte(byte) {
       if (reg.cleaned) return;  // defensive: listener should already be removed
       buf += String.fromCharCode(byte);
-      var mi = buf.indexOf(marker);
-      if (mi !== -1) {
-        var tail = buf.substring(mi + marker.length);
-        if (tail.includes('# ') || tail.includes('$ ')) {
-          reg.cleaned = true;
-          self.emulator.remove_listener('serial0-output-byte', onByte);
-          clearTimeout(timer);
-          var idx = self._silentListeners.indexOf(reg);
-          if (idx >= 0) self._silentListeners.splice(idx, 1);
-          self._muteCount = Math.max(0, self._muteCount - 1);
-          entry.resolve();
-          self._drainSilentQueue();
-        }
+      var match = completion.exec(buf);
+      if (match && /[#$] $/.test(buf.slice(match.index + match[0].length))) {
+        var status = Number(match[1]);
+        finish(status === 0 ? null : new Error('Tutorial shell command failed with exit status ' + status + '.'), true);
       }
     }
     self.emulator.add_listener('serial0-output-byte', onByte);
-    var timer = setTimeout(function () {
-      if (reg.cleaned) return;  // already cleaned up by reset or marker match
-      reg.cleaned = true;
-      self.emulator.remove_listener('serial0-output-byte', onByte);
-      var idx = self._silentListeners.indexOf(reg);
-      if (idx >= 0) self._silentListeners.splice(idx, 1);
-      self._muteCount = Math.max(0, self._muteCount - 1);
-      entry.resolve();
-      self._drainSilentQueue();
+    reg.timer = setTimeout(function () {
+      finish(new Error('Tutorial shell command timed out before returning to the prompt.'), false);
     }, V86_SILENT_COMMAND_TIMEOUT_MS);
     reg.onByte = onByte;
-    reg.timer = timer;
     self._silentListeners.push(reg);
-    // Heredocs and embedded newlines make it unsafe to append ` #marker` to
-    // the same line — a trailing "EOF #marker" no longer matches the heredoc
-    // terminator and the shell hangs at a PS2 `>` prompt forever. In those
-    // cases, send the marker as a separate no-op line that prints after the
-    // previous command's prompt returns.
-    if (/<<|\n/.test(entry.cmd)) {
-      self.sendCommand(' ' + entry.cmd);
-      self.sendCommand(': #' + marker);
-    } else {
-      self.sendCommand(' ' + entry.cmd + ' #' + marker);
-    }
+    // Split the printed marker so only execution can emit the completion
+    // record. An echoed command or prompt-looking output cannot finish it.
+    self.sendCommand(' ' + interactiveShellCommand(entry.cmd) +
+      '; printf "\\n%s%s:%s\\n" "__SIL_" ' + shellQuote(marker.slice(6)) + ' "$?" #' + marker);
   };
 
   /**
@@ -6844,6 +6859,7 @@
       self._shellWriter = { write: function (data) { return writer.write(data); } };
       if (self.term && typeof self.term.onData === 'function') {
         self._shellInputDispose = self.term.onData(function (data) {
+          if (!self._canAcceptTerminalInput()) return;
           writer.write(data).catch(function () {});
         });
       }
@@ -10151,13 +10167,13 @@
         self._logLegacyBackgroundSerialSkip('git gutter refresh');
         return { content: null, notReady: true };
       }
-      var cmd = '( cd ' + shellQuote(repoRoot) + ' && ( git show HEAD:\'' + safeRel + '\' 2>/dev/null && echo ' + marker + ' ) > ' + shellQuote(tmpVMPath) + ' )';
+      var cmd = '( cd ' + shellQuote(repoRoot) + ' && { git show HEAD:\'' + safeRel + '\' 2>/dev/null && echo ' + marker + '; true; } > ' + shellQuote(tmpVMPath) + ' )';
       return self._runSilent(cmd)
         .then(function () { return new Promise(function (r) { setTimeout(r, 120); }); })
         .then(function () { return self.emulator.read_file(read9pPath); })
         .then(function (buf) {
           // Cleanup (fire-and-forget; cleanup failure is harmless).
-          self._runSilent('rm -f ' + shellQuote(tmpVMPath));
+          self._runSilent('rm -f ' + shellQuote(tmpVMPath)).catch(function () {});
           if (!buf || buf.length === 0) {
             if (!self._gitGutterDiagLogged) {
               self._gitGutterDiagLogged = true;
@@ -11041,6 +11057,11 @@
     if (!step) return;
     if (this.config.backend === 'smalltalk') return this._replaceSmalltalkFiles(step.files || []);
     var self = this;
+    // A VM restore abandons pending serial listeners. Wait for preparation
+    // before resetting so its readiness promise and loading state can settle.
+    if (this._stepSetupPromise) {
+      return this._stepSetupPromise.then(function () { return self.resetStep(); });
+    }
     if (this._prologInterpreter && this._prologInterpreter.busy) {
       return this._prologInterpreter.stopForWorkspaceChange().then(function () { return self.resetStep(); });
     }
@@ -11938,6 +11959,19 @@
 
     var self = this;
 
+    var hasSetup = firstVisit && step.setup_commands && step.setup_commands.length > 0;
+    var hasPostFileload = firstVisit && (
+      (this.postFileloadSetupCommands && this.postFileloadSetupCommands.length > 0) ||
+      (step.post_fileload_setup && step.post_fileload_setup.length > 0)
+    );
+    var preparingTerminal = (hasSetup || hasPostFileload) &&
+      !self._isBackgroundSyncPaused() &&
+      (this.config.backend === 'v86' || this.config.backend === 'webcontainer');
+    if (preparingTerminal) {
+      self._terminalSetupInProgress = true;
+      self._showTerminalLoading('Preparing step\u2026');
+    }
+
     // Close any open files that aren't part of this step. The underlying VM
     // filesystem is untouched, so terminal commands (`cat`, etc.) can still
     // read those files.
@@ -11995,11 +12029,6 @@
       });
     }
 
-    var hasSetup = firstVisit && step.setup_commands && step.setup_commands.length > 0;
-    var hasPostFileload = firstVisit && (
-      (this.postFileloadSetupCommands && this.postFileloadSetupCommands.length > 0) ||
-      (step.post_fileload_setup && step.post_fileload_setup.length > 0)
-    );
     var visibleFilesRefreshScheduled = false;
     if (self._isBackgroundSyncPaused()) {
       visibleFilesRefreshScheduled = true;
@@ -12011,7 +12040,6 @@
       // and the git-graph panel stay interactive. Bash skips this line at
       // history-insert time because _runSilent appends a "#__SIL_<id>"
       // marker that matches the boot-time HISTIGNORE pattern.
-      self._showTerminalLoading('Preparing step\u2026');
       if (hasSetup) {
         if (this.config.backend === 'webcontainer') {
           stepReadyPromise = stepReadyPromise.then(function () {
@@ -12047,7 +12075,6 @@
       }).then(function () {
         return self._runStepDir(step);
       }).then(function () {
-        self._hideTerminalLoading();
         self._refreshGitGraph && self._refreshGitGraph();
       });
     } else if (firstVisit && step.setup_commands && step.setup_commands.length > 0) {
@@ -12234,12 +12261,13 @@
     });
     this._stepSetupPromise = activeStepReady;
     var clearStepReady = function () {
+      if (preparingTerminal) {
+        self._terminalSetupInProgress = false;
+        self._hideTerminalLoading();
+      }
       if (self._stepSetupPromise === activeStepReady) self._stepSetupPromise = null;
     };
-    activeStepReady.then(clearStepReady, function () {
-      self._hideTerminalLoading();
-      clearStepReady();
-    });
+    activeStepReady.then(clearStepReady, clearStepReady);
 
     return activeStepReady;
   };

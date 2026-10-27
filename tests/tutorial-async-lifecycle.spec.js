@@ -79,6 +79,148 @@ function installTutorialHarness(steps, options = {}) {
 }
 
 test.describe('tutorial asynchronous lifecycle', () => {
+  for (const outcome of ['success', 'failure']) {
+    test(`terminal stays inaccessible throughout step preparation and recovers after ${outcome}`, async ({ page }) => {
+      await loadTutorialRuntime(page);
+      await page.addStyleTag({ path: path.join(__dirname, '..', 'css', 'tutorial.css') });
+      await page.evaluate(() => {
+        const tutorial = window.__installTutorialHarness([{
+          title: 'Prepared Step', setup_commands: ['prepare-step'],
+        }], { backend: 'v86', requireTests: false });
+        tutorial.root.insertAdjacentHTML('beforeend',
+          '<section class="tvm-terminal-panel" aria-label="Terminal">' +
+          '<div class="tvm-terminal-header"><button>Terminal tools</button></div>' +
+          '<div class="tvm-terminal-container"><textarea aria-label="Terminal input"></textarea></div>' +
+          '</section>');
+        tutorial.terminalContainerEl = tutorial.root.querySelector('.tvm-terminal-container');
+        tutorial._showTerminalLoading = window.TutorialCode.prototype._showTerminalLoading;
+        tutorial._hideTerminalLoading = window.TutorialCode.prototype._hideTerminalLoading;
+        let finishSetup;
+        let failSetup;
+        tutorial._runSilent = () => new Promise((resolve, reject) => {
+          finishSetup = resolve;
+          failSetup = reject;
+        });
+        // A prompt refresh can finish while asynchronous file/snapshot work is
+        // still pending. It must not uncover the terminal before the step is ready.
+        let finishFiles;
+        let filesStarted;
+        const refreshingFiles = new Promise(resolve => { filesStarted = resolve; });
+        tutorial._refreshStepVisibleFiles = () => new Promise(resolve => {
+          finishFiles = resolve;
+          filesStarted();
+        });
+        tutorial._showError = message => {
+          const alert = document.createElement('div');
+          alert.setAttribute('role', 'alert');
+          alert.textContent = message;
+          tutorial.root.appendChild(alert);
+        };
+        const pending = tutorial.loadStep(0).catch(error => error.message);
+        window.__loadingLifecycle = {
+          tutorial, pending, refreshingFiles,
+          finishSetup: () => finishSetup(),
+          failSetup: () => failSetup(new Error('Setup failed')),
+          finishFiles: () => finishFiles(),
+        };
+      });
+
+      const status = page.getByRole('status').filter({ hasText: 'Preparing step' });
+      const input = page.getByLabel('Terminal input');
+      await expect(status).toBeVisible();
+      await expect(input).toBeHidden();
+      await input.evaluate(element => element.focus());
+      await expect(input).not.toBeFocused();
+      await expect(page.getByRole('button', { name: 'Terminal tools' })).toHaveCount(0);
+
+      if (outcome === 'success') {
+        await page.evaluate(async () => {
+          const state = window.__loadingLifecycle;
+          state.finishSetup();
+          await state.refreshingFiles;
+          state.tutorial._hideTerminalLoading();
+        });
+        await expect(status).toBeVisible();
+        await expect(input).toBeHidden();
+        await page.evaluate(() => window.__loadingLifecycle.finishFiles());
+      } else {
+        await page.evaluate(() => window.__loadingLifecycle.failSetup());
+        await expect(page.getByRole('alert')).toContainText('Setup failed');
+      }
+      await page.evaluate(() => window.__loadingLifecycle.pending);
+      await expect(status).toBeHidden();
+      await expect(input).toBeVisible();
+      await input.focus();
+      await expect(input).toBeFocused();
+    });
+  }
+
+  for (const outcome of ['success', 'failure']) {
+    test(`reset waits for pending step preparation and preserves its ${outcome}`, async ({ page }) => {
+      await loadTutorialRuntime(page);
+      await page.addStyleTag({ path: path.join(__dirname, '..', 'css', 'tutorial.css') });
+      await page.evaluate(() => {
+        const tutorial = window.__installTutorialHarness([{
+          title: 'Prepared Step', setup_commands: ['prepare-step'],
+        }], { backend: 'v86', requireTests: false });
+        tutorial.root.insertAdjacentHTML('beforeend',
+          '<section class="tvm-terminal-panel" aria-label="Terminal">' +
+          '<div class="tvm-terminal-container"><textarea aria-label="Terminal input"></textarea></div>' +
+          '</section>');
+        tutorial.terminalContainerEl = tutorial.root.querySelector('.tvm-terminal-container');
+        tutorial._showTerminalLoading = window.TutorialCode.prototype._showTerminalLoading;
+        tutorial._hideTerminalLoading = window.TutorialCode.prototype._hideTerminalLoading;
+        tutorial.resetType = 'commands';
+        tutorial._stepEntrySnapshots[0] = new ArrayBuffer(0);
+        const state = { restores: 0, resetResult: 'pending' };
+        tutorial.emulator = {
+          restore_state: async () => { state.restores++; },
+          serial0_send() {},
+        };
+        tutorial.term = {
+          clear() {}, focus() {},
+          buffer: { active: { length: 1, getLine: () => ({ translateToString: () => 'tutorial:~# ' }) } },
+        };
+        tutorial._runSilent = command => command === 'prepare-step'
+          ? new Promise((resolve, reject) => {
+            state.finishSetup = resolve;
+            state.failSetup = () => reject(new Error('Setup failed'));
+          })
+          : Promise.resolve();
+        state.load = tutorial.loadStep(0).catch(error => error.message);
+        state.reset = Promise.resolve(tutorial.resetStep()).then(
+          () => { state.resetResult = 'success'; },
+          error => { state.resetResult = error.message; },
+        );
+        window.__resetDuringSetup = state;
+      });
+
+      const status = page.getByRole('status').filter({ hasText: 'Preparing step' });
+      await expect(status).toBeVisible();
+      expect(await page.evaluate(() => ({
+        restores: window.__resetDuringSetup.restores,
+        result: window.__resetDuringSetup.resetResult,
+      })), 'Reset must not replace the VM while preparation owns it').toEqual({ restores: 0, result: 'pending' });
+
+      const result = await page.evaluate(async outcome => {
+        const state = window.__resetDuringSetup;
+        if (outcome === 'success') state.finishSetup();
+        else state.failSetup();
+        await Promise.all([state.load, state.reset]);
+        return { restores: state.restores, result: state.resetResult };
+      }, outcome);
+      if (outcome === 'success') {
+        expect(result).toEqual({ restores: 1, result: 'success' });
+        await expect(status).toBeHidden();
+        await page.getByLabel('Terminal input').focus();
+        await expect(page.getByLabel('Terminal input')).toBeFocused();
+      } else {
+        expect(result).toEqual({ restores: 0, result: 'Setup failed' });
+        await expect(page.getByRole('alert')).toContainText('Setup failed');
+      }
+    });
+  }
+
   test('step readiness waits for file sync and setup before applying a solution', async ({ page }) => {
     await loadTutorialRuntime(page);
 

@@ -2588,20 +2588,48 @@ html:not(.dark-mode) .tvm-diagram-fs-close:hover {
 .tvm-terminal-loading {
   position: absolute;
   inset: 0;
-  display: flex;
+  display: none;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 16px;
-  background: rgba(20, 20, 20, 0.88);
+  background: #141414;
   color: #b0b0c0;
+  font-size: max(1em, var(--font-size-readable-min, 16px));
+  padding: 1em;
+  overflow: auto;
+  text-align: center;
   z-index: 5;
-  pointer-events: auto;  /* block clicks/keys on the terminal while up */
+  pointer-events: auto;
 }
 
 html:not(.dark-mode) .tvm-terminal-loading {
-  background: rgba(245, 245, 250, 0.88);
+  background: #f5f5fa;
   color: #40405c;
+}
+
+.tvm-terminal-panel.is-loading > :not(.tvm-terminal-loading) {
+  visibility: hidden;
+}
+
+.tvm-terminal-panel.is-loading > .tvm-terminal-loading {
+  display: flex;
+}
+
+.tvm-terminal-panel .tvm-terminal-loading .tvm-loading-text {
+  font: inherit;
+  color: inherit;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tvm-terminal-loading .tvm-loading-spinner { animation: none; }
+}
+
+html.prm-reduce .tvm-terminal-loading .tvm-loading-spinner { animation: none; }
+
+@media print {
+  .tvm-terminal-panel.is-loading > .tvm-terminal-loading { display: none; }
+  .tvm-terminal-panel.is-loading > :not(.tvm-terminal-loading) { visibility: visible; }
 }
 
 .tvm-terminal-header {
