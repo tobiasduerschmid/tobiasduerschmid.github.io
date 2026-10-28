@@ -1,4 +1,4 @@
-title: 'Advanced Git: Debugging, History Rewriting, and Submodules'
+title: 'Advanced Git'
 description: Go beyond the basics — master detached HEAD, git's object model, stash, cherry-pick, blame, bisect, rebase (including interactive), squash merge, and submodules. Every step is grounded in a real scenario you will meet on the job.
 
 # Authoring-time Bloom-verb objectives. Not yet rendered to students.
