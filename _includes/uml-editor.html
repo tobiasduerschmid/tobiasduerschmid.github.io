@@ -5581,6 +5581,16 @@ Supported options:
         { separator: true },
         { label: 'Delete', kbd: 'Del', danger: true, onClick: function () { setSelectedLayoutId(item.id, 'node'); deleteSelected(); } }
       ];
+      if (selectedClassForActions()) {
+        const memberActions = ['attribute', 'method'].map(function (kind) {
+          return { label: 'Add ' + kind, onClick: function () {
+            setActiveTool(null);
+            setSelectedLayoutId(item.id, 'node');
+            openClassMemberForm(kind, kind === 'attribute' ? classAttributeButton : classMethodButton);
+          } };
+        });
+        items.splice(1, 0, ...memberActions);
+      }
       showContextMenu(clientX, clientY, items);
     }
 
@@ -6747,7 +6757,12 @@ Supported options:
         : 'For example: -balance: int. ') +
         'Use + public, - private, # protected, or ~ package visibility; {static} and {abstract} are optional. Enter adds; Escape cancels.';
       classMemberForm.hidden = false;
-      classMemberInput.focus();
+      if (wrap.classList.contains('is-fullscreen')) {
+        classActions.scrollIntoView({ block: 'center', inline: 'nearest' });
+        classMemberInput.focus({ preventScroll: true });
+      } else {
+        classMemberInput.focus();
+      }
     }
 
     function classMemberValidationError(signature, kind) {
@@ -10694,35 +10709,37 @@ Supported options:
     }
 
     // ─── Class-member inline edit (double-click an attribute / method) ───
+    function classMemberDisplayKey(member) {
+      return ((member.visibility || '') + ' ' + member.text).replace(/\s+/g, ' ').trim();
+    }
+
     function findClassMemberTextAt(svg, classId, clientX, clientY) {
-      var line = getDeclarationLine(textarea.value, 'class', classId);
+      const line = getDeclarationLine(textarea.value, 'class', classId);
       if (!line) return null;
-      var info = parseClassDeclaration(line);
+      const info = parseClassDeclaration(line);
       if (!info.members.length) return null;
-      // Find the visible <text> element under the cursor that's inside the
-      // class's bbox AND whose text content matches one of the member rows.
-      var below = document.elementsFromPoint(clientX, clientY);
-      for (var i = 0; i < below.length; i++) {
-        var el = below[i];
-        if (el.tagName && el.tagName.toLowerCase() === 'text' && !el.closest('.uml-pg-edit-layer')) {
-          var content = (el.textContent || '').replace(/\s+/g, ' ').trim();
-          if (!content) continue;
-          if (content === info.name) return null; // hit the class name — fall back to rename
-          // Match against parsed member text. Members render as `+ {abstract} foo()`
-          // or `+ name: type`. Strip leading visibility/modifier tokens to compare.
-          for (var j = 0; j < info.members.length; j++) {
-            var m = info.members[j];
-            var rendered = (m.visibility || '') + ' ';
-            if (m.isAbstract) rendered += '{abstract} ';
-            if (m.isStatic) rendered += '{static} ';
-            rendered += (m.text || '').trim();
-            // Normalize whitespace for comparison.
-            var normalized = rendered.replace(/\s+/g, ' ').trim();
-            if (content === normalized || content.indexOf(m.text || '!nope') !== -1) {
-              return { index: j, textEl: el };
-            }
-          }
-        }
+      const border = layoutBoundsElementsForId(svg, classId)[0];
+      const divider = border && border.parentNode.querySelector('line');
+      if (!divider) return null;
+      const bounds = border.getBoundingClientRect();
+      const bodyTop = divider.getBoundingClientRect().top;
+      const occurrences = new Map();
+      // ArchUML emits a class's labels immediately after its box group, with
+      // attributes before methods. Keep ownership even when classes overlap,
+      // and preserve occurrence order for duplicate signatures.
+      for (let el = border.parentNode.nextElementSibling; el && el.tagName.toLowerCase() === 'text'; el = el.nextElementSibling) {
+        const rect = el.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        if (centerX < bounds.left || centerX > bounds.right || centerY <= bodyTop || centerY > bounds.bottom) continue;
+        const key = classMemberDisplayKey(parseMemberLine(el.textContent || ''));
+        const occurrence = occurrences.get(key) || 0;
+        occurrences.set(key, occurrence + 1);
+        if (clientX < rect.left || clientX > rect.right || clientY < rect.top || clientY > rect.bottom) continue;
+        const matches = info.members.map(function (member, index) {
+          return classMemberDisplayKey(member) === key ? index : -1;
+        }).filter(function (index) { return index !== -1; });
+        if (matches[occurrence] !== undefined) return { index: matches[occurrence], textEl: el };
       }
       return null;
     }
@@ -10734,6 +10751,7 @@ Supported options:
       var info = parseClassDeclaration(line);
       var member = info.members[memberIdx];
       if (!member) return;
+      const sourceAtStart = textarea.value;
       var rect = textEl.getBoundingClientRect();
       var input = document.createElement('input');
       input.type = 'text';
@@ -10759,14 +10777,15 @@ Supported options:
       }
       function commit() {
         var raw = input.value.trim();
+        textEl.textContent = originalText;
         cleanup();
-        if (!raw) return;
+        if (!raw || typeSelect.value !== 'class' || textarea.value !== sourceAtStart) return;
         var parsed = parseMemberLine(raw);
+        if (parsed.visibility === member.visibility && parsed.text === member.text &&
+            parsed.isAbstract === member.isAbstract && parsed.isStatic === member.isStatic) return;
         // An omitted visibility stays omitted when editing inline as well.
         info.members[memberIdx] = parsed;
-        snapshotForUndo();
-        var newLine = buildClassLine(info);
-        replaceLineForElementId(classId, newLine);
+        replaceClassDeclaration(classId, info, null);
       }
       function cancel() {
         textEl.textContent = originalText;
@@ -10781,8 +10800,12 @@ Supported options:
         inlineRenameCancel = null;
       }
       function onKey(ev) {
-        if (ev.key === 'Enter') { ev.preventDefault(); commit(); }
-        else if (ev.key === 'Escape') { ev.preventDefault(); cancel(); }
+        if (ev.key !== 'Enter' && ev.key !== 'Escape') return;
+        ev.preventDefault();
+        ev.stopPropagation();
+        if (ev.key === 'Enter') commit();
+        else cancel();
+        focusLayoutTarget(classId);
       }
       input.addEventListener('input', preview);
       input.addEventListener('keydown', onKey);

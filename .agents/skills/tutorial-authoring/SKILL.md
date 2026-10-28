@@ -2807,8 +2807,14 @@ channel.
   overlays the name, preserves references, and restores the rendered name when
   an empty or duplicate identifier is rejected. Class diagrams expose a persistent
   **Class editing** bar: selecting one classifier enables **Rename class**,
-  **Add attribute**, and **Add method** without a menu. Member entry uses a visible
-  signature label and Add/Cancel buttons; Enter submits and Escape cancels.
+  **Add attribute**, and **Add method** without a menu. Right-clicking a classifier
+  also offers **Add attribute** and **Add method** for that class. Double-clicking
+  an existing member edits its exact signature, including visibility and modifiers;
+  matching is scoped to the class body and handles attributes/methods rendered in
+  a different order from source. Empty edits and Escape restore the original row,
+  and stale edits cannot overwrite a changed source or another diagram type.
+  Member entry uses a visible signature label and Add/Cancel buttons; Enter
+  submits and Escape cancels.
   Pending entries do not modify source and are cancelled when the target or
   diagram changes. Commits reuse the existing class declaration, undo, autosave,
   and export paths. Controls use `css/tutorial-uml-editor.css`, including dark
@@ -2828,6 +2834,8 @@ channel.
   Undo, Redo, and Delete require editor focus. Undo/Redo, arrow nudges, and F2
   restore focus synchronously so they cannot steal a subsequent focus choice. Escape cancels a pending palette
   or class/route drag before exiting fullscreen; right-button gestures do not drag.
+  At narrow widths, stacked panes retain a usable canvas height and scroll inside
+  the fullscreen wrapper; palette rows do not shrink over one another.
   Tooltips render within the fullscreen element and dismiss on button activation
   so they cannot remain over the next control. After fullscreen focus restoration,
   the tooltip controller's `dismissAccessibleTooltips()` clears obsolete help;

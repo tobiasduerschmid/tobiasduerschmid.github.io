@@ -1221,6 +1221,8 @@ html.dark-mode .uml-pg-member-error { color: #ffb9b0; }
 
 @media print {
   .uml-pg-class-actions { display: none; }
+  .uml-pg-context-menu,
+  .uml-pg-inline-input { display: none !important; }
   #uml-playground-wrap::backdrop { background: #fff; }
   #uml-pg-fullscreen-bar { display: none; }
   #uml-playground-wrap.is-fullscreen {
@@ -1526,7 +1528,7 @@ html.dark-mode .uml-pg-guide-line {
 
 .uml-pg-context-menu .uml-pg-context-key {
   margin-left: auto;
-  color: #6a7a93;
+  color: #596b84;
   font-size: 0.9em;
   font-family: 'Cascadia Code', 'Fira Mono', 'Menlo', 'Consolas', monospace;
 }
@@ -1562,7 +1564,7 @@ html.dark-mode .uml-pg-context-menu button.is-danger:hover {
 }
 
 html.dark-mode .uml-pg-context-menu .uml-pg-context-key {
-  color: #8aa3c2;
+  color: #abc0db;
 }
 
 .uml-pg-edit-hitbox.is-selected {
@@ -2134,6 +2136,20 @@ html.dark-mode a.uml-pg-syntax-help-link:focus-visible {
   }
 }
 
+@media screen and (max-width: 700px) {
+  /* Stacked source and properties panes must not squeeze the canvas to zero. */
+  #uml-playground-wrap.is-fullscreen #uml-playground-body {
+    flex: 0 0 auto;
+  }
+  #uml-playground-wrap.is-fullscreen #uml-pg-preview-pane {
+    flex: 0 0 auto;
+    min-height: 50vh;
+  }
+  #uml-playground-wrap.is-fullscreen #uml-pg-output {
+    height: auto;
+  }
+}
+
 /* ─── Visual-editor palette ─── */
 #uml-pg-palette {
   display: flex;
@@ -2146,6 +2162,7 @@ html.dark-mode a.uml-pg-syntax-help-link:focus-visible {
 
 .uml-pg-palette-row {
   display: flex;
+  flex-shrink: 0;
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
