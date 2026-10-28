@@ -1,0 +1,13 @@
+{%- comment -%}
+  The topic illustrations a scene enables, drawn for one cue. The player
+  replaces each slot with the reading step's copy for the current cue.
+  Params: topic, scene, cue.
+{%- endcomment -%}
+{%- assign np_visual_lesson = site.data.narrated_patterns[include.topic] -%}
+{%- for np_visual in np_visual_lesson.visuals -%}
+{%- assign np_visual_key = np_visual[0] -%}
+{%- assign np_visual_file = np_visual[1] -%}
+{%- if include.scene[np_visual_key] -%}
+<div class="np-visual" data-np-visual="{{ np_visual_key }}">{% include {{ np_visual_file }} cue=include.cue %}</div>
+{%- endif -%}
+{%- endfor -%}

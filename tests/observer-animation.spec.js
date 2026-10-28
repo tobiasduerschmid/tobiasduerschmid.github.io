@@ -7,6 +7,10 @@ const examples = yaml.load(readFileSync(require.resolve('../_data/explainers/obs
 const quizzes = yaml.load(readFileSync(require.resolve('../_data/explainers/observer_quizzes.yml'), 'utf8'));
 const timing = require('../_data/explainers/observer_timing.json');
 const url = '/SEBook/designpatterns/observer.html';
+const sceneIndex = id => story.scenes.findIndex(scene => scene.id === id);
+// Each section ends in one question; the summary section lists several.
+const questionsOf = id => quizzes[id].questions || [quizzes[id]];
+const singleChecks = story.scenes.filter(scene => !quizzes[scene.id].questions).length;
 const player = page => page.getByRole('region', { name: story.title, exact: true });
 async function seek(page, time) {
   const animation = player(page);
@@ -102,15 +106,19 @@ test('each section ends in exactly one tutorial question and resumes only when r
   for (const [index, scene] of story.scenes.entries()) {
     await seek(page, timing.scenes[index].end - 0.2);
     await animation.getByRole('button', { name: 'Play narration' }).click();
-    const quiz = animation.getByRole('region', { name: `${index + 1}. ${scene.label} — Knowledge check`, exact: true });
+    const questions = questionsOf(scene.id);
+    const kind = questions.length > 1 ? 'Summary quiz' : 'Knowledge check';
+    const quiz = animation.getByRole('region', { name: `${index + 1}. ${scene.label} — ${kind}`, exact: true });
     await expect(quiz).toBeVisible();
-    await expect(quiz.getByText(quizzes[scene.id].question, { exact: true })).toBeVisible();
     expect(await animation.locator('audio').evaluate(audio => audio.paused)).toBe(true);
-    await expect(quiz.locator('.quiz-question-card:visible')).toHaveCount(1);
-    await expect(quiz.getByRole('radio')).toHaveCount(quizzes[scene.id].options.length);
-    const answer = quizzes[scene.id].options[quizzes[scene.id].correct_index];
-    await quiz.getByRole('radio').filter({ hasText: answer }).click();
-    await expect(quiz.getByText(quizzes[scene.id].explanation, { exact: true })).toBeVisible();
+    for (const question of questions) {
+      await expect(quiz.getByText(question.question, { exact: true })).toBeVisible();
+      await expect(quiz.locator('.quiz-question-card:visible')).toHaveCount(1);
+      await expect(quiz.locator('.quiz-question-card:visible').getByRole('radio')).toHaveCount(question.options.length);
+      await quiz.getByRole('radio').filter({ hasText: question.options[question.correct_index] }).click();
+      await expect(quiz.getByText(question.explanation, { exact: true })).toBeVisible();
+      if (question !== questions.at(-1)) await quiz.getByRole('button', { name: 'Next Question' }).click();
+    }
     expect(await animation.locator('audio').evaluate(audio => audio.paused)).toBe(true);
     await quiz.getByRole('button', { name: 'See Results' }).click();
     await quiz.getByRole('button', { name: index + 1 < story.scenes.length ? 'Continue narration' : 'Finish review' }).click();
@@ -118,6 +126,7 @@ test('each section ends in exactly one tutorial question and resumes only when r
     if (index + 1 < story.scenes.length) {
       await expect(animation.getByRole('button', { name: 'Pause narration' })).toBeVisible();
       await animation.getByRole('button', { name: 'Pause narration' }).click();
+      await expect(animation.getByRole('button', { name: 'Play narration' })).toBeEnabled();
       await expect(animation.getByRole('heading', { name: story.scenes[index + 1].title, exact: true })).toBeVisible();
     } else {
       await expect(animation.getByText('Narration and final knowledge check finished. Revisit any section to review.')).toBeVisible();
@@ -140,7 +149,7 @@ for (const dark of [false, true]) {
     });
     if (dark) await expect.poll(brightness).toBeLessThan(60);
     else await expect.poll(brightness).toBeGreaterThan(220);
-    await seek(page, timing.scenes[1].start + 1);
+    await seek(page, timing.scenes[sceneIndex('conditions')].start + 1);
     const beforeDiagram = animation.getByRole('region', { name: 'Before-design dependencies' });
     await expect(beforeDiagram.locator('svg')).toBeVisible();
     for (const name of ['DocumentBefore', 'Preview', 'CharacterCount', 'SaveButton']) await expect(beforeDiagram.getByText(name, { exact: true })).toBeVisible();
@@ -154,16 +163,16 @@ for (const dark of [false, true]) {
     expect(diagramBounds.x).toBeGreaterThanOrEqual(codeBounds.x + codeBounds.width);
     expect(diagramBounds.y).toBeLessThan(codeBounds.y + codeBounds.height);
     expect(await beforeDiagram.evaluate(element => element.scrollWidth - element.clientWidth)).toBeLessThanOrEqual(1);
-    await expect(animation.locator('.observer-diagram-caption:visible')).toContainText('UI widgets and presentation rules tend to change more often than the domain model');
+    await expect(animation.locator('.np-diagram-caption:visible')).toContainText('UI widgets and presentation rules tend to change more often than the domain model');
     await a11yCheckpoint(page, 'before dependencies beside code', { include: '#observer-animation', feature: 'observer-animation' });
     await animation.locator('.nja-player').screenshot({ path: testInfo.outputPath('before.png') });
-    await seek(page, timing.scenes[2].start + 1);
+    await seek(page, timing.scenes[sceneIndex('roles')].start + 1);
     const diagram = animation.getByRole('region', { name: 'Observer pattern role diagram' });
     await expect(diagram.locator('svg')).toBeVisible();
     for (const name of ['Subject', 'Observer', 'ConcreteSubject', 'ConcreteObserver']) await expect(diagram.getByText(name, { exact: true })).toBeVisible();
     await a11yCheckpoint(page, 'role diagram', { include: '#observer-animation', feature: 'observer-animation' });
     await animation.locator('.nja-player').screenshot({ path: testInfo.outputPath('roles.png') });
-    await seek(page, timing.scenes[6].cues[2].start + 1);
+    await seek(page, timing.scenes[sceneIndex('views')].cues[2].start + 1);
     await animation.getByRole('combobox', { name: 'Code language' }).selectOption('typescript');
     const solution = animation.getByRole('region', { name: 'Observer solution dependencies' });
     for (const name of ['Subject', 'Observer', 'Document', 'Preview', 'CharacterCount', 'SaveButton']) await expect(solution.getByText(name, { exact: true })).toBeVisible();
@@ -181,7 +190,7 @@ for (const dark of [false, true]) {
     await a11yCheckpoint(page, 'marked TypeScript code', { include: '#observer-animation', feature: 'observer-animation' });
     await animation.locator('.nja-player').screenshot({ path: testInfo.outputPath('code.png') });
     await page.setViewportSize({ width: 320, height: 850 });
-    await seek(page, timing.scenes[1].start + 1);
+    await seek(page, timing.scenes[sceneIndex('conditions')].start + 1);
     await expect.poll(() => animation.evaluate(element => element.scrollWidth - element.clientWidth)).toBeLessThanOrEqual(1);
     await beforeDiagram.focus();
     await beforeDiagram.press('Home');
@@ -190,18 +199,18 @@ for (const dark of [false, true]) {
     await expect.poll(() => beforeDiagram.evaluate(element => element.scrollLeft)).toBeGreaterThan(beforeDependencyScroll);
     await a11yCheckpoint(page, 'mobile before dependencies', { include: '#observer-animation', feature: 'observer-animation' });
     await animation.locator('.nja-player').screenshot({ path: testInfo.outputPath('before-mobile.png') });
-    await seek(page, timing.scenes[2].start + 1);
+    await seek(page, timing.scenes[sceneIndex('roles')].start + 1);
     await diagram.focus();
     await diagram.press('Home');
     const beforeScroll = await diagram.evaluate(element => element.scrollLeft);
     await diagram.press('ArrowRight');
     await expect.poll(() => diagram.evaluate(element => element.scrollLeft)).toBeGreaterThan(beforeScroll);
     await a11yCheckpoint(page, 'mobile diagram', { include: '#observer-animation', feature: 'observer-animation' });
-    await seek(page, timing.scenes[6].cues[2].start + 1);
+    await seek(page, timing.scenes[sceneIndex('views')].cues[2].start + 1);
     await expect.poll(() => animation.evaluate(element => element.scrollWidth - element.clientWidth)).toBeLessThanOrEqual(1);
     await a11yCheckpoint(page, 'mobile code', { include: '#observer-animation', feature: 'observer-animation' });
     await animation.getByRole('button', { name: 'Knowledge check', exact: true }).click();
-    const quiz = animation.locator('.observer-quiz');
+    const quiz = animation.locator('.np-quiz');
     const disabledPlay = animation.getByRole('button', { name: 'Play narration' });
     await expect(disabledPlay).toBeDisabled();
     await disabledPlay.hover();
@@ -230,9 +239,9 @@ test('the edit trace supports reversible seeking and a quiz can be skipped witho
   await page.goto(url);
   const animation = player(page);
   await animation.getByRole('combobox', { name: 'Code language' }).selectOption('java');
-  await seek(page, timing.scenes[7].cues[3].start + 1);
+  await seek(page, timing.scenes[sceneIndex('trace')].cues[3].start + 1);
   await expect(animation.getByRole('img', { name: /document Hello, character count 5/ })).toBeVisible();
-  await seek(page, timing.scenes[7].cues[0].start + 1);
+  await seek(page, timing.scenes[sceneIndex('trace')].cues[0].start + 1);
   await expect(animation.getByRole('img', { name: /document empty, character count 0, Save disabled/ })).toBeVisible();
   await animation.getByRole('button', { name: 'Knowledge check', exact: true }).click();
   await animation.getByRole('button', { name: 'Skip Knowledge Check' }).click();
@@ -245,7 +254,7 @@ test('previous and next navigate directly past knowledge checks, whether closed 
   await page.goto(url);
   const animation = player(page);
   const selection = animation.getByRole('combobox', { name: 'Scene', exact: true });
-  const quiz = animation.locator('.observer-quiz');
+  const quiz = animation.locator('.np-quiz');
   await animation.getByRole('combobox', { name: 'Code language' }).selectOption('java');
   await seek(page, timing.scenes[3].start + 1);
   for (const openCheck of [false, true]) {
@@ -280,7 +289,7 @@ test('all languages and quiz explanations remain available without JavaScript; p
   await noJS.goto(url);
   await player(noJS).getByText('Transcript, code, and visual descriptions', { exact: true }).click();
   for (const example of Object.values(examples)) await expect(player(noJS).getByText(`${example.label} — ${example.filename}`, { exact: true })).toBeVisible();
-  await expect(player(noJS).getByText('Knowledge check:', { exact: true })).toHaveCount(story.scenes.length);
+  await expect(player(noJS).getByText('Knowledge check:', { exact: true })).toHaveCount(singleChecks);
   await context.close();
   await page.goto(url);
   await player(page).getByRole('combobox', { name: 'Code language' }).selectOption('cpp');
@@ -297,10 +306,10 @@ test('changing UML emphasis keeps its scale steady through every animation frame
   await page.goto(url);
   await expect(player(page).getByRole('button', { name: 'Play narration' })).toBeVisible();
   await page.evaluate(() => document.fonts.ready);
-  for (const sceneIndex of [2, 6]) {
-    await seek(page, timing.scenes[sceneIndex].cues[0].start + 1);
+  for (const index of ['roles', 'views'].map(sceneIndex)) {
+    await seek(page, timing.scenes[index].cues[0].start + 1);
     const sizes = await player(page).evaluate(async (root, nextTime) => {
-      const previous = root.querySelector('.nja-scene:not([hidden]) [data-observer-diagram] svg').getBoundingClientRect();
+      const previous = root.querySelector('.nja-scene:not([hidden]) [data-np-diagram] svg').getBoundingClientRect();
       const frames = [[previous.width, previous.height]];
       const slider = root.querySelector('.nja-seek');
       slider.value = String(nextTime);
@@ -308,13 +317,13 @@ test('changing UML emphasis keeps its scale steady through every animation frame
       const started = performance.now();
       // Sample the transition, including the renderer's delayed settling interval.
       while (performance.now() - started < 650) {
-        const svg = root.querySelector('.nja-scene:not([hidden]) [data-observer-diagram] svg');
+        const svg = root.querySelector('.nja-scene:not([hidden]) [data-np-diagram] svg');
         const box = svg.getBoundingClientRect();
         frames.push([box.width, box.height]);
         await new Promise(requestAnimationFrame);
       }
       return frames;
-    }, timing.scenes[sceneIndex].cues[1].start + 1);
+    }, timing.scenes[index].cues[1].start + 1);
     for (const dimension of [0, 1]) {
       const values = sizes.map(size => size[dimension]);
       expect(Math.max(...values) - Math.min(...values), 'No transient zoom while changing the highlighted class').toBeLessThan(1);
@@ -328,13 +337,13 @@ test('self-paced and print HTML include every step and visualization without aud
   for (const view of ['read', 'print']) {
     await page.goto(`/SEBook/designpatterns/observer/${view}/`);
     await expect(page.locator('audio')).toHaveCount(0);
-    const steps = page.locator('.observer-reading-step');
+    const steps = page.locator('.np-reading-step');
     await expect(steps).toHaveCount(story.scenes.reduce((count, scene) => count + scene.cues.length, 0));
     for (const scene of story.scenes) {
       for (const [index, cue] of scene.cues.entries()) {
         const step = page.locator(`[data-reading-scene="${scene.id}"][data-reading-cue="${index}"]`);
         await expect(step.getByText(cue.text, { exact: true })).toBeVisible();
-        if (scene.diagram) await expect(step.locator('.observer-diagram svg')).toBeVisible();
+        if (scene.diagram) await expect(step.locator('.np-diagram svg')).toBeVisible();
         if (scene.code) {
           for (const language of story.languages) {
             const marks = await step.locator(`[data-transcript-language="${language}"] [aria-current="true"]`).evaluateAll(lines => lines.map(line => Number(line.dataset.line)));
@@ -344,7 +353,7 @@ test('self-paced and print HTML include every step and visualization without aud
         if (scene.ui) await expect(step.getByRole('img', { name: /^Text editor:/ })).toBeVisible();
       }
     }
-    await expect(page.getByText('Knowledge check:', { exact: true })).toHaveCount(11);
+    await expect(page.getByText('Knowledge check:', { exact: true })).toHaveCount(singleChecks);
     await expect(page.locator('[data-reading-scene="trace"][data-reading-cue="3"]').getByRole('img', { name: /document Hello, character count 5.*detached and retains Hi/ })).toBeVisible();
   }
   await context.close();
@@ -372,7 +381,7 @@ test('reading and print views preserve the selected language and print all diagr
   await page.getByRole('link', { name: 'Print view', exact: true }).click();
   await expect(page.getByRole('combobox', { name: 'Code language' })).toHaveValue('java');
   await expect(page.locator('html')).not.toHaveClass(/dark-mode/);
-  const printPalette = () => page.evaluate(() => ['body', '.nja-editor', '.observer-diagram', 'h4', '.observer-reading-note'].map(selector => {
+  const printPalette = () => page.evaluate(() => ['body', '.nja-editor', '.np-diagram', 'h4', '.np-reading-note'].map(selector => {
     const style = getComputedStyle(document.querySelector(selector));
     return [style.color, style.backgroundColor];
   }));
@@ -381,9 +390,9 @@ test('reading and print views preserve the selected language and print all diagr
   await expect.poll(printPalette, { message: 'The print view stays light regardless of the surrounding theme.' }).toEqual(lightPalette);
   await page.emulateMedia({ media: 'print' });
   await expect(page.locator('[data-transcript-language="python"]:visible')).toHaveCount(0);
-  await expect(page.locator('.observer-reading-step')).toHaveCount(story.scenes.reduce((count, scene) => count + scene.cues.length, 0));
+  await expect(page.locator('.np-reading-step')).toHaveCount(story.scenes.reduce((count, scene) => count + scene.cues.length, 0));
   await expect(page.getByText(quizzes.ui.explanation, { exact: true })).toBeVisible();
-  await expect(page.locator('.observer-diagram svg:visible')).toHaveCount(story.scenes.filter(scene => scene.diagram).reduce((count, scene) => count + scene.cues.length, 0));
+  await expect(page.locator('.np-diagram svg:visible')).toHaveCount(story.scenes.filter(scene => scene.diagram).reduce((count, scene) => count + scene.cues.length, 0));
   await page.pdf({ path: testInfo.outputPath('observer-lesson.pdf'), format: 'A4', printBackground: true, margin: { top: '15mm', bottom: '15mm', left: '15mm', right: '15mm' } });
 });
 
@@ -405,7 +414,7 @@ test('view links carry language and theme through a reading, print, and narratio
   await expect(player(page).getByRole('combobox', { name: 'Code language' })).toHaveValue('typescript');
   await expect(page.locator('html')).toHaveClass(/dark-mode/);
   await expect(page.getByRole('checkbox', { name: 'Toggle dark mode' })).toBeChecked();
-  await seek(page, timing.scenes[1].start + 1);
+  await seek(page, timing.scenes[sceneIndex('conditions')].start + 1);
   await expect(player(page).locator('.nja-stage pre:visible')).toHaveAttribute('aria-label', `${examples.typescript.filename} code`);
   await theme(page, false);
   await expect(player(page).getByRole('link', { name: 'Read at my own pace', exact: true })).toHaveAttribute('href', /language=typescript&theme=light/);
@@ -424,11 +433,11 @@ test('compact controls and a collapsible contents list leave room for the lesson
   await theme(page, true);
   await page.screenshot({ path: testInfo.outputPath('compact-player-dark.png') });
   await page.goto('/SEBook/designpatterns/observer/read/');
-  await expect(page.getByRole('heading', { name: /1\. One edit, several views/ })).toBeInViewport();
+  await expect(page.getByRole('heading', { name: /1\. How a pattern is described/ })).toBeInViewport();
   const contents = page.getByRole('group').filter({ has: page.locator('summary', { hasText: 'Lesson sections' }) });
-  await expect(contents.getByRole('link', { name: 'Consequences', exact: true })).toBeHidden();
+  await expect(contents.getByRole('link', { name: story.scenes[sceneIndex('consequences')].label, exact: true })).toBeHidden();
   await contents.locator('summary').click();
-  await expect(contents.getByRole('link', { name: 'Consequences', exact: true })).toBeVisible();
+  await expect(contents.getByRole('link', { name: story.scenes[sceneIndex('consequences')].label, exact: true })).toBeVisible();
 });
 
 test('prediction cues defer the takeaway and remain reversible', async ({ page }) => {

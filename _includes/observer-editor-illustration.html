@@ -1,14 +1,14 @@
-{% assign editor_state_name = include.state | default: 'hi' %}
+{% assign editor_state_name = include.cue.ui_state | default: 'hi' %}
 {% assign editor_state = site.data.explainers.observer_ui[editor_state_name] %}
 {% capture editor_description %}Text editor: document {{ editor_state.text | default: 'empty' }}, character count {{ editor_state.count }}, Save {% if editor_state.enabled %}enabled{% else %}disabled{% endif %}. Preview {% if editor_state.detached %}is detached and retains{% else %}displays{% endif %} {{ editor_state.preview | default: 'empty text' }}.{% endcapture %}
 <div class="observer-editor" role="img" aria-label="{{ editor_description | escape }}">
   <div aria-hidden="true">
     <div class="nja-window-bar">Text editor · illustrated UI state</div>
-    <div class="observer-document"><strong>Document <span>Concrete Subject</span></strong><div data-ui="document">{{ editor_state.text | default: '(empty)' | escape }}</div></div>
+    <div class="observer-document"><strong>Document <span>Concrete Subject</span></strong><div>{{ editor_state.text | default: '(empty)' | escape }}</div></div>
     <div class="observer-widgets">
-      <div class="observer-widget{% if editor_state.detached %} is-detached{% endif %}" data-widget="preview"><strong>Preview <span>Concrete Observer</span></strong><div data-ui="preview">{{ editor_state.preview | default: '(empty)' | escape }}</div><p data-ui="preview-status">{% if editor_state.detached %}Detached · pane closed · last stored text{% else %}Registered{% endif %}</p></div>
-      <div class="observer-widget"><strong>CharacterCount <span>Concrete Observer</span></strong><div data-ui="count">{{ editor_state.count }}</div></div>
-      <div class="observer-widget"><strong>SaveButton <span>Concrete Observer</span></strong><div class="observer-save" data-ui="save">Save · {% if editor_state.enabled %}enabled{% else %}disabled{% endif %}</div></div>
+      <div class="observer-widget{% if editor_state.detached %} is-detached{% endif %}"><strong>Preview <span>Concrete Observer</span></strong><div>{{ editor_state.preview | default: '(empty)' | escape }}</div><p>{% if editor_state.detached %}Detached · pane closed · last stored text{% else %}Registered{% endif %}</p></div>
+      <div class="observer-widget"><strong>CharacterCount <span>Concrete Observer</span></strong><div>{{ editor_state.count }}</div></div>
+      <div class="observer-widget"><strong>SaveButton <span>Concrete Observer</span></strong><div class="observer-save">Save · {% if editor_state.enabled %}enabled{% else %}disabled{% endif %}</div></div>
     </div>
   </div>
 </div>

@@ -1,0 +1,13 @@
+{%- assign companion = site.data.explainers.state_ui -%}
+{%- assign panel = companion.panels[include.cue.ui_state] -%}
+<div class="state-companion-panel" role="img" aria-label="Game companion panel: {{ companion.dog }} is {{ panel.state }} with energy {{ panel.energy }} of {{ companion.full_energy }}. Last input: {{ panel.input }}. {{ companion.dog }} {{ panel.reaction }}.">
+  <div aria-hidden="true">
+    <div class="nja-window-bar">Game companion · illustrated panel</div>
+    <div class="state-companion-body">
+      <p class="state-companion-name">{{ companion.dog }} <span>companion dog</span></p>
+      <p class="state-companion-status">State <strong>{{ panel.state }}</strong> <span>Energy {{ panel.energy }} of {{ companion.full_energy }}</span></p>
+      <ul class="state-companion-inputs">{% for input in companion.inputs %}<li{% if input == panel.input %} class="is-last"{% endif %}>{{ input }}</li>{% endfor %}</ul>
+      <p class="state-companion-reaction"><span>{{ panel.input }} →</span> {{ companion.dog }} {{ panel.reaction }}</p>
+    </div>
+  </div>
+</div>

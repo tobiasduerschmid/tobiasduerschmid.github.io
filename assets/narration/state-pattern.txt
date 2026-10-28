@@ -1,0 +1,73 @@
+Imagine you are building the companion dog in a video game. The dog is following the player, and the player throws a ball. The dog sprints after it.
+
+Later, after two rounds of fetch, the dog is out of energy and naps. The player throws again, and the dog keeps snoring. Same input, different reaction: the reaction depends on the dog's current state.
+
+Design patterns capture proven solutions to problems like this one. Every pattern description has the same backbone. The context is the situation in which a problem recurs. The problem states what makes it hard. The solution describes abstract roles and how they collaborate. And the consequences state what the solution costs and buys. We will learn the State pattern in exactly that order. Choose a code language above; the explanation is the same in every language.
+
+First, the context. The State pattern applies when an object's behavior depends on its state, and that state changes at runtime. A U M L state machine diagram shows such an object. Rounded boxes are states, arrows are transitions labeled with events, and a new dog starts in Following.
+
+Throwing a ball moves the dog to Fetching. On the next game tick, a guard in square brackets decides the transition: with energy left, the dog returns to Following; with no energy left, it naps. A whistle wakes a napping dog.
+
+Two more signs place us in this context. Several operations, not just one, react differently in each state. And new states keep arriving, as designers add swimming, guarding, or begging. One warning about words: the pattern also names one of its roles Context. The pattern's context is a situation; the Context role is an object.
+
+Now the problem. Here is a direct implementation. The dog stores its mode as a value, and throw ball checks it: a following dog starts to fetch, a fetching dog keeps chasing the first ball, and a napping dog keeps snoring.
+
+Whistle repeats the same three-way check with different reactions, and only its napping branch changes the mode.
+
+Tick repeats the check a third time. Notice the shape: in the table of reactions, each method is one column, and every mode appears in every column. The rules for one state, a single row of the table, are scattered across all three methods.
+
+Your team wants a zoomies mode: after a nap, the dog sometimes races around in circles. Before continuing, predict which methods you must edit, and what the dog does if someone forgets one of them. Pause here if you want more thinking time.
+
+Every method changes, and the else branches are a trap: each one treats an unknown mode as napping, so a forgotten branch makes a dog with the zoomies snore. That is the problem in pattern terms: how can an object change its behavior when its state changes, without scattering state checks through every operation? The forces: keep each state's rules together, make transitions explicit, add states without editing every operation, and avoid classes that do not pay for themselves.
+
+The solution: represent each state as an object, and let the object whose behavior changes delegate to its current state object. A pattern describes its solution with abstract roles, not concrete classes. The Context role is the object clients use. It holds exactly one current state and forwards every state-dependent request to it.
+
+The State role is an interface with one operation for each request that the Context forwards. The Context passes itself along, so a state object can read the Context's data or change its state.
+
+The concrete state role implements those operations for one state. To make a transition, a concrete state calls the Context's set state with the next state object. The dashed arrow with a hollow triangle shows that a concrete state fulfills the State interface. Many classes can play this one role.
+
+Roles let you recognize the pattern in any code. In our game, Dog will play Context, dog state plays State, and Following, Fetching, and Napping play concrete state. To the player, the dog seems to change its class, yet only one reference changes.
+
+Now the solution in code, one role at a time. dog state plays the State role. It declares one operation for each input: throw ball, whistle, and tick. Each receives the dog and returns its reaction, which the game can animate.
+
+Every Concrete State must implement all three operations. Java, C plus plus, and TypeScript check this when compiling, and Python refuses to create a state object with a missing operation. The else branches, by contrast, silently accepted any mode.
+
+Dog plays the Context role. It keeps the data that belongs to the dog, its energy, and a reference to its current state object, initially the shared Following object.
+
+Each request is now a single line that forwards the call to the current state, passing the dog along. No mode check is left, and the Context no longer knows what a whistle means in any state.
+
+set state replaces the current state object. Concrete States call it to make transitions, while clients only send inputs. A transition is one assignment of one reference.
+
+Following, Fetching, and Napping each play the concrete state role. Following collects every following branch from the old methods: a throw switches to the shared Fetching object, while a whistle and a tick only animate. It is one row of the table. Moving the branches one method at a time, with tests after each move, keeps every reaction the same.
+
+Fetching ignores throws and whistles. Its tick spends one energy and then calls set state with Napping or Following. That energy check is a guard on data, not a state check, so it rightly stays.
+
+Napping snores through throws and ticks, and its whistle restores the energy and returns to Following. Each transition now sits in the state it leaves.
+
+These state objects store no data of their own, because the energy lives in the dog. So every dog can share one object per state, as the marked lines show. Creating a new state object on each transition would also work. Sharing is safe only while states stay stateless, which is also why each operation receives the dog as a parameter.
+
+A solution also describes how its roles collaborate at runtime. The game creates a dog, and the player throws a ball. The sequence diagram shows the delegation: Dog forwards throw ball to the Following object, which calls set state with the Fetching object and answers: runs after the ball.
+
+The player throws a second ball, exactly as before. Predict which object answers, and what the dog does. Pause the narration if you want more thinking time.
+
+This time Dog forwards throw ball to the Fetching object, which changes nothing and answers: keeps chasing the first ball. The same call reached a different object, and the client never asked which state the dog was in.
+
+On the next tick, Fetching spends one energy and, with energy left, calls set state with the Following object. Three collaborations define the pattern: the Context delegates, the Context passes itself along, and the current state decides what comes next.
+
+Finally, the consequences, which every pattern description must state. The first benefit: State localizes state-specific behavior. Each state's reactions live in one class, so adding a state means writing one class and editing only the transitions that lead into it.
+
+The second benefit: transitions become explicit. Each one is a named call in the state it leaves, and switching states replaces one reference, so the object never holds half of an old state and half of a new one. Stateless state objects can even be shared.
+
+The liabilities: more classes, with transitions spread across them, so states depend on their successors and no single class shows the whole lifecycle. Keep the state machine diagram as the map. And a new request, such as feeding a treat, must be added to the interface and to every state. State is a bet that states will change more often than requests.
+
+Consequences tell us when a pattern pays off, so revisit the context. State fits when several states have distinct behavior across several requests and new states keep arriving, as with game characters that gain swimming, guarding, or fleeing.
+
+With a few stable states, conditionals can be clearer, especially an E num with switches that your compiler or type checker can prove exhaustive. Try simpler refactorings first, such as extracting a method. If states differ only in where they go next, a transition table may be simpler. And if effects can stack, such as soaked and sleepy at once, one current state cannot represent them.
+
+State and Strategy share the same structure, a Context delegating through an interface, but their contexts differ. A client chooses a Strategy, while State objects replace one another as events occur, usually without the client noticing.
+
+One last design check. A whistle should now wake a napping dog into the zoomies. A dog with the zoomies races one lap on its next tick and then follows. It chases a thrown ball at once and ignores whistles. Which class do you add, and which existing code changes? Explain your answer before continuing.
+
+Add a Zoomies class that plays the concrete state role with all three reactions. The only existing line that changes is the transition into it: Napping's whistle now calls set state with the Zoomies object. dog state, Dog, Following, and Fetching stay unchanged, because no new request was needed.
+
+To finish, recall the whole pattern. Context: one object's behavior in several operations depends on a state that changes at runtime. Problem: state checks scattered through every operation. Solution: a Context delegates to its current State object, and each Concrete State implements one state and chooses the next. Consequences: localized states and explicit transitions, at the cost of more classes, spread transitions, and costly new requests. The summary quiz checks each part on a new example. Bring this mental model to every pattern you learn.

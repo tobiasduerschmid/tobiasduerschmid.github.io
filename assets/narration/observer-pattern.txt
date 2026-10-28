@@ -1,6 +1,10 @@
 Imagine a text editor. You type Hi into its document. A preview displays Hi, a character count displays two, and a Save button becomes enabled. One change has three different effects. Our question is: who should know how to update each part of this user interface?
 
-We will first inspect a design full of conditions, then separate two responsibilities using the Observer pattern. By the end, you should be able to identify the Subject and the Observers, trace an update, and explain when the extra indirection is worthwhile. Choose a code language above; the explanation is the same in every language.
+Design patterns capture proven answers to questions like this one. Every pattern description has the same backbone. The context is the situation in which a problem recurs. The problem states what makes it hard. The solution describes abstract roles and how they collaborate. And the consequences state what the solution costs and buys. We will learn the Observer pattern in exactly that order. Choose a code language above; the explanation is the same in every language.
+
+First, the context. Observer applies when a change to one object must be reflected in other objects. In our editor, the document changes, and three dependents react: the preview, the character count, and the Save button.
+
+Two more signs place us in this context. The dependents are independent of one another and change for their own reasons. And they come and go at runtime, as panes open and close. The object that changes should not need to know which dependents exist.
 
 Here is the first design. The document stores its new text, then checks which widgets exist. If the preview is present, it writes the text into that view. The document has already taken on two jobs: managing its content and knowing how one particular widget displays it.
 
@@ -10,9 +14,9 @@ The Save button adds another existence check, then a decision: disable it for em
 
 Before we change the design, imagine adding a word-count panel. Which class would you have to edit, and why? Explain the dependency in your own words. Pause here if you want more thinking time.
 
-Conditions are not the problem. The document is a domain class: it represents the content being edited. Look at its arrows to the concrete UI classes. UI widgets and presentation rules tend to change more often than the domain model, so domain classes should avoid depending on them. Here, adding a view or changing its display rule forces us to edit the document. Let the views own those decisions while the document manages text.
+Conditions are not the problem. The document is a domain class: it represents the content being edited. Look at its arrows to the concrete UI classes. UI widgets and presentation rules tend to change more often than the domain model, so domain classes should avoid depending on them. Here, adding a view or changing its display rule forces us to edit the document. That is the problem in pattern terms: how can a change to one object reach many dependents without coupling it to their concrete classes?
 
-The object whose state changes is the Subject. An Observer is an object that reacts to those changes. The Subject keeps a collection of registered Observers and calls their common update operation. Attach and detach manage this collection. In the diagram, Subject holds references through the Observer contract, so it can notify a Preview or Save button without depending on either concrete class.
+The solution separates the responsibility to notify from the responsibility to react, using abstract roles rather than concrete classes. The object whose state changes is the Subject. An Observer is an object that reacts to those changes. The Subject keeps a collection of registered Observers and calls their common update operation. Attach and detach manage this collection. In the diagram, Subject holds references through the Observer contract, so it can notify a Preview or Save button without depending on either concrete class.
 
 Observer is the common notification contract. Here it has one operation, update, which receives the new text. Every registered object must support that operation. Calling the same operation can produce different behavior in different concrete Observers.
 
@@ -40,7 +44,7 @@ Character Count is another Observer. It receives the same text but reacts differ
 
 The Save button owns the empty-text condition. That condition remains useful: it expresses the button's rule. What disappeared from the document was the knowledge of which widgets exist and how to update them. Moving responsibility is the design improvement, not reaching a count of zero if statements.
 
-Client code creates the Document and the three concrete Observers, then attaches them. This composition code knows the concrete objects; the Subject's notification code does not. Our views begin empty, the count is zero, and Save is disabled. Attaching alone does not request an initial update in this example.
+A solution also describes how its roles collaborate at runtime. Client code creates the Document and the three concrete Observers, then attaches them. This composition code knows the concrete objects; the Subject's notification code does not. Our views begin empty, the count is zero, and Save is disabled. Attaching alone does not request an initial update in this example.
 
 Set the document to Hi. The Document stores Hi, then the Subject calls update on each registered Observer. Preview displays Hi. Character Count displays two. Save becomes enabled. These are ordinary calls in registration order in this implementation, not simultaneous updates guaranteed by the pattern.
 
@@ -48,16 +52,18 @@ Now close the preview pane by detaching its Observer, and change the document to
 
 The count becomes five and Save remains enabled. The detached Preview object receives no update, so its stored text remains Hi, although its pane is closed. The Subject's loop did not need a special case for a closed preview. Removing its registration was enough.
 
-The main benefit is extension through the Observer contract. Add a word-count view and register it without changing the Document's notification loop. Views can also join and leave at runtime. Coupling is reduced to a shared contract, but not erased: changing that contract can still affect every Observer.
+Finally, the consequences, which every pattern description must state. The main benefit is extension through the Observer contract. Add a word-count view and register it without changing the Document's notification loop. Views can also join and leave at runtime. Coupling is reduced to a shared contract, but not erased: changing that contract can still affect every Observer.
 
 The cost is indirect control flow. To explain why a view changed, you must find where it was attached and where the Subject notified it. Slow Observers delay the caller in our synchronous version. An exception aborts this simple loop, so later Observers miss that update. Applications must choose an error policy deliberately.
 
 Registrations also have lifetimes. A long-lived Subject can retain an unused Observer; a non-owning reference can outlive its target. Detach views when they close. Our teaching code assumes one thread, no subscription changes during notification, and no recursive edits from update. Production code needs explicit policies for these cases, rather than relying on the pattern name.
 
-Observer fits when one object's changes matter to several independent dependents, especially when the set of dependents can change. A document with optional views is a strong example. The Subject should not have to know each view's class. With just one fixed collaborator and no need for flexible registration, a direct call may be clearer.
+Consequences tell us when a pattern pays off, so revisit the context. Observer fits when one object's changes matter to several independent dependents, especially when the set of dependents can change. A document with optional views is a strong example. The Subject should not have to know each view's class. With just one fixed collaborator and no need for flexible registration, a direct call may be clearer.
 
 Do not assume Observer provides reliable delivery across processes. A message broker, persistence, retry policy, or scheduling mechanism would be additional design decisions. Our example is direct collaboration among objects in one process. Keep that boundary clear when applying the idea to a larger system.
 
 One last design check. You need an optional word-count panel that can be opened and closed while editing. Which role should it play? What code must be added, and what should stay unchanged? Explain your answer before continuing.
 
 Make the panel a concrete Observer with an update operation that computes its own word count. Attach it when the panel opens and detach it when it closes. If it opens after text already exists, explicitly initialize it from the current document state; attach alone does not do that here. The Subject's notification loop stays unchanged. That is the central separation: the Subject announces a change, and each Observer decides how to react.
+
+To finish, recall the whole pattern. Context: several independent objects must react when one object changes, and they come and go. Problem: an object that updates its dependents directly knows every concrete dependent. Solution: a Subject notifies its registered Observers through one update contract, and each Concrete Observer owns its reaction. Consequences: new dependents without editing the Subject, at the cost of indirect control flow and registration lifecycles. The summary quiz checks each part on a new example.

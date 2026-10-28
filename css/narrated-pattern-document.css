@@ -1,0 +1,62 @@
+/* One HTML lesson supplies the self-paced reader and both print surfaces. */
+.np-reader-page { margin: 0; background: #fff; color: #192d43; font: 18px/1.6 system-ui, sans-serif; }
+html.dark-mode:not(.print-light-mode) .np-reader-page { background: #0c1118; color: #f6f8ff; }
+.np-document-page { max-width: 1450px; margin: 0 auto; padding: 1.5em; }
+.np-document-page h1 { font-size: 2em; line-height: 1.25; margin: 0 0 0.4em; }
+.np-document-page header > p { margin: 0.6em 0; }
+.np-reading-contents summary { width: fit-content; }
+.np-document-page h2 { font-size: 1.6em; }
+.np-document-page h3 { font-size: 1.4em; }
+.np-document-page h4 { font-size: 1.2em; }
+.np-document-page h1, .np-document-page h2, .np-document-page h3, .np-document-page h4 { color: inherit; }
+.np-document-controls { display: flex; flex-wrap: wrap; align-items: end; gap: 1em; margin: 1em 0; }
+.np-document-controls[hidden] { display: none; }
+.np-document-controls label { display: flex; flex-direction: column; gap: 0.3em; }
+.np-document-controls button, .np-document-controls select { font: inherit; color: var(--nja-text); background: var(--nja-input); border: 2px solid var(--nja-line); border-radius: 5px; min-height: 2.5em; padding: 0.3em 0.6em; }
+.np-document-controls button { cursor: pointer; }
+.np-document-controls button:hover { background: var(--nja-hover); }
+.np-document-page :focus-visible { outline: 3px solid var(--nja-cyan); outline-offset: 3px; }
+.np-reading-contents ol { columns: 2; padding-left: 1.5em; }
+.np-reading-contents li { break-inside: avoid; margin: 0.4em 0; }
+.np-reading .nja-transcript-scene { margin: 2em 0; border-top: 2px solid var(--nja-line); padding-top: 1em; }
+.np-reading-step { margin: 1.5em 0; padding-bottom: 1.5em; border-bottom: 1px solid var(--nja-line); }
+.np-reading-step > h4 { font-size: 1.2em; color: var(--nja-text); }
+.np-reading .nja-art pre { max-height: none; overflow: visible; }
+.np-reading pre { padding: 0.7em; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--nja-code-bg); color: var(--nja-text); font: inherit; }
+.np-reading pre code { color: inherit; font: 1em/1.6 'Fira Code', Menlo, Consolas, monospace; }
+.np-reading .np-diagram .sebook-figure { margin: 0; }
+.np-reading .np-diagram .sebook-figure__verbose { color: #222; background: #f5f7fa; font: inherit; }
+.np-reading .np-diagram .sebook-figure__verbose summary { color: #192d43; }
+html.dark-mode:not(.print-light-mode) .np-reading .np-diagram .sebook-figure__verbose { color: #f6f8ff; background: #19212b; }
+html.dark-mode:not(.print-light-mode) .np-reading .np-diagram .sebook-figure__verbose summary { color: #f6f8ff; }
+.np-reading-note { padding: 0.7em 1em; border-left: 3px solid var(--nja-accent); background: var(--nja-note-bg); }
+.np-reading .np-print-question { padding: 1em; background: var(--nja-panel); border: 1px solid var(--nja-line); border-radius: 5px; }
+.np-reading .np-print-question summary { font: inherit; }
+.np-document-footer { max-width: 1450px; margin: 1em auto; padding: 1.5em; font-size: 0.9em; }
+.np-document-footer a, .np-document-footer a:visited { color: inherit; text-decoration: underline; }
+.np-document-footer a:focus-visible { outline: 3px solid currentColor; outline-offset: 3px; }
+.np-reader-skip, .np-reader-skip:visited { position: absolute; left: 1em; top: -6em; color: #192d43; background: #fff; padding: 0.8em; z-index: 10; }
+.np-reader-skip:focus { top: 0.5em; outline: 3px solid #005b75; }
+@media (max-width: 700px) {
+  .np-document-page { padding: 0.85em; }
+  .np-reading-contents ol { columns: 1; }
+}
+@media print {
+  .np-reader-page, html.dark-mode:not(.print-light-mode) .np-reader-page { background: #fff; color: #000; font-size: 12pt; }
+  .np-document-page { padding: 0; max-width: none; }
+  .np-document-controls, .np-view-links, .np-reading-contents, .np-reader-skip, .np-document-footer { display: none !important; }
+  .np-reading [data-transcript-language][hidden] { display: none !important; }
+  .np-reading .np-lesson { display: block; }
+  .np-reading .nja-code-line { padding-block: 0; line-height: 1.5; }
+  .np-reading .nja-transcript-scene, .np-reading-step { break-inside: auto; }
+  .np-reading :is(h3, h4) { break-after: avoid; }
+  .np-reading :is(p, li) { orphans: 3; widows: 3; }
+  .np-reading .nja-code-line, .np-reading .np-diagram, .np-reading .np-visual { break-inside: avoid; }
+  .np-reading .np-diagram, html.dark-mode:not(.print-light-mode) .np-reading .np-diagram { background: #fff; color: #000; margin: 1em 0; overflow: visible; }
+  .np-reading .np-diagram svg, html.dark-mode:not(.print-light-mode) .np-reading .np-diagram svg { filter: none !important; }
+  .np-reading .np-diagram .sebook-figure__verbose { display: none; }
+  .np-reading pre, .np-reading .nja-editor { max-height: none; overflow: visible; }
+  .np-reading .nja-code-line.is-highlighted { border-left-color: #000; font-weight: 700; }
+  .np-reading .np-print-question { break-inside: avoid; }
+  .np-reading .np-print-question details::details-content { display: block; content-visibility: visible; }
+}

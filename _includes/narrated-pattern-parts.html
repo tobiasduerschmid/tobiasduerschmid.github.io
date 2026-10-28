@@ -1,0 +1,8 @@
+{%- comment -%}
+  Where a scene sits in the pattern description. Shown only for scenes that
+  name a part, so lessons without parts look unchanged. Params: scene.
+{%- endcomment -%}
+{%- if include.scene.part -%}
+{%- assign np_parts = "Context,Problem,Solution,Consequences" | split: "," -%}
+<ol class="np-parts" aria-label="Part of the pattern description">{% for np_part in np_parts %}<li{% if np_part == include.scene.part %} aria-current="step"{% endif %}>{{ np_part }}</li>{% endfor %}</ol>
+{%- endif -%}

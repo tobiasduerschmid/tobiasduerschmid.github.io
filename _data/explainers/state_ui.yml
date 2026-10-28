@@ -1,0 +1,38 @@
+# Illustrated companion panel and the table of reactions. The table is the
+# specification both code designs implement; tests compare them.
+dog: Biscuit
+full_energy: 2
+inputs: [Throw ball, Whistle, Game tick]
+panels:
+  throw_following: {state: Fetching, energy: 2, input: Throw ball, reaction: runs after the ball}
+  throw_fetching: {state: Fetching, energy: 2, input: Throw ball, reaction: keeps chasing the first ball}
+  tick_fetching: {state: Following, energy: 1, input: Game tick, reaction: brings the ball back}
+  throw_napping: {state: Napping, energy: 0, input: Throw ball, reaction: keeps snoring}
+requests:
+  - {id: throw_ball, label: throwBall()}
+  - {id: whistle, label: whistle()}
+  - {id: tick, label: tick()}
+states:
+  - id: following
+    label: Following
+    reactions:
+      throw_ball: {message: runs after the ball, next: Fetching}
+      whistle: {message: wags its tail}
+      tick: {message: trots beside you}
+  - id: fetching
+    label: Fetching
+    reactions:
+      throw_ball: {message: keeps chasing the first ball}
+      whistle: {message: ignores the whistle}
+      # Each fetch uses one energy; the last one sends the dog to Napping.
+      tick:
+        message: brings the ball back
+        next: Following
+        uses_energy: true
+        when_tired: {message: brings the ball back and naps, next: Napping}
+  - id: napping
+    label: Napping
+    reactions:
+      throw_ball: {message: keeps snoring}
+      whistle: {message: wakes up and follows you, next: Following, restores_energy: true}
+      tick: {message: snores}

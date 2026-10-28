@@ -1,0 +1,81 @@
+{%- comment -%}
+  The self-paced lesson: every cue with its code, settled diagram, and topic
+  illustrations, then each section's question. It is the reading and print
+  views, the chapter transcript, and the source the player clones per cue.
+  Params: topic.
+{%- endcomment -%}
+{% assign lesson = site.data.narrated_patterns[include.topic] %}
+{% assign explainer = site.data.explainers[include.topic] %}
+{% capture examples_key %}{{ include.topic }}_code{% endcapture %}
+{% capture quizzes_key %}{{ include.topic }}_quizzes{% endcapture %}
+{% assign examples = site.data.explainers[examples_key] %}
+{% assign quizzes = site.data.explainers[quizzes_key] %}
+<div class="np-reading">
+  {% for scene in explainer.scenes %}
+  {% assign scene_number = forloop.index %}
+  {% capture lesson_class %}{% include narrated-pattern-lesson-class.html topic=include.topic scene=scene %}{% endcapture %}
+  <section class="nja-transcript-scene" id="{{ include.topic }}-reading-{{ scene.id }}" aria-labelledby="{{ include.topic }}-reading-{{ scene.id }}-title">
+    <h3 id="{{ include.topic }}-reading-{{ scene.id }}-title">{{ scene_number }}. {{ scene.label | escape }}</h3>
+    {% include narrated-pattern-parts.html scene=scene %}
+    <p class="nja-purpose"><strong>Our task:</strong> {{ scene.purpose | escape }}</p>
+    {% for cue in scene.cues %}
+    <section class="np-reading-step" data-reading-scene="{{ scene.id }}" data-reading-cue="{{ forloop.index0 }}" aria-labelledby="{{ include.topic }}-reading-{{ scene.id }}-{{ forloop.index }}">
+      <h4 id="{{ include.topic }}-reading-{{ scene.id }}-{{ forloop.index }}">{{ scene_number }}.{{ forloop.index }} — {{ cue.step | escape }}</h4>
+      <p>{{ cue.text | escape }}</p>
+      <div class="nja-art">
+        <div class="{{ lesson_class | strip }}">
+          {% if scene.code %}
+          <div class="nja-code-column">
+            {% for language in explainer.languages %}
+            {% assign example = examples[language] %}{% assign block = example.blocks[scene.code] %}{% assign focus_lines = block.focus[cue.focus] %}
+            <div data-transcript-language="{{ language }}">
+              <p><strong>{{ example.label }}</strong> · {% if focus_lines %}Marked lines: {{ focus_lines | join: ', ' }}{% else %}Whole example{% endif %}</p>
+              {% include narrated-explainer-code.html code=block.source filename=example.filename language=language focus_lines=focus_lines %}
+            </div>
+            {% endfor %}
+          </div>
+          {% endif %}
+          {% if scene.diagram %}
+          {% assign diagram = explainer.diagrams[scene.diagram] %}
+          <div class="np-diagram-column">
+            <p><strong>{{ diagram.label | escape }}</strong>{% if cue.diagram_focus %} · Highlighted: {{ cue.diagram_focus | escape }}{% endif %}</p>
+            {% include narrated-pattern-diagram.html diagram=diagram cue=cue %}
+            {% if forloop.first and diagram.caption %}<p class="np-diagram-caption">{{ diagram.caption | escape }}</p>{% endif %}
+          </div>
+          {% endif %}
+          {% include narrated-pattern-visuals.html topic=include.topic scene=scene cue=cue %}
+          {% if scene.cards %}
+          <dl class="np-cards">{% for card in scene.cards %}<div><dt>{{ card.title | escape }}</dt><dd>{{ card.text | escape }}</dd></div>{% endfor %}</dl>
+          {% endif %}
+        </div>
+      </div>
+      <p class="np-reading-note"><strong>Notice:</strong> {{ cue.note | escape }}</p>
+    </section>
+    {% endfor %}
+    <p class="nja-takeaway">{{ scene.takeaway | escape }}</p>
+    {% assign check = quizzes[scene.id] %}
+    {% if check.questions %}{% assign questions = check.questions %}{% assign check_label = 'Summary quiz:' %}{% else %}{% assign questions = '' | split: '' | push: check %}{% assign check_label = 'Knowledge check:' %}{% endif %}
+    {% for question in questions %}
+    <div class="np-print-question"><p><strong>{{ check_label }}</strong>{% if questions.size > 1 %} {{ forloop.index }} of {{ questions.size }} ·{% endif %} {{ question.question | escape }}</p>
+      <ul>{% for option in question.options %}<li>{{ option | escape }}</li>{% endfor %}</ul>
+      <details><summary>Answer and explanation</summary><p>{{ question.options[question.correct_index] | escape }}</p><p>{{ question.explanation | escape }}</p></details>
+    </div>
+    {% endfor %}
+  </section>
+  {% endfor %}
+  <section aria-labelledby="{{ include.topic }}-reading-complete-examples">
+    <h3 id="{{ include.topic }}-reading-complete-examples">Complete examples</h3>
+    <p>{{ lesson.complete_examples | escape }}</p>
+    {% for language in explainer.languages %}
+    {% assign example = examples[language] %}
+    {% capture full_source %}{% if example.imports.size > 0 %}{{ example.imports }}
+{% endif %}{% for block_name in explainer.example_order %}{{ example.blocks[block_name].source }}
+{% endfor %}{% endcapture %}
+    <div data-transcript-language="{{ language }}">
+      <p><strong>{{ example.label }} — {{ example.filename }}</strong></p>
+      <p>{{ example.note | escape }}</p>
+      {% include narrated-explainer-code.html code=full_source language=language transcript=true %}
+    </div>
+    {% endfor %}
+  </section>
+</div>

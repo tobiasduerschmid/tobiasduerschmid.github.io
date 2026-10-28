@@ -3,6 +3,10 @@
   'use strict';
   // Media clocks quantize timestamps; a sub-millisecond roundoff is not a previous cue.
   const TIME_EPSILON = 0.001;
+  // A section's audio ends with its last cue's silence, and the next section's
+  // speech starts right at the boundary. Checks run once per frame and output is
+  // buffered, so stop inside that silence rather than at the boundary itself.
+  const SECTION_END_LEAD = 0.3;
 
   function clockLabel(seconds) {
     const whole = Math.max(0, Math.floor(seconds));
@@ -68,7 +72,7 @@
 
     function renderPlayback(time) {
       const boundary = currentScene >= 0 ? timing.scenes[currentScene].end : Infinity;
-      if (options.onSectionEnd && time + TIME_EPSILON >= boundary) {
+      if (options.onSectionEnd && time + TIME_EPSILON >= boundary - SECTION_END_LEAD) {
         audio.pause();
         // Keep the completed section on screen while its checkpoint is open.
         audio.currentTime = Math.max(0, boundary - 0.002);

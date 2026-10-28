@@ -110,10 +110,10 @@ diagrams:
       @enduml
 scenes:
   - id: ui
-    label: One edit, several views
+    label: How a pattern is described
     title: One document, three views
-    purpose: Keep the editor's views consistent when its document changes.
-    takeaway: The document owns the text; each view has a different reaction to that text.
+    purpose: Preview the parts of every pattern description with a familiar example.
+    takeaway: A pattern pairs a problem that recurs in a context with a solution and its consequences.
     ui: true
     cues:
       - text: "Imagine a text editor. You type Hi into its document. A preview displays Hi, a character count displays two, and a Save button becomes enabled. One change has three different effects. Our question is: who should know how to update each part of this user interface?"
@@ -121,13 +121,32 @@ scenes:
         note: 'Document: Hi · Preview: Hi · Count: 2 · Save: enabled'
         visual: 'A text-editor illustration shows the document Hi and three matching views: preview Hi, character count 2, and Save enabled.'
         ui_state: hi
-      - text: "We will first inspect a design full of conditions, then separate two responsibilities using the Observer pattern. By the end, you should be able to identify the Subject and the Observers, trace an update, and explain when the extra indirection is worthwhile. Choose a code language above; the explanation is the same in every language."
-        step: Follow responsibilities, not punctuation
-        note: 'Recognize the coupling → assign roles → trace an update → judge the tradeoff.'
+      - text: "Design patterns capture proven answers to questions like this one. Every pattern description has the same backbone. The context is the situation in which a problem recurs. The problem states what makes it hard. The solution describes abstract roles and how they collaborate. And the consequences state what the solution costs and buys. We will learn the Observer pattern in exactly that order. Choose a code language above; the explanation is the same in every language."
+        step: Context, problem, solution, consequences
+        note: Context → Problem → Solution (roles, collaborations) → Consequences
         visual: 'The same editor remains visible. The language selector changes only the code, not the narration.'
         ui_state: hi
+  - id: context
+    part: Context
+    label: 'Context: one change, many dependents'
+    title: When does the Observer pattern apply?
+    purpose: Recognize the situation that the Observer pattern addresses.
+    takeaway: 'The context: several independent objects must react when one object changes, and they come and go.'
+    ui: true
+    cues:
+      - text: "First, the context. Observer applies when a change to one object must be reflected in other objects. In our editor, the document changes, and three dependents react: the preview, the character count, and the Save button."
+        step: One object, several dependents
+        note: The document changes; three dependents react.
+        visual: The text editor shows the document Hi with its three dependent views.
+        ui_state: hi
+      - text: "Two more signs place us in this context. The dependents are independent of one another and change for their own reasons. And they come and go at runtime, as panes open and close. The object that changes should not need to know which dependents exist."
+        step: Signs of this context
+        note: Independent dependents · they come and go · the changing object should not know them.
+        visual: The text editor remains visible; each view is drawn as a separate part of the editor.
+        ui_state: hi
   - id: conditions
-    label: The conditional-heavy design
+    part: Problem
+    label: 'Problem: the document knows every widget'
     title: The document knows every widget
     purpose: Find what must change when another view is added.
     code: problem
@@ -159,20 +178,21 @@ scenes:
         diagram_focus: DocumentBefore
         prediction: true
         pause_after: 6
-      - text: "Conditions are not the problem. The document is a domain class: it represents the content being edited. Look at its arrows to the concrete UI classes. UI widgets and presentation rules tend to change more often than the domain model, so domain classes should avoid depending on them. Here, adding a view or changing its display rule forces us to edit the document. Let the views own those decisions while the document manages text."
-        step: What is the coupling?
+      - text: "Conditions are not the problem. The document is a domain class: it represents the content being edited. Look at its arrows to the concrete UI classes. UI widgets and presentation rules tend to change more often than the domain model, so domain classes should avoid depending on them. Here, adding a view or changing its display rule forces us to edit the document. That is the problem in pattern terms: how can a change to one object reach many dependents without coupling it to their concrete classes?"
+        step: The problem and its forces
         note: UI changes more often; keep concrete widgets and presentation rules out of domain classes.
         visual: The whole method appears beside the diagram. DocumentBefore is highlighted, with three outgoing references to concrete UI classes.
         diagram_focus: DocumentBefore
         pause_after: 3
   - id: roles
-    label: Subject and Observer roles
+    part: Solution
+    label: 'Solution: Subject and Observer roles'
     title: Depend on one update contract
-    purpose: Separate the responsibility to notify from the responsibility to react.
+    purpose: Learn the solution's abstract roles before reading the code.
     diagram: roles
     takeaway: The Subject knows the Observer contract; concrete Observers decide what an update means.
     cues:
-      - text: "The object whose state changes is the Subject. An Observer is an object that reacts to those changes. The Subject keeps a collection of registered Observers and calls their common update operation. Attach and detach manage this collection. In the diagram, Subject holds references through the Observer contract, so it can notify a Preview or Save button without depending on either concrete class."
+      - text: "The solution separates the responsibility to notify from the responsibility to react, using abstract roles rather than concrete classes. The object whose state changes is the Subject. An Observer is an object that reacts to those changes. The Subject keeps a collection of registered Observers and calls their common update operation. Attach and detach manage this collection. In the diagram, Subject holds references through the Observer contract, so it can notify a Preview or Save button without depending on either concrete class."
         step: Subject — manage registrations and notify
         note: Subject depends on Observer, not on concrete widget classes.
         visual: The Subject role is hatched and highlighted. Its association points to zero or more Observers.
@@ -193,7 +213,8 @@ scenes:
         visual: ConcreteObserver is highlighted. Its realization arrow points to the Observer interface.
         diagram_focus: ConcreteObserver
   - id: contract
-    label: Implement the contract
+    part: Solution
+    label: 'Solution: the Observer role in code'
     title: One operation every Observer supports
     purpose: Give the Subject a stable way to notify any view.
     code: observer
@@ -213,7 +234,8 @@ scenes:
         focus: contract
         diagram_focus: Observer
   - id: subject
-    label: Implement the Subject
+    part: Solution
+    label: 'Solution: the Subject role in code'
     title: Registration replaces widget checks
     purpose: Maintain the collection of Observers to notify.
     code: subject
@@ -239,7 +261,8 @@ scenes:
         focus: notify
         diagram_focus: Subject
   - id: document
-    label: Implement the concrete Subject
+    part: Solution
+    label: 'Solution: the Concrete Subject in code'
     title: Change the state, then notify
     purpose: Keep the document consistent before any Observer reacts.
     code: document
@@ -259,7 +282,8 @@ scenes:
         focus: notify
         diagram_focus: Document
   - id: views
-    label: Implement concrete Observers
+    part: Solution
+    label: 'Solution: Concrete Observers in code'
     title: Put UI behavior in the views
     purpose: Give each view responsibility for its own reaction.
     code: views
@@ -285,7 +309,8 @@ scenes:
         focus: save
         diagram_focus: SaveButton
   - id: trace
-    label: Trace an edit and a detach
+    part: Solution
+    label: 'Solution: how the roles collaborate'
     title: Follow the runtime collaboration
     purpose: Predict which Observers receive each change.
     code: wire
@@ -293,7 +318,7 @@ scenes:
     ui: true
     takeaway: Registration controls who receives the next notification.
     cues:
-      - text: "Client code creates the Document and the three concrete Observers, then attaches them. This composition code knows the concrete objects; the Subject's notification code does not. Our views begin empty, the count is zero, and Save is disabled. Attaching alone does not request an initial update in this example."
+      - text: "A solution also describes how its roles collaborate at runtime. Client code creates the Document and the three concrete Observers, then attaches them. This composition code knows the concrete objects; the Subject's notification code does not. Our views begin empty, the count is zero, and Save is disabled. Attaching alone does not request an initial update in this example."
         step: Client code connects the objects
         note: 'Registered Observers: Preview, CharacterCount, SaveButton.'
         visual: The three attach calls are marked. The editor illustration is empty, the count is zero, and Save is disabled. Subject is highlighted in the solution diagram beside the code.
@@ -324,7 +349,8 @@ scenes:
         diagram_focus: Document
         ui_state: hello
   - id: consequences
-    label: Consequences
+    part: Consequences
+    label: 'Consequences: benefits and liabilities'
     title: Flexibility has a cost
     purpose: Weigh the benefits against lifecycle and execution responsibilities.
     takeaway: Observer reduces concrete coupling but makes the notification contract and lifecycle important.
@@ -336,7 +362,7 @@ scenes:
       - title: Choose runtime policies
         text: Detachment, failure, ordering, repeated updates, and reentrancy need decisions.
     cues:
-      - text: "The main benefit is extension through the Observer contract. Add a word-count view and register it without changing the Document's notification loop. Views can also join and leave at runtime. Coupling is reduced to a shared contract, but not erased: changing that contract can still affect every Observer."
+      - text: "Finally, the consequences, which every pattern description must state. The main benefit is extension through the Observer contract. Add a word-count view and register it without changing the Document's notification loop. Views can also join and leave at runtime. Coupling is reduced to a shared contract, but not erased: changing that contract can still affect every Observer."
         step: Add a view without editing the Subject
         note: A new concrete Observer plus registration is enough when the contract fits.
         visual: A benefit card explains adding and registering a new Observer.
@@ -348,10 +374,11 @@ scenes:
         step: Own the registration lifecycle
         note: Detach before a view is discarded; define callback and concurrency policies.
         visual: The lifecycle note lists single-threaded calls, stable registrations during notification, and no recursive edits.
-  - id: context
-    label: When to use Observer
+  - id: applicability
+    part: Context
+    label: 'Context revisited: when to use Observer'
     title: Is this a one-to-many change?
-    purpose: Distinguish a good fit from unnecessary indirection.
+    purpose: Decide whether the Observer pattern's context holds before applying it.
     takeaway: Use Observer when independently evolving dependents need to react to a Subject's changes.
     cards:
       - title: A good fit
@@ -361,7 +388,7 @@ scenes:
       - title: Beyond this pattern
         text: Reliable delivery across processes needs transport and delivery policies.
     cues:
-      - text: "Observer fits when one object's changes matter to several independent dependents, especially when the set of dependents can change. A document with optional views is a strong example. The Subject should not have to know each view's class. With just one fixed collaborator and no need for flexible registration, a direct call may be clearer."
+      - text: "Consequences tell us when a pattern pays off, so revisit the context. Observer fits when one object's changes matter to several independent dependents, especially when the set of dependents can change. A document with optional views is a strong example. The Subject should not have to know each view's class. With just one fixed collaborator and no need for flexible registration, a direct call may be clearer."
         step: Use the pattern to handle real variation
         note: Look for independently changing views and a stable update contract.
         visual: The context cards contrast optional editor views with one fixed collaborator.
@@ -388,3 +415,22 @@ scenes:
         note: Initialize a newly opened view; keep the Subject's notification loop.
         visual: The answer names the concrete Observer role, update behavior, initialization, attachment, and detachment.
         ui_state: hi
+  - id: summary
+    label: 'Summary: the whole pattern'
+    title: Context, problem, solution, consequences
+    purpose: Recall every part of the Observer pattern before the summary quiz.
+    takeaway: Context, problem, solution, and consequences make up the mental model for every pattern.
+    cards:
+      - title: Context
+        text: Several independent objects must react when one object changes, and they come and go at runtime.
+      - title: Problem
+        text: A changing object that updates its dependents directly knows every concrete dependent and its rules.
+      - title: Solution
+        text: A Subject notifies registered Observers through one update contract; each Concrete Observer owns its reaction.
+      - title: Consequences
+        text: Dependents are added without editing the Subject, at the cost of indirect control flow and lifecycle policies.
+    cues:
+      - text: "To finish, recall the whole pattern. Context: several independent objects must react when one object changes, and they come and go. Problem: an object that updates its dependents directly knows every concrete dependent. Solution: a Subject notifies its registered Observers through one update contract, and each Concrete Observer owns its reaction. Consequences: new dependents without editing the Subject, at the cost of indirect control flow and registration lifecycles. The summary quiz checks each part on a new example."
+        step: The Observer pattern in four parts
+        note: Context → Problem → Solution → Consequences
+        visual: Four cards summarize the Observer pattern's context, problem, solution, and consequences.

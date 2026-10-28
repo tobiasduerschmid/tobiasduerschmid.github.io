@@ -1,0 +1,25 @@
+# Presentation settings for narrated design-pattern lessons. Speech, scenes,
+# and diagrams stay in _data/explainers/<topic>.yml, so editing these settings
+# never changes a narration's audio fingerprint.
+#
+# visuals maps a scene key to the include that draws it. A scene with that key
+# set to true shows the include; the include receives the current cue.
+observer:
+  name: Observer
+  summary: Follow a text editor from conditional-heavy updates to cooperating <strong>Subjects and Observers</strong>.
+  prerequisites: Assumes familiarity with objects, methods, and collections.
+  chapter: /SEBook/designpatterns/observer.html
+  views: /SEBook/designpatterns/observer
+  visuals:
+    ui: observer-editor-illustration.html
+  complete_examples: These toolkit-neutral objects hold UI state. Rendering and input-event wiring are omitted. Register each Observer once; detach only registered Observers. Use one thread, keep registrations stable during notification, and do not recursively edit from update. Exceptions stop notification. The simple example text keeps counts consistent across languages.
+state:
+  name: State
+  summary: Learn the State pattern through its <strong>context, problem, solution, and consequences</strong>, using a video game's companion dog.
+  prerequisites: Assumes familiarity with interfaces and polymorphism.
+  chapter: /SEBook/designpatterns/state.html
+  views: /SEBook/designpatterns/state
+  visuals:
+    ui: state-companion-panel.html
+    table: state-behavior-table.html
+  complete_examples: The dog models only its behavior state and energy; movement, animation, and rendering are omitted. State objects are stateless and shared by every dog, so they must never store data about one dog. Each operation returns the dog's reaction, which a game would animate. Both designs give identical reactions for every state and input.

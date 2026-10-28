@@ -1,0 +1,23 @@
+/* Observer lesson: the illustrated text editor (Document plus three concrete Observers). */
+.observer-animation .observer-editor { border: 2px solid var(--nja-line); border-radius: 6px; overflow: hidden; min-width: 0; }
+.observer-animation .observer-editor .nja-window-bar { display: block; }
+.observer-animation .observer-document { padding: 1em; border-bottom: 2px solid var(--nja-line); }
+.observer-animation .observer-document > div { padding: 0.8em; margin-top: 0.5em; border: 2px solid var(--nja-cyan); border-radius: 3px; background: var(--nja-input); }
+.observer-animation .observer-widgets { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.7em; padding: 0.8em; }
+.observer-animation .observer-widget { border: 1px solid var(--nja-line); border-radius: 3px; padding: 0.7em; min-width: 0; }
+.observer-animation .observer-widget strong, .observer-animation .observer-document strong { display: block; color: var(--nja-text); overflow-wrap: anywhere; }
+.observer-animation .observer-widget strong span, .observer-animation .observer-document strong span { display: block; font-weight: normal; color: var(--nja-muted); font-size: 0.9em; }
+.observer-animation .observer-widget > div { margin-top: 0.7em; overflow-wrap: anywhere; }
+.observer-animation .observer-widget p { font-size: 0.9em; }
+.observer-animation .observer-widget.is-detached { border-style: dashed; }
+.observer-animation .observer-save { padding: 0.5em; border: 2px solid var(--nja-green); border-radius: 4px; color: var(--nja-green); }
+.observer-animation .np-code-with-visual .observer-widgets { grid-template-columns: 1fr; }
+@media (max-width: 700px) {
+  .observer-animation .observer-widgets,
+  .observer-animation .np-code-with-diagram .observer-widgets { grid-template-columns: 1fr; }
+}
+@media print {
+  .observer-animation .np-reading .observer-widgets { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .observer-animation .np-reading .observer-document, .observer-animation .np-reading .observer-widgets { padding: 0.6em; }
+  .observer-animation .np-reading .observer-widget { padding: 0.5em; }
+}

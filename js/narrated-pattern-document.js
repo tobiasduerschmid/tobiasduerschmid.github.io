@@ -1,4 +1,4 @@
-/* Reading views share the SEBook language preference; URLs can select a view. */
+/* Narrated pattern lessons share the SEBook language preference; URLs can select a view. */
 (function () {
   'use strict';
   const params = new URLSearchParams(window.location.search);
@@ -25,7 +25,7 @@
   }
 
   function updateViewLinks(lesson, language) {
-    lesson.querySelectorAll('[data-observer-document-link]').forEach(link => {
+    lesson.querySelectorAll('[data-np-view-link]').forEach(link => {
       const target = new URL(link.href);
       target.searchParams.set('language', language);
       target.searchParams.set('theme', selectedTheme());
@@ -41,6 +41,9 @@
   }
 
   function enhancePreferences(lesson) {
+    // Combined course pages may load this script once per embedded lesson.
+    if (lesson.dataset.npPreferences) return;
+    lesson.dataset.npPreferences = 'enhanced';
     const preferences = window.SEBookCodePreferences;
     const language = lesson.querySelector('[data-setting="language"], [data-document-language]');
     const available = Array.from(language.options, option => option.value);
@@ -68,8 +71,8 @@
     // Real hrefs also preserve preferences when copied or opened in a new tab.
     new MutationObserver(updateTheme).observe(page, { attributes: true, attributeFilter: ['class'] });
 
-    if (lesson.classList.contains('observer-document-page')) {
-      lesson.querySelector('.observer-document-controls').hidden = false;
+    if (lesson.classList.contains('np-document-page')) {
+      lesson.querySelector('.np-document-controls').hidden = false;
       lesson.querySelector('[data-document-print]').addEventListener('click', () => window.print());
       if (themeButton) themeButton.addEventListener('click', () => page.classList.toggle('dark-mode'));
     }
@@ -77,7 +80,7 @@
 
   function init() {
     applyRequestedTheme();
-    document.querySelectorAll('.observer-animation').forEach(enhancePreferences);
+    document.querySelectorAll('.narrated-pattern').forEach(enhancePreferences);
   }
   // Deferred scripts run while readyState is interactive, before the site's
   // DOMContentLoaded handlers initialize its theme controls from saved preferences.

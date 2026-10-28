@@ -1,0 +1,8 @@
+{%- comment -%}
+  Layout classes for one scene: code beside a diagram, code beside a topic
+  illustration, or a single column. Params: topic, scene.
+{%- endcomment -%}
+{%- assign np_layout_lesson = site.data.narrated_patterns[include.topic] -%}
+{%- assign np_layout_visual = false -%}
+{%- for np_visual in np_layout_lesson.visuals -%}{%- assign np_visual_key = np_visual[0] -%}{%- if include.scene[np_visual_key] -%}{%- assign np_layout_visual = true -%}{%- endif -%}{%- endfor -%}
+np-lesson{% if include.scene.code and include.scene.diagram %} np-code-with-diagram{% elsif include.scene.code and np_layout_visual %} np-code-with-visual{% endif %}

@@ -1,19 +1,10 @@
-/* Observer lesson visuals. All state is derived from the current cue and language. */
+/* Narrated design-pattern lessons. All visual state is derived from the current
+   cue and language: code marks change in place, while diagrams and topic
+   illustrations are copied from the build-time reading step for the same cue. */
 (function () {
   'use strict';
 
-  function renderEditor(editor, state) {
-    const values = { document: state.text || '(empty)', preview: state.preview || '(empty)', count: state.count,
-      save: `Save · ${state.enabled ? 'enabled' : 'disabled'}`,
-      'preview-status': state.detached ? 'Detached · pane closed · last stored text' : 'Registered' };
-    Object.entries(values).forEach(([name, text]) => {
-      editor.querySelector(`[data-ui="${name}"]`).textContent = text;
-    });
-    editor.querySelector('[data-widget="preview"]').classList.toggle('is-detached', state.detached);
-    editor.setAttribute('aria-label', `Text editor: document ${state.text || 'empty'}, character count ${state.count}, Save ${state.enabled ? 'enabled' : 'disabled'}. Preview ${state.detached ? 'is detached and retains' : 'displays'} ${state.preview || 'empty text'}.`);
-  }
-
-  function cloneDiagram(source, prefix) {
+  function cloneSvg(source, prefix) {
     const svg = source.cloneNode(true);
     const ids = new Map(Array.from(svg.querySelectorAll('[id]'), element => [element.id, `${prefix}-${element.id}`]));
     svg.querySelectorAll('*').forEach(element => {
@@ -28,18 +19,18 @@
     return svg;
   }
 
-  function renderDiagram(container, readingStep, source, focus) {
+  function renderDiagram(container, settled, type, focus, prefix) {
     // Reuse the finished ArchUML geometry from the HTML reading version. A cue
-    // changes emphasis, never the layout or intermediate fitting scale.
-    const svg = cloneDiagram(readingStep.querySelector('.observer-diagram svg'), `player-${readingStep.dataset.readingScene}`);
+    // changes emphasis or adds steps, never the fitting scale of a drawn step.
+    const source = settled.dataset.npDiagramSource;
     container.dataset.umlRendered = 'true';
-    container.dataset.umlType = 'class';
+    container.dataset.umlType = type;
     container.dataset.umlSpec = source;
-    window.UMLShared.prepareDiagramContainer(container, 'class');
-    container.replaceChildren(svg);
+    window.UMLShared.prepareDiagramContainer(container, type);
+    container.replaceChildren(cloneSvg(settled.querySelector('svg'), prefix));
     window.UMLShared.autoFitSVG(container);
-    window.UMLShared.applySvgAccessibility(container, 'class', source);
-    const label = Array.from(svg.querySelectorAll('text')).find(text => text.textContent === focus);
+    window.UMLShared.applySvgAccessibility(container, type, source);
+    const label = focus && Array.from(container.querySelectorAll('svg text')).find(text => text.textContent.split(':')[0].trim() === focus);
     if (label) {
       const bounds = label.getBoundingClientRect();
       const viewport = container.getBoundingClientRect();
@@ -48,6 +39,13 @@
         container.scrollLeft += bounds.left - viewport.left - (container.clientWidth - bounds.width) / 2;
       }
     }
+  }
+
+  function renderVisuals(scene, readingStep) {
+    scene.querySelectorAll('[data-np-visual]').forEach(slot => {
+      const settled = readingStep.querySelector(`[data-np-visual="${slot.dataset.npVisual}"]`);
+      slot.replaceChildren(...Array.from(settled.childNodes, node => node.cloneNode(true)));
+    });
   }
 
   function highlightCode(scene, block, focus) {
@@ -67,12 +65,12 @@
 
   function enhance(root) {
     if (root.classList.contains('is-enhanced')) return;
-    const story = JSON.parse(root.querySelector('[data-observer-storyboard]').textContent);
-    const examples = JSON.parse(root.querySelector('[data-observer-examples]').textContent);
-    const timing = JSON.parse(root.querySelector('[data-observer-timing]').textContent);
-    const quizzes = JSON.parse(root.querySelector('[data-observer-quizzes]').textContent);
-    const uiStates = JSON.parse(root.querySelector('[data-observer-ui-states]').textContent);
-    const quizPanel = root.querySelector('.observer-quiz');
+    const topic = root.dataset.npTopic;
+    const story = JSON.parse(root.querySelector('[data-np-storyboard]').textContent);
+    const examples = JSON.parse(root.querySelector('[data-np-examples]').textContent);
+    const timing = JSON.parse(root.querySelector('[data-np-timing]').textContent);
+    const quizzes = JSON.parse(root.querySelector('[data-np-quizzes]').textContent);
+    const quizPanel = root.querySelector('.np-quiz');
     const quizHost = quizPanel.querySelector('[data-quiz-host]');
     const languageSelect = root.querySelector('[data-setting="language"]');
     let lastCue = null;
@@ -82,20 +80,23 @@
     function render(scene, storyScene, cue) {
       const language = languageSelect.value;
       if (cue === lastCue && language === lastLanguage) return;
+      const cueChanged = cue !== lastCue;
       lastCue = cue;
       lastLanguage = language;
+      const cueIndex = storyScene.cues.indexOf(cue);
+      const readingStep = root.querySelector(`[data-reading-scene="${storyScene.id}"][data-reading-cue="${cueIndex}"]`);
       scene.querySelector('.nja-step').textContent = cue.step;
       scene.querySelector('.nja-note').textContent = cue.note;
       scene.querySelector('.nja-takeaway').hidden = Boolean(cue.prediction);
       if (storyScene.code) {
         highlightCode(scene, examples[language].blocks[storyScene.code], cue.focus);
       }
-      if (storyScene.ui) renderEditor(scene.querySelector('.observer-editor'), uiStates[cue.ui_state]);
-      const diagramKey = `${storyScene.id}:${cue.diagram_focus}`;
+      if (cueChanged) renderVisuals(scene, readingStep);
+      const diagramKey = `${storyScene.id}:${cue.diagram_focus}:${cue.diagram_steps}`;
       if (storyScene.diagram && diagramKey !== lastDiagramKey) {
-        const cueIndex = storyScene.cues.indexOf(cue);
-        const readingStep = root.querySelector(`[data-reading-scene="${storyScene.id}"][data-reading-cue="${cueIndex}"]`);
-        renderDiagram(scene.querySelector('[data-observer-diagram]'), readingStep, story.diagrams[storyScene.diagram].source, cue.diagram_focus);
+        const diagram = story.diagrams[storyScene.diagram];
+        renderDiagram(scene.querySelector('[data-np-diagram]'), readingStep.querySelector('.np-diagram'),
+          diagram.type || 'class', cue.diagram_focus, `player-${topic}-${storyScene.id}`);
         lastDiagramKey = diagramKey;
       }
     }
@@ -123,13 +124,17 @@
     function openQuiz(index) {
       root.querySelector('audio').pause();
       const scene = story.scenes[index];
+      // A section has one question, or a summary quiz lists several.
+      const check = quizzes[scene.id];
+      const questions = check.questions || [check];
       mountedQuizzes.forEach((host) => { host.hidden = true; });
       if (!mountedQuizzes.has(index)) {
         const host = document.createElement('div');
         quizHost.appendChild(host);
         window.SebookQuiz.mount({
           hostEl: host, controlsEl: quizPanel, stepIndex: index,
-          quiz: { min_score: 0.8, questions: [quizzes[scene.id]] },
+          // A summary follows the pattern description's order; options still shuffle.
+          quiz: { min_score: 0.8, questions, shuffle_questions: false },
           allowSkip: true, isFinalQuiz: index === story.scenes.length - 1,
           onPass: () => continueNarration(index),
           onSkip: () => continueNarration(index),
@@ -142,9 +147,10 @@
       root.querySelector('.nja-stage').hidden = true;
       root.querySelector('.nja-narration').hidden = true;
       root.querySelector('[data-action="play"]').disabled = true;
-      quizPanel.querySelector('.tvm-quiz-status').textContent = 'Narration paused for one question.';
+      quizPanel.querySelector('.tvm-quiz-status').textContent = questions.length > 1
+        ? `Narration paused for ${questions.length} questions.` : 'Narration paused for one question.';
       const heading = quizPanel.querySelector('h3');
-      heading.textContent = `${index + 1}. ${scene.label} — Knowledge check`;
+      heading.textContent = `${index + 1}. ${scene.label} — ${questions.length > 1 ? 'Summary quiz' : 'Knowledge check'}`;
       quizPanel.hidden = false;
       heading.focus({ preventScroll: true });
       quizPanel.scrollIntoView({ block: 'nearest', behavior: 'instant' });
@@ -161,7 +167,7 @@
     });
   }
 
-  function init() { document.querySelectorAll('.observer-animation').forEach(enhance); }
+  function init() { document.querySelectorAll('section.narrated-pattern').forEach(enhance); }
   if (document.readyState !== 'complete') document.addEventListener('DOMContentLoaded', init, { once: true });
   else init();
 })();

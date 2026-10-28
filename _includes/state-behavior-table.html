@@ -1,0 +1,23 @@
+{%- assign companion = site.data.explainers.state_ui -%}
+{%- assign table_focus = include.cue.table_focus -%}
+{%- capture marked_label -%}
+{%- if table_focus.column -%}
+{%- for request in companion.requests -%}{%- if request.id == table_focus.column -%}Marked column: {{ request.label }} — one method of the mode-checking class{%- endif -%}{%- endfor -%}
+{%- elsif table_focus.row -%}
+{%- for state in companion.states -%}{%- if state.id == table_focus.row -%}Marked row: {{ state.label }}{%- endif -%}{%- endfor -%}
+{%- else -%}Nothing marked{%- endif -%}
+{%- endcapture -%}
+<div class="state-behavior">
+  <table class="state-behavior-table">
+    <caption>Reactions by state and input</caption>
+    <thead>
+      <tr><th scope="col">State</th>{% for request in companion.requests %}<th scope="col"{% if table_focus.column == request.id %} class="is-marked"{% endif %}>{{ request.label }}</th>{% endfor %}</tr>
+    </thead>
+    <tbody>
+      {% for state in companion.states %}
+      <tr{% if table_focus.row == state.id %} class="is-marked"{% endif %}><th scope="row">{{ state.label }}</th>{% for request in companion.requests %}{% assign reaction = state.reactions[request.id] %}<td{% if table_focus.column == request.id %} class="is-marked"{% endif %}>{{ reaction.message }}{% if reaction.next %}<span class="state-behavior-next"><span aria-hidden="true">→ </span><span class="sr-only">, next state </span>{{ reaction.next }}</span>{% endif %}{% if reaction.when_tired %}<span class="state-behavior-guard">With no energy left: {{ reaction.when_tired.message }}<span class="state-behavior-next"><span aria-hidden="true">→ </span><span class="sr-only">, next state </span>{{ reaction.when_tired.next }}</span></span>{% endif %}</td>{% endfor %}</tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <p class="np-focus-label">{{ marked_label }}</p>
+</div>

@@ -1,13 +1,15 @@
 # Observer narrated UI example
 
-The Observer chapter starts with an approximately 11-minute narration about a text editor. Document
+The Observer chapter starts with an approximately 13-minute narration about a text editor. Document
 is the concrete Subject; Preview, CharacterCount, and SaveButton are concrete
 Observers. Learners choose Python, Java, C++, or TypeScript before playing and can
 switch code without changing the narration position.
 
 ## Learning sequence
 
-The lesson establishes the UI state, examines a conditional-heavy model, explains
+The lesson follows the structure of a pattern description, and each scene shows
+its part (Context, Problem, Solution, Consequences). It establishes the UI state and
+the context, examines a conditional-heavy model as the problem, explains
 four roles in an ArchUML class diagram, implements each responsibility, traces
 notification and detachment, weighs consequences, and judges applicability. It
 keeps the UI example constant to make the responsibility change visible. Code
@@ -26,7 +28,8 @@ Implementation sections show the solution's six actual classes beside the code,
 highlighting the class being discussed. The runtime trace keeps that structure
 visible and shows the changing widget state below it.
 
-Every one of the 11 sections ends with exactly one question. The standalone
+Each section ends with one question; the final summary recalls all four parts and
+ends with a six-question summary quiz on a new example (a live sports app). The standalone
 player mounts the existing `SebookQuiz` renderer from `js/tutorial-quiz.js`, so
 answer shuffling, misconception feedback, retry, and keyboard operation match
 tutorial quizzes. Audio pauses at the boundary; the learner can answer or skip,
@@ -52,11 +55,12 @@ SEBook preference (`sebook-code-language`); no playback history is saved.
 - `_data/explainers/observer_timing.json`: generated cue boundaries and source hash.
 - `assets/audio/observer-pattern.mp3` and `assets/narration/observer-pattern.*`:
   generated compressed speech, captions, and pronunciation-adjusted script.
-- `_includes/observer-animation.html`, `_includes/observer-editor-illustration.html`,
-  `js/observer-animation.js`, and `css/observer-animation.css`: lesson-specific UI.
+- `_includes/observer-editor-illustration.html` and `css/observer-narration.css`: the
+  illustrated editor. The player, reader, and print views are the shared narrated
+  pattern lesson (`docs/narrated-pattern.md`), registered in `_data/narrated_patterns.yml`.
 
 `js/narrated-explainer.js` shares the native-audio transport with Node.js and React. The
-Observer adapter adds section checkpoints and derives visual state from the
+shared pattern-lesson adapter (`js/narrated-pattern.js`) adds section checkpoints and derives visual state from the
 current cue. `narrated-explainer-code.html` and `css/narrated-explainer.css` share Rouge
 highlighting and the theme. Light and dark palettes follow `html.dark-mode`,
 including diagram, controls, code, focus markers, and quiz feedback.
@@ -73,7 +77,7 @@ all examples. Links between the player, reader, and print view carry the selecte
 language and theme in their URLs, including when copied or opened in another tab.
 The reader's section list is collapsible to keep the first step near the top.
 
-`_includes/observer-reading-content.html` supplies the reader, the chapter's
+`_includes/narrated-pattern-reading.html` supplies the reader, the chapter's
 transcript, and `/SEBook/designpatterns/observer/print/`. Browser printing from
 the chapter uses this same content. Print is always light, includes the selected
 language and answer explanations, and removes navigation and controls. Without
@@ -88,7 +92,7 @@ their diagrams without JavaScript.
 ArchUML's readable-size calculation compares screen-space transforms for the root
 SVG and its labels. Firefox reports their `getCTM()` transforms in inconsistent
 coordinate spaces, which otherwise makes repeated fitting alternate sizes.
-`js/observer-document.js` owns language visibility and view-link preferences on all
+`js/narrated-pattern-document.js` owns language visibility and view-link preferences on all
 three surfaces. It loads before the player adapter so the initial cue uses the
 shared `SEBookCodePreferences` language. A valid `?language=` view link selects
 and saves that language across the SEBook. Choosing a language in a

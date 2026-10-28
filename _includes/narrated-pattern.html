@@ -1,0 +1,109 @@
+{%- comment -%}
+  Narrated design-pattern lesson: language-selectable code, ArchUML diagrams,
+  topic illustrations, and one knowledge check per section.
+  Params: topic (a key of _data/narrated_patterns.yml and _data/explainers).
+{%- endcomment -%}
+{% assign topic = include.topic %}
+{% assign lesson = site.data.narrated_patterns[topic] %}
+{% assign explainer = site.data.explainers[topic] %}
+{% capture timing_key %}{{ topic }}_timing{% endcapture %}
+{% capture examples_key %}{{ topic }}_code{% endcapture %}
+{% capture quizzes_key %}{{ topic }}_quizzes{% endcapture %}
+{% assign timing = site.data.explainers[timing_key] %}
+{% assign examples = site.data.explainers[examples_key] %}
+{% assign quizzes = site.data.explainers[quizzes_key] %}
+<section class="narrated-explainer narrated-pattern {{ topic }}-animation mathjax_ignore" id="{{ topic }}-animation" aria-labelledby="{{ topic }}-animation-title" data-np-topic="{{ topic }}">
+  <h2 id="{{ topic }}-animation-title">{{ explainer.title }}</h2>
+  <p>{{ lesson.summary }} {{ lesson.prerequisites }}</p>
+  <div class="nja-player">
+    <div class="nja-controls nja-playback-controls np-toolbar" hidden>
+      <div class="np-toolbar-row">
+        <label class="np-language">Code language<select data-setting="language" aria-describedby="{{ topic }}-language-help">{% for language in explainer.languages %}<option value="{{ language }}"{% if language == explainer.default_language %} selected{% endif %}>{{ examples[language].label }}</option>{% endfor %}</select></label>
+        <span id="{{ topic }}-language-help" class="np-control-help">You can switch languages without restarting the narration.</span>
+      <div class="nja-transport">
+        <button type="button" data-action="play" aria-label="Play narration"><i class="fa fa-play" aria-hidden="true"></i></button>
+        <button type="button" data-action="restart" aria-label="Restart narration"><i class="fa fa-undo" aria-hidden="true"></i></button>
+        <button type="button" data-action="previous" aria-label="Previous scene"><i class="fa fa-step-backward" aria-hidden="true"></i></button>
+        <button type="button" data-action="next" aria-label="Next scene"><i class="fa fa-step-forward" aria-hidden="true"></i></button>
+        <button type="button" data-action="mute" aria-label="Mute narration" aria-pressed="false"><i class="fa fa-volume-up" aria-hidden="true"></i></button>
+        <output class="nja-time" aria-label="Playback time">0:00</output>
+      </div>
+      </div>
+      <label class="nja-seek-label">Animation position<input type="range" min="0" max="{{ timing.duration | default: 1 }}" step="0.01" value="0" aria-valuetext="0:00" class="nja-seek"></label>
+    </div>
+    <div class="nja-stage">
+      {% for scene in explainer.scenes %}
+      {% assign first_cue = scene.cues.first %}
+      {% capture lesson_class %}{% include narrated-pattern-lesson-class.html topic=topic scene=scene %}{% endcapture %}
+      <div class="nja-scene" data-scene="{{ scene.id }}"{% unless forloop.first %} hidden{% endunless %}>
+        <div class="nja-scene-meta"><span class="nja-sticker">{{ lesson.name | upcase }}</span><span>{{ forloop.index }} / {{ explainer.scenes.size }} &nbsp; {{ scene.label }}</span>{% include narrated-pattern-parts.html scene=scene %}</div>
+        <h3>{{ scene.title }}</h3>
+        <div class="nja-art" role="group" aria-label="{{ first_cue.visual | escape }}">
+          <p class="nja-purpose"><strong>Our task</strong> {{ scene.purpose | escape }}</p>
+          <div class="{{ lesson_class | strip }}">
+            {% if scene.code %}
+            <div class="nja-code-column">
+              {% for language in explainer.languages %}
+              {% assign example = examples[language] %}{% assign block = example.blocks[scene.code] %}
+              <div data-code-language="{{ language }}"{% unless language == explainer.default_language %} hidden{% endunless %}>
+                {% include narrated-explainer-code.html code=block.source filename=example.filename language=language scrollable=true %}
+                <p class="nja-code-context">{{ example.note | escape }}</p>
+              </div>
+              {% endfor %}
+              <p class="np-focus-label">{% if first_cue.focus %}Marked lines: <span data-focus-lines></span>{% else %}<span data-focus-lines>Whole example</span>{% endif %}</p>
+            </div>
+            {% endif %}
+            {% if scene.diagram %}
+            {% assign diagram = explainer.diagrams[scene.diagram] %}
+            <div class="np-diagram-column">
+              <div class="np-diagram">
+                <div data-np-diagram role="region" aria-label="{{ diagram.label | escape }}"></div>
+              </div>
+              <noscript><p>{{ diagram.description | escape }}</p></noscript>
+              {% if diagram.caption %}<p class="np-diagram-caption">{{ diagram.caption | escape }}</p>{% endif %}
+            </div>
+            {% endif %}
+            {% include narrated-pattern-visuals.html topic=topic scene=scene cue=first_cue %}
+            {% if scene.cards %}
+            <dl class="np-cards">{% for card in scene.cards %}<div><dt>{{ card.title | escape }}</dt><dd>{{ card.text | escape }}</dd></div>{% endfor %}</dl>
+            {% endif %}
+          </div>
+          <div class="nja-explanation"><strong class="nja-step">{{ first_cue.step }}</strong><p class="nja-note">{{ first_cue.note | escape }}</p></div>
+        </div>
+        <p class="nja-takeaway"><i class="fa fa-lightbulb" aria-hidden="true"></i>{{ scene.takeaway }}</p>
+      </div>
+      {% endfor %}
+    </div>
+    <section class="np-quiz" aria-labelledby="{{ topic }}-quiz-title" hidden>
+      <h3 id="{{ topic }}-quiz-title" tabindex="-1">Knowledge check</h3>
+      <div data-quiz-host></div>
+      <p class="tvm-quiz-status" role="status" aria-live="polite"></p>
+    </section>
+    <div class="nja-narration" role="region" aria-label="Narration"><p>{{ explainer.scenes.first.cues.first.text }}</p></div>
+    <audio class="nja-audio" controls preload="none" aria-label="{{ lesson.name }} narration by Kokoro">
+      <source src="{{ explainer.audio | relative_url }}" type="audio/mpeg">
+      <track kind="captions" src="{{ explainer.captions | relative_url }}" srclang="en" label="English">
+    </audio>
+    <div class="nja-controls" hidden><div class="nja-settings">
+      <label class="nja-scene-select">Scene<select data-setting="scene">{% for scene in explainer.scenes %}<option value="{{ forloop.index0 }}">{{ forloop.index }}. {{ scene.label }}</option>{% endfor %}</select></label>
+      <button type="button" class="np-review-check" data-review-check>Knowledge check</button>
+      <label>Speed<select data-setting="speed"><option value="0.75">0.75x</option><option value="1" selected>1x</option><option value="1.25">1.25x</option><option value="1.5">1.5x</option></select></label>
+    </div></div>
+    <p class="nja-status" role="status" aria-live="polite"></p>
+  </div>
+  <p class="nja-credit">Synthetic narration: Kokoro. <a href="{{ explainer.script | relative_url }}" download>Download narration script</a> &middot; <a href="{{ explainer.audio | relative_url }}" download>Download narration</a> &middot; <a href="{{ explainer.captions | relative_url }}" download>Download captions</a></p>
+  <p class="np-view-links"><a data-np-view-link href="{{ lesson.views | append: '/read/' | relative_url }}">Read at my own pace</a> · <a data-np-view-link href="{{ lesson.views | append: '/print/' | relative_url }}">Print step-by-step version</a></p>
+  <details class="nja-transcript">
+    <summary>Transcript, code, and visual descriptions</summary>
+    {% include narrated-pattern-reading.html topic=topic %}
+  </details>
+  <script type="application/json" data-np-storyboard>{{ explainer | jsonify }}</script>
+  <script type="application/json" data-np-quizzes>{{ quizzes | jsonify }}</script>
+  <script type="application/json" data-np-examples>{{ examples | jsonify }}</script>
+  <script type="application/json" data-np-timing>{{ timing | jsonify }}</script>
+</section>
+<script src="{{ '/js/narrated-explainer.js' | relative_url }}" defer></script>
+<script src="{{ '/js/parsons-grading.js' | relative_url }}" defer></script>
+<script src="{{ '/js/tutorial-quiz.js' | relative_url }}" defer></script>
+<script src="{{ '/js/narrated-pattern-document.js' | relative_url }}" defer></script>
+<script src="{{ '/js/narrated-pattern.js' | relative_url }}" defer></script>

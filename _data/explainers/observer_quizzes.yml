@@ -9,6 +9,17 @@ ui:
   option_feedback:
     1: Formatting a count is a view responsibility; the underlying text is the document's state.
     2: Layout can change without changing what the document contains.
+context:
+  question: Which situation is the context for the Observer pattern?
+  options:
+    - A client chooses one of several algorithms at runtime
+    - Several independent objects must react when one object changes
+    - An object behaves differently depending on its current state
+  correct_index: 1
+  explanation: Observer applies when changes to one object must reach several independent dependents, and the set of dependents can change at runtime.
+  option_feedback:
+    0: A client choosing an algorithm is the context of the Strategy pattern.
+    2: Behavior that varies with an object's own state is the context of the State pattern.
 conditions:
   question: Why does adding a word-count panel force changes in the original design?
   options:
@@ -97,7 +108,7 @@ consequences:
   option_feedback:
     0: The pattern supplies no automatic thread creation or scheduling.
     2: There is no timeout policy in this loop; one would have to be designed explicitly.
-context:
+applicability:
   question: Which situation most strongly favors Observer over a direct call?
   options:
     - A calculation always uses one fixed helper
@@ -119,3 +130,65 @@ transfer:
   option_feedback:
     1: This attach implementation does not invoke update; waiting for the next edit would leave the new view uninitialized.
     2: The new Observer should own its formatting rule, leaving the Subject's loop unchanged.
+summary:
+  questions:
+    - question: A live sports app updates a scoreboard, a notification banner, and a stats panel whenever a match score changes. Which feature puts it in the Observer pattern's context?
+      options:
+        - The score has more than one value to display
+        - Independent views react to one changing object
+        - The match changes its behavior as it progresses
+      correct_index: 1
+      explanation: Several independent dependents must react when one object changes, and views can be added or removed.
+      option_feedback:
+        0: How many values change does not matter; what matters is that several independent dependents react to the change.
+        2: Behavior that varies with an object's own state is the context of the State pattern.
+    - question: The first version of the sports app's Match class updates the scoreboard, banner, and stats panel directly. Which problem does the Observer pattern address in that design?
+      options:
+        - Match knows every concrete view and its update rule
+        - Match stores the score in too many fields
+        - The views run their updates too slowly
+      correct_index: 0
+      explanation: The changing object depends on every concrete dependent, so each new view or display rule forces an edit to Match.
+      option_feedback:
+        1: How Match stores its score is unrelated; the problem is its knowledge of the views.
+        2: Observer does not make updates faster; synchronous notification can even add latency.
+    - question: In an Observer design of the sports app, which class plays the Subject role?
+      options:
+        - Scoreboard, the most important view
+        - ScoreObserver, the update interface
+        - Match, whose score changes
+      correct_index: 2
+      explanation: The Subject is the object whose state changes and that notifies its registered Observers.
+      option_feedback:
+        0: Scoreboard reacts to changes; it is a Concrete Observer, however important it is.
+        1: The update interface plays the Observer role. The Subject holds Observers and notifies them.
+    - question: The banner is detached, and then the score changes. Which objects receive update?
+      options:
+        - The scoreboard and the stats panel
+        - All three views, including the banner
+        - Only the views created after detaching
+      correct_index: 0
+      explanation: The Subject notifies exactly the Observers registered when the change happens; detaching removes the banner from that collection.
+      option_feedback:
+        1: Implementing the Observer interface is not enough; an object must be registered to be notified.
+        2: Creating a view does not register it; registration happens only through attach.
+    - question: The team adds a live-odds panel to the Observer-based sports app. Which code changes?
+      options:
+        - Match's notification loop gains a case for odds
+        - A new Concrete Observer and one attach call
+        - Every existing view gains an odds method
+      correct_index: 1
+      explanation: 'Extending the dependents is the pattern''s benefit: write a new Observer and register it, while the Subject''s notification stays the same.'
+      option_feedback:
+        0: A case for a concrete view would reintroduce the coupling that the pattern removes.
+        2: Existing Observers own only their own reactions and do not change.
+    - question: Which sports app design would make the Observer pattern a poor fit?
+      options:
+        - Views that fans open and close during a match
+        - Several panels that each format the score differently
+        - One fixed display that always shows the score
+      correct_index: 2
+      explanation: With one fixed collaborator and no need for flexible registration, a direct call is clearer than the extra indirection.
+      option_feedback:
+        0: Dependents that come and go at runtime are exactly the context Observer handles.
+        1: Independent dependents with different reactions are where separate Observers pay off.

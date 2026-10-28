@@ -1,0 +1,33 @@
+/* State lesson: the illustrated companion panel and the table of reactions by state and input. */
+.state-animation .state-companion-panel { border: 2px solid var(--nja-line); border-radius: 6px; overflow: hidden; min-width: 0; }
+.state-animation .state-companion-panel .nja-window-bar { display: block; }
+.state-animation .state-companion-body { padding: 1em; }
+.state-animation .state-companion-body p { margin: 0 0 0.7em; color: var(--nja-text); overflow-wrap: anywhere; }
+.state-animation .state-companion-name { font-weight: 700; }
+.state-animation .state-companion-name span { font-weight: normal; color: var(--nja-muted); }
+.state-animation .state-companion-status strong { display: inline-block; margin: 0 0.6em 0 0.4em; padding: 0.15em 0.6em; border: 2px solid var(--nja-cyan); border-radius: 999px; color: var(--nja-text); background: var(--nja-panel); }
+.state-animation .state-companion-status span { color: var(--nja-muted); }
+.state-animation .state-companion-inputs { display: flex; flex-wrap: wrap; gap: 0.6em; margin: 0 0 0.9em; padding: 0; list-style: none; }
+.state-animation .state-companion-inputs li { padding: 0.35em 0.8em; border: 1px solid var(--nja-line); border-radius: 4px; color: var(--nja-text); background: var(--nja-input); }
+/* The last input is marked by a heavier, double border and bold text as well as color. */
+.state-animation .state-companion-inputs li.is-last { border: 3px double var(--nja-accent); font-weight: 700; }
+.state-animation .state-companion-reaction { padding: 0.6em 0.8em; border-left: 4px solid var(--nja-accent); background: var(--nja-note-bg); }
+.state-animation .state-companion-reaction span { color: var(--nja-muted); }
+
+.state-animation .state-behavior { min-width: 0; }
+.state-animation .state-behavior-table { width: 100%; border-collapse: collapse; color: var(--nja-text); font: inherit; }
+.state-animation .state-behavior-table caption { caption-side: top; text-align: left; padding: 0 0 0.5em; color: var(--nja-text); font-weight: 700; }
+.state-animation .state-behavior-table :is(th, td) { padding: 0.45em 0.5em; border: 1px solid var(--nja-line); text-align: left; vertical-align: top; overflow-wrap: anywhere; }
+.state-animation .state-behavior-table thead th { background: var(--nja-chrome); font-family: 'Fira Code', Menlo, Consolas, monospace; font-weight: 600; }
+/* State names are the row labels; they must not break mid-word. */
+.state-animation .state-behavior-table tbody th { background: var(--nja-panel); font-family: 'Fira Code', Menlo, Consolas, monospace; white-space: nowrap; overflow-wrap: normal; }
+.state-animation .state-behavior-next { display: block; color: var(--nja-accent); font-weight: 700; }
+.state-animation .state-behavior-guard { display: block; margin-top: 0.4em; padding-top: 0.4em; border-top: 1px dashed var(--nja-line); }
+/* A marked row or column gets a thick outline and fill, not color alone. */
+.state-animation .state-behavior-table .is-marked:is(th, td),
+.state-animation .state-behavior-table tr.is-marked > :is(th, td) { background: var(--nja-highlight); border: 3px solid var(--nja-accent); }
+@media print {
+  .state-animation .state-behavior-table :is(th, td) { border-color: #555; }
+  .state-animation .state-behavior-table .is-marked:is(th, td),
+  .state-animation .state-behavior-table tr.is-marked > :is(th, td) { border-color: #000; }
+}

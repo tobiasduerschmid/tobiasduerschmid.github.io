@@ -1,0 +1,185 @@
+# One knowledge check per section, about the State pattern rather than the
+# game example. The summary section lists several questions under `questions`.
+intro:
+  question: Which parts make up a design pattern's description?
+  options:
+    - A context, a recurring problem, a solution, and its consequences
+    - A class library, its public API, and usage examples
+    - A UML class diagram, a test suite, and a code template
+  correct_index: 0
+  explanation: A pattern describes a problem that recurs in a context, a solution expressed as roles and collaborations, and the consequences of applying it.
+  option_feedback:
+    1: A library is reusable code. A pattern is a reusable design idea that you adapt to each situation.
+    2: Diagrams and code illustrate a pattern, but without its context, problem, and consequences you cannot tell when to apply it.
+context:
+  question: Which situation is the context for the State pattern?
+  options:
+    - Several objects must be notified whenever one object changes
+    - Several operations of one object depend on a state that changes at runtime
+    - A client must choose one of several interchangeable algorithms
+  correct_index: 1
+  explanation: The State pattern applies when an object's behavior in several operations depends on its current state, and that state changes while the program runs.
+  option_feedback:
+    0: Notifying dependents of a change is the context of the Observer pattern.
+    2: A client choosing an algorithm is the context of the Strategy pattern. In State, transitions happen as events occur.
+problem:
+  question: In the State pattern's problem, what makes state-checking conditionals hard to change?
+  options:
+    - Conditionals are slower than calls to state objects
+    - Each operation must store its own copy of the state
+    - Each state's rules are spread across every operation
+  correct_index: 2
+  explanation: Every state-dependent operation repeats the same check, so one state's rules live in many methods, and adding a state means editing all of them.
+  option_feedback:
+    0: The problem is modifiability, not speed. Performance depends on the workload and should be measured.
+    1: The conditional design typically stores the state once, in one field. The difficulty is that every operation must check it.
+solution:
+  question: In the State pattern, which role implements the behavior of one particular state?
+  options:
+    - Concrete State
+    - Context
+    - State interface
+  correct_index: 0
+  explanation: Each Concrete State implements every state-dependent operation for one state. The Context only delegates, and the State interface only declares the operations.
+  option_feedback:
+    1: The Context forwards requests to its current state object. Keeping state-specific behavior out of it is the point of the pattern.
+    2: The State interface declares the operations that every state must answer; it does not implement any one state's behavior.
+state_role:
+  question: In the State pattern, which operations belong in the State interface?
+  options:
+    - Every public operation of the Context, including setState()
+    - One for each request whose behavior depends on the state
+    - One for each Concrete State, such as toNapping()
+  correct_index: 1
+  explanation: The State interface mirrors the Context's state-dependent requests, so the Context can forward each request to whichever state object is current.
+  option_feedback:
+    0: setState() is how state objects change the Context. It is not a state-dependent request, so it stays on the Context.
+    2: Operations named after states would make every state know every other state. The interface lists requests, and each state decides how to react.
+context_role:
+  question: In the State pattern, what does the Context do with a state-dependent request?
+  options:
+    - Checks its current state, then calls the matching method
+    - Asks the client to choose the right state object
+    - Forwards it to its current state object, passing itself
+  correct_index: 2
+  explanation: The Context delegates every state-dependent request to its current state object and passes itself, so the state can read its data or change its state.
+  option_feedback:
+    0: A status check in the Context is the conditional design that the pattern replaces. Dynamic dispatch selects the behavior.
+    1: Clients only make requests. They do not deal with state objects directly.
+concrete_roles:
+  question: In the State pattern, when can several Contexts share the same Concrete State objects?
+  options:
+    - When the state objects store no data about one Context
+    - When the state objects never make transitions
+    - When there is only one Context object in the program
+  correct_index: 0
+  explanation: A stateless state object holds only behavior, so any Context can use it. The Context passes itself as a parameter instead of being stored in the state.
+  option_feedback:
+    1: Shared state objects can still make transitions, because they change the Context that is passed to them.
+    2: With one Context, sharing gains nothing. Sharing is possible for many Contexts whenever the states hold no per-Context data.
+collaborations:
+  question: In the State pattern, a Concrete State calls setState(next) on its Context. What handles the Context's next request?
+  options:
+    - The Context itself, by checking a stored mode
+    - The next state object
+    - The same Concrete State, until the client resets it
+  correct_index: 1
+  explanation: setState(next) replaces the Context's current state object, so the next request is delegated to the new state.
+  option_feedback:
+    0: The Context stores no mode to check. It always delegates to its current state object.
+    2: The transition already happened. The client never resets or chooses the state.
+consequences:
+  question: Which change is usually more expensive with the State pattern than with state-checking conditionals?
+  options:
+    - Adding a new state with its own behavior
+    - Changing how one state reacts to one request
+    - Adding a new request that every state must handle
+  correct_index: 2
+  explanation: A new request adds an operation to the State interface and an implementation to every Concrete State. Conditionals had the opposite trade-off.
+  option_feedback:
+    0: Adding a state is the pattern's benefit — one new class plus the transitions that lead into it.
+    1: Changing one reaction edits one method of one state class, a local change in either design.
+applicability:
+  question: In which situation is a simpler design usually better than the State pattern?
+  options:
+    - Two stable states with nearly identical behavior
+    - Many states with distinct behavior that keep being added
+    - Several requests whose reactions differ in every state
+  correct_index: 0
+  explanation: The pattern adds classes and spreads transitions. With few stable, similar states, extracted methods or a checked switch are clearer.
+  option_feedback:
+    1: Distinct behavior and new states arriving are exactly the context in which the State pattern pays off.
+    2: Requests that react differently in every state are a strong sign of the State pattern's context.
+transfer:
+  question: In a State pattern design, which existing code changes when you add a new state that needs no new request?
+  options:
+    - Every forwarding method of the Context
+    - Only the transitions that lead into the new state
+    - The State interface and every Concrete State
+  correct_index: 1
+  explanation: The new state is one new Concrete State class. Elsewhere, only the transitions into it change.
+  option_feedback:
+    0: The Context forwards to whichever state is current, so its forwarding methods do not change for a new state.
+    2: The interface changes only for a new request. A new state implements the existing operations.
+summary:
+  questions:
+    - question: A video player reacts differently to play(), pause(), and networkLost() when it is Playing, Paused, or Buffering. Which feature puts it in the State pattern's context?
+      options:
+        - A user can choose among several playback qualities
+        - Several views must update when the playback position moves
+        - Several operations react to a state that changes at runtime
+      correct_index: 2
+      explanation: The State pattern's context is one object whose behavior in several operations depends on a state that changes as the program runs.
+      option_feedback:
+        0: A user choosing among interchangeable behaviors is the context of the Strategy pattern.
+        1: Updating several views after a change is the context of the Observer pattern.
+    - question: The video player's first version checks its mode in play(), pause(), and networkLost(). Which problem does the State pattern address in that design?
+      options:
+        - Each mode's rules are scattered across all three methods
+        - The player keeps too few classes for its features
+        - The player's public methods are visible to clients
+      correct_index: 0
+      explanation: Every method repeats the mode check, so one mode's behavior lives in three places, and a new mode must be added to every method.
+      option_feedback:
+        1: A small number of classes is not the problem. The pattern adds classes as a cost, not as a goal.
+        2: Clients still call the same public methods after the refactoring; the interface is not the problem.
+    - question: In a State pattern video player, which class plays the Context role?
+      options:
+        - PlayerState, the interface every state implements
+        - VideoPlayer, the object that clients call
+        - Buffering, the state with the most logic
+      correct_index: 1
+      explanation: The Context is the object clients use. It holds the current state object and forwards state-dependent requests to it.
+      option_feedback:
+        0: PlayerState plays the State role. It declares the operations; it is not the object clients call.
+        2: Buffering is one Concrete State. How much logic a class has does not determine its role.
+    - question: When data arrives, Buffering calls setState(playing) on the video player. Which object handles the player's next pause()?
+      options:
+        - The Buffering object
+        - The VideoPlayer, by checking its mode
+        - The Playing object
+      correct_index: 2
+      explanation: The transition replaced the current state object, so the Context now forwards requests to the Playing object.
+      option_feedback:
+        0: Buffering stopped being the current state when it called setState.
+        1: The Context does not check a mode. It delegates to whichever state object is current.
+    - question: The team adds a Casting state and a new skipAd() request to the State pattern video player. Which change costs more?
+      options:
+        - Adding skipAd() to the interface and every state
+        - Adding the Casting state class
+        - Changing VideoPlayer's existing forwarding methods
+      correct_index: 0
+      explanation: A new request touches the State interface and every Concrete State, while a new state is one class plus its incoming transitions.
+      option_feedback:
+        1: A new state is the pattern's cheap change — one class and the transitions that lead into it.
+        2: The existing forwarding methods stay the same; only skipAd() needs one new forwarding method.
+    - question: Which video player design would make the State pattern a poor fit?
+      options:
+        - New modes, such as Casting, in every release
+        - Two stable modes that barely differ
+        - Five modes that react differently to every button
+      correct_index: 1
+      explanation: With few stable, similar modes, the extra classes and spread transitions cost more than they save; a checked switch is clearer.
+      option_feedback:
+        0: New states arriving regularly is the situation the State pattern handles best.
+        2: Distinct reactions in many modes are exactly where localized state classes pay off.

@@ -32,15 +32,19 @@ const examples = yaml.load(readFileSync(path.join(root, '_data/explainers/observ
 const quizzes = yaml.load(readFileSync(path.join(root, '_data/explainers/observer_quizzes.yml'), 'utf8'));
 const timing = require('../../_data/explainers/observer_timing.json');
 
-test('every section has exactly one question and every cue has valid language-independent focus', () => {
+test('every section has one question, the summary covers every part, and every cue has valid focus', () => {
   assert.deepEqual(Object.keys(quizzes), story.scenes.map(scene => scene.id));
+  // The last section's summary quiz checks context, problem, solution, and consequences.
+  assert.ok(quizzes[story.scenes.at(-1).id].questions.length >= 4);
   story.scenes.forEach(scene => {
-    const question = quizzes[scene.id];
-    assert.equal(typeof question.question, 'string');
-    assert.ok(question.options.length >= 2);
-    assert.ok(Number.isInteger(question.correct_index));
-    assert.ok(question.correct_index >= 0 && question.correct_index < question.options.length);
-    assert.ok(question.explanation.trim());
+    const check = quizzes[scene.id];
+    for (const question of check.questions || [check]) {
+      assert.equal(typeof question.question, 'string');
+      assert.ok(question.options.length >= 2);
+      assert.ok(Number.isInteger(question.correct_index));
+      assert.ok(question.correct_index >= 0 && question.correct_index < question.options.length);
+      assert.ok(question.explanation.trim());
+    }
     for (const cue of scene.cues) {
       if (!cue.focus) continue;
       for (const language of story.languages) {
