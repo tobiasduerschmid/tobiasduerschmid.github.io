@@ -20,6 +20,8 @@ Supported options:
 - reset_label, reset_title
 - hide_archuml: "true" or "false" to hide the source pane and Copy ArchUML
 - hide_syntax_help: "true" or "false" to hide the link to the ArchUML syntax reference
+- export_types: optional comma-separated types to download together instead of
+  the active diagram; requires storage_key to identify the tutorial and its drafts
 {% endcomment %}
 {% assign uml_editor_types_param = include.types | default: "class,sequence,state,component,deployment,usecase,activity,freeform,gitgraph,folder-tree,venn,er,crc" %}
 {% assign uml_editor_types = uml_editor_types_param | split: "," %}
@@ -28,6 +30,8 @@ Supported options:
 {% assign uml_editor_start = include.start | default: "example" %}
 {% assign uml_editor_persistence = include.persistence | default: "true" %}
 {% assign uml_editor_storage_key = include.storage_key | default: "" %}
+{% assign uml_editor_export_types_param = include.export_types | default: "" %}
+{% assign uml_editor_export_types = uml_editor_export_types_param | split: "," %}
 {% assign uml_editor_default_editor_size = include.default_editor_size | default: include.editor_size | default: "" %}
 {% assign uml_editor_default_props_size = include.default_props_size | default: include.props_size | default: "" %}
 {% assign uml_editor_reset_label = include.reset_label | default: "Example" %}
@@ -52,6 +56,7 @@ Supported options:
   "defaultLayout": "{{ uml_editor_default_layout | escape }}",
   "start": "{{ uml_editor_start | escape }}",
   "storageKey": "{{ uml_editor_storage_key | escape }}",
+  "exportTypes": {{ uml_editor_export_types | jsonify }},
   "defaultEditorSize": {% if uml_editor_default_editor_size != "" %}{{ uml_editor_default_editor_size | plus: 0 }}{% else %}null{% endif %},
   "defaultPropsSize": {% if uml_editor_default_props_size != "" %}{{ uml_editor_default_props_size | plus: 0 }}{% else %}null{% endif %},
   "hideArchUml": {% if uml_editor_hide_archuml == true or uml_editor_hide_archuml == "true" %}true{% else %}false{% endif %},
@@ -63,6 +68,7 @@ Supported options:
 <link rel="stylesheet" href="{{ '/css/print-light.css' | relative_url }}" media="print">
 <script src="{{ '/js/uml-editor-callout-drag.js' | relative_url }}"></script>
 <script src="{{ '/js/uml-editor-callouts.js' | relative_url }}"></script>
+<script src="{{ '/js/uml-export.js' | relative_url }}"></script>
 
 <div id="uml-playground-wrap"{% if uml_editor_hide_archuml == true or uml_editor_hide_archuml == "true" %} class="is-archuml-hidden"{% endif %}>
   <div id="uml-pg-fullscreen-bar" role="group" aria-label="Fullscreen controls" hidden>
@@ -117,7 +123,11 @@ Supported options:
     </span>
     <span class="uml-pg-toolbar-group uml-pg-toolbar-group-export" role="group" aria-label="Export">
       <button id="uml-pg-copy-source" data-original-title="Copy generated ArchUML">Copy ArchUML</button>
+      {% if uml_editor_export_types_param != "" %}
+      <button id="uml-pg-export-source" data-original-title="Download all tutorial diagrams in one encrypted UML file" type="button">Export All UML</button>
+      {% else %}
       <button id="uml-pg-export-source" data-original-title="Download encrypted ArchUML as a UML file" type="button">Export UML</button>
+      {% endif %}
       <button id="uml-pg-generate-python" data-original-title="Open generated Python in a runnable tutorial workspace" type="button">Generate Python</button>
       <button id="uml-pg-download" data-original-title="Download diagram as SVG file">&#8595; Download SVG</button>
     </span>
@@ -198,6 +208,26 @@ Supported options:
     </div>
     <button id="uml-pg-help-dismiss" type="button" aria-label="Got it — dismiss tips">Got it</button>
   </div>
+
+  <section id="uml-pg-class-actions" class="uml-pg-class-actions" aria-label="Class editing" hidden>
+    <div class="uml-pg-class-action-buttons">
+      <span>Select one class to edit its name or members.</span>
+      <button id="uml-pg-class-rename" type="button" disabled>Rename class</button>
+      <button id="uml-pg-class-add-attribute" type="button" disabled>Add attribute</button>
+      <button id="uml-pg-class-add-method" type="button" disabled>Add method</button>
+    </div>
+    <span id="uml-pg-class-selection" class="uml-pg-sr-only" role="status" aria-live="polite"></span>
+    <form id="uml-pg-member-form" class="uml-pg-member-form" aria-label="Add class member" hidden novalidate>
+      <label id="uml-pg-member-label" for="uml-pg-member-signature">Attribute signature</label>
+      <input id="uml-pg-member-signature" type="text" autocomplete="off" spellcheck="false" aria-describedby="uml-pg-member-help uml-pg-member-error">
+      <div class="uml-pg-class-action-buttons">
+        <button type="submit">Add</button>
+        <button id="uml-pg-member-cancel" type="button">Cancel</button>
+      </div>
+      <p id="uml-pg-member-help"></p>
+      <p id="uml-pg-member-error" class="uml-pg-member-error" role="alert" hidden></p>
+    </form>
+  </section>
 
   <div id="uml-playground-body">
     <div id="uml-pg-editor-pane" role="region" aria-labelledby="uml-pg-source-heading">
@@ -800,6 +830,18 @@ Supported options:
     // Multi-select: keys = ids, values = 'node' | 'route'. Single-select scalars
     // above remain the "primary" (most recent click) for the props panel.
     var selectedLayoutIds = Object.create(null);
+    const classActions = document.getElementById('uml-pg-class-actions');
+    const classSelection = document.getElementById('uml-pg-class-selection');
+    const classRenameButton = document.getElementById('uml-pg-class-rename');
+    const classAttributeButton = document.getElementById('uml-pg-class-add-attribute');
+    const classMethodButton = document.getElementById('uml-pg-class-add-method');
+    const classMemberForm = document.getElementById('uml-pg-member-form');
+    const classMemberLabel = document.getElementById('uml-pg-member-label');
+    const classMemberInput = document.getElementById('uml-pg-member-signature');
+    const classMemberHelp = document.getElementById('uml-pg-member-help');
+    const classMemberError = document.getElementById('uml-pg-member-error');
+    let classMemberDraft = null;
+    let classActionsRenderedSource = null;
     const calloutEditor = window.UMLCalloutEditor.create({
       root: document.getElementById('uml-playground-wrap'),
       getSource: function () { return textarea.value; },
@@ -5296,7 +5338,9 @@ Supported options:
       if (spec.isNote) opts.label = 'New note text';
       if (spec.isPort) opts.label = spec.portKind === 'portin' ? 'in' : 'out';
       if (spec.isInterface) opts.label = spec.interfaceKind === 'provide' ? 'P_iface' : 'R_iface';
-      var clearToolAfterPlacement = type === 'sequence' && spec && (spec.id === 'actor' || spec.id === 'participant');
+      // A newly placed classifier is ready for naming and member entry.
+      var clearToolAfterPlacement = type === 'class' ||
+        (type === 'sequence' && spec && (spec.id === 'actor' || spec.id === 'participant'));
 
       // Ports / interfaces dropped onto a component go INSIDE that component's
       // `{ }` block — they live there in ArchUML and the renderer lays them out
@@ -6655,6 +6699,132 @@ Supported options:
       return member;
     }
 
+    function selectedClassForActions() {
+      if (typeSelect.value !== 'class' || !editToggle.checked || selectionSize() !== 1 ||
+          selectedLayoutKind !== 'node' || classActionsRenderedSource !== textarea.value) return null;
+      const line = getDeclarationLine(textarea.value, 'class', selectedLayoutId);
+      if (!line || !/^(?:abstract\s+class|class|interface|enum)\s/i.test(line.trim())) return null;
+      const info = parseClassDeclaration(line);
+      return info.name ? { id: selectedLayoutId, info: info } : null;
+    }
+
+    function closeClassMemberForm(restoreFocus) {
+      const trigger = classMemberDraft && classMemberDraft.trigger;
+      classMemberDraft = null;
+      classMemberForm.hidden = true;
+      classMemberInput.value = '';
+      classMemberInput.removeAttribute('aria-invalid');
+      classMemberError.textContent = '';
+      classMemberError.hidden = true;
+      if (restoreFocus && trigger && !trigger.disabled) trigger.focus();
+    }
+
+    function updateClassActions(rendering) {
+      classActions.hidden = typeSelect.value !== 'class' || !editToggle.checked;
+      const selected = selectedClassForActions();
+      [classRenameButton, classAttributeButton, classMethodButton].forEach(function (button) {
+        button.disabled = !selected;
+      });
+      classSelection.textContent = selected
+        ? 'Selected: ' + (selected.info.declarationLabel || selected.info.name)
+        : 'Select one class to edit its name or members.';
+      if (classMemberDraft && (classMemberDraft.source !== textarea.value ||
+          classMemberDraft.id !== selectedLayoutId || selectionSize() !== 1 ||
+          classActions.hidden || (!rendering && !selected))) {
+        closeClassMemberForm(false);
+      }
+    }
+
+    function openClassMemberForm(kind, trigger) {
+      const selected = selectedClassForActions();
+      if (!selected) return;
+      cancelInlineRename();
+      closeClassMemberForm(false);
+      classMemberDraft = { id: selected.id, kind: kind, trigger: trigger, source: textarea.value };
+      classMemberLabel.textContent = kind === 'method' ? 'Method signature' : 'Attribute signature';
+      classMemberHelp.textContent = (kind === 'method'
+        ? 'For example: +rollDice(): int. '
+        : 'For example: -balance: int. ') +
+        'Use + public, - private, # protected, or ~ package visibility; {static} and {abstract} are optional. Enter adds; Escape cancels.';
+      classMemberForm.hidden = false;
+      classMemberInput.focus();
+    }
+
+    function classMemberValidationError(signature, kind) {
+      if (!signature.trim()) return 'Enter a ' + kind + ' signature before adding it.';
+      const syntax = signature.replace(/"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'/g, '""');
+      if (/["']/.test(syntax.replace(/""/g, ''))) return 'Close each quoted value before adding the member.';
+      if (/[;\r\n]/.test(signature)) return 'Enter one member at a time. Semicolons and line breaks are not supported, including inside quoted values.';
+      const member = parseMemberLine(signature);
+      const memberSyntax = parseMemberLine(syntax).text;
+      if (!member.text || /[{}]/.test(memberSyntax)) {
+        return 'Enter a member name. Only {static} and {abstract} modifiers are supported before the name.';
+      }
+      if (kind === 'attribute' && /[()]/.test(member.text)) {
+        return 'An attribute has no parameter list. Use Add method for a signature with parentheses.';
+      }
+      let parenthesisDepth = 0;
+      let balancedParentheses = true;
+      for (const char of memberSyntax) {
+        if (char === '(') parenthesisDepth++;
+        if (char === ')' && --parenthesisDepth < 0) balancedParentheses = false;
+      }
+      if (kind === 'method' && (memberSyntax.indexOf('(') < 1 || parenthesisDepth !== 0 || !balancedParentheses)) {
+        return 'Include a method name and parentheses, for example +rollDice(): int.';
+      }
+      return '';
+    }
+
+    function submitClassMember(event) {
+      event.preventDefault();
+      const selected = selectedClassForActions();
+      if (!classMemberDraft || !selected || selected.id !== classMemberDraft.id) {
+        closeClassMemberForm(false);
+        return;
+      }
+      const signature = classMemberInput.value;
+      const validationError = classMemberValidationError(signature, classMemberDraft.kind);
+      if (validationError) {
+        classMemberError.textContent = validationError;
+        classMemberError.hidden = false;
+        classMemberInput.setAttribute('aria-invalid', 'true');
+        classMemberInput.focus();
+        return;
+      }
+      const draft = classMemberDraft;
+      selected.info.members.push(parseMemberLine(signature));
+      closeClassMemberForm(false);
+      replaceClassDeclaration(selected.id, selected.info, null);
+      draft.trigger.focus();
+      announce('Added ' + draft.kind + ' to "' + (selected.info.declarationLabel || selected.info.name) + '".', false);
+    }
+
+    classAttributeButton.addEventListener('click', function () {
+      openClassMemberForm('attribute', classAttributeButton);
+    });
+    classMethodButton.addEventListener('click', function () {
+      openClassMemberForm('method', classMethodButton);
+    });
+    classRenameButton.addEventListener('click', function () {
+      const selected = selectedClassForActions();
+      const svg = output.querySelector('svg');
+      if (!selected || !svg) return;
+      closeClassMemberForm(false);
+      const item = findEditableElements(svg).find(function (element) { return element.id === selected.id; });
+      if (item) startInlineRename(item);
+    });
+    classMemberForm.addEventListener('submit', submitClassMember);
+    classMemberForm.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        event.stopPropagation();
+        closeClassMemberForm(true);
+      }
+    });
+    document.getElementById('uml-pg-member-cancel').addEventListener('click', function () {
+      closeClassMemberForm(true);
+    });
+
     function buildClassLine(info) {
       var keyword;
       if (info.kind === 'abstract' || info.isAbstract && info.kind === 'class') keyword = 'abstract class';
@@ -6669,14 +6839,21 @@ Supported options:
       if (info.texture) line += ' ' + info.texture;
       if (info.rawAfter) line += ' ' + info.rawAfter;
       if (info.members && info.members.length) {
-        var body = info.members.map(function (m) {
+        var memberLines = info.members.map(function (m) {
           var s = m.visibility || '';
           if (m.isAbstract) s += ' {abstract}';
           if (m.isStatic) s += ' {static}';
           s += ' ' + (m.text || '').trim();
           return s.trim();
-        }).join('; ');
-        line += ' { ' + body + ' }';
+        });
+        // The renderer splits single-line bodies on every semicolon. Keep
+        // quoted defaults in multiline bodies so adding a member cannot split
+        // an existing string value into additional members.
+        if (info.members.some(function (m) { return (m.text || '').indexOf(';') !== -1; })) {
+          line += ' {\n  ' + memberLines.join('\n  ') + '\n}';
+        } else {
+          line += ' { ' + memberLines.join('; ') + ' }';
+        }
       }
       return line;
     }
@@ -6693,6 +6870,7 @@ Supported options:
     }
 
     function rebuildPropsPane() {
+      updateClassActions();
       if (!propsPane) return;
       if (!editToggle || !editToggle.checked || selectionSize() === 0) {
         clearPropsPane();
@@ -8159,12 +8337,12 @@ Supported options:
       return info;
     }
 
-    function replaceClassDeclaration(oldId, info) {
+    function replaceClassDeclaration(oldId, info, undoKind = 'edit:' + oldId) {
       if (info.name !== oldId && existingIds(textarea.value, typeSelect.value)[info.name]) {
         announce('"' + info.name + '" is already used. Pick a different identifier.', true);
         return;
       }
-      snapshotForUndo('edit:' + oldId);
+      snapshotForUndo(undoKind);
       var type = typeSelect.value;
       var newLine = buildClassLine(info);
       var newId = info.name;
@@ -9917,7 +10095,7 @@ Supported options:
       refreshActiveButtonStates();
     }
 
-    // ─── In-canvas inline rename (label-only, never id) ───
+    // ─── In-canvas inline rename (updates references for named classifiers) ───
     var inlineRenameInput = null;
     var inlineRenameCancel = null;
 
@@ -9928,7 +10106,8 @@ Supported options:
       // The hitbox might have moved since the item was found — re-locate it.
       var hitbox = svg.querySelector('.uml-pg-edit-hitbox[data-layout-id="' + cssAttrEscape(item.id) + '"]');
       if (!hitbox) return;
-      var rect = hitbox.getBoundingClientRect();
+      var labelTextNode = findElementLabelTextNode(svg, item);
+      var rect = (labelTextNode || hitbox).getBoundingClientRect();
       var input = document.createElement('input');
       input.type = 'text';
       input.className = 'uml-pg-inline-input';
@@ -9937,20 +10116,22 @@ Supported options:
       input.style.left = rect.left + 'px';
       input.style.top = rect.top + 'px';
       input.style.width = Math.max(rect.width, 100) + 'px';
-      input.style.minHeight = Math.max(rect.height * 0.5, 28) + 'px';
+      input.style.minHeight = Math.max(rect.height, 28) + 'px';
       wrap.appendChild(input);
       input.focus();
       input.select();
       inlineRenameInput = input;
       inlineRenameCancel = cancel;
 
-      var labelTextNode = findElementLabelTextNode(svg, item);
       var originalText = labelTextNode ? labelTextNode.textContent : null;
       function preview() {
         if (labelTextNode) labelTextNode.textContent = input.value;
       }
       function commit() {
         var newLabel = input.value.trim();
+        // Restore the preview if the name is empty, unchanged, or rejected
+        // (for example because another class already has that identifier).
+        if (labelTextNode && originalText !== null) labelTextNode.textContent = originalText;
         cleanup();
         if (!newLabel || newLabel === item.label) return;
         snapshotForUndo();
@@ -9969,8 +10150,15 @@ Supported options:
         inlineRenameCancel = null;
       }
       function onKey(ev) {
-        if (ev.key === 'Enter') { ev.preventDefault(); commit(); }
-        else if (ev.key === 'Escape') { ev.preventDefault(); cancel(); }
+        if (ev.key === 'Enter') {
+          ev.preventDefault();
+          commit();
+          focusLayoutTarget(selectedLayoutId || item.id);
+        } else if (ev.key === 'Escape') {
+          ev.preventDefault();
+          cancel();
+          focusLayoutTarget(item.id);
+        }
       }
       input.addEventListener('input', preview);
       input.addEventListener('keydown', onKey);
@@ -11195,6 +11383,8 @@ Supported options:
 
     function renderDiagram(options) {
       options = options || {};
+      classActionsRenderedSource = null;
+      updateClassActions(true);
       rememberCurrentSource(currentType);
       renderGeneration++;
       cancelVisualEditorInstall();
@@ -11233,6 +11423,7 @@ Supported options:
         var svg = output.querySelector('svg');
         calloutEditor.refresh(svg, type);
         if (svg) {
+          classActionsRenderedSource = textarea.value;
           if ((!ignoresLayout(type) || type === 'gitgraph') && type !== 'folder-tree') {
             applyEditorCanvasBounds(svg);
           }
@@ -11265,6 +11456,7 @@ Supported options:
         // Intentionally do NOT update lastSnapshotValue on error. The next
         // text edit's snapshot should still revert to the last good state.
       }
+      updateClassActions();
     }
 
     function showError(msg) {
@@ -11285,6 +11477,8 @@ Supported options:
       errorBox.classList.remove('is-hidden');
       errorBox.style.display = '';
       output.innerHTML = '';
+      classActionsRenderedSource = null;
+      updateClassActions();
       clearEditLayer();
       calloutEditor.refresh(null, typeSelect.value);
       status.textContent = '';
@@ -11377,6 +11571,7 @@ Supported options:
     });
 
     textarea.addEventListener('input', function (event) {
+      updateClassActions();
       if (event && event.isTrusted === false) {
         clearTimeout(debounceTimer);
         renderDiagram();
@@ -12067,12 +12262,6 @@ Supported options:
           textarea.select();
         }
       });
-    }
-
-    function bytesToBase64(bytes) {
-      var bin = '';
-      for (var i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
-      return btoa(bin);
     }
 
     function safeDiagramFileName(type) {
@@ -12968,65 +13157,39 @@ Supported options:
       });
     }
 
-    async function encryptedUmlPayload(password) {
-      if (!window.crypto || !window.crypto.subtle) {
-        throw new Error('Encrypted export needs Web Crypto support in this browser.');
-      }
-      var source = textarea.value || '';
-      var encoder = new TextEncoder();
-      var salt = window.crypto.getRandomValues(new Uint8Array(16));
-      var iv = window.crypto.getRandomValues(new Uint8Array(12));
-      var keyMaterial = await window.crypto.subtle.importKey(
-        'raw',
-        encoder.encode(password),
-        'PBKDF2',
-        false,
-        ['deriveKey']
-      );
-      var iterations = 200000;
-      var key = await window.crypto.subtle.deriveKey(
-        { name: 'PBKDF2', salt: salt, iterations: iterations, hash: 'SHA-256' },
-        keyMaterial,
-        { name: 'AES-GCM', length: 128 },
-        false,
-        ['encrypt']
-      );
-      var plaintext = JSON.stringify({
-        diagramType: typeSelect.value,
-        archuml: source
-      });
-      var ciphertext = new Uint8Array(await window.crypto.subtle.encrypt(
-        { name: 'AES-GCM', iv: iv },
-        key,
-        encoder.encode(plaintext)
-      ));
-      return JSON.stringify({
-        format: 'sebook.archuml.encrypted',
-        version: 1,
-        diagramType: typeSelect.value,
-        createdAt: new Date().toISOString(),
-        crypto: {
-          algorithm: 'AES-GCM',
-          keyLength: 128,
-          kdf: 'PBKDF2',
-          hash: 'SHA-256',
-          iterations: iterations,
-          salt: bytesToBase64(salt),
-          iv: bytesToBase64(iv)
-        },
-        ciphertext: bytesToBase64(ciphertext)
-      }, null, 2);
-    }
+    const FIXED_UML_EXPORT_PASSWORD = '4-amigos';
 
-    var FIXED_UML_EXPORT_PASSWORD = '4-amigos';
+    function sourceExportSnapshot() {
+      const types = EDITOR_CONFIG.exportTypes || [];
+      if (types.length) {
+        const diagrams = {};
+        types.forEach(function (type) { diagrams[type] = sourceDraftForType(type); });
+        return {
+          filename: safeDiagramFileName(autosaveScope) + '.uml',
+          message: 'All ' + types.length + ' diagrams downloaded in one UML file.',
+          encrypted: window.UMLEncryptedExport.encryptTutorial({
+            password: FIXED_UML_EXPORT_PASSWORD, tutorialId: autosaveScope, diagrams: diagrams
+          })
+        };
+      }
+      const diagramType = typeSelect.value;
+      return {
+        filename: safeDiagramFileName(diagramType) + '.uml',
+        message: 'Encrypted UML downloaded.',
+        encrypted: window.UMLEncryptedExport.encryptDiagram({
+          password: FIXED_UML_EXPORT_PASSWORD, diagramType: diagramType, archuml: textarea.value || ''
+        })
+      };
+    }
 
     if (exportSourceBtn) {
       exportSourceBtn.addEventListener('click', async function () {
         exportSourceBtn.disabled = true;
         try {
-          var payload = await encryptedUmlPayload(FIXED_UML_EXPORT_PASSWORD);
-          downloadTextFile(safeDiagramFileName(typeSelect.value) + '.uml', payload, 'application/vnd.sebook.uml+json');
-          status.textContent = 'Encrypted UML downloaded.';
+          const snapshot = sourceExportSnapshot();
+          const payload = await snapshot.encrypted;
+          downloadTextFile(snapshot.filename, payload, 'application/vnd.sebook.uml+json');
+          status.textContent = snapshot.message;
           setTimeout(function () { status.textContent = ''; }, 2000);
         } catch (err) {
           status.textContent = err.message || String(err);

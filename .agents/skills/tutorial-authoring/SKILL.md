@@ -785,6 +785,10 @@ remove entries by hand. Things to know:
       changed runtime behavior, add or update a Playwright spec under
       `tests/`. Existing examples: `tests/python-tutorial.spec.js`,
       `tests/git-tutorial.spec.js`.
+- [ ] **Combined UML submissions** — for `uml_export_all: true`, decrypt one
+      actual download and verify every declared step's diagram is included,
+      including unsaved current edits, earlier drafts, and empty missing types.
+      Unscoped playground drafts must never enter a tutorial submission.
 - [ ] **Prolog query surfaces stay independent.** Run and Debug execute
       the step's `default_query`; free-form queries belong in the Terminal
       view. Check that interpreter drafts, history, and transcript survive
@@ -917,6 +921,10 @@ backend: v86 | cpp | pyodide | webcontainer | react | prolog | haskell | smallta
 #     present grep/awk source patterns as evidence of C++ behavior.
 
 # === Common feature flags ===
+uml_export_all: boolean                # uml-editor only; default false. Replace
+                                       # Export UML with Export All UML, bundling
+                                       # the distinct steps[].uml_type drafts in
+                                       # one <tutorial-id>.uml download. See §4.5.
 instructions_footer_include: string   # Optional trusted filename under _includes/.
                                        # Appended after every step's rendered
                                        # instructions by tutorial-step-instructions.html.
@@ -2783,6 +2791,17 @@ channel.
   Member types inside angle- and square-bracket generics follow type renames.
   Dotted identifiers are independent unless they identify an actual component
   port; deleting or renaming `A` must preserve a separately declared `A.Part`.
+- **UML class quick editing** — placing a classifier returns to selection mode
+  so its header can immediately be double-clicked to rename it. The inline field
+  overlays the name, preserves references, and restores the rendered name when
+  an empty or duplicate identifier is rejected. Class diagrams expose a persistent
+  **Class editing** bar: selecting one classifier enables **Rename class**,
+  **Add attribute**, and **Add method** without a menu. Member entry uses a visible
+  signature label and Add/Cancel buttons; Enter submits and Escape cancels.
+  Pending entries do not modify source and are cancelled when the target or
+  diagram changes. Commits reuse the existing class declaration, undo, autosave,
+  and export paths. Controls use `css/tutorial-uml-editor.css`, including dark
+  mode and print rules. This adds no YAML option or persistence key.
 - **UML editor history and safe edits** — new edits after Undo discard the redo
   branch; resetting a selected layout and changing layout mode are undoable.
   Activity labels and Venn set references preserve explanatory text and contents.
@@ -2825,7 +2844,20 @@ channel.
   in `js/ArchUML/css/diagram-view.css`, imported by `css/uml-diagram.css`.
   No tutorial YAML, stored preference, or new keyboard shortcut is required.
 - **`_includes/uml-editor.html`** also owns UML editor export actions. The
-  "Generate Python" toolbar action reads the saved class-diagram and
+  `uml_export_all: true` tutorial flag passes the distinct step `uml_type` values
+  as the include's `export_types`. **Export All UML** snapshots the live active
+  textarea plus earlier in-memory drafts, falling back only to that tutorial's
+  scoped autosave keys. Missing types remain empty strings. It downloads one
+  `<tutorial-id>.uml`; the Monopoly homework includes class, state, and sequence.
+  `js/uml-export.js` owns serialization and encryption for both formats. Version 2
+  uses `format: "sebook.archuml.encrypted"`, outer `tutorialId`, and encrypted
+  JSON `{tutorialId, diagrams: {<type>: <ArchUML source>}}`; there is no outer
+  `diagramType`. It retains PBKDF2/SHA-256 (200,000 iterations, 16-byte salt)
+  and AES-GCM-128 (12-byte IV). Other pages retain version 1 single-diagram
+  exports with `diagramType` and encrypted `{diagramType, archuml}`. Serialization
+  happens before asynchronous encryption, preserving the clicked snapshot even
+  if a student edits or navigates while it runs. No storage schema/key changes.
+  The "Generate Python" toolbar action reads the saved class-diagram and
   sequence-diagram ArchUML drafts for the editor instance, generates a
   Python module with classes, attributes, operations, and sequence-derived
   method bodies, opens `uml-python-workspace.html`, and hands the generated

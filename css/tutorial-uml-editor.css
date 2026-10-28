@@ -1115,7 +1115,112 @@ body #main-content #uml-pg-output svg[data-uml-pg-editor-canvas="1"] {
 .uml-pg-diagnostics h3 { margin: 0 0 0.5em; font-size: 1.2em; }
 .uml-pg-diagnostics p, .uml-pg-diagnostics ul { margin: 0.5em 0; }
 
+/* Always reserve this row in class-editing mode so selecting a class does
+   not move the canvas before the second click of a double-click. */
+.uml-pg-class-actions {
+  flex: 0 0 auto;
+  padding: 0.5em 0.75em;
+  background: #eef2f9;
+  color: #172b45;
+  border-bottom: 1px solid #6c7f96;
+}
+
+.uml-pg-class-actions[hidden],
+.uml-pg-member-form[hidden],
+.uml-pg-member-error[hidden] {
+  display: none;
+}
+
+.uml-pg-class-action-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4em 0.65em;
+}
+
+.uml-pg-class-action-buttons > span {
+  flex: 1 1 15em;
+}
+
+.uml-pg-class-actions button,
+.uml-pg-class-actions input {
+  box-sizing: border-box;
+  min-height: 2em;
+  max-width: 100%;
+  padding: 0.3em 0.6em;
+  font: inherit;
+  line-height: 1.4;
+  color: #172b45;
+  background: #fff;
+  border: 1px solid #6c7f96;
+  border-radius: 0.25em;
+}
+
+.uml-pg-class-actions button {
+  cursor: pointer;
+  white-space: normal;
+}
+
+.uml-pg-class-actions button:hover:not(:disabled) {
+  background: #dbeaf8;
+}
+
+.uml-pg-class-actions button:disabled {
+  color: #526275;
+  background: #e0e5ec;
+  cursor: default;
+}
+
+.uml-pg-class-actions button:focus-visible,
+.uml-pg-class-actions input:focus-visible {
+  outline: 3px solid #175a91;
+  outline-offset: 2px;
+}
+
+.uml-pg-member-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.4em 0.65em;
+  margin-top: 0.6em;
+}
+
+.uml-pg-member-form > label,
+.uml-pg-member-form > p {
+  grid-column: 1 / -1;
+  margin: 0;
+  font: inherit;
+  overflow-wrap: anywhere;
+}
+
+.uml-pg-member-form > label { font-weight: 600; }
+.uml-pg-member-form > input { min-width: 0; width: 100%; }
+.uml-pg-member-error { color: #9a241b; font-weight: 600; }
+
+html.dark-mode .uml-pg-class-actions {
+  background: #1c293b;
+  color: #e3eef9;
+  border-color: #8da4c0;
+}
+
+html.dark-mode .uml-pg-class-actions button,
+html.dark-mode .uml-pg-class-actions input {
+  color: #e3eef9;
+  background: #243347;
+  border-color: #8da4c0;
+}
+
+html.dark-mode .uml-pg-class-actions button:hover:not(:disabled) { background: #354c68; }
+html.dark-mode .uml-pg-class-actions button:disabled { color: #b5c4d5; background: #293341; }
+html.dark-mode .uml-pg-class-actions button:focus-visible,
+html.dark-mode .uml-pg-class-actions input:focus-visible { outline-color: #FFD100; }
+html.dark-mode .uml-pg-member-error { color: #ffb9b0; }
+
+@media (max-width: 600px) {
+  .uml-pg-member-form { grid-template-columns: minmax(0, 1fr); }
+}
+
 @media print {
+  .uml-pg-class-actions { display: none; }
   #uml-playground-wrap::backdrop { background: #fff; }
   #uml-pg-fullscreen-bar { display: none; }
   #uml-playground-wrap.is-fullscreen {
