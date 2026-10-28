@@ -83,6 +83,12 @@ def rewrite_test(source, transform):
     return ast.unparse(ast.fix_missing_locations(transform.visit(ast.parse(source)))) + '\n'
 
 
+def replaced(source, old, new):
+    """Edit a model file, failing loudly if the edit no longer applies."""
+    assert old in source, f'model source no longer contains:\n{old}'
+    return source.replace(old, new)
+
+
 class TddGraders(unittest.TestCase):
     def check(self, step_index, files):
         env = {**os.environ, 'PYTEST_DISABLE_PLUGIN_AUTOLOAD': '1'}
@@ -195,6 +201,54 @@ def test_sequence(n, expected):
     assert fizzbuzz(n) == expected
 '''
         self.assert_accepts(9, files)
+
+    def test_per_die_iteration_accepts_a_generator_expression(self):
+        files = solution_files(CONFIG['steps'][5])
+        files['scorer.py'] = replaced(files['scorer.py'], '''    events = []
+
+    for die in dice:
+        if die == 1:
+            events.append(ScoringEvent("Dragon Flame", (1,), 100))
+        if die == 5:
+            events.append(ScoringEvent("Lightning Spark", (5,), 50))
+
+    return BattleReport(tuple(events))''', '''    singles = {1: ("Dragon Flame", 100), 5: ("Lightning Spark", 50)}
+    return BattleReport(tuple(
+        ScoringEvent(singles[die][0], (die,), singles[die][1])
+        for die in dice if die in singles
+    ))''')
+        self.assert_accepts(5, files)
+
+    def test_repeated_combos_accept_a_while_loop(self):
+        files = solution_files(CONFIG['steps'][8])
+        files['scorer.py'] = replaced(files['scorer.py'], '''        number_of_combos = counts[self.die] // self.count
+
+        for _ in range(number_of_combos):
+            dice_used = tuple([self.die] * self.count)
+            events.append(ScoringEvent(self.name, dice_used, self.damage))
+
+        counts[self.die] %= self.count''', '''        while counts[self.die] >= self.count:
+            dice_used = tuple([self.die] * self.count)
+            events.append(ScoringEvent(self.name, dice_used, self.damage))
+            counts[self.die] -= self.count''')
+        self.assert_accepts(8, files)
+
+    def test_fizzbuzz_optional_negative_input_follows_the_learner(self):
+        for behavior, implementation, check in (
+                ('returns an empty list', 'return []', 'assert fizzbuzz(-1) == []'),
+                ('raises its own message', 'raise ValueError("n cannot be negative")',
+                 'with pytest.raises(ValueError, match="cannot be negative"):\n'
+                 '        fizzbuzz(-1)')):
+            with self.subTest(behavior=behavior):
+                files = solution_files(CONFIG['steps'][9])
+                files['fizzbuzz.py'] = replaced(
+                    files['fizzbuzz.py'],
+                    'raise ValueError(f"n must be non-negative, got {n}")', implementation)
+                files['test_fizzbuzz.py'] = replaced(
+                    files['test_fizzbuzz.py'],
+                    'with pytest.raises(ValueError, match="non-negative"):\n'
+                    '        fizzbuzz(-1)', check)
+                self.assert_accepts(9, files)
 
     def test_collection_errors_and_skips_do_not_demonstrate_detection(self):
         for replacement in ('import missing_library\n',
