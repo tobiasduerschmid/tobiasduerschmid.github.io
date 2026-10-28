@@ -57,9 +57,17 @@ section boundary, inside the silence after its last cue, because the next
 section's speech begins exactly at the boundary. Every section must therefore
 end with more than 0.3 s of silence (the renderer's default is 0.55 s).
 
+The shared transport also adds the full-screen button to every narration
+(Node.js, React, and the pattern lessons) where the browser supports element
+full screen. The whole `.nja-player` fills the screen, so captions, settings,
+and knowledge checks stay available. Diagrams need no refit: their readable
+width is set in `em` and capped by the column, so they fit both layouts.
+
 ## Checks
 
 Run each lesson's node test (`scripts/tests/<topic>-narration.test.js`) and
 Playwright spec, plus `tests/wcag22-complete-audit.spec.js` for the chapter and
-both views. See `docs/observer-animation.md` and `docs/state-narration.md` for
-the topic-specific details.
+both views. `tests/narration-fullscreen.spec.js` covers full screen on every
+narration page; add a new narration's page to its list. See
+`docs/observer-animation.md` and `docs/state-narration.md` for the
+topic-specific details.

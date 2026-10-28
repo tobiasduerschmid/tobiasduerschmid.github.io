@@ -8,6 +8,19 @@
   // buffered, so stop inside that silence rather than at the boundary itself.
   const SECTION_END_LEAD = 0.3;
 
+  // Full screen needs element support, which some browsers (such as Safari on
+  // iPhone) lack, so the button is added only where it can work.
+  function addFullscreenButton(root) {
+    const player = root.querySelector('.nja-player');
+    if (!document.fullscreenEnabled || !player.requestFullscreen) return null;
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.dataset.action = 'fullscreen';
+    button.appendChild(document.createElement('i')).setAttribute('aria-hidden', 'true');
+    root.querySelector('[data-action="mute"]').after(button);
+    return button;
+  }
+
   function clockLabel(seconds) {
     const whole = Math.max(0, Math.floor(seconds));
     return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, '0')}`;
@@ -24,6 +37,8 @@
     const narration = root.querySelector('.nja-narration p');
     const status = root.querySelector('.nja-status');
     const playButton = root.querySelector('[data-action="play"]');
+    const player = root.querySelector('.nja-player');
+    const fullscreenButton = addFullscreenButton(root);
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
     let frame = 0;
     let position = 0;
@@ -68,6 +83,16 @@
       playButton.title = label;
       playButton.setAttribute('data-original-title', label);
       playButton.querySelector('i').className = paused ? 'fa fa-play' : 'fa fa-pause';
+    }
+
+    function updateFullscreenButton() {
+      if (!fullscreenButton) return;
+      const active = document.fullscreenElement === player;
+      const label = active ? 'Exit full screen' : 'Enter full screen';
+      fullscreenButton.setAttribute('aria-label', label);
+      fullscreenButton.title = label;
+      fullscreenButton.setAttribute('data-original-title', label);
+      fullscreenButton.querySelector('i').className = active ? 'fa fa-compress' : 'fa fa-expand';
     }
 
     function renderPlayback(time) {
@@ -142,6 +167,15 @@
         button.setAttribute('data-original-title', label);
         button.querySelector('i').className = audio.muted ? 'fa fa-volume-off' : 'fa fa-volume-up';
       },
+      // The whole player, including checkpoints, fills the screen; Escape also exits.
+      async fullscreen() {
+        try {
+          if (document.fullscreenElement === player) await document.exitFullscreen();
+          else await player.requestFullscreen();
+        } catch (error) {
+          status.textContent = 'The browser could not change full screen. The narration continues here.';
+        }
+      },
     };
 
     root.querySelectorAll('[data-action]').forEach((button) => {
@@ -195,6 +229,9 @@
       stopFrames();
       if (!document.hidden && !audio.paused) frame = requestAnimationFrame(tick);
     });
+    // Full screen also resizes the window, so the resize listener refits the stage.
+    document.addEventListener('fullscreenchange', updateFullscreenButton);
+    updateFullscreenButton();
     window.addEventListener('pagehide', () => { audio.pause(); stopFrames(); });
     window.addEventListener('beforeprint', () => {
       audio.pause();

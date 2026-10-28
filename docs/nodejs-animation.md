@@ -35,7 +35,8 @@ multimedia, cognitive-load, and retrieval guidance.
 - `_includes/nodejs-animation*.html`, `css/nodejs-animation.css`, and
   `js/nodejs-animation-art.js`: Node.js-specific structure and poses.
 - `_includes/narrated-explainer*.html`, `css/narrated-explainer.css`, and
-  `js/narrated-explainer.js`: shared player, code presentation, and transcript.
+  `js/narrated-explainer.js`: shared player (including its full-screen button),
+  code presentation, and transcript.
 
 Native audio is the sole playback clock. Seeking derives the complete visual state
 from that clock; it does not replay accumulated timers. Nothing autoplays. Native
