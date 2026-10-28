@@ -16,19 +16,31 @@
   overflow: hidden;
 }
 
+/* The workspace has the viewport's height. Controls keep their natural height,
+   the canvas row takes the rest, and the column scrolls instead of clipping
+   when a short screen cannot fit both. */
 .tvm-uml-editor-workspace #uml-playground-wrap {
+  --uml-pg-hidden-source-canvas-min: 0px;
+  display: flex;
+  flex-direction: column;
   flex: 1 1 auto;
   width: 100%;
   height: 100%;
   min-height: 0;
+  overflow-y: auto;
   margin: 0;
   border: 0;
   border-radius: 0;
 }
 
 .tvm-uml-editor-workspace #uml-playground-body {
-  flex: 1 1 auto;
-  min-height: 0;
+  flex: 1 1 0;
+  min-height: 320px;
+}
+
+/* The site's generic section margin would push the canvas off a short screen. */
+.tvm-uml-editor-workspace #uml-playground-wrap > section {
+  margin-top: 0;
 }
 
 .tvm-uml-editor-workspace #uml-pg-preview-pane {
@@ -812,6 +824,7 @@ html.dark-mode #uml-pg-fullscreen-bar {
 
 /* Full-screen mode: take over the viewport. */
 #uml-playground-wrap.is-fullscreen {
+  --uml-pg-hidden-source-canvas-min: 0px;
   position: fixed;
   inset: 0;
   z-index: 9999;
@@ -1225,6 +1238,7 @@ html.dark-mode .uml-pg-member-error { color: #ffb9b0; }
   .uml-pg-inline-input { display: none !important; }
   #uml-playground-wrap::backdrop { background: #fff; }
   #uml-pg-fullscreen-bar { display: none; }
+  .tvm-uml-editor-workspace #uml-playground-wrap { overflow: visible; }
   #uml-playground-wrap.is-fullscreen {
     position: static;
     height: auto;
@@ -1241,8 +1255,10 @@ html.dark-mode .uml-pg-member-error { color: #ffb9b0; }
   display: none !important;
 }
 
+/* Without the source pane, an inline editor's canvas needs a height of its
+   own. Layouts that size the editor to the viewport set the minimum to 0. */
 #uml-playground-wrap.is-archuml-hidden #uml-pg-preview-pane {
-  min-height: 620px;
+  min-height: var(--uml-pg-hidden-source-canvas-min, 620px);
 }
 
 .uml-pg-modal[hidden] {

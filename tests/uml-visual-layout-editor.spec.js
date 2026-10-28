@@ -2070,8 +2070,8 @@ user -> app: run()
     await page.locator('#uml-pg-input').dispatchEvent('input');
     await expect(page.locator('.uml-pg-sequence-empty')).toBeVisible();
     await page.locator('#uml-pg-palette-elements .uml-pg-tool-btn[data-tool-spec="actor"]').click();
-    await expect(page.locator('.uml-pg-edit-hitbox[data-layout-id="actor"]')).toHaveCount(1);
-    await expect(page.locator('#uml-pg-input')).toHaveValue(/actor actor: Actor/);
+    await expect(page.locator('.uml-pg-edit-hitbox[data-layout-id="user"]')).toHaveCount(1);
+    await expect(page.locator('#uml-pg-input')).toHaveValue(/actor user: Actor/);
   });
 
   test('sequence canvas adds editable participants with valid default labels', async ({ page }) => {

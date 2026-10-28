@@ -2732,7 +2732,14 @@ channel.
 - **`js/tutorial-uml-editor.js`** — lightweight backend for UML-modeling
   tutorials (`backend: uml-editor`). It reuses the standard tutorial
   instruction chrome on the left and `_includes/uml-editor.html` as the
-  right-side workspace editor. Step `tests[].assertions` inspect the current
+  right-side workspace editor. The workspace has the viewport's height: the
+  editor is a flex column whose controls keep their natural height, whose canvas
+  row takes the rest (at least 320px), and which scrolls rather than clips on a
+  short screen. The inline hidden-source canvas minimum
+  (`--uml-pg-hidden-source-canvas-min`, 620px on content pages) is 0 here and in
+  fullscreen, and the editor's `<section>` bars ignore the site's generic section
+  margin. Keep the canvas and Properties fully visible at 1366×768 with the Quick
+  tips dismissed. Step `tests[].assertions` inspect the current
   ArchUML source for elements, members, relations, transitions, and messages.
   Test results show the authored criterion descriptions and pass/fail status,
   without exposing precise assertion failure messages. The separate **Hints**
@@ -2741,7 +2748,10 @@ channel.
   replaces the current step's active diagram draft with an empty ArchUML
   document; it does not clear drafts saved for other diagram types.
 - **UML homework grading** — class/state/sequence assertions use the same
-  public ArchUML parsers as the renderer. Notes cannot supply model evidence;
+  public ArchUML parsers as the renderer, on the same layout-free source
+  (`UMLShared.extractLayoutMetadata`): inline `@pos`, `@layout` route bends, and
+  callouts written by the visual editor never become part of a name, so moving
+  an element cannot change a grade. Notes cannot supply model evidence;
   sequence arrows retain semantic direction and response messages are excluded
   from call checks. `class_consistency` also supports `state_roles`,
   `state_operations`, `state_ownership`, and `state_inheritance`. These infer the
@@ -2775,7 +2785,11 @@ channel.
   edits preserve nested declarations, pseudostate kinds, and state actions.
   Draft diagnostics are nonblocking and never discard or rewrite invalid or
   incomplete work. Current checks cover unclosed sequence fragments, excess
-  operands for `opt`, `loop`, `break`, and `neg`, and direct self-generalization.
+  operands for `opt`, `loop`, `break`, and `neg`, direct self-generalization,
+  and sequence lifelines whose id is a sequence keyword (`actor`, `ref`, `alt`,
+  …), which turn their own messages into declarations or fragments. New
+  lifelines never receive a keyword id (the Actor default is `user`), and
+  renames to a keyword are refused with a reason.
   They ignore note content and do not claim complete UML validation. Keep the
   same behavior in tutorials and standalone editor pages; no tutorial YAML
   option, progress credit, or new persistence key is added by these controls.
@@ -2802,6 +2816,27 @@ channel.
   Member types inside angle- and square-bracket generics follow type renames.
   Dotted identifiers are independent unless they identify an actual component
   port; deleting or renaming `A` must preserve a separately declared `A.Part`.
+  Port edits keep a component body's form, because ArchUML splits a one-line
+  body on `;` and a multi-line body on newlines. Connectors may name a port by
+  its bare alias (`b_db --> db_in`), and ArchUML resolves that alias before any
+  component name, so deleting or renaming a port updates those connectors too.
+- **UML editor relation identity** — class, deployment, freeform, and activity
+  routes carry source-line ids (`rel:N`); sequence messages carry `seqmsg:N`.
+  State and component routes are numbered `edge-N` in parse or drawing order and
+  use-case routes `usecase:N` in parser order, so the editor resolves those to
+  the one relation line whose endpoints (and, between the same pair, label)
+  match the drawn route: bare port aliases map to `Owner.alias`, and each state
+  `[*]` to its numbered pseudostate. Lines drawn without a route id, such as a
+  class generalization tree's, are numbered by the route collector and resolve
+  to the one relation without a named route whose ends include every element
+  the line touches, so a subclass's branch is its generalization while the
+  shared trunk matches none. A connection that matches no single line, such as
+  the implicit activity flow into a decision or that trunk, is explained in
+  Properties and kept by Delete instead of editing another line. After a
+  relation is created, its own route is selected once the diagram is drawn.
+  Activity continuation flows (`--> [guard] Target`) keep their implicit
+  source; flow guards stay guards on every edit, and Properties names the field
+  **Guard** when the guard is the flow's visible text.
 - **UML class quick editing** — placing a classifier returns to selection mode
   so its header can immediately be double-clicked to rename it. The inline field
   overlays the name, preserves references, and restores the rendered name when
