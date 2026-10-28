@@ -1,0 +1,221 @@
+---
+name: design-pattern-narration
+description: >-
+  Authoring guide for narrated design-pattern lessons in the SEBook (the Observer and State
+  narrations, and any new one). USE THIS SKILL EVERY TIME you create, extend, restructure, or review
+  a narrated pattern lesson: `_data/explainers/<topic>.yml` (speech, scenes, cues, diagrams),
+  `<topic>_code.yml` (Python/Java/C++/TypeScript examples), `<topic>_quizzes.yml` (section checks and
+  the summary quiz), `<topic>_timing.json`, the `_data/narrated_patterns.yml` registry, topic
+  illustrations such as `_includes/<topic>-*.html` with `css/<topic>-narration.css`, the
+  `SEBook/designpatterns/<topic>/read.html` and `print.html` views, the narration audio and captions
+  under `assets/`, or `scripts/render-explainer-narration.py`. Also trigger on requests like "make a
+  narration for the X pattern", "pick an example for the X narration", "fix the narration
+  pronunciation", "the narration cuts into the next word", "add a summary quiz", or "restructure the
+  narration around context, problem, solution, and consequences". Covers choosing the example,
+  structuring the narration as a pattern description, writing cues, diagrams, four-language code, and
+  conceptual quizzes, rendering Kokoro speech, wiring the chapter, and verifying the result. The
+  shared player itself is documented in docs/narrated-pattern.md.
+---
+
+# Authoring narrated design-pattern lessons
+
+A narrated lesson is an approximately 11–13 minute, Kokoro-voiced walk through one
+design pattern at the top of its SEBook chapter (see `/SEBook/designpatterns/observer.html`
+and `/SEBook/designpatterns/state.html`). A lesson is **data plus a few topic
+illustrations**: the player, transport, reader, and print views are shared. The architecture
+and file list live in [`docs/narrated-pattern.md`](../../../docs/narrated-pattern.md); this
+skill is about authoring a lesson that teaches well and ships clean.
+
+If you only remember six things:
+
+1. **The narration is a pattern description.** Its spine is Context → Problem → Solution
+   (abstract roles) → Consequences. Each of these is a first-class scene with a `part:` field,
+   so learners see on screen which part of the description they are in.
+2. **Teach the abstract roles before the example's classes.** Name the roles (Subject/Observer,
+   Context/State/ConcreteState, …), show a role diagram with no example names, then map each role
+   onto the example one at a time. Students should leave with the pattern, not the example.
+3. **The example must be a genuinely good fit for the pattern.** Original, inspired by the
+   literature but not copied, relatable to Gen Z students, and *growing along the pattern's
+   variation axis* (more states for State, more observers for Observer). If an `enum` and a
+   `switch` would honestly be the better design, the example is wrong.
+4. **Quizzes test the pattern, not the example.** One check per section, plus one multi-question
+   summary quiz at the end that covers every part of the description on a *new* scenario.
+5. **Code ships in Python, Java, C++, and TypeScript, and the tests run it.** The before
+   (conditional) and after (pattern) designs must produce identical behavior, checked against one
+   data oracle.
+6. **Speech must sound right and stop cleanly.** Every identifier or symbol the TTS mangles gets a
+   `pronunciations` entry, and every section ends with more than 0.3 s of silence so knowledge
+   checks stop before the next word.
+
+Read [`quiz-format`](../quiz-format/SKILL.md) before writing questions,
+[`good-diagrams`](../good-diagrams/SKILL.md) and [`diagrams`](../diagrams/SKILL.md) before
+writing diagrams, [`pedagogical-advisor`](../pedagogical-advisor/SKILL.md) for the example and
+sequence, and [`sebook-authoring`](../sebook-authoring/SKILL.md) for the chapter that hosts the
+lesson. WCAG 2.2 AA, light/dark mode, the font-size rules, and the no-inline-styles rule in
+`AGENTS.md` apply to every illustration you add.
+
+## 1. Choose the running example
+
+Do this first and get the user's agreement before writing speech; every later artifact depends
+on it, and a rejected example means re-rendering the audio.
+
+Read what the literature uses for the pattern (GoF, Head First Design Patterns, POSA, Kerievsky's
+*Refactoring to Patterns*, Nystrom's *Game Programming Patterns*; the local RAG index holds
+the books, and the user-level `design-patterns` skill, where installed, names a NotebookLM
+notebook for them). Note the *shape* each
+source uses, then design a new example with the same shape. Compare at least three candidates
+against these criteria:
+
+| Criterion | Question to answer |
+|---|---|
+| Pattern fit | Does the forces section of GoF actually apply? Would a simpler design (an `enum` + `switch`, a callback, a lambda) be better? If yes, reject. |
+| Variation axis | Is adding another variant (a state, an observer, a strategy) a change this domain really sees? The transfer task depends on it. |
+| Behavior per variant | Do several requests behave differently in each variant (for State: every state answers every request)? One-request examples collapse into Strategy or a flag. |
+| Relatable | Will a UCLA undergraduate recognize it without domain explanation (games, apps, editors, streaming, social features)? |
+| Small | Fits three variants, three requests, and about 10 lines per class in all four languages. |
+| Original | Not a copy of a textbook example (no gumball machine, TCPConnection, weather station). Record which sources inspired it in `docs/<topic>-narration.md`. |
+
+Examples that were rejected and why: a pull-request status workflow for State (its behavior is a
+status check plus permissions; an `enum` is the better design). Examples that shipped: a text
+editor whose preview, character count, and save button observe the document (Observer); a game
+companion dog that follows, fetches, and naps (State).
+
+## 2. Structure the scenes
+
+Use this sequence and adapt it only with a reason. `part:` is one of `Context`, `Problem`,
+`Solution`, `Consequences`; omit it for the intro, transfer, and summary.
+
+| Scene | `part` | What it does |
+|---|---|---|
+| intro | — | Hook with the example, then explain how a pattern is described (the triple plus roles and consequences). |
+| context | Context | The recurring situation, shown with the example (a state machine for State, a UI for Observer). Warn about name collisions, such as State's `Context` *role* versus the pattern's *context*. |
+| problem | Problem | The naive design in code and its forces. End on a prediction cue about what breaks when the domain grows. |
+| solution | Solution | The abstract roles on a role diagram, with no example names. |
+| one scene per role | Solution | Each role in code, mapped onto the example, with `diagram_focus` on that role. |
+| collaborations | Solution | A sequence diagram revealed one message group per cue, with a prediction before each reveal. |
+| consequences | Consequences | Benefits and liabilities, each tied to a code change the learner just saw. |
+| applicability | Context | When to use it and when not to, plus the neighboring pattern it is confused with (State vs. Strategy, Observer vs. Mediator). |
+| transfer | — | Extend the example along the variation axis; name exactly which code changes. |
+| summary | — | Recall all four parts with `cards`, then the summary quiz. |
+
+Each scene has a `purpose` (shown as "Our task"), a `title`, a `takeaway`, and cues. Keep every
+diagram within about 9 symbols; split rather than crowd.
+
+## 3. Write the cues
+
+Each cue is one spoken paragraph of about 40–50 words (2–4 sentences); the shipped lessons run at
+140–150 words per minute, so 35–40 cues make an 11–13 minute lesson. Fields, all in
+`_data/explainers/<topic>.yml`:
+
+- `text`: the spoken words, which are also the captions. Write it as written English; the
+  `pronunciations` map fixes speech only.
+- `visual`: a description of what is on screen for this cue. It becomes the stage's accessible
+  name, so describe the marks and diagram emphasis, not the speech.
+- `step` and `note`: the short explanation strip under the code.
+- `focus`: a key into the code block's `focus` map; the player marks those lines in every
+  language. `table_focus`, `ui_state`, and similar keys are read by topic illustrations.
+- `diagram_focus`: one class, interface, state, or lifeline to highlight. `diagram_steps`: how many
+  sequence message groups are shown.
+- `prediction: true`: asks the learner to predict; it hides the takeaway and needs a
+  `pause_after` of a few seconds so there is time to think. The next cue gives the answer.
+
+Narration rules: say role names exactly as the diagrams spell them, introduce a term before using
+it, connect every consequence to something seen earlier, and never refer to a quiz option or an
+on-screen position that the learner might not see (captions, reader view, and print use the same
+text).
+
+## 4. Diagrams
+
+Diagrams live under `diagrams:` as ArchUML sources and render at build time
+(`static_uml: true` on the chapter). Use the type that matches the question the scene answers:
+
+- **class** for the role diagram and the solution's structure (`type` may be omitted);
+- **state** for a lifecycle whose behavior depends on state, with guards in square brackets;
+- **sequence** for collaborations, with lifelines in `source` and message groups in `steps`.
+
+Lessons learned from the shipped lessons: keep sequence diagrams to three or four lifelines and
+omit return arrows that add width without meaning; use anonymous lifelines (`: Following`) for
+shared stateless objects; give each diagram a `label`, a `description` (the text alternative),
+and a `caption` that explains the notation once. Check every highlight target exists, because a
+misspelled `diagram_focus` silently highlights nothing.
+
+## 5. Code in four languages
+
+`_data/explainers/<topic>_code.yml` has one entry per language with `label`, `filename`, `note`,
+`imports`, and `blocks`. Each block has `source` and a `focus` map of named line lists (1-based).
+`example_order` in the storyboard lists the blocks that make up the complete example; the
+`problem` block is the before design.
+
+- Write idiomatic code in each language, not a transliteration (Java `static final INSTANCE`
+  fields, C++ function-local statics, Python module constants, TypeScript module consts).
+- Keep each block short enough to read on the stage without scrolling far.
+- A data file such as `<topic>_ui.yml` describes the expected behavior (for State, a table of
+  reactions by state and request). The node test runs both designs in all four languages against
+  it, and the topic illustrations render from the same data.
+- C++ compiles with `-std=c++17 -Wall -Wextra -pedantic -Werror`. TypeScript must pass
+  `tsc --strict`; run it separately, because the node test only strips types. If a toolchain
+  (often the JDK) is missing locally, say so in your summary; the test skips it rather than
+  passing it.
+
+## 6. Quizzes
+
+`_data/explainers/<topic>_quizzes.yml` has one entry per scene id, in scene order. Follow
+`quiz-format` (sparse `option_feedback` keyed by option index, no length or markup tells, no
+position references), plus these lesson-specific rules:
+
+- **Ask about the pattern.** Stems name the pattern and a role or consequence ("In the State
+  pattern, which role …"), never the dog's or the document's details. A learner who skipped the
+  example but understands the pattern should be able to answer.
+- **Rotate `correct_index`** across questions; options shuffle, but authors drift toward index 0.
+- **The last scene's entry is a summary quiz:** `questions:` with about six items on a new
+  scenario (a sports app for Observer, a video player for State), covering context, problem,
+  roles, collaboration, consequences, and applicability in that order. The player keeps their
+  order (`shuffle_questions: false`); options still shuffle.
+
+## 7. Render the speech
+
+`scripts/render-explainer-narration.py --topic <topic>` renders each cue with Kokoro (voice
+`af_heart`, speed 0.95), adds `pause_after` silence (0.55 s by default), and writes the MP3,
+WebVTT captions, the spoken script, and `_data/explainers/<topic>_timing.json` with the
+storyboard's SHA-256. Add a new topic to its `--topic` choices. Setup and the espeak-ng
+long-path workaround are in `docs/nodejs-animation.md` and `docs/state-narration.md`.
+
+- Rendering changes the audio, captions, and timing; re-render after **any** storyboard edit,
+  because the node test compares the hash.
+- Listen to every cue that contains code identifiers, acronyms, or symbols. Typical fixes:
+  `UML: U M L`, `C++: C plus plus`, `enum: E num`, camelCase names split into words
+  (`setState: set state`). Captions keep the written form.
+- The player stops for each check 0.3 s before the section boundary. The last cue of every
+  section therefore needs more than 0.3 s of silence; the default works, and the State node
+  test's silence check is the template to copy.
+
+## 8. Wire the lesson into the site
+
+Follow "Adding a lesson" in `docs/narrated-pattern.md`: register the topic in
+`_data/narrated_patterns.yml` (including its `visuals` map), link the CSS modules and include
+`narrated-pattern.html` in the chapter, and add the `read.html` and `print.html` views.
+
+- Topic illustrations are includes that read `include.cue`; their CSS goes in
+  `css/<topic>-narration.css` with base, `html.dark-mode`, and `@media print` rules together.
+  Readable text inherits its size or uses `em` (never `rem`, which is 10 px here).
+- Add the topic to the lists that name the narrated lessons: `shortcuts.html`, `settings.html`,
+  and `cookies.html` ("narrated design-pattern lessons (Observer, State, …)").
+- Full screen, captions, speed, scene selection, and the language switch come from the shared
+  transport. Do not add per-topic transport code.
+
+## 9. Verify
+
+Copy `scripts/tests/state-narration.test.js` and `tests/state-narration.spec.js` as templates;
+they check structure, timing, both designs in all languages, quizzes, focus targets, and the
+player in both themes and on mobile. Then:
+
+```bash
+node --test scripts/tests/<topic>-narration.test.js
+```
+
+Build the site (the Bash tool needs `LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8`), run the topic spec
+and `tests/narration-fullscreen.spec.js` (add the new page to its list) with
+`A11Y_INTERACTIVE_CHECKS=1`, and run `tests/wcag22-complete-audit.spec.js` with
+`WCAG_AUDIT_URL_FILTER` matching the chapter and both views. Finally, play the lesson in the
+browser: watch for a check that clips the next word, a highlight that misses its target, and
+text that needs leaning in to read.

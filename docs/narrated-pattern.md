@@ -70,4 +70,5 @@ Playwright spec, plus `tests/wcag22-complete-audit.spec.js` for the chapter and
 both views. `tests/narration-fullscreen.spec.js` covers full screen on every
 narration page; add a new narration's page to its list. See
 `docs/observer-animation.md` and `docs/state-narration.md` for the
-topic-specific details.
+topic-specific details, and the `design-pattern-narration` skill for how to
+author a lesson.
