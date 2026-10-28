@@ -7,7 +7,8 @@ learning_objectives:
   - "Write a failing test FIRST (Red) and explain what each failing test is asking the design to clarify."
   - "Make the failing test pass with the minimum code (Green) without overshooting."
   - "Refactor while tests stay green — distinguishing safe refactors from risky ones."
-  - "Recognize when a sequence of similar tests demands a structural refactor (rule object, polymorphism)."
+  - "Decide when a generalization is safe: only when the tests already pin down everything it decides."
+  - "Choose the next test by aiming it at a boundary no earlier test reached."
   - "Apply the same rhythm to a new domain (FizzBuzz) and confirm the technique transfers."
 
 backend: pyodide
@@ -73,6 +74,7 @@ setup_commands:
   - |
     # Keep helpers in a module: the worker clears execution globals between checks.
     def _install_tdd_checks():
+        import ast
         import importlib
         import sys
         import pytest
@@ -155,7 +157,7 @@ setup_commands:
             if cycle >= 4:
                 cases += [[1, 1], [1, 5], [5, 5], [2, 3, 4, 6]]
             if cycle >= 5:
-                cases += [[1, 1, 1], [1, 1, 1, 1, 5], [5, 1, 2, 1, 1, 1]]
+                cases += [[1, 1, 1], [1, 1, 1, 1, 5], [5, 1], [5, 1, 2, 1, 1, 1]]
             if cycle >= 6:
                 cases += [[face] * 3 for face in range(2, 7)]
                 cases += [[5, 2, 5, 1, 2, 5, 2, 5]]
@@ -174,9 +176,11 @@ setup_commands:
                     f"score({dice}) has events {actual_events}; expected {expected_events}.")
             check_suite('/tutorial/test_scorer.py', 'scorer')
 
-        def check_score_test(cycle, name, dice_cases):
+        def check_score_test(cycle, dice_cases):
+            # The whole suite must pin down damage and events for each roll, so
+            # learners may name and arrange their tests however they like.
             source = reference(cycle)
-            check_suite('/tutorial/test_scorer.py', 'scorer', source, test_name=name)
+            check_suite('/tutorial/test_scorer.py', 'scorer', source)
             for dice in dice_cases:
                 for field in ('damage', 'events'):
                     mutant = source + '''
@@ -194,12 +198,26 @@ setup_commands:
     '''.replace('TARGET', repr(dice)).replace('FIELD', repr(field))
                     try:
                         check_suite('/tutorial/test_scorer.py', 'scorer', mutant,
-                                    expect_failure=True, test_name=name)
+                                    expect_failure=True)
                     except AssertionError as error:
                         raise AssertionError(
-                            f"{name} must reject incorrect {field} for score({dice}). "
+                            f"No test rejects incorrect {field} for score({dice}). "
                             "Assert the promised value, not just a type or non-negative result.\n"
                             f"{error}") from error
+
+        def score_loops_over_roll():
+            # True when score() iterates over its dice in a for statement or a
+            # comprehension (`for d in sorted(dice)` counts as well).
+            tree = ast.parse(open('/tutorial/scorer.py').read())
+            score_fn = next((n for n in ast.walk(tree)
+                             if isinstance(n, ast.FunctionDef) and n.name == 'score'), None)
+            assert score_fn is not None, "Define a `score` function in scorer.py"
+            param = score_fn.args.args[0].arg if score_fn.args.args else 'dice'
+            return any(
+                isinstance(n, (ast.For, ast.comprehension))
+                and any(isinstance(name, ast.Name) and name.id == param
+                        for name in ast.walk(n.iter))
+                for n in ast.walk(score_fn))
 
         def check_fizzbuzz():
             actual = fresh_module('fizzbuzz').fizzbuzz
@@ -209,10 +227,10 @@ setup_commands:
                     f"fizzbuzz({n}) must return exactly {n} correctly transformed strings.")
             check_suite('/tutorial/test_fizzbuzz.py', 'fizzbuzz')
 
-        def check_fizzbuzz_tests():
+        def fizzbuzz_reference_for_learner():
             # Negative n is an optional extension with no single required
             # behavior, so the reference defers it to the learner's own code.
-            reference = fizzbuzz_reference + '''
+            return fizzbuzz_reference + '''
     _required_fizzbuzz = fizzbuzz
     _learner = {'__name__': 'learner_fizzbuzz'}
     try:
@@ -224,30 +242,42 @@ setup_commands:
             return _learner['fizzbuzz'](n)
         return _required_fizzbuzz(n)
     '''.replace('LEARNER_SOURCE', repr(open('/tutorial/fizzbuzz.py').read()))
+
+        # One wrong implementation per required partition; each check reports one.
+        fizzbuzz_mutants = {
+            'empty input': "return ['1'] if n == 0 else _correct_fizzbuzz(n)",
+            'requested length': "return _correct_fizzbuzz(15)",
+            'numbers as strings':
+                "return [int(v) if v.isdigit() else v for v in _correct_fizzbuzz(n)]",
+            'multiples of 3':
+                "return [str(i) if v == 'Fizz' else v for i, v in enumerate(_correct_fizzbuzz(n), 1)]",
+            'multiples of 5':
+                "return [str(i) if v == 'Buzz' else v for i, v in enumerate(_correct_fizzbuzz(n), 1)]",
+            'multiples of 15':
+                "return ['Fizz' if v == 'FizzBuzz' else v for v in _correct_fizzbuzz(n)]",
+        }
+
+        def check_fizzbuzz_tests_agree():
+            check_suite('/tutorial/test_fizzbuzz.py', 'fizzbuzz', fizzbuzz_reference_for_learner())
+
+        def check_fizzbuzz_tests_detect(behavior):
+            # Each check also needs the passing reference run, so a suite that
+            # fails everywhere cannot earn detection credit.
+            reference = fizzbuzz_reference_for_learner()
             check_suite('/tutorial/test_fizzbuzz.py', 'fizzbuzz', reference)
-            mutants = {
-                'empty input': "return ['1'] if n == 0 else _correct_fizzbuzz(n)",
-                'requested length': "return _correct_fizzbuzz(15)",
-                'ordinary numbers as strings':
-                    "return [int(v) if v.isdigit() else v for v in _correct_fizzbuzz(n)]",
-                'multiples of three':
-                    "return [str(i) if v == 'Fizz' else v for i, v in enumerate(_correct_fizzbuzz(n), 1)]",
-                'multiples of five':
-                    "return [str(i) if v == 'Buzz' else v for i, v in enumerate(_correct_fizzbuzz(n), 1)]",
-                'overlapping rules':
-                    "return ['Fizz' if v == 'FizzBuzz' else v for v in _correct_fizzbuzz(n)]",
-            }
-            for behavior, body in mutants.items():
-                mutant = reference + '\n_correct_fizzbuzz = fizzbuzz\ndef fizzbuzz(n):\n    ' + body + '\n'
-                try:
-                    check_suite('/tutorial/test_fizzbuzz.py', 'fizzbuzz', mutant, expect_failure=True)
-                except AssertionError as error:
-                    raise AssertionError(f"Your tests must detect incorrect {behavior}.\n{error}") from error
+            mutant = (reference + '\n_correct_fizzbuzz = fizzbuzz\ndef fizzbuzz(n):\n    '
+                      + fizzbuzz_mutants[behavior] + '\n')
+            try:
+                check_suite('/tutorial/test_fizzbuzz.py', 'fizzbuzz', mutant, expect_failure=True)
+            except AssertionError as error:
+                raise AssertionError(f"Your tests must detect incorrect {behavior}.\n{error}") from error
 
         pytest._tdd_check_score = check_score
         pytest._tdd_check_score_test = check_score_test
+        pytest._tdd_score_loops_over_roll = score_loops_over_roll
         pytest._tdd_check_fizzbuzz = check_fizzbuzz
-        pytest._tdd_check_fizzbuzz_tests = check_fizzbuzz_tests
+        pytest._tdd_check_fizzbuzz_tests_agree = check_fizzbuzz_tests_agree
+        pytest._tdd_check_fizzbuzz_tests_detect = check_fizzbuzz_tests_detect
 
     _install_tdd_checks()
 
@@ -382,7 +412,7 @@ steps:
       - ☐ Cycle 3 — A single 5 → one Lightning Spark event
       - ☐ Cycle 4 — …
 
-      More items appear as we work through them — Beck's discipline is to *not* pre-resolve them all. Pick the next item, turn *only that one* into a runnable test, make it pass, optionally refactor, repeat. He names two mistakes explicitly: converting every list item into a test up front (it invites rework, plus "depression and/or boredom" when nothing passes for a while), and mixing refactoring into making a test pass (the "wearing two hats" problem). The platform's step-by-step structure enforces both disciplines for you.
+      More items appear as we work through them — Beck's discipline is to *not* pre-resolve them all. Pick the next item, turn *only that one* into a runnable test, make it pass, optionally refactor, repeat. He names two mistakes explicitly: converting every list item into a test up front (it invites rework, plus "depression and/or boredom" when nothing passes for a while), and mixing refactoring into making a test pass (the "wearing two hats" problem). Until cycle 7 the steps pick the next item for you; in cycle 7 you choose it, and in the final FizzBuzz cycle you write the whole list.
 
       ## Cycle 1's spec
 
@@ -482,16 +512,42 @@ steps:
         fails with an ImportError. That import error is the deliverable.
 
     tests:
-      - description: "The empty-roll test accepts a valid report and rejects wrong damage and events"
+      - description: "Your tests detect wrong damage and events for the empty roll"
         command: |
           import pytest
-          pytest._tdd_check_score_test(1, 'test_empty_roll_has_zero_damage_and_no_events', [[]])
+          pytest._tdd_check_score_test(1, [[]])
+        # Shared by every "Your tests detect wrong damage and events" check.
+        hints: &detect_roll_hints
+          - title: "Would any test notice a wrong answer?"
+            text: |
+              This check breaks `score` on purpose for the roll it names: once
+              with damage that is off by one, once with an event that has the
+              wrong name. It expects one of your tests to fail each time.
+              Picture each break: which of your assertions would catch it?
+          - title: "Pin both promised values"
+            text: |
+              The spec promises two things about the roll: its `total_damage`
+              and its exact `events`. A test that checks only one of them, or
+              only a type, a length, or `>= 0`, still passes when the other is wrong.
+          - title: "Compare with exact expected values"
+            text: |
+              Compare `report.total_damage` with an exact number and
+              `report.events` with the exact tuple the rules table implies
+              (whole `ScoringEvent(...)` values, or `()` when nothing scores).
+              The check also runs your tests against a correct `score`, so
+              they must expect exactly what the rules say.
 
       - description: "Implementation is still empty (RED phase requires no production code)"
         command: |
           impl = open('/tutorial/scorer.py').read()
           assert 'class BattleReport' not in impl and 'def score' not in impl, \
               "Cycle 1 RED requires that scorer.py has NO BattleReport class and NO score function yet — that comes in the next step (Cycle 1 GREEN). Move any implementation code there."
+        hints:
+          - title: "RED means the code doesn't exist yet"
+            text: |
+              In this step `scorer.py` should define neither `BattleReport` nor
+              `score`. Move any production code you wrote to the next step,
+              Cycle 1 GREEN, where a passing test will ask for it.
 
       - description: "Running pytest shows RED for the right reason (ImportError or similar)"
         command: |
@@ -511,6 +567,19 @@ steps:
           ])
           assert right_reason, \
               f"The test failed, but not for the expected reason. RED-for-the-right-reason in this step means an ImportError (or similar) because the score function does not exist yet. Got:\n{output}"
+        hints:
+          - title: "Read pytest's first error line"
+            text: |
+              Click **▶ Test** and read the first error. An `ImportError` that
+              names `score` is the RED you want. A `SyntaxError` or
+              `IndentationError` means the test file itself is broken, so fix
+              that first: a typo teaches you nothing about the unit.
+          - title: "A green run means something already exists"
+            text: |
+              If pytest passes here, either `scorer.py` already provides
+              `score` or the test checks nothing. Keep `scorer.py` empty in
+              this step, and make sure the test calls `score([])`.
+            condition: "output_contains: passed"
 
     # NO QUIZ — the user lives the rhythm first; the first knowledge check
     # comes after the REFACTOR step (the next-next step).
@@ -689,12 +758,23 @@ steps:
           source = open('/tutorial/scorer.py').read()
           assert 'class BattleReport' in source, \
               "Define a class called BattleReport in scorer.py — see the worked example"
+        hints:
+          - title: "The test reads attributes from a report"
+            text: |
+              The test reads `total_damage` and `events` from whatever `score`
+              returns. Define a `BattleReport` class in `scorer.py` to be that
+              object; the starter's sub-goal comments mark where its parts go.
 
       - description: "score function is defined in scorer.py"
         command: |
           source = open('/tutorial/scorer.py').read()
           assert 'def score' in source, \
               "Define a function called score(dice) in scorer.py"
+        hints:
+          - title: "The test imports `score` by name"
+            text: |
+              `from scorer import score` needs a function with exactly that name
+              in `scorer.py`, taking the roll as its one parameter.
 
       - description: "BattleReport uses @dataclass(frozen=True) (immutable report)"
         command: |
@@ -704,20 +784,49 @@ steps:
           cls = getattr(importlib.import_module('scorer'), 'BattleReport')
           assert is_dataclass(cls) and cls.__dataclass_params__.frozen, \
               'Use a frozen dataclass for BattleReport: freezing prevents field assignment, independently of equality.'
+        hints:
+          - title: "This tutorial's value objects are immutable"
+            text: |
+              Decorate `BattleReport` with `@dataclass(frozen=True)`. The test
+              would pass without freezing; the tutorial checks it because every
+              report and event here is an immutable value.
 
       - description: "Taught scoring behaviors are correct and the learner tests pass"
         command: |
           import pytest
           pytest._tdd_check_score(1)
+        hints:
+          - title: "Read the first pytest failure"
+            text: |
+              Click **▶ Test** and read the first failing line. Is
+              `report.total_damage` a number, or a method (a missing
+              `@property`)? Is `report.events` exactly `()`?
+          - title: "Mutable defaults are rejected"
+            text: |
+              Dataclasses refuse a list default such as `events: list = []`.
+              The test compares `events` with `()`: which immutable default
+              would match it?
+            condition: "output_contains: mutable default"
 
       - description: "Implementation is minimal — no speculative dice handling yet"
         command: |
+          import pytest
           source = open('/tutorial/scorer.py').read()
           # The current test does not need any of these. Adding them would be
           # speculative design — code with no test demanding it.
           for forbidden in ['ScoringEvent', 'Counter(', 'COMBO_RULES', 'SINGLE_RULES']:
               assert forbidden not in source, \
                   f"`{forbidden}` is not yet demanded by any test — remove it. The GREEN rule is *smallest* code that passes. Future cycles will add what they need."
+          if 'def score' in source:
+              assert not pytest._tdd_score_loops_over_roll(), \
+                  "No test says how a non-empty roll scores yet, so `score` should not loop over the dice."
+        hints:
+          - title: "Only build what a test asks for"
+            text: |
+              The one test so far is about the empty roll. Events, counters,
+              rule tables, and loops over the dice all decide things no test
+              asks about yet; remove them, and later cycles will add each one
+              when a test demands it.
 
     # NO QUIZ — the first quiz follows the REFACTOR step.
 
@@ -756,8 +865,6 @@ steps:
       | **Imports** | Conventional order, no dead imports? | _____ |
 
       Fill the right column from your code *before* opening the reveal. The discipline is the looking, not the finding.
-
-      > **Keep the given test names.** This tutorial's checks find each test by the name its task gives you, so renaming one makes its check fail. In your own projects, renaming a test is an ordinary refactor.
 
       ## Your task
 
@@ -871,11 +978,18 @@ steps:
         command: |
           import pytest
           pytest._tdd_check_score(1)
+        hints:
+          - title: "A refactor keeps every test green"
+            text: |
+              Click **▶ Test**. If a test fails, compare the failure with the
+              edit you made during REFACTOR: restructuring must not change what
+              `score([])` returns. Undo the edit and try a smaller one.
 
-      - description: "test_empty_roll_has_zero_damage_and_no_events detects incorrect damage and events"
+      - description: "Your tests detect wrong damage and events for the empty roll"
         command: |
           import pytest
-          pytest._tdd_check_score_test(1, 'test_empty_roll_has_zero_damage_and_no_events', [[]])
+          pytest._tdd_check_score_test(1, [[]])
+        hints: *detect_roll_hints
 
     quiz:
       title: "Step 3 — Knowledge Check"
@@ -999,13 +1113,13 @@ steps:
     instructions: |
       ### Why this matters
 
-      Cycle 1 walked the rhythm one phase at a time. Cycle 2 packs all three phases into one step — and immediately tests the hardest TDD discipline of all: *allow the hard-code*. The first GREEN for "a 1 is a Dragon Flame" should look ugly (`if dice == [1]:`) because *one example* is not enough information to choose the right shape. Refactor toward duplication, not before it.
+      Writing the smallest code that passes, even a hard-coded special case, keeps every line answerable to a test: a general rule written now would decide how other faces and several dice score before any test says. Tolerating that ugliness for a while is what keeps test-driven designs from filling up with guesses.
 
       ### 🎯 You will learn to
 
       - Apply the full RED-GREEN-REFACTOR rhythm as a single packaged cycle, translating a one-sentence spec into a test, the smallest passing code, and a deliberate REFACTOR pause
-      - Analyze why the first GREEN is allowed (and expected) to look ugly — one example is not enough information to choose the right shape
-      - Evaluate the "refactor toward duplication, not before it" rule against the temptation to generalize early
+      - Analyze why the first GREEN may look ugly: one example pins down almost nothing about the general rule
+      - Evaluate a tempting generalization by asking what it would decide that no test pins down yet
 
       > **Spec:** a single die showing **1** creates a *Dragon Flame* event worth 100 damage.
 
@@ -1013,9 +1127,11 @@ steps:
 
       ## Your task
 
-      1. **🔴 RED** — add `test_single_one_creates_dragon_flame_event` in `test_scorer.py`. From the spec ("a single die showing 1 creates a *Dragon Flame* event worth 100 damage"), translate into pytest assertions yourself. The four-part shape from cycle 1 still applies; the rules table at the top names the event and damage. **Predict** the failure category (`ImportError`? `AttributeError`? `AssertionError`?) before running.
+      1. **🔴 RED** — add `test_single_one_creates_dragon_flame_event` in `test_scorer.py`. The TODO spells out this first event test in full, because `ScoringEvent(name, dice_used, damage)` is the event shape the rest of the tutorial relies on; later cycles give you less. Read each part against the spec before you type it. **Predict** the failure category (`ImportError`? `AttributeError`? `AssertionError`?) before running.
       2. **🟢 GREEN** — pick the smallest code that turns the test green. Resist any abstraction beyond what cycle 2's single test demands. After you've made your choice, open the reveal below to compare.
-      3. **🔵 REFACTOR** — walk the cycle-1 checklist. Resist generalizing; cycle 4 will earn the loop.
+      3. **🔵 REFACTOR** — walk the cycle-1 checklist. Resist generalizing: no test says yet how other faces or several dice score.
+
+      Name each new test after the behavior it pins down. The checks look at what your tests *detect*, not at their names.
 
       <details markdown="1"><summary>Reveal — what we expected for RED (open after running)</summary>
 
@@ -1024,10 +1140,10 @@ steps:
 
       <details markdown="1"><summary>Reveal — one shape for the smallest GREEN (open after you've tried)</summary>
 
-      A hardcoded `if dice == [1]:` branch returning a `BattleReport` with one `ScoringEvent`. Yes, it's ugly. Yes, you can see how cycle 3 will duplicate it. That's the point — wait for the second example.
+      A hardcoded `if dice == [1]:` branch returning a `BattleReport` with one `ScoringEvent`. Yes, it's ugly, and cycle 3 will duplicate it. A loop written now would also decide how `[1, 1]` or `[2]` score, and no test says that yet.
       </details>
 
-      > **Why "allow the hard-code" is a TDD discipline.** The instinct is to extract a rule, write a loop, build the abstraction now. TDD asks you to wait for the test that *demands* it. A speculative loop is a guess at the right shape; a loop refactor pulled by cycle 4's test is a *discovery*. **Refactor toward duplication, not before it.**
+      > **Why "allow the hard-code" is a TDD discipline.** The instinct is to extract a rule, write a loop, build the abstraction now. But a general rule decides cases your tests don't cover yet: how `[1, 1]` scores, whether a lone `2` scores, which order events come in. Until a test pins those down, the abstraction is a guess. **Generalize only what your tests already pin down.**
 
       🪞 **Pause (10 seconds, after green):** what did the test force you to *name* before any code existed? Then compare your answer with the RED reveal above.
 
@@ -1132,20 +1248,28 @@ steps:
           language: "python"
       explanation: |
         The hardcoded `if dice == [1]:` branch is the smallest GREEN that satisfies
-        the test. Cycle 4's test will make this branch insufficient — that is the
-        signal to refactor into a loop. Until then, the duplication is fine.
+        the test. A loop would also decide how other faces and several dice score,
+        which no test pins down yet; cycle 4's tests will, and that is when the loop
+        becomes a safe refactor. Until then, the duplication is fine.
 
     tests:
-      - description: "test_single_one_creates_dragon_flame_event detects incorrect damage and events"
+      - description: "Your tests detect wrong damage and events for [1]"
         command: |
           import pytest
-          pytest._tdd_check_score_test(2, 'test_single_one_creates_dragon_flame_event', [[1]])
+          pytest._tdd_check_score_test(2, [[1]])
+        hints: *detect_roll_hints
 
       - description: "ScoringEvent class is defined in scorer.py"
         command: |
           source = open('/tutorial/scorer.py').read()
           assert 'class ScoringEvent' in source, \
               "Define a ScoringEvent dataclass in scorer.py — the test imports it"
+        hints:
+          - title: "The test imports the event class"
+            text: |
+              `from scorer import score, ScoringEvent` needs a `ScoringEvent`
+              class in `scorer.py` whose fields match how your test builds one:
+              a name, the dice used, and the damage.
 
       - description: "ScoringEvent is a frozen dataclass (immutability matters)"
         command: |
@@ -1155,14 +1279,28 @@ steps:
           cls = getattr(importlib.import_module('scorer'), 'ScoringEvent')
           assert is_dataclass(cls) and cls.__dataclass_params__.frozen, \
               'Use a frozen dataclass for ScoringEvent: freezing prevents field assignment, independently of equality.'
+        hints:
+          - title: "Events are immutable values too"
+            text: |
+              Give `ScoringEvent` the same decorator as `BattleReport`:
+              `@dataclass(frozen=True)`. Its generated equality is also what
+              lets your test compare a report's events with constructed ones.
 
       - description: "Taught scoring behaviors are correct and the learner tests pass"
         command: |
           import pytest
           pytest._tdd_check_score(2)
+        hints:
+          - title: "Read the first pytest failure"
+            text: |
+              Click **▶ Test** and compare the expected and actual values in
+              the first failure. Does `score([1])` return a report whose events
+              hold one whole `ScoringEvent`, and does `score([])` still return
+              an empty report?
 
       - description: "Implementation has not jumped ahead to a loop or rule objects"
         command: |
+          import pytest
           source = open('/tutorial/scorer.py').read()
           # If a student has already written the cycle-4 loop or cycle-6 rule
           # objects, they have over-engineered. The next cycle's test is what
@@ -1170,6 +1308,15 @@ steps:
           for forbidden in ['ComboRule', 'SingleRule', 'COMBO_RULES', 'SINGLE_RULES']:
               assert forbidden not in source, \
                   f"`{forbidden}` belongs to a later cycle (cycle 6). Right now the smallest GREEN is `if dice == [1]:` — let the loop and the rule objects emerge under pressure from later tests."
+          assert not pytest._tdd_score_loops_over_roll(), \
+              "A loop over the dice decides how other faces and several dice score; no test says that yet."
+        hints:
+          - title: "What would the loop decide?"
+            text: |
+              A loop over the dice, or a rule table, answers questions no test
+              asks yet: how `[1, 1]` scores, whether a lone `2` scores. Go back
+              to the smallest GREEN for the one roll your test names; a later
+              cycle's tests will pin those answers down first.
 
     # NO QUIZ — focus on the rhythm; the next quiz is two cycles away.
 
@@ -1178,32 +1325,39 @@ steps:
   # STEP 5 — Cycle 3: A single 5 creates a Lightning Spark event
   # Pedagogy:
   #   Variation theory     — same shape of test, different value (contrast).
-  #   Make duplication     — two near-identical branches; visible, not yet fixed.
-  #   No quiz — duplication is itself the lesson; no need to test it yet.
+  #   PRIMM (Predict)      — predict what a loop would decide before writing it.
+  #   Fading               — the TODO names only the roll; learners derive expectations.
+  #   No quiz — the predict reveal carries the generalization judgment; cycle 4's
+  #   quiz revisits it.
   # --------------------------------------------------------------------------
   - title: "Cycle 3 — Single 5 → Lightning Spark"
     instructions: |
       ### Why this matters
 
-      Cycle 3 is *the same shape* as cycle 2 with different values — and that's exactly why it matters. Two near-identical hardcoded branches make the duplication impossible to miss; the trap is that your hands will itch to extract a loop *right now*. Don't. Refactoring with only two data points is still guessing. Cycle 4's test will provide the third point — and the loop refactor it earns will be a discovery, not a guess.
+      Duplication tempts you to generalize, but a generalization is only safe when your tests already pin down everything it decides. Telling a safe refactor (restating tested behavior) from a guess (deciding untested behavior) keeps a test-driven design honest.
 
       ### 🎯 You will learn to
 
-      - Apply Variation Theory by writing a second test with the *same shape* as cycle 2 (only the values change) and observing what the contrast makes visible
-      - Evaluate when *deliberately keeping ugly code* is the disciplined move — refactoring under-informed is worse than not refactoring
-      - Analyze how the visible duplication will be the design pressure that earns the cycle 4 refactor
+      - Apply the cycle-2 test shape to a new example, deriving the expected values from the rules table yourself
+      - Evaluate a proposed generalization by asking what it decides that no test pins down yet
+      - Distinguish a safe refactor (a face-to-event lookup) from a guess (a loop over every die)
 
       > **Spec:** a single die showing **5** creates a *Lightning Spark* event worth 50 damage.
 
-      Same shape as cycle 2, different values. The duplication this creates is *intentional* — cycle 4's test will earn the right to fix it.
-
       ## Your task
 
-      1. **🔴 RED** — add `test_single_five_creates_lightning_spark_event`, structured exactly like cycle 2's test but with the Lightning Spark values.
-      2. **🟢 GREEN** — add a second hardcoded `if dice == [5]:` branch. **Resist** the urge to write a loop or dict lookup.
-      3. **🔵 REFACTOR** — walk the checklist. The duplication is now visible; the right move is to **note it and write nothing**. No test demands the loop yet.
+      1. **🔴 RED** — add a test for the spec, shaped like your cycle-2 test. This time the TODO names only the roll: take the expected event and damage from the spec and the rules table.
+      2. **🟢 GREEN** — make it pass with the smallest change. A second hardcoded branch is fine.
+      3. **🔵 REFACTOR** — the two branches now share a shape. Before you change anything, **predict**: if you replaced both branches with `for die in dice:`, what would `score([1, 1])` return? Which of your tests pins that down? Then open the reveal.
 
-      > **Why deliberately keeping ugly code is the disciplined move.** You can clearly see duplication. Refactoring it now would be *guessing* at the right shape with one too few data points. Cycle 4's test will provide the third data point — and the loop refactor it earns is a discovery, not a guess. **Refactor toward duplication, not before it.**
+      <details markdown="1"><summary>Reveal — what a loop would decide (open after predicting)</summary>
+
+      Two Dragon Flames, 200 damage — plausible, but none of your tests says so. The same loop would turn `[1, 1, 1]` into three Flames, which the rules table says is wrong. A loop over the dice decides how *several* dice combine before any test pins that down: a guess.
+
+      A lookup from face to event that still handles one die at a time is different. It only restates what your two tests already pin down, so it is a safe refactor if you want it. Cycle 4's `[1, 1]` test will pin down how several dice combine, and then the loop restates tested behavior too.
+      </details>
+
+      > **The rule this tutorial follows.** The number of examples isn't what makes a generalization safe; what matters is whether your tests already pin down everything it decides. Before you generalize, ask what the new code decides that no test pins down yet. If the answer is "nothing", refactor on green; if it's "something", wait for the test that pins it down. **Generalize only what your tests already pin down.**
 
       ---
 
@@ -1263,9 +1417,9 @@ steps:
               )
 
 
-          # TODO (RED): write test_single_five_creates_lightning_spark_event
-          #             score([5]) should return total_damage == 50 with
-          #             events == (ScoringEvent("Lightning Spark", (5,), 50),)
+          # TODO (RED): test the spec for the roll [5] (for example,
+          #             test_single_five_creates_lightning_spark_event).
+          #             Take the expected event and damage from the rules table.
         language: "python"
 
     open_file: "test_scorer.py"
@@ -1337,15 +1491,17 @@ steps:
                 )
           language: "python"
       explanation: |
-        Add a second hardcoded branch. The duplication between the two branches is
-        loud and intentional — cycle 4's test will provide the third data point
-        that earns the loop.
+        Add a second hardcoded branch. A lookup from face to event that still
+        handles one die at a time would be an equally valid refactor, because it
+        restates only what the two tests pin down. A loop over the dice would also
+        decide how several dice combine, which no test pins down until cycle 4.
 
     tests:
-      - description: "test_single_five_creates_lightning_spark_event detects incorrect damage and events"
+      - description: "Your tests detect wrong damage and events for [5]"
         command: |
           import pytest
-          pytest._tdd_check_score_test(3, 'test_single_five_creates_lightning_spark_event', [[5]])
+          pytest._tdd_check_score_test(3, [[5]])
+        hints: *detect_roll_hints
 
       - description: "Taught scoring behaviors are correct and the learner tests pass"
         command: |
@@ -1400,135 +1556,65 @@ steps:
               blanks yourself.
 
             condition: "output_contains: AssertionError"
-      - description: "Implementation still has the second hardcoded branch (no premature refactor to loop)"
+      - description: "score() does not loop over the dice yet"
         command: |
-          import ast
-          source = open('/tutorial/scorer.py').read()
-          # We expect TWO if-branches checking specific dice lists. A student
-          # who jumped to a `for die in dice:` loop has refactored without a
-          # justifying test — exactly the move cycle 4 will earn the right to.
-          tree = ast.parse(source)
-          score_fn = next((n for n in ast.walk(tree)
-                           if isinstance(n, ast.FunctionDef) and n.name == 'score'), None)
-          assert score_fn is not None, "Define a `score` function in scorer.py"
-          param = score_fn.args.args[0].arg if score_fn.args.args else 'dice'
-
-          def list_eq_targets(fn, name):
-              targets = []
-              for n in ast.walk(fn):
-                  if (isinstance(n, ast.Compare)
-                          and isinstance(n.left, ast.Name) and n.left.id == name
-                          and len(n.ops) == 1 and isinstance(n.ops[0], ast.Eq)
-                          and isinstance(n.comparators[0], ast.List)):
-                      values = []
-                      ok = True
-                      for elt in n.comparators[0].elts:
-                          if isinstance(elt, ast.Constant):
-                              values.append(elt.value)
-                          else:
-                              ok = False
-                              break
-                      if ok:
-                          targets.append(tuple(values))
-              return targets
-
-          targets = list_eq_targets(score_fn, param)
-          assert (1,) in targets and (5,) in targets, \
-              f"Cycle 3's smallest GREEN is two `if {param} == [...]:` branches *inside `score()` itself* — one for `[1]` and one for `[5]`. The checker walks `score`'s body for these comparisons, so branches placed elsewhere (e.g. on `BattleReport`) don't count. If you've already replaced the branches with a `for` / `dict` / `match`, that refactor belongs in cycle 4 — restore the two hardcoded `if` branches in `score` for now."
+          import pytest
+          assert not pytest._tdd_score_loops_over_roll(), \
+              "A loop over the dice decides how several dice combine before any test pins that down."
         hints:
-          - title: "Which function does the checker walk?"
+          - title: "What does the loop decide?"
             text: |
-              The checker imports `scorer.py` and walks the body of `score(dice)`
-              itself, looking for two `if dice == [...]:` comparisons. Open
-              `scorer.py` and read just the body of `score` — what dispatch
-              logic actually lives there? If `score` immediately hands `dice`
-              off to `BattleReport`, the checker sees zero branches in `score`
-              even when the right `if` lines exist somewhere else in the file.
-            condition: "output_contains: AssertionError"
-          - title: "Separate the decider from the container"
+              Trace `score([1, 1])` and `score([1, 1, 1])` through your loop.
+              Which of your tests says what those rolls should produce? None
+              does yet, so the loop is a guess about how several dice combine.
+          - title: "A lookup is safe; the loop waits for cycle 4"
             text: |
-              `BattleReport` is meant to be a passive value object — `events:
-              tuple = ()` plus a derived `total_damage` that sums
-              `event.damage` for each event. Asking `BattleReport` "which
-              events does this dice list produce?" puts the dispatch in the
-              wrong class: the report ends up having to know every dragon-dice
-              rule, and re-derives everything on every read. Move the
-              per-rule decisions back into `score(dice)`, and let each branch
-              construct the right `BattleReport(events=...)` value.
-            condition: "code_contains: self.dice"
-          - title: "`for` / `dict` / `match` is cycle 4's job"
-            text: |
-              If you went straight to a `for die in dice:` loop (or a `dict`
-              dispatch, or `match`/`case`), you've generalised on one too few
-              data points. Cycle 4's test (`[1, 1]`) is what *earns* the loop
-              by making it the cheapest GREEN; until then, the duplication
-              between two hardcoded `if` branches is the lesson, not a code
-              smell to fix. Back the loop out and write the second `if`
-              instead — the cycle-4 step is where it'll come back, justified.
-            condition: "code_contains: for "
-          - title: "Two top-level ifs, then a default return"
-            text: |
-              Inside `score(dice)` (not on `BattleReport`), the body has the
-              shape:
+              Keep handling one die at a time: hardcoded branches, or a lookup
+              from face to event, both restate exactly what your two tests pin
+              down. Cycle 4's `[1, 1]` test is the one that earns the loop.
 
-              ```python
-              def score(dice):
-                  if dice == ...:                      # the roll that fires Dragon Flame
-                      return BattleReport((ScoringEvent(...),))
-                  if dice == ...:                      # the roll that fires Lightning Spark
-                      return BattleReport((ScoringEvent(...),))
-                  return BattleReport()
-              ```
-
-              Each `...` is a value the rules table at the top of the
-              tutorial names. No `for`, no `dict`, no `match`. The
-              duplication between the two branches is the *point* of cycle 3
-              — cycle 4's test will earn the right to collapse it.
-            condition: "output_contains: AssertionError"
-
-    # NO QUIZ — duplication is the lesson; cycle 4 will pay for it.
+    # NO QUIZ — the predict reveal carries the generalization lesson; cycle 4's
+    # quiz revisits it.
 
 
   # --------------------------------------------------------------------------
   # STEP 6 — Cycle 4: Repeated singles + FIRST REAL REFACTOR + QUIZ
   # Pedagogy:
   #   Design pressure       — repeated cases expose growing branch duplication.
-  #   Refactor under safety — three green tests guard the change to a loop.
-  #   Counter-misconception — "tests slow refactoring" is dismantled here.
+  #   Refactor on green     — GREEN adds a third branch; REFACTOR replaces all
+  #                           branches with a loop while every test stays green.
+  #   PRIMM (Predict)       — predict the branch count without a loop.
+  #   Mutation move         — verify that the "free" guardrail test can fail.
   #   Quiz                  — checks understanding of the safety-net concept.
   # --------------------------------------------------------------------------
   - title: "Cycle 4 — Repeated Singles → First Real Refactor"
     instructions: |
       ### Why this matters
 
-      Cycle 4 is the first **design-breaking** test of the tutorial — neither `dice == [1]` nor `dice == [5]` matches `[1, 1]`, so the cheapest patch (a third hardcoded branch) is *globally* expensive even when it's *locally* small. This is also where the safety-net argument becomes load-bearing: the *previous three green tests* are what allow you to replace the hardcoded branches with a loop without fear. The mutation move at the end of the cycle proves those tests actually catch the regressions you think they do.
+      Refactoring means changing a program's structure while every test stays green, and those passing tests are what make even a sweeping change safe. Refactoring only on green, then checking the safety net with a deliberate break, keeps design changes from turning into regressions.
 
       ### 🎯 You will learn to
 
-      - Apply the first real refactor under safety — replacing hardcoded branches with a loop while three green tests guard the change
-      - Evaluate competing GREEN options (third hardcoded branch vs. loop) by predicting which is cheaper across the next two cycles
-      - Apply the *mutation move* (mutate a line, watch a test fail, revert) to verify the safety net actually catches regressions
+      - Apply a real refactor on green: replace hardcoded branches with a loop while every test stays green
+      - Evaluate when a generalization is safe: when your tests already pin down what it decides
+      - Apply the *mutation move* (break a line, watch a test fail, revert) to check that a test guards what it claims
 
       > **Spec:** `score([1, 1])` returns total damage 200 with **two** Dragon Flame events.
 
-      The first **design-breaking** test. Neither `dice == [1]` nor `dice == [5]` matches `[1, 1]` — the duplication you noted in cycle 3 just demanded payment.
+      The first **design-breaking** test: neither `dice == [1]` nor `dice == [5]` matches `[1, 1]`.
 
       ## Your task
 
-      1. **🔴 RED** — add `test_two_ones_create_two_dragon_flames` asserting damage 200 and two Flame events. Run; predict the failure.
-      2. **🟢 GREEN** — you have two options:
-         - *Option A*: a third hardcoded branch for `dice == [1, 1]`.
-         - *Option B*: replace the hardcoded branches with a `for` loop over each die.
+      1. **🔴 RED** — add a test for the spec. The TODO only names the roll, so name the test after the behavior. Predict the failure, then run.
+      2. **🟢 GREEN** — make it pass with the smallest change. A third hardcoded branch is fine: GREEN is about passing, not about design.
+      3. **🔵 REFACTOR (on green)** — your three branches now share one rule that your tests pin down: each 1 is a Dragon Flame, each 5 a Lightning Spark, and every die scores on its own. **Predict first:** without a loop, how many more branches would `[1, 5]`, `[5, 5]`, and `[1, 1, 5]` need? Then replace the branches with a loop over the dice. Re-run after each small edit: the bar stays green the whole time. That is what makes this a refactor rather than a rewrite.
+      4. **🟢 Guardrail test (required)** — add a test for the mixed roll `[1, 5]` (one Flame, then one Spark). **Predict** whether `scorer.py` needs to change. It should pass for free, so prove the test isn't vacuous with the *mutation move*: temporarily break a line in `scorer.py` (e.g., `if die == 5:` → `if die == 6:`), re-run, watch the test fail, then **revert**. A test that doesn't fail when the production code breaks is a *Liar test*.
 
-         **Pick one. *Before* you implement, predict: which option will be cheaper over the next two or three cycles?** Don't peek ahead — predict from what you know now. Implement your choice, run, and revisit your prediction.
-      3. **🔵 REFACTOR + mutation check** — re-run; the previous three tests are your safety net. Then **prove they actually catch regressions** with the ten-second *mutation move*: temporarily change a line in `scorer.py` (e.g., `if die == 1:` → `if die == 99:`), rerun pytest, watch a test fail, then **revert**. A test that doesn't fail when the production code breaks is a *Liar test* — it's not pinning down the behavior you think it is.
-      4. **🟢 Guardrail test (required)** — add `test_one_and_five_create_two_different_events` (mixed dice `[1, 5]` → one Flame + one Spark). **Predict** whether you'll need to change `scorer.py`. The new loop *should* handle this for free — but the test makes that promise explicit.
+      🪞 **Pause (after the refactor):** in *one sentence*, what did the passing test results just tell you that you'd otherwise have had to verify by hand? Hold your answer; the cycle quiz returns to it.
 
-      🪞 **Pause (after green):** in *one sentence*, what did the passing test results just tell you that you'd otherwise have had to verify by hand? Hold your answer; the cycle quiz returns to it.
+      <details markdown="1"><summary>Reveal — why not keep adding branches? (open after predicting)</summary>
 
-      <details markdown="1"><summary>Reveal — what happens when option A wins (open after running)</summary>
-
-      A third hardcoded branch passes cycle 4. But the mixed-dice guardrail (`[1, 5]`) needs a fourth branch — and cycle 5 (triple 1s) would need still more special cases. Hardcoding can pass individual examples, but a general loop handles the repeated-singles rule with less duplication. *Locally smallest* (one new `if`) is *globally largest*.
+      One more branch for each: a hardcoded branch covers exactly one roll, so `[1, 5]`, `[5, 5]`, and `[1, 1, 5]` would each need their own, and so would every roll that contains a 2, 3, 4, or 6. The loop states the rule your four tests already pin down: dice score one at a time, 1s as Flames and 5s as Sparks. In cycle 3 no test said how several dice combine; now `[1, 1]` does. The mixed roll `[1, 5]` is the case the loop extends to that no test names yet, which is why the guardrail test comes next.
       </details>
 
       <details markdown="1"><summary>Why the mutation move matters</summary>
@@ -1607,14 +1693,10 @@ steps:
               )
 
 
-          # TODO (RED): write test_two_ones_create_two_dragon_flames
-          #             score([1, 1]) should return total_damage == 200 and two
-          #             Dragon Flame events in events
+          # TODO (RED): test the spec for the roll [1, 1].
           #
-          # TODO (required guardrail, after the loop refactor): add
-          # test_one_and_five_create_two_different_events
-          #             score([1, 5]) should return total_damage == 150 with
-          #             one Dragon Flame followed by one Lightning Spark
+          # TODO (required guardrail, after the refactor): test the mixed
+          #             roll [1, 5].
         language: "python"
 
     open_file: "scorer.py"
@@ -1706,48 +1788,59 @@ steps:
                 )
           language: "python"
       explanation: |
-        The right move is Option B — replace the hardcoded branches with a per-die
-        loop. The previous three tests act as a safety net that lets you do the
-        rewrite confidently and confirm in one second that nothing broke. The
-        mixed-dice guardrail (`[1, 5]`) passes immediately on the new loop — the
-        mutation move proves it's not vacuous.
+        GREEN can be a third hardcoded branch. Then REFACTOR on green: the four
+        tests pin down one per-die rule, so a loop restates it and every test stays
+        green throughout, which makes this a real refactor. The mixed-dice
+        guardrail (`[1, 5]`) passes immediately on the new loop, and the mutation
+        move proves it isn't vacuous.
 
     tests:
-      - description: "test_two_ones_create_two_dragon_flames detects incorrect damage and events"
+      - description: "Your tests detect wrong damage and events for [1, 1]"
         command: |
           import pytest
-          pytest._tdd_check_score_test(4, 'test_two_ones_create_two_dragon_flames', [[1, 1]])
+          pytest._tdd_check_score_test(4, [[1, 1]])
+        hints: *detect_roll_hints
 
-      - description: "test_one_and_five_create_two_different_events detects incorrect damage and events"
+      - description: "Your tests detect wrong damage and events for [1, 5]"
         command: |
           import pytest
-          pytest._tdd_check_score_test(4, 'test_one_and_five_create_two_different_events', [[1, 5]])
+          pytest._tdd_check_score_test(4, [[1, 5]])
+        hints: *detect_roll_hints
 
       - description: "Taught scoring behaviors are correct and the learner tests pass"
         command: |
           import pytest
           pytest._tdd_check_score(4)
+        hints:
+          - title: "Read the first pytest failure"
+            text: |
+              Click **▶ Test**. If one of your tests fails, compare its expected
+              and actual values: does every die score on its own, in roll order?
+          - title: "Rolls beyond your own tests"
+            text: |
+              Besides your tests, this check scores `[5, 5]` and `[2, 3, 4, 6]`.
+              What does the rules table say each should produce? Trace both
+              through your code.
 
       - description: "Implementation iterates over dice (loop refactor was applied)"
         command: |
-          import ast
-          source = open('/tutorial/scorer.py').read()
-          tree = ast.parse(source)
-          score_fn = next((n for n in ast.walk(tree)
-                           if isinstance(n, ast.FunctionDef) and n.name == 'score'), None)
-          assert score_fn is not None, "Define a `score` function in scorer.py"
-          param = score_fn.args.args[0].arg if score_fn.args.args else 'dice'
-          # Accept any loop or comprehension over the roll, whatever its variable
-          # name (`for die in dice`, `for d in sorted(dice)`, `(... for d in dice)`).
-          def iterates_over_roll(iterable):
-              return any(isinstance(n, ast.Name) and n.id == param for n in ast.walk(iterable))
-
-          has_loop = any(
-              isinstance(n, (ast.For, ast.comprehension)) and iterates_over_roll(n.iter)
-              for n in ast.walk(score_fn)
-          )
-          assert has_loop, \
-              f"Cycle 4's refactor replaces the hardcoded `if {param} == [...]:` branches with a per-die loop or comprehension. Without that, adding a third hardcoded branch (`if {param} == [1, 1]:`) just makes the duplication worse."
+          import pytest
+          assert pytest._tdd_score_loops_over_roll(), \
+              "Cycle 4's refactor replaces the hardcoded branches with a loop or comprehension over the dice."
+        hints:
+          - title: "Refactor the branches into one loop"
+            text: |
+              With the tests green, replace the hardcoded branches in `score`
+              with one loop (or comprehension) over the dice that turns each 1
+              into a Dragon Flame and each 5 into a Lightning Spark. Re-run after
+              each edit; the bar should stay green throughout.
+          - title: "Keep the decisions in `score`"
+            text: |
+              `BattleReport` is a passive value: events plus a derived total. If
+              it inspects the dice itself, it has to know every scoring rule.
+              Move the per-die decisions into `score(dice)` and pass the
+              finished events to `BattleReport`.
+            condition: "code_contains: self.dice"
 
       - description: "Hardcoded list-equality branches are gone (the duplication was paid down)"
         command: |
@@ -1770,6 +1863,12 @@ steps:
           )
           assert not has_list_eq, \
               f"The whole point of cycle 4 was to retire the `if {param} == [...]:` branches in favor of a generic per-die loop. Remove them."
+        hints:
+          - title: "Branches for exact rolls are now dead weight"
+            text: |
+              Each `dice == [...]` branch handles one exact roll, and the loop
+              already handles every roll. Remove the branches and re-run: if the
+              bar stays green, they were pure duplication.
 
     quiz:
       title: "Step 6 — Knowledge Check"
@@ -1778,19 +1877,19 @@ steps:
       questions:
 
         - question: |
-            You noticed obvious duplication after cycle 3 but did not refactor it. Cycle 4's test then *forced* the refactor. Why is this sequence (notice → wait → refactor when test demands) better than (notice → refactor immediately)?
+            In cycle 3 you saw two near-identical branches but didn't replace them with a loop over the dice. Why was waiting until cycle 4 the safer choice?
           type: single
           options:
-            - "It is not better — refactoring as soon as you see duplication is always the right move; this tutorial just artificially delayed it"
-            - "Waiting ensures the refactor is justified by behavior, and you have more data points to design the right shape"
-            - "Python performance is better when you delay extracting loops, because the interpreter optimises hardcoded branches differently from iterative ones"
-            - "It is purely a style choice — the resulting code in either order is identical, so the order of operations does not matter"
-          correct_index: 1
+            - "In cycle 3 no test said how several dice combine; cycle 4's tests pin that down, so the loop adds no guess"
+            - "Duplication should always be removed right away, so delaying the loop until cycle 4 was an arbitrary choice"
+            - "Two examples are never enough to generalize, because the Rule of Three requires a third copy first"
+            - "The order doesn't matter, because the loop and the two branches return the same result for every roll"
+          correct_index: 0
           option_feedback:
-            0: "*\"Refactor on first sight of duplication\"* sounds disciplined, but with one example, you're guessing the abstraction's shape. Two examples reveal the *common* parts; one is just a special case dressed as a pattern. The *Rule of Three* (Don Roberts' guideline, popularised by Fowler's *Refactoring*) is the same idea — refactor toward duplication, not before it."
-            2: "Performance is not the reason. Python's interpreter compiles both forms to similar bytecode, and the difference is microseconds at most. Confusing a *design* discipline with a *performance* concern muddles two unrelated questions."
-            3: "Order *is* the lesson. Refactor-before-test gives you no safety net during the structural change; refactor-after-test gives you passing test results proving behavior was preserved. The same final code is reached, but only one path *guarantees* the path was safe."
-          explanation: "With only `[1]` and `[5]`, a loop would be a guess about the design's shape. The `[1, 1]` test showed the duplication was real and what the general rule must handle, and the three passing tests made the loop refactor safe."
+            1: "Removing duplication is right when the change only restates tested behavior; a face-to-event lookup was fine in cycle 3. The loop also decided how several dice score, which no cycle-3 test checked."
+            2: "The count isn't what decides it: cycle 6 extracts rule objects after just two combos, because those two vary in exactly what the rule holds. The Rule of Three (Don Roberts' guideline, popularised by Fowler's *Refactoring*) is a cautious default, not the reason here."
+            3: "They differ on rolls no cycle-3 test checked: the loop scores `[1, 1]` as two Flames, while the branches return an empty report. Waiting let a test decide which behavior is right."
+          explanation: "A loop over the dice decides how several dice combine. In cycle 3 no test said; cycle 4's `[1, 1]` test pins it down, so the loop then restates tested behavior instead of guessing. Generalize only what your tests already pin down."
 
         - question: |
             You replaced the hardcoded branches with a `for` loop and ran pytest. All four tests passed. What did the test suite just do for you that you would otherwise have had to do manually?
@@ -1812,23 +1911,22 @@ steps:
             have to convince yourself of each line by reading.
 
         - question: |
-            A teammate looks at your cycle-4 GREEN code and says: *"Why didn't you just add a third `if dice == [1, 1]:` branch? It would have passed the test."* What is the **most accurate** rebuttal?
+            After GREEN, `score()` has three hardcoded branches and all four tests pass. A teammate says: *"It's green, so we're done — why touch it?"* What is the strongest reason to refactor now?
           type: single
           options:
-            - "It passes, but each branch covers one exact roll — the three examples now share one per-die rule"
-            - "A third branch is forbidden by pytest — only one `if` statement per function is allowed in TDD code"
-            - "The teammate is right and you should rewrite — TDD always prefers the smallest change, and one new `if` is smaller than rewriting the function"
-            - "It does not matter — both approaches produce the same byte code after Python compiles them"
+            - "The four tests now pin down one per-die rule, so a loop can restate it while they guard the change"
+            - "Green means done: REFACTOR is optional and only matters once the code has started causing bugs"
+            - "A loop runs faster than a chain of `if` checks, so the refactor is mainly a performance fix"
+            - "It's safer to restructure after the next test fails, because changing passing code risks breaking it"
           correct_index: 0
           option_feedback:
-            1: "pytest has no opinion about your control flow. Made-up rules like \"one `if` per function\" sound TDD-flavored but aren't real — and inventing them tells you you're searching for *external* discipline instead of *internal* design judgment. The discipline lives in *why* you choose one shape over another."
-            2: "\"Smallest change\" fits when one example can't reveal the rule. Here `[1, 1]` is the third example of one per-die rule, and each hardcoded branch covers only one exact roll — the `[1, 5]` guardrail would need yet another. Generalizing now follows the evidence instead of guessing."
-            3: "Bytecode equivalence (which isn't even quite true here — Python doesn't auto-optimize hardcoded branch chains into loops) is a runtime concern, not a design one. The question is what the code *says* and what the next developer *sees*, not what CPython executes."
+            1: "REFACTOR is part of every cycle, and green is the moment restructuring is safe, not a sign you're finished. Left alone, each new roll would need its own branch."
+            2: "Refactoring changes structure for readability and ease of change, not speed. The gain here is one rule instead of one branch per roll."
+            3: "That inverts the cycle. Restructuring while a test is red mixes two changes and loses the safety net; on green, any slip shows up immediately as a failing test."
           explanation: |
-            Hardcoding is a good first GREEN when one example can't show the general
-            rule. By cycle 4, three examples share one per-die rule, and a branch per
-            exact roll only multiplies duplication. The loop states the rule the examples
-            share — and it will change again in cycle 5, when triples need a new design.
+            Green is when restructuring is safe: four passing tests pin down the per-die
+            rule and will flag any slip. The loop restates what the tests already pin down,
+            and the mixed-roll guardrail then confirms it handles a roll no branch did.
 
         - question: |
             Why is "RED for the right reason" still the right framing in cycle 4, even though we are now adding a test on top of an already-passing suite?
@@ -1875,6 +1973,8 @@ steps:
   #   Design pressure       — combos require grouping and consumption bookkeeping.
   #   Counter -> structure  — counting + leftover bookkeeping replaces iteration.
   #   Threshold concept     — "tests force structural change, not just lines."
+  #   Rewrite vs. refactor  — GREEN rewrites on purpose; guardrail tests pin
+  #                           down what the rewrite changed (leftovers, order).
   #   Quiz                  — checks the design-pressure interpretation.
   # --------------------------------------------------------------------------
   - title: "Cycle 5 — Triple 1s → Dragon Blast (Design Moment)"
@@ -1887,7 +1987,7 @@ steps:
 
       - Analyze the extra group information a combo requires, and explain why a `Counter` is a useful design choice
       - Evaluate the *Refactoring Litmus Test*: which property of the previous tests allowed them to survive a full rewrite of `score`?
-      - Apply the same mutation move from cycle 4 to a leftover-bookkeeping line, confirming the new structure's invariants are pinned down by tests
+      - Apply guardrail tests to pin down behavior a rewrite changed (leftover dice, event order), checking each with the mutation move
 
       > **Spec:** three 1s in a roll combine into one *Dragon Blast* (1000 damage) instead of three Dragon Flames. In the count-then-emit design, emit combos in rule-table order, then leftover Dragon Flames, then Lightning Sparks; the input order does not affect that event order.
 
@@ -1895,17 +1995,24 @@ steps:
 
       ## Your task
 
-      1. **🔴 RED** — add `test_three_ones_create_dragon_blast_instead_of_three_flames`. **Predict** what kind of failure pytest will show (`ImportError`, `AttributeError`, `AssertionError` — and what the message will likely contain). Run.
-      2. **🟢 GREEN** — *before reaching for code*: open the per-die loop in `score()`. **Spend 90 seconds writing a one-sentence answer to:** *what information must scoring retain to recognize a triple and avoid counting its dice again as singles?* Then implement the count-then-emit design using `collections.Counter`.
-      3. **🔵 REFACTOR** — re-run; the previous five tests survived a *full body rewrite* of `score`.
-      4. **🟢 Guardrail test (required)** — your GREEN code subtracts the consumed dice (`counts[1] -= 3`) so leftovers still score as singles. That behavior is currently *implicit* — no test would catch a future refactor that forgets it. Add `test_dragon_blast_plus_leftover_flame_and_spark` (`score([1, 1, 1, 1, 5])` → one Blast, one leftover Flame, one Spark = 1150 damage). It should pass for free; verify with the cycle-4 mutation move (mutate `counts[1] -= 3` to `counts[1] -= 4`, watch the new test fail, revert).
+      1. **🔴 RED** — add a test for the spec (the TODO names only the roll). **Predict** what kind of failure pytest will show (`ImportError`, `AttributeError`, `AssertionError` — and what the message will likely contain). Run.
+      2. **🟢 GREEN** — *before reaching for code*: open the per-die loop in `score()`. **Spend 90 seconds writing a one-sentence answer to:** *what information must scoring retain to recognize a triple and avoid counting its dice again as singles?* Then implement the count-then-emit design using `collections.Counter`. This GREEN is a **rewrite**, not a refactor: it changes behavior on purpose, and your five earlier tests check that nothing you meant to keep broke.
+      3. **🟢 Guardrail tests (required)** — a rewrite can also change behavior that no test checks. Pin down two such behaviors, and prove each new test can fail with the mutation move:
+         - **Leftovers:** your code subtracts the consumed dice (`counts[1] -= 3`) so leftover 1s still score. Test `[1, 1, 1, 1, 5]` (one Blast, one leftover Flame, one Spark: 1150), then mutate `counts[1] -= 3` to `counts[1] -= 4`, watch the test fail, and revert.
+         - **Event order:** **predict** what `score([5, 1])` returned with the cycle-4 loop and what it returns now. The spec fixes the order, so test it, then temporarily emit Sparks before Flames, watch the test fail, and revert.
+      4. **🔵 REFACTOR (on green)** — walk the cycle-1 checklist. The two singles loops repeat one shape. Extracting them now would be a safe refactor, but cycle 6 extracts singles and combos together once a second combo shows what a rule needs, so noting it is enough. Check names and magic numbers too.
 
       <details markdown="1"><summary>Reveal — one shape that handles per-face-count thinking (open after you've tried)</summary>
 
       Stop iterating dice in order. **Count** how many of each face appeared (`collections.Counter`), then decide what to emit. Combos consume dice; leftovers still score as singles.
       </details>
 
-      🪞 **Pause (after green):** Yet all five previous tests still pass after the rewrite. **Spend 30 seconds writing down: why?** What property of *the previous tests* allowed them to survive a full body rewrite of `score`?
+      <details markdown="1"><summary>Reveal — <code>score([5, 1])</code> before and after the rewrite (open after predicting)</summary>
+
+      The cycle-4 loop scored dice in roll order: Lightning Spark, then Dragon Flame. Count-then-emit scores by face, so it now returns Dragon Flame, then Lightning Spark, the order the spec asks for. None of your earlier tests rolled a 5 before a 1, so the rewrite changed this behavior silently. Tests protect only what they check.
+      </details>
+
+      🪞 **Pause (after green):** all five previous tests still pass after the rewrite. **Spend 30 seconds writing down: why?** What property of *the previous tests* allowed them to survive a full body rewrite of `score`?
 
       <details markdown="1"><summary>Compare your answer — the property that survived</summary>
 
@@ -2003,9 +2110,10 @@ steps:
               )
 
 
-          # TODO (RED): write test_three_ones_create_dragon_blast_instead_of_three_flames
-          #             score([1, 1, 1]) should return total_damage == 1000 with
-          #             a single Dragon Blast event whose dice_used is (1, 1, 1)
+          # TODO (RED): test the spec for the roll [1, 1, 1].
+          #
+          # TODO (required guardrails, after GREEN): test [1, 1, 1, 1, 5]
+          #             (leftovers) and [5, 1] (event order).
         language: "python"
 
     open_file: "scorer.py"
@@ -2125,6 +2233,16 @@ steps:
                     ScoringEvent("Dragon Flame", (1,), 100),
                     ScoringEvent("Lightning Spark", (5,), 50),
                 )
+
+
+            def test_event_order_follows_the_rules_not_the_roll():
+                report = score([5, 1])
+
+                assert report.total_damage == 150
+                assert report.events == (
+                    ScoringEvent("Dragon Flame", (1,), 100),
+                    ScoringEvent("Lightning Spark", (5,), 50),
+                )
           language: "python"
       explanation: |
         The structural shift: count occurrences with `Counter`, run the combo check
@@ -2132,46 +2250,58 @@ steps:
         five previous tests act as the safety net for the rewrite — and all five
         still pass because count-then-emit gives the same results for every roll
         they check. It is not identical everywhere: `score([5, 1])` now lists the
-        Dragon Flame before the Lightning Spark (the order the cycle-5 spec fixes),
-        and no test pins that order down yet. The
-        `test_dragon_blast_plus_leftover_flame_and_spark` guardrail pins down the
-        implicit leftover behavior so a future refactor can't silently break it.
+        Dragon Flame before the Lightning Spark, the order the cycle-5 spec asks
+        for. The two guardrails pin down what the rewrite changed or left
+        implicit: leftover 1s still score, and event order follows the rules
+        rather than the roll.
 
     tests:
-      - description: "test_three_ones_create_dragon_blast_instead_of_three_flames detects incorrect damage and events"
+      - description: "Your tests detect wrong damage and events for [1, 1, 1]"
         command: |
           import pytest
-          pytest._tdd_check_score_test(5, 'test_three_ones_create_dragon_blast_instead_of_three_flames', [[1, 1, 1]])
+          pytest._tdd_check_score_test(5, [[1, 1, 1]])
+        hints: *detect_roll_hints
 
-      - description: "test_dragon_blast_plus_leftover_flame_and_spark detects incorrect damage and events"
+      - description: "Your tests detect wrong damage and events for [1, 1, 1, 1, 5]"
         command: |
           import pytest
-          pytest._tdd_check_score_test(5, 'test_dragon_blast_plus_leftover_flame_and_spark', [[1, 1, 1, 1, 5]])
+          pytest._tdd_check_score_test(5, [[1, 1, 1, 1, 5]])
+        hints: *detect_roll_hints
+
+      - description: "Your tests detect wrong damage and events for [5, 1]"
+        command: |
+          import pytest
+          pytest._tdd_check_score_test(5, [[5, 1]])
+        hints: *detect_roll_hints
 
       - description: "Implementation uses Counter (the count-then-emit shape)"
         command: |
           source = open('/tutorial/scorer.py').read()
           assert 'Counter' in source, \
               "For this design exercise, use collections.Counter to separate counting from event emission. Other algorithms are possible; Counter makes the consumption bookkeeping explicit."
-
-      - description: "Combo logic precedes leftover singles (Dragon Blast comes before Dragon Flame in the events tuple)"
-        command: |
-          source = open('/tutorial/scorer.py').read()
-          assert 'Dragon Blast' in source, \
-              "The new event name `Dragon Blast` must be emitted by score() when the roll contains three 1s"
+        hints:
+          - title: "This exercise counts faces with `Counter`"
+            text: |
+              Other designs could pass, but this step practices count-then-emit:
+              build a `collections.Counter` from the roll, then decide which
+              events those counts produce.
 
       - description: "Taught scoring behaviors are correct and the learner tests pass"
         command: |
           import pytest
           pytest._tdd_check_score(5)
-
         hints:
-          - title: "Small nudge"
+          - title: "Can the code see three 1s at once?"
             text: "Trace `score([1, 1, 1])` through your code by hand. Does the per-die loop ever 'see' all three 1s at once? If not, what data structure would let it?"
             condition: "output_contains: AssertionError"
-          - title: "Strategic hint"
+          - title: "Consume first, then score what's left"
             text: "Separate the two decisions: which dice a combo consumes, and which dice remain available to the singles rules. Trace those counts before choosing what to emit."
             condition: "output_contains: AssertionError"
+          - title: "Rolls beyond your own tests"
+            text: |
+              Besides your tests, this check scores `[5, 1, 2, 1, 1, 1]`. Work
+              out its events from the rules table, in the order the spec asks
+              for, then trace the roll through your code.
     quiz:
       title: "Step 7 — Knowledge Check"
       min_score: 0.8
@@ -2198,7 +2328,7 @@ steps:
             behavior; they do not prove that this is the only correct algorithm.
 
         - question: |
-            After the count-then-emit refactor, all five previous tests still passed. What does that tell you about the previous tests?
+            After the count-then-emit rewrite, all five previous tests still passed. What does that tell you about the previous tests?
           type: single
           options:
             - "That they were unnecessary — passing on a totally different implementation means they were not pinning down anything specific"
@@ -2236,7 +2366,7 @@ steps:
             exactly this leftover behavior.
 
         - question: |
-            A teammate suggests "let's just add `if Counter(dice)[1] >= 3: ...` at the top of the existing per-die loop." Why is that *not* the same as the count-then-emit refactor we did?
+            A teammate suggests "let's just add `if Counter(dice)[1] >= 3: ...` at the top of the existing per-die loop." Why is that *not* the same as the count-then-emit rewrite we did?
           type: single
           options:
             - "It would leave two competing models of the input (per-die loop + Counter), making future combos inconsistent"
@@ -2249,7 +2379,7 @@ steps:
             2: "`Counter` works fine inside loops — it's just a dict subclass. This invents a Python constraint that doesn't exist. The real reason against the hybrid approach is design coherence, not language mechanics."
             3: "Pytest has no opinion on iteration styles. (As with earlier questions, made-up framework rules are a sign you're searching for *external* enforcement of discipline that has to come from your own design judgment.)"
           explanation: |
-            The refactor is not "add Counter on top of the existing loop." It is "*replace*
+            The rewrite is not "add Counter on top of the existing loop." It is "*replace*
             the per-die view with the per-face-count view." Mixing both is the worst of
             both worlds: now the function maintains two parallel models of the input, and
             every future change has to update both. The structural shift was the point.
@@ -2290,7 +2420,7 @@ steps:
       ### 🎯 You will learn to
 
       - Apply *listening to the test* — recognize that a duplicate combo branch is the test telling you the structure is wrong
-      - Create a rule-object abstraction (`ComboRule` + `SingleRule` with a uniform `apply()` interface) under the safety net of seven green tests
+      - Create a rule-object abstraction (`ComboRule` + `SingleRule` with a uniform `apply()` interface) under the safety net of eight green tests
       - Evaluate the resulting design against the Open-Closed Principle — new behavior added as data, not as branches
 
       > **Spec:** three 2s combine into a *Goblin Swarm* (200 damage).
@@ -2303,7 +2433,7 @@ steps:
 
       ## Phase 1 — 🔴 RED
 
-      Add `test_three_twos_create_goblin_swarm`. Mirror the shape of `test_three_ones_create_dragon_blast_instead_of_three_flames` — only the dice value, the event name, and the damage change. Run.
+      Add a test for the spec. Mirror the shape of your triple-1s test — only the dice value, the event name, and the damage change. Run.
 
       ---
 
@@ -2347,7 +2477,7 @@ steps:
 
       ### B — Name the entity
 
-      Two examples is the **minimum** needed to see a pattern. The things that vary are *fields of an entity that doesn't yet have a name*. **What would you call it?** (One that holds a die value, a name, and a damage — plus the threshold, if you choose.) Pick a name, then call it `ComboRule` in your code so this tutorial's checks can find it.
+      Two examples are enough here because they vary in exactly what a rule needs: the die, the name, the damage. Those are *fields of an entity that doesn't yet have a name*. **What would you call it?** (One that holds a die value, a name, and a damage — plus the threshold, if you choose.) Decide on a name, then compare it with the one this tutorial uses, `ComboRule`, which its checks look for.
 
       ### C — Sketch the entity
 
@@ -2402,7 +2532,7 @@ steps:
           return BattleReport(tuple(events))
       ```
 
-      All eight tests still pass — the refactor preserved every observable behavior. That's the *Refactoring Litmus Test*: behavior-level tests survive structural rewrites.
+      All nine tests still pass — the refactor preserved every observable behavior. That's the *Refactoring Litmus Test*: behavior-level tests survive structural rewrites.
       </details>
 
       ### E — Apply the same recognition to singles
@@ -2413,7 +2543,7 @@ steps:
 
       🪞 **Predict first:** how many lines *inside* `score()` will you change to add four new triple combos (Triple 3 → Orc Charge 300, Triple 4 → Troll Smash 400, Triple 5 → Lightning Storm 500, Triple 6 → Demon Strike 600)? Hold the number.
 
-      The behavior-preserving refactor is now complete. Start new **RED → GREEN** mini-cycles: add a parametrized test named `test_other_triples_create_combo_events` with one row for the next missing combo, run and observe its failure, then add that combo to `COMBO_RULES` and rerun. Repeat until all four rows pass. Review the design on green. Adding new scoring rules is new behavior, not part of the preceding refactor.
+      The behavior-preserving refactor is now complete. Start new **RED → GREEN** mini-cycles: add one parametrized test (for example, `test_other_triples_create_combo_events`) with one row for the next missing combo, run and observe its failure, then add that combo to `COMBO_RULES` and rerun. Repeat until all four rows pass. Review the design on green. Adding new scoring rules is new behavior, not part of the preceding refactor.
 
       <details markdown="1"><summary>Why parametrize beats a for-loop inside one test</summary>
 
@@ -2428,7 +2558,7 @@ steps:
 
       You also just applied the **Open-Closed Principle**: `score()` is now closed for modification but open for extension. Phase F made the payoff concrete — **four new combos cost zero edits to `score()`**. New behavior arrives as data, not as new branches. **`score()` will not change again for the rest of the tutorial.**
 
-      And you discovered the right abstraction at the **right moment** — *two examples*. One would have been a guess; six would have been six branches you'd have to delete. **Refactor toward duplication, not before it, and not after it has rotted (Rule of Two).**
+      And you extracted it at the right moment. The two combos varied in exactly the fields a rule object holds, so the extraction restated tested behavior instead of guessing. Count alone doesn't decide this: cycle 3 also had two examples, but a loop there would have decided how several dice combine before any test said. **Generalize only what your tests already pin down.**
       </details>
 
       ---
@@ -2548,15 +2678,21 @@ steps:
               )
 
 
-          # TODO (RED): write test_three_twos_create_goblin_swarm
-          #             score([2, 2, 2]) should return total_damage == 200 with
-          #             a Goblin Swarm event whose dice_used is (2, 2, 2)
+          def test_event_order_follows_the_rules_not_the_roll():
+              report = score([5, 1])
+
+              assert report.total_damage == 150
+              assert report.events == (
+                  ScoringEvent("Dragon Flame", (1,), 100),
+                  ScoringEvent("Lightning Spark", (5,), 50),
+              )
+
+
+          # TODO (RED): test the spec for the roll [2, 2, 2].
           #
-          # TODO (Phase F, after the rule-object refactor): write a parametrized
-          # test_other_triples_create_combo_events using @pytest.mark.parametrize
-          # that covers the four remaining triples — Orc Charge (300), Troll Smash
-          # (400), Lightning Storm (500), Demon Strike (600). And append the
-          # matching ComboRule rows to COMBO_RULES in scorer.py.
+          # TODO (Phase F, after the rule-object refactor): one parametrized
+          #             test for the four remaining triples, grown one row at a
+          #             time (see the instructions).
         language: "python"
 
     open_file: "scorer.py"
@@ -2719,6 +2855,16 @@ steps:
                 )
 
 
+            def test_event_order_follows_the_rules_not_the_roll():
+                report = score([5, 1])
+
+                assert report.total_damage == 150
+                assert report.events == (
+                    ScoringEvent("Dragon Flame", (1,), 100),
+                    ScoringEvent("Lightning Spark", (5,), 50),
+                )
+
+
             def test_three_twos_create_goblin_swarm():
                 report = score([2, 2, 2])
 
@@ -2752,22 +2898,36 @@ steps:
         in `COMBO_RULES`, with one parametrized test covering all four.
 
     tests:
-      - description: "test_three_twos_create_goblin_swarm detects incorrect damage and events"
+      - description: "Your tests detect wrong damage and events for [2, 2, 2]"
         command: |
           import pytest
-          pytest._tdd_check_score_test(6, 'test_three_twos_create_goblin_swarm', [[2, 2, 2]])
+          pytest._tdd_check_score_test(6, [[2, 2, 2]])
+        hints: *detect_roll_hints
 
       - description: "ComboRule class is defined"
         command: |
           source = open('/tutorial/scorer.py').read()
           assert 'class ComboRule' in source, \
               "You're stuck somewhere before Phase 3C. After the deliberately-ugly GREEN (Phase 2), there are TWO combo blocks visible — Dragon Blast and Goblin Swarm. Phase 3 asks you to spot what varies between them and extract it into a `ComboRule` dataclass with an `apply(self, counts)` method. The reveal block in the instructions has one possible shape if you're truly stuck."
+        hints:
+          - title: "Extract what the two combo blocks share"
+            text: |
+              Phase 3 compares the Dragon Blast and Goblin Swarm blocks. Pull
+              the parts that vary into fields of a `ComboRule` dataclass, and
+              move the shared detect-emit-consume steps into its `apply(counts)`
+              method.
 
       - description: "SingleRule class is defined"
         command: |
           source = open('/tutorial/scorer.py').read()
           assert 'class SingleRule' in source, \
               "Cycle 6's refactor introduces a `SingleRule` dataclass — the per-occurrence sibling of `ComboRule`."
+        hints:
+          - title: "Singles follow the same recognition"
+            text: |
+              Phase E applies the combo recognition to the two singles loops:
+              what varies between them? Give those fields to a `SingleRule`
+              dataclass with its own `apply(counts)` method.
 
       - description: "COMBO_RULES registry includes all six triple combos (Phase F: cash in the OCP win)"
         command: |
@@ -2776,11 +2936,18 @@ steps:
           for combo_name in ['Dragon Blast', 'Goblin Swarm', 'Orc Charge', 'Troll Smash', 'Lightning Storm', 'Demon Strike']:
               assert combo_name in source, \
                   f"COMBO_RULES is missing `{combo_name}` — Phase F asks you to append the four remaining triples (Orc Charge, Troll Smash, Lightning Storm, Demon Strike) as data, no edits to `score()`"
+        hints:
+          - title: "New combos are new rows"
+            text: |
+              Keep the combo rules in a module-level `COMBO_RULES` tuple. Phase
+              F adds the four remaining triples from the rules table as rows,
+              one RED-GREEN mini-cycle at a time, without touching `score()`.
 
-      - description: "test_other_triples_create_combo_events detects incorrect damage and events"
+      - description: "Your tests detect wrong damage and events for the other four triples"
         command: |
           import pytest
-          pytest._tdd_check_score_test(6, 'test_other_triples_create_combo_events', [[3, 3, 3], [4, 4, 4], [5, 5, 5], [6, 6, 6]])
+          pytest._tdd_check_score_test(6, [[3, 3, 3], [4, 4, 4], [5, 5, 5], [6, 6, 6]])
+        hints: *detect_roll_hints
 
       - description: "Phase F test uses @pytest.mark.parametrize"
         command: |
@@ -2802,11 +2969,23 @@ steps:
           )
           assert has_decorator, \
               "Use `@pytest.mark.parametrize` for the four-combo test — not a `for` loop inside a single test function. Each row should report as a separate test result."
+        hints:
+          - title: "One test, one row per triple"
+            text: |
+              Decorate a single test with `@pytest.mark.parametrize`, giving it
+              one row per remaining triple. pytest then reports each row as its
+              own result, so one wrong combo can't hide the others.
 
-      - description: "SINGLE_RULES registry exists with Dragon Flame and Lightning Spark"
+      - description: "SINGLE_RULES registry is defined"
         command: |
           source = open('/tutorial/scorer.py').read()
           assert 'SINGLE_RULES' in source, "Define a `SINGLE_RULES` tuple of `SingleRule` instances at module level"
+        hints:
+          - title: "Singles become data too"
+            text: |
+              Declare the Dragon Flame and Lightning Spark rules as a
+              module-level `SINGLE_RULES` tuple, and let `score()` iterate over
+              it the same way it iterates over `COMBO_RULES`.
 
       - description: "score() body iterates over rules (no hardcoded counts[1] etc., no per-combo branches)"
         command: |
@@ -2838,6 +3017,13 @@ steps:
           for combo_name in ['Orc Charge', 'Troll Smash', 'Lightning Storm', 'Demon Strike']:
               assert not any(combo_name in s for s in score_strings), \
                   f"`score()` should not mention `{combo_name}` directly — it lives in `COMBO_RULES`. Phase F's lesson: new combos cost zero edits to `score()`."
+        hints:
+          - title: "`score()` only runs the rules"
+            text: |
+              After the refactor, `score()` should count the dice and then apply
+              each rule in order. A threshold check like `counts[1] >= 3` or a
+              combo name inside `score()` means a rule still lives in the wrong
+              place; move it into a rule object.
 
       - description: "Taught scoring behaviors are correct and the learner tests pass"
         command: |
@@ -2845,10 +3031,10 @@ steps:
           pytest._tdd_check_score(6)
 
         hints:
-          - title: "Small nudge"
+          - title: "Which test is failing?"
             text: "Which test is failing — a previous one (you broke a behavior during refactor), the new triple-2s one (the new combo isn't being emitted), or one of the parametrized rows (Phase F)? The diagnosis is different in each case."
             condition: "output_contains: AssertionError"
-          - title: "Strategic hint"
+          - title: "Each kind of failure has its own cause"
             text: "If a *previous* test fails, you've changed observable behavior — undo and try a smaller refactor step. If the *new* test fails, your `ComboRule` either isn't in `COMBO_RULES`, or its `apply` method isn't being iterated in `score()`. If a parametrized row fails, check that you appended all four combos to `COMBO_RULES`."
             condition: "output_contains: AssertionError"
     quiz:
@@ -2907,17 +3093,16 @@ steps:
           option_feedback:
             1: "Pytest supports dataclasses (and has for years), and pytest support wouldn't dictate when to refactor anyway. This invents history to dodge the design question. The answer has to be about *information available to the designer*, not tooling availability."
             2: "Order matters because *what you knew when* matters. With one combo (cycle 5), the abstraction is a guess; with two (cycle 6), the common shape is *visible*. Refactoring at cycle 5 picks the shape based on speculation; refactoring at cycle 6 picks it based on evidence. Same final code, very different epistemic standing."
-            3: "\"Earlier is always better\" is the universal-rule trap. With one example you can't see the shape; refactoring early commits you to a guess that the next cycle may invalidate. The TDD discipline is *refactor toward duplication*, not before it — which is the Rule of Three (or Two, in this tutorial), not \"as soon as possible.\""
+            3: "\"Earlier is always better\" is the universal-rule trap. With one combo you can't tell which parts of the block are rule data, so refactoring then commits you to a guess the next cycle may invalidate. Generalize when your tests show what varies, not \"as soon as possible.\""
           explanation: |
-            Two data points are the minimum for seeing the right *shape* of an abstraction.
             With only `Dragon Blast` (cycle 5), you'd be guessing which parts of the block
             are rule data and which are fixed structure. Cycle 6's `Goblin Swarm` shows
             that the die, the name, and the damage vary while the threshold stays 3, and
             only then is the rule object's shape a *discovery* rather than a *guess*.
-            Refactor *toward* duplication, not *before* it.
+            Generalize only what your tests already pin down.
 
         - question: |
-            After the rule-object refactor, all seven previous tests still pass. Why is this expected, and what does it confirm about the previous tests?
+            After the rule-object refactor, all eight previous tests still pass. Why is this expected, and what does it confirm about the previous tests?
           type: single
           options:
             - "It is unexpected — refactoring should always break something. If nothing broke, the previous tests must have been weak"
@@ -2930,7 +3115,7 @@ steps:
             2: "Pytest doesn't skip tests by name pattern (the only name-based discovery rule is the `test_` prefix). This invents framework behavior to explain a green bar — but the green bar means what it says: every test ran and passed."
             3: "Python's import order didn't change in any way that would affect imports. The refactor added new classes but didn't move anything that breaks `from scorer import score`. (And if imports *had* broken, you'd see ImportError, not a green bar.)"
           explanation: |
-            The seven previous tests asserted on `report.total_damage`, `report.events`,
+            The eight previous tests asserted on `report.total_damage`, `report.events`,
             and `ScoringEvent` instances. None of them asserted on internal structure.
             That is precisely why they survived a refactor that *replaced the entire
             implementation strategy*. The Refactoring Litmus Test: behavior tests survive
@@ -2962,19 +3147,37 @@ steps:
   # Pedagogy:
   #   Productive failure   — the "obvious" code has a bug; the test reveals it.
   #   Boundary thinking    — three is enough; six is two combos worth.
+  #   Test selection       — learners choose the next test before seeing the spec
+  #                          (Canon TDD step 2), the first time they pick one.
   #   Quiz                 — checks "TDD finds bugs you didn't know you had."
   # --------------------------------------------------------------------------
-  - title: "Cycle 7 — Six 1s → Two Dragon Blasts (Hidden Bug)"
+  - title: "Cycle 7 — The Next Test → A Hidden Bug"
     instructions: |
       ### Why this matters
 
-      Previous tests covered one complete triple and a leftover, but never enough dice for two triples. The current green bar therefore tells us little about that boundary. Before running a new case, trace what your implementation does. This is the gap between executing a line and checking its behavior across relevant inputs.
+      Choosing which test to write next decides what your suite can catch. Aiming the next test at a boundary no earlier test reached is how you find the bugs a green bar hides.
 
       ### 🎯 You will learn to
 
-      - Apply boundary-value analysis to predict where existing tests under-pin a behavior (`exactly N` covered; `2N` and beyond not)
+      - Analyze your test list to choose the next test, aiming at a boundary no earlier test reached
       - Analyze the gap between line coverage and behavioral correctness — coverage locates under-tested code; it does not measure correctness
       - Create a fix to `ComboRule.apply` so it emits zero-or-more combos per call with correct leftover bookkeeping
+
+      ## Choose the next test
+
+      Your tests pin down the empty roll, single and repeated singles, a mixed roll, one triple of every face, leftover 1s after a triple, and event order. The rules table says every three matching dice form a combo. **Which roll would you test next to find out whether the design is really finished?**
+
+      - (a) `[2, 2, 2, 2]` — a triple with one leftover 2
+      - (b) `[1, 1, 1, 1, 1, 1]` — six of one face
+      - (c) `[3, 3, 3, 5]` — a triple plus a scoring single
+      - (d) `[6, 6, 6]` — the highest-damage triple
+
+      Commit to a letter and a one-sentence reason, *then* open the reveal.
+
+      <details markdown="1"><summary>Reveal — the next test (open after choosing)</summary>
+
+      **(b) Six of one face.** Every combo test so far had exactly three of a face, or four in the leftover guardrail; none had enough dice for a *second* triple. That is the boundary no test has reached yet. Rolls (a) and (c) repeat the triple-plus-leftover shape the cycle-5 guardrail already pins down, and (d) is already one of your Phase F rows.
+      </details>
 
       > **Spec:** `score([1, 1, 1, 1, 1, 1])` produces **two** Dragon Blasts (2000 damage).
 
@@ -2991,9 +3194,9 @@ steps:
 
       ## Your task
 
-      1. **🔴 RED** — add `test_six_ones_create_two_dragon_blasts` asserting 2000 damage and two Blast events. Run; see the wrong events tuple.
+      1. **🔴 RED** — add a test for the spec, named after the behavior. Run; see the wrong events tuple.
       2. **🟢 GREEN** — fix `ComboRule.apply` so it can emit *zero or more* combos per call, with the correct leftover bookkeeping. *Before you code*, write the formula on paper for: how many full combos do `n` dice of one face produce? How many leftover dice?
-      3. **🔵 REFACTOR** — re-run. Especially gratifying: cycle 5's leftover guardrail still passes — the fix only changed behavior on cases no prior test pinned down.
+      3. **🔵 REFACTOR (on green)** — walk the checklist. One candidate: if your `apply` builds `dice_used` with `tuple([self.die] * self.count)`, it creates a list only to turn it into a tuple; `(self.die,) * self.count` says the same thing directly. Make the change, re-run, and stay green. (Cycle 5's leftover guardrail still passes too: the fix changed behavior only on rolls no earlier test pinned down.)
 
       <details markdown="1"><summary>Why this matters: coverage vs. boundary thinking</summary>
 
@@ -3164,6 +3367,16 @@ steps:
               )
 
 
+          def test_event_order_follows_the_rules_not_the_roll():
+              report = score([5, 1])
+
+              assert report.total_damage == 150
+              assert report.events == (
+                  ScoringEvent("Dragon Flame", (1,), 100),
+                  ScoringEvent("Lightning Spark", (5,), 50),
+              )
+
+
           def test_three_twos_create_goblin_swarm():
               report = score([2, 2, 2])
 
@@ -3189,9 +3402,7 @@ steps:
               assert report.events == (expected_event,)
 
 
-          # TODO (RED): write test_six_ones_create_two_dragon_blasts
-          #             score([1, 1, 1, 1, 1, 1]) should return total_damage == 2000
-          #             and events containing TWO Dragon Blast ScoringEvents
+          # TODO (RED): your next test (choose it in the step instructions).
         language: "python"
 
     open_file: "scorer.py"
@@ -3234,7 +3445,7 @@ steps:
                     number_of_combos = counts[self.die] // self.count
 
                     for _ in range(number_of_combos):
-                        dice_used = tuple([self.die] * self.count)
+                        dice_used = (self.die,) * self.count
                         events.append(ScoringEvent(self.name, dice_used, self.damage))
 
                     counts[self.die] %= self.count
@@ -3357,6 +3568,16 @@ steps:
                 )
 
 
+            def test_event_order_follows_the_rules_not_the_roll():
+                report = score([5, 1])
+
+                assert report.total_damage == 150
+                assert report.events == (
+                    ScoringEvent("Dragon Flame", (1,), 100),
+                    ScoringEvent("Lightning Spark", (5,), 50),
+                )
+
+
             def test_three_twos_create_goblin_swarm():
                 report = score([2, 2, 2])
 
@@ -3401,10 +3622,11 @@ steps:
         the disagreement is only on multi-combo cases.
 
     tests:
-      - description: "test_six_ones_create_two_dragon_blasts detects incorrect damage and events"
+      - description: "Your tests detect wrong damage and events for [1, 1, 1, 1, 1, 1]"
         command: |
           import pytest
-          pytest._tdd_check_score_test(7, 'test_six_ones_create_two_dragon_blasts', [[1, 1, 1, 1, 1, 1]])
+          pytest._tdd_check_score_test(7, [[1, 1, 1, 1, 1, 1]])
+        hints: *detect_roll_hints
 
       - description: "Taught scoring behaviors are correct and the learner tests pass"
         command: |
@@ -3412,10 +3634,10 @@ steps:
           pytest._tdd_check_score(7)
 
         hints:
-          - title: "Small nudge"
+          - title: "Count full combos and leftovers"
             text: "How many full combos do `n` dice of one face produce? How many leftover dice? Write the formula on paper before changing any code."
             condition: "output_contains: AssertionError"
-          - title: "Strategic hint"
+          - title: "One `if` handles only one combo"
             text: "Floor-division (`//`) gives you the number of complete combos. Modulo (`%`) gives you the leftover. The single `if`/`-=` from cycle 5 only handled one combo per call — you need a loop."
             condition: "output_contains: AssertionError"
     quiz:
@@ -3568,7 +3790,7 @@ steps:
 
       ## Canon TDD step 1 — write your own test list
 
-      Before reading any further, take 60 seconds and **write your own test list**. What behaviors does the spec define? Order them from *simplest* to *most design-breaking* — the way the Dragon Dice tutorial implicitly did across cycles 1–7. **You did this implicitly throughout — now you do it explicitly.**
+      Before reading any further, take 60 seconds and **write your own test list**. What behaviors does the spec define? Order them from *simplest* to *most design-breaking*, the way the Dragon Dice steps ordered cycles 1–7. The steps chose those tests for you, and in cycle 7 you chose one; **now you write the whole list.**
 
       <details markdown="1"><summary>📋 One possible test list (open ONLY after you've written your own — 60 seconds first)</summary>
 
@@ -3626,7 +3848,7 @@ steps:
       - The rhythm itself (RED → GREEN → REFACTOR, one test at a time)
       - Test-list discipline (Canon TDD step 1 — a list before any tests)
       - RED-as-success (the failing test is the deliverable, not a problem)
-      - Refactor-toward-duplication (Rule of Two; wait for the second example)
+      - Generalize only what your tests already pin down (code that decides untested behavior is a guess)
       - TPP — smallest transformation that passes the failing test
       - Allow-the-ugly-first-GREEN (don't pre-design the abstraction)
 
@@ -3749,21 +3971,103 @@ steps:
           pytest._tdd_check_fizzbuzz()
 
         hints:
-          - title: "Small nudge"
+          - title: "Which branch claims 15?"
             text: "What does your code return for i=15? Trace it by hand. Which `if` branch claims it first?"
             condition: "output_contains: AssertionError"
-          - title: "Strategic hint"
+          - title: "Overlapping rules need an order or a composition"
             text: "If the `% 3` branch fires before `% 15`, the result at i=15 will be 'Fizz', not 'FizzBuzz'. Either reorder so `% 15` is checked first, or build the result by composing 'Fizz'+'Buzz'."
             condition: "output_contains: AssertionError"
-      - description: "Tests detect incorrect behavior across the required FizzBuzz partitions"
+          - title: "Inputs beyond your own tests"
+            text: |
+              Besides your tests, this check calls `fizzbuzz` with 0 and with
+              lengths up to 31, comparing every element and the list's length.
+              Trace `fizzbuzz(0)` and `fizzbuzz(16)` through your code.
+
+      - description: "Your FizzBuzz tests pass on a correct implementation"
         command: |
           import pytest
-          pytest._tdd_check_fizzbuzz_tests()
+          pytest._tdd_check_fizzbuzz_tests_agree()
+        hints:
+          - title: "A test expects something the spec doesn't say"
+            text: |
+              One of your tests fails against a correct `fizzbuzz`. Compare its
+              expected value with the spec: are the numbers strings, does the
+              list start at 1, and is its length exactly `n`?
+
+      - description: "Your tests detect a wrong result for n = 0"
+        command: |
+          import pytest
+          pytest._tdd_check_fizzbuzz_tests_detect('empty input')
+        hints:
+          - title: "The smallest input is a partition too"
+            text: |
+              Would any of your tests notice if `fizzbuzz(0)` returned `['1']`
+              instead of an empty list? If not, add a test for that input.
+
+      - description: "Your tests detect a list of the wrong length"
+        command: |
+          import pytest
+          pytest._tdd_check_fizzbuzz_tests_detect('requested length')
+        hints:
+          - title: "Check a whole list, not one element"
+            text: |
+              This check returns the 15-element list whatever `n` is. A test
+              that compares only one element, such as the last, can miss that.
+              Which of your tests compares a whole list, or its length, for an
+              `n` other than 15?
+
+      - description: "Your tests detect numbers returned as integers"
+        command: |
+          import pytest
+          pytest._tdd_check_fizzbuzz_tests_detect('numbers as strings')
+        hints:
+          - title: "Ordinary numbers are a partition"
+            text: |
+              Would any of your tests notice `[1, 2, 'Fizz']` instead of
+              `['1', '2', 'Fizz']`? A test that looks only at Fizz and Buzz
+              labels never sees an ordinary number.
+
+      - description: "Your tests detect a wrong result for multiples of 3"
+        command: |
+          import pytest
+          pytest._tdd_check_fizzbuzz_tests_detect('multiples of 3')
+        hints:
+          - title: "A multiple of 3 that isn't a multiple of 5"
+            text: |
+              Would any of your tests notice if `3` came back as `'3'` instead
+              of `'Fizz'`? Look for a test whose input includes a multiple of 3
+              that isn't also a multiple of 5.
+
+      - description: "Your tests detect a wrong result for multiples of 5"
+        command: |
+          import pytest
+          pytest._tdd_check_fizzbuzz_tests_detect('multiples of 5')
+        hints:
+          - title: "A multiple of 5 that isn't a multiple of 3"
+            text: |
+              Would any of your tests notice if `5` came back as `'5'` instead
+              of `'Buzz'`? Look for a test whose input includes a multiple of 5
+              that isn't also a multiple of 3.
+
+      - description: "Your tests detect a wrong result for multiples of 15"
+        command: |
+          import pytest
+          pytest._tdd_check_fizzbuzz_tests_detect('multiples of 15')
+        hints:
+          - title: "The overlap is its own partition"
+            text: |
+              Would any of your tests notice if `15` came back as `'Fizz'`? The
+              overlap of both rules needs a test of its own.
 
       - description: "All your tests pass"
         command: |
           from tutorial_test_grading import check_suite
           check_suite('/tutorial/test_fizzbuzz.py', 'fizzbuzz')
+        hints:
+          - title: "Your code and your tests disagree"
+            text: |
+              Click **▶ Test** and read the first failure. Decide which side
+              matches the spec, the test or the code, and fix that one.
 
     quiz:
       title: "Step 10 — Knowledge Check"
@@ -3924,18 +4228,18 @@ steps:
       |---|---|---|---|
       | 1 | Empty roll | First class + function | RED for the right reason |
       | 2 | Single 1 | `ScoringEvent` introduced | Allow the ugly first GREEN |
-      | 3 | Single 5 | Second hardcoded branch | Refactor *toward* duplication |
-      | 4 | Repeated and mixed singles | Per-die loop | Mutation-check the regression safety net |
-      | 5 | Triple 1s + leftover guardrail | `Counter`, count-then-emit | Group consumption and leftover behavior |
+      | 3 | Single 5 | Second hardcoded branch (a lookup is fine; a loop is a guess) | Generalize only what tests pin down |
+      | 4 | Repeated and mixed singles | Third branch, then a per-die loop on green | First real refactor; mutation-check the safety net |
+      | 5 | Triple 1s + leftover and order guardrails | `Counter` rewrite (count-then-emit) | A rewrite changes behavior; pin down what it changed |
       | 6 | Triple 2s, then other triples | Extract rule objects on green; add rules through new RED–GREEN cycles | Extension as data; parametrized cases |
-      | 7 | Six 1s | `//` and `%=` | Multiple-combo boundary; coverage is not correctness |
+      | 7 | Six 1s (your choice of next test) | Repeat combos per call (e.g. `//` and `%=`) | Aim the next test at an unreached boundary; coverage is not correctness |
       | Transfer | **FizzBuzz** | (different domain) | The rhythm transfers — TDD isn't problem-specific |
       </details>
 
       <details markdown="1"><summary>Reveal — six takeaways that travel</summary>
 
       1. **TDD is design, not testing.** The test is the contract; the implementation emerges under its pressure.
-      2. **Let concrete examples inform abstractions.** Cycle 6's two combo implementations made their shared structure visible. The number of examples is a heuristic, not a requirement: refactor on green when it makes the design clearer.
+      2. **Generalize only what your tests already pin down.** A refactor on green restates tested behavior, like cycle 6's rule objects after two combos; a generalization that decides untested behavior is a guess, like a cycle-3 loop over every die. The Rule of Three is a cautious default when you can't tell which is which.
       3. **Tests enable change.** Behavior-level assertions survive structural rewrites; implementation-coupled tests don't.
       4. **Coverage ≠ correctness; complement with boundary-value analysis** (zero, exactly N, 2N, between).
       5. **Listen to the test.** Pain in writing a test usually points at the production code.
@@ -4047,7 +4351,7 @@ steps:
                   number_of_combos = counts[self.die] // self.count
 
                   for _ in range(number_of_combos):
-                      dice_used = tuple([self.die] * self.count)
+                      dice_used = (self.die,) * self.count
                       events.append(ScoringEvent(self.name, dice_used, self.damage))
 
                   counts[self.die] %= self.count
@@ -4170,6 +4474,16 @@ steps:
               )
 
 
+          def test_event_order_follows_the_rules_not_the_roll():
+              report = score([5, 1])
+
+              assert report.total_damage == 150
+              assert report.events == (
+                  ScoringEvent("Dragon Flame", (1,), 100),
+                  ScoringEvent("Lightning Spark", (5,), 50),
+              )
+
+
           def test_three_twos_create_goblin_swarm():
               report = score([2, 2, 2])
 
@@ -4245,7 +4559,7 @@ steps:
                     number_of_combos = counts[self.die] // self.count
 
                     for _ in range(number_of_combos):
-                        dice_used = tuple([self.die] * self.count)
+                        dice_used = (self.die,) * self.count
                         events.append(ScoringEvent(self.name, dice_used, self.damage))
 
                     counts[self.die] %= self.count
@@ -4305,6 +4619,12 @@ steps:
         command: |
           import pytest
           pytest._tdd_check_score(7)
+        hints:
+          - title: "This step re-checks the finished scorer"
+            text: |
+              Nothing new is required here. If this fails, click **▶ Test**: a
+              failing test means an edit since cycle 7 changed behavior, so
+              compare it with the step's starter `scorer.py` and undo the change.
 
     quiz:
       title: "Step 11 — Knowledge Check"

@@ -52,7 +52,7 @@ def run_candidate(step_index, files):
             try:
                 with contextlib.redirect_stdout(captured), contextlib.redirect_stderr(captured):
                     exec(check['command'].replace('/tutorial', directory), {})
-                results.append({'passed': True})
+                results.append({'passed': True, 'description': check['description']})
             except Exception as error:
                 results.append({'passed': False, 'description': check['description'],
                                 'error': f'{type(error).__name__}: {error}'})
@@ -104,6 +104,15 @@ class TddGraders(unittest.TestCase):
         failed = [item for item in self.check(step_index, files) if not item['passed']]
         self.assertEqual(failed, [], '\n'.join(item['error'] for item in failed))
 
+    def failures(self, step_index, files):
+        return [item['description'] for item in self.check(step_index, files)
+                if not item['passed']]
+
+    def outcome(self, results, fragment):
+        matches = [item['passed'] for item in results if fragment in item['description']]
+        self.assertEqual(len(matches), 1, (fragment, results))
+        return matches[0]
+
     def test_all_models_and_two_equivalent_variants(self):
         for index, step in enumerate(CONFIG['steps']):
             for style in ('model', 'reversed', 'negated_inequality'):
@@ -148,7 +157,7 @@ def test_single_one_creates_dragon_flame_event():
 '''
         failures = [item['description'] for item in self.check(3, files) if not item['passed']]
         self.assertTrue(any('scoring behaviors' in item for item in failures), failures)
-        self.assertTrue(any('detects incorrect' in item for item in failures), failures)
+        self.assertTrue(any('detect' in item for item in failures), failures)
 
     def test_event_count_alone_does_not_pin_event_identity(self):
         files = solution_files(CONFIG['steps'][5])
@@ -178,9 +187,9 @@ def test_number():
     assert fizzbuzz(15)[0] == '1'
 '''
         results = self.check(9, files)
-        self.assertFalse(results[0]['passed'], results)
-        self.assertFalse(results[1]['passed'], results)
-        self.assertTrue(results[2]['passed'], results)
+        self.assertFalse(self.outcome(results, 'FizzBuzz respects'), results)
+        self.assertFalse(self.outcome(results, 'wrong length'), results)
+        self.assertTrue(self.outcome(results, 'All your tests pass'), results)
 
     def test_fizzbuzz_accepts_one_parametrized_function(self):
         files = solution_files(CONFIG['steps'][9])
@@ -224,11 +233,11 @@ def test_sequence(n, expected):
         files['scorer.py'] = replaced(files['scorer.py'], '''        number_of_combos = counts[self.die] // self.count
 
         for _ in range(number_of_combos):
-            dice_used = tuple([self.die] * self.count)
+            dice_used = (self.die,) * self.count
             events.append(ScoringEvent(self.name, dice_used, self.damage))
 
         counts[self.die] %= self.count''', '''        while counts[self.die] >= self.count:
-            dice_used = tuple([self.die] * self.count)
+            dice_used = (self.die,) * self.count
             events.append(ScoringEvent(self.name, dice_used, self.damage))
             counts[self.die] -= self.count''')
         self.assert_accepts(8, files)
@@ -249,6 +258,66 @@ def test_sequence(n, expected):
                     'with pytest.raises(ValueError, match="non-negative"):\n'
                     '        fizzbuzz(-1)', check)
                 self.assert_accepts(9, files)
+
+    def test_learners_may_name_tests_freely(self):
+        files = solution_files(CONFIG['steps'][5])
+        files['test_scorer.py'] = files['test_scorer.py'].replace('def test_', 'def test_renamed_')
+        self.assert_accepts(5, files)
+
+    def test_cycle_three_accepts_a_lookup_refactor_but_not_a_loop(self):
+        model = solution_files(CONFIG['steps'][4])
+        branches = '''    if dice == [1]:
+        return BattleReport((
+            ScoringEvent("Dragon Flame", (1,), 100),
+        ))
+    if dice == [5]:
+        return BattleReport((
+            ScoringEvent("Lightning Spark", (5,), 50),
+        ))
+    return BattleReport()'''
+        lookup = {**model, 'scorer.py': replaced(model['scorer.py'], branches, '''    singles = {1: ("Dragon Flame", 100), 5: ("Lightning Spark", 50)}
+    if len(dice) == 1 and dice[0] in singles:
+        name, damage = singles[dice[0]]
+        return BattleReport((ScoringEvent(name, (dice[0],), damage),))
+    return BattleReport()''')}
+        self.assert_accepts(4, lookup)
+        loop = {**model, 'scorer.py': replaced(model['scorer.py'], branches, '''    events = []
+    for die in dice:
+        if die == 1:
+            events.append(ScoringEvent("Dragon Flame", (1,), 100))
+        if die == 5:
+            events.append(ScoringEvent("Lightning Spark", (5,), 50))
+    return BattleReport(tuple(events))''')}
+        self.assertEqual(self.failures(4, loop), ['score() does not loop over the dice yet'])
+
+    def test_order_guardrail_is_required(self):
+        files = solution_files(CONFIG['steps'][6])
+        tree = ast.parse(files['test_scorer.py'])
+        tree.body = [node for node in tree.body if not (
+            isinstance(node, ast.FunctionDef)
+            and node.name == 'test_event_order_follows_the_rules_not_the_roll')]
+        files['test_scorer.py'] = ast.unparse(tree)
+        self.assertEqual(self.failures(6, files),
+                         ['Your tests detect wrong damage and events for [5, 1]'])
+
+    def test_fizzbuzz_reports_each_missing_partition(self):
+        files = solution_files(CONFIG['steps'][9])
+        files['test_fizzbuzz.py'] = '''from fizzbuzz import fizzbuzz
+
+def test_zero():
+    assert fizzbuzz(0) == []
+
+def test_numbers():
+    assert fizzbuzz(2) == ['1', '2']
+
+def test_three():
+    assert fizzbuzz(3)[-1] == 'Fizz'
+
+def test_fifteen():
+    assert fizzbuzz(15)[-1] == 'FizzBuzz'
+'''
+        self.assertEqual(self.failures(9, files),
+                         ['Your tests detect a wrong result for multiples of 5'])
 
     def test_collection_errors_and_skips_do_not_demonstrate_detection(self):
         for replacement in ('import missing_library\n',
