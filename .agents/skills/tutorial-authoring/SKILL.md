@@ -785,6 +785,12 @@ remove entries by hand. Things to know:
       changed runtime behavior, add or update a Playwright spec under
       `tests/`. Existing examples: `tests/python-tutorial.spec.js`,
       `tests/git-tutorial.spec.js`.
+- [ ] **v86 learner path replayed** — the Playwright specs apply
+      `solution:` commands, which often rebuild end states directly, so they
+      never run the learner's instructed commands. Replay those against real
+      Git, as `scripts/tests/git-advanced-tutorial-content.test.js` does:
+      each step should fail a check before the learner acts, pass after the
+      instructed commands, and hit only the conflicts the step announces.
 - [ ] **Combined UML submissions** — for `uml_export_all: true`, decrypt one
       actual download and verify every declared step's diagram is included,
       including unsaved current edits, earlier drafts, and empty missing types.
@@ -1569,6 +1575,11 @@ help ladder** that responds to the student's actual mistake.
 For `shell-pipeline`, TutorChat's source is the separate current shell command,
 not the text data open in Monaco. Conditions guide feedback; they must not
 replace the behavior-based checks or require one particular solution spelling.
+For `v86`, the terminal replaces the output panel, so `output_contains` never
+fires and `output_missing` always does; test-command `echo` diagnostics are not
+shown either. `code_*`/`source_*` read only the step's open editor file. Hints
+about repository state should be unconditional and self-diagnosing ("If
+`git status` says …, run …").
 
 ### 3.4 Inline Python object-reference labs
 
