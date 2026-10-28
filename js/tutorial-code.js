@@ -8074,8 +8074,13 @@
           }
           return;
         }
+        const tabGroup = tab.parentElement;
         self._setActiveFile(filename);
         self._renderTabs();
+        // Rendering replaces the label that received activation. Keep focus
+        // on its replacement so the next Tab continues from this file group.
+        const activeLabel = tabGroup.querySelector('.tvm-tab-label[aria-current="true"]');
+        if (activeLabel) activeLabel.focus({ preventScroll: true });
       }
 
       tab.addEventListener('click', activateTab);
@@ -8099,7 +8104,9 @@
         else return;
         e.preventDefault();
         if (tabs[nextIdx]) {
-          tabs[nextIdx].tabIndex = 0;
+          tabs.forEach(function (button, index) {
+            button.tabIndex = index === nextIdx ? 0 : -1;
+          });
           tabs[nextIdx].focus();
         }
       });
@@ -13400,7 +13407,14 @@
         self._renderTestResults(tests, new Array(tests.length).fill(null), run);
       });
     }
-    runNext(0);
+    // Grade the current editor contents even when the autosync debounce has
+    // not fired yet (for example, a quick keyboard edit followed by Test).
+    self._syncFilesToBackend(Object.keys(self.editorModels || {})).then(function () {
+      runNext(0);
+    }).catch(function (error) {
+      console.warn('Pyodide test file sync failed:', error && error.message || error);
+      self._renderTestResults(tests, new Array(tests.length).fill(null), run);
+    });
   };
 
   // WebContainers — run the current Node file with real Node, then evaluate

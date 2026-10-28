@@ -86,3 +86,18 @@ test('Escape moves focus from a detached editor to its Close window control', as
   });
   await expect.poll(() => popup.isClosed()).toBe(true);
 });
+
+test('Escape leaves the active code editor when the second tutorial pane is hidden', async ({ page }) => {
+  test.setTimeout(120_000);
+  await page.goto('/SEBook/tools/python-debugging?instructor-mode=true&autosave=false');
+  await expect(page.getByRole('button', { name: 'Start debugger', exact: true })).toBeEnabled({ timeout: 60_000 });
+  // The tour has one source pane after the greeting's split source/test panes.
+  await page.evaluate(async () => { await window._tutorial.loadStep(1); });
+  await expect(page.getByRole('button', { name: 'tour.py', exact: true })).toBeVisible();
+  const editor = page.getByRole('textbox', { name: /^Code pane, Python code editor\./ });
+  await editor.focus();
+  await page.keyboard.press('Escape');
+  await expect(editor).not.toBeFocused();
+  await page.keyboard.press('Tab');
+  expect(await page.evaluate(() => document.activeElement?.closest('.monaco-editor'))).toBeNull();
+});

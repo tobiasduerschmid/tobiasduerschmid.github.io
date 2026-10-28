@@ -1,0 +1,65 @@
+# Python Debugging: Teaching Alignment and Review
+
+Instructor-facing review of `_data/tutorials/python-debugging.yml`. This document records source alignment and assessment limits; it is not a student answer sheet or evidence of measured learning gains. Step numbers below are one-based.
+
+## Sources and scope
+
+Reviewed Tobias Dürschmid's **CS 35L Lecture 10 — Debugging & Git**, debugging slides **2–29** and exit ticket **47**, and selected sections of Andreas Zeller's **Why Programs Fail: A Guide to Systematic Debugging**, **second edition (2009)**: §2.2; §§4.1–4.3; §§5.1–5.4 and 5.9; §§6.1–6.6 and 6.8; §§8.1–8.4; §§10.1–10.4 and 10.7; and §§15.1–15.5. Book page references below use printed page numbers. Slide 30 begins the advanced Git material; executing those techniques belongs to the separately linked Git tutorial.
+
+The lecture's four phases are reproduce, locate, determine root cause, then implement and verify. The revised tutorial uses that structure while allowing investigation to cycle through hypotheses, predictions, observations, and revisions. It does not attribute a rigid seven-stage algorithm to these sources.
+
+## Source-to-practice map
+
+| Source | Capability | Revised exercise and assessable evidence |
+| --- | --- | --- |
+| Slides 2–3 | Seek and evaluate help for an external error | Step 7 drafts an anonymized search/help request and compares two suggestions against a reproduction. A live documentation search is optional. The offline artifact supports review of the proposed search and experiment; it does not demonstrate effective live searching. |
+| Slides 4, 6, 13, 17, 28; Zeller §§6.2–6.5, pp. 130–136 | Connect a hypothesis to a discriminating observation | Step 1 models an accumulator investigation, then asks learners to investigate a different greeting failure. Later cases request predictions, observations, and possible refutations with less prescription. Review whether the conclusion follows from the evidence, not merely whether the template is filled. |
+| Slides 7–8; Zeller §§15.1–15.3, pp. 329–335 | Distinguish fault, incorrect state, and observable failure | Steps 1 and 8 require a causal chain; maze, ledger, and waitlist investigations identify a decision or transition inconsistent with the contract. A suspicious value alone is not proof of a cause. |
+| Slides 9–12; Zeller §2.2, pp. 26–30, and §§4.1–4.3, pp. 75–90 | Reproduce and communicate the same failure | Step 1 records input, expected/actual output, run action, browser, and Python version. Step 8 repeats reporting independently. Step 7 plans controlled comparisons for a timing-dependent failure; no live intermittent failure is reproduced. |
+| Slide 11; Zeller §§5.1–5.3, pp. 105–110 | Simplify while preserving the failure | Steps 3 and 6 require smaller reproductions and preservation of original tests. Learners check that the new test fails with the original fault and passes after repair. This practices manual reduction, not automated delta debugging or proof of global minimality. |
+| Slides 14–16; Zeller §§8.1–8.2, pp. 175–178, and §§10.1–10.4, pp. 223–231 | Choose observations and test internal expectations | Step 4 uses a supplied data-flow diagram to select observation boundaries, compares a conditional pause with a focused log, and adds a temporary loader-contract assertion. Review placement, predicted values, and interpretation. Reading the diagram does not assess independent diagram construction. |
+| Slides 18–19; Zeller §§6.4–6.5, pp. 134–136 | Explain intended behavior and reconcile it with execution | Step 3 asks for a spoken or written explanation using actual recursive state. Steps 7–8 return to explanation and a next experiment. Assess the causal account, not eloquence or word count. |
+| Slides 20–26; Zeller §8.3, pp. 188–195 | Configure and inspect a useful execution | Step 2 rehearses breakpoints, stepping, variables, watches, and caller scopes on correct code, then deliberately probes a type mismatch and restores the input. Step 3 applies scope inspection to recursion. Observed tool use and interpretation provide stronger evidence than recognition questions alone. |
+| Slide 27; Zeller §§8.1, 8.3, and 10.3 | Filter observations using a relevant condition | Step 2 provides a reachable negative-score predicate; Step 4 asks learners to choose a transaction predicate. Inspect whether the selected executions answer the learner's question. A condition matching a value does not classify that value as erroneous. |
+| Slides 20–27, extended by Zeller §§8.4 and 15.1 | Trace a later symptom to an earlier transition | Step 5 distinguishes debugger snapshots from completed counter events; Step 6 locates the first waitlist-policy violation. Recorded-history controls are a site-specific extension. Moving backward to a matching state does not establish its earliest occurrence or guarantee faster debugging. |
+| Slide 29; Zeller §§15.3–15.5, pp. 333–339 | Repair, document, and retain regression evidence | Steps 3, 6, and 8 require retained tests and fail-before/pass-after evidence. Step 6 includes a closure note and commit-subject draft. Independent graders check production behavior; no Git commit or automatic review of the prose is required. |
+| Slide 47 | Distinguish testing from debugging | Step 1 separates detecting a mismatch from investigating its cause. The final quiz asks learners to distinguish those activities in a repair scenario. |
+| Zeller §§6.8 and 15.4.3 | Select a useful technique in a new setting | Step 7 interleaves investigation scenarios; Step 8 leaves tool choice and diagnosis to the learner, then asks for a cross-case comparison. This offers immediate transfer practice, not evidence of delayed retention or broad debugging competence. |
+
+## Sequence, support, and evidence limits
+
+The sum example supplies a worked investigation without solving the greeting task. A correct-code rehearsal separates debugger operation from fault diagnosis. Maze, ledger, and waitlist cases then combine tool use with investigation while reducing directions that name a fault or prescribe its repair. The counter rehearsal prepares for event-history reasoning. Article tags provides the least guided repair.
+
+The 19 behavioral criteria use independent inputs and check returned paths and budgets, loaded representations and arithmetic, queue order and capacity, and grouping before winner selection. They accept equivalent implementations. Editable tests and sample data cannot make a faulty implementation pass merely by weakening the expected result. These checks do not infer debugger use, understanding, authorship, or effort from source patterns or notes.
+
+Each failed criterion has condition-driven support for an untouched/missing definition, a recognizable partial approach, and another developed approach. Patterns are scoped to relevant definitions and select advice only; they are not correctness rules. Hints pose comparisons or partial traces without supplying repair code. Instructor solution explanations contain the worked answers. Student-facing self-checks use the learner's predictions, recorded evidence, and peer/instructor review without assuming access to instructor mode.
+
+The 26 quiz items check distinctions and reasoning in short scenarios. Thresholds allow one missed item in each three- or four-question check; feedback should guide review. Scores, completed logs, and repaired code each provide limited evidence. To assess investigation directly, inspect a learner's prediction and observation or watch a short fresh attempt, documenting the assistance available.
+
+The revision reduces instruction prose from 6,328 to 3,952 whitespace-separated words (about 38%) and quiz questions from 34 to 26 while adding the missing practical activities. This measures reduced reading and assessment volume, not observed learning or completion time.
+
+## Pacing and teaching cautions
+
+Plan **two sessions of about 55–75 minutes each**, pausing after the ledger case. This is a provisional scheduling estimate, not a measured completion time. Several thousand words of instructions, code reading, 26 questions, and learner-created experiments make a single short session unrealistic for many beginners. Check actual learner progress and extend time when needed.
+
+For efficient core work, retain one prediction–observation–explanation cycle and one discriminating reproduction per repair, with notes of a few lines. Learners already fluent with the controls can check the rehearsal predictions and move on once they can explain the observations. Additional trace repetitions, extra input variations, live searching beyond the supplied advice comparison, and a later fresh transfer task are useful extensions; they should not crowd out the independent investigation. The later task would add evidence about retention but is not implemented or measured here.
+
+Use pure watch expressions: invoked functions can mutate state (Zeller §8.3.5, p. 194). History inspection does not reverse I/O, restore arbitrary external state, or let edited code resume from the past. A trace tick is not an application event; inspect event boundaries and earlier occurrences before claiming a first divergence.
+
+Avoid universal rules that the sources do not support. Purposeful logging is useful; simple investigations can remain lightweight (Zeller §6.6); temporary workarounds can be justified and documented when a full repair is constrained (§15.5). Normalization follows each exercise's explicit contract, not a rule to remove whitespace from every string.
+
+## Verification record
+
+`node --test scripts/tests/python-debugging-graders.test.js scripts/tests/python-debugging-hints.test.js` passes 62 tests: 42 behavioral candidates and the parent test, plus 19 hint-profile tests. Candidates include all five models and starters, two alternative repairs per assessed exercise, plausible wrong and partial fixes, input mutation, and weakened editable tests/sample data. Hint profiles cover starter, partial, developed, deleted-definition, helper, and comment cases.
+
+This establishes the tested distinctions on native Python and the source-condition contract. It does not cover every possible implementation.
+
+The final full Jekyll build passed. Eight focused Chromium tests in `tests/python-debugging-tutorial.spec.js` passed against the built site: the conditional breakpoint, both recorded-history investigations, rejection of all five starters and acceptance of all five model repairs in real Pyodide, a deque alternative through visible pytest and independent grading, live lesson structure, student print output with solutions hidden, and grading immediately after an edit while the background save timer is paused. Scoped axe checks passed on all eight live instruction sections in light and dark modes and on print instructions. Final visual checks at 1440px and 390px confirmed the diagram labels fit in both themes; print paragraphs remained readable at 16px. These are focused checks, not a site-wide accessibility certification. The quiz answer-cue audit found no flags in the 26 questions.
+
+## Keyboard access follow-up
+
+The review identified keyboard barriers in the shared debugger that affected independent operation of these exercises. The subsequent runtime repair adds a file-and-line breakpoint form and native controls for frame selection, variable expansion and editing, panel collapse, and history navigation. It preserves file-tab focus, unsent watch and breakpoint drafts, and the normal meaning of buttons in the watchpoint-removal dialog. Shortcut documentation describes these routes and the existing Escape exit from Monaco.
+
+Instruction-region axe checks alone cannot establish keyboard access to the debugger. Five additional runtime checks exercise real Python execution and the detached debugger's synchronized controls: duplicate breakpoint entry and drafts; exception-filter editing and Tab navigation; watchpoint-dialog containment, Cancel, Delete, and focus after deletion with a collapsed group; frame selection and watch drafts; and variable-edit cancellation and replay focus in both windows. The final focused Chromium run passed 37 tests across the tutorial, shared keyboard controls, editor Escape behavior, language debugger, and Python replay suites. These checks target specific barriers and do not constitute a site-wide accessibility certification.
+
+The separate `tests/python-debugging-keyboard.spec.js` journey passed all eight lessons in student mode using keyboard interactions throughout. It navigates the debugger tour, selects a test-file breakpoint, inspects counter and waitlist history, repairs all five assessed programs through the editor's Find command, runs visible pytest and all 19 independent criteria, answers all 26 shuffled quiz questions, and reaches tutorial completion. It also checks editing after Stop and Escape from Monaco. Read-only source observations verify that keyboard edits change exactly the intended expressions. This establishes a complete tested keyboard route in Chromium, not measured learner completion time or learning gains.

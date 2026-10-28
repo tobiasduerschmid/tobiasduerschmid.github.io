@@ -146,7 +146,8 @@ info_nav_title: "Keyboard shortcuts"
   </table>
 
   <h2 id="debugger">Step-through debugger</h2>
-  <p class="shortcuts-note">Available in tutorials that enable the Python, JavaScript, Prolog, or Haskell debugger. Focus the debugger panel or its controls to use these shortcuts. Prolog steps follow resolution goals; Haskell steps follow demanded expressions. Their history controls inspect recorded events without repeating program effects.</p>
+  <p class="shortcuts-note">Available in tutorials that enable the Python, JavaScript, Prolog, or Haskell debugger. During a debug session, focus the debugger panel, its controls, or the code editor to use these shortcuts. Prolog steps follow resolution goals; Haskell steps follow demanded expressions. Their history controls inspect recorded events without repeating program effects.</p>
+  <p>Use <kbd>Tab</kbd> and <kbd>Shift</kbd>+<kbd>Tab</kbd> to reach debugger controls, and <kbd>Enter</kbd> or <kbd>Space</kbd> to activate buttons. In <strong>Breakpoints → Code Breakpoints</strong>, choose a file and line, then activate <strong>Add breakpoint</strong>. Use its <strong>Edit condition</strong> and <strong>Remove breakpoint</strong> buttons to manage it. Variable expanders, call-stack frames, and history entries are buttons. The history slider accepts arrow keys, <kbd>Home</kbd>, and <kbd>End</kbd>. Press <kbd>Esc</kbd> to leave the code editor and resume tab navigation.</p>
   <table class="shortcuts-table">
     <caption>Step controls in the inline debugger.</caption>
     <thead>
@@ -578,7 +579,7 @@ info_nav_title: "Keyboard shortcuts"
   </table>
 
   <h2 id="conflicts">Conflicts with browser and operating system shortcuts</h2>
-  <p>The shortcuts above are scoped to specific widgets — they only fire while the widget is focused. None of them override browser-wide shortcuts (such as <kbd>Ctrl</kbd>+<kbd>T</kbd> for a new tab or <kbd>Ctrl</kbd>+<kbd>W</kbd> for closing a tab) or operating system shortcuts. The debugger keys (<kbd>F5</kbd>, <kbd>F10</kbd>, <kbd>F11</kbd>) shadow the browser&rsquo;s reload and devtools shortcuts; this only happens while the debugger panel has focus, so click outside the debugger if you need the browser&rsquo;s default behaviour.</p>
+  <p>The shortcuts above are scoped to specific widgets — they only fire while the widget is focused. None of them override browser-wide shortcuts (such as <kbd>Ctrl</kbd>+<kbd>T</kbd> for a new tab or <kbd>Ctrl</kbd>+<kbd>W</kbd> for closing a tab) or operating system shortcuts. The debugger keys (<kbd>F5</kbd>, <kbd>F10</kbd>, <kbd>F11</kbd>) shadow the browser&rsquo;s reload and devtools shortcuts; this only happens during a debug session while focus is in the debugger or its code editor. Move focus outside them to use the browser&rsquo;s default behaviour.</p>
 
   <h2 id="reporting">Reporting accessibility issues</h2>
   <p>If a shortcut on this page does not work, or if you encounter an interactive widget that cannot be operated by keyboard, please <a href="https://github.com/tobiasduerschmid/tobiasduerschmid.github.io/issues">open an issue on GitHub</a>.</p>

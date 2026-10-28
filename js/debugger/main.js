@@ -154,6 +154,10 @@
     tutorial._debuggerCtl.loadConfiguredBreakpoints();
     tutorial._debuggerCtl.refreshBpDecorations();
     tutorial._debuggerCtl.scheduleBreakpointRefresh();
+    // Step reset precedes creation of its editor models. File activation is
+    // the point where the breakpoint form can reflect the new workspace.
+    tutorial._debuggerCtl.renderBreakpointManager();
+    tutorial._debuggerCtl._publishActiveFile();
   }
 
   function installUnavailableDebuggerUI(tutorial, details) {
@@ -178,6 +182,7 @@
       stepsTab.type = 'button';
       stepsTab.className = 'tvm-left-tab active';
       stepsTab.setAttribute('data-panel', 'steps');
+      stepsTab.setAttribute('aria-pressed', 'true');
       stepsTab.innerHTML = '<i class="fa fa-book-open" aria-hidden="true"></i> Steps';
       tabBar.appendChild(stepsTab);
       instructionsPanel.insertBefore(tabBar, instructionsPanel.firstChild);
@@ -222,7 +227,9 @@
     function activate(panel) {
       var tabs = tabBar.querySelectorAll('.tvm-left-tab');
       for (var i = 0; i < tabs.length; i++) {
-        tabs[i].classList.toggle('active', tabs[i].getAttribute('data-panel') === panel);
+        var selected = tabs[i].getAttribute('data-panel') === panel;
+        tabs[i].classList.toggle('active', selected);
+        tabs[i].setAttribute('aria-pressed', String(selected));
       }
       var stepsView = instructionsPanel.querySelector('.tvm-steps-view');
       if (stepsView) stepsView.style.display = panel === 'steps' ? 'flex' : 'none';
@@ -952,6 +959,15 @@
     if (!action || !action.type) return;
     var self = this;
     switch (action.type) {
+      case 'addBreakpoint': {
+        var filename = String(action.path || '').replace(/^\/tutorial\//, '');
+        var entry = this.t.editorModels && this.t.editorModels[filename];
+        var line = Number(action.line);
+        if (!entry || !Number.isInteger(line) || line < 1) break;
+        var existing = this.breakpoints.get(this.normalizeBreakpointPath(filename));
+        if (!existing || !existing.has(line)) this.toggleBreakpoint(filename, line);
+        break;
+      }
       case 'toggleBreakpoint': {
         var fn = String(action.path || '').replace(/^\/tutorial\//, '');
         if (fn) self.toggleBreakpoint(fn, action.line);
@@ -1032,7 +1048,7 @@
         break;
       }
       case 'addExceptionBreakpoint': {
-        self.addExceptionBreakpoint(action || {});
+        self.addExceptionBreakpoint({ type: action.exceptionType, mode: action.mode, enabled: action.enabled });
         break;
       }
       case 'removeExceptionBreakpoint': {
@@ -1046,7 +1062,7 @@
       case 'editExceptionBreakpoint': {
         if (action.id != null) {
           var fields = {};
-          if (Object.prototype.hasOwnProperty.call(action, 'type')) fields.type = action.type;
+          if (Object.prototype.hasOwnProperty.call(action, 'exceptionType')) fields.type = action.exceptionType;
           if (action.mode === 'all' || action.mode === 'uncaught') fields.mode = action.mode;
           self.editExceptionBreakpoint(action.id, fields);
         }
@@ -1133,6 +1149,7 @@
       var stepsTab = document.createElement('button');
       stepsTab.className = 'tvm-left-tab active';
       stepsTab.setAttribute('data-panel', 'steps');
+      stepsTab.setAttribute('aria-pressed', 'true');
       stepsTab.innerHTML = '<i class="fa fa-book-open"></i> Steps';
       tabBar.appendChild(stepsTab);
       instructionsPanel.insertBefore(tabBar, instructionsPanel.firstChild);
@@ -1163,6 +1180,7 @@
       var btn = document.createElement('button');
       btn.className = 'tvm-left-tab';
       btn.setAttribute('data-panel', v.panel);
+      btn.setAttribute('aria-pressed', 'false');
       btn.innerHTML = v.label;
       btn.addEventListener('click', function () { self.activateTab(v.panel); });
       tabBar.appendChild(btn);
@@ -1215,12 +1233,12 @@
     return sections.map(function (s) {
       var collapsed = self._isSectionCollapsed(s.key);
       return '<section class="tvm-dbg-section' + (collapsed ? ' collapsed' : '') +
-             '" data-section="' + s.key + '">' +
-             '<header class="tvm-dbg-section-head" data-section="' + s.key + '">' +
-             '<span class="tvm-dbg-section-chevron">▾</span>' +
-             '<i class="fa ' + s.icon + '"></i>' +
+             '" data-section="' + s.key + '" aria-label="' + s.label + '">' +
+             '<button type="button" class="tvm-dbg-section-head" aria-expanded="' + !collapsed + '" data-section="' + s.key + '">' +
+             '<span class="tvm-dbg-section-chevron" aria-hidden="true">▾</span>' +
+             '<i class="fa ' + s.icon + '" aria-hidden="true"></i>' +
              '<span class="tvm-dbg-section-title">' + s.label + '</span>' +
-             '</header>' +
+             '</button>' +
              '<div class="tvm-dbg-section-body" data-section="' + s.key + '">' +
              '<div class="tvm-debug-empty">' + s.empty + '</div>' +
              '</div>' +
@@ -1252,6 +1270,7 @@
       var key = section.getAttribute('data-section');
       var nowCollapsed = !section.classList.contains('collapsed');
       section.classList.toggle('collapsed', nowCollapsed);
+      head.setAttribute('aria-expanded', String(!nowCollapsed));
       self._setSectionCollapsed(key, nowCollapsed);
     });
   };
@@ -1261,7 +1280,9 @@
     // Toggle active state on tabs
     var tabs = this.tabBar.querySelectorAll('.tvm-left-tab');
     for (var i = 0; i < tabs.length; i++) {
-      tabs[i].classList.toggle('active', tabs[i].getAttribute('data-panel') === panel);
+      var selected = tabs[i].getAttribute('data-panel') === panel;
+      tabs[i].classList.toggle('active', selected);
+      tabs[i].setAttribute('aria-pressed', String(selected));
     }
     // Show/hide views
     var instructionsPanel = this.t.root.querySelector('.tvm-instructions-panel');
@@ -1407,7 +1428,7 @@
     // Keyboard shortcuts
     document.addEventListener('keydown', function (e) {
       if (!self.session) return;
-      if (usesLanguageChannel(self.t) && !e.target.closest('.tvm-debug-view, .tvm-debug-toolbar')) return;
+      if (!self.t.root.contains(e.target) || !e.target.closest('.tvm-debug-view, .tvm-debug-toolbar, .monaco-editor, .tvm-left-tab[data-panel="dbg-combined"]')) return;
       if (e.key === 'F5' && !e.shiftKey) { e.preventDefault(); self.handleToolbarCmd('continue'); }
       else if (e.key === 'F5' && e.shiftKey && e.altKey) { e.preventDefault(); self.handleToolbarCmd('backContinue'); }
       else if (e.key === 'F5' && e.shiftKey) { e.preventDefault(); self.handleToolbarCmd('stop'); }
@@ -3187,6 +3208,8 @@
       runBtn.removeAttribute('title');
     }
 
+    // Keep focus in the newly active debugger when its launch button is hidden.
+    var focusDebugger = document.activeElement === this.debugBtn;
     // Show step toolbar; hide Debug button
     if (this.debugBtn) this.debugBtn.style.display = 'none';
     if (this.stepToolbar) this.stepToolbar.style.display = 'flex';
@@ -3194,6 +3217,7 @@
 
     this.activateTab('dbg-combined');
     this.disableStepButtons(true);
+    if (focusDebugger) this.tabBar.querySelector('[data-panel="dbg-combined"]').focus();
     this.setStatus('starting…');
     this._publishWatches();
     this._publishCursor();
@@ -3521,6 +3545,7 @@
   };
 
   DebuggerController.prototype.endSession = function (keepHistory) {
+    var focusLaunch = this.stepToolbar && this.stepToolbar.contains(document.activeElement);
     // Restore editor + UI state
     if (!this.sync) {
       if (this.t.editor) this.t.editor.updateOptions({ readOnly: this._editorWasReadOnly });
@@ -3540,7 +3565,10 @@
     if (actions && this.stepToolbar && this.stepToolbar.parentNode !== actions) {
       actions.appendChild(this.stepToolbar);
     }
-    if (this.debugBtn) this.debugBtn.style.display = '';
+    if (this.debugBtn) {
+      this.debugBtn.style.display = '';
+      if (focusLaunch) this.debugBtn.focus();
+    }
     this.clearCurrentLineDecoration();
     // For NodeChannel, kill the spawned Node process. Pyodide's worker stays
     // alive across sessions (just resets its state via _ttd_cleanup).
@@ -3623,7 +3651,10 @@
     if (this.renderLanguageSection('dbg-vars', 'renderVariables')) return;
     var view = this.viewEl('dbg-vars');
     if (!view) return;
+    var expanded = window.SEBookDebuggerUI.captureExpandedVariables(view);
+    var interaction = window.SEBookDebuggerUI.capturePanelInteraction(view);
     if (this.historyIdx < 0) {
+      window.SEBookDebuggerUI.retainVariableFocus(view, interaction);
       view.innerHTML = '<div class="tvm-debug-empty">Start debugging to see variables.</div>';
       return;
     }
@@ -3654,6 +3685,8 @@
     view.innerHTML = html;
     this.wireExpanders(view);
     this._wireSubsectionToggles(view);
+    window.SEBookDebuggerUI.restoreExpandedVariables(view, expanded);
+    window.SEBookDebuggerUI.restoreVariableFocus(view, interaction, '.tvm-debug-subsection-head');
   };
 
   // Sub-sections inside the Variables section (Locals, Globals).
@@ -3662,10 +3695,10 @@
     var collapsed = this._isSubsectionCollapsed(key);
     return '<div class="tvm-debug-subsection' + (collapsed ? ' collapsed' : '') +
            '" data-subsection="' + key + '">' +
-           '<div class="tvm-debug-subsection-head">' +
-           '<span class="tvm-debug-subsection-chevron">▾</span>' +
+           '<button type="button" class="tvm-debug-subsection-head" data-debug-focus="subsection:' + key + '" aria-expanded="' + !collapsed + '">' +
+           '<span class="tvm-debug-subsection-chevron" aria-hidden="true">▾</span>' +
            '<span class="tvm-debug-subsection-title">' + label + '</span>' +
-           '</div>' +
+           '</button>' +
            '<div class="tvm-debug-subsection-body">' + contentHtml + '</div>' +
            '</div>';
   };
@@ -3692,6 +3725,7 @@
           var key = sub.getAttribute('data-subsection');
           var nowCollapsed = !sub.classList.contains('collapsed');
           sub.classList.toggle('collapsed', nowCollapsed);
+          head.setAttribute('aria-expanded', String(!nowCollapsed));
           self._setSubsectionCollapsed(key, nowCollapsed);
         });
       })(heads[i]);
@@ -3750,18 +3784,19 @@
     // either Locals or Globals. Nested children are not editable in v1
     // (would require expression paths like `foo.bar[2]`). The editKey carries
     // the (scope, name) tuple so the click handler knows what to mutate.
-    var editAttr = editKey ? ' data-edit-key="' + this.escape(editKey) + '" data-original-title="Click to edit"' : '';
-    var valueHtml = '<span class="tvm-debug-var-value' + (editKey ? ' tvm-debug-var-editable' : '') + '"' + editAttr +
-                    '>' + this.escape(val.repr || val.preview || '') + '</span>';
+    var editAttr = editKey ? ' type="button" data-debug-focus="variable:' + this.escape(editKey) + '" data-edit-key="' + this.escape(editKey) + '" aria-label="Edit ' + this.escape(name + ': ' + (val.repr || val.preview || '')) + '" data-original-title="Edit value"' : '';
+    var valueTag = editKey ? 'button' : 'span';
+    var valueHtml = '<' + valueTag + ' class="tvm-debug-var-value' + (editKey ? ' tvm-debug-var-editable' : '') + '"' + editAttr +
+                    '>' + this.escape(val.repr || val.preview || '') + '</' + valueTag + '>';
     var hasChildren = val.kind === 'collection' || (val.kind === 'object' && val.attrs && Object.keys(val.attrs).length);
     var expander = hasChildren
-      ? '<span class="tvm-debug-expander" data-expanded="false">▶</span>'
+      ? '<button type="button" class="tvm-debug-expander" data-name="' + this.escape(name) + '" data-expanded="false" aria-expanded="false" aria-label="Expand ' + this.escape(name) + '">▶</button>'
       : '<span class="tvm-debug-expander-spacer"></span>';
     var row = '<div class="tvm-debug-var-row" style="padding-left:' + (depth * 14) + 'px">' +
               expander + nameHtml + typeHtml + valueHtml + (aliasBadge || '') + '</div>';
     if (hasChildren) {
       var childHtml = this.renderChildren(val, depth + 1);
-      row += '<div class="tvm-debug-var-children" style="display:none">' + childHtml + '</div>';
+      row += '<div class="tvm-debug-var-children" hidden>' + childHtml + '</div>';
     }
     return row;
   };
@@ -3802,15 +3837,17 @@
         ex.addEventListener('click', function () {
           var expanded = ex.getAttribute('data-expanded') === 'true';
           ex.setAttribute('data-expanded', !expanded);
+          ex.setAttribute('aria-expanded', String(!expanded));
+          ex.setAttribute('aria-label', (expanded ? 'Expand ' : 'Collapse ') + ex.getAttribute('data-name'));
           ex.textContent = expanded ? '▶' : '▼';
           var children = ex.parentElement.nextElementSibling;
           if (children && children.classList.contains('tvm-debug-var-children')) {
-            children.style.display = expanded ? 'none' : 'block';
+            children.hidden = expanded;
           }
         });
       })(expanders[i]);
     }
-    // Click-to-edit on values: replaces the span with an input, applies on
+    // Activate an editable value: replaces its button with an input, applies on
     // Enter, cancels on Escape. Live edits go through SAB; rewound edits get
     // recorded as overrides for the next session restart.
     var self = this;
@@ -3835,39 +3872,45 @@
     input.type = 'text';
     input.className = 'tvm-debug-var-edit-input';
     input.value = originalText;
+    input.setAttribute('aria-label', 'New value for ' + name);
     input.setAttribute('spellcheck', 'false');
     valueEl.replaceWith(input);
     input.focus();
     input.select();
     var self = this;
     var done = false;
-    function commit() {
+    function commit(restoreFocus) {
       if (done) return; done = true;
       var expr = input.value;
       // Detect "no change" so we don't queue a no-op edit (which would still
       // re-eval and produce the same value, but adds noise to live_edits).
       var unchanged = expr === originalText;
-      // Show the user's edit visually: the value span flips to the new text
+      // Show the user's edit visually: the value button flips to the new text
       // with a "pending" affordance until the next snapshot arrives, at which
       // point renderAll() replaces it with the worker-confirmed value.
       if (!unchanged) {
         valueEl.textContent = expr;
+        valueEl.setAttribute('aria-label', 'Edit ' + name + ': ' + expr);
         valueEl.classList.add('tvm-debug-var-edit-pending');
         valueEl.setAttribute('data-original-title', 'Applying edit… (was: ' + originalText + ')');
         valueEl.removeAttribute('title');
       }
       input.replaceWith(valueEl);
+      if (restoreFocus) valueEl.focus();
       if (!unchanged) self.applyVarEdit(scope, frameIdx, name, expr);
     }
     function cancel() {
       if (done) return; done = true;
       input.replaceWith(valueEl);
+      valueEl.focus();
     }
     input.addEventListener('keydown', function (e) {
-      if (e.key === 'Enter') { e.preventDefault(); commit(); }
-      else if (e.key === 'Escape') { e.preventDefault(); cancel(); }
+      if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); commit(true); }
+      else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); cancel(); }
     });
-    input.addEventListener('blur', commit);
+    input.addEventListener('blur', function () {
+      setTimeout(function () { if (input.isConnected) commit(false); }, 0);
+    });
   };
 
   // Apply a variable edit. Two paths:
@@ -3963,6 +4006,7 @@
     if (this.renderLanguageSection('dbg-stack', 'renderCallStack')) return;
     var view = this.viewEl('dbg-stack');
     if (!view) return;
+    var focused = view.contains(document.activeElement) ? document.activeElement.getAttribute('data-frame-idx') : null;
     if (this.historyIdx < 0) {
       view.innerHTML = '<div class="tvm-debug-empty">Start debugging to see the call stack.</div>';
       return;
@@ -3973,14 +4017,18 @@
     for (var i = snap.stack.length - 1; i >= 0; i--) {
       var f = this.displayFrameForSnapshot(snap, i);
       var cls = 'tvm-debug-frame' + (i === selectedIdx ? ' active' : '');
-      rows.push('<div class="' + cls + '" data-frame-idx="' + i + '">' +
+      rows.push('<button type="button" class="' + cls + '" data-frame-idx="' + i + '" aria-pressed="' + (i === selectedIdx) + '">' +
                 '<span class="tvm-debug-frame-fn">' + this.escape(f.function) + '</span>' +
                 '<span class="tvm-debug-frame-loc">' + this.escape(this.basename(f.file)) + ':' + f.line + '</span>' +
-                '</div>');
+                '</button>');
     }
     view.innerHTML = '<div class="tvm-debug-stack">' + rows.join('') + '</div>';
     var self = this;
     var frames = view.querySelectorAll('.tvm-debug-frame');
+    if (focused !== null) {
+      var replacement = view.querySelector('[data-frame-idx="' + focused + '"]');
+      if (replacement) replacement.focus({ preventScroll: true });
+    }
     for (var j = 0; j < frames.length; j++) {
       (function (frame) {
         frame.addEventListener('click', function () {
@@ -3998,6 +4046,7 @@
     if (this.renderLanguageSection('dbg-watch', 'renderWatch')) return;
     var view = this.viewEl('dbg-watch');
     if (!view) return;
+    var interaction = window.SEBookDebuggerUI.capturePanelInteraction(view);
     var snap = this.historyIdx >= 0 ? this.history[this.historyIdx] : null;
     var watches = this.getNormalWatches();
     var rows = [];
@@ -4013,26 +4062,27 @@
                 '<span class="tvm-debug-watch-expr">' + this.escape(expr) + '</span>' +
                 '<span class="tvm-debug-watch-arrow">→</span>' +
                 '<span class="tvm-debug-watch-val">' + valStr + '</span>' +
-                '<button class="tvm-debug-watch-action tvm-debug-watch-promote" data-i="' + i + '" data-original-title="Watch for data value changes" aria-label="Watch for data value changes">' + debugManagerIcon('dataWatch') + '</button>' +
-                '<button class="tvm-debug-watch-action tvm-debug-watch-remove" data-i="' + i + '" data-original-title="Remove" aria-label="Remove">' + debugManagerIcon('trash') + '</button>' +
+                '<button class="tvm-debug-watch-action tvm-debug-watch-promote" data-debug-focus="watch-promote:' + this.escape(expr) + '" data-i="' + i + '" data-original-title="Watch for data value changes" aria-label="Watch for data value changes">' + debugManagerIcon('dataWatch') + '</button>' +
+                '<button class="tvm-debug-watch-action tvm-debug-watch-remove" data-debug-focus="watch-remove:' + this.escape(expr) + '" data-i="' + i + '" data-original-title="Remove" aria-label="Remove">' + debugManagerIcon('trash') + '</button>' +
                 '</div>');
     }
     view.innerHTML =
       '<div class="tvm-debug-watch-list">' + rows.join('') + '</div>' +
       '<div class="tvm-debug-watch-add">' +
-      '<input type="text" class="tvm-debug-watch-input" placeholder="Add a Python expression to watch (e.g. len(items))" data-original-title="Watch expression" aria-label="Watch expression" />' +
-      '<button class="tvm-debug-watch-add-btn">+ Add</button>' +
+      '<input type="text" class="tvm-debug-watch-input" data-debug-focus="watch-expression" data-debug-draft="true" placeholder="Add a Python expression to watch (e.g. len(items))" data-original-title="Watch expression" aria-label="Watch expression" />' +
+      '<button class="tvm-debug-watch-add-btn" data-debug-focus="watch-add">+ Add</button>' +
       '</div>' +
       (watches.length === 0 ? '<div class="tvm-debug-empty">Watches are evaluated on every step. Avoid expressions with side effects.</div>' : '');
 
+    window.SEBookDebuggerUI.restorePanelInteraction(view, interaction, '.tvm-debug-watch-input');
     var self = this;
     var input = view.querySelector('.tvm-debug-watch-input');
     var addBtn = view.querySelector('.tvm-debug-watch-add-btn');
     function add() {
       var expr = (input.value || '').trim();
       if (!expr) return;
-      self.addNormalWatch(expr);
       input.value = '';
+      self.addNormalWatch(expr);
     }
     if (addBtn) addBtn.addEventListener('click', add);
     if (input) input.addEventListener('keydown', function (e) { if (e.key === 'Enter') add(); });
@@ -4079,6 +4129,7 @@
     if (this.renderLanguageSection('dbg-breakpoints', 'renderBreakpoints')) return;
     var view = this.viewEl('dbg-breakpoints');
     if (!view) return;
+    var interaction = window.SEBookDebuggerUI.capturePanelInteraction(view);
     var snap = this.historyIdx >= 0 ? this.history[this.historyIdx] : null;
     var bpRows = [];
     var self = this;
@@ -4102,8 +4153,8 @@
           '<span class="tvm-debug-manager-title">' + self.escape(self.basename(path)) + ':' + line + '</span>' +
           cond + hits + err +
           '</span>' +
-          '<button class="tvm-debug-manager-icon" data-bp-edit="1" data-path="' + self.escape(path) + '" data-line="' + line + '" data-original-title="Edit condition" aria-label="Edit condition">' + debugManagerIcon('edit') + '</button>' +
-          '<button class="tvm-debug-manager-icon tvm-debug-manager-danger" data-bp-remove="1" data-path="' + self.escape(path) + '" data-line="' + line + '" data-original-title="Remove breakpoint" aria-label="Remove breakpoint">' + debugManagerIcon('trash') + '</button>' +
+          '<button class="tvm-debug-manager-icon" data-debug-focus="breakpoint-edit:' + self.escape(path) + ':' + line + '" data-bp-edit="1" data-path="' + self.escape(path) + '" data-line="' + line + '" data-original-title="Edit condition" aria-label="Edit condition">' + debugManagerIcon('edit') + '</button>' +
+          '<button class="tvm-debug-manager-icon tvm-debug-manager-danger" data-debug-focus="breakpoint-remove:' + self.escape(path) + ':' + line + '" data-bp-remove="1" data-path="' + self.escape(path) + '" data-line="' + line + '" data-original-title="Remove breakpoint" aria-label="Remove breakpoint">' + debugManagerIcon('trash') + '</button>' +
           '</div>'
         );
       });
@@ -4115,26 +4166,26 @@
       var toggleLabel = disabled ? 'Enable data watchpoint' : 'Disable data watchpoint';
       return '<div class="tvm-debug-manager-row tvm-debug-manager-watchpoint-row' + (disabled ? ' disabled' : '') + '">' +
         '<label class="tvm-debug-manager-toggle" data-original-title="' + toggleLabel + '">' +
-        '<input type="checkbox" aria-label="' + toggleLabel + '" data-wp-toggle="' + self.escape(wp.id) + '"' + (disabled ? '' : ' checked') + '>' +
+        '<input type="checkbox" aria-label="' + toggleLabel + '" data-debug-focus="wp-toggle:' + self.escape(wp.id) + '" data-wp-toggle="' + self.escape(wp.id) + '"' + (disabled ? '' : ' checked') + '>' +
         '<span></span><em class="sr-only">' + toggleLabel + '</em>' +
         '</label>' +
         '<span class="tvm-debug-manager-main">' +
         '<span class="tvm-debug-manager-title">' + self.escape(wp.expr) + '</span>' +
         '<span class="tvm-debug-manager-value">' + val + '</span>' +
         '</span>' +
-        '<button class="tvm-debug-manager-icon" data-wp-run="' + self.escape(wp.id) + '" data-original-title="Run to this data value change" aria-label="Run to this data value change">' + debugManagerIcon('playData') + '</button>' +
-        '<button class="tvm-debug-manager-icon" data-wp-back="' + self.escape(wp.id) + '" data-original-title="Run back to this data value change" aria-label="Run back to this data value change">' + debugManagerIcon('backData') + '</button>' +
-        '<button class="tvm-debug-manager-icon tvm-debug-manager-danger" data-wp-remove="' + self.escape(wp.id) + '" data-original-title="Remove data watchpoint" aria-label="Remove data watchpoint">' + debugManagerIcon('trash') + '</button>' +
+        '<button class="tvm-debug-manager-icon" data-debug-focus="wp-run:' + self.escape(wp.id) + '" data-wp-run="' + self.escape(wp.id) + '" data-original-title="Run to this data value change" aria-label="Run to this data value change">' + debugManagerIcon('playData') + '</button>' +
+        '<button class="tvm-debug-manager-icon" data-debug-focus="wp-back:' + self.escape(wp.id) + '" data-wp-back="' + self.escape(wp.id) + '" data-original-title="Run back to this data value change" aria-label="Run back to this data value change">' + debugManagerIcon('backData') + '</button>' +
+        '<button class="tvm-debug-manager-icon tvm-debug-manager-danger" data-debug-focus="wp-remove:' + self.escape(wp.id) + '" data-wp-remove="' + self.escape(wp.id) + '" data-original-title="Remove data watchpoint" aria-label="Remove data watchpoint">' + debugManagerIcon('trash') + '</button>' +
         '</div>';
     });
     var watchpointControls =
       '<div class="tvm-debug-manager-add">' +
-      '<input type="text" class="tvm-debug-watchpoint-input" placeholder="Break when expression changes value" data-original-title="Data watchpoint expression" aria-label="Data watchpoint expression" />' +
-      '<button class="tvm-debug-watchpoint-add-btn">' + debugManagerIcon('plus') + '<span>Add Data Watchpoint</span></button>' +
+      '<input type="text" class="tvm-debug-watchpoint-input" data-debug-focus="watchpoint-expression" data-debug-draft="true" placeholder="Break when expression changes value" data-original-title="Data watchpoint expression" aria-label="Data watchpoint expression" />' +
+      '<button class="tvm-debug-watchpoint-add-btn" data-debug-focus="watchpoint-add">' + debugManagerIcon('plus') + '<span>Add Data Watchpoint</span></button>' +
       '</div>' +
       '<div class="tvm-debug-manager-actions">' +
-      '<button class="tvm-debug-manager-run" data-wp-run-all="1">' + debugManagerIcon('playData') + '<span>Run to Data Change</span></button>' +
-      '<button class="tvm-debug-manager-run" data-wp-back-all="1">' + debugManagerIcon('backData') + '<span>Run Back to Data Change</span></button>' +
+      '<button class="tvm-debug-manager-run" data-debug-focus="wp-run-all" data-wp-run-all="1">' + debugManagerIcon('playData') + '<span>Run to Data Change</span></button>' +
+      '<button class="tvm-debug-manager-run" data-debug-focus="wp-back-all" data-wp-back-all="1">' + debugManagerIcon('backData') + '<span>Run Back to Data Change</span></button>' +
       '</div>';
 
     var ebRows = (this.exceptionBreakpoints || []).map(function (eb) {
@@ -4144,45 +4195,48 @@
       var toggleLabel = disabled ? 'Enable exception breakpoint' : 'Disable exception breakpoint';
       return '<div class="tvm-debug-manager-row tvm-debug-manager-exception-row' + (disabled ? ' disabled' : '') + '" data-exc-bp="' + eb.id + '">' +
         '<label class="tvm-debug-manager-toggle" data-original-title="' + toggleLabel + '">' +
-        '<input type="checkbox" aria-label="' + toggleLabel + '" data-exc-toggle="' + eb.id + '"' + (disabled ? '' : ' checked') + '>' +
+        '<input type="checkbox" aria-label="' + toggleLabel + '" data-debug-focus="exc-toggle:' + eb.id + '" data-exc-toggle="' + eb.id + '"' + (disabled ? '' : ' checked') + '>' +
         '<span></span><em class="sr-only">' + toggleLabel + '</em>' +
         '</label>' +
         '<span class="tvm-debug-manager-main">' +
-        '<input type="text" class="tvm-debug-manager-exc-type" placeholder="Any exception type" data-original-title="Exception type filter" aria-label="Exception type filter" value="' + typeAttr + '" data-exc-type="' + eb.id + '" spellcheck="false" autocomplete="off">' +
+        '<input type="text" class="tvm-debug-manager-exc-type" placeholder="Any exception type" data-original-title="Exception type filter" aria-label="Exception type filter" value="' + typeAttr + '" data-debug-focus="exception-type:' + eb.id + '" data-debug-draft="focus" data-exc-type="' + eb.id + '" spellcheck="false" autocomplete="off">' +
         '<span class="tvm-debug-manager-exc-modes">' +
-        '<label><input type="radio" name="exc-mode-' + eb.id + '" value="uncaught" data-exc-mode="' + eb.id + '"' + (modeAll ? '' : ' checked') + '>Uncaught</label>' +
-        '<label><input type="radio" name="exc-mode-' + eb.id + '" value="all" data-exc-mode="' + eb.id + '"' + (modeAll ? ' checked' : '') + '>All raised</label>' +
+        '<label><input type="radio" name="exc-mode-' + eb.id + '" value="uncaught" data-debug-focus="exception-mode:uncaught:' + eb.id + '" data-exc-mode="' + eb.id + '"' + (modeAll ? '' : ' checked') + '>Uncaught</label>' +
+        '<label><input type="radio" name="exc-mode-' + eb.id + '" value="all" data-debug-focus="exception-mode:all:' + eb.id + '" data-exc-mode="' + eb.id + '"' + (modeAll ? ' checked' : '') + '>All raised</label>' +
         '</span>' +
         '</span>' +
-        '<button class="tvm-debug-manager-icon" data-exc-run="' + eb.id + '" data-original-title="Run to this exception" aria-label="Run to this exception">' + debugManagerIcon('playException') + '</button>' +
-        '<button class="tvm-debug-manager-icon" data-exc-back="' + eb.id + '" data-original-title="Run back to this exception" aria-label="Run back to this exception">' + debugManagerIcon('backException') + '</button>' +
-        '<button class="tvm-debug-manager-icon tvm-debug-manager-danger" data-exc-remove="' + eb.id + '" data-original-title="Remove exception breakpoint" aria-label="Remove exception breakpoint">' + debugManagerIcon('trash') + '</button>' +
+        '<button class="tvm-debug-manager-icon" data-debug-focus="exc-run:' + eb.id + '" data-exc-run="' + eb.id + '" data-original-title="Run to this exception" aria-label="Run to this exception">' + debugManagerIcon('playException') + '</button>' +
+        '<button class="tvm-debug-manager-icon" data-debug-focus="exc-back:' + eb.id + '" data-exc-back="' + eb.id + '" data-original-title="Run back to this exception" aria-label="Run back to this exception">' + debugManagerIcon('backException') + '</button>' +
+        '<button class="tvm-debug-manager-icon tvm-debug-manager-danger" data-debug-focus="exc-remove:' + eb.id + '" data-exc-remove="' + eb.id + '" data-original-title="Remove exception breakpoint" aria-label="Remove exception breakpoint">' + debugManagerIcon('trash') + '</button>' +
         '</div>';
     });
     var exceptionControls =
       '<div class="tvm-debug-manager-actions">' +
-      '<button class="tvm-debug-manager-run" data-exc-add="1">' + debugManagerIcon('plus') + '<span>Add Exception Breakpoint</span></button>' +
-      '<button class="tvm-debug-manager-run" data-exc-run-all="1">' + debugManagerIcon('playException') + '<span>Run to Exception</span></button>' +
-      '<button class="tvm-debug-manager-run" data-exc-back-all="1">' + debugManagerIcon('backException') + '<span>Run Back to Exception</span></button>' +
+      '<button class="tvm-debug-manager-run" data-debug-focus="exc-add" data-exc-add="1">' + debugManagerIcon('plus') + '<span>Add Exception Breakpoint</span></button>' +
+      '<button class="tvm-debug-manager-run" data-debug-focus="exc-run-all" data-exc-run-all="1">' + debugManagerIcon('playException') + '<span>Run to Exception</span></button>' +
+      '<button class="tvm-debug-manager-run" data-debug-focus="exc-back-all" data-exc-back-all="1">' + debugManagerIcon('backException') + '<span>Run Back to Exception</span></button>' +
       '</div>';
 
     view.innerHTML =
       '<div class="tvm-debug-manager">' +
       this.renderBreakpointManagerGroup('manager-code-breakpoints', 'Code Breakpoints',
-        bpRows.length ? bpRows.join('') : '<div class="tvm-debug-empty-row">No code breakpoints.</div>') +
+        (bpRows.length ? bpRows.join('') : '<div class="tvm-debug-empty-row">No code breakpoints.</div>') +
+        window.SEBookDebuggerUI.breakpointFormHTML(this._buildSyncState(), this.languageViewHelpers())) +
       this.renderBreakpointManagerGroup('manager-data-watchpoints', 'Data Watchpoints',
         (wpRows.length ? wpRows.join('') : '<div class="tvm-debug-empty-row">No data watchpoints.</div>') + watchpointControls) +
       this.renderBreakpointManagerGroup('manager-exception-breakpoints', 'Exception Breakpoints',
         (ebRows.length ? ebRows.join('') : '<div class="tvm-debug-empty-row">No exception breakpoints.</div>') + exceptionControls) +
       '</div>';
 
+    window.SEBookDebuggerUI.restorePanelInteraction(view, interaction, '.tvm-debug-breakpoint-line');
+    window.SEBookDebuggerUI.wireBreakpointForm(view, this._buildSyncState(), this._handleAction.bind(this));
     var input = view.querySelector('.tvm-debug-watchpoint-input');
     var addBtn = view.querySelector('.tvm-debug-watchpoint-add-btn');
     function add() {
       var expr = (input && input.value || '').trim();
       if (!expr) return;
-      self.addWatchpoint(expr);
       if (input) input.value = '';
+      self.addWatchpoint(expr);
     }
     if (addBtn) addBtn.addEventListener('click', add);
     if (input) input.addEventListener('keydown', function (e) { if (e.key === 'Enter') add(); });
@@ -4246,10 +4300,20 @@
     var excTypes = view.querySelectorAll('[data-exc-type]');
     for (var ety = 0; ety < excTypes.length; ety++) {
       (function (el) {
-        var commit = function () { self.editExceptionBreakpoint(el.getAttribute('data-exc-type'), { type: el.value }); };
-        el.addEventListener('change', commit);
-        el.addEventListener('blur', commit);
-        el.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); el.blur(); } });
+        var committedValue = el.value;
+        var commit = function (value) {
+          if (value === committedValue) return;
+          committedValue = value;
+          self.editExceptionBreakpoint(el.getAttribute('data-exc-type'), { type: value });
+        };
+        el.addEventListener('blur', function (event) {
+          var value = el.value;
+          var nextControl = event.relatedTarget;
+          // A microtask can run before native Tab focus settles. Ignore blur
+          // caused by redraw, but save edits after a deliberate focus move.
+          setTimeout(function () { if (el.isConnected || nextControl) commit(value); }, 0);
+        });
+        el.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); commit(el.value); } });
       })(excTypes[ety]);
     }
     var excModes = view.querySelectorAll('[data-exc-mode]');
@@ -4292,8 +4356,8 @@
   DebuggerController.prototype.renderBreakpointManagerGroup = function (key, label, bodyHtml) {
     var collapsed = this._isSubsectionCollapsed(key);
     return '<section class="tvm-debug-manager-group' + (collapsed ? ' collapsed' : '') + '" data-manager-group="' + this.escape(key) + '">' +
-      '<button type="button" class="tvm-debug-manager-heading" data-manager-group-toggle="' + this.escape(key) + '">' +
-      '<span class="tvm-debug-manager-chevron">▾</span>' +
+      '<button type="button" class="tvm-debug-manager-heading" data-debug-focus="group:' + this.escape(key) + '" aria-expanded="' + !collapsed + '" data-manager-group-toggle="' + this.escape(key) + '">' +
+      '<span class="tvm-debug-manager-chevron" aria-hidden="true">▾</span>' +
       '<span>' + this.escape(label) + '</span>' +
       '</button>' +
       '<div class="tvm-debug-manager-group-body">' + bodyHtml + '</div>' +
@@ -4311,6 +4375,7 @@
           if (!group) return;
           var nowCollapsed = !group.classList.contains('collapsed');
           group.classList.toggle('collapsed', nowCollapsed);
+          head.setAttribute('aria-expanded', String(!nowCollapsed));
           self._setSubsectionCollapsed(key, nowCollapsed);
         });
       })(heads[i]);
@@ -4324,55 +4389,8 @@
   };
 
   DebuggerController.prototype.renderHistory = function () {
-    if (this.renderLanguageSection('dbg-history', 'renderHistory')) return;
-    var view = this.viewEl('dbg-history');
-    if (!view) return;
-    if (this.historyIdx < 0 || this.history.length === 0) {
-      view.innerHTML = '<div class="tvm-debug-empty">Start debugging to navigate execution history.</div>';
-      return;
-    }
-    var n = this.history.length;
-    var html = '<div class="tvm-debug-history-controls">' +
-      '<input type="range" class="tvm-debug-history-slider" min="0" max="' + (n - 1) + '" value="' + this.historyIdx + '" data-original-title="Execution history position" aria-label="Execution history position">' +
-      '<span class="tvm-debug-history-pos">' + (this.historyIdx + 1) + ' / ' + n + '</span>' +
-      (this.historyIdx === this.liveIdx
-        ? '<span class="tvm-debug-history-live">● live</span>'
-        : '<span class="tvm-debug-history-rewound">⏮ rewound</span>') +
-      '</div>';
-    // Compact list of recent events
-    html += '<div class="tvm-debug-history-list">';
-    var start = Math.max(0, this.historyIdx - 50);
-    var end = Math.min(n, start + 100);
-    for (var i = start; i < end; i++) {
-      var s = this.history[i];
-      var loc = this.displayLocationForSnapshot(s);
-      var marker = (i === this.historyIdx) ? ' active' : '';
-      var ev = s.event === 'call' ? '↳' : s.event === 'return' ? '↰' : s.event === 'exception' ? '⚠' : '·';
-      html += '<div class="tvm-debug-history-item' + marker + '" data-i="' + i + '">' +
-              '<span class="tvm-debug-history-i">' + (i + 1) + '</span>' +
-              '<span class="tvm-debug-history-ev">' + ev + '</span>' +
-              '<span class="tvm-debug-history-loc">' + this.escape(this.basename(loc.file)) + ':' + loc.line + '</span>' +
-              '</div>';
-    }
-    html += '</div>';
-    view.innerHTML = html;
-    var self = this;
-    var slider = view.querySelector('.tvm-debug-history-slider');
-    if (slider) slider.addEventListener('input', function () {
-      self.historyIdx = +slider.value;
-      self.selectedFrameIdx = -1;
-      self.renderAll();
-    });
-    var items = view.querySelectorAll('.tvm-debug-history-item');
-    for (var i = 0; i < items.length; i++) {
-      (function (it) {
-        it.addEventListener('click', function () {
-          self.historyIdx = +it.getAttribute('data-i');
-          self.selectedFrameIdx = -1;
-          self.renderAll();
-        });
-      })(items[i]);
-    }
+    window.SEBookDebuggerUI.renderHistory(this.viewEl('dbg-history'), this._buildSyncState(),
+      this._handleAction.bind(this), this.languageViewHelpers());
   };
 
   DebuggerController.prototype.renderCurrentLine = function (revealLine) {

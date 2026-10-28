@@ -14,25 +14,33 @@
   }
 
   function attach(editor) {
-    editor.addCommand(monaco.KeyCode.Escape, function () {
-      var editorNode = editor.getDomNode();
-      if (!editorNode) return;
+    // addCommand registers a global binding; with two panes its last handler
+    // can run for the other editor. addAction scopes the binding to editorId.
+    editor.addAction({
+      id: 'sebook.leaveEditor',
+      label: 'Leave code editor',
+      keybindings: [monaco.KeyCode.Escape],
+      precondition: exitWhen,
+      run: function () {
+        var editorNode = editor.getDomNode();
+        if (!editorNode) return;
 
-      // Continue in document order so the next Tab does not re-enter Monaco.
-      var controls = document.querySelectorAll(focusableSelector);
-      for (var i = 0; i < controls.length; i++) {
-        var control = controls[i];
-        if (!isAvailable(control) || editorNode.contains(control)) continue;
-        if (editorNode.compareDocumentPosition(control) & Node.DOCUMENT_POSITION_FOLLOWING) {
-          control.focus();
-          if (document.activeElement === control) return;
+        // Continue in document order so the next Tab does not re-enter Monaco.
+        var controls = document.querySelectorAll(focusableSelector);
+        for (var i = 0; i < controls.length; i++) {
+          var control = controls[i];
+          if (!isAvailable(control) || editorNode.contains(control)) continue;
+          if (editorNode.compareDocumentPosition(control) & Node.DOCUMENT_POSITION_FOLLOWING) {
+            control.focus();
+            if (document.activeElement === control) return;
+          }
         }
-      }
 
-      // A standalone editor may be the last control on the page.
-      document.body.tabIndex = -1;
-      document.body.focus();
-    }, exitWhen);
+        // A standalone editor may be the last control on the page.
+        document.body.tabIndex = -1;
+        document.body.focus();
+      }
+    });
   }
 
   window.SebookMonacoFocusExit = { attach: attach };

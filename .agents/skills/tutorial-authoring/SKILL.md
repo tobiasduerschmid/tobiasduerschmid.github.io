@@ -2687,7 +2687,25 @@ channel.
   is reused by the main editor and popout editors. Empty breakpoint hitboxes
   also paint the shared hover-preview glyph so students can discover where
   breakpoints can be added; keep that math aligned with the glyph-offset CSS
-  variables in `js/debugger/debugger.css`. If a debugger tutorial loads in a
+  variables in `js/debugger/debugger.css`. Keyboard users create source
+  breakpoints with the shared File/Line/Add form under Code Breakpoints;
+  `addBreakpoint` validates a known file and a positive integer line and is
+  idempotent, so submitting an existing breakpoint never removes it. Lines
+  beyond the current file remain pending as the learner edits the file.
+  `ui-render.js` owns the form, native history controls, and panel interaction
+  snapshots used by the Python controller and synchronized language/popout
+  views. Draft inputs and focus survive panel refreshes; editable values,
+  variable expanders, stack frames, and section headings use native buttons.
+  Start hands focus to the Debug tab; ending a session returns toolbar focus
+  to Debug. Function-key stepping is scoped to an active debugger's panel,
+  toolbar, or editor. File-tab activation restores focus after rebuilding the
+  tabs, and arrow navigation keeps one tab stop per file-tab group. These
+  changes reuse existing storage families and add no key bindings. Escape
+  exits the focused Monaco pane through an editor-scoped `addAction`; do not
+  replace it with a global `addCommand`, which can target a hidden split pane.
+  Python Test My Work synchronizes current editor files before grading, so it
+  does not depend on the background autosync debounce or a preceding Run.
+  If a debugger tutorial loads in a
   webview without cross-origin isolation / `SharedArrayBuffer`, `main.js`
   still renders a fallback Debug tab and toolbar Debug button with reload /
   full-browser guidance so the debugger affordance is discoverable instead of

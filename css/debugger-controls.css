@@ -16,10 +16,97 @@
 
 .tvm-bp-dialog .tvm-bp-dialog-title { font-size: 1.2em; }
 
+dialog.tvm-watchpoint-remove-dialog {
+  margin: auto;
+  padding: 0;
+}
+
+dialog.tvm-watchpoint-remove-dialog::backdrop { background: rgba(15, 23, 42, 0.42); }
+html.dark-mode dialog.tvm-watchpoint-remove-dialog::backdrop { background: rgba(2, 6, 23, 0.62); }
+
+.tvm-debug-breakpoint-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 0.6em;
+  margin: 0.6em 0;
+}
+
+.tvm-debug-breakpoint-field {
+  display: flex;
+  flex: 1 1 12em;
+  flex-direction: column;
+  gap: 0.25em;
+  min-width: 0;
+}
+
+.tvm-debug-breakpoint-line-field { flex: 0 1 9em; }
+
+.tvm-debug-view :is(input, select, button),
+.tvm-debug-breakpoint-field {
+  font: inherit;
+}
+
+.tvm-debug-breakpoint-form :is(input, select, button) {
+  min-height: 2em;
+  min-width: 0;
+  max-width: 100%;
+  padding: 0.3em 0.5em;
+  border: 1px solid #767676;
+  border-radius: 3px;
+  background: #fff;
+  color: #1a1a1a;
+}
+
+.tvm-debug-breakpoint-form .tvm-debug-breakpoint-add {
+  background: #ffd100;
+  color: #1a1a1a;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+html.dark-mode .tvm-debug-breakpoint-form :is(input, select, button) {
+  border-color: #a3a3a3;
+  background: #252526;
+  color: #f1f1f1;
+}
+
+html.dark-mode .tvm-debug-breakpoint-form .tvm-debug-breakpoint-add {
+  background: #ffd100;
+  color: #1a1a1a;
+}
+
+.tvm-debug-breakpoint-form :disabled { opacity: 0.65; cursor: default; }
+
+.tvm-debug-view button.tvm-debug-var-editable {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px dashed currentColor;
+  min-height: 28px;
+  padding: 0.1em 0.25em;
+  text-align: left;
+  cursor: pointer;
+}
+
+.tvm-debug-view button.tvm-debug-var-editable:hover,
+html.dark-mode .tvm-debug-view button.tvm-debug-var-editable:hover {
+  background: rgba(255, 209, 0, 0.18);
+}
+
 .tvm-debug-toolbar .tvm-debug-status {
   font-size: max(1em, var(--font-size-readable-min, 16px));
   font-style: normal;
   text-transform: none;
+}
+
+/* The popout mounts the toolbar on its host, not inside it. Do not let the
+   inline toolbar's flex growth consume the detached window's content area. */
+.tdp-toolbar-host.tvm-debug-toolbar {
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  width: 100%;
+  margin-left: 0;
 }
 
 .tvm-debug-view :is(
@@ -148,10 +235,37 @@ html:not(.dark-mode) .monaco-editor :is(.tvm-debug-current-line-rewound, .tvm-de
 }
 
 @media print {
+  .tvm-bp-dialog-backdrop { display: none; }
+
+  .tvm-debug-breakpoint-form :is(input, select, button),
+  html.dark-mode .tvm-debug-breakpoint-form :is(input, select, button) {
+    background: #fff;
+    color: #111;
+    border-color: #111;
+  }
+
+  .tvm-debug-view button.tvm-debug-var-editable,
+  html.dark-mode .tvm-debug-view button.tvm-debug-var-editable {
+    background: transparent;
+    color: #111;
+  }
+
   .tvm-debug-view,
   html.dark-mode .tvm-debug-view {
     background: #fff;
     color: #111;
+  }
+
+  .tvm-debug-view :is(.tvm-dbg-section-head, .tvm-debug-subsection-head, .tvm-debug-manager-heading),
+  html.dark-mode .tvm-debug-view :is(.tvm-dbg-section-head, .tvm-debug-subsection-head, .tvm-debug-manager-heading) {
+    background: #fff;
+    color: #111;
+  }
+
+  .tvm-debug-view input::placeholder,
+  html.dark-mode .tvm-debug-view input::placeholder {
+    color: #555;
+    opacity: 1;
   }
 
   .tvm-debug-view :is(button, input, select):focus-visible,

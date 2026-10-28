@@ -27,6 +27,7 @@
   'use strict';
 
   var UNCHANGED = 'UNCHANGED';
+  const pendingVariableFocus = new WeakMap();
 
   function escapeHtml(s) {
     return String(s == null ? '' : s)
@@ -131,6 +132,136 @@
     };
   }
 
+  /** Capture local drafts and focus before replacing a panel's markup.
+   * Stable data-debug-focus keys identify controls. data-debug-draft="true"
+   * keeps an unsent value; "focus" keeps it only while that field is active.
+   */
+  function capturePanelInteraction(view) {
+    const active = view.ownerDocument.activeElement;
+    const focused = view.contains(active) ? active : null;
+    const drafts = {};
+    view.querySelectorAll('[data-debug-draft][data-debug-focus]').forEach(function (field) {
+      if (field.dataset.debugDraft === 'true' || field === focused) {
+        drafts[field.dataset.debugFocus] = field.value;
+      }
+    });
+    return {
+      key: focused && focused.dataset.debugFocus,
+      drafts: drafts,
+      selectionStart: focused && focused.selectionStart,
+      selectionEnd: focused && focused.selectionEnd,
+      selectionDirection: focused && focused.selectionDirection,
+    };
+  }
+
+  /** Restore a captured panel without moving focus from another panel.
+   * The optional fallback is used only when the focused control disappeared.
+   */
+  function restorePanelInteraction(view, snapshot, fallbackSelector) {
+    if (!snapshot) return;
+    let focused = null;
+    view.querySelectorAll('[data-debug-focus]').forEach(function (control) {
+      const key = control.dataset.debugFocus;
+      if (Object.prototype.hasOwnProperty.call(snapshot.drafts, key)) {
+        const value = snapshot.drafts[key];
+        if (control.tagName !== 'SELECT' || Array.from(control.options).some(function (option) { return option.value === value; })) {
+          control.value = value;
+        }
+      }
+      if (key === snapshot.key) focused = control;
+    });
+    if (!snapshot.key) return;
+    if (!isAvailableControl(focused)) focused = fallbackSelector && view.querySelector(fallbackSelector);
+    if (!isAvailableControl(focused)) {
+      focused = Array.from(view.querySelectorAll('[data-debug-focus]')).find(isAvailableControl);
+    }
+    if (!focused) return;
+    focused.focus({ preventScroll: true });
+    if (typeof snapshot.selectionStart === 'number' && focused.setSelectionRange &&
+        (focused.type === 'text' || focused.tagName === 'TEXTAREA')) {
+      focused.setSelectionRange(snapshot.selectionStart, snapshot.selectionEnd, snapshot.selectionDirection);
+    }
+  }
+
+  function isAvailableControl(control) {
+    return !!control && !control.disabled && !control.closest('[inert]') &&
+      control.getClientRects().length > 0 && getComputedStyle(control).visibility !== 'hidden';
+  }
+
+  /** Retain a focused value button only when replay temporarily empties the
+   * variable panel. Deliberate pointer/focus navigation cancels the request.
+   */
+  function retainVariableFocus(view, snapshot) {
+    if (!snapshot.key || !snapshot.key.startsWith('variable:')) return;
+    clearPendingVariableFocus(view);
+    const controller = new AbortController();
+    const doc = view.ownerDocument;
+    pendingVariableFocus.set(view, { snapshot: snapshot, controller: controller });
+    doc.addEventListener('pointerdown', function () { clearPendingVariableFocus(view); }, { signal: controller.signal, capture: true });
+    doc.addEventListener('focusin', function (event) {
+      if (event.target !== doc.body && !view.contains(event.target)) clearPendingVariableFocus(view);
+    }, { signal: controller.signal, capture: true });
+  }
+
+  function clearPendingVariableFocus(view) {
+    const pending = pendingVariableFocus.get(view);
+    if (!pending) return;
+    pending.controller.abort();
+    pendingVariableFocus.delete(view);
+  }
+
+  /** Restore a current interaction, or its retained value after replay. A
+   * pending value waits until editable again; it never focuses a fallback.
+   */
+  function restoreVariableFocus(view, snapshot, fallbackSelector) {
+    if (snapshot.key) {
+      clearPendingVariableFocus(view);
+      restorePanelInteraction(view, snapshot, fallbackSelector);
+      return;
+    }
+    const pending = pendingVariableFocus.get(view);
+    if (!pending) return;
+    const ready = Array.from(view.querySelectorAll('[data-debug-focus]')).some(function (control) {
+      return control.dataset.debugFocus === pending.snapshot.key && isAvailableControl(control);
+    });
+    if (ready) {
+      clearPendingVariableFocus(view);
+      restorePanelInteraction(view, pending.snapshot);
+    }
+  }
+
+  /** Shared keyboard-operable breakpoint entry for the main and popout views. */
+  function breakpointFormHTML(state, helpers) {
+    helpers = defaultHelpers(helpers);
+    const files = state.filesAvailable || [];
+    const selected = files.indexOf(state.activeFile) >= 0 ? state.activeFile : files[0];
+    const disabled = files.length ? '' : ' disabled';
+    return '<form class="tvm-debug-breakpoint-form">' +
+      '<label class="tvm-debug-breakpoint-field"><span>Breakpoint file</span>' +
+      '<select class="tvm-debug-breakpoint-file" data-debug-focus="breakpoint-file" data-debug-draft="true" required' + disabled + '>' +
+      files.map(function (path) {
+        return '<option value="' + helpers.escape(path) + '"' + (path === selected ? ' selected' : '') + '>' + helpers.escape(path) + '</option>';
+      }).join('') + '</select></label>' +
+      '<label class="tvm-debug-breakpoint-field tvm-debug-breakpoint-line-field"><span>Breakpoint line</span>' +
+      '<input class="tvm-debug-breakpoint-line" data-debug-focus="breakpoint-line" data-debug-draft="true" type="number" min="1" step="1" required value="1"' + disabled + '></label>' +
+      '<button type="submit" class="tvm-debug-breakpoint-add" data-debug-focus="breakpoint-add"' + disabled + '>Add breakpoint</button></form>';
+  }
+
+  /** Wire one freshly mounted form, after restoring local draft values. */
+  function wireBreakpointForm(view, state, dispatch) {
+    const form = view.querySelector('.tvm-debug-breakpoint-form');
+    if (!form) return;
+    const file = form.querySelector('.tvm-debug-breakpoint-file');
+    const line = form.querySelector('.tvm-debug-breakpoint-line');
+    form.addEventListener('submit', function (event) {
+      event.preventDefault();
+      if (!form.reportValidity()) return;
+      const lineNumber = line.valueAsNumber;
+      if (!(state.filesAvailable || []).includes(file.value) || !Number.isSafeInteger(lineNumber) || lineNumber < 1) return;
+      dispatch({ type: 'addBreakpoint', path: file.value, line: lineNumber });
+    });
+  }
+
   function watchpointRemovePreferenceKey(tutorialId) {
     return 'tutorial-debug-watchpoint-remove-choice-' + (tutorialId || 'default');
   }
@@ -152,20 +283,19 @@
     } catch (e) { /* localStorage unavailable */ }
   }
 
-  function showRemoveWatchpointDialog(watchpoint) {
+  function showRemoveWatchpointDialog(watchpoint, view) {
     var old = document.querySelector('.tvm-bp-dialog-backdrop');
     if (old && old.parentNode) old.parentNode.removeChild(old);
     return new Promise(function (resolve) {
       var done = false;
       var previousFocus = document.activeElement;
+      const returnFocus = capturePanelInteraction(view);
       var backdrop = document.createElement('div');
       backdrop.className = 'tvm-bp-dialog-backdrop';
       backdrop.setAttribute('role', 'presentation');
 
-      var dialog = document.createElement('div');
-      dialog.className = 'tvm-bp-dialog';
-      dialog.setAttribute('role', 'dialog');
-      dialog.setAttribute('aria-modal', 'true');
+      var dialog = document.createElement('dialog');
+      dialog.className = 'tvm-bp-dialog tvm-watchpoint-remove-dialog';
       dialog.setAttribute('aria-labelledby', 'tvm-wp-remove-dialog-title');
 
       var header = document.createElement('div');
@@ -226,38 +356,50 @@
       dialog.appendChild(body);
       dialog.appendChild(actions);
       backdrop.appendChild(dialog);
-      document.body.appendChild(backdrop);
+      (document.fullscreenElement || document.body).appendChild(backdrop);
 
       function close(result) {
         if (done) return;
         done = true;
-        backdrop.removeEventListener('keydown', onKeydown);
+        dialog.close();
         if (backdrop.parentNode) backdrop.parentNode.removeChild(backdrop);
-        try {
-          if (previousFocus && previousFocus.focus) previousFocus.focus();
-        } catch (e) {}
+        if (previousFocus && previousFocus.isConnected) previousFocus.focus();
+        else restorePanelInteraction(view, returnFocus, '.tvm-debug-watchpoint-input');
         resolve(result);
       }
       function choice(which) {
         close({ choice: which, remember: !!remember.checked });
       }
-      function onKeydown(e) {
-        if (e.key === 'Escape') {
-          e.preventDefault();
-          close(null);
-        } else if (e.key === 'Enter') {
-          e.preventDefault();
-          choice('watch');
+      dialog.addEventListener('cancel', function (event) {
+        event.preventDefault();
+        close(null);
+      });
+      dialog.addEventListener('keydown', function (event) {
+        // Native buttons keep their Enter/Space meaning. The modal owns Tab
+        // and Escape, so debugger shortcuts must not handle these events.
+        event.stopPropagation();
+        if (event.key !== 'Tab') return;
+        const first = remember;
+        const last = keep;
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first.focus();
         }
-      }
-      backdrop.addEventListener('keydown', onKeydown);
-      backdrop.addEventListener('mousedown', function (e) {
-        if (e.target === backdrop) close(null);
+      });
+      dialog.addEventListener('click', function (event) {
+        if (event.target !== dialog) return;
+        const bounds = dialog.getBoundingClientRect();
+        if (event.clientX < bounds.left || event.clientX > bounds.right ||
+            event.clientY < bounds.top || event.clientY > bounds.bottom) close(null);
       });
       cancel.addEventListener('click', function () { close(null); });
       del.addEventListener('click', function () { choice('delete'); });
       keep.addEventListener('click', function () { choice('watch'); });
-      setTimeout(function () { keep.focus(); }, 0);
+      dialog.showModal();
+      cancel.focus();
     });
   }
 
@@ -390,10 +532,13 @@
   function renderVariables(view, state, dispatch, helpers) {
     if (!view) return;
     helpers = defaultHelpers(helpers);
+    const expandedValues = captureExpandedVariables(view);
+    const interaction = capturePanelInteraction(view);
     const viewRoot = view.closest('.tvm-debug-view');
     if (viewRoot) viewRoot.classList.toggle('tvm-debug-haskell', state.backend === 'haskell');
     var hi = state.historyIdx;
     if (hi == null || hi < 0 || !state.history || !state.history[hi]) {
+      retainVariableFocus(view, interaction);
       view.innerHTML = '<div class="tvm-debug-empty">' +
         (state.backend === 'haskell' ? 'Start debugging to see bindings.' : 'Start debugging to see variables.') +
         '</div>';
@@ -408,6 +553,7 @@
     if (state.backend === 'haskell') {
       view.innerHTML = renderHaskellBindings(frame, snap, frameIdx, helpers);
       wireSubsectionToggles(view, helpers);
+      restoreVariableFocus(view, interaction, '.tvm-debug-subsection-head');
       return;
     }
     var html = renderSubsection('locals', 'Locals · ' + helpers.escape(frame.function),
@@ -429,15 +575,17 @@
     }
     view.innerHTML = html;
     wireExpanders(view);
+    restoreExpandedVariables(view, expandedValues);
     wireSubsectionToggles(view, helpers);
     wireVarEdits(view, dispatch);
+    restoreVariableFocus(view, interaction, '.tvm-debug-subsection-head');
   }
 
   function renderSubsection(key, label, contentHtml, helpers) {
     var collapsed = helpers.getSubsectionCollapsed(key);
     return '<div class="tvm-debug-subsection' + (collapsed ? ' collapsed' : '') +
            '" data-subsection="' + key + '">' +
-           '<button type="button" class="tvm-debug-subsection-head" aria-expanded="' + !collapsed + '">' +
+           '<button type="button" class="tvm-debug-subsection-head" data-debug-focus="subsection:' + helpers.escape(key) + '" aria-expanded="' + !collapsed + '">' +
            '<span class="tvm-debug-subsection-chevron" aria-hidden="true">▾</span>' +
            '<span class="tvm-debug-subsection-title">' + label + '</span>' +
            '</button>' +
@@ -495,10 +643,10 @@
     if (!val) return '';
     var nameHtml = '<span class="tvm-debug-var-name">' + helpers.escape(name) + '</span>';
     var typeHtml = '<span class="tvm-debug-var-type">' + helpers.escape(val.type || (val.kind === 'primitive' ? '' : val.kind) || '') + '</span>';
-    var editAttr = editKey ? ' data-edit-key="' + helpers.escape(editKey) + '" data-original-title="Click to edit"' : '';
-    var valueHtml = '<span class="tvm-debug-var-value' + (editKey ? ' tvm-debug-var-editable' : '') + '"' + editAttr +
+    var editAttr = editKey ? ' type="button" data-edit-key="' + helpers.escape(editKey) + '" data-debug-focus="variable:' + helpers.escape(editKey) + '" aria-label="' + helpers.escape('Edit ' + name + ': ' + (val.repr || val.preview || '') + (val.note ? ' (' + val.note + ')' : '')) + '"' : '';
+    var valueHtml = '<' + (editKey ? 'button' : 'span') + ' class="tvm-debug-var-value' + (editKey ? ' tvm-debug-var-editable' : '') + '"' + editAttr +
                     '>' + helpers.escape(val.repr || val.preview || '') +
-                    (val.note ? ' <span class="tvm-debug-var-type">(' + helpers.escape(val.note) + ')</span>' : '') + '</span>';
+                    (val.note ? ' <span class="tvm-debug-var-type">(' + helpers.escape(val.note) + ')</span>' : '') + '</' + (editKey ? 'button' : 'span') + '>';
     var hasChildren = val.kind === 'collection' || (val.kind === 'object' && val.attrs && Object.keys(val.attrs).length);
     var expander = hasChildren
       ? '<button type="button" class="tvm-debug-expander" data-expanded="false" aria-expanded="false" aria-label="Expand ' + helpers.escape(name) + '">▶</button>'
@@ -557,6 +705,37 @@
     }
   }
 
+  function tagVariableExpanders(view) {
+    view.querySelectorAll('.tvm-debug-expander').forEach(function (control) {
+      const names = [];
+      let row = control.parentElement;
+      while (row) {
+        names.unshift(row.querySelector('.tvm-debug-var-name').textContent);
+        const children = row.parentElement.closest('.tvm-debug-var-children');
+        row = children ? children.previousElementSibling : null;
+      }
+      const subsection = control.closest('[data-subsection]');
+      control.dataset.debugFocus = 'expand:' + subsection.dataset.subsection + ':' + JSON.stringify(names);
+    });
+  }
+
+  /** Capture expanded value paths before replacing variable rows. Call before
+   * capturePanelInteraction so the focused expander has its stable path key.
+   */
+  function captureExpandedVariables(view) {
+    tagVariableExpanders(view);
+    return new Set(Array.from(view.querySelectorAll('.tvm-debug-expander[data-expanded="true"]'))
+      .map(function (control) { return control.dataset.debugFocus; }));
+  }
+
+  /** Restore after wiring expander buttons, before restoring panel focus. */
+  function restoreExpandedVariables(view, expanded) {
+    tagVariableExpanders(view);
+    view.querySelectorAll('.tvm-debug-expander').forEach(function (control) {
+      if (expanded.has(control.dataset.debugFocus) && control.getAttribute('data-expanded') !== 'true') control.click();
+    });
+  }
+
   function wireVarEdits(view, dispatch) {
     var editables = view.querySelectorAll('.tvm-debug-var-editable');
     for (var k = 0; k < editables.length; k++) {
@@ -577,31 +756,41 @@
     input.className = 'tvm-debug-var-edit-input';
     input.value = originalText;
     input.setAttribute('spellcheck', 'false');
+    input.setAttribute('aria-label', 'New value for ' + name);
     valueEl.replaceWith(input);
     input.focus();
     input.select();
     var done = false;
-    function commit() {
+    function commit(restoreFocus) {
       if (done) return; done = true;
       var expr = input.value;
       var unchanged = expr === originalText;
       if (!unchanged) {
         valueEl.textContent = expr;
+        valueEl.setAttribute('aria-label', 'Edit ' + name + ': ' + expr);
         valueEl.classList.add('tvm-debug-var-edit-pending');
         valueEl.setAttribute('data-original-title', 'Applying edit… (was: ' + originalText + ')');
         valueEl.removeAttribute('title');
       }
       input.replaceWith(valueEl);
+      if (restoreFocus) valueEl.focus({ preventScroll: true });
       if (!unchanged) {
         dispatch({ type: 'editVariable', scope: scope, frameIdx: frameIdx, name: name, expr: expr });
       }
     }
-    function cancel() { if (done) return; done = true; input.replaceWith(valueEl); }
+    function cancel() {
+      if (done) return;
+      done = true;
+      input.replaceWith(valueEl);
+      valueEl.focus({ preventScroll: true });
+    }
     input.addEventListener('keydown', function (e) {
-      if (e.key === 'Enter') { e.preventDefault(); commit(); }
-      else if (e.key === 'Escape') { e.preventDefault(); cancel(); }
+      if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); commit(true); }
+      else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); cancel(); }
     });
-    input.addEventListener('blur', commit);
+    input.addEventListener('blur', function () {
+      setTimeout(function () { if (input.isConnected) commit(false); }, 0);
+    });
   }
 
   function resolveVarLocal(state, snap, frameIdx, scope, name) {
@@ -654,6 +843,7 @@
   function renderCallStack(view, state, dispatch, helpers) {
     if (!view) return;
     helpers = defaultHelpers(helpers);
+    const interaction = capturePanelInteraction(view);
     var hi = state.historyIdx;
     if (hi == null || hi < 0 || !state.history || !state.history[hi]) {
       view.innerHTML = '<div class="tvm-debug-empty">Start debugging to see the call stack.</div>';
@@ -667,7 +857,7 @@
     for (var i = snap.stack.length - 1; i >= 0; i--) {
       var f = displayFrameForSnapshot(snap, i);
       var cls = 'tvm-debug-frame' + (i === selectedIdx ? ' active' : '');
-      rows.push('<button type="button" class="' + cls + '" data-frame-idx="' + i + '" aria-pressed="' + (i === selectedIdx) + '">' +
+      rows.push('<button type="button" class="' + cls + '" data-debug-focus="frame:' + i + '" data-frame-idx="' + i + '" aria-pressed="' + (i === selectedIdx) + '">' +
                 '<span class="tvm-debug-frame-fn">' + helpers.escape(f.invocation || f.function) + '</span>' +
                 '<span class="tvm-debug-frame-loc">' + helpers.escape(helpers.basename(f.file)) + ':' + f.line + '</span>' +
                 '</button>');
@@ -682,6 +872,7 @@
         });
       })(frames[j]);
     }
+    restorePanelInteraction(view, interaction, '.tvm-debug-frame.active');
   }
 
   // -- Watch ----------------------------------------------------------------
@@ -689,6 +880,7 @@
   function renderWatch(view, state, dispatch, helpers) {
     if (!view) return;
     helpers = defaultHelpers(helpers);
+    const interaction = capturePanelInteraction(view);
     if (state.backend === 'haskell') {
       view.innerHTML = '<p class="tvm-debug-language-note">Hover a pattern name in the source to see its type and value. While an equation is being chosen, the editor lists the arguments and every equation.</p>';
       return;
@@ -711,29 +903,28 @@
                 '<span class="tvm-debug-watch-expr">' + helpers.escape(expr) + '</span>' +
                 '<span class="tvm-debug-watch-arrow">→</span>' +
                 '<span class="tvm-debug-watch-val">' + valStr + '</span>' +
-                '<button class="tvm-debug-watch-action tvm-debug-watch-promote" data-i="' + i + '" data-original-title="Watch for data value changes" aria-label="Watch for data value changes">' + debugManagerIcon('dataWatch') + '</button>' +
-                '<button class="tvm-debug-watch-action tvm-debug-watch-remove" data-i="' + i + '" data-original-title="Remove" aria-label="Remove">' + debugManagerIcon('trash') + '</button>' +
+                '<button type="button" class="tvm-debug-watch-action tvm-debug-watch-promote" data-debug-focus="watch-promote:' + helpers.escape(expr) + '" data-i="' + i + '" data-original-title="Watch for data value changes" aria-label="Watch for data value changes: ' + helpers.escape(expr) + '">' + debugManagerIcon('dataWatch') + '</button>' +
+                '<button type="button" class="tvm-debug-watch-action tvm-debug-watch-remove" data-debug-focus="watch-remove:' + helpers.escape(expr) + '" data-i="' + i + '" data-original-title="Remove" aria-label="Remove watch: ' + helpers.escape(expr) + '">' + debugManagerIcon('trash') + '</button>' +
                 '</div>');
     }
     view.innerHTML =
       '<div class="tvm-debug-watch-list">' + rows.join('') + '</div>' +
-      '<div class="tvm-debug-watch-add">' +
-      '<input type="text" class="tvm-debug-watch-input" placeholder="' + (isProlog ? 'Query variable (e.g. X)' : 'Add a Python expression to watch (e.g. len(items))') + '" aria-label="' + (isProlog ? 'Query variable to watch' : 'Watch expression') + '" />' +
-      '<button class="tvm-debug-watch-add-btn">+ Add</button>' +
-      '</div>' +
+      '<form class="tvm-debug-watch-add">' +
+      '<input type="text" class="tvm-debug-watch-input" data-debug-focus="watch-expression" data-debug-draft="true" placeholder="' + (isProlog ? 'Query variable (e.g. X)' : 'Add a Python expression to watch (e.g. len(items))') + '" aria-label="' + (isProlog ? 'Query variable to watch' : 'Watch expression') + '" />' +
+      '<button type="submit" class="tvm-debug-watch-add-btn" data-debug-focus="watch-add">+ Add</button>' +
+      '</form>' +
       (isProlog ? '<p class="tvm-debug-language-note">Watch a named variable from your query. Arbitrary Prolog goals are not evaluated.</p>' :
         (watches.length === 0 ? '<div class="tvm-debug-empty">Watches are evaluated on every step. Avoid expressions with side effects.</div>' : ''));
 
     var input = view.querySelector('.tvm-debug-watch-input');
-    var addBtn = view.querySelector('.tvm-debug-watch-add-btn');
-    function add() {
+    function add(event) {
+      event.preventDefault();
       var expr = (input.value || '').trim();
       if (!expr) return;
-      dispatch({ type: 'addWatch', expr: expr });
       input.value = '';
+      dispatch({ type: 'addWatch', expr: expr });
     }
-    if (addBtn) addBtn.addEventListener('click', add);
-    if (input) input.addEventListener('keydown', function (e) { if (e.key === 'Enter') add(); });
+    view.querySelector('.tvm-debug-watch-add').addEventListener('submit', add);
     var removeBtns = view.querySelectorAll('.tvm-debug-watch-remove');
     for (var i2 = 0; i2 < removeBtns.length; i2++) {
       (function (btn) {
@@ -752,6 +943,7 @@
         });
       })(promoteBtns[p]);
     }
+    restorePanelInteraction(view, interaction, '.tvm-debug-watch-input');
   }
 
   // -- Breakpoint manager --------------------------------------------------
@@ -759,11 +951,7 @@
   function renderBreakpoints(view, state, dispatch, helpers) {
     if (!view) return;
     helpers = defaultHelpers(helpers);
-    // Runtime acknowledgements may refresh this section after a condition
-    // dialog has restored focus to its Edit button.
-    var focusedEdit = view.contains(document.activeElement) && document.activeElement.hasAttribute('data-bp-edit')
-      ? { path: document.activeElement.getAttribute('data-path'), line: document.activeElement.getAttribute('data-line') }
-      : null;
+    const interaction = capturePanelInteraction(view);
     var snap = (state.historyIdx != null && state.historyIdx >= 0 && state.history)
       ? state.history[state.historyIdx]
       : null;
@@ -816,10 +1004,10 @@
         '</div>';
     });
     var watchpointControls =
-      '<div class="tvm-debug-manager-add">' +
-      '<input type="text" class="tvm-debug-watchpoint-input" placeholder="' + (state.backend === 'prolog' ? 'Query variable (e.g. X)' : 'Break when expression changes value') + '" aria-label="' + (state.backend === 'prolog' ? 'Query variable for data watchpoint' : 'Data watchpoint expression') + '" />' +
-      '<button class="tvm-debug-watchpoint-add-btn">' + debugManagerIcon('plus') + '<span>Add Data Watchpoint</span></button>' +
-      '</div>' +
+      '<form class="tvm-debug-manager-add tvm-debug-watchpoint-add">' +
+      '<input type="text" class="tvm-debug-watchpoint-input" data-debug-focus="watchpoint-expression" data-debug-draft="true" placeholder="' + (state.backend === 'prolog' ? 'Query variable (e.g. X)' : 'Break when expression changes value') + '" aria-label="' + (state.backend === 'prolog' ? 'Query variable for data watchpoint' : 'Data watchpoint expression') + '" />' +
+      '<button type="submit" class="tvm-debug-watchpoint-add-btn" data-debug-focus="watchpoint-add">' + debugManagerIcon('plus') + '<span>Add Data Watchpoint</span></button>' +
+      '</form>' +
       '<div class="tvm-debug-manager-actions">' +
       '<button class="tvm-debug-manager-run" data-wp-run-all="1">' + debugManagerIcon('playData') + '<span>Run to Data Change</span></button>' +
       '<button class="tvm-debug-manager-run" data-wp-back-all="1">' + debugManagerIcon('backData') + '<span>Run Back to Data Change</span></button>' +
@@ -858,7 +1046,7 @@
     view.innerHTML =
       '<div class="tvm-debug-manager">' +
       renderBreakpointGroup('manager-code-breakpoints', 'Code Breakpoints',
-        bpRows.length ? bpRows.join('') : '<div class="tvm-debug-empty-row">No code breakpoints.</div>', helpers) +
+        (bpRows.length ? bpRows.join('') : '<div class="tvm-debug-empty-row">No code breakpoints.</div>') + breakpointFormHTML(state, helpers), helpers) +
       (state.backend === 'haskell' ? '' : renderBreakpointGroup('manager-data-watchpoints', 'Data Watchpoints',
         (wpRows.length ? wpRows.join('') : '<div class="tvm-debug-empty-row">No data watchpoints.</div>') + watchpointControls, helpers)) +
       (state.backend === 'prolog' || state.backend === 'haskell' ? '' : renderBreakpointGroup('manager-exception-breakpoints', 'Exception Breakpoints',
@@ -866,26 +1054,41 @@
       '</div>';
 
     var input = view.querySelector('.tvm-debug-watchpoint-input');
-    var addBtn = view.querySelector('.tvm-debug-watchpoint-add-btn');
-    function add() {
+    const addForm = view.querySelector('.tvm-debug-watchpoint-add');
+    function add(event) {
+      event.preventDefault();
       var expr = (input && input.value || '').trim();
       if (!expr) return;
-      dispatch({ type: 'addWatchpoint', expr: expr });
       if (input) input.value = '';
+      dispatch({ type: 'addWatchpoint', expr: expr });
     }
-    if (addBtn) addBtn.addEventListener('click', add);
-    if (input) input.addEventListener('keydown', function (e) { if (e.key === 'Enter') add(); });
+    if (addForm) addForm.addEventListener('submit', add);
+    tagManagerControls(view);
     wireManagerButtons(view, state, dispatch);
     wireBreakpointGroups(view, helpers);
-    if (focusedEdit) {
-      var editButtons = view.querySelectorAll('[data-bp-edit]');
-      for (var i = 0; i < editButtons.length; i++) {
-        if (editButtons[i].getAttribute('data-path') === focusedEdit.path && editButtons[i].getAttribute('data-line') === focusedEdit.line) {
-          editButtons[i].focus({ preventScroll: true });
-          break;
+    restorePanelInteraction(view, interaction, '.tvm-debug-breakpoint-file');
+    wireBreakpointForm(view, state, dispatch);
+  }
+
+  function tagManagerControls(view) {
+    const attributes = ['bp-edit', 'bp-remove', 'wp-toggle', 'wp-run', 'wp-back', 'wp-remove', 'wp-run-all', 'wp-back-all',
+      'exc-toggle', 'exc-type', 'exc-mode', 'exc-run', 'exc-back', 'exc-remove', 'exc-add', 'exc-run-all', 'exc-back-all', 'manager-group-toggle'];
+    attributes.forEach(function (attribute) {
+      view.querySelectorAll('[data-' + attribute + ']').forEach(function (control) {
+        let identity = control.getAttribute('data-' + attribute);
+        let prefix = attribute;
+        if (attribute === 'bp-edit' || attribute === 'bp-remove') {
+          prefix = attribute === 'bp-edit' ? 'breakpoint-edit' : 'breakpoint-remove';
+          identity = control.dataset.path + ':' + control.dataset.line;
         }
-      }
-    }
+        if (attribute === 'exc-mode') identity += ':' + control.value;
+        if (attribute === 'exc-type') {
+          prefix = 'exception-type';
+          control.dataset.debugDraft = 'focus';
+        }
+        control.dataset.debugFocus = prefix + ':' + identity;
+      });
+    });
   }
 
   function renderBreakpointGroup(key, label, bodyHtml, helpers) {
@@ -980,7 +1183,7 @@
               break;
             }
           }
-          showRemoveWatchpointDialog(wp).then(function (result) {
+          showRemoveWatchpointDialog(wp, view).then(function (result) {
             if (!result || !result.choice) return;
             send(result.choice, !!result.remember);
           });
@@ -1001,10 +1204,28 @@
     var excTypes = view.querySelectorAll('[data-exc-type]');
     for (var ety = 0; ety < excTypes.length; ety++) {
       (function (el) {
-        var commit = function () { dispatch({ type: 'editExceptionBreakpoint', id: el.getAttribute('data-exc-type'), type: el.value }); };
-        el.addEventListener('change', commit);
-        el.addEventListener('blur', commit);
-        el.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); el.blur(); } });
+        let committedValue = el.value;
+        function commit(value) {
+          if (value === committedValue) return;
+          committedValue = value;
+          dispatch({ type: 'editExceptionBreakpoint', id: el.getAttribute('data-exc-type'), exceptionType: committedValue });
+        }
+        el.addEventListener('blur', function (event) {
+          const value = el.value;
+          const nextControl = event.relatedTarget;
+          // A microtask can run before native Tab focus settles. Wait until
+          // the focus/click sequence finishes; ignore blur caused by redraw.
+          setTimeout(function () {
+            if (el.isConnected || nextControl) commit(value);
+          }, 0);
+        });
+        el.addEventListener('keydown', function (event) {
+          if (event.key === 'Enter') {
+            event.preventDefault();
+            event.stopPropagation();
+            commit(el.value);
+          }
+        });
       })(excTypes[ety]);
     }
     var excModes = view.querySelectorAll('[data-exc-mode]');
@@ -1107,6 +1328,14 @@
   }
 
   window.SEBookDebuggerUI = {
+    capturePanelInteraction: capturePanelInteraction,
+    restorePanelInteraction: restorePanelInteraction,
+    retainVariableFocus: retainVariableFocus,
+    restoreVariableFocus: restoreVariableFocus,
+    captureExpandedVariables: captureExpandedVariables,
+    restoreExpandedVariables: restoreExpandedVariables,
+    breakpointFormHTML: breakpointFormHTML,
+    wireBreakpointForm: wireBreakpointForm,
     renderToolbar: renderToolbar,
     renderDebugView: renderDebugView,
     renderVariables: renderVariables,
