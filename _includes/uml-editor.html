@@ -604,6 +604,15 @@ Supported options:
   // Note schema is shared across diagrams that support `note as id "text"`.
   var NOTE_SCHEMA = { id: 'note', label: 'Note', glyph: '✎', base: 'N', keyword: 'note', supports: { displayLabel: true }, isNote: true };
 
+  // Words the sequence grammar reads at the start of a line. A lifeline with one
+  // of these ids turns its own messages into declarations or fragments.
+  var SEQUENCE_KEYWORDS = ['participant', 'actor', 'activate', 'deactivate', 'create', 'destroy', 'note',
+    'alt', 'opt', 'loop', 'par', 'break', 'critical', 'ref', 'neg', 'else', 'end'];
+
+  function isSequenceKeyword(type, id) {
+    return type === 'sequence' && SEQUENCE_KEYWORDS.indexOf(String(id).toLowerCase()) !== -1;
+  }
+
   var ELEMENT_SCHEMAS = {
     class: [
       { id: 'class',     label: 'Class',     glyph: '▢', base: 'Class',     keyword: 'class',          supports: { stereotype: true, members: true, abstract: true, highlight: true, texture: true } },
@@ -613,7 +622,7 @@ Supported options:
       NOTE_SCHEMA
     ],
     sequence: [
-      { id: 'actor',       label: 'Actor',       glyph: '☺', base: 'actor',  keyword: 'actor',       supports: { displayLabel: true, highlight: true, texture: true } },
+      { id: 'actor',       label: 'Actor',       glyph: '☺', base: 'user',   keyword: 'actor',      supports: { displayLabel: true, highlight: true, texture: true } },
       { id: 'participant', label: 'Participant', glyph: '▭', base: 'p',      keyword: 'participant', supports: { displayLabel: true, highlight: true, texture: true } },
       { id: 'activate',    label: 'Activate',    glyph: '▮', base: 'activate', keyword: 'activate', supports: {}, sequenceControl: 'activate' },
       { id: 'deactivate',  label: 'Deactivate',  glyph: '▯', base: 'deactivate', keyword: 'deactivate', supports: {}, sequenceControl: 'deactivate' },
@@ -2522,11 +2531,19 @@ Supported options:
     function generateUniqueId(text, type, base) {
       var taken = existingIds(text, type);
       var safe = String(base || 'New').replace(/[^A-Za-z0-9_]/g, '') || 'New';
+      function isFree(id) { return !taken[id] && !isSequenceKeyword(type, id); }
       // Try base, base2, base3... so the first new element gets a clean name.
-      if (!taken[safe]) return safe;
+      if (isFree(safe)) return safe;
       var i = 2;
-      while (taken[safe + i]) i++;
+      while (!isFree(safe + i)) i++;
       return safe + i;
+    }
+
+    // Why newId cannot become an element's identifier, or '' when it can.
+    function identifierConflict(text, type, newId) {
+      if (existingIds(text, type)[newId]) return '"' + newId + '" is already used. Pick a different identifier.';
+      if (isSequenceKeyword(type, newId)) return '"' + newId + '" is a sequence-diagram keyword. Pick a different identifier.';
+      return '';
     }
 
     function findInsertPointForDeclaration(lines) {
@@ -2679,10 +2696,10 @@ Supported options:
       }
 
       if (typeSelect.value === 'activity') {
-        var actSrc = formatActivityEndpointId(sourceId);
-        var actTgt = formatActivityEndpointId(targetId);
-        var actLine = actSrc + ' ' + op + ' ' + actTgt;
-        if (label) actLine += ' : ' + label;
+        var actHead = opts.implicitSource ? op : formatActivityEndpointId(sourceId) + ' ' + op;
+        var guard = opts.labelIsGuard ? label : opts.guard;
+        var actLine = actHead + ' ' + (guard ? '[' + guard + '] ' : '') + formatActivityEndpointId(targetId);
+        if (label && !opts.labelIsGuard) actLine += ' : ' + label;
         return actLine;
       }
 
@@ -3829,9 +3846,11 @@ Supported options:
         }
       }
       const port = componentPortForId(text, type, id);
+      // Connectors may name a port by its bare alias (`b_db --> db_in`).
+      const portAlias = port ? port.body.ports[port.index].alias : null;
       if (port) {
         port.body.ports.splice(port.index, 1);
-        text = replaceBlockByMatch(text, type, function (line) { return declarationIdForLine(line, type) === port.owner; }, setBraceBody(port.declaration, buildComponentBody(port.body)));
+        text = replaceBlockByMatch(text, type, function (line) { return declarationIdForLine(line, type) === port.owner; }, setComponentBody(port.declaration, port.body));
         lines = stripLayoutMetadata(text).split('\n');
         routes = readLayoutRoutes(text);
       }
@@ -3853,7 +3872,7 @@ Supported options:
           continue;
         }
         const noteBlock = /^note\b/i.test(t) && t.indexOf(':') < 0;
-        if (referenceSpans(line, type).some(function (span) { return idIsReferenceTo(span.value, id); })) {
+        if (referenceSpans(line, type).some(function (span) { return idIsReferenceTo(span.value, id) || (portAlias !== null && span.value === portAlias); })) {
           let end = i;
           if (noteBlock) while (end + 1 < lines.length && !/^\s*end\s*note\s*$/i.test(lines[end])) end++;
           edits.push({ start: i, end: end });
@@ -4633,8 +4652,9 @@ Supported options:
     function updateSequenceParticipant(record, nextKind, nextId, nextLabel) {
       var oldId = record.id;
       var newId = (nextId || oldId).trim() || oldId;
-      if (newId !== oldId && existingIds(textarea.value, 'sequence')[newId]) {
-        announce('"' + newId + '" is already used. Pick a different identifier.', true);
+      var conflict = newId !== oldId && identifierConflict(textarea.value, 'sequence', newId);
+      if (conflict) {
+        announce(conflict, true);
         return;
       }
       var kind = nextKind === 'actor' ? 'actor' : 'participant';
@@ -5400,9 +5420,7 @@ Supported options:
       var parsed = parseComponentBody(body);
       var kind = spec.isInterface ? spec.interfaceKind : spec.portKind;
       parsed.ports.push({ kind: kind, label: label, alias: newPortId, dashed: false });
-      var newBody = buildComponentBody(parsed);
-      var newLine = setBraceBody(line, newBody);
-      replaceLineForElementId(componentId, newLine);
+      replaceLineForElementId(componentId, setComponentBody(line, parsed));
     }
 
     function findDeploymentNodeAtSvgPoint(pt) {
@@ -5450,16 +5468,19 @@ Supported options:
     function selectNewestRelationAfterRender(type) {
       var indices = relationLineIndices(textarea.value, type);
       if (!indices.length) return;
-      var lastSourceLine = indices[indices.length - 1];
-      var routeId;
-      if (type === 'sequence') {
-        routeId = 'seqmsg:' + lastSourceLine;
-      } else if (type === 'class' || type === 'freeform') {
-        routeId = 'rel:' + lastSourceLine;
-      } else {
-        routeId = 'edge-' + (indices.length - 1);
-      }
-      selectAfterRender(routeId, 'route');
+      // Not every renderer names routes by source line, so the new line's
+      // route is found once the diagram has been drawn.
+      pendingSelect = { sourceLine: indices[indices.length - 1], kind: 'route' };
+    }
+
+    function routeIdForSourceLine(svg, lineIdx) {
+      var type = typeSelect.value;
+      var lines = stripLayoutMetadata(textarea.value).split('\n');
+      var indices = relationLineIndices(textarea.value, type);
+      var route = findEditableRoutes(svg).find(function (candidate) {
+        return relationLineMatchForRouteId(String(candidate.id), type, lines, indices).lineIdx === lineIdx;
+      });
+      return route ? route.id : null;
     }
 
     // ─── Hover-to-extend "+" handle + relation chooser popup ───
@@ -5581,6 +5602,16 @@ Supported options:
         { separator: true },
         { label: 'Delete', kbd: 'Del', danger: true, onClick: function () { setSelectedLayoutId(item.id, 'node'); deleteSelected(); } }
       ];
+      if (selectedClassForActions()) {
+        const memberActions = ['attribute', 'method'].map(function (kind) {
+          return { label: 'Add ' + kind, onClick: function () {
+            setActiveTool(null);
+            setSelectedLayoutId(item.id, 'node');
+            openClassMemberForm(kind, kind === 'attribute' ? classAttributeButton : classMethodButton);
+          } };
+        });
+        items.splice(1, 0, ...memberActions);
+      }
       showContextMenu(clientX, clientY, items);
     }
 
@@ -6747,7 +6778,12 @@ Supported options:
         : 'For example: -balance: int. ') +
         'Use + public, - private, # protected, or ~ package visibility; {static} and {abstract} are optional. Enter adds; Escape cancels.';
       classMemberForm.hidden = false;
-      classMemberInput.focus();
+      if (wrap.classList.contains('is-fullscreen')) {
+        classActions.scrollIntoView({ block: 'center', inline: 'nearest' });
+        classMemberInput.focus({ preventScroll: true });
+      } else {
+        classMemberInput.focus();
+      }
     }
 
     function classMemberValidationError(signature, kind) {
@@ -7742,9 +7778,7 @@ Supported options:
         compFs.appendChild(compList);
 
         function commitComp() {
-          var newBody = buildComponentBody(parsedComp);
-          var newLine = setBraceBody(line, newBody);
-          replaceLineForElementId(id, newLine);
+          replaceLineForElementId(id, setComponentBody(line, parsedComp));
         }
         function renderPorts() {
           compList.textContent = '';
@@ -8215,7 +8249,7 @@ Supported options:
       return { ports: ports, raw: raw };
     }
 
-    function buildComponentBody(parsed) {
+    function buildComponentBody(parsed, separator) {
       var pieces = parsed.ports.map(function (p) {
         var s = (p.kind || 'portin') + ' "' + escapeQuoted(p.label || '') + '"';
         if (p.alias && p.alias !== p.label) s += ' as ' + p.alias;
@@ -8223,7 +8257,13 @@ Supported options:
         return s;
       });
       pieces = pieces.concat(parsed.raw);
-      return pieces.join('; ');
+      return pieces.join(separator);
+    }
+
+    // ArchUML splits a one-line body on ';' and a multi-line body on newlines,
+    // so a rebuilt component keeps its declaration's form.
+    function setComponentBody(declaration, parsed) {
+      return setBraceBody(declaration, buildComponentBody(parsed, /\n/.test(declaration) ? '\n' : '; '));
     }
 
     function parseDeploymentNodeBody(body) {
@@ -8558,8 +8598,9 @@ Supported options:
       if (!newId || newId === oldId) return;
       var type = typeSelect.value;
       var taken = existingIds(textarea.value, type);
-      if (taken[newId]) {
-        announce('"' + newId + '" is already used. Pick a different identifier.', true);
+      var conflict = identifierConflict(textarea.value, type, newId);
+      if (conflict) {
+        announce(conflict, true);
         return;
       }
       var sourceText = textarea.value;
@@ -8573,9 +8614,12 @@ Supported options:
         newId = port.owner + '.' + alias;
         if (taken[newId]) { announce('"' + newId + '" is already used. Pick a different identifier.', true); return; }
         snapshotForUndo();
+        const oldAlias = port.body.ports[port.index].alias;
         port.body.ports[port.index].alias = alias;
-        sourceText = replaceBlockByMatch(sourceText, type, function (line) { return declarationIdForLine(line, type) === port.owner; }, setBraceBody(port.declaration, buildComponentBody(port.body)));
-        textarea.value = renameReferencesInRelations(sourceText, oldId, newId);
+        sourceText = replaceBlockByMatch(sourceText, type, function (line) { return declarationIdForLine(line, type) === port.owner; }, setComponentBody(port.declaration, port.body));
+        sourceText = renameReferencesInRelations(sourceText, oldId, newId);
+        // Connectors may also name the port by its bare alias (`b_db --> db_in`).
+        textarea.value = renameReferencesInRelations(sourceText, oldAlias, alias);
         selectAfterRender(newId, 'node');
         renderDiagram();
         return;
@@ -8602,6 +8646,107 @@ Supported options:
       textarea.value = sourceText;
       selectAfterRender(newId, 'node');
       renderDiagram();
+    }
+
+    // The drawn endpoints of a route whose id is an ordinal (edge-N, usecase:N).
+    function drawnRouteEndpoints(routeId, lines) {
+      const usecase = routeId.match(/^usecase:(\d+)$/);
+      if (usecase) {
+        // Use-case routes carry no endpoint attributes; the ordinal indexes
+        // the parser's relationships.
+        const relationship = window.UMLUseCaseDiagram.parse(lines.join('\n')).relationships[Number(usecase[1])];
+        return relationship ? { source: relationship.from, target: relationship.to, label: '' } : null;
+      }
+      const svg = output.querySelector('svg');
+      const selector = '[data-layout-route-id="' + cssAttrEscape(routeId) + '"]';
+      const route = svg && svg.querySelector(selector + '[data-layout-source]');
+      if (!route) return null;
+      const label = svg.querySelector(selector + '[data-layout-kind="edge-label"]');
+      return {
+        source: route.getAttribute('data-layout-source'),
+        target: route.getAttribute('data-layout-target'),
+        label: label ? label.textContent.trim() : ''
+      };
+    }
+
+    // Each relation line's endpoints in the ids the renderer draws: connectors
+    // may name a port by its bare alias, and every state [*] is its own
+    // numbered pseudostate.
+    function drawnRelationEndpoints(type, lines, relationIndices) {
+      const portOwners = {};
+      if (type === 'component') {
+        window.UMLComponentDiagram.parse(lines.join('\n')).components.forEach(function (component) {
+          (component.ports || []).forEach(function (port) { portOwners[port.alias] = component.name; });
+        });
+      }
+      function componentEndpoint(token) {
+        const id = String(token || '').replace(/^\[(.+)\]$/, '$1');
+        return Object.prototype.hasOwnProperty.call(portOwners, id) ? portOwners[id] + '.' + id : id;
+      }
+      let initials = 0;
+      let finals = 0;
+      return relationIndices.map(function (lineIdx) {
+        const info = parseRelationLine(lines[lineIdx]);
+        normalizeRelationInfoForType(info, type, lines[lineIdx]);
+        let source = info.source;
+        let target = info.target;
+        if (type === 'state') {
+          if (source === '[*]') source = '__initial__' + initials++;
+          if (target === '[*]') target = '__final__' + finals++;
+        } else if (type === 'component') {
+          source = componentEndpoint(source);
+          target = componentEndpoint(target);
+        }
+        return { lineIdx: lineIdx, source: source, target: target, label: info.label || '' };
+      });
+    }
+
+    function routeIdIsDrawn(svg, routeId) {
+      return !!svg.querySelector('[data-layout-route-id="' + cssAttrEscape(routeId) + '"]');
+    }
+
+    // The route collector numbers a line the renderer draws without an id,
+    // such as a line of a generalization tree, so its id names no endpoints.
+    // It belongs to the one relation without a named route whose ends include
+    // every element the line touches. A line that touches nothing, or one
+    // shared by several such relations (a tree's trunk), resolves to -1.
+    function relationLineForUnnamedRoute(svg, routeId, type, lines, relationIndices) {
+      const routes = findEditableRoutes(svg);
+      const route = routes.find(function (candidate) { return candidate.id === routeId; });
+      if (!route) return -1;
+      const touched = findEditableElements(svg).filter(function (item) {
+        return item.axis !== 'label' && item.axis !== 'branch-label' &&
+          (routeEndpointTouchesItem(route, 0, item) || routeEndpointTouchesItem(route, route.points.length - 1, item));
+      }).map(function (item) { return item.id; });
+      if (!touched.length) return -1;
+      const named = {};
+      routes.forEach(function (other) {
+        if (routeIdIsDrawn(svg, other.id)) named[relationLineMatchForRouteId(String(other.id), type, lines, relationIndices).lineIdx] = true;
+      });
+      const candidates = drawnRelationEndpoints(type, lines, relationIndices).filter(function (relation) {
+        return !named[relation.lineIdx] && touched.every(function (id) { return id === relation.source || id === relation.target; });
+      });
+      return candidates.length === 1 ? candidates[0].lineIdx : -1;
+    }
+
+    // edge-N and usecase:N count routes in the renderer's drawing or parse
+    // order, not source lines. Accept only the one relation line whose
+    // endpoints (and, between the same pair, label) match the drawn route;
+    // a flow with no line of its own resolves to -1 rather than a guess.
+    function relationLineForOrdinalRoute(routeId, type, lines, relationIndices) {
+      const svg = output.querySelector('svg');
+      if (svg && /^edge-\d+$/.test(routeId) && !routeIdIsDrawn(svg, routeId)) {
+        return relationLineForUnnamedRoute(svg, routeId, type, lines, relationIndices);
+      }
+      const drawn = drawnRouteEndpoints(routeId, lines);
+      if (!drawn) return -1;
+      let candidates = drawnRelationEndpoints(type, lines, relationIndices).filter(function (relation) {
+        return relation.source === drawn.source && relation.target === drawn.target;
+      });
+      if (candidates.length > 1 && drawn.label) {
+        candidates = candidates.filter(function (relation) { return relation.label === drawn.label; });
+      }
+      return candidates.length === 1 ? candidates[0].lineIdx : -1;
     }
 
     function relationLineMatchForRouteId(routeId, type, lines, relationIndices) {
@@ -8641,14 +8786,10 @@ Supported options:
         }
       }
 
-      var ordinalMatch = id.match(/^edge[-:_](\d+)$/);
-      if (ordinalMatch) {
-        var n = Number(ordinalMatch[1]);
+      if (/^(?:edge[-:_]|usecase:)\d+$/.test(id)) {
         var indices = relationIndices || relationLineIndices(lines.join('\n'), type);
-        if (indices[n] != null) {
-          result.lineIdx = indices[n];
-          result.lineText = lines[result.lineIdx];
-        }
+        result.lineIdx = relationLineForOrdinalRoute(id, type, lines, indices);
+        if (result.lineIdx !== -1) result.lineText = lines[result.lineIdx];
       }
       return result;
     }
@@ -8704,6 +8845,14 @@ Supported options:
       var targetId = match.targetId;
       var lineIdx = match.lineIdx;
       var lineText = match.lineText;
+      if (lineIdx === -1) {
+        propsTitle.textContent = 'Relation';
+        var unresolved = document.createElement('p');
+        unresolved.className = 'uml-pg-prop-hint';
+        unresolved.textContent = 'This connection could not be matched to one line of the source, so it cannot be edited here.';
+        propsContent.appendChild(unresolved);
+        return;
+      }
       // Parse to get source/target if we have a line.
       var preInfo = parseRelationLine(lineText);
       normalizeRelationInfoForType(preInfo, type, lineText);
@@ -8739,11 +8888,14 @@ Supported options:
             function (v) { rewireRelationEndpoint(id, lineIdx, info, 'endpoint', v); }
           )));
         } else {
-          propsContent.appendChild(field('Source endpoint', selectInput(
-            endpointOptions,
-            info.source,
-            function (v) { rewireRelationEndpoint(id, lineIdx, info, 'source', v); }
-          )));
+          // A continuation flow's source is whichever step precedes it.
+          if (!info.implicitSource) {
+            propsContent.appendChild(field('Source endpoint', selectInput(
+              endpointOptions,
+              info.source,
+              function (v) { rewireRelationEndpoint(id, lineIdx, info, 'source', v); }
+            )));
+          }
           propsContent.appendChild(field('Target endpoint', selectInput(
             endpointOptions,
             info.target,
@@ -8751,7 +8903,7 @@ Supported options:
           )));
         }
       }
-      propsContent.appendChild(field('Label', textInput(info.label, function (v) {
+      propsContent.appendChild(field(info.labelIsGuard ? 'Guard' : 'Label', textInput(info.label, function (v) {
         info.label = v;
         replaceRelationLine(lineIdx, info);
       })));
@@ -8990,6 +9142,16 @@ Supported options:
         info.op = 'o->';
         return finalizeParsedRelationInfo(info);
       }
+      // An activity continuation (`--> [guard] Target`) flows from the node
+      // before it, such as the decision that opens an if/else branch.
+      var continuation = t.match(/^-->\s*(?:\[([^\]]*)\]\s*)?(\(\*\)|"(?:[^"\\]|\\.)*"|\S+)$/);
+      if (continuation) {
+        info.op = '-->';
+        info.implicitSource = true;
+        info.guard = continuation[1] || '';
+        info.target = continuation[2].charAt(0) === '"' ? unquoteId(continuation[2]) : continuation[2];
+        return finalizeParsedRelationInfo(info);
+      }
       var tokenized = parseTokenizedRelationLine(t);
       if (tokenized) {
         tokenized.label = info.label;
@@ -9094,6 +9256,13 @@ Supported options:
       }
       if (type === 'state' && (op === '-->' || info.kind === 'assoc')) info.kind = 'transition';
       if (type === 'activity' && (op === '-->' || info.kind === 'assoc')) info.kind = 'flow';
+      if (type === 'activity') {
+        // Activity flows carry guards, not multiplicities: `"A" --> [ok] "B"`.
+        if (info.targetMult && !info.guard) { info.guard = info.targetMult; info.targetMult = ''; }
+        // A flow shows one text, and a guard is it unless a `: label` is
+        // written. Edit whichever one the diagram shows.
+        if (info.guard && !info.label) { info.label = info.guard; info.labelIsGuard = true; }
+      }
       if ((type === 'component' || type === 'deployment') && info.kind === 'assoc') info.kind = 'arrow';
       if (type === 'sequence' && op === '-->' && info.kind === 'assoc') info.kind = 'return';
       if (type === 'freeform') {
@@ -9131,6 +9300,16 @@ Supported options:
       return '';
     }
 
+    // Everything buildRelationLine needs to re-emit a parsed relation in its form.
+    function relationLineOptions(info) {
+      return {
+        label: info.label, sourceMult: info.sourceMult, targetMult: info.targetMult,
+        navigability: info.navigability, sourceNavigability: info.sourceNavigability,
+        targetNavigability: info.targetNavigability, stereotype: info.stereotype, dashed: info.dashed,
+        guard: info.guard, labelIsGuard: info.labelIsGuard, implicitSource: info.implicitSource
+      };
+    }
+
     function replaceRelationLine(lineIdx, info) {
       if (lineIdx === -1) return;
       var type = typeSelect.value;
@@ -9138,16 +9317,13 @@ Supported options:
       var spec = rels.find(function (r) { return r.id === info.kind; });
       if (!spec) return;
       snapshotForUndo('rel:' + lineIdx);
-      var newLine = buildRelationLine(spec, info.source, info.target, {
-        label: info.label, sourceMult: info.sourceMult, targetMult: info.targetMult,
-        navigability: info.navigability, sourceNavigability: info.sourceNavigability,
-        targetNavigability: info.targetNavigability, op: info.op, stereotype: info.stereotype, dashed: info.dashed
-      });
+      var newLine = buildRelationLine(spec, info.source, info.target, relationLineOptions(info));
       var positions = readLayoutPositions(textarea.value);
       var routes = readLayoutRoutes(textarea.value);
       var clean = stripLayoutMetadata(textarea.value);
       var lines = clean.split('\n');
-      lines[lineIdx] = newLine;
+      var indent = (lines[lineIdx].match(/^\s*/) || [''])[0];
+      lines[lineIdx] = indent + newLine;
       textarea.value = writePositionsIntoSource(lines.join('\n'), type, positions, routes);
       selectAfterRender(selectedLayoutId, 'route');
       renderDiagram();
@@ -9196,19 +9372,7 @@ Supported options:
       endpointId = String(endpointId || '').trim();
       if (lineIdx === -1 || !endpointId) return;
 
-      var nextInfo = {
-        kind: info.kind,
-        label: info.label,
-        sourceMult: info.sourceMult,
-        targetMult: info.targetMult,
-        navigability: info.navigability,
-        sourceNavigability: info.sourceNavigability,
-        targetNavigability: info.targetNavigability,
-        stereotype: info.stereotype,
-        dashed: info.dashed,
-        source: info.source,
-        target: info.target
-      };
+      var nextInfo = Object.assign({}, info);
 
       if (typeSelect.value === 'sequence' && /^(lost|found)$/.test(nextInfo.kind || '')) {
         if (nextInfo.source === endpointId && nextInfo.target === endpointId) return;
@@ -9237,16 +9401,7 @@ Supported options:
       var clean = stripLayoutMetadata(textarea.value);
       var lines = clean.split('\n');
       var indent = (lines[lineIdx].match(/^\s*/) || [''])[0];
-      lines[lineIdx] = indent + buildRelationLine(spec, nextInfo.source, nextInfo.target, {
-        label: nextInfo.label,
-        sourceMult: nextInfo.sourceMult,
-        targetMult: nextInfo.targetMult,
-        navigability: nextInfo.navigability,
-        sourceNavigability: nextInfo.sourceNavigability,
-        targetNavigability: nextInfo.targetNavigability,
-        stereotype: nextInfo.stereotype,
-        dashed: nextInfo.dashed
-      });
+      lines[lineIdx] = indent + buildRelationLine(spec, nextInfo.source, nextInfo.target, relationLineOptions(nextInfo));
       textarea.value = writePositionsIntoSource(lines.join('\n'), typeSelect.value, positions, routes);
       selectAfterRender(nextRouteId, 'route');
       renderDiagram();
@@ -9278,25 +9433,17 @@ Supported options:
 
     function invertRelationDirection(routeId) {
       var meta = relationInfoForRouteId(routeId);
+      if (meta && meta.info && meta.info.implicitSource) {
+        announce('This flow continues from the step before it, so it has no source to swap.', false);
+        return;
+      }
       if (!meta || meta.lineIdx === -1 || !meta.info || !meta.info.source || !meta.info.target) {
         announce('Could not locate that relation in the source.', false);
         return;
       }
 
       var type = typeSelect.value;
-      var info = {
-        kind: meta.info.kind,
-        label: meta.info.label,
-        sourceMult: meta.info.sourceMult,
-        targetMult: meta.info.targetMult,
-        navigability: meta.info.navigability,
-        sourceNavigability: meta.info.sourceNavigability,
-        targetNavigability: meta.info.targetNavigability,
-        stereotype: meta.info.stereotype,
-        dashed: meta.info.dashed,
-        source: meta.info.source,
-        target: meta.info.target
-      };
+      var info = Object.assign({}, meta.info);
 
       if (type === 'sequence' && (info.kind === 'lost' || info.kind === 'found')) {
         info.kind = info.kind === 'lost' ? 'found' : 'lost';
@@ -9325,16 +9472,7 @@ Supported options:
       var clean = stripLayoutMetadata(textarea.value);
       var lines = clean.split('\n');
       var indent = (lines[meta.lineIdx].match(/^\s*/) || [''])[0];
-      lines[meta.lineIdx] = indent + buildRelationLine(spec, info.source, info.target, {
-        label: info.label,
-        sourceMult: info.sourceMult,
-        targetMult: info.targetMult,
-        navigability: info.navigability,
-        sourceNavigability: info.sourceNavigability,
-        targetNavigability: info.targetNavigability,
-        stereotype: info.stereotype,
-        dashed: info.dashed
-      });
+      lines[meta.lineIdx] = indent + buildRelationLine(spec, info.source, info.target, relationLineOptions(info));
       textarea.value = writePositionsIntoSource(lines.join('\n'), type, positions, routes);
       selectAfterRender(nextRouteId, 'route');
       renderDiagram();
@@ -9428,12 +9566,14 @@ Supported options:
       var routeIdxs = [];
       var elementIds = [];
       var fragmentIds = [];
+      var keptRoutes = 0;
       entries.forEach(function (e) {
         if (e.kind === 'route') {
           var id = String(e.id);
           var lines = stripLayoutMetadata(textarea.value).split('\n');
           var idx = relationLineMatchForRouteId(id, typeSelect.value, lines, rIndices).lineIdx;
           if (idx !== -1) routeIdxs.push(idx);
+          else keptRoutes++;
         } else if (e.kind === 'fragment') {
           fragmentIds.push(String(e.id));
         } else if (e.kind === 'activation') {
@@ -9469,7 +9609,14 @@ Supported options:
       });
       setSelectedLayoutId(null);
       renderDiagram();
-      announce('Deleted ' + entries.length + ' item' + (entries.length === 1 ? '' : 's') + '.', false);
+      var deleted = entries.length - keptRoutes;
+      var message = deleted ? 'Deleted ' + deleted + ' item' + (deleted === 1 ? '' : 's') + '.' : '';
+      if (keptRoutes) {
+        message += (message ? ' ' : '') + (keptRoutes === 1
+          ? 'Kept 1 connection that could not be matched to one line of the source.'
+          : 'Kept ' + keptRoutes + ' connections that could not be matched to one line of the source.');
+      }
+      announce(message, !deleted);
     }
 
     function installRouteEditor(svg, layer) {
@@ -10082,7 +10229,7 @@ Supported options:
       }
       if (pendingSelect) {
         var ps2 = pendingSelect; pendingSelect = null;
-        setSelectedLayoutId(ps2.id, ps2.kind);
+        setSelectedLayoutId(ps2.sourceLine == null ? ps2.id : routeIdForSourceLine(svg, ps2.sourceLine), ps2.kind);
       }
       revealSelectedLayoutTarget();
       if (initialCanvasRevealPending) {
@@ -10271,8 +10418,9 @@ Supported options:
       var parsed = parseSequenceHeadText(newHeadText, id);
       if (!parsed || !parsed.id || !parsed.label) return;
       var newId = parsed.id;
-      if (newId !== id && existingIds(textarea.value, 'sequence')[newId]) {
-        announce('"' + newId + '" is already used. Pick a different identifier.', true);
+      var conflict = newId !== id && identifierConflict(textarea.value, 'sequence', newId);
+      if (conflict) {
+        announce(conflict, true);
         return;
       }
       var kind = /^actor\b/i.test(line.trim()) ? 'actor' : 'participant';
@@ -10694,35 +10842,37 @@ Supported options:
     }
 
     // ─── Class-member inline edit (double-click an attribute / method) ───
+    function classMemberDisplayKey(member) {
+      return ((member.visibility || '') + ' ' + member.text).replace(/\s+/g, ' ').trim();
+    }
+
     function findClassMemberTextAt(svg, classId, clientX, clientY) {
-      var line = getDeclarationLine(textarea.value, 'class', classId);
+      const line = getDeclarationLine(textarea.value, 'class', classId);
       if (!line) return null;
-      var info = parseClassDeclaration(line);
+      const info = parseClassDeclaration(line);
       if (!info.members.length) return null;
-      // Find the visible <text> element under the cursor that's inside the
-      // class's bbox AND whose text content matches one of the member rows.
-      var below = document.elementsFromPoint(clientX, clientY);
-      for (var i = 0; i < below.length; i++) {
-        var el = below[i];
-        if (el.tagName && el.tagName.toLowerCase() === 'text' && !el.closest('.uml-pg-edit-layer')) {
-          var content = (el.textContent || '').replace(/\s+/g, ' ').trim();
-          if (!content) continue;
-          if (content === info.name) return null; // hit the class name — fall back to rename
-          // Match against parsed member text. Members render as `+ {abstract} foo()`
-          // or `+ name: type`. Strip leading visibility/modifier tokens to compare.
-          for (var j = 0; j < info.members.length; j++) {
-            var m = info.members[j];
-            var rendered = (m.visibility || '') + ' ';
-            if (m.isAbstract) rendered += '{abstract} ';
-            if (m.isStatic) rendered += '{static} ';
-            rendered += (m.text || '').trim();
-            // Normalize whitespace for comparison.
-            var normalized = rendered.replace(/\s+/g, ' ').trim();
-            if (content === normalized || content.indexOf(m.text || '!nope') !== -1) {
-              return { index: j, textEl: el };
-            }
-          }
-        }
+      const border = layoutBoundsElementsForId(svg, classId)[0];
+      const divider = border && border.parentNode.querySelector('line');
+      if (!divider) return null;
+      const bounds = border.getBoundingClientRect();
+      const bodyTop = divider.getBoundingClientRect().top;
+      const occurrences = new Map();
+      // ArchUML emits a class's labels immediately after its box group, with
+      // attributes before methods. Keep ownership even when classes overlap,
+      // and preserve occurrence order for duplicate signatures.
+      for (let el = border.parentNode.nextElementSibling; el && el.tagName.toLowerCase() === 'text'; el = el.nextElementSibling) {
+        const rect = el.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        if (centerX < bounds.left || centerX > bounds.right || centerY <= bodyTop || centerY > bounds.bottom) continue;
+        const key = classMemberDisplayKey(parseMemberLine(el.textContent || ''));
+        const occurrence = occurrences.get(key) || 0;
+        occurrences.set(key, occurrence + 1);
+        if (clientX < rect.left || clientX > rect.right || clientY < rect.top || clientY > rect.bottom) continue;
+        const matches = info.members.map(function (member, index) {
+          return classMemberDisplayKey(member) === key ? index : -1;
+        }).filter(function (index) { return index !== -1; });
+        if (matches[occurrence] !== undefined) return { index: matches[occurrence], textEl: el };
       }
       return null;
     }
@@ -10734,6 +10884,7 @@ Supported options:
       var info = parseClassDeclaration(line);
       var member = info.members[memberIdx];
       if (!member) return;
+      const sourceAtStart = textarea.value;
       var rect = textEl.getBoundingClientRect();
       var input = document.createElement('input');
       input.type = 'text';
@@ -10759,14 +10910,15 @@ Supported options:
       }
       function commit() {
         var raw = input.value.trim();
+        textEl.textContent = originalText;
         cleanup();
-        if (!raw) return;
+        if (!raw || typeSelect.value !== 'class' || textarea.value !== sourceAtStart) return;
         var parsed = parseMemberLine(raw);
+        if (parsed.visibility === member.visibility && parsed.text === member.text &&
+            parsed.isAbstract === member.isAbstract && parsed.isStatic === member.isStatic) return;
         // An omitted visibility stays omitted when editing inline as well.
         info.members[memberIdx] = parsed;
-        snapshotForUndo();
-        var newLine = buildClassLine(info);
-        replaceLineForElementId(classId, newLine);
+        replaceClassDeclaration(classId, info, null);
       }
       function cancel() {
         textEl.textContent = originalText;
@@ -10781,8 +10933,12 @@ Supported options:
         inlineRenameCancel = null;
       }
       function onKey(ev) {
-        if (ev.key === 'Enter') { ev.preventDefault(); commit(); }
-        else if (ev.key === 'Escape') { ev.preventDefault(); cancel(); }
+        if (ev.key !== 'Enter' && ev.key !== 'Escape') return;
+        ev.preventDefault();
+        ev.stopPropagation();
+        if (ev.key === 'Enter') commit();
+        else cancel();
+        focusLayoutTarget(classId);
       }
       input.addEventListener('input', preview);
       input.addEventListener('keydown', onKey);
@@ -11348,6 +11504,12 @@ Supported options:
           if (fragment.endIdx < 0) messages.push('Line ' + (fragment.startIdx + 1) + ': ' + fragment.kind + ' is missing its closing end.');
           if (/^(opt|loop|break|neg)$/.test(fragment.kind) && fragment.branches.length) {
             messages.push('Line ' + (fragment.startIdx + 1) + ': ' + fragment.kind + ' requires one operand. Keep this draft, or use alt/par for multiple operands.');
+          }
+        });
+        sourceLinesWithoutNotes(text).forEach(function (line, index) {
+          var declared = line.trim().match(/^(?:participant|actor)\s+([^\s:]+)/);
+          if (declared && isSequenceKeyword(type, declared[1])) {
+            messages.push('Line ' + (index + 1) + ': the lifeline id "' + declared[1] + '" is a sequence-diagram keyword, so lines that start with it are not read as messages. Rename the lifeline.');
           }
         });
       }
@@ -13334,9 +13496,9 @@ Supported options:
 })();
 </script>
 
+{% unless uml_editor_hide_syntax_help == true or uml_editor_hide_syntax_help == "true" %}
 ---
 
-{% unless uml_editor_hide_syntax_help == true or uml_editor_hide_syntax_help == "true" %}
 <div class="uml-pg-syntax-help">
   <div class="uml-pg-syntax-help-text">
     <strong>Need syntax help?</strong> The full ArchUML syntax reference with live rendered examples is available on a dedicated page.

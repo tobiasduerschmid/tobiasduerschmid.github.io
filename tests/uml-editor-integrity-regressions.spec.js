@@ -587,6 +587,140 @@ test('renaming an activity action changes references without rewriting explanato
   await expect(sourceInput(page)).toHaveValue(original);
 });
 
+const drawnModel = (page, parser) => page.evaluate(name => {
+  const source = window.UMLShared.extractLayoutMetadata(document.getElementById('uml-pg-input').value).text;
+  return window[name].parse(source);
+}, parser);
+
+// Route ids are renderer handles with no accessible equivalent per relation,
+// so these tests reach the drawn route through its layout attributes.
+async function selectRoute(page, routeId) {
+  const segment = page.locator('#uml-pg-output .uml-pg-edge-hitbox[data-layout-id=' + JSON.stringify(routeId) + ']').first();
+  await segment.focus();
+  await segment.press('Enter');
+}
+
+test('the starter sequence exchange draws its request between two lifelines', async ({ page }) => {
+  await openDiagram(page, 'sequence', '@startuml\n@enduml');
+  await page.getByRole('button', { name: '+ Starter exchange', exact: true }).click();
+  await expect(elementTarget(page, 'user: User')).toBeVisible();
+  await expect(elementTarget(page, 'p: Service')).toBeVisible();
+  await expect(page.getByRole('button', { name: /^Element / })).toHaveCount(2);
+  const model = await drawnModel(page, 'UMLSequenceDiagram');
+  expect(model.messages.filter(event => event.type === 'message').map(message => [message.from, message.to, message.label]))
+    .toEqual([['user', 'p', 'request()']]);
+});
+
+test('a lifeline cannot be renamed to a sequence keyword', async ({ page }) => {
+  const original = '@startuml\nactor user: User\nparticipant registry: Registry\nuser -> registry : lookup()\n@enduml';
+  await openDiagram(page, 'sequence', original);
+  await page.getByText(/^Advanced sequence rows/).click();
+  await editProperty(page, 'Lifeline 2 identifier', 'ref');
+  await expect(page.getByText('"ref" is a sequence-diagram keyword. Pick a different identifier.', { exact: true })).toBeVisible();
+  await expect(sourceInput(page)).toHaveValue(original);
+});
+
+test('a saved lifeline named with a sequence keyword is explained by the diagnostics', async ({ page }) => {
+  await openDiagram(page, 'sequence', '@startuml\nactor actor: User\nparticipant p: Service\nactor -> p : request()\n@enduml');
+  await expect(page.getByRole('region', { name: 'Draft diagnostics' }))
+    .toContainText('Line 2: the lifeline id "actor" is a sequence-diagram keyword, so lines that start with it are not read as messages.');
+});
+
+const componentPorts = async (page, owner) =>
+  (await drawnModel(page, 'UMLComponentDiagram')).components.find(component => component.name === owner).ports.map(port => port.alias);
+const layeredComponents = '@startuml\ncomponent Frontend {\n  portout "httpOut" as f_out\n}\ncomponent Backend {\n  portin "httpIn" as b_in\n  portout "dbOut" as b_dbout\n  portout "eventOut" as b_eventout\n}\ncomponent Database {\n  portin "dbIn" as db_in\n}\ncomponent EventBus {\n  portin "eventIn" as eb_in\n}\nf_out --> b_in : REST / JSON\nb_dbout --> db_in : SQL\nb_eventout --> eb_in : publish\n@enduml';
+
+test('deleting one port keeps its component\'s other ports and drops connectors to it', async ({ page }) => {
+  await openDiagram(page, 'component', layeredComponents);
+  await selectElement(page, 'eventOut', 'Port');
+  await deleteSelected(page);
+  await expect(elementTarget(page, 'eventOut', 'Port')).toHaveCount(0);
+  expect(await componentPorts(page, 'Backend')).toEqual(['b_in', 'b_dbout']);
+  await expect(page.getByRole('button', { name: /^Element / })).toHaveCount(4);
+  await expect(sourceInput(page)).not.toHaveValue(/b_eventout/);
+  await expect(sourceInput(page)).toHaveValue(/b_dbout --> db_in : SQL/);
+});
+
+test('a selected component connector is the one Properties and Delete change', async ({ page }) => {
+  await openDiagram(page, 'component', layeredComponents);
+  const sqlRoute = await page.locator('#uml-pg-output [data-layout-source="Backend.b_dbout"][data-layout-target="Database.db_in"]').first().getAttribute('data-layout-route-id');
+  await selectRoute(page, sqlRoute);
+  await expect(page.getByRole('textbox', { name: 'Label', exact: true })).toHaveValue('SQL');
+  await deleteSelected(page);
+  await expect(sourceInput(page)).not.toHaveValue(/b_dbout --> db_in/);
+  await expect(sourceInput(page)).toHaveValue(/f_out --> b_in : REST \/ JSON/);
+  await expect(sourceInput(page)).toHaveValue(/b_eventout --> eb_in : publish/);
+});
+
+test('a selected use-case association is the one Delete removes', async ({ page }) => {
+  await openDiagram(page, 'usecase', '@startuml\nactor User\nusecase "Login" as UC1\nusecase "Register" as UC2\nUser -- UC1\nUser -- UC2\n@enduml');
+  await selectRoute(page, 'usecase:1');
+  await expect(page.getByRole('heading', { name: 'Relation — User → UC2', exact: true })).toBeVisible();
+  await deleteSelected(page);
+  await expect(sourceInput(page)).toHaveValue('@startuml\nactor User\nusecase "Login" as UC1\nusecase "Register" as UC2\nUser -- UC1\n@enduml');
+});
+
+const generalizationTree = '@startuml\nclass Square\nclass Property\nclass Railroad\nclass Game\nProperty --|> Square\nRailroad --|> Square\nGame *-- Square\n@enduml';
+
+// A generalization tree's lines carry no route ids, so these tests find a
+// line the way a student sees it: by the class edge it meets.
+async function selectTreeLine(page, label, edge) {
+  const box = await elementTarget(page, label).boundingBox();
+  const routeId = await page.locator('#uml-pg-output .uml-pg-edge-hitbox').evaluateAll((lines, { box, edge }) => {
+    const bottom = box.y + box.height;
+    const line = lines.find(candidate => {
+      const r = candidate.getBoundingClientRect();
+      const centerX = r.left + r.width / 2;
+      // A subclass branch ends on the subclass; the trunk starts below the superclass's triangle.
+      const meets = edge === 'top' ? Math.abs(r.bottom - box.y) < 8 : r.top > bottom && r.top - bottom < 24;
+      return r.height > r.width && centerX > box.x && centerX < box.x + box.width && meets;
+    });
+    return line ? line.getAttribute('data-layout-id') : null;
+  }, { box, edge });
+  expect(routeId, `a tree line meets the ${edge} edge of ${label}`).not.toBeNull();
+  await selectRoute(page, routeId);
+}
+
+test('a subclass branch of a generalization tree is the generalization Delete removes', async ({ page }) => {
+  await openDiagram(page, 'class', generalizationTree);
+  await selectTreeLine(page, 'Property', 'top');
+  await expect(page.getByRole('heading', { name: 'Relation — Property → Square', exact: true })).toBeVisible();
+  await deleteSelected(page);
+  await expect(sourceInput(page)).toHaveValue('@startuml\nclass Square\nclass Property\nclass Railroad\nclass Game\nRailroad --|> Square\nGame *-- Square\n@enduml');
+});
+
+test('a generalization trunk shared by several subclasses is explained and kept', async ({ page }) => {
+  await openDiagram(page, 'class', generalizationTree);
+  await selectTreeLine(page, 'Square', 'bottom');
+  await expect(page.getByText('This connection could not be matched to one line of the source, so it cannot be edited here.', { exact: true })).toBeVisible();
+  await deleteSelected(page);
+  await expect(sourceInput(page)).toHaveValue(generalizationTree);
+});
+
+const decisionActivity = '@startuml\n(*) --> "Receive Order"\nif "Payment Valid?" then\n  --> [yes] "Process Order"\nelse\n  --> [no] "Reject Order"\nendif\n"Process Order" --> (*)\n"Reject Order" --> (*)\n@enduml';
+
+test('labeling an activity decision branch edits its guard and keeps its target', async ({ page }) => {
+  await openDiagram(page, 'activity', decisionActivity);
+  const yesRoute = await page.locator('#uml-pg-output [data-layout-kind="edge-label"]', { hasText: '[yes]' }).first().getAttribute('data-layout-route-id');
+  await selectRoute(page, yesRoute);
+  await editProperty(page, 'Guard', 'approved');
+  await expect(sourceInput(page)).toHaveValue(/^ {2}--> \[approved\] "Process Order"$/m);
+  const model = await drawnModel(page, 'UMLActivityDiagram');
+  const decision = model.nodes.find(node => node.type === 'decision').id;
+  const processOrder = model.nodes.find(node => node.label === 'Process Order').id;
+  expect(model.edges.filter(edge => edge.from === decision && edge.to === processOrder).map(edge => edge.guard)).toEqual(['approved']);
+});
+
+test('a flow with no line of its own is explained instead of edited', async ({ page }) => {
+  await openDiagram(page, 'activity', decisionActivity);
+  const implicitRoute = await page.locator('#uml-pg-output .uml-pg-edge-hitbox[data-layout-id^="edge-"]').first().getAttribute('data-layout-id');
+  await selectRoute(page, implicitRoute);
+  await expect(page.getByText('This connection could not be matched to one line of the source, so it cannot be edited here.', { exact: true })).toBeVisible();
+  await deleteSelected(page);
+  await expect(page.getByText('Kept 1 connection that could not be matched to one line of the source.', { exact: true })).toBeVisible();
+  await expect(sourceInput(page)).toHaveValue(decisionActivity);
+});
+
 test('duplicating a state retains links to independent dotted states', async ({ page }) => {
   const original = '@startuml\nstate A {\nstate Child\nChild --> A.Part\n}\nstate A.Part\n@enduml';
   await openDiagram(page, 'state', original);

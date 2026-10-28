@@ -797,9 +797,12 @@
       model.parseError = 'The UML parser is unavailable. Reload the page before checking your work.';
       return model;
     }
-    if (['class', 'state', 'sequence'].indexOf(type) === -1) return parseOtherArchUml(source);
     try {
-      var parsed = renderer.parse(source);
+      // Grade the model the student drew, as the renderer sees it: positions,
+      // route bends, and callouts the editor stores beside it are not names.
+      var modelSource = window.UMLShared.extractLayoutMetadata(source).text;
+      if (['class', 'state', 'sequence'].indexOf(type) === -1) return parseOtherArchUml(modelSource);
+      var parsed = renderer.parse(modelSource);
       if (type === 'class') {
         parsed.classes.forEach(function (cls) {
           addElement(model, cls.type === 'abstract' ? 'abstract class' : cls.type, cls.name, cls.name);

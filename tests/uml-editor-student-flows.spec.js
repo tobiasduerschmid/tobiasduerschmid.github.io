@@ -228,6 +228,24 @@ test('fullscreen keeps keyboard help tooltips in front of the editor', async ({ 
 });
 
 
+test('the homework canvas and properties fit a 1366×768 laptop screen', async ({ page }) => {
+  await page.setViewportSize({ width: 1366, height: 768 });
+  await page.addInitScript(() => localStorage.setItem('uml-pg-help-dismissed', '1'));
+  await page.goto(TUTORIAL);
+  await expect(page.getByRole('region', { name: 'Diagram preview', exact: true })).toBeInViewport({ ratio: 1 });
+  await expect(page.getByRole('region', { name: 'Properties', exact: true })).toBeInViewport({ ratio: 1 });
+});
+
+test('the mouse wheel reaches the homework properties while quick tips are shown', async ({ page }) => {
+  await page.setViewportSize({ width: 1366, height: 768 });
+  await page.goto(TUTORIAL);
+  await expect(page.getByRole('region', { name: 'Visual editor tips', exact: true })).toBeVisible();
+  await page.getByRole('region', { name: 'Visual editor palette', exact: true }).hover();
+  await page.mouse.wheel(0, 1200);
+  // Scroll offsets are whole pixels while the layout is fractional.
+  await expect(page.getByRole('region', { name: 'Properties', exact: true })).toBeInViewport({ ratio: 0.99 });
+});
+
 test('printing a fullscreen editor stays light even when the screen theme is dark', async ({ page }) => {
   await page.goto(TUTORIAL);
   await page.evaluate(() => document.documentElement.classList.add('dark-mode'));

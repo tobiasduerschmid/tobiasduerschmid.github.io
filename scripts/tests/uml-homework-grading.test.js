@@ -34,9 +34,24 @@ function rejects(type, source, overrides) {
   assert.ok(grade(type, source, overrides).some(row => !row.pass), 'An invalid submission must receive a failed criterion');
 }
 const insert = (source, text) => source.replace('@enduml', text + '\n@enduml');
+// What the visual editor writes once a student drags declarations or bends a route.
+function arrangedByEditor(source) {
+  let x = 0;
+  const pinned = source.replace(/^(?:class|interface|state|participant) \S+(?:: \S+)?/gm, head => `${head} @pos(${x += 120}, 40)`);
+  return pinned.replace('@startuml\n', '@startuml\n@layout schema=1 renderer="archuml-visual-editor"\nedge "rel:6" points="40,40 40,120 160,120"\n@endlayout\n');
+}
 const abstractDesign = diagrams.class.replace('interface PlayerState', 'abstract class PlayerState').replace('PlayerState { +takeTurn', 'PlayerState { +{abstract} takeTurn').replaceAll('..|>', '--|>');
 
 for (const type of ['class', 'state', 'sequence']) test('accepts the complete ' + type + ' baseline', () => passes(type));
+for (const type of ['class', 'state', 'sequence']) {
+  test(type + ' grades ignore positions and route bends saved by the visual editor', () => passes(type, arrangedByEditor(diagrams[type])));
+}
+test('later steps read an arranged class and state diagram', () => {
+  const arranged = { class: arrangedByEditor(diagrams.class), state: arrangedByEditor(diagrams.state) };
+  passes('state', diagrams.state, arranged);
+  passes('sequence', diagrams.sequence, arranged);
+});
+test('arranging a wrong class diagram does not hide its error', () => rejects('class', arrangedByEditor(diagrams.class.replace('Player o--', 'Player --o'))));
 for (const [name, source] of [
   ['a consistently renamed abstraction', diagrams.class.replaceAll('PlayerState', 'TurnBehavior')],
   ['a consistently renamed turn operation', diagrams.class.replaceAll('takeTurn', 'advanceTurn')],

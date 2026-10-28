@@ -16,19 +16,31 @@
   overflow: hidden;
 }
 
+/* The workspace has the viewport's height. Controls keep their natural height,
+   the canvas row takes the rest, and the column scrolls instead of clipping
+   when a short screen cannot fit both. */
 .tvm-uml-editor-workspace #uml-playground-wrap {
+  --uml-pg-hidden-source-canvas-min: 0px;
+  display: flex;
+  flex-direction: column;
   flex: 1 1 auto;
   width: 100%;
   height: 100%;
   min-height: 0;
+  overflow-y: auto;
   margin: 0;
   border: 0;
   border-radius: 0;
 }
 
 .tvm-uml-editor-workspace #uml-playground-body {
-  flex: 1 1 auto;
-  min-height: 0;
+  flex: 1 1 0;
+  min-height: 320px;
+}
+
+/* The site's generic section margin would push the canvas off a short screen. */
+.tvm-uml-editor-workspace #uml-playground-wrap > section {
+  margin-top: 0;
 }
 
 .tvm-uml-editor-workspace #uml-pg-preview-pane {
@@ -812,6 +824,7 @@ html.dark-mode #uml-pg-fullscreen-bar {
 
 /* Full-screen mode: take over the viewport. */
 #uml-playground-wrap.is-fullscreen {
+  --uml-pg-hidden-source-canvas-min: 0px;
   position: fixed;
   inset: 0;
   z-index: 9999;
@@ -1221,8 +1234,11 @@ html.dark-mode .uml-pg-member-error { color: #ffb9b0; }
 
 @media print {
   .uml-pg-class-actions { display: none; }
+  .uml-pg-context-menu,
+  .uml-pg-inline-input { display: none !important; }
   #uml-playground-wrap::backdrop { background: #fff; }
   #uml-pg-fullscreen-bar { display: none; }
+  .tvm-uml-editor-workspace #uml-playground-wrap { overflow: visible; }
   #uml-playground-wrap.is-fullscreen {
     position: static;
     height: auto;
@@ -1239,8 +1255,10 @@ html.dark-mode .uml-pg-member-error { color: #ffb9b0; }
   display: none !important;
 }
 
+/* Without the source pane, an inline editor's canvas needs a height of its
+   own. Layouts that size the editor to the viewport set the minimum to 0. */
 #uml-playground-wrap.is-archuml-hidden #uml-pg-preview-pane {
-  min-height: 620px;
+  min-height: var(--uml-pg-hidden-source-canvas-min, 620px);
 }
 
 .uml-pg-modal[hidden] {
@@ -1526,7 +1544,7 @@ html.dark-mode .uml-pg-guide-line {
 
 .uml-pg-context-menu .uml-pg-context-key {
   margin-left: auto;
-  color: #6a7a93;
+  color: #596b84;
   font-size: 0.9em;
   font-family: 'Cascadia Code', 'Fira Mono', 'Menlo', 'Consolas', monospace;
 }
@@ -1562,7 +1580,7 @@ html.dark-mode .uml-pg-context-menu button.is-danger:hover {
 }
 
 html.dark-mode .uml-pg-context-menu .uml-pg-context-key {
-  color: #8aa3c2;
+  color: #abc0db;
 }
 
 .uml-pg-edit-hitbox.is-selected {
@@ -2134,6 +2152,20 @@ html.dark-mode a.uml-pg-syntax-help-link:focus-visible {
   }
 }
 
+@media screen and (max-width: 700px) {
+  /* Stacked source and properties panes must not squeeze the canvas to zero. */
+  #uml-playground-wrap.is-fullscreen #uml-playground-body {
+    flex: 0 0 auto;
+  }
+  #uml-playground-wrap.is-fullscreen #uml-pg-preview-pane {
+    flex: 0 0 auto;
+    min-height: 50vh;
+  }
+  #uml-playground-wrap.is-fullscreen #uml-pg-output {
+    height: auto;
+  }
+}
+
 /* ─── Visual-editor palette ─── */
 #uml-pg-palette {
   display: flex;
@@ -2146,6 +2178,7 @@ html.dark-mode a.uml-pg-syntax-help-link:focus-visible {
 
 .uml-pg-palette-row {
   display: flex;
+  flex-shrink: 0;
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
