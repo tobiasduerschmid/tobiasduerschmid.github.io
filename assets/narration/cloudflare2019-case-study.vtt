@@ -1,0 +1,113 @@
+WEBVTT
+
+understand_service-1
+00:00:00.000 --> 00:00:27.600
+It is 2 July 2019. Imagine you are helping investigate a major outage. A visitor asks for a web page. For a site using Cloudflare, that request reaches Cloudflare before any needed work continues to the site's own server, called its origin. Cloudflare supplies services shared by many independent websites. We will follow only the request inspection path; caching and other features are outside this diagram.
+
+understand_service-2
+00:00:27.600 --> 00:00:56.169
+The web application firewall, abbreviated WAF, examines requests for suspicious patterns. A rule describes something to recognize and what to do when it is recognized. The processor, or CPU, performs that work. Its capacity is finite: work spent inspecting one request is capacity unavailable for other work. The inspection step therefore has both a security responsibility and a progress obligation.
+
+understand_service-3
+00:00:56.169 --> 00:01:30.409
+Now visitors to many sites see 502 errors. That status says a gateway could not successfully complete its upstream work; it does not name the defective component. Cloudflare's first synthetic monitoring alert arrived at 13:45 UTC. A synthetic monitor sends test requests to observe the service. You have a symptom and a shared dependency, but you do not yet know whether demand increased, origins failed, or request processing became expensive. Which evidence should you seek first?
+
+localize-1
+00:01:30.409 --> 00:02:07.445
+By 14:00, processor observations, system traces, and logs pointed to the WAF. Front-line servers accept traffic and delegate work to request-handling processes, called workers. The CPU serving web traffic was exhausted. A trace observes execution activity; a profile summarizes where time is spent. Either can narrow an investigation toward expensive work. Neither, by itself, explains why that work is excessive. The failure to visitors remains the 502 response.
+
+localize-2
+00:02:07.445 --> 00:02:45.617
+The team had just deployed a new rule intended to improve detection of cross-site scripting, an attack involving unwanted script execution in a web application. The change was merged at 13:31, built and tested at 13:37, and began rolling out at 13:42. Quicksilver distributed the configuration globally. Positive and negative matching tests passed. The rule was in simulate mode: matches would be logged rather than deliberately blocking requests. That is useful context, but what does it actually tell us about evaluation cost?
+
+contain-1
+00:02:45.617 --> 00:03:14.804
+The request worker needs inspection to complete. Inspection invokes a regular-expression matcher: a program that checks text against a pattern. In this incident, excessive matching work consumed the CPU needed to serve requests. The front-line servers consequently produced 502 errors. No intentional rule-based block is needed for that failure. This sequence explains the dependency; it is not a recovered trace of one particular visitor's request.
+
+contain-2
+00:03:14.804 --> 00:03:48.084
+Availability is failing now. The WAF is implicated, and responders can terminate its operation globally. A narrower rollback would be desirable if it can be executed promptly, but the postmortem describes delays and obstructed access to recovery systems. The immediate objective is to stop the expensive work and restore request progress. Disabling a security function also has a cost that must be tracked. Choose the strongest immediate action among these options.
+
+reproduce-1
+00:03:48.084 --> 00:04:15.801
+By 14:09, traffic and CPU had recovered. That supports the WAF containment decision, but it does not mean the WAF's security function is restored or identify every detail of the defective rule. Removing an entire component changes many things at once. We now need stronger evidence that the particular rule, under relevant inputs, explains the excessive work.
+
+reproduce-2
+00:04:15.801 --> 00:04:48.188
+A reproducer must specify input, rule version, matching engine, and relevant configuration. An oracle is the criterion that tells us whether the observed outcome satisfies the requirement. In an isolated setup, compare candidate absent, candidate present, and candidate removed again while keeping the other conditions comparable. Observe both the service behavior and resource use. The public account does not publish the actual triggering requests, so we will not invent them.
+
+define_oracles-1
+00:04:48.188 --> 00:05:13.323
+The isolated checks supported the new rule as the cause. Its regular expression could make a backtracking matcher explore excessive alternatives. To understand that mechanism without source code, we will use a much smaller teaching task: decide whether a single-line text contains an equals sign. This is not the original security rule, and our example text is not a recovered incident request.
+
+define_oracles-2
+00:05:13.323 --> 00:05:42.246
+For this model, the functional obligation is to answer present if an equals sign exists, and absent otherwise. One candidate check asks whether an equals sign occurs at one proposed input position; revisiting a position counts again. We add a teaching budget: count the characters, add one, and multiply by four. For seven characters, at most thirty-two checks are allowed. This invented budget distinguishes a correct eventual answer from an acceptable execution.
+
+define_oracles-3
+00:05:42.246 --> 00:05:56.342
+Suppose the input has no equals sign. Evaluation stops because it reaches the work limit before finishing. We have not established the matching answer merely by stopping. Which result should the experiment record?
+
+trace_search-1
+00:05:56.342 --> 00:06:22.779
+Our deliberately inefficient matcher starts at the beginning of the text. It lets a first skip consume any number of characters, then lets a second skip do the same, then requires an equals sign. If that requirement fails, it revises earlier choices. Trying alternative earlier choices is backtracking. Both skips can consume the same kinds of characters, so more than one allocation can lead to the same next position.
+
+trace_search-2
+00:06:22.779 --> 00:06:49.089
+The input is three x characters, with no equals sign. First, the skips consume three and zero characters: the equals check fails at the end. Next, they consume two and one: the check fails at the same end. Next, they consume two and zero: the check fails before the last x. The diagram shows only three attempts. Each attempt is locally understandable, but some revisit a position that was already checked.
+
+trace_search-3
+00:06:49.089 --> 00:07:10.204
+Hold the first skip at length one. On our three-character input, the second skip can then consume two, one, or zero characters. None produces an equals sign. Once those choices fail, the first skip can become zero and the second has four lengths to try. What does this suggest about shortening the input by one character?
+
+minimize-1
+00:07:10.204 --> 00:07:38.564
+For three characters, the four first-skip lengths leave one, two, three, and four choices for the second skip: ten candidate checks in total. More generally, each added character extends several possible allocations. Seven non-equals characters require thirty-six checks; thirty-two require five hundred sixty-one. These counts describe our fixed-start model. They do not measure Cloudflare's full expression, engine optimizations, or actual incident traffic.
+
+minimize-2
+00:07:38.564 --> 00:08:02.590
+We want a compact reproducer that still exceeds our teaching budget. At length seven, thirty-six candidate checks exceed the budget of thirty-two. At length six, twenty-eight checks equal the budget of twenty-eight, so the run completes within it. Deleting text until the matcher merely returns absent could erase the resource failure. Which property should a reduction attempt preserve?
+
+diagnose-1
+00:08:02.590 --> 00:08:30.328
+We now have a causal mechanism: overlapping repetition allows a backtracking engine to explore many allocations; triggering inputs make that work expensive; inadequate protection lets the work interfere with serving requests. We also need incorrectness: which obligation is violated? A CPU being busy can be normal. Failure to make required request progress, or exceeding a specified work budget, supplies the missing requirement.
+
+diagnose-2
+00:08:30.328 --> 00:09:04.632
+The parent Debugging chapter calls the implementation problem a fault and an incorrect runtime state an error. The Debugging Book calls them a defect and a fault or infection. Both use failure for externally incorrect behavior. On seven characters, a thirty-third check would exceed our model's budget; the bounded experiment stops before performing it. For the real service, visitors saw 502 errors. The public report does not provide one exact instruction where every incident request first became incorrect.
+
+diagnose-3
+00:09:04.632 --> 00:09:27.762
+The full incident also involved missing barriers. A CPU safeguard had been removed during an earlier refactor, cost checks were absent from testing, and rule rollout bypassed ordinary staged deployment. Those conditions help explain why one expensive rule became a global outage. Which statement best captures a defensible diagnosis?
+
+repair-1
+00:09:27.762 --> 00:09:55.975
+For our small task, a forward scan is enough. Inspect the next unexamined character. If it is equals, report present. Otherwise advance. At the end, report absent. No earlier position is revisited. That preserves the tiny task's intended answer while inspecting each character at most once. This is a teaching repair for finding equals, not a substitute for a security rule that must recognize more complex patterns.
+
+repair-2
+00:09:55.975 --> 00:10:22.103
+Retain the original failing seven-character negative case and longer negative cases. Also challenge behavior on empty input and equals at the beginning, middle, and end. A matcher that always reports absent would be fast but wrong. A repair that merely raises the budget would leave the allocation growth unchanged. Which evidence would justify the strongest bounded claim about this repair?
+
+harden-1
+00:10:22.103 --> 00:10:56.844
+Return to the real service. Removing the offending rule addresses that deployed trigger. Performance tests challenge costly inputs before release. A matching engine with appropriate complexity guarantees changes what evaluation can cost. Runtime protection limits damage when work is still too expensive. Staged deployment exposes a smaller portion of traffic before expansion. A recovery path must remain usable when ordinary serving is impaired. These measures address different parts of the chain.
+
+harden-2
+00:10:56.844 --> 00:11:21.743
+The July 12 postmortem reported restoration of CPU protection and inspection of the existing rules as completed. Other measures had future target dates, including performance profiling tests and an engine transition. A promised date is evidence of a plan, not proof it shipped. Suppose a rule passes a small staged rollout. What can that observation establish?
+
+verify_history-1
+00:11:21.743 --> 00:11:50.590
+Traffic recovered by 14:09 with the WAF disabled. At 14:52, after removing the bad rule and performing isolated checks, the WAF was re-enabled. The detailed report describes a twenty-seven-minute outage; the longer time until WAF restoration is a different interval. Mixing these milestones would hide the period of reduced security functionality.
+
+verify_history-2
+00:11:50.590 --> 00:12:23.677
+A July 2020 follow-up confirms that the WAF migrated in July 2019 from PCRE to an engine inspired by RE2. It reports reduced matching-time outliers, while overall edge CPU consumption did not measurably change. The article also describes a separate optimization yielding its forty-percent headline. We should not attribute that whole headline to the engine migration. Which conclusion fits these sources?
+
+transfer-1
+00:12:23.677 --> 00:12:49.997
+A separate service accepts uploaded records. A validator checks them, then a report builder produces a summary. After a rule update, large uploads time out and CPU usage is high. Smaller uploads often succeed. You have not yet measured where the time goes. The validator might be expensive, the report builder might repeat work, or demand might have changed. Nothing here establishes a regular-expression defect.
+
+transfer-2
+00:12:49.997 --> 00:13:18.533
+Make an investigation note: state the expected result and resource obligation, preserve a failing upload and configuration, and name at least two explanations. Then choose an observation that could separate them. After the choice, write one positive test and one cost test you would retain when a repair is proposed. Use the four stages: investigate and reproduce, locate, explain, then repair and verify. Evidence can send you back to an earlier stage.

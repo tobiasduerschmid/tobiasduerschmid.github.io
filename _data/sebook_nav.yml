@@ -148,6 +148,10 @@ topics:
         url: /SEBook/development_practices/code_comprehension.html
       - name: Debugging
         url: /SEBook/development_practices/debugging.html
+      - name: "Therac-25: Debugging Case Study"
+        url: /SEBook/development_practices/therac-25.html
+      - name: "Cloudflare 2019: Debugging Case Study"
+        url: /SEBook/development_practices/cloudflare-2019.html
       - name: Python Debugging Tutorial
         url: /SEBook/tools/python-debugging.html
       - name: Gen Ai

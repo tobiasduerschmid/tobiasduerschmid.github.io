@@ -419,7 +419,7 @@
 - term: RegEx
   definition: Regular Expression
   description: A pattern language for matching, validating, searching, or transforming text.
-  related: []
+  related: [PCRE, RE2]
 
 - term: REPL
   definition: Read–Eval–Print Loop
@@ -629,3 +629,28 @@
   definition: Association for Computing Machinery
   description: A professional society for computing. Its journal Communications of the ACM published David Parnas's 1972 paper that introduced information hiding.
   related: []
+
+- term: WAF
+  definition: Web Application Firewall
+  description: A service that examines web requests using security rules. Evaluating a rule consumes computation even when a matching request is only logged rather than blocked.
+  related: [HTTP, RegEx]
+
+- term: PCRE
+  definition: Perl Compatible Regular Expressions
+  description: A family of regular-expression libraries. Its traditional backtracking matcher can explore many alternatives for some pattern and input combinations.
+  related: [RegEx, RE2]
+
+- term: RE2
+  definition: RE2 regular-expression engine
+  description: An engine designed to match its supported regular-expression syntax in time linear in input length for a fixed pattern. It omits features such as backreferences that conflict with its guarantees.
+  related: [RegEx, PCRE]
+
+- term: UTC
+  definition: Coordinated Universal Time
+  description: The time standard used to label all historical timestamps in the Cloudflare debugging case study, allowing events from different locations to be compared.
+  related: []
+
+- term: ReDoS
+  definition: Regular Expression Denial of Service
+  description: Loss of service caused by excessively expensive regular-expression evaluation. Attackers can exploit vulnerable patterns, but costly matching can also be triggered without an attack.
+  related: [RegEx, WAF]

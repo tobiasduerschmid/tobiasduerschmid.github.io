@@ -91,7 +91,7 @@ def render(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--topic", choices=["nodejs", "react", "observer", "state"], required=True)
+    parser.add_argument("--topic", choices=["nodejs", "react", "observer", "state", "therac25", "cloudflare2019"], required=True)
     parser.add_argument("--model", required=True)
     parser.add_argument("--voices", required=True)
     parser.add_argument("--work-dir")

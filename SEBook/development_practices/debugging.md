@@ -101,7 +101,7 @@ The rest of this chapter walks through the same four steps in order. The progres
 
 > **Goal:** Get to a place where you can observe the bug on demand — and, eventually, where a test can do it for you.
 
-A bug you cannot reproduce is a bug you cannot debug. The cautionary tale: between 1985 and 1987 the **Therac-25** radiation-therapy machine killed six patients with massive overdoses. The triggering condition was an experienced operator typing faster than the developers expected — a sequence the test team had never reproduced because they typed slower. Until the team could reproduce the input sequence, the bug remained invisible.
+A reliable reproducer lets you test competing explanations under controlled conditions. The **Therac-25** investigation describes six accidents involving serious injuries and deaths between 1985 and 1987—not six deaths or six instances of one proven defect. At Tyler, reconstructing a rapid correction during setup helped reveal a timing-dependent failure; other incidents involved different or unresolved mechanisms. The [Therac-25 case study](/SEBook/development_practices/therac-25.html) follows the evidence from reported symptoms to reproduction, diagnosis, and repair {% cite LevesonTurner1993Therac %}.
 
 To reproduce a bug, capture two things:
 
@@ -299,3 +299,11 @@ Want to practice the step-through debugger, breakpoints, and a time-travel debug
 {% include flashcards.html id="debugging" %}
 
 {% include quiz.html id="debugging" %}
+
+## Case Study: Therac-25
+
+**[Begin the Therac-25 debugging investigation](/SEBook/development_practices/therac-25.html).** Follow a real case through narrated ArchUML diagrams. Predict the next state, choose an investigation, compare your reasoning with the evidence, and challenge a proposed repair. The chapter includes a silent reading path, decision feedback, and clearly labeled historical reconstructions; no programming language is required.
+
+## Case Study: Cloudflare 2019
+
+**[Investigate the Cloudflare outage of 2 July 2019](/SEBook/development_practices/cloudflare-2019.html).** Start with unavailable websites and choose what evidence to collect next. Follow narrated ArchUML diagrams from service symptoms to a performance mechanism, then distinguish restoring service from verifying a durable repair. Networking and regular-expression concepts are introduced before the adventure; a silent reading path includes the same decisions and explanations.

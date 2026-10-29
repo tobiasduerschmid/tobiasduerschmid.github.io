@@ -1,0 +1,40 @@
+<div class="case-study-reader">
+  <p>Work through each scene in order. Make your prediction before opening its explanation or reading the next scene.</p>
+  {% for scene in include.story.scenes %}
+  <section class="case-reading-scene" aria-labelledby="{{ include.prefix }}-reading-{{ scene.id }}">
+    <h3 id="{{ include.prefix }}-reading-{{ scene.id }}">{{ forloop.index }}. {{ scene.title | escape }}</h3>
+    {% if scene.purpose %}<p><strong>Our task:</strong> {{ scene.purpose | escape }}</p>{% endif %}
+    {% if scene.evidence %}<p class="case-provenance"><strong>Evidence status:</strong> {{ scene.evidence | escape }}</p>{% endif %}
+    {% if scene.sources %}<p class="case-provenance">Sources: {% for source in scene.sources %}<a href="{{ source.url | escape }}">{{ source.title | escape }}</a>{% unless forloop.last %}; {% endunless %}{% endfor %}</p>{% endif %}
+    {% for cue in scene.cues %}
+    {% assign diagram_key = cue.diagram | default: scene.diagram %}
+    {% assign diagram = include.story.diagrams[diagram_key] %}
+    <section class="case-reading-step" data-case-reading-scene="{{ scene.id | escape }}" data-case-reading-cue="{{ forloop.index0 }}">
+      <h4>{{ cue.step | escape }}</h4>
+      <p>{{ cue.text | escape }}</p>
+      <figure class="case-figure">
+        <div class="case-diagram"><div data-uml-type="{{ diagram.type | escape }}" data-uml-spec="{{ diagram.source | escape }}" role="region" aria-label="{{ diagram.label | escape }}"></div></div>
+        {% if diagram.caption %}<figcaption>{{ diagram.caption | escape }}</figcaption>{% endif %}
+      </figure>
+      <p class="case-diagram-description"><strong>Diagram description:</strong> {{ diagram.description | escape }}</p>
+      {% if cue.note %}<p class="case-reading-note">{{ cue.note | escape }}</p>{% endif %}
+    </section>
+    {% endfor %}
+    {% if scene.checkpoint %}
+    <section class="case-reading-question" aria-label="Decision for {{ scene.label | escape }}">
+      <h4>Choose the next action</h4>
+      <p>{{ scene.checkpoint.question | escape }}</p>
+      <ol type="A">{% for option in scene.checkpoint.options %}<li>{{ option | escape }}</li>{% endfor %}</ol>
+      <details class="case-reading-answer">
+        <summary>Reveal the answer and reasoning</summary>
+        <div>
+          <p><strong>Answer:</strong> {{ scene.checkpoint.options[scene.checkpoint.correct_index] | escape }}</p>
+          <p>{{ scene.checkpoint.explanation | escape }}</p>
+          {% for feedback in scene.checkpoint.option_feedback %}{% assign option_index = feedback[0] | plus: 0 %}<p><strong>{{ scene.checkpoint.options[option_index] | escape }}</strong> {{ feedback[1] | escape }}</p>{% endfor %}
+        </div>
+      </details>
+    </section>
+    {% elsif scene.takeaway %}<p><strong>Takeaway:</strong> {{ scene.takeaway | escape }}</p>{% endif %}
+  </section>
+  {% endfor %}
+</div>

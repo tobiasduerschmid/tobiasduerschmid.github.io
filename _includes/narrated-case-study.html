@@ -1,0 +1,82 @@
+{% assign case_story = site.data.explainers[include.topic] %}
+{% assign case_timing_key = include.topic | append: '_timing' %}
+{% assign case_timing = site.data.explainers[case_timing_key] %}
+{% assign case_id = include.topic | append: '-case-study' %}
+<section class="narrated-case-study narrated-explainer mathjax_ignore" id="{{ case_id }}" aria-labelledby="{{ case_id }}-title">
+  <h2 id="{{ case_id }}-title">{{ case_story.title | escape }}</h2>
+  {% if case_story.description %}<p>{{ case_story.description | escape }}</p>{% endif %}
+  <p>Use <strong>Next step</strong> to investigate without audio, or play the narration. Each decision pauses before the next evidence. You may revisit any scene; this is practice, not an exam.</p>
+  <div class="nja-player">
+    <div class="nja-controls nja-playback-controls" hidden>
+      <div class="nja-transport">
+        <button type="button" data-action="play" aria-label="Play narration"><i class="fa fa-play" aria-hidden="true"></i></button>
+        <button type="button" data-action="restart" aria-label="Restart narration"><i class="fa fa-undo" aria-hidden="true"></i></button>
+        <button type="button" data-action="previous" aria-label="Previous scene"><i class="fa fa-step-backward" aria-hidden="true"></i></button>
+        <button type="button" data-action="next" aria-label="Next scene"><i class="fa fa-step-forward" aria-hidden="true"></i></button>
+        <button type="button" data-action="mute" aria-label="Mute narration" aria-pressed="false"><i class="fa fa-volume-up" aria-hidden="true"></i></button>
+        <output class="nja-time" aria-label="Playback time">0:00</output>
+      </div>
+      <label class="nja-seek-label">Narration position<input type="range" class="nja-seek" min="0" max="{{ case_timing.duration | default: 1 }}" step="0.01" value="0" aria-valuetext="0:00"></label>
+    </div>
+    <div class="nja-stage">
+      {% for scene in case_story.scenes %}
+      <section class="nja-scene" data-scene="{{ scene.id | escape }}" aria-labelledby="{{ case_id }}-{{ scene.id }}-title"{% unless forloop.first %} hidden{% endunless %}>
+        <p class="nja-scene-meta">{{ forloop.index }} / {{ case_story.scenes.size }} · {{ scene.label | escape }}</p>
+        <h3 id="{{ case_id }}-{{ scene.id }}-title" tabindex="-1">{{ scene.title | escape }}</h3>
+        <div class="nja-art" role="group" aria-label="{{ scene.cues.first.visual | escape }}">
+          {% if scene.purpose %}<p class="nja-purpose"><strong>Our task</strong> {{ scene.purpose | escape }}</p>{% endif %}
+          <figure class="case-figure">
+            <div class="case-diagram"><div data-case-diagram></div></div>
+            <figcaption data-case-caption></figcaption>
+          </figure>
+          {% if scene.evidence or scene.sources %}
+          <details class="case-provenance">
+            <summary>Evidence and sources</summary>
+            {% if scene.evidence %}<p><strong>Evidence status:</strong> {{ scene.evidence | escape }}</p>{% endif %}
+            {% if scene.sources %}<p>Sources: {% for source in scene.sources %}<a href="{{ source.url | escape }}">{{ source.title | escape }}</a>{% unless forloop.last %}; {% endunless %}{% endfor %}</p>{% endif %}
+          </details>
+          {% endif %}
+          <details class="case-description"><summary>Read the diagram description</summary><p data-case-description></p></details>
+          <div class="nja-explanation"><strong class="nja-step">{{ scene.cues.first.step | escape }}</strong><p class="nja-note">{{ scene.cues.first.note | escape }}</p></div>
+        </div>
+        {% if scene.takeaway %}<p class="nja-takeaway">{{ scene.takeaway | escape }}</p>{% endif %}
+      </section>
+      {% endfor %}
+    </div>
+    <section class="case-quiz" aria-labelledby="{{ case_id }}-decision-title" hidden>
+      <h3 id="{{ case_id }}-decision-title" tabindex="-1">Choose the next action</h3>
+      <div data-quiz-host></div>
+      <p class="tvm-quiz-status" role="status" aria-live="polite"></p>
+      <button type="button" data-case-action="review-evidence">Review this scene</button>
+    </section>
+    <div class="nja-narration" role="region" aria-label="Current narration"><p>{{ case_story.scenes.first.cues.first.text | escape }}</p></div>
+    <audio class="nja-audio" controls preload="none" aria-label="{{ case_story.title | escape }} narration">
+      <source src="{{ case_story.audio | relative_url }}" type="audio/mpeg">
+      <track kind="captions" src="{{ case_story.captions | relative_url }}" srclang="en" label="English">
+    </audio>
+    <div class="nja-controls case-step-controls" hidden>
+      <div class="case-step-actions">
+        <button type="button" data-case-action="previous-step">Previous step</button>
+        <button type="button" data-case-action="next-step">Next step</button>
+        <output data-case-progress aria-label="Current step"></output>
+      </div>
+      <div class="nja-settings">
+        <label class="nja-scene-select">Review a scene<select data-setting="scene">{% for scene in case_story.scenes %}<option value="{{ forloop.index0 }}">{{ forloop.index }}. {{ scene.label | escape }}</option>{% endfor %}</select></label>
+        <label>Narration speed<select data-setting="speed"><option value="0.75">0.75x</option><option value="1" selected>1x</option><option value="1.25">1.25x</option><option value="1.5">1.5x</option></select></label>
+      </div>
+    </div>
+    <p class="nja-status" role="status" aria-live="polite"></p>
+  </div>
+  <p class="nja-credit">Synthetic narration: Kokoro. <a href="{{ case_story.script | relative_url }}" download>Download narration script</a> · <a href="{{ case_story.audio | relative_url }}" download>Download narration</a> · <a href="{{ case_story.captions | relative_url }}" download>Download captions</a></p>
+  <div class="case-reading-actions" hidden><button type="button" data-case-action="read">Read at my own pace</button><button type="button" data-case-action="print">Print the case study</button></div>
+  <details class="nja-transcript" open>
+    <summary>Complete transcript, diagrams, and decision explanations (contains later findings)</summary>
+    {% include narrated-case-study-reading.html story=case_story prefix=case_id %}
+  </details>
+  <script type="application/json" data-case-storyboard>{{ case_story | jsonify | replace: '</', '<\/' }}</script>
+  <script type="application/json" data-case-timing>{{ case_timing | jsonify }}</script>
+</section>
+<script src="{{ '/js/narrated-explainer.js' | relative_url }}" defer></script>
+<script src="{{ '/js/parsons-grading.js' | relative_url }}" defer></script>
+<script src="{{ '/js/tutorial-quiz.js' | relative_url }}" defer></script>
+<script src="{{ '/js/narrated-case-study.js' | relative_url }}" defer></script>

@@ -1,0 +1,108 @@
+/* Diagram-only stories use the shared narration palette in both page themes. */
+.narrated-case-study:not(.is-enhanced) .nja-stage { display: none; }
+.narrated-case-study .nja-scene { min-height: 0; }
+.narrated-case-study .nja-scene-meta { margin: 0; font-size: 1em; }
+.narrated-case-study .nja-scene h3 { font-size: 1.4em; }
+.narrated-case-study .nja-explanation { grid-template-columns: 1fr; }
+.narrated-case-study .nja-narration { min-height: 0; }
+.narrated-case-study .case-figure { margin: 1em 0; min-width: 0; }
+.narrated-case-study .case-figure figcaption { color: var(--nja-text); font: inherit; line-height: 1.6; margin-top: 0.65em; }
+.narrated-case-study .case-provenance { color: var(--nja-muted); font: inherit; line-height: 1.6; overflow-wrap: anywhere; }
+.narrated-case-study .case-description { margin: 0.75em 0; }
+.narrated-case-study .case-description p { color: var(--nja-text); font: inherit; }
+.narrated-case-study .case-diagram {
+  --uml-stroke: #4060a0;
+  --uml-text: #222;
+  --uml-fill: #fdfcf8;
+  --uml-header-fill: #dbe8f8;
+  --uml-line: #000;
+  --uml-secondary-line: #657484;
+  --uml-secondary-fill: #eef4fa;
+  --uml-label-fill: #fff;
+  --uml-label-stroke: #74859a;
+  background: #fff;
+  color: var(--nja-text);
+  border: 2px solid var(--nja-line);
+  border-radius: 5px;
+  padding: 0.5em;
+  overflow-x: auto;
+  min-width: 0;
+}
+.narrated-case-study .case-diagram svg { max-width: none; filter: none !important; }
+@media screen {
+  html.dark-mode:not(.print-light-mode) .narrated-case-study .case-diagram { background: #151a20; }
+  html.dark-mode:not(.print-light-mode) .narrated-case-study .case-diagram svg { filter: invert(1) hue-rotate(180deg) !important; }
+}
+.narrated-case-study [data-case-diagram] { min-width: 0; }
+.narrated-case-study .case-step-actions,
+.narrated-case-study .case-reading-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.65em; margin-bottom: 1em; }
+.narrated-case-study .case-step-actions output { flex: 1 1 13em; font: inherit; color: var(--nja-text); }
+.narrated-case-study .nja-controls .case-step-actions button { width: auto; height: auto; padding: 0.5em 0.8em; }
+.narrated-case-study :is(.case-reading-actions, .case-quiz) button {
+  font: inherit; min-height: 2.6em; padding: 0.6em 0.8em; border: 2px solid var(--nja-line);
+  border-radius: 5px; color: var(--nja-text); background: var(--nja-input); cursor: pointer;
+}
+.narrated-case-study :is(.case-reading-actions, .case-quiz) button:hover:not(:disabled) { background: var(--nja-hover); }
+.narrated-case-study :is(button, summary, h3, [data-case-diagram]):focus-visible { outline: 3px solid var(--nja-cyan); outline-offset: 3px; }
+.narrated-case-study .case-study-reader { color: var(--nja-text); }
+.narrated-case-study .case-study-reader :is(p, li) { color: inherit; font: inherit; line-height: 1.65; }
+.narrated-case-study .case-study-reader h3 { font-size: 1.4em; color: inherit; }
+.narrated-case-study .case-study-reader h4 { font-size: 1.2em; color: inherit; line-height: 1.4; }
+.narrated-case-study .case-reading-scene { margin: 2em 0; padding-top: 0.6em; border-top: 2px solid var(--nja-line); }
+.narrated-case-study .case-reading-step { margin: 1.5em 0; }
+.narrated-case-study .case-diagram-description { border-left: 3px solid var(--nja-line); padding-left: 0.8em; }
+.narrated-case-study .case-reading-question { border: 2px solid var(--nja-line); border-radius: 5px; padding: 1em; background: var(--nja-panel); }
+.narrated-case-study .case-reading-answer { margin-top: 0.8em; }
+
+/* Shared SebookQuiz behavior, with the same readable palette as the story. */
+.narrated-case-study .case-quiz { padding: 1.4em; color: var(--nja-text); background: var(--nja-bg); }
+.narrated-case-study .case-quiz h3 { font-size: 1.3em; color: inherit; line-height: 1.4; }
+.narrated-case-study .case-quiz h4 { font-size: 1.2em; color: inherit; }
+.narrated-case-study .case-quiz p { font: inherit; color: inherit; line-height: 1.6; }
+.narrated-case-study .tvm-quiz-gate-header { display: flex; gap: 0.8em; align-items: center; margin-bottom: 1em; }
+.narrated-case-study .tvm-quiz-gate-icon { font-size: 1.5em; }
+.narrated-case-study .quiz-container { margin: 1em 0; padding: 1em; background: var(--nja-panel); border: 2px solid var(--nja-line); border-radius: 6px; color: var(--nja-text); font: inherit; }
+.narrated-case-study .quiz-question-card { display: none; }
+.narrated-case-study .quiz-question-card.active { display: block; }
+.narrated-case-study .question-text { font: inherit; font-weight: 600; margin-bottom: 1em; }
+.narrated-case-study .quiz-options { display: flex; flex-direction: column; gap: 0.6em; }
+.narrated-case-study .quiz-option { display: flex; gap: 0.7em; align-items: flex-start; text-align: left; width: 100%; margin: 0; }
+.narrated-case-study .quiz-option:hover:not(:disabled) { border-color: var(--nja-cyan); }
+.narrated-case-study .quiz-option.correct { background: var(--nja-success-bg); color: var(--nja-green); border-color: var(--nja-green); }
+.narrated-case-study .quiz-option.incorrect { background: var(--nja-error-bg); color: var(--nja-coral); border-color: var(--nja-coral); }
+.narrated-case-study .quiz-option.correct::after { content: '✓'; margin-left: auto; }
+.narrated-case-study .quiz-option.incorrect::after { content: '✗'; margin-left: auto; }
+.narrated-case-study .option-label { display: inline-grid; place-items: center; flex-shrink: 0; min-width: 1.8em; min-height: 1.8em; padding: 0.1em; border: 1px solid var(--nja-line); border-radius: 50%; background: var(--nja-chrome); color: var(--nja-text); font: inherit; }
+.narrated-case-study .option-checkbox { display: none; }
+.narrated-case-study .option-content { min-width: 0; }
+.narrated-case-study .option-feedback { margin: 0.3em 0 0.5em; padding: 0.6em 0.8em; background: var(--nja-warning-bg); border-left: 3px solid var(--nja-accent); font: inherit; }
+.narrated-case-study .quiz-explanation { margin-top: 1em; padding: 0.8em; background: var(--nja-note-bg); border: 1px solid var(--nja-line); border-left: 4px solid var(--nja-accent); font: inherit; }
+.narrated-case-study .explanation-title { color: var(--nja-accent); font-weight: bold; }
+.narrated-case-study :is(.quiz-shortcuts-hint, .quiz-next-shortcut-hint, .quiz-result-shortcut-hint) { font-size: 1em; line-height: 1.5; color: var(--nja-muted); }
+.narrated-case-study kbd { color: var(--nja-text); background: var(--nja-input); border: 1px solid var(--nja-line); font: inherit; padding: 0.1em 0.3em; }
+.narrated-case-study .quiz-progress-bar { height: 0.5em; background: var(--nja-line); border-radius: 5px; margin-bottom: 1em; overflow: hidden; }
+.narrated-case-study .progress-fill { height: 100%; background: var(--nja-accent); }
+.narrated-case-study .quiz-correct-answers { display: none; gap: 0.5em; color: var(--nja-green); font: inherit; margin-top: 0.8em; }
+.narrated-case-study .correct-label-badge { padding: 0.2em 0.5em; border: 1px solid var(--nja-green); border-radius: 4px; color: var(--nja-green); background: var(--nja-success-bg); font: inherit; }
+.narrated-case-study :is(.score-display, .score-summary, .tvm-quiz-threshold) { font: inherit; margin: 0.8em 0; }
+.narrated-case-study .results-actions { display: flex; flex-wrap: wrap; gap: 0.8em; }
+.narrated-case-study :is(.hidden, .is-hidden) { display: none !important; }
+@media (max-width: 520px) {
+  .narrated-case-study .case-quiz { padding: 0.85em; }
+  .narrated-case-study .quiz-container { padding: 0.65em; }
+  .narrated-case-study .quiz-option { gap: 0.5em; padding: 0.55em 0.45em; }
+  .narrated-case-study .option-label { min-width: 1.4em; min-height: 1.4em; }
+}
+@media print {
+  .narrated-case-study .case-reading-actions { display: none !important; }
+  .narrated-case-study .case-study-reader { color: #000; }
+  .narrated-case-study .case-reading-scene { break-inside: auto; border-color: #666; }
+  .narrated-case-study .case-reading-step { break-inside: avoid; }
+  .narrated-case-study .case-provenance { color: #222; }
+  .narrated-case-study .case-reading-question { background: #fff; border-color: #666; }
+  .narrated-case-study .case-diagram { background: #fff; border-color: #666; overflow: visible; }
+  .narrated-case-study .case-diagram svg { max-width: 100%; height: auto; filter: none !important; }
+  .narrated-case-study .case-reading-answer::details-content { display: block; content-visibility: visible; }
+  .narrated-case-study .case-reading-answer > div { display: block !important; }
+  .narrated-case-study .case-reading-answer summary { display: none; }
+}

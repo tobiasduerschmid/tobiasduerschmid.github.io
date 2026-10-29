@@ -210,6 +210,8 @@ class Context {
 - "Skip to main content" link
 - The H1-driven top nav (the whole point of this skill)
 
+**Narrated diagram case studies.** Use `{% include narrated-case-study.html topic="therac25" %}` with `static_uml: true` and the shared `narrated-explainer.css` plus `narrated-case-study.css`, followed by `print-light.css`. `_data/explainers/<topic>.yml` holds ArchUML diagrams, narration cues, evidence/source labels, and decision checkpoints; generated audio, captions, and measured timing use the existing Kokoro renderer. The adapter reuses the narration clock and tutorial quiz engine, supports silent cue navigation, and pauses before revealing the next evidence. Keep prediction answers out of earlier narration, captions, and descriptions. The same reading include supplies a no-JavaScript transcript and print answers. See `docs/narrated-case-study.md` for the schema and checks; no code panel or additional persistence is needed.
+
 ## Citations and `_bibliography/references.bib`
 
 The bibliography lives at [`_bibliography/references.bib`](../../../_bibliography/references.bib) (~3000 lines, ~hundreds of entries) and is rendered by [jekyll-scholar](https://github.com/inukshuk/jekyll-scholar). Citation style is `harvard-cite-them-right`, sorted by author ascending ([`_config.yml` lines 127–138](../../../_config.yml)). Inline cites render as `(Author, Year)`; the auto-appended References section lists full entries linked to `url` / `doi`.

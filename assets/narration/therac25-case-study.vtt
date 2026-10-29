@@ -1,0 +1,157 @@
+WEBVTT
+
+orientation-1
+00:00:00.000 --> 00:00:21.796
+Therac-25 was a computer-controlled machine used to treat cancer with radiation. A therapist entered a prescribed treatment at a keyboard and screen, called the console. The patient received radiation from the treatment head. Follow the arrows: the first arrows carry information; the last arrow represents a physical beam.
+
+orientation-2
+00:00:21.796 --> 00:00:47.965
+The prescription specified the intended treatment, including the kind of radiation and the dose. Absorbed dose is radiation energy deposited per unit mass of tissue. The controller was the software that prepared the equipment and managed delivery. Typing a request did not itself deliver radiation. Our debugging question will be how a reasonable request could lead to an incorrect physical result.
+
+modes-1
+00:00:47.965 --> 00:01:12.141
+An accelerator gives electrons energy, producing an energetic beam. Both treatment modes began with that electron beam. In electron mode, abbreviated E, the machine spread that electron beam across the treatment field at appropriate settings. In this diagram, read each arrow as the path of the beam. We show only the parts needed to understand the difference between modes.
+
+modes-2
+00:01:12.141 --> 00:01:35.197
+In X-ray mode, abbreviated X, the electrons instead struck a metal target inside the treatment head, producing X-rays. Here, target means a machine part, not the tumor. This conversion required a substantially more intense electron beam. Changing between E and X therefore required changing both beam settings and the physical arrangement.
+
+modes-3
+00:01:35.197 --> 00:01:56.162
+If X-ray-production settings remained while the required metal target was absent, intense electrons could reach the patient inappropriately. That is the mismatch we need to understand. Remember two questions: what settings has the machine applied, and what is actually in the beam path? The displayed choice alone cannot answer both.
+
+normal-1
+00:01:56.162 --> 00:02:21.158
+This sequence diagram shows a successful setup with an unchanged E request. Each vertical lane represents a responsibility. Read events from top to bottom. An arrow shows an interaction; a return arrow reports a result. Our simplified example first prepares the beam settings, then the physical arrangement. It does not claim the historical program used these exact calls.
+
+normal-2
+00:02:21.158 --> 00:02:48.801
+Both preparations must be suitable for the current request before treatment proceeds. A ready indication means the controller is allowing the next step; it is a claim to examine, not independent proof of physical correctness. The operator's command to turn the beam on comes after preparation. None of the setup arrows in this diagram delivers radiation. Keep three facts separate: requested mode, applied configuration, and permission to operate.
+
+normal-3
+00:02:48.801 --> 00:03:11.615
+So far the request stayed unchanged. But the interface allowed the therapist to correct an entry. Setup took time, and software could handle keyboard input while other preparation remained unfinished. We will first establish what happened, then compare ordinary setup with a correction during that work. The first decision begins with the reported evidence.
+
+report-1
+00:03:11.615 --> 00:03:36.708
+In Tyler, Texas, two incidents occurred in 1986. Patients reported unexpected painful effects during treatment, while the console displayed a low dose and a cryptic numbered warning. The machine paused, but its interface allowed the operator to proceed. A low reading could suggest little radiation had been delivered; the patient's experience challenged that interpretation.
+
+report-2
+00:03:36.708 --> 00:04:01.427
+We are reviewing an investigation after treatment has stopped. A symptom is an observation needing explanation: the patient's report, the reading, and the warning are symptoms. They do not yet identify a defective routine. Which investigation would test whether the displayed account agreed with the machine's physical output? Choose an observation that adds a different source of evidence.
+
+configuration-1
+00:04:01.427 --> 00:04:25.175
+Before following the software, state what correct operation requires. The request expresses the intended treatment. Beam setup chooses operating settings. Positioning selects the arrangement in the beam path. These are different responsibilities. A completed setup routine tells us about its own work; it does not automatically tell us what another responsibility has done.
+
+configuration-2
+00:04:25.175 --> 00:04:41.393
+Imagine the console now says E. We need evidence about whether treatment may proceed, not just evidence that the text on screen changed. Use the two preparation paths in the diagram to decide what must be established for the current request.
+
+reproduce-1
+00:04:41.393 --> 00:05:16.380
+Routine checks initially failed to reproduce the reported event. Investigators also considered an electrical shock, without substantiating that explanation. A machine working normally during a check does not explain a different history. Reproducing means finding repeatable conditions that produce the relevant failure, with an observable result that tells us whether it happened. The therapists contributed the keyboard history; physicist Fritz Hager helped investigate physical output. Their different observations were needed together.
+
+reproduce-2
+00:05:16.380 --> 00:05:38.112
+Look at the two branches. The top branch enters E directly. The lower branch enters X, begins setup, then corrects the entry to E. The word alternative means these are separate trials, not one combined run. Both end with E on the request, but the earlier work is different. The diagram deliberately withholds the outcomes.
+
+reproduce-3
+00:05:38.112 --> 00:05:58.383
+Keep the equipment and intended final treatment the same. Which comparison would help determine whether the order and timing of the correction matter? Think about what another investigator would have to record to repeat your trial. We are designing controlled investigation conditions, not repeating exposure with a patient.
+
+reads-1
+00:05:58.383 --> 00:06:21.833
+Reconstructing a rapid change from X to E helped investigators reproduce the Tyler problem. We now ask how that history could matter. The controller had one computer, but several software tasks took turns running. A task could pause while input handling changed a shared value, then resume. Two processors are not required for this kind of timing problem.
+
+reads-2
+00:06:21.833 --> 00:06:43.429
+The Shared request lane stands for information in memory. Beam setup reads X and uses it to select settings. The therapist then changes the shared request to E. Changing that memory value does not undo a decision already made from its earlier value. Follow the arrows down to the correction; the positioning read has not yet happened.
+
+reads-3
+00:06:43.429 --> 00:07:00.383
+Positioning is about to read the current request. No step recomputing earlier settings is shown. What combination of decisions is now possible? Also separate internal preparation from physical output: inhibited means operation is not permitted.
+
+missing_check-1
+00:07:00.383 --> 00:07:23.331
+Positioning can select the E arrangement while the beam settings still come from X. The next question is why the controller failed to notice and reconcile the correction. Reconcile here means revisiting earlier work so that it agrees with the current request. The diagram explains inconsistent decisions; it does not yet show permission to deliver a beam.
+
+missing_check-2
+00:07:23.331 --> 00:07:46.328
+Part of setup adjusted bending magnets that steer the electron beam. This took several seconds. During the wait, a delay-checking routine could look for corrected input. A software flag is a stored value used as a yes-or-no condition. Here, flag on meant magnet setup was in progress, and later edit checks depended on that flag being on.
+
+missing_check-3
+00:07:46.328 --> 00:08:07.580
+Now follow the sequence. The first delay clears the flag, meaning it sets the flag to off, although magnet setup continues. An input correction arrives afterward. A later delay checks for edits only when the flag is on. What can happen to this accepted correction? The corrected input and the flag are separate stored values.
+
+diagnosis-1
+00:08:07.580 --> 00:08:28.492
+The later edit check can be skipped because the flag is already off. There was also a completion problem. The interface had an area for commands after treatment entry. Reaching it once was treated as evidence of completion, even if the therapist went back to edit. Past completion did not establish that editing was finished now.
+
+diagnosis-2
+00:08:28.492 --> 00:08:51.356
+Use The Debugging Book's terms. The implementation defect is the incorrect rule, such as clearing the setup flag too early. The resulting incorrect runtime state is a fault, also called an infection. Incorrect physical output is a failure; injury is its consequence. A wrong internal state can exist before any external failure occurs.
+
+diagnosis-3
+00:08:51.356 --> 00:09:17.078
+A diagnosis needs two parts: how this sequence causes the invalid state, and why accepting that state violates the requirement. Recall the requirement: applied settings and positioning must be suitable for the current request before operation. Which explanation connects the mechanism to that requirement? Typing speed identifies a trigger; it does not itself explain an implementation defect.
+
+repair-1
+00:09:17.078 --> 00:09:40.123
+To reason about a repair, switch to a state diagram. Each box describes a condition of our proposed controller. Inhibited means operation is blocked. Preparing means setup is underway. Ready means permission has been granted. Arrows show changes of state. Text in square brackets is a guard: a condition that must be true for that change to happen.
+
+repair-2
+00:09:40.123 --> 00:10:03.579
+This is a new teaching design, not a recovered diagram of Therac-25. Starting setup moves from Inhibited to Preparing. Completing work might move to Ready, but the guard is deliberately missing. An edit after Ready revokes permission. Work based on an older request is obsolete: finishing it does not make it suitable for the newer request.
+
+repair-3
+00:10:03.579 --> 00:10:21.556
+Adding a delay might avoid one observed timing. It would not explain what to do if another correction arrived. What must the completion rule establish before granting permission? Choose a relationship between the work, the current request, and the equipment, rather than a waiting time.
+
+verify-1
+00:10:21.556 --> 00:10:49.624
+The proposed rule authorizes only a current, consistent configuration. The larger box groups Preparing and Ready: an edit in either state invalidates permission. Text after a slash names the action taken. Historically, the Tyler corrections kept the magnet flag on until setup ended and added shared editing status to prevent premature progression. Those were specific changes implementing related obligations.
+
+verify-2
+00:10:49.624 --> 00:11:11.587
+Suppose the original bad sequence is now blocked. That is necessary, but a controller that never permits anything would pass that test too. Which additional test establishes that intended use still works? After answering, consider edits after readiness and old work finishing late. Old results must not displace a newer valid setup.
+
+yakima_boundary-1
+00:11:11.587 --> 00:11:38.132
+A later accident at Yakima in 1987 involved a different defect. Inside the treatment head, a turntable selected components in the beam path. This was not the patient's table. Its field-light position used visible light to help align the treatment field; it was not a treatment position. A SET request asked the mechanism to return toward the treatment configuration. SET did not turn the beam on.
+
+yakima_boundary-2
+00:11:38.132 --> 00:12:03.918
+Before progressing, software needed to check position. Follow three separate steps: setup requests a check; the checker inspects position and records a blocking problem if needed; progression consults that recorded status. The check request was stored in a one-byte value. Nonzero meant perform the check. A byte can represent 256 different values, here zero through 255.
+
+yakima_boundary-3
+00:12:03.918 --> 00:12:28.691
+The program repeatedly added one to that value during setup passes. These are repetitions inside preparation, not counts of patients. The arithmetic wraps: adding one beyond the largest representable value starts again at zero. In our paused trace the value is 255, and the next pass increments it. Predict the next value and what the nonzero guard will do.
+
+yakima_check-1
+00:12:28.691 --> 00:12:49.548
+The value becomes zero, so the position check can be skipped. The later decision uses a separate blocking-status value. Think of that status as stored yes-or-no problem indicators. If no blocking indicator is set, the software may advance. But that does not tell us whether a required check just ran or was skipped.
+
+yakima_check-2
+00:12:49.548 --> 00:13:13.938
+In the published explanation, the turntable was still in field-light position. A SET request occurred during the zero interval, while other blocking indicators remained clear. Under those conditions, setup could advance to the next phase with the wrong physical arrangement. Wrapping alone does not explain an overdose. Skipping a check also does not erase a problem already recorded.
+
+yakima_check-3
+00:13:13.938 --> 00:13:35.106
+The value was being used to say check required, not to count useful events. If every setup pass must leave it nonzero, how should that value be updated? Compare enforcing its intended meaning with merely making the wraparound take longer. This repairs one local obligation; the complete machine needs more evidence.
+
+assurance-1
+00:13:35.106 --> 00:13:59.900
+A software repair addresses a known mechanism. A protective function adds another way to prevent unsafe output. In this diagram the controller requests operation, while a separate function observes configuration and can block it. Independence means a controller mistake must not automatically defeat that protection too; drawing two boxes does not establish that property.
+
+assurance-2
+00:13:59.900 --> 00:14:24.715
+The historical corrective process included software changes, protective hardware, clearer recovery behavior, documentation, and testing of installed machines. For our proposed model, suppose known failing histories and ordinary uses now pass. What conclusion do those observations support? Distinguish evidence about those cases from a claim about every possible failure.
+
+transfer-1
+00:14:24.715 --> 00:14:47.905
+A print interface displays two copies, but the printer sometimes produces one after a last-moment edit. A worker is the software that prepares the print job. It starts before the edit and later sends a job to the printer. We do not know the copy count it sends. Two explanations remain: an old prepared job, or a printer ignoring a correct job.
+
+transfer-2
+00:14:47.905 --> 00:15:10.694
+Which observation would distinguish those explanations? For each possible result, say what it would support and what would remain unknown. Then name one test that repeats the failure history and one that checks ordinary successful use. Your task is to transfer the investigation method, not assume this new case has the same cause as Therac-25.
