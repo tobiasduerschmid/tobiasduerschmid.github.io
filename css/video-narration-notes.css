@@ -4,7 +4,7 @@
    points and ruled lines, and each knowledge check), then the answers. Notes
    are a print surface, so they stay light. The page also loads the stage's
    styles, which color html and body for the stage page; these rules win. */
-html.print-light-mode { background: #eef1f5; }
+html.print-light-mode { background: #eef1f5; color-scheme: light; }
 html body.vn-notes-page {
   --vn-notes-ink: #17202c;
   --vn-notes-muted: #4a5566;
@@ -122,6 +122,26 @@ html body.vn-notes-page {
   /* A 3.6in still is the 960px stage at 0.36, on Letter and A4 alike. */
   .vn-note-still { width: 3.6in; }
   .vn-note-still > .stage { transform: scale(0.36); }
+  /* Keep HTML text and SVG paths as vector PDF drawing commands. Filters
+     (including inline animation poses) and soft shadows create bitmap layers. */
+  .vn-note-still,
+  .vn-note-still *,
+  .vn-note-still::before,
+  .vn-note-still::after,
+  .vn-note-still *::before,
+  .vn-note-still *::after {
+    filter: none !important;
+    backdrop-filter: none !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+  /* Tiled plaster/ruled-paper textures and glossy confetti also rasterize in
+     Chromium's PDF renderer. Keep the artwork, paper, and confetti colors;
+     omit only these decorative textures. Other gradients remain vector. */
+  .vn-note-still .sw-texture,
+  .vn-note-still .confetti-piece::after { display: none; }
+  .vn-note-still .us-card-body { background-image: none; }
+  .vn-note-still .confetti-piece { background: var(--piece-color); }
   /* The lines fill whatever room the picture, points, or question leave. */
   .vn-note-points .vn-note-lines, .vn-check .vn-note-lines { flex: 1 1 0; height: 0; }
   .vn-note-lines--below { height: auto; }

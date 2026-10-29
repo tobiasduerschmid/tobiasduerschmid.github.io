@@ -163,6 +163,14 @@ the lesson remains: three rows a Letter page, then the answers. Pictures
 print at a fixed 3.6in (the stage at 0.36), so print layout needs no script.
 The ruled lines are bordered spans, so they print without background
 graphics; the pictures keep their colors with `print-color-adjust: exact`.
+The notes always use the light palette, including when the site or operating
+system prefers dark mode. Print CSS keeps the live HTML text and SVG artwork
+as vector graphics: it disables filters and shadows, omits the decorative
+plaster and ruled-paper textures, and gives confetti a solid paper color.
+The remaining gradients, slide content, and layout are preserved. The notes
+tests inspect every object in the generated PDF for raster images (including
+images inside patterns and soft masks), and compare the light/dark PDF drawing
+streams so a theme preference cannot change the printed artwork.
 
 ## Adding a video narration
 

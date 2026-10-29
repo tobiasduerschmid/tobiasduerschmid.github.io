@@ -2,6 +2,8 @@
 // "Printable notes"): the page that "Save lesson notes as PDF" opens and prints.
 const { test, expect } = require('@playwright/test');
 const { readFileSync } = require('node:fs');
+const { createHash } = require('node:crypto');
+const { PDFDocument, PDFName, PDFRawStream } = require('pdf-lib');
 const yaml = require('js-yaml');
 const { a11yCheckpoint } = require('./a11y-helpers');
 
@@ -147,6 +149,37 @@ for (const [topic, lesson] of Object.entries(data('video_narrations.yml'))) {
     const pdf = await page.pdf({ format: 'Letter', preferCSSPageSize: true });
     const pages = (pdf.toString('latin1').match(/\/Type\s*\/Page\b/g) || []).length;
     expect(pages).toBe(Math.ceil((cues.length + questions.length) / ROWS_PER_PAGE));
+  });
+
+  test(`${topic} notes: every printed picture remains vector graphics`, async ({ page }) => {
+    await page.goto(notesUrl);
+    await picturesReady(page);
+    const pdf = await PDFDocument.load(await page.pdf({ format: 'Letter', printBackground: true }));
+    // Inspect every PDF object, including images inside patterns and soft masks
+    // that are missed by checking only the page's direct image resources.
+    const images = pdf.context.enumerateIndirectObjects().filter(([, object]) => (
+      object instanceof PDFRawStream && object.dict.get(PDFName.of('Subtype')) === PDFName.of('Image')
+    ));
+    expect(images.length, 'raster images in the notes PDF').toBe(0);
+  });
+
+  test(`${topic} notes: dark mode prints the same light artwork`, async ({ page }) => {
+    await page.emulateMedia({ colorScheme: 'light' });
+    await page.goto(notesUrl);
+    await picturesReady(page);
+    await page.emulateMedia({ media: 'print' });
+    // Compare the PDF drawing/font streams, ignoring document timestamps.
+    const drawingStreams = async () => {
+      const pdf = await PDFDocument.load(await page.pdf({ format: 'Letter', printBackground: true }));
+      return pdf.context.enumerateIndirectObjects()
+        .filter(([, object]) => object instanceof PDFRawStream)
+        .map(([, object]) => createHash('sha256').update(object.getContents()).digest('hex'));
+    };
+    const light = await drawingStreams();
+    await page.emulateMedia({ media: 'print', colorScheme: 'dark' });
+    await page.evaluate(() => document.documentElement.classList.add('dark-mode'));
+    await expect(page.locator('html')).toHaveCSS('color-scheme', 'light');
+    expect(await drawingStreams()).toEqual(light);
   });
 
   test(`${topic}: the button under the video opens the notes and the print dialog`, async ({ page }) => {
