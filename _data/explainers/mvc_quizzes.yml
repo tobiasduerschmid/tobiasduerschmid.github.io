@@ -1,0 +1,198 @@
+# One knowledge check per section, about the Model-View-Controller pattern
+# rather than the screen-time example. Every check is answerable from the
+# narration up to that point. The summary section lists several questions
+# under `questions`, on a new example.
+intro:
+  question: What does each of the three roles in the Model-View-Controller pattern's name take care of?
+  options:
+    - The model holds the data, views display it, and controllers handle input
+    - The model handles input, views hold the data, and controllers display it
+    - The model is the database, the view is a web page, and the controller is the server
+  correct_index: 0
+  explanation: The pattern's name lists its roles. The model holds the data, views display it, and controllers handle the user's input.
+  option_feedback:
+    1: Views only display data they get from the model, and input goes to controllers, so this swaps every job.
+    2: The roles are jobs inside one interactive app, not machines or tiers of a web system.
+context:
+  question: Which app is in the context that the Model-View-Controller pattern fits?
+  options:
+    - A nightly batch job that converts files without any user interface
+    - An interactive tool whose users edit data while its interface keeps changing
+    - A library of math functions that other programs call directly
+  correct_index: 1
+  explanation: The pattern fits interactive apps whose user interface keeps changing. Users change the data while they look at it, and new screens and charts keep arriving.
+  option_feedback:
+    0: Without users editing data they are looking at, there is no interface to keep flexible and no input to separate from the display.
+    2: A library has callers but no user interface, so there are no displays or input to separate.
+problem:
+  question: In the Model-View-Controller pattern's problem, what makes an interface tangled up with the data expensive?
+  options:
+    - Extra method calls make the program noticeably slower
+    - The data can no longer be kept in memory
+    - Every new display or port forces edits to the code holding the data
+  correct_index: 2
+  explanation: User interfaces change all the time. When the interface is tangled up with the data, every interface change touches the code that holds the data and risks breaking it.
+  option_feedback:
+    0: The problem is the cost of changing the code, not its speed.
+    1: Where the data lives in memory does not change. The issue is which code you must edit when the interface changes.
+model_role:
+  question: In the Model-View-Controller pattern, what does the model know about its views?
+  options:
+    - Each view's class, so that it can call the right drawing code
+    - Only that each one has an update method it can call
+    - Nothing at all, so each view must check the model on a timer
+  correct_index: 1
+  explanation: The model keeps a list of dependents and calls update on each one. It does not know what they display or how.
+  option_feedback:
+    0: If the model called each view's drawing code, it would have to change whenever a view is added, which is exactly the tangle the pattern removes.
+    2: Views need no timer, because the model calls their update method whenever the data changes.
+view_role:
+  question: In the Model-View-Controller pattern, what does a view do when its update method is called?
+  options:
+    - It changes the model's data to match what it displays
+    - It asks its controller to redraw all the other views
+    - It asks the model for the current data and redraws itself
+  correct_index: 2
+  explanation: The announcement carries no data. Each view asks the model for exactly the data it shows and redraws itself.
+  option_feedback:
+    0: Views only display the model's data; changes to the data come from controllers.
+    1: Every view on the model's list receives update directly; no controller coordinates the other views.
+controller_role:
+  question: In the Model-View-Controller pattern, a user scrolls a view without changing any data. What should the view's controller do?
+  options:
+    - Ask its own view to scroll, without involving the model
+    - Change the model so that every view scrolls
+    - Call notify so that every view on the list redraws
+  correct_index: 0
+  explanation: Controllers turn input into requests. A change to the data goes to the model; a change to what one view shows goes to that view.
+  option_feedback:
+    1: Scrolling does not change the data, so the model and the other views should not be involved.
+    2: Only the model calls notify, and only after its data changes.
+collaborations:
+  question: In the Model-View-Controller pattern, which order of steps follows one edit?
+  options:
+    - The controller redraws every view first, then stores the change in the model
+    - The controller asks the model to change; the model notifies; views fetch data and redraw
+    - The model checks the controllers for input, then redraws each of the views itself
+  correct_index: 1
+  explanation: That is the whole loop. A controller changes the model, the model announces the change, and every view asks for the data and redraws.
+  option_feedback:
+    0: Controllers do not draw. Views redraw themselves after the model's announcement, so all of them stay in sync.
+    2: Input arrives at controllers, and views draw themselves; the model neither checks for input nor draws.
+setup:
+  question: In the Model-View-Controller pattern, who creates a view's controller during set-up?
+  options:
+    - The model, at the moment that the view joins its list of dependents
+    - Each controller, which then creates its own view and registers it
+    - The view itself, during initialization, through a factory method
+  correct_index: 2
+  explanation: Set-up code creates the model and then each view. Each view joins the model's list and creates its own controller, often by overriding a factory method.
+  option_feedback:
+    0: The model stays independent of views and controllers, so it must not choose or create them.
+    1: The view creates its controller; the controller receives its view and the model.
+solution:
+  question: In the Model-View-Controller pattern, what is the model's only link back to its views and controllers?
+  options:
+    - A list of dependents that it notifies when its data changes
+    - Direct calls from the model to each view's drawing code
+    - Its controller, which forwards every model change to the views
+  correct_index: 0
+  explanation: The model knows its views and interested controllers only as entries on its list of dependents, the Observer pattern. That list is its only link back to the screen.
+  option_feedback:
+    1: If the model called each view's drawing code, it would depend on every view, which brings back the problem.
+    2: Controllers send requests to the model; the model's announcements go to everything on its list directly.
+consequences:
+  question: Which of these is a cost of the Model-View-Controller pattern?
+  options:
+    - Views and controllers call the model directly, so changing its interface breaks them
+    - Porting to a new platform requires rewriting the model's data and rules
+    - Only one view of the model can be open at a time
+  correct_index: 0
+  explanation: Both views and controllers depend on the model's interface, so changes to it ripple into them.
+  option_feedback:
+    1: A phone version needs new views and controllers but the same model, so the interface can be ported without touching the data.
+    2: Showing the same data in many views at once is one of the pattern's main gains.
+applicability:
+  question: Many toolkits merge each view and its controller into one component. What does that variant of the Model-View-Controller pattern give up?
+  options:
+    - Keeping several views in sync with one model
+    - The ability to swap a view's controller for another
+    - Keeping the data separate from its displays
+  correct_index: 1
+  explanation: When one component both draws and handles its own input, you can no longer swap its controller. The model still keeps several views in sync.
+  option_feedback:
+    0: The merged components still read one model and redraw when it changes, so the views stay in sync.
+    2: The model stays separate; only the view and controller are combined.
+transfer:
+  question: You add a new kind of chart to an app built with the Model-View-Controller pattern. What must change?
+  options:
+    - A new drawing branch in the model's notify method
+    - Every existing controller, so that each also updates the new chart
+    - A new view class with its controller, created in the set-up code
+  correct_index: 2
+  explanation: A new display is a new view with a suitable controller. It joins the model's list during set-up, so the model and the other views stay unchanged.
+  option_feedback:
+    0: The notify method calls update on whatever is on the list; it never needs to know which kinds of views exist.
+    1: Controllers ask the model for changes; the model's announcement reaches the new view without changing them.
+summary:
+  questions:
+    - question: A fitness app shows a workout's heart rate as a large number, a live graph, and a smartwatch display, and its screens are redesigned often. Why is this app in the Model-View-Controller pattern's context?
+      options:
+        - It is interactive, and its interface keeps changing while its data stays stable
+        - Its heart-rate algorithm must run on several servers at the same time
+        - It has exactly one display, and that display will never change
+      correct_index: 0
+      explanation: Users interact with live data shown in several ways, and the interface keeps changing. That is the pattern's context.
+      option_feedback:
+        1: Spreading computation across servers is about deployment, not about separating an interface from its data.
+        2: With one fixed display, the pattern's flexibility would not pay off.
+    - question: The fitness app's first version stores the heart-rate samples inside its graph widget class. What problem does the Model-View-Controller pattern identify in this design?
+      options:
+        - A list cannot store a long workout's heart-rate samples efficiently
+        - Changing or porting a display changes the code that holds the data
+        - The graph would refresh too slowly to be usable during a workout
+      correct_index: 1
+      explanation: With the data inside a widget, every new display, interface change, or port must edit the code that holds the data.
+      option_feedback:
+        0: The data structure is not the issue; where the data lives is.
+        2: The problem is the cost of changing the interface, not drawing speed.
+    - question: In a Model-View-Controller design of the fitness app, which role does the workout object that holds the heart-rate samples play?
+      options:
+        - View
+        - Controller
+        - Model
+      correct_index: 2
+      explanation: The workout holds the data and announces its changes, so it is the model.
+      option_feedback:
+        0: Views display the samples; they do not hold them.
+        1: Controllers turn input into requests; they do not hold the data.
+    - question: A user taps Pause on the watch. In the Model-View-Controller pattern, what happens next?
+      options:
+        - The watch controller asks the model to pause, and the model notifies every view
+        - The watch view pauses itself and then tells the phone's views to pause too
+        - The model asks each controller in turn whether the user tapped Pause
+      correct_index: 0
+      explanation: Input enters through a controller, which asks the model to change. The model announces the change, and every view asks for the new state and redraws.
+      option_feedback:
+        1: Views do not coordinate each other; each one hears about the change from the model.
+        2: Controllers receive input when it happens; the model does not ask them for it.
+    - question: The heart rate changes every second, and every change notifies every view. Which cost of the Model-View-Controller pattern does this risk?
+      options:
+        - The model becomes tied to every view's class
+        - Many unnecessary redraws
+        - An interface that is harder to port
+      correct_index: 1
+      explanation: Frequent changes can trigger many announcements and redraws. The model can say which part changed, so views skip updates that do not concern them.
+      option_feedback:
+        0: The model knows its views only through their update method, however often it notifies them.
+        2: Porting gets easier with the pattern, because the model stays the same.
+    - question: For which part of the fitness app would separate model, view, and controller classes add complexity without much benefit?
+      options:
+        - The live heart-rate displays on the phone and the watch
+        - The workout data that several screens show and edit
+        - A static About screen with fixed text
+      correct_index: 2
+      explanation: For a small display that never changes, the extra classes cost more than they return.
+      option_feedback:
+        0: Several synchronized displays of changing data are where the pattern pays off.
+        1: Data shown and edited in several places is exactly the pattern's context.

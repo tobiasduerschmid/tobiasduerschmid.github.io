@@ -18,6 +18,7 @@
     <h3 id="{{ include.topic }}-reading-{{ scene.id }}-title">{{ scene_number }}. {{ scene.label | escape }}</h3>
     {% include narrated-pattern-parts.html scene=scene %}
     <p class="nja-purpose"><strong>Our task:</strong> {{ scene.purpose | escape }}</p>
+    {% assign np_previous_diagram = '' %}
     {% for cue in scene.cues %}
     <section class="np-reading-step" data-reading-scene="{{ scene.id }}" data-reading-cue="{{ forloop.index0 }}" aria-labelledby="{{ include.topic }}-reading-{{ scene.id }}-{{ forloop.index }}">
       <h4 id="{{ include.topic }}-reading-{{ scene.id }}-{{ forloop.index }}">{{ scene_number }}.{{ forloop.index }} — {{ cue.step | escape }}</h4>
@@ -35,13 +36,16 @@
             {% endfor %}
           </div>
           {% endif %}
-          {% if scene.diagram %}
-          {% assign diagram = explainer.diagrams[scene.diagram] %}
+          {% comment %} A cue may switch to another diagram; its caption shows when it first appears. {% endcomment %}
+          {% assign np_cue_diagram = cue.diagram | default: scene.diagram %}
+          {% if np_cue_diagram %}
+          {% assign diagram = explainer.diagrams[np_cue_diagram] %}
           <div class="np-diagram-column">
             <p><strong>{{ diagram.label | escape }}</strong>{% if cue.diagram_focus %} · Highlighted: {{ cue.diagram_focus | escape }}{% endif %}</p>
             {% include narrated-pattern-diagram.html diagram=diagram cue=cue %}
-            {% if forloop.first and diagram.caption %}<p class="np-diagram-caption">{{ diagram.caption | escape }}</p>{% endif %}
+            {% if np_cue_diagram != np_previous_diagram and diagram.caption %}<p class="np-diagram-caption">{{ diagram.caption | escape }}</p>{% endif %}
           </div>
+          {% assign np_previous_diagram = np_cue_diagram %}
           {% endif %}
           {% include narrated-pattern-visuals.html topic=include.topic scene=scene cue=cue %}
           {% if scene.cards %}

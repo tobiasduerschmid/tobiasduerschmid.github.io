@@ -54,7 +54,8 @@
             </div>
             {% endif %}
             {% if scene.diagram %}
-            {% assign diagram = explainer.diagrams[scene.diagram] %}
+            {% assign np_first_diagram = first_cue.diagram | default: scene.diagram %}
+            {% assign diagram = explainer.diagrams[np_first_diagram] %}
             <div class="np-diagram-column">
               <div class="np-diagram">
                 <div data-np-diagram role="region" aria-label="{{ diagram.label | escape }}"></div>
@@ -106,4 +107,8 @@
 <script src="{{ '/js/parsons-grading.js' | relative_url }}" defer></script>
 <script src="{{ '/js/tutorial-quiz.js' | relative_url }}" defer></script>
 <script src="{{ '/js/narrated-pattern-document.js' | relative_url }}" defer></script>
+{%- comment -%} Topic scripts for live illustrations run before the player renders its first cue. {%- endcomment -%}
+{% for script in lesson.scripts %}
+<script src="{{ '/js/' | append: script | relative_url }}" defer></script>
+{% endfor %}
 <script src="{{ '/js/narrated-pattern.js' | relative_url }}" defer></script>

@@ -1,8 +1,8 @@
 # Narrated design-pattern lessons
 
-Observer and State share one player: language-selectable code, ArchUML class,
-state, and sequence diagrams, topic illustrations, and a knowledge check at the
-end of every section. A lesson is data plus a few topic includes; the player,
+Observer, State, and Model-View-Controller share one player:
+language-selectable code, ArchUML class, state, sequence, and CRC diagrams,
+topic illustrations, and a knowledge check at the end of every section. A lesson is data plus a few topic includes; the player,
 reader, and print views are generic.
 
 ## Adding a lesson
@@ -29,13 +29,23 @@ reader, and print views are generic.
 - `scene.code`, `scene.diagram`, and `scene.cards` choose what a scene shows.
   Any key in the topic's `visuals` map, such as `ui: true`, adds that include;
   the include receives the current cue and reads its own cue fields.
-- Diagrams accept `type` (`class` by default, `state`, or `sequence`).
-  `cue.diagram_focus` hatches one class, interface, state, or lifeline.
-  A diagram with `steps` lists lifelines in `source` and message groups in
-  `steps`; `cue.diagram_steps` shows the first groups, so a trace can reveal
-  messages only after a prediction.
+- Diagrams accept `type` (`class` by default, `state`, `sequence`, or `crc`).
+  `cue.diagram_focus` hatches one class, interface, state, or lifeline; CRC
+  cards cannot be highlighted. A diagram with `steps` lists lifelines in
+  `source` and message groups (or CRC cards) in `steps`; `cue.diagram_steps`
+  shows the first groups, so a trace can reveal messages only after a
+  prediction.
+- `cue.diagram` switches one cue to another diagram of the storyboard; the
+  player updates the region's label and caption, and the reader shows the new
+  diagram's caption where it first appears.
 - `scene.part` (`Context`, `Problem`, `Solution`, or `Consequences`) shows where
   the scene sits in the pattern description, in the player and the reader.
+- A topic's `scripts` list in `_data/narrated_patterns.yml` loads files from
+  `js/` before the player starts. Before replacing a visual for a new cue, the
+  player dispatches a cancelable `narrated-pattern:cue` event on the visual's
+  slot with `detail.settled` (the reading step's copy); a live illustration
+  cancels it and moves itself to that cue's state. `js/mvc-dashboard.js` is the
+  example.
 - A quiz entry is one question, or `questions:` for a multi-question summary.
 - `cue.prediction: true` hides the takeaway until the next cue; give such cues a
   `pause_after` silence.

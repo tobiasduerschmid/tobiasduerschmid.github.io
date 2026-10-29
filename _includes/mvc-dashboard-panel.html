@@ -1,0 +1,37 @@
+{%- comment -%}
+  The illustrated screen-time dashboard for one cue: the same minutes as a
+  table, a bar chart, and a pie chart. Bar lengths and pie slices are SVG
+  geometry computed from _data/explainers/mvc_ui.yml. In the player,
+  js/mvc-dashboard.js turns it into a live, editable dashboard and moves it
+  to the state in data-mvc-cue. Params: cue.
+{%- endcomment -%}
+{%- assign dashboard = site.data.explainers.mvc_ui -%}
+{%- assign panel = dashboard.panels[include.cue.ui_state] -%}
+{%- assign mvc_total = 0 -%}
+{%- for category in dashboard.categories -%}{%- assign mvc_total = mvc_total | plus: panel.minutes[category] -%}{%- endfor -%}
+{%- capture mvc_week -%}{% for category in dashboard.categories %}{{ category }} {{ panel.minutes[category] }} minutes{% unless forloop.last %}, {% endunless %}{% endfor %}{%- endcapture -%}
+{%- capture mvc_cue -%}{"minutes": {{ panel.minutes | jsonify }}, "selected": {{ panel.selected | default: "" | jsonify }}, "readonly": {{ panel.readonly | default: false | jsonify }}, "redraw": {{ include.cue.ui_redraw | default: "changed" | jsonify }}, "input": {{ panel.input | jsonify }}, "result": {{ panel.result | jsonify }}{% if panel.from %}, "from": {{ dashboard.panels[panel.from].minutes | jsonify }}{% endif %}}{%- endcapture -%}
+<div class="mvc-dashboard" data-mvc-cue="{{ mvc_cue | escape }}" role="img" aria-label="{{ dashboard.app }} dashboard. The table, bar chart, and pie chart show {{ mvc_week }}.{% if panel.selected %} The bar chart highlights {{ panel.selected }}.{% endif %}{% if panel.readonly %} The pie chart is read-only.{% endif %} Last input: {{ panel.input }}. {{ panel.result }}">
+  <div aria-hidden="true">
+    <div class="nja-window-bar">{{ dashboard.app }} · illustrated dashboard</div>
+    <div class="mvc-dashboard-views">
+      <div class="mvc-pane">
+        <p class="mvc-pane-title">Table</p>
+        <table class="mvc-table"><tbody>{% for category in dashboard.categories %}<tr><th>{{ category }}</th><td>{{ panel.minutes[category] }} min</td></tr>{% endfor %}</tbody></table>
+      </div>
+      <div class="mvc-pane">
+        <p class="mvc-pane-title">Bar chart</p>
+        <ul class="mvc-bars">{% for category in dashboard.categories %}<li class="mvc-bar-row{% if category == panel.selected %} is-selected{% endif %}"><span class="mvc-bar-label">{{ category }}</span><svg class="mvc-bar-track" viewBox="0 0 120 10" preserveAspectRatio="none" focusable="false"><rect class="mvc-fill--{{ category | downcase }}" width="{{ panel.minutes[category] }}" height="10"/></svg></li>{% endfor %}</ul>
+      </div>
+      <div class="mvc-pane{% if panel.readonly %} is-readonly{% endif %}">
+        <p class="mvc-pane-title">Pie chart{% if panel.readonly %} <span class="mvc-badge">read-only</span>{% endif %}</p>
+        <div class="mvc-pie-layout">
+          <svg class="mvc-pie" viewBox="0 0 42 42" focusable="false">{% assign mvc_start = 0.0 %}{% for category in dashboard.categories %}{% assign mvc_share = panel.minutes[category] | times: 100.0 | divided_by: mvc_total %}<circle class="mvc-slice mvc-stroke--{{ category | downcase }}" cx="21" cy="21" r="15.9155" pathLength="100" stroke-dasharray="{{ mvc_share | round: 3 }} {{ 100 | minus: mvc_share | round: 3 }}" stroke-dashoffset="{{ 25 | minus: mvc_start | round: 3 }}"/>{% assign mvc_start = mvc_start | plus: mvc_share %}{% endfor %}</svg>
+          <ul class="mvc-legend">{% for category in dashboard.categories %}{% assign mvc_share = panel.minutes[category] | times: 100.0 | divided_by: mvc_total %}<li><span class="mvc-swatch mvc-fill--{{ category | downcase }}"></span>{{ category }} {{ mvc_share | round }}%</li>{% endfor %}</ul>
+        </div>
+      </div>
+    </div>
+    <p class="mvc-dashboard-input"><span>Last input</span> {{ panel.input }}</p>
+    <p class="mvc-dashboard-result">{{ panel.result }}</p>
+  </div>
+</div>

@@ -14,6 +14,8 @@ const narrations = [
     diagramScene: sceneNumber('observer', 'contract') },
   { url: '/SEBook/designpatterns/state.html', id: 'state-animation', title: 'The State pattern in a game companion',
     diagramScene: sceneNumber('state', 'state_role') },
+  { url: '/SEBook/designpatterns/mvc.html', id: 'mvc-animation', title: 'Model-View-Controller in a data visualizer',
+    diagramScene: sceneNumber('mvc', 'model_role') },
 ];
 const lessonOf = (page, narration) => page.getByRole('region', { name: narration.title, exact: true });
 const insideFullScreen = locator => locator.evaluate(element =>

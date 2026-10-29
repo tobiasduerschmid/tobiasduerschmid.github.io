@@ -1,0 +1,887 @@
+python:
+  label: Python
+  filename: mvc_demo.py
+  note: Views draw text lines so the example runs anywhere; a real toolkit would paint widgets. Each controller receives the events a toolkit would deliver.
+  imports: |
+    from __future__ import annotations
+
+    from abc import ABC, abstractmethod
+    from dataclasses import dataclass
+  blocks:
+    problem:
+      source: |
+        class ScreenTimeApp:
+            def __init__(self, minutes: dict[str, int]) -> None:
+                self.minutes = dict(minutes)
+                self.selected = ""
+                self.redraw()
+
+            def on_cell_edited(self, category: str, minutes: int) -> None:
+                self.minutes[category] = minutes
+                self.redraw()
+
+            def on_bar_clicked(self, category: str) -> None:
+                self.selected = category
+                self.redraw()
+
+            def redraw(self) -> None:
+                rows = list(self.minutes.items())
+                total = sum(minutes for _, minutes in rows)
+                self.table = [f"{name}: {minutes} min" for name, minutes in rows]
+                self.bars = [("> " if name == self.selected else "")
+                             + f"{name} {'#' * (minutes // 30)}" for name, minutes in rows]
+                self.pie = [f"{name} {round(100 * minutes / total)}%"
+                            for name, minutes in rows]
+      focus:
+        data: [1, 2, 3]
+        edit: [7, 8, 9]
+        redraw: [15, 16, 17, 18, 19, 20, 21, 22]
+        redraw_all: [11, 12, 13, 15, 18, 21, 22]
+    model:
+      source: |
+        class Observer(ABC):
+            @abstractmethod
+            def update(self) -> None:
+                pass
+
+
+        class Dataset:
+            def __init__(self, minutes: dict[str, int]) -> None:
+                self._minutes = dict(minutes)
+                self._observers: list[Observer] = []
+
+            def attach(self, observer: Observer) -> None:
+                self._observers.append(observer)
+
+            def detach(self, observer: Observer) -> None:
+                self._observers.remove(observer)
+
+            def notify(self) -> None:
+                for observer in list(self._observers):
+                    observer.update()
+
+            def set_minutes(self, category: str, minutes: int) -> None:
+                self._minutes[category] = minutes
+                self.notify()
+
+            def rows(self) -> list[tuple[str, int]]:
+                return list(self._minutes.items())
+      focus:
+        data: [7, 8, 9, 22, 23, 26, 27]
+        registry: [1, 2, 3, 10, 12, 13, 15, 16]
+        notify: [18, 19, 20, 24]
+    views:
+      source: |
+        class View(Observer):
+            def __init__(self, model: Dataset) -> None:
+                self.model = model
+                self.selected = ""
+                self.lines: list[str] = []
+
+            def initialize(self) -> None:
+                self.model.attach(self)
+                self.controller = self.make_controller()
+                self.update()
+
+            def make_controller(self) -> Controller:
+                return Controller(self)
+
+            def update(self) -> None:
+                self.lines = self.draw(self.model.rows())
+
+            def highlight(self, category: str) -> None:
+                self.selected = category
+                self.update()
+
+            def mark(self, category: str) -> str:
+                return "> " if category == self.selected else ""
+
+            @abstractmethod
+            def draw(self, rows: list[tuple[str, int]]) -> list[str]:
+                pass
+
+
+        class TableView(View):
+            def make_controller(self) -> Controller:
+                return TableController(self)
+
+            def draw(self, rows: list[tuple[str, int]]) -> list[str]:
+                return [f"{self.mark(name)}{name}: {minutes} min" for name, minutes in rows]
+
+
+        class BarChartView(View):
+            def make_controller(self) -> Controller:
+                return ChartController(self)
+
+            def draw(self, rows: list[tuple[str, int]]) -> list[str]:
+                return [f"{self.mark(name)}{name} {'#' * (minutes // 30)}" for name, minutes in rows]
+
+
+        class PieChartView(View):
+            def draw(self, rows: list[tuple[str, int]]) -> list[str]:
+                total = sum(minutes for _, minutes in rows)
+                return [f"{self.mark(name)}{name} {round(100 * minutes / total)}%"
+                        for name, minutes in rows]
+      focus:
+        update: [1, 2, 3, 15, 16]
+        draw: [25, 26, 34, 35, 42, 43, 47, 48, 49, 50]
+        highlight: [18, 19, 20, 22, 23]
+        factory: [7, 8, 9, 10, 12, 13, 31, 32, 39, 40]
+    controllers:
+      source: |
+        @dataclass(frozen=True)
+        class Event:
+            kind: str  # "edit" or "click"
+            category: str
+            minutes: int = 0
+
+
+        class Controller(Observer):
+            def __init__(self, view: View) -> None:
+                self.view = view
+                self.model = view.model
+
+            def handle_event(self, event: Event) -> None:
+                pass  # ignores all input: a read-only view
+
+            def update(self) -> None:
+                pass  # override if behavior depends on the model
+
+
+        class TableController(Controller):
+            def handle_event(self, event: Event) -> None:
+                if event.kind == "edit":
+                    self.model.set_minutes(event.category, event.minutes)
+
+
+        class ChartController(Controller):
+            def handle_event(self, event: Event) -> None:
+                if event.kind == "click":
+                    self.view.highlight(event.category)
+      focus:
+        base: [8, 9, 10, 11, 13, 14]
+        update: [16, 17]
+        table: [20, 21, 22, 23]
+        chart: [26, 27, 28, 29]
+    wire:
+      source: |
+        dataset = Dataset({"Social": 120, "Video": 90, "Games": 60, "Study": 30})
+        table, bars, pie = TableView(dataset), BarChartView(dataset), PieChartView(dataset)
+        for view in (table, bars, pie):
+            view.initialize()
+
+        table.controller.handle_event(Event("edit", "Study", 90))
+        bars.controller.handle_event(Event("click", "Games"))
+        pie.controller.handle_event(Event("edit", "Study", 0))  # read-only: ignored
+
+        for view in (table, bars, pie):
+            print("\n".join(view.lines))
+      focus:
+        setup: [1, 2, 3, 4]
+        edit: [6]
+        click: [7]
+        readonly: [8]
+java:
+  label: Java
+  filename: MvcDemo.java
+  note: Views draw text lines so the example runs anywhere; a real toolkit would paint widgets. Object already defines notify(), so the model names its procedure notifyObservers().
+  imports: |
+    import java.util.ArrayList;
+    import java.util.Collections;
+    import java.util.LinkedHashMap;
+    import java.util.List;
+    import java.util.Map;
+  blocks:
+    problem:
+      source: |
+        class ScreenTimeApp {
+            private final Map<String, Integer> minutes;
+            private String selected = "";
+            final List<String> table = new ArrayList<>();
+            final List<String> bars = new ArrayList<>();
+            final List<String> pie = new ArrayList<>();
+
+            ScreenTimeApp(Map<String, Integer> minutes) {
+                this.minutes = new LinkedHashMap<>(minutes);
+                redraw();
+            }
+
+            void onCellEdited(String category, int value) {
+                minutes.put(category, value);
+                redraw();
+            }
+
+            void onBarClicked(String category) {
+                selected = category;
+                redraw();
+            }
+
+            private void redraw() {
+                int total = minutes.values().stream().mapToInt(Integer::intValue).sum();
+                table.clear(); bars.clear(); pie.clear();
+                minutes.forEach((name, value) -> {
+                    table.add(name + ": " + value + " min");
+                    bars.add((name.equals(selected) ? "> " : "") + name + " " + "#".repeat(value / 30));
+                    pie.add(name + " " + Math.round(100.0 * value / total) + "%");
+                });
+            }
+        }
+      focus:
+        data: [1, 2, 8, 9]
+        edit: [13, 14, 15]
+        redraw: [23, 24, 25, 26, 27, 28, 29, 30]
+        redraw_all: [18, 19, 20, 23, 27, 29]
+    model:
+      source: |
+        interface Observer {
+            void update();
+        }
+
+        class Dataset {
+            private final Map<String, Integer> minutes;
+            private final List<Observer> observers = new ArrayList<>();
+
+            Dataset(Map<String, Integer> minutes) {
+                this.minutes = new LinkedHashMap<>(minutes);
+            }
+
+            void attach(Observer observer) {
+                observers.add(observer);
+            }
+
+            void detach(Observer observer) {
+                observers.remove(observer);
+            }
+
+            void notifyObservers() {
+                for (Observer observer : List.copyOf(observers)) {
+                    observer.update();
+                }
+            }
+
+            void setMinutes(String category, int value) {
+                minutes.put(category, value);
+                notifyObservers();
+            }
+
+            Map<String, Integer> rows() {
+                return Collections.unmodifiableMap(minutes);
+            }
+        }
+      focus:
+        data: [5, 6, 9, 10, 27, 28, 32, 33]
+        registry: [1, 2, 7, 13, 14, 17, 18]
+        notify: [21, 22, 23, 29]
+    views:
+      source: |
+        abstract class View implements Observer {
+            final Dataset model;
+            String selected = "";
+            List<String> lines = List.of();
+            Controller controller;
+
+            View(Dataset model) {
+                this.model = model;
+            }
+
+            void initialize() {
+                model.attach(this);
+                controller = makeController();
+                update();
+            }
+
+            Controller makeController() {
+                return new Controller(this);
+            }
+
+            @Override
+            public void update() {
+                lines = draw(model.rows());
+            }
+
+            void highlight(String category) {
+                selected = category;
+                update();
+            }
+
+            String mark(String category) {
+                return category.equals(selected) ? "> " : "";
+            }
+
+            abstract List<String> draw(Map<String, Integer> rows);
+        }
+
+        class TableView extends View {
+            TableView(Dataset model) { super(model); }
+
+            @Override Controller makeController() { return new TableController(this); }
+
+            @Override List<String> draw(Map<String, Integer> rows) {
+                List<String> out = new ArrayList<>();
+                rows.forEach((name, value) -> out.add(mark(name) + name + ": " + value + " min"));
+                return out;
+            }
+        }
+
+        class BarChartView extends View {
+            BarChartView(Dataset model) { super(model); }
+
+            @Override Controller makeController() { return new ChartController(this); }
+
+            @Override List<String> draw(Map<String, Integer> rows) {
+                List<String> out = new ArrayList<>();
+                rows.forEach((name, value) -> out.add(mark(name) + name + " " + "#".repeat(value / 30)));
+                return out;
+            }
+        }
+
+        class PieChartView extends View {
+            PieChartView(Dataset model) { super(model); }
+
+            @Override List<String> draw(Map<String, Integer> rows) {
+                int total = rows.values().stream().mapToInt(Integer::intValue).sum();
+                List<String> out = new ArrayList<>();
+                rows.forEach((name, value) -> out.add(mark(name) + name + " " + Math.round(100.0 * value / total) + "%"));
+                return out;
+            }
+        }
+      focus:
+        update: [1, 2, 21, 22, 23, 24]
+        draw: [35, 43, 44, 45, 46, 55, 56, 57, 58, 65, 66, 67, 68, 69]
+        highlight: [26, 27, 28, 29, 31, 32, 33]
+        factory: [11, 12, 13, 14, 15, 17, 18, 41, 53]
+    controllers:
+      source: |
+        record Event(String kind, String category, int minutes) {
+            Event(String kind, String category) {
+                this(kind, category, 0);
+            }
+        }
+
+        class Controller implements Observer {
+            final View view;
+            final Dataset model;
+
+            Controller(View view) {
+                this.view = view;
+                this.model = view.model;
+            }
+
+            void handleEvent(Event event) {
+                // ignores all input: a read-only view
+            }
+
+            @Override
+            public void update() {
+                // override if behavior depends on the model
+            }
+        }
+
+        class TableController extends Controller {
+            TableController(View view) { super(view); }
+
+            @Override void handleEvent(Event event) {
+                if (event.kind().equals("edit")) {
+                    model.setMinutes(event.category(), event.minutes());
+                }
+            }
+        }
+
+        class ChartController extends Controller {
+            ChartController(View view) { super(view); }
+
+            @Override void handleEvent(Event event) {
+                if (event.kind().equals("click")) {
+                    view.highlight(event.category());
+                }
+            }
+        }
+      focus:
+        base: [7, 8, 9, 11, 12, 13, 14, 16, 17, 18]
+        update: [20, 21, 22, 23]
+        table: [26, 29, 30, 31, 32, 33]
+        chart: [36, 39, 40, 41, 42, 43]
+    wire:
+      source: |
+        public class MvcDemo {
+            public static void main(String[] args) {
+                Map<String, Integer> week = new LinkedHashMap<>();
+                week.put("Social", 120); week.put("Video", 90);
+                week.put("Games", 60); week.put("Study", 30);
+                Dataset dataset = new Dataset(week);
+                TableView table = new TableView(dataset);
+                BarChartView bars = new BarChartView(dataset);
+                PieChartView pie = new PieChartView(dataset);
+                for (View view : List.of(table, bars, pie)) view.initialize();
+
+                table.controller.handleEvent(new Event("edit", "Study", 90));
+                bars.controller.handleEvent(new Event("click", "Games"));
+                pie.controller.handleEvent(new Event("edit", "Study", 0)); // read-only: ignored
+
+                for (View view : List.of(table, bars, pie)) {
+                    System.out.println(String.join("\n", view.lines));
+                }
+            }
+        }
+      focus:
+        setup: [3, 4, 5, 6, 7, 8, 9, 10]
+        edit: [12]
+        click: [13]
+        readonly: [14]
+cpp:
+  label: C++
+  filename: mvc_demo.cpp
+  note: Views draw text lines so the example runs anywhere; a real toolkit would paint widgets. A view owns its controller, so the view's set-up is defined once the controller classes are complete.
+  imports: |
+    #include <algorithm>
+    #include <cmath>
+    #include <iostream>
+    #include <memory>
+    #include <string>
+    #include <utility>
+    #include <vector>
+  blocks:
+    problem:
+      source: |
+        class ScreenTimeApp {
+            Rows minutes;
+            std::string selected;
+
+        public:
+            std::vector<std::string> table, bars, pie;
+
+            explicit ScreenTimeApp(Rows start) : minutes(std::move(start)) { redraw(); }
+
+            void onCellEdited(const std::string& category, int value) {
+                for (auto& [name, current] : minutes)
+                    if (name == category) current = value;
+                redraw();
+            }
+
+            void onBarClicked(const std::string& category) {
+                selected = category;
+                redraw();
+            }
+
+        private:
+            void redraw() {
+                int total = 0;
+                for (const auto& row : minutes) total += row.second;
+                table.clear(); bars.clear(); pie.clear();
+                for (const auto& [name, value] : minutes) {
+                    table.push_back(name + ": " + std::to_string(value) + " min");
+                    bars.push_back((name == selected ? "> " : "") + name + " " + std::string(value / 30, '#'));
+                    pie.push_back(name + " " + std::to_string(std::lround(100.0 * value / total)) + "%");
+                }
+            }
+        };
+      focus:
+        data: [1, 2, 8]
+        edit: [10, 11, 12, 13]
+        redraw: [22, 23, 24, 25, 26, 27, 28, 29, 30]
+        redraw_all: [16, 17, 18, 22, 27, 29]
+    model:
+      source: |
+        using Rows = std::vector<std::pair<std::string, int>>;
+
+        class Observer {
+        public:
+            virtual ~Observer() = default;
+            virtual void update() = 0;
+        };
+
+        class Dataset {
+            Rows minutes;
+            std::vector<Observer*> observers;
+
+        public:
+            explicit Dataset(Rows start) : minutes(std::move(start)) {}
+
+            void attach(Observer& observer) { observers.push_back(&observer); }
+
+            void detach(Observer& observer) {
+                observers.erase(std::remove(observers.begin(), observers.end(), &observer), observers.end());
+            }
+
+            void notify() {
+                auto registered = observers;
+                for (Observer* observer : registered) observer->update();
+            }
+
+            void setMinutes(const std::string& category, int value) {
+                for (auto& [name, current] : minutes)
+                    if (name == category) current = value;
+                notify();
+            }
+
+            const Rows& rows() const { return minutes; }
+        };
+      focus:
+        data: [1, 9, 10, 14, 27, 28, 29, 33]
+        registry: [3, 4, 5, 6, 11, 16, 18, 19]
+        notify: [22, 23, 24, 30]
+    views:
+      source: |
+        class Controller;
+
+        class View : public Observer {
+            std::string selected;
+
+        public:
+            explicit View(Dataset& model) : model(model) {}
+            ~View() override;   // detaches; defined after Controller
+            void initialize();  // attaches, then makes a controller
+
+            void update() override { lines = draw(model.rows()); }
+
+            void highlight(const std::string& category) {
+                selected = category;
+                update();
+            }
+
+            Dataset& model;
+            std::vector<std::string> lines;
+            std::unique_ptr<Controller> controller;
+
+        protected:
+            virtual std::unique_ptr<Controller> makeController();
+            virtual std::vector<std::string> draw(const Rows& rows) const = 0;
+            std::string mark(const std::string& category) const {
+                return category == selected ? "> " : "";
+            }
+        };
+
+        class TableView : public View {
+        public:
+            using View::View;
+
+        protected:
+            std::unique_ptr<Controller> makeController() override;
+            std::vector<std::string> draw(const Rows& rows) const override {
+                std::vector<std::string> out;
+                for (const auto& [name, value] : rows)
+                    out.push_back(mark(name) + name + ": " + std::to_string(value) + " min");
+                return out;
+            }
+        };
+
+        class BarChartView : public View {
+        public:
+            using View::View;
+
+        protected:
+            std::unique_ptr<Controller> makeController() override;
+            std::vector<std::string> draw(const Rows& rows) const override {
+                std::vector<std::string> out;
+                for (const auto& [name, value] : rows)
+                    out.push_back(mark(name) + name + " " + std::string(value / 30, '#'));
+                return out;
+            }
+        };
+
+        class PieChartView : public View {
+        public:
+            using View::View;
+
+        protected:
+            std::vector<std::string> draw(const Rows& rows) const override {
+                int total = 0;
+                for (const auto& row : rows) total += row.second;
+                std::vector<std::string> out;
+                for (const auto& [name, value] : rows)
+                    out.push_back(mark(name) + name + " " + std::to_string(std::lround(100.0 * value / total)) + "%");
+                return out;
+            }
+        };
+      focus:
+        update: [3, 7, 11, 18, 19]
+        draw: [24, 36, 37, 38, 39, 40, 50, 51, 52, 53, 54, 63, 64, 65, 66, 67, 68, 69]
+        highlight: [13, 14, 15, 16, 25, 26, 27]
+        factory: [1, 8, 9, 20, 23, 35, 49]
+    controllers:
+      source: |
+        struct Event {
+            std::string kind;  // "edit" or "click"
+            std::string category;
+            int minutes = 0;
+        };
+
+        class Controller : public Observer {
+        public:
+            explicit Controller(View& view) : view(view), model(view.model) {}
+
+            virtual void handleEvent(const Event&) {}  // ignores all input: a read-only view
+            void update() override {}  // override if behavior depends on the model
+
+        protected:
+            View& view;
+            Dataset& model;
+        };
+
+        class TableController : public Controller {
+        public:
+            using Controller::Controller;
+
+            void handleEvent(const Event& event) override {
+                if (event.kind == "edit") model.setMinutes(event.category, event.minutes);
+            }
+        };
+
+        class ChartController : public Controller {
+        public:
+            using Controller::Controller;
+
+            void handleEvent(const Event& event) override {
+                if (event.kind == "click") view.highlight(event.category);
+            }
+        };
+
+        // A view's set-up needs the complete controller classes above.
+        inline View::~View() { model.detach(*this); }
+        inline void View::initialize() {
+            model.attach(*this);
+            controller = makeController();
+            update();
+        }
+        inline std::unique_ptr<Controller> View::makeController() { return std::make_unique<Controller>(*this); }
+        inline std::unique_ptr<Controller> TableView::makeController() { return std::make_unique<TableController>(*this); }
+        inline std::unique_ptr<Controller> BarChartView::makeController() { return std::make_unique<ChartController>(*this); }
+      focus:
+        base: [7, 8, 9, 11, 14, 15, 16]
+        update: [12]
+        table: [19, 23, 24, 25]
+        chart: [28, 32, 33, 34]
+    wire:
+      source: |
+        int main() {
+            Dataset dataset({{"Social", 120}, {"Video", 90}, {"Games", 60}, {"Study", 30}});
+            TableView table(dataset);
+            BarChartView bars(dataset);
+            PieChartView pie(dataset);
+            const std::vector<View*> views{&table, &bars, &pie};
+            for (View* view : views) view->initialize();
+
+            table.controller->handleEvent({"edit", "Study", 90});
+            bars.controller->handleEvent({"click", "Games", 0});
+            pie.controller->handleEvent({"edit", "Study", 0});  // read-only: ignored
+
+            for (const View* view : views)
+                for (const auto& line : view->lines) std::cout << line << '\n';
+        }
+      focus:
+        setup: [2, 3, 4, 5, 6, 7]
+        edit: [9]
+        click: [10]
+        readonly: [11]
+typescript:
+  label: TypeScript
+  filename: mvc-demo.ts
+  note: Views draw text lines so the example runs anywhere; a real toolkit would paint widgets. Each controller receives the events a toolkit would deliver.
+  imports: |
+    export {};
+  blocks:
+    problem:
+      source: |
+        class ScreenTimeApp {
+          private readonly minutes: Map<string, number>;
+          private selected = "";
+          table: string[] = [];
+          bars: string[] = [];
+          pie: string[] = [];
+
+          constructor(minutes: Map<string, number>) {
+            this.minutes = new Map(minutes);
+            this.redraw();
+          }
+
+          onCellEdited(category: string, value: number): void {
+            this.minutes.set(category, value);
+            this.redraw();
+          }
+
+          onBarClicked(category: string): void {
+            this.selected = category;
+            this.redraw();
+          }
+
+          private redraw(): void {
+            const rows = [...this.minutes];
+            const total = rows.reduce((sum, [, value]) => sum + value, 0);
+            this.table = rows.map(([name, value]) => `${name}: ${value} min`);
+            this.bars = rows.map(([name, value]) =>
+              `${name === this.selected ? "> " : ""}${name} ${"#".repeat(Math.floor(value / 30))}`);
+            this.pie = rows.map(([name, value]) => `${name} ${Math.round((100 * value) / total)}%`);
+          }
+        }
+      focus:
+        data: [1, 2, 8, 9]
+        edit: [13, 14, 15]
+        redraw: [23, 24, 25, 26, 27, 28, 29]
+        redraw_all: [18, 19, 20, 23, 26, 29]
+    model:
+      source: |
+        interface Observer {
+          update(): void;
+        }
+
+        type Rows = ReadonlyArray<readonly [string, number]>;
+
+        class Dataset {
+          private readonly minutes: Map<string, number>;
+          private readonly observers: Observer[] = [];
+
+          constructor(minutes: Map<string, number>) {
+            this.minutes = new Map(minutes);
+          }
+
+          attach(observer: Observer): void {
+            this.observers.push(observer);
+          }
+
+          detach(observer: Observer): void {
+            const index = this.observers.indexOf(observer);
+            if (index >= 0) this.observers.splice(index, 1);
+          }
+
+          notify(): void {
+            for (const observer of [...this.observers]) observer.update();
+          }
+
+          setMinutes(category: string, value: number): void {
+            this.minutes.set(category, value);
+            this.notify();
+          }
+
+          rows(): Rows {
+            return [...this.minutes];
+          }
+        }
+      focus:
+        data: [5, 7, 8, 11, 12, 28, 29, 33, 34]
+        registry: [1, 2, 9, 15, 16, 19, 20, 21]
+        notify: [24, 25, 30]
+    views:
+      source: |
+        abstract class View implements Observer {
+          readonly model: Dataset;
+          private selected = "";
+          lines: string[] = [];
+          controller!: Controller;
+
+          constructor(model: Dataset) {
+            this.model = model;
+          }
+
+          initialize(): void {
+            this.model.attach(this);
+            this.controller = this.makeController();
+            this.update();
+          }
+
+          protected makeController(): Controller {
+            return new Controller(this);
+          }
+
+          update(): void {
+            this.lines = this.draw(this.model.rows());
+          }
+
+          highlight(category: string): void {
+            this.selected = category;
+            this.update();
+          }
+
+          protected mark(category: string): string {
+            return category === this.selected ? "> " : "";
+          }
+
+          protected abstract draw(rows: Rows): string[];
+        }
+
+        class TableView extends View {
+          protected makeController(): Controller {
+            return new TableController(this);
+          }
+
+          protected draw(rows: Rows): string[] {
+            return rows.map(([name, value]) => `${this.mark(name)}${name}: ${value} min`);
+          }
+        }
+
+        class BarChartView extends View {
+          protected makeController(): Controller {
+            return new ChartController(this);
+          }
+
+          protected draw(rows: Rows): string[] {
+            return rows.map(([name, value]) => `${this.mark(name)}${name} ${"#".repeat(Math.floor(value / 30))}`);
+          }
+        }
+
+        class PieChartView extends View {
+          protected draw(rows: Rows): string[] {
+            const total = rows.reduce((sum, [, value]) => sum + value, 0);
+            return rows.map(([name, value]) => `${this.mark(name)}${name} ${Math.round((100 * value) / total)}%`);
+          }
+        }
+      focus:
+        update: [1, 2, 21, 22, 23]
+        draw: [34, 42, 43, 44, 52, 53, 54, 58, 59, 60, 61]
+        highlight: [25, 26, 27, 28, 30, 31, 32]
+        factory: [11, 12, 13, 14, 15, 17, 18, 19, 38, 39, 48, 49]
+    controllers:
+      source: |
+        type Event = { kind: "edit" | "click"; category: string; minutes?: number };
+
+        class Controller implements Observer {
+          protected readonly view: View;
+          protected readonly model: Dataset;
+
+          constructor(view: View) {
+            this.view = view;
+            this.model = view.model;
+          }
+
+          handleEvent(_event: Event): void {
+            // ignores all input: a read-only view
+          }
+
+          update(): void {
+            // override if behavior depends on the model
+          }
+        }
+
+        class TableController extends Controller {
+          handleEvent(event: Event): void {
+            if (event.kind === "edit") this.model.setMinutes(event.category, event.minutes ?? 0);
+          }
+        }
+
+        class ChartController extends Controller {
+          handleEvent(event: Event): void {
+            if (event.kind === "click") this.view.highlight(event.category);
+          }
+        }
+      focus:
+        base: [3, 4, 5, 7, 8, 9, 10, 12, 13, 14]
+        update: [16, 17, 18]
+        table: [21, 22, 23, 24]
+        chart: [27, 28, 29, 30]
+    wire:
+      source: |
+        const dataset = new Dataset(new Map([["Social", 120], ["Video", 90], ["Games", 60], ["Study", 30]]));
+        const table = new TableView(dataset);
+        const bars = new BarChartView(dataset);
+        const pie = new PieChartView(dataset);
+        for (const view of [table, bars, pie]) view.initialize();
+
+        table.controller.handleEvent({ kind: "edit", category: "Study", minutes: 90 });
+        bars.controller.handleEvent({ kind: "click", category: "Games" });
+        pie.controller.handleEvent({ kind: "edit", category: "Study", minutes: 0 }); // read-only: ignored
+
+        for (const view of [table, bars, pie]) console.log(view.lines.join("\n"));
+      focus:
+        setup: [1, 2, 3, 4, 5]
+        edit: [7]
+        click: [8]
+        readonly: [9]
