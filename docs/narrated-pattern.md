@@ -1,6 +1,6 @@
 # Narrated design-pattern lessons
 
-Observer and State share one player: language-selectable code, ArchUML class,
+Observer, State, and Strategy share one player: language-selectable code, ArchUML class,
 state, and sequence diagrams, topic illustrations, and a knowledge check at the
 end of every section. A lesson is data plus a few topic includes; the player,
 reader, and print views are generic.
@@ -69,6 +69,6 @@ Run each lesson's node test (`scripts/tests/<topic>-narration.test.js`) and
 Playwright spec, plus `tests/wcag22-complete-audit.spec.js` for the chapter and
 both views. `tests/narration-fullscreen.spec.js` covers full screen on every
 narration page; add a new narration's page to its list. See
-`docs/observer-animation.md` and `docs/state-narration.md` for the
+`docs/observer-animation.md`, `docs/state-narration.md`, and `docs/strategy-narration.md` for the
 topic-specific details, and the `design-pattern-narration` skill for how to
 author a lesson.

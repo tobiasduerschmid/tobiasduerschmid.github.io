@@ -1,0 +1,718 @@
+python:
+  label: Python
+  filename: strategy_demo.py
+  note: An abstract base class makes the Strategy role explicit. Amounts are whole cents, so the shares can add up to the total exactly.
+  imports: |
+    from __future__ import annotations
+
+    from abc import ABC, abstractmethod
+  blocks:
+    problem:
+      source: |
+        def split_evenly(total: int, people: list[str]) -> dict[str, int]:
+            base, extra = divmod(total, len(people))
+            return {p: base + (1 if i < extra else 0) for i, p in enumerate(people)}
+
+
+        class ExpenseBefore:
+            def __init__(self, total: int, people: list[str], method: str,
+                         percents: dict[str, int] | None = None, guest: str = "") -> None:
+                self.total, self.people, self.method = total, people, method
+                self.percents, self.guest = percents or {}, guest
+
+            def shares(self) -> dict[str, int]:
+                if self.method == "equal":
+                    return split_evenly(self.total, self.people)
+                elif self.method == "percent":
+                    shares = {p: self.total * self.percents[p] // 100 for p in self.people}
+                    shares[self.people[0]] += self.total - sum(shares.values())
+                    return shares
+                else:  # birthday
+                    payers = [p for p in self.people if p != self.guest]
+                    payer_shares = split_evenly(self.total, payers)
+                    return {p: payer_shares.get(p, 0) for p in self.people}
+
+            def label(self) -> str:
+                if self.method == "equal":
+                    return "Split equally"
+                elif self.method == "percent":
+                    return "Split by percentage"
+                else:  # birthday
+                    return f"Birthday treat for {self.guest}"
+      focus:
+        shares: [12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
+        label: [24, 25, 26, 27, 28, 29, 30]
+        fields: [7, 8, 9, 10]
+        fallback: [19, 20, 21, 22, 29, 30]
+    strategy:
+      source: |
+        class SplitStrategy(ABC):
+            @abstractmethod
+            def split(self, total: int, people: list[str]) -> dict[str, int]:
+                """Each person's share in cents; the shares add up to the total."""
+
+            @abstractmethod
+            def label(self) -> str:
+                """Describes the split on the receipt."""
+      focus:
+        contract: [1, 3, 7]
+        params: [3]
+        promise: [4]
+    context:
+      source: |
+        class Expense:
+            def __init__(self, total: int, people: list[str],
+                         strategy: SplitStrategy) -> None:
+                self.total = total
+                self.people = people
+                self._strategy = strategy
+
+            def shares(self) -> dict[str, int]:
+                return self._strategy.split(self.total, self.people)
+
+            def label(self) -> str:
+                return self._strategy.label()
+
+            def set_strategy(self, strategy: SplitStrategy) -> None:
+                self._strategy = strategy
+      focus:
+        fields: [2, 3, 4, 5, 6]
+        delegate: [8, 9, 11, 12]
+        set_strategy: [14, 15]
+    strategies:
+      source: |
+        class EqualSplit(SplitStrategy):
+            def split(self, total: int, people: list[str]) -> dict[str, int]:
+                base, extra = divmod(total, len(people))
+                # The first `extra` people pay one more cent, so shares add up.
+                return {p: base + (1 if i < extra else 0) for i, p in enumerate(people)}
+
+            def label(self) -> str:
+                return "Split equally"
+
+
+        class PercentSplit(SplitStrategy):
+            def __init__(self, percents: dict[str, int]) -> None:
+                if sum(percents.values()) != 100:
+                    raise ValueError("percentages must add up to 100")
+                self.percents = percents
+
+            def split(self, total: int, people: list[str]) -> dict[str, int]:
+                shares = {p: total * self.percents[p] // 100 for p in people}
+                shares[people[0]] += total - sum(shares.values())
+                return shares
+
+            def label(self) -> str:
+                return "Split by percentage"
+
+
+        class BirthdaySplit(SplitStrategy):
+            def __init__(self, guest: str) -> None:
+                self.guest = guest
+
+            def split(self, total: int, people: list[str]) -> dict[str, int]:
+                payers = [p for p in people if p != self.guest]
+                payer_shares = EQUAL.split(total, payers)
+                return {p: payer_shares.get(p, 0) for p in people}
+
+            def label(self) -> str:
+                return f"Birthday treat for {self.guest}"
+
+
+        # EqualSplit stores no data, so every expense can share one object.
+        EQUAL = EqualSplit()
+      focus:
+        equal: [1, 2, 3, 4, 5, 6, 7, 8]
+        remainder: [3, 4, 5]
+        percent: [11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]
+        birthday: [26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36]
+        shared: [39, 40]
+    wire:
+      source: |
+        def receipt(expense: Expense) -> str:
+            shares = ", ".join(f"{p} {c}" for p, c in expense.shares().items())
+            return f"{expense.label()}: {shares}"
+
+
+        dinner = Expense(6000, ["Ava", "Ben", "Chloe"], EQUAL)  # amounts in cents
+        print(receipt(dinner))
+        dinner.set_strategy(PercentSplit({"Ava": 50, "Ben": 30, "Chloe": 20}))
+        print(receipt(dinner))
+      focus:
+        first: [6, 7]
+        switch: [8, 9]
+        label: [3, 9]
+java:
+  label: Java
+  filename: StrategyDemo.java
+  note: SplitStrategy is our own interface. EqualSplit keeps one shared INSTANCE because it stores no data of its own.
+  imports: |
+    import java.util.ArrayList;
+    import java.util.LinkedHashMap;
+    import java.util.List;
+    import java.util.Map;
+    import java.util.StringJoiner;
+  blocks:
+    problem:
+      source: |
+        enum Method { EQUAL, PERCENT, BIRTHDAY }
+
+        final class ExpenseBefore {
+            private final int total;
+            private final List<String> people;
+            private final Method method;
+            private final Map<String, Integer> percents;
+            private final String guest;
+
+            ExpenseBefore(int total, List<String> people, Method method,
+                          Map<String, Integer> percents, String guest) {
+                this.total = total;
+                this.people = people;
+                this.method = method;
+                this.percents = percents;
+                this.guest = guest;
+            }
+
+            Map<String, Integer> shares() {
+                if (method == Method.EQUAL) {
+                    return splitEvenly(total, people);
+                } else if (method == Method.PERCENT) {
+                    Map<String, Integer> shares = new LinkedHashMap<>();
+                    int assigned = 0;
+                    for (String person : people) {
+                        shares.put(person, total * percents.get(person) / 100);
+                        assigned += shares.get(person);
+                    }
+                    shares.merge(people.get(0), total - assigned, Integer::sum);
+                    return shares;
+                } else { // BIRTHDAY
+                    List<String> payers = new ArrayList<>(people);
+                    payers.remove(guest);
+                    Map<String, Integer> payerShares = splitEvenly(total, payers);
+                    Map<String, Integer> shares = new LinkedHashMap<>();
+                    for (String person : people) shares.put(person, payerShares.getOrDefault(person, 0));
+                    return shares;
+                }
+            }
+
+            String label() {
+                if (method == Method.EQUAL) {
+                    return "Split equally";
+                } else if (method == Method.PERCENT) {
+                    return "Split by percentage";
+                } else { // BIRTHDAY
+                    return "Birthday treat for " + guest;
+                }
+            }
+
+            static Map<String, Integer> splitEvenly(int total, List<String> people) {
+                Map<String, Integer> shares = new LinkedHashMap<>();
+                int base = total / people.size(), extra = total % people.size();
+                for (int i = 0; i < people.size(); i++) shares.put(people.get(i), base + (i < extra ? 1 : 0));
+                return shares;
+            }
+        }
+      focus:
+        shares: [19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]
+        label: [41, 42, 43, 44, 45, 46, 47, 48, 49]
+        fields: [4, 5, 6, 7, 8, 10, 11]
+        fallback: [31, 32, 33, 34, 35, 36, 37, 46, 47]
+    strategy:
+      source: |
+        interface SplitStrategy {
+            /** Each person's share in cents; the shares add up to the total. */
+            Map<String, Integer> split(int total, List<String> people);
+
+            /** Describes the split on the receipt. */
+            String label();
+        }
+      focus:
+        contract: [1, 3, 6]
+        params: [3]
+        promise: [2]
+    context:
+      source: |
+        final class Expense {
+            private final int total;
+            private final List<String> people;
+            private SplitStrategy strategy;
+
+            Expense(int total, List<String> people, SplitStrategy strategy) {
+                this.total = total;
+                this.people = people;
+                this.strategy = strategy;
+            }
+
+            Map<String, Integer> shares() {
+                return strategy.split(total, people);
+            }
+
+            String label() {
+                return strategy.label();
+            }
+
+            void setStrategy(SplitStrategy strategy) {
+                this.strategy = strategy;
+            }
+        }
+      focus:
+        fields: [2, 3, 4, 6, 7, 8, 9, 10]
+        delegate: [12, 13, 14, 16, 17, 18]
+        set_strategy: [20, 21, 22]
+    strategies:
+      source: |
+        final class EqualSplit implements SplitStrategy {
+            // Stores no data, so every expense can share one object.
+            static final SplitStrategy INSTANCE = new EqualSplit();
+
+            public Map<String, Integer> split(int total, List<String> people) {
+                Map<String, Integer> shares = new LinkedHashMap<>();
+                int base = total / people.size(), extra = total % people.size();
+                // The first `extra` people pay one more cent, so shares add up.
+                for (int i = 0; i < people.size(); i++) shares.put(people.get(i), base + (i < extra ? 1 : 0));
+                return shares;
+            }
+
+            public String label() { return "Split equally"; }
+        }
+
+        final class PercentSplit implements SplitStrategy {
+            private final Map<String, Integer> percents;
+
+            PercentSplit(Map<String, Integer> percents) {
+                int sum = percents.values().stream().mapToInt(Integer::intValue).sum();
+                if (sum != 100) throw new IllegalArgumentException("percentages must add up to 100");
+                this.percents = percents;
+            }
+
+            public Map<String, Integer> split(int total, List<String> people) {
+                Map<String, Integer> shares = new LinkedHashMap<>();
+                int assigned = 0;
+                for (String person : people) {
+                    shares.put(person, total * percents.get(person) / 100);
+                    assigned += shares.get(person);
+                }
+                shares.merge(people.get(0), total - assigned, Integer::sum);
+                return shares;
+            }
+
+            public String label() { return "Split by percentage"; }
+        }
+
+        final class BirthdaySplit implements SplitStrategy {
+            private final String guest;
+
+            BirthdaySplit(String guest) { this.guest = guest; }
+
+            public Map<String, Integer> split(int total, List<String> people) {
+                List<String> payers = new ArrayList<>(people);
+                payers.remove(guest);
+                Map<String, Integer> payerShares = EqualSplit.INSTANCE.split(total, payers);
+                Map<String, Integer> shares = new LinkedHashMap<>();
+                for (String person : people) shares.put(person, payerShares.getOrDefault(person, 0));
+                return shares;
+            }
+
+            public String label() { return "Birthday treat for " + guest; }
+        }
+      focus:
+        equal: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
+        remainder: [7, 8, 9]
+        percent: [16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37]
+        birthday: [39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54]
+        shared: [2, 3]
+    wire:
+      source: |
+        public class StrategyDemo {
+            static String receipt(Expense expense) {
+                StringJoiner shares = new StringJoiner(", ");
+                expense.shares().forEach((person, cents) -> shares.add(person + " " + cents));
+                return expense.label() + ": " + shares;
+            }
+
+            public static void main(String[] args) {
+                Expense dinner = new Expense(6000, List.of("Ava", "Ben", "Chloe"), EqualSplit.INSTANCE);
+                System.out.println(receipt(dinner));
+                dinner.setStrategy(new PercentSplit(Map.of("Ava", 50, "Ben", 30, "Chloe", 20)));
+                System.out.println(receipt(dinner));
+            }
+        }
+      focus:
+        first: [9, 10]
+        switch: [11, 12]
+        label: [5, 12]
+cpp:
+  label: C++
+  filename: strategy_demo.cpp
+  note: 'Strategies are const objects held through shared_ptr, so every expense can share the stateless EqualSplit. Shares maps each person to cents.'
+  imports: |
+    #include <iostream>
+    #include <map>
+    #include <memory>
+    #include <stdexcept>
+    #include <string>
+    #include <utility>
+    #include <vector>
+
+    using Shares = std::map<std::string, int>;  // person -> cents
+  blocks:
+    problem:
+      source: |
+        enum class Method { Equal, Percent, Birthday };
+
+        Shares splitEvenly(int total, const std::vector<std::string>& people) {
+            Shares shares;
+            const int count = static_cast<int>(people.size());
+            for (int i = 0; i < count; ++i) shares[people[i]] = total / count + (i < total % count ? 1 : 0);
+            return shares;
+        }
+
+        class ExpenseBefore {
+            int total;
+            std::vector<std::string> people;
+            Method method;
+            std::map<std::string, int> percents;
+            std::string guest;
+
+        public:
+            ExpenseBefore(int total, std::vector<std::string> people, Method method,
+                          std::map<std::string, int> percents = {}, std::string guest = "")
+                : total(total), people(std::move(people)), method(method),
+                  percents(std::move(percents)), guest(std::move(guest)) {}
+
+            Shares shares() const {
+                if (method == Method::Equal) {
+                    return splitEvenly(total, people);
+                } else if (method == Method::Percent) {
+                    Shares shares;
+                    int assigned = 0;
+                    for (const auto& person : people) {
+                        shares[person] = total * percents.at(person) / 100;
+                        assigned += shares[person];
+                    }
+                    shares[people.front()] += total - assigned;
+                    return shares;
+                } else {  // Birthday
+                    std::vector<std::string> payers;
+                    for (const auto& person : people) if (person != guest) payers.push_back(person);
+                    Shares shares = splitEvenly(total, payers);
+                    for (const auto& person : people) shares.try_emplace(person, 0);
+                    return shares;
+                }
+            }
+
+            std::string label() const {
+                if (method == Method::Equal) {
+                    return "Split equally";
+                } else if (method == Method::Percent) {
+                    return "Split by percentage";
+                } else {  // Birthday
+                    return "Birthday treat for " + guest;
+                }
+            }
+        };
+      focus:
+        shares: [23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42]
+        label: [44, 45, 46, 47, 48, 49, 50, 51, 52]
+        fields: [11, 12, 13, 14, 15, 18, 19]
+        fallback: [35, 36, 37, 38, 39, 40, 49, 50]
+    strategy:
+      source: |
+        class SplitStrategy {
+        public:
+            virtual ~SplitStrategy() = default;
+            // Each person's share in cents; the shares add up to the total.
+            virtual Shares split(int total, const std::vector<std::string>& people) const = 0;
+            // Describes the split on the receipt.
+            virtual std::string label() const = 0;
+        };
+      focus:
+        contract: [1, 5, 7]
+        params: [5]
+        promise: [4]
+    context:
+      source: |
+        class Expense {
+            int total;
+            std::vector<std::string> people;
+            std::shared_ptr<const SplitStrategy> strategy;
+
+        public:
+            Expense(int total, std::vector<std::string> people,
+                    std::shared_ptr<const SplitStrategy> strategy)
+                : total(total), people(std::move(people)), strategy(std::move(strategy)) {}
+
+            Shares shares() const { return strategy->split(total, people); }
+            std::string label() const { return strategy->label(); }
+
+            void setStrategy(std::shared_ptr<const SplitStrategy> next) { strategy = std::move(next); }
+        };
+      focus:
+        fields: [2, 3, 4, 7, 8, 9]
+        delegate: [11, 12]
+        set_strategy: [14]
+    strategies:
+      source: |
+        class EqualSplit : public SplitStrategy {
+        public:
+            Shares split(int total, const std::vector<std::string>& people) const override {
+                Shares shares;
+                const int count = static_cast<int>(people.size());
+                // The first total % count people pay one more cent, so shares add up.
+                for (int i = 0; i < count; ++i) shares[people[i]] = total / count + (i < total % count ? 1 : 0);
+                return shares;
+            }
+            std::string label() const override { return "Split equally"; }
+        };
+
+        // EqualSplit stores no data, so every expense can share one object.
+        std::shared_ptr<const SplitStrategy> equalSplit() {
+            static const auto shared = std::make_shared<const EqualSplit>();
+            return shared;
+        }
+
+        class PercentSplit : public SplitStrategy {
+            std::map<std::string, int> percents;
+
+        public:
+            explicit PercentSplit(std::map<std::string, int> percents) : percents(std::move(percents)) {
+                int sum = 0;
+                for (const auto& entry : this->percents) sum += entry.second;
+                if (sum != 100) throw std::invalid_argument("percentages must add up to 100");
+            }
+            Shares split(int total, const std::vector<std::string>& people) const override {
+                Shares shares;
+                int assigned = 0;
+                for (const auto& person : people) {
+                    shares[person] = total * percents.at(person) / 100;
+                    assigned += shares[person];
+                }
+                shares[people.front()] += total - assigned;
+                return shares;
+            }
+            std::string label() const override { return "Split by percentage"; }
+        };
+
+        class BirthdaySplit : public SplitStrategy {
+            std::string guest;
+
+        public:
+            explicit BirthdaySplit(std::string guest) : guest(std::move(guest)) {}
+            Shares split(int total, const std::vector<std::string>& people) const override {
+                std::vector<std::string> payers;
+                for (const auto& person : people) if (person != guest) payers.push_back(person);
+                Shares shares = equalSplit()->split(total, payers);
+                for (const auto& person : people) shares.try_emplace(person, 0);
+                return shares;
+            }
+            std::string label() const override { return "Birthday treat for " + guest; }
+        };
+      focus:
+        equal: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+        remainder: [5, 6, 7]
+        percent: [19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]
+        birthday: [41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54]
+        shared: [13, 14, 15, 16, 17]
+    wire:
+      source: |
+        std::string receipt(const Expense& expense) {
+            std::string shares;
+            for (const auto& [person, cents] : expense.shares()) {
+                shares += (shares.empty() ? "" : ", ") + person + " " + std::to_string(cents);
+            }
+            return expense.label() + ": " + shares;
+        }
+
+        int main() {
+            Expense dinner(6000, {"Ava", "Ben", "Chloe"}, equalSplit());  // amounts in cents
+            std::cout << receipt(dinner) << '\n';
+            dinner.setStrategy(std::make_shared<PercentSplit>(
+                std::map<std::string, int>{{"Ava", 50}, {"Ben", 30}, {"Chloe", 20}}));
+            std::cout << receipt(dinner) << '\n';
+        }
+      focus:
+        first: [10, 11]
+        switch: [12, 13, 14]
+        label: [6, 14]
+typescript:
+  label: TypeScript
+  filename: strategy-demo.ts
+  note: SplitStrategy is a TypeScript interface. Shares maps each person to an amount in whole cents.
+  imports: |
+    type Shares = Map<string, number>; // person -> cents
+  blocks:
+    problem:
+      source: |
+        type Method = "equal" | "percent" | "birthday";
+
+        function splitEvenly(total: number, people: string[]): Shares {
+          const base = Math.floor(total / people.length);
+          const extra = total % people.length;
+          return new Map(people.map((p, i): [string, number] => [p, base + (i < extra ? 1 : 0)]));
+        }
+
+        class ExpenseBefore {
+          private readonly total: number;
+          private readonly people: string[];
+          private readonly method: Method;
+          private readonly percents: Record<string, number>;
+          private readonly guest: string;
+
+          constructor(total: number, people: string[], method: Method,
+                      percents: Record<string, number> = {}, guest = "") {
+            this.total = total;
+            this.people = people;
+            this.method = method;
+            this.percents = percents;
+            this.guest = guest;
+          }
+
+          shares(): Shares {
+            if (this.method === "equal") {
+              return splitEvenly(this.total, this.people);
+            } else if (this.method === "percent") {
+              const shares: Shares = new Map();
+              for (const p of this.people) shares.set(p, Math.floor(this.total * this.percents[p] / 100));
+              const assigned = [...shares.values()].reduce((a, b) => a + b, 0);
+              shares.set(this.people[0], shares.get(this.people[0])! + this.total - assigned);
+              return shares;
+            } else { // birthday
+              const payerShares = splitEvenly(this.total, this.people.filter(p => p !== this.guest));
+              return new Map(this.people.map((p): [string, number] => [p, payerShares.get(p) ?? 0]));
+            }
+          }
+
+          label(): string {
+            if (this.method === "equal") {
+              return "Split equally";
+            } else if (this.method === "percent") {
+              return "Split by percentage";
+            } else { // birthday
+              return `Birthday treat for ${this.guest}`;
+            }
+          }
+        }
+      focus:
+        shares: [25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38]
+        label: [40, 41, 42, 43, 44, 45, 46, 47, 48]
+        fields: [10, 11, 12, 13, 14, 16, 17]
+        fallback: [34, 35, 36, 45, 46]
+    strategy:
+      source: |
+        interface SplitStrategy {
+          /** Each person's share in cents; the shares add up to the total. */
+          split(total: number, people: string[]): Shares;
+          /** Describes the split on the receipt. */
+          label(): string;
+        }
+      focus:
+        contract: [1, 3, 5]
+        params: [3]
+        promise: [2]
+    context:
+      source: |
+        class Expense {
+          private readonly total: number;
+          private readonly people: string[];
+          private strategy: SplitStrategy;
+
+          constructor(total: number, people: string[], strategy: SplitStrategy) {
+            this.total = total;
+            this.people = people;
+            this.strategy = strategy;
+          }
+
+          shares(): Shares {
+            return this.strategy.split(this.total, this.people);
+          }
+
+          label(): string {
+            return this.strategy.label();
+          }
+
+          setStrategy(strategy: SplitStrategy): void {
+            this.strategy = strategy;
+          }
+        }
+      focus:
+        fields: [2, 3, 4, 6, 7, 8, 9, 10]
+        delegate: [12, 13, 14, 16, 17, 18]
+        set_strategy: [20, 21, 22]
+    strategies:
+      source: |
+        class EqualSplit implements SplitStrategy {
+          split(total: number, people: string[]): Shares {
+            const base = Math.floor(total / people.length);
+            const extra = total % people.length;
+            // The first `extra` people pay one more cent, so shares add up.
+            return new Map(people.map((p, i): [string, number] => [p, base + (i < extra ? 1 : 0)]));
+          }
+
+          label(): string {
+            return "Split equally";
+          }
+        }
+
+        class PercentSplit implements SplitStrategy {
+          private readonly percents: Record<string, number>;
+
+          constructor(percents: Record<string, number>) {
+            if (Object.values(percents).reduce((a, b) => a + b, 0) !== 100) {
+              throw new Error("percentages must add up to 100");
+            }
+            this.percents = percents;
+          }
+
+          split(total: number, people: string[]): Shares {
+            const shares: Shares = new Map();
+            for (const p of people) shares.set(p, Math.floor(total * this.percents[p] / 100));
+            const assigned = [...shares.values()].reduce((a, b) => a + b, 0);
+            shares.set(people[0], shares.get(people[0])! + total - assigned);
+            return shares;
+          }
+
+          label(): string {
+            return "Split by percentage";
+          }
+        }
+
+        class BirthdaySplit implements SplitStrategy {
+          private readonly guest: string;
+
+          constructor(guest: string) {
+            this.guest = guest;
+          }
+
+          split(total: number, people: string[]): Shares {
+            const payerShares = EQUAL.split(total, people.filter(p => p !== this.guest));
+            return new Map(people.map((p): [string, number] => [p, payerShares.get(p) ?? 0]));
+          }
+
+          label(): string {
+            return `Birthday treat for ${this.guest}`;
+          }
+        }
+
+        // EqualSplit stores no data, so every expense can share one object.
+        const EQUAL: SplitStrategy = new EqualSplit();
+      focus:
+        equal: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+        remainder: [3, 4, 5, 6]
+        percent: [14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35]
+        birthday: [37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52]
+        shared: [54, 55]
+    wire:
+      source: |
+        function receipt(expense: Expense): string {
+          const shares = [...expense.shares()].map(([p, cents]) => `${p} ${cents}`).join(", ");
+          return `${expense.label()}: ${shares}`;
+        }
+
+        const dinner = new Expense(6000, ["Ava", "Ben", "Chloe"], EQUAL); // amounts in cents
+        console.log(receipt(dinner));
+        dinner.setStrategy(new PercentSplit({ Ava: 50, Ben: 30, Chloe: 20 }));
+        console.log(receipt(dinner));
+      focus:
+        first: [6, 7]
+        switch: [8, 9]
+        label: [3, 9]

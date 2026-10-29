@@ -1,0 +1,36 @@
+/* Strategy lesson: the illustrated group-expense panel and the table of split methods by operation. */
+.strategy-animation .strategy-split-panel { border: 2px solid var(--nja-line); border-radius: 6px; overflow: hidden; min-width: 0; }
+.strategy-animation .strategy-split-panel .nja-window-bar { display: block; }
+.strategy-animation .strategy-split-body { padding: 1em; }
+.strategy-animation .strategy-split-body p { margin: 0 0 0.7em; color: var(--nja-text); overflow-wrap: anywhere; }
+.strategy-animation .strategy-split-expense { font-weight: 700; }
+.strategy-animation .strategy-split-expense strong { margin-left: 0.4em; font-variant-numeric: tabular-nums; }
+.strategy-animation .strategy-split-methods { display: flex; flex-wrap: wrap; gap: 0.6em; margin: 0 0 0.9em; padding: 0; list-style: none; }
+.strategy-animation .strategy-split-methods li { padding: 0.35em 0.8em; border: 1px solid var(--nja-line); border-radius: 999px; color: var(--nja-text); background: var(--nja-input); }
+/* The selected method is marked by a heavier, double border and bold text as well as color. */
+.strategy-animation .strategy-split-methods li.is-selected { border: 3px double var(--nja-accent); font-weight: 700; background: var(--nja-panel); }
+.strategy-animation .strategy-split-shares { display: grid; gap: 0.3em; margin: 0 0 0.9em; padding: 0; list-style: none; }
+.strategy-animation .strategy-split-shares li { display: flex; justify-content: space-between; gap: 1em; padding: 0.35em 0.2em; border-bottom: 1px solid var(--nja-line); color: var(--nja-text); }
+.strategy-animation .strategy-split-shares strong { font-variant-numeric: tabular-nums; }
+.strategy-animation .strategy-split-receipt { padding: 0.6em 0.8em; border-left: 4px solid var(--nja-accent); background: var(--nja-note-bg); }
+.strategy-animation .strategy-split-receipt span { margin-right: 0.4em; color: var(--nja-muted); }
+
+.strategy-animation .strategy-methods { min-width: 0; }
+.strategy-animation .strategy-method-table { width: 100%; border-collapse: collapse; color: var(--nja-text); font: inherit; }
+.strategy-animation .strategy-method-table caption { caption-side: top; text-align: left; padding: 0 0 0.5em; color: var(--nja-text); font-weight: 700; }
+/* Columns never shrink below a word; narrow screens hyphenate at syllables instead of breaking anywhere. */
+.strategy-animation .strategy-method-table :is(th, td) { padding: 0.45em 0.5em; border: 1px solid var(--nja-line); text-align: left; vertical-align: top; overflow-wrap: break-word; hyphens: auto; }
+.strategy-animation .strategy-method-table thead th { background: var(--nja-chrome); font-weight: 700; }
+.strategy-animation .strategy-method-table tbody th { background: var(--nja-panel); }
+/* A marked row or column gets a thick outline and fill, not color alone. */
+.strategy-animation .strategy-method-table .is-marked:is(th, td),
+.strategy-animation .strategy-method-table tr.is-marked > :is(th, td) { background: var(--nja-highlight); border: 3px solid var(--nja-accent); }
+/* Four columns of whole words need about 400px; on phones, wrap anywhere instead of overflowing. */
+@media (max-width: 520px) {
+  .strategy-animation .strategy-method-table :is(th, td) { overflow-wrap: anywhere; }
+}
+@media print {
+  .strategy-animation .strategy-method-table :is(th, td) { border-color: #555; }
+  .strategy-animation .strategy-method-table .is-marked:is(th, td),
+  .strategy-animation .strategy-method-table tr.is-marked > :is(th, td) { border-color: #000; }
+}

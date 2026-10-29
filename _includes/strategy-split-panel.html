@@ -1,0 +1,18 @@
+{%- assign split = site.data.explainers.strategy_ui -%}
+{%- comment -%} Liquid cannot nest bracket lookups, so resolve the case index first. {%- endcomment -%}
+{%- assign panel_index = split.panels[include.cue.ui_state] -%}
+{%- assign panel = split.cases[panel_index] -%}
+{%- for method in split.methods -%}{%- if method.id == panel.method -%}{%- assign panel_method = method.label -%}{%- endif -%}{%- endfor -%}
+{%- capture total -%}{{ panel.total | divided_by: 100 }}.{{ panel.total | modulo: 100 | prepend: '0' | slice: -2, 2 }}{%- endcapture -%}
+{%- capture owed -%}{%- for person in split.people -%}{%- assign cents = panel.shares[person] -%}{{ person }} owes ${{ cents | divided_by: 100 }}.{{ cents | modulo: 100 | prepend: '0' | slice: -2, 2 }}{% unless forloop.last %}, {% endunless %}{%- endfor -%}{%- endcapture -%}
+<div class="strategy-split-panel" role="img" aria-label="Group expense panel: {{ split.expense }}, ${{ total }}, split {{ panel_method }}. {{ owed }}. Receipt: {{ panel.label }}.">
+  <div aria-hidden="true">
+    <div class="nja-window-bar">Group expenses · illustrated panel</div>
+    <div class="strategy-split-body">
+      <p class="strategy-split-expense">{{ split.expense }} <strong>${{ total }}</strong></p>
+      <ul class="strategy-split-methods">{% for method in split.methods %}<li{% if method.id == panel.method %} class="is-selected"{% endif %}>{{ method.label }}</li>{% endfor %}</ul>
+      <ul class="strategy-split-shares">{% for person in split.people %}{% assign cents = panel.shares[person] %}<li><span>{{ person }}</span> <strong>${{ cents | divided_by: 100 }}.{{ cents | modulo: 100 | prepend: '0' | slice: -2, 2 }}</strong></li>{% endfor %}</ul>
+      <p class="strategy-split-receipt"><span>Receipt</span> {{ panel.label }}</p>
+    </div>
+  </div>
+</div>
