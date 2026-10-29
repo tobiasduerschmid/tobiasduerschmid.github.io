@@ -18,12 +18,19 @@ class _Reports:
     def __init__(self):
         self.collected = []
         self.reports = []
+        self.exceptions = {}
 
     def pytest_collection_finish(self, session):
         self.collected = list(session.items)
 
     def pytest_runtest_logreport(self, report):
         self.reports.append(report)
+
+    @pytest.hookimpl(hookwrapper=True)
+    def pytest_runtest_makereport(self, item, call):
+        yield
+        if call.excinfo is not None:
+            self.exceptions[(item.nodeid, call.when)] = call.excinfo.type
 
 
 def _clear_workspace_imports(directory):
@@ -38,22 +45,27 @@ def _clear_workspace_imports(directory):
     importlib.invalidate_caches()
 
 
-def _is_assertion_failure(report):
+def _detects_mutant(report, exceptions, allowed_errors):
     if report.when != "call" or not report.failed:
         return False
-    crash = getattr(report.longrepr, "reprcrash", None)
-    message = getattr(crash, "message", "")
-    return message.startswith(("AssertionError", "assert ", "Failed:"))
+    exception = exceptions.get((report.nodeid, report.when))
+    return exception is not None and issubclass(
+        exception, (AssertionError, pytest.fail.Exception) + allowed_errors)
 
 
 def check_suite(test_file, module_name, replacement_source=None,
-                expect_failure=False, test_name=None, min_tests=1):
+                expect_failure=False, test_name=None, min_tests=1,
+                allowed_mutation_errors=()):
     """Require passing tests, or a genuine assertion failure on one mutant.
 
     ``module_name`` names a module beside ``test_file``. ``test_name`` optionally
     selects an explicitly required test. Mutant checks cannot pass on collection
     errors, skipped tests, fixture failures, or unrelated runtime exceptions.
     Callers also run a passing reference check to validate the same suite.
+    ``allowed_mutation_errors`` explicitly permits exception types caused by
+    one mutant's changed output, such as IndexError when observing a removed
+    call before checking its count. This never relaxes passing-reference or
+    collection/setup/teardown checks. Keep allowances local to that mutant.
     """
     test_path = Path(test_file).resolve()
     directory = test_path.parent
@@ -91,9 +103,11 @@ def check_suite(test_file, module_name, replacement_source=None,
     if expect_failure:
         failures = [report for report in calls if report.failed]
         assert status == 1 and failures and all(
-            _is_assertion_failure(report) for report in failures
+            _detects_mutant(report, reports.exceptions, allowed_mutation_errors)
+            for report in failures
         ), (
-            "The suite must reject this changed behavior with an assertion; "
+            "The suite must reject this changed behavior with an assertion "
+            "or an explicitly allowed observation error; "
             "a passing suite or an unrelated error does not demonstrate detection.\n"
             + details
         )

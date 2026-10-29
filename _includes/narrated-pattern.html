@@ -12,7 +12,7 @@
 {% assign timing = site.data.explainers[timing_key] %}
 {% assign examples = site.data.explainers[examples_key] %}
 {% assign quizzes = site.data.explainers[quizzes_key] %}
-<section class="narrated-explainer narrated-pattern {{ topic }}-animation mathjax_ignore" id="{{ topic }}-animation" aria-labelledby="{{ topic }}-animation-title" data-np-topic="{{ topic }}">
+<section class="narrated-explainer narrated-lesson narrated-pattern {{ topic }}-animation mathjax_ignore" id="{{ topic }}-animation" aria-labelledby="{{ topic }}-animation-title" data-np-topic="{{ topic }}">
   <h2 id="{{ topic }}-animation-title">{{ explainer.title }}</h2>
   <p>{{ lesson.summary }} {{ lesson.prerequisites }}</p>
   <div class="nja-player">
@@ -54,7 +54,8 @@
             </div>
             {% endif %}
             {% if scene.diagram %}
-            {% assign diagram = explainer.diagrams[scene.diagram] %}
+            {% assign np_first_diagram = first_cue.diagram | default: scene.diagram %}
+            {% assign diagram = explainer.diagrams[np_first_diagram] %}
             <div class="np-diagram-column">
               <div class="np-diagram">
                 <div data-np-diagram role="region" aria-label="{{ diagram.label | escape }}"></div>
@@ -69,6 +70,8 @@
             {% endif %}
           </div>
           <div class="nja-explanation"><strong class="nja-step">{{ first_cue.step }}</strong><p class="nja-note">{{ first_cue.note | escape }}</p></div>
+          {%- comment -%} Sources are shown, never spoken: cue.source stays out of the narration text. {%- endcomment -%}
+          <p class="np-source"{% unless first_cue.source %} hidden{% endunless %}><span class="np-source-label">Source:</span> <span data-np-source>{{ first_cue.source | escape }}</span></p>
         </div>
         <p class="nja-takeaway"><i class="fa fa-lightbulb" aria-hidden="true"></i>{{ scene.takeaway }}</p>
       </div>
@@ -106,4 +109,9 @@
 <script src="{{ '/js/parsons-grading.js' | relative_url }}" defer></script>
 <script src="{{ '/js/tutorial-quiz.js' | relative_url }}" defer></script>
 <script src="{{ '/js/narrated-pattern-document.js' | relative_url }}" defer></script>
+<script src="{{ '/js/narrated-lesson.js' | relative_url }}" defer></script>
+{%- comment -%} Topic scripts for live illustrations run before the player renders its first cue. {%- endcomment -%}
+{% for script in lesson.scripts %}
+<script src="{{ '/js/' | append: script | relative_url }}" defer></script>
+{% endfor %}
 <script src="{{ '/js/narrated-pattern.js' | relative_url }}" defer></script>

@@ -49,7 +49,7 @@
     // preference notification. Observe those views before paint, without a
     // timeout that could expire while a worker or editor is still loading.
     sizes.observe(document.body);
-    document.querySelectorAll('[data-language-switcher], .narrated-pattern').forEach(element => sizes.observe(element));
+    document.querySelectorAll('[data-language-switcher], .narrated-lesson').forEach(element => sizes.observe(element));
 
     // Keep the anchor only until the reader next navigates. Never counteract
     // wheel, touch, keyboard, scrollbar, or link navigation with scroll fixes.

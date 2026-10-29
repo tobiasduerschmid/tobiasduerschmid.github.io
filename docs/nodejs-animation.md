@@ -79,7 +79,7 @@ cue only synthesizes that cue again. It regenerates audio, captions, the plain
 script, and the timing manifest together. Review changed speech before publishing.
 The narration is synthetic, not a recording of a human speaker.
 
-The required `--topic` argument selects `nodejs`, `react`, `observer`, `state`, `therac25`, or `cloudflare2019`; outputs
+The required `--topic` argument selects `nodejs`, `react`, `observer`, `state`, `strategy`, `mvc`, `scrum`, `therac25`, or `cloudflare2019`; outputs
 follow that storyboard's declared audio, caption, and script paths, with a sibling
 `<topic>_timing.json` file.
 

@@ -18,6 +18,7 @@
     <h3 id="{{ include.topic }}-reading-{{ scene.id }}-title">{{ scene_number }}. {{ scene.label | escape }}</h3>
     {% include narrated-pattern-parts.html scene=scene %}
     <p class="nja-purpose"><strong>Our task:</strong> {{ scene.purpose | escape }}</p>
+    {% assign np_previous_diagram = '' %}
     {% for cue in scene.cues %}
     <section class="np-reading-step" data-reading-scene="{{ scene.id }}" data-reading-cue="{{ forloop.index0 }}" aria-labelledby="{{ include.topic }}-reading-{{ scene.id }}-{{ forloop.index }}">
       <h4 id="{{ include.topic }}-reading-{{ scene.id }}-{{ forloop.index }}">{{ scene_number }}.{{ forloop.index }} — {{ cue.step | escape }}</h4>
@@ -35,13 +36,16 @@
             {% endfor %}
           </div>
           {% endif %}
-          {% if scene.diagram %}
-          {% assign diagram = explainer.diagrams[scene.diagram] %}
+          {% comment %} A cue may switch to another diagram; its caption shows when it first appears. {% endcomment %}
+          {% assign np_cue_diagram = cue.diagram | default: scene.diagram %}
+          {% if np_cue_diagram %}
+          {% assign diagram = explainer.diagrams[np_cue_diagram] %}
           <div class="np-diagram-column">
             <p><strong>{{ diagram.label | escape }}</strong>{% if cue.diagram_focus %} · Highlighted: {{ cue.diagram_focus | escape }}{% endif %}</p>
             {% include narrated-pattern-diagram.html diagram=diagram cue=cue %}
-            {% if forloop.first and diagram.caption %}<p class="np-diagram-caption">{{ diagram.caption | escape }}</p>{% endif %}
+            {% if np_cue_diagram != np_previous_diagram and diagram.caption %}<p class="np-diagram-caption">{{ diagram.caption | escape }}</p>{% endif %}
           </div>
+          {% assign np_previous_diagram = np_cue_diagram %}
           {% endif %}
           {% include narrated-pattern-visuals.html topic=include.topic scene=scene cue=cue %}
           {% if scene.cards %}
@@ -50,32 +54,13 @@
         </div>
       </div>
       <p class="np-reading-note"><strong>Notice:</strong> {{ cue.note | escape }}</p>
+      {% if cue.source %}<p class="np-source"><span class="np-source-label">Source:</span> {{ cue.source | escape }}</p>{% endif %}
     </section>
     {% endfor %}
     <p class="nja-takeaway">{{ scene.takeaway | escape }}</p>
     {% assign check = quizzes[scene.id] %}
-    {% if check.questions %}{% assign questions = check.questions %}{% assign check_label = 'Summary quiz:' %}{% else %}{% assign questions = '' | split: '' | push: check %}{% assign check_label = 'Knowledge check:' %}{% endif %}
-    {% for question in questions %}
-    <div class="np-print-question"><p><strong>{{ check_label }}</strong>{% if questions.size > 1 %} {{ forloop.index }} of {{ questions.size }} ·{% endif %} {{ question.question | escape }}</p>
-      <ul>{% for option in question.options %}<li>{{ option | escape }}</li>{% endfor %}</ul>
-      <details><summary>Answer and explanation</summary><p>{{ question.options[question.correct_index] | escape }}</p><p>{{ question.explanation | escape }}</p></details>
-    </div>
-    {% endfor %}
+    {% include narrated-lesson-check.html check=check %}
   </section>
   {% endfor %}
-  <section aria-labelledby="{{ include.topic }}-reading-complete-examples">
-    <h3 id="{{ include.topic }}-reading-complete-examples">Complete examples</h3>
-    <p>{{ lesson.complete_examples | escape }}</p>
-    {% for language in explainer.languages %}
-    {% assign example = examples[language] %}
-    {% capture full_source %}{% if example.imports.size > 0 %}{{ example.imports }}
-{% endif %}{% for block_name in explainer.example_order %}{{ example.blocks[block_name].source }}
-{% endfor %}{% endcapture %}
-    <div data-transcript-language="{{ language }}">
-      <p><strong>{{ example.label }} — {{ example.filename }}</strong></p>
-      <p>{{ example.note | escape }}</p>
-      {% include narrated-explainer-code.html code=full_source language=language transcript=true %}
-    </div>
-    {% endfor %}
-  </section>
+  {% include narrated-lesson-examples.html topic=include.topic note=lesson.complete_examples %}
 </div>

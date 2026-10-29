@@ -1,0 +1,219 @@
+# One knowledge check per section, about Scrum rather than the dining-hall
+# example. Every key and every reason to reject a distractor is said in the
+# narration before its check. The intro has no check. The summary section
+# lists several questions, about a new team, under `questions`.
+theory:
+  question: A team inspects its progress every day, but it never changes its plan, whatever it finds. Which pillar of Scrum is missing?
+  options:
+    - Transparency
+    - Inspection
+    - Adaptation
+  correct_index: 2
+  explanation: Adaptation means adjusting as soon as something drifts off course. Transparency makes inspection possible, and inspection pays off only when the team adapts.
+  option_feedback:
+    0: The team can see its progress, so the work is transparent. What is missing comes after the inspection.
+    1: The team does inspect, every day. Inspection without adaptation is pointless, because nothing changes as a result.
+team:
+  question: A Scrum Team has a designer, a tester, and three programmers. Which statement fits Scrum?
+  options:
+    - All five are Developers, and together they cover every needed skill
+    - Only the programmers are Developers; the designer and tester assist them
+    - Each of the five must be able to do every task on the team
+  correct_index: 0
+  explanation: Developers are everyone who creates part of the usable product each sprint. A cross-functional team has, together, every skill needed to deliver each sprint without handing work to another department.
+  option_feedback:
+    1: The title covers everyone who creates part of the usable product each sprint, including designers and testers, not only the people who write code.
+    2: Cross-functional describes the team as a whole. Together the members have every skill needed; no single person needs all of them.
+product_owner:
+  question: A Product Owner hears about customers' needs only through a chain of three managers. Which change best addresses this?
+  options:
+    - Have the Scrum Master write the user stories instead
+    - Let the Product Owner talk with customers directly
+    - Add a fourth manager to summarize the requests
+  correct_index: 1
+  explanation: When needs pass through long chains of people, what customers actually need gets lost on the way. Product Owners do their job best when they talk with customers directly.
+  option_feedback:
+    0: Writing and ordering user stories is the Product Owner's job. The problem is how far the Product Owner is from the customers, not who writes the stories.
+    2: Another link makes the chain longer, so even more of the original need can get lost.
+scrum_master:
+  question: A Scrum Master starts assigning tasks to the Developers and setting their deadlines. Why does this conflict with Scrum?
+  options:
+    - Only the Product Owner may assign tasks to the Developers
+    - Assigning tasks is fine, but setting deadlines is not allowed
+    - The team organizes its own work; the Scrum Master supports it
+  correct_index: 2
+  explanation: A Scrum Team is self-managing, deciding who does what, when, and how. The Scrum Master coaches the team, removes impediments, and shields it instead of leading it.
+  option_feedback:
+    0: The Product Owner decides what to build and in what order, not who does each task. The team itself decides who does what, when, and how.
+    1: The Scrum Master is not a project manager or anyone's boss, so neither assigning tasks nor setting deadlines is part of the role.
+product_backlog:
+  question: A stakeholder emails a Developer directly with a request for a new feature. In Scrum, where should that request go?
+  options:
+    - Into the Sprint Backlog, so the team can start on it now
+    - Into the Product Backlog, where the Product Owner orders it
+    - Into the Definition of Done, so that it cannot be skipped
+  correct_index: 1
+  explanation: The Product Backlog is the team's single source of work; if an idea is not on it, the team does not work on it. The Product Owner orders each new item against everything else.
+  option_feedback:
+    0: The Sprint Backlog is the Developers' plan for the current sprint. New ideas go to the Product Backlog first, where the Product Owner decides how valuable they are.
+    2: The Definition of Done is a shared checklist of quality measures for finished work, not a list of features to build.
+sprint_backlog:
+  question: Midway through a sprint, the Developers find that one selected item is much bigger than expected. What does Scrum suggest?
+  options:
+    - Change the Sprint Goal to fit what the team can still finish
+    - Ask the Scrum Master to decide which items to drop
+    - Renegotiate the scope with the Product Owner; keep the Sprint Goal
+  correct_index: 2
+  explanation: Scope can bend during a sprint, but the Sprint Goal stays fixed. The Developers renegotiate the scope with the Product Owner, and the shared goal keeps the team working together.
+  option_feedback:
+    0: The Sprint Goal stays fixed during the sprint. It is the one shared target that keeps the team working together, so the scope bends around it.
+    1: Deciding what to build is the Product Owner's job, and the Scrum Master is not a product manager. The Developers renegotiate scope with the Product Owner.
+increment:
+  question: At the end of a sprint, an item is fully coded, but it has not passed the tests that the team's Definition of Done requires. What happens to it?
+  options:
+    - It returns to the Product Backlog to be ordered again
+    - It counts toward the Increment, because the code is written
+    - It is released now, and its tests are fixed next sprint
+  correct_index: 0
+  explanation: The Definition of Done decides what counts as finished. An item that misses it is not part of the Increment; it goes back to the Product Backlog, where the Product Owner orders it again.
+  option_feedback:
+    1: Only work that meets the Definition of Done is part of the Increment. Code that fails its required tests is not done.
+    2: Work that misses the Definition of Done cannot be released or shown as done, whatever the plan for fixing it later.
+sprint:
+  question: A team's two-week sprint is about to end with two items unfinished. Someone proposes adding three days to this sprint. What does Scrum say?
+  options:
+    - Extend it, since finishing the selected items matters most
+    - Keep its length; unfinished items go back to the Product Backlog
+    - Extend it, but only if the Scrum Master approves the change
+  correct_index: 1
+  explanation: A Sprint is a fixed timebox, usually two to three weeks and never more than a month, and the next one starts the moment it ends. Work that misses the Definition of Done returns to the Product Backlog.
+  option_feedback:
+    0: A Sprint is a fixed timebox. Scope bends during the sprint, but the length does not.
+    2: No role stretches a Sprint; its fixed length is what makes it a timebox. The Scrum Master keeps events within their timeboxes.
+sprint_planning:
+  question: In Sprint Planning, who selects the Product Backlog items for the sprint?
+  options:
+    - The Developers, who also plan how to do the work
+    - The Product Owner alone, who orders the backlog
+    - The Scrum Master, who facilitates the event
+  correct_index: 0
+  explanation: The Product Owner proposes how the sprint could add value, and the whole team writes the Sprint Goal. The Developers then select the items and split them into tasks of a day or less.
+  option_feedback:
+    1: The Product Owner proposes the value and orders the Product Backlog, but the Developers pull in the items they can take on and plan the work.
+    2: The Scrum Master keeps the event effective and within its timebox. Selecting the work is not part of that role.
+daily_scrum:
+  question: A manager wants to use the Daily Scrum to collect a status update from each Developer. Why does this conflict with Scrum?
+  options:
+    - Only the Scrum Master and Product Owner may attend it
+    - The Daily Scrum is for the Developers to adapt their own plan
+    - Status updates belong in the Sprint Retrospective instead
+  correct_index: 1
+  explanation: The Daily Scrum is fifteen minutes for the Developers to inspect progress toward the Sprint Goal and adapt the day's plan by talking with each other. It is not a status report for managers.
+  option_feedback:
+    0: The Daily Scrum is the Developers' meeting. They inspect their own progress and adapt their own plan.
+    2: The retrospective inspects how the team works, not each person's status. The Daily Scrum's job is to inspect progress toward the Sprint Goal and adapt the day's plan.
+sprint_review:
+  question: What is the main result of a Sprint Review?
+  options:
+    - A revised Sprint Goal for the sprint that is ending
+    - A signed approval that closes the project phase
+    - An updated Product Backlog, shaped by stakeholder feedback
+  correct_index: 2
+  explanation: The Sprint Review inspects the Increment with key stakeholders, ideally through live demos with real customers. Its result is an updated Product Backlog, ready for the next Sprint Planning.
+  option_feedback:
+    0: The Sprint Goal is written in Sprint Planning and stays fixed during the sprint. The review's result feeds the next Sprint Planning instead.
+    1: The review is a working session, not a sign-off. Stakeholders try the Increment, and their feedback changes what comes next.
+sprint_retrospective:
+  question: In a retrospective, a team notices that accessibility problems keep reaching users. Which change fits the Sprint Retrospective best?
+  options:
+    - Rank each Developer by how many problems they caused
+    - Add a screen-reader check to the Definition of Done
+    - Ask stakeholders to rate the accessibility of each demo
+  correct_index: 1
+  explanation: The Sprint Retrospective inspects how the team worked, including its Definition of Done, and picks the most helpful changes. A quality check in the Definition of Done protects qualities that user stories tend to miss.
+  option_feedback:
+    0: The retrospective looks for the most helpful changes to how the team works. Ranking people changes nothing about the process.
+    2: Gathering stakeholder feedback on the product happens in the Sprint Review. The retrospective changes how the team works, such as what its Definition of Done requires.
+inspect_adapt:
+  question: Which pairing of an event, what it inspects, and what it adapts is correct?
+  options:
+    - 'Sprint Review: inspects the Increment; adapts the Product Backlog'
+    - 'Daily Scrum: inspects the Increment; adapts the Definition of Done'
+    - 'Sprint Retrospective: inspects the Product Backlog; adapts the Sprint Goal'
+  correct_index: 0
+  explanation: Sprint Planning inspects the Product Backlog and creates the Sprint Backlog. The Daily Scrum inspects progress and adapts the day's plan. The Sprint Review inspects the Increment and adapts the Product Backlog. The retrospective inspects how the team worked and adapts its process.
+  option_feedback:
+    1: The Daily Scrum inspects progress toward the Sprint Goal and adapts the day's plan. The Definition of Done changes in the retrospective.
+    2: The retrospective inspects how the team worked and adapts its process and Definition of Done. The Sprint Goal is written in Sprint Planning.
+summary:
+  questions:
+    - question: A team building an app for booking library study rooms has argued for weeks about whether students want reminder notifications. Which next step follows Scrum's empiricism?
+      options:
+        - Write a complete specification of every reminder rule first
+        - Ship a small reminder next sprint and watch how students use it
+        - Let the most experienced developer decide from past projects
+      correct_index: 1
+      explanation: Empiricism means deciding from experience and observation instead of detailed up-front predictions. A small, real experiment answers a question that weeks of debate cannot.
+      option_feedback:
+        0: A complete up-front specification is a prediction. Some questions are too complex to settle by analysis alone; you find out by watching real users.
+        2: An experienced developer's view is still a prediction about these students. Empiricism asks the team to observe what real users do.
+    - question: On the study-room team, the sprint plan lives only in one developer's head, so nobody else can tell how the sprint is going. Which pillar is weakest, and why does it matter?
+      options:
+        - Transparency, and without it inspection would mislead
+        - Adaptation, and without it the plan could never change
+        - Inspection, and without it the team could not see the plan
+      correct_index: 0
+      explanation: Transparency means the work is visible to the people doing it and receiving it, on the wall rather than in someone's head. Transparency makes inspection possible; inspecting work you cannot see would only mislead.
+      option_feedback:
+        1: The plan could still change. The problem is that no one else can see it, and visibility of the work is transparency.
+        2: Inspection means checking the work, which depends on seeing it first. A plan hidden in one head is a transparency problem.
+    - question: For the study-room app, the library, student government, and a dean all send conflicting feature requests. Who decides their order in the Product Backlog?
+      options:
+        - The Scrum Master, who balances the team's needs
+        - Whichever stakeholder has the most authority
+        - The Product Owner, who maximizes the product's value
+      correct_index: 2
+      explanation: The Product Owner is accountable for maximizing value. They learn what customers need and order the Product Backlog so the most valuable work comes first.
+      option_feedback:
+        0: The Scrum Master coaches the team and removes impediments but is not a product manager. Deciding what to build is the Product Owner's job.
+        1: When managers dictate the vision, the Product Owner cannot steer toward value. The Product Owner needs real authority over the order.
+    - question: The study-room team cannot test its door-sensor feature because a contract with the facilities office is still unsigned. Which role is accountable for getting this impediment removed?
+      options:
+        - The Scrum Master
+        - The Product Owner
+        - The Developers, by working around it
+      correct_index: 0
+      explanation: Impediments are blockers the team cannot clear alone, such as a missing agreement. Removing them is the Scrum Master's job, so the Developers can keep building.
+      option_feedback:
+        1: The Product Owner decides what to build and in what order. Clearing blockers that the team cannot remove alone is the Scrum Master's job.
+        2: An impediment is a blocker the team cannot clear alone, like a missing contract. The Scrum Master chases it so the Developers can keep building.
+    - question: On the last day of a sprint, the study-room calendar works on laptops but has not passed the phone test that the team's Definition of Done requires. What happens to it?
+      options:
+        - It is released, since most students book on laptops
+        - It returns to the Product Backlog, to be ordered again
+        - The team removes the phone test from its Definition of Done
+      correct_index: 1
+      explanation: Only work that meets the Definition of Done is part of the Increment. Unfinished work goes back to the Product Backlog, where the Product Owner orders it again.
+      option_feedback:
+        0: Work that misses the Definition of Done cannot be released or shown as done, however close it is.
+        2: The Definition of Done is the team's shared quality checklist. A retrospective changes it to improve quality, not to let one unfinished item through.
+    - question: In the study-room app's Sprint Review, librarians ask for a way to block rooms during exam week. What should happen to that request?
+      options:
+        - The Developers add it to the current sprint right away
+        - The team notes it as a process improvement for the retrospective
+        - The Product Owner adds it to the Product Backlog and orders it
+      correct_index: 2
+      explanation: The Sprint Review inspects the Increment with stakeholders, and its result is an updated Product Backlog. The Product Owner orders the new item against everything else.
+      option_feedback:
+        0: The current sprint's plan serves its Sprint Goal. New requests join the Product Backlog, the single source of work, where the Product Owner orders them.
+        1: A new feature is about the product, not how the team works. The review adapts the Product Backlog; the retrospective adapts the process.
+    - question: The study-room team's Daily Scrums keep running forty minutes. In which event should the team inspect this and decide how to change it?
+      options:
+        - Sprint Retrospective
+        - Sprint Review
+        - Sprint Planning
+      correct_index: 0
+      explanation: The Sprint Retrospective inspects how the team worked, including its events, and picks the most helpful changes. A Daily Scrum that keeps running long is a problem with the process.
+      option_feedback:
+        1: The Sprint Review inspects the product with stakeholders. Problems with how the team works belong in the retrospective.
+        2: Sprint Planning answers why, what, and how for the next sprint's work. Improving how the team works is the retrospective's job.

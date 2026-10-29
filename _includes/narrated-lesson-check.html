@@ -1,0 +1,15 @@
+{%- comment -%}
+  A section's knowledge check in a reading or print view: one question, or a
+  summary quiz's questions, each with its answer behind a disclosure.
+  Params: check (a quiz entry; nothing renders without one).
+{%- endcomment -%}
+{%- assign np_check = include.check -%}
+{%- if np_check -%}
+{%- if np_check.questions %}{% assign np_questions = np_check.questions %}{% assign np_check_label = 'Summary quiz:' %}{% else %}{% assign np_questions = '' | split: '' | push: np_check %}{% assign np_check_label = 'Knowledge check:' %}{% endif -%}
+{%- for question in np_questions %}
+<div class="np-print-question"><p><strong>{{ np_check_label }}</strong>{% if np_questions.size > 1 %} {{ forloop.index }} of {{ np_questions.size }} ·{% endif %} {{ question.question | escape }}</p>
+  <ul>{% for option in question.options %}<li>{{ option | escape }}</li>{% endfor %}</ul>
+  <details><summary>Answer and explanation</summary><p>{{ question.options[question.correct_index] | escape }}</p><p>{{ question.explanation | escape }}</p></details>
+</div>
+{%- endfor -%}
+{%- endif -%}

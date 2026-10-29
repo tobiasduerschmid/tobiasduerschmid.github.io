@@ -525,7 +525,7 @@
     cc: 'cpp', cxx: 'cpp', 'c++': 'cpp', hpp: 'cpp', hh: 'cpp', hxx: 'cpp',
     makefile: 'makefile', Makefile: 'makefile',
     pl: 'prolog', pro: 'prolog',
-    java: 'java',
+    java: 'java', tla: 'tlaplus',
     hs: 'haskell', lhs: 'haskell',
   };
 
@@ -564,6 +564,7 @@
     if (backend === 'browser') return 'Browser Node sandbox';
     if (backend === 'haskell') return 'Haskell';
     if (backend === 'compiler') return 'Compiler lab';
+    if (backend === 'tla') return 'TLA+ / PlusCal';
     if (backend === 'shell-pipeline') return 'Shell pipeline';
     if (backend === 'v86') return 'Linux VM';
     return backend;
@@ -597,6 +598,7 @@
       declaredBackends.length > 1 ||
       normalizeBackendName(declaredBackends[0]) !== backend
     ));
+    if (mixedBackendMode && declaredBackends.includes('tla')) throw new Error('TLA+ uses a single-backend tutorial workspace.');
     var hasReactStep = declaredBackends.indexOf('react') !== -1;
     var hasV86Step = declaredBackends.indexOf('v86') !== -1;
     var useTerminal = !mixedBackendMode &&
@@ -605,6 +607,7 @@
     this.config = {
       backend: backend,
       shellManuals: options.shellManuals || {},
+      tla: options.tla || {},
       defaultBackend: backend,
       v86Path: options.v86Path || '/assets/v86',
       vmPath: options.vmPath || '/vm/dist',
@@ -910,6 +913,8 @@
       ? (typeof options.playwright === 'object' ? options.playwright : { enabled: true })
       : null;
     this._playwrightMode = !!(this.playwrightConfig && this.playwrightConfig.enabled !== false);
+    this._studentPlaywrightRun = null;
+    this._playwrightRunController = null;
     this._umlDefaultView = options.uml_default_view || false; // UML tab shown by default instead of Output
     this._umlContainer = null;
     this._umlContentEl = null;
@@ -943,9 +948,11 @@
     this._reactPreviewGeneration = 0;
     this._reactPreviewReady = false;
     this._pendingReactPatch = null;
+    this._reactPatchDeferred = false;
     this._reactPreviewReadyWaiters = {};
     this._reactPreviewMessageHandler = null;
     this._reactAssertionRequestId = 0;
+    this._reactAssertionRequests = new Map();
     this._reactAssertionPort = null;
     this._reactAssertionPortGeneration = -1;
 
@@ -1510,9 +1517,11 @@
     this._umlViewControls.forEach(function (controls) { controls.destroy(); });
     this._umlViewEvents.abort();
     this._destroyed = true;
+    this._cancelPlaywrightRun();
     clearTimeout(this._umlRefreshTimer);
     if (this._umlClient) this._umlClient.dispose();
     if (this._compilerAdapter) this._compilerAdapter.destroy();
+    if (this._tlaController) this._tlaController.destroy();
     if (this.config.backend === 'shell-pipeline') this._stopShellPipeline({ silent: true });
     if (this._compilerRulesEditor) this._compilerRulesEditor.destroy();
     if (this._compilerSourceEditor) this._compilerSourceEditor.destroy();
@@ -1553,10 +1562,7 @@
       this._reactPreviewMessageHandler = null;
     }
     this._closeReactAssertionBroker();
-    Object.keys(this._reactPreviewReadyWaiters).forEach(function (generation) {
-      clearTimeout(this._reactPreviewReadyWaiters[generation].timeoutId);
-    }, this);
-    this._reactPreviewReadyWaiters = {};
+    this._cancelReactPreviewWaiters(new Error('React preview was destroyed'));
   };
 
   // ---------------------------------------------------------------------------
@@ -1640,6 +1646,10 @@
     if (this.config.backend === 'compiler') {
       this.root.classList.add('compiler-tutorial');
       outputContainerHtml = '<div class="tvm-output-container" tabindex="0" role="region" aria-label="Compiler results"><pre class="tvm-output-pre"></pre><div class="compiler-tutorial-results"></div></div>';
+    }
+    if (this.config.backend === 'tla') {
+      this.root.classList.add('tla-tutorial');
+      outputContainerHtml = '<div class="tvm-output-container" tabindex="0" role="region" aria-label="Model results"><pre class="tvm-output-pre"></pre><div class="tla-tutorial-results"></div></div>';
     }
     // tabindex="0" makes this container focusable so keyboard users can pan
     // and zoom the diagram; without role+aria-label the WCAG 4.1.2 audit
@@ -1779,7 +1789,7 @@
         '<button class="tvm-test-run-btn" data-original-title="Run the test file" style="display:none;">&#10003; Test</button>' +
         '<button class="tvm-stop-btn" data-original-title="Stop execution" style="display:none;">&#9208; Stop</button>' +
         '<button class="tvm-clear-btn" data-original-title="Clear output">Clear</button>' +
-        (this.config.backend === 'compiler' ? '' : '<button class="tvm-output-popout-btn" data-original-title="Open output in separate window">⧉<span class="sr-only">Open output in separate window</span></button>') +
+        (['compiler', 'tla'].includes(this.config.backend) ? '' : '<button class="tvm-output-popout-btn" data-original-title="Open output in separate window">⧉<span class="sr-only">Open output in separate window</span></button>') +
         '</div></div>' +
         outputContainerHtml;
 
@@ -3680,8 +3690,19 @@
     if (backend === 'pyodide') return this._initPyodide(setupCommandsOverride, loadingOptions);
     if (backend === 'webcontainer') {
       var self = this;
-      return this._initWebContainer(setupCommandsOverride, loadingOptions).catch(function (err) {
-        return self._disposeWebContainerRuntime().then(function () {
+      const initialization = this._initWebContainer(setupCommandsOverride, loadingOptions);
+      const generation = this._webcontainerGeneration;
+      return initialization.catch(function (err) {
+        // A cancelled initialization no longer owns the runtime. In particular,
+        // it must not dispose a replacement or revive a destroyed tutorial.
+        if (self._destroyed || self._webcontainerGeneration !== generation ||
+            (err && err.reason === 'terminated')) throw err;
+        const disposal = self._disposeWebContainerRuntime();
+        const disposedGeneration = self._webcontainerGeneration;
+        return disposal.then(function () {
+          if (self._destroyed || self._webcontainerGeneration !== disposedGeneration) {
+            throw webContainerCancellationError();
+          }
           // An authored setup command is part of the tutorial contract. Falling
           // back to the browser shim would silently skip that contract, so only
           // dependency/boot failures are eligible for fallback.
@@ -3711,6 +3732,7 @@
     if (backend === 'haskell') return this._initHaskell();
     if (backend === 'smalltalk') return this._initSmalltalk();
     if (backend === 'compiler') return this._initCompiler();
+    if (backend === 'tla') return this._initTLA();
     if (backend === 'shell-pipeline') return this._initShellPipeline();
     return Promise.reject(new Error('Unknown backend: ' + backend));
   };
@@ -4941,6 +4963,12 @@
       var worker = new Worker(self.config.workerPath);
       self._worker = worker;
       var initialization = self._trackWorkerInitialization(worker, resolve, reject);
+      function requireCurrentWorker() {
+        if (self._worker === worker) return;
+        const error = new Error('Python initialization was superseded');
+        error.reason = 'terminated';
+        throw error;
+      }
       initialization.timer = setTimeout(function () {
         if (self._worker !== worker || initialized) return;
         var message = 'Pyodide runtime initialization timed out';
@@ -4971,6 +4999,7 @@
           // iso-git module loaded and dir registered.
           var gitSetup = self.gitGraphPath
             ? pythonSetup.then(function () {
+                requireCurrentWorker();
                 return self._requestWorker(
                   { type: 'gitInit', dir: self.gitGraphPath },
                   { timeoutMs: WORKER_REQUEST_TIMEOUT_MS }
@@ -4982,18 +5011,22 @@
                   );
                 });
               }).then(function () {
+                requireCurrentWorker();
                 self._initGitTerminal();
                 if (self.gitSetupCommands && self.gitSetupCommands.length) {
                   return self._runGitSetup(self.gitSetupCommands);
                 }
               }).then(function () {
+                requireCurrentWorker();
                 // First paint of the gitgraph (in case the user lands on
                 // graph view from a step's `view: git_graph`).
                 if (window.GitGraph) self._lightRefreshGitGraph();
                 // Now that git is initialised, retry any gutter refreshes
                 // that landed early and got the "notReady" reply.
                 if (self.config.enableGitGutter) {
-                  setTimeout(function () { self._refreshAllGitGutters(); }, 50);
+                  setTimeout(function () {
+                    if (self._worker === worker) self._refreshAllGitGutters();
+                  }, 50);
                 }
               })
             : pythonSetup;
@@ -5039,158 +5072,100 @@
     });
   };
 
-  // ---- SQL backend -----------------------------------------------------------
-  TutorialCode.prototype._initSQL = function () {
-    var self = this;
-    this._showLoading('Loading SQL runtime\u2026 (first load may take a moment)');
+  // SQL, Prolog, and Java share the ready/setup/message worker protocol.
+  // Keep ownership and deadline handling together so obsolete events cannot
+  // settle a newer boot transaction or send its setup to the wrong worker.
+  TutorialCode.prototype._initRuntimeWorker = function (options) {
+    const self = this;
+    const { backend, label, workerPath, setupMessage } = options;
+    this._showLoading('Loading ' + label + ' runtime\u2026 (first load may take a moment)');
     return new Promise(function (resolve, reject) {
-      var initialized = false;
-      var bootTimer = setTimeout(function () {
-        if (initialized) return;
-        var message = 'SQL runtime initialization timed out';
-        self._terminateWorker(message);
-        reject(new Error(message));
-      }, WORKER_BOOT_TIMEOUT_MS);
-      self._worker = new Worker(self.config.sqlWorkerPath);
+      let initialized = false;
+      let readyReceived = false;
+      const worker = new Worker(workerPath);
+      self._worker = worker;
+      const initialization = self._trackWorkerInitialization(worker, resolve, reject);
 
-      self._worker.onmessage = function (e) {
-        var msg = e.data;
-        if (msg.type === 'loading') { self._showLoading(msg.message); return; }
-        if (msg.type === 'ready') {
-          var setupCmds = self.setupCommands;
-          var setup = setupCmds && setupCmds.length > 0
-            ? self._runWorkerCommand(
-                { type: 'runSQL', sql: setupCmds.join('\n'), silent: true },
-                'SQL global setup',
-                { timeoutMs: WORKER_REQUEST_TIMEOUT_MS }
-              )
+      function fail(message) {
+        if (self._worker !== worker) return;
+        if (!initialized) initialization.finish(new Error(message));
+        self._handleWorkerFailure(message, initialized, reject, backend);
+      }
+
+      initialization.timer = setTimeout(function () {
+        fail(label + ' runtime initialization timed out');
+      }, WORKER_BOOT_TIMEOUT_MS);
+
+      worker.onmessage = function (event) {
+        if (self._worker !== worker) return;
+        const message = event.data;
+        if (message.type === 'loading') { self._showLoading(message.message); return; }
+        if (message.type === 'ready') {
+          if (readyReceived) return;
+          readyReceived = true;
+          const setup = setupMessage
+            ? self._runWorkerCommand(setupMessage, label + ' global setup', {
+                timeoutMs: WORKER_REQUEST_TIMEOUT_MS,
+              })
             : Promise.resolve();
           setup.then(function () {
+            if (self._worker !== worker) return;
             initialized = true;
-            clearTimeout(bootTimer);
             self.booted = true;
-            resolve();
+            initialization.finish();
           }, function (error) {
-            clearTimeout(bootTimer);
-            self._terminateWorker(error && error.message || 'SQL initialization failed');
-            reject(error);
+            if (self._worker !== worker) return;
+            initialization.finish(error);
+            self._terminateWorker(error && error.message || label + ' initialization failed');
           });
           return;
         }
-        if (msg.type === 'stdout') { self._appendOutput(msg.text, 'stdout'); return; }
-        if (msg.type === 'stderr') { self._appendOutput(msg.text, 'stderr'); return; }
-        if (msg.type === 'table') { self._appendTable(msg.columns, msg.rows); return; }
-        if (msg.type === 'error') {
-          clearTimeout(bootTimer);
-          self._handleWorkerFailure(msg.message || 'SQL runtime failed', initialized, reject, 'sql');
+        if (message.type === 'stdout' || message.type === 'stderr') {
+          self._appendOutput(message.text, message.type);
           return;
         }
-        self._routeWorkerResponse(msg);
+        if (backend === 'sql' && message.type === 'table') {
+          self._appendTable(message.columns, message.rows);
+          return;
+        }
+        if (message.type === 'error') {
+          fail(message.message || label + ' runtime failed');
+          return;
+        }
+        self._routeWorkerResponse(message);
       };
+      worker.onerror = function (error) {
+        fail(label + ' worker error: ' + (error.message || error));
+      };
+    });
+  };
 
-      self._worker.onerror = function (err) {
-        clearTimeout(bootTimer);
-        var message = 'SQL worker error: ' + (err.message || err);
-        self._handleWorkerFailure(message, initialized, reject, 'sql');
-      };
+  // ---- SQL backend -----------------------------------------------------------
+  TutorialCode.prototype._initSQL = function () {
+    const commands = this.setupCommands || [];
+    return this._initRuntimeWorker({
+      backend: 'sql', label: 'SQL', workerPath: this.config.sqlWorkerPath,
+      setupMessage: commands.length
+        ? { type: 'runSQL', sql: commands.join('\n'), silent: true }
+        : null,
     });
   };
 
   // ---- Prolog backend (Tau Prolog via Web Worker) ----------------------------
   TutorialCode.prototype._initProlog = function () {
-    var self = this;
-    this._showLoading('Loading Prolog runtime\u2026 (first load may take a moment)');
-    return new Promise(function (resolve, reject) {
-      var initialized = false;
-      var bootTimer = setTimeout(function () {
-        if (initialized) return;
-        var message = 'Prolog runtime initialization timed out';
-        self._terminateWorker(message);
-        reject(new Error(message));
-      }, WORKER_BOOT_TIMEOUT_MS);
-      self._worker = new Worker(self.config.prologWorkerPath);
-
-      self._worker.onmessage = function (e) {
-        var msg = e.data;
-        if (msg.type === 'loading') { self._showLoading(msg.message); return; }
-        if (msg.type === 'ready') {
-          var setupCmds = self.setupCommands;
-          var setup = setupCmds && setupCmds.length > 0
-            ? self._runWorkerCommand(
-                { type: 'runProlog', code: setupCmds.join('\n'), silent: true },
-                'Prolog global setup',
-                { timeoutMs: WORKER_REQUEST_TIMEOUT_MS }
-              )
-            : Promise.resolve();
-          setup.then(function () {
-            initialized = true;
-            clearTimeout(bootTimer);
-            self.booted = true;
-            resolve();
-          }, function (error) {
-            clearTimeout(bootTimer);
-            self._terminateWorker(error && error.message || 'Prolog initialization failed');
-            reject(error);
-          });
-          return;
-        }
-        if (msg.type === 'stdout') { self._appendOutput(msg.text, 'stdout'); return; }
-        if (msg.type === 'stderr') { self._appendOutput(msg.text, 'stderr'); return; }
-        if (msg.type === 'error') {
-          clearTimeout(bootTimer);
-          self._handleWorkerFailure(msg.message || 'Prolog runtime failed', initialized, reject, 'prolog');
-          return;
-        }
-        self._routeWorkerResponse(msg);
-      };
-
-      self._worker.onerror = function (err) {
-        clearTimeout(bootTimer);
-        var message = 'Prolog worker error: ' + (err.message || err);
-        self._handleWorkerFailure(message, initialized, reject, 'prolog');
-      };
+    const commands = this.setupCommands || [];
+    return this._initRuntimeWorker({
+      backend: 'prolog', label: 'Prolog', workerPath: this.config.prologWorkerPath,
+      setupMessage: commands.length
+        ? { type: 'runProlog', code: commands.join('\n'), silent: true }
+        : null,
     });
   };
 
   // ---- Java backend (Java-to-JS transpiler via Web Worker) ------------------
   TutorialCode.prototype._initJava = function () {
-    var self = this;
-    this._showLoading('Loading Java runtime… (first load may take a moment)');
-    return new Promise(function (resolve, reject) {
-      var initialized = false;
-      var bootTimer = setTimeout(function () {
-        if (initialized) return;
-        var message = 'Java runtime initialization timed out';
-        self._terminateWorker(message);
-        reject(new Error(message));
-      }, WORKER_BOOT_TIMEOUT_MS);
-      self._worker = new Worker(self.config.javaWorkerPath);
-
-      self._worker.onmessage = function (e) {
-        var msg = e.data;
-        if (msg.type === 'loading') { self._showLoading(msg.message); return; }
-        if (msg.type === 'ready') {
-          initialized = true;
-          clearTimeout(bootTimer);
-          self.booted = true;
-          resolve();
-          return;
-        }
-        if (msg.type === 'stdout') { self._appendOutput(msg.text, 'stdout'); return; }
-        if (msg.type === 'stderr') { self._appendOutput(msg.text, 'stderr'); return; }
-        if (msg.type === 'error') {
-          clearTimeout(bootTimer);
-          self._handleWorkerFailure(msg.message || 'Java runtime failed', initialized, reject, 'java');
-          return;
-        }
-        self._routeWorkerResponse(msg);
-      };
-
-      self._worker.onerror = function (err) {
-        clearTimeout(bootTimer);
-        var message = 'Java worker error: ' + (err.message || err);
-        self._handleWorkerFailure(message, initialized, reject, 'java');
-      };
+    return this._initRuntimeWorker({
+      backend: 'java', label: 'Java', workerPath: this.config.javaWorkerPath,
     });
   };
 
@@ -5308,11 +5283,19 @@
       var worker = self._createHaskellExecutor();
       self._worker = worker;
       var initialization = self._trackWorkerInitialization(worker, resolve, reject);
+      function fail(message) {
+        if (self._worker !== worker) return;
+        if (!initialized) {
+          initialization.finish(new Error(message));
+          self._terminateWorker(message);
+        } else {
+          self._appendOutput('\nHaskell runtime error: ' + message + '\n', 'err');
+          self._restartHaskellExecutor().catch(function () {});
+        }
+      }
       initialization.timer = setTimeout(function () {
         if (self._worker !== worker || initialized) return;
-        var message = 'Haskell runtime initialization timed out';
-        initialization.finish(new Error(message));
-        self._terminateWorker(message);
+        fail('Haskell runtime initialization timed out');
       }, HASKELL_BOOT_TIMEOUT_MS);
 
       worker.onmessage = function (e) {
@@ -5321,9 +5304,7 @@
         if (msg.type === 'loading') { self._showLoading(msg.message); return; }
         if (msg.type === 'ready') {
           if (self.setupCommands && self.setupCommands.length > 0) {
-            initialization.finish(new Error(
-              'The Haskell backend does not support setup_commands; provide starter files instead.'
-            ));
+            fail('The Haskell backend does not support setup_commands; provide starter files instead.');
             return;
           }
           initialized = true;
@@ -5334,12 +5315,7 @@
         if (msg.type === 'stdout') { self._appendOutput(msg.text, 'stdout'); return; }
         if (msg.type === 'stderr') { self._appendOutput(msg.text, 'stderr'); return; }
         if (msg.type === 'error') {
-          if (!initialized) {
-            initialization.finish(new Error(msg.message));
-          } else {
-            self._appendOutput('\nHaskell runtime error: ' + msg.message + '\n', 'err');
-            self._restartHaskellExecutor().catch(function () {});
-          }
+          fail(msg.message || 'Haskell runtime failed');
           return;
         }
         self._routeWorkerResponse(msg);
@@ -5347,7 +5323,7 @@
 
       worker.onerror = function (err) {
         if (self._worker !== worker) return;
-        initialization.finish(new Error('Haskell worker error: ' + (err.message || err)));
+        fail('Haskell worker error: ' + (err.message || err));
       };
     });
   };
@@ -5778,6 +5754,7 @@
       return id;
     }
 
+    const requestWorker = this._worker;
     if (callback) {
       var timeoutId = setTimeout(function () {
         var detail = 'Worker request "' + (msg.type || 'unknown') + '" timed out after ' + timeoutMs + ' ms';
@@ -5790,7 +5767,8 @@
         } catch (error) {
           console.error('[TutorialCode] Worker timeout callback failed:', error);
         }
-        if (settled && options.restartOnTimeout && !self._destroyed) {
+        if (settled && options.restartOnTimeout && !self._destroyed &&
+            self._worker === requestWorker) {
           self._restartWorkerBackend(detail).catch(function () {});
         }
       }, timeoutMs);
@@ -5857,7 +5835,7 @@
       message = { type: 'runProlog', code: commands.join('\n'), silent: true };
     } else if (this.config.backend === 'sql') {
       message = { type: 'runSQL', sql: commands.join('\n'), silent: true };
-    } else if (this.config.backend === 'haskell' || this.config.backend === 'cpp' || this.config.backend === 'compiler') {
+    } else if (this.config.backend === 'haskell' || this.config.backend === 'cpp' || this.config.backend === 'compiler' || this.config.backend === 'tla') {
       return Promise.reject(new Error(
         backendLabel(this.config.backend) + ' does not support setup_commands; provide step files instead.'
       ));
@@ -6020,6 +5998,7 @@
   TutorialCode.prototype._clearOutput = function () {
     if (this.outputPre) this.outputPre.innerHTML = '';
     if (this._compilerResultHost) this._compilerResultHost.replaceChildren();
+    if (this._tlaController) this._tlaController.reset();
   };
 
   TutorialCode.prototype._setRunTransactionControls = function (state, label) {
@@ -6034,6 +6013,7 @@
     var stopBtn = this.root && this.root.querySelector('.tvm-stop-btn');
     if (state === 'running' || state === 'restarting') {
       if (this.config.backend === 'shell-pipeline' && document.activeElement === runBtn) this._shellPipelineRestoreRunFocus = true;
+      if (this.config.backend === 'tla' && document.activeElement === runBtn) this._tlaRestoreRunFocus = true;
       if (runBtn) {
         runBtn.disabled = true;
         this._renderRunButtonLabel(runBtn, label || (state === 'restarting'
@@ -6072,6 +6052,10 @@
     if (this._compilerRestoreRunFocus && runBtn && !runBtn.disabled) {
       this._compilerRestoreRunFocus = false;
       runBtn.focus();
+    }
+    if (this._tlaRestoreRunFocus) {
+      this._tlaRestoreRunFocus = false;
+      if (runBtn && !runBtn.disabled && (document.activeElement === document.body || document.activeElement === stopBtn || document.activeElement === runBtn)) runBtn.focus();
     }
     if (this._shellPipelineRestoreRunFocus) {
       this._shellPipelineRestoreRunFocus = false;
@@ -6135,8 +6119,8 @@
 
   TutorialCode.prototype._runCurrentFile = function (options) {
     if (this._activeRunTransaction) return this._activeRunTransaction.promise;
-    if ((this.config.backend === 'cpp' || this.config.backend === 'haskell' || this.config.backend === 'prolog' || this.config.backend === 'smalltalk' || this.config.backend === 'compiler' || this.config.backend === 'shell-pipeline') && this._testRunInFlight) return Promise.resolve(false);
-    if ((this.config.backend === 'compiler' || this.config.backend === 'shell-pipeline') && this._activeStepLoadRequest) return Promise.resolve(false);
+    if ((this.config.backend === 'cpp' || this.config.backend === 'haskell' || this.config.backend === 'prolog' || this.config.backend === 'smalltalk' || this.config.backend === 'compiler' || this.config.backend === 'tla' || this.config.backend === 'shell-pipeline') && this._testRunInFlight) return Promise.resolve(false);
+    if ((this.config.backend === 'compiler' || this.config.backend === 'tla' || this.config.backend === 'shell-pipeline') && this._activeStepLoadRequest) return Promise.resolve(false);
     if (this._haskellInterpreter) this._haskellInterpreter.showOutput();
     if (this._prologInterpreter) {
       if (this._activeStepLoadRequest || this._workerRestartPromise || (this._debuggerCtl && this._debuggerCtl.session)) return Promise.resolve(false);
@@ -6151,6 +6135,7 @@
       id: ++this._runSequence,
       kind: 'run-file',
       acceptDrafts: !!(options && options.acceptDrafts),
+      tlaOperation: options && options.tlaOperation || 'check',
       stepIndex: stepIndex,
       step: step,
       runFiles: runFiles,
@@ -6185,6 +6170,7 @@
 
     if (backend === 'smalltalk') return this._runSmalltalk(run);
     if (backend === 'compiler') return this._runCompiler(run);
+    if (backend === 'tla') return this._runTLA(run);
     if (backend === 'shell-pipeline') return this._runShellPipeline(run);
 
     if (backend === 'v86') {
@@ -6668,6 +6654,12 @@
   };
 
   // ---- WebContainers backend -------------------------------------------------
+  function webContainerCancellationError() {
+    const error = new Error('WebContainer initialization was cancelled');
+    error.reason = 'terminated';
+    return error;
+  }
+
   TutorialCode.prototype._loadWebContainerAPI = function () {
     // Under COEP=credentialless (set by the COI service worker), dynamic
     // `import()` of cross-origin ESM defaults to a no-cors fetch. Preloading
@@ -6714,21 +6706,32 @@
    * Bound the remote boot handshake. A promise may resolve after its timeout;
    * that late instance is torn down instead of leaking behind browser fallback.
    */
-  TutorialCode.prototype._bootWebContainer = function (WebContainer, timeoutMs) {
+  TutorialCode.prototype._bootWebContainer = function (WebContainer, timeoutMs, signal) {
     var self = this;
     var limit = Math.max(1, Number(timeoutMs) || WEBCONTAINER_BOOT_TIMEOUT_MS);
     return new Promise(function (resolve, reject) {
       var settled = false;
-      var timer = setTimeout(function () {
+      function finish(error, instance) {
         if (settled) return;
         settled = true;
+        clearTimeout(timer);
+        if (signal) signal.removeEventListener('abort', onAbort);
+        if (error) reject(error); else resolve(instance);
+      }
+      function onAbort() { finish(webContainerCancellationError()); }
+      var timer = setTimeout(function () {
         var error = new Error('WebContainer boot timed out after ' + limit + ' ms');
         error.code = 'WEBCONTAINER_BOOT_TIMEOUT';
         error.webContainerUnavailable = true;
-        reject(error);
+        finish(error);
       }, limit);
+      if (signal) {
+        signal.addEventListener('abort', onAbort, { once: true });
+        if (signal.aborted) onAbort();
+      }
 
       Promise.resolve().then(function () {
+        if (settled || self._destroyed) throw webContainerCancellationError();
         if (!WebContainer || typeof WebContainer.boot !== 'function') {
           throw new Error('WebContainer API does not expose boot()');
         }
@@ -6736,18 +6739,15 @@
       }).then(function (instance) {
         if (settled || self._destroyed) {
           self._teardownWebContainerInstance(instance);
+          if (!settled) finish(webContainerCancellationError());
           return;
         }
-        settled = true;
-        clearTimeout(timer);
-        resolve(instance);
+        finish(null, instance);
       }, function (reason) {
         if (settled) return;
-        settled = true;
-        clearTimeout(timer);
         var error = reason instanceof Error ? reason : new Error(String(reason));
         error.webContainerUnavailable = true;
-        reject(error);
+        finish(error);
       });
     });
   };
@@ -6777,6 +6777,10 @@
   };
 
   TutorialCode.prototype._disposeWebContainerRuntime = function () {
+    this._webcontainerGeneration = (this._webcontainerGeneration || 0) + 1;
+    const initialization = this._webcontainerInitController;
+    this._webcontainerInitController = null;
+    if (initialization) initialization.abort();
     var instance = this._webcontainer;
     this._webcontainer = null;
     if (this._webcontainerRunProcess) {
@@ -6801,22 +6805,51 @@
 
   TutorialCode.prototype._initWebContainer = function (setupCommandsOverride, loadingOptions) {
     var self = this;
+    if (this._destroyed) return Promise.reject(webContainerCancellationError());
+    const previousDisposal = this._webcontainerInitController
+      ? this._disposeWebContainerRuntime() : Promise.resolve();
+    const controller = new AbortController();
+    const signal = controller.signal;
+    this._webcontainerInitController = controller;
+    this._webcontainerGeneration = (this._webcontainerGeneration || 0) + 1;
+    function requireCurrentInitialization() {
+      if (self._destroyed || signal.aborted || self._webcontainerInitController !== controller) {
+        throw webContainerCancellationError();
+      }
+    }
+    let rejectCancellation;
+    const cancellation = new Promise(function (_resolve, reject) { rejectCancellation = reject; });
+    function onAbort() { rejectCancellation(webContainerCancellationError()); }
+    signal.addEventListener('abort', onAbort, { once: true });
     var setupCommands = Array.isArray(setupCommandsOverride)
       ? setupCommandsOverride
       : (self.setupCommands || []);
     this._showLoading('Booting WebContainers\u2026', loadingOptions);
 
-    return this._loadWebContainerAPI()
+    const initialization = previousDisposal.then(function () {
+      requireCurrentInitialization();
+      return self._loadWebContainerAPI();
+    })
       .then(function (module) {
-        return self._bootWebContainer(module.WebContainer, self._webcontainerBootTimeoutMs);
+        requireCurrentInitialization();
+        return self._bootWebContainer(module.WebContainer, self._webcontainerBootTimeoutMs, signal);
       })
       .then(function (wc) {
+        try {
+          requireCurrentInitialization();
+        } catch (error) {
+          // Cancellation may arrive after boot resolves but before this
+          // continuation takes ownership of the returned instance.
+          self._teardownWebContainerInstance(wc);
+          throw error;
+        }
         self._webcontainer = wc;
         self._webcontainerCwd = '/tutorial';
         self._webcontainerServerUrls = {};
         if (wc && typeof wc.on === 'function') {
           try {
             self._webcontainerServerReadyUnsub = wc.on('server-ready', function (port, url) {
+              if (self._webcontainer !== wc || self._destroyed) return;
               self._webcontainerServerUrls[String(port)] = url;
               if (self._debuggerCtl && self._debuggerCtl.session && typeof self._debuggerCtl.setStatus === 'function') {
                 self._debuggerCtl.setStatus('server running');
@@ -6826,32 +6859,45 @@
         }
 
         return wc.fs.mkdir('tutorial', { recursive: true }).then(function () {
+          requireCurrentInitialization();
           return self.config.useTerminal
-            ? self._startWebContainerShell('/tutorial')
+            ? self._startWebContainerShell('/tutorial', signal)
             : Promise.resolve();
         });
       })
       .then(function () {
+        requireCurrentInitialization();
         return self._runWebContainerCommands(setupCommands, {
           cwd: '/tutorial',
           label: 'WebContainer global setup',
+          signal: signal,
         }).catch(function (error) {
           error.webContainerSetupFailure = true;
           throw error;
         });
       })
       .then(function () {
+        requireCurrentInitialization();
         self.booted = true;
       });
+    return Promise.race([initialization, cancellation]).finally(function () {
+      signal.removeEventListener('abort', onAbort);
+      if (self._webcontainerInitController === controller) self._webcontainerInitController = null;
+    });
   };
 
-  TutorialCode.prototype._startWebContainerShell = function (cwd) {
+  TutorialCode.prototype._startWebContainerShell = function (cwd, signal) {
     var self = this;
+    const instance = this._webcontainer;
     var shellCwd = cwd || this._webcontainerCwd || '/tutorial';
-    return this._webcontainer.spawn('jsh', {
+    return instance.spawn('jsh', {
       cwd: shellCwd,
       terminal: { cols: self.term ? self.term.cols : 80, rows: self.term ? self.term.rows : 24 },
     }).then(function (process) {
+      if (self._destroyed || self._webcontainer !== instance || (signal && signal.aborted)) {
+        try { process.kill(); } catch (error) { /* already stopped */ }
+        throw webContainerCancellationError();
+      }
       self._shellProcess = process;
 
       var writer = process.input.getWriter();
@@ -6904,8 +6950,10 @@
   TutorialCode.prototype._runWebContainerCommand = function (cmd, options) {
     options = options || {};
     var self = this;
+    const signal = options.signal;
     var previous = this._webcontainerCommandQueue || Promise.resolve();
     var task = previous.catch(function () {}).then(function () {
+      if (signal && signal.aborted) throw webContainerCancellationError();
       var wc = self._webcontainer;
       if (!wc) throw new Error('WebContainer is not ready yet');
       var timeoutMs = Math.max(1, Number(options.timeoutMs) || WEBCONTAINER_COMMAND_TIMEOUT_MS);
@@ -6930,12 +6978,14 @@
           if (settled) return;
           settled = true;
           clearTimeout(timer);
+          if (signal) signal.removeEventListener('abort', onAbort);
           if (killProcess && process) {
             try { process.kill(); } catch (e) { /* already stopped */ }
           }
           cancelReader();
           reject(error);
         }
+        function onAbort() { fail(webContainerCancellationError(), true); }
 
         function echo(text) {
           if (!options.echoOutput || !text) return;
@@ -6948,10 +6998,16 @@
           error.code = 'WEBCONTAINER_COMMAND_TIMEOUT';
           fail(error, true);
         }, timeoutMs);
+        if (signal) {
+          signal.addEventListener('abort', onAbort, { once: true });
+          if (signal.aborted) onAbort();
+        }
 
         Promise.resolve().then(function () {
+          if (settled) return null;
           return wc.spawn('sh', ['-c', command], { cwd: cwd });
         }).then(function (spawned) {
+          if (!spawned) return;
           if (settled) {
             try { spawned.kill(); } catch (e) { /* timed out before spawn */ }
             return;
@@ -7001,6 +7057,7 @@
           }
           settled = true;
           clearTimeout(timer);
+          if (signal) signal.removeEventListener('abort', onAbort);
           resolve({ exitCode: exitCode, output: output });
         }).catch(function (error) {
           fail(error instanceof Error ? error : new Error(String(error)), true);
@@ -7146,6 +7203,11 @@
    * host-owned deadline can terminate even a Worker blocked in a tight loop.
    */
   TutorialCode.prototype._stopExecution = function () {
+    if (this._tlaController) {
+      this._tlaRestoreRunFocus = document.activeElement === this.root.querySelector('.tvm-stop-btn');
+      this._tlaController.stop();
+      return;
+    }
     if (this.config.backend === 'shell-pipeline') return this._stopShellPipeline();
     if (this._compilerAdapter) {
       this._compilerRestoreRunFocus = document.activeElement === this.root.querySelector('.tvm-stop-btn');
@@ -7314,15 +7376,24 @@
     if (generation !== this._reactPreviewGeneration) return;
     this._reactPreviewReady = true;
     this._flushPendingReactPatch();
+    this._settleReactPreviewWaiter(generation);
+  };
 
+  TutorialCode.prototype._settleReactPreviewWaiter = function (generation, error) {
     var waiter = this._reactPreviewReadyWaiters[generation];
     if (!waiter) return;
+    if (!error && (!this._reactPreviewReady ||
+        this._reactAssertionPortGeneration !== generation || !this._reactAssertionPort)) return;
     clearTimeout(waiter.timeoutId);
+    if (waiter.signal) waiter.signal.removeEventListener('abort', waiter.onAbort);
     delete this._reactPreviewReadyWaiters[generation];
-    if (!waiter.fired) {
-      waiter.fired = true;
-      setTimeout(waiter.callback, 700);
-    }
+    waiter.callback(error);
+  };
+
+  TutorialCode.prototype._cancelReactPreviewWaiters = function (error) {
+    Object.keys(this._reactPreviewReadyWaiters).forEach(function (generation) {
+      this._settleReactPreviewWaiter(generation, error);
+    }, this);
   };
 
   TutorialCode.prototype._flushPendingReactPatch = function () {
@@ -7343,6 +7414,9 @@
   };
 
   TutorialCode.prototype._closeReactAssertionBroker = function () {
+    this._reactAssertionRequests.forEach(function (finish) {
+      finish(new Error('React assertion cancelled because its preview was closed'));
+    });
     if (this._reactAssertionPort) {
       try { this._reactAssertionPort.close(); } catch (error) { /* already closed */ }
     }
@@ -7368,6 +7442,7 @@
     this._reactAssertionPort = transferredPort;
     this._reactAssertionPortGeneration = message.generation;
     this._reactAssertionPort.start();
+    this._settleReactPreviewWaiter(message.generation);
   };
 
   TutorialCode.prototype._replaceReactPreviewFrame = function (srcdoc) {
@@ -7385,28 +7460,49 @@
     if (this._previewFrameSync) replacement.addEventListener('load', this._previewFrameSync);
   };
 
-  TutorialCode.prototype._rebuildReactPreview = function (onReady, stepOverride, fileSnapshot) {
-    if (!this._previewFrame) return;
+  TutorialCode.prototype._reactPreviewHasActiveTest = function () {
+    return !!(this._studentPlaywrightRun || this._playwrightRunController ||
+      (this._activeTestRun && this.config.backend === 'react'));
+  };
+
+  // The callback succeeds only after this generation's initial render and
+  // private assertion broker are ready. Cancellation and deadlines are errors.
+  TutorialCode.prototype._rebuildReactPreview = function (onReady, stepOverride, fileSnapshot, options) {
+    options = options || {};
+    if (!this._previewFrame || this._destroyed) {
+      if (onReady) onReady(new Error('React preview is unavailable'));
+      return;
+    }
+    if (options.signal && options.signal.aborted) {
+      if (onReady) onReady(new Error('React preview preparation was cancelled'));
+      return;
+    }
+    if (!options.testRun && this._reactPreviewHasActiveTest()) this._cancelPlaywrightRun();
     var self = this;
     var generation = ++this._reactPreviewGeneration;
+    this._cancelReactPreviewWaiters(new Error('React preview was replaced by a newer preview'));
     var step = stepOverride || this.steps[this.currentStep >= 0 ? this.currentStep : 0];
     this._reactPreviewReady = false;
     this._pendingReactPatch = null;
 
     if (onReady) {
-      var waiter = { callback: onReady, fired: false, timeoutId: null };
+      var waiter = { callback: onReady, timeoutId: null, signal: options.signal };
       waiter.timeoutId = setTimeout(function () {
-        if (self._reactPreviewReadyWaiters[generation] !== waiter) return;
-        delete self._reactPreviewReadyWaiters[generation];
-        waiter.fired = true;
-        onReady();
-      }, 2000);
+        self._settleReactPreviewWaiter(generation, new Error('React preview initialization timed out'));
+      }, options.timeoutMs || 10000);
+      waiter.onAbort = function () {
+        self._settleReactPreviewWaiter(generation, new Error('React preview preparation was cancelled'));
+      };
       this._reactPreviewReadyWaiters[generation] = waiter;
+      if (waiter.signal) waiter.signal.addEventListener('abort', waiter.onAbort, { once: true });
     }
 
     // A new iframe element gives each generation a fresh WindowProxy. Code in
     // the previous preview therefore cannot race the next broker handshake.
     this._closeReactAssertionBroker();
+    // This rebuild captures the current editors synchronously. A later save
+    // during bootstrap can defer a new patch without being cleared on ready.
+    if (!fileSnapshot) this._reactPatchDeferred = false;
     this._replaceReactPreviewFrame(this._buildReactSrcdoc(step, generation, fileSnapshot));
   };
 
@@ -7450,6 +7546,11 @@
   /** Hot-patch the live preview without reaching into its isolated document. */
   TutorialCode.prototype._patchReactPreview = function () {
     if (!this._previewFrame) return;
+    if (this._reactPreviewHasActiveTest()) {
+      this._reactPatchDeferred = true;
+      return;
+    }
+    this._reactPatchDeferred = false;
 
     var self = this;
     var step = this.steps[this.currentStep >= 0 ? this.currentStep : 0];
@@ -7647,6 +7748,7 @@
     cpp: { id: 'cpp', label: 'C++' },
     haskell: { id: 'haskell', label: 'Haskell' },
     compiler: { id: 'plaintext', label: 'Compiler rules' },
+    tla: { id: 'tlaplus', label: 'TLA+ / PlusCal' },
     smalltalk: { id: 'smalltalk', label: 'Smalltalk' },
     sql: { id: 'sql', label: 'SQL' },
     v86: { id: 'shell-sebook', label: 'Shell' },
@@ -7829,7 +7931,7 @@
       monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS,
       function () { self._saveCurrentFile(); }
     );
-    if (this._mixedBackendMode || this.config.backend === 'pyodide' || this.config.backend === 'browser' || this.config.backend === 'java' || this.config.backend === 'cpp' || this.config.backend === 'haskell' || this.config.backend === 'shell-pipeline') {
+    if (this._mixedBackendMode || this.config.backend === 'pyodide' || this.config.backend === 'browser' || this.config.backend === 'java' || this.config.backend === 'cpp' || this.config.backend === 'haskell' || this.config.backend === 'tla' || this.config.backend === 'shell-pipeline') {
       editor.addCommand(
         monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
         function () { self._runCurrentFile(); }
@@ -7923,6 +8025,13 @@
         if (self.config.enableGitGutter) {
           clearTimeout(gutterTimer);
           gutterTimer = setTimeout(function () { self._refreshGitGutter(filename); }, 300);
+        }
+        if (self.config.backend === 'tla') {
+          // Restoring persisted files must retain their saved completion record.
+          // User edits invalidate grading; all edits invalidate an open trace.
+          if (self._suppressAutoSave) self._tlaController?.markStale();
+          else { self._invalidateTLA(); self._autoSaveProgress(); }
+          return;
         }
         if (self._suppressAutoSave) return;
         if (self.config.backend === 'shell-pipeline') {
@@ -10537,6 +10646,7 @@
   TutorialCode.prototype.applySolution = function () {
     var step = this.steps[this.currentStep];
     if (!step || !step.solution) return;
+    if (this.config.backend === 'tla') this._invalidateTLA();
     var self = this;
     if (this._prologInterpreter && this._prologInterpreter.busy) {
       return this._prologInterpreter.stopForWorkspaceChange().then(function () { return self.applySolution(); });
@@ -10637,7 +10747,7 @@
             }, resolve);
           });
         });
-      } else if (this.config.backend === 'haskell' || this.config.backend === 'cpp' || this.config.backend === 'compiler') {
+      } else if (this.config.backend === 'haskell' || this.config.backend === 'cpp' || this.config.backend === 'compiler' || this.config.backend === 'tla') {
         p = p.then(function () {
           return Promise.reject(new Error(
             backendLabel(self.config.backend) + ' solutions support file replacements, not solution commands.'
@@ -10649,7 +10759,7 @@
     // 4. React: rebuild live preview after file changes
     if (this.config.backend === 'react') {
       p = p.then(function () {
-        setTimeout(function () { self._rebuildReactPreview(); }, 400);
+        self._rebuildReactPreview();
       });
     }
 
@@ -11062,6 +11172,7 @@
   TutorialCode.prototype.resetStep = function () {
     var step = this.steps[this.currentStep];
     if (!step) return;
+    if (this.config.backend === 'tla') this._invalidateTLA();
     if (this.config.backend === 'smalltalk') return this._replaceSmalltalkFiles(step.files || []);
     var self = this;
     // A VM restore abandons pending serial listeners. Wait for preparation
@@ -11808,6 +11919,8 @@
   TutorialCode.prototype.loadStep = function (index) {
     if (index < 0 || index >= this.steps.length) return Promise.resolve();
     if (!this.instructorMode && !this._stepsUnlocked.has(index)) return Promise.resolve();
+    this._cancelPlaywrightRun();
+    if (this._tlaController) this._tlaController.reset();
     if (this._compilerAdapter) this._compilerAdapter.cancel();
     if (this.config.backend === 'shell-pipeline') this._stopShellPipeline({ silent: true });
 
@@ -12185,11 +12298,10 @@
     }
 
     // Clear output panel between steps
-    if (this.config.backend === 'pyodide' || this.config.backend === 'browser' || this.config.backend === 'webcontainer' || this.config.backend === 'prolog' || this.config.backend === 'java' || this.config.backend === 'cpp' || this.config.backend === 'haskell' || this.config.backend === 'compiler' || this.config.backend === 'shell-pipeline') this._clearOutput();
+    if (this.config.backend === 'pyodide' || this.config.backend === 'browser' || this.config.backend === 'webcontainer' || this.config.backend === 'prolog' || this.config.backend === 'java' || this.config.backend === 'cpp' || this.config.backend === 'haskell' || this.config.backend === 'compiler' || this.config.backend === 'tla' || this.config.backend === 'shell-pipeline') this._clearOutput();
     // Rebuild React preview when a new step is loaded
     if (this.config.backend === 'react') {
-      var stepSelf = this;
-      setTimeout(function () { stepSelf._rebuildReactPreview(); }, 400);
+      this._rebuildReactPreview();
     }
 
     // Configure HTTP client visibility (persistent sidebar panel)
@@ -12479,7 +12591,7 @@
   };
 
   TutorialCode.prototype._buildTestButtonHTML = function (index) {
-    if (this._testRunInFlight) {
+    if (this._testRunInFlight || this._studentPlaywrightRun) {
       return '<button class="tvm-btn tvm-btn-test" disabled data-original-title="Wait for the current test run to finish">\u23f3 Running tests\u2026</button>';
     }
     var remaining = this._cooldownRemaining(index);
@@ -12979,9 +13091,9 @@
     // Re-entrancy guard — a previous "I'm sure" run can fire again before its
     // results return. Without this guard, the second run can replace the
     // pending test buffer/state and produce ghost results in the panel.
-    if (this._testRunInFlight) return;
-    if ((this.config.backend === 'cpp' || this.config.backend === 'haskell' || this.config.backend === 'prolog' || this.config.backend === 'smalltalk' || this.config.backend === 'compiler' || this.config.backend === 'shell-pipeline') && this._activeRunTransaction) return;
-    if ((this.config.backend === 'compiler' || this.config.backend === 'shell-pipeline') && this._activeStepLoadRequest) return;
+    if (this._testRunInFlight || this._studentPlaywrightRun || this._destroyed) return;
+    if ((this.config.backend === 'cpp' || this.config.backend === 'haskell' || this.config.backend === 'prolog' || this.config.backend === 'smalltalk' || this.config.backend === 'compiler' || this.config.backend === 'tla' || this.config.backend === 'shell-pipeline') && this._activeRunTransaction) return;
+    if ((this.config.backend === 'compiler' || this.config.backend === 'tla' || this.config.backend === 'shell-pipeline') && this._activeStepLoadRequest) return;
     if (this.config.backend === 'prolog' && (this._activeStepLoadRequest || this._workerRestartPromise || (this._debuggerCtl && this._debuggerCtl.session))) return;
     var stepIndex = this.currentStep;
     var step = this.steps[stepIndex];
@@ -13025,6 +13137,7 @@
     else if (backend === 'haskell') this._runTestsHaskell(run);
     else if (backend === 'smalltalk') this._runTestsSmalltalk(run);
     else if (backend === 'compiler') this._runTestsCompiler(run);
+    else if (backend === 'tla') this._runTestsTLA(run);
     else if (backend === 'shell-pipeline') this._runTestsShellPipeline(run);
     else {
       run.completed = true;
@@ -13483,6 +13596,28 @@
     panel.innerHTML = innerHtml;
   };
 
+  TutorialCode.prototype._captureReactFiles = function () {
+    var files = {};
+    Object.keys(this.editorModels || {}).forEach(function (filename) {
+      files[filename] = this.editorModels[filename].model.getValue();
+    }, this);
+    return files;
+  };
+
+  TutorialCode.prototype._reactFilesMatch = function (files) {
+    var current = this._captureReactFiles();
+    var filenames = Object.keys(files);
+    return filenames.length === Object.keys(current).length && filenames.every(function (filename) {
+      return current[filename] === files[filename];
+    });
+  };
+
+  TutorialCode.prototype._cancelPlaywrightRun = function () {
+    if (this._studentPlaywrightRun) this._studentPlaywrightRun.cancelled = true;
+    if (this._activeTestRun && this.config.backend === 'react') this._activeTestRun.cancelled = true;
+    if (this._playwrightRunController) this._playwrightRunController.abort();
+  };
+
   TutorialCode.prototype._runPlaywrightCompatSpecs = function (step, options) {
     var self = this;
     options = options || {};
@@ -13503,18 +13638,21 @@
       });
     }
 
-    var files = options.files || {};
-    if (!options.files) Object.keys(this.editorModels || {}).forEach(function (filename) {
-      files[filename] = self.editorModels[filename].model.getValue();
-    });
+    if (this._destroyed || this._playwrightRunController) {
+      return Promise.reject(new Error('Playwright runtime is unavailable or already running'));
+    }
+    var files = options.files || this._captureReactFiles();
+    var controller = new AbortController();
+    this._playwrightRunController = controller;
 
     var cfg = this._playwrightStepConfig(step);
     var timeout = Number(cfg.timeout || cfg.expect_timeout || 5000);
     function rebuildPreview() {
-      return new Promise(function (resolve) {
-        self._rebuildReactPreview(function () {
+      return new Promise(function (resolve, reject) {
+        self._rebuildReactPreview(function (error) {
+          if (error) { reject(error); return; }
           resolve({ frame: self._previewFrame, port: self._reactAssertionPort });
-        }, step, files);
+        }, step, files, { signal: controller.signal, testRun: true });
       });
     }
 
@@ -13525,16 +13663,27 @@
         files: files,
         testFiles: testFiles,
         timeout: timeout,
+        signal: controller.signal,
+        freshPreview: true,
         resetBetweenTests: cfg.reset_between_tests !== false && cfg.resetBetweenTests !== false,
         rebuildPreview: rebuildPreview,
       });
+    }).finally(function () {
+      if (self._playwrightRunController === controller) self._playwrightRunController = null;
     });
   };
 
-  TutorialCode.prototype._runStudentPlaywrightTests = function () {
+  TutorialCode.prototype._runStudentPlaywrightTests = async function () {
     var self = this;
     var step = this.steps[this.currentStep];
-    if (!this._stepHasStudentPlaywrightTests(step)) return;
+    if (this._destroyed || this._studentPlaywrightRun || this._testRunInFlight ||
+        !this._stepHasStudentPlaywrightTests(step)) return;
+    var run = {
+      stepIndex: this.currentStep, loadSequence: this._stepLoadSequence,
+      files: this._captureReactFiles(), cancelled: false,
+    };
+    this._studentPlaywrightRun = run;
+    this._refreshTestButton(this.currentStep);
     var btn = this._previewTestBtn || (this.root && this.root.querySelector('.tvm-preview-test-btn'));
     var oldLabel = btn ? btn.textContent : '';
     if (btn) {
@@ -13542,18 +13691,41 @@
       btn.textContent = '\u23f3 Testing\u2026';
     }
 
+    function isCurrent() {
+      return !self._destroyed && !run.cancelled && self.currentStep === run.stepIndex;
+    }
+
     this._showStudentTestPanel('<div class="tvm-test-running"><div class="tvm-test-spinner"></div>Running Playwright tests\u2026</div>');
-    this._runPlaywrightCompatSpecs(step).then(function (run) {
-      self._renderStudentTestResults(run.tests, run.results);
-    }).catch(function (err) {
-      console.error('Playwright compatibility run failed:', err);
-      self._renderStudentTestResults([{ description: 'Run Playwright compatibility tests' }], [false]);
-    }).then(function () {
+    try {
+      var result = await this._runPlaywrightCompatSpecs(step, { files: run.files });
+      if (!isCurrent()) return;
+      if (!this._reactFilesMatch(run.files)) {
+        var message = 'Code changed during the run. Run Test again to check the current source.';
+        this._showStudentTestPanel('<p>' + message + '</p>');
+        this._ensureTestAnnouncer().textContent = message;
+        return;
+      }
+      this._renderStudentTestResults(result.tests, result.results, result.details);
+    } catch (err) {
+      if (isCurrent()) {
+        console.error('Playwright compatibility run failed:', err);
+        this._renderStudentTestResults([{ description: 'Run Playwright compatibility tests' }], [false],
+          [String(err && err.message || err)]);
+      }
+    } finally {
+      if (this._studentPlaywrightRun === run) this._studentPlaywrightRun = null;
+      if (run.cancelled && !this._destroyed && this.currentStep === run.stepIndex &&
+          this._stepLoadSequence === run.loadSequence) {
+        this._showStudentTestPanel('<p>Test run cancelled. Run Test again when the preview is ready.</p>');
+        this._ensureTestAnnouncer().textContent = 'Test run cancelled.';
+      }
       if (btn) {
         btn.disabled = false;
         btn.textContent = oldLabel || '\u2713 Test';
       }
-    });
+      if (this._reactPatchDeferred && !this._destroyed && !run.cancelled) this._patchReactPreview();
+      if (!this._destroyed) this._refreshTestButton(this.currentStep);
+    }
   };
 
   TutorialCode.prototype._checkPlaywrightExpectation = function (test, run) {
@@ -13645,17 +13817,14 @@
     const stepIndex = run && typeof run.stepIndex === 'number' ? run.stepIndex : this.currentStep;
     const step = this.steps[stepIndex];
     const cfg = test.playwright || test.student_playwright || test.studentTest || {};
-    const options = { test_files: cfg.test_files };
+    const options = { test_files: cfg.test_files, files: run && run.reactFiles };
     const frozenApp = cfg.app_source === 'starter' || cfg.mutations || cfg.reference_mutations;
     if (!frozenApp) {
       this._checkPlaywrightExpectation(test, await this._runPlaywrightCompatSpecs(step, options));
       return;
     }
 
-    let files = {};
-    Object.keys(this.editorModels || {}).forEach((filename) => {
-      files[filename] = this.editorModels[filename].model.getValue();
-    });
+    let files = Object.assign({}, options.files || this._captureReactFiles());
     if (cfg.app_source === 'starter') {
       this._getReactPreviewFileOrder(step).forEach(function (filename) {
         const authored = (step.files || []).find(function (file) { return file.path === filename; });
@@ -13690,25 +13859,25 @@
       }
       this._checkPlaywrightExpectation(test, candidate);
     } finally {
-      // Restore the current lesson even if the learner navigated during a run.
-      await new Promise((resolve) => this._rebuildReactPreview(resolve));
+      // A grading batch restores once at completion. Direct callers retain a
+      // restored preview; cancelled work must never replace a newer lesson.
+      if (!(run && (run.playwrightBatch || run.cancelled)) && !this._destroyed) {
+        await new Promise((resolve) => this._rebuildReactPreview(resolve, null, null, { testRun: true }));
+      }
     }
   };
 
-  TutorialCode.prototype._getReactAssertionContext = function (step) {
-    var self = this;
-    var files = {};
-    Object.keys(this.editorModels || {}).forEach(function (filename) {
-      files[filename] = self.editorModels[filename].model.getValue();
-    });
+  TutorialCode.prototype._getReactAssertionContext = function (step, fileSnapshot) {
+    var files = fileSnapshot || this._captureReactFiles();
     var source = this._getReactPreviewFileOrder(step).map(function (filename) {
-      if (/\.css$/i.test(filename) || !self.editorModels[filename]) return '';
-      return self.editorModels[filename].model.getValue();
+      if (/\.css$/i.test(filename) || typeof files[filename] !== 'string') return '';
+      return files[filename];
     }).filter(Boolean).join('\n');
     return { code: this._stripCode(source), files: files };
   };
 
   TutorialCode.prototype._runReactAssertionInPreview = function (test, context) {
+    var self = this;
     var assertionPort = this._reactAssertionPort;
     if (!assertionPort || this._reactAssertionPortGeneration !== this._reactPreviewGeneration) {
       return Promise.reject(new Error('React assertion broker is unavailable'));
@@ -13719,21 +13888,28 @@
 
     var requestId = 'react-assertion-' + (++this._reactAssertionRequestId);
     return new Promise(function (resolve, reject) {
+      var finished = false;
       var timeoutId = setTimeout(function () {
-        assertionPort.removeEventListener('message', handleResult);
-        reject(new Error('React assertion timed out after ' +
+        finish(new Error('React assertion timed out after ' +
           (REACT_ASSERTION_TIMEOUT_MS / 1000) + ' seconds'));
       }, REACT_ASSERTION_TIMEOUT_MS);
+
+      function finish(error) {
+        if (finished) return;
+        finished = true;
+        clearTimeout(timeoutId);
+        assertionPort.removeEventListener('message', handleResult);
+        self._reactAssertionRequests.delete(requestId);
+        if (error) reject(error); else resolve();
+      }
 
       function handleResult(event) {
         var result = event.data;
         if (!result || result.type !== 'result' || result.id !== requestId) return;
-        clearTimeout(timeoutId);
-        assertionPort.removeEventListener('message', handleResult);
-        if (result.passed === true) resolve();
-        else reject(new Error(result.error || 'Assertion failed'));
+        finish(result.passed === true ? null : new Error(result.error || 'Assertion failed'));
       }
 
+      self._reactAssertionRequests.set(requestId, finish);
       assertionPort.addEventListener('message', handleResult);
       try {
         assertionPort.postMessage({
@@ -13744,44 +13920,53 @@
           files: context.files,
         });
       } catch (error) {
-        clearTimeout(timeoutId);
-        assertionPort.removeEventListener('message', handleResult);
-        reject(error);
+        finish(error);
       }
     });
   };
 
-  TutorialCode.prototype._runReactAssertionTests = function (tests, run) {
+  TutorialCode.prototype._runReactAssertionTests = async function (tests, run) {
     var self = this;
     var stepIndex = run && typeof run.stepIndex === 'number' ? run.stepIndex : this.currentStep;
     var step = this.steps[stepIndex];
-    return new Promise(function (resolve) {
-      // Rebuild a fresh preview, then run tests after React has settled.
-      self._rebuildReactPreview(function () {
-        var context = self._getReactAssertionContext(step);
-        var results = [];
-
-        function runNext(i) {
-          if (i >= tests.length) { resolve(results); return; }
-
-          var assertionPromise;
-          if (tests[i].playwright || tests[i].student_playwright || tests[i].studentTest) {
-            assertionPromise = self._runPlaywrightExpectationTest(tests[i], run);
-          } else {
-            assertionPromise = self._runReactAssertionInPreview(tests[i], context);
-          }
-          assertionPromise.then(function () {
-            results[i] = true;
-            runNext(i + 1);
-          }).catch(function (e) {
-            results[i] = false;
-            console.warn('React test ' + i + ' failed:', e.message);
-            runNext(i + 1);
-          });
-        }
-        runNext(0);
-      }, step);
+    run = run || { stepIndex: stepIndex };
+    run.reactFiles = run.reactFiles || this._captureReactFiles();
+    run.playwrightBatch = tests.every(function (test) {
+      return !!(test.playwright || test.student_playwright || test.studentTest);
     });
+    var results = [];
+    try {
+      // Playwright suites prepare their own isolated previews. Ordinary React
+      // assertions instead share one fresh document and one source snapshot.
+      if (!run.playwrightBatch) {
+        await new Promise(function (resolve, reject) {
+          self._rebuildReactPreview(function (error) {
+            if (error) reject(error); else resolve();
+          }, step, run.reactFiles, { testRun: true });
+        });
+      }
+      var context = this._getReactAssertionContext(step, run.reactFiles);
+      for (var i = 0; i < tests.length; i++) {
+        if (run.cancelled || this._destroyed || this.currentStep !== stepIndex ||
+            !this._reactFilesMatch(run.reactFiles)) break;
+        try {
+          if (tests[i].playwright || tests[i].student_playwright || tests[i].studentTest) {
+            await this._runPlaywrightExpectationTest(tests[i], run);
+          } else {
+            await this._runReactAssertionInPreview(tests[i], context);
+          }
+          results[i] = true;
+        } catch (error) {
+          results[i] = false;
+          console.warn('React test ' + i + ' failed:', error.message);
+        }
+      }
+      return tests.map(function (_test, index) { return results[index] === undefined ? null : results[index]; });
+    } finally {
+      if (run.playwrightBatch && !run.cancelled && !this._destroyed && this.currentStep === stepIndex) {
+        await new Promise(function (resolve) { self._rebuildReactPreview(resolve, null, null, { testRun: true }); });
+      }
+    }
   };
 
   // React — each test.command is evaluated as JS; `frame` is the preview iframe
@@ -13790,9 +13975,18 @@
     var tests = step && step.tests;
     if (!tests || !tests.length) return;
     var self = this;
+    run.reactFiles = this._captureReactFiles();
+    run.reactLoadSequence = this._stepLoadSequence;
+    if (this._previewTestBtn) this._previewTestBtn.disabled = true;
     this._showTestPanel('<div class="tvm-test-running"><div class="tvm-test-spinner"></div>Running tests\u2026</div>');
-    this._runReactAssertionTests(tests, run).then(function (results) {
+    return this._runReactAssertionTests(tests, run).catch(function (error) {
+      run.reactFailure = String(error && error.message || error);
+      return new Array(tests.length).fill(null);
+    }).then(function (results) {
       self._renderTestResults(tests, results, run);
+    }).finally(function () {
+      if (self._previewTestBtn && !self._studentPlaywrightRun) self._previewTestBtn.disabled = false;
+      if (self._reactPatchDeferred && !self._destroyed && !run.cancelled) self._patchReactPreview();
     });
   };
 
@@ -13987,8 +14181,8 @@
     return html;
   };
 
-  TutorialCode.prototype._renderStudentTestResults = function (tests, results) {
-    var html = this._buildTestResultsHTML(tests, results);
+  TutorialCode.prototype._renderStudentTestResults = function (tests, results, details) {
+    var html = this._buildTestResultsHTML(tests, results, details);
     this._showStudentTestPanel(html);
     this._announceTestResult(tests, results);
   };
@@ -14014,7 +14208,27 @@
     if (!isActiveRun || this.currentStep !== run.stepIndex || this._destroyed) {
       return;
     }
+    if (run.cancelled) {
+      if (!run.silent && run.reactLoadSequence === this._stepLoadSequence) {
+        this._showTestPanel('<p>Checks cancelled. Run Test My Work again when the preview is ready.</p>');
+        this._ensureTestAnnouncer().textContent = 'Checks cancelled.';
+      }
+      return;
+    }
+    if (run.reactFiles && !this._reactFilesMatch(run.reactFiles)) {
+      var changedMessage = 'Source changed during checks. Results discarded; run Test My Work again.';
+      if (!run.silent) {
+        var changedHTML = '<p>' + changedMessage + '</p>';
+        this._showTestPanel(changedHTML);
+        this._ensureTestAnnouncer().textContent = changedMessage;
+        if (this._popoutManager) {
+          this._popoutManager.broadcastTestResult({ resultsHTML: changedHTML, results: [], allPassed: false, stepIndex: run.stepIndex });
+        }
+      }
+      return;
+    }
     if (run.shellPipelineLoad !== undefined && this._stepLoadSequence !== run.shellPipelineLoad) return;
+    if (run.tlaLoad !== undefined && this._stepLoadSequence !== run.tlaLoad) return;
     if (run.smalltalkLoad !== undefined && (this._smalltalkChecksStale(run) || run.smalltalkFailure)) {
       if (this._stepLoadSequence !== run.smalltalkLoad) return;
       var message = this._smalltalkChecksStale(run)
@@ -14037,7 +14251,9 @@
     var silent = run.silent;
     var stepIndex = run.stepIndex;
 
-    var html = this._buildTestResultsHTML(tests, results, run.smalltalkResults && this._smalltalkCheckDetails(run.smalltalkResults));
+    var details = run.reactFailure ? tests.map(function () { return run.reactFailure; })
+      : run.smalltalkResults ? this._smalltalkCheckDetails(run.smalltalkResults) : run.tlaDetails;
+    var html = this._buildTestResultsHTML(tests, results, details);
     if (run.smalltalkProgram) html = this._smalltalkCheckPanel(run, html);
     if (!silent) {
       this._showTestPanel(html);
@@ -15728,10 +15944,16 @@
   // silently (no terminal echo). Used during _initPyodide bring-up.
   TutorialCode.prototype._runGitSetup = function (lines) {
     var self = this;
+    const worker = this._worker;
     var dir = this.gitGraphPath || '/tutorial';
     var seq = Promise.resolve();
     lines.forEach(function (line) {
       seq = seq.then(function () {
+        if (self._worker !== worker) {
+          const error = new Error('Python git setup was superseded');
+          error.reason = 'terminated';
+          throw error;
+        }
         return self._requestWorker(
           { type: 'gitRun', line: String(line), cwd: dir, dir: dir },
           { timeoutMs: WORKER_REQUEST_TIMEOUT_MS }

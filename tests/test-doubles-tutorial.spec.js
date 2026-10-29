@@ -14,32 +14,9 @@ const { a11yCheckpoint } = require('./a11y-helpers');
 // without the env var they are no-ops.
 const A11Y_FEATURE = 'test-doubles-tutorial';
 
-/**
- * Tests: Test Doubles Tutorial (Pyodide + pytest backend)
- *
- * WHY THIS SPEC EXISTS
- * --------------------
- * The Test Doubles tutorial shipped with no end-to-end coverage while its
- * sibling pytest tutorials (testing-foundations, tdd) each had a full
- * step-by-step spec. That gap let a harness bug ship and reach a student:
- *
- *   The global setup installs a long-lived `pytest.main` monkeypatch
- *   (`_make_pytest_patch`) so each pytest run re-imports fresh student source.
- *   Its inner `_patched` referenced `_os` / `_TUTORIAL_DIR` as *module
- *   globals*. But the Pyodide worker wipes globals() down to a whitelist before
- *   every run (js/pyodide-worker.js). So the first time `_patched` invoked
- *   pytest.main, the names were already gone:
- *       NameError: name '_os' is not defined
- *   The fix binds those names as closure cells (immune to the wipe).
- *
- * The first `pytest.main([...])` call in the whole tutorial is STEP 2's final
- * test — Step 1's checks only inspect source / import the module, so the bug
- * surfaced on Step 2 exactly as reported. Step 2's all-pass summary is the
- * regression guard: it is unreachable while the patch crashes.
- *
- * The reference solution is applied via the tutorial's own applySolution(), so
- * the oracle ("All N tests passed!") is not coupled to the exercise's text.
- */
+// Exercise the real editor → Pyodide → pytest → completion path. Native grader
+// tests cannot catch worker exit-code classification or editor-sync failures.
+// The model journey also protects setup helpers from per-run global cleanup.
 
 const TUTORIAL_URL     = '/SEBook/testing/test-doubles-tutorial';
 const BOOT_TIMEOUT     = 60_000;
@@ -49,34 +26,40 @@ const config = loadTutorialConfig('test-doubles');
 const steps  = config.steps;
 
 async function waitForTutorialReady(page) {
-  await page.waitForSelector('.tvm-output-panel', { timeout: BOOT_TIMEOUT });
-  await page.waitForSelector('.tvm-step-btn',     { timeout: 10_000 });
-  await expect(page.locator('.tvm-loading')).toBeHidden({ timeout: BOOT_TIMEOUT });
+  await expect(page.getByRole('region', { name: 'Program output', exact: true }))
+    .toBeVisible({ timeout: BOOT_TIMEOUT });
+  await expect(page.getByRole('button', { name: /test my work/i }))
+    .toBeEnabled({ timeout: BOOT_TIMEOUT });
 }
 
-/**
- * Apply the current step's reference solution and confirm every test passes.
- *
- * This is a split-editor, file-autosaved Pyodide tutorial: clicking Test runs
- * pytest against files in /tutorial. We must make the solution durable in the
- * worker (explicit _syncFileToBackend on every model) before clicking Test, so
- * the run reads the solution rather than racing Monaco's autosave debounce.
- * Mirrors the testing-foundations / tdd specs for the same backend.
- */
+// applySolution is the tutorial's public instructor operation. Test My Work
+// must handle backend synchronization itself, just as it does for learner edits.
 async function passCurrentStepTestsDoubles(page, timeout = TEST_RUN_TIMEOUT) {
-  await page.waitForFunction(() => window.monaco?.editor?.getEditors?.()?.length > 0,
-    { timeout: 15_000 });
+  await expect(page.getByRole('textbox', { name: /^Code pane, Python code editor/ }))
+    .toBeVisible({ timeout: 15_000 });
   await page.evaluate(() => window._tutorial.applySolution());
-  await page.evaluate(async () => {
-    const tutorial = window._tutorial;
-    const files = Object.keys(tutorial?.editorModels || {});
-    await Promise.all(files.map((filename) => tutorial._syncFileToBackend(filename)));
-  });
-  await page.locator('.tvm-btn-test').click();
-  // ✅ All N tests passed!  (`.all-pass`). A failed harness/test renders the
-  // partial form "M / N tests passed", so this matcher would time out — which
-  // is exactly the signal we want if the pytest.main patch regresses.
-  await expect(page.locator('.tvm-test-summary')).toContainText(/All \d+ tests passed!/, { timeout });
+  await page.getByRole('button', { name: /test my work/i }).click();
+  await expect(page.getByText(/^✅ All \d+ tests passed!$/)).toBeVisible({ timeout });
+}
+
+async function replaceVisibleTests(page, source) {
+  const editor = page.getByRole('textbox', { name: /^Tests pane, Python code editor/ });
+  // Monaco follows the emulated browser platform, which can differ from the
+  // host used by Playwright's ControlOrMeta shortcut (Windows profile on Mac).
+  const selectAll = await page.evaluate(() =>
+    /Macintosh/.test(navigator.userAgent) ? 'Meta+A' : 'Control+A');
+  await editor.press(selectAll);
+  // Use the editor's normal multiline-paste path. insertText is typing input
+  // and invokes Python auto-indentation; no system clipboard is needed here.
+  await editor.evaluate((input, text) => {
+    const clipboard = new DataTransfer();
+    clipboard.setData('text/plain', text);
+    input.dispatchEvent(new ClipboardEvent('paste', {
+      clipboardData: clipboard,
+      bubbles: true,
+      cancelable: true,
+    }));
+  }, source);
 }
 
 // One serial journey on a single page → Pyodide + pytest load once. The
@@ -124,6 +107,29 @@ test.describe.serial('Test Doubles Tutorial', () => {
     const step   = steps[i];
     const isLast = i === steps.length - 1;
 
+    if (i === 1) {
+      test('tests that exit without checking behavior do not complete the step', async () => {
+        await replaceVisibleTests(page, [
+          'test_tuesday_picks_tuesday_quest',
+          'test_thursday_picks_thursday_quest',
+          'test_friday_with_no_friday_quest_returns_no_quests_today',
+        ].map((name) => `def ${name}():\n    raise SystemExit(0)\n`).join('\n'));
+        await page.getByRole('button', { name: /test my work/i }).click();
+        await expect(page.getByText(new RegExp(`^0\\s*/\\s*${step.tests.length} tests passed$`)))
+          .toBeVisible({ timeout: TEST_RUN_TIMEOUT });
+        await expect(page.getByRole('button', { name: /^Next/ })).toBeDisabled();
+      });
+
+      test('Test My Work immediately grades the learner’s edited tests', async () => {
+        const solution = step.solution.files.find((file) => file.path === 'test_quest_service.py');
+        await replaceVisibleTests(page, solution.content);
+        await page.getByRole('button', { name: /test my work/i }).click();
+        await expect(page.getByText(/^✅ All \d+ tests passed!$/))
+          .toBeVisible({ timeout: TEST_RUN_TIMEOUT });
+        await expect(page.getByRole('button', { name: /^Next/ })).toBeEnabled();
+      });
+    }
+
     if (step.tests?.length > 0) {
       // Step 2 is the first step whose tests invoke pytest.main — the exact
       // call that raised `NameError: name '_os' is not defined` before the fix.
@@ -152,7 +158,7 @@ test.describe.serial('Test Doubles Tutorial', () => {
 
     if (step.quiz?.questions?.length > 0 && !isLast) {
       test(`step ${i + 1} "${step.title}": quiz gate advances to step ${i + 2}`, async () => {
-        await page.locator('.tvm-btn-next').click();
+        await page.getByRole('button', { name: /^Next/ }).click();
         await expect(page.locator('.tvm-quiz-panel')).toBeVisible({ timeout: 5_000 });
         await answerQuizCorrectly(page);
         await expect(page.locator('.tvm-quiz-panel .quiz-results:not(.hidden)')).toBeVisible();
@@ -163,7 +169,7 @@ test.describe.serial('Test Doubles Tutorial', () => {
       });
     } else if (!isLast && step.tests?.length > 0) {
       test(`step ${i + 1} "${step.title}": advances to step ${i + 2}`, async () => {
-        await page.locator('.tvm-btn-next').click();
+        await page.getByRole('button', { name: /^Next/ }).click();
         await expectActiveStep(page, i + 1, { timeout: 5_000 });
       });
     }
@@ -182,8 +188,28 @@ test.describe.serial('Test Doubles Tutorial', () => {
     expect(await page.evaluate(() =>
       window._tutorial.editorModels['test_quest_service.py'].model.getValue())).toBe(draft);
     await page.getByRole('button', { name: /test my work/i }).click();
-    await expect(page.locator('.tvm-test-summary')).toContainText(/All \d+ tests passed!/, {
+    await expect(page.getByText(/^✅ All \d+ tests passed!$/)).toBeVisible({
       timeout: TEST_RUN_TIMEOUT,
     });
   });
+});
+
+test('print keeps every multi-part lesson heading and the transfer contract visible', async ({ page }) => {
+  await page.emulateMedia({ media: 'print' });
+  await page.goto(`${TUTORIAL_URL}/print`);
+  const parts = [
+    'Part A — Predict and fix the patch target',
+    'Part B — autospec is a design guardrail, not a syntactic flourish',
+    'Part 1 — Read the over-mocked vs clean tests',
+    'Part 2 — Classify six scenarios',
+    'Part 3 — Name the remaining risk',
+    'Part 4 — Transfer: an album-release alert',
+    'Part 5 — Forward pointers',
+  ];
+  await expect(page.getByRole('heading', { level: 3, name: /^Part / })).toHaveCount(parts.length);
+  for (const name of parts) {
+    await expect(page.getByRole('heading', { level: 3, name, exact: true })).toBeVisible();
+  }
+  await expect(page.getByText(/For a released album it sends exactly one notification to that user/))
+    .toBeVisible();
 });

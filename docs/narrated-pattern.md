@@ -1,9 +1,10 @@
 # Narrated design-pattern lessons
 
-Observer and State share one player: language-selectable code, ArchUML class,
-state, and sequence diagrams, topic illustrations, and a knowledge check at the
-end of every section. A lesson is data plus a few topic includes; the player,
-reader, and print views are generic.
+Observer, State, Strategy, and Model-View-Controller share one player:
+language-selectable code, ArchUML class, state, sequence, and CRC diagrams,
+topic illustrations, and a knowledge check at the end of every section. A
+lesson is data plus a few topic includes; the player, reader, and print views
+are generic.
 
 ## Adding a lesson
 
@@ -29,13 +30,26 @@ reader, and print views are generic.
 - `scene.code`, `scene.diagram`, and `scene.cards` choose what a scene shows.
   Any key in the topic's `visuals` map, such as `ui: true`, adds that include;
   the include receives the current cue and reads its own cue fields.
-- Diagrams accept `type` (`class` by default, `state`, or `sequence`).
-  `cue.diagram_focus` hatches one class, interface, state, or lifeline.
-  A diagram with `steps` lists lifelines in `source` and message groups in
-  `steps`; `cue.diagram_steps` shows the first groups, so a trace can reveal
-  messages only after a prediction.
+- Diagrams accept `type` (`class` by default, `state`, `sequence`, or `crc`).
+  `cue.diagram_focus` hatches one class, interface, state, or lifeline; CRC
+  cards cannot be highlighted. A diagram with `steps` lists lifelines in
+  `source` and message groups (or CRC cards) in `steps`; `cue.diagram_steps`
+  shows the first groups, so a trace can reveal messages only after a
+  prediction.
+- `cue.source` is a citation shown on screen below the explanation strip, in
+  the player and the reader. It is never spoken: the narration text names no
+  sources, which `scripts/tests/narrated-pattern-sources.test.js` checks.
+- `cue.diagram` switches one cue to another diagram of the storyboard; the
+  player updates the region's label and caption, and the reader shows the new
+  diagram's caption where it first appears.
 - `scene.part` (`Context`, `Problem`, `Solution`, or `Consequences`) shows where
   the scene sits in the pattern description, in the player and the reader.
+- A topic's `scripts` list in `_data/narrated_patterns.yml` loads files from
+  `js/` before the player starts. Before replacing a visual for a new cue, the
+  player dispatches a cancelable `narrated-pattern:cue` event on the visual's
+  slot with `detail.settled` (the reading step's copy); a live illustration
+  cancels it and moves itself to that cue's state. `js/mvc-dashboard.js` is the
+  example.
 - A quiz entry is one question, or `questions:` for a multi-question summary.
 - `cue.prediction: true` hides the takeaway until the next cue; give such cues a
   `pause_after` silence.
@@ -48,6 +62,10 @@ at build time), and the topic illustrations. It is the reading and print views
 and the chapter transcript. `js/narrated-pattern.js` derives the player's stage
 from the current cue: it marks code lines in place and copies the matching
 reading step's diagram and illustrations, so no topic needs its own script.
+`js/narrated-lesson.js` holds what it shares with video narrations
+(`docs/video-narration.md`): copying a cue's diagram, marking code lines, and the
+section checks. Shared styles apply to the `narrated-lesson` class, and the
+reader layout serves both lesson types.
 `js/narrated-pattern-document.js` handles the shared language preference and the
 theme carried in view links; it is safe to load once per lesson on combined
 course pages.
@@ -58,9 +76,12 @@ section's speech begins exactly at the boundary. Every section must therefore
 end with more than 0.3 s of silence (the renderer's default is 0.55 s).
 
 The shared transport also adds the full-screen button to every narration
-(Node.js, React, and the pattern lessons) where the browser supports element
-full screen. The whole `.nja-player` fills the screen, so captions, settings,
-and knowledge checks stay available. Diagrams need no refit: their readable
+(Node.js, React, and the pattern lessons). The whole `.nja-player` fills the
+screen, so captions, settings, and knowledge checks stay available. It uses
+the standard or Safari's prefixed API; where neither exists (Safari on
+iPhone) or the browser refuses, the player fills the viewport itself and makes
+the page behind it inert until the button or Escape returns it. Style full
+screen on `.is-fullscreen`, which both modes set, not on `:fullscreen`. Diagrams need no refit: their readable
 width is set in `em` and capped by the column, so they fit both layouts.
 
 ## Checks
@@ -69,6 +90,6 @@ Run each lesson's node test (`scripts/tests/<topic>-narration.test.js`) and
 Playwright spec, plus `tests/wcag22-complete-audit.spec.js` for the chapter and
 both views. `tests/narration-fullscreen.spec.js` covers full screen on every
 narration page; add a new narration's page to its list. See
-`docs/observer-animation.md` and `docs/state-narration.md` for the
+`docs/observer-animation.md`, `docs/state-narration.md`, and `docs/strategy-narration.md` for the
 topic-specific details, and the `design-pattern-narration` skill for how to
 author a lesson.

@@ -1,0 +1,94 @@
+/* Model-View-Controller lesson: the illustrated screen-time dashboard. Each
+   category has a color with at least 3:1 contrast in both themes; every chart
+   also labels its categories in text, so color is never the only cue. */
+.mvc-animation {
+  --mvc-social: #0060a8;
+  --mvc-video: #b4235f;
+  --mvc-games: #8a5a00;
+  --mvc-study: #1d7a46;
+}
+@media screen {
+  html.dark-mode:not(.print-light-mode) .mvc-animation {
+    --mvc-social: #6cc4ff;
+    --mvc-video: #ff8cb8;
+    --mvc-games: #ffc75a;
+    --mvc-study: #6ee79a;
+  }
+}
+.mvc-animation .mvc-fill--social { fill: var(--mvc-social); background-color: var(--mvc-social); }
+.mvc-animation .mvc-fill--video { fill: var(--mvc-video); background-color: var(--mvc-video); }
+.mvc-animation .mvc-fill--games { fill: var(--mvc-games); background-color: var(--mvc-games); }
+.mvc-animation .mvc-fill--study { fill: var(--mvc-study); background-color: var(--mvc-study); }
+.mvc-animation .mvc-stroke--social { stroke: var(--mvc-social); }
+.mvc-animation .mvc-stroke--video { stroke: var(--mvc-video); }
+.mvc-animation .mvc-stroke--games { stroke: var(--mvc-games); }
+.mvc-animation .mvc-stroke--study { stroke: var(--mvc-study); }
+
+.mvc-animation .mvc-dashboard { border: 2px solid var(--nja-line); border-radius: 6px; overflow: hidden; min-width: 0; }
+.mvc-animation .mvc-dashboard .nja-window-bar { display: block; }
+.mvc-animation .mvc-dashboard-views { display: grid; grid-template-columns: repeat(auto-fit, minmax(11em, 1fr)); gap: 0.8em; padding: 1em; }
+.mvc-animation .mvc-pane { min-width: 0; padding: 0.7em; border: 1px solid var(--nja-line); border-radius: 4px; background: var(--nja-input); }
+.mvc-animation .mvc-dashboard p.mvc-pane-title { margin: 0 0 0.5em; color: var(--nja-text); font-weight: 700; }
+.mvc-animation .mvc-badge { display: inline-block; padding: 0 0.5em; border: 1px solid var(--nja-line); border-radius: 999px; color: var(--nja-text); background: var(--nja-panel); font-size: 0.9em; font-weight: normal; }
+/* A read-only pane is marked by a dashed border and its badge. */
+.mvc-animation .mvc-pane.is-readonly { border: 2px dashed var(--nja-line); }
+
+.mvc-animation .mvc-table { width: 100%; border-collapse: collapse; color: var(--nja-text); font: inherit; }
+.mvc-animation .mvc-table :is(th, td) { padding: 0.25em 0.4em; border-bottom: 1px solid var(--nja-line); text-align: left; }
+.mvc-animation .mvc-table td { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+.mvc-animation .mvc-bars { display: grid; gap: 0.45em; margin: 0; padding: 0; list-style: none; }
+.mvc-animation .mvc-bar-row { display: grid; grid-template-columns: 4.2em minmax(0, 1fr); gap: 0.5em; align-items: center; color: var(--nja-text); }
+.mvc-animation .mvc-bar-track { display: block; width: 100%; height: 1em; background: var(--nja-panel); }
+/* The highlighted bar gets bold, underlined text and a thick outline, not only color. */
+.mvc-animation .mvc-bar-row.is-selected .mvc-bar-label { font-weight: 700; text-decoration: underline; text-underline-offset: 0.15em; }
+.mvc-animation .mvc-bar-row.is-selected .mvc-bar-track { outline: 3px solid var(--nja-accent); outline-offset: 2px; }
+
+.mvc-animation .mvc-pie-layout { display: flex; flex-wrap: wrap; gap: 0.6em; align-items: center; }
+.mvc-animation .mvc-pie { width: 6em; height: 6em; flex: none; }
+.mvc-animation .mvc-slice { fill: none; stroke-width: 8; }
+.mvc-animation .mvc-legend { margin: 0; padding: 0; list-style: none; color: var(--nja-text); }
+.mvc-animation .mvc-legend li { display: flex; align-items: center; gap: 0.4em; }
+.mvc-animation .mvc-swatch { display: inline-block; width: 0.8em; height: 0.8em; border-radius: 2px; flex: none; }
+
+.mvc-animation .mvc-dashboard p.mvc-dashboard-input,
+.mvc-animation .mvc-dashboard p.mvc-dashboard-result { margin: 0 1em 0.8em; color: var(--nja-text); overflow-wrap: anywhere; }
+.mvc-animation .mvc-dashboard-input span { color: var(--nja-muted); margin-right: 0.3em; }
+.mvc-animation .mvc-dashboard p.mvc-dashboard-result { padding: 0.6em 0.8em; border-left: 4px solid var(--nja-accent); background: var(--nja-note-bg); }
+
+/* The live dashboard in the player (js/mvc-dashboard.js): editable minutes,
+   bars that are buttons, and a "redrawn" marker on each view that redraws. */
+.mvc-animation .mvc-dashboard.is-live .mvc-table input { width: 4.8em; font: inherit; color: var(--nja-text); background: var(--nja-input); border: 2px solid var(--nja-line); border-radius: 4px; padding: 0.1em 0.3em; text-align: right; font-variant-numeric: tabular-nums; }
+.mvc-animation .mvc-dashboard.is-live .mvc-table input:focus-visible { outline: 3px solid var(--nja-cyan); outline-offset: 2px; }
+.mvc-animation .mvc-dashboard.is-live .mvc-table input.is-typing { outline: 3px dashed var(--nja-accent); outline-offset: 2px; }
+.mvc-animation .mvc-dashboard.is-live .mvc-table input[aria-invalid="true"] { border-color: var(--nja-coral); border-style: dashed; }
+.mvc-animation .mvc-dashboard.is-live .mvc-table label { font-weight: 700; }
+.mvc-animation .mvc-dashboard.is-live .mvc-bar-row { display: block; }
+.mvc-animation .mvc-bar-button { display: grid; grid-template-columns: 4.2em minmax(0, 1fr); gap: 0.5em; align-items: center; width: 100%; min-height: 2em; padding: 0.15em 0.3em; font: inherit; color: var(--nja-text); background: transparent; border: 2px solid transparent; border-radius: 4px; text-align: left; cursor: pointer; }
+.mvc-animation .mvc-bar-button:hover { background: var(--nja-hover); }
+.mvc-animation .mvc-bar-button:focus-visible { outline: 3px solid var(--nja-cyan); outline-offset: 2px; }
+.mvc-animation .mvc-bar-button[aria-pressed="true"] .mvc-bar-label { font-weight: 700; text-decoration: underline; text-underline-offset: 0.15em; }
+.mvc-animation .mvc-bar-button[aria-pressed="true"] .mvc-bar-track { outline: 3px solid var(--nja-accent); outline-offset: 2px; }
+.mvc-animation .mvc-redrawn-tag { display: none; padding: 0 0.45em; border: 1px solid var(--nja-accent); border-radius: 999px; color: var(--nja-text); background: var(--nja-highlight); font-size: 0.9em; font-weight: normal; }
+.mvc-animation .mvc-pane.is-redrawn .mvc-redrawn-tag { display: inline-block; }
+.mvc-animation .mvc-pane.is-redrawn { animation: mvc-redrawn 1.1s ease-out; }
+@keyframes mvc-redrawn {
+  from { box-shadow: 0 0 0 4px var(--nja-accent); }
+  to { box-shadow: 0 0 0 0 transparent; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mvc-animation .mvc-pane.is-redrawn { animation: none; box-shadow: 0 0 0 3px var(--nja-accent); }
+}
+.mvc-animation .mvc-dashboard-controls { display: flex; flex-wrap: wrap; gap: 0.6em 1.2em; align-items: center; margin: 0 1em 0.8em; color: var(--nja-text); }
+.mvc-animation .mvc-dashboard-controls label { display: inline-flex; gap: 0.4em; align-items: center; margin: 0; font: inherit; }
+.mvc-animation .mvc-dashboard-controls input[type="checkbox"] { width: 1.2em; height: 1.2em; margin: 0; accent-color: var(--nja-accent); }
+.mvc-animation .mvc-dashboard-reset { min-height: 2.4em; padding: 0.3em 0.8em; font: inherit; color: var(--nja-text); background: var(--nja-chrome); border: 2px solid var(--nja-line); border-radius: 4px; cursor: pointer; }
+.mvc-animation .mvc-dashboard-reset:hover { background: var(--nja-hover); }
+.mvc-animation .mvc-dashboard-reset:focus-visible { outline: 3px solid var(--nja-cyan); outline-offset: 2px; }
+.mvc-animation .mvc-dashboard p.mvc-dashboard-status { margin: 0 1em 0.8em; color: var(--nja-text); }
+.mvc-animation .mvc-dashboard p.mvc-dashboard-status:empty { display: none; }
+
+@media print {
+  .mvc-animation .mvc-pane { border-color: #555; }
+  .mvc-animation .mvc-bar-row.is-selected .mvc-bar-track { outline-color: #000; }
+}

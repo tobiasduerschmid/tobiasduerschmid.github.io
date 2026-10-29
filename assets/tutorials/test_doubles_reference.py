@@ -52,3 +52,38 @@ class DailyQuestService:
     def celebrate_milestone(self, user_id, days):
         if days % 7 == 0:
             send_push(user_id, f"🎉 {days}-day streak!")
+
+
+# Independent implementations for Step 6's public-behavior checks. Keeping the
+# refactored XP implementation separate makes internal-helper coupling visible.
+XP_SOURCE = '''
+def _filter_completed(quests):
+    return [quest for quest in quests if quest.get("completed")]
+
+def _apply_multipliers(quests):
+    return [(quest["title"], quest["xp"] * quest.get("multiplier", 1))
+            for quest in quests]
+
+def _sum_xp(items):
+    return sum(xp for _title, xp in items)
+
+def compute_total_xp(quests):
+    return _sum_xp(_apply_multipliers(_filter_completed(quests)))
+'''
+
+XP_INLINE_SOURCE = '''
+def compute_total_xp(quests):
+    total = 0
+    for quest in quests:
+        if quest.get("completed"):
+            total += quest["xp"] * quest.get("multiplier", 1)
+    return total
+'''
+
+RELEASE_SOURCE = '''
+def announce_release(user_id, album_id, catalog, notifier):
+    if not catalog.is_released(album_id):
+        return False
+    notifier.send(user_id, f"Now playing: {album_id}")
+    return True
+'''

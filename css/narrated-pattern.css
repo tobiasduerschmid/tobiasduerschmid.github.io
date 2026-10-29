@@ -1,35 +1,40 @@
-/* Narrated design-pattern lessons share theme tokens with the narration transport and code.
-   Topic illustrations live in css/<topic>-narration.css. */
-.narrated-pattern .np-toolbar { padding: 0.65em 1em; }
-.narrated-pattern .np-toolbar-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6em 1.2em; }
-.narrated-pattern .np-language { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5em; margin: 0; font: inherit; }
-.narrated-pattern .np-language select { font: inherit; color: var(--nja-text); background: var(--nja-input); border: 2px solid var(--nja-line); border-radius: 4px; min-height: 2.4em; padding: 0.3em; }
-.narrated-pattern .np-toolbar .nja-transport { flex: 1 1 23em; }
-.narrated-pattern .np-toolbar .nja-seek-label { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 0.75em; margin: 0.4em 0 0; }
-.narrated-pattern .np-toolbar .nja-seek { margin: 0; }
-.narrated-pattern :is(.np-control-help, .sr-only) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+/* Narrated lessons (the design-pattern lessons and video narrations) share theme
+   tokens with the narration transport and code: the parts strip, diagrams,
+   summary cards, and knowledge checks. Pattern topic illustrations live in
+   css/<topic>-narration.css; the video screen lives in css/video-narration.css. */
+.narrated-lesson .np-toolbar { padding: 0.65em 1em; }
+.narrated-lesson .np-toolbar-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6em 1.2em; }
+.narrated-lesson .np-language { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5em; margin: 0; font: inherit; }
+.narrated-lesson .np-language select { font: inherit; color: var(--nja-text); background: var(--nja-input); border: 2px solid var(--nja-line); border-radius: 4px; min-height: 2.4em; padding: 0.3em; }
+.narrated-lesson .np-toolbar .nja-transport { flex: 1 1 23em; }
+.narrated-lesson .np-toolbar .nja-seek-label { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 0.75em; margin: 0.4em 0 0; }
+.narrated-lesson .np-toolbar .nja-seek { margin: 0; }
+.narrated-lesson :is(.np-control-help, .sr-only) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 /* Where a scene sits in the pattern description: the current part is bold,
    filled, and outlined, not distinguished by color alone. */
-.narrated-pattern .np-parts { display: flex; flex-wrap: wrap; gap: 0.3em; margin: 0; padding: 0; list-style: none; }
-.narrated-pattern .np-parts li { padding: 0.15em 0.6em; border: 1px dashed var(--nja-line); border-radius: 999px; color: var(--nja-muted); }
-.narrated-pattern .np-parts li + li::before { content: '→ '; color: var(--nja-muted); }
-.narrated-pattern .np-parts li[aria-current="step"] { border: 2px solid var(--nja-ink); background: var(--nja-accent-fill); color: var(--nja-ink); font-weight: 700; }
-.narrated-pattern .np-parts li[aria-current="step"]::before { color: var(--nja-ink); }
-.narrated-pattern .np-reading .np-parts { margin: 0.4em 0 0.8em; }
-.narrated-pattern .np-lesson { min-width: 0; }
-.narrated-pattern .np-code-with-visual { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 1.2em; align-items: start; }
-.narrated-pattern .np-code-with-diagram { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: 1.2em; align-items: start; }
-.narrated-pattern .np-code-with-diagram .np-visual { grid-column: 1 / -1; }
-.narrated-pattern .np-visual { min-width: 0; }
-.narrated-pattern .np-diagram-column { min-width: 0; }
-.narrated-pattern .np-diagram-caption { color: var(--nja-text); font: inherit; margin: 0.8em 0 0; }
-.narrated-pattern .np-focus-label { color: var(--nja-accent); font: inherit; margin: 0.7em 0; }
-.narrated-pattern .np-cards { display: grid; gap: 1em; margin: 1em 0; }
-.narrated-pattern .np-cards > div { border-left: 3px solid var(--nja-cyan); padding: 0.8em 1em; background: var(--nja-panel); }
-.narrated-pattern .np-cards dt { color: var(--nja-cyan); font-size: 1.2em; }
-.narrated-pattern .np-cards dd { margin: 0.5em 0 0; color: var(--nja-text); font: inherit; }
+.narrated-lesson .np-parts { display: flex; flex-wrap: wrap; gap: 0.3em; margin: 0; padding: 0; list-style: none; }
+.narrated-lesson .np-parts li { padding: 0.15em 0.6em; border: 1px dashed var(--nja-line); border-radius: 999px; color: var(--nja-muted); }
+.narrated-lesson .np-parts li + li::before { content: '→ '; color: var(--nja-muted); }
+.narrated-lesson .np-parts li[aria-current="step"] { border: 2px solid var(--nja-ink); background: var(--nja-accent-fill); color: var(--nja-ink); font-weight: 700; }
+.narrated-lesson .np-parts li[aria-current="step"]::before { color: var(--nja-ink); }
+.narrated-lesson .np-reading .np-parts { margin: 0.4em 0 0.8em; }
+.narrated-lesson .np-lesson { min-width: 0; }
+.narrated-lesson .np-code-with-visual { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 1.2em; align-items: start; }
+.narrated-lesson .np-code-with-diagram { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: 1.2em; align-items: start; }
+.narrated-lesson .np-code-with-diagram .np-visual { grid-column: 1 / -1; }
+.narrated-lesson .np-visual { min-width: 0; }
+.narrated-lesson .np-diagram-column { min-width: 0; }
+.narrated-lesson .np-diagram-caption { color: var(--nja-text); font: inherit; margin: 0.8em 0 0; }
+.narrated-lesson .np-focus-label { color: var(--nja-accent); font: inherit; margin: 0.7em 0; }
+/* A cue's source is shown, not spoken. It uses the same colors in both themes as other secondary text. */
+.narrated-lesson p.np-source { margin: 0.6em 0 0; color: var(--nja-muted); font-size: 0.9em; line-height: 1.5; overflow-wrap: break-word; }
+.narrated-lesson .np-source-label { font-weight: 700; margin-right: 0.3em; }
+.narrated-lesson .np-cards { display: grid; gap: 1em; margin: 1em 0; }
+.narrated-lesson .np-cards > div { border-left: 3px solid var(--nja-cyan); padding: 0.8em 1em; background: var(--nja-panel); }
+.narrated-lesson .np-cards dt { color: var(--nja-cyan); font-size: 1.2em; }
+.narrated-lesson .np-cards dd { margin: 0.5em 0 0; color: var(--nja-text); font: inherit; }
 /* ArchUML uses its authored light palette and the site's dark SVG filter. */
-.narrated-pattern .np-diagram {
+.narrated-lesson .np-diagram {
   --uml-stroke: #4060a0;
   --uml-text: #222;
   --uml-fill: #fdfcf8;
@@ -42,67 +47,67 @@
   background: #fff; color: #222; border: 2px solid #8798a9;
   border-radius: 5px; padding: 0.5em; overflow-x: auto;
 }
-.narrated-pattern .np-diagram svg { filter: none !important; }
-html.dark-mode:not(.print-light-mode) .narrated-pattern .np-diagram { background: #151a20; border-color: var(--nja-line); }
-html.dark-mode:not(.print-light-mode) .narrated-pattern .np-diagram svg { filter: invert(1) hue-rotate(180deg) !important; }
-.narrated-pattern [data-np-diagram]:focus-visible { outline: 3px solid var(--nja-cyan); outline-offset: 3px; }
-.narrated-pattern [data-np-diagram] { min-width: 0; }
-.narrated-pattern [data-np-diagram] svg { max-width: none; }
+.narrated-lesson .np-diagram svg { filter: none !important; }
+html.dark-mode:not(.print-light-mode) .narrated-lesson .np-diagram { background: #151a20; border-color: var(--nja-line); }
+html.dark-mode:not(.print-light-mode) .narrated-lesson .np-diagram svg { filter: invert(1) hue-rotate(180deg) !important; }
+.narrated-lesson [data-np-diagram]:focus-visible { outline: 3px solid var(--nja-cyan); outline-offset: 3px; }
+.narrated-lesson [data-np-diagram] { min-width: 0; }
+.narrated-lesson [data-np-diagram] svg { max-width: none; }
 /* Diagrams and tables need room beside the code; below this width they follow it. */
 @media (max-width: 1400px) {
-  .narrated-pattern :is(.np-code-with-diagram, .np-code-with-visual) { grid-template-columns: 1fr; }
+  .narrated-lesson :is(.np-code-with-diagram, .np-code-with-visual) { grid-template-columns: 1fr; }
 }
 @media print {
-  .narrated-pattern [data-transcript-language][hidden] { display: none !important; }
-  .narrated-pattern .nja-transcript-scene { break-inside: auto; }
+  .narrated-lesson [data-transcript-language][hidden] { display: none !important; }
+  .narrated-lesson .nja-transcript-scene { break-inside: auto; }
 }
 
 /* SebookQuiz supplies the tutorial interaction; theme tokens match this player. */
-.narrated-pattern .np-quiz { padding: 1.4em; color: var(--nja-text); background: var(--nja-bg); }
-.narrated-pattern .np-quiz h3 { font-size: 1.3em; color: var(--nja-text); line-height: 1.4; }
-.narrated-pattern .np-quiz h4 { font-size: 1.2em; color: var(--nja-text); }
-.narrated-pattern .np-quiz p { font: inherit; color: inherit; }
-.narrated-pattern .np-quiz .tvm-quiz-gate-header { display: flex; align-items: center; gap: 0.8em; margin-bottom: 1em; }
-.narrated-pattern .np-quiz .tvm-quiz-gate-icon { font-size: 1.5em; }
-.narrated-pattern .np-quiz .quiz-container { margin: 1em 0; padding: 1em; background: var(--nja-panel); border: 2px solid var(--nja-line); border-radius: 8px; color: var(--nja-text); font: inherit; }
-.narrated-pattern .np-quiz .quiz-question-card { display: none; }
-.narrated-pattern .np-quiz .quiz-question-card.active { display: block; }
-.narrated-pattern .np-quiz .question-text { color: var(--nja-text); font: inherit; font-weight: 600; margin: 0 0 1em; }
-.narrated-pattern .np-quiz .quiz-options { display: flex; flex-direction: column; gap: 0.6em; }
-.narrated-pattern .np-quiz button { font: inherit; min-height: 2.6em; border: 2px solid var(--nja-line); border-radius: 6px; padding: 0.6em 0.8em; background: var(--nja-input); color: var(--nja-text); cursor: pointer; }
-.narrated-pattern .np-quiz .quiz-option { display: flex; gap: 0.7em; align-items: flex-start; text-align: left; width: 100%; margin: 0; }
-.narrated-pattern .np-quiz .quiz-option:hover:not([disabled]) { background: var(--nja-hover); border-color: var(--nja-cyan); }
-.narrated-pattern .np-quiz .quiz-option.correct { background: var(--nja-success-bg); color: var(--nja-green); border-color: var(--nja-green); }
-.narrated-pattern .np-quiz .quiz-option.incorrect { background: var(--nja-error-bg); color: var(--nja-coral); border-color: var(--nja-coral); }
-.narrated-pattern .np-quiz .quiz-option.correct::after { content: '✓'; margin-left: auto; }
-.narrated-pattern .np-quiz .quiz-option.incorrect::after { content: '✗'; margin-left: auto; }
-.narrated-pattern .np-quiz .option-label { display: inline-grid; place-items: center; min-width: 1.8em; min-height: 1.8em; padding: 0.1em; border: 1px solid var(--nja-line); border-radius: 50%; background: var(--nja-chrome); color: var(--nja-text); font: inherit; }
-.narrated-pattern .np-quiz .option-checkbox { display: none; }
-.narrated-pattern .np-quiz .option-content { min-width: 0; }
-.narrated-pattern .np-quiz .option-feedback { margin: 0.3em 0 0.5em; padding: 0.6em 0.8em; background: var(--nja-warning-bg); border-left: 3px solid var(--nja-accent); color: var(--nja-text); font: inherit; }
-.narrated-pattern .np-quiz .quiz-explanation { margin: 1em 0 0; padding: 0.8em; background: var(--nja-note-bg); border: 1px solid var(--nja-line); border-left: 4px solid var(--nja-accent); color: var(--nja-text); font: inherit; }
-.narrated-pattern .np-quiz .explanation-title { color: var(--nja-accent); font: inherit; font-weight: bold; }
-.narrated-pattern .np-quiz :is(.quiz-shortcuts-hint, .quiz-next-shortcut-hint, .quiz-result-shortcut-hint) { font-size: 0.9em; line-height: 1.5; margin-top: 0.8em; color: var(--nja-muted); }
-.narrated-pattern .np-quiz kbd { color: var(--nja-text); background: var(--nja-input); border: 1px solid var(--nja-line); font: inherit; padding: 0.1em 0.3em; }
-.narrated-pattern .np-quiz .quiz-progress-bar { height: 0.5em; background: var(--nja-line); border-radius: 6px; margin-bottom: 1em; overflow: hidden; }
-.narrated-pattern .np-quiz .progress-fill { height: 100%; background: var(--nja-accent); }
-.narrated-pattern .np-quiz .quiz-correct-answers { display: none; gap: 0.5em; color: var(--nja-green); font: inherit; margin-top: 0.8em; }
-.narrated-pattern .np-quiz .correct-label-badge { padding: 0.2em 0.5em; border: 1px solid var(--nja-green); border-radius: 4px; color: var(--nja-green); background: var(--nja-success-bg); font: inherit; }
-.narrated-pattern .np-quiz :is(.score-display, .score-summary, .tvm-quiz-threshold) { color: var(--nja-text); font: inherit; margin: 0.8em 0; }
-.narrated-pattern .np-quiz .results-actions { display: flex; flex-wrap: wrap; gap: 0.8em; }
-.narrated-pattern .np-quiz :is(.hidden, .is-hidden) { display: none !important; }
-.narrated-pattern .np-quiz :is(button, h3):focus-visible { outline: 3px solid var(--nja-cyan); outline-offset: 3px; }
-.narrated-pattern .nja-controls .np-review-check { display: block; width: auto; height: auto; min-height: 2.4em; padding: 0.4em 0.7em; }
-.narrated-pattern .nja-art pre { max-height: 24em; overflow-y: auto; scrollbar-color: var(--nja-line) var(--nja-code-bg); }
-.narrated-pattern .nja-art pre:focus-visible { outline: 3px solid var(--nja-cyan); outline-offset: -3px; }
+.narrated-lesson .np-quiz { padding: 1.4em; color: var(--nja-text); background: var(--nja-bg); }
+.narrated-lesson .np-quiz h3 { font-size: 1.3em; color: var(--nja-text); line-height: 1.4; }
+.narrated-lesson .np-quiz h4 { font-size: 1.2em; color: var(--nja-text); }
+.narrated-lesson .np-quiz p { font: inherit; color: inherit; }
+.narrated-lesson .np-quiz .tvm-quiz-gate-header { display: flex; align-items: center; gap: 0.8em; margin-bottom: 1em; }
+.narrated-lesson .np-quiz .tvm-quiz-gate-icon { font-size: 1.5em; }
+.narrated-lesson .np-quiz .quiz-container { margin: 1em 0; padding: 1em; background: var(--nja-panel); border: 2px solid var(--nja-line); border-radius: 8px; color: var(--nja-text); font: inherit; }
+.narrated-lesson .np-quiz .quiz-question-card { display: none; }
+.narrated-lesson .np-quiz .quiz-question-card.active { display: block; }
+.narrated-lesson .np-quiz .question-text { color: var(--nja-text); font: inherit; font-weight: 600; margin: 0 0 1em; }
+.narrated-lesson .np-quiz .quiz-options { display: flex; flex-direction: column; gap: 0.6em; }
+.narrated-lesson .np-quiz button { font: inherit; min-height: 2.6em; border: 2px solid var(--nja-line); border-radius: 6px; padding: 0.6em 0.8em; background: var(--nja-input); color: var(--nja-text); cursor: pointer; }
+.narrated-lesson .np-quiz .quiz-option { display: flex; gap: 0.7em; align-items: flex-start; text-align: left; width: 100%; margin: 0; }
+.narrated-lesson .np-quiz .quiz-option:hover:not([disabled]) { background: var(--nja-hover); border-color: var(--nja-cyan); }
+.narrated-lesson .np-quiz .quiz-option.correct { background: var(--nja-success-bg); color: var(--nja-green); border-color: var(--nja-green); }
+.narrated-lesson .np-quiz .quiz-option.incorrect { background: var(--nja-error-bg); color: var(--nja-coral); border-color: var(--nja-coral); }
+.narrated-lesson .np-quiz .quiz-option.correct::after { content: '✓'; margin-left: auto; }
+.narrated-lesson .np-quiz .quiz-option.incorrect::after { content: '✗'; margin-left: auto; }
+.narrated-lesson .np-quiz .option-label { display: inline-grid; place-items: center; min-width: 1.8em; min-height: 1.8em; padding: 0.1em; border: 1px solid var(--nja-line); border-radius: 50%; background: var(--nja-chrome); color: var(--nja-text); font: inherit; }
+.narrated-lesson .np-quiz .option-checkbox { display: none; }
+.narrated-lesson .np-quiz .option-content { min-width: 0; }
+.narrated-lesson .np-quiz .option-feedback { margin: 0.3em 0 0.5em; padding: 0.6em 0.8em; background: var(--nja-warning-bg); border-left: 3px solid var(--nja-accent); color: var(--nja-text); font: inherit; }
+.narrated-lesson .np-quiz .quiz-explanation { margin: 1em 0 0; padding: 0.8em; background: var(--nja-note-bg); border: 1px solid var(--nja-line); border-left: 4px solid var(--nja-accent); color: var(--nja-text); font: inherit; }
+.narrated-lesson .np-quiz .explanation-title { color: var(--nja-accent); font: inherit; font-weight: bold; }
+.narrated-lesson .np-quiz :is(.quiz-shortcuts-hint, .quiz-next-shortcut-hint, .quiz-result-shortcut-hint) { font-size: 0.9em; line-height: 1.5; margin-top: 0.8em; color: var(--nja-muted); }
+.narrated-lesson .np-quiz kbd { color: var(--nja-text); background: var(--nja-input); border: 1px solid var(--nja-line); font: inherit; padding: 0.1em 0.3em; }
+.narrated-lesson .np-quiz .quiz-progress-bar { height: 0.5em; background: var(--nja-line); border-radius: 6px; margin-bottom: 1em; overflow: hidden; }
+.narrated-lesson .np-quiz .progress-fill { height: 100%; background: var(--nja-accent); }
+.narrated-lesson .np-quiz .quiz-correct-answers { display: none; gap: 0.5em; color: var(--nja-green); font: inherit; margin-top: 0.8em; }
+.narrated-lesson .np-quiz .correct-label-badge { padding: 0.2em 0.5em; border: 1px solid var(--nja-green); border-radius: 4px; color: var(--nja-green); background: var(--nja-success-bg); font: inherit; }
+.narrated-lesson .np-quiz :is(.score-display, .score-summary, .tvm-quiz-threshold) { color: var(--nja-text); font: inherit; margin: 0.8em 0; }
+.narrated-lesson .np-quiz .results-actions { display: flex; flex-wrap: wrap; gap: 0.8em; }
+.narrated-lesson .np-quiz :is(.hidden, .is-hidden) { display: none !important; }
+.narrated-lesson .np-quiz :is(button, h3):focus-visible { outline: 3px solid var(--nja-cyan); outline-offset: 3px; }
+.narrated-lesson .nja-controls .np-review-check { display: block; width: auto; height: auto; min-height: 2.4em; padding: 0.4em 0.7em; }
+.narrated-lesson .nja-art pre { max-height: 24em; overflow-y: auto; scrollbar-color: var(--nja-line) var(--nja-code-bg); }
+.narrated-lesson .nja-art pre:focus-visible { outline: 3px solid var(--nja-cyan); outline-offset: -3px; }
 @media (max-width: 520px) {
-  .narrated-pattern .np-toolbar .nja-seek-label { grid-template-columns: 1fr; gap: 0; }
-  .narrated-pattern .np-quiz { padding: 0.85em; }
-  .narrated-pattern .np-quiz .quiz-container { padding: 0.65em; }
-  .narrated-pattern .np-quiz .quiz-option { gap: 0.5em; padding: 0.55em 0.45em; }
-  .narrated-pattern .np-quiz .option-label { min-width: 1.4em; min-height: 1.4em; }
+  .narrated-lesson .np-toolbar .nja-seek-label { grid-template-columns: 1fr; gap: 0; }
+  .narrated-lesson .np-quiz { padding: 0.85em; }
+  .narrated-lesson .np-quiz .quiz-container { padding: 0.65em; }
+  .narrated-lesson .np-quiz .quiz-option { gap: 0.5em; padding: 0.55em 0.45em; }
+  .narrated-lesson .np-quiz .option-label { min-width: 1.4em; min-height: 1.4em; }
 }
 @media print {
-  .narrated-pattern .np-quiz { display: none !important; }
-  .narrated-pattern .np-print-question details::details-content { display: block; content-visibility: visible; }
+  .narrated-lesson .np-quiz { display: none !important; }
+  .narrated-lesson .np-print-question details::details-content { display: block; content-visibility: visible; }
 }

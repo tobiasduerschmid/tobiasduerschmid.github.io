@@ -37,6 +37,7 @@ importScripts(PYODIDE_INDEX_URL + 'pyodide.js');
 
 var pyodide = null;
 var _running = false;
+let _executeWithExitStatus = null;
 
 // ---- Initialisation ---------------------------------------------------------
 
@@ -50,6 +51,31 @@ loadPyodide({
   // Create /tutorial working directory
   try { pyodide.FS.mkdir('/tutorial'); } catch (e) { /* already exists */ }
   pyodide.FS.chdir('/tutorial');
+
+  // Inspect SystemExit.code in Python: its traceback cannot distinguish an
+  // integer status from a string reason, or an exit nested in another error.
+  // The retained function owns this namespace, outside the learner-global wipe.
+  const executionGlobals = pyodide.runPython('{}');
+  try {
+    pyodide.runPython([
+      'import sys',
+      'from pyodide.code import eval_code_async',
+      'async def execute_with_exit_status(source, namespace):',
+      '    try:',
+      '        await eval_code_async(source, globals=namespace)',
+      '    except SystemExit as error:',
+      '        if error.code is None:',
+      '            return 0',
+      '        if isinstance(error.code, int):',
+      '            return int(error.code)',
+      '        print(error.code, file=sys.stderr)',
+      '        return 1',
+      '    return 0',
+    ].join('\n'), { globals: executionGlobals });
+    _executeWithExitStatus = executionGlobals.get('execute_with_exit_status');
+  } finally {
+    executionGlobals.destroy();
+  }
 
   // Inject a helper available in all test/run contexts:
   //   __run_capture(path) → stdout as string (for output-checking tests)
@@ -219,35 +245,30 @@ function runCode(id, code, silent) {
         ].join('\n'));
       } catch (err) { /* Safely ignore internal wipe errors */ }
 
-      return pyodide.runPythonAsync(code);
+      return executePythonCode(code);
     })
-    .then(function () {
+    .then(function (exitCode) {
       _running = false;
-      self.postMessage({ type: 'run_done', id: id, exitCode: 0 });
+      self.postMessage({ type: 'run_done', id: id, exitCode: exitCode });
     })
     .catch(function (err) {
       _running = false;
-      // SystemExit is a clean exit signal, not an error. Recognize it and
-      // suppress the traceback. Two forms to detect:
-      //   1. err.type === 'SystemExit' (pyodide PythonError exposes the
-      //      raised Python class name on .type).
-      //   2. "SystemExit: <n>" anywhere in the message (fallback for older
-      //      pyodide builds that don't populate .type).
       var msg = err && err.message ? err.message : String(err);
-      var isSystemExit = (err && err.type === 'SystemExit') ||
-                         /(^|\n|\b)SystemExit\b/.test(msg);
-      if (isSystemExit) {
-        var codeMatch = /SystemExit\s*:\s*(\d+)/.exec(msg);
-        var exitCode = codeMatch ? parseInt(codeMatch[1], 10) : 0;
-        self.postMessage({ type: 'run_done', id: id, exitCode: exitCode });
-        return;
-      }
       var fullMsg = err.type ? (err.type + ': ' + msg) : msg;
       if (!silent) {
         self.postMessage({ type: 'stderr', text: fullMsg + '\n' });
       }
       self.postMessage({ type: 'run_done', id: id, exitCode: 1 });
     });
+}
+
+async function executePythonCode(code) {
+  const execution = _executeWithExitStatus(code, pyodide.globals);
+  try {
+    return await execution;
+  } finally {
+    execution.destroy();
+  }
 }
 
 // ---- File I/O ---------------------------------------------------------------

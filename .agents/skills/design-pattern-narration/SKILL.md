@@ -1,8 +1,8 @@
 ---
 name: design-pattern-narration
 description: >-
-  Authoring guide for narrated design-pattern lessons in the SEBook (the Observer and State
-  narrations, and any new one). USE THIS SKILL EVERY TIME you create, extend, restructure, or review
+  Authoring guide for narrated design-pattern lessons in the SEBook (the Observer, State, Strategy,
+  and Model-View-Controller narrations, and any new one). USE THIS SKILL EVERY TIME you create, extend, restructure, or review
   a narrated pattern lesson: `_data/explainers/<topic>.yml` (speech, scenes, cues, diagrams),
   `<topic>_code.yml` (Python/Java/C++/TypeScript examples), `<topic>_quizzes.yml` (section checks and
   the summary quiz), `<topic>_timing.json`, the `_data/narrated_patterns.yml` registry, topic
@@ -20,32 +20,49 @@ description: >-
 # Authoring narrated design-pattern lessons
 
 A narrated lesson is an approximately 11–13 minute, Kokoro-voiced walk through one
-design pattern at the top of its SEBook chapter (see `/SEBook/designpatterns/observer.html`
-and `/SEBook/designpatterns/state.html`). A lesson is **data plus a few topic
+design pattern at the top of its SEBook chapter (see `/SEBook/designpatterns/observer.html`,
+`/SEBook/designpatterns/state.html`, and `/SEBook/designpatterns/strategy.html`). A lesson is **data plus a few topic
 illustrations**: the player, transport, reader, and print views are shared. The architecture
 and file list live in [`docs/narrated-pattern.md`](../../../docs/narrated-pattern.md); this
 skill is about authoring a lesson that teaches well and ships clean.
 
-If you only remember six things:
+If you only remember eight things:
 
 1. **The narration is a pattern description.** Its spine is Context → Problem → Solution
-   (abstract roles) → Consequences. Each of these is a first-class scene with a `part:` field,
-   so learners see on screen which part of the description they are in.
-2. **Teach the abstract roles before the example's classes.** Name the roles (Subject/Observer,
-   Context/State/ConcreteState, …), show a role diagram with no example names, then map each role
-   onto the example one at a time. Students should leave with the pattern, not the example.
-3. **The example must be a genuinely good fit for the pattern.** Original, inspired by the
+   (roles) → Consequences. Each of these is a first-class scene with a `part:` field, so
+   learners see on screen which part of the description they are in.
+2. **Show the concrete solution before abstracting it.** After the problem, redesign the
+   example in code, one class at a time, and trace one input through it. Only then step back:
+   "remove the screen time and the charts, and three roles remain." Map every abstract role to
+   the example class that played it. Students should leave with the pattern, not the example,
+   but they reach it through the example (concreteness fading).
+3. **Build a mental model, not a glossary.** The audience is undergraduate computer science
+   students. Explain each idea in plain words ("a list of dependents it notifies", "the data and
+   its rules") and state one memorable loop or rule they can reuse ("a controller changes the
+   model, the model announces the change, and every view redraws from the model"). Use a term
+   only when it deepens understanding, such as linking to a pattern they know (Observer, Factory
+   Method); define it when you first use it, and then use it consistently.
+4. **The example must be a genuinely good fit for the pattern.** Original, inspired by the
    literature but not copied, relatable to Gen Z students, and *growing along the pattern's
    variation axis* (more states for State, more observers for Observer). If an `enum` and a
    `switch` would honestly be the better design, the example is wrong.
-4. **Quizzes test the pattern, not the example.** One check per section, plus one multi-question
-   summary quiz at the end that covers every part of the description on a *new* scenario.
-5. **Code ships in Python, Java, C++, and TypeScript, and the tests run it.** The before
+5. **Quizzes test the pattern, using only what the narration taught.** One check per section,
+   plus one multi-question summary quiz at the end that covers every part of the description on
+   a *new* scenario. Every key, and every reason to reject a distractor, must have been said in
+   the narration before the check, in the narration's own words.
+6. **Code ships in Python, Java, C++, and TypeScript, and the tests run it.** The before
    (conditional) and after (pattern) designs must produce identical behavior, checked against one
    data oracle.
-6. **Speech must sound right and stop cleanly.** Every identifier or symbol the TTS mangles gets a
+7. **Speech must sound right and stop cleanly.** Every identifier or symbol the TTS mangles gets a
    `pronunciations` entry, and every section ends with more than 0.3 s of silence so knowledge
    checks stop before the next word.
+8. **Sources are shown, never read aloud; history is left out.** The spoken narration (and
+   its captions), the quizzes, and the lesson summary teach concepts: they never name authors,
+   books, dates, or places, and never say "the book says" or "as X observes". State the idea and
+   why it matters to students instead. To credit a source, put it in the cue's `source` field,
+   which the player and the reader show on screen under the explanation. Record fuller
+   provenance for maintainers in `docs/<topic>-narration.md`.
+   `scripts/tests/narrated-pattern-sources.test.js` fails if any cue's speech names a source.
 
 Read [`quiz-format`](../quiz-format/SKILL.md) before writing questions,
 [`good-diagrams`](../good-diagrams/SKILL.md) and [`diagrams`](../diagrams/SKILL.md) before
@@ -78,7 +95,18 @@ against these criteria:
 Examples that were rejected and why: a pull-request status workflow for State (its behavior is a
 status check plus permissions; an `enum` is the better design). Examples that shipped: a text
 editor whose preview, character count, and save button observe the document (Observer); a game
-companion dog that follows, fetches, and naps (State).
+companion dog that follows, fetches, and naps (State); a group-expense app that splits a bill
+equally, by percentage, or as a birthday treat, refactored from a method-checking calculation
+the way Kerievsky refactors a loan's capital calculation (Strategy); a screen-time visualizer
+whose table, bar chart, and pie chart share one dataset, live and editable in the player
+(Model-View-Controller).
+
+Ground the whole lesson in those sources, not only the example: follow GoF's applicability,
+participants, collaborations, consequences, and implementation issues, use Kerievsky's
+refactoring mechanics for the problem-to-solution steps, and borrow Head First's design
+principles where they explain a role. The narration states these ideas as concepts without
+saying the sources aloud (rule 8); show the source on screen in the cue's `source` field, so
+students can find it again.
 
 ## 2. Structure the scenes
 
@@ -87,16 +115,19 @@ Use this sequence and adapt it only with a reason. `part:` is one of `Context`, 
 
 | Scene | `part` | What it does |
 |---|---|---|
-| intro | — | Hook with the example, then explain how a pattern is described (the triple plus roles and consequences). |
+| intro | — | Show the example working (animate it, and let students try it if the illustration is live), then preview how a pattern is described and name the roles in one plain sentence. |
 | context | Context | The recurring situation, shown with the example (a state machine for State, a UI for Observer). Warn about name collisions, such as State's `Context` *role* versus the pattern's *context*. |
-| problem | Problem | The naive design in code and its forces. End on a prediction cue about what breaks when the domain grows. |
-| solution | Solution | The abstract roles on a role diagram, with no example names. |
-| one scene per role | Solution | Each role in code, mapped onto the example, with `diagram_focus` on that role. |
-| collaborations | Solution | A sequence diagram revealed one message group per cue, with a prediction before each reveal. |
+| problem | Problem | The naive design in code and the demands a solution must meet. End on a prediction cue about what breaks when the domain grows. |
+| one scene per new class | Solution | The concrete redesign: each class of the example in code ("Solution, concretely: …"), with a class diagram of the example and `diagram_focus` on the class. |
+| collaborations | Solution | One input traced through the example's classes on a sequence diagram, one message group per cue, with a prediction before a reveal. End by stating the loop in one sentence. |
+| solution | Solution | The abstraction ("Solution, abstracted: …"): the pattern's roles, each mapped back to the example class that played it, as CRC cards or a role diagram. Show how the roles interact on a role-level class diagram. |
 | consequences | Consequences | Benefits and liabilities, each tied to a code change the learner just saw. |
 | applicability | Context | When to use it and when not to, plus the neighboring pattern it is confused with (State vs. Strategy, Observer vs. Mediator). |
 | transfer | — | Extend the example along the variation axis; name exactly which code changes. |
 | summary | — | Recall all four parts with `cards`, then the summary quiz. |
+
+The Model-View-Controller lesson follows this order. The Observer and State lessons predate the
+concrete-first rule and introduce the roles before the code.
 
 Each scene has a `purpose` (shown as "Our task"), a `title`, a `takeaway`, and cues. Keep every
 diagram within about 9 symbols; split rather than crowd.
@@ -112,17 +143,29 @@ Each cue is one spoken paragraph of about 40–50 words (2–4 sentences); the s
 - `visual`: a description of what is on screen for this cue. It becomes the stage's accessible
   name, so describe the marks and diagram emphasis, not the speech.
 - `step` and `note`: the short explanation strip under the code.
+- `source`: an optional citation shown on screen below the explanation strip, such as
+  "Gamma et al., Design Patterns: Strategy, Applicability". It is never spoken.
 - `focus`: a key into the code block's `focus` map; the player marks those lines in every
   language. `table_focus`, `ui_state`, and similar keys are read by topic illustrations.
 - `diagram_focus`: one class, interface, state, or lifeline to highlight. `diagram_steps`: how many
-  sequence message groups are shown.
+  sequence message groups (or CRC cards) are shown. `diagram`: switch this cue to another
+  diagram of the storyboard, for example from CRC cards to a class diagram of how the roles
+  interact; the region label and caption follow it.
 - `prediction: true`: asks the learner to predict; it hides the takeaway and needs a
   `pause_after` of a few seconds so there is time to think. The next cue gives the answer.
 
-Narration rules: say role names exactly as the diagrams spell them, introduce a term before using
-it, connect every consequence to something seen earlier, and never refer to a quiz option or an
-on-screen position that the learner might not see (captions, reader view, and print use the same
-text).
+Narration rules:
+
+- Say role names exactly as the diagrams spell them, introduce a term before using it, and
+  connect every consequence to something seen earlier.
+- Prefer plain words to the pattern literature's vocabulary: "a list of dependents" over
+  "change-propagation mechanism", "the data and its rules" over "functional core", "a request
+  to change only this view" over "display request". Name a variant by what it does ("view and
+  controller merged into one component") rather than by its catalog name.
+- No history in any text, and no sources in speech, captions, `step`, `note`, or `visual`
+  text; citations belong in `source`, which is shown but never spoken.
+- Never refer to a quiz option or an on-screen position that the learner might not see
+  (captions, reader view, and print use the same text).
 
 ## 4. Diagrams
 
@@ -131,7 +174,11 @@ Diagrams live under `diagrams:` as ArchUML sources and render at build time
 
 - **class** for the role diagram and the solution's structure (`type` may be omitted);
 - **state** for a lifecycle whose behavior depends on state, with guards in square brackets;
-- **sequence** for collaborations, with lifelines in `source` and message groups in `steps`.
+- **sequence** for collaborations, with lifelines in `source` and message groups in `steps`;
+- **crc** for role cards when the source describes structure that way (POSA does), with one
+  card per entry in `steps`. CRC cards cannot take `diagram_focus`, and they list
+  responsibilities, not interactions: follow them with a role-level class diagram (a cue-level
+  `diagram`) that shows which role calls which, and highlight the role being discussed.
 
 Lessons learned from the shipped lessons: keep sequence diagrams to three or four lifelines and
 omit return arrows that add width without meaning; use anonymous lifelines (`: Following`) for
@@ -166,9 +213,15 @@ position references), plus these lesson-specific rules:
 - **Ask about the pattern.** Stems name the pattern and a role or consequence ("In the State
   pattern, which role …"), never the dog's or the document's details. A learner who skipped the
   example but understands the pattern should be able to answer.
+- **Test only what the narration taught.** Audit every question: name the cue, in that section
+  or earlier, that states the key and the reason each distractor is wrong. If no cue does, change
+  the question or teach the idea first. Use the narration's words in stems and options (if the
+  narration says "a list of dependents", do not ask about the "change-propagation mechanism"),
+  and do not introduce new terms in explanations or feedback.
 - **Rotate `correct_index`** across questions; options shuffle, but authors drift toward index 0.
 - **The last scene's entry is a summary quiz:** `questions:` with about six items on a new
-  scenario (a sports app for Observer, a video player for State), covering context, problem,
+  scenario (a sports app for Observer, a video player for State, a photo app's export formats for
+  Strategy), covering context, problem,
   roles, collaboration, consequences, and applicability in that order. The player keeps their
   order (`shuffle_questions: false`); options still shuffle.
 
@@ -185,6 +238,14 @@ long-path workaround are in `docs/nodejs-animation.md` and `docs/state-narration
 - Listen to every cue that contains code identifiers, acronyms, or symbols. Typical fixes:
   `UML: U M L`, `C++: C plus plus`, `enum: E num`, camelCase names split into words
   (`setState: set state`). Captions keep the written form.
+- Abbreviations with periods break inside: written "p.m." phonemizes as `pˈiː.ˈɛm.`, a stop
+  between letters that sounds like "pee. em.", so map it (`p.m.: PM.`, keeping the sentence's
+  full stop). Check a doubtful word by its phonemes, not by ear alone:
+  `Kokoro(...).tokenizer.phonemize(text, 'en-us')` shows what the voice will say. Whisper
+  transcripts normalize such words back to their written form, so they cannot catch it.
+- Heteronyms take the wrong reading after a noun: in "the plan lives on the wall" espeak reads
+  `lˈaɪvz` (the plural of "life"). Respell the phrase (`plan lives: plan livs`). Check every
+  "lives", "read", "lead", "close", "live", "wind", "tear", and "minute" by its phonemes.
 - The player stops for each check 0.3 s before the section boundary. The last cue of every
   section therefore needs more than 0.3 s of silence; the default works, and the State node
   test's silence check is the template to copy.
@@ -198,6 +259,22 @@ Follow "Adding a lesson" in `docs/narrated-pattern.md`: register the topic in
 - Topic illustrations are includes that read `include.cue`; their CSS goes in
   `css/<topic>-narration.css` with base, `html.dark-mode`, and `@media print` rules together.
   Readable text inherits its size or uses `em` (never `rem`, which is 10 px here).
+- **Make the example live when seeing it change teaches the idea.** Show the problem and the
+  solution in motion (an edit spreading to every view) and let students change it themselves.
+  List the script in the topic's `scripts:` in `_data/narrated_patterns.yml`. The script upgrades
+  the static illustration in the player only, cancels the player's `narrated-pattern:cue` event,
+  and animates to the state that the settled reading step describes (for example in a
+  `data-<topic>-cue` attribute). Reader and print views keep the static, accessible picture. The
+  Model-View-Controller dashboard (`js/mvc-dashboard.js`) is the template, and it is itself
+  built with the pattern it teaches.
+- Live illustrations need labeled controls, keyboard access, a polite status message for each
+  student action (not for narrated changes), and no motion under `prefers-reduced-motion`.
+  Mark which parts reacted with text as well as motion, and never move focus during narration.
+- Liquid cannot nest bracket lookups: `a[b[c]]` silently renders empty. Assign the inner
+  value to a variable first. An illustration that shows zeros or blanks usually hit this.
+- Tables beside code get a narrow column. Use `overflow-wrap: break-word` with
+  `hyphens: auto` (not `anywhere`, which breaks words at random letters), and keep cell text
+  short.
 - Add the topic to the lists that name the narrated lessons: `shortcuts.html`, `settings.html`,
   and `cookies.html` ("narrated design-pattern lessons (Observer, State, …)").
 - Full screen, captions, speed, scene selection, and the language switch come from the shared

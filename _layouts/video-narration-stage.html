@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+{%- comment -%}
+  The animated stage of a video narration: a same-origin frame, so the
+  song-video engine keeps its own Timeline and styles apart from the chapter.
+  The parent player poses it (js/video-narration-stage.js); the frame has no
+  controls or focusable content. Front matter: topic.
+{%- endcomment -%}
+{%- assign lesson = site.data.video_narrations[page.topic] -%}
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ lesson.name | escape }} animation</title>
+  {% include ai-training-opt-out-meta.html %}
+  <meta name="robots" content="noindex">
+  {%- include video-narration-stage-assets.html topic=page.topic part='styles' %}
+</head>
+<body class="is-fit">
+  <main class="vn-stage-page">
+    <h1 class="vn-stage-title">{{ lesson.name | escape }} animation for the narrated lesson at {{ lesson.chapter | relative_url }}</h1>
+    <div class="stage" id="stage" aria-hidden="true" data-topic="{{ page.topic }}" data-theme="{{ lesson.animation.theme | default: 'studio' }}"></div>
+  </main>
+  {%- include video-narration-stage-assets.html topic=page.topic part='scripts' %}
+</body>
+</html>

@@ -1,0 +1,619 @@
+title: Model-View-Controller in a data visualizer
+audio: /assets/audio/mvc-pattern.mp3
+captions: /assets/narration/mvc-pattern.vtt
+script: /assets/narration/mvc-pattern.txt
+voice: af_heart
+speed: 0.95
+# Spoken forms for the speech engine; captions keep the written text.
+pronunciations:
+  UML: U M L
+  CRC: C R C
+  MVC: M V C
+  ScreenTimeApp: screen time app
+  TableView: table view
+  BarChartView: bar chart view
+  PieChartView: pie chart view
+  LineChartView: line chart view
+  TableController: table controller
+  ChartController: chart controller
+languages: [python, java, cpp, typescript]
+default_language: python
+example_order: [model, views, controllers, wire]
+diagrams:
+  structure:
+    type: crc
+    label: CRC cards for the Model-View-Controller roles
+    description: Three CRC cards. Model holds the data and its rules, keeps a list of dependents, and tells them when the data changes; it works with View and Controller. View displays the data, asks the model for it, redraws after each change, and creates its controller; it works with Controller and Model. Controller receives the user's input, turns it into requests for the model or its view, and reacts to changes only if it needs to; it works with View and Model.
+    caption: 'Each card names a role, what it is responsible for on the left, and which roles it works with on the right. The two lists are independent: entries on the same line are not paired.'
+    # Cards appear one per cue, in the order the narration introduces them,
+    # stacked so that they stay readable without horizontal scrolling.
+    source: |
+      @startuml
+      layout vertical
+    steps:
+      - |
+        card Model {
+          responsibility: Holds the data and its rules
+          responsibility: Keeps a list of dependents
+          responsibility: Tells them when the data changes
+          collaborator: View
+          collaborator: Controller
+        }
+      - |
+        card View {
+          responsibility: Displays the data
+          responsibility: Asks the model for the data
+          responsibility: Redraws after each change
+          responsibility: Creates its controller
+          collaborator: Controller
+          collaborator: Model
+        }
+      - |
+        card Controller {
+          responsibility: Receives the user's input
+          responsibility: Turns it into model or view requests
+          responsibility: Reacts to changes, if it needs to
+          collaborator: View
+          collaborator: Model
+        }
+  roles:
+    label: Class diagram of the Model-View-Controller roles
+    description: Model notifies any number of Observers and offers attach, notify, getData, and setData. View and Controller both implement Observer. View reads its Model; Controller changes the Model and adjusts its View.
+    caption: 'Solid arrows show which role calls which; dashed arrows with hollow triangles show which roles implement Observer. The Model points only to the Observer interface, so it never depends on a concrete view or controller.'
+    source: |
+      @startuml
+      layout landscape
+      interface Observer {
+        + update()
+      }
+      class Model {
+        + attach(observer)
+        + notify()
+        + getData()
+        + setData(value)
+      }
+      class View {
+        + update()
+        + display()
+      }
+      class Controller {
+        + handleEvent(event)
+      }
+      Model --> "*" Observer : notifies
+      View ..|> Observer
+      Controller ..|> Observer
+      View --> "1" Model : reads
+      Controller --> "1" Model : changes
+      Controller --> "1" View : adjusts
+      @enduml
+  solution:
+    label: Model-View-Controller roles in the visualizer
+    description: Dataset keeps any number of Observers and offers attach, detach, notify, setMinutes, and rows. View and Controller both implement Observer. Each View reads its Dataset and is paired with one Controller; each Controller changes its Dataset.
+    caption: 'Dataset plays the Model; View and Controller are the base classes of the other two roles. The Dataset depends only on the Observer interface, never on a view or controller class.'
+    source: |
+      @startuml
+      layout landscape
+      interface Observer {
+        + update()
+      }
+      class Dataset {
+        + attach(observer)
+        + detach(observer)
+        + notify()
+        + setMinutes(category, minutes)
+        + rows()
+      }
+      class View {
+        + initialize()
+        + update()
+        + highlight(category)
+      }
+      class Controller {
+        + handleEvent(event)
+        + update()
+      }
+      Dataset --> "*" Observer : notifies
+      View ..|> Observer
+      Controller ..|> Observer
+      View --> "1" Dataset : reads
+      Controller --> "1" Dataset : changes
+      View "1" -- "1" Controller : pairs with
+      @enduml
+  views:
+    label: View classes in the visualizer
+    description: View implements Observer, reads one Dataset, and declares update, highlight, makeController, and draw. TableView, BarChartView, and PieChartView each extend View and define draw.
+    caption: 'Each concrete view inherits update from View and supplies only its own draw method.'
+    source: |
+      @startuml
+      layout portrait
+      interface Observer {
+        + update()
+      }
+      class Dataset {
+        + rows()
+      }
+      class View {
+        + update()
+        + highlight(category)
+        # makeController()
+        # draw(rows)
+      }
+      class TableView {
+        # draw(rows)
+      }
+      class BarChartView {
+        # draw(rows)
+      }
+      class PieChartView {
+        # draw(rows)
+      }
+      View ..|> Observer
+      View --> "1" Dataset : reads
+      TableView --|> View
+      BarChartView --|> View
+      PieChartView --|> View
+      @enduml
+  controllers:
+    label: Controller classes in the visualizer
+    description: TableController and ChartController extend Controller, which declares handleEvent and update. TableController sends setMinutes to the Dataset; ChartController sends highlight to a View.
+    caption: 'Each controller turns an input event into a request: a change to the data goes to the model, and a change to what one view shows goes to that view.'
+    source: |
+      @startuml
+      layout portrait
+      class Controller {
+        + handleEvent(event)
+        + update()
+      }
+      class TableController {
+        + handleEvent(event)
+      }
+      class ChartController {
+        + handleEvent(event)
+      }
+      class Dataset {
+        + setMinutes(category, minutes)
+      }
+      class View {
+        + highlight(category)
+      }
+      TableController --|> Controller
+      ChartController --|> Controller
+      TableController --> Dataset : setMinutes
+      ChartController --> View : highlight
+      @enduml
+  input:
+    type: sequence
+    label: Sequence of one edit in the table
+    description: The table's controller, handling an edit event, calls setMinutes on the dataset. The dataset calls notify on itself, then update on the table view, which calls rows on the dataset, and update on the bar chart view, which also calls rows on the dataset.
+    caption: 'Lifelines are named like the variables in the main program. The edit enters through the table''s controller; every view hears about it from the model. Messages appear as the narration reaches them.'
+    source: |
+      @startuml
+      participant controller
+      participant dataset
+      participant table
+      participant bars
+    steps:
+      - |
+        activate controller
+        controller -> dataset: setMinutes("Study", 90)
+        activate dataset
+      - |
+        dataset -> dataset: notify()
+        dataset -> table: update()
+        activate table
+        table -> dataset: rows()
+        deactivate table
+      - |
+        dataset -> bars: update()
+        activate bars
+        bars -> dataset: rows()
+        deactivate bars
+        deactivate dataset
+        deactivate controller
+  setup:
+    type: sequence
+    label: Sequence of setting up one view
+    description: The main program creates the dataset. It then creates the bar chart view with the dataset and calls initialize on it. The view calls attach on the dataset, calls makeController on itself, creates its controller, and calls rows on the dataset to draw itself.
+    caption: 'Lifelines are named like the variables in the main program; the controller is a ChartController. The model is created first, then each view, which joins the model''s list and creates its own controller.'
+    source: |
+      @startuml
+      participant main
+      participant dataset
+      participant bars
+      participant controller
+    steps:
+      - |
+        main -> dataset: «create»
+      - |
+        main -> bars: «create»(dataset)
+        main -> bars: initialize()
+        activate bars
+        bars -> dataset: attach(bars)
+      - |
+        bars -> bars: makeController()
+        bars -> controller: «create»(bars)
+        bars -> dataset: rows()
+        deactivate bars
+scenes:
+  - id: intro
+    label: How a pattern is described
+    title: One dataset, three charts
+    purpose: See the problem in action, then preview how every pattern is described.
+    takeaway: A pattern pairs a problem that recurs in a context with a solution and its consequences.
+    ui: true
+    cues:
+      - text: "Imagine an app that charts your weekly screen time. A table lists your minutes for social media, video, games, and studying, and a bar chart and a pie chart show the same week. Watch the Study row change to ninety: both charts follow instantly."
+        step: One edit, three views
+        note: The table, bar chart, and pie chart always show the same minutes.
+        visual: An interactive Screen time dashboard shows a table, a bar chart, and a pie chart. The Study row changes from 30 to 90 minutes, and both charts update.
+        ui_state: edit_demo
+      - text: "Try it yourself. Pause the narration, type a new number into any row, or click a bar, and watch which views change. Model-View-Controller is a classic way to organize an app like this, and its ideas run through most user-interface frameworks you will use."
+        step: Try it
+        note: Edit a row or click a bar, then watch the other views.
+        visual: The interactive dashboard shows Study at 90 minutes; every row of the table can be edited, and every bar can be clicked.
+        ui_state: edited
+      - text: "We will describe it the way every pattern is described: the context it fits, the problem it solves, its solution, and the consequences of using it. On the way you will meet the three roles in its name. The model holds the data, views display it, and controllers handle input. Choose a code language above; the design is the same in every language."
+        step: Context, problem, solution, consequences
+        note: The model holds the data, views display it, and controllers handle input.
+        visual: The interactive dashboard still shows Study at 90 minutes.
+        ui_state: edited
+  - id: context
+    part: Context
+    label: 'Context: an interactive, changing interface'
+    title: When does Model-View-Controller apply?
+    purpose: Recognize the situation that Model-View-Controller fits.
+    takeaway: The pattern fits interactive apps whose interface keeps changing while the data stays the same.
+    ui: true
+    cues:
+      - text: "First, the context. The pattern fits interactive apps whose user interface keeps changing. Interactive means people change the data while they look at it. A changing interface means new screens, charts, and layouts keep arriving."
+        source: "Buschmann et al., Pattern-Oriented Software Architecture, Vol. 1: Model-View-Controller, Context"
+        step: Interactive and changing
+        note: Users edit the data while viewing it, and the interface keeps changing.
+        visual: The interactive dashboard shows the starting week in its table, bar chart, and pie chart.
+        ui_state: start
+      - text: "Our visualizer fits. People type into the table and expect every chart to follow at once. And next month someone asks for a line chart, a dark theme, or a phone version. The data itself, minutes per category, changes far less often than the ways we show and edit it."
+        step: Stable data, changing presentation
+        note: New charts, themes, and platforms arrive often.
+        visual: The Study row changes to 90 minutes, and both charts follow.
+        ui_state: edited
+  - id: problem
+    part: Problem
+    label: 'Problem: the interface is tangled up with the data'
+    title: One class does everything
+    purpose: Find what must change when the interface changes.
+    takeaway: The problem is interface code tangled up with the data, not the number of charts.
+    code: problem
+    ui: true
+    cues:
+      - text: "Here is a first design. One class, ScreenTimeApp, stores the minutes per category. That data is the heart of the app: it would be the same on a laptop, a phone, or a watch."
+        step: One class holds the data
+        note: The minutes per category
+        visual: The class header and its minutes field are marked. The dashboard, drawn by this first design, shows the starting week.
+        focus: data
+        ui_state: start
+        ui_redraw: all
+      - text: "The same class also handles input. When the user edits a cell, the edit handler stores the new minutes and calls redraw. So input handling now lives right next to the data."
+        step: It also handles input
+        note: The edit handler changes the data, then redraws.
+        visual: The edit handler is marked. In the dashboard, Study changes to 90 minutes and all three views redraw.
+        focus: edit
+        ui_state: edited
+        ui_redraw: all
+      - text: "Redraw builds every display by hand: the table rows, one hash mark per thirty minutes for the bar chart, and each category's share of the pie. Drawing code for three charts now lives in the class that holds the data."
+        step: It also draws every view
+        note: Table, bars, and pie are built in one method.
+        visual: The redraw method is marked. The dashboard shows Study at 90 minutes.
+        focus: redraw
+        ui_state: edited
+        ui_redraw: all
+      - text: "Clicking a bar only selects it. Yet the click handler calls the same redraw, so the table and the pie chart are rebuilt too, even though nothing they show has changed."
+        step: Every input redraws everything
+        note: Selecting a bar rebuilds all three displays.
+        visual: The click handler and the table and pie lines of redraw are marked. In the dashboard, the Games bar is highlighted and all three views redraw.
+        focus: redraw_all
+        ui_state: clicked
+        ui_redraw: all
+      - text: "Before we fix the design, predict the cost of a change. You must add a line chart and port the app to a phone. Which code must you edit, and why is that risky? Pause here if you want more thinking time."
+        step: Predict the cost of a new chart
+        note: Where would a line chart go?
+        visual: The whole class is unmarked. The dashboard highlights the Games bar.
+        prediction: true
+        pause_after: 6
+        ui_state: clicked
+        ui_redraw: all
+      - text: "Every one of those changes lands in the class that holds the data. That is the problem: user interfaces change all the time, and when the interface is tangled up with the data, every interface change risks breaking the data and spreads through the code."
+        step: The problem
+        note: Interface code is tangled up with the data.
+        visual: The redraw method is marked again. The dashboard highlights the Games bar.
+        focus: redraw
+        ui_state: clicked
+        ui_redraw: all
+      - text: "So a good solution has to meet four demands at once. Show the same data in different ways. Update every display immediately. Make the interface easy to change, even while the app runs. And port the interface to a new platform without touching the data."
+        source: "Buschmann et al., Pattern-Oriented Software Architecture, Vol. 1: Model-View-Controller, Problem"
+        step: Four demands on a solution
+        note: Many presentations; instant updates; easy interface changes; portable interfaces
+        visual: The data and the redraw method are marked together. The dashboard highlights the Games bar.
+        focus: redraw_all
+        ui_state: clicked
+        ui_redraw: all
+  - id: model_role
+    part: Solution
+    label: 'Solution, concretely: a class for the data'
+    title: The data plus a list of dependents
+    purpose: Move the data into a class that knows nothing about displays.
+    takeaway: The dataset knows its dependents only as things it can call update on.
+    code: model
+    diagram: solution
+    cues:
+      - text: "Here is the fix, one step at a time. First, move the data into its own class, Dataset; it will be our model. It stores minutes per category, the way users think about them, not pixels or widgets. Displays read it through rows, input changes it through set minutes, and nothing in it mentions a table, a bar, or a pie."
+        source: "Reenskaug, Models–Views–Controllers (technical note)"
+        step: A class for the data
+        note: rows() for reading, setMinutes() for changing
+        visual: The Dataset class and its rows and setMinutes methods are marked; Dataset is highlighted in the class diagram.
+        focus: data
+        diagram_focus: Dataset
+      - text: "Dataset also keeps a list of the objects that depend on it. Attach adds an entry and detach removes one. Anything with an update method can be on the list: every display, and any input handler whose behavior depends on the data."
+        step: A list of dependents
+        note: attach() and detach() manage the list.
+        visual: The Observer interface, the list, attach, and detach are marked; Observer is highlighted in the class diagram.
+        focus: registry
+        diagram_focus: Observer
+      - text: "Every method that changes the data calls notify once the change is complete. Notify calls update on everything on the list, one after another. Dataset announces that something changed; it never decides how anything is shown."
+        step: Announce every change
+        note: setMinutes() stores the minutes, then notifies.
+        visual: The notify loop and its call in setMinutes are marked; Dataset is highlighted in the class diagram.
+        focus: notify
+        diagram_focus: Dataset
+  - id: view_role
+    part: Solution
+    label: 'Solution, concretely: a class for each display'
+    title: Ask for the data, then draw it
+    purpose: Give each display its own class that redraws from the dataset.
+    takeaway: Views read the dataset and decide how to display it; they never own the data.
+    code: views
+    diagram: views
+    cues:
+      - text: "Second, give each display its own class; these are our views. The base View class keeps a reference to the dataset. Its update method is what the dataset calls: it asks the dataset for the current rows and redraws. Notice that the announcement carries no data; each view fetches exactly what it needs."
+        step: Update asks, then draws
+        note: update() calls rows(), then draw().
+        visual: The View class and its update method are marked; View is highlighted in the class diagram.
+        focus: update
+        diagram_focus: View
+      - text: "Each concrete view decides only how to draw. TableView prints minutes, BarChartView prints one hash mark per thirty minutes, and PieChartView computes each category's share of the total. None of them stores the data; each one recomputes its display from the dataset."
+        step: Each view draws its own way
+        note: The same rows, three presentations
+        visual: The draw methods of the three concrete views are marked; BarChartView is highlighted in the class diagram.
+        focus: draw
+        diagram_focus: BarChartView
+      - text: "A view can also change what it shows without touching the data. Highlight marks one category and redraws only this view. Scrolling and zooming work the same way: they change one view, not the dataset."
+        step: Some changes stay in one view
+        note: highlight() changes this view only.
+        visual: The highlight and mark methods are marked; View is highlighted in the class diagram.
+        focus: highlight
+        diagram_focus: View
+  - id: controller_role
+    part: Solution
+    label: 'Solution, concretely: a class for each kind of input'
+    title: Turn input into requests
+    purpose: Give input its own classes that turn events into requests.
+    takeaway: Controllers interpret input; they ask the dataset to change the data or their own view to change what it shows.
+    code: controllers
+    diagram: controllers
+    cues:
+      - text: "Third, give input its own classes; these are our controllers. Each one handles the input for one view. The base Controller knows its view and the dataset, and its handle event method receives each input event. The base version ignores every event, which is exactly how you make a view read-only: give it a controller that ignores input."
+        source: "Gamma et al., Design Patterns: Design Patterns in Smalltalk MVC"
+        step: The base controller ignores input
+        note: handleEvent() does nothing here.
+        visual: The base Controller class and its empty handleEvent are marked; Controller is highlighted in the class diagram.
+        focus: base
+        diagram_focus: Controller
+      - text: "TableController interprets edits. It turns an edit into a request to change the data: set minutes on the dataset. It does not touch any display; the views will hear about the change from the dataset."
+        step: Edits change the data
+        note: TableController calls dataset.setMinutes().
+        visual: TableController's handleEvent is marked; TableController is highlighted in the class diagram.
+        focus: table
+        diagram_focus: TableController
+      - text: "ChartController interprets clicks. A click on a bar becomes a request to its own view: highlight that category. The data is unchanged, so no other view redraws. Not every input changes the data."
+        step: Clicks change one view
+        note: ChartController calls view.highlight().
+        visual: ChartController's handleEvent is marked; ChartController is highlighted in the class diagram.
+        focus: chart
+        diagram_focus: ChartController
+      - text: "Controllers have an update method too, for when their behavior depends on the data. A Clear button that works only while there is data would need it. Ours do not, so their update does nothing, and they never join the dataset's list."
+        step: Controllers listen only when they need to
+        note: update() matters only if behavior depends on the data.
+        visual: The base Controller's empty update is marked; Controller is highlighted in the class diagram.
+        focus: update
+        diagram_focus: Controller
+  - id: collaborations
+    part: Solution
+    label: 'Solution, concretely: one edit through the classes'
+    title: Input changes the data; the data updates the views
+    purpose: Trace one input through the new classes.
+    takeaway: A controller changes the dataset, the dataset announces the change, and every view redraws from it.
+    code: wire
+    diagram: input
+    cues:
+      - text: "Now watch the new classes work together on one input. The user types ninety into the Study row. That edit reaches the table's controller, which calls set minutes on the dataset."
+        source: "Buschmann et al., Pattern-Oriented Software Architecture, Vol. 1: Model-View-Controller, Dynamics, first scenario"
+        step: Input reaches a controller
+        note: handleEvent() calls setMinutes().
+        visual: The table edit in the main program is marked. The sequence diagram shows the table's controller calling setMinutes on the dataset.
+        focus: edit
+        diagram_steps: 1
+      - text: "The dataset stores ninety and calls notify. Which objects receive update, and what does each one do next? Predict before the diagram continues."
+        step: Predict what happens next
+        note: Who receives update()?
+        visual: The sequence diagram still shows only the setMinutes call.
+        focus: edit
+        diagram_steps: 1
+        prediction: true
+        pause_after: 5
+      - text: "Every view on the list receives update. The table view asks the dataset for its rows and redraws. Study now shows ninety minutes."
+        step: The table asks and redraws
+        note: update() is followed by rows().
+        visual: The sequence diagram adds notify, then update on the table view and its rows call back to the dataset.
+        focus: edit
+        diagram_steps: 2
+      - text: "The bar chart does the same and grows two more hash marks for Study, and the pie chart recomputes its shares. Then control returns to the table's controller. That is the whole loop: a controller changes the dataset, the dataset announces the change, and every view redraws from it."
+        step: The whole loop
+        note: Controller changes the data; the dataset announces; views redraw.
+        visual: The sequence diagram adds update on the bar chart view and its rows call; every message of the edit is shown.
+        focus: edit
+        diagram_steps: 3
+      - text: "Now click the Games bar. The chart controller asks its own view to highlight Games, and only the bar chart redraws. The first design rebuilt every display on every click."
+        step: A click stays in one view
+        note: highlight() redraws only the bar chart.
+        visual: The bar chart click in the main program is marked. The sequence diagram still shows the whole edit.
+        focus: click
+        diagram_steps: 3
+  - id: setup
+    part: Solution
+    label: 'Solution, concretely: connecting the classes'
+    title: Create the dataset, then each view and its controller
+    purpose: Connect the classes without making the dataset depend on them.
+    takeaway: Set-up code creates the dataset first; each view joins its list and creates its own controller.
+    code: wire
+    diagram: setup
+    cues:
+      - text: "Before any input arrives, something must connect the pieces. That set-up code lives outside the dataset, views, and controllers, here in the main program. First it creates the dataset."
+        source: "Buschmann et al., Pattern-Oriented Software Architecture, Vol. 1: Model-View-Controller, Dynamics, second scenario"
+        step: Create the dataset
+        note: Set-up code lives outside the new classes.
+        visual: The set-up lines of the main program are marked. The sequence diagram shows main creating the dataset.
+        focus: setup
+        diagram_steps: 1
+      - text: "Next it creates each view, gives it the dataset, and initializes it. The view adds itself to the dataset's list."
+        step: Create each view
+        note: initialize() calls attach().
+        visual: The set-up lines stay marked. The sequence diagram adds main creating the bar chart view, calling initialize, and the view attaching itself to the dataset.
+        focus: setup
+        diagram_steps: 2
+      - text: "Then the view calls make controller to create its own controller. Each view class overrides that one method to choose the controller it needs, a small use of the Factory Method pattern. Finally the view draws itself, and the app starts handling input."
+        source: "Gamma et al., Design Patterns: Design Patterns in Smalltalk MVC"
+        step: Each view creates its controller
+        note: makeController() is a factory method.
+        visual: The set-up lines stay marked. The sequence diagram adds makeController, the creation of the view's controller, and the view reading rows to draw itself.
+        focus: setup
+        diagram_steps: 3
+  - id: solution
+    part: Solution
+    label: 'Solution, abstracted: Model, View, and Controller'
+    title: From our classes to the pattern's roles
+    purpose: Generalize the redesign into the pattern's three roles.
+    takeaway: The model holds the data, views display it, controllers handle input, and the model's change announcements keep every view in sync.
+    diagram: structure
+    cues:
+      - text: "Now step back. Remove the screen time and the charts, and three roles remain: they are the Model-View-Controller pattern. C R C cards summarize each role's responsibilities and the roles it works with. The Model, like our Dataset, holds the data and its rules, keeps a list of who depends on it, and tells them whenever the data changes."
+        source: "Buschmann et al., Pattern-Oriented Software Architecture, Vol. 1: Model-View-Controller, Structure"
+        step: The Model, like our Dataset
+        note: It holds the data, keeps a list of dependents, and tells them about changes.
+        visual: One CRC card, Model, lists its responsibilities and the roles it works with, View and Controller.
+        diagram_steps: 1
+      - text: "The View, like our table and charts, displays the data. Whenever the model reports a change, a view asks the model for the current data and redraws itself, and each view creates its own controller. One model can have many views."
+        step: The View, like our table and charts
+        note: It asks the model for data and redraws after each change.
+        visual: A second CRC card, View, appears below Model, working with Controller and Model.
+        diagram_steps: 2
+      - text: "The Controller, like our table and chart controllers, receives the user's input and decides what it means: a request to change the data, which goes to the model, or a request to change only what its own view shows. All input arrives through controllers."
+        step: The Controller, like our input classes
+        note: Input becomes a request to the model or to its own view.
+        visual: A third CRC card, Controller, appears, working with View and Model.
+        diagram_steps: 3
+      - text: "A UML class diagram shows how the roles interact. Views and controllers point to the model, but the model points only to the Observer interface: its list of dependents. That list is the Observer pattern you already know, and it is the model's only link back to the screen."
+        step: The model knows only its list
+        note: The model's list of dependents is the Observer pattern.
+        visual: A class diagram of the roles. Model notifies any number of Observers; View implements Observer, reads the Model, and creates its Controller; Controller changes the Model and asks its View to change what it shows. Observer is highlighted.
+        diagram: roles
+        diagram_focus: Observer
+      - text: "Follow the arrows for one input. It enters at a Controller, which asks the Model to change. The Model notifies everything on its list, and each View reads the Model and redraws. A Controller can also ask its own View to change what it shows. No arrow ever points from the Model to a specific view or controller."
+        step: Follow the arrows
+        note: Controller to Model, Model to Observer, View back to Model
+        visual: The class diagram of the roles with Controller highlighted, showing its arrows to Model and to View.
+        diagram: roles
+        diagram_focus: Controller
+  - id: consequences
+    part: Consequences
+    label: 'Consequences: benefits and liabilities'
+    title: Flexible interfaces, more moving parts
+    purpose: Weigh what the pattern buys against what it costs.
+    takeaway: Model-View-Controller buys flexible, synchronized views at the cost of more classes and code that depends on the model.
+    cues:
+      - text: "Now the consequences, starting with what you gain. You can show the same data in many views at once, like our three charts. Those views stay in sync automatically, because every change goes through the model. And you can swap views and controllers, even while the app runs: give the table a controller that ignores input, and it becomes read-only."
+        source: "Buschmann et al., Pattern-Oriented Software Architecture, Vol. 1: Model-View-Controller, Consequences"
+        step: Gains for views and controllers
+        note: Many views, always in sync, and swappable
+        visual: A summary of the benefits many views of one model, views that stay in sync, and swappable views and controllers.
+      - text: "You also gain freedom to change the interface. A phone version needs new views and controllers, but the same model. And general-purpose views and controllers, such as tables, lists, and buttons, can be reused across many apps."
+        step: Gains for change and reuse
+        note: Port the interface; reuse views and controllers
+        visual: A summary of the benefits a portable interface and reusable views and controllers.
+      - text: "The costs are real too. Three roles mean more classes and more wiring, which a single label or menu does not justify. A burst of changes can trigger many redraws, and views that ask the model for data again and again can be slow. A model can say which part changed, so views can skip updates that do not concern them."
+        source: "Krasner and Pope, A Cookbook for Using the Model-View-Controller User Interface Paradigm in Smalltalk-80"
+        step: Costs in complexity and updates
+        note: More classes; many redraws; repeated queries
+        visual: A summary of the liabilities more classes, many redraws, and repeated queries to the model.
+      - text: "Coupling also remains. A view and its controller are made for each other, so you rarely reuse one without the other. Both call the model directly, so changing the model's interface breaks them. And because updates travel through announcements, reading the code alone rarely tells you why a view redrew."
+        source: "Fowler, GUI Architectures"
+        step: Costs in coupling
+        note: View and controller pairs; direct model calls; hidden update paths
+        visual: A summary of the liabilities of coupling between views, controllers, and the model.
+  - id: applicability
+    part: Context
+    label: 'Context revisited: when to use Model-View-Controller'
+    title: Is the interface the part that changes?
+    purpose: Decide whether the pattern's context holds before applying it.
+    takeaway: Use the pattern when one model needs several changing views and ways of editing it.
+    cues:
+      - text: "With those trade-offs in mind, revisit the context. Use Model-View-Controller when an interactive app shows the same data in several ways and its interface keeps changing. For a small dialog with one fixed display, simple direct calls are clearer."
+        step: Use it where the interface varies
+        note: Several views; a changing interface
+        visual: A summary of when to use the pattern and when direct calls are clearer.
+      - text: "You will often see view and controller merged. Many toolkits, and the components you write in web frameworks, both draw and handle their own input. That variant still keeps several views in sync with one model, but you can no longer swap a view's controller."
+        source: "Buschmann et al., Pattern-Oriented Software Architecture, Vol. 1: Model-View-Controller, Variants"
+        step: View and controller, merged
+        note: Still in sync, but controllers can no longer be swapped
+        visual: A summary of the variant that merges view and controller into one component.
+      - text: "Finally, do not reduce the pattern to Observer. Three smaller patterns work together inside it: Observer between the model and its views, Strategy for the swappable controller of a view, and Composite for views nested inside other views. And server-side web MVC only borrows the name: a controller handles a request and picks a page to render, and the model does not notify any views."
+        source: "Gamma et al., Design Patterns: Design Patterns in Smalltalk MVC"
+        step: Not just Observer, and not web MVC
+        note: Observer, Strategy, and Composite work together inside it.
+        visual: A summary that relates Model-View-Controller to Observer, Strategy, and Composite, and distinguishes it from server-side web MVC.
+  - id: transfer
+    label: Apply the pattern
+    title: Add a line chart and a read-only view
+    purpose: Extend the visualizer without touching the model.
+    takeaway: New ways to show or edit the data are new views and controllers; the model stays the same.
+    ui: true
+    cues:
+      - text: "One last design check. Your users want a line chart of the same minutes, plus a shared, read-only copy of the pie chart for a group chat. Which classes do you add, and what stays unchanged? Explain before continuing."
+        step: Add a chart and a read-only copy
+        note: Which roles change?
+        visual: The dashboard shows a read-only pie chart that ignored an attempted edit; Games stays highlighted in the bar chart.
+        prediction: true
+        pause_after: 6
+        ui_state: readonly
+      - text: "Add a LineChartView with its own draw method, and let its make controller choose a controller. Create and initialize it in the set-up code, and it adds itself to the dataset's list. The shared pie chart is just another PieChartView whose controller ignores input. The dataset stays unchanged."
+        step: New views, the same model
+        note: A LineChartView and set-up code; the Dataset is unchanged.
+        visual: The dashboard shows the read-only pie chart unchanged after the ignored edit.
+        ui_state: readonly
+  - id: summary
+    label: 'Summary: the whole pattern'
+    title: Context, problem, solution, consequences
+    purpose: Recall every part of Model-View-Controller before the summary quiz.
+    takeaway: Context, problem, solution, and consequences make up the mental model for every pattern.
+    cards:
+      - title: Context
+        text: Interactive apps whose interface keeps changing while users edit the data.
+      - title: Problem
+        text: When the interface is tangled up with the data, every new display or port risks breaking the data.
+      - title: Solution
+        text: A model holds the data and announces changes; views redraw from it; controllers turn input into requests.
+      - title: Consequences
+        text: Many synchronized, swappable views and a portable interface, at the cost of more classes, extra redraws, and code that depends on the model.
+    cues:
+      - text: "To finish, recall the whole pattern. Context: interactive apps whose interface keeps changing. Problem: when the interface is tangled up with the data, every interface change risks breaking the data. Solution: a model holds the data and announces changes, views redraw themselves from the model, and controllers turn input into requests. Consequences: many synchronized, swappable views and a portable interface, at the cost of more classes, extra redraws, and views and controllers that depend on the model. The summary quiz checks each part on a new example."
+        step: Model-View-Controller in four parts
+        note: Context, problem, solution, consequences
+        visual: Four cards summarize the pattern's context, problem, solution, and consequences.

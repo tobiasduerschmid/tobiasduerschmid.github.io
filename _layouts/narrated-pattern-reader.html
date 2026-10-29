@@ -1,5 +1,20 @@
 <!DOCTYPE html>
+{%- comment -%}
+  The reading and print views of a narrated lesson: a design-pattern lesson
+  (_data/narrated_patterns.yml) or a video narration (_data/video_narrations.yml,
+  front matter `video_narration: true`). Front matter: topic, print_view.
+{%- endcomment -%}
+{%- if page.video_narration -%}
+{%- assign lesson = site.data.video_narrations[page.topic] -%}
+{%- assign root_class = 'video-narration' -%}
+{%- assign anchor = page.topic | append: '-video' -%}
+{%- assign lesson_css = '/css/video-narration.css' -%}
+{%- else -%}
 {%- assign lesson = site.data.narrated_patterns[page.topic] -%}
+{%- assign root_class = 'narrated-pattern' -%}
+{%- assign anchor = page.topic | append: '-animation' -%}
+{%- assign lesson_css = '/css/' | append: page.topic | append: '-narration.css' -%}
+{%- endif -%}
 {%- assign explainer = site.data.explainers[page.topic] -%}
 {%- capture examples_key %}{{ page.topic }}_code{% endcapture -%}
 {%- assign examples = site.data.explainers[examples_key] %}
@@ -17,26 +32,26 @@
   <link rel="stylesheet" href="{{ '/css/narrated-explainer.css' | relative_url }}">
   <link rel="stylesheet" href="{{ '/css/narrated-pattern.css' | relative_url }}">
   <link rel="stylesheet" href="{{ '/css/narrated-pattern-document.css' | relative_url }}">
-  <link rel="stylesheet" href="{{ '/css/' | append: page.topic | append: '-narration.css' | relative_url }}">
+  <link rel="stylesheet" href="{{ lesson_css | relative_url }}">
   <link rel="stylesheet" href="{{ '/css/print-light.css' | relative_url }}">
 </head>
 <body class="np-reader-page">
   <a href="#main-content" class="np-reader-skip">Skip to lesson</a>
-  <main id="main-content" class="narrated-explainer narrated-pattern {{ page.topic }}-animation np-document-page" tabindex="-1">
+  <main id="main-content" class="narrated-explainer narrated-lesson {{ root_class }} {{ anchor }} np-document-page" tabindex="-1">
     <header>
       <h1>{{ explainer.title }}</h1>
-      <p>Read at your own pace. Every step pairs the explanation with its code and visualizations. {{ lesson.prerequisites }}</p>
+      <p>Read at your own pace. Every step pairs the explanation with its {% if explainer.languages %}code and visualizations{% else %}slides, diagrams, and a description of each animation{% endif %}. {{ lesson.prerequisites }}</p>
       <nav class="np-view-links" aria-label="Lesson views">
-        <a data-np-view-link href="{{ lesson.chapter | append: '#' | append: page.topic | append: '-animation' | relative_url }}">Back to narrated version</a> ·
-        {% if page.print_view %}<a data-np-view-link href="{{ lesson.views | append: '/read/' | relative_url }}">Reading view</a>{% else %}<a data-np-view-link href="{{ lesson.views | append: '/print/' | relative_url }}">Print view</a>{% endif %}
+        <a data-np-view-link href="{{ lesson.chapter | append: '#' | append: anchor | relative_url }}">Back to narrated version</a> ·
+        {% if page.print_view %}<a data-np-view-link href="{{ lesson.views | append: '/read/' | relative_url }}">Reading view</a>{% else %}<a data-np-view-link href="{{ lesson.views | append: '/print/' | relative_url }}">Print view</a>{% endif %}{% if page.video_narration %}{% capture notes_key %}{{ page.topic }}_notes{% endcapture %}{% if site.data.explainers[notes_key] %} · <a href="{{ lesson.views | append: '/notes/' | relative_url }}">Lesson notes with pictures</a>{% endif %}{% endif %}
       </nav>
       <div class="np-document-controls" hidden>
-        <label>Code language <select data-document-language>{% for language in explainer.languages %}<option value="{{ language }}">{{ examples[language].label }}</option>{% endfor %}</select></label>
+        {% if explainer.languages %}<label>Code language <select data-document-language>{% for language in explainer.languages %}<option value="{{ language }}">{{ examples[language].label }}</option>{% endfor %}</select></label>{% endif %}
         <button type="button" data-document-print>Print / Save as PDF</button>
         {% unless page.print_view %}<button type="button" data-document-theme aria-pressed="false">Dark mode</button>{% endunless %}
       </div>
-      <noscript><p>All four languages are included below. Use your browser’s Print command to print this document.</p></noscript>
-      <details class="np-reading-contents"><summary>Lesson sections</summary><nav aria-label="Lesson sections"><ol>{% for scene in explainer.scenes %}<li><a href="#{{ page.topic }}-reading-{{ scene.id }}">{{ scene.label | escape }}</a></li>{% endfor %}<li><a href="#{{ page.topic }}-reading-complete-examples">Complete examples</a></li></ol></nav></details>
+      {% if explainer.languages %}<noscript><p>All four languages are included below. Use your browser’s Print command to print this document.</p></noscript>{% endif %}
+      <details class="np-reading-contents"><summary>Lesson sections</summary><nav aria-label="Lesson sections"><ol>{% for scene in explainer.scenes %}<li><a href="#{{ page.topic }}-reading-{{ scene.id }}">{{ scene.label | escape }}</a></li>{% endfor %}{% if explainer.languages %}<li><a href="#{{ page.topic }}-reading-complete-examples">Complete examples</a></li>{% endif %}</ol></nav></details>
     </header>
     <h2>Lesson steps</h2>
     {{ content }}

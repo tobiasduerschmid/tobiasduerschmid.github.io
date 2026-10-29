@@ -26,6 +26,8 @@ decks:
   - testdoubles
   - tdd
   - dev_practice_refactoring
+  - git_advanced
+  - debugging
 
 other:
   - design_pattern_observer
@@ -36,5 +38,4 @@ other:
   - uml_sequence_diagram_examples
   - security
   - dev_practice_genai
-  - debugging
   - process_people_tailoring

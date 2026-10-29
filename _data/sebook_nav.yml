@@ -121,6 +121,13 @@ topics:
         url: /SEBook/testing/test-doubles-tutorial.html
 
 
+  - name: PlusCal and Temporal Logic
+    icon: null
+    url: /SEBook/verification/pluscal-tutorial
+    subtopics:
+      - name: TLA+ and PlusCal
+        url: /SEBook/verification/tla-tutorial
+
   - name: UML
     icon: null
     url: /SEBook/uml.html

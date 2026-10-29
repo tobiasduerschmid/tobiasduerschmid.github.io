@@ -62,9 +62,11 @@ def render(args):
             pause = np.zeros(round(sample_rate * cue.get("pause_after", 0.55)), dtype="float32")
             start = samples_so_far / sample_rate
             frames.extend([samples, pause])
+            # Speech ends before the pause; animated stages time words within it.
+            speech_end = (samples_so_far + len(samples)) / sample_rate
             samples_so_far += len(samples) + len(pause)
             end = samples_so_far / sample_rate
-            timing["cues"].append({"start": start, "end": end})
+            timing["cues"].append({"start": start, "end": end, "speech_end": speech_end})
             script.append(spoken)
             captions.extend([f"{scene['id']}-{index + 1}", f"{timestamp(start)} --> {timestamp(end)}", cue["text"], ""])
             print(f"{scene['id']} {index + 1}: {start:.2f} - {end:.2f}", flush=True)
@@ -91,7 +93,7 @@ def render(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--topic", choices=["nodejs", "react", "observer", "state", "therac25", "cloudflare2019"], required=True)
+    parser.add_argument("--topic", choices=["nodejs", "react", "observer", "state", "strategy", "mvc", "scrum", "therac25", "cloudflare2019"], required=True)
     parser.add_argument("--model", required=True)
     parser.add_argument("--voices", required=True)
     parser.add_argument("--work-dir")

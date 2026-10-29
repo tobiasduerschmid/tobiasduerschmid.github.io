@@ -1,4 +1,5 @@
-/* Narrated pattern lessons share the SEBook language preference; URLs can select a view. */
+/* Narrated lessons share the SEBook language preference; URLs can select a view.
+   A lesson without code has no language control and carries only the theme. */
 (function () {
   'use strict';
   const params = new URLSearchParams(window.location.search);
@@ -27,7 +28,7 @@
   function updateViewLinks(lesson, language) {
     lesson.querySelectorAll('[data-np-view-link]').forEach(link => {
       const target = new URL(link.href);
-      target.searchParams.set('language', language);
+      if (language) target.searchParams.set('language', language);
       target.searchParams.set('theme', selectedTheme());
       link.href = target.href;
     });
@@ -40,12 +41,8 @@
     window.history.replaceState(window.history.state, '', current.href);
   }
 
-  function enhancePreferences(lesson) {
-    // Combined course pages may load this script once per embedded lesson.
-    if (lesson.dataset.npPreferences) return;
-    lesson.dataset.npPreferences = 'enhanced';
+  function followLanguagePreference(lesson, language) {
     const preferences = window.SEBookCodePreferences;
-    const language = lesson.querySelector('[data-setting="language"], [data-document-language]');
     const available = Array.from(language.options, option => option.value);
     const requestedLanguage = params.get('language');
     if (available.includes(requestedLanguage)) {
@@ -59,13 +56,21 @@
       language.dispatchEvent(new CustomEvent('sebook:languagechange'));
     });
     language.addEventListener('change', () => preferences.set(language.value));
+  }
+
+  function enhancePreferences(lesson) {
+    // Combined course pages may load this script once per embedded lesson.
+    if (lesson.dataset.npPreferences) return;
+    lesson.dataset.npPreferences = 'enhanced';
+    const language = lesson.querySelector('[data-setting="language"], [data-document-language]');
+    if (language) followLanguagePreference(lesson, language);
 
     const themeButton = lesson.querySelector('[data-document-theme]');
     const siteThemeToggle = document.getElementById('darkModeToggle');
     function updateTheme() {
       if (themeButton) themeButton.setAttribute('aria-pressed', String(selectedTheme() === 'dark'));
       if (siteThemeToggle) siteThemeToggle.checked = selectedTheme() === 'dark';
-      updateViewLinks(lesson, language.value);
+      updateViewLinks(lesson, language && language.value);
     }
     updateTheme();
     // Real hrefs also preserve preferences when copied or opened in a new tab.
@@ -80,7 +85,7 @@
 
   function init() {
     applyRequestedTheme();
-    document.querySelectorAll('.narrated-pattern').forEach(enhancePreferences);
+    document.querySelectorAll('.narrated-lesson').forEach(enhancePreferences);
   }
   // Deferred scripts run while readyState is interactive, before the site's
   // DOMContentLoaded handlers initialize its theme controls from saved preferences.

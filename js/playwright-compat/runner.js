@@ -155,6 +155,11 @@
     this.dispose = function () {
       if (disposed) return;
       disposed = true;
+      // Stop preview-side action retries as well as the worker-side requests.
+      // Otherwise an abandoned click could fire after the user starts a new run.
+      postPortMessage(port, {
+        type: requestType, id: ++sequence, commandType: 'cancel-actions', payload: {},
+      });
       removePortEventListener(port, 'message', handleMessage);
       Object.keys(pending).forEach(function (id) {
         pending[id].reject(new NativeError('Playwright runner was disposed'));
@@ -303,14 +308,22 @@
 
   Locator.prototype.isVisible = function () {
     return this._page._command('assert', { assertion: 'visibleLoose', locator: this._steps })
-      .then(function (result) { return !!result.pass; });
+      .then(function (result) {
+        if (result.error) throw new Error(result.message);
+        return !!result.pass;
+      });
   };
 
-  function Page(broker) {
+  function Page(broker, timeout) {
     this._broker = broker;
+    this._timeout = timeout || 5000;
+    this._lastAssertionMessage = '';
   }
 
   Page.prototype._command = function (type, payload, timeout) {
+    if (type === 'action') {
+      payload = Object.assign({}, payload, { options: Object.assign({ timeout: this._timeout }, payload.options) });
+    }
     return this._broker.command(type, payload, timeout);
   };
 
@@ -385,14 +398,19 @@
         }).then(function (result) {
           var pass = !!(result && result.pass);
           lastMessage = result && result.message || '';
-          if (negate ? !pass : pass) return true;
+          if (result && result.error) throw new Error(lastMessage);
+          if (negate ? !pass : pass) {
+            locator._page._lastAssertionMessage = '';
+            return true;
+          }
+          locator._page._lastAssertionMessage = lastMessage || ('Expected locator ' + (negate ? 'not ' : '') + assertion);
           if (Date.now() >= deadline) {
             throw new Error(lastMessage || ('Expected locator ' + (negate ? 'not ' : '') + assertion));
           }
           return delay(80).then(attempt);
         }).catch(function (err) {
           lastMessage = err && err.message || String(err);
-          if (negate && assertion === 'visible') return true;
+          locator._page._lastAssertionMessage = lastMessage;
           if (Date.now() >= deadline) throw err;
           return delay(80).then(attempt);
         });
@@ -531,6 +549,8 @@
     this.testFiles = options.testFiles || [];
     this.timeout = options.timeout || 5000;
     this.resetBetweenTests = options.resetBetweenTests !== false;
+    this.freshPreview = options.freshPreview === true;
+    this.hasRunTest = false;
     this.rebuildPreview = options.rebuildPreview;
     this.registry = [];
   }
@@ -567,11 +587,15 @@
     var self = this;
     if (testCase.skip) {
       if (this.watchdog) this.watchdog.arm(this.timeout, 'Playwright test scheduling');
-      return NativePromise.resolve(true);
+      return NativePromise.resolve({ passed: true, detail: '' });
     }
     var broker;
+    var page;
+    var timeoutId;
     var work = NativePromise.resolve();
-    if (this.resetBetweenTests && this.rebuildPreview) {
+    var needsReset = this.resetBetweenTests && !(this.freshPreview && !this.hasRunTest);
+    this.hasRunTest = true;
+    if (needsReset && this.rebuildPreview) {
       if (this.watchdog) this.watchdog.arm(this.resetTimeout, 'React preview reset');
       work = work.then(function () { return self.rebuildPreview(); });
     } else if (this.watchdog) {
@@ -588,29 +612,50 @@
         port: self.port,
         requestType: self.requestType,
       });
-      var page = new Page(broker);
+      page = new Page(broker, self.timeout);
       var fixtures = { page: page };
       var chain = page.goto('/');
       testCase.beforeEach.forEach(function (hook) {
         chain = chain.then(function () { return hook(fixtures); });
       });
       chain = chain.then(function () { return testCase.fn(fixtures); });
-      testCase.afterEach.forEach(function (hook) {
-        chain = chain.then(function () { return hook(fixtures); });
+      function runAfterEach() {
+        var failed = false;
+        var firstFailure;
+        return testCase.afterEach.reduce(function (hooks, hook) {
+          return hooks.then(function () { return hook(fixtures); }).catch(function (error) {
+            // Every cleanup hook gets its turn, including outer scopes. Keep
+            // the first failure so a later cleanup cannot hide its cause.
+            if (!failed) {
+              failed = true;
+              firstFailure = error;
+            }
+          });
+        }, NativePromise.resolve()).then(function () {
+          if (failed) throw firstFailure;
+        });
+      }
+      chain = chain.then(runAfterEach, function (failure) {
+        return runAfterEach().then(function () { throw failure; }, function () { throw failure; });
       });
       return NativePromise.race([
         chain,
-        delay(self.timeout).then(function () {
-          throw new NativeError('Test timed out after ' + self.timeout + 'ms');
+        new NativePromise(function (_, reject) {
+          timeoutId = scheduleTimeout(function () {
+            var detail = page._lastAssertionMessage;
+            reject(new NativeError('Test timed out after ' + self.timeout + 'ms' + (detail ? ': ' + detail : '')));
+          }, self.timeout);
         }),
       ]);
     }).then(function () {
       if (broker) broker.dispose();
-      return true;
+      cancelTimeout(timeoutId);
+      return { passed: true, detail: '' };
     }).catch(function (err) {
       if (broker) broker.dispose();
+      cancelTimeout(timeoutId);
       console.warn('[PlaywrightCompat] ' + testCase.title + ' failed:', err && err.message || err);
-      return false;
+      return { passed: false, detail: errorMessage(err) };
     });
   };
 
@@ -622,12 +667,14 @@
       return NativePromise.resolve({
         tests: [{ description: 'Load ' + loadError.filename }],
         results: [false],
+        details: [errorMessage(loadError.error)],
       });
     }
     if (!this.registry.length) {
       return NativePromise.resolve({
         tests: [{ description: 'At least one Playwright test is defined' }],
         results: [false],
+        details: ['No runnable test definitions were found in the selected files.'],
       });
     }
     var tests = this.registry.map(function (item) {
@@ -636,21 +683,25 @@
       return result;
     });
     var results = [];
+    var details = [];
     var chain = NativePromise.resolve();
     this.registry.forEach(function (testCase, index) {
       chain = chain.then(function () {
         return this._runOne(testCase).then(function (result) {
-          results[index] = result;
+          results[index] = result.passed;
+          details[index] = result.detail;
         });
       }.bind(this));
     }, this);
-    return chain.then(function () { return { tests: tests, results: results }; });
+    return chain.then(function () { return { tests: tests, results: results, details: details }; });
   };
 
   function agentScript(config) {
     config = config || {};
     var testIdAttribute = config.testIdAttribute || 'data-testid';
     return '(' + function (tidAttr) {
+      const scheduleActionRetry = window.setTimeout.bind(window);
+      let actionGeneration = 0;
       function normalizeText(value) {
         return String(value == null ? '' : value).replace(/\s+/g, ' ').trim();
       }
@@ -660,7 +711,7 @@
         if (matcher.type === 'regex') {
           return new RegExp(matcher.source, matcher.flags || '').test(value);
         }
-        if (matcher.type === 'array') return matcher.items.some(function (m) { return matches(value, m, exact); });
+        if (matcher.type === 'array') throw new Error('An array matcher requires a list of elements');
         var expected = normalizeText(matcher.value);
         return exact ? value === expected : value.toLowerCase().indexOf(expected.toLowerCase()) !== -1;
       }
@@ -680,9 +731,43 @@
         if (!el || !el.ownerDocument || !el.isConnected) return false;
         if (el.hidden) return false;
         var style = el.ownerDocument.defaultView.getComputedStyle(el);
-        if (!style || style.display === 'none' || style.visibility === 'hidden' || Number(style.opacity) === 0) return false;
-        var rects = el.getClientRects();
-        return !!(rects && rects.length);
+        if (!style || style.display === 'none' || style.visibility === 'hidden' || style.visibility === 'collapse') return false;
+        const rect = el.getBoundingClientRect();
+        return rect.width > 0 && rect.height > 0;
+      }
+      function hiddenFromRole(el) {
+        if (el.closest('[aria-hidden="true"], [hidden]')) return true;
+        for (let node = el; node && node.nodeType === 1; node = node.parentElement) {
+          const style = node.ownerDocument.defaultView.getComputedStyle(node);
+          if (style.display === 'none') return true;
+        }
+        const style = el.ownerDocument.defaultView.getComputedStyle(el);
+        return style.visibility === 'hidden' || style.visibility === 'collapse';
+      }
+      function disabled(el) {
+        if (el.matches(':disabled')) return true;
+        const owner = el.closest('[aria-disabled]');
+        return !!owner && owner.getAttribute('aria-disabled') === 'true';
+      }
+      function roleState(el, state) {
+        if (state === 'disabled') return disabled(el);
+        if (state === 'checked' && /^(checkbox|radio)$/.test(el.type || '')) {
+          return el.indeterminate ? 'mixed' : el.checked;
+        }
+        if (state === 'selected' && el.tagName === 'OPTION') return el.selected;
+        const value = el.getAttribute('aria-' + state);
+        return value === 'true' ? true : value === 'false' ? false : value;
+      }
+      function roleOptionsMatch(el, options) {
+        if (!options.includeHidden && hiddenFromRole(el)) return false;
+        if (options.level !== undefined) {
+          const level = el.getAttribute('aria-level') || (/^H[1-6]$/.test(el.tagName) ? el.tagName.slice(1) : null);
+          if (Number(level) !== Number(options.level)) return false;
+        }
+        for (const state of ['checked', 'pressed', 'selected', 'expanded', 'disabled']) {
+          if (options[state] !== undefined && roleState(el, state) !== options[state]) return false;
+        }
+        return options.name === undefined || matches(nameOf(el), options.name, options.exact);
       }
       function roleOf(el) {
         var explicit = el.getAttribute && el.getAttribute('role');
@@ -692,11 +777,13 @@
         if (tag === 'button') return 'button';
         if (tag === 'a' && el.hasAttribute('href')) return 'link';
         if (tag === 'input' && ['button', 'submit', 'reset'].indexOf(type) !== -1) return 'button';
-        if (tag === 'input' && ['text', 'email', 'search', 'tel', 'url', 'password', 'number', ''].indexOf(type) !== -1) return 'textbox';
+        if (tag === 'input' && ['text', 'email', 'tel', 'url', 'password', ''].indexOf(type) !== -1) return 'textbox';
+        if (tag === 'input' && type === 'search') return 'searchbox';
+        if (tag === 'input' && type === 'number') return 'spinbutton';
         if (tag === 'textarea') return 'textbox';
         if (tag === 'input' && type === 'checkbox') return 'checkbox';
         if (tag === 'input' && type === 'radio') return 'radio';
-        if (tag === 'select') return 'combobox';
+        if (tag === 'select') return el.multiple || el.size > 1 ? 'listbox' : 'combobox';
         if (/^h[1-6]$/.test(tag)) return 'heading';
         if (tag === 'ul' || tag === 'ol') return 'list';
         if (tag === 'li') return 'listitem';
@@ -706,6 +793,7 @@
         if (tag === 'td') return 'cell';
         if (tag === 'th') return 'columnheader';
         if (tag === 'option') return 'option';
+        if (tag === 'output') return 'status';
         return '';
       }
       function textOf(el) {
@@ -770,8 +858,7 @@
             var opts = step.options || {};
             out = out.concat(allElements(root).filter(function (el) {
               if (roleOf(el) !== step.role) return false;
-              if (opts.level && /^h[1-6]$/i.test(el.tagName || '') && Number((el.tagName || '').slice(1)) !== Number(opts.level)) return false;
-              return opts.name === undefined || matches(nameOf(el), opts.name, opts.exact);
+              return roleOptionsMatch(el, opts);
             }));
           } else if (step.kind === 'text') {
             var candidates = allElements(root).filter(function (el) {
@@ -877,10 +964,8 @@
           window.scrollTo(Math.max(0, targetX), Math.max(0, targetY));
         }
       }
-      function handleAction(payload) {
-        var el = strictOne(payload.locator);
+      function performAction(el, payload) {
         var action = payload.action;
-        scrollIntoViewWithinIframe(el);
         if (action === 'click') {
           fire(el, 'mouseover'); fire(el, 'mousemove'); fire(el, 'mousedown'); fire(el, 'mouseup'); fire(el, 'click');
         } else if (action === 'fill') {
@@ -891,8 +976,10 @@
           el.focus(); setValue(el, String(el.value || '') + String(payload.value || ''));
         } else if (action === 'check' || action === 'uncheck') {
           if (!/^(input)$/i.test(el.tagName || '') || !/^(checkbox|radio)$/i.test(el.type || '')) throw new Error(action + '() target is not a checkbox or radio');
-          el.checked = action === 'check';
-          fire(el, 'input'); fire(el, 'change'); fire(el, 'click');
+          const checked = action === 'check';
+          if (el.checked === checked) return true;
+          fire(el, 'click');
+          if (el.checked !== checked) throw new Error(action + '() did not change the checked state');
         } else if (action === 'press') {
           fire(el, 'keydown', { key: payload.key }); fire(el, 'keyup', { key: payload.key });
         } else if (action === 'hover') {
@@ -906,19 +993,105 @@
         }
         return true;
       }
+      function actionabilityProblem(el, action, options) {
+        if (!visible(el)) return 'Element is not visible';
+        if (action !== 'hover' && disabled(el)) return 'Element is disabled';
+        if (['fill', 'type', 'press'].includes(action) && (el.readOnly || el.getAttribute('aria-readonly') === 'true')) {
+          return 'Element is not editable';
+        }
+        if (['click', 'check', 'uncheck', 'hover'].includes(action) && !options.force) {
+          const rect = el.getBoundingClientRect();
+          const left = Math.max(0, rect.left), top = Math.max(0, rect.top);
+          const right = Math.min(window.innerWidth, rect.right), bottom = Math.min(window.innerHeight, rect.bottom);
+          if (right <= left || bottom <= top) return 'Element is outside the preview viewport';
+          const hit = document.elementFromPoint((left + right) / 2, (top + bottom) / 2);
+          if (!hit || (hit !== el && !el.contains(hit))) return 'Element does not receive pointer events';
+        }
+        return '';
+      }
+      function handleAction(payload) {
+        const options = payload.options || {};
+        const timeout = Number(options.timeout) > 0 ? Number(options.timeout) : 5000;
+        const deadline = Date.now() + timeout;
+        const generation = actionGeneration;
+        let previousElement, previousRect;
+        const needsStablePosition = ['click', 'check', 'uncheck', 'hover'].includes(payload.action);
+
+        return new Promise((resolveAction, rejectAction) => {
+          function attempt() {
+            if (generation !== actionGeneration) {
+              rejectAction(new Error('Playwright action was cancelled'));
+              return;
+            }
+            try {
+              const nodes = resolve(payload.locator);
+              if (nodes.length > 1) throw new Error('Strict locator expected 1 element, found ' + nodes.length);
+              const el = nodes[0];
+              let problem = el ? '' : 'Locator did not match an element';
+              if (el) {
+                scrollIntoViewWithinIframe(el);
+                problem = actionabilityProblem(el, payload.action, options);
+                const rect = el.getBoundingClientRect();
+                const position = [rect.x, rect.y, rect.width, rect.height].join(',');
+                if (!problem && needsStablePosition && (previousElement !== el || previousRect !== position)) {
+                  problem = 'Element is not yet stable';
+                }
+                previousElement = el;
+                previousRect = position;
+              }
+              if (!problem) {
+                resolveAction(options.trial ? true : performAction(el, payload));
+                return;
+              }
+              if (Date.now() >= deadline) throw new Error(payload.action + '() timed out: ' + problem);
+              scheduleActionRetry(attempt, 32);
+            } catch (error) {
+              rejectAction(error);
+            }
+          }
+          attempt();
+        });
+      }
+      function checkTextList(nodes, expected, contains) {
+        const values = nodes.map(textOf);
+        let index = 0;
+        for (const matcher of expected.items) {
+          if (contains) {
+            while (index < values.length && !matchesAssertionText(values[index], matcher, true)) index++;
+          }
+          if (index >= values.length || !matchesAssertionText(values[index], matcher, contains)) return false;
+          index++;
+        }
+        return contains || index === values.length;
+      }
+      function matchesAssertionText(value, matcher, contains) {
+        if (matcher.type === 'regex') return matches(value, matcher, true);
+        const actual = normalizeText(value), expected = normalizeText(matcher.value);
+        return contains ? actual.includes(expected) : actual === expected;
+      }
+      function describeMatcher(matcher) {
+        if (matcher.type === 'regex') return '/' + matcher.source + '/' + (matcher.flags || '');
+        if (matcher.type === 'array') return '[' + matcher.items.map(describeMatcher).join(', ') + ']';
+        return JSON.stringify(matcher.value);
+      }
       function checkAssertion(payload) {
         var nodes = resolve(payload.locator);
         var a = payload.assertion;
         function fail(msg) { return { pass: false, message: msg }; }
         function pass() { return { pass: true, message: '' }; }
         if (a === 'count') return nodes.length === Number(payload.expected) ? pass() : fail('Expected count ' + payload.expected + ', got ' + nodes.length);
-        if (a === 'hidden') return nodes.length === 0 || nodes.every(function (el) { return !visible(el); }) ? pass() : fail('Expected element to be hidden');
-        if (a === 'visibleLoose') return nodes.some(visible) ? pass() : fail('Expected at least one visible element');
+        if ((a === 'text' || a === 'containText') && payload.expected && payload.expected.type === 'array') {
+          return checkTextList(nodes, payload.expected, a === 'containText') ? pass() :
+            fail('Expected list text ' + describeMatcher(payload.expected) + ', got ' + JSON.stringify(nodes.map(textOf)));
+        }
+        if (nodes.length > 1) return { pass: false, error: true, message: 'Strict locator expected 1 element, found ' + nodes.length };
+        if (a === 'hidden') return nodes.length === 0 || !visible(nodes[0]) ? pass() : fail('Expected element to be hidden');
+        if (a === 'visibleLoose') return nodes.length === 1 && visible(nodes[0]) ? pass() : fail('Expected element to be visible');
         if (nodes.length !== 1) return fail('Strict locator expected 1 element, found ' + nodes.length);
         var el = nodes[0];
         if (a === 'visible') return visible(el) ? pass() : fail('Expected element to be visible');
-        if (a === 'text') return matches(textOf(el), payload.expected, true) ? pass() : fail('Expected text ' + JSON.stringify(payload.expected && payload.expected.value) + ', got ' + JSON.stringify(textOf(el)));
-        if (a === 'containText') return matches(textOf(el), payload.expected, false) ? pass() : fail('Expected text to contain ' + JSON.stringify(payload.expected && payload.expected.value) + ', got ' + JSON.stringify(textOf(el)));
+        if (a === 'text') return matchesAssertionText(textOf(el), payload.expected, false) ? pass() : fail('Expected text ' + describeMatcher(payload.expected) + ', got ' + JSON.stringify(textOf(el)));
+        if (a === 'containText') return matchesAssertionText(textOf(el), payload.expected, true) ? pass() : fail('Expected text to contain ' + describeMatcher(payload.expected) + ', got ' + JSON.stringify(textOf(el)));
         if (a === 'value') return matches(el.value || '', payload.expected, true) ? pass() : fail('Expected value ' + JSON.stringify(payload.expected && payload.expected.value) + ', got ' + JSON.stringify(el.value || ''));
         if (a === 'attribute') {
           var name = payload.expected && payload.expected.name;
@@ -928,8 +1101,8 @@
           return matches(attr, payload.expected.value, true) ? pass() : fail('Expected attribute ' + name + ' to match, got ' + JSON.stringify(attr));
         }
         if (a === 'checked') return el.checked ? pass() : fail('Expected element to be checked');
-        if (a === 'enabled') return !el.disabled ? pass() : fail('Expected element to be enabled');
-        if (a === 'disabled') return el.disabled ? pass() : fail('Expected element to be disabled');
+        if (a === 'enabled') return !disabled(el) ? pass() : fail('Expected element to be enabled');
+        if (a === 'disabled') return disabled(el) ? pass() : fail('Expected element to be disabled');
         return fail('Unsupported assertion: ' + a);
       }
       function handleValue(payload) {
@@ -939,6 +1112,10 @@
         return null;
       }
       function handle(payload) {
+        if (payload.type === 'cancel-actions') {
+          actionGeneration++;
+          return true;
+        }
         if (payload.type === 'goto') {
           try {
             if (payload.payload && payload.payload.url && payload.payload.url.indexOf('#') === 0) window.location.hash = payload.payload.url;
@@ -994,6 +1171,7 @@
         testFiles: message.testFiles || [],
         timeout: timeout,
         resetBetweenTests: message.resetBetweenTests !== false,
+        freshPreview: message.freshPreview === true,
         port: sessionPort,
         requestType: 'preview-command',
         watchdog: new WorkerWatchdog(sessionPort),
@@ -1066,6 +1244,16 @@
   function run(options) {
     options = options || {};
     return new NativePromise(function (resolve, reject) {
+      const signal = options.signal;
+      function abortError() {
+        const error = new NativeError('Playwright run was cancelled');
+        error.name = 'AbortError';
+        return error;
+      }
+      if (signal && signal.aborted) {
+        reject(abortError());
+        return;
+      }
       if (!global.document || !global.document.body) {
         reject(new NativeError('Playwright runner requires a document body'));
         return;
@@ -1114,6 +1302,7 @@
       }
 
       function cleanup() {
+        if (signal) signal.removeEventListener('abort', handleAbort);
         if (bootTimer) cancelTimeout(bootTimer);
         if (watchdogTimer) cancelTimeout(watchdogTimer);
         bootTimer = null;
@@ -1141,6 +1330,10 @@
         settled = true;
         cleanup();
         reject(error instanceof NativeError ? error : new NativeError(errorMessage(error)));
+      }
+
+      function handleAbort() {
+        finishWithError(abortError());
       }
 
       function finishWithResult(result) {
@@ -1198,6 +1391,7 @@
         }
 
         NativePromise.resolve(rebuild).then(function (rebuiltPreview) {
+          if (settled) return;
           if (!rebuiltPreview || !rebuiltPreview.port) {
             throw new NativeError('Rebuilt React preview did not provide a private broker');
           }
@@ -1274,6 +1468,7 @@
             testFiles: options.testFiles || [],
             timeout: Number(options.timeout) || 5000,
             resetBetweenTests: options.resetBetweenTests !== false,
+            freshPreview: options.freshPreview === true,
           }, [bootstrapPort]);
           bootstrapPort = null;
         } catch (error) {
@@ -1284,6 +1479,7 @@
         }
       }
 
+      if (signal) signal.addEventListener('abort', handleAbort, { once: true });
       bootTimer = scheduleTimeout(function () {
         finishWithError(new NativeError('Timed out while starting the isolated Playwright worker'));
       }, WORKER_BOOT_TIMEOUT_MS);

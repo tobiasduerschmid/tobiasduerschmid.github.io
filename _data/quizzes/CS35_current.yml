@@ -26,6 +26,8 @@ decks:
   - testdoubles
   - tdd
   - dev_practice_refactoring
+  - git_advanced
+  - debugging
 
 other:
   - design_pattern_observer
@@ -34,5 +36,4 @@ other:
   - design_with_reuse
   - security
   - dev_practice_genai
-  - debugging
   - process_people_tailoring

@@ -1,8 +1,11 @@
 {%- comment -%}
-  Where a scene sits in the pattern description. Shown only for scenes that
-  name a part, so lessons without parts look unchanged. Params: scene.
+  Where a scene sits in the lesson's description. Shown only for scenes that
+  name a part, so lessons without parts look unchanged. A pattern lesson's
+  parts are its description's; another lesson passes its own list and label.
+  Params: scene, parts (optional array), label (optional).
 {%- endcomment -%}
 {%- if include.scene.part -%}
-{%- assign np_parts = "Context,Problem,Solution,Consequences" | split: "," -%}
-<ol class="np-parts" aria-label="Part of the pattern description">{% for np_part in np_parts %}<li{% if np_part == include.scene.part %} aria-current="step"{% endif %}>{{ np_part }}</li>{% endfor %}</ol>
+{%- assign np_description_parts = "Context,Problem,Solution,Consequences" | split: "," -%}
+{%- assign np_parts = include.parts | default: np_description_parts -%}
+<ol class="np-parts" aria-label="{{ include.label | default: 'Part of the pattern description' }}">{% for np_part in np_parts %}<li{% if np_part == include.scene.part %} aria-current="step"{% endif %}>{{ np_part }}</li>{% endfor %}</ol>
 {%- endif -%}
