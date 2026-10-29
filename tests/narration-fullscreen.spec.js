@@ -16,6 +16,8 @@ const narrations = [
     diagramScene: sceneNumber('state', 'state_role') },
   { url: '/SEBook/designpatterns/strategy.html', id: 'strategy-animation', title: 'The Strategy pattern in a bill-splitting app',
     diagramScene: sceneNumber('strategy', 'strategy_role') },
+  { url: '/SEBook/designpatterns/mvc.html', id: 'mvc-animation', title: 'Model-View-Controller in a data visualizer',
+    diagramScene: sceneNumber('mvc', 'model_role') },
 ];
 const lessonOf = (page, narration) => page.getByRole('region', { name: narration.title, exact: true });
 // Accessibility checkpoints audit `.nja-player`, the element that fills the screen.

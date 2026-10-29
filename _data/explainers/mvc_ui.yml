@@ -1,0 +1,45 @@
+# Illustrated screen-time dashboard and the specification both code designs
+# implement. The node test replays `events` against each design and compares
+# its output with `expected`.
+app: Screen time
+categories: [Social, Video, Games, Study]
+start: {Social: 120, Video: 90, Games: 60, Study: 30}
+# One bar mark per 30 minutes; pie shares are rounded to whole percent.
+bar_unit: 30
+events:
+  - {kind: edit, view: table, category: Study, minutes: 90}
+  - {kind: click, view: bars, category: Games}
+  # The pie chart's controller ignores input, so this edit changes nothing.
+  - {kind: edit, view: pie, category: Study, minutes: 0}
+expected:
+  table: ['Social: 120 min', 'Video: 90 min', 'Games: 60 min', 'Study: 90 min']
+  bars: ['Social ####', 'Video ###', '> Games ##', 'Study ###']
+  pie: ['Social 33%', 'Video 25%', 'Games 17%', 'Study 25%']
+# A panel with `from` starts in that panel's state and animates to its own,
+# so a cue can show an edit happening. In the player, students can also edit
+# the table, click bars, and make the table read-only between cues.
+panels:
+  edit_demo:
+    from: start
+    minutes: {Social: 120, Video: 90, Games: 60, Study: 90}
+    input: Typed 90 into the Study row of the table
+    result: Both charts follow the table instantly.
+  start:
+    minutes: {Social: 120, Video: 90, Games: 60, Study: 30}
+    input: Opened the dashboard
+    result: The table, bar chart, and pie chart show the same week.
+  edited:
+    minutes: {Social: 120, Video: 90, Games: 60, Study: 90}
+    input: Typed 90 into the Study row of the table
+    result: Every view shows 90 minutes of studying.
+  clicked:
+    minutes: {Social: 120, Video: 90, Games: 60, Study: 90}
+    selected: Games
+    input: Clicked the Games bar
+    result: Only the bar chart changes; the data is unchanged.
+  readonly:
+    minutes: {Social: 120, Video: 90, Games: 60, Study: 90}
+    selected: Games
+    readonly: true
+    input: Typed 0 into the shared, read-only pie chart
+    result: Its controller ignores the input; nothing changes.
