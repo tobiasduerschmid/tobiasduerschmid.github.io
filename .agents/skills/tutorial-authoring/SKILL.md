@@ -1284,7 +1284,7 @@ steps:
                                              # target if the tutorial debugger is
                                              # enabled; `run_files` only changes
                                              # the toolbar pytest run.
-    view: editor | git_graph | uml | make_dag    # Override default pane visible.
+    view: editor | git_graph | uml_diagram | make_dag # Override default pane visible.
                                              # `make_dag` requires a top-level
                                              # `make_dag:` config; opens the
                                              # live Make dependency graph.
@@ -2024,6 +2024,14 @@ other platforms retain `Ctrl`. This changes labels only, not key bindings.
   unless `?instructor-mode=true` is in the URL). The Print button on the
   live tutorial redirects to `<live-permalink>/print?autoprint=1` (preserving
   `?instructor-mode=true` if set).
+  On narrow screens, authored UML figures retain their measured readable width
+  in keyboard-scrollable containers; do not apply the generic responsive-image
+  `max-width: 100%` rule to those SVGs. Paper printing still fits diagrams to the
+  page. Print surfaces remain light even when the saved site theme is dark.
+  Authored ArchUML wrappers can supply contextual captions with
+  `data-uml-caption`; a nonblank attribute overrides a leading `caption:` in
+  the diagram source. Check that these captions remain visible in live and
+  print views, especially when they explain omitted classes or operations.
 
 For `shell-pipeline` only, live and print layouts evaluate the instruction
 string through the existing `liquid` filter before `markdownify`. This supports
