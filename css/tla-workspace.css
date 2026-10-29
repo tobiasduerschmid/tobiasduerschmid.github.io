@@ -1,0 +1,119 @@
+/* Presentation for the TLA+ workspace; execution lives in js/tla/. */
+.tla-tutorial .tvm-output-pre:empty { display: none; }
+.tla-workspace {
+  --tla-surface: #fff;
+  --tla-soft: #f2f6fa;
+  --tla-text: #182535;
+  --tla-muted: #47566a;
+  --tla-border: #728195;
+  --tla-accent: #075f9c;
+  --tla-selected: #e4f1fc;
+  --tla-changed: #fff5ce;
+  --tla-warning: #765400;
+  --tla-focus: #0969da;
+  min-width: 0;
+  padding: 1em;
+  color: var(--tla-text);
+  background: var(--tla-surface);
+  font-size: max(1em, var(--font-size-readable-min, 16px));
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+html.dark-mode .tla-workspace {
+  --tla-surface: #151f2c;
+  --tla-soft: #202e40;
+  --tla-text: #edf3fa;
+  --tla-muted: #c2cede;
+  --tla-border: #8394ab;
+  --tla-accent: #91ceff;
+  --tla-selected: #233f59;
+  --tla-changed: #403717;
+  --tla-warning: #f5d778;
+  --tla-focus: #8ccaff;
+}
+.tla-workspace [hidden] { display: none !important; }
+.tla-workspace :is(p, li, label, dt, dd, th, td, summary, caption) { font-size: 1em; line-height: inherit; }
+.tla-workspace p { margin: .5em 0; }
+.tla-workspace h3 { margin: 0 0 .5em; font-size: 1.4em; color: inherit; }
+.tla-workspace h4 { margin: .4em 0; font-size: 1.2em; color: inherit; }
+.tla-workspace :is(button, input, select) {
+  font: inherit;
+  color: var(--tla-text);
+  background: var(--tla-surface);
+  border: 1px solid var(--tla-border);
+  border-radius: .3em;
+  min-height: 2.5em;
+  max-width: 100%;
+}
+.tla-workspace button { cursor: pointer; padding: .45em .7em; white-space: normal; text-align: start; }
+.tla-workspace :is(input[type="text"], select) { padding: .4em .6em; }
+.tla-workspace button:not(:disabled):hover { background: var(--tla-selected); }
+.tla-workspace button:disabled { color: var(--tla-muted); background: var(--tla-soft); cursor: default; }
+.tla-workspace :focus-visible { outline: 3px solid var(--tla-focus); outline-offset: 3px; scroll-margin: 6em 1em; }
+.tla-workspace .tla-state-heading:focus { outline: 3px solid var(--tla-focus); outline-offset: 3px; }
+.tla-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 18em), 1fr)); gap: .75em; margin: 1em 0; }
+.tla-action-card { border: 1px solid var(--tla-border); border-radius: .5em; padding: .8em; background: var(--tla-soft); }
+.tla-action-card button { width: 100%; color: var(--tla-accent); font-weight: 700; }
+.tla-action-card p { margin: .6em 0 0; }
+.tla-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: .6em; margin: .7em 0; }
+.tla-workspace .tla-hint, .tla-workspace .tla-scope, .tla-workspace .tla-value-type { color: var(--tla-muted); }
+.tla-progress:empty { display: none; }
+.tla-result { margin: 1em 0; padding: .8em 1em; border: 1px solid var(--tla-border); border-left: .35em solid var(--tla-accent); border-radius: .3em; }
+.tla-result[data-outcome="counterexample"], .tla-result[data-outcome="error"], .tla-result[data-outcome="incomplete"] { border-left-color: var(--tla-warning); }
+.tla-workspace .tla-notice { padding: .7em .8em; background: var(--tla-changed); border-left: .3em solid var(--tla-warning); }
+.tla-trace, .tla-choices { margin: 1.1em 0; }
+.tla-jump { display: flex; align-items: center; flex-wrap: wrap; gap: .5em; }
+.tla-jump select { flex: 1 1 12em; min-width: 0; }
+.tla-workspace .tla-sequence { display: flex; flex-wrap: wrap; gap: .45em; list-style: none; margin: .9em 0; padding: 0; }
+.tla-sequence li { margin: 0; padding: 0; }
+.tla-sequence [aria-current="step"] { background: var(--tla-selected); border: 2px solid var(--tla-accent); font-weight: 700; text-decoration: underline; text-underline-offset: .2em; }
+.tla-filter { display: flex; align-items: center; gap: .6em; margin: .7em 0; cursor: pointer; }
+.tla-workspace input[type="checkbox"] { appearance: auto; width: 1.5em; height: 1.5em; min-height: 1.5em; flex-shrink: 0; accent-color: var(--tla-accent); }
+.tla-workspace .tla-variables { width: 100%; table-layout: fixed; border-collapse: collapse; margin: .8em 0; color: inherit; background: var(--tla-surface); }
+.tla-variables caption { color: var(--tla-text); text-align: start; font-weight: 600; padding: .4em 0; }
+.tla-variables :is(th, td) { padding: .65em .55em; border: 1px solid var(--tla-border); vertical-align: top; text-align: start; }
+.tla-variables thead { background: var(--tla-soft); }
+.tla-variables th:first-child { width: 36%; }
+.tla-variables th:last-child { width: 64%; }
+.tla-change { display: block; margin-top: .35em; font-weight: 400; }
+.tla-variables .tla-variable-changed { background: var(--tla-changed); }
+.tla-variable-changed .tla-change { font-weight: 700; }
+.tla-workspace :is(pre, code) { font-size: 1em; font-family: 'Fira Code', 'Cascadia Code', Menlo, monospace; color: inherit; background: transparent; }
+.tla-workspace pre { white-space: pre-wrap; overflow-wrap: anywhere; word-break: normal; max-width: 100%; margin: 0; padding: 0; border: 0; line-height: 1.55; }
+.tla-value-type { display: block; margin-top: .35em; }
+.tla-details { margin: .7em 0; }
+.tla-details > summary { min-height: 1.75em; padding: .3em 0; cursor: pointer; font-weight: 600; color: var(--tla-accent); }
+.tla-details > :not(summary) { margin-top: .6em; }
+.tla-variables .tla-details > summary { color: var(--tla-text); }
+.tla-choice-list { list-style: none; margin: .75em 0; padding: 0; display: grid; gap: .6em; }
+.tla-choice-list li { border: 1px solid var(--tla-border); border-radius: .3em; padding: .6em; background: var(--tla-soft); }
+.tla-choice-list button { width: 100%; }
+.tla-evaluation-form { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .6em; }
+.tla-evaluation-form :is(label, p, pre) { grid-column: 1 / -1; }
+.tla-evaluation-form input { min-width: 0; width: 100%; }
+.tla-workspace .tla-evaluation-result:not(:empty) { padding: .7em; border: 1px solid var(--tla-border); background: var(--tla-soft); }
+.tla-run-details { border-top: 1px solid var(--tla-border); margin-top: 1.2em; padding-top: .4em; }
+.tla-workspace :is(.tla-statistics, .tla-definitions) { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: .6em 1em; margin: .5em 0; }
+.tla-workspace :is(.tla-statistics, .tla-definitions) dd { margin: 0; }
+.tla-workspace .tla-code { padding: .75em; background: var(--tla-soft); border: 1px solid var(--tla-border); }
+.tla-attribution { color: var(--tla-muted); }
+.tla-attribution a, .tla-attribution a:visited { color: var(--tla-accent); text-decoration: underline; text-underline-offset: .15em; }
+@media (max-width: 480px) {
+  .tla-workspace { padding: .7em; }
+  .tla-variables :is(th, td) { padding: .5em .3em; }
+  .tla-evaluation-form { grid-template-columns: minmax(0, 1fr); }
+  .tla-workspace :is(.tla-statistics, .tla-definitions) { grid-template-columns: minmax(0, 1fr); }
+  .tla-workspace :is(.tla-statistics, .tla-definitions) dd { margin-bottom: .6em; }
+}
+@media print {
+  .tla-workspace, html.dark-mode .tla-workspace {
+    --tla-surface: #fff; --tla-soft: #fff; --tla-text: #000; --tla-muted: #333;
+    --tla-border: #555; --tla-accent: #000; --tla-selected: #eee;
+    --tla-changed: #f2f2f2; --tla-warning: #333; --tla-focus: #000;
+    background: #fff; color: #000;
+  }
+  .tla-actions, .tla-workspace > .tla-toolbar, .tla-progress, .tla-trace > .tla-toolbar,
+  .tla-jump, .tla-sequence, .tla-sequence + .tla-hint, .tla-filter, .tla-source,
+  .tla-choices, .tla-evaluation-form { display: none !important; }
+  .tla-variables tr { break-inside: avoid; }
+}

@@ -9,149 +9,149 @@ intro-2
 But it is Chloe's birthday, so Ava switches the split to a birthday treat: Chloe pays nothing, and Ava and Ben pay 30 dollars each. The question stayed the same, who owes what, but a different algorithm answered it.
 
 intro-3
-00:00:24.091 --> 00:01:01.295
-Design patterns capture proven solutions to problems like this one. Every pattern description has the same backbone. The context is the situation in which a problem recurs. The problem states what makes it hard. The solution describes abstract roles and how they collaborate. And the consequences state what the solution costs and buys. We follow the Gang of Four's description of the Strategy pattern, and we refactor toward it step by step, as the book Refactoring to Patterns does. Choose a code language above; the explanation is the same in every language.
+00:00:24.091 --> 00:00:57.286
+Design patterns capture proven solutions to problems like this one. Every pattern description has the same backbone. The context is the situation in which a problem recurs. The problem states what makes it hard. The solution describes abstract roles and how they collaborate. And the consequences state what the solution costs and buys. We describe the Strategy pattern in that order, and we refactor toward it step by step. Choose a code language above; the explanation is the same in every language.
 
 context-1
-00:01:01.295 --> 00:01:18.441
+00:00:57.286 --> 00:01:14.431
 First, the context. The Strategy pattern applies when one task can be done by a family of interchangeable algorithms. Splitting an expense is one task, and the app offers several algorithms for it: equally, by percentage, and the birthday treat.
 
 context-2
-00:01:18.441 --> 00:01:38.769
+00:01:14.431 --> 00:01:34.760
 Two more signs place us in this context. The client chooses the algorithm, here the person logging the expense, and may change that choice later. And new algorithms keep arriving, such as splitting by shares or by items. Split by percentage, Ava pays 30 dollars, Ben 18, and Chloe 12.
 
 context-3
-00:01:38.769 --> 00:01:57.495
-The Gang of Four name one more sign: related behaviors that show up as conditional statements in one class's operations. And one warning about words: the pattern also names one of its roles Context. The pattern's context is a situation; the Context role is an object.
+00:01:34.760 --> 00:01:53.239
+One more sign of this context: related behaviors that show up as conditional statements in one class's operations. And one warning about words: the pattern also names one of its roles Context. The pattern's context is a situation; the Context role is an object.
 
 problem-1
-00:01:57.495 --> 00:02:11.117
+00:01:53.239 --> 00:02:06.862
 Now the problem. Here is a direct implementation. The expense stores the name of its split method, and shares checks it: split evenly, split by percentage, or let everyone but the birthday guest pay.
 
 problem-2
-00:02:11.117 --> 00:02:25.404
+00:02:06.862 --> 00:02:21.149
 Label repeats the same three-way check to describe the split on the receipt. In the table, each operation is one column, and every method appears in every column, so one method's rules are scattered across the class.
 
 problem-3
-00:02:25.404 --> 00:02:41.898
-Look at the constructor, too. It takes percentages and a guest, although each is used by only one method. The expense collects every algorithm's data, the kind of long parameter list that Refactoring to Patterns lists as a sign for this refactoring.
+00:02:21.149 --> 00:02:35.400
+Look at the constructor, too. It takes percentages and a guest, although each is used by only one method. The expense collects every algorithm's data, the kind of long parameter list that signals this refactoring.
 
 problem-4
-00:02:41.898 --> 00:03:02.707
+00:02:35.400 --> 00:02:56.209
 Your friends want a new method: split by items, where each person pays for what they ordered. Before continuing, predict which code you must edit, and what happens if someone forgets one branch. Pause here if you want more thinking time.
 
 problem-5
-00:03:02.707 --> 00:03:48.243
+00:02:56.209 --> 00:03:41.655
 You must edit the constructor and both operations, and the else branches are a trap: each one treats an unknown method as a birthday, so a forgotten branch quietly charges the wrong friends. Subclassing the expense once per method would not help either. It hard-wires the algorithm, and switching methods while editing would mean replacing the expense. That is the problem in pattern terms: how can a class use one of a family of algorithms, chosen by its client, without hard-wiring them into the class? The forces: keep each algorithm's code and data together, let clients switch at runtime, add algorithms without editing the class, and avoid classes that do not pay for themselves.
 
 solution-1
-00:03:48.243 --> 00:04:11.863
-The solution: put each algorithm in its own object behind a common interface, and let the class that needs the algorithm delegate to that object. Head First Design Patterns puts the principle in three words: encapsulate what varies. A pattern describes its solution with abstract roles. The Strategy role is the interface that every algorithm in the family implements.
+00:03:41.655 --> 00:04:04.005
+The solution: put each algorithm in its own object behind a common interface, and let the class that needs the algorithm delegate to that object. The principle fits in three words: encapsulate what varies. A pattern describes its solution with abstract roles. The Strategy role is the interface that every algorithm in the family implements.
 
 solution-2
-00:04:11.863 --> 00:04:27.485
+00:04:04.005 --> 00:04:19.627
 Each ConcreteStrategy implements one algorithm of the family. The dashed arrow with a hollow triangle shows that a ConcreteStrategy fulfills the Strategy interface. The diagram draws the role once; many classes can play it.
 
 solution-3
-00:04:27.485 --> 00:04:46.605
-The Context role is configured with a Strategy object, keeps a reference to it, and forwards algorithm requests to it. It depends only on the Strategy interface, which Head First calls programming to an interface, and it has a strategy instead of inheriting one: composition over inheritance.
+00:04:19.627 --> 00:04:38.043
+The Context role is configured with a Strategy object, keeps a reference to it, and forwards algorithm requests to it. It depends only on the Strategy interface, which is programming to an interface, and it has a strategy instead of inheriting one: composition over inheritance.
 
 solution-4
-00:04:46.605 --> 00:05:04.719
+00:04:38.043 --> 00:04:56.157
 A client makes the choice: it creates a ConcreteStrategy and passes it to the Context, then talks only to the Context. In our app, Expense will play Context, SplitStrategy plays Strategy, and EqualSplit, PercentSplit, and BirthdaySplit play ConcreteStrategy.
 
 strategy_role-1
-00:05:04.719 --> 00:05:21.989
+00:04:56.157 --> 00:05:13.427
 Now the solution in code, one role at a time. SplitStrategy plays the Strategy role. It declares the two operations every split algorithm must offer: split, which returns each person's share, and label, which describes the split on the receipt.
 
 strategy_role-2
-00:05:21.989 --> 00:05:44.309
-Notice what split receives: the total and the people. The Context takes the data to the strategy as parameters, which keeps the two decoupled. The Gang of Four describe the alternative: the Context passes itself, and each strategy asks for exactly what it needs. Refactoring to Patterns often chooses that, at the price of tighter coupling.
+00:05:13.427 --> 00:05:34.611
+Notice what split receives: the total and the people. The Context takes the data to the strategy as parameters, which keeps the two decoupled. The alternative: the Context passes itself, and each strategy asks for exactly what it needs. Refactorings toward Strategy often choose that, at the price of tighter coupling.
 
 strategy_role-3
-00:05:44.309 --> 00:06:00.953
+00:05:34.611 --> 00:05:51.255
 The interface also states a contract: the shares, in cents, always add up to the total. Interchangeable means more than matching method names. Every ConcreteStrategy must keep this promise, so that the Context and its clients can trust any of them.
 
 context_role-1
-00:06:00.953 --> 00:06:14.270
+00:05:51.255 --> 00:06:04.572
 Expense plays the Context role. It keeps the data that belongs to the expense, its total and its people, plus a reference to a split strategy, which the client passes in when it creates the expense.
 
 context_role-2
-00:06:14.270 --> 00:06:29.454
+00:06:04.572 --> 00:06:19.756
 Shares and label are now single lines that forward each request to the strategy. No method check is left, Expense no longer knows how any split works, and its constructor no longer needs percentages or a guest.
 
 context_role-3
-00:06:29.454 --> 00:06:49.224
-setStrategy lets the client replace the algorithm at runtime, as when Ava switched to the birthday treat. Refactoring to Patterns suggests a constructor parameter when the choice never changes, and a setter when clients must change it later. Head First's ducks change their flying behavior the same way.
+00:06:19.756 --> 00:06:39.088
+setStrategy lets the client replace the algorithm at runtime, as when Ava switched to the birthday treat. Pass the strategy to the constructor when the choice never changes, and offer a setter when clients must change it later. A simulated duck that changes how it flies works the same way.
 
 concrete_roles-1
-00:06:49.224 --> 00:07:07.971
-EqualSplit, PercentSplit, and BirthdaySplit each play the ConcreteStrategy role. Each collects one method's branches from both operations, one row of the table. Like Refactoring to Patterns, we move one branch at a time and run the tests after each move, so every share stays the same.
+00:06:39.088 --> 00:06:58.155
+EqualSplit, PercentSplit, and BirthdaySplit each play the ConcreteStrategy role. Each collects one method's branches from both operations, one row of the table. As in any careful refactoring, we move one branch at a time and run the tests after each move, so every share stays the same.
 
 concrete_roles-2
-00:07:07.971 --> 00:07:26.893
+00:06:58.155 --> 00:07:17.077
 EqualSplit divides the total evenly. When cents remain, the first people pay one cent more: split 10 dollars three ways, and Ava pays 3 dollars and 34 cents, while Ben and Chloe pay 3 dollars and 33 cents. The contract holds: the shares add up to the total.
 
 concrete_roles-3
-00:07:26.893 --> 00:07:43.052
-PercentSplit keeps its own data, the percentages, and checks when it is created that they add up to 100. Algorithm-specific data now lives in the algorithm instead of the expense, one of the reasons the Gang of Four give for the pattern.
+00:07:17.077 --> 00:07:32.458
+PercentSplit keeps its own data, the percentages, and checks when it is created that they add up to 100. Algorithm-specific data now lives in the algorithm instead of the expense, one of the main reasons to use the pattern.
 
 concrete_roles-4
-00:07:43.052 --> 00:07:52.197
+00:07:32.458 --> 00:07:41.603
 BirthdaySplit keeps the guest and reuses EqualSplit for everyone else. One strategy can be built from another, by composition again.
 
 concrete_roles-5
-00:07:52.197 --> 00:08:09.243
+00:07:41.603 --> 00:07:58.650
 EqualSplit stores no data, so every expense can share one object, as the marked lines show. PercentSplit and BirthdaySplit hold one expense's choices, so each expense gets its own. Sharing is safe only for strategies without per-expense data.
 
 collaborations-1
-00:08:09.243 --> 00:08:29.162
+00:07:58.650 --> 00:08:18.570
 A solution also describes how its roles collaborate at runtime. The app, our client, creates the dinner expense with the shared EqualSplit object and asks for the shares. The sequence diagram shows the delegation: Expense forwards split, with the total and the people, to the EqualSplit object.
 
 collaborations-2
-00:08:29.162 --> 00:08:50.612
+00:08:18.570 --> 00:08:40.029
 Now the app calls setStrategy with a PercentSplit for 50, 30, and 20 percent, then asks for the shares exactly as before. Predict which object answers, and who pays what. Pause the narration if you want more thinking time.
 
 collaborations-3
-00:08:50.612 --> 00:09:04.571
+00:08:40.029 --> 00:08:53.988
 This time Expense forwards split to the PercentSplit object, and Ava pays 30 dollars, Ben 18, and Chloe 12. The same call reached a different algorithm, and Expense never asked which one it held.
 
 collaborations-4
-00:09:04.571 --> 00:09:21.863
+00:08:53.988 --> 00:09:11.280
 Label follows the same path, so the receipt now reads: split by percentage. Three collaborations define the pattern: the client chooses and passes a strategy, the Context forwards requests to it, and the Context gives the strategy the data it needs.
 
 consequences-1
-00:09:21.863 --> 00:09:41.436
+00:09:11.280 --> 00:09:30.914
 Finally, the consequences, which every pattern description must state. The first benefit: a family of related algorithms, each in its own class with its own data. Adding a split method means writing one class, the conditional statements are gone, and Expense and the other strategies stay untouched.
 
 consequences-2
-00:09:41.436 --> 00:09:59.254
+00:09:30.914 --> 00:09:48.732
 The second benefit: an alternative to subclassing. Expense stays one class, and clients can switch its algorithm at runtime instead of replacing the object. Each strategy is small and independent, so you can test it alone with nothing but a total and a list of people.
 
 consequences-3
-00:09:59.254 --> 00:10:24.378
+00:09:48.732 --> 00:10:13.877
 The liabilities. Clients must understand how strategies differ before choosing one, so use Strategy only when that difference matters to them, as it does in the split picker. The app has more classes and objects, although stateless ones can be shared. And one interface serves every algorithm, so a simple strategy may receive data it never uses, while a new one may need data the interface does not pass.
 
 applicability-1
-00:10:24.378 --> 00:10:41.161
+00:10:13.877 --> 00:10:30.660
 Consequences tell us when a pattern pays off, so revisit the context. Strategy fits when several interchangeable algorithms serve one task, clients choose among them, and new algorithms keep arriving, as split methods do in every expense app.
 
 applicability-2
-00:10:41.161 --> 00:11:07.438
-Refactoring to Patterns adds a caution: much conditional logic is not complicated enough to justify Strategy. With two stable variants, a conditional is clearer. And in languages with first-class functions, a strategy with one stateless operation can simply be a function you pass in, the same idea without the classes. Our split has two related operations and its own data, so classes pay off.
+00:10:30.660 --> 00:10:55.347
+A caution: much conditional logic is not complicated enough to justify Strategy. With two stable variants, a conditional is clearer. And in languages with first-class functions, a strategy with one stateless operation can simply be a function you pass in, the same idea without the classes. Our split has two related operations and its own data, so classes pay off.
 
 applicability-3
-00:11:07.438 --> 00:11:30.186
+00:10:55.347 --> 00:11:18.094
 Strategy and State share the same structure, a Context delegating through an interface, but their contexts differ. A client chooses a Strategy, and strategies do not know one another, while State objects replace one another as events occur. Template Method varies the steps of one algorithm through subclasses, fixed when an object is created.
 
 transfer-1
-00:11:30.186 --> 00:11:52.185
+00:11:18.094 --> 00:11:40.094
 One last design check. Your friends want to split by items: each person pays for the dishes they ordered, and tax and tip are shared in proportion. Which class do you add, and which existing code changes? Explain your answer before continuing.
 
 transfer-2
-00:11:52.185 --> 00:12:12.627
+00:11:40.094 --> 00:12:00.536
 Add an ItemizedSplit class that plays the ConcreteStrategy role, keeps each person's items, and implements split and label. SplitStrategy, Expense, and the other strategies stay unchanged. Only client code changes: the split picker offers the new method and passes an ItemizedSplit to the expense.
 
 summary-1
-00:12:12.627 --> 00:12:56.455
+00:12:00.536 --> 00:12:44.374
 To finish, recall the whole pattern. Context: one task can be done by a family of interchangeable algorithms, and clients choose among them. Problem: a class that hard-wires its algorithms in conditionals or subclasses scatters each algorithm and cannot switch at runtime. Solution: a Context delegates to a Strategy interface, each ConcreteStrategy implements one algorithm, and the client chooses which one the Context holds. Consequences: interchangeable, independently testable algorithms without conditionals, at the cost of informed clients, more objects, and one shared interface. The summary quiz checks each part on a new example.

@@ -26,6 +26,9 @@
 .narrated-lesson .np-diagram-column { min-width: 0; }
 .narrated-lesson .np-diagram-caption { color: var(--nja-text); font: inherit; margin: 0.8em 0 0; }
 .narrated-lesson .np-focus-label { color: var(--nja-accent); font: inherit; margin: 0.7em 0; }
+/* A cue's source is shown, not spoken. It uses the same colors in both themes as other secondary text. */
+.narrated-lesson p.np-source { margin: 0.6em 0 0; color: var(--nja-muted); font-size: 0.9em; line-height: 1.5; overflow-wrap: break-word; }
+.narrated-lesson .np-source-label { font-weight: 700; margin-right: 0.3em; }
 .narrated-lesson .np-cards { display: grid; gap: 1em; margin: 1em 0; }
 .narrated-lesson .np-cards > div { border-left: 3px solid var(--nja-cyan); padding: 0.8em 1em; background: var(--nja-panel); }
 .narrated-lesson .np-cards dt { color: var(--nja-cyan); font-size: 1.2em; }

@@ -70,6 +70,8 @@
             {% endif %}
           </div>
           <div class="nja-explanation"><strong class="nja-step">{{ first_cue.step }}</strong><p class="nja-note">{{ first_cue.note | escape }}</p></div>
+          {%- comment -%} Sources are shown, never spoken: cue.source stays out of the narration text. {%- endcomment -%}
+          <p class="np-source"{% unless first_cue.source %} hidden{% endunless %}><span class="np-source-label">Source:</span> <span data-np-source>{{ first_cue.source | escape }}</span></p>
         </div>
         <p class="nja-takeaway"><i class="fa fa-lightbulb" aria-hidden="true"></i>{{ scene.takeaway }}</p>
       </div>

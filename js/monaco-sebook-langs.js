@@ -22,7 +22,7 @@
     css: 'css', txt: 'plaintext', c: 'c', h: 'c', cpp: 'cpp',
     makefile: 'makefile', Makefile: 'makefile',
     pl: 'prolog', pro: 'prolog',
-    java: 'java',
+    java: 'java', tla: 'tlaplus',
     hs: 'haskell', lhs: 'haskell', st: 'smalltalk',
   };
 
@@ -37,6 +37,24 @@
     if (!monaco || !monaco.languages) return;
     if (monaco.__sebookRegistered) return;
     monaco.__sebookRegistered = true;
+
+    // Highlighting is deliberately lexical; SANY remains the semantic authority.
+    monaco.languages.register({ id: 'tlaplus', extensions: ['.tla'] });
+    monaco.languages.setLanguageConfiguration('tlaplus', {
+      comments: { lineComment: '\\*', blockComment: ['(*', '*)'] },
+      brackets: [['(', ')'], ['[', ']'], ['{', '}']],
+    });
+    monaco.languages.setMonarchTokensProvider('tlaplus', {
+      tokenizer: {
+        root: [
+          [/\\\*.*$/, 'comment'], [/\(\*/, 'comment', '@comment'],
+          [/"(?:[^"\\]|\\.)*"/, 'string'],
+          [/\b(?:MODULE|EXTENDS|CONSTANTS?|VARIABLES?|ASSUME|THEOREM|PROOF|INSTANCE|LOCAL|LET|IN|IF|THEN|ELSE|CASE|OTHER|CHOOSE|DOMAIN|SUBSET|UNION|UNCHANGED|ENABLED|EXCEPT|TRUE|FALSE)\b/, 'keyword'],
+          [/\b\d+\b/, 'number'], [/\\[A-Za-z]+|==|=>|~>|<=>|\/\\|\\\/|\[\]|<>|[=+*'~#<>-]/, 'operator'],
+        ],
+        comment: [[/\(\*/, 'comment', '@push'], [/\*\)/, 'comment', '@pop'], [/[^(*]+|[(*]/, 'comment']],
+      },
+    });
 
     // Lexical highlighting only; the native image compiles Smalltalk source.
     monaco.languages.register({ id: 'smalltalk' });

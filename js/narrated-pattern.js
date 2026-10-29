@@ -38,6 +38,8 @@
       const readingStep = root.querySelector(`[data-reading-scene="${storyScene.id}"][data-reading-cue="${cueIndex}"]`);
       scene.querySelector('.nja-step').textContent = cue.step;
       scene.querySelector('.nja-note').textContent = cue.note;
+      scene.querySelector('[data-np-source]').textContent = cue.source || '';
+      scene.querySelector('.np-source').hidden = !cue.source;
       scene.querySelector('.nja-takeaway').hidden = Boolean(cue.prediction);
       if (storyScene.code) {
         highlightCode(scene, examples[language].blocks[storyScene.code], cue.focus);

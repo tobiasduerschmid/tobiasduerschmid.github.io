@@ -280,6 +280,9 @@
   <link rel="stylesheet" href="{{ '/css/uml-diagram.css' | relative_url }}">
   <link rel="stylesheet" href="{{ '/css/uml-view-controls.css' | relative_url }}">
   <link rel="stylesheet" href="{{ '/css/object-reference-lab.css' | relative_url }}">
+  {% if tutorial_backend == 'tla' %}
+  <link rel="stylesheet" href="{{ '/css/tla-workspace.css' | relative_url }}">
+  {% endif %}
   {% if tutorial_backend == 'compiler' %}
   <link rel="stylesheet" href="{{ '/css/compiler-lab.css' | relative_url }}">
   {% endif %}
@@ -312,6 +315,10 @@
   <script src="{{ '/js/uml-view-controls.js' | relative_url }}"></script>
   <script src="{{ '/js/monaco-loader.js' | relative_url }}"></script>
   <script src="{{ '/js/tutorial-code.js' | relative_url }}"></script>
+  {% if tutorial_backend == 'tla' %}
+  <script src="{{ '/js/tla/view.js' | relative_url }}"></script>
+  <script src="{{ '/js/tutorial-tla.js' | relative_url }}"></script>
+  {% endif %}
   {% if tutorial_backend == 'shell-pipeline' %}
   <script src="{{ '/js/tutorial-shell-command.js' | relative_url }}"></script>
   <script src="{{ '/js/tutorial-shell-pipeline.js' | relative_url }}"></script>
@@ -418,6 +425,7 @@
 
       var tutorial = new TutorialCode('#tutorial-container', {
         backend:      '{{ tutorial_backend }}',
+        tla: config.tla || {},
         {% if tutorial_backend == 'shell-pipeline' %}shellManuals: {{ site.data.shell_command_manuals | jsonify | replace: '</script', '<\/script' }},{% endif %}
         tutorialId:   '{{ page.tutorial }}',
         steps:        config.steps,

@@ -308,6 +308,11 @@
   description: The SOLID principle that objects of a subtype should be usable anywhere the supertype is expected without breaking the program's promised behavior.
   related: [SOLID, OOP]
 
+- term: LTL
+  definition: Linear Temporal Logic
+  description: A logic for expressing properties along an infinite sequence of states, using operators such as always, eventually, next, and until. A model satisfies an LTL property when every behavior allowed by the model satisfies it.
+  related: [TLA+, TLC]
+
 - term: MRO
   definition: Method Resolution Order
   description: The order in which Python searches classes for inherited attributes and methods. Cooperative super calls continue along the receiving class's order, which can include another branch of multiple inheritance.
@@ -371,6 +376,11 @@
   definition: Process Identifier
   description: A numeric identifier assigned by an operating system to a running process.
   related: [ID, OS]
+
+- term: PlusCal
+  definition: PlusCal algorithm language
+  description: A language for writing algorithms that translate to TLA+ specifications. Labels divide the algorithm into atomic actions, making the possible interleavings of concurrent processes explicit.
+  related: [TLA+, TLC]
 
 - term: POP
   definition: Post Office Protocol
@@ -520,6 +530,16 @@
   definition: Test-Driven Development
   description: A development workflow in which the developer writes a failing test first, then writes the smallest amount of code that makes the test pass, then refactors. The cycle repeats one tiny step at a time.
   related: [CI, CD]
+
+- term: TLA+
+  definition: Temporal Logic of Actions
+  description: A specification language for describing systems through states, actions, and properties of behaviors. Finite instances can be explored with TLC; a checked model does not by itself establish that an implementation matches the specification.
+  related: [TLC, PlusCal, LTL]
+
+- term: TLC
+  definition: TLA+ model checker
+  description: A tool that explores a configured TLA+ model and checks selected invariants and temporal properties. It can report a counterexample when a property fails. A completed finite-model check, one explored behavior, and an incomplete run support different conclusions.
+  related: [TLA+, PlusCal, LTL]
 
 - term: TLS
   definition: Transport Layer Security
