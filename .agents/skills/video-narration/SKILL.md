@@ -216,9 +216,29 @@ picture is limited by height there; on a short, wide screen (a phone on its
 side) the captions join the sidebar so the picture takes the height above the
 controls; on narrower screens the header is a row above. Check full screen at
 1440x900, 1920x1080, 1024x768, 844x390, and 390x844, and the inline player at
-320px wide. iPhone Safari has no element full screen, so the player hides the
-button there; everything else must work by touch (tap the picture to play,
+320px wide. Everything must also work by touch (tap the picture to play,
 double-tap a side to skip).
+
+Full screen works in every browser, so keep it working when you change the
+player (`js/narrated-explainer.js`):
+
+- The transport uses the standard API or Safari's prefixed one. Where neither
+  exists (Safari on iPhone), or the browser refuses the request, the player
+  fills the viewport itself (`.is-viewport-fullscreen`), Escape and the button
+  leave it, and the page behind it is `inert`, so Tab never lands on hidden
+  content.
+- Style full screen on the player's `.is-fullscreen` class, never on
+  `:fullscreen`, which the drawn mode does not match; react to the root's
+  `narration-fullscreenchange` event, never to `document.fullscreenElement`
+  alone.
+- Give every newer CSS feature a fallback in the line before it: `100vh`
+  before `100dvh`, a `vh` width before `cqw`/`cqh`. A missing `:has()` or
+  container query may only lose polish, never content or a control. Use no
+  script API newer than 2022 without a fallback (`findLastIndex` became
+  `lastIndexWhere`).
+- Test a missing API by deleting both the standard and the prefixed one in an
+  init script: Chrome still has `webkitRequestFullscreen`, so removing only
+  the standard one tests nothing.
 
 ## 6. Render, wire, verify
 

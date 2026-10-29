@@ -65,7 +65,11 @@ on a short, wide screen such as a phone on its side, the captions join the
 sidebar and the picture takes the height above the controls; on narrower
 screens the header is a row above the picture. A knowledge check opens inside
 the full-screen video. Where the browser has no element full screen (iPhone
-Safari), the button is hidden and the inline player works by touch.
+Safari) or refuses it, the shared transport draws the full screen itself: the
+video fills the viewport, the page behind it is inert, and the button or
+Escape returns. Both modes set `.is-fullscreen` on the video and send a
+`narration-fullscreenchange` event, which the full-screen layout and the
+control-visibility timer follow.
 
 ## Storyboard
 

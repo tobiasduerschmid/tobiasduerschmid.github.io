@@ -72,7 +72,26 @@ for (const narration of narrations.filter(item => item.diagramScene !== undefine
   });
 }
 
-test('a refused full-screen request leaves the narration in the page with a status message', async ({ page }) => {
+// What a viewer sees at the screen's corners and center belongs to the narration.
+const coversViewport = lesson => lesson.evaluate(root => {
+  const right = window.innerWidth - 2;
+  const bottom = window.innerHeight - 2;
+  return [[1, 1], [right, 1], [1, bottom], [right, bottom], [right / 2, bottom / 2]]
+    .every(([x, y]) => root.contains(document.elementFromPoint(x, y)));
+});
+// Where Tab takes focus outside the narration (the page itself counts as nowhere).
+const focusEscapes = async (page, lesson, presses) => {
+  const escapes = [];
+  for (let press = 0; press < presses; press += 1) {
+    await page.keyboard.press('Tab');
+    const outside = await lesson.evaluate(root => (root.contains(document.activeElement) || document.activeElement === document.body
+      ? null : document.activeElement.outerHTML.slice(0, 80)));
+    if (outside) escapes.push(outside);
+  }
+  return escapes;
+};
+
+test('a refused full-screen request fills the viewport instead, and the button leaves it', async ({ page }) => {
   await page.addInitScript(() => {
     Element.prototype.requestFullscreen = () => Promise.reject(new TypeError('Permissions check failed'));
   });
@@ -80,18 +99,37 @@ test('a refused full-screen request leaves the narration in the page with a stat
   await page.goto(narration.url);
   const lesson = lessonOf(page, narration);
   await lesson.getByRole('button', { name: 'Enter full screen' }).click();
-  await expect(lesson.getByRole('status').filter({ hasText: 'could not change full screen' })).toBeVisible();
-  await expect(lesson.getByRole('button', { name: 'Enter full screen' })).toBeVisible();
+  const exit = lesson.getByRole('button', { name: 'Exit full screen' });
+  await expect(exit).toBeVisible();
+  expect(await coversViewport(lesson)).toBe(true);
   expect(await fullScreenActive(page)).toBe(false);
+
+  await exit.click();
+  await expect(lesson.getByRole('button', { name: 'Enter full screen' })).toBeFocused();
+  expect(await coversViewport(lesson)).toBe(false);
 });
 
-test('browsers without element full screen get no full-screen button', async ({ page }) => {
+test('without element full screen (Safari on iPhone), the narration fills the viewport and keeps focus until Escape', async ({ page }) => {
+  // Neither the standard API nor Safari's prefixed one, as on an iPhone.
   await page.addInitScript(() => {
+    delete Element.prototype.requestFullscreen;
+    delete Element.prototype.webkitRequestFullscreen;
     Object.defineProperty(Document.prototype, 'fullscreenEnabled', { get: () => false });
+    Object.defineProperty(Document.prototype, 'webkitFullscreenEnabled', { get: () => false });
   });
   const narration = narrations[0];
   await page.goto(narration.url);
   const lesson = lessonOf(page, narration);
-  await expect(lesson.getByRole('button', { name: 'Play narration' })).toBeVisible();
-  await expect(lesson.getByRole('button', { name: /full screen/ })).toHaveCount(0);
+  await lesson.getByRole('button', { name: 'Enter full screen' }).click();
+  await expect(lesson.getByRole('button', { name: 'Exit full screen' })).toBeFocused();
+  expect(await coversViewport(lesson)).toBe(true);
+  expect(await fullScreenActive(page)).toBe(false);
+  // More presses than the player has controls, so Tab would reach the page behind it.
+  expect(await focusEscapes(page, lesson, 30)).toEqual([]);
+  await a11yCheckpoint(page, `${narration.id} viewport full screen`, { include: `#${narration.id} .nja-player`, feature: 'narration-fullscreen' });
+
+  await page.keyboard.press('Escape');
+  await expect(lesson.getByRole('button', { name: 'Enter full screen' })).toBeVisible();
+  expect(await coversViewport(lesson)).toBe(false);
+  expect(await focusEscapes(page, lesson, 30)).not.toEqual([]);
 });

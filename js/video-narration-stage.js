@@ -43,7 +43,11 @@
 
   // The stage follows the site's light or dark mode: it mirrors the dark-mode
   // class of the page that embeds it, and keeps following when it changes.
-  const host = window.parent !== window ? window.parent.document.documentElement : null;
+  // A host page the frame cannot read (a sandboxed embed) leaves the stage in light mode.
+  let host = null;
+  try {
+    if (window.parent !== window) host = window.parent.document.documentElement;
+  } catch (error) { /* cross-origin host */ }
   function syncTheme() {
     document.documentElement.classList.toggle('dark-mode', Boolean(host && host.classList.contains('dark-mode')));
   }

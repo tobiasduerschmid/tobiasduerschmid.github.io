@@ -30,14 +30,17 @@
         panel.classList.add('is-ready');
       }, () => { /* The poster keeps describing each cue. */ });
     });
-    const loader = new IntersectionObserver(entries => {
-      if (entries.some(entry => entry.isIntersecting)) load();
-    }, { rootMargin: '200px' });
+    // The frame loads when the screen comes near the viewport, or at once in a
+    // browser without IntersectionObserver.
+    const loader = 'IntersectionObserver' in window
+      ? new IntersectionObserver(entries => { if (entries.some(entry => entry.isIntersecting)) load(); }, { rootMargin: '200px' })
+      : null;
     function load() {
-      loader.disconnect();
+      if (loader) loader.disconnect();
       if (!frame.getAttribute('src')) frame.src = frame.dataset.src;
     }
-    loader.observe(panel.closest('[data-vn-screen]'));
+    if (loader) loader.observe(panel.closest('[data-vn-screen]'));
+    else load();
     audio.addEventListener('play', load, { once: true });
 
     return {
@@ -126,7 +129,10 @@
       visibility.focusControl(settingsToggle);
     });
     for (const type of ['play', 'pause', 'ended']) listen(audio, type, syncPicture);
-    listen(document, 'fullscreenchange', () => visibility.setFullscreen(document.fullscreenElement === video));
+    listen(root, 'narration-fullscreenchange', event => visibility.setFullscreen(event.detail.active));
+    // While a knowledge check is open, the control bar steps aside (css/video-narration.css).
+    const quiz = root.querySelector('.np-quiz');
+    new MutationObserver(() => video.classList.toggle('has-open-check', !quiz.hidden)).observe(quiz, { attributes: true, attributeFilter: ['hidden'] });
     syncPicture();
   }
 
@@ -142,6 +148,7 @@
       button.setAttribute('aria-label', `${name}: jump to its start`);
       button.addEventListener('click', () => player.seekTo(timing.scenes[sceneIndex].start));
       item.replaceChildren(button);
+      item.classList.add('is-linked');
     };
     root.querySelectorAll('.vn-scenes .np-parts li').forEach(item => {
       const sceneIndex = story.scenes.findIndex(scene => scene.part === item.textContent.trim());

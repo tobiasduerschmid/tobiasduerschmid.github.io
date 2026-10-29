@@ -76,9 +76,12 @@ section's speech begins exactly at the boundary. Every section must therefore
 end with more than 0.3 s of silence (the renderer's default is 0.55 s).
 
 The shared transport also adds the full-screen button to every narration
-(Node.js, React, and the pattern lessons) where the browser supports element
-full screen. The whole `.nja-player` fills the screen, so captions, settings,
-and knowledge checks stay available. Diagrams need no refit: their readable
+(Node.js, React, and the pattern lessons). The whole `.nja-player` fills the
+screen, so captions, settings, and knowledge checks stay available. It uses
+the standard or Safari's prefixed API; where neither exists (Safari on
+iPhone) or the browser refuses, the player fills the viewport itself and makes
+the page behind it inert until the button or Escape returns it. Style full
+screen on `.is-fullscreen`, which both modes set, not on `:fullscreen`. Diagrams need no refit: their readable
 width is set in `em` and capped by the column, so they fit both layouts.
 
 ## Checks

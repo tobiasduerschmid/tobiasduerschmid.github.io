@@ -555,6 +555,26 @@ test('full screen on a phone keeps the picture large, with the header and captio
   for (const side of [heading, captions]) expect(side.x + side.width).toBeLessThanOrEqual(picture.x + 1);
 });
 
+test('without element full screen (Safari on iPhone), full screen fills the viewport and Escape leaves it', async ({ page }) => {
+  await page.addInitScript(() => {
+    delete Element.prototype.requestFullscreen;
+    delete Element.prototype.webkitRequestFullscreen;
+    Object.defineProperty(Document.prototype, 'fullscreenEnabled', { get: () => false });
+  });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(url);
+  const animation = player(page);
+  const video = animation.locator('[data-vn-video]');
+  await animation.getByRole('button', { name: 'Enter full screen' }).click();
+  await expect(animation.getByRole('button', { name: 'Exit full screen' })).toBeVisible();
+  expect(await video.boundingBox()).toEqual({ x: 0, y: 0, width: 390, height: 844 });
+  await expect(animation.getByRole('heading', { name: story.scenes[0].title, exact: true })).toBeInViewport();
+  await expect(animation.locator('[data-vn-panel="animation"]')).toBeInViewport();
+  await page.keyboard.press('Escape');
+  await expect(animation.getByRole('button', { name: 'Enter full screen' })).toBeVisible();
+  expect((await video.boundingBox()).width).toBeLessThan(390);
+});
+
 test('the animated stage follows the site\'s light or dark mode as it changes', async ({ page }) => {
   await page.goto(url);
   const animation = player(page);

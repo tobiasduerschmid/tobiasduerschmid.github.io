@@ -8,15 +8,21 @@
   // buffered, so stop inside that silence rather than at the boundary itself.
   const SECTION_END_LEAD = 0.3;
 
-  // Full screen needs element support, which some browsers (such as Safari on
-  // iPhone) lack, so the button is added only where it can work. A player may
-  // place its own hidden button; otherwise one follows the mute button.
-  function addFullscreenButton(root, target) {
+  // Full screen uses the standard API, Safari's prefixed one, or, where a
+  // browser cannot show an element full screen (Safari on iPhone), a mode the
+  // player draws itself over the whole viewport (.is-viewport-fullscreen).
+  // Either way the player carries .is-fullscreen, which its styles key on.
+  const nativeFullscreen = {
+    supported: (target) => Boolean((document.fullscreenEnabled && target.requestFullscreen)
+      || (document.webkitFullscreenEnabled && target.webkitRequestFullscreen)),
+    element: () => document.fullscreenElement || document.webkitFullscreenElement || null,
+    request: (target) => (target.requestFullscreen ? target.requestFullscreen() : target.webkitRequestFullscreen()),
+    exit: () => (document.exitFullscreen ? document.exitFullscreen() : document.webkitExitFullscreen()),
+  };
+
+  // A player may place its own hidden button; otherwise one follows the mute button.
+  function addFullscreenButton(root) {
     const placed = root.querySelector('[data-action="fullscreen"]');
-    if (!document.fullscreenEnabled || !target.requestFullscreen) {
-      if (placed) placed.remove();
-      return null;
-    }
     if (placed) {
       placed.hidden = false;
       return placed;
@@ -27,6 +33,28 @@
     button.appendChild(document.createElement('i')).setAttribute('aria-hidden', 'true');
     root.querySelector('[data-action="mute"]').after(button);
     return button;
+  }
+
+  // While a player fills the viewport, the page behind it is inert, so focus
+  // and assistive technology stay in the player, as they do in full screen.
+  // Returns a function that wakes exactly the elements it made inert.
+  function inertOutside(element) {
+    const madeInert = [];
+    for (let node = element; node !== document.body; node = node.parentElement) {
+      for (const sibling of node.parentElement.children) {
+        if (sibling !== node && !sibling.inert) {
+          sibling.inert = true;
+          madeInert.push(sibling);
+        }
+      }
+    }
+    return () => madeInert.forEach((sibling) => { sibling.inert = false; });
+  }
+
+  /** The last index whose item matches, or -1 (Array#findLastIndex, for browsers before 2022). */
+  function lastIndexWhere(items, matches) {
+    for (let i = items.length - 1; i >= 0; i -= 1) if (matches(items[i])) return i;
+    return -1;
   }
 
   function clockLabel(seconds) {
@@ -47,7 +75,8 @@
     const playButton = root.querySelector('[data-action="play"]');
     // The element that fills the screen: the whole player, or a video narration's video.
     const player = options.fullscreenTarget || root.querySelector('.nja-player');
-    const fullscreenButton = addFullscreenButton(root, player);
+    const fullscreenButton = addFullscreenButton(root);
+    let viewportFullscreen = false;
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
     let frame = 0;
     let position = 0;
@@ -60,9 +89,9 @@
 
     function render(time) {
       position = Math.max(0, Math.min(timing.duration, time));
-      const index = Math.max(0, timing.scenes.findLastIndex((scene) => position + TIME_EPSILON >= scene.start));
+      const index = Math.max(0, lastIndexWhere(timing.scenes, (scene) => position + TIME_EPSILON >= scene.start));
       const sceneTiming = timing.scenes[index];
-      const cueIndex = Math.max(0, sceneTiming.cues.findLastIndex((cue) => position + TIME_EPSILON >= cue.start));
+      const cueIndex = Math.max(0, lastIndexWhere(sceneTiming.cues, (cue) => position + TIME_EPSILON >= cue.start));
       const cueTiming = sceneTiming.cues[cueIndex];
       if (index !== currentScene) {
         scenes.forEach((scene, number) => { scene.hidden = number !== index; });
@@ -98,9 +127,29 @@
       playButton.querySelector('i').className = paused ? 'fa fa-play' : 'fa fa-pause';
     }
 
-    function updateFullscreenButton() {
+    const isFullscreen = () => viewportFullscreen || nativeFullscreen.element() === player;
+
+    // However full screen changed, the player, its button, and its listeners follow.
+    function syncFullscreen() {
+      const active = isFullscreen();
+      player.classList.toggle('is-fullscreen', active);
+      updateFullscreenButton(active);
+      root.dispatchEvent(new CustomEvent('narration-fullscreenchange', { detail: { active } }));
+    }
+
+    let wakePage = null;
+    function setViewportFullscreen(active) {
+      if (active === viewportFullscreen) return;
+      viewportFullscreen = active;
+      player.classList.toggle('is-viewport-fullscreen', active);
+      document.documentElement.classList.toggle('has-viewport-fullscreen', active);
+      if (active) wakePage = inertOutside(player);
+      else wakePage();
+      syncFullscreen();
+    }
+
+    function updateFullscreenButton(active) {
       if (!fullscreenButton) return;
-      const active = document.fullscreenElement === player;
       const label = active ? 'Exit full screen' : 'Enter full screen';
       fullscreenButton.setAttribute('aria-label', label);
       fullscreenButton.title = label;
@@ -182,11 +231,23 @@
       },
       // The whole player, including checkpoints, fills the screen; Escape also exits.
       async fullscreen() {
+        if (viewportFullscreen) {
+          setViewportFullscreen(false);
+          return;
+        }
+        if (nativeFullscreen.element() === player) {
+          await nativeFullscreen.exit();
+          return;
+        }
+        if (!nativeFullscreen.supported(player)) {
+          setViewportFullscreen(true);
+          return;
+        }
         try {
-          if (document.fullscreenElement === player) await document.exitFullscreen();
-          else await player.requestFullscreen();
+          await nativeFullscreen.request(player);
         } catch (error) {
-          status.textContent = 'The browser could not change full screen. The narration continues here.';
+          // A browser that refuses to show the element full screen still gets the whole viewport.
+          setViewportFullscreen(true);
         }
       },
     };
@@ -243,8 +304,17 @@
       if (!document.hidden && !audio.paused) frame = requestAnimationFrame(tick);
     });
     // Full screen also resizes the window, so the resize listener refits the stage.
-    document.addEventListener('fullscreenchange', updateFullscreenButton);
-    updateFullscreenButton();
+    document.addEventListener('fullscreenchange', syncFullscreen);
+    document.addEventListener('webkitfullscreenchange', syncFullscreen);
+    // Older Safari reports a refused prefixed request only as an event.
+    document.addEventListener('webkitfullscreenerror', (event) => {
+      if (event.target === player) setViewportFullscreen(true);
+    });
+    // Escape leaves the drawn full screen, as it leaves the browser's own.
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && viewportFullscreen && !event.defaultPrevented) setViewportFullscreen(false);
+    });
+    updateFullscreenButton(false);
     window.addEventListener('pagehide', () => { audio.pause(); stopFrames(); });
     window.addEventListener('beforeprint', () => {
       audio.pause();
@@ -261,6 +331,7 @@
     return {
       refresh: () => render(position),
       seekTo,
+      isFullscreen,
       selectScene,
       play,
       currentScene: () => currentScene,

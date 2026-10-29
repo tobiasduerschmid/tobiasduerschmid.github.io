@@ -55,7 +55,14 @@ html.dark-mode:not(.print-light-mode) .narrated-explainer {
 .narrated-explainer .nja-player { background: var(--nja-bg); color: var(--nja-text); border: 2px solid var(--nja-line); border-radius: 8px; overflow: hidden; }
 /* Full screen keeps the theme variables of the surrounding lesson; a scene or
    checkpoint taller than the screen scrolls inside the player. */
-.narrated-explainer .nja-player:fullscreen { overflow-y: auto; border: 0; border-radius: 0; }
+.narrated-explainer .nja-player.is-fullscreen { overflow-y: auto; border: 0; border-radius: 0; }
+/* Where a browser cannot show an element full screen (Safari on iPhone), the
+   player fills the viewport itself (js/narrated-explainer.js), and the page
+   behind it stops scrolling. The html state class lifts this rule above any
+   lesson's own layout of the element, as the browser's full-screen rules are. */
+html.has-viewport-fullscreen .narrated-explainer .is-viewport-fullscreen { position: fixed; inset: 0; z-index: 2147483000; width: 100vw; height: 100vh; height: 100dvh; margin: 0; }
+html.has-viewport-fullscreen,
+html.has-viewport-fullscreen body { overflow: hidden; }
 .narrated-explainer .nja-stage { padding: 1.4em; }
 .narrated-explainer .nja-scene { min-height: 30em; }
 .narrated-explainer .nja-scene-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 1em; color: var(--nja-muted); font-size: 0.9em; }

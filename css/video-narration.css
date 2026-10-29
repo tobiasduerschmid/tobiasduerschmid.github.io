@@ -23,7 +23,7 @@
 /* The part strip's parts are buttons that jump to each part's start; the pill
    is the button, so the whole pill is the target. */
 .video-narration .vn-scenes .np-parts li { padding: 0; }
-.video-narration .vn-scenes .np-parts li:has(button)::before { content: none; }
+.video-narration .vn-scenes .np-parts li.is-linked::before { content: none; }
 .video-narration .vn-scenes .np-parts button { min-height: 1.9em; padding: 0.15em 0.7em; background: none; border: 0; border-radius: 999px; color: inherit; font: inherit; cursor: pointer; }
 .video-narration .vn-scenes .np-parts li + li button::before { content: '→ '; }
 .video-narration .vn-scenes .np-parts button:hover { background: var(--nja-hover); color: var(--nja-text); }
@@ -83,7 +83,7 @@
 .video-narration .vn-cc[aria-pressed="false"] { text-decoration: line-through; text-decoration-thickness: 0.15em; }
 /* While a knowledge check is open, the control bar steps aside so the quiz
    has the room; the quiz's own buttons continue the narration. */
-.video-narration .vn-video:has(.np-quiz:not([hidden])) .vn-controls { display: none; }
+.video-narration .vn-video.has-open-check .vn-controls { display: none; }
 .video-narration .vn-settings { margin-top: 0.6em; padding: 0.8em; background: var(--nja-bg); border: 1px solid var(--nja-line); border-radius: 6px; }
 .video-narration .vn-settings .nja-settings { align-items: end; }
 
@@ -96,48 +96,49 @@
    controls under the picture; if they are taller, the picture letterboxes.
    Controls hide after a few seconds of playback (controls-visibility.js) and
    keep their row, so the picture never jumps. */
-.video-narration .vn-video:fullscreen { --vn-chrome: 9.5em; display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) auto auto; width: 100%; height: 100%; margin: 0; background: var(--nja-bg); color: var(--nja-text); font-size: clamp(16px, 1.25vw, 28px); overflow: hidden; }
+.video-narration .vn-video.is-fullscreen { --vn-chrome: 9.5em; display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) auto auto; width: 100%; height: 100%; margin: 0; background: var(--nja-bg); color: var(--nja-text); font-size: clamp(16px, 1.25vw, 28px); overflow: hidden; }
 /* The frame's parts become the full-screen grid's own items; the frame is a
    plain wrapper with no role or focus of its own. */
-.video-narration .vn-video:fullscreen .vn-frame { display: contents; }
-.video-narration .vn-video:fullscreen .vn-phone-tip { display: none; }
-.video-narration .vn-video:fullscreen .vn-scenes { grid-area: 1 / 1; padding: 0.6em 1.2em 0.5em; overflow-y: auto; }
-.video-narration .vn-video:fullscreen .vn-scene h3 { margin: 0.15em 0 0.2em; font-size: 1.35em; }
-.video-narration .vn-video:fullscreen .vn-screen { grid-area: 2 / 1; container-type: size; aspect-ratio: auto; min-height: 0; height: 100%; padding: 0.6em; place-items: center; background: var(--nja-bg); font-size: 1em; }
-.video-narration .vn-video:fullscreen .np-quiz { grid-area: 2 / 1 / 5 / 2; overflow-y: auto; }
-.video-narration .vn-video:fullscreen .vn-captions { grid-area: 3 / 1; min-height: 0; padding: 0.5em 1.4em 0.7em; background: var(--nja-bg); border-top: 0; color: var(--nja-text); font-size: calc(1em * var(--vn-caption-scale, 1)); text-align: center; }
-.video-narration .vn-video:fullscreen .vn-captions p { max-width: 60em; margin: 0 auto; color: var(--nja-text); }
-.video-narration .vn-video:fullscreen .vn-controls { grid-area: 4 / 1; }
+.video-narration .vn-video.is-fullscreen .vn-frame { display: contents; }
+.video-narration .vn-video.is-fullscreen .vn-phone-tip { display: none; }
+.video-narration .vn-video.is-fullscreen .vn-scenes { grid-area: 1 / 1; padding: 0.6em 1.2em 0.5em; overflow-y: auto; }
+.video-narration .vn-video.is-fullscreen .vn-scene h3 { margin: 0.15em 0 0.2em; font-size: 1.35em; }
+.video-narration .vn-video.is-fullscreen .vn-screen { grid-area: 2 / 1; container-type: size; aspect-ratio: auto; min-height: 0; height: 100%; padding: 0.6em; place-items: center; background: var(--nja-bg); font-size: 1em; }
+.video-narration .vn-video.is-fullscreen .np-quiz { grid-area: 2 / 1 / 5 / 2; overflow-y: auto; }
+.video-narration .vn-video.is-fullscreen .vn-captions { grid-area: 3 / 1; min-height: 0; padding: 0.5em 1.4em 0.7em; background: var(--nja-bg); border-top: 0; color: var(--nja-text); font-size: calc(1em * var(--vn-caption-scale, 1)); text-align: center; }
+.video-narration .vn-video.is-fullscreen .vn-captions p { max-width: 60em; margin: 0 auto; color: var(--nja-text); }
+.video-narration .vn-video.is-fullscreen .vn-controls { grid-area: 4 / 1; }
 @media (min-aspect-ratio: 3 / 2) {
-  .video-narration .vn-video:fullscreen { grid-template-rows: minmax(0, 1fr) auto auto; grid-template-columns: minmax(15em, 1fr) min(calc(100vw - 15em), calc((100vh - var(--vn-chrome)) * 16 / 9)); }
-  .video-narration .vn-video:fullscreen .vn-scenes { grid-area: 1 / 1 / 4 / 2; align-self: center; max-height: 100%; padding: 1.4em 1.2em 1.4em 1.6em; }
-  .video-narration .vn-video:fullscreen .nja-scene-meta { flex-direction: column; align-items: flex-start; gap: 0.6em; }
-  .video-narration .vn-video:fullscreen .vn-scene h3 { margin: 0.6em 0 0.4em; font-size: 1.6em; line-height: 1.2; }
-  .video-narration .vn-video:fullscreen .vn-screen { grid-area: 1 / 2; }
-  .video-narration .vn-video:fullscreen .np-quiz { grid-area: 1 / 2 / 4 / 3; }
-  .video-narration .vn-video:fullscreen .vn-captions { grid-area: 2 / 2; }
-  .video-narration .vn-video:fullscreen .vn-controls { grid-area: 3 / 2; }
+  .video-narration .vn-video.is-fullscreen { grid-template-rows: minmax(0, 1fr) auto auto; grid-template-columns: minmax(15em, 1fr) min(calc(100vw - 15em), calc((100vh - var(--vn-chrome)) * 16 / 9)); }
+  .video-narration .vn-video.is-fullscreen .vn-scenes { grid-area: 1 / 1 / 4 / 2; align-self: center; max-height: 100%; padding: 1.4em 1.2em 1.4em 1.6em; }
+  .video-narration .vn-video.is-fullscreen .nja-scene-meta { flex-direction: column; align-items: flex-start; gap: 0.6em; }
+  .video-narration .vn-video.is-fullscreen .vn-scene h3 { margin: 0.6em 0 0.4em; font-size: 1.6em; line-height: 1.2; }
+  .video-narration .vn-video.is-fullscreen .vn-screen { grid-area: 1 / 2; }
+  .video-narration .vn-video.is-fullscreen .np-quiz { grid-area: 1 / 2 / 4 / 3; }
+  .video-narration .vn-video.is-fullscreen .vn-captions { grid-area: 2 / 2; }
+  .video-narration .vn-video.is-fullscreen .vn-controls { grid-area: 3 / 2; }
 }
 /* A short, wide screen, such as a phone on its side: the captions join the
    header in the sidebar, so the picture takes the height above the controls. */
 @media (min-aspect-ratio: 3 / 2) and (max-height: 600px) {
-  .video-narration .vn-video:fullscreen { --vn-chrome: 6.5em; grid-template-rows: max-content minmax(0, 1fr) auto; grid-template-columns: minmax(12em, 1fr) min(calc(100vw - 12em), calc((100vh - var(--vn-chrome)) * 16 / 9)); }
-  .video-narration .vn-video:fullscreen .vn-scenes { grid-area: 1 / 1; align-self: start; padding: 0.6em 0.8em 0.2em; overflow: visible; }
-  .video-narration .vn-video:fullscreen .vn-scene h3 { margin: 0.3em 0 0; font-size: 1.2em; }
-  .video-narration .vn-video:fullscreen .vn-screen { grid-area: 1 / 2 / 3 / 3; padding: 0.3em; }
-  .video-narration .vn-video:fullscreen .np-quiz { grid-area: 1 / 2 / 4 / 3; }
-  .video-narration .vn-video:fullscreen .vn-captions { grid-area: 2 / 1 / 4 / 2; overflow-y: auto; padding: 0.4em 0.8em; text-align: left; }
-  .video-narration .vn-video:fullscreen .vn-controls { grid-area: 3 / 2; }
+  .video-narration .vn-video.is-fullscreen { --vn-chrome: 6.5em; grid-template-rows: max-content minmax(0, 1fr) auto; grid-template-columns: minmax(12em, 1fr) min(calc(100vw - 12em), calc((100vh - var(--vn-chrome)) * 16 / 9)); }
+  .video-narration .vn-video.is-fullscreen .vn-scenes { grid-area: 1 / 1; align-self: start; padding: 0.6em 0.8em 0.2em; overflow: visible; }
+  .video-narration .vn-video.is-fullscreen .vn-scene h3 { margin: 0.3em 0 0; font-size: 1.2em; }
+  .video-narration .vn-video.is-fullscreen .vn-screen { grid-area: 1 / 2 / 3 / 3; padding: 0.3em; }
+  .video-narration .vn-video.is-fullscreen .np-quiz { grid-area: 1 / 2 / 4 / 3; }
+  .video-narration .vn-video.is-fullscreen .vn-captions { grid-area: 2 / 1 / 4 / 2; overflow-y: auto; padding: 0.4em 0.8em; text-align: left; }
+  .video-narration .vn-video.is-fullscreen .vn-controls { grid-area: 3 / 2; }
 }
-.video-narration .vn-video:fullscreen .vn-panel { width: 100%; max-height: 100%; }
-.video-narration .vn-video:fullscreen .vn-panel--slide { padding: 1em 1.4em; background: var(--nja-panel); border-radius: 8px; overflow-y: auto; }
-.video-narration .vn-video:fullscreen .vn-panel--animation { width: min(100cqw, calc(100cqh * 16 / 9)); max-height: none; }
-.video-narration .vn-video:fullscreen .vn-controls { transition: opacity 180ms ease, visibility 0s; }
-.video-narration .vn-video:fullscreen.are-controls-hidden .vn-controls { opacity: 0; visibility: hidden; pointer-events: none; transition-delay: 0s, 180ms; }
-.video-narration .vn-video:fullscreen.are-controls-hidden,
-.video-narration .vn-video:fullscreen.are-controls-hidden .vn-picture-control { cursor: none; }
+.video-narration .vn-video.is-fullscreen .vn-panel { width: 100%; max-height: 100%; }
+.video-narration .vn-video.is-fullscreen .vn-panel--slide { padding: 1em 1.4em; background: var(--nja-panel); border-radius: 8px; overflow-y: auto; }
+/* Container units fit the picture to its cell; older browsers use the viewport estimate. */
+.video-narration .vn-video.is-fullscreen .vn-panel--animation { width: min(100%, calc((100vh - var(--vn-chrome)) * 16 / 9)); width: min(100cqw, calc(100cqh * 16 / 9)); max-height: none; }
+.video-narration .vn-video.is-fullscreen .vn-controls { transition: opacity 180ms ease, visibility 0s; }
+.video-narration .vn-video.is-fullscreen.are-controls-hidden .vn-controls { opacity: 0; visibility: hidden; pointer-events: none; transition-delay: 0s, 180ms; }
+.video-narration .vn-video.is-fullscreen.are-controls-hidden,
+.video-narration .vn-video.is-fullscreen.are-controls-hidden .vn-picture-control { cursor: none; }
 @media (prefers-reduced-motion: reduce) {
-  .video-narration .vn-video:fullscreen .vn-controls { transition: none; }
+  .video-narration .vn-video.is-fullscreen .vn-controls { transition: none; }
 }
 
 /* The animated stage. Until the frame's stage is ready, or if it fails, a

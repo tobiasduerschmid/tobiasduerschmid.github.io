@@ -14,7 +14,7 @@
     cssInjected = true;
     var style = document.createElement('style');
     style.textContent = [
-      '.site-confetti-layer{position:fixed;inset:0;pointer-events:none;z-index:9999;overflow:hidden;contain:layout style paint;}',
+      '.site-confetti-layer{position:fixed;inset:0;pointer-events:none;z-index:2147483647;overflow:hidden;contain:layout style paint;}',
       '.site-confetti-piece{',
         'position:absolute;',
         'width:10px;height:14px;',
@@ -64,10 +64,12 @@
   }
 
   // Full screen shows only the full-screen element's subtree, so confetti
-  // falls inside that element while one is shown. Elements that render no
-  // children of their own (a full-screen video or frame) leave it on the body.
+  // falls inside that element while one is shown (Safari's prefixed API
+  // included). Elements that render no children of their own (a full-screen
+  // video or frame) leave it on the body, where the topmost z-index keeps it
+  // above a player that fills the viewport itself.
   function hostElement() {
-    var shown = document.fullscreenElement;
+    var shown = document.fullscreenElement || document.webkitFullscreenElement;
     return shown && !/^(VIDEO|IFRAME|IMG|CANVAS|EMBED|OBJECT)$/.test(shown.tagName) ? shown : document.body;
   }
 
