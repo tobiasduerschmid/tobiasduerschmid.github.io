@@ -2604,6 +2604,12 @@ channel.
   step setup, and only then re-enables Run (returning focus there when Stop was
   keyboard-activated). Execution timeouts use the same restart path, so an
   infinite learner program does not require a page reload.
+  Pyodide classifies `SystemExit` inside Python using the actual exception's
+  `code`: no value/`None` means success, integer codes retain their value, and
+  other values print an exit reason and fail. An outer assertion or runtime
+  error remains a failure even if its traceback mentions `SystemExit`; never
+  infer success from exception-message text. This applies to both learner runs
+  and silent instructor checks, including nested pytest failure reports.
   C++ and Python initialization belongs to its specific worker: cancelling
   that worker immediately settles its boot promise and clears the boot timer.
   Late events and superseded restart stages cannot change the newly selected
@@ -3834,15 +3840,24 @@ under the same prefix family as other tutorial state so the global
   **Python test-writing lessons.** Fetch the repository-owned
   `assets/tutorials/python_test_grading.py` helper in `setup_commands` and import
   `check_suite(test_file, module_name, replacement_source=None,
-  expect_failure=False, test_name=None, min_tests=1)` in instructor checks.
+  expect_failure=False, test_name=None, min_tests=1,
+  allowed_mutation_errors=())` in instructor checks.
   Supply a correct reference implementation independent of editable learner
   helpers, then run each narrowly scoped mutant separately. A passing reference
   check is required as well as mutant checks; a source substring or a test-file
   self-check cannot establish oracle strength. `test_name` optionally selects
   an explicitly required test; otherwise learner test names are unrestricted.
   The helper rejects zero collection, skips, collection/setup/teardown errors
-  and unrelated runtime exceptions. Mutant credit requires an assertion failure
-  in the test call phase. It restores the module file in `finally`, clears
+  and unrelated runtime exceptions. Mutant credit normally requires an assertion
+  failure in the test call phase, classified by the actual Python exception type,
+  never traceback text. A narrowly scoped mutant may explicitly allow a known
+  observation error: for example, `allowed_mutation_errors=(IndexError,)` when
+  removing a required call makes a valid test inspect an empty recording before
+  checking its length. Apply that allowance only to the relevant mutant, and
+  retain the passing reference check for the same selected tests. It never
+  relaxes reference, collection, fixture, or skipped-test checks. Exercise both
+  valid alternative assertions and plausible weak oracles in grader regressions.
+  It restores the module file in `finally`, clears
   workspace module/bytecode caches between runs, and restores the previous
   bytecode setting. Learner tests still run in the normal Python environment;
   this helper is a diagnostic evaluator, not a hostile-code security boundary.
