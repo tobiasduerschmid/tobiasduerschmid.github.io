@@ -4,6 +4,7 @@ const path = require('node:path');
 const yaml = require('js-yaml');
 const tutorial = yaml.load(fs.readFileSync(path.join(__dirname, '../_data/tutorials/tla.yml'), 'utf8'));
 const beginner = yaml.load(fs.readFileSync(path.join(__dirname, '../_data/tutorials/pluscal.yml'), 'utf8'));
+const { a11yCheckpoint } = require('./a11y-helpers');
 
 // This suite deliberately uses the real hosted Java runtime and official pinned TLC.
 // Run explicitly when changing engine artifacts, isolation, or protocol integration.
@@ -92,41 +93,71 @@ test.describe('official TLA+ engine in the tutorial', () => {
     await expect(page.locator('iframe[title="TLA+ execution runtime"]')).toHaveCount(0);
   });
 
-  test('beginner YAML checks give feedback and cannot pass by weakening the visible property', async ({ page }) => {
+  test('PlusCal boundary checks give separate feedback and preserve a repaired draft', async ({ page }) => {
     await page.goto('/SEBook/verification/pluscal-tutorial');
+    await expect(page.getByRole('heading', { name: beginner.steps[0].title, exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: /Test My Work/ })).toHaveCount(0);
+    const step = beginner.steps.find(candidate => candidate.key === 'playlist-boundary');
+    const index = beginner.steps.indexOf(step);
+    await page.getByRole('button', { name: 'Step ' + (index + 1) + ': ' + step.title, exact: true }).click();
     const testWork = page.getByRole('button', { name: /Test My Work/ });
     await expect(testWork).toBeEnabled();
     await testWork.click();
-    await expect(page.locator('.tvm-test-results')).toBeVisible({ timeout: 210000 });
-    await expect(page.locator('.tvm-test-item.pass')).toHaveCount(1);
-    await expect(page.locator('.tvm-test-detail')).toContainText('instructor-defined invariant');
-
-    await page.getByRole('button', { name: 'Step 2: ' + beginner.steps[1].title, exact: true }).click();
-    await testWork.click();
-    await expect(page.locator('.tvm-test-results')).toBeVisible({ timeout: 210000 });
-    await expect(page.locator('.tvm-test-item.fail')).toHaveCount(1);
-    await expect(page.locator('.tvm-test-detail')).toContainText('invariant violation');
-    await expect(page.locator('.tla-result')).toHaveAttribute('data-outcome', 'counterexample');
+    await expect(page.getByText(/^0\s*\/\s*2 tests passed$/)).toBeVisible({ timeout: 210000 });
+    for (const criterion of step.tests) {
+      await expect(page.getByRole('listitem').filter({ hasText: criterion.description })).toContainText('invariant violation');
+    }
+    const hints = page.getByRole('button', { name: 'Hints', exact: true });
+    await hints.click();
+    await expect(hints).toHaveAttribute('aria-expanded', 'true');
+    await expect(page.getByText(/The Last Allowed Iteration$/)).toBeVisible();
+    await expect(page.getByText(/A Guard Decision Table$/)).toHaveCount(0);
+    await a11yCheckpoint(page, 'pluscal-failing-boundary', { feature: 'pluscal-tutorial' });
 
     await page.evaluate(() => {
       const model = window._tutorial.editorModels['Model.tla'].model;
       model.setValue(model.getValue().replace('CountWithinLimit == count <= 2', 'CountWithinLimit == TRUE'));
       window._tutorial.editorModels['Model.cfg'].model.setValue('SPECIFICATION Spec\nCHECK_DEADLOCK FALSE');
     });
-    await expect(page.locator('.tvm-test-results')).toHaveCount(0);
+    await expect(page.getByText(/^0\s*\/\s*2 tests passed$/)).toHaveCount(0);
     await testWork.click();
-    await expect(page.locator('.tvm-test-results')).toBeVisible({ timeout: 210000 });
-    await expect(page.locator('.tvm-test-item.fail')).toHaveCount(1);
+    await expect(page.getByText(/^0\s*\/\s*2 tests passed$/)).toBeVisible({ timeout: 210000 });
 
     await page.evaluate(files => {
       for (const file of files) window._tutorial.editorModels[file.path].model.setValue(file.content);
-    }, beginner.steps[1].solution.files);
+    }, step.solution.files);
     await testWork.click();
-    await expect(page.locator('.tvm-test-results')).toBeVisible({ timeout: 210000 });
-    await expect(page.locator('.tvm-test-item.pass')).toHaveCount(1);
-    await expect(page.locator('.tvm-test-detail')).toContainText('holds in every reachable state');
+    await expect(page.getByText('✅ All 2 tests passed!', { exact: true })).toBeVisible({ timeout: 210000 });
+    for (const criterion of step.tests) {
+      await expect(page.getByRole('listitem').filter({ hasText: criterion.description })).toContainText('holds in every reachable state');
+    }
     await page.reload();
+    await expect(page.getByRole('heading', { name: step.title, exact: true })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Model.tla', exact: true })).toHaveAttribute('aria-current', 'true');
-    await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('tutorial-progress-pluscal')).stepsPassed)).toContain(1);
+    await testWork.click();
+    await expect(page.getByText('✅ All 2 tests passed!', { exact: true })).toBeVisible({ timeout: 210000 });
+  });
+
+  test('all PlusCal reference exercises receive their complete semantic feedback in the browser', async ({ page }) => {
+    test.setTimeout(480000);
+    await page.goto('/SEBook/verification/pluscal-tutorial');
+    for (const [index, step] of beginner.steps.entries()) {
+      if (!step.tests?.length) continue;
+      await page.getByRole('button', { name: 'Step ' + (index + 1) + ': ' + step.title, exact: true }).click();
+      await expect(page.getByRole('heading', { name: step.title, exact: true })).toBeVisible();
+      await expect(page.getByRole('button', { name: 'Model.tla', exact: true })).toHaveAttribute('aria-current', 'true');
+      await page.evaluate(files => {
+        for (const file of files) window._tutorial.editorModels[file.path].model.setValue(file.content);
+      }, step.solution.files);
+      const started = Date.now();
+      await page.getByRole('button', { name: /Test My Work/ }).click();
+      await expect(page.getByText('✅ All ' + step.tests.length + ' tests passed!', { exact: true })).toBeVisible({ timeout: 210000 });
+      console.log(step.key + ': ' + step.tests.length + ' checks completed in ' + (Date.now() - started) + 'ms');
+      for (const criterion of step.tests) {
+        const row = page.getByRole('listitem').filter({ hasText: criterion.description });
+        await expect(row).toContainText(criterion.tla.status === 'counterexample' ? 'as expected' : 'holds');
+      }
+      await a11yCheckpoint(page, 'pluscal-feedback-' + step.key, { feature: 'pluscal-tutorial' });
+    }
   });
 });

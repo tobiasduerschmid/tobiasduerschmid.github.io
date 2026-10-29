@@ -1,57 +1,78 @@
-title: 'Your First PlusCal Check'
-description: 'A very small C-style PlusCal program, one property, and one loop-bound bug. For learners who know variables and while loops; no TLA+ knowledge or installation required. About 10 minutes.'
+# Design rationale and source keys: docs/pluscal-tutorial-design.md and docs/pluscal-tlc-ltl-pedagogy-research.md.
+# New lesson keys intentionally require rechecking the expanded objectives; legacy drafts remain preserved by the shared runtime.
+# No runtime schema changes. Hints use existing source_matches to retain PlusCal inside its TLA+ comment.
+title: PlusCal and Temporal Logic
+description: Model shared playlists, ticket races, and unreliable uploads in C-style PlusCal. Learn TLC and basic
+  LTL through worked examples, faded repairs, and an independent retry model. For CS undergraduates who know variables
+  and loops; about 110–120 minutes in two sittings.
 learning_objectives:
-  - Read a variable update and a while loop in C-style PlusCal.
-  - Run TLC against a supplied property.
-  - Find the first counterexample state that breaks the property.
-  - Repair a loop boundary without weakening the property.
+  - Trace data and control states in C-style PlusCal models.
+  - Construct and select invariants that express a stated requirement.
+  - Analyze counterexamples and concurrent interleavings.
+  - Choose and justify atomic step boundaries.
+  - Interpret always, eventually, and response properties over infinite behaviors.
+  - Evaluate weak fairness and vacuous success without overclaiming guarantees.
+  - Create a bounded model and assess its safety, progress, and intended behaviors.
+  - State the scope and limitations of a completed TLC check.
 backend: tla
 require_tests: false
 require_quiz: false
 allow_skip_steps: true
 autosave_type: files
-progress_version: 1
+progress_version: 2
 run_label: Check model
 tla:
   config_file: Model.cfg
 steps:
-  # Pedagogy: Start with a complete worked program; predict values before checking one supplied property.
-  - title: A Counter That Stops at Two
-    key: first-pluscal-check
+  # Pedagogy: PRIMM — complete worked example, predict, explore, explain; state/control contrast [T3, L1].
+  - title: Playlist States
+    key: playlist-states
     run_file: Model.tla
     open_file: Model.tla
     instructions: |
       ### Why this matters
 
-      A checker can help answer a simple question about your program: can this counter ever become too large?
+      A model lets you ask whether a design can break before you build the app. A two-slot shared playlist is small enough to inspect every state while learning what a checker actually checks.
 
       ### 🎯 You will learn to
 
-      - Read a tiny PlusCal program with C-style braces.
-      - Check a supplied property with TLC.
+      - Trace state changes in C-style PlusCal.
+      - Distinguish one explored behavior from an exhaustive model check.
 
-      **PlusCal** describes an algorithm. **TLC** checks the model produced from that algorithm. This first example is already complete; you do not need to write any TLA+.
+      **Start here:** you need variables, Boolean conditions, and `while` loops from a language such as C++ or Python. No formal-methods background or installation is needed. Plan about **110–120 minutes**, preferably in two sittings: lessons 1–5, then 6–10. These are planning estimates; take longer where the traces need it.
 
-      In **Model.tla**, read the program inside `(* ... *)`. It uses braces and semicolons like C:
+      Our playlist has **two queue slots**. We model only the number of occupied slots, not tracks, accounts, or streaming. The complete worked example is in **Model.tla**.
 
-      - `variables count = 0;` gives the counter its starting value.
-      - `while (count < 2)` repeats while the condition is true.
-      - `count := count + 1;` assigns a new value. PlusCal uses `:=` for assignment.
-      - `Count:` names a step so the checker can identify it.
+      - **PlusCal** describes an algorithm; this tutorial uses its **C-style** braces and semicolons.
+      - **TLA+** is the language into which PlusCal translates. Our properties also use TLA+ expressions.
+      - **TLC** checks a configured model. It does not run the real music app.
 
-      The supplied property, `CountWithinLimit == count <= 2`, means **count must never be greater than two**. Here `==` defines the name of a condition; it does not update `count`.
+      ### Read the small model
 
-      **Predict:** Starting at zero, which values will the counter take before the loop stops?
+      Inside `(* ... *)`, `--algorithm` introduces PlusCal. The surrounding module header, `EXTENDS Naturals`, and `====` are supplied packaging; `Naturals` supplies arithmetic.
 
-      **Check:** Choose **Check every reachable state**. Translation happens automatically. The first run downloads the browser runtime and may take a little while. TLC should report that it found no violation of this property.
+      | Source | Meaning |
+      | --- | --- |
+      | `variables count = 0;` | Start with an empty queue. |
+      | `while (count < 2)` | Repeat while a slot remains. |
+      | `count := count + 1;` | Assign the next value. |
+      | `Add:` | Name an atomic step, from this label to the next label encountered. |
+      | `CountWithinLimit == count <= 2` | Define a named Boolean condition. |
 
-      **Inspect:** Choose **Explore one behavior**, select the starting state, then select the available next steps. Watch `count` go from 0 to 1 to 2. The extra variable `pc` records the program's current label; `"Done"` means the program has finished.
+      **C/Python habit check:** `:=` updates a variable; `=` compares values in an expression; `==` defines an operator. This is C-style PlusCal, not C with a different compiler.
 
-      **Model.cfg** selects the supplied program and property. Its `CHECK_DEADLOCK FALSE` line allows this small program to finish; reaching its end is intentional, not a bug. Leave these settings unchanged for now.
+      A **state** includes every variable's value and the current control location. Translation adds `pc`, the program counter: `"Add"` is a label and `"Done"` indicates termination. Equal `count` values do not necessarily mean equal states.
 
-      This result applies to this small model and its supplied property. Exploring one behavior is a way to understand it; the check searches all its reachable states. Neither action grades your explanation automatically.
+      ### Your exploration
 
-      Choose **Test My Work** for feedback on the counter's bound. You may continue to the next lesson whenever you are ready.
+      1. **Predict:** Does the queue reach 2 or 3? After the final increment, might a later state keep the same `count` but change `pc`? Write a one-sentence prediction in your own notes.
+      2. **Check:** Choose **Check every reachable state**. PlusCal translates automatically. The first use downloads a browser Java runtime; subsequent small checks should be faster. You can read while it starts.
+      3. **Inspect:** Choose **Explore one behavior**, choose the initial state, then choose successive available transitions. Compare both `count` and `pc`. Exploration chooses one path; it is not the exhaustive check.
+      4. **Explain:** Name one detail of a real playlist that this model deliberately leaves out.
+
+      **Model.cfg** selects `SPECIFICATION Spec` and `INVARIANT CountWithinLimit`. An **invariant** is a condition required in every reachable state, including the initial state. `CHECK_DEADLOCK FALSE` disables TLC's separate deadlock diagnostic; termination is intentional here. This setting does not establish progress and should not be copied blindly into a protocol model.
+
+      **Exploratory step:** the knowledge check is your self-check; there is no code grade here. Throughout this tutorial, checks and quizzes are optional practice, and numbered lessons remain accessible. A successful check supports only the selected requirements of the configured model. A stopped, incomplete, or erroneous check establishes no pass.
     files:
       - path: Model.tla
         language: tlaplus
@@ -60,10 +81,10 @@ steps:
           ---- MODULE Model ----
           EXTENDS Naturals
 
-          (* --algorithm Counter {
+          (* --algorithm Playlist {
           variables count = 0;
           {
-            Count:
+            Add:
             while (count < 2) {
               count := count + 1;
             };
@@ -79,14 +100,39 @@ steps:
           SPECIFICATION Spec
           INVARIANT CountWithinLimit
           CHECK_DEADLOCK FALSE
-    tests:
-      - description: The counter stays between zero and two.
-        tla:
-          status: complete
-          invariant: 'count \in 0..2'
-          model_config: |
-            SPECIFICATION Spec
-            CHECK_DEADLOCK FALSE
+    quiz:
+      title: Step 1 — Knowledge Check
+      min_score: 0.8
+      shuffle_questions: false
+      shuffle_options: true
+      questions:
+        - type: single
+          difficulty: basic
+          question: In a PlusCal model, two displayed states have the same `count` but different `pc` values. What
+            follows?
+          options:
+            - They are different states.
+            - They are the same state.
+            - One must be a checker error.
+          correct_index: 0
+          option_feedback:
+            1: Equal data values do not imply equal control locations or successors.
+            2: Control can advance without changing the queue count.
+          explanation: Control location is part of state. It can change which transitions are possible even when
+            data values match.
+        - type: single
+          difficulty: intermediate
+          question: You explored one successful ticket-purchase behavior. What evidence is still missing for a safety
+            claim?
+          options:
+            - A faster run of that behavior.
+            - A check of all modeled choices.
+            - A screenshot of its final state.
+          correct_index: 1
+          option_feedback:
+            0: Speed does not broaden the set of behaviors inspected.
+            2: A final snapshot omits both earlier states and alternative choices.
+          explanation: One successful behavior does not rule out a different allowed behavior that breaks the requirement.
     solution:
       files:
         - path: Model.tla
@@ -95,10 +141,10 @@ steps:
             ---- MODULE Model ----
             EXTENDS Naturals
 
-            (* --algorithm Counter {
+            (* --algorithm Playlist {
             variables count = 0;
             {
-              Count:
+              Add:
               while (count < 2) {
                 count := count + 1;
               };
@@ -107,40 +153,47 @@ steps:
 
             CountWithinLimit == count <= 2
             ====
+        - path: Model.cfg
+          language: plaintext
+          content: |
+            SPECIFICATION Spec
+            INVARIANT CountWithinLimit
+            CHECK_DEADLOCK FALSE
       explanation: |
-        The counter starts at 0, becomes 1, then becomes 2. At 2 the loop condition is false, so it finishes. CountWithinLimit holds throughout. This worked example needs no repair.
-
-  # Pedagogy: Change one boundary, inspect its concrete failure, then retrieve the earlier guard.
-  - title: One Extra Iteration
-    key: pluscal-loop-boundary
+        The data values are 0, 1, and 2. A later control step reaches Done with count still 2. TLC checks CountWithinLimit throughout the reachable model; one selected exploration merely helps explain that result. Track identities, duplicate songs, and networking are outside this abstraction.
+  # Pedagogy: PRIMM — diagnose a supplied counterexample, then fade the guard; separate safety and useful work [L1, T6].
+  - title: The Boundary Counterexample
+    key: playlist-boundary
     run_file: Model.tla
     open_file: Model.tla
     instructions: |
       ### Why this matters
 
-      One extra `=` in a loop condition can allow one extra iteration. A counterexample shows exactly where that changes the result.
+      Counterexamples turn a vague failure into a concrete explanation. Finding the first bad state and the decision just before it is a reusable debugging skill.
 
       ### 🎯 You will learn to
 
-      - Read a failing trace and identify its first bad value.
-      - Repair the loop while keeping the requirement unchanged.
+      - Locate the first invariant violation in a trace.
+      - Repair a boundary while preserving the requirement.
 
-      This program differs from the previous one by just one character: its loop condition is now `count <= 2`. The requirement is still **count must never be greater than two**.
+      The queue still has two slots. The starter changes the loop guard to `count <= 2`; the requirement stays unchanged.
 
-      **Predict → Check:** Will this loop stop at two? Choose **Check every reachable state**. TLC should find a counterexample: a sequence of states that breaks `CountWithinLimit`.
+      1. **Predict:** When `count` is exactly 2, does the loop stop or take another step?
+      2. **Check:** Choose **Check every reachable state**. Use the counterexample's **Next** or **Jump to state** controls to find the first state that violates `CountWithinLimit`.
+      3. **Explain:** Record the preceding `count`, the guard's truth value there, and the next `count`. A counterexample is one legal modeled path that refutes the invariant; TLC need not show every bad path.
+      4. **Repair:** Change **only the loop condition**. The queue must fill both slots and then finish without exceeding capacity. Keep the initial value, increment, labels, property, and configuration unchanged.
+      5. **Check again:** Use **Test My Work**. Its two rows separately check the bound and the value when the program finishes. Then explain your guard at the boundary without referring to the green indicators.
 
-      Use **Next** or **Jump to state** to follow the trace. Find the first state where `count` is too large. Look at the preceding state and explain why the loop was allowed to run again.
-
-      **Repair:** Change only the loop condition. Keep the assignment, the property, and **Model.cfg** unchanged. Check again, then choose **Test My Work** for feedback. Explain why the repaired loop stops in time.
+      These checks inspect state safety and the completed result. They do not separately establish eventual termination or police every source edit; keep to the guard-only task. We will check progress explicitly later.
 
       <details markdown="1">
-      <summary>Hint: try the boundary value</summary>
+      <summary>Help With the Boundary</summary>
 
-      When `count` is exactly 2, should the loop run once more? Evaluate the condition at that value before choosing your edit.
+      Make three rows for the guard: count 0, count 1, count 2. Mark where another occupied slot is permitted. Compare that decision table with your expression.
 
       </details>
 
-      A check that finds no violation supports the supplied property for this model. It does not check requirements you did not express. When you are ready, continue with [TLA+ and PlusCal](/SEBook/verification/tla-tutorial) to explore states, concurrent updates, and eventual completion.
+      **A useful failure:** a counterexample is evidence about the model. The next decision is whether the algorithm, the requirement, or the abstraction is wrong. Here the two-slot requirement is fixed, so changing it would answer a different question.
     files:
       - path: Model.tla
         language: tlaplus
@@ -149,10 +202,10 @@ steps:
           ---- MODULE Model ----
           EXTENDS Naturals
 
-          (* --algorithm Counter {
+          (* --algorithm Playlist {
           variables count = 0;
           {
-            Count:
+            Add:
             while (count <= 2) {
               count := count + 1;
             };
@@ -169,13 +222,77 @@ steps:
           INVARIANT CountWithinLimit
           CHECK_DEADLOCK FALSE
     tests:
-      - description: The repaired loop keeps the counter between zero and two.
+      - description: The queue stays within its two slots.
         tla:
           status: complete
-          invariant: 'count \in 0..2'
+          invariant: count \in 0..2
           model_config: |
             SPECIFICATION Spec
             CHECK_DEADLOCK FALSE
+        hints:
+          - title: The Last Allowed Iteration
+            text: Inspect the guard with count exactly 2. Is one more occupied slot allowed?
+            condition: 'source_matches: /while\s*\(\s*count\s*<=\s*2\s*\)/'
+          - title: The Other Side of the Boundary
+            text: Trace count 0, 1, and 2 through your current guard. It must admit useful work before capacity
+              and stop at capacity.
+            condition: 'source_matches: /(?<![\s\S])(?![\s\S]*while\s*\(\s*count\s*<=\s*2\s*\))(?=[\s\S]*while\s*\()/'
+          - title: A Guard Decision Table
+            text: 'If the loop was removed, restore its shape from the worked example. Make a table for count 0,
+              1, 2: which rows should permit another increment? Turn that table into one condition.'
+            condition: 'source_matches: /(?<![\s\S])(?![\s\S]*while\s*\()/'
+      - description: A finished queue contains both requested tracks.
+        tla:
+          status: complete
+          invariant: (pc = "Done") => count = 2
+          model_config: |
+            SPECIFICATION Spec
+            CHECK_DEADLOCK FALSE
+        hints:
+          - title: The Last Allowed Iteration
+            text: Inspect the guard with count exactly 2. Is one more occupied slot allowed?
+            condition: 'source_matches: /while\s*\(\s*count\s*<=\s*2\s*\)/'
+          - title: The Other Side of the Boundary
+            text: Trace count 0, 1, and 2 through your current guard. It must admit useful work before capacity
+              and stop at capacity.
+            condition: 'source_matches: /(?<![\s\S])(?![\s\S]*while\s*\(\s*count\s*<=\s*2\s*\))(?=[\s\S]*while\s*\()/'
+          - title: A Guard Decision Table
+            text: 'If the loop was removed, restore its shape from the worked example. Make a table for count 0,
+              1, 2: which rows should permit another increment? Turn that table into one condition.'
+            condition: 'source_matches: /(?<![\s\S])(?![\s\S]*while\s*\()/'
+    quiz:
+      title: Step 2 — Knowledge Check
+      min_score: 0.8
+      shuffle_questions: false
+      shuffle_options: true
+      questions:
+        - type: single
+          difficulty: intermediate
+          question: A PlusCal loop starts with `count = 0`, increments by one, and uses `count <= 4`. An invariant
+            requires `count <= 4`. Which state first violates it?
+          options:
+            - The state with count 4.
+            - The state with count 5.
+            - The state after termination only.
+          correct_index: 1
+          option_feedback:
+            0: At 4 the requirement still holds; the outgoing step is the problem.
+            2: An invariant is checked during execution, not only when the algorithm finishes.
+          explanation: The guard is still true at 4, so the next increment reaches 5 before the loop can finish.
+        - type: single
+          difficulty: intermediate
+          question: TLC finds a counterexample to a fixed capacity requirement. Removing that requirement from Model.cfg
+            produces a successful run. What changed?
+          options:
+            - The capacity bug was repaired.
+            - The checker used a safer schedule.
+            - The checked question became weaker.
+          correct_index: 2
+          option_feedback:
+            0: The algorithm still permits the same over-capacity state.
+            1: Removing a property does not repair the schedule that led to the violation.
+          explanation: Omitting a property removes that obligation from the check; it does not change the faulty
+            transition.
     solution:
       files:
         - path: Model.tla
@@ -184,10 +301,10 @@ steps:
             ---- MODULE Model ----
             EXTENDS Naturals
 
-            (* --algorithm Counter {
+            (* --algorithm Playlist {
             variables count = 0;
             {
-              Count:
+              Add:
               while (count < 2) {
                 count := count + 1;
               };
@@ -196,5 +313,1322 @@ steps:
 
             CountWithinLimit == count <= 2
             ====
+        - path: Model.cfg
+          language: plaintext
+          content: |
+            SPECIFICATION Spec
+            INVARIANT CountWithinLimit
+            CHECK_DEADLOCK FALSE
       explanation: |
-        The faulty loop still runs when count is 2, so its next assignment produces 3. Changing the guard back to count < 2 prevents that extra iteration. The requirement remains the same; the program now satisfies it.
+        The faulty guard permits the increment from 2 to 3. The reference uses count < 2: true at 0 and 1, false at 2. Equivalent guards such as count <= 1 are valid for this stated domain. Stopping at 1 would satisfy the bound but fail the separate completed-result check.
+  # Pedagogy: Worked-example fading — learner constructs the invariant; contrasting positive/negative cases reject vacuous success [L1, F2, F5].
+  - title: A Requirement With Teeth
+    key: playlist-property
+    run_file: Model.tla
+    open_file: Model.tla
+    instructions: |
+      ### Why this matters
+
+      A checker can correctly answer the wrong question. Writing the requirement yourself makes the difference between a useful invariant and a condition that accepts everything.
+
+      ### 🎯 You will learn to
+
+      - Translate a capacity requirement into a state predicate.
+      - Select that invariant in the model configuration.
+
+      This deliberately faulty queue visits counts 0 through 3. It represents **two available slots**. Leave the algorithm unchanged so it supplies examples that your property must accept and reject.
+
+      An operator definition has the form `Name == expression`. Expressions use `<=`, `<`, `=`, and `#` (not equal). `TRUE` and `FALSE` are Boolean values. For example, `Nonnegative == count >= 0` says nothing about an upper limit.
+
+      1. **Classify:** In your notes, mark count 0, 1, 2, and 3 as permitted or forbidden by the two-slot requirement.
+      2. **Write:** Replace the placeholder body of `WithinCapacity` with a predicate that matches that classification. It must constrain the current state; TLC's invariant check supplies the “every reachable state” part.
+      3. **Select:** In **Model.cfg**, add an `INVARIANT` declaration naming your operator, following the earlier configuration. Preserve `SPECIFICATION Spec` and the existing deadlock setting.
+      4. **Check:** **Check every reachable state** should now produce the intended counterexample. Do not repair the algorithm in this lesson: exposing its defect is the task.
+      5. **Validate your work:** **Test My Work** checks the predicate's classification independently, then checks that your configuration actually exposes an invariant failure. Both criteria should pass even though the model intentionally violates the requirement.
+
+      **Two different questions:** “Does this algorithm obey the requirement?” should fail here. “Did I write and select the right requirement?” should pass. An expected counterexample can be useful evidence; green is not the objective by itself.
+
+      The classification check covers the supplied reachable values, not every imaginable integer. Keep the example transitions intact. If your property were tested only against a correct queue, the unhelpful predicate `TRUE` could look just as good.
+    files:
+      - path: Model.tla
+        language: tlaplus
+        reseed: true
+        content: |
+          ---- MODULE Model ----
+          EXTENDS Naturals
+
+          (* --algorithm Playlist {
+          variables count = 0;
+          {
+            Add:
+            while (count < 3) {
+              count := count + 1;
+            };
+          }
+          } *)
+
+          WithinCapacity == TRUE
+          ====
+      - path: Model.cfg
+        language: plaintext
+        reseed: true
+        content: |
+          SPECIFICATION Spec
+          CHECK_DEADLOCK FALSE
+    tests:
+      - description: The predicate accepts permitted counts and rejects the excess count.
+        tla:
+          status: complete
+          invariant: WithinCapacity <=> (count <= 2)
+          model_config: |
+            SPECIFICATION Spec
+            CHECK_DEADLOCK FALSE
+        hints:
+          - title: A Requirement Is a Filter
+            text: TRUE accepts every state. Describe which count values belong to a two-slot queue before choosing
+              an expression.
+            condition: 'source_matches: /^WithinCapacity\s*==\s*TRUE\s*$/m'
+          - title: Classify the Reachable Values
+            text: 'Your model visits count 0, 1, 2, and 3. Evaluate your predicate on all four: which one must it
+              reject, and which must it preserve?'
+            condition: 'source_matches: /(?<![\s\S])(?![\s\S]*^WithinCapacity\s*==\s*TRUE\s*$)(?=[\s\S]*^WithinCapacity\s*==)/m'
+          - title: Name and Selection Have Different Jobs
+            text: Restore a definition named WithinCapacity if it is missing. Separate the predicate in Model.tla
+              from the INVARIANT line selecting it in Model.cfg; neither substitutes for the other.
+            condition: 'source_matches: /(?<![\s\S])(?![\s\S]*^WithinCapacity\s*==)/m'
+      - description: The selected configuration exposes an invariant violation.
+        tla:
+          status: counterexample
+          reason: invariant
+        hints:
+          - title: Select the Question to Check
+            text: A named condition is not automatically checked. Compare your Model.cfg with the earlier working
+              configuration.
+            condition: 'source_matches: /(?<![\s\S])(?![\s\S]*^\s*INVARIANT\s+WithinCapacity\b)/m'
+          - title: Keep the Known Bad Example
+            text: If the invariant is selected, check that the algorithm can still reach its deliberately forbidden
+              count. This lesson changes the requirement only.
+            condition: 'source_matches: /(?=[\s\S]*^\s*INVARIANT\s+WithinCapacity\b)(?=[\s\S]*while\s*\()/m'
+          - title: Restore the Evidence
+            text: If the loop has disappeared, restore this lesson and preserve its transition code. Your task is
+              to classify its states and select the classification for checking.
+            condition: 'source_matches: /(?<![\s\S])(?=[\s\S]*^\s*INVARIANT\s+WithinCapacity\b)(?![\s\S]*while\s*\()/m'
+    quiz:
+      title: Step 3 — Knowledge Check
+      min_score: 0.8
+      shuffle_questions: false
+      shuffle_options: true
+      questions:
+        - type: single
+          difficulty: intermediate
+          question: A model visits only counts 0, 1, and 2. Both `count <= 2` and `TRUE` pass as invariants. Which
+            added case distinguishes their meanings?
+          options:
+            - Another visit to count 1.
+            - A reachable state with count 3.
+            - A different label at count 0.
+          correct_index: 1
+          option_feedback:
+            0: Both predicates accept 1, so another visit provides no distinguishing evidence.
+            2: Neither predicate mentions the label; both still accept count 0.
+          explanation: The predicates disagree at count 3. A useful validation case must exercise a state where
+            competing requirements differ.
+        - type: single
+          difficulty: basic
+          question: In a TLA+ definition, what does `QueueEmpty == count = 0` do?
+          options:
+            - It assigns zero to count.
+            - It defines a Boolean operator.
+            - It requires every state to be empty.
+          correct_index: 1
+          option_feedback:
+            0: Only the PlusCal assignment changes count here. The equality inside the definition compares values.
+            2: A definition alone does not select a property for checking.
+          explanation: The definition names a predicate. The configuration determines whether TLC checks that predicate
+            as an invariant.
+    solution:
+      files:
+        - path: Model.tla
+          language: tlaplus
+          content: |
+            ---- MODULE Model ----
+            EXTENDS Naturals
+
+            (* --algorithm Playlist {
+            variables count = 0;
+            {
+              Add:
+              while (count < 3) {
+                count := count + 1;
+              };
+            }
+            } *)
+
+            WithinCapacity == count <= 2
+            ====
+        - path: Model.cfg
+          language: plaintext
+          content: |
+            SPECIFICATION Spec
+            INVARIANT WithinCapacity
+            CHECK_DEADLOCK FALSE
+      explanation: |
+        WithinCapacity accepts 0, 1, and 2 and rejects 3. Selecting it with INVARIANT WithinCapacity makes the intentionally faulty queue fail. The reference preserves the bug because this exercise assesses specification, not repair.
+  # Pedagogy: PRIMM — worked concurrency counterexample; hold domain size fixed while varying schedule [T3, T6, F5].
+  - title: Competing Ticket Requests
+    key: ticket-interleavings
+    run_file: Model.tla
+    open_file: Model.tla
+    instructions: |
+      ### Why this matters
+
+      Two individually sensible actions can interfere when they share state. A last-ticket sale makes the interleaving visible without networking or database setup.
+
+      ### 🎯 You will learn to
+
+      - Construct a legal interleaving of two PlusCal processes.
+      - Explain why a checked condition can become outdated.
+
+      A campus concert has **one ticket left**. Two buyers each attempt to buy it once. `sold` counts successful purchases; payment details are outside this model.
+
+      `process (Buyer \in {1, 2})` creates two process instances, with identities 1 and 2. `\in` means “is an element of,” and `{1, 2}` is a set. These identities impose **no execution order**. TLC considers all allowed interleavings, not random probabilities.
+
+      The two labels matter:
+
+      - **Check:** evaluate `sold < 1` and choose whether to enter the branch.
+      - **Buy:** increment `sold` in a later atomic step.
+
+      A step runs from a label to the next label reached. Braces group source code; they do **not** make the entire `if` indivisible when another label interrupts it. An `if` condition is not rechecked automatically at `Buy`.
+
+      1. **Predict:** Can the model sell one ticket or two? Commit to a claim and a possible order of labeled actions.
+      2. **Explore:** Choose an initial state, then try a schedule where one buyer finishes before the other checks. Next start a fresh exploration and try a schedule where both buyers check before either buys.
+      3. **Check all choices:** Run **Check every reachable state**. Follow the failing trace and record which buyer passed its check before the ticket was sold.
+      4. **Explain:** Describe why “but I used an `if`” does not prevent this race.
+
+      For concurrent processes, `pc[1]` and `pc[2]` store each buyer's location. A trace can show both poised at `Buy` while `sold` is still zero. Distinguish those control states from the final numerical result.
+
+      **Exploratory step:** there is no code repair yet. Keep this counterexample in your notes. One correct sequential schedule cannot establish that all schedules are safe, and the number of bad schedules is not a probability of failure.
+    files:
+      - path: Model.tla
+        language: tlaplus
+        reseed: true
+        content: |
+          ---- MODULE Model ----
+          EXTENDS Naturals
+
+          (* --algorithm Tickets {
+          variables sold = 0;
+          process (Buyer \in {1, 2}) {
+            Check:
+            if (sold < 1) {
+              Buy:
+              sold := sold + 1;
+            };
+          }
+          } *)
+
+          Capacity == sold <= 1
+          ====
+      - path: Model.cfg
+        language: plaintext
+        reseed: true
+        content: |
+          SPECIFICATION Spec
+          INVARIANT Capacity
+          CHECK_DEADLOCK FALSE
+    quiz:
+      title: Step 4 — Knowledge Check
+      min_score: 0.8
+      shuffle_questions: false
+      shuffle_options: true
+      questions:
+        - type: single
+          difficulty: intermediate
+          question: In the supplied PlusCal ticket model, both buyers have already passed `Check` and are at `Buy`,
+            with `sold = 0`. What can happen?
+          options:
+            - Only the first buyer may increment.
+            - Both may increment without rechecking.
+            - The second buyer must restart Check.
+          correct_index: 1
+          option_feedback:
+            0: The condition was evaluated earlier, when the ticket was still available.
+            2: There is no modeled transition that returns this buyer to Check.
+          explanation: Each process already selected its branch. Its next labeled step executes that branch without
+            reevaluating the old condition.
+        - type: single
+          difficulty: intermediate
+          question: A PlusCal process has an `if` body containing two labels. What determines whether another process
+            can interleave there?
+          options:
+            - The labels along the control path.
+            - The indentation of the assignments.
+            - The braces surrounding the whole if.
+          correct_index: 0
+          option_feedback:
+            1: Indentation helps readers but does not create atomicity.
+            2: A branch containing multiple labeled steps can be interrupted between those steps.
+          explanation: Labels delimit atomic steps in the algorithm, so their placement changes the model’s possible
+            interleavings.
+    solution:
+      files:
+        - path: Model.tla
+          language: tlaplus
+          content: |
+            ---- MODULE Model ----
+            EXTENDS Naturals
+
+            (* --algorithm Tickets {
+            variables sold = 0;
+            process (Buyer \in {1, 2}) {
+              Check:
+              if (sold < 1) {
+                Buy:
+                sold := sold + 1;
+              };
+            }
+            } *)
+
+            Capacity == sold <= 1
+            ====
+        - path: Model.cfg
+          language: plaintext
+          content: |
+            SPECIFICATION Spec
+            INVARIANT Capacity
+            CHECK_DEADLOCK FALSE
+      explanation: |
+        A failing schedule is Check(1), Check(2), Buy(1), Buy(2). Both checks see zero. The purchases then make sold 1 and 2. The whole if is not atomic because Buy is a separate label. TLC may choose a symmetric witness instead.
+  # Pedagogy: Worked-example fading — choose the boundary, retain useful behavior, justify abstraction; retrieve invariant meaning [T3, T6, F2].
+  - title: Atomic Reservations
+    key: atomic-reservations
+    run_file: Model.tla
+    open_file: Model.tla
+    instructions: |
+      ### Why this matters
+
+      An atomic operation keeps a decision and its update together. Modeling that boundary accurately is essential: stronger assumptions can hide a real race just as easily as they can describe a real fix.
+
+      ### 🎯 You will learn to
+
+      - Choose an atomic boundary that prevents overselling.
+      - Justify the implementation mechanism the model assumes.
+
+      The service now provides **one atomic reservation operation**: checking availability and recording a purchase happen indivisibly. Your job is to model that promised operation. The starter is the same two-label race.
+
+      1. **Plan:** Identify which actions must be indivisible for the promised operation. Sketch a legal schedule after your proposed change.
+      2. **Modify:** Change **label placement only** so each buyer attempts one atomic reservation. Keep both buyers, the `if`, the increment, the initial value, and the property/configuration. A buyer that finds no ticket finishes without buying.
+      3. **Check:** Use **Test My Work**. One criterion checks capacity; the other checks that when both buyers have finished, one ticket was actually sold. Deleting all useful work is not a repair.
+      4. **Explain the assumption:** Name a real mechanism that could implement this indivisible operation, such as a suitable database transaction or synchronization primitive. The source label itself installs neither.
+
+      For reading the checking logic, `\A b \in {1, 2}: P` means “for every buyer b, P.” `=>` means implication: when the condition on its left holds, the condition on its right must hold. A finished-result rule says what is true **if both buyers finish**; it does not yet guarantee that they will finish.
+
+      The automatic checks cover the stated state requirements. They do not prove that an implementation provides the assumed atomic operation, nor that arbitrary source edits preserve both purchase attempts. Keep to the label-only contract and compare both schedules yourself.
+
+      **Pause point:** before the next sitting, close the example and explain how a correct `if` can still participate in a race. Reconstruct the two labels from memory, then check your explanation.
+    files:
+      - path: Model.tla
+        language: tlaplus
+        reseed: true
+        content: |
+          ---- MODULE Model ----
+          EXTENDS Naturals
+
+          (* --algorithm Tickets {
+          variables sold = 0;
+          process (Buyer \in {1, 2}) {
+            Check:
+            if (sold < 1) {
+              Buy:
+              sold := sold + 1;
+            };
+          }
+          } *)
+
+          Capacity == sold <= 1
+          ====
+      - path: Model.cfg
+        language: plaintext
+        reseed: true
+        content: |
+          SPECIFICATION Spec
+          INVARIANT Capacity
+          CHECK_DEADLOCK FALSE
+    tests:
+      - description: No schedule sells more than the available ticket.
+        tla:
+          status: complete
+          invariant: sold \in 0..1
+          model_config: |
+            SPECIFICATION Spec
+            CHECK_DEADLOCK FALSE
+        hints:
+          - title: The Gap Between Decision and Update
+            text: Locate the point where another buyer can run after the condition has been evaluated but before
+              the purchase is recorded.
+            condition: 'source_matches: /\bBuy\s*:/'
+          - title: Preserve a Real Sale
+            text: With that gap changed, trace both buyer orders. Check that one buyer still sells a ticket and
+              the other can finish without selling one.
+            condition: 'source_matches: /(?<![\s\S])(?![\s\S]*\bBuy\s*:)(?=[\s\S]*sold\s*:=)/'
+          - title: Two Obligations Together
+            text: 'If the update was removed, restore it before changing atomicity. Write a two-row plan: the buyer
+              who sees a free ticket; the buyer who sees none. What must each do?'
+            condition: 'source_matches: /(?<![\s\S])(?![\s\S]*\bBuy\s*:)(?![\s\S]*sold\s*:=)/'
+      - description: When both buyers finish, a ticket has been sold.
+        tla:
+          status: complete
+          invariant: '(\A b \in {1, 2}: pc[b] = "Done") => sold = 1'
+          model_config: |
+            SPECIFICATION Spec
+            CHECK_DEADLOCK FALSE
+        hints:
+          - title: The Gap Between Decision and Update
+            text: Locate the point where another buyer can run after the condition has been evaluated but before
+              the purchase is recorded.
+            condition: 'source_matches: /\bBuy\s*:/'
+          - title: Preserve a Real Sale
+            text: With that gap changed, trace both buyer orders. Check that one buyer still sells a ticket and
+              the other can finish without selling one.
+            condition: 'source_matches: /(?<![\s\S])(?![\s\S]*\bBuy\s*:)(?=[\s\S]*sold\s*:=)/'
+          - title: Two Obligations Together
+            text: 'If the update was removed, restore it before changing atomicity. Write a two-row plan: the buyer
+              who sees a free ticket; the buyer who sees none. What must each do?'
+            condition: 'source_matches: /(?<![\s\S])(?![\s\S]*\bBuy\s*:)(?![\s\S]*sold\s*:=)/'
+    quiz:
+      title: Step 5 — Knowledge Check
+      min_score: 0.8
+      shuffle_questions: false
+      shuffle_options: true
+      questions:
+        - type: single
+          difficulty: intermediate
+          question: A PlusCal model passes after two steps are combined. The deployed service still performs them
+            separately without synchronization. What conclusion is warranted?
+          options:
+            - The deployment has inherited atomicity.
+            - The model uses an unsupported assumption.
+            - The counterexample was only bad luck.
+          correct_index: 1
+          option_feedback:
+            0: Changing model labels does not change implementation behavior.
+            2: The counterexample was an allowed behavior, not a claim about its probability.
+          explanation: The checked model excludes interleavings that the implementation still permits. The implementation
+            must supply the modeled atomic operation.
+        - type: single
+          difficulty: intermediate
+          question: A model’s completed result is within capacity, but an earlier state exceeded it. Does the capacity
+            invariant hold?
+          options:
+            - Yes, because the final state is safe.
+            - No, because an earlier state violates it.
+            - Yes, if every process eventually stops.
+          correct_index: 1
+          option_feedback:
+            0: A later repair does not erase an earlier invariant violation.
+            2: Termination and the state bound are separate requirements.
+          explanation: An invariant must hold in every reachable state, not only at termination. This revisits the
+            queue’s boundary requirement.
+    solution:
+      files:
+        - path: Model.tla
+          language: tlaplus
+          content: |
+            ---- MODULE Model ----
+            EXTENDS Naturals
+
+            (* --algorithm Tickets {
+            variables sold = 0;
+            process (Buyer \in {1, 2}) {
+              Check:
+              if (sold < 1) {
+                sold := sold + 1;
+              };
+            }
+            } *)
+
+            Capacity == sold <= 1
+            ====
+        - path: Model.cfg
+          language: plaintext
+          content: |
+            SPECIFICATION Spec
+            INVARIANT Capacity
+            CHECK_DEADLOCK FALSE
+      explanation: |
+        The reference retains Check and removes the intervening Buy label. The condition and increment now form one atomic step. Whichever buyer goes first sells the ticket; the other observes sold = 1. This is sound only because the scenario explicitly grants an atomic reservation operation.
+  # Pedagogy: Worked temporal contrasts — infinite-behavior semantics and current-position inclusion before formula construction [L1, L2, L10].
+  - title: Always and Eventually
+    key: temporal-truth
+    run_file: Model.tla
+    open_file: Model.tla
+    instructions: |
+      ### Why this matters
+
+      State constraints cannot express every requirement. Temporal logic describes what must hold across a whole behavior, including whether something ever happens.
+
+      ### 🎯 You will learn to
+
+      - Interpret always and eventually on infinite behaviors.
+      - Distinguish a finite prefix from an infinite counterexample.
+
+      **Linear Temporal Logic (LTL)** describes a single linear sequence of states. We use two of its ideas through TLA+ syntax:
+
+      | Meaning from the current position | Common LTL notation | Type in TLA+ |
+      | --- | --- | --- |
+      | True now and at every later position | `G p` | `[]p` |
+      | True now or at some later position | `F p` | `<>p` |
+
+      The current position counts in **both** operators. Do not type `G` or `F` into these files as though they were TLA+ operators. `PROPERTY` selects a temporal formula; `INVARIANT` selects a state predicate.
+
+      **Safety** rules out bad events; a state invariant is one important kind. **Liveness** requires eventual progress. This lesson’s model starts with music already playing, then permits muting it. Finite termination is represented temporally by repeating the final state forever. TLA+ also permits **stuttering**: steps that leave every variable unchanged.
+
+      1. **Predict:** Does `<>playing` require playback to become true again after muting, or is being true initially sufficient?
+      2. **Check:** The supplied configuration checks `EverPlaying`. Explain its result using the initial state.
+      3. **Contrast:** Change only the selected `PROPERTY` to `AlwaysPlaying`. Predict, check, and find the first false state. Then restore `EverPlaying`.
+      4. **Transfer:** For the following behaviors, decide both `[]p` and `<>p` in your notes before opening the explanation.
+
+      | Infinite behavior | Description |
+      | --- | --- |
+      | Never | p is false forever. |
+      | Only now | p is true initially, then false forever. |
+      | Later | p is false initially, then true forever. |
+      | Always | p is true forever. |
+
+      <details markdown="1">
+      <summary>Compare the Four Behaviors</summary>
+
+      Never satisfies neither formula. Only now and Later satisfy eventually but not always. Always satisfies both. Eventually does not mean “strictly later.”
+
+      </details>
+
+      A finite trace ending before an upload completes is **not by itself** a liveness violation: completion might follow. A liveness counterexample needs an infinite continuation, often displayed as a prefix followed by a loop. “Repeat this state forever” is different evidence from “we stopped watching here.”
+
+      **Exploratory step:** no code grade. Checking `<>p` as a property asks whether **every allowed behavior** eventually reaches p. Finding one successful exploration only establishes that one behavior can do so. We will confront a failing eventuality next.
+    files:
+      - path: Model.tla
+        language: tlaplus
+        reseed: true
+        content: |
+          ---- MODULE Model ----
+          EXTENDS Naturals
+
+          (* --algorithm Playback {
+          variables playing = TRUE;
+          {
+            Mute:
+            playing := FALSE;
+          }
+          } *)
+
+          EverPlaying == <>playing
+          AlwaysPlaying == []playing
+          ====
+      - path: Model.cfg
+        language: plaintext
+        reseed: true
+        content: |
+          SPECIFICATION Spec
+          PROPERTY EverPlaying
+          CHECK_DEADLOCK FALSE
+    quiz:
+      title: Step 6 — Knowledge Check
+      min_score: 0.8
+      shuffle_questions: false
+      shuffle_options: true
+      questions:
+        - type: single
+          difficulty: intermediate
+          question: On an infinite behavior, `p` is true initially and false forever afterward. Which TLA+ formulas
+            hold at the start?
+          options:
+            - Both `[]p` and `<>p`.
+            - Only `<>p`.
+            - Neither `[]p` nor `<>p`.
+          correct_index: 1
+          option_feedback:
+            0: One false later position refutes always.
+            2: An eventuality is already satisfied when p is true now.
+          explanation: Eventually includes the initial position. Always is false because later positions fail p.
+        - type: single
+          difficulty: intermediate
+          question: Which observation refutes `<>uploaded` for an allowed infinite TLA+ behavior?
+          options:
+            - Ten states without an upload so far.
+            - No upload from the initial state forever.
+            - One other path that uploads promptly.
+          correct_index: 1
+          option_feedback:
+            0: An unbounded eventuality has no ten-step deadline.
+            2: One successful behavior cannot eliminate a different failing behavior.
+          explanation: The explicit infinite repetition supplies a complete non-progress behavior. A finite waiting
+            prefix alone does not.
+    solution:
+      files:
+        - path: Model.tla
+          language: tlaplus
+          content: |
+            ---- MODULE Model ----
+            EXTENDS Naturals
+
+            (* --algorithm Playback {
+            variables playing = TRUE;
+            {
+              Mute:
+              playing := FALSE;
+            }
+            } *)
+
+            EverPlaying == <>playing
+            AlwaysPlaying == []playing
+            ====
+        - path: Model.cfg
+          language: plaintext
+          content: |
+            SPECIFICATION Spec
+            PROPERTY EverPlaying
+            CHECK_DEADLOCK FALSE
+      explanation: |
+        EverPlaying holds because playing is TRUE initially, even on a behavior that stutters immediately. AlwaysPlaying fails on the behavior that takes Mute. This deliberate initial truth lets us isolate temporal meaning before discussing scheduling assumptions.
+  # Pedagogy: PRIMM — confront permitted stuttering, then apply an explicit justified assumption; no latency inference [T3, L1, L2].
+  - title: Progress and Fairness
+    key: eventual-upload
+    run_file: Model.tla
+    open_file: Model.tla
+    instructions: |
+      ### Why this matters
+
+      An action being available is different from it eventually happening. Progress claims need scheduling assumptions that you can explain and defend.
+
+      ### 🎯 You will learn to
+
+      - Interpret an infinite postponement counterexample.
+      - Apply weak fairness only when the scenario justifies it.
+
+      A clip is ready to upload. The model deliberately abstracts one successful send as `uploaded := TRUE`. Network failure and retries are absent for now.
+
+      1. **Predict:** The only code action sends the clip. Must `<>uploaded` hold, or can the model postpone that action forever?
+      2. **Check:** Run the supplied model. Inspect the liveness loop or stuttering continuation with `uploaded = FALSE`. A trace might be very short; its **infinite repetition** is the evidence.
+
+      ### The assumption behind progress
+
+      The algorithm has no scheduling fairness yet. Its specification permits stuttering forever while Send remains enabled. Our scenario now promises: **an action that remains continuously enabled will not be postponed forever**. This is **weak fairness**.
+
+      For a single sequential PlusCal algorithm, the header `--fair algorithm Name` adds weak fairness for its next-step action. It excludes indefinite postponement of that continuously enabled action. It does not promise a response within a number of steps or seconds, and cannot enable a blocked action. Fairness of an action also does not make every nondeterministic choice inside it happen.
+
+      3. **Modify:** Express the supplied scheduling promise in the algorithm header. Preserve the initial false value, the enabled Send action, and `EventuallyUploaded`.
+      4. **Check:** Use **Test My Work**, then explain exactly which infinite behavior the added assumption excludes.
+      5. **Challenge:** If an actual network can fail forever, does fairness of this successful-send abstraction prove that the clip will upload? Identify the missing behavior before making that claim.
+
+      `CHECK_DEADLOCK FALSE` remains explicit: it disables the separate deadlock diagnostic. It does **not** remove stuttering or supply fairness. Removing the temporal `PROPERTY` line would stop asking about progress, not repair it.
+
+      The test checks the progress formula independently of your editable property selection, using your model's `Spec`, including its fairness assumptions. You must still justify those assumptions and preserve the scenario.
+    files:
+      - path: Model.tla
+        language: tlaplus
+        reseed: true
+        content: |
+          ---- MODULE Model ----
+          EXTENDS Naturals
+
+          (* --algorithm Upload {
+          variables uploaded = FALSE;
+          {
+            Send:
+            uploaded := TRUE;
+          }
+          } *)
+
+          EventuallyUploaded == <>uploaded
+          ====
+      - path: Model.cfg
+        language: plaintext
+        reseed: true
+        content: |
+          SPECIFICATION Spec
+          PROPERTY EventuallyUploaded
+          CHECK_DEADLOCK FALSE
+    tests:
+      - description: Every allowed behavior eventually uploads the clip.
+        tla:
+          status: complete
+          property: <>uploaded
+          model_config: |
+            SPECIFICATION Spec
+            CHECK_DEADLOCK FALSE
+        hints:
+          - title: The Behavior That Never Starts
+            text: Read the repeating state in the counterexample. Is Send disabled, or is an enabled step being
+              postponed forever?
+            condition: 'source_matches: /--algorithm\s+Upload\b/'
+          - title: Enabling Comes Before Fairness
+            text: If fairness is present, inspect whether Send can actually run. Fairness cannot turn a false condition
+              into an enabled action.
+            condition: 'source_matches: /--fair\s+algorithm\s+Upload\b/'
+          - title: Restore the Scheduling Question
+            text: If the algorithm header or body was removed, restore this lesson. Separate its initial value,
+              enabled update, temporal requirement, and scheduling assumption before editing.
+            condition: 'source_matches: /(?<![\s\S])(?![\s\S]*--(?:fair\s+)?algorithm\s+Upload\b)/'
+    quiz:
+      title: Step 7 — Knowledge Check
+      min_score: 0.8
+      shuffle_questions: false
+      shuffle_options: true
+      questions:
+        - type: single
+          difficulty: intermediate
+          question: A weakly fair action remains continuously enabled. What behavior does weak fairness exclude?
+          options:
+            - The action waiting for any finite time.
+            - The action being postponed forever.
+            - The action occurring after five steps.
+          correct_index: 1
+          option_feedback:
+            0: Any particular finite delay can still be compatible with weak fairness.
+            2: A fixed step bound would be a stronger, different promise.
+          explanation: Weak fairness excludes endless postponement of a continuously enabled action, without imposing
+            a numerical deadline.
+        - type: single
+          difficulty: intermediate
+          question: An upload action is blocked forever by a condition that stays false. What does adding weak fairness
+            establish?
+          options:
+            - The blocked action must eventually run.
+            - The condition must eventually become true.
+            - No progress guarantee for that action.
+          correct_index: 2
+          option_feedback:
+            0: The action never becomes continuously enabled.
+            1: Fairness does not supply missing environment transitions.
+          explanation: Weak fairness constrains continuously enabled actions. It does not make a permanently disabled
+            action possible.
+    solution:
+      files:
+        - path: Model.tla
+          language: tlaplus
+          content: |
+            ---- MODULE Model ----
+            EXTENDS Naturals
+
+            (* --fair algorithm Upload {
+            variables uploaded = FALSE;
+            {
+              Send:
+              uploaded := TRUE;
+            }
+            } *)
+
+            EventuallyUploaded == <>uploaded
+            ====
+        - path: Model.cfg
+          language: plaintext
+          content: |
+            SPECIFICATION Spec
+            PROPERTY EventuallyUploaded
+            CHECK_DEADLOCK FALSE
+      explanation: |
+        The reference uses --fair algorithm Upload. Send is continuously enabled until it changes uploaded to TRUE, so forever postponing it is excluded. This is a scheduling assumption for the model, not a modification to a real scheduler or network.
+  # Pedagogy: Faded formula construction — contrast no trigger, delayed success, and infinite failure; diagnose missing scope and vacuity [L1, L2, L3, L4].
+  - title: A Response Contract
+    key: response-contract
+    run_file: Model.tla
+    open_file: Model.tla
+    instructions: |
+      ### Why this matters
+
+      “Every request gets a response” contains both a trigger and a future obligation. A precise formula must accept a quiet system while detecting a request that is never served.
+
+      ### 🎯 You will learn to
+
+      - Construct a response property from an agreed requirement.
+      - Detect vacuous success and distinguish it from useful service.
+
+      This is a **one-request** clip-sharing model. `requested` records that a request has occurred and stays true afterward. `delivered` records successful delivery. There are no overlapping request IDs, so a Boolean can represent this one obligation.
+
+      `either { ... } or { ... };` allows either branch nondeterministically. It is not a coin flip. `skip;` makes no data update, although control can advance to the next label. The Request step can issue a request or do nothing; Reply can deliver it or drop it. Fairness makes these enabled control steps progress, but does not force the successful branch.
+
+      ### Derive the requirement
+
+      Whenever a request has occurred, delivery must hold **then or later**. If no request occurs, delivery is not required. There is no response deadline. The logical expression `a => b` is false only when a is true and b is false.
+
+      1. **Classify first:** Write the required answer for three complete behaviors: no request forever; a later request followed by delivery; a later request followed by no delivery forever.
+      2. **Repair the formula:** The starter combines implication and eventually. Predict what it says about a request that arrives after the initial state, then repair only the definition of `Response`. Use the temporal operators you have learned. Keep the model and configuration unchanged.
+      3. **Check the model:** A correct requirement should find the intentionally dropped-request behavior. Use the trace to explain why scheduling fairness did not repair unreliable delivery.
+      4. **Test your formula:** **Test My Work** checks two directions separately: rejecting behaviors that violate the requirement, and accepting behaviors the requirement permits. The fixed model supplies both positive and negative cases. Passing these checks means your formula classifies those cases correctly; the deliberately unreliable service still violates it.
+
+      A response formula can pass **vacuously** when requests never occur: the implication's trigger never becomes true. That is logically correct, but tells us nothing about the ability to serve a request. Explore a behavior that actually issues one before claiming that the model represents requesting. Removing the Request action to obtain a successful check would discard the intended scenario.
+
+      Keep the model small and unchanged here. These checks validate the formula over its behaviors, not over every possible system. A real app with overlapping requests needs identities and matching responses, not just these two Booleans.
+    files:
+      - path: Model.tla
+        language: tlaplus
+        reseed: true
+        content: |
+          ---- MODULE Model ----
+          EXTENDS Naturals
+
+          (* --fair algorithm ResponseLab {
+          variables requested = FALSE, delivered = FALSE;
+          {
+            Request:
+            either { requested := TRUE; }
+            or { skip; };
+            Reply:
+            either { delivered := requested; }
+            or { skip; };
+          }
+          } *)
+
+          Response == requested => <>delivered
+          ====
+      - path: Model.cfg
+        language: plaintext
+        reseed: true
+        content: |
+          SPECIFICATION Spec
+          PROPERTY Response
+          CHECK_DEADLOCK FALSE
+    tests:
+      - description: The formula rejects a request that remains undelivered forever.
+        tla:
+          status: complete
+          property: Response => [](requested => <>delivered)
+          model_config: |
+            SPECIFICATION Spec
+            CHECK_DEADLOCK FALSE
+        hints:
+          - title: A Request After the Start
+            text: At which position does the starter examine requested? Compare its initial value with its value
+              after the Request step. Can the starter detect a request that is never served?
+            condition: 'source_matches: /^Response\s*==\s*requested\s*=>\s*<>delivered\s*$/m'
+          - title: A Request That Arrives Later
+            text: If your formula examines only the initial state, requested is FALSE there. Move your reasoning
+              to the later state where the request first becomes true.
+            condition: 'source_matches: /(?<![\s\S])(?![\s\S]*^Response\s*==\s*requested\s*=>\s*<>delivered\s*$)(?=[\s\S]*^Response\s*==[^\n]*)(?![\s\S]*^Response\s*==[^\n]*\[\])/m'
+          - title: Three Complete Behaviors
+            text: 'Classify: no request forever; a later request followed by delivery; a later request followed
+              by no delivery forever. Which formula component enforces each classification?'
+            condition: 'source_matches: /^Response\s*==[^\n]*\[\]/m'
+          - title: The Missing Named Requirement
+            text: Restore a definition named Response. Its body must describe when a request creates an eventual
+              obligation; compare the current and later positions separately.
+            condition: 'source_matches: /(?<![\s\S])(?![\s\S]*^Response\s*==)/m'
+      - description: The formula permits quiet behavior and eventual delivery.
+        tla:
+          status: complete
+          property: '[](requested => <>delivered) => Response'
+          model_config: |
+            SPECIFICATION Spec
+            CHECK_DEADLOCK FALSE
+        hints:
+          - title: A Request After the Start
+            text: At which position does the starter examine requested? Compare its initial value with its value
+              after the Request step. Can the starter detect a request that is never served?
+            condition: 'source_matches: /^Response\s*==\s*requested\s*=>\s*<>delivered\s*$/m'
+          - title: A Request That Arrives Later
+            text: If your formula examines only the initial state, requested is FALSE there. Move your reasoning
+              to the later state where the request first becomes true.
+            condition: 'source_matches: /(?<![\s\S])(?![\s\S]*^Response\s*==\s*requested\s*=>\s*<>delivered\s*$)(?=[\s\S]*^Response\s*==[^\n]*)(?![\s\S]*^Response\s*==[^\n]*\[\])/m'
+          - title: Three Complete Behaviors
+            text: 'Classify: no request forever; a later request followed by delivery; a later request followed
+              by no delivery forever. Which formula component enforces each classification?'
+            condition: 'source_matches: /^Response\s*==[^\n]*\[\]/m'
+          - title: The Missing Named Requirement
+            text: Restore a definition named Response. Its body must describe when a request creates an eventual
+              obligation; compare the current and later positions separately.
+            condition: 'source_matches: /(?<![\s\S])(?![\s\S]*^Response\s*==)/m'
+    quiz:
+      title: Step 8 — Knowledge Check
+      min_score: 0.8
+      shuffle_questions: false
+      shuffle_options: true
+      questions:
+        - type: single
+          difficulty: intermediate
+          question: A requirement says every request must receive delivery now or later. On a complete infinite
+            behavior with no request, does this requirement hold?
+          options:
+            - True, regardless of delivery.
+            - False, because delivery is missing.
+            - Undecidable until a request occurs.
+          correct_index: 0
+          option_feedback:
+            1: Delivery is required only when a request has occurred.
+            2: The behavior is specified as request-free forever, not merely an unfinished prefix.
+          explanation: No state creates the obligation, so the requirement holds throughout this complete infinite
+            behavior. This does not demonstrate the ability to serve a request.
+        - type: single
+          difficulty: intermediate
+          question: Initially requested is false; later it becomes true, but delivery never occurs. Does
+            `requested => <>delivered`, evaluated at the start, detect this failure?
+          options:
+            - No; its initial trigger is false.
+            - Yes; the later request triggers it.
+            - Yes; delivery must hold initially.
+          correct_index: 0
+          option_feedback:
+            1: This implication examines requested at the position where the formula is evaluated.
+            2: Eventually permits delivery now or later; it does not require delivery initially.
+          explanation: The initial false trigger makes this implication true. A requirement about requests arriving
+            later must also apply its obligation at those later positions.
+    solution:
+      files:
+        - path: Model.tla
+          language: tlaplus
+          content: |
+            ---- MODULE Model ----
+            EXTENDS Naturals
+
+            (* --fair algorithm ResponseLab {
+            variables requested = FALSE, delivered = FALSE;
+            {
+              Request:
+              either { requested := TRUE; }
+              or { skip; };
+              Reply:
+              either { delivered := requested; }
+              or { skip; };
+            }
+            } *)
+
+            Response == [](requested => <>delivered)
+            ====
+        - path: Model.cfg
+          language: plaintext
+          content: |
+            SPECIFICATION Spec
+            PROPERTY Response
+            CHECK_DEADLOCK FALSE
+      explanation: |
+        Response == [](requested => <>delivered) accepts no-request behaviors and successful responses, and rejects a request followed by permanent nondelivery. requested ~> delivered is a TLA+ shorthand for this formula, though the core task uses the operators just taught. A correct formula deliberately reveals the dropped-request behavior. The two assessment implications check each direction separately because this TLC build does not accept a raw temporal equivalence operator in that shape.
+  # Pedagogy: Independent integration from a packaging scaffold — transfer safety, atomic steps, nondeterminism and progress; require allowed failure witnesses [F2, F3, L1, P2].
+  - title: The Upload Retry Budget
+    key: upload-capstone
+    run_file: Model.tla
+    open_file: Model.tla
+    instructions: |
+      ### Why this matters
+
+      A useful model must include failure as well as success. A bounded retry policy connects safety and progress without pretending that an unreliable network must eventually work.
+
+      ### 🎯 You will learn to
+
+      - Construct a small C-style PlusCal model from a behavioral contract.
+      - Check safety, progress, and representative allowed outcomes.
+
+      Your short clip failed to upload before you left campus Wi-Fi. Model the app's **bounded retry policy**. You now get the module, variables, properties, and a placeholder body; choose the control structure yourself. Use earlier syntax references if needed, but try your own plan before opening hints.
+
+      `CONSTANT RetryLimit` declares a model parameter. **Model.cfg** supplies its finite value, initially 2. Unlike the changing `attempts` variable, this value stays fixed during one model check. `\in 0..RetryLimit` means membership in the inclusive integer range. For conditions, `/\` means “and,” `\/` means “or,” and `~` means “not.”
+
+      ### Contract
+
+      - Begin with `attempts = 0` and `uploaded = FALSE`.
+      - Each attempted send increments `attempts` once, whether it succeeds or fails. RetryLimit counts **all attempts**, including the first, not just retries after it.
+      - Each attempt may nondeterministically succeed or fail. Failure leaves `uploaded` false; success makes it true.
+      - Treat one attempt's counter update and outcome as a single atomic modeled step.
+      - Stop making attempts after the first success or when the budget is exhausted. A zero budget makes no attempt.
+      - Both success and exhausted failure must remain possible when the budget is positive. Do not model a guarantee the network does not provide.
+      - Assume the retry worker is weakly fair, as declared in the header. A network result occurs within each attempt; indefinite hanging within an attempt is outside this model.
+
+      ### Your model
+
+      1. **Plan:** Write two traces for budget 2: success immediately; both attempts fail. Include the expected final state. Decide where the repeated atomic attempt begins and ends.
+      2. **Build:** Replace the placeholder body under `Try`. Preserve the declared variables, constant, header, and supplied properties. Reuse `while`, assignment, and `either/or`; helper labels are allowed.
+      3. **Check:** Use **Check every reachable state**, then **Test My Work**. Correct one failed criterion at a time. The reachability criteria deliberately look for counterexamples to “success never happens” and “exhausted failure never happens”: finding those witnesses is a pass for model adequacy.
+      4. **Vary:** Change only RetryLimit in **Model.cfg** to 0, then 3. Predict and check each. Automatic exercise checks use their own stated reference settings, so these configuration changes are separate practice. Restore 2 afterward.
+      5. **Explain:** Why does eventual completion of the retry policy not imply eventual successful upload? Name one real behavior excluded by the abstraction.
+
+      **Assessment scope:** the checks cover the declared model behavior at reference budget 2 and the zero-budget boundary. They are formative feedback, not proof that your model captures every network failure or every possible budget. Your traces, changed-budget check, and explanation remain part of the work.
+    files:
+      - path: Model.tla
+        language: tlaplus
+        reseed: true
+        content: |
+          ---- MODULE Model ----
+          EXTENDS Naturals
+          CONSTANT RetryLimit
+
+          (* --fair algorithm UploadBudget {
+          variables attempts = 0, uploaded = FALSE;
+          {
+            Try:
+            skip;
+          }
+          } *)
+
+          BudgetOK == attempts \in 0..RetryLimit
+          Finished == <> (pc = "Done" /\ (uploaded \/ attempts = RetryLimit))
+          ====
+      - path: Model.cfg
+        language: plaintext
+        reseed: true
+        content: |
+          SPECIFICATION Spec
+          CONSTANT RetryLimit = 2
+          INVARIANT BudgetOK
+          PROPERTY Finished
+          CHECK_DEADLOCK FALSE
+    tests:
+      - description: Attempt accounting stays within budget and advances one send at a time.
+        tla:
+          status: complete
+          property: "[](attempts \\in 0..RetryLimit /\\ uploaded \\in BOOLEAN /\\ (uploaded => attempts > 0)) /\\ [][attempts' \\in {attempts, attempts + 1}]_vars"
+          model_config: |
+            SPECIFICATION Spec
+            CONSTANT RetryLimit = 2
+            CHECK_DEADLOCK FALSE
+        hints:
+          - title: The State Before and After an Attempt
+            text: 'The scaffold supplies only packaging. Write two cases in your notes: a successful attempt and
+              a failed attempt. Which state changes are common, and which differ?'
+            condition: 'source_matches: /(?<![\s\S])(?![\s\S]*while\s*\()/'
+          - title: The Stop Decision
+            text: 'With a loop present, compare three states: no attempts yet, a recorded success, and an exhausted
+              budget. Decide where another network attempt is allowed.'
+            condition: 'source_matches: /(?=[\s\S]*while\s*\()(?![\s\S]*\beither\b)/'
+          - title: Contrast Two Short Histories
+            text: Trace success on the first attempt, then all attempts failing. Track attempts, uploaded, and pc
+              through both. Identify the first state where either history violates the contract.
+            condition: 'source_matches: /(?=[\s\S]*while\s*\()(?=[\s\S]*\beither\b)/'
+      - description: Every behavior finishes after success or exhausted attempts.
+        tla:
+          status: complete
+          property: <>(pc = "Done" /\ (uploaded \/ attempts = RetryLimit))
+          model_config: |
+            SPECIFICATION Spec
+            CONSTANT RetryLimit = 2
+            CHECK_DEADLOCK FALSE
+        hints:
+          - title: The State Before and After an Attempt
+            text: 'The scaffold supplies only packaging. Write two cases in your notes: a successful attempt and
+              a failed attempt. Which state changes are common, and which differ?'
+            condition: 'source_matches: /(?<![\s\S])(?![\s\S]*while\s*\()/'
+          - title: The Stop Decision
+            text: 'With a loop present, compare three states: no attempts yet, a recorded success, and an exhausted
+              budget. Decide where another network attempt is allowed.'
+            condition: 'source_matches: /(?=[\s\S]*while\s*\()(?![\s\S]*\beither\b)/'
+          - title: Contrast Two Short Histories
+            text: Trace success on the first attempt, then all attempts failing. Track attempts, uploaded, and pc
+              through both. Identify the first state where either history violates the contract.
+            condition: 'source_matches: /(?=[\s\S]*while\s*\()(?=[\s\S]*\beither\b)/'
+      - description: A successful upload ends further attempts.
+        tla:
+          status: complete
+          property: '[][uploaded => (uploaded'' /\ attempts'' = attempts)]_vars'
+          model_config: |
+            SPECIFICATION Spec
+            CONSTANT RetryLimit = 2
+            CHECK_DEADLOCK FALSE
+        hints:
+          - title: The State Before and After an Attempt
+            text: 'The scaffold supplies only packaging. Write two cases in your notes: a successful attempt and
+              a failed attempt. Which state changes are common, and which differ?'
+            condition: 'source_matches: /(?<![\s\S])(?![\s\S]*while\s*\()/'
+          - title: The Stop Decision
+            text: 'With a loop present, compare three states: no attempts yet, a recorded success, and an exhausted
+              budget. Decide where another network attempt is allowed.'
+            condition: 'source_matches: /(?=[\s\S]*while\s*\()(?![\s\S]*\beither\b)/'
+          - title: Contrast Two Short Histories
+            text: Trace success on the first attempt, then all attempts failing. Track attempts, uploaded, and pc
+              through both. Identify the first state where either history violates the contract.
+            condition: 'source_matches: /(?=[\s\S]*while\s*\()(?=[\s\S]*\beither\b)/'
+      - description: The model permits a successful upload.
+        tla:
+          status: counterexample
+          invariant: ~uploaded
+          model_config: |
+            SPECIFICATION Spec
+            CONSTANT RetryLimit = 2
+            CHECK_DEADLOCK FALSE
+          reason: invariant
+        hints:
+          - title: The State Before and After an Attempt
+            text: 'The scaffold supplies only packaging. Write two cases in your notes: a successful attempt and
+              a failed attempt. Which state changes are common, and which differ?'
+            condition: 'source_matches: /(?<![\s\S])(?![\s\S]*while\s*\()/'
+          - title: The Stop Decision
+            text: 'With a loop present, compare three states: no attempts yet, a recorded success, and an exhausted
+              budget. Decide where another network attempt is allowed.'
+            condition: 'source_matches: /(?=[\s\S]*while\s*\()(?![\s\S]*\beither\b)/'
+          - title: Contrast Two Short Histories
+            text: Trace success on the first attempt, then all attempts failing. Track attempts, uploaded, and pc
+              through both. Identify the first state where either history violates the contract.
+            condition: 'source_matches: /(?=[\s\S]*while\s*\()(?=[\s\S]*\beither\b)/'
+      - description: The model permits an exhausted budget without upload.
+        tla:
+          status: counterexample
+          invariant: ~(pc = "Done" /\ attempts = RetryLimit /\ ~uploaded)
+          model_config: |
+            SPECIFICATION Spec
+            CONSTANT RetryLimit = 2
+            CHECK_DEADLOCK FALSE
+          reason: invariant
+        hints:
+          - title: The State Before and After an Attempt
+            text: 'The scaffold supplies only packaging. Write two cases in your notes: a successful attempt and
+              a failed attempt. Which state changes are common, and which differ?'
+            condition: 'source_matches: /(?<![\s\S])(?![\s\S]*while\s*\()/'
+          - title: The Stop Decision
+            text: 'With a loop present, compare three states: no attempts yet, a recorded success, and an exhausted
+              budget. Decide where another network attempt is allowed.'
+            condition: 'source_matches: /(?=[\s\S]*while\s*\()(?![\s\S]*\beither\b)/'
+          - title: Contrast Two Short Histories
+            text: Trace success on the first attempt, then all attempts failing. Track attempts, uploaded, and pc
+              through both. Identify the first state where either history violates the contract.
+            condition: 'source_matches: /(?=[\s\S]*while\s*\()(?=[\s\S]*\beither\b)/'
+      - description: A zero budget finishes without an attempted send.
+        tla:
+          status: complete
+          property: '[](attempts = 0 /\ ~uploaded) /\ <>(pc = "Done")'
+          model_config: |
+            SPECIFICATION Spec
+            CONSTANT RetryLimit = 0
+            CHECK_DEADLOCK FALSE
+        hints:
+          - title: The State Before and After an Attempt
+            text: 'The scaffold supplies only packaging. Write two cases in your notes: a successful attempt and
+              a failed attempt. Which state changes are common, and which differ?'
+            condition: 'source_matches: /(?<![\s\S])(?![\s\S]*while\s*\()/'
+          - title: The Stop Decision
+            text: 'With a loop present, compare three states: no attempts yet, a recorded success, and an exhausted
+              budget. Decide where another network attempt is allowed.'
+            condition: 'source_matches: /(?=[\s\S]*while\s*\()(?![\s\S]*\beither\b)/'
+          - title: Contrast Two Short Histories
+            text: Trace success on the first attempt, then all attempts failing. Track attempts, uploaded, and pc
+              through both. Identify the first state where either history violates the contract.
+            condition: 'source_matches: /(?=[\s\S]*while\s*\()(?=[\s\S]*\beither\b)/'
+    quiz:
+      title: Step 9 — Knowledge Check
+      min_score: 0.8
+      shuffle_questions: false
+      shuffle_options: true
+      questions:
+        - type: single
+          difficulty: intermediate
+          question: A weakly fair retry model allows every attempted upload to fail and stops at its budget. Which
+            progress claim is justified?
+          options:
+            - Every clip eventually uploads.
+            - This retry policy eventually finishes.
+            - Every retry succeeds before its budget.
+          correct_index: 1
+          option_feedback:
+            0: Fair scheduling does not force the nondeterministic network result to be success.
+            2: A finite retry budget bounds attempts, not guaranteed success.
+          explanation: Completion includes reporting exhausted failure. The model deliberately permits a network
+            that never succeeds.
+        - type: single
+          difficulty: intermediate
+          question: TLC checks a retry model with RetryLimit = 3. Which follow-up tests generalization most directly?
+          options:
+            - Recheck the same model without edits.
+            - Compare new limits and their edge cases.
+            - Replace the safety requirement with TRUE.
+          correct_index: 1
+          option_feedback:
+            0: Repeating the same completed analysis does not expand its parameter scope.
+            2: Weakening the property removes evidence instead of broadening it.
+          explanation: Different parameter instances exercise additional cases. Even several successful instances
+            do not prove all possible budgets.
+    solution:
+      files:
+        - path: Model.tla
+          language: tlaplus
+          content: |
+            ---- MODULE Model ----
+            EXTENDS Naturals
+            CONSTANT RetryLimit
+
+            (* --fair algorithm UploadBudget {
+            variables attempts = 0, uploaded = FALSE;
+            {
+              Try:
+              while (attempts < RetryLimit /\ ~uploaded) {
+                attempts := attempts + 1;
+                either { uploaded := TRUE; }
+                or { skip; };
+              };
+            }
+            } *)
+
+            BudgetOK == attempts \in 0..RetryLimit
+            Finished == <> (pc = "Done" /\ (uploaded \/ attempts = RetryLimit))
+            ====
+        - path: Model.cfg
+          language: plaintext
+          content: |
+            SPECIFICATION Spec
+            CONSTANT RetryLimit = 2
+            INVARIANT BudgetOK
+            PROPERTY Finished
+            CHECK_DEADLOCK FALSE
+      explanation: |
+        The reference repeats only while a budget remains and no success has occurred. Every iteration increments attempts before choosing success or failure. Both assignments lie within the Try step, so one modeled attempt is atomic. Weak fairness and the finite increasing budget support eventual exit, including all-failure paths. No retry occurs after success. RetryLimit = 0 skips the body immediately. This is one valid model, not a required spelling.
+  # Pedagogy: Independent claim evaluation, optional temporal contrast, and delayed transfer; distinguish tool success from learning and model adequacy [L1, L2, F8, P3].
+  - title: Evidence You Can Defend
+    key: scoped-evidence
+    run_file: Model.tla
+    open_file: Model.tla
+    instructions: |
+      ### Why this matters
+
+      A successful check is useful only when its conclusion matches its evidence. Explaining the bounds and assumptions is part of engineering the model, not an optional disclaimer.
+
+      ### 🎯 You will learn to
+
+      - Evaluate a verification claim against its model and assumptions.
+      - Transfer temporal reasoning to a fresh complete behavior.
+
+      **Independent reasoning step:** leave the editor closed for these questions first. The workspace contains a reference retry model for later comparison. This reflection has no automatic code grade.
+
+      ### A claim worth making
+
+      For your own capstone, write three short sentences:
+
+      1. **Requirement and scope:** which properties did TLC finish checking, for which RetryLimit values?
+      2. **Assumptions:** where did you assume atomic steps or fair scheduling, and what would justify them in an implementation?
+      3. **Missing behavior:** give one concrete case your model omits and one model change that would let you investigate it.
+
+      Compare your statement with this pattern: “For the supplied finite model at these parameter values, TLC completed the selected checks under these assumptions.” Add the actual facts. A parse success, an interrupted check, and a chosen successful behavior cannot substitute for that result. Neither can a successful check establish that an implementation conforms to the model.
+
+      ### Two tempting shortcuts
+
+      - A teammate removes the failing `PROPERTY` line and calls the model fixed. State what was actually checked afterward.
+      - Another deletes every request transition, obtains a passing response property, and calls the service reliable. Describe an intended scenario now missing from the model and how to expose its absence.
+
+      ### Optional extension: repetition versus settling down
+
+      Once always and eventually feel comfortable, compare their order:
+
+      - `[]<>p` means p keeps occurring: from every position, another true position exists. Common LTL notation is `G F p`.
+      - `<>[]p` means p eventually stays true forever. Common LTL notation is `F G p`.
+
+      For an infinite connection indicator that alternates false, true, false, true forever, decide which formula holds. Then invent a different infinite behavior satisfying both. Describe the repeating tail explicitly; a finite prefix is insufficient.
+
+      <details markdown="1">
+      <summary>Compare Recurrence and Stabilization</summary>
+
+      Alternation satisfies `[]<>p`, but no suffix stays true, so it fails `<>[]p`. A behavior initially false and then true forever satisfies both. Both also hold if p is always true. The formula order changes the requirement.
+
+      </details>
+
+      ### A later return
+
+      On another day, before rereading, model two players claiming the final team slot. Produce an unsafe interleaving, a justified atomic repair, and one progress assumption. Then classify a fresh response behavior and explain one vacuous success. Compare against your earlier notes only after committing an answer. This is retrieval and transfer practice; today's completion is not a measurement of next week's retention.
+
+      Continue with the [TLA+ and PlusCal exploration](/SEBook/verification/tla-tutorial) to see explicit TLA+ actions. The [PlusCal C-syntax manual](https://lamport.azurewebsites.net/tla/c-manual.pdf) is the language reference.
+    files:
+      - path: Model.tla
+        language: tlaplus
+        reseed: true
+        content: |
+          ---- MODULE Model ----
+          EXTENDS Naturals
+          CONSTANT RetryLimit
+
+          (* --fair algorithm UploadBudget {
+          variables attempts = 0, uploaded = FALSE;
+          {
+            Try:
+            while (attempts < RetryLimit /\ ~uploaded) {
+              attempts := attempts + 1;
+              either { uploaded := TRUE; }
+              or { skip; };
+            };
+          }
+          } *)
+
+          BudgetOK == attempts \in 0..RetryLimit
+          Finished == <> (pc = "Done" /\ (uploaded \/ attempts = RetryLimit))
+          ====
+      - path: Model.cfg
+        language: plaintext
+        reseed: true
+        content: |
+          SPECIFICATION Spec
+          CONSTANT RetryLimit = 2
+          INVARIANT BudgetOK
+          PROPERTY Finished
+          CHECK_DEADLOCK FALSE
+    quiz:
+      title: Step 10 — Knowledge Check
+      min_score: 0.8
+      shuffle_questions: false
+      shuffle_options: true
+      questions:
+        - type: single
+          difficulty: intermediate
+          question: TLC finishes checking capacity and completion at RetryLimit = 2 with weak fairness. Which claim
+            fits that evidence?
+          options:
+            - Those properties hold for the configured model.
+            - The deployed app is correct under all schedules.
+            - Every retry budget is now formally verified.
+          correct_index: 0
+          option_feedback:
+            1: Implementation conformance and schedules excluded by the model were not established.
+            2: Checking one finite instance does not prove all values of a parameter.
+          explanation: The result is scoped to the supplied finite model, selected requirements, parameter values,
+            and fairness assumptions.
+        - type: single
+          difficulty: intermediate
+          question: In a one-request game lobby, join is false initially and true forever from state 2. Admitted
+            is false until state 4 and true forever afterward. Which property holds at the start?
+          options:
+            - '`[](join => <>admitted)` only.'
+            - '`[](join => admitted)` only.'
+            - Both response properties hold.
+          correct_index: 0
+          option_feedback:
+            1: At states 2 and 3, join is true but admitted is false; the same-state implication fails.
+            2: Delayed admission satisfies eventual response, but not the same-state requirement.
+          explanation: Every state with join true has admission then or later. The delay is allowed by eventually,
+            while the same-state response fails before state 4.
+        - type: single
+          difficulty: intermediate
+          question: A response property passes after every request-producing transition is removed. What should
+            a model reviewer ask for?
+          options:
+            - A witness that an intended request can occur.
+            - A longer trace with no request in it.
+            - A simpler name for the response property.
+          correct_index: 0
+          option_feedback:
+            1: More quiet states do not establish the missing request scenario.
+            2: Renaming a formula does not change the modeled behavior.
+          explanation: Validation must check that the model still includes intended behavior. A request-free model
+            can satisfy the response implication vacuously.
+    solution:
+      files:
+        - path: Model.tla
+          language: tlaplus
+          content: |
+            ---- MODULE Model ----
+            EXTENDS Naturals
+            CONSTANT RetryLimit
+
+            (* --fair algorithm UploadBudget {
+            variables attempts = 0, uploaded = FALSE;
+            {
+              Try:
+              while (attempts < RetryLimit /\ ~uploaded) {
+                attempts := attempts + 1;
+                either { uploaded := TRUE; }
+                or { skip; };
+              };
+            }
+            } *)
+
+            BudgetOK == attempts \in 0..RetryLimit
+            Finished == <> (pc = "Done" /\ (uploaded \/ attempts = RetryLimit))
+            ====
+        - path: Model.cfg
+          language: plaintext
+          content: |
+            SPECIFICATION Spec
+            CONSTANT RetryLimit = 2
+            INVARIANT BudgetOK
+            PROPERTY Finished
+            CHECK_DEADLOCK FALSE
+      explanation: |
+        A defensible statement names the properties, RetryLimit values, completion status, atomicity, and fairness. The reference retries fairly but permits all sends to fail; it does not model hanging network calls, parallel clients, or real-time delays. Deleting a property weakens the checked question. Deleting requests can make response hold vacuously. Alternation demonstrates recurrence without stabilization.

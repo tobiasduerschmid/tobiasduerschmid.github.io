@@ -34,7 +34,7 @@ steps:
 
       This tutorial uses **TLA+**, a language for specifying behavior, and **TLC**, its model checker. Everything runs in your browser. The first check downloads a Java runtime and may take a little time. These are exploration exercises: completing a check does not automatically grade your reasoning.
 
-      New to these tools? Start with [Your First PlusCal Check](/SEBook/verification/pluscal-tutorial): a tiny program with C-style braces and one loop-bound property.
+      New to these tools? Start with [PlusCal and Temporal Logic](/SEBook/verification/pluscal-tutorial), which introduces C-style PlusCal through small models, counterexamples, concurrency, and temporal properties.
 
       Open **Model.tla**. This counter starts at zero, increases up to a capacity, then resets. A **state** assigns a value to every variable. A **transition** connects a state to an allowed next state.
 

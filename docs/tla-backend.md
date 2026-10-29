@@ -3,8 +3,10 @@
 The `tla` backend runs the official TLA+ parser, PlusCal translator, and TLC
 model checker in the browser. It is intended for small executable models and
 explicitly separates a completed model check from inspecting one behavior.
-The first introduction is `/SEBook/verification/pluscal-tutorial`: a tiny
-C-style program and one counter bound. Its print view is at
+The first introduction is **PlusCal and Temporal Logic** at
+`/SEBook/verification/pluscal-tutorial`. It develops C-style PlusCal models,
+counterexample interpretation, concurrent actions, and temporal properties
+across ten lessons. Its print view is at
 `/SEBook/verification/pluscal-tutorial/print`. The broader follow-up is
 `/SEBook/verification/tla-tutorial`, with a matching print view at
 `/SEBook/verification/tla-tutorial/print`.
@@ -141,11 +143,36 @@ The supported statuses are `complete` and `counterexample`, with optional
 cancellation are unassessed, not passes. Parse-only results and chosen-path
 exploration must never be used to award model-checking credit.
 
-The beginner PlusCal tutorial checks `count \in 0..2` this way. Removing or
-weakening the editable `CountWithinLimit` property cannot make its faulty loop
-pass. The shared **Test My Work** panel explains passes, counterexamples,
+The introductory PlusCal tutorial uses trusted checks for its invariant and
+temporal-property exercises. Removing or weakening an editable property alone
+cannot make a model satisfy the independently supplied requirement. The shared
+**Test My Work** panel explains passes, counterexamples,
 errors, and incomplete checks. No custom success/failure-message YAML fields
 are introduced by this backend.
+
+The property-writing lesson checks the learner's predicate against permitted
+and forbidden reachable counts, then checks that the editable configuration
+selects an invariant that fails on the deliberately faulty model. Its expected
+counterexample is successful exercise evidence, not a correct algorithm.
+The response lesson starts with the faulty initial-position implication
+`Response == requested => <>delivered`. Learners repair its scope so later
+requests create an obligation too. Two temporal implications compare the
+submitted formula with the intended requirement on a fixed one-request model.
+Together they require acceptance of quiet/successful behaviors and rejection of
+the dropped-request behavior. This is equivalence over the fixture's behaviors,
+not unrestricted formula equivalence.
+
+The retry capstone combines safety and progress checks with reachability
+witnesses for both successful upload and exhausted failure. Attempt accounting
+requires bounded values and each transition to preserve the count or increase
+it by one. `RetryLimit` counts every attempt, including the first. The
+zero-budget check requires the count to remain zero and upload to remain false
+throughout the behavior, as well as eventual termination. The witness checks
+expect invariant counterexamples; a counterexample can therefore be a passed
+exercise criterion. Instructor configurations use `RetryLimit = 2` and the
+zero-budget boundary. The learner also checks 3 separately. These finite checks
+do not establish every possible budget or every clause of an arbitrary edited
+algorithm; the contract and explanations remain part of review.
 
 Keep the oracle aligned with the exercise: even a trusted property cannot
 establish that a learner's model adequately represents the intended system.
@@ -225,13 +252,22 @@ inventory.
 
 ## Lesson design and validation
 
-The beginner PlusCal tutorial introduces only one variable, C-style braces, a
-while-loop guard, assignment, and the supplied bound. Its first step is a complete
-worked example. The second changes `< 2` to `<= 2`, asks the learner to locate
-`count = 3`, and repairs the guard without changing the requirement. It requires
-no raw TLA+ specification writing and offers a link to the broader tutorial.
+The introductory PlusCal tutorial starts with a worked playlist model and a
+boundary defect before asking learners to write a property. A ticket-reservation
+example then contrasts interleavings with atomic actions. Temporal truth,
+eventual completion, response requirements, and an upload capstone introduce
+reasoning over behaviors. The final lesson revisits what the checked model
+establishes. C-style PlusCal keeps the algorithm syntax familiar while the
+lessons introduce property notation at the point of use. Tests and knowledge
+checks remain optional, and all ten lessons can be selected directly.
+Recurrence and stabilization are an optional, ungraded extension. The final
+knowledge check uses a new response scenario rather than grading that extension.
+The [design rationale](pluscal-tutorial-design.md) maps each lesson to specific
+research findings, design inferences, and observable learner work. It also
+records the limits of the evidence and the unmeasured pacing estimate.
 
-The four lessons use a worked example, a boundary repair, a concurrency contrast,
+The separate TLA+ and PlusCal tutorial's four lessons use a worked example,
+a boundary repair, a concurrency contrast,
 and a safety/liveness contrast. They introduce notation at the point of use and
 ask learners to predict, check, inspect evidence, modify one aspect, and explain
 the result. Hints direct attention to guards or atomicity boundaries rather than
@@ -249,7 +285,7 @@ solution files with the pinned official translator/checker. It also checks the
 final lesson's safety-only comparison: removing the temporal property succeeds
 without establishing liveness. The suite uses temporary workspaces outside the
 repository and preserves the original configuration after PlusCal translation.
-It also executes the beginner program, its boundary mutant, and its repair;
+It also executes the introductory PlusCal models, their defects, and their repairs;
 the real assessment module and Java bridge verify that trusted checks accept
 the reference programs and reject a faulty loop even after the editable
 property/configuration is weakened.
@@ -268,5 +304,5 @@ Browser tests must separately exercise real startup, Stop, stale results,
 configuration edits, keyboard navigation, and both live and print views.
 
 Language references: Leslie Lamport's [TLA+ and PlusCal tutorial](https://lamport.azurewebsites.net/tla/tutorial/contents.html),
-[PlusCal manual](https://lamport.azurewebsites.net/tla/p-manual.pdf), and the
+[PlusCal C-syntax manual](https://lamport.azurewebsites.net/tla/c-manual.pdf), and the
 [official TLA+ tools source](https://github.com/tlaplus/tlaplus).

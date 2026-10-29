@@ -1,6 +1,6 @@
 ---
 layout: tutorial
-title: 'Your First PlusCal Check'
+title: PlusCal and Temporal Logic
 tutorial: pluscal
 permalink: /SEBook/verification/pluscal-tutorial
 ---

@@ -3248,10 +3248,24 @@ configurations. Each test runs against a fresh JVM. The shared **Test My Work**
 panel provides result-specific plain-text feedback; no new custom feedback
 YAML fields are introduced. Incomplete or stale checks never award credit.
 
-`_data/tutorials/pluscal.yml` is the very basic C-style worked-counter/loop-bound
-tutorial. Its optional tests check `count \in 0..2` independently of the
-editable property, including a negative test where the learner weakens that
-property/configuration. The broader `_data/tutorials/tla.yml` combines
+`_data/tutorials/pluscal.yml` is the ten-lesson C-style introduction: playlist
+states and invariant construction, ticket interleavings and atomicity, temporal
+truth and weak fairness, response-formula construction, a bounded-upload
+capstone, and scoped evidence. Worked examples fade to repair and construction;
+the design rationale and source mapping live in `docs/pluscal-tutorial-design.md`.
+Exploratory lessons have no code grade. Authored checks use independent state
+and temporal requirements, with separate reachability witnesses for success and
+exhausted failure in the capstone. The formula-writing lesson compares both
+implication directions over its fixed positive/negative behavior fixture; this
+is not unrestricted temporal equivalence. Its selected configuration is assessed
+separately where configuration editing is the task. Early guard/label repairs
+have explicit edit scopes; their terminal-state invariants alone do not prove
+termination. Hints use the existing `source_matches` condition to retain the
+PlusCal algorithm inside the TLA+ comment; whole-source absence checks must be
+anchored absolutely even when inner definition patterns use multiline anchors.
+Version 2 uses new stable lesson keys so prior short-introduction completion
+does not credit the expanded lessons; the shared runtime preserves legacy drafts.
+The companion `_data/tutorials/tla.yml` combines explicit TLA+ actions and
 exploration/reflection with optional bound, concurrent-completion, and eventual-
 completion checks. Its reference constant configuration is explicit in the
 instructions. Both use `require_tests: false`,
