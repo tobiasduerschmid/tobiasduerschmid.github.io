@@ -730,6 +730,13 @@
         height: auto !important;
       }
 
+      /* Keep UML labels at the renderer's readable size on small screens.
+         The figure already provides keyboard-accessible horizontal scrolling.
+         Paper output still uses the fit-to-page rules in uml-diagram.css. */
+      .sebook-figure--archuml > [role="img"] svg {
+        max-width: none !important;
+      }
+
       .starter-file-name,
       .step-instructions code,
       .starter-file-content code {

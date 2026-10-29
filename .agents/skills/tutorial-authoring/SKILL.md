@@ -1284,7 +1284,7 @@ steps:
                                              # target if the tutorial debugger is
                                              # enabled; `run_files` only changes
                                              # the toolbar pytest run.
-    view: editor | git_graph | uml | make_dag    # Override default pane visible.
+    view: editor | git_graph | uml_diagram | make_dag # Override default pane visible.
                                              # `make_dag` requires a top-level
                                              # `make_dag:` config; opens the
                                              # live Make dependency graph.
@@ -2024,6 +2024,14 @@ other platforms retain `Ctrl`. This changes labels only, not key bindings.
   unless `?instructor-mode=true` is in the URL). The Print button on the
   live tutorial redirects to `<live-permalink>/print?autoprint=1` (preserving
   `?instructor-mode=true` if set).
+  On narrow screens, authored UML figures retain their measured readable width
+  in keyboard-scrollable containers; do not apply the generic responsive-image
+  `max-width: 100%` rule to those SVGs. Paper printing still fits diagrams to the
+  page. Print surfaces remain light even when the saved site theme is dark.
+  Authored ArchUML wrappers can supply contextual captions with
+  `data-uml-caption`; a nonblank attribute overrides a leading `caption:` in
+  the diagram source. Check that these captions remain visible in live and
+  print views, especially when they explain omitted classes or operations.
 
 For `shell-pipeline` only, live and print layouts evaluate the instruction
 string through the existing `liquid` filter before `markdownify`. This supports
@@ -2202,6 +2210,24 @@ so disposing that broker must make every later command from the losing chain
 reject before it posts to the shared session port. Keep this boundary when
 adding Playwright-shaped APIs; otherwise a delayed action from a timed-out test
 can mutate the freshly reset preview used by the next test.
+
+Preview preparation succeeds only after the same generation has reported its
+initial render and supplied its private assertion broker. Do not substitute a
+fixed delay or treat a deadline as success. `_rebuildReactPreview` callbacks
+receive an error on timeout, replacement, cancellation, or destruction; callers
+must handle it. Its optional fourth argument accepts `{signal, timeoutMs, testRun}`
+(default deadline: ten seconds). Internal assessment rebuilds set `testRun: true`;
+an external refresh cancels the active test. Saves defer preview patches while
+tests own the document, then apply the current source after the run releases it.
+Closing the broker rejects its pending React
+assertions immediately, releasing their timers and listeners.
+Playwright `run` also accepts an `AbortSignal`; abort terminates its worker and
+pending commands. The host cancels on step navigation and destruction. Learner
+Test and Test My Work share the preview exclusively, and results from changed
+source snapshots cannot award credit. `freshPreview: true` means the caller has
+already supplied a fresh preview: skip only the first redundant reset, retaining
+isolation between subsequent tests. Do not reuse live application state to save
+startup work.
 
 `uml-python-workspace.html` is a separate generated-code workspace opened by
 the UML editor's "Generate Python" action. It receives a one-shot
@@ -2490,6 +2516,12 @@ channel.
   workspace-initialization failure tears down any partial or late runtime before
   selecting the browser fallback. Authored WebContainer setup failures do not
   fall back because doing so would silently skip required tutorial state.
+  WebContainer initialization owns an abort signal across module loading, boot,
+  workspace creation, terminal startup, and global setup. Disposal rejects that
+  initialization immediately, releases boot/setup deadlines, and kills late
+  processes or runtime instances. Intentional cancellation never selects the
+  browser fallback; generation checks also prevent an obsolete failure or
+  asynchronous teardown from replacing a newer runtime.
   Global setup, first-visit step setup, background shell work, and `step_dir`
   validation share one serialized command queue; each call awaits process exit
   and output drain, rejects on timeout or nonzero status, and leaves the queue
@@ -2604,10 +2636,22 @@ channel.
   step setup, and only then re-enables Run (returning focus there when Stop was
   keyboard-activated). Execution timeouts use the same restart path, so an
   infinite learner program does not require a page reload.
-  C++ and Python initialization belongs to its specific worker: cancelling
+  Pyodide classifies `SystemExit` inside Python using the actual exception's
+  `code`: no value/`None` means success, integer codes retain their value, and
+  other values print an exit reason and fail. An outer assertion or runtime
+  error remains a failure even if its traceback mentions `SystemExit`; never
+  infer success from exception-message text. This applies to both learner runs
+  and silent instructor checks, including nested pytest failure reports.
+  C++, Python, SQL, Prolog, Java, and Haskell initialization belongs to its specific worker: cancelling
   that worker immediately settles its boot promise and clears the boot timer.
   Late events and superseded restart stages cannot change the newly selected
   language, replay files into it, or leave its Run control disabled.
+  SQL/Prolog/Java share the tracked initializer, including setup completion and
+  fatal-worker recovery. Python Git setup checks ownership before each request
+  and continuation. Request timeout recovery must check that its original worker
+  is still active after notifying the caller, because that callback may replace
+  the runtime. Haskell errors after readiness terminate the failed executor and
+  settle outstanding requests rather than invoking an already-settled boot promise.
   Browser-backend learner code runs in a fresh opaque-origin `data:` Worker,
   with repository-owned Node/module/fs/argv/server mocks. Host HTTP-client
   requests are routed to that Worker while a server step remains active. Every
@@ -3781,6 +3825,19 @@ under the same prefix family as other tutorial state so the global
   preserve hidden-text matching, and select the smallest matching element. This
   follows installed Playwright text-selector semantics; role/name queries and
   assertion text extraction have separate behavior.
+  Actions retry resolution and actionability within their timeout: pointer
+  actions require a visible, enabled, stable target receiving events; text entry
+  additionally requires editability. Checked-state actions are idempotent.
+  Role locators exclude accessibility-hidden elements by default and honor
+  supported ARIA state filters. Array `toHaveText` checks cardinality, order,
+  and each element's text; array `toContainText` checks an ordered subsequence.
+  Keep compatibility tests against the installed real Playwright API when
+  extending this subset; this runner does not implement all Playwright features.
+  Results retain `tests` and boolean `results`, with an aligned `details` string
+  array for bounded learner-owned failure diagnostics. Render details as escaped
+  text, including expected/actual assertion values, without interpreting HTML.
+  Cleanup hooks still run after assertion or earlier cleanup failures; retain
+  the body error, or otherwise the first cleanup error, as the primary failure.
   **Behavioral checks of learner test suites.** A gate can override `test_files`
   (globs, restricted to that gate), require `min_tests` runnable (non-skipped)
   tests, and select a named test
@@ -3816,16 +3873,18 @@ under the same prefix family as other tutorial state so the global
   reused only within one assessment run for the same file snapshot and selection.
   Empty suites, skipped selected tests, malformed JavaScript and broken reference
   setup earn no mutation credit. Skips are rejected for every assessment gate,
-  including named pass/fail checks without a `min_tests` setting. The compatibility runner reports boolean outcomes, so a failure that
+  including named pass/fail checks without a `min_tests` setting. Grading uses boolean outcomes even though learner diagnostics are available, so a failure that
   occurs only on the mutant is not classified by exception kind. Author valid,
   narrowly targeted mutants and verify them with independent passing solutions
   and inadequate-test counterexamples. This is diagnostic grading, not proof of
   exhaustive coverage or protection against hostile learner code.
 
   App/spec snapshots are passed into fresh preview/worker runs without rewriting
-  Monaco models, draft storage or authored config. A `finally` rebuild restores
-  the current lesson's learner preview after reference/mutant grading, including
-  failed checks. Do not bypass the opaque-origin worker or private broker port
+  Monaco models, draft storage or authored config. One immutable source snapshot
+  is used throughout an assessment. An all-Playwright batch prepares previews
+  only for actual suite runs and restores the learner preview once at completion,
+  including failed checks; cancellation must not replace a newer lesson's preview.
+  Direct single-gate calls still restore their preview. Do not bypass the opaque-origin worker or private broker port
   to evaluate learner specs in the host page. Add `reseed: true` to app and spec
   files when adjacent lessons reuse paths for different starter programs. Keep
   existing lesson keys/index identities so saved drafts remain reachable; adding
@@ -3834,15 +3893,24 @@ under the same prefix family as other tutorial state so the global
   **Python test-writing lessons.** Fetch the repository-owned
   `assets/tutorials/python_test_grading.py` helper in `setup_commands` and import
   `check_suite(test_file, module_name, replacement_source=None,
-  expect_failure=False, test_name=None, min_tests=1)` in instructor checks.
+  expect_failure=False, test_name=None, min_tests=1,
+  allowed_mutation_errors=())` in instructor checks.
   Supply a correct reference implementation independent of editable learner
   helpers, then run each narrowly scoped mutant separately. A passing reference
   check is required as well as mutant checks; a source substring or a test-file
   self-check cannot establish oracle strength. `test_name` optionally selects
   an explicitly required test; otherwise learner test names are unrestricted.
   The helper rejects zero collection, skips, collection/setup/teardown errors
-  and unrelated runtime exceptions. Mutant credit requires an assertion failure
-  in the test call phase. It restores the module file in `finally`, clears
+  and unrelated runtime exceptions. Mutant credit normally requires an assertion
+  failure in the test call phase, classified by the actual Python exception type,
+  never traceback text. A narrowly scoped mutant may explicitly allow a known
+  observation error: for example, `allowed_mutation_errors=(IndexError,)` when
+  removing a required call makes a valid test inspect an empty recording before
+  checking its length. Apply that allowance only to the relevant mutant, and
+  retain the passing reference check for the same selected tests. It never
+  relaxes reference, collection, fixture, or skipped-test checks. Exercise both
+  valid alternative assertions and plausible weak oracles in grader regressions.
+  It restores the module file in `finally`, clears
   workspace module/bytecode caches between runs, and restores the previous
   bytecode setting. Learner tests still run in the normal Python environment;
   this helper is a diagnostic evaluator, not a hostile-code security boundary.

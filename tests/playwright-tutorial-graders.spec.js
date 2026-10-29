@@ -35,6 +35,42 @@ for (const name of ['first smoke', 'second smoke']) {
 }
 `;
 
+// Negative control: the former three-path solution observes the single-item
+// round trip only after both clicks. A toggle that ignores both looks correct.
+const finalStateOnlyToggleSuite = `import { test, expect } from '@playwright/test';
+async function add(page, names) {
+  await page.goto('/');
+  for (const name of names) {
+    await page.getByLabel('Todo item').fill(name);
+    await page.getByRole('button', { name: 'Add todo' }).click();
+  }
+}
+test('one of three todos can be completed and kept visible', async ({ page }) => {
+  await add(page, ['Milk', 'Bread', 'Eggs']);
+  const milk = page.getByRole('button', { name: 'Milk' });
+  await milk.click();
+  await expect(milk).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByRole('status')).toHaveText(/\\b2\\b/);
+  await expect(page.getByRole('listitem').filter({ hasText: 'Milk' })).toBeVisible();
+});
+test('two clicks leave one todo pending', async ({ page }) => {
+  await add(page, ['Milk']);
+  const milk = page.getByRole('button', { name: 'Milk' });
+  await milk.click();
+  await milk.click();
+  await expect(milk).toHaveAttribute('aria-pressed', 'false');
+  await expect(page.getByRole('status')).toHaveText(/\\b1\\b/);
+});
+test('completing one of two todos leaves the other pending', async ({ page }) => {
+  await add(page, ['Milk', 'Bread']);
+  const milk = page.getByRole('button', { name: 'Milk' });
+  await milk.click();
+  await expect(page.getByRole('status')).toHaveText(/\\b1\\b/);
+  await expect(milk).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByRole('button', { name: 'Bread' })).toHaveAttribute('aria-pressed', 'false');
+});
+`;
+
 // Independently authored equivalent solution: different names, import order,
 // quote style and count matcher from the lesson's displayed model answer.
 const capstoneSuite = `import { expect, test } from "@playwright/test";
@@ -80,6 +116,21 @@ test.describe('Playwright tutorial behavioral grading', () => {
     await openStep(page, 7);
     await setTutorialFileContent(page, 'tests/all-done.spec.js', smokeSuite);
     await grade(page, /Failures:.*nonzero count/);
+  });
+
+  test('a final-state-only round trip does not earn single-item toggle coverage', async ({ page }) => {
+    await openStep(page, 6);
+    await setTutorialFileContent(page, 'tests/mark-done.spec.js', finalStateOnlyToggleSuite);
+    await grade(page, /^5 of 6 tests passed\. Failures: The suite catches a single todo whose toggle has no effect\.$/);
+  });
+
+  test('remaining-count assertions alone do not earn item-preservation credit', async ({ page }) => {
+    await openStep(page, 7);
+    const countOnlySuite = capstoneSuite.split('\n').filter(line =>
+      !line.includes('await expect(') || line.includes('getByRole("status")')
+    ).join('\n');
+    await setTutorialFileContent(page, 'tests/all-done.spec.js', countOnlySuite);
+    await grade(page, /^4 of 6 tests passed\. Failures:.*completed todos disappearing.*completed todos losing their original text/);
   });
 
   test('equivalent capstone tests pass and grading preserves the learner app and spec', async ({ page }) => {
@@ -135,7 +186,22 @@ test.describe('Playwright tutorial behavioral grading', () => {
     const suite = config.steps[1].solution.files.find(file => file.path === 'tests/add-todo.spec.js').content
       .replace(/test\('([^']+)'/g, (_, name) => `test(${JSON.stringify('Contract: ' + name)}`);
     await setTutorialFileContent(page, 'tests/add-todo.spec.js', suite);
-    await grade(page, /^All 2 tests passed\.$/);
+    await grade(page, /^All 5 tests passed\.$/);
+  });
+
+  test('four copies of the whitespace check do not earn coverage of the other input paths', async ({ page }) => {
+    await openStep(page, 1);
+    const duplicateWhitespaceSuite = `import { test, expect } from '@playwright/test';
+      for (const title of ['happy path', 'empty input', 'long input', 'whitespace input']) {
+        test(title, async ({ page }) => {
+          await page.goto('/');
+          await page.getByLabel('Todo item').fill('   ');
+          await page.getByRole('button', { name: 'Add todo' }).click();
+          await expect(page.getByRole('listitem')).toHaveCount(0);
+        });
+      }`;
+    await setTutorialFileContent(page, 'tests/add-todo.spec.js', duplicateWhitespaceSuite);
+    await grade(page, /^2 of 5 tests passed\. Failures:.*ordinary non-empty todo being rejected.*empty input being accepted.*200-character todo being rejected/);
   });
 
   test('a wrong expected value cannot masquerade as catching the empty-text bug', async ({ page }) => {
