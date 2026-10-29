@@ -9,10 +9,18 @@
   const SECTION_END_LEAD = 0.3;
 
   // Full screen needs element support, which some browsers (such as Safari on
-  // iPhone) lack, so the button is added only where it can work.
-  function addFullscreenButton(root) {
-    const player = root.querySelector('.nja-player');
-    if (!document.fullscreenEnabled || !player.requestFullscreen) return null;
+  // iPhone) lack, so the button is added only where it can work. A player may
+  // place its own hidden button; otherwise one follows the mute button.
+  function addFullscreenButton(root, target) {
+    const placed = root.querySelector('[data-action="fullscreen"]');
+    if (!document.fullscreenEnabled || !target.requestFullscreen) {
+      if (placed) placed.remove();
+      return null;
+    }
+    if (placed) {
+      placed.hidden = false;
+      return placed;
+    }
     const button = document.createElement('button');
     button.type = 'button';
     button.dataset.action = 'fullscreen';
@@ -37,8 +45,9 @@
     const narration = root.querySelector('.nja-narration p');
     const status = root.querySelector('.nja-status');
     const playButton = root.querySelector('[data-action="play"]');
-    const player = root.querySelector('.nja-player');
-    const fullscreenButton = addFullscreenButton(root);
+    // The element that fills the screen: the whole player, or a video narration's video.
+    const player = options.fullscreenTarget || root.querySelector('.nja-player');
+    const fullscreenButton = addFullscreenButton(root, player);
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
     let frame = 0;
     let position = 0;
@@ -64,13 +73,17 @@
       if (index !== currentScene || cueIndex !== currentCue) {
         const cue = storyboard.scenes[index].cues[cueIndex];
         narration.textContent = cue.text;
-        scenes[index].querySelector('.nja-art').setAttribute('aria-label', cue.visual);
+        // A scene's own art region names what it shows; a player with one
+        // screen shared by every scene labels that screen in its renderer.
+        const art = scenes[index].querySelector('.nja-art');
+        if (art) art.setAttribute('aria-label', cue.visual);
       }
       currentScene = index;
       currentCue = cueIndex;
       const progress = Math.max(0, Math.min(1, (position - cueTiming.start) / (cueTiming.end - cueTiming.start)));
+      // Renderers that pose artwork on the narration clock also get its time.
       options.render(scenes[index], storyboard.scenes[index],
-        storyboard.scenes[index].cues[cueIndex], progress, motion ? motion.checked : false);
+        storyboard.scenes[index].cues[cueIndex], progress, motion ? motion.checked : false, position);
       seek.value = String(position);
       seek.setAttribute('aria-valuetext', `${clockLabel(position)} of ${clockLabel(timing.duration)}`);
       root.querySelector('.nja-time').textContent = `${clockLabel(position)} / ${clockLabel(timing.duration)}`;
@@ -247,6 +260,7 @@
     render(0);
     return {
       refresh: () => render(position),
+      seekTo,
       selectScene,
       play,
       currentScene: () => currentScene,

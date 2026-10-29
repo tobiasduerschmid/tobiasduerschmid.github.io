@@ -1,0 +1,69 @@
+{%- comment -%}
+  The self-paced video narration: every cue with the panels its screen shows
+  (cue.show, or the scene's show), then each section's question. It is the
+  reading and print views, the chapter transcript, and the source the player
+  copies slides, diagrams, and code from. An animation is described in words.
+  Params: topic.
+{%- endcomment -%}
+{% assign lesson = site.data.video_narrations[include.topic] %}
+{% assign explainer = site.data.explainers[include.topic] %}
+{% capture examples_key %}{{ include.topic }}_code{% endcapture %}
+{% capture quizzes_key %}{{ include.topic }}_quizzes{% endcapture %}
+{% assign examples = site.data.explainers[examples_key] %}
+{% assign quizzes = site.data.explainers[quizzes_key] %}
+<div class="np-reading vn-reading">
+  {% for scene in explainer.scenes %}
+  {% assign scene_number = forloop.index %}
+  <section class="nja-transcript-scene" id="{{ include.topic }}-reading-{{ scene.id }}" aria-labelledby="{{ include.topic }}-reading-{{ scene.id }}-title">
+    <h3 id="{{ include.topic }}-reading-{{ scene.id }}-title">{{ scene_number }}. {{ scene.label | escape }}</h3>
+    {% include narrated-pattern-parts.html scene=scene parts=lesson.parts label=lesson.parts_label %}
+    <p class="nja-purpose"><strong>Our task:</strong> {{ scene.purpose | escape }}</p>
+    {% assign vn_previous_diagram = '' %}
+    {% for cue in scene.cues %}
+    {% assign vn_shown = cue.show | default: scene.show %}
+    <section class="np-reading-step" data-reading-scene="{{ scene.id }}" data-reading-cue="{{ forloop.index0 }}" aria-labelledby="{{ include.topic }}-reading-{{ scene.id }}-{{ forloop.index }}">
+      <h4 id="{{ include.topic }}-reading-{{ scene.id }}-{{ forloop.index }}">{{ scene_number }}.{{ forloop.index }} — {{ cue.step | escape }}</h4>
+      <p>{{ cue.text | escape }}</p>
+      <div class="vn-reading-panels" data-vn-count="{{ vn_shown.size }}">
+        {% for vn_panel in vn_shown %}
+        {% case vn_panel %}
+        {% when 'slide' %}
+        {% comment %} A cue may switch to another slide of the storyboard. {% endcomment %}
+        {% assign vn_slide_name = cue.slide | default: scene.slide %}
+        {% assign vn_slide = explainer.slides[vn_slide_name] %}
+        <div class="vn-reading-panel" data-vn-settled="slide">{% include video-narration-slide.html slide=vn_slide cue=cue %}</div>
+        {% when 'diagram' %}
+        {% comment %} A cue may switch to another diagram; its caption shows when it first appears. {% endcomment %}
+        {% assign vn_diagram_name = cue.diagram | default: scene.diagram %}
+        {% assign diagram = explainer.diagrams[vn_diagram_name] %}
+        <div class="vn-reading-panel np-diagram-column" data-vn-settled="diagram">
+          <p><strong>{{ diagram.label | escape }}</strong>{% if cue.diagram_focus %} · Highlighted: {{ cue.diagram_focus | escape }}{% endif %}</p>
+          {% include narrated-pattern-diagram.html diagram=diagram cue=cue %}
+          {% if vn_diagram_name != vn_previous_diagram and diagram.caption %}<p class="np-diagram-caption">{{ diagram.caption | escape }}</p>{% endif %}
+        </div>
+        {% assign vn_previous_diagram = vn_diagram_name %}
+        {% when 'code' %}
+        <div class="vn-reading-panel nja-code-column" data-vn-settled="code">
+          {% for language in explainer.languages %}
+          {% assign example = examples[language] %}{% assign block = example.blocks[scene.code] %}{% assign focus_lines = block.focus[cue.focus] %}
+          <div data-transcript-language="{{ language }}">
+            <p><strong>{{ example.label }}</strong> · {% if focus_lines %}Marked lines: {{ focus_lines | join: ', ' }}{% else %}Whole example{% endif %}</p>
+            {% include narrated-explainer-code.html code=block.source filename=example.filename language=language focus_lines=focus_lines %}
+          </div>
+          {% endfor %}
+        </div>
+        {% when 'animation' %}
+        <div class="vn-reading-panel vn-animation-description" data-vn-settled="animation"><p><strong>In the animation:</strong> {{ cue.visual | escape }}</p></div>
+        {% endcase %}
+        {% endfor %}
+      </div>
+      <p class="np-reading-note"><strong>Notice:</strong> {{ cue.note | escape }}</p>
+    </section>
+    {% endfor %}
+    <p class="nja-takeaway">{{ scene.takeaway | escape }}</p>
+    {% assign check = quizzes[scene.id] %}
+    {% include narrated-lesson-check.html check=check %}
+  </section>
+  {% endfor %}
+  {% if explainer.languages %}{% include narrated-lesson-examples.html topic=include.topic note=lesson.complete_examples %}{% endif %}
+</div>

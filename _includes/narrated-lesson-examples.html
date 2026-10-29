@@ -1,0 +1,23 @@
+{%- comment -%}
+  The complete examples that close a lesson with code: every block of
+  explainer.example_order joined into one file per language.
+  Params: topic, note (what the examples omit or assume).
+{%- endcomment -%}
+{%- assign np_explainer = site.data.explainers[include.topic] -%}
+{%- capture np_examples_key %}{{ include.topic }}_code{% endcapture -%}
+{%- assign np_examples = site.data.explainers[np_examples_key] %}
+<section aria-labelledby="{{ include.topic }}-reading-complete-examples">
+  <h3 id="{{ include.topic }}-reading-complete-examples">Complete examples</h3>
+  <p>{{ include.note | escape }}</p>
+  {% for language in np_explainer.languages %}
+  {% assign example = np_examples[language] %}
+  {% capture full_source %}{% if example.imports.size > 0 %}{{ example.imports }}
+{% endif %}{% for block_name in np_explainer.example_order %}{{ example.blocks[block_name].source }}
+{% endfor %}{% endcapture %}
+  <div data-transcript-language="{{ language }}">
+    <p><strong>{{ example.label }} — {{ example.filename }}</strong></p>
+    <p>{{ example.note | escape }}</p>
+    {% include narrated-explainer-code.html code=full_source language=language transcript=true %}
+  </div>
+  {% endfor %}
+</section>

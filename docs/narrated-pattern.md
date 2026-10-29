@@ -59,6 +59,10 @@ at build time), and the topic illustrations. It is the reading and print views
 and the chapter transcript. `js/narrated-pattern.js` derives the player's stage
 from the current cue: it marks code lines in place and copies the matching
 reading step's diagram and illustrations, so no topic needs its own script.
+`js/narrated-lesson.js` holds what it shares with video narrations
+(`docs/video-narration.md`): copying a cue's diagram, marking code lines, and the
+section checks. Shared styles apply to the `narrated-lesson` class, and the
+reader layout serves both lesson types.
 `js/narrated-pattern-document.js` handles the shared language preference and the
 theme carried in view links; it is safe to load once per lesson on combined
 course pages.

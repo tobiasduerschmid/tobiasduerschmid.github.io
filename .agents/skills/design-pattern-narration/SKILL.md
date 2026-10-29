@@ -232,6 +232,14 @@ long-path workaround are in `docs/nodejs-animation.md` and `docs/state-narration
 - Listen to every cue that contains code identifiers, acronyms, or symbols. Typical fixes:
   `UML: U M L`, `C++: C plus plus`, `enum: E num`, camelCase names split into words
   (`setState: set state`). Captions keep the written form.
+- Abbreviations with periods break inside: written "p.m." phonemizes as `pˈiː.ˈɛm.`, a stop
+  between letters that sounds like "pee. em.", so map it (`p.m.: PM.`, keeping the sentence's
+  full stop). Check a doubtful word by its phonemes, not by ear alone:
+  `Kokoro(...).tokenizer.phonemize(text, 'en-us')` shows what the voice will say. Whisper
+  transcripts normalize such words back to their written form, so they cannot catch it.
+- Heteronyms take the wrong reading after a noun: in "the plan lives on the wall" espeak reads
+  `lˈaɪvz` (the plural of "life"). Respell the phrase (`plan lives: plan livs`). Check every
+  "lives", "read", "lead", "close", "live", "wind", "tear", and "minute" by its phonemes.
 - The player stops for each check 0.3 s before the section boundary. The last cue of every
   section therefore needs more than 0.3 s of silence; the default works, and the State node
   test's silence check is the template to copy.

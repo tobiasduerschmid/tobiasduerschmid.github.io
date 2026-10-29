@@ -58,28 +58,8 @@
     {% endfor %}
     <p class="nja-takeaway">{{ scene.takeaway | escape }}</p>
     {% assign check = quizzes[scene.id] %}
-    {% if check.questions %}{% assign questions = check.questions %}{% assign check_label = 'Summary quiz:' %}{% else %}{% assign questions = '' | split: '' | push: check %}{% assign check_label = 'Knowledge check:' %}{% endif %}
-    {% for question in questions %}
-    <div class="np-print-question"><p><strong>{{ check_label }}</strong>{% if questions.size > 1 %} {{ forloop.index }} of {{ questions.size }} ·{% endif %} {{ question.question | escape }}</p>
-      <ul>{% for option in question.options %}<li>{{ option | escape }}</li>{% endfor %}</ul>
-      <details><summary>Answer and explanation</summary><p>{{ question.options[question.correct_index] | escape }}</p><p>{{ question.explanation | escape }}</p></details>
-    </div>
-    {% endfor %}
+    {% include narrated-lesson-check.html check=check %}
   </section>
   {% endfor %}
-  <section aria-labelledby="{{ include.topic }}-reading-complete-examples">
-    <h3 id="{{ include.topic }}-reading-complete-examples">Complete examples</h3>
-    <p>{{ lesson.complete_examples | escape }}</p>
-    {% for language in explainer.languages %}
-    {% assign example = examples[language] %}
-    {% capture full_source %}{% if example.imports.size > 0 %}{{ example.imports }}
-{% endif %}{% for block_name in explainer.example_order %}{{ example.blocks[block_name].source }}
-{% endfor %}{% endcapture %}
-    <div data-transcript-language="{{ language }}">
-      <p><strong>{{ example.label }} — {{ example.filename }}</strong></p>
-      <p>{{ example.note | escape }}</p>
-      {% include narrated-explainer-code.html code=full_source language=language transcript=true %}
-    </div>
-    {% endfor %}
-  </section>
+  {% include narrated-lesson-examples.html topic=include.topic note=lesson.complete_examples %}
 </div>

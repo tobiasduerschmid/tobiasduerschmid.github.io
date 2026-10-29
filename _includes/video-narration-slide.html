@@ -1,0 +1,55 @@
+{%- comment -%}
+  One cue's structured-text slide. Layouts: cards (a grid of titled items,
+  each with a line of text or a short list), steps (the same, numbered),
+  pillars (cards standing on a base under a roof), and table (rows of cells
+  under column headings; the first cell heads its row). cue.slide_reveal
+  shows the first n items (default: all); cue.slide_focus marks one item by
+  id with a heavier border, bold title, and aria-current, never color alone.
+  Params: slide, cue.
+{%- endcomment -%}
+{%- assign vn_slide = include.slide -%}
+{%- assign vn_reveal = include.cue.slide_reveal | default: vn_slide.items.size -%}
+{%- assign vn_focus = include.cue.slide_focus -%}
+{%- assign vn_layout = vn_slide.layout | default: 'cards' -%}
+<div class="vn-slide vn-slide--{{ vn_layout }}">
+  {%- if vn_layout == 'table' %}
+  {%- comment -%} A data table may scroll sideways on a narrow screen (WCAG 1.4.10); the region keeps it keyboard-scrollable. {%- endcomment %}
+  {%- comment -%} The heading stays in view above the scrolling table; its caption names the table for screen readers. {%- endcomment %}
+  <p class="vn-slide-heading" aria-hidden="true">{{ vn_slide.heading | escape }}</p>
+  <div class="vn-slide-table-scroll" role="region" aria-label="{{ vn_slide.heading | escape }}" tabindex="0">
+  <table class="vn-slide-table">
+    <caption class="vn-hidden-label">{{ vn_slide.heading | escape }}</caption>
+    <thead><tr>{% for column in vn_slide.columns %}<th scope="col">{{ column | escape }}</th>{% endfor %}</tr></thead>
+    <tbody>
+      {%- for item in vn_slide.items limit: vn_reveal %}
+      <tr{% if item.id == vn_focus %} class="is-focused" aria-current="true"{% endif %}><th scope="row">{{ item.cells.first | escape }}</th>{% for cell in item.cells offset: 1 %}<td>{{ cell | escape }}</td>{% endfor %}</tr>
+      {%- endfor %}
+    </tbody>
+  </table>
+  </div>
+  {%- else %}
+  {%- if vn_slide.heading %}
+  <p class="vn-slide-heading">{{ vn_slide.heading | escape }}</p>
+  {%- endif %}
+  {%- if vn_slide.roof %}
+  <p class="vn-slide-roof">{{ vn_slide.roof | escape }}</p>
+  {%- endif %}
+  {%- if vn_layout == 'steps' %}{% assign vn_list = 'ol' %}{% else %}{% assign vn_list = 'ul' %}{% endif %}
+  <{{ vn_list }} class="vn-slide-items">
+    {%- for item in vn_slide.items limit: vn_reveal %}
+    <li class="vn-slide-item{% if item.id == vn_focus %} is-focused{% endif %}"{% if item.id == vn_focus %} aria-current="true"{% endif %}>
+      <span class="vn-slide-item-title">{{ item.title | escape }}</span>
+      {%- if item.text %}
+      <span class="vn-slide-item-text">{{ item.text | escape }}</span>
+      {%- endif %}
+      {%- if item.list %}
+      <ul class="vn-slide-item-list">{% for entry in item.list %}<li>{{ entry | escape }}</li>{% endfor %}</ul>
+      {%- endif %}
+    </li>
+    {%- endfor %}
+  </{{ vn_list }}>
+  {%- if vn_slide.base %}
+  <p class="vn-slide-base">{{ vn_slide.base | escape }}</p>
+  {%- endif %}
+  {%- endif %}
+</div>

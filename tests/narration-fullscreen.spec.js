@@ -18,6 +18,7 @@ const narrations = [
     diagramScene: sceneNumber('strategy', 'strategy_role') },
   { url: '/SEBook/designpatterns/mvc.html', id: 'mvc-animation', title: 'Model-View-Controller in a data visualizer',
     diagramScene: sceneNumber('mvc', 'model_role') },
+  { url: '/SEBook/process/scrum.html', id: 'scrum-video', title: 'Scrum in one sprint' },
 ];
 const lessonOf = (page, narration) => page.getByRole('region', { name: narration.title, exact: true });
 // Accessibility checkpoints audit `.nja-player`, the element that fills the screen.

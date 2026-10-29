@@ -1,0 +1,114 @@
+/* The animated stage's own page (_layouts/video-narration-stage.html): a
+   main landmark that holds the stage, and a title for anyone who opens the
+   page directly. The stage itself is styled by css/song-video-stage.css. */
+.vn-stage-page { margin: 0; }
+.vn-stage-title { position: absolute; width: 1px; height: 1px; margin: 0; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+/* The stage follows the site's light or dark mode: js/video-narration-stage.js
+   mirrors the embedding page's dark-mode class onto this frame. The dark
+   values are the song videos' own; light mode re-points the song kit's tokens
+   and repaints the story wall, so every element changes color and brightness
+   with the setting. A topic's artwork paints surfaces, lines, and text only
+   with these tokens (docs/video-narration.md). */
+.stage {
+  --vn-panel: #151c3d;
+  --vn-panel-lit: #1f2a59;
+  --vn-panel-line: rgba(160, 190, 255, 0.45);
+  --vn-column: rgba(18, 26, 51, 0.88);
+  --vn-inset: #0d1330;
+  --vn-chip: #23305e;
+  --vn-step: #3b4670;
+  --vn-structure: #3b4670;
+  --vn-structure-line: #6b7aa6;
+  --vn-label-bg: #11163a;
+  --vn-line: #a5b1c9;
+  --vn-dashed: rgba(160, 190, 255, 0.55);
+  --vn-ring: rgba(56, 211, 245, 0.6);
+  --vn-lit: var(--gold);
+  --vn-gold-ink: var(--gold);
+  --vn-cyan-ink: var(--cyan);
+  --vn-green-ink: var(--green);
+  --vn-red-ink: var(--red);
+  --vn-paper-shadow: 0 4px 0 rgba(0, 0, 0, 0.35);
+  --vn-alert-bg: #1b0f18;
+  --vn-alert-text: #ffd7dd;
+  --vn-hatch-a: #1b2340;
+  --vn-hatch-b: #222b4d;
+}
+
+html:not(.dark-mode) body { background: #f4f1ea; }
+html:not(.dark-mode) .stage {
+  --bg: #f4f1ea;
+  --panel: rgba(255, 255, 255, 0.94);
+  --panel-line: rgba(20, 33, 61, 0.22);
+  --text: #14213d;
+  --muted: #45536e;
+  --vn-panel: #ffffff;
+  --vn-panel-lit: #fff6d6;
+  --vn-panel-line: rgba(20, 33, 61, 0.3);
+  --vn-column: rgba(255, 255, 255, 0.82);
+  --vn-inset: #eef2fa;
+  --vn-chip: #e3e9f5;
+  --vn-step: #dde3f0;
+  --vn-structure: #cfd6e6;
+  --vn-structure-line: #8a94ad;
+  --vn-label-bg: #ffffff;
+  --vn-line: #6b7894;
+  --vn-dashed: rgba(20, 33, 61, 0.42);
+  --vn-ring: rgba(0, 103, 127, 0.5);
+  --vn-lit: #a87600;
+  --vn-gold-ink: #7a4f00;
+  --vn-cyan-ink: #00677f;
+  --vn-green-ink: #176138;
+  --vn-red-ink: #b42318;
+  --vn-paper-shadow: 0 0 0 1px rgba(20, 33, 61, 0.18), 0 4px 0 rgba(20, 33, 61, 0.14);
+  --vn-alert-bg: #fff1f3;
+  --vn-alert-text: #8a1c2b;
+  --vn-hatch-a: #e9edf6;
+  --vn-hatch-b: #dfe4ef;
+}
+
+/* The song kit's pieces in light mode: stamps on paper-white, kinetic words
+   in dark ink, and accent words in their darker shades. */
+html:not(.dark-mode) .stage .stamp { background: rgba(255, 255, 255, 0.9); color: #b42318; }
+html:not(.dark-mode) .stage .stamp--gold { color: #7a4f00; }
+html:not(.dark-mode) .stage .stamp--green { color: #176138; }
+html:not(.dark-mode) .stage .kinetic { text-shadow: 0 6px 0 rgba(20, 33, 61, 0.16); }
+html:not(.dark-mode) .stage .kinetic-word--gold { color: #7a4f00; }
+html:not(.dark-mode) .stage .kinetic-word--cyan { color: #00677f; }
+html:not(.dark-mode) .stage .kinetic-word--pink { color: #a3135f; }
+html:not(.dark-mode) .stage .kinetic-word--green { color: #176138; }
+
+/* The story wall in daylight: warm plaster, faint notes, and a soft lamp.
+   The scenery stays faint so dark text over it keeps at least 4.5:1. */
+html:not(.dark-mode) .theme-story-wall { background: #f4f1ea; }
+html:not(.dark-mode) .sw-room::after { background: rgba(255, 255, 255, 0.2); }
+html:not(.dark-mode) .sw-base {
+  background:
+    radial-gradient(ellipse 44% 50% at 34% 0%, rgba(255, 196, 120, 0.22), transparent 72%),
+    radial-gradient(ellipse 50% 60% at 0% 60%, rgba(139, 92, 246, 0.08), transparent 72%),
+    radial-gradient(ellipse 50% 50% at 100% 90%, rgba(8, 145, 178, 0.08), transparent 72%),
+    linear-gradient(180deg, #faf7f0 0%, #f2eee5 55%, #e9e4d8 100%);
+}
+html:not(.dark-mode) .sw-texture {
+  background-image:
+    radial-gradient(rgba(70, 60, 40, 0.07) 1px, transparent 1.6px),
+    radial-gradient(rgba(70, 60, 40, 0.05) 1px, transparent 1.4px);
+}
+html:not(.dark-mode) .sw-pool--warm { --sw-pool: rgba(255, 170, 90, 0.1); }
+html:not(.dark-mode) .sw-pool--violet { --sw-pool: rgba(139, 92, 246, 0.06); }
+html:not(.dark-mode) .sw-pool--teal { --sw-pool: rgba(20, 184, 166, 0.06); }
+html:not(.dark-mode) .sw-lamp-glow { background: radial-gradient(ellipse at 50% 30%, rgba(255, 196, 120, 0.3), transparent 70%); }
+html:not(.dark-mode) .sw-lamp-cord { stroke: rgba(60, 60, 80, 0.6); }
+html:not(.dark-mode) .sw-lamp-shade { fill: #8a94ad; stroke: rgba(150, 110, 40, 0.4); }
+html:not(.dark-mode) .sw-note-shadow,
+html:not(.dark-mode) .sw-card-shadow { fill: rgba(70, 60, 40, 0.1); }
+html:not(.dark-mode) .sw-note--yellow { --sw-note: rgba(255, 206, 46, 0.32); }
+html:not(.dark-mode) .sw-note--pink { --sw-note: rgba(255, 102, 178, 0.2); }
+html:not(.dark-mode) .sw-note--cyan { --sw-note: rgba(64, 214, 255, 0.2); }
+html:not(.dark-mode) .sw-note--green { --sw-note: rgba(74, 226, 132, 0.2); }
+html:not(.dark-mode) .sw-scribble { stroke: rgba(40, 40, 60, 0.28); }
+html:not(.dark-mode) .sw-card-paper { fill: rgba(255, 255, 255, 0.62); }
+html:not(.dark-mode) .sw-card-line { stroke: rgba(70, 100, 160, 0.22); }
+html:not(.dark-mode) .sw-tape-strip { fill: rgba(200, 185, 140, 0.36); }
+html:not(.dark-mode) .sw-vignette { background: radial-gradient(ellipse at 50% 45%, transparent 60%, rgba(90, 80, 60, 0.14) 100%); }

@@ -12,7 +12,7 @@
 {% assign timing = site.data.explainers[timing_key] %}
 {% assign examples = site.data.explainers[examples_key] %}
 {% assign quizzes = site.data.explainers[quizzes_key] %}
-<section class="narrated-explainer narrated-pattern {{ topic }}-animation mathjax_ignore" id="{{ topic }}-animation" aria-labelledby="{{ topic }}-animation-title" data-np-topic="{{ topic }}">
+<section class="narrated-explainer narrated-lesson narrated-pattern {{ topic }}-animation mathjax_ignore" id="{{ topic }}-animation" aria-labelledby="{{ topic }}-animation-title" data-np-topic="{{ topic }}">
   <h2 id="{{ topic }}-animation-title">{{ explainer.title }}</h2>
   <p>{{ lesson.summary }} {{ lesson.prerequisites }}</p>
   <div class="nja-player">
@@ -107,6 +107,7 @@
 <script src="{{ '/js/parsons-grading.js' | relative_url }}" defer></script>
 <script src="{{ '/js/tutorial-quiz.js' | relative_url }}" defer></script>
 <script src="{{ '/js/narrated-pattern-document.js' | relative_url }}" defer></script>
+<script src="{{ '/js/narrated-lesson.js' | relative_url }}" defer></script>
 {%- comment -%} Topic scripts for live illustrations run before the player renders its first cue. {%- endcomment -%}
 {% for script in lesson.scripts %}
 <script src="{{ '/js/' | append: script | relative_url }}" defer></script>
