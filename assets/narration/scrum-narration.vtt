@@ -1,197 +1,197 @@
 WEBVTT
 
 intro-1
-00:00:00.000 --> 00:00:16.883
+00:00:00.000 --> 00:00:16.893
 It's six fifty-eight p.m. You're starving, and the dining-hall line is out the door. Again. A student team wants to fix that with Hall Hopper, an app that shows tonight's menus and how packed each hall is right now. They have two weeks to ship something real.
 
 intro-2
-00:00:16.883 --> 00:00:34.380
+00:00:16.893 --> 00:00:34.390
 One way to build it: plan the whole app up front, build for months, then launch. By then, students might want something else, and it's too late to change course. Scrum takes the other path: deliver a small, working piece every few weeks, learn from real users, and adjust.
 
 intro-3
-00:00:34.380 --> 00:00:54.255
+00:00:34.390 --> 00:00:54.335
 Scrum is the most popular way agile teams work, and it's deliberately small: three roles, who is accountable for what; three artifacts, the work everyone can see; and five events, the rhythm that keeps the team learning. The team decides everything else. Let's follow Hall Hopper's team through one sprint.
 
 theory-1
-00:00:54.255 --> 00:01:15.176
+00:00:54.335 --> 00:01:15.256
 Why work in short loops? Because building software for real people is a complex problem: you can't predict everything by thinking harder. Will students actually trust a crowd meter? No meeting can answer that. So Scrum runs on empiricism: decide from experience and observation, not from up-front predictions.
 
 theory-2
-00:01:15.176 --> 00:01:31.384
+00:01:15.256 --> 00:01:31.464
 Empiricism stands on three pillars. Pillar one, transparency: the important facts about the work are visible to everyone doing it and everyone receiving it. The work is on the wall, not hidden in someone's head or a private spreadsheet.
 
 theory-3
-00:01:31.384 --> 00:01:45.649
+00:01:31.464 --> 00:01:45.729
 Pillar two, inspection: the team checks its progress and its artifacts often, so problems show up while they're still small. Transparency makes this possible. Inspecting work you can't actually see is misleading.
 
 theory-4
-00:01:45.649 --> 00:02:02.890
+00:01:45.729 --> 00:02:04.941
 Pillar three, adaptation: when something drifts off course, the team adjusts as soon as it can. Inspecting without adapting is pointless, like checking a map and then ignoring it. Every Scrum event you're about to meet is a built-in moment to inspect and adapt.
 
 team-1
-00:02:02.890 --> 00:02:21.134
+00:02:04.941 --> 00:02:23.186
 Meet Hall Hopper's Scrum Team: seven people, one product. The team is cross-functional: together, they have every skill needed to ship working software each sprint, from design and app screens to the server and testing. No tossing work over the wall to another department.
 
 team-2
-00:02:21.134 --> 00:02:39.928
+00:02:23.186 --> 00:02:41.970
 The team is also self-managing, often called self-organizing: the team decides who does what, when, and how. Inside it, Scrum defines three roles, officially called accountabilities: the Developers, the Product Owner, and the Scrum Master. No ranks, and no sub-teams.
 
 team-3
-00:02:39.928 --> 00:02:56.683
+00:02:41.970 --> 00:02:58.724
 Think of it like a character-select screen. Player one: the Developers, the builders. That's everyone who creates part of the usable product each sprint. On Hall Hopper, a designer, a tester, and three programmers. Not only the people who write code.
 
 team-4
-00:02:56.683 --> 00:03:15.131
+00:02:58.724 --> 00:03:19.122
 The Developers own three things. They create the sprint's plan, called the Sprint Backlog. They build quality in by meeting the Definition of Done, the team's shared checklist of quality standards, and by holding each other accountable. And every day, they adapt their plan to hit the sprint's goal.
 
 product_owner-1
-00:03:15.131 --> 00:03:33.350
+00:03:19.122 --> 00:03:37.320
 Player two: the Product Owner, the value navigator. One person, accountable for maximizing the value the team's work creates. Hall Hopper's Product Owner skips the guesswork and talks directly with students and dining-hall staff to learn what they actually need, and why.
 
 product_owner-2
-00:03:33.350 --> 00:03:49.046
+00:03:37.320 --> 00:03:53.016
 They turn those needs into user stories and order the Product Backlog, so the most valuable work comes first. They answer the Developers' questions, and when work is finished, they check its acceptance criteria to decide whether it does what was asked.
 
 product_owner-3
-00:03:49.046 --> 00:04:10.022
+00:03:53.016 --> 00:04:15.942
 Product Owners fall into three classic traps. Needs reach them through a long chain of people, like a game of telephone: so talk with customers directly. Managers dictate the vision: so give the Product Owner real authority. Little domain knowledge: so choose someone who understands both the users and development.
 
 scrum_master-1
-00:04:10.022 --> 00:04:25.844
+00:04:15.942 --> 00:04:31.844
 Player three: the Scrum Master, the team coach. They help everyone understand Scrum, coach the team in managing itself, and make sure every event is effective, productive, and kept within its time limit, which Scrum calls a timebox.
 
 scrum_master-2
-00:04:25.844 --> 00:04:44.628
+00:04:31.844 --> 00:04:50.628
 Their other superpower: removing impediments, blockers the team can't clear alone. Hall Hopper's crowd meter needs live data from dining services, and that needs a data agreement signed by the legal office. The Scrum Master chases the signature, so the Developers can keep building.
 
 scrum_master-3
-00:04:44.628 --> 00:05:00.598
+00:04:50.628 --> 00:05:06.598
 Two common mix-ups. The Scrum Master is not a product manager: deciding what to build is the Product Owner's job. And they are not a project manager or anyone's boss. A Scrum Master shields and supports the team; they don't command it.
 
 scrum_master-4
-00:05:00.598 --> 00:05:19.566
+00:05:06.598 --> 00:05:27.526
 Expect a healthy tension between these two roles. The Scrum Master speaks up for internal quality: maintainable code, the Developers' needs, and a better process. The Product Owner pushes for external quality: the features customers want, on schedule. Great teams balance both.
 
 product_backlog-1
-00:05:19.566 --> 00:05:37.956
+00:05:27.526 --> 00:05:45.916
 Now the artifacts, the work everyone can see. Artifact one: the Product Backlog, an ordered list of what's needed to improve the product. It's the team's single source of work. If an idea isn't on the Product Backlog, nobody works on it. Not even if the dean asks nicely.
 
 product_backlog-2
-00:05:37.956 --> 00:05:54.864
+00:05:45.916 --> 00:06:02.824
 Most items are user stories with acceptance criteria. Hall Hopper's top story: as a hungry student, I want to see how crowded each dining hall is, so that I can skip the long lines. The Product Owner keeps the most valuable stories at the top.
 
 product_backlog-3
-00:05:54.864 --> 00:06:14.931
+00:06:02.824 --> 00:06:24.841
 The backlog is emergent: it keeps changing as the team learns. Refinement splits big, fuzzy items into smaller, clearer ones and adds details like order and size. And the whole list points at a Product Goal, the long-term target. Hall Hopper's: every student picks a dining hall in under a minute.
 
 sprint_backlog-1
-00:06:14.931 --> 00:06:31.565
+00:06:24.841 --> 00:06:41.475
 Artifact two: the Sprint Backlog, the Developers' plan for one sprint. It answers three questions. Why does this sprint matter? That's the Sprint Goal. What will we build? The Product Backlog items chosen for the sprint. How will we build them? A plan of tasks.
 
 sprint_backlog-2
-00:06:31.565 --> 00:06:47.439
+00:06:41.475 --> 00:06:57.349
 Hall Hopper's Sprint Goal: students can check how crowded a hall is before walking over. The plan lives on the wall in real time, updated by the Developers, for the Developers. Anyone can glance at it and see exactly where the sprint stands.
 
 sprint_backlog-3
-00:06:47.439 --> 00:07:05.620
+00:06:57.349 --> 00:07:17.480
 Plot twist: one item turns out way bigger than expected. The Developers renegotiate the scope with the Product Owner, maybe saving the hall photos for later, but the Sprint Goal stays locked. One shared goal keeps the team pulling together instead of drifting into side quests.
 
 increment-1
-00:07:05.620 --> 00:07:21.798
+00:07:17.480 --> 00:07:33.636
 Artifact three: the Increment, a concrete stepping stone toward the Product Goal. Each Increment adds to all the earlier ones, is verified so everything works together, and must be usable. A pretty mockup or a half-built screen doesn't count.
 
 increment-2
-00:07:21.798 --> 00:07:37.767
+00:07:33.636 --> 00:07:49.606
 So who decides what finished means? The Definition of Done: the team's shared quality standard. Hall Hopper's says code reviewed, automated tests pass, and tested on a real phone. The moment an item meets it, an Increment is born.
 
 increment-3
-00:07:37.767 --> 00:07:54.875
+00:07:49.606 --> 00:08:06.714
 Prediction time. It's the sprint's last day. One story is ninety percent finished, but its tests still fail. Does it count toward the Increment? And where does it go next? Pause here if you want more thinking time.
 
 increment-4
-00:07:54.875 --> 00:08:15.346
+00:08:06.714 --> 00:08:29.134
 It doesn't count: ninety percent done is not done. Work that misses the Definition of Done can't be released or shown as finished. It returns to the Product Backlog, where the Product Owner orders it again. Notice that each artifact comes with a commitment: the Product Goal, the Sprint Goal, and the Definition of Done.
 
 sprint-1
-00:08:15.346 --> 00:08:32.789
+00:08:29.134 --> 00:08:46.578
 Now the events, the rhythm of Scrum. First, the Sprint itself: a fixed timebox, usually two to three weeks and never more than a month, of focused work toward the Sprint Goal. When one sprint ends, the next one begins immediately. No gaps, no off-season.
 
 sprint-2
-00:08:32.789 --> 00:08:49.269
+00:08:46.578 --> 00:09:05.008
 The Sprint is a container for the other four events. Sprint Planning opens it, a Daily Scrum happens every working day, and the Sprint Review and Sprint Retrospective close it. Inside the sprint, nobody makes changes that would endanger the Sprint Goal.
 
 sprint_planning-1
-00:08:49.269 --> 00:09:03.296
+00:09:05.008 --> 00:09:19.034
 Sprint Planning kicks off the sprint, with the whole Scrum Team in the room. Topic one: why is this sprint valuable? The Product Owner pitches how the product could gain value, and together the team writes the Sprint Goal.
 
 sprint_planning-2
-00:09:03.296 --> 00:09:18.345
+00:09:19.034 --> 00:09:34.062
 Topic two: what can we get done? The Developers pull top items from the Product Backlog and size them, for example with planning poker. Topic three: how will we do it? They break each item into tasks that take a day or less.
 
 sprint_planning-3
-00:09:18.345 --> 00:09:28.813
+00:09:34.062 --> 00:09:46.480
 Notice that the three questions build the three parts of the Sprint Backlog: the goal answers why, the selected items answer what, and the tasks answer how.
 
 daily_scrum-1
-00:09:28.813 --> 00:09:45.542
+00:09:46.480 --> 00:10:03.210
 Every working day, the Developers hold the Daily Scrum, also called the daily stand-up: fifteen minutes, same time, same place, and standing keeps it short. The point: inspect progress toward the Sprint Goal and adapt the plan for the next day of work.
 
 daily_scrum-2
-00:09:45.542 --> 00:10:02.305
+00:10:03.210 --> 00:10:19.972
 Many teams answer three questions: what did I do yesterday, how will I help reach the Sprint Goal today, and what's blocking me? On day four, a Developer says the dining data is still blocked. The Scrum Master grabs that impediment, and the stand-up moves on.
 
 daily_scrum-3
-00:10:02.305 --> 00:10:13.158
+00:10:19.972 --> 00:10:32.775
 One thing it's not: a status report for managers. The Daily Scrum is the Developers talking to each other, sharing what they know so they can change today's plan.
 
 sprint_review-1
-00:10:13.158 --> 00:10:30.261
+00:10:32.775 --> 00:10:49.878
 End of the sprint: demo time. The Sprint Review inspects the outcome. The team shows the Increment to key stakeholders and talks about progress toward the Product Goal. It's a working session with live demos, ideally with real customers. Not a slideshow.
 
 sprint_review-2
-00:10:30.261 --> 00:10:49.938
+00:10:49.878 --> 00:11:09.555
 Students try the crowd meter live, and they love it. Then the feedback lands. Several want to filter menus by allergens, and one student who uses a screen reader can't tell how busy a hall is, because the meter only uses color. The Product Owner adds both to the Product Backlog, near the top.
 
 sprint_review-3
-00:10:49.938 --> 00:11:02.093
+00:11:09.555 --> 00:11:23.660
 The Product Owner also judges whether the Increment delivers the value its stories promised. The review's real output is an updated Product Backlog, ready for the next Sprint Planning.
 
 sprint_retrospective-1
-00:11:02.093 --> 00:11:20.321
+00:11:23.660 --> 00:11:41.888
 The final event: the Sprint Retrospective. The review inspected the product; the retrospective inspects the process: individuals, interactions, processes, tools, and the Definition of Done. What went well? What problems did we hit? How did we solve them, or not?
 
 sprint_retrospective-2
-00:11:20.321 --> 00:11:39.929
+00:11:41.888 --> 00:12:01.497
 So why did the screen-reader problem reach users? Nobody checked accessibility. User stories focus on features, so qualities like accessibility and performance easily slip through. The team's most helpful change: add checked with a screen reader to the Definition of Done. Then the next sprint starts.
 
 sprint_retrospective-3
-00:11:39.929 --> 00:11:49.065
+00:12:01.497 --> 00:12:12.582
 The review changes what the team builds next. The retrospective changes how the team works. Both feed straight into the next Sprint Planning.
 
 inspect_adapt-1
-00:11:49.065 --> 00:12:06.446
+00:12:12.582 --> 00:12:29.963
 Zoom out, and the pattern clicks. The artifacts provide transparency, and every event is a scheduled moment to inspect something and adapt something. Sprint Planning inspects the Product Backlog and the Product Goal, and adapts the plan by creating a new Sprint Backlog.
 
 inspect_adapt-2
-00:12:06.446 --> 00:12:18.539
+00:12:29.963 --> 00:12:42.057
 Your turn. What does the Daily Scrum inspect, and what does it adapt? What about the Sprint Review? Pause here if you want more thinking time.
 
 inspect_adapt-3
-00:12:18.539 --> 00:12:35.397
+00:12:42.057 --> 00:12:58.915
 The Daily Scrum inspects progress toward the Sprint Goal and adapts the day's plan. The Sprint Review inspects the Increment and adapts the Product Backlog. The Sprint Retrospective inspects how the team worked and adapts its process and Definition of Done.
 
 inspect_adapt-4
-00:12:35.397 --> 00:12:46.643
+00:12:58.915 --> 00:13:12.111
 And the Sprint contains them all, so the team learns at three speeds: every day, every sprint, and across the whole product. That's empiricism, built right into the calendar.
 
 summary-1
-00:12:46.643 --> 00:13:05.885
+00:13:12.111 --> 00:13:31.353
 Quick recap. Scrum runs on empiricism and its three pillars: transparency, inspection, and adaptation. Three roles share the work: the Developers build a usable Increment, the Product Owner maximizes value, and the Scrum Master coaches the team and clears impediments.
 
 summary-2
-00:13:05.885 --> 00:13:22.883
+00:13:31.353 --> 00:13:48.350
 Three artifacts keep the work visible, each with a commitment: the Product Backlog and its Product Goal, the Sprint Backlog and its Sprint Goal, and the Increment and its Definition of Done. And five events keep the team inspecting and adapting, sprint after sprint.
 
 summary-3
-00:13:22.883 --> 00:13:31.664
+00:13:48.350 --> 00:13:59.081
 Now level up: the summary quiz drops you into a brand-new team. For each situation, decide which part of Scrum it calls for.

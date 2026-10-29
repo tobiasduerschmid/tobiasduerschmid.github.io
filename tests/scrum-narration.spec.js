@@ -397,51 +397,66 @@ test('every cue keeps a visible gap between its cards, badges, and panels', asyn
   expect(found).toEqual({});
 });
 
-test('narration stops inside the silence before each check, and a section without one plays on', async ({ page }) => {
-  test.setTimeout(240000);
-  await serveAudioRanges(page);
-  await page.addInitScript(() => {
-    const pause = HTMLMediaElement.prototype.pause;
-    HTMLMediaElement.prototype.pause = function recordPause() {
-      if (window.pausedAt === null) window.pausedAt = this.currentTime;
-      return pause.call(this);
-    };
+for (const speed of [1, 2]) {
+  test(`narration at ${speed}x holds the final picture after speech before each check, and a section without one plays on`, async ({ page }) => {
+    test.setTimeout(240000);
+    await serveAudioRanges(page);
+    await page.addInitScript(() => {
+      const pause = HTMLMediaElement.prototype.pause;
+      HTMLMediaElement.prototype.pause = function recordPause() {
+        if (window.pausedAt === null) window.pausedAt = this.currentTime;
+        return pause.call(this);
+      };
+    });
+    await page.goto(url);
+    const animation = player(page);
+    // Load the audio before selecting a speed; loading resets the media rate.
+    await seek(page, timing.scenes[0].cues.at(-1).speech_end - 0.5);
+    await animation.getByRole('button', { name: 'Player settings' }).click();
+    await animation.getByRole('combobox', { name: 'Speed', exact: true }).selectOption(String(speed));
+    await animation.getByRole('button', { name: 'Player settings' }).click();
+    for (const [index, scene] of story.scenes.entries()) {
+      const end = timing.scenes[index].end;
+      const speechEnd = timing.scenes[index].cues.at(-1).speech_end;
+      await seek(page, speechEnd - 0.5);
+      await page.evaluate(() => { window.pausedAt = null; });
+      await animation.getByRole('button', { name: 'Play narration' }).click();
+      await expect(animation.locator('audio')).toHaveJSProperty('playbackRate', speed);
+      const questions = questionsOf(scene.id);
+      if (!questions.length) {
+        // No check: the next section starts and keeps playing, and focus stays put.
+        await expect(animation.getByRole('heading', { name: story.scenes[index + 1].title, exact: true })).toBeVisible();
+        await expect(animation.getByRole('button', { name: 'Pause narration' })).toBeFocused();
+        await animation.getByRole('button', { name: 'Pause narration' }).click();
+        continue;
+      }
+      const kind = questions.length > 1 ? 'Summary quiz' : 'Knowledge check';
+      const quiz = animation.getByRole('region', { name: `${index + 1}. ${scene.label} — ${kind}`, exact: true });
+      await expect.poll(() => animation.locator('audio').evaluate(audio => audio.currentTime),
+        { intervals: [50, 100] }).toBeGreaterThan(speechEnd + 0.75);
+      await expect(animation.getByRole('group', { name: scene.cues.at(-1).visual, exact: true })).toBeVisible();
+      await expect(quiz).toBeHidden();
+      await expect(quiz).toBeVisible();
+      const pausedAt = await page.evaluate(() => window.pausedAt);
+      expect(pausedAt - speechEnd, `${scene.id}: time to inspect the picture after the last word`).toBeGreaterThanOrEqual(2);
+      expect(pausedAt, `${scene.id}: stops before the next section's speech`).toBeLessThan(end - 0.1);
+      await expect(animation.locator('audio')).toHaveJSProperty('paused', true);
+      for (const question of questions) {
+        await expect(quiz.getByText(question.question, { exact: true })).toBeVisible();
+        await quiz.getByRole('radio').filter({ hasText: question.options[question.correct_index] }).click();
+        await expect(quiz.getByText(question.explanation, { exact: true })).toBeVisible();
+        if (question !== questions.at(-1)) await quiz.getByRole('button', { name: /^Next/ }).click();
+      }
+      await quiz.getByRole('button', { name: 'See Results' }).click();
+      await quiz.getByRole('button', { name: index + 1 < story.scenes.length ? 'Continue narration' : 'Finish review' }).click();
+      await expect(quiz).toBeHidden();
+      if (index + 1 < story.scenes.length) {
+        await animation.getByRole('button', { name: 'Pause narration' }).click();
+        await expect(animation.getByRole('heading', { name: story.scenes[index + 1].title, exact: true })).toBeVisible();
+      }
+    }
   });
-  await page.goto(url);
-  const animation = player(page);
-  for (const [index, scene] of story.scenes.entries()) {
-    const end = timing.scenes[index].end;
-    await seek(page, end - 0.9);
-    await page.evaluate(() => { window.pausedAt = null; });
-    await animation.getByRole('button', { name: 'Play narration' }).click();
-    const questions = questionsOf(scene.id);
-    if (!questions.length) {
-      // No check: the next section starts and keeps playing, and focus stays put.
-      await expect(animation.getByRole('heading', { name: story.scenes[index + 1].title, exact: true })).toBeVisible();
-      await expect(animation.getByRole('button', { name: 'Pause narration' })).toBeFocused();
-      await animation.getByRole('button', { name: 'Pause narration' }).click();
-      continue;
-    }
-    const kind = questions.length > 1 ? 'Summary quiz' : 'Knowledge check';
-    const quiz = animation.getByRole('region', { name: `${index + 1}. ${scene.label} — ${kind}`, exact: true });
-    await expect(quiz).toBeVisible();
-    expect(await page.evaluate(() => window.pausedAt), `${scene.id}: stops before the next section's speech`).toBeLessThan(end - 0.1);
-    expect(await animation.locator('audio').evaluate(audio => audio.paused)).toBe(true);
-    for (const question of questions) {
-      await expect(quiz.getByText(question.question, { exact: true })).toBeVisible();
-      await quiz.getByRole('radio').filter({ hasText: question.options[question.correct_index] }).click();
-      await expect(quiz.getByText(question.explanation, { exact: true })).toBeVisible();
-      if (question !== questions.at(-1)) await quiz.getByRole('button', { name: /^Next/ }).click();
-    }
-    await quiz.getByRole('button', { name: 'See Results' }).click();
-    await quiz.getByRole('button', { name: index + 1 < story.scenes.length ? 'Continue narration' : 'Finish review' }).click();
-    await expect(quiz).toBeHidden();
-    if (index + 1 < story.scenes.length) {
-      await animation.getByRole('button', { name: 'Pause narration' }).click();
-      await expect(animation.getByRole('heading', { name: story.scenes[index + 1].title, exact: true })).toBeVisible();
-    }
-  }
-});
+}
 
 test('the video controls match the music player: skips, keys, captions, volume, settings, and the picture', async ({ page }) => {
   await page.goto(url);

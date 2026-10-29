@@ -59,6 +59,7 @@ scenes:
         note: Frequent checks catch problems while they are small.
         visual: 'The second pillar rises and lights up: Inspection, check often. A sticker labeled Inspect slides down the wall''s cards, and a red note appears, Bug: the meter shows the wrong hall, with the sticker Caught early. A sticker on the first pillar reads Makes inspection possible, and a dashed box labeled Hidden work is stamped Misleading.'
       - text: "Pillar three, adaptation: when something drifts off course, the team adjusts as soon as it can. Inspecting without adapting is pointless, like checking a map and then ignoring it. Every Scrum event you're about to meet is a built-in moment to inspect and adapt."
+        pause_after: 2.5
         step: Adaptation
         note: Adjust as soon as something drifts; inspecting without adapting is pointless.
         visual: 'The third pillar rises and lights up: Adaptation, adjust quickly. On a dashed course line, a dot drifts off course and comes back, with the stickers Off course, then Adjusted. A note, Inspect without adapting, is stamped Pointless, and a last note reads Every event: inspect and adapt, as all three pillars light up.'
@@ -85,6 +86,7 @@ scenes:
         note: Designers and testers are Developers too.
         visual: 'A character-select screen shows three role cards: Developers, Product Owner, and Scrum Master. The Developers card lights up, showing five badges, a Designer, a Tester, and three Programmers, and its power: Ship a usable Increment.'
       - text: "The Developers own three things. They create the sprint's plan, called the Sprint Backlog. They build quality in by meeting the Definition of Done, the team's shared checklist of quality standards, and by holding each other accountable. And every day, they adapt their plan to hit the sprint's goal."
+        pause_after: 2.5
         step: What Developers own
         note: The plan, the quality, and the daily adjustments are theirs.
         visual: 'The other role cards fade, leaving the Developers card. Around it appears what the Developers own: a Sprint Backlog column of task notes, with the sticker The plan; a Definition of Done checklist being checked (Code reviewed, Automated tests pass, Tested on a real phone), with the sticker Quality and a note, Hold each other accountable; and an Inspect and Adapt loop beside a Sprint Goal flag, with the sticker Every day.'
@@ -107,6 +109,7 @@ scenes:
         note: Most valuable first; acceptance criteria decide whether a story is met.
         visual: 'The speech bubbles turn into story cards in a Product Backlog column, which reorder, most valuable first: 1, See how crowded each hall is; 2, Tonight''s menus; 3, Hall photos; 4, Favorite halls. A Developer asks, When is a hall Packed? The Product Owner answers, When the line is out the door. An Acceptance criteria checklist gets checked, Given I open the app, Then every hall shows Quiet, Busy, or Packed, with the sticker What was asked.'
       - text: "Product Owners fall into three classic traps. Needs reach them through a long chain of people, like a game of telephone: so talk with customers directly. Managers dictate the vision: so give the Product Owner real authority. Little domain knowledge: so choose someone who understands both the users and development."
+        pause_after: 2.5
         step: Three classic traps
         note: Each trap has a direct fix.
         visual: 'A heading reads Three classic traps. Three pink trap cards each get a green fix card. Long chains: needs pass through many people, and four people pass on Quiet hall? until it arrives as Quiz hall?; fix: talk with customers directly. A dictated vision: a Manager''s note says Build a leaderboard!; fix: give the Product Owner real authority. Little domain knowledge: the Product Owner asks, What''s a swipe count?; fix: someone who knows users and development.'
@@ -133,6 +136,7 @@ scenes:
         note: Product decisions belong to the Product Owner; the team manages its own work.
         visual: 'A heading reads Two mix-ups. A card, A product manager?, is stamped Nope, with the sticker Product Owner''s job. A card, A project manager or boss?, is stamped Nope. On the right, the Scrum Master''s badge stands in front of three team members, with the stickers Shields, Supports, and No commands.'
       - text: "Expect a healthy tension between these two roles. The Scrum Master speaks up for internal quality: maintainable code, the Developers' needs, and a better process. The Product Owner pushes for external quality: the features customers want, on schedule. Great teams balance both."
+        pause_after: 2.5
         step: A healthy tension
         note: Internal quality and external quality, balanced by the team.
         visual: 'A heading reads A healthy tension. A balance holds two pans: the Scrum Master''s, Internal quality (Maintainable code, The Developers'' needs, A better process), and the Product Owner''s, External quality (Features customers want, On schedule). The beam tips one way, then the other, and levels out under the sticker Great teams balance both.'
@@ -155,6 +159,7 @@ scenes:
         note: Each item says who wants what, and why, with acceptance criteria.
         visual: 'The top card grows: As a hungry student, I want to see how crowded each dining hall is, so that I can skip the long lines. Its acceptance criteria read: Given I open the app, Then every hall shows Quiet, Busy, or Packed.'
       - text: "The backlog is emergent: it keeps changing as the team learns. Refinement splits big, fuzzy items into smaller, clearer ones and adds details like order and size. And the whole list points at a Product Goal, the long-term target. Hall Hopper's: every student picks a dining hall in under a minute."
+        pause_after: 2.5
         step: Emergent, refined, aimed at a goal
         note: Refinement splits and details items; the Product Goal is the long-term target.
         visual: 'A Product Backlog column holds three ranked cards and a dashed, fuzzy card, Make dining better. Stickers read Emergent and Refinement, with the line It keeps changing as the team learns. The fuzzy card splits into two smaller, clearer cards, Favorite halls and Hall opening hours, and a size appears beside each card, with the sticker Order and size. A gold banner types in the Product Goal, Every student picks a dining hall in under a minute, with the sticker Long-term target.'
@@ -177,6 +182,7 @@ scenes:
         note: Visible in real time, by and for the Developers.
         visual: 'In the Sprint Backlog column, a banner shows the Sprint Goal: Students can check how crowded a hall is before walking over. Under it, task notes move across To do, Doing, and Done.'
       - text: "Plot twist: one item turns out way bigger than expected. The Developers renegotiate the scope with the Product Owner, maybe saving the hall photos for later, but the Sprint Goal stays locked. One shared goal keeps the team pulling together instead of drifting into side quests."
+        pause_after: 2.5
         step: Scope bends, the goal holds
         note: Scope is renegotiated with the Product Owner; the Sprint Goal stays.
         visual: 'A story card, Hall photos, grows too big for the sprint. After a speech bubble from the Product Owner''s badge, it slides back to the Product Backlog. The Sprint Goal banner stays put, with a lock.'
@@ -205,6 +211,7 @@ scenes:
         prediction: true
         pause_after: 4
       - text: "It doesn't count: ninety percent done is not done. Work that misses the Definition of Done can't be released or shown as finished. It returns to the Product Backlog, where the Product Owner orders it again. Notice that each artifact comes with a commitment: the Product Goal, the Sprint Goal, and the Definition of Done."
+        pause_after: 2.5
         step: Unfinished work goes back
         note: Unfinished work returns to the Product Backlog to be ordered again.
         visual: 'The story is stamped Not done, the Increment''s slot disappears, and a sticker there reads Not released. The story slides back into the Product Backlog, takes rank 4, and a sticker reads Ordered again. Then each column gets its commitment flag: Product Goal, Sprint Goal, and Definition of Done.'
@@ -223,6 +230,7 @@ scenes:
         note: Two to three weeks, never more than a month, and back to back.
         visual: A calendar strip of ten workdays is bracketed as Sprint 1, two weeks. Right after it, a second bracket, Sprint 2, begins with no gap.
       - text: "The Sprint is a container for the other four events. Sprint Planning opens it, a Daily Scrum happens every working day, and the Sprint Review and Sprint Retrospective close it. Inside the sprint, nobody makes changes that would endanger the Sprint Goal."
+        pause_after: 2.5
         step: A container for the other events
         note: Planning opens it, Daily Scrums fill it, and the Review and Retrospective close it.
         visual: 'Markers land on the calendar: Sprint Planning on day 1, a Daily Scrum dot on every day, and the Sprint Review and Sprint Retrospective on day 10.'
@@ -245,6 +253,7 @@ scenes:
         note: The Developers select items and split them into tasks of a day or less.
         visual: Three story cards slide from the Product Backlog into the Sprint Backlog. Planning poker cards flip to 3, 5, and 8. Each story splits into small task notes marked one day or less.
       - text: "Notice that the three questions build the three parts of the Sprint Backlog: the goal answers why, the selected items answer what, and the tasks answer how."
+        pause_after: 2.5
         step: Three questions, three parts
         note: Why, what, and how become the Sprint Backlog.
         visual: 'The Sprint Backlog frame fills in again, under the sticker Built in Sprint Planning: the Sprint Goal answers Why?, the selected items answer What?, and the task notes answer How?'
@@ -267,6 +276,7 @@ scenes:
         note: A blocker surfaces, and the Scrum Master takes it.
         visual: 'Three speech bubbles appear: Yesterday, Today, and Blockers. A task note turns red, Blocked: no data agreement, and the Scrum Master''s badge takes it off the board, with the sticker Scrum Master has it.'
       - text: "One thing it's not: a status report for managers. The Daily Scrum is the Developers talking to each other, sharing what they know so they can change today's plan."
+        pause_after: 2.5
         step: Not a status report
         note: The Developers talk to each other, not to managers.
         visual: 'A Manager''s badge holds a Status report, stamped Not this. Four Developers'' badges talk to each other: Can you pair with me on the meter?, and Sure! I''ll write its tests. In a column titled Today''s plan, a new note appears, Pair up: meter and its tests, with the sticker Plan changed.'
@@ -289,6 +299,7 @@ scenes:
         note: New requests become Product Backlog items, ordered by the Product Owner.
         visual: 'Two speech bubbles: Can I filter menus by allergens? and My screen reader can''t tell how busy a hall is. A sticker points out that the meter uses color only, and two new cards, Filter menus by allergens and Crowd level in words too, join the Product Backlog near the top.'
       - text: "The Product Owner also judges whether the Increment delivers the value its stories promised. The review's real output is an updated Product Backlog, ready for the next Sprint Planning."
+        pause_after: 2.5
         step: An updated Product Backlog
         note: The review adapts the Product Backlog.
         visual: 'The phone shows the colored-dot crowd meter, and the Product Owner''s badge appears beside a Value check card: Did the stories deliver? Most students: yes. Screen-reader users: not yet. A Product Backlog column lists Crowd level in words too and Filter menus by allergens, both new and on top, then Tonight''s menus and Hall photos, with the sticker Updated and a note, Ready for the next Sprint Planning.'
@@ -311,6 +322,7 @@ scenes:
         note: Qualities like accessibility belong in the Definition of Done.
         visual: 'A Problems note reads: Nobody checked accessibility. A new line is written onto the Definition of Done: Checked with a screen reader. The calendar flips to Sprint 2.'
       - text: "The review changes what the team builds next. The retrospective changes how the team works. Both feed straight into the next Sprint Planning."
+        pause_after: 2.5
         step: Product versus process
         note: The retrospective adapts the process; the review adapts the Product Backlog.
         visual: 'Two cards, Sprint Review, which changes what the team builds next, and Sprint Retrospective, which changes how the team works, each send an arrow into a gold banner: Next, Sprint Planning.'
@@ -339,6 +351,7 @@ scenes:
         note: The plan, the Product Backlog, and the process.
         visual: 'The slots fill in: the Daily Scrum inspects progress toward the Sprint Goal and adapts the day''s plan; the Sprint Review inspects the Increment and adapts the Product Backlog. A fourth row adds the Sprint Retrospective, which inspects how the team worked and adapts its process and the Definition of Done.'
       - text: "And the Sprint contains them all, so the team learns at three speeds: every day, every sprint, and across the whole product. That's empiricism, built right into the calendar."
+        pause_after: 2.5
         step: Learning at three speeds
         note: Every day, every sprint, and across the product.
         visual: 'A bracket under all four rows reads The Sprint holds them all. Stickers name three speeds, Every day, Every sprint, and Whole product, and a gold stamp reads Empiricism.'
@@ -359,6 +372,7 @@ scenes:
         note: Three artifacts with their commitments, and five events.
         visual: 'Two more cards complete the recap. Artifacts, each with a commitment: Product Backlog, Product Goal; Sprint Backlog, Sprint Goal; Increment, Definition of Done. Events, inspect and adapt: Sprint, Planning, Daily Scrum, Review, and Retrospective.'
       - text: "Now level up: the summary quiz drops you into a brand-new team. For each situation, decide which part of Scrum it calls for."
+        pause_after: 2.5
         step: Try it on a new team
         note: The summary quiz describes a different project.
         visual: 'The recap clears for big words, Level up!, and confetti. A card reads Summary quiz: a brand-new team, a study-room booking app, with Seven situations and Which part of Scrum fits?'

@@ -104,11 +104,12 @@ test('speech, captions, and timing are generated from the published storyboard',
   assert.ok(size > 0 && size * 8 / timing.duration < 64000);
 });
 
-test('every section ends in enough silence for the player to stop before the next section', () => {
+test('every quiz leaves at least two seconds to inspect the final picture after speech', () => {
   // js/narrated-explainer.js stops 0.3 s before a section boundary.
-  timing.scenes.forEach(scene => {
+  timing.scenes.filter(scene => quizzes[scene.id]).forEach(scene => {
     const last = scene.cues.at(-1);
-    assert.ok(last.end - last.speech_end > 0.3, `${scene.id} ends with too little silence`);
+    const viewingTime = scene.end - 0.3 - last.speech_end;
+    assert.ok(viewingTime >= 2, `${scene.id}: only ${viewingTime.toFixed(2)} s to inspect the picture before the quiz`);
   });
 });
 

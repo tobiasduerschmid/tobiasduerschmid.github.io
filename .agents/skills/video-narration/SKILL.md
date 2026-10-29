@@ -69,7 +69,9 @@ If you only remember eleven things:
     [`quiz-format`](../quiz-format/SKILL.md): application questions on new
     situations, distractors from real confusions (the Scrum Master as a
     boss), and a summary quiz on a new team. User-story actors are always real
-    users, never "the system".
+    users, never "the system". Before every check, including the summary quiz,
+    finish the speech and hold the completed picture for a short viewing pause:
+    set the section's last cue to `pause_after: 2.5` or longer (see section 1).
 11. **Every narration ships printable notes.** A button under the video
     saves them as a PDF: each cue's picture at rest beside its key points in
     note form, ruled lines to write on, each section's knowledge check, and
@@ -91,6 +93,16 @@ describes what is on screen, including its words, because it is the screen's
 accessible name and the reading view's text for the picture. Update it in the
 same edit as the choreography.
 
+**Always leave time to look before a quiz.** Give the last cue of every section
+with a knowledge check, including the summary quiz, `pause_after: 2.5` or
+longer. Finish all spoken words and complete the picture by `speech_end`, then
+hold it visibly through the silence. The player opens the quiz 0.3 s before
+the section boundary, so 2.5 s of rendered silence leaves 2.2 s to inspect the
+slide at normal speed (1.1 s at 2x). The ordinary 0.55 s cue pause leaves only
+0.25 s and is insufficient. Regenerate the audio, captions, and timing
+together; a delayed overlay over ongoing speech does not provide this pause.
+Never trim speech or start the next section's words before the check.
+
 ## 2. Animation
 
 Write the choreography against narration words: `begin(line)`, `end(line)`,
@@ -102,7 +114,9 @@ from building.
 - One `picture(from, to)` per cue, or one spanning consecutive cues that share
   a picture (a temple that gains a pillar per cue, a board that fills in). The
   resting pose (0.3 s before a cue ends) must show that cue's whole picture,
-  because it is the still image when motion is off.
+  because it is the still image when motion is off. Before a quiz, that whole
+  picture must already be present at `speech_end` and stay visible throughout
+  the viewing pause; a last-moment reveal at the resting pose is too late.
 - Leave no dead air: if words between two reveals take more than a few
   seconds, put something on screen for them.
 - Stage text is at least 20px in the picture's artwork (18px on the 960x540 stage after the body's 91% scale), and decorative uppercase
@@ -314,7 +328,11 @@ phonemes ("p.m." needs the spoken form `PM.`; see that skill's section 7). Any e
 to the storyboard, including `visual` text, changes its hash: re-render
 (per-cue audio is cached, so unchanged speech is not resynthesized) before
 running the tests. Follow "Adding a video narration" in
-`docs/video-narration.md`. Then look at every cue's resting pose in both
+`docs/video-narration.md`. Follow the Scrum timing and playback tests for every
+quiz boundary: at normal speed, at least two seconds pass after `speech_end`
+with the completed picture visible before the quiz opens, and playback stops
+before the next section's first word. Include the final summary quiz and
+check accelerated playback too. Then look at every cue's resting pose in both
 themes (contact sheets of the stage page posed with
 `window.VideoNarrationStage.seek(t)`), watch the moving moments mid-cue, and
 run the topic's node test, its Playwright spec,

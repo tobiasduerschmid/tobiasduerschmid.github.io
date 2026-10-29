@@ -54,6 +54,13 @@ new backlog item fixes. The hall names are invented.
 The summary quiz uses a new team (a study-room booking app), so the checks test
 Scrum rather than recall of the example.
 
+Every section with a quiz ends with `pause_after: 2.5` on its last cue,
+including the summary. The audio finishes all words, then holds the final
+picture in silence. The shared player opens the check 0.3 seconds before the
+section boundary, leaving about 2.2 seconds to inspect the picture at normal
+speed (1.1 seconds at 2x) without starting the next section's speech. Keep the
+audio, captions, and timing manifest together when regenerating this pause.
+
 ## The pictures
 
 Every cue is a scene on the animated stage, in one visual language: paper
