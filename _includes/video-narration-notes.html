@@ -1,39 +1,43 @@
 {%- comment -%}
   The printable notes of a video narration: its title, then one row per cue
-  (a still of its picture at rest, its key points from
-  _data/explainers/<topic>_notes.yml, and ruled lines for handwriting), under
-  each scene's heading. Print keeps only the narration: the introduction,
-  links, and site footer stay on screen. The page is also the source of the
-  PDF that scripts/render-video-narration-notes.js saves; it carries that
-  render's fingerprint so the script prints the current page.
-  Params: topic.
+  under each scene's heading (the picture at rest, its key points from
+  _data/explainers/<topic>_notes.yml, and ruled lines for handwriting), each
+  section's knowledge check as a row of its own, and the answers at the end.
+  js/video-narration-notes.js draws every picture from the narration's
+  animated stage when the page opens; until then, and without scripts, a row
+  describes its picture in words. Print keeps only the narration, its checks,
+  and the answers. Params: topic.
 {%- endcomment -%}
 {% assign lesson = site.data.video_narrations[include.topic] %}
 {% assign explainer = site.data.explainers[include.topic] %}
 {% capture vn_points_key %}{{ include.topic }}_notes{% endcapture %}
-{% capture vn_render_key %}{{ include.topic }}_notes_render{% endcapture %}
+{% capture vn_quizzes_key %}{{ include.topic }}_quizzes{% endcapture %}
 {% assign vn_points = site.data.explainers[vn_points_key] %}
-{% assign vn_render = site.data.explainers[vn_render_key] %}
-{% assign vn_version = vn_render.source_sha256 | slice: 0, 12 %}
+{% assign vn_quizzes = site.data.explainers[vn_quizzes_key] %}
 {% assign vn_anchor = include.topic | append: '-video' %}
-{% comment %} Ruled lines are bordered spans, which print without background graphics; the area clips the ones it has no room for. {% endcomment %}
+{% assign vn_letters = 'ABCDEFGHIJ' | split: '' %}
+{% comment %} Ruled lines are bordered spans, which print without background graphics; an area clips the ones it has no room for. {% endcomment %}
 {% capture vn_ruled %}{% for vn_line in (1..12) %}<span></span>{% endfor %}{% endcapture %}
-<main id="main-content" class="vn-notes" data-notes-source="{{ vn_render.source_sha256 }}">
+<main id="main-content" class="vn-notes">
   <header class="vn-notes-title">
     <p class="vn-notes-kicker">Lesson notes · {{ lesson.name }}</p>
     <h1>{{ explainer.title }}</h1>
     <div class="vn-notes-intro">
-      <p>The narration's pictures, paused, beside its key points, with lines for your own notes, questions, and examples. Printing or saving as PDF keeps only the narration.</p>
+      <p>The narration's pictures, paused, beside its key points, with lines for your own notes, each section's knowledge check, and the answers at the end. Printing or saving as PDF keeps only the lesson.</p>
+      <p class="vn-notes-actions">
+        <button type="button" class="vn-notes-print" data-notes-print hidden>Save as PDF or print</button>
+        <span class="vn-notes-status" role="status" data-notes-status></span>
+      </p>
       <nav class="vn-notes-links" aria-label="Lesson views">
         <a href="{{ lesson.chapter | append: '#' | append: vn_anchor | relative_url }}">Back to the video</a> ·
         <a href="{{ lesson.views | append: '/read/' | relative_url }}">Reading view</a>
-        {%- if vn_render.pdf %} · <a href="{{ vn_render.pdf.path | relative_url }}?v={{ vn_version }}" download>Download these notes (PDF, {{ vn_render.pdf.pages }} pages, {{ vn_render.pdf.bytes | divided_by: 100000.0 | round | divided_by: 10.0 }} MB)</a>{% endif %}
-        <button type="button" class="vn-notes-print" data-notes-print hidden>Print</button>
       </nav>
     </div>
   </header>
+  {% assign vn_question = 0 %}
   {% for scene in explainer.scenes %}
   {% assign vn_scene_number = forloop.index %}
+  {% assign vn_scene_index = forloop.index0 %}
   <section class="vn-notes-scene" aria-labelledby="{{ include.topic }}-notes-{{ scene.id }}">
     {% for cue in scene.cues %}
     {% capture vn_cue_id %}{{ scene.id }}-{{ forloop.index }}{% endcapture %}
@@ -43,7 +47,7 @@
         {% if forloop.first %}<h2 id="{{ include.topic }}-notes-{{ scene.id }}">{{ vn_scene_number }}. {{ scene.label | escape }}</h2>{% endif %}
         <h3 id="{{ include.topic }}-notes-{{ vn_cue_id }}"><span class="vn-note-number">{{ vn_scene_number }}.{{ forloop.index }}</span> {{ cue.step | escape }}</h3>
       </header>
-      {% if vn_render %}<img class="vn-note-still" src="{{ vn_render.stills.directory | append: '/' | append: vn_cue_id | append: '.jpg' | relative_url }}?v={{ vn_version }}" width="{{ vn_render.stills.width }}" height="{{ vn_render.stills.height }}" alt="{{ cue.visual | escape }}">{% endif %}
+      <div class="vn-note-still" role="img" aria-label="{{ cue.visual | escape }}" data-vn-scene="{{ vn_scene_index }}" data-vn-cue="{{ forloop.index0 }}"><p>{{ cue.visual | escape }}</p></div>
       <div class="vn-note-points">
         <ul>{% if vn_cue_points %}{% for point in vn_cue_points %}<li>{{ point | markdownify | remove: '<p>' | remove: '</p>' | strip }}</li>{% endfor %}{% else %}<li>{{ cue.note | escape }}</li>{% endif %}</ul>
         <div class="vn-note-lines" aria-hidden="true">{{ vn_ruled }}</div>
@@ -51,6 +55,38 @@
       <div class="vn-note-lines vn-note-lines--below" aria-hidden="true">{{ vn_ruled }}</div>
     </section>
     {% endfor %}
+    {% assign vn_check = vn_quizzes[scene.id] %}
+    {% if vn_check %}
+    {% if vn_check.questions %}{% assign vn_check_questions = vn_check.questions %}{% else %}{% assign vn_check_questions = '' | split: '' | push: vn_check %}{% endif %}
+    {% for question in vn_check_questions %}
+    {% assign vn_question = vn_question | plus: 1 %}
+    <section class="vn-note vn-check" aria-labelledby="{{ include.topic }}-notes-question-{{ vn_question }}">
+      <header class="vn-note-head"><h3 id="{{ include.topic }}-notes-question-{{ vn_question }}"><span class="vn-note-number">Question {{ vn_question }}</span> {% if vn_check.questions %}Summary quiz, {{ forloop.index }} of {{ vn_check_questions.size }}{% else %}Check: {{ scene.label | escape }}{% endif %}</h3></header>
+      <p class="vn-check-question">{{ question.question | escape }}</p>
+      <ol class="vn-check-options" type="A">{% for option in question.options %}<li>{{ option | escape }}</li>{% endfor %}</ol>
+      <p class="vn-check-prompt">Your answer, and why the others are wrong (answers at the end):</p>
+      <div class="vn-note-lines" aria-hidden="true">{{ vn_ruled }}</div>
+    </section>
+    {% endfor %}
+    {% endif %}
   </section>
   {% endfor %}
+  <section class="vn-notes-answers" aria-labelledby="{{ include.topic }}-notes-answers">
+    <h2 id="{{ include.topic }}-notes-answers">Answers</h2>
+    <ol>
+    {% for scene in explainer.scenes %}
+    {% assign vn_check = vn_quizzes[scene.id] %}
+    {% if vn_check %}
+    {% if vn_check.questions %}{% assign vn_check_questions = vn_check.questions %}{% else %}{% assign vn_check_questions = '' | split: '' | push: vn_check %}{% endif %}
+    {% for question in vn_check_questions %}
+      <li>
+        <p><strong>Answer {{ vn_letters[question.correct_index] }}: {{ question.options[question.correct_index] | escape }}.</strong> {{ question.explanation | escape }}</p>
+        {% for option in question.options %}{% assign vn_why_not = question.option_feedback[forloop.index0] %}{% if vn_why_not and forloop.index0 != question.correct_index %}<p><strong>Why not {{ vn_letters[forloop.index0] }}:</strong> {{ vn_why_not | escape }}</p>{% endif %}{% endfor %}
+      </li>
+    {% endfor %}
+    {% endif %}
+    {% endfor %}
+    </ol>
+  </section>
+  <div class="vn-notes-master"><div class="stage" id="stage" aria-hidden="true" data-topic="{{ include.topic }}" data-theme="{{ lesson.animation.theme | default: 'studio' }}"></div></div>
 </main>

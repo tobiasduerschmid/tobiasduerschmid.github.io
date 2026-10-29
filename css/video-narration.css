@@ -219,7 +219,20 @@
 .video-narration .vn-animation-description { padding: 0.7em 1em; background: var(--nja-note-bg); border-left: 4px solid var(--nja-accent); }
 .video-narration .vn-animation-description p { margin: 0; color: var(--nja-text); }
 
+/* Right under the player: the link that opens the printable notes and their
+   print dialog (_includes/video-narration-notes.html), drawn as a button. */
+.video-narration .vn-export { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6em 1em; margin: 1em 0; }
+.video-narration .vn-export-button,
+.video-narration .vn-export-button:visited { display: inline-flex; align-items: center; gap: 0.5em; min-height: 2.75em; padding: 0.4em 1.1em; border: 2px solid var(--nja-ink); border-radius: 6px; background: var(--nja-accent-fill); color: var(--nja-ink); box-shadow: 3px 3px 0 var(--nja-line); font-weight: 800; text-decoration: none; }
+/* Ink in both themes: the lesson's dark-mode link color must not reach it. */
+html.dark-mode:not(.print-light-mode) .video-narration a.vn-export-button,
+html.dark-mode:not(.print-light-mode) .video-narration a.vn-export-button:visited { color: var(--nja-ink); }
+.video-narration .vn-export-button:hover { background: #ffe14d; }
+.video-narration .vn-export-button:focus-visible { outline: 3px solid var(--nja-cyan); outline-offset: 3px; }
+.video-narration .vn-export-hint { color: var(--nja-muted); }
+
 @media print {
+  .video-narration .vn-export { display: none; }
   .video-narration .vn-reading-panel[data-vn-settled="slide"],
   .video-narration .vn-slide-item,
   .video-narration .vn-slide-table :is(th, td) { background: #fff; border-color: #555; color: #000; }

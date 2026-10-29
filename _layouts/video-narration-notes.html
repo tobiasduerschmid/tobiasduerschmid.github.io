@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 {%- comment -%}
   The printable notes of a video narration (_includes/video-narration-notes.html).
-  A print surface, so it is always light. Front matter: topic, title.
-  scripts/render-video-narration-notes.js hashes this layout and the files it
-  links, so link only what the notes need.
+  It loads the narration's stage styles and scripts, so the notes draw their
+  pictures from the current narration. A print surface, so it is always light.
+  Front matter: topic, title.
 {%- endcomment -%}
 <html lang="en" class="print-light-mode">
 <head>
@@ -11,8 +11,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{ page.title | escape }}</title>
   {% include ai-training-opt-out-meta.html %}
+  {%- include video-narration-stage-assets.html topic=page.topic part='styles' %}
   <link rel="stylesheet" href="{{ '/css/video-narration-notes.css' | relative_url }}?v={{ site.asset_version }}">
-  <script src="{{ '/js/video-narration-notes.js' | relative_url }}?v={{ site.asset_version }}" defer></script>
 </head>
 <body class="vn-notes-page">
   {{ content }}
@@ -20,5 +20,7 @@
     {% include cookie-notice.html %}
     <p>{% include ai-training-opt-out-notice.txt %}</p>
   </footer>
+  {%- include video-narration-stage-assets.html topic=page.topic part='scripts' %}
+  <script src="{{ '/js/video-narration-notes.js' | relative_url }}?v={{ site.asset_version }}"></script>
 </body>
 </html>

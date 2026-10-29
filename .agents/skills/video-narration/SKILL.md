@@ -13,7 +13,7 @@ description: >-
   Scrum graphics", "the animation is out of sync with the narration", "text overlaps in the
   video", "full screen / mobile / dark mode looks wrong in the video", or "export the narration as
   notes / a PDF / a handout" (`<topic>_notes.yml`, `_layouts/video-narration-notes.html`,
-  `scripts/render-video-narration-notes.js`). Covers the lesson type, example, narrative arc, one
+  `js/video-narration-notes.js`). Covers the lesson type, example, narrative arc, one
   visual style, overlap and theme rules, animation timing, full screen and mobile, quizzes, the
   printable notes, rendering, and verification. Architecture: docs/video-narration.md.
 ---
@@ -70,9 +70,11 @@ If you only remember eleven things:
     situations, distractors from real confusions (the Scrum Master as a
     boss), and a summary quiz on a new team. User-story actors are always real
     users, never "the system".
-11. **Every narration ships printable notes.** Each cue's picture at rest
-    beside its key points in note form, with ruled lines to write on, and
-    nothing else: the PDF holds only the narration. See section 6.
+11. **Every narration ships printable notes.** A button under the video
+    saves them as a PDF: each cue's picture at rest beside its key points in
+    note form, ruled lines to write on, each section's knowledge check, and
+    the answers, and nothing else. They are drawn from the current narration
+    when opened, never from a stored file. See section 6.
 
 ## 1. The narrative arc
 
@@ -248,13 +250,16 @@ player (`js/narrated-explainer.js`):
 
 ## 6. Printable notes
 
-Every video narration has a notes page (`<views>/notes/`) and a PDF made from
-it: a handout students print or annotate. Each cue is one row: its picture
-at rest (the pose 0.3 s before the cue ends, the same pose the stage audits
-check), its key points beside it, and ruled lines to write on. Print keeps
-only the narration: its title, then the rows under each scene's heading, three
-to a page; the introduction, links, and site footer stay on screen. Rules
-from review:
+Every video narration has printable notes: a handout students print or save
+as a PDF and annotate. The **Save lesson notes as PDF** button under the video
+opens the notes page (`<views>/notes/#export`), which draws the pictures and
+opens the print dialog. Each cue is one row: its picture at rest (the pose
+0.3 s before the cue ends, the same pose the stage audits check), its key
+points beside it, and ruled lines to write on. After each section comes its
+knowledge check as a row of its own, with room to answer; the answers, with
+why each wrong option is wrong, close the notes. Print keeps only the lesson:
+its title, three rows a page under each scene's heading, and the answers; the
+introduction, links, and site footer stay on screen. Rules from review:
 
 - **Key points are notes, not narration.** Write one to four bullets per cue
   in `_data/explainers/<topic>_notes.yml`, keyed by cue id
@@ -279,23 +284,26 @@ from review:
   every resting pose for partly covered text.
 - **Bullets live apart from the storyboard,** so editing them never changes
   the narration's audio fingerprint.
+- **Notes come from the current narration, never from a stored file.** The
+  notes page builds the narration's stage itself, out of view, and copies
+  each cue's resting pose into its row (`VideoNarrationStage.still(time)`,
+  which writes every animated value into the copy's inline styles). Editing
+  the storyboard, timing, choreography, bullets, or quizzes changes the notes
+  with nothing to re-render. Do not commit rendered stills or PDFs.
+- **A copy must look like the video.** It inherits the stage page's type
+  (browser defaults), not the notes' type, and its slot uses
+  `contain: strict`; without containment, Chrome's print shrinks every page
+  to fit the 960px stage.
 
-Render the stills and the PDF with a Jekyll server running this checkout:
-
-```bash
-node scripts/render-video-narration-notes.js --topic <topic> --base-url http://127.0.0.1:4000
-```
-
-Re-render after any change to the storyboard, timing, bullets, stage or
-choreography files, or the notes layout. The render record
-(`_data/explainers/<topic>_notes_render.json`) stores a fingerprint of those
-sources, and `scripts/tests/video-narration-notes.test.js` fails until it
-matches; the same test checks the bullets' form, one still per cue, and that
-the PDF has three rows a page. `tests/video-narration-notes.spec.js` checks
-the page: every picture with its description as alternative text, every
-bullet as written, and in print only the narration, with no row clipped and
-three rows to a Letter page. Look at the PDF itself before committing: render
-a few pages with `pdftoppm` and read them.
+`tests/video-narration-notes.spec.js` checks every row's picture (its
+description as its accessible name) and bullets as written; that every
+picture shows the paused video's words in the same places; that each check
+follows its section and the answers match; that print shows only the lesson
+with no row clipped and three rows to a Letter page; that Chromium's saved
+PDF has exactly one page per three rows; and that the button opens the notes
+and the print dialog. `scripts/tests/video-narration-notes.test.js` checks
+the bullets' form. Look at a saved PDF before committing: print the notes
+page to PDF and read a few pages (`pdftoppm` renders them).
 
 ## 7. Render, wire, verify
 

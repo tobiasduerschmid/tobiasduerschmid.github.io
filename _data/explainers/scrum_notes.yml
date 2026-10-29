@@ -3,7 +3,7 @@
 # id (<scene id>-<cue number>, as the stage names cues): one to four short
 # bullets in note form, with **bold** key terms. They live apart from the
 # storyboard, so editing a bullet never changes the narration's audio
-# fingerprint; scripts/render-video-narration-notes.js renders the PDF.
+# fingerprint; the notes page (_includes/video-narration-notes.html) shows them.
 intro-1:
   - "**Example:** Hall Hopper app: tonight's menus and how packed each dining hall is"
   - "Student team, **two weeks** to ship"

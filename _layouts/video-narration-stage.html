@@ -6,8 +6,6 @@
   controls or focusable content. Front matter: topic.
 {%- endcomment -%}
 {%- assign lesson = site.data.video_narrations[page.topic] -%}
-{%- assign explainer = site.data.explainers[page.topic] -%}
-{%- capture timing_key %}{{ page.topic }}_timing{% endcapture %}
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -15,28 +13,13 @@
   <title>{{ lesson.name | escape }} animation</title>
   {% include ai-training-opt-out-meta.html %}
   <meta name="robots" content="noindex">
-  <link rel="stylesheet" href="{{ '/css/song-video-fonts.css' | relative_url }}?v={{ site.asset_version }}">
-  <link rel="stylesheet" href="{{ '/css/song-video-stage.css' | relative_url }}?v={{ site.asset_version }}">
-  {%- for href in lesson.animation.styles %}
-  <link rel="stylesheet" href="{{ href | relative_url }}?v={{ site.asset_version }}">
-  {%- endfor %}
-  <link rel="stylesheet" href="{{ '/css/video-narration-stage.css' | relative_url }}?v={{ site.asset_version }}">
+  {%- include video-narration-stage-assets.html topic=page.topic part='styles' %}
 </head>
 <body class="is-fit">
   <main class="vn-stage-page">
     <h1 class="vn-stage-title">{{ lesson.name | escape }} animation for the narrated lesson at {{ lesson.chapter | relative_url }}</h1>
     <div class="stage" id="stage" aria-hidden="true" data-topic="{{ page.topic }}" data-theme="{{ lesson.animation.theme | default: 'studio' }}"></div>
   </main>
-  <script type="application/json" id="narration-storyboard">{{ explainer | jsonify | replace: '<', '\u003c' }}</script>
-  <script type="application/json" id="narration-timing">{{ site.data.explainers[timing_key] | jsonify }}</script>
-  <script src="{{ '/js/song-video/timeline.js' | relative_url }}?v={{ site.asset_version }}"></script>
-  <script src="{{ '/js/song-video/kit.js' | relative_url }}?v={{ site.asset_version }}"></script>
-  {%- for src in lesson.animation.scripts %}
-  <script src="{{ src | relative_url }}?v={{ site.asset_version }}"></script>
-  {%- endfor %}
-  <script src="{{ '/js/song-video/rounded-surfaces.js' | relative_url }}?v={{ site.asset_version }}"></script>
-  <script src="{{ '/js/song-video/scene.js' | relative_url }}?v={{ site.asset_version }}"></script>
-  <script src="{{ '/js/video-narration-marks.js' | relative_url }}?v={{ site.asset_version }}"></script>
-  <script src="{{ '/js/video-narration-stage.js' | relative_url }}?v={{ site.asset_version }}"></script>
+  {%- include video-narration-stage-assets.html topic=page.topic part='scripts' %}
 </body>
 </html>

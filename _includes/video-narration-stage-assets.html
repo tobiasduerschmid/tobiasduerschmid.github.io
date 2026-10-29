@@ -1,0 +1,28 @@
+{%- comment -%}
+  What a page needs to build a video narration's animated stage: its styles
+  (part="styles", in the head) or its data and scripts (part="scripts", after
+  the #stage element). The stage frame and the printable notes share this list.
+  Params: topic, part.
+{%- endcomment -%}
+{%- assign vn_lesson = site.data.video_narrations[include.topic] -%}
+{%- if include.part == 'styles' %}
+  <link rel="stylesheet" href="{{ '/css/song-video-fonts.css' | relative_url }}?v={{ site.asset_version }}">
+  <link rel="stylesheet" href="{{ '/css/song-video-stage.css' | relative_url }}?v={{ site.asset_version }}">
+  {%- for href in vn_lesson.animation.styles %}
+  <link rel="stylesheet" href="{{ href | relative_url }}?v={{ site.asset_version }}">
+  {%- endfor %}
+  <link rel="stylesheet" href="{{ '/css/video-narration-stage.css' | relative_url }}?v={{ site.asset_version }}">
+{%- else -%}
+  {%- capture vn_timing_key %}{{ include.topic }}_timing{% endcapture %}
+  <script type="application/json" id="narration-storyboard">{{ site.data.explainers[include.topic] | jsonify | replace: '<', '<' }}</script>
+  <script type="application/json" id="narration-timing">{{ site.data.explainers[vn_timing_key] | jsonify }}</script>
+  <script src="{{ '/js/song-video/timeline.js' | relative_url }}?v={{ site.asset_version }}"></script>
+  <script src="{{ '/js/song-video/kit.js' | relative_url }}?v={{ site.asset_version }}"></script>
+  {%- for src in vn_lesson.animation.scripts %}
+  <script src="{{ src | relative_url }}?v={{ site.asset_version }}"></script>
+  {%- endfor %}
+  <script src="{{ '/js/song-video/rounded-surfaces.js' | relative_url }}?v={{ site.asset_version }}"></script>
+  <script src="{{ '/js/song-video/scene.js' | relative_url }}?v={{ site.asset_version }}"></script>
+  <script src="{{ '/js/video-narration-marks.js' | relative_url }}?v={{ site.asset_version }}"></script>
+  <script src="{{ '/js/video-narration-stage.js' | relative_url }}?v={{ site.asset_version }}"></script>
+{%- endif -%}
