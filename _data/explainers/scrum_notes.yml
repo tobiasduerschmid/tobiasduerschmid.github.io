@@ -1,0 +1,163 @@
+# Key points for the printable notes of the Scrum video narration
+# (docs/video-narration.md, "Printable notes"). One entry per cue, keyed by its
+# id (<scene id>-<cue number>, as the stage names cues): one to four short
+# bullets in note form, with **bold** key terms. They live apart from the
+# storyboard, so editing a bullet never changes the narration's audio
+# fingerprint; scripts/render-video-narration-notes.js renders the PDF.
+intro-1:
+  - "**Example:** Hall Hopper app: tonight's menus and how packed each dining hall is"
+  - "Student team, **two weeks** to ship"
+intro-2:
+  - "Plan everything up front → months of building → too late to change course"
+  - "**Scrum:** small working pieces every few weeks; learn from users; adjust"
+intro-3:
+  - "Most popular agile framework; deliberately small"
+  - "**3 roles** (who is accountable), **3 artifacts** (visible work), **5 events** (rhythm)"
+  - "The team decides everything else"
+theory-1:
+  - "Software for real people is **complex**: can't predict it all up front"
+  - "**Empiricism:** decide from experience and observation"
+theory-2:
+  - "**Three pillars**; first: **transparency**"
+  - "Important facts visible to everyone doing or receiving the work"
+  - "Work on the wall, not in heads or private spreadsheets"
+theory-3:
+  - "**Inspection:** check progress and artifacts often; catch problems small"
+  - "Needs transparency: inspecting hidden work misleads"
+theory-4:
+  - "**Adaptation:** adjust as soon as work drifts off course"
+  - "Inspecting without adapting is pointless"
+  - "Every event is a chance to **inspect and adapt**"
+team-1:
+  - "**Scrum Team:** 7 people, one product"
+  - "**Cross-functional:** every skill needed to ship each sprint; no hand-offs"
+team-2:
+  - "**Self-managing** (self-organizing): the team decides who, what, when, how"
+  - "Three **accountabilities** (roles): Developers, Product Owner, Scrum Master"
+  - "No ranks, no sub-teams"
+team-3:
+  - "**Developers:** all builders of the usable product, not only coders"
+  - "Hall Hopper: designer, tester, 3 programmers"
+team-4:
+  - "Create the **Sprint Backlog** (the sprint's plan)"
+  - "Meet the **Definition of Done** (shared quality checklist); hold each other accountable"
+  - "Adapt the plan daily toward the Sprint Goal"
+product_owner-1:
+  - "**Product Owner:** one person, accountable for maximizing value"
+  - "Talks directly with customers to learn their needs and why"
+product_owner-2:
+  - "Writes **user stories**; **orders the Product Backlog** by value"
+  - "Answers Developers' questions; checks **acceptance criteria** on finished work"
+product_owner-3:
+  - "Trap: telephone game → talk with customers directly"
+  - "Trap: managers dictate the vision → give real authority"
+  - "Trap: little domain knowledge → pick someone who knows users and development"
+scrum_master-1:
+  - "**Scrum Master:** team coach; teaches Scrum, coaches self-management"
+  - "Keeps events effective, within their **timebox**"
+scrum_master-2:
+  - "Removes **impediments** the team can't clear alone"
+  - "Example: chases the legal sign-off for live dining data"
+scrum_master-3:
+  - "Not a product manager (that's the Product Owner) and not a boss"
+  - "Serves and shields the team; doesn't command it"
+scrum_master-4:
+  - "Healthy tension: Scrum Master → **internal quality** (code, process, Developers)"
+  - "Product Owner → **external quality** (features, schedule); balance both"
+product_backlog-1:
+  - "**Product Backlog:** ordered list of what the product needs"
+  - "**Single source of work**: not on it → nobody works on it"
+product_backlog-2:
+  - "Mostly **user stories** with **acceptance criteria**"
+  - "Most valuable first: “see how crowded each hall is”"
+product_backlog-3:
+  - "**Emergent:** changes as the team learns"
+  - "**Refinement:** split big, fuzzy items; add order and size"
+  - "**Product Goal:** the long-term target"
+sprint_backlog-1:
+  - "**Sprint Backlog:** Developers' plan for one sprint"
+  - "**Why:** Sprint Goal · **What:** selected items · **How:** tasks"
+sprint_backlog-2:
+  - "Lives on the wall, updated in real time by the Developers"
+  - "Anyone sees where the sprint stands"
+sprint_backlog-3:
+  - "Item too big → renegotiate **scope** with the Product Owner"
+  - "The **Sprint Goal stays fixed** and keeps the team focused"
+increment-1:
+  - "**Increment:** a usable step toward the Product Goal"
+  - "Adds to earlier Increments; verified to work together"
+  - "Mockups and half-built screens don't count"
+increment-2:
+  - "**Definition of Done:** the shared quality standard"
+  - "Example: reviewed, tests pass, tested on a phone"
+  - "Meets it → part of the Increment"
+increment-3:
+  - "**Predict:** last day; a story is 90% done, tests failing. Counts? Goes where?"
+increment-4:
+  - "90% done is not done: not released, not shown as finished"
+  - "Back to the **Product Backlog** for reordering"
+  - "**Commitments:** Product Goal, Sprint Goal, Definition of Done"
+sprint-1:
+  - "**Sprint:** fixed timebox, usually 2–3 weeks, **never more than a month**"
+  - "The next sprint starts immediately; no gaps"
+sprint-2:
+  - "**Container** for the other four events"
+  - "Planning → Daily Scrums → Review and Retrospective"
+  - "No changes that endanger the Sprint Goal"
+sprint_planning-1:
+  - "**Sprint Planning:** the whole Scrum Team starts the sprint"
+  - "**Why:** the Product Owner proposes value; the team writes the Sprint Goal"
+sprint_planning-2:
+  - "**What:** Developers pull and size top items (planning poker)"
+  - "**How:** tasks of a day or less"
+sprint_planning-3:
+  - "Why → goal, what → items, how → tasks: the Sprint Backlog's three parts"
+daily_scrum-1:
+  - "**Daily Scrum** (stand-up): Developers, **15 minutes**, every working day"
+  - "Inspect progress toward the Sprint Goal; adapt the plan"
+daily_scrum-2:
+  - "Common questions: yesterday? today? blockers?"
+  - "The Scrum Master takes the impediment; the meeting moves on"
+daily_scrum-3:
+  - "**Not a status report** for managers"
+  - "Developers coordinate with each other"
+sprint_review-1:
+  - "**Sprint Review:** inspect the Increment with stakeholders"
+  - "Progress toward the Product Goal; live demos, not slides"
+sprint_review-2:
+  - "Feedback: allergen filter; the color-only meter fails screen readers"
+  - "New items near the top of the Product Backlog"
+sprint_review-3:
+  - "The Product Owner judges the delivered value"
+  - "Output: an **updated Product Backlog**"
+sprint_retrospective-1:
+  - "**Sprint Retrospective:** inspects the **process**"
+  - "People, interactions, tools, Definition of Done"
+  - "What went well? What problems? Solved?"
+sprint_retrospective-2:
+  - "User stories miss qualities like accessibility and performance"
+  - "Fix: add a screen-reader check to the **Definition of Done**"
+sprint_retrospective-3:
+  - "Review: **what** to build · Retrospective: **how** to work"
+  - "Both feed the next Sprint Planning"
+inspect_adapt-1:
+  - "Artifacts give transparency; each event inspects and adapts"
+  - "**Sprint Planning:** inspects Product Backlog and Goal → creates the Sprint Backlog"
+inspect_adapt-2:
+  - "**Predict:** what do the Daily Scrum and the Sprint Review each inspect and adapt?"
+inspect_adapt-3:
+  - "**Daily Scrum:** progress → the day's plan"
+  - "**Sprint Review:** Increment → Product Backlog"
+  - "**Retrospective:** way of working → process and Definition of Done"
+inspect_adapt-4:
+  - "The Sprint contains every event"
+  - "Learning at **three speeds**: daily, per sprint, across the product"
+summary-1:
+  - "**Empiricism:** transparency, inspection, adaptation"
+  - "Developers build; Product Owner maximizes value; Scrum Master coaches"
+summary-2:
+  - "Product Backlog → Product Goal; Sprint Backlog → Sprint Goal; Increment → Definition of Done"
+  - "Five events: inspect and adapt every sprint"
+summary-3:
+  - "**Self-test:** the summary quiz on a new team"
+  - "Match each situation to a role, artifact, or event"

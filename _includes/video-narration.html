@@ -19,6 +19,8 @@
 {% capture timing_key %}{{ topic }}_timing{% endcapture %}
 {% capture examples_key %}{{ topic }}_code{% endcapture %}
 {% capture quizzes_key %}{{ topic }}_quizzes{% endcapture %}
+{% capture notes_render_key %}{{ topic }}_notes_render{% endcapture %}
+{% assign notes_render = site.data.explainers[notes_render_key] %}
 {% assign timing = site.data.explainers[timing_key] %}
 {% assign examples = site.data.explainers[examples_key] %}
 {% assign quizzes = site.data.explainers[quizzes_key] %}
@@ -124,7 +126,7 @@
     <p>With focus on the picture or the controls: <kbd>K</kbd> or <kbd>Space</kbd> plays or pauses, <kbd>←</kbd> and <kbd>→</kbd> go back or forward 5 seconds, <kbd>0</kbd> to <kbd>9</kbd> jump to the start or 10% to 90% of the narration, <kbd>C</kbd> turns captions on or off, and <kbd>F</kbd> toggles full screen. <kbd>Esc</kbd> leaves full screen. The narration pauses for a knowledge check at the end of each section.</p>
   </details>
   <p class="nja-credit">Synthetic narration: Kokoro. <a href="{{ explainer.script | relative_url }}" download>Download narration script</a> &middot; <a href="{{ explainer.audio | relative_url }}" download>Download narration</a> &middot; <a href="{{ explainer.captions | relative_url }}" download>Download captions</a></p>
-  <p class="np-view-links"><a data-np-view-link href="{{ lesson.views | append: '/read/' | relative_url }}">Read at my own pace</a> · <a data-np-view-link href="{{ lesson.views | append: '/print/' | relative_url }}">Print step-by-step version</a></p>
+  <p class="np-view-links"><a data-np-view-link href="{{ lesson.views | append: '/read/' | relative_url }}">Read at my own pace</a> · <a data-np-view-link href="{{ lesson.views | append: '/print/' | relative_url }}">Print step-by-step version</a>{% if notes_render.pdf %} · <a href="{{ lesson.views | append: '/notes/' | relative_url }}">Lesson notes with pictures</a> (<a href="{{ notes_render.pdf.path | relative_url }}?v={{ notes_render.source_sha256 | slice: 0, 12 }}" download>PDF, {{ notes_render.pdf.pages }} pages</a>){% endif %}</p>
   <details class="nja-transcript">
     <summary>Transcript{% if explainer.languages %}, code,{% endif %} and visual descriptions</summary>
     {% include video-narration-reading.html topic=topic %}

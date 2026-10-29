@@ -1,0 +1,13 @@
+{
+  "source_sha256": "c82d9e138e98b56820be695f4a23acd997a39aa9f983079abe958b12dfe4d974",
+  "stills": {
+    "directory": "/assets/video-narration/scrum/slides",
+    "width": 1200,
+    "height": 675
+  },
+  "pdf": {
+    "path": "/assets/video-narration/scrum/scrum-notes.pdf",
+    "pages": 17,
+    "bytes": 4633722
+  }
+}

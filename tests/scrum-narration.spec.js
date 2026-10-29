@@ -183,7 +183,9 @@ function stageTextProblems() {
       const box = cover.getBoundingClientRect();
       for (const t of texts) {
         const index = pieces.indexOf(t.piece);
-        if (index >= 0 && index < i && overlap(t.box, box) > 0.25 * t.box.width * t.box.height) problems.add(`covered: ${t.text} by ${cover.className}`);
+        // Even one hidden letter counts; the floor ignores the empty corner of a
+        // rotated sticker's bounding box.
+        if (index >= 0 && index < i && overlap(t.box, box) > Math.max(30, 0.04 * t.box.width * t.box.height)) problems.add(`covered: ${t.text} by ${cover.className}`);
       }
     });
   }

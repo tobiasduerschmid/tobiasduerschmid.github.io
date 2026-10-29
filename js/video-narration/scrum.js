@@ -541,7 +541,7 @@
       const a = picture(one, two);
       sk.bracket(a, { x: 40, y: 76, w: 870, text: 'Sprint 1 · two weeks', at: at(one, 'timebox') });
       const days = sk.workdays(a, { x: 40, y: 120, at: begin(one) + 0.2 });
-      sticker(a, 'Never more than a month', { x: 530, y: 12, at: at(one, 'month'), until: end(one), variant: 'gold', iconName: 'calendar' });
+      sticker(a, 'Never more than a month', { x: 530, y: 0, at: at(one, 'month'), until: end(one), variant: 'gold', iconName: 'calendar' });
       sk.bracket(a, { x: 40, y: 350, w: 870, text: 'Sprint 2 starts right away', at: at(one, 'next'), next: true });
       sk.workdays(a, { x: 40, y: 400, at: at(one, 'next') + 0.2, first: 11 });
       sticker(a, 'No gaps', { x: 380, y: 488, at: at(one, 'gaps'), until: end(one), variant: 'cyan', iconName: 'check' });
@@ -560,7 +560,7 @@
       sk.column(a, { x: 30, y: 30, w: 290, h: 490, title: 'Product Backlog', at: begin(one) + 0.1 });
       sk.column(a, { x: 335, y: 30, w: 290, h: 490, title: 'Sprint Backlog', at: begin(one) + 0.25 });
       const cards = backlogCards(a, { x: 45, y: 95, from: begin(one) + 0.4 });
-      sk.badge(a, { x: 760, y: 70, role: 'Product Owner', iconName: 'globe', variant: 'po', at: begin(one) + 0.6 });
+      sk.badge(a, { x: 760, y: 86, role: 'Product Owner', iconName: 'globe', variant: 'po', at: begin(one) + 0.6 });
       sk.speech(a, { x: 650, y: 230, w: 290, text: 'The crowd meter first!', at: at(one, 'pitches'), until: end(one) });
       sk.banner(a, { x: 343, y: 90, w: 250, title: 'Sprint Goal', text: SPRINT_GOAL, at: at(one, 'writes') - 0.2, typeAt: at(one, 'writes') });
 
@@ -569,7 +569,7 @@
       ['Read swipe counts: 1 day', 'Draw the meter: 1 day', 'Test on a phone: half a day'].forEach((text, i) => {
         sk.note(a, { x: 650, y: 370 + i * 54, w: 268, text, tone: 'cyan', tilt: 0, at: at(two, 'break') + i * 0.25 });
       });
-      sticker(a, 'Tasks: a day or less', { x: 560, y: 18, at: at(two, 'less'), variant: 'gold', iconName: 'timer' });
+      sticker(a, 'Tasks: a day or less', { x: 650, y: 18, at: at(two, 'less'), variant: 'gold', iconName: 'timer' });
 
       // The three questions build the Sprint Backlog's three parts.
       const three = 'sprint_planning-3';

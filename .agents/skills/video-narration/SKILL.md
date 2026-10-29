@@ -11,9 +11,11 @@ description: >-
   `assets/video-narration/`, or a chapter that includes `video-narration.html`. Also trigger on
   requests like "make a narrated video lesson about X", "animate this narration", "refine the
   Scrum graphics", "the animation is out of sync with the narration", "text overlaps in the
-  video", or "full screen / mobile / dark mode looks wrong in the video". Covers the lesson type,
-  example, narrative arc, one visual style, overlap and theme rules, animation timing, full screen
-  and mobile, quizzes, rendering, and verification. Architecture: docs/video-narration.md.
+  video", "full screen / mobile / dark mode looks wrong in the video", or "export the narration as
+  notes / a PDF / a handout" (`<topic>_notes.yml`, `_layouts/video-narration-notes.html`,
+  `scripts/render-video-narration-notes.js`). Covers the lesson type, example, narrative arc, one
+  visual style, overlap and theme rules, animation timing, full screen and mobile, quizzes, the
+  printable notes, rendering, and verification. Architecture: docs/video-narration.md.
 ---
 
 # Authoring video narrations
@@ -26,7 +28,7 @@ architecture, and [`design-pattern-narration`](../design-pattern-narration/SKILL
 for rules both lesson types share (cue length, predictions, pronunciation,
 section-end silence, no history or attribution in speech).
 
-If you only remember ten things:
+If you only remember eleven things:
 
 1. **Pick the type by what teaches the idea.** A pattern taught through one
    evolving code example is a design-pattern lesson. A process, practice, or
@@ -68,6 +70,9 @@ If you only remember ten things:
     situations, distractors from real confusions (the Scrum Master as a
     boss), and a summary quiz on a new team. User-story actors are always real
     users, never "the system".
+11. **Every narration ships printable notes.** Each cue's picture at rest
+    beside its key points in note form, with ruled lines to write on, and
+    nothing else: the PDF holds only the narration. See section 6.
 
 ## 1. The narrative arc
 
@@ -135,7 +140,8 @@ Place every element so it neither touches nor hides another:
   the usual culprits, so keep them short.
 - `tests/<topic>-narration.spec.js` poses every cue and checks placement
   twice: the overlap test fails on text over text, text covered by a later
-  piece, or text off the stage; the gap test fails on painted boxes closer
+  piece (even one letter: a sticker clipping the "g" of "Sprint Backlog"
+  counts), or text off the stage; the gap test fails on painted boxes closer
   than the gap without one containing the other. List an intended overlap in
   the test's allowlist with the reason (the gap test allows the top story
   held in front of the board); never weaken the threshold to pass.
@@ -240,7 +246,58 @@ player (`js/narrated-explainer.js`):
   init script: Chrome still has `webkitRequestFullscreen`, so removing only
   the standard one tests nothing.
 
-## 6. Render, wire, verify
+## 6. Printable notes
+
+Every video narration has a notes page (`<views>/notes/`) and a PDF made from
+it: a handout students print or annotate. Each cue is one row: its picture
+at rest (the pose 0.3 s before the cue ends, the same pose the stage audits
+check), its key points beside it, and ruled lines to write on. Print keeps
+only the narration: its title, then the rows under each scene's heading, three
+to a page; the introduction, links, and site footer stay on screen. Rules
+from review:
+
+- **Key points are notes, not narration.** Write one to four bullets per cue
+  in `_data/explainers/<topic>_notes.yml`, keyed by cue id
+  (`<scene id>-<cue number>`), at most 16 words each, about half the
+  narration's words in all. Telegraphic phrases, `**bold**` for the term a
+  bullet defines, arrows for cause and effect ("Item too big → renegotiate
+  scope"). Never repeat eight words in a row from the cue; a copied sentence
+  is not a note.
+- **Keep every idea, drop the talk.** Each term, rule, number, and timebox the
+  cue teaches appears in its bullets; jokes, transitions, and repeated
+  examples do not. Add a topic test that every taught term appears in the
+  notes (the Scrum test lists roles, artifacts, commitments, events, and
+  timeboxes).
+- **Prediction cues keep their question.** Write the question as a bullet
+  ("**Predict:** ... Counts? Goes where?") so students answer it on the lines;
+  the next row has the answer.
+- **Bullets are inline Markdown.** Only `**bold**` is meant; underscores and
+  single asterisks turn into emphasis, so write blanks and lists in words.
+- **The picture is the resting pose, so the resting pose must be complete.**
+  A label still entering, a sticker covering a letter, or a piece that
+  leaves before the cue ends shows up in print. The overlap test checks
+  every resting pose for partly covered text.
+- **Bullets live apart from the storyboard,** so editing them never changes
+  the narration's audio fingerprint.
+
+Render the stills and the PDF with a Jekyll server running this checkout:
+
+```bash
+node scripts/render-video-narration-notes.js --topic <topic> --base-url http://127.0.0.1:4000
+```
+
+Re-render after any change to the storyboard, timing, bullets, stage or
+choreography files, or the notes layout. The render record
+(`_data/explainers/<topic>_notes_render.json`) stores a fingerprint of those
+sources, and `scripts/tests/video-narration-notes.test.js` fails until it
+matches; the same test checks the bullets' form, one still per cue, and that
+the PDF has three rows a page. `tests/video-narration-notes.spec.js` checks
+the page: every picture with its description as alternative text, every
+bullet as written, and in print only the narration, with no row clipped and
+three rows to a Letter page. Look at the PDF itself before committing: render
+a few pages with `pdftoppm` and read them.
+
+## 7. Render, wire, verify
 
 Render with `scripts/render-explainer-narration.py --topic <topic>` (setup and
 the espeak-ng path workaround: the `design-pattern-narration` skill).
@@ -253,5 +310,6 @@ running the tests. Follow "Adding a video narration" in
 themes (contact sheets of the stage page posed with
 `window.VideoNarrationStage.seek(t)`), watch the moving moments mid-cue, and
 run the topic's node test, its Playwright spec,
-`tests/narration-fullscreen.spec.js`, and `tests/wcag22-complete-audit.spec.js`
-filtered to the chapter and both views.
+`tests/narration-fullscreen.spec.js`, the notes tests (section 6), and
+`tests/wcag22-complete-audit.spec.js` filtered to the chapter, both views, and
+the notes page.

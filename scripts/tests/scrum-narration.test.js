@@ -136,3 +136,16 @@ test('the chapter, its views, and the animation frame are wired to the registry'
   for (const file of [...lesson.animation.styles, ...lesson.animation.scripts]) assert.ok(existsSync(path.join(root, file)), file);
   assert.ok(lesson.animation.scripts.at(-1).endsWith('/scrum.js'), 'the choreography loads after its kits');
 });
+
+test('the printable notes name every part of Scrum the narration teaches', () => {
+  const notes = yaml.load(read('_data/explainers/scrum_notes.yml'));
+  const text = Object.values(notes).flat().join(' ').replace(/\*\*/g, '').toLowerCase();
+  const taught = [
+    'empiricism', 'transparency', 'inspection', 'adaptation', 'cross-functional', 'self-managing',
+    'developers', 'product owner', 'scrum master', 'impediment', 'timebox',
+    'product backlog', 'user stories', 'acceptance criteria', 'refinement', 'emergent', 'product goal',
+    'sprint backlog', 'sprint goal', 'increment', 'definition of done',
+    'sprint planning', 'daily scrum', '15 minutes', 'never more than a month', 'sprint review', 'sprint retrospective',
+  ];
+  assert.deepEqual(taught.filter(term => !text.includes(term)), []);
+});

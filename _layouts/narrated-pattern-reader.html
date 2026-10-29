@@ -43,7 +43,7 @@
       <p>Read at your own pace. Every step pairs the explanation with its {% if explainer.languages %}code and visualizations{% else %}slides, diagrams, and a description of each animation{% endif %}. {{ lesson.prerequisites }}</p>
       <nav class="np-view-links" aria-label="Lesson views">
         <a data-np-view-link href="{{ lesson.chapter | append: '#' | append: anchor | relative_url }}">Back to narrated version</a> ·
-        {% if page.print_view %}<a data-np-view-link href="{{ lesson.views | append: '/read/' | relative_url }}">Reading view</a>{% else %}<a data-np-view-link href="{{ lesson.views | append: '/print/' | relative_url }}">Print view</a>{% endif %}
+        {% if page.print_view %}<a data-np-view-link href="{{ lesson.views | append: '/read/' | relative_url }}">Reading view</a>{% else %}<a data-np-view-link href="{{ lesson.views | append: '/print/' | relative_url }}">Print view</a>{% endif %}{% if page.video_narration %}{% capture notes_render_key %}{{ page.topic }}_notes_render{% endcapture %}{% if site.data.explainers[notes_render_key].pdf %} · <a href="{{ lesson.views | append: '/notes/' | relative_url }}">Lesson notes with pictures</a>{% endif %}{% endif %}
       </nav>
       <div class="np-document-controls" hidden>
         {% if explainer.languages %}<label>Code language <select data-document-language>{% for language in explainer.languages %}<option value="{{ language }}">{{ examples[language].label }}</option>{% endfor %}</select></label>{% endif %}

@@ -34,6 +34,9 @@ through four-language code.
 | `js/narrated-lesson.js` | Shared with the pattern lessons: diagram copies, code marks, section checks. |
 | `css/video-narration.css` | The screen, panels, and slide layouts, in both themes and print. |
 | `js/video-narration/<topic>.js`, `<topic>-kit.js`, `css/video-narration-<topic>.css` | The topic's choreography and artwork, loaded only in its frame. |
+| `_data/explainers/<topic>_notes.yml` | Key points per cue for the printable notes. |
+| `_layouts/video-narration-notes.html`, `_includes/video-narration-notes.html`, `css/video-narration-notes.css`, `js/video-narration-notes.js` | The printable notes page and its Print button. |
+| `scripts/render-video-narration-notes.js`, `_data/explainers/<topic>_notes_render.json`, `assets/video-narration/<topic>/` | Renders the notes' stills and PDF, and records what they were rendered from. |
 
 ## The player
 
@@ -137,6 +140,29 @@ cue's visual description. The frame is `aria-hidden`; the screen's accessible
 name is the cue's `visual`, and the reading and print views describe each
 animated cue in words.
 
+## Printable notes
+
+`<views>/notes/` (layout `video-narration-notes`, include
+`_includes/video-narration-notes.html`, styles `css/video-narration-notes.css`)
+shows every cue as a row: a still of its picture at rest, its key points from
+`_data/explainers/<topic>_notes.yml`, and ruled lines for handwriting. On
+screen it previews the handout with a Print button and the PDF link; in print
+only the narration remains (its title, then three rows a page under each
+scene's heading). The ruled lines are bordered spans, so they print even
+without background graphics.
+
+`scripts/render-video-narration-notes.js` poses the stage page at each cue's
+resting time in light mode and saves a JPEG per cue under
+`assets/video-narration/<topic>/slides/`, then prints the notes page to
+`assets/video-narration/<topic>/<topic>-notes.pdf` (Letter, tagged, with an
+outline and page numbers). It writes `_data/explainers/<topic>_notes_render.json`
+with the stills' size, the PDF's pages and bytes, and a fingerprint of every
+source that can change them; the notes page carries the fingerprint, and the
+script waits until the server shows it. The stills and PDF are committed, like
+the narration audio, and `scripts/tests/video-narration-notes.test.js` fails
+when the fingerprint no longer matches the sources. The chapter and the
+reading and print views link the notes once a render exists.
+
 ## Adding a video narration
 
 1. Write the storyboard and quizzes, and register the topic in
@@ -155,5 +181,11 @@ animated cue in words.
    `{% include video-narration-reading.html topic=page.topic %}`.
 6. Add the chapter to `tests/narration-fullscreen.spec.js`, and copy
    `scripts/tests/scrum-narration.test.js` and `tests/scrum-narration.spec.js`.
+7. Write the key points in `_data/explainers/<topic>_notes.yml`, add
+   `notes.html` under the `views` path (`layout: video-narration-notes`,
+   `topic`, `permalink: <views>/notes/`, `sitemap: false`, and
+   `{% include video-narration-notes.html topic=page.topic %}`), and run
+   `scripts/render-video-narration-notes.js --topic <topic>`. The notes tests
+   cover every registered narration.
 
 The `video-narration` skill covers how to author a lesson that teaches well.

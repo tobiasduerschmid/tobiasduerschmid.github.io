@@ -1,0 +1,94 @@
+/* The printable notes of a video narration (_includes/video-narration-notes.html).
+   On screen they preview the handout; in print and in the rendered PDF, only
+   the narration remains: its title, then three cue rows a page, each with the
+   picture at rest, its key points, and ruled lines for handwriting. Notes are
+   a print surface, so they stay light. */
+.vn-notes-page {
+  --vn-notes-ink: #17202c;
+  --vn-notes-muted: #4a5566;
+  --vn-notes-accent: #0b5f75;
+  --vn-notes-rule: #aab6c4;
+  --vn-notes-edge: #c9d2dd;
+  --vn-notes-line-gap: 2em;
+  margin: 0;
+  color: var(--vn-notes-ink);
+  background: #eef1f5;
+  color-scheme: light;
+  font: 18px/1.5 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+.vn-notes { max-width: 1100px; margin: 0 auto; padding: 1.5em 1em 1em; }
+.vn-notes h1 { margin: 0.2em 0 0.4em; font-size: 2em; line-height: 1.2; }
+.vn-notes h2 { margin: 0; font-size: 1.4em; line-height: 1.25; }
+.vn-notes h3 { margin: 0; font-size: 1.2em; line-height: 1.3; }
+.vn-notes a, .vn-notes a:visited { color: var(--vn-notes-accent); }
+.vn-notes a:focus-visible, .vn-notes-print:focus-visible, .vn-notes-footer a:focus-visible { outline: 3px solid var(--vn-notes-accent); outline-offset: 3px; }
+.vn-notes-kicker { margin: 0; color: var(--vn-notes-accent); font-size: 0.9em; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; }
+.vn-notes-links { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4em 0.6em; margin: 1em 0; }
+.vn-notes-print { min-height: 2.4em; padding: 0.3em 1.1em; border: 0; border-radius: 6px; color: #fff; background: var(--vn-notes-accent); font: inherit; font-weight: 700; cursor: pointer; }
+.vn-notes-print[hidden] { display: none; }
+
+/* The title and every row are sheets of paper on screen. */
+.vn-notes-title, .vn-note { margin: 0 0 1.2em; padding: 1em 1.2em; background: #fff; border: 1px solid var(--vn-notes-edge); border-radius: 8px; }
+.vn-notes-intro p { margin: 0.6em 0 0; }
+
+/* A row: the heading across, the still beside its points, lines below both. */
+.vn-note {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-areas: "head head" "still points" "below points";
+  grid-template-rows: auto auto minmax(0, 1fr);
+  gap: 0.6em 1.2em;
+}
+.vn-note-head { grid-area: head; }
+.vn-note-head h2 { margin-bottom: 0.2em; color: var(--vn-notes-accent); }
+.vn-note-number { margin-right: 0.25em; color: var(--vn-notes-muted); font-variant-numeric: tabular-nums; }
+.vn-note-still { grid-area: still; display: block; width: 100%; height: auto; border: 1px solid var(--vn-notes-edge); border-radius: 4px; }
+.vn-note-points { grid-area: points; display: flex; flex-direction: column; min-height: 0; }
+.vn-note-points ul { margin: 0; padding-left: 1.2em; }
+.vn-note-points li { margin: 0 0 0.35em; }
+/* Ruled lines: borders, which print even without background graphics. An
+   area holds more lines than it shows and clips the rest. */
+.vn-note-lines { overflow: hidden; }
+.vn-note-lines span { display: block; box-sizing: border-box; height: var(--vn-notes-line-gap); border-bottom: 1px solid var(--vn-notes-rule); }
+.vn-note-points .vn-note-lines { flex: 1 0 auto; height: calc(3 * var(--vn-notes-line-gap)); margin-top: 0.4em; }
+.vn-note-lines--below { grid-area: below; height: calc(2 * var(--vn-notes-line-gap)); }
+
+.vn-notes-footer { max-width: 1100px; margin: 0 auto; padding: 0 1em 2em; color: var(--vn-notes-muted); font-size: 0.9em; }
+.vn-notes-footer a, .vn-notes-footer a:visited { color: inherit; text-decoration: underline; }
+
+@media (max-width: 700px) {
+  .vn-notes-page { font-size: 17px; }
+  .vn-notes-title, .vn-note { padding: 0.9em; }
+  .vn-note { grid-template-columns: minmax(0, 1fr); grid-template-areas: "head" "still" "points"; grid-template-rows: none; }
+  .vn-note-lines--below { display: none; }
+}
+
+/* scripts/render-video-narration-notes.js prints with these margins too. */
+@page { margin: 0.4in 0.5in 0.55in; }
+@media print {
+  .vn-notes-page { --vn-notes-line-gap: 0.28in; background: #fff; font-size: 10.5pt; line-height: 1.4; }
+  .vn-notes { max-width: none; padding: 0; }
+  .vn-notes h1 { font-size: 15pt; }
+  .vn-notes h2 { font-size: 13pt; }
+  .vn-notes h3 { font-size: 11.5pt; }
+  /* Only the narration prints: no introduction, links, or site footer. */
+  .vn-notes-intro, .vn-notes-footer { display: none; }
+  .vn-notes-title, .vn-note { padding: 0; border: 0; border-radius: 0; background: none; }
+  .vn-notes-title { display: flex; align-items: baseline; gap: 0.6em; margin: 0 0 0.1in; }
+  /* The title and three rows fill a Letter page (A4 has room to spare); a row never splits. */
+  .vn-note {
+    box-sizing: border-box;
+    height: 3in;
+    margin: 0 0 0.12in;
+    padding-top: 0.06in;
+    border-top: 1.5pt solid var(--vn-notes-ink);
+    grid-template-columns: 50% minmax(0, 1fr);
+    gap: 0.06in 0.2in;
+    overflow: hidden;
+    break-inside: avoid;
+  }
+  /* The lines fill whatever room the picture and the points leave. */
+  .vn-note-points .vn-note-lines { height: 0; }
+  .vn-note-lines--below { height: auto; }
+  .vn-note-lines span { border-bottom-width: 0.75pt; }
+}
