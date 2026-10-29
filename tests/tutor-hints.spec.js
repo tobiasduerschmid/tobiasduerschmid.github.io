@@ -1,6 +1,7 @@
 const { test, expect } = require('@playwright/test');
 const path = require('node:path');
 const { a11yCheckpoint } = require('./a11y-helpers');
+const { loadTutorialConfig } = require('./tutorial-helpers');
 const pageErrors = new WeakMap();
 
 test.beforeEach(async ({ page }) => {
@@ -19,7 +20,7 @@ test.afterEach(async ({ page }) => {
 // build or a cached backend. Conditions react to source passed through the
 // public TutorChat failure event, just as they do after a learner retests.
 async function openHintsFixture(page, { backend = 'browser', tests, results,
-  records = [], source = 'phase_a' } = {}) {
+  records = [], source = 'phase_a', attempts = ['phase_a', 'phase_b', 'phase_c'] } = {}) {
   const authoredTests = tests || Array.from({ length: 5 }, (_, index) => ({
     description: `Criterion ${index + 1}`,
     hints: ['phase_a', 'phase_b', 'phase_c'].map((phase, level) => ({
@@ -47,6 +48,7 @@ async function openHintsFixture(page, { backend = 'browser', tests, results,
       </main><script src="/js/haskell/syntax.js"></script>
       <script src="/js/tutor-chat.js"></script><script>
       let source = ${JSON.stringify(source)};
+      const attempts = ${JSON.stringify(attempts)};
       let phase = 0;
       const step = { tests: ${JSON.stringify(authoredTests)},
         solution: { files: [{ content: 'print(f"{answer}")' }] } };
@@ -57,8 +59,8 @@ async function openHintsFixture(page, { backend = 'browser', tests, results,
         _testResults: ${JSON.stringify(results || [false, false, false, false, true])},
         _testHintRecords: ${JSON.stringify(records)} };
       document.getElementById('retest').onclick = () => TutorChat.onTestFailure(tutorial);
-      document.getElementById('advance').onclick = () => { source = ['phase_a', 'phase_b', 'phase_c'][++phase]; };
-      document.getElementById('reset').onclick = () => { phase = 0; source = 'phase_a'; };
+      document.getElementById('advance').onclick = () => { source = attempts[++phase]; };
+      document.getElementById('reset').onclick = () => { phase = 0; source = attempts[0]; };
       document.getElementById('pass').onclick = () => TutorChat.onTestPass(tutorial);
       document.getElementById('leave').onclick = () => TutorChat.onStepChange(tutorial);
       TutorChat.onTestFailure(tutorial);
@@ -110,6 +112,87 @@ test('retesting selects guidance from the current code and does not accumulate e
   await openHints(page);
   await expect(first.getByText('Guidance 1, level 1', { exact: true })).toBeVisible();
   await expect(first.getByText('Guidance 1, level 3', { exact: true })).toHaveCount(0);
+});
+
+test('Playwright capstone hints follow declarations and assertions, including deletion back to starter', async ({ page }) => {
+  const step = loadTutorialConfig('playwright').steps[7];
+  const starter = step.files.find(file => file.path === 'tests/all-done.spec.js').content +
+    "\n// test('a comment is not a definition', () => expect('not an assertion'));\n";
+  const partial = `import { test, expect } from '@playwright/test';
+    test('complete the tasks', async ({ page }) => { await page.goto('/'); });`;
+  const developed = `import { test, expect } from '@playwright/test';
+    test('complete the tasks', async ({ page }) => {
+      await page.goto('/');
+      await expect(page.getByRole('heading', { name: 'Todo Lab' })).toBeVisible();
+    });`;
+  await openHintsFixture(page, {
+    backend: 'react', tests: step.tests, results: step.tests.map(() => false),
+    source: starter, attempts: [starter, partial, developed],
+  });
+  const titles = [
+    ['Begin with two user paths', 'Distinguish an empty list from a completed list', 'Keep track of item identity'],
+    ['Give each path an observation', 'Observe the list after the actions', 'Compare names before and after'],
+    ['Inspect the first failure', 'Consider hidden and removed items', 'Check what a retained locator promises'],
+  ];
+  for (const phase of [0, 1, 2, 0]) {
+    if (phase !== 0) {
+      await page.getByRole('button', { name: 'Advance code attempt', exact: true }).click();
+    } else {
+      await page.getByRole('button', { name: 'Reset code attempt', exact: true }).click();
+    }
+    await page.getByRole('button', { name: 'Retest', exact: true }).click();
+    await openHints(page);
+    const guidance = step.tests.map(criterion => criterion.hints[phase].text);
+    expect(new Set(guidance).size, 'each failed criterion needs its own advice').toBe(step.tests.length);
+    const cards = page.locator('.tvm-tutor-hint');
+    await expect(cards).toHaveCount(step.tests.length);
+    await expect(cards.locator('.tvm-tutor-hint-body')).toHaveText(guidance);
+    for (const title of titles[phase]) {
+      await expect(page.getByText(new RegExp(`${title}$`))).toBeVisible();
+    }
+  }
+});
+
+test('single-item toggle hints ignore the worked example and follow the scoped round-trip attempt', async ({ page }) => {
+  const step = loadTutorialConfig('playwright').steps[6];
+  const criterion = step.tests.find(item => item.description === 'The suite catches a single todo whose toggle has no effect');
+  const starter = step.files.find(file => file.path === 'tests/mark-done.spec.js').content;
+  const title = 'marking and unmarking a todo restores the count';
+  const start = starter.indexOf(`test('${title}'`);
+  const end = starter.indexOf('\ntest(', start);
+  expect(start).toBeGreaterThanOrEqual(0);
+  expect(end).toBeGreaterThan(start);
+  const before = starter.slice(0, start);
+  const after = starter.slice(end);
+  const attempt = (checkpoint) => before + `test('${title}', async ({ page }) => {
+    await page.goto('/');
+    await page.getByLabel('Todo item').fill('Milk');
+    await page.getByRole('button', { name: 'Add todo' }).click();
+    const milk = page.getByRole('button', { name: 'Milk' });
+    await milk.click();
+    ${checkpoint}
+    await milk.click();
+    await expect(milk).toHaveAttribute('aria-pressed', 'false');
+  });` + after;
+  const partial = attempt('');
+  const developed = attempt("await expect(milk).toHaveAttribute('aria-pressed', 'true');");
+  const renamed = developed.replace(title, 'my single-item round trip');
+  const removed = before + after;
+  await openHintsFixture(page, {
+    backend: 'react', tests: [criterion], results: [false], source: starter,
+    attempts: [starter, partial, developed, renamed, removed],
+  });
+  for (const [phase, hintIndex] of [[0, 0], [1, 1], [2, 2], [3, 0], [4, 0], [0, 0]]) {
+    await page.getByRole('button', {
+      name: phase === 0 ? 'Reset code attempt' : 'Advance code attempt', exact: true,
+    }).click();
+    await page.getByRole('button', { name: 'Retest', exact: true }).click();
+    await openHints(page);
+    const cards = page.locator('.tvm-tutor-hint');
+    await expect(cards).toHaveCount(1);
+    await expect(cards.locator('.tvm-tutor-hint-body')).toHaveText(criterion.hints[hintIndex].text);
+    await expect(cards.getByText(new RegExp(`${criterion.hints[hintIndex].title}$`))).toBeVisible();
+  }
 });
 
 for (const event of ['Pass all checks', 'Leave step']) {

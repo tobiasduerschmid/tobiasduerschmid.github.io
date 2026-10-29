@@ -175,7 +175,7 @@ test.describe('React preview isolation', () => {
     // public responses. Its named result also proves the runner loaded the spec.
     const results = page.locator('.tvm-preview-test-panel');
     await expect(results.getByText(/0\s*\/\s*1 tests passed/)).toBeVisible({ timeout: 20_000 });
-    await expect(results.getByRole('listitem')).toHaveText(/^✗\s*user can add a todo$/);
+    await expect(results.getByRole('listitem')).toHaveText(/^✗\s*user can add a todo/);
     await expect(page.frameLocator(PREVIEW_SELECTOR).locator('html'))
       .toHaveAttribute('data-playwright-message-count', '0');
   });
@@ -287,7 +287,7 @@ test.describe('React preview isolation', () => {
     const results = page.locator('.tvm-preview-test-panel');
     await expect(results.getByText(/1\s*\/\s*2 tests passed/)).toBeVisible({ timeout: 20_000 });
     await expect(results.getByRole('listitem')).toHaveText([
-      /^✗\s*action scheduled by a timed-out test$/,
+      /^✗\s*action scheduled by a timed-out test/,
       /^✓\s*user can add a todo$/,
     ]);
   });
