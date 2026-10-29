@@ -1,0 +1,200 @@
+title: 'Your First PlusCal Check'
+description: 'A very small C-style PlusCal program, one property, and one loop-bound bug. For learners who know variables and while loops; no TLA+ knowledge or installation required. About 10 minutes.'
+learning_objectives:
+  - Read a variable update and a while loop in C-style PlusCal.
+  - Run TLC against a supplied property.
+  - Find the first counterexample state that breaks the property.
+  - Repair a loop boundary without weakening the property.
+backend: tla
+require_tests: false
+require_quiz: false
+allow_skip_steps: true
+autosave_type: files
+progress_version: 1
+run_label: Check model
+tla:
+  config_file: Model.cfg
+steps:
+  # Pedagogy: Start with a complete worked program; predict values before checking one supplied property.
+  - title: A Counter That Stops at Two
+    key: first-pluscal-check
+    run_file: Model.tla
+    open_file: Model.tla
+    instructions: |
+      ### Why this matters
+
+      A checker can help answer a simple question about your program: can this counter ever become too large?
+
+      ### 🎯 You will learn to
+
+      - Read a tiny PlusCal program with C-style braces.
+      - Check a supplied property with TLC.
+
+      **PlusCal** describes an algorithm. **TLC** checks the model produced from that algorithm. This first example is already complete; you do not need to write any TLA+.
+
+      In **Model.tla**, read the program inside `(* ... *)`. It uses braces and semicolons like C:
+
+      - `variables count = 0;` gives the counter its starting value.
+      - `while (count < 2)` repeats while the condition is true.
+      - `count := count + 1;` assigns a new value. PlusCal uses `:=` for assignment.
+      - `Count:` names a step so the checker can identify it.
+
+      The supplied property, `CountWithinLimit == count <= 2`, means **count must never be greater than two**. Here `==` defines the name of a condition; it does not update `count`.
+
+      **Predict:** Starting at zero, which values will the counter take before the loop stops?
+
+      **Check:** Choose **Check every reachable state**. Translation happens automatically. The first run downloads the browser runtime and may take a little while. TLC should report that it found no violation of this property.
+
+      **Inspect:** Choose **Explore one behavior**, select the starting state, then select the available next steps. Watch `count` go from 0 to 1 to 2. The extra variable `pc` records the program's current label; `"Done"` means the program has finished.
+
+      **Model.cfg** selects the supplied program and property. Its `CHECK_DEADLOCK FALSE` line allows this small program to finish; reaching its end is intentional, not a bug. Leave these settings unchanged for now.
+
+      This result applies to this small model and its supplied property. Exploring one behavior is a way to understand it; the check searches all its reachable states. Neither action grades your explanation automatically.
+
+      Choose **Test My Work** for feedback on the counter's bound. You may continue to the next lesson whenever you are ready.
+    files:
+      - path: Model.tla
+        language: tlaplus
+        reseed: true
+        content: |
+          ---- MODULE Model ----
+          EXTENDS Naturals
+
+          (* --algorithm Counter {
+          variables count = 0;
+          {
+            Count:
+            while (count < 2) {
+              count := count + 1;
+            };
+          }
+          } *)
+
+          CountWithinLimit == count <= 2
+          ====
+      - path: Model.cfg
+        language: plaintext
+        reseed: true
+        content: |
+          SPECIFICATION Spec
+          INVARIANT CountWithinLimit
+          CHECK_DEADLOCK FALSE
+    tests:
+      - description: The counter stays between zero and two.
+        tla:
+          status: complete
+          invariant: 'count \in 0..2'
+          model_config: |
+            SPECIFICATION Spec
+            CHECK_DEADLOCK FALSE
+    solution:
+      files:
+        - path: Model.tla
+          language: tlaplus
+          content: |
+            ---- MODULE Model ----
+            EXTENDS Naturals
+
+            (* --algorithm Counter {
+            variables count = 0;
+            {
+              Count:
+              while (count < 2) {
+                count := count + 1;
+              };
+            }
+            } *)
+
+            CountWithinLimit == count <= 2
+            ====
+      explanation: |
+        The counter starts at 0, becomes 1, then becomes 2. At 2 the loop condition is false, so it finishes. CountWithinLimit holds throughout. This worked example needs no repair.
+
+  # Pedagogy: Change one boundary, inspect its concrete failure, then retrieve the earlier guard.
+  - title: One Extra Iteration
+    key: pluscal-loop-boundary
+    run_file: Model.tla
+    open_file: Model.tla
+    instructions: |
+      ### Why this matters
+
+      One extra `=` in a loop condition can allow one extra iteration. A counterexample shows exactly where that changes the result.
+
+      ### 🎯 You will learn to
+
+      - Read a failing trace and identify its first bad value.
+      - Repair the loop while keeping the requirement unchanged.
+
+      This program differs from the previous one by just one character: its loop condition is now `count <= 2`. The requirement is still **count must never be greater than two**.
+
+      **Predict → Check:** Will this loop stop at two? Choose **Check every reachable state**. TLC should find a counterexample: a sequence of states that breaks `CountWithinLimit`.
+
+      Use **Next** or **Jump to state** to follow the trace. Find the first state where `count` is too large. Look at the preceding state and explain why the loop was allowed to run again.
+
+      **Repair:** Change only the loop condition. Keep the assignment, the property, and **Model.cfg** unchanged. Check again, then choose **Test My Work** for feedback. Explain why the repaired loop stops in time.
+
+      <details markdown="1">
+      <summary>Hint: try the boundary value</summary>
+
+      When `count` is exactly 2, should the loop run once more? Evaluate the condition at that value before choosing your edit.
+
+      </details>
+
+      A check that finds no violation supports the supplied property for this model. It does not check requirements you did not express. When you are ready, continue with [TLA+ and PlusCal](/SEBook/verification/tla-tutorial) to explore states, concurrent updates, and eventual completion.
+    files:
+      - path: Model.tla
+        language: tlaplus
+        reseed: true
+        content: |
+          ---- MODULE Model ----
+          EXTENDS Naturals
+
+          (* --algorithm Counter {
+          variables count = 0;
+          {
+            Count:
+            while (count <= 2) {
+              count := count + 1;
+            };
+          }
+          } *)
+
+          CountWithinLimit == count <= 2
+          ====
+      - path: Model.cfg
+        language: plaintext
+        reseed: true
+        content: |
+          SPECIFICATION Spec
+          INVARIANT CountWithinLimit
+          CHECK_DEADLOCK FALSE
+    tests:
+      - description: The repaired loop keeps the counter between zero and two.
+        tla:
+          status: complete
+          invariant: 'count \in 0..2'
+          model_config: |
+            SPECIFICATION Spec
+            CHECK_DEADLOCK FALSE
+    solution:
+      files:
+        - path: Model.tla
+          language: tlaplus
+          content: |
+            ---- MODULE Model ----
+            EXTENDS Naturals
+
+            (* --algorithm Counter {
+            variables count = 0;
+            {
+              Count:
+              while (count < 2) {
+                count := count + 1;
+              };
+            }
+            } *)
+
+            CountWithinLimit == count <= 2
+            ====
+      explanation: |
+        The faulty loop still runs when count is 2, so its next assignment produces 3. Changing the guard back to count < 2 prevents that extra iteration. The requirement remains the same; the program now satisfies it.

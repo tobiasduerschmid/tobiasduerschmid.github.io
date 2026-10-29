@@ -596,6 +596,20 @@ info_nav_title: "Browser storage"
       are loaded.
     </li>
     <li>
+      <strong>TLA+ browser runtime</strong> &mdash; TLA+ tutorials download the pinned
+      CheerpJ 4.3 Java runtime from <code>cjrtnc.leaningtech.com</code> when you first
+      check syntax, verify a model, or explore a behavior. The model checker runs
+      in your browser; SEBook does not send models to a verification service.
+      Its separate runtime frame cannot read SEBook cookies or saved preferences.
+      Model files and search data use an in-memory filesystem, discarded when the
+      runtime is stopped or replaced. Your editable drafts use the existing
+      <code>tutorial-progress-&lt;id&gt;</code> storage described above.
+      CheerpJ helper frames may cache runtime resources on the vendor's origin;
+      use your browser's site-data controls to clear that cache. See the
+      <a href="https://cheerpj.com/docs/guides/filesystem">CheerpJ filesystem documentation</a>
+      and <a href="https://leaningtech.com/privacy-policy/">Leaning Technologies privacy policy</a>.
+    </li>
+    <li>
       <strong>StackBlitz WebContainers</strong> &mdash; Node.js tutorials using the
       <code>webcontainer</code> backend open a versioned, cross-origin runtime from
       <code>stackblitz.com</code>. The site passes that runtime the tutorial workspace files and

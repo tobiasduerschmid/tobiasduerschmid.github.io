@@ -1,0 +1,372 @@
+# Execution contract and validation: docs/tla-backend.md.
+title: 'TLA+ and PlusCal'
+description: 'Model states, find a counterexample, and examine concurrency and fairness in four small browser exercises. For programmers comfortable with variables and conditions; no formal-methods background or installation required. Allow about 30–40 minutes.'
+learning_objectives:
+  - Describe a system using initial states, variables, and allowed transitions.
+  - Interpret an invariant counterexample and repair the modeled behavior.
+  - Explain how PlusCal labels determine which operations can interleave.
+  - Distinguish safety from liveness and identify a fairness assumption.
+  - Explain what a completed finite-model check does and does not establish.
+backend: tla
+require_tests: false
+require_quiz: false
+allow_skip_steps: true
+autosave_type: files
+progress_version: 1
+run_label: Check model
+tla:
+  config_file: Model.cfg
+steps:
+  # Pedagogy: Predict and inspect a complete worked example before changing one bound.
+  - title: States and Transitions
+    key: states-and-transitions
+    run_file: Model.tla
+    open_file: Model.tla
+    instructions: |
+      ### Why this matters
+
+      A system may behave in more ways than one test run reveals. A small model lets you describe the allowed behaviors and check a requirement across them.
+
+      ### 🎯 You will learn to
+
+      - Read an initial state and the actions that change it.
+      - Explain the scope of a completed finite-model check.
+
+      This tutorial uses **TLA+**, a language for specifying behavior, and **TLC**, its model checker. Everything runs in your browser. The first check downloads a Java runtime and may take a little time. These are exploration exercises: completing a check does not automatically grade your reasoning.
+
+      New to these tools? Start with [Your First PlusCal Check](/SEBook/verification/pluscal-tutorial): a tiny program with C-style braces and one loop-bound property.
+
+      Open **Model.tla**. This counter starts at zero, increases up to a capacity, then resets. A **state** assigns a value to every variable. A **transition** connects a state to an allowed next state.
+
+      - `Init` describes the initial state.
+      - `Increment` and `Reset` are actions. A prime, as in `count'`, means the value in the **next** state; `count` means the current value.
+      - `Next` permits either action; `\/` means “or,” and `/\` means “and.”
+      - `WithinCapacity` is an **invariant**: a condition that must hold in every reachable state. `\in 0..Capacity` means membership in that range of integers.
+
+      **Predict → Check:** Read **Model.cfg**, where `Capacity = 2` supplies the constant and `INVARIANT` selects the requirement. List the values you expect `count` to take, then choose **Check every reachable state**. Compare your list with the distinct-state count under **Run details**. Then choose **Explore one behavior** and select the allowed next actions to inspect the values yourself.
+
+      `Spec` also permits **stuttering**: a step where the modeled variables do not change. The notation `[][Next]_count` allows each step to be a `Next` action or such an unchanged step. We will use this fact again in the final lesson.
+
+      **Modify:** Change the capacity in **Model.cfg** to `3`. Predict how many distinct states the model will have before checking again. Explain why `WithinCapacity` still holds.
+
+      A **completed check** establishes the configured properties for this finite model and these constants, within TLC's model-checking method. It is not a proof for every capacity or for an implementation you have not connected to the model. Following one path through states only illustrates one behavior; it does not replace the check. A stopped, timed-out, or otherwise incomplete check establishes neither success nor failure.
+
+      **Test My Work** offers optional feedback on the bound using the exercise's reference capacity of 2. Use **Check every reachable state** to investigate other values in your editable configuration.
+    files:
+      - path: Model.tla
+        language: tlaplus
+        reseed: true
+        content: |
+          ---- MODULE Model ----
+          EXTENDS Naturals
+          CONSTANT Capacity
+          VARIABLE count
+
+          Init == count = 0
+          Increment == /\ count < Capacity
+                       /\ count' = count + 1
+          Reset == /\ count = Capacity
+                   /\ count' = 0
+          Next == Increment \/ Reset
+          Spec == Init /\ [][Next]_count
+          WithinCapacity == count \in 0..Capacity
+          ====
+      - path: Model.cfg
+        language: plaintext
+        reseed: true
+        content: |
+          CONSTANT Capacity = 2
+          SPECIFICATION Spec
+          INVARIANT WithinCapacity
+    tests:
+      - description: The counter stays within its capacity, checked at capacity two.
+        tla:
+          status: complete
+          invariant: 'count \in 0..Capacity'
+          model_config: |
+            CONSTANT Capacity = 2
+            SPECIFICATION Spec
+    solution:
+      files:
+        - path: Model.cfg
+          language: plaintext
+          content: |
+            CONSTANT Capacity = 3
+            SPECIFICATION Spec
+            INVARIANT WithinCapacity
+      explanation: |
+        The starter has three states: `count` is 0, 1, or 2. Capacity 3 gives four: 0, 1, 2, or 3. Increment stops at the capacity and Reset returns to zero, so both actions preserve the invariant. Checking these two capacities alone does not prove the statement for all capacities.
+
+  # Pedagogy: Retrieve the state/action distinction, then use one concrete failure to repair behavior.
+  - title: An Invariant Counterexample
+    key: invariant-counterexample
+    run_file: Model.tla
+    open_file: Model.tla
+    instructions: |
+      ### Why this matters
+
+      A counterexample gives you a specific permitted behavior that breaks a requirement. Reading its first failing state can expose a boundary mistake that ordinary examples miss.
+
+      ### 🎯 You will learn to
+
+      - Locate the transition that first violates an invariant.
+      - Repair an action while preserving the intended requirement.
+
+      A counter must stay between zero and its capacity. This version contains a boundary mistake. Keep `Capacity = 2` and keep `WithinCapacity` unchanged.
+
+      **Predict → Check:** Can any action take `count` outside `0..Capacity`? Choose **Check every reachable state**, then move through the counterexample states. Compare each state with the preceding one.
+
+      Record three pieces of evidence: the last value inside the allowed range, the first value outside it, and the action that connects them. A counterexample is a permitted behavior of this model; it is not a report that the checker malfunctioned.
+
+      **Modify:** Repair `Increment` so it respects the capacity. Keep `Reset` available at the capacity, then check again and use **Test My Work** for feedback. Explain why raising the capacity or weakening the invariant would not repair the original requirement.
+
+      <details markdown="1">
+      <summary>Hint: inspect the boundary</summary>
+
+      Evaluate the guard of `Increment` when `count` equals `Capacity`. If the action is allowed, calculate the next value and compare it with the invariant.
+
+      </details>
+
+      **Reflect:** The repaired model can repeatedly reset without representing any real customer request. What would you need to add before using this model to make a claim about a queue in production?
+    files:
+      - path: Model.tla
+        language: tlaplus
+        reseed: true
+        content: |
+          ---- MODULE Model ----
+          EXTENDS Naturals
+          CONSTANT Capacity
+          VARIABLE count
+
+          Init == count = 0
+          Increment == /\ count <= Capacity
+                       /\ count' = count + 1
+          Reset == /\ count = Capacity
+                   /\ count' = 0
+          Next == Increment \/ Reset
+          Spec == Init /\ [][Next]_count
+          WithinCapacity == count \in 0..Capacity
+          ====
+      - path: Model.cfg
+        language: plaintext
+        reseed: true
+        content: |
+          CONSTANT Capacity = 2
+          SPECIFICATION Spec
+          INVARIANT WithinCapacity
+    tests:
+      - description: The repaired actions keep the counter within capacity two.
+        tla:
+          status: complete
+          invariant: 'count \in 0..Capacity'
+          model_config: |
+            CONSTANT Capacity = 2
+            SPECIFICATION Spec
+    solution:
+      files:
+        - path: Model.tla
+          language: tlaplus
+          content: |
+            ---- MODULE Model ----
+            EXTENDS Naturals
+            CONSTANT Capacity
+            VARIABLE count
+
+            Init == count = 0
+            Increment == /\ count < Capacity
+                         /\ count' = count + 1
+            Reset == /\ count = Capacity
+                     /\ count' = 0
+            Next == Increment \/ Reset
+            Spec == Init /\ [][Next]_count
+            WithinCapacity == count \in 0..Capacity
+            ====
+      explanation: |
+        The failing trace reaches `count = 2` and then increments to 3. Requiring `count < Capacity` prevents that transition while retaining Reset at 2. A production claim would also need an adequate model of arrivals, removals, failures, and the relationship between the model and implementation. A passing check cannot establish that the model contains every important behavior.
+
+  # Pedagogy: Transfer counterexample reading to concurrency; contrast one atomicity boundary.
+  - title: Concurrent Updates in PlusCal
+    key: pluscal-concurrent-updates
+    run_file: Model.tla
+    open_file: Model.tla
+    instructions: |
+      ### Why this matters
+
+      Two correct-looking updates can lose work when their reads and writes interleave. Making the permitted interleavings explicit helps you identify what must be atomic.
+
+      ### 🎯 You will learn to
+
+      - Read a counterexample involving two processes.
+      - Explain how a PlusCal label changes an atomicity boundary.
+
+      **PlusCal** is an algorithm language that translates to TLA+. Its source lives inside the `(* ... *)` comment in **Model.tla**. The translator creates the TLA+ definitions used by TLC.
+
+      Here, each of two workers adds one to a shared `total`. Each worker has its own `seen` variable. The labels `Read:` and `Write:` mark separate atomic actions: another process can run between them. Within one labeled action, the statements execute together in the model.
+
+      `AllCounted` says: **if both workers have finished, total must equal 2**. The generated `pc` variable records each process's current label; `"Done"` means that process finished. `\A` means “for every,” and `=>` means “implies.” This invariant says what must be true at completion; it does not require the workers eventually to finish.
+
+      **Predict → Check:** Write down one order of the two workers' reads and writes that you think could lose an update. Choose **Check every reachable state**; PlusCal is translated automatically. The **Check syntax / translate PlusCal** action also lets you inspect generated TLA+ without checking properties. Inspect the failing trace and compare `total`, `seen`, and `pc` across states. Which value was read before another worker changed it?
+
+      **Modify:** Change only the label boundaries so each worker's read and update belong to one atomic action. Keep both processes, their two assignments, and `AllCounted`. Check again to translate the edited algorithm and verify it, then choose **Test My Work** for feedback.
+
+      <details markdown="1">
+      <summary>Hint: choose the atomic action</summary>
+
+      Start at a label and read forward to the next label or the end of the process. Those statements form one atomic action. Decide whether another worker should be allowed to run between the read and the write.
+
+      </details>
+
+      **Reflect:** Combining statements in this model is an assumption about atomicity. In an implementation, you would need a mechanism such as a lock or atomic update that justifies that assumption. The model edit does not add that mechanism to your program.
+    files:
+      - path: Model.tla
+        language: tlaplus
+        reseed: true
+        content: |
+          ---- MODULE Model ----
+          EXTENDS Naturals
+
+          (* --algorithm Workers
+          variables total = 0;
+          define
+            AllCounted == (\A p \in {1, 2}: pc[p] = "Done") => total = 2
+          end define;
+          process Worker \in {1, 2}
+          variables seen = 0;
+          begin
+          Read:
+            seen := total;
+          Write:
+            total := seen + 1;
+          end process;
+          end algorithm; *)
+          ====
+      - path: Model.cfg
+        language: plaintext
+        reseed: true
+        content: |
+          SPECIFICATION Spec
+          INVARIANT AllCounted
+    tests:
+      - description: When both workers finish, both updates are counted.
+        tla:
+          status: complete
+          invariant: '(\A p \in {1, 2}: pc[p] = "Done") => total = 2'
+          model_config: |
+            SPECIFICATION Spec
+    solution:
+      files:
+        - path: Model.tla
+          language: tlaplus
+          content: |
+            ---- MODULE Model ----
+            EXTENDS Naturals
+
+            (* --algorithm Workers
+            variables total = 0;
+            define
+              AllCounted == (\A p \in {1, 2}: pc[p] = "Done") => total = 2
+            end define;
+            process Worker \in {1, 2}
+            variables seen = 0;
+            begin
+            Count:
+              seen := total;
+              total := seen + 1;
+            end process;
+            end algorithm; *)
+            ====
+      explanation: |
+        With separate Read and Write actions, both workers can read zero and later both write one. The model then reaches a state where both have finished but total is 1. With one Count label, one worker completes its read and write before the other can do either. Both assignments remain, but no other process can interleave between them. TLC checks this atomic model; the implementation still needs to realize that atomicity.
+
+  # Pedagogy: Contrast safety and liveness in a two-state model; make fairness an explicit assumption.
+  - title: Safety, Liveness, and Fairness
+    key: liveness-and-fairness
+    run_file: Model.tla
+    open_file: Model.tla
+    instructions: |
+      ### Why this matters
+
+      A system can avoid bad states while never making progress. To reason about eventual completion, you must say which indefinitely postponed actions your model permits.
+
+      ### 🎯 You will learn to
+
+      - Distinguish an invariant from an eventual-completion property.
+      - Explain the assumption introduced by weak fairness.
+
+      A request starts with `done = FALSE`. `Complete` can change it to `TRUE`. `Safe` is a type invariant: `done` must remain Boolean. `EventuallyDone == <>done` is a **liveness** property: eventually `done` must be true. In contrast, an invariant expresses a **safety** requirement: a bad state must never occur.
+
+      **Predict → Check:** The completion action is available initially. Does availability alone force it to happen? Check the model and inspect the counterexample's repeating or stuttering part. Explain how it can preserve `Safe` yet violate `EventuallyDone`.
+
+      Recall that `[][Next]_done` permits unchanged steps. A behavior may postpone `Complete` forever. The configuration disables the separate deadlock check because `done = TRUE` is an intended terminal state; it still checks `Safe` and `EventuallyDone`.
+
+      **Modify:** Add the assumption `/\ WF_done(Complete)` to the definition of `Spec`, then check again and choose **Test My Work**. **Weak fairness** says that an action which remains enabled continuously cannot be postponed forever. Explain why that assumption excludes the failing behavior here.
+
+      **Compare:** Remove the fairness clause and remove only `PROPERTY EventuallyDone` from **Model.cfg**. Check once more. Which claim did this check actually establish? A successful safety check does not establish liveness; the property must be selected in the configuration.
+
+      <details markdown="1">
+      <summary>Hint: read the infinite behavior</summary>
+
+      A liveness counterexample has a finite prefix and a part that repeats forever. Ask whether `done` ever becomes true along that entire behavior, not just whether a Complete transition exists elsewhere in the graph.
+
+      </details>
+
+      **Transfer:** In a real service, what makes eventual scheduling or delivery reasonable? Fairness is an assumption to justify, not a fix for a broken scheduler or an unreliable network. State that assumption beside any claim you draw from the model.
+
+      For further study, see Leslie Lamport's [TLA+ and PlusCal tutorial](https://lamport.azurewebsites.net/tla/tutorial/contents.html) and the [PlusCal language manual](https://lamport.azurewebsites.net/tla/p-manual.pdf).
+    files:
+      - path: Model.tla
+        language: tlaplus
+        reseed: true
+        content: |
+          ---- MODULE Model ----
+          VARIABLE done
+
+          Init == done = FALSE
+          Complete == /\ ~done
+                      /\ done' = TRUE
+          Next == Complete
+          Spec == Init /\ [][Next]_done
+          Safe == done \in BOOLEAN
+          EventuallyDone == <>done
+          ====
+      - path: Model.cfg
+        language: plaintext
+        reseed: true
+        content: |
+          SPECIFICATION Spec
+          INVARIANT Safe
+          PROPERTY EventuallyDone
+          CHECK_DEADLOCK FALSE
+    tests:
+      - description: The request eventually completes under the specification's assumptions.
+        tla:
+          status: complete
+          property: '<>done'
+          model_config: |
+            SPECIFICATION Spec
+            CHECK_DEADLOCK FALSE
+    solution:
+      files:
+        - path: Model.tla
+          language: tlaplus
+          content: |
+            ---- MODULE Model ----
+            VARIABLE done
+
+            Init == done = FALSE
+            Complete == /\ ~done
+                        /\ done' = TRUE
+            Next == Complete
+            Spec == Init /\ [][Next]_done /\ WF_done(Complete)
+            Safe == done \in BOOLEAN
+            EventuallyDone == <>done
+            ====
+        - path: Model.cfg
+          language: plaintext
+          content: |
+            SPECIFICATION Spec
+            INVARIANT Safe
+            PROPERTY EventuallyDone
+            CHECK_DEADLOCK FALSE
+      explanation: |
+        Without fairness, the behavior that keeps done FALSE forever is permitted and violates EventuallyDone. Complete stays enabled throughout that behavior, so weak fairness excludes it. Once done is TRUE, unchanged steps are harmless. Removing the PROPERTY line checks only the configured invariant and says nothing about eventual completion. The fair model's result depends on the fairness assumption being appropriate for the real system.

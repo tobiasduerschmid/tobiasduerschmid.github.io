@@ -676,6 +676,13 @@ students are confused" reports.
       checks. Use different step directories to preserve drafts. Verify every
       expected AST alternative, lexical/syntax counterexamples, and resource-limit
       diagnostics; Run alone never awards completion credit. See §3.5.
+- [ ] **TLA+ tutorials use `backend: tla`**, an explicit `.tla` `run_file`,
+      an editable `.cfg` file, and `tla.config_file`. Keep lessons single-backend;
+      use stable step keys and `reseed: true` for reused filenames. Validate
+      starter and solution outcomes with official TLC, including PlusCal
+      translation. Distinguish completed model checking, counterexamples,
+      incomplete runs, and one chosen behavior. Never equate a successful
+      model check with model adequacy or implementation correctness (§4.6).
 - [ ] **Progression policy is deliberate.** Self-directed review may use
       `require_tests: false` and `require_quiz: false`; verify skipped checks
       stay unpassed, including after reload and in the instructions popout.
@@ -835,7 +842,7 @@ exclude_from_index: boolean            # If true, /SEBook/tutorials hides
                                        # and any non-student-facing tutorial.
 
 # === Backend selection ===
-backend: v86 | cpp | pyodide | webcontainer | react | prolog | haskell | smalltalk | compiler | shell-pipeline | uml-editor | multiple
+backend: v86 | cpp | pyodide | webcontainer | react | prolog | haskell | smalltalk | compiler | shell-pipeline | tla | uml-editor | multiple
                                        # default: v86
 
 # v86           — full Linux VM (shell, gcc, git, etc.). Most tutorials.
@@ -855,6 +862,13 @@ backend: v86 | cpp | pyodide | webcontainer | react | prolog | haskell | smallta
 #                 trees and distinct AST alternatives within explicit bounds.
 #                 Reads the three compiler_files from Monaco, with no VM or
 #                 execution of the parsed language. See §3.5.
+# tla           — Official SANY parser, PlusCal translator, and TLC model
+#                 checker through Java 11 in CheerpJ. Single-backend only.
+#                 Standard editable .tla/.cfg files; run_file selects the
+#                 module and tla.config_file selects the model configuration.
+#                 Model checking, counterexamples, and chosen-behavior
+#                 exploration have distinct meanings. See §4.6 and
+#                 docs/tla-backend.md for runtime and resource boundaries.
 # webcontainer  — Node.js + npm + dev server (StackBlitz). Needs COOP/COEP.
 # react         — React + Vite + live preview iframe + Playwright-compat.
 # prolog        — Single-backend Tau Prolog 0.3.4 worker, locally pinned under
@@ -896,7 +910,7 @@ backend: v86 | cpp | pyodide | webcontainer | react | prolog | haskell | smallta
 # tutorial-level default per step. Mixed mode supports `v86`, `cpp`, `pyodide`,
 # `react`, `webcontainer`, and `browser` steps, with `browser` serving as the
 # in-page Node fallback if WebContainers cannot boot. Keep `haskell`,
-# `uml-editor`, `shell-pipeline`, SQL, Prolog, Java, and debugger tutorials single-backend until
+# `uml-editor`, `shell-pipeline`, `tla`, SQL, Prolog, Java, and debugger tutorials single-backend until
 # the runtime explicitly supports those combinations.
 # Mixed tutorials with multiple worker backends (such as cpp and pyodide)
 # replace the active worker lazily when switching languages, restoring the
@@ -1321,6 +1335,11 @@ steps:
                                              # webcontainer appends it to the
                                              # `node <run_file>` invocation as
                                              # `process.argv.slice(2)`.
+    tla:                                     # tla backend only; optional at root
+      config_file: Model.cfg                 # and step. Step config overrides
+                                             # root. run_file selects the .tla
+                                             # entry. Both files use ordinary
+                                             # files/autosave/solution handling.
     default_query: string                    # prolog only. Authored goal used by
                                              # Run and Debug, independent of the
                                              # Terminal prompt and history.
@@ -1397,6 +1416,17 @@ steps:
           comparison: exact                  # exact (default) | count-lines |
                                              # ranked-counts; see §4.8.
           preserve_files: [access.tsv]        # Optional unchanged source paths.
+        tla:                                 # tla backend only; instead of command.
+          status: complete                   # complete | counterexample
+          reason: exhausted-state-space      # Optional checker outcome reason.
+          invariant: 'count \in 0..2'         # Optional trusted TLA+ expression;
+                                             # requires model_config when present.
+                                             # Alternatively, property: '<>done'
+                                             # checks a temporal expression.
+                                             # Never supply both fields.
+          model_config: |                    # Trusted instructor configuration.
+            SPECIFICATION Spec
+            CHECK_DEADLOCK FALSE
         signature:                           # Haskell only; optional explicit
           name: canAffordPizza                # top-level declaration in run_file.
           type: "Double -> Double -> Bool"    # Compiler-resolved exact monomorphic type.
@@ -2971,6 +3001,10 @@ channel.
   `haskell-runtime-frame.html` + `js/haskell-worker.js` (a sandboxed Haskell
   frame through `js/vendor/microhs/mhs-embed.js`, the local, pinned MicroHs
   WebAssembly runtime),
+  `js/tutorial-tla.js` + `js/tla/{client,controller,model}.mjs` (the TLA+
+  tutorial boundary, bounded private-port requests, and state exploration;
+  `tla-runtime-frame.html` + `js/tla/frame.js` run the official Java tools
+  through CheerpJ in a disposable opaque-origin data-URL frame),
   `js/playwright-compat/runner.js` (in-browser Playwright for React; host-side
   preview proxy plus an opaque-origin, terminable learner-spec worker),
   `js/pyodide-git.js` / `js/pyodide-unix.js` (POSIX mocks).
@@ -3140,23 +3174,96 @@ snapshot-input, or checksum drift.
 
 ### 4.6 Backends — what each supports
 
-| Feature                | v86 | cpp | pyodide | webcontainer | browser | react | prolog | haskell | uml-editor | compiler | shell-pipeline |
-|------------------------|-----|-----|---------|--------------|---------|-------|--------|---------|------------|----------|----------------|
-| Shell terminal         | ✅  | ❌  | ❌      | ✅           | ❌      | ❌    | ❌     | ❌      | ❌         | ❌ | ❌ |
-| Compiled languages     | C   | C++17 | ❌    | (npm only)   | ❌      | ❌    | ❌     | ✅      | ❌         | ❌ | ❌ |
-| `git`                  | ✅  | ❌  | mocked  | ✅           | ❌      | ❌    | ❌     | ❌      | ❌         | ❌ | ❌ |
-| Debugger / recorded history | ❌ | ❌ | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ |
-| Live preview iframe    | ❌  | ❌  | ❌      | ✅           | ❌      | ✅    | ❌     | ❌      | ❌         | ❌ | ❌ |
-| Playwright tests       | ❌  | ❌  | ❌      | ❌           | ❌      | ✅    | ❌     | ❌      | ❌         | ❌ | ❌ |
-| UML assertion tests    | ❌  | ❌  | ❌      | ❌           | ❌      | ❌    | ❌     | ❌      | ✅         | ❌ | ❌ |
-| `pytest`               | ❌  | ❌  | ✅      | ❌           | ❌      | ❌    | ❌     | ❌      | ❌         | ❌ | ❌ |
-| Linter                 | ✅  | ❌  | ✅      | ✅           | ✅      | ✅    | ❌     | ❌      | ❌         | ❌ | ❌ |
-| Regex / EBNF / AST checks | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ |
-| Separate Bash command box / fixture checks | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Feature                | v86 | cpp | pyodide | webcontainer | browser | react | prolog | haskell | uml-editor | compiler | shell-pipeline | tla |
+|------------------------|-----|-----|---------|--------------|---------|-------|--------|---------|------------|----------|----------------|-----|
+| Shell terminal         | ✅  | ❌  | ❌      | ✅           | ❌      | ❌    | ❌     | ❌      | ❌         | ❌ | ❌ | ❌ |
+| Compiled languages     | C   | C++17 | ❌    | (npm only)   | ❌      | ❌    | ❌     | ✅      | ❌         | ❌ | ❌ | ❌ |
+| `git`                  | ✅  | ❌  | mocked  | ✅           | ❌      | ❌    | ❌     | ❌      | ❌         | ❌ | ❌ | ❌ |
+| Debugger / recorded history | ❌ | ❌ | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ | State traces |
+| Live preview iframe    | ❌  | ❌  | ❌      | ✅           | ❌      | ✅    | ❌     | ❌      | ❌         | ❌ | ❌ | ❌ |
+| Playwright tests       | ❌  | ❌  | ❌      | ❌           | ❌      | ✅    | ❌     | ❌      | ❌         | ❌ | ❌ | ❌ |
+| UML assertion tests    | ❌  | ❌  | ❌      | ❌           | ❌      | ❌    | ❌     | ❌      | ✅         | ❌ | ❌ | ❌ |
+| `pytest`               | ❌  | ❌  | ✅      | ❌           | ❌      | ❌    | ❌     | ❌      | ❌         | ❌ | ❌ | ❌ |
+| Linter                 | ✅  | ❌  | ✅      | ✅           | ✅      | ✅    | ❌     | ❌      | ❌         | ❌ | ❌ | ❌ |
+| Regex / EBNF / AST checks | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ |
+| Separate Bash command box / fixture checks | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ |
+| TLA+ model checking / behavior exploration | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
 
 Mixed-backend tutorials support `v86`, `cpp`, `pyodide`, `react`, `webcontainer`,
 and `browser`. They are for author-controlled backend switches between steps,
 not for debugger flows or terminal-first Node labs.
+
+#### TLA+ and PlusCal
+
+`tla` is single-backend and uses the official SANY parser, PlusCal translator,
+and TLC checker through Java 11 in CheerpJ. It does not use `java-worker.js`,
+whose Java subset transpiler cannot execute the tools JAR. This is a real
+model-checking engine, not a hand-written interpretation of selected TLA+
+syntax. TLC still has its own executable-specification and finite-state
+requirements; browser memory and time are bounded. Do not promise theorem
+proving, unbounded verification, arbitrary Java module overrides, or a desktop
+TLC debugger session. See `docs/tla-backend.md` for the deployment contract.
+
+Use ordinary `files` entries with `language: tlaplus` for `.tla` and
+`language: plaintext` for `.cfg`. Set `run_file: Model.tla` on each step and
+`tla: {config_file: Model.cfg}` at tutorial or step level; a step overrides the
+tutorial default. Every configuration is visible and editable. Put finite
+constant assignments, `SPECIFICATION` (or `INIT`/`NEXT`), and selected
+`INVARIANT`/`PROPERTY` declarations there. Explanations must identify any
+fairness assumptions, disabled deadlock check, constraints, or omitted
+properties that affect the conclusion. Standard file drafts, Reset, solution
+files, stable keys, and print views apply. No shell setup is needed.
+
+The workspace separates **Check every reachable state**, **Explore one
+behavior**, and **Check syntax / translate PlusCal**. Checking and exploration
+translate PlusCal automatically; generated TLA+ is derived output, not the
+authoritative editable source. Counterexample navigation shows named values
+and changes, plus liveness loops when present. This is state/behavior
+inspection, not the shared call-stack debugger. Exploring one path and
+evaluating an operator at one state never establish universal properties.
+Operator watches require a live exploration session; completed counterexamples
+retain values for inspection after their checking JVM is released.
+An interrupted or incomplete check does not establish a pass. Results from
+older editor text are stale and must be checked again.
+
+Optional declarative checks use `tests[].tla: {status: complete}` or
+`{status: counterexample, reason: invariant}`. Reasons currently include
+`exhausted-state-space`, `invariant`, `deadlock`, `liveness`, and `property`.
+Only completed checker outcomes can be assessed; errors, incomplete runs,
+and cancellation remain unassessed. Status/reason-only checks use the learner's
+configuration and can be bypassed by weakening or removing its property.
+
+For exercise feedback, supply `tests[].tla.invariant` or `property`, plus
+`model_config`. These expression fields are mutually exclusive: `invariant`
+checks every reachable state; `property` checks a temporal property of behaviors.
+Both require a nonempty instructor
+configuration. `js/tla/assessment.mjs` creates an unused
+`SEBookTutorialCheck[2…].tla` module extending the learner entry and defining
+`SEBookProperty`; a separate trusted `.cfg` appends `INVARIANT SEBookProperty`
+or `PROPERTY SEBookProperty` as appropriate.
+All semantic work stays in the official translator and TLC, including PlusCal
+in the extended learner module. Generated check files do not replace editor
+files. A trusted `model_config` alone is also supported for other property
+configurations. Each test runs against a fresh JVM. The shared **Test My Work**
+panel provides result-specific plain-text feedback; no new custom feedback
+YAML fields are introduced. Incomplete or stale checks never award credit.
+
+`_data/tutorials/pluscal.yml` is the very basic C-style worked-counter/loop-bound
+tutorial. Its optional tests check `count \in 0..2` independently of the
+editable property, including a negative test where the learner weakens that
+property/configuration. The broader `_data/tutorials/tla.yml` combines
+exploration/reflection with optional bound, concurrent-completion, and eventual-
+completion checks. Its reference constant configuration is explicit in the
+instructions. Both use `require_tests: false`,
+`require_quiz: false`, and `allow_skip_steps: true`. Even trusted properties
+do not establish model adequacy: consider vacuous repairs that remove the
+behavior the exercise intended to model.
+
+`scripts/tests/tla-tutorial-content.test.js` runs the authored starters and
+solutions against the pinned official tools, with negative invariant and
+liveness cases. Set `JAVA_BIN` to a Java 11+ executable for those checks.
+Browser tests must separately verify runtime startup, Stop, stale results,
+the editable configuration, keyboard-only state navigation, and print output.
 
 `shell-pipeline` interprets the separate **Shell command** textarea with the
 pinned just-bash browser bundle. Current editor files seed a fresh in-memory
