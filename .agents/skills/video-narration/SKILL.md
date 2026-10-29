@@ -108,8 +108,22 @@ from building.
   that belongs on top, pass `sk.overlay(picture)` as its parent, start it on
   the word it celebrates, and keep the picture up long enough to see it.
 
-## 3. No overlaps
+## 3. No overlaps, no occlusion, visible gaps
 
+Place every element so it neither touches nor hides another:
+
+- Boxes keep a visible gap. Cards, badges, notes, panels, chips, and days in
+  a row, a stack, or a grid stand at least 8px apart on the stage (6px after
+  the 91% artwork scale). Compute spacing from each box's outer size: paper
+  pieces are as wide as `w` plus their padding (a card adds 24px, a badge
+  16px, a speech bubble 32px), and a card's height is its text plus 16px. A
+  rotated piece (a sticker, a flag, a tilted note) grows its corners, so give
+  it more room. A box inside another (a card in its column) fits inside it.
+- Nothing covers a heading or a label. A piece that comes forward (the top
+  story held up in front of the board) sits below the headings it would hide;
+  move it, or fade what it would cover.
+- A raised piece (a lit role card lifts 14px and thickens its border) needs
+  room for its raised state, not only its resting one.
 - No line runs behind text. A label on a line sits in a gap between two line
   segments (the bracket), never on a background mask, which some browsers
   paint under the line.
@@ -119,31 +133,54 @@ from building.
   Master takes it"), let it leave and say so with a sticker.
 - Every word stays inside the stage at every resting pose; long stickers are
   the usual culprits, so keep them short.
-- `tests/<topic>-narration.spec.js` has an overlap test that poses every cue
-  and fails on text over text, text covered by a later piece, or text off the
-  stage. List an intended overlap (a card zooming over a board) in its
-  allowlist with the reason.
+- `tests/<topic>-narration.spec.js` poses every cue and checks placement
+  twice: the overlap test fails on text over text, text covered by a later
+  piece, or text off the stage; the gap test fails on painted boxes closer
+  than the gap without one containing the other. List an intended overlap in
+  the test's allowlist with the reason (the gap test allows the top story
+  held in front of the board); never weaken the threshold to pass.
 
-## 4. Light and dark mode
+## 4. Light and dark mode: no contrast issue in either
 
-The frame mirrors the embedding page's `dark-mode` class
-(`js/video-narration-stage.js`), and the player's chrome (the picture's
-background while it loads, full screen, captions) uses the narration tokens.
-In stage CSS, paint surfaces, lines, and text only with the `--vn-*` tokens
-and the re-pointed song tokens (`--text`, `--muted`) from
-`css/video-narration-stage.css`; never a raw color, except paper pieces and
-devices that are the same object in both modes (a card, a phone) and bright
-fills with dark ink (stickers, flags). Accents used as text or lines use their
-`-ink` tokens, which darken in light mode. Check both themes: every text keeps
-4.5:1 against its own background, and the wall stays faint behind it.
+The video follows the site's setting, and every text must keep 4.5:1 against
+what is painted behind it, in light **and** dark mode, on load **and** after
+the viewer switches theme mid-video. Three rules produce that reliably:
 
-Always check contrast in light **and** dark mode, never one theme alone: the
-spec's contrast test poses every cue in both themes and measures each text
-against what is painted behind it, and screenshots of both themes go in the
-review. A token that passes on the wall can fail on a structure (the light
-gold ink failed at 4.07:1 on the temple's roof). After a theme change, reload
-the page with the cache bypassed: a frame can keep a stale stylesheet and show
-light surfaces with dark-mode text.
+1. **Paint only with theme tokens.** The frame mirrors the embedding page's
+   `dark-mode` class (`js/video-narration-stage.js`), and
+   `css/video-narration-stage.css` defines the `--vn-*` tokens (dark by
+   default, light under `html:not(.dark-mode)`) and re-points the song kit's
+   `--text` and `--muted`. In stage CSS, surfaces, lines, and text use only
+   these tokens. The exceptions are objects that are the same in both modes
+   and carry their own contrast: paper pieces with dark ink (cards, notes,
+   badges, the phone) and bright fills with dark ink (stickers, flags).
+   Accents used as text or lines use their `-ink` tokens, which darken in
+   light mode. Pair every surface token with the text token meant for it;
+   never put a surface token behind text that stays theme-independent.
+2. **Never freeze a computed color.** Any code that copies computed colors
+   into inline styles must repaint when the theme class on `<html>` changes.
+   `js/song-video/rounded-surfaces.js` does this for Firefox's rounded-border
+   fix, which runs only in Firefox, so a stale color there never shows in
+   Chrome. Mixed themes on screen (dark cards on the light wall, or white
+   cards with pale text) mean a frozen color or a stale stylesheet.
+3. **Version every asset URL.** The frame loads its own CSS and scripts;
+   each URL in the player, the frame layout, and the chapter carries
+   `?v={{ site.asset_version }}`. Bump `asset_version` in `_config.yml`
+   whenever a video narration's CSS or JS changes, so no viewer combines an old
+   stylesheet with a new one.
+
+Verify with tests and eyes, every time, in both modes:
+
+- `every cue's text keeps 4.5:1 contrast in light/dark mode` poses every cue
+  in each theme and measures each text against the fills behind it.
+- `switching from light to dark (and back) while watching any cue paints it
+  like a fresh video` switches theme at every cue, with Firefox's repaint
+  forced on, and compares every element's painted colors with a stage loaded
+  in that theme. It is the test that catches frozen colors; it failed on the
+  old repaint module before the fix.
+- Look at contact sheets of every cue in both themes, and switch theme while
+  the video plays, in Chrome and Firefox. A token that passes on the wall can
+  fail on a structure (light gold ink failed at 4.07:1 on the temple's roof).
 
 ## 5. The player, full screen, and mobile
 

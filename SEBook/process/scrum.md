@@ -3,12 +3,12 @@ title: Scrum
 layout: sebook
 ---
 
-<link rel="stylesheet" href="{{ '/css/song-video-fonts.css' | relative_url }}">
-<link rel="stylesheet" href="{{ '/css/narrated-explainer.css' | relative_url }}">
-<link rel="stylesheet" href="{{ '/css/narrated-pattern.css' | relative_url }}">
-<link rel="stylesheet" href="{{ '/css/narrated-pattern-document.css' | relative_url }}">
-<link rel="stylesheet" href="{{ '/css/video-narration.css' | relative_url }}">
-<link rel="stylesheet" href="{{ '/css/print-light.css' | relative_url }}">
+<link rel="stylesheet" href="{{ '/css/song-video-fonts.css' | relative_url }}?v={{ site.asset_version }}">
+<link rel="stylesheet" href="{{ '/css/narrated-explainer.css' | relative_url }}?v={{ site.asset_version }}">
+<link rel="stylesheet" href="{{ '/css/narrated-pattern.css' | relative_url }}?v={{ site.asset_version }}">
+<link rel="stylesheet" href="{{ '/css/narrated-pattern-document.css' | relative_url }}?v={{ site.asset_version }}">
+<link rel="stylesheet" href="{{ '/css/video-narration.css' | relative_url }}?v={{ site.asset_version }}">
+<link rel="stylesheet" href="{{ '/css/print-light.css' | relative_url }}?v={{ site.asset_version }}">
 
 While many organizations claim to be "Agile", the ==vast majority — historically reported around 60–80% in the annual *State of Agile* surveys — implement the Scrum framework or a Scrum/Kanban hybrid==. 
 

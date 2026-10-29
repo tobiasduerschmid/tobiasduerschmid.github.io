@@ -63,17 +63,28 @@
     document.head.appendChild(style);
   }
 
+  // Full screen shows only the full-screen element's subtree, so confetti
+  // falls inside that element while one is shown. Elements that render no
+  // children of their own (a full-screen video or frame) leave it on the body.
+  function hostElement() {
+    var shown = document.fullscreenElement;
+    return shown && !/^(VIDEO|IFRAME|IMG|CANVAS|EMBED|OBJECT)$/.test(shown.tagName) ? shown : document.body;
+  }
+
   function getLayer() {
-    if (layer && layer.parentNode) return layer;
-    layer = document.createElement('div');
-    layer.className = 'site-confetti-layer';
-    layer.setAttribute('aria-hidden', 'true');
-    layer.addEventListener('animationend', function (event) {
-      if (event.target && event.target.classList.contains('site-confetti-piece')) {
-        removePiece(event.target);
-      }
-    });
-    document.body.appendChild(layer);
+    var host = hostElement();
+    if (layer && layer.parentNode === host) return layer;
+    if (!layer) {
+      layer = document.createElement('div');
+      layer.className = 'site-confetti-layer';
+      layer.setAttribute('aria-hidden', 'true');
+      layer.addEventListener('animationend', function (event) {
+        if (event.target && event.target.classList.contains('site-confetti-piece')) {
+          removePiece(event.target);
+        }
+      });
+    }
+    host.appendChild(layer);
     return layer;
   }
 

@@ -14,7 +14,8 @@
  *
  * Each repaint copies the box's computed border and fill. When a state class
  * changes (a lamp lights, a cell turns new), the boxes inside the changed
- * element are repainted from their new computed style, and boxes added
+ * element are repainted from their new computed style; when the document's
+ * theme class changes (dark-mode on <html>), every box is; and boxes added
  * later are repainted as they arrive; boxes whose border or fill is animated
  * keep their border. A subtree that comes back into the stage (scene.js
  * culls transparent pictures out of the document) repaints only the boxes
@@ -189,9 +190,14 @@
     node.classList.remove(...undo.classes);
   }
 
-  /** A box's classes that can change its paint, in a comparable form. */
+  /**
+   * A box's classes that can change its paint, in a comparable form, with the
+   * document's own classes: a theme class on <html> (dark-mode) re-colors
+   * every box, and a repaint copies colors, so it must be redone.
+   */
   function stateOf(node) {
-    return Array.from(node.classList).filter((className) => !IGNORED_CLASSES.test(className)).sort().join(' ');
+    const own = Array.from(node.classList).filter((className) => !IGNORED_CLASSES.test(className)).sort().join(' ');
+    return `${root.document.documentElement.className}|${own}`;
   }
 
   /**
@@ -283,7 +289,13 @@
       if (boxes.size) repaint([...boxes].filter((box) => box.isConnected), painted, states);
     });
     observer.observe(stage, { subtree: true, childList: true, attributes: true, attributeFilter: ['class'], attributeOldValue: true });
-    observers.set(stage, observer);
+    // A theme change on <html> re-colors every box in the stage; boxes outside
+    // the document now repaint on return, since their recorded state includes it.
+    const theme = new MutationObserver(() => {
+      repaint([...stage.querySelectorAll(':not(svg *)')], painted, states);
+    });
+    theme.observe(root.document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    observers.set(stage, { disconnect: () => { observer.disconnect(); theme.disconnect(); } });
     return counts;
   }
 

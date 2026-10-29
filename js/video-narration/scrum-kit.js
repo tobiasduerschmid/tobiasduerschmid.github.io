@@ -219,7 +219,7 @@
     fx.rise(title, at, { distance: -20, duration: 0.35 });
     if (until !== undefined) fx.fadeOut(title, until);
     const cards = ROLES.map((role, i) => roleCard(parent, {
-      x: 18 + i * 312, y: 110, role: i, at: at + 0.1 + i * 0.12, until, litAt: i === chosen ? litAt : undefined,
+      x: 14 + i * 314, y: 110, role: i, at: at + 0.1 + i * 0.12, until, litAt: i === chosen ? litAt : undefined,
     }));
     return { title, cards };
   }

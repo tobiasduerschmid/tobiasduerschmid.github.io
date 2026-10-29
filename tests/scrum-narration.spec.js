@@ -24,6 +24,8 @@ async function seek(page, time) {
 async function theme(page, dark) {
   const toggle = page.getByRole('checkbox', { name: 'Toggle dark mode' });
   if (await toggle.isChecked() !== dark) await toggle.press('Space');
+  // Colors cross-fade between themes; measure contrast only once they have settled.
+  await page.waitForFunction(() => document.getAnimations().every(animation => !(animation instanceof CSSTransition) || animation.playState !== 'running'));
 }
 // WEBrick may answer a conditional MP3 range request with 304 instead of the
 // bytes Chromium needs after seeking; drop validators from range requests.
@@ -188,10 +190,49 @@ function stageTextProblems() {
   return [...problems];
 }
 
+// Finds painted boxes (cards, badges, notes, panels, chips, days) closer than
+// a small gap to another box without one containing the other, in the pose
+// the stage shows now. Stickers, stamps, arrows, and structures built from
+// touching parts (a temple, a balance, a loop) sit over or against artwork
+// on purpose and are left out.
+function crowdedBoxes() {
+  const GAP = 4;
+  const SKIPPED = '.sticker, .stamp, .kinetic, .confetti-layer, .sk-overlay, .sk-arrow, .sk-bracket, .sk-frame, .sk-slot, .sk-loop, .sk-loop-dot, .sk-loop-label, .sk-dot, .sk-wave, .sk-ball, .sk-person, .sk-roof, .sk-base, .sk-pillar, .sk-balance-post, .sk-balance-beam, .sk-topic';
+  const stageNode = document.getElementById('stage');
+  const shown = (node) => {
+    for (let n = node; n && n !== stageNode; n = n.parentElement) {
+      const style = getComputedStyle(n);
+      if (style.display === 'none' || style.visibility === 'hidden' || Number(style.opacity) < 0.35) return false;
+    }
+    return true;
+  };
+  const painted = (node) => {
+    const style = getComputedStyle(node);
+    return style.backgroundColor !== 'rgba(0, 0, 0, 0)' || style.backgroundImage !== 'none' || parseFloat(style.borderTopWidth) > 0;
+  };
+  const name = (node) => `${node.classList[0]} "${node.textContent.trim().slice(0, 20)}"`;
+  const crowded = [];
+  for (const scene of stageNode.querySelectorAll('.scene')) {
+    if (!shown(scene)) continue;
+    const boxes = [...scene.children].flatMap((child) => (child.matches('.sk-body') ? [...child.children] : [child]))
+      .filter((piece) => !piece.matches(SKIPPED) && shown(piece) && painted(piece))
+      .map((piece) => ({ piece, box: piece.getBoundingClientRect() }));
+    boxes.forEach((a, i) => {
+      for (const b of boxes.slice(i + 1)) {
+        const inside = (outer, inner) => inner.left >= outer.left - 1 && inner.right <= outer.right + 1 && inner.top >= outer.top - 1 && inner.bottom <= outer.bottom + 1;
+        if (inside(a.box, b.box) || inside(b.box, a.box)) continue;
+        const dx = Math.max(b.box.left - a.box.right, a.box.left - b.box.right);
+        const dy = Math.max(b.box.top - a.box.bottom, a.box.top - b.box.bottom);
+        if (dx < GAP && dy < GAP) crowded.push(`${name(a.piece)} / ${name(b.piece)}`);
+      }
+    });
+  }
+  return crowded;
+}
+// END crowdedBoxes
+
 test('no cue\'s picture overlaps its words or leaves the stage', async ({ page }) => {
   test.setTimeout(120000);
-  // The top story card zooms in over the board on purpose, hiding its headers.
-  const intended = { 'product_backlog-2': /^covered: .* by sk-column.*|^covered: .* by us-card/ };
   await page.setViewportSize({ width: 960, height: 540 });
   await page.goto('/assets/video-narration/scrum.html');
   await page.evaluate(() => window.VideoNarrationStage.ready);
@@ -200,7 +241,7 @@ test('no cue\'s picture overlaps its words or leaves the stage', async ({ page }
     for (const [cueIndex] of scene.cues.entries()) {
       const id = `${scene.id}-${cueIndex + 1}`;
       await page.evaluate((time) => window.VideoNarrationStage.seek(time), timing.scenes[sceneIndex].cues[cueIndex].end - 0.3);
-      const problems = (await page.evaluate(stageTextProblems)).filter((problem) => !(intended[id] && intended[id].test(problem)));
+      const problems = await page.evaluate(stageTextProblems);
       if (problems.length) found[id] = problems;
     }
   }
@@ -283,6 +324,76 @@ for (const dark of [false, true]) {
     expect(found).toEqual({});
   });
 }
+
+// Every stage element's painted colors, in document order: what the viewer
+// sees, without the pixel noise a GPU-rasterized screenshot carries.
+function stagePaint() {
+  const props = ['color', 'backgroundColor', 'backgroundImage', 'borderTopColor', 'outlineColor', 'fill', 'stroke'];
+  return [...document.querySelectorAll('#stage *')].map((node, index) => {
+    const style = getComputedStyle(node);
+    return `${index} ${node.getAttribute('class') || node.tagName}: ${props.map((prop) => style[prop]).join(' ')}`;
+  });
+}
+
+// Switching theme after the stage is built must paint exactly the colors a
+// stage built in that theme paints. Firefox's rounded-surface repaint copies colors
+// into inline styles, so it runs here too (forced), or Chromium would never
+// exercise the path where a theme switch can leave stale colors behind.
+for (const [from, to] of [['light', 'dark'], ['dark', 'light']]) {
+  test(`switching from ${from} to ${to} mode while watching any cue paints it like a fresh ${to} video`, async ({ browser }) => {
+    test.setTimeout(180000);
+    const stageIn = async (theme) => {
+      const context = await browser.newContext({ viewport: { width: 960, height: 540 } });
+      const page = await context.newPage();
+      await page.goto('/assets/video-narration/scrum.html');
+      await page.evaluate(() => window.VideoNarrationStage.ready);
+      await page.evaluate((dark) => {
+        document.documentElement.classList.toggle('dark-mode', dark);
+        window.SongRoundedSurfaces.prepare(document.getElementById('stage'), { force: true });
+      }, theme === 'dark');
+      return { page, context };
+    };
+    const setTheme = (page, theme) => page.evaluate((dark) => document.documentElement.classList.toggle('dark-mode', dark), theme === 'dark');
+    const poseAt = (page, time) => page.evaluate((t) => window.VideoNarrationStage.seek(t), time);
+    const switched = await stageIn(from);
+    const fresh = await stageIn(to);
+    const differing = [];
+    for (const [sceneIndex, scene] of story.scenes.entries()) {
+      for (const [cueIndex] of scene.cues.entries()) {
+        const time = timing.scenes[sceneIndex].cues[cueIndex].end - 0.3;
+        // The viewer is watching this cue in one theme and switches to the other.
+        await poseAt(switched.page, time);
+        await setTheme(switched.page, to);
+        await poseAt(fresh.page, time);
+        const [a, b] = await Promise.all([switched, fresh].map(({ page }) => page.evaluate(stagePaint)));
+        const first = a.findIndex((paint, i) => paint !== b[i]);
+        if (first >= 0) differing.push(`${scene.id}-${cueIndex + 1}: ${a[first]} / ${b[first]}`);
+        await setTheme(switched.page, from);
+      }
+    }
+    await Promise.all([switched, fresh].map(({ context }) => context.close()));
+    expect(differing).toEqual([]);
+  });
+}
+
+test('every cue keeps a visible gap between its cards, badges, and panels', async ({ page }) => {
+  test.setTimeout(120000);
+  // The top story is held up in front of the board, below the column headings.
+  const intended = { 'product_backlog-2': /^sk-column .* \/ us-card / };
+  await page.setViewportSize({ width: 960, height: 540 });
+  await page.goto('/assets/video-narration/scrum.html');
+  await page.evaluate(() => window.VideoNarrationStage.ready);
+  const found = {};
+  for (const [sceneIndex, scene] of story.scenes.entries()) {
+    for (const [cueIndex] of scene.cues.entries()) {
+      const id = `${scene.id}-${cueIndex + 1}`;
+      await page.evaluate((time) => window.VideoNarrationStage.seek(time), timing.scenes[sceneIndex].cues[cueIndex].end - 0.3);
+      const crowded = (await page.evaluate(crowdedBoxes)).filter((pair) => !(intended[id] && intended[id].test(pair)));
+      if (crowded.length) found[id] = crowded;
+    }
+  }
+  expect(found).toEqual({});
+});
 
 test('narration stops inside the silence before each check, and a section without one plays on', async ({ page }) => {
   test.setTimeout(240000);
@@ -421,6 +532,10 @@ test('full screen fills the display with the video, hides idle controls, and kee
   expect(await quiz.evaluate(element => document.fullscreenElement.contains(element))).toBe(true);
   // The control bar steps aside while the check is open, giving the quiz its room.
   await expect(controls).toBeHidden();
+  // A correct answer's confetti falls inside the full-screen video, the only part shown.
+  const question = questionsOf(story.scenes[1].id)[0];
+  await quiz.getByRole('radio').filter({ hasText: question.options[question.correct_index] }).click();
+  await expect.poll(() => page.evaluate(() => document.fullscreenElement.querySelectorAll('.site-confetti-piece').length)).toBeGreaterThan(0);
   await page.evaluate(() => document.exitFullscreen());
   await expect.poll(() => page.evaluate(() => document.fullscreenElement)).toBe(null);
 });

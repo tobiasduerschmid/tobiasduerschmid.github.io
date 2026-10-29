@@ -78,7 +78,7 @@
 
     // A board column of ranked backlog cards; returns the cards.
     function backlogCards(parent, { x, y, from, count = BACKLOG.length, step = 72 }) {
-      return BACKLOG.slice(0, count).map((text, i) => sk.card(parent, { x, y: y + i * step, text, rank: i + 1, at: from + i * 0.18 }));
+      return BACKLOG.slice(0, count).map((text, i) => sk.card(parent, { x, y: y + i * step, w: 254, text, rank: i + 1, at: from + i * 0.18 }));
     }
 
     // A large heading in the top-left corner of a picture.
@@ -96,7 +96,7 @@
       part(232, 'What?', 'Selected items', times.what);
       SPRINT_ITEMS.forEach((text, i) => sk.card(parent, { x: 262 + i * 220, y: 240, w: 190, text, at: times.items + i * 0.2 }));
       part(380, 'How?', 'Plan of tasks', times.how);
-      TASKS.forEach((text, i) => sk.note(parent, { x: 262 + i * 166, y: 396, w: 136, text, tone: 'cyan', tilt: i % 2 ? 1.5 : -1.5, at: times.tasks + i * 0.15 }));
+      TASKS.forEach((text, i) => sk.note(parent, { x: 262 + i * 170, y: 396, w: 136, text, tone: 'cyan', tilt: i % 2 ? 1.5 : -1.5, at: times.tasks + i * 0.15 }));
     }
 
     // ----------------------------------------------------------------
@@ -205,12 +205,12 @@
       const a = picture(one, two);
       sk.frame(a, { x: 40, y: 80, w: 880, h: 420, label: 'One Scrum Team', at: begin(one) + 0.1 });
       const xs = TEAM.map((name, i) => {
-        const x = 64 + i * 122;
-        sk.badge(a, { x, y: 140, role: name, iconName: 'user', at: at(one, 'seven') + i * 0.12 });
+        const x = 58 + i * 124;
+        sk.badge(a, { x, y: 140, w: 100, role: name, iconName: 'user', at: at(one, 'seven') + i * 0.12 });
         return x;
       });
       const tagsLeave = begin(two) + 0.2;
-      const tag = (index, text, word, row) => sk.skill(a, { x: xs[index] - 6, y: row ? 296 : 254, text, at: at(one, word), until: tagsLeave });
+      const tag = (index, text, word, row) => sk.skill(a, { x: xs[index] - 6, y: row ? 302 : 254, text, at: at(one, word), until: tagsLeave });
       tag(2, 'Design', 'design', 0);
       tag(3, 'App screens', 'screens', 1);
       tag(4, 'App screens', 'screens', 0);
@@ -226,9 +226,9 @@
       });
       sticker(a, 'The team decides', { x: 330, y: 392, at: at(two, 'decides'), until: roles, variant: 'green', iconName: 'check' });
       sticker(a, '3 accountabilities', { x: 330, y: 340, at: at(two, 'accountabilities'), variant: 'gold', iconName: 'list' });
-      sk.bracket(a, { x: xs[2] - 6, y: 256, w: xs[6] + 128 - xs[2], text: 'Developers', at: at(two, 'developers'), under: true });
-      sk.skill(a, { x: xs[0] - 4, y: 266, w: 104, text: 'Product Owner', tone: 'po', at: at(two, 'owner') });
-      sk.skill(a, { x: xs[1] - 4, y: 266, w: 104, text: 'Scrum Master', tone: 'sm', at: at(two, 'master') });
+      sk.bracket(a, { x: xs[2] - 6, y: 256, w: xs[6] + 122 - xs[2], text: 'Developers', at: at(two, 'developers'), under: true });
+      sk.skill(a, { x: xs[0] + 2, y: 266, w: 96, text: 'Product Owner', tone: 'po', at: at(two, 'owner') });
+      sk.skill(a, { x: xs[1] + 2, y: 266, w: 96, text: 'Scrum Master', tone: 'sm', at: at(two, 'master') });
       sticker(a, 'No ranks', { x: 300, y: 420, at: at(two, 'ranks'), variant: 'violet', iconName: 'cross' });
       sticker(a, 'No sub-teams', { x: 500, y: 420, at: at(two, 'teams'), variant: 'violet', iconName: 'cross' });
 
@@ -240,7 +240,7 @@
       const own = begin(four) + 0.2;
       [select.title, select.cards[1], select.cards[2]].forEach((node) => fx.fadeOut(node, own));
       [['Designer', 'designer'], ['Tester', 'tester'], ['3 Programmers', 'programmers']].forEach(([text, word], i) => {
-        sk.skill(b, { x: 30 + i * 120, y: 498, text, at: at(three, word), until: own });
+        sk.skill(b, { x: 14 + i * 120, y: 506, text, at: at(three, word), until: own });
       });
       sticker(b, 'Not only coders', { x: 660, y: 494, at: at(three, 'code'), until: own, variant: 'gold', iconName: 'team' });
 
@@ -275,8 +275,8 @@
       const arrived = ['Favorite halls', BACKLOG[0], BACKLOG[2], BACKLOG[1]];
       BACKLOG.slice(0, 4).forEach((text, rank) => {
         const from = arrived.indexOf(text);
-        const story = sk.card(a, { x: 385, y: 80 + from * 66, w: 258, text, rank: rank + 1, rankAt: at(two, 'first'), at: at(two, 'stories') + from * 0.15 });
-        if (from !== rank) fx.moveTo(story, at(two, 'order'), 0, (rank - from) * 66, 0.7);
+        const story = sk.card(a, { x: 385, y: 76 + from * 70, w: 258, text, rank: rank + 1, rankAt: at(two, 'first'), at: at(two, 'stories') + from * 0.15 });
+        if (from !== rank) fx.moveTo(story, at(two, 'order'), 0, (rank - from) * 70, 0.7);
       });
       sticker(a, 'Most valuable first', { x: 380, y: 380, at: at(two, 'valuable'), until: at(two, 'acceptance'), variant: 'gold', iconName: 'arrowUp' });
       // Questions answered, and finished work checked against its criteria.
@@ -302,16 +302,16 @@
       ].forEach((trap, i) => {
         const x = 30 + i * 310;
         sk.listCard(b, { x, y: 64, w: 290, tone: 'trap', iconName: 'warning', title: trap.name, text: trap.line, at: at(three, trap.word) });
-        sk.listCard(b, { x, y: 380, w: 290, tone: 'fix', iconName: 'check', title: 'Fix', text: trap.fix, at: at(three, trap.fixWord) });
+        sk.listCard(b, { x, y: 392, w: 290, tone: 'fix', iconName: 'check', title: 'Fix', text: trap.fix, at: at(three, trap.fixWord) });
       });
       // A game of telephone garbles the need on its way.
       sk.queue(b, { x: 54, y: 284, count: 4, gap: 64, at: at(three, 'chain') });
       sk.speech(b, { x: 30, y: 218, w: 120, small: true, text: 'Quiet hall?', at: at(three, 'people') });
       sk.speech(b, { x: 180, y: 218, w: 116, small: true, text: 'Quiz hall?', at: at(three, 'telephone') });
-      sk.badge(b, { x: 346, y: 252, role: 'Manager', iconName: 'user', at: at(three, 'managers') + 0.2 });
-      sk.note(b, { x: 478, y: 240, w: 136, text: 'Build a leaderboard!', tone: 'pink', tilt: 3, at: at(three, 'dictate') });
-      sk.badge(b, { x: 656, y: 252, role: 'Product Owner', iconName: 'globe', variant: 'po', at: at(three, 'little') + 0.2 });
-      sk.note(b, { x: 788, y: 240, w: 120, text: "What's a swipe count?", tone: 'cyan', tilt: 3, at: at(three, 'knowledge') });
+      sk.badge(b, { x: 346, y: 244, role: 'Manager', iconName: 'user', at: at(three, 'managers') + 0.2 });
+      sk.note(b, { x: 486, y: 236, w: 128, text: 'Build a leaderboard!', tone: 'pink', tilt: 3, at: at(three, 'dictate') });
+      sk.badge(b, { x: 656, y: 244, role: 'Product Owner', iconName: 'globe', variant: 'po', at: at(three, 'little') + 0.2 });
+      sk.note(b, { x: 794, y: 236, w: 116, text: "What's a swipe count?", tone: 'cyan', tilt: 3, at: at(three, 'knowledge') });
     }
 
     function scrumMaster() {
@@ -405,11 +405,11 @@
       sticker(a, 'Single source of work', { x: 350, y: 120, at: at('product_backlog-1', 'single'), until: firstEnd, variant: 'gold', iconName: 'list' });
       const request = sk.note(a, { x: 670, y: 110, w: 230, text: 'Dean: add a hall leaderboard!', tone: 'pink', at: at('product_backlog-1', 'dean'), until: firstEnd });
       sk.badge(a, { x: 470, y: 330, role: 'Product Owner', iconName: 'globe', variant: 'po', at: at('product_backlog-1', 'dean') + 0.3, until: firstEnd });
-      fx.moveTo(request, at('product_backlog-1', 'nicely'), -70, 220, 0.7);
+      fx.moveTo(request, at('product_backlog-1', 'nicely'), -310, 120, 0.7);
       sticker(a, 'Only through the backlog', { x: 500, y: 470, at: at('product_backlog-1', 'nicely') + 0.6, until: firstEnd, variant: 'cyan', iconName: 'list' });
 
       us.card(a, {
-        x: 160, y: 60, w: 640, size: 'big', title: 'Top story', at: at('product_backlog-2', 'top'),
+        x: 160, y: 104, w: 640, size: 'big', title: 'Top story', at: at('product_backlog-2', 'top'),
         role: 'hungry student', want: 'to see how crowded each dining hall is', why: 'I can skip the long lines',
         fill: { role: at('product_backlog-2', 'hungry'), want: at('product_backlog-2', 'see'), why: at('product_backlog-2', 'skip') },
         gwt: ['Given I open the app', 'Then every hall shows Quiet, Busy, or Packed'],
@@ -449,10 +449,10 @@
       const two = 'sprint_backlog-2';
       const three = 'sprint_backlog-3';
       sk.banner(a, { x: 40, y: 20, w: 880, title: 'Sprint Goal', text: SPRINT_GOAL, at: begin(two) + 0.1, lockAt: at(three, 'locked') });
-      ['To do', 'Doing', 'Done'].forEach((name, i) => sk.column(a, { x: 40 + i * 300, y: 120, w: 280, h: 280, title: name, at: at(two, 'plan') + i * 0.15 }));
+      ['To do', 'Doing', 'Done'].forEach((name, i) => sk.column(a, { x: 40 + i * 300, y: 120, w: 280, h: 270, title: name, at: at(two, 'plan') + i * 0.15 }));
       const cards = {};
       const place = (key, text, lane, row) => {
-        cards[key] = sk.card(a, { x: 50 + lane * 300, y: 180 + row * 70, w: 260, text, at: at(two, 'plan') + 0.4 + row * 0.15 });
+        cards[key] = sk.card(a, { x: 50 + lane * 300, y: 180 + row * 70, w: 250, text, at: at(two, 'plan') + 0.4 + row * 0.15 });
       };
       place('meter', 'Draw the crowd meter', 0, 0);
       place('photos', 'Hall photos', 0, 1);
@@ -465,7 +465,7 @@
 
       fx.bump(cards.photos, at(three, 'bigger'), 0.3);
       sticker(a, 'Way bigger than expected', { x: 40, y: 420, at: at(three, 'bigger') + 0.2, until: at(three, 'later'), variant: 'pink', iconName: 'warning' });
-      sk.badge(a, { x: 800, y: 405, role: 'Product Owner', iconName: 'globe', variant: 'po', at: at(three, 'renegotiate') });
+      sk.badge(a, { x: 800, y: 404, role: 'Product Owner', iconName: 'globe', variant: 'po', at: at(three, 'renegotiate') });
       sk.speech(a, { x: 400, y: 420, w: 360, text: 'Save hall photos for later?', at: at(three, 'renegotiate') + 0.4 });
       tween(cards.photos, [{ opacity: 1, translate: '0 0' }, { opacity: 0, translate: '-320px 0' }], at(three, 'later'), 0.7, EASE.in);
       sticker(a, 'No side quests', { x: 40, y: 470, at: at(three, 'quests'), variant: 'gold', iconName: 'shield' });
@@ -476,9 +476,9 @@
       const a = picture(one);
       sk.phone(a, { x: 40, y: 40, halls: HALLS, at: begin(one) + 0.1, colorOnly: true });
       sk.goalFlag(a, { x: 760, y: 150, text: 'Product Goal', at: at(one, 'goal') });
-      ['Increment 1', 'Increment 2', 'Increment 3'].forEach((text, i) => sk.increment(a, { x: 330 + i * 150, y: 420 - i * 70, text, at: at(one, 'adds') + i * 0.3 }));
+      ['Increment 1', 'Increment 2', 'Increment 3'].forEach((text, i) => sk.increment(a, { x: 350 + i * 150, y: 420 - i * 70, text, at: at(one, 'adds') + i * 0.3 }));
       sticker(a, 'Works together', { x: 640, y: 470, at: at(one, 'verified'), variant: 'green', iconName: 'check' });
-      sk.halfScreen(a, { x: 340, y: 50, text: 'Half-built', at: at(one, 'mockup') });
+      sk.halfScreen(a, { x: 360, y: 30, text: 'Half-built', at: at(one, 'mockup') });
       stamp(a, 'Not usable', { x: 300, y: 214, small: true, at: at(one, 'count'), color: 'red', rotate: -10 });
 
       const two = 'increment-2';
@@ -507,7 +507,7 @@
       ['Product Backlog', 'Sprint Backlog', 'Increment'].forEach((name, i) => sk.column(c, { x: 30 + i * 305, y: 30, w: 290, h: 490, title: name, at: start + 0.1 + i * 0.15 }));
       ['Hall photos', 'Favorite halls', 'Dark mode'].forEach((text, i) => sk.card(c, { x: 45, y: 95 + i * 66, w: 254, text, rank: i + 1, at: start + 0.4 + i * 0.12 }));
       sk.card(c, { x: 655, y: 95, w: 254, text: BACKLOG[0], at: start + 0.6 });
-      sk.skill(c, { x: 790, y: 168, text: 'Done', tone: 'done', at: start + 0.8 });
+      sk.skill(c, { x: 790, y: 174, text: 'Done', tone: 'done', at: start + 0.8 });
       const returns = at(four, 'returns');
       sticker(c, 'Last day', { x: 360, y: 474, at: at(three, 'last'), until: returns, variant: 'gold', iconName: 'calendar' });
       const unfinished = sk.card(c, { x: 350, y: 95, w: 254, text: BACKLOG[1], rank: 4, rankAt: at(four, 'again'), at: at(three, 'story') });
@@ -547,9 +547,9 @@
       sticker(a, 'No gaps', { x: 380, y: 488, at: at(one, 'gaps'), until: end(one), variant: 'cyan', iconName: 'check' });
 
       sk.flag(a, { x: 36, y: 238, text: 'Sprint Planning', at: at(two, 'planning') });
-      days.forEach((x, i) => sk.dot(a, { x: x + 29, y: 206, at: at(two, 'daily') + i * 0.12 }));
+      days.forEach((x, i) => sk.dot(a, { x: x + 30, y: 206, at: at(two, 'daily') + i * 0.12 }));
       sk.flag(a, { x: 755, y: 238, text: 'Sprint Review', tone: 'review', at: at(two, 'review') });
-      sk.flag(a, { x: 690, y: 284, text: 'Sprint Retrospective', tone: 'retro', at: at(two, 'retrospective') });
+      sk.flag(a, { x: 690, y: 298, text: 'Sprint Retrospective', tone: 'retro', at: at(two, 'retrospective') });
       sticker(a, 'Protect the Sprint Goal', { x: 300, y: 488, at: at(two, 'endanger'), variant: 'green', iconName: 'shield' });
     }
 
@@ -562,7 +562,7 @@
       const cards = backlogCards(a, { x: 45, y: 95, from: begin(one) + 0.4 });
       sk.badge(a, { x: 760, y: 70, role: 'Product Owner', iconName: 'globe', variant: 'po', at: begin(one) + 0.6 });
       sk.speech(a, { x: 650, y: 230, w: 290, text: 'The crowd meter first!', at: at(one, 'pitches'), until: end(one) });
-      sk.banner(a, { x: 345, y: 90, w: 270, title: 'Sprint Goal', text: SPRINT_GOAL, at: at(one, 'writes') - 0.2, typeAt: at(one, 'writes') });
+      sk.banner(a, { x: 343, y: 90, w: 250, title: 'Sprint Goal', text: SPRINT_GOAL, at: at(one, 'writes') - 0.2, typeAt: at(one, 'writes') });
 
       cards.slice(0, 3).forEach((card, i) => fx.moveTo(card, at(two, 'pull') + i * 0.25, 300, 180, 0.6));
       [['3', -8], ['5', 0], ['8', 8]].forEach(([value, rotate], i) => sk.poker(a, { x: 670 + i * 90, y: 250, value, rotate, at: at(two, 'poker') + i * 0.2 }));
@@ -592,9 +592,9 @@
       sticker(a, 'Inspect progress', { x: 40, y: 40, at: at(one, 'inspect'), until: end(one), variant: 'cyan', iconName: 'search' });
       sticker(a, 'Adapt the plan', { x: 700, y: 40, at: at(one, 'adapt'), until: end(one), variant: 'green', iconName: 'loop' });
 
-      sk.speech(a, { x: 20, y: 30, w: 290, who: 'Yesterday', text: 'I drew the meter.', at: at(two, 'yesterday') });
-      sk.speech(a, { x: 325, y: 30, w: 290, who: 'Today', text: 'I hook up live data.', at: at(two, 'today') });
-      sk.speech(a, { x: 630, y: 30, w: 300, who: 'Blockers', text: 'Still no data agreement.', at: at(two, 'blocking') });
+      sk.speech(a, { x: 14, y: 30, w: 270, who: 'Yesterday', text: 'I drew the meter.', at: at(two, 'yesterday') });
+      sk.speech(a, { x: 324, y: 30, w: 270, who: 'Today', text: 'I hook up live data.', at: at(two, 'today') });
+      sk.speech(a, { x: 634, y: 30, w: 270, who: 'Blockers', text: 'Still no data agreement.', at: at(two, 'blocking') });
       // The Scrum Master takes the blocker, and the stand-up moves on.
       const blocker = sk.note(a, { x: 600, y: 150, w: 250, text: 'Blocked: no data agreement', tone: 'red', at: at(two, 'blocked') });
       sk.badge(a, { x: 836, y: 190, role: 'Scrum Master', iconName: 'shield', variant: 'sm', at: at(two, 'grabs') });
@@ -613,7 +613,7 @@
       sk.note(b, { x: 55, y: 432, w: 300, text: 'Pair up: meter and its tests', tone: 'green', tilt: 0, at: at(three, 'change') });
       sk.speech(b, { x: 420, y: 40, w: 290, who: 'Developer', text: 'Can you pair with me on the meter?', at: at(three, 'talking') });
       sk.speech(b, { x: 630, y: 168, w: 270, who: 'Developer', text: "Sure! I'll write its tests.", at: at(three, 'sharing') });
-      [420, 545, 670, 795].forEach((x, i) => sk.badge(b, { x, y: 330, role: 'Developer', iconName: 'pencil', at: at(three, 'developers') + i * 0.1 }));
+      [400, 536, 672, 808].forEach((x, i) => sk.badge(b, { x, y: 330, role: 'Developer', iconName: 'pencil', at: at(three, 'developers') + i * 0.1 }));
       sticker(b, 'Plan changed', { x: 420, y: 476, at: at(three, 'plan'), variant: 'green', iconName: 'loop' });
     }
 
@@ -631,12 +631,12 @@
       stamp(a, 'Not a slideshow', { x: 655, y: 385, at: at(one, 'slideshow'), until: end(one), color: 'red', rotate: -8, small: true });
 
       sticker(a, 'They love it', { x: 40, y: 20, at: at(two, 'love'), variant: 'pink', iconName: 'sparkle' });
-      sk.speech(a, { x: 30, y: 90, w: 300, who: 'Student', text: 'Can I filter menus by allergens?', at: at(two, 'allergens') });
-      sk.speech(a, { x: 640, y: 90, w: 300, who: 'Student', text: "My screen reader can't tell how busy a hall is.", at: at(two, 'screen') });
+      sk.speech(a, { x: 30, y: 90, w: 280, who: 'Student', text: 'Can I filter menus by allergens?', at: at(two, 'allergens') });
+      sk.speech(a, { x: 654, y: 90, w: 262, who: 'Student', text: "My screen reader can't tell how busy a hall is.", at: at(two, 'screen') });
       sticker(a, 'Color only', { x: 660, y: 300, at: at(two, 'color'), variant: 'red', iconName: 'warning' });
       sk.column(a, { x: 30, y: 270, w: 300, h: 250, title: 'Product Backlog', at: at(two, 'adds') - 0.3 });
-      sk.card(a, { x: 45, y: 330, w: 270, text: 'Filter menus by allergens', tone: 'new', at: at(two, 'adds') + 0.2 });
-      sk.card(a, { x: 45, y: 400, w: 270, text: 'Crowd level in words too', tone: 'new', at: at(two, 'adds') + 0.5 });
+      sk.card(a, { x: 45, y: 330, w: 264, text: 'Filter menus by allergens', tone: 'new', at: at(two, 'adds') + 0.2 });
+      sk.card(a, { x: 45, y: 400, w: 264, text: 'Crowd level in words too', tone: 'new', at: at(two, 'adds') + 0.5 });
 
       // The Product Owner judges the value; the output is an updated Product Backlog.
       const three = 'sprint_review-3';
@@ -652,7 +652,7 @@
       });
       sk.column(b, { x: 640, y: 40, w: 290, h: 330, title: 'Product Backlog', at: at(three, 'output') });
       [['Crowd level in words too', 'new'], ['Filter menus by allergens', 'new'], [BACKLOG[1]], [BACKLOG[2]]].forEach(([text, tone], i) => {
-        sk.card(b, { x: 655, y: 100 + i * 66, w: 254, text, tone, rank: i + 1, at: at(three, 'output') + 0.3 + i * 0.12 });
+        sk.card(b, { x: 655, y: 100 + i * 70, w: 254, text, tone, rank: i + 1, at: at(three, 'output') + 0.3 + i * 0.12 });
       });
       sticker(b, 'Updated', { x: 660, y: 386, at: at(three, 'updated'), variant: 'green', iconName: 'check' });
       sk.note(b, { x: 650, y: 444, w: 250, text: 'Ready for the next Sprint Planning', tilt: 1, at: at(three, 'ready') });
@@ -673,7 +673,7 @@
       sticker(a, 'Qualities slip through', { x: 30, y: 400, at: at(two, 'slip'), variant: 'red', iconName: 'warning' });
       sk.note(a, { x: 660, y: 100, w: 250, text: 'Add a screen-reader check', tone: 'cyan', at: at(two, 'change') });
       sk.checklist(a, {
-        x: 470, y: 290, w: 460, title: 'Definition of Done', at: at(two, 'change') + 0.3,
+        x: 460, y: 300, w: 440, title: 'Definition of Done', at: at(two, 'change') + 0.3,
         items: [
           ...DONE.map((text) => ({ text, checkAt: at(two, 'change') + 0.3 })),
           { text: 'Checked with a screen reader', type: true, at: at(two, 'definition'), checkAt: at(two, 'definition') + 1.2 },
