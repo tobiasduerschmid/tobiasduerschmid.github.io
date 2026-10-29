@@ -23,3 +23,13 @@ state:
     ui: state-companion-panel.html
     table: state-behavior-table.html
   complete_examples: The dog models only its behavior state and energy; movement, animation, and rendering are omitted. State objects are stateless and shared by every dog, so they must never store data about one dog. Each operation returns the dog's reaction, which a game would animate. Both designs give identical reactions for every state and input.
+strategy:
+  name: Strategy
+  summary: Learn the Strategy pattern through its <strong>context, problem, solution, and consequences</strong>, using a bill-splitting app.
+  prerequisites: Assumes familiarity with interfaces and polymorphism.
+  chapter: /SEBook/designpatterns/strategy.html
+  views: /SEBook/designpatterns/strategy
+  visuals:
+    ui: strategy-split-panel.html
+    table: strategy-method-table.html
+  complete_examples: Amounts are whole cents, so every split keeps its contract that the shares add up to the total. The expense models only its total, its people, and its split; payers, currencies, and storage are omitted. EqualSplit is stateless and shared by every expense, while PercentSplit and BirthdaySplit hold one expense's choices. Both designs give identical labels and shares for every case.

@@ -1,0 +1,185 @@
+# One knowledge check per section, about the Strategy pattern rather than the
+# bill-splitting example. The summary section lists several questions under `questions`.
+intro:
+  question: Which parts make up a design pattern's description?
+  options:
+    - A class library, its public API, and usage examples
+    - A context, a recurring problem, a solution, and its consequences
+    - A UML class diagram, a test suite, and a code template
+  correct_index: 1
+  explanation: A pattern describes a problem that recurs in a context, a solution expressed as roles and collaborations, and the consequences of applying it.
+  option_feedback:
+    0: A library is reusable code. A pattern is a reusable design idea that you adapt to each situation.
+    2: Diagrams and code illustrate a pattern, but without its context, problem, and consequences you cannot tell when to apply it.
+context:
+  question: Which situation is the context for the Strategy pattern?
+  options:
+    - Several objects must be notified whenever one object changes
+    - Several operations of one object depend on a state that changes as events occur
+    - One task has several interchangeable algorithms, and clients choose among them
+  correct_index: 2
+  explanation: The Strategy pattern applies when a family of algorithms can do the same task, the client cares which one runs, and new algorithms keep arriving.
+  option_feedback:
+    0: Notifying dependents of a change is the context of the Observer pattern.
+    1: Behavior that changes as an object moves between states is the context of the State pattern. In Strategy, the client makes the choice.
+problem:
+  question: In the Strategy pattern's problem, what makes a class that picks its algorithm with conditionals hard to change?
+  options:
+    - Each algorithm's code and data are spread across the class's operations
+    - Conditionals run more slowly than calls through an interface
+    - The class can no longer be used by more than one client
+  correct_index: 0
+  explanation: Every operation repeats the same check, and the class collects every algorithm's data, so adding or changing one algorithm means editing the whole class.
+  option_feedback:
+    1: The problem is modifiability, not speed. Performance depends on the workload and should be measured.
+    2: Many clients can still use the class. The difficulty is that every new algorithm edits it.
+solution:
+  question: In the Strategy pattern, which role holds a reference to a Strategy and forwards algorithm requests to it?
+  options:
+    - Concrete Strategy
+    - Context
+    - Client
+  correct_index: 1
+  explanation: The Context is configured with a Strategy object, keeps a reference to it, and forwards requests through the Strategy interface.
+  option_feedback:
+    0: A Concrete Strategy implements one algorithm. It receives the requests that the Context forwards.
+    2: The client chooses a strategy and passes it to the Context, then sends its requests to the Context, which forwards them.
+strategy_role:
+  question: In the Strategy pattern, what makes concrete strategies interchangeable for the Context?
+  options:
+    - They inherit their algorithm from a shared Context subclass
+    - They are created by the Context, so it knows each concrete class
+    - They implement the same interface and keep the same contract
+  correct_index: 2
+  explanation: The Context relies only on the Strategy interface and its contract, such as shares that add up to the total, so any Concrete Strategy that keeps them can be swapped in.
+  option_feedback:
+    0: Strategies do not inherit from the Context. The pattern replaces subclassing the Context with composition.
+    1: Usually the client creates the strategy. The Context depends only on the Strategy interface, not on concrete classes.
+context_role:
+  question: In the Strategy pattern, when should the Context offer a setter for its strategy, not only a constructor parameter?
+  options:
+    - When clients must change the algorithm after creating the Context
+    - Whenever the strategy is stateless and can be shared
+    - Whenever the Context has more than one operation to forward
+  correct_index: 0
+  explanation: A constructor parameter suffices when the choice never changes; a setter lets clients change the algorithm during the Context's lifetime.
+  option_feedback:
+    1: Sharing decides how many strategy objects exist, not when the choice is made. A shared strategy can be passed to the constructor.
+    2: The number of forwarded operations does not matter. What matters is whether the choice changes while the Context lives.
+concrete_roles:
+  question: In the Strategy pattern, when can many contexts safely share one Concrete Strategy object?
+  options:
+    - When the Context passes itself to each strategy operation
+    - When the strategy stores no data about any one context
+    - When the strategy implements only a single operation
+  correct_index: 1
+  explanation: A stateless strategy behaves the same for every context, so one object can serve them all; a strategy configured for one context needs its own object.
+  option_feedback:
+    0: Passing the Context gives a strategy access to data, but sharing is safe only if the strategy itself keeps no per-context data.
+    2: The number of operations is irrelevant. A one-operation strategy that stores per-context data cannot be shared.
+collaborations:
+  question: In the Strategy pattern, who usually chooses which Concrete Strategy a Context uses?
+  options:
+    - The current Concrete Strategy, which passes control to the next one
+    - The Context, by checking a type code before each request
+    - The client, which creates a strategy and passes it to the Context
+  correct_index: 2
+  explanation: Clients usually create a Concrete Strategy and pass it to the Context; afterward they interact with the Context only.
+  option_feedback:
+    0: Objects replacing one another describes the State pattern. Strategies do not know one another.
+    1: Checking a type code inside the Context is the conditional design that Strategy replaces.
+consequences:
+  question: Which is a liability of the Strategy pattern?
+  options:
+    - Clients must understand how strategies differ to choose one
+    - Adding an algorithm requires editing the Context's operations
+    - The Context can no longer change its algorithm at runtime
+  correct_index: 0
+  explanation: Because clients choose, they must know how the strategies differ, so Strategy suits variation that matters to clients. More objects and one shared interface are further costs.
+  option_feedback:
+    1: A new algorithm is a new Concrete Strategy. The Context's operations stay unchanged.
+    2: Strategy makes switching at runtime easier, because a client can pass the Context a different strategy.
+applicability:
+  question: A class picks one of two stable formulas with one if statement, and no new formulas are expected. What does the Strategy pattern's applicability suggest?
+  options:
+    - Introduce a Strategy for each formula to prepare for growth
+    - Keep the conditional; the pattern would not pay for itself
+    - Turn each formula into a subclass of the class that uses it
+  correct_index: 1
+  explanation: Strategy pays off when a family of algorithms varies and keeps growing. Two stable variants are clearer as a conditional.
+  option_feedback:
+    0: Classes added for growth that is not expected are speculative generality; they cost more than they buy.
+    2: Subclassing hard-wires the formula into the class, the very alternative that Strategy argues against.
+transfer:
+  question: In a Strategy design, a new algorithm is added to the family. Which code typically changes?
+  options:
+    - The Strategy interface and every existing Concrete Strategy
+    - The Context, which needs a new branch for the algorithm
+    - A new Concrete Strategy class and the client code that offers it
+  correct_index: 2
+  explanation: The new algorithm implements the existing interface. Only the client code that creates and passes strategies learns about it.
+  option_feedback:
+    0: The interface changes only when every algorithm needs a new operation. A new algorithm implements the existing one.
+    1: The Context forwards to whatever strategy it holds, so it needs no branch.
+summary:
+  questions:
+    - question: A photo app exports images as JPEG, PNG, or WebP. Each format compresses differently, the user picks one, and new formats keep appearing. Which part of the Strategy pattern does this description match?
+      options:
+        - 'Its context: one task with interchangeable algorithms chosen by clients'
+        - 'Its solution: a Context that delegates to a Strategy interface'
+        - 'Its consequences: more objects and clients that must know the strategies'
+      correct_index: 0
+      explanation: The description states a situation, not a design or its costs. One task, several interchangeable algorithms, a client's choice, and growth are the Strategy pattern's context.
+      option_feedback:
+        1: The description says nothing about how the code is organized. A Context delegating to a Strategy would be the solution.
+        2: Costs follow from applying the solution. The description only states the situation the app is in.
+    - question: The photo app's first Exporter checks the chosen format with if statements in compress(), fileExtension(), and estimateSize(). In Strategy pattern terms, what is the problem?
+      options:
+        - The checks make each export slower than an interface call would
+        - Each format's rules are scattered, so a new format edits every operation
+        - The Exporter can no longer be reused by other parts of the app
+      correct_index: 1
+      explanation: Each format's rules live in three methods, and adding a format means editing all of them, the problem that Strategy addresses.
+      option_feedback:
+        0: The problem is modifiability, not speed. Performance depends on the workload and should be measured.
+        2: Other parts of the app can still call the Exporter. The difficulty is that every new format edits it.
+    - question: In a Strategy design for the photo app, which class plays the Concrete Strategy role?
+      options:
+        - Exporter, which holds a compression object and forwards to it
+        - Compression, the interface every format implements
+        - WebPCompression, which implements one format's algorithm
+      correct_index: 2
+      explanation: Each format's compression class implements one algorithm of the family, so it plays Concrete Strategy.
+      option_feedback:
+        0: The class that holds the strategy and forwards requests to it plays Context.
+        1: The interface that every format implements plays Strategy.
+    - question: In the photo app's Strategy design, the user switches from PNG to WebP before exporting. What happens?
+      options:
+        - The client sets a WebP strategy, and the Exporter forwards to it
+        - The PNG strategy replaces itself with the WebP strategy
+        - The Exporter adds a WebP branch to its export operation
+      correct_index: 0
+      explanation: The client chooses, passing the Exporter a WebP strategy; the Exporter then forwards requests to whatever strategy it holds.
+      option_feedback:
+        1: Objects that replace themselves describe the State pattern. Strategies do not know one another.
+        2: Branches inside the Context are the conditional design that Strategy replaces.
+    - question: The photo app's team adds AVIF export using the Strategy design. Which consequence of the pattern does this show?
+      options:
+        - The client no longer needs to know which formats exist
+        - A new algorithm is one new class; the Exporter stays unchanged
+        - Every existing format strategy must be updated for AVIF
+      correct_index: 1
+      explanation: The new format implements the existing interface, so the Context and the other strategies stay unchanged.
+      option_feedback:
+        0: Clients must still know the strategies to choose one. That liability remains.
+        2: Existing strategies are independent of one another, so they do not change.
+    - question: Which change would make the Strategy pattern a poor fit for the photo app's export?
+      options:
+        - Users start choosing among ten formats instead of three
+        - Each format gains a second operation, such as estimating file size
+        - The app keeps only JPEG, with no plans for other formats
+      correct_index: 2
+      explanation: With one algorithm and no expected variation, the pattern's context no longer holds; a direct call is simpler.
+      option_feedback:
+        0: More interchangeable algorithms chosen by users strengthen the fit.
+        1: A second related operation joins the Strategy interface; it does not break the pattern.
