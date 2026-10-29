@@ -54,6 +54,7 @@
         </div>
       </div>
       <p class="np-reading-note"><strong>Notice:</strong> {{ cue.note | escape }}</p>
+      {% if cue.source %}<p class="np-source"><span class="np-source-label">Source:</span> {{ cue.source | escape }}</p>{% endif %}
     </section>
     {% endfor %}
     <p class="nja-takeaway">{{ scene.takeaway | escape }}</p>

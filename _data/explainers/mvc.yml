@@ -266,6 +266,7 @@ scenes:
     ui: true
     cues:
       - text: "First, the context. The pattern fits interactive apps whose user interface keeps changing. Interactive means people change the data while they look at it. A changing interface means new screens, charts, and layouts keep arriving."
+        source: "Buschmann et al., Pattern-Oriented Software Architecture, Vol. 1: Model-View-Controller, Context"
         step: Interactive and changing
         note: Users edit the data while viewing it, and the interface keeps changing.
         visual: The interactive dashboard shows the starting week in its table, bar chart, and pie chart.
@@ -328,6 +329,7 @@ scenes:
         ui_state: clicked
         ui_redraw: all
       - text: "So a good solution has to meet four demands at once. Show the same data in different ways. Update every display immediately. Make the interface easy to change, even while the app runs. And port the interface to a new platform without touching the data."
+        source: "Buschmann et al., Pattern-Oriented Software Architecture, Vol. 1: Model-View-Controller, Problem"
         step: Four demands on a solution
         note: Many presentations; instant updates; easy interface changes; portable interfaces
         visual: The data and the redraw method are marked together. The dashboard highlights the Games bar.
@@ -344,6 +346,7 @@ scenes:
     diagram: solution
     cues:
       - text: "Here is the fix, one step at a time. First, move the data into its own class, Dataset; it will be our model. It stores minutes per category, the way users think about them, not pixels or widgets. Displays read it through rows, input changes it through set minutes, and nothing in it mentions a table, a bar, or a pie."
+        source: "Reenskaug, Models–Views–Controllers (technical note)"
         step: A class for the data
         note: rows() for reading, setMinutes() for changing
         visual: The Dataset class and its rows and setMinutes methods are marked; Dataset is highlighted in the class diagram.
@@ -398,6 +401,7 @@ scenes:
     diagram: controllers
     cues:
       - text: "Third, give input its own classes; these are our controllers. Each one handles the input for one view. The base Controller knows its view and the dataset, and its handle event method receives each input event. The base version ignores every event, which is exactly how you make a view read-only: give it a controller that ignores input."
+        source: "Gamma et al., Design Patterns: Design Patterns in Smalltalk MVC"
         step: The base controller ignores input
         note: handleEvent() does nothing here.
         visual: The base Controller class and its empty handleEvent are marked; Controller is highlighted in the class diagram.
@@ -431,6 +435,7 @@ scenes:
     diagram: input
     cues:
       - text: "Now watch the new classes work together on one input. The user types ninety into the Study row. That edit reaches the table's controller, which calls set minutes on the dataset."
+        source: "Buschmann et al., Pattern-Oriented Software Architecture, Vol. 1: Model-View-Controller, Dynamics, first scenario"
         step: Input reaches a controller
         note: handleEvent() calls setMinutes().
         visual: The table edit in the main program is marked. The sequence diagram shows the table's controller calling setMinutes on the dataset.
@@ -472,6 +477,7 @@ scenes:
     diagram: setup
     cues:
       - text: "Before any input arrives, something must connect the pieces. That set-up code lives outside the dataset, views, and controllers, here in the main program. First it creates the dataset."
+        source: "Buschmann et al., Pattern-Oriented Software Architecture, Vol. 1: Model-View-Controller, Dynamics, second scenario"
         step: Create the dataset
         note: Set-up code lives outside the new classes.
         visual: The set-up lines of the main program are marked. The sequence diagram shows main creating the dataset.
@@ -484,6 +490,7 @@ scenes:
         focus: setup
         diagram_steps: 2
       - text: "Then the view calls make controller to create its own controller. Each view class overrides that one method to choose the controller it needs, a small use of the Factory Method pattern. Finally the view draws itself, and the app starts handling input."
+        source: "Gamma et al., Design Patterns: Design Patterns in Smalltalk MVC"
         step: Each view creates its controller
         note: makeController() is a factory method.
         visual: The set-up lines stay marked. The sequence diagram adds makeController, the creation of the view's controller, and the view reading rows to draw itself.
@@ -498,6 +505,7 @@ scenes:
     diagram: structure
     cues:
       - text: "Now step back. Remove the screen time and the charts, and three roles remain: they are the Model-View-Controller pattern. C R C cards summarize each role's responsibilities and the roles it works with. The Model, like our Dataset, holds the data and its rules, keeps a list of who depends on it, and tells them whenever the data changes."
+        source: "Buschmann et al., Pattern-Oriented Software Architecture, Vol. 1: Model-View-Controller, Structure"
         step: The Model, like our Dataset
         note: It holds the data, keeps a list of dependents, and tells them about changes.
         visual: One CRC card, Model, lists its responsibilities and the roles it works with, View and Controller.
@@ -532,6 +540,7 @@ scenes:
     takeaway: Model-View-Controller buys flexible, synchronized views at the cost of more classes and code that depends on the model.
     cues:
       - text: "Now the consequences, starting with what you gain. You can show the same data in many views at once, like our three charts. Those views stay in sync automatically, because every change goes through the model. And you can swap views and controllers, even while the app runs: give the table a controller that ignores input, and it becomes read-only."
+        source: "Buschmann et al., Pattern-Oriented Software Architecture, Vol. 1: Model-View-Controller, Consequences"
         step: Gains for views and controllers
         note: Many views, always in sync, and swappable
         visual: A summary of the benefits many views of one model, views that stay in sync, and swappable views and controllers.
@@ -540,10 +549,12 @@ scenes:
         note: Port the interface; reuse views and controllers
         visual: A summary of the benefits a portable interface and reusable views and controllers.
       - text: "The costs are real too. Three roles mean more classes and more wiring, which a single label or menu does not justify. A burst of changes can trigger many redraws, and views that ask the model for data again and again can be slow. A model can say which part changed, so views can skip updates that do not concern them."
+        source: "Krasner and Pope, A Cookbook for Using the Model-View-Controller User Interface Paradigm in Smalltalk-80"
         step: Costs in complexity and updates
         note: More classes; many redraws; repeated queries
         visual: A summary of the liabilities more classes, many redraws, and repeated queries to the model.
       - text: "Coupling also remains. A view and its controller are made for each other, so you rarely reuse one without the other. Both call the model directly, so changing the model's interface breaks them. And because updates travel through announcements, reading the code alone rarely tells you why a view redrew."
+        source: "Fowler, GUI Architectures"
         step: Costs in coupling
         note: View and controller pairs; direct model calls; hidden update paths
         visual: A summary of the liabilities of coupling between views, controllers, and the model.
@@ -559,10 +570,12 @@ scenes:
         note: Several views; a changing interface
         visual: A summary of when to use the pattern and when direct calls are clearer.
       - text: "You will often see view and controller merged. Many toolkits, and the components you write in web frameworks, both draw and handle their own input. That variant still keeps several views in sync with one model, but you can no longer swap a view's controller."
+        source: "Buschmann et al., Pattern-Oriented Software Architecture, Vol. 1: Model-View-Controller, Variants"
         step: View and controller, merged
         note: Still in sync, but controllers can no longer be swapped
         visual: A summary of the variant that merges view and controller into one component.
       - text: "Finally, do not reduce the pattern to Observer. Three smaller patterns work together inside it: Observer between the model and its views, Strategy for the swappable controller of a view, and Composite for views nested inside other views. And server-side web MVC only borrows the name: a controller handles a request and picks a page to render, and the model does not notify any views."
+        source: "Gamma et al., Design Patterns: Design Patterns in Smalltalk MVC"
         step: Not just Observer, and not web MVC
         note: Observer, Strategy, and Composite work together inside it.
         visual: A summary that relates Model-View-Controller to Observer, Strategy, and Composite, and distinguishes it from server-side web MVC.

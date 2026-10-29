@@ -36,6 +36,9 @@ are generic.
   `source` and message groups (or CRC cards) in `steps`; `cue.diagram_steps`
   shows the first groups, so a trace can reveal messages only after a
   prediction.
+- `cue.source` is a citation shown on screen below the explanation strip, in
+  the player and the reader. It is never spoken: the narration text names no
+  sources, which `scripts/tests/narrated-pattern-sources.test.js` checks.
 - `cue.diagram` switches one cue to another diagram of the storyboard; the
   player updates the region's label and caption, and the reader shows the new
   diagram's caption where it first appears.

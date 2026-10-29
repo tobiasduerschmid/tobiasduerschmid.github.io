@@ -9,7 +9,9 @@ is chosen for.
 
 ## Sources
 
-The lesson follows three books and quotes none of their examples:
+The lesson follows three books and quotes none of their examples. The narration
+never says their names aloud; each cue that draws on one shows the source on
+screen in its `source` field:
 
 - **Design Patterns (GoF), Strategy:** the applicability list (including
   behaviors that appear as conditionals), the three roles, the collaborations

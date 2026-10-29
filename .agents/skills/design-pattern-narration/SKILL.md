@@ -56,10 +56,13 @@ If you only remember eight things:
 7. **Speech must sound right and stop cleanly.** Every identifier or symbol the TTS mangles gets a
    `pronunciations` entry, and every section ends with more than 0.3 s of silence so knowledge
    checks stop before the next word.
-8. **No history and no author attribution.** The narration, captions, quizzes, and lesson
-   summary teach concepts. Do not name inventors, books, dates, or places, and do not write "the
-   book says" or "as X observes". Replace each with the idea and why it matters to students.
-   Keep provenance for maintainers in `docs/<topic>-narration.md`.
+8. **Sources are shown, never read aloud; history is left out.** The spoken narration (and
+   its captions), the quizzes, and the lesson summary teach concepts: they never name authors,
+   books, dates, or places, and never say "the book says" or "as X observes". State the idea and
+   why it matters to students instead. To credit a source, put it in the cue's `source` field,
+   which the player and the reader show on screen under the explanation. Record fuller
+   provenance for maintainers in `docs/<topic>-narration.md`.
+   `scripts/tests/narrated-pattern-sources.test.js` fails if any cue's speech names a source.
 
 Read [`quiz-format`](../quiz-format/SKILL.md) before writing questions,
 [`good-diagrams`](../good-diagrams/SKILL.md) and [`diagrams`](../diagrams/SKILL.md) before
@@ -101,9 +104,9 @@ whose table, bar chart, and pie chart share one dataset, live and editable in th
 Ground the whole lesson in those sources, not only the example: follow GoF's applicability,
 participants, collaborations, consequences, and implementation issues, use Kerievsky's
 refactoring mechanics for the problem-to-solution steps, and borrow Head First's design
-principles where they explain a role. The narration itself states these ideas as concepts
-without naming the sources (rule 8); record which source each claim comes from in
-`docs/<topic>-narration.md`, so maintainers can find it again.
+principles where they explain a role. The narration states these ideas as concepts without
+saying the sources aloud (rule 8); show the source on screen in the cue's `source` field, so
+students can find it again.
 
 ## 2. Structure the scenes
 
@@ -140,6 +143,8 @@ Each cue is one spoken paragraph of about 40–50 words (2–4 sentences); the s
 - `visual`: a description of what is on screen for this cue. It becomes the stage's accessible
   name, so describe the marks and diagram emphasis, not the speech.
 - `step` and `note`: the short explanation strip under the code.
+- `source`: an optional citation shown on screen below the explanation strip, such as
+  "Gamma et al., Design Patterns: Strategy, Applicability". It is never spoken.
 - `focus`: a key into the code block's `focus` map; the player marks those lines in every
   language. `table_focus`, `ui_state`, and similar keys are read by topic illustrations.
 - `diagram_focus`: one class, interface, state, or lifeline to highlight. `diagram_steps`: how many
@@ -157,7 +162,8 @@ Narration rules:
   "change-propagation mechanism", "the data and its rules" over "functional core", "a request
   to change only this view" over "display request". Name a variant by what it does ("view and
   controller merged into one component") rather than by its catalog name.
-- No history or attribution in speech, captions, `step`, `note`, or `visual` text.
+- No history in any text, and no sources in speech, captions, `step`, `note`, or `visual`
+  text; citations belong in `source`, which is shown but never spoken.
 - Never refer to a quiz option or an on-screen position that the learner might not see
   (captions, reader view, and print use the same text).
 

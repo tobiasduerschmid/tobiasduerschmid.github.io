@@ -104,6 +104,19 @@ test('class diagrams highlight the discussed role, and CRC cards and messages ap
   }
 });
 
+test('a cue drawn from a source shows it on screen, and other cues show none', async ({ page }) => {
+  await page.goto(url);
+  const animation = player(page);
+  for (const [index, scene] of story.scenes.entries()) {
+    for (const [cueIndex, cue] of scene.cues.entries()) {
+      await seek(page, timing.scenes[index].cues[cueIndex].start + 0.5);
+      const source = animation.locator('.nja-scene:visible .np-source');
+      if (cue.source) await expect(source, `${scene.id}/${cueIndex}`).toHaveText(`Source: ${cue.source}`);
+      else await expect(source, `${scene.id}/${cueIndex}`).toBeHidden();
+    }
+  }
+});
+
 // In the player the dashboard is a live app: rows are spin buttons, bars are toggle buttons.
 const liveDashboard = animation => animation.locator('.nja-scene:visible').getByRole('group', { name: /^Screen time/ });
 const row = (board, category) => board.getByRole('spinbutton', { name: category, exact: true });

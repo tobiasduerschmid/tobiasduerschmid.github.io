@@ -4,9 +4,10 @@ The Model-View-Controller chapter opens with an approximately 13-minute
 narration built on the shared player in `docs/narrated-pattern.md`. Its
 example is a data visualizer that charts weekly screen time as a table, a bar
 chart, and a pie chart. The structure follows POSA1 (pp. 125-143), but the
-narration itself names no authors, books, or dates: it builds a plain-language
-mental model for undergraduate students, and it shows the concrete redesign
-before abstracting it into the pattern's roles.
+spoken narration names no authors, books, or dates; cues that draw on a source
+show it on screen in their `source` field. The narration builds a
+plain-language mental model for undergraduate students, and it shows the
+concrete redesign before abstracting it into the pattern's roles.
 
 In the player the dashboard is live (`js/mvc-dashboard.js`): each cue animates
 it to the cue's state, so the opening shows an edit spreading to every view,
