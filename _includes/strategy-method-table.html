@@ -1,0 +1,23 @@
+{%- assign split = site.data.explainers.strategy_ui -%}
+{%- assign table_focus = include.cue.table_focus -%}
+{%- capture marked_label -%}
+{%- if table_focus.column -%}
+{%- for operation in split.operations -%}{%- if operation.id == table_focus.column -%}Marked column: {{ operation.label }} — {% if operation.id == 'needs' %}the constructor parameters{% else %}one operation{% endif %} of the method-checking class{%- endif -%}{%- endfor -%}
+{%- elsif table_focus.row -%}
+{%- for method in split.methods -%}{%- if method.id == table_focus.row -%}Marked row: {{ method.label }}{%- endif -%}{%- endfor -%}
+{%- else -%}Nothing marked{%- endif -%}
+{%- endcapture -%}
+<div class="strategy-methods">
+  <table class="strategy-method-table">
+    <caption>Split methods by operation</caption>
+    <thead>
+      <tr><th scope="col">Method</th>{% for operation in split.operations %}<th scope="col"{% if table_focus.column == operation.id %} class="is-marked"{% endif %}>{{ operation.label }}</th>{% endfor %}</tr>
+    </thead>
+    <tbody>
+      {% for method in split.methods %}
+      <tr{% if table_focus.row == method.id %} class="is-marked"{% endif %}><th scope="row">{{ method.label }}</th>{% for operation in split.operations %}<td{% if table_focus.column == operation.id %} class="is-marked"{% endif %}>{{ method.cells[operation.id] }}</td>{% endfor %}</tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <p class="np-focus-label">{{ marked_label }}</p>
+</div>

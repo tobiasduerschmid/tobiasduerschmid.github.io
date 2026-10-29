@@ -35,3 +35,13 @@ mvc:
   # In the player, the dashboard is a live MVC app that students can edit.
   scripts: [mvc-dashboard.js]
   complete_examples: Views draw text lines instead of widgets, and the main program delivers the events a toolkit would. Every view attaches once and is never detached while the dataset notifies. Controllers that do not depend on the data are not attached. Both designs print identical lines for the same edits and clicks.
+strategy:
+  name: Strategy
+  summary: Learn the Strategy pattern through its <strong>context, problem, solution, and consequences</strong>, using a bill-splitting app.
+  prerequisites: Assumes familiarity with interfaces and polymorphism.
+  chapter: /SEBook/designpatterns/strategy.html
+  views: /SEBook/designpatterns/strategy
+  visuals:
+    ui: strategy-split-panel.html
+    table: strategy-method-table.html
+  complete_examples: Amounts are whole cents, so every split keeps its contract that the shares add up to the total. The expense models only its total, its people, and its split; payers, currencies, and storage are omitted. EqualSplit is stateless and shared by every expense, while PercentSplit and BirthdaySplit hold one expense's choices. Both designs give identical labels and shares for every case.

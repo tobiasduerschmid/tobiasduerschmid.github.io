@@ -1,8 +1,8 @@
 ---
 name: design-pattern-narration
 description: >-
-  Authoring guide for narrated design-pattern lessons in the SEBook (the Observer, State, and
-  Model-View-Controller narrations, and any new one). USE THIS SKILL EVERY TIME you create, extend, restructure, or review
+  Authoring guide for narrated design-pattern lessons in the SEBook (the Observer, State, Strategy,
+  and Model-View-Controller narrations, and any new one). USE THIS SKILL EVERY TIME you create, extend, restructure, or review
   a narrated pattern lesson: `_data/explainers/<topic>.yml` (speech, scenes, cues, diagrams),
   `<topic>_code.yml` (Python/Java/C++/TypeScript examples), `<topic>_quizzes.yml` (section checks and
   the summary quiz), `<topic>_timing.json`, the `_data/narrated_patterns.yml` registry, topic
@@ -20,8 +20,8 @@ description: >-
 # Authoring narrated design-pattern lessons
 
 A narrated lesson is an approximately 11–13 minute, Kokoro-voiced walk through one
-design pattern at the top of its SEBook chapter (see `/SEBook/designpatterns/observer.html`
-and `/SEBook/designpatterns/state.html`). A lesson is **data plus a few topic
+design pattern at the top of its SEBook chapter (see `/SEBook/designpatterns/observer.html`,
+`/SEBook/designpatterns/state.html`, and `/SEBook/designpatterns/strategy.html`). A lesson is **data plus a few topic
 illustrations**: the player, transport, reader, and print views are shared. The architecture
 and file list live in [`docs/narrated-pattern.md`](../../../docs/narrated-pattern.md); this
 skill is about authoring a lesson that teaches well and ships clean.
@@ -92,8 +92,18 @@ against these criteria:
 Examples that were rejected and why: a pull-request status workflow for State (its behavior is a
 status check plus permissions; an `enum` is the better design). Examples that shipped: a text
 editor whose preview, character count, and save button observe the document (Observer); a game
-companion dog that follows, fetches, and naps (State); a screen-time visualizer whose table, bar
-chart, and pie chart share one dataset, live and editable in the player (Model-View-Controller).
+companion dog that follows, fetches, and naps (State); a group-expense app that splits a bill
+equally, by percentage, or as a birthday treat, refactored from a method-checking calculation
+the way Kerievsky refactors a loan's capital calculation (Strategy); a screen-time visualizer
+whose table, bar chart, and pie chart share one dataset, live and editable in the player
+(Model-View-Controller).
+
+Ground the whole lesson in those sources, not only the example: follow GoF's applicability,
+participants, collaborations, consequences, and implementation issues, use Kerievsky's
+refactoring mechanics for the problem-to-solution steps, and borrow Head First's design
+principles where they explain a role. The narration itself states these ideas as concepts
+without naming the sources (rule 8); record which source each claim comes from in
+`docs/<topic>-narration.md`, so maintainers can find it again.
 
 ## 2. Structure the scenes
 
@@ -204,7 +214,8 @@ position references), plus these lesson-specific rules:
   and do not introduce new terms in explanations or feedback.
 - **Rotate `correct_index`** across questions; options shuffle, but authors drift toward index 0.
 - **The last scene's entry is a summary quiz:** `questions:` with about six items on a new
-  scenario (a sports app for Observer, a video player for State), covering context, problem,
+  scenario (a sports app for Observer, a video player for State, a photo app's export formats for
+  Strategy), covering context, problem,
   roles, collaboration, consequences, and applicability in that order. The player keeps their
   order (`shuffle_questions: false`); options still shuffle.
 
@@ -245,6 +256,11 @@ Follow "Adding a lesson" in `docs/narrated-pattern.md`: register the topic in
 - Live illustrations need labeled controls, keyboard access, a polite status message for each
   student action (not for narrated changes), and no motion under `prefers-reduced-motion`.
   Mark which parts reacted with text as well as motion, and never move focus during narration.
+- Liquid cannot nest bracket lookups: `a[b[c]]` silently renders empty. Assign the inner
+  value to a variable first. An illustration that shows zeros or blanks usually hit this.
+- Tables beside code get a narrow column. Use `overflow-wrap: break-word` with
+  `hyphens: auto` (not `anywhere`, which breaks words at random letters), and keep cell text
+  short.
 - Add the topic to the lists that name the narrated lessons: `shortcuts.html`, `settings.html`,
   and `cookies.html` ("narrated design-pattern lessons (Observer, State, …)").
 - Full screen, captions, speed, scene selection, and the language switch come from the shared

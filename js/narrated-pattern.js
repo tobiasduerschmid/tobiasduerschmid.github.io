@@ -30,7 +30,11 @@
     container.replaceChildren(cloneSvg(settled.querySelector('svg'), prefix));
     window.UMLShared.autoFitSVG(container);
     window.UMLShared.applySvgAccessibility(container, type, source);
-    const label = focus && Array.from(container.querySelectorAll('svg text')).find(text => text.textContent.split(':')[0].trim() === focus);
+    // An anonymous lifeline (`participant x as : Cls`) displays its label, not its id.
+    const alias = focus && source.match(new RegExp(`^participant ${focus} as (.+)$`, 'm'));
+    const shown = alias ? alias[1].trim() : focus;
+    const label = focus && Array.from(container.querySelectorAll('svg text')).find(text =>
+      text.textContent.trim() === shown || text.textContent.split(':')[0].trim() === shown);
     if (label) {
       const bounds = label.getBoundingClientRect();
       const viewport = container.getBoundingClientRect();

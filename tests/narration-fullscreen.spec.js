@@ -14,10 +14,13 @@ const narrations = [
     diagramScene: sceneNumber('observer', 'contract') },
   { url: '/SEBook/designpatterns/state.html', id: 'state-animation', title: 'The State pattern in a game companion',
     diagramScene: sceneNumber('state', 'state_role') },
+  { url: '/SEBook/designpatterns/strategy.html', id: 'strategy-animation', title: 'The Strategy pattern in a bill-splitting app',
+    diagramScene: sceneNumber('strategy', 'strategy_role') },
   { url: '/SEBook/designpatterns/mvc.html', id: 'mvc-animation', title: 'Model-View-Controller in a data visualizer',
     diagramScene: sceneNumber('mvc', 'model_role') },
 ];
 const lessonOf = (page, narration) => page.getByRole('region', { name: narration.title, exact: true });
+// Accessibility checkpoints audit `.nja-player`, the element that fills the screen.
 const insideFullScreen = locator => locator.evaluate(element =>
   Boolean(document.fullscreenElement && document.fullscreenElement.contains(element)));
 const fullScreenActive = page => page.evaluate(() => document.fullscreenElement !== null);
@@ -31,7 +34,7 @@ for (const narration of narrations) {
     await expect(exit).toBeFocused();
     expect(await insideFullScreen(lesson.getByRole('button', { name: 'Play narration' }))).toBe(true);
     expect(await insideFullScreen(lesson.getByRole('region', { name: 'Narration' }))).toBe(true);
-    await a11yCheckpoint(page, `${narration.id} full screen`, { include: `#${narration.id}`, feature: 'narration-fullscreen' });
+    await a11yCheckpoint(page, `${narration.id} full screen`, { include: `#${narration.id} .nja-player`, feature: 'narration-fullscreen' });
 
     await exit.click();
     await expect(lesson.getByRole('button', { name: 'Enter full screen' })).toBeFocused();
@@ -64,7 +67,7 @@ for (const narration of narrations.filter(item => item.diagramScene !== undefine
     const check = lesson.getByRole('region', { name: /Knowledge check$/ });
     await expect.poll(() => check.evaluate(region => region.contains(document.activeElement))).toBe(true);
     expect(await insideFullScreen(check)).toBe(true);
-    await a11yCheckpoint(page, `${narration.id} full-screen check`, { include: `#${narration.id}`, feature: 'narration-fullscreen' });
+    await a11yCheckpoint(page, `${narration.id} full-screen check`, { include: `#${narration.id} .nja-player`, feature: 'narration-fullscreen' });
   });
 }
 

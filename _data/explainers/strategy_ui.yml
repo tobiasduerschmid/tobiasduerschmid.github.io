@@ -1,0 +1,39 @@
+# Illustrated split panel and the table of split methods. The cases are the
+# specification both code designs implement; tests compare them.
+expense: Dinner
+people: [Ava, Ben, Chloe]
+# Each panel shows one case: its method, total, and shares.
+panels: {equal: 0, percent: 1, birthday: 2}
+operations:
+  - {id: shares, label: shares()}
+  - {id: label, label: label()}
+  - {id: needs, label: Extra data}
+methods:
+  - id: equal
+    label: Equally
+    cells:
+      shares: Divide evenly; the first people pay leftover cents
+      label: '"Split equally"'
+      needs: None
+  - id: percent
+    label: By percentage
+    percents: {Ava: 50, Ben: 30, Chloe: 20}
+    cells:
+      shares: Each pays a percentage; the first person pays leftover cents
+      label: '"Split by percentage"'
+      needs: Percentages that add up to 100
+  - id: birthday
+    label: Birthday
+    guest: Chloe
+    cells:
+      shares: The guest pays nothing; the others split evenly
+      label: '"Birthday treat for Chloe"'
+      needs: The guest
+# Totals and shares are in cents.
+cases:
+  - {method: equal, total: 6000, label: Split equally, shares: {Ava: 2000, Ben: 2000, Chloe: 2000}}
+  - {method: percent, total: 6000, label: Split by percentage, shares: {Ava: 3000, Ben: 1800, Chloe: 1200}}
+  - {method: birthday, total: 6000, label: Birthday treat for Chloe, shares: {Ava: 3000, Ben: 3000, Chloe: 0}}
+  - {method: equal, total: 1000, label: Split equally, shares: {Ava: 334, Ben: 333, Chloe: 333}}
+  - {method: percent, total: 1001, label: Split by percentage, shares: {Ava: 501, Ben: 300, Chloe: 200}}
+  - {method: birthday, total: 1001, label: Birthday treat for Chloe, shares: {Ava: 501, Ben: 500, Chloe: 0}}
