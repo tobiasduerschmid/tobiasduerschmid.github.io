@@ -3,11 +3,16 @@
 The narration at the top of `SEBook/process/scrum.md` teaches Scrum's theory,
 roles, artifacts, and events by following one sprint of a student team. It is
 the first video narration (`docs/video-narration.md`). Storyboard:
-`_data/explainers/scrum.yml`; checks: `scrum_quizzes.yml`; artwork:
+`_data/narrations/scrum.yml`; checks: `scrum_quizzes.yml`; artwork:
 `js/video-narration/scrum.js` and `scrum-kit.js` with
 `css/video-narration-scrum.css`.
 
 ## Sources
+
+See [the shared format](narration-format.md). Spoken `say` cues and teaching
+text live in the YAML; diagrams, code/animation state, and renderer settings
+live separately in `_data/narration_visuals/scrum.json`.
+
 
 The narration states ideas without naming sources (as the narrated lessons
 do); this is where each comes from, for maintainers.

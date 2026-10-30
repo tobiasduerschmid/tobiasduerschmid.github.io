@@ -1,7 +1,7 @@
+const { loadStory } = require('../scripts/narration/source');
 const { test, expect } = require('@playwright/test');
 const { readFileSync } = require('node:fs');
 const path = require('node:path');
-const yaml = require('js-yaml');
 const { a11yCheckpoint } = require('./a11y-helpers');
 
 const cases = [
@@ -23,7 +23,7 @@ for (const { topic, slug } of cases) {
     let story;
     let decisionIndex;
     test.beforeAll(() => {
-      story = yaml.load(readFileSync(path.join(__dirname, `../_data/explainers/${topic}.yml`), 'utf8'));
+      story = loadStory(topic);
       decisionIndex = story.scenes.findIndex((scene, index) => scene.checkpoint && index < story.scenes.length - 1);
       expect(decisionIndex, 'the investigation needs a decision before revealing further evidence').toBeGreaterThanOrEqual(0);
     });

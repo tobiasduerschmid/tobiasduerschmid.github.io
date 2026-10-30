@@ -1,0 +1,513 @@
+# Edit speech and teaching text here. Visual state lives in ../narration_visuals/observer.json.
+version: 1
+id: observer
+kind: pattern
+title: Observer in a user interface
+lesson:
+  name: Observer
+  summary: >-
+    Follow a text editor from conditional-heavy updates to cooperating <strong>Subjects and
+    Observers</strong>.
+  prerequisites: Assumes familiarity with objects, methods, and collections.
+  chapter: /SEBook/designpatterns/observer.html
+  views: /SEBook/designpatterns/observer
+  outline_labels:
+    context: One change, many dependents
+    conditions: Coupled updates
+    roles: Subject and Observer
+    contract: Observer interface
+    subject: Subject
+    document: Concrete Subject
+    views: Concrete Observers
+    trace: Collaborations
+    consequences: Benefits and liabilities
+    applicability: When to use Observer
+  complete_examples: >-
+    These toolkit-neutral objects hold UI state. Rendering and input-event wiring are omitted.
+    Register each Observer once; detach only registered Observers. Use one thread, keep
+    registrations stable during notification, and do not recursively edit from update. Exceptions
+    stop notification. The simple example text keeps counts consistent across languages.
+speech:
+  voice: af_heart
+  speed: 0.95
+  pronunciations:
+    UML: U M L
+media:
+  audio: /assets/audio/observer-pattern.mp3
+  captions: /assets/narration/observer-pattern.vtt
+  script: /assets/narration/observer-pattern.txt
+scenes:
+  - id: ui
+    label: How a pattern is described
+    title: One document, three views
+    purpose: Preview the parts of every pattern description with a familiar example.
+    takeaway: A pattern pairs a problem that recurs in a context with a solution and its consequences.
+    cues:
+      - id: cue-1
+        say: >-
+          Imagine a text editor. You type Hi into its document. A preview displays Hi, a character
+          count displays two, and a Save button becomes enabled. One change has three different
+          effects. Our question is: who should know how to update each part of this user interface?
+        step: One change, three reactions
+        note: "Document: Hi · Preview: Hi · Count: 2 · Save: enabled"
+        visual: >-
+          A text-editor illustration shows the document Hi and three matching views: preview Hi,
+          character count 2, and Save enabled.
+      - id: cue-2
+        say: >-
+          Design patterns capture proven answers to questions like this one. Every pattern
+          description has the same backbone. The context is the situation in which a problem recurs.
+          The problem states what makes it hard. The solution describes abstract roles and how they
+          collaborate. And the consequences state what the solution costs and buys. We will learn
+          the Observer pattern in exactly that order. Choose a code language above; the explanation
+          is the same in every language.
+        step: Context, problem, solution, consequences
+        note: Context → Problem → Solution (roles, collaborations) → Consequences
+        visual: >-
+          The same editor remains visible. The language selector changes only the code, not the
+          narration.
+  - id: context
+    part: Context
+    label: "Context: one change, many dependents"
+    title: When does the Observer pattern apply?
+    purpose: Recognize the situation that the Observer pattern addresses.
+    takeaway: >-
+      The context: several independent objects must react when one object changes, and they come and
+      go.
+    cues:
+      - id: cue-1
+        say: >-
+          First, the context. Observer applies when a change to one object must be reflected in
+          other objects. In our editor, the document changes, and three dependents react: the
+          preview, the character count, and the Save button.
+        step: One object, several dependents
+        note: The document changes; three dependents react.
+        visual: The text editor shows the document Hi with its three dependent views.
+      - id: cue-2
+        say: >-
+          Two more signs place us in this context. The dependents are independent of one another and
+          change for their own reasons. And they come and go at runtime, as panes open and close.
+          The object that changes should not need to know which dependents exist.
+        step: Signs of this context
+        note: Independent dependents · they come and go · the changing object should not know them.
+        visual: The text editor remains visible; each view is drawn as a separate part of the editor.
+  - id: conditions
+    part: Problem
+    label: "Problem: the document knows every widget"
+    title: The document knows every widget
+    purpose: Find what must change when another view is added.
+    takeaway: >-
+      The problem is UI-specific knowledge in the document, not the mere presence of an if
+      statement.
+    cues:
+      - id: cue-1
+        say: >-
+          Here is the first design. The document stores its new text, then checks which widgets
+          exist. If the preview is present, it writes the text into that view. The document has
+          already taken on two jobs: managing its content and knowing how one particular widget
+          displays it.
+        step: A special case for the preview
+        note: The model reaches directly into the Preview widget.
+        visual: >-
+          Beside the marked preview check, an ArchUML diagram shows DocumentBefore pointing directly
+          to Preview, CharacterCount, and SaveButton. Preview is highlighted.
+      - id: cue-2
+        say: >-
+          Next comes another condition for the character count. Its update is different: compute the
+          text length, convert it to display text, and write that into the counter. The document now
+          knows both widget identities and their presentation rules.
+        step: Another widget, another branch
+        note: The document also owns the counter's formatting rule.
+        visual: >-
+          The character-count condition and length-to-text assignment are marked beside the diagram,
+          where CharacterCount is highlighted.
+      - id: cue-3
+        say: >-
+          The Save button adds another existence check, then a decision: disable it for empty text
+          and enable it otherwise. This is a simplified editing rule, not a complete saving
+          workflow. A word-count panel or a second preview would add still more widget-specific code
+          here.
+        step: Conditions accumulate in the model
+        note: Widget-existence checks and the Save button's rule are mixed together.
+        visual: >-
+          The Save-widget check and its nested empty-text condition are marked beside the diagram,
+          where SaveButton is highlighted.
+      - id: cue-4
+        say: >-
+          Before we change the design, imagine adding a word-count panel. Which class would you have
+          to edit, and why? Explain the dependency in your own words. Pause here if you want more
+          thinking time.
+        step: Predict the cost of one more view
+        note: Which class must change when a word-count panel is added?
+        visual: >-
+          The whole method remains beside the diagram. DocumentBefore is highlighted while the
+          learner considers adding another view.
+        prediction: true
+        pause_after: 6
+      - id: cue-5
+        say: >-
+          Conditions are not the problem. The document is a domain class: it represents the content
+          being edited. Look at its arrows to the concrete UI classes. UI widgets and presentation
+          rules tend to change more often than the domain model, so domain classes should avoid
+          depending on them. Here, adding a view or changing its display rule forces us to edit the
+          document. That is the problem in pattern terms: how can a change to one object reach many
+          dependents without coupling it to their concrete classes?
+        step: The problem and its forces
+        note: UI changes more often; keep concrete widgets and presentation rules out of domain classes.
+        visual: >-
+          The whole method appears beside the diagram. DocumentBefore is highlighted, with three
+          outgoing references to concrete UI classes.
+        pause_after: 3
+  - id: roles
+    part: Solution
+    label: "Solution: Subject and Observer roles"
+    title: Depend on one update contract
+    purpose: Learn the solution's abstract roles before reading the code.
+    takeaway: The Subject knows the Observer contract; concrete Observers decide what an update means.
+    cues:
+      - id: cue-1
+        say: >-
+          The solution separates the responsibility to notify from the responsibility to react,
+          using abstract roles rather than concrete classes. The object whose state changes is the
+          Subject. An Observer is an object that reacts to those changes. The Subject keeps a
+          collection of registered Observers and calls their common update operation. Attach and
+          detach manage this collection. In the diagram, Subject holds references through the
+          Observer contract, so it can notify a Preview or Save button without depending on either
+          concrete class.
+        step: Subject — manage registrations and notify
+        note: Subject depends on Observer, not on concrete widget classes.
+        visual: >-
+          The Subject role is hatched and highlighted. Its association points to zero or more
+          Observers.
+      - id: cue-2
+        say: >-
+          Observer is the common notification contract. Here it has one operation, update, which
+          receives the new text. Every registered object must support that operation. Calling the
+          same operation can produce different behavior in different concrete Observers.
+        step: Observer — define the notification contract
+        note: Every Observer can receive update(text).
+        visual: The Observer interface is hatched and highlighted, including its update operation.
+      - id: cue-3
+        say: >-
+          The Concrete Subject owns the application state. Our Document fills this role. It changes
+          the text and asks the Subject's notification mechanism to send an update. The solid line
+          with a hollow triangle shows that this example inherits that mechanism from Subject. A
+          separate base class is one implementation choice, not a requirement of the pattern.
+        step: Concrete Subject — Document
+        note: Store the new text before notifying Observers.
+        visual: ConcreteSubject is highlighted. Its generalization arrow points to Subject.
+      - id: cue-4
+        say: >-
+          Each Concrete Observer implements the update contract and owns its reaction. Preview,
+          Character Count, and Save button are three concrete Observers in our editor. The dashed
+          line with a hollow triangle shows that a Concrete Observer fulfills the Observer contract.
+          The diagram draws that role once; many classes and objects can fill it.
+        step: Concrete Observer — each view
+        note: Preview, CharacterCount, and SaveButton each own their UI state.
+        visual: ConcreteObserver is highlighted. Its realization arrow points to the Observer interface.
+  - id: contract
+    part: Solution
+    label: "Solution: the Observer role in code"
+    title: One operation every Observer supports
+    purpose: Give the Subject a stable way to notify any view.
+    takeaway: The update contract describes a capability; it does not prescribe a widget's behavior.
+    cues:
+      - id: cue-1
+        say: >-
+          This code makes the Observer contract explicit in the selected language. The important
+          promise is language-independent: an Observer accepts an update containing text. We use
+          objects with an update operation to make the pattern roles visible. A language or
+          framework may also express the same collaboration with callable handlers.
+        step: Observer.update(text)
+        note: All concrete Observers honor the same contract.
+        visual: >-
+          The Observer declaration and update-operation signature are marked. Observer is
+          highlighted in the solution diagram beside the code.
+      - id: cue-2
+        say: >-
+          This is the push variant: the Subject passes the changed text to its Observers. In a pull
+          variant, the notification would prompt each Observer to query the Subject for the state it
+          needs. Push makes our example small, but it couples Observers to the text payload. Neither
+          variant removes every dependency.
+        step: Push the new text
+        note: "Push: update carries data. Pull: the Observer queries the Subject."
+        visual: >-
+          The update parameter is visible as the data passed from the Subject to each Observer.
+          Observer is highlighted in the solution diagram beside the code.
+  - id: subject
+    part: Solution
+    label: "Solution: the Subject role in code"
+    title: Registration replaces widget checks
+    purpose: Maintain the collection of Observers to notify.
+    takeaway: The Subject's notification loop stays the same as new kinds of Observer are added.
+    cues:
+      - id: cue-1
+        say: >-
+          The Subject stores a collection of Observers. Attach adds a registration. In this small
+          example, client code attaches each object once. Notice the type of the parameter:
+          Observer. The Subject does not ask whether the object is a preview, a counter, or a
+          button.
+        step: Attach an Observer
+        note: Client code chooses which objects participate.
+        visual: >-
+          The attach operation and addition to the Observer collection are marked. Subject is
+          highlighted in the solution diagram beside the code.
+      - id: cue-2
+        say: >-
+          Detach removes a registration. When a pane closes, client code detaches its Observer so
+          future changes no longer update it. Our example detaches only registered objects. A real
+          API should also define how repeated attachment and detaching an absent object behave.
+        step: Detach when a view leaves
+        note: Closing a view ends its registration.
+        visual: >-
+          The detach operation and removal from the Observer collection are marked. Subject is
+          highlighted in the solution diagram beside the code.
+      - id: cue-3
+        say: >-
+          Notification is now one loop. For each registered Observer, call update with the new text.
+          Dispatch selects that object's implementation. There is no branch for each kind of widget.
+          This loop calls Observers synchronously, one at a time; Observer does not automatically
+          create threads or asynchronous tasks.
+        step: Notify every registered Observer
+        note: One loop; the same contract; different reactions.
+        visual: >-
+          The loop and call to Observer.update are marked. Subject is highlighted in the solution
+          diagram beside the code.
+  - id: document
+    part: Solution
+    label: "Solution: the Concrete Subject in code"
+    title: Change the state, then notify
+    purpose: Keep the document consistent before any Observer reacts.
+    takeaway: The Document changes text without knowing any concrete Observer's display rule.
+    cues:
+      - id: cue-1
+        say: >-
+          The Document is our concrete Subject. Its state-changing operation first stores the new
+          text. Only then does it notify Observers. This ordering matters: if an Observer reads the
+          document during an update, it should see the completed change, not an intermediate state.
+        step: First update the Subject's state
+        note: The document must be consistent before callbacks run.
+        visual: >-
+          The text assignment in the Document is marked before the notification call. Document is
+          highlighted in the solution diagram beside the code.
+      - id: cue-2
+        say: >-
+          Now compare this notification call with the original conditional-heavy method. The
+          document no longer formats a counter or enables a button. It announces the new text
+          through the shared mechanism. We still choose when notifications occur: this example
+          notifies on every call, even if the supplied text is unchanged.
+        step: Then notify the Observers
+        note: This implementation notifies on every setter call.
+        visual: >-
+          The single notification call is marked; no widget-specific branches remain in Document.
+          Document is highlighted in the solution diagram beside the code.
+  - id: views
+    part: Solution
+    label: "Solution: Concrete Observers in code"
+    title: Put UI behavior in the views
+    purpose: Give each view responsibility for its own reaction.
+    takeaway: Observer relocates widget-specific behavior; it does not eliminate legitimate conditions.
+    cues:
+      - id: cue-1
+        say: >-
+          Preview implements Observer. Its update operation copies the new text into its own display
+          state. These examples use small, toolkit-neutral widget objects: the text and enabled
+          fields stand for what a real UI toolkit would display. We leave framework setup out so you
+          can see the collaboration.
+        step: Preview owns its displayed text
+        note: Widget fields stand for visible UI state; toolkit rendering is omitted.
+        visual: >-
+          Preview and its text assignment are marked in the selected language. Preview is
+          highlighted in the solution diagram beside the code.
+      - id: cue-2
+        say: >-
+          Character Count is another Observer. It receives the same text but reacts differently: its
+          display becomes the text's length. Our examples use simple text such as Hi and Hello,
+          giving counts of two and five. Real editors must also choose how to count Unicode
+          characters.
+        step: CharacterCount owns its formatting
+        note: "The same update: Hi → 2; Hello → 5."
+        visual: >-
+          CharacterCount and its length-to-text conversion are marked. CharacterCount is highlighted
+          in the solution diagram beside the code.
+      - id: cue-3
+        say: >-
+          The Save button owns the empty-text condition. That condition remains useful: it expresses
+          the button's rule. What disappeared from the document was the knowledge of which widgets
+          exist and how to update them. Moving responsibility is the design improvement, not
+          reaching a count of zero if statements.
+        step: SaveButton owns its condition
+        note: Disable for empty text; enable otherwise.
+        visual: >-
+          SaveButton and its empty-text branch are marked. SaveButton is highlighted in the solution
+          diagram beside the code.
+  - id: trace
+    part: Solution
+    label: "Solution: how the roles collaborate"
+    title: Follow the runtime collaboration
+    purpose: Predict which Observers receive each change.
+    takeaway: Registration controls who receives the next notification.
+    cues:
+      - id: cue-1
+        say: >-
+          A solution also describes how its roles collaborate at runtime. Client code creates the
+          Document and the three concrete Observers, then attaches them. This composition code knows
+          the concrete objects; the Subject's notification code does not. Our views begin empty, the
+          count is zero, and Save is disabled. Attaching alone does not request an initial update in
+          this example.
+        step: Client code connects the objects
+        note: "Registered Observers: Preview, CharacterCount, SaveButton."
+        visual: >-
+          The three attach calls are marked. The editor illustration is empty, the count is zero,
+          and Save is disabled. Subject is highlighted in the solution diagram beside the code.
+      - id: cue-2
+        say: >-
+          Set the document to Hi. The Document stores Hi, then the Subject calls update on each
+          registered Observer. Preview displays Hi. Character Count displays two. Save becomes
+          enabled. These are ordinary calls in registration order in this implementation, not
+          simultaneous updates guaranteed by the pattern.
+        step: Hi reaches all three Observers
+        note: "Subject text: Hi · Preview: Hi · Count: 2 · Save: enabled."
+        visual: >-
+          The first edit is marked. All three views display their reaction to Hi. Document is
+          highlighted in the solution diagram beside the code.
+      - id: cue-3
+        say: >-
+          Now close the preview pane by detaching its Observer, and change the document to Hello.
+          Before continuing, predict the count and the Save state. Does the detached Preview
+          object's stored text change? Pause the narration if you want more thinking time.
+        step: Predict after detaching Preview
+        note: "Next edit: Hello. Which objects receive update?"
+        visual: >-
+          The detach call is marked. Preview is labeled detached; its last stored text is Hi. The
+          next edit has not yet been shown. Preview is highlighted in the solution diagram beside
+          the code.
+        prediction: true
+        pause_after: 6
+      - id: cue-4
+        say: >-
+          The count becomes five and Save remains enabled. The detached Preview object receives no
+          update, so its stored text remains Hi, although its pane is closed. The Subject's loop did
+          not need a special case for a closed preview. Removing its registration was enough.
+        step: Only the remaining Observers react
+        note: "Subject: Hello · Count: 5 · Save: enabled · Detached Preview retains Hi."
+        visual: >-
+          The second edit is marked. The document shows Hello, the count shows five, and the closed
+          Preview retains Hi in its stored state. Document is highlighted in the solution diagram
+          beside the code.
+  - id: consequences
+    part: Consequences
+    label: "Consequences: benefits and liabilities"
+    title: Flexibility has a cost
+    purpose: Weigh the benefits against lifecycle and execution responsibilities.
+    takeaway: >-
+      Observer reduces concrete coupling but makes the notification contract and lifecycle
+      important.
+    cues:
+      - id: cue-1
+        say: >-
+          Finally, the consequences, which every pattern description must state. The main benefit is
+          extension through the Observer contract. Add a word-count view and register it without
+          changing the Document's notification loop. Views can also join and leave at runtime.
+          Coupling is reduced to a shared contract, but not erased: changing that contract can still
+          affect every Observer.
+        step: Add a view without editing the Subject
+        note: A new concrete Observer plus registration is enough when the contract fits.
+        visual: A benefit card explains adding and registering a new Observer.
+      - id: cue-2
+        say: >-
+          The cost is indirect control flow. To explain why a view changed, you must find where it
+          was attached and where the Subject notified it. Slow Observers delay the caller in our
+          synchronous version. An exception aborts this simple loop, so later Observers miss that
+          update. Applications must choose an error policy deliberately.
+        step: Account for callback work and failure
+        note: Synchronous notification adds Observer work to the edit's latency.
+        visual: >-
+          A debugging card names registration and notification sites; a runtime-policy card names
+          failure and ordering.
+      - id: cue-3
+        say: >-
+          Registrations also have lifetimes. A long-lived Subject can retain an unused Observer; a
+          non-owning reference can outlive its target. Detach views when they close. Our teaching
+          code assumes one thread, no subscription changes during notification, and no recursive
+          edits from update. Production code needs explicit policies for these cases, rather than
+          relying on the pattern name.
+        step: Own the registration lifecycle
+        note: Detach before a view is discarded; define callback and concurrency policies.
+        visual: >-
+          The lifecycle note lists single-threaded calls, stable registrations during notification,
+          and no recursive edits.
+  - id: applicability
+    part: Context
+    label: "Context revisited: when to use Observer"
+    title: Is this a one-to-many change?
+    purpose: Decide whether the Observer pattern's context holds before applying it.
+    takeaway: Use Observer when independently evolving dependents need to react to a Subject's changes.
+    cues:
+      - id: cue-1
+        say: >-
+          Consequences tell us when a pattern pays off, so revisit the context. Observer fits when
+          one object's changes matter to several independent dependents, especially when the set of
+          dependents can change. A document with optional views is a strong example. The Subject
+          should not have to know each view's class. With just one fixed collaborator and no need
+          for flexible registration, a direct call may be clearer.
+        step: Use the pattern to handle real variation
+        note: Look for independently changing views and a stable update contract.
+        visual: The context cards contrast optional editor views with one fixed collaborator.
+      - id: cue-2
+        say: >-
+          Do not assume Observer provides reliable delivery across processes. A message broker,
+          persistence, retry policy, or scheduling mechanism would be additional design decisions.
+          Our example is direct collaboration among objects in one process. Keep that boundary clear
+          when applying the idea to a larger system.
+        step: Notification is not a delivery guarantee
+        note: The pattern alone supplies no network transport, retries, or asynchronous execution.
+        visual: A boundary card distinguishes local notification from delivery across processes.
+  - id: transfer
+    label: Check your understanding
+    title: Add a word-count view
+    purpose: Explain a change without memorizing language syntax.
+    takeaway: The Subject owns notification; each Observer owns its reaction.
+    cues:
+      - id: cue-1
+        say: >-
+          One last design check. You need an optional word-count panel that can be opened and closed
+          while editing. Which role should it play? What code must be added, and what should stay
+          unchanged? Explain your answer before continuing.
+        step: Make the responsibility decision
+        note: Name the role, the new behavior, and the registration lifecycle.
+        visual: >-
+          The editor illustration provides the familiar context; the prompt asks how to add an
+          optional word-count panel without showing an answer.
+        prediction: true
+        pause_after: 6
+      - id: cue-2
+        say: >-
+          Make the panel a concrete Observer with an update operation that computes its own word
+          count. Attach it when the panel opens and detach it when it closes. If it opens after text
+          already exists, explicitly initialize it from the current document state; attach alone
+          does not do that here. The Subject's notification loop stays unchanged. That is the
+          central separation: the Subject announces a change, and each Observer decides how to
+          react.
+        step: Concrete Observer + attach + detach
+        note: Initialize a newly opened view; keep the Subject's notification loop.
+        visual: >-
+          The answer names the concrete Observer role, update behavior, initialization, attachment,
+          and detachment.
+  - id: summary
+    label: "Summary: the whole pattern"
+    title: Context, problem, solution, consequences
+    purpose: Recall every part of the Observer pattern before the summary quiz.
+    takeaway: Context, problem, solution, and consequences make up the mental model for every pattern.
+    cues:
+      - id: cue-1
+        say: >-
+          To finish, recall the whole pattern. Context: several independent objects must react when
+          one object changes, and they come and go. Problem: an object that updates its dependents
+          directly knows every concrete dependent. Solution: a Subject notifies its registered
+          Observers through one update contract, and each Concrete Observer owns its reaction.
+          Consequences: new dependents without editing the Subject, at the cost of indirect control
+          flow and registration lifecycles. The summary quiz checks each part on a new example.
+        step: The Observer pattern in four parts
+        note: Context → Problem → Solution → Consequences
+        visual: Four cards summarize the Observer pattern's context, problem, solution, and consequences.

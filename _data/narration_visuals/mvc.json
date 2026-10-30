@@ -1,0 +1,355 @@
+{
+  "version": 1,
+  "presentation": {
+    "visuals": {
+      "ui": "mvc-dashboard-panel.html"
+    },
+    "scripts": [
+      "mvc-dashboard.js"
+    ],
+    "styles": [
+      "/css/mvc-narration.css"
+    ]
+  },
+  "resources": {
+    "languages": [
+      "python",
+      "java",
+      "cpp",
+      "typescript"
+    ],
+    "default_language": "python",
+    "example_order": [
+      "model",
+      "views",
+      "controllers",
+      "wire"
+    ],
+    "diagrams": {
+      "structure": {
+        "type": "crc",
+        "label": "CRC cards for the Model-View-Controller roles",
+        "description": "Three CRC cards. Model holds the data and its rules, keeps a list of dependents, and tells them when the data changes; it works with View and Controller. View displays the data, asks the model for it, redraws after each change, and creates its controller; it works with Controller and Model. Controller receives the user's input, turns it into requests for the model or its view, and reacts to changes only if it needs to; it works with View and Model.",
+        "caption": "Each card names a role, what it is responsible for on the left, and which roles it works with on the right. The two lists are independent: entries on the same line are not paired.",
+        "source": "@startuml\nlayout vertical\n",
+        "steps": [
+          "card Model {\n  responsibility: Holds the data and its rules\n  responsibility: Keeps a list of dependents\n  responsibility: Tells them when the data changes\n  collaborator: View\n  collaborator: Controller\n}\n",
+          "card View {\n  responsibility: Displays the data\n  responsibility: Asks the model for the data\n  responsibility: Redraws after each change\n  responsibility: Creates its controller\n  collaborator: Controller\n  collaborator: Model\n}\n",
+          "card Controller {\n  responsibility: Receives the user's input\n  responsibility: Turns it into model or view requests\n  responsibility: Reacts to changes, if it needs to\n  collaborator: View\n  collaborator: Model\n}\n"
+        ]
+      },
+      "roles": {
+        "label": "Class diagram of the Model-View-Controller roles",
+        "description": "Model notifies any number of Observers and offers attach, notify, getData, and setData. View and Controller both implement Observer. View reads its Model; Controller changes the Model and adjusts its View.",
+        "caption": "Solid arrows show which role calls which; dashed arrows with hollow triangles show which roles implement Observer. The Model points only to the Observer interface, so it never depends on a concrete view or controller.",
+        "source": "@startuml\nlayout landscape\ninterface Observer {\n  + update()\n}\nclass Model {\n  + attach(observer)\n  + notify()\n  + getData()\n  + setData(value)\n}\nclass View {\n  + update()\n  + display()\n}\nclass Controller {\n  + handleEvent(event)\n}\nModel --> \"*\" Observer : notifies\nView ..|> Observer\nController ..|> Observer\nView --> \"1\" Model : reads\nController --> \"1\" Model : changes\nController --> \"1\" View : adjusts\n@enduml\n"
+      },
+      "solution": {
+        "label": "Model-View-Controller roles in the visualizer",
+        "description": "Dataset keeps any number of Observers and offers attach, detach, notify, setMinutes, and rows. View and Controller both implement Observer. Each View reads its Dataset and is paired with one Controller; each Controller changes its Dataset.",
+        "caption": "Dataset plays the Model; View and Controller are the base classes of the other two roles. The Dataset depends only on the Observer interface, never on a view or controller class.",
+        "source": "@startuml\nlayout landscape\ninterface Observer {\n  + update()\n}\nclass Dataset {\n  + attach(observer)\n  + detach(observer)\n  + notify()\n  + setMinutes(category, minutes)\n  + rows()\n}\nclass View {\n  + initialize()\n  + update()\n  + highlight(category)\n}\nclass Controller {\n  + handleEvent(event)\n  + update()\n}\nDataset --> \"*\" Observer : notifies\nView ..|> Observer\nController ..|> Observer\nView --> \"1\" Dataset : reads\nController --> \"1\" Dataset : changes\nView \"1\" -- \"1\" Controller : pairs with\n@enduml\n"
+      },
+      "views": {
+        "label": "View classes in the visualizer",
+        "description": "View implements Observer, reads one Dataset, and declares update, highlight, makeController, and draw. TableView, BarChartView, and PieChartView each extend View and define draw.",
+        "caption": "Each concrete view inherits update from View and supplies only its own draw method.",
+        "source": "@startuml\nlayout portrait\ninterface Observer {\n  + update()\n}\nclass Dataset {\n  + rows()\n}\nclass View {\n  + update()\n  + highlight(category)\n  # makeController()\n  # draw(rows)\n}\nclass TableView {\n  # draw(rows)\n}\nclass BarChartView {\n  # draw(rows)\n}\nclass PieChartView {\n  # draw(rows)\n}\nView ..|> Observer\nView --> \"1\" Dataset : reads\nTableView --|> View\nBarChartView --|> View\nPieChartView --|> View\n@enduml\n"
+      },
+      "controllers": {
+        "label": "Controller classes in the visualizer",
+        "description": "TableController and ChartController extend Controller, which declares handleEvent and update. TableController sends setMinutes to the Dataset; ChartController sends highlight to a View.",
+        "caption": "Each controller turns an input event into a request: a change to the data goes to the model, and a change to what one view shows goes to that view.",
+        "source": "@startuml\nlayout portrait\nclass Controller {\n  + handleEvent(event)\n  + update()\n}\nclass TableController {\n  + handleEvent(event)\n}\nclass ChartController {\n  + handleEvent(event)\n}\nclass Dataset {\n  + setMinutes(category, minutes)\n}\nclass View {\n  + highlight(category)\n}\nTableController --|> Controller\nChartController --|> Controller\nTableController --> Dataset : setMinutes\nChartController --> View : highlight\n@enduml\n"
+      },
+      "input": {
+        "type": "sequence",
+        "label": "Sequence of one edit in the table",
+        "description": "The table's controller, handling an edit event, calls setMinutes on the dataset. The dataset calls notify on itself, then update on the table view, which calls rows on the dataset, and update on the bar chart view, which also calls rows on the dataset.",
+        "caption": "Lifelines are named like the variables in the main program. The edit enters through the table's controller; every view hears about it from the model. Messages appear as the narration reaches them.",
+        "source": "@startuml\nparticipant controller\nparticipant dataset\nparticipant table\nparticipant bars\n",
+        "steps": [
+          "activate controller\ncontroller -> dataset: setMinutes(\"Study\", 90)\nactivate dataset\n",
+          "dataset -> dataset: notify()\ndataset -> table: update()\nactivate table\ntable -> dataset: rows()\ndeactivate table\n",
+          "dataset -> bars: update()\nactivate bars\nbars -> dataset: rows()\ndeactivate bars\ndeactivate dataset\ndeactivate controller\n"
+        ]
+      },
+      "setup": {
+        "type": "sequence",
+        "label": "Sequence of setting up one view",
+        "description": "The main program creates the dataset. It then creates the bar chart view with the dataset and calls initialize on it. The view calls attach on the dataset, calls makeController on itself, creates its controller, and calls rows on the dataset to draw itself.",
+        "caption": "Lifelines are named like the variables in the main program; the controller is a ChartController. The model is created first, then each view, which joins the model's list and creates its own controller.",
+        "source": "@startuml\nparticipant main\nparticipant dataset\nparticipant bars\nparticipant controller\n",
+        "steps": [
+          "main -> dataset: \u00abcreate\u00bb\n",
+          "main -> bars: \u00abcreate\u00bb(dataset)\nmain -> bars: initialize()\nactivate bars\nbars -> dataset: attach(bars)\n",
+          "bars -> bars: makeController()\nbars -> controller: \u00abcreate\u00bb(bars)\nbars -> dataset: rows()\ndeactivate bars\n"
+        ]
+      }
+    }
+  },
+  "scenes": {
+    "intro": {
+      "state": {
+        "ui": true
+      },
+      "cues": {
+        "cue-1": {
+          "ui_state": "edit_demo"
+        },
+        "cue-2": {
+          "ui_state": "edited"
+        },
+        "cue-3": {
+          "ui_state": "edited"
+        }
+      }
+    },
+    "context": {
+      "state": {
+        "ui": true
+      },
+      "cues": {
+        "cue-1": {
+          "ui_state": "start"
+        },
+        "cue-2": {
+          "ui_state": "edited"
+        }
+      }
+    },
+    "problem": {
+      "state": {
+        "code": "problem",
+        "ui": true
+      },
+      "cues": {
+        "cue-1": {
+          "focus": "data",
+          "ui_state": "start",
+          "ui_redraw": "all"
+        },
+        "cue-2": {
+          "focus": "edit",
+          "ui_state": "edited",
+          "ui_redraw": "all"
+        },
+        "cue-3": {
+          "focus": "redraw",
+          "ui_state": "edited",
+          "ui_redraw": "all"
+        },
+        "cue-4": {
+          "focus": "redraw_all",
+          "ui_state": "clicked",
+          "ui_redraw": "all"
+        },
+        "cue-5": {
+          "ui_state": "clicked",
+          "ui_redraw": "all"
+        },
+        "cue-6": {
+          "focus": "redraw",
+          "ui_state": "clicked",
+          "ui_redraw": "all"
+        },
+        "cue-7": {
+          "focus": "redraw_all",
+          "ui_state": "clicked",
+          "ui_redraw": "all"
+        }
+      }
+    },
+    "model_role": {
+      "state": {
+        "code": "model",
+        "diagram": "solution"
+      },
+      "cues": {
+        "cue-1": {
+          "focus": "data",
+          "diagram_focus": "Dataset"
+        },
+        "cue-2": {
+          "focus": "registry",
+          "diagram_focus": "Observer"
+        },
+        "cue-3": {
+          "focus": "notify",
+          "diagram_focus": "Dataset"
+        }
+      }
+    },
+    "view_role": {
+      "state": {
+        "code": "views",
+        "diagram": "views"
+      },
+      "cues": {
+        "cue-1": {
+          "focus": "update",
+          "diagram_focus": "View"
+        },
+        "cue-2": {
+          "focus": "draw",
+          "diagram_focus": "BarChartView"
+        },
+        "cue-3": {
+          "focus": "highlight",
+          "diagram_focus": "View"
+        }
+      }
+    },
+    "controller_role": {
+      "state": {
+        "code": "controllers",
+        "diagram": "controllers"
+      },
+      "cues": {
+        "cue-1": {
+          "focus": "base",
+          "diagram_focus": "Controller"
+        },
+        "cue-2": {
+          "focus": "table",
+          "diagram_focus": "TableController"
+        },
+        "cue-3": {
+          "focus": "chart",
+          "diagram_focus": "ChartController"
+        },
+        "cue-4": {
+          "focus": "update",
+          "diagram_focus": "Controller"
+        }
+      }
+    },
+    "collaborations": {
+      "state": {
+        "code": "wire",
+        "diagram": "input"
+      },
+      "cues": {
+        "cue-1": {
+          "focus": "edit",
+          "diagram_steps": 1
+        },
+        "cue-2": {
+          "focus": "edit",
+          "diagram_steps": 1
+        },
+        "cue-3": {
+          "focus": "edit",
+          "diagram_steps": 2
+        },
+        "cue-4": {
+          "focus": "edit",
+          "diagram_steps": 3
+        },
+        "cue-5": {
+          "focus": "click",
+          "diagram_steps": 3
+        }
+      }
+    },
+    "setup": {
+      "state": {
+        "code": "wire",
+        "diagram": "setup"
+      },
+      "cues": {
+        "cue-1": {
+          "focus": "setup",
+          "diagram_steps": 1
+        },
+        "cue-2": {
+          "focus": "setup",
+          "diagram_steps": 2
+        },
+        "cue-3": {
+          "focus": "setup",
+          "diagram_steps": 3
+        }
+      }
+    },
+    "solution": {
+      "state": {
+        "diagram": "structure"
+      },
+      "cues": {
+        "cue-1": {
+          "diagram_steps": 1
+        },
+        "cue-2": {
+          "diagram_steps": 2
+        },
+        "cue-3": {
+          "diagram_steps": 3
+        },
+        "cue-4": {
+          "diagram": "roles",
+          "diagram_focus": "Observer"
+        },
+        "cue-5": {
+          "diagram": "roles",
+          "diagram_focus": "Controller"
+        }
+      }
+    },
+    "consequences": {
+      "state": {},
+      "cues": {
+        "cue-1": {},
+        "cue-2": {},
+        "cue-3": {},
+        "cue-4": {}
+      }
+    },
+    "applicability": {
+      "state": {},
+      "cues": {
+        "cue-1": {},
+        "cue-2": {},
+        "cue-3": {}
+      }
+    },
+    "transfer": {
+      "state": {
+        "ui": true
+      },
+      "cues": {
+        "cue-1": {
+          "ui_state": "readonly"
+        },
+        "cue-2": {
+          "ui_state": "readonly"
+        }
+      }
+    },
+    "summary": {
+      "state": {
+        "cards": [
+          {
+            "title": "Context",
+            "text": "Interactive apps whose interface keeps changing while users edit the data."
+          },
+          {
+            "title": "Problem",
+            "text": "When the interface is tangled up with the data, every new display or port risks breaking the data."
+          },
+          {
+            "title": "Solution",
+            "text": "A model holds the data and announces changes; views redraw from it; controllers turn input into requests."
+          },
+          {
+            "title": "Consequences",
+            "text": "Many synchronized, swappable views and a portable interface, at the cost of more classes, extra redraws, and code that depends on the model."
+          }
+        ]
+      },
+      "cues": {
+        "cue-1": {}
+      }
+    }
+  }
+}

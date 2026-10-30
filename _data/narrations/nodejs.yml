@@ -1,0 +1,383 @@
+# Edit speech and teaching text here. Visual state lives in ../narration_visuals/nodejs.json.
+version: 1
+id: nodejs
+kind: explainer
+title: Node.js in motion
+lesson:
+  name: Node.js
+speech:
+  voice: af_heart
+  speed: 0.95
+  pronunciations:
+    JavaScript: Javascript
+    Node.js: Node JS
+    V8: V eight
+    libuv: lib UV
+    readFileSync: read file sync
+    readFile: read file
+    onFile: on file
+    showFile: show file
+    createServer: create server
+    console.log: console dot log
+    console.error: console dot error
+    setTimeout: set timeout
+    node:fs/promises: node colon FS slash promises
+    node:fs: node colon FS
+    node:http: node colon HTTP
+    note.txt: note dot text
+    utf8: UTF eight
+    npm: NPM
+    package.json: package dot Jason
+    node_modules: node modules
+media:
+  audio: /assets/audio/nodejs-basics.mp3
+  script: /assets/narration/nodejs-basics.txt
+  captions: /assets/narration/nodejs-basics.vtt
+scenes:
+  - id: runtime
+    label: The runtime
+    title: JavaScript beyond the browser
+    takeaway: The language stays the same. The runtime supplies different tools.
+    cues:
+      - id: cue-1
+        say: >-
+          How can JavaScript read a file or answer a web request without a browser? It needs a
+          runtime: an environment that executes the language and supplies useful tools. Node.js is
+          that environment for a computer or server. It is not a different programming language.
+        step: Language and runtime
+        note: JavaScript describes the instructions. A runtime executes them.
+        visual: >-
+          One JavaScript program connects to two environments. A browser supplies page tools;
+          Node.js supplies file and network tools. The program is the same language in both.
+      - id: cue-2
+        say: >-
+          Inside Node.js, V8 executes your JavaScript. Node adds capabilities such as reading files
+          and accepting network connections. A browser instead provides tools for interacting with a
+          web page. Keep these two ideas separate: JavaScript is the language; the runtime
+          determines which tools your program can use.
+        step: Tools around the language
+        note: V8 executes JavaScript; Node supplies file and network APIs.
+        visual: >-
+          The Node.js environment is emphasized. Its V8 engine is connected to a file and a network
+          endpoint; the browser has a separate web-page surface.
+  - id: syntax
+    label: JavaScript syntax
+    title: Values, functions, and calls
+    takeaway: Defining a function stores instructions. Calling it runs them.
+    purpose: Greet Sam and count how many greetings we have made.
+    cues:
+      - id: cue-1
+        say: >-
+          Our first program greets Sam and counts the greeting. Read it from top to bottom. Const
+          gives the text Hello the name greeting; the quotation marks make it a string. Let gives
+          the number zero the name count. We use let because count will change. A const binding
+          cannot be reassigned.
+        step: Give values names
+        note: Quotes make a string. The equals sign assigns a value to a name.
+        visual: >-
+          Code lines one and two are highlighted. A value table connects greeting to the string
+          Hello and count to the number zero.
+      - id: cue-2
+        say: >-
+          Next, the arrow creates a function and stores it under the name greet. Name, in
+          parentheses, is a parameter: a name for the input the function will receive. The curly
+          braces enclose its body. We have described the work, but have not run it. Count is still
+          zero.
+        step: Define the work
+        note: (name) is the input parameter; { ... } holds the function body.
+        visual: >-
+          The function definition is outlined. A function object has a name input, a body containing
+          count and output operations, and a Defined, not running status. Count remains zero.
+      - id: cue-3
+        say: >-
+          The last line calls greet. Parentheses after a function name mean run it, and Sam is the
+          argument we pass in. Inside this call, the parameter name now refers to Sam. Execution
+          moves into the function body.
+        step: Supply an argument
+        note: greet("Sam") calls the function; its name parameter receives "Sam".
+        visual: >-
+          The call on line seven is highlighted. An argument labelled Sam connects to the function's
+          name parameter, showing the concrete value name now holds.
+      - id: cue-4
+        say: >-
+          Count plus equals one adds one to count, so it becomes one. The console.log call prints
+          the values of greeting and name: Hello Sam. The dot selects log from console; the
+          parentheses supply its inputs. The function then finishes. These ordinary JavaScript steps
+          run in order, one at a time.
+        step: Run the body
+        note: count += 1 adds one. console.log prints values to the terminal.
+        visual: >-
+          The two body lines are highlighted. Count changes from zero to one, and the output
+          terminal displays Hello Sam. A completed call returns to the main program.
+  - id: blocking
+    label: Blocking
+    title: "Blocking: the thread waits"
+    takeaway: A synchronous read must finish before the next line can run.
+    purpose: Read note.txt, print its contents, then print Next.
+    cues:
+      - id: cue-1
+        say: >-
+          Now we want to read a file, print its contents, and print Next. Our file, note.txt,
+          contains Hello from disk. Assume it exists and the read succeeds. Require loads Node's
+          built-in file-system module; we name that collection of tools fs. The dot lets us select
+          readFileSync from it.
+        step: Start with a concrete file
+        note: note.txt contains "Hello from disk." Assume the read succeeds.
+        visual: >-
+          Line one loads the file-system module. A paper-shaped note.txt shows Hello from disk. The
+          execution and output areas are still empty.
+      - id: cue-2
+        say: >-
+          Here, readFileSync receives the file name and utf8, which asks Node to decode the bytes as
+          text. This call does not return until the read finishes. During that wait, this JavaScript
+          thread cannot run the next line or another request's handler. That is what blocking means
+          here.
+        step: Wait inside the call
+        note: utf8 asks for text. readFileSync returns that text only when ready.
+        visual: >-
+          Execution is stopped at line two. A lock marks the JavaScript thread as waiting while a
+          separate file-read progress track advances. The output remains empty.
+      - id: cue-3
+        say: >-
+          When the call returns, text receives Hello from disk. Only now do the two console.log
+          calls run. First the file contents, then Next. The important cost is not just a slow file:
+          other work needing this thread has been unable to make progress during the wait.
+        step: Resume with the result
+        note: "Output order: Hello from disk. then Next."
+        visual: >-
+          The completed file supplies text. The lock opens, lines three and four are highlighted,
+          and the output shows Hello from disk. above Next.
+  - id: nonblocking
+    label: Non-blocking
+    title: "Non-blocking: use the waiting time"
+    takeaway: Start the read now. Handle its result later. Keep JavaScript available.
+    purpose: Start the same file read, but allow Next to print without waiting.
+    cues:
+      - id: cue-1
+        say: >-
+          What if Next could print while the file is being read? This version uses readFile without
+          Sync. The file and encoding stay the same. The new third argument, onFile, is a function
+          to handle the result later. We will define it next. This call starts the operation and
+          returns without the file text.
+        step: Register the completion function
+        note: The third argument, onFile, is a function to call with the result.
+        visual: >-
+          The same file is shown. Line two starts a read and registers onFile as its completion
+          function. The JavaScript thread is not locked.
+      - id: cue-2
+        say: >-
+          JavaScript moves on and prints Next. Node coordinates the file operation using the
+          operating system and a libuv worker pool. Once our current code finishes, the JavaScript
+          thread can run other ready work. The file operation and JavaScript can make progress
+          during the same period.
+        step: Run the next line
+        note: Next prints while the file operation is still pending.
+        visual: >-
+          Next appears in the output while the file-read track is still in progress. The JavaScript
+          thread becomes available for other ready work.
+      - id: cue-3
+        say: >-
+          When the read completes, onFile becomes ready to run with the result. The event loop
+          coordinates when ready callbacks execute. A ready callback does not interrupt JavaScript
+          already running; it must wait for that code to finish. The ready area here is a simplified
+          view of Node's queues.
+        step: Completion is ready, not an interruption
+        note: The event loop schedules ready callbacks when JavaScript can run them.
+        visual: >-
+          The file has finished. An onFile function token appears in a separate ready area with the
+          file result. It has not entered the JavaScript thread yet.
+      - id: cue-4
+        say: >-
+          Now the callback runs and prints Hello from disk, after Next. This is concurrency:
+          operations overlap in time. It is not two callbacks running simultaneously on this
+          JavaScript thread. A long calculation still occupies the thread and delays other
+          callbacks, even in a program that uses asynchronous file reads.
+        step: Run the callback with the result
+        note: "Output order: Next, then Hello from disk. Same file, different order."
+        visual: >-
+          The onFile token travels from the ready area into the JavaScript thread. The output now
+          shows Next above Hello from disk. Only one function occupies the thread.
+  - id: callbacks
+    label: Callbacks
+    title: A function you hand over
+    takeaway: Pass a function value now. The receiving code decides when to call it.
+    purpose: Handle either the file text or a read error.
+    cues:
+      - id: cue-1
+        say: >-
+          A callback is a function you pass to other code. This snippet defines onFile to handle
+          either success or failure. Function, followed by a name, parameters, and a body, is
+          another way to define a function. The last line passes onFile to readFile. There are no
+          call parentheses after onFile: we hand over the function, not the result of calling it
+          now.
+        step: Pass the function, not its return value
+        note: onFile refers to a function. onFile() would call it immediately.
+        visual: >-
+          The named onFile function connects to the third argument of readFile. The labels contrast
+          onFile, pass the function, with onFile(), call now.
+      - id: cue-2
+        say: >-
+          On success, Node calls our function with two arguments: null first, meaning no error, and
+          the file text second. They become the values of error and text. The if statement tests
+          error. Null makes that condition false, so we skip the error block and print Hello from
+          disk.
+        step: Trace the success path
+        note: error is null; text is "Hello from disk." The error branch is skipped.
+        visual: >-
+          Two argument ports supply null to error and Hello from disk. to text. The success path
+          bypasses the error branch and reaches console.log(text).
+      - id: cue-3
+        say: >-
+          Suppose the file is missing instead. Error now holds an error object, so the condition is
+          true. The console.error call reports the problem. Return exits this callback immediately,
+          before console.log can try to print missing data. Handling failure is part of using an
+          asynchronous result.
+        step: Trace the failure path
+        note: Return exits this callback, so it cannot print missing file data.
+        visual: >-
+          The error input changes to an error object and the text input is unavailable. The
+          highlighted path reports the error and stops at return; the success output is not reached.
+      - id: cue-4
+        say: >-
+          We can put the same function directly in the call. The arrow connects the error and text
+          parameters to the body in braces. This changes the notation, not the behavior. Here,
+          readFile calls it later because readFile is asynchronous. A callback is not automatically
+          asynchronous; other functions may call their callbacks immediately.
+        step: Same behavior, inline notation
+        note: The arrow function is the third argument. Its parameters and body are unchanged.
+        visual: >-
+          The code switches to the equivalent inline arrow callback. The same two input ports and
+          the same success and error paths remain in place.
+  - id: await
+    label: Promises and await
+    title: Pause a function, free the thread
+    takeaway: Await waits inside this function, without blocking the whole thread.
+    purpose: Read the same file using a promise instead of a callback argument.
+    cues:
+      - id: cue-1
+        say: >-
+          Here is another way to express the same task. We load the promises version of the
+          file-system module. Its readFile returns a promise: an object representing an eventual
+          result or failure. Calling showFile starts our async function. At await, this function
+          suspends until the promise settles; the JavaScript thread can do other work.
+        step: Receive a promise, not the text
+        note: A promise represents an eventual result or failure. It starts pending.
+        visual: >-
+          The file read supplies a pending promise. showFile is paused at await, with text not yet
+          assigned. A separate JavaScript-thread track remains available.
+      - id: cue-2
+        say: >-
+          On success, the promise fulfills with Hello from disk. The function can resume: await
+          produces that value, text receives it, and console.log prints it. The later step is
+          written below the read, but it still runs only after the asynchronous result is ready.
+        step: Resume with the value
+        note: When the promise fulfills, await produces the file text.
+        visual: >-
+          The promise is fulfilled with Hello from disk. The value moves to text, showFile resumes,
+          and the output displays the file contents.
+      - id: cue-3
+        say: >-
+          On failure, await throws the rejection, and catch receives the error. We report it instead
+          of printing file text. Try and catch keep those two outcomes separate. Notice what async
+          does not do: a long calculation inside showFile still occupies the JavaScript thread.
+          Await is not a command to create another thread.
+        step: Follow a rejected promise
+        note: try and catch handle failure. Async does not move calculations to another thread.
+        visual: >-
+          The alternate failure path marks the promise rejected and carries an error to catch. The
+          output reports an error instead of file text.
+  - id: server
+    label: A web server
+    title: One request, one response
+    takeaway: Register a handler once. Node calls it for each incoming request.
+    purpose: Answer a browser request with the text Hello!
+    cues:
+      - id: cue-1
+        say: >-
+          Let's use a callback to answer a browser. This program loads Node's built-in HTTP module,
+          then creates a server. The createServer call receives an arrow function as its request
+          handler. We are registering what to do later. We have not sent Hello yet, because no
+          request has arrived.
+        step: Register the request handler
+        note: createServer receives a callback. Registering it does not run its body.
+        visual: >-
+          The server stores a request handler. The browser has not sent a request, and the handler
+          body is not executing.
+      - id: cue-2
+        say: >-
+          Listen makes the server accept connections on port three thousand. Visiting localhost,
+          port three thousand, in a browser sends a request to this server on our computer. Node
+          calls the handler with req, the incoming request, and res, the response object we can use
+          to reply.
+        step: Accept a request on port 3000
+        note: req describes the incoming request; res is used to build the response.
+        visual: >-
+          A labelled request travels from the browser at localhost:3000 to the listening Node
+          server. The handler receives req and res.
+      - id: cue-3
+        say: >-
+          Inside the handler, res dot end sends Hello and finishes the response. The browser
+          receives that text. The server remains listening for another request. This is the same
+          pattern again: register a function now, then run it when the relevant event occurs.
+        step: Send and finish the response
+        note: res.end("Hello!") sends the text and completes this response.
+        visual: >-
+          A response carrying Hello! travels back to the browser. The browser displays Hello!, while
+          Node remains listening on port 3000.
+  - id: npm
+    label: Modules and npm
+    title: Install a package. Load a module.
+    takeaway: npm installs packages. require loads modules. Node executes the program.
+    purpose: Add an external package to a project, then load it from JavaScript.
+    cues:
+      - id: cue-1
+        say: >-
+          A module is reusable code. Node already includes the file-system and HTTP modules; they
+          need no extra installation. Express is an external package. In a project's terminal, npm
+          install express downloads its code into node_modules and records the dependency in
+          package.json. Installing makes the package available to the project.
+        step: Add package files to the project
+        note: This is a terminal command, not JavaScript.
+        visual: >-
+          A package labelled Express moves from the package registry into the project's node_modules
+          folder. package.json records the dependency. The command is explicitly labelled Terminal.
+      - id: cue-2
+        say: >-
+          Now, inside a JavaScript file, require loads Express and const stores its exported value
+          under the name express. That line alone does not start a server. These examples use the
+          CommonJS module style. Remember the different jobs: npm installs packages; require loads
+          modules; Node runs your JavaScript program.
+        step: Use the installed code
+        note: Loading Express does not itself start a web server.
+        visual: >-
+          The code switches from a terminal command to JavaScript. The installed Express module
+          connects to the express binding. The server is marked Not started.
+  - id: predict
+    label: Predict the output
+    title: Predict the output
+    takeaway: Finish the current code first. Run the timer callback later.
+    purpose: Test whether scheduling a callback interrupts the current code.
+    cues:
+      - id: cue-1
+        say: >-
+          Can you predict this program's output? The first line prints A. The setTimeout call
+          schedules a callback that prints B. Empty parentheses mean the arrow function has no
+          parameters; its short body is the console.log call. Zero requests a zero-delay timer, not
+          an interruption. The last line prints C. What order do you expect, and why?
+        step: Predict before revealing
+        note: A zero-delay timer still schedules its callback for later.
+        pause_after: 5
+        visual: >-
+          The three code lines are visible. A timer holds the callback that prints B. Three output
+          slots remain question marks during the prediction pause.
+      - id: cue-2
+        say: >-
+          The answer is A, C, B. The main code prints A, registers the timer, then prints C. Only
+          after that code finishes can the timer callback print B. Explain the reason, not just the
+          letters: asynchronous work lets us handle a result later while ordinary JavaScript
+          continues running in order.
+        step: Explain the order
+        note: "A, C, B: scheduling the callback is not the same as running it."
+        visual: >-
+          Line one produces A, then line three produces C. After the current code finishes, the
+          timer callback executes and B appears last. The completed output is A, C, B.

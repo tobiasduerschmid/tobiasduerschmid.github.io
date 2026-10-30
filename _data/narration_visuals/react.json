@@ -1,0 +1,286 @@
+{
+  "version": 1,
+  "presentation": {
+    "renderer": "ReactAnimationArt",
+    "styles": [
+      "/css/react-animation.css"
+    ]
+  },
+  "resources": {
+    "language": "jsx"
+  },
+  "scenes": {
+    "declarative": {
+      "state": {},
+      "cues": {
+        "cue-1": {
+          "pose": "describe"
+        },
+        "cue-2": {
+          "pose": "change"
+        }
+      }
+    },
+    "jsx": {
+      "state": {
+        "filename": "CourseTitle.jsx",
+        "code": "function CourseTitle() {\n  const title = \"React\";\n  return (\n    <h2 className=\"course-title\">\n      {title}\n    </h2>\n  );\n}"
+      },
+      "cues": {
+        "cue-1": {
+          "pose": "function",
+          "focus": [
+            1,
+            2,
+            8
+          ]
+        },
+        "cue-2": {
+          "pose": "markup",
+          "focus": [
+            3,
+            4,
+            6,
+            7
+          ]
+        },
+        "cue-3": {
+          "pose": "expression",
+          "focus": [
+            2,
+            5
+          ]
+        }
+      }
+    },
+    "props": {
+      "state": {
+        "filename": "courses.jsx",
+        "code": "function CourseTitle({ title }) {\n  return <h2>{title}</h2>;\n}\nfunction App() {\n  return (\n    <main>\n      <CourseTitle title=\"React\" />\n      <CourseTitle title=\"Node.js\" />\n    </main>\n  );\n}"
+      },
+      "cues": {
+        "cue-1": {
+          "pose": "parent",
+          "focus": [
+            4,
+            6,
+            7,
+            8,
+            9
+          ]
+        },
+        "cue-2": {
+          "pose": "inputs",
+          "focus": [
+            1,
+            2,
+            7,
+            8
+          ]
+        },
+        "cue-3": {
+          "pose": "readonly",
+          "focus": [
+            1,
+            2
+          ]
+        }
+      }
+    },
+    "state": {
+      "state": {
+        "filename": "LikeButton.jsx",
+        "code": "import { useState } from \"react\";\nfunction LikeButton() {\n  const [likes, setLikes] = useState(0);\n  return <button>Like: {likes}</button>;\n}"
+      },
+      "cues": {
+        "cue-1": {
+          "pose": "memory",
+          "focus": [
+            1,
+            3
+          ]
+        },
+        "cue-2": {
+          "pose": "pair",
+          "focus": [
+            3
+          ]
+        },
+        "cue-3": {
+          "pose": "snapshot",
+          "focus": [
+            4
+          ]
+        }
+      }
+    },
+    "events": {
+      "state": {
+        "filename": "LikeButton.jsx",
+        "context": "useState is imported from React, as in the previous example.",
+        "code": "function LikeButton() {\n  const [likes, setLikes] = useState(0);\n  function handleLike() {\n    setLikes(likes + 1);\n  }\n  return (\n    <button onClick={handleLike}>\n      Like: {likes}\n    </button>\n  );\n}"
+      },
+      "cues": {
+        "cue-1": {
+          "pose": "handler",
+          "focus": [
+            3,
+            4,
+            5,
+            7
+          ]
+        },
+        "cue-2": {
+          "pose": "click",
+          "focus": [
+            4
+          ]
+        },
+        "cue-3": {
+          "pose": "commit",
+          "focus": [
+            2,
+            7,
+            8,
+            9
+          ]
+        }
+      }
+    },
+    "updates": {
+      "state": {
+        "filename": "handleLike.jsx",
+        "context": "Both versions run inside one click handler. This render's likes value is 0.",
+        "code": "function handleLike() {\n  setLikes(likes + 1);\n  setLikes(likes + 1);\n}",
+        "alternate_code": "function handleLike() {\n  setLikes(n => n + 1);\n  setLikes(n => n + 1);\n}"
+      },
+      "cues": {
+        "cue-1": {
+          "pose": "question",
+          "focus": [
+            2,
+            3
+          ]
+        },
+        "cue-2": {
+          "pose": "replace",
+          "focus": [
+            2,
+            3
+          ]
+        },
+        "cue-3": {
+          "pose": "updater",
+          "variant": "alternate",
+          "focus": [
+            2,
+            3
+          ]
+        }
+      }
+    },
+    "shared": {
+      "state": {
+        "filename": "Course.jsx",
+        "context": "useState is imported from React. The child component is shown next.",
+        "code": "function Course() {\n  const [likes, setLikes] = useState(0);\n  function handleLike() {\n    setLikes(n => n + 1);\n  }\n  return (\n    <section>\n      <LikeButton likes={likes}\n        onLike={handleLike} />\n      <p>Total: {likes}</p>\n    </section>\n  );\n}",
+        "alternate_filename": "LikeButton.jsx",
+        "alternate_context": "The child receives both its displayed value and its callback from Course. It has no local state.",
+        "alternate_code": "function LikeButton({ likes, onLike }) {\n  return (\n    <button onClick={onLike}>\n      Like: {likes}\n    </button>\n  );\n}"
+      },
+      "cues": {
+        "cue-1": {
+          "pose": "owner",
+          "focus": [
+            2,
+            8,
+            10
+          ]
+        },
+        "cue-2": {
+          "pose": "callback",
+          "focus": [
+            3,
+            4,
+            8,
+            9
+          ]
+        },
+        "cue-3": {
+          "pose": "together",
+          "variant": "alternate",
+          "focus": [
+            1,
+            3,
+            4
+          ]
+        }
+      }
+    },
+    "lists": {
+      "state": {
+        "filename": "CourseList.jsx",
+        "context": "The parent passes courses: an array of objects with stable id and title properties.",
+        "code": "function CourseList({ courses }) {\n  return (\n    <ul>\n      {courses.map(course => (\n        <li key={course.id}>\n          {course.title}\n        </li>\n      ))}\n    </ul>\n  );\n}",
+        "alternate_filename": "reorder.jsx",
+        "alternate_context": "Inside the parent: courses and setCourses come from useState. This is the parent's event handler.",
+        "alternate_code": "function reverseOrder() {\n  setCourses(items => [...items].reverse());\n}"
+      },
+      "cues": {
+        "cue-1": {
+          "pose": "map",
+          "focus": [
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ]
+        },
+        "cue-2": {
+          "pose": "keys",
+          "focus": [
+            5
+          ]
+        },
+        "cue-3": {
+          "pose": "copy",
+          "variant": "alternate",
+          "focus": [
+            2
+          ]
+        }
+      }
+    },
+    "effects": {
+      "state": {
+        "filename": "Course.jsx (inside the component)",
+        "context": "useEffect is imported from React. likes is the state owned by Course.",
+        "code": "useEffect(() => {\n  document.title = \"Likes: \" + likes;\n}, [likes]);"
+      },
+      "cues": {
+        "cue-1": {
+          "pose": "outside",
+          "focus": [
+            1,
+            2
+          ]
+        },
+        "cue-2": {
+          "pose": "synchronize",
+          "focus": [
+            1,
+            2,
+            3
+          ]
+        },
+        "cue-3": {
+          "pose": "recap",
+          "focus": []
+        }
+      }
+    }
+  }
+}

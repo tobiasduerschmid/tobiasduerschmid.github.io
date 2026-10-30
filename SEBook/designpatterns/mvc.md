@@ -4,14 +4,7 @@ layout: sebook
 static_uml: true
 ---
 
-<link rel="stylesheet" href="{{ '/css/song-video-fonts.css' | relative_url }}">
-<link rel="stylesheet" href="{{ '/css/narrated-explainer.css' | relative_url }}">
-<link rel="stylesheet" href="{{ '/css/narrated-pattern.css' | relative_url }}">
-<link rel="stylesheet" href="{{ '/css/narrated-pattern-document.css' | relative_url }}">
-<link rel="stylesheet" href="{{ '/css/mvc-narration.css' | relative_url }}">
-<link rel="stylesheet" href="{{ '/css/print-light.css' | relative_url }}">
-
-{% include narrated-pattern.html topic="mvc" %}
+{% include narration.html topic="mvc" %}
 
 The Model-View-Controller (MVC) architectural pattern decomposes an interactive application into three distinct components: a model that encapsulates the core application data and business logic, a view that renders this information to the user, and a controller that translates user inputs into corresponding state updates.
 

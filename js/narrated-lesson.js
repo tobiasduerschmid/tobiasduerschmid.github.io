@@ -186,5 +186,23 @@
     root.querySelectorAll('.np-outline li').forEach(item => link(item, Number(item.dataset.narrationSceneIndex)));
   }
 
-  window.NarratedLesson = { renderDiagram, highlightCode, sectionChecks, linkNavigation };
+  // Shared lifecycle for lessons with section checks and an optional language
+  // selector. Adapters supply only their cue rendering and fullscreen target.
+  function mount(root, { story, timing, quizzes, examples, render, fullscreenTarget }) {
+    const checks = sectionChecks(root, story, quizzes);
+    const player = window.NarratedExplainer.enhance(root, {
+      storyboard: story, timing, render, fullscreenTarget,
+      onSectionEnd: checks.sectionEnded, onSeek: checks.close, canPlay: checks.isClosed,
+    });
+    checks.attach(player);
+    linkNavigation(root, story, timing, player);
+    const language = root.querySelector('[data-setting="language"]');
+    if (language) language.addEventListener('sebook:languagechange', () => {
+      player.refresh();
+      root.querySelector('.nja-status').textContent = `Code language: ${examples[language.value].label}. Narration position unchanged.`;
+    });
+    return player;
+  }
+
+  window.NarratedLesson = { renderDiagram, highlightCode, mount };
 })();

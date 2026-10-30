@@ -16,15 +16,20 @@ architectures, team practices). A design-pattern lesson
 (`docs/narrated-pattern.md`) remains the right type for a pattern taught
 through four-language code.
 
+The versioned authoring contract and a complete minimal example are in
+[`narration-format.md`](narration-format.md). Use the shared compiler and
+`narration.html` entry point for every new lesson.
+
 ## Files
 
 | File | Role |
 |---|---|
-| `_data/explainers/<topic>.yml` | Storyboard: speech, scenes, cues, `slides`, `diagrams`, optional `languages`. |
+| `_data/narrations/<topic>.yml` | Readable speech (`say`), scene order, teaching text, navigation, and lesson metadata. |
+| `_data/narration_visuals/<topic>.json` | Separate renderer settings, slides, diagrams, language metadata, and scene/cue visual state. |
 | `_data/explainers/<topic>_quizzes.yml` | One check per scene id (a scene without an entry has none), or `questions:` for the summary. |
-| `_data/explainers/<topic>_timing.json` | Written by the renderer: cue times, each cue's `speech_end`, and the storyboard's SHA-256. |
-| `_data/video_narrations.yml` | Registry: name, summary, prerequisites, chapter and view paths, `parts`, `parts_label`, `animation`. |
-| `_includes/video-narration.html` | The player; include it with `topic`. |
+| `_data/explainers/<topic>_timing.json` | Written by the renderer: cue times, each cue's `speech_end`, and the speech fingerprint. |
+| `site.data.video_narrations` | Compiled compatibility view; metadata comes from the script’s `lesson` and the visual package’s `presentation`. Do not create a second registry file. |
+| `_includes/narration.html`, `_includes/video-narration.html` | Public entry point and video adapter; pass `topic` to `narration.html`. |
 | `_includes/narrated-lesson-navigation.html` | Shared two-level roadmap, visible from the opening frame. |
 | `_includes/video-narration-reading.html` | Every cue with its panels: reading and print views, the transcript, and the source the player copies from. |
 | `_includes/video-narration-slide.html` | One cue's slide (layouts below). |
@@ -65,15 +70,15 @@ bar, and settings through the song player's class hooks, which
 `_includes/video-narration.html` adds beside its own classes. Keys typed in a
 knowledge check stay with the quiz.
 
-Full screen fills the display with the video, in the page's light or dark
-colors: the scene's header, the picture letterboxed at 16:9, and captions and
-controls in their own places, so nothing covers the picture. Where the screen
-is at least 3:2 the header is a sidebar beside the picture (the picture is
-limited by height there, so a sidebar costs less picture than a header row);
-on a short, wide screen such as a phone on its side, the captions join the
-sidebar and the picture takes the height above the controls; on narrower
-screens the header is a row above the picture. A knowledge check opens inside
-the full-screen video. Where the browser has no element full screen (iPhone
+Full screen keeps a horizontal, two-level roadmap across the top on laptops
+and phones. Each level scrolls sideways when its labels do not fit; it never
+becomes a sidebar or shrinks the text. The inline scene title and task remain
+available to screen readers, while the roadmap identifies the fullscreen scene.
+The 16:9 picture fills the space below the roadmap. Compact controls overlay
+its bottom edge, and captions sit just above the controls on an opaque,
+theme-aware background. Long or enlarged captions scroll within the overlay;
+the CC button can reveal any artwork beneath them. A knowledge check replaces
+the picture and overlays. Where the browser has no element full screen (iPhone
 Safari) or refuses it, the shared transport draws the full screen itself: the
 video fills the viewport, the page behind it is inert, and the button or
 Escape returns. Both modes set `.is-fullscreen` on the video and send a
@@ -85,21 +90,25 @@ On touch screens held upright, `bindFullscreenLayout` rotates the inner
 unlocked, works in both native and viewport fullscreen, and stops rotating
 when the phone turns sideways. The **Landscape in full screen** checkbox in
 settings lets viewers use portrait instead; its choice lasts for this page
-visit. Layout classes use the measured surface dimensions (including visual
-viewport resizing), so a rotated phone gets the same layout as a sideways one.
-On short landscape screens, controls span the full width below the picture;
-scene navigation and captions scroll independently in the sidebar. Settings
+visit. The layout uses the measured surface dimensions (including visual viewport
+resizing), so a rotated phone gets the same horizontal roadmap and compact
+controls as a sideways one. Settings
 open in a bounded, scrollable panel without shrinking the picture. Knowledge
 checks keep a visible fullscreen exit for touch users.
 
-## Storyboard
+## Compiled storyboard
+
+The following illustrates the **runtime** shape, not an authoring file. Put
+readable scene fields and `say` in the YAML; put `show`, panel references, and
+highlights in the JSON package, keyed by stable scene/cue IDs. The compiler
+merges them and maps `say` to `text`.
 
 A scene declares the panels it may show, and `show` lists the ones its cues
 show by default; a cue may override `show` with one or two panels.
 
 ```yaml
 - id: increment
-  part: Artifacts            # one of the registry's parts; omit for intro and summary
+  part: Artifacts            # one of lesson.parts; omit for intro and summary
   animation: true            # the animated stage is available
   slide: artifacts           # a key of `slides`; a cue may switch with `slide:`
   diagram: item_lifecycle    # a key of `diagrams`; a cue may switch with `diagram:`
@@ -138,7 +147,7 @@ A repeated word is keyed `word2`, `word3`, and so on.
 The choreography registers `window.SongChoreographies[<topic>]` and draws only
 for cues that show the animation. It uses the song kits (`kit.scene`,
 `kit.sticker`, `kit.stamp`, `kit.confetti`, `StoryKit.card`) plus its own kit;
-every pose is a function of narration time. The registry's `animation` lists the
+every pose is a function of narration time. The visual package’s `presentation.animation` lists the
 stage theme and the styles and scripts the frame loads.
 
 The stage follows the site's light or dark mode: `js/video-narration-stage.js`
@@ -192,18 +201,20 @@ streams so a theme preference cannot change the printed artwork.
 
 ## Adding a video narration
 
-1. Write the storyboard and quizzes, and register the topic in
-   `_data/video_narrations.yml`.
-2. Render speech with `scripts/render-explainer-narration.py --topic <topic>`
-   (add the topic to its `--topic` choices).
+1. Write `_data/narrations/<topic>.yml` (`kind: video`), its companion
+   `_data/narration_visuals/<topic>.json`, and optional quizzes. Follow
+   `docs/narration-format.md`; discovery and registration are automatic.
+2. Validate with `python3 scripts/render-explainer-narration.py --topic <topic> --check`,
+   then render with `--model` and `--voices` pointing to the Kokoro installation.
+   Run `node scripts/narration.js check <topic>` after rendering.
 3. For animation, add `assets/video-narration/<topic>.html` (front matter
    `layout: video-narration-stage`, `topic`, `sitemap: false`), the choreography,
-   its kit, and its stage CSS, and list them under `animation`.
-4. In the chapter, link `song-video-fonts.css`, `narrated-explainer.css`,
-   `narrated-pattern.css`, `narrated-pattern-document.css`, and
-   `video-narration.css` before `print-light.css`, set `static_uml: true` if a
-   diagram is used, and add `{% include video-narration.html topic="<topic>" %}`.
-5. Add `read.html` and `print.html` under the registry's `views` path with
+   its kit, and its stage CSS, and list them under `presentation.animation`
+   in the visual package. Data-only slides need no stage page or choreography.
+4. In the chapter, set `static_uml: true` if a diagram is used and add
+   `{% include narration.html topic="<topic>" %}`. It selects the adapter and
+   loads its styles, including `presentation.styles`, before `print-light.css`.
+5. Add `read.html` and `print.html` under the script’s `lesson.views` path with
    `layout: narrated-pattern-reader`, `video_narration: true`, `topic`, and
    `{% include video-narration-reading.html topic=page.topic %}`.
 6. Add the chapter to `tests/narration-fullscreen.spec.js`, and copy

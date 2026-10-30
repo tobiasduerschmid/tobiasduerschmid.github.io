@@ -1,0 +1,303 @@
+{
+  "version": 1,
+  "presentation": {
+    "visuals": {
+      "ui": "observer-editor-illustration.html"
+    },
+    "styles": [
+      "/css/observer-narration.css"
+    ]
+  },
+  "resources": {
+    "languages": [
+      "python",
+      "java",
+      "cpp",
+      "typescript"
+    ],
+    "default_language": "python",
+    "example_order": [
+      "observer",
+      "subject",
+      "document",
+      "views",
+      "wire"
+    ],
+    "diagrams": {
+      "before": {
+        "label": "Before-design dependencies",
+        "description": "DocumentBefore holds optional references directly to Preview, CharacterCount, and SaveButton and writes their UI state.",
+        "caption": "DocumentBefore is the domain class; Preview, CharacterCount, and SaveButton are UI classes. Each arrow is a direct reference to an optional widget (0..1). UI widgets and presentation rules tend to change more often than the domain model, so domain classes should avoid these dependencies.",
+        "source": "@startuml\nlayout horizontal\n@layout\nnode DocumentBefore 0 160\nnode Preview 255 0\nnode CharacterCount 255 160\nnode SaveButton 255 320\n@endlayout\nclass DocumentBefore {\n  + text\n  + setText(text)\n}\nclass Preview {\n  + text\n}\nclass CharacterCount {\n  + text\n}\nclass SaveButton {\n  + enabled\n}\nDocumentBefore --> \"0..1\" Preview : preview\nDocumentBefore --> \"0..1\" CharacterCount : count\nDocumentBefore --> \"0..1\" SaveButton : save\n@enduml\n"
+      },
+      "roles": {
+        "label": "Observer pattern role diagram",
+        "description": "Subject holds zero or more Observers and calls update(text). ConcreteSubject inherits the registration mechanism from Subject and owns the changing state. ConcreteObserver implements Observer and owns its reaction.",
+        "source": "@startuml\nlayout square\nclass Subject {\n  - observers: Observer collection\n  + attach(observer)\n  + detach(observer)\n  # notifyObservers(text)\n}\ninterface Observer {\n  + update(text)\n}\nclass ConcreteSubject {\n  - state: text\n  + setText(text)\n}\nclass ConcreteObserver {\n  - viewState\n  + update(text)\n}\nConcreteSubject --|> Subject\nConcreteObserver ..|> Observer\nSubject --> \"0..*\" Observer : notifies\n@enduml\n"
+      },
+      "solution": {
+        "label": "Observer solution dependencies",
+        "description": "Document inherits Subject. Subject holds references through the Observer interface. Preview, CharacterCount, and SaveButton each implement Observer. Document has no direct references to those concrete UI classes.",
+        "caption": "Document is the concrete Subject. Preview, CharacterCount, and SaveButton are concrete Observers. The domain depends on the Observer contract; UI classes implement that contract and own their presentation rules.",
+        "source": "@startuml\nlayout compact\n@layout\nnode Subject 0 20\nnode Observer 280 20\nnode Document 30 220\nnode Preview 0 400\nnode CharacterCount 160 400\nnode SaveButton 350 400\n@endlayout\nclass Subject {\n  + attach(observer)\n  + detach(observer)\n  # notifyObservers(text)\n}\ninterface Observer {\n  + update(text)\n}\nclass Document {\n  + setText(text)\n}\nclass Preview {\n  + update(text)\n}\nclass CharacterCount {\n  + update(text)\n}\nclass SaveButton {\n  + update(text)\n}\nDocument --|> Subject\nSubject --> \"0..*\" Observer : notifies\nPreview ..|> Observer\nCharacterCount ..|> Observer\nSaveButton ..|> Observer\n@enduml\n"
+      }
+    }
+  },
+  "scenes": {
+    "ui": {
+      "state": {
+        "ui": true
+      },
+      "cues": {
+        "cue-1": {
+          "ui_state": "hi"
+        },
+        "cue-2": {
+          "ui_state": "hi"
+        }
+      }
+    },
+    "context": {
+      "state": {
+        "ui": true
+      },
+      "cues": {
+        "cue-1": {
+          "ui_state": "hi"
+        },
+        "cue-2": {
+          "ui_state": "hi"
+        }
+      }
+    },
+    "conditions": {
+      "state": {
+        "code": "problem",
+        "diagram": "before"
+      },
+      "cues": {
+        "cue-1": {
+          "focus": "preview",
+          "diagram_focus": "Preview"
+        },
+        "cue-2": {
+          "focus": "count",
+          "diagram_focus": "CharacterCount"
+        },
+        "cue-3": {
+          "focus": "save",
+          "diagram_focus": "SaveButton"
+        },
+        "cue-4": {
+          "diagram_focus": "DocumentBefore"
+        },
+        "cue-5": {
+          "diagram_focus": "DocumentBefore"
+        }
+      }
+    },
+    "roles": {
+      "state": {
+        "diagram": "roles"
+      },
+      "cues": {
+        "cue-1": {
+          "diagram_focus": "Subject"
+        },
+        "cue-2": {
+          "diagram_focus": "Observer"
+        },
+        "cue-3": {
+          "diagram_focus": "ConcreteSubject"
+        },
+        "cue-4": {
+          "diagram_focus": "ConcreteObserver"
+        }
+      }
+    },
+    "contract": {
+      "state": {
+        "code": "observer",
+        "diagram": "solution"
+      },
+      "cues": {
+        "cue-1": {
+          "focus": "contract",
+          "diagram_focus": "Observer"
+        },
+        "cue-2": {
+          "focus": "contract",
+          "diagram_focus": "Observer"
+        }
+      }
+    },
+    "subject": {
+      "state": {
+        "code": "subject",
+        "diagram": "solution"
+      },
+      "cues": {
+        "cue-1": {
+          "focus": "attach",
+          "diagram_focus": "Subject"
+        },
+        "cue-2": {
+          "focus": "detach",
+          "diagram_focus": "Subject"
+        },
+        "cue-3": {
+          "focus": "notify",
+          "diagram_focus": "Subject"
+        }
+      }
+    },
+    "document": {
+      "state": {
+        "code": "document",
+        "diagram": "solution"
+      },
+      "cues": {
+        "cue-1": {
+          "focus": "state",
+          "diagram_focus": "Document"
+        },
+        "cue-2": {
+          "focus": "notify",
+          "diagram_focus": "Document"
+        }
+      }
+    },
+    "views": {
+      "state": {
+        "code": "views",
+        "diagram": "solution"
+      },
+      "cues": {
+        "cue-1": {
+          "focus": "preview",
+          "diagram_focus": "Preview"
+        },
+        "cue-2": {
+          "focus": "count",
+          "diagram_focus": "CharacterCount"
+        },
+        "cue-3": {
+          "focus": "save",
+          "diagram_focus": "SaveButton"
+        }
+      }
+    },
+    "trace": {
+      "state": {
+        "code": "wire",
+        "diagram": "solution",
+        "ui": true
+      },
+      "cues": {
+        "cue-1": {
+          "focus": "attach",
+          "diagram_focus": "Subject",
+          "ui_state": "empty"
+        },
+        "cue-2": {
+          "focus": "first",
+          "diagram_focus": "Document",
+          "ui_state": "hi"
+        },
+        "cue-3": {
+          "focus": "detach",
+          "diagram_focus": "Preview",
+          "ui_state": "detached"
+        },
+        "cue-4": {
+          "focus": "second",
+          "diagram_focus": "Document",
+          "ui_state": "hello"
+        }
+      }
+    },
+    "consequences": {
+      "state": {
+        "cards": [
+          {
+            "title": "Extend the views",
+            "text": "Add an Observer and register it; keep the Subject's notification logic."
+          },
+          {
+            "title": "Trace indirect calls",
+            "text": "Find registration sites as well as notification sites when debugging."
+          },
+          {
+            "title": "Choose runtime policies",
+            "text": "Detachment, failure, ordering, repeated updates, and reentrancy need decisions."
+          }
+        ]
+      },
+      "cues": {
+        "cue-1": {},
+        "cue-2": {},
+        "cue-3": {}
+      }
+    },
+    "applicability": {
+      "state": {
+        "cards": [
+          {
+            "title": "A good fit",
+            "text": "A document model with optional, independently evolving views."
+          },
+          {
+            "title": "A simpler alternative",
+            "text": "One fixed collaborator can often be called directly."
+          },
+          {
+            "title": "Beyond this pattern",
+            "text": "Reliable delivery across processes needs transport and delivery policies."
+          }
+        ]
+      },
+      "cues": {
+        "cue-1": {},
+        "cue-2": {}
+      }
+    },
+    "transfer": {
+      "state": {
+        "ui": true
+      },
+      "cues": {
+        "cue-1": {
+          "ui_state": "hi"
+        },
+        "cue-2": {
+          "ui_state": "hi"
+        }
+      }
+    },
+    "summary": {
+      "state": {
+        "cards": [
+          {
+            "title": "Context",
+            "text": "Several independent objects must react when one object changes, and they come and go at runtime."
+          },
+          {
+            "title": "Problem",
+            "text": "A changing object that updates its dependents directly knows every concrete dependent and its rules."
+          },
+          {
+            "title": "Solution",
+            "text": "A Subject notifies registered Observers through one update contract; each Concrete Observer owns its reaction."
+          },
+          {
+            "title": "Consequences",
+            "text": "Dependents are added without editing the Subject, at the cost of indirect control flow and lifecycle policies."
+          }
+        ]
+      },
+      "cues": {
+        "cue-1": {}
+      }
+    }
+  }
+}

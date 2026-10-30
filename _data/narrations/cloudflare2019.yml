@@ -1,0 +1,760 @@
+# Edit speech and teaching text here. Visual state lives in ../narration_visuals/cloudflare2019.json.
+version: 1
+id: cloudflare2019
+kind: case-study
+title: "Cloudflare 2019: restore the service, explain the failure"
+description: >-
+  Follow a request, compare evidence, and choose the next debugging action. A narrated investigation
+  with diagrams, decisions, and a clearly labeled miniature model.
+lesson:
+  name: "Cloudflare 2019: restore the service, explain the failure"
+speech:
+  voice: af_heart
+  speed: 0.95
+  pronunciations:
+    "502": five oh two
+    WAF: web application firewall
+    CPU: C P U
+    UTC: U T C
+    PCRE: P C R E
+    RE2: R E two
+media:
+  audio: /assets/audio/cloudflare2019-case-study.mp3
+  captions: /assets/narration/cloudflare2019-case-study.vtt
+  script: /assets/narration/cloudflare2019-case-study.txt
+scenes:
+  - id: understand_service
+    label: Understand the service
+    title: Many websites fail. What is shared?
+    purpose: Establish what a request is supposed to do before interpreting a failure.
+    evidence: Published incident context; simplified architecture and original decision prompt.
+    sources:
+      - title: "Cloudflare: initial incident report, 2 July 2019"
+        url: https://blog.cloudflare.com/cloudflare-outage/
+      - title: "Cloudflare postmortem: first monitoring alert"
+        url: https://blog.cloudflare.com/details-of-the-cloudflare-outage-on-july-2-2019/
+    cues:
+      - id: cue-1
+        say: >-
+          It is 2 July 2019. Imagine you are helping investigate a major outage. A visitor asks for
+          a web page. For a site using Cloudflare, that request reaches Cloudflare before any needed
+          work continues to the site's own server, called its origin. Cloudflare supplies services
+          shared by many independent websites. We will follow only the request inspection path;
+          caching and other features are outside this diagram.
+        step: Follow one ordinary request
+        note: "Goal: eligible requests should receive a useful response. We have not located a defect."
+        visual: A visitor, Cloudflare, the inspection step, and the origin establish the request path.
+      - id: cue-2
+        say: >-
+          The web application firewall, abbreviated WAF, examines requests for suspicious patterns.
+          A rule describes something to recognize and what to do when it is recognized. The
+          processor, or CPU, performs that work. Its capacity is finite: work spent inspecting one
+          request is capacity unavailable for other work. The inspection step therefore has both a
+          security responsibility and a progress obligation.
+        step: Learn the shared responsibility
+        note: A permitted request still needs inspection to finish before it can proceed.
+        visual: The WAF sits on the request path rather than beside it as an optional report.
+      - id: cue-3
+        say: >-
+          Now visitors to many sites see 502 errors. That status says a gateway could not
+          successfully complete its upstream work; it does not name the defective component.
+          Cloudflare's first synthetic monitoring alert arrived at 13:45 UTC. A synthetic monitor
+          sends test requests to observe the service. You have a symptom and a shared dependency,
+          but you do not yet know whether demand increased, origins failed, or request processing
+          became expensive. Which evidence should you seek first?
+        step: Start from the symptom
+        note: >-
+          All historical times in this investigation use UTC. The choices are teaching
+          reconstructions, not responder dialogue.
+        visual: The same request path supports several competing explanations for a failed response.
+        prediction: true
+    checkpoint:
+      question: What should you compare before selecting an explanation for widespread 502 errors?
+      options:
+        - Incoming request volume, serving CPU, and where request workers spend their time.
+        - The error number alone, because it uniquely identifies an origin-server defect.
+        - The number of affected sites alone, because a broad outage establishes an attack.
+      correct_index: 0
+      explanation: >-
+        Compare demand with the cost and location of processing. The shared symptom localizes a
+        concern, but observations along the request path are needed to distinguish competing
+        explanations. Preserve the relevant time window and configuration as well.
+      option_feedback:
+        "1": >-
+          A 502 identifies a failed gateway interaction. Several failures along the request path can
+          produce it.
+        "2": >-
+          Many affected sites share infrastructure. Broad impact does not establish who or what
+          caused it.
+  - id: localize
+    label: Locate the work
+    title: The processors are busy. Busy doing what?
+    purpose: Use component evidence and a recent change as leads, without treating correlation as proof.
+    evidence: Published timeline and findings; diagram summarizes observations rather than reproducing logs.
+    sources:
+      - title: "Cloudflare postmortem: investigation timeline and deployment"
+        url: https://blog.cloudflare.com/details-of-the-cloudflare-outage-on-july-2-2019/
+      - title: "Cloudflare initial report: simulate mode logs matches"
+        url: https://blog.cloudflare.com/cloudflare-outage/
+    cues:
+      - id: cue-1
+        say: >-
+          By 14:00, processor observations, system traces, and logs pointed to the WAF. Front-line
+          servers accept traffic and delegate work to request-handling processes, called workers.
+          The CPU serving web traffic was exhausted. A trace observes execution activity; a profile
+          summarizes where time is spent. Either can narrow an investigation toward expensive work.
+          Neither, by itself, explains why that work is excessive. The failure to visitors remains
+          the 502 response.
+        step: Use the new evidence
+        note: >-
+          Known: WAF activity is implicated. Unknown: the precise mechanism and the conditions that
+          trigger it.
+        visual: Serving CPU and WAF activity narrow the search behind the visible 502 symptom.
+      - id: cue-2
+        say: >-
+          The team had just deployed a new rule intended to improve detection of cross-site
+          scripting, an attack involving unwanted script execution in a web application. The change
+          was merged at 13:31, built and tested at 13:37, and began rolling out at 13:42.
+          Quicksilver distributed the configuration globally. Positive and negative matching tests
+          passed. The rule was in simulate mode: matches would be logged rather than deliberately
+          blocking requests. That is useful context, but what does it actually tell us about
+          evaluation cost?
+        step: Inspect the change path
+        note: >-
+          Functional tests check expected matching answers. They do not automatically establish a
+          bound on computation.
+        visual: Configuration and incoming requests meet at the WAF, even without a new server binary.
+        prediction: true
+    checkpoint:
+      question: Does simulate mode rule out the new rule as a cause of CPU exhaustion?
+      options:
+        - Yes, because logging a match means the matcher never runs.
+        - No; inspect the cost of evaluating the rule before it decides whether there is a match.
+        - Yes, because passing positive and negative tests proves acceptable cost on all inputs.
+      correct_index: 1
+      explanation: >-
+        Simulate mode changes the consequence of a match. The system must still evaluate the pattern
+        to discover that match. Functional correctness and affordable evaluation are separate
+        questions. The deployed rule is a candidate cause that needs further evidence.
+      option_feedback:
+        "0": >-
+          Logging a match requires first determining whether a match occurred. Simulation does not
+          remove that computation.
+        "2": >-
+          The tests establish results for tested cases. Missing resource checks can leave expensive
+          behavior undetected.
+  - id: contain
+    label: Contain the outage
+    title: Restore progress while the mechanism is still being investigated
+    purpose: Distinguish an urgent containment decision from a completed repair.
+    evidence: Published WAF resource dependency; simplified causal sequence and reconstructed decision.
+    sources:
+      - title: "Cloudflare postmortem: global WAF termination"
+        url: https://blog.cloudflare.com/details-of-the-cloudflare-outage-on-july-2-2019/
+    cues:
+      - id: cue-1
+        say: >-
+          The request worker needs inspection to complete. Inspection invokes a regular-expression
+          matcher: a program that checks text against a pattern. In this incident, excessive
+          matching work consumed the CPU needed to serve requests. The front-line servers
+          consequently produced 502 errors. No intentional rule-based block is needed for that
+          failure. This sequence explains the dependency; it is not a recovered trace of one
+          particular visitor's request.
+        step: Connect computation to the symptom
+        note: The rule's action can be harmless while computing its condition is expensive.
+        visual: Matching work delays progress before an ordinary inspection result can return.
+      - id: cue-2
+        say: >-
+          Availability is failing now. The WAF is implicated, and responders can terminate its
+          operation globally. A narrower rollback would be desirable if it can be executed promptly,
+          but the postmortem describes delays and obstructed access to recovery systems. The
+          immediate objective is to stop the expensive work and restore request progress. Disabling
+          a security function also has a cost that must be tracked. Choose the strongest immediate
+          action among these options.
+        step: Make the operational tradeoff
+        note: >-
+          Your decision concerns containment under the stated evidence, not a claim that the
+          underlying defect is repaired.
+        visual: >-
+          The dependency diagram shows why continuing matching work can keep the service
+          unavailable.
+        prediction: true
+    checkpoint:
+      question: >-
+        With the WAF implicated and global termination available, which action best addresses the
+        ongoing outage?
+      options:
+        - Leave the WAF running until every detail of the matching algorithm has been proved.
+        - Switch the rule to simulate mode and assume its evaluation cost disappears.
+        - Terminate the WAF, monitor recovery, and track the temporary loss of that protection.
+      correct_index: 2
+      explanation: >-
+        This is containment: remove implicated work from the critical path, check whether service
+        recovers, and keep the missing security function visible as an unresolved obligation.
+        Historically, global termination was proposed at 14:02 and executed at 14:07. Other
+        Cloudflare protections remained active.
+      option_feedback:
+        "0": >-
+          Detailed diagnosis matters, but waiting preserves the observed service failure when a
+          containment action is available.
+        "1": The rule was already in simulate mode. Evaluation still runs before the simulated action.
+  - id: reproduce
+    label: Reproduce safely
+    title: Traffic returns. Which claim still needs evidence?
+    purpose: Turn a candidate explanation into a controlled comparison.
+    evidence: Published recovery milestone; the comparison diagram is an original experimental plan.
+    sources:
+      - title: "Cloudflare postmortem: recovery and isolated checks"
+        url: https://blog.cloudflare.com/details-of-the-cloudflare-outage-on-july-2-2019/
+    cues:
+      - id: cue-1
+        say: >-
+          By 14:09, traffic and CPU had recovered. That supports the WAF containment decision, but
+          it does not mean the WAF's security function is restored or identify every detail of the
+          defective rule. Removing an entire component changes many things at once. We now need
+          stronger evidence that the particular rule, under relevant inputs, explains the excessive
+          work.
+        step: Separate recovery from diagnosis
+        note: "Known: removing WAF work restored service. Still needed: a more specific causal test."
+        visual: Traffic recovery occurs before the transition to WAF restoration.
+      - id: cue-2
+        say: >-
+          A reproducer must specify input, rule version, matching engine, and relevant
+          configuration. An oracle is the criterion that tells us whether the observed outcome
+          satisfies the requirement. In an isolated setup, compare candidate absent, candidate
+          present, and candidate removed again while keeping the other conditions comparable.
+          Observe both the service behavior and resource use. The public account does not publish
+          the actual triggering requests, so we will not invent them.
+        step: Design the comparison before seeing its result
+        note: Isolation prevents a diagnostic replay from recreating the full production outage.
+        visual: Three controlled evaluations vary the candidate while preserving comparable conditions.
+        prediction: true
+    checkpoint:
+      question: >-
+        A colleague tests small requests with the candidate absent and large requests with it
+        present. The second trial is slower. What should you do next?
+      options:
+        - >-
+          Repeat with comparable inputs and settings while varying the candidate, including rollback
+          and resource observations.
+        - >-
+          Conclude that the rule caused the slowdown because the two configurations behaved
+          differently.
+        - >-
+          Conclude that request size caused the slowdown because larger requests always require more
+          time.
+      correct_index: 0
+      explanation: >-
+        Both the candidate rule and input size changed, so this comparison cannot separate their
+        effects. Repeat under comparable conditions in isolation. Historically, Cloudflare used an
+        isolated city and traffic excluding paying customers to test the rule's causality and
+        rollback before restoring the WAF. The confounded trial and diagram are teaching examples,
+        not their exact commands.
+      option_feedback:
+        "1": >-
+          The different result could depend on the changed input, the changed rule, or their
+          interaction. The comparison changed more than one relevant condition.
+        "2": >-
+          Size is a plausible factor, but the rule also changed. This observation alone cannot
+          establish which change explains the slowdown.
+  - id: define_oracles
+    label: Define the failure
+    title: A correct answer can still arrive too expensively
+    purpose: Specify both a functional oracle and a resource oracle.
+    evidence: Historical causal finding; original bounded model for explaining performance debugging.
+    sources:
+      - title: "Cloudflare postmortem: expensive regular-expression matching"
+        url: https://blog.cloudflare.com/details-of-the-cloudflare-outage-on-july-2-2019/
+      - title: "The Debugging Book: debugging performance issues"
+        url: https://www.debuggingbook.org/html/PerformanceDebugger.html
+    cues:
+      - id: cue-1
+        say: >-
+          The isolated checks supported the new rule as the cause. Its regular expression could make
+          a backtracking matcher explore excessive alternatives. To understand that mechanism
+          without source code, we will use a much smaller teaching task: decide whether a
+          single-line text contains an equals sign. This is not the original security rule, and our
+          example text is not a recovered incident request.
+        step: Move from the incident to a small model
+        note: >-
+          Keep the historical conclusion separate from the simplified mechanism we can trace
+          completely.
+        visual: Evaluation can finish with a matching answer or stop at a work limit.
+      - id: cue-2
+        say: >-
+          For this model, the functional obligation is to answer present if an equals sign exists,
+          and absent otherwise. One candidate check asks whether an equals sign occurs at one
+          proposed input position; revisiting a position counts again. We add a teaching budget:
+          count the characters, add one, and multiply by four. For seven characters, at most
+          thirty-two checks are allowed. This invented budget distinguishes a correct eventual
+          answer from an acceptable execution.
+        step: State two obligations
+        note: "Teaching budget: 4 × (length + 1) candidate checks. It is not a Cloudflare service limit."
+        visual: Match and NoMatch are functional answers; BudgetExceeded is a separate resource outcome.
+      - id: cue-3
+        say: >-
+          Suppose the input has no equals sign. Evaluation stops because it reaches the work limit
+          before finishing. We have not established the matching answer merely by stopping. Which
+          result should the experiment record?
+        step: Predict the classification
+        note: >-
+          A measurement-tool crash would be another outcome requiring investigation, not evidence
+          that the matcher passed.
+        visual: >-
+          The transition to BudgetExceeded differs from exhausting the candidate set and reaching
+          NoMatch.
+        prediction: true
+    checkpoint:
+      question: How should the bounded experiment classify evaluation stopped at its work limit?
+      options:
+        - As a successful negative match, because no match was reported before stopping.
+        - As budget exceeded, keeping that distinct from a completed negative result.
+        - As proof of an infinite loop, because the result was not yet available.
+      correct_index: 1
+      explanation: >-
+        A timeout or work limit is an observation about resources or progress. It is not the matcher
+        answering absent, and it does not prove nontermination. Preserve distinct outcomes so a
+        reducer or regression test cannot silently convert the performance failure into a passing
+        negative case.
+      option_feedback:
+        "0": >-
+          Absence of an answer is not an answer of absence. The candidate search did not complete
+          within the budget.
+        "2": >-
+          A finite computation can be much too expensive. Observing a limit does not prove an
+          infinite loop.
+  - id: trace_search
+    label: Trace the alternatives
+    title: Why can three characters produce repeated work?
+    purpose: Explain backtracking with explicit allocations rather than unexplained regex syntax.
+    evidence: Original finite teaching trace motivated by the postmortem's simplified pattern analysis.
+    sources:
+      - title: "Cloudflare postmortem: explanation of backtracking"
+        url: https://blog.cloudflare.com/details-of-the-cloudflare-outage-on-july-2-2019/
+    cues:
+      - id: cue-1
+        say: >-
+          Our deliberately inefficient matcher starts at the beginning of the text. It lets a first
+          skip consume any number of characters, then lets a second skip do the same, then requires
+          an equals sign. If that requirement fails, it revises earlier choices. Trying alternative
+          earlier choices is backtracking. Both skips can consume the same kinds of characters, so
+          more than one allocation can lead to the same next position.
+        step: Understand the matcher before tracing it
+        note: >-
+          A skip may consume zero characters. The starting position stays fixed throughout this
+          model.
+        visual: Separate allocations determine where the required equals sign is tested.
+      - id: cue-2
+        say: >-
+          The input is three x characters, with no equals sign. First, the skips consume three and
+          zero characters: the equals check fails at the end. Next, they consume two and one: the
+          check fails at the same end. Next, they consume two and zero: the check fails before the
+          last x. The diagram shows only three attempts. Each attempt is locally understandable, but
+          some revisit a position that was already checked.
+        step: Follow three attempts on xxx
+        note: >-
+          We count candidate equals checks, not seconds, processor instructions, or production PCRE
+          calls.
+        visual: Two distinct allocations retry the same end position before another position is tested.
+      - id: cue-3
+        say: >-
+          Hold the first skip at length one. On our three-character input, the second skip can then
+          consume two, one, or zero characters. None produces an equals sign. Once those choices
+          fail, the first skip can become zero and the second has four lengths to try. What does
+          this suggest about shortening the input by one character?
+        step: Predict the remaining search
+        note: >-
+          Think about the number of possible allocations, not just the number of distinct character
+          positions.
+        visual: >-
+          The trace leaves further allocations outstanding; a failed attempt can reopen an earlier
+          choice.
+        prediction: true
+    checkpoint:
+      question: >-
+        For input xx, keep the starting position fixed and try all valid lengths of both skips. How
+        many candidate equals checks are made before concluding absent?
+      options:
+        - Three checks, one at each distinct input boundary.
+        - Nine checks, because each skip can independently have length zero, one, or two.
+        - Six checks, counting the valid allocations of two characters between the skips.
+      correct_index: 2
+      explanation: >-
+        A first skip of length two leaves one possible second length; length one leaves two; length
+        zero leaves three. That gives 1 + 2 + 3 = 6 checks. Three characters allow ten, so deleting
+        one character removes four allocations. This finite branching explains repeated work without
+        an infinite loop.
+      option_feedback:
+        "0": >-
+          There are three distinct boundaries, but different allocations can revisit a boundary.
+          Count allocations as well as positions.
+        "1": >-
+          The skips share the same two characters. An allocation whose combined length exceeds two
+          is invalid, so the choices are not independent.
+  - id: minimize
+    label: Reduce the reproducer
+    title: A smaller example is useful only if it preserves the failure
+    purpose: Choose a reduction criterion that retains the expensive behavior.
+    evidence: Exact counts for the original fixed-start model; no production timing or instruction counts.
+    sources:
+      - title: "The Debugging Book: reducing failure-inducing inputs"
+        url: https://www.debuggingbook.org/html/DeltaDebugger.html
+      - title: "Davis dissertation: Cloudflare analysis, section 3.3"
+        url: https://davisjam.github.io/files/publications/Davis-Dissertation-2020.pdf
+    cues:
+      - id: cue-1
+        say: >-
+          For three characters, the four first-skip lengths leave one, two, three, and four choices
+          for the second skip: ten candidate checks in total. More generally, each added character
+          extends several possible allocations. Seven non-equals characters require thirty-six
+          checks; thirty-two require five hundred sixty-one. These counts describe our fixed-start
+          model. They do not measure Cloudflare's full expression, engine optimizations, or actual
+          incident traffic.
+        step: Count the branching
+        note: >-
+          The model grows quadratically. The full production pattern has additional structure and
+          can exhibit higher polynomial growth under analyzed assumptions.
+        visual: >-
+          The branches expose how alternative allocations accumulate even when the required symbol
+          is absent.
+      - id: cue-2
+        say: >-
+          We want a compact reproducer that still exceeds our teaching budget. At length seven,
+          thirty-six candidate checks exceed the budget of thirty-two. At length six, twenty-eight
+          checks equal the budget of twenty-eight, so the run completes within it. Deleting text
+          until the matcher merely returns absent could erase the resource failure. Which property
+          should a reduction attempt preserve?
+        step: Preserve the diagnostic property
+        note: >-
+          Recompute the size-dependent budget for each candidate input. An invalid experiment is
+          unresolved, not a successful reduction.
+        visual: >-
+          Branching counts explain why reducing size can remove the failure even while the matching
+          answer stays unchanged.
+        prediction: true
+    checkpoint:
+      question: What should remain true when minimizing this performance reproducer?
+      options:
+        - The same resource criterion still fails under the specified matching conditions.
+        - The input is shorter, even if the expensive behavior disappears.
+        - The eventual matching answer is absent, regardless of how much work is needed.
+      correct_index: 0
+      explanation: >-
+        A reducer needs the failure predicate, not just any observable result. For this family and
+        budget, seven repeated non-equals characters are the first failing length. That restricted
+        result is not proof of the globally smallest reproducer for the original regex. Delta
+        debugging also depends on the oracle and the reductions it is allowed to try.
+      option_feedback:
+        "1": >-
+          Smaller is useful only while the diagnostic property remains. Otherwise you have minimized
+          away the bug's manifestation.
+        "2": >-
+          Absent is a valid functional answer for these inputs. It does not distinguish affordable
+          from excessive evaluation.
+  - id: diagnose
+    label: Explain the cause
+    title: Where does expensive work become an incorrect execution?
+    purpose: >-
+      Connect a causal mechanism to a stated requirement and distinguish defect, infection, and
+      failure.
+    evidence: Historical causal account with explicitly separate teaching requirements and terminology.
+    sources:
+      - title: "The Debugging Book: defects, infections, and failures"
+        url: https://www.debuggingbook.org/html/Intro_Debugging.html
+      - title: "Cloudflare postmortem: contributing causes"
+        url: https://blog.cloudflare.com/details-of-the-cloudflare-outage-on-july-2-2019/
+    cues:
+      - id: cue-1
+        say: >-
+          We now have a causal mechanism: overlapping repetition allows a backtracking engine to
+          explore many allocations; triggering inputs make that work expensive; inadequate
+          protection lets the work interfere with serving requests. We also need incorrectness:
+          which obligation is violated? A CPU being busy can be normal. Failure to make required
+          request progress, or exceeding a specified work budget, supplies the missing requirement.
+        step: Explain both causality and incorrectness
+        note: >-
+          A hot component is a location. A mechanism plus a violated requirement supports a
+          diagnosis.
+        visual: >-
+          The causal chain separates implementation structure, resource effects, and visible service
+          failure.
+      - id: cue-2
+        say: >-
+          The parent Debugging chapter calls the implementation problem a fault and an incorrect
+          runtime state an error. The Debugging Book calls them a defect and a fault or infection.
+          Both use failure for externally incorrect behavior. On seven characters, a thirty-third
+          check would exceed our model's budget; the bounded experiment stops before performing it.
+          For the real service, visitors saw 502 errors. The public report does not provide one
+          exact instruction where every incident request first became incorrect.
+        step: Translate the terminology
+        note: "Parent chapter: fault → error → failure. Debugging Book: defect → infection → failure."
+        visual: >-
+          Each link in the chain answers a different question about what is wrong and where it
+          becomes observable.
+      - id: cue-3
+        say: >-
+          The full incident also involved missing barriers. A CPU safeguard had been removed during
+          an earlier refactor, cost checks were absent from testing, and rule rollout bypassed
+          ordinary staged deployment. Those conditions help explain why one expensive rule became a
+          global outage. Which statement best captures a defensible diagnosis?
+        step: Challenge an incomplete diagnosis
+        note: >-
+          Do not infer a programmer's thoughts from the defective behavior, or blame an operator for
+          submitting an allowed input.
+        visual: >-
+          Insufficient protection connects expensive local work to widespread inability to serve
+          requests.
+        prediction: true
+    checkpoint:
+      question: Which diagnosis explains the observed failure rather than only renaming a symptom?
+      options:
+        - The CPU was high, so high CPU must always be a software failure.
+        - >-
+          The input activated excessive backtracking; missing safeguards let it violate
+          request-progress obligations and cause 502 responses.
+        - >-
+          The service returned an error message, so the code constructing that message must contain
+          the original defect.
+      correct_index: 1
+      explanation: >-
+        The diagnosis joins a triggering condition, a computation mechanism, propagation through
+        shared resources, and a violated requirement. The 502 response can be correct error handling
+        by the front line while the overall service still fails its availability obligation.
+      option_feedback:
+        "0": >-
+          Utilization is a measurement. A requirement and a causal explanation are needed to
+          establish incorrectness.
+        "2": >-
+          Reporting a downstream failure is not necessarily the source of it. Follow the dependency
+          that prevented useful work.
+  - id: repair
+    label: Repair and verify
+    title: Change the search while preserving the answer
+    purpose: Judge a repair by functional behavior and bounded work, including ordinary successful cases.
+    evidence: >-
+      Original repair specification for the tiny equals-search model; not Cloudflare's production
+      patch.
+    sources:
+      - title: "The Debugging Book: diagnosis and repair"
+        url: https://www.debuggingbook.org/html/Intro_Debugging.html
+    cues:
+      - id: cue-1
+        say: >-
+          For our small task, a forward scan is enough. Inspect the next unexamined character. If it
+          is equals, report present. Otherwise advance. At the end, report absent. No earlier
+          position is revisited. That preserves the tiny task's intended answer while inspecting
+          each character at most once. This is a teaching repair for finding equals, not a
+          substitute for a security rule that must recognize more complex patterns.
+        step: Repair the model's mechanism
+        note: >-
+          The proposed state machine states a behavior to implement and verify; drawing it does not
+          establish a production fix.
+        visual: >-
+          Every unsuccessful inspection advances to a new character instead of reopening earlier
+          allocations.
+      - id: cue-2
+        say: >-
+          Retain the original failing seven-character negative case and longer negative cases. Also
+          challenge behavior on empty input and equals at the beginning, middle, and end. A matcher
+          that always reports absent would be fast but wrong. A repair that merely raises the budget
+          would leave the allocation growth unchanged. Which evidence would justify the strongest
+          bounded claim about this repair?
+        step: Select evidence for the repair
+        note: >-
+          Test intended success as well as the failure history; compare answers and work under
+          explicit assumptions.
+        visual: >-
+          The Found and Absent outcomes remain reachable, while repeated searching is removed from
+          this model.
+        prediction: true
+    checkpoint:
+      question: What must verification establish for the proposed forward-scan repair?
+      options:
+        - That the original negative example runs quickly, even if positive examples now fail.
+        - That the timeout is longer, because finishing one run proves the growth is acceptable.
+        - >-
+          That matching answers are preserved and work stays within the stated budget on the chosen
+          test family, supported by the no-revisit reasoning.
+      correct_index: 2
+      explanation: >-
+        Use both oracles. Positive and negative cases check intended function; the old reproducer
+        and growing inputs challenge cost. The state-machine argument explains a linear inspection
+        bound for this model because each advance reaches a new character. This does not prove the
+        correctness of an unexamined implementation or of Cloudflare's entire rule set.
+      option_feedback:
+        "0": >-
+          A fast wrong answer is still a failure. The original functionality must survive the
+          repair.
+        "1": >-
+          Raising a limit can hide one manifestation without changing the excessive search
+          structure.
+  - id: harden
+    label: Prevent recurrence
+    title: Why fixing one rule is not the whole response
+    purpose: Match each protection to the causal link it can interrupt.
+    evidence: >-
+      Published completed actions and planned response measures, shown as conceptual
+      responsibilities.
+    sources:
+      - title: "Cloudflare postmortem: corrective actions and target dates"
+        url: https://blog.cloudflare.com/details-of-the-cloudflare-outage-on-july-2-2019/
+    cues:
+      - id: cue-1
+        say: >-
+          Return to the real service. Removing the offending rule addresses that deployed trigger.
+          Performance tests challenge costly inputs before release. A matching engine with
+          appropriate complexity guarantees changes what evaluation can cost. Runtime protection
+          limits damage when work is still too expensive. Staged deployment exposes a smaller
+          portion of traffic before expansion. A recovery path must remain usable when ordinary
+          serving is impaired. These measures address different parts of the chain.
+        step: Preserve several independent obligations
+        note: >-
+          An arrow between conceptual responsibilities does not prove that implementation safeguards
+          are independent.
+        visual: Testing, rollout, evaluation, and recovery intervene at different points.
+      - id: cue-2
+        say: >-
+          The July 12 postmortem reported restoration of CPU protection and inspection of the
+          existing rules as completed. Other measures had future target dates, including performance
+          profiling tests and an engine transition. A promised date is evidence of a plan, not proof
+          it shipped. Suppose a rule passes a small staged rollout. What can that observation
+          establish?
+        step: Keep reported status precise
+        note: >-
+          The diagram groups response obligations. It is not a snapshot proving all changes were
+          deployed at publication.
+        visual: A stage of rollout limits initial exposure but does not enumerate every possible input.
+        prediction: true
+    checkpoint:
+      question: What does a successful small rollout establish about a changed rule?
+      options:
+        - >-
+          Evidence under that stage's traffic and conditions, with monitoring and rollback still
+          needed as exposure grows.
+        - Proof that no unobserved input can cause excessive work.
+        - Proof that matching correctness no longer needs testing because rollout was staged.
+      correct_index: 0
+      explanation: >-
+        A staged rollout limits initial blast radius and supplies operational evidence. Its input
+        distribution and duration bound the claim. It complements performance analysis, functional
+        tests, runtime limits, and recovery; it does not replace them.
+      option_feedback:
+        "1": >-
+          A small traffic sample can miss uncommon or longer inputs. Successful observation is not
+          exhaustive proof.
+        "2": >-
+          Deployment strategy does not establish matching semantics. A cheaply evaluated rule can
+          still make wrong security decisions.
+  - id: verify_history
+    label: Check the outcome
+    title: Which historical claim is actually supported?
+    purpose: Distinguish recovery, restoration, and confirmed later remediation.
+    evidence: Published July 2019 milestones and the July 2020 retrospective confirmation.
+    sources:
+      - title: "Cloudflare postmortem: WAF restoration at 14:52 UTC"
+        url: https://blog.cloudflare.com/details-of-the-cloudflare-outage-on-july-2-2019/
+      - title: "Cloudflare, 2020: transitioning from PCRE to an RE2-inspired engine"
+        url: https://blog.cloudflare.com/making-the-waf-40-faster/
+    cues:
+      - id: cue-1
+        say: >-
+          Traffic recovered by 14:09 with the WAF disabled. At 14:52, after removing the bad rule
+          and performing isolated checks, the WAF was re-enabled. The detailed report describes a
+          twenty-seven-minute outage; the longer time until WAF restoration is a different interval.
+          Mixing these milestones would hide the period of reduced security functionality.
+        step: Verify what returned when
+        note: >-
+          Recovery of one service property does not imply restoration of every service
+          responsibility.
+        visual: Traffic recovery and WAF restoration occupy different milestones on July 2.
+      - id: cue-2
+        say: >-
+          A July 2020 follow-up confirms that the WAF migrated in July 2019 from PCRE to an engine
+          inspired by RE2. It reports reduced matching-time outliers, while overall edge CPU
+          consumption did not measurably change. The article also describes a separate optimization
+          yielding its forty-percent headline. We should not attribute that whole headline to the
+          engine migration. Which conclusion fits these sources?
+        step: Use later evidence for a later claim
+        note: >-
+          The later report confirms a migration. It does not prove that every future performance
+          failure is impossible.
+        visual: Engine change is a later milestone supported by retrospective evidence.
+        prediction: true
+    checkpoint:
+      question: Which statement respects the evidence and its limits?
+      options:
+        - At 14:09 the WAF had been fully restored and every long-term remediation was complete.
+        - >-
+          Traffic recovered first, WAF service returned later, and a later account confirms the
+          engine migration.
+        - The engine migration alone made the entire edge service forty percent faster.
+      correct_index: 1
+      explanation: >-
+        The sources support distinct claims at distinct times. This is also a debugging habit:
+        record exactly what an observation establishes, and keep unresolved or untested claims
+        separate from completed work.
+      option_feedback:
+        "0": >-
+          At 14:09 the WAF was still disabled. Its restoration and long-term hardening belong to
+          later milestones.
+        "2": >-
+          The follow-up distinguishes the migration's effects from the separate optimization behind
+          that headline.
+  - id: transfer
+    label: Investigate a new case
+    title: Apply the method without copying the diagnosis
+    purpose: Transfer evidence-driven debugging to a different service.
+    evidence: Original transfer exercise. This is not another reported Cloudflare incident.
+    sources:
+      - title: "The Debugging Book: scientific investigation of failures"
+        url: https://www.debuggingbook.org/html/Intro_Debugging.html
+    cues:
+      - id: cue-1
+        say: >-
+          A separate service accepts uploaded records. A validator checks them, then a report
+          builder produces a summary. After a rule update, large uploads time out and CPU usage is
+          high. Smaller uploads often succeed. You have not yet measured where the time goes. The
+          validator might be expensive, the report builder might repeat work, or demand might have
+          changed. Nothing here establishes a regular-expression defect.
+        step: Orient to a new system
+        note: >-
+          Your goal: identify a discriminating observation and preserve a meaningful failure
+          predicate.
+        visual: Validation and report building are separate possible sources of expensive work.
+      - id: cue-2
+        say: >-
+          Make an investigation note: state the expected result and resource obligation, preserve a
+          failing upload and configuration, and name at least two explanations. Then choose an
+          observation that could separate them. After the choice, write one positive test and one
+          cost test you would retain when a repair is proposed. Use the four stages: investigate and
+          reproduce, locate, explain, then repair and verify. Evidence can send you back to an
+          earlier stage.
+        step: Choose a defensible next action
+        note: >-
+          The four-stage structure is a teaching organization of Zeller's methods, not a verbatim
+          list or a claim about the historical responders.
+        visual: Follow the work across boundaries before selecting a repair for one box.
+        prediction: true
+    checkpoint:
+      question: Which next action best follows the evidence in this new incident?
+      options:
+        - Replace the validator's regex engine immediately because the symptoms resemble Cloudflare.
+        - >-
+          Delete records until any upload succeeds, then treat that successful input as the
+          reproducer.
+        - >-
+          Measure time at validation and report-building boundaries, then compare controlled
+          versions while preserving the failing input and cost criterion.
+      correct_index: 2
+      explanation: >-
+        First obtain evidence that distinguishes candidate causes. A repeatable input and explicit
+        oracle let you compare versions and later evaluate a repair. Follow with a changed-input
+        prediction that could falsify your explanation. The transferable result is a method for
+        selecting evidence, not a rule that every high-CPU outage is a regex bug.
+      option_feedback:
+        "0": >-
+          Similar symptoms do not establish the same cause. The expensive work has not yet been
+          localized.
+        "1": >-
+          That produces a passing example. Reduction is useful only while it preserves the failure
+          being investigated.

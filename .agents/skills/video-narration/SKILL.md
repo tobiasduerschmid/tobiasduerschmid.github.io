@@ -4,11 +4,11 @@ description: >-
   Authoring guide for video narrations in the SEBook: narrated lessons played like a video, whose
   every cue is a scene on an animated vector stage built with the song-video engine (the Scrum
   narration, and any new one). USE THIS SKILL EVERY TIME you create, extend, restructure, or review
-  a video narration: `_data/explainers/<topic>.yml` with `animation` or `show`,
-  `<topic>_quizzes.yml`, `_data/video_narrations.yml`, `_includes/video-narration*.html`,
+  a video narration: `_data/narrations/<topic>.yml` and `_data/narration_visuals/<topic>.json`,
+  `<topic>_quizzes.yml`, shared narration compilation, `_includes/video-narration*.html`,
   `_layouts/video-narration-stage.html`, `js/video-narration*.js`, `js/video-narration/<topic>.js`
   choreographies and kits, `css/video-narration*.css`, the stage page under
-  `assets/video-narration/`, or a chapter that includes `video-narration.html`. Also trigger on
+  `assets/video-narration/`, or a chapter that includes `narration.html` with `kind: video`. Also trigger on
   requests like "make a narrated video lesson about X", "animate this narration", "refine the
   Scrum graphics", "the animation is out of sync with the narration", "text overlaps in the
   video", "full screen / mobile / dark mode looks wrong in the video", or "export the narration as
@@ -19,6 +19,12 @@ description: >-
 ---
 
 # Authoring video narrations
+
+Read [narration-authoring](../narration-authoring/SKILL.md) first for the shared
+versioned format, source ownership, compiler, and audio regeneration workflow.
+Speech and teaching text belong in `_data/narrations/<topic>.yml`; animation
+configuration and state belong in `_data/narration_visuals/<topic>.json` and
+its referenced choreography assets. Use `kind: video`.
 
 A video narration is a 12 to 15 minute, Kokoro-voiced lesson that plays like a
 video, with a knowledge check after each section. It shares its transport,
@@ -215,7 +221,7 @@ shares its modules. Rules that came from review:
   Developers, Product Owner, Scrum Master) as smaller ovals that jump to each
   scene's start, the current one filled. Give every scene with a `part` a
   short `outline` name, and keep `part` identical to a name in the
-  registry's `parts`.
+  script’s `lesson.parts`.
 - **The roadmap is visible from the very first scene, before playback.**
   When a lesson declares `parts`, show its complete clickable part strip on
   every scene, including the introduction and summary. Show the second-level
@@ -226,7 +232,7 @@ shares its modules. Rules that came from review:
   `scene.part` must never hide navigation or require a fabricated part value
   in the speech storyboard. Verify the opening frame, each jump target,
   inline and mobile fullscreen layouts, and both themes. Reuse the shared
-  `narrated-lesson-navigation.html` include and `NarratedLesson.linkNavigation`
+  `narrated-lesson-navigation.html` include and `NarratedLesson.mount`
   helper used by design-pattern lessons; a jump keeps keyboard focus in the
   destination navigation.
 - Every picture has a heading strip: a tag naming the role, artifact, or
@@ -244,15 +250,21 @@ shares its modules. Rules that came from review:
 - Space on any player button toggles playback, as in the music player; Enter
   activates the button.
 
-Full screen fills the display with the video, including the scene's header
-(lesson sticker, scene number, part strip, title, and task). Where the screen
-is at least 3:2, the header is a sidebar beside the picture, because the
-picture is limited by height there; on a short, wide screen (a phone on its
-side) the captions join the sidebar so the picture takes the height above the
-controls; on narrower screens the header is a row above. Check full screen at
-1440x900, 1920x1080, 1024x768, 844x390, and 390x844, and the inline player at
-320px wide. Everything must also work by touch (tap the picture to play,
-double-tap a side to skip).
+Full screen keeps the two-level navigation **horizontal across the top on
+both laptops and phones**, including simulated mobile landscape. Never turn
+it into a sidebar. Let each level scroll horizontally when needed instead of
+wrapping it into a tall stack or shrinking readable text. The scene number,
+label, and both sets of links identify the current scene; the inline title
+and task can be visually hidden in fullscreen but remain accessible to screen
+readers. Give the picture the space below the navigation. Keep the controls
+thin (compact padding and at least 32px targets); overlay them and captions
+on the lower picture when needed, rather than reserving large caption bands.
+Caption backgrounds must retain contrast in both themes, captions must scroll
+at enlarged sizes, and CC must let viewers uncover the artwork. Keep settings,
+keyboard focus, and knowledge checks above overlays and independently usable.
+Check full screen at 1440x900, 1920x1080, 1024x768, 844x390, 390x844, and
+320x568, and the inline player at 320px wide. Everything must also work by
+touch (tap the picture to play, double-tap a side to skip).
 
 Full screen works in every browser, so keep it working when you change the
 player (`js/narrated-explainer.js`):
@@ -337,10 +349,11 @@ page to PDF and read a few pages (`pdftoppm` renders them).
 Render with `scripts/render-explainer-narration.py --topic <topic>` (setup and
 the espeak-ng path workaround: the `design-pattern-narration` skill).
 Listen for abbreviations and symbols, and check doubtful words by their
-phonemes ("p.m." needs the spoken form `PM.`; see that skill's section 7). Any edit
-to the storyboard, including `visual` text, changes its hash: re-render
-(per-cue audio is cached, so unchanged speech is not resynthesized) before
-running the tests. Follow "Adding a video narration" in
+phonemes ("p.m." needs the spoken form `PM.`; see that skill’s section 7).
+Run `node scripts/narration.js check <topic>`. Regenerate audio after changing
+`say`, pauses, voice, speed, pronunciation rules, or scene/cue order or IDs.
+The speech fingerprint excludes visual descriptions, navigation, and artwork;
+those edits need no audio generation. Unchanged spoken cues reuse the WAV cache. Follow "Adding a video narration" in
 `docs/video-narration.md`. Follow the Scrum timing and playback tests for every
 quiz boundary: at normal speed, at least two seconds pass after `speech_end`
 with the completed picture visible before the quiz opens, and playback stops

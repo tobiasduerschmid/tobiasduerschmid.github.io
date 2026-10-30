@@ -1,16 +1,14 @@
+const { loadStory } = require('../narration/source');
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const { readFileSync } = require('node:fs');
 const path = require('node:path');
-const yaml = require('js-yaml');
 const { mkdtempSync, writeFileSync, rmSync } = require('node:fs');
 const { tmpdir } = require('node:os');
 const { execFile } = require('node:child_process');
 const { promisify } = require('node:util');
 
 const root = path.resolve(__dirname, '../..');
-const source = readFileSync(path.join(root, '_data/explainers/nodejs.yml'));
-const story = yaml.load(source.toString());
+const story = loadStory('nodejs');
 
 test('worked examples actually produce the outputs the lesson teaches', async () => {
   const directory = mkdtempSync(path.join(tmpdir(), 'nodejs-lesson-'));

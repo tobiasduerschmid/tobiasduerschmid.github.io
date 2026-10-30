@@ -40,9 +40,14 @@ components, deployment, data-fetching frameworks or optimization APIs.
 
 ## Ownership
 
-- `_data/explainers/react.yml`: canonical examples, narration, pronunciation map,
-  conceptual steps, focus lines and complete nonvisual descriptions.
-- `_data/explainers/react_timing.json`: measured timings and source SHA-256.
+See [the shared format](narration-format.md). Spoken `say` cues and teaching
+text live in the YAML; diagrams, code/animation state, and renderer settings
+live separately in `_data/narration_visuals/react.json`.
+
+
+- `_data/narrations/react.yml`: narration, pronunciation map, conceptual steps,
+  and complete nonvisual descriptions.
+- `_data/explainers/react_timing.json`: measured timings and speech fingerprint.
 - `_includes/react-animation-art.html` and `react-animation-preview.html`: concrete
   visual structures, without inline presentation.
 - `css/react-animation.css`: React-specific artwork. `js/react-animation-art.js`:

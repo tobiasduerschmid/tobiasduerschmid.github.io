@@ -1,3 +1,4 @@
+const { loadStory } = require('../narration/source');
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const { readFileSync, existsSync } = require('node:fs');
@@ -22,12 +23,10 @@ test('Observer provides all four languages with a complete worked UI example', (
   }
 });
 
-const { createHash } = require('node:crypto');
 const { statSync, mkdtempSync, writeFileSync, rmSync } = require('node:fs');
 const { tmpdir } = require('node:os');
 const { execFileSync, spawnSync } = require('node:child_process');
-const source = readFileSync(path.join(root, '_data/explainers/observer.yml'));
-const story = yaml.load(source.toString());
+const story = loadStory('observer');
 const examples = yaml.load(readFileSync(path.join(root, '_data/explainers/observer_code.yml'), 'utf8'));
 const quizzes = yaml.load(readFileSync(path.join(root, '_data/explainers/observer_quizzes.yml'), 'utf8'));
 const timing = require('../../_data/explainers/observer_timing.json');
@@ -55,7 +54,7 @@ test('every section has one question, the summary covers every part, and every c
 });
 
 test('Observer speech, captions and timing are generated from the published storyboard', () => {
-  assert.equal(timing.source_sha256, createHash('sha256').update(source).digest('hex'));
+  assert.equal(timing.speech_sha256, story.speech_sha256);
   let end = 0;
   assert.equal(timing.scenes.length, story.scenes.length);
   timing.scenes.forEach((scene, index) => {

@@ -77,7 +77,13 @@ specific cues:
 
 ## Sources
 
-- `_data/explainers/mvc.yml`: speech, scenes, parts, and diagrams (CRC cards,
+See [the shared format](narration-format.md). Spoken `say` cues and teaching
+text live in the YAML; diagrams, code/animation state, and renderer settings
+live separately in `_data/narration_visuals/mvc.json`.
+
+
+- `_data/narrations/mvc.yml`: speech, scenes, parts, and teaching text.
+- `_data/narration_visuals/mvc.json`: renderer state and diagrams (CRC cards,
   three class diagrams, and both scenarios as sequence diagrams).
 - `_data/explainers/mvc_code.yml`: the four-language examples.
 - `_data/explainers/mvc_quizzes.yml`: section checks and the summary quiz.
@@ -87,7 +93,7 @@ specific cues:
   illustrated dashboard. Bar lengths and pie slices are SVG geometry computed
   at build time; the reader and print views show this static picture.
 - `js/mvc-dashboard.js`: the live dashboard in the player, loaded through the
-  topic's `scripts` in `_data/narrated_patterns.yml`.
+  `presentation.scripts` in `_data/narration_visuals/mvc.json`.
 
 ## Regeneration and checks
 

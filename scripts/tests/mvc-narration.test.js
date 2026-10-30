@@ -1,6 +1,6 @@
+const { loadStory } = require('../narration/source');
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const { createHash } = require('node:crypto');
 const { readFileSync, statSync, mkdtempSync, writeFileSync, rmSync } = require('node:fs');
 const { tmpdir } = require('node:os');
 const path = require('node:path');
@@ -9,8 +9,7 @@ const yaml = require('js-yaml');
 
 const root = path.resolve(__dirname, '../..');
 const read = file => readFileSync(path.join(root, file), 'utf8');
-const source = readFileSync(path.join(root, '_data/explainers/mvc.yml'));
-const story = yaml.load(source.toString());
+const story = loadStory('mvc');
 const examples = yaml.load(read('_data/explainers/mvc_code.yml'));
 const quizzes = yaml.load(read('_data/explainers/mvc_quizzes.yml'));
 const dashboard = yaml.load(read('_data/explainers/mvc_ui.yml'));
@@ -107,7 +106,7 @@ test('code blocks exist in all four languages and their marks name real lines', 
 });
 
 test('speech, captions, and timing are generated from the published storyboard', () => {
-  assert.equal(timing.source_sha256, createHash('sha256').update(source).digest('hex'),
+  assert.equal(timing.speech_sha256, story.speech_sha256,
     'Regenerate audio, captions, and timing after editing the storyboard.');
   assert.equal(timing.scenes.length, story.scenes.length);
   let end = 0;

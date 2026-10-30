@@ -1,9 +1,8 @@
+const { loadStory } = require('../scripts/narration/source');
 const { test, expect } = require('@playwright/test');
 const { a11yCheckpoint } = require('./a11y-helpers');
-const { readFileSync } = require('node:fs');
-const yaml = require('js-yaml');
 
-const sceneNumber = (topic, id) => yaml.load(readFileSync(require.resolve(`../_data/explainers/${topic}.yml`), 'utf8'))
+const sceneNumber = (topic, id) => loadStory(topic)
   .scenes.findIndex(scene => scene.id === id);
 // Every narration uses the shared transport, so each one gets the same contract.
 // Pattern lessons also name a scene that shows code beside a fitted diagram.

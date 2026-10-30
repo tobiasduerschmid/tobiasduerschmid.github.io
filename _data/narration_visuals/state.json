@@ -1,0 +1,335 @@
+{
+  "version": 1,
+  "presentation": {
+    "visuals": {
+      "ui": "state-companion-panel.html",
+      "table": "state-behavior-table.html"
+    },
+    "styles": [
+      "/css/state-narration.css"
+    ]
+  },
+  "resources": {
+    "languages": [
+      "python",
+      "java",
+      "cpp",
+      "typescript"
+    ],
+    "default_language": "python",
+    "example_order": [
+      "state",
+      "context",
+      "states",
+      "wire"
+    ],
+    "diagrams": {
+      "lifecycle": {
+        "type": "state",
+        "label": "Companion dog state machine",
+        "description": "A new dog starts in Following. throwBall() moves it to Fetching. In Fetching, tick() returns it to Following while it has energy left and moves it to Napping when no energy is left. In Napping, whistle() returns it to Following.",
+        "caption": "Each rounded box is a state; each arrow is a transition labeled with its event and, in square brackets, a guard on the dog's data. Events that leave the state unchanged, such as whistle() in Fetching, are not drawn.",
+        "source": "@startuml\nlayout horizontal\nstate Following\nstate Fetching\nstate Napping\n[*] --> Following\nFollowing --> Fetching : throwBall()\nFetching --> Following : tick() [energy left]\nFetching --> Napping : tick() [no energy left]\nNapping --> Following : whistle()\n@enduml\n"
+      },
+      "roles": {
+        "label": "State pattern role diagram",
+        "description": "Context holds exactly one current State and offers request() and setState(next). State declares handle(context). ConcreteState implements State and calls setState(next) on the Context to make a transition.",
+        "source": "@startuml\nlayout horizontal\nclass Context {\n  - state: State\n  + request()\n  + setState(next)\n}\ninterface State {\n  + handle(context)\n}\nclass ConcreteState {\n  + handle(context)\n}\nContext --> \"1\" State : current\nConcreteState ..|> State\nConcreteState ..> Context : setState(next)\n@enduml\n"
+      },
+      "solution": {
+        "label": "State solution structure",
+        "description": "Dog holds its energy and one current DogState, and forwards throwBall(), whistle(), and tick() to it. Following, Fetching, and Napping each implement DogState. Dog does not depend on the concrete state classes.",
+        "caption": "Dog plays Context; DogState plays State; Following, Fetching, and Napping play Concrete State. The Context depends only on the State interface.",
+        "source": "@startuml\nclass Dog {\n  + energy\n  - state: DogState\n  + throwBall()\n  + whistle()\n  + tick()\n  + setState(next)\n}\ninterface DogState {\n  + throwBall(dog)\n  + whistle(dog)\n  + tick(dog)\n}\nclass Following\nclass Fetching\nclass Napping\nDog --> \"1\" DogState : current\nFollowing ..|> DogState\nFetching ..|> DogState\nNapping ..|> DogState\n@enduml\n"
+      },
+      "sequence": {
+        "type": "sequence",
+        "label": "Sequence of the traced inputs",
+        "description": "The game calls throwBall() on dog, and dog forwards it to the shared Following object, which calls setState(fetching) on dog. The game calls throwBall() again, and dog forwards it to the Fetching object, which changes nothing. The game calls tick(), and dog forwards it to the Fetching object, which calls setState(following) on dog.",
+        "caption": "Each input goes to whichever state object is current. The messages appear as the narration reaches them; the panel below shows each reaction.",
+        "source": "@startuml\nparticipant game\nparticipant dog: Dog\nparticipant following as : Following\nparticipant fetching as : Fetching\n",
+        "steps": [
+          "game -> dog: throwBall()\nactivate dog\ndog -> following: throwBall(dog)\nactivate following\nfollowing -> dog: setState(fetching)\nactivate dog\ndeactivate dog\ndeactivate following\ndeactivate dog\n",
+          "game -> dog: throwBall()\nactivate dog\ndog -> fetching: throwBall(dog)\nactivate fetching\ndeactivate fetching\ndeactivate dog\n",
+          "game -> dog: tick()\nactivate dog\ndog -> fetching: tick(dog)\nactivate fetching\nfetching -> dog: setState(following)\nactivate dog\ndeactivate dog\ndeactivate fetching\ndeactivate dog\n"
+        ]
+      }
+    }
+  },
+  "scenes": {
+    "intro": {
+      "state": {
+        "ui": true
+      },
+      "cues": {
+        "cue-1": {
+          "ui_state": "throw_following"
+        },
+        "cue-2": {
+          "ui_state": "throw_napping"
+        },
+        "cue-3": {
+          "ui_state": "throw_napping"
+        }
+      }
+    },
+    "context": {
+      "state": {
+        "diagram": "lifecycle"
+      },
+      "cues": {
+        "cue-1": {
+          "diagram_focus": "Following"
+        },
+        "cue-2": {
+          "diagram_focus": "Fetching"
+        },
+        "cue-3": {
+          "diagram_focus": "Napping"
+        }
+      }
+    },
+    "problem": {
+      "state": {
+        "code": "problem",
+        "table": true
+      },
+      "cues": {
+        "cue-1": {
+          "focus": "throw",
+          "table_focus": {
+            "column": "throw_ball"
+          }
+        },
+        "cue-2": {
+          "focus": "whistle",
+          "table_focus": {
+            "column": "whistle"
+          }
+        },
+        "cue-3": {
+          "focus": "tick",
+          "table_focus": {
+            "column": "tick"
+          }
+        },
+        "cue-4": {},
+        "cue-5": {
+          "focus": "fallback",
+          "table_focus": {
+            "row": "napping"
+          }
+        }
+      }
+    },
+    "solution": {
+      "state": {
+        "diagram": "roles"
+      },
+      "cues": {
+        "cue-1": {
+          "diagram_focus": "Context"
+        },
+        "cue-2": {
+          "diagram_focus": "State"
+        },
+        "cue-3": {
+          "diagram_focus": "ConcreteState"
+        },
+        "cue-4": {
+          "diagram_focus": "Context"
+        }
+      }
+    },
+    "state_role": {
+      "state": {
+        "code": "state",
+        "diagram": "solution"
+      },
+      "cues": {
+        "cue-1": {
+          "focus": "contract",
+          "diagram_focus": "DogState"
+        },
+        "cue-2": {
+          "focus": "contract",
+          "diagram_focus": "DogState"
+        }
+      }
+    },
+    "context_role": {
+      "state": {
+        "code": "context",
+        "diagram": "solution"
+      },
+      "cues": {
+        "cue-1": {
+          "focus": "field",
+          "diagram_focus": "Dog"
+        },
+        "cue-2": {
+          "focus": "delegate",
+          "diagram_focus": "Dog"
+        },
+        "cue-3": {
+          "focus": "set_state",
+          "diagram_focus": "Dog"
+        }
+      }
+    },
+    "concrete_roles": {
+      "state": {
+        "code": "states",
+        "table": true
+      },
+      "cues": {
+        "cue-1": {
+          "focus": "following",
+          "table_focus": {
+            "row": "following"
+          }
+        },
+        "cue-2": {
+          "focus": "fetching",
+          "table_focus": {
+            "row": "fetching"
+          }
+        },
+        "cue-3": {
+          "focus": "napping",
+          "table_focus": {
+            "row": "napping"
+          }
+        },
+        "cue-4": {
+          "focus": "shared"
+        }
+      }
+    },
+    "collaborations": {
+      "state": {
+        "code": "wire",
+        "diagram": "sequence",
+        "ui": true
+      },
+      "cues": {
+        "cue-1": {
+          "focus": "first_throw",
+          "diagram_focus": "following",
+          "diagram_steps": 1,
+          "ui_state": "throw_following"
+        },
+        "cue-2": {
+          "focus": "second_throw",
+          "diagram_steps": 1,
+          "ui_state": "throw_following"
+        },
+        "cue-3": {
+          "focus": "second_throw",
+          "diagram_focus": "fetching",
+          "diagram_steps": 2,
+          "ui_state": "throw_fetching"
+        },
+        "cue-4": {
+          "focus": "tick",
+          "diagram_focus": "fetching",
+          "diagram_steps": 3,
+          "ui_state": "tick_fetching"
+        }
+      }
+    },
+    "consequences": {
+      "state": {
+        "cards": [
+          {
+            "title": "Benefit: localized states",
+            "text": "Each state's reactions live in one class; a new state is one class plus its incoming transitions."
+          },
+          {
+            "title": "Benefit: explicit transitions",
+            "text": "Each transition is a named call in the state it leaves; changing state swaps one reference."
+          },
+          {
+            "title": "Liability: more classes, spread transitions",
+            "text": "States depend on their successors, and a new request must be added to every state."
+          }
+        ]
+      },
+      "cues": {
+        "cue-1": {},
+        "cue-2": {},
+        "cue-3": {}
+      }
+    },
+    "applicability": {
+      "state": {
+        "cards": [
+          {
+            "title": "A good fit",
+            "text": "Several states with distinct behavior across several requests, and states that keep being added."
+          },
+          {
+            "title": "Simpler alternatives",
+            "text": "A few stable states \u2014 extracted methods or exhaustive, checked switches. States that differ only in where they go next \u2014 a transition table."
+          },
+          {
+            "title": "Not Strategy",
+            "text": "A client chooses a Strategy; State objects replace one another as events occur."
+          }
+        ]
+      },
+      "cues": {
+        "cue-1": {},
+        "cue-2": {},
+        "cue-3": {}
+      }
+    },
+    "transfer": {
+      "state": {
+        "cards": [
+          {
+            "title": "Zoomies",
+            "text": "A whistle wakes a napping dog into the zoomies instead of a calm walk."
+          },
+          {
+            "title": "Its reactions",
+            "text": "Tick races one lap, then follows. Throw starts fetching at once. Whistle is ignored."
+          },
+          {
+            "title": "Your task",
+            "text": "Name the class you add and every existing line that changes."
+          }
+        ]
+      },
+      "cues": {
+        "cue-1": {},
+        "cue-2": {}
+      }
+    },
+    "summary": {
+      "state": {
+        "cards": [
+          {
+            "title": "Context",
+            "text": "Several operations of one object depend on a state that changes at runtime, and new states keep arriving."
+          },
+          {
+            "title": "Problem",
+            "text": "State checks scattered through every operation keep one state's rules apart and make every new state touch every method."
+          },
+          {
+            "title": "Solution",
+            "text": "A Context delegates to its current State object; Concrete States implement one state each and choose the next state."
+          },
+          {
+            "title": "Consequences",
+            "text": "Localized states and explicit transitions, at the cost of more classes, spread transitions, and costly new requests."
+          }
+        ]
+      },
+      "cues": {
+        "cue-1": {}
+      }
+    }
+  }
+}

@@ -78,8 +78,7 @@
     <p>Technical references: <a href="https://nodejs.org/en/learn/getting-started/introduction-to-nodejs">Node.js introduction</a>, <a href="https://nodejs.org/en/learn/asynchronous-work/dont-block-the-event-loop">blocking and the event loop</a>, and <a href="https://nodejs.org/en/learn/asynchronous-work/discover-promises-in-nodejs">promises</a>.</p>
     {% endif %}
   </details>
-  <script type="application/json" data-explainer-storyboard>{{ explainer | jsonify }}</script>
-  <script type="application/json" data-explainer-timing>{{ timing | jsonify }}</script>
+  {% include narration-data.html topic=include.topic %}
 </section>
 {% assign art_script = '/js/' | append: include.topic | append: '-animation-art.js' %}
 <script src="{{ art_script | relative_url }}" defer></script>

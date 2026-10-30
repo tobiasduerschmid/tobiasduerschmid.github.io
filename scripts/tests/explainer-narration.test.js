@@ -1,19 +1,17 @@
+const { loadStory } = require('../narration/source');
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const { readFileSync, statSync } = require('node:fs');
 const path = require('node:path');
-const { createHash } = require('node:crypto');
-const yaml = require('js-yaml');
 const parser = require('@babel/parser');
 
 const root = path.resolve(__dirname, '../..');
 for (const topic of ['nodejs', 'react']) {
-  const source = readFileSync(path.join(root, `_data/explainers/${topic}.yml`));
-  const story = yaml.load(source.toString());
+  const story = loadStory(topic);
   const timing = JSON.parse(readFileSync(path.join(root, `_data/explainers/${topic}_timing.json`)));
 
   test(`${topic}: published speech and cue times match the storyboard`, () => {
-    assert.equal(timing.source_sha256, createHash('sha256').update(source).digest('hex'),
+    assert.equal(timing.speech_sha256, story.speech_sha256,
       'Regenerate audio, captions, and timing after editing the storyboard.');
     assert.equal(timing.voice, story.voice);
     assert.equal(timing.speed, story.speed);

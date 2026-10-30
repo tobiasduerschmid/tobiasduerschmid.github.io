@@ -1,7 +1,7 @@
 {%- comment -%}
   Narrated design-pattern lesson: language-selectable code, ArchUML diagrams,
   topic illustrations, and one knowledge check per section.
-  Params: topic (a key of _data/narrated_patterns.yml and _data/explainers).
+  Params: topic (a key of the compiled site.data.narrated_patterns view and _data/explainers).
 {%- endcomment -%}
 {% assign topic = include.topic %}
 {% assign lesson = site.data.narrated_patterns[topic] %}
@@ -100,10 +100,7 @@
     <summary>Transcript, code, and visual descriptions</summary>
     {% include narrated-pattern-reading.html topic=topic %}
   </details>
-  <script type="application/json" data-np-storyboard>{{ explainer | jsonify }}</script>
-  <script type="application/json" data-np-quizzes>{{ quizzes | jsonify }}</script>
-  <script type="application/json" data-np-examples>{{ examples | jsonify }}</script>
-  <script type="application/json" data-np-timing>{{ timing | jsonify }}</script>
+  {% include narration-data.html topic=include.topic %}
 </section>
 <script src="{{ '/js/narrated-explainer.js' | relative_url }}" defer></script>
 <script src="{{ '/js/parsons-grading.js' | relative_url }}" defer></script>

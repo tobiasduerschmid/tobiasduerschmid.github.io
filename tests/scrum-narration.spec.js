@@ -1,11 +1,12 @@
+const { loadStory, loadRegistry } = require('../scripts/narration/source');
 const { test, expect } = require('@playwright/test');
 const { a11yCheckpoint } = require('./a11y-helpers');
 const { readFileSync } = require('node:fs');
 const yaml = require('js-yaml');
 
-const story = yaml.load(readFileSync(require.resolve('../_data/explainers/scrum.yml'), 'utf8'));
+const story = loadStory('scrum');
 const quizzes = yaml.load(readFileSync(require.resolve('../_data/explainers/scrum_quizzes.yml'), 'utf8'));
-const lesson = yaml.load(readFileSync(require.resolve('../_data/video_narrations.yml'), 'utf8')).scrum;
+const lesson = loadRegistry('video').scrum;
 const timing = require('../_data/explainers/scrum_timing.json');
 const url = '/SEBook/process/scrum.html';
 const player = page => page.getByRole('region', { name: story.title, exact: true });
@@ -529,16 +530,15 @@ test('full screen fills the display with the video, hides idle controls, and kee
   await expect.poll(() => page.evaluate(() => document.fullscreenElement && document.fullscreenElement.matches('[data-vn-video]'))).toBe(true);
   const box = await video.boundingBox();
   expect([Math.round(box.width), Math.round(box.height)]).toEqual([1280, 800]);
-  // The picture letterboxes at 16:9, above captions and controls, and the
-  // scene's header stays in view beside it, using the width a 16:10 screen spares.
+  // The roadmap stays horizontal above the picture; captions and compact
+  // controls overlay its lower edge rather than creating a sidebar.
   const picture = await animation.locator('[data-vn-panel="animation"]').boundingBox();
   expect(picture.width / picture.height).toBeCloseTo(16 / 9, 1);
   const controls = animation.locator('.vn-controls');
-  expect(picture.y + picture.height).toBeLessThanOrEqual((await controls.boundingBox()).y);
-  const heading = animation.getByRole('heading', { name: story.scenes[0].title, exact: true });
-  await expect(heading).toBeVisible();
-  expect((await heading.boundingBox()).x + (await heading.boundingBox()).width).toBeLessThanOrEqual(picture.x);
-  expect(picture.width).toBeGreaterThan(1280 * 0.7);
+  expect((await controls.boundingBox()).height).toBeLessThanOrEqual(76);
+  const navigation = await animation.getByRole('navigation', { name: 'Lesson sections' }).boundingBox();
+  expect(navigation.y + navigation.height).toBeLessThanOrEqual(picture.y + 1);
+  expect(picture.width).toBeGreaterThan(1280 * 0.85);
 
   await page.keyboard.press('k');
   await expect(animation.getByRole('button', { name: 'Pause narration' })).toBeAttached();
@@ -565,19 +565,25 @@ test('full screen fills the display with the video, hides idle controls, and kee
   await expect.poll(() => page.evaluate(() => document.fullscreenElement)).toBe(null);
 });
 
-test('full screen on a phone keeps the picture large, with the header and captions beside it', async ({ page }) => {
+test('full screen on a phone keeps horizontal navigation and overlays captions on the picture', async ({ page }) => {
   await page.setViewportSize({ width: 844, height: 390 });
   await page.goto(url);
   const animation = player(page);
   await animation.getByRole('button', { name: 'Enter full screen' }).click();
-  await expect.poll(() => page.evaluate(() => Boolean(document.fullscreenElement))).toBe(true);
   const picture = await animation.locator('[data-vn-panel="animation"]').boundingBox();
   const controls = await animation.locator('.vn-controls').boundingBox();
-  expect(picture.height).toBeGreaterThan(390 * 0.55);
-  expect(picture.y + picture.height).toBeLessThanOrEqual(controls.y + 1);
-  const heading = await animation.getByRole('heading', { name: story.scenes[0].title, exact: true }).boundingBox();
-  const captions = await animation.getByRole('region', { name: 'Narration', exact: true }).boundingBox();
-  for (const side of [heading, captions]) expect(side.x + side.width).toBeLessThanOrEqual(picture.x + 1);
+  expect(picture.height).toBeGreaterThan(390 * 0.7);
+  expect(controls.height).toBeLessThanOrEqual(76);
+  const navigation = await animation.getByRole('navigation', { name: 'Lesson sections' }).boundingBox();
+  expect(navigation.y + navigation.height).toBeLessThanOrEqual(picture.y + 1);
+  const captions = animation.getByRole('region', { name: 'Narration', exact: true });
+  const captionBox = await captions.boundingBox();
+  expect(captionBox.y).toBeGreaterThan(picture.y);
+  expect(captionBox.y).toBeLessThan(picture.y + picture.height);
+  expect(captionBox.y + captionBox.height).toBeLessThanOrEqual(controls.y);
+  await animation.getByRole('button', { name: 'Closed captions (CC)', exact: true }).click();
+  await expect(captions).toBeHidden();
+  expect(await animation.locator('[data-vn-panel="animation"]').boundingBox()).toEqual(picture);
 });
 
 test('without element full screen (Safari on iPhone), full screen fills the viewport and Escape leaves it', async ({ page }) => {
@@ -593,7 +599,7 @@ test('without element full screen (Safari on iPhone), full screen fills the view
   await animation.getByRole('button', { name: 'Enter full screen' }).click();
   await expect(animation.getByRole('button', { name: 'Exit full screen' })).toBeVisible();
   expect(await video.boundingBox()).toEqual({ x: 0, y: 0, width: 390, height: 844 });
-  await expect(animation.getByRole('heading', { name: story.scenes[0].title, exact: true })).toBeInViewport();
+  await expect(animation.getByRole('navigation', { name: 'Lesson sections' })).toBeInViewport();
   await expect(animation.locator('[data-vn-panel="animation"]')).toBeInViewport();
   await page.keyboard.press('Escape');
   await expect(animation.getByRole('button', { name: 'Enter full screen' })).toBeVisible();

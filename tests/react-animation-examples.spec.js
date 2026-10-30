@@ -1,8 +1,7 @@
+const { loadStory } = require('../scripts/narration/source');
 const { test, expect } = require('@playwright/test');
-const { readFileSync } = require('node:fs');
-const yaml = require('js-yaml');
 const parser = require('@babel/parser');
-const story = yaml.load(readFileSync(require.resolve('../_data/explainers/react.yml'), 'utf8'));
+const story = loadStory('react');
 const scene = (id) => story.scenes.find((item) => item.id === id);
 
 // The same pinned React/Babel versions used by the interactive React tutorial.

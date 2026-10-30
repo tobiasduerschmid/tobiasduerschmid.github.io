@@ -1,0 +1,296 @@
+{
+  "version": 1,
+  "presentation": {},
+  "resources": {
+    "diagrams": {
+      "reports": {
+        "type": "component",
+        "label": "Evidence arriving from different sources",
+        "description": "A patient report and console indications both reach the investigation. The investigation compares possible explanations. The diagram makes no claim that either observation identifies a source defect.",
+        "caption": "An observation constrains an explanation; it does not select one automatically. These are evidence roles, not machine components.",
+        "source": "@startuml\nlayout vertical\ncomponent PatientReport\ncomponent ConsoleIndications\ncomponent Investigation\ncomponent Explanations\nPatientReport --> Investigation : unexpected effect\nConsoleIndications --> Investigation : message and reading\nInvestigation --> Explanations : compare with evidence\n@enduml\n"
+      },
+      "machine": {
+        "type": "component",
+        "label": "One request, several configuration responsibilities",
+        "description": "Prescription entry influences beam setup and positioning separately. Beam setup determines operating parameters; positioning determines the beam path. Both affect output. These are conceptual responsibilities, not recovered software modules.",
+        "caption": "A displayed request and an applied configuration answer different questions.",
+        "source": "@startuml\nlayout vertical\ncomponent Prescription\ncomponent BeamSetup\ncomponent Positioning\ncomponent Output\nPrescription --> BeamSetup : select parameters\nPrescription --> Positioning : select arrangement\nBeamSetup --> Output : operating parameters\nPositioning --> Output : beam path\n@enduml\n"
+      },
+      "histories": {
+        "type": "sequence",
+        "label": "Two histories with the same final request",
+        "description": "In one history an electron request is entered directly. In the other an X-ray request is entered, setup begins, and the request is corrected to electron mode while setup is outstanding. Neither resulting output is shown.",
+        "caption": "A comparison experiment must specify more than the last value on screen. These are teaching scenarios.",
+        "source": "@startuml\nactor operator: Operator\nparticipant input: Request\nparticipant setup: Setup work\nalt [direct entry]\n  operator -> input: enter E\n  setup -> input: read request\n  input --> setup: E\nelse [correction during setup]\n  operator -> input: enter X\n  setup -> input: read request\n  input --> setup: X\n  operator -> input: correct to E\nend\nnote over input: Final request is E\n@enduml\n"
+      },
+      "before_second_read": {
+        "type": "sequence",
+        "label": "Pause before the positioning read",
+        "description": "The request is X when beam setup selects parameters. The operator then edits the request to E. Positioning has not yet performed the read shown next in this reconstruction.",
+        "caption": "Read downward. Each lane represents a responsibility; a memory read is drawn as an exchange for explanation.",
+        "source": "@startuml\nactor operator: Operator\nparticipant request: Shared request\nparticipant beam: Beam setup\nparticipant position: Positioning\noperator -> request: enter X\nbeam -> request: read mode\nrequest --> beam: X\nbeam -> beam: select X parameters\noperator -> request: correct to E\nnote over position: Next read not yet shown\n@enduml\n"
+      },
+      "different_reads": {
+        "type": "sequence",
+        "label": "Decisions derived from different requests",
+        "description": "Beam setup derives parameters from X before the correction. Positioning reads E afterward and selects the E arrangement. No automatic reconciliation or permission to operate is shown.",
+        "caption": "Reconstructed ordering: each decision depends on the value read at that time.",
+        "source": "@startuml\nactor operator: Operator\nparticipant request: Shared request\nparticipant beam: Beam setup\nparticipant position: Positioning\noperator -> request: enter X\nbeam -> request: read mode\nrequest --> beam: X\nbeam -> beam: select X parameters\noperator -> request: correct to E\nposition -> request: read mode\nrequest --> position: E\nposition -> position: select E arrangement\nnote over beam: Earlier parameters retained\n@enduml\n"
+      },
+      "flag_question": {
+        "type": "sequence",
+        "label": "A flag changes while its protected work continues",
+        "description": "Magnet setup begins. Its first delay check clears the magnet-setting flag. An input correction then occurs while setup continues. The result of a later conditional edit check has not yet been shown.",
+        "caption": "Reconstructed control flow. Clearing a flag sets it to off; it does not undo the input correction.",
+        "source": "@startuml\nparticipant setup: Magnet setup\nparticipant delay: Delay checks\nparticipant flags: Shared state\nsetup -> flags: setting flag on\nsetup -> delay: first delay\ndelay -> flags: clear setting flag\nnote over setup: Setup continues\nnote over flags: Request corrected to E\nsetup -> delay: later delay\nnote over delay: Edit check requires flag on\n@enduml\n"
+      },
+      "flag_result": {
+        "type": "sequence",
+        "label": "Why a correction can escape reconciliation",
+        "description": "The first delay call clears the setting flag. A later correction changes the request. A later delay invocation reads the cleared flag and skips its edit check, allowing earlier parameters to remain. The figure omits the separate setup-completion weakness and unrelated instructions.",
+        "caption": "Reconstructed control flow: the later edit check requires a flag that is already off.",
+        "source": "@startuml\nparticipant setup: Magnet setup\nparticipant delay: Delay checks\nparticipant flags: Shared state\nsetup -> flags: setting flag on\nsetup -> delay: first delay\ndelay -> flags: clear setting flag\nnote over flags: Request corrected to E\nsetup -> delay: later delay\ndelay -> flags: read setting flag\nflags --> delay: off\ndelay -> delay: skip edit check\nnote over setup: Earlier parameters retained\n@enduml\n"
+      },
+      "repair_question": {
+        "type": "state",
+        "label": "What should authorize readiness?",
+        "description": "The proposed model starts inhibited, begins preparation, and has an unfinished condition on the transition to ready. Editing from ready returns to inhibited. The missing condition is the learner's design decision.",
+        "caption": "Proposed teaching contract, not the original Therac phase machine. The guard is deliberately unfinished.",
+        "source": "@startuml\nlayout portrait\nstate Inhibited\nstate Preparing\nstate Ready\n[*] --> Inhibited\nInhibited --> Preparing : begin setup\nPreparing --> Ready : complete [which condition?]\nReady --> Inhibited : edit / revoke permission\n@enduml\n"
+      },
+      "repair": {
+        "type": "state",
+        "label": "A proposed authorization contract",
+        "description": "Inhibited starts preparation for a request. Only a current consistent completion reaches Ready. Obsolete completion preserves preparation. Editing in Preparing or Ready inhibits operation. The outer box groups those two states under the shared edit rule. This is a partial teaching specification.",
+        "caption": "Proposed teaching model. A guard is in brackets; an action follows a slash.",
+        "source": "@startuml\nlayout portrait\nstate Inhibited\nstate SetupLifecycle {\n  state Preparing\n  state Ready\n  Preparing --> Ready : complete [current and consistent] / authorize\n  Preparing --> Preparing : complete [obsolete] / discard\n  Ready --> Ready : operate [consistent] / accept\n}\n[*] --> Inhibited\nInhibited --> Preparing : begin setup / capture request\nSetupLifecycle --> Inhibited : edit / invalidate\n@enduml\n"
+      },
+      "yakima_question": {
+        "type": "sequence",
+        "label": "A required check meets a byte boundary",
+        "description": "Repeated setup passes have brought the check-required value to 255. The next pass increments it. The result is left unknown. Limits checking uses a nonzero value to decide whether to call the position check.",
+        "caption": "Reconstructed check rule. Setup-loop passes are not patient counts.",
+        "source": "@startuml\nparticipant setup: Setup passes\nparticipant flag: Check required\nparticipant limits: Limits checking\nparticipant check: Position check\nnote over flag: Value before increment is 255\nsetup -> flag: increment one byte\nnote over flag: New value?\nlimits -> flag: read value\nopt [value is nonzero]\n  limits -> check: check position\nend\n@enduml\n"
+      },
+      "yakima_result": {
+        "type": "sequence",
+        "label": "The skipped check and the later decision",
+        "description": "A setup increment wraps the check-required value to zero. Limits checking reads zero and skips the position check. In the representative vulnerable schedule, the turntable remains in field-light position, all blocking malfunction bits remain clear, SET occurs in the zero interval, and setup advances to phase 2. Skipping the call does not clear an already-set bit.",
+        "caption": "Reconstructed path: field-light position, a positioning request during zero, and clear blocking status must coincide.",
+        "source": "@startuml\nparticipant setup: Setup passes\nparticipant flag: Check required\nparticipant limits: Limits checking\nparticipant status: Blocking status\nnote over setup: Turntable remains in field-light position\nnote over status: All blocking bits remain clear\nsetup -> flag: increment 255 to 0\nlimits -> flag: read value\nflag --> limits: zero\nlimits -> limits: skip position check\nnote over setup: Request treatment position during zero\nsetup -> status: read status\nstatus --> setup: zero\nsetup -> setup: advance setup\n@enduml\n"
+      },
+      "layers": {
+        "type": "component",
+        "label": "A control decision and a separate protective decision",
+        "description": "A controller requests output. A protective function uses configuration evidence to inhibit output. This conceptual architecture illustrates a distinct enforcement responsibility; drawing separate boxes does not establish real independence.",
+        "caption": "Independence is a property to demonstrate through implementation and evidence, not a consequence of diagram layout.",
+        "source": "@startuml\nlayout vertical\ncomponent Controller\ncomponent ConfigurationEvidence\ncomponent Protection\ncomponent Output\nController --> Output : requests operation\nConfigurationEvidence --> Protection : observed configuration\nProtection --> Output : may inhibit\n@enduml\n"
+      },
+      "transfer": {
+        "type": "sequence",
+        "label": "A new investigation at a printer boundary",
+        "description": "An interface first requests one copy, a worker begins preparing a job, and the interface changes to two copies. The worker submits a job to a printer, which produces one copy. The submitted copy count is deliberately unknown.",
+        "caption": "Teaching scenario. Locate an observation that separates two explanations before choosing a repair.",
+        "source": "@startuml\nparticipant ui: Print interface\nparticipant worker: Job preparation\nparticipant printer: Printer\nui -> worker: request one copy\nworker -> worker: begin preparation\nnote over ui: Request changed to two copies\nworker -> printer: submit job (count unknown)\nprinter --> ui: one copy produced\n@enduml\n"
+      },
+      "system_overview": {
+        "type": "component",
+        "label": "From treatment request to physical output",
+        "description": "A therapist enters a prescribed treatment through the console. The controller configures the treatment head. The head delivers radiation to the patient when operation is authorized. Arrows distinguish information from physical radiation; they do not show an accident.",
+        "caption": "System overview. The console is the interface; the treatment head produces the physical output.",
+        "source": "@startuml\nlayout portrait\ncomponent Therapist\ncomponent Console\ncomponent Controller\ncomponent TreatmentHead\ncomponent Patient\nTherapist --> Console : enter prescribed treatment\nConsole --> Controller : treatment request\nController --> TreatmentHead : settings and positioning\nTreatmentHead --> Patient : radiation during treatment\n@enduml\n"
+      },
+      "electron_mode": {
+        "type": "component",
+        "label": "Electron treatment: a spread electron beam",
+        "description": "The accelerator produces an electron beam at settings appropriate to electron treatment. A spreading system distributes the beam across the treatment field. This conceptual path omits monitoring and other hardware.",
+        "caption": "E means electron treatment. This simplified beam path omits hardware not needed for the comparison.",
+        "source": "@startuml\nlayout portrait\ncomponent Accelerator\ncomponent BeamSpreading\ncomponent TreatmentField\nAccelerator --> BeamSpreading : electron treatment beam\nBeamSpreading --> TreatmentField : spread electrons\n@enduml\n"
+      },
+      "xray_mode": {
+        "type": "component",
+        "label": "X-ray treatment: electrons strike a metal target",
+        "description": "A substantially more intense electron beam strikes a metal target inside the treatment head. The target produces X-rays for treatment. Beam shaping and monitoring are omitted. The target is a machine component, not the tumor.",
+        "caption": "X means X-ray treatment. The metal target is inside the machine, not inside the patient.",
+        "source": "@startuml\nlayout portrait\ncomponent Accelerator\ncomponent MetalTarget\ncomponent TreatmentField\nAccelerator --> MetalTarget : high intensity electrons\nMetalTarget --> TreatmentField : X rays\n@enduml\n"
+      },
+      "normal_setup": {
+        "type": "sequence",
+        "label": "A successful setup with one unchanged request",
+        "description": "The operator requests electron treatment. The controller asks beam setup and positioning to prepare that mode. Both report completion. The diagram stops at the obligation to check the current configuration before permission; no radiation is shown. It illustrates intended relationships, not recovered software calls.",
+        "caption": "Worked baseline: one unchanged request. Setup is preparation; it is not radiation delivery.",
+        "source": "@startuml\nactor operator: Therapist\nparticipant control: Controller\nparticipant beam: Beam setup\nparticipant position: Positioning\noperator -> control: request E\ncontrol -> beam: prepare E settings\nbeam --> control: settings complete\ncontrol -> position: prepare E arrangement\nposition --> control: positioning complete\nnote over control: Check current configuration before permission\n@enduml\n"
+      },
+      "yakima_normal": {
+        "type": "sequence",
+        "label": "The intended position-checking chain",
+        "description": "A setup pass requests a position check by leaving a flag nonzero. The checker reads physical position and records a blocking problem if the arrangement is unsuitable. Progression consults that recorded status. This shows the intended dependency, not a complete instruction trace.",
+        "caption": "Worked baseline: requesting a check, performing it, and using its result are three separate steps.",
+        "source": "@startuml\nparticipant setup: Setup work\nparticipant flag: Check required\nparticipant check: Position check\nparticipant status: Blocking status\nsetup -> flag: request check (nonzero)\ncheck -> flag: read request\nflag --> check: nonzero\ncheck -> check: inspect physical position\nopt [position unsuitable]\ncheck -> status: record blocking problem\nend\nsetup -> status: inspect result before progressing\n@enduml\n"
+      }
+    }
+  },
+  "scenes": {
+    "orientation": {
+      "state": {
+        "diagram": "system_overview"
+      },
+      "cues": {
+        "cue-1": {},
+        "cue-2": {}
+      }
+    },
+    "modes": {
+      "state": {
+        "diagram": "electron_mode"
+      },
+      "cues": {
+        "cue-1": {},
+        "cue-2": {
+          "diagram": "xray_mode"
+        },
+        "cue-3": {
+          "diagram": "machine"
+        }
+      }
+    },
+    "normal": {
+      "state": {
+        "diagram": "normal_setup"
+      },
+      "cues": {
+        "cue-1": {},
+        "cue-2": {},
+        "cue-3": {}
+      }
+    },
+    "report": {
+      "state": {
+        "diagram": "reports"
+      },
+      "cues": {
+        "cue-1": {},
+        "cue-2": {}
+      }
+    },
+    "configuration": {
+      "state": {
+        "diagram": "machine"
+      },
+      "cues": {
+        "cue-1": {},
+        "cue-2": {}
+      }
+    },
+    "reproduce": {
+      "state": {
+        "diagram": "histories"
+      },
+      "cues": {
+        "cue-1": {},
+        "cue-2": {},
+        "cue-3": {}
+      }
+    },
+    "reads": {
+      "state": {
+        "diagram": "before_second_read"
+      },
+      "cues": {
+        "cue-1": {},
+        "cue-2": {},
+        "cue-3": {}
+      }
+    },
+    "missing_check": {
+      "state": {
+        "diagram": "different_reads"
+      },
+      "cues": {
+        "cue-1": {
+          "diagram": "different_reads"
+        },
+        "cue-2": {
+          "diagram": "flag_question"
+        },
+        "cue-3": {
+          "diagram": "flag_question"
+        }
+      }
+    },
+    "diagnosis": {
+      "state": {
+        "diagram": "flag_result"
+      },
+      "cues": {
+        "cue-1": {},
+        "cue-2": {},
+        "cue-3": {}
+      }
+    },
+    "repair": {
+      "state": {
+        "diagram": "repair_question"
+      },
+      "cues": {
+        "cue-1": {},
+        "cue-2": {},
+        "cue-3": {}
+      }
+    },
+    "verify": {
+      "state": {
+        "diagram": "repair"
+      },
+      "cues": {
+        "cue-1": {},
+        "cue-2": {}
+      }
+    },
+    "yakima_boundary": {
+      "state": {
+        "diagram": "yakima_normal"
+      },
+      "cues": {
+        "cue-1": {
+          "diagram": "yakima_normal"
+        },
+        "cue-2": {
+          "diagram": "yakima_normal"
+        },
+        "cue-3": {
+          "diagram": "yakima_question"
+        }
+      }
+    },
+    "yakima_check": {
+      "state": {
+        "diagram": "yakima_result"
+      },
+      "cues": {
+        "cue-1": {},
+        "cue-2": {},
+        "cue-3": {}
+      }
+    },
+    "assurance": {
+      "state": {
+        "diagram": "layers"
+      },
+      "cues": {
+        "cue-1": {},
+        "cue-2": {}
+      }
+    },
+    "transfer": {
+      "state": {
+        "diagram": "transfer"
+      },
+      "cues": {
+        "cue-1": {},
+        "cue-2": {}
+      }
+    }
+  }
+}

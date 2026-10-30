@@ -1,3 +1,4 @@
+const { loadStory } = require('../scripts/narration/source');
 const { test, expect } = require('@playwright/test');
 const { a11yCheckpoint } = require('./a11y-helpers');
 const { chromiumLaunchOptions } = require('../scripts/chromium-launch-options');
@@ -5,8 +6,7 @@ const { chromiumLaunchOptions } = require('../scripts/chromium-launch-options');
 test.use({ launchOptions: { ...chromiumLaunchOptions(), args: ['--disable-audio-output'] } });
 const timing = require('../_data/explainers/nodejs_timing.json');
 const { readFileSync } = require('node:fs');
-const yaml = require('js-yaml');
-const story = yaml.load(readFileSync(require.resolve('../_data/explainers/nodejs.yml'), 'utf8'));
+const story = loadStory('nodejs');
 
 const pageURL = '/SEBook/tools/nodejs.html';
 const player = (page) => page.getByRole('region', { name: 'Node.js in motion', exact: true });

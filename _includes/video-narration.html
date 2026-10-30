@@ -5,7 +5,7 @@
   for lessons whose storyboard has `slides`, `diagrams`, or `languages`;
   captions and a video control bar follow, and full screen fills the screen
   with the video. One knowledge check ends each section.
-  Params: topic (a key of _data/video_narrations.yml and _data/explainers).
+  Params: topic (a key of the compiled site.data.video_narrations view and _data/explainers).
   Docs: docs/video-narration.md.
 
   The video, its controls, and its settings also carry the song player's
@@ -134,10 +134,7 @@
     <summary>Transcript{% if explainer.languages %}, code,{% endif %} and visual descriptions</summary>
     {% include video-narration-reading.html topic=topic %}
   </details>
-  <script type="application/json" data-np-storyboard>{{ explainer | jsonify }}</script>
-  <script type="application/json" data-np-quizzes>{{ quizzes | jsonify }}</script>
-  <script type="application/json" data-np-examples>{{ examples | jsonify }}</script>
-  <script type="application/json" data-np-timing>{{ timing | jsonify }}</script>
+  {% include narration-data.html topic=include.topic %}
 </section>
 <script src="{{ '/js/narrated-explainer.js' | relative_url }}?v={{ site.asset_version }}" defer></script>
 <script src="{{ '/js/parsons-grading.js' | relative_url }}?v={{ site.asset_version }}" defer></script>

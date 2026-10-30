@@ -1,3 +1,4 @@
+const { loadStory, loadRegistry } = require('../scripts/narration/source');
 // The printable notes of every video narration (docs/video-narration.md,
 // "Printable notes"): the page that "Save lesson notes as PDF" opens and prints.
 const { test, expect } = require('@playwright/test');
@@ -42,8 +43,8 @@ function stageWords(stage) {
   return found.sort((a, b) => a.y - b.y || a.x - b.x || a.text.localeCompare(b.text));
 }
 
-for (const [topic, lesson] of Object.entries(data('video_narrations.yml'))) {
-  const story = data(`explainers/${topic}.yml`);
+for (const [topic, lesson] of Object.entries(loadRegistry('video'))) {
+  const story = loadStory(topic);
   const timing = data(`explainers/${topic}_timing.json`);
   const notes = data(`explainers/${topic}_notes.yml`);
   const quizzes = data(`explainers/${topic}_quizzes.yml`);

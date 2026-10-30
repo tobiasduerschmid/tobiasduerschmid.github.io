@@ -17,12 +17,9 @@
 
   function enhance(root) {
     if (root.classList.contains('is-enhanced')) return;
-    const { renderDiagram, highlightCode, sectionChecks, linkNavigation } = window.NarratedLesson;
+    const { story, timing, examples, quizzes } = window.NarratedExplainer.readData(root);
+    const { renderDiagram, highlightCode, mount } = window.NarratedLesson;
     const topic = root.dataset.npTopic;
-    const story = JSON.parse(root.querySelector('[data-np-storyboard]').textContent);
-    const examples = JSON.parse(root.querySelector('[data-np-examples]').textContent);
-    const timing = JSON.parse(root.querySelector('[data-np-timing]').textContent);
-    const quizzes = JSON.parse(root.querySelector('[data-np-quizzes]').textContent);
     const languageSelect = root.querySelector('[data-setting="language"]');
     let lastCue = null;
     let lastLanguage = null;
@@ -60,17 +57,7 @@
       }
     }
 
-    const checks = sectionChecks(root, story, quizzes);
-    const player = window.NarratedExplainer.enhance(root, {
-      storyboard: story, timing, render, onSectionEnd: checks.sectionEnded,
-      onSeek: checks.close, canPlay: checks.isClosed,
-    });
-    checks.attach(player);
-    linkNavigation(root, story, timing, player);
-    languageSelect.addEventListener('sebook:languagechange', () => {
-      player.refresh();
-      root.querySelector('.nja-status').textContent = `Code language: ${examples[languageSelect.value].label}. Narration position unchanged.`;
-    });
+    mount(root, { story, timing, quizzes, examples, render });
   }
 
   function init() { document.querySelectorAll('section.narrated-pattern').forEach(enhance); }

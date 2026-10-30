@@ -1,9 +1,10 @@
+const { loadStory } = require('../scripts/narration/source');
 const { test, expect } = require('@playwright/test');
 const { a11yCheckpoint } = require('./a11y-helpers');
 const { readFileSync } = require('node:fs');
 const yaml = require('js-yaml');
 
-const story = yaml.load(readFileSync(require.resolve('../_data/explainers/strategy.yml'), 'utf8'));
+const story = loadStory('strategy');
 const examples = yaml.load(readFileSync(require.resolve('../_data/explainers/strategy_code.yml'), 'utf8'));
 const quizzes = yaml.load(readFileSync(require.resolve('../_data/explainers/strategy_quizzes.yml'), 'utf8'));
 const split = yaml.load(readFileSync(require.resolve('../_data/explainers/strategy_ui.yml'), 'utf8'));

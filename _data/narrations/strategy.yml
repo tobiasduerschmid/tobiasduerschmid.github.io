@@ -1,0 +1,552 @@
+# Edit speech and teaching text here. Visual state lives in ../narration_visuals/strategy.json.
+version: 1
+id: strategy
+kind: pattern
+title: The Strategy pattern in a bill-splitting app
+lesson:
+  name: Strategy
+  summary: >-
+    Learn the Strategy pattern through its <strong>context, problem, solution, and
+    consequences</strong>, using a bill-splitting app.
+  prerequisites: Assumes familiarity with interfaces and polymorphism.
+  chapter: /SEBook/designpatterns/strategy.html
+  views: /SEBook/designpatterns/strategy
+  outline_labels:
+    context: One task, many algorithms
+    problem: Scattered method checks
+    solution: One object per algorithm
+    strategy_role: Strategy interface
+    context_role: Context role
+    concrete_roles: Concrete Strategies
+    collaborations: Collaborations
+    consequences: Benefits and liabilities
+    applicability: When to use Strategy
+  complete_examples: >-
+    Amounts are whole cents, so every split keeps its contract that the shares add up to the total.
+    The expense models only its total, its people, and its split; payers, currencies, and storage
+    are omitted. EqualSplit is stateless and shared by every expense, while PercentSplit and
+    BirthdaySplit hold one expense's choices. Both designs give identical labels and shares for
+    every case.
+speech:
+  voice: af_heart
+  speed: 0.95
+  pronunciations:
+    UML: U M L
+    C++: C plus plus
+    ConcreteStrategy: concrete strategy
+    SplitStrategy: split strategy
+    EqualSplit: equal split
+    PercentSplit: percent split
+    BirthdaySplit: birthday split
+    ItemizedSplit: itemized split
+    setStrategy: set strategy
+media:
+  audio: /assets/audio/strategy-pattern.mp3
+  captions: /assets/narration/strategy-pattern.vtt
+  script: /assets/narration/strategy-pattern.txt
+scenes:
+  - id: intro
+    label: How a pattern is described
+    title: A pattern is more than its classes
+    purpose: Preview the parts of every pattern description.
+    takeaway: A pattern pairs a problem that recurs in a context with a solution and its consequences.
+    cues:
+      - id: cue-1
+        say: >-
+          Imagine Ava, Ben, and Chloe share a 60-dollar dinner and log it in a group-expense app.
+          Split equally, and each of them owes 20 dollars.
+        step: One expense, split equally
+        note: Equally → Ava 20 · Ben 20 · Chloe 20 dollars
+        visual: >-
+          A group-expense panel shows Dinner, 60 dollars, split Equally. Ava, Ben, and Chloe each
+          owe 20 dollars.
+      - id: cue-2
+        say: >-
+          But it is Chloe's birthday, so Ava switches the split to a birthday treat: Chloe pays
+          nothing, and Ava and Ben pay 30 dollars each. The question stayed the same, who owes what,
+          but a different algorithm answered it.
+        step: Same question, different algorithm
+        note: Birthday → Ava 30 · Ben 30 · Chloe 0 dollars
+        visual: >-
+          The panel now shows the Birthday split. Ava and Ben each owe 30 dollars, and Chloe owes
+          nothing.
+      - id: cue-3
+        say: >-
+          Design patterns capture proven solutions to problems like this one. Every pattern
+          description has the same backbone. The context is the situation in which a problem recurs.
+          The problem states what makes it hard. The solution describes abstract roles and how they
+          collaborate. And the consequences state what the solution costs and buys. We describe the
+          Strategy pattern in that order, and we refactor toward it step by step. Choose a code
+          language above; the explanation is the same in every language.
+        source: >-
+          Gamma et al., Design Patterns: Strategy; Kerievsky, Refactoring to Patterns: Replace
+          Conditional Logic with Strategy
+        step: Context, problem, solution, consequences
+        note: Context → Problem → Solution (roles, collaborations) → Consequences
+        visual: >-
+          The birthday panel remains visible. The language selector changes only the code, not the
+          narration.
+  - id: context
+    part: Context
+    label: "Context: one task, many algorithms"
+    title: When does the Strategy pattern apply?
+    purpose: Recognize the situation that the Strategy pattern addresses.
+    takeaway: >-
+      The context: one task has a family of interchangeable algorithms, and clients choose among
+      them.
+    cues:
+      - id: cue-1
+        say: >-
+          First, the context. The Strategy pattern applies when one task can be done by a family of
+          interchangeable algorithms. Splitting an expense is one task, and the app offers several
+          algorithms for it: equally, by percentage, and the birthday treat.
+        step: One task, a family of algorithms
+        note: "Equally · By percentage · Birthday — one task: who owes what"
+        visual: >-
+          The panel lists the three split methods. Equally is selected, and each friend owes 20
+          dollars.
+      - id: cue-2
+        say: >-
+          Two more signs place us in this context. The client chooses the algorithm, here the person
+          logging the expense, and may change that choice later. And new algorithms keep arriving,
+          such as splitting by shares or by items. Split by percentage, Ava pays 30 dollars, Ben 18,
+          and Chloe 12.
+        step: The client chooses, and more algorithms arrive
+        note: By percentage 50 · 30 · 20 → Ava 30 · Ben 18 · Chloe 12 dollars
+        visual: By percentage is selected. Ava owes 30 dollars, Ben 18, and Chloe 12.
+      - id: cue-3
+        say: >-
+          One more sign of this context: related behaviors that show up as conditional statements in
+          one class's operations. And one warning about words: the pattern also names one of its
+          roles Context. The pattern's context is a situation; the Context role is an object.
+        source: "Gamma et al., Design Patterns: Strategy, Applicability"
+        step: Signs of this context
+        note: >-
+          Clients choose · new algorithms arrive · behaviors hide in conditionals · context ≠ the
+          Context role
+        visual: The percentage split remains on the panel.
+  - id: problem
+    part: Problem
+    label: "Problem: method checks everywhere"
+    title: Every operation checks the split method
+    purpose: Name the forces that make hard-wired algorithms hard to change.
+    takeaway: >-
+      The problem: let clients choose an algorithm without hard-wiring every algorithm into one
+      class.
+    cues:
+      - id: cue-1
+        say: >-
+          Now the problem. Here is a direct implementation. The expense stores the name of its split
+          method, and shares checks it: split evenly, split by percentage, or let everyone but the
+          birthday guest pay.
+        step: shares() checks the method
+        note: Each branch of shares() fills one cell of the shares() column.
+        visual: >-
+          The shares method's three branches are marked beside a table of split methods. The
+          shares() column of the table is marked.
+      - id: cue-2
+        say: >-
+          Label repeats the same three-way check to describe the split on the receipt. In the table,
+          each operation is one column, and every method appears in every column, so one method's
+          rules are scattered across the class.
+        step: label() repeats the check
+        note: Two operations × three methods — one method's rules sit in two places.
+        visual: The label method is marked. The label() column of the table is marked.
+      - id: cue-3
+        say: >-
+          Look at the constructor, too. It takes percentages and a guest, although each is used by
+          only one method. The expense collects every algorithm's data, the kind of long parameter
+          list that signals this refactoring.
+        source: "Kerievsky, Refactoring to Patterns: Replace Conditional Logic with Strategy"
+        step: The constructor carries every method's data
+        note: percents and guest each serve a single branch.
+        visual: >-
+          The constructor's parameters and fields are marked. The Extra data column of the table is
+          marked.
+      - id: cue-4
+        say: >-
+          Your friends want a new method: split by items, where each person pays for what they
+          ordered. Before continuing, predict which code you must edit, and what happens if someone
+          forgets one branch. Pause here if you want more thinking time.
+        step: Predict the cost of a new method
+        note: Which code changes when an itemized split is added?
+        visual: The whole class remains beside the table. Nothing is marked while the learner predicts.
+        prediction: true
+        pause_after: 6
+      - id: cue-5
+        say: >-
+          You must edit the constructor and both operations, and the else branches are a trap: each
+          one treats an unknown method as a birthday, so a forgotten branch quietly charges the
+          wrong friends. Subclassing the expense once per method would not help either. It
+          hard-wires the algorithm, and switching methods while editing would mean replacing the
+          expense. That is the problem in pattern terms: how can a class use one of a family of
+          algorithms, chosen by its client, without hard-wiring them into the class? The forces:
+          keep each algorithm's code and data together, let clients switch at runtime, add
+          algorithms without editing the class, and avoid classes that do not pay for themselves.
+        step: The problem and its forces
+        note: >-
+          Keep each algorithm together · switch at runtime · add algorithms locally · no needless
+          classes
+        visual: >-
+          The two else branches are marked. The Birthday row of the table is marked, because each
+          else branch supplies one of its cells.
+        pause_after: 3
+  - id: solution
+    part: Solution
+    label: "Solution: one object per algorithm"
+    title: Delegate to an interchangeable algorithm object
+    purpose: Learn the solution's three abstract roles before reading the code.
+    takeaway: "The solution: a Context delegates to a Strategy object that its client chose."
+    cues:
+      - id: cue-1
+        say: >-
+          The solution: put each algorithm in its own object behind a common interface, and let the
+          class that needs the algorithm delegate to that object. The principle fits in three words:
+          encapsulate what varies. A pattern describes its solution with abstract roles. The
+          Strategy role is the interface that every algorithm in the family implements.
+        source: "Freeman et al., Head First Design Patterns: design principles"
+        step: Strategy — the interface all algorithms share
+        note: "Encapsulate what varies: here, the algorithm."
+        visual: >-
+          A UML class diagram shows the Strategy pattern's roles. The Strategy interface is hatched
+          and highlighted.
+      - id: cue-2
+        say: >-
+          Each ConcreteStrategy implements one algorithm of the family. The dashed arrow with a
+          hollow triangle shows that a ConcreteStrategy fulfills the Strategy interface. The diagram
+          draws the role once; many classes can play it.
+        step: Concrete Strategy — one algorithm each
+        note: Many classes can play this one role.
+        visual: ConcreteStrategy is highlighted, with its realization arrow to Strategy.
+      - id: cue-3
+        say: >-
+          The Context role is configured with a Strategy object, keeps a reference to it, and
+          forwards algorithm requests to it. It depends only on the Strategy interface, which is
+          programming to an interface, and it has a strategy instead of inheriting one: composition
+          over inheritance.
+        source: "Freeman et al., Head First Design Patterns: design principles"
+        step: Context — forwards to its Strategy
+        note: Program to an interface · favor composition over inheritance.
+        visual: >-
+          Context is highlighted. A hollow diamond and an arrow show that it holds exactly one
+          Strategy.
+      - id: cue-4
+        say: >-
+          A client makes the choice: it creates a ConcreteStrategy and passes it to the Context,
+          then talks only to the Context. In our app, Expense will play Context, SplitStrategy plays
+          Strategy, and EqualSplit, PercentSplit, and BirthdaySplit play ConcreteStrategy.
+        step: The client chooses the algorithm
+        note: >-
+          Expense → Context · SplitStrategy → Strategy · EqualSplit, PercentSplit, BirthdaySplit →
+          Concrete Strategy
+        visual: >-
+          Client is highlighted, with dependencies labeled creates to ConcreteStrategy and
+          configures to Context.
+  - id: strategy_role
+    part: Solution
+    label: "Solution: the Strategy role in code"
+    title: One interface for every split algorithm
+    purpose: See how the Strategy role becomes an interface with a contract.
+    takeaway: The Strategy role lists the operations every algorithm offers, and the promise each one keeps.
+    cues:
+      - id: cue-1
+        say: >-
+          Now the solution in code, one role at a time. SplitStrategy plays the Strategy role. It
+          declares the two operations every split algorithm must offer: split, which returns each
+          person's share, and label, which describes the split on the receipt.
+        step: SplitStrategy plays Strategy
+        note: split(total, people) and label() — one family, two related operations.
+        visual: >-
+          The SplitStrategy declaration and its two operations are marked. SplitStrategy is
+          highlighted in the solution class diagram beside the code.
+      - id: cue-2
+        say: >-
+          Notice what split receives: the total and the people. The Context takes the data to the
+          strategy as parameters, which keeps the two decoupled. The alternative: the Context passes
+          itself, and each strategy asks for exactly what it needs. Refactorings toward Strategy
+          often choose that, at the price of tighter coupling.
+        source: >-
+          Gamma et al., Design Patterns: Strategy, Implementation; Kerievsky, Refactoring to
+          Patterns
+        step: Take the data to the strategy
+        note: Parameters keep Strategy and Context decoupled; passing the Context couples them.
+        visual: >-
+          The split signature with its total and people parameters is marked. SplitStrategy remains
+          highlighted.
+      - id: cue-3
+        say: >-
+          The interface also states a contract: the shares, in cents, always add up to the total.
+          Interchangeable means more than matching method names. Every ConcreteStrategy must keep
+          this promise, so that the Context and its clients can trust any of them.
+        step: A contract every algorithm keeps
+        note: The shares add up to the total, for every Concrete Strategy.
+        visual: >-
+          The comment stating that the shares add up to the total is marked. SplitStrategy remains
+          highlighted.
+  - id: context_role
+    part: Solution
+    label: "Solution: the Context role in code"
+    title: Forward requests to the chosen strategy
+    purpose: See how the Context role delegates instead of checking methods.
+    takeaway: The Context role holds a strategy and forwards requests; it no longer checks methods.
+    cues:
+      - id: cue-1
+        say: >-
+          Expense plays the Context role. It keeps the data that belongs to the expense, its total
+          and its people, plus a reference to a split strategy, which the client passes in when it
+          creates the expense.
+        step: Expense plays Context
+        note: total and people stay in Expense; one field holds the strategy.
+        visual: >-
+          The fields and the constructor are marked. Expense is highlighted in the solution class
+          diagram.
+      - id: cue-2
+        say: >-
+          Shares and label are now single lines that forward each request to the strategy. No method
+          check is left, Expense no longer knows how any split works, and its constructor no longer
+          needs percentages or a guest.
+        step: Forward with no conditions
+        note: shares() and label() each delegate to the strategy.
+        visual: >-
+          The two forwarding methods are marked. Expense is highlighted in the solution class
+          diagram.
+      - id: cue-3
+        say: >-
+          setStrategy lets the client replace the algorithm at runtime, as when Ava switched to the
+          birthday treat. Pass the strategy to the constructor when the choice never changes, and
+          offer a setter when clients must change it later. A simulated duck that changes how it
+          flies works the same way.
+        source: >-
+          Kerievsky, Refactoring to Patterns; Freeman et al., Head First Design Patterns: the duck
+          simulator
+        step: setStrategy for a new choice
+        note: Constructor for a fixed choice; setter for a changing one.
+        visual: The setStrategy method is marked. Expense is highlighted in the solution class diagram.
+  - id: concrete_roles
+    part: Solution
+    label: "Solution: the Concrete Strategy role"
+    title: Each strategy class owns one algorithm
+    purpose: Move each method's branches into the class that plays its Concrete Strategy role.
+    takeaway: Each Concrete Strategy is one row of the table, one algorithm with its own data.
+    cues:
+      - id: cue-1
+        say: >-
+          EqualSplit, PercentSplit, and BirthdaySplit each play the ConcreteStrategy role. Each
+          collects one method's branches from both operations, one row of the table. As in any
+          careful refactoring, we move one branch at a time and run the tests after each move, so
+          every share stays the same.
+        source: "Kerievsky, Refactoring to Patterns: mechanics of Replace Conditional Logic with Strategy"
+        step: EqualSplit — the first row
+        note: Each Concrete Strategy is one row, its shares() and label() together.
+        visual: The EqualSplit class is marked. The Equally row of the table is marked.
+      - id: cue-2
+        say: >-
+          EqualSplit divides the total evenly. When cents remain, the first people pay one cent
+          more: split 10 dollars three ways, and Ava pays 3 dollars and 34 cents, while Ben and
+          Chloe pay 3 dollars and 33 cents. The contract holds: the shares add up to the total.
+        step: Leftover cents keep the contract
+        note: 10 dollars equally → 3.34 · 3.33 · 3.33
+        visual: >-
+          EqualSplit's division and its comment about leftover cents are marked. The Equally row
+          remains marked.
+      - id: cue-3
+        say: >-
+          PercentSplit keeps its own data, the percentages, and checks when it is created that they
+          add up to 100. Algorithm-specific data now lives in the algorithm instead of the expense,
+          one of the main reasons to use the pattern.
+        source: "Gamma et al., Design Patterns: Strategy, Consequences"
+        step: PercentSplit — data lives with its algorithm
+        note: Percentages are checked once, when the strategy is created.
+        visual: >-
+          The PercentSplit class is marked, including its constructor check. The By percentage row
+          of the table is marked.
+      - id: cue-4
+        say: >-
+          BirthdaySplit keeps the guest and reuses EqualSplit for everyone else. One strategy can be
+          built from another, by composition again.
+        step: BirthdaySplit — reuse by composition
+        note: The guest pays nothing; EqualSplit splits the rest.
+        visual: The BirthdaySplit class is marked. The Birthday row of the table is marked.
+      - id: cue-5
+        say: >-
+          EqualSplit stores no data, so every expense can share one object, as the marked lines
+          show. PercentSplit and BirthdaySplit hold one expense's choices, so each expense gets its
+          own. Sharing is safe only for strategies without per-expense data.
+        step: Share stateless strategies
+        note: Stateless → one shared object; configured → one per expense.
+        visual: >-
+          The lines that create the one shared EqualSplit object are marked. No row of the table is
+          marked.
+  - id: collaborations
+    part: Solution
+    label: "Solution: how the roles collaborate"
+    title: The same call reaches a different algorithm
+    purpose: Predict which strategy answers each request at runtime.
+    takeaway: >-
+      The Context forwards to the strategy its client chose, and a new choice changes which object
+      answers.
+    cues:
+      - id: cue-1
+        say: >-
+          A solution also describes how its roles collaborate at runtime. The app, our client,
+          creates the dinner expense with the shared EqualSplit object and asks for the shares. The
+          sequence diagram shows the delegation: Expense forwards split, with the total and the
+          people, to the EqualSplit object.
+        step: shares() reaches EqualSplit
+        note: Ava 20 · Ben 20 · Chloe 20 dollars
+        visual: >-
+          The first two lines of client code are marked. A UML sequence diagram shows app, dinner,
+          and the EqualSplit and PercentSplit objects; dinner forwards split to the EqualSplit
+          object, which is highlighted. The panel shows the equal split.
+      - id: cue-2
+        say: >-
+          Now the app calls setStrategy with a PercentSplit for 50, 30, and 20 percent, then asks
+          for the shares exactly as before. Predict which object answers, and who pays what. Pause
+          the narration if you want more thinking time.
+        step: Predict the next shares()
+        note: The same call as before. Which object answers now?
+        visual: >-
+          The setStrategy line and the second request are marked. The sequence diagram still ends
+          after the first request, so the answer is not shown yet. The panel shows the equal split.
+        prediction: true
+        pause_after: 6
+      - id: cue-3
+        say: >-
+          This time Expense forwards split to the PercentSplit object, and Ava pays 30 dollars, Ben
+          18, and Chloe 12. The same call reached a different algorithm, and Expense never asked
+          which one it held.
+        step: The same call, a different algorithm
+        note: Ava 30 · Ben 18 · Chloe 12 dollars
+        visual: >-
+          The sequence diagram adds setStrategy and the second shares request, which dinner forwards
+          to the PercentSplit object; it is highlighted. The panel shows the percentage split.
+      - id: cue-4
+        say: >-
+          Label follows the same path, so the receipt now reads: split by percentage. Three
+          collaborations define the pattern: the client chooses and passes a strategy, the Context
+          forwards requests to it, and the Context gives the strategy the data it needs.
+        step: Three collaborations
+        note: Client chooses · Context forwards · Context passes the data
+        visual: >-
+          The label call in the receipt is marked. The sequence diagram adds label, which dinner
+          forwards to the PercentSplit object. The panel shows the percentage split.
+  - id: consequences
+    part: Consequences
+    label: "Consequences: benefits and liabilities"
+    title: Interchangeable algorithms, informed clients
+    purpose: Weigh what the pattern makes easy against what it makes harder.
+    takeaway: >-
+      Every pattern trades benefits for liabilities; Strategy favors adding algorithms when clients
+      care which one runs.
+    cues:
+      - id: cue-1
+        say: >-
+          Finally, the consequences, which every pattern description must state. The first benefit:
+          a family of related algorithms, each in its own class with its own data. Adding a split
+          method means writing one class, the conditional statements are gone, and Expense and the
+          other strategies stay untouched.
+        step: "Benefit: a family of algorithms"
+        note: One new class per algorithm; no conditionals.
+        visual: The first card states the benefit of a family of algorithms.
+      - id: cue-2
+        say: >-
+          The second benefit: an alternative to subclassing. Expense stays one class, and clients
+          can switch its algorithm at runtime instead of replacing the object. Each strategy is
+          small and independent, so you can test it alone with nothing but a total and a list of
+          people.
+        step: "Benefit: an alternative to subclassing"
+        note: Switch at runtime; test each algorithm alone.
+        visual: The second card states the benefit of an alternative to subclassing.
+      - id: cue-3
+        say: >-
+          The liabilities. Clients must understand how strategies differ before choosing one, so use
+          Strategy only when that difference matters to them, as it does in the split picker. The
+          app has more classes and objects, although stateless ones can be shared. And one interface
+          serves every algorithm, so a simple strategy may receive data it never uses, while a new
+          one may need data the interface does not pass.
+        step: "Liabilities: informed clients, more objects"
+        note: Clients must know the strategies · more objects · one interface for all
+        visual: >-
+          The third card states the liabilities — informed clients, more objects, and one shared
+          interface.
+  - id: applicability
+    part: Context
+    label: "Context revisited: when to use Strategy"
+    title: Does the algorithm really vary?
+    purpose: Decide whether the Strategy pattern's context holds before applying it.
+    takeaway: Apply Strategy only where its context holds; otherwise choose a simpler design.
+    cues:
+      - id: cue-1
+        say: >-
+          Consequences tell us when a pattern pays off, so revisit the context. Strategy fits when
+          several interchangeable algorithms serve one task, clients choose among them, and new
+          algorithms keep arriving, as split methods do in every expense app.
+        step: When the context holds
+        note: Several algorithms × client choice × more on the way.
+        visual: The first card describes a good fit for the Strategy pattern.
+      - id: cue-2
+        say: >-
+          A caution: much conditional logic is not complicated enough to justify Strategy. With two
+          stable variants, a conditional is clearer. And in languages with first-class functions, a
+          strategy with one stateless operation can simply be a function you pass in, the same idea
+          without the classes. Our split has two related operations and its own data, so classes pay
+          off.
+        source: "Kerievsky, Refactoring to Patterns: Replace Conditional Logic with Strategy"
+        step: When a simpler design wins
+        note: Two stable variants → a conditional · one stateless operation → a function
+        visual: The second card describes simpler alternatives — a conditional or a function parameter.
+      - id: cue-3
+        say: >-
+          Strategy and State share the same structure, a Context delegating through an interface,
+          but their contexts differ. A client chooses a Strategy, and strategies do not know one
+          another, while State objects replace one another as events occur. Template Method varies
+          the steps of one algorithm through subclasses, fixed when an object is created.
+        step: Strategy versus State and Template Method
+        note: Client chooses · objects replace themselves · subclasses fix the steps
+        visual: The third card contrasts Strategy with State and Template Method.
+  - id: transfer
+    label: Apply the pattern
+    title: Split by items
+    purpose: Apply the pattern's roles to a new algorithm before seeing an answer.
+    takeaway: A new algorithm is one new Concrete Strategy plus the client code that offers it.
+    cues:
+      - id: cue-1
+        say: >-
+          One last design check. Your friends want to split by items: each person pays for the
+          dishes they ordered, and tax and tip are shared in proportion. Which class do you add, and
+          which existing code changes? Explain your answer before continuing.
+        step: Plan the change
+        note: Name the new class and every existing line that changes.
+        visual: >-
+          Three cards describe the itemized split, its tax and tip rule, and the task. No answer is
+          shown.
+        prediction: true
+        pause_after: 6
+      - id: cue-2
+        say: >-
+          Add an ItemizedSplit class that plays the ConcreteStrategy role, keeps each person's
+          items, and implements split and label. SplitStrategy, Expense, and the other strategies
+          stay unchanged. Only client code changes: the split picker offers the new method and
+          passes an ItemizedSplit to the expense.
+        step: One new class, offered by the client
+        note: ItemizedSplit plays Concrete Strategy; only the picker changes.
+        visual: The three cards remain; the narration names the ItemizedSplit class and the client change.
+  - id: summary
+    label: "Summary: the whole pattern"
+    title: Context, problem, solution, consequences
+    purpose: Recall every part of the Strategy pattern before the summary quiz.
+    takeaway: Context, problem, solution, and consequences make up the mental model for every pattern.
+    cues:
+      - id: cue-1
+        say: >-
+          To finish, recall the whole pattern. Context: one task can be done by a family of
+          interchangeable algorithms, and clients choose among them. Problem: a class that
+          hard-wires its algorithms in conditionals or subclasses scatters each algorithm and cannot
+          switch at runtime. Solution: a Context delegates to a Strategy interface, each
+          ConcreteStrategy implements one algorithm, and the client chooses which one the Context
+          holds. Consequences: interchangeable, independently testable algorithms without
+          conditionals, at the cost of informed clients, more objects, and one shared interface. The
+          summary quiz checks each part on a new example.
+        step: The Strategy pattern in four parts
+        note: Context → Problem → Solution → Consequences
+        visual: Four cards summarize the Strategy pattern's context, problem, solution, and consequences.

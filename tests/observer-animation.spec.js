@@ -1,8 +1,9 @@
+const { loadStory } = require('../scripts/narration/source');
 const { test, expect } = require('@playwright/test');
 const { a11yCheckpoint } = require('./a11y-helpers');
 const { readFileSync } = require('node:fs');
 const yaml = require('js-yaml');
-const story = yaml.load(readFileSync(require.resolve('../_data/explainers/observer.yml'), 'utf8'));
+const story = loadStory('observer');
 const examples = yaml.load(readFileSync(require.resolve('../_data/explainers/observer_code.yml'), 'utf8'));
 const quizzes = yaml.load(readFileSync(require.resolve('../_data/explainers/observer_quizzes.yml'), 'utf8'));
 const timing = require('../_data/explainers/observer_timing.json');

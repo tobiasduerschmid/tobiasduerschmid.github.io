@@ -1,11 +1,10 @@
+const { loadStory } = require('../scripts/narration/source');
 const { test, expect } = require('@playwright/test');
-const { readFileSync } = require('node:fs');
-const yaml = require('js-yaml');
 const { a11yCheckpoint } = require('./a11y-helpers');
 const { chromiumLaunchOptions } = require('../scripts/chromium-launch-options');
 // Decode real audio on a virtual output; CI must not depend on a sound device.
 test.use({ launchOptions: { ...chromiumLaunchOptions(), args: ['--disable-audio-output'] } });
-const story = yaml.load(readFileSync(require.resolve('../_data/explainers/react.yml'), 'utf8'));
+const story = loadStory('react');
 const timing = require('../_data/explainers/react_timing.json');
 const pageURL = '/SEBook/tools/react.html';
 const player = (page) => page.getByRole('region', { name: 'React in motion', exact: true });

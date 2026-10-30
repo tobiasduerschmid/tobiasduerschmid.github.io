@@ -1,25 +1,21 @@
 """Generate Kokoro narration, measured cue timings, captions and the TTS script.
 
-Optional offline tooling: kokoro-onnx==0.6.1, soundfile>=0.13, pyyaml.
+Optional offline tooling: kokoro-onnx==0.6.1, soundfile>=0.13. Node and npm dependencies compile the source.
 The site serves only the generated audio and text; it never downloads the model.
 """
 
 import argparse
 import hashlib
 import json
+import subprocess
 from pathlib import Path
-
-import numpy as np
-import soundfile as sf
-import yaml
-from kokoro_onnx import Kokoro
 
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
 def spoken_form(text, pronunciations):
-    for written in sorted(pronunciations, key=len, reverse=True):
+    for written in sorted(pronunciations, key=lambda word: (-len(word), word)):
         text = text.replace(written, pronunciations[written])
     return text
 
@@ -32,16 +28,31 @@ def timestamp(seconds):
     return f"{hours:02}:{minutes:02}:{whole_seconds:02}.{milliseconds:03}"
 
 
+def load_storyboard(topic):
+    """Use the same validated compilation as Jekyll; no parallel schema parser."""
+    result = subprocess.run(
+        ["node", str(ROOT / "scripts/narration.js"), "compile", topic],
+        check=True, capture_output=True, text=True,
+    )
+    return json.loads(result.stdout)["story"]
+
+
 def render(args):
-    source = ROOT / f"_data/explainers/{args.topic}.yml"
-    storyboard = yaml.safe_load(source.read_text())
+    storyboard = load_storyboard(args.topic)
+    if args.check:
+        cues = sum(len(scene["cues"]) for scene in storyboard["scenes"])
+        print(f"Valid script: {len(storyboard['scenes'])} scenes, {cues} cues; speech {storyboard['speech_sha256']}")
+        return
+    if not args.model or not args.voices:
+        raise ValueError("Audio rendering requires --model and --voices")
+    import numpy as np
+    import soundfile as sf
+    from kokoro_onnx import Kokoro
     kokoro = Kokoro(args.model, args.voices)
     work = Path(args.work_dir or f"/tmp/{args.topic}-kokoro-render")
     work.mkdir(parents=True, exist_ok=True)
-    audio_dir = ROOT / "assets/audio"
-    text_dir = ROOT / "assets/narration"
-    audio_dir.mkdir(parents=True, exist_ok=True)
-    text_dir.mkdir(parents=True, exist_ok=True)
+    for field in ('audio', 'captions', 'script'):
+        (ROOT / storyboard[field].lstrip('/')).parent.mkdir(parents=True, exist_ok=True)
     voice, speed = storyboard["voice"], storyboard["speed"]
     frames, script, captions, scenes = [], [], ["WEBVTT", ""], []
     samples_so_far = 0
@@ -66,7 +77,7 @@ def render(args):
             speech_end = (samples_so_far + len(samples)) / sample_rate
             samples_so_far += len(samples) + len(pause)
             end = samples_so_far / sample_rate
-            timing["cues"].append({"start": start, "end": end, "speech_end": speech_end})
+            timing["cues"].append({"id": cue["id"], "start": start, "end": end, "speech_end": speech_end})
             script.append(spoken)
             captions.extend([f"{scene['id']}-{index + 1}", f"{timestamp(start)} --> {timestamp(end)}", cue["text"], ""])
             print(f"{scene['id']} {index + 1}: {start:.2f} - {end:.2f}", flush=True)
@@ -84,7 +95,7 @@ def render(args):
              format="MP3", subtype="MPEG_LAYER_III", bitrate_mode="CONSTANT",
              compression_level=mp3_compression)
     manifest = {"duration": samples_so_far / sample_rate, "voice": voice, "speed": speed,
-                "source_sha256": hashlib.sha256(source.read_bytes()).hexdigest(), "scenes": scenes}
+                "speech_sha256": storyboard["speech_sha256"], "scenes": scenes}
     (ROOT / f"_data/explainers/{args.topic}_timing.json").write_text(json.dumps(manifest, indent=2) + "\n")
     (ROOT / storyboard["script"].lstrip("/")).write_text("\n\n".join(script) + "\n")
     (ROOT / storyboard["captions"].lstrip("/")).write_text("\n".join(captions))
@@ -93,8 +104,9 @@ def render(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--topic", choices=["nodejs", "react", "observer", "state", "strategy", "mvc", "scrum", "therac25", "cloudflare2019"], required=True)
-    parser.add_argument("--model", required=True)
-    parser.add_argument("--voices", required=True)
+    parser.add_argument("--topic", required=True, help="ID under _data/narrations; no hard-coded topic list")
+    parser.add_argument("--check", action="store_true", help="Validate the script without loading speech dependencies or writing audio")
+    parser.add_argument("--model")
+    parser.add_argument("--voices")
     parser.add_argument("--work-dir")
     render(parser.parse_args())

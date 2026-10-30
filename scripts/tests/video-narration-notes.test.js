@@ -1,3 +1,4 @@
+const { loadStory, loadRegistry } = require('../narration/source');
 // The printable notes of every video narration (docs/video-narration.md,
 // "Printable notes"): each cue's key points are notes, not narration, and
 // every narration has its notes page.
@@ -9,7 +10,7 @@ const yaml = require('js-yaml');
 
 const root = path.resolve(__dirname, '../..');
 const read = file => readFileSync(path.join(root, file.replace(/^\//, '')), 'utf8');
-const lessons = yaml.load(read('_data/video_narrations.yml'));
+const lessons = loadRegistry('video');
 // Words as a reader counts them: case, emphasis, and apostrophes aside.
 const words = text => text.toLowerCase().replace(/\*\*/g, '').replace(/['’]/g, '').split(/[^a-z0-9%]+/).filter(Boolean);
 // The longest run of consecutive words that `point` repeats from `speech`.
@@ -30,7 +31,7 @@ const COPIED_RUN = 8;
 const NOTES_SHARE = 0.5;
 
 for (const [topic, lesson] of Object.entries(lessons)) {
-  const story = yaml.load(read(`_data/explainers/${topic}.yml`));
+  const story = loadStory(topic);
   const notes = yaml.load(read(`_data/explainers/${topic}_notes.yml`));
   const cues = story.scenes.flatMap(scene => scene.cues.map((cue, index) => ({ id: `${scene.id}-${index + 1}`, cue })));
 

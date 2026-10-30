@@ -5,21 +5,27 @@ narration cues, and decisions. `js/narrated-case-study.js` adapts the existing
 `NarratedExplainer` media transport and `SebookQuiz` question renderer; it does
 not introduce another playback clock, grader, or persistence mechanism.
 
-Use a static SEBook page with `static_uml: true`, load
-`css/narrated-explainer.css` and `css/narrated-case-study.css`, then load
-`css/print-light.css` last. Insert:
+Use a static SEBook page with `static_uml: true` and the common entry point:
 
 ```liquid
-{% include narrated-case-study.html topic='therac25' %}
+{% include narration.html topic='therac25' %}
 ```
 
-The include reads `_data/explainers/<topic>.yml` and the matching
-`<topic>_timing.json` produced by `scripts/render-explainer-narration.py`.
-Generate audio after the storyboard is final: the manifest's source hash must
-match the complete YAML file. Load the page through Jekyll so audio seeking
-supports byte-range requests.
+Use `kind: case-study` in `_data/narrations/<topic>.yml`. Speech (`say`),
+evidence, source links, and checkpoints stay readable there; diagrams and
+visual state live in `_data/narration_visuals/<topic>.json`. See the
+[shared format](narration-format.md) for the complete envelope and commands.
+The include selects the case-study adapter and its styles automatically.
+Render audio with `scripts/render-explainer-narration.py`; the generated
+`<topic>_timing.json` must match the speech fingerprint. Visual-only edits do
+not require speech generation. Serve with byte-range support for audio seeking.
 
-## Storyboard contract
+## Compiled storyboard contract
+
+This example shows the resolved runtime shape consumed by the adapter. In
+author files, move diagrams to JSON `resources.diagrams` and diagram references
+to keyed scene/cue visual state; keep prose in YAML and use `say` instead of
+`text`, with stable scene and cue IDs. Do not author this merged representation.
 
 ```yaml
 title: A case-study title

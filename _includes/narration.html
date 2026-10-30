@@ -1,0 +1,5 @@
+{%- comment -%}Public entry point. Kind and renderer are declared once in the lesson specification.{%- endcomment -%}
+{%- assign narration_entry = site.data.narration_lessons[include.topic] -%}
+{% for stylesheet in narration_entry.styles %}<link rel="stylesheet" href="{{ stylesheet | relative_url }}?v={{ site.asset_version }}">{% endfor %}
+<link rel="stylesheet" href="{{ '/css/print-light.css' | relative_url }}?v={{ site.asset_version }}">
+{% include {{ narration_entry.player_include }} topic=include.topic subject=narration_entry.lesson.name renderer=narration_entry.lesson.renderer %}

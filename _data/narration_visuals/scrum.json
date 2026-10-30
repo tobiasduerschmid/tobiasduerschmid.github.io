@@ -1,0 +1,222 @@
+{
+  "version": 1,
+  "presentation": {
+    "animation": {
+      "page": "/assets/video-narration/scrum.html",
+      "theme": "story-wall",
+      "styles": [
+        "/css/song-video-story-wall.css",
+        "/css/song-video-story-kit.css",
+        "/css/video-narration-scrum.css"
+      ],
+      "scripts": [
+        "/js/song-video/story-wall.js",
+        "/js/song-video/story-kit.js",
+        "/js/video-narration/scrum-kit.js",
+        "/js/video-narration/scrum.js"
+      ]
+    }
+  },
+  "resources": {},
+  "scenes": {
+    "intro": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ]
+      },
+      "cues": {
+        "cue-1": {},
+        "cue-2": {},
+        "cue-3": {}
+      }
+    },
+    "theory": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ]
+      },
+      "cues": {
+        "cue-1": {},
+        "cue-2": {},
+        "cue-3": {},
+        "cue-4": {}
+      }
+    },
+    "team": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ]
+      },
+      "cues": {
+        "cue-1": {},
+        "cue-2": {},
+        "cue-3": {},
+        "cue-4": {}
+      }
+    },
+    "product_owner": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ]
+      },
+      "cues": {
+        "cue-1": {},
+        "cue-2": {},
+        "cue-3": {}
+      }
+    },
+    "scrum_master": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ]
+      },
+      "cues": {
+        "cue-1": {},
+        "cue-2": {},
+        "cue-3": {},
+        "cue-4": {}
+      }
+    },
+    "product_backlog": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ]
+      },
+      "cues": {
+        "cue-1": {},
+        "cue-2": {},
+        "cue-3": {}
+      }
+    },
+    "sprint_backlog": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ]
+      },
+      "cues": {
+        "cue-1": {},
+        "cue-2": {},
+        "cue-3": {}
+      }
+    },
+    "increment": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ]
+      },
+      "cues": {
+        "cue-1": {},
+        "cue-2": {},
+        "cue-3": {},
+        "cue-4": {}
+      }
+    },
+    "sprint": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ]
+      },
+      "cues": {
+        "cue-1": {},
+        "cue-2": {}
+      }
+    },
+    "sprint_planning": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ]
+      },
+      "cues": {
+        "cue-1": {},
+        "cue-2": {},
+        "cue-3": {}
+      }
+    },
+    "daily_scrum": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ]
+      },
+      "cues": {
+        "cue-1": {},
+        "cue-2": {},
+        "cue-3": {}
+      }
+    },
+    "sprint_review": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ]
+      },
+      "cues": {
+        "cue-1": {},
+        "cue-2": {},
+        "cue-3": {}
+      }
+    },
+    "sprint_retrospective": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ]
+      },
+      "cues": {
+        "cue-1": {},
+        "cue-2": {},
+        "cue-3": {}
+      }
+    },
+    "inspect_adapt": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ]
+      },
+      "cues": {
+        "cue-1": {},
+        "cue-2": {},
+        "cue-3": {},
+        "cue-4": {}
+      }
+    },
+    "summary": {
+      "state": {
+        "animation": true,
+        "show": [
+          "animation"
+        ]
+      },
+      "cues": {
+        "cue-1": {},
+        "cue-2": {},
+        "cue-3": {}
+      }
+    }
+  }
+}

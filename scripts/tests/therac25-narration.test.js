@@ -1,9 +1,8 @@
+const { loadStory } = require('../narration/source');
 const { test, describe, before } = require('node:test');
 const assert = require('node:assert/strict');
 const { readFileSync } = require('node:fs');
-const { createHash } = require('node:crypto');
 const path = require('node:path');
-const yaml = require('js-yaml');
 
 const root = path.resolve(__dirname, '../..');
 const readAsset = filename => readFileSync(path.join(root, filename));
@@ -15,11 +14,9 @@ function assertText(value, label) {
 
 for (const topic of ['therac25', 'cloudflare2019']) {
   describe(topic, () => {
-    let source;
     let story;
     before(() => {
-      source = readAsset(`_data/explainers/${topic}.yml`);
-      story = yaml.load(source.toString());
+      story = loadStory(topic);
     });
     const readTiming = () => JSON.parse(readAsset(`_data/explainers/${topic}_timing.json`));
 
@@ -92,7 +89,7 @@ for (const topic of ['therac25', 'cloudflare2019']) {
 
     test('published narration timings cover the current storyboard in order without gaps', () => {
       const timing = readTiming();
-      assert.equal(timing.source_sha256, createHash('sha256').update(source).digest('hex'),
+      assert.equal(timing.speech_sha256, story.speech_sha256,
         'Regenerate narration assets after editing the storyboard.');
       assert.equal(timing.voice, story.voice);
       assert.equal(timing.speed, story.speed);

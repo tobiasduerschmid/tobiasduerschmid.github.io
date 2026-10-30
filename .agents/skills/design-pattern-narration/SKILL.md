@@ -3,9 +3,10 @@ name: design-pattern-narration
 description: >-
   Authoring guide for narrated design-pattern lessons in the SEBook (the Observer, State, Strategy,
   and Model-View-Controller narrations, and any new one). USE THIS SKILL EVERY TIME you create, extend, restructure, or review
-  a narrated pattern lesson: `_data/explainers/<topic>.yml` (speech, scenes, cues, diagrams),
+  a narrated pattern lesson: `_data/narrations/<topic>.yml` (readable speech and teaching text),
+  `_data/narration_visuals/<topic>.json` (diagrams and renderer state),
   `<topic>_code.yml` (Python/Java/C++/TypeScript examples), `<topic>_quizzes.yml` (section checks and
-  the summary quiz), `<topic>_timing.json`, the `_data/narrated_patterns.yml` registry, topic
+  the summary quiz), `<topic>_timing.json`, the shared narration compiler, topic
   illustrations such as `_includes/<topic>-*.html` with `css/<topic>-narration.css`, the
   `SEBook/designpatterns/<topic>/read.html` and `print.html` views, the narration audio and captions
   under `assets/`, or `scripts/render-explainer-narration.py`. Also trigger on requests like "make a
@@ -18,6 +19,10 @@ description: >-
 ---
 
 # Authoring narrated design-pattern lessons
+
+Read [narration-authoring](../narration-authoring/SKILL.md) first for the common
+source format, compiler, player boundary, and speech workflow. Use `kind: pattern`;
+keep the narration readable and the renderer state in its separate JSON package.
 
 A narrated lesson is an approximately 11–13 minute, Kokoro-voiced walk through one
 design pattern at the top of its SEBook chapter (see `/SEBook/designpatterns/observer.html`,
@@ -121,12 +126,12 @@ including the introduction, transfer, and summary. Each part jumps to its first
 scene. Under it, show the current part's scene links; a scene without `part`
 previews Context's scenes. Mark only the actual current part and scene with
 `aria-current="step"`, so an overview preview has no current marker. Use the
-shared `narrated-lesson-navigation.html` include and `NarratedLesson.linkNavigation`
+shared `narrated-lesson-navigation.html` include and `NarratedLesson.mount`
 helper, also used by video narrations. Navigation must work before playback,
 by keyboard and touch, in mobile/fullscreen layouts and both themes; keep
 focus in the destination navigation after a jump. Do not invent a storyboard
-`part` solely to display navigation. Put short navigation labels in the registry's
-`outline_labels` map keyed by scene id, so presentation-only edits do not change
+`part` solely to display navigation. Put short navigation labels in the script’s
+`lesson.outline_labels` map keyed by scene id, so presentation-only edits do not change
 the audio fingerprint. Existing storyboard `outline` and `label` fields are
 fallbacks.
 
@@ -153,23 +158,28 @@ diagram within about 9 symbols; split rather than crowd.
 
 Each cue is one spoken paragraph of about 40–50 words (2–4 sentences); the shipped lessons run at
 140–150 words per minute, so 35–40 cues make an 11–13 minute lesson. Fields, all in
-`_data/explainers/<topic>.yml`:
+`_data/narrations/<topic>.yml`:
 
-- `text`: the spoken words, which are also the captions. Write it as written English; the
+- `id`: a stable cue identity; preserve it when moving or rewriting the cue.
+- `say`: the spoken words, which are also the captions. Write it as written English; the
   `pronunciations` map fixes speech only.
 - `visual`: a description of what is on screen for this cue. It becomes the stage's accessible
   name, so describe the marks and diagram emphasis, not the speech.
 - `step` and `note`: the short explanation strip under the code.
 - `source`: an optional citation shown on screen below the explanation strip, such as
   "Gamma et al., Design Patterns: Strategy, Applicability". It is never spoken.
+- `prediction: true`: asks the learner to predict; it hides the takeaway and needs a
+  `pause_after` of a few seconds so there is time to think. The next cue gives the answer.
+
+Put the following renderer fields in `_data/narration_visuals/<topic>.json`,
+under `scenes.<scene-id>.cues.<cue-id>`, not in the spoken script:
+
 - `focus`: a key into the code block's `focus` map; the player marks those lines in every
   language. `table_focus`, `ui_state`, and similar keys are read by topic illustrations.
 - `diagram_focus`: one class, interface, state, or lifeline to highlight. `diagram_steps`: how many
   sequence message groups (or CRC cards) are shown. `diagram`: switch this cue to another
   diagram of the storyboard, for example from CRC cards to a class diagram of how the roles
   interact; the region label and caption follow it.
-- `prediction: true`: asks the learner to predict; it hides the takeaway and needs a
-  `pause_after` of a few seconds so there is time to think. The next cue gives the answer.
 
 Narration rules:
 
@@ -186,7 +196,8 @@ Narration rules:
 
 ## 4. Diagrams
 
-Diagrams live under `diagrams:` as ArchUML sources and render at build time
+Diagrams live under `resources.diagrams` in the visual JSON package as
+ArchUML sources and render at build time
 (`static_uml: true` on the chapter). Use the type that matches the question the scene answers:
 
 - **class** for the role diagram and the solution's structure (`type` may be omitted);
@@ -207,7 +218,7 @@ misspelled `diagram_focus` silently highlights nothing.
 
 `_data/explainers/<topic>_code.yml` has one entry per language with `label`, `filename`, `note`,
 `imports`, and `blocks`. Each block has `source` and a `focus` map of named line lists (1-based).
-`example_order` in the storyboard lists the blocks that make up the complete example; the
+`resources.example_order` in the visual package lists the blocks that make up the complete example; the
 `problem` block is the before design.
 
 - Write idiomatic code in each language, not a transliteration (Java `static final INSTANCE`
@@ -247,11 +258,14 @@ position references), plus these lesson-specific rules:
 `scripts/render-explainer-narration.py --topic <topic>` renders each cue with Kokoro (voice
 `af_heart`, speed 0.95), adds `pause_after` silence (0.55 s by default), and writes the MP3,
 WebVTT captions, the spoken script, and `_data/explainers/<topic>_timing.json` with the
-storyboard's SHA-256. Add a new topic to its `--topic` choices. Setup and the espeak-ng
+speech fingerprint. Topic discovery is automatic; never add a topic allowlist.
+Validate first with `--check` (no speech model needed). Setup and the espeak-ng
 long-path workaround are in `docs/nodejs-animation.md` and `docs/state-narration.md`.
 
-- Rendering changes the audio, captions, and timing; re-render after **any** storyboard edit,
-  because the node test compares the hash.
+- Run `node scripts/narration.js check <topic>` after editing. Re-render after changes
+  to `say`, pauses, voice, speed, pronunciation rules, or scene/cue order or IDs.
+  Visual state, diagram layout, navigation, citations, and descriptions do not affect
+  the speech fingerprint. Unchanged speech reuses the per-cue WAV cache.
 - Listen to every cue that contains code identifiers, acronyms, or symbols. Typical fixes:
   `UML: U M L`, `C++: C plus plus`, `enum: E num`, camelCase names split into words
   (`setState: set state`). Captions keep the written form.
@@ -278,16 +292,18 @@ long-path workaround are in `docs/nodejs-animation.md` and `docs/state-narration
 
 ## 8. Wire the lesson into the site
 
-Follow "Adding a lesson" in `docs/narrated-pattern.md`: register the topic in
-`_data/narrated_patterns.yml` (including its `visuals` map), link the CSS modules and include
-`narrated-pattern.html` in the chapter, and add the `read.html` and `print.html` views.
+Follow "Adding a lesson" in `docs/narrated-pattern.md`: add the readable script
+and JSON visual package, then include `narration.html` with `topic` in the chapter
+and add the `read.html` and `print.html` views. `lesson` holds human-facing metadata;
+`presentation.visuals`, `presentation.scripts`, and `presentation.styles` in the
+JSON package select illustrations and assets. Registration and shared styles are automatic.
 
 - Topic illustrations are includes that read `include.cue`; their CSS goes in
   `css/<topic>-narration.css` with base, `html.dark-mode`, and `@media print` rules together.
   Readable text inherits its size or uses `em` (never `rem`, which is 10 px here).
 - **Make the example live when seeing it change teaches the idea.** Show the problem and the
   solution in motion (an edit spreading to every view) and let students change it themselves.
-  List the script in the topic's `scripts:` in `_data/narrated_patterns.yml`. The script upgrades
+  List the script in the visual package’s `presentation.scripts`. The script upgrades
   the static illustration in the player only, cancels the player's `narrated-pattern:cue` event,
   and animates to the state that the settled reading step describes (for example in a
   `data-<topic>-cue` attribute). Reader and print views keep the static, accessible picture. The

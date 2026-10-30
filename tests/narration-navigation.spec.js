@@ -1,14 +1,12 @@
+const { loadStory, loadRegistry } = require('../scripts/narration/source');
 const { test, expect } = require('@playwright/test');
-const { readFileSync } = require('node:fs');
-const yaml = require('js-yaml');
 const { a11yCheckpoint } = require('./a11y-helpers');
-const data = name => yaml.load(readFileSync(require.resolve(`../_data/${name}.yml`), 'utf8'));
-const patterns = data('narrated_patterns');
-const videos = data('video_narrations');
+const patterns = loadRegistry('pattern');
+const videos = loadRegistry('video');
 
 for (const topic of ['scrum', 'observer', 'state', 'strategy', 'mvc']) {
   const lesson = videos[topic] || patterns[topic];
-  const story = data(`explainers/${topic}`);
+  const story = loadStory(topic);
   const parts = lesson.parts || ['Context', 'Problem', 'Solution', 'Consequences'];
   const partsLabel = lesson.parts_label || 'Part of the pattern description';
   const label = scene => lesson.outline_labels?.[scene.id] || scene.outline || scene.label;

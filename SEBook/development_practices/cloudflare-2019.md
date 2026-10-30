@@ -4,10 +4,6 @@ layout: sebook
 static_uml: true
 ---
 
-<link rel="stylesheet" href="{{ '/css/narrated-explainer.css' | relative_url }}">
-<link rel="stylesheet" href="{{ '/css/narrated-case-study.css' | relative_url }}">
-<link rel="stylesheet" href="{{ '/css/print-light.css' | relative_url }}">
-
 # Investigation
 
 Several unrelated websites suddenly return an error page. Their shared infrastructure is Cloudflare. You join the investigation with a symptom, competing explanations, and a need to restore service. **Which observation should you collect next, and what would it actually establish?**
@@ -30,7 +26,7 @@ Listen to the narration or use **Next step** to investigate silently. Before eac
 
 **Published history** labels reported events. **Teaching reconstruction** labels an explanatory diagram or simplified trace. **Proposed experiment** labels a new test or contract. The choices are learning activities, not a transcript of the responders' deliberations; history does not branch according to your answer. Read the sections after the player when you are ready for the explanation and full chronology.
 
-{% include narrated-case-study.html topic="cloudflare2019" %}
+{% include narration.html topic="cloudflare2019" %}
 
 # Case Record
 

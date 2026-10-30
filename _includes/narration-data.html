@@ -1,0 +1,9 @@
+{%- comment -%}One data contract for every narration adapter; compiled by scripts/narration/.{%- endcomment -%}
+{%- assign narration_entry = site.data.narration_lessons[include.topic] -%}
+{%- assign narration_timing_key = include.topic | append: '_timing' -%}
+{%- assign narration_code_key = include.topic | append: '_code' -%}
+{%- assign narration_quiz_key = include.topic | append: '_quizzes' -%}
+<script type="application/json" data-narration-story>{{ narration_entry.story | jsonify | replace: '</', '<\/' }}</script>
+<script type="application/json" data-narration-timing>{{ site.data.explainers[narration_timing_key] | jsonify | replace: '</', '<\/' }}</script>
+<script type="application/json" data-narration-examples>{{ site.data.explainers[narration_code_key] | jsonify | replace: '</', '<\/' }}</script>
+<script type="application/json" data-narration-quizzes>{{ site.data.explainers[narration_quiz_key] | jsonify | replace: '</', '<\/' }}</script>

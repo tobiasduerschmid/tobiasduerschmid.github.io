@@ -73,8 +73,7 @@
     <summary>Complete transcript, diagrams, and decision explanations (contains later findings)</summary>
     {% include narrated-case-study-reading.html story=case_story prefix=case_id %}
   </details>
-  <script type="application/json" data-case-storyboard>{{ case_story | jsonify | replace: '</', '<\/' }}</script>
-  <script type="application/json" data-case-timing>{{ case_timing | jsonify }}</script>
+  {% include narration-data.html topic=include.topic %}
 </section>
 <script src="{{ '/js/narrated-explainer.js' | relative_url }}" defer></script>
 <script src="{{ '/js/parsons-grading.js' | relative_url }}" defer></script>

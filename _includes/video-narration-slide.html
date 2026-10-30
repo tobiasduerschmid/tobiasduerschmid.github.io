@@ -22,7 +22,7 @@
     <thead><tr>{% for column in vn_slide.columns %}<th scope="col">{{ column | escape }}</th>{% endfor %}</tr></thead>
     <tbody>
       {%- for item in vn_slide.items limit: vn_reveal %}
-      <tr{% if item.id == vn_focus %} class="is-focused" aria-current="true"{% endif %}><th scope="row">{{ item.cells.first | escape }}</th>{% for cell in item.cells offset: 1 %}<td>{{ cell | escape }}</td>{% endfor %}</tr>
+      <tr{% if vn_focus and item.id == vn_focus %} class="is-focused" aria-current="true"{% endif %}><th scope="row">{{ item.cells.first | escape }}</th>{% for cell in item.cells offset: 1 %}<td>{{ cell | escape }}</td>{% endfor %}</tr>
       {%- endfor %}
     </tbody>
   </table>
@@ -37,7 +37,7 @@
   {%- if vn_layout == 'steps' %}{% assign vn_list = 'ol' %}{% else %}{% assign vn_list = 'ul' %}{% endif %}
   <{{ vn_list }} class="vn-slide-items">
     {%- for item in vn_slide.items limit: vn_reveal %}
-    <li class="vn-slide-item{% if item.id == vn_focus %} is-focused{% endif %}"{% if item.id == vn_focus %} aria-current="true"{% endif %}>
+    <li class="vn-slide-item{% if vn_focus and item.id == vn_focus %} is-focused{% endif %}"{% if vn_focus and item.id == vn_focus %} aria-current="true"{% endif %}>
       <span class="vn-slide-item-title">{{ item.title | escape }}</span>
       {%- if item.text %}
       <span class="vn-slide-item-text">{{ item.text | escape }}</span>

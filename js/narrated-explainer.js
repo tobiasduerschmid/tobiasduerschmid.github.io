@@ -338,7 +338,13 @@
     };
   }
 
-  window.NarratedExplainer = { enhance };
+  // Templates and adapters share one compiled lesson data boundary.
+  function readData(root) {
+    const read = name => JSON.parse(root.querySelector(`[data-narration-${name}]`).textContent);
+    return { story: read('story'), timing: read('timing'), examples: read('examples'), quizzes: read('quizzes') || {} };
+  }
+
+  window.NarratedExplainer = { enhance, readData };
 
   // Generic lessons supply a renderer by name. Observer supplies its own
   // adapter so section checkpoints stay outside the shared transport.
@@ -346,9 +352,9 @@
     const artwork = window[root.dataset.artRenderer];
     // Combined chapters load renderer/player pairs in document order.
     if (!artwork) return;
+    const { story, timing } = readData(root);
     enhance(root, {
-      storyboard: JSON.parse(root.querySelector('[data-explainer-storyboard]').textContent),
-      timing: JSON.parse(root.querySelector('[data-explainer-timing]').textContent),
+      storyboard: story, timing,
       render(scene, storyScene, cue, progress, motion) {
         artwork.render(scene, storyScene.id, cue, progress, motion);
       },

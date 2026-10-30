@@ -1,0 +1,253 @@
+{
+  "version": 1,
+  "presentation": {
+    "renderer": "NodejsAnimationArt",
+    "styles": [
+      "/css/nodejs-animation.css"
+    ]
+  },
+  "resources": {},
+  "scenes": {
+    "runtime": {
+      "state": {},
+      "cues": {
+        "cue-1": {
+          "pose": "language"
+        },
+        "cue-2": {
+          "pose": "tools"
+        }
+      }
+    },
+    "syntax": {
+      "state": {
+        "filename": "greeting.cjs",
+        "code": "const greeting = \"Hello\";\nlet count = 0;\nconst greet = (name) => {\n  count += 1;\n  console.log(greeting, name);\n};\ngreet(\"Sam\");"
+      },
+      "cues": {
+        "cue-1": {
+          "pose": "values",
+          "focus": [
+            1,
+            2
+          ]
+        },
+        "cue-2": {
+          "pose": "define",
+          "focus": [
+            3,
+            6
+          ]
+        },
+        "cue-3": {
+          "pose": "call",
+          "focus": [
+            7
+          ]
+        },
+        "cue-4": {
+          "pose": "execute",
+          "focus": [
+            4,
+            5
+          ]
+        }
+      }
+    },
+    "blocking": {
+      "state": {
+        "filename": "blocking.cjs",
+        "code": "const fs = require(\"node:fs\");\nconst text = fs.readFileSync(\"note.txt\", \"utf8\");\nconsole.log(text);\nconsole.log(\"Next\");"
+      },
+      "cues": {
+        "cue-1": {
+          "pose": "load",
+          "focus": [
+            1
+          ]
+        },
+        "cue-2": {
+          "pose": "read",
+          "focus": [
+            2
+          ]
+        },
+        "cue-3": {
+          "pose": "complete",
+          "focus": [
+            3,
+            4
+          ]
+        }
+      }
+    },
+    "nonblocking": {
+      "state": {
+        "filename": "nonblocking.cjs",
+        "context": "onFile is the function we define in the next scene. It prints the file text on success.",
+        "code": "const fs = require(\"node:fs\");\nfs.readFile(\"note.txt\", \"utf8\", onFile);\nconsole.log(\"Next\");"
+      },
+      "cues": {
+        "cue-1": {
+          "pose": "start",
+          "focus": [
+            2
+          ]
+        },
+        "cue-2": {
+          "pose": "continue",
+          "focus": [
+            3
+          ]
+        },
+        "cue-3": {
+          "pose": "ready",
+          "focus": []
+        },
+        "cue-4": {
+          "pose": "run",
+          "focus": []
+        }
+      }
+    },
+    "callbacks": {
+      "state": {
+        "filename": "callback.cjs",
+        "context": "fs is the file-system module loaded in the previous example.",
+        "code": "function onFile(error, text) {\n  if (error) {\n    console.error(error);\n    return;\n  }\n  console.log(text);\n}\nfs.readFile(\"note.txt\", \"utf8\", onFile);",
+        "alternate_code": "fs.readFile(\"note.txt\", \"utf8\", (error, text) => {\n  if (error) {\n    console.error(error);\n    return;\n  }\n  console.log(text);\n});"
+      },
+      "cues": {
+        "cue-1": {
+          "pose": "pass",
+          "focus": [
+            1,
+            8
+          ]
+        },
+        "cue-2": {
+          "pose": "success",
+          "focus": [
+            1,
+            2,
+            6
+          ]
+        },
+        "cue-3": {
+          "pose": "error",
+          "focus": [
+            2,
+            3,
+            4
+          ]
+        },
+        "cue-4": {
+          "pose": "inline",
+          "focus": [
+            1,
+            7
+          ]
+        }
+      }
+    },
+    "await": {
+      "state": {
+        "filename": "promise.cjs",
+        "code": "const fs = require(\"node:fs/promises\");\nasync function showFile() {\n  try {\n    const text = await fs.readFile(\"note.txt\", \"utf8\");\n    console.log(text);\n  } catch (error) {\n    console.error(error);\n  }\n}\nshowFile();"
+      },
+      "cues": {
+        "cue-1": {
+          "pose": "pending",
+          "focus": [
+            1,
+            2,
+            4,
+            10
+          ]
+        },
+        "cue-2": {
+          "pose": "fulfilled",
+          "focus": [
+            4,
+            5
+          ]
+        },
+        "cue-3": {
+          "pose": "rejected",
+          "focus": [
+            6,
+            7
+          ]
+        }
+      }
+    },
+    "server": {
+      "state": {
+        "filename": "server.cjs",
+        "code": "const http = require(\"node:http\");\nconst server = http.createServer((req, res) => {\n  res.end(\"Hello!\");\n});\nserver.listen(3000);"
+      },
+      "cues": {
+        "cue-1": {
+          "pose": "register",
+          "focus": [
+            1,
+            2,
+            4
+          ]
+        },
+        "cue-2": {
+          "pose": "listen",
+          "focus": [
+            5
+          ]
+        },
+        "cue-3": {
+          "pose": "reply",
+          "focus": [
+            3
+          ]
+        }
+      }
+    },
+    "npm": {
+      "state": {
+        "filename": "terminal",
+        "code": "npm install express",
+        "alternate_code": "const express = require(\"express\");",
+        "alternate_filename": "app.cjs"
+      },
+      "cues": {
+        "cue-1": {
+          "pose": "install",
+          "focus": [
+            1
+          ]
+        },
+        "cue-2": {
+          "pose": "import",
+          "focus": [
+            1
+          ]
+        }
+      }
+    },
+    "predict": {
+      "state": {
+        "filename": "timer.cjs",
+        "code": "console.log(\"A\");\nsetTimeout(() => console.log(\"B\"), 0);\nconsole.log(\"C\");"
+      },
+      "cues": {
+        "cue-1": {
+          "pose": "question",
+          "focus": [
+            2
+          ]
+        },
+        "cue-2": {
+          "pose": "answer",
+          "focus": []
+        }
+      }
+    }
+  }
+}

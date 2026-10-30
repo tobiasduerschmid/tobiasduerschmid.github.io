@@ -4,10 +4,6 @@ layout: sebook
 static_uml: true
 ---
 
-<link rel="stylesheet" href="{{ '/css/narrated-explainer.css' | relative_url }}">
-<link rel="stylesheet" href="{{ '/css/narrated-case-study.css' | relative_url }}">
-<link rel="stylesheet" href="{{ '/css/print-light.css' | relative_url }}">
-
 # Investigation
 
 A patient reports an unexpected effect. A console displays a low dose. Routine checks do not reproduce the event. **What would you investigate next—and what result would change your explanation?**
@@ -18,7 +14,7 @@ The investigation is self-paced. Listen to the narration or use **Next step** to
 
 The labels matter: **published history** identifies reported events; **teaching reconstruction** identifies a diagram of the published causal explanation; **proposed design** identifies a new contract used to reason about a repair. None of the diagrams is a recovered accident log or a complete medical-device design. The main historical account documents both what investigators established and what remained uncertain {% cite LevesonTurner1993Therac %}.
 
-{% include narrated-case-study.html topic="therac25" %}
+{% include narration.html topic="therac25" %}
 
 # Case Record
 

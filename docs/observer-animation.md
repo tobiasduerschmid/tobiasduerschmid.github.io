@@ -41,10 +41,16 @@ SEBook preference (`sebook-code-language`); no playback history is saved.
 
 ## Sources
 
-- `_data/explainers/observer.yml`: language-independent speech, visual
-  descriptions, scene sequence, ArchUML source, and semantic focus keys.
-  The `diagrams` map stores each diagram's label, text description, optional
-  caption, and source; a scene's `diagram` key selects it.
+See [the shared format](narration-format.md). Spoken `say` cues and teaching
+text live in the YAML; diagrams, code/animation state, and renderer settings
+live separately in `_data/narration_visuals/observer.json`.
+
+
+- `_data/narrations/observer.yml`: language-independent speech, visual
+  descriptions, and scene sequence.
+- `_data/narration_visuals/observer.json`: `resources.diagrams` stores each
+  diagram’s label, description, caption, and source; keyed scene/cue state
+  selects diagrams and semantic focus targets.
 - `_data/explainers/observer_code.yml`: four equivalent examples and mappings
   from semantic focus keys to one-based source lines. `example_order` assembles
   complete runnable examples without the earlier conditional-heavy version.
@@ -52,12 +58,12 @@ SEBook preference (`sebook-code-language`); no playback history is saved.
   are separate from speech so editing feedback does not invalidate audio.
 - `_data/explainers/observer_ui.yml`: the editor states shared by the player and
   the static reading steps.
-- `_data/explainers/observer_timing.json`: generated cue boundaries and source hash.
+- `_data/explainers/observer_timing.json`: generated cue boundaries and speech fingerprint.
 - `assets/audio/observer-pattern.mp3` and `assets/narration/observer-pattern.*`:
   generated compressed speech, captions, and pronunciation-adjusted script.
 - `_includes/observer-editor-illustration.html` and `css/observer-narration.css`: the
   illustrated editor. The player, reader, and print views are the shared narrated
-  pattern lesson (`docs/narrated-pattern.md`), registered in `_data/narrated_patterns.yml`.
+  pattern lesson (`docs/narrated-pattern.md`), discovered from the shared narration specification.
 
 `js/narrated-explainer.js` shares the native-audio transport with Node.js and React. The
 shared pattern-lesson adapter (`js/narrated-pattern.js`) adds section checkpoints and derives visual state from the

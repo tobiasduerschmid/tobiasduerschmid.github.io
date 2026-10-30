@@ -27,8 +27,6 @@
       const surfaceWidth = rotated ? height : width;
       const surfaceHeight = rotated ? width : height;
       video.classList.toggle('is-rotated', rotated);
-      video.classList.toggle('is-wide', active && surfaceWidth / surfaceHeight >= 1.5);
-      video.classList.toggle('is-short', active && surfaceHeight <= 600);
       if (!active) return;
       video.style.setProperty('--vn-surface-width', `${surfaceWidth}px`);
       video.style.setProperty('--vn-surface-height', `${surfaceHeight}px`);
@@ -186,12 +184,9 @@
 
   function enhance(root) {
     if (root.classList.contains('is-enhanced')) return;
-    const { renderDiagram, sectionChecks, linkNavigation } = window.NarratedLesson;
+    const { story, timing, examples, quizzes } = window.NarratedExplainer.readData(root);
+    const { renderDiagram, mount } = window.NarratedLesson;
     const topic = root.dataset.vnTopic;
-    const story = JSON.parse(root.querySelector('[data-np-storyboard]').textContent);
-    const examples = JSON.parse(root.querySelector('[data-np-examples]').textContent);
-    const timing = JSON.parse(root.querySelector('[data-np-timing]').textContent);
-    const quizzes = JSON.parse(root.querySelector('[data-np-quizzes]').textContent);
     const screen = root.querySelector('[data-vn-screen]');
     const panels = Object.fromEntries(Array.from(screen.querySelectorAll('[data-vn-panel]'), panel => [panel.dataset.vnPanel, panel]));
     const animation = panels.animation ? animationStage(panels.animation, root.querySelector('audio')) : null;
@@ -266,21 +261,12 @@
       root.querySelector('.nja-takeaway').hidden = Boolean(cue.prediction);
     }
 
-    const checks = sectionChecks(root, story, quizzes);
-    const player = window.NarratedExplainer.enhance(root, {
-      storyboard: story, timing, render, onSectionEnd: checks.sectionEnded,
-      onSeek: checks.close, canPlay: checks.isClosed, fullscreenTarget: root.querySelector('[data-vn-video]'),
+    const player = mount(root, {
+      story, timing, quizzes, examples, render,
+      fullscreenTarget: root.querySelector('[data-vn-video]'),
     });
-    checks.attach(player);
     bindFullscreenLayout(root);
     bindVideoControls(root, player);
-    linkNavigation(root, story, timing, player);
-    if (languageSelect) {
-      languageSelect.addEventListener('sebook:languagechange', () => {
-        player.refresh();
-        root.querySelector('.nja-status').textContent = `Code language: ${examples[languageSelect.value].label}. Narration position unchanged.`;
-      });
-    }
   }
 
   function init() { document.querySelectorAll('section.video-narration').forEach(enhance); }

@@ -25,9 +25,14 @@ multimedia, cognitive-load, and retrieval guidance.
 
 ## Sources and outputs
 
-- `_data/explainers/nodejs.yml`: narration, purpose and prerequisite context for
-  each snippet, visual descriptions, examples, voice, pronunciations, and pauses.
-- `_data/explainers/nodejs_timing.json`: actual measured cue times and source hash.
+See [the shared format](narration-format.md). Spoken `say` cues and teaching
+text live in the YAML; diagrams, code/animation state, and renderer settings
+live separately in `_data/narration_visuals/nodejs.json`.
+
+
+- `_data/narrations/nodejs.yml`: narration, purpose and prerequisite context for
+  each snippet, visual descriptions, voice, pronunciations, and pauses.
+- `_data/explainers/nodejs_timing.json`: actual measured cue times and speech fingerprint.
 - `assets/audio/nodejs-basics.mp3`: Kokoro `af_heart`, speed `0.95`, 24 kHz mono,
   48 kbps MP3. Only the compressed file is published, not the working WAVs.
 - `assets/narration/nodejs-basics.txt`: plain, pronunciation-adjusted TTS input.
@@ -63,7 +68,7 @@ not decoration. Reduced motion jumps directly to the complete teaching state.
 The optional renderer uses [kokoro-onnx](https://github.com/thewh1teagle/kokoro-onnx)
 and its [v1.0 model and voice files](https://github.com/thewh1teagle/kokoro-onnx/releases/tag/model-files-v1.1).
 Generation is local; model files are not shipped to the browser. Install
-`kokoro-onnx==0.6.1`, `soundfile>=0.13`, and `pyyaml` in an isolated Python
+`kokoro-onnx==0.6.1` and `soundfile>=0.13` in an isolated Python
 environment. SoundFile's bundled libsndfile encodes the compressed MP3, so no
 separate system encoder is needed. Run:
 
@@ -79,9 +84,10 @@ cue only synthesizes that cue again. It regenerates audio, captions, the plain
 script, and the timing manifest together. Review changed speech before publishing.
 The narration is synthetic, not a recording of a human speaker.
 
-The required `--topic` argument selects `nodejs`, `react`, `observer`, `state`, `strategy`, `mvc`, `scrum`, `therac25`, or `cloudflare2019`; outputs
-follow that storyboard's declared audio, caption, and script paths, with a sibling
-`<topic>_timing.json` file.
+The required `--topic` argument discovers any ID under `_data/narrations/`;
+outputs follow its declared media paths, with `_data/explainers/<topic>_timing.json`.
+Run `npm ci` before compilation and `node scripts/narration.js check` after
+rendering. See `docs/narration-format.md` for speech fingerprint semantics.
 
 Pronunciation substitutions affect only speech and the downloadable TTS script.
 Captions, visual labels, and code retain the proper technical spellings.

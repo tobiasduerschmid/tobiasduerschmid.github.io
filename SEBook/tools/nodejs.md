@@ -3,16 +3,11 @@ title: Node.js
 layout: sebook
 ---
 
-<link rel="stylesheet" href="{{ '/css/song-video-fonts.css' | relative_url }}">
-<link rel="stylesheet" href="{{ '/css/narrated-explainer.css' | relative_url }}">
-<link rel="stylesheet" href="{{ '/css/nodejs-animation.css' | relative_url }}">
-<link rel="stylesheet" href="{{ '/css/print-light.css' | relative_url }}">
-
 This is a **reference page** for JavaScript and Node.js, designed to be kept open alongside the [Node.js Essentials Tutorial](/SEBook/tools/nodejs-tutorial). Use it to look up syntax, concepts, and comparisons while you work through the hands-on exercises.
 
 > **New to Node.js?** Watch the introduction below, then try the [interactive tutorial](/SEBook/tools/nodejs-tutorial) for practice with immediate feedback.
 
-{% include nodejs-animation.html %}
+{% include narration.html topic="nodejs" %}
 
 ## The Syntax and Semantics: A Familiar Hybrid
 If Python and C++ had a child that was raised on the internet, it would be JavaScript. It powers most of the interactive web you use daily, runs on servers via Node.js (used at companies such as LinkedIn, PayPal, Uber, and NASA), and ships in cross-platform desktop apps like VS Code and Discord (via the Electron framework, which embeds Node.js).

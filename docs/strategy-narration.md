@@ -9,6 +9,11 @@ is chosen for.
 
 ## Sources
 
+See [the shared format](narration-format.md). Spoken `say` cues and teaching
+text live in the YAML; diagrams, code/animation state, and renderer settings
+live separately in `_data/narration_visuals/strategy.json`.
+
+
 The lesson follows three books and quotes none of their examples. The narration
 never says their names aloud; each cue that draws on one shows the source on
 screen in its `source` field:
@@ -58,7 +63,8 @@ Solution, Consequences):
 
 ## Files
 
-- `_data/explainers/strategy.yml`: speech, scenes, parts, and diagrams.
+- `_data/narrations/strategy.yml`: speech, scenes, parts, and teaching text.
+- `_data/narration_visuals/strategy.json`: diagrams and renderer state.
 - `_data/explainers/strategy_code.yml`: the four-language examples.
 - `_data/explainers/strategy_quizzes.yml`: section checks and the summary quiz.
 - `_data/explainers/strategy_ui.yml`: the panel cases and the table of split

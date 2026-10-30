@@ -1,0 +1,224 @@
+{
+  "version": 1,
+  "presentation": {},
+  "resources": {
+    "diagrams": {
+      "request_path": {
+        "type": "component",
+        "label": "Cloudflare sits between a visitor and a website",
+        "description": "A visitor sends a request to Cloudflare. Within the simplified request path, the web application firewall inspects it before permitted work continues toward the website's origin server. This diagram omits caching and other services. It does not say every request reaches an origin.",
+        "caption": "Conceptual request path. A shared processing step can affect many unrelated websites.",
+        "source": "@startuml\nlayout vertical\ncomponent Visitor\ncomponent Cloudflare\ncomponent WAF\ncomponent Origin\nVisitor --> Cloudflare : request\nCloudflare --> WAF : inspect\nWAF --> Origin : continue\n@enduml\n"
+      },
+      "observations": {
+        "type": "component",
+        "label": "Symptoms and observations localize the investigation",
+        "description": "Requests reach Cloudflare's request workers. Observations identify exhausted serving CPU and activity in the web application firewall. Front-line servers return 502 errors to visitors. This is a synthesis of observations, not an instrument trace or a complete server topology.",
+        "caption": "By 14:00 UTC, CPU observations, traces, and logs implicated the WAF. A component location is still short of a full diagnosis.",
+        "source": "@startuml\nlayout vertical\ncomponent Requests\ncomponent RequestWorkers\ncomponent WAF\ncomponent FrontLine\ncomponent Visitors\nRequests --> RequestWorkers : work arrives\nRequestWorkers --> WAF : activity implicated\nnote right of RequestWorkers : Serving CPU exhausted\nFrontLine --> Visitors : 502 errors\n@enduml\n"
+      },
+      "rollout": {
+        "type": "component",
+        "label": "A rule change reaches request processing worldwide",
+        "description": "An approved rule passes build and functional tests, then Quicksilver distributes it to the WAF across the network. Incoming requests independently reach the WAF for evaluation. Simulate mode changes the action taken on a match, but whether evaluating this rule is expensive remains the question.",
+        "caption": "Configuration distribution and request processing are different paths. A rule update can change computation without a server-binary release.",
+        "source": "@startuml\nlayout vertical\ncomponent ApprovedRule\ncomponent FunctionalTests\ncomponent Quicksilver\ncomponent WAF\ncomponent Requests\nApprovedRule --> FunctionalTests : build and test\nFunctionalTests --> Quicksilver : publish rule\nQuicksilver --> WAF : global configuration\nRequests --> WAF : evaluate rule\n@enduml\n"
+      },
+      "blocked_progress": {
+        "type": "sequence",
+        "label": "Evaluation can consume resources before any blocking decision",
+        "description": "A request worker invokes WAF inspection, which calls the pattern matcher. Matching consumes excessive CPU and the worker does not make useful request progress in this simplified sequence. The front line returns 502 to the visitor. No deliberate WAF block decision is shown, and the sequence does not claim a recovered per-request timeout trace.",
+        "caption": "Causal reconstruction of the resource dependency. Simulating a rule's action still requires computing its match.",
+        "source": "@startuml\nactor visitor: Visitor\nparticipant front: Front line\nparticipant worker: Request worker\nparticipant waf: WAF\nparticipant matcher: Matcher\nvisitor -> front: request page\nfront -> worker: handle request\nworker -> waf: inspect\nwaf -> matcher: evaluate pattern\nmatcher -> matcher: excessive matching work\nnote over worker: Useful progress impaired\nfront --> visitor: 502 error\n@enduml\n"
+      },
+      "recovery": {
+        "type": "state",
+        "label": "Availability returns before WAF protection is restored",
+        "description": "The service moves from unavailable to traffic recovered after global WAF termination. At the traffic-recovered state the WAF remains disabled; an outgoing transition toward WAF restoration still requires evidence. These states summarize the service response, not Cloudflare's software state machine.",
+        "caption": "14:07 UTC: global WAF termination. By 14:09: traffic and CPU recovered. Restoring the security function is a separate obligation.",
+        "source": "@startuml\nstate Unavailable\nstate TrafficRecovered\nstate WAFRestored\nUnavailable --> TrafficRecovered : terminate WAF\nTrafficRecovered --> WAFRestored : evidence still required\nnote right of TrafficRecovered : WAF remains disabled\n@enduml\n"
+      },
+      "causal_test": {
+        "type": "sequence",
+        "label": "A controlled comparison tests the candidate rule",
+        "description": "An investigator evaluates the WAF without the candidate rule, with the candidate rule, and after removing it again, comparing outcomes under controlled conditions. Outcomes are deliberately not supplied here. The diagram represents a proposed experiment; it is not a transcript of historical commands.",
+        "caption": "Keep input and environment comparable while varying the candidate cause. Confine any risky replay to an isolated setting.",
+        "source": "@startuml\nactor investigator: Investigator\nparticipant setup: Isolated setup\nparticipant observer: Measurements\ninvestigator -> setup: candidate absent\nsetup -> observer: record outcome\ninvestigator -> setup: candidate present\nsetup -> observer: record outcome\ninvestigator -> setup: candidate removed again\nsetup -> observer: record outcome\n@enduml\n"
+      },
+      "outcomes": {
+        "type": "state",
+        "label": "Matching answers and resource outcomes are different",
+        "description": "In a proposed bounded experiment, evaluating a pattern can find a match, exhaust all candidates and report no match, or require another check after using the allowed budget. Only the first two are matching answers. The bounded experiment stops before performing a disallowed check. Budget exceeded is a resource outcome, not a negative matching answer.",
+        "caption": "Teaching test contract. The budget and these states are not recovered production safeguards.",
+        "source": "@startuml\nstate Evaluating\nstate Match\nstate NoMatch\nstate BudgetExceeded\n[*] --> Evaluating\nEvaluating --> Match : pattern found\nEvaluating --> NoMatch : candidates exhausted\nEvaluating --> BudgetExceeded : another check needed beyond budget\n@enduml\n"
+      },
+      "repeated_candidates": {
+        "type": "sequence",
+        "label": "Different allocations can retry the same missing character",
+        "description": "The teaching matcher starts at the beginning of xxx. A first skip and a second skip can each consume any number of characters. With skip lengths three and zero, it tests for equals at the end and fails. With lengths two and one it tests the same end again and fails. With lengths two and zero it tests before the last x and fails. More allocations remain. These are three illustrative attempts, not the full production regex.",
+        "caption": "Teaching trace: two overlapping skips followed by a required equals sign. The input xxx contains no equals sign.",
+        "source": "@startuml\nparticipant choices: Skip lengths\nparticipant check: Equals check\nparticipant input: Input xxx\nchoices -> check: first 3, second 0\ncheck -> input: test at end\ninput --> check: missing equals\nchoices -> check: first 2, second 1\ncheck -> input: test at same end\ninput --> check: missing equals\nchoices -> check: first 2, second 0\ncheck -> input: test before last x\ninput --> check: missing equals\nnote over choices: More allocations remain\n@enduml\n"
+      },
+      "allocation_tree": {
+        "type": "sequence",
+        "label": "Ten allocations for only three characters",
+        "description": "For a three-character input and a fixed starting position, first-skip length three leaves one possible second-skip length, length two leaves two, length one leaves three, and length zero leaves four. These branches total ten checks for the required equals sign. Every check fails on xxx. Counts are for this explicit teaching model, not PCRE instructions.",
+        "caption": "The search repeats work because several allocations reach the same input position. The branch counts are 1 + 2 + 3 + 4 = 10.",
+        "source": "@startuml\nparticipant first: First skip\nparticipant second: Second skip\nfirst -> second: length 3 leaves 0 characters\nsecond --> first: 1 possible length\nfirst -> second: length 2 leaves 1 character\nsecond --> first: 2 possible lengths\nfirst -> second: length 1 leaves 2 characters\nsecond --> first: 3 possible lengths\nfirst -> second: length 0 leaves 3 characters\nsecond --> first: 4 possible lengths\n@enduml\n"
+      },
+      "resource_chain": {
+        "type": "component",
+        "label": "A defect becomes a service failure through resource use",
+        "description": "Overlapping repetition in a backtracking pattern permits excessive search. With triggering input and inadequate protection, resource demand interferes with serving requests. Failed request handling becomes visible as 502 errors. This causal model distinguishes a defective implementation choice, an incorrect runtime condition relative to a resource requirement, and an external failure.",
+        "caption": "A hot CPU alone is not a diagnosis. State the progress or resource requirement that the execution violates.",
+        "source": "@startuml\nlayout vertical\ncomponent OverlappingRepetition\ncomponent ExcessiveSearch\ncomponent ImpairedRequestProgress\ncomponent Visible502\nOverlappingRepetition --> ExcessiveSearch : triggering input\nExcessiveSearch --> ImpairedRequestProgress : insufficient protection\nImpairedRequestProgress --> Visible502 : service cannot complete\n@enduml\n"
+      },
+      "repaired_model": {
+        "type": "state",
+        "label": "A single forward scan for the teaching contract",
+        "description": "The proposed teaching repair inspects the next unexamined character. Equals leads to Found. A different character advances to the next character. End of input leads to Absent. No transition revisits an earlier character. This is a specification for the tiny equals-search exercise, not a replacement for Cloudflare's security rule.",
+        "caption": "Preserve the required answer while changing the search structure. This model inspects each input character at most once.",
+        "source": "@startuml\nstate InspectNext\nstate Advance\nstate Found\nstate Absent\n[*] --> InspectNext\nInspectNext --> Found : equals found\nInspectNext --> Advance : other character\nAdvance --> InspectNext : next unexamined position\nInspectNext --> Absent : end of input\n@enduml\n"
+      },
+      "safeguards": {
+        "type": "component",
+        "label": "Different safeguards interrupt different causal links",
+        "description": "A rule enters performance testing, then staged deployment, then request matching. Bounded matching and runtime resource protection limit work at evaluation. A recovery path provides a way to remove a problematic rule. These are conceptual responsibilities drawn from the response measures, not a claim that every measure had already shipped in July 2019.",
+        "caption": "Prevent expensive work, contain rollout exposure, and preserve recovery access. These are complementary obligations.",
+        "source": "@startuml\nlayout vertical\ncomponent Rule\ncomponent PerformanceTests\ncomponent StagedRollout\ncomponent BoundedMatching\ncomponent RecoveryPath\nRule --> PerformanceTests : challenge cost\nPerformanceTests --> StagedRollout : limit initial exposure\nStagedRollout --> BoundedMatching : serve requests\nRecoveryPath --> BoundedMatching : remove problematic rule\n@enduml\n"
+      },
+      "restoration": {
+        "type": "state",
+        "label": "Three milestones establish different claims",
+        "description": "Traffic recovered at 14:09 UTC on 2 July. WAF service was restored at 14:52 after the bad rule was removed and isolated checks were performed. A later engine change in July 2019 is retrospectively confirmed by a 2020 article. This milestone diagram is not a complete release history or software state machine.",
+        "caption": "Recovery, restoration, and later hardening are distinct milestones. The follow-up confirms the engine migration; a target date alone would not.",
+        "source": "@startuml\nstate TrafficRecovered\nstate WAFRestored\nstate EngineChanged\nTrafficRecovered --> WAFRestored : 14:52 UTC on July 2\nWAFRestored --> EngineChanged : later in July 2019\nnote left of TrafficRecovered : 14:09 UTC on July 2\nnote right of EngineChanged : Confirmed in 2020 account\n@enduml\n"
+      },
+      "transfer": {
+        "type": "component",
+        "label": "A new incident with an unknown expensive component",
+        "description": "Uploads pass through a validator, then a report builder, before a result is returned. After a rule update, large uploads time out and CPU is high. The diagram does not identify which component consumes the CPU or whether the update caused the timeout. This is an invented transfer scenario.",
+        "caption": "New scenario: preserve the debugging method while withholding the diagnosis. No regex defect has been established here.",
+        "source": "@startuml\nlayout vertical\ncomponent Uploads\ncomponent Validator\ncomponent ReportBuilder\ncomponent Result\nUploads --> Validator : inspect content\nValidator --> ReportBuilder : accepted records\nReportBuilder --> Result : build report\nnote right of Uploads : Large uploads time out\n@enduml\n"
+      }
+    }
+  },
+  "scenes": {
+    "understand_service": {
+      "state": {
+        "diagram": "request_path"
+      },
+      "cues": {
+        "cue-1": {},
+        "cue-2": {},
+        "cue-3": {}
+      }
+    },
+    "localize": {
+      "state": {
+        "diagram": "observations"
+      },
+      "cues": {
+        "cue-1": {},
+        "cue-2": {
+          "diagram": "rollout"
+        }
+      }
+    },
+    "contain": {
+      "state": {
+        "diagram": "blocked_progress"
+      },
+      "cues": {
+        "cue-1": {},
+        "cue-2": {}
+      }
+    },
+    "reproduce": {
+      "state": {
+        "diagram": "recovery"
+      },
+      "cues": {
+        "cue-1": {},
+        "cue-2": {
+          "diagram": "causal_test"
+        }
+      }
+    },
+    "define_oracles": {
+      "state": {
+        "diagram": "outcomes"
+      },
+      "cues": {
+        "cue-1": {},
+        "cue-2": {},
+        "cue-3": {}
+      }
+    },
+    "trace_search": {
+      "state": {
+        "diagram": "repeated_candidates"
+      },
+      "cues": {
+        "cue-1": {},
+        "cue-2": {},
+        "cue-3": {}
+      }
+    },
+    "minimize": {
+      "state": {
+        "diagram": "allocation_tree"
+      },
+      "cues": {
+        "cue-1": {},
+        "cue-2": {}
+      }
+    },
+    "diagnose": {
+      "state": {
+        "diagram": "resource_chain"
+      },
+      "cues": {
+        "cue-1": {},
+        "cue-2": {},
+        "cue-3": {}
+      }
+    },
+    "repair": {
+      "state": {
+        "diagram": "repaired_model"
+      },
+      "cues": {
+        "cue-1": {},
+        "cue-2": {}
+      }
+    },
+    "harden": {
+      "state": {
+        "diagram": "safeguards"
+      },
+      "cues": {
+        "cue-1": {},
+        "cue-2": {}
+      }
+    },
+    "verify_history": {
+      "state": {
+        "diagram": "restoration"
+      },
+      "cues": {
+        "cue-1": {},
+        "cue-2": {}
+      }
+    },
+    "transfer": {
+      "state": {
+        "diagram": "transfer"
+      },
+      "cues": {
+        "cue-1": {},
+        "cue-2": {}
+      }
+    }
+  }
+}

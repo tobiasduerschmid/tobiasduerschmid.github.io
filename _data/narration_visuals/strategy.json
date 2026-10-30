@@ -1,0 +1,339 @@
+{
+  "version": 1,
+  "presentation": {
+    "visuals": {
+      "ui": "strategy-split-panel.html",
+      "table": "strategy-method-table.html"
+    },
+    "styles": [
+      "/css/strategy-narration.css"
+    ]
+  },
+  "resources": {
+    "languages": [
+      "python",
+      "java",
+      "cpp",
+      "typescript"
+    ],
+    "default_language": "python",
+    "example_order": [
+      "strategy",
+      "context",
+      "strategies",
+      "wire"
+    ],
+    "diagrams": {
+      "roles": {
+        "label": "Strategy pattern role diagram",
+        "description": "Context holds exactly one Strategy and offers contextInterface() and setStrategy(strategy). Strategy declares algorithmInterface(). ConcreteStrategy implements Strategy. A Client creates a ConcreteStrategy and configures the Context with it.",
+        "caption": "A hollow diamond with an arrow means Context has a Strategy; a dashed arrow with a hollow triangle means ConcreteStrategy implements Strategy. The Client is not a role of the pattern, but it makes the choice.",
+        "source": "@startuml\nlayout horizontal\nclass Client\nclass Context {\n  - strategy: Strategy\n  + contextInterface()\n  + setStrategy(strategy)\n}\ninterface Strategy {\n  + algorithmInterface()\n}\nclass ConcreteStrategy {\n  + algorithmInterface()\n}\nClient ..> Context : configures\nClient ..> ConcreteStrategy : creates\nContext o--> \"1\" Strategy : strategy\nConcreteStrategy ..|> Strategy\n@enduml\n"
+      },
+      "solution": {
+        "label": "Strategy solution structure",
+        "description": "Expense holds its total, its people, and one SplitStrategy, and forwards shares() and label() to it. EqualSplit, PercentSplit, and BirthdaySplit each implement SplitStrategy. PercentSplit keeps its percentages, BirthdaySplit keeps its guest and reuses EqualSplit. Expense does not depend on the concrete strategies.",
+        "caption": "Expense plays Context; SplitStrategy plays Strategy; EqualSplit, PercentSplit, and BirthdaySplit play Concrete Strategy. The Context depends only on the Strategy interface.",
+        "source": "@startuml\nclass Expense {\n  - total\n  - people\n  - strategy: SplitStrategy\n  + shares()\n  + label()\n  + setStrategy(strategy)\n}\ninterface SplitStrategy {\n  + split(total, people)\n  + label()\n}\nclass EqualSplit\nclass PercentSplit {\n  - percents\n}\nclass BirthdaySplit {\n  - guest\n}\nExpense o--> \"1\" SplitStrategy : strategy\nEqualSplit ..|> SplitStrategy\nPercentSplit ..|> SplitStrategy\nBirthdaySplit ..|> SplitStrategy\nBirthdaySplit ..> EqualSplit : reuses\n@enduml\n"
+      },
+      "sequence": {
+        "type": "sequence",
+        "label": "Sequence of the traced requests",
+        "description": "The app asks dinner for its shares, and dinner forwards split(total, people) to the shared EqualSplit object. The app calls setStrategy(percent) on dinner and asks for the shares again; dinner forwards split(total, people) to the PercentSplit object. The app asks dinner for its label, and dinner forwards label() to the PercentSplit object.",
+        "caption": "Each request goes to whichever strategy the expense holds. The messages appear as the narration reaches them; the panel below shows each result.",
+        "source": "@startuml\nparticipant app\nparticipant dinner: Expense\nparticipant equal as : EqualSplit\nparticipant percent as : PercentSplit\n",
+        "steps": [
+          "app -> dinner: shares()\nactivate dinner\ndinner -> equal: split(total, people)\nactivate equal\ndeactivate equal\ndeactivate dinner\n",
+          "app -> dinner: setStrategy(percent)\napp -> dinner: shares()\nactivate dinner\ndinner -> percent: split(total, people)\nactivate percent\ndeactivate percent\ndeactivate dinner\n",
+          "app -> dinner: label()\nactivate dinner\ndinner -> percent: label()\nactivate percent\ndeactivate percent\ndeactivate dinner\n"
+        ]
+      }
+    }
+  },
+  "scenes": {
+    "intro": {
+      "state": {
+        "ui": true
+      },
+      "cues": {
+        "cue-1": {
+          "ui_state": "equal"
+        },
+        "cue-2": {
+          "ui_state": "birthday"
+        },
+        "cue-3": {
+          "ui_state": "birthday"
+        }
+      }
+    },
+    "context": {
+      "state": {
+        "ui": true
+      },
+      "cues": {
+        "cue-1": {
+          "ui_state": "equal"
+        },
+        "cue-2": {
+          "ui_state": "percent"
+        },
+        "cue-3": {
+          "ui_state": "percent"
+        }
+      }
+    },
+    "problem": {
+      "state": {
+        "code": "problem",
+        "table": true
+      },
+      "cues": {
+        "cue-1": {
+          "focus": "shares",
+          "table_focus": {
+            "column": "shares"
+          }
+        },
+        "cue-2": {
+          "focus": "label",
+          "table_focus": {
+            "column": "label"
+          }
+        },
+        "cue-3": {
+          "focus": "fields",
+          "table_focus": {
+            "column": "needs"
+          }
+        },
+        "cue-4": {},
+        "cue-5": {
+          "focus": "fallback",
+          "table_focus": {
+            "row": "birthday"
+          }
+        }
+      }
+    },
+    "solution": {
+      "state": {
+        "diagram": "roles"
+      },
+      "cues": {
+        "cue-1": {
+          "diagram_focus": "Strategy"
+        },
+        "cue-2": {
+          "diagram_focus": "ConcreteStrategy"
+        },
+        "cue-3": {
+          "diagram_focus": "Context"
+        },
+        "cue-4": {
+          "diagram_focus": "Client"
+        }
+      }
+    },
+    "strategy_role": {
+      "state": {
+        "code": "strategy",
+        "diagram": "solution"
+      },
+      "cues": {
+        "cue-1": {
+          "focus": "contract",
+          "diagram_focus": "SplitStrategy"
+        },
+        "cue-2": {
+          "focus": "params",
+          "diagram_focus": "SplitStrategy"
+        },
+        "cue-3": {
+          "focus": "promise",
+          "diagram_focus": "SplitStrategy"
+        }
+      }
+    },
+    "context_role": {
+      "state": {
+        "code": "context",
+        "diagram": "solution"
+      },
+      "cues": {
+        "cue-1": {
+          "focus": "fields",
+          "diagram_focus": "Expense"
+        },
+        "cue-2": {
+          "focus": "delegate",
+          "diagram_focus": "Expense"
+        },
+        "cue-3": {
+          "focus": "set_strategy",
+          "diagram_focus": "Expense"
+        }
+      }
+    },
+    "concrete_roles": {
+      "state": {
+        "code": "strategies",
+        "table": true
+      },
+      "cues": {
+        "cue-1": {
+          "focus": "equal",
+          "table_focus": {
+            "row": "equal"
+          }
+        },
+        "cue-2": {
+          "focus": "remainder",
+          "table_focus": {
+            "row": "equal"
+          }
+        },
+        "cue-3": {
+          "focus": "percent",
+          "table_focus": {
+            "row": "percent"
+          }
+        },
+        "cue-4": {
+          "focus": "birthday",
+          "table_focus": {
+            "row": "birthday"
+          }
+        },
+        "cue-5": {
+          "focus": "shared"
+        }
+      }
+    },
+    "collaborations": {
+      "state": {
+        "code": "wire",
+        "diagram": "sequence",
+        "ui": true
+      },
+      "cues": {
+        "cue-1": {
+          "focus": "first",
+          "diagram_focus": "equal",
+          "diagram_steps": 1,
+          "ui_state": "equal"
+        },
+        "cue-2": {
+          "focus": "switch",
+          "diagram_steps": 1,
+          "ui_state": "equal"
+        },
+        "cue-3": {
+          "focus": "switch",
+          "diagram_focus": "percent",
+          "diagram_steps": 2,
+          "ui_state": "percent"
+        },
+        "cue-4": {
+          "focus": "label",
+          "diagram_focus": "percent",
+          "diagram_steps": 3,
+          "ui_state": "percent"
+        }
+      }
+    },
+    "consequences": {
+      "state": {
+        "cards": [
+          {
+            "title": "Benefit: a family of algorithms",
+            "text": "Each algorithm and its data live in one class; adding one leaves the Context and the others untouched, and the conditionals disappear."
+          },
+          {
+            "title": "Benefit: an alternative to subclassing",
+            "text": "The Context stays one class; clients switch algorithms at runtime, and each strategy can be tested alone."
+          },
+          {
+            "title": "Liability: informed clients, more objects",
+            "text": "Clients must know how strategies differ; every algorithm adds a class, and one interface serves them all."
+          }
+        ]
+      },
+      "cues": {
+        "cue-1": {},
+        "cue-2": {},
+        "cue-3": {}
+      }
+    },
+    "applicability": {
+      "state": {
+        "cards": [
+          {
+            "title": "A good fit",
+            "text": "Several interchangeable algorithms for one task, chosen by clients, with more on the way."
+          },
+          {
+            "title": "Simpler alternatives",
+            "text": "Two stable variants \u2014 a conditional. One stateless operation \u2014 pass a function."
+          },
+          {
+            "title": "Not State, not Template Method",
+            "text": "A client chooses a Strategy; State objects replace one another; Template Method varies steps through subclasses."
+          }
+        ]
+      },
+      "cues": {
+        "cue-1": {},
+        "cue-2": {},
+        "cue-3": {}
+      }
+    },
+    "transfer": {
+      "state": {
+        "cards": [
+          {
+            "title": "Itemized",
+            "text": "Each friend pays for the dishes they ordered."
+          },
+          {
+            "title": "Tax and tip",
+            "text": "Shared in proportion to each friend's dishes."
+          },
+          {
+            "title": "Your task",
+            "text": "Name the class you add and every existing line that changes."
+          }
+        ]
+      },
+      "cues": {
+        "cue-1": {},
+        "cue-2": {}
+      }
+    },
+    "summary": {
+      "state": {
+        "cards": [
+          {
+            "title": "Context",
+            "text": "One task can be done by a family of interchangeable algorithms, clients choose among them, and new ones keep arriving."
+          },
+          {
+            "title": "Problem",
+            "text": "Hard-wiring the algorithms into one class, in conditionals or subclasses, scatters each algorithm and blocks switching at runtime."
+          },
+          {
+            "title": "Solution",
+            "text": "A Context delegates to a Strategy interface; each Concrete Strategy implements one algorithm, and the client chooses which one the Context holds."
+          },
+          {
+            "title": "Consequences",
+            "text": "Interchangeable, independently testable algorithms without conditionals, at the cost of informed clients, more objects, and one shared interface."
+          }
+        ]
+      },
+      "cues": {
+        "cue-1": {}
+      }
+    }
+  }
+}

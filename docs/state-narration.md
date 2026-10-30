@@ -36,7 +36,13 @@ refactoring without reusing their examples.
 
 ## Sources
 
-- `_data/explainers/state.yml`: speech, scenes, parts, and diagrams.
+See [the shared format](narration-format.md). Spoken `say` cues and teaching
+text live in the YAML; diagrams, code/animation state, and renderer settings
+live separately in `_data/narration_visuals/state.json`.
+
+
+- `_data/narrations/state.yml`: speech, scenes, parts, and teaching text.
+- `_data/narration_visuals/state.json`: diagrams and renderer state.
 - `_data/explainers/state_code.yml`: the four-language examples.
 - `_data/explainers/state_quizzes.yml`: section checks and the summary quiz.
 - `_data/explainers/state_ui.yml`: the companion panel states and the table of

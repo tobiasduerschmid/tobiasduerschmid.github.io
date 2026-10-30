@@ -1,6 +1,6 @@
+const { loadStory, loadRegistry } = require('../narration/source');
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const { createHash } = require('node:crypto');
 const { existsSync, readFileSync, statSync } = require('node:fs');
 const path = require('node:path');
 const yaml = require('js-yaml');
@@ -8,11 +8,10 @@ const { wordMarks } = require('../../js/video-narration-marks.js');
 
 const root = path.resolve(__dirname, '../..');
 const read = file => readFileSync(path.join(root, file.replace(/^\//, '')), 'utf8');
-const source = readFileSync(path.join(root, '_data/explainers/scrum.yml'));
-const story = yaml.load(source.toString());
+const story = loadStory('scrum');
 const quizzes = yaml.load(read('_data/explainers/scrum_quizzes.yml'));
 const timing = JSON.parse(read('_data/explainers/scrum_timing.json'));
-const lesson = yaml.load(read('_data/video_narrations.yml')).scrum;
+const lesson = loadRegistry('video').scrum;
 const cues = story.scenes.flatMap(scene => scene.cues);
 const frontMatter = file => yaml.load(read(file).split('---')[1]);
 
@@ -79,7 +78,7 @@ test('every section after the intro ends in a valid check, and the last is a sum
 });
 
 test('speech, captions, and timing are generated from the published storyboard', () => {
-  assert.equal(timing.source_sha256, createHash('sha256').update(source).digest('hex'),
+  assert.equal(timing.speech_sha256, story.speech_sha256,
     'Regenerate audio, captions, and timing after editing the storyboard.');
   assert.equal(timing.scenes.length, story.scenes.length);
   let end = 0;
@@ -123,8 +122,9 @@ test('word marks are keyed like song marks and follow the speech in order', () =
 
 test('the chapter, its views, and the animation frame are wired to the registry', () => {
   const chapter = read(`${lesson.chapter.replace('.html', '.md')}`);
-  assert.match(chapter, /\{% include video-narration\.html topic="scrum" %\}/);
-  assert.ok(chapter.indexOf('video-narration.css') < chapter.indexOf('print-light.css'), 'print styles load last');
+  assert.match(chapter, /\{% include narration\.html topic="scrum" %\}/);
+  const entry = read('_includes/narration.html');
+  assert.ok(entry.indexOf('narration_entry.styles') < entry.indexOf('print-light.css'), 'print styles load last');
   for (const view of ['read', 'print']) {
     const page = frontMatter(`${lesson.views}/${view}.html`);
     assert.equal(page.layout, 'narrated-pattern-reader');

@@ -47,8 +47,7 @@
 
   function enhance(root) {
     if (root.classList.contains('is-enhanced')) return;
-    const story = JSON.parse(root.querySelector('[data-case-storyboard]').textContent);
-    const timing = JSON.parse(root.querySelector('[data-case-timing]').textContent);
+    const { story, timing } = window.NarratedExplainer.readData(root);
     // The readable version remains fully available while narration is unbuilt.
     if (!timing || !window.NarratedExplainer || !window.SebookQuiz) return;
     const audio = root.querySelector('audio');

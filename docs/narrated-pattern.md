@@ -6,26 +6,34 @@ topic illustrations, and a knowledge check at the end of every section. A
 lesson is data plus a few topic includes; the player, reader, and print views
 are generic.
 
+The readable script and separate visual package use the shared
+[versioned narration format](narration-format.md), also used by videos,
+explainers, and case studies.
+
 ## Adding a lesson
 
-1. Write `_data/explainers/<topic>.yml` (speech, scenes, cues, diagrams),
-   `<topic>_code.yml` (Python, Java, C++, TypeScript blocks with focus lines),
-   and `<topic>_quizzes.yml` (one entry per scene id).
-2. Register the topic in `_data/narrated_patterns.yml`: name, summary,
-   prerequisites, chapter and view paths, the complete-examples note, and a
-   `visuals` map from scene keys to the includes that draw them.
-3. Render speech with `scripts/render-explainer-narration.py --topic <topic>`
-   (add the topic to its `--topic` choices). This writes the MP3, captions,
-   TTS script, and `<topic>_timing.json`.
-4. In the chapter, link `narrated-explainer.css`, `narrated-pattern.css`,
-   `narrated-pattern-document.css`, and `<topic>-narration.css` before
-   `print-light.css`, set `static_uml: true`, and add
-   `{% include narrated-pattern.html topic="<topic>" %}`.
+1. Write `_data/narrations/<topic>.yml` with `kind: pattern`, readable `say`
+   cues, scene order, and teaching text. Keep the four-language blocks and
+   checks in `_data/explainers/<topic>_code.yml` and `<topic>_quizzes.yml`.
+2. Put name, summary, prerequisites, chapter/views paths, and complete-example
+   notes in `lesson`. Put diagrams, visual state, and the `presentation.visuals`
+   include map in `_data/narration_visuals/<topic>.json`. Discovery is automatic.
+3. Validate using `python3 scripts/render-explainer-narration.py --topic <topic> --check`.
+   Render with `--model` and `--voices`, then run `node scripts/narration.js check <topic>`.
+   This writes the MP3, captions, TTS script, and `<topic>_timing.json`. Only
+   changes to speech inputs or ordering require audio regeneration.
+4. Set `static_uml: true` in the chapter and add
+   `{% include narration.html topic="<topic>" %}`. It loads the shared styles
+   and the JSON package’s `presentation.styles` before `print-light.css`.
 5. Add `SEBook/<path>/<topic>/read.html` and `print.html` with
    `layout: narrated-pattern-reader`, `topic: <topic>`, and
    `{% include narrated-pattern-reading.html topic=page.topic %}`.
 
 ## Storyboard features
+
+The fields below describe the compiled runtime. Speech and teaching fields
+come from the YAML; diagram definitions and render state come from the JSON
+package’s `resources`, `scenes.<id>.state`, and `scenes.<id>.cues.<cue-id>`.
 
 - `scene.code`, `scene.diagram`, and `scene.cards` choose what a scene shows.
   Any key in the topic's `visuals` map, such as `ui: true`, adds that include;
@@ -47,9 +55,9 @@ are generic.
 - The player shows a clickable part strip and scene outline from its opening
   frame. Scenes without a `part` preview Context's scene links without marking
   a part or scene as current. Keep their `part` omitted. Optional
-  `outline_labels` in `_data/narrated_patterns.yml` maps scene ids to concise
+  `lesson.outline_labels` in the readable script maps scene ids to concise
   link labels; otherwise the scene's `outline` or `label` is used.
-- A topic's `scripts` list in `_data/narrated_patterns.yml` loads files from
+- A topic’s `presentation.scripts` list in the visual package loads files from
   `js/` before the player starts. Before replacing a visual for a new cue, the
   player dispatches a cancelable `narrated-pattern:cue` event on the visual's
   slot with `detail.settled` (the reading step's copy); a live illustration
@@ -69,7 +77,7 @@ from the current cue: it marks code lines in place and copies the matching
 reading step's diagram and illustrations, so no topic needs its own script.
 `js/narrated-lesson.js` holds what it shares with video narrations
 (`docs/video-narration.md`): copying a cue's diagram, marking code lines,
-section checks, and the `linkNavigation` helper. The roadmap markup comes from
+section checks, and the `mount` lifecycle shared by both adapters. The roadmap markup comes from
 `_includes/narrated-lesson-navigation.html`; jumps preserve playback state and
 move keyboard focus to the matching control in the destination scene.
 Shared styles apply to the `narrated-lesson` class, and the
@@ -81,7 +89,8 @@ course pages.
 `js/narrated-explainer.js` stops for each section's check 0.3 s before the
 section boundary, inside the silence after its last cue, because the next
 section's speech begins exactly at the boundary. Every section must therefore
-end with more than 0.3 s of silence (the renderer's default is 0.55 s).
+end with at least 2.5 s of silence, giving learners time to inspect the
+completed picture before the check (ordinary cues default to 0.55 s).
 
 The shared transport also adds the full-screen button to every narration
 (Node.js, React, and the pattern lessons). The whole `.nja-player` fills the

@@ -1,9 +1,9 @@
 const { test, expect } = require('@playwright/test');
 const { readFileSync } = require('node:fs');
 const path = require('node:path');
-const yaml = require('js-yaml');
+const { loadStory } = require('../scripts/narration/source');
 
-const story = yaml.load(readFileSync(path.join(__dirname, '../_data/explainers/therac25.yml'), 'utf8'));
+const story = loadStory('therac25');
 const timing = JSON.parse(readFileSync(path.join(__dirname, '../_data/explainers/therac25_timing.json'), 'utf8'));
 const firstDecisionIndex = story.scenes.findIndex(scene => scene.checkpoint);
 const orientationScenes = story.scenes.slice(0, firstDecisionIndex);
