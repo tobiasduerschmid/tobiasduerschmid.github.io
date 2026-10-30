@@ -1,0 +1,139 @@
+# Printable handout key points. Keys preserve scene and cue identities.
+intro-buzz:
+  - "**Example:** an app texts you when a seat opens in a full class"
+  - "Built by three friends; alert arrives at 2:13 a.m."
+intro-sketch:
+  - "Whiteboard sketch: boxes and arrows with no stated meaning"
+  - "Open questions: what an arrow means, which boxes run, whose boxes they are"
+intro-roadmap:
+  - "**Component diagram:** running system's parts, offered and needed services, connections"
+  - "Four steps: components → interfaces → connectors → reading"
+parts-six:
+  - "**Component:** a running part, replaceable as a unit"
+  - "Seat-alert app: StudentWeb, AlertService, SeatPoller, AlertDB"
+  - "Registrar and TextGateway: run by other organizations"
+parts-notation:
+  - "**Symbol:** rectangle with the name and the «component» keyword"
+  - "Or a two-tab icon in the corner instead, as in this diagram"
+  - "Name each part by what it does"
+parts-black_box:
+  - "**Black box:** others use only offered services, never the insides"
+  - "Rewrite freely if offered services stay and no new needs appear"
+runtime_view-code_view:
+  - "**Run-time view:** what runs; **code view:** how the source is organized"
+  - "Repository folders: web, service, poller, shared, lib/http"
+runtime_view-predict:
+  - "**Predict:** 500 open alert pages. How many StudentWeb copies? How many web folders?"
+  - "**Predict:** is the HTTP library a component?"
+runtime_view-answer:
+  - "One web folder → 500 running copies, drawn as one component"
+  - "Library → inside SeatPoller, not a component of its own"
+  - "Shared folder → code inside two components"
+interfaces-contract:
+  - "**Interface:** named set of operations; says what, not how"
+  - "SeatCounts: report each class's open seats"
+interfaces-provided:
+  - "**Provided interface:** a service a component offers"
+  - "Drawn as a ball, or lollipop"
+  - "Registrar provides SeatCounts"
+interfaces-required:
+  - "**Required interface:** a service a component needs from another part"
+  - "Drawn as a socket, a half circle"
+  - "SeatPoller requires SeatCounts"
+interfaces-both:
+  - "AlertService provides Watches and requires TextMessages"
+  - "Part that answers requests → ball · part that makes requests → socket"
+assembly-snap:
+  - "**Assembly connector:** matching ball sits inside the socket → need is met"
+  - "Registrar's SeatCounts fills SeatPoller's socket"
+assembly-requests_travel:
+  - "At run time, requests flow from socket owner to ball owner"
+  - "SeatPoller depends on SeatCounts; Registrar doesn't know SeatPoller"
+assembly-match:
+  - "**Match:** the ball offers every operation the socket needs"
+  - "StudentWeb ← Watches ← AlertService ← TextMessages ← TextGateway"
+substitution-fake:
+  - "Real registrar can't open seats on demand for tests"
+  - "**FakeRegistrar:** provides SeatCounts with counts chosen by each test"
+substitution-predict:
+  - "**Predict:** swapping Registrar for FakeRegistrar. What changes inside SeatPoller?"
+substitution-swap:
+  - "**Replaceable:** any provider of SeatCounts fits the socket"
+  - "Only the wiring changes; SeatPoller's code stays the same"
+  - "Different interface → add an adapter component that provides SeatCounts"
+ports-doorways:
+  - "**Port:** named interaction point, a small square on the edge"
+  - "AlertService ports: events (seat news), store (database)"
+  - "Watches ball attaches to the component box itself"
+ports-own_rules:
+  - "Each port: its own provided and required interfaces, its own rules"
+  - "events port: one-way messages · store port: queries awaiting results"
+ports-attach:
+  - "Component has ports → end connectors on the port where the partner interacts"
+  - "Insides can change without rewiring"
+connector_types-kinds:
+  - "**Connector:** run-time path between parts; name its kind in «angle quotes»"
+  - "Ball-and-socket assembly: «HTTPS» request and reply"
+  - "«queue» waiting messages · «SQL» database access"
+connector_types-predict:
+  - "**Predict:** AlertService is down 30 seconds. What happens to seat news? To a student's request?"
+connector_types-answer:
+  - "«queue»: message waits until AlertService returns"
+  - "«HTTPS»: request fails; both sides must run at once → web app retries"
+  - "Connector kind → how failures spread"
+connector_types-key:
+  - "Name each connector's kind on the line or in a **key**"
+  - "Key explains every line and arrow"
+  - "A queue that only carries messages is a connector, not a component"
+dependencies-dashed:
+  - "**Dependency:** dashed arrow; tail needs head"
+  - "No interface shown → good for overviews"
+  - "AlertService needs AlertDB, TextGateway, SeatPoller's messages"
+dependencies-missing:
+  - "**No arrow** → claims independence"
+  - "SeatPoller announces seats with or without listeners"
+dependencies-failure:
+  - "Failure reasoning: walk arrows backward from the broken part"
+  - "Gateway down → no texts; creating alerts still works"
+trace-create:
+  - "1. Maya: StudentWeb → Watches → AlertService → «SQL» → AlertDB"
+trace-poll:
+  - "2. Every minute: SeatPoller → SeatCounts → Registrar"
+  - "Open seats rise from zero to one at 2:13 a.m."
+trace-announce:
+  - "3. Seat-opened message → «queue» → events port"
+  - "AlertService looks up Maya's alert, texts her via TextMessages"
+trace-whole_story:
+  - "Six components, three interfaces, three connector kinds; no code needed"
+  - "Shows what runs, who needs whom, what can be swapped"
+when_to_use-questions:
+  - "Which parts run and connect? → **component diagram**"
+  - "Code inside one part → class · message order → sequence"
+  - "Which machines run which parts? → **deployment diagram**"
+when_to_use-machines:
+  - "Keep machines out of component diagrams"
+  - "Parts may move between servers; the component diagram stays the same"
+mistakes-sketch_errors:
+  - "Mistake: libraries and shared code drawn as components"
+  - "Mistake: arrows without labels or a key"
+  - "Mistake: no offered or needed services"
+mistakes-swapped:
+  - "Mistake: ball and socket swapped; ball goes on the answering part"
+  - "Mistake: an interface or a message queue drawn as a box"
+mistakes-fixed:
+  - "Fixed: running parts only, balls and sockets, named kinds, a key, outside systems marked"
+  - "About seven components per diagram; split larger systems"
+transfer-task:
+  - "**Task:** add push notifications beside texts"
+  - "Which component? Which interface? Which existing parts change?"
+transfer-answer:
+  - "New PushGateway provides PushMessages"
+  - "AlertService gains a PushMessages socket and follows each student's choice"
+  - "StudentWeb offers the choice; AlertDB records it; other parts unchanged"
+summary-recall_parts:
+  - "**Component:** running, replaceable part with a two-tab icon"
+  - "Ball → offers · socket → needs · assembly → ball in matching socket"
+summary-recall_reading:
+  - "Connectors attach at ports and name their kind"
+  - "Dashed arrows → dependencies"
+  - "Read by following one request through the parts"

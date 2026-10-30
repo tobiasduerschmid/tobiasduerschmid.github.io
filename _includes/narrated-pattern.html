@@ -1,6 +1,7 @@
 {%- comment -%}
   Narrated design-pattern lesson: language-selectable code, ArchUML diagrams,
-  topic illustrations, and one knowledge check per section.
+  topic illustrations, and one knowledge check per section. A lesson without
+  code (no languages) shows no language selector.
   Params: topic (a key of the compiled site.data.narrated_patterns view and _data/explainers).
 {%- endcomment -%}
 {% assign topic = include.topic %}
@@ -18,8 +19,8 @@
   <div class="nja-player">
     <div class="nja-controls nja-playback-controls np-toolbar" hidden>
       <div class="np-toolbar-row">
-        <label class="np-language">Code language<select data-setting="language" aria-describedby="{{ topic }}-language-help">{% for language in explainer.languages %}<option value="{{ language }}"{% if language == explainer.default_language %} selected{% endif %}>{{ examples[language].label }}</option>{% endfor %}</select></label>
-        <span id="{{ topic }}-language-help" class="np-control-help">You can switch languages without restarting the narration.</span>
+        {% if explainer.languages %}<label class="np-language">Code language<select data-setting="language" aria-describedby="{{ topic }}-language-help">{% for language in explainer.languages %}<option value="{{ language }}"{% if language == explainer.default_language %} selected{% endif %}>{{ examples[language].label }}</option>{% endfor %}</select></label>
+        <span id="{{ topic }}-language-help" class="np-control-help">You can switch languages without restarting the narration.</span>{% endif %}
       <div class="nja-transport">
         <button type="button" data-action="play" aria-label="Play narration"><i class="fa fa-play" aria-hidden="true"></i></button>
         <button type="button" data-action="restart" aria-label="Restart narration"><i class="fa fa-undo" aria-hidden="true"></i></button>

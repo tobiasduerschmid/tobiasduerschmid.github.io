@@ -1,0 +1,207 @@
+# One knowledge check per section, about component diagrams rather than the
+# seat-alert example. The summary section lists several questions under `questions`.
+intro:
+  question: What does a UML component diagram show about a running system?
+  options:
+    - Its folders, source files, and libraries
+    - Its parts, the services each offers and needs, and their connections
+    - The order in which messages travel during one scenario
+  correct_index: 1
+  explanation: A component diagram shows the system while it runs, with its replaceable parts, the services each part offers and needs, and how the parts connect.
+  option_feedback:
+    0: Folders and files describe how the source is organized, not the parts that run.
+    2: A component diagram shows which parts connect, not the order in which messages travel.
+parts:
+  question: In a component diagram, why can a team rewrite a component's insides without changing the components around it?
+  options:
+    - Other components use only the services it offers, never its insides
+    - Component diagrams hide code, so changes to the code never matter
+    - Each component must run on its own machine
+  correct_index: 0
+  explanation: A component is a black box. As long as it still offers the same services and needs no new ones, the parts around it don't change.
+  option_feedback:
+    1: Code changes matter when they change what a component offers or needs. Only changes behind those services stay invisible to the other parts.
+    2: Where a component runs doesn't make it replaceable. Its hidden insides and its services do.
+runtime_view:
+  question: A food-ordering service uses a date-formatting library. In a component diagram of the running system, how does the library appear?
+  options:
+    - As its own component, because it is separate code
+    - Not as a component; it runs inside the ordering service
+    - As a provided interface on the ordering service
+  correct_index: 1
+  explanation: In the run-time view, a library is code that runs inside the component that uses it, so it isn't drawn as a component of its own.
+  option_feedback:
+    0: Separate code doesn't mean a separate running part. Folders and libraries belong to the code view.
+    2: An interface is a set of operations that a component offers. A library inside the service is part of how it works, not something it offers.
+interfaces:
+  question: In a component diagram, a PaymentService box has a ball labeled Charges. What does the ball say?
+  options:
+    - PaymentService needs Charges from another component
+    - PaymentService provides Charges, so other parts can ask it to charge
+    - Charges is a separate component that PaymentService calls
+  correct_index: 1
+  explanation: A ball, or lollipop, is a provided interface, a service the component offers. A socket would mean that the component needs the service.
+  option_feedback:
+    0: Needing a service is a required interface, drawn as a socket, a half circle.
+    2: An interface is drawn as a ball or a socket on a component, not as a component of its own.
+assembly:
+  question: In a component diagram, OrderService's Charges socket holds PaymentService's Charges ball. What does this assembly connector say?
+  options:
+    - PaymentService calls OrderService whenever a card is charged
+    - Both components store their data in the same database
+    - OrderService's need for Charges is met by PaymentService
+  correct_index: 2
+  explanation: An assembly connector joins a required interface to a matching provided one. At run time, OrderService makes Charges requests, and PaymentService answers them.
+  option_feedback:
+    0: Requests go from the socket's owner to the ball's owner, so OrderService asks and PaymentService answers.
+    1: An assembly connector is about a service that one part offers and another needs, not about shared storage.
+substitution:
+  question: A team replaces PaymentService with NewPayments, which provides the same Charges interface. In the component diagram, what changes inside OrderService, which requires Charges?
+  options:
+    - Nothing; a different component now fills its Charges socket
+    - Its Charges socket must become a ball
+    - Every call it makes must be rewritten for NewPayments
+  correct_index: 0
+  explanation: Any component that provides the required interface can fill the socket, so the component that requires it doesn't change. Only the wiring does.
+  option_feedback:
+    1: The socket shows what OrderService needs, and that need hasn't changed. Only the provider has.
+    2: OrderService calls the Charges operations, which NewPayments offers too. If the interface were different, an adapter component would be needed instead.
+ports:
+  question: In a component diagram, why give a component separate ports for its web clients and for its admin tools?
+  options:
+    - Ports make the requests that reach a component travel faster
+    - Each partner gets its own point, interfaces, and rules
+    - Each port has to run on a separate machine or server
+  correct_index: 1
+  explanation: A port is a named interaction point. Separate ports let each kind of partner connect at its own point, with its own interfaces and rules, while the insides stay hidden.
+  option_feedback:
+    0: Ports organize where partners connect; they say nothing about speed.
+    2: Ports are points on a component's edge. Which machine runs a component is a different question.
+connector_types:
+  question: In a component diagram, a sensor sends readings to a service through a «queue» connector, and a phone app calls the same service over «HTTPS». The service is down for a minute. What happens?
+  options:
+    - Both the readings and the requests wait until it returns
+    - Both the readings and the requests fail and are lost
+    - The readings wait in the queue; the app's requests fail
+  correct_index: 2
+  explanation: Queued messages wait until the service comes back. A request and its reply need both sides running at the same moment, so the app's requests fail and must be retried.
+  option_feedback:
+    0: Only queued messages wait. An HTTPS request needs the service running to get its reply.
+    1: A queue holds messages until the service returns, so the readings aren't lost.
+dependencies:
+  question: An overview component diagram has a dashed arrow from ReportService to Database, and no arrow touches EmailService. What does the diagram claim?
+  options:
+    - ReportService needs Database and doesn't depend on EmailService
+    - Database needs ReportService, and EmailService is unused
+    - ReportService sends its reports to Database through email
+  correct_index: 0
+  explanation: A dashed arrow points from the component that needs to the component it needs, and a missing arrow claims that there is no dependency.
+  option_feedback:
+    1: The component at the arrow's tail needs the one at its head, so ReportService needs Database. A missing arrow claims independence, not that a part is unused.
+    2: A dependency arrow says that one part needs another; it doesn't say how they communicate.
+trace:
+  question: In a component diagram, a Kiosk's Orders socket holds the Kitchen component's Orders ball, and Kitchen sends print jobs to a Printer through a «queue» connector. A customer orders at the kiosk. How does the order travel?
+  options:
+    - From Printer to Kitchen to Kiosk, against the connectors
+    - Kiosk to Kitchen through Orders, then to Printer as a queued message
+    - From Kiosk straight to Printer, skipping Kitchen
+  correct_index: 1
+  explanation: Follow one request. The kiosk, which requires Orders, asks Kitchen, which provides it, and Kitchen then puts a message on the queue for the printer.
+  option_feedback:
+    0: Requests start at the socket's owner, the kiosk, which needs Orders.
+    2: The kiosk is connected only to Kitchen, so the order passes through Kitchen.
+when_to_use:
+  question: A component diagram shows a system's running parts. Which diagram shows which cloud servers run each of those parts?
+  options:
+    - A component diagram with the servers drawn as components
+    - A sequence diagram of the servers
+    - A deployment diagram
+  correct_index: 2
+  explanation: A deployment diagram shows which machines run which parts. The component diagram stays the same when parts move between machines.
+  option_feedback:
+    0: Machines aren't components. Keeping them out lets the component diagram stay the same when parts move.
+    1: A sequence diagram shows the order of messages in one scenario, not where parts run.
+mistakes:
+  question: A component diagram shows a box with the component icon labeled JSON library, connected to the service that uses it. What is wrong?
+  options:
+    - Libraries must be drawn as provided interfaces
+    - A library runs inside the service, so it isn't a component
+    - Nothing; every folder of code is a component
+  correct_index: 1
+  explanation: Component diagrams show running parts. A library is code that runs inside the component that uses it.
+  option_feedback:
+    0: A provided interface is a service that a component offers to others, not code it uses internally.
+    2: Folders belong to the code view. One folder can run as many copies, and one component can contain code from several folders.
+transfer:
+  question: In a component diagram, a new outside service will provide an interface that one existing component needs. Which parts change?
+  options:
+    - Every component, since the diagram gained a box
+    - Only the database, which must store the new service
+    - The new component, plus the parts that use its interface
+  correct_index: 2
+  explanation: The new component brings its own provided interface, and only the components that use it get a new socket or change their behavior.
+  option_feedback:
+    0: Components that don't use the new interface stay untouched; that is the point of connecting through interfaces.
+    1: A new service is a new component with its own interface. The database changes only if the data it stores changes.
+summary:
+  questions:
+    - question: A campus shuttle app has RiderApp on each phone, TrackerService on a server, a TrackerDB database, and a GPS library inside TrackerService. Which belongs in the shuttle app's component diagram as a component?
+      options:
+        - The GPS library that TrackerService uses
+        - The utils folder that two services share
+        - TrackerService, which runs on a server
+      correct_index: 2
+      explanation: A component is a running part you can replace as a unit. TrackerService runs; the library and the folder are code.
+      option_feedback:
+        0: A library runs inside the component that uses it, so it isn't a component of its own.
+        1: Folders belong to the code view; their code ends up inside the components that run.
+    - question: In the shuttle app, TrackerService calls an outside MapProvider to draw routes. In the component diagram, where do the ball and the socket go?
+      options:
+        - Ball on MapProvider, socket on TrackerService
+        - Ball on TrackerService, socket on MapProvider
+        - Both on TrackerService, which uses the maps
+      correct_index: 0
+      explanation: MapProvider answers requests, so it provides the interface, a ball. TrackerService makes the requests, so it requires the interface, a socket.
+      option_feedback:
+        1: The ball belongs on the part that answers requests. MapProvider answers; TrackerService asks.
+        2: The socket shows TrackerService's need, and the ball shows MapProvider's offer, so they sit on different components.
+    - question: The shuttle team switches to another map provider that provides the same Maps interface. In the component diagram, what changes inside TrackerService?
+      options:
+        - It needs one new port for each map provider
+        - Nothing; the new provider fills the same Maps socket
+        - Its Maps socket becomes a ball
+      correct_index: 1
+      explanation: Any component that provides Maps fits TrackerService's socket, so only the wiring changes.
+      option_feedback:
+        0: The socket stays the same because TrackerService's need hasn't changed; a new provider plugs into it.
+        2: TrackerService still needs maps, so its required interface stays a socket.
+    - question: In the shuttle app's component diagram, shuttles send their locations to TrackerService through a «queue» connector. TrackerService restarts for a minute. What happens to the locations sent meanwhile?
+      options:
+        - They wait in the queue until TrackerService returns
+        - They fail, and each shuttle must retry at once
+        - They are lost, because no port accepts them
+      correct_index: 0
+      explanation: A queue holds messages until the component that takes them comes back.
+      option_feedback:
+        1: Failing until a retry happens to request-and-reply connectors such as «HTTPS», not to queued messages.
+        2: The queue keeps the messages; the port is where TrackerService takes them once it is running again.
+    - question: The shuttle app's overview component diagram has no arrow between RiderApp and TrackerDB. What does that claim?
+      options:
+        - TrackerDB is not part of the shuttle app
+        - RiderApp stores its data in TrackerDB
+        - RiderApp doesn't depend on TrackerDB directly
+      correct_index: 2
+      explanation: A missing dependency arrow claims independence. RiderApp may still reach the data through TrackerService.
+      option_feedback:
+        0: A missing arrow claims that two parts are independent, not that a part is missing from the system.
+        1: Storing data in TrackerDB would be a dependency, which the diagram would show as a dashed arrow.
+    - question: The shuttle app's team wants to show in what order messages flow when a rider checks an arrival time. Which diagram fits?
+      options:
+        - A component diagram with numbered arrows
+        - A sequence diagram
+        - A deployment diagram
+      correct_index: 1
+      explanation: A sequence diagram shows the order of messages in one scenario; a component diagram shows which parts run and how they connect.
+      option_feedback:
+        0: A component diagram shows the connections that exist, not the order of messages in one scenario.
+        2: A deployment diagram shows which machines run which parts.

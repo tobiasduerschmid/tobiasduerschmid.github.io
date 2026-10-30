@@ -1,6 +1,7 @@
 ---
 title: "UML Component Diagrams"
 layout: sebook
+static_uml: true
 ---
 
 <div class="uml-class-diagram-container" data-uml-type="component" data-uml-spec='@startuml
@@ -33,6 +34,10 @@ callout bottom of edge 1 middle : Connector: a link these parts use to communica
 @enduml'></div>
 
 # UML Component Diagrams
+
+> **New to UML?** The narrated lesson below builds a component diagram step by step, with a knowledge check after each section. The rest of this chapter goes deeper and adds practice.
+
+{% include narration.html topic="uml_component_diagram" %}
 
 ## Learning Objectives
 

@@ -2,8 +2,8 @@
   One cue's ArchUML diagram. A diagram with steps shows its first
   cue.diagram_steps groups (messages, or CRC cards); cue.diagram_focus is
   hatched. Class diagrams mark the declaration in place so interfaces keep
-  their kind; state and sequence diagrams accept a later highlight
-  declaration. CRC cards cannot be highlighted. Params: diagram, cue.
+  their kind; state, sequence, and component diagrams accept a later
+  highlight declaration. CRC cards cannot be highlighted. Params: diagram, cue.
 {%- endcomment -%}
 {%- capture np_newline %}
 {% endcapture -%}
@@ -27,7 +27,7 @@
 {%- assign np_marked = np_marked | replace: np_plain, np_hatched | replace: np_plain_line, np_hatched_line -%}
 {%- endfor -%}
 {%- elsif np_focus and np_type != 'crc' -%}
-{%- if np_type == 'sequence' %}{% assign np_keyword = 'participant' %}{% else %}{% assign np_keyword = 'state' %}{% endif -%}
+{%- case np_type %}{% when 'sequence' %}{% assign np_keyword = 'participant' %}{% when 'component' %}{% assign np_keyword = 'component' %}{% else %}{% assign np_keyword = 'state' %}{% endcase -%}
 {%- capture np_highlight %}{{ np_keyword }} {{ np_focus }} #fff0ac hatched{{ np_newline }}@enduml{% endcapture -%}
 {%- assign np_marked = np_source | replace: '@enduml', np_highlight -%}
 {%- endif -%}

@@ -1,0 +1,83 @@
+The one class you need is full. You set a seat alert and go to sleep. At two thirteen in the morning, someone drops the class, your phone buzzes, and you grab the seat before anyone else wakes up. Three friends built that alert app.
+
+Here is their whiteboard sketch. Boxes and arrows, but what do they mean? Does the alert service call the poller, or does the poller send it news? Is the HTTP library a running program? Which boxes belong to the app, and which belong to someone else?
+
+A U M L component diagram answers those questions. Drawn for the system while it runs, it shows the replaceable parts, the services each part offers and needs, and how the parts connect. We'll build one in four steps: components, interfaces, connectors, and reading the whole diagram.
+
+Start with the components. A component is a part of the system that runs and can be replaced as a unit. Our app has six: the web app in each student's browser, the alert service, the seat poller, and the database, plus the registrar and the text gateway, which other organizations run.
+
+U M L draws a component as a rectangle with its name and the keyword component in angle quotes, or with a small icon in the corner instead: a box with two tabs. This diagram uses the icon. Choose names that say what each part does, like alert service.
+
+A component is a black box. Other parts may use only the services it offers, never its insides. That makes it replaceable: the team can rewrite alert service from scratch, and as long as it offers the same services and needs no new ones, nothing around it changes.
+
+A component diagram shows the run-time view: what is running. Don't confuse it with the code view, which shows how the source is organized. Here is the app's repository: folders for the web app, the service, and the poller, a shared folder, and an HTTP library.
+
+Predict before you continue. On enrollment day, 500 students have the alert page open. How many copies of student web are running, and how many web folders exist? And is the HTTP library a component of its own? Pause here if you want more time.
+
+Five hundred copies run, one per browser, all built from one web folder, and the diagram draws them as one student web component. In the run-time view, the HTTP library is not a component: it runs inside the poller. And the shared folder ends up inside two components.
+
+Components work together through interfaces. An interface is a named set of operations, a contract that says what a part can do, not how. seat counts, for example, has one operation: report the open seats in each class.
+
+A provided interface is a service a component offers. U M L draws it as a ball on a stick, often called a lollipop. The registrar provides seat counts, so any part with permission can ask it for seat counts.
+
+A required interface is a service a component needs from someone else. U M L draws it as a socket, a half circle. seat poller requires seat counts: it can't do its job unless some component answers that question.
+
+Most components do both. alert service provides Watches, so web apps can create and cancel alerts, and it requires text messages to send them. A quick check: the ball sits on the part that answers requests; the socket sits on the part that makes them.
+
+Now wire the parts. When a socket meets a matching ball, the need is met. U M L draws the ball sitting inside the socket, and calls this an assembly connector. Here, seat poller's need for seat counts is met by the registrar.
+
+At run time, requests travel along that connector: the poller asks, and the registrar answers. The picture also shows who depends on whom. seat poller depends on seat counts, while the registrar knows nothing about the poller.
+
+A ball fits a socket only when the interfaces match: every operation the socket needs, the ball must offer. Elsewhere in the app, student web's socket holds alert service's Watches ball, and alert service's socket holds the text gateway's text messages ball.
+
+Testing the poller is tricky: you can't make a seat open on the real registrar whenever a test needs one. So the team writes fake registrar, a small component that provides the same seat counts interface and reports whatever counts each test chooses.
+
+Predict before you continue. To test seat poller against fake registrar instead of the real registrar, what has to change inside seat poller? Pause the narration if you want more time to think.
+
+Nothing inside seat poller changes. Only the wiring does: the test plugs fake registrar's ball into the same socket. That's what replaceable means. A new enrollment system with a different interface wouldn't fit, though; it would need an adapter component that provides seat counts.
+
+Big components talk to several partners. A port is a named interaction point on a component's edge, drawn as a small square. alert service has two: events, where seat news arrives from the queue, and store, where it reaches the database. Its Watches ball sits on the box itself.
+
+Each port can carry its own provided and required interfaces, and its own rules. Messages arriving at the events port need no reply, while queries leaving the store port wait for their results. Partners see the port, never the code behind it.
+
+When a component has ports, end each connector on the port where the conversation happens, not just anywhere on the box. Then readers know which doorway each partner uses, and the team can change alert service's insides without rewiring anything.
+
+A connector is a path that running parts use to interact, and paths differ, so name each one's kind in angle quotes. Here, the ball-and-socket assembly is a request over H T T P S that waits for its reply, queue means messages wait in line, and S Q L means database access.
+
+Predict before you continue. alert service restarts and is gone for thirty seconds. In that window, a seat opens, and a student tries to create an alert. What happens to the seat news, and what happens to the student's request?
+
+The seat news waits in the queue, and alert service handles it when it comes back. The student's request fails, because a request and its reply need both sides running at the same moment, so the web app has to retry. The connector's kind decides how a failure spreads.
+
+Two habits keep lines clear. Name the kind of every connector, on the line or in a key, and say what each line and arrow means. Notice that the queue is a connector, not a component: its only job is to carry messages between parts.
+
+Sometimes you only want an overview. A dashed arrow is a dependency: the component at its tail needs the one at its head, without saying through which interface. alert service needs the database, the text gateway, and the poller's seat news.
+
+Missing arrows matter too: they claim independence. Nothing depends on student web, the registrar depends on none of our parts, and seat poller doesn't depend on alert service. It keeps announcing open seats whether or not anyone listens.
+
+Use the arrows to reason about failures. The text gateway goes down, so follow the arrows backward. alert service can't send texts. student web depends on alert service, so check it too: creating alerts still works, because that path never touches the gateway.
+
+Now read the whole diagram by following one alert. Maya uses student web to ask for an alert on a full class. The app calls alert service through the Watches interface, and alert service saves the alert in alert D B.
+
+Meanwhile, every minute, seat poller asks the registrar for seat counts through seat counts. At two thirteen in the morning, a student drops the class, and the poller sees its open seats go from zero to one.
+
+The poller puts a seat-opened message on the queue and moves on. alert service takes it at its events port, finds Maya's alert in the database, and sends her a text through text messages. Seconds later, her phone buzzes.
+
+Six components, three interfaces, and three kinds of connectors told the whole story, without a single line of code. That's what a component diagram is for: anyone can see what runs, who needs whom, and which part could be swapped for another.
+
+Every diagram answers a question. Which parts run, and how do they connect? Draw a component diagram. How is the code inside one part organized? A class diagram. In what order do messages flow in one scenario? A sequence diagram. Which machines run which parts? A deployment diagram.
+
+Keep machines out of a component diagram. alert service and seat poller might share one cloud server today and move apart tomorrow, and the component diagram stays the same. Show which machine runs which part in a separate deployment diagram.
+
+Back to the whiteboard sketch, where you can now name the mistakes. The HTTP library and the shared code are code, not running parts. The arrows have no labels and no key, so nobody knows whether they mean calls, messages, or data. And no box shows what it offers or needs.
+
+Two more mistakes are common. Swapping ball and socket: the ball belongs on the part that answers requests. And drawing an interface or a queue as its own box: an interface is a ball or a socket on a component, and a queue that only carries messages is a connector.
+
+Here is the fixed version: six running parts, each service shown as a ball or a socket, every connector's kind named, a key, and the two outside systems marked. Keep each diagram to about seven components, and split a bigger system into several diagrams.
+
+Your turn. Students want push notifications as an option next to texts, sent through a phone maker's push service. Which component do you add, what interface does it provide, and which existing components change? Pause and sketch your answer before continuing.
+
+Add push gateway, an outside service that provides push messages. alert service gets a new push messages socket to hold that ball, and it changes to follow each student's choice. student web changes to offer the choice, and alert D B stores it. seat poller, the registrar, and the text gateway stay the same.
+
+To finish, recall the whole picture. A component is a running part you can replace, drawn as a box with a two-tab icon. Interfaces are contracts: a ball offers a service, a socket needs one, and an assembly connector snaps a matching ball into a socket.
+
+Connectors attach at ports and are labeled with their kind of interaction, and dashed arrows show who needs whom. To read a component diagram, follow one request from part to part. The summary quiz checks each idea on a new app.

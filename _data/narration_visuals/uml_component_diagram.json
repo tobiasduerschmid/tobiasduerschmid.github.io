@@ -1,0 +1,397 @@
+{
+  "version": 1,
+  "presentation": {
+    "styles": [
+      "/css/uml_component_diagram-narration.css"
+    ]
+  },
+  "resources": {
+    "diagrams": {
+      "sketch": {
+        "type": "freeform",
+        "label": "The team's whiteboard sketch",
+        "description": "An informal sketch with eight boxes: Web app, Alert service, Poller, Registrar, SMS, Database, HTTP library, and Shared code. Unlabeled arrows run from Web app to Alert service, from Alert service to Poller and to SMS, from Database to Alert service, and from Poller to Registrar and to HTTP library. Plain lines join Shared code to Alert service and to Poller.",
+        "caption": "An informal sketch, not UML: nothing says what a box or an arrow means.",
+        "source": "@startuml\nlayout horizontal\nbox \"Web app\" as web\nbox \"Alert service\" as svc\nbox \"Poller\" as poll\nbox \"Registrar\" as reg\nbox \"SMS\" as sms\nbox \"Database\" as db\nbox \"HTTP library\" as lib\nbox \"Shared code\" as shared\nweb --> svc\nsvc --> poll\npoll --> reg\nsvc --> sms\ndb --> svc\npoll --> lib\nshared -- svc\nshared -- poll\n@enduml\n"
+      },
+      "parts": {
+        "type": "component",
+        "label": "The seat-alert app's components",
+        "description": "Six components: StudentWeb, AlertService, SeatPoller, AlertDB, Registrar, and TextGateway. Notes say that Registrar is run by the university and TextGateway by an SMS company.",
+        "caption": "Each box is a component: a part that runs and can be replaced as a unit. The two notes mark the parts that other organizations run.",
+        "source": "@startuml\nlayout square\ncomponent StudentWeb\ncomponent AlertService\ncomponent SeatPoller\ncomponent AlertDB\ncomponent Registrar\ncomponent TextGateway\nnote bottom of Registrar : run by the university\nnote bottom of TextGateway : run by an SMS company\n@enduml\n"
+      },
+      "code_tree": {
+        "type": "folder-tree",
+        "label": "The app's code view",
+        "description": "The seat-alert repository contains the folders web, service, poller, shared, and lib; lib contains http.",
+        "caption": "The code view shows how the source is organized. It is not a component diagram.",
+        "source": "@startuml\nseat-alert/\n  web/\n  service/\n  poller/\n  shared/\n  lib/\n    http/\n@enduml\n"
+      },
+      "code_tree_mapped": {
+        "type": "folder-tree",
+        "label": "The code view mapped to running components",
+        "description": "web runs as StudentWeb in 500 browsers; service runs as AlertService; poller runs as SeatPoller; shared is built into AlertService and SeatPoller; lib/http runs inside SeatPoller.",
+        "caption": "One folder can run as many copies, and one component can contain code from several folders.",
+        "source": "@startuml\nseat-alert/\n  web/          # runs as StudentWeb in 500 browsers\n  service/      # runs as AlertService\n  poller/       # runs as SeatPoller\n  shared/       # built into AlertService and SeatPoller\n  lib/\n    http/       # runs inside SeatPoller\n@enduml\n"
+      },
+      "offers_needs": {
+        "type": "component",
+        "label": "Offered and needed services",
+        "description": "Registrar provides the SeatCounts interface, shown as a ball. SeatPoller requires SeatCounts, shown as a socket. AlertService provides Watches and requires TextMessages.",
+        "caption": "A ball, or lollipop, is a provided interface; a socket, or half circle, is a required interface.",
+        "source": "@startuml\ncomponent Registrar {\n  provide \"SeatCounts\" as rg_counts\n}\ncomponent SeatPoller {\n  require \"SeatCounts\" as sp_counts\n}\ncomponent AlertService {\n  provide \"Watches\" as as_watches\n  require \"TextMessages\" as as_texts\n}\n@enduml\n"
+      },
+      "offers_needs_provided": {
+        "type": "component",
+        "label": "Offered and needed services",
+        "description": "Registrar provides the SeatCounts interface, shown as a ball. SeatPoller requires SeatCounts, shown as a socket. AlertService provides Watches and requires TextMessages.",
+        "caption": "A ball, or lollipop, is a provided interface; a socket, or half circle, is a required interface.",
+        "source": "@startuml\ncomponent Registrar {\n  provide \"SeatCounts\" as rg_counts\n}\ncomponent SeatPoller {\n  require \"SeatCounts\" as sp_counts\n}\ncomponent AlertService {\n  provide \"Watches\" as as_watches\n  require \"TextMessages\" as as_texts\n}\ncallout bottom of text \"SeatCounts\" occurrence 1 : Provided interface: a service Registrar offers\n@enduml\n"
+      },
+      "offers_needs_required": {
+        "type": "component",
+        "label": "Offered and needed services",
+        "description": "Registrar provides the SeatCounts interface, shown as a ball. SeatPoller requires SeatCounts, shown as a socket. AlertService provides Watches and requires TextMessages.",
+        "caption": "A ball, or lollipop, is a provided interface; a socket, or half circle, is a required interface.",
+        "source": "@startuml\ncomponent Registrar {\n  provide \"SeatCounts\" as rg_counts\n}\ncomponent SeatPoller {\n  require \"SeatCounts\" as sp_counts\n}\ncomponent AlertService {\n  provide \"Watches\" as as_watches\n  require \"TextMessages\" as as_texts\n}\ncallout bottom of text \"SeatCounts\" occurrence 2 : Required interface: a service SeatPoller needs\n@enduml\n"
+      },
+      "offers_needs_both": {
+        "type": "component",
+        "label": "Offered and needed services",
+        "description": "Registrar provides the SeatCounts interface, shown as a ball. SeatPoller requires SeatCounts, shown as a socket. AlertService provides Watches and requires TextMessages.",
+        "caption": "A ball, or lollipop, is a provided interface; a socket, or half circle, is a required interface.",
+        "source": "@startuml\ncomponent Registrar {\n  provide \"SeatCounts\" as rg_counts\n}\ncomponent SeatPoller {\n  require \"SeatCounts\" as sp_counts\n}\ncomponent AlertService {\n  provide \"Watches\" as as_watches\n  require \"TextMessages\" as as_texts\n}\ncallout bottom of text \"Watches\" : Provided: AlertService answers these requests\ncallout bottom of text \"TextMessages\" : Required: AlertService makes these requests\n@enduml\n"
+      },
+      "assembly_pair": {
+        "type": "component",
+        "label": "An assembly in the seat-alert app",
+        "description": "Registrar's SeatCounts ball sits in SeatPoller's socket.",
+        "caption": "In an assembly connector, the ball of the component that answers requests sits in the socket of the component that makes them.",
+        "source": "@startuml\ncomponent SeatPoller {\n  require \"SeatCounts\" as sp_counts\n}\ncomponent Registrar {\n  provide \"SeatCounts\" as rg_counts\n}\nrg_counts --> sp_counts\n@enduml\n"
+      },
+      "assembly_pair_callout": {
+        "type": "component",
+        "label": "An assembly in the seat-alert app",
+        "description": "Registrar's SeatCounts ball sits in SeatPoller's socket.",
+        "caption": "In an assembly connector, the ball of the component that answers requests sits in the socket of the component that makes them.",
+        "source": "@startuml\ncomponent SeatPoller {\n  require \"SeatCounts\" as sp_counts\n}\ncomponent Registrar {\n  provide \"SeatCounts\" as rg_counts\n}\nrg_counts --> sp_counts\ncallout bottom of text \"SeatCounts\" : Assembly connector: a need met by a matching offer\n@enduml\n"
+      },
+      "assembly_chain": {
+        "type": "component",
+        "label": "More assemblies in the seat-alert app",
+        "description": "AlertService's Watches ball sits in StudentWeb's socket, and TextGateway's TextMessages ball sits in AlertService's socket.",
+        "caption": "In an assembly connector, the ball of the component that answers requests sits in the socket of the component that makes them.",
+        "source": "@startuml\nlayout square\ncomponent StudentWeb {\n  require \"Watches\" as sw_watches\n}\ncomponent AlertService {\n  provide \"Watches\" as as_watches\n  require \"TextMessages\" as as_texts\n}\ncomponent TextGateway {\n  provide \"TextMessages\" as tg_texts\n}\nas_watches --> sw_watches\ntg_texts --> as_texts\n@enduml\n"
+      },
+      "swap_choice": {
+        "type": "component",
+        "label": "Swapping the SeatCounts provider",
+        "description": "Registrar and FakeRegistrar each provide SeatCounts, shown as balls. SeatPoller requires SeatCounts, shown as an empty socket.",
+        "caption": "FakeRegistrar provides the same SeatCounts interface as Registrar.",
+        "source": "@startuml\ncomponent Registrar {\n  provide \"SeatCounts\" as rg_counts\n}\ncomponent FakeRegistrar {\n  provide \"SeatCounts\" as fk_counts\n}\ncomponent SeatPoller {\n  require \"SeatCounts\" as sp_counts\n}\n@enduml\n"
+      },
+      "swap_test": {
+        "type": "component",
+        "label": "Swapping the SeatCounts provider",
+        "description": "FakeRegistrar's SeatCounts ball sits in SeatPoller's socket.",
+        "caption": "In tests, FakeRegistrar's ball fills SeatPoller's socket, and SeatPoller is unchanged.",
+        "source": "@startuml\ncomponent FakeRegistrar {\n  provide \"SeatCounts\" as fk_counts\n}\ncomponent SeatPoller {\n  require \"SeatCounts\" as sp_counts\n}\nfk_counts --> sp_counts\n@enduml\n"
+      },
+      "wiring": {
+        "type": "component",
+        "label": "How AlertService is wired",
+        "description": "AlertService's Watches ball sits in StudentWeb's socket. SeatPoller's news port connects to AlertService's events port through a «queue», and AlertService's store port connects to AlertDB's sql port over «SQL».",
+        "caption": "Small squares on the edges are ports. Lines between ports are connectors labeled with their kind; the ball-and-socket assembly is an «HTTPS» request and reply.",
+        "source": "@startuml\ncomponent StudentWeb {\n  require \"Watches\" as sw_watches\n}\ncomponent SeatPoller {\n  portout \"news\" as sp_news\n}\ncomponent AlertService {\n  provide \"Watches\" as as_watches\n  portin \"events\" as as_events\n  portout \"store\" as as_store\n}\ncomponent AlertDB {\n  portin \"sql\" as db_sql\n}\nas_watches --> sw_watches\nsp_news -- as_events : «queue»\nas_store -- db_sql : «SQL»\n@enduml\n"
+      },
+      "wiring_port": {
+        "type": "component",
+        "label": "How AlertService is wired",
+        "description": "AlertService's Watches ball sits in StudentWeb's socket. SeatPoller's news port connects to AlertService's events port through a «queue», and AlertService's store port connects to AlertDB's sql port over «SQL».",
+        "caption": "Small squares on the edges are ports. Lines between ports are connectors labeled with their kind; the ball-and-socket assembly is an «HTTPS» request and reply.",
+        "source": "@startuml\ncomponent StudentWeb {\n  require \"Watches\" as sw_watches\n}\ncomponent SeatPoller {\n  portout \"news\" as sp_news\n}\ncomponent AlertService {\n  provide \"Watches\" as as_watches\n  portin \"events\" as as_events\n  portout \"store\" as as_store\n}\ncomponent AlertDB {\n  portin \"sql\" as db_sql\n}\nas_watches --> sw_watches\nsp_news -- as_events : «queue»\nas_store -- db_sql : «SQL»\ncallout top of element AlertService.as_events : Port: a named interaction point\n@enduml\n"
+      },
+      "wiring_kind": {
+        "type": "component",
+        "label": "How AlertService is wired",
+        "description": "AlertService's Watches ball sits in StudentWeb's socket. SeatPoller's news port connects to AlertService's events port through a «queue», and AlertService's store port connects to AlertDB's sql port over «SQL».",
+        "caption": "Small squares on the edges are ports. Lines between ports are connectors labeled with their kind; the ball-and-socket assembly is an «HTTPS» request and reply.",
+        "source": "@startuml\ncomponent StudentWeb {\n  require \"Watches\" as sw_watches\n}\ncomponent SeatPoller {\n  portout \"news\" as sp_news\n}\ncomponent AlertService {\n  provide \"Watches\" as as_watches\n  portin \"events\" as as_events\n  portout \"store\" as as_store\n}\ncomponent AlertDB {\n  portin \"sql\" as db_sql\n}\nas_watches --> sw_watches\nsp_news -- as_events : «queue»\nas_store -- db_sql : «SQL»\ncallout bottom of text \"«queue»\" : Connector kind: how the parts interact\n@enduml\n"
+      },
+      "wiring_key": {
+        "type": "component",
+        "label": "How AlertService is wired",
+        "description": "AlertService's Watches ball sits in StudentWeb's socket. SeatPoller's news port connects to AlertService's events port through a «queue», and AlertService's store port connects to AlertDB's sql port over «SQL». A note serves as the key: a ball in a socket is an «HTTPS» call.",
+        "caption": "Small squares on the edges are ports. Lines between ports are connectors labeled with their kind; the ball-and-socket assembly is an «HTTPS» request and reply.",
+        "source": "@startuml\ncomponent StudentWeb {\n  require \"Watches\" as sw_watches\n}\ncomponent SeatPoller {\n  portout \"news\" as sp_news\n}\ncomponent AlertService {\n  provide \"Watches\" as as_watches\n  portin \"events\" as as_events\n  portout \"store\" as as_store\n}\ncomponent AlertDB {\n  portin \"sql\" as db_sql\n}\nas_watches --> sw_watches\nsp_news -- as_events : «queue»\nas_store -- db_sql : «SQL»\nnote bottom of SeatPoller : Key: ball in socket = «HTTPS» call\n@enduml\n"
+      },
+      "overview": {
+        "type": "component",
+        "label": "Dependency overview",
+        "description": "Dashed dependency arrows run from StudentWeb to AlertService; from AlertService to AlertDB, TextGateway, and SeatPoller; and from SeatPoller to Registrar.",
+        "caption": "A dashed arrow points from the component that needs to the component it needs.",
+        "source": "@startuml\ncomponent StudentWeb\ncomponent AlertService\ncomponent SeatPoller\ncomponent AlertDB\ncomponent Registrar\ncomponent TextGateway\nStudentWeb ..> AlertService\nAlertService ..> AlertDB\nAlertService ..> TextGateway\nAlertService ..> SeatPoller\nSeatPoller ..> Registrar\n@enduml\n"
+      },
+      "full": {
+        "type": "component",
+        "label": "The complete seat-alert component diagram",
+        "description": "StudentWeb requires Watches, which AlertService provides. SeatPoller requires SeatCounts, which Registrar provides. AlertService requires TextMessages, which TextGateway provides. SeatPoller's news port connects to AlertService's events port through a «queue», and AlertService's store port connects to AlertDB over «SQL».",
+        "caption": "Every ball-and-socket connector in this app is an «HTTPS» request and reply; the other connectors are labeled with their kind.",
+        "source": "@startuml\nlayout square\ncomponent StudentWeb {\n  require \"Watches\" as sw_watches\n}\ncomponent AlertService {\n  provide \"Watches\" as as_watches\n  portin \"events\" as as_events\n  portout \"store\" as as_store\n  require \"TextMessages\" as as_texts\n}\ncomponent SeatPoller {\n  require \"SeatCounts\" as sp_counts\n  portout \"news\" as sp_news\n}\ncomponent Registrar {\n  provide \"SeatCounts\" as rg_counts\n}\ncomponent TextGateway {\n  provide \"TextMessages\" as tg_texts\n}\ncomponent AlertDB {\n  portin \"sql\" as db_sql\n}\nas_watches --> sw_watches\nrg_counts --> sp_counts\ntg_texts --> as_texts\nsp_news -- as_events : «queue»\nas_store -- db_sql : «SQL»\n@enduml\n"
+      },
+      "full_notes": {
+        "type": "component",
+        "label": "The complete seat-alert component diagram",
+        "description": "StudentWeb requires Watches, which AlertService provides. SeatPoller requires SeatCounts, which Registrar provides. AlertService requires TextMessages, which TextGateway provides. SeatPoller's news port connects to AlertService's events port through a «queue», and AlertService's store port connects to AlertDB over «SQL». Notes say that Registrar is run by the university and TextGateway by an SMS company. A note serves as the key: a ball in a socket is an «HTTPS» call.",
+        "caption": "Every ball-and-socket connector in this app is an «HTTPS» request and reply; the other connectors are labeled with their kind.",
+        "source": "@startuml\nlayout square\ncomponent StudentWeb {\n  require \"Watches\" as sw_watches\n}\ncomponent AlertService {\n  provide \"Watches\" as as_watches\n  portin \"events\" as as_events\n  portout \"store\" as as_store\n  require \"TextMessages\" as as_texts\n}\ncomponent SeatPoller {\n  require \"SeatCounts\" as sp_counts\n  portout \"news\" as sp_news\n}\ncomponent Registrar {\n  provide \"SeatCounts\" as rg_counts\n}\ncomponent TextGateway {\n  provide \"TextMessages\" as tg_texts\n}\ncomponent AlertDB {\n  portin \"sql\" as db_sql\n}\nas_watches --> sw_watches\nrg_counts --> sp_counts\ntg_texts --> as_texts\nsp_news -- as_events : «queue»\nas_store -- db_sql : «SQL»\nnote top of Registrar : run by the university\nnote top of TextGateway : run by an SMS company\nnote bottom of StudentWeb : Key: ball in socket = «HTTPS» call\n@enduml\n"
+      },
+      "push": {
+        "type": "component",
+        "label": "AlertService with push notifications",
+        "description": "AlertService and its partners. A new PushGateway provides PushMessages, and its ball sits in a new PushMessages socket on AlertService. StudentWeb still requires Watches, TextGateway still provides TextMessages, and AlertService's store port still connects to AlertDB over «SQL».",
+        "caption": "The new PushGateway fills a new socket on AlertService; the other parts keep their interfaces.",
+        "source": "@startuml\nlayout square\ncomponent StudentWeb {\n  require \"Watches\" as sw_watches\n}\ncomponent AlertService {\n  provide \"Watches\" as as_watches\n  portout \"store\" as as_store\n  require \"TextMessages\" as as_texts\n  require \"PushMessages\" as as_push\n}\ncomponent TextGateway {\n  provide \"TextMessages\" as tg_texts\n}\ncomponent PushGateway {\n  provide \"PushMessages\" as pg_push\n}\ncomponent AlertDB {\n  portin \"sql\" as db_sql\n}\nas_watches --> sw_watches\ntg_texts --> as_texts\npg_push --> as_push\nas_store -- db_sql : «SQL»\n@enduml\n"
+      }
+    }
+  },
+  "scenes": {
+    "intro": {
+      "state": {
+        "diagram": "sketch"
+      },
+      "cues": {
+        "buzz": {},
+        "sketch": {},
+        "roadmap": {}
+      }
+    },
+    "parts": {
+      "state": {
+        "diagram": "parts"
+      },
+      "cues": {
+        "six": {},
+        "notation": {
+          "diagram_focus": "AlertService"
+        },
+        "black_box": {
+          "diagram_focus": "AlertService"
+        }
+      }
+    },
+    "runtime_view": {
+      "state": {
+        "diagram": "code_tree"
+      },
+      "cues": {
+        "code_view": {},
+        "predict": {},
+        "answer": {
+          "diagram": "code_tree_mapped"
+        }
+      }
+    },
+    "interfaces": {
+      "state": {
+        "diagram": "offers_needs"
+      },
+      "cues": {
+        "contract": {
+          "diagram_focus": "Registrar"
+        },
+        "provided": {
+          "diagram": "offers_needs_provided",
+          "diagram_focus": "Registrar"
+        },
+        "required": {
+          "diagram": "offers_needs_required",
+          "diagram_focus": "SeatPoller"
+        },
+        "both": {
+          "diagram": "offers_needs_both",
+          "diagram_focus": "AlertService"
+        }
+      }
+    },
+    "assembly": {
+      "state": {
+        "diagram": "assembly_pair"
+      },
+      "cues": {
+        "snap": {
+          "diagram": "assembly_pair_callout",
+          "diagram_focus": "SeatPoller"
+        },
+        "requests_travel": {
+          "diagram_focus": "Registrar"
+        },
+        "match": {
+          "diagram": "assembly_chain",
+          "diagram_focus": "AlertService"
+        }
+      }
+    },
+    "substitution": {
+      "state": {
+        "diagram": "swap_choice"
+      },
+      "cues": {
+        "fake": {
+          "diagram_focus": "FakeRegistrar"
+        },
+        "predict": {},
+        "swap": {
+          "diagram": "swap_test",
+          "diagram_focus": "FakeRegistrar"
+        }
+      }
+    },
+    "ports": {
+      "state": {
+        "diagram": "wiring"
+      },
+      "cues": {
+        "doorways": {
+          "diagram": "wiring_port",
+          "diagram_focus": "AlertService"
+        },
+        "own_rules": {
+          "diagram_focus": "AlertService"
+        },
+        "attach": {
+          "diagram_focus": "AlertService"
+        }
+      }
+    },
+    "connector_types": {
+      "state": {
+        "diagram": "wiring"
+      },
+      "cues": {
+        "kinds": {
+          "diagram": "wiring_kind"
+        },
+        "predict": {},
+        "answer": {
+          "diagram_focus": "AlertService"
+        },
+        "key": {
+          "diagram": "wiring_key"
+        }
+      }
+    },
+    "dependencies": {
+      "state": {
+        "diagram": "overview"
+      },
+      "cues": {
+        "dashed": {
+          "diagram_focus": "AlertService"
+        },
+        "missing": {
+          "diagram_focus": "SeatPoller"
+        },
+        "failure": {
+          "diagram_focus": "TextGateway"
+        }
+      }
+    },
+    "trace": {
+      "state": {
+        "diagram": "full"
+      },
+      "cues": {
+        "create": {
+          "diagram_focus": "StudentWeb"
+        },
+        "poll": {
+          "diagram_focus": "SeatPoller"
+        },
+        "announce": {
+          "diagram_focus": "AlertService"
+        },
+        "whole_story": {}
+      }
+    },
+    "when_to_use": {
+      "state": {
+        "cards": [
+          {
+            "title": "Component diagram",
+            "text": "Which parts run, and how do they connect?"
+          },
+          {
+            "title": "Class diagram",
+            "text": "How is the code inside one part organized?"
+          },
+          {
+            "title": "Sequence diagram",
+            "text": "In what order do messages flow in one scenario?"
+          },
+          {
+            "title": "Deployment diagram",
+            "text": "Which machines run which parts?"
+          }
+        ]
+      },
+      "cues": {
+        "questions": {},
+        "machines": {}
+      }
+    },
+    "mistakes": {
+      "state": {
+        "diagram": "sketch"
+      },
+      "cues": {
+        "sketch_errors": {},
+        "swapped": {
+          "diagram": "full"
+        },
+        "fixed": {
+          "diagram": "full_notes"
+        }
+      }
+    },
+    "transfer": {
+      "state": {
+        "diagram": "full"
+      },
+      "cues": {
+        "task": {},
+        "answer": {
+          "diagram": "push",
+          "diagram_focus": "PushGateway"
+        }
+      }
+    },
+    "summary": {
+      "state": {
+        "cards": [
+          {
+            "title": "Components",
+            "text": "Running parts you can replace as a unit, drawn as boxes with a two-tab icon."
+          },
+          {
+            "title": "Interfaces",
+            "text": "A ball offers a service, a socket needs one, and an assembly snaps a matching ball into a socket."
+          },
+          {
+            "title": "Connectors",
+            "text": "Lines attach at ports and name their kind, such as «HTTPS», «queue», or «SQL»; dashed arrows show dependencies."
+          },
+          {
+            "title": "Reading",
+            "text": "Follow one request from part to part; other diagrams show code, message order, or machines."
+          }
+        ]
+      },
+      "cues": {
+        "recall_parts": {},
+        "recall_reading": {}
+      }
+    }
+  }
+}

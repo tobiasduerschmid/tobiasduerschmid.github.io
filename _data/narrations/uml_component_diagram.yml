@@ -1,0 +1,601 @@
+# Edit speech and teaching text here. Visual state lives in ../narration_visuals/uml_component_diagram.json.
+version: 1
+id: uml_component_diagram
+kind: pattern
+title: UML component diagrams in a seat-alert app
+lesson:
+  name: Component diagrams
+  parts: [Components, Interfaces, Connectors, Reading]
+  parts_label: Parts of the lesson
+  summary: >-
+    Learn to read and draw UML component diagrams: <strong>components, interfaces, ports, and
+    connectors</strong>, using an app that texts you when a seat opens in a full class.
+  prerequisites: No UML experience needed.
+  chapter: /SEBook/uml_component_diagram.html
+  views: /SEBook/uml_component_diagram
+  outline_labels:
+    parts: What runs
+    runtime_view: Run time vs. code
+    interfaces: Offered and needed
+    assembly: Ball in socket
+    substitution: Swapping a part
+    ports: Ports
+    connector_types: Connector kinds
+    dependencies: Dependencies
+    trace: Follow one alert
+    when_to_use: Choose the diagram
+    mistakes: Common mistakes
+speech:
+  voice: af_heart
+  speed: 0.95
+  pronunciations:
+    "2:13": two thirteen
+    UML: U M L
+    HTTPS: H T T P S
+    SQL: S Q L
+    AlertService: alert service
+    StudentWeb: student web
+    SeatPoller: seat poller
+    AlertDB: alert D B
+    TextGateway: text gateway
+    SeatCounts: seat counts
+    TextMessages: text messages
+    FakeRegistrar: fake registrar
+    PushGateway: push gateway
+    PushMessages: push messages
+media:
+  audio: /assets/audio/uml-component-diagram.mp3
+  captions: /assets/narration/uml-component-diagram.vtt
+  script: /assets/narration/uml-component-diagram.txt
+scenes:
+  - id: intro
+    label: A seat alert at night
+    title: Who woke up your phone?
+    purpose: See what a precise picture of a running system can answer.
+    takeaway: A component diagram shows a running system's parts, what each offers and needs, and how they connect.
+    cues:
+      - id: buzz
+        say: >-
+          The one class you need is full. You set a seat alert and go to sleep. At 2:13 in the
+          morning, someone drops the class, your phone buzzes, and you grab the seat before anyone
+          else wakes up. Three friends built that alert app.
+        step: A seat opens in the middle of the night
+        note: Full class → alert set → seat opens → phone buzzes
+        visual: >-
+          The team's whiteboard sketch of the seat-alert app: boxes labeled Web app, Alert service,
+          Poller, Registrar, SMS, Database, HTTP library, and Shared code, joined by unlabeled arrows
+          and lines.
+      - id: sketch
+        say: >-
+          Here is their whiteboard sketch. Boxes and arrows, but what do they mean? Does the alert
+          service call the poller, or does the poller send it news? Is the HTTP library a running
+          program? Which boxes belong to the app, and which belong to someone else?
+        step: Boxes and arrows leave questions open
+        note: What does an arrow mean? Which boxes run? Whose boxes are they?
+        visual: >-
+          The same sketch. Nothing on it explains what a box or an arrow means; an arrow points
+          from Alert service to Poller.
+      - id: roadmap
+        say: >-
+          A UML component diagram answers those questions. Drawn for the system while it runs, it
+          shows the replaceable parts, the services each part offers and needs, and how the parts
+          connect. We'll build one in four steps: components, interfaces, connectors, and reading
+          the whole diagram.
+        source: >-
+          OMG, UML 2.5.1, §11.6 Components; Clements et al., Documenting Software Architectures,
+          2nd ed., ch. 3
+        step: Components, interfaces, connectors, reading
+        note: A component diagram shows the running system's parts, services, and connections.
+        visual: The whiteboard sketch remains on screen.
+        pause_after: 2.5
+  - id: parts
+    part: Components
+    label: "Components: what runs"
+    title: What counts as a component?
+    purpose: Identify the components of the seat-alert app.
+    takeaway: A component is a running part you can replace as a unit, with its insides hidden behind the services it offers and needs.
+    cues:
+      - id: six
+        say: >-
+          Start with the components. A component is a part of the system that runs and can be
+          replaced as a unit. Our app has six: the web app in each student's browser, the alert
+          service, the seat poller, and the database, plus the registrar and the text gateway,
+          which other organizations run.
+        source: >-
+          Clements et al., Documenting Software Architectures, 2nd ed., §3.2.1; CS 130 Lecture 15:
+          Software Architecture
+        step: Six running parts
+        note: StudentWeb · AlertService · SeatPoller · AlertDB · Registrar and TextGateway run by others
+        visual: >-
+          A UML component diagram with six components: StudentWeb, AlertService, SeatPoller,
+          AlertDB, Registrar, and TextGateway. Notes say that Registrar is run by the university and
+          TextGateway by an SMS company.
+      - id: notation
+        say: >-
+          UML draws a component as a rectangle with its name and the keyword component in angle
+          quotes, or with a small icon in the corner instead: a box with two tabs. This diagram uses
+          the icon. Choose names that say what each part does, like AlertService.
+        source: "OMG, UML 2.5.1, §11.6.4 Notation"
+        step: The component symbol
+        note: Rectangle and name, with the «component» keyword or a two-tab icon
+        visual: >-
+          AlertService is highlighted. Like every component, it has a small two-tab icon in its top
+          right corner.
+      - id: black_box
+        say: >-
+          A component is a black box. Other parts may use only the services it offers, never its
+          insides. That makes it replaceable: the team can rewrite AlertService from scratch, and
+          as long as it offers the same services and needs no new ones, nothing around it changes.
+        source: "OMG, UML 2.5.1, §11.6.3: a substitutable unit with provided and required interfaces"
+        step: A black box you can replace
+        note: Others use only what it offers · its insides can change freely
+        visual: AlertService remains highlighted among the six components.
+        pause_after: 2.5
+  - id: runtime_view
+    part: Components
+    label: "Components: run time, not code"
+    title: One codebase, many running copies
+    purpose: Tell running parts apart from the code that builds them.
+    takeaway: A component diagram shows what runs; the code view shows how the source is organized, and the two rarely match one to one.
+    cues:
+      - id: code_view
+        say: >-
+          A component diagram shows the run-time view: what is running. Don't confuse it with the
+          code view, which shows how the source is organized. Here is the app's repository:
+          folders for the web app, the service, and the poller, a shared folder, and an HTTP
+          library.
+        source: >-
+          CS 130 Lecture 15: Software Architecture; Clements et al., Documenting Software
+          Architectures, 2nd ed., §3.5
+        step: The code view is not the run-time view
+        note: Code view → folders and files · run-time view → running parts
+        visual: >-
+          A folder tree of the seat-alert repository: seat-alert contains web, service, poller,
+          shared, and lib, and lib contains http.
+      - id: predict
+        say: >-
+          Predict before you continue. On enrollment day, 500 students have the alert page open.
+          How many copies of StudentWeb are running, and how many web folders exist? And is the
+          HTTP library a component of its own? Pause here if you want more time.
+        step: "Predict: copies, folders, and the library"
+        note: How many StudentWeb copies run? How many web folders? Is the HTTP library a component?
+        visual: The same folder tree, without notes. Nothing is marked while you predict.
+        prediction: true
+        pause_after: 5
+      - id: answer
+        say: >-
+          Five hundred copies run, one per browser, all built from one web folder, and the diagram
+          draws them as one StudentWeb component. In the run-time view, the HTTP library is not a
+          component: it runs inside the poller. And the shared folder ends up inside two
+          components.
+        source: >-
+          Clements et al., Documenting Software Architectures, 2nd ed., §3.5: relation to module
+          views
+        step: Code and running parts don't match one to one
+        note: One web folder → 500 running copies · library → inside SeatPoller · shared → in two parts
+        visual: >-
+          The folder tree now has notes: web runs as StudentWeb in 500 browsers; service runs as
+          AlertService; poller runs as SeatPoller; shared is built into AlertService and SeatPoller;
+          lib/http runs inside SeatPoller.
+        pause_after: 2.5
+  - id: interfaces
+    part: Interfaces
+    label: "Interfaces: offered and needed"
+    title: What a component offers and needs
+    purpose: Read provided and required interfaces.
+    takeaway: A ball shows a service a component provides; a socket shows a service it requires.
+    cues:
+      - id: contract
+        say: >-
+          Components work together through interfaces. An interface is a named set of operations, a
+          contract that says what a part can do, not how. SeatCounts, for example, has one
+          operation: report the open seats in each class.
+        source: "OMG, UML 2.5.1, §10.4.3 Interfaces"
+        step: An interface is a contract
+        note: "SeatCounts: report the open seats in each class"
+        visual: >-
+          Three components: Registrar with a ball labeled SeatCounts, SeatPoller with a socket
+          labeled SeatCounts, and AlertService with a ball labeled Watches and a socket labeled
+          TextMessages. Registrar is highlighted.
+      - id: provided
+        say: >-
+          A provided interface is a service a component offers. UML draws it as a ball on a stick,
+          often called a lollipop. The registrar provides SeatCounts, so any part with permission
+          can ask it for seat counts.
+        source: "OMG, UML 2.5.1, §10.4.4 Notation"
+        step: "Provided: the ball offers"
+        note: Ball, or lollipop → a service this component offers
+        visual: >-
+          Registrar remains highlighted. A callout on its SeatCounts ball reads: Provided interface,
+          a service Registrar offers.
+      - id: required
+        say: >-
+          A required interface is a service a component needs from someone else. UML draws it as a
+          socket, a half circle. SeatPoller requires SeatCounts: it can't do its job unless some
+          component answers that question.
+        step: "Required: the socket needs"
+        note: Socket, or half circle → a service this component needs
+        visual: >-
+          SeatPoller is highlighted. A callout on its SeatCounts socket reads: Required interface, a
+          service SeatPoller needs.
+      - id: both
+        say: >-
+          Most components do both. AlertService provides Watches, so web apps can create and cancel
+          alerts, and it requires TextMessages to send them. A quick check: the ball sits on the
+          part that answers requests; the socket sits on the part that makes them.
+        step: Answers requests → ball · makes requests → socket
+        note: AlertService provides Watches and requires TextMessages.
+        visual: >-
+          AlertService is highlighted. Callouts mark its Watches ball as a service it provides and
+          its TextMessages socket as a service it requires.
+        pause_after: 2.5
+  - id: assembly
+    part: Interfaces
+    label: "Interfaces: ball in socket"
+    title: Snap the ball into the socket
+    purpose: Connect required interfaces to matching provided interfaces.
+    takeaway: An assembly connector says that one component's need is met by another component's matching offer.
+    cues:
+      - id: snap
+        say: >-
+          Now wire the parts. When a socket meets a matching ball, the need is met. UML draws the
+          ball sitting inside the socket, and calls this an assembly connector. Here, SeatPoller's
+          need for SeatCounts is met by the registrar.
+        source: "OMG, UML 2.5.1, §11.2.3 Connectors; §10.4.4 Notation"
+        step: Ball in socket → an assembly connector
+        note: Registrar's SeatCounts ball fills SeatPoller's socket.
+        visual: >-
+          Registrar's SeatCounts ball sits in SeatPoller's socket, marked by a callout that reads
+          Assembly connector, a need met by a matching offer. SeatPoller is highlighted.
+      - id: requests_travel
+        say: >-
+          At run time, requests travel along that connector: the poller asks, and the registrar
+          answers. The picture also shows who depends on whom. SeatPoller depends on SeatCounts,
+          while the registrar knows nothing about the poller.
+        step: The socket's owner asks; the ball's owner answers
+        note: SeatPoller depends on SeatCounts · Registrar doesn't know SeatPoller
+        visual: The same assembly; Registrar is highlighted.
+      - id: match
+        say: >-
+          A ball fits a socket only when the interfaces match: every operation the socket needs, the
+          ball must offer. Elsewhere in the app, StudentWeb's socket holds AlertService's Watches
+          ball, and AlertService's socket holds the text gateway's TextMessages ball.
+        source: "OMG, UML 2.5.1, §11.2.3: compatible features at the ends of a connector"
+        step: Interfaces must match
+        note: Every operation the socket needs, the ball offers.
+        visual: >-
+          Two more assemblies: AlertService's Watches ball sits in StudentWeb's socket, and
+          TextGateway's TextMessages ball sits in AlertService's socket. AlertService is
+          highlighted.
+        pause_after: 2.5
+  - id: substitution
+    part: Interfaces
+    label: "Interfaces: swapping a part"
+    title: Plug in a different part
+    purpose: Predict what changes when one component replaces another.
+    takeaway: Any component that provides the required interface can fill the socket, and the component that requires it doesn't change.
+    cues:
+      - id: fake
+        say: >-
+          Testing the poller is tricky: you can't make a seat open on the real registrar whenever a
+          test needs one. So the team writes FakeRegistrar, a small component that provides the same
+          SeatCounts interface and reports whatever counts each test chooses.
+        step: FakeRegistrar provides SeatCounts too
+        note: Same interface, seat counts chosen by each test
+        visual: >-
+          Registrar and FakeRegistrar each have a SeatCounts ball; SeatPoller has an empty
+          SeatCounts socket. FakeRegistrar is highlighted.
+      - id: predict
+        say: >-
+          Predict before you continue. To test SeatPoller against FakeRegistrar instead of the
+          real registrar, what has to change inside SeatPoller? Pause the narration if you want
+          more time to think.
+        step: "Predict: what changes in SeatPoller?"
+        note: Which code changes when FakeRegistrar replaces Registrar?
+        visual: >-
+          The same picture: two SeatCounts balls and one empty socket. Nothing is connected while
+          you predict.
+        prediction: true
+        pause_after: 5
+      - id: swap
+        say: >-
+          Nothing inside SeatPoller changes. Only the wiring does: the test plugs FakeRegistrar's
+          ball into the same socket. That's what replaceable means. A new enrollment system with a
+          different interface wouldn't fit, though; it would need an adapter component that
+          provides SeatCounts.
+        source: "OMG, UML 2.5.1, §11.6.3: replaceable based on compatible interfaces"
+        step: Swap the provider, keep the socket
+        note: Same interface → plug it in · different interface → add an adapter
+        visual: FakeRegistrar's SeatCounts ball now sits in SeatPoller's socket. FakeRegistrar is highlighted.
+        pause_after: 2.5
+  - id: ports
+    part: Connectors
+    label: "Connectors: ports"
+    title: Named doorways on the edge
+    purpose: Read the ports where connectors attach.
+    takeaway: A port is a named interaction point; each partner connects at the port meant for it.
+    cues:
+      - id: doorways
+        say: >-
+          Big components talk to several partners. A port is a named interaction point on a
+          component's edge, drawn as a small square. AlertService has two: events, where seat news
+          arrives from the queue, and store, where it reaches the database. Its Watches ball sits
+          on the box itself.
+        source: "OMG, UML 2.5.1, §11.3.3 Ports; §11.3.4 Notation"
+        step: "A port: a named interaction point"
+        note: events and store, two ports on AlertService; Watches sits on the box
+        visual: >-
+          SeatPoller's news port connects to AlertService's events port by a line labeled «queue»,
+          and AlertService's store port connects to AlertDB's sql port by a line labeled «SQL».
+          AlertService's Watches ball sits in StudentWeb's socket. A callout on the events port
+          reads Port, a named interaction point. AlertService is highlighted.
+      - id: own_rules
+        say: >-
+          Each port can carry its own provided and required interfaces, and its own rules.
+          Messages arriving at the events port need no reply, while queries leaving the store port
+          wait for their results. Partners see the port, never the code behind it.
+        source: >-
+          OMG, UML 2.5.1, §11.3.3; Clements et al., Documenting Software Architectures, 2nd ed.,
+          §7.1
+        step: Each port has its own interfaces and rules
+        note: "events: one-way messages · store: queries that wait for results"
+        visual: The same diagram. AlertService remains highlighted.
+      - id: attach
+        say: >-
+          When a component has ports, end each connector on the port where the conversation
+          happens, not just anywhere on the box. Then readers know which doorway each partner uses,
+          and the team can change AlertService's insides without rewiring anything.
+        source: "Clements et al., Documenting Software Architectures, 2nd ed., §3.4.3: UML for C&C views"
+        step: End connectors on ports
+        note: A port shows where a partner connects; the insides can change freely.
+        visual: The same diagram. AlertService remains highlighted.
+        pause_after: 2.5
+  - id: connector_types
+    part: Connectors
+    label: "Connectors: what travels"
+    title: Label every line
+    purpose: Tell request and reply, queued messages, and database access apart.
+    takeaway: A connector's label names its kind of interaction, and that kind decides what happens when a part fails.
+    cues:
+      - id: kinds
+        say: >-
+          A connector is a path that running parts use to interact, and paths differ, so name each
+          one's kind in angle quotes. Here, the ball-and-socket assembly is a request over HTTPS
+          that waits for its reply, queue means messages wait in line, and SQL means database
+          access.
+        source: >-
+          Clements et al., Documenting Software Architectures, 2nd ed., §3.2.1 and §3.4.3;
+          OMG, UML 2.5.1, §11.2.4
+        step: Name each connector's kind
+        note: Assembly over «HTTPS» → request and reply · «queue» → messages wait · «SQL» → database
+        visual: >-
+          The same wiring diagram. A callout on the «queue» label reads: Connector kind, how the
+          parts interact.
+      - id: predict
+        say: >-
+          Predict before you continue. AlertService restarts and is gone for thirty seconds. In that
+          window, a seat opens, and a student tries to create an alert. What happens to the seat
+          news, and what happens to the student's request?
+        step: "Predict: a 30-second restart"
+        note: Where does the seat news go? What does the student's request do?
+        visual: The same wiring diagram. Nothing is marked while you predict.
+        prediction: true
+        pause_after: 5
+      - id: answer
+        say: >-
+          The seat news waits in the queue, and AlertService handles it when it comes back. The
+          student's request fails, because a request and its reply need both sides running at the
+          same moment, so the web app has to retry. The connector's kind decides how a failure
+          spreads.
+        step: The kind decides how failures spread
+        note: «queue» → the message waits · «HTTPS» → the request fails and is retried
+        visual: The same wiring diagram. AlertService is highlighted.
+      - id: key
+        say: >-
+          Two habits keep lines clear. Name the kind of every connector, on the line or in a key,
+          and say what each line and arrow means. Notice that the queue is a connector, not a
+          component: its only job is to carry messages between parts.
+        source: "Clements et al., Documenting Software Architectures, 2nd ed., §3.2.1 and §3.4.1"
+        step: Name every kind, and add a key
+        note: A queue that only carries messages is a connector, not a component.
+        visual: >-
+          The same wiring diagram with a note that serves as its key: a ball in a socket is an
+          «HTTPS» call.
+        pause_after: 2.5
+  - id: dependencies
+    part: Connectors
+    label: "Connectors: dependencies"
+    title: Who needs whom
+    purpose: Use dependency arrows to reason about change and failure.
+    takeaway: A dashed arrow says that one component needs another; a missing arrow claims that it doesn't.
+    cues:
+      - id: dashed
+        say: >-
+          Sometimes you only want an overview. A dashed arrow is a dependency: the component at its
+          tail needs the one at its head, without saying through which interface. AlertService
+          needs the database, the text gateway, and the poller's seat news.
+        source: "OMG, UML 2.5.1, §11.6.5: an overview diagram with dependencies"
+        step: "Dashed arrow: the tail needs the head"
+        note: The arrow doesn't say which interface is used.
+        visual: >-
+          An overview diagram with dashed arrows: from StudentWeb to AlertService; from
+          AlertService to AlertDB, TextGateway, and SeatPoller; and from SeatPoller to Registrar.
+          AlertService is highlighted.
+      - id: missing
+        say: >-
+          Missing arrows matter too: they claim independence. Nothing depends on StudentWeb, the
+          registrar depends on none of our parts, and SeatPoller doesn't depend on AlertService. It
+          keeps announcing open seats whether or not anyone listens.
+        source: "OMG, UML 2.5.1, §11.6.5"
+        step: No arrow claims no dependency
+        note: SeatPoller announces seats whether or not anyone listens.
+        visual: The same overview diagram. SeatPoller is highlighted.
+      - id: failure
+        say: >-
+          Use the arrows to reason about failures. The text gateway goes down, so follow the arrows
+          backward. AlertService can't send texts. StudentWeb depends on AlertService, so check it
+          too: creating alerts still works, because that path never touches the gateway.
+        step: Follow arrows backward
+        note: Gateway down → no texts · students can still create alerts
+        visual: The same overview diagram. TextGateway is highlighted.
+        pause_after: 2.5
+  - id: trace
+    part: Reading
+    label: "Reading: follow one alert"
+    title: Read the whole diagram
+    purpose: Trace one alert through every component and connector.
+    takeaway: Read a component diagram by following one request from part to part.
+    cues:
+      - id: create
+        say: >-
+          Now read the whole diagram by following one alert. Maya uses StudentWeb to ask for an
+          alert on a full class. The app calls AlertService through the Watches interface, and
+          AlertService saves the alert in AlertDB.
+        step: 1. Maya creates an alert
+        note: StudentWeb → Watches → AlertService → «SQL» → AlertDB
+        visual: >-
+          The complete component diagram of the seat-alert app, with every interface, port, and
+          connector. StudentWeb is highlighted.
+      - id: poll
+        say: >-
+          Meanwhile, every minute, SeatPoller asks the registrar for seat counts through
+          SeatCounts. At 2:13 in the morning, a student drops the class, and the poller sees its
+          open seats go from zero to one.
+        step: 2. The poller sees an open seat
+        note: SeatPoller → SeatCounts → Registrar, every minute
+        visual: The complete diagram. SeatPoller is highlighted.
+      - id: announce
+        say: >-
+          The poller puts a seat-opened message on the queue and moves on. AlertService takes it at
+          its events port, finds Maya's alert in the database, and sends her a text through
+          TextMessages. Seconds later, her phone buzzes.
+        step: 3. AlertService texts Maya
+        note: «queue» → events → AlertDB → TextMessages → TextGateway
+        visual: The complete diagram. AlertService is highlighted.
+      - id: whole_story
+        say: >-
+          Six components, three interfaces, and three kinds of connectors told the whole story,
+          without a single line of code. That's what a component diagram is for: anyone can see
+          what runs, who needs whom, and which part could be swapped for another.
+        step: The whole story, without code
+        note: What runs · who needs whom · what can be swapped
+        visual: The complete diagram, with nothing highlighted.
+        pause_after: 2.5
+  - id: when_to_use
+    part: Reading
+    label: "Reading: choose the diagram"
+    title: Pick the diagram by the question
+    purpose: Decide when a component diagram is the right picture.
+    takeaway: Draw a component diagram to show what runs and how it connects; other diagrams answer other questions.
+    cues:
+      - id: questions
+        say: >-
+          Every diagram answers a question. Which parts run, and how do they connect? Draw a
+          component diagram. How is the code inside one part organized? A class diagram. In what
+          order do messages flow in one scenario? A sequence diagram. Which machines run which
+          parts? A deployment diagram.
+        source: "CS 130 Lecture 3: UML; Clements et al., Documenting Software Architectures, 2nd ed., ch. 1, 3, 5"
+        step: One question per diagram
+        note: Running parts → component · code → class · message order → sequence · machines → deployment
+        visual: Four cards pair each diagram type with the question it answers.
+      - id: machines
+        say: >-
+          Keep machines out of a component diagram. AlertService and SeatPoller might share one
+          cloud server today and move apart tomorrow, and the component diagram stays the same.
+          Show which machine runs which part in a separate deployment diagram.
+        source: "OMG, UML 2.5.1, §19 Deployments"
+        step: Machines belong in a deployment diagram
+        note: Components run on machines; draw that mapping in a deployment diagram.
+        visual: The four cards remain on screen.
+        pause_after: 2.5
+  - id: mistakes
+    part: Reading
+    label: "Reading: common mistakes"
+    title: Fix the whiteboard sketch
+    purpose: Spot and fix the most common component-diagram mistakes.
+    takeaway: Draw only running parts, show the services they offer and need, label every line, and keep each diagram small.
+    cues:
+      - id: sketch_errors
+        say: >-
+          Back to the whiteboard sketch, where you can now name the mistakes. The HTTP library and
+          the shared code are code, not running parts. The arrows have no labels and no key, so nobody knows
+          whether they mean calls, messages, or data. And no box shows what it offers or needs.
+        source: >-
+          Clements et al., Documenting Software Architectures, 2nd ed., §3.2.4: a poorly documented
+          C&C diagram
+        step: Code drawn as components; unexplained arrows
+        note: Code isn't a component · unlabeled arrows, no key · no offered or needed services
+        visual: The team's whiteboard sketch again, with its unlabeled arrows and its code boxes.
+      - id: swapped
+        say: >-
+          Two more mistakes are common. Swapping ball and socket: the ball belongs on the part that
+          answers requests. And drawing an interface or a queue as its own box: an interface is a
+          ball or a socket on a component, and a queue that only carries messages is a connector.
+        step: Balls, sockets, and queues in their places
+        note: Ball → the part that answers · interface → ball or socket · queue → connector
+        visual: >-
+          The complete UML diagram of the app: each ball on the part that answers requests, and the
+          queue drawn as a connector labeled «queue».
+      - id: fixed
+        say: >-
+          Here is the fixed version: six running parts, each service shown as a ball or a socket,
+          every connector's kind named, a key, and the two outside systems marked. Keep each
+          diagram to about seven components, and split a bigger system into several diagrams.
+        step: The fixed diagram
+        note: Running parts only · balls and sockets · named kinds and a key · about seven components each
+        visual: >-
+          The complete UML diagram of the app, with notes marking Registrar and TextGateway as run
+          by others, and a key: a ball in a socket is an «HTTPS» call.
+        pause_after: 2.5
+  - id: transfer
+    label: "Apply it: push notifications"
+    title: Add push notifications
+    purpose: Extend the diagram before seeing an answer.
+    takeaway: A new outside service is a new component with its own interface; only the parts that use it change.
+    cues:
+      - id: task
+        say: >-
+          Your turn. Students want push notifications as an option next to texts, sent through a
+          phone maker's push service. Which component do you add, what interface does it provide,
+          and which existing components change? Pause and sketch your answer before continuing.
+        step: Plan the change
+        note: New component? Its interface? Which existing parts change?
+        visual: The complete diagram of the app. No answer is shown.
+        prediction: true
+        pause_after: 6
+      - id: answer
+        say: >-
+          Add PushGateway, an outside service that provides PushMessages. AlertService gets a new
+          PushMessages socket to hold that ball, and it changes to follow each student's choice.
+          StudentWeb changes to offer the choice, and AlertDB stores it. SeatPoller, the
+          registrar, and the text gateway stay the same.
+        step: One new component, one new socket
+        note: New PushGateway · AlertService and StudentWeb change · AlertDB stores the choice
+        visual: >-
+          AlertService and its partners, with a new PushGateway, highlighted, whose PushMessages
+          ball sits in a new socket on AlertService. StudentWeb, TextGateway, and AlertDB keep
+          their connections.
+        pause_after: 2.5
+  - id: summary
+    label: "Summary: the whole diagram"
+    title: Components, interfaces, connectors, reading
+    purpose: Recall each idea before the summary quiz.
+    takeaway: A component diagram shows running, replaceable parts, the services they offer and need, and the connectors between them.
+    cues:
+      - id: recall_parts
+        say: >-
+          To finish, recall the whole picture. A component is a running part you can replace,
+          drawn as a box with a two-tab icon. Interfaces are contracts: a ball offers a service, a
+          socket needs one, and an assembly connector snaps a matching ball into a socket.
+        step: Components and interfaces
+        note: Component → running, replaceable part · ball → offers · socket → needs
+        visual: Four cards summarize components, interfaces, connectors, and reading.
+      - id: recall_reading
+        say: >-
+          Connectors attach at ports and are labeled with their kind of interaction, and dashed
+          arrows show who needs whom. To read a component diagram, follow one request from part to
+          part. The summary quiz checks each idea on a new app.
+        step: Connectors and reading
+        note: Ports → where lines attach · labels → kinds · follow one request
+        visual: The four summary cards remain on screen.
+        pause_after: 3

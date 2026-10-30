@@ -158,7 +158,10 @@ A notation lesson that needs the same player (code beside per-cue ArchUML diagra
 Dependencies. The UML sequence-diagram lesson (`docs/uml-sequence-diagram-narration.md`) uses
 Lifelines, Messages, Activations, and Fragments: it teaches on one concrete run with named
 objects, then generalizes to one diagram with loop, alt, and opt, and checks in its node test
-that SEBook's Java, TypeScript, and C++ analyzers infer that diagram from its code. Start from
+that SEBook's Java, TypeScript, and C++ analyzers infer that diagram from its code. The UML
+component diagram lesson (`docs/uml-component-diagram-narration.md`) uses Components,
+Interfaces, Connectors, and Reading, and has no code: with no `languages` in the visual package,
+the player shows no language selector and the reader no complete examples. Start from
 code the audience can read, give each cue that needs a different
 teaching callout its own diagram variant, and keep every diagram consistent with the cited UML
 references and the SEBook chapter's rules.
@@ -219,6 +222,9 @@ ArchUML sources and render at build time
   card per entry in `steps`. CRC cards cannot take `diagram_focus`, and they list
   responsibilities, not interactions: follow them with a role-level class diagram (a cue-level
   `diagram`) that shows which role calls which, and highlight the role being discussed.
+- **component** for running parts, balls, sockets, ports, and connectors; `diagram_focus`
+  hatches a component. The player also renders non-UML ArchUML types (`freeform`,
+  `folder-tree`) without a highlight.
 
 Lessons learned from the shipped lessons: keep sequence diagrams to three or four lifelines and
 omit return arrows that add width without meaning; use anonymous lifelines (`: Following`) for

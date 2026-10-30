@@ -4,7 +4,7 @@ const { a11yCheckpoint } = require('./a11y-helpers');
 const patterns = loadRegistry('pattern');
 const videos = loadRegistry('video');
 
-for (const topic of ['scrum', 'observer', 'state', 'strategy', 'mvc', 'uml_class_diagram', 'uml_sequence_diagram']) {
+for (const topic of ['scrum', 'observer', 'state', 'strategy', 'mvc', 'uml_class_diagram', 'uml_sequence_diagram', 'uml_component_diagram']) {
   const lesson = videos[topic] || patterns[topic];
   const story = loadStory(topic);
   const parts = lesson.parts || ['Context', 'Problem', 'Solution', 'Consequences'];

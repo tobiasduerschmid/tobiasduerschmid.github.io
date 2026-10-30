@@ -4,11 +4,14 @@ Observer, State, Strategy, and Model-View-Controller share one player:
 language-selectable code, ArchUML class, state, sequence, and CRC diagrams,
 topic illustrations, and a knowledge check at the end of every section. A
 lesson is data plus a few topic includes; the player, reader, and print views
-are generic. The UML class-diagram lesson (`docs/uml-class-diagram-narration.md`)
-and the UML sequence-diagram lesson (`docs/uml-sequence-diagram-narration.md`)
+are generic. The UML class-diagram lesson (`docs/uml-class-diagram-narration.md`),
+the UML sequence-diagram lesson (`docs/uml-sequence-diagram-narration.md`), and
+the UML component diagram lesson (`docs/uml-component-diagram-narration.md`)
 use the same player for notation rather than a pattern: each script declares
 its own `lesson.parts`, which the player, reader, and print views show instead
-of the pattern description's parts.
+of the pattern description's parts. A lesson whose visual package lists no
+`languages`, like the component diagram lesson, shows no language selector
+and no complete examples.
 
 The readable script and separate visual package use the shared
 [versioned narration format](narration-format.md), also used by videos,
@@ -44,9 +47,10 @@ package’s `resources`, `scenes.<id>.state`, and `scenes.<id>.cues.<cue-id>`.
 - `scene.code`, `scene.diagram`, and `scene.cards` choose what a scene shows.
   Any key in the topic's `visuals` map, such as `ui: true`, adds that include;
   the include receives the current cue and reads its own cue fields.
-- Diagrams accept `type` (`class` by default, `state`, `sequence`, or `crc`).
-  `cue.diagram_focus` hatches one class, interface, state, or lifeline; CRC
-  cards cannot be highlighted. A diagram with `steps` lists lifelines in
+- Diagrams accept `type` (`class` by default, `state`, `sequence`, `crc`,
+  `component`, or a non-UML ArchUML type such as `freeform` or `folder-tree`).
+  `cue.diagram_focus` hatches one class, interface, state, lifeline, or
+  component; CRC cards and non-UML types cannot be highlighted. A diagram with `steps` lists lifelines in
   `source` and message groups (or CRC cards) in `steps`; `cue.diagram_steps`
   shows the first groups, so a trace can reveal messages only after a
   prediction.

@@ -26,7 +26,8 @@
     let lastDiagramKey = null;
 
     function render(scene, storyScene, cue) {
-      const language = languageSelect.value;
+      // A lesson without code has no language selector.
+      const language = languageSelect ? languageSelect.value : '';
       if (cue === lastCue && language === lastLanguage) return;
       const cueChanged = cue !== lastCue;
       lastCue = cue;

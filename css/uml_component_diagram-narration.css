@@ -1,0 +1,4 @@
+/* Component-diagram lesson: its four question and summary cards sit two by two
+   in the player, in one row on a wide screen, and stacked on a phone.
+   Theme-neutral layout only, so light, dark, and print share it. */
+.uml_component_diagram-animation .np-cards { grid-template-columns: repeat(auto-fit, minmax(min(100%, 22em), 1fr)); }

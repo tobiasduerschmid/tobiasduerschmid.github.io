@@ -21,6 +21,8 @@ const narrations = [
     diagramScene: sceneNumber('uml_class_diagram', 'class_box') },
   { url: '/SEBook/uml_sequence_diagram.html', id: 'uml_sequence_diagram-animation', title: "UML sequence diagrams on a space probe's scan",
     diagramScene: sceneNumber('uml_sequence_diagram', 'practice') },
+  { url: '/SEBook/uml_component_diagram.html', id: 'uml_component_diagram-animation', title: 'UML component diagrams in a seat-alert app',
+    diagramScene: sceneNumber('uml_component_diagram', 'interfaces') },
   { url: '/SEBook/process/scrum.html', id: 'scrum-video', title: 'Scrum in one sprint' },
 ];
 const lessonOf = (page, narration) => page.getByRole('region', { name: narration.title, exact: true });

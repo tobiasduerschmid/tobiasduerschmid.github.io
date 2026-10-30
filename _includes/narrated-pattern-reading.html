@@ -62,5 +62,5 @@
     {% include narrated-lesson-check.html check=check %}
   </section>
   {% endfor %}
-  {% include narrated-lesson-examples.html topic=include.topic note=lesson.complete_examples %}
+  {% if explainer.example_order %}{% include narrated-lesson-examples.html topic=include.topic note=lesson.complete_examples %}{% endif %}
 </div>
