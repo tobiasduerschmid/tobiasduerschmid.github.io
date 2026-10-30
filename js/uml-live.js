@@ -122,7 +122,12 @@
         const activeWorker = ensureWorker();
         request.id = ++nextId;
         slot.active = request;
-        request.timer = setTimeout(timeout, 10000);
+        // Python downloads and initializes the bundled type checker before
+        // analyzing source. Its individual I/O requests allow 30 seconds;
+        // the outer watchdog must allow startup plus inference to complete.
+        // Keep a finite bound, without relaxing render/other-language limits.
+        const timeoutMs = request.payload.type === 'analyze' && request.payload.lang === 'python' ? 60000 : 10000;
+        request.timer = setTimeout(timeout, timeoutMs);
         activeWorker.postMessage({ ...request.payload, id: request.id });
       } catch (error) {
         fail(error);

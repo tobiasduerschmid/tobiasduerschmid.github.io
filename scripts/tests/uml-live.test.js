@@ -115,7 +115,10 @@ test('a stalled analysis times out without running the same source on the main t
       () => { outcome = 'resolved'; },
       error => { outcome = error.umlTimeout ? 'timed out' : error.message; }
     );
-    t.mock.timers.tick(10000);
+    t.mock.timers.tick(59999);
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(outcome, 'pending', 'Python startup and inference get the full bounded allowance');
+    t.mock.timers.tick(1);
     await new Promise(resolve => setImmediate(resolve));
     assert.equal(outcome, 'timed out', 'a stalled worker must not lock inference or fall back to synchronous analysis');
     await result;
@@ -136,7 +139,7 @@ test('the newest queued edit runs automatically after an older analysis stalls',
     const outdated = client.analyze(request('Outdated'));
     const superseded = assert.rejects(outdated, error => api.isSuperseded(error));
     const latest = client.analyze(request('Latest'));
-    t.mock.timers.tick(10000);
+    t.mock.timers.tick(60000);
     assert.equal(workers[0].terminated, true);
     workers[1].reply(diagram('Latest'));
     assert.equal((await latest).classDiagram, 'class Latest');
@@ -148,6 +151,32 @@ test('the newest queued edit runs automatically after an older analysis stalls',
     const next = client.analyze(request('NextEdit'));
     workers[1].reply(diagram('NextEdit'));
     assert.equal((await next).classDiagram, 'class NextEdit');
+  } finally { client.dispose(); }
+});
+
+test('Python inference can finish after the ordinary worker deadline', async t => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const { api, workers } = loadClient();
+  const client = api.createClient();
+  try {
+    const pending = client.analyze(request('Checkout'));
+    const outcome = pending.catch(error => error);
+    t.mock.timers.tick(11000);
+    workers[0].reply(diagram('Checkout'));
+    assert.equal((await outcome).classDiagram, 'class Checkout');
+    assert.equal(workers[0].terminated, false);
+  } finally { client.dispose(); }
+});
+
+test('non-Python analysis retains the short stalled-worker deadline', async t => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const { api, workers } = loadClient();
+  const client = api.createClient();
+  try {
+    const outcome = client.analyze({ language: 'java', sources: { 'Main.java': 'class Main {}' } }).catch(error => error);
+    t.mock.timers.tick(10000);
+    assert.equal((await outcome).umlTimeout, true);
+    assert.equal(workers[0].terminated, true);
   } finally { client.dispose(); }
 });
 

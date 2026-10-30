@@ -55,6 +55,35 @@ const syntaxSamples = {
   typescript: 'class Marker {\n    /* class in comment\nclass on second comment line */\n    text: string = "class in string";\n    value: number = 42;\n}'
 };
 
+test('Python self-calls render after a slow type-checker download and still follow edits', async ({ page, context }) => {
+  test.setTimeout(60_000);
+  await page.clock.install();
+  let releaseDownload;
+  let downloadStarted;
+  const held = new Promise(resolve => { releaseDownload = resolve; });
+  const started = new Promise(resolve => { downloadStarted = resolve; });
+  // Hold the real library at the network boundary, then advance only the
+  // page's clock. Analysis and rendering still use the actual workers.
+  await context.route('**/browser-basedpyright/**/pyright.worker.js', async route => {
+    downloadStarted();
+    await held;
+    await route.continue();
+  });
+  try {
+    await page.goto(sequenceChapter);
+    await started;
+    await page.clock.fastForward(11_000);
+    const lab = labByTitle(page, 'Calling another method');
+    await expect(lab.getByRole('status')).toHaveText('Updating diagram…');
+    releaseDownload();
+    await expect(lab.getByRole('img')).toHaveAccessibleName(/2 participants.*checkout calls checkout with "validate\(\)"/);
+    await replaceCode(editorFor(lab), labEdits.python.self_calls(await sourceText(lab)));
+    await expect(lab.getByRole('img')).toHaveAccessibleName(/checkout calls checkout with "save\(\)".*checkout calls checkout with "validate\(\)"/);
+  } finally {
+    releaseDownload();
+  }
+});
+
 for (const chapter of [classChapter, sequenceChapter]) {
   test(`TypeScript labs are checked as separate programs and report type errors: ${chapter}`, async ({ page }) => {
     await page.goto(chapter);
