@@ -35,11 +35,7 @@
       <div class="vn-scenes" tabindex="0" role="region" aria-label="Scene navigation">
         {% for scene in explainer.scenes %}
         <div class="nja-scene vn-scene" data-scene="{{ scene.id }}"{% unless forloop.first %} hidden{% endunless %}>
-          <div class="nja-scene-meta"><span class="nja-sticker">{{ lesson.name | upcase }}</span><span>{{ forloop.index }} / {{ explainer.scenes.size }} &nbsp; {{ scene.label }}</span>{% include narrated-pattern-parts.html scene=scene parts=lesson.parts label=lesson.parts_label %}</div>
-          {%- if scene.part %}
-          {%- comment -%} The outline's second level: the scenes of this scene's part, each a jump target. {%- endcomment %}
-          <ol class="vn-outline" aria-label="Scenes in {{ scene.part | escape }}">{% for vn_other in explainer.scenes %}{% if vn_other.part == scene.part %}<li data-vn-scene-index="{{ forloop.index0 }}"{% if vn_other.id == scene.id %} aria-current="step"{% endif %}>{{ vn_other.outline | default: vn_other.label }}</li>{% endif %}{% endfor %}</ol>
-          {%- endif %}
+          {% include narrated-lesson-navigation.html lesson=lesson story=explainer scene=scene number=forloop.index %}
           <h3>{{ scene.title }}</h3>
           <p class="nja-purpose"><strong>Our task</strong> {{ scene.purpose | escape }}</p>
         </div>

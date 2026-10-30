@@ -18,6 +18,24 @@
 .narrated-lesson .np-parts li[aria-current="step"] { border: 2px solid var(--nja-ink); background: var(--nja-accent-fill); color: var(--nja-ink); font-weight: 700; }
 .narrated-lesson .np-parts li[aria-current="step"]::before { color: var(--nja-ink); }
 .narrated-lesson .np-reading .np-parts { margin: 0.4em 0 0.8em; }
+/* The part strip's parts are buttons that jump to each part's start; the pill
+   is the button, so the whole pill is the target. */
+.narrated-lesson .np-navigation .np-parts li { padding: 0; }
+.narrated-lesson .np-navigation .np-parts li.is-linked::before { content: none; }
+.narrated-lesson .np-navigation .np-parts button { min-height: 1.9em; padding: 0.15em 0.7em; background: none; border: 0; border-radius: 999px; color: inherit; font: inherit; cursor: pointer; }
+.narrated-lesson .np-navigation .np-parts li + li button::before { content: '→ '; }
+.narrated-lesson .np-navigation .np-parts button:hover { background: var(--nja-hover); color: var(--nja-text); }
+.narrated-lesson .np-navigation .np-parts li[aria-current="step"] button:hover { background: none; color: var(--nja-ink); }
+.narrated-lesson .np-navigation .np-parts button:focus-visible { outline: 3px solid var(--nja-cyan); outline-offset: 2px; }
+/* The outline's second level: the current part's scenes, as smaller ovals
+   under the part strip, marked by a left rule. The current scene is filled
+   and bold, never color alone. */
+.narrated-lesson .np-outline { display: flex; flex-wrap: wrap; gap: 0.3em; margin: 0.45em 0 0; padding: 0 0 0 0.7em; border-left: 3px solid var(--nja-line); list-style: none; font-size: 0.9em; }
+.narrated-lesson .np-outline li { min-width: 0; max-width: 100%; margin: 0; border: 1px solid var(--nja-line); border-radius: 999px; color: var(--nja-muted); }
+.narrated-lesson .np-outline li[aria-current="step"] { border: 2px solid var(--nja-ink); background: var(--nja-highlight); color: var(--nja-text); font-weight: 800; }
+.narrated-lesson .np-outline button { max-width: 100%; white-space: normal; overflow-wrap: anywhere; min-height: 1.9em; padding: 0.1em 0.75em; background: none; border: 0; border-radius: 999px; color: inherit; font: inherit; cursor: pointer; }
+.narrated-lesson .np-outline button:hover { background: var(--nja-hover); color: var(--nja-text); }
+.narrated-lesson .np-outline button:focus-visible { outline: 3px solid var(--nja-cyan); outline-offset: 2px; }
 .narrated-lesson .np-lesson { min-width: 0; }
 .narrated-lesson .np-code-with-visual { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 1.2em; align-items: start; }
 .narrated-lesson .np-code-with-diagram { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: 1.2em; align-items: start; }

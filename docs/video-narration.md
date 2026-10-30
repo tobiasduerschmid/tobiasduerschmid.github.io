@@ -25,13 +25,14 @@ through four-language code.
 | `_data/explainers/<topic>_timing.json` | Written by the renderer: cue times, each cue's `speech_end`, and the storyboard's SHA-256. |
 | `_data/video_narrations.yml` | Registry: name, summary, prerequisites, chapter and view paths, `parts`, `parts_label`, `animation`. |
 | `_includes/video-narration.html` | The player; include it with `topic`. |
+| `_includes/narrated-lesson-navigation.html` | Shared two-level roadmap, visible from the opening frame. |
 | `_includes/video-narration-reading.html` | Every cue with its panels: reading and print views, the transcript, and the source the player copies from. |
 | `_includes/video-narration-slide.html` | One cue's slide (layouts below). |
 | `_layouts/video-narration-stage.html`, `css/video-narration-stage.css` | The animation frame's page, and the stage's light and dark tokens. |
 | `_layouts/narrated-pattern-reader.html` | Reading and print views of both lesson types (`video_narration: true`). |
 | `js/video-narration.js` | The player adapter: panels per cue, copies settled panels, poses the stage. |
 | `js/video-narration-stage.js` | Inside the frame: turns cues into song lines, builds the choreography, `seek(time)`. |
-| `js/narrated-lesson.js` | Shared with the pattern lessons: diagram copies, code marks, section checks. |
+| `js/narrated-lesson.js` | Shared with the pattern lessons: diagram copies, code marks, section checks, and roadmap jumps with keyboard focus. |
 | `css/video-narration.css` | The screen, panels, and slide layouts, in both themes and print. |
 | `js/video-narration/<topic>.js`, `<topic>-kit.js`, `css/video-narration-<topic>.css` | The topic's choreography and artwork, loaded only in its frame. |
 | `_data/explainers/<topic>_notes.yml` | Key points per cue for the printable notes. |
@@ -43,7 +44,12 @@ through four-language code.
 The lesson plays like a video. The video holds the scene's header (number,
 part strip, title, and task), then a frame (`.vn-frame`) with the screen, the
 captions (the narration text, on by default), and a control bar; below the
-video come the cue's step and note and the scene's takeaway. Each part in the part strip is a button that jumps to the start of that part's first scene. The control bar
+video come the cue's step and note and the scene's takeaway. The complete
+clickable part strip stays visible on every scene, including the opening frame
+before playback and the summary. Each part jumps to its first scene. The
+second-level outline shows the current part's scenes; an overview without a
+`part` previews the first registered part's scenes without marking either a
+part or a scene as current. The control bar
 has: position; play, back and forward 5 seconds, previous and
 next scene, restart, and time; mute, volume, captions (CC), settings (scene,
 speed, caption size, "Animate visuals", knowledge check, and code language

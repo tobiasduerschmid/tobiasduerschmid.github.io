@@ -5,12 +5,24 @@
 # visuals maps a scene key to the include that draws it. A scene with that key
 # set to true shows the include; the include receives the current cue.
 # scripts lists files in js/ that the player loads for live illustrations.
+# outline_labels supplies short navigation labels keyed by scene id.
 observer:
   name: Observer
   summary: Follow a text editor from conditional-heavy updates to cooperating <strong>Subjects and Observers</strong>.
   prerequisites: Assumes familiarity with objects, methods, and collections.
   chapter: /SEBook/designpatterns/observer.html
   views: /SEBook/designpatterns/observer
+  outline_labels:
+    context: One change, many dependents
+    conditions: Coupled updates
+    roles: Subject and Observer
+    contract: Observer interface
+    subject: Subject
+    document: Concrete Subject
+    views: Concrete Observers
+    trace: Collaborations
+    consequences: Benefits and liabilities
+    applicability: When to use Observer
   visuals:
     ui: observer-editor-illustration.html
   complete_examples: These toolkit-neutral objects hold UI state. Rendering and input-event wiring are omitted. Register each Observer once; detach only registered Observers. Use one thread, keep registrations stable during notification, and do not recursively edit from update. Exceptions stop notification. The simple example text keeps counts consistent across languages.
@@ -20,6 +32,16 @@ state:
   prerequisites: Assumes familiarity with interfaces and polymorphism.
   chapter: /SEBook/designpatterns/state.html
   views: /SEBook/designpatterns/state
+  outline_labels:
+    context: Behavior depends on state
+    problem: Scattered state checks
+    solution: One object per state
+    state_role: State interface
+    context_role: Context role
+    concrete_roles: Concrete States
+    collaborations: Collaborations
+    consequences: Benefits and liabilities
+    applicability: When to use State
   visuals:
     ui: state-companion-panel.html
     table: state-behavior-table.html
@@ -30,6 +52,17 @@ mvc:
   prerequisites: Assumes familiarity with interfaces, inheritance, and the Observer pattern.
   chapter: /SEBook/designpatterns/mvc.html
   views: /SEBook/designpatterns/mvc
+  outline_labels:
+    context: A changing interface
+    problem: Tangled data and interface
+    model_role: Model
+    view_role: Views
+    controller_role: Controllers
+    collaborations: One edit through the classes
+    setup: Connecting the classes
+    solution: Model, View, and Controller
+    consequences: Benefits and liabilities
+    applicability: When to use MVC
   visuals:
     ui: mvc-dashboard-panel.html
   # In the player, the dashboard is a live MVC app that students can edit.
@@ -41,6 +74,16 @@ strategy:
   prerequisites: Assumes familiarity with interfaces and polymorphism.
   chapter: /SEBook/designpatterns/strategy.html
   views: /SEBook/designpatterns/strategy
+  outline_labels:
+    context: One task, many algorithms
+    problem: Scattered method checks
+    solution: One object per algorithm
+    strategy_role: Strategy interface
+    context_role: Context role
+    concrete_roles: Concrete Strategies
+    collaborations: Collaborations
+    consequences: Benefits and liabilities
+    applicability: When to use Strategy
   visuals:
     ui: strategy-split-panel.html
     table: strategy-method-table.html

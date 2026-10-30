@@ -55,12 +55,8 @@ test('each scene names its part of the pattern description', async ({ page }) =>
   for (const [index, scene] of story.scenes.entries()) {
     await seek(page, timing.scenes[index].start + 0.5);
     const parts = animation.locator('.nja-scene:visible').getByRole('list', { name: 'Part of the pattern description' });
-    if (!scene.part) {
-      await expect(parts).toHaveCount(0);
-      continue;
-    }
     await expect(parts.getByRole('listitem')).toHaveText(['Context', 'Problem', 'Solution', 'Consequences']);
-    await expect(parts.locator('[aria-current="step"]')).toHaveText(scene.part);
+    await expect(parts.locator('[aria-current="step"]')).toHaveText(scene.part ? [scene.part] : []);
   }
 });
 

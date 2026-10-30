@@ -184,30 +184,9 @@
     syncPicture();
   }
 
-  // The outline is navigation: each part in a scene's part strip jumps to the
-  // start of that part's first scene, and each scene of the current part
-  // (the outline's second level) jumps to its own start.
-  function linkParts(root, story, timing, player) {
-    const link = (item, sceneIndex) => {
-      const name = item.textContent.trim();
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.textContent = name;
-      button.setAttribute('aria-label', `${name}: jump to its start`);
-      button.addEventListener('click', () => player.seekTo(timing.scenes[sceneIndex].start));
-      item.replaceChildren(button);
-      item.classList.add('is-linked');
-    };
-    root.querySelectorAll('.vn-scenes .np-parts li').forEach(item => {
-      const sceneIndex = story.scenes.findIndex(scene => scene.part === item.textContent.trim());
-      if (sceneIndex >= 0) link(item, sceneIndex);
-    });
-    root.querySelectorAll('.vn-outline li').forEach(item => link(item, Number(item.dataset.vnSceneIndex)));
-  }
-
   function enhance(root) {
     if (root.classList.contains('is-enhanced')) return;
-    const { renderDiagram, sectionChecks } = window.NarratedLesson;
+    const { renderDiagram, sectionChecks, linkNavigation } = window.NarratedLesson;
     const topic = root.dataset.vnTopic;
     const story = JSON.parse(root.querySelector('[data-np-storyboard]').textContent);
     const examples = JSON.parse(root.querySelector('[data-np-examples]').textContent);
@@ -295,7 +274,7 @@
     checks.attach(player);
     bindFullscreenLayout(root);
     bindVideoControls(root, player);
-    linkParts(root, story, timing, player);
+    linkNavigation(root, story, timing, player);
     if (languageSelect) {
       languageSelect.addEventListener('sebook:languagechange', () => {
         player.refresh();

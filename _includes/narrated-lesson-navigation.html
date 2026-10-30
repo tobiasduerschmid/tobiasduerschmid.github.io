@@ -1,0 +1,13 @@
+{%- comment -%}
+  Shared player roadmap. Overview scenes preview the first part without a
+  current-step marker. Reading/print views retain their static part labels.
+  Params: lesson, story, scene, number. Pattern parts are the default.
+{%- endcomment -%}
+{%- assign nav_default_parts = "Context,Problem,Solution,Consequences" | split: "," -%}
+{%- assign nav_parts = include.lesson.parts | default: nav_default_parts -%}
+{%- assign nav_part = include.scene.part | default: nav_parts.first -%}
+{%- assign nav_labels = include.lesson.outline_labels -%}
+<nav class="np-navigation" aria-label="Lesson sections">
+  <div class="nja-scene-meta"><span class="nja-sticker">{{ include.lesson.name | upcase }}</span><span>{{ include.number }} / {{ include.story.scenes.size }} &nbsp; {{ include.scene.label }}</span>{% include narrated-pattern-parts.html scene=include.scene parts=nav_parts label=include.lesson.parts_label show_all=true %}</div>
+  <ol class="np-outline" aria-label="Scenes in {{ nav_part | escape }}">{% for nav_scene in include.story.scenes %}{% if nav_scene.part == nav_part %}<li data-narration-scene-index="{{ forloop.index0 }}"{% if nav_scene.id == include.scene.id %} aria-current="step"{% endif %}>{{ nav_labels[nav_scene.id] | default: nav_scene.outline | default: nav_scene.label }}</li>{% endif %}{% endfor %}</ol>
+</nav>

@@ -80,18 +80,14 @@ test('each cue shows its panels on one screen named by the cue\'s visual', async
   expect(errors).toEqual([]);
 });
 
-test('each scene names its part of Scrum', async ({ page }) => {
+test('every scene keeps the Scrum roadmap visible and marks only its actual part', async ({ page }) => {
   await page.goto(url);
   const animation = player(page);
   for (const [index, scene] of story.scenes.entries()) {
     await seek(page, timing.scenes[index].start + 0.5);
     const parts = animation.locator('.nja-scene:visible').getByRole('list', { name: lesson.parts_label });
-    if (!scene.part) {
-      await expect(parts).toHaveCount(0);
-      continue;
-    }
     await expect(parts.getByRole('listitem')).toHaveText(lesson.parts);
-    await expect(parts.locator('[aria-current="step"]')).toHaveText(scene.part);
+    await expect(parts.locator('[aria-current="step"]')).toHaveText(scene.part ? [scene.part] : []);
   }
 });
 
@@ -99,13 +95,25 @@ test('each part in the part strip jumps to the start of its first scene', async 
   await page.goto(url);
   const animation = player(page);
   const position = animation.getByRole('slider', { name: 'Narration position' });
-  await seek(page, cueTime(1, 0));
+  // The roadmap must already work before playback, on the opening scene.
   for (const part of lesson.parts) {
     const index = story.scenes.findIndex(scene => scene.part === part);
     await animation.locator('.nja-scene:visible').getByRole('button', { name: `${part}: jump to its start` }).click();
     await expect(animation.getByRole('heading', { name: story.scenes[index].title, exact: true })).toBeVisible();
     await expect.poll(async () => Number(await position.inputValue())).toBeCloseTo(timing.scenes[index].start, 0);
   }
+});
+
+test('the opening scene previews clickable Theory scenes without marking one current', async ({ page }) => {
+  await page.goto(url);
+  const animation = player(page);
+  const outline = animation.getByRole('list', { name: 'Scenes in Theory', exact: true });
+  await expect(outline).toBeVisible();
+  await expect(outline.getByRole('button')).toHaveText(['Empiricism', 'Inspect and adapt']);
+  await expect(outline.locator('[aria-current="step"]')).toHaveCount(0);
+  await outline.getByRole('button', { name: 'Empiricism: jump to its start', exact: true }).click();
+  await expect(animation.getByRole('heading', { name: story.scenes[1].title, exact: true })).toBeVisible();
+  await expect(animation.getByRole('list', { name: 'Scenes in Theory', exact: true }).locator('[aria-current="step"]')).toHaveText('Empiricism');
 });
 
 test('the animated stage builds every scene and poses the narration\'s picture', async ({ page }) => {

@@ -115,6 +115,21 @@ students can find it again.
 Use this sequence and adapt it only with a reason. `part:` is one of `Context`, `Problem`,
 `Solution`, `Consequences`; omit it for the intro, transfer, and summary.
 
+**Every player shows its two-level clickable roadmap from the opening frame.**
+Keep Context → Problem → Solution → Consequences visible on every scene,
+including the introduction, transfer, and summary. Each part jumps to its first
+scene. Under it, show the current part's scene links; a scene without `part`
+previews Context's scenes. Mark only the actual current part and scene with
+`aria-current="step"`, so an overview preview has no current marker. Use the
+shared `narrated-lesson-navigation.html` include and `NarratedLesson.linkNavigation`
+helper, also used by video narrations. Navigation must work before playback,
+by keyboard and touch, in mobile/fullscreen layouts and both themes; keep
+focus in the destination navigation after a jump. Do not invent a storyboard
+`part` solely to display navigation. Put short navigation labels in the registry's
+`outline_labels` map keyed by scene id, so presentation-only edits do not change
+the audio fingerprint. Existing storyboard `outline` and `label` fields are
+fallbacks.
+
 | Scene | `part` | What it does |
 |---|---|---|
 | intro | — | Show the example working (animate it, and let students try it if the illustration is live), then preview how a pattern is described and name the roles in one plain sentence. |

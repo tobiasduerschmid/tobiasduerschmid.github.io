@@ -157,5 +157,34 @@
     };
   }
 
-  window.NarratedLesson = { renderDiagram, highlightCode, sectionChecks };
+  // The outline is navigation: each part in a scene's part strip jumps to the
+  // start of that part's first scene, and each scene of the current part
+  // (the outline's second level) jumps to its own start.
+  function linkNavigation(root, story, timing, player) {
+    const link = (item, sceneIndex) => {
+      const name = item.textContent.trim();
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.textContent = name;
+      button.setAttribute('aria-label', `${name}: jump to its start`);
+      button.addEventListener('click', () => {
+        player.seekTo(timing.scenes[sceneIndex].start);
+        // Seeking hides the old scene. Keep keyboard focus on the equivalent
+        // navigation button in the newly visible scene instead of on the body.
+        const destination = root.querySelectorAll('[data-scene]')[sceneIndex];
+        const target = Array.from(destination.querySelectorAll('.np-navigation button'))
+          .find(candidate => candidate.textContent === name);
+        if (target) target.focus();
+      });
+      item.replaceChildren(button);
+      item.classList.add('is-linked');
+    };
+    root.querySelectorAll('.np-navigation .np-parts li').forEach(item => {
+      const sceneIndex = story.scenes.findIndex(scene => scene.part === item.textContent.trim());
+      if (sceneIndex >= 0) link(item, sceneIndex);
+    });
+    root.querySelectorAll('.np-outline li').forEach(item => link(item, Number(item.dataset.narrationSceneIndex)));
+  }
+
+  window.NarratedLesson = { renderDiagram, highlightCode, sectionChecks, linkNavigation };
 })();

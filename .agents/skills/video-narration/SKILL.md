@@ -216,6 +216,19 @@ shares its modules. Rules that came from review:
   scene's start, the current one filled. Give every scene with a `part` a
   short `outline` name, and keep `part` identical to a name in the
   registry's `parts`.
+- **The roadmap is visible from the very first scene, before playback.**
+  When a lesson declares `parts`, show its complete clickable part strip on
+  every scene, including the introduction and summary. Show the second-level
+  scene links too: the current part's scenes when `scene.part` exists, otherwise
+  preview the first registered part (for Scrum: Empiricism and Inspect and
+  adapt under Theory). Mark only the actual current part and scene with
+  `aria-current="step"`; an overview preview has no current marker. Missing
+  `scene.part` must never hide navigation or require a fabricated part value
+  in the speech storyboard. Verify the opening frame, each jump target,
+  inline and mobile fullscreen layouts, and both themes. Reuse the shared
+  `narrated-lesson-navigation.html` include and `NarratedLesson.linkNavigation`
+  helper used by design-pattern lessons; a jump keeps keyboard focus in the
+  destination navigation.
 - Every picture has a heading strip: a tag naming the role, artifact, or
   event the picture teaches ("Role · Product Owner"), with the icon that
   stands for it throughout the video, drawn by `picture()` above the scaled

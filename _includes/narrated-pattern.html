@@ -36,7 +36,7 @@
       {% assign first_cue = scene.cues.first %}
       {% capture lesson_class %}{% include narrated-pattern-lesson-class.html topic=topic scene=scene %}{% endcapture %}
       <div class="nja-scene" data-scene="{{ scene.id }}"{% unless forloop.first %} hidden{% endunless %}>
-        <div class="nja-scene-meta"><span class="nja-sticker">{{ lesson.name | upcase }}</span><span>{{ forloop.index }} / {{ explainer.scenes.size }} &nbsp; {{ scene.label }}</span>{% include narrated-pattern-parts.html scene=scene %}</div>
+        {% include narrated-lesson-navigation.html lesson=lesson story=explainer scene=scene number=forloop.index %}
         <h3>{{ scene.title }}</h3>
         <div class="nja-art" role="group" aria-label="{{ first_cue.visual | escape }}">
           <p class="nja-purpose"><strong>Our task</strong> {{ scene.purpose | escape }}</p>
@@ -109,9 +109,9 @@
 <script src="{{ '/js/parsons-grading.js' | relative_url }}" defer></script>
 <script src="{{ '/js/tutorial-quiz.js' | relative_url }}" defer></script>
 <script src="{{ '/js/narrated-pattern-document.js' | relative_url }}" defer></script>
-<script src="{{ '/js/narrated-lesson.js' | relative_url }}" defer></script>
+<script src="{{ '/js/narrated-lesson.js' | relative_url }}?v={{ site.asset_version }}" defer></script>
 {%- comment -%} Topic scripts for live illustrations run before the player renders its first cue. {%- endcomment -%}
 {% for script in lesson.scripts %}
 <script src="{{ '/js/' | append: script | relative_url }}" defer></script>
 {% endfor %}
-<script src="{{ '/js/narrated-pattern.js' | relative_url }}" defer></script>
+<script src="{{ '/js/narrated-pattern.js' | relative_url }}?v={{ site.asset_version }}" defer></script>

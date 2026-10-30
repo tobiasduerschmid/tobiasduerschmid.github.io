@@ -17,7 +17,7 @@
 
   function enhance(root) {
     if (root.classList.contains('is-enhanced')) return;
-    const { renderDiagram, highlightCode, sectionChecks } = window.NarratedLesson;
+    const { renderDiagram, highlightCode, sectionChecks, linkNavigation } = window.NarratedLesson;
     const topic = root.dataset.npTopic;
     const story = JSON.parse(root.querySelector('[data-np-storyboard]').textContent);
     const examples = JSON.parse(root.querySelector('[data-np-examples]').textContent);
@@ -66,6 +66,7 @@
       onSeek: checks.close, canPlay: checks.isClosed,
     });
     checks.attach(player);
+    linkNavigation(root, story, timing, player);
     languageSelect.addEventListener('sebook:languagechange', () => {
       player.refresh();
       root.querySelector('.nja-status').textContent = `Code language: ${examples[languageSelect.value].label}. Narration position unchanged.`;

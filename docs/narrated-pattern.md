@@ -44,6 +44,11 @@ are generic.
   diagram's caption where it first appears.
 - `scene.part` (`Context`, `Problem`, `Solution`, or `Consequences`) shows where
   the scene sits in the pattern description, in the player and the reader.
+- The player shows a clickable part strip and scene outline from its opening
+  frame. Scenes without a `part` preview Context's scene links without marking
+  a part or scene as current. Keep their `part` omitted. Optional
+  `outline_labels` in `_data/narrated_patterns.yml` maps scene ids to concise
+  link labels; otherwise the scene's `outline` or `label` is used.
 - A topic's `scripts` list in `_data/narrated_patterns.yml` loads files from
   `js/` before the player starts. Before replacing a visual for a new cue, the
   player dispatches a cancelable `narrated-pattern:cue` event on the visual's
@@ -63,8 +68,11 @@ and the chapter transcript. `js/narrated-pattern.js` derives the player's stage
 from the current cue: it marks code lines in place and copies the matching
 reading step's diagram and illustrations, so no topic needs its own script.
 `js/narrated-lesson.js` holds what it shares with video narrations
-(`docs/video-narration.md`): copying a cue's diagram, marking code lines, and the
-section checks. Shared styles apply to the `narrated-lesson` class, and the
+(`docs/video-narration.md`): copying a cue's diagram, marking code lines,
+section checks, and the `linkNavigation` helper. The roadmap markup comes from
+`_includes/narrated-lesson-navigation.html`; jumps preserve playback state and
+move keyboard focus to the matching control in the destination scene.
+Shared styles apply to the `narrated-lesson` class, and the
 reader layout serves both lesson types.
 `js/narrated-pattern-document.js` handles the shared language preference and the
 theme carried in view links; it is safe to load once per lesson on combined
@@ -90,6 +98,8 @@ Run each lesson's node test (`scripts/tests/<topic>-narration.test.js`) and
 Playwright spec, plus `tests/wcag22-complete-audit.spec.js` for the chapter and
 both views. `tests/narration-fullscreen.spec.js` covers full screen on every
 narration page; add a new narration's page to its list. See
+`tests/narration-navigation.spec.js` for opening-frame navigation, keyboard
+jumps, focus, and mobile reflow checks across both lesson types. See
 `docs/observer-animation.md`, `docs/state-narration.md`, and `docs/strategy-narration.md` for the
 topic-specific details, and the `design-pattern-narration` skill for how to
 author a lesson.

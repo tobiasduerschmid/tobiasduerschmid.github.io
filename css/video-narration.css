@@ -23,24 +23,6 @@
 .video-narration .vn-surface { display: flex; flex-direction: column; }
 .video-narration .vn-check-exit { display: none; }
 .video-narration :is(.vn-scenes, .vn-captions):focus-visible { outline: 3px solid var(--nja-cyan); outline-offset: -3px; }
-/* The part strip's parts are buttons that jump to each part's start; the pill
-   is the button, so the whole pill is the target. */
-.video-narration .vn-scenes .np-parts li { padding: 0; }
-.video-narration .vn-scenes .np-parts li.is-linked::before { content: none; }
-.video-narration .vn-scenes .np-parts button { min-height: 1.9em; padding: 0.15em 0.7em; background: none; border: 0; border-radius: 999px; color: inherit; font: inherit; cursor: pointer; }
-.video-narration .vn-scenes .np-parts li + li button::before { content: '→ '; }
-.video-narration .vn-scenes .np-parts button:hover { background: var(--nja-hover); color: var(--nja-text); }
-.video-narration .vn-scenes .np-parts li[aria-current="step"] button:hover { background: none; color: var(--nja-ink); }
-.video-narration .vn-scenes .np-parts button:focus-visible { outline: 3px solid var(--nja-cyan); outline-offset: 2px; }
-/* The outline's second level: the current part's scenes, as smaller ovals
-   under the part strip, marked by a left rule. The current scene is filled
-   and bold, never color alone. */
-.video-narration .vn-outline { display: flex; flex-wrap: wrap; gap: 0.3em; margin: 0.45em 0 0; padding: 0 0 0 0.7em; border-left: 3px solid var(--nja-line); list-style: none; font-size: 0.9em; }
-.video-narration .vn-outline li { margin: 0; border: 1px solid var(--nja-line); border-radius: 999px; color: var(--nja-muted); }
-.video-narration .vn-outline li[aria-current="step"] { border: 2px solid var(--nja-ink); background: var(--nja-highlight); color: var(--nja-text); font-weight: 800; }
-.video-narration .vn-outline button { min-height: 1.9em; padding: 0.1em 0.75em; background: none; border: 0; border-radius: 999px; color: inherit; font: inherit; cursor: pointer; }
-.video-narration .vn-outline button:hover { background: var(--nja-hover); color: var(--nja-text); }
-.video-narration .vn-outline button:focus-visible { outline: 3px solid var(--nja-cyan); outline-offset: 2px; }
 .video-narration .vn-phone-tip { display: none; }
 .video-narration .vn-frame { position: relative; display: flex; flex-direction: column; margin: 0 1.4em; border: 2px solid var(--nja-line); border-radius: 8px; overflow: hidden; background: var(--nja-panel); }
 .video-narration .vn-video:focus-visible { outline: 3px solid var(--nja-cyan); outline-offset: 3px; }
@@ -99,7 +81,9 @@
   position: absolute; top: 50%; left: 50%;
   width: var(--vn-surface-width, 100%); height: var(--vn-surface-height, 100%);
   transform: translate(-50%, -50%);
-  display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, auto) minmax(0, 1fr) minmax(0, auto) auto;
+  /* Divide the space left by the controls between navigation, picture, and
+     captions. Content-sized rows can consume it all on small portrait phones. */
+  display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) minmax(0, 2fr) minmax(0, 1fr) auto;
   padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
   overflow: hidden;
 }
