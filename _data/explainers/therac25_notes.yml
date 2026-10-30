@@ -1,0 +1,128 @@
+# Printable key points; stable keys combine the scene ID and cue ID.
+orientation-cue-1:
+  - "**Therac-25:** computer-controlled radiotherapy; therapist enters a prescription at the console"
+  - "Information passes through the controller; the treatment head delivers a physical beam"
+orientation-cue-2:
+  - "**Absorbed dose:** deposited radiation energy divided by tissue mass"
+  - "Controller prepares equipment and manages delivery; entering a request is not delivering treatment"
+modes-cue-1:
+  - "An **accelerator** energizes electrons; both modes start with an electron beam"
+  - "**E mode:** spread electrons over the treatment field using appropriate settings"
+modes-cue-2:
+  - "**X mode:** electrons strike a metal target to generate X-rays"
+  - "Target means a machine component; conversion needs greater beam intensity and a different arrangement"
+modes-cue-3:
+  - "**Hazard:** X-ray-production intensity without its metal target can expose the patient to intense electrons"
+  - "Check applied settings and actual beam-path components; the display alone cannot establish both"
+normal-cue-1:
+  - "**Sequence diagram:** responsibility lanes; time downward; arrows show interactions and returned results"
+  - "Teaching baseline: unchanged E request → prepare settings → prepare positioning; not historical source calls"
+normal-cue-2:
+  - "Both preparations must suit the current request before treatment"
+  - "**Ready** is a permission claim, not independent physical verification"
+  - "Distinguish requested mode, applied configuration, and authorization; beam-on follows setup"
+normal-cue-3:
+  - "Corrections can arrive while preparation remains unfinished"
+  - "Compare an unchanged-request baseline with setup interrupted by editing"
+report-cue-1:
+  - "**Tyler, 1986:** painful effects conflicted with low console readings and a cryptic warning"
+  - "The pause still permitted continuation; patient experience challenged the displayed account"
+report-cue-2:
+  - "**Symptom:** an observation needing explanation; a warning does not identify the defective routine"
+  - "**Predict:** Which independent observation could test agreement between displayed and physical results?"
+configuration-cue-1:
+  - "Request specifies intent; beam setup chooses settings; positioning arranges the beam path"
+  - "Completion of one responsibility does not establish another responsibility's result"
+configuration-cue-2:
+  - "The console currently displays E"
+  - "**Predict:** What evidence across both preparation paths would justify permission for this request?"
+reproduce-cue-1:
+  - "Normal checks did not reproduce the event; the electrical-shock explanation remained unsubstantiated"
+  - "**Reproduce:** repeatable triggering conditions plus an observable failure criterion"
+  - "Therapists supplied keyboard histories; Fritz Hager investigated output; combine those evidence sources"
+reproduce-cue-2:
+  - "Two separate trials: direct E entry versus X setup followed by correction to E"
+  - "Same final request, different preceding work; outcomes remain withheld"
+reproduce-cue-3:
+  - "Hold equipment and intended final treatment constant"
+  - "**Predict:** Which comparison tests correction timing, and what must another investigator record?"
+  - "Controlled investigation only; no repeated patient exposure"
+reads-cue-1:
+  - "A rapid X-to-E correction helped reproduce Tyler's failure"
+  - "Interleaved tasks on one computer can pause around shared-memory changes; multiple processors are unnecessary"
+reads-cue-2:
+  - "Setup reads X; later keyboard handling writes E into shared memory"
+  - "Updating a stored request does not recompute decisions already derived from it"
+reads-cue-3:
+  - "Positioning will read the current request; no earlier-setting recomputation is shown"
+  - "**Predict:** Which decisions can coexist now, and what does inhibition still prevent?"
+missing_check-cue-1:
+  - "E positioning can coexist with settings derived from X"
+  - "**Reconcile:** revisit prior work against current intent; inconsistent decisions do not establish beam permission"
+missing_check-cue-2:
+  - "Bending-magnet setup takes seconds; delay routines can inspect corrected input while waiting"
+  - "**Flag:** stored yes-or-no condition; magnet-setup-on enables subsequent edit checking"
+missing_check-cue-3:
+  - "First delay clears the flag while magnet setup continues; a correction then arrives"
+  - "**Predict:** What happens when subsequent edit checking requires that now-cleared flag?"
+diagnosis-cue-1:
+  - "Flag already off → later edit inspection can be bypassed"
+  - "Reaching the command area once was treated as completion, despite subsequent editing"
+  - "Past completion is not proof that editing has finished now"
+diagnosis-cue-2:
+  - "**Defect:** incorrect implementation rule; **fault/infection:** resulting incorrect runtime state"
+  - "**Failure:** externally incorrect physical output; injury is a consequence"
+  - "Internal incorrectness can precede an externally visible failure"
+diagnosis-cue-3:
+  - "**Diagnosis:** explain the causal mechanism and the violated requirement"
+  - "Typing speed identifies a triggering schedule, not the implementation defect"
+  - "**Predict:** Which explanation connects this mechanism to the required current configuration?"
+repair-cue-1:
+  - "**State diagram:** boxes describe conditions; arrows describe transitions; bracketed guards constrain transitions"
+  - "**Inhibited:** blocked; **Preparing:** setup underway; **Ready:** permission granted"
+repair-cue-2:
+  - "Proposed teaching design: setup begins in Inhibited and proceeds to Preparing"
+  - "Editing after Ready revokes permission; finishing obsolete work cannot validate a newer request"
+  - "The completion guard remains unspecified"
+repair-cue-3:
+  - "Extra waiting may avoid one schedule without handling another correction"
+  - "**Predict:** What relationship among completed work, current intent, and equipment should authorize operation?"
+verify-cue-1:
+  - "Proposed contract: only current, consistent configuration authorizes operation; editing invalidates permission"
+  - "A state-diagram slash introduces an action; the larger box groups Preparing and Ready"
+  - "Historical changes retained the magnet flag through setup and added shared editing status"
+verify-cue-2:
+  - "Blocking every operation would also prevent the original failure"
+  - "**Predict:** Which additional test demonstrates useful operation remains possible?"
+  - "Also challenge late obsolete completions and edits after readiness"
+yakima_boundary-cue-1:
+  - "**Yakima, 1987:** distinct defect involving the beam-path turntable, not the patient table"
+  - "**Field-light position:** visible-light alignment; unsuitable for treatment"
+  - "**SET:** request a return toward treatment configuration; not a beam-on command"
+yakima_boundary-cue-2:
+  - "Request check → inspect position and record problems → consult blocking status before progression"
+  - "A nonzero check-required byte enables inspection; its 256 values span 0–255"
+yakima_boundary-cue-3:
+  - "Setup passes repeatedly increment a wrapping byte; these are not patient counts"
+  - "**Predict:** After incrementing 255, what value and nonzero-guard behavior follow?"
+yakima_check-cue-1:
+  - "Wraparound to zero can suppress the position check"
+  - "Separate blocking-status indicators govern progression; clear status does not prove inspection occurred"
+yakima_check-cue-2:
+  - "Published hazardous path: field-light position, SET during the zero interval, other blocking indicators clear"
+  - "Wraparound alone does not establish overdose; skipped inspection does not clear existing problem indicators"
+yakima_check-cue-3:
+  - "The stored value means **check required**, not a meaningful event count"
+  - "**Predict:** Which update guarantees nonzero after each setup pass instead of postponing wraparound?"
+assurance-cue-1:
+  - "Repair targets a known mechanism; a protective function independently observes configuration and can inhibit output"
+  - "**Independence:** controller mistakes must not automatically defeat protection; separate boxes do not demonstrate independence"
+assurance-cue-2:
+  - "Historical corrective work included software, protective hardware, recovery behavior, documentation, and installed-machine testing"
+  - "**Predict:** What claim follows from passing known-failure and ordinary-use tests?"
+transfer-cue-1:
+  - "Print request changes to two copies while a worker prepares the job; one copy emerges"
+  - "Competing explanations: stale submitted job or printer mishandling a correct job; submitted count unknown"
+transfer-cue-2:
+  - "**Predict:** Which observation separates the explanations, and what would each result establish?"
+  - "Keep failure-history and normal-use tests; transfer the investigative method, not an assumed cause"

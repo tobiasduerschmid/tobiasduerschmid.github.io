@@ -12,8 +12,8 @@ description: >-
   requests like "make a narrated video lesson about X", "animate this narration", "refine the
   Scrum graphics", "the animation is out of sync with the narration", "text overlaps in the
   video", "full screen / mobile / dark mode looks wrong in the video", or "export the narration as
-  notes / a PDF / a handout" (`<topic>_notes.yml`, `_layouts/video-narration-notes.html`,
-  `js/video-narration-notes.js`). Covers the lesson type, example, narrative arc, one
+  notes / a PDF / a handout" (`<topic>_notes.yml`, `_layouts/narration-notes.html`,
+  `js/narration-notes.js`). Covers the lesson type, example, narrative arc, one
   visual style, overlap and theme rules, animation timing, full screen and mobile, quizzes, the
   printable notes, rendering, and verification. Architecture: docs/video-narration.md.
 ---
@@ -78,11 +78,12 @@ If you only remember eleven things:
     users, never "the system". Before every check, including the summary quiz,
     finish the speech and hold the completed picture for a short viewing pause:
     set the section's last cue to `pause_after: 2.5` or longer (see section 1).
-11. **Every narration ships printable notes.** A button under the video
-    saves them as a PDF: each cue's picture at rest beside its key points in
-    note form, ruled lines to write on, each section's knowledge check, and
-    the answers, and nothing else. They are drawn from the current narration
-    when opened, never from a stored file. See section 6.
+11. **Every narration ships editable, printable notes.** The shared links
+    under the video open an editable handout or the PDF print dialog: each
+    cue's picture at rest, concise key points, space to type or handwrite,
+    each section's knowledge check, and answers at the end. Student writing
+    saves locally and appears in print. Pictures come from the current
+    narration, never committed stills or PDFs. See section 6.
 
 ## 1. The narrative arc
 
@@ -287,42 +288,32 @@ player (`js/narrated-explainer.js`):
   init script: Chrome still has `webkitRequestFullscreen`, so removing only
   the standard one tests nothing.
 
-## 6. Printable notes
+## 6. Editable notes and PDF export
 
-Every video narration has printable notes: a handout students print or save
-as a PDF and annotate. The **Save lesson notes as PDF** button under the video
-opens the notes page (`<views>/notes/#export`), which draws the pictures and
-opens the print dialog. Each cue is one row: its picture at rest (the pose
-0.3 s before the cue ends, the same pose the stage audits check), its key
-points beside it, and ruled lines to write on. After each section comes its
-knowledge check as a row of its own, with room to answer; the answers, with
-why each wrong option is wrong, close the notes. Print keeps only the lesson:
-its title, three rows a page under each scene's heading, and the answers; the
-introduction, links, and site footer stay on screen. Rules from review:
+Use the all-kind workflow in
+[`narration-authoring`](../narration-authoring/SKILL.md#editable-notes-and-pdf-handouts-for-every-kind).
+The shared layout/include are `narration-notes.html`, and
+`js/narration-notes.js` owns visual preparation, editing, saving, and print.
+The compiler derives `lesson.notes_url`; Jekyll generates the route. Do not
+copy the old video-specific notes page or add per-topic lifecycle code.
+**Save lesson notes as PDF** opens `notes_url#export`; **Edit lesson notes**
+opens the same handout without immediately printing.
 
-- **Key points are notes, not narration.** Write one to four bullets per cue
-  in `_data/explainers/<topic>_notes.yml`, keyed by cue id
-  (`<scene id>-<cue number>`), at most 16 words each, about half the
-  narration's words in all. Telegraphic phrases, `**bold**` for the term a
-  bullet defines, arrows for cause and effect ("Item too big → renegotiate
-  scope"). Never repeat eight words in a row from the cue; a copied sentence
-  is not a note.
-- **Keep every idea, drop the talk.** Each term, rule, number, and timebox the
-  cue teaches appears in its bullets; jokes, transitions, and repeated
-  examples do not. Add a topic test that every taught term appears in the
-  notes (the Scrum test lists roles, artifacts, commitments, events, and
-  timeboxes).
-- **Prediction cues keep their question.** Write the question as a bullet
-  ("**Predict:** ... Counts? Goes where?") so students answer it on the lines;
-  the next row has the answer.
-- **Bullets are inline Markdown.** Only `**bold**` is meant; underscores and
-  single asterisks turn into emphasis, so write blanks and lists in words.
+Write one to four human-authored bullets per cue in
+`_data/explainers/<topic>_notes.yml`, keyed by `<scene.id>-<cue.id>` (only
+existing Scrum notes retain the positional fallback). Follow the shared
+16-word limit, at-most-half speech word count, no-eight-word-copy rule, and
+prediction/term-preservation rules. Bullets are separate from speech and do
+not change its fingerprint. Stage-specific rules:
+
+- **Keep the lesson's exact concepts.** Include each taught term, rule,
+  number, and timebox; omit jokes and repeated examples. Scrum's topic test
+  checks roles, artifacts, commitments, events, and timeboxes. Prediction
+  rows retain the question; the next row supplies its answer.
 - **The picture is the resting pose, so the resting pose must be complete.**
   A label still entering, a sticker covering a letter, or a piece that
   leaves before the cue ends shows up in print. The overlap test checks
   every resting pose for partly covered text.
-- **Bullets live apart from the storyboard,** so editing them never changes
-  the narration's audio fingerprint.
 - **Notes come from the current narration, never from a stored file.** The
   notes page builds the narration's stage itself, out of view, and copies
   each cue's resting pose into its row (`VideoNarrationStage.still(time)`,
@@ -334,15 +325,27 @@ introduction, links, and site footer stay on screen. Rules from review:
   `contain: strict`; without containment, Chrome's print shrinks every page
   to fit the 960px stage.
 
+Each cue and check has a labeled text field. Student writing autosaves under
+`sebook-narration-notes-<topic>` and prints through mirrored plain-text
+paragraphs. The inventory provides per-lesson and bulk deletion; update the
+storage skill and disclosures when changing persistence. Blank animated-stage
+handouts keep three rows per Letter page. Rows containing student writing
+grow across pages instead of clipping text. Other narration kinds use their
+content height; never apply the stage's fixed row height to code or diagrams.
+The code-language select, when present, affects this handout only.
+
 `tests/video-narration-notes.spec.js` checks every row's picture (its
 description as its accessible name) and bullets as written; that every
 picture shows the paused video's words in the same places; that each check
 follows its section and the answers match; that print shows only the lesson
-with no row clipped and three rows to a Letter page; that Chromium's saved
-PDF has exactly one page per three rows; and that the button opens the notes
-and the print dialog. `scripts/tests/video-narration-notes.test.js` checks
-the bullets' form. Look at a saved PDF before committing: print the notes
-page to PDF and read a few pages (`pdftoppm` renders them).
+with no row clipped and three blank rows to a Letter page; that Chromium's
+blank saved PDF preserves that pagination; and that export opens the notes
+and print dialog. `scripts/tests/video-narration-notes.test.js` checks Scrum's
+terms and bullets. Also run the all-kind `scripts/tests/narration-notes.test.js`
+and `tests/narration-notes.spec.js`, including saved writing and deletion.
+Inspect both a blank PDF and one with long student notes (`pdftoppm` can
+render them). Browser PDF tagging is not a guarantee: check text and reading
+order, and do not report a tags test as complete PDF or full-site conformance.
 
 ## 7. Render, wire, verify
 

@@ -150,6 +150,52 @@ A change is not done until you have verified it. The bar:
 
 If you genuinely cannot run a check (e.g. headless environment with no audio output, no GUI for VoiceOver), say so explicitly rather than claiming pass. A reasoned "automated checks pass; could not visually confirm focus order in this environment" is much better than a false claim of success.
 
+## Print layouts and exported PDFs
+
+The same AA requirement applies to **every feature’s printed output**, including
+chapters, tutorials, narration notes, code examples, quizzes and student-written
+answers. A screen audit or an `@media print` screenshot does not establish PDF
+accessibility. Verify the HTML print view and the exported document separately.
+
+1. **Audit print media under a saved dark preference.** Run
+   `tests/wcag22-print-audit.spec.js` for affected routes. Use
+   `WCAG_PRINT_AUDIT_FULL_SWEEP=1` for every emitted page; the default run samples
+   one page per feature family and must be reported as a sample. Keep backgrounds
+   light, text and meaningful graphics sufficiently contrasted, code wrapped,
+   and complete content visible across page breaks. Long student notes must grow
+   and paginate instead of being clipped inside a textarea or fixed-height row.
+2. **Inspect actual PDF bytes from the supported export path.** Preserve text as
+   selectable text and export semantic tags (`tagged: true` in Playwright).
+   Check the document title, `/Lang`, `/MarkInfo`, `/StructTreeRoot`, heading
+   hierarchy, list/table structure, link destinations and page tab order. Verify
+   the relevant student-entered text survives export exactly, including line
+   breaks and literal markup characters. Keep these checks in permanent tests
+   for shared exporters and representative print-layout families.
+3. **Verify meaningful graphics and reading order.** Inspect required figure
+   alternatives in the PDF, not only HTML `alt` attributes. A structural Figure
+   containing a readable Caption is different from an image Figure: do not
+   infer an absent text alternative merely by counting `/Figure` tags without
+   `/Alt`. Check the content and its equivalent description. Confirm multi-column
+   notes read in their intended sequence, headings navigate correctly, tables
+   retain header relationships, and links have sensible keyboard order in a PDF
+   reader. Follow [W3C PDF1](https://www.w3.org/WAI/WCAG22/Techniques/pdf/PDF1)
+   and [W3C PDF3](https://www.w3.org/WAI/WCAG22/Techniques/pdf/PDF3).
+4. **Exercise the finished file with assistive technology.** Use a screen reader
+   or a tool exposing the PDF accessibility tree to check meaningful reading
+   order and equivalent descriptions; inspect zoom/reflow and keyboard traversal
+   in the supported reader. Repeat after merging, stamping or other PDF
+   post-processing because those operations can discard semantic structure.
+5. **Report the evidence precisely.** Tags, a green axe scan and contrast checks
+   are necessary evidence, not proof that all applicable criteria are satisfied.
+   State the pages/export paths tested and any manual checks not performed.
+   Browser “Save as PDF” and operating-system print destinations can produce
+   different artifacts; do not guarantee arbitrary printer-driver output based
+   on a Chromium-generated sample. Preserve an accessible HTML companion.
+
+Do not advertise full WCAG conformance or PDF/UA certification from a tag-presence
+check. PDF/UA is a separate document-format standard; WCAG checks still require
+judgment about content, reading order and assistive-technology behavior.
+
 ## When you find an existing violation
 
 If you discover a pre-existing AA violation in code adjacent to your change, **surface it to the user** rather than silently fixing it. Don't pile sweeping accessibility debt into an unrelated PR — split it into its own task so the diff stays reviewable.

@@ -405,6 +405,33 @@ info_nav_title: "Browser storage"
     <i class="fa fa-trash" aria-hidden="true"></i> Delete all tutorial state
   </button>
 
+  <h3 id="narration-notes">Narration notes</h3>
+  <p>
+    Notes you type beside narration cues and questions are saved automatically in this browser as you edit.
+    Each lesson has one entry, shared by its editable and printable notes views. These notes are not sent to this site.
+    They remain until you delete them or clear browser storage.
+  </p>
+  <table class="storage-table" data-category="narration-notes" id="narration-notes-table">
+    <thead>
+      <tr>
+        <th class="col-key">Key (with prefix)</th>
+        <th class="col-purpose">Purpose</th>
+        <th class="col-status">Status</th>
+        <th class="col-action">Delete</th>
+      </tr>
+    </thead>
+    <tbody id="narration-notes-body">
+      <tr class="empty-row"><td colspan="4">Scanning your browser&hellip;</td></tr>
+    </tbody>
+  </table>
+  <p class="cookies-prefix-note">
+    <em>Prefix:</em> <code>sebook-narration-notes-&lt;topic&gt;</code> &mdash;
+    your notes for a lesson's narration cues and questions, identified by scene and cue IDs or the question's position within its section.
+  </p>
+  <button class="cookies-btn danger" data-clear-category="narration-notes" data-clear-prefixes="sebook-narration-notes-" type="button">
+    <i class="fa fa-trash" aria-hidden="true"></i> Delete all narration notes
+  </button>
+
   <h3>Standalone tutorials</h3>
   <table class="storage-table" data-category="standalone-tutorials">
     <thead>
@@ -835,6 +862,9 @@ info_nav_title: "Browser storage"
   var UML_PREFIXES = [
     { prefix: 'uml-pg-autosave-', label: 'Autosaved ArchUML draft from the UML Playground or a scoped UML tutorial' }
   ];
+  var NARRATION_NOTES_PREFIXES = [
+    { prefix: 'sebook-narration-notes-', label: 'Your notes for narration cues and questions, saved automatically as you edit' }
+  ];
 
   function describeKeyAgainst(key, prefixList) {
     for (var i = 0; i < prefixList.length; i++) {
@@ -853,6 +883,9 @@ info_nav_title: "Browser storage"
   }
   function describeUmlKey(key) {
     return describeKeyAgainst(key, UML_PREFIXES);
+  }
+  function describeNarrationNotesKey(key) {
+    return describeKeyAgainst(key, NARRATION_NOTES_PREFIXES);
   }
 
   function renderPrefixedTable(bodyId, describeFn, emptyMessage) {
@@ -904,6 +937,10 @@ info_nav_title: "Browser storage"
     renderPrefixedTable('uml-dynamic-body', describeUmlKey,
       'No UML diagram drafts stored in your browser.');
   }
+  function renderDynamicNarrationNotes() {
+    renderPrefixedTable('narration-notes-body', describeNarrationNotesKey,
+      'No narration notes stored in your browser.');
+  }
 
   // -------- Render everything --------
   function renderAll() {
@@ -912,6 +949,7 @@ info_nav_title: "Browser storage"
     renderDynamicTutorialKeys();
     renderDynamicToolKeys();
     renderDynamicUmlKeys();
+    renderDynamicNarrationNotes();
   }
 
   // -------- Bulk delete --------

@@ -120,9 +120,7 @@
     </audio>
     <p class="nja-status" role="status" aria-live="polite"></p>
   </div>
-  {%- if notes %}
-  <p class="vn-export"><a class="vn-export-button button" href="{{ lesson.views | append: '/notes/' | relative_url }}#export"><i class="fa fa-file-pdf" aria-hidden="true"></i> Save lesson notes as PDF</a> <span class="vn-export-hint">Every picture with its key points, room for your notes, and the knowledge checks with answers.</span></p>
-  {%- endif %}
+
   <details class="vn-tips">
     <summary>Playback tips and shortcuts</summary>
     <p id="{{ topic }}-video-help">Click or tap the picture to play or pause. Double-click or double-tap its left half to go back 5 seconds, or its right half to go forward 5 seconds. In full screen, the controls hide after 3 seconds of playback; move the pointer, press a key, or tap the picture to show them.</p>

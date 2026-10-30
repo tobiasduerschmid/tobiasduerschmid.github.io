@@ -1,0 +1,106 @@
+# Printable key points; stable keys combine the scene ID and cue ID.
+understand_service-cue-1:
+  - "**2 July 2019:** many independent sites share Cloudflare's request-processing path"
+  - "Visitor → Cloudflare → site's **origin** when needed; diagram excludes caching and other services"
+understand_service-cue-2:
+  - "**WAF:** web application firewall; rules recognize suspicious request patterns and specify actions"
+  - "Inspection consumes finite **CPU** capacity; security checks must also permit request progress"
+understand_service-cue-3:
+  - "**502:** failed gateway work, not identification of the defective component"
+  - "First synthetic-monitor alert: **13:45 UTC**; monitors send test requests to observe service"
+  - "**Predict:** Which evidence separates demand growth, origin failure, and costly request processing?"
+localize-cue-1:
+  - "By **14:00**, CPU observations, traces, and logs implicated WAF work; serving capacity was exhausted"
+  - "Front-line servers delegate request handling to **workers**"
+  - "**Trace:** execution observations; **profile:** time distribution; locating costly work does not explain its cause"
+localize-cue-2:
+  - "Cross-site-scripting rule: merge **13:31**, build/tests **13:37**, global Quicksilver rollout **13:42**"
+  - "Positive/negative matching tests passed; **simulate mode** logs matches instead of deliberately blocking"
+  - "**Predict:** What does that evidence establish about evaluation cost?"
+contain-cue-1:
+  - "Request progress depends on inspection completing; inspection invokes a regular-expression matcher"
+  - "Excessive matching consumed serving CPU → 502 errors, even without intentional blocking"
+  - "Sequence is a dependency reconstruction, not an individual visitor's recovered trace"
+contain-cue-2:
+  - "Immediate objective: halt expensive work and restore availability"
+  - "Narrow rollback faced delays and impaired recovery access; disabling security also carries a cost"
+  - "**Predict:** Which available containment action best serves this immediate objective?"
+reproduce-cue-1:
+  - "Traffic and CPU recovered by **14:09**, supporting WAF containment"
+  - "Recovery neither restores WAF protection nor isolates the exact rule mechanism"
+  - "Removing a whole component changes multiple factors; seek narrower causal evidence"
+reproduce-cue-2:
+  - "**Reproducer:** input, rule version, matching engine, relevant configuration"
+  - "**Oracle:** criterion distinguishing acceptable and unacceptable results"
+  - "**Predict:** What follows from comparable absent/present/removed trials measuring behavior and resources?"
+  - "Actual triggering requests were unpublished; do not invent incident inputs"
+define_oracles-cue-1:
+  - "Isolated checks implicated the new rule and excessive alternatives in a backtracking matcher"
+  - "Teaching task: detect an equals sign in one line; not the original rule or request"
+define_oracles-cue-2:
+  - "**Functional oracle:** present exactly when an equals sign exists"
+  - "Count every candidate-position check, including repeated visits"
+  - "Invented work budget: **4 × (characters + 1)**; seven characters permit 32 checks"
+define_oracles-cue-3:
+  - "Work limit stops evaluation before completion on input without equals"
+  - "**Predict:** What outcome should the experiment record when the answer remains unestablished?"
+trace_search-cue-1:
+  - "Inefficient model: two variable-length skips, then an equals check from a fixed starting point"
+  - "**Backtracking:** revise earlier choices after failure"
+  - "Overlapping skips permit different allocations that revisit the same candidate position"
+trace_search-cue-2:
+  - "For xxx: skip allocations **(3,0)**, **(2,1)**, **(2,0)** all fail the equals test"
+  - "The first two revisit the end position; three displayed attempts are only a partial trace"
+trace_search-cue-3:
+  - "First skip length one leaves three second-skip choices; first skip zero leaves four"
+  - "**Predict:** How does deleting one character change the allocation search?"
+minimize-cue-1:
+  - "Three characters: **1 + 2 + 3 + 4 = 10** candidate checks"
+  - "Seven characters: **36** checks; 32 characters: **561** checks"
+  - "Counts describe the fixed-start teaching model, not Cloudflare traffic or full-engine behavior"
+minimize-cue-2:
+  - "Length seven: **36 > 32**; length six: **28 = 28**, within budget"
+  - "**Predict:** Which failure property must a smaller reproducer preserve?"
+  - "Merely preserving an absent answer may discard the resource failure"
+diagnose-cue-1:
+  - "Overlapping repetition → many backtracking allocations → costly inputs → inadequate protection → impaired service"
+  - "**Incorrectness** needs a violated progress or work-budget obligation; busy CPU alone is insufficient"
+diagnose-cue-2:
+  - "Chapter terms: **fault → error → failure**; book terms: **defect → fault/infection → failure**"
+  - "The model stops before check 33; visitors experienced 502 responses"
+  - "No single exact first-incorrect instruction was published for every incident request"
+diagnose-cue-3:
+  - "Missing barriers: previously removed CPU safeguard, absent cost tests, rollout bypassing staged deployment"
+  - "**Predict:** Which diagnosis links the mechanism, violated obligation, and spread of the outage?"
+repair-cue-1:
+  - "**Forward scan:** inspect successive characters; stop on equals or report absent at the end"
+  - "At most one inspection per character; no revisits"
+  - "Repair applies to the teaching task, not general security-pattern recognition"
+repair-cue-2:
+  - "Retain seven-character and longer negative cases; challenge empty input and equals at several positions"
+  - "Always-absent is fast but wrong; raising the budget leaves search growth intact"
+  - "**Predict:** What behavioral and cost evidence supports a bounded repair claim?"
+harden-cue-1:
+  - "Remove the trigger; test performance; choose suitable matching-complexity guarantees"
+  - "Runtime limits contain excessive work; staged rollout limits initial exposure"
+  - "Recovery must remain usable during serving failures; these measures protect different causal links"
+harden-cue-2:
+  - "**12 July postmortem:** CPU protection restored and existing rules inspected"
+  - "Profiling tests and engine transition still had target dates; planned does not mean completed"
+  - "**Predict:** What does success in a small staged rollout actually establish?"
+verify_history-cue-1:
+  - "**14:09:** traffic recovered with WAF disabled; **14:52:** WAF restored after rule removal and checks"
+  - "Reported outage: **27 minutes**; reduced security functionality lasted longer"
+verify_history-cue-2:
+  - "2020 follow-up confirms July 2019 migration from **PCRE** to an **RE2-inspired** engine"
+  - "Matching-time outliers fell; overall edge CPU showed no measurable change"
+  - "The 40-percent headline concerned a separate optimization"
+  - "**Predict:** Which conclusion accurately distinguishes the reported changes?"
+transfer-cue-1:
+  - "Large uploads time out after a rule update; high CPU does not identify the cause"
+  - "Possible explanations: expensive validation, repeated report-building work, or changed demand"
+  - "No evidence yet establishes a regular-expression defect"
+transfer-cue-2:
+  - "State functional/resource obligations; preserve failing input/configuration; list competing explanations"
+  - "**Predict:** Which observation separates explanations? Which positive and cost tests should remain?"
+  - "Investigate/reproduce → locate → explain → repair/verify; new evidence can require revisiting earlier stages"

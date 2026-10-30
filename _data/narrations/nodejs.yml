@@ -4,6 +4,7 @@ id: nodejs
 kind: explainer
 title: Node.js in motion
 lesson:
+  chapter: /SEBook/tools/nodejs.html
   name: Node.js
 speech:
   voice: af_heart

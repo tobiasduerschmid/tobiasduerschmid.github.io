@@ -340,8 +340,21 @@
 
   // Templates and adapters share one compiled lesson data boundary.
   function readData(root) {
-    const read = name => JSON.parse(root.querySelector(`[data-narration-${name}]`).textContent);
-    return { story: read('story'), timing: read('timing'), examples: read('examples'), quizzes: read('quizzes') || {} };
+    // Cached pages and incremental Jekyll previews can pair older markup with
+    // the current runtime. Normalize those published data attributes here.
+    const legacy = {
+      story: '[data-np-storyboard], [data-explainer-storyboard], [data-case-storyboard]',
+      timing: '[data-np-timing], [data-explainer-timing], [data-case-timing]',
+      examples: '[data-np-examples]',
+      quizzes: '[data-np-quizzes]',
+    };
+    const read = (name, fallback) => {
+      const data = root.querySelector(`[data-narration-${name}]`) || root.querySelector(legacy[name]);
+      if (data) return JSON.parse(data.textContent);
+      if (fallback !== undefined) return fallback;
+      throw new Error(`Narration ${name} data is missing.`);
+    };
+    return { story: read('story'), timing: read('timing'), examples: read('examples', {}), quizzes: read('quizzes', {}) || {} };
   }
 
   window.NarratedExplainer = { enhance, readData };

@@ -1,0 +1,46 @@
+{% assign note_story = site.data.explainers[include.topic] %}
+{% assign note_scene = include.scene %}{% assign note_cue = include.cue %}
+{% if include.kind == 'explainer' %}
+<div class="vn-explainer-pose">
+  {% if note_scene.code %}
+    {% assign note_code = note_scene.code %}{% assign note_filename = note_scene.filename %}
+    {% if note_cue.variant == 'alternate' or note_cue.pose == 'inline' or note_cue.pose == 'import' %}
+      {% assign note_code = note_scene.alternate_code | default: note_scene.code %}
+      {% assign note_filename = note_scene.alternate_filename | default: note_scene.filename %}
+    {% endif %}
+    {% include narrated-explainer-code.html code=note_code filename=note_filename language=note_story.language focus_lines=note_cue.focus %}
+  {% endif %}
+  <div class="vn-note-art" role="img" aria-label="{{ note_cue.visual | escape }}">
+    <div class="vn-note-art-drawing" aria-hidden="true" inert hidden>
+      {% assign note_art_include = include.topic | append: '-animation-art.html' %}
+      {% include {{ note_art_include }} scene=note_scene %}
+    </div>
+    <p class="vn-note-visual-description">{{ note_cue.visual | escape }}</p>
+  </div>
+  <span class="nja-step" hidden></span><span class="nja-note" hidden></span>
+</div>
+{% else %}
+  {% if note_scene.code %}
+    {% assign note_code_key = include.topic | append: '_code' %}
+    {% for note_language in note_story.languages %}
+      {% assign note_example = site.data.explainers[note_code_key][note_language] %}
+      {% assign note_block = note_example.blocks[note_scene.code] %}
+      {% assign note_focus = note_block.focus[note_cue.focus] %}
+      <div data-notes-language="{{ note_language }}">
+        <p>{{ note_example.label }}{% if note_focus %} · Marked lines: {{ note_focus | join: ', ' }}{% endif %}</p>
+        {% include narrated-explainer-code.html code=note_block.source filename=note_example.filename language=note_language focus_lines=note_focus %}
+      </div>
+    {% endfor %}
+  {% endif %}
+  <div role="img" aria-label="{{ note_cue.visual | escape }}"><div aria-hidden="true" inert>
+  {% assign note_diagram_key = note_cue.diagram | default: note_scene.diagram %}
+  {% if note_diagram_key %}
+    {% assign note_diagram = note_story.diagrams[note_diagram_key] %}
+    {% include narrated-pattern-diagram.html diagram=note_diagram cue=note_cue %}
+  {% endif %}
+  {% if include.kind == 'pattern' %}{% include narrated-pattern-visuals.html topic=include.topic scene=note_scene cue=note_cue %}{% endif %}
+  {% if note_scene.cards %}<dl>{% for card in note_scene.cards %}<div><dt>{{ card.title | escape }}</dt><dd>{{ card.text | escape }}</dd></div>{% endfor %}</dl>{% endif %}
+  {% assign note_slide_key = note_cue.slide | default: note_scene.slide %}
+  {% if note_slide_key %}{% assign note_slide = note_story.slides[note_slide_key] %}{% include video-narration-slide.html slide=note_slide cue=note_cue %}{% endif %}
+  </div><p class="vn-note-visual-description">{{ note_cue.visual | escape }}</p></div>
+{% endif %}

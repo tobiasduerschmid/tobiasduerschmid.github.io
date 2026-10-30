@@ -1,0 +1,139 @@
+# Printable handout key points. Keys preserve scene and cue identities.
+intro-cue-1:
+  - "**Example:** one screen-time dataset feeds a table, bar chart, and pie chart"
+  - "Editing Study to 90 minutes updates both charts"
+intro-cue-2:
+  - "Explore edits and bar clicks; observe which displays react"
+  - "**Model-View-Controller:** organizes interactive applications around distinct responsibilities"
+intro-cue-3:
+  - "**Model:** data; **View:** display; **Controller:** input"
+  - "Describe context, problem, solution, and consequences"
+context-cue-1:
+  - "**MVC context:** interactive applications with frequently changing interfaces"
+  - "Users edit data while viewing it; new displays and layouts appear"
+context-cue-2:
+  - "Table edits should immediately update charts"
+  - "Presentation and input evolve more often than minutes-per-category data"
+problem-cue-1:
+  - "**ScreenTimeApp:** initially owns category-minute data"
+  - "That domain data is independent of laptop, phone, or watch presentation"
+problem-cue-2:
+  - "Same class handles edits, changes data, and requests redraw"
+  - "Input responsibilities sit beside data ownership"
+problem-cue-3:
+  - "redraw constructs table rows, bar marks, and pie shares"
+  - "Three displays’ drawing logic accumulates inside the data-owning class"
+problem-cue-4:
+  - "A bar selection triggers a full redraw"
+  - "Unchanged table and pie chart are unnecessarily rebuilt"
+problem-cue-5:
+  - "**Predict:** Adding a line chart and phone UI changes which code? Why risky?"
+problem-cue-6:
+  - "UI changes reach the class owning domain data"
+  - "**Problem:** tangled responsibilities spread changes and risk corrupting data behavior"
+problem-cue-7:
+  - "**Requirements:** multiple representations; immediate synchronization"
+  - "Allow interface changes, including runtime changes"
+  - "Port the interface while preserving domain data"
+model_role-cue-1:
+  - "**Dataset:** stores minutes, not pixels or widgets"
+  - "rows queries data; setMinutes changes it"
+  - "No concrete table, bar, or pie dependencies"
+model_role-cue-2:
+  - "**attach/detach:** maintain a dependent list through update"
+  - "Views and data-dependent input handlers may subscribe"
+model_role-cue-3:
+  - "After completing a data change, **notify** calls each dependent’s update"
+  - "Dataset announces changes without deciding presentation"
+view_role-cue-1:
+  - "**View:** retains Dataset and redraws when updated"
+  - "Notification carries no data; each view **pulls** what it needs"
+view_role-cue-2:
+  - "Table shows minutes; bar uses one mark per 30 minutes; pie computes proportions"
+  - "Each view derives its display from Dataset rather than owning duplicate domain data"
+view_role-cue-3:
+  - "**View-local change:** highlighting redraws only that view"
+  - "Scrolling and zooming can change presentation without changing Dataset"
+controller_role-cue-1:
+  - "**Controller:** interprets input for one view; knows View and Dataset"
+  - "A controller that ignores events makes its view read-only"
+controller_role-cue-2:
+  - "**TableController:** converts cell edits into Dataset.setMinutes requests"
+  - "It does not directly redraw displays"
+controller_role-cue-3:
+  - "**ChartController:** converts a click into its view’s highlight request"
+  - "No data change means other views need not redraw"
+controller_role-cue-4:
+  - "Data-dependent controllers can subscribe via update, such as a conditional Clear button"
+  - "These example controllers need no updates or subscriptions"
+collaborations-cue-1:
+  - "Edit Study to 90 → TableController → Dataset.setMinutes"
+collaborations-cue-2:
+  - "**Predict:** After Dataset stores 90 and notifies, who receives update? What follows?"
+collaborations-cue-3:
+  - "Registered views receive update"
+  - "TableView reads fresh rows and redraws Study as 90"
+collaborations-cue-4:
+  - "BarChartView adds two Study marks; PieChartView recalculates shares"
+  - "Controller changes model → model notifies → views query and redraw"
+collaborations-cue-5:
+  - "Games bar click → ChartController → its view’s highlight"
+  - "Only BarChartView redraws; the other displays stay unchanged"
+setup-cue-1:
+  - "External setup code assembles the collaborators"
+  - "Create Dataset before views and controllers"
+setup-cue-2:
+  - "Create each View with Dataset, then initialize it"
+  - "Initialization registers the View as a dependent"
+setup-cue-3:
+  - "**Factory Method:** each View’s makeController selects its controller"
+  - "View draws initially, then the application begins handling input"
+solution-cue-1:
+  - "**Model:** owns domain data and rules, registrations, and change announcements"
+  - "CRC cards summarize each role’s responsibilities and collaborators"
+solution-cue-2:
+  - "**View:** queries current model data and draws a representation"
+  - "Each View creates its Controller; multiple Views can share a Model"
+solution-cue-3:
+  - "**Controller:** translates user input into Model or View requests"
+  - "Input can change domain data or only the local presentation"
+solution-cue-4:
+  - "Views and Controllers depend on the Model"
+  - "Model depends only on its **Observer** notification contract"
+  - "No Model dependency on a concrete screen component"
+solution-cue-5:
+  - "Data change: Controller → Model → notification → View query and redraw"
+  - "Local change: Controller → its View"
+  - "Model never targets a specific View or Controller"
+consequences-cue-1:
+  - "**Benefits:** synchronized views of shared data and replaceable collaborators"
+  - "Swapping in an input-ignoring Controller makes a View read-only"
+consequences-cue-2:
+  - "**Portability:** new platform Views and Controllers can reuse the Model"
+  - "General-purpose UI collaborators can be reused across applications"
+consequences-cue-3:
+  - "**Costs:** more classes, assembly work, and potentially excessive redraws or model queries"
+  - "Detailed change notifications can let unaffected Views skip updates"
+consequences-cue-4:
+  - "View and Controller often depend closely on each other"
+  - "Both depend on the Model’s interface"
+  - "Notification-driven updates make causal control flow harder to trace"
+applicability-cue-1:
+  - "Use for evolving interactive interfaces with multiple representations of shared data"
+  - "One small fixed display may suit direct calls"
+applicability-cue-2:
+  - "Merged View/Controller components retain shared-Model synchronization"
+  - "Trade-off: a View’s Controller can no longer be swapped independently"
+applicability-cue-3:
+  - "**Observer:** Model notifications; **Strategy:** interchangeable Controllers; **Composite:** nested Views"
+  - "Server-side web MVC differs: requests choose rendered pages without Model-to-View notifications"
+transfer-cue-1:
+  - "**Predict:** Add a line chart and read-only pie-chart copy. What changes? What stays?"
+transfer-cue-2:
+  - "Add **LineChartView**, its drawing method, and Controller selection"
+  - "Setup initializes and subscribes it; another PieChartView receives an input-ignoring Controller"
+  - "Dataset remains unchanged"
+summary-cue-1:
+  - "**Context/problem:** changing interactive UI tangled with domain data"
+  - "**Solution:** Model owns data; Views display; Controllers interpret input"
+  - "**Trade-off:** synchronized, portable views versus wiring, redraw costs, and remaining model dependencies"

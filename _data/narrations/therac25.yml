@@ -17,6 +17,7 @@ references:
   - title: "The Debugging Book: diagnosis, causality, and incorrectness"
     url: https://www.debuggingbook.org/html/Intro_Debugging.html
 lesson:
+  chapter: /SEBook/development_practices/therac-25.html
   name: "Therac-25: follow the evidence"
 speech:
   voice: af_heart

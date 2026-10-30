@@ -5,10 +5,11 @@ description: >-
   and Model-View-Controller narrations, and any new one). USE THIS SKILL EVERY TIME you create, extend, restructure, or review
   a narrated pattern lesson: `_data/narrations/<topic>.yml` (readable speech and teaching text),
   `_data/narration_visuals/<topic>.json` (diagrams and renderer state),
-  `<topic>_code.yml` (Python/Java/C++/TypeScript examples), `<topic>_quizzes.yml` (section checks and
+  `<topic>_code.yml` (Python/Java/C++/TypeScript examples), `<topic>_notes.yml` (handout key points), `<topic>_quizzes.yml` (section checks and
   the summary quiz), `<topic>_timing.json`, the shared narration compiler, topic
   illustrations such as `_includes/<topic>-*.html` with `css/<topic>-narration.css`, the
-  `SEBook/designpatterns/<topic>/read.html` and `print.html` views, the narration audio and captions
+  `SEBook/designpatterns/<topic>/read.html` and `print.html` views, the shared editable PDF notes view,
+  the narration audio and captions
   under `assets/`, or `scripts/render-explainer-narration.py`. Also trigger on requests like "make a
   narration for the X pattern", "pick an example for the X narration", "fix the narration
   pronunciation", "the narration cuts into the next word", "add a summary quiz", or "restructure the
@@ -27,7 +28,7 @@ keep the narration readable and the renderer state in its separate JSON package.
 A narrated lesson is an approximately 11–13 minute, Kokoro-voiced walk through one
 design pattern at the top of its SEBook chapter (see `/SEBook/designpatterns/observer.html`,
 `/SEBook/designpatterns/state.html`, and `/SEBook/designpatterns/strategy.html`). A lesson is **data plus a few topic
-illustrations**: the player, transport, reader, and print views are shared. The architecture
+illustrations**: the player, transport, reader, print, and editable notes views are shared. The architecture
 and file list live in [`docs/narrated-pattern.md`](../../../docs/narrated-pattern.md); this
 skill is about authoring a lesson that teaches well and ships clean.
 
@@ -297,6 +298,8 @@ and JSON visual package, then include `narration.html` with `topic` in the chapt
 and add the `read.html` and `print.html` views. `lesson` holds human-facing metadata;
 `presentation.visuals`, `presentation.scripts`, and `presentation.styles` in the
 JSON package select illustrations and assets. Registration and shared styles are automatic.
+Write `<topic>_notes.yml` for every cue; the shared notes generator creates
+the editable handout automatically from the lesson metadata (section 9).
 
 - Topic illustrations are includes that read `include.cue`; their CSS goes in
   `css/<topic>-narration.css` with base, `html.dark-mode`, and `@media print` rules together.
@@ -322,7 +325,39 @@ JSON package select illustrations and assets. Registration and shared styles are
 - Full screen, captions, speed, scene selection, and the language switch come from the shared
   transport. Do not add per-topic transport code.
 
-## 9. Verify
+## 9. Editable notes and PDF export
+
+Every pattern lesson ships the same notes workflow as videos, explainers, and
+case studies. Follow
+[`narration-authoring`](../narration-authoring/SKILL.md#editable-notes-and-pdf-handouts-for-every-kind)
+and [the shared format](../../../docs/narration-format.md#editable-lesson-notes-and-pdf-export).
+Do not clone a pattern-specific notes layout or script.
+
+- `narration.html` adds **Save lesson notes as PDF** and **Edit lesson notes**.
+  The compiler derives `lesson.notes_url` from `lesson.views`, or from
+  `lesson.chapter` minus `.html`, followed by `/notes/`; Jekyll generates that
+  route using the shared `narration-notes` layout/include.
+- Author `_data/explainers/<topic>_notes.yml` with stable
+  `<scene.id>-<cue.id>` keys and one to four substantive bullets per cue.
+  Each bullet is at most 16 words; the total is at most half the speech, with
+  no run of eight copied words. Preserve role names, forces, qualifications,
+  consequences, and prediction questions without revealing answers early.
+  Notes-only edits do not require audio generation.
+- Reuse the cue's code, static illustration, and diagram. The handout's
+  code-language select changes only that page, not the shared saved language.
+  Code and diagrams must remain readable in rows that size to their content;
+  do not impose the animated stage's three-row print geometry on them.
+- Each cue and check has a labeled student-note field. The shared
+  `js/narration-notes.js` restores and autosaves plain text under
+  `sebook-narration-notes-<topic>` and prepares export. Student text prints
+  as ordinary paragraphs and can grow across pages. Keep the answer key at
+  the end and blank ruled space for handwriting.
+- Preserve headings, text alternatives, labels, keyboard access, light print
+  colors, and no-script reading. The browser supplies PDF tagging; inspect
+  the saved file instead of treating a tags check as complete accessibility
+  proof. Keep verification PDFs outside the repository.
+
+## 10. Verify
 
 Copy `scripts/tests/state-narration.test.js` and `tests/state-narration.spec.js` as templates;
 they check structure, timing, both designs in all languages, quizzes, focus targets, and the
@@ -335,6 +370,10 @@ node --test scripts/tests/<topic>-narration.test.js
 Build the site (the Bash tool needs `LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8`), run the topic spec
 and `tests/narration-fullscreen.spec.js` (add the new page to its list) with
 `A11Y_INTERACTIVE_CHECKS=1`, and run `tests/wcag22-complete-audit.spec.js` with
-`WCAG_AUDIT_URL_FILTER` matching the chapter and both views. Finally, play the lesson in the
+`WCAG_AUDIT_URL_FILTER` matching the chapter, reader/print views, and notes page.
+Run `scripts/tests/narration-notes.test.js` and `tests/narration-notes.spec.js`
+for handout content, editable text, reload/isolation, storage deletion, code-language
+choice, and export. Inspect a PDF containing long student writing. Report the
+actual audit scope, not full-site conformance. Finally, play the lesson in the
 browser: watch for a check that clips the next word, a highlight that misses its target, and
 text that needs leaning in to read.

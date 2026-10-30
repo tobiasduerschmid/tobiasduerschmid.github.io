@@ -1,4 +1,4 @@
-/* The printable notes of a video narration (_includes/video-narration-notes.html).
+/* Shared editable handouts (_includes/narration-notes.html).
    On screen they preview the handout; in print, only the lesson remains: its
    title, then three rows a page (each cue's picture at rest beside its key
    points and ruled lines, and each knowledge check), then the answers. Notes
@@ -51,7 +51,7 @@ html body.vn-notes-page {
 .vn-note-points li { margin: 0 0 0.35em; }
 
 /* The picture: a copy of the 960x540 stage, scaled to the slot's width
-   (js/video-narration-notes.js sets the scale on screen). Before it is drawn,
+   (js/narration-notes.js sets the scale on screen). Before it is drawn,
    or without scripts, the slot describes the picture in words. Its colors
    print as they show. */
 .vn-note-still { grid-area: still; position: relative; overflow: hidden; border: 1px solid var(--vn-notes-edge); border-radius: 4px; background: #f4f1ea; }
@@ -137,15 +137,71 @@ html body.vn-notes-page {
   }
   /* Tiled plaster/ruled-paper textures and glossy confetti also rasterize in
      Chromium's PDF renderer. Keep the artwork, paper, and confetti colors;
-     omit only these decorative textures. Other gradients remain vector. */
+     omit these decorative textures before the gradient fallbacks below. */
   .vn-note-still .sw-texture,
   .vn-note-still .confetti-piece::after { display: none; }
   .vn-note-still .us-card-body { background-image: none; }
   .vn-note-still .confetti-piece { background: var(--piece-color); }
+  /* Chromium 156 rasterizes radial CSS gradients, even without filters.
+     Keep the wall's linear wash and the objects' shapes as vectors; their
+     decorative light pools, vignette, and glossy shading need not print. */
+  .vn-note-still .sw-base { background-image: linear-gradient(180deg, #faf7f0 0%, #f2eee5 55%, #e9e4d8 100%) !important; }
+  .vn-note-still .sw-pool,
+  .vn-note-still .sw-lamp-glow,
+  .vn-note-still .sw-vignette { display: none; }
+  .vn-note-still .sk-ball { background: #7c3aed !important; }
+  .vn-note-still .us-card-pin { background: #e11d48 !important; }
+  /* Transparent gradient strokes also rasterize. Borders preserve the
+     dashed arrows and index-card margin without a bitmap paint layer. */
+  .vn-note-still .sk-arrow--dashed { background: none !important; }
+  .vn-note-still .sk-arrow--dashed::before { content: ''; position: absolute; inset: 0; box-sizing: border-box; border-top: 6px dashed currentColor; }
+  .vn-note-still .us-card { background: linear-gradient(170deg, #fffaf0, var(--paper) 60%, #f6ead0) !important; }
+  .vn-note-still .us-card::before { content: ''; position: absolute; top: 0; bottom: 0; left: calc(var(--margin) - 2px); border-left: 2px solid rgba(230, 60, 80, 0.55); }
   /* The lines fill whatever room the picture, points, or question leave. */
   .vn-note-points .vn-note-lines, .vn-check .vn-note-lines { flex: 1 1 0; height: 0; }
   .vn-note-lines--below { height: auto; }
   .vn-note-lines span { border-bottom-width: 0.75pt; }
   .vn-notes-answers { break-before: page; }
   .vn-notes-answers li { break-inside: avoid; }
+}
+
+/* The same handout supports static code/diagrams and editable student notes.
+   Content determines row height; long code and student prose must never clip. */
+.vn-notes-page .vn-notes-skip { position: absolute; left: 1em; top: -10em; padding: 0.5em; background: #fff; color: #0b5f75; z-index: 10; }
+.vn-notes-page .vn-notes-skip:focus { top: 0; }
+.vn-notes label, .vn-notes select, .vn-notes textarea { font: inherit; color: inherit; }
+.vn-notes select { margin-left: 0.5em; padding: 0.3em; background: #fff; border: 1px solid #4a5566; }
+.vn-note-editor label { display: block; font-weight: 600; }
+.vn-note-editor label[hidden] { display: none; }
+.vn-note-editor textarea { display: block; box-sizing: border-box; width: 100%; min-height: 5em; padding: 0.5em; margin: 0.3em 0; border: 1px solid #4a5566; background: #fff; resize: vertical; line-height: 1.5; }
+.vn-notes textarea:focus-visible, .vn-notes select:focus-visible { outline: 3px solid #0b5f75; outline-offset: 2px; }
+.vn-note-written { display: none; }
+.vn-note-written p { white-space: pre-wrap; overflow-wrap: anywhere; margin: 0.4em 0; }
+.vn-notes--document .vn-note-still { overflow: visible; padding: 0.6em; background: #fff; }
+.vn-notes--document .vn-note-still pre { white-space: pre-wrap; overflow-wrap: anywhere; max-height: none; font-size: 1em; }
+.vn-notes--document .np-diagram { max-height: none; overflow: visible; }
+.vn-notes--document .np-diagram svg { max-width: 100%; height: auto; }
+.vn-notes--document .np-cards { display: block; }
+.vn-notes--document .vn-note-still > * + * { margin-top: 1em; }
+.vn-notes--document .vn-note-still [hidden] { display: none !important; }
+.vn-note-art-drawing { visibility: hidden; }
+.has-pose .vn-note-art-drawing { visibility: visible; }
+.vn-note-visual-description { margin: 0.6em 0 0; color: var(--vn-notes-muted); font-size: 1em; }
+.vn-notes--document .nja-model { margin: 0; }
+@media print {
+  .vn-notes-page .vn-notes-skip, .vn-note-editor label { display: none; }
+  .vn-note-editor.has-text .vn-note-written { display: block; }
+  .vn-note.has-written-notes, .vn-notes--document .vn-note {
+    display: block; height: auto; min-height: 3in; overflow: visible; break-inside: auto;
+  }
+  .vn-note.has-written-notes > *, .vn-notes--document .vn-note > * { margin-bottom: 0.12in; }
+  .vn-notes--document .vn-note-still { width: auto; break-inside: avoid; }
+  .vn-notes--document .vn-note-still pre { max-height: none; overflow: visible; }
+  .vn-note.has-written-notes .vn-note-points .vn-note-lines,
+  .vn-notes--document .vn-note-points .vn-note-lines { min-height: 0.56in; }
+  .vn-note.has-written-notes .vn-note-lines--below,
+  .vn-notes--document .vn-note-lines--below { display: none; }
+  .vn-note-written { orphans: 3; widows: 3; }
+  .vn-note-head { break-after: avoid; }
+  .vn-notes--document .vn-note-still, .vn-note-written p { break-inside: auto; }
 }

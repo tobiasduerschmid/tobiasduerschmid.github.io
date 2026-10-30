@@ -41,7 +41,8 @@ The versioned authoring contract and a complete minimal example are in
 | `css/video-narration.css` | The screen, panels, and slide layouts, in both themes and print. |
 | `js/video-narration/<topic>.js`, `<topic>-kit.js`, `css/video-narration-<topic>.css` | The topic's choreography and artwork, loaded only in its frame. |
 | `_data/explainers/<topic>_notes.yml` | Key points per cue for the printable notes. |
-| `_layouts/video-narration-notes.html`, `_includes/video-narration-notes.html`, `css/video-narration-notes.css`, `js/video-narration-notes.js` | The printable notes: draws each cue's picture from the stage, then prints. |
+| `_layouts/narration-notes.html`, `_includes/narration-notes.html`, `css/video-narration-notes.css`, `js/narration-notes.js` | Shared editable handout for every narration kind: settles visuals, saves student writing locally, and prints. |
+| `_includes/narration-note-visual.html`, `_includes/narration-note-editor.html` | Reuse each kind's visuals and provide labeled note fields with plain-text print content. |
 | `_includes/video-narration-stage-assets.html` | The stage's styles, data, and scripts, shared by the stage frame and the notes. |
 
 ## The player
@@ -167,27 +168,43 @@ cue's visual description. The frame is `aria-hidden`; the screen's accessible
 name is the cue's `visual`, and the reading and print views describe each
 animated cue in words.
 
-## Printable notes
+## Editable notes and PDF export
 
-The **Save lesson notes as PDF** button under the video opens `<views>/notes/#export`
-(layout `video-narration-notes`, include `_includes/video-narration-notes.html`,
-styles `css/video-narration-notes.css`, script `js/video-narration-notes.js`).
-The page loads the narration's stage styles and scripts
+Every narration kind uses the same notes page. The shared `narration.html`
+entry point supplies **Save lesson notes as PDF** and **Edit lesson notes**
+links. Jekyll generates the `narration-notes` layout/include at the compiler's
+`lesson.notes_url`: `lesson.views`, or `lesson.chapter` minus a trailing
+`.html`, followed by `/notes/`. Export appends `#export`. New lessons need no
+hand-authored notes route. The old `video-narration-notes` layout/include are
+compatibility wrappers; `js/narration-notes.js` owns the shared lifecycle.
+See [the shared format](narration-format.md#editable-lesson-notes-and-pdf-export)
+for the notes schema, editable fields, local storage, and all-kind tests.
+
+For an animated video, the page loads the stage styles and scripts
 (`_includes/video-narration-stage-assets.html`, the same list the stage frame
 uses) and builds the stage once, out of view. For each cue it calls
 `VideoNarrationStage.still(time)` at the cue's resting time: the stage poses
 there, and a copy of it keeps the pose because every animated value is
 written into the copy's inline styles, and ids are renamed per copy. The copy
 replaces the row's description of its picture, which is what shows without
-scripts. When every picture is drawn, the page opens the print dialog (the
-`#export` hash), where readers save a PDF; its own button prints again.
+scripts. After the fonts and pictures are ready, the shared script opens the
+print dialog when `#export` is present; its own button prints again.
 
 Each row pairs the picture with the cue's key points from
-`_data/explainers/<topic>_notes.yml` and ruled lines; each section's check
+`_data/explainers/<topic>_notes.yml`, a labeled editable field, and ruled lines;
+each section's check
 from `<topic>_quizzes.yml` follows as a row with room to answer, and the
-answers, with each wrong option's feedback, close the notes. In print only
-the lesson remains: three rows a Letter page, then the answers. Pictures
-print at a fixed 3.6in (the stage at 0.36), so print layout needs no script.
+answers, with each wrong option's feedback, close the notes. Notes keys use
+`<scene.id>-<cue.id>`; only the existing Scrum file uses the legacy positional
+fallback. Each input autosaves under `sebook-narration-notes-<topic>`, with
+deletion available in Browser storage. Printed student writing comes from
+plain-text paragraphs mirrored from the textareas, so it remains readable
+and can flow across pages.
+
+In print only the lesson remains. Blank animated-stage handouts keep three
+rows per Letter page, then the answers. Non-video handouts use content-height
+rows; any row with student writing grows instead of clipping its text.
+Blank-stage pictures print at a fixed 3.6in (the stage at 0.36).
 The ruled lines are bordered spans, so they print without background
 graphics; the pictures keep their colors with `print-color-adjust: exact`.
 The notes always use the light palette, including when the site or operating
@@ -198,6 +215,9 @@ The remaining gradients, slide content, and layout are preserved. The notes
 tests inspect every object in the generated PDF for raster images (including
 images inside patterns and soft masks), and compare the light/dark PDF drawing
 streams so a theme preference cannot change the printed artwork.
+PDF export uses the browser's support for accessible HTML, including whatever
+tagging it provides. Verify the saved file's text and reading order; the
+presence of tags alone is not proof of PDF or full-site conformance.
 
 ## Adding a video narration
 
@@ -219,11 +239,11 @@ streams so a theme preference cannot change the printed artwork.
    `{% include video-narration-reading.html topic=page.topic %}`.
 6. Add the chapter to `tests/narration-fullscreen.spec.js`, and copy
    `scripts/tests/scrum-narration.test.js` and `tests/scrum-narration.spec.js`.
-7. Write the key points in `_data/explainers/<topic>_notes.yml` and add
-   `notes.html` under the `views` path (`layout: video-narration-notes`,
-   `topic`, `permalink: <views>/notes/`, `sitemap: false`, and
-   `{% include video-narration-notes.html topic=page.topic %}`). The button
-   appears once the key points exist, and the notes tests cover every
-   registered narration.
+7. Write one to four concise key points per cue in
+   `_data/explainers/<topic>_notes.yml`, keyed by stable scene and cue IDs.
+   The shared generator supplies the notes page and both chapter links.
+   Run the common notes tests and the video still/print checks. Inspect a
+   blank handout and one containing long student writing; do not add a
+   per-topic copy of the notes layout, script, or page.
 
 The `video-narration` skill covers how to author a lesson that teaches well.

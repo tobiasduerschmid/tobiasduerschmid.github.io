@@ -1,0 +1,101 @@
+# Printable handout key points. Keys preserve scene and cue identities.
+declarative-cue-1:
+  - "**React:** JavaScript library for user interfaces; neither another language nor Node.js replacement"
+  - "Example: keep a Like button consistent with the remembered count"
+declarative-cue-2:
+  - "**Imperative:** update the button text manually"
+  - "**Declarative:** describe UI for state; React recalculates and updates the page"
+jsx-cue-1:
+  - "**Component:** function describing part of the interface"
+  - "CourseTitle starts uppercase; built-in tags start lowercase"
+  - "Function braces enclose statements; const names the local title string"
+jsx-cue-2:
+  - "**return:** supplies an element description"
+  - "**JSX:** syntax extension transformed into JavaScript by a build tool"
+  - "Lowercase h2 describes a heading; **className** specifies its CSS class"
+jsx-cue-3:
+  - "JSX braces insert the result of a JavaScript expression"
+  - "Function braces group statements; JSX braces insert values"
+  - "The displayed heading omits source braces and string quotation marks"
+props-cue-1:
+  - "**App:** parent containing two CourseTitle instances"
+  - "Uppercase tags select components; lowercase main selects built-in HTML"
+  - "Self-closing tags end with a slash"
+props-cue-2:
+  - "**Props:** properties passed into a component"
+  - "Object destructuring extracts title from the props object"
+  - "Each instance executes the same component with a different input"
+props-cue-3:
+  - "Props are **read-only**; children should not mutate received objects"
+  - "**Props:** supplied inputs; **state:** remembered values that can change"
+state-cue-1:
+  - "**useState:** imported Hook providing component memory"
+  - "Call Hooks at the component’s top level"
+  - "Zero initializes this instance’s state"
+state-cue-2:
+  - "**Array destructuring:** names the current value and update function"
+  - "**likes:** value; **setLikes:** requests an update"
+  - "const fixes local bindings; later renders can receive different values"
+state-cue-3:
+  - "**Render:** React calls the component to calculate UI"
+  - "likes is a **snapshot** for this call; it stays fixed during execution"
+  - "Memory exists now; click handling comes next"
+events-cue-1:
+  - "**onClick:** receives handleLike as a function value"
+  - "Invocation parentheses would execute it during rendering"
+  - "The callback runs in response to a click"
+events-cue-2:
+  - "Handler reads snapshot zero and requests replacement with one"
+  - "**setLikes:** queues an update; it does not rewrite local likes"
+  - "React processes queued updates after this handler finishes"
+events-cue-3:
+  - "Next render receives one and calculates the new button description"
+  - "**Commit:** applies necessary changes to the browser’s DOM"
+  - "Render calculates UI; commit updates the document"
+updates-cue-1:
+  - "**Predict:** Two calls using likes + 1 from snapshot zero: one or two afterward?"
+  - "Does the first request change the second expression’s local input?"
+updates-cue-2:
+  - "Result: **one**; both requests replace state with one"
+  - "React groups this event’s updates; neither call is skipped"
+  - "Separate deliberate clicks remain separate events"
+updates-cue-3:
+  - "**Updater function:** computes new state from the preceding queued result"
+  - "Two pure updaters produce zero → one → two"
+  - "Use updaters when state depends on previous state; avoid mutations and requests"
+shared-cue-1:
+  - "**Lifting state up:** move shared memory into the nearest common parent"
+  - "Course owns one count used by both button and total"
+  - "Independent copies could diverge"
+shared-cue-2:
+  - "Parent passes handleLike through its **onLike** prop"
+  - "onLike is an authored prop name, not a browser event"
+  - "The supplied function updates the parent-owned count"
+shared-cue-3:
+  - "Child extracts likes and onLike, then connects onLike to onClick"
+  - "Click requests the parent’s update; both displays render the new count"
+  - "Data travels downward; callbacks request changes without mutating props"
+lists-cue-1:
+  - "**map:** transforms each course into a list element"
+  - "**course.title:** reads the current object’s property"
+  - "JSX braces insert the resulting element array"
+lists-cue-2:
+  - "**key:** stable item identity across renders, unique among siblings"
+  - "Use course identifiers; position and random keys fail to preserve identity"
+  - "Stable identities preserve associations when stateful items reorder"
+lists-cue-3:
+  - "**Spread:** create a new array before reversing"
+  - "Reverse the copy, never the existing state array"
+  - "**Shallow copy:** new array, same course objects; this operation leaves those objects unchanged"
+effects-cue-1:
+  - "**useEffect:** synchronizes something beyond the returned JSX"
+  - "Example: assign document.title from the committed like count"
+  - "Import useEffect; pass a function containing the synchronization work"
+effects-cue-2:
+  - "Effects run after commit, initially and when declared dependencies change"
+  - "**[likes]:** dependency list for the reactive value being read"
+  - "Subscriptions and timers need cleanup; development can repeat setup and cleanup"
+effects-cue-3:
+  - "Derive display text during rendering; handle user actions in event handlers"
+  - "**Trace:** count owner → callback request → new render → commit"
+  - "Use effects for external synchronization, not ordinary calculations"

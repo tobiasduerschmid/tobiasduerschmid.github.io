@@ -1,0 +1,117 @@
+# Printable handout key points. Keys preserve scene and cue identities.
+ui-cue-1:
+  - "**Example:** one document edit updates preview, character count, and Save availability"
+  - "Who should own each widget’s reaction?"
+ui-cue-2:
+  - "**Pattern description:** context, problem, solution, consequences"
+  - "Context names the situation; problem names its difficulty"
+  - "Solution describes collaborating roles; consequences weigh benefits against costs"
+context-cue-1:
+  - "**Observer context:** one object changes; several dependent objects must react"
+  - "Document dependents: preview, character counter, Save button"
+context-cue-2:
+  - "Dependents evolve independently and can appear or disappear at runtime"
+  - "The changing object should not enumerate concrete dependent classes"
+conditions-cue-1:
+  - "Document stores text and updates Preview directly"
+  - "Two responsibilities mixed: domain content and widget presentation"
+conditions-cue-2:
+  - "Counter branch calculates length, formats it, and updates the display"
+  - "Document now depends on widget identities and display rules"
+conditions-cue-3:
+  - "Save branch checks presence and enables nonempty text"
+  - "Simplified editing rule, not a full saving workflow"
+  - "Every added widget creates more document-specific presentation code"
+conditions-cue-4:
+  - "**Predict:** Adding word count requires editing which class? Explain the dependency."
+conditions-cue-5:
+  - "**Problem:** notify dependents without coupling domain code to concrete UI classes"
+  - "Conditionals themselves are not the issue; the direction of dependency is"
+  - "Frequent presentation changes should not force domain-model edits"
+roles-cue-1:
+  - "**Subject:** maintains registrations and announces changes through Observer references"
+  - "**Observer:** owns a reaction behind a shared update contract"
+  - "**attach/detach:** manage subscriptions"
+roles-cue-2:
+  - "**update(text):** common notification operation"
+  - "Different Concrete Observers respond differently to the same call"
+roles-cue-3:
+  - "**Concrete Subject:** Document owns text and initiates notification"
+  - "Solid hollow triangle: inherited notification mechanism in this example"
+  - "A separate Subject superclass is optional"
+roles-cue-4:
+  - "**Concrete Observer:** implements update and owns its reaction"
+  - "Preview, Character Count, and Save button fill this role"
+  - "Dashed hollow triangle: fulfills the Observer contract"
+contract-cue-1:
+  - "Observer contract accepts text updates across all four languages"
+  - "Objects expose roles clearly; callable handlers can express the same collaboration"
+contract-cue-2:
+  - "**Push:** notification carries changed text"
+  - "**Pull:** Observer queries needed Subject state after notification"
+  - "Push couples this example to a text payload; neither approach eliminates dependencies"
+subject-cue-1:
+  - "**attach:** register an Observer through its contract"
+  - "Example client attaches each object once; no widget-type tests"
+subject-cue-2:
+  - "**detach:** unsubscribe a closing pane"
+  - "Production APIs must define duplicate attachment and absent-object removal"
+subject-cue-3:
+  - "One loop calls each registered Observer’s update implementation"
+  - "Dispatch replaces widget-specific branches"
+  - "Calls are synchronous; the pattern creates no threads or asynchronous tasks"
+document-cue-1:
+  - "**Ordering:** complete the text change, then notify"
+  - "An Observer reading Document must see consistent updated state"
+document-cue-2:
+  - "Document announces data; widgets own formatting and enabling rules"
+  - "This example notifies on every call, including unchanged text"
+views-cue-1:
+  - "**Preview.update:** stores received text as display state"
+  - "Toolkit-neutral fields represent what actual widgets would show"
+views-cue-2:
+  - "**Character Count.update:** displays text length; Hi → 2, Hello → 5"
+  - "Real editors must define their Unicode counting policy"
+views-cue-3:
+  - "**Save button:** owns the nonempty-text condition"
+  - "Improvement: assign widget knowledge to widgets, not eliminate every conditional"
+trace-cue-1:
+  - "Client creates concrete objects and registers them; Subject only knows their contract"
+  - "Initial views: empty preview, count zero, Save disabled"
+  - "Registration alone does not initialize a view"
+trace-cue-2:
+  - "Document stores Hi, then notifies its registered Observers"
+  - "Results: preview Hi, count 2, Save enabled"
+  - "This implementation invokes them sequentially in registration order"
+trace-cue-3:
+  - "**Predict:** Detach Preview, then set Hello. What happens to count, Save, and Preview’s stored text?"
+trace-cue-4:
+  - "Results: count 5; Save enabled; detached Preview retains Hi"
+  - "Removing the registration avoids a closed-widget special case"
+consequences-cue-1:
+  - "**Benefit:** add and register a view without editing Document’s notification loop"
+  - "Dependents can join and leave dynamically"
+  - "Coupling remains through the shared contract"
+consequences-cue-2:
+  - "**Cost:** attachment and notification sites make control flow indirect"
+  - "Synchronous slow Observers delay callers"
+  - "An exception stops this simple loop; production needs an explicit error policy"
+consequences-cue-3:
+  - "**Lifetimes:** retained subscriptions can keep unused objects alive; non-owning references can dangle"
+  - "Detach on closure; define concurrency, subscription-change, and recursive-update policies"
+applicability-cue-1:
+  - "Use for multiple independent dependents, especially changing subscriptions"
+  - "One fixed collaborator may need only a direct call"
+applicability-cue-2:
+  - "Observer alone provides no durable cross-process delivery"
+  - "Brokers, persistence, retries, and scheduling are additional architectural choices"
+transfer-cue-1:
+  - "**Predict:** Optional word-count pane: which role, added code, and unchanged code?"
+transfer-cue-2:
+  - "Add a Concrete Observer that calculates its own word count"
+  - "Attach on opening; detach on closing; explicitly initialize from existing document state"
+  - "Subject’s notification loop stays unchanged"
+summary-cue-1:
+  - "**Context/problem:** changing dependents; direct updates couple the Subject to concrete classes"
+  - "**Solution:** registered Observers receive updates and implement their own reactions"
+  - "**Trade-off:** extensibility versus indirect control flow and subscription lifecycles"

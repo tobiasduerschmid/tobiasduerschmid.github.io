@@ -17,7 +17,7 @@ const LETTER = { width: (8.5 - 2 * 0.5) * INCH, height: (11 - 0.4 - 0.55) * INCH
 // The picture a row shows: its cue at rest, just before the cue ends.
 const REST_LEAD = 0.3;
 const ROWS_PER_PAGE = 3;
-const picturesReady = page => expect(page.getByRole('status')).toHaveText('The pictures are ready.', { timeout: 60000 });
+const picturesReady = page => expect(page.locator('[data-notes-status]')).toHaveText('The pictures are ready.', { timeout: 60000 });
 
 // The words a stage shows and where, in stage pixels.
 function stageWords(stage) {

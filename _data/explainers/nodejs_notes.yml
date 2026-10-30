@@ -1,0 +1,98 @@
+# Printable handout key points. Keys preserve scene and cue identities.
+runtime-cue-1:
+  - "**Runtime:** executes a language and provides tools"
+  - "**Node.js:** JavaScript runtime for computers and servers; not another language"
+runtime-cue-2:
+  - "**V8:** executes JavaScript inside Node.js"
+  - "Node supplies file and network capabilities; browsers supply page-interaction tools"
+syntax-cue-1:
+  - "**const:** a binding that cannot be reassigned"
+  - "**let:** a reassignable binding; count starts at zero"
+  - "Quotation marks delimit the string Hello"
+syntax-cue-2:
+  - "**Arrow function:** names an input parameter and groups work in a body"
+  - "Defining greet does not execute it; count remains zero"
+syntax-cue-3:
+  - "**Call:** parentheses invoke greet with Sam as its argument"
+  - "During this call, parameter name refers to Sam"
+syntax-cue-4:
+  - "**+= 1:** count increases to one"
+  - "**console.log:** dot selects log; parentheses pass greeting and name"
+  - "Output: Hello Sam; ordinary JavaScript executes sequentially"
+blocking-cue-1:
+  - "**require:** loads the built-in file-system module as fs"
+  - "Example assumes note.txt exists, contains Hello from disk, and reads successfully"
+blocking-cue-2:
+  - "**readFileSync:** returns only after reading finishes"
+  - "**utf8:** decode bytes into text"
+  - "Blocked JavaScript thread cannot execute another line or request handler"
+blocking-cue-3:
+  - "Completed read assigns text; output: Hello from disk, then Next"
+  - "Waiting also delays unrelated work that needs this thread"
+nonblocking-cue-1:
+  - "**readFile:** starts reading and returns before supplying file contents"
+  - "Third argument onFile receives the eventual result"
+nonblocking-cue-2:
+  - "Next prints while the file operation progresses"
+  - "Operating system and **libuv worker pool** support file work"
+  - "After current code finishes, the JavaScript thread can handle ready work"
+nonblocking-cue-3:
+  - "Completed read makes onFile ready"
+  - "**Event loop:** coordinates callback execution"
+  - "Ready callbacks wait; they cannot interrupt JavaScript already executing"
+nonblocking-cue-4:
+  - "Output: Next, then Hello from disk"
+  - "**Concurrency:** operations overlap; callbacks still execute individually on this thread"
+  - "Lengthy calculations delay other callbacks, despite asynchronous reads"
+callbacks-cue-1:
+  - "**Callback:** function supplied to another function"
+  - "Pass onFile without invocation parentheses; do not call it immediately"
+  - "Named function declarations specify parameters and a body"
+callbacks-cue-2:
+  - "**Error-first callback:** success supplies null, then file text"
+  - "Falsy error skips failure handling and prints the text"
+callbacks-cue-3:
+  - "Missing file produces an error object"
+  - "**console.error:** reports failure"
+  - "**return:** exits before success code can use unavailable data"
+callbacks-cue-4:
+  - "Inline arrow notation preserves the callback behavior"
+  - "readFile invokes its callback later; other APIs may invoke callbacks immediately"
+await-cue-1:
+  - "**Promise:** represents eventual success or failure"
+  - "**await:** suspends this async function while the thread can handle other work"
+  - "Use Node’s promise-based file-system API"
+await-cue-2:
+  - "Fulfillment supplies file text to await"
+  - "Execution resumes below await, assigns text, and prints the result"
+await-cue-3:
+  - "Rejection throws at await; **catch** handles the error"
+  - "**async** does not move calculations onto another thread"
+  - "Long calculations still occupy the JavaScript thread"
+server-cue-1:
+  - "**HTTP module:** createServer registers a request-handler callback"
+  - "Registration prepares a response; nothing is sent before a request"
+server-cue-2:
+  - "**listen(3000):** accept connections on port 3000"
+  - "Visiting localhost:3000 sends a request to this computer"
+  - "**req:** incoming request; **res:** response interface"
+server-cue-3:
+  - "**res.end:** sends Hello and completes this response"
+  - "Server stays available for subsequent requests"
+  - "Register behavior first; run it when the matching event arrives"
+npm-cue-1:
+  - "**Module:** reusable code; file-system and HTTP modules are built in"
+  - "**npm install express:** downloads the external package into node_modules"
+  - "**package.json:** records the project dependency"
+npm-cue-2:
+  - "**require:** loads a module; const names its exported value"
+  - "These examples use **CommonJS**; loading Express alone starts no server"
+  - "npm installs; require loads; Node executes"
+predict-cue-1:
+  - "**Predict:** What order do A, B, and C print? Why?"
+  - "**setTimeout(..., 0):** schedules a callback; zero delay does not interrupt running code"
+  - "Empty arrow parameters mean no input arguments"
+predict-cue-2:
+  - "Output: **A, C, B**"
+  - "Main code completes before the scheduled callback can print B"
+  - "Asynchronous results arrive later while current JavaScript continues sequentially"

@@ -1200,7 +1200,7 @@ steps:
             PROPERTY Response
             CHECK_DEADLOCK FALSE
       explanation: |
-        Response == [](requested => <>delivered) accepts no-request behaviors and successful responses, and rejects a request followed by permanent nondelivery. requested ~> delivered is a TLA+ shorthand for this formula, though the core task uses the operators just taught. A correct formula deliberately reveals the dropped-request behavior. The two assessment implications check each direction separately because this TLC build does not accept a raw temporal equivalence operator in that shape.
+        `Response == [](requested => <>delivered)` accepts no-request behaviors and successful responses, and rejects a request followed by permanent nondelivery. `requested ~> delivered` is a TLA+ shorthand for this formula, though the core task uses the operators just taught. A correct formula deliberately reveals the dropped-request behavior. The two assessment implications check each direction separately because this TLC build does not accept a raw temporal equivalence operator in that shape.
   # Pedagogy: Independent integration from a packaging scaffold — transfer safety, atomic steps, nondeterminism and progress; require allowed failure witnesses [F2, F3, L1, P2].
   - title: The Upload Retry Budget
     key: upload-capstone

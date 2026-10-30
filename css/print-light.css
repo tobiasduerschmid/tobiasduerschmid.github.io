@@ -66,8 +66,10 @@ html.print-light-mode.dark-mode .sebook-figure__verbose-body .sebook-figure__ver
 }
 
 @media print {
+  /* Dedicated print-light-mode documents already own a light palette, including
+     colored teaching artwork. Do not recolor them through the dark-page reset. */
   html,
-  html.dark-mode {
+  html.dark-mode:not(.print-light-mode) {
     --sebook-button-bg: #fff;
     --sebook-button-bg-hover: #fff;
     --sebook-button-text: #111;
@@ -116,162 +118,162 @@ html.print-light-mode.dark-mode .sebook-figure__verbose-body .sebook-figure__ver
   }
 
   html,
-  html.dark-mode,
-  html.dark-mode body,
-  html.dark-mode body.default-layout,
-  html.dark-mode body.blog-layout,
-  html.dark-mode body.sebook-layout,
-  html.dark-mode body.framework-layout,
-  html.dark-mode body.sebook-combined-layout,
-  html.dark-mode body.tutorial-layout {
+  html.dark-mode:not(.print-light-mode),
+  html.dark-mode:not(.print-light-mode) body,
+  html.dark-mode:not(.print-light-mode) body.default-layout,
+  html.dark-mode:not(.print-light-mode) body.blog-layout,
+  html.dark-mode:not(.print-light-mode) body.sebook-layout,
+  html.dark-mode:not(.print-light-mode) body.framework-layout,
+  html.dark-mode:not(.print-light-mode) body.sebook-combined-layout,
+  html.dark-mode:not(.print-light-mode) body.tutorial-layout {
     color-scheme: light !important;
     background: #fff !important;
     color: #111 !important;
   }
 
-  html.dark-mode #sebook-content-wrapper,
-  html.dark-mode #blog-content-wrapper,
-  html.dark-mode #main-content,
-  html.dark-mode .container,
-  html.dark-mode article.post-content,
-  html.dark-mode body.sebook-layout #main-content,
-  html.dark-mode body.blog-layout #main-content,
-  html.dark-mode body.framework-layout #main-content,
-  html.dark-mode body.framework-layout article.post-content,
-  html.dark-mode body.sebook-combined-layout #main-content {
+  html.dark-mode:not(.print-light-mode) #sebook-content-wrapper,
+  html.dark-mode:not(.print-light-mode) #blog-content-wrapper,
+  html.dark-mode:not(.print-light-mode) #main-content,
+  html.dark-mode:not(.print-light-mode) .container,
+  html.dark-mode:not(.print-light-mode) article.post-content,
+  html.dark-mode:not(.print-light-mode) body.sebook-layout #main-content,
+  html.dark-mode:not(.print-light-mode) body.blog-layout #main-content,
+  html.dark-mode:not(.print-light-mode) body.framework-layout #main-content,
+  html.dark-mode:not(.print-light-mode) body.framework-layout article.post-content,
+  html.dark-mode:not(.print-light-mode) body.sebook-combined-layout #main-content {
     background: #fff !important;
     color: #111 !important;
     box-shadow: none !important;
   }
 
-  html.dark-mode body * {
+  html.dark-mode:not(.print-light-mode) body * {
     color: #111 !important;
     border-color: #ddd !important;
     box-shadow: none !important;
     text-shadow: none !important;
   }
 
-  html.dark-mode body *:not(svg):not(path):not(rect):not(circle):not(ellipse):not(line):not(polyline):not(polygon):not(text):not(tspan) {
+  html.dark-mode:not(.print-light-mode) body *:not(svg):not(path):not(rect):not(circle):not(ellipse):not(line):not(polyline):not(polygon):not(text):not(tspan) {
     background-color: transparent !important;
   }
 
-  html.dark-mode .panel,
-  html.dark-mode .panel-default,
-  html.dark-mode .panel-heading,
-  html.dark-mode .panel-body,
-  html.dark-mode .jumbotron,
-  html.dark-mode .blog-post-item,
-  html.dark-mode .card,
-  html.dark-mode .well,
-  html.dark-mode .list-group,
-  html.dark-mode .list-group-item,
-  html.dark-mode .alert {
+  html.dark-mode:not(.print-light-mode) .panel,
+  html.dark-mode:not(.print-light-mode) .panel-default,
+  html.dark-mode:not(.print-light-mode) .panel-heading,
+  html.dark-mode:not(.print-light-mode) .panel-body,
+  html.dark-mode:not(.print-light-mode) .jumbotron,
+  html.dark-mode:not(.print-light-mode) .blog-post-item,
+  html.dark-mode:not(.print-light-mode) .card,
+  html.dark-mode:not(.print-light-mode) .well,
+  html.dark-mode:not(.print-light-mode) .list-group,
+  html.dark-mode:not(.print-light-mode) .list-group-item,
+  html.dark-mode:not(.print-light-mode) .alert {
     background: #fff !important;
     border-color: #ddd !important;
     color: #111 !important;
   }
 
-  html.dark-mode h1,
-  html.dark-mode h2,
-  html.dark-mode h3,
-  html.dark-mode h4,
-  html.dark-mode h5,
-  html.dark-mode h6,
-  html.dark-mode .post-title,
-  html.dark-mode .page-heading,
-  html.dark-mode .intro-header h1,
-  html.dark-mode .quiz-header h1,
-  html.dark-mode .quiz-header h3,
-  html.dark-mode .blog-post-header h1,
-  html.dark-mode .blog-post-content h2,
-  html.dark-mode .blog-post-content h3,
-  html.dark-mode body.sebook-layout #main-content h1,
-  html.dark-mode body.sebook-layout #main-content h2,
-  html.dark-mode body.blog-layout #main-content h1,
-  html.dark-mode body.blog-layout #main-content h2,
-  html.dark-mode body.framework-layout #main-content h1,
-  html.dark-mode body.framework-layout #main-content h2,
-  html.dark-mode body.sebook-combined-layout #main-content h1,
-  html.dark-mode body.sebook-combined-layout #main-content h2 {
+  html.dark-mode:not(.print-light-mode) h1,
+  html.dark-mode:not(.print-light-mode) h2,
+  html.dark-mode:not(.print-light-mode) h3,
+  html.dark-mode:not(.print-light-mode) h4,
+  html.dark-mode:not(.print-light-mode) h5,
+  html.dark-mode:not(.print-light-mode) h6,
+  html.dark-mode:not(.print-light-mode) .post-title,
+  html.dark-mode:not(.print-light-mode) .page-heading,
+  html.dark-mode:not(.print-light-mode) .intro-header h1,
+  html.dark-mode:not(.print-light-mode) .quiz-header h1,
+  html.dark-mode:not(.print-light-mode) .quiz-header h3,
+  html.dark-mode:not(.print-light-mode) .blog-post-header h1,
+  html.dark-mode:not(.print-light-mode) .blog-post-content h2,
+  html.dark-mode:not(.print-light-mode) .blog-post-content h3,
+  html.dark-mode:not(.print-light-mode) body.sebook-layout #main-content h1,
+  html.dark-mode:not(.print-light-mode) body.sebook-layout #main-content h2,
+  html.dark-mode:not(.print-light-mode) body.blog-layout #main-content h1,
+  html.dark-mode:not(.print-light-mode) body.blog-layout #main-content h2,
+  html.dark-mode:not(.print-light-mode) body.framework-layout #main-content h1,
+  html.dark-mode:not(.print-light-mode) body.framework-layout #main-content h2,
+  html.dark-mode:not(.print-light-mode) body.sebook-combined-layout #main-content h1,
+  html.dark-mode:not(.print-light-mode) body.sebook-combined-layout #main-content h2 {
     color: #2774AE !important;
   }
 
-  html.dark-mode .jumbotron h1,
-  html.dark-mode .jumbotron h2,
-  html.dark-mode body.default-layout header h1,
-  html.dark-mode body.default-layout #page-top header h1,
-  html.dark-mode .blog-post-title a,
-  html.dark-mode .blog-post-title a:visited,
-  html.dark-mode .blog-post-title a:hover,
-  html.dark-mode .blog-post-title a:focus {
+  html.dark-mode:not(.print-light-mode) .jumbotron h1,
+  html.dark-mode:not(.print-light-mode) .jumbotron h2,
+  html.dark-mode:not(.print-light-mode) body.default-layout header h1,
+  html.dark-mode:not(.print-light-mode) body.default-layout #page-top header h1,
+  html.dark-mode:not(.print-light-mode) .blog-post-title a,
+  html.dark-mode:not(.print-light-mode) .blog-post-title a:visited,
+  html.dark-mode:not(.print-light-mode) .blog-post-title a:hover,
+  html.dark-mode:not(.print-light-mode) .blog-post-title a:focus {
     color: #2774AE !important;
   }
 
-  html.dark-mode a,
-  html.dark-mode a:visited,
-  html.dark-mode a.citation,
-  html.dark-mode a.citation:visited,
-  html.dark-mode a.citation:hover {
+  html.dark-mode:not(.print-light-mode) a,
+  html.dark-mode:not(.print-light-mode) a:visited,
+  html.dark-mode:not(.print-light-mode) a.citation,
+  html.dark-mode:not(.print-light-mode) a.citation:visited,
+  html.dark-mode:not(.print-light-mode) a.citation:hover {
     color: #2774AE !important;
   }
 
-  html.dark-mode a.citation:hover {
+  html.dark-mode:not(.print-light-mode) a.citation:hover {
     background: #fff !important;
   }
 
   .inline-language-switcher,
-  html.dark-mode .inline-language-switcher,
+  html.dark-mode:not(.print-light-mode) .inline-language-switcher,
   .inline-language-tabs,
-  html.dark-mode .inline-language-tabs,
-  html.dark-mode .inline-language-tabs button,
-  html.dark-mode .inline-language-tabs button[aria-selected="true"],
-  html.dark-mode .inline-language-tabs button[aria-selected="true"]:hover,
-  html.dark-mode .inline-language-tabs button[aria-selected="true"]:focus {
+  html.dark-mode:not(.print-light-mode) .inline-language-tabs,
+  html.dark-mode:not(.print-light-mode) .inline-language-tabs button,
+  html.dark-mode:not(.print-light-mode) .inline-language-tabs button[aria-selected="true"],
+  html.dark-mode:not(.print-light-mode) .inline-language-tabs button[aria-selected="true"]:hover,
+  html.dark-mode:not(.print-light-mode) .inline-language-tabs button[aria-selected="true"]:focus {
     background: #fff !important;
     color: #111 !important;
     border-color: #767676 !important;
     box-shadow: none !important;
   }
 
-  html.dark-mode .text-danger,
-  html.dark-mode p.lead,
-  html.dark-mode .lead,
-  html.dark-mode legend,
-  html.dark-mode .form-control-static,
-  html.dark-mode .panel-title,
-  html.dark-mode .panel-heading,
-  html.dark-mode .panel-body,
-  html.dark-mode .blog-post-excerpt,
-  html.dark-mode .blog-post-info {
+  html.dark-mode:not(.print-light-mode) .text-danger,
+  html.dark-mode:not(.print-light-mode) p.lead,
+  html.dark-mode:not(.print-light-mode) .lead,
+  html.dark-mode:not(.print-light-mode) legend,
+  html.dark-mode:not(.print-light-mode) .form-control-static,
+  html.dark-mode:not(.print-light-mode) .panel-title,
+  html.dark-mode:not(.print-light-mode) .panel-heading,
+  html.dark-mode:not(.print-light-mode) .panel-body,
+  html.dark-mode:not(.print-light-mode) .blog-post-excerpt,
+  html.dark-mode:not(.print-light-mode) .blog-post-info {
     color: #111 !important;
   }
 
-  html.dark-mode .post-date,
-  html.dark-mode .post-meta {
+  html.dark-mode:not(.print-light-mode) .post-date,
+  html.dark-mode:not(.print-light-mode) .post-meta {
     color: #555 !important;
   }
 
-  html.dark-mode .blog-featured-badge,
-  html.dark-mode .blog-featured-badge:visited {
+  html.dark-mode:not(.print-light-mode) .blog-featured-badge,
+  html.dark-mode:not(.print-light-mode) .blog-featured-badge:visited {
     background: #FFD100 !important;
     color: #000 !important;
     border-color: #8a6d00 !important;
   }
 
-  html.dark-mode blockquote,
-  html.dark-mode code,
-  html.dark-mode pre,
-  html.dark-mode .highlight,
-  html.dark-mode .highlight pre,
-  html.dark-mode body.sebook-layout #main-content pre,
-  html.dark-mode body.sebook-layout #main-content code,
-  html.dark-mode body.sebook-layout #main-content .highlight pre,
-  html.dark-mode body.framework-layout #main-content pre,
-  html.dark-mode body.framework-layout #main-content code,
-  html.dark-mode body.framework-layout #main-content .highlight pre,
-  html.dark-mode body.sebook-combined-layout #main-content pre,
-  html.dark-mode body.sebook-combined-layout #main-content code,
-  html.dark-mode body.sebook-combined-layout #main-content .highlight pre {
+  html.dark-mode:not(.print-light-mode) blockquote,
+  html.dark-mode:not(.print-light-mode) code,
+  html.dark-mode:not(.print-light-mode) pre,
+  html.dark-mode:not(.print-light-mode) .highlight,
+  html.dark-mode:not(.print-light-mode) .highlight pre,
+  html.dark-mode:not(.print-light-mode) body.sebook-layout #main-content pre,
+  html.dark-mode:not(.print-light-mode) body.sebook-layout #main-content code,
+  html.dark-mode:not(.print-light-mode) body.sebook-layout #main-content .highlight pre,
+  html.dark-mode:not(.print-light-mode) body.framework-layout #main-content pre,
+  html.dark-mode:not(.print-light-mode) body.framework-layout #main-content code,
+  html.dark-mode:not(.print-light-mode) body.framework-layout #main-content .highlight pre,
+  html.dark-mode:not(.print-light-mode) body.sebook-combined-layout #main-content pre,
+  html.dark-mode:not(.print-light-mode) body.sebook-combined-layout #main-content code,
+  html.dark-mode:not(.print-light-mode) body.sebook-combined-layout #main-content .highlight pre {
     background: #eef !important;
     border-color: #eee !important;
     color: #111 !important;
@@ -279,9 +281,9 @@ html.print-light-mode.dark-mode .sebook-figure__verbose-body .sebook-figure__ver
     text-shadow: none !important;
   }
 
-  html.dark-mode pre code,
-  html.dark-mode .highlight code,
-  html.dark-mode .highlight pre code {
+  html.dark-mode:not(.print-light-mode) pre code,
+  html.dark-mode:not(.print-light-mode) .highlight code,
+  html.dark-mode:not(.print-light-mode) .highlight pre code {
     background: transparent !important;
     border-color: transparent !important;
     color: #111 !important;
@@ -289,38 +291,38 @@ html.print-light-mode.dark-mode .sebook-figure__verbose-body .sebook-figure__ver
 
   /* Rouge's dark token colors are individually important. Override those
      descendants too, so a saved dark theme cannot make printed code faint. */
-  html.dark-mode body .highlight [class] {
+  html.dark-mode:not(.print-light-mode) body .highlight [class] {
     color: #111 !important;
   }
 
-  html.dark-mode table,
-  html.dark-mode th,
-  html.dark-mode td {
+  html.dark-mode:not(.print-light-mode) table,
+  html.dark-mode:not(.print-light-mode) th,
+  html.dark-mode:not(.print-light-mode) td {
     background: #fff !important;
     border-color: #ddd !important;
     color: #111 !important;
   }
 
-  html.dark-mode th {
+  html.dark-mode:not(.print-light-mode) th {
     background: #f8f9fa !important;
     border-bottom-color: #2774AE !important;
     color: #2774AE !important;
   }
 
-  html.dark-mode tr:nth-child(even),
-  html.dark-mode tr:nth-child(even) td {
+  html.dark-mode:not(.print-light-mode) tr:nth-child(even),
+  html.dark-mode:not(.print-light-mode) tr:nth-child(even) td {
     background: #fafafa !important;
   }
 
-  html.dark-mode input,
-  html.dark-mode textarea,
-  html.dark-mode select,
-  html.dark-mode button,
-  html.dark-mode .btn.btn-default.active,
-  html.dark-mode .tvm-btn-prev,
-  html.dark-mode .tvm-btn-next,
-  html.dark-mode .tvm-btn-test,
-  html.dark-mode .form-control {
+  html.dark-mode:not(.print-light-mode) input,
+  html.dark-mode:not(.print-light-mode) textarea,
+  html.dark-mode:not(.print-light-mode) select,
+  html.dark-mode:not(.print-light-mode) button,
+  html.dark-mode:not(.print-light-mode) .btn.btn-default.active,
+  html.dark-mode:not(.print-light-mode) .tvm-btn-prev,
+  html.dark-mode:not(.print-light-mode) .tvm-btn-next,
+  html.dark-mode:not(.print-light-mode) .tvm-btn-test,
+  html.dark-mode:not(.print-light-mode) .form-control {
     background: #fff !important;
     border-color: #767676 !important;
     color: #111 !important;
@@ -328,12 +330,12 @@ html.print-light-mode.dark-mode .sebook-figure__verbose-body .sebook-figure__ver
 
   /* Gym buttons are also reused by settings and other shared components. */
   .gym-btn,
-  html.dark-mode .gym-btn,
-  html.dark-mode .gym-btn.primary,
-  html.dark-mode .gym-btn.secondary,
-  html.dark-mode .gym-btn.danger,
-  html.dark-mode .gym-btn.primary:disabled,
-  html.dark-mode .gym-btn.secondary:hover:not(:disabled) {
+  html.dark-mode:not(.print-light-mode) .gym-btn,
+  html.dark-mode:not(.print-light-mode) .gym-btn.primary,
+  html.dark-mode:not(.print-light-mode) .gym-btn.secondary,
+  html.dark-mode:not(.print-light-mode) .gym-btn.danger,
+  html.dark-mode:not(.print-light-mode) .gym-btn.primary:disabled,
+  html.dark-mode:not(.print-light-mode) .gym-btn.secondary:hover:not(:disabled) {
     background: #fff !important;
     border: 1px solid #767676 !important;
     color: #111 !important;
@@ -345,9 +347,9 @@ html.print-light-mode.dark-mode .sebook-figure__verbose-body .sebook-figure__ver
     border-color: #2774AE !important;
   }
 
-  html.dark-mode .quiz-container .option-checkbox,
-  html.dark-mode .tvm-quiz-panel .option-checkbox,
-  html.dark-mode .workout-quiz-card .option-checkbox {
+  html.dark-mode:not(.print-light-mode) .quiz-container .option-checkbox,
+  html.dark-mode:not(.print-light-mode) .tvm-quiz-panel .option-checkbox,
+  html.dark-mode:not(.print-light-mode) .workout-quiz-card .option-checkbox {
     background: #fff !important;
     border-color: #2774AE !important;
     box-shadow: none !important;
@@ -355,57 +357,57 @@ html.print-light-mode.dark-mode .sebook-figure__verbose-body .sebook-figure__ver
     print-color-adjust: exact;
   }
 
-  html.dark-mode .quiz-container .quiz-option.selected .option-checkbox::after,
-  html.dark-mode .tvm-quiz-panel .quiz-option.selected .option-checkbox::after,
-  html.dark-mode .workout-quiz-card .quiz-option.selected .option-checkbox::after {
+  html.dark-mode:not(.print-light-mode) .quiz-container .quiz-option.selected .option-checkbox::after,
+  html.dark-mode:not(.print-light-mode) .tvm-quiz-panel .quiz-option.selected .option-checkbox::after,
+  html.dark-mode:not(.print-light-mode) .workout-quiz-card .quiz-option.selected .option-checkbox::after {
     border-color: #2774AE !important;
   }
 
-  html.dark-mode .uml-class-diagram-container svg,
-  html.dark-mode .uml-sequence-diagram-container svg,
-  html.dark-mode .uml-state-diagram-container svg,
-  html.dark-mode .uml-activity-diagram-container svg,
-  html.dark-mode .uml-usecase-diagram-container svg,
-  html.dark-mode .uml-component-diagram-container svg,
-  html.dark-mode .uml-deployment-diagram-container svg,
-  html.dark-mode .uml-freeform-diagram-container svg,
-  html.dark-mode .uml-folder-tree-diagram-container svg,
-  html.dark-mode .uml-venn-diagram-container svg,
-  html.dark-mode .uml-er-diagram-container svg,
-  html.dark-mode .uml-crc-diagram-container svg,
-  html.dark-mode .uml-sym svg {
+  html.dark-mode:not(.print-light-mode) .uml-class-diagram-container svg,
+  html.dark-mode:not(.print-light-mode) .uml-sequence-diagram-container svg,
+  html.dark-mode:not(.print-light-mode) .uml-state-diagram-container svg,
+  html.dark-mode:not(.print-light-mode) .uml-activity-diagram-container svg,
+  html.dark-mode:not(.print-light-mode) .uml-usecase-diagram-container svg,
+  html.dark-mode:not(.print-light-mode) .uml-component-diagram-container svg,
+  html.dark-mode:not(.print-light-mode) .uml-deployment-diagram-container svg,
+  html.dark-mode:not(.print-light-mode) .uml-freeform-diagram-container svg,
+  html.dark-mode:not(.print-light-mode) .uml-folder-tree-diagram-container svg,
+  html.dark-mode:not(.print-light-mode) .uml-venn-diagram-container svg,
+  html.dark-mode:not(.print-light-mode) .uml-er-diagram-container svg,
+  html.dark-mode:not(.print-light-mode) .uml-crc-diagram-container svg,
+  html.dark-mode:not(.print-light-mode) .uml-sym svg {
     filter: none !important;
   }
 
-  html.dark-mode .uml-empty-msg,
-  html.dark-mode .uml-gitgraph-fallback-empty {
+  html.dark-mode:not(.print-light-mode) .uml-empty-msg,
+  html.dark-mode:not(.print-light-mode) .uml-gitgraph-fallback-empty {
     color: #555 !important;
   }
 
-  html.dark-mode .uml-error-msg,
-  html.dark-mode .uml-gitgraph-fallback-error {
+  html.dark-mode:not(.print-light-mode) .uml-error-msg,
+  html.dark-mode:not(.print-light-mode) .uml-gitgraph-fallback-error {
     color: #b00000 !important;
   }
 
-  html.dark-mode .sebook-figure__caption {
+  html.dark-mode:not(.print-light-mode) .sebook-figure__caption {
     color: #444 !important;
   }
 
-  html.dark-mode .sebook-figure__verbose {
+  html.dark-mode:not(.print-light-mode) .sebook-figure__verbose {
     background: #fafbfc !important;
     border-color: #d6dae0 !important;
   }
 
-  html.dark-mode .sebook-figure__verbose > summary {
+  html.dark-mode:not(.print-light-mode) .sebook-figure__verbose > summary {
     color: #364152 !important;
   }
 
-  html.dark-mode .sebook-figure__verbose-body {
+  html.dark-mode:not(.print-light-mode) .sebook-figure__verbose-body {
     border-top-color: #e6e9ee !important;
   }
 
-  html.dark-mode .sebook-figure__verbose-body h4,
-  html.dark-mode .sebook-figure__verbose-body .sebook-figure__verbose-heading {
+  html.dark-mode:not(.print-light-mode) .sebook-figure__verbose-body h4,
+  html.dark-mode:not(.print-light-mode) .sebook-figure__verbose-body .sebook-figure__verbose-heading {
     color: #1f2937 !important;
   }
 }

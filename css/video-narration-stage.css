@@ -3,6 +3,20 @@
    page directly. The stage itself is styled by css/song-video-stage.css. */
 .vn-stage-page { margin: 0; }
 .vn-stage-title { position: absolute; width: 1px; height: 1px; margin: 0; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.vn-stage-print-summary { display: none; }
+
+/* A raw animation frame has no standalone print reading order. Direct prints
+   identify its lesson and point to the complete, accessible notes instead. */
+@media print {
+  html.vn-stage-document,
+  html.vn-stage-document body { background: #fff; color: #111; }
+  html.vn-stage-document body { overflow: visible; font: 12pt/1.5 system-ui, sans-serif; }
+  .vn-stage-document .vn-stage-page { padding: 1em; }
+  .vn-stage-document .vn-stage-title { position: static; width: auto; height: auto; margin-bottom: 0.6em; overflow: visible; clip-path: none; white-space: normal; font-size: 1.7em; }
+  .vn-stage-document .stage { display: none !important; }
+  .vn-stage-document .vn-stage-print-summary { display: block; }
+  .vn-stage-document a, .vn-stage-document a:visited { color: #005587; text-decoration: underline; }
+}
 
 /* The stage follows the site's light or dark mode: js/video-narration-stage.js
    mirrors the embedding page's dark-mode class onto this frame. The dark

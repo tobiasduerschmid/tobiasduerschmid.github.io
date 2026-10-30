@@ -3,3 +3,5 @@
 {% for stylesheet in narration_entry.styles %}<link rel="stylesheet" href="{{ stylesheet | relative_url }}?v={{ site.asset_version }}">{% endfor %}
 <link rel="stylesheet" href="{{ '/css/print-light.css' | relative_url }}?v={{ site.asset_version }}">
 {% include {{ narration_entry.player_include }} topic=include.topic subject=narration_entry.lesson.name renderer=narration_entry.lesson.renderer %}
+
+<p class="narration-notes-link"><a class="button" href="{{ narration_entry.lesson.notes_url | relative_url }}#export">Save lesson notes as PDF</a> · <a href="{{ narration_entry.lesson.notes_url | relative_url }}">Edit lesson notes</a></p>

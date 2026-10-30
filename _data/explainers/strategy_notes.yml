@@ -1,0 +1,120 @@
+# Printable handout key points. Keys preserve scene and cue identities.
+intro-cue-1:
+  - "**Example:** $60 dinner split equally among Ava, Ben, Chloe → $20 each"
+intro-cue-2:
+  - "**Birthday treat:** Chloe pays $0; Ava and Ben pay $30 each"
+  - "Same question, different algorithm"
+intro-cue-3:
+  - "**Pattern description:** context, problem, solution, consequences"
+  - "Refactor incrementally toward interchangeable algorithms"
+context-cue-1:
+  - "**Strategy context:** one task with multiple interchangeable algorithms"
+  - "Expense variants: equal, percentage, birthday treat"
+context-cue-2:
+  - "Client selects the algorithm and may change it later; new variants keep arriving"
+  - "Percentage example: Ava $30, Ben $18, Chloe $12"
+context-cue-3:
+  - "Related algorithm behaviors often appear as repeated conditionals"
+  - "Pattern **context** means situation; **Context role** means the delegating object"
+problem-cue-1:
+  - "Expense stores a split-method name"
+  - "shares branches among equal, percentage, and birthday algorithms"
+problem-cue-2:
+  - "label repeats the same algorithm selection"
+  - "Each algorithm’s row is scattered across operation columns"
+problem-cue-3:
+  - "Constructor accepts percentages and guest, although each belongs to one algorithm"
+  - "Long parameter list exposes mixed algorithm-specific data"
+problem-cue-4:
+  - "**Predict:** Add itemized splitting. Which code changes? What if one branch is missed?"
+problem-cue-5:
+  - "Constructor, shares, and label all change; unknown methods fall into birthday defaults"
+  - "Expense subclasses hard-wire algorithms and obstruct runtime switching"
+  - "**Forces:** encapsulate algorithm code/data, support switching, and justify extra classes"
+solution-cue-1:
+  - "**Encapsulate what varies:** algorithm objects behind one contract"
+  - "**Strategy:** interface defining the algorithm family"
+solution-cue-2:
+  - "**ConcreteStrategy:** one implementation of the algorithm contract"
+  - "Dashed hollow triangle: fulfills the Strategy interface"
+solution-cue-3:
+  - "**Context:** retains a Strategy reference and forwards requests"
+  - "Depend on interfaces; prefer composition over algorithm-specific subclasses"
+solution-cue-4:
+  - "Client constructs and supplies the chosen ConcreteStrategy"
+  - "**Mapping:** Expense → Context; SplitStrategy → Strategy"
+  - "EqualSplit, PercentSplit, BirthdaySplit → ConcreteStrategy"
+strategy_role-cue-1:
+  - "**SplitStrategy:** split returns shares; label describes the receipt"
+  - "Every variant offers both related operations"
+strategy_role-cue-2:
+  - "Expense passes total and people as parameters"
+  - "Passing Context instead exposes more data but increases coupling"
+strategy_role-cue-3:
+  - "**Contract:** shares measured in cents sum exactly to the total"
+  - "Matching operation names alone does not ensure interchangeability"
+context_role-cue-1:
+  - "**Expense:** owns total, people, and the client-supplied Strategy reference"
+context_role-cue-2:
+  - "shares and label delegate without inspecting the method"
+  - "Algorithm-specific percentages and guest leave Expense’s constructor"
+context_role-cue-3:
+  - "**setStrategy:** client changes the algorithm while retaining the Expense"
+  - "Constructor injection suffices for fixed choices; expose a setter only when switching is needed"
+concrete_roles-cue-1:
+  - "Each ConcreteStrategy gathers one algorithm’s branches and related operations"
+  - "Refactor incrementally with tests preserving every share"
+concrete_roles-cue-2:
+  - "**EqualSplit:** divide evenly and distribute remaining cents to the first people"
+  - "$10 ÷ 3 → $3.34, $3.33, $3.33; total preserved"
+concrete_roles-cue-3:
+  - "**PercentSplit:** owns percentages and validates their sum as 100"
+  - "Algorithm-specific data belongs with its algorithm"
+concrete_roles-cue-4:
+  - "**BirthdaySplit:** stores the guest and delegates remaining participants to EqualSplit"
+  - "Strategies can compose other strategies"
+concrete_roles-cue-5:
+  - "Stateless EqualSplit can be shared across expenses"
+  - "Percentage and birthday choices belong to individual expenses"
+  - "Do not share strategy objects carrying per-expense data"
+collaborations-cue-1:
+  - "Client creates an Expense with shared EqualSplit"
+  - "Expense forwards split with total and people"
+collaborations-cue-2:
+  - "**Predict:** Replace strategy with 50%, 30%, 20%. Who answers, and who owes what?"
+collaborations-cue-3:
+  - "PercentSplit now answers: Ava $30, Ben $18, Chloe $12"
+  - "Expense delegates identically without identifying its algorithm"
+collaborations-cue-4:
+  - "label delegates too, keeping receipt and shares consistent"
+  - "Client chooses; Context forwards requests and supplies required data"
+consequences-cue-1:
+  - "**Benefit:** related algorithm code and data live together"
+  - "New variants leave Expense and existing strategies unchanged"
+consequences-cue-2:
+  - "**Benefit:** replace algorithms without replacing the Context"
+  - "Small strategies can be tested independently with their inputs"
+consequences-cue-3:
+  - "**Costs:** clients must understand alternatives; more objects and classes"
+  - "One shared interface may provide unnecessary data or omit new needs"
+  - "Stateless strategies can reduce object overhead"
+applicability-cue-1:
+  - "Use for interchangeable algorithms chosen by clients, especially an expanding family"
+applicability-cue-2:
+  - "Simple stable choices may need only a conditional"
+  - "One stateless operation can be a passed function"
+  - "Several related operations plus algorithm data can justify classes"
+applicability-cue-3:
+  - "**Strategy:** clients select algorithms; strategies need not know one another"
+  - "**State:** events lead states to select successors"
+  - "**Template Method:** subclasses vary algorithm steps, fixed when the object is created"
+transfer-cue-1:
+  - "**Predict:** Itemized splitting with proportional tax and tip requires which new and changed code?"
+transfer-cue-2:
+  - "Add **ItemizedSplit** with item data, split, and label"
+  - "Client’s picker constructs and supplies it"
+  - "Expense, SplitStrategy, and other algorithms remain unchanged"
+summary-cue-1:
+  - "**Context/problem:** interchangeable algorithms become hard-wired, scattered rules"
+  - "**Solution:** client selects ConcreteStrategy; Context delegates through Strategy"
+  - "**Trade-off:** independent testing and switching versus informed clients, more objects, and a shared interface"

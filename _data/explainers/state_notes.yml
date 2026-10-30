@@ -1,0 +1,124 @@
+# Printable handout key points. Keys preserve scene and cue identities.
+intro-cue-1:
+  - "**Example:** Following dog receives a thrown ball and begins fetching"
+intro-cue-2:
+  - "After two fetches, exhausted dog naps and ignores another throw"
+  - "Same input; current state determines the reaction"
+intro-cue-3:
+  - "**Pattern description:** context, problem, solution, consequences"
+  - "State lesson follows recurring situation → difficulty → collaborating roles → trade-offs"
+context-cue-1:
+  - "**State context:** runtime state controls an object’s behavior"
+  - "State-machine rounded boxes represent states; labeled arrows represent event-triggered transitions"
+  - "Initial state: Following"
+context-cue-2:
+  - "Throw: Following → Fetching"
+  - "Tick guard: remaining energy → Following; exhausted → Napping"
+  - "Whistle wakes Napping; square brackets mark guards"
+context-cue-3:
+  - "Several requests behave differently across states; new states keep arriving"
+  - "Pattern **context** means situation; **Context role** means the delegating object"
+problem-cue-1:
+  - "First design stores a mode and branches inside throwBall"
+  - "Following fetches; Fetching continues its chase; Napping snores"
+problem-cue-2:
+  - "whistle repeats mode checks"
+  - "Only the Napping branch changes mode"
+problem-cue-3:
+  - "tick repeats the checks again"
+  - "Methods are table columns; one state’s row is scattered across methods"
+problem-cue-4:
+  - "**Predict:** Adding Zoomies affects which methods? What if one branch is forgotten?"
+problem-cue-5:
+  - "Every method needs editing; default branches misclassify unknown modes as Napping"
+  - "**Forces:** group state rules, expose transitions, and ease additions"
+  - "Extra classes must justify their cost"
+solution-cue-1:
+  - "**Context:** holds one current State object"
+  - "State-dependent requests delegate through that reference"
+solution-cue-2:
+  - "**State:** shared interface covering every forwarded request"
+  - "Context passes itself so State can access data and request transitions"
+solution-cue-3:
+  - "**ConcreteState:** implements one state’s reactions"
+  - "Transition calls Context.setState with the successor"
+  - "Dashed hollow triangle: implementation of the State contract"
+solution-cue-4:
+  - "**Mapping:** Dog → Context; DogState → State"
+  - "Following, Fetching, Napping → ConcreteState"
+  - "Replacing one reference changes behavior without replacing the dog"
+state_role-cue-1:
+  - "**DogState:** declares throwBall, whistle, and tick"
+  - "Each operation receives a dog and returns an animatable reaction"
+state_role-cue-2:
+  - "Every ConcreteState implements all three requests"
+  - "Java, C++, TypeScript check contracts; Python rejects incomplete abstract instances"
+  - "Unlike default branches, missing reactions are exposed"
+context_role-cue-1:
+  - "**Dog:** owns energy and a current-state reference"
+  - "Initially references the shared Following object"
+context_role-cue-2:
+  - "Each request forwards directly, passing the dog"
+  - "Context need not interpret whistles or inspect mode values"
+context_role-cue-3:
+  - "**setState:** replaces one current-state reference"
+  - "States choose transitions; clients supply inputs"
+concrete_roles-cue-1:
+  - "**Following:** collects one row of reactions"
+  - "Throw → shared Fetching; whistle and tick only animate"
+  - "Move branches incrementally and test unchanged behavior"
+concrete_roles-cue-2:
+  - "**Fetching:** ignores additional throws and whistles"
+  - "Tick spends energy, then chooses Napping or Following"
+  - "Energy test is a valid data guard, not a mode check"
+concrete_roles-cue-3:
+  - "**Napping:** snores through throws and ticks"
+  - "Whistle restores energy and transitions to Following"
+  - "Transitions live in their source states"
+concrete_roles-cue-4:
+  - "Energy belongs to each dog; these State objects hold no instance-specific data"
+  - "**Stateless states** can be shared across dogs"
+  - "Allocating per transition also works; sharing requires states to remain stateless"
+collaborations-cue-1:
+  - "Game input: throwBall → Dog → Following"
+  - "Following selects Fetching and returns the fetching reaction"
+collaborations-cue-2:
+  - "**Predict:** A second throw reaches which object? What reaction follows?"
+collaborations-cue-3:
+  - "Dog now delegates to Fetching"
+  - "Fetching keeps chasing the original ball; client need not inspect state"
+collaborations-cue-4:
+  - "Tick spends energy; remaining energy selects Following"
+  - "Core collaboration: delegate, pass Context, choose the successor"
+consequences-cue-1:
+  - "**Benefit:** one class groups each state’s behavior"
+  - "Add a state plus the incoming transitions that select it"
+consequences-cue-2:
+  - "**Benefit:** explicit transitions replace a single current-state reference"
+  - "The object does not combine partial old and new states"
+  - "Stateless State objects can be shared"
+consequences-cue-3:
+  - "**Costs:** additional classes, successor dependencies, and distributed transitions"
+  - "State-machine diagram preserves the lifecycle overview"
+  - "New requests change every State; favor State when states vary more often"
+applicability-cue-1:
+  - "Use when multiple states alter several operations and states keep growing"
+  - "Examples: game characters gaining guarding, swimming, or fleeing"
+applicability-cue-2:
+  - "Few stable states: exhaustive enum switches or extracted methods may suffice"
+  - "Transition-only differences may suit a table"
+  - "Independent simultaneous effects cannot fit one exclusive current state"
+applicability-cue-3:
+  - "**State versus Strategy:** similar delegation structure, different intent"
+  - "Clients select Strategies; State objects typically replace one another following events"
+transfer-cue-1:
+  - "**Predict:** Zoomies chases throws, ignores whistles, and follows after one tick"
+  - "A whistle wakes Napping into Zoomies: which classes and transitions change?"
+transfer-cue-2:
+  - "Add **Zoomies**, implementing all three reactions"
+  - "Change Napping.whistle’s destination to Zoomies"
+  - "DogState, Dog, Following, and Fetching need no changes"
+summary-cue-1:
+  - "**Context/problem:** state-dependent requests; mode checks scattered across operations"
+  - "**Solution:** Context delegates to State; ConcreteStates own reactions and transitions"
+  - "**Trade-off:** localized behavior versus extra classes, distributed transitions, and costly new requests"

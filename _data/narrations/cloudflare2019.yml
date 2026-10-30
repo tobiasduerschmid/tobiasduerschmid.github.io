@@ -7,6 +7,7 @@ description: >-
   Follow a request, compare evidence, and choose the next debugging action. A narrated investigation
   with diagrams, decisions, and a clearly labeled miniature model.
 lesson:
+  chapter: /SEBook/development_practices/cloudflare-2019.html
   name: "Cloudflare 2019: restore the service, explain the failure"
 speech:
   voice: af_heart

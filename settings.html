@@ -673,8 +673,8 @@ info_nav_title: "My Settings"
     <script src="{{ '/js/profile-sync-page.js' | relative_url }}" defer></script>
 
     <fieldset class="settings-section">
-      <legend class="sr-only">What each tutorial remembers</legend>
-      <h2 class="settings-section-title">What each tutorial remembers</h2>
+      <legend class="sr-only">What lessons and tools remember</legend>
+      <h2 class="settings-section-title">What lessons and tools remember</h2>
       <div class="settings-list">
         <div class="setting-row setting-row-full">
           <div>
@@ -717,6 +717,25 @@ info_nav_title: "My Settings"
               <a href="{{ '/cookies/' | relative_url }}">Browser storage</a>.
               That page can also remove saved VM reset snapshots, cached VM
               assets, and the tutorial service worker.
+            </p>
+          </div>
+        </div>
+
+        <div class="setting-row setting-row-full">
+          <div>
+            <p class="setting-name">Narration notes</p>
+            <p class="setting-description">
+              Notes you type beside narration cues and questions are saved
+              automatically as you edit. Each lesson uses a
+              <code>sebook-narration-notes-&lt;topic&gt;</code> entry in this
+              browser, shared by its editable and printable notes views.
+              These notes are not sent to this site.
+            </p>
+            <p class="setting-description">
+              Edit your notes in the lesson. To erase notes for one lesson,
+              or all lessons, open
+              <a href="{{ '/cookies/#narration-notes' | relative_url }}">Narration notes in Browser storage</a>.
+              Deleting them there removes the saved notes from this browser.
             </p>
           </div>
         </div>

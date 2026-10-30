@@ -6,7 +6,7 @@
   controls or focusable content. Front matter: topic.
 {%- endcomment -%}
 {%- assign lesson = site.data.video_narrations[page.topic] -%}
-<html lang="en">
+<html lang="en" class="vn-stage-document">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -14,11 +14,16 @@
   {% include ai-training-opt-out-meta.html %}
   <meta name="robots" content="noindex">
   {%- include video-narration-stage-assets.html topic=page.topic part='styles' %}
+  <link rel="stylesheet" href="{{ '/css/print-light.css' | relative_url }}?v={{ site.asset_version }}">
 </head>
 <body class="is-fit">
   <main class="vn-stage-page">
     <h1 class="vn-stage-title">{{ lesson.name | escape }} animation for the narrated lesson at {{ lesson.chapter | relative_url }}</h1>
     <div class="stage" id="stage" aria-hidden="true" data-topic="{{ page.topic }}" data-theme="{{ lesson.animation.theme | default: 'studio' }}"></div>
+    <div class="vn-stage-print-summary">
+      <p>This animation accompanies the <a href="{{ lesson.chapter | relative_url }}">{{ lesson.name | escape }} narrated lesson</a>.</p>
+      <p>Use the <a href="{{ lesson.notes_url | relative_url }}">{{ lesson.name | escape }} lesson notes</a> for printable pictures, visual descriptions, key points, and space for your own notes.</p>
+    </div>
   </main>
   {%- include video-narration-stage-assets.html topic=page.topic part='scripts' %}
 </body>

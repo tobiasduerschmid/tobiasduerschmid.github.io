@@ -55,7 +55,7 @@ You MUST update `cookies.html` whenever any of the following happens. Use the ta
 | New File System Access call | Add a section (the page currently asserts these aren't used). |
 | Renamed key | Rename the row's `data-key` and the displayed `<td class="storage-key">`. |
 | Removed key (feature deleted) | **Delete the row.** Stale entries in the inventory are also a privacy violation. Add the removed key or prefix to `retired` in [`js/profile-sync-catalog.js`](../../../js/profile-sync-catalog.js) so the Chrome profile sync extension deletes the old copy instead of restoring it. New keys do not need a catalog entry: the extension copies every cookie and `localStorage` item it finds. |
-| New dynamic key pattern (e.g. `myfeature-{id}-...`) | Add it to `DYNAMIC_PREFIXES` in the page's `<script>` and to the prefix legend AND to the relevant "Delete all" button's `data-clear-prefixes` so bulk-delete still wipes everything. |
+| New dynamic key pattern (e.g. `myfeature-{id}-...`) | Add it to the appropriate prefix array in the page's `<script>` (`DYNAMIC_PREFIXES` for tutorials, or a feature-specific array/table) and to the prefix legend AND to the relevant "Delete all" button's `data-clear-prefixes` so bulk-delete still wipes everything. |
 | Changed cookie expiry / `path` / `SameSite` / `Secure` / `HttpOnly` / domain | Update the row's purpose blurb if the change is user-visible (session vs persistent, scope expansion, etc.). |
 | Swapped backends (e.g. cookie → localStorage) | Move the row to the right table AND update its `data-storage` attribute. |
 
@@ -75,11 +75,11 @@ If the changed key is a user-facing setting, update `settings.html` too. That in
    ```
    The trash button and "set / not set" badge are populated automatically by the page's JS — do not add them by hand.
 3. **Dynamic keys (per-tutorial, per-path, etc.).** Do NOT add a row per id. Instead:
-   - Add a new entry to `DYNAMIC_PREFIXES` in the page's `<script>` block:
+   - Add a new entry to the relevant prefix array in the page's `<script>` block (`DYNAMIC_PREFIXES` for tutorial data). Keep separate features in their own category, as `NARRATION_NOTES_PREFIXES`, `TOOL_PREFIXES`, and `UML_PREFIXES` do, using the common `renderPrefixedTable` helper:
      ```js
      { prefix: 'myfeature-',  label: 'Short description shown in the dynamic table' },
      ```
-   - Add the new prefix and a brief description to the `<p style="font-size:0.85em..."` legend just below the dynamic table.
+   - Add the new prefix and a brief description to the `<p class="cookies-prefix-note">` legend just below the dynamic table. Presentation belongs in the existing CSS module.
    - Add the prefix to the `data-clear-prefixes` attribute of the relevant "Delete all" button so bulk-delete still wipes everything.
 4. **Be honest about scope.** If the value is conditional (e.g. only written when a toggle is on), say so in the purpose cell — users should know why a value might or might not be set.
 5. **Re-check the "Where else does this site store data?" bullets** at the bottom for `sessionStorage`, `IndexedDB`, Cache API, Service Worker, BroadcastChannel, File System Access, third-party CDNs, and cross-origin cookies. The bullets currently read "not used" / "ephemeral only" for several of them — if your change makes any of those statements wrong, rewrite the bullet *and* (where it makes sense) add a delete action.
@@ -104,7 +104,7 @@ If you add a new layout, include `{% include cookie-notice.html %}` near the foo
 - [ ] Did I touch any storage API or helper from the table above? → ran the workflow.
 - [ ] Did I add/rename/remove a key? → updated `cookies.html` (row added / renamed / **deleted**). A removed key or prefix is also added to `retired` in `js/profile-sync-catalog.js`. A new key is copied by the Chrome profile sync extension without a catalog entry.
 - [ ] Did I add/rename/remove a user-facing setting? → updated `settings.html` with a visible label, control or explanatory row, and storage key/prefix.
-- [ ] Did I touch a *dynamic* key pattern? → updated `DYNAMIC_PREFIXES`, the legend text, AND the `data-clear-prefixes` on the bulk-delete button.
+- [ ] Did I touch a *dynamic* key pattern? → updated its prefix array and table rendering, the legend text, AND the `data-clear-prefixes` on the bulk-delete button.
 - [ ] Did I introduce `sessionStorage` (persistent), `IndexedDB`, Cache API, Service Worker that caches, File System Access, or `BroadcastChannel` with a new name? → rewrote the corresponding bullet in "Where else does this site store data?"
 - [ ] Did I add a third-party library that itself stores anything? → documented every key it touches.
 - [ ] Did I change a cookie's expiry / scope / `SameSite` / `Secure`? → updated the purpose blurb if the change is user-visible.
@@ -135,7 +135,7 @@ This is a snapshot to help you spot duplicates and pick the right category — *
 - `sebook-code-language` — shared language for SEBook code tabs, UML labs, and Observer lesson views; written on explicit selection, default Python
 - `regex-tutorial-progress`, `regex-tutorial-advanced-progress`
 
-**localStorage — dynamic prefixes (10)** (one entry per tutorial id / page path):
+**localStorage — dynamic prefixes** (one entry per tutorial, lesson, or page path):
 - `tutorial-progress-<id>` — saved code, current step, completion records, and optional progress version / ordered lesson keys for matching progress after tutorial updates
 - `tutorial-editor-split-<id>` — split-pane preference
 - `tutorial-cooldown-<id>` — per-step "Test My Work" cooldown end times
@@ -146,6 +146,7 @@ This is a snapshot to help you spot duplicates and pick the right category — *
 - `tutorial-debug-watchpoint-remove-choice-<id>` — watchpoint removal preference
 - `tutorial-debug-section-<id>-<name>` — debugger panel collapse
 - `tutorial-debug-subsection-<id>-<name>` — debugger sub-panel collapse
+- `sebook-narration-notes-<topic>` — student-written cue notes and question reasoning, saved on each input by `js/narration-notes.js`. Format: `{version: 1, entries: {"cue:scene/id": "text", "question:scene/0": "text"}}`; cue keys use stable scene/cue IDs, question keys use the scene and zero-based question position. Empty fields are removed; an empty lesson record is deleted. There is no autosave toggle. `/cookies/#narration-notes` discovers these keys in a separate category with per-entry and bulk deletion. The optional profile sync extension copies them under its existing localStorage rules. The notes page's code-language selection is temporary and does not write a preference.
 
 **Adjacent surfaces:**
 - `sessionStorage` — one-time migration of `prefersReducedMotion`; a tab-scoped `tutorial-popout-session-<path>` nonce that reconnects detached tutorial windows after reload without cross-tab channel sharing; plus the generated Python workspace's short-lived `archuml-generated-python-payload` reload bridge (also mirrored briefly in `window.name`)
@@ -173,5 +174,6 @@ This is a snapshot to help you spot duplicates and pick the right category — *
 - SE Gym enabled, timed practice, workout hero, difficulty visibility/filtering, and performance tracking: `se-gym-active`, `se-gym-timed-practice`, `se-gym-timer-mode`, `se-gym-timer-total-minutes`, `se-gym-timer-seconds-per-question`, `se-gym-show-workout-hero`, `se-gym-show-difficulty`, `se-gym-active-difficulties`, `analyze-performance`, `se-gym-stats`
 - SE Gym questions marked Always skip, with a restore action: `se-gym-skipped-questions`
 - Per-tutorial state and progress: `tutorial-progress-<id>`, `tutorial-editor-split-<id>`, `tutorial-cooldown-<id>`, `tutorial-time-practice-<id>`, `tutorial-popout-state-<path>-<session>`, `tutorial-debug-bps-<id>`, `tutorial-debug-excbps-<id>`, `tutorial-debug-watchpoint-remove-choice-<id>`, `tutorial-debug-section-<id>-<name>`, `tutorial-debug-subsection-<id>-<name>`, `regex-tutorial-progress`, `regex-tutorial-advanced-progress`
+- Narration notes: explanatory row names `sebook-narration-notes-<topic>`, describes autosave in the lesson, and links to the inventory for deletion; it adds no new preference control.
 
 If your change makes any line in this section wrong, edit `cookies.html` first, then update this snapshot.

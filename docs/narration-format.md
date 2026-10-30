@@ -12,7 +12,8 @@ adapters retain their distinct teaching interactions.
 | --- | --- |
 | `_data/narrations/<id>.yml` | Readable narration, scene order, navigation, teaching text, speech settings, media paths, and lesson metadata. |
 | `_data/narration_visuals/<id>.json` | Renderer configuration, diagrams/slides, scene state, and cue state. This package can be machine-produced. |
-| `_data/explainers/<id>_code.yml`, `_quizzes.yml`, `_notes.yml`, `_ui.yml` | Existing optional code, assessments, printable notes, and example behavior. |
+| `_data/explainers/<id>_code.yml`, `_quizzes.yml`, `_ui.yml` | Optional code, assessments, and example behavior. |
+| `_data/explainers/<id>_notes.yml` | Human-authored key points for every cue in the editable PDF handout. Required for every lesson. |
 | `_data/explainers/<id>_timing.json` | Generated cue boundaries, stable cue IDs, and the speech fingerprint. Never author timestamps. |
 | `assets/audio/`, `assets/narration/` | Generated MP3, captions, and pronunciation-adjusted script. |
 
@@ -77,6 +78,9 @@ parts/parts_label, and optional `outline_labels` keyed by scene ID. Pattern
 lessons default to Context, Problem, Solution, Consequences. An introduction
 without `part` previews the first part's links without marking them current.
 Keep code-example notes (`complete_examples`) here too.
+The compiler derives `lesson.notes_url` from `lesson.views`, or from
+`lesson.chapter` with a trailing `.html` removed, then appends `/notes/`.
+With neither link present, it uses `/SEBook/narrations/<id>/notes/`.
 
 Scene teaching fields are `label`, `title`, `part`, `outline`, `purpose`,
 `takeaway`, optional evidence/source references, and a case-study `checkpoint`.
@@ -147,15 +151,17 @@ local, trusted author assets; they are not an untrusted upload format.
 ## Add and edit a lesson
 
 1. Add the YAML script and its JSON visual package. Use existing lessons for
-   kind-specific examples. Add optional quizzes/code/notes using their existing
-   schemas; do not invent a new quiz or code format.
+   kind-specific examples. Add key points in `<id>_notes.yml` for every cue and
+   optional quizzes/code using their existing schemas; do not invent a new
+   quiz or code format.
 2. Add a chapter using the shared entry point:
    ```liquid
    {% include narration.html topic="queues" %}
    ```
    It selects the adapter and styles from the specification. Add
    `static_uml: true` to the page if the lesson uses UML. Add the reader/print
-   and notes pages described in the corresponding narration skill.
+   views described in the corresponding narration skill. Jekyll generates
+   the notes page automatically; do not copy a per-topic notes page.
 3. Validate before rendering audio:
    ```sh
    node scripts/narration.js compile queues
@@ -183,6 +189,82 @@ and visual-description edits do not. Existing audio was retained during the
 migration after comparing every old runtime field; only timing metadata gained
 cue IDs and the speech fingerprint.
 
+## Editable lesson notes and PDF export
+
+All nine lessons share the same handout: Scrum, Observer, State, Strategy,
+MVC, Node.js, React, Therac-25, and Cloudflare. The public `narration.html`
+entry point adds **Save lesson notes as PDF** (`lesson.notes_url#export`) and
+**Edit lesson notes** (`lesson.notes_url`). The notes generator in
+`_plugins/narrations.rb` creates the route using the `narration-notes` layout
+and include. An existing page at that URL takes precedence; Scrum's retained
+page delegates to the shared include. Do not maintain another lesson registry.
+
+Write the handout's key points separately from speech:
+
+```yaml
+# _data/explainers/queues_notes.yml
+arrival-waiting:
+  - "**Queue order:** earlier arrivals go first"
+```
+
+The key is `<scene.id>-<cue.id>`. Preserve these identities when reordering
+the lesson. Only existing Scrum notes retain the legacy
+`<scene.id>-<one-based cue position>` fallback; use stable IDs for new notes.
+Each cue needs one to four substantive bullets, at most 16 words each, with
+at most half the narration's total word count and no run of eight copied
+speech words. Keep taught terms, qualifications, rules, and prediction
+questions; do not reveal a later cue's answer early. Inline `**bold**` marks
+terms. Editing these notes never changes the audio fingerprint or requires
+speech generation.
+
+Each cue pairs its settled visual with those key points and a labeled field
+for the learner's notes. Section checks or case-study checkpoints follow
+their section with a field for an answer and reasoning; the answer key stays
+at the end. Video lessons reuse `VideoNarrationStage.still(cue.end - 0.3)`;
+other kinds reuse their diagram, code, illustration, or explainer renderer
+through `narration-note-visual.html`. Never flatten readable code, diagrams,
+or student writing into screenshots. The code-language control affects only
+the open handout and does not change the site's saved language preference.
+Non-video pictures include a visible description inside their image wrapper:
+Chromium can omit an image's PDF tag when all its children are hidden from the
+accessibility tree, so keep that description available in the exported file.
+
+`js/narration-notes.js` owns visual preparation, export, and editable-note
+persistence for every kind. After pictures and fonts settle, `#export` opens
+the browser's print dialog; the page's print button can open it again. Each
+input saves plain text to `localStorage` under
+`sebook-narration-notes-<id>`:
+
+```json
+{"version":1,"entries":{"cue:arrival/waiting":"My note","question:arrival/0":"My reasoning"}}
+```
+
+Cue entries use stable scene/cue IDs; question entries use the scene ID and
+zero-based question position within that section. Empty fields are removed,
+and an empty lesson record is deleted. There is no separate autosave toggle.
+Saved text is restored on return; storage failures leave editing and export
+available with a status message. `/cookies/#narration-notes` lists the records
+with per-lesson and bulk deletion, and `/settings/` explains the behavior.
+The optional Chrome profile sync extension follows its existing rules for
+localStorage; the site does not receive the notes.
+
+The shared `narration-note-editor.html` keeps the textarea on screen and
+mirrors its text into ordinary paragraphs for print. Blank animated-stage
+handouts retain three rows per Letter page. Non-video rows use their content
+height, and rows with student writing can expand across pages rather than
+clip text or shrink it to meet a row count. Ruled blank space remains for
+handwriting. The handout uses the light palette, including from a dark-mode
+page, and print omits editing controls, navigation, and the site footer.
+
+Export begins with accessible HTML and uses the browser's PDF support;
+tagging and reading order depend on that browser. Check labels, headings,
+text alternatives, keyboard use, no-script fallbacks, saved text, and a
+rendered PDF. A test finding PDF tags does not establish full PDF or full-site
+accessibility conformance. Run `scripts/tests/narration-notes.test.js` and
+`tests/narration-notes.spec.js` across all kinds, plus the video-specific
+notes checks for stage stills and blank-page geometry. Keep generated PDFs
+and verification screenshots outside the repository.
+
 ## Shared core and extension boundary
 
 - `scripts/narration/compile.js`: pure validation/compilation and speech identity.
@@ -190,12 +272,21 @@ cue IDs and the speech fingerprint.
 - `scripts/narration.js`: CLI used by Jekyll, audio tooling, and CI.
 - `_plugins/narrations.rb`: adapts compiled lessons to Jekyll data views.
 - `_includes/narration.html`, `narration-data.html`: page/style entry and data contract.
+- `_layouts/narration-notes.html`, `_includes/narration-notes.html`,
+  `narration-note-visual.html`, and `narration-note-editor.html`: one generated
+  editable handout for every lesson, with small kind-specific visual branches.
+- `js/narration-notes.js` and `css/video-narration-notes.css`: shared handout
+  preparation, local saving, print lifecycle, and screen/print layout.
 - `js/narrated-explainer.js`: shared audio clock, seeking, speed, motion,
   fullscreen, print lifecycle, and `readData` boundary for every adapter.
 - `js/narrated-lesson.js`: common mounting, quiz lifecycle, navigation/focus,
   language refresh, diagram copying, and code highlighting for pattern/video lessons.
 - The four presentation adapters own cue rendering and their distinct learning
   interactions. They do not reimplement the clock or parse a second source format.
+
+`readData` accepts the older `data-np-*`, `data-explainer-*`, and `data-case-*`
+attributes at this boundary so cached HTML survives a runtime update. New
+templates always use `narration-data.html`; its common attributes take precedence.
 
 Keep this boundary when extending the system. Prefer another lesson in an
 existing kind over a new player. Add an adapter only for a demonstrated new

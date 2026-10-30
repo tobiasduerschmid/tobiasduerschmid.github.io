@@ -23,6 +23,7 @@ references:
   - title: Synchronizing effects
     url: https://react.dev/learn/synchronizing-with-effects
 lesson:
+  chapter: /SEBook/tools/react.html
   name: React
 speech:
   voice: af_heart

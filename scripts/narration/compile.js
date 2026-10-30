@@ -27,6 +27,7 @@ function compileLesson(source, visuals) {
   validateVisualPackage(source, visuals);
   const scenes = source.scenes.map(scene => compileScene(scene, visuals.scenes[scene.id], `${source.id}.${scene.id}`));
   const lesson = { ...source.lesson, ...visuals.presentation };
+  lesson.notes_url = `${lesson.views || (lesson.chapter || `/SEBook/narrations/${source.id}`).replace(/\.html$/, '')}/notes/`;
   const story = { ...visuals.resources, title: source.title, ...source.media, ...source.speech, scenes };
   for (const key of ['description', 'references']) {
     if (source[key] !== undefined) story[key] = source[key];
