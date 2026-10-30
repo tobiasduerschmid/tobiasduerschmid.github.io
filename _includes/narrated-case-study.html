@@ -67,6 +67,7 @@
     </div>
     <p class="nja-status" role="status" aria-live="polite"></p>
   </div>
+  {{ include.notes_actions }}
   <p class="nja-credit">Synthetic narration: Kokoro. <a href="{{ case_story.script | relative_url }}" download>Download narration script</a> · <a href="{{ case_story.audio | relative_url }}" download>Download narration</a> · <a href="{{ case_story.captions | relative_url }}" download>Download captions</a></p>
   <div class="case-reading-actions" hidden><button type="button" data-case-action="read">Read at my own pace</button><button type="button" data-case-action="print">Print the case study</button></div>
   <details class="nja-transcript" open>

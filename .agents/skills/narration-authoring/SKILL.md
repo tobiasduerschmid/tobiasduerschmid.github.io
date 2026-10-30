@@ -94,12 +94,18 @@ keep any retained page as a thin delegate to the common include. Do not add
 per-topic page copies or a notes registry.
 
 `narration.html` adds **Save lesson notes as PDF** (`notes_url#export`) and
-**Edit lesson notes** (`notes_url`). These apply to all nine current lessons,
-not only Scrum. `js/narration-notes.js` prepares the visuals, restores and saves
+**Edit lesson notes** (`notes_url`). Pass these shared `notes_actions` to each
+adapter directly below its player, before tips, credits, and the transcript.
+Keep navigation-link semantics while styling the actions as buttons, with
+wrapping, visible focus, and light/dark colors. Hide them in print. These
+apply to every kind, not only Scrum. `js/narration-notes.js` prepares the visuals, restores and saves
 student text, waits for fonts and settled pictures, then opens the print dialog
 for `#export`. It is the sole notes lifecycle script. The reusable visual and
 editor includes are `narration-note-visual.html` and `narration-note-editor.html`;
 the common stylesheet remains `css/video-narration-notes.css`.
+`js/narration-note-rich-text.js` owns safe markup normalization and keyboard/paste
+editing, using the local pinned DOMPurify dependency. Native editing commands
+preserve undo history; storage and export remain in the lifecycle script.
 
 - Author `_data/explainers/<id>_notes.yml` as a mapping from
   `<scene.id>-<cue.id>` to one to four substantive bullets, each at most
@@ -118,13 +124,20 @@ the common stylesheet remains `css/video-narration-notes.css`.
   a language preference. Keep authored bullets and student writing separate
   from the speech. Notes-only edits never require audio regeneration.
 - Save on input under `sebook-narration-notes-<id>` as
-  `{version: 1, entries: {"cue:scene/id": "text", "question:scene/0": "text"}}`.
+  `{version: 2, entries: {"cue:scene/id": {html: "My <strong>note</strong>"}}}`.
   Cue keys use stable IDs; question keys use the scene and zero-based question
-  position. There is no autosave toggle. Preserve editing and export when
+  position (`question:scene/0`). Load version 1 plain strings literally and
+  upgrade on the first edit without changing keys. Accept only supported
+  semantic markup from saved or pasted content, without executable content,
+  attributes, or arbitrary styling. There is no autosave toggle. Preserve editing and export when
   browser storage fails, with a visible status. Read `cookie-storage-tracker`
   for any persistence change and keep `/cookies/` deletion and `/settings/`
   disclosure aligned.
-- Screen textareas mirror their plain text into paragraphs for print. Blank
+- Labeled multiline rich-text fields have visible keyboard help and no
+  formatting toolbar. Scope Cmd/Ctrl+B, I, U (bold, italic, underline) and
+  Cmd/Ctrl+Shift+7, 8 (numbered and bulleted lists) to the focused field;
+  preserve native undo/redo and Tab navigation. Keep `/shortcuts/` aligned.
+  Print mirrors preserve safe formatting and semantic lists. Blank
   animated-stage handouts keep three rows per Letter page; non-video rows
   use content height. Populated student notes must grow across pages rather
   than clip, overlap, or shrink to preserve a row count. Keep ruled space for

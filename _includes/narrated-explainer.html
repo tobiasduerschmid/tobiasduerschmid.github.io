@@ -56,6 +56,7 @@
     </div>
     <p class="nja-status" role="status" aria-live="polite"></p>
   </div>
+  {{ include.notes_actions }}
   <p class="nja-credit">Narration: Kokoro. <a href="{{ explainer.script | relative_url }}" download>Download TTS script</a> &middot; <a href="{{ explainer.audio | relative_url }}" download>Download narration</a></p>
   <details class="nja-transcript">
     <summary>Transcript and visual descriptions</summary>

@@ -325,9 +325,13 @@ not change its fingerprint. Stage-specific rules:
   `contain: strict`; without containment, Chrome's print shrinks every page
   to fit the 960px stage.
 
-Each cue and check has a labeled text field. Student writing autosaves under
-`sebook-narration-notes-<topic>` and prints through mirrored plain-text
-paragraphs. The inventory provides per-lesson and bulk deletion; update the
+Each cue and check has a labeled rich-text field with keyboard help and no
+formatting toolbar. Cmd/Ctrl+B, I, U toggle bold, italic, and underline;
+Cmd/Ctrl+Shift+7 and 8 toggle numbered and bulleted lists. Keep native
+undo/redo and Tab navigation. Student writing autosaves under
+`sebook-narration-notes-<topic>` and prints with its safe semantic formatting.
+Follow the shared version 2 storage contract and literal migration of old
+plain-text notes. The inventory provides per-lesson and bulk deletion; update the
 storage skill and disclosures when changing persistence. Blank animated-stage
 handouts keep three rows per Letter page. Rows containing student writing
 grow across pages instead of clipping text. Other narration kinds use their

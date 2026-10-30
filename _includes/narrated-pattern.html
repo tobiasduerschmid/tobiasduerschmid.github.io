@@ -94,6 +94,7 @@
     </div></div>
     <p class="nja-status" role="status" aria-live="polite"></p>
   </div>
+  {{ include.notes_actions }}
   <p class="nja-credit">Synthetic narration: Kokoro. <a href="{{ explainer.script | relative_url }}" download>Download narration script</a> &middot; <a href="{{ explainer.audio | relative_url }}" download>Download narration</a> &middot; <a href="{{ explainer.captions | relative_url }}" download>Download captions</a></p>
   <p class="np-view-links"><a data-np-view-link href="{{ lesson.views | append: '/read/' | relative_url }}">Read at my own pace</a> · <a data-np-view-link href="{{ lesson.views | append: '/print/' | relative_url }}">Print step-by-step version</a></p>
   <details class="nja-transcript">

@@ -347,10 +347,14 @@ Do not clone a pattern-specific notes layout or script.
   code-language select changes only that page, not the shared saved language.
   Code and diagrams must remain readable in rows that size to their content;
   do not impose the animated stage's three-row print geometry on them.
-- Each cue and check has a labeled student-note field. The shared
-  `js/narration-notes.js` restores and autosaves plain text under
-  `sebook-narration-notes-<topic>` and prepares export. Student text prints
-  as ordinary paragraphs and can grow across pages. Keep the answer key at
+- Each cue and check has a labeled rich-text field with keyboard help and no
+  formatting toolbar. Cmd/Ctrl+B, I, U toggle bold, italic, and underline;
+  Cmd/Ctrl+Shift+7 and 8 toggle numbered and bulleted lists. Preserve native
+  undo/redo and Tab navigation. The shared `js/narration-notes.js` restores
+  and autosaves text and safe semantic formatting under
+  `sebook-narration-notes-<topic>` using the shared version 2 contract,
+  including literal migration of old plain-text notes. Student formatting
+  and list structure survive print and can grow across pages. Keep the answer key at
   the end and blank ruled space for handwriting.
 - Preserve headings, text alternatives, labels, keyboard access, light print
   colors, and no-script reading. The browser supplies PDF tagging; inspect

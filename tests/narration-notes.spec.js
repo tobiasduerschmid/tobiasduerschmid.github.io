@@ -157,21 +157,22 @@ test('student notes and reasoning survive a reload and print as literal multilin
   await ready(page);
   const noteField = page.getByRole('textbox', { name: 'Your notes', exact: true }).first();
   const answerField = page.getByRole('textbox', { name: 'Your answer and reasoning', exact: true }).first();
-  await expect(noteField).toHaveValue(note);
-  await expect(answerField).toHaveValue(reasoning);
+  // Rich editors may represent visible line breaks with block elements.
+  await expect(noteField).toHaveText(note, { useInnerText: true });
+  await expect(answerField).toHaveText(reasoning, { useInnerText: true });
   await a11yCheckpoint(page, 'saved student notes', { feature: 'narration-notes' });
   await page.emulateMedia({ media: 'print' });
   await expect(noteField).toBeHidden();
   await expect(answerField).toBeHidden();
-  const writtenNote = page.locator('[data-notes-written^="cue:"] p').first();
-  const writtenAnswer = page.locator('[data-notes-written^="question:"] p').first();
+  const writtenNote = page.locator('[data-notes-written^="cue:"] [data-notes-content]').first();
+  const writtenAnswer = page.locator('[data-notes-written^="question:"] [data-notes-content]').first();
   await expect(writtenNote).toBeVisible();
   await expect(writtenAnswer).toBeVisible();
-  expect(await writtenNote.textContent()).toBe(note);
-  expect(await writtenAnswer.textContent()).toBe(reasoning);
+  expect(await writtenNote.innerText()).toBe(note);
+  expect(await writtenAnswer.innerText()).toBe(reasoning);
   await expect(writtenNote).toHaveCSS('white-space', 'pre-wrap');
-  await expect(writtenNote.locator('*')).toHaveCount(0);
-  await expect(writtenAnswer.locator('*')).toHaveCount(0);
+  await expect(writtenNote.locator('strong, b, script')).toHaveCount(0);
+  await expect(writtenAnswer.locator('script')).toHaveCount(0);
   expect(await page.evaluate(() => window.unwantedNoteScript)).toBeUndefined();
   const bounds = await writtenNote.evaluate(element => ({
     textBottom: element.getBoundingClientRect().bottom,
@@ -196,19 +197,19 @@ test('unavailable browser storage reports the failure while retaining printable 
   const text = 'Keep my event-loop observation even when storage is unavailable.';
   const field = page.getByRole('textbox', { name: 'Your notes', exact: true }).first();
   await field.fill(text);
-  await expect(field).toHaveValue(text);
+  await expect(field).toHaveText(text);
   await expect(page.locator('[data-notes-save-status]')).toContainText('Notes could not be saved.');
   const otherTab = await context.newPage();
   await otherTab.goto(loadLesson('nodejs').lesson.notes_url);
   await ready(otherTab);
   await otherTab.getByRole('textbox', { name: 'Your notes', exact: true }).nth(1).fill('A different note saved in another tab.');
-  await expect(page.getByRole('textbox', { name: 'Your notes', exact: true }).nth(1)).toHaveValue('A different note saved in another tab.');
-  await expect(field).toHaveValue(text);
+  await expect(page.getByRole('textbox', { name: 'Your notes', exact: true }).nth(1)).toHaveText('A different note saved in another tab.');
+  await expect(field).toHaveText(text);
   await expect(page.locator('[data-notes-save-status]')).toContainText('Notes could not be saved.');
   await otherTab.close();
   await a11yCheckpoint(page, 'notes storage unavailable', { feature: 'narration-notes' });
   await page.emulateMedia({ media: 'print' });
-  const written = page.locator('[data-notes-written^="cue:"] p').first();
+  const written = page.locator('[data-notes-written^="cue:"] [data-notes-content]').first();
   await expect(written).toBeVisible();
   expect(await written.textContent()).toBe(text);
 });
@@ -225,11 +226,11 @@ test('another tab can update and delete a saved note even while its field is foc
   await ready(otherTab);
   await expect(field).toBeFocused();
   const otherField = otherTab.getByRole('textbox', { name: 'Your notes', exact: true }).first();
-  await expect(otherField).toHaveValue('Original saved note');
+  await expect(otherField).toHaveText('Original saved note');
   await otherField.fill('Revised from the second tab');
-  await expect(field).toHaveValue('Revised from the second tab');
+  await expect(field).toHaveText('Revised from the second tab');
   await otherField.fill('');
-  await expect(field).toHaveValue('');
+  await expect(field).toHaveText('');
   await page.emulateMedia({ media: 'print' });
   await expect(page.locator('[data-notes-written^="cue:"]').first()).toBeHidden();
   await otherTab.close();
@@ -240,7 +241,7 @@ test('saved notes are separate per lesson and can be removed from Browser storag
     await page.goto(loadLesson(topic).lesson.notes_url);
     await ready(page);
     const field = page.getByRole('textbox', { name: 'Your notes', exact: true }).first();
-    await expect(field).toHaveValue('');
+    await expect(field).toHaveText('');
     await field.fill(`My ${topic} notes`);
   }
   await page.getByRole('link', { name: 'Manage saved notes', exact: true }).click();
@@ -256,7 +257,7 @@ test('saved notes are separate per lesson and can be removed from Browser storag
   for (const topic of ['observer', 'nodejs']) {
     await page.goto(loadLesson(topic).lesson.notes_url);
     await ready(page);
-    await expect(page.getByRole('textbox', { name: 'Your notes', exact: true }).first()).toHaveValue('');
+    await expect(page.getByRole('textbox', { name: 'Your notes', exact: true }).first()).toHaveText('');
   }
 });
 

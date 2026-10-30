@@ -1,4 +1,7 @@
 <div class="vn-note-editor">
-  <label hidden>{{ include.label }}<textarea rows="3" disabled data-notes-entry="{{ include.key | escape }}" spellcheck="true"></textarea></label>
-  <div class="vn-note-written" data-notes-written="{{ include.key | escape }}"><strong>{{ include.label }}</strong><p></p></div>
+  <div data-notes-input hidden>
+    <span class="vn-note-label" id="note-label-{{ include.key | slugify }}">{{ include.label }}</span>
+    <div class="vn-note-field" role="textbox" aria-multiline="true" aria-labelledby="note-label-{{ include.key | slugify }}" aria-describedby="notes-format-help" contenteditable="false" data-notes-entry="{{ include.key | escape }}" spellcheck="true"></div>
+  </div>
+  <div class="vn-note-written" data-notes-written="{{ include.key | escape }}"><strong>{{ include.label }}</strong><div class="vn-note-content" data-notes-content></div></div>
 </div>

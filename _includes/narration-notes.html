@@ -25,6 +25,8 @@
     <div class="vn-notes-intro">
       <p>The narration's pictures, paused, beside its key points, with lines for your own notes, each section's knowledge check, and the answers at the end. Printing or saving as PDF keeps only the lesson.</p>
       <p>Type in the fields below. Your notes save automatically in this browser and are included when you export a PDF. <a href="{{ '/cookies/#narration-notes' | relative_url }}">Manage saved notes</a>.</p>
+      <p id="notes-format-help">While editing, use Ctrl (⌘ on Mac) + B for bold, + I for italic, or + U for underline. Ctrl/⌘ + Shift + 7 makes a numbered list; + Shift + 8 makes a bulleted list. Use your usual undo and redo keys. Formatting is saved and included in the PDF.</p>
+      <p class="vn-notes-format-status" role="status" data-notes-format-status></p>
       <noscript><p>Enable JavaScript to edit and save notes here. You can print the lesson with blank writing space without it.</p></noscript>
       <p role="status" data-notes-save-status></p>
       {% if explainer.languages %}<label>Code language for these notes<select data-notes-code-language disabled>{% for language in explainer.languages %}<option value="{{ language }}"{% if language == explainer.default_language %} selected{% endif %}>{{ language }}</option>{% endfor %}</select></label>{% endif %}

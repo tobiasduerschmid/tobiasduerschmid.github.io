@@ -9,6 +9,8 @@
   const story = JSON.parse(document.getElementById('narration-notes-data').textContent);
   const fields = [...root.querySelectorAll('[data-notes-entry]')];
   const key = `sebook-narration-notes-${root.dataset.notesTopic}`;
+  const richText = window.NarrationNoteRichText;
+  const formatStatus = document.querySelector('[data-notes-format-status]');
   const unsaved = new Set();
   const saveFailure = 'Notes could not be saved. Keep this page open and export a PDF to keep your text.';
 
@@ -16,23 +18,28 @@
     const raw = localStorage.getItem(key);
     if (!raw) return {};
     const record = JSON.parse(raw);
-    if (record.version !== 1 || !record.entries || typeof record.entries !== 'object' || Array.isArray(record.entries)) {
+    if (![1, 2].includes(record.version) || !record.entries || typeof record.entries !== 'object' || Array.isArray(record.entries)) {
       throw new Error('Unsupported saved notes');
     }
-    return record.entries;
+    return Object.fromEntries(Object.entries(record.entries).map(([id, entry]) => [id, { html: richText.fromStored(entry, record.version) }]));
   }
   function showWritten(field) {
     const editor = field.closest('.vn-note-editor');
-    editor.querySelector('[data-notes-written] p').textContent = field.value;
-    editor.classList.toggle('has-text', Boolean(field.value.trim()));
-    field.closest('.vn-note').classList.toggle('has-written-notes', Boolean(field.value.trim()));
+    const html = richText.clean(field.innerHTML);
+    editor.querySelector('[data-notes-content]').innerHTML = html;
+    editor.classList.toggle('has-text', Boolean(html));
+    field.closest('.vn-note').classList.toggle('has-written-notes', Boolean(html));
+    return html;
   }
   function restore() {
     try {
       const entries = readNotes();
       fields.forEach(field => {
         if (unsaved.has(field.dataset.notesEntry)) return;
-        field.value = typeof entries[field.dataset.notesEntry] === 'string' ? entries[field.dataset.notesEntry] : '';
+        const html = entries[field.dataset.notesEntry]?.html || '';
+        // Unchanged fields retain their caret and native undo history when
+        // another tab saves a different note in this lesson.
+        if (richText.clean(field.innerHTML) !== html) field.innerHTML = html;
         showWritten(field);
       });
       saveStatus.textContent = unsaved.size ? saveFailure : 'Notes save automatically on this browser.';
@@ -40,23 +47,23 @@
       saveStatus.textContent = 'Saved notes could not be read. You can still type and export this page.';
     }
   }
-  fields.forEach(field => { field.disabled = false; field.closest('label').hidden = false; });
   restore();
-  fields.forEach(field => field.addEventListener('input', () => {
-    showWritten(field);
+  function save(field) {
+    const html = showWritten(field);
     unsaved.add(field.dataset.notesEntry);
     try {
       const entries = readNotes();
-      if (field.value) entries[field.dataset.notesEntry] = field.value;
+      if (html) entries[field.dataset.notesEntry] = { html };
       else delete entries[field.dataset.notesEntry];
-      if (Object.keys(entries).length) localStorage.setItem(key, JSON.stringify({ version: 1, entries }));
+      if (Object.keys(entries).length) localStorage.setItem(key, JSON.stringify({ version: 2, entries }));
       else localStorage.removeItem(key);
       unsaved.delete(field.dataset.notesEntry);
       saveStatus.textContent = unsaved.size ? saveFailure : 'Notes saved on this browser.';
     } catch (_) {
       saveStatus.textContent = saveFailure;
     }
-  }));
+  }
+  fields.forEach(field => richText.mount(field, () => save(field), message => { formatStatus.textContent = message; }));
   window.addEventListener('storage', event => { if (event.key === key || event.key === null) restore(); });
 
   // Choose a code language for this handout without changing a site preference.

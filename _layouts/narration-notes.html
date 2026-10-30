@@ -22,6 +22,8 @@
   <script type="application/json" id="narration-notes-data">{{ notes_entry.story | jsonify | replace: '</', '<\/' }}</script>
   {% if notes_entry.lesson.animation %}{% include video-narration-stage-assets.html topic=page.topic part='scripts' %}{% endif %}
   {% if notes_entry.lesson.renderer %}{% assign notes_art_script = '/js/' | append: page.topic | append: '-animation-art.js' %}<script src="{{ notes_art_script | relative_url }}?v={{ site.asset_version }}"></script>{% endif %}
+  <script src="{{ '/js/vendor/dompurify/3.4.17/purify.min.js' | relative_url }}"></script>
+  <script src="{{ '/js/narration-note-rich-text.js' | relative_url }}?v={{ site.asset_version }}"></script>
   <script src="{{ '/js/narration-notes.js' | relative_url }}?v={{ site.asset_version }}"></script>
 </body>
 </html>

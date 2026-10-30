@@ -169,14 +169,21 @@ html body.vn-notes-page {
    Content determines row height; long code and student prose must never clip. */
 .vn-notes-page .vn-notes-skip { position: absolute; left: 1em; top: -10em; padding: 0.5em; background: #fff; color: #0b5f75; z-index: 10; }
 .vn-notes-page .vn-notes-skip:focus { top: 0; }
-.vn-notes label, .vn-notes select, .vn-notes textarea { font: inherit; color: inherit; }
+.vn-notes label, .vn-notes select, .vn-note-field { font: inherit; color: inherit; }
 .vn-notes select { margin-left: 0.5em; padding: 0.3em; background: #fff; border: 1px solid #4a5566; }
-.vn-note-editor label { display: block; font-weight: 600; }
-.vn-note-editor label[hidden] { display: none; }
-.vn-note-editor textarea { display: block; box-sizing: border-box; width: 100%; min-height: 5em; padding: 0.5em; margin: 0.3em 0; border: 1px solid #4a5566; background: #fff; resize: vertical; line-height: 1.5; }
-.vn-notes textarea:focus-visible, .vn-notes select:focus-visible { outline: 3px solid #0b5f75; outline-offset: 2px; }
+.vn-note-label { display: block; font-weight: 600; }
+.vn-note-editor [data-notes-input][hidden] { display: none; }
+.vn-note-field { display: block; box-sizing: border-box; width: 100%; min-height: 5em; padding: 0.5em; margin: 0.3em 0; border: 1px solid #4a5566; background: #fff; line-height: 1.5; }
+.vn-note-field:focus-visible, .vn-notes select:focus-visible { outline: 3px solid #0b5f75; outline-offset: 2px; }
 .vn-note-written { display: none; }
-.vn-note-written p { white-space: pre-wrap; overflow-wrap: anywhere; margin: 0.4em 0; }
+.vn-note-field, .vn-note-content { white-space: pre-wrap; overflow-wrap: anywhere; }
+.vn-note-content { margin: 0.4em 0; }
+.vn-note-field p, .vn-note-content p { margin: 0; font: inherit; }
+.vn-note-field ul, .vn-note-field ol, .vn-note-content ul, .vn-note-content ol { margin: 0.3em 0; padding-left: 1.5em; }
+.vn-note-field li, .vn-note-content li { font: inherit; margin: 0; }
+.vn-note-field strong, .vn-note-content strong, .vn-note-field b { font-weight: 700; }
+.vn-note-field em, .vn-note-content em, .vn-note-field i { font-style: italic; }
+.vn-notes-format-status { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
 .vn-notes--document .vn-note-still { overflow: visible; padding: 0.6em; background: #fff; }
 .vn-notes--document .vn-note-still pre { white-space: pre-wrap; overflow-wrap: anywhere; max-height: none; font-size: 1em; }
 .vn-notes--document .np-diagram { max-height: none; overflow: visible; }
@@ -189,7 +196,7 @@ html body.vn-notes-page {
 .vn-note-visual-description { margin: 0.6em 0 0; color: var(--vn-notes-muted); font-size: 1em; }
 .vn-notes--document .nja-model { margin: 0; }
 @media print {
-  .vn-notes-page .vn-notes-skip, .vn-note-editor label { display: none; }
+  .vn-notes-page .vn-notes-skip, .vn-note-editor [data-notes-input] { display: none; }
   .vn-note-editor.has-text .vn-note-written { display: block; }
   .vn-note.has-written-notes, .vn-notes--document .vn-note {
     display: block; height: auto; min-height: 3in; overflow: visible; break-inside: auto;

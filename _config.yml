@@ -4,7 +4,7 @@ plugins:
   - jekyll-scholar
 
 env: production
-asset_version: "20261029-editable-narration-notes"
+asset_version: "20261030-narration-diagrams-fit"
 
 # Feature flags
 personal_gym: true

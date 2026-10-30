@@ -194,7 +194,10 @@ cue IDs and the speech fingerprint.
 All nine lessons share the same handout: Scrum, Observer, State, Strategy,
 MVC, Node.js, React, Therac-25, and Cloudflare. The public `narration.html`
 entry point adds **Save lesson notes as PDF** (`lesson.notes_url#export`) and
-**Edit lesson notes** (`lesson.notes_url`). The notes generator in
+**Edit lesson notes** (`lesson.notes_url`). The actions are navigation links
+styled as buttons directly below each player, before tips, credits, and the
+transcript. `narration.html` passes one shared `notes_actions` slot to every
+adapter; keep its visual placement and document order aligned. The notes generator in
 `_plugins/narrations.rb` creates the route using the `narration-notes` layout
 and include. An existing page at that URL takes precedence; Scrum's retained
 page delegates to the shared include. Do not maintain another lesson registry.
@@ -232,11 +235,11 @@ accessibility tree, so keep that description available in the exported file.
 `js/narration-notes.js` owns visual preparation, export, and editable-note
 persistence for every kind. After pictures and fonts settle, `#export` opens
 the browser's print dialog; the page's print button can open it again. Each
-input saves plain text to `localStorage` under
+input saves text and formatting to `localStorage` under
 `sebook-narration-notes-<id>`:
 
 ```json
-{"version":1,"entries":{"cue:arrival/waiting":"My note","question:arrival/0":"My reasoning"}}
+{"version":2,"entries":{"cue:arrival/waiting":{"html":"My <strong>note</strong>"},"question:arrival/0":{"html":"My reasoning"}}}
 ```
 
 Cue entries use stable scene/cue IDs; question entries use the scene ID and
@@ -246,10 +249,18 @@ Saved text is restored on return; storage failures leave editing and export
 available with a status message. `/cookies/#narration-notes` lists the records
 with per-lesson and bulk deletion, and `/settings/` explains the behavior.
 The optional Chrome profile sync extension follows its existing rules for
-localStorage; the site does not receive the notes.
+localStorage; the site does not receive the notes. Version 1 plain-text entries
+are loaded literally, including any markup characters, and upgraded on the
+first edit. Keep the existing storage keys and entry identities.
 
-The shared `narration-note-editor.html` keeps the textarea on screen and
-mirrors its text into ordinary paragraphs for print. Blank animated-stage
+The shared `narration-note-editor.html` uses a labeled multiline rich-text
+textbox with visible keyboard help, without formatting buttons. While a field
+has focus, Cmd/Ctrl+B, I, and U toggle bold, italic, and underline;
+Cmd/Ctrl+Shift+7 and 8 toggle numbered and bulleted lists. Preserve native
+undo/redo and let Tab leave the field. Document shortcuts in `/shortcuts/`.
+Only supported semantic markup is accepted from pasted or stored content;
+discard executable content, attributes, and arbitrary styling. The print
+mirror preserves that safe formatting and real list structure. Blank animated-stage
 handouts retain three rows per Letter page. Non-video rows use their content
 height, and rows with student writing can expand across pages rather than
 clip text or shrink it to meet a row count. Ruled blank space remains for
@@ -277,6 +288,10 @@ and verification screenshots outside the repository.
   editable handout for every lesson, with small kind-specific visual branches.
 - `js/narration-notes.js` and `css/video-narration-notes.css`: shared handout
   preparation, local saving, print lifecycle, and screen/print layout.
+- `js/narration-note-rich-text.js`: safe markup normalization and focused
+  keyboard/paste behavior, using the local pinned DOMPurify dependency.
+  Native editing commands preserve the browser's undo history; keep storage
+  and export orchestration in `narration-notes.js`.
 - `js/narrated-explainer.js`: shared audio clock, seeking, speed, motion,
   fullscreen, print lifecycle, and `readData` boundary for every adapter.
 - `js/narrated-lesson.js`: common mounting, quiz lifecycle, navigation/focus,

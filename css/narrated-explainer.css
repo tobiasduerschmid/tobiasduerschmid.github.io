@@ -160,6 +160,36 @@ html.dark-mode:not(.print-light-mode) .narrated-explainer a, html.dark-mode:not(
 html.dark-mode:not(.print-light-mode) .narrated-explainer .nja-description { color: #d1dce7; border-color: #9bafc1; }
 html.dark-mode:not(.print-light-mode) .narrated-explainer .nja-transcript .nja-syntax { color: var(--nja-text); background: var(--nja-code-bg); }
 
+/* Shared lesson actions stay next to the player, before its supplemental links. */
+.narrated-explainer .narration-notes-actions { display: flex; flex-wrap: wrap; gap: 0.5em; margin: 0.55em 0; }
+.narrated-explainer .narration-note-action,
+.narrated-explainer .narration-note-action:visited,
+html.dark-mode:not(.print-light-mode) .narrated-explainer .narration-note-action,
+html.dark-mode:not(.print-light-mode) .narrated-explainer .narration-note-action:visited {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  max-width: 100%;
+  padding: 0.45em 0.8em;
+  border: 2px solid var(--nja-line);
+  border-radius: 6px;
+  color: var(--nja-text);
+  background: var(--nja-chrome);
+  font: inherit;
+  font-weight: 700;
+  line-height: 1.4;
+  text-align: center;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+.narrated-explainer .narration-note-action--export,
+.narrated-explainer .narration-note-action--export:visited,
+html.dark-mode:not(.print-light-mode) .narrated-explainer .narration-note-action--export,
+html.dark-mode:not(.print-light-mode) .narrated-explainer .narration-note-action--export:visited { color: var(--nja-ink); background: var(--nja-accent-fill); }
+.narrated-explainer .narration-note-action:hover { text-decoration: underline; text-underline-offset: 0.15em; }
+.narrated-explainer .narration-note-action:focus-visible { outline: 3px solid var(--nja-cyan); outline-offset: 3px; }
+
 @media (max-width: 1050px) {
   .narrated-explainer .nja-lesson-layout { grid-template-columns: 1fr; }
   .narrated-explainer .nja-explanation { grid-template-columns: 1fr; }
@@ -177,6 +207,7 @@ html.dark-mode:not(.print-light-mode) .narrated-explainer .nja-transcript .nja-s
 @media print {
   .narrated-explainer, html.dark-mode:not(.print-light-mode) .narrated-explainer { --nja-accent: #005587; color: #000; background: #fff; }
   .narrated-explainer .nja-player, .narrated-explainer .nja-credit, .narrated-explainer .nja-transcript summary { display: none !important; }
+  .narrated-explainer .narration-notes-actions { display: none !important; }
   .narrated-explainer .nja-transcript::details-content { display: block; content-visibility: visible; }
   .narrated-explainer .nja-transcript > * { display: block !important; }
   .narrated-explainer .nja-transcript-scene { break-inside: avoid; }

@@ -42,7 +42,8 @@ The versioned authoring contract and a complete minimal example are in
 | `js/video-narration/<topic>.js`, `<topic>-kit.js`, `css/video-narration-<topic>.css` | The topic's choreography and artwork, loaded only in its frame. |
 | `_data/explainers/<topic>_notes.yml` | Key points per cue for the printable notes. |
 | `_layouts/narration-notes.html`, `_includes/narration-notes.html`, `css/video-narration-notes.css`, `js/narration-notes.js` | Shared editable handout for every narration kind: settles visuals, saves student writing locally, and prints. |
-| `_includes/narration-note-visual.html`, `_includes/narration-note-editor.html` | Reuse each kind's visuals and provide labeled note fields with plain-text print content. |
+| `_includes/narration-note-visual.html`, `_includes/narration-note-editor.html` | Reuse each kind's visuals and provide labeled rich-text fields with semantic print content. |
+| `js/narration-note-rich-text.js` | Shared sanitization and keyboard/paste editing; preserves native undo history. Storage and export stay in the notes lifecycle. |
 | `_includes/video-narration-stage-assets.html` | The stage's styles, data, and scripts, shared by the stage frame and the notes. |
 
 ## The player
@@ -172,7 +173,8 @@ animated cue in words.
 
 Every narration kind uses the same notes page. The shared `narration.html`
 entry point supplies **Save lesson notes as PDF** and **Edit lesson notes**
-links. Jekyll generates the `narration-notes` layout/include at the compiler's
+links styled as buttons directly beneath the player, before its tips and
+transcript. Jekyll generates the `narration-notes` layout/include at the compiler's
 `lesson.notes_url`: `lesson.views`, or `lesson.chapter` minus a trailing
 `.html`, followed by `/notes/`. Export appends `#export`. New lessons need no
 hand-authored notes route. The old `video-narration-notes` layout/include are
@@ -197,9 +199,11 @@ from `<topic>_quizzes.yml` follows as a row with room to answer, and the
 answers, with each wrong option's feedback, close the notes. Notes keys use
 `<scene.id>-<cue.id>`; only the existing Scrum file uses the legacy positional
 fallback. Each input autosaves under `sebook-narration-notes-<topic>`, with
-deletion available in Browser storage. Printed student writing comes from
-plain-text paragraphs mirrored from the textareas, so it remains readable
-and can flow across pages.
+deletion available in Browser storage. Labeled rich-text fields use the
+keyboard shortcuts documented in the shared format, without a formatting
+toolbar. Their print mirrors retain safe formatting and semantic lists, so
+student writing remains readable and can flow across pages. Old plain-text
+notes load literally and upgrade on the first edit.
 
 In print only the lesson remains. Blank animated-stage handouts keep three
 rows per Letter page, then the answers. Non-video handouts use content-height

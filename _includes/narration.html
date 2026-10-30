@@ -2,6 +2,10 @@
 {%- assign narration_entry = site.data.narration_lessons[include.topic] -%}
 {% for stylesheet in narration_entry.styles %}<link rel="stylesheet" href="{{ stylesheet | relative_url }}?v={{ site.asset_version }}">{% endfor %}
 <link rel="stylesheet" href="{{ '/css/print-light.css' | relative_url }}?v={{ site.asset_version }}">
-{% include {{ narration_entry.player_include }} topic=include.topic subject=narration_entry.lesson.name renderer=narration_entry.lesson.renderer %}
-
-<p class="narration-notes-link"><a class="button" href="{{ narration_entry.lesson.notes_url | relative_url }}#export">Save lesson notes as PDF</a> · <a href="{{ narration_entry.lesson.notes_url | relative_url }}">Edit lesson notes</a></p>
+{%- capture narration_notes_actions -%}
+<div class="narration-notes-actions">
+  <a class="narration-note-action narration-note-action--export" href="{{ narration_entry.lesson.notes_url | relative_url }}#export">Save lesson notes as PDF</a>
+  <a class="narration-note-action" href="{{ narration_entry.lesson.notes_url | relative_url }}">Edit lesson notes</a>
+</div>
+{%- endcapture -%}
+{% include {{ narration_entry.player_include }} topic=include.topic subject=narration_entry.lesson.name renderer=narration_entry.lesson.renderer notes_actions=narration_notes_actions %}
