@@ -1,0 +1,479 @@
+{
+  "version": 1,
+  "presentation": {},
+  "resources": {
+    "languages": [
+      "python",
+      "java",
+      "cpp",
+      "typescript"
+    ],
+    "default_language": "python",
+    "example_order": [
+      "mentionable",
+      "message",
+      "channels",
+      "invite",
+      "server"
+    ],
+    "diagrams": {
+      "sketch": {
+        "type": "freeform",
+        "label": "Whiteboard sketch of the chat app",
+        "description": "An informal sketch: boxes named Server, Channel, Message, and Member, joined left to right by three plain arrows with no key.",
+        "caption": "Boxes and arrows without a key: each reader decides what an arrow means.",
+        "source": "@startuml\nlayout horizontal\nbox \"Server\" as server\nbox \"Channel\" as channel\nbox \"Message\" as message\nbox \"Member\" as member\nserver --> channel\nchannel --> message\nmessage --> member\n@enduml\n"
+      },
+      "sketch_questions": {
+        "type": "freeform",
+        "label": "Whiteboard sketch of the chat app",
+        "description": "An informal sketch: boxes named Server, Channel, Message, and Member, joined left to right by three plain arrows with no key. Each arrow carries a question mark.",
+        "caption": "Boxes and arrows without a key: each reader decides what an arrow means.",
+        "source": "@startuml\nlayout horizontal\nbox \"Server\" as server\nbox \"Channel\" as channel\nbox \"Message\" as message\nbox \"Member\" as member\nserver --> channel : ?\nchannel --> message : ?\nmessage --> member : ?\n@enduml\n"
+      },
+      "preview": {
+        "label": "The chat app sketch as a UML class diagram",
+        "description": "Server owns any number of Channels (filled diamond, 1 at Server). Channel, an abstract class, owns any number of Messages (filled diamond, 1 at Channel). Each Message is written by exactly one Member; a member writes any number of messages; the arrow points to Member.",
+        "caption": "Every mark here has one UML meaning, and the lesson explains each one.",
+        "source": "@startuml\nlayout horizontal\nclass Server\nabstract class Channel\nclass Message\nclass Member\nServer \"1\" *--> \"*\" Channel\nChannel \"1\" *--> \"*\" Message\nMessage \"*\" --> \"1\" Member : written by\n@enduml\n"
+      },
+      "message_name": {
+        "label": "Class box for Message",
+        "description": "Class Message with private attributes text: String and author: Member, and public operations edit(text: String) and preview(length: Integer): String.",
+        "caption": "One class, three compartments: name, attributes, and operations.",
+        "source": "@startuml\nclass Message {\n  - text: String\n  - author: Member\n  + edit(text: String)\n  + preview(length: Integer): String\n}\ncallout top of text \"Message\" : Name compartment: the class\n@enduml\n"
+      },
+      "message_attributes": {
+        "label": "Class box for Message",
+        "description": "Class Message with private attributes text: String and author: Member, and public operations edit(text: String) and preview(length: Integer): String.",
+        "caption": "One class, three compartments: name, attributes, and operations.",
+        "source": "@startuml\nclass Message {\n  - text: String\n  - author: Member\n  + edit(text: String)\n  + preview(length: Integer): String\n}\ncallout right of text \"text: String\" occurrence 1 : Attribute: a stored value\n@enduml\n"
+      },
+      "message_operations": {
+        "label": "Class box for Message",
+        "description": "Class Message with private attributes text: String and author: Member, and public operations edit(text: String) and preview(length: Integer): String.",
+        "caption": "One class, three compartments: name, attributes, and operations.",
+        "source": "@startuml\nclass Message {\n  - text: String\n  - author: Member\n  + edit(text: String)\n  + preview(length: Integer): String\n}\ncallout bottom of text \"preview(length: Integer): String\" : Operation: parameters, result\n@enduml\n"
+      },
+      "message_visibility": {
+        "label": "Class box for Message",
+        "description": "Class Message with private attributes text: String and author: Member, and public operations edit(text: String) and preview(length: Integer): String.",
+        "caption": "One class, three compartments: name, attributes, and operations.",
+        "source": "@startuml\nclass Message {\n  - text: String\n  - author: Member\n  + edit(text: String)\n  + preview(length: Integer): String\n}\ncallout left of text \"-\" occurrence 1 : Minus: private\ncallout left of text \"+\" occurrence 1 : Plus: public\n@enduml\n"
+      },
+      "message_markers": {
+        "label": "Class box for Message",
+        "description": "Class Message with private attributes text: String and author: Member, and public operations edit(text: String) and preview(length: Integer): String.",
+        "caption": "One class, three compartments: name, attributes, and operations.",
+        "source": "@startuml\nclass Message {\n  - text: String\n  - author: Member\n  + edit(text: String)\n  + preview(length: Integer): String\n}\ncallout bottom of element Message : Also: # protected, ~ package\n@enduml\n"
+      },
+      "message_sketch": {
+        "label": "Sketch-level class box for Message",
+        "description": "Class Message listing only the names text, author, edit(), and preview(), without types or visibility markers.",
+        "caption": "The same class at sketch level: details not shown are unknown, not absent.",
+        "source": "@startuml\nclass Message {\n  text\n  author\n  edit()\n  preview()\n}\ncallout right of element Message : Not shown means unknown, not absent\n@enduml\n"
+      },
+      "kinds": {
+        "label": "Generalization of channels",
+        "description": "Abstract class Channel, its name in italics with {abstract} below it, with protected attribute name: String, public operation rename(name: String), and abstract operation summary(): String. TextChannel, with topic: String and summary(), and VoiceChannel, with connect(member: Member) and summary(), are subclasses of Channel.",
+        "caption": "Inherited attributes and operations are drawn once, in the general class.",
+        "source": "@startuml\nlayout compact\nabstract class Channel {\n  # name: String\n  + rename(name: String)\n  + {abstract} summary(): String\n}\nclass TextChannel {\n  - topic: String\n  + summary(): String\n}\nclass VoiceChannel {\n  + connect(member: Member)\n  + summary(): String\n}\nTextChannel --|> Channel\nVoiceChannel --|> Channel\ncallout right of text \"Channel\" : General class: what both share\n@enduml\n"
+      },
+      "kinds_triangle": {
+        "label": "Generalization of channels",
+        "description": "Abstract class Channel, its name in italics with {abstract} below it, with protected attribute name: String, public operation rename(name: String), and abstract operation summary(): String. TextChannel, with topic: String and summary(), and VoiceChannel, with connect(member: Member) and summary(), are subclasses of Channel.",
+        "caption": "Inherited attributes and operations are drawn once, in the general class.",
+        "source": "@startuml\nlayout compact\nabstract class Channel {\n  # name: String\n  + rename(name: String)\n  + {abstract} summary(): String\n}\nclass TextChannel {\n  - topic: String\n  + summary(): String\n}\nclass VoiceChannel {\n  + connect(member: Member)\n  + summary(): String\n}\nTextChannel --|> Channel\nVoiceChannel --|> Channel\ncallout right of shape polygon occurrence 1 : Triangle at the general class\n@enduml\n"
+      },
+      "kinds_abstract": {
+        "label": "Generalization of channels",
+        "description": "Abstract class Channel, its name in italics with {abstract} below it, with protected attribute name: String, public operation rename(name: String), and abstract operation summary(): String. TextChannel, with topic: String and summary(), and VoiceChannel, with connect(member: Member) and summary(), are subclasses of Channel.",
+        "caption": "Inherited attributes and operations are drawn once, in the general class.",
+        "source": "@startuml\nlayout compact\nabstract class Channel {\n  # name: String\n  + rename(name: String)\n  + {abstract} summary(): String\n}\nclass TextChannel {\n  - topic: String\n  + summary(): String\n}\nclass VoiceChannel {\n  + connect(member: Member)\n  + summary(): String\n}\nTextChannel --|> Channel\nVoiceChannel --|> Channel\ncallout right of text \"Channel\" : Abstract class: italic name, {abstract}\ncallout right of text \"summary(): String\" occurrence 1 : Abstract operation: italic\n@enduml\n"
+      },
+      "kinds_substitution": {
+        "label": "Generalization of channels",
+        "description": "Abstract class Channel, its name in italics with {abstract} below it, with protected attribute name: String, public operation rename(name: String), and abstract operation summary(): String. TextChannel, with topic: String and summary(), and VoiceChannel, with connect(member: Member) and summary(), are subclasses of Channel.",
+        "caption": "Inherited attributes and operations are drawn once, in the general class.",
+        "source": "@startuml\nlayout compact\nabstract class Channel {\n  # name: String\n  + rename(name: String)\n  + {abstract} summary(): String\n}\nclass TextChannel #fff0ac hatched {\n  - topic: String\n  + summary(): String\n}\nclass VoiceChannel #fff0ac hatched {\n  + connect(member: Member)\n  + summary(): String\n}\nTextChannel --|> Channel\nVoiceChannel --|> Channel\ncallout right of text \"Channel\" : Any subclass can stand in\n@enduml\n"
+      },
+      "mentions": {
+        "label": "The Mentionable interface and its realizations",
+        "description": "Interface Mentionable declares mention(): String. Member, with nickname and mention, and abstract class Channel, with name and mention, each realize Mentionable.",
+        "caption": "Member and Channel are unrelated classes that keep the same promise.",
+        "source": "@startuml\ninterface Mentionable {\n  + mention(): String\n}\nclass Member {\n  - nickname: String\n  + mention(): String\n}\nabstract class Channel {\n  # name: String\n  + mention(): String\n}\nMember ..|> Mentionable\nChannel ..|> Mentionable\n@enduml\n"
+      },
+      "mentions_realization": {
+        "label": "The Mentionable interface and its realizations",
+        "description": "Interface Mentionable declares mention(): String. Member, with nickname and mention, and abstract class Channel, with name and mention, each realize Mentionable.",
+        "caption": "Member and Channel are unrelated classes that keep the same promise.",
+        "source": "@startuml\ninterface Mentionable {\n  + mention(): String\n}\nclass Member {\n  - nickname: String\n  + mention(): String\n}\nabstract class Channel {\n  # name: String\n  + mention(): String\n}\nMember ..|> Mentionable\nChannel ..|> Mentionable\ncallout top of text \"«interface»\" : Interface: promised operations\ncallout left of shape polygon occurrence 1 : Realization: dashed line\n@enduml\n"
+      },
+      "mentions_compare": {
+        "label": "The Mentionable interface and its realizations",
+        "description": "Interface Mentionable declares mention(): String. Member, with nickname and mention, and abstract class Channel, with name and mention, each realize Mentionable. TextChannel is a subclass of Channel.",
+        "caption": "Member and Channel are unrelated classes that keep the same promise.",
+        "source": "@startuml\ninterface Mentionable {\n  + mention(): String\n}\nclass Member {\n  - nickname: String\n  + mention(): String\n}\nabstract class Channel {\n  # name: String\n  + mention(): String\n}\nMember ..|> Mentionable\nChannel ..|> Mentionable\nclass TextChannel\nTextChannel --|> Channel\ncallout left of shape polygon occurrence 2 : Solid: a kind of\ncallout left of shape polygon occurrence 1 : Dashed: keeps a promise\n@enduml\n"
+      },
+      "author_attribute": {
+        "label": "Message with an author attribute",
+        "description": "Message lists the attribute author: Member. A separate Member box has no line to Message.",
+        "caption": "The author reference is still hidden inside an attribute.",
+        "source": "@startuml\nlayout vertical\nclass Message {\n  - text: String\n  - author: Member\n  + edit(text: String)\n  + preview(length: Integer): String\n}\nclass Member {\n  - nickname: String\n  + rename(nickname: String)\n  + mention(): String\n}\ncallout right of text \"author: Member\" : Its type is another class\n@enduml\n"
+      },
+      "author_line": {
+        "label": "Message written by Member",
+        "description": "An association labeled written by runs from Message to Member, with an open arrowhead at Member. Message no longer lists author as an attribute.",
+        "caption": "The same reference drawn as an association, navigable from Message to Member.",
+        "source": "@startuml\nlayout vertical\nclass Message {\n  - text: String\n  + edit(text: String)\n  + preview(length: Integer): String\n}\nclass Member {\n  - nickname: String\n  + rename(nickname: String)\n  + mention(): String\n}\nMessage --> Member : written by\ncallout left of edge 1 middle : Association: links between objects\n@enduml\n"
+      },
+      "author_navigable": {
+        "label": "Message written by Member",
+        "description": "An association labeled written by runs from Message to Member, with an open arrowhead at Member. Message no longer lists author as an attribute.",
+        "caption": "The same reference drawn as an association, navigable from Message to Member.",
+        "source": "@startuml\nlayout vertical\nclass Message {\n  - text: String\n  + edit(text: String)\n  + preview(length: Integer): String\n}\nclass Member {\n  - nickname: String\n  + rename(nickname: String)\n  + mention(): String\n}\nMessage --> Member : written by\ncallout left of edge 1 end : Navigable: a message reaches its author\n@enduml\n"
+      },
+      "author_counts": {
+        "caption": "Each number counts the objects at its end that link to one object at the other end.",
+        "label": "Multiplicities of written by",
+        "description": "Message is written by Member: 1 at the Member end, a star at the Message end.",
+        "source": "@startuml\nlayout horizontal\nclass Message\nclass Member\nMessage \"*\" --> \"1\" Member : written by\ncallout top of text \"1\" : Exactly one author per message\ncallout top of text \"*\" : Any number of messages per member\n@enduml\n"
+      },
+      "member_counts": {
+        "caption": "Each number counts the objects at its end that link to one object at the other end.",
+        "label": "Multiplicities of server membership",
+        "description": "Server links to Member, with a star at the Server end and 1..* at the Member end.",
+        "source": "@startuml\nlayout horizontal\nclass Server\nclass Member\nServer \"*\" --> \"1..*\" Member\ncallout top of text \"1..*\" : At least one member per server\ncallout top of text \"*\" : Any number of servers per member\n@enduml\n"
+      },
+      "voice_open": {
+        "caption": "Each number counts the objects at its end that link to one object at the other end.",
+        "label": "VoiceChannel and Member, multiplicities unknown",
+        "description": "VoiceChannel links to Member, with an arrowhead at Member and a question mark at each end in place of the multiplicities.",
+        "source": "@startuml\nlayout horizontal\nclass VoiceChannel\nclass Member\nVoiceChannel \"?\" --> \"?\" Member\n@enduml\n"
+      },
+      "voice_counts": {
+        "caption": "Each number counts the objects at its end that link to one object at the other end.",
+        "label": "Multiplicities of VoiceChannel and Member",
+        "description": "VoiceChannel links to Member, with 0..1 at the VoiceChannel end and a star at the Member end.",
+        "source": "@startuml\nlayout horizontal\nclass VoiceChannel\nclass Member\nVoiceChannel \"0..1\" --> \"*\" Member\ncallout top of text \"0..1\" : At most one voice channel per member\ncallout top of text \"*\" : Any number of members per voice channel\n@enduml\n"
+      },
+      "ownership": {
+        "caption": "A filled diamond sits at the whole; each part has at most one owner.",
+        "label": "Server owns its channels",
+        "description": "Server owns any number of Channels: a filled diamond at Server with 1, a star and an arrowhead at Channel.",
+        "source": "@startuml\nlayout vertical\nclass Server\nabstract class Channel\nServer \"1\" *--> \"*\" Channel\ncallout right of edge 1 start : Composition: delete a server, its channels go\n@enduml\n"
+      },
+      "ownership_messages": {
+        "caption": "A filled diamond sits at the whole; each part has at most one owner.",
+        "label": "Servers own channels, channels own messages",
+        "description": "Server owns any number of Channels, and Channel owns any number of Messages, each with a filled diamond and 1 at the whole.",
+        "source": "@startuml\nlayout vertical\nclass Server\nabstract class Channel\nclass Message\nServer \"1\" *--> \"*\" Channel\nChannel \"1\" *--> \"*\" Message\ncallout right of text \"1\" occurrence 1 : At the diamond: always 1 or 0..1\n@enduml\n"
+      },
+      "ownership_author_question": {
+        "caption": "A filled diamond sits at the whole; each part has at most one owner.",
+        "label": "Ownership, and the author question",
+        "description": "Server owns Channels and Channel owns Messages with filled diamonds. Message is written by exactly one Member, a plain association with an arrowhead, marked with a question: diamond or not?",
+        "source": "@startuml\nlayout vertical\nclass Server\nabstract class Channel\nclass Message\nclass Member\nServer \"1\" *--> \"*\" Channel\nChannel \"1\" *--> \"*\" Message\nMessage \"*\" --> \"1\" Member : written by\ncallout left of text \"written by\" : Diamond here, or not?\n@enduml\n"
+      },
+      "ownership_author_answer": {
+        "caption": "A filled diamond sits at the whole; each part has at most one owner.",
+        "label": "Ownership, and the author answer",
+        "description": "Server owns Channels and Channel owns Messages with filled diamonds. Message is written by exactly one Member through a plain association: the messages outlive their author.",
+        "source": "@startuml\nlayout vertical\nclass Server\nabstract class Channel\nclass Message\nclass Member\nServer \"1\" *--> \"*\" Channel\nChannel \"1\" *--> \"*\" Message\nMessage \"*\" --> \"1\" Member : written by\ncallout left of text \"written by\" : No diamond: messages outlive their author\n@enduml\n"
+      },
+      "grouping": {
+        "caption": "The server owns its categories and channels; a category only groups channels.",
+        "label": "Categories group channels",
+        "description": "Server owns any number of Categories and any number of Channels, with filled diamonds. Category groups any number of Channels with a hollow diamond at Category and 0..1 there.",
+        "source": "@startuml\nclass Server\nclass Category\nabstract class Channel\nServer \"1\" *--> \"*\" Category\nServer \"1\" *--> \"*\" Channel\nCategory \"0..1\" o--> \"*\" Channel\ncallout left of text \"0..1\" : Aggregation: groups only\n@enduml\n"
+      },
+      "grouping_plain": {
+        "caption": "The server owns its categories and channels; a category only groups channels.",
+        "label": "Categories linked to channels by a plain association",
+        "description": "Server owns Categories and Channels with filled diamonds. Category links to any number of Channels through a plain association with 0..1 at Category.",
+        "source": "@startuml\nclass Server\nclass Category\nabstract class Channel\nServer \"1\" *--> \"*\" Category\nServer \"1\" *--> \"*\" Channel\nCategory \"0..1\" --> \"*\" Channel\ncallout left of text \"0..1\" : Also correct: plain line\n@enduml\n"
+      },
+      "join": {
+        "label": "Server depends on Invite",
+        "description": "Server, with the operation join(invite: Invite, nickname: String): Member, has a dashed dependency arrow to Invite, which has usesLeft: Integer and redeem(). Server links to Member with a star at Server and 1..* at Member.",
+        "caption": "A stored reference is an association; a parameter used once is a dependency.",
+        "source": "@startuml\nlayout vertical\nclass Server {\n  + join(invite: Invite, nickname: String): Member\n}\nclass Invite {\n  - usesLeft: Integer\n  + redeem()\n}\nclass Member\nServer ..> Invite\nServer \"*\" --> \"1..*\" Member\n@enduml\n"
+      },
+      "join_dependency": {
+        "label": "Server depends on Invite",
+        "description": "Server, with the operation join(invite: Invite, nickname: String): Member, has a dashed dependency arrow to Invite, which has usesLeft: Integer and redeem(). Server links to Member with a star at Server and 1..* at Member.",
+        "caption": "A stored reference is an association; a parameter used once is a dependency.",
+        "source": "@startuml\nlayout vertical\nclass Server {\n  + join(invite: Invite, nickname: String): Member\n}\nclass Invite {\n  - usesLeft: Integer\n  + redeem()\n}\nclass Member\nServer ..> Invite\nServer \"*\" --> \"1..*\" Member\ncallout bottom of element Invite : Dependency: never stored\n@enduml\n"
+      },
+      "join_association": {
+        "label": "Server depends on Invite",
+        "description": "Server, with the operation join(invite: Invite, nickname: String): Member, has a dashed dependency arrow to Invite, which has usesLeft: Integer and redeem(). Server links to Member with a star at Server and 1..* at Member.",
+        "caption": "A stored reference is an association; a parameter used once is a dependency.",
+        "source": "@startuml\nlayout vertical\nclass Server {\n  + join(invite: Invite, nickname: String): Member\n}\nclass Invite {\n  - usesLeft: Integer\n  + redeem()\n}\nclass Member\nServer ..> Invite\nServer \"*\" --> \"1..*\" Member\ncallout left of text \"1..*\" : Association: stored\n@enduml\n"
+      },
+      "structure": {
+        "label": "A structural view of the chat app",
+        "description": "Server owns Categories and Channels. Category groups Channels with a hollow diamond, 0..1 at Category. TextChannel and VoiceChannel are subclasses of the abstract class Channel. Channel owns Messages. Each Message is written by exactly one Member. A VoiceChannel holds any number of Members, each in at most one voice channel.",
+        "caption": "One view answers one question: what owns what, and who links to whom.",
+        "source": "@startuml\nclass Server\nclass Category\nabstract class Channel\nclass TextChannel\nclass VoiceChannel\nclass Message\nclass Member\nServer \"1\" *--> \"*\" Category\nServer \"1\" *--> \"*\" Channel\nCategory \"0..1\" o--> \"*\" Channel\nTextChannel --|> Channel\nVoiceChannel --|> Channel\nChannel \"1\" *--> \"*\" Message\nMessage \"*\" --> \"1\" Member : written by\nVoiceChannel \"0..1\" --> \"*\" Member\n@enduml\n"
+      },
+      "structure_category": {
+        "label": "A structural view of the chat app",
+        "description": "Server owns Categories and Channels. Category groups Channels with a hollow diamond, 0..1 at Category. TextChannel and VoiceChannel are subclasses of the abstract class Channel. Channel owns Messages. Each Message is written by exactly one Member. A VoiceChannel holds any number of Members, each in at most one voice channel.",
+        "caption": "One view answers one question: what owns what, and who links to whom.",
+        "source": "@startuml\nclass Server\nclass Category\nabstract class Channel\nclass TextChannel\nclass VoiceChannel\nclass Message\nclass Member\nServer \"1\" *--> \"*\" Category\nServer \"1\" *--> \"*\" Channel\nCategory \"0..1\" o--> \"*\" Channel\nTextChannel --|> Channel\nVoiceChannel --|> Channel\nChannel \"1\" *--> \"*\" Message\nMessage \"*\" --> \"1\" Member : written by\nVoiceChannel \"0..1\" --> \"*\" Member\ncallout right of text \"0..1\" occurrence 1 : Groups many channels; each in at most one category\n@enduml\n"
+      },
+      "roles_open": {
+        "caption": "A new class gets one line for each rule.",
+        "label": "Role before its lines are drawn",
+        "description": "The interface Mentionable and the classes Server, Role, and Member, with no lines between Role and the others.",
+        "source": "@startuml\ninterface Mentionable\nclass Server\nclass Role\nclass Member\n@enduml\n"
+      },
+      "roles_answer": {
+        "caption": "A new class gets one line for each rule.",
+        "label": "Role with its three lines",
+        "description": "Server owns any number of Roles (filled diamond, 1 at Server). Role and Member are joined by a plain association with a star at both ends. Role realizes Mentionable.",
+        "source": "@startuml\ninterface Mentionable\nclass Server\nclass Role\nclass Member\nServer \"1\" *-- \"*\" Role\nRole \"*\" -- \"*\" Member\nRole ..|> Mentionable\n@enduml\n"
+      }
+    }
+  },
+  "scenes": {
+    "intro": {
+      "state": {
+        "diagram": "sketch"
+      },
+      "cues": {
+        "sketch": {},
+        "ambiguity": {
+          "diagram": "sketch_questions"
+        },
+        "preview": {
+          "diagram": "preview"
+        }
+      }
+    },
+    "class_box": {
+      "state": {
+        "code": "message",
+        "diagram": "message_name"
+      },
+      "cues": {
+        "name": {
+          "focus": "header"
+        },
+        "attributes": {
+          "focus": "fields",
+          "diagram": "message_attributes"
+        },
+        "operations": {
+          "focus": "operations",
+          "diagram": "message_operations"
+        }
+      }
+    },
+    "visibility": {
+      "state": {
+        "code": "message",
+        "diagram": "message_visibility"
+      },
+      "cues": {
+        "markers": {
+          "focus": "visibility"
+        },
+        "more_markers": {
+          "focus": "spelling",
+          "diagram": "message_markers"
+        },
+        "detail": {
+          "focus": "constructor",
+          "diagram": "message_sketch"
+        }
+      }
+    },
+    "generalization": {
+      "state": {
+        "code": "channels",
+        "diagram": "kinds"
+      },
+      "cues": {
+        "kinds": {
+          "focus": "kinds",
+          "diagram_focus": "Channel"
+        },
+        "triangle": {
+          "focus": "triangle",
+          "diagram": "kinds_triangle"
+        },
+        "abstract": {
+          "focus": "abstract",
+          "diagram": "kinds_abstract"
+        },
+        "substitution": {
+          "focus": "substitution",
+          "diagram": "kinds_substitution"
+        }
+      }
+    },
+    "interfaces": {
+      "state": {
+        "code": "mentionable",
+        "diagram": "mentions"
+      },
+      "cues": {
+        "contract": {
+          "focus": "interface",
+          "diagram_focus": "Mentionable"
+        },
+        "realization": {
+          "focus": "realize",
+          "diagram": "mentions_realization"
+        },
+        "compare": {
+          "focus": "implement",
+          "diagram": "mentions_compare"
+        }
+      }
+    },
+    "associations": {
+      "state": {
+        "code": "message",
+        "diagram": "author_attribute"
+      },
+      "cues": {
+        "attribute": {
+          "focus": "author"
+        },
+        "line": {
+          "focus": "author",
+          "diagram": "author_line"
+        },
+        "navigable": {
+          "focus": "navigate",
+          "diagram": "author_navigable"
+        }
+      }
+    },
+    "multiplicity": {
+      "state": {
+        "diagram": "author_counts"
+      },
+      "cues": {
+        "numbers": {},
+        "vocabulary": {
+          "diagram": "member_counts"
+        },
+        "predict_voice": {
+          "diagram": "voice_open"
+        },
+        "reveal_voice": {
+          "diagram": "voice_counts"
+        }
+      }
+    },
+    "composition": {
+      "state": {
+        "code": "server",
+        "diagram": "ownership"
+      },
+      "cues": {
+        "owner": {
+          "focus": "owned"
+        },
+        "one_owner": {
+          "focus": "owned",
+          "diagram": "ownership_messages"
+        },
+        "predict_author": {
+          "focus": "owned",
+          "diagram": "ownership_author_question"
+        },
+        "no_diamond": {
+          "focus": "evidence",
+          "diagram": "ownership_author_answer"
+        }
+      }
+    },
+    "aggregation": {
+      "state": {
+        "code": "server",
+        "diagram": "grouping"
+      },
+      "cues": {
+        "grouping": {
+          "focus": "grouped"
+        },
+        "when_unsure": {
+          "focus": "ownership",
+          "diagram": "grouping_plain"
+        }
+      }
+    },
+    "dependency": {
+      "state": {
+        "code": "server",
+        "diagram": "join"
+      },
+      "cues": {
+        "join": {
+          "focus": "join",
+          "diagram_focus": "Server"
+        },
+        "dashed": {
+          "focus": "param",
+          "diagram": "join_dependency"
+        },
+        "stored": {
+          "focus": "members",
+          "diagram": "join_association"
+        }
+      }
+    },
+    "reading": {
+      "state": {
+        "diagram": "structure"
+      },
+      "cues": {
+        "read_lines": {},
+        "one_view": {
+          "diagram": "structure_category"
+        }
+      }
+    },
+    "transfer": {
+      "state": {
+        "diagram": "roles_open"
+      },
+      "cues": {
+        "predict_roles": {},
+        "reveal_roles": {
+          "diagram": "roles_answer"
+        }
+      }
+    },
+    "summary": {
+      "state": {
+        "cards": [
+          {
+            "title": "Classes",
+            "text": "A box with a name, attributes, and operations; + public, - private, # protected, ~ package."
+          },
+          {
+            "title": "Generalization",
+            "text": "A solid line with a hollow triangle at the general class; a dashed one at an interface the class realizes."
+          },
+          {
+            "title": "Associations",
+            "text": "Solid lines between objects with a multiplicity at each end; a filled diamond owns parts, a hollow one only groups them."
+          },
+          {
+            "title": "Dependencies",
+            "text": "A dashed arrow from a class to one it uses but does not keep, with no multiplicities."
+          }
+        ]
+      },
+      "cues": {
+        "recall": {}
+      }
+    }
+  }
+}

@@ -34,7 +34,7 @@ The first three are about *what direction of data* the test cares about — valu
 Gerard Meszaros's canonical taxonomy in *xUnit Test Patterns* (2007) {% cite meszaros2007xunit %} identifies five kinds of test double — *Dummy*, *Fake*, *Stub*, *Spy*, and *Mock*. The umbrella name **Test Double** covers all five; the five names below it are roles, each tagged for a different test-design problem.
 
 <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
-class TestDouble <<abstract>> {
+abstract class TestDouble {
   replaces a real dependency
 }
 class Dummy {

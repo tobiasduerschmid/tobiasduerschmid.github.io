@@ -1,0 +1,778 @@
+# Four-language code for the UML class-diagram narration. Every block is part of one
+# program (resources.example_order lists them in compilation order); focus lists the
+# 1-based lines the player marks for a cue.
+python:
+  label: Python
+  filename: chat_app.py
+  note: Python has no access or interface keywords. By convention, two leading underscores mark a private name and one marks a protected name; Mentionable is an abstract base class whose only operation is abstract.
+  imports: |
+    from __future__ import annotations
+
+    from abc import ABC, abstractmethod
+  blocks:
+    message:
+      source: |
+        class Message:
+            def __init__(self, text: str, author: Member) -> None:
+                self.__text = text
+                self.__author = author
+
+            def edit(self, text: str) -> None:
+                self.__text = text
+
+            def preview(self, length: int) -> str:
+                return self.__author.mention() + ": " + self.__text[:length]
+      focus:
+        header: [1]
+        fields: [3, 4]
+        operations: [6, 9]
+        visibility: [3, 4, 6, 9]
+        spelling: [3, 4]
+        constructor: [2]
+        author: [4]
+        navigate: [10]
+    mentionable:
+      source: |
+        class Mentionable(ABC):
+            @abstractmethod
+            def mention(self) -> str:
+                """The text that refers to this object in a message."""
+
+
+        class Member(Mentionable):
+            def __init__(self, nickname: str) -> None:
+                self.__nickname = nickname
+
+            def rename(self, nickname: str) -> None:
+                self.__nickname = nickname
+
+            def mention(self) -> str:
+                return "@" + self.__nickname
+      focus:
+        interface: [1, 2, 3, 4]
+        realize: [7]
+        implement: [14, 15]
+    channels:
+      source: |
+        class Channel(Mentionable, ABC):
+            def __init__(self, name: str) -> None:
+                self._name = name
+                self.__messages: list[Message] = []  # owned: deleted with the channel
+
+            def rename(self, name: str) -> None:
+                self._name = name
+
+            def mention(self) -> str:
+                return "#" + self._name
+
+            def post(self, author: Member, text: str) -> Message:
+                message = Message(text, author)
+                self.__messages.append(message)
+                return message
+
+            @abstractmethod
+            def summary(self) -> str:
+                """One line for the channel list."""
+
+
+        class TextChannel(Channel):
+            def __init__(self, name: str, topic: str) -> None:
+                super().__init__(name)
+                self.__topic = topic
+
+            def summary(self) -> str:
+                return self.mention() + ": " + self.__topic
+
+
+        class VoiceChannel(Channel):
+            def __init__(self, name: str) -> None:
+                super().__init__(name)
+                self.__connected: list[Member] = []
+
+            def connect(self, member: Member) -> None:
+                self.__connected.append(member)
+
+            def summary(self) -> str:
+                return f"{self.mention()}: {len(self.__connected)} talking"
+      focus:
+        kinds: [1, 22, 31]
+        triangle: [3, 6, 22, 31]
+        abstract: [1, 3, 17, 18]
+        substitution: [27, 28, 39, 40]
+      scroll:
+        kinds: 22
+        triangle: 3
+        abstract: 17
+        substitution: 39
+    invite:
+      source: |
+        class Invite:
+            def __init__(self, uses: int) -> None:
+                self.__uses_left = uses
+
+            def redeem(self) -> None:
+                if self.__uses_left == 0:
+                    raise ValueError("This invite has been used up.")
+                self.__uses_left -= 1
+      focus: {}
+    server:
+      source: |
+        class Category:
+            def __init__(self, name: str) -> None:
+                self.__name = name
+                self.__channels: list[Channel] = []  # grouped, not owned
+
+            def add(self, channel: Channel) -> None:
+                self.__channels.append(channel)
+
+
+        class Server:
+            def __init__(self, name: str, owner: Member) -> None:
+                self.__name = name
+                self.__members: list[Member] = [owner]
+                self.__channels: list[Channel] = []  # owned: deleted with the server
+                self.__categories: list[Category] = []  # owned: deleted with the server
+
+            def add_channel(self, channel: Channel) -> None:
+                self.__channels.append(channel)
+
+            def add_category(self, category: Category) -> None:
+                self.__categories.append(category)
+
+            def delete_category(self, category: Category) -> None:
+                self.__categories.remove(category)  # its channels stay
+
+            def join(self, invite: Invite, nickname: str) -> Member:
+                invite.redeem()
+                member = Member(nickname)
+                self.__members.append(member)
+                return member
+
+            def overview(self) -> str:
+                return self.__name + ": " + "; ".join(c.summary() for c in self.__channels)
+      focus:
+        owned: [14, 17]
+        evidence: [14, 15]
+        grouped: [4, 23, 24]
+        ownership: [4, 14, 15]
+        join: [26, 27, 28, 29, 30]
+        param: [26, 27]
+        members: [13, 29]
+      scroll:
+        grouped: 4
+        ownership: 14
+        members: 13
+java:
+  label: Java
+  filename: ChatApp.java
+  note: Constructors without a modifier have package visibility and are left out of the diagrams. Comments record which lists own the objects they store.
+  imports: |
+    import java.util.ArrayList;
+    import java.util.List;
+    import java.util.StringJoiner;
+  blocks:
+    message:
+      source: |
+        class Message {
+            private String text;
+            private final Member author;
+
+            Message(String text, Member author) {
+                this.text = text;
+                this.author = author;
+            }
+
+            public void edit(String text) {
+                this.text = text;
+            }
+
+            public String preview(int length) {
+                return author.mention() + ": " + text.substring(0, Math.min(length, text.length()));
+            }
+        }
+      focus:
+        header: [1]
+        fields: [2, 3]
+        operations: [10, 14]
+        visibility: [2, 3, 10, 14]
+        spelling: [2, 3]
+        constructor: [5]
+        author: [3]
+        navigate: [15]
+      scroll:
+        visibility: 2
+    mentionable:
+      source: |
+        interface Mentionable {
+            /** The text that refers to this object in a message. */
+            String mention();
+        }
+
+        class Member implements Mentionable {
+            private String nickname;
+
+            Member(String nickname) {
+                this.nickname = nickname;
+            }
+
+            public void rename(String nickname) {
+                this.nickname = nickname;
+            }
+
+            @Override
+            public String mention() {
+                return "@" + nickname;
+            }
+        }
+      focus:
+        interface: [1, 3]
+        realize: [6]
+        implement: [18, 19]
+    channels:
+      source: |
+        abstract class Channel implements Mentionable {
+            protected String name;
+            private final List<Message> messages = new ArrayList<>(); // owned: deleted with the channel
+
+            Channel(String name) {
+                this.name = name;
+            }
+
+            public void rename(String name) {
+                this.name = name;
+            }
+
+            @Override
+            public String mention() {
+                return "#" + name;
+            }
+
+            public Message post(Member author, String text) {
+                Message message = new Message(text, author);
+                messages.add(message);
+                return message;
+            }
+
+            /** One line for the channel list. */
+            public abstract String summary();
+        }
+
+        class TextChannel extends Channel {
+            private final String topic;
+
+            TextChannel(String name, String topic) {
+                super(name);
+                this.topic = topic;
+            }
+
+            @Override
+            public String summary() {
+                return mention() + ": " + topic;
+            }
+        }
+
+        class VoiceChannel extends Channel {
+            private final List<Member> connected = new ArrayList<>();
+
+            VoiceChannel(String name) {
+                super(name);
+            }
+
+            public void connect(Member member) {
+                connected.add(member);
+            }
+
+            @Override
+            public String summary() {
+                return mention() + ": " + connected.size() + " talking";
+            }
+        }
+      focus:
+        kinds: [1, 28, 42]
+        triangle: [2, 9, 28, 42]
+        abstract: [1, 2, 25]
+        substitution: [37, 38, 54, 55]
+      scroll:
+        kinds: 28
+        triangle: 2
+        abstract: 25
+        substitution: 54
+    invite:
+      source: |
+        class Invite {
+            private int usesLeft;
+
+            Invite(int uses) {
+                this.usesLeft = uses;
+            }
+
+            public void redeem() {
+                if (usesLeft == 0) {
+                    throw new IllegalStateException("This invite has been used up.");
+                }
+                usesLeft--;
+            }
+        }
+      focus: {}
+    server:
+      source: |
+        class Category {
+            private final String name;
+            private final List<Channel> channels = new ArrayList<>(); // grouped, not owned
+
+            Category(String name) {
+                this.name = name;
+            }
+
+            public void add(Channel channel) {
+                channels.add(channel);
+            }
+        }
+
+        class Server {
+            private final String name;
+            private final List<Member> members = new ArrayList<>();
+            private final List<Channel> channels = new ArrayList<>(); // owned: deleted with the server
+            private final List<Category> categories = new ArrayList<>(); // owned: deleted with the server
+
+            Server(String name, Member owner) {
+                this.name = name;
+                members.add(owner);
+            }
+
+            public void addChannel(Channel channel) {
+                channels.add(channel);
+            }
+
+            public void addCategory(Category category) {
+                categories.add(category);
+            }
+
+            public void deleteCategory(Category category) {
+                categories.remove(category); // its channels stay
+            }
+
+            public Member join(Invite invite, String nickname) {
+                invite.redeem();
+                Member member = new Member(nickname);
+                members.add(member);
+                return member;
+            }
+
+            public String overview() {
+                StringJoiner lines = new StringJoiner("; ");
+                for (Channel channel : channels) {
+                    lines.add(channel.summary());
+                }
+                return name + ": " + lines;
+            }
+        }
+      focus:
+        owned: [17, 25]
+        evidence: [17, 18]
+        grouped: [3, 33, 34]
+        ownership: [3, 17, 18]
+        join: [37, 38, 39, 40, 41]
+        param: [37, 38]
+        members: [16, 22, 40]
+      scroll:
+        owned: 17
+        grouped: 3
+        ownership: 17
+        members: 16
+cpp:
+  label: C++
+  filename: chat_app.cpp
+  note: A unique_ptr has exactly one owner, so destroying a server destroys its channels, and destroying a channel destroys its messages. Raw pointers only refer to objects.
+  imports: |
+    #include <algorithm>
+    #include <memory>
+    #include <stdexcept>
+    #include <string>
+    #include <vector>
+  blocks:
+    message:
+      source: |
+        class Message {
+        public:
+            Message(std::string text, const Member& author) : text(std::move(text)), author(&author) {}
+
+            void edit(const std::string& text) { this->text = text; }
+
+            std::string preview(std::size_t length) const {
+                return author->mention() + ": " + text.substr(0, length);
+            }
+
+        private:
+            std::string text;
+            const Member* author;
+        };
+      focus:
+        header: [1]
+        fields: [12, 13]
+        operations: [5, 7]
+        visibility: [2, 5, 7, 11, 12, 13]
+        spelling: [11]
+        constructor: [3]
+        author: [13]
+        navigate: [8]
+      scroll:
+        visibility: 2
+    mentionable:
+      source: |
+        class Mentionable {
+        public:
+            virtual ~Mentionable() = default;
+            // The text that refers to this object in a message.
+            virtual std::string mention() const = 0;
+        };
+
+        class Member : public Mentionable {
+        public:
+            explicit Member(std::string nickname) : nickname(std::move(nickname)) {}
+
+            void rename(const std::string& nickname) { this->nickname = nickname; }
+
+            std::string mention() const override { return "@" + nickname; }
+
+        private:
+            std::string nickname;
+        };
+      focus:
+        interface: [1, 5]
+        realize: [8]
+        implement: [14]
+    channels:
+      source: |
+        class Channel : public Mentionable {
+        public:
+            explicit Channel(std::string name) : name(std::move(name)) {}
+
+            void rename(const std::string& name) { this->name = name; }
+
+            std::string mention() const override { return "#" + name; }
+
+            Message& post(const Member& author, std::string text) {
+                messages.push_back(std::make_unique<Message>(std::move(text), author));
+                return *messages.back();
+            }
+
+            // One line for the channel list.
+            virtual std::string summary() const = 0;
+
+        protected:
+            std::string name;
+
+        private:
+            std::vector<std::unique_ptr<Message>> messages;  // owned: deleted with the channel
+        };
+
+        class TextChannel : public Channel {
+        public:
+            TextChannel(std::string name, std::string topic) : Channel(std::move(name)), topic(std::move(topic)) {}
+
+            std::string summary() const override { return mention() + ": " + topic; }
+
+        private:
+            std::string topic;
+        };
+
+        class VoiceChannel : public Channel {
+        public:
+            using Channel::Channel;
+
+            void connect(const Member& member) { connected.push_back(&member); }
+
+            std::string summary() const override {
+                return mention() + ": " + std::to_string(connected.size()) + " talking";
+            }
+
+        private:
+            std::vector<const Member*> connected;
+        };
+      focus:
+        kinds: [1, 24, 34]
+        triangle: [5, 18, 24, 34]
+        abstract: [1, 15, 17, 18]
+        substitution: [28, 40, 41]
+      scroll:
+        kinds: 24
+        triangle: 18
+        abstract: 15
+        substitution: 40
+    invite:
+      source: |
+        class Invite {
+        public:
+            explicit Invite(int uses) : usesLeft(uses) {}
+
+            void redeem() {
+                if (usesLeft == 0) throw std::runtime_error("This invite has been used up.");
+                --usesLeft;
+            }
+
+        private:
+            int usesLeft;
+        };
+      focus: {}
+    server:
+      source: |
+        class Category {
+        public:
+            explicit Category(std::string name) : name(std::move(name)) {}
+
+            void add(Channel& channel) { channels.push_back(&channel); }
+
+        private:
+            std::string name;
+            std::vector<Channel*> channels;  // grouped, not owned
+        };
+
+        class Server {
+        public:
+            Server(std::string name, std::shared_ptr<Member> owner)
+                : name(std::move(name)), members{std::move(owner)} {}
+
+            void addChannel(std::unique_ptr<Channel> channel) { channels.push_back(std::move(channel)); }
+
+            void addCategory(std::unique_ptr<Category> category) { categories.push_back(std::move(category)); }
+
+            void deleteCategory(const Category& category) {  // its channels stay
+                categories.erase(std::remove_if(categories.begin(), categories.end(),
+                    [&](const auto& kept) { return kept.get() == &category; }), categories.end());
+            }
+
+            std::shared_ptr<Member> join(Invite& invite, std::string nickname) {
+                invite.redeem();
+                members.push_back(std::make_shared<Member>(std::move(nickname)));
+                return members.back();
+            }
+
+            std::string overview() const {
+                std::string text = name + ": ";
+                for (std::size_t i = 0; i < channels.size(); ++i) {
+                    text += (i > 0 ? "; " : "") + channels[i]->summary();
+                }
+                return text;
+            }
+
+        private:
+            std::string name;
+            std::vector<std::shared_ptr<Member>> members;
+            std::vector<std::unique_ptr<Channel>> channels;     // owned: deleted with the server
+            std::vector<std::unique_ptr<Category>> categories;  // owned: deleted with the server
+        };
+      focus:
+        owned: [17, 43]
+        evidence: [43, 44]
+        grouped: [9, 21, 22]
+        ownership: [9, 43, 44]
+        join: [26, 27, 28, 29]
+        param: [26, 27]
+        members: [15, 28, 42]
+      scroll:
+        owned: 43
+        grouped: 9
+        ownership: 43
+        members: 42
+typescript:
+  label: TypeScript
+  filename: chat_app.ts
+  note: Members are public unless marked private or protected. Comments record which arrays own the objects they store.
+  imports: ""
+  blocks:
+    message:
+      source: |
+        class Message {
+          private text: string;
+          private readonly author: Member;
+
+          constructor(text: string, author: Member) {
+            this.text = text;
+            this.author = author;
+          }
+
+          edit(text: string): void {
+            this.text = text;
+          }
+
+          preview(length: number): string {
+            return this.author.mention() + ": " + this.text.slice(0, length);
+          }
+        }
+      focus:
+        header: [1]
+        fields: [2, 3]
+        operations: [10, 14]
+        visibility: [2, 3, 10, 14]
+        spelling: [2, 3]
+        constructor: [5]
+        author: [3]
+        navigate: [15]
+      scroll:
+        visibility: 2
+    mentionable:
+      source: |
+        interface Mentionable {
+          /** The text that refers to this object in a message. */
+          mention(): string;
+        }
+
+        class Member implements Mentionable {
+          private nickname: string;
+
+          constructor(nickname: string) {
+            this.nickname = nickname;
+          }
+
+          rename(nickname: string): void {
+            this.nickname = nickname;
+          }
+
+          mention(): string {
+            return "@" + this.nickname;
+          }
+        }
+      focus:
+        interface: [1, 3]
+        realize: [6]
+        implement: [17, 18]
+    channels:
+      source: |
+        abstract class Channel implements Mentionable {
+          protected name: string;
+          private readonly messages: Message[] = []; // owned: deleted with the channel
+
+          constructor(name: string) {
+            this.name = name;
+          }
+
+          rename(name: string): void {
+            this.name = name;
+          }
+
+          mention(): string {
+            return "#" + this.name;
+          }
+
+          post(author: Member, text: string): Message {
+            const message = new Message(text, author);
+            this.messages.push(message);
+            return message;
+          }
+
+          /** One line for the channel list. */
+          abstract summary(): string;
+        }
+
+        class TextChannel extends Channel {
+          private readonly topic: string;
+
+          constructor(name: string, topic: string) {
+            super(name);
+            this.topic = topic;
+          }
+
+          summary(): string {
+            return this.mention() + ": " + this.topic;
+          }
+        }
+
+        class VoiceChannel extends Channel {
+          private readonly connected: Member[] = [];
+
+          connect(member: Member): void {
+            this.connected.push(member);
+          }
+
+          summary(): string {
+            return `${this.mention()}: ${this.connected.length} talking`;
+          }
+        }
+      focus:
+        kinds: [1, 27, 40]
+        triangle: [2, 9, 27, 40]
+        abstract: [1, 2, 24]
+        substitution: [35, 36, 47, 48]
+      scroll:
+        kinds: 27
+        triangle: 2
+        abstract: 24
+        substitution: 47
+    invite:
+      source: |
+        class Invite {
+          private usesLeft: number;
+
+          constructor(uses: number) {
+            this.usesLeft = uses;
+          }
+
+          redeem(): void {
+            if (this.usesLeft === 0) throw new Error("This invite has been used up.");
+            this.usesLeft -= 1;
+          }
+        }
+      focus: {}
+    server:
+      source: |
+        class Category {
+          private readonly name: string;
+          private readonly channels: Channel[] = []; // grouped, not owned
+
+          constructor(name: string) {
+            this.name = name;
+          }
+
+          add(channel: Channel): void {
+            this.channels.push(channel);
+          }
+        }
+
+        class Server {
+          private readonly name: string;
+          private readonly members: Member[];
+          private readonly channels: Channel[] = []; // owned: deleted with the server
+          private categories: Category[] = []; // owned: deleted with the server
+
+          constructor(name: string, owner: Member) {
+            this.name = name;
+            this.members = [owner];
+          }
+
+          addChannel(channel: Channel): void {
+            this.channels.push(channel);
+          }
+
+          addCategory(category: Category): void {
+            this.categories.push(category);
+          }
+
+          deleteCategory(category: Category): void {
+            this.categories = this.categories.filter(kept => kept !== category); // its channels stay
+          }
+
+          join(invite: Invite, nickname: string): Member {
+            invite.redeem();
+            const member = new Member(nickname);
+            this.members.push(member);
+            return member;
+          }
+
+          overview(): string {
+            return this.name + ": " + this.channels.map(channel => channel.summary()).join("; ");
+          }
+        }
+      focus:
+        owned: [17, 25]
+        evidence: [17, 18]
+        grouped: [3, 33, 34]
+        ownership: [3, 17, 18]
+        join: [37, 38, 39, 40, 41]
+        param: [37, 38]
+        members: [16, 22, 40]
+      scroll:
+        owned: 17
+        grouped: 3
+        ownership: 17
+        members: 16

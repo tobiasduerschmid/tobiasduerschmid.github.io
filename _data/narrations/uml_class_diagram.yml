@@ -1,0 +1,606 @@
+# Edit speech and teaching text here. Visual state lives in ../narration_visuals/uml_class_diagram.json.
+version: 1
+id: uml_class_diagram
+kind: pattern
+title: UML class diagrams in a study-group chat app
+lesson:
+  name: Class diagrams
+  parts: [Classes, Generalization, Associations, Dependencies]
+  parts_label: Parts of a class diagram
+  summary: >-
+    Learn to read and draw UML <strong>class diagrams</strong>: classes, generalization,
+    associations, and dependencies, using a study-group chat app.
+  prerequisites: >-
+    Assumes you can read classes, fields, methods, and inheritance in one programming language.
+    No UML experience needed.
+  chapter: /SEBook/uml_class_diagram.html
+  views: /SEBook/uml_class_diagram
+  outline_labels:
+    class_box: Class boxes
+    visibility: Visibility and detail
+    generalization: Generalization
+    interfaces: Interfaces
+    associations: Associations
+    multiplicity: Multiplicity
+    composition: Composition
+    aggregation: Aggregation
+    dependency: Dependency
+  complete_examples: >-
+    The example models one study-group server: its members, channels, categories, and
+    messages, plus the invite a new member redeems. Accounts, permissions, storage, and
+    networking are omitted. The four languages print the same results, and comments record
+    which collections own the objects they store.
+speech:
+  voice: af_heart
+  speed: 0.95
+  pronunciations:
+    UML: U M L
+    C++: C plus plus
+    TextChannel: text channel
+    VoiceChannel: voice channel
+    0..1: zero dot dot one
+    1..*: one dot dot star
+    invite: inn-vite
+    Invite: Inn-vite
+media:
+  audio: /assets/audio/uml-class-diagram.mp3
+  captions: /assets/narration/uml-class-diagram.vtt
+  script: /assets/narration/uml-class-diagram.txt
+scenes:
+  - id: intro
+    label: Why class diagrams?
+    title: One sketch, four readings
+    purpose: See why a design sketch needs a shared notation.
+    takeaway: UML gives every box and line of a class diagram one agreed meaning.
+    cues:
+      - id: sketch
+        say: >-
+          Imagine you and three friends are building a chat app for your study group, with
+          servers, channels, and messages, like the ones you already use for classes. Someone
+          sketches the design on a whiteboard: four boxes, Server, Channel, Message, and Member,
+          joined by three arrows.
+        step: A design sketch on a whiteboard
+        note: Server → Channel → Message → Member, joined by unlabeled arrows.
+        visual: >-
+          A whiteboard-style sketch shows four boxes, Server, Channel, Message, and Member,
+          joined left to right by three plain arrows.
+      - id: ambiguity
+        say: >-
+          Now ask each friend what the arrows mean. Does a server contain its channels, create
+          them, or just call them? Does the last arrow mean that a member wrote the message, or
+          that the message mentions them? Each reader fills in a different meaning, and nobody
+          notices until the code disagrees.
+        source: "Clements et al., Documenting Software Architectures: Rule 3a, Explain Your Notation"
+        step: Undefined arrows are ambiguous
+        note: contains? creates? calls? wrote? mentions? Each reader guesses differently.
+        visual: The same sketch, now with a question mark on each arrow.
+      - id: preview
+        say: >-
+          A sketch needs a notation in which every symbol has one agreed meaning. The standard
+          one is the Unified Modeling Language, UML, and its most widely used diagram is the
+          class diagram: the classes of a system, what each one stores and does, and how they
+          relate. Here is our sketch in UML. By the end, you will read every mark on it.
+        source: "OMG, Unified Modeling Language 2.5.1, clause 11.4 Classes"
+        step: The same sketch in UML
+        note: UML gives every box, line, and number one standard meaning.
+        visual: >-
+          A UML class diagram of the same four classes: Server owns Channel with a filled
+          diamond, Channel owns Message with a filled diamond, and an arrow labeled written by
+          runs from Message to Member, with a number at each end of every line.
+        pause_after: 2.5
+  - id: class_box
+    part: Classes
+    label: "Classes: one box per class"
+    title: A class is a box with three compartments
+    purpose: Read a class box and match it to the code it describes.
+    takeaway: A class box shows the class name, its attributes, and its operations.
+    cues:
+      - id: name
+        say: >-
+          Let's start with one class. A class describes a set of objects with the same structure
+          and behavior, and every message in our app is an object of the class Message. UML draws
+          a class as a rectangle. Its top compartment holds the class name, usually a noun. Choose
+          a code language above; the explanation is the same in every language.
+        source: "Rumbaugh et al., The Unified Modeling Language Reference Manual: Static View, Classifiers"
+        step: Name compartment
+        note: class Message → a rectangle whose top compartment says Message
+        visual: >-
+          The code of class Message beside a UML class box for Message. The class name
+          compartment is labeled.
+      - id: attributes
+        say: >-
+          The middle compartment lists attributes, the values each object stores: the fields in
+          the code. Each reads name, colon, type, with UML's own type names: String for text,
+          Integer for whole numbers, Boolean for true or false. One attribute, author, has a
+          type from our own app, Member. Remember that one.
+        source: "OMG, Unified Modeling Language 2.5.1, 9.5.4 Property notation; clause 21 Primitive Types"
+        step: "Attributes: name, colon, type"
+        note: "text: String · author: Member — each field becomes an attribute"
+        visual: >-
+          The fields text and author are marked in the code. In the class box, the attribute
+          text: String is labeled as an attribute.
+      - id: operations
+        say: >-
+          The bottom compartment lists operations, the behavior other objects can invoke: the
+          methods. Each reads name, then the parameters in parentheses, each with its own name and
+          type, then a colon and the result type. Preview takes a length and returns a String.
+          Edit returns nothing, so its result is simply left out.
+        source: "OMG, Unified Modeling Language 2.5.1, 9.6.4 Operation notation"
+        step: "Operations: name(parameters): result"
+        note: "preview(length: Integer): String · edit(text: String) has no result"
+        visual: >-
+          The edit and preview methods are marked in the code. In the class box, the operation
+          preview(length: Integer): String is labeled as an operation.
+        pause_after: 2.5
+  - id: visibility
+    part: Classes
+    label: "Classes: visibility and detail"
+    title: Who may use each member?
+    purpose: Read visibility markers and decide how much detail a diagram shows.
+    takeaway: Visibility markers show who may use a member; details left out are unknown, not absent.
+    cues:
+      - id: markers
+        say: >-
+          The symbol in front of each attribute and operation is its visibility. A minus sign
+          means private: only code inside the class may use it. A plus sign means public: any code
+          that can see the class may use it. Message hides its text and offers edit and preview
+          instead. That is encapsulation, visible at a glance.
+        source: "OMG, Unified Modeling Language 2.5.1, 7.8.24 VisibilityKind"
+        step: "Minus: private · Plus: public"
+        note: "- private: inside the class only · + public: wherever the class is visible"
+        visual: >-
+          The private fields and public methods are marked in the code. In the class box, the
+          minus sign before text is labeled private and the plus sign before edit is labeled
+          public.
+      - id: more_markers
+        say: >-
+          Two more markers exist. A hash sign means protected: the class and its subclasses may
+          use it. A tilde means package: any class in the same package may use it. Each language
+          spells these its own way. Python has no access keywords; by convention, two leading
+          underscores mark a private name, and one marks a protected name.
+        step: "Hash: protected · Tilde: package"
+        note: "# protected: class and subclasses · ~ package: same package · Python: __name and _name"
+        visual: >-
+          The code marks how the language spells private: a private keyword or label, or
+          Python's two leading underscores. The class box for Message remains, with a label
+          listing the other two markers: a hash sign for protected and a tilde for package.
+      - id: detail
+        say: >-
+          You also choose how much to show. This box leaves out the constructor, and an early
+          sketch might list only names, without types or markers. Leaving something out says
+          nothing about it: a missing marker means not shown, not public, and a missing
+          compartment tells you nothing about what it holds. Show what helps your reader.
+        source: >-
+          Rumbaugh et al., The Unified Modeling Language Reference Manual: visibility; OMG,
+          Unified Modeling Language 2.5.1, 9.2.4 Classifier notation
+        step: Show what helps your reader
+        note: Omitted is not absent — missing markers and compartments are simply not shown.
+        visual: >-
+          The constructor is marked in the code. A sketch-level class box for Message lists only
+          the names text, author, edit, and preview, without types or visibility markers, and is
+          labeled: details not shown are unknown, not absent.
+        pause_after: 2.5
+  - id: generalization
+    part: Generalization
+    label: "Generalization: kinds of channels"
+    title: A TextChannel is a Channel
+    purpose: Draw what two classes share as one general class.
+    takeaway: A hollow triangle points to the general class; subclasses inherit its attributes and operations.
+    cues:
+      - id: kinds
+        say: >-
+          Our app has two kinds of channels. A text channel has a topic. A voice channel tracks
+          the members currently talking. But both have a name, both can be renamed, and both hold
+          messages. Generalization captures what they share: one general class, Channel, and two
+          more specific classes, TextChannel and VoiceChannel.
+        step: One general class, two specific ones
+        note: "Shared: name, rename, messages · TextChannel adds a topic · VoiceChannel adds talkers"
+        visual: >-
+          The three class headers are marked in the code. A UML class diagram shows TextChannel
+          and VoiceChannel below Channel, which is highlighted and labeled as the general class.
+      - id: triangle
+        say: >-
+          UML draws generalization as a solid line with a hollow triangle, and the triangle always
+          touches the general class. Check the direction with a sentence: a TextChannel is a
+          Channel. Each subclass inherits the attributes and operations of its superclass, so name
+          and rename appear once, in Channel, and nowhere else.
+        source: "OMG, Unified Modeling Language 2.5.1, 9.2.4 Classifier notation and 9.9.7 Generalization"
+        step: The triangle touches the general class
+        note: "Test: a TextChannel is a Channel · inherited members are drawn once"
+        visual: >-
+          The subclass headers and Channel's name and rename are marked in the code. In the
+          diagram, the hollow triangle under Channel is labeled generalization.
+      - id: abstract
+        say: >-
+          Name carries a hash sign, protected, so the subclasses can use it. And there is no
+          plain channel, only text and voice channels, so Channel is abstract: no object can be
+          created from it directly. UML sets an abstract class's name in italics. Summary is in
+          italics too: an abstract operation, which each subclass must implement.
+        source: "Rumbaugh et al., The Unified Modeling Language Reference Manual: Generalization"
+        step: Abstract is written in italics
+        note: "Italic class: no direct objects · italic operation: each subclass implements it"
+        visual: >-
+          The abstract class and its abstract summary operation are marked in the code. In the
+          diagram, the italic name Channel, with the property {abstract} below it, is labeled
+          abstract class, and the italic summary operation is labeled abstract operation.
+      - id: substitution
+        say: >-
+          Generalization also promises substitution: wherever code expects a Channel, a
+          TextChannel or a VoiceChannel will do. A channel list can ask every channel for its
+          summary without knowing its kind. And notice that this line relates classes, not
+          individual objects, so it never carries numbers.
+        source: "Rumbaugh et al., The Unified Modeling Language Reference Manual: Static View, purpose of generalization"
+        step: A subclass can stand in for its superclass
+        note: Code that expects a Channel accepts either subclass · no numbers on this line
+        visual: >-
+          The two summary implementations are marked in the code. In the diagram, TextChannel
+          and VoiceChannel are highlighted below Channel, labeled: any subclass can stand in.
+        pause_after: 2.5
+  - id: interfaces
+    part: Generalization
+    label: "Generalization: interfaces"
+    title: A promise unrelated classes keep
+    purpose: Recognize an interface and the classes that realize it.
+    takeaway: A dashed line with a hollow triangle shows that a class realizes an interface.
+    cues:
+      - id: contract
+        say: >-
+          In a message, you can mention a member with an at sign, or a channel with a hash sign.
+          Members and channels share nothing else, yet both must answer one question: what text
+          refers to me? An interface declares such a promise: public operations without an
+          implementation. Mentionable declares one operation, mention.
+        source: "OMG, Unified Modeling Language 2.5.1, 10.4.3 Interface semantics"
+        step: "Interface: a promise of operations"
+        note: "Mentionable promises mention(): @ana for a member, #homework for a channel"
+        visual: >-
+          The Mentionable interface is marked in the code. A UML diagram shows Mentionable,
+          highlighted, above Member and Channel.
+      - id: realization
+        say: >-
+          UML marks an interface with the word interface in double angle brackets, above its
+          name. A class that implements it draws a dashed line with a hollow triangle to the
+          interface, a relationship called realization. Member and Channel each realize
+          Mentionable, and each keeps the promise in its own way.
+        step: Dashed line, hollow triangle
+        note: "«interface» above the name · realization: dashed line, triangle at the interface"
+        visual: >-
+          The line declaring that Member implements Mentionable is marked in the code. In the
+          diagram, the interface keyword and the dashed realization lines are labeled.
+      - id: compare
+        say: >-
+          Compare the two triangles. A solid line says the subclass is a kind of its superclass
+          and inherits what it declares. A dashed line says the class keeps the promise an
+          interface makes, and in UML an interface supplies no implementation to inherit. Code
+          that only needs to mention something can accept any Mentionable.
+        source: "Rumbaugh et al., The Unified Modeling Language Reference Manual: Static View, Realization"
+        step: "Solid: a kind of · Dashed: keeps a promise"
+        note: Generalization inherits members · realization only promises operations
+        visual: >-
+          Member's mention implementation is marked in the code. TextChannel joins the diagram
+          with a solid generalization line to Channel, beside the dashed realization lines, and
+          labels contrast the two triangles.
+        pause_after: 2.5
+  - id: associations
+    part: Associations
+    label: "Associations: links between objects"
+    title: A message knows its author
+    purpose: Draw a reference between objects as an association.
+    takeaway: An association line describes links between objects; an arrowhead shows which way you can navigate.
+    cues:
+      - id: attribute
+        say: >-
+          Remember the author attribute? Its type is Member, another class of our app, so the box
+          hides a connection between two classes. A good rule: use attributes for plain values,
+          like text and numbers, and lines for references to other objects. UML calls such a line
+          an association.
+        source: "Rumbaugh et al., The Unified Modeling Language Reference Manual: Static View, Classifiers"
+        step: A reference hidden in an attribute
+        note: "author: Member hides a connection · attributes for plain values, lines for objects"
+        visual: >-
+          The author field is marked in the code. In the diagram, Message lists author: Member as
+          an attribute, and the Member box stands apart with no line.
+      - id: line
+        say: >-
+          Here is the same reference as an association. Author has left the attribute list, and a
+          solid line labeled written by now joins Message and Member. The association describes
+          all the links at runtime: each link connects one message object to one member object.
+          Draw a reference as an attribute or as a line, not both.
+        source: "OMG, Unified Modeling Language 2.5.1, 11.5.3 Association semantics"
+        step: "Association: a solid line"
+        note: Association = all links between objects · attribute or line, not both
+        visual: >-
+          The author field stays marked in the code. Author is gone from Message's attributes,
+          and a solid line labeled written by joins Message and Member. The line is labeled
+          association.
+      - id: navigable
+        say: >-
+          The open arrowhead at Member says the association is navigable in that direction: from
+          a message, code can reach its author directly, because Message stores the reference.
+          Preview does exactly that. Member stores no list of its messages, and with nothing
+          drawn at the Message end, the diagram leaves that direction open.
+        source: "OMG, Unified Modeling Language 2.5.1, 11.5.4 Association notation"
+        step: "Arrowhead: the navigable direction"
+        note: "Arrow toward Member: Message stores the reference · unmarked end: unspecified"
+        visual: >-
+          The preview line that reaches the author is marked in the code. In the diagram, the
+          open arrowhead at the Member end is labeled navigable.
+        pause_after: 2.5
+  - id: multiplicity
+    part: Associations
+    label: "Associations: multiplicity"
+    title: How many objects at each end?
+    purpose: Place and read multiplicities at both ends of an association.
+    takeaway: A multiplicity counts the objects at its end that link to one object at the other end.
+    cues:
+      - id: numbers
+        say: >-
+          An association also answers: how many? A multiplicity at each end counts the objects at
+          that end that can link to one object at the other end. One message has exactly one
+          author, so a 1 sits next to Member. One member can write any number of messages, so a
+          star sits next to Message.
+        source: "Rumbaugh et al., The Unified Modeling Language Reference Manual: multiplicity (of association)"
+        step: Count from the far end
+        note: "1 next to Member: one author per message · star next to Message: any number"
+        visual: >-
+          The association from Message to Member shows a 1 at the Member end and a star at the
+          Message end, each labeled with what it counts.
+      - id: vocabulary
+        say: >-
+          Four multiplicities cover most diagrams. 1 means exactly one, 0..1 means at most one, a
+          star means zero or more, and 1..* means at least one. Every server, for example, has at
+          least one member, its owner. The author field shows the 1; the app's rules decide the
+          other end. And no number shown means nothing is known.
+        source: "OMG, Unified Modeling Language 2.5.1, 7.5.4 Multiplicity notation and 11.5.4 Association notation"
+        step: "1 · 0..1 · star · 1..*"
+        note: "1 exactly one · 0..1 at most one · star zero or more · 1..* at least one"
+        visual: >-
+          Server links to Member with a star at the Server end and 1..* at the Member end, each
+          labeled with what it counts.
+      - id: predict_voice
+        say: >-
+          Your turn. In our app, a member can talk in only one voice channel at a time, while a
+          voice channel can hold many members. Predict the multiplicity at each end of the line
+          between VoiceChannel and Member, and which number goes at which end. Pause if you need
+          more time.
+        step: Predict both ends
+        note: One voice channel per member at a time; many members per voice channel.
+        visual: >-
+          VoiceChannel and Member are joined by an association with a question mark at each end.
+        prediction: true
+        pause_after: 6
+      - id: reveal_voice
+        say: >-
+          Next to VoiceChannel goes 0..1: one member is in at most one voice channel. Next to
+          Member goes a star: one voice channel holds any number of members. Put each number next
+          to the class it counts, and read it from the other end: start at one object, cross the
+          line, and count.
+        step: Each number sits next to what it counts
+        note: "0..1 next to VoiceChannel · star next to Member · read from the opposite end"
+        visual: >-
+          The association now shows 0..1 at the VoiceChannel end and a star at the Member end,
+          each labeled with what it counts.
+        pause_after: 2.5
+  - id: composition
+    part: Associations
+    label: "Associations: composition"
+    title: Parts that live and die with their whole
+    purpose: Decide when an association is a composition.
+    takeaway: A filled diamond marks exclusive ownership; deleting the whole deletes its parts.
+    cues:
+      - id: owner
+        say: >-
+          Some associations connect a whole to its parts. Delete a server, and every one of its
+          channels is deleted with it. A filled diamond at the whole's end marks this composition,
+          the strongest kind of association: each part belongs to at most one whole at a time, and
+          deleting the whole deletes its current parts.
+        source: "OMG, Unified Modeling Language 2.5.1, 9.5.3 Property semantics, composite aggregation"
+        step: "Filled diamond: the whole owns its parts"
+        note: One owner at a time · delete a server → its channels go too
+        visual: >-
+          The server's list of channels is marked in the code. A UML diagram shows Server owning
+          Channel, with the filled diamond at the Server end labeled composition.
+      - id: one_owner
+        say: >-
+          Because a part has at most one owner, the number at the diamond is always 1 or 0..1.
+          Here every channel belongs to exactly one server, so a 1 sits at the diamond and a star
+          at Channel. Messages work the same way: delete a channel, and its messages go with it.
+        source: "OMG, Unified Modeling Language 2.5.1, 9.9.17 Property constraints, multiplicity_of_composite"
+        step: "At the diamond: 1 or 0..1"
+        note: "Composite end: 1 or 0..1 · delete a channel → its messages go too"
+        visual: >-
+          The server's list of channels stays marked in the code. The 1 at the Server end is
+          labeled: at the diamond, always 1 or 0..1. A second filled diamond joins Channel to
+          Message.
+      - id: predict_author
+        say: >-
+          Now the author line. In our app, when someone deletes their account, the messages they
+          wrote stay in the channel, shown as from a deleted user. Should the line from Message to
+          Member get a filled diamond at Member? Decide before continuing.
+        step: "Predict: diamond or not?"
+        note: A deleted account's messages stay. Does Member own Message?
+        visual: >-
+          The server's owned list of channels stays marked in the code for comparison. Member
+          joins the diagram through the written by association from Message, which is labeled
+          with a question: diamond or not?
+        prediction: true
+        pause_after: 5
+      - id: no_diamond
+        say: >-
+          No diamond. The messages outlive their author, and each message already has its one
+          owner, its channel. So choose diamonds from the design's ownership rule, not from code
+          syntax. In Python, Java, or TypeScript, a stored reference looks the same either way.
+          In C++, holding parts by value or by unique pointer is real evidence of ownership.
+        source: "SEBook, UML Class Diagrams: Composition, relating the model to code"
+        step: Choose diamonds from ownership rules
+        note: "Messages outlive authors → plain association · references alone prove no ownership"
+        visual: >-
+          The comments that record ownership are marked in the code. In the diagram, the written
+          by association stays a plain line with an arrowhead, labeled: no diamond, the messages
+          outlive their author.
+        pause_after: 2.5
+  - id: aggregation
+    part: Associations
+    label: "Associations: aggregation"
+    title: Grouping without owning
+    purpose: Tell aggregation from composition and from a plain association.
+    takeaway: A hollow diamond marks a whole-part grouping without exclusive ownership; when unsure, use a plain association.
+    cues:
+      - id: grouping
+        say: >-
+          Categories group channels in the sidebar, like Classes or Social. A category is a whole
+          made of channels, but delete it, and its channels stay, now uncategorized. A hollow
+          diamond at the whole's end marks this aggregation: whole and part, without exclusive
+          ownership. UML does not fix the parts' lifetime, so the diamond alone promises nothing
+          about deletion.
+        source: >-
+          OMG, Unified Modeling Language 2.5.1, 9.5.3 Property semantics, shared aggregation;
+          SEBook, UML Class Diagrams: Aggregation
+        step: "Hollow diamond: grouping, not owning"
+        note: Delete a category → its channels stay · hollow diamond makes no lifetime promise
+        visual: >-
+          The category's list of channels and the delete operation are marked in the code. The
+          diagram shows Server owning Category and Channel with filled diamonds, and Category
+          joined to Channel with a hollow diamond at the Category end, labeled aggregation.
+      - id: when_unsure
+        say: >-
+          Compare the three lines. The server owns both its categories and its channels, so
+          deleting it removes everything. A category only groups. Aggregation adds so little
+          meaning that when you are unsure, a plain association is always a safe choice. Use the
+          filled diamond whenever the whole truly owns its parts.
+        source: >-
+          Rumbaugh et al., The Unified Modeling Language Reference Manual: aggregation, discussion;
+          SEBook, UML Class Diagrams: honest caveat on aggregation
+        step: "Unsure? Draw a plain association"
+        note: "Composition owns lifetimes · aggregation groups · unsure → plain association"
+        visual: >-
+          The comments recording which lists the server owns and which list the category only
+          groups are marked in the code. The same three classes; the hollow diamond is replaced
+          by a plain association with an arrowhead, labeled: also correct, a plain association.
+        pause_after: 2.5
+  - id: dependency
+    part: Dependencies
+    label: "Dependencies: using without keeping"
+    title: The server uses an invite and forgets it
+    purpose: Tell a dependency from an association.
+    takeaway: A dashed arrow shows that one class needs another without keeping a reference to it.
+    cues:
+      - id: join
+        say: >-
+          Last relationship. To join a server, a new member uses an invite. Server's join
+          operation receives the Invite as a parameter, redeems it, creates the Member, and adds
+          it to the member list. But the server never stores the invite: it uses Invite only
+          while join runs.
+        step: "join(invite: Invite, nickname: String): Member"
+        note: The invite arrives as a parameter, is used once, and is never stored.
+        visual: >-
+          The join operation is marked in the code. A UML diagram shows Server, highlighted, with
+          its join operation, beside Invite and Member.
+      - id: dashed
+        say: >-
+          UML draws this as a dependency: a dashed line with an open arrowhead, from the client,
+          Server, to the supplier, Invite. It says Server needs Invite to work: if Invite changes,
+          Server may have to change too. It is the weakest relationship. There is no stored link,
+          so there are no numbers either.
+        source: >-
+          Rumbaugh et al., The Unified Modeling Language Reference Manual: Static View,
+          Dependencies; OMG, Unified Modeling Language 2.5.1, 7.7 Dependencies
+        step: "Dashed arrow: the client needs the supplier"
+        note: "Server needs Invite · if Invite changes, Server may change · no link, no numbers"
+        visual: >-
+          The join parameter is marked in the code. In the diagram, the dashed arrow from Server
+          to Invite is labeled dependency.
+      - id: stored
+        say: >-
+          Compare the line to Member. The server stores its members, so that line is an
+          association, with 1..* at Member, because every server keeps at least its owner. In
+          general, parameters, local variables, return types, and thrown exceptions create
+          dependencies; references an object stores create associations.
+        source: "SEBook, UML Class Diagrams: Dependency"
+        step: "Stored: association · Used: dependency"
+        note: "Parameters, locals, results, exceptions → dependency · stored fields → association"
+        visual: >-
+          The member list is marked in the code. In the diagram, the association from Server to
+          Member, with a star at Server and 1..* at Member, is labeled association.
+        pause_after: 2.5
+  - id: reading
+    label: Reading a whole diagram
+    title: Every line has one meaning
+    purpose: Read a complete class diagram line by line.
+    takeaway: Read each line by its style and its ends, and draw only the view your reader needs.
+    cues:
+      - id: read_lines
+        say: >-
+          Now read a whole diagram, each line by its style and its ends. Solid lines say has, or
+          is a kind of. Dashed lines say uses, or promises. Then the ends: a triangle names a more
+          general class, a diamond a whole and its parts, an arrowhead a direction you can
+          navigate, and the numbers how many. Try reading the line from Category to Channel
+          before I do.
+        step: Style, then ends, then numbers
+        note: "Solid: has, or is a kind of · Dashed: uses, or promises"
+        visual: >-
+          A class diagram view of the app: Server owns Category and Channel, Category groups
+          Channel with a hollow diamond, TextChannel and VoiceChannel generalize to Channel,
+          Channel owns Message, Message is written by Member, and VoiceChannel holds Member.
+      - id: one_view
+        say: >-
+          A category groups any number of channels, each channel sits in at most one category, and
+          the hollow diamond says the channels can outlive it. Notice what this view leaves out:
+          the interface and the invite. That is deliberate. One diagram that shows every
+          relationship becomes unreadable, so draw the view that answers your reader's question.
+        source: "Clements et al., Documenting Software Architectures: Appendix A, UML Class Diagrams: Too Much, Too Little"
+        step: One view, one question
+        note: A view leaves out what its reader's question does not need.
+        visual: >-
+          The association from Category to Channel is labeled: a category groups many channels;
+          each channel sits in at most one category.
+        pause_after: 2.5
+  - id: transfer
+    label: Extend the model
+    title: Add roles to the app
+    purpose: Apply every relationship to a new class before seeing an answer.
+    takeaway: A new class gets one line for each relationship the app's rules require.
+    cues:
+      - id: predict_roles
+        say: >-
+          One last design task. Your group adds roles, like Moderators. A server has any number of
+          roles, and deleting the server deletes them. A member can hold many roles, and a role can
+          be given to many members. And a role can be mentioned, with an at sign. Which lines
+          connect the new class Role? Decide before continuing.
+        step: Plan Role's lines
+        note: "Role: owned by a server · held by many members · mentionable. Which lines?"
+        visual: >-
+          Server, Member, the Mentionable interface, and a new class Role are shown, with no lines
+          between Role and the others.
+        prediction: true
+        pause_after: 6
+      - id: reveal_roles
+        say: >-
+          Role gets three lines. A filled diamond from Server, with 1 at the server and a star at
+          Role. A plain association to Member, with a star at both ends, since a role groups
+          members without owning them. And a dashed line with a hollow triangle to Mentionable.
+          Nothing else in the diagram changes.
+        step: Three new lines, nothing else changes
+        note: "Server owns Role · Role and Member: star at both ends · Role realizes Mentionable"
+        visual: >-
+          Role is joined to Server by a filled diamond with 1 and a star, to Member by a plain
+          association with a star at both ends, and to Mentionable by a dashed realization line.
+        pause_after: 2.5
+  - id: summary
+    label: "Summary: the whole notation"
+    title: Classes, generalization, associations, dependencies
+    purpose: Recall every part of a class diagram before the summary quiz.
+    takeaway: A class diagram shows classes and their relationships, and every symbol has one meaning.
+    cues:
+      - id: recall
+        say: >-
+          To finish, recall the four parts. Classes: a box with a name, attributes, and
+          operations, each with a visibility marker. Generalization: a solid line with a hollow
+          triangle to the more general class, or a dashed one to an interface the class realizes.
+          Associations: solid lines between objects, with a multiplicity at each end, a filled
+          diamond when the whole owns its parts, and a hollow one when it only groups them.
+          Dependencies: a dashed arrow to a class that is used but not kept. The summary quiz
+          checks each part on a new app.
+        step: A class diagram in four parts
+        note: Classes → Generalization → Associations → Dependencies
+        visual: Four cards summarize classes, generalization, associations, and dependencies.
+        pause_after: 3

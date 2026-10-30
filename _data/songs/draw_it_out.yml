@@ -319,7 +319,7 @@ sections:
         end: 101.62
         text: "Is a Rectangle a Shape? Then inherit: is-a."
         marks: {"is": 98.62, "a": 98.82, "rectangle": 98.96, "a_2": 99.52, "shape": 99.96, "then": 100.62, "inherit": 100.78, "is_2": 101.12, "a_3": 101.42}
-        visual: "A new class diagram: abstract class Shape, marked «abstract», with −color: Integer and +area(): Real, above Rectangle, with −width: Integer, −height: Integer, and +area(): Real. Rectangle and then Shape are ringed; then the hollow triangle between them is ringed in violet and labelled “inherit: is-a”, and a sticker beside Rectangle says “A Rectangle is a Shape”."
+        visual: "A new class diagram: abstract class Shape, its name in italics with {abstract} below it, with −color: Integer and +area(): Real, above Rectangle, with −width: Integer, −height: Integer, and +area(): Real. Rectangle and then Shape are ringed; then the hollow triangle between them is ringed in violet and labelled “inherit: is-a”, and a sticker beside Rectangle says “A Rectangle is a Shape”."
       - id: verse-2-6
         start: 101.76
         end: 104.44

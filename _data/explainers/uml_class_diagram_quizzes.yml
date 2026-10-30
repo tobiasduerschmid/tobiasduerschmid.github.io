@@ -1,0 +1,255 @@
+# One knowledge check per section, about UML class-diagram notation rather than the chat
+# app's details. The summary section lists several questions under `questions`.
+intro:
+  question: Why does a design team draw a UML class diagram instead of a whiteboard sketch with plain, unlabeled arrows?
+  options:
+    - A class diagram can be compiled to check the design
+    - Each UML symbol has one meaning that every reader shares
+    - A sketch cannot show which classes the system has
+  correct_index: 1
+  explanation: >-
+    Plain arrows let each reader fill in a different meaning, such as contains, creates, or calls. In
+    UML, every box and line has one agreed meaning, so a class diagram tells every reader the same thing.
+  option_feedback:
+    0: Neither sketches nor class diagrams are compiled. The difference is whether readers agree on what the symbols mean.
+    2: The sketch's boxes already name the classes. What it leaves open is the meaning of each arrow.
+class_box:
+  question: >-
+    In a UML class diagram, how is a method preview, which takes an integer length and returns text,
+    written in the operations compartment?
+  options:
+    - String preview(Integer length)
+    - "preview: String(length)"
+    - "preview(length: Integer): String"
+  correct_index: 2
+  explanation: An operation reads name, then the parameters in parentheses as name, colon, type, then a colon and the result type.
+  option_feedback:
+    0: That is the declaration order of languages such as Java. UML writes the name first and puts the result type after a colon.
+    1: The parameters belong in parentheses right after the name, and the result type follows the closing parenthesis.
+visibility:
+  question: >-
+    An early UML class diagram shows a Message box listing only the names text, author, edit, and
+    preview, with no types or visibility markers. What does it tell you about the visibility of edit?
+  options:
+    - "Nothing: this view does not show its visibility"
+    - It is public, because no marker means public
+    - It is private, because only public members get a marker
+  correct_index: 0
+  explanation: >-
+    Leaving something out of a diagram says nothing about it. A missing visibility marker means the
+    visibility is not shown, not that it is public or private.
+  option_feedback:
+    1: A missing marker means not shown, not public. Public members carry a plus sign when visibility is shown.
+    2: Private members carry a minus sign when visibility is shown. Here no member shows a marker, so the diagram is silent.
+generalization:
+  question: In a UML class diagram, VoiceChannel is a kind of Channel. How is this generalization drawn?
+  options:
+    - A solid line with a hollow triangle touching VoiceChannel
+    - A solid line with a hollow triangle touching Channel
+    - A dashed line with a hollow triangle touching Channel
+  correct_index: 1
+  explanation: >-
+    Generalization is a solid line with a hollow triangle at the general class. Check it with a
+    sentence: a VoiceChannel is a Channel.
+  option_feedback:
+    0: The triangle always touches the general class. The sentence "a VoiceChannel is a Channel" tells you that Channel is the general one.
+    2: Generalization uses a solid line. A dashed line with a hollow triangle belongs to a different relationship.
+interfaces:
+  question: In a UML class diagram, Member and Channel both realize the interface Mentionable. What does that tell you?
+  options:
+    - Member is a kind of Channel and inherits its name
+    - Both inherit the code of mention from Mentionable
+    - Both provide a mention operation, each in its own way
+  correct_index: 2
+  explanation: >-
+    Realization, a dashed line with a hollow triangle at the interface, says that a class keeps the
+    promise the interface makes by providing its operations. In UML, an interface supplies no implementation.
+  option_feedback:
+    0: Realization relates each class to the interface, not to each other. Member and Channel share only the promise.
+    1: In UML, an interface supplies no implementation, so each class writes its own mention.
+associations:
+  question: In a UML class diagram, Message stores a reference to its author, a Member. How should that reference appear?
+  options:
+    - As an association line from Message to Member only
+    - As the attribute author plus an association line
+    - As a generalization from Message to Member
+  correct_index: 0
+  explanation: >-
+    References to other objects are clearer as association lines, and a reference appears either as an
+    attribute or as a line, not both. The arrowhead at Member shows that a message can reach its author.
+  option_feedback:
+    1: Showing the same reference twice repeats it. Draw it as an attribute or as a line, not both.
+    2: Generalization means "is a kind of". A message is not a kind of member; it links to one.
+multiplicity:
+  question: >-
+    In a UML class diagram of a course app, a student can enroll in at most one lab section, and a lab
+    section holds any number of students. Which multiplicities belong on the association?
+  options:
+    - A star next to LabSection and 0..1 next to Student
+    - 0..1 next to LabSection and a star next to Student
+    - 1 next to LabSection and 1 next to Student
+  correct_index: 1
+  explanation: >-
+    Each number sits next to the class it counts. From one student, count lab sections: at most one, so
+    0..1 goes next to LabSection. From one lab section, count students: any number, so a star goes next
+    to Student.
+  option_feedback:
+    0: These numbers sit at the wrong ends. Read each one from the other end, starting at one student.
+    2: Exactly one at both ends would require every student to have a section and every section to hold exactly one student.
+composition:
+  question: >-
+    In a UML class diagram of a photo app, deleting an album deletes the album's comments, but deleting a
+    user keeps the comments they wrote. Where does a filled diamond belong?
+  options:
+    - At User, on the association between User and Comment
+    - At both Album and User, on both associations
+    - At Album, on the association between Album and Comment
+  correct_index: 2
+  explanation: >-
+    A filled diamond sits at the whole's end when deleting the whole deletes its parts. The album owns
+    its comments; the user only links to the comments they wrote, which outlive the user.
+  option_feedback:
+    0: The comments outlive the user who wrote them, so the user does not own them.
+    1: A part belongs to at most one whole at a time, so a comment cannot have two owners.
+aggregation:
+  question: >-
+    In a UML class diagram of a music app, a playlist groups songs, deleting the playlist keeps the
+    songs, and one song can appear in many playlists. Which notation fits?
+  options:
+    - A hollow diamond at Playlist, or simply a plain association
+    - A filled diamond at Playlist, since a playlist contains songs
+    - A filled diamond at Song, since songs outlive playlists
+  correct_index: 0
+  explanation: >-
+    A playlist is a whole made of songs that it does not own: aggregation, a hollow diamond at the whole's
+    end. Because aggregation adds little meaning, a plain association is also a safe choice.
+  option_feedback:
+    1: A filled diamond would mean that deleting a playlist deletes its songs and that each song has one owner. Neither holds here.
+    2: A diamond always sits at the whole's end, and here nothing owns the songs' lifetime.
+dependency:
+  question: >-
+    In a UML class diagram, Message has an operation render(theme: Theme) that uses the theme to pick
+    colors and never stores it. Which line connects the two classes?
+  options:
+    - An association from Message to Theme, with 1 next to Theme
+    - A dashed arrow from Message to Theme
+    - A dashed arrow from Theme to Message
+  correct_index: 1
+  explanation: >-
+    A parameter that is used and never stored creates a dependency: a dashed line with an open arrowhead
+    from the client, Message, to the supplier, Theme, with no multiplicities.
+  option_feedback:
+    0: An association stands for a reference the object stores. A parameter used during one call is a dependency.
+    2: The arrow runs from the client that needs the supplier to the supplier, here from Message to Theme.
+reading:
+  question: Why does the structural view of the chat app's UML class diagram leave out the Mentionable interface and the Invite class?
+  options:
+    - UML does not allow interfaces in diagrams with associations
+    - Mentionable and Invite are no longer part of the design
+    - Each view answers one question, and showing all is unreadable
+  correct_index: 2
+  explanation: >-
+    One diagram that shows every relationship becomes hard to read, so each view shows what its reader's
+    question needs. Leaving something out of a view says nothing about whether it exists.
+  option_feedback:
+    0: UML lets a diagram mix any of these elements. Leaving them out is a choice made for the reader.
+    1: Leaving something out of a view says nothing about it. Mentionable and Invite still belong to the design.
+transfer:
+  question: >-
+    In the chat app's UML class diagram, a new class Badge must be mentionable, like members, but shares
+    nothing else with them. Which line connects Badge?
+  options:
+    - A dashed line with a hollow triangle from Badge to Mentionable
+    - A solid line with a hollow triangle from Badge to Member
+    - A filled diamond at Mentionable on a line to Badge
+  correct_index: 0
+  explanation: >-
+    A class that keeps an interface's promise realizes it: a dashed line with a hollow triangle at the
+    interface. Badge does not become a kind of Member.
+  option_feedback:
+    1: A solid line with a triangle would make Badge a kind of Member that inherits its attributes and operations, which Badge does not share.
+    2: A filled diamond means a whole owns its parts' lifetime. An interface owns nothing; Badge only promises mention.
+summary:
+  questions:
+    - question: >-
+        In a UML class diagram of a workout-tracking app, the Workout box lists `- startedAt: DateTime`
+        and `+ totalReps(): Integer`. Which reading is correct?
+      options:
+        - startedAt is a public attribute; totalReps is a private operation
+        - startedAt is a private attribute; totalReps is a public operation
+        - startedAt is an operation returning a DateTime; totalReps is an attribute
+      correct_index: 1
+      explanation: >-
+        A minus sign marks a private member and a plus sign a public one. Operations carry parentheses,
+        and the type after the last colon is the result type.
+      option_feedback:
+        0: The markers are reversed. A minus sign means private, and a plus sign means public.
+        2: Only operations carry parentheses, so startedAt is an attribute of type DateTime and totalReps is an operation.
+    - question: >-
+        In the workout app's UML class diagram, Run and Lift are kinds of Exercise, and the name Exercise
+        is written in italics. What follows?
+      options:
+        - Exercise has no direct objects; Run and Lift inherit its members
+        - Exercise is an interface that Run and Lift realize with dashed lines
+        - Run and Lift own their Exercise and delete it with themselves
+      correct_index: 0
+      explanation: >-
+        An italic class name marks an abstract class: no object is created from it directly. Its
+        subclasses inherit its attributes and operations.
+      option_feedback:
+        1: An interface is marked by the word interface in double angle brackets. Italics mark an abstract class.
+        2: Generalization relates kinds, not wholes and parts, so it says nothing about deletion.
+    - question: >-
+        In the workout app's UML class diagram, Workout and Badge both provide share(), which the interface
+        Shareable declares. How is that drawn?
+      options:
+        - A solid line with a hollow triangle from each class to Shareable
+        - A dashed arrow with an open arrowhead from Shareable to each class
+        - A dashed line with a hollow triangle from each class to Shareable
+      correct_index: 2
+      explanation: Each class realizes Shareable, so each gets a dashed line with a hollow triangle at the interface.
+      option_feedback:
+        0: A solid line with a triangle is generalization, "a kind of". Workout and Badge only keep the promise Shareable makes.
+        1: A dashed line with an open arrowhead is a dependency, and it would point from the class that needs another to the class it needs.
+    - question: >-
+        In the workout app's UML class diagram, a workout records at least one set, and every set belongs
+        to exactly one workout. Which multiplicities fit the association between Workout and ExerciseSet?
+      options:
+        - 1..* next to Workout and 1 next to ExerciseSet
+        - 1 next to Workout and 1..* next to ExerciseSet
+        - A star at both ends
+      correct_index: 1
+      explanation: >-
+        Each number sits next to the class it counts. One workout has at least one set, so 1..* goes next
+        to ExerciseSet. One set belongs to exactly one workout, so 1 goes next to Workout.
+      option_feedback:
+        0: The numbers sit at the wrong ends. Starting at one workout, you count sets, so 1..* goes next to ExerciseSet.
+        2: A star allows zero, but every workout has at least one set and every set exactly one workout.
+    - question: >-
+        In the workout app, deleting a workout deletes its sets, while deleting a training plan keeps the
+        workouts it groups. Which diamonds fit the UML class diagram?
+      options:
+        - Filled at Workout for its sets; hollow, or none, at TrainingPlan
+        - Hollow at Workout for its sets; filled at TrainingPlan
+        - Filled at both Workout and TrainingPlan
+      correct_index: 0
+      explanation: >-
+        Sets are deleted with their workout, so the workout owns them: a filled diamond at Workout. A
+        training plan only groups workouts: a hollow diamond at TrainingPlan, or simply a plain association.
+      option_feedback:
+        1: The roles are swapped. The workout owns its sets' lifetime, while the plan only groups workouts.
+        2: A filled diamond at TrainingPlan would delete its workouts with the plan, which this app does not do.
+    - question: >-
+        In the workout app's UML class diagram, Workout has an operation importRoute(file: RouteFile) that
+        reads the file once and never stores it. Which line fits?
+      options:
+        - An association from Workout to RouteFile, with 1 next to RouteFile
+        - A dashed arrow from RouteFile to Workout
+        - A dashed arrow from Workout to RouteFile
+      correct_index: 2
+      explanation: >-
+        A parameter used once and never stored creates a dependency: a dashed line with an open arrowhead
+        from the client, Workout, to the supplier, RouteFile.
+      option_feedback:
+        0: An association stands for a stored reference. This file is only used during one call.
+        1: The arrow points from the class that needs the other, Workout, to the class it needs, RouteFile.

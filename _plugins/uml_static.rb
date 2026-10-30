@@ -63,6 +63,46 @@ module Jekyll
         FileUtils.mkdir_p(@cache_dir)
       end
 
+      # A long-running `jekyll serve` fingerprints the renderer once per build,
+      # not once per process: after an ArchUML change, cached SVGs from the old
+      # renderer no longer match any diagram.
+      def refresh_renderer
+        setup if @cache.nil?
+        fingerprint = renderer_fingerprint(Dir.pwd)
+        return if fingerprint == @renderer_hash
+
+        @renderer_hash = fingerprint
+        @cache = {}
+      end
+
+      # Documents that must work without JavaScript also need their diagrams in
+      # development builds (for example, printable narration steps).
+      def prerender?(item)
+        Jekyll.env == 'production' || ENV['JEKYLL_ENV'] == 'production' || ENV['CI'] || item.data['static_uml']
+      end
+
+      # Incremental builds regenerate a page with pre-rendered diagrams when the
+      # renderer changes, not only when the page's own source does. A page that
+      # did not track a renderer input yet may hold diagrams from any older
+      # renderer, so it regenerates once. Jekyll treats a missing dependency as
+      # changed on every build, so only existing inputs are tracked.
+      def track_renderer(item)
+        site = item.site
+        regenerator = site.regenerator
+        # The key Jekyll's regenerator looks pages and documents up by.
+        source = site.in_source_dir(item.relative_path)
+        dependencies = regenerator.metadata.dig(source, 'deps')
+        return if dependencies.nil?
+
+        RENDERER_INPUT_PATHS.each do |input|
+          dependency = site.in_source_dir(input)
+          next if dependencies.include?(dependency) || !File.file?(dependency)
+
+          regenerator.add_dependency(source, dependency)
+          regenerator.cache[source] = true
+        end
+      end
+
       def renderer_fingerprint(root_path)
         digest = Digest::SHA256.new
         RENDERER_INPUT_PATHS.each do |relative_path|
@@ -425,11 +465,19 @@ module Jekyll
   end
 end
 
+Jekyll::Hooks.register :site, :pre_render do |site|
+  Jekyll::UMLStatic.refresh_renderer
+  # Jekyll decides what to regenerate after this hook.
+  (site.pages + site.collections.each_value.flat_map(&:docs)).each do |item|
+    Jekyll::UMLStatic.track_renderer(item) if Jekyll::UMLStatic.prerender?(item)
+  end
+end
+
 Jekyll::Hooks.register [:posts, :pages, :documents], :post_render do |post|
-  is_production = Jekyll.env == 'production' || ENV['JEKYLL_ENV'] == 'production' || ENV['CI']
-  # Documents that must work without JavaScript also need their diagrams in
-  # development builds (for example, printable narration steps).
-  next unless is_production || post.data['static_uml']
+  next unless Jekyll::UMLStatic.prerender?(post)
+
+  # A page regenerated for its own changes starts with no dependencies.
+  Jekyll::UMLStatic.track_renderer(post)
 
   if post.output && (post.output.include?('<html') || post.url.end_with?('/', '.html'))
     post.output = Jekyll::UMLStatic.process(post.output, page_identifier: post.url)

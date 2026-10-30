@@ -47,7 +47,9 @@
   }
 
   // Marks a cue's focus lines in the visible language of a code panel and
-  // scrolls the first one into view. `scope` holds the per-language panels.
+  // scrolls them into view. When the marked lines do not all fit, the block's
+  // `scroll` map may name the line that matters most for this focus; that line
+  // is shown instead of the first. `scope` holds the per-language panels.
   function highlightCode(scope, block, focus) {
     const lines = block.focus[focus] || [];
     const active = scope.querySelector('[data-code-language]:not([hidden])');
@@ -58,8 +60,16 @@
       else line.removeAttribute('aria-current');
     });
     const codeWindow = active.querySelector('pre');
-    const firstLine = active.querySelector('.is-highlighted');
-    codeWindow.scrollTop = firstLine ? firstLine.offsetTop - codeWindow.offsetTop - 20 : 0;
+    const marked = active.querySelectorAll('.is-highlighted');
+    let target = marked[0];
+    // Focus names such as `constructor` must not find inherited properties.
+    const keyLine = block.scroll && Object.hasOwn(block.scroll, focus) ? block.scroll[focus] : null;
+    if (target && keyLine) {
+      const last = marked[marked.length - 1];
+      const span = last.offsetTop + last.offsetHeight - target.offsetTop;
+      if (span > codeWindow.clientHeight - 20) target = active.querySelector(`[data-line="${keyLine}"]`) || target;
+    }
+    codeWindow.scrollTop = target ? target.offsetTop - codeWindow.offsetTop - 20 : 0;
     scope.querySelector('[data-focus-lines]').textContent = lines.length ? lines.join(', ') : 'Whole example';
   }
 

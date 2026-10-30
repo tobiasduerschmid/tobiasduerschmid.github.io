@@ -152,6 +152,13 @@ fallbacks.
 The Model-View-Controller lesson follows this order. The Observer and State lessons predate the
 concrete-first rule and introduce the roles before the code.
 
+A notation lesson that needs the same player (code beside per-cue ArchUML diagrams) uses
+`kind: pattern` with its own `lesson.parts` and `parts_label`; the UML class-diagram lesson
+(`docs/uml-class-diagram-narration.md`) uses Classes, Generalization, Associations, and
+Dependencies. Start from code the audience can read, give each cue that needs a different
+teaching callout its own diagram variant, and keep every diagram consistent with the cited UML
+references and the SEBook chapter's rules.
+
 Each scene has a `purpose` (shown as "Our task"), a `title`, a `takeaway`, and cues. Keep every
 diagram within about 9 symbols; split rather than crowd.
 

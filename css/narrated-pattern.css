@@ -71,7 +71,8 @@
 }
 .narrated-lesson [data-np-diagram]:focus-visible { outline: 3px solid var(--nja-cyan); outline-offset: 3px; }
 .narrated-lesson [data-np-diagram] { min-width: 0; }
-.narrated-lesson [data-np-diagram] svg { max-width: none; }
+/* Lesson diagrams scale down to their column by default, so the narrated picture is never clipped. */
+.narrated-lesson [data-np-diagram] svg, .np-reading .np-diagram svg { max-width: 100% !important; }
 /* Diagrams and tables need room beside the code; below this width they follow it. */
 @media (max-width: 1400px) {
   .narrated-lesson :is(.np-code-with-diagram, .np-code-with-visual) { grid-template-columns: 1fr; }

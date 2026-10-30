@@ -2,7 +2,10 @@
 title: "UML Class Diagrams"
 layout: sebook
 uml_code_labs: true
+static_uml: true
 ---
+
+{% include narration.html topic="uml_class_diagram" %}
 
 > **Want to practice?** Write code that matches target diagrams in our interactive tutorials: [UML Class Diagrams in Python](/SEBook/tools/uml-class-diagram-python.html) and [UML Class Diagrams in Java](/SEBook/tools/java-tutorial.html).
 {: id="7-interactive-tutorials"}

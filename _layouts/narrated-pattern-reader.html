@@ -8,12 +8,13 @@
 {%- assign lesson = site.data.video_narrations[page.topic] -%}
 {%- assign root_class = 'video-narration' -%}
 {%- assign anchor = page.topic | append: '-video' -%}
-{%- assign lesson_css = '/css/video-narration.css' -%}
+{%- assign lesson_styles = '/css/video-narration.css' | split: ',' -%}
 {%- else -%}
 {%- assign lesson = site.data.narrated_patterns[page.topic] -%}
 {%- assign root_class = 'narrated-pattern' -%}
 {%- assign anchor = page.topic | append: '-animation' -%}
-{%- assign lesson_css = '/css/' | append: page.topic | append: '-narration.css' -%}
+{%- comment -%} A pattern lesson's own styles come from its visual package; a lesson may have none. {%- endcomment -%}
+{%- assign lesson_styles = lesson.styles -%}
 {%- endif -%}
 {%- assign explainer = site.data.explainers[page.topic] -%}
 {%- capture examples_key %}{{ page.topic }}_code{% endcapture -%}
@@ -32,7 +33,7 @@
   <link rel="stylesheet" href="{{ '/css/narrated-explainer.css' | relative_url }}">
   <link rel="stylesheet" href="{{ '/css/narrated-pattern.css' | relative_url }}">
   <link rel="stylesheet" href="{{ '/css/narrated-pattern-document.css' | relative_url }}">
-  <link rel="stylesheet" href="{{ lesson_css | relative_url }}">
+  {% for stylesheet in lesson_styles %}<link rel="stylesheet" href="{{ stylesheet | relative_url }}">{% endfor %}
   <link rel="stylesheet" href="{{ '/css/print-light.css' | relative_url }}">
 </head>
 <body class="np-reader-page">

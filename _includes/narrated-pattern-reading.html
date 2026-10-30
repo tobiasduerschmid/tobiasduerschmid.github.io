@@ -16,7 +16,7 @@
   {% capture lesson_class %}{% include narrated-pattern-lesson-class.html topic=include.topic scene=scene %}{% endcapture %}
   <section class="nja-transcript-scene" id="{{ include.topic }}-reading-{{ scene.id }}" aria-labelledby="{{ include.topic }}-reading-{{ scene.id }}-title">
     <h3 id="{{ include.topic }}-reading-{{ scene.id }}-title">{{ scene_number }}. {{ scene.label | escape }}</h3>
-    {% include narrated-pattern-parts.html scene=scene %}
+    {% include narrated-pattern-parts.html scene=scene parts=lesson.parts label=lesson.parts_label %}
     <p class="nja-purpose"><strong>Our task:</strong> {{ scene.purpose | escape }}</p>
     {% assign np_previous_diagram = '' %}
     {% for cue in scene.cues %}

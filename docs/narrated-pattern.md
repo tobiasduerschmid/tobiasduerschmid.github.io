@@ -4,7 +4,10 @@ Observer, State, Strategy, and Model-View-Controller share one player:
 language-selectable code, ArchUML class, state, sequence, and CRC diagrams,
 topic illustrations, and a knowledge check at the end of every section. A
 lesson is data plus a few topic includes; the player, reader, and print views
-are generic.
+are generic. The UML class-diagram lesson (`docs/uml-class-diagram-narration.md`)
+uses the same player for notation rather than a pattern: its script declares
+its own `lesson.parts`, which the player, reader, and print views show instead
+of the pattern description's parts.
 
 The readable script and separate visual package use the shared
 [versioned narration format](narration-format.md), also used by videos,
@@ -25,6 +28,8 @@ explainers, and case studies.
 4. Set `static_uml: true` in the chapter and add
    `{% include narration.html topic="<topic>" %}`. It loads the shared styles
    and the JSON package’s `presentation.styles` before `print-light.css`.
+   Such pages embed diagrams drawn at build time; an incremental
+   `jekyll serve` redraws them after any ArchUML renderer change.
 5. Add `SEBook/<path>/<topic>/read.html` and `print.html` with
    `layout: narrated-pattern-reader`, `topic: <topic>`, and
    `{% include narrated-pattern-reading.html topic=page.topic %}`.
@@ -99,7 +104,10 @@ the standard or Safari's prefixed API; where neither exists (Safari on
 iPhone) or the browser refuses, the player fills the viewport itself and makes
 the page behind it inert until the button or Escape returns it. Style full
 screen on `.is-fullscreen`, which both modes set, not on `:fullscreen`. Diagrams need no refit: their readable
-width is set in `em` and capped by the column, so they fit both layouts.
+width is set in `em`, and in the player and reader they scale down to the column by default
+(`max-width: 100%`), so a wide diagram is never clipped in either layout. Keep lesson
+diagrams narrow, so that scaling stays small and labels stay legible. A diagram with
+teaching callouts inverts only its model layer in dark mode, as everywhere on the site.
 
 ## Checks
 

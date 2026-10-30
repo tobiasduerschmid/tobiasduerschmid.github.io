@@ -76,8 +76,10 @@ for (const mode of DISPLAY_MODES) {
         }, mode.dark);
 
         // Production figures are already rendered; development pages and
-        // runtime embeds may still carry their public source declarations.
-        const declared = page.locator('.sebook-figure--archuml > [role="img"], [data-uml-type], pre > code[class^="language-uml-"], pre > code[class^="diagram-"]');
+        // runtime embeds may still carry their public source declarations. A
+        // narration player's diagram host shows a copy of a reading-step figure
+        // that is already counted, so it declares nothing new.
+        const declared = page.locator('.sebook-figure--archuml > [role="img"], [data-uml-type]:not([data-np-diagram]), pre > code[class^="language-uml-"], pre > code[class^="diagram-"]');
         const diagramCount = await declared.count();
         expect(diagramCount, `${url}: authored diagrams are present before measuring generated embeds`)
           .toBeGreaterThanOrEqual(authoredDiagrams);

@@ -1,0 +1,125 @@
+# Handout key points for the UML class-diagram narration, keyed by <scene id>-<cue id>.
+# Telegraphic notes, not narration: at most 16 words a bullet, only **bold** markup.
+intro-sketch:
+  - "Running example: a study-group chat app with servers, channels, messages, members"
+  - Whiteboard sketch = four boxes joined by unlabeled arrows
+intro-ambiguity:
+  - "**Ambiguity**: an unlabeled arrow could mean contains, creates, calls, wrote, or mentions"
+  - Readers guess differently → code that disagrees with the design
+intro-preview:
+  - "**UML** (Unified Modeling Language): the standard notation, one meaning per symbol"
+  - "**Class diagram**: classes, what each stores and does, and how they relate"
+class_box-name:
+  - "**Class**: describes a set of objects sharing structure and behavior"
+  - Drawn as a rectangle with the class name, usually a noun, at the top
+class_box-attributes:
+  - "Middle compartment: **attributes**, the values each object stores (fields)"
+  - "Syntax name: Type, with UML types String, Integer, Boolean"
+  - "author: Member → its type is another class of the app"
+class_box-operations:
+  - "Bottom compartment: **operations**, the behavior others can invoke (methods)"
+  - "Syntax name(param: Type): Result; no result → leave the colon and type out"
+visibility-markers:
+  - "**Visibility** marker in front of every attribute and operation"
+  - Minus sign = private, inside the class only · plus sign = public
+  - Private fields behind public operations = **encapsulation**
+visibility-more_markers:
+  - Hash sign = protected (class and subclasses) · tilde = package (same package)
+  - "Python: two leading underscores → private, one leading underscore → protected"
+visibility-detail:
+  - Diagrams may omit details such as constructors, types, or markers
+  - "Omitted ≠ absent: no marker means not shown, not public"
+  - Choose the detail that helps your reader
+generalization-kinds:
+  - "**Generalization**: shared features move up into one general class"
+  - Channel (general) → TextChannel and VoiceChannel (specific)
+generalization-triangle:
+  - Solid line + hollow triangle; the triangle touches the **general** class
+  - "Direction check: “a TextChannel is a Channel”"
+  - Subclasses **inherit** attributes and operations, drawn once in the superclass
+generalization-abstract:
+  - name is protected (hash sign) so the subclasses can use it
+  - "**Abstract class**: italic name, often {abstract} below; no direct objects"
+  - "**Abstract operation**: italic; every subclass must implement it"
+generalization-substitution:
+  - "**Substitution**: a subclass object works wherever its superclass is expected"
+  - Generalization relates classes, not objects → no multiplicities
+interfaces-contract:
+  - "**Interface**: promised public operations without an implementation"
+  - "Mentionable's mention(): @ana for a member, #homework for a channel"
+interfaces-realization:
+  - Notation «interface» above the interface name
+  - "**Realization**: dashed line + hollow triangle at the interface"
+interfaces-compare:
+  - "Solid triangle: is a kind of, inherits members"
+  - "Dashed triangle: keeps a promise, inherits no implementation"
+  - Code that only needs mention() accepts any Mentionable
+associations-attribute:
+  - "Rule: plain values (text, numbers) as attributes; references to objects as lines"
+  - "author: Member as an attribute hides a connection between two classes"
+associations-line:
+  - "**Association**: a solid line describing all runtime **links** between objects"
+  - One link = one message object + its member object
+  - A reference appears as an attribute or a line, not both
+associations-navigable:
+  - "Open arrowhead = **navigable**: Message stores the reference and reaches its author"
+  - Unmarked end = navigability unspecified
+multiplicity-numbers:
+  - "**Multiplicity**: how many objects at this end link to one object at the far end"
+  - 1 next to Member (one author) · star next to Message (any number)
+multiplicity-vocabulary:
+  - 1 exactly one · 0..1 at most one · star zero or more · 1..* at least one
+  - Code fixes one end (author field); the app's rules decide the other
+  - No number shown → nothing known about the number
+multiplicity-predict_voice:
+  - "**Predict:** one voice channel per member, many members per channel. Which numbers go where?"
+multiplicity-reveal_voice:
+  - 0..1 next to VoiceChannel · star next to Member
+  - Put each number beside the class it counts; read from the opposite end
+composition-owner:
+  - "**Composition**: filled diamond at the whole; strongest association"
+  - At most one owner per part; deleting the whole deletes its current parts
+composition-one_owner:
+  - Composite end (the diamond) takes only 1 or 0..1
+  - Channel owns its messages → deleting a channel deletes them
+composition-predict_author:
+  - "**Predict:** a deleted account's messages remain. Does the line need a diamond at Member?"
+composition-no_diamond:
+  - "No diamond: messages outlive their author; their single owner is the channel"
+  - Pick diamonds from ownership rules, not from code syntax
+  - Python, Java, TypeScript references look alike; C++ value or unique pointer shows ownership
+aggregation-grouping:
+  - "**Aggregation**: hollow diamond at the whole; grouping without exclusive ownership"
+  - Delete a category → its channels stay, uncategorized
+  - UML attaches no lifetime rule to the hollow diamond
+aggregation-when_unsure:
+  - Server owns categories and channels; a category only groups channels
+  - Unsure between aggregation and association → a plain association is always safe
+dependency-join:
+  - "join(invite: Invite, nickname: String): Member uses the invite during one call"
+  - The server never stores the invite
+dependency-dashed:
+  - "**Dependency**: dashed line, open arrowhead, from client to supplier"
+  - A change to the supplier may force a change to the client
+  - Weakest relationship; no stored link → no multiplicities
+dependency-stored:
+  - Stored members → association, 1..* at Member (the owner is always present)
+  - Parameters, locals, return types, exceptions → dependency; stored references → association
+reading-read_lines:
+  - "Read the style first: solid = has or is a kind of; dashed = uses or promises"
+  - "Then the ends: triangle, diamond, arrowhead; then the numbers"
+  - "**Try:** say the Category to Channel line as a sentence"
+reading-one_view:
+  - A category groups many channels; each channel has at most one category and outlives it
+  - "A **view** answers one question; leave out what that question does not need"
+transfer-predict_roles:
+  - "**Predict:** a Role is owned by a server, held by many members, and mentionable. Which lines?"
+transfer-reveal_roles:
+  - Server → Role with a filled diamond, 1 at Server and a star at Role
+  - Role to Member is a plain association with a star at both ends
+  - Role realizes Mentionable with a dashed line and hollow triangle
+summary-recall:
+  - "Classes: name, attributes, operations, visibility markers"
+  - "Generalization: solid triangle; realization: dashed triangle to an interface"
+  - "Associations: multiplicities; a filled diamond owns, a hollow diamond groups"
+  - "Dependencies: dashed arrow to a class used but not kept"

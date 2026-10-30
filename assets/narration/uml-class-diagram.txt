@@ -1,0 +1,73 @@
+Imagine you and three friends are building a chat app for your study group, with servers, channels, and messages, like the ones you already use for classes. Someone sketches the design on a whiteboard: four boxes, Server, Channel, Message, and Member, joined by three arrows.
+
+Now ask each friend what the arrows mean. Does a server contain its channels, create them, or just call them? Does the last arrow mean that a member wrote the message, or that the message mentions them? Each reader fills in a different meaning, and nobody notices until the code disagrees.
+
+A sketch needs a notation in which every symbol has one agreed meaning. The standard one is the Unified Modeling Language, U M L, and its most widely used diagram is the class diagram: the classes of a system, what each one stores and does, and how they relate. Here is our sketch in U M L. By the end, you will read every mark on it.
+
+Let's start with one class. A class describes a set of objects with the same structure and behavior, and every message in our app is an object of the class Message. U M L draws a class as a rectangle. Its top compartment holds the class name, usually a noun. Choose a code language above; the explanation is the same in every language.
+
+The middle compartment lists attributes, the values each object stores: the fields in the code. Each reads name, colon, type, with U M L's own type names: String for text, Integer for whole numbers, Boolean for true or false. One attribute, author, has a type from our own app, Member. Remember that one.
+
+The bottom compartment lists operations, the behavior other objects can invoke: the methods. Each reads name, then the parameters in parentheses, each with its own name and type, then a colon and the result type. Preview takes a length and returns a String. Edit returns nothing, so its result is simply left out.
+
+The symbol in front of each attribute and operation is its visibility. A minus sign means private: only code inside the class may use it. A plus sign means public: any code that can see the class may use it. Message hides its text and offers edit and preview instead. That is encapsulation, visible at a glance.
+
+Two more markers exist. A hash sign means protected: the class and its subclasses may use it. A tilde means package: any class in the same package may use it. Each language spells these its own way. Python has no access keywords; by convention, two leading underscores mark a private name, and one marks a protected name.
+
+You also choose how much to show. This box leaves out the constructor, and an early sketch might list only names, without types or markers. Leaving something out says nothing about it: a missing marker means not shown, not public, and a missing compartment tells you nothing about what it holds. Show what helps your reader.
+
+Our app has two kinds of channels. A text channel has a topic. A voice channel tracks the members currently talking. But both have a name, both can be renamed, and both hold messages. Generalization captures what they share: one general class, Channel, and two more specific classes, text channel and voice channel.
+
+U M L draws generalization as a solid line with a hollow triangle, and the triangle always touches the general class. Check the direction with a sentence: a text channel is a Channel. Each subclass inherits the attributes and operations of its superclass, so name and rename appear once, in Channel, and nowhere else.
+
+Name carries a hash sign, protected, so the subclasses can use it. And there is no plain channel, only text and voice channels, so Channel is abstract: no object can be created from it directly. U M L sets an abstract class's name in italics. Summary is in italics too: an abstract operation, which each subclass must implement.
+
+Generalization also promises substitution: wherever code expects a Channel, a text channel or a voice channel will do. A channel list can ask every channel for its summary without knowing its kind. And notice that this line relates classes, not individual objects, so it never carries numbers.
+
+In a message, you can mention a member with an at sign, or a channel with a hash sign. Members and channels share nothing else, yet both must answer one question: what text refers to me? An interface declares such a promise: public operations without an implementation. Mentionable declares one operation, mention.
+
+U M L marks an interface with the word interface in double angle brackets, above its name. A class that implements it draws a dashed line with a hollow triangle to the interface, a relationship called realization. Member and Channel each realize Mentionable, and each keeps the promise in its own way.
+
+Compare the two triangles. A solid line says the subclass is a kind of its superclass and inherits what it declares. A dashed line says the class keeps the promise an interface makes, and in U M L an interface supplies no implementation to inherit. Code that only needs to mention something can accept any Mentionable.
+
+Remember the author attribute? Its type is Member, another class of our app, so the box hides a connection between two classes. A good rule: use attributes for plain values, like text and numbers, and lines for references to other objects. U M L calls such a line an association.
+
+Here is the same reference as an association. Author has left the attribute list, and a solid line labeled written by now joins Message and Member. The association describes all the links at runtime: each link connects one message object to one member object. Draw a reference as an attribute or as a line, not both.
+
+The open arrowhead at Member says the association is navigable in that direction: from a message, code can reach its author directly, because Message stores the reference. Preview does exactly that. Member stores no list of its messages, and with nothing drawn at the Message end, the diagram leaves that direction open.
+
+An association also answers: how many? A multiplicity at each end counts the objects at that end that can link to one object at the other end. One message has exactly one author, so a 1 sits next to Member. One member can write any number of messages, so a star sits next to Message.
+
+Four multiplicities cover most diagrams. 1 means exactly one, zero dot dot one means at most one, a star means zero or more, and one dot dot star means at least one. Every server, for example, has at least one member, its owner. The author field shows the 1; the app's rules decide the other end. And no number shown means nothing is known.
+
+Your turn. In our app, a member can talk in only one voice channel at a time, while a voice channel can hold many members. Predict the multiplicity at each end of the line between voice channel and Member, and which number goes at which end. Pause if you need more time.
+
+Next to voice channel goes zero dot dot one: one member is in at most one voice channel. Next to Member goes a star: one voice channel holds any number of members. Put each number next to the class it counts, and read it from the other end: start at one object, cross the line, and count.
+
+Some associations connect a whole to its parts. Delete a server, and every one of its channels is deleted with it. A filled diamond at the whole's end marks this composition, the strongest kind of association: each part belongs to at most one whole at a time, and deleting the whole deletes its current parts.
+
+Because a part has at most one owner, the number at the diamond is always 1 or zero dot dot one. Here every channel belongs to exactly one server, so a 1 sits at the diamond and a star at Channel. Messages work the same way: delete a channel, and its messages go with it.
+
+Now the author line. In our app, when someone deletes their account, the messages they wrote stay in the channel, shown as from a deleted user. Should the line from Message to Member get a filled diamond at Member? Decide before continuing.
+
+No diamond. The messages outlive their author, and each message already has its one owner, its channel. So choose diamonds from the design's ownership rule, not from code syntax. In Python, Java, or TypeScript, a stored reference looks the same either way. In C plus plus, holding parts by value or by unique pointer is real evidence of ownership.
+
+Categories group channels in the sidebar, like Classes or Social. A category is a whole made of channels, but delete it, and its channels stay, now uncategorized. A hollow diamond at the whole's end marks this aggregation: whole and part, without exclusive ownership. U M L does not fix the parts' lifetime, so the diamond alone promises nothing about deletion.
+
+Compare the three lines. The server owns both its categories and its channels, so deleting it removes everything. A category only groups. Aggregation adds so little meaning that when you are unsure, a plain association is always a safe choice. Use the filled diamond whenever the whole truly owns its parts.
+
+Last relationship. To join a server, a new member uses an inn-vite. Server's join operation receives the Inn-vite as a parameter, redeems it, creates the Member, and adds it to the member list. But the server never stores the inn-vite: it uses Inn-vite only while join runs.
+
+U M L draws this as a dependency: a dashed line with an open arrowhead, from the client, Server, to the supplier, Inn-vite. It says Server needs Inn-vite to work: if Inn-vite changes, Server may have to change too. It is the weakest relationship. There is no stored link, so there are no numbers either.
+
+Compare the line to Member. The server stores its members, so that line is an association, with one dot dot star at Member, because every server keeps at least its owner. In general, parameters, local variables, return types, and thrown exceptions create dependencies; references an object stores create associations.
+
+Now read a whole diagram, each line by its style and its ends. Solid lines say has, or is a kind of. Dashed lines say uses, or promises. Then the ends: a triangle names a more general class, a diamond a whole and its parts, an arrowhead a direction you can navigate, and the numbers how many. Try reading the line from Category to Channel before I do.
+
+A category groups any number of channels, each channel sits in at most one category, and the hollow diamond says the channels can outlive it. Notice what this view leaves out: the interface and the inn-vite. That is deliberate. One diagram that shows every relationship becomes unreadable, so draw the view that answers your reader's question.
+
+One last design task. Your group adds roles, like Moderators. A server has any number of roles, and deleting the server deletes them. A member can hold many roles, and a role can be given to many members. And a role can be mentioned, with an at sign. Which lines connect the new class Role? Decide before continuing.
+
+Role gets three lines. A filled diamond from Server, with 1 at the server and a star at Role. A plain association to Member, with a star at both ends, since a role groups members without owning them. And a dashed line with a hollow triangle to Mentionable. Nothing else in the diagram changes.
+
+To finish, recall the four parts. Classes: a box with a name, attributes, and operations, each with a visibility marker. Generalization: a solid line with a hollow triangle to the more general class, or a dashed one to an interface the class realizes. Associations: solid lines between objects, with a multiplicity at each end, a filled diamond when the whole owns its parts, and a hollow one when it only groups them. Dependencies: a dashed arrow to a class that is used but not kept. The summary quiz checks each part on a new app.
