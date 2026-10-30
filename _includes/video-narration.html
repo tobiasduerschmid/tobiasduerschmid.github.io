@@ -31,7 +31,8 @@
   <p>{{ lesson.summary }} {{ lesson.prerequisites }}</p>
   <div class="nja-player">
     <div class="vn-video song-player-screen" data-vn-video tabindex="-1">
-      <div class="vn-scenes">
+      <div class="vn-surface">
+      <div class="vn-scenes" tabindex="0" role="region" aria-label="Scene navigation">
         {% for scene in explainer.scenes %}
         <div class="nja-scene vn-scene" data-scene="{{ scene.id }}"{% unless forloop.first %} hidden{% endunless %}>
           <div class="nja-scene-meta"><span class="nja-sticker">{{ lesson.name | upcase }}</span><span>{{ forloop.index }} / {{ explainer.scenes.size }} &nbsp; {{ scene.label }}</span>{% include narrated-pattern-parts.html scene=scene parts=lesson.parts label=lesson.parts_label %}</div>
@@ -70,11 +71,12 @@
           <noscript><p>{{ first_cue.visual | escape }}</p></noscript>
         </div>
         <section class="np-quiz" aria-labelledby="{{ topic }}-quiz-title" hidden>
+          <button type="button" class="vn-check-exit">Exit full screen</button>
           <h3 id="{{ topic }}-quiz-title" tabindex="-1">Knowledge check</h3>
           <div data-quiz-host></div>
           <p class="tvm-quiz-status" role="status" aria-live="polite"></p>
         </section>
-        <div class="nja-narration vn-captions" id="{{ topic }}-video-captions" role="region" aria-label="Narration"><p>{{ first_cue.text }}</p></div>
+        <div class="nja-narration vn-captions" id="{{ topic }}-video-captions" role="region" aria-label="Narration" tabindex="0"><p>{{ first_cue.text }}</p></div>
         <div class="nja-controls nja-playback-controls vn-controls song-player-controls" hidden>
           <label class="nja-seek-label vn-seek-label"><span class="vn-hidden-label">Narration position</span><input type="range" min="0" max="{{ timing.duration | default: 1 }}" step="0.01" value="0" aria-valuetext="0:00" class="nja-seek" aria-keyshortcuts="ArrowLeft ArrowRight 0 1 2 3 4 5 6 7 8 9"></label>
           <div class="vn-toolbar">
@@ -100,6 +102,7 @@
               <label class="nja-scene-select">Scene<select data-setting="scene">{% for scene in explainer.scenes %}<option value="{{ forloop.index0 }}">{{ forloop.index }}. {{ scene.label }}</option>{% endfor %}</select></label>
               <label>Speed<select data-setting="speed"><option value="0.5">0.5x</option><option value="0.75">0.75x</option><option value="1" selected>1x</option><option value="1.25">1.25x</option><option value="1.5">1.5x</option><option value="2">2x</option></select></label>
               <label>Caption size<select class="vn-caption-size"><option value="1" selected>100%</option><option value="1.25">125%</option><option value="1.5">150%</option><option value="2">200%</option></select></label>
+              <label class="nja-motion"><input type="checkbox" class="vn-landscape" checked> Landscape in full screen</label>
               {% if lesson.animation %}<label class="nja-motion"><input type="checkbox" data-setting="motion" checked> Animate visuals</label>{% endif %}
               <button type="button" class="np-review-check" data-review-check>Knowledge check</button>
               {% if explainer.languages %}
@@ -111,6 +114,7 @@
         </div>
       </div>
       <p class="vn-phone-tip">Tip: turn your phone sideways for a bigger picture.</p>
+      </div>
     </div>
     <div class="nja-explanation"><strong class="nja-step">{{ first_cue.step }}</strong><p class="nja-note">{{ first_cue.note | escape }}</p></div>
     <p class="nja-takeaway"><i class="fa fa-lightbulb" aria-hidden="true"></i><span data-vn-takeaway>{{ first_scene.takeaway }}</span></p>

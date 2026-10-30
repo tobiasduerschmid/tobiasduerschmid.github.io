@@ -74,6 +74,18 @@ Escape returns. Both modes set `.is-fullscreen` on the video and send a
 `narration-fullscreenchange` event, which the full-screen layout and the
 control-visibility timer follow.
 
+On touch screens held upright, `bindFullscreenLayout` rotates the inner
+`.vn-surface` clockwise into landscape. It leaves the device's orientation
+unlocked, works in both native and viewport fullscreen, and stops rotating
+when the phone turns sideways. The **Landscape in full screen** checkbox in
+settings lets viewers use portrait instead; its choice lasts for this page
+visit. Layout classes use the measured surface dimensions (including visual
+viewport resizing), so a rotated phone gets the same layout as a sideways one.
+On short landscape screens, controls span the full width below the picture;
+scene navigation and captions scroll independently in the sidebar. Settings
+open in a bounded, scrollable panel without shrinking the picture. Knowledge
+checks keep a visible fullscreen exit for touch users.
+
 ## Storyboard
 
 A scene declares the panels it may show, and `show` lists the ones its cues

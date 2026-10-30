@@ -10,6 +10,54 @@
   // next cue, after everything the cue introduces has appeared.
   const REST_BEFORE_NEXT_CUE = 0.3;
 
+  // Rotate the inner surface, not the native fullscreen element (whose
+  // transform the browser resets). This also works without orientation-lock
+  // support on iPhone. The viewer can keep device orientation in settings.
+  function bindFullscreenLayout(root) {
+    const video = root.querySelector('[data-vn-video]');
+    const landscape = root.querySelector('.vn-landscape');
+    const touch = window.matchMedia('(any-pointer: coarse)');
+    let active = false;
+
+    function resize() {
+      const viewport = window.visualViewport;
+      const width = viewport ? viewport.width : window.innerWidth;
+      const height = viewport ? viewport.height : window.innerHeight;
+      const rotated = active && landscape.checked && touch.matches && height > width;
+      const surfaceWidth = rotated ? height : width;
+      const surfaceHeight = rotated ? width : height;
+      video.classList.toggle('is-rotated', rotated);
+      video.classList.toggle('is-wide', active && surfaceWidth / surfaceHeight >= 1.5);
+      video.classList.toggle('is-short', active && surfaceHeight <= 600);
+      if (!active) return;
+      video.style.setProperty('--vn-surface-width', `${surfaceWidth}px`);
+      video.style.setProperty('--vn-surface-height', `${surfaceHeight}px`);
+      video.style.setProperty('--vn-viewport-width', `${width}px`);
+      video.style.setProperty('--vn-viewport-height', `${height}px`);
+      video.style.setProperty('--vn-viewport-left', `${viewport ? viewport.offsetLeft : 0}px`);
+      video.style.setProperty('--vn-viewport-top', `${viewport ? viewport.offsetTop : 0}px`);
+    }
+
+    root.addEventListener('narration-fullscreenchange', event => {
+      active = event.detail.active;
+      resize();
+      const quiz = root.querySelector('.np-quiz');
+      // The quiz replaces the toolbar, so its heading is the return target
+      // when the full-screen-only exit button disappears.
+      if (!active && !quiz.hidden) quiz.querySelector('h3').focus({ preventScroll: true });
+    });
+    landscape.addEventListener('change', resize);
+    window.addEventListener('resize', resize);
+    touch.addEventListener('change', resize);
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', resize);
+      window.visualViewport.addEventListener('scroll', resize);
+    }
+    root.querySelector('.vn-check-exit').addEventListener('click', () => {
+      root.querySelector('[data-action="fullscreen"]').click();
+    });
+  }
+
   // The frame loads once the screen comes near the viewport, or when playback
   // starts (a page in a background tab may not report visibility). Until its
   // stage is ready (or if it fails), a poster describes the cue in words.
@@ -245,6 +293,7 @@
       onSeek: checks.close, canPlay: checks.isClosed, fullscreenTarget: root.querySelector('[data-vn-video]'),
     });
     checks.attach(player);
+    bindFullscreenLayout(root);
     bindVideoControls(root, player);
     linkParts(root, story, timing, player);
     if (languageSelect) {
