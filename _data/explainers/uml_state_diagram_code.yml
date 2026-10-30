@@ -1,0 +1,973 @@
+# Four-language code for the UML state machine diagram narration. Generated from
+# marked sources: each focus list names the 1-based lines a cue highlights, and
+# scroll names the line to bring into view when they do not all fit.
+python:
+  label: Python
+  filename: delivery_robot.py
+  note: The State enum lists the states; the robot records each behavior it performs in actions.
+  imports: |
+    from enum import Enum
+  blocks:
+    first:
+      source: |
+        class State(Enum):
+            DRIVING = "Driving"
+            WAITING = "Waiting"
+            UNLOCKED = "Unlocked"
+            RETURNING = "Returning"
+            DONE = "Done"  # the final state
+
+
+        class DeliveryRobot:
+            def __init__(self, pin: str) -> None:
+                self.state = State.DRIVING  # the initial arrow
+                self.pin = pin
+                self.actions: list[str] = []
+
+            def arrived(self) -> None:
+                if self.state is State.DRIVING:
+                    self.state = State.WAITING
+
+            def enter_pin(self, code: str) -> None:
+                if self.state is not State.WAITING:
+                    return  # no matching transition: ignored
+                if code == self.pin:  # [pin matches]
+                    self.state = State.UNLOCKED
+                else:  # [pin wrong] / beep()
+                    self.actions.append("beep")
+
+            def lid_closed(self) -> None:
+                if self.state is State.UNLOCKED:
+                    self.actions.append("play thanks")  # / playThanks()
+                    self.state = State.RETURNING
+      focus:
+        states:
+          - 1
+          - 2
+          - 3
+          - 4
+          - 5
+          - 6
+          - 11
+        enum:
+          - 1
+          - 2
+          - 3
+          - 4
+          - 5
+          - 6
+        unlocked:
+          - 4
+        final:
+          - 6
+        initial:
+          - 11
+        arrived:
+          - 15
+          - 16
+          - 17
+        pin_event:
+          - 19
+        ignore:
+          - 20
+          - 21
+        guard_effect:
+          - 22
+          - 29
+        guard:
+          - 22
+          - 23
+        two_guards:
+          - 22
+          - 23
+          - 24
+          - 25
+        effect:
+          - 27
+          - 28
+          - 29
+          - 30
+      scroll:
+        states: 1
+        guard_effect: 22
+        effect: 29
+    robot:
+      source: |
+        class State(Enum):
+            DRIVING = "Driving"
+            WAITING = "Waiting"
+            UNLOCKED = "Unlocked"
+            RETURNING = "Returning"
+            DONE = "Done"  # the final state
+
+
+        # The composite state Delivering groups three substates.
+        DELIVERING = {State.DRIVING, State.WAITING, State.UNLOCKED}
+
+
+        class DeliveryRobot:
+            def __init__(self, pin: str) -> None:
+                self.state = State.DRIVING  # the initial arrow
+                self.pin = pin
+                self.actions: list[str] = []
+
+            def _enter(self, state: State) -> None:
+                self.state = state
+                if state is State.WAITING:
+                    self.actions.append("notify customer")  # entry / notifyCustomer()
+                    self.actions.append("start 10-minute timer")  # for after(10 min)
+                elif state is State.UNLOCKED:
+                    self.actions.append("unlock lid")  # entry / unlockLid()
+                elif state is State.RETURNING:
+                    self.actions.append("drive to base")  # do / driveToBase()
+
+            def _exit(self) -> None:
+                if self.state is State.UNLOCKED:
+                    self.actions.append("lock lid")  # exit / lockLid()
+                elif self.state is State.WAITING:
+                    self.actions.append("cancel timer")  # leaving ends after(10 min)
+
+            def _transition(self, target: State, effect: str = "") -> None:
+                self._exit()
+                if effect:
+                    self.actions.append(effect)
+                self._enter(target)
+
+            def arrived(self) -> None:
+                if self.state is State.DRIVING:
+                    self._transition(State.WAITING)
+
+            def enter_pin(self, code: str) -> None:
+                if self.state is not State.WAITING:
+                    return  # no matching transition: ignored
+                if code == self.pin:  # [pin matches]
+                    self._transition(State.UNLOCKED)
+                else:  # internal transition: [pin wrong] / beep()
+                    self.actions.append("beep")
+
+            def extend_wait(self) -> None:  # self-transition
+                if self.state is State.WAITING:
+                    self._transition(State.WAITING)
+
+            def wait_timed_out(self) -> None:  # after(10 min)
+                if self.state is State.WAITING:
+                    self._transition(State.RETURNING)
+
+            def lid_closed(self) -> None:
+                if self.state is State.UNLOCKED:
+                    self._transition(State.RETURNING, effect="play thanks")
+
+            def battery_low(self) -> None:  # when(battery < 15%)
+                if self.state in DELIVERING:
+                    self._transition(State.RETURNING)
+
+            def base_reached(self) -> None:  # driveToBase() is done
+                if self.state is State.RETURNING:
+                    self._transition(State.DONE)
+      focus:
+        composite:
+          - 9
+          - 10
+          - 65
+          - 66
+          - 67
+        enter_exit:
+          - 19
+          - 20
+          - 21
+          - 22
+          - 23
+          - 24
+          - 25
+          - 26
+          - 27
+          - 29
+          - 30
+          - 31
+          - 32
+          - 33
+          - 35
+          - 36
+          - 37
+          - 38
+          - 39
+        waiting_entry:
+          - 21
+          - 22
+          - 23
+        self_effects:
+          - 21
+          - 22
+          - 23
+          - 32
+          - 33
+          - 35
+          - 36
+          - 37
+          - 38
+          - 39
+        extend:
+          - 21
+          - 22
+          - 23
+          - 53
+          - 54
+          - 55
+        lid_behaviors:
+          - 24
+          - 25
+          - 30
+          - 31
+        exit_lock:
+          - 29
+          - 30
+          - 31
+        order:
+          - 35
+          - 36
+          - 37
+          - 38
+          - 39
+          - 63
+        internal_self:
+          - 50
+          - 51
+          - 53
+          - 54
+          - 55
+        internal:
+          - 50
+          - 51
+      scroll:
+        enter_exit: 19
+        lid_behaviors: 24
+        self_effects: 32
+        order: 35
+        extend: 53
+java:
+  label: Java
+  filename: DeliveryRobotDemo.java
+  note: The State enum lists the states; the robot records each behavior it performs in actions().
+  imports: |
+    import java.util.ArrayList;
+    import java.util.EnumSet;
+    import java.util.List;
+    import java.util.Set;
+  blocks:
+    first:
+      source: |
+        enum State { DRIVING, WAITING, UNLOCKED, RETURNING, DONE }  // DONE: the final state
+
+        class DeliveryRobot {
+            private final String pin;
+            private final List<String> actions = new ArrayList<>();
+            private State state = State.DRIVING;  // the initial arrow
+
+            DeliveryRobot(String pin) {
+                this.pin = pin;
+            }
+
+            State state() { return state; }
+            List<String> actions() { return actions; }
+
+            void arrived() {
+                if (state == State.DRIVING) state = State.WAITING;
+            }
+
+            void enterPin(String code) {
+                if (state != State.WAITING) return;  // no matching transition: ignored
+                if (code.equals(pin)) {  // [pin matches]
+                    state = State.UNLOCKED;
+                } else {  // [pin wrong] / beep()
+                    actions.add("beep");
+                }
+            }
+
+            void lidClosed() {
+                if (state == State.UNLOCKED) {
+                    actions.add("play thanks");  // / playThanks()
+                    state = State.RETURNING;
+                }
+            }
+        }
+      focus:
+        states:
+          - 1
+          - 6
+        enum:
+          - 1
+        unlocked:
+          - 1
+        final:
+          - 1
+        initial:
+          - 6
+        arrived:
+          - 15
+          - 16
+          - 17
+        pin_event:
+          - 19
+        ignore:
+          - 20
+        guard_effect:
+          - 21
+          - 30
+        guard:
+          - 21
+          - 22
+        two_guards:
+          - 21
+          - 22
+          - 23
+          - 24
+          - 25
+        effect:
+          - 28
+          - 29
+          - 30
+          - 31
+          - 32
+          - 33
+      scroll:
+        guard_effect: 21
+        effect: 30
+    robot:
+      source: |
+        enum State { DRIVING, WAITING, UNLOCKED, RETURNING, DONE }  // DONE: the final state
+
+        class DeliveryRobot {
+            // The composite state Delivering groups three substates.
+            static final Set<State> DELIVERING = EnumSet.of(State.DRIVING, State.WAITING, State.UNLOCKED);
+
+            private final String pin;
+            private final List<String> actions = new ArrayList<>();
+            private State state = State.DRIVING;  // the initial arrow
+
+            DeliveryRobot(String pin) {
+                this.pin = pin;
+            }
+
+            State state() { return state; }
+            List<String> actions() { return actions; }
+
+            private void enter(State next) {
+                state = next;
+                if (next == State.WAITING) {
+                    actions.add("notify customer");  // entry / notifyCustomer()
+                    actions.add("start 10-minute timer");  // for after(10 min)
+                } else if (next == State.UNLOCKED) {
+                    actions.add("unlock lid");  // entry / unlockLid()
+                } else if (next == State.RETURNING) {
+                    actions.add("drive to base");  // do / driveToBase()
+                }
+            }
+
+            private void exit() {
+                if (state == State.UNLOCKED) actions.add("lock lid");  // exit / lockLid()
+                if (state == State.WAITING) actions.add("cancel timer");  // leaving ends after(10 min)
+            }
+
+            private void transition(State target, String effect) {
+                exit();
+                if (effect != null) actions.add(effect);
+                enter(target);
+            }
+
+            private void transition(State target) {
+                transition(target, null);
+            }
+
+            void arrived() {
+                if (state == State.DRIVING) transition(State.WAITING);
+            }
+
+            void enterPin(String code) {
+                if (state != State.WAITING) return;  // no matching transition: ignored
+                if (code.equals(pin)) {  // [pin matches]
+                    transition(State.UNLOCKED);
+                } else {  // internal transition: [pin wrong] / beep()
+                    actions.add("beep");
+                }
+            }
+
+            void extendWait() {  // self-transition
+                if (state == State.WAITING) transition(State.WAITING);
+            }
+
+            void waitTimedOut() {  // after(10 min)
+                if (state == State.WAITING) transition(State.RETURNING);
+            }
+
+            void lidClosed() {
+                if (state == State.UNLOCKED) transition(State.RETURNING, "play thanks");
+            }
+
+            void batteryLow() {  // when(battery < 15%)
+                if (DELIVERING.contains(state)) transition(State.RETURNING);
+            }
+
+            void baseReached() {  // driveToBase() is done
+                if (state == State.RETURNING) transition(State.DONE);
+            }
+        }
+      focus:
+        composite:
+          - 4
+          - 5
+          - 70
+          - 71
+          - 72
+        enter_exit:
+          - 18
+          - 19
+          - 20
+          - 21
+          - 22
+          - 23
+          - 24
+          - 25
+          - 26
+          - 27
+          - 28
+          - 30
+          - 31
+          - 32
+          - 33
+          - 35
+          - 36
+          - 37
+          - 38
+          - 39
+        waiting_entry:
+          - 20
+          - 21
+          - 22
+        self_effects:
+          - 20
+          - 21
+          - 22
+          - 32
+          - 35
+          - 36
+          - 37
+          - 38
+          - 39
+        extend:
+          - 20
+          - 21
+          - 22
+          - 58
+          - 59
+          - 60
+        lid_behaviors:
+          - 23
+          - 24
+          - 31
+        exit_lock:
+          - 30
+          - 31
+          - 33
+        order:
+          - 35
+          - 36
+          - 37
+          - 38
+          - 39
+          - 67
+        internal_self:
+          - 53
+          - 54
+          - 55
+          - 58
+          - 59
+          - 60
+        internal:
+          - 53
+          - 54
+          - 55
+      scroll:
+        enter_exit: 18
+        lid_behaviors: 23
+        self_effects: 32
+        order: 35
+        extend: 58
+cpp:
+  label: C++
+  filename: delivery_robot.cpp
+  note: The State enum class lists the states; the robot records each behavior it performs in actions().
+  imports: |
+    #include <set>
+    #include <string>
+    #include <utility>
+    #include <vector>
+  blocks:
+    first:
+      source: |
+        enum class State { Driving, Waiting, Unlocked, Returning, Done };  // Done: the final state
+
+        class DeliveryRobot {
+        public:
+            explicit DeliveryRobot(std::string pin) : pin_(std::move(pin)) {}
+
+            State state() const { return state_; }
+            const std::vector<std::string>& actions() const { return actions_; }
+
+            void arrived() {
+                if (state_ == State::Driving) state_ = State::Waiting;
+            }
+
+            void enterPin(const std::string& code) {
+                if (state_ != State::Waiting) return;  // no matching transition: ignored
+                if (code == pin_) {  // [pin matches]
+                    state_ = State::Unlocked;
+                } else {  // [pin wrong] / beep()
+                    actions_.push_back("beep");
+                }
+            }
+
+            void lidClosed() {
+                if (state_ == State::Unlocked) {
+                    actions_.push_back("play thanks");  // / playThanks()
+                    state_ = State::Returning;
+                }
+            }
+
+        private:
+            std::string pin_;
+            State state_ = State::Driving;  // the initial arrow
+            std::vector<std::string> actions_;
+        };
+      focus:
+        states:
+          - 1
+          - 32
+        enum:
+          - 1
+        unlocked:
+          - 1
+        final:
+          - 1
+        arrived:
+          - 10
+          - 11
+          - 12
+        pin_event:
+          - 14
+        ignore:
+          - 15
+        guard_effect:
+          - 16
+          - 25
+        guard:
+          - 16
+          - 17
+        two_guards:
+          - 16
+          - 17
+          - 18
+          - 19
+          - 20
+        effect:
+          - 23
+          - 24
+          - 25
+          - 26
+          - 27
+          - 28
+        initial:
+          - 32
+      scroll:
+        guard_effect: 16
+        effect: 25
+        states: 32
+    robot:
+      source: |
+        enum class State { Driving, Waiting, Unlocked, Returning, Done };  // Done: the final state
+
+        // The composite state Delivering groups three substates.
+        const std::set<State> kDelivering{State::Driving, State::Waiting, State::Unlocked};
+
+        class DeliveryRobot {
+        public:
+            explicit DeliveryRobot(std::string pin) : pin_(std::move(pin)) {}
+
+            State state() const { return state_; }
+            const std::vector<std::string>& actions() const { return actions_; }
+
+            void arrived() {
+                if (state_ == State::Driving) transition(State::Waiting);
+            }
+
+            void enterPin(const std::string& code) {
+                if (state_ != State::Waiting) return;  // no matching transition: ignored
+                if (code == pin_) {  // [pin matches]
+                    transition(State::Unlocked);
+                } else {  // internal transition: [pin wrong] / beep()
+                    actions_.push_back("beep");
+                }
+            }
+
+            void extendWait() {  // self-transition
+                if (state_ == State::Waiting) transition(State::Waiting);
+            }
+
+            void waitTimedOut() {  // after(10 min)
+                if (state_ == State::Waiting) transition(State::Returning);
+            }
+
+            void lidClosed() {
+                if (state_ == State::Unlocked) transition(State::Returning, "play thanks");
+            }
+
+            void batteryLow() {  // when(battery < 15%)
+                if (kDelivering.count(state_) > 0) transition(State::Returning);
+            }
+
+            void baseReached() {  // driveToBase() is done
+                if (state_ == State::Returning) transition(State::Done);
+            }
+
+        private:
+            void enter(State next) {
+                state_ = next;
+                if (next == State::Waiting) {
+                    actions_.push_back("notify customer");  // entry / notifyCustomer()
+                    actions_.push_back("start 10-minute timer");  // for after(10 min)
+                } else if (next == State::Unlocked) {
+                    actions_.push_back("unlock lid");  // entry / unlockLid()
+                } else if (next == State::Returning) {
+                    actions_.push_back("drive to base");  // do / driveToBase()
+                }
+            }
+
+            void exit() {
+                if (state_ == State::Unlocked) actions_.push_back("lock lid");  // exit / lockLid()
+                if (state_ == State::Waiting) actions_.push_back("cancel timer");  // leaving ends after(10 min)
+            }
+
+            void transition(State target, const std::string& effect = "") {
+                exit();
+                if (!effect.empty()) actions_.push_back(effect);
+                enter(target);
+            }
+
+            std::string pin_;
+            State state_ = State::Driving;  // the initial arrow
+            std::vector<std::string> actions_;
+        };
+      focus:
+        composite:
+          - 3
+          - 4
+          - 38
+          - 39
+          - 40
+        internal_self:
+          - 21
+          - 22
+          - 23
+          - 26
+          - 27
+          - 28
+        internal:
+          - 21
+          - 22
+          - 23
+        extend:
+          - 26
+          - 27
+          - 28
+          - 49
+          - 50
+          - 51
+        order:
+          - 35
+          - 64
+          - 65
+          - 66
+          - 67
+          - 68
+        enter_exit:
+          - 47
+          - 48
+          - 49
+          - 50
+          - 51
+          - 52
+          - 53
+          - 54
+          - 55
+          - 56
+          - 57
+          - 59
+          - 60
+          - 61
+          - 62
+          - 64
+          - 65
+          - 66
+          - 67
+          - 68
+        waiting_entry:
+          - 49
+          - 50
+          - 51
+        self_effects:
+          - 49
+          - 50
+          - 51
+          - 61
+          - 64
+          - 65
+          - 66
+          - 67
+          - 68
+        lid_behaviors:
+          - 52
+          - 53
+          - 60
+        exit_lock:
+          - 59
+          - 60
+          - 62
+      scroll:
+        extend: 26
+        enter_exit: 47
+        lid_behaviors: 52
+        self_effects: 61
+        order: 64
+typescript:
+  label: TypeScript
+  filename: delivery-robot.ts
+  note: A union of string literals lists the states; the robot records each behavior it performs in actions.
+  imports: ''
+  blocks:
+    first:
+      source: |
+        type State = "Driving" | "Waiting" | "Unlocked" | "Returning" | "Done";  // Done: the final state
+
+        class DeliveryRobot {
+          readonly actions: string[] = [];
+          state: State = "Driving";  // the initial arrow
+          private readonly pin: string;
+
+          constructor(pin: string) {
+            this.pin = pin;
+          }
+
+          arrived(): void {
+            if (this.state === "Driving") this.state = "Waiting";
+          }
+
+          enterPin(code: string): void {
+            if (this.state !== "Waiting") return;  // no matching transition: ignored
+            if (code === this.pin) {  // [pin matches]
+              this.state = "Unlocked";
+            } else {  // [pin wrong] / beep()
+              this.actions.push("beep");
+            }
+          }
+
+          lidClosed(): void {
+            if (this.state === "Unlocked") {
+              this.actions.push("play thanks");  // / playThanks()
+              this.state = "Returning";
+            }
+          }
+        }
+      focus:
+        states:
+          - 1
+          - 5
+        enum:
+          - 1
+        unlocked:
+          - 1
+        final:
+          - 1
+        initial:
+          - 5
+        arrived:
+          - 12
+          - 13
+          - 14
+        pin_event:
+          - 16
+        ignore:
+          - 17
+        guard_effect:
+          - 18
+          - 27
+        guard:
+          - 18
+          - 19
+        two_guards:
+          - 18
+          - 19
+          - 20
+          - 21
+          - 22
+        effect:
+          - 25
+          - 26
+          - 27
+          - 28
+          - 29
+          - 30
+      scroll:
+        guard_effect: 18
+        effect: 27
+    robot:
+      source: |
+        type State = "Driving" | "Waiting" | "Unlocked" | "Returning" | "Done";  // Done: the final state
+
+        // The composite state Delivering groups three substates.
+        const DELIVERING: ReadonlySet<State> = new Set<State>(["Driving", "Waiting", "Unlocked"]);
+
+        class DeliveryRobot {
+          readonly actions: string[] = [];
+          state: State = "Driving";  // the initial arrow
+          private readonly pin: string;
+
+          constructor(pin: string) {
+            this.pin = pin;
+          }
+
+          private enter(next: State): void {
+            this.state = next;
+            if (next === "Waiting") {
+              this.actions.push("notify customer");  // entry / notifyCustomer()
+              this.actions.push("start 10-minute timer");  // for after(10 min)
+            } else if (next === "Unlocked") {
+              this.actions.push("unlock lid");  // entry / unlockLid()
+            } else if (next === "Returning") {
+              this.actions.push("drive to base");  // do / driveToBase()
+            }
+          }
+
+          private exit(): void {
+            if (this.state === "Unlocked") this.actions.push("lock lid");  // exit / lockLid()
+            if (this.state === "Waiting") this.actions.push("cancel timer");  // leaving ends after(10 min)
+          }
+
+          private transition(target: State, effect?: string): void {
+            this.exit();
+            if (effect) this.actions.push(effect);
+            this.enter(target);
+          }
+
+          arrived(): void {
+            if (this.state === "Driving") this.transition("Waiting");
+          }
+
+          enterPin(code: string): void {
+            if (this.state !== "Waiting") return;  // no matching transition: ignored
+            if (code === this.pin) {  // [pin matches]
+              this.transition("Unlocked");
+            } else {  // internal transition: [pin wrong] / beep()
+              this.actions.push("beep");
+            }
+          }
+
+          extendWait(): void {  // self-transition
+            if (this.state === "Waiting") this.transition("Waiting");
+          }
+
+          waitTimedOut(): void {  // after(10 min)
+            if (this.state === "Waiting") this.transition("Returning");
+          }
+
+          lidClosed(): void {
+            if (this.state === "Unlocked") this.transition("Returning", "play thanks");
+          }
+
+          batteryLow(): void {  // when(battery < 15%)
+            if (DELIVERING.has(this.state)) this.transition("Returning");
+          }
+
+          baseReached(): void {  // driveToBase() is done
+            if (this.state === "Returning") this.transition("Done");
+          }
+        }
+      focus:
+        composite:
+          - 3
+          - 4
+          - 63
+          - 64
+          - 65
+        enter_exit:
+          - 15
+          - 16
+          - 17
+          - 18
+          - 19
+          - 20
+          - 21
+          - 22
+          - 23
+          - 24
+          - 25
+          - 27
+          - 28
+          - 29
+          - 30
+          - 32
+          - 33
+          - 34
+          - 35
+          - 36
+        waiting_entry:
+          - 17
+          - 18
+          - 19
+        self_effects:
+          - 17
+          - 18
+          - 19
+          - 29
+          - 32
+          - 33
+          - 34
+          - 35
+          - 36
+        extend:
+          - 17
+          - 18
+          - 19
+          - 51
+          - 52
+          - 53
+        lid_behaviors:
+          - 20
+          - 21
+          - 28
+        exit_lock:
+          - 27
+          - 28
+          - 30
+        order:
+          - 32
+          - 33
+          - 34
+          - 35
+          - 36
+          - 60
+        internal_self:
+          - 46
+          - 47
+          - 48
+          - 51
+          - 52
+          - 53
+        internal:
+          - 46
+          - 47
+          - 48
+      scroll:
+        enter_exit: 15
+        lid_behaviors: 20
+        self_effects: 29
+        order: 32
+        extend: 51

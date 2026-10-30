@@ -5,7 +5,8 @@ language-selectable code, ArchUML class, state, sequence, and CRC diagrams,
 topic illustrations, and a knowledge check at the end of every section. A
 lesson is data plus a few topic includes; the player, reader, and print views
 are generic. The UML class-diagram lesson (`docs/uml-class-diagram-narration.md`),
-the UML sequence-diagram lesson (`docs/uml-sequence-diagram-narration.md`), and
+the UML sequence-diagram lesson (`docs/uml-sequence-diagram-narration.md`),
+the UML state machine diagram lesson (`docs/uml-state-diagram-narration.md`), and
 the UML component diagram lesson (`docs/uml-component-diagram-narration.md`)
 use the same player for notation rather than a pattern: each script declares
 its own `lesson.parts`, which the player, reader, and print views show instead
@@ -47,6 +48,12 @@ package’s `resources`, `scenes.<id>.state`, and `scenes.<id>.cues.<cue-id>`.
 - `scene.code`, `scene.diagram`, and `scene.cards` choose what a scene shows.
   Any key in the topic's `visuals` map, such as `ui: true`, adds that include;
   the include receives the current cue and reads its own cue fields.
+- `cue.focus` names a line list in the code block's `focus` map; the player
+  marks those lines and scrolls to the first. A block's optional `scroll` map
+  (`scroll: {<focus>: <line>}`) names the line to show instead when the marked
+  lines do not fit the code window. The window shows about ten lines, and
+  fewer at laptop widths, where the code column beside the diagram is about
+  50 characters wide and long lines wrap.
 - Diagrams accept `type` (`class` by default, `state`, `sequence`, `crc`,
   `component`, or a non-UML ArchUML type such as `freeform` or `folder-tree`).
   `cue.diagram_focus` hatches one class, interface, state, lifeline, or

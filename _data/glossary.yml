@@ -348,6 +348,11 @@
   description: The SOLID principle that software entities should be open for extension but closed for modification, so new variants can be added without editing stable existing code.
   related: [SOLID, OOP]
 
+- term: OMG
+  definition: Object Management Group
+  description: The standards consortium that publishes the UML specification. A citation such as "OMG, UML 2.5.1, §14.2.3.4" points to a section of that specification.
+  related: [UML]
+
 - term: OpenCL
   definition: Open Computing Language
   description: An open standard for parallel computation across devices from different vendors. Programs can launch work-items that run a kernel on different portions of the data.
@@ -376,6 +381,11 @@
   definition: Process Identifier
   description: A numeric identifier assigned by an operating system to a running process.
   related: [ID, OS]
+
+- term: PIN
+  definition: Personal Identification Number
+  description: A short secret number that a person types to prove they may do something, such as unlocking a delivery robot's lid with a code from an app.
+  related: [ID]
 
 - term: PlusCal
   definition: PlusCal algorithm language

@@ -1,0 +1,135 @@
+# Handout key points for the UML state machine diagram narration, keyed by <scene id>-<cue id>.
+# Telegraphic notes, not narration: at most 16 words a bullet, only **bold** markup.
+intro-snack:
+  - "Running example: a campus delivery robot bringing a late-night snack"
+intro-same_pin:
+  - PIN typed while driving → nothing happens
+  - Same PIN at your door → lid unlocks
+  - "**State**: what has happened so far decides the reaction"
+intro-whose_states:
+  - "**UML** (Unified Modeling Language): standard notation for software diagrams"
+  - "First ask: the states of what? Here, one robot during one delivery"
+  - "A recording shows one run; a **state machine diagram** shows every run"
+  - "Four parts: states, transitions, inside a state, composite states"
+states-situations:
+  - "**State**: a situation in an object's life while some condition holds"
+  - "Robot: Driving, Waiting, Unlocked, Returning; drawn as rounded rectangles"
+  - Exactly one state at a time (no nesting yet)
+states-naming:
+  - "Name states for situations, not actions"
+  - "Naming test: \"the robot is …\" + name. Unlocked fits; open lid fails"
+states-initial:
+  - "**Initial pseudostate**: small black dot; not a real state, never a resting place"
+  - "One arrow to the first state (Driving), with no event and no condition"
+states-final:
+  - "**Final state**: bullseye; a real state"
+  - Reaching it → this delivery's state machine is complete; robot can take the next order
+  - Optional, e.g. a thermostat never finishes
+states-code_states:
+  - "States in code: an enum (a fixed set of values)"
+  - One field holds the current state; starts at Driving
+events-arrows:
+  - "**Transition**: arrow from source state to target state"
+  - Fires when its named event occurs, e.g. arrived takes Driving → Waiting
+events-label_parts:
+  - "Label: **trigger** [**guard**] / **effect**, every part optional"
+  - Trigger names the event; events may carry data, e.g. enterPin(code)
+events-predict_early_pin:
+  - "**Predict:** robot is Driving, you type your PIN. Which arrow fires? What happens?"
+events-ignored:
+  - No arrow for the event in the current state → event **discarded**
+  - A missing arrow is a decision; the robot keeps driving
+  - "Code: event method checks the state, returns early"
+guards-guard:
+  - "**Guard**: Boolean condition in square brackets, e.g. [pin matches]"
+  - Checked once, when its event arrives; false → no transition
+guards-two_guards:
+  - Same trigger, opposite guards, e.g. [pin matches] and [pin wrong]
+  - Guards on one trigger must never both be true → at most one fires
+guards-effect:
+  - "**Effect**: after the slash; runs while the transition fires"
+  - "lidClosed / playThanks(): thank-you sound on the way out"
+  - Belongs to one arrow; other paths into Returning skip it
+guards-code_guards:
+  - Guard → condition of an if inside the event method
+  - Effect → a call just before the state changes
+time_change-way_out:
+  - Without a PIN, nothing leaves Waiting → robot waits forever
+  - Give every state a way out
+time_change-after:
+  - "**Time event**: after(10 min)"
+  - Clock starts on entering Waiting; leaving first → it never fires
+time_change-when:
+  - "**Change event**: when(battery < 15%)"
+  - Occurs the moment the condition turns from false to true
+  - A guard alone never watches; checked only when its event arrives
+entry_exit-lid_rules:
+  - State-owned behavior, not tied to any single arrow
+  - "**entry / unlockLid()**: on every way in"
+  - "**exit / lockLid()**: on every way out; listed below a line inside the state"
+entry_exit-why_exit:
+  - Exit as effects → one copy per outgoing arrow
+  - One forgotten copy → robot drives off with the lid open
+  - Exit behavior also covers ways out added later
+entry_exit-order:
+  - "Fixed order: source **exit** → transition **effect** → target **entry**"
+  - "lidClosed: lockLid() → playThanks() → enter Returning"
+entry_exit-code_entry:
+  - "Waiting: entry / notifyCustomer() → phone buzzes on every arrival"
+  - "Code: enter and exit helpers; one transition method runs exit → effect → enter"
+do_activity-do:
+  - "**Do activity**: ongoing work, e.g. do / driveToBase() in Returning"
+  - Starts after entry; runs while the state is active
+  - Leaving the state early aborts it
+do_activity-completion:
+  - "**Completion transition**: no trigger"
+  - Fires once the state's own work ends, e.g. driveToBase() completes
+  - Most unlabeled arrows work this way
+internal_self-predict_wrong_pin:
+  - "**Predict:** wrong-PIN arrow from Waiting back to Waiting. Phone buzzes again? Timeout restarts?"
+internal_self-self_transition:
+  - "**Self-transition**: arrow back to the same state"
+  - Exit → effect → entry, so the notification repeats and the timeout restarts
+  - Abuse case → wrong codes every nine minutes keep the robot waiting forever
+internal_self-internal:
+  - "**Internal transition**: listed inside the state; never leaves it"
+  - "enterPin(code) [pin wrong] / beep(): no exit, no entry; the timeout keeps counting"
+internal_self-extend:
+  - "extendWait: a self-transition on purpose"
+  - Re-entering Waiting → new notification and a fresh 10 minutes
+internal_self-code_internal:
+  - "Internal: run the effect only; the state field stays"
+  - "Self: transition(Waiting) runs exit and entry again → timer restarts"
+review-trace:
+  - "Trace: Driving → Waiting (buzz) → wrong PIN (beep) → Unlocked → Returning → final state"
+review-checklist:
+  - "Reviewer checks: every state **reachable** from the initial pseudostate"
+  - Every state has a **way out**, or is final
+  - Guards on one trigger **never overlap**; states named for **situations**
+composite-repeat:
+  - Low battery possible in Driving, Waiting, and Unlocked
+  - Three identical arrows, one more per new state → states belong together
+composite-group:
+  - "**Composite state**: contains **substates** in a nested diagram"
+  - Arrow to its border → enters through the inner black dot → Driving
+  - "While delivering: in Delivering plus one substate at once"
+composite-border:
+  - "One transition from the border: when(battery < 15%)"
+  - Applies to every substate; replaces three arrows
+composite-predict_lid:
+  - "**Predict:** low battery with the lid open; border arrow. Does the lid lock?"
+composite-inside_out:
+  - "Exits run from the inside out: Unlocked's exit (lockLid) → leave Delivering → enter Returning"
+  - Exit behaviors hold on every path, even border arrows
+transfer-predict_cancel:
+  - "**Plan:** cancel allowed while driving or waiting, never once the lid is open"
+  - Cancel refunds and returns. Which transitions? Why not one border arrow?
+transfer-cancel_answer:
+  - "cancel / refund() from Driving and from Waiting to Returning"
+  - Border arrow → also leaves Unlocked → breaks the rule
+  - In Unlocked, cancel has no arrow → ignored
+summary-recap:
+  - "**States**: rounded rectangles named for situations; black dot to bullseye"
+  - "**Transitions**: trigger [guard] / effect"
+  - "**Inside a state**: entry, exit, do, internal transitions"
+  - "**Composite states**: substates under one border"

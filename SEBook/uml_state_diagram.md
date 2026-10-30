@@ -1,14 +1,18 @@
 ---
 title: "UML State Machine Diagrams"
 layout: sebook
+static_uml: true
 ---
 
+{% include narration.html topic="uml_state_diagram" %}
+
 <div class="uml-class-diagram-container" data-uml-type="state" data-uml-spec='@startuml
+layout compact
 [*] --> Created
 Created --> Paid : payment_received
 Paid --> Shipped : item_dispatched
 Shipped --> Delivered : delivery_confirmed
-Created --> Cancelled : customer_cancels / payment_timeout
+Created --> Cancelled : customer_cancels, payment_timeout
 Paid --> Refunded : return_initiated
 Delivered --> [*]
 Cancelled --> [*]
@@ -25,7 +29,7 @@ callout right of edge 7 end : Final state: this region has completed
 ## 🎯 Learning Objectives
 *By the end of this chapter, you will be able to:*
 1. **Identify** the core components of a UML State Machine diagram (states, transitions, events, guards, and effects).
-2. **Translate** a behavioral description of a system into a syntactically correct ASCII state machine diagram.
+2. **Translate** a behavioral description of a system into a syntactically correct UML state machine diagram.
 3. **Evaluate** when to use state machines versus other behavioral diagrams (like sequence or activity diagrams) in the software design process.
 
 ---
@@ -181,7 +185,7 @@ callout left of text "loadError / showErrorMessage()" : Transition label: event,
 
 **Reading the diagram:**
 
-1. **`Buffering` as a transitional state:** When a track is requested, the player cannot play immediately — it must buffer first. The guard-free transition `bufferReady` fires automatically when enough data has loaded.
+1. **`Buffering` as a transitional state:** When a track is requested, the player cannot play immediately — it must buffer first. The `bufferReady` event arrives once enough data has loaded and triggers the transition to `Playing`; until it (or `loadError`) arrives, the player stays in `Buffering`.
 2. **Error handling via effect:** If loading fails, `loadError` fires and the effect `/ showErrorMessage()` executes before returning to `Idle`. One transition handles the rollback and the user feedback.
 3. **`skipTrack` resets the buffer:** Skipping while playing triggers `/ clearBuffer()` as a transition effect, moving back to `Buffering` for the new track. Making side effects explicit in the diagram (rather than hiding them in code comments) is a key UML best practice.
 4. **No final state:** A music player runs indefinitely — there is no lifecycle end for this object. Omitting the final state is the correct choice here, not an oversight.

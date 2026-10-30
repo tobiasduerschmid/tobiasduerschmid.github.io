@@ -1,0 +1,5 @@
+/* UML state machine diagram narration. The diagram is the picture each cue
+   teaches and the code is the translation, so the diagram comes first: on the
+   left beside the code, and above it once the two columns stack. Layout only;
+   colors, dark mode, and print come from the shared narrated-lesson styles. */
+.uml_state_diagram-animation .np-code-with-diagram .np-diagram-column { order: -1; }

@@ -275,3 +275,60 @@ test('saved composite positions carry unsaved descendants while respecting their
     await browser.close();
   }
 });
+
+test('internal transitions are listed inside their state; description rows stay unlisted', () => {
+  const model = parsers().state('state Waiting {\n entry / notifyCustomer()\n enterPin(code) [pin wrong] / beep()\n}\nWaiting : locate / shareLocation()\nRed : write a tiny failing test\nWaiting --> Unlocked : enterPin(code) [pin matches]');
+  const byName = Object.fromEntries(model.states.map(state => [state.name, state]));
+  assert.deepEqual(Array.from(byName.Waiting.internalTransitions), ['enterPin(code) [pin wrong] / beep()', 'locate / shareLocation()']);
+  assert.equal(byName.Waiting.entryAction, 'notifyCustomer()');
+  assert.equal(byName.Red, undefined, 'a description row without an effect slash keeps its existing meaning');
+  assert.equal(model.transitions.length, 1);
+});
+
+test('a top-level highlight restyles a nested state without moving it out of its composite', () => {
+  const model = parsers().state('state Delivering {\n [*] --> Driving\n Driving --> Unlocked : arrived\n}\nDelivering --> Returning : low\nstate Unlocked #fff0ac hatched');
+  const unlocked = model.states.find(state => state.name === 'Unlocked');
+  assert.equal(unlocked.parent, 'Delivering');
+  assert.ok(unlocked.highlight || unlocked.texture, 'the highlight still applies');
+});
+
+// Distance from a rendered label to the nearest point of a rendered route.
+function nearestRouteDistance(label, route) {
+  let best = Infinity;
+  const length = route.getTotalLength();
+  for (let at = 0; at <= length; at += 3) {
+    const point = route.getPointAtLength(at);
+    const dx = Math.max(label.x - point.x, 0, point.x - (label.x + label.width));
+    const dy = Math.max(label.y - point.y, 0, point.y - (label.y + label.height));
+    best = Math.min(best, Math.hypot(dx, dy));
+  }
+  return best;
+}
+
+test('a self-transition moves to a free face when another route passes its default spot', async () => {
+  const browser = await chromium.launch(chromiumLaunchOptions());
+  try {
+    const page = await browser.newPage();
+    await page.setContent('<!doctype html><html lang="en"><title>Self-transition regression</title><body><div id="diagram"></div></body></html>');
+    await page.addScriptTag({ path: bundlePath });
+    await page.addScriptTag({ content: `window.nearestRouteDistance = ${nearestRouteDistance}` });
+    const result = await page.evaluate(() => {
+      const host = document.getElementById('diagram');
+      window.UMLStateDiagram.render(host, 'layout compact\n[*] --> Driving\nDriving --> Waiting : arrived\nWaiting --> Unlocked : enterPin(code) [pin matches]\nWaiting --> Waiting : extendWait\nUnlocked --> Returning : lidClosed / playThanks()\nWaiting --> Returning : after(10 min)\nDriving --> Returning : when(battery < 15%)\nReturning --> [*]\nWaiting : entry / notifyCustomer()\nWaiting : enterPin(code) [pin wrong] / beep()\nUnlocked : entry / unlockLid()\nUnlocked : exit / lockLid()\nReturning : do / driveToBase()');
+      const svg = host.querySelector('svg');
+      const label = Array.from(svg.querySelectorAll('text[data-layout-kind="edge-label"]')).find(node => node.textContent === 'extendWait');
+      const loopId = label.getAttribute('data-layout-route-id');
+      const others = Array.from(svg.querySelectorAll('[data-layout-route-id]:not([data-layout-route-decorative])'))
+        .filter(path => path.getAttribute('data-layout-route-id') !== loopId);
+      const box = label.getBBox();
+      return {
+        nearestOther: Math.min(...others.map(path => window.nearestRouteDistance(box, path))),
+        own: window.nearestRouteDistance(box, svg.querySelector(`[data-layout-route-id="${loopId}"]:not([data-layout-route-decorative])`)),
+      };
+    });
+    assert.ok(result.own <= 30, 'the label stays beside its loop');
+    assert.ok(result.nearestOther > result.own, `another route (${result.nearestOther}px) must not be closer to the label than its loop (${result.own}px)`);
+  } finally {
+    await browser.close();
+  }
+});

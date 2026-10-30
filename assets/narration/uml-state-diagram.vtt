@@ -1,0 +1,161 @@
+WEBVTT
+
+intro-1
+00:00:00.000 --> 00:00:13.008
+It is 11 at night, you are studying for a midterm, and you order a snack. A small delivery robot rolls out of the dining hall with your food locked inside and drives across campus to your dorm.
+
+intro-2
+00:00:13.008 --> 00:00:30.377
+Halfway there, you type your PIN into the app. Nothing happens. A few minutes later, the robot waits outside your dorm, you type the same PIN, and the lid unlocks. Same input, different reaction: what the robot does depends on what has happened so far. That is its state.
+
+intro-3
+00:00:30.377 --> 00:00:57.315
+A UML state machine diagram captures exactly this. UML, the Unified Modeling Language, is a standard notation for software diagrams. First decide whose states you draw: here, one robot during one delivery. A video shows one delivery; the diagram shows all of them, built in four parts: states, transitions, what happens inside a state, and composite states.
+
+states-1
+00:00:57.315 --> 00:01:16.071
+A state is a situation in the life of an object during which some condition holds. During a delivery, the robot is Driving, Waiting at your door, Unlocked, or Returning to its base. Each state is a rounded rectangle with its name, and the robot is in exactly one of them at a time.
+
+states-2
+00:01:16.071 --> 00:01:34.469
+Name each state for a situation, not an action. A quick test: say "the robot is," then the name. The robot is Unlocked works. The robot is open lid does not, because opening the lid is something the robot does, and actions get their own places in the diagram.
+
+states-3
+00:01:34.469 --> 00:01:52.217
+Where does a delivery start? The small black dot is the initial pseudostate. It is not a real state, and the robot never stays there. Its single arrow points to the first state, Driving, carries no event and no condition, and is taken the moment the delivery begins.
+
+states-4
+00:01:52.217 --> 00:02:10.387
+Where does it end? The bullseye is the final state, and unlike the black dot, it is a real state. When the robot reaches it, this delivery's state machine is complete, and the robot can start the next delivery. Not every diagram needs one: a dorm thermostat never finishes.
+
+states-5
+00:02:10.387 --> 00:02:29.305
+In code, the states become a fixed set of values, such as an enum, and one field remembers the current state. The initial arrow becomes the field's starting value, Driving. Pick your code language above; the narration is the same in every language.
+
+events-1
+00:02:29.305 --> 00:02:45.523
+Arrows are transitions. A transition moves the robot from its source state to its target state when the event named on the arrow occurs. When the robot reaches your door, the event arrived occurs, and the robot moves from Driving to Waiting.
+
+events-2
+00:02:45.523 --> 00:03:02.707
+A transition's label has up to three parts: a trigger, a guard in square brackets, and an effect after a slash. Every part is optional. So far we only have triggers, which name events. An event can carry data: enterPin carries the code you typed.
+
+events-3
+00:03:02.707 --> 00:03:21.121
+Now predict. The robot is still Driving, and you type your PIN early. Look at the arrows leaving Driving. Which transition fires, and what does the robot do next? Pause the narration if you want more time to think.
+
+events-4
+00:03:21.121 --> 00:03:40.177
+None fires. No arrow leaves Driving with enterPin as its trigger, so the event is discarded, and the robot keeps driving. A missing arrow is a decision: in that state, the event is ignored. In code, the method checks the state and returns early.
+
+guards-1
+00:03:40.177 --> 00:03:57.984
+At your door, the PIN should unlock the lid only if the code is right. That condition is a guard, written in square brackets: enterPin, then pin matches in brackets. The guard is checked once, when the event arrives, and the transition fires only if the guard is true.
+
+guards-2
+00:03:57.984 --> 00:04:15.237
+A wrong code needs its own rule with the opposite guard, pin wrong, and a beep. When transitions share a trigger, write guards that can never both be true, so at most one fires. Where the wrong-code rule belongs in the diagram is a puzzle we solve in part three.
+
+guards-3
+00:04:15.237 --> 00:04:32.872
+After the slash comes the effect: behavior that runs while the transition fires. When you close the lid, the robot plays a thank-you sound on its way out: lidClosed, slash, playThanks. An effect belongs to its own arrow; other ways into Returning skip it.
+
+guards-4
+00:04:32.872 --> 00:04:47.244
+In code, the guard is the condition of an if statement inside the event's method, and the effect is a call made just before the state changes. Each marked line maps to one part of a label.
+
+time_change-1
+00:04:47.244 --> 00:05:02.912
+What if you fall asleep and never come down? Nothing leaves Waiting unless someone types a PIN, so the robot would wait forever. Give every state a way out. Here, time is the way out: after 10 minutes, the robot gives up and returns.
+
+time_change-2
+00:05:02.912 --> 00:05:17.312
+That trigger is a time event: after, then a duration in parentheses. Its clock starts when the robot enters Waiting. If the robot leaves Waiting sooner, because your PIN was right, the time event never fires.
+
+time_change-3
+00:05:17.312 --> 00:05:36.834
+The battery drains while the robot drives. A change event watches a condition: when, then battery below 15 percent. It occurs the moment that condition turns from false to true. A guard cannot do this job: it is checked only when its own event arrives.
+
+entry_exit-1
+00:05:36.834 --> 00:05:54.413
+Some behavior belongs to a state, not to one arrow. Whenever the robot enters Unlocked, the lid must unlock. Whenever it leaves, the lid must lock again. Write both inside the state, below a line: entry, slash, unlockLid, and exit, slash, lockLid.
+
+entry_exit-2
+00:05:54.413 --> 00:06:10.803
+Why not put lockLid on the outgoing arrow as an effect? Each new way out would need its own copy, and one forgotten copy sends the robot down the street with the lid open. An exit behavior runs on every way out, including the ones you add later.
+
+entry_exit-3
+00:06:10.803 --> 00:06:26.500
+When a transition fires, the order is fixed: first the source state's exit behavior, then the transition's effect, then the target state's entry behavior. When you close the lid: lock the lid, play the thank-you sound, then enter Returning.
+
+entry_exit-4
+00:06:26.500 --> 00:06:47.790
+Waiting gets an entry behavior too: entry, slash, notifyCustomer, so your phone buzzes however the robot gets there. In code, put entry and exit behavior in two helper methods, and route every transition through one method that calls exit, then the effect, then enter.
+
+do_activity-1
+00:06:47.790 --> 00:07:07.709
+Returning is not a single moment: the robot drives back for several minutes. Ongoing work like that is a do activity: do, slash, driveToBase. It starts after the entry behavior and runs while the state is active. If a transition left the state first, the do activity would be aborted.
+
+do_activity-2
+00:07:07.709 --> 00:07:26.773
+Now look at the arrow from Returning to the final state. It has no trigger, so it is a completion transition: it fires when the state finishes its own work, here when driveToBase is done, because the robot is back. Most unlabeled arrows you meet work this way.
+
+internal_self-1
+00:07:26.773 --> 00:07:46.396
+Back to the wrong PIN. Suppose we draw its arrow from Waiting straight back to Waiting. Predict what happens when someone types a wrong code: does your phone buzz again, and what happens to the 10-minute timeout? Pause if you want more time.
+
+internal_self-2
+00:07:46.396 --> 00:08:05.437
+An arrow back to the same state is a self-transition. The robot really leaves Waiting and enters it again: exit, then the effect, then entry, so your phone buzzes again, and the 10 minutes start over. A prankster who types a wrong code every nine minutes keeps the robot waiting forever.
+
+internal_self-3
+00:08:05.437 --> 00:08:23.389
+We want the beep without leaving. That is an internal transition, written inside the state as trigger, guard, and effect: enterPin, pin wrong in brackets, slash, beep. The state is never exited, so neither exit nor entry runs, and the 10 minutes keep counting.
+
+internal_self-4
+00:08:23.389 --> 00:08:40.196
+Sometimes the restart is exactly what you want. If you tap "I need more time," the event extendWait triggers a self-transition on purpose: the robot enters Waiting again, your phone confirms with a new notification, and the 10 minutes start over.
+
+internal_self-5
+00:08:40.196 --> 00:08:59.182
+In code, the difference is one call. The wrong-code branch only beeps and leaves the state alone. extendWait goes through the transition method with Waiting as its target, so exit and entry run again, the notification is sent, and the timer restarts.
+
+review-1
+00:08:59.182 --> 00:09:17.830
+Trace one delivery through the whole diagram so far. Start Driving. The robot arrives: Waiting, and your phone buzzes. A wrong PIN beeps. The right PIN unlocks the lid. You close it: lock, thanks, Returning. The drive to base finishes, and the machine is complete.
+
+review-2
+00:09:17.830 --> 00:09:36.797
+Before you hand in a diagram, check four things. Can every state be reached from the initial pseudostate? Does every state have a way out, or is it final? Do transitions with the same trigger have guards that never overlap? And is every state named for a situation?
+
+composite-1
+00:09:36.797 --> 00:09:54.935
+So far, only Driving reacts to a low battery. But the battery can also run low while the robot waits or while the lid is open. That takes three arrows with the same label, plus one more for every state we add later. Repeated arrows signal states that belong together.
+
+composite-2
+00:09:54.935 --> 00:10:15.196
+A composite state contains other states, its substates, in a nested diagram with its own black dot. An arrow ending on the border of the composite state Delivering enters through that inner dot, so every delivery starts in Driving. While delivering, the robot is in Delivering and in exactly one substate.
+
+composite-3
+00:10:15.196 --> 00:10:31.606
+Now one transition leaves the border of Delivering: when the battery is below 15 percent. It applies to every substate. Whichever one is active, the robot leaves it, leaves Delivering, and heads to Returning. One arrow replaces three.
+
+composite-4
+00:10:31.606 --> 00:10:48.958
+Predict: the battery drops below 15 percent while the lid is open. The arrow starts at the border, not at Unlocked. Does the lid lock before the robot drives away? Pause if you want more time.
+
+composite-5
+00:10:48.958 --> 00:11:08.156
+Yes. Leaving a composite state exits from the inside out: first Unlocked's exit behavior locks the lid, then Delivering is exited, and only then does Returning begin. Exit behaviors keep their promise on every path, even on arrows from a border.
+
+transfer-1
+00:11:08.156 --> 00:11:31.292
+Your turn. New rule: you may cancel while the robot is driving or waiting, but not once the lid is open. Canceling refunds the order and sends the robot back. Which transitions do you add, and why not one arrow from the border of Delivering? Pause and sketch it.
+
+transfer-2
+00:11:31.292 --> 00:11:50.831
+Add two transitions labeled cancel, slash, refund: one from Driving and one from Waiting, both to Returning. A border transition would also leave Unlocked, which the rule forbids. In Unlocked, cancel has no arrow, so the event is simply ignored there.
+
+summary-1
+00:11:50.831 --> 00:12:18.147
+To finish, recall the notation. States are rounded rectangles named for situations, from the black dot to the bullseye. A transition reads trigger, guard in brackets, slash, effect. Inside a state go entry, exit, do, and internal transitions. A composite state groups substates under one border. The summary quiz tries each idea on a new example.

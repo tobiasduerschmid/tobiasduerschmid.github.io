@@ -1,0 +1,585 @@
+# Edit speech and teaching text here. Diagrams and visual state live in
+# ../narration_visuals/uml_state_diagram.json.
+version: 1
+id: uml_state_diagram
+kind: pattern
+title: UML state machine diagrams with a delivery robot
+lesson:
+  name: State machine diagrams
+  summary: >-
+    Learn to read and draw UML state machine diagrams: <strong>states, transitions, what happens
+    inside a state, and composite states</strong>, with a campus delivery robot.
+  prerequisites: Assumes you can read if statements and methods in one programming language. No UML experience needed.
+  chapter: /SEBook/uml_state_diagram.html
+  views: /SEBook/uml_state_diagram
+  parts: [States, Transitions, Inside a state, Composite states]
+  parts_label: Parts of a state machine diagram
+  outline_labels:
+    states: States, start, end
+    events: Events
+    guards: Guards and effects
+    time_change: Time and change
+    entry_exit: Entry and exit
+    do_activity: Do activities
+    internal_self: Internal or self
+    composite: Grouping states
+  complete_examples: >-
+    The robot records each behavior it performs in a list of actions, so the four languages can be
+    compared directly. Timers, the battery monitor, and navigation live outside the class: they call
+    the matching event method when the time is up, the battery runs low, or the robot reaches its
+    base. Every language produces the same actions for the same events.
+speech:
+  voice: af_heart
+  speed: 0.95
+  pronunciations:
+    UML: U M L
+    PIN: pin
+    enterPin: enter pin
+    lidClosed: lid closed
+    playThanks: play thanks
+    unlockLid: unlock lid
+    lockLid: lock lid
+    notifyCustomer: notify customer
+    driveToBase: drive to base
+    extendWait: extend wait
+    pseudostate: sudo state
+    enum: E num
+media:
+  audio: /assets/audio/uml-state-diagram.mp3
+  captions: /assets/narration/uml-state-diagram.vtt
+  script: /assets/narration/uml-state-diagram.txt
+scenes:
+  - id: intro
+    label: A robot that remembers
+    title: Same input, different reaction
+    purpose: See why a delivery robot's reaction depends on its state.
+    takeaway: A state machine diagram shows every state of one object and every event that moves it between states.
+    cues:
+      - id: snack
+        say: >-
+          It is 11 at night, you are studying for a midterm, and you order a snack. A small delivery
+          robot rolls out of the dining hall with your food locked inside and drives across campus
+          to your dorm.
+        step: One robot, one delivery
+        note: The robot carries your food across campus with its lid locked.
+        visual: >-
+          Three cards describe the delivery. The first card reads: Driving, the lid is locked and the
+          robot is on its way.
+      - id: same_pin
+        say: >-
+          Halfway there, you type your PIN into the app. Nothing happens. A few minutes later, the
+          robot waits outside your dorm, you type the same PIN, and the lid unlocks. Same input,
+          different reaction: what the robot does depends on what has happened so far. That is its
+          state.
+        step: Same input, different reaction
+        note: PIN while driving → nothing · same PIN while waiting → the lid unlocks
+        visual: >-
+          The second card reads: the same PIN does nothing while the robot drives, and unlocks the lid
+          once it waits at your door.
+      - id: whose_states
+        say: >-
+          A UML state machine diagram captures exactly this. UML, the Unified Modeling Language, is a
+          standard notation for software diagrams. First decide whose states you draw: here, one robot
+          during one delivery. A video shows one delivery; the diagram shows all of them, built in four
+          parts: states, transitions, what happens inside a state, and composite states.
+        source: >-
+          OMG, UML 2.5.1, §14.1 StateMachines; Clements et al., Documenting Software Architectures,
+          2nd ed., §8.2–8.3
+        step: The states of what?
+        note: One robot during one delivery · every possible run, not one recording
+        visual: >-
+          The third card reads: the states of what? One robot during one delivery. The diagram covers
+          every delivery, not one recording.
+        pause_after: 2.5
+  - id: states
+    part: States
+    label: "States: where the robot can be"
+    title: States, a start, and an end
+    purpose: Name the situations the robot can be in during a delivery.
+    takeaway: >-
+      A state is a situation in an object's life; the black dot marks where it starts and the
+      bullseye where it ends.
+    cues:
+      - id: situations
+        say: >-
+          A state is a situation in the life of an object during which some condition holds. During a
+          delivery, the robot is Driving, Waiting at your door, Unlocked, or Returning to its base.
+          Each state is a rounded rectangle with its name, and the robot is in exactly one of them at a
+          time.
+        source: "OMG, UML 2.5.1, §14.2.3.4 State; Rumbaugh et al., UML Reference Manual, 2nd ed.: state"
+        step: Four states
+        note: Driving · Waiting · Unlocked · Returning, one at a time
+        visual: >-
+          A diagram shows four rounded rectangles in a row: Driving, Waiting, Unlocked, and Returning.
+          There are no arrows yet. The code marks the State enum, one value per state.
+      - id: naming
+        say: >-
+          Name each state for a situation, not an action. A quick test: say "the robot is," then the
+          name. The robot is Unlocked works. The robot is open lid does not, because opening the lid is
+          something the robot does, and actions get their own places in the diagram.
+        step: Name the situation
+        note: 'Test the name in "the robot is …": Unlocked works, open lid does not'
+        visual: >-
+          The four states remain. Unlocked is highlighted. The code marks the Unlocked value.
+      - id: initial
+        say: >-
+          Where does a delivery start? The small black dot is the initial pseudostate. It is not a real
+          state, and the robot never stays there. Its single arrow points to the first state, Driving,
+          carries no event and no condition, and is taken the moment the delivery begins.
+        source: "OMG, UML 2.5.1, §14.2.3.7 Pseudostate kinds: initial"
+        step: The initial pseudostate
+        note: Black dot → first state · its arrow has no event or condition · never a resting place
+        visual: >-
+          A small black dot now points to Driving. The code marks the line that starts the state field at
+          Driving.
+      - id: final
+        say: >-
+          Where does it end? The bullseye is the final state, and unlike the black dot, it is a real
+          state. When the robot reaches it, this delivery's state machine is complete, and the robot
+          can start the next delivery. Not every diagram needs one: a dorm thermostat never finishes.
+        source: "OMG, UML 2.5.1, §14.2.3.7 FinalState; Rumbaugh et al., UML Reference Manual, 2nd ed.: final state"
+        step: The final state
+        note: Bullseye = this machine is complete · a real state · optional for objects that never finish
+        visual: >-
+          Returning now has an arrow to a bullseye, the final state. The code marks the Done value, the
+          final state.
+      - id: code_states
+        say: >-
+          In code, the states become a fixed set of values, such as an enum, and one field remembers
+          the current state. The initial arrow becomes the field's starting value, Driving. Pick your code
+          language above; the narration is the same in every language.
+        step: States in code
+        note: enum of states · one field holds the current state · it starts at Driving
+        visual: >-
+          The code marks the declaration of the four states and the final state Done, and the state field
+          that starts at Driving. The diagram with the black dot and the bullseye remains beside it.
+        pause_after: 2.5
+  - id: events
+    part: Transitions
+    label: "Transitions: events move the robot"
+    title: Events trigger transitions
+    purpose: Read a transition's trigger, and predict what an event without a matching arrow does.
+    takeaway: >-
+      A transition fires when its trigger's event occurs in its source state; an event without a
+      matching transition is discarded.
+    cues:
+      - id: arrows
+        say: >-
+          Arrows are transitions. A transition moves the robot from its source state to its target
+          state when the event named on the arrow occurs. When the robot reaches your door, the event
+          arrived occurs, and the robot moves from Driving to Waiting.
+        source: "OMG, UML 2.5.1, §14.2.3.8 Transition"
+        step: A transition
+        note: Source state → target state when the named event occurs
+        visual: >-
+          Arrows connect the states in a chain: arrived from Driving to Waiting, enterPin(code) from
+          Waiting to Unlocked, and lidClosed from Unlocked to Returning. The code marks the arrived
+          method, which moves the robot from Driving to Waiting.
+      - id: label_parts
+        say: >-
+          A transition's label has up to three parts: a trigger, a guard in square brackets, and an
+          effect after a slash. Every part is optional. So far we only have triggers, which name
+          events. An event can carry data: enterPin carries the code you typed.
+        source: "OMG, UML 2.5.1, §14.2.4.8 Transition notation"
+        step: "trigger [guard] / effect"
+        note: Label = trigger [guard] / effect · all optional · an event may carry data
+        visual: >-
+          The chain of transitions remains. Each label so far is only a trigger, such as enterPin(code).
+          The code marks the enterPin method, whose code parameter is the event's data.
+      - id: predict_early_pin
+        say: >-
+          Now predict. The robot is still Driving, and you type your PIN early. Look at the arrows
+          leaving Driving. Which transition fires, and what does the robot do next? Pause the
+          narration if you want more time to think.
+        step: "Predict: a PIN while driving"
+        note: "Predict: which arrow leaving Driving has the trigger enterPin?"
+        visual: >-
+          Driving is highlighted. Its only outgoing arrow is labeled arrived. The code marks the first
+          line of the enterPin method.
+        prediction: true
+        pause_after: 5
+      - id: ignored
+        say: >-
+          None fires. No arrow leaves Driving with enterPin as its trigger, so the event is discarded,
+          and the robot keeps driving. A missing arrow is a decision: in that state, the event is
+          ignored. In code, the method checks the state and returns early.
+        source: >-
+          OMG, UML 2.5.1, §14.2.3.9.1 Event processing; Rumbaugh et al., UML Reference Manual, 2nd ed.,
+          ch. 7
+        step: No matching arrow, so the event is discarded
+        note: No arrow for this event in this state → event discarded · in code, return early
+        visual: >-
+          Driving stays highlighted. Beside the diagram, the enterPin method returns early unless the
+          robot is Waiting.
+        pause_after: 2.5
+  - id: guards
+    part: Transitions
+    label: "Transitions: guards and effects"
+    title: Guards decide, effects act
+    purpose: Choose between transitions with guards, and attach behavior to a transition with an effect.
+    takeaway: A guard is checked when its event arrives; an effect runs while its transition fires.
+    cues:
+      - id: guard
+        say: >-
+          At your door, the PIN should unlock the lid only if the code is right. That condition is a
+          guard, written in square brackets: enterPin, then pin matches in brackets. The guard is
+          checked once, when the event arrives, and the transition fires only if the guard is true.
+        source: "OMG, UML 2.5.1, §14.2.3.8 Transition guards; Rumbaugh et al., UML Reference Manual, 2nd ed.: guard condition"
+        step: A guard
+        note: "[pin matches] is checked when enterPin arrives · false → no transition"
+        visual: >-
+          The arrow from Waiting to Unlocked now reads enterPin(code) [pin matches]. The code marks the if
+          statement that compares the code with the PIN.
+      - id: two_guards
+        say: >-
+          A wrong code needs its own rule with the opposite guard, pin wrong, and a beep. When
+          transitions share a trigger, write guards that can never both be true, so at most one fires.
+          Where the wrong-code rule belongs in the diagram is a puzzle we solve in part three.
+        step: Guards that never overlap
+        note: "[pin matches] and [pin wrong]: at most one is true · the wrong-code rule is placed later"
+        visual: >-
+          The diagram is unchanged. The wrong-code rule is described in words, not drawn yet. The code
+          marks both branches: a matching PIN unlocks, and a wrong one beeps.
+      - id: effect
+        say: >-
+          After the slash comes the effect: behavior that runs while the transition fires. When you
+          close the lid, the robot plays a thank-you sound on its way out: lidClosed, slash,
+          playThanks. An effect belongs to its own arrow; other ways into Returning skip it.
+        source: "OMG, UML 2.5.1, §14.2.4.8 Transition notation"
+        step: An effect
+        note: "/ playThanks() runs only when this transition fires"
+        visual: >-
+          The arrow from Unlocked to Returning now reads lidClosed / playThanks(). The code marks the
+          lidClosed method, which plays the thank-you sound before changing the state.
+      - id: code_guards
+        say: >-
+          In code, the guard is the condition of an if statement inside the event's method, and the
+          effect is a call made just before the state changes. Each marked line maps to one part of a
+          label.
+        step: Guards and effects in code
+        note: Guard → if condition · effect → a call just before the state changes
+        visual: >-
+          The code marks the pin comparison in enterPin and the thank-you call in lidClosed. The
+          diagram with the guard and the effect remains.
+        pause_after: 2.5
+  - id: time_change
+    part: Transitions
+    label: "Transitions: time and change events"
+    title: Waiting forever, or not
+    purpose: Leave a state after a timeout, or when a condition becomes true.
+    takeaway: after(...) fires when time has passed in a state; when(...) fires the moment its condition becomes true.
+    cues:
+      - id: way_out
+        say: >-
+          What if you fall asleep and never come down? Nothing leaves Waiting unless someone types a
+          PIN, so the robot would wait forever. Give every state a way out. Here, time is the way out:
+          after 10 minutes, the robot gives up and returns.
+        source: "Clements et al., Documenting Software Architectures, 2nd ed., §8.3.2"
+        step: Every state needs a way out
+        note: No PIN ever arrives → after(10 min) → Returning
+        visual: Waiting is highlighted. A new arrow from Waiting to Returning reads after(10 min).
+      - id: after
+        say: >-
+          That trigger is a time event: after, then a duration in parentheses. Its clock starts when the
+          robot enters Waiting. If the robot leaves Waiting sooner, because your PIN was right, the
+          time event never fires.
+        source: "OMG, UML 2.5.1, §13.3.3 TimeEvent; Rumbaugh et al., UML Reference Manual, 2nd ed.: time event"
+        step: "after(10 min)"
+        note: Time event · the clock starts on entering Waiting · leaving first means it never fires
+        visual: Waiting stays highlighted, with its after(10 min) arrow to Returning.
+      - id: when
+        say: >-
+          The battery drains while the robot drives. A change event watches a condition: when, then
+          battery below 15 percent. It occurs the moment that condition turns from false to true. A
+          guard cannot do this job: it is checked only when its own event arrives.
+        source: "OMG, UML 2.5.1, §13.3.3 ChangeEvent; Rumbaugh et al., UML Reference Manual, 2nd ed.: change event"
+        step: "when(battery < 15%)"
+        note: Change event fires when its condition becomes true · a guard alone never watches
+        visual: A new arrow from Driving to Returning reads when(battery < 15%).
+        pause_after: 2.5
+  - id: entry_exit
+    part: Inside a state
+    label: "Inside a state: entry and exit"
+    title: Behavior on every way in and out
+    purpose: Attach behavior to entering and leaving a state, whichever transition is taken.
+    takeaway: Entry runs on every way in, exit on every way out; a transition runs exit, then effect, then entry.
+    cues:
+      - id: lid_rules
+        say: >-
+          Some behavior belongs to a state, not to one arrow. Whenever the robot enters Unlocked, the
+          lid must unlock. Whenever it leaves, the lid must lock again. Write both inside the state,
+          below a line: entry, slash, unlockLid, and exit, slash, lockLid.
+        source: "OMG, UML 2.5.1, §14.2.3.4 State entry and exit Behaviors"
+        step: "entry / and exit /"
+        note: "entry / unlockLid() on every way in · exit / lockLid() on every way out"
+        visual: >-
+          A part of the diagram shows Waiting, Unlocked, and Returning. Unlocked has a second compartment
+          with entry / unlockLid() and exit / lockLid(). The code marks the lines that unlock the lid on
+          entering Unlocked and lock it on leaving.
+      - id: why_exit
+        say: >-
+          Why not put lockLid on the outgoing arrow as an effect? Each new way out would need its own
+          copy, and one forgotten copy sends the robot down the street with the lid open. An exit
+          behavior runs on every way out, including the ones you add later.
+        step: Why an exit behavior?
+        note: An effect belongs to one arrow · exit belongs to the state → no forgotten path
+        visual: >-
+          Unlocked is highlighted, showing exit / lockLid(). The code marks the exit helper, which locks
+          the lid.
+      - id: order
+        say: >-
+          When a transition fires, the order is fixed: first the source state's exit behavior, then the
+          transition's effect, then the target state's entry behavior. When you close the lid: lock the
+          lid, play the thank-you sound, then enter Returning.
+        source: "OMG, UML 2.5.1, §14.2.3.9.6 Transition execution sequence"
+        step: Exit, then effect, then entry
+        note: "lidClosed: lockLid() → playThanks() → enter Returning"
+        visual: >-
+          The same part of the diagram. The arrow lidClosed / playThanks() leads from Unlocked to
+          Returning. The code marks the transition helper, which calls exit, then the effect, then enter,
+          and the lidClosed call that uses it.
+      - id: code_entry
+        say: >-
+          Waiting gets an entry behavior too: entry, slash, notifyCustomer, so your phone buzzes however
+          the robot gets there. In code, put entry and exit behavior in two helper methods, and route
+          every transition through one method that calls exit, then the effect, then enter.
+        step: Entry and exit in code
+        note: "transition() = exit() → effect → enter(target) · one place per behavior"
+        visual: >-
+          Waiting now shows entry / notifyCustomer(). The code marks the enter, exit, and transition
+          helper methods.
+        pause_after: 2.5
+  - id: do_activity
+    part: Inside a state
+    label: "Inside a state: ongoing work"
+    title: Do activities and completion
+    purpose: Model work that takes time inside a state, and move on when it finishes.
+    takeaway: A do activity runs while its state is active; a transition without a trigger fires when the state's work is done.
+    cues:
+      - id: do
+        say: >-
+          Returning is not a single moment: the robot drives back for several minutes. Ongoing work
+          like that is a do activity: do, slash, driveToBase. It starts after the entry behavior and
+          runs while the state is active. If a transition left the state first, the do activity would
+          be aborted.
+        source: "OMG, UML 2.5.1, §14.2.3.4 State doActivity Behavior"
+        step: "do / driveToBase()"
+        note: Runs while in Returning · starts after entry · aborted if the state is left early
+        visual: Returning is highlighted and shows do / driveToBase(). An unlabeled arrow leads from Returning to the final state.
+      - id: completion
+        say: >-
+          Now look at the arrow from Returning to the final state. It has no trigger, so it is a
+          completion transition: it fires when the state finishes its own work, here when driveToBase
+          is done, because the robot is back. Most unlabeled arrows you meet work this way.
+        source: >-
+          OMG, UML 2.5.1, §14.2.3.8 Completion Transitions; Rumbaugh et al., UML Reference Manual,
+          2nd ed.: completion transition
+        step: Completion transitions
+        note: No trigger → fires when the state's work completes
+        visual: The unlabeled arrow from Returning to the final state is the focus. Returning stays highlighted.
+        pause_after: 2.5
+  - id: internal_self
+    part: Inside a state
+    label: "Inside a state: internal or self?"
+    title: Stay in a state, or leave and come back?
+    purpose: Decide whether an event should leave its state and enter it again.
+    takeaway: A self-transition exits and re-enters its state; an internal transition handles an event without leaving.
+    cues:
+      - id: predict_wrong_pin
+        say: >-
+          Back to the wrong PIN. Suppose we draw its arrow from Waiting straight back to Waiting.
+          Predict what happens when someone types a wrong code: does your phone buzz again, and what
+          happens to the 10-minute timeout? Pause if you want more time.
+        step: "Predict: an arrow back to Waiting"
+        note: "Predict: with an arrow back to Waiting, does entry run again? Does the timeout restart?"
+        visual: >-
+          A part of the diagram shows Waiting with entry / notifyCustomer(), an arrow from Waiting back to
+          itself labeled enterPin(code) [pin wrong] / beep(), and arrows to Unlocked and to Returning
+          after(10 min). The code marks what entering Waiting does: notify the customer and start the
+          10-minute timer.
+        prediction: true
+        pause_after: 5
+      - id: self_transition
+        say: >-
+          An arrow back to the same state is a self-transition. The robot really leaves Waiting and
+          enters it again: exit, then the effect, then entry, so your phone buzzes again, and the 10
+          minutes start over. A prankster who types a wrong code every nine minutes keeps the robot
+          waiting forever.
+        source: >-
+          OMG, UML 2.5.1, §14.2.3.8 Transition kinds; Rumbaugh et al., UML Reference Manual, 2nd ed.:
+          self-transition
+        step: A self-transition leaves and re-enters
+        note: Exit → effect → entry · the phone buzzes again · the timeout restarts
+        visual: >-
+          The arrow from Waiting back to itself remains. Waiting is highlighted. The code marks the
+          transition helper and the Waiting lines it runs again.
+      - id: internal
+        say: >-
+          We want the beep without leaving. That is an internal transition, written inside the state as
+          trigger, guard, and effect: enterPin, pin wrong in brackets, slash, beep. The state is never
+          exited, so neither exit nor entry runs, and the 10 minutes keep counting.
+        source: >-
+          OMG, UML 2.5.1, §14.2.3.8 Transition kinds: internal; Rumbaugh et al., UML Reference Manual,
+          2nd ed.: internal transition
+        step: An internal transition stays
+        note: Written inside the state · no exit, no entry · the timeout keeps counting
+        visual: >-
+          The arrow from Waiting back to itself is gone. Waiting now lists enterPin(code) [pin wrong] /
+          beep() below its entry behavior. The code marks the wrong-PIN branch, which only beeps.
+      - id: extend
+        say: >-
+          Sometimes the restart is exactly what you want. If you tap "I need more time," the event
+          extendWait triggers a self-transition on purpose: the robot enters Waiting again, your phone
+          confirms with a new notification, and the 10 minutes start over.
+        step: A self-transition on purpose
+        note: extendWait → enter Waiting again · new notification · a fresh 10 minutes
+        visual: >-
+          A self-transition arrow labeled extendWait now leads from Waiting back to Waiting. The code
+          marks the extendWait method and the Waiting entry lines it runs again.
+      - id: code_internal
+        say: >-
+          In code, the difference is one call. The wrong-code branch only beeps and leaves the state
+          alone. extendWait goes through the transition method with Waiting as its target, so exit
+          and entry run again, the notification is sent, and the timer restarts.
+        step: Internal versus self in code
+        note: "Internal: the effect only · self: transition(Waiting) runs exit and entry"
+        visual: The code marks the wrong-code branch of enterPin and the extendWait method. The diagram remains.
+        pause_after: 2.5
+  - id: review
+    label: Read the whole diagram
+    title: Trace one delivery, then check the diagram
+    purpose: Trace a delivery through the whole diagram and check it the way a reviewer would.
+    takeaway: Trace paths to read a state machine; check reachability, ways out, guards, and names to review one.
+    cues:
+      - id: trace
+        say: >-
+          Trace one delivery through the whole diagram so far. Start Driving. The robot arrives:
+          Waiting, and your phone buzzes. A wrong PIN beeps. The right PIN unlocks the lid. You close it: lock,
+          thanks, Returning. The drive to base finishes, and the machine is complete.
+        step: Trace a delivery
+        note: Driving → Waiting (beep) → Unlocked → Returning → final state
+        visual: >-
+          The whole diagram: Driving, Waiting with its entry behavior and internal transition, Unlocked
+          with entry and exit behaviors, and Returning with its do activity, connected by arrived,
+          enterPin(code) [pin matches], extendWait, after(10 min), lidClosed / playThanks(), and
+          when(battery < 15%).
+      - id: checklist
+        say: >-
+          Before you hand in a diagram, check four things. Can every state be reached from the initial
+          pseudostate? Does every state have a way out, or is it final? Do transitions with the same
+          trigger have guards that never overlap? And is every state named for a situation?
+        source: "Clements et al., Documenting Software Architectures, 2nd ed., §8.3.2"
+        step: Four checks
+        note: Reachable · a way out · guards that never overlap · situation names
+        visual: The whole diagram remains.
+        pause_after: 2.5
+  - id: composite
+    part: Composite states
+    label: Composite states
+    title: Group states under one border
+    purpose: Replace repeated transitions with one transition from a composite state.
+    takeaway: >-
+      A composite state groups substates; a transition from its border leaves whichever substate is
+      active, from the inside out.
+    cues:
+      - id: repeat
+        say: >-
+          So far, only Driving reacts to a low battery. But the battery can also run low while the
+          robot waits or while the lid is open. That takes three arrows with the same label, plus one
+          more for every state we add later. Repeated arrows signal states that belong together.
+        step: Three identical arrows
+        note: Same trigger and target from three states → a sign to group them
+        visual: >-
+          A part of the diagram shows three arrows labeled when(battery < 15%), from Driving, Waiting,
+          and Unlocked to Returning.
+      - id: group
+        say: >-
+          A composite state contains other states, its substates, in a nested diagram with its own
+          black dot. An arrow ending on the border of the composite state Delivering enters through
+          that inner dot, so every delivery starts in Driving. While delivering, the robot is in
+          Delivering and in exactly one substate.
+        source: >-
+          OMG, UML 2.5.1, §14.2.3.4 State entry (default entry); Rumbaugh et al., UML Reference Manual,
+          2nd ed.: composite state
+        step: A composite state
+        note: Arrow to the border → inner black dot → Driving · in Delivering and one substate
+        visual: >-
+          A rounded rectangle named Delivering contains Driving, Waiting, and Unlocked, with its own
+          black dot pointing to Driving. The outer black dot points to the border of Delivering.
+      - id: border
+        say: >-
+          Now one transition leaves the border of Delivering: when the battery is below 15 percent. It
+          applies to every substate. Whichever one is active, the robot leaves it, leaves Delivering,
+          and heads to Returning. One arrow replaces three.
+        source: "OMG, UML 2.5.1, §14.2.3.8 Transition: group transitions"
+        step: One transition from the border
+        note: A border transition applies to every substate · one arrow replaces three
+        visual: One arrow labeled when(battery < 15%) leads from the border of Delivering to Returning.
+      - id: predict_lid
+        say: >-
+          Predict: the battery drops below 15 percent while the lid is open. The arrow starts at the
+          border, not at Unlocked. Does the lid lock before the robot drives away? Pause if you want
+          more time.
+        step: "Predict: low battery, lid open"
+        note: "Predict: the arrow starts at the border. Does exit / lockLid() still run?"
+        visual: Unlocked is highlighted inside Delivering, showing exit / lockLid().
+        prediction: true
+        pause_after: 5
+      - id: inside_out
+        say: >-
+          Yes. Leaving a composite state exits from the inside out: first Unlocked's exit behavior
+          locks the lid, then Delivering is exited, and only then does Returning begin. Exit
+          behaviors keep their promise on every path, even on arrows from a border.
+        source: "OMG, UML 2.5.1, §14.2.3.9.6 Transition execution sequence; Rumbaugh et al., UML Reference Manual, 2nd ed., ch. 7"
+        step: Exit from the inside out
+        note: "Unlocked exit (lockLid) → leave Delivering → enter Returning"
+        visual: Unlocked stays highlighted. The border arrow when(battery < 15%) leads to Returning.
+        pause_after: 2.5
+  - id: transfer
+    label: "Apply it: cancel a delivery"
+    title: Add a cancel rule
+    purpose: Extend the diagram for a new rule before seeing an answer.
+    takeaway: >-
+      Draw a border transition only when every substate should react; otherwise draw transitions from
+      the states that should.
+    cues:
+      - id: predict_cancel
+        say: >-
+          Your turn. New rule: you may cancel while the robot is driving or waiting, but not once the
+          lid is open. Canceling refunds the order and sends the robot back. Which transitions do you
+          add, and why not one arrow from the border of Delivering? Pause and sketch it.
+        step: Plan the change
+        note: "Plan: cancel / refund() is allowed in Driving and Waiting, but not in Unlocked"
+        visual: >-
+          The composite state Delivering with Driving, Waiting, and Unlocked, and its low-battery arrow
+          to Returning. Three cards state the rule: cancel while driving or waiting, never once the lid
+          is open, and a cancel refunds and returns. No answer is shown.
+        prediction: true
+        pause_after: 6
+      - id: cancel_answer
+        say: >-
+          Add two transitions labeled cancel, slash, refund: one from Driving and one from Waiting,
+          both to Returning. A border transition would also leave Unlocked, which the rule forbids.
+          In Unlocked, cancel has no arrow, so the event is simply ignored there.
+        step: Two arrows, not a border arrow
+        note: "cancel / refund() from Driving and from Waiting · Unlocked ignores cancel"
+        visual: >-
+          A part of the diagram shows two new arrows labeled cancel / refund(), from Driving and from
+          Waiting to Returning. Unlocked has no cancel arrow.
+        pause_after: 2.5
+  - id: summary
+    label: "Summary: the whole notation"
+    title: States, transitions, inside, composite
+    purpose: Recall every element before the summary quiz.
+    takeaway: States, transitions, what happens inside a state, and composite states make up a state machine diagram.
+    cues:
+      - id: recap
+        say: >-
+          To finish, recall the notation. States are rounded rectangles named for situations, from the
+          black dot to the bullseye. A transition reads trigger, guard in brackets, slash, effect.
+          Inside a state go entry, exit, do, and internal transitions. A composite state groups
+          substates under one border. The summary quiz tries each idea on a new example.
+        step: The whole notation
+        note: States → Transitions → Inside a state → Composite states
+        visual: Four cards summarize states, transitions, what happens inside a state, and composite states.
+        pause_after: 3

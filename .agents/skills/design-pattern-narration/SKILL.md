@@ -159,12 +159,17 @@ Dependencies. The UML sequence-diagram lesson (`docs/uml-sequence-diagram-narrat
 Lifelines, Messages, Activations, and Fragments: it teaches on one concrete run with named
 objects, then generalizes to one diagram with loop, alt, and opt, and checks in its node test
 that SEBook's Java, TypeScript, and C++ analyzers infer that diagram from its code. The UML
-component diagram lesson (`docs/uml-component-diagram-narration.md`) uses Components,
-Interfaces, Connectors, and Reading, and has no code: with no `languages` in the visual package,
-the player shows no language selector and the reader no complete examples. Start from
-code the audience can read, give each cue that needs a different
-teaching callout its own diagram variant, and keep every diagram consistent with the cited UML
-references and the SEBook chapter's rules.
+state machine diagram lesson (`docs/uml-state-diagram-narration.md`)
+uses States, Transitions, Inside a state, and Composite states. The UML component diagram
+lesson (`docs/uml-component-diagram-narration.md`) uses Components, Interfaces, Connectors, and
+Reading, and has no code: with no `languages` in the visual package, the player shows no
+language selector and the reader no complete examples. Start from code the audience
+can read, give each cue that needs a different teaching callout its own diagram variant, and
+keep every diagram consistent with the cited UML references and the SEBook chapter's rules.
+Show each cue only the fragment of the diagram it teaches and say in the caption what is left
+out. Check every rendered label against its own arrow: ArchUML places a label far from its
+arrow when several labeled arrows crowd into one state from inside a composite, so draw such
+diagrams so the crowding never arises.
 
 Each scene has a `purpose` (shown as "Our task"), a `title`, a `takeaway`, and cues. Keep every
 diagram within about 9 symbols; split rather than crowd.
@@ -242,6 +247,18 @@ misspelled `diagram_focus` silently highlights nothing.
 - Write idiomatic code in each language, not a transliteration (Java `static final INSTANCE`
   fields, C++ function-local statics, Python module constants, TypeScript module consts).
 - Keep each block short enough to read on the stage without scrolling far.
+- **The code follows the narration.** In a scene that shows code, give every cue a `focus` on
+  the lines that implement the behavior it discusses, not only the cue that talks about code. A
+  prediction cue marks what is at stake, never the answer. The player scrolls to the first
+  marked line; when a focus spans more lines than the window shows (about ten: a 24em window of
+  2.15em lines), add a block-level `scroll` map entry naming the most interesting line for that
+  focus (`scroll: {extend: 53}`), and the player shows that line instead. In the two-column
+  layout at laptop widths (1440–1536 px) the code column holds only about 50 characters, so
+  lines with trailing comments wrap and fewer lines fit: check the fit at 1440×900 as well as
+  at the default 1280×720. Before naming a key line, mark only the lines the cue names, and
+  order code so lines discussed together sit together. Line order differs by language (C++
+  often puts private helpers last), so check each language's first marked line. Describe the
+  marked code in the cue's `visual` text too.
 - A data file such as `<topic>_ui.yml` describes the expected behavior (for State, a table of
   reactions by state and request). The node test runs both designs in all four languages against
   it, and the topic illustrations render from the same data.

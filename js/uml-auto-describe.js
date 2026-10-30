@@ -334,42 +334,82 @@
 
   // ---------- state machine diagrams ----------
 
-  function describeStateDiagram(spec) {
-    var states = [];
+  // States in order, their composite parents, the behaviors listed inside each
+  // state (entry, exit, do, and internal transitions), and the transitions.
+  // Layout metadata, positions, and highlight colors carry no meaning here.
+  function parseStateSpec(spec) {
+    var model = { states: [], parents: Object.create(null), behaviors: Object.create(null), transitions: [] };
     var seen = Object.create(null);
-    var transitions = [];
+    var stack = [];
+    var text = String(spec || '').replace(/^[ \t]*@layout\b[\s\S]*?^[ \t]*@endlayout[ \t]*$/gim, '');
 
-    function record(name) {
-      if (seen[name] || name === '[*]') return;
+    function record(name, parent) {
+      if (name === '[*]' || seen[name]) return;
       seen[name] = true;
-      states.push(name);
+      model.states.push(name);
+      if (parent) model.parents[name] = parent;
+    }
+    function behavior(name, row) {
+      record(name, stack[stack.length - 1]);
+      (model.behaviors[name] = model.behaviors[name] || []).push(row);
+    }
+    function describeRow(row) {
+      return /^(entry|exit|do)\s*\//i.test(row) ? row : 'internal transition ' + row;
     }
 
-    spec.split('\n').forEach(function (raw) {
-      var line = raw.trim();
-      if (!line) return;
+    text.split('\n').forEach(function (raw) {
+      var line = raw.replace(/\s+@pos\([^)]*\)/i, '').trim();
+      var parent = stack[stack.length - 1];
       var m;
-      if ((m = line.match(/^state\s+(\w+)/))) {
-        record(m[1]);
-      } else if ((m = line.match(/^(\[\*\]|\w+)\s*-->\s*(\[\*\]|\w+)\s*(?::\s*(.+))?$/))) {
-        transitions.push({ from: m[1], to: m[2], label: m[3] && m[3].trim() });
-        record(m[1]); record(m[2]);
+      if (!line) return;
+      if (line === '}') { stack.pop(); return; }
+      if ((m = line.match(/^state\s+(\w+)[^{]*\{\s*$/))) { record(m[1], parent); stack.push(m[1]); return; }
+      if ((m = line.match(/^state\s+(\w+)/))) { record(m[1], parent); return; }
+      if ((m = line.match(/^(\[\*\]|\w+)\s*-->\s*(\[\*\]|\w+)\s*(?::\s*(.+))?$/))) {
+        model.transitions.push({ from: m[1], to: m[2], label: m[3] && m[3].trim(), parent: parent });
+        record(m[1], parent); record(m[2], parent);
+        return;
       }
+      if ((m = line.match(/^(\w+)\s*:\s*(.*\/.*)$/))) { behavior(m[1], describeRow(m[2].trim())); return; }
+      if (parent && /\//.test(line) && !/^(?:note|callout)\b/i.test(line)) behavior(parent, describeRow(line));
     });
+    return model;
+  }
 
-    if (!transitions.length && !states.length) return 'UML state machine diagram.';
-    var head = states.length
+  function stateTransitionSentence(t) {
+    var from = t.from === '[*]' ? (t.parent ? 'the initial pseudostate of ' + t.parent : 'the initial pseudostate') : t.from;
+    var to   = t.to   === '[*]' ? (t.parent ? 'the final state of ' + t.parent : 'the final state') : t.to;
+    var tail = t.label ? ' on ' + t.label : '';
+    return from + ' transitions to ' + to + tail;
+  }
+
+  function stateCompositeSentences(model) {
+    var children = Object.create(null);
+    model.states.forEach(function (name) {
+      var parent = model.parents[name];
+      if (parent) (children[parent] = children[parent] || []).push(name);
+    });
+    return Object.keys(children).map(function (parent) {
+      return parent + ' is a composite state containing ' + children[parent].join(', ');
+    });
+  }
+
+  function stateBehaviorSentences(model) {
+    return model.states.filter(function (name) { return model.behaviors[name]; }).map(function (name) {
+      return name + ' lists ' + model.behaviors[name].join('; ');
+    });
+  }
+
+  function describeStateDiagram(spec) {
+    var model = parseStateSpec(spec);
+    var states = model.states;
+    if (!model.transitions.length && !states.length) return 'UML state machine diagram.';
+    var parts = [states.length
       ? 'UML state machine diagram with ' + pluralize(states.length, 'state', 'states') + ' (' + states.join(', ') + ')'
-      : 'UML state machine diagram';
-    if (!transitions.length) return head + '.';
-
-    var ts = transitions.map(function (t) {
-      var from = t.from === '[*]' ? 'the initial pseudostate' : t.from;
-      var to   = t.to   === '[*]' ? 'the final state'        : t.to;
-      var tail = t.label ? ' on ' + t.label : '';
-      return from + ' transitions to ' + to + tail;
-    });
-    return head + '. Transitions: ' + ts.join('; ') + '.';
+      : 'UML state machine diagram'];
+    parts = parts.concat(stateCompositeSentences(model), stateBehaviorSentences(model));
+    if (model.transitions.length) parts.push('Transitions: ' + model.transitions.map(stateTransitionSentence).join('; '));
+    return parts.join('. ') + '.';
   }
 
   // ---------- component diagrams ----------
@@ -870,42 +910,21 @@
   }
 
   function describeStateDiagramVerbose(spec) {
-    var states = [];
-    var seen = Object.create(null);
-    var transitions = [];
-
-    function record(name) {
-      if (seen[name] || name === '[*]') return;
-      seen[name] = true;
-      states.push(name);
-    }
-
-    spec.split('\n').forEach(function (raw) {
-      var line = raw.trim();
-      if (!line) return;
-      var m;
-      if ((m = line.match(/^state\s+(\w+)/))) {
-        record(m[1]);
-      } else if ((m = line.match(/^(\[\*\]|\w+)\s*-->\s*(\[\*\]|\w+)\s*(?::\s*(.+))?$/))) {
-        transitions.push({ from: m[1], to: m[2], label: m[3] && m[3].trim() });
-        record(m[1]); record(m[2]);
-      }
-    });
-
-    var summary = describeStateDiagram(stripDecorations(spec));
+    var stripped = stripDecorations(spec);
+    var model = parseStateSpec(stripped);
     var sections = [];
 
-    if (states.length) sections.push({ heading: 'States', items: states });
-    if (transitions.length) {
-      var ts = transitions.map(function (t) {
-        var from = t.from === '[*]' ? 'the initial pseudostate' : t.from;
-        var to   = t.to   === '[*]' ? 'the final state'        : t.to;
-        var tail = t.label ? ' on ' + t.label : '';
-        return from + ' transitions to ' + to + tail;
-      });
-      sections.push({ heading: 'Transitions', items: ts });
+    if (model.states.length) {
+      sections.push({ heading: 'States', items: model.states.map(function (name) {
+        return model.parents[name] ? name + ' (inside ' + model.parents[name] + ')' : name;
+      }) });
     }
-    return { summary: summary, sections: sections };
+    var behaviors = stateBehaviorSentences(model);
+    if (behaviors.length) sections.push({ heading: 'Behaviors inside states', items: behaviors });
+    if (model.transitions.length) {
+      sections.push({ heading: 'Transitions', items: model.transitions.map(stateTransitionSentence) });
+    }
+    return { summary: describeStateDiagram(stripped), sections: sections };
   }
 
   function describeComponentDiagramVerbose(spec) {

@@ -1,0 +1,298 @@
+# One knowledge check per section, about UML state machine notation rather than the
+# delivery robot. Each one applies a taught idea to a new situation. The summary
+# section lists several questions under questions, in the order of the lesson's parts.
+intro:
+  difficulty: basic
+  question: What does one UML state machine diagram describe?
+  options:
+  - One recorded run of a system, step by step, in the order it happened
+  - Every state of one object and the events that move it between them
+  - Which methods of one class call which other methods, and in what order
+  correct_index: 1
+  explanation: >-
+    A state machine diagram follows one object: every situation it can be in and every event that moves
+    it between them, so it covers every possible run, not one recording.
+  option_feedback:
+    0: >-
+      One recorded run is a single path. The diagram shows all paths at once, including runs nobody has
+      recorded yet.
+    2: >-
+      Calls between methods are not states. A state machine describes the situations one object is in
+      and what moves it between them.
+states:
+  difficulty: basic
+  question: In a UML state machine diagram, what does the small black dot with a single arrow mean?
+  options:
+  - The object waits there until its first event arrives
+  - The machine ends there, once its behavior is complete
+  - The machine starts there, and the object never stays there
+  correct_index: 2
+  explanation: >-
+    The black dot is the initial pseudostate. Its arrow is taken as soon as the machine starts, so the
+    object is in the first real state right away.
+  option_feedback:
+    0: >-
+      Waiting is what a real state does. The initial pseudostate is not a real state, so the object never
+      rests there.
+    1: The end is the bullseye, the final state. The black dot marks where the machine starts.
+events:
+  difficulty: intermediate
+  question: >-
+    A game character is in the state Jumping when the player presses crouch. No transition leaving Jumping
+    has crouch as its trigger. What happens?
+  options:
+  - The event is discarded, and the character stays Jumping
+  - The event waits until the character reaches a state that uses it
+  - The diagram is invalid, since every state needs an arrow per event
+  correct_index: 0
+  explanation: >-
+    An event without a matching transition in the current state is discarded. A missing arrow is a decision:
+    in that state, the event is ignored.
+  option_feedback:
+    1: >-
+      By default, events are not saved for later. Without a matching transition in the current state,
+      the event is discarded.
+    2: >-
+      A state needs arrows only for the events it reacts to. A missing arrow means the event is ignored
+      there.
+guards:
+  difficulty: intermediate
+  question: >-
+    A transition is labeled scan(ticket) [ticket valid] / openGate(). When does openGate() run?
+  options:
+  - When a ticket is scanned and the guard is true at that moment
+  - As soon as the ticket becomes valid, even if nothing is scanned
+  - Every time a ticket is scanned, before the guard is checked
+  correct_index: 0
+  explanation: >-
+    The guard [ticket valid] is checked when the event scan(ticket) arrives. Only if it is true does the
+    transition fire, and the effect openGate() runs while it fires.
+  option_feedback:
+    1: A guard never watches a condition. It is checked only when its own event arrives.
+    2: If the guard is false, the transition does not fire, so its effect does not run.
+time_change:
+  difficulty: intermediate
+  question: >-
+    A rental bike should relock 5 minutes after it unlocks if nobody rides away, and it should report
+    the moment its battery drops below 10 percent. Which triggers fit?
+  options:
+  - '[5 min passed] to relock, and [battery < 10%] to report'
+  - 'when(5 min) to relock, and after(battery < 10%) to report'
+  - 'after(5 min) to relock, and when(battery < 10%) to report'
+  correct_index: 2
+  explanation: >-
+    after(...) is a time event that fires when the duration has passed in a state. when(...) is a change
+    event that fires the moment its condition becomes true.
+  option_feedback:
+    0: >-
+      A guard alone is checked only when an event arrives, so nothing would ever notice time passing or
+      the battery draining.
+    1: The keywords are swapped. after takes a duration, and when takes a condition.
+entry_exit:
+  difficulty: intermediate
+  question: >-
+    A transition labeled pause / saveProgress() leaves Playing, which has exit / dimScreen(), and
+    enters Paused, which has entry / showMenu(). In what order do the behaviors run?
+  options:
+  - 'showMenu(), then saveProgress(), then dimScreen()'
+  - 'dimScreen(), then saveProgress(), then showMenu()'
+  - 'saveProgress(), then dimScreen(), then showMenu()'
+  correct_index: 1
+  explanation: >-
+    A transition runs the source state's exit behavior, then its own effect, then the target state's entry
+    behavior.
+  option_feedback:
+    0: The source state is left first, so its exit behavior runs before anything else.
+    2: >-
+      The effect runs between leaving and entering. Exit comes first, then the effect, then entry.
+do_activity:
+  difficulty: intermediate
+  question: >-
+    A state Uploading has do / sendFile() and one outgoing transition with no trigger, to Shared. When
+    is that transition taken?
+  options:
+  - As soon as Uploading is entered, before sendFile() starts
+  - Never, because a transition without a trigger cannot fire
+  - When sendFile() finishes, because it is a completion transition
+  correct_index: 2
+  explanation: >-
+    A transition without a trigger is a completion transition. It fires when its state finishes its own
+    work, here when the do activity sendFile() is done.
+  option_feedback:
+    0: >-
+      The do activity starts after entry and runs while the state is active. The completion transition
+      waits until it is done.
+    1: >-
+      No trigger does not mean never. It means the transition fires when the state completes its work.
+internal_self:
+  difficulty: advanced
+  question: >-
+    A music player's Playing state has entry / startVisualizer(). Pressing volume up should raise the
+    volume without restarting the visualizer. How should volumeUp be modeled?
+  options:
+  - 'As an internal transition listed inside Playing: volumeUp / raiseVolume()'
+  - 'As an arrow from Playing back to Playing: volumeUp / raiseVolume()'
+  - 'As a second entry behavior of Playing: entry / raiseVolume()'
+  correct_index: 0
+  explanation: >-
+    An internal transition handles the event without leaving the state, so neither exit nor entry runs,
+    and the visualizer keeps going.
+  option_feedback:
+    1: >-
+      An arrow back to the same state is a self-transition. It leaves Playing and enters it again, so
+      the entry behavior restarts the visualizer.
+    2: An entry behavior runs whenever Playing is entered, not when volume up is pressed.
+review:
+  difficulty: intermediate
+  question: >-
+    A reviewer finds a state Stuck that has no outgoing transitions and is not a final state. Which check
+    fails?
+  options:
+  - Every state has a way out, or is a final state
+  - Every state can be reached from the initial pseudostate
+  - Transitions with the same trigger have guards that never overlap
+  correct_index: 0
+  explanation: >-
+    A state with no way out that is not final traps the object forever. Add a transition out, such as
+    a timeout, or make the end explicit with a final state.
+  option_feedback:
+    1: >-
+      Reachability asks whether the object can get into a state. The problem with Stuck is getting out
+      of it.
+    2: >-
+      Overlapping guards concern several arrows with one trigger. Stuck has no arrows out at all.
+composite:
+  difficulty: advanced
+  question: >-
+    A composite state Checkout contains Cart, Payment, and Review. One transition labeled cancel leaves
+    the border of Checkout. The customer cancels while in Payment, which has exit / clearCardForm().
+    What happens?
+  options:
+  - Nothing, because cancel is drawn on Checkout, not on Payment
+  - clearCardForm() runs, then Checkout is left for the target state
+  - Checkout is left at once, and clearCardForm() is skipped
+  correct_index: 1
+  explanation: >-
+    A transition from the border of a composite state applies to every substate. Leaving exits from the
+    inside out, so Payment's exit behavior runs first.
+  option_feedback:
+    0: A border transition applies to whichever substate is active, including Payment.
+    2: >-
+      Exit behaviors run on every way out, including border transitions. The active substate is exited
+      first.
+transfer:
+  difficulty: advanced
+  question: >-
+    A composite state InCall contains Muted and Unmuted. The host may end the call in either substate,
+    and ending always leads to Ended. How should endCall be drawn?
+  options:
+  - As an internal transition listed inside each substate
+  - As a self-transition on InCall that leads back into it
+  - As one transition from the border of InCall to Ended
+  correct_index: 2
+  explanation: >-
+    When every substate should react the same way, one transition from the border of the composite state
+    covers them all, including substates added later.
+  option_feedback:
+    0: An internal transition never leaves its state, so the call would never end.
+    1: >-
+      A self-transition leaves InCall and enters it again, so the call would start over instead of ending.
+summary:
+  questions:
+  - difficulty: basic
+    question: >-
+      A rental scooter can be ridden, parked during a ride, or out of service. Which name follows the
+      naming advice for the scooter's state while someone rides it?
+    options:
+    - Riding
+    - startRide
+    - Ride button
+    correct_index: 0
+    explanation: >-
+      A state names a situation the object is in, so the sentence "the scooter is Riding" reads correctly.
+    option_feedback:
+      1: >-
+        startRide names an action the scooter performs. Try the sentence "the scooter is startRide."
+      2: A button is part of the app, not a situation of the scooter. Pressing it is an event.
+  - difficulty: intermediate
+    question: >-
+      The scooter's transition endRide [in parking zone] / chargeFare() leaves Riding. Which part of
+      the label is checked when endRide arrives?
+    options:
+    - 'endRide'
+    - '[in parking zone]'
+    - 'chargeFare()'
+    correct_index: 1
+    explanation: >-
+      The guard in square brackets is checked when the trigger's event arrives; the transition fires only
+      if it is true.
+    option_feedback:
+      0: >-
+        endRide is the trigger, the event itself. The guard in brackets is what gets checked when it arrives.
+      2: chargeFare() is the effect, which runs only if the transition fires.
+  - difficulty: intermediate
+    question: >-
+      A scooter reservation should expire 10 minutes after the scooter enters Reserved. Which trigger
+      belongs on the transition from Reserved to Available?
+    options:
+    - 'when(10 min)'
+    - '[10 min passed]'
+    - 'after(10 min)'
+    correct_index: 2
+    explanation: after(...) is a time event. Its clock starts when the scooter enters Reserved.
+    option_feedback:
+      0: when takes a condition that becomes true, not a duration.
+      1: >-
+        A guard alone is checked only when an event arrives, so it would never notice the time passing.
+  - difficulty: intermediate
+    question: >-
+      Riding has entry / startMeter() and exit / stopMeter(). A rider can leave Riding by parking,
+      by ending the ride, or when the battery dies. How often must the diagram mention stopMeter()?
+    options:
+    - Once, as the exit behavior of Riding
+    - Once for each transition that leaves Riding
+    - Never, because the meter stops on its own
+    correct_index: 0
+    explanation: >-
+      An exit behavior runs on every way out of its state, including ways added later, so one mention
+      covers all three.
+    option_feedback:
+      1: >-
+        Repeating it as an effect on every outgoing arrow works until someone adds a new way out and forgets
+        the copy.
+      2: >-
+        Nothing stops the meter unless the diagram says so. The exit behavior is where it says so once.
+  - difficulty: advanced
+    question: >-
+      While Riding, a GPS update arrives every second and should update the map without restarting the
+      meter. How should gpsUpdate be modeled?
+    options:
+    - As an arrow from Riding back to Riding
+    - As an internal transition inside Riding
+    - As an entry behavior of Riding
+    correct_index: 1
+    explanation: >-
+      An internal transition handles the event without leaving Riding, so neither exit nor entry runs
+      and the meter keeps going.
+    option_feedback:
+      0: >-
+        A self-transition leaves Riding and enters it again, so exit stops the meter and entry starts
+        it over every second.
+      2: An entry behavior runs only when Riding is entered, not when an update arrives.
+  - difficulty: advanced
+    question: >-
+      The scooter should return to its depot when its battery drops below 5 percent, whether it is Riding
+      or Parked. How can one transition express that?
+    options:
+    - Draw when(battery < 5%) as an arrow between Riding and Parked
+    - Add when(battery < 5%) as an entry behavior of both states
+    - Group both in a composite state and draw it from its border
+    correct_index: 2
+    explanation: >-
+      A transition from the border of a composite state applies to every substate, so one arrow covers
+      Riding and Parked.
+    option_feedback:
+      0: >-
+        An arrow between the two states moves the scooter from one to the other; it never reaches the
+        depot.
+      1: when(...) is a trigger on a transition, not a behavior that runs on entry.

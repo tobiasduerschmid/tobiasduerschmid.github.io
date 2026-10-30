@@ -1,0 +1,411 @@
+{
+  "version": 1,
+  "presentation": {
+    "styles": [
+      "/css/uml_state_diagram-narration.css"
+    ]
+  },
+  "resources": {
+    "languages": [
+      "python",
+      "java",
+      "cpp",
+      "typescript"
+    ],
+    "default_language": "python",
+    "example_order": [
+      "robot"
+    ],
+    "diagrams": {
+      "states_row": {
+        "type": "state",
+        "label": "The four states of a delivery",
+        "description": "Four states in a column: Driving, Waiting, Unlocked, and Returning. No transitions connect them yet.",
+        "caption": "Each rounded rectangle is one state: a situation the robot can be in during a delivery.",
+        "source": "@startuml\nstate Driving @pos(-52, 41)\nstate Waiting @pos(-52, 133)\nstate Unlocked @pos(-57, 225)\nstate Returning @pos(-59, 317)\n@enduml\n"
+      },
+      "states_start": {
+        "type": "state",
+        "label": "The initial pseudostate",
+        "description": "The initial pseudostate, a small black dot, points to Driving. Waiting, Unlocked, and Returning follow below it.",
+        "caption": "The black dot is not a state; its arrow leads to the first state as soon as the delivery begins.",
+        "source": "@startuml\nstate Driving @pos(-52, 41)\nstate Waiting @pos(-52, 133)\nstate Unlocked @pos(-57, 225)\nstate Returning @pos(-59, 317)\n[*] --> Driving\n@layout schema=1 renderer=\"archuml-visual-editor\"\nnode \"__initial__0\" x=0 y=0\n@endlayout\n@enduml\n"
+      },
+      "states_end": {
+        "type": "state",
+        "label": "The initial pseudostate and the final state",
+        "description": "The black dot points to Driving, and Returning points to the final state, a bullseye. Waiting and Unlocked stand between them.",
+        "caption": "The bullseye is the final state: reaching it completes this delivery's state machine.",
+        "source": "@startuml\nstate Driving @pos(-52, 41)\nstate Waiting @pos(-52, 133)\nstate Unlocked @pos(-57, 225)\nstate Returning @pos(-59, 317)\n[*] --> Driving\nReturning --> [*]\n@layout schema=1 renderer=\"archuml-visual-editor\"\nnode \"__initial__0\" x=0 y=0\nnode \"__final__0\" x=-3 y=390\n@endlayout\n@enduml\n"
+      },
+      "chain_triggers": {
+        "type": "state",
+        "label": "Transitions with triggers",
+        "description": "From the initial pseudostate to Driving; arrived leads from Driving to Waiting; enterPin(code) from Waiting to Unlocked; lidClosed from Unlocked to Returning; Returning leads to the final state.",
+        "caption": "Each arrow is a transition, labeled with the event that triggers it.",
+        "source": "@startuml\nlayout compact\n[*] --> Driving\nDriving --> Waiting : arrived\nWaiting --> Unlocked : enterPin(code)\nUnlocked --> Returning : lidClosed\nReturning --> [*]\n@enduml\n"
+      },
+      "chain_guard": {
+        "type": "state",
+        "label": "A transition with a guard",
+        "description": "The chain of states, with the transition from Waiting to Unlocked labeled enterPin(code) [pin matches].",
+        "caption": "The guard in square brackets is checked when its event arrives.",
+        "source": "@startuml\nlayout compact\n[*] --> Driving\nDriving --> Waiting : arrived\nWaiting --> Unlocked : enterPin(code) [pin matches]\nUnlocked --> Returning : lidClosed\nReturning --> [*]\n@enduml\n"
+      },
+      "chain_effect": {
+        "type": "state",
+        "label": "Transitions with a guard and an effect",
+        "description": "The chain of states. Waiting to Unlocked reads enterPin(code) [pin matches]; Unlocked to Returning reads lidClosed / playThanks().",
+        "caption": "After the slash comes the effect, which runs while its transition fires.",
+        "source": "@startuml\nlayout compact\n[*] --> Driving\nDriving --> Waiting : arrived\nWaiting --> Unlocked : enterPin(code) [pin matches]\nUnlocked --> Returning : lidClosed / playThanks()\nReturning --> [*]\n@enduml\n"
+      },
+      "chain_after": {
+        "type": "state",
+        "label": "A time event",
+        "description": "The chain of states plus a transition from Waiting to Returning labeled after(10 min).",
+        "caption": "after(10 min) is a time event: it fires 10 minutes after the robot enters Waiting, unless the robot has left by then.",
+        "source": "@startuml\nlayout compact\n[*] --> Driving\nDriving --> Waiting : arrived\nWaiting --> Unlocked : enterPin(code) [pin matches]\nUnlocked --> Returning : lidClosed / playThanks()\nWaiting --> Returning : after(10 min)\nReturning --> [*]\n@enduml\n"
+      },
+      "chain_when": {
+        "type": "state",
+        "label": "A time event and a change event",
+        "description": "The chain of states with after(10 min) from Waiting to Returning, plus a transition from Driving to Returning labeled when(battery < 15%).",
+        "caption": "when(...) is a change event: it fires the moment its condition becomes true.",
+        "source": "@startuml\nlayout compact\n[*] --> Driving\nDriving --> Waiting : arrived\nWaiting --> Unlocked : enterPin(code) [pin matches]\nUnlocked --> Returning : lidClosed / playThanks()\nWaiting --> Returning : after(10 min)\nDriving --> Returning : when(battery < 15%)\nReturning --> [*]\n@enduml\n"
+      },
+      "lid_part": {
+        "type": "state",
+        "label": "Entry and exit behaviors of Unlocked",
+        "description": "Part of the diagram: Waiting leads to Unlocked on enterPin(code) [pin matches], and Unlocked leads to Returning on lidClosed / playThanks(). Unlocked lists entry / unlockLid() and exit / lockLid().",
+        "caption": "Only the states around the lid are shown. Behaviors inside a state sit below a line.",
+        "source": "@startuml\nlayout compact\nWaiting --> Unlocked : enterPin(code) [pin matches]\nUnlocked --> Returning : lidClosed / playThanks()\nUnlocked : entry / unlockLid()\nUnlocked : exit / lockLid()\n@enduml\n"
+      },
+      "lid_part_notify": {
+        "type": "state",
+        "label": "Entry behaviors of Waiting and Unlocked",
+        "description": "The same part of the diagram, with Waiting now listing entry / notifyCustomer().",
+        "caption": "An entry behavior runs on every way into its state.",
+        "source": "@startuml\nlayout compact\nWaiting --> Unlocked : enterPin(code) [pin matches]\nUnlocked --> Returning : lidClosed / playThanks()\nWaiting : entry / notifyCustomer()\nUnlocked : entry / unlockLid()\nUnlocked : exit / lockLid()\n@enduml\n"
+      },
+      "returning_part": {
+        "type": "state",
+        "label": "A do activity and a completion transition",
+        "description": "Part of the diagram: Unlocked leads to Returning on lidClosed / playThanks(). Returning lists do / driveToBase(), and an unlabeled arrow leads from Returning to the final state.",
+        "caption": "Only the end of the delivery is shown. The unlabeled arrow fires when driveToBase() is done.",
+        "source": "@startuml\nlayout compact\nUnlocked --> Returning : lidClosed / playThanks()\nReturning --> [*]\nUnlocked : entry / unlockLid()\nUnlocked : exit / lockLid()\nReturning : do / driveToBase()\n@enduml\n"
+      },
+      "waiting_wrong_arrow": {
+        "type": "state",
+        "label": "A wrong PIN drawn as a self-transition",
+        "description": "Part of the diagram around Waiting, which lists entry / notifyCustomer(). An arrow leaves Waiting and returns to it, labeled enterPin(code) [pin wrong] / beep(). Waiting also leads to Unlocked on enterPin(code) [pin matches] and to Returning after(10 min).",
+        "caption": "Only Waiting and its transitions are shown. An arrow back to the same state is a self-transition.",
+        "source": "@startuml\nlayout compact\nWaiting --> Unlocked : enterPin(code) [pin matches]\nWaiting --> Returning : after(10 min)\nWaiting --> Waiting : enterPin(code) [pin wrong] / beep()\nWaiting : entry / notifyCustomer()\n@enduml\n"
+      },
+      "waiting_internal": {
+        "type": "state",
+        "label": "A wrong PIN as an internal transition",
+        "description": "Waiting lists entry / notifyCustomer() and the internal transition enterPin(code) [pin wrong] / beep(). It leads to Unlocked on enterPin(code) [pin matches] and to Returning after(10 min).",
+        "caption": "An internal transition is written inside its state and never leaves it.",
+        "source": "@startuml\nlayout compact\nWaiting --> Unlocked : enterPin(code) [pin matches]\nWaiting --> Returning : after(10 min)\nWaiting : entry / notifyCustomer()\nWaiting : enterPin(code) [pin wrong] / beep()\n@enduml\n"
+      },
+      "waiting_extend": {
+        "type": "state",
+        "label": "An internal transition and a self-transition",
+        "description": "Waiting lists entry / notifyCustomer() and enterPin(code) [pin wrong] / beep(), and has a self-transition labeled extendWait. It leads to Unlocked on enterPin(code) [pin matches] and to Returning after(10 min).",
+        "caption": "extendWait leaves Waiting and enters it again; the wrong PIN never leaves.",
+        "source": "@startuml\nlayout compact\nWaiting --> Unlocked : enterPin(code) [pin matches]\nWaiting --> Returning : after(10 min)\nWaiting --> Waiting : extendWait\nWaiting : entry / notifyCustomer()\nWaiting : enterPin(code) [pin wrong] / beep()\n@enduml\n"
+      },
+      "battery_three": {
+        "type": "state",
+        "label": "Three low-battery transitions",
+        "description": "Driving leads to Waiting on arrived, and Waiting to Unlocked on enterPin(code) [pin matches]; Unlocked lists exit / lockLid(). Driving, Waiting, and Unlocked each have an arrow to Returning labeled when(battery < 15%).",
+        "caption": "Only the low-battery transitions and the path between the three states are shown.",
+        "source": "@startuml\nlayout compact\n[*] --> Driving\nDriving --> Waiting : arrived\nWaiting --> Unlocked : enterPin(code) [pin matches]\nDriving --> Returning : when(battery < 15%)\nWaiting --> Returning : when(battery < 15%)\nUnlocked --> Returning : when(battery < 15%)\nUnlocked : exit / lockLid()\n@enduml\n"
+      },
+      "delivering_group": {
+        "type": "state",
+        "label": "The composite state Delivering",
+        "description": "A composite state named Delivering contains Driving, Waiting, and Unlocked. Its own black dot points to Driving, arrived leads to Waiting, and enterPin(code) [pin matches] leads to Unlocked, which lists exit / lockLid(). The outer black dot points to the border of Delivering.",
+        "caption": "An arrow to the border of a composite state enters through its inner black dot.",
+        "source": "@startuml\nlayout compact\n[*] --> Delivering\nstate Delivering {\n  [*] --> Driving\n  Driving --> Waiting : arrived\n  Waiting --> Unlocked : enterPin(code) [pin matches]\n  Unlocked : exit / lockLid()\n}\n@enduml\n"
+      },
+      "delivering_border": {
+        "type": "state",
+        "label": "A transition from the border of Delivering",
+        "description": "The composite state Delivering contains Driving, Waiting, and Unlocked. One arrow labeled when(battery < 15%) leads from the border of Delivering to Returning.",
+        "caption": "Only the low-battery transition leaves the composite here. It applies to every substate.",
+        "source": "@startuml\nlayout compact\n[*] --> Delivering\nstate Delivering {\n  [*] --> Driving\n  Driving --> Waiting : arrived\n  Waiting --> Unlocked : enterPin(code) [pin matches]\n  Unlocked : exit / lockLid()\n}\nDelivering --> Returning : when(battery < 15%)\n@enduml\n"
+      },
+      "whole": {
+        "type": "state",
+        "label": "The whole delivery state machine",
+        "description": "The initial pseudostate leads to Driving. Driving leads to Waiting on arrived and to Returning on when(battery < 15%). Waiting lists entry / notifyCustomer() and enterPin(code) [pin wrong] / beep(); it has a self-transition extendWait and leads to Unlocked on enterPin(code) [pin matches] and to Returning after(10 min). Unlocked lists entry / unlockLid() and exit / lockLid() and leads to Returning on lidClosed / playThanks(). Returning lists do / driveToBase() and leads to the final state.",
+        "caption": "The whole diagram, before grouping states into a composite state.",
+        "source": "@startuml\nlayout compact\n[*] --> Driving\nDriving --> Waiting : arrived\nWaiting --> Unlocked : enterPin(code) [pin matches]\nWaiting --> Waiting : extendWait\nUnlocked --> Returning : lidClosed / playThanks()\nWaiting --> Returning : after(10 min)\nDriving --> Returning : when(battery < 15%)\nReturning --> [*]\nWaiting : entry / notifyCustomer()\nWaiting : enterPin(code) [pin wrong] / beep()\nUnlocked : entry / unlockLid()\nUnlocked : exit / lockLid()\nReturning : do / driveToBase()\n@enduml\n"
+      },
+      "cancel_answer": {
+        "type": "state",
+        "label": "Cancel transitions",
+        "description": "Driving leads to Waiting on arrived, and Waiting to Unlocked on enterPin(code) [pin matches]. Driving and Waiting each have an arrow to Returning labeled cancel / refund(). Unlocked has no cancel arrow.",
+        "caption": "Only the path between the states and the two new cancel transitions are shown; inside Delivering they leave the same two states.",
+        "source": "@startuml\nlayout compact\n[*] --> Driving\nDriving --> Waiting : arrived\nWaiting --> Unlocked : enterPin(code) [pin matches]\nDriving --> Returning : cancel / refund()\nWaiting --> Returning : cancel / refund()\n@enduml\n"
+      }
+    }
+  },
+  "scenes": {
+    "intro": {
+      "state": {
+        "cards": [
+          {
+            "title": "Driving",
+            "text": "You type your PIN early: nothing happens, and the lid stays locked."
+          },
+          {
+            "title": "Waiting at your door",
+            "text": "You type the same PIN: the lid unlocks."
+          },
+          {
+            "title": "The states of what?",
+            "text": "One robot during one delivery: every possible run, not one recording."
+          }
+        ]
+      },
+      "cues": {
+        "snack": {},
+        "same_pin": {},
+        "whose_states": {}
+      }
+    },
+    "states": {
+      "state": {
+        "diagram": "states_row",
+        "code": "first"
+      },
+      "cues": {
+        "situations": {
+          "focus": "enum"
+        },
+        "naming": {
+          "diagram_focus": "Unlocked",
+          "focus": "unlocked"
+        },
+        "initial": {
+          "diagram": "states_start",
+          "focus": "initial"
+        },
+        "final": {
+          "diagram": "states_end",
+          "focus": "final"
+        },
+        "code_states": {
+          "diagram": "states_end",
+          "focus": "states"
+        }
+      }
+    },
+    "events": {
+      "state": {
+        "diagram": "chain_triggers",
+        "code": "first"
+      },
+      "cues": {
+        "arrows": {
+          "focus": "arrived"
+        },
+        "label_parts": {
+          "focus": "pin_event"
+        },
+        "predict_early_pin": {
+          "diagram_focus": "Driving",
+          "focus": "pin_event"
+        },
+        "ignored": {
+          "diagram_focus": "Driving",
+          "focus": "ignore"
+        }
+      }
+    },
+    "guards": {
+      "state": {
+        "diagram": "chain_guard",
+        "code": "first"
+      },
+      "cues": {
+        "guard": {
+          "focus": "guard"
+        },
+        "two_guards": {
+          "focus": "two_guards"
+        },
+        "effect": {
+          "diagram": "chain_effect",
+          "focus": "effect"
+        },
+        "code_guards": {
+          "diagram": "chain_effect",
+          "focus": "guard_effect"
+        }
+      }
+    },
+    "time_change": {
+      "state": {
+        "diagram": "chain_after"
+      },
+      "cues": {
+        "way_out": {
+          "diagram_focus": "Waiting"
+        },
+        "after": {
+          "diagram_focus": "Waiting"
+        },
+        "when": {
+          "diagram": "chain_when",
+          "diagram_focus": "Driving"
+        }
+      }
+    },
+    "entry_exit": {
+      "state": {
+        "diagram": "lid_part",
+        "code": "robot"
+      },
+      "cues": {
+        "lid_rules": {
+          "focus": "lid_behaviors"
+        },
+        "why_exit": {
+          "diagram_focus": "Unlocked",
+          "focus": "exit_lock"
+        },
+        "order": {
+          "focus": "order"
+        },
+        "code_entry": {
+          "diagram": "lid_part_notify",
+          "focus": "enter_exit"
+        }
+      }
+    },
+    "do_activity": {
+      "state": {
+        "diagram": "returning_part"
+      },
+      "cues": {
+        "do": {
+          "diagram_focus": "Returning"
+        },
+        "completion": {
+          "diagram_focus": "Returning"
+        }
+      }
+    },
+    "internal_self": {
+      "state": {
+        "diagram": "waiting_wrong_arrow",
+        "code": "robot"
+      },
+      "cues": {
+        "predict_wrong_pin": {
+          "focus": "waiting_entry"
+        },
+        "self_transition": {
+          "diagram_focus": "Waiting",
+          "focus": "self_effects"
+        },
+        "internal": {
+          "diagram": "waiting_internal",
+          "focus": "internal"
+        },
+        "extend": {
+          "diagram": "waiting_extend",
+          "focus": "extend"
+        },
+        "code_internal": {
+          "diagram": "waiting_extend",
+          "focus": "internal_self"
+        }
+      }
+    },
+    "composite": {
+      "state": {
+        "diagram": "battery_three"
+      },
+      "cues": {
+        "repeat": {},
+        "group": {
+          "diagram": "delivering_group"
+        },
+        "border": {
+          "diagram": "delivering_border"
+        },
+        "predict_lid": {
+          "diagram": "delivering_border",
+          "diagram_focus": "Unlocked"
+        },
+        "inside_out": {
+          "diagram": "delivering_border",
+          "diagram_focus": "Unlocked"
+        }
+      }
+    },
+    "review": {
+      "state": {
+        "diagram": "whole"
+      },
+      "cues": {
+        "trace": {},
+        "checklist": {}
+      }
+    },
+    "transfer": {
+      "state": {
+        "diagram": "delivering_border",
+        "cards": [
+          {
+            "title": "Allowed",
+            "text": "Cancel while the robot is driving or waiting."
+          },
+          {
+            "title": "Not allowed",
+            "text": "Cancel once the lid is open."
+          },
+          {
+            "title": "What cancel does",
+            "text": "Refund the order and send the robot back to its base."
+          }
+        ]
+      },
+      "cues": {
+        "predict_cancel": {},
+        "cancel_answer": {
+          "diagram": "cancel_answer"
+        }
+      }
+    },
+    "summary": {
+      "state": {
+        "cards": [
+          {
+            "title": "States",
+            "text": "Rounded rectangles named for situations, from the black dot to the bullseye."
+          },
+          {
+            "title": "Transitions",
+            "text": "trigger [guard] / effect; an event with no matching arrow is discarded."
+          },
+          {
+            "title": "Inside a state",
+            "text": "entry, exit, and do behaviors, plus internal transitions that never leave."
+          },
+          {
+            "title": "Composite states",
+            "text": "Substates under one border; a border transition leaves any of them."
+          }
+        ]
+      },
+      "cues": {
+        "recap": {}
+      }
+    }
+  }
+}

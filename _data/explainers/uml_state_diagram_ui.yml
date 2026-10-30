@@ -1,0 +1,36 @@
+# The delivery robot's specified behavior. Each scenario starts a new robot with
+# this PIN, sends its events in order, and lists the behaviors the robot performs
+# and the state it ends in. The first version of the code implements only the
+# first three events; the complete version implements every event. Tests run all
+# four languages against these scenarios.
+pin: "4721"
+first:
+  - id: pin_while_driving
+    events: [[enter_pin, "4721"], [lid_closed]]
+    actions: []
+    state: Driving
+  - id: wrong_then_right_pin
+    events: [[arrived], [enter_pin, "0000"], [enter_pin, "4721"], [lid_closed]]
+    actions: [beep, play thanks]
+    state: Returning
+complete:
+  - id: pin_while_driving
+    events: [[enter_pin, "4721"], [lid_closed], [extend_wait]]
+    actions: []
+    state: Driving
+  - id: delivery
+    events: [[arrived], [enter_pin, "0000"], [enter_pin, "4721"], [lid_closed], [base_reached]]
+    actions: [notify customer, start 10-minute timer, beep, cancel timer, unlock lid, lock lid, play thanks, drive to base]
+    state: Done
+  - id: extend_then_time_out
+    events: [[arrived], [extend_wait], [wait_timed_out]]
+    actions: [notify customer, start 10-minute timer, cancel timer, notify customer, start 10-minute timer, cancel timer, drive to base]
+    state: Returning
+  - id: low_battery_with_lid_open
+    events: [[arrived], [enter_pin, "4721"], [battery_low], [battery_low]]
+    actions: [notify customer, start 10-minute timer, cancel timer, unlock lid, lock lid, drive to base]
+    state: Returning
+  - id: low_battery_while_driving
+    events: [[battery_low], [arrived], [base_reached]]
+    actions: [drive to base]
+    state: Done
