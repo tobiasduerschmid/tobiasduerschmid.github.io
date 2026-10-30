@@ -51,7 +51,8 @@
 .narrated-lesson .np-cards > div { border-left: 3px solid var(--nja-cyan); padding: 0.8em 1em; background: var(--nja-panel); }
 .narrated-lesson .np-cards dt { color: var(--nja-cyan); font-size: 1.2em; }
 .narrated-lesson .np-cards dd { margin: 0.5em 0 0; color: var(--nja-text); font: inherit; }
-/* ArchUML uses its authored light palette and the site's dark SVG filter. */
+/* Shared diagram styles own SVG theming, including the separate callout layer.
+   Keep the authored model palette light so it is inverted exactly once. */
 .narrated-lesson .np-diagram {
   --uml-stroke: #4060a0;
   --uml-text: #222;
@@ -65,9 +66,9 @@
   background: #fff; color: #222; border: 2px solid #8798a9;
   border-radius: 5px; padding: 0.5em; overflow-x: auto;
 }
-.narrated-lesson .np-diagram svg { filter: none !important; }
-html.dark-mode:not(.print-light-mode) .narrated-lesson .np-diagram { background: #151a20; border-color: var(--nja-line); }
-html.dark-mode:not(.print-light-mode) .narrated-lesson .np-diagram svg { filter: invert(1) hue-rotate(180deg) !important; }
+@media screen {
+  html.dark-mode:not(.print-light-mode) .narrated-lesson .np-diagram { background: #151a20; border-color: var(--nja-line); }
+}
 .narrated-lesson [data-np-diagram]:focus-visible { outline: 3px solid var(--nja-cyan); outline-offset: 3px; }
 .narrated-lesson [data-np-diagram] { min-width: 0; }
 .narrated-lesson [data-np-diagram] svg { max-width: none; }

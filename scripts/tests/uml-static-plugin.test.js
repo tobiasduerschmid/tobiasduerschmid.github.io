@@ -155,6 +155,7 @@ test('static SVG cache fingerprints every renderer input', () => {
   const fileContents = {
     'js/ArchUML/uml-bundle.js': 'bundle source',
     'js/ArchUML/uml_to_svg.js': 'renderer driver source',
+    'js/ArchUML/css/callouts.css': 'embedded callout theme',
     'js/git-graph.js': 'git graph source',
   };
 

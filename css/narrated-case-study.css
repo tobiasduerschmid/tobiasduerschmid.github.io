@@ -28,10 +28,10 @@
   overflow-x: auto;
   min-width: 0;
 }
-.narrated-case-study .case-diagram svg { max-width: none; filter: none !important; }
+/* SVG theming belongs to the shared diagram styles, including callout layers. */
+.narrated-case-study .case-diagram svg { max-width: none; }
 @media screen {
   html.dark-mode:not(.print-light-mode) .narrated-case-study .case-diagram { background: #151a20; }
-  html.dark-mode:not(.print-light-mode) .narrated-case-study .case-diagram svg { filter: invert(1) hue-rotate(180deg) !important; }
 }
 .narrated-case-study [data-case-diagram] { min-width: 0; }
 .narrated-case-study .case-step-actions,

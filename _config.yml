@@ -4,7 +4,7 @@ plugins:
   - jekyll-scholar
 
 env: production
-asset_version: "20261030-narration-diagrams-fit"
+asset_version: "20261030-narration-diagram-themes"
 
 # Feature flags
 personal_gym: true

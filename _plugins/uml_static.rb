@@ -28,6 +28,7 @@ module Jekyll
       js/ArchUML/uml-bundle.js
       js/ArchUML/uml_to_svg.js
       js/git-graph.js
+      js/ArchUML/css/callouts.css
     ].freeze
 
     # A malformed raw block must stop at the next pre/code boundary instead of
