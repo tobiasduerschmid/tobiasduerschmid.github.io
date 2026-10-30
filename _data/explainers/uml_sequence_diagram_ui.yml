@@ -1,0 +1,35 @@
+# Expected outcomes of the lesson's code. scripts/tests/uml-sequence-diagram-narration.test.js
+# runs every language against these scenarios, and the scan panel draws its numbers from
+# them. A scan covers three times the probe's level.
+probe:
+  level: 4
+  power: 12
+scenarios:
+  partial:
+    title: A pebble and a boulder
+    rocks:
+      - {name: pebble, size: 10, crystals: 5, unscanned_after: 0, crystals_after: 0, tagged_after: 0}
+      - {name: boulder, size: 20, crystals: 8, unscanned_after: 8, crystals_after: 8, tagged_after: 2}
+    probe_crystals_after: 5
+    star_map_after: 0
+    sounds_after: [ping]
+  charted:
+    title: A pebble and a shard
+    rocks:
+      - {name: pebble, size: 10, crystals: 5, unscanned_after: 0, crystals_after: 0, tagged_after: 0}
+      - {name: shard, size: 6, crystals: 2, unscanned_after: 0, crystals_after: 0, tagged_after: 0}
+    probe_crystals_after: 7
+    star_map_after: 2
+    sounds_after: [ping, chime]
+# A cue's panel_state names one moment of one scenario.
+panels:
+  partial_after: {scenario: partial, after: true}
+  charted_before: {scenario: charted, after: false}
+  charted_after: {scenario: charted, after: true}
+# The transfer exercise: the dock recharges each drone below half charge by 5.
+recharge:
+  drones:
+    - {capacity: 20, battery: 4, battery_after: 9}
+    - {capacity: 20, battery: 15, battery_after: 15}
+    - {capacity: 10, battery: 4, battery_after: 9}
+  sounds_after: [beep]

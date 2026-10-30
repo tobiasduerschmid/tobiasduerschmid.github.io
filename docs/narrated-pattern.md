@@ -5,7 +5,8 @@ language-selectable code, ArchUML class, state, sequence, and CRC diagrams,
 topic illustrations, and a knowledge check at the end of every section. A
 lesson is data plus a few topic includes; the player, reader, and print views
 are generic. The UML class-diagram lesson (`docs/uml-class-diagram-narration.md`)
-uses the same player for notation rather than a pattern: its script declares
+and the UML sequence-diagram lesson (`docs/uml-sequence-diagram-narration.md`)
+use the same player for notation rather than a pattern: each script declares
 its own `lesson.parts`, which the player, reader, and print views show instead
 of the pattern description's parts.
 

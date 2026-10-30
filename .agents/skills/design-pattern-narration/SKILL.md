@@ -155,7 +155,11 @@ concrete-first rule and introduce the roles before the code.
 A notation lesson that needs the same player (code beside per-cue ArchUML diagrams) uses
 `kind: pattern` with its own `lesson.parts` and `parts_label`; the UML class-diagram lesson
 (`docs/uml-class-diagram-narration.md`) uses Classes, Generalization, Associations, and
-Dependencies. Start from code the audience can read, give each cue that needs a different
+Dependencies. The UML sequence-diagram lesson (`docs/uml-sequence-diagram-narration.md`) uses
+Lifelines, Messages, Activations, and Fragments: it teaches on one concrete run with named
+objects, then generalizes to one diagram with loop, alt, and opt, and checks in its node test
+that SEBook's Java, TypeScript, and C++ analyzers infer that diagram from its code. Start from
+code the audience can read, give each cue that needs a different
 teaching callout its own diagram variant, and keep every diagram consistent with the cited UML
 references and the SEBook chapter's rules.
 

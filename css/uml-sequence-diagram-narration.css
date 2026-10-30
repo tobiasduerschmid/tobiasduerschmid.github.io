@@ -1,0 +1,46 @@
+/* Sequence-diagram lesson: the scan panel the probe changes, and the frame around the call-stack diagram. */
+/* A sequence diagram grows sideways with every lifeline, so the code stays above it at every width. */
+.uml_sequence_diagram-animation .np-code-with-diagram { grid-template-columns: minmax(0, 1fr); }
+.uml_sequence_diagram-animation .sd-scan { border: 2px solid var(--nja-line); border-radius: 6px; overflow: hidden; min-width: 0; }
+.uml_sequence_diagram-animation .sd-scan .nja-window-bar { display: block; }
+.uml_sequence_diagram-animation .sd-scan-units { display: grid; gap: 0.5em; margin: 0; padding: 0.9em 1em 0.4em; list-style: none; }
+.uml_sequence_diagram-animation .sd-unit { display: grid; grid-template-columns: minmax(5em, auto) minmax(0, 1fr) auto; gap: 0.3em 1em; align-items: center; padding: 0.45em 0.6em; border: 1px solid var(--nja-line); border-radius: 4px; background: var(--nja-input); color: var(--nja-text); }
+.uml_sequence_diagram-animation .sd-unit-name { font-weight: 700; }
+.uml_sequence_diagram-animation .sd-unit-status { color: var(--nja-muted); text-align: right; }
+/* A fully scanned rock is marked by a double border and its status text, not by color alone. */
+.uml_sequence_diagram-animation .sd-unit.is-done { border: 3px double var(--nja-accent); background: var(--nja-panel); }
+.uml_sequence_diagram-animation .sd-progress { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5em; font-variant-numeric: tabular-nums; }
+.uml_sequence_diagram-animation .sd-progress-track { display: inline-block; width: 6em; height: 0.7em; border: 1px solid var(--nja-line); border-radius: 999px; background: var(--nja-bg); overflow: hidden; }
+.uml_sequence_diagram-animation .sd-progress-fill { display: block; height: 100%; background: var(--nja-accent); }
+.uml_sequence_diagram-animation .sd-progress-0 { width: 0; }
+.uml_sequence_diagram-animation .sd-progress-10 { width: 10%; }
+.uml_sequence_diagram-animation .sd-progress-20 { width: 20%; }
+.uml_sequence_diagram-animation .sd-progress-30 { width: 30%; }
+.uml_sequence_diagram-animation .sd-progress-40 { width: 40%; }
+.uml_sequence_diagram-animation .sd-progress-50 { width: 50%; }
+.uml_sequence_diagram-animation .sd-progress-60 { width: 60%; }
+.uml_sequence_diagram-animation .sd-progress-70 { width: 70%; }
+.uml_sequence_diagram-animation .sd-progress-80 { width: 80%; }
+.uml_sequence_diagram-animation .sd-progress-90 { width: 90%; }
+.uml_sequence_diagram-animation .sd-progress-100 { width: 100%; }
+.uml_sequence_diagram-animation .sd-scan-log { margin: 0.5em 1em 0.9em; padding: 0.5em 0.8em; border-left: 4px solid var(--nja-accent); background: var(--nja-note-bg); color: var(--nja-text); overflow-wrap: anywhere; }
+
+.uml_sequence_diagram-animation .sd-stack { min-width: 0; padding: 0.8em 1em; border: 2px solid var(--nja-line); border-radius: 6px; background: var(--nja-panel); color: var(--nja-text); }
+.uml_sequence_diagram-animation .sd-stack-title { margin: 0 0 0.5em; font-weight: 700; }
+.uml_sequence_diagram-animation .sd-stack-diagram { margin: 0; }
+/* Like the lesson's diagrams (css/narrated-pattern.css), the stack scales down to its column instead of scrolling. */
+.uml_sequence_diagram-animation .sd-stack-diagram svg { max-width: 100% !important; }
+.uml_sequence_diagram-animation .sd-stack-note { margin: 0.6em 0 0; color: var(--nja-muted); }
+
+@media (max-width: 520px) {
+  .uml_sequence_diagram-animation .sd-unit { grid-template-columns: 1fr; }
+  .uml_sequence_diagram-animation .sd-unit-status { text-align: left; }
+  /* Phones trade the stack's padding for picture width, so its scaled labels stay near paragraph size. */
+  .uml_sequence_diagram-animation .sd-stack { padding: 0.8em 0.5em; }
+  .uml_sequence_diagram-animation .np-diagram.sd-stack-diagram { padding: 0.25em; }
+}
+@media print {
+  .uml_sequence_diagram-animation :is(.sd-scan, .sd-stack, .sd-unit, .sd-progress-track) { border-color: #555; }
+  .uml_sequence_diagram-animation .sd-unit.is-done { border-color: #000; }
+  .uml_sequence_diagram-animation .sd-progress-fill { background: #333; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+}

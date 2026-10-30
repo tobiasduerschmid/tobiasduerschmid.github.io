@@ -1,0 +1,22 @@
+{%- comment -%}
+  The call stack at the moment a cue describes, top frame first, drawn as an
+  ArchUML freeform stack beside the activation bars it mirrors. Each frame puts
+  its call above its object, and the note sits above the stack, so the picture
+  stays narrow enough to keep its labels legible on a phone.
+  Params: cue (cue.frames, optional cue.stack_note).
+{%- endcomment -%}
+{%- capture sd_stack -%}
+@startuml
+layout vertical
+{% for frame in include.cue.frames %}box "{{ frame.call }}\non {{ frame.on }}" as frame{{ forloop.index0 }}
+{% endfor %}{% for frame in include.cue.frames offset: 1 %}frame{{ forloop.index0 }} -- frame{{ forloop.index }}
+{% endfor %}note top of frame0 : running now
+@enduml
+{%- endcapture -%}
+<div class="sd-stack">
+  <p class="sd-stack-title">Call stack, top frame first</p>
+  <div class="np-diagram sd-stack-diagram"><div data-uml-type="freeform" data-uml-spec="{{ sd_stack | escape }}"></div></div>
+  {%- if include.cue.stack_note %}
+  <p class="sd-stack-note">{{ include.cue.stack_note | escape }}</p>
+  {%- endif %}
+</div>

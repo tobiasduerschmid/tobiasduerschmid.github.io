@@ -1,0 +1,108 @@
+# Key points for the printable lesson notes, keyed by <scene id>-<cue id>.
+# Notes, not narration: at most 16 words a bullet, and only **bold** is meant as markup.
+intro-tap:
+  - Each scan covers **12 points** of every asteroid in range
+  - Pebble needs 10 → done, 5 crystals · boulder needs 20 → 8 short, tagged
+intro-structure:
+  - "**Class diagram** = structure: classes, operations, who can reach whom"
+  - Shows no order of calls
+intro-preview:
+  - "**Sequence diagram**: who messages whom in one scenario, ordered by time"
+  - Four parts → lifelines, messages, activations, fragments
+lifelines-participants:
+  - "**Lifeline**: head box plus dashed line, one per participant"
+  - "This run: probe, pebble, boulder, sound player"
+lifelines-naming:
+  - "Head reads **name : Type**, as in pebble : Asteroid"
+  - Type = a class from the class diagram
+  - One class, several lifelines → diagram shows objects, not classes
+lifelines-anonymous:
+  - "**Anonymous lifeline**: : SoundPlayer, type only"
+  - Horizontal order carries no meaning → arrange for short arrows
+calls-found:
+  - Read top to bottom → lower means later
+  - "**Found message**: starts at a filled dot; sender outside the diagram"
+  - Label = operation name + arguments
+calls-async:
+  - "**Asynchronous message**: solid line, open arrowhead, no reply"
+  - Sender moves on; play only queues the sound
+calls-self:
+  - "**Self-message**: arrow loops back to the sender's own lifeline"
+  - scanPower() → 3 × level = 12
+calls-predict_wait:
+  - "**Predict:** must the probe wait for scan(12)? What does it need back?"
+calls-sync:
+  - "**Synchronous message**: solid line, filled arrowhead; sender waits"
+  - "**Reply**: dashed arrow back to the caller with the result"
+  - Next step depends on what remains unscanned → must wait
+replies-reply_value:
+  - Reply returns to the caller of the matching call
+  - Reply label names the returned value → collectSample() returns 5
+replies-optional:
+  - Replies are optional
+  - Draw them when the value matters (scan → 8); skip obvious returns (tag)
+replies-labels:
+  - "Call label: operation(arguments), matched to parameters in order"
+  - "Reply label: the value, or the variable receiving it"
+  - "Full form: unscanned = scan(power): 8"
+activations-bars:
+  - "**Activation bar** (execution specification): object is running an operation"
+  - Starts when its call arrives, ends when that call returns
+activations-waiting:
+  - Caller's bar continues while blocked on a reply
+  - Callee's bar → from the call's arrival to its reply
+activations-nested:
+  - Self-message → second bar stacked on the first, shifted right
+activations-stack:
+  - Bar ≈ **stack frame** over time → call pushes, reply pops
+  - Asynchronous work happens outside the sender's stack
+loop-generalize:
+  - A trace = one run with fixed objects
+  - "**Combined fragment**: frame around messages, operator in its corner"
+loop-loop:
+  - "**loop** repeats its messages; its **guard** sits in square brackets"
+  - "[for each rock in rocks] · rock : Asteroid = current rock"
+loop-bounds:
+  - "loop(1, 3) → at least once, at most three times"
+  - No limits → any number of passes, even zero
+choices-alt:
+  - "**alt**: dashed lines separate guarded operands; at most one runs"
+  - "[unscanned == 0] → collectSample() · [else] → tag(2)"
+choices-else:
+  - "**[else]** holds when no other guard does"
+  - Guards read known values and never send messages
+  - alt inside loop → decided again for every rock
+choices-opt:
+  - "**opt**: one operand that runs or is skipped → if without else"
+  - "[every rock scanned] → star map and chime"
+choices-create:
+  - "**Creation message**: dashed arrow labeled «create» to the new head"
+  - New lifeline starts where its object is created
+  - Constructor call in code → creation arrow
+runs-predict_run:
+  - "**Predict:** pebble needs 10, shard needs 6, scan of 12 → which messages? Does opt run?"
+runs-answer:
+  - Both fully scanned → scan and collectSample twice, no tag
+  - opt runs → «create» star map, then play("chime")
+runs-traces:
+  - Diagram with fragments → a set of runs, called **traces**
+  - Uncovered runs are not described, neither valid nor invalid
+  - Draw the scenarios that matter
+practice-consistency:
+  - Lifeline type = a class in the class diagram
+  - Each message matches something the receiver handles, usually an operation
+  - No match → one diagram is wrong
+practice-reach:
+  - Sender must reach receiver → field (sfx), parameter (rocks), or creation (star map)
+practice-when:
+  - Draw one when order is the question → design, review, debugging
+  - One scenario, few lifelines; update it with the code
+transfer-sketch:
+  - "**Exercise:** sketch rechargeAll with messages, replies, and fragments; lifelines are given"
+transfer-recharge_answer:
+  - loop [for each drone in drones] → lowBattery() with reply low
+  - opt [low] → recharge(5) · after the loop → asynchronous play("beep")
+summary-recap:
+  - "Lifelines: name : Type; time runs down the page"
+  - "Messages: filled waits, open moves on, dashed replies, «create» starts a lifeline"
+  - Activations ≈ stack frames · fragments → loop, alt, opt

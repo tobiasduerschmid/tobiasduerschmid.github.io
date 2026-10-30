@@ -1,0 +1,374 @@
+{
+  "version": 1,
+  "presentation": {
+    "visuals": {
+      "panel": "uml-sequence-diagram-scan-panel.html",
+      "stack": "uml-sequence-diagram-call-stack.html"
+    },
+    "styles": [
+      "/css/uml-sequence-diagram-narration.css"
+    ]
+  },
+  "resources": {
+    "languages": [
+      "python",
+      "java",
+      "cpp",
+      "typescript"
+    ],
+    "default_language": "python",
+    "example_order": [
+      "sound",
+      "asteroid",
+      "probe",
+      "mission"
+    ],
+    "diagrams": {
+      "classes": {
+        "label": "Class diagram of the probe game",
+        "description": "Probe has a level and crystals and offers scanAll(rocks) and scanPower(). Asteroid has unscanned points, crystals, and tagged passes and offers scan(power), collectSample(), and tag(passes). SoundPlayer offers play(sound). StarMap records how many rocks it charts. Probe is associated with exactly one SoundPlayer through sfx and with zero or one StarMap through starMap, and depends on Asteroid for its rocks parameter.",
+        "caption": "The structure you already know: which classes exist, what each offers, and who can reach whom. It shows no order of calls.",
+        "source": "@startuml\nclass Probe {\n  level: Integer\n  crystals: Integer\n  scanAll(rocks: Sequence<Asteroid>)\n  scanPower(): Integer\n}\nclass Asteroid {\n  unscanned: Integer\n  crystals: Integer\n  tagged: Integer\n  scan(power: Integer): Integer\n  collectSample(): Integer\n  tag(passes: Integer)\n}\nclass SoundPlayer {\n  play(sound: String)\n}\nclass StarMap {\n  rocks: Integer\n}\nProbe --> \"1\" SoundPlayer : sfx\nProbe --> \"0..1\" StarMap : starMap\nProbe ..> Asteroid\n@enduml\n"
+      },
+      "trace": {
+        "type": "sequence",
+        "label": "Sequence diagram of one run",
+        "description": "One run of the scan with the probe, the pebble, the boulder, and the sound player. A found message scanAll(rocks) reaches the probe. The probe sends play(\"ping\") asynchronously to the sound player, then sends itself scanPower(). It calls scan(12) on the pebble, which replies 0, and collectSample() on the pebble, which replies 5. It calls scan(12) on the boulder, which replies 8, and then tag(2) on the boulder.",
+        "caption": "Read from top to bottom. A filled arrowhead means the sender waits; an open arrowhead means it continues; a dashed arrow is a reply.",
+        "source": "@startuml\nlayout compact\nparticipant probe: Probe\nparticipant pebble: Asteroid\nparticipant boulder: Asteroid\nparticipant sfx: SoundPlayer\n",
+        "steps": [
+          "o-> probe: scanAll(rocks)\n",
+          "probe ->> sfx: play(\"ping\")\n",
+          "probe -> probe: scanPower()\n",
+          "probe -> pebble: scan(12)\npebble --> probe: 0\n",
+          "probe -> pebble: collectSample()\npebble --> probe: 5\n",
+          "probe -> boulder: scan(12)\nboulder --> probe: 8\n",
+          "probe -> boulder: tag(2)\n"
+        ]
+      },
+      "trace_bars": {
+        "type": "sequence",
+        "label": "The same run with activation bars",
+        "description": "The run of the scan with activation bars. The probe is active from the arrival of scanAll(rocks) to its end, with a nested bar for the self-message scanPower(). The pebble is active while it handles scan(12) and collectSample(), and the boulder while it handles scan(12) and tag(2). The asynchronous play(\"ping\") adds no bar.",
+        "caption": "A bar runs from a call's arrival to its return, including time spent waiting for nested calls.",
+        "source": "@startuml\nlayout compact\nparticipant probe: Probe\nparticipant pebble: Asteroid\nparticipant boulder: Asteroid\nparticipant sfx: SoundPlayer\no-> probe: scanAll(rocks)\nactivate probe\nprobe ->> sfx: play(\"ping\")\nprobe -> probe: scanPower()\nactivate probe\ndeactivate probe\nprobe -> pebble: scan(12)\nactivate pebble\npebble --> probe: 0\ndeactivate pebble\nprobe -> pebble: collectSample()\nactivate pebble\npebble --> probe: 5\ndeactivate pebble\nprobe -> boulder: scan(12)\nactivate boulder\nboulder --> probe: 8\ndeactivate boulder\nprobe -> boulder: tag(2)\nactivate boulder\ndeactivate boulder\ndeactivate probe\n@enduml\n"
+      },
+      "scan_loop": {
+        "type": "sequence",
+        "label": "General diagram with a loop",
+        "description": "The general scan diagram with the probe, one rock lifeline, and the sound player. After scanAll(rocks), play(\"ping\"), and scanPower(), a loop fragment guarded by for each rock in rocks holds scan(power) from the probe to the rock and its reply, unscanned.",
+        "caption": "One rock lifeline stands for whichever asteroid the loop reaches on each pass.",
+        "source": "@startuml\nlayout compact\nparticipant probe: Probe\nparticipant rock: Asteroid\nparticipant sfx: SoundPlayer\no-> probe: scanAll(rocks)\nactivate probe\nprobe ->> sfx: play(\"ping\")\nprobe -> probe: scanPower()\nactivate probe\ndeactivate probe\nloop [for each rock in rocks]\nprobe -> rock: scan(power)\nactivate rock\nrock --> probe: unscanned\ndeactivate rock\nend\ndeactivate probe\n@enduml\n"
+      },
+      "scan_alt": {
+        "type": "sequence",
+        "label": "General diagram with a loop and an alt",
+        "description": "Inside the loop for each rock in rocks, after scan(power) and its reply unscanned, an alt fragment has two operands. When unscanned == 0, the probe calls collectSample() on the rock and receives crystals. Otherwise, under the guard else, the probe calls tag(2) on the rock.",
+        "caption": "A dashed line divides the alt frame into operands; at most one operand runs on each pass.",
+        "source": "@startuml\nlayout compact\nparticipant probe: Probe\nparticipant rock: Asteroid\nparticipant sfx: SoundPlayer\no-> probe: scanAll(rocks)\nactivate probe\nprobe ->> sfx: play(\"ping\")\nprobe -> probe: scanPower()\nactivate probe\ndeactivate probe\nloop [for each rock in rocks]\nprobe -> rock: scan(power)\nactivate rock\nrock --> probe: unscanned\ndeactivate rock\nalt [unscanned == 0]\nprobe -> rock: collectSample()\nactivate rock\nrock --> probe: crystals\ndeactivate rock\nelse [else]\nprobe -> rock: tag(2)\nactivate rock\ndeactivate rock\nend\nend\ndeactivate probe\n@enduml\n"
+      },
+      "scan": {
+        "type": "sequence",
+        "label": "Complete general diagram of the scan",
+        "description": "The complete general scan diagram. A found message scanAll(rocks) reaches the probe, which sends play(\"ping\") asynchronously and scanPower() to itself. A loop for each rock in rocks holds scan(power) with its reply unscanned and an alt fragment: when unscanned == 0, collectSample() with reply crystals; otherwise tag(2). After the loop, an opt fragment guarded by every rock scanned creates starMap: StarMap and sends play(\"chime\") asynchronously.",
+        "caption": "loop repeats, alt chooses at most one operand, and opt runs its operand or skips it.",
+        "source": "@startuml\nlayout compact\nparticipant probe: Probe\nparticipant rock: Asteroid\nparticipant sfx: SoundPlayer\nparticipant starMap: StarMap\no-> probe: scanAll(rocks)\nactivate probe\nprobe ->> sfx: play(\"ping\")\nprobe -> probe: scanPower()\nactivate probe\ndeactivate probe\nloop [for each rock in rocks]\nprobe -> rock: scan(power)\nactivate rock\nrock --> probe: unscanned\ndeactivate rock\nalt [unscanned == 0]\nprobe -> rock: collectSample()\nactivate rock\nrock --> probe: crystals\ndeactivate rock\nelse [else]\nprobe -> rock: tag(2)\nactivate rock\ndeactivate rock\nend\nend\nopt [every rock scanned]\ncreate starMap\nprobe --> starMap: <<create>>\nactivate starMap\ndeactivate starMap\nprobe ->> sfx: play(\"chime\")\nend\ndeactivate probe\n@enduml\n"
+      },
+      "charted_run": {
+        "type": "sequence",
+        "label": "One run with a pebble and a shard",
+        "description": "A concrete run with a pebble and a shard. After scanAll(rocks), play(\"ping\"), and scanPower(), the probe calls scan(12) on the pebble, which replies 0, and collectSample(), which replies 5, then scan(12) on the shard, which replies 0, and collectSample(), which replies 2. Because every rock is scanned, the probe creates starMap: StarMap and sends play(\"chime\") asynchronously. No tag message is sent.",
+        "caption": "This trace is one of the runs the general diagram describes: two passes through the loop, the first operand of the alt each time, and the opt.",
+        "source": "@startuml\nlayout compact\nparticipant probe: Probe\nparticipant pebble: Asteroid\nparticipant shard: Asteroid\nparticipant sfx: SoundPlayer\nparticipant starMap: StarMap\no-> probe: scanAll(rocks)\nactivate probe\nprobe ->> sfx: play(\"ping\")\nprobe -> probe: scanPower()\nactivate probe\ndeactivate probe\nprobe -> pebble: scan(12)\nactivate pebble\npebble --> probe: 0\ndeactivate pebble\nprobe -> pebble: collectSample()\nactivate pebble\npebble --> probe: 5\ndeactivate pebble\nprobe -> shard: scan(12)\nactivate shard\nshard --> probe: 0\ndeactivate shard\nprobe -> shard: collectSample()\nactivate shard\nshard --> probe: 2\ndeactivate shard\ncreate starMap\nprobe --> starMap: <<create>>\nactivate starMap\ndeactivate starMap\nprobe ->> sfx: play(\"chime\")\ndeactivate probe\n@enduml\n"
+      },
+      "recharge": {
+        "type": "sequence",
+        "label": "Sequence diagram of the recharge",
+        "description": "A found message rechargeAll(drones) reaches the dock. A loop fragment guarded by for each drone in drones holds lowBattery() from the dock to the drone with the reply low, and an opt fragment guarded by low around recharge(5). After the loop, the dock sends play(\"beep\") asynchronously to the sound player.",
+        "caption": "The answer to the exercise: the check is a synchronous call, the recharge is optional, and the beep is asynchronous.",
+        "source": "@startuml\nlayout compact\nparticipant dock: Dock\nparticipant drone: Drone\nparticipant sfx: SoundPlayer\n",
+        "steps": [
+          "o-> dock: rechargeAll(drones)\nactivate dock\nloop [for each drone in drones]\ndock -> drone: lowBattery()\nactivate drone\ndrone --> dock: low\ndeactivate drone\nopt [low]\ndock -> drone: recharge(5)\nactivate drone\ndeactivate drone\nend\nend\ndock ->> sfx: play(\"beep\")\ndeactivate dock\n"
+        ]
+      }
+    }
+  },
+  "scenes": {
+    "intro": {
+      "state": {
+        "diagram": "classes",
+        "panel": true
+      },
+      "cues": {
+        "tap": {
+          "panel_state": "partial_after"
+        },
+        "structure": {
+          "panel_state": "partial_after"
+        },
+        "preview": {
+          "diagram": "scan",
+          "panel_state": "partial_after"
+        }
+      }
+    },
+    "lifelines": {
+      "state": {
+        "code": "mission",
+        "diagram": "trace"
+      },
+      "cues": {
+        "participants": {
+          "focus": "objects",
+          "diagram_steps": 0
+        },
+        "naming": {
+          "focus": "rocks",
+          "diagram_steps": 0,
+          "diagram_focus": "pebble"
+        },
+        "anonymous": {
+          "focus": "sfx",
+          "diagram_steps": 0,
+          "diagram_focus": "sfx"
+        }
+      }
+    },
+    "calls": {
+      "state": {
+        "code": "probe",
+        "diagram": "trace"
+      },
+      "cues": {
+        "found": {
+          "focus": "entry",
+          "diagram_steps": 1
+        },
+        "async": {
+          "focus": "play",
+          "diagram_steps": 2,
+          "diagram_focus": "sfx"
+        },
+        "self": {
+          "focus": "self_call",
+          "diagram_steps": 3,
+          "diagram_focus": "probe"
+        },
+        "predict_wait": {
+          "focus": "scan_call",
+          "diagram_steps": 3
+        },
+        "sync": {
+          "focus": "scan_call",
+          "diagram_steps": 4,
+          "diagram_focus": "pebble"
+        }
+      }
+    },
+    "replies": {
+      "state": {
+        "code": "probe",
+        "diagram": "trace"
+      },
+      "cues": {
+        "reply_value": {
+          "focus": "collect",
+          "diagram_steps": 5,
+          "diagram_focus": "pebble"
+        },
+        "optional": {
+          "focus": "scan_and_tag",
+          "diagram_steps": 7,
+          "diagram_focus": "boulder"
+        },
+        "labels": {
+          "focus": "scan_call",
+          "diagram_steps": 7
+        }
+      }
+    },
+    "activations": {
+      "state": {
+        "code": "probe",
+        "diagram": "trace_bars",
+        "stack": true
+      },
+      "cues": {
+        "bars": {
+          "focus": "method",
+          "diagram_focus": "probe",
+          "frames": [
+            {
+              "call": "scanAll(rocks)",
+              "on": "probe"
+            }
+          ]
+        },
+        "waiting": {
+          "focus": "scan_call",
+          "diagram_focus": "pebble",
+          "frames": [
+            {
+              "call": "scan(12)",
+              "on": "pebble"
+            },
+            {
+              "call": "scanAll(rocks)",
+              "on": "probe"
+            }
+          ]
+        },
+        "nested": {
+          "focus": "self_call",
+          "diagram_focus": "probe",
+          "frames": [
+            {
+              "call": "scanPower()",
+              "on": "probe"
+            },
+            {
+              "call": "scanAll(rocks)",
+              "on": "probe"
+            }
+          ]
+        },
+        "stack": {
+          "focus": "play",
+          "diagram_focus": "sfx",
+          "frames": [
+            {
+              "call": "scanAll(rocks)",
+              "on": "probe"
+            }
+          ],
+          "stack_note": "The audio system plays the queued \"ping\" sound later, outside the probe's stack."
+        }
+      }
+    },
+    "loop": {
+      "state": {
+        "code": "probe",
+        "diagram": "scan_loop"
+      },
+      "cues": {
+        "generalize": {
+          "focus": "loop"
+        },
+        "loop": {
+          "focus": "loop_body",
+          "diagram_focus": "rock"
+        },
+        "bounds": {
+          "focus": "loop"
+        }
+      }
+    },
+    "choices": {
+      "state": {
+        "code": "probe",
+        "diagram": "scan_alt"
+      },
+      "cues": {
+        "alt": {
+          "focus": "alt"
+        },
+        "else": {
+          "focus": "guards"
+        },
+        "opt": {
+          "focus": "opt",
+          "diagram": "scan"
+        },
+        "create": {
+          "focus": "create",
+          "diagram": "scan",
+          "diagram_focus": "starMap"
+        }
+      }
+    },
+    "runs": {
+      "state": {
+        "code": "probe",
+        "diagram": "scan",
+        "panel": true
+      },
+      "cues": {
+        "predict_run": {
+          "focus": "method",
+          "panel_state": "charted_before"
+        },
+        "answer": {
+          "focus": "messages",
+          "diagram": "charted_run",
+          "diagram_focus": "starMap",
+          "panel_state": "charted_after"
+        },
+        "traces": {
+          "focus": "method",
+          "panel_state": "charted_after"
+        }
+      }
+    },
+    "practice": {
+      "state": {
+        "code": "probe",
+        "diagram": "classes"
+      },
+      "cues": {
+        "consistency": {
+          "focus": "rock_calls",
+          "diagram_focus": "Asteroid"
+        },
+        "reach": {
+          "focus": "reach",
+          "diagram_focus": "Probe"
+        },
+        "when": {
+          "focus": "method",
+          "diagram": "scan"
+        }
+      }
+    },
+    "transfer": {
+      "state": {
+        "code": "recharge",
+        "diagram": "recharge"
+      },
+      "cues": {
+        "sketch": {
+          "focus": "method",
+          "diagram_steps": 0
+        },
+        "recharge_answer": {
+          "focus": "method",
+          "diagram_steps": 1
+        }
+      }
+    },
+    "summary": {
+      "state": {
+        "cards": [
+          {
+            "title": "Lifelines",
+            "text": "One per participant, headed name : Type. Time runs down the page; spacing is not a clock."
+          },
+          {
+            "title": "Messages",
+            "text": "Filled arrowhead: the sender waits. Open arrowhead: it moves on. Dashed arrow: a reply. <<create>> starts a new lifeline."
+          },
+          {
+            "title": "Activations",
+            "text": "A bar runs from a call's arrival to its return, including time spent waiting, like a stack frame."
+          },
+          {
+            "title": "Fragments",
+            "text": "loop repeats as its guard allows, alt runs at most one guarded operand, and opt runs its operand or skips it."
+          }
+        ]
+      },
+      "cues": {
+        "recap": {}
+      }
+    }
+  }
+}

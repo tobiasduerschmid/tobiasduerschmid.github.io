@@ -1,0 +1,67 @@
+It's your turn. Two asteroids drift in range of your probe: a pebble that needs 10 points of scanning and a boulder that needs 20. You tap Scan all. A ping sounds, each rock gets 12 points, the pebble yields 5 crystals, and the boulder, still 8 short, gets a tracking tag.
+
+You already know the class diagram for this game: Probe, Asteroid, star map, and sound player, each with its operations. It shows what can exist and who can reach whom. It can't show what just happened: who called whom, and in what order.
+
+A sequence diagram shows exactly that: the messages sent between objects in one scenario, in time order. We'll read one in four parts: lifelines, messages, activations, and fragments. Choose a code language above; the diagrams stay the same in every language.
+
+A sequence diagram starts with its participants. Each one gets a lifeline: a box at the top and a dashed line running down the page. In our run, four objects take part: the probe, the pebble, the boulder, and the probe's sound player.
+
+Each box names an object, then its type: pebble colon Asteroid. The name identifies the object; the type is a class from your class diagram. So one Asteroid class gives two lifelines. A class diagram shows kinds of things; a sequence diagram shows the objects in one run.
+
+When the name doesn't matter, keep just the colon and the type, like colon sound player for some sound player. Here we keep the name S F X, the variable the code uses. And left-to-right order has no meaning: arrange lifelines so the arrows stay short.
+
+Now the messages. Read them from top to bottom, because time runs down the page. The first arrow is your tap arriving as scan all. It comes from the game's input code, outside this diagram, so it starts at a filled dot: a found message.
+
+The probe first tells the sound player to play the ping. Play only drops the sound into a queue and returns at once; the audio plays later. The probe never waits for the sound, so the arrow is A-synchronous: a solid line with an open arrowhead, and no reply.
+
+Next, the probe asks itself how strong a scan is: scan power returns three times its level, which is 12. A message to the same object loops back to its own lifeline. In code, that's a call on self or this.
+
+The probe now scans the pebble with scan of 12. Before that arrow appears, predict: should the probe wait for this message, unlike the sound? What does it need back? Pause the narration if you want more time.
+
+It has to wait, because its next step depends on how much of the pebble is left to scan. A synchronous message is a solid line with a filled arrowhead: the sender waits until the receiver finishes. The dashed arrow back is the reply, carrying 0: nothing is left.
+
+With the pebble fully scanned, the probe calls collect sample, and 5 comes back on the reply: five crystals. A reply always returns to the caller of the call it answers, and its label names the returned value.
+
+The boulder answers scan with 8, so it isn't done, and the probe calls tag with 2 passes, to find it again later. Tag returns nothing worth showing, so its reply is left out. Replies are optional: draw them when the value matters, and skip obvious ones.
+
+Labels follow the operation. A call's label is the operation's name and its arguments, matched in order to the operation's parameters, like scan of 12. A reply's label names the returned value, or the variable that receives it.
+
+Now add activation bars, which U M L formally calls execution specifications. A thin bar on a lifeline shows when that object is running an operation. The probe's bar starts when scan all arrives and ends when scan all returns.
+
+A bar includes waiting. While the pebble runs scan, the probe's bar continues, because scan all hasn't returned; the probe is blocked until the reply arrives. The pebble's short bar starts when the call arrives and ends when it replies.
+
+A self-message stacks a second bar on the same lifeline. The scan power call runs inside scan all, so its bar sits on top of the probe's first bar, shifted slightly right, and ends when scan power returns.
+
+If that reminds you of the call stack, good: each bar is like a stack frame stretched over time. A synchronous call pushes a frame; its reply pops it. The ping plays in no frame of the probe's stack; the audio system plays it later, on its own.
+
+Our trace showed one run with exactly two asteroids. But the code never names a pebble or a boulder; it loops over whatever rocks are in range. To describe every run in one diagram, U M L uses combined fragments: a frame around some messages, with an operator in its corner.
+
+The loop fragment repeats the messages inside its frame. Its guard, in square brackets, says how often: for each rock in rocks. A single lifeline, rock colon Asteroid, stands for whichever rock the current pass reaches: first the pebble, then the boulder.
+
+A loop can also state limits, like loop of 1 comma 3: at least once, and at most three times. A loop without limits may repeat any number of times, including zero. Ours has no limits; its guard alone decides, with one pass per rock.
+
+After each scan, the code branches. If nothing of the rock is left to scan, the probe collects a sample; otherwise, it tags the rock. An alt fragment shows the choice: a dashed line splits its frame into operands, each with a guard, and at most one operand runs.
+
+The guard else is true when no other guard is. Guards test values the participants already know at that point, like the amount the last reply returned; a guard never sends a message. And since this alt sits inside the loop, the choice is made again for every rock.
+
+After the loop comes one more decision: only if every rock was fully scanned does a new star map appear and the chime play. That's an opt fragment: one operand that either runs or is skipped, like an if with no else.
+
+Inside it is one more kind of message: creation. The dashed arrow labeled create points at the box of a new lifeline, drawn where the star map begins to exist, not at the top of the diagram. A constructor call in your code becomes this arrow.
+
+Your turn to read. On the next pass, a pebble that needs 10 points and a shard that needs 6 are in range, and each scan still covers 12. Walk the diagram: which messages are sent, in what order, and does the opt fragment run? Pause if you need time.
+
+Both are fully scanned. The pebble gets scan and collect sample, then the shard gets the same two calls. No rock is left unfinished, so tag is never sent. Every rock was scanned, so the opt runs: the star map is created, and the chime plays.
+
+So a diagram with fragments describes a set of runs, called traces, and each concrete run is one of them. Runs the diagram doesn't cover aren't described at all, as valid or invalid. Draw diagrams for the scenarios that matter, not for every path a program can take.
+
+Your sequence and class diagrams must agree. Each lifeline's type is a class in the class diagram. Each message names something the receiver's class can handle, usually one of its operations, with matching arguments. In our game, scan, collect sample, and tag are all Asteroid operations. A message with no match means one diagram is wrong.
+
+A sender must also be able to reach its receiver. The probe reaches the sound player through its S F X field, the asteroids through the rocks parameter, and the star map because it creates it. If you can't name the path, the design is missing one.
+
+When does a sequence diagram earn its place? When order is the question: designing a feature before you code it, explaining a tricky flow in a review, or chasing a bug across several objects. Keep each one to a single scenario and a few lifelines, and update it when the code changes.
+
+One last translation. The docking station recharges its drones: for each drone, it asks whether the battery is low, recharges the low ones by 5, and finally plays a beep without waiting. Sketch the sequence diagram for this code before the answer appears.
+
+A found message starts recharge all. Inside a loop for each drone, low battery is a synchronous call whose reply, low, feeds an opt guard around recharge of 5. After the loop, play beep is A-synchronous, with an open arrowhead, and the dock's bar spans the whole run.
+
+To finish, recall the four parts. Lifelines: one participant each, named name colon Type, with time running down the page. Messages: filled arrowheads wait, open arrowheads move on, dashed replies return values, and creation starts a lifeline. Activations: bars that work like stack frames. Fragments: loop repeats, alt chooses, and opt may skip. The summary quiz checks each part on a new app.

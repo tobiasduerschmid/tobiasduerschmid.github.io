@@ -2,7 +2,10 @@
 title: "UML Sequence Diagrams"
 layout: sebook
 uml_code_labs: true
+static_uml: true
 ---
+
+{% include narration.html topic="uml_sequence_diagram" %}
 
 > **Want to practice?** Write code that matches target diagrams in our interactive tutorial: [UML Sequence Diagrams in Python](/SEBook/tools/uml-sequence-diagram-python.html).
 {: #interactive-tutorials}

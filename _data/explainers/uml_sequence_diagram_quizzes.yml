@@ -1,0 +1,227 @@
+# One knowledge check per section, about sequence-diagram notation rather than the probe's
+# details. The summary section lists several questions on a new app under `questions`.
+intro:
+  question: What does a UML sequence diagram show that a class diagram does not?
+  options:
+    - The attributes and operations that each class offers
+    - The messages objects exchange in one scenario, in time order
+    - Every way the program can possibly run, including error paths
+  correct_index: 1
+  explanation: >-
+    A class diagram shows what exists and who can reach whom. A sequence diagram shows who sends
+    what to whom, and in what order, in one scenario.
+  option_feedback:
+    0: Attributes and operations belong to the class diagram, which shows no order of calls.
+    2: A sequence diagram shows the messages of one scenario, not every possible run.
+lifelines:
+  question: "In a sequence diagram, what does the lifeline head boulder: Asteroid tell you?"
+  options:
+    - Asteroid names the object, and boulder is the class it belongs to
+    - boulder is a subclass of the Asteroid class from the class diagram
+    - boulder is one object of class Asteroid taking part in this run
+  correct_index: 2
+  explanation: >-
+    A lifeline head names one participant and then its type. The name says which object it is;
+    the type is a class from the class diagram.
+  option_feedback:
+    0: The head reads name, then type, so boulder is the object and Asteroid is its class.
+    1: Subclasses appear in a class diagram as generalizations. In a lifeline head, the colon separates an object's name from its type.
+calls:
+  question: In a sequence diagram, when is a message drawn as a solid line with an open arrowhead?
+  options:
+    - When the sender continues without waiting for the receiver
+    - When the receiver belongs to a different class than the sender
+    - When the sender needs a value back before it continues
+  correct_index: 0
+  explanation: >-
+    An open arrowhead on a solid line marks an asynchronous message: the sender moves on at
+    once, and no reply is drawn.
+  option_feedback:
+    1: The receiver's class does not decide the arrowhead. Only whether the sender waits does.
+    2: A sender that needs a value must wait for it. That is a synchronous message, with a filled arrowhead and a dashed reply.
+replies:
+  question: In a sequence diagram, when can you leave out the reply to a synchronous call?
+  options:
+    - Never, because every synchronous call needs a dashed reply
+    - When the call returns nothing worth showing, so the return is obvious
+    - When the receiver's lifeline is drawn to the right of the caller's
+  correct_index: 1
+  explanation: >-
+    Replies are optional. Draw them when the returned value matters, and skip them when the
+    return is obvious, such as a call that returns nothing.
+  option_feedback:
+    0: Replies are optional. A call that returns nothing worth showing, like tag, can leave its reply out.
+    2: Left-to-right order has no meaning in a sequence diagram, so it cannot decide whether a reply is drawn.
+activations:
+  question: >-
+    In a sequence diagram, a caller sends a synchronous message and waits for the reply. What do
+    the activation bars show during that wait?
+  options:
+    - The caller's bar stops when it sends the message and restarts with the reply
+    - Only the receiver has a bar, because only one bar can be open at a time
+    - The caller's bar continues, and the receiver's bar runs until it replies
+  correct_index: 2
+  explanation: >-
+    A bar covers the whole execution of an operation, including time spent waiting for nested
+    calls, like a stack frame that stays on the stack until its call returns.
+  option_feedback:
+    0: The caller's operation has not returned yet, so its bar continues while it waits.
+    1: The bars of a caller and its receiver overlap in time, like frames on a call stack.
+loop:
+  question: >-
+    In a sequence diagram, how should one diagram describe every run of code that sends scan to
+    each asteroid in a list of any length?
+  options:
+    - With a loop fragment around scan, guarded by a condition naming the list
+    - With one scan arrow per asteroid, copied for the longest list you expect
+    - With asynchronous scan arrows, so the sender never waits for an asteroid
+  correct_index: 0
+  explanation: >-
+    A loop frame repeats its messages as its guard allows, and one lifeline stands for the
+    current item, so a single diagram covers lists of any length.
+  option_feedback:
+    1: Copied arrows describe one run with a fixed number of asteroids. A loop covers lists of any length.
+    2: The sender needs each asteroid's reply before it continues, so scan stays synchronous. Repetition needs a loop.
+choices:
+  question: In a sequence diagram, how does an opt fragment differ from an alt fragment?
+  options:
+    - An opt repeats its operand while the guard holds, and an alt runs once
+    - An opt runs or skips one operand, and an alt picks at most one of several
+    - An opt may hold only asynchronous messages, and an alt only synchronous ones
+  correct_index: 1
+  explanation: >-
+    An opt is like an if without an else: its single operand runs or is skipped. An alt is split
+    into guarded operands, and at most one of them runs.
+  option_feedback:
+    0: Repetition is the job of a loop fragment. An opt runs its operand at most once.
+    2: Fragments say whether and how often messages occur, not whether senders wait. The scan's opt holds a creation message and an asynchronous one.
+runs:
+  question: In a sequence diagram with fragments, what does the diagram say about a run it does not cover?
+  options:
+    - That the run is forbidden, because the diagram leaves it out
+    - That the run behaves like the closest run the diagram shows
+    - Nothing, because it describes that run as neither valid nor invalid
+  correct_index: 2
+  explanation: >-
+    A diagram with fragments describes a set of runs, called traces. Runs it does not cover are
+    not described at all, so you cannot conclude whether they are valid.
+  option_feedback:
+    0: Leaving a run out does not forbid it. The diagram simply says nothing about that run.
+    1: A diagram does not extrapolate from the runs it shows. A run it does not cover is not described at all.
+practice:
+  question: >-
+    In a sequence diagram, an arrow sends refuel(5) to a lifeline of type Asteroid, but the class
+    diagram's Asteroid class has no such operation. What should you conclude?
+  options:
+    - The diagrams disagree, so add the operation to Asteroid or fix the message
+    - Nothing, because sequence diagrams may send messages a class cannot handle
+    - The message must be asynchronous, because no operation receives it
+  correct_index: 0
+  explanation: >-
+    Each message names something the receiver's class can handle, usually one of its
+    operations. A message with no match means that one of the two diagrams is wrong.
+  option_feedback:
+    1: The two diagrams must agree. Every message has to match something its receiver's class handles.
+    2: The arrowhead says whether the sender waits. It does not excuse a missing operation.
+transfer:
+  question: >-
+    In a sequence diagram of code that calls drone.lowBattery() and recharges the drone only when
+    the answer is true, how should the check and the recharge appear?
+  options:
+    - As an alt with lowBattery() in one operand and recharge(5) in the other
+    - As a synchronous lowBattery() with its reply, then recharge(5) inside an opt
+    - As an asynchronous lowBattery(), then recharge(5) with no fragment at all
+  correct_index: 1
+  explanation: >-
+    The caller needs the answer before deciding, so lowBattery() is synchronous, with a reply.
+    Only the recharge is conditional, so an opt guarded by the reply holds it.
+  option_feedback:
+    0: The check always happens, so it is not one branch of a choice. Only the recharge depends on the answer.
+    2: The caller needs the answer before it decides, so it waits. Without a fragment, recharge(5) would be sent every time.
+summary:
+  questions:
+    - question: >-
+        In a sequence diagram of a flashcard app, the lifeline today: Deck stands next to a
+        lifeline headed only : Card. What do the two heads tell you?
+      options:
+        - today is one Deck object, and the card's name does not matter
+        - today is a subclass of Deck, and Card is an object without a class
+        - Deck is the object's name, and today and Card are both classes
+      correct_index: 0
+      explanation: >-
+        A head reads name, then type. today is an object of class Deck, and a head with only a
+        colon and a type names no particular card.
+      option_feedback:
+        1: "The colon separates a name from a type. today is an object of class Deck, and the head : Card has a type but no name."
+        2: A lifeline head reads name, then type, so today is the name and Deck is its class.
+    - question: >-
+        In the flashcard app's sequence diagram, the deck calls check(answer) on a card and needs
+        to know whether the answer was right before it continues. How is that drawn?
+      options:
+        - A solid line with an open arrowhead, and no reply drawn back to the deck
+        - A solid line with a filled arrowhead, and a dashed reply naming the result
+        - A dashed arrow labeled create, pointing at the head of the card's lifeline
+      correct_index: 1
+      explanation: >-
+        The deck needs the result before it continues, so the message is synchronous: a filled
+        arrowhead, and a dashed reply that names what comes back.
+      option_feedback:
+        0: An open arrowhead means the deck moves on without waiting, but it needs the result first.
+        2: A creation message starts a new lifeline. check(answer) asks a card that already exists.
+    - question: >-
+        In the flashcard app's sequence diagram, the app schedules tomorrow's reminder and
+        continues at once, without waiting for the notification service. Which arrow fits?
+      options:
+        - A solid line with a filled arrowhead, followed by a dashed reply
+        - A self-message that loops back to the app's own lifeline
+        - A solid line with an open arrowhead and no reply
+      correct_index: 2
+      explanation: >-
+        The app does not wait, so the message is asynchronous: a solid line with an open
+        arrowhead, and no reply.
+      option_feedback:
+        0: That is a synchronous call. The app would wait for the notification service to finish.
+        1: A self-message goes to the same object. The reminder goes to the notification service.
+    - question: >-
+        In the flashcard app's sequence diagram, the deck's activation bar continues while a card
+        runs check(answer). Why?
+      options:
+        - The deck's operation is still running while it waits for the reply
+        - The deck keeps sending messages to the card the whole time
+        - Activation bars always stretch to the bottom of the diagram
+      correct_index: 0
+      explanation: >-
+        A bar covers an operation from the arrival of its call to its return, including time
+        spent waiting, like a stack frame that stays on the stack.
+      option_feedback:
+        1: One message goes to the card. The bar continues because the deck's operation has not returned yet.
+        2: A bar ends when its operation returns, like a stack frame that is popped.
+    - question: >-
+        In a sequence diagram of the flashcard app, each due card is shown once; a correct answer
+        doubles that card's interval, and a wrong one resets it. Which fragments fit?
+      options:
+        - An opt fragment containing a loop
+        - A loop fragment containing an alt
+        - An alt fragment containing a loop
+      correct_index: 1
+      explanation: >-
+        Each due card is visited once, so a loop surrounds the messages. For each card, at most
+        one of two outcomes happens, so an alt with guards such as correct and else sits inside
+        the loop.
+      option_feedback:
+        0: An opt runs once or not at all, so it cannot visit every due card.
+        2: The choice is made for each card, so it belongs inside the loop, not around it.
+    - question: >-
+        In the flashcard app's sequence diagram, a message sends flip() to a Card lifeline, but
+        the Card class in the class diagram has no flip operation. What does that tell you?
+      options:
+        - The message must be asynchronous, because no operation receives it
+        - Sequence diagrams may show any message, whatever the classes offer
+        - The two diagrams disagree, so one of them needs fixing
+      correct_index: 2
+      explanation: >-
+        Each message must name something the receiver's class can handle, usually one of its
+        operations. A mismatch means one of the diagrams is wrong.
+      option_feedback:
+        0: The arrowhead says whether the sender waits. It does not excuse a missing operation.
+        1: Each message must name something its receiver's class can handle.

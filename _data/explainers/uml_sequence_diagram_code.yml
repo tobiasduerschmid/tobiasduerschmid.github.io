@@ -1,0 +1,673 @@
+python:
+  label: Python
+  filename: probe.py
+  note: Python passes the rocks as a list. Every name in a sequence diagram follows the design's camelCase spelling, so scan_all appears there as scanAll.
+  imports: |
+    from __future__ import annotations
+  blocks:
+    sound:
+      source: |
+        class SoundPlayer:
+            def __init__(self) -> None:
+                self.queued: list[str] = []
+
+            def play(self, sound: str) -> None:
+                # Queue the sound; the audio thread plays it later.
+                self.queued.append(sound)
+
+
+        class StarMap:
+            def __init__(self, rocks: int) -> None:
+                self.rocks = rocks
+      focus:
+        play: [5, 6, 7]
+        star_map: [10, 11, 12]
+    asteroid:
+      source: |
+        class Asteroid:
+            def __init__(self, name: str, unscanned: int, crystals: int) -> None:
+                self.name = name
+                self.unscanned = unscanned
+                self.crystals = crystals
+                self.tagged = 0
+
+            def scan(self, power: int) -> int:
+                self.unscanned = max(0, self.unscanned - power)
+                return self.unscanned
+
+            def collect_sample(self) -> int:
+                sample, self.crystals = self.crystals, 0
+                return sample
+
+            def tag(self, passes: int) -> None:
+                self.tagged = passes
+      focus:
+        operations: [8, 12, 16]
+    probe:
+      source: |
+        class Probe:
+            def __init__(self, level: int, sfx: SoundPlayer) -> None:
+                self.level = level
+                self.sfx = sfx
+                self.crystals = 0
+                self.star_map: StarMap | None = None
+
+            def scan_all(self, rocks: list[Asteroid]) -> None:
+                self.sfx.play("ping")
+                power = self.scan_power()
+                scanned = 0
+                for rock in rocks:
+                    unscanned = rock.scan(power)
+                    if unscanned == 0:
+                        self.crystals += rock.collect_sample()
+                        scanned += 1
+                    else:
+                        rock.tag(2)
+                if scanned == len(rocks):
+                    self.star_map = StarMap(scanned)
+                    self.sfx.play("chime")
+
+            def scan_power(self) -> int:
+                return 3 * self.level
+      focus:
+        method: [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21]
+        entry: [8]
+        play: [9]
+        self_call: [10, 23, 24]
+        scan_call: [13]
+        collect: [14, 15]
+        scan_and_tag: [13, 18]
+        loop: [12]
+        loop_body: [12, 13]
+        alt: [14, 15, 16, 17, 18]
+        guards: [14, 17]
+        opt: [19, 20, 21]
+        create: [20]
+        messages: [9, 10, 13, 15, 18, 20, 21]
+        rock_calls: [13, 15, 18]
+        reach: [4, 8, 20]
+      scroll:
+        self_call: 10
+        method: 8
+        messages: 12
+        reach: 4
+    mission:
+      source: |
+        sfx = SoundPlayer()
+        probe = Probe(4, sfx)
+        pebble = Asteroid("pebble", 10, 5)
+        boulder = Asteroid("boulder", 20, 8)
+        probe.scan_all([pebble, boulder])
+        print(f"pebble: {pebble.unscanned} left | boulder: {boulder.unscanned} left, tagged {boulder.tagged}")
+        print(f"crystals: {probe.crystals} | star map: {'none' if probe.star_map is None else probe.star_map.rocks}")
+      focus:
+        objects: [1, 2, 3, 4]
+        rocks: [3, 4]
+        sfx: [1]
+        scan: [5]
+        result: [6, 7]
+    recharge:
+      source: |
+        class Drone:
+            def __init__(self, battery: int, capacity: int) -> None:
+                self.battery = battery
+                self.capacity = capacity
+
+            def low_battery(self) -> bool:
+                return 2 * self.battery < self.capacity
+
+            def recharge(self, amount: int) -> None:
+                self.battery = min(self.capacity, self.battery + amount)
+
+
+        class Dock:
+            def __init__(self, sfx: SoundPlayer) -> None:
+                self.sfx = sfx
+
+            def recharge_all(self, drones: list[Drone]) -> None:
+                for drone in drones:
+                    low = drone.low_battery()
+                    if low:
+                        drone.recharge(5)
+                self.sfx.play("beep")
+      focus:
+        method: [17, 18, 19, 20, 21, 22]
+        loop: [18]
+        check: [19]
+        opt: [20, 21]
+        beep: [22]
+java:
+  label: Java
+  filename: Mission.java
+  note: Fields that the demo prints are package-private, so the Mission class in the same file can read them.
+  imports: |
+    import java.util.ArrayList;
+    import java.util.List;
+  blocks:
+    sound:
+      source: |
+        class SoundPlayer {
+            final List<String> queued = new ArrayList<>();
+
+            void play(String sound) {
+                // Queue the sound; the audio thread plays it later.
+                queued.add(sound);
+            }
+        }
+
+        class StarMap {
+            final int rocks;
+
+            StarMap(int rocks) {
+                this.rocks = rocks;
+            }
+        }
+      focus:
+        play: [4, 5, 6, 7]
+        star_map: [10, 11, 13, 14, 15, 16]
+    asteroid:
+      source: |
+        class Asteroid {
+            final String name;
+            int unscanned;
+            int crystals;
+            int tagged = 0;
+
+            Asteroid(String name, int unscanned, int crystals) {
+                this.name = name;
+                this.unscanned = unscanned;
+                this.crystals = crystals;
+            }
+
+            int scan(int power) {
+                unscanned = Math.max(0, unscanned - power);
+                return unscanned;
+            }
+
+            int collectSample() {
+                int sample = crystals;
+                crystals = 0;
+                return sample;
+            }
+
+            void tag(int passes) {
+                tagged = passes;
+            }
+        }
+      focus:
+        operations: [13, 18, 24]
+    probe:
+      source: |
+        class Probe {
+            private final int level;
+            private final SoundPlayer sfx;
+            int crystals = 0;
+            StarMap starMap;
+
+            Probe(int level, SoundPlayer sfx) {
+                this.level = level;
+                this.sfx = sfx;
+            }
+
+            void scanAll(List<Asteroid> rocks) {
+                sfx.play("ping");
+                int power = scanPower();
+                int scanned = 0;
+                for (Asteroid rock : rocks) {
+                    int unscanned = rock.scan(power);
+                    if (unscanned == 0) {
+                        crystals += rock.collectSample();
+                        scanned++;
+                    } else {
+                        rock.tag(2);
+                    }
+                }
+                if (scanned == rocks.size()) {
+                    starMap = new StarMap(scanned);
+                    sfx.play("chime");
+                }
+            }
+
+            private int scanPower() {
+                return 3 * level;
+            }
+        }
+      focus:
+        method: [12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29]
+        entry: [12]
+        play: [13]
+        self_call: [14, 31, 32]
+        scan_call: [17]
+        collect: [18, 19]
+        scan_and_tag: [17, 22]
+        loop: [16]
+        loop_body: [16, 17]
+        alt: [18, 19, 20, 21, 22, 23]
+        guards: [18, 21]
+        opt: [25, 26, 27]
+        create: [26]
+        messages: [13, 14, 17, 19, 22, 26, 27]
+        rock_calls: [17, 19, 22]
+        reach: [3, 12, 26]
+      scroll:
+        self_call: 14
+        method: 12
+        messages: 16
+        reach: 3
+    mission:
+      source: |
+        public class Mission {
+            public static void main(String[] args) {
+                SoundPlayer sfx = new SoundPlayer();
+                Probe probe = new Probe(4, sfx);
+                Asteroid pebble = new Asteroid("pebble", 10, 5);
+                Asteroid boulder = new Asteroid("boulder", 20, 8);
+                probe.scanAll(List.of(pebble, boulder));
+                System.out.println("pebble: " + pebble.unscanned + " left | boulder: " + boulder.unscanned
+                    + " left, tagged " + boulder.tagged);
+                System.out.println("crystals: " + probe.crystals + " | star map: "
+                    + (probe.starMap == null ? "none" : String.valueOf(probe.starMap.rocks)));
+            }
+        }
+      focus:
+        objects: [3, 4, 5, 6]
+        rocks: [5, 6]
+        sfx: [3]
+        scan: [7]
+        result: [8, 9, 10, 11]
+    recharge:
+      source: |
+        class Drone {
+            int battery;
+            final int capacity;
+
+            Drone(int battery, int capacity) {
+                this.battery = battery;
+                this.capacity = capacity;
+            }
+
+            boolean lowBattery() {
+                return 2 * battery < capacity;
+            }
+
+            void recharge(int amount) {
+                battery = Math.min(capacity, battery + amount);
+            }
+        }
+
+        class Dock {
+            private final SoundPlayer sfx;
+
+            Dock(SoundPlayer sfx) {
+                this.sfx = sfx;
+            }
+
+            void rechargeAll(List<Drone> drones) {
+                for (Drone drone : drones) {
+                    boolean low = drone.lowBattery();
+                    if (low) {
+                        drone.recharge(5);
+                    }
+                }
+                sfx.play("beep");
+            }
+        }
+      focus:
+        method: [26, 27, 28, 29, 30, 31, 32, 33, 34]
+        loop: [27]
+        check: [28]
+        opt: [29, 30, 31]
+        beep: [33]
+cpp:
+  label: C++
+  filename: probe.cpp
+  note: The probe reaches its rocks through pointers and keeps its star map in a std::optional value member.
+  imports: |
+    #include <algorithm>
+    #include <cstddef>
+    #include <iostream>
+    #include <optional>
+    #include <string>
+    #include <utility>
+    #include <vector>
+  blocks:
+    sound:
+      source: |
+        class SoundPlayer {
+        public:
+            void play(const std::string& sound) {
+                // Queue the sound; the audio thread plays it later.
+                queued.push_back(sound);
+            }
+
+            std::vector<std::string> queued;
+        };
+
+        class StarMap {
+        public:
+            explicit StarMap(int rocks) : rocks(rocks) {}
+
+            int rocks;
+        };
+      focus:
+        play: [3, 4, 5, 6]
+        star_map: [11, 12, 13, 15, 16]
+    asteroid:
+      source: |
+        class Asteroid {
+        public:
+            Asteroid(std::string name, int unscanned, int crystals)
+                : name(std::move(name)), unscanned(unscanned), crystals(crystals) {}
+
+            int scan(int power) {
+                unscanned = std::max(0, unscanned - power);
+                return unscanned;
+            }
+
+            int collectSample() {
+                return std::exchange(crystals, 0);
+            }
+
+            void tag(int passes) {
+                tagged = passes;
+            }
+
+            std::string name;
+            int unscanned;
+            int crystals;
+            int tagged = 0;
+        };
+      focus:
+        operations: [6, 11, 15]
+    probe:
+      source: |
+        class Probe {
+        public:
+            Probe(int level, SoundPlayer& sfx) : level(level), sfx(sfx) {}
+
+            void scanAll(const std::vector<Asteroid*>& rocks) {
+                sfx.play("ping");
+                int power = scanPower();
+                std::size_t scanned = 0;
+                for (Asteroid* rock : rocks) {
+                    int unscanned = rock->scan(power);
+                    if (unscanned == 0) {
+                        crystals += rock->collectSample();
+                        ++scanned;
+                    } else {
+                        rock->tag(2);
+                    }
+                }
+                if (scanned == rocks.size()) {
+                    starMap = StarMap(static_cast<int>(scanned));
+                    sfx.play("chime");
+                }
+            }
+
+            int crystals = 0;
+            std::optional<StarMap> starMap;
+
+        private:
+            int scanPower() const {
+                return 3 * level;
+            }
+
+            int level;
+            SoundPlayer& sfx;
+        };
+      focus:
+        method: [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
+        entry: [5]
+        play: [6]
+        self_call: [7, 28, 29]
+        scan_call: [10]
+        collect: [11, 12]
+        scan_and_tag: [10, 15]
+        loop: [9]
+        loop_body: [9, 10]
+        alt: [11, 12, 13, 14, 15, 16]
+        guards: [11, 14]
+        opt: [18, 19, 20]
+        create: [19]
+        messages: [6, 7, 10, 12, 15, 19, 20]
+        rock_calls: [10, 12, 15]
+        reach: [5, 19, 33]
+      scroll:
+        self_call: 7
+        method: 5
+        messages: 9
+        reach: 5
+    mission:
+      source: |
+        int main() {
+            SoundPlayer sfx;
+            Probe probe(4, sfx);
+            Asteroid pebble("pebble", 10, 5);
+            Asteroid boulder("boulder", 20, 8);
+            probe.scanAll({&pebble, &boulder});
+            std::cout << "pebble: " << pebble.unscanned << " left | boulder: " << boulder.unscanned
+                      << " left, tagged " << boulder.tagged << '\n';
+            std::cout << "crystals: " << probe.crystals << " | star map: "
+                      << (probe.starMap ? std::to_string(probe.starMap->rocks) : "none") << '\n';
+        }
+      focus:
+        objects: [2, 3, 4, 5]
+        rocks: [4, 5]
+        sfx: [2]
+        scan: [6]
+        result: [7, 8, 9, 10]
+    recharge:
+      source: |
+        class Drone {
+        public:
+            Drone(int battery, int capacity) : battery(battery), capacity(capacity) {}
+
+            bool lowBattery() const {
+                return 2 * battery < capacity;
+            }
+
+            void recharge(int amount) {
+                battery = std::min(capacity, battery + amount);
+            }
+
+            int battery;
+            int capacity;
+        };
+
+        class Dock {
+        public:
+            explicit Dock(SoundPlayer& sfx) : sfx(sfx) {}
+
+            void rechargeAll(const std::vector<Drone*>& drones) {
+                for (Drone* drone : drones) {
+                    bool low = drone->lowBattery();
+                    if (low) {
+                        drone->recharge(5);
+                    }
+                }
+                sfx.play("beep");
+            }
+
+        private:
+            SoundPlayer& sfx;
+        };
+      focus:
+        method: [21, 22, 23, 24, 25, 26, 27, 28, 29]
+        loop: [22]
+        check: [23]
+        opt: [24, 25, 26]
+        beep: [28]
+typescript:
+  label: TypeScript
+  filename: probe.ts
+  note: Fields are declared and assigned explicitly, so the example runs with type stripping as well as with tsc.
+  imports: ""
+  blocks:
+    sound:
+      source: |
+        class SoundPlayer {
+          readonly queued: string[] = [];
+
+          play(sound: string): void {
+            // Queue the sound; the audio thread plays it later.
+            this.queued.push(sound);
+          }
+        }
+
+        class StarMap {
+          readonly rocks: number;
+
+          constructor(rocks: number) {
+            this.rocks = rocks;
+          }
+        }
+      focus:
+        play: [4, 5, 6, 7]
+        star_map: [10, 11, 13, 14, 15, 16]
+    asteroid:
+      source: |
+        class Asteroid {
+          readonly name: string;
+          unscanned: number;
+          crystals: number;
+          tagged = 0;
+
+          constructor(name: string, unscanned: number, crystals: number) {
+            this.name = name;
+            this.unscanned = unscanned;
+            this.crystals = crystals;
+          }
+
+          scan(power: number): number {
+            this.unscanned = Math.max(0, this.unscanned - power);
+            return this.unscanned;
+          }
+
+          collectSample(): number {
+            const sample = this.crystals;
+            this.crystals = 0;
+            return sample;
+          }
+
+          tag(passes: number): void {
+            this.tagged = passes;
+          }
+        }
+      focus:
+        operations: [13, 18, 24]
+    probe:
+      source: |
+        class Probe {
+          crystals = 0;
+          starMap: StarMap | null = null;
+          private readonly level: number;
+          private readonly sfx: SoundPlayer;
+
+          constructor(level: number, sfx: SoundPlayer) {
+            this.level = level;
+            this.sfx = sfx;
+          }
+
+          scanAll(rocks: Asteroid[]): void {
+            this.sfx.play("ping");
+            const power = this.scanPower();
+            let scanned = 0;
+            for (const rock of rocks) {
+              const unscanned = rock.scan(power);
+              if (unscanned === 0) {
+                this.crystals += rock.collectSample();
+                scanned += 1;
+              } else {
+                rock.tag(2);
+              }
+            }
+            if (scanned === rocks.length) {
+              this.starMap = new StarMap(scanned);
+              this.sfx.play("chime");
+            }
+          }
+
+          private scanPower(): number {
+            return 3 * this.level;
+          }
+        }
+      focus:
+        method: [12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29]
+        entry: [12]
+        play: [13]
+        self_call: [14, 31, 32]
+        scan_call: [17]
+        collect: [18, 19]
+        scan_and_tag: [17, 22]
+        loop: [16]
+        loop_body: [16, 17]
+        alt: [18, 19, 20, 21, 22, 23]
+        guards: [18, 21]
+        opt: [25, 26, 27]
+        create: [26]
+        messages: [13, 14, 17, 19, 22, 26, 27]
+        rock_calls: [17, 19, 22]
+        reach: [5, 12, 26]
+      scroll:
+        self_call: 14
+        method: 12
+        messages: 16
+        reach: 5
+    mission:
+      source: |
+        const sfx = new SoundPlayer();
+        const probe = new Probe(4, sfx);
+        const pebble = new Asteroid("pebble", 10, 5);
+        const boulder = new Asteroid("boulder", 20, 8);
+        probe.scanAll([pebble, boulder]);
+        console.log(`pebble: ${pebble.unscanned} left | boulder: ${boulder.unscanned} left, tagged ${boulder.tagged}`);
+        console.log(`crystals: ${probe.crystals} | star map: ${probe.starMap === null ? "none" : probe.starMap.rocks}`);
+      focus:
+        objects: [1, 2, 3, 4]
+        rocks: [3, 4]
+        sfx: [1]
+        scan: [5]
+        result: [6, 7]
+    recharge:
+      source: |
+        class Drone {
+          battery: number;
+          readonly capacity: number;
+
+          constructor(battery: number, capacity: number) {
+            this.battery = battery;
+            this.capacity = capacity;
+          }
+
+          lowBattery(): boolean {
+            return 2 * this.battery < this.capacity;
+          }
+
+          recharge(amount: number): void {
+            this.battery = Math.min(this.capacity, this.battery + amount);
+          }
+        }
+
+        class Dock {
+          private readonly sfx: SoundPlayer;
+
+          constructor(sfx: SoundPlayer) {
+            this.sfx = sfx;
+          }
+
+          rechargeAll(drones: Drone[]): void {
+            for (const drone of drones) {
+              const low = drone.lowBattery();
+              if (low) {
+                drone.recharge(5);
+              }
+            }
+            this.sfx.play("beep");
+          }
+        }
+      focus:
+        method: [26, 27, 28, 29, 30, 31, 32, 33, 34]
+        loop: [27]
+        check: [28]
+        opt: [29, 30, 31]
+        beep: [33]

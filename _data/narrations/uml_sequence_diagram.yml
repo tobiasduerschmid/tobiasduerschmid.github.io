@@ -1,0 +1,551 @@
+# Edit speech and teaching text here. Visual state lives in ../narration_visuals/uml_sequence_diagram.json.
+version: 1
+id: uml_sequence_diagram
+kind: pattern
+title: UML sequence diagrams on a space probe's scan
+lesson:
+  name: Sequence diagrams
+  parts: [Lifelines, Messages, Activations, Fragments]
+  parts_label: Parts of a sequence diagram
+  summary: >-
+    Learn to read and draw UML sequence diagrams, from <strong>lifelines and messages to
+    activation bars and combined fragments</strong>, by tracing one scan of a space probe in a
+    space-exploration game.
+  prerequisites: Assumes you can read UML class diagrams and short object-oriented programs.
+  chapter: /SEBook/uml_sequence_diagram.html
+  views: /SEBook/uml_sequence_diagram
+  outline_labels:
+    lifelines: Who takes part
+    calls: Wait or move on
+    replies: Replies and labels
+    activations: Activation bars
+    loop: Loops
+    choices: alt and opt
+    runs: Reading runs
+  complete_examples: >-
+    The game models only one scan: the probe's level, each asteroid's unscanned amount and
+    crystals, and the sounds the probe queues. Playing a sound only queues it, so the probe never
+    waits for the audio. A scan covers three times the probe's level, and every language prints
+    the same outcome for the pebble and the boulder. The docking-station example is the transfer
+    exercise; it reuses SoundPlayer.
+speech:
+  voice: af_heart
+  speed: 0.95
+  pronunciations:
+    UML: U M L
+    scanAll: scan all
+    scanPower: scan power
+    collectSample: collect sample
+    SoundPlayer: sound player
+    StarMap: star map
+    rechargeAll: recharge all
+    lowBattery: low battery
+    sfx: S F X
+    asynchronous: A-synchronous
+media:
+  audio: /assets/audio/uml-sequence-diagram.mp3
+  captions: /assets/narration/uml-sequence-diagram.vtt
+  script: /assets/narration/uml-sequence-diagram.txt
+scenes:
+  - id: intro
+    label: Why sequence diagrams
+    title: Structure is not the whole story
+    purpose: See what a sequence diagram adds to the class diagram you already know.
+    takeaway: >-
+      A class diagram shows what exists; a sequence diagram shows the messages of one scenario
+      in time order.
+    cues:
+      - id: tap
+        say: >-
+          It's your turn. Two asteroids drift in range of your probe: a pebble that needs 10
+          points of scanning and a boulder that needs 20. You tap Scan all. A ping sounds, each
+          rock gets 12 points, the pebble yields 5 crystals, and the boulder, still 8 short, gets
+          a tracking tag.
+        step: One turn, one scan
+        note: Scan of 12 → pebble done, 5 crystals · boulder 8 short, tagged
+        visual: >-
+          A scan panel shows the result: the pebble is fully scanned, 10 of 10, and its sample
+          of 5 crystals is collected; the boulder is scanned 12 of 20 and tagged for 2 passes; the
+          ping sound is queued. The game's class diagram is shown above it.
+      - id: structure
+        say: >-
+          You already know the class diagram for this game: Probe, Asteroid, StarMap, and
+          SoundPlayer, each with its operations. It shows what can exist and who can reach
+          whom. It can't show what just happened: who called whom, and in what order.
+        step: A class diagram shows structure
+        note: Classes, operations, and associations, but no order of calls
+        visual: >-
+          The UML class diagram shows Probe with scanAll and scanPower, Asteroid with scan,
+          collectSample, and tag, StarMap, and SoundPlayer with play. Probe's associations to
+          SoundPlayer and StarMap are labeled with the fields that hold them, sfx and starMap,
+          and Probe depends on Asteroid.
+      - id: preview
+        say: >-
+          A sequence diagram shows exactly that: the messages sent between objects in one
+          scenario, in time order. We'll read one in four parts: lifelines, messages,
+          activations, and fragments. Choose a code language above; the diagrams stay the same
+          in every language.
+        source: >-
+          OMG, UML 2.5.1, §17.8 Sequence Diagrams; Rumbaugh, Jacobson, and Booch, The Unified
+          Modeling Language Reference Manual: sequence diagram
+        step: Lifelines, messages, activations, fragments
+        note: Who takes part → what they send → when they are busy → loops and choices
+        visual: >-
+          The finished sequence diagram of the scan previews the lesson: four lifelines, arrows
+          for the messages between them, activation bars, and frames labeled loop, alt, and opt.
+        pause_after: 2.5
+  - id: lifelines
+    part: Lifelines
+    label: "Lifelines: who takes part"
+    title: One lifeline per participant
+    purpose: Name the objects that take part in one run.
+    takeaway: >-
+      Each participant gets a lifeline headed name colon Type; a sequence diagram shows objects
+      in one run, not classes.
+    cues:
+      - id: participants
+        say: >-
+          A sequence diagram starts with its participants. Each one gets a lifeline: a box at
+          the top and a dashed line running down the page. In our run, four objects take part:
+          the probe, the pebble, the boulder, and the probe's sound player.
+        source: "OMG, UML 2.5.1, §17.3.4 Lifeline notation"
+        step: A lifeline for each participant
+        note: Head box plus dashed line · probe, pebble, boulder, and the sound player
+        visual: >-
+          The sequence diagram shows only four lifeline heads with dashed lines below them:
+          probe: Probe, pebble: Asteroid, boulder: Asteroid, and sfx: SoundPlayer. The lines that
+          create these four objects are marked in the code.
+      - id: naming
+        say: >-
+          Each box names an object, then its type: pebble colon Asteroid. The name identifies
+          the object; the type is a class from your class diagram. So one Asteroid class gives
+          two lifelines. A class diagram shows kinds of things; a sequence diagram shows the
+          objects in one run.
+        step: "name : Type"
+        note: "pebble: Asteroid and boulder: Asteroid — two objects of one class"
+        visual: >-
+          The pebble: Asteroid lifeline is hatched and highlighted beside boulder: Asteroid. The
+          lines that create the pebble and the boulder are marked.
+      - id: anonymous
+        say: >-
+          When the name doesn't matter, keep just the colon and the type, like colon
+          SoundPlayer for some sound player. Here we keep the name sfx, the variable the code
+          uses. And left-to-right order has no meaning: arrange lifelines so the arrows stay
+          short.
+        step: Anonymous lifelines and free order
+        note: ": SoundPlayer names no object · horizontal order carries no meaning"
+        visual: >-
+          The sfx: SoundPlayer lifeline is hatched and highlighted. The line that creates the
+          sound player is marked.
+        pause_after: 2.5
+  - id: calls
+    part: Messages
+    label: "Messages: wait or move on"
+    title: Synchronous and asynchronous messages
+    purpose: Tell a message the sender waits for from one it does not.
+    takeaway: >-
+      A filled arrowhead means the sender waits for the receiver; an open arrowhead means the
+      sender moves on.
+    cues:
+      - id: found
+        say: >-
+          Now the messages. Read them from top to bottom, because time runs down the page. The
+          first arrow is your tap arriving as scanAll. It comes from the game's input code,
+          outside this diagram, so it starts at a filled dot: a found message.
+        source: "OMG, UML 2.5.1, §17.4.3 and §17.4.4 (found messages)"
+        step: A found message starts the run
+        note: Filled dot = sender outside the diagram · label = operation(arguments)
+        visual: >-
+          A found message, scanAll(rocks), arrives at the probe's lifeline from a filled dot at
+          the left. The scanAll method header is marked.
+      - id: async
+        say: >-
+          The probe first tells the sound player to play the ping. Play only drops the sound
+          into a queue and returns at once; the audio plays later. The probe never waits for the
+          sound, so the arrow is asynchronous: a solid line with an open arrowhead, and no
+          reply.
+        step: "Asynchronous: the sender moves on"
+        note: Solid line, open arrowhead · no waiting and no reply
+        visual: >-
+          A new arrow, play("ping"), runs from the probe to the sound player as a solid line with
+          an open arrowhead. The play call is marked in the code.
+      - id: self
+        say: >-
+          Next, the probe asks itself how strong a scan is: scanPower returns three times its
+          level, which is 12. A message to the same object loops back to its own lifeline. In
+          code, that's a call on self or this.
+        step: A self-message
+        note: scanPower() → 3 × level = 12 · the arrow returns to the probe's own lifeline
+        visual: >-
+          A self-message, scanPower(), loops from the probe's lifeline back to it. The call and
+          the scanPower method are marked.
+      - id: predict_wait
+        say: >-
+          The probe now scans the pebble with scan of 12. Before that arrow appears, predict:
+          should the probe wait for this message, unlike the sound? What does it need back?
+          Pause the narration if you want more time.
+        step: "Predict: wait or move on?"
+        note: scan(12) — does the probe need an answer before it continues?
+        visual: >-
+          The diagram still ends after scanPower, so the next arrow is not shown yet. The scan
+          call is marked in the code.
+        prediction: true
+        pause_after: 5
+      - id: sync
+        say: >-
+          It has to wait, because its next step depends on how much of the pebble is left to
+          scan. A synchronous message is a solid line with a filled arrowhead: the sender waits
+          until the receiver finishes. The dashed arrow back is the reply, carrying 0: nothing is
+          left.
+        source: >-
+          OMG, UML 2.5.1, §17.4.4 Message notation; Rumbaugh, Jacobson, and Booch, The Unified
+          Modeling Language Reference Manual: message
+        step: "Synchronous: the sender waits"
+        note: Solid line, filled arrowhead → dashed reply with the result, 0
+        visual: >-
+          The arrow scan(12) runs from the probe to the pebble with a filled arrowhead, and a
+          dashed reply labeled 0 returns to the probe. The scan call stays marked.
+        pause_after: 2.5
+  - id: replies
+    part: Messages
+    label: "Messages: replies and labels"
+    title: What comes back, and how arrows are labeled
+    purpose: Decide when to draw a reply and what to write on each arrow.
+    takeaway: >-
+      A dashed reply returns control and a value to the caller; draw it when the value matters.
+    cues:
+      - id: reply_value
+        say: >-
+          With the pebble fully scanned, the probe calls collectSample, and 5 comes back on the
+          reply: five crystals. A reply always returns to the caller of the call it answers, and
+          its label names the returned value.
+        step: A reply names what comes back
+        note: collectSample() → reply 5, back to the probe
+        visual: >-
+          The arrow collectSample() runs from the probe to the pebble, and a dashed reply labeled
+          5 returns. The collectSample call is marked.
+      - id: optional
+        say: >-
+          The boulder answers scan with 8, so it isn't done, and the probe calls tag with 2
+          passes, to find it again later. Tag returns nothing worth showing, so its reply is
+          left out. Replies are optional: draw them when the value matters, and skip obvious
+          ones.
+        step: Draw the replies that matter
+        note: scan(12) → 8 shown · tag(2) returns nothing → no reply drawn
+        visual: >-
+          The arrow scan(12) goes to the boulder with a reply labeled 8, followed by tag(2) with
+          no reply. The scan and tag calls are marked.
+      - id: labels
+        say: >-
+          Labels follow the operation. A call's label is the operation's name and its
+          arguments, matched in order to the operation's parameters, like scan of 12. A reply's
+          label names the returned value, or the variable that receives it.
+        source: "OMG, UML 2.5.1, §17.4.4 (request and reply message labels)"
+        step: Labels name operations and values
+        note: "Call: name(arguments) · reply: the value, or its variable · full form: unscanned = scan(power): 8"
+        visual: >-
+          The whole run is shown: scanAll, play, scanPower, scan and its reply 0, collectSample
+          and its reply 5, scan and its reply 8, and tag. The scan call is marked.
+        pause_after: 2.5
+  - id: activations
+    part: Activations
+    label: "Activations: who is busy"
+    title: Bars that work like a call stack
+    purpose: Read when each object is executing, including while it waits.
+    takeaway: >-
+      An activation bar runs from a call's arrival to its return, like a stack frame stretched
+      over time.
+    cues:
+      - id: bars
+        say: >-
+          Now add activation bars, which UML formally calls execution specifications. A thin
+          bar on a lifeline shows when that object is running an operation. The probe's bar
+          starts when scanAll arrives and ends when scanAll returns.
+        source: >-
+          OMG, UML 2.5.1, §17.2.4 ExecutionSpecification; Rumbaugh, Jacobson, and Booch, The
+          Unified Modeling Language Reference Manual: activation
+        step: Bars show who is executing
+        note: A bar starts when a call arrives and ends when it returns
+        visual: >-
+          The same run now has activation bars. The probe's lifeline is hatched; its bar spans
+          the whole run. The call stack below the diagram holds one frame, scanAll(rocks) on the
+          probe.
+      - id: waiting
+        say: >-
+          A bar includes waiting. While the pebble runs scan, the probe's bar continues,
+          because scanAll hasn't returned; the probe is blocked until the reply arrives. The
+          pebble's short bar starts when the call arrives and ends when it replies.
+        step: A caller's bar continues while it waits
+        note: The probe waits inside scanAll · the pebble's bar is scan(12)
+        visual: >-
+          The pebble's lifeline is hatched, with a short bar under scan(12). The call stack shows
+          scan(12) on the pebble above scanAll(rocks) on the probe.
+      - id: nested
+        say: >-
+          A self-message stacks a second bar on the same lifeline. The scanPower call runs
+          inside scanAll, so its bar sits on top of the probe's first bar, shifted slightly
+          right, and ends when scanPower returns.
+        step: Self-messages nest bars
+        note: The scanPower() bar overlaps scanAll() on the probe's lifeline
+        visual: >-
+          The probe's lifeline is hatched, showing a small bar for scanPower() on top of its long
+          bar. The call stack shows scanPower() above scanAll(rocks), both on the probe.
+      - id: stack
+        say: >-
+          If that reminds you of the call stack, good: each bar is like a stack frame stretched
+          over time. A synchronous call pushes a frame; its reply pops it. The ping plays in no
+          frame of the probe's stack; the audio system plays it later, on its own.
+        source: >-
+          Rumbaugh, Jacobson, and Booch, The Unified Modeling Language Reference Manual:
+          activation, which corresponds to a stack frame
+        step: Bars mirror stack frames
+        note: Call → push · reply → pop · an asynchronous send leaves the sender's stack alone
+        visual: >-
+          The sound player's lifeline is hatched. The call stack holds only scanAll(rocks) on the
+          probe, and a note says the audio system plays the queued ping sound later.
+        pause_after: 2.5
+  - id: loop
+    part: Fragments
+    label: "Fragments: loops"
+    title: One diagram for any number of asteroids
+    purpose: Describe repeated messages with a loop fragment.
+    takeaway: >-
+      A loop frame repeats its messages as its guard allows, and one lifeline stands for the
+      current item.
+    cues:
+      - id: generalize
+        say: >-
+          Our trace showed one run with exactly two asteroids. But the code never names a pebble
+          or a boulder; it loops over whatever rocks are in range. To describe every run in one
+          diagram, UML uses combined fragments: a frame around some messages, with an operator in
+          its corner.
+        step: From one run to every run
+        note: The code loops over rocks → the diagram needs a frame, not copies
+        visual: >-
+          A general sequence diagram replaces the pebble and the boulder with one lifeline,
+          rock: Asteroid. A frame labeled loop surrounds scan(power) and its reply, unscanned.
+          The for loop is marked in the code.
+      - id: loop
+        say: >-
+          The loop fragment repeats the messages inside its frame. Its guard, in square
+          brackets, says how often: for each rock in rocks. A single lifeline, rock colon
+          Asteroid, stands for whichever rock the current pass reaches: first the pebble, then
+          the boulder.
+        source: "OMG, UML 2.5.1, §17.6.3 Loop and §17.6.4 InteractionConstraint"
+        step: loop with a guard
+        note: "[for each rock in rocks] · rock: Asteroid is the current rock"
+        visual: >-
+          The rock lifeline is hatched. The loop frame's guard reads for each rock in rocks. The
+          for loop and the scan call are marked.
+      - id: bounds
+        say: >-
+          A loop can also state limits, like loop of 1 comma 3: at least once, and at most three
+          times. A loop without limits may repeat any number of times, including zero. Ours has
+          no limits; its guard alone decides, with one pass per rock.
+        source: "OMG, UML 2.5.1, §17.6.4 Loop interactionOperator"
+        step: Loop limits
+        note: loop(1, 3) → 1 to 3 passes · plain loop → any number, even zero
+        visual: The general diagram with its loop frame remains. The for loop is marked.
+        pause_after: 2.5
+  - id: choices
+    part: Fragments
+    label: "Fragments: alt and opt"
+    title: Choices, and a lifeline that starts late
+    purpose: Show choices with alt and opt, and an object created during the run.
+    takeaway: >-
+      An alt frame runs at most one guarded operand; an opt frame runs its one operand or skips
+      it.
+    cues:
+      - id: alt
+        say: >-
+          After each scan, the code branches. If nothing of the rock is left to scan, the probe
+          collects a sample; otherwise, it tags the rock. An alt fragment shows the choice: a
+          dashed line splits its frame into operands, each with a guard, and at most one operand
+          runs.
+        source: "OMG, UML 2.5.1, §17.6.3 Alternatives"
+        step: "alt: at most one branch"
+        note: "[unscanned == 0] → collectSample() · [else] → tag(2)"
+        visual: >-
+          Inside the loop frame, a frame labeled alt has two operands divided by a dashed line:
+          guard unscanned == 0 with collectSample() and its reply, crystals, and guard else with
+          tag(2). The if and else branches are marked.
+      - id: else
+        say: >-
+          The guard else is true when no other guard is. Guards test values the participants
+          already know at that point, like the amount the last reply returned; a guard never
+          sends a message. And since this alt sits inside the loop, the choice is made again for
+          every rock.
+        step: Guards and else
+        note: "[else] = no other guard is true · guards read known values · checked on every pass"
+        visual: The alt frame with its two guards remains. The if and else lines are marked.
+      - id: opt
+        say: >-
+          After the loop comes one more decision: only if every rock was fully scanned does a
+          new star map appear and the chime play. That's an opt fragment: one operand that either
+          runs or is skipped, like an if with no else.
+        source: "OMG, UML 2.5.1, §17.6.3 Option"
+        step: "opt: run it or skip it"
+        note: "[every rock scanned] → star map and chime · opt = if without else"
+        visual: >-
+          The complete general diagram adds a frame labeled opt after the loop, guarded by every
+          rock scanned. It holds a creation message to starMap: StarMap and an asynchronous
+          play("chime"). The final if statement is marked.
+      - id: create
+        say: >-
+          Inside it is one more kind of message: creation. The dashed arrow labeled create
+          points at the box of a new lifeline, drawn where the star map begins to exist, not at
+          the top of the diagram. A constructor call in your code becomes this arrow.
+        source: "OMG, UML 2.5.1, §17.4.4 Message notation (object creation)"
+        step: Creation starts a lifeline mid-diagram
+        note: "Dashed arrow labeled «create» → head of starMap: StarMap, placed when it is created"
+        visual: >-
+          The starMap: StarMap lifeline is hatched; its head sits inside the opt frame at the end
+          of a dashed arrow labeled create. The line that constructs the star map is marked.
+        pause_after: 2.5
+  - id: runs
+    part: Fragments
+    label: Reading runs
+    title: One diagram, many traces
+    purpose: Predict a specific run from a diagram with fragments.
+    takeaway: >-
+      A diagram with fragments describes a set of runs, called traces; each concrete run is one
+      of them.
+    cues:
+      - id: predict_run
+        say: >-
+          Your turn to read. On the next pass, a pebble that needs 10 points and a shard that
+          needs 6 are in range, and each scan still covers 12. Walk the diagram: which messages
+          are sent, in what order, and does the opt fragment run? Pause if you need time.
+        step: Predict one run
+        note: Pebble needs 10 · shard needs 6 · scan of 12 → which messages? Does the opt run?
+        visual: >-
+          The complete general diagram is shown with the scan panel before the scan: a pebble
+          scanned 0 of 10 and a shard scanned 0 of 6. The scanAll method is marked.
+        prediction: true
+        pause_after: 6
+      - id: answer
+        say: >-
+          Both are fully scanned. The pebble gets scan and collectSample, then the shard gets
+          the same two calls. No rock is left unfinished, so tag is never sent. Every rock was
+          scanned, so the opt runs: the star map is created, and the chime plays.
+        step: One trace, written out
+        note: scan and collectSample, twice · no tag · opt runs → «create» star map, play("chime")
+        visual: >-
+          A concrete diagram of this run shows probe, pebble, shard, sound player, and a star map
+          created near the end: scan(12) and collectSample() for the pebble and then for the
+          shard, the star map's creation, and play("chime"); the new starMap lifeline is
+          hatched. The scan panel shows both rocks fully scanned, 7 crystals, and a star map
+          charting 2 asteroids.
+      - id: traces
+        say: >-
+          So a diagram with fragments describes a set of runs, called traces, and each concrete
+          run is one of them. Runs the diagram doesn't cover aren't described at all, as valid
+          or invalid. Draw diagrams for the scenarios that matter, not for every path a program
+          can take.
+        source: >-
+          OMG, UML 2.5.1, §17.2.3 Interactions (valid and invalid traces); Clements et al.,
+          Documenting Software Architectures, 2nd ed., §8.3.1 Notations for Capturing Traces
+        step: A diagram describes traces
+        note: Fragments → many traces · runs it does not cover are not described · choose scenarios that matter
+        visual: >-
+          The complete general diagram returns, with its loop, alt, and opt frames. The scan
+          panel still shows the charted pass.
+        pause_after: 2.5
+  - id: practice
+    label: Sequence diagrams in practice
+    title: Consistent, reachable, and worth drawing
+    purpose: Keep sequence diagrams consistent with the class diagram and worth their cost.
+    takeaway: >-
+      Every lifeline type is a class, every message is something its receiver handles, and every
+      diagram answers one question.
+    cues:
+      - id: consistency
+        say: >-
+          Your sequence and class diagrams must agree. Each lifeline's type is a class in the
+          class diagram. Each message names something the receiver's class can handle, usually
+          one of its operations, with matching arguments. In our game, scan, collectSample, and
+          tag are all Asteroid operations. A message with no match means one diagram is wrong.
+        source: "OMG, UML 2.5.1, §17.4.3 Messages (a message's signature is an operation or a signal)"
+        step: Messages match operations
+        note: Lifeline type = a class · message = an operation of the receiver · arguments match parameters
+        visual: >-
+          The class diagram is shown with Asteroid hatched and highlighted; its operations are
+          scan, collectSample, and tag. The three calls to the rock are marked in the code.
+      - id: reach
+        say: >-
+          A sender must also be able to reach its receiver. The probe reaches the sound player
+          through its sfx field, the asteroids through the rocks parameter, and the star map
+          because it creates it. If you can't name the path, the design is missing one.
+        step: Senders must reach their receivers
+        note: Field sfx · parameter rocks · the star map it creates
+        visual: >-
+          The class diagram is shown with Probe hatched and highlighted, its sfx association to
+          SoundPlayer, its starMap association to StarMap, and its dependency on Asteroid. The
+          sfx field, the rocks parameter, and the star map's construction are marked.
+      - id: when
+        say: >-
+          When does a sequence diagram earn its place? When order is the question: designing a
+          feature before you code it, explaining a tricky flow in a review, or chasing a bug
+          across several objects. Keep each one to a single scenario and a few lifelines, and
+          update it when the code changes.
+        source: >-
+          Clements et al., Documenting Software Architectures, 2nd ed., §8.5 Why to Document
+          Behavior; Epilogue, §E.4 Documenting Architecture in an Agile Development Project
+        step: Draw one when order matters
+        note: Design a feature · explain a flow · trace a bug · one scenario, a few lifelines, kept current
+        visual: The complete general diagram of the scan is shown again. The scanAll method is marked.
+        pause_after: 2.5
+  - id: transfer
+    label: Apply it
+    title: Draw the recharge
+    purpose: Translate new code into a sequence diagram before seeing an answer.
+    takeaway: >-
+      Calls become arrows, loops and ifs become fragments, and a send the caller doesn't wait for
+      gets an open arrowhead.
+    cues:
+      - id: sketch
+        say: >-
+          One last translation. The docking station recharges its drones: for each drone, it
+          asks whether the battery is low, recharges the low ones by 5, and finally plays a beep
+          without waiting. Sketch the sequence diagram for this code before the answer appears.
+        step: Sketch the recharge diagram
+        note: The lifelines are given · draw the messages, replies, and fragments yourself
+        visual: >-
+          Only three lifeline heads are shown: dock: Dock, drone: Drone, and sfx: SoundPlayer. The
+          rechargeAll method is marked in the code.
+        prediction: true
+        pause_after: 6
+      - id: recharge_answer
+        say: >-
+          A found message starts rechargeAll. Inside a loop for each drone, lowBattery is a
+          synchronous call whose reply, low, feeds an opt guard around recharge of 5. After the
+          loop, play beep is asynchronous, with an open arrowhead, and the dock's bar spans the
+          whole run.
+        step: Calls → arrows, loops and ifs → fragments
+        note: "loop [for each drone in drones] → lowBattery() + reply low · opt [low] → recharge(5) · play(\"beep\") is asynchronous"
+        visual: >-
+          The recharge diagram: a found message rechargeAll(drones) reaches the dock; a loop
+          frame for each drone in drones holds lowBattery() with its reply low and an opt frame
+          guarded by low around recharge(5); after the loop, an asynchronous play("beep") goes to
+          the sound player.
+        pause_after: 2.5
+  - id: summary
+    label: "Summary: the four parts"
+    title: Lifelines, messages, activations, fragments
+    purpose: Recall every part of a sequence diagram before the summary quiz.
+    takeaway: >-
+      Lifelines, messages, activations, and fragments together describe one scenario's
+      interactions in time order.
+    cues:
+      - id: recap
+        say: >-
+          To finish, recall the four parts. Lifelines: one participant each, named name colon
+          Type, with time running down the page. Messages: filled arrowheads wait, open
+          arrowheads move on, dashed replies return values, and creation starts a lifeline.
+          Activations: bars that work like stack frames. Fragments: loop repeats, alt chooses,
+          and opt may skip. The summary quiz checks each part on a new app.
+        step: Four parts of every sequence diagram
+        note: Lifelines → messages → activations → fragments
+        visual: >-
+          Four cards summarize lifelines, messages, activations, and fragments.
+        pause_after: 2.5

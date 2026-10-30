@@ -1,0 +1,40 @@
+{%- comment -%}
+  The probe's scan that the sequence-diagram lesson traces, before or after
+  one Scan all. Numbers come from _data/explainers/uml_sequence_diagram_ui.yml.
+  Params: cue (cue.panel_state names a panel).
+{%- endcomment -%}
+{%- assign sd_ui = site.data.explainers.uml_sequence_diagram_ui -%}
+{%- comment -%} Liquid cannot nest bracket lookups, so resolve the panel first. {%- endcomment -%}
+{%- assign sd_panel = sd_ui.panels[include.cue.panel_state] -%}
+{%- assign sd_pass = sd_ui.scenarios[sd_panel.scenario] -%}
+{%- if sd_panel.after -%}{%- assign sd_moment = 'after the scan' -%}{%- else -%}{%- assign sd_moment = 'before the scan' -%}{%- endif -%}
+{%- capture sd_summary -%}
+Scan panel, {{ sd_pass.title | downcase }}, {{ sd_moment }}. Probe: level {{ sd_ui.probe.level }}; each scan covers {{ sd_ui.probe.power }} points{% if sd_panel.after %}; {{ sd_pass.probe_crystals_after }} crystals{% endif %}.
+{%- for rock in sd_pass.rocks %}
+{%- if sd_panel.after %}{% assign sd_scanned = rock.size | minus: rock.unscanned_after %}{% else %}{% assign sd_scanned = 0 %}{% endif %} {{ rock.name | capitalize }}: scanned {{ sd_scanned }} of {{ rock.size }}
+{%- if sd_panel.after %}{% if rock.unscanned_after == 0 %}, sample of {{ rock.crystals }} crystals collected{% elsif rock.tagged_after > 0 %}, tagged for {{ rock.tagged_after }} passes{% endif %}{% endif %}.
+{%- endfor %}
+{%- if sd_panel.after %} Sounds queued: {{ sd_pass.sounds_after | join: ', ' }}. {% if sd_pass.star_map_after > 0 %}A star map charting {{ sd_pass.star_map_after }} asteroids appeared.{% else %}No star map.{% endif %}{% endif %}
+{%- endcapture -%}
+<div class="sd-scan" role="img" aria-label="{{ sd_summary | strip_newlines | escape }}">
+  <div aria-hidden="true">
+    <div class="nja-window-bar">{{ sd_pass.title }} · {{ sd_moment }}</div>
+    <ul class="sd-scan-units">
+      <li class="sd-unit">
+        <span class="sd-unit-name">Probe</span>
+        <span>Level {{ sd_ui.probe.level }} · scan {{ sd_ui.probe.power }}</span>
+        <span class="sd-unit-status">{% if sd_panel.after %}{{ sd_pass.probe_crystals_after }}{% else %}0{% endif %} crystals</span>
+      </li>
+      {%- for rock in sd_pass.rocks %}
+      {%- if sd_panel.after %}{% assign sd_scanned = rock.size | minus: rock.unscanned_after %}{% else %}{% assign sd_scanned = 0 %}{% endif %}
+      {%- assign sd_tenths = sd_scanned | times: 10 | divided_by: rock.size | times: 10 %}
+      <li class="sd-unit{% if sd_panel.after and rock.unscanned_after == 0 %} is-done{% endif %}">
+        <span class="sd-unit-name">{{ rock.name | capitalize }}</span>
+        <span class="sd-progress"><span class="sd-progress-track"><span class="sd-progress-fill sd-progress-{{ sd_tenths }}"></span></span> Scanned {{ sd_scanned }} / {{ rock.size }}</span>
+        <span class="sd-unit-status">{% if sd_panel.after %}{% if rock.unscanned_after == 0 %}Sample · {{ rock.crystals }} crystals{% elsif rock.tagged_after > 0 %}Tagged · {{ rock.tagged_after }} passes{% endif %}{% else %}In range{% endif %}</span>
+      </li>
+      {%- endfor %}
+    </ul>
+    <p class="sd-scan-log">{% if sd_panel.after %}Sounds queued: {{ sd_pass.sounds_after | join: ', ' }} · {% if sd_pass.star_map_after > 0 %}Star map: {{ sd_pass.star_map_after }} asteroids charted{% else %}No star map{% endif %}{% else %}Scan all is ready{% endif %}</p>
+  </div>
+</div>
