@@ -66,8 +66,12 @@ html.print-light-mode.dark-mode .sebook-figure__verbose-body .sebook-figure__ver
 }
 
 @media print {
-  /* Dedicated print-light-mode documents already own a light palette, including
-     colored teaching artwork. Do not recolor them through the dark-page reset. */
+  /* Runtime print mode (_includes/head.html) swaps `dark-mode` for
+     `print-light-mode` and keeps `dark-mode` off until printing ends. The
+     `html.dark-mode:not(.print-light-mode)` resets below are the fallback for a
+     print that never enters that mode. Dedicated print-light-mode documents
+     already own a light palette, including colored teaching artwork, so the
+     dark-page reset must not recolor them. */
   html,
   html.dark-mode:not(.print-light-mode) {
     --sebook-button-bg: #fff;

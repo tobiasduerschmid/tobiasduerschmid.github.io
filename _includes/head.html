@@ -72,8 +72,8 @@
 
   <!-- Print always uses the light palette, regardless of the saved site
        theme. We remove only the runtime class while the browser is preparing
-       print/print-preview, then restore it after printing so the user's
-       preference and cookie stay unchanged. -->
+       print/print-preview and keep it off until printing ends, then restore it
+       so the user's preference and cookie stay unchanged. -->
   <script>
     (function () {
       var root = document.documentElement;
@@ -124,8 +124,21 @@
         wasDarkBeforePrint = false;
       }
 
+      // Layout scripts re-apply the saved theme when they initialise, which can
+      // run after print mode has started (a PDF generated from a freshly loaded
+      // page, for instance) and would leak the dark palette into print.
+      // exitPrintMode restores the class.
+      function keepPrintLight() {
+        if (!printModeActive || !hasClass('dark-mode')) return;
+        wasDarkBeforePrint = true;
+        removeClass('dark-mode');
+      }
+
       window.addEventListener('beforeprint', enterPrintMode);
       window.addEventListener('afterprint', exitPrintMode);
+      if (window.MutationObserver) {
+        new MutationObserver(keepPrintLight).observe(root, { attributes: true, attributeFilter: ['class'] });
+      }
 
       if (window.matchMedia) {
         var printMedia = window.matchMedia('print');

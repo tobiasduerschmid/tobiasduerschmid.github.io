@@ -164,6 +164,12 @@ accessibility. Verify the HTML print view and the exported document separately.
    light, text and meaningful graphics sufficiently contrasted, code wrapped,
    and complete content visible across page breaks. Long student notes must grow
    and paginate instead of being clipped inside a textarea or fixed-height row.
+   Theme handling is centralized in the print controller in
+   `_includes/head.html`: it keeps `dark-mode` off for as long as print mode is
+   active, reverting any script that re-applies the saved theme. A layout needs no
+   print guard of its own, and the dark palette cannot reach print.
+   `tests/print-light-theme.spec.js` pins this; keep it green when changing theme
+   or print-mode code.
 2. **Inspect actual PDF bytes from the supported export path.** Preserve text as
    selectable text and export semantic tags (`tagged: true` in Playwright).
    Check the document title, `/Lang`, `/MarkInfo`, `/StructTreeRoot`, heading
