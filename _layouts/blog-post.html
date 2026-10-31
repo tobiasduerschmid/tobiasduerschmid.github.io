@@ -18,7 +18,9 @@ layout: blog
               {% endif %}
             </small>
           </p>
+          {% if page.image %}
           <img src="{{page.image}}" alt="{{ page.image_alt_text }}" class="rounded-img">
+          {% endif %}
         </div>
 
         <!-- Toggles -->

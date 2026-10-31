@@ -1464,6 +1464,21 @@ html.blog-citations-disabled body.blog-layout .blog-references-nav {
   display: block;
   max-width: 100%;
   overflow-x: auto;
+  border-collapse: collapse;
+  margin: var(--sp-lg, 15px) 0 var(--sp-xl, 20px);
+}
+
+/* Theme variables switch with html.dark-mode; print-light.css owns print. */
+.blog-post-content th,
+.blog-post-content td {
+  border: 1px solid var(--sebook-border);
+  padding: var(--sp-sm, 8px) var(--sp-md, 12px);
+  text-align: left;
+  vertical-align: top;
+}
+
+.blog-post-content thead th {
+  background: var(--sebook-surface-band);
 }
 
 .blog-post-footer {
@@ -2072,6 +2087,17 @@ html.dark-mode .tts-control-rate {
   .blog-post-content code {
     overflow-wrap: anywhere;
     word-break: break-word;
+  }
+
+  /* Cells hyphenate instead of inheriting overflow-wrap: anywhere, which lets
+     table layout crush short columns into split words. The tighter padding
+     keeps three-column tables inside the 320px reflow width. */
+  .blog-post-content th,
+  .blog-post-content td {
+    overflow-wrap: break-word;
+    -webkit-hyphens: auto;
+    hyphens: auto;
+    padding: var(--sp-sm, 8px) var(--sp-xs, 4px);
   }
 
   .blog-post-footer .btn {
