@@ -50,8 +50,10 @@ STARTER_FAULT = {
     "root-cause": "raw-priority",
     "ai-patches": "reopen-inverted",
     "weakened-test": "any-priority",
-    "capstone": "close-saved-early",
+    "capstone": "queue-cache-stale",
 }
+# The correct package each published solution restores; REFERENCE unless named.
+SOLUTION_VARIANT = {"capstone": "queue-cache"}
 # Team tests that fail on each starter; the instructions describe these failures.
 STARTER_RED_TEAM_TESTS = {
     "orient": set(),
@@ -60,7 +62,7 @@ STARTER_RED_TEAM_TESTS = {
     "root-cause": {"test_queue_accepts_mixed_case_priority"},
     "ai-patches": {"test_reopen_next_day"},
     "weakened-test": set(),
-    "capstone": {"test_closing_twice_is_conflict", "test_reopen_next_day"},
+    "capstone": set(),
 }
 
 
@@ -84,6 +86,10 @@ def apply_diff(source, diff):
     old = "".join(line[1:] + "\n" for line in lines if line[:1] in " -")
     new = "".join(line[1:] + "\n" for line in lines if line[:1] in " +")
     return replaced(source, old, new)
+
+
+def diffs_in(key):
+    return re.findall(r"```diff\n(.*?)```", STEPS[key]["instructions"], re.S)
 
 
 def regression_test(body):
@@ -145,17 +151,27 @@ def team_failures(files):
 
 
 class LessonMaterials(unittest.TestCase):
-    def test_every_lesson_reseeds_the_whole_repository(self):
+    def test_every_lesson_lists_the_whole_repository(self):
         package = sorted(GRADING.REFERENCE)
         for key, step in STEPS.items():
             with self.subTest(step=key):
                 paths = [item["path"] for item in step["files"]]
+                notes = ["code_map.md"] if key == "orient" else ["code_map.md", "debugging_log.md"]
                 learner_test = "test_learning.py" if key == "orient" else "test_regression.py"
                 self.assertEqual(sorted(paths), sorted(
-                    package + ["README.md", "test_helpdesk.py", learner_test, "debugging_log.md"]))
-                self.assertTrue(all(item.get("reseed") for item in step["files"]))
+                    package + notes + ["README.md", "test_helpdesk.py", learner_test]))
                 self.assertIn(step["open_file"], paths)
                 self.assertTrue(set(step["run_files"]) <= set(paths))
+
+    def test_only_the_code_map_carries_over_between_lessons(self):
+        for key, step in STEPS.items():
+            for item in step["files"]:
+                with self.subTest(step=key, path=item["path"]):
+                    if item["path"] == "code_map.md":
+                        self.assertTrue(item.get("persistent"))
+                        self.assertFalse(item.get("reseed"))
+                    else:
+                        self.assertTrue(item.get("reseed"))
 
     def test_starter_package_is_the_reference_plus_the_lessons_fault(self):
         for key, fault in STARTER_FAULT.items():
@@ -168,12 +184,16 @@ class LessonMaterials(unittest.TestCase):
                            if path.startswith("helpdesk/")}
                 self.assertEqual(package, expected)
 
-    def test_published_solutions_restore_the_reference_package(self):
+    def test_published_solutions_restore_a_correct_package(self):
         for key in STEPS:
             with self.subTest(step=key):
+                expected = dict(GRADING.REFERENCE)
+                if key in SOLUTION_VARIANT:
+                    path, source = GRADING.variant_source(SOLUTION_VARIANT[key])
+                    expected[path] = source
                 package = {path: source for path, source in files_of(key, solution=True).items()
                            if path.startswith("helpdesk/")}
-                self.assertEqual(package, GRADING.REFERENCE)
+                self.assertEqual(package, expected)
 
     def test_team_suite_fails_exactly_where_the_instructions_say(self):
         for key, red in STARTER_RED_TEAM_TESTS.items():
@@ -182,17 +202,19 @@ class LessonMaterials(unittest.TestCase):
                 self.assertEqual(team_failures(files_of(key, solution=True)), set())
 
     def test_patches_shown_to_learners_are_the_graded_patches(self):
-        diffs = re.findall(r"```diff\n(.*?)```", STEPS["ai-patches"]["instructions"], re.S)
         starter = files_of("ai-patches")["helpdesk/service.py"]
-        self.assertEqual(len(diffs), 2)
-        for diff, fault in zip(diffs, ("patch-a", "patch-b")):
-            with self.subTest(patch=fault):
-                self.assertEqual(apply_diff(starter, diff), GRADING.faulty(fault)[1])
+        expected = [GRADING.faulty("patch-a")[1], GRADING.faulty("patch-b")[1],
+                    GRADING.variant_source("patch-c")[1]]
+        diffs = diffs_in("ai-patches")
+        self.assertEqual(len(diffs), len(expected))
+        for diff, patched in zip(diffs, expected):
+            self.assertEqual(apply_diff(starter, diff), patched)
 
-    def test_pull_request_diff_is_the_weakened_team_test(self):
-        [diff] = re.findall(r"```diff\n(.*?)```", STEPS["weakened-test"]["instructions"], re.S)
-        restored = files_of("weakened-test", solution=True)["test_helpdesk.py"]
-        self.assertEqual(apply_diff(restored, diff), files_of("weakened-test")["test_helpdesk.py"])
+    def test_pull_request_diffs_are_the_two_team_test_edits(self):
+        strengthen, weaken = diffs_in("weakened-test")
+        kept = apply_diff(files_of("orient")["test_helpdesk.py"], strengthen)
+        self.assertEqual(kept, files_of("weakened-test", solution=True)["test_helpdesk.py"])
+        self.assertEqual(apply_diff(kept, weaken), files_of("weakened-test")["test_helpdesk.py"])
 
     @unittest.skipIf(pyflakes_check is None, "pyflakes is not installed")
     def test_editor_lint_does_not_point_at_the_seeded_faults(self):
@@ -204,14 +226,18 @@ class LessonMaterials(unittest.TestCase):
                         pyflakes_check(source, path, PyflakesReporter(report, report))
                         self.assertEqual(report.getvalue(), "")
 
-    def test_checks_name_only_existing_rules_and_faults(self):
+    def test_checks_name_only_existing_rules_faults_and_variants(self):
         for key, step in STEPS.items():
             for check in step.get("tests", []):
                 with self.subTest(step=key, check=check["description"]):
-                    for name in re.findall(r"'([a-z_]+)'", check["command"]):
-                        self.assertIn(name, GRADING.RULES)
-                    for name in re.findall(r"suite_detects\('[^']+', '([a-z-]+)'\)", check["command"]):
+                    command = check["command"]
+                    for args in re.findall(r"check(?:_all_except)?\('/tutorial',(.*?)\)", command, re.S):
+                        for name in re.findall(r"'([a-z_]+)'", args):
+                            self.assertIn(name, GRADING.RULES)
+                    for name in re.findall(r"suite_detects\('[^']+', '([a-z0-9-]+)'", command):
                         self.assertIn(name, GRADING.FAULTS)
+                    for name in re.findall(r"variant='([a-z0-9-]+)'", command):
+                        self.assertIn(name, GRADING.VARIANTS)
 
 
 class LessonChecks(unittest.TestCase):
@@ -245,16 +271,13 @@ class LessonChecks(unittest.TestCase):
     def test_starters_fail_the_lessons_own_checks(self):
         expected = {
             "orient": ["hands out the tickets it keeps"],
-            "reproduce": ["original code", "once replies are saved", "fetched again"],
-            "green-bar": ["never overwrites", "never reused", "reuses the newest", "correct store"],
-            "root-cause": ["mixed case", "new ticket stores", "Changing a ticket", "raw text",
-                           "correct code"],
-            "ai-patches": ["day 9", "day 10", "saved as open", "Assistant A", "Assistant B",
-                           "correct reopen"],
-            "weakened-test": ["such as ASAP", "fails again"],
-            # The same unsaved close also breaks reopening, which only the catch-all covers.
-            "capstone": ["is saved", "leave the queue", "twice", "original code", "correct code",
-                         "Every other"],
+            "reproduce": ["original code", "passes on correct code", "fetched again"],
+            "green-bar": ["never overwrites", "Rule 2 holds", "one-line fix", "whatever their first ID"],
+            "root-cause": ["mixed case", "every request that writes", "path the team suite",
+                           "passes on correct code"],
+            "ai-patches": ["day 9", "day 10", "no closing day", "Patch A", "Patch B", "Patch C"],
+            "weakened-test": ["missing priorities", "again requires"],
+            "capstone": ["always lists exactly", "original code", "passes on correct code"],
         }
         for key, fragments in expected.items():
             with self.subTest(step=key):
@@ -343,7 +366,7 @@ class LessonChecks(unittest.TestCase):
         self.assert_rejected("reproduce", {
             "helpdesk/service.py": files_of("reproduce")["helpdesk/service.py"],
             "helpdesk/store.py": GRADING.faulty("live-objects")[1],
-        }, ["hands out copies"])
+        }, ["storage contract"])
 
     # ---- Lesson 3: green bar --------------------------------------------------
 
@@ -365,7 +388,15 @@ class LessonChecks(unittest.TestCase):
 
     def test_green_bar_rejects_the_max_plus_one_fix(self):
         self.assert_rejected("green-bar", {"helpdesk/store.py": GRADING.faulty("id-from-max")[1]},
-                             ["never reused"])
+                             ["Rule 2 holds"])
+
+    def test_green_bar_rejects_a_delete_that_leaves_a_placeholder(self):
+        store = replaced(files_of("green-bar")["helpdesk/store.py"],
+                         "        return self._rows.pop(ticket_id, None) is not None\n",
+                         "        existed = self._rows.get(ticket_id) is not None\n"
+                         "        self._rows[ticket_id] = None\n"
+                         "        return existed\n")
+        self.assert_rejected("green-bar", {"helpdesk/store.py": store}, ["every view"])
 
     def test_green_bar_rejects_a_test_that_deletes_the_oldest_ticket(self):
         oldest = regression_test(
@@ -374,7 +405,16 @@ class LessonChecks(unittest.TestCase):
             "    second = create(app)\n"
             "    app.delete(f\"/tickets/{first['id']}\")\n"
             "    assert create(app)['id'] not in (first['id'], second['id'])\n")
-        self.assert_rejected("green-bar", {"test_regression.py": oldest}, ["reuses the newest"])
+        self.assert_rejected("green-bar", {"test_regression.py": oldest}, ["one-line fix"])
+
+    def test_green_bar_rejects_a_test_that_pins_the_next_id(self):
+        pinned = regression_test(
+            "def test_next_id_after_deleting_the_newest(app):\n"
+            "    create(app)\n"
+            "    newest = create(app)\n"
+            "    app.delete(f\"/tickets/{newest['id']}\")\n"
+            "    assert create(app)['id'] == 3\n")
+        self.assert_rejected("green-bar", {"test_regression.py": pinned}, ["whatever their first ID"])
 
     # ---- Lesson 4: root cause -------------------------------------------------
 
@@ -391,37 +431,38 @@ class LessonChecks(unittest.TestCase):
             "    assert app.get('/queue').status == 200\n")
         self.assert_accepted("root-cause", {"test_regression.py": through_queue})
 
-    def test_root_cause_rejects_normalizing_only_in_the_queue(self):
+    def test_root_cause_rejects_lowercasing_only_where_priorities_are_read(self):
         starter = files_of("root-cause")["helpdesk/service.py"]
-        symptom_fix = replaced(starter, "PRIORITY_RANK[ticket.priority]",
-                               "PRIORITY_RANK[ticket.priority.lower()]")
-        self.assert_rejected("root-cause", {"helpdesk/service.py": symptom_fix},
-                             ["new ticket stores", "Changing a ticket"])
+        queue_only = replaced(starter, "PRIORITY_RANK[ticket.priority]",
+                              "PRIORITY_RANK[ticket.priority.lower()]")
+        self.assert_rejected("root-cause", {"helpdesk/service.py": queue_only},
+                             ["every request that writes"])
+        # Lowercasing every response as well still leaves the store holding 'High'.
+        models = replaced(files_of("root-cause")["helpdesk/models.py"],
+                          '"priority": self.priority,', '"priority": self.priority.lower(),')
+        self.assert_rejected("root-cause", {"helpdesk/service.py": queue_only, "helpdesk/models.py": models},
+                             ["every request that writes"])
 
     def test_root_cause_rejects_repairing_creation_only(self):
         self.assert_rejected("root-cause",
                              {"helpdesk/service.py": GRADING.faulty("raw-priority-change")[1]},
-                             ["Changing a ticket"])
+                             ["every request that writes"])
 
     def test_root_cause_rejects_a_test_of_the_creation_path(self):
         creation = regression_test(
             "def test_mixed_case_creation_is_lowercased(app):\n"
             "    ticket = create(app, 'Shuttle times', 'High')\n"
             "    assert app.get(f\"/tickets/{ticket['id']}\").json['priority'] == 'high'\n")
-        self.assert_rejected("root-cause", {"test_regression.py": creation}, ["raw text"])
+        self.assert_rejected("root-cause", {"test_regression.py": creation}, ["path the team suite"])
 
     # ---- Lesson 5: AI patches -------------------------------------------------
 
-    def test_ai_patches_accept_other_repairs_and_one_combined_test(self):
+    def test_ai_patches_accept_patch_c_other_repairs_and_one_combined_test(self):
+        self.assert_accepted("ai-patches", {"helpdesk/service.py": GRADING.variant_source("patch-c")[1]})
         starter = files_of("ai-patches")["helpdesk/service.py"]
         negated = replaced(starter, "        if day - ticket.closed_on <= REOPEN_WINDOW_DAYS:\n",
                            "        if not day - ticket.closed_on <= REOPEN_WINDOW_DAYS:\n")
         self.assert_accepted("ai-patches", {"helpdesk/service.py": negated})
-        patch_b_saved = replaced(GRADING.faulty("patch-b")[1],
-                                 '        ticket.status, ticket.closed_on = "open", None\n',
-                                 '        ticket.status, ticket.closed_on = "open", None\n'
-                                 '        self.store.save(ticket)\n')
-        self.assert_accepted("ai-patches", {"helpdesk/service.py": patch_b_saved})
         combined = regression_test(
             "def test_day_seven_reopen_is_saved(app):\n"
             "    ticket = create(app)\n"
@@ -430,26 +471,49 @@ class LessonChecks(unittest.TestCase):
             "    assert app.get(f\"/tickets/{ticket['id']}\").json['status'] == 'open'\n")
         self.assert_accepted("ai-patches", {"test_regression.py": combined})
 
-    def test_ai_patches_reject_applying_either_patch(self):
+    def test_ai_patches_reject_applying_a_wrong_patch(self):
         self.assert_rejected("ai-patches", {"helpdesk/service.py": GRADING.faulty("patch-a")[1]},
                              ["day 9"])
         self.assert_rejected("ai-patches", {"helpdesk/service.py": GRADING.faulty("patch-b")[1]},
-                             ["saved as open"])
+                             ["no closing day"])
 
-    def test_ai_patches_reject_tests_that_catch_only_one_patch(self):
+    def test_ai_patches_reject_tests_that_catch_only_one_wrong_patch(self):
         day_nine = regression_test(
             "def test_day_nine(app):\n"
             "    ticket = create(app)\n"
             "    app.post(f\"/tickets/{ticket['id']}/close\", {'day': 2})\n"
             "    assert app.post(f\"/tickets/{ticket['id']}/reopen\", {'day': 9}).status == 200\n")
-        self.assert_rejected("ai-patches", {"test_regression.py": day_nine}, ["Assistant B"])
+        self.assert_rejected("ai-patches", {"test_regression.py": day_nine}, ["Patch B"])
         reload_only = regression_test(
             "def test_reopen_is_saved(app):\n"
             "    ticket = create(app)\n"
             "    app.post(f\"/tickets/{ticket['id']}/close\", {'day': 2})\n"
             "    app.post(f\"/tickets/{ticket['id']}/reopen\", {'day': 4})\n"
             "    assert app.get(f\"/tickets/{ticket['id']}\").json['status'] == 'open'\n")
-        self.assert_rejected("ai-patches", {"test_regression.py": reload_only}, ["Assistant A"])
+        self.assert_rejected("ai-patches", {"test_regression.py": reload_only}, ["Patch A"])
+
+    def test_ai_patches_reject_tests_that_also_reject_the_correct_patch(self):
+        # A learner who reads "within 7 days" as "fewer than 7" writes a test that
+        # passes on Patch A and fails on correct code, including Patch C.
+        fewer_than_seven = regression_test(
+            "def test_day_nine_is_too_late(app):\n"
+            "    ticket = create(app)\n"
+            "    app.post(f\"/tickets/{ticket['id']}/close\", {'day': 2})\n"
+            "    assert app.post(f\"/tickets/{ticket['id']}/reopen\", {'day': 9}).status == 409\n")
+        self.assert_rejected("ai-patches", {"test_regression.py": fewer_than_seven},
+                             ["Patch A", "Patch C"])
+
+    def test_ai_patches_reject_a_day_nine_test_that_reads_json_first(self):
+        # On Patch A the reopen answers 409 with only an error field, so this
+        # raises KeyError instead of failing an assertion: no rejection credit.
+        json_first = regression_test(
+            "def test_day_nine(app):\n"
+            "    ticket = create(app)\n"
+            "    app.post(f\"/tickets/{ticket['id']}/close\", {'day': 2})\n"
+            "    response = app.post(f\"/tickets/{ticket['id']}/reopen\", {'day': 9})\n"
+            "    assert response.json['status'] == 'open'\n"
+            "    assert app.get(f\"/tickets/{ticket['id']}\").json['status'] == 'open'\n")
+        self.assert_rejected("ai-patches", {"test_regression.py": json_first}, ["Patch A"])
 
     # ---- Lesson 6: weakened test ----------------------------------------------
 
@@ -468,12 +532,27 @@ class LessonChecks(unittest.TestCase):
     def test_weakened_test_rejects_keeping_the_agents_test(self):
         self.assert_rejected("weakened-test",
                              {"test_helpdesk.py": files_of("weakened-test")["test_helpdesk.py"]},
-                             ["fails again"])
+                             ["again requires"])
+
+    def test_weakened_test_rejects_a_strict_copy_beside_the_relaxed_test(self):
+        suite = files_of("weakened-test")["test_helpdesk.py"] + (
+            "\n\ndef test_unknown_priority_really_is_rejected(app):\n"
+            "    response = app.post('/tickets', {'title': 'Stage lights', 'priority': 'asap'})\n"
+            "    assert response.status == 400\n")
+        self.assert_rejected("weakened-test", {"test_helpdesk.py": suite}, ["again requires"])
+
+    def test_weakened_test_rejects_a_restored_test_that_allows_a_crash(self):
+        suite = replaced(files_of("weakened-test", solution=True)["test_helpdesk.py"],
+                         '    response = app.post("/tickets", {"title": "Stage lights", "priority": "asap"})\n'
+                         "    assert response.status == 400\n",
+                         '    response = app.post("/tickets", {"title": "Stage lights", "priority": "asap"})\n'
+                         "    assert response.status != 201\n")
+        self.assert_rejected("weakened-test", {"test_helpdesk.py": suite}, ["again requires"])
 
     def test_weakened_test_rejects_restoring_the_test_without_fixing_the_code(self):
         self.assert_rejected("weakened-test",
                              {"helpdesk/validation.py": files_of("weakened-test")["helpdesk/validation.py"]},
-                             ["such as ASAP"])
+                             ["missing priorities"])
 
     def test_weakened_test_rejects_case_sensitive_validation(self):
         strict = replaced(files_of("weakened-test", solution=True)["helpdesk/validation.py"],
@@ -483,26 +562,43 @@ class LessonChecks(unittest.TestCase):
 
     # ---- Lesson 7: capstone ---------------------------------------------------
 
-    def test_capstone_accepts_a_redundant_second_save(self):
-        starter = files_of("capstone")["helpdesk/service.py"]
-        twice = replaced(starter, '        ticket.closed_on = day\n        return ticket.to_dict()\n',
-                         '        ticket.closed_on = day\n        self.store.save(ticket)\n'
-                         '        return ticket.to_dict()\n')
-        self.assert_accepted("capstone", {"helpdesk/service.py": twice})
+    def test_capstone_accepts_removing_the_cache_or_clearing_it_everywhere(self):
+        self.assert_accepted("capstone", {"helpdesk/service.py": GRADING.REFERENCE["helpdesk/service.py"]})
+        solution = files_of("capstone", solution=True)["helpdesk/service.py"]
+        cautious = replaced(solution, "        return copy.deepcopy(self._queue)\n",
+                            "        queue = copy.deepcopy(self._queue)\n"
+                            "        return queue\n")
+        self.assert_accepted("capstone", {"helpdesk/service.py": cautious})
 
-    def test_capstone_rejects_the_assistants_queue_patch(self):
+    def test_capstone_rejects_the_assistants_first_suggestion(self):
+        # Moving the save to the end changes nothing: closing already reaches the store.
         starter = files_of("capstone")["helpdesk/service.py"]
-        assistant = replaced(starter, 'if ticket.status == "open"]', 'if ticket.status != "closed"]')
-        self.assert_rejected("capstone", {"helpdesk/service.py": assistant},
-                             ["is saved", "leave the queue", "twice", "Every other"])
+        moved = replaced(starter,
+                         "        ticket.status = \"closed\"\n"
+                         "        ticket.closed_on = day\n"
+                         "        self.store.save(ticket)\n"
+                         "        return ticket.to_dict()\n",
+                         "        ticket.status = \"closed\"\n"
+                         "        ticket.closed_on = day\n"
+                         "        result = ticket.to_dict()\n"
+                         "        self.store.save(ticket)\n"
+                         "        return result\n")
+        self.assert_rejected("capstone", {"helpdesk/service.py": moved}, ["always lists exactly"])
 
-    def test_capstone_rejects_a_test_of_the_close_response(self):
-        response_only = regression_test(
-            "def test_close_response(app):\n"
+    def test_capstone_rejects_tests_that_do_not_view_the_queue_first(self):
+        close_then_view = regression_test(
+            "def test_closed_ticket_leaves_the_queue(app):\n"
             "    ticket = create(app)\n"
-            "    response = app.post(f\"/tickets/{ticket['id']}/close\", {'day': 2})\n"
-            "    assert response.json['status'] == 'closed'\n")
-        self.assert_rejected("capstone", {"test_regression.py": response_only}, ["original code"])
+            "    assert app.post(f\"/tickets/{ticket['id']}/close\", {'day': 2}).status == 200\n"
+            "    assert app.get('/queue').json == []\n")
+        self.assert_rejected("capstone", {"test_regression.py": close_then_view}, ["original code"])
+        store_only = regression_test(
+            "def test_close_is_saved(app):\n"
+            "    ticket = create(app)\n"
+            "    app.get('/queue')\n"
+            "    app.post(f\"/tickets/{ticket['id']}/close\", {'day': 2})\n"
+            "    assert app.get(f\"/tickets/{ticket['id']}\").json['status'] == 'closed'\n")
+        self.assert_rejected("capstone", {"test_regression.py": store_only}, ["original code"])
 
 
 if __name__ == "__main__":

@@ -4045,14 +4045,19 @@ under the same prefix family as other tutorial state so the global
 
   **Multi-file repository lessons.** `repo-debugging` keeps a package under
   `helpdesk/` and reseeds every file in every lesson, so each lesson is a new
-  commit of one repository. Its lesson-specific asset,
+  commit of one repository; only `code_map.md` (`persistent`, no `reseed`)
+  carries the learner's notes forward. Its lesson-specific asset,
   `assets/tutorials/helpdesk_grading.py`, holds the reference package, named
-  seeded faults (exact single-match edits), and README-rule checks that import
-  the learner's current package through its public API, independent of editable
-  test files. `suite_detects`/`suite_accepts` pin the whole package to the
-  reference (plus one fault) while `check_suite` runs a learner test file, then
-  restore the learner's files; `check_suite` resolves dotted module names to
-  nested paths. Starters must equal reference plus fault:
+  seeded faults and correct `VARIANTS` (exact single-match edits; a fault may
+  build on a variant), and README-rule checks that import the learner's current
+  package through its public API, independent of editable test files.
+  `suite_detects(file, fault, test_name=None)` and
+  `suite_accepts(file, variant=None, test_name=None)` pin the whole package to
+  the reference (plus one fault or variant) while `check_suite` runs a learner
+  test file, then restore the learner's files; `check_suite` resolves dotted
+  module names to nested paths. Accepting a correct variant, such as a correct
+  AI patch, catches tests that reject correct code. Starters must equal
+  reference plus fault:
   `scripts/tests/test_repo_debugging_graders.py` enforces that, checks the
   diffs shown in instructions against the graded patches, and replays every
   check on alternative and mistaken submissions. Set `sys.dont_write_bytecode

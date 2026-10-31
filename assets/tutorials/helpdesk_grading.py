@@ -353,26 +353,110 @@ FAULTS = {
         ("    if not isinstance(priority, str) or priority.strip().lower() not in PRIORITY_RANK:\n",
          "    if not isinstance(priority, str) or not priority.strip():\n"),
     ]),
-    # Lesson 7: closing saves the ticket before changing it.
-    "close-saved-early": ("helpdesk/service.py", [
-        ("        ticket.status = \"closed\"\n"
-         "        ticket.closed_on = day\n"
-         "        self.store.save(ticket)\n",
+    # Lesson 6 mutant: an unknown priority crashes instead of returning 400.
+    "unknown-priority-crashes": ("helpdesk/validation.py", [
+        ("        raise ValidationError(f\"priority must be one of: {', '.join(PRIORITY_RANK)}\")\n",
+         "        raise KeyError(priority)\n"),
+    ]),
+    # Lesson 7: the teammate's queue cache is not cleared when a ticket closes.
+    "queue-cache-stale": ("helpdesk/service.py", [
+        ("        ticket.closed_on = day\n"
          "        self.store.save(ticket)\n"
-         "        ticket.status = \"closed\"\n"
-         "        ticket.closed_on = day\n"),
+         "        self._changed()\n",
+         "        ticket.closed_on = day\n"
+         "        self.store.save(ticket)\n"),
+    ], "queue-cache"),
+}
+
+# Correct alternatives, written as the same kind of edits. Learner tests must
+# accept them, so a test that rejects correct code cannot earn credit.
+VARIANTS = {
+    # Lesson 3: a store whose IDs start at 101; rule 2 promises no first number.
+    "ids-from-101": ("helpdesk/store.py", [
+        ("        self._last_id = 0\n", "        self._last_id = 100\n"),
+    ]),
+    # Lesson 5: Assistant C keeps B's rewrite but also keeps the save.
+    "patch-c": ("helpdesk/service.py", [
+        ("        if day - ticket.closed_on > REOPEN_WINDOW_DAYS:\n"
+         "            raise Conflict(f\"ticket {ticket_id} was closed too long ago\")\n"
+         "        ticket.status = \"open\"\n"
+         "        ticket.closed_on = None\n",
+         "        days_closed = day - ticket.closed_on\n"
+         "        if days_closed > REOPEN_WINDOW_DAYS:\n"
+         "            raise Conflict(f\"ticket {ticket_id} was closed too long ago\")\n"
+         "        ticket.status, ticket.closed_on = \"open\", None\n"),
+    ]),
+    # Lesson 7: a teammate's cache for GET /queue, cleared after every write.
+    "queue-cache": ("helpdesk/service.py", [
+        ('"""Business rules. Each write loads a ticket, changes that copy, and saves it."""\n',
+         '"""Business rules. Each write loads a ticket, changes that copy, and saves it."""\n'
+         "import copy\n\n"),
+        ("        self.store = store\n",
+         "        self.store = store\n"
+         "        self._queue = None  # the info tent screen polls GET /queue\n\n"
+         "    def _changed(self):\n"
+         "        \"\"\"Forget the cached queue after any write.\"\"\"\n"
+         "        self._queue = None\n"),
+        ("                        priority=clean_priority(priority))\n"
+         "        self.store.save(ticket)\n",
+         "                        priority=clean_priority(priority))\n"
+         "        self.store.save(ticket)\n"
+         "        self._changed()\n"),
+        ("            raise NotFound(f\"no ticket {ticket_id}\")\n\n    def add_reply",
+         "            raise NotFound(f\"no ticket {ticket_id}\")\n"
+         "        self._changed()\n\n    def add_reply"),
+        ("        ticket.replies.append(clean_reply(author, text))\n"
+         "        self.store.save(ticket)\n",
+         "        ticket.replies.append(clean_reply(author, text))\n"
+         "        self.store.save(ticket)\n"
+         "        self._changed()\n"),
+        ("        ticket.priority = clean_priority(priority)\n"
+         "        self.store.save(ticket)\n",
+         "        ticket.priority = clean_priority(priority)\n"
+         "        self.store.save(ticket)\n"
+         "        self._changed()\n"),
+        ("        ticket.closed_on = day\n"
+         "        self.store.save(ticket)\n",
+         "        ticket.closed_on = day\n"
+         "        self.store.save(ticket)\n"
+         "        self._changed()\n"),
+        ("        ticket.closed_on = None\n"
+         "        self.store.save(ticket)\n",
+         "        ticket.closed_on = None\n"
+         "        self.store.save(ticket)\n"
+         "        self._changed()\n"),
+        ("    def queue(self):\n"
+         "        waiting = [ticket for ticket in self.store.all() if ticket.status == \"open\"]\n"
+         "        waiting.sort(key=lambda ticket: (PRIORITY_RANK[ticket.priority], ticket.id))\n"
+         "        return [ticket.to_dict() for ticket in waiting]\n",
+         "    def queue(self):\n"
+         "        if self._queue is None:\n"
+         "            waiting = [ticket for ticket in self.store.all() if ticket.status == \"open\"]\n"
+         "            waiting.sort(key=lambda ticket: (PRIORITY_RANK[ticket.priority], ticket.id))\n"
+         "            self._queue = [ticket.to_dict() for ticket in waiting]\n"
+         "        return copy.deepcopy(self._queue)\n"),
     ]),
 }
 
 
-def faulty(name):
-    """Return ``(path, source)`` for REFERENCE with one named fault applied."""
-    path, edits = FAULTS[name]
-    source = REFERENCE[path]
+def _edited(table, name):
+    """Apply one named entry's exact edits to REFERENCE, or to its base variant."""
+    path, edits, *base = table[name]
+    source = variant_source(base[0])[1] if base else REFERENCE[path]
     for old, new in edits:
         assert source.count(old) == 1, f"{name}: expected one match for {old!r}"
         source = source.replace(old, new)
     return path, source
+
+
+def faulty(name):
+    """Return ``(path, source)`` for one named fault."""
+    return _edited(FAULTS, name)
+
+
+def variant_source(name):
+    """Return ``(path, source)`` for one named correct variant."""
+    return _edited(VARIANTS, name)
 
 
 def _module_name(path):
@@ -408,22 +492,27 @@ def pinned(directory, sources):
         _forget_workspace_modules()
 
 
-def _judge_suite(test_file, fault=None):
+def _judge_suite(test_file, fault=None, variant=None, test_name=None):
     directory = Path(test_file).parent
-    path, source = faulty(fault) if fault else ("helpdesk/service.py", REFERENCE["helpdesk/service.py"])
+    if fault:
+        path, source = faulty(fault)
+    elif variant:
+        path, source = variant_source(variant)
+    else:
+        path, source = "helpdesk/service.py", REFERENCE["helpdesk/service.py"]
     with pinned(directory, REFERENCE):
         check_suite(test_file, _module_name(path), replacement_source=source,
-                    expect_failure=fault is not None)
+                    expect_failure=fault is not None, test_name=test_name)
 
 
-def suite_detects(test_file, fault):
-    """The learner's tests fail, by assertion, on REFERENCE plus ``fault``."""
-    _judge_suite(test_file, fault)
+def suite_detects(test_file, fault, test_name=None):
+    """The learner's tests (or one named test) fail, by assertion, on ``fault``."""
+    _judge_suite(test_file, fault=fault, test_name=test_name)
 
 
-def suite_accepts(test_file):
-    """The learner's tests pass on REFERENCE."""
-    _judge_suite(test_file)
+def suite_accepts(test_file, variant=None, test_name=None):
+    """The learner's tests pass on REFERENCE, or on one correct variant."""
+    _judge_suite(test_file, variant=variant, test_name=test_name)
 
 
 def fresh_app(directory):
@@ -485,6 +574,7 @@ def deleted_ticket_is_gone(app):
     ticket = _create(app)
     assert app.delete(f"/tickets/{ticket['id']}").status == 204
     assert app.get(f"/tickets/{ticket['id']}").status == 404
+    assert app.delete(f"/tickets/{ticket['id']}").status == 404
 
 
 def new_ticket_never_overwrites(app):
@@ -522,6 +612,13 @@ def priority_is_lowercased_on_change(app):
     assert _fetch(app, ticket)["priority"] == "urgent"
 
 
+def priority_is_stored_lowercase(app):
+    ticket = _create(app, "Shuttle times", "High")
+    assert app.service.store.get(ticket["id"]).priority == "high"
+    assert app.post(f"/tickets/{ticket['id']}/priority", {"priority": "URGENT"}).status == 200
+    assert app.service.store.get(ticket["id"]).priority == "urgent"
+
+
 def unknown_priority_is_rejected(app):
     for priority in ("asap", "ASAP", "", None):
         response = app.post("/tickets", {"title": "Stage lights", "priority": priority})
@@ -545,6 +642,20 @@ def queue_orders_by_priority_then_age(app):
     normal = _create(app, "Locker key", "normal")
     later_urgent = _create(app, "Lost phone", "urgent")
     assert _queue_ids(app) == [urgent["id"], later_urgent["id"], normal["id"], low["id"]]
+
+
+def queue_tracks_every_change(app):
+    """Each write shows up in the queue, even right after the queue was viewed."""
+    first = _create(app, "Locker key", "normal")
+    assert _queue_ids(app) == [first["id"]]
+    second = _create(app, "Medical tent", "low")
+    assert _queue_ids(app) == [first["id"], second["id"]]
+    assert app.post(f"/tickets/{second['id']}/priority", {"priority": "urgent"}).status == 200
+    assert _queue_ids(app) == [second["id"], first["id"]]
+    assert _close(app, second, 2).status == 200
+    assert _queue_ids(app) == [first["id"]]
+    assert app.delete(f"/tickets/{first['id']}").status == 204
+    assert _queue_ids(app) == []
 
 
 def closed_tickets_leave_queue(app):
@@ -642,8 +753,9 @@ RULES = {rule.__name__: rule for rule in (
     tickets_are_created_and_fetched, unknown_ids_are_404, deleted_ticket_is_gone,
     new_ticket_never_overwrites, ids_never_reused_after_deleting_newest,
     priority_is_lowercased_on_create, priority_is_lowercased_on_change,
-    unknown_priority_is_rejected, queue_handles_mixed_case,
-    queue_orders_by_priority_then_age, closed_tickets_leave_queue,
+    priority_is_stored_lowercase, unknown_priority_is_rejected,
+    queue_handles_mixed_case, queue_orders_by_priority_then_age,
+    queue_tracks_every_change, closed_tickets_leave_queue,
     reply_is_returned, reply_survives_reload, blank_reply_is_rejected,
     close_is_saved, closing_twice_is_conflict, reopen_allowed_through_day_seven,
     reopen_rejected_after_day_seven, reopen_is_saved,

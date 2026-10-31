@@ -14,7 +14,7 @@ const starterFile = (key, path) => config.steps[stepIndex(key)].files.find(file 
 // Checks each starter already passes, matching the native replay; the rest
 // describe that lesson's bug and the learner's still-missing test.
 const STARTER_PASSES = {
-  orient: 1, reproduce: 2, 'green-bar': 1, 'root-cause': 1, 'ai-patches': 1, 'weakened-test': 3, capstone: 0,
+  orient: 1, reproduce: 2, 'green-bar': 2, 'root-cause': 1, 'ai-patches': 1, 'weakened-test': 3, capstone: 2,
 };
 
 async function openLesson(page, index) {
@@ -59,16 +59,19 @@ test('the toolbar Test runs the team suite and the regression tests from the nes
   await expect(output).toContainText(/14 passed/, { timeout: TIMEOUT });
 });
 
-test('a repair made in one lesson does not leak into the next lesson', async ({ page }) => {
+test('a repair stays in its lesson while the code map follows the learner', async ({ page }) => {
   test.setTimeout(180_000);
   const reproduce = stepIndex('reproduce');
   await openLesson(page, reproduce);
   const edited = `${starterFile('reproduce', 'helpdesk/service.py')}\n# learner note\n`;
   expect(await setTutorialFileContent(page, 'helpdesk/service.py', edited)).toBe(true);
+  const notes = `${starterFile('reproduce', 'code_map.md')}- save() is called after every change\n`;
+  expect(await setTutorialFileContent(page, 'code_map.md', notes)).toBe(true);
 
   await page.evaluate(async step => window._tutorial.loadStep(step), reproduce + 1);
   expect(await editorText(page, 'helpdesk/service.py'))
     .toBe(starterFile(config.steps[reproduce + 1].key, 'helpdesk/service.py'));
+  expect(await editorText(page, 'code_map.md')).toBe(notes);
   await page.evaluate(async step => window._tutorial.loadStep(step), reproduce);
   expect(await editorText(page, 'helpdesk/service.py')).toBe(edited);
 });
