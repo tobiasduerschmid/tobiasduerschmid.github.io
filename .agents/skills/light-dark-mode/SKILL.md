@@ -136,3 +136,4 @@ If you genuinely cannot run the site (e.g. you're operating headlessly), say so 
 | Adding an SVG icon | Use `currentColor` for `fill` / `stroke` so it inherits the text color, or add an explicit dark-mode override |
 | Adding a Mermaid / ArchUML diagram | The existing invert filter handles it — verify visually that the result is legible |
 | Working on the editor / terminal workspace panels | These are always dark; match the local convention — light-mode overrides are for the chrome only |
+| Anything that prints or exports to PDF | Print is always light, whatever theme is saved. Read [`print-light-mode`](../print-light-mode/SKILL.md) before touching `@media print`, print views, or theme-restore scripts |

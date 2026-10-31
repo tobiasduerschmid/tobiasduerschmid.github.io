@@ -127,6 +127,10 @@
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
+      /* This page doesn't load main.css, which forces exact colors elsewhere;
+         the white number needs its fill to print. */
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
     }
 
     .step-title {

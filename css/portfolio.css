@@ -801,9 +801,13 @@ html.dark-mode h2 {
 	text-shadow: none;
 }
 
-/* Inline code inside headings inherits the heading color in all modes */
-h1 code, h2 code, h3 code, h4 code, h5 code, h6 code {
-	color: inherit !important;
+/* Inline code inside headings inherits the heading color in light and dark
+   mode. Print keeps the plain print code color instead: the print heading blue
+   on the code background is only 4.36:1. */
+@media screen {
+	h1 code, h2 code, h3 code, h4 code, h5 code, h6 code {
+		color: inherit !important;
+	}
 }
 
 html.dark-mode .text-danger {

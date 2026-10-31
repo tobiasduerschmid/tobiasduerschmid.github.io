@@ -2399,6 +2399,18 @@ html:not(.dark-mode) .tvm-diagram-type-btn.active {
   color: #fff;
   box-shadow: 0 1px 4px rgba(39,116,174,0.3);
 }
+/* The selected tab is a filled accent with white text on screen, which is only
+   legible if the browser prints backgrounds. Print it as an outlined tab with dark
+   text; the heavier border and bold weight mark it as selected without color. */
+@media print {
+  .tvm-diagram-type-btn.active {
+    background: #fff !important;
+    border: 2px solid #111 !important;
+    color: #111 !important;
+    box-shadow: none !important;
+    font-weight: 700;
+  }
+}
 html:not(.dark-mode) .tvm-diagram-zoom-controls {
   background: #eaecf0;
   border-color: #cdd0d8;

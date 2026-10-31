@@ -1,0 +1,90 @@
+{%- comment -%}
+Print always uses the light palette, regardless of the saved site theme.
+
+head.html includes this for the shared layouts. Add it to the <head> of every
+other page that can carry the `dark-mode` class (pop-outs, narration readers).
+While print mode is active the controller sets `print-light-mode`, keeps
+`dark-mode` off, and restores both once printing ends, so the reader's saved
+preference and cookie stay unchanged. It is safe on a document that is
+print-light by design: that document keeps the class it started with.
+{%- endcomment -%}
+<script>
+  (function () {
+    var root = document.documentElement;
+    var wasDarkBeforePrint = false;
+    var addedPrintLightMode = false;
+    var printModeActive = false;
+
+    function classText() {
+      return root.className || '';
+    }
+
+    function hasClass(name) {
+      return (' ' + classText() + ' ').indexOf(' ' + name + ' ') !== -1;
+    }
+
+    function addClass(name) {
+      if (root.classList && typeof root.classList.add === 'function') {
+        root.classList.add(name);
+        return;
+      }
+      if (!hasClass(name)) {
+        root.className = classText() ? classText() + ' ' + name : name;
+      }
+    }
+
+    function removeClass(name) {
+      if (root.classList && typeof root.classList.remove === 'function') {
+        root.classList.remove(name);
+        return;
+      }
+      root.className = (' ' + classText() + ' ').replace(' ' + name + ' ', ' ').trim();
+    }
+
+    function enterPrintMode() {
+      if (printModeActive) return;
+      printModeActive = true;
+      wasDarkBeforePrint = hasClass('dark-mode');
+      addedPrintLightMode = !hasClass('print-light-mode');
+      removeClass('dark-mode');
+      addClass('print-light-mode');
+    }
+
+    function exitPrintMode() {
+      if (!printModeActive) return;
+      printModeActive = false;
+      if (addedPrintLightMode) removeClass('print-light-mode');
+      if (wasDarkBeforePrint) {
+        addClass('dark-mode');
+      }
+      wasDarkBeforePrint = false;
+    }
+
+    // Layout scripts re-apply the saved theme when they initialise, which can
+    // run after print mode has started (a PDF generated from a freshly loaded
+    // page, for instance) and would leak the dark palette into print.
+    // exitPrintMode restores the class.
+    function keepPrintLight() {
+      if (!printModeActive || !hasClass('dark-mode')) return;
+      wasDarkBeforePrint = true;
+      removeClass('dark-mode');
+    }
+
+    window.addEventListener('beforeprint', enterPrintMode);
+    window.addEventListener('afterprint', exitPrintMode);
+    if (window.MutationObserver) {
+      new MutationObserver(keepPrintLight).observe(root, { attributes: true, attributeFilter: ['class'] });
+    }
+
+    if (window.matchMedia) {
+      var printMedia = window.matchMedia('print');
+      var syncPrintMedia = function () {
+        if (printMedia.matches) enterPrintMode();
+        else exitPrintMode();
+      };
+      if (printMedia.addEventListener) printMedia.addEventListener('change', syncPrintMedia);
+      else if (printMedia.addListener) printMedia.addListener(syncPrintMedia);
+      syncPrintMedia();
+    }
+  })();
+</script>

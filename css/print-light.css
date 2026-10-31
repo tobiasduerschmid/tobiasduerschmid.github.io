@@ -66,13 +66,15 @@ html.print-light-mode.dark-mode .sebook-figure__verbose-body .sebook-figure__ver
 }
 
 @media print {
-  /* Runtime print mode (_includes/head.html) swaps `dark-mode` for
+  /* Runtime print mode (_includes/print-light-controller.html) swaps `dark-mode` for
      `print-light-mode` and keeps `dark-mode` off until printing ends. The
      `html.dark-mode:not(.print-light-mode)` resets below are the fallback for a
      print that never enters that mode. Dedicated print-light-mode documents
      already own a light palette, including colored teaching artwork, so the
      dark-page reset must not recolor them. */
-  html,
+  /* The theme defines these button tokens on `:root`, which out-ranks a bare
+     `html` selector, so print overrides them on `:root` as well. */
+  :root,
   html.dark-mode:not(.print-light-mode) {
     --sebook-button-bg: #fff;
     --sebook-button-bg-hover: #fff;
@@ -119,6 +121,17 @@ html.print-light-mode.dark-mode .sebook-figure__verbose-body .sebook-figure__ver
   .tvm-quiz-panel .quiz-option.selected .option-checkbox::after,
   .workout-quiz-card .quiz-option.selected .option-checkbox::after {
     border-color: #2774AE !important;
+  }
+
+  /* Filled danger buttons would print as large dark red blocks. They don't use
+     the button tokens above, so print them as an outline with dark red text. */
+  .gym-btn.danger,
+  .btn.btn-danger,
+  .cookies-btn.danger,
+  .spec-card-btn-danger {
+    background: #fff !important;
+    border-color: #7a111d !important;
+    color: #7a111d !important;
   }
 
   html,
