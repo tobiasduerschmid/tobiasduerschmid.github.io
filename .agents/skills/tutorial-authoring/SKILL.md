@@ -1136,6 +1136,13 @@ playwright:                            # React tutorials only.
 instructor_mode: boolean               # Always show solutions, hints,
                                        # answers. Set on lecture configs.
 disable_quiz: boolean                  # Skip all quizzes (lectures).
+
+# === Print view ===
+print_unchanged_files: boolean         # Default true. false prints a one-line
+                                       # note instead of a starter file whose
+                                       # content equals the previous step's
+                                       # file at the same path. Use it when
+                                       # every lesson reseeds a whole repository.
 ```
 
 ### 3.2 Step fields (`steps:` is a list)
@@ -4035,6 +4042,24 @@ under the same prefix family as other tutorial state so the global
   workspace module/bytecode caches between runs, and restores the previous
   bytecode setting. Learner tests still run in the normal Python environment;
   this helper is a diagnostic evaluator, not a hostile-code security boundary.
+
+  **Multi-file repository lessons.** `repo-debugging` keeps a package under
+  `helpdesk/` and reseeds every file in every lesson, so each lesson is a new
+  commit of one repository. Its lesson-specific asset,
+  `assets/tutorials/helpdesk_grading.py`, holds the reference package, named
+  seeded faults (exact single-match edits), and README-rule checks that import
+  the learner's current package through its public API, independent of editable
+  test files. `suite_detects`/`suite_accepts` pin the whole package to the
+  reference (plus one fault) while `check_suite` runs a learner test file, then
+  restore the learner's files; `check_suite` resolves dotted module names to
+  nested paths. Starters must equal reference plus fault:
+  `scripts/tests/test_repo_debugging_graders.py` enforces that, checks the
+  diffs shown in instructions against the graded patches, and replays every
+  check on alternative and mistaken submissions. Set `sys.dont_write_bytecode
+  = True` in setup, because the shared helper clears only the top-level
+  `__pycache__`, not a package's. Run pyflakes over every seeded fault:
+  with `linter: true`, a fault that leaves an import unused underlines the
+  bug for the learner.
 
 - **UML assertions** (`uml-editor`): `tests[].assertions` are structural
   checks against the current ArchUML source. Use `kind: element|class|state|

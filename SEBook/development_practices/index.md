@@ -21,7 +21,7 @@ Use the master deck when you want a mixed review of code-reading, debugging, rev
 
 # Debugging
 
-[Debugging](/SEBook/development_practices/debugging.html) covers reproducing a fault, localizing the root cause, using debuggers and assertions, verifying the fix, and preserving the regression test. The [Python Debugging Tutorial](/SEBook/tools/python-debugging) gives hands-on practice with breakpoints and time-travel debugging.
+[Debugging](/SEBook/development_practices/debugging.html) covers reproducing a fault, localizing the root cause, using debuggers and assertions, verifying the fix, and preserving the regression test. The [Python Debugging Tutorial](/SEBook/tools/python-debugging) gives hands-on practice with breakpoints and time-travel debugging, and the [Repository Debugging Tutorial](/SEBook/development_practices/repo-debugging-tutorial) practices debugging an unfamiliar multi-file repository, including reviewing AI-generated patches.
 
 # Defensive Programming and Design by Contract
 

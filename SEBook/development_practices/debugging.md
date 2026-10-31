@@ -291,9 +291,10 @@ These are covered in depth in the [Git chapter](/SEBook/tools/git.html); the poi
 
 # Practice
 
-Want to practice the step-through debugger, breakpoints, and a time-travel debugger on real (broken) code?
+Practice on real, broken code:
 
 * **[Python Debugging Tutorial](/SEBook/tools/python-debugging)** — work through several bugs in a sandboxed editor with a full debugger, including time-travel features.
+* **[Repository Debugging Tutorial](/SEBook/development_practices/repo-debugging-tutorial)** — debug an unfamiliar multi-file service from bug reports: reproduce each bug as a failing test, fix the cause instead of the symptom, and review AI-generated patches against the spec.
 
 
 {% include flashcards.html id="debugging" %}

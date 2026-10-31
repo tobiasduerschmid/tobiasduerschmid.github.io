@@ -68,6 +68,7 @@ Each skill below lists exercises that already exist in the SEBook, followed by n
 ### Debug with Hypotheses
 
 * **[Debugging Python: From Symptom to Fix](/SEBook/tools/python-debugging)** is the closest SEBook match for the debugging round. Its cases ("Maze Pathfinder," "Ledger Reconciliation," and "Course Waitlist") each start from a failing test. You narrow down the problem with a time-travel debugger, targeted logging, and recorded program history, then protect the fix with a regression test. "Debugging Triage" asks you to judge two suggested fixes, and "Independent Case — Article Tags" gives you an unlabeled fault and asks for an evidence log.
+* **[Repository Debugging: From Bug Report to Reviewed Patch](/SEBook/development_practices/repo-debugging-tutorial)** was built for this interview format. One multi-file service receives seven bug reports. You orient yourself and check a documented claim with a test ("Orientation Before Debugging"), turn a user's report into a failing test ("Reproduce Before You Repair"), catch a fix that passes the visible test but breaks the spec ("When the Green Bar Lies"), and trace a crash back to where the bad value was created ("Fix the Cause, Not the Crash Site").
 * **The [Debugging chapter](/SEBook/development_practices/debugging.html)** covers a four-step debugging process and the Git tools that support it, with a quiz.
 * **Two narrated case studies, [Therac-25](/SEBook/development_practices/therac-25.html) and [Cloudflare 2019](/SEBook/development_practices/cloudflare-2019.html),** practice the reasoning side with decision checkpoints: Does this clue explain the whole failure? Does a smaller example still preserve it? Why is fixing one rule not the whole response?
 * **New drills:** Bug Swap and Real-Bug Replay.
@@ -86,7 +87,8 @@ Each skill below lists exercises that already exist in the SEBook, followed by n
 * **[Code Smells & Refactoring](/SEBook/tools/code-smells-refactoring-tutorial):** in "Boolean Anti-Patterns — and the trap that costs you everything," a colleague's tidy-looking simplification silently drops a case, and you expose it with a test. "The Refactoring Memo" asks you to diagnose unfamiliar code, including risks and your confidence, before you change it.
 * **The [Modern Code Review chapter](/SEBook/development_practices/modern_code_review.html)** covers how reviewers understand a change, including a section on AI-generated code; its quiz includes an AI agent's 2,000-line pull request that passes all its tests.
 * **The [Generative AI in Software Engineering chapter](/SEBook/development_practices/genAI.html)** describes a "supervisor mentality" and what to delegate. Its quiz includes scenarios such as a hallucinated import and an AI that hard-codes expected outputs to make tests pass.
-* **New drills:** AI Patch Review and Teach-the-Bot Debugging. The SEBook doesn't yet have an exercise in which you review a complete AI-generated patch, so these drills fill that gap.
+* **[Repository Debugging](/SEBook/development_practices/repo-debugging-tutorial)** puts AI output under review. In "Review Two AI Patches," both patches pass the team's tests, and you write the tests that reject them. In "The Patch That Edited the Test," an agent made a failing test pass by weakening it. "Independent Case: Ghost Tickets" asks you to refute an assistant's confident diagnosis before you fix the real cause.
+* **New drills:** AI Patch Review and Teach-the-Bot Debugging, which carry those reviews over to larger patches in your own projects.
 
 ### Investigate History and Tools
 
@@ -158,22 +160,22 @@ The plan assumes roughly four hours per week alongside your classes; skip what y
 
 ### Week 1: Read Before You Write
 
-* **In the SEBook:** Code Comprehension Part 1, then the reading boss in Part 2.
+* **In the SEBook:** Code Comprehension Part 1, the reading boss in Part 2, and the orientation step of Repository Debugging.
 * **New drills:** two Orientation Sprints and one core drill without AI.
 
 ### Week 2: Debug Like a Scientist
 
-* **In the SEBook:** the three cases in Debugging Python, and Testing Foundations.
+* **In the SEBook:** the three cases in Debugging Python, Testing Foundations, and steps 2–4 of Repository Debugging.
 * **New drills:** two Failing Test First exercises, a Bug Swap, and one core drill with a restricted assistant.
 
 ### Week 3: Work with the AI, Not for It
 
-* **In the SEBook:** the Boolean trap in Code Smells & Refactoring, and git bisect in Advanced Git.
+* **In the SEBook:** the Boolean trap in Code Smells & Refactoring, git bisect in Advanced Git, and the two AI review steps of Repository Debugging.
 * **New drills:** two AI Patch Reviews, Teach-the-Bot Debugging, and one core drill with a full agent.
 
 ### Week 4: Interview Conditions
 
-* **In the SEBook:** the independent case in Debugging Python, done without AI.
+* **In the SEBook:** the independent cases in Debugging Python and Repository Debugging, done without AI.
 * **New drills:** two timed mock interviews with an observer (one with a restricted assistant, one with a full agent), Explain-and-Change follow-ups, an Environment Recovery Drill, and a Real-Bug Replay.
 
 Keep a debugging log for every bug, in every week. In Week 4, also redo one kind of bug from Week 1 from memory.

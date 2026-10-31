@@ -1,0 +1,2493 @@
+# Practice for repository debugging rounds: one service, seven bug reports, two AI reviews.
+# Every lesson reseeds the whole repository. Its starter is the reference package in
+# assets/tutorials/helpdesk_grading.py plus that lesson's seeded fault;
+# scripts/tests/test_repo_debugging_graders.py checks that correspondence and replays the checks.
+title: 'Repository Debugging: From Bug Report to Reviewed Patch'
+description: Practice the work of a repository debugging interview. Orient yourself in an unfamiliar
+  multi-file Python service, reproduce bug reports as failing tests, fix causes instead of symptoms, and
+  review AI-generated patches and diagnoses against the spec. For students comfortable with Python classes,
+  dictionaries, and pytest assertions. Seven steps, about two sessions of 45–60 minutes each.
+learning_objectives:
+  - Orient in an unfamiliar repository by reading its documentation and tests, tracing one request end to
+    end, and checking a documented claim with a learning test.
+  - Reproduce a reported bug as a failing regression test before changing production code.
+  - Distinguish where a failure appears from where the wrong state was created, and repair every path
+    that creates it.
+  - Judge whether a passing test suite establishes a requirement, and add the missing boundary case.
+  - Review AI-generated patches against the specification and write tests that reject the incorrect ones.
+  - Detect a patch that weakens a test instead of fixing the code, and restore the test's intent.
+  - Test an AI diagnosis with an observation that could refute it, then fix, test, and document the
+    actual cause independently.
+backend: pyodide
+linter: true
+debugger: true
+pytest: true
+require_tests: true
+autosave_type: files
+editor_split: true
+output_height: 30%
+progress_version: 1
+# Lessons share most files; print each unchanged file once.
+print_unchanged_files: false
+setup_commands:
+  - import pyodide_js; await pyodide_js.loadPackage('pytest')
+  - import sys; sys.path.insert(0, '/tutorial'); sys.dont_write_bytecode = True
+  - |
+    import sys, types
+    from pyodide.http import pyfetch
+    for name, url in (('tutorial_test_grading', '/assets/tutorials/python_test_grading.py'),
+                      ('helpdesk_grading', '/assets/tutorials/helpdesk_grading.py')):
+        response = await pyfetch(url)
+        response.raise_for_status()
+        module = types.ModuleType(name)
+        exec(await response.string(), module.__dict__)
+        sys.modules[name] = module
+
+steps:
+
+  # Pedagogy: worked example with fading. The expert orientation routine (README, tests, one request
+  # traced end to end, code map) is modeled once, then practiced in every later step. Shah et al. (2025)
+  # found final-year students struggle to start from documentation and to read structurally.
+  # PRIMM — Predict a documented claim, then check it with a learning test (Make). The suite is green.
+  - title: Orientation Before Debugging
+    key: orient
+    instructions: |
+      ### Why this matters
+
+      In a repository debugging interview, and in your first weeks on any team, you fix code you have never seen. A few minutes of structured reading tells you where to look, so you stop guessing in the wrong file.
+
+      ### 🎯 You will learn to
+
+      - **Trace** one request through every layer of an unfamiliar service.
+      - **Verify** a documented claim with a learning test instead of trusting it.
+
+      Every step of this tutorial uses one small repository: the help desk backend for a music festival's info tent. Each later step brings a new bug report against it.
+
+      #### How an experienced developer orients
+
+      1. **README first.** Read `README.md`: what does the system promise? Its numbered rules are the spec. When code and README disagree, the README decides what a fix must do.
+      2. **Tests second.** Skim `test_helpdesk.py` in the **Tests** pane. Tests are executable examples: `app.post("/tickets", {...})` returns a response with `.status` and `.json`.
+      3. **Follow one request.** Pick one test and trace its request from `helpdesk/api.py` into `helpdesk/service.py` and `helpdesk/store.py`. Skip code the request never reaches.
+      4. **Write a code map.** Note where requests enter, where the rules live, and where data is stored.
+
+      #### Your turn
+
+      1. **Run.** Select **Test** in the output toolbar. Every team test should pass; nothing is broken yet.
+      2. **Map.** Follow the routine above and fill in the code map in `debugging_log.md`. Short phrases are enough.
+      3. **Predict.** The README says the store hands out copies. Suppose code loads ticket 1 with `store.get(1)`, changes its title, and never calls `save`. What will the next `store.get(1)` return? Write your prediction in the log.
+      4. **Check with a learning test.** A *learning test* pins down how unfamiliar code behaves, so you rely on evidence instead of documentation that may have drifted. In `test_learning.py`, add `test_changing_a_loaded_ticket_does_not_change_the_store`. Like the example test already in that file, it should use `TicketStore` directly and assert what your prediction says.
+      5. **Verify.** Run **Test**, then **Test My Work**.
+    files:
+      - path: README.md
+        language: markdown
+        reseed: true
+        content: &readme |
+          # Festival Help Desk
+
+          The info tent at the Lakeside Sound festival logs attendee problems as
+          tickets: lost wristbands, accessibility requests, set-time questions.
+          Staff work through a shared queue.
+
+          ## Where things live
+
+          - `helpdesk/api.py`: entry point; routes requests, maps errors to status codes
+          - `helpdesk/service.py`: the business rules for every request
+          - `helpdesk/store.py`: in-memory storage that behaves like a database table
+          - `helpdesk/validation.py`: input rules shared by every write path
+          - `helpdesk/models.py`: the `Ticket` record and rule constants
+          - `helpdesk/errors.py`: errors that become 400, 404, and 409 responses
+          - `test_helpdesk.py`: the team's test suite; keep your own tests in a
+            separate `test_*.py` file
+
+          ## Rules
+
+          1. Tickets: `POST /tickets` with a `title` and a `priority` creates an open
+             ticket (201). A title must contain text; surrounding spaces are removed.
+          2. IDs are never reused, even after a delete. Attendees get their ticket ID
+             by text message, so an old ID must never lead to someone else's ticket.
+          3. Priorities are `urgent`, `high`, `normal`, and `low`, accepted in any
+             letter case and stored in lowercase. Anything else is rejected (400).
+          4. Replies: `POST /tickets/<id>/replies` with an `author` and `text` adds a
+             reply (201). From then on the reply is part of the ticket.
+          5. Queue: `GET /queue` lists open tickets only: urgent first, then high,
+             normal, and low; oldest first within a priority.
+          6. Closing: `POST /tickets/<id>/close` with a festival `day` number closes
+             the ticket and records that day. Closing a closed ticket is a conflict
+             (409) and keeps the original day.
+          7. Reopening: `POST /tickets/<id>/reopen` with a `day` reopens a ticket up
+             to 7 days after it closed, day 7 included: closed on day 2, it can reopen
+             through day 9. Later is a conflict (409). A reopened ticket is open and
+             has no closing day.
+          8. Unknown ticket IDs return 404.
+
+          ## Storage contract
+
+          `TicketStore.get()` and `TicketStore.all()` return copies, the way a
+          database returns rows. Changing a loaded ticket changes nothing until the
+          service calls `store.save(ticket)`.
+      - path: helpdesk/__init__.py
+        language: python
+        reseed: true
+        content: &init_py |
+          """Festival Help Desk: tickets for the info tent at a music festival.
+
+          Requests enter through api.py, which calls service.py for the rules;
+          service.py reads and writes tickets through store.py.
+          """
+          from helpdesk.api import create_app
+
+          __all__ = ["create_app"]
+      - path: helpdesk/api.py
+        language: python
+        reseed: true
+        content: &api_py |
+          """Entry point: routes requests to the service and turns errors into status codes.
+
+          Paths look like the real HTTP API, e.g. POST /tickets/3/close {"day": 2}.
+          """
+          import re
+          import traceback
+
+          from helpdesk.errors import Conflict, NotFound, ValidationError
+          from helpdesk.service import TicketService
+          from helpdesk.store import TicketStore
+
+          STATUS_FOR = {ValidationError: 400, NotFound: 404, Conflict: 409}
+
+
+          class Response:
+              def __init__(self, status, json=None):
+                  self.status = status
+                  self.json = json
+
+              def __repr__(self):
+                  return f"Response({self.status}, {self.json!r})"
+
+
+          class App:
+              def __init__(self, service):
+                  self.service = service
+                  self.routes = [
+                      ("POST", r"/tickets", self._create),
+                      ("GET", r"/tickets/(\d+)", self._get),
+                      ("DELETE", r"/tickets/(\d+)", self._delete),
+                      ("POST", r"/tickets/(\d+)/replies", self._reply),
+                      ("POST", r"/tickets/(\d+)/priority", self._priority),
+                      ("POST", r"/tickets/(\d+)/close", self._close),
+                      ("POST", r"/tickets/(\d+)/reopen", self._reopen),
+                      ("GET", r"/queue", self._queue),
+                  ]
+
+              def get(self, path):
+                  return self.handle("GET", path, {})
+
+              def post(self, path, body=None):
+                  return self.handle("POST", path, body or {})
+
+              def delete(self, path):
+                  return self.handle("DELETE", path, {})
+
+              def handle(self, method, path, body):
+                  for route_method, pattern, action in self.routes:
+                      match = re.fullmatch(pattern, path)
+                      if match and route_method == method:
+                          try:
+                              return action(body, *map(int, match.groups()))
+                          except tuple(STATUS_FOR) as error:
+                              return Response(STATUS_FOR[type(error)], {"error": str(error)})
+                          except Exception:
+                              traceback.print_exc()  # the server log
+                              return Response(500, {"error": "internal server error"})
+                  return Response(404, {"error": f"no route for {method} {path}"})
+
+              def _create(self, body):
+                  ticket = self.service.create_ticket(body.get("title"), body.get("priority"))
+                  return Response(201, ticket)
+
+              def _get(self, body, ticket_id):
+                  return Response(200, self.service.get_ticket(ticket_id))
+
+              def _delete(self, body, ticket_id):
+                  self.service.delete_ticket(ticket_id)
+                  return Response(204)
+
+              def _reply(self, body, ticket_id):
+                  ticket = self.service.add_reply(ticket_id, body.get("author"), body.get("text"))
+                  return Response(201, ticket)
+
+              def _priority(self, body, ticket_id):
+                  return Response(200, self.service.set_priority(ticket_id, body.get("priority")))
+
+              def _close(self, body, ticket_id):
+                  return Response(200, self.service.close_ticket(ticket_id, body.get("day")))
+
+              def _reopen(self, body, ticket_id):
+                  return Response(200, self.service.reopen_ticket(ticket_id, body.get("day")))
+
+              def _queue(self, body):
+                  return Response(200, self.service.queue())
+
+
+          def create_app():
+              return App(TicketService(TicketStore()))
+      - path: helpdesk/service.py
+        language: python
+        reseed: true
+        content: &service_py |
+          """Business rules. Each write loads a ticket, changes that copy, and saves it."""
+          from helpdesk.errors import Conflict, NotFound
+          from helpdesk.models import PRIORITY_RANK, REOPEN_WINDOW_DAYS, Ticket
+          from helpdesk.validation import clean_priority, clean_reply, clean_title
+
+
+          class TicketService:
+              def __init__(self, store):
+                  self.store = store
+
+              def _load(self, ticket_id):
+                  ticket = self.store.get(ticket_id)
+                  if ticket is None:
+                      raise NotFound(f"no ticket {ticket_id}")
+                  return ticket
+
+              def create_ticket(self, title, priority):
+                  ticket = Ticket(id=self.store.next_id(), title=clean_title(title),
+                                  priority=clean_priority(priority))
+                  self.store.save(ticket)
+                  return ticket.to_dict()
+
+              def get_ticket(self, ticket_id):
+                  return self._load(ticket_id).to_dict()
+
+              def delete_ticket(self, ticket_id):
+                  if not self.store.delete(ticket_id):
+                      raise NotFound(f"no ticket {ticket_id}")
+
+              def add_reply(self, ticket_id, author, text):
+                  ticket = self._load(ticket_id)
+                  ticket.replies.append(clean_reply(author, text))
+                  self.store.save(ticket)
+                  return ticket.to_dict()
+
+              def set_priority(self, ticket_id, priority):
+                  ticket = self._load(ticket_id)
+                  ticket.priority = clean_priority(priority)
+                  self.store.save(ticket)
+                  return ticket.to_dict()
+
+              def close_ticket(self, ticket_id, day):
+                  ticket = self._load(ticket_id)
+                  if ticket.status == "closed":
+                      raise Conflict(f"ticket {ticket_id} is already closed")
+                  ticket.status = "closed"
+                  ticket.closed_on = day
+                  self.store.save(ticket)
+                  return ticket.to_dict()
+
+              def reopen_ticket(self, ticket_id, day):
+                  ticket = self._load(ticket_id)
+                  if ticket.status != "closed":
+                      raise Conflict(f"ticket {ticket_id} is not closed")
+                  if day - ticket.closed_on > REOPEN_WINDOW_DAYS:
+                      raise Conflict(f"ticket {ticket_id} was closed too long ago")
+                  ticket.status = "open"
+                  ticket.closed_on = None
+                  self.store.save(ticket)
+                  return ticket.to_dict()
+
+              def queue(self):
+                  waiting = [ticket for ticket in self.store.all() if ticket.status == "open"]
+                  waiting.sort(key=lambda ticket: (PRIORITY_RANK[ticket.priority], ticket.id))
+                  return [ticket.to_dict() for ticket in waiting]
+      - path: helpdesk/store.py
+        language: python
+        reseed: true
+        content: &store_py |
+          """In-memory storage that behaves like a database table.
+
+          get() and all() return copies, the way a database returns rows. Changing a
+          loaded ticket changes nothing here until the service calls save().
+          """
+          import copy
+
+
+          class TicketStore:
+              def __init__(self):
+                  self._rows = {}
+                  self._last_id = 0
+
+              def next_id(self):
+                  self._last_id += 1
+                  return self._last_id
+
+              def get(self, ticket_id):
+                  row = self._rows.get(ticket_id)
+                  return copy.deepcopy(row) if row is not None else None
+
+              def all(self):
+                  return [copy.deepcopy(row) for row in self._rows.values()]
+
+              def save(self, ticket):
+                  self._rows[ticket.id] = copy.deepcopy(ticket)
+
+              def delete(self, ticket_id):
+                  return self._rows.pop(ticket_id, None) is not None
+      - path: helpdesk/validation.py
+        language: python
+        reseed: true
+        content: &validation_py |
+          """Input rules shared by every write path. Each function returns the cleaned value."""
+          from helpdesk.errors import ValidationError
+          from helpdesk.models import PRIORITY_RANK
+
+
+          def clean_title(title):
+              if not isinstance(title, str) or not title.strip():
+                  raise ValidationError("title must contain text")
+              return title.strip()
+
+
+          def clean_priority(priority):
+              if not isinstance(priority, str) or priority.strip().lower() not in PRIORITY_RANK:
+                  raise ValidationError(f"priority must be one of: {', '.join(PRIORITY_RANK)}")
+              return priority.strip().lower()
+
+
+          def clean_reply(author, text):
+              if not isinstance(author, str) or not author.strip():
+                  raise ValidationError("author must contain text")
+              if not isinstance(text, str) or not text.strip():
+                  raise ValidationError("reply text must contain text")
+              return {"author": author.strip(), "text": text.strip()}
+      - path: helpdesk/models.py
+        language: python
+        reseed: true
+        content: &models_py |
+          """The ticket record and the constants the README rules refer to."""
+          from dataclasses import dataclass, field
+
+          PRIORITY_RANK = {"urgent": 0, "high": 1, "normal": 2, "low": 3}
+          REOPEN_WINDOW_DAYS = 7
+
+
+          @dataclass
+          class Ticket:
+              id: int
+              title: str
+              priority: str
+              status: str = "open"
+              closed_on: int | None = None
+              replies: list = field(default_factory=list)
+
+              def to_dict(self):
+                  return {
+                      "id": self.id,
+                      "title": self.title,
+                      "priority": self.priority,
+                      "status": self.status,
+                      "closed_on": self.closed_on,
+                      "replies": [dict(reply) for reply in self.replies],
+                  }
+      - path: helpdesk/errors.py
+        language: python
+        reseed: true
+        content: &errors_py |
+          """Errors raised by the service. api.py turns each one into a status code."""
+
+
+          class ValidationError(Exception):
+              """The request breaks an input rule. (400)"""
+
+
+          class NotFound(Exception):
+              """No ticket has that ID. (404)"""
+
+
+          class Conflict(Exception):
+              """The request is valid, but not in the ticket's current state. (409)"""
+      - path: test_helpdesk.py
+        language: python
+        reseed: true
+        content: &team_tests |
+          """The team's test suite. Comments name the README rule each test protects."""
+          import pytest
+
+          from helpdesk import create_app
+
+
+          @pytest.fixture
+          def app():
+              return create_app()
+
+
+          def create(app, title="Lost wristband", priority="normal"):
+              response = app.post("/tickets", {"title": title, "priority": priority})
+              assert response.status == 201, response
+              return response.json
+
+
+          # Rule 1: tickets
+          def test_create_returns_open_ticket(app):
+              ticket = create(app, "  Lost wristband  ", "high")
+              assert ticket["title"] == "Lost wristband"
+              assert ticket["priority"] == "high"
+              assert ticket["status"] == "open"
+              assert ticket["closed_on"] is None
+              assert ticket["replies"] == []
+
+
+          def test_created_ticket_can_be_fetched(app):
+              ticket = create(app)
+              response = app.get(f"/tickets/{ticket['id']}")
+              assert response.status == 200
+              assert response.json == ticket
+
+
+          def test_blank_title_is_rejected(app):
+              assert app.post("/tickets", {"title": "   ", "priority": "low"}).status == 400
+
+
+          # Rule 2: IDs
+          def test_new_ticket_does_not_overwrite_existing(app):
+              first = create(app, "Lost wristband")
+              second = create(app, "Locker key")
+              assert app.delete(f"/tickets/{first['id']}").status == 204
+              create(app, "Water refill map")
+              assert app.get(f"/tickets/{second['id']}").json["title"] == "Locker key"
+
+
+          # Rule 3: priorities
+          def test_unknown_priority_is_rejected(app):
+              response = app.post("/tickets", {"title": "Stage lights", "priority": "asap"})
+              assert response.status == 400
+
+
+          def test_queue_accepts_mixed_case_priority(app):
+              low = create(app, "Merch question", "low")
+              high = create(app, "Shuttle times", "High")
+              urgent = create(app, "Medical tent", "urgent")
+              response = app.get("/queue")
+              assert response.status == 200
+              assert [ticket["id"] for ticket in response.json] == [urgent["id"], high["id"], low["id"]]
+
+
+          # Rule 4: replies
+          def test_reply_is_returned(app):
+              ticket = create(app)
+              response = app.post(f"/tickets/{ticket['id']}/replies", {"author": "Sam", "text": "On it!"})
+              assert response.status == 201
+              assert response.json["replies"] == [{"author": "Sam", "text": "On it!"}]
+
+
+          # Rule 5: queue
+          def test_queue_orders_by_priority_then_age(app):
+              low = create(app, "Merch question", "low")
+              urgent = create(app, "Medical tent", "urgent")
+              normal = create(app, "Locker key", "normal")
+              later_urgent = create(app, "Lost phone", "urgent")
+              ids = [ticket["id"] for ticket in app.get("/queue").json]
+              assert ids == [urgent["id"], later_urgent["id"], normal["id"], low["id"]]
+
+
+          # Rule 6: closing
+          def test_close_records_day(app):
+              ticket = create(app)
+              response = app.post(f"/tickets/{ticket['id']}/close", {"day": 2})
+              assert response.status == 200
+              assert response.json["status"] == "closed"
+              assert response.json["closed_on"] == 2
+
+
+          def test_closing_twice_is_conflict(app):
+              ticket = create(app)
+              app.post(f"/tickets/{ticket['id']}/close", {"day": 2})
+              response = app.post(f"/tickets/{ticket['id']}/close", {"day": 5})
+              assert response.status == 409
+
+
+          # Rule 7: reopening
+          def test_reopen_next_day(app):
+              ticket = create(app)
+              app.post(f"/tickets/{ticket['id']}/close", {"day": 3})
+              response = app.post(f"/tickets/{ticket['id']}/reopen", {"day": 4})
+              assert response.status == 200
+              assert response.json["status"] == "open"
+
+
+          # Rule 8: unknown IDs
+          def test_unknown_ticket_is_404(app):
+              assert app.get("/tickets/99").status == 404
+
+
+          def test_deleted_ticket_is_404(app):
+              ticket = create(app)
+              assert app.delete(f"/tickets/{ticket['id']}").status == 204
+              assert app.get(f"/tickets/{ticket['id']}").status == 404
+      - path: test_learning.py
+        language: python
+        reseed: true
+        content: |
+          """Learning tests: small experiments that pin down how unfamiliar code behaves."""
+          from helpdesk.models import Ticket
+          from helpdesk.store import TicketStore
+
+
+          def test_saved_ticket_can_be_loaded():
+              store = TicketStore()
+              store.save(Ticket(id=1, title="Lost wristband", priority="normal"))
+              assert store.get(1).title == "Lost wristband"
+
+
+          # Add test_changing_a_loaded_ticket_does_not_change_the_store below.
+      - path: debugging_log.md
+        language: markdown
+        reseed: true
+        content: |
+          # Code map: Festival Help Desk
+
+          Short phrases are enough.
+
+          - Where a request enters:
+          - Where the business rules live:
+          - Where tickets are stored, and what get() hands back:
+          - Path of POST /tickets/1/replies, function by function:
+          - Prediction: after changing a loaded ticket without save(), get() returns...
+          - One question you still have about this code:
+    open_file: README.md
+    run_file: test_learning.py
+    run_files: [test_helpdesk.py, test_learning.py]
+    tests:
+      - description: Your learning tests pass on the real store
+        command: |
+          from helpdesk_grading import suite_accepts
+          suite_accepts('/tutorial/test_learning.py')
+        hints:
+          - title: Compare with what the store did
+            text: Run **Test** and read the failing assertion. Does your test assert what the README promises,
+              or what you guessed before reading `helpdesk/store.py`?
+      - description: Your learning tests fail on a store that hands out the tickets it keeps instead of copies
+        command: |
+          from helpdesk_grading import suite_detects
+          suite_detects('/tutorial/test_learning.py', 'live-objects')
+        hints:
+          - title: Change the loaded ticket
+            text: The README's claim is about what happens after you change a ticket you loaded. A test that
+              only saves and loads cannot tell a copy from the original.
+          - title: Ask the store again
+            text: After changing the loaded ticket, load the same ID again and assert on what comes back.
+              Which title does the README predict?
+    quiz:
+      title: Step 1 — Knowledge Check
+      min_score: 0.8
+      questions:
+        - type: parsons
+          difficulty: intermediate
+          question: 'A test sends `app.post("/tickets/3/close", {"day": 2})` for an open ticket. Arrange
+            the calls in the order they start. Two of these calls never run for this request.'
+          lines:
+            - App.post
+            - App.handle
+            - App._close
+            - TicketService.close_ticket
+            - TicketService._load
+            - TicketStore.get
+            - TicketStore.save
+            - Ticket.to_dict
+          distractors:
+            - TicketService.queue
+            - clean_priority
+          explanation: "`App.post` hands the request to `App.handle`, which matches the route and calls
+            `App._close`. The service's `close_ticket` loads the ticket through `_load` and `TicketStore.get`,
+            changes that copy, saves it with `TicketStore.save`, and builds the response with
+            `Ticket.to_dict`. `queue` and `clean_priority` serve other requests."
+        - type: single
+          difficulty: basic
+          question: You need to know whether a ticket closed on day 2 may be reopened on day 9. Which source
+            states the intended behavior?
+          options:
+            - "Rule 7 in `README.md`"
+            - "`reopen_ticket` in `helpdesk/service.py`"
+            - "`test_reopen_next_day` in `test_helpdesk.py`"
+            - "`REOPEN_WINDOW_DAYS` in `helpdesk/models.py`"
+          correct_index: 0
+          option_feedback:
+            1: The code shows what the program does now. While you debug, that is exactly what may be wrong,
+              so it cannot settle what should happen.
+            2: That test reopens one day after closing. It says nothing about day 9 or about the edge of the
+              window.
+            3: The constant supplies the number 7, but not whether day 7 itself is inside the window. Rule 7
+              says it is.
+          explanation: The README's numbered rules are the spec for this repository. Code and tests are
+            evidence about current behavior; when they disagree with the spec, the spec decides what a fix
+            must do.
+        - type: single
+          difficulty: intermediate
+          question: |
+            A teammate adds this method to `TicketService`. A request to rename ticket 4 returns the new title. What does a later `GET /tickets/4` show?
+
+            ```python
+            def rename(self, ticket_id, title):
+                ticket = self._load(ticket_id)
+                ticket.title = clean_title(title)
+                return ticket.to_dict()
+            ```
+          options:
+            - The old title
+            - The new title
+            - A 404, because the ticket changed without being saved
+            - A 500, because the store rejects unsaved changes
+          correct_index: 0
+          option_feedback:
+            1: "That would be true if `_load` returned the stored object. `TicketStore.get` returns a deep
+              copy, so only the copy got the new title."
+            2: The stored ticket still exists, unchanged; only a delete removes a row.
+            3: The store never inspects the copies it hands out, so it cannot reject anything. The changed
+              copy is simply discarded.
+          explanation: "`_load` returns a copy from `TicketStore.get`. The method changes and returns that copy,
+            so the response shows the new title, but the stored ticket keeps the old one until someone calls
+            `self.store.save(ticket)`."
+    solution:
+      files:
+        - path: test_learning.py
+          language: python
+          content: |
+            """Learning tests: small experiments that pin down how unfamiliar code behaves."""
+            from helpdesk.models import Ticket
+            from helpdesk.store import TicketStore
+
+
+            def test_saved_ticket_can_be_loaded():
+                store = TicketStore()
+                store.save(Ticket(id=1, title="Lost wristband", priority="normal"))
+                assert store.get(1).title == "Lost wristband"
+
+
+            def test_changing_a_loaded_ticket_does_not_change_the_store():
+                store = TicketStore()
+                store.save(Ticket(id=1, title="Lost wristband", priority="normal"))
+                loaded = store.get(1)
+                loaded.title = "Found it"
+                assert store.get(1).title == "Lost wristband"
+      explanation: |
+        **Code map.** Requests enter `App.handle` in `helpdesk/api.py`, which matches the path and calls one `_action` method. The rules live in `TicketService` (`helpdesk/service.py`); tickets are stored by `TicketStore` (`helpdesk/store.py`). `POST /tickets/1/replies` runs `App._reply` → `TicketService.add_reply` → `_load` → `TicketStore.get`, appends a cleaned reply to the copy, then calls `TicketStore.save` and `Ticket.to_dict`.
+
+        **Learning test.** `store.get(1)` returns a deep copy, so changing it leaves the stored ticket alone, and a second `get` returns the original title. A test that only saves and loads would also pass on a store that hands out its own objects, so it would not check the README's claim.
+
+  # Pedagogy: worked example (a teammate's reproduction of another report), then completion: the learner
+  # turns a user report into a failing test before touching production code (failing test first;
+  # BugSpotter, Padurean et al. 2025). Hypothesis testing requires naming an observation that could
+  # refute the hypothesis (Michaeli & Romeike 2019: explicit debugging process instruction).
+  - title: Reproduce Before You Repair
+    key: reproduce
+    instructions: |
+      ### Why this matters
+
+      A bug report describes a symptom, not a cause. Turning it into a failing test proves you can trigger the bug on demand; the same test later proves the fix worked and keeps the bug from coming back.
+
+      ### 🎯 You will learn to
+
+      - **Translate** a user's bug report into a failing regression test.
+      - **Test** a hypothesis with an observation that could prove it wrong.
+
+      #### The bug report
+
+      > **#212 Replies vanish.** "I replied to an attendee's ticket and saw my reply appear. When I opened the ticket again, the reply was gone." (Priya, info tent staff)
+
+      Every team test passes. The suite has a blind spot, and your first job is to cover it.
+
+      #### A worked example from another report
+
+      This is how a teammate reproduced an earlier report, "Deleted tickets still open":
+
+      ```python
+      def test_deleted_ticket_is_404(app):
+          ticket = create(app)                                         # the state in the report
+          assert app.delete(f"/tickets/{ticket['id']}").status == 204  # what the user did
+          assert app.get(f"/tickets/{ticket['id']}").status == 404     # what the user expected
+      ```
+
+      It follows the user's steps through the public API, checks each status before trusting `.json`, and asserts the *expected* behavior, so it fails while the bug exists.
+
+      #### Your turn
+
+      1. **Reproduce.** In `test_regression.py`, write one test that follows Priya's steps and asserts what she expected. Run **Test**: your test should fail, and every team test should pass.
+      2. **Hypothesize.** In `debugging_log.md`, name the function you suspect and why. Then name one observation that would prove you wrong.
+      3. **Check.** Make that observation, for example with a temporary `print` or the debugger, and record the result.
+      4. **Fix.** Change production code so the cause is gone. Leave `test_helpdesk.py` and the storage contract as they are.
+      5. **Verify.** Run **Test**, then **Test My Work**.
+    files:
+      - path: README.md
+        language: markdown
+        reseed: true
+        content: *readme
+      - path: helpdesk/__init__.py
+        language: python
+        reseed: true
+        content: *init_py
+      - path: helpdesk/api.py
+        language: python
+        reseed: true
+        content: *api_py
+      - path: helpdesk/service.py
+        language: python
+        reseed: true
+        content: |
+          """Business rules. Each write loads a ticket, changes that copy, and saves it."""
+          from helpdesk.errors import Conflict, NotFound
+          from helpdesk.models import PRIORITY_RANK, REOPEN_WINDOW_DAYS, Ticket
+          from helpdesk.validation import clean_priority, clean_reply, clean_title
+
+
+          class TicketService:
+              def __init__(self, store):
+                  self.store = store
+
+              def _load(self, ticket_id):
+                  ticket = self.store.get(ticket_id)
+                  if ticket is None:
+                      raise NotFound(f"no ticket {ticket_id}")
+                  return ticket
+
+              def create_ticket(self, title, priority):
+                  ticket = Ticket(id=self.store.next_id(), title=clean_title(title),
+                                  priority=clean_priority(priority))
+                  self.store.save(ticket)
+                  return ticket.to_dict()
+
+              def get_ticket(self, ticket_id):
+                  return self._load(ticket_id).to_dict()
+
+              def delete_ticket(self, ticket_id):
+                  if not self.store.delete(ticket_id):
+                      raise NotFound(f"no ticket {ticket_id}")
+
+              def add_reply(self, ticket_id, author, text):
+                  ticket = self._load(ticket_id)
+                  ticket.replies.append(clean_reply(author, text))
+                  return ticket.to_dict()
+
+              def set_priority(self, ticket_id, priority):
+                  ticket = self._load(ticket_id)
+                  ticket.priority = clean_priority(priority)
+                  self.store.save(ticket)
+                  return ticket.to_dict()
+
+              def close_ticket(self, ticket_id, day):
+                  ticket = self._load(ticket_id)
+                  if ticket.status == "closed":
+                      raise Conflict(f"ticket {ticket_id} is already closed")
+                  ticket.status = "closed"
+                  ticket.closed_on = day
+                  self.store.save(ticket)
+                  return ticket.to_dict()
+
+              def reopen_ticket(self, ticket_id, day):
+                  ticket = self._load(ticket_id)
+                  if ticket.status != "closed":
+                      raise Conflict(f"ticket {ticket_id} is not closed")
+                  if day - ticket.closed_on > REOPEN_WINDOW_DAYS:
+                      raise Conflict(f"ticket {ticket_id} was closed too long ago")
+                  ticket.status = "open"
+                  ticket.closed_on = None
+                  self.store.save(ticket)
+                  return ticket.to_dict()
+
+              def queue(self):
+                  waiting = [ticket for ticket in self.store.all() if ticket.status == "open"]
+                  waiting.sort(key=lambda ticket: (PRIORITY_RANK[ticket.priority], ticket.id))
+                  return [ticket.to_dict() for ticket in waiting]
+      - path: helpdesk/store.py
+        language: python
+        reseed: true
+        content: *store_py
+      - path: helpdesk/validation.py
+        language: python
+        reseed: true
+        content: *validation_py
+      - path: helpdesk/models.py
+        language: python
+        reseed: true
+        content: *models_py
+      - path: helpdesk/errors.py
+        language: python
+        reseed: true
+        content: *errors_py
+      - path: test_helpdesk.py
+        language: python
+        reseed: true
+        content: *team_tests
+      - path: test_regression.py
+        language: python
+        reseed: true
+        content: &regression_starter |
+          """Regression tests: one test per bug, written before the fix."""
+          import pytest
+
+          from helpdesk import create_app
+
+
+          @pytest.fixture
+          def app():
+              return create_app()
+
+
+          def create(app, title="Lost wristband", priority="normal"):
+              response = app.post("/tickets", {"title": title, "priority": priority})
+              assert response.status == 201, response
+              return response.json
+
+
+          # Write this step's regression test below. Name it after the behavior it
+          # protects, check each status code before reading .json, and run it before
+          # you fix anything: it should fail for the reason in the bug report.
+      - path: debugging_log.md
+        language: markdown
+        reseed: true
+        content: &log_template |
+          # Debugging log
+
+          - Symptom (expected vs. actual):
+          - Reproduction (test name, and how it fails before the fix):
+          - Hypothesis (where, and why):
+          - Check that could prove the hypothesis wrong, and its result:
+          - Cause (file, function, and the wrong state):
+          - Fix, and why it removes the cause:
+          - What the regression test protects:
+    open_file: test_regression.py
+    run_file: test_regression.py
+    run_files: [test_helpdesk.py, test_regression.py]
+    tests:
+      - description: Your regression test fails on the original code, where replies vanish
+        command: |
+          from helpdesk_grading import suite_detects
+          suite_detects('/tutorial/test_regression.py', 'reply-not-saved')
+        hints:
+          - title: Follow Priya's steps
+            text: She replied, then opened the ticket again. Which request stands for "opened the ticket
+              again"? Assert on that response, not on the reply's response.
+          - title: Compare with the team test
+            text: "`test_reply_is_returned` passes while the bug exists. Which response does it read, and which
+              response should yours read?"
+      - description: Your regression test passes once replies are saved
+        command: |
+          from helpdesk_grading import suite_accepts
+          suite_accepts('/tutorial/test_regression.py')
+        hints:
+          - title: Assert the expected behavior
+            text: Your test should describe what Priya expected to see, so it passes on correct code. Check each
+              status before reading `.json`.
+      - description: A reply is still on the ticket when the ticket is fetched again
+        command: |
+          from helpdesk_grading import check
+          check('/tutorial', 'reply_survives_reload')
+        hints:
+          - title: Trace one reply
+            text: Follow `POST /tickets/<id>/replies` from `helpdesk/api.py` into the service. When that method
+              returns, where does the reply exist, and where does it not?
+          - title: Use the storage contract
+            text: The README's storage contract says when a change reaches the store. Does the reply path do
+              that? Compare it with the other write methods.
+      - description: The store still hands out copies, as README.md promises
+        command: |
+          from helpdesk_grading import check
+          check('/tutorial', 'store_hands_out_copies')
+        hints:
+          - title: Keep the contract
+            text: If replies started persisting after you edited `helpdesk/store.py`, the fix may have removed
+              the copies. Restore them, and find the code that forgot to save instead.
+      - description: Every other README rule still holds
+        command: |
+          from helpdesk_grading import check_all_except
+          check_all_except('/tutorial', 'reply_survives_reload', 'store_hands_out_copies')
+        hints:
+          - title: Run the team suite
+            text: Run **Test** and read any failing team test. A fix should change only the behavior the bug
+              report is about.
+    quiz:
+      title: Step 2 — Knowledge Check
+      min_score: 0.8
+      questions:
+        - type: single
+          difficulty: intermediate
+          question: Before the fix, `test_reply_is_returned` passed even though replies vanished. Why?
+          options:
+            - It reads only the POST response, built from the service's copy
+            - pytest reuses the previous run's results for unchanged tests
+            - The `app` fixture shares one store across all tests
+            - It asserts on the status code instead of the reply text
+          correct_index: 0
+          option_feedback:
+            1: pytest runs every selected test from scratch, and these runs disable its cache. The test passed
+              because of what it checks.
+            2: "The fixture calls `create_app()` for each test, and `create_app` builds a new store every
+              time."
+            3: It checks the reply text too, but only in the POST response. That response comes from the copy
+              that `add_reply` changed.
+          explanation: "`add_reply` appends to the copy from `store.get` and returns `ticket.to_dict()` from that
+            copy, so the POST response shows the reply whether or not it was saved. Only a later GET reads the
+            store."
+        - type: single
+          difficulty: advanced
+          question: "Your hypothesis: `add_reply` never saves the ticket. Which observation could prove that
+            hypothesis wrong?"
+          options:
+            - Right after the POST, `store.get(id).replies` holds the reply
+            - The POST response contains the new reply
+            - Your new regression test fails
+            - "`add_reply` has no `self.store.save(ticket)` line"
+          correct_index: 0
+          option_feedback:
+            1: The response comes from the changed copy, so it contains the reply whether or not it was saved.
+              It cannot tell the explanations apart.
+            2: A failing test shows that the bug exists. Several causes would make it fail, so it does not single
+              out the missing save.
+            3: This agrees with the hypothesis, so it cannot be the observation that proves it wrong. A save
+              hidden in a helper method would also slip past a quick read.
+          explanation: A good check could come out against you. If the stored ticket already had the reply right
+            after the POST, saving would not be the problem, and you would look elsewhere, for example at how
+            GET builds its response.
+        - type: single
+          difficulty: basic
+          question: Why write the regression test before fixing the bug?
+          options:
+            - Seeing it fail shows that it can detect this bug
+            - pytest only records tests that failed at least once
+            - A failing test makes the eventual fix shorter
+            - It replaces reading the code around the bug
+          correct_index: 0
+          option_feedback:
+            1: pytest records every test the same way. The value of the first failure is what it tells you.
+            2: The test does not change the size of the fix. It changes how sure you can be that the fix worked.
+            3: You still read code to find the cause. The test pins down the symptom; tracing finds the cause.
+          explanation: A test written after the fix might pass even on the buggy code, in which case it proves
+            nothing. Watching it fail first, for the reported reason, shows it detects the bug; watching it pass
+            after the fix shows the fix removed it.
+    solution:
+      files:
+        - path: helpdesk/service.py
+          language: python
+          content: *service_py
+        - path: test_regression.py
+          language: python
+          content: |
+            """Regression tests: one test per bug, written before the fix."""
+            import pytest
+
+            from helpdesk import create_app
+
+
+            @pytest.fixture
+            def app():
+                return create_app()
+
+
+            def create(app, title="Lost wristband", priority="normal"):
+                response = app.post("/tickets", {"title": title, "priority": priority})
+                assert response.status == 201, response
+                return response.json
+
+
+            def test_reply_is_still_there_after_reloading_the_ticket(app):
+                ticket = create(app)
+                reply = app.post(f"/tickets/{ticket['id']}/replies", {"author": "Priya", "text": "Found it!"})
+                assert reply.status == 201, reply
+                reloaded = app.get(f"/tickets/{ticket['id']}")
+                assert reloaded.status == 200, reloaded
+                assert reloaded.json["replies"] == [{"author": "Priya", "text": "Found it!"}]
+      explanation: |
+        **Cause.** `add_reply` appends the reply to the copy returned by `store.get` and returns it without calling `store.save`. The POST response is built from that copy, so it looks right; the next GET reads the unchanged stored ticket.
+
+        **Fix.** Save the ticket after appending, as every other write method does. Removing the deep copies from the store would also make replies persist, but it breaks the README's storage contract and lets any code change stored tickets by accident.
+
+        **A check that could have refuted the hypothesis:** if `store.get(id).replies` had contained the reply right after the POST, the missing save would not explain the bug.
+
+  # Pedagogy: productive failure. The visible failing test admits an almost-correct fix
+  # (`max(...) + 1`); a gated prediction asks the learner to test that fix against the README before
+  # the reveal. Tests as evidence: a passing suite covers only what it checks (EvalPlus, Liu et al. 2023).
+  - title: When the Green Bar Lies
+    key: green-bar
+    instructions: |
+      ### Why this matters
+
+      A passing test proves only the cases it checks. Comparing a fix with the written requirement, not just with the failing test, is how you catch the fix that is almost right before a user does.
+
+      ### 🎯 You will learn to
+
+      - **Compare** a fix against the requirement instead of the failing test alone.
+      - **Write** a boundary test that rejects an almost-correct fix.
+
+      #### The bug report
+
+      > **#219 Wrong ticket.** "An attendee texted us their ticket number and got someone else's lost-wristband ticket."
+
+      This time a team test fails: `test_new_ticket_does_not_overwrite_existing`.
+
+      #### Your turn
+
+      1. **Reproduce.** Run **Test** and read the failure. Record the expected and actual titles in `debugging_log.md`.
+      2. **Localize.** Trace where a new ticket gets its ID. Explain in the log why deleting the *first* ticket makes the next ID collide.
+      3. **Predict.** A teammate proposes this one-line fix for `next_id`:
+
+         ```python
+         return max(self._rows, default=0) + 1
+         ```
+
+         It makes the failing test pass. Now read rule 2 of the README. Is there a sequence of creates and deletes for which this fix still breaks the rule? Commit to an answer in the log before you open the reveal.
+
+         <details markdown="1"><summary>Open after you've committed to an answer</summary>
+
+         Delete the **newest** ticket, then create one. The highest remaining ID plus one is the deleted ticket's ID, so an old text message now leads to a stranger's ticket. The team test deletes the *oldest* ticket, which is why it cannot see this.
+
+         </details>
+
+      4. **Test the boundary.** In `test_regression.py`, write a test for that sequence. It should fail on the current code.
+      5. **Fix.** Repair the ID logic so rule 2 holds for every sequence of creates and deletes. Run **Test**, then **Test My Work**.
+    files:
+      - path: README.md
+        language: markdown
+        reseed: true
+        content: *readme
+      - path: helpdesk/__init__.py
+        language: python
+        reseed: true
+        content: *init_py
+      - path: helpdesk/api.py
+        language: python
+        reseed: true
+        content: *api_py
+      - path: helpdesk/service.py
+        language: python
+        reseed: true
+        content: *service_py
+      - path: helpdesk/store.py
+        language: python
+        reseed: true
+        content: |
+          """In-memory storage that behaves like a database table.
+
+          get() and all() return copies, the way a database returns rows. Changing a
+          loaded ticket changes nothing here until the service calls save().
+          """
+          import copy
+
+
+          class TicketStore:
+              def __init__(self):
+                  self._rows = {}
+
+              def next_id(self):
+                  return len(self._rows) + 1
+
+              def get(self, ticket_id):
+                  row = self._rows.get(ticket_id)
+                  return copy.deepcopy(row) if row is not None else None
+
+              def all(self):
+                  return [copy.deepcopy(row) for row in self._rows.values()]
+
+              def save(self, ticket):
+                  self._rows[ticket.id] = copy.deepcopy(ticket)
+
+              def delete(self, ticket_id):
+                  return self._rows.pop(ticket_id, None) is not None
+      - path: helpdesk/validation.py
+        language: python
+        reseed: true
+        content: *validation_py
+      - path: helpdesk/models.py
+        language: python
+        reseed: true
+        content: *models_py
+      - path: helpdesk/errors.py
+        language: python
+        reseed: true
+        content: *errors_py
+      - path: test_helpdesk.py
+        language: python
+        reseed: true
+        content: *team_tests
+      - path: test_regression.py
+        language: python
+        reseed: true
+        content: *regression_starter
+      - path: debugging_log.md
+        language: markdown
+        reseed: true
+        content: *log_template
+    open_file: test_helpdesk.py
+    run_file: test_regression.py
+    run_files: [test_helpdesk.py, test_regression.py]
+    tests:
+      - description: A new ticket never overwrites an existing ticket
+        command: |
+          from helpdesk_grading import check
+          check('/tutorial', 'new_ticket_never_overwrites')
+        hints:
+          - title: Trace the collision
+            text: After two creates and one delete, how many rows does the store hold, and which ID does
+              `next_id` hand out next? Which ticket already has that ID?
+      - description: IDs are never reused, even after the newest ticket is deleted
+        command: |
+          from helpdesk_grading import check
+          check('/tutorial', 'ids_never_reused_after_deleting_newest')
+        hints:
+          - title: Every ID ever issued
+            text: Rule 2 is about every ID the store has ever handed out, not only the IDs it holds now. What
+              would the store need to remember after a delete?
+          - title: Formulas over current rows
+            text: A delete removes a row. Any formula computed from the remaining rows can repeat an ID once
+              the right ticket is gone.
+      - description: Your regression test fails on a store that reuses the newest ticket's ID
+        command: |
+          from helpdesk_grading import suite_detects
+          suite_detects('/tutorial/test_regression.py', 'id-from-max')
+        hints:
+          - title: Use the revealed sequence
+            text: Create two tickets, delete the newest, create another, and assert something about the new
+              ticket's ID that rule 2 requires.
+      - description: Your regression test passes on a correct store
+        command: |
+          from helpdesk_grading import suite_accepts
+          suite_accepts('/tutorial/test_regression.py')
+        hints:
+          - title: Assert the rule, not a number
+            text: Rule 2 says IDs are never reused; it does not promise a particular next number. Assert that
+              the new ID differs from the earlier ones.
+      - description: Every other README rule still holds
+        command: |
+          from helpdesk_grading import check_all_except
+          check_all_except('/tutorial', 'new_ticket_never_overwrites', 'ids_never_reused_after_deleting_newest')
+        hints:
+          - title: Run the team suite
+            text: Run **Test** and read any failing team test. Did the new ID logic change how tickets are
+              stored or looked up?
+    quiz:
+      title: Step 3 — Knowledge Check
+      min_score: 0.8
+      questions:
+        - type: single
+          difficulty: advanced
+          question: "Two fixes for `next_id`: `max(self._rows, default=0) + 1`, and a counter that only
+            increases. Both pass `test_new_ticket_does_not_overwrite_existing`. Which sequence of requests
+            tells them apart?"
+          options:
+            - Create two tickets, delete the second, then create one
+            - Create two tickets, delete the first, then create one
+            - Create 100 tickets without deleting any
+            - Delete a ticket ID that does not exist
+          correct_index: 0
+          option_feedback:
+            1: "That is the team test's sequence. Both fixes pass it, because the second ticket still holds the
+              highest ID, so `max` steps past it."
+            2: Without deletes, the row count, the highest ID, and a counter all agree, so every version hands
+              out 1 through 100.
+            3: Both versions return 404 here and hand out no ID, so this request cannot separate them.
+          explanation: "Deleting the newest ticket lowers the highest remaining ID. `max(...) + 1` then hands out
+            the deleted ticket's ID again; a counter remembers that the ID was issued and moves on."
+        - type: single
+          difficulty: intermediate
+          question: After a teammate's `max(...) + 1` fix, every team test passes. What does that green suite
+            establish?
+          options:
+            - The cases the suite checks work; rule 2 has a case it skips
+            - Rule 2 now holds for every sequence of creates and deletes
+            - Nothing, because the suite already missed this bug once
+            - The bug cannot come back, since a test now covers it
+          correct_index: 0
+          option_feedback:
+            1: The suite only deletes the oldest ticket. Deleting the newest one still recycles an ID under this
+              fix.
+            2: "It does establish something: the overwrite case that the team test checks is fixed. Evidence
+              covers what it checks, no more and no less."
+            3: The team test protects the overwrite case only. The newest-ticket case can still break without
+              any test noticing.
+          explanation: A passing test is evidence for exactly the inputs it runs. Rule 2 covers every sequence of
+            creates and deletes, so you compare the fix with the rule and add a test for the case the suite
+            skips.
+        - type: single
+          difficulty: intermediate
+          question: "You write a regression test for #219, and it passes on its first run, before any fix. What
+            should you conclude?"
+          options:
+            - It does not reproduce the bug yet; change it until it fails
+            - Someone already fixed the bug, so the report can be closed
+            - pytest is showing a cached result from an earlier run
+            - The bug report must describe the problem incorrectly
+          correct_index: 0
+          option_feedback:
+            1: The team test still fails on this code, so the bug is present. A test that passes anyway is not
+              exercising it.
+            2: These runs disable pytest's cache, and each run imports your current files.
+            3: The report may be imprecise, but a failing team test confirms a real bug. Make your test follow
+              the report's steps first.
+          explanation: A regression test earns trust by failing for the reported reason before the fix. If it
+            passes on buggy code, it checks something else, so revise its steps or assertion until it fails,
+            then fix the code.
+    solution:
+      files:
+        - path: helpdesk/store.py
+          language: python
+          content: *store_py
+        - path: test_regression.py
+          language: python
+          content: |
+            """Regression tests: one test per bug, written before the fix."""
+            import pytest
+
+            from helpdesk import create_app
+
+
+            @pytest.fixture
+            def app():
+                return create_app()
+
+
+            def create(app, title="Lost wristband", priority="normal"):
+                response = app.post("/tickets", {"title": title, "priority": priority})
+                assert response.status == 201, response
+                return response.json
+
+
+            def test_deleting_the_newest_ticket_does_not_recycle_its_id(app):
+                first = create(app, "Lost wristband")
+                newest = create(app, "Locker key")
+                assert app.delete(f"/tickets/{newest['id']}").status == 204
+                replacement = create(app, "Water refill map")
+                assert replacement["id"] not in (first["id"], newest["id"])
+      explanation: |
+        **Cause.** `next_id` returns `len(self._rows) + 1`. After a delete the count drops, so the next ID can equal a live ticket's ID, and `save` overwrites that ticket.
+
+        **Why `max(...) + 1` is not enough.** It skips the IDs of tickets that still exist, but after the newest ticket is deleted it hands out that ID again, which breaks rule 2. The model fix keeps a counter in the store that only increases. Any approach that remembers every ID issued so far meets the rule.
+
+        **Regression test:** create two tickets, delete the newest, create another, and assert that the new ID differs from both earlier IDs.
+
+  # Pedagogy: tracing a value from its point of use back to its point of creation, and searching for
+  # every path that creates it (Shah et al. 2025: finding all relevant code). Predict exposes the
+  # symptom fix at the crash site before the learner commits to it.
+  - title: Fix the Cause, Not the Crash Site
+    key: root-cause
+    instructions: |
+      ### Why this matters
+
+      A traceback shows where bad data was finally used, which is often far from where it was created. Patching the line that crashed hides the symptom and leaves the bad data spreading through every other path.
+
+      ### 🎯 You will learn to
+
+      - **Trace** a bad value from where it crashed back to where it was created.
+      - **Find** every code path that creates the same bad value.
+
+      #### The bug report
+
+      > **#231 Queue page down.** "Someone created a ticket with priority `High`, and now the queue page shows a server error."
+
+      `test_queue_accepts_mixed_case_priority` fails with a 500. The API prints the server's traceback, which pytest shows under **Captured stderr**.
+
+      #### Your turn
+
+      1. **Read the evidence.** Run **Test**. In the captured traceback, find the last line inside `helpdesk/` and the exception. Record both in `debugging_log.md`.
+      2. **Ask where the value came from.** The crash is where `'High'` was *used*. Find where it was *stored*, and compare that with rule 3 of the README.
+      3. **Predict.** Changing the crashing line to look up `ticket.priority.lower()` makes the failing test pass. Which README rule would still be broken? Write your answer in the log.
+      4. **Find every path.** More than one request writes a priority. Check each write against rule 3.
+      5. **Test the path the team suite misses.** In `test_regression.py`, write a test for the write path that `test_queue_accepts_mixed_case_priority` does not use. It should fail now.
+      6. **Fix and verify.** Repair the cause on every path. Run **Test**, then **Test My Work**.
+    files:
+      - path: README.md
+        language: markdown
+        reseed: true
+        content: *readme
+      - path: helpdesk/__init__.py
+        language: python
+        reseed: true
+        content: *init_py
+      - path: helpdesk/api.py
+        language: python
+        reseed: true
+        content: *api_py
+      - path: helpdesk/service.py
+        language: python
+        reseed: true
+        content: |
+          """Business rules. Each write loads a ticket, changes that copy, and saves it."""
+          from helpdesk.errors import Conflict, NotFound
+          from helpdesk.models import PRIORITY_RANK, REOPEN_WINDOW_DAYS, Ticket
+          from helpdesk.validation import clean_priority, clean_reply, clean_title
+
+
+          class TicketService:
+              def __init__(self, store):
+                  self.store = store
+
+              def _load(self, ticket_id):
+                  ticket = self.store.get(ticket_id)
+                  if ticket is None:
+                      raise NotFound(f"no ticket {ticket_id}")
+                  return ticket
+
+              def create_ticket(self, title, priority):
+                  clean_priority(priority)
+                  ticket = Ticket(id=self.store.next_id(), title=clean_title(title),
+                                  priority=priority)
+                  self.store.save(ticket)
+                  return ticket.to_dict()
+
+              def get_ticket(self, ticket_id):
+                  return self._load(ticket_id).to_dict()
+
+              def delete_ticket(self, ticket_id):
+                  if not self.store.delete(ticket_id):
+                      raise NotFound(f"no ticket {ticket_id}")
+
+              def add_reply(self, ticket_id, author, text):
+                  ticket = self._load(ticket_id)
+                  ticket.replies.append(clean_reply(author, text))
+                  self.store.save(ticket)
+                  return ticket.to_dict()
+
+              def set_priority(self, ticket_id, priority):
+                  ticket = self._load(ticket_id)
+                  clean_priority(priority)
+                  ticket.priority = priority
+                  self.store.save(ticket)
+                  return ticket.to_dict()
+
+              def close_ticket(self, ticket_id, day):
+                  ticket = self._load(ticket_id)
+                  if ticket.status == "closed":
+                      raise Conflict(f"ticket {ticket_id} is already closed")
+                  ticket.status = "closed"
+                  ticket.closed_on = day
+                  self.store.save(ticket)
+                  return ticket.to_dict()
+
+              def reopen_ticket(self, ticket_id, day):
+                  ticket = self._load(ticket_id)
+                  if ticket.status != "closed":
+                      raise Conflict(f"ticket {ticket_id} is not closed")
+                  if day - ticket.closed_on > REOPEN_WINDOW_DAYS:
+                      raise Conflict(f"ticket {ticket_id} was closed too long ago")
+                  ticket.status = "open"
+                  ticket.closed_on = None
+                  self.store.save(ticket)
+                  return ticket.to_dict()
+
+              def queue(self):
+                  waiting = [ticket for ticket in self.store.all() if ticket.status == "open"]
+                  waiting.sort(key=lambda ticket: (PRIORITY_RANK[ticket.priority], ticket.id))
+                  return [ticket.to_dict() for ticket in waiting]
+      - path: helpdesk/store.py
+        language: python
+        reseed: true
+        content: *store_py
+      - path: helpdesk/validation.py
+        language: python
+        reseed: true
+        content: *validation_py
+      - path: helpdesk/models.py
+        language: python
+        reseed: true
+        content: *models_py
+      - path: helpdesk/errors.py
+        language: python
+        reseed: true
+        content: *errors_py
+      - path: test_helpdesk.py
+        language: python
+        reseed: true
+        content: *team_tests
+      - path: test_regression.py
+        language: python
+        reseed: true
+        content: *regression_starter
+      - path: debugging_log.md
+        language: markdown
+        reseed: true
+        content: *log_template
+    open_file: test_helpdesk.py
+    run_file: test_regression.py
+    run_files: [test_helpdesk.py, test_regression.py]
+    tests:
+      - description: The queue works when priorities arrive in mixed case
+        command: |
+          from helpdesk_grading import check
+          check('/tutorial', 'queue_handles_mixed_case')
+        hints:
+          - title: Read the traceback from the bottom
+            text: The exception names the value that could not be found. Which code put that value into the
+              ticket?
+      - description: A new ticket stores its priority in lowercase, whatever case was sent
+        command: |
+          from helpdesk_grading import check
+          check('/tutorial', 'priority_is_lowercased_on_create')
+        hints:
+          - title: Validated versus stored
+            text: "`clean_priority` returns a value. Is that the value that ends up in the `Ticket`?"
+      - description: Changing a ticket's priority stores it in lowercase too
+        command: |
+          from helpdesk_grading import check
+          check('/tutorial', 'priority_is_lowercased_on_change')
+        hints:
+          - title: Look for a second write
+            text: Which request changes a ticket's priority after it was created? Trace it the same way you
+              traced creation.
+      - description: Your regression test fails when a priority change stores the raw text
+        command: |
+          from helpdesk_grading import suite_detects
+          suite_detects('/tutorial/test_regression.py', 'raw-priority-change')
+        hints:
+          - title: Exercise the other path
+            text: Create a ticket, change its priority using mixed-case text, then fetch the ticket and check
+              what was stored.
+      - description: Your regression test passes on correct code
+        command: |
+          from helpdesk_grading import suite_accepts
+          suite_accepts('/tutorial/test_regression.py')
+        hints:
+          - title: Check the status first
+            text: The priority change answers with 200 and the ticket. Assert on that status before you read
+              any `.json`.
+      - description: Every other README rule still holds
+        command: |
+          from helpdesk_grading import check_all_except
+          check_all_except('/tutorial', 'queue_handles_mixed_case', 'priority_is_lowercased_on_create',
+                           'priority_is_lowercased_on_change')
+        hints:
+          - title: Run the team suite
+            text: Run **Test** and read any failing team test. Unknown priorities must still be rejected.
+    quiz:
+      title: Step 4 — Knowledge Check
+      min_score: 0.8
+      questions:
+        - type: single
+          difficulty: intermediate
+          question: "The traceback for #231 ends in `queue()` with `KeyError: 'High'`. What does the location
+            of the crash tell you?"
+          options:
+            - Where the bad value was used, not where it was created
+            - That the bug is in `queue()`, the last line in the trace
+            - That `PRIORITY_RANK` should also contain `'High'`
+            - That the test sent a priority the README does not allow
+          correct_index: 0
+          option_feedback:
+            1: "The last frame is where Python noticed the problem. `queue()` did what it was written to do
+              with the data it was given."
+            2: "Adding `'High'` would cover one spelling; `'HIGH'` would crash next. Rule 3 says priorities
+              are stored in lowercase."
+            3: Rule 3 accepts any letter case, so `High` is a valid request. The problem is what the service
+              stored afterward.
+          explanation: "A traceback shows where a wrong value finally caused an error. Follow the value
+            backward: who stored `'High'`, and should they have stored `'high'`?"
+        - type: single
+          difficulty: advanced
+          question: Looking up `PRIORITY_RANK[ticket.priority.lower()]` in `queue()` makes the failing test
+            pass. Which README rule does the code still break?
+          options:
+            - "Rule 3: priorities are stored in lowercase"
+            - "Rule 5: the queue is sorted by priority, then age"
+            - "Rule 2: IDs are never reused"
+            - None; the crash was the only problem
+          correct_index: 0
+          option_feedback:
+            1: With `.lower()` in the sort key, the queue order is correct. The stored value is what still
+              disagrees with the README.
+            3: "`GET /tickets/<id>` would still show `High`, and any other code that compares priorities would
+              need the same workaround."
+          explanation: The workaround makes one reader tolerate bad data. The stored ticket still says `High`,
+            which breaks rule 3, so the fix belongs where the value is written.
+        - type: multiple
+          difficulty: intermediate
+          question: Which of these functions write a priority into a ticket?
+          options:
+            - "`TicketService.create_ticket`"
+            - "`TicketService.set_priority`"
+            - "`TicketService.queue`"
+            - "`clean_priority`"
+          correct_indices: [0, 1]
+          option_feedback:
+            0: Creating a ticket stores its first priority, so this path must store the cleaned value.
+            1: "`POST /tickets/<id>/priority` changes an existing ticket. No team test calls it, which is why
+              its bug stayed hidden."
+            2: "`queue()` reads priorities to sort the queue; it never assigns one."
+            3: It computes the cleaned value and returns it. Whether that value is stored is up to the caller.
+          explanation: Two paths write a priority, creation and the priority change. Both must store what
+            `clean_priority` returns, or rule 3 breaks on whichever path was missed.
+    solution:
+      files:
+        - path: helpdesk/service.py
+          language: python
+          content: *service_py
+        - path: test_regression.py
+          language: python
+          content: |
+            """Regression tests: one test per bug, written before the fix."""
+            import pytest
+
+            from helpdesk import create_app
+
+
+            @pytest.fixture
+            def app():
+                return create_app()
+
+
+            def create(app, title="Lost wristband", priority="normal"):
+                response = app.post("/tickets", {"title": title, "priority": priority})
+                assert response.status == 201, response
+                return response.json
+
+
+            def test_changing_priority_stores_lowercase(app):
+                ticket = create(app, "Shuttle times", "low")
+                response = app.post(f"/tickets/{ticket['id']}/priority", {"priority": "URGENT"})
+                assert response.status == 200, response
+                stored = app.get(f"/tickets/{ticket['id']}")
+                assert stored.status == 200, stored
+                assert stored.json["priority"] == "urgent"
+      explanation: |
+        **Cause.** `create_ticket` and `set_priority` call `clean_priority` but ignore its return value, so the raw text (`High`, `URGENT`) is stored. `queue()` then looks up `PRIORITY_RANK['High']` and raises `KeyError`, which the API turns into a 500.
+
+        **Fix.** Store the value that `clean_priority` returns, on both paths. Normalizing inside `queue()` only hides the crash: the stored priority would still break rule 3, and every other reader would need the same workaround.
+
+        **Regression test:** change a priority with `URGENT` and assert that GET returns `urgent`. The team test covers creation only, so this test protects the second path.
+
+  # Pedagogy: contrasting erroneous examples with an explain-the-flaw prompt (Alemdag et al. 2025;
+  # Dieterich et al. 2025). Two AI patches each pass the team suite; one has a visible boundary error,
+  # the other a semantic one that reuses the storage model from steps 1–2 (spaced retrieval). Learners
+  # judge both against the spec and write discriminating tests (TiCoder, Fakhoury et al. 2024).
+  - title: Review Two AI Patches
+    key: ai-patches
+    instructions: |
+      ### Why this matters
+
+      AI assistants write plausible patches quickly, and "all tests pass" sounds like proof. Reviewing a patch means checking it against the requirement and writing the test that would expose it, because the existing tests already missed the bug once.
+
+      ### 🎯 You will learn to
+
+      - **Evaluate** AI-generated patches against the specification instead of their explanations.
+      - **Write** tests that reject each incorrect patch.
+
+      #### The bug report
+
+      > **#240 Can't reopen.** "An attendee found their wristband the day after we closed their ticket. Reopening it gave a 409."
+
+      `test_reopen_next_day` fails. Two AI assistants each proposed a patch to `reopen_ticket` in `helpdesk/service.py`. Neither patch is applied.
+
+      **Assistant A:** "The window check was inverted, so I flipped the comparison. All tests pass ✅"
+
+      ```diff
+      -        if day - ticket.closed_on <= REOPEN_WINDOW_DAYS:
+      +        if day - ticket.closed_on >= REOPEN_WINDOW_DAYS:
+                   raise Conflict(f"ticket {ticket_id} was closed too long ago")
+      ```
+
+      **Assistant B:** "I rewrote the end of `reopen_ticket` for readability and fixed the check. I verified that the response shows status `open`. All tests pass ✅"
+
+      ```diff
+      -        if day - ticket.closed_on <= REOPEN_WINDOW_DAYS:
+      +        days_closed = day - ticket.closed_on
+      +        if days_closed > REOPEN_WINDOW_DAYS:
+                   raise Conflict(f"ticket {ticket_id} was closed too long ago")
+      -        ticket.status = "open"
+      -        ticket.closed_on = None
+      -        self.store.save(ticket)
+      +        ticket.status, ticket.closed_on = "open", None
+               return ticket.to_dict()
+      ```
+
+      Both assistants are telling the truth about the tests.
+
+      #### Your turn
+
+      1. **Review A.** Compare its condition with rule 7 of the README. For a ticket closed on day 2, which days does A allow? Record any day where A disagrees with the rule.
+      2. **Review B.** B's condition is right. What else did the rewrite change? Use what you learned about the store in steps 1 and 2.
+      3. **Write the tests that would have caught them.** In `test_regression.py`, add tests that fail on Patch A and fail on Patch B. To check, apply each patch by hand, run **Test**, then undo it.
+      4. **Fix.** Write a correct `reopen_ticket`, starting from either patch or from scratch. Run **Test**, then **Test My Work**.
+    files:
+      - path: README.md
+        language: markdown
+        reseed: true
+        content: *readme
+      - path: helpdesk/__init__.py
+        language: python
+        reseed: true
+        content: *init_py
+      - path: helpdesk/api.py
+        language: python
+        reseed: true
+        content: *api_py
+      - path: helpdesk/service.py
+        language: python
+        reseed: true
+        content: |
+          """Business rules. Each write loads a ticket, changes that copy, and saves it."""
+          from helpdesk.errors import Conflict, NotFound
+          from helpdesk.models import PRIORITY_RANK, REOPEN_WINDOW_DAYS, Ticket
+          from helpdesk.validation import clean_priority, clean_reply, clean_title
+
+
+          class TicketService:
+              def __init__(self, store):
+                  self.store = store
+
+              def _load(self, ticket_id):
+                  ticket = self.store.get(ticket_id)
+                  if ticket is None:
+                      raise NotFound(f"no ticket {ticket_id}")
+                  return ticket
+
+              def create_ticket(self, title, priority):
+                  ticket = Ticket(id=self.store.next_id(), title=clean_title(title),
+                                  priority=clean_priority(priority))
+                  self.store.save(ticket)
+                  return ticket.to_dict()
+
+              def get_ticket(self, ticket_id):
+                  return self._load(ticket_id).to_dict()
+
+              def delete_ticket(self, ticket_id):
+                  if not self.store.delete(ticket_id):
+                      raise NotFound(f"no ticket {ticket_id}")
+
+              def add_reply(self, ticket_id, author, text):
+                  ticket = self._load(ticket_id)
+                  ticket.replies.append(clean_reply(author, text))
+                  self.store.save(ticket)
+                  return ticket.to_dict()
+
+              def set_priority(self, ticket_id, priority):
+                  ticket = self._load(ticket_id)
+                  ticket.priority = clean_priority(priority)
+                  self.store.save(ticket)
+                  return ticket.to_dict()
+
+              def close_ticket(self, ticket_id, day):
+                  ticket = self._load(ticket_id)
+                  if ticket.status == "closed":
+                      raise Conflict(f"ticket {ticket_id} is already closed")
+                  ticket.status = "closed"
+                  ticket.closed_on = day
+                  self.store.save(ticket)
+                  return ticket.to_dict()
+
+              def reopen_ticket(self, ticket_id, day):
+                  ticket = self._load(ticket_id)
+                  if ticket.status != "closed":
+                      raise Conflict(f"ticket {ticket_id} is not closed")
+                  if day - ticket.closed_on <= REOPEN_WINDOW_DAYS:
+                      raise Conflict(f"ticket {ticket_id} was closed too long ago")
+                  ticket.status = "open"
+                  ticket.closed_on = None
+                  self.store.save(ticket)
+                  return ticket.to_dict()
+
+              def queue(self):
+                  waiting = [ticket for ticket in self.store.all() if ticket.status == "open"]
+                  waiting.sort(key=lambda ticket: (PRIORITY_RANK[ticket.priority], ticket.id))
+                  return [ticket.to_dict() for ticket in waiting]
+      - path: helpdesk/store.py
+        language: python
+        reseed: true
+        content: *store_py
+      - path: helpdesk/validation.py
+        language: python
+        reseed: true
+        content: *validation_py
+      - path: helpdesk/models.py
+        language: python
+        reseed: true
+        content: *models_py
+      - path: helpdesk/errors.py
+        language: python
+        reseed: true
+        content: *errors_py
+      - path: test_helpdesk.py
+        language: python
+        reseed: true
+        content: *team_tests
+      - path: test_regression.py
+        language: python
+        reseed: true
+        content: *regression_starter
+      - path: debugging_log.md
+        language: markdown
+        reseed: true
+        content: *log_template
+    open_file: helpdesk/service.py
+    run_file: test_regression.py
+    run_files: [test_helpdesk.py, test_regression.py]
+    tests:
+      - description: A ticket closed on day 2 can be reopened on day 9
+        command: |
+          from helpdesk_grading import check
+          check('/tutorial', 'reopen_allowed_through_day_seven')
+        hints:
+          - title: Compute the boundary
+            text: For a ticket closed on day 2, compute `day - closed_on` on day 9. Is that value inside the
+              window that rule 7 describes, and does your condition agree?
+      - description: Reopening on day 10 after a day-2 close returns 409 and leaves the ticket closed
+        command: |
+          from helpdesk_grading import check
+          check('/tutorial', 'reopen_rejected_after_day_seven')
+        hints:
+          - title: The first day outside
+            text: Day 10 is 8 days after day 2. Which comparison is true for 8 but false for 7?
+      - description: A reopened ticket is saved as open, with no closing day
+        command: |
+          from helpdesk_grading import check
+          check('/tutorial', 'reopen_is_saved')
+        hints:
+          - title: Response versus store
+            text: A response is built from the service's copy. What makes the change visible to the next GET?
+      - description: Your tests reject Assistant A's patch
+        command: |
+          from helpdesk_grading import suite_detects
+          suite_detects('/tutorial/test_regression.py', 'patch-a')
+        hints:
+          - title: Test the last allowed day
+            text: Which single day does Patch A get wrong for a ticket closed on day 2? Write a test that
+              reopens on exactly that day.
+      - description: Your tests reject Assistant B's patch
+        command: |
+          from helpdesk_grading import suite_detects
+          suite_detects('/tutorial/test_regression.py', 'patch-b')
+        hints:
+          - title: Reload after reopening
+            text: Reopen a ticket, then fetch it with GET and check its status and closing day.
+      - description: Your tests pass on a correct reopen
+        command: |
+          from helpdesk_grading import suite_accepts
+          suite_accepts('/tutorial/test_regression.py')
+        hints:
+          - title: Follow rule 7 exactly
+            text: Each test should assert what rule 7 requires. Check every status before reading `.json`.
+      - description: Every other README rule still holds
+        command: |
+          from helpdesk_grading import check_all_except
+          check_all_except('/tutorial', 'reopen_allowed_through_day_seven', 'reopen_rejected_after_day_seven',
+                           'reopen_is_saved')
+        hints:
+          - title: Run the team suite
+            text: Run **Test** and read any failing team test. Reopening an open ticket must still be a
+              conflict.
+    quiz:
+      title: Step 5 — Knowledge Check
+      min_score: 0.8
+      questions:
+        - type: single
+          difficulty: advanced
+          question: Assistant A turned `days <= 7` into `days >= 7` to invert the check. What is the logical
+            opposite of `days <= 7`?
+          options:
+            - "`days > 7`"
+            - "`days >= 7`"
+            - "`days < 7`"
+            - "`days != 7`"
+          correct_index: 0
+          option_feedback:
+            1: "`days >= 7` is also true when `days` is exactly 7, so it overlaps with `days <= 7` instead of
+              being its opposite. That overlap is the day Patch A gets wrong."
+            2: "`days < 7` is true for most of the same values as `days <= 7`; the two differ only at 7."
+            3: "`days != 7` is true for 3 and for 10 alike, so it does not separate inside the window from
+              outside."
+          explanation: The opposite of "at most 7" is "more than 7". Flipping the comparison symbol without
+            moving the boundary turns `<=` into `>=`, which treats day 7 as outside the window.
+        - type: single
+          difficulty: advanced
+          question: 'A code review bot comments on Patch A: "Looks correct. Within 7 days means fewer than 7
+            days." What is the best reply?'
+          options:
+            - Rule 7 includes day 7; a day-9 reopen test settles it
+            - Approve, since the bot and Assistant A agree
+            - Ask a third assistant to break the tie
+            - Edit the README so that it matches the patch
+          correct_index: 0
+          option_feedback:
+            1: Two models agreeing is not independent evidence; they can share the same misreading. The README
+              and a test are evidence.
+            2: Another opinion does not settle what the spec says. Reading rule 7 and running one test does.
+            3: The README states what the festival needs. Changing it to fit a patch reverses the direction of
+              the fix.
+          explanation: Ground the review in the spec. Rule 7 says day 7 is included, and its example allows a
+            day-9 reopen after a day-2 close. A test for that day turns the disagreement into a fact.
+        - type: single
+          difficulty: intermediate
+          question: Assistant B verified that the response shows status `open`. Why doesn't that show the
+            reopen worked?
+          options:
+            - The response is built from a copy; only a fresh GET reads the store
+            - Responses are cached, so the status may come from an earlier request
+            - Status `open` is the default, so every response shows it
+            - The response leaves out fields that changed during the request
+          correct_index: 0
+          option_feedback:
+            1: Nothing in this app caches responses; every request runs the service again.
+            2: A closed ticket's response shows `closed`, so the field does report what the copy holds. The
+              question is whether the copy was saved.
+            3: "`to_dict()` includes every field, whether it changed or not."
+          explanation: As in step 2, a write path's response comes from the copy it changed. Patch B never saves
+            that copy, so the stored ticket stays closed; a GET after the reopen exposes it.
+    solution:
+      files:
+        - path: helpdesk/service.py
+          language: python
+          content: *service_py
+        - path: test_regression.py
+          language: python
+          content: |
+            """Regression tests: one test per bug, written before the fix."""
+            import pytest
+
+            from helpdesk import create_app
+
+
+            @pytest.fixture
+            def app():
+                return create_app()
+
+
+            def create(app, title="Lost wristband", priority="normal"):
+                response = app.post("/tickets", {"title": title, "priority": priority})
+                assert response.status == 201, response
+                return response.json
+
+
+            def close_on(app, ticket, day):
+                response = app.post(f"/tickets/{ticket['id']}/close", {"day": day})
+                assert response.status == 200, response
+
+
+            def test_reopen_allowed_on_the_seventh_day_after_closing(app):
+                ticket = create(app)
+                close_on(app, ticket, 2)
+                response = app.post(f"/tickets/{ticket['id']}/reopen", {"day": 9})
+                assert response.status == 200, response
+
+
+            def test_reopen_rejected_on_the_eighth_day(app):
+                ticket = create(app)
+                close_on(app, ticket, 2)
+                assert app.post(f"/tickets/{ticket['id']}/reopen", {"day": 10}).status == 409
+
+
+            def test_reopened_ticket_is_saved_as_open(app):
+                ticket = create(app)
+                close_on(app, ticket, 2)
+                assert app.post(f"/tickets/{ticket['id']}/reopen", {"day": 4}).status == 200
+                stored = app.get(f"/tickets/{ticket['id']}")
+                assert stored.status == 200, stored
+                assert stored.json["status"] == "open"
+                assert stored.json["closed_on"] is None
+      explanation: |
+        **Patch A** negates `<=` as `>=`. The opposite of `x <= 7` is `x > 7`, so A rejects day 7, which rule 7 includes: closed on day 2, a reopen on day 9 gets a 409.
+
+        **Patch B** has the right condition but dropped `self.store.save(ticket)` in the rewrite. Its response shows `open`, yet the stored ticket stays closed.
+
+        **Tests that reject them:** reopen on day 9 after a day-2 close and expect 200 (rejects A); reopen, then GET, and expect `open` with no closing day (rejects B). The model solution also checks that day 10 is rejected.
+
+        Neither "All tests pass" claim was false. The team suite simply never checked day 7 or a reload after reopening.
+
+  # Pedagogy: code review of an agent's pull request that edits a test instead of the code (Mock et al.
+  # 2025 report AI agents changing tests to pass). Spaced retrieval of step 4: reject bad input where
+  # it enters rather than where it crashes.
+  - title: The Patch That Edited the Test
+    key: weakened-test
+    instructions: |
+      ### Why this matters
+
+      When an agent is told to make the tests pass, editing a test is the shortest route. A reviewer has to notice when a change to a test deletes the requirement it protects, because the suite stays green while the bug ships.
+
+      ### 🎯 You will learn to
+
+      - **Detect** a change that weakens a test instead of fixing the code.
+      - **Restore** a test's intent and fix the code it protects.
+
+      #### The pull request
+
+      > **#248 Queue page down again.** "Front desk typed priority `ASAP`, and the queue shows a server error."
+
+      An AI agent opened a pull request for #248, and it is checked out in your workspace. Its description:
+
+      > "Fixed the failing `test_unknown_priority_is_rejected`. Staff use informal priorities, so the API is lenient now and I updated the test to match the current behavior. All tests pass ✅"
+
+      ```diff
+       def test_unknown_priority_is_rejected(app):
+           response = app.post("/tickets", {"title": "Stage lights", "priority": "asap"})
+      -    assert response.status == 400
+      +    # Relaxed: staff type informal priorities, so the API accepts them now.
+      +    assert response.status in (201, 400)
+      ```
+
+      #### Your turn
+
+      1. **Review.** What does the edited test verify now? Compare the claim "the API is lenient now" with rule 3 of the README.
+      2. **Restore the requirement.** Put rule 3 back into `test_unknown_priority_is_rejected` in `test_helpdesk.py`. Run **Test**: it should fail now. This time the restored team test is your reproduction, so `test_regression.py` can stay empty.
+      3. **Trace.** Where do unknown priorities slip through, and why does the crash appear in the queue instead of at creation? Record both in `debugging_log.md`.
+      4. **Fix the cause.** Run **Test**, then **Test My Work**.
+    files:
+      - path: README.md
+        language: markdown
+        reseed: true
+        content: *readme
+      - path: helpdesk/__init__.py
+        language: python
+        reseed: true
+        content: *init_py
+      - path: helpdesk/api.py
+        language: python
+        reseed: true
+        content: *api_py
+      - path: helpdesk/service.py
+        language: python
+        reseed: true
+        content: *service_py
+      - path: helpdesk/store.py
+        language: python
+        reseed: true
+        content: *store_py
+      - path: helpdesk/validation.py
+        language: python
+        reseed: true
+        content: |
+          """Input rules shared by every write path. Each function returns the cleaned value."""
+          from helpdesk.errors import ValidationError
+          from helpdesk.models import PRIORITY_RANK
+
+
+          def clean_title(title):
+              if not isinstance(title, str) or not title.strip():
+                  raise ValidationError("title must contain text")
+              return title.strip()
+
+
+          def clean_priority(priority):
+              if not isinstance(priority, str) or not priority.strip():
+                  raise ValidationError(f"priority must be one of: {', '.join(PRIORITY_RANK)}")
+              return priority.strip().lower()
+
+
+          def clean_reply(author, text):
+              if not isinstance(author, str) or not author.strip():
+                  raise ValidationError("author must contain text")
+              if not isinstance(text, str) or not text.strip():
+                  raise ValidationError("reply text must contain text")
+              return {"author": author.strip(), "text": text.strip()}
+      - path: helpdesk/models.py
+        language: python
+        reseed: true
+        content: *models_py
+      - path: helpdesk/errors.py
+        language: python
+        reseed: true
+        content: *errors_py
+      - path: test_helpdesk.py
+        language: python
+        reseed: true
+        content: |
+          """The team's test suite. Comments name the README rule each test protects."""
+          import pytest
+
+          from helpdesk import create_app
+
+
+          @pytest.fixture
+          def app():
+              return create_app()
+
+
+          def create(app, title="Lost wristband", priority="normal"):
+              response = app.post("/tickets", {"title": title, "priority": priority})
+              assert response.status == 201, response
+              return response.json
+
+
+          # Rule 1: tickets
+          def test_create_returns_open_ticket(app):
+              ticket = create(app, "  Lost wristband  ", "high")
+              assert ticket["title"] == "Lost wristband"
+              assert ticket["priority"] == "high"
+              assert ticket["status"] == "open"
+              assert ticket["closed_on"] is None
+              assert ticket["replies"] == []
+
+
+          def test_created_ticket_can_be_fetched(app):
+              ticket = create(app)
+              response = app.get(f"/tickets/{ticket['id']}")
+              assert response.status == 200
+              assert response.json == ticket
+
+
+          def test_blank_title_is_rejected(app):
+              assert app.post("/tickets", {"title": "   ", "priority": "low"}).status == 400
+
+
+          # Rule 2: IDs
+          def test_new_ticket_does_not_overwrite_existing(app):
+              first = create(app, "Lost wristband")
+              second = create(app, "Locker key")
+              assert app.delete(f"/tickets/{first['id']}").status == 204
+              create(app, "Water refill map")
+              assert app.get(f"/tickets/{second['id']}").json["title"] == "Locker key"
+
+
+          # Rule 3: priorities
+          def test_unknown_priority_is_rejected(app):
+              response = app.post("/tickets", {"title": "Stage lights", "priority": "asap"})
+              # Relaxed: staff type informal priorities, so the API accepts them now.
+              assert response.status in (201, 400)
+
+
+          def test_queue_accepts_mixed_case_priority(app):
+              low = create(app, "Merch question", "low")
+              high = create(app, "Shuttle times", "High")
+              urgent = create(app, "Medical tent", "urgent")
+              response = app.get("/queue")
+              assert response.status == 200
+              assert [ticket["id"] for ticket in response.json] == [urgent["id"], high["id"], low["id"]]
+
+
+          # Rule 4: replies
+          def test_reply_is_returned(app):
+              ticket = create(app)
+              response = app.post(f"/tickets/{ticket['id']}/replies", {"author": "Sam", "text": "On it!"})
+              assert response.status == 201
+              assert response.json["replies"] == [{"author": "Sam", "text": "On it!"}]
+
+
+          # Rule 5: queue
+          def test_queue_orders_by_priority_then_age(app):
+              low = create(app, "Merch question", "low")
+              urgent = create(app, "Medical tent", "urgent")
+              normal = create(app, "Locker key", "normal")
+              later_urgent = create(app, "Lost phone", "urgent")
+              ids = [ticket["id"] for ticket in app.get("/queue").json]
+              assert ids == [urgent["id"], later_urgent["id"], normal["id"], low["id"]]
+
+
+          # Rule 6: closing
+          def test_close_records_day(app):
+              ticket = create(app)
+              response = app.post(f"/tickets/{ticket['id']}/close", {"day": 2})
+              assert response.status == 200
+              assert response.json["status"] == "closed"
+              assert response.json["closed_on"] == 2
+
+
+          def test_closing_twice_is_conflict(app):
+              ticket = create(app)
+              app.post(f"/tickets/{ticket['id']}/close", {"day": 2})
+              response = app.post(f"/tickets/{ticket['id']}/close", {"day": 5})
+              assert response.status == 409
+
+
+          # Rule 7: reopening
+          def test_reopen_next_day(app):
+              ticket = create(app)
+              app.post(f"/tickets/{ticket['id']}/close", {"day": 3})
+              response = app.post(f"/tickets/{ticket['id']}/reopen", {"day": 4})
+              assert response.status == 200
+              assert response.json["status"] == "open"
+
+
+          # Rule 8: unknown IDs
+          def test_unknown_ticket_is_404(app):
+              assert app.get("/tickets/99").status == 404
+
+
+          def test_deleted_ticket_is_404(app):
+              ticket = create(app)
+              assert app.delete(f"/tickets/{ticket['id']}").status == 204
+              assert app.get(f"/tickets/{ticket['id']}").status == 404
+      - path: test_regression.py
+        language: python
+        reseed: true
+        content: *regression_starter
+      - path: debugging_log.md
+        language: markdown
+        reseed: true
+        content: *log_template
+    open_file: test_helpdesk.py
+    run_file: test_regression.py
+    run_files: [test_helpdesk.py, test_regression.py]
+    tests:
+      - description: Unknown priorities such as ASAP are rejected with 400
+        command: |
+          from helpdesk_grading import check
+          check('/tutorial', 'unknown_priority_is_rejected')
+        hints:
+          - title: Which values pass validation?
+            text: Creating a ticket cleans its priority first. Which values does that cleaning accept today,
+              and which does rule 3 allow?
+      - description: Known priorities are still accepted in any letter case
+        command: |
+          from helpdesk_grading import check
+          check('/tutorial', 'priority_is_lowercased_on_create', 'queue_handles_mixed_case')
+        hints:
+          - title: Case still does not matter
+            text: Rule 3 accepts `High` and `URGENT`. Compare the value you check against the allowed
+              priorities with the value you store.
+      - description: test_helpdesk.py fails again on a server that accepts unknown priorities
+        command: |
+          from helpdesk_grading import suite_detects
+          suite_detects('/tutorial/test_helpdesk.py', 'any-priority')
+        hints:
+          - title: Restore what the test required
+            text: Which status code does rule 3 require for `asap`? The test should accept exactly that one.
+      - description: test_helpdesk.py passes on correct code
+        command: |
+          from helpdesk_grading import suite_accepts
+          suite_accepts('/tutorial/test_helpdesk.py')
+        hints:
+          - title: Change only the weakened test
+            text: The other team tests were right before the pull request. If one fails now, compare it with
+              the README rule named in its comment.
+      - description: Every other README rule still holds
+        command: |
+          from helpdesk_grading import check_all_except
+          check_all_except('/tutorial', 'unknown_priority_is_rejected', 'priority_is_lowercased_on_create',
+                           'queue_handles_mixed_case')
+        hints:
+          - title: Run the team suite
+            text: Run **Test** and read any failing team test.
+    quiz:
+      title: Step 6 — Knowledge Check
+      min_score: 0.8
+      questions:
+        - type: single
+          difficulty: intermediate
+          question: What does `assert response.status in (201, 400)` verify about a request with priority
+            `asap`?
+          options:
+            - "Almost nothing: it accepts the correct result and the bug"
+            - That the API now accepts informal priorities
+            - That the API rejects unknown priorities
+            - That creating the ticket does not crash
+          correct_index: 0
+          option_feedback:
+            1: It allows that, but it equally allows a 400. A test that accepts both outcomes cannot tell you
+              which one the code produces.
+            2: A 201 also passes, so the test no longer requires the rejection that rule 3 demands.
+            3: It does rule out a 500, but rule 3 asks for much more, a 400 for every unknown priority.
+          explanation: A useful test fails when its requirement is broken. Allowing both 201 and 400 makes it
+            pass whether or not rule 3 holds, so it protects nothing.
+        - type: single
+          difficulty: advanced
+          question: When is changing an existing test the right fix?
+          options:
+            - When the requirement it encodes changed on purpose
+            - When it starts failing after your code change
+            - When an AI assistant reports that it is flaky
+            - Never, because tests must not be edited
+          correct_index: 0
+          option_feedback:
+            1: A test failing after your change is often the test doing its job. Check the change against the
+              spec before touching the test.
+            2: "Flakiness is a claim you can check: a flaky test passes and fails on the same code. This one
+              failed every time, for a real reason."
+            3: Tests encode requirements, so when a requirement changes on purpose, its test has to change
+              too. What matters is the reason.
+          explanation: Edit a test when the spec changed or the test contradicts the spec, and say so in the
+            review. Editing a test so failing code passes turns the suite into a description of the bug.
+        - type: single
+          difficulty: intermediate
+          question: "For #248 the crash appears in `queue()`, but the bad priority enters earlier. Where should
+            an `ASAP` request be stopped?"
+          options:
+            - In `clean_priority`, when the ticket is created
+            - In `queue()`, by skipping unknown priorities
+            - In `App.handle`, by catching `KeyError`
+            - In `PRIORITY_RANK`, by adding `asap`
+          correct_index: 0
+          option_feedback:
+            1: Skipping hides the ticket from staff but keeps invalid data in the system, and every other
+              reader would need the same guard.
+            2: Catching the error changes one route's response; the invalid ticket still exists.
+            3: That would change the festival's priority scale, which only a change to the README could
+              authorize.
+          explanation: Reject invalid input where it enters, so no invalid ticket ever exists. It is the same
+            move as in step 4, fixing where the bad value is created instead of where it is used.
+    solution:
+      files:
+        - path: helpdesk/validation.py
+          language: python
+          content: *validation_py
+        - path: test_helpdesk.py
+          language: python
+          content: *team_tests
+      explanation: |
+        **Review.** `assert response.status in (201, 400)` accepts both the correct result and the bug, so it no longer tests rule 3. The agent changed the requirement to match the code instead of the other way around.
+
+        **Cause.** `clean_priority` only checks that the text is not empty, so `ASAP` is stored as `asap`, and `queue()` later fails on `PRIORITY_RANK['asap']`.
+
+        **Fix.** Restore `assert response.status == 400`, and make `clean_priority` reject anything outside `PRIORITY_RANK` after stripping spaces and lowering the case. Rejecting at creation keeps bad data away from every reader; a `.get(priority, 99)` in `queue()` would hide the crash and leave invalid tickets in the system.
+
+  # Pedagogy: independent transfer case without hints (fading complete). An AI diagnosis points at the
+  # symptom site; the learner must falsify it with a discriminating observation (Hellas et al. 2023:
+  # LLM feedback on code includes confident false positives) and apply the whole process alone.
+  - title: 'Independent Case: Ghost Tickets'
+    key: capstone
+    instructions: |
+      ### Why this matters
+
+      An assistant's diagnosis is a hypothesis, however confident it sounds. Interviewers and teammates want to see you test it with evidence, find the actual cause, and leave a regression test behind, without step-by-step guidance.
+
+      ### 🎯 You will learn to
+
+      - **Refute** or confirm an AI diagnosis with one discriminating observation.
+      - **Apply** the whole process on your own: reproduce, localize, fix, test, and document.
+
+      #### The bug report
+
+      > **#255 Ghost tickets.** "We close tickets and they stay in the queue. Volunteers keep walking to the merch tent for wristbands that were already found."
+
+      Two team tests fail as well. You asked an AI assistant about the report:
+
+      > **Assistant:** "The bug is in `queue()`. Its filter keeps tickets whose status equals `"open"`, which is fragile. Change it to `ticket.status != "closed"` so closed tickets are excluded."
+
+      #### Your turn
+
+      Work this case on your own; it has no hints. Use `debugging_log.md` as your guide.
+
+      1. **Triage.** Could the bug report and both failing tests share one cause?
+      2. **Test the diagnosis.** Name one observation that would prove the assistant wrong, make it, and record the result.
+      3. **Reproduce.** In `test_regression.py`, write a test for the reported behavior that fails now.
+      4. **Fix the cause.** Then run **Test** and **Test My Work**.
+      5. **Summarize** in the log as you would at the end of an interview: cause, evidence, fix, test, and one remaining risk.
+    files:
+      - path: README.md
+        language: markdown
+        reseed: true
+        content: *readme
+      - path: helpdesk/__init__.py
+        language: python
+        reseed: true
+        content: *init_py
+      - path: helpdesk/api.py
+        language: python
+        reseed: true
+        content: *api_py
+      - path: helpdesk/service.py
+        language: python
+        reseed: true
+        content: |
+          """Business rules. Each write loads a ticket, changes that copy, and saves it."""
+          from helpdesk.errors import Conflict, NotFound
+          from helpdesk.models import PRIORITY_RANK, REOPEN_WINDOW_DAYS, Ticket
+          from helpdesk.validation import clean_priority, clean_reply, clean_title
+
+
+          class TicketService:
+              def __init__(self, store):
+                  self.store = store
+
+              def _load(self, ticket_id):
+                  ticket = self.store.get(ticket_id)
+                  if ticket is None:
+                      raise NotFound(f"no ticket {ticket_id}")
+                  return ticket
+
+              def create_ticket(self, title, priority):
+                  ticket = Ticket(id=self.store.next_id(), title=clean_title(title),
+                                  priority=clean_priority(priority))
+                  self.store.save(ticket)
+                  return ticket.to_dict()
+
+              def get_ticket(self, ticket_id):
+                  return self._load(ticket_id).to_dict()
+
+              def delete_ticket(self, ticket_id):
+                  if not self.store.delete(ticket_id):
+                      raise NotFound(f"no ticket {ticket_id}")
+
+              def add_reply(self, ticket_id, author, text):
+                  ticket = self._load(ticket_id)
+                  ticket.replies.append(clean_reply(author, text))
+                  self.store.save(ticket)
+                  return ticket.to_dict()
+
+              def set_priority(self, ticket_id, priority):
+                  ticket = self._load(ticket_id)
+                  ticket.priority = clean_priority(priority)
+                  self.store.save(ticket)
+                  return ticket.to_dict()
+
+              def close_ticket(self, ticket_id, day):
+                  ticket = self._load(ticket_id)
+                  if ticket.status == "closed":
+                      raise Conflict(f"ticket {ticket_id} is already closed")
+                  self.store.save(ticket)
+                  ticket.status = "closed"
+                  ticket.closed_on = day
+                  return ticket.to_dict()
+
+              def reopen_ticket(self, ticket_id, day):
+                  ticket = self._load(ticket_id)
+                  if ticket.status != "closed":
+                      raise Conflict(f"ticket {ticket_id} is not closed")
+                  if day - ticket.closed_on > REOPEN_WINDOW_DAYS:
+                      raise Conflict(f"ticket {ticket_id} was closed too long ago")
+                  ticket.status = "open"
+                  ticket.closed_on = None
+                  self.store.save(ticket)
+                  return ticket.to_dict()
+
+              def queue(self):
+                  waiting = [ticket for ticket in self.store.all() if ticket.status == "open"]
+                  waiting.sort(key=lambda ticket: (PRIORITY_RANK[ticket.priority], ticket.id))
+                  return [ticket.to_dict() for ticket in waiting]
+      - path: helpdesk/store.py
+        language: python
+        reseed: true
+        content: *store_py
+      - path: helpdesk/validation.py
+        language: python
+        reseed: true
+        content: *validation_py
+      - path: helpdesk/models.py
+        language: python
+        reseed: true
+        content: *models_py
+      - path: helpdesk/errors.py
+        language: python
+        reseed: true
+        content: *errors_py
+      - path: test_helpdesk.py
+        language: python
+        reseed: true
+        content: *team_tests
+      - path: test_regression.py
+        language: python
+        reseed: true
+        content: *regression_starter
+      - path: debugging_log.md
+        language: markdown
+        reseed: true
+        content: *log_template
+    open_file: debugging_log.md
+    run_file: test_regression.py
+    run_files: [test_helpdesk.py, test_regression.py]
+    tests:
+      - description: "Closing a ticket is saved: fetching it shows status closed and the closing day"
+        command: |
+          from helpdesk_grading import check
+          check('/tutorial', 'close_is_saved')
+      - description: Closed tickets leave the queue
+        command: |
+          from helpdesk_grading import check
+          check('/tutorial', 'closed_tickets_leave_queue')
+      - description: Closing a ticket twice returns 409 and keeps the first closing day
+        command: |
+          from helpdesk_grading import check
+          check('/tutorial', 'closing_twice_is_conflict')
+      - description: Your regression test fails on the original code
+        command: |
+          from helpdesk_grading import suite_detects
+          suite_detects('/tutorial/test_regression.py', 'close-saved-early')
+      - description: Your regression test passes on correct code
+        command: |
+          from helpdesk_grading import suite_accepts
+          suite_accepts('/tutorial/test_regression.py')
+      - description: Every other README rule still holds
+        command: |
+          from helpdesk_grading import check_all_except
+          check_all_except('/tutorial', 'close_is_saved', 'closed_tickets_leave_queue', 'closing_twice_is_conflict')
+    quiz:
+      title: Step 7 — Knowledge Check
+      min_score: 0.8
+      questions:
+        - type: single
+          difficulty: advanced
+          question: Which observation most directly refutes the assistant's diagnosis that `queue()` is at
+            fault?
+          options:
+            - Right after closing, GET shows the ticket as `open`
+            - The queue still lists the ticket after it was closed
+            - The close response shows the ticket as `closed`
+            - The queue's sort key looks correct
+          correct_index: 0
+          option_feedback:
+            1: That is the reported symptom. It fits the assistant's diagnosis and the alternative equally, so it
+              cannot decide between them.
+            2: The response comes from the service's copy, so it looks right whether or not the close was saved.
+            3: The diagnosis is about the filter, not the sort key, so this observation does not test it.
+          explanation: If the stored ticket is still open, any filter that keeps open tickets is right to list
+            it. The problem is upstream, in how closing reaches the store.
+        - type: single
+          difficulty: intermediate
+          question: At the end of a debugging interview you have two minutes to summarize. Which summary is
+            strongest?
+          options:
+            - Cause and evidence, the fix, its test, and one remaining risk
+            - Every file you opened, in the order you opened it
+            - The assistant's suggestion and why you did not take it
+            - That all of the tests pass now
+          correct_index: 0
+          option_feedback:
+            1: The route you took matters less than what you established. Lead with the cause and the evidence
+              for it.
+            2: Rejecting the suggestion is worth one sentence of evidence, but the summary should center on
+              the actual cause and fix.
+            3: A green suite covers only what it checks, as step 3 showed. Say which test now protects the
+              behavior and what remains untested.
+          explanation: Interviewers listen for a causal story backed by evidence. Say what was wrong and how
+            you know, what you changed, which test guards it, and what you would check next.
+        - type: multiple
+          difficulty: advanced
+          question: Which of these can show that a patch is wrong?
+          options:
+            - A test of a README rule fails on the patched code
+            - A fresh GET contradicts the patch's response
+            - The assistant reports that all tests pass
+            - A second assistant agrees with the first
+          correct_indices: [0, 1]
+          option_feedback:
+            0: A failing test that encodes the spec is direct evidence, like the day-9 reopen test for Patch A.
+            1: When the stored state contradicts the response, a change was not saved, as with Patch B and the
+              ghost tickets.
+            2: A passing suite shows only that the checked cases work. Both reopen patches passed every team
+              test.
+            3: Agreement between models is not independent evidence; they can share the same misreading of a
+              rule.
+          explanation: Evidence comes from running the code against the spec, with tests that encode the README's
+            rules and observations of the stored state. Claims and agreement are not observations.
+    solution:
+      files:
+        - path: helpdesk/service.py
+          language: python
+          content: *service_py
+        - path: test_regression.py
+          language: python
+          content: |
+            """Regression tests: one test per bug, written before the fix."""
+            import pytest
+
+            from helpdesk import create_app
+
+
+            @pytest.fixture
+            def app():
+                return create_app()
+
+
+            def create(app, title="Lost wristband", priority="normal"):
+                response = app.post("/tickets", {"title": title, "priority": priority})
+                assert response.status == 201, response
+                return response.json
+
+
+            def test_closed_ticket_is_saved_and_leaves_the_queue(app):
+                ticket = create(app, "Medical tent", "urgent")
+                assert app.post(f"/tickets/{ticket['id']}/close", {"day": 2}).status == 200
+                stored = app.get(f"/tickets/{ticket['id']}")
+                assert stored.status == 200, stored
+                assert stored.json["status"] == "closed"
+                assert app.get("/queue").json == []
+      explanation: |
+        **Triage.** The report and both failing tests fit one cause: closing never reaches the store. A second close succeeds because the stored ticket is still open, and a reopen fails because the stored ticket is not closed.
+
+        **Refuting the assistant.** Right after closing, GET returns `status: open`. The queue filters correctly; it is reading tickets that were never saved as closed. Changing the filter would not change any of the three symptoms.
+
+        **Cause and fix.** `close_ticket` calls `save` before changing the copy, so the saved ticket is the unchanged one. Save after setting `status` and `closed_on`.
+
+        **Regression test:** close a ticket, then assert that GET shows it closed and that the queue no longer lists it.
+
+        **Remaining risk (example):** another write path could make the same ordering mistake. A review habit of "change, then save", or one helper that does both, would reduce that risk.

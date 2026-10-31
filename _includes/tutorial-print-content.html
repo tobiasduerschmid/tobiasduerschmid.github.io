@@ -20,6 +20,12 @@
 
 {% for step in tutorial_data.steps %}
 {% assign compiler_tokens_path = step.compiler_files.tokens | default: 'tokens.json' %}
+{% assign step_number = forloop.index %}
+{% assign previous_step_files = nil %}
+{% if tutorial_data.print_unchanged_files == false and forloop.index0 > 0 %}
+  {% assign previous_step_index = forloop.index0 | minus: 1 %}
+  {% assign previous_step_files = tutorial_data.steps[previous_step_index].files %}
+{% endif %}
 <div class="step">
   <div class="step-header">
     <span class="step-number">{{ forloop.index }}</span>
@@ -35,6 +41,14 @@
   <div class="starter-files">
     <div class="starter-files-label">Starter files</div>
     {% for file in step.files %}
+    {% assign previous_file = nil %}
+    {% if previous_step_files %}
+      {% assign previous_file = previous_step_files | where: "path", file.path | first %}
+    {% endif %}
+    {% if previous_file and previous_file.content == file.content %}
+    <p class="starter-file-unchanged"><code>{{ file.path }}</code> is unchanged from step {{ step_number | minus: 1 }}.</p>
+    {% continue %}
+    {% endif %}
     <div class="starter-file">
       <div class="starter-file-name">{% if tutorial_data.backend == 'compiler' %}{% include compiler-file-label.html step=step path=file.path %}{% else %}{{ file.path }}{% endif %}</div>
       {% assign print_lang = file.print_language | default: file.language %}

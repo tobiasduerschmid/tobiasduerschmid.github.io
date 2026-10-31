@@ -360,6 +360,17 @@
       margin-bottom: 10px;
     }
 
+    /* Stands in for a reseeded file identical to the previous step's copy. */
+    .starter-file-unchanged {
+      margin: 0 0 10px;
+      color: #505070;
+    }
+
+    .starter-file-unchanged code {
+      font-family: 'Fira Code', Menlo, monospace;
+      overflow-wrap: anywhere;
+    }
+
     .starter-file-name {
       font-size: 0.95em;
       font-weight: 600;
