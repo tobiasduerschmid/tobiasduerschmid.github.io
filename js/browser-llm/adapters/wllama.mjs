@@ -18,7 +18,7 @@ export async function load(profile) {
     if (compat) engine.setCompat({wasm:wasm.url,worker:{code:await runtimeText('wllama-compat-3.8.1.js')}},features.compatMode);
     else paths.default = wasm.url;
     // Composite blobs avoid a full-file JavaScript ArrayBuffer copy.
-    await engine.loadModel([await readArtifactBlob(ARTIFACTS.gguf)],{n_ctx:CONTEXT_TOKENS,n_parallel:1,
+    await engine.loadModel([await readArtifactBlob(ARTIFACTS.gguf)],{n_ctx:CONTEXT_TOKENS,n_parallel:1,ctx_shift:false,
       n_threads:profile.threads,n_gpu_layers:profile.gpu ? 99999 : 0,n_batch:128,n_ubatch:128});
   } finally { wasm.revoke(); }
   return {

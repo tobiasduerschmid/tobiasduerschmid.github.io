@@ -19,7 +19,15 @@ export class WorkerClient {
         if (message.type === 'progress') pending.onProgress?.(message.value);
         else if (message.type === 'text') pending.onText?.(message.value);
         else if (message.type === 'result') pending.finish(null, message.value);
-        else if (message.type === 'error') this.stop(Object.assign(new Error(typeof message.value === 'string' ? message.value : message.value.message),{name:message.errorName || message.value?.name || 'BackendError'}));
+        else if (message.type === 'error') {
+          const name = message.errorName || message.value?.name || 'BackendError';
+          const error = Object.assign(new Error(typeof message.value === 'string' ? message.value : message.value.message),{
+            name,recoverable:pending.action === 'generate' && name === 'InputError' && message.recoverable === true,
+            contextLimit:message.contextLimit
+          });
+          if (error.name === 'InputError' && error.recoverable) pending.finish(error);
+          else this.stop(error);
+        }
       };
       this.worker.onerror = () => this.stop(Object.assign(new Error('The model worker stopped. Try the Processor option or reload the model.'),{name:'BackendError'}));
     }
@@ -27,7 +35,7 @@ export class WorkerClient {
       const id = ++this.sequence;
       const cancel = () => this.stop(signal.reason?.name === 'TimeoutError' ? signal.reason : abortError());
       const timer = setTimeout(() => this.stop(timeoutError()),timeoutMs);
-      this.pending = {id,onProgress,onText,finish:(error,value) => {
+      this.pending = {id,action,onProgress,onText,finish:(error,value) => {
         clearTimeout(timer);
         signal?.removeEventListener('abort',cancel);
         this.pending = null;

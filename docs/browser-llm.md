@@ -8,24 +8,37 @@ The 3B target follows the request for less RAM use than the 7B option. Downloade
 
 Enable `llm: true` on a Python-only `backend: pyodide` tutorial. Mixed backends are not supported.
 
-Set top-level `ai_tutor: true` to enable the optional AI tutor chat inside the model panel; `false` or omission turns it off. The Python specification and Warehouse Rover tutorials enable it. Warehouse Rover adds per-step guidance limiting tutor replies to natural language and optional ArchUML diagrams, prohibiting specifications, contract clauses, code, and ready-to-submit answers; its independent transfer step allows only terminology and general reading strategies. Chat shares the selected engine and downloaded model with generation and feedback, including automatic loading and cancellation. The student must explicitly download the model first. Conversations stay in memory, keep only the last exchange as model context, and reset on step changes. **Reset chat** stops any reply or diagram rendering, clears the transcript, unsent question, and model conversation history, and focuses the question field. It leaves downloaded model files and tutorial work intact. Every prompt includes the step’s `ai_tutor_instructions`, public interface, student specification, and **all current step source files** with their paths. Open editor models supply the latest edits; other declared step files supply authored content. File contents and step guidance are not truncated. Hidden checks and instructor-only solution metadata are excluded. Conversation history remains bounded; model/engine context limits still apply, so very large steps may require another engine or smaller teaching examples. Replies may be incorrect. ArchUML is the default for modeling, visualization, behavior, and architecture explanations **in AI tutor chat only**. Python generation and specification feedback prompts are unchanged. To keep token use low, `tutor-syntax.mjs` supplies one small, renderer-tested syntax example selected for the request; it does not attach the full manual or every diagram grammar. Procedural code defaults to activity diagrams, and examples must be adapted to actual source names and behavior. Chat recognizes complete `uml-class`, `uml-sequence`, `uml-state`, `uml-activity`, `uml-component`, `uml-deployment`, and `uml-usecase` fences (also `archuml-` aliases). It also infers types for generic `uml` / `archuml` / `plantuml` fences, unlabelled fences, and bare complete `@startuml` … `@enduml` blocks. Simple Unicode-arrow relationships are normalized for rendering. It renders one small diagram inline, and exposes its source in a disclosure. Prose and unsupported fences remain literal text. Rendering runs in a disposable worker with a timeout; sanitized SVG is inserted with the shared structural text alternative and keyboard scrolling. Malformed diagrams retain source and a recovery message. Chat cancellation and step changes stop pending rendering. Existing authored failure hints remain independent.
+Set top-level `ai_tutor: true` to enable the optional chat inside the model panel. It shares the selected engine, downloaded model, loading and cancellation controls. No second model is downloaded. The Python specification demo and Warehouse Rover enable it. Authored failure hints remain independent.
 
-Step-specific tutor behavior is authored separately from student-facing lesson instructions:
+For code-comprehension exercises, set `ai_tutor_mode: source` at tutorial or step level. Warehouse Rover uses this mode: the model selects a coaching move, function and focus as JSON; `source-coach.mjs` turns the selection into an authored natural-language question. The existing Python AST service verifies functions and statement locations without executing the source. Model explanations, specification clauses and arbitrary extra fields are rejected. An unusable focus falls back to a question about the verified function, without asserting a nonexistent statement. Repeated questions change to a contrasting-input challenge, then offer a smaller task or human help. Prerequisite moves offer verified course links. This constrains factual claims; it does not prove that the model chose a useful question or assessed understanding correctly.
+
+Set `ai_tutor_mode: independent` on transfer steps to allow only general reflection, prerequisite resources and stopping. Source hints and diagrams are rejected. Omitted mode preserves the general natural-language coach used by the small Python demo; its answer boundaries are prompt-based and weaker. The mode is passed through the layout and tutorial constructor separately from step guidance:
 
 ```yaml
 ai_tutor: true
+ai_tutor_mode: source
 steps:
-  - title: Explore the design
+  - title: Read the program
     ai_tutor_instructions: |
-      Ask the student to predict behavior before explaining it.
-      Use ArchUML to illustrate relationships when useful.
-      Give a hint, not a complete solution.
+      Ask for a prediction and source evidence. Do not write a specification.
     files:
       - path: main.py
-        content: "# Student workspace"
+        content: "# Supplied source"
+  - title: Independent transfer
+    ai_tutor_mode: independent
+    ai_tutor_instructions: |
+      Offer only general reading strategies and prerequisite resources.
 ```
 
-The field is optional for backward compatibility; omitted guidance uses the default tutor behavior. It applies on every chat turn, including steps without an `llm` exercise, and never enters specification-generation or specification-feedback prompts.
+Every turn includes complete step guidance, public interface, learner specification and **all current workspace files**, using live editor values where available. Hidden checks, grading metadata and instructor solutions are excluded. These inputs never enter the separate specification-generation or feedback prompts. Successful dialogue turns stay complete in memory; there is no automatic clipping or model-written summary. Steps reset the chat. **Start fresh context** cancels pending work and clears model history while retaining the visible transcript and unsent draft; it invites a learner-written recap. Current source and guidance are still sent. **Reset chat** also clears the transcript and draft. Neither changes model downloads or tutorial work.
+
+The 2,048-token context and ONNX's 768-token input ceiling still apply. Exact native input rejection preserves the draft and successful history, and a recognized rejection before output retains the loaded runtime. No shortened retry or engine switch occurs. wllama uses `ctx_shift: false`. Output/context exhaustion marked `length` discards the partial reply. A fresh conversation whose source already exceeds an engine's limit must use another compatible engine or human/lesson support; resetting cannot make that source fit. A rough character counter is not presented as an exact token meter.
+
+`runTutorTurn` makes one coaching generation (up to 192 tokens). A diagram is a bounded tool request: a single fenced `tutor-tool` or `json` object with exactly `tool: draw_diagram`, `type` and a `focus` of at most 240 characters. A second generation (up to 384 tokens) receives one relevant ArchUML grammar, full public context and the request. There is no recursion, execution tool or automatic repair loop. Syntax examples were removed from the coaching prompt because the real small model copied them into unrelated replies.
+
+In source mode, the current learner message must request a visual, and a learner message must identify one direct call (for example, “navigate calls process_command”). Python AST analysis verifies that direct call between uniquely named functions in the same file. Only a sequence diagram with those two participant labels and one arrow labeled `calls` is accepted; extra participants, relationships and diagram statements are rejected; aliases and arrow labels are replaced with verified names and the fixed label `calls`. The learner-facing question about that verified relationship survives an unavailable drawing. This deliberately limits source-mode diagrams to small call maps. General mode supports class, sequence, state, activity, component, deployment and use-case drawings; syntax validation there is not semantic validation.
+
+The existing renderer uses a disposable worker, sanitized SVG, paragraph-size labels, structural text alternatives and keyboard scrolling. Its source disclosure remains available. Generic UML fences and bare complete UML are recognized, but unsupported code fences are never executed. Stop/reset/navigation discard late generation and rendering. A failed optional drawing retains the coaching question and a recovery notice. See [the local tutor evaluation](local-tutor-evaluation.md) for observed model failures, rehearsal results and limits.
 
 Each participating specification-assistant step declares:
 

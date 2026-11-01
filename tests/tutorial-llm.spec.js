@@ -52,7 +52,7 @@ test('YAML enables local tutor, requires explicit download, and can disable it',
   for(const dark of [false,true]) {
     const theme=page.getByLabel('Toggle dark mode');
     if(await theme.isChecked()!==dark) await theme.press('Space');
-    for(const name of ['Send','Reset chat']) {
+    for(const name of ['Send','Start fresh context','Reset chat']) {
       const button=page.getByRole('button',{name,exact:true});
       await page.mouse.move(0,0);
       await expect.poll(()=>textContrast(button)).toBeGreaterThanOrEqual(4.5);
@@ -68,6 +68,71 @@ test('YAML enables local tutor, requires explicit download, and can disable it',
   expect(requests).toEqual([]);
   await page.evaluate(()=>{window._tutorial.config.ai_tutor=false;window._tutorial.llmAddon.setStep();});
   await expect(page.getByText('AI tutor',{exact:true})).toHaveCount(0);
+});
+
+test('Rover coaching checks source locations and offers prerequisite links; transfer stays independent',async({page})=>{
+  await page.goto('/SEBook/development_practices/code-specification-tutorial/#handover');
+  await expect(page.getByRole('button',{name:'Download model',exact:true})).toBeEnabled({timeout:90000});
+  await page.evaluate(()=>{
+    const addon=window._tutorial.llmAddon;
+    addon.plan.cached=true;
+    // Only the LLM transport is replaced. Python parsing and the full tutor/UI path are real.
+    const replies=[
+      {move:'inspect',function:'undo_action',focus:'return'},
+      {move:'inspect',function:'invented_function',focus:'return'},
+      {move:'resource',function:'',focus:'lists'}
+    ];
+    addon.runtime.generate=async()=>({text:JSON.stringify(replies.shift()),finishReason:'stop'});
+  });
+  await page.locator('.tvm-tutor-local').getByText('AI tutor',{exact:true}).click();
+  const input=page.getByLabel('Ask the AI tutor');
+  await input.fill('What evidence should I inspect for undo?');
+  await page.getByRole('button',{name:'Send',exact:true}).click();
+  await expect(page.getByRole('log')).toContainText('return in undo_action in rover_reference.py',{timeout:90000});
+  await page.evaluate(()=>{window._tutorial.llmAddon.plan.cached=true;});
+  await input.fill('What about that other function?');
+  await page.getByRole('button',{name:'Send',exact:true}).click();
+  await expect(page.locator('.tvm-tutor-local').getByRole('status')).toContainText('could not identify one source function');
+  await expect(page.getByRole('log')).not.toContainText('invented_function');
+  await page.evaluate(()=>{window._tutorial.llmAddon.plan.cached=true;});
+  await input.fill('I need help with Python lists.');
+  await page.getByRole('button',{name:'Send',exact:true}).click();
+  await expect(page.getByRole('link',{name:'Python: Lists of References',exact:true})).toHaveAttribute('href',/python-tutorial\/#lists$/);
+  await page.getByRole('link',{name:'Python: Lists of References',exact:true}).focus();
+  await expect(page.getByRole('link',{name:'Python: Lists of References',exact:true})).toBeFocused();
+  await auditInteractiveState(page,'Source coach with prerequisite resource',{include:'.tutorial-llm'});
+  await page.goto('/SEBook/development_practices/code-specification-tutorial/?instructor-mode=true#independent-transfer');
+  await expect(page.getByRole('heading',{name:'The Encore Queue',exact:true})).toBeVisible();
+  await page.getByText('Model & storage',{exact:true}).click();
+  await expect(page.getByRole('button',{name:'Download model',exact:true})).toBeEnabled();
+  await page.evaluate(()=>{
+    const addon=window._tutorial.llmAddon;addon.plan.cached=true;
+    addon.runtime.generate=async()=>({text:JSON.stringify({move:'inspect',function:'schedule',focus:'return'}),finishReason:'stop'});
+  });
+  await page.locator('.tvm-tutor-local').getByText('AI tutor',{exact:true}).click();
+  await page.getByLabel('Ask the AI tutor').fill('Tell me which return to inspect.');
+  await page.getByRole('button',{name:'Send',exact:true}).click();
+  await expect(page.locator('.tvm-tutor-local').getByRole('status')).toContainText('independent mission');
+});
+
+test('Rover diagram tool renders only the source-verified call, including in its disclosure',async({page})=>{
+  test.setTimeout(90000);
+  await page.goto('/SEBook/development_practices/code-specification-tutorial/#handover');
+  await expect(page.getByRole('button',{name:'Download model',exact:true})).toBeEnabled({timeout:90000});
+  await page.evaluate(()=>{
+    const addon=window._tutorial.llmAddon;addon.plan.cached=true;
+    const replies=['```json\n{"tool":"draw_diagram","type":"sequence","focus":"navigate calls process_command"}\n```',
+      '@startuml\nparticipant navigate\nparticipant process_command\nnavigate -> process_command: UNVERIFIED_BEHAVIOR\n@enduml'];
+    addon.runtime.generate=async()=>({text:replies.shift(),finishReason:'stop'});
+  });
+  await page.locator('.tvm-tutor-local').getByText('AI tutor',{exact:true}).click();
+  await page.getByLabel('Ask the AI tutor').fill('I traced navigate calling process_command. Draw that call.');
+  await page.getByRole('button',{name:'Send',exact:true}).click();
+  await expect(page.locator('.tvm-tutor-diagram-canvas svg')).toBeVisible({timeout:60000});
+  await page.getByText('Diagram source (ArchUML)',{exact:true}).press('Enter');
+  await expect(page.locator('.tvm-tutor-diagram pre')).toContainText('a -> b: calls');
+  await expect(page.getByRole('log')).not.toContainText('UNVERIFIED_BEHAVIOR');
+  await auditInteractiveState(page,'Source-verified call map',{include:'.tutorial-llm'});
 });
 
 test('tutor uses automatic cached loading and Stop reply cancels initialization',async({page,context})=>{

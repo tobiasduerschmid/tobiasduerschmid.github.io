@@ -114,6 +114,7 @@ export class BrowserLLM {
       return {...result,timing:{elapsedMs:performance.now()-start,firstTokenMs,completionTokens:result.usage?.completion_tokens}};
     }
     catch(error) {
+      if (error.name === 'InputError' && error.recoverable === true) throw error;
       if (error.name === 'BackendError' && profile.gpu) this.failed.add(profile.id);
       await this.unload();
       // Failed streaming output is never replayed or combined with a new attempt.

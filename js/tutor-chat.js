@@ -431,7 +431,7 @@
     var body = document.createElement('div');
     body.className = 'tvm-tutor-body';
     var note = document.createElement('p');
-    note.textContent = 'Ask for a hint or explanation. The tutor uses ArchUML diagrams to explain models, behavior, and architecture. Replies run on this device and may be wrong. Download the model above before your first question.';
+    note.textContent = 'Share a prediction, your source evidence, or what is confusing. The tutor helps you take one reasoning step; it may request a small ArchUML diagram. Replies run on this device and may be wrong. Download the model above before your first question. Completed turns stay in context until you explicitly start fresh or reset; context space is limited.';
     body.appendChild(note);
     var messages = document.createElement('div');
     messages.className = 'tvm-tutor-messages';
@@ -455,7 +455,9 @@
     stop.type = 'button'; stop.textContent = 'Stop reply'; stop.hidden = true;
     var reset = document.createElement('button');
     reset.type = 'button'; reset.textContent = 'Reset chat';
-    row.append(send, stop, reset); form.appendChild(row); body.appendChild(form);
+    var fresh = document.createElement('button');
+    fresh.type = 'button'; fresh.textContent = 'Start fresh context';
+    row.append(send, stop, fresh, reset); form.appendChild(row); body.appendChild(form);
     var status = document.createElement('p');
     status.className = 'tvm-tutor-status';
     status.setAttribute('role', 'status');
@@ -486,6 +488,12 @@
       stopReply(); history = []; messages.replaceChildren(); input.value = '';
       status.textContent = 'Chat reset. Ask a new question.'; input.focus();
     });
+    fresh.addEventListener('click', function () {
+      stopReply(); history = [];
+      append('context', 'New context starts here. Earlier messages remain visible but are no longer sent to the tutor.');
+      status.textContent = 'Include your own short recap of what you found and your next question. The current source and lesson guidance will still be included.';
+      input.focus();
+    });
     form.addEventListener('submit', async function (event) {
       event.preventDefault();
       var question = input.value.trim();
@@ -494,10 +502,12 @@
       controls(true); status.textContent = 'Preparing a local reply…';
       append('user', question);
       try {
-        var answer = await ask(question, history.slice(-2), function (message) {
+        var reply = await ask(question, history.map(function (turn) {return {...turn};}), function (message) {
           if (request === revision) status.textContent = message;
         });
         if (request !== revision) return;
+        var answer = typeof reply === 'string' ? reply : reply.text;
+        var notice = typeof reply === 'string' ? '' : reply.notice;
         var message = append('assistant', renderReply ? '' : answer);
         if (renderReply) {
           rendering = new AbortController();
@@ -505,15 +515,25 @@
           await renderReply(message,answer,rendering.signal);
           if (request !== revision) return;
         }
-        history = [{role:'user',content:question}, {role:'assistant',content:answer}];
-        input.value = ''; status.textContent = 'Reply ready. Check the guidance against the lesson.';
+        if (reply.resource) {
+          var resourceUrl = new URL(reply.resource.url, window.location.href);
+          if (resourceUrl.origin === window.location.origin && /^https?:$/.test(resourceUrl.protocol)) {
+            var resource = document.createElement('p');
+            var link = document.createElement('a');
+            link.href = resourceUrl.href; link.textContent = reply.resource.label;
+            resource.appendChild(link); message.appendChild(resource);
+            answer += '\nSuggested resource: ' + reply.resource.label;
+          }
+        }
+        history.push({role:'user',content:question}, {role:'assistant',content:answer});
+        input.value = ''; status.textContent = notice || 'Reply ready. Check the guidance against the source.';
       } catch (error) {
         if (request === revision) status.textContent = error.name === 'AbortError' ? 'Reply stopped.' : error.message;
       } finally {
         if (request === revision) { controls(false); input.focus(); }
       }
     });
-    return {destroy:function () {stopReply(); root.remove();}};
+    return {focus:function () {root.open = true; input.focus();},destroy:function () {stopReply(); root.remove();}};
   };
 
   // ─── Expose ─────────────────────────────────────────────────────────────────

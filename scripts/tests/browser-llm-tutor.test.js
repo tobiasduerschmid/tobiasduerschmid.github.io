@@ -11,18 +11,18 @@ test('tutor context includes public work but excludes private lesson data and in
   for(const secret of ['PRIVATE_CHECK','PRIVATE_SOLUTION','INJECTED_ROLE']) assert.ok(!text.includes(secret));
 });
 
-test('tutor bounds conversation history and rejects empty or oversized questions',async()=>{
+test('tutor rejects empty or oversized questions without clipping valid learner evidence',async()=>{
   const {tutorMessages}=await import('../../js/browser-llm/prompts.mjs');
   for(const question of [' ', 'x'.repeat(601)]) assert.throws(()=>tutorMessages({},question));
-  const messages=tutorMessages({},'x'.repeat(600),Array(20).fill({role:'user',content:'x'.repeat(10000)}));
-  assert.ok(messages.length<=5);
-  assert.ok(JSON.stringify(messages).length<3000);
+  const evidence='x'.repeat(10000);
+  const messages=tutorMessages({},'x'.repeat(600),[{role:'user',content:evidence}]);
+  assert.ok(messages.some(message=>message.role==='user'&&message.content===evidence));
 });
 
 
-test('only the tutor defaults to ArchUML diagrams',async()=>{
+test('only the tutor can request ArchUML drawings',async()=>{
   const {tutorMessages,generationMessages,feedbackMessages}=await import('../../js/browser-llm/prompts.mjs');
-  assert.match(tutorMessages({},'Explain the architecture')[0].content,/default to ArchUML/);
+  assert.match(tutorMessages({},'Draw the architecture')[0].content,/ArchUML drawing/);
   for(const messages of [generationMessages('Keep order','f(items)'),feedbackMessages('Keep order','f(items)',['ordering'])]) {
     assert.doesNotMatch(JSON.stringify(messages),/ArchUML|uml-class|uml-component/);
   }
@@ -83,16 +83,15 @@ test('generic UML from the reported reply is recognized as a class diagram',asyn
   assert.equal(inferDiagramType('not a recognizable diagram'),null);
 });
 
-test('only the relevant compact syntax card is included, with activity as the function default',async()=>{
+test('drawing instructions select one grammar without a complete copyable example',async()=>{
   const {tutorDiagramGuidance}=await import('../../js/browser-llm/tutor-syntax.mjs');
-  const {tutorReplyParts}=await import('../../js/browser-llm/tutor-diagrams.mjs');
   for(const type of ['class','sequence','state','activity','component','deployment','usecase']) {
     const guidance=tutorDiagramGuidance({},'Explain with a '+type+' diagram');
-    const diagrams=tutorReplyParts(guidance).filter(part=>part.valid);
-    assert.equal(diagrams.length,1);assert.equal(diagrams[0].type,type);
+    assert.match(guidance,new RegExp('fenced uml-'+type+' block'));
+    assert.doesNotMatch(guidance,/```|Client|Service/);
   }
-  assert.match(tutorDiagramGuidance({files:[{path:'main.py',content:'def f(): pass'}]},'render ArchUML of the code'),/```uml-activity/);
-  assert.match(tutorDiagramGuidance({},'Clarify that',[{role:'user',content:'Explain the architecture'}]),/```uml-component/);
+  assert.match(tutorDiagramGuidance({files:[{path:'main.py',content:'def f(): pass'}]},'render ArchUML of the code'),/uml-activity/);
+  assert.match(tutorDiagramGuidance({},'Clarify that',[{role:'user',content:'Explain the architecture'}]),/uml-component/);
 });
 
 

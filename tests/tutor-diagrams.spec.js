@@ -92,18 +92,50 @@ for(const fenced of [true,false]) {
   });
 }
 
-test('the compact syntax reference renders with the actual ArchUML engines',async({page})=>{
+test('a drawing request runs a separate generation and renders its result without tool JSON',async({page})=>{
   await page.goto(URL);
   await expect(page.getByText('AI tutor',{exact:true})).toBeVisible({timeout:90000});
-  for(const type of Object.keys(examples)) {
-    await page.evaluate(async type=>{
-      const {tutorDiagramGuidance}=await import('/js/browser-llm/tutor-syntax.mjs');
-      const {renderTutorReply}=await import('/js/browser-llm/tutor-diagrams.mjs');
-      let host=document.getElementById('syntax-preview');
-      if(!host){host=document.createElement('div');host.id='syntax-preview';document.querySelector('.tutorial-llm').append(host);}
-      host.replaceChildren();
-      await renderTutorReply(host,tutorDiagramGuidance({},type+' diagram'),new AbortController().signal);
-    },type);
-    await expect(page.locator('#syntax-preview svg')).toBeVisible();
-  }
+  await page.evaluate(()=>{
+    const addon=window._tutorial.llmAddon;
+    addon.plan.cached=true;window.modelRequests=[];
+    // Only inference is controlled; production prompt construction, tool dispatch,
+    // chat lifecycle, diagram renderer and sanitizer all run normally.
+    addon.runtime.generate=async(messages)=>{
+      window.modelRequests.push(messages);
+      return {finishReason:'stop',text:window.modelRequests.length===1
+        ? '```tutor-tool\n{"tool":"draw_diagram","type":"activity","focus":"the source-reading steps identified by the learner"}\n```'
+        : '```uml-activity\n@startuml\n(*) --> "Inspect unique_in_order"\n"Inspect unique_in_order" --> "Compare prediction"\n"Compare prediction" --> (*)\n@enduml\n```'};
+    };
+  });
+  await page.getByText('AI tutor',{exact:true}).click();
+  await page.getByLabel('Ask the AI tutor').fill('Draw the two source-reading steps I identified.');
+  await page.getByRole('button',{name:'Send',exact:true}).click();
+  await expect(page.getByRole('button',{name:'Send',exact:true})).toBeEnabled();
+  await expect(page.locator('.tvm-tutor-diagram-canvas svg')).toBeVisible();
+  await expect(page.getByRole('log')).not.toContainText('tutor-tool');
+  const requests=await page.evaluate(()=>window.modelRequests);
+  expect(requests).toHaveLength(2);
+  expect(requests[0][0].content).not.toContain('@startuml');
+  expect(requests[1][0].content).toContain('uml-activity');
+});
+
+test('Stop reply cancels a pending drawing generation and suppresses its late result',async({page})=>{
+  await page.goto(URL);
+  await expect(page.getByText('AI tutor',{exact:true})).toBeVisible({timeout:90000});
+  await page.evaluate(()=>{
+    const addon=window._tutorial.llmAddon;addon.plan.cached=true;let calls=0;
+    addon.runtime.generate=async()=>{
+      if(calls++)return new Promise(resolve=>{window.finishDrawing=resolve;});
+      return {finishReason:'stop',text:'Which relationship would you check?\n```tutor-tool\n{"tool":"draw_diagram","type":"activity","focus":"the learner observation"}\n```'};
+    };
+  });
+  await page.getByText('AI tutor',{exact:true}).click();
+  await page.getByLabel('Ask the AI tutor').fill('Can you draw the relationship I found?');
+  await page.getByRole('button',{name:'Send',exact:true}).click();
+  await expect(page.locator('.tvm-tutor-local').getByRole('status')).toContainText('separate local generation');
+  await page.getByRole('button',{name:'Stop reply',exact:true}).click();
+  await page.evaluate(()=>window.finishDrawing({finishReason:'stop',text:'STALE DRAWING'}));
+  await expect(page.getByRole('log')).not.toContainText('STALE');
+  await expect(page.getByRole('log')).not.toContainText('Which relationship would you check?');
+  await expect(page.getByLabel('Ask the AI tutor')).toBeEnabled();
 });

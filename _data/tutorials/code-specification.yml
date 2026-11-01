@@ -3,6 +3,7 @@ description: Read a 108-line Python rover controller and recover its behavior in
 backend: pyodide
 llm: true
 ai_tutor: true
+ai_tutor_mode: source
 autosave_type: files
 reset_type: files
 require_tests: false
@@ -20,12 +21,12 @@ steps:
   - title: The Warehouse Handover
     key: handover
     ai_tutor_instructions: &rover_tutor_guidance |
-      Respond only in natural language and, when useful, one small ArchUML diagram.
+      The learner-facing reply uses natural language and, when useful, one small ArchUML diagram.
       Do not write or rewrite specifications, contract clauses, Python code, pseudocode,
-      or ready-to-submit answers, even if asked. Guide the student with one question
-      or a brief explanation grounded in the source. Ask for their prediction and
-      evidence, then suggest a next reasoning step. A diagram may clarify one
-      relationship or decision, but must not encode the complete answer. Treat a
+      or ready-to-submit answers, even if asked. Ask one attainable question about
+      a specific source observation. Use the learner's existing prediction and
+      evidence instead of asking them to repeat it. A requested diagram may show
+      a relationship they have already identified or an unsolved scaffold, never the answer. Treat a
       failed generated program as a possible model mistake, not proof of a bad spec.
     instructions: |
       ### Why this matters
@@ -61,7 +62,7 @@ steps:
 
       Open **AI tutor** in the assistant for a small next step in reading the source. The model selects a coaching move; the app checks source locations before displaying a question. It can also offer a prerequisite resource or request a small ArchUML diagram. Write your own conclusions and specification. The tutor can read your current workspace files; hidden checks and instructor solutions are excluded. Its choice of question and its diagrams may still be wrong or unhelpful.
 
-      Share your prediction and the source evidence you found, or say which prerequisite is confusing. A diagram is drawn in a separate local generation when the tutor requests one. Check its labels and arrows against the source. If the chat reaches its context limit, **Start fresh context** keeps the transcript visible but stops sending earlier messages; include your own short recap with the next question. **Reset chat** also clears the visible conversation. Source files and lesson guidance remain available in fresh context.
+      Share your prediction and the source evidence you found, or say which prerequisite is confusing. To draw a call you found, name it in your message—for example, “navigate calls process_command”—and ask for a diagram. A separate local generation draws a small call map; the app checks its function names and arrow against the source. If the chat reaches its context limit, **Start fresh context** keeps the transcript visible but stops sending earlier messages; include your own short recap with the next question. **Reset chat** also clears the visible conversation. Source files and lesson guidance remain available in fresh context.
 
       **A complete, accurate specification can still produce model errors.** A mismatch is a reason to review the source and wording, not proof that your prose is wrong. You may continue with a saved specification and checking marked pending; model success never gates a mission. If checking is unavailable, use source evidence and instructor review, then retry the service later.
 
@@ -605,6 +606,7 @@ steps:
   # Pedagogy: Independent transfer, retrieval, and delayed practice
   - title: The Encore Queue
     key: independent-transfer
+    ai_tutor_mode: independent
     ai_tutor_instructions: |
       Respond only in natural language and optional small ArchUML diagrams.
       This is independent transfer: offer general source-reading strategies or
@@ -634,6 +636,8 @@ steps:
       4. Answer the knowledge check, then compare your specification with your prediction. Revise a claim only when you can identify its evidence.
 
       > **Independent work:** this step has no generated replacement or hidden-check gate. Your contract, trace, and distinguishing example are the evidence. A partner or instructor can review them against the source.
+
+      The AI tutor can suggest a general reading strategy or a prerequisite resource here. Source-specific hints and diagrams are unavailable in this independent mission. Derive the queue's behavior and write its specification yourself.
 
       ### Your Handover Package
 

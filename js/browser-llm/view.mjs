@@ -26,16 +26,16 @@ export class ModelView {
     if (before) host.prepend(this.element);
     else host.append(this.element);
   }
-  controls({busy=false,ready=false,cached=false,prepared=false,suggestion=false,exercise=false,specificationOnly=false,deleting=false,comparable=false,operation}) {
+  controls({busy=false,ready=false,cached=false,prepared=false,suggestion=false,exercise=false,chat=false,specificationOnly=false,deleting=false,comparable=false,operation}) {
     const usable = ready || cached;
     this.fields['model-state'].textContent = ready ? 'Ready · on your device' : operation === 'download' ? 'Setting up…' : cached ? 'Downloaded · on your device' : 'Optional · on your device';
-    this.fields.setup.hidden = usable || !exercise;
+    this.fields.setup.hidden = usable || !(exercise || chat);
     this.fields['check-hint'].hidden = !exercise;
     this.fields['check-hint'].textContent = specificationOnly
       ? 'Generates and checks an implementation from your prose. You only work on the specification.'
       : usable ? 'Checks the code in your editor.' : 'Checks the code in your editor. No download needed.';
     this.fields.engine.disabled = busy;
-    this.buttons.download.hidden = usable || !exercise;
+    this.buttons.download.hidden = usable || !(exercise || chat);
     this.buttons.download.disabled = busy || ready || !prepared;
     this.buttons.unload.disabled = busy || !ready;
     this.buttons.generate.hidden = !usable || !exercise || specificationOnly;

@@ -1,8 +1,9 @@
 import {BrowserLLM} from './runtime.mjs';
 import {renderTutorReply} from './tutor-diagrams.mjs';
 import {ModelView,formatBytes} from './view.mjs';
-import {feedbackMessages,tutorMessages,CATEGORIES} from './prompts.mjs';
+import {feedbackMessages,CATEGORIES} from './prompts.mjs';
 import {generateStandalonePython,generationProblem,GENERATION_PHASES} from './program-generation.mjs';
+import {runTutorTurn} from './tutor-session.mjs';
 import {checkSpecification,specificationFeedback,specificationStatus} from './specification-exercise.mjs';
 
 class TutorialModelAddon {
@@ -29,6 +30,7 @@ class TutorialModelAddon {
   refresh() {
     this.view.controls({busy:!!this.operation,ready:this.runtime.ready,cached:!!this.plan?.cached,prepared:!!this.plan,
       suggestion:!!this.suggestion,exercise:!!this.exercise,specificationOnly:this.exercise?.mode === 'specification',
+      chat:this.tutorial.config.ai_tutor === true,
       deleting:this.operation?.kind === 'delete',comparable:!!this.plan?.comparable,operation:this.operation?.kind});
   }
   async prepare() {
@@ -116,23 +118,35 @@ class TutorialModelAddon {
   async askTutor(question,history,onStatus) {
     if (!this.runtime.ready && !this.plan?.cached) throw new Error('Download the model using the button above, then send your question.');
     const step = this.tutorial.steps[this.tutorial.currentStep];
-    const messages = tutorMessages({title:step.title,contract:this.exercise?.interface,instructions:step.ai_tutor_instructions,
+    const context = {title:step.title,contract:this.exercise?.interface,instructions:step.ai_tutor_instructions,
+      coaching:step.ai_tutor_mode || this.tutorial.config.ai_tutor_mode,
       specification:this.exercise ? this.view.fields.specification.value : '',
-      files:this.tutorial.captureTutorFiles()},question,history);
+      files:this.tutorial.captureTutorFiles()};
     try {
       return await this.perform('chat',async signal=>{
-        const result = await this.runtime.generate(messages,{signal,maxTokens:384,onProgress:value=>{
-          this.generationProgress(value,signal,'Writing a tutor reply locally…');
-          onStatus(value.phase === 'generating' ? 'Writing a local reply…' : value.message || 'Loading model into memory…');
-        }});
-        if (result.finishReason === 'length') throw new Error('The reply was too long. Try a more focused question.');
-        if (!result.text.trim()) throw new Error('The model returned no reply. Try again.');
+        if(context.coaching==='source') {
+          onStatus('Checking source locations…');
+          if(!window.SEBookPythonAst)throw new Error('Source analysis is unavailable. Reload this page, or use the lesson and ask a TA.');
+          context.sourceModel=await window.SEBookPythonAst.analyze(context.files.filter(file=>file.path.endsWith('.py'))
+            .map(file=>({filename:file.path,content:file.content})));
+          signal.throwIfAborted();
+          if(context.sourceModel.errors?.length)throw new Error('The Python source could not be parsed. Restore the supplied source before asking about its statements.');
+        }
+        let stage='Writing a local coaching reply…';
+        const result = await runTutorTurn({context,question,history,signal,
+          onStatus:message=>{stage=message;onStatus(message);},
+          generate:(messages,options)=>this.runtime.generate(messages,{...options,onProgress:value=>{
+            this.generationProgress(value,signal,stage);
+            onStatus(value.phase === 'generating' ? stage : value.message || 'Loading model into memory…');
+          }})});
         this.view.status('Tutor reply ready.');
-        return result.text.trim();
+        return result;
       },{rethrow:true});
     } catch(error) {
-      if (/input limit|context window|context length/i.test(error.message)) {
-        throw new Error('This step’s instructions and source files exceed the selected engine’s context limit. Try Processor in Model & storage. No files were shortened for the prompt.');
+      if (error.name==='InputError') {
+        throw new Error(history.length
+          ? 'The conversation and source exceed this engine’s context limit. Your messages and question are unchanged. Use Start fresh context, then include your own short recap with the next question. No source or instructions were shortened.'
+          : 'This step’s source and instructions exceed this engine’s input limit even in fresh context. Try Processor in Model & storage. No files were shortened; you can also use the lesson or ask a TA.');
       }
       throw error;
     } finally { if (!this.runtime.ready && !this.operation) await this.prepare(); }
@@ -147,7 +161,8 @@ class TutorialModelAddon {
     });
     await this.prepare();
     if (this.runtime.ready && focused === this.view.buttons.download && document.activeElement === document.body) {
-      (this.exercise?.mode === 'specification' ? this.view.buttons.check : this.view.buttons.generate).focus();
+      if(this.exercise)(this.exercise.mode === 'specification' ? this.view.buttons.check : this.view.buttons.generate).focus();
+      else this.chat?.focus();
     }
   }
   async compare() {

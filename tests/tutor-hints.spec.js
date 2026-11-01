@@ -51,6 +51,49 @@ test('Reset chat clears the conversation, draft, and context for the next questi
   expect(await page.evaluate(()=>window.chatRequests[2].history)).toEqual([]);
 });
 
+test('local tutor retains complete earlier reasoning and starts fresh context only on request',async({page})=>{
+  await openHintsFixture(page);
+  await page.evaluate(()=>{
+    window.chatRequests=[];
+    TutorChat.createLocal(document.querySelector('main'),async(question,history)=>{
+      window.chatRequests.push({question,history});
+      if(question==='This fills the context')throw new Error('Context full. Start fresh context with your own recap.');
+      return {text:'Which source decision supports your reasoning?',notice:''};
+    },()=>{});
+  });
+  await page.getByText('AI tutor',{exact:true}).click();
+  const input=page.getByLabel('Ask the AI tutor');
+  const send=page.getByRole('button',{name:'Send',exact:true});
+  const early='I compared both branches. '.repeat(8)+'My conclusion is based on the final return.';
+  for(const question of [early,'I traced a second case.','I revised my prediction.','This fills the context']){
+    await input.fill(question);await send.click();await expect(input).toBeEnabled();
+  }
+  const last=await page.evaluate(()=>window.chatRequests.at(-1));
+  expect(last.history).toHaveLength(6);expect(last.history[0].content).toBe(early);
+  await expect(input).toHaveValue('This fills the context');
+  await expect(page.getByRole('log')).toContainText(early);
+  await expect(page.getByRole('status')).toContainText('Context full');
+  await page.getByRole('button',{name:'Start fresh context',exact:true}).click();
+  await expect(page.getByRole('log')).toContainText(early);
+  await expect(input).toHaveValue('This fills the context');await expect(input).toBeFocused();
+  await expect(page.getByRole('status')).toContainText('recap');
+  await input.fill('My recap: I checked both branches. How can I compare a new case?');
+  await send.click();await expect(input).toBeEnabled();
+  expect(await page.evaluate(()=>window.chatRequests.at(-1).history)).toEqual([]);
+});
+
+test('a failed optional diagram keeps its coaching reply and recovery notice visible',async({page})=>{
+  await openHintsFixture(page);
+  await page.evaluate(()=>{
+    TutorChat.createLocal(document.querySelector('main'),async()=>({text:'Which branch would you inspect?',notice:'The diagram reached the context limit.'}),()=>{});
+  });
+  await page.getByText('AI tutor',{exact:true}).click();
+  await page.getByLabel('Ask the AI tutor').fill('Please draw a diagram.');
+  await page.getByRole('button',{name:'Send',exact:true}).click();
+  await expect(page.getByRole('log')).toContainText('Which branch would you inspect?');
+  await expect(page.getByRole('status')).toContainText('diagram reached the context limit');
+});
+
 test('Reset chat cancels an active reply and ignores late results while a new reply runs',async({page})=>{
   await openHintsFixture(page);
   await page.evaluate(()=>{

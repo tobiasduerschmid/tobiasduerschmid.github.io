@@ -1,13 +1,13 @@
-// Small, renderer-tested examples. Send only the relevant card, not the
-// ArchUML manual or every diagram grammar on every chat turn.
-const CARDS = {
-  class:'class Item {\n  +name: str\n  +label(): str\n}\nclass Catalog\nCatalog --> Item : contains',
-  sequence:'participant a: Client\nparticipant b: Service\na -> b: request\nb --> a: reply',
-  state:'[*] --> Ready\nReady --> Done : finish\nDone --> [*]',
-  activity:'(*) --> "Check input"\nif "Valid?" then\n  --> [yes] "Accept"\nelse\n  --> [no] "Reject"\nendif\n"Accept" --> (*)\n"Reject" --> (*)',
-  component:'component Client\ncomponent Service\nClient --> Service : request',
-  deployment:'node Client\nnode Server\nClient --> Server : request',
-  usecase:'actor Student\nusecase "Ask question" as Ask\nStudent --> Ask'
+// Grammar fragments belong only to the drawing stage. Complete examples were
+// copied verbatim by the small model, even when unrelated to the learner's code.
+const SYNTAX = {
+  class:'Declare actual classes with class Name { ... }. Members use +name: Type or +method(): Type. Relationships use Name --> Other : label. Do not invent classes for standalone functions.',
+  sequence:'Declare real callers and callees with participant id: SourceName. Calls use id -> other: label and replies use other --> id: label. Use function names as SourceName for procedural code.',
+  state:'Declare each state as state Name. Transitions use Name --> Other : label. Initial/final states use [*].',
+  activity:'Use (*) for start/end and quoted action names: (*) --> "Action". Connect quoted actions with -->. Branches use if "condition" then, --> [yes] "Action", else, --> [no] "Other action", endif. Do not use start/stop keywords.',
+  component:'Declare component Name. Relationships use Name --> Other : label.',
+  deployment:'Declare node Name. Relationships use Name --> Other : label.',
+  usecase:'Declare actor Name and usecase "Goal" as id. Relationships use Name --> id.'
 };
 
 function requestedType(text) {
@@ -25,7 +25,6 @@ export function tutorDiagramGuidance({files=[],instructions=''},question,history
   const previous = history.filter(message=>message.role==='user').at(-1)?.content || '';
   const type = requestedType(question) || requestedType(previous) || requestedType(instructions) ||
     (files.some(file=>/^\s*class\s+\w+/m.test(file.content)) ? 'class' : 'activity');
-  return 'For modeling, visualization or architecture, default to ArchUML with a one-sentence takeaway. Use '+type+
-    '. Syntax example only: use actual names and behavior from the source, never invent classes for standalone functions. One diagram, at most 5 nodes; no HTML, URLs or layout directives.\n'+
-    '```uml-'+type+'\n@startuml\n'+CARDS[type]+'\n@enduml\n```';
+  return 'Use '+type+'. Return a fenced uml-'+type+' block with @startuml and @enduml on their own lines. '+
+    'One diagram, at most 5 nodes; no HTML, URLs or layout directives. Use actual source identifiers and learner-established relationships, not the placeholder words in this grammar.\n'+SYNTAX[type];
 }
