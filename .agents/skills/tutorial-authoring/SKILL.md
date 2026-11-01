@@ -4650,7 +4650,7 @@ Firefox graphics uses the pinned Transformers.js 3.8.1 / ONNX Runtime Web JavaSc
 
 ### AI tutor authoring and ArchUML output contract
 
-For a Python-only tutorial, enable the shared local model with `llm: true` and the chat with `ai_tutor: true`. Set `ai_tutor: false` or omit it to hide chat. Existing authored failure hints remain independent. Chat reuses the same downloaded model, engine selection, automatic cached loading, spinner, cancellation and deletion controls; it downloads no second model. Conversation history is memory-only. The Python specification demo enables it and gives both steps explicit tutor guidance.
+For a Python-only tutorial, enable the shared local model with `llm: true` and the chat with `ai_tutor: true`. Set `ai_tutor: false` or omit it to hide chat. Existing authored failure hints remain independent. Chat reuses the same downloaded model, engine selection, automatic cached loading, spinner, cancellation and deletion controls; it downloads no second model. Conversation history is memory-only. **Reset chat** stops active generation or diagram rendering, discards late replies, clears the visible transcript, unsent question, and model conversation history, and returns focus to the question field. Downloaded model files, specifications, workspace files, and progress remain intact. The Python specification demo enables it and gives both steps explicit tutor guidance.
 
 ```yaml
 backend: pyodide

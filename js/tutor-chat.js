@@ -453,7 +453,9 @@
     send.className = 'tvm-tutor-send tutorial-llm-primary';
     var stop = document.createElement('button');
     stop.type = 'button'; stop.textContent = 'Stop reply'; stop.hidden = true;
-    row.append(send, stop); form.appendChild(row); body.appendChild(form);
+    var reset = document.createElement('button');
+    reset.type = 'button'; reset.textContent = 'Reset chat';
+    row.append(send, stop, reset); form.appendChild(row); body.appendChild(form);
     var status = document.createElement('p');
     status.className = 'tvm-tutor-status';
     status.setAttribute('role', 'status');
@@ -472,8 +474,17 @@
     function controls(value) {
       busy = value; input.disabled = value; send.disabled = value; stop.hidden = !value;
     }
+    function stopReply() {
+      revision++; rendering?.abort(); rendering = null;
+      if (busy) cancel();
+      controls(false);
+    }
     stop.addEventListener('click', function () {
-      revision++; rendering?.abort(); cancel(); controls(false); status.textContent = 'Reply stopped.'; input.focus();
+      stopReply(); status.textContent = 'Reply stopped.'; input.focus();
+    });
+    reset.addEventListener('click', function () {
+      stopReply(); history = []; messages.replaceChildren(); input.value = '';
+      status.textContent = 'Chat reset. Ask a new question.'; input.focus();
     });
     form.addEventListener('submit', async function (event) {
       event.preventDefault();
@@ -502,7 +513,7 @@
         if (request === revision) { controls(false); input.focus(); }
       }
     });
-    return {destroy:function () {revision++; rendering?.abort(); if (busy) cancel(); root.remove();}};
+    return {destroy:function () {stopReply(); root.remove();}};
   };
 
   // ─── Expose ─────────────────────────────────────────────────────────────────

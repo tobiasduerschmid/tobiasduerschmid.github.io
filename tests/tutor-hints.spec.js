@@ -23,6 +23,65 @@ test('local chat renders replies as text and discards stopped replies',async({pa
   await expect(page.getByRole('button',{name:'Send',exact:true})).toBeEnabled();
 });
 
+test('Reset chat clears the conversation, draft, and context for the next question',async({page})=>{
+  await openHintsFixture(page);
+  await page.evaluate(()=>{
+    window.chatRequests=[];
+    TutorChat.createLocal(document.querySelector('main'),async(question,history)=>{
+      window.chatRequests.push({question,history});
+      return 'Consider the order.';
+    },()=>{});
+  });
+  await page.getByText('AI tutor',{exact:true}).click();
+  const input=page.getByLabel('Ask the AI tutor');
+  const send=page.getByRole('button',{name:'Send',exact:true});
+  for(const question of ['Explain lists','What about duplicates?']) {
+    await input.fill(question);await send.click();await expect(input).toBeEnabled();
+  }
+  expect(await page.evaluate(()=>window.chatRequests[1].history)).toEqual([
+    {role:'user',content:'Explain lists'},{role:'assistant',content:'Consider the order.'}
+  ]);
+  await input.fill('Unsent draft');
+  await page.getByRole('button',{name:'Reset chat',exact:true}).focus();
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('log',{name:'Tutor conversation'})).toBeEmpty();
+  await expect(input).toHaveValue('');await expect(input).toBeFocused();
+  await expect(page.getByRole('status')).toContainText('Chat reset');
+  await input.fill('A fresh question');await send.click();await expect(input).toBeEnabled();
+  expect(await page.evaluate(()=>window.chatRequests[2].history)).toEqual([]);
+});
+
+test('Reset chat cancels an active reply and ignores late results while a new reply runs',async({page})=>{
+  await openHintsFixture(page);
+  await page.evaluate(()=>{
+    window.chatRequests=[];window.chatCancellations=0;
+    TutorChat.createLocal(document.querySelector('main'),(question,history,onStatus)=>new Promise(resolve=>{
+      window.chatRequests.push({question,history,onStatus,resolve});
+    }),()=>{window.chatCancellations++;});
+  });
+  await page.getByText('AI tutor',{exact:true}).click();
+  const input=page.getByLabel('Ask the AI tutor');
+  const send=page.getByRole('button',{name:'Send',exact:true});
+  await input.fill('Old question');await send.click();await expect(input).toBeDisabled();
+  await page.getByRole('button',{name:'Reset chat',exact:true}).click();
+  expect(await page.evaluate(()=>window.chatCancellations)).toBe(1);
+  await expect(page.getByRole('log')).toBeEmpty();await expect(input).toBeFocused();
+  await expect(page.getByRole('button',{name:'Stop reply',exact:true})).toBeHidden();
+  await input.fill('New question');await send.click();
+  await page.evaluate(()=>{
+    window.chatRequests[0].onStatus('STALE STATUS');
+    window.chatRequests[0].resolve('STALE ANSWER');
+  });
+  await expect(send).toBeDisabled();
+  await expect(page.getByRole('log')).toHaveText('New question');
+  await expect(page.getByRole('status')).not.toContainText('STALE');
+  expect(await page.evaluate(()=>window.chatRequests[1].history)).toEqual([]);
+  await page.evaluate(()=>window.chatRequests[1].resolve('New answer'));
+  await expect(page.getByRole('log')).toContainText('New answer');
+  await expect(page.getByRole('log')).not.toContainText('STALE');
+  await expect(send).toBeEnabled();
+});
+
 test.beforeEach(async ({ page }) => {
   const errors = [];
   pageErrors.set(page, errors);

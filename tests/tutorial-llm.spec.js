@@ -52,11 +52,17 @@ test('YAML enables local tutor, requires explicit download, and can disable it',
   for(const dark of [false,true]) {
     const theme=page.getByLabel('Toggle dark mode');
     if(await theme.isChecked()!==dark) await theme.press('Space');
-    const send=page.getByRole('button',{name:'Send',exact:true});
-    await page.mouse.move(0,0);
-    await expect.poll(()=>textContrast(send)).toBeGreaterThanOrEqual(4.5);
-    await send.hover();
-    await expect.poll(()=>textContrast(send)).toBeGreaterThanOrEqual(4.5);
+    for(const name of ['Send','Reset chat']) {
+      const button=page.getByRole('button',{name,exact:true});
+      await page.mouse.move(0,0);
+      await expect.poll(()=>textContrast(button)).toBeGreaterThanOrEqual(4.5);
+      await button.hover();
+      await expect.poll(()=>textContrast(button)).toBeGreaterThanOrEqual(4.5);
+    }
+    await page.getByRole('button',{name:'Reset chat',exact:true}).focus();
+    await page.keyboard.press('Space');
+    await expect(page.getByLabel('Ask the AI tutor')).toBeFocused();
+    await expect(page.getByRole('log',{name:'Tutor conversation'})).toBeEmpty();
     await auditInteractiveState(page,'Local tutor '+(dark?'dark':'light'),{include:'.tutorial-llm'});
   }
   expect(requests).toEqual([]);
