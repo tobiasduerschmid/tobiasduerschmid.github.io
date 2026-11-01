@@ -6,7 +6,7 @@ Status: design for review; implementation has not started.
 
 Students will write natural-language specifications, generate Python locally, and receive feedback about unclear or contradictory requirements without seeing hidden tests. The initial model is Qwen2.5-Coder 1.5B Instruct. The baseline includes 8 GB Intel laptops without dedicated graphics. Better hardware should improve speed while retaining the same model choice. Tests need to be hidden from the normal interface and feedback; resistance to developer-tool inspection is not required.
 
-The user requested exchangeable inference engines selected according to the machine. This first implementation delivers the reusable inference layer and one complete demonstration exercise: specification entry, Python generation, bounded execution against hidden tests, and conceptual feedback. Limiting the initial content to one exercise is the proposed implementation scope; the requested end-to-end behavior is included without authoring a full exercise catalogue or redesigning the existing tutorial system.
+The user requested exchangeable inference engines selected according to the machine, with hardware and browser capability determination completed before downloading the model. This first implementation delivers the reusable inference layer and one complete demonstration exercise: specification entry, Python generation, bounded execution against hidden tests, and conceptual feedback. Limiting the initial content to one exercise is the proposed implementation scope; the requested end-to-end behavior is included without authoring a full exercise catalogue or redesigning the existing tutorial system.
 
 ## Approaches
 
@@ -37,7 +37,7 @@ Create a focused `js/browser-llm/` module family. The public runtime exposes pre
 
 Each adapter implements:
 
-- `probe(environment, artifact)`: report supported execution profiles and reasons for exclusion without downloading weights.
+- `probe(environment, artifact)`: report supported execution profiles and reasons for exclusion using browser APIs and lightweight capability checks. It must not initialize model loaders or fetch model assets, even speculatively.
 - `load(artifact, profile, options)`: initialize with progress events and cancellation.
 - `generate(request, options)`: stream plain text and return a normalized result with finish reason and timing information.
 - `dispose()`: release workers and model resources; safe after partial initialization.
@@ -46,13 +46,15 @@ The registry owns model metadata. The selector owns candidate ranking. Adapters 
 
 ## Selection, measurement, and fallback
 
-1. Probe WebGPU adapter/features/limits, required WebAssembly features, cross-origin isolation, and reported CPU concurrency. Treat missing memory information as unknown; browser APIs do not expose reliable free GPU memory. A reported 8 GB is not an allocation guarantee.
+1. Complete capability detection before any model download. Probe WebGPU adapter/features/limits, required WebAssembly features, cross-origin isolation, and reported CPU concurrency; use approximate device memory only where exposed. Validate creation of a GPU device with the candidate's required features and limits, then release the probe device. Use small local capability checks rather than loading a model or making large memory allocations to test suitability. Treat missing memory information as unknown; browser APIs do not expose reliable free GPU memory. A reported 8 GB is not an allocation guarantee, and the reported CPU concurrency is not an exact processor inventory.
 2. Exclude unsupported profiles. Candidates include WebLLM GPU, wllama GPU, wllama multithreaded CPU, and wllama single-threaded CPU with compatibility assets when required. Respect wllama's documented Firefox/Safari limitations instead of forcing a slow GPU compatibility path.
 3. In the absence of valid measurements, prefer a supported already-cached artifact; otherwise use WebLLM GPU when its requirements are met, then wllama GPU/CPU. This initial ranking is a heuristic, not an established performance result.
-4. Before transfer, show the selected model's actual download size. Download only that artifact. A fallback needing another large artifact returns a `download-required` state with the additional byte count; it does not silently download both models.
-5. After load, run a bounded warm-up with a fixed non-student prompt. Where alternatives are already cached, offer a bounded comparison, loading one candidate at a time. Rank by successful complete-request latency for a fixed input/output workload, including prompt processing and generation. Do not compare token rates from unequal outputs or treat an unmeasured engine as slower.
+4. Finish selection and show the chosen engine, GPU/CPU mode, and selected model's actual download size before enabling the download action. If no supported candidate is found, explain the limitation without downloading model assets. Download only the chosen artifact after activation. A fallback needing another large artifact returns a `download-required` state with the additional byte count; it does not silently download both models.
+5. After load, run a bounded warm-up with a fixed non-student prompt. This validates and measures the previously selected configuration; it is not a prerequisite for the initial hardware determination. Where alternatives are already cached, offer a bounded comparison, loading one candidate at a time. Rank by successful complete-request latency for a fixed input/output workload, including prompt processing and generation. Do not compare token rates from unequal outputs or treat an unmeasured engine as slower. Never download another artifact solely to benchmark engine selection.
 6. Retain measurements in memory for the current page session, keyed by model artifact, engine version, execution profile, and context budget. Do not create a persistent hardware fingerprint. Reprobe on explicit retry or after a backend failure.
 7. On GPU initialization failure or device loss, fully dispose the failed candidate before trying a compatible fallback. Do not retry cancellation, invalid input, download denial, or an exhausted deadline. Bound the number of attempts to the remaining candidates.
+
+The required order is capability detection, engine selection, download-size display, explicit activation, and model download. Hardware detection establishes a compatible initial choice before transfer; it cannot establish real inference throughput or guarantee sufficient available memory without running the selected model. Keep the existing failure and fallback handling for those runtime uncertainties.
 
 Provide Auto and explicit engine choices for diagnosis. Unsupported choices state why they cannot run. The selector cannot override an explicit CPU-only choice. CPU threading is capped conservatively; more reported logical cores do not justify occupying all of them.
 
@@ -78,7 +80,7 @@ The demonstration exercises generation and feedback as separate requests on the 
 
 ## Verification and acceptance
 
-- Unit tests cover observable selection, unsupported capabilities, cached-artifact preference, additional-download boundaries, explicit overrides, bounded fallback, cancellation, stale replies, and cleanup.
+- Unit tests cover observable selection, unsupported capabilities, cached-artifact preference, additional-download boundaries, explicit overrides, bounded fallback, cancellation, stale replies, and cleanup. A browser network check must verify zero model-asset requests during capability detection and selection, and before explicit activation, including the unsupported-hardware path.
 - Both real adapters must load the selected Qwen model and complete a short Python-generation request. Mocked adapters establish orchestration behavior, not real inference support.
 - Verify the complete demonstration flow, including actual Python execution, deterministic failure-category mapping, omission of hidden-test details from prompts and displayed output, and treatment of syntax/runtime failures as possible generation errors.
 - Exercise a forced CPU path as well as available WebGPU. Verify Chrome/Edge, Firefox, and Safari/WebKit paths separately; emulation is not evidence of native hardware speed.
