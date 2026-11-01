@@ -135,6 +135,7 @@ Build the strategy hands-on in this two-part interactive tutorial sequence. Do P
 
 * [Code Comprehension Part 1: Hypotheses & Beacons](/SEBook/development_practices/code-comprehension-tutorial) — practice attention focus, hypothesis generation, beacon-based reading, and targeted traces in Python and React.
 * [Code Comprehension Part 2: Tests & Cross-File Flow](/SEBook/development_practices/code-comprehension-advanced-tutorial) — use tests, Node.js routes, and multi-file React examples to practice deeper hypothesis testing and interaction mapping.
+* [Code to Contract: Warehouse Rover](/SEBook/development_practices/code-specification-tutorial) — read a 108-line controller with a single command-string input, specify its behavior in natural language, and test an unseen replacement generated from your prose. Includes an independent transfer task and a no-download route.
 
 ## Practice This
 

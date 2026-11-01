@@ -189,7 +189,7 @@ test('capability checks fetch no model; manual checks distinguish mismatches, sy
   await open(page);
   await page.getByRole('button',{name:'Check Python',exact:true}).click();
   await expect(status(page)).toContainText('Check finished');
-  await expect(page.getByText(/The implementation did not satisfy every check/)).toContainText('order of the returned values');
+  await expect(page.getByText(/The implementation did not satisfy every check/)).toContainText(/order[\s\S]*returned values/);
   const panel=page.getByRole('region',{name:'Specification assistant'});
   await expect(panel).not.toContainText('[7, -8, 2]');
   await expect(panel).not.toContainText('assert subject');

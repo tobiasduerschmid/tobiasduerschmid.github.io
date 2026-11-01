@@ -57,7 +57,7 @@ html.dark-mode .tutorial-llm {
 .tutorial-llm button.tutorial-llm-primary { background: var(--llm-focus); color: var(--llm-accent-text); border-color: var(--llm-focus); font-weight: 600; }
 .tutorial-llm button.tutorial-llm-primary:is(:hover, :active):not(:disabled) { background: var(--llm-primary-hover); color: var(--llm-accent-text); border-color: var(--llm-primary-hover); }
 .tutorial-llm button:disabled { color: var(--llm-muted); background: var(--llm-control); border-color: var(--llm-divider); cursor: default; }
-.tutorial-llm :is(button, textarea, select, a, summary):focus-visible { outline: 3px solid var(--llm-focus); outline-offset: 3px; }
+.tutorial-llm :is(button, textarea, select, a, summary, pre[tabindex]):focus-visible { outline: 3px solid var(--llm-focus); outline-offset: 3px; }
 .tutorial-llm-actions { display: flex; flex-wrap: wrap; gap: .55em; margin: .8em 0 .4em; }
 .tutorial-llm-actions button { flex: 0 1 auto; }
 .tutorial-llm .tutorial-llm-hint { color: var(--llm-muted); font-size: .95em; margin: .45em 0; }
@@ -90,6 +90,25 @@ html.dark-mode .tutorial-llm {
 .tutorial-llm progress { accent-color: var(--llm-focus); height: .7em; display: block; }
 .tutorial-llm-result, .tutorial-llm-feedback { border-top: 1px solid var(--llm-divider); padding-top: 1em; margin-top: 1em; }
 .tutorial-llm-feedback p { white-space: pre-wrap; }
+.tutorial-llm-inspection { border-top: 1px solid var(--llm-divider); margin-top: 1em; }
+.tutorial-llm .tutorial-llm-code-preview {
+  --orl-syntax-keyword: #7134a0;
+  --orl-syntax-string: #176336;
+  --orl-syntax-number: #924500;
+  --orl-syntax-builtin: #005587;
+  --orl-muted: var(--llm-muted);
+  font-family: ui-monospace, monospace;
+  max-height: 24em;
+  overflow: auto;
+  tab-size: 4;
+}
+html.dark-mode .tutorial-llm .tutorial-llm-code-preview {
+  --orl-syntax-keyword: #d7adff;
+  --orl-syntax-string: #9bd7ad;
+  --orl-syntax-number: #ffc18a;
+  --orl-syntax-builtin: #9fcbff;
+}
+.tutorial-llm .tutorial-llm-code-preview code { font: inherit; color: inherit; background: none; border: 0; padding: 0; white-space: inherit; }
 .tutorial-llm .tutorial-llm-settings { border-top: 1px solid var(--llm-divider); margin: 1em 0 0; padding-top: .3em; }
 .tutorial-llm-settings > summary { font-weight: 600; }
 .tutorial-llm-settings label { margin-top: 1em; }

@@ -1,10 +1,10 @@
 # Adaptive browser LLM engines for SE Book
 
-Status: approved for implementation on 2026-10-31. The user additionally requires a download progress bar, easy model deletion, and integration as an opt-in add-on to the Python tutorial backend.
+Status: approved for implementation on 2026-10-31. The user additionally requires a download progress bar, easy model deletion, and integration as an opt-in add-on to the Python tutorial backend. The model target is now Qwen2.5-Coder 3B Instruct with four-bit quantization, following the request for less RAM use than the 7B option. The original 1.5B measurements remain historical evidence and must not be reported as 3B results.
 
 ## Intent and agreed constraints
 
-Students will write natural-language specifications, generate Python locally, and receive feedback about unclear or contradictory requirements without seeing hidden tests. The initial model is Qwen2.5-Coder 1.5B Instruct. The baseline includes 8 GB Intel laptops without dedicated graphics. Better hardware should improve speed while retaining the same model choice. Tests need to be hidden from the normal interface and feedback; resistance to developer-tool inspection is not required.
+Students will write natural-language specifications, generate Python locally, and receive feedback about unclear or contradictory requirements without seeing hidden tests. The current model target is Qwen2.5-Coder 3B Instruct. The baseline includes 8 GB Intel laptops without dedicated graphics, with physical-device acceptance still required for the new model. Better hardware should improve speed while retaining the same model choice. Tests need to be hidden from the normal interface and feedback; resistance to developer-tool inspection is not required.
 
 The user requested exchangeable inference engines selected according to the machine, with hardware and browser capability determination completed before downloading the model. This first implementation delivers the reusable inference layer and one complete demonstration exercise: specification entry, Python generation, bounded execution against hidden tests, and conceptual feedback. Limiting the initial content to one exercise is the proposed implementation scope; the requested end-to-end behavior is included without authoring a full exercise catalogue or redesigning the existing tutorial system.
 
@@ -20,16 +20,16 @@ The user additionally requires that no large files be stored in the repository. 
 
 ## Model identity and artifacts
 
-Use one logical model identity: `qwen2.5-coder-1.5b-instruct`. Never automatically switch parameter count or instruction-tuned checkpoint.
+Use one logical model identity: `qwen2.5-coder-3b-instruct`. Never automatically switch parameter count or instruction-tuned checkpoint.
 
 The model registry records immutable upstream revisions, artifact URLs, byte counts, quantization, format, and engine compatibility. Runtime packages are pinned too. The weights are downloaded on explicit activation, not committed to the repository or fetched by ordinary chapter visits.
 
-The two initial artifacts are:
+The original **1.5B** design used these two initial artifacts; these are historical download sizes, not the current 3B sizes:
 
 - WebLLM: MLC `q4f16_1`, approximately 880 MB of model assets.
 - wllama: the official Qwen GGUF `Q4_K_M`, approximately 1.12 GB.
 
-These are the same upstream model in different 4-bit representations, not byte-identical weights. Backend arithmetic and quantization can change answers even with matching sampling settings. Cross-engine checks compare behavior, not exact text. If identical quantized weights become a requirement, restrict automatic selection to wllama's CPU/GPU paths sharing the GGUF artifact.
+The current 3B artifacts must be pinned independently in the model registry and verified through real inference. Representations must derive from the same upstream model, but need not be byte-identical weights. Backend arithmetic and quantization can change answers even with matching sampling settings. Cross-engine checks compare behavior, not exact text. If identical quantized weights become a requirement, restrict automatic selection to wllama's CPU/GPU paths sharing the GGUF artifact.
 
 Keep the same prompt policy, 2,048-token initial context budget, output limits, and sampling configuration across candidates. Faster hardware does not receive additional hints, longer reasoning, or a larger model. Reject over-budget input visibly rather than silently truncating specifications. Engine-specific settings concern execution only.
 
@@ -93,7 +93,7 @@ An actual 8 GB Intel laptop remains the baseline acceptance target. If represent
 
 The builder may settle internal filenames, dependency packaging consistent with repository conventions, conservative deadlines/thread caps, and the exact demonstration prompts and exercise. Preserve the contracts above and report unverified hardware paths explicitly.
 
-## Sources checked
+## Sources checked for the original 1.5B design
 
 - [WebLLM engine documentation](https://webllm.mlc.ai/docs/)
 - [MLC model artifact](https://huggingface.co/mlc-ai/Qwen2.5-Coder-1.5B-Instruct-q4f16_1-MLC/tree/main)

@@ -591,11 +591,12 @@ info_nav_title: "Browser storage"
     </li>
     <li id="browser-model-storage">
       <strong>Downloaded local language model</strong> &mdash; optional Python specification
-      tutorials store Qwen2.5-Coder 1.5B model data in the Cache API under
+      tutorials store Qwen2.5-Coder 3B model data in the Cache API under
       <code>sebook-llm-gguf-v1</code>, <code>sebook-llm-onnx-v1</code>, <code>webllm/model</code>, and
-      <code>webllm/config</code> (about 0.88–1.36 GB per selected format).
+      <code>webllm/config</code> (about 1.74–2.38 GB per selected format).
       Completed files and ranges from interrupted downloads remain reusable. An engine
-      switch can leave multiple formats downloaded. Browser eviction or deleting site
+      switch can leave multiple formats downloaded. Older model versions may also
+      remain until deletion; this control removes them too. Browser eviction or deleting site
       data removes them. Small executable libraries use the normal HTTP cache, not these
       model caches. The legacy <code>webllm/wasm</code> model cache is also cleared if present.
       Specifications and model replies stay in page memory; applied Python follows the

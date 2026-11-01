@@ -1,0 +1,719 @@
+title: 'Code to Contract: Warehouse Rover'
+description: Read a 108-line Python rover controller and recover its behavior in natural language. Test my work generates and tests a replacement from your prose, with optional code inspection. Six missions lead from source reading to independent transfer. Requires reading Python functions and collections; allow 60–75 minutes plus an optional local-model download.
+backend: pyodide
+llm: true
+ai_tutor: true
+autosave_type: files
+reset_type: files
+require_tests: false
+progress_version: 2
+print_unchanged_files: false
+learning_objectives:
+  - Map a substantial program from its small public interface to behaviorally relevant helpers.
+  - Trace command interpretation, boundaries, state history, and interactions using source evidence.
+  - Create natural-language contracts that distinguish plausible implementations.
+  - Evaluate a specification using source evidence, counterexamples, and behavioral check results.
+  - Justify revisions without treating model failures as proof that the prose is wrong.
+  - Transfer code-to-contract reasoning independently to an unfamiliar program.
+steps:
+  # Pedagogy: PRIMM — Predict and Run; top-down comprehension
+  - title: The Warehouse Handover
+    key: handover
+    ai_tutor_instructions: &rover_tutor_guidance |
+      Respond only in natural language and, when useful, one small ArchUML diagram.
+      Do not write or rewrite specifications, contract clauses, Python code, pseudocode,
+      or ready-to-submit answers, even if asked. Guide the student with one question
+      or a brief explanation grounded in the source. Ask for their prediction and
+      evidence, then suggest a next reasoning step. A diagram may clarify one
+      relationship or decision, but must not encode the complete answer. Treat a
+      failed generated program as a possible model mistake, not proof of a bad spec.
+    instructions: |
+      ### Why this matters
+
+      A tiny interface can hide a rich state machine. Reading from its public entry point helps you discover the behavior without holding every helper in memory.
+
+      ### 🎯 You will learn to
+
+      - Map a public entry point to behaviorally relevant helpers.
+      - Predict a result and support the prediction with source evidence.
+
+      ### Your Mission
+
+      The warehouse's little delivery rover has a working controller and a missing manual. Your mission is to **read its 108-line Python program** and write a natural-language specification precise enough for a replacement. The interface is small: one command string goes in; the final position and heading come out.
+
+      **Prerequisites:** reading Python functions, loops, conditionals, tuples, lists, and dictionaries. Allow **60–75 minutes**, plus an optional model download. If these structures are new, start with the [Python tutorial](/SEBook/tools/python-tutorial).
+
+      Your work is prose: predictions, examples, explanations, and specifications. Keep the supplied Python unchanged. The original is the authority for this preservation task, even if you would design a different rover policy.
+
+      ### Read From the Entry Point Outward · About 8 Minutes
+
+      1. Open `rover_reference.py`. Find `navigate` near the end and follow its calls. Read the complete program, using a call map to connect the helpers.
+      2. In `field_notes.md`, write a one-sentence purpose hypothesis and a map: **function → responsibility → evidence**. For example, the entry point delegates one character at a time; inspect the called function before deciding what that delegation guarantees.
+      3. Predict the final tuple for the supplied command string **`FLFRFU`**. Record each intermediate state, including heading, and mark your confidence as low, medium, or high.
+      4. Choose **Run** to see the fixed demonstration of the original. Compare it with your prediction and find the source decisions that explain any disagreement. Run always uses `rover_demo.py`, whichever file tab is open.
+      5. Write a first draft in **Your specification** above. Save a copy in `field_notes.md`. It can be incomplete; later missions help you find and justify missing rules.
+
+      **Input domain:** `commands` is a string. Other input types are outside this exercise. The result is a tuple `(x, y, heading)` with two integers and an uppercase heading string. Derive the command meanings and other rules from the source.
+
+      ### Try Your Specification
+
+      Choose **Download model** in the assistant if you want automated feedback; let its download and setup finish. **Test my work** generates a program from your prose and tests it with the same behavioral checks used for the original. For this check, the model gets your prose and the public interface, not the original source or checks. After generation, expand **View generated Python** to inspect the exact implementation that was checked, with syntax highlighting. This read-only view is optional; revise your specification rather than editing the replacement.
+
+      Open **AI tutor** in the assistant for a small next step in reading the source. The model selects a coaching move; the app checks source locations before displaying a question. It can also offer a prerequisite resource or request a small ArchUML diagram. Write your own conclusions and specification. The tutor can read your current workspace files; hidden checks and instructor solutions are excluded. Its choice of question and its diagrams may still be wrong or unhelpful.
+
+      Share your prediction and the source evidence you found, or say which prerequisite is confusing. A diagram is drawn in a separate local generation when the tutor requests one. Check its labels and arrows against the source. If the chat reaches its context limit, **Start fresh context** keeps the transcript visible but stops sending earlier messages; include your own short recap with the next question. **Reset chat** also clears the visible conversation. Source files and lesson guidance remain available in fresh context.
+
+      **A complete, accurate specification can still produce model errors.** A mismatch is a reason to review the source and wording, not proof that your prose is wrong. You may continue with a saved specification and checking marked pending; model success never gates a mission. If checking is unavailable, use source evidence and instructor review, then retry the service later.
+
+      The main specification field is shared across missions 1, 2, 4, and 5 during this page session. Save revisions in `field_notes.md` with the tutorial's save or download controls before reloading the page. The notes remain available in every mission.
+    files:
+      - &rover_reference
+        path: rover_reference.py
+        content: |
+          """Warehouse Rover: the controller supplied by the previous team.
+
+          The public interface is navigate(commands): one string in, one state out.
+          Read from that entry point to discover the controller's behavior.
+          """
+
+
+          GRID_SIZE = 5
+          START = (0, 0, "E")
+          HEADINGS = ("N", "E", "S", "W")
+          WALLS = {(2, 1), (2, 2), (2, 3)}
+          DIRECTIONS = {"N": (0, 1), "E": (1, 0), "S": (0, -1), "W": (-1, 0)}
+
+
+          def turn_heading(heading, command):
+              """heading is N/E/S/W; command is L/R, both uppercase."""
+              current = HEADINGS.index(heading)
+              if command == "L":
+                  offset = -1
+              else:
+                  offset = 1
+              return HEADINGS[(current + offset) % len(HEADINGS)]
+
+
+          def next_position(state):
+              """Find the proposed neighboring cell before checking the floor."""
+              x, y, heading = state
+              dx, dy = DIRECTIONS[heading]
+              return (x + dx, y + dy)
+
+
+          def inside_floor(position):
+              """Decide whether a cell belongs to the warehouse floor."""
+              x, y = position
+              return 0 <= x < GRID_SIZE and 0 <= y < GRID_SIZE
+
+
+          def available_cell(position):
+              """Combine the floor boundary and fixed warehouse obstacles."""
+              if not inside_floor(position):
+                  return False
+              if position in WALLS:
+                  return False
+              return True
+
+
+          def forward(state):
+              """Resolve a proposed forward move without changing history."""
+              position = next_position(state)
+              if not available_cell(position):
+                  return state
+              x, y = position
+              return (x, y, state[2])
+
+
+          def apply_action(state, command, history):
+              """Evaluate a movement action, then decide whether to remember it."""
+              if command == "F":
+                  candidate = forward(state)
+              elif command in ("L", "R"):
+                  x, y, heading = state
+                  candidate = (x, y, turn_heading(heading, command))
+              else:
+                  return state
+
+              if candidate != state:
+                  history.append(state)
+              return candidate
+
+
+          def undo_action(state, history):
+              """Recover a saved state when the current session has one."""
+              if history:
+                  return history.pop()
+              return state
+
+
+          def reset_session(history):
+              """Start a new route and remove the old route's saved states."""
+              history.clear()
+              return START
+
+
+          def process_command(state, command, history):
+              """Dispatch one character; all branches return a complete state."""
+              command = command.upper()
+              if command == "X":
+                  return reset_session(history)
+              if command == "U":
+                  return undo_action(state, history)
+              if command in ("F", "L", "R"):
+                  return apply_action(state, command, history)
+              return state
+
+
+          def navigate(commands):
+              """Interpret a command string and return (x, y, heading).
+
+              commands is a string. Other input types are outside the contract.
+              The returned coordinates are integers and heading is a string.
+              """
+              state = START
+              history = []
+
+              for command in commands:
+                  state = process_command(state, command, history)
+
+              return state
+      - &rover_demo
+        path: rover_demo.py
+        content: |
+          import runpy
+
+          navigate = runpy.run_path("rover_reference.py")["navigate"]
+          commands = "FLFRFU"
+          # Fixed demonstration: record your prediction before choosing Run.
+          print("Commands:", commands)
+          print("Final state:", navigate(commands))
+      - &field_notes
+        path: field_notes.md
+        persistent: true
+        content: |
+          # Warehouse Rover Field Notes
+
+          ## 1. Handover
+          Purpose hypothesis:
+          Call map (function -> responsibility -> evidence):
+          Prediction for FLFRFU, with confidence:
+          What surprised me after Run:
+          My first navigate specification:
+
+          ## 2. Evidence Table
+          Question | Competing interpretations | My command string | Predicted state | Source evidence
+          Three general rules supported by my examples:
+
+          ## 3. One Function
+          My turn_heading specification:
+          My distinguishing example:
+          Check result or pending status:
+          Source evidence for any revision:
+
+          ## 4. Whole Program
+          My navigate specification (save each revision here):
+          Revision reason and evidence:
+          My own new example and predicted state:
+          Check result or pending status:
+          Requirements I can justify even if model checking is inconclusive:
+
+          ## 5. Review
+          My smallest counterexample to the proposed clause:
+          The original's result and the proposed clause's result:
+          My revised clause and source evidence:
+
+          ## 6. Transfer — No Model
+          My admit_groups specification:
+          Prediction for the supplied demonstration:
+          One additional distinguishing example:
+          What passing checks can and cannot establish:
+    open_file: rover_reference.py
+    run_file: rover_demo.py
+    llm: &rover_exercise
+      mode: specification
+      draft_id: rover-main
+      file: rover_reference.py
+      interface: Define navigate(commands). commands is a string. Return (x, y, heading) as a tuple of two integers and an uppercase heading string. No printing, input(), or imports of other tutorial files. No particular helper structure is required.
+      specification: ''
+      checks:
+        - category: input-contract
+          command: |
+            navigate = subject['navigate']
+            assert navigate('fLf') == (1, 1, 'N')
+            assert navigate('f l f') == (1, 1, 'N')
+            assert navigate('F?1\n\tL!F') == (1, 1, 'N')
+            assert navigate('!?123 \n\t') == (0, 0, 'E')
+            assert navigate('flfru') == (1, 1, 'N')
+            assert navigate('FFxU') == (0, 0, 'E')
+        - category: boundaries
+          command: |
+            navigate = subject['navigate']
+            for commands, expected in [
+                ('', (0, 0, 'E')),
+                ('FFFFF', (4, 0, 'E')),
+                ('FFFFLFFFFF', (4, 4, 'N')),
+                ('LLF', (0, 0, 'W')),
+                ('RF', (0, 0, 'S')),
+                ('FLFRF', (1, 1, 'E')),
+                ('FLFFRF', (1, 2, 'E')),
+                ('FLFFFRF', (1, 3, 'E')),
+                ('FFLF', (2, 0, 'N')),
+                ('FLFFFFRFRF', (2, 4, 'S')),
+                ('FLFFFFRFFRFRF', (3, 3, 'W')),
+            ]:
+                assert navigate(commands) == expected
+        - category: ordering
+          command: |
+            navigate = subject['navigate']
+            for commands, expected in [
+                ('R', (0, 0, 'S')),
+                ('L', (0, 0, 'N')),
+                ('RR', (0, 0, 'W')),
+                ('LL', (0, 0, 'W')),
+                ('RRR', (0, 0, 'N')),
+                ('LLLL', (0, 0, 'E')),
+                ('FFFFLFFFFLFFFFLFFFF', (0, 0, 'S')),
+                ('FLLF', (0, 0, 'W')),
+            ]:
+                assert navigate(commands) == expected
+        - category: ordering
+          command: |
+            navigate = subject['navigate']
+            for commands, expected in [
+                ('FU', (0, 0, 'E')),
+                ('LU', (0, 0, 'E')),
+                ('RU', (0, 0, 'E')),
+                ('FLUU', (0, 0, 'E')),
+                ('FLLU', (1, 0, 'N')),
+                ('FRFU', (1, 0, 'E')),
+                ('FFFFFU', (3, 0, 'E')),
+                ('F?U', (0, 0, 'E')),
+                ('FUU', (0, 0, 'E')),
+                ('FFUUU', (0, 0, 'E')),
+                ('FLFRFU', (1, 1, 'N')),
+                ('FLFRFUU', (1, 0, 'N')),
+                ('UUUU', (0, 0, 'E')),
+            ]:
+                assert navigate(commands) == expected
+        - category: ordering
+          command: |
+            navigate = subject['navigate']
+            assert navigate('FLFXU') == (0, 0, 'E')
+            assert navigate('FLFXFU') == (0, 0, 'E')
+            assert navigate('XLFU') == (0, 0, 'N')
+            assert navigate('XU') == (0, 0, 'E')
+            assert navigate('FRXUU') == (0, 0, 'E')
+        - category: mutation
+          command: |
+            navigate = subject['navigate']
+            assert navigate('FFFFLFF') == (4, 2, 'N')
+            assert navigate('') == (0, 0, 'E')
+            assert navigate('U') == (0, 0, 'E')
+            assert navigate('F') == (1, 0, 'E')
+            assert navigate('U') == (0, 0, 'E')
+            assert navigate('L') == (0, 0, 'N')
+            assert navigate('F') == (1, 0, 'E')
+            assert navigate('X') == (0, 0, 'E')
+        - category: output-contract
+          command: |
+            import contextlib
+            import io
+            capture = io.StringIO()
+            with contextlib.redirect_stdout(capture), contextlib.redirect_stderr(capture):
+                for commands in ('', 'FLFRFU', 'FFFFLFFFF', 'R?XU'):
+                    result = subject['navigate'](commands)
+                    assert type(result) is tuple and len(result) == 3
+                    assert type(result[0]) is int and type(result[1]) is int
+                    assert type(result[2]) is str and result[2] in ('N', 'E', 'S', 'W')
+            assert capture.getvalue() == ''
+    quiz:
+      title: Step 1 — Knowledge Check
+      min_score: 0.8
+      shuffle: true
+      questions:
+        - type: single
+          difficulty: intermediate
+          question: A rover returns an unexpected heading after a command sequence. Where should a targeted source reading start?
+          options:
+            - At the public function, following the calls that interpret commands and change state.
+            - At the first line, tracing every helper with every possible input.
+            - At the helper names alone, treating each name as its complete contract.
+          correct_index: 0
+          option_feedback:
+            '1': First locate the path that determines the returned state. Tracing everything at once can hide the relevant decision.
+            '2': Names suggest hypotheses. The implementation supplies the evidence.
+          explanation: Start from the observable result, then follow the calls that can affect it.
+        - type: single
+          difficulty: intermediate
+          question: A replacement matches one rover result but uses one function instead of the original helpers. What follows?
+          options:
+            - It must fail because every helper is part of the public interface.
+            - It may preserve the contract even though its internal structure differs.
+            - It is equivalent for every command string because this result agrees.
+          correct_index: 1
+          option_feedback:
+            '0': The public interface requires navigate, not the original helper structure.
+            '2': Untested boundaries and interactions may still differ.
+          explanation: A behavioral contract permits different internal structures. One matching result is evidence, not a proof over all inputs.
+    solution:
+      explanation: 'The main path is navigate → process_command. Movement goes through apply_action and forward → next_position and available_cell → inside_floor. Turning uses turn_heading; undo and reset have their own helpers. FLFRFU returns (1, 1, N): the attempted second eastward move meets a wall, so U restores the state before the preceding right turn. Accept different call-map wording if it matches the source.'
+  # Pedagogy: PRIMM — Investigate; contrasting cases and self-explanation
+  - title: State and Boundary Evidence
+    key: evidence
+    ai_tutor_instructions: *rover_tutor_guidance
+    instructions: |
+      ### Why this matters
+
+      The same letter can have a different effect depending on earlier commands. Small examples that separate competing interpretations turn a vague summary into defensible requirements.
+
+      ### 🎯 You will learn to
+
+      - Trace both the current state and the remembered states.
+      - Invent command strings that distinguish plausible rules.
+      - Separate observable behavior from internal implementation choices.
+
+      ### The Evidence Board · About 12 Minutes
+
+      Read `rover_reference.py` and keep your reasoning in `field_notes.md`. Your examples are command strings and explanations in words; no new Python is needed.
+
+      1. Revisit `FLFRFU`. For each character, record the current state and the states available to undo. Locate the source decision behind each change or non-change. Run can replay the unchanged demonstration.
+      2. Choose **four questions** below. For each, write two plausible answers and invent a short command string where they disagree. Predict its result by tracing the original.
+      3. Record **question → alternatives → command string → predicted state → source evidence**. Explain which decision rules out the competing interpretation.
+
+      Questions worth investigating:
+
+      - How do lowercase letters, spaces, and unfamiliar characters behave?
+      - Which directions change which coordinate? What happens at each floor edge?
+      - What happens when the next cell is an obstacle? Can a route go around it?
+      - What does undo remember about movement and turning?
+      - How do unsuccessful or ignored commands interact with undo?
+      - What happens when there is nothing left to undo?
+      - Which earlier effects survive a reset?
+      - Can one call affect the starting state of the next call?
+
+      ### From a Trace to a Contract
+
+      A trace says what happened **once**. A contract states a rule for **all inputs in a stated domain**. An example supports a rule but cannot replace it.
+
+      For an unrelated function `bonus(stamps)` returning `5 if stamps >= 3 else 0`, a useful contract is: “For a nonnegative integer stamp count, return 5 for at least three stamps and 0 otherwise.” It names the boundary without requiring an `if` expression.
+
+      Write three rover rules in that style, each with evidence and a distinguishing example. Add them to your draft above. You can use **Test my work**, but an early mismatch is expected while the contract is incomplete. Record what you have established independently of the result.
+
+      > **Support if stuck:** follow one character through `process_command`. Compare the current state with the proposed next state, then inspect the condition that changes history. For a boundary question, inspect `available_cell` before predicting.
+
+      Explain one surprising result to a partner or in your notes before continuing. Preserve behavior in your wording; do not require the same helper names, list layout, or dispatch structure.
+    files:
+      - *rover_reference
+      - *rover_demo
+      - *field_notes
+    open_file: rover_reference.py
+    run_file: rover_demo.py
+    llm: *rover_exercise
+    solution:
+      explanation: Accept any four source-supported distinctions. Useful contrasts include lowercase versus uppercase, moving beyond an edge versus stopping, an obstacle versus an available neighboring cell, undoing a turn versus only position, and resetting with versus without forgetting history. Good evidence states both competing outcomes and identifies the branch or state update that selects one. A route around a wall is different from moving through it.
+  # Pedagogy: Worked-example fading; one contract before the complete controller
+  - title: One Turn Contract
+    key: function-contract
+    ai_tutor_instructions: *rover_tutor_guidance
+    instructions: |
+      ### Why this matters
+
+      A small contract is easier to review than a broad request such as “control the rover.” Practicing one function lets you check the link between every requirement and its evidence before combining several rules.
+
+      ### 🎯 You will learn to
+
+      - Derive a complete contract for one function from its source.
+      - Use a distinguishing example and feedback to review the contract.
+
+      ### A First Complete Specification · About 10 Minutes
+
+      Focus on **`turn_heading(heading, command)` in `rover_reference.py`**. This exercise accepts only uppercase headings `N/E/S/W` and uppercase commands `L/R`. Your deliverable is natural-language prose.
+
+      1. Draft the helper contract in `field_notes.md`. Cover the input domain, each command's effect, cycling past an endpoint, return shape, and side effects. Derive the rules from the source.
+      2. Invent an example that distinguishes your rule from a plausible alternative. Predict its answer. If useful, predict and Run the fixed demonstration with heading `N` and command `L`.
+      3. Paste the prose into **Your specification** above and choose **Test my work** when the model is ready. This mission has a separate helper draft; your whole-rover draft remains saved for the next mission.
+      4. Review feedback alongside the original. Identify a missing or ambiguous rule only when source evidence supports that diagnosis.
+      5. If you find a gap, revise one claim and save both wordings and your reason. Otherwise explain why the current wording remains justified.
+
+      Pair each sentence with source evidence. State transformations and their order clearly when order affects the result. The checker generates and tests an implementation. You can optionally expand **View generated Python** to compare the model’s interpretation with your prose; your deliverable remains the specification.
+
+      **Even an accurate contract may produce a faulty model implementation.** After at most **two justified revisions**, keep the wording you can support, record unresolved feedback, and ask for instructor review or retry later. Rewording without new evidence is not the learning goal.
+
+      > **Without model access:** complete the same specification and example. Ask a partner or instructor to compare your prose with the original. Record automated checking as pending and continue. Your reasoning is assessed independently of model obedience.
+    files:
+      - *rover_reference
+      - path: turn_demo.py
+        content: |
+          import runpy
+
+          turn = runpy.run_path("rover_reference.py")["turn_heading"]
+          # Fixed demonstration of the supplied original.
+          print("Heading N, command L:", turn("N", "L"))
+      - *field_notes
+    open_file: rover_reference.py
+    run_file: turn_demo.py
+    llm:
+      mode: specification
+      draft_id: rover-turn
+      file: rover_reference.py
+      interface: Define turn_heading(heading, command). heading is uppercase N, E, S, or W; command is uppercase L or R. Return one uppercase heading string without printing or input(). Other input values are outside this helper exercise.
+      specification: ''
+      checks:
+        - category: ordering
+          command: |
+            turn = subject['turn_heading']
+            for heading, left, right in [('N', 'W', 'E'), ('E', 'N', 'S'), ('S', 'E', 'W'), ('W', 'S', 'N')]:
+                assert turn(heading, 'L') == left
+                assert turn(heading, 'R') == right
+        - category: mutation
+          command: |
+            turn = subject['turn_heading']
+            assert turn('N', 'L') == 'W'
+            assert turn('N', 'L') == 'W'
+            assert turn('E', 'R') == 'S'
+            assert turn('N', 'L') == 'W'
+        - category: output-contract
+          command: |
+            import contextlib
+            import io
+            capture = io.StringIO()
+            with contextlib.redirect_stdout(capture), contextlib.redirect_stderr(capture):
+                for heading in 'NESW':
+                    for command in 'LR':
+                        result = subject['turn_heading'](heading, command)
+                        assert type(result) is str and result in 'NESW' and len(result) == 1
+            assert capture.getvalue() == ''
+    solution:
+      files:
+        - path: turn_solution.py
+          content: |
+            def turn_heading(heading, command):
+                headings = 'NESW'
+                offset = 1 if command == 'R' else -1
+                return headings[(headings.index(heading) + offset) % 4]
+      explanation: Given an uppercase heading N, E, S, or W and an uppercase command L or R, return the heading after a 90-degree turn. L turns counterclockwise and R clockwise. Clockwise order is N, E, S, W and wraps back to N. Return one uppercase heading string, leave the inputs unchanged, print nothing, and retain no state between calls. For example, turning left from N returns W. Other precise prose and different internal implementations are acceptable.
+  # Pedagogy: Independent synthesis; generation, evidence, and calibrated feedback
+  - title: The Whole Rover Contract
+    key: whole-contract
+    ai_tutor_instructions: *rover_tutor_guidance
+    instructions: |
+      ### Why this matters
+
+      The public interface stays small while several rules interact behind it. A complete specification must connect those rules without making its reader reconstruct them from a collection of examples.
+
+      ### 🎯 You will learn to
+
+      - Synthesize source evidence into one complete behavioral contract.
+      - Distinguish specification gaps from possible model implementation errors.
+      - Explain the limits of a passing check result.
+
+      ### Write the Missing Manual · About 15 Minutes
+
+      Return to **`navigate(commands)`**. Your earlier whole-rover draft is available above. The replacement is free to use any internal structure.
+
+      1. Hide the helper solution and review your source map and evidence table. Write a complete natural-language contract of at most **1,200 characters** in `field_notes.md`. You choose its organization; make the behavior recoverable from the prose alone.
+      2. Check it against the original. Cover the input domain, initial state, coordinate system, command interpretation, legal destinations, interactions over time, returned value, and effects across calls. These are review prompts, not the answers.
+      3. Invent a **new** short command string that combines two rules. Predict the final tuple from your contract, then trace the source independently. Explain why a plausible but incorrect controller would differ.
+      4. Paste your complete prose above and choose **Test my work**. The checker builds a replacement and runs the original's behavioral checks. Expand **View generated Python** if you want to inspect what the model wrote. Record the result or mark checking pending.
+      5. If a mismatch points to a real omission or ambiguity, revise that claim using source evidence. Save the old wording, new wording, and reason. If the prose already states the rule accurately, record a possible model error instead of changing the contract to suit a faulty result.
+
+      Use concise sentences, with sequencing explicit where it matters. You may describe the procedure in ordinary language. Do not paste the original code or require its helper structure.
+
+      **Stopping rule:** after at most two evidence-based revisions, keep your strongest specification and record unresolved feedback for instructor review or a later retry. A correct specification is not guaranteed to produce a passing model program. Continue even when automated checking is unavailable or unsuccessful.
+
+      **Done means:** a saved contract, a new distinguishing example and source trace, a check result or pending status, and reasons for any revisions. A passing suite supports agreement on its checked cases; it does not prove equivalence for every command string.
+    files:
+      - *rover_reference
+      - *rover_demo
+      - *field_notes
+    open_file: rover_reference.py
+    run_file: rover_demo.py
+    llm: *rover_exercise
+    solution:
+      files: &rover_solution_files
+        - path: rover_solution.py
+          content: |
+            def navigate(commands):
+                x, y, direction = 0, 0, 1
+                headings = 'NESW'
+                vectors = ((0, 1), (1, 0), (0, -1), (-1, 0))
+                walls = {(2, 1), (2, 2), (2, 3)}
+                history = []
+                for command in commands:
+                    command = command.upper()
+                    previous = (x, y, direction)
+                    if command == 'X':
+                        x, y, direction = 0, 0, 1
+                        history.clear()
+                    elif command == 'U':
+                        if history:
+                            x, y, direction = history.pop()
+                    elif command in 'LR':
+                        direction = (direction + (1 if command == 'R' else -1)) % 4
+                        history.append(previous)
+                    elif command == 'F':
+                        dx, dy = vectors[direction]
+                        destination = (x + dx, y + dy)
+                        if 0 <= destination[0] <= 4 and 0 <= destination[1] <= 4 and destination not in walls:
+                            x, y = destination
+                            history.append(previous)
+                return (x, y, headings[direction])
+      explanation: |-
+        Interpret the command string one character at a time, ignoring letter case. Start at (0,0) facing E on a 5 by 5 grid with coordinates 0 through 4. N increases y, E increases x, S decreases y, and W decreases x. Cells (2,1), (2,2), and (2,3) are walls. F moves one cell forward unless the destination is outside the grid or a wall; a blocked move changes nothing. L turns 90 degrees counterclockwise and R clockwise. Before each successful F, L, or R, remember the complete prior (x,y,heading) state. U restores and removes the most recently remembered state; with no history it does nothing. Blocked F, ignored characters, and U never add history. X restores (0,0,E) and clears all history. Ignore all other characters, including spaces. Each call starts fresh. Return the final (x,y,heading) as a tuple of two integers and an uppercase heading string. Print nothing.
+
+        This is one complete contract, not a required wording. The reference replacement uses a different internal organization. Review prose by its behavior and evidence; automated model success is not a separate learning objective.
+  # Pedagogy: Evaluate and revise; minimal counterexamples and source-based justification
+  - title: Review the Undo Rule
+    key: regression-review
+    ai_tutor_instructions: *rover_tutor_guidance
+    instructions: |
+      ### Why this matters
+
+      A tiny counterexample can expose a misleading requirement more clearly than a long argument. Comparing a proposed sentence with the original lets you revise a contract for a reason you can defend.
+
+      ### 🎯 You will learn to
+
+      - Construct a minimal counterexample to a proposed specification clause.
+      - Revise that clause using source evidence while preserving the rest of the contract.
+
+      ### A Previous Team's Handover Note · About 10 Minutes
+
+      A previous team proposes this sentence for undo behavior:
+
+      > “Every command uses an undo slot.”
+
+      1. Their proposed policy keeps `U` and `X` as they are in the source, but saves the prior state for every other character, even when nothing changes. Compare that policy with the original's history updates.
+      2. Invent the shortest command string you can where that policy and the original disagree after `U`. State both final tuples and explain the decisive difference. Remove any character that is not needed for your argument.
+      3. Find a second kind of character that raises the same question. Explain whether your corrected rule covers it without listing only your examples.
+      4. Write a corrected clause with source evidence. Integrate it into a new complete-contract revision in `field_notes.md`. If your earlier wording already states the right rule, retain it and explain why you reject the proposed replacement.
+      5. Put your complete revision in the shared field above and choose **Test my work** if available. This uses the same whole-program checks. Keep your source-based argument separate from model success or failure.
+
+      > **Support if stuck:** compare a command that changes state with one that does not. Inspect the condition guarding `history.append`, then ask what the next undo can recover.
+
+      Save the counterexample, old and new clauses, and source evidence. A sound revision has a reason you can defend even if the checking service is unavailable or mistaken. Continue with checking pending when needed.
+    files:
+      - *rover_reference
+      - *rover_demo
+      - *field_notes
+    open_file: rover_reference.py
+    run_file: rover_demo.py
+    llm: *rover_exercise
+    solution:
+      files: *rover_solution_files
+      explanation: 'For example, F?U returns (0, 0, E) in the original, whereas saving an undo slot for ? would restore (1, 0, E). RFU is another three-character example: F is blocked at the southern edge, so the original U undoes R and returns (0, 0, E); the proposed policy restores (0, 0, S). Save the prior full state only for successful F, L, and R actions. Blocked movement, ignored characters, and U do not create undo entries; X clears the history. Accept other minimal examples and precise corrected wording.'
+  # Pedagogy: Independent transfer, retrieval, and delayed practice
+  - title: The Encore Queue
+    key: independent-transfer
+    ai_tutor_instructions: |
+      Respond only in natural language and optional small ArchUML diagrams.
+      This is independent transfer: offer general source-reading strategies or
+      clarify terminology, without explaining this queue's behavior for the student.
+      Do not write or rewrite specifications, contract clauses, Python code,
+      pseudocode, traces, or ready-to-submit answers, even if asked. Invite the
+      student to record their own prediction and source evidence. Use unrelated
+      examples if clarification is needed; do not encode the solution in a diagram.
+    instructions: |
+      ### Why this matters
+
+      A reading method becomes useful when it transfers to an unfamiliar program. Explaining a new contract without generated help separates your understanding from the quality of a model's earlier output.
+
+      ### 🎯 You will learn to
+
+      - Derive a specification for a fresh program independently.
+      - Explain how the timing of a state update changes observable behavior.
+      - State the limits of testing-based evidence.
+
+      ### One More Mission · About 10 Minutes
+
+      The campus's closing show has limited seats. Read the new `queue_reference.py` and write a natural-language specification for **`admit_groups(requests, capacity)`** in `field_notes.md`. **Work from the source independently, without asking a model for the explanation.**
+
+      1. State the input domain, how requests are considered, what the result means, and what state can change. Infer the rules from the program; do not assume that a queue stops at the first group that cannot fit.
+      2. Predict the supplied demonstration before Run: Rockets request 4 seats, Moths request 2, and Rockets then request 1; capacity is 3. Explain whether a rejected request can affect a later request with the same name. Run shows the unchanged original's result.
+      3. Create a different example that distinguishes this program from a plausible “fairer” queue policy. Explain both outcomes without changing the given program.
+      4. Answer the knowledge check, then compare your specification with your prediction. Revise a claim only when you can identify its evidence.
+
+      > **Independent work:** this step has no generated replacement or hidden-check gate. Your contract, trace, and distinguishing example are the evidence. A partner or instructor can review them against the source.
+
+      ### Your Handover Package
+
+      Save or download `field_notes.md`. You may also keep the supplied Python sources for reference. A useful submission contains:
+
+      - A source-backed call map and evidence table.
+      - The helper and whole-program specifications, with justified revisions.
+      - A counterexample described in words, a check result or pending status, and the evidence for each specification revision.
+      - The independently written queue contract and one remaining uncertainty about the rover.
+
+      For a return visit in two or three days, hide your notes and derive the queue contract again. Then compare: which boundary did you remember, and which did you reconstruct from evidence?
+
+      When finished, **Model & storage → Unload from memory** releases the running model while keeping its download. **Delete downloaded model** reclaims all downloaded formats and partial downloads for this site; your tutorial files are separate.
+    files:
+      - path: queue_reference.py
+        content: |
+          def admit_groups(requests, capacity):
+              """requests: list of (name, size); capacity: nonnegative integer.
+
+              Names are nonempty strings. Sizes are integers, not booleans.
+              Return (admitted_names, remaining_capacity).
+              """
+              admitted = []
+              seen = set()
+              remaining = capacity
+
+              for name, size in requests:
+                  if name in seen:
+                      continue
+                  if size <= 0:
+                      continue
+                  if size > remaining:
+                      continue
+
+                  admitted.append(name)
+                  seen.add(name)
+                  remaining -= size
+
+              return (admitted, remaining)
+      - path: queue_demo.py
+        content: |
+          import runpy
+
+          admit = runpy.run_path("queue_reference.py")["admit_groups"]
+          requests = [("Rockets", 4), ("Moths", 2), ("Rockets", 1)]
+          capacity = 3
+          # Fixed demonstration: save your prediction and explanation before Run.
+          print(admit(requests, capacity))
+          print("Requests after the call:", requests)
+      - *field_notes
+    open_file: queue_reference.py
+    run_file: queue_demo.py
+    quiz:
+      title: Step 6 — Knowledge Check
+      min_score: 0.8
+      shuffle: true
+      questions:
+        - type: single
+          difficulty: intermediate
+          question: In the Python queue program, a group name is added to `seen` only after admission. What does that imply for an earlier request that was too large?
+          options:
+            - Its name is reserved even though its group was not admitted.
+            - A later smaller request with that name may still be admitted.
+            - All later requests must stop at that rejected group.
+          correct_index: 1
+          option_feedback:
+            '0': The rejected path continues before seen.add runs, so the name is not recorded.
+            '2': continue advances to the next request; it does not end the loop.
+          explanation: Only successful admission updates seen. A rejected request consumes neither a name nor capacity.
+        - type: single
+          difficulty: intermediate
+          question: A replacement preserves the given queue program, but a reviewer prefers to stop at the first group that cannot fit. How should that preference be handled?
+          options:
+            - Change the replacement silently; the preferred policy is the specification.
+            - Change the tests until the new implementation reports success.
+            - Propose a separate requirement change with an example of its effect.
+          correct_index: 2
+          option_feedback:
+            '0': The current task treats the given program as the authority. A preference does not silently replace that contract.
+            '1': A green result obtained by changing expectations does not demonstrate preservation.
+          explanation: Preservation and redesign are different tasks. A proposed policy change needs agreement and revised expectations, rather than being disguised as a repair.
+    solution:
+      explanation: Process requests in input order with initially empty admitted names and the supplied capacity. Ignore requests whose name has already been admitted, whose size is nonpositive, or whose size exceeds the remaining capacity; continue considering later requests. Otherwise append the exact name, remember it, and subtract its size. Rejected requests do not reserve their names. Return the new admitted-name list and remaining capacity as a tuple. Names are case-sensitive; inputs are unchanged; calls are independent. The public example yields `(['Moths', 'Rockets'], 0)`. A stop-on-first-too-large policy would admit nobody in that example. Accept other well-justified distinguishing cases.

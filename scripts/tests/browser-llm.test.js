@@ -105,8 +105,15 @@ test('Firefox can select ONNX graphics with nine storage buffers and no native J
 
 test('ONNX rejects unsupported half precision, buffer sizes, or shader limits before downloading',async()=>{
   const [{selectCandidates}]=await modules;
-  for(const limits of [{f16:false},{maxStorageBufferBindingSize:268435456},{maxBufferSize:268435456},
+  for(const limits of [{f16:false},{maxStorageBufferBindingSize:536870912},{maxBufferSize:536870912},
     {maxStorageBuffersPerShaderStage:8},{maxComputeWorkgroupStorageSize:16384}]) {
     assert.throws(()=>selectCandidates({...capable,gpu:{...capable.gpu,...limits}},{choice:'onnx-gpu'}),/unavailable/);
   }
+});
+
+test('3B graphics eligibility rejects WebLLM bindings that would fall back below its tensor size',async()=>{
+  const [{selectCandidates}]=await modules;
+  const constrained={...capable,wllamaGPU:false,gpu:{...capable.gpu,maxStorageBufferBindingSize:536870912}};
+  assert.throws(()=>selectCandidates(constrained,{choice:'webllm-gpu'}),/unavailable/);
+  assert.equal(selectCandidates(constrained)[0].id,'wllama-cpu');
 });

@@ -341,7 +341,13 @@
       "license_url": "https://raw.githubusercontent.com/microsoft/onnxruntime/89f8206ba4/LICENSE"
     }
   },
-  "model_library": "https://raw.githubusercontent.com/mlc-ai/binary-mlc-llm-libs/146ed9cd4b4062e967b017fd2291f7106b50599f/web-llm-models/v0_2_87/base/Qwen2-1.5B-Instruct-q4f16_1_cs1k-webgpu.wasm",
+  "model": {
+    "name": "Qwen2.5-Coder-3B-Instruct",
+    "upstream_revision": "488639f1ff808d1d3d0ba301aef8c11461451ec5",
+    "license": "qwen-research",
+    "license_url": "https://huggingface.co/Qwen/Qwen2.5-Coder-3B-Instruct/blob/488639f1ff808d1d3d0ba301aef8c11461451ec5/LICENSE"
+  },
+  "model_library": "https://raw.githubusercontent.com/mlc-ai/binary-mlc-llm-libs/146ed9cd4b4062e967b017fd2291f7106b50599f/web-llm-models/v0_2_87/base/Qwen2.5-3B-Instruct-q4f16_1_cs1k-webgpu.wasm",
   "sha256": {
     "wllama-3.8.1.mjs": "e5506753e41a59c11f61f2c52422045be9fc76e32a7e47f037aaad5df4ec723e",
     "wllama-compat-3.8.1.js": "2649eeb408988841c372e54805adfa25aed5d02f850c09add78c2f3ac0f3fce1",
@@ -349,7 +355,7 @@
     "webllm-0.2.87.mjs": "3bff4c55cd2f0200711517341babcebe7a91a8ef85b983420439fcf26835a674",
     "WLLAMA-LICENSE": "5866e3bd7e3cbd3f7c8bea6efd8a1e7fa7cc8de68c30f428aff7c6584a0fb720",
     "wllama-3.8.1.wasm": "551f13439366eff11e057b1b91fe46a7fdac29d56d67372d4c5f19a549dfe70c",
-    "qwen2-1.5b-webllm-0.2.87.wasm": "155ef7359c859f7d646f4c5adc548d779475da3e3196701c7a9d4b82827559a8",
+    "qwen2.5-3b-webllm-0.2.87.wasm": "10ea84df9823a2927b52cbdf752bd64daa6e1db3d1617ebe791be9dc2800a71e",
     "wllama-compat-3.8.1.wasm": "2db3f67d0bcc19cdf8f14f129e46cab691bff898954808f8a2dc4c586eb5bb68",
     "transformers-3.8.1.mjs": "aa5002b70e789798da263f5f99c62bd3e8fcd0c119258a493c40c180648365fa",
     "onnx-jsep-1.22.mjs": "08fb86ec433c78bfb032c5d84a68b8e8e5a8d81268fa39e24314179a5767a5b9",
@@ -361,7 +367,7 @@
     "wllama-3.8.1.wasm": "https://cdn.jsdelivr.net/npm/@wllama/wllama@3.8.1/esm/wasm/wllama.wasm",
     "wllama-compat-3.8.1.wasm": "https://cdn.jsdelivr.net/npm/@wllama/wllama-compat@3.8.1/wasm/wllama.wasm",
     "wllama-compat-3.8.1.js": "https://cdn.jsdelivr.net/npm/@wllama/wllama-compat@3.8.1/wasm/wllama.js",
-    "qwen2-1.5b-webllm-0.2.87.wasm": "https://raw.githubusercontent.com/mlc-ai/binary-mlc-llm-libs/146ed9cd4b4062e967b017fd2291f7106b50599f/web-llm-models/v0_2_87/base/Qwen2-1.5B-Instruct-q4f16_1_cs1k-webgpu.wasm",
+    "qwen2.5-3b-webllm-0.2.87.wasm": "https://raw.githubusercontent.com/mlc-ai/binary-mlc-llm-libs/146ed9cd4b4062e967b017fd2291f7106b50599f/web-llm-models/v0_2_87/base/Qwen2.5-3B-Instruct-q4f16_1_cs1k-webgpu.wasm",
     "transformers-3.8.1.mjs": "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1/dist/transformers.min.js",
     "onnx-jsep-1.22.mjs": "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1/dist/ort-wasm-simd-threaded.jsep.mjs",
     "onnx-jsep-1.22.wasm": "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1/dist/ort-wasm-simd-threaded.jsep.wasm"

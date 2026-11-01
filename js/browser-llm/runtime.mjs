@@ -21,15 +21,15 @@ export class BrowserLLM {
   }
   async prepare(choice = 'auto') {
     const revision = ++this.prepareRevision;
-    if (!navigator.locks) throw new Error('This browser cannot safely manage model downloads. Try an updated browser, or continue with manual Python editing.');
+    if (!navigator.locks) throw new Error('This browser cannot safely manage model downloads. Try an updated browser, or continue the tutorial without model assistance.');
     // Reprobe on each explicit selection/retry; devices can disappear mid-session.
     const capabilities = await detectCapabilities();
     const storage = await modelStorageStatus();
     if (revision !== this.prepareRevision) throw abortError();
-    if (!storage.available) throw new Error('Model storage is unavailable. Allow site storage or use a regular browser window. You can still work manually.');
+    if (!storage.available) throw new Error('Model storage is unavailable. Allow site storage or use a regular browser window. You can continue the tutorial without model assistance.');
     const candidates = selectCandidates(capabilities,{choice,cached:storage.cached,measurements:this.measurements,excluded:choice === 'auto' ? this.failed : new Set()});
     const profile = candidates[0];
-    if (!profile) throw new Error('No working model engine is available. You can still edit and run Python manually.');
+    if (!profile) throw new Error('No working model engine is available. You can continue the tutorial without model assistance.');
     this.choice = choice;
     this.profile = profile;
     this.capabilities = capabilities;

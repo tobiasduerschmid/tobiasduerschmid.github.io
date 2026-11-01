@@ -2,6 +2,7 @@
 (function () {
   'use strict';
   var modules = new URL('browser-llm/checks.mjs', document.currentScript.src).href;
+  var inspectionModule = new URL('browser-llm/python-completeness.mjs', document.currentScript.src).href;
   var proto = window.TutorialCode.prototype;
   proto.captureTutorFiles = function () {
     var authored = new Map((this.steps[this.currentStep].files || []).map(function (file) { return [file.path,file]; }));
@@ -38,6 +39,23 @@
     this._renderTabs();
   };
   proto.runLlmChecks = async function (snapshot,exercise,signal) {
+    return this._runLlmValidation(snapshot,signal,{
+      build:async function () { return (await import(modules)).checkProgram(snapshot.source,exercise); },
+      syncFiles:true,
+      accept:function (result) { return ['checked','syntax','runtime'].includes(result.status) && Array.isArray(result.failed); }
+    });
+  };
+  proto.inspectLlmProgram = async function (snapshot,signal) {
+    return this._runLlmValidation(snapshot,signal,{
+      build:async function () { return (await import(inspectionModule)).inspectionProgram(snapshot.source); },
+      syncFiles:false,
+      accept:function (result) {
+        return ['complete','syntax'].includes(result.status) || result.status === 'incomplete' &&
+          Array.isArray(result.missingNames) && Array.isArray(result.externalImports);
+      }
+    });
+  };
+  proto._runLlmValidation = async function (snapshot,signal,validation) {
     if (this.config.backend !== 'pyodide' || !this.booted || this._activeRunTransaction || this._testRunInFlight || this._activeStepLoadRequest || this._workerRestartPromise) {
       throw new Error('Wait for Python to finish its current operation, then check again.');
     }
@@ -55,15 +73,15 @@
     signal.addEventListener('abort',cancel,{once:true});
     run.promise = (async function () {
       try {
-        var module = await import(modules);
-        await self._syncFilesToBackend(Object.keys(self.editorModels));
+        var code = await validation.build();
+        if (validation.syncFiles) await self._syncFilesToBackend(Object.keys(self.editorModels));
         if (signal.aborted || !self.isLlmSnapshotCurrent(snapshot)) return null;
-        var message = await self._requestWorker({type:'runCode',code:module.checkProgram(snapshot.source,exercise),silent:true,captureOutput:true},
+        var message = await self._requestWorker({type:'runCode',code:code,silent:true,captureOutput:true},
           {timeoutMs:15000,restartOnTimeout:true});
         if (signal.aborted || run.cancelled || !self.isLlmSnapshotCurrent(snapshot)) return null;
         if (message.exitCode !== 0) return {status:'runtime',failed:[]};
         var result = JSON.parse(message.stdout.trim());
-        if (!['checked','syntax','runtime'].includes(result.status) || !Array.isArray(result.failed)) throw new Error('Invalid check result');
+        if (!validation.accept(result)) throw new Error('Invalid Python validation result');
         return result;
       } catch (_) {
         return signal.aborted || run.cancelled || !self.isLlmSnapshotCurrent(snapshot) ? null : {status:'unavailable',failed:[]};

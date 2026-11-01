@@ -1,7 +1,9 @@
 import {BrowserLLM} from './runtime.mjs';
 import {renderTutorReply} from './tutor-diagrams.mjs';
 import {ModelView,formatBytes} from './view.mjs';
-import {generationMessages,feedbackMessages,pythonFromResult,tutorMessages,CATEGORIES} from './prompts.mjs';
+import {feedbackMessages,tutorMessages,CATEGORIES} from './prompts.mjs';
+import {generateStandalonePython,generationProblem,GENERATION_PHASES} from './program-generation.mjs';
+import {checkSpecification,specificationFeedback,specificationStatus} from './specification-exercise.mjs';
 
 class TutorialModelAddon {
   constructor(tutorial,template) {
@@ -17,7 +19,7 @@ class TutorialModelAddon {
     for (const [name,handler] of Object.entries(actions)) on(this.view.buttons[name],'click',handler);
     on(this.view.fields.engine,'change',()=>{this.unload();this.prepare();});
     on(this.view.fields.specification,'input',()=>{
-      this.specifications.set(this.tutorial.currentStep,this.view.fields.specification.value);
+      this.specifications.set(this.specificationKey(),this.view.fields.specification.value);
       this.invalidate();
     });
     on(window,'pagehide',()=>this.runtime.unload());
@@ -26,7 +28,8 @@ class TutorialModelAddon {
   }
   refresh() {
     this.view.controls({busy:!!this.operation,ready:this.runtime.ready,cached:!!this.plan?.cached,prepared:!!this.plan,
-      suggestion:!!this.suggestion,exercise:!!this.exercise,deleting:this.operation?.kind === 'delete',comparable:!!this.plan?.comparable,operation:this.operation?.kind});
+      suggestion:!!this.suggestion,exercise:!!this.exercise,specificationOnly:this.exercise?.mode === 'specification',
+      deleting:this.operation?.kind === 'delete',comparable:!!this.plan?.comparable,operation:this.operation?.kind});
   }
   async prepare() {
     const request = this.prepareRequest = (this.prepareRequest || 0)+1;
@@ -53,17 +56,20 @@ class TutorialModelAddon {
     } catch(error) { if (request === this.prepareRequest && error.name !== 'AbortError') this.view.status(error.message); }
     this.refresh();
   }
-  beforeStepChange() { this.cancel(); this.chat?.destroy(); this.chat=null; this.watchers.forEach(w=>w.dispose()); this.watchers=[]; }
+  beforeStepChange() { this.cancel(); this.view.clearInspection(); this.chat?.destroy(); this.chat=null; this.watchers.forEach(w=>w.dispose()); this.watchers=[]; }
+  specificationKey() { return this.exercise?.draft_id ?? this.tutorial.currentStep; }
   setStep() {
     this.beforeStepChange();
     this.suggestion = null;
     this.exercise = this.tutorial.steps[this.tutorial.currentStep]?.llm;
+    this.view.positionBeforeInstructions(this.exercise?.mode === 'specification');
     this.view.fields.exercise.hidden = !this.exercise;
     this.view.fields.result.hidden = true;
     this.view.feedback('');
+    if (!this.operation) this.view.status('');
     if (this.exercise) {
       this.view.fields.contract.textContent = this.exercise.interface;
-      this.view.fields.specification.value = this.specifications.get(this.tutorial.currentStep) ?? this.exercise.specification ?? '';
+      this.view.fields.specification.value = this.specifications.get(this.specificationKey()) ?? this.exercise.specification ?? '';
     }
     this.watchers = Object.values(this.tutorial.editorModels).map(entry=>entry.model.onDidChangeContent(()=>this.invalidate()));
     this.refresh();
@@ -75,12 +81,15 @@ class TutorialModelAddon {
   }
   invalidate() {
     this.suggestion = null;
+    this.view.clearInspection();
     if (this.operation?.kind !== 'download' && this.operation?.kind !== 'delete') this.cancel();
     this.view.feedback('');
+    if (!this.operation) this.view.status('');
     this.refresh();
   }
   cancel() {
     if (!this.operation || this.operation.kind === 'delete') return;
+    if (this.operation.kind === 'check') this.view.clearInspection();
     this.operation.controller.abort();
     this.operation = null;
     this.suggestion = null;
@@ -137,7 +146,9 @@ class TutorialModelAddon {
       this.view.status('Model ready.');
     });
     await this.prepare();
-    if (this.runtime.ready && focused === this.view.buttons.download && document.activeElement === document.body) this.view.buttons.generate.focus();
+    if (this.runtime.ready && focused === this.view.buttons.download && document.activeElement === document.body) {
+      (this.exercise?.mode === 'specification' ? this.view.buttons.check : this.view.buttons.generate).focus();
+    }
   }
   async compare() {
     await this.perform('compare',async signal=>{
@@ -166,17 +177,26 @@ class TutorialModelAddon {
     await this.perform('generate',async signal=>{
       const snapshot = this.tutorial.captureLlmSnapshot(this.exercise.file);
       const spec = this.view.fields.specification.value;
-      const messages = generationMessages(spec,this.exercise.interface);
       this.suggestion = null;
       this.view.fields.result.hidden = false;
       this.view.fields.code.value = '';
-      const progress = value=>this.generationProgress(value,signal,'Generating Python locally…');
-      const result = await this.runtime.generate(messages,{signal,onProgress:progress,onText:text=>{if (!signal.aborted) this.view.fields.code.value=text;}});
+      const started = performance.now();
+      let phase = 'generating';
+      const result = await generateStandalonePython({specification:spec,contract:this.exercise.interface,signal,
+        isCurrent:()=>this.tutorial.isLlmSnapshotCurrent(snapshot) && spec === this.view.fields.specification.value,
+        onPhase:value=>{phase=value;this.view.status(GENERATION_PHASES[value]);},
+        inspect:source=>this.tutorial.inspectLlmProgram({...snapshot,source},signal),
+        generate:(messages,options)=>this.runtime.generate(messages,{...options,
+          onProgress:value=>this.generationProgress(value,signal,GENERATION_PHASES[phase]),
+          onText:text=>{if (!signal.aborted) this.view.fields.code.value=text;}})});
+      if (!result) return;
       if (signal.aborted || !this.tutorial.isLlmSnapshotCurrent(snapshot) || spec !== this.view.fields.specification.value) return;
-      const code = pythonFromResult(result);
+      if (result.source) this.view.fields.code.value = result.source;
+      if (result.status !== 'complete') {this.view.status(generationProblem(result));return;}
+      const code = result.source;
       this.suggestion = {snapshot,code};
       this.view.fields.code.value = code;
-      this.view.status('Generation complete in '+(result.timing.elapsedMs/1000).toFixed(1)+' seconds. Review the program, then apply it to '+this.exercise.file+'.');
+      this.view.status('Generation complete in '+((performance.now()-started)/1000).toFixed(1)+' seconds. Review the program, then apply it to '+this.exercise.file+'.');
     });
     if (!this.runtime.ready && !this.operation) await this.prepare();
   }
@@ -197,6 +217,7 @@ class TutorialModelAddon {
     this.refresh();
   }
   async check() {
+    if (this.exercise.mode === 'specification') return this.checkProse();
     await this.perform('check',async signal=>{
       const snapshot = this.tutorial.captureLlmSnapshot(this.exercise.file);
       const spec = this.view.fields.specification.value;
@@ -223,6 +244,30 @@ class TutorialModelAddon {
         if (advice.finishReason !== 'length' && advice.text.trim()) this.view.feedback(summary+'\n\nModel suggestions — verify them yourself:\n'+advice.text.trim());
       }
       this.view.status('Check finished. Read the conceptual feedback below.');
+    });
+    if (!this.runtime.ready && !this.operation) await this.prepare();
+  }
+  async checkProse() {
+    await this.perform('check',async signal=>{
+      const snapshot = this.tutorial.captureLlmSnapshot(this.exercise.file);
+      const specification = this.view.fields.specification.value;
+      this.view.feedback('');
+      this.view.clearInspection();
+      let phase = 'generating';
+      const result = await checkSpecification({
+        specification,exercise:this.exercise,snapshot,signal,
+        isCurrent:captured=>this.tutorial.isLlmSnapshotCurrent(captured) && specification === this.view.fields.specification.value,
+        generate:(messages,options)=>this.runtime.generate(messages,{...options,
+          onProgress:value=>this.generationProgress(value,signal,GENERATION_PHASES[phase])}),
+        inspect:source=>this.tutorial.inspectLlmProgram({...snapshot,source},signal),
+        runChecks:(candidate,exercise,checkSignal)=>this.tutorial.runLlmChecks(candidate,exercise,checkSignal),
+        onGenerated:source=>this.view.showInspection(source),
+        onPhase:value=>{phase=value;this.view.status(value === 'checking'
+          ? 'Checking the generated implementation…' : GENERATION_PHASES[value]);}
+      });
+      if (!result) return;
+      this.view.feedback(specificationFeedback(result));
+      this.view.status(specificationStatus(result));
     });
     if (!this.runtime.ready && !this.operation) await this.prepare();
   }

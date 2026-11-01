@@ -42,9 +42,14 @@
       <h4>Feedback</h4>
       <p data-field="feedback"></p>
     </div>
+    <details class="tutorial-llm-inspection" data-field="inspection" hidden>
+      <summary>View generated Python</summary>
+      <p class="tutorial-llm-hint" id="tutorial-llm-inspection-hint">Read-only: the program generated from your current specification. Compare the model's interpretation with your prose.</p>
+      <pre class="tutorial-llm-code-preview" role="region" aria-label="Generated Python" aria-describedby="tutorial-llm-inspection-hint" tabindex="0"><code data-field="inspection-code"></code></pre>
+    </details>
     <details class="tutorial-llm-settings" data-field="settings">
       <summary>Model &amp; storage</summary>
-      <p>Qwen2.5-Coder 1.5B runs locally. Your specification and code stay on this device.</p>
+      <p>Qwen2.5-Coder 3B runs locally. Your specification and code stay on this device.</p>
       <label for="tutorial-llm-engine">Run the model using</label>
       <select id="tutorial-llm-engine" data-field="engine">
         <option value="auto">Automatic (recommended)</option>

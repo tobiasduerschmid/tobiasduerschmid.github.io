@@ -3,8 +3,8 @@ import {ARTIFACTS,CONTEXT_TOKENS} from '../catalog.mjs';
 
 export async function load(profile) {
   const {CreateMLCEngine} = await importRuntime('webllm-0.2.87.mjs');
-  const library = await runtimeWasm('qwen2-1.5b-webllm-0.2.87.wasm');
   const model = ARTIFACTS.mlc;
+  const library = await runtimeWasm(model.library);
   let engine;
   try {
   engine = await CreateMLCEngine(model.modelId,{
@@ -15,7 +15,7 @@ export async function load(profile) {
       model_lib:library.url,
       integrity:model.integrity,
       required_features:['shader-f16'],
-      overrides:{context_window_size:CONTEXT_TOKENS,prefill_chunk_size:profile.prefillTokens || 128}
+      overrides:{context_window_size:CONTEXT_TOKENS,prefill_chunk_size:profile.prefillTokens || 128,repetition_penalty:1}
     }]}
   });
   } finally { library.revoke(); }

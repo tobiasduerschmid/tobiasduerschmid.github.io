@@ -11,20 +11,38 @@ export class ModelView {
     this.fields.feedback.textContent = text;
     this.fields['feedback-wrap'].hidden = !text;
   }
-  controls({busy=false,ready=false,cached=false,prepared=false,suggestion=false,exercise=false,deleting=false,comparable=false,operation}) {
+  clearInspection() {
+    this.fields.inspection.hidden = true;
+    this.fields.inspection.open = false;
+    this.fields['inspection-code'].replaceChildren();
+  }
+  showInspection(source) {
+    // The shared highlighter creates text nodes and spans, never model HTML.
+    this.fields['inspection-code'].replaceChildren(globalThis.ObjectReferenceCode.highlight(source));
+    this.fields.inspection.hidden = false;
+  }
+  positionBeforeInstructions(before) {
+    const host = this.element.parentElement;
+    if (before) host.prepend(this.element);
+    else host.append(this.element);
+  }
+  controls({busy=false,ready=false,cached=false,prepared=false,suggestion=false,exercise=false,specificationOnly=false,deleting=false,comparable=false,operation}) {
     const usable = ready || cached;
     this.fields['model-state'].textContent = ready ? 'Ready · on your device' : operation === 'download' ? 'Setting up…' : cached ? 'Downloaded · on your device' : 'Optional · on your device';
     this.fields.setup.hidden = usable || !exercise;
     this.fields['check-hint'].hidden = !exercise;
-    this.fields['check-hint'].textContent = usable ? 'Checks the code in your editor.' : 'Checks the code in your editor. No download needed.';
+    this.fields['check-hint'].textContent = specificationOnly
+      ? 'Generates and checks an implementation from your prose. You only work on the specification.'
+      : usable ? 'Checks the code in your editor.' : 'Checks the code in your editor. No download needed.';
     this.fields.engine.disabled = busy;
     this.buttons.download.hidden = usable || !exercise;
     this.buttons.download.disabled = busy || ready || !prepared;
     this.buttons.unload.disabled = busy || !ready;
-    this.buttons.generate.hidden = !usable || !exercise;
+    this.buttons.generate.hidden = !usable || !exercise || specificationOnly;
     this.buttons.generate.disabled = busy || !usable || !exercise;
     this.buttons.check.hidden = !exercise;
-    this.buttons.check.disabled = busy || !exercise;
+    this.buttons.check.textContent = specificationOnly ? 'Test my work' : 'Check Python';
+    this.buttons.check.disabled = busy || !exercise || (specificationOnly && !usable);
     this.buttons.apply.disabled = busy || !suggestion;
     this.buttons.cancel.hidden = !busy || deleting;
     this.buttons.compare.hidden = !comparable;

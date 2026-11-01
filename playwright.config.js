@@ -56,7 +56,7 @@ module.exports = defineConfig({
     },
     {
       name: 'tutorial-llm-firefox',
-      testMatch: /(tutorial-llm|tutor-diagrams)\.spec\.js/,
+      testMatch: /(tutorial-llm|tutor-diagrams|code-specification-tutorial)\.spec\.js/,
       use: { ...devices['Desktop Firefox'], launchOptions: {} },
     },
     {

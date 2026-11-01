@@ -33,9 +33,9 @@ export const RUNTIME_ASSETS = {
     "url": "https://cdn.jsdelivr.net/npm/@wllama/wllama-compat@3.8.1/wasm/wllama.js",
     "integrity": "sha256-JknutAiYiEHDcuVIBa36Ja7V0C+FDAmt14wvOsDz/OE="
   },
-  "qwen2-1.5b-webllm-0.2.87.wasm": {
-    "url": "https://raw.githubusercontent.com/mlc-ai/binary-mlc-llm-libs/146ed9cd4b4062e967b017fd2291f7106b50599f/web-llm-models/v0_2_87/base/Qwen2-1.5B-Instruct-q4f16_1_cs1k-webgpu.wasm",
-    "integrity": "sha256-FV73NZyFn31kb0xa3FSNd5R12j4xlnAcep1LgoJ1Wag="
+  "qwen2.5-3b-webllm-0.2.87.wasm": {
+    "url": "https://raw.githubusercontent.com/mlc-ai/binary-mlc-llm-libs/146ed9cd4b4062e967b017fd2291f7106b50599f/web-llm-models/v0_2_87/base/Qwen2.5-3B-Instruct-q4f16_1_cs1k-webgpu.wasm",
+    "integrity": "sha256-EOqE35gjopJ7UsvfdSvWTapuHbPRYX6+eRvp3CgApx4="
   }
 };
 

@@ -57,15 +57,16 @@ function supportsGraphics(profile,capabilities) {
   if (!gpu.available) return false;
   if (profile.engine === 'wllama') return capabilities.wllamaGPU !== false;
   if (!gpu.f16 || (gpu.maxComputeWorkgroupStorageSize || 32768) < 32768) return false;
+  // The 3B ONNX embedding is 622 MB. WebLLM's 155 MB quantized tensor
+  // also exceeds its 128 MiB fallback when a 1 GiB binding is unavailable.
+  if (gpu.maxBufferSize < GPU_LIMIT || gpu.maxStorageBufferBindingSize < GPU_LIMIT) return false;
   if (profile.engine === 'onnx') {
-    // The FP16 embedding table is about 467 MB. This tested JSEP backend
-    // supports nine buffers; newer native ONNX/WebLLM shaders require ten.
-    return gpu.maxStorageBuffersPerShaderStage >= 9 && gpu.maxBufferSize >= 536870912 && gpu.maxStorageBufferBindingSize >= 536870912;
+    return gpu.maxStorageBuffersPerShaderStage >= 9;
   }
-  return gpu.maxStorageBuffersPerShaderStage >= 10 && gpu.maxBufferSize >= 268435456 && gpu.maxStorageBufferBindingSize >= 134217728;
+  return gpu.maxStorageBuffersPerShaderStage >= 10;
 }
 export function selectCandidates(capabilities, {choice='auto',cached=[],measurements=new Map(),excluded=new Set()} = {}) {
-  if (!capabilities.wasm || !capabilities.simd || capabilities.exceptions === false) throw new Error('This browser needs WebAssembly with vector instructions. You can still edit and run Python manually.');
+  if (!capabilities.wasm || !capabilities.simd || capabilities.exceptions === false) throw new Error('This browser needs WebAssembly with vector instructions. You can continue the tutorial without model assistance.');
   let candidates = PROFILES.filter(profile => !excluded.has(profile.id) && (!profile.gpu || supportsGraphics(profile,capabilities)))
     .map(p=>({...p,threads:p.engine === 'onnx' ? 1 : capabilities.threads || 1}));
   if (choice !== 'auto') {
