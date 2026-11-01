@@ -1,0 +1,369 @@
+{
+  "packages": {
+    "web-llm": {
+      "bugs": {
+        "url": "https://github.com/mlc-ai/web-llm/issues"
+      },
+      "dist": {
+        "shasum": "6bc9c1b004c518742a9b1916f0e6dbd18bf35e19",
+        "tarball": "https://registry.npmjs.org/@mlc-ai/web-llm/-/web-llm-0.2.87.tgz",
+        "fileCount": 73,
+        "integrity": "sha512-34N19988MdaEtzh8Mq/IOrfKCk2HRDOrXgEkLT28r3aiyAU6ZJSUB+v35t7zyU+0QEaFl91Y4U5SuPN/cwoHNw==",
+        "signatures": [
+          {
+            "sig": "MEUCIQDMnWNEo4Wl0ulgGTguBJ9tg254fmuJACn4Bpc/15OAUQIgS7pvnWlZaiW1GchSDf0CXCSmybmOlwMlZDFZwp8uol4=",
+            "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+          },
+          {
+            "sig": "MEUCIQCe6nLYtkFjC9lrh++qqArjgtinskAnRO4WymMvsHpu2gIgK0Z+ZDDhRqI0epQS0b1YTIaEfzPBAWnb4Wfqc6+iIM4=",
+            "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+          }
+        ],
+        "unpackedSize": 14408024
+      },
+      "main": "lib/index.js",
+      "name": "@mlc-ai/web-llm",
+      "type": "module",
+      "_from": "file:/Users/akaashrp/Documents/webllm-release-0.2.87/final-rebuild-20261030/upgrade-pr-20261030/mlc-ai-web-llm-0.2.87.tgz",
+      "types": "lib/index.d.ts",
+      "license": "Apache-2.0",
+      "scripts": {
+        "lint": "npx eslint ./src/ ./tests/ ./examples/ && npx prettier ./src/ ./tests/ ./examples/ --check",
+        "test": "jest --coverage",
+        "build": "rollup -c && ./cleanup-index-js.sh",
+        "format": "prettier --write \"./src/\" \"./examples/\" \"./tests/\"",
+        "prepare": "husky",
+        "test:browser": "npm run build:browser-tests && playwright test --config tests/browser/playwright.config.mjs",
+        "build:browser-tests": "rollup -c tests/browser/rollup.config.js"
+      },
+      "_npmUser": {
+        "name": "akaashrp",
+        "email": "akaashrp@gmail.com"
+      },
+      "homepage": "https://github.com/mlc-ai/web-llm",
+      "keywords": [
+        "llm",
+        "large language model",
+        "machine learning"
+      ],
+      "_resolved": "/Users/akaashrp/Documents/webllm-release-0.2.87/final-rebuild-20261030/upgrade-pr-20261030/mlc-ai-web-llm-0.2.87.tgz",
+      "overrides": {
+        "glob": "^13.0.0",
+        "test-exclude": "^7.0.1"
+      },
+      "_integrity": "sha512-34N19988MdaEtzh8Mq/IOrfKCk2HRDOrXgEkLT28r3aiyAU6ZJSUB+v35t7zyU+0QEaFl91Y4U5SuPN/cwoHNw==",
+      "repository": {
+        "url": "git+https://github.com/mlc-ai/web-llm.git",
+        "type": "git"
+      },
+      "_npmVersion": "11.6.2",
+      "description": "Hardware accelerated language model chats on browsers",
+      "directories": {},
+      "maintainers": [
+        {
+          "name": "tqchen",
+          "email": "tianqi.tchen@gmail.com"
+        },
+        {
+          "name": "akaashrp",
+          "email": "akaashrp@gmail.com"
+        },
+        {
+          "name": "charliefruan",
+          "email": "charlieruan2001130@gmail.com"
+        },
+        {
+          "name": "neetnestor",
+          "email": "imba.qxy@gmail.com"
+        },
+        {
+          "name": "rickzx",
+          "email": "rickzhou97@gmail.com"
+        },
+        {
+          "name": "ruihanglai",
+          "email": "ruihangl@cs.cmu.edu"
+        },
+        {
+          "name": "sudeepag",
+          "email": "hello@sudeep.co"
+        }
+      ],
+      "_nodeVersion": "24.11.1",
+      "dependencies": {
+        "loglevel": "^1.9.1"
+      },
+      "_hasShrinkwrap": false,
+      "devDependencies": {
+        "jest": "^30.2.0",
+        "husky": "^9.0.11",
+        "tslib": "^2.3.1",
+        "buffer": "^5.7.1",
+        "eslint": "^9.39.1",
+        "rollup": "^4.53.3",
+        "process": "^0.11.10",
+        "ts-jest": "^29.4.6",
+        "prettier": "3.6.2",
+        "@eslint/js": "^9.9.0",
+        "typescript": "^5.9.3",
+        "@types/jest": "^30.0.0",
+        "@types/chrome": "^0.0.266",
+        "@webgpu/types": "^0.1.24",
+        "@eslint/eslintrc": "^3.3.1",
+        "@playwright/test": "1.55.1",
+        "typescript-eslint": "^8.47.0",
+        "@mlc-ai/web-runtime": "0.28.0-dev1",
+        "@mlc-ai/web-xgrammar": "0.1.27",
+        "@types/serviceworker": "^0.0.86",
+        "rollup-plugin-ignore": "^1.0.10",
+        "@mlc-ai/web-tokenizers": "^0.1.6",
+        "eslint-config-prettier": "^10.1.8",
+        "eslint-plugin-prettier": "^5.5.4",
+        "@rollup/plugin-commonjs": "^29.0.0",
+        "@next/eslint-plugin-next": "^16.0.0",
+        "@rollup/plugin-typescript": "^12.3.0",
+        "@rollup/plugin-node-resolve": "^16.0.3"
+      },
+      "_npmOperationalInternal": {
+        "tmp": "tmp/web-llm_0.2.87_1793382003961_0.5015853236461041",
+        "host": "s3://npm-registry-packages-npm-production"
+      },
+      "_id": "@mlc-ai/web-llm@0.2.87",
+      "version": "0.2.87"
+    },
+    "wllama": {
+      "bugs": {
+        "url": "https://github.com/ngxson/wllama/issues"
+      },
+      "dist": {
+        "shasum": "e0353359cbfa3d93c844bf5787914bfedc1190cb",
+        "tarball": "https://registry.npmjs.org/@wllama/wllama/-/wllama-3.8.1.tgz",
+        "fileCount": 90,
+        "integrity": "sha512-Pl7BEJhPU8OHnV/yhn3DFZYhLLOdSHh+4TND79WCftHnlUAdQPAsyc/CfIOY+4mVxvf5VW3Xw3Uf7BBfotS1gw==",
+        "signatures": [
+          {
+            "sig": "MEUCIEkxUs9qhqvsk76eev+TBr0qXle4jCHBrRJXkthaUBtUAiEA1tabExFBsC36izXTdQKKrcbWtyiyWlVVS/ViKEi5T9g=",
+            "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+          },
+          {
+            "sig": "MEUCIQD7hBzBvpWKLB9VhqwtOKNsIlNnNVG7SGg0aTfCKYQFxgIgVfUvax6Qwntpd19Evfiz7ogVmlwZrhTUTzEGC/k9/VQ=",
+            "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+          }
+        ],
+        "unpackedSize": 20248968
+      },
+      "main": "index.js",
+      "name": "@wllama/wllama",
+      "type": "module",
+      "author": {
+        "name": "Xuan Son NGUYEN",
+        "email": "contact@ngxson.com"
+      },
+      "gitHead": "b68fd6427063266176bb0054befe9ff70b3258f1",
+      "license": "MIT",
+      "scripts": {
+        "docs": "typedoc --tsconfig tsconfig.build.json src/index.ts",
+        "test": "vitest",
+        "build": "npm run clean && npm run build:worker && npm run build:tsup && npm run build:minified && npm run build:typedef && ./scripts/post_build.sh && npm run docs",
+        "clean": "rm -rf ./esm && rm -rf ./docs && rm -rf ./wasm",
+        "serve": "node ./scripts/http_server.js",
+        "format": "prettier --write .",
+        "upload": "npm run format && npm run build && node scripts/check_package_size.js && npm publish --access public && (cd compat && npm publish --access public)",
+        "serve:mt": "MULTITHREAD=1 node ./scripts/http_server.js",
+        "test:auto": "AUTO=1 vitest",
+        "test:wgpu": "WEBGPU=1 vitest",
+        "build:glue": "node ./cpp/generate_glue_prototype.js",
+        "build:test": "WLLAMA_TEST_BACKEND=1 npm run build:wasm",
+        "build:tsup": "tsup src/index.ts --format cjs,esm --clean",
+        "build:wasm": "./scripts/build_wasm.sh && npm run build:glue",
+        "test:safari": "BROWSER=safari vitest",
+        "build:worker": "./scripts/build_worker.sh",
+        "test:firefox": "BROWSER=firefox vitest",
+        "build:typedef": "tsc --emitDeclarationOnly --declaration -p tsconfig.build.json",
+        "build:minified": "terser esm/index.js -o esm/index.min.js --compress --mangle --source-map"
+      },
+      "_npmUser": {
+        "name": "ngxson",
+        "email": "thichthat@gmail.com"
+      },
+      "homepage": "https://github.com/ngxson/wllama#readme",
+      "keywords": [
+        "wasm",
+        "webassembly",
+        "llama",
+        "llm",
+        "ai",
+        "rag",
+        "embeddings",
+        "generation"
+      ],
+      "prettier": {
+        "semi": true,
+        "tabWidth": 2,
+        "singleQuote": true,
+        "trailingComma": "es5",
+        "bracketSameLine": false
+      },
+      "repository": {
+        "url": "git+https://github.com/ngxson/wllama.git",
+        "type": "git"
+      },
+      "_npmVersion": "11.4.2",
+      "description": "WebAssembly binding for llama.cpp - Enabling on-browser LLM inference",
+      "directories": {
+        "example": "examples"
+      },
+      "maintainers": [
+        {
+          "name": "ngxson",
+          "email": "thichthat@gmail.com"
+        }
+      ],
+      "_nodeVersion": "24.4.1",
+      "_hasShrinkwrap": false,
+      "devDependencies": {
+        "tsup": "^8.4.0",
+        "terser": "^5.39.0",
+        "express": "^4.18.3",
+        "typedoc": "^0.27.2",
+        "prettier": "^3.3.3",
+        "mime-types": "^2.1.35",
+        "playwright": "^1.59.1",
+        "typescript": "^5.4.2",
+        "webdriverio": "^9.4.1",
+        "@vitest/browser": "^2.1.6",
+        "@playwright/test": "^1.60.0"
+      },
+      "_npmOperationalInternal": {
+        "tmp": "tmp/wllama_3.8.1_1790950874786_0.050551968028422545",
+        "host": "s3://npm-registry-packages-npm-production"
+      },
+      "_id": "@wllama/wllama@3.8.1",
+      "version": "3.8.1"
+    },
+    "wllama-compat": {
+      "bugs": {
+        "url": "https://github.com/ngxson/wllama/issues"
+      },
+      "dist": {
+        "shasum": "b6f28d88e076b260d4b280c6f797a885d87d1f3a",
+        "tarball": "https://registry.npmjs.org/@wllama/wllama-compat/-/wllama-compat-3.8.1.tgz",
+        "fileCount": 5,
+        "integrity": "sha512-IvmjrJ+JzDbt3w1FQq1yAmnFEiLGCceowK2Q80zW+k9ChFkPBM1ByX/9xm2xVxyd8MHC50VpuDo6SDE83k9kIQ==",
+        "signatures": [
+          {
+            "sig": "MEUCIDMol2Yu8U3vanwfIVJt5b2OrrdCNOJLqNEov+5yBe2IAiEA6bU2X8XjkdW4sRlyYSZuxAPbGFqynwreIgnKcBuZeh0=",
+            "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+          },
+          {
+            "sig": "MEYCIQCr/Pqvy6dlkOZ+MIhl9jH8a+ha2v9RPG91IZteiEwVBwIhALfO/B3kt3MnWzlMbfCC3VsTuyFz+a9v0E9YbBLRc1wh",
+            "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+          }
+        ],
+        "unpackedSize": 16180363
+      },
+      "main": "index.js",
+      "name": "@wllama/wllama-compat",
+      "type": "module",
+      "author": {
+        "name": "Xuan Son NGUYEN",
+        "email": "contact@ngxson.com"
+      },
+      "gitHead": "b68fd6427063266176bb0054befe9ff70b3258f1",
+      "license": "MIT",
+      "scripts": {
+        "upload": "npm publish --access public"
+      },
+      "_npmUser": {
+        "name": "ngxson",
+        "email": "thichthat@gmail.com"
+      },
+      "homepage": "https://github.com/ngxson/wllama#readme",
+      "keywords": [
+        "wasm",
+        "webassembly",
+        "llama",
+        "llm",
+        "ai",
+        "rag",
+        "embeddings",
+        "generation"
+      ],
+      "repository": {
+        "url": "git+https://github.com/ngxson/wllama.git",
+        "type": "git"
+      },
+      "_npmVersion": "11.4.2",
+      "description": "Optional package providing compatibility with older browsers for @wllama/wllama",
+      "directories": {},
+      "maintainers": [
+        {
+          "name": "ngxson",
+          "email": "thichthat@gmail.com"
+        }
+      ],
+      "_nodeVersion": "24.4.1",
+      "_hasShrinkwrap": false,
+      "_npmOperationalInternal": {
+        "tmp": "tmp/wllama-compat_3.8.1_1790950839572_0.8657639228824998",
+        "host": "s3://npm-registry-packages-npm-production"
+      },
+      "_id": "@wllama/wllama-compat@3.8.1",
+      "version": "3.8.1"
+    },
+    "transformers": {
+      "name": "@huggingface/transformers",
+      "version": "3.8.1",
+      "license": "Apache-2.0",
+      "repository": {
+        "url": "git+https://github.com/huggingface/transformers.js.git",
+        "type": "git"
+      },
+      "dist": {
+        "shasum": "317da003865322396796173223eeaaf0f9723f0a",
+        "tarball": "https://registry.npmjs.org/@huggingface/transformers/-/transformers-3.8.1.tgz",
+        "fileCount": 379,
+        "integrity": "sha512-tsTk4zVjImqdqjS8/AOZg2yNLd1z9S5v+7oUPpXaasDRwEDhB+xnglK1k5cad26lL5/ZIaeREgWWy0bs9y9pPA==",
+        "signatures": [
+          {
+            "sig": "MEYCIQC25bBnWkhT9x6LvY/qhL8Hm1AYFIZf4rbKfq7/olxUngIhAM7TPvIc3DQvOnBDNJdb0hYnNbBQl3zEoFf4ZccoF0TK",
+            "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+          }
+        ],
+        "unpackedSize": 48306100
+      }
+    },
+    "onnxruntime-web": {
+      "name": "onnxruntime-web",
+      "version": "1.22.0-dev.20250409-89f8206ba4",
+      "license": "MIT",
+      "repository": "https://github.com/microsoft/onnxruntime",
+      "license_url": "https://raw.githubusercontent.com/microsoft/onnxruntime/89f8206ba4/LICENSE"
+    }
+  },
+  "model_library": "https://raw.githubusercontent.com/mlc-ai/binary-mlc-llm-libs/146ed9cd4b4062e967b017fd2291f7106b50599f/web-llm-models/v0_2_87/base/Qwen2-1.5B-Instruct-q4f16_1_cs1k-webgpu.wasm",
+  "sha256": {
+    "wllama-3.8.1.mjs": "e5506753e41a59c11f61f2c52422045be9fc76e32a7e47f037aaad5df4ec723e",
+    "wllama-compat-3.8.1.js": "2649eeb408988841c372e54805adfa25aed5d02f850c09add78c2f3ac0f3fce1",
+    "WEBLLM-LICENSE": "87935f332472db09253871326ef23d5d6a45f4fd2e6c96772f72052866dfab0d",
+    "webllm-0.2.87.mjs": "3bff4c55cd2f0200711517341babcebe7a91a8ef85b983420439fcf26835a674",
+    "WLLAMA-LICENSE": "5866e3bd7e3cbd3f7c8bea6efd8a1e7fa7cc8de68c30f428aff7c6584a0fb720",
+    "wllama-3.8.1.wasm": "551f13439366eff11e057b1b91fe46a7fdac29d56d67372d4c5f19a549dfe70c",
+    "qwen2-1.5b-webllm-0.2.87.wasm": "155ef7359c859f7d646f4c5adc548d779475da3e3196701c7a9d4b82827559a8",
+    "wllama-compat-3.8.1.wasm": "2db3f67d0bcc19cdf8f14f129e46cab691bff898954808f8a2dc4c586eb5bb68",
+    "transformers-3.8.1.mjs": "aa5002b70e789798da263f5f99c62bd3e8fcd0c119258a493c40c180648365fa",
+    "onnx-jsep-1.22.mjs": "08fb86ec433c78bfb032c5d84a68b8e8e5a8d81268fa39e24314179a5767a5b9",
+    "onnx-jsep-1.22.wasm": "c46655e8a94afc45338d4cb2b840475f88e5012d524509916e505079c00bfa39"
+  },
+  "runtime_urls": {
+    "webllm-0.2.87.mjs": "https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.87/lib/index.js",
+    "wllama-3.8.1.mjs": "https://cdn.jsdelivr.net/npm/@wllama/wllama@3.8.1/esm/index.js",
+    "wllama-3.8.1.wasm": "https://cdn.jsdelivr.net/npm/@wllama/wllama@3.8.1/esm/wasm/wllama.wasm",
+    "wllama-compat-3.8.1.wasm": "https://cdn.jsdelivr.net/npm/@wllama/wllama-compat@3.8.1/wasm/wllama.wasm",
+    "wllama-compat-3.8.1.js": "https://cdn.jsdelivr.net/npm/@wllama/wllama-compat@3.8.1/wasm/wllama.js",
+    "qwen2-1.5b-webllm-0.2.87.wasm": "https://raw.githubusercontent.com/mlc-ai/binary-mlc-llm-libs/146ed9cd4b4062e967b017fd2291f7106b50599f/web-llm-models/v0_2_87/base/Qwen2-1.5B-Instruct-q4f16_1_cs1k-webgpu.wasm",
+    "transformers-3.8.1.mjs": "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1/dist/transformers.min.js",
+    "onnx-jsep-1.22.mjs": "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1/dist/ort-wasm-simd-threaded.jsep.mjs",
+    "onnx-jsep-1.22.wasm": "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1/dist/ort-wasm-simd-threaded.jsep.wasm"
+  }
+}

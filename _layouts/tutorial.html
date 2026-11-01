@@ -223,6 +223,10 @@
         {% assign tutorial_uses_v86 = true %}
       {% endif %}
     {% endfor %}
+    {% assign tutorial_llm_enabled = false %}
+    {% if tutorial_data.llm and tutorial_backend == 'pyodide' and tutorial_mixed_backend == false %}
+      {% assign tutorial_llm_enabled = true %}
+    {% endif %}
     {% if tutorial_backend == 'uml-editor' %}
       <div id="tutorial-container" class="tvm-root tvm-uml-editor-tutorial">
         <div class="tvm-container tvm-uml-editor-container">
@@ -290,6 +294,10 @@
   {% if tutorial_backend == 'shell-pipeline' %}
   <link rel="stylesheet" href="{{ '/css/tutorial-shell-pipeline.css' | relative_url }}">
   {% endif %}
+  {% if tutorial_llm_enabled %}
+  {% include tutorial-llm.html %}
+  <link rel="stylesheet" href="{{ '/css/tutorial-llm.css' | relative_url }}">
+  {% endif %}
   <link rel="stylesheet" href="{{ '/css/print-light.css' | relative_url }}">
 
   <!-- Tutorial engine — unified (v86 / pyodide / webcontainer) -->
@@ -315,6 +323,9 @@
   <script src="{{ '/js/uml-view-controls.js' | relative_url }}"></script>
   <script src="{{ '/js/monaco-loader.js' | relative_url }}"></script>
   <script src="{{ '/js/tutorial-code.js' | relative_url }}"></script>
+  {% if tutorial_llm_enabled %}
+  <script src="{{ '/js/tutorial-llm.js' | relative_url }}"></script>
+  {% endif %}
   {% if tutorial_backend == 'tla' %}
   <script src="{{ '/js/tla/view.js' | relative_url }}"></script>
   <script src="{{ '/js/tutorial-tla.js' | relative_url }}"></script>
@@ -353,7 +364,7 @@
         repeat downloads, while validator checks prevent stale snapshots).
   {%- endcomment -%}
   {% assign tutorial_requires_coi = false %}
-  {% if tutorial_uses_webcontainer %}
+  {% if tutorial_uses_webcontainer or tutorial_llm_enabled %}
     {% assign tutorial_requires_coi = true %}
   {% elsif tutorial_data.debugger and tutorial_data.backend != 'prolog' and tutorial_data.backend != 'haskell' %}
     {% assign tutorial_requires_coi = true %}
@@ -506,7 +517,13 @@
         playwright: config.playwright || null,
       });
       window._tutorial = tutorial;
-      tutorial.start().catch(function () {
+      tutorial.start().then(function () {
+        {% if tutorial_llm_enabled %}
+        return import('{{ "/js/browser-llm/tutorial-addon.mjs" | relative_url }}').then(function (module) {
+          module.mountTutorialModel(tutorial, document.getElementById('tutorial-llm-template'));
+        });
+        {% endif %}
+      }).catch(function () {
         // start() owns the visible error state; consume the rejected readiness
         // promise here because this layout intentionally starts it in place.
       });

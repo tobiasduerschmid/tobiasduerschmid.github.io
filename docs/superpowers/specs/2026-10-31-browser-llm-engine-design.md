@@ -1,6 +1,6 @@
 # Adaptive browser LLM engines for SE Book
 
-Status: design for review; implementation has not started.
+Status: approved for implementation on 2026-10-31. The user additionally requires a download progress bar, easy model deletion, and integration as an opt-in add-on to the Python tutorial backend.
 
 ## Intent and agreed constraints
 
@@ -15,6 +15,8 @@ The user requested exchangeable inference engines selected according to the mach
 3. **Exchangeable adapters:** a stable SE Book interface, initially implemented by WebLLM and wllama. Selection and fallback are outside lesson code. This follows the user's latest direction; the concrete policy below is the proposed implementation choice.
 
 Neither GPU presence nor an Intel/Apple/NVIDIA label proves which engine is fastest. “Auto” means the best supported candidate under the download and memory constraints, refined by available measurements; it is not a guarantee of a globally optimal configuration.
+
+The user additionally requires that no large files be stored in the repository. Keep model weights and runtime bundles on pinned public hosts; verify runtime integrity before execution. The repository contains only small integration code, configuration, licenses, and provenance.
 
 ## Model identity and artifacts
 

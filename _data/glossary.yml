@@ -198,6 +198,11 @@
   description: A visual interface made of windows, buttons, menus, icons, and other graphical controls. GUIs contrast with command-line interfaces.
   related: [UI, CLI]
 
+- term: GB
+  definition: Gigabyte
+  description: A decimal unit of data size equal to one billion bytes. Download sizes on this site use decimal gigabytes.
+  related: [MB]
+
 - term: HTML
   definition: HyperText Markup Language
   description: The markup language used to structure web pages. HTML elements describe meaning (heading, paragraph, list, link); CSS describes presentation; JavaScript describes behaviour.
@@ -318,6 +323,11 @@
   description: The order in which Python searches classes for inherited attributes and methods. Cooperative super calls continue along the receiving class's order, which can include another branch of multiple inheritance.
   related: [OOP, ABC]
 
+- term: MB
+  definition: Megabyte
+  description: A decimal unit of data size equal to one million bytes. Download progress on this site uses decimal megabytes.
+  related: [GB]
+
 - term: MVC
   definition: Model-View-Controller
   description: A user-interface architecture that separates the data and business rules (the Model), the presentation (the View), and the input handling and orchestration (the Controller).
@@ -356,6 +366,11 @@
 - term: OpenCL
   definition: Open Computing Language
   description: An open standard for parallel computation across devices from different vendors. Programs can launch work-items that run a kernel on different portions of the data.
+
+- term: ONNX
+  definition: Open Neural Network Exchange
+  description: An open format for representing machine-learning models so compatible inference engines can execute them. The browser specification assistant uses an ONNX conversion of the same Qwen checkpoint for Firefox graphics acceleration.
+  related: [AI, LLM]
 
 - term: OOP
   definition: Object-Oriented Programming

@@ -6,7 +6,7 @@
  *
  * Inbound messages (main → worker):
  *   { type: 'run',      id, path }              Run a file by path (streams output)
- *   { type: 'runCode',  id, code, silent }       Run Python code string
+ *   { type: 'runCode',  id, code, silent, captureOutput }       Run Python code string
  *   { type: 'write',    id, path, content }      Write a file to Pyodide FS
  *   { type: 'read',     id, path }               Read a file from Pyodide FS
  *
@@ -162,7 +162,7 @@ self.onmessage = function (e) {
   if (msg.type === 'run') {
     runFile(msg.id, msg.path, msg.args || []);
   } else if (msg.type === 'runCode') {
-    runCode(msg.id, msg.code, !!msg.silent);
+    runCode(msg.id, msg.code, !!msg.silent, !!msg.captureOutput);
   } else if (msg.type === 'write') {
     writeFile(msg.id, msg.path, msg.content);
   } else if (msg.type === 'read') {
@@ -196,7 +196,7 @@ function runFile(id, path, args) {
   runCode(id, code, false);
 }
 
-function runCode(id, code, silent) {
+function runCode(id, code, silent, captureOutput) {
   if (_running) {
     // Queue up after current run (simple: reject with busy signal)
     self.postMessage({ type: 'stderr', text: 'Already running — please wait.\n' });
@@ -205,8 +205,13 @@ function runCode(id, code, silent) {
   }
   _running = true;
 
+  // Optional bounded reply for structured checks; ordinary silent runs still
+  // discard output, and nothing is streamed into the learner's output panel.
+  var capturedOutput = '';
   if (silent) {
-    pyodide.setStdout({ batched: function () {} });
+    pyodide.setStdout({ batched: function (text) {
+      if (captureOutput) capturedOutput = (capturedOutput + text + '\n').slice(0, 16384);
+    } });
     pyodide.setStderr({ batched: function () {} });
   } else {
     pyodide.setStdout({ batched: function (text) {
@@ -249,7 +254,9 @@ function runCode(id, code, silent) {
     })
     .then(function (exitCode) {
       _running = false;
-      self.postMessage({ type: 'run_done', id: id, exitCode: exitCode });
+      var reply = { type: 'run_done', id: id, exitCode: exitCode };
+      if (captureOutput) reply.stdout = capturedOutput;
+      self.postMessage(reply);
     })
     .catch(function (err) {
       _running = false;

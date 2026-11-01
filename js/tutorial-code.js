@@ -1514,6 +1514,7 @@
   };
 
   TutorialCode.prototype.destroy = function () {
+    if (this.llmAddon) this.llmAddon.destroy();
     this._umlViewControls.forEach(function (controls) { controls.destroy(); });
     this._umlViewEvents.abort();
     this._destroyed = true;
@@ -11510,6 +11511,7 @@
     if (!step) return;
 
     this._clearTimedPracticeTimer();
+    if (this.llmAddon) this.llmAddon.beforeStepChange();
     if (window.TutorChat) { window.TutorChat.onStepChange(); }
     if (this.debuggerEnabled && window.SEBookDebugger) {
       window.SEBookDebugger.onStepChange(this);
@@ -11919,6 +11921,7 @@
   TutorialCode.prototype.loadStep = function (index) {
     if (index < 0 || index >= this.steps.length) return Promise.resolve();
     if (!this.instructorMode && !this._stepsUnlocked.has(index)) return Promise.resolve();
+    if (this.llmAddon) this.llmAddon.beforeStepChange();
     this._cancelPlaywrightRun();
     if (this._tlaController) this._tlaController.reset();
     if (this._compilerAdapter) this._compilerAdapter.cancel();
@@ -12014,6 +12017,9 @@
         return committed;
       });
     };
+    // Cancelling a Python specification check replaces its worker. Keep the
+    // outgoing models intact until recovery finishes before writing the next step.
+    if (this.llmAddon && this._workerRestartPromise) return this._workerRestartPromise.then(load);
     if (this._prologInterpreter && this._prologInterpreter.busy) {
       return this._prologInterpreter.stopForWorkspaceChange().then(load);
     }
@@ -12385,6 +12391,7 @@
       self._suppressAutoSave = autoSaveSuppressedBeforeStepLoad;
       if (self.autoSaveEnabled && !self._suppressAutoSave) self._autoSaveProgress();
       self._startTimedPractice(index);
+      if (self.llmAddon) self.llmAddon.setStep();
       return true;
     }, function (error) {
       self._suppressAutoSave = autoSaveSuppressedBeforeStepLoad;
@@ -13091,7 +13098,7 @@
     // Re-entrancy guard — a previous "I'm sure" run can fire again before its
     // results return. Without this guard, the second run can replace the
     // pending test buffer/state and produce ghost results in the panel.
-    if (this._testRunInFlight || this._studentPlaywrightRun || this._destroyed) return;
+    if (this._testRunInFlight || this._llmChecksInFlight || this._studentPlaywrightRun || this._destroyed) return;
     if ((this.config.backend === 'cpp' || this.config.backend === 'haskell' || this.config.backend === 'prolog' || this.config.backend === 'smalltalk' || this.config.backend === 'compiler' || this.config.backend === 'tla' || this.config.backend === 'shell-pipeline') && this._activeRunTransaction) return;
     if ((this.config.backend === 'compiler' || this.config.backend === 'tla' || this.config.backend === 'shell-pipeline') && this._activeStepLoadRequest) return;
     if (this.config.backend === 'prolog' && (this._activeStepLoadRequest || this._workerRestartPromise || (this._debuggerCtl && this._debuggerCtl.session))) return;

@@ -37,6 +37,15 @@
     {{ rendered_step_instructions | replace: ' id="', ' data-print-id="' }}
   </div>
 
+  {% if tutorial_data.llm and tutorial_data.backend == 'pyodide' and step.llm %}
+  <div class="step-instructions">
+    <h3>Specification practice</h3>
+    <p><strong>Public interface:</strong> {{ step.llm.interface | escape }}</p>
+    <p><strong>Starting specification:</strong> {{ step.llm.specification | escape }}</p>
+    <p>Refine this specification and write or review a Python implementation. Explain which rules your specification states and which assumptions a programmer would still need to make.</p>
+  </div>
+  {% endif %}
+
   {% if step.files %}
   <div class="starter-files">
     <div class="starter-files-label">Starter files</div>

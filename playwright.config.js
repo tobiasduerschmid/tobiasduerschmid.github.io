@@ -55,6 +55,11 @@ module.exports = defineConfig({
       use: { ...devices['Desktop Chrome'] },
     },
     {
+      name: 'tutorial-llm-firefox',
+      testMatch: /tutorial-llm\.spec\.js/,
+      use: { ...devices['Desktop Firefox'], launchOptions: {} },
+    },
+    {
       name: 'gym-mobile-firefox',
       testMatch: /se-gym-mobile-start\.spec\.js/,
       use: { ...devices['Desktop Firefox'], launchOptions: {} },

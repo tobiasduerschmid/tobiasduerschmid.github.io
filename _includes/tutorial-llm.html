@@ -1,0 +1,70 @@
+<template id="tutorial-llm-template">
+  <section class="tutorial-llm" aria-labelledby="tutorial-llm-heading">
+    <header class="tutorial-llm-heading">
+      <h3 id="tutorial-llm-heading">Specification assistant</h3>
+      <span class="tutorial-llm-badge" data-field="model-state">Optional · on your device</span>
+    </header>
+    <div data-field="exercise" hidden>
+      <label for="tutorial-llm-specification">Your specification</label>
+      <textarea id="tutorial-llm-specification" data-field="specification" rows="4" maxlength="1200" aria-describedby="tutorial-llm-spec-hint"></textarea>
+      <p class="tutorial-llm-hint" id="tutorial-llm-spec-hint">Up to 1,200 characters; kept until you reload.</p>
+      <details class="tutorial-llm-contract">
+        <summary>Function requirements</summary>
+        <pre data-field="contract"></pre>
+      </details>
+    </div>
+    <p class="tutorial-llm-setup" data-field="setup">Checking your device…</p>
+    <div class="tutorial-llm-actions">
+      <button class="tutorial-llm-primary" type="button" data-action="download" disabled>Download model</button>
+      <button class="tutorial-llm-primary" type="button" data-action="generate" hidden disabled>Generate Python</button>
+      <button type="button" data-action="check">Check Python</button>
+      <button type="button" data-action="cancel" hidden>Cancel</button>
+    </div>
+    <p class="tutorial-llm-hint" data-field="check-hint">Checks the code in your editor. No download needed.</p>
+    <div class="tutorial-llm-progress" data-field="progress-wrap" hidden>
+      <label id="tutorial-llm-progress-label" for="tutorial-llm-progress">Model download</label>
+      <progress aria-labelledby="tutorial-llm-progress-label" id="tutorial-llm-progress" data-field="progress" max="1" value="0"></progress>
+      <p data-field="bytes"></p>
+    </div>
+    <div class="tutorial-llm-status-row">
+      <span class="tutorial-llm-spinner" data-field="loading" data-testid="model-loading-indicator" aria-hidden="true" hidden></span>
+      <p class="tutorial-llm-status" role="status" aria-live="polite" aria-atomic="true" data-field="status"></p>
+    </div>
+    <div class="tutorial-llm-result" data-field="result" hidden>
+      <label for="tutorial-llm-code">Generated Python — review before applying</label>
+      <textarea id="tutorial-llm-code" data-field="code" rows="8" readonly spellcheck="false"></textarea>
+      <div class="tutorial-llm-actions">
+        <button class="tutorial-llm-primary" type="button" data-action="apply" disabled>Apply to Python file</button>
+      </div>
+      <p class="tutorial-llm-hint">Applying replaces the current Python file. Review it, then check it.</p>
+    </div>
+    <div class="tutorial-llm-feedback" data-field="feedback-wrap" hidden>
+      <h4>Feedback</h4>
+      <p data-field="feedback"></p>
+    </div>
+    <details class="tutorial-llm-settings" data-field="settings">
+      <summary>Model &amp; storage</summary>
+      <p>Qwen2.5-Coder 1.5B runs locally. Your specification and code stay on this device.</p>
+      <label for="tutorial-llm-engine">Run the model using</label>
+      <select id="tutorial-llm-engine" data-field="engine">
+        <option value="auto">Automatic (recommended)</option>
+        <option value="cpu">Processor — broad compatibility</option>
+        <option value="webllm-gpu">Graphics — WebLLM</option>
+        <option value="onnx-gpu">Graphics — ONNX (Firefox compatible)</option>
+        <option value="wllama-gpu">Graphics — wllama</option>
+      </select>
+      <p data-field="device"></p>
+      <p class="tutorial-llm-hint" data-field="browser-note"></p>
+      <p class="tutorial-llm-hint">Changing engines may download another format of the same model. Runtime files add up to about 25 MB. Other tabs and apps share your available memory.</p>
+      <div class="tutorial-llm-actions">
+        <button type="button" data-action="compare" hidden>Compare downloaded engines</button>
+        <button type="button" data-action="unload" disabled>Unload from memory</button>
+      </div>
+      <p class="tutorial-llm-hint">Unload keeps the download for next time. Compare tests already downloaded engines without fetching more models.</p>
+      <div class="tutorial-llm-storage">
+        <button type="button" data-action="delete">Delete downloaded model</button>
+        <p class="tutorial-llm-hint">Removes all formats and partial downloads, including those used in other tabs. Your Python work stays. Also available on the <a href="{{ '/cookies/#browser-model-storage' | relative_url }}">storage page</a>.</p>
+      </div>
+    </details>
+  </section>
+</template>

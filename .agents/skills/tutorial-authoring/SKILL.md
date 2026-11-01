@@ -634,6 +634,9 @@ students are confused" reports.
 
 ### YAML & content
 
+- [ ] Optional local specification assistants use top-level `llm: true` only with a single `backend: pyodide`. Each participating step has `llm.file`, public `llm.interface`, starting `llm.specification`, and conceptual `llm.checks`. Keep hidden commands out of ordinary `tests`, prompts, and printed content. Verify manual checking, generation/apply, cancellation, and model deletion; see `docs/browser-llm.md`.
+
+
 - [ ] `_data/tutorials/<slug>.yml` created with Title-Cased `title`,
       `description`, top-level `learning_objectives:` (4–8 Bloom-verb
       items), and an explicit `backend:`. (See §3.1 for the schema cheat
@@ -820,6 +823,9 @@ layout, and the popouts) actually consume. **Update this section when you
 add a field.**
 
 ### 3.1 Top-level fields
+
+**Optional local specification assistant:** `llm: true` enables the exchangeable browser model add-on for Python-only (`backend: pyodide`, no mixed step backends) tutorials. Ordinary tutorials load no inference runtime. Capabilities are checked before downloading; a student must activate Download/Load. Model data is separate from tutorial autosave. See `docs/browser-llm.md` for limits, storage, and verification.
+
 
 ```yaml
 title: string                          # Required. Shown in navbar + index
@@ -1146,6 +1152,21 @@ print_unchanged_files: boolean         # Default true. false prints a one-line
 ```
 
 ### 3.2 Step fields (`steps:` is a list)
+
+A participating Python step may set:
+
+```yaml
+llm:
+  file: solution.py
+  interface: "Define the public function signature and input domain."
+  specification: "The student's editable starting prose."
+  checks:
+    - category: ordering
+      command: "assert subject['function_name'](...) == ..."
+```
+
+`file` must name an editable Python file in the step. `interface` is public (maximum 600 characters); `specification` is session-only, editable up to 1,200 characters. Check commands execute with `subject` containing a fresh execution of the current file. At most 20 check groups are accepted. Categories are `ordering`, `duplicates`, `boundaries`, `input-contract`, `output-contract`, or `mutation`; describe a concept, never a concrete hidden case. The adapter returns only categories plus `checked`/`syntax`/`runtime`/`unavailable` status. Checks do not award ordinary tutorial test credit. The print view includes public specification/interface only. Hidden means absent from normal UI/feedback, not secret from developer tools. Checks can be run without any model download.
+
 
 ```yaml
 steps:
@@ -2025,6 +2046,17 @@ JSON markers under `[data-compiler-lab]` auto-initialize; dynamic owners call
 session-only. See `docs/compiler-lab.md` for limits, examples, and lecture mapping.
 
 ## 4. Architecture map
+
+### Optional browser language-model add-on
+
+- `_includes/tutorial-llm.html` and `css/tutorial-llm.css` own semantic controls and theme/print styling; `js/browser-llm/view.mjs` updates state and measured download progress. The panel starts with the specification and expandable function requirements. Show one primary action (download or generate); keep **Check Python** usable without a model. Cached models load automatically before generation or conceptual feedback, with a spinner beside the live preparation status; reduced motion stops its animation. No separate load action is needed. Automatic loading is cache-only: eviction returns to explicit download. Cancel, edits, and navigation stop preparation as well as generation. Byte/percentage download progress and Cancel stay beside the primary action. Engine selection, device details, comparison, unload, and deletion live in the native **Model & storage** disclosure, which remains accessible on non-exercise steps. Generated code requires explicit application, and feedback is revealed only when present.
+- `tutorial-addon.mjs` owns session-only specification state, explicit code application, and cancellation on edits/navigation. `js/tutorial-llm.js` bridges revision snapshots and bounded checks into the existing Python worker ownership. `tutorial-code.js` only calls lifecycle hooks and excludes simultaneous ordinary tests during these checks.
+- `capabilities.mjs` probes without model fetches; `runtime.mjs` selects an adapter, owns one worker and origin-wide model lock, and requires activation before a new format download.
+- `storage.mjs` streams files into the exact vendor data caches and coordinates complete/partial deletion across tabs. No learner draft is stored with model data. `/cookies/` and Delete everything use the same deletion API.
+- `worker.mjs` lazily imports WebLLM/wllama/ONNX adapters with pinned hosted runtimes after acquisition. The fixed model, immutable URLs, byte counts, and executable integrity are in `catalog.mjs` and `js/vendor/browser-llm/provenance.json`. Do not silently substitute a larger model or fetch a second format to benchmark it.
+- `js/pyodide-worker.js` accepts opt-in `captureOutput` on silent `runCode` requests and returns at most 16 KiB of stdout; ordinary silent requests still discard it. This carries only the structured check summary.
+- `checks.mjs` sees hidden commands; `prompts.mjs` sees only public interface/specification and allowlisted conceptual categories. Generated code is never automatically applied or executed. Failures do not prove that prose is wrong.
+
 
 ### 4.1 Layouts
 
@@ -4608,3 +4640,10 @@ root so instructions, editors, output, diagrams, popout controls, and the navbar
 remain available. Browser exits synchronize its label and pressed state. There
 is no keyboard shortcut. The same controller supplies the SE Gym workout button;
 its optional saved preference is off by default.
+
+Browser LLM lifecycle: preflight requests are revision-guarded in both the view and runtime. Normal `loadStep()` cancels checks before destination preparation starts. GPU backend failures invalidate that candidate and reprobe; cancellation, invalid input, and exhausted deadlines never retry. Each model load runs a bounded non-student warm-up; Automatic can compare already-downloaded alternatives sequentially under a two-minute deadline. Measurements are page-session-only and compare total latency only for identical completed output; no additional weights are downloaded for comparison.
+
+Browser capability rules must match the pinned engines: WebLLM 0.2.87 needs at least ten storage buffers per shader stage; unsupported graphics choices are disabled before model acquisition. Firefox wllama graphics requires native JSPI and Memory64. Processor mode uses wllama’s native Firefox runtime when Memory64 is available; do not force Asyncify there merely because JSPI is absent. The warm-up only checks readiness. Engine comparison times an identical complete Python-function workload, and generation reports elapsed time.
+
+
+Firefox graphics uses the pinned Transformers.js 3.8.1 / ONNX Runtime Web JavaScript WebGPU backend with the same Qwen checkpoint. Preflight requires shader-f16, nine storage buffers per stage, 512 MiB buffer/binding capacity, and 32 KiB workgroup storage. Do not replace it with the newer native backend without retesting: Transformers.js 4.3.2 exceeded the nine-buffer limit on real inference. The ONNX representation is 1,355,668,005 bytes; its weights use validated 32 MiB ranges in `sebook-llm-onnx-v1`, with a read-only custom cache and no remote loader downloads or extra Transformers cache. Deletion must clear this store too. The full templated ONNX prompt is capped at 768 input tokens before GPU inference because this graph returns FP32 logits for every input position; oversized prompts get an input error rather than truncation or a GPU allocation failure. The initialization buffer adds peak memory; physical 8 GB acceptance is still required. For fresh Firefox downloads Automatic prefers ONNX, while existing compatible cached formats and explicit choices take precedence. Runtime binaries remain pinned, integrity-verified hosted assets outside the repository.

@@ -1,0 +1,83 @@
+title: "From Specification to Python"
+description: "A short experiment in making program requirements precise, checking generated Python, and separating specification ambiguity from implementation mistakes. Basic Python functions and lists are prerequisites. Allow 15–20 minutes, plus the optional model download."
+backend: pyodide
+llm: true
+autosave_type: files
+require_tests: false
+learning_objectives:
+  - State observable behavior, boundary rules, and mutation constraints in a natural-language specification.
+  - Distinguish evidence of an implementation mismatch from evidence that a specification is ambiguous.
+  - Review a generated implementation and explain the limits of passing checks.
+steps:
+  - title: Make the requirements explicit
+    instructions: |
+      ### Your task
+
+      Design `unique_in_order(items)`, a function that removes repeated integers from a list. The intended behavior is:
+
+      - Keep one occurrence of each distinct value, in the order it first appeared.
+      - Return a new list and leave the original list unchanged.
+      - Accept an empty list and return an empty list.
+      - Inputs are lists of integers; other input types are outside this exercise's contract.
+
+      For example, `[4, 1, 4, 3]` should produce `[4, 1, 3]`. Before running anything, explain why the starting implementation might disagree with that requirement.
+
+      ### Try, inspect, refine
+
+      Use **Check Python** to inspect the starting code. Then clarify one missing rule in the specification below and generate a new version, or edit `solution.py` yourself.
+
+      Review and apply any generated code before checking it. Explain what changed: a failing program can be the model's mistake even when the specification is clear.
+    files:
+      - path: solution.py
+        content: |
+          def unique_in_order(items):
+              # One possible reading of "remove repeated values".
+              return sorted(set(items))
+    open_file: solution.py
+    run_file: solution.py
+    llm:
+      file: solution.py
+      interface: "Define unique_in_order(items). The argument is a list of integers. Return a list. Do not read input or print output."
+      specification: "Remove repeated values from a list of integers."
+      checks:
+        - category: duplicates
+          command: |
+            for values in ([13, 13, 13], [5, 5, -2, -2, 5], [0, 0]):
+                result = subject['unique_in_order'](values)
+                assert isinstance(result, list)
+                assert len(result) == len(set(values)) and set(result) == set(values)
+        - category: ordering
+          command: |
+            assert subject['unique_in_order']([7, -8, 2]) == [7, -8, 2]
+            assert subject['unique_in_order']([6, -3, 6, 9, -3]) == [6, -3, 9]
+        - category: boundaries
+          command: |
+            assert subject['unique_in_order']([]) == []
+            assert subject['unique_in_order']([-11]) == [-11]
+        - category: mutation
+          command: |
+            original = [8, -4, 8]
+            before = original.copy()
+            result = subject['unique_in_order'](original)
+            assert original == before
+            assert result is not original
+  - title: Transfer the reasoning
+    instructions: |
+      ### Check what you learned
+
+      Without generating another program, write a specification for a variation: keep the **last** occurrence of each integer, ordered by where those retained occurrences appeared in the input.
+
+      Give an example that distinguishes this variation from the first task. Explain the empty-input rule and whether the input may change. Then sketch how your implementation would change.
+
+      Passing a finite set of checks does not establish that every requirement is stated, every implementation is correct, or every interpretation agrees. Name one assumption that you deliberately ruled out in your specification.
+
+      ### Remove the download when finished
+
+      Open **Model & storage** below. **Delete downloaded model** reclaims its storage; **Unload from memory** keeps the download for next time. Your saved Python files are separate.
+    files:
+      - path: reflection.py
+        content: |
+          # Write the revised specification as comments.
+          # Give your distinguishing example and explain your reasoning.
+    open_file: reflection.py
+    run_file: reflection.py
