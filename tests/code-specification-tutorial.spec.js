@@ -68,9 +68,9 @@ test('print preserves original readings and prose tasks without disclosing hidde
   await expect(page.locator('meta[name="tdm-reservation"]')).toHaveAttribute('content','1');
 });
 
-// Substitute the inference transport through WorkerClient's factory seam.
-// The real runtime orchestration and private browser Python checker run; this
-// tests UI/checker integration, not model quality or inference-worker behavior.
+// Substitute only the external inference worker at the browser boundary.
+// Both shared and direct runtime orchestration and the private browser Python
+// checker run; this tests UI/checker integration, not model quality.
 // Empty cache entries live only in this test's disposable browser context.
 async function controlledGeneration(page,source,url=URL) {
   await page.goto(url);
@@ -81,16 +81,22 @@ async function controlledGeneration(page,source,url=URL) {
     const {WARMUP_MESSAGES}=await import('/js/browser-llm/measurements.mjs');
     const sources=Array.isArray(source)?source:[source];
     let attempt=0;
-    window._tutorial.llmAddon.runtime.client.factory=()=>({
-      stopped:false,
-      postMessage({id,action,payload}) {
-        const warmup=action === 'generate' && JSON.stringify(payload.messages) === JSON.stringify(WARMUP_MESSAGES);
-        if (action === 'generate' && !warmup) window.__modelFixtureMessages.push(payload.messages);
-        const value=action === 'load' ? true : {text:warmup?'ready':sources[Math.min(attempt++,sources.length-1)],finishReason:'stop'};
-        queueMicrotask(()=>{if (!this.stopped) this.onmessage({data:{id,type:'result',value}});});
-      },
-      terminate() {this.stopped=true;}
-    });
+    const NativeWorker=window.Worker;
+    window.Worker=class extends NativeWorker {
+      constructor(url,options) {
+        if(!String(url).includes('/browser-llm/worker.mjs'))return new NativeWorker(url,options);
+        return {
+          stopped:false,
+          postMessage({id,action,payload}) {
+            const warmup=action === 'generate' && JSON.stringify(payload.messages) === JSON.stringify(WARMUP_MESSAGES);
+            if (action === 'generate' && !warmup) window.__modelFixtureMessages.push(payload.messages);
+            const value=action === 'load' ? true : {text:warmup?'ready':sources[Math.min(attempt++,sources.length-1)],finishReason:'stop'};
+            queueMicrotask(()=>{if (!this.stopped) this.onmessage({data:{id,type:'result',value}});});
+          },
+          terminate() {this.stopped=true;}
+        };
+      }
+    };
     const {ARTIFACTS}=await import('/js/browser-llm/catalog.mjs');
     for (const asset of ARTIFACTS.gguf.assets) {
       const cache=await caches.open(asset.cache);

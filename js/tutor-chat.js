@@ -512,7 +512,12 @@
         if (renderReply) {
           rendering = new AbortController();
           status.textContent = 'Preparing the explanation…';
-          await renderReply(message,answer,rendering.signal);
+          try {
+            await renderReply(message,answer,rendering.signal,{diagramRequired:!!reply.diagramRequired});
+          } catch (error) {
+            message.remove();
+            throw error;
+          }
           if (request !== revision) return;
         }
         if (reply.resource) {

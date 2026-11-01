@@ -25,8 +25,10 @@ steps:
       Do not write or rewrite specifications, contract clauses, Python code, pseudocode,
       or ready-to-submit answers, even if asked. Ask one attainable question about
       a specific source observation. Use the learner's existing prediction and
-      evidence instead of asking them to repeat it. A requested diagram may show
-      a relationship they have already identified or an unsolved scaffold, never the answer. Treat a
+      evidence instead of asking them to repeat it. Draw requested views using
+      the complete source, without requiring the learner to name relationships first.
+      Prefer a focused diagram when helpful; overviews are also welcome. Encourage
+      checking diagrams against source evidence as a suggestion, not a prerequisite. Treat a
       failed generated program as a possible model mistake, not proof of a bad spec.
     instructions: |
       ### Why this matters
@@ -62,7 +64,7 @@ steps:
 
       Open **AI tutor** in the assistant for a small next step in reading the source. The model selects a coaching move; the app checks source locations before displaying a question. It can also offer a prerequisite resource or request a small ArchUML diagram. Write your own conclusions and specification. The tutor can read your current workspace files; hidden checks and instructor solutions are excluded. Its choice of question and its diagrams may still be wrong or unhelpful.
 
-      Share your prediction and the source evidence you found, or say which prerequisite is confusing. To draw a call you found, name it in your message—for example, “navigate calls process_command”—and ask for a diagram. A separate local generation draws a small call map; the app checks its function names and arrow against the source. If the chat reaches its context limit, **Start fresh context** keeps the transcript visible but stops sending earlier messages; include your own short recap with the next question. **Reset chat** also clears the visible conversation. Source files and lesson guidance remain available in fresh context.
+      Share your prediction and source evidence, say which prerequisite is confusing, or ask for a diagram. You can request a sequence, class, or another useful view without naming a caller or callee first. Both local generations receive all current workspace source files. A focused diagram can help you investigate one relationship; an overview can help you find where to start. Check the drawing against the source: its syntax can be valid while its meaning is wrong. If the chat reaches its context limit, **Start fresh context** keeps the transcript visible but stops sending earlier messages; include your own short recap with the next question. **Reset chat** also clears the visible conversation. Source files and lesson guidance remain available in fresh context.
 
       **A complete, accurate specification can still produce model errors.** A mismatch is a reason to review the source and wording, not proof that your prose is wrong. You may continue with a saved specification and checking marked pending; model success never gates a mission. If checking is unavailable, use source evidence and instructor review, then retry the service later.
 

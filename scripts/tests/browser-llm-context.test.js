@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const {build} = require('esbuild');
 const vm = require('node:vm');
 const path = require('node:path');
+const catalog = import('../../js/browser-llm/catalog.mjs');
 
 // Keep production modules real; replace only browser storage and vendor imports.
 async function browserModule(file, boundaries, globals, run) {
@@ -48,8 +49,9 @@ for (const [message,name,recoverable] of [
     assert.equal(result.errorName,'InputError');
     assert.equal(result.recoverable,recoverable);
     assert.equal(result.value,message);
-    assert.equal(result.contextLimit.contextTokens,2048);
-    assert.equal(result.contextLimit.maxInputTokens,2047);
+    const {CONTEXT_TOKENS} = await catalog;
+    assert.equal(result.contextLimit.contextTokens,CONTEXT_TOKENS);
+    assert.equal(result.contextLimit.maxInputTokens,CONTEXT_TOKENS-1);
   });
 }
 
@@ -157,5 +159,27 @@ test('wllama disables automatic removal of prompt tokens from a full context',as
     '../storage.mjs':{readArtifactBlob:async()=>new Blob(['cached model'])}
   },{Blob},async({load})=>load({threads:2,gpu:false}));
   assert.equal(options.ctx_shift,false);
-  assert.equal(options.n_ctx,2048);
+  assert.equal(options.n_ctx,(await catalog).CONTEXT_TOKENS);
 });
+
+for (const artifact of ['mlc','mlc7b']) {
+  test('WebLLM loads the selected '+artifact+' model with its matching verified library and 4K context',async()=>{
+    const {ARTIFACTS,CONTEXT_TOKENS}=await catalog;
+    let modelId,settings,libraryName,revoked=false;
+    await browserModule('adapters/webllm.mjs',{
+      '../vendor.mjs':{
+        importRuntime:async()=>({CreateMLCEngine:async(id,options)=>{modelId=id;settings=options;return {};}}),
+        runtimeWasm:async name=>{libraryName=name;return {url:'blob:verified-library',revoke(){revoked=true;}};}
+      }
+    },{},async({load})=>load({artifact}));
+    const model=ARTIFACTS[artifact];
+    assert.equal(modelId,model.modelId);
+    assert.equal(libraryName,model.library);
+    const configured=settings.appConfig.model_list[0];
+    assert.equal(configured.model,model.baseUrl);
+    assert.equal(configured.model_lib,'blob:verified-library');
+    assert.equal(configured.integrity.model_lib,model.integrity.model_lib);
+    assert.equal(configured.overrides.context_window_size,CONTEXT_TOKENS);
+    assert.equal(revoked,true);
+  });
+}

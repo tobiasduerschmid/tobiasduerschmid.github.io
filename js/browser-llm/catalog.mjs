@@ -1,7 +1,16 @@
-// Immutable Qwen2.5-Coder 3B artifacts. Weights stay outside the repository.
-export const CONTEXT_TOKENS = 2048;
+import {MLC_7B} from './catalog-7b.mjs';
+// Immutable Qwen2.5-Coder artifacts. Weights stay outside the repository.
+export const CONTEXT_TOKENS = 4096;
 export const OUTPUT_TOKENS = 384;
+export const DEFAULT_MODEL = '3b';
+export const MODELS = {
+  '3b':{label:'Qwen2.5-Coder 3B Instruct',requiresMemoryConfirmation:false,
+    memoryNote:'Lower-memory default for 8 GB-class devices. Other apps and tabs share the available memory.'},
+  '7b':{label:'Qwen2.5-Coder 7B Instruct',requiresMemoryConfirmation:true,
+    memoryNote:'Use a device with at least 16 GB of memory and allow about 6 GB of available graphics or shared memory. This is an estimate, not a measurement; loading can use more. Close memory-heavy apps and tabs.'}
+};
 export const ARTIFACTS = {
+  "mlc7b": MLC_7B,
   "mlc": {
     "label": "Qwen2.5-Coder 3B Instruct (4-bit MLC)",
     "bytes": 1743386562,

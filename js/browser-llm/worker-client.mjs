@@ -5,6 +5,7 @@ export function abortError() { return new DOMException('Operation cancelled.', '
 export class WorkerClient {
   constructor(factory = () => new Worker(new URL('./worker.mjs', import.meta.url), {type:'module'})) {
     this.factory = factory;
+    this.shared = false;
     this.sequence = 0;
   }
   request(action, payload, {signal, onProgress, onText, timeoutMs = 300000} = {}) {
@@ -50,4 +51,6 @@ export class WorkerClient {
     this.worker = null;
     this.pending?.finish(error);
   }
+  release() { this.stop(); }
+  close() { this.stop(); }
 }

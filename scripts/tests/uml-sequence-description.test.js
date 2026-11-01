@@ -10,6 +10,19 @@ const context = { window: {}, setInterval() {}, clearInterval() {} };
 vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../../js/uml-auto-describe.js'), 'utf8'), context);
 const descriptions = context.window.UMLAutoDescribe;
 
+test('found messages describe an external sender without adding a fictitious participant', () => {
+  const source = 'participant rover: navigate\no-> rover: navigate(commands)';
+  const summary = descriptions.describe('sequence', source);
+  const verbose = descriptions.describeVerbose('sequence', source);
+  const messages = verbose.sections.find(section => section.heading === 'Messages').items.join('; ');
+  for (const text of [summary, messages]) {
+    assert.match(text, /found message from outside the diagram to rover with "navigate\(commands\)"/i);
+    assert.doesNotMatch(text, /o calls/);
+  }
+  assert.match(summary, /1 participant/);
+  assert.deepEqual(Array.from(verbose.sections.find(section => section.heading === 'Participants').items), ['navigate']);
+});
+
 for (const creation of ['Main --> sensor: <<create>>', 'sensor <-- Main: <<create>>']) {
   test(`creation is distinct from a reply in both text alternatives: ${creation}`, () => {
     const source = `participant sensor: Sensor\n${creation}\nMain -> sensor: read()\nsensor --> Main: int`;

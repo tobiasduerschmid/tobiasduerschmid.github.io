@@ -1,6 +1,7 @@
 import {ARTIFACTS} from './catalog.mjs';
 
 export const MODEL_LOCK = 'sebook-browser-llm-model';
+export const MODEL_DOWNLOAD_LOCK = 'sebook-browser-llm-download';
 export const MODEL_CHANNEL = 'sebook-browser-llm-storage';
 export const MODEL_CACHES = ['sebook-llm-gguf-v1','sebook-llm-onnx-v1','webllm/model','webllm/config','webllm/wasm'];
 const SIZE_HEADER = 'x-sebook-model-bytes';
@@ -163,12 +164,18 @@ export async function deleteModelStorage() {
   } finally { clearTimeout(timer); channel?.close(); }
 }
 
-export function holdModelLock() {
+export function holdModelLock({shared = false} = {}) {
   if (!navigator.locks) return Promise.reject(new Error('This browser cannot safely manage model downloads. Try an updated browser.'));
   return new Promise((resolve,reject) => {
-    navigator.locks.request(MODEL_LOCK,{ifAvailable:true},lock => {
+    navigator.locks.request(MODEL_LOCK,{ifAvailable:true,mode:shared ? 'shared' : 'exclusive'},lock => {
       if (!lock) { reject(new Error('The model is active in another tab. Unload it there, then try again.')); return; }
       return new Promise(release => resolve(release));
     }).catch(reject);
   });
+}
+
+// Pages may join the shared memory lease together, but only one streams weights.
+export function withModelDownloadLock(operation,{signal,onProgress = ()=>{}} = {}) {
+  onProgress({phase:'download-wait',message:'Checking whether another tab is downloading this model…'});
+  return navigator.locks.request(MODEL_DOWNLOAD_LOCK,{signal},operation);
 }

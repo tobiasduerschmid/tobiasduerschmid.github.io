@@ -591,20 +591,33 @@ info_nav_title: "Browser storage"
     </li>
     <li id="browser-model-storage">
       <strong>Downloaded local language model</strong> &mdash; optional Python specification
-      tutorials store Qwen2.5-Coder 3B model data in the Cache API under
+      tutorials store Qwen2.5-Coder model data in the Cache API under
       <code>sebook-llm-gguf-v1</code>, <code>sebook-llm-onnx-v1</code>, <code>webllm/model</code>, and
-      <code>webllm/config</code> (about 1.74–2.38 GB per selected format).
-      Completed files and ranges from interrupted downloads remain reusable. An engine
-      switch can leave multiple formats downloaded. Older model versions may also
+      <code>webllm/config</code>. The default 3B model uses about 1.74–2.38 GB per selected
+      format. The optional 7B model uses about 4.29 GB in the WebLLM caches and requires
+      compatible graphics plus confirmation of at least 16 GB of device memory.
+      Completed files and ranges from interrupted downloads remain reusable. Changing
+      the model size or engine can leave multiple downloads. Older model versions may also
       remain until deletion; this control removes them too. Browser eviction or deleting site
       data removes them. Small executable libraries use the normal HTTP cache, not these
       model caches. The legacy <code>webllm/wasm</code> model cache is also cleared if present.
-      Specifications and model replies stay in page memory; applied Python follows the
+      Model and engine choices, memory confirmation, specifications, and model replies
+      stay in page memory; applied Python follows the
       tutorial's existing save preference. No specification or Python code is sent to an
       inference server. Model files are fetched from Hugging Face after activation. Runtime libraries are fetched from pinned jsDelivr versions and an immutable GitHub commit, with integrity checks.
+      Compatible tabs on this exact site origin share one in-memory model, taking
+      turns to generate; each tab keeps its own chat. The
+      <code>sebook-browser-llm-inference-v1</code> BroadcastChannel carries requests,
+      streamed replies, cancellation, and readiness between those tabs only. These
+      messages are temporary and are not saved or sent to a server. The
+      <code>sebook-browser-llm-host-v1</code> browser lock elects the hosting tab.
+      Closing that tab may interrupt a reply; another tab can reload the downloaded
+      model when you try again. If cross-tab sharing is unavailable, the assistant
+      says so and uses a separate instance for that tab.
       The <code>sebook-browser-llm-storage</code> BroadcastChannel and
-      <code>sebook-browser-llm-model</code> browser lock coordinate unload/deletion across
-      open tabs; neither stores learner data.
+      <code>sebook-browser-llm-model</code> and <code>sebook-browser-llm-download</code>
+      browser locks coordinate model use, downloads, and deletion. Channels and
+      locks do not persist learner data.
       <button id="cookies-delete-model" class="cookies-btn danger" type="button">
         <i class="fa fa-trash" aria-hidden="true"></i> Delete downloaded language model
       </button>

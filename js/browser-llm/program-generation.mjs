@@ -1,6 +1,6 @@
 import {generationMessages,pythonFromResult} from './prompts.mjs';
 
-// Allow helper definitions within the existing 2,048-token context.
+// Reserve enough output for helper definitions while keeping generation bounded.
 const IMPLEMENTATION_TOKENS = 1024;
 const MAX_ATTEMPTS = 2;
 

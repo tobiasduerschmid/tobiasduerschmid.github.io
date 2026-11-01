@@ -49,7 +49,23 @@
     </details>
     <details class="tutorial-llm-settings" data-field="settings">
       <summary>Model &amp; storage</summary>
-      <p>Qwen2.5-Coder 3B runs locally. Your specification and code stay on this device.</p>
+      <p>Qwen2.5-Coder runs locally. Your specification and code stay on this device.</p>
+      <label for="tutorial-llm-model">Model size</label>
+      <select id="tutorial-llm-model" data-field="model" aria-describedby="tutorial-llm-model-note tutorial-llm-selection-note">
+        <option value="3b">3B — lower-memory default</option>
+        <option value="7b">7B — optional upgrade (16 GB+)</option>
+      </select>
+      <p class="tutorial-llm-hint" id="tutorial-llm-model-note" data-field="model-note"></p>
+      <div data-field="memory-confirmation" hidden>
+        <label for="tutorial-llm-memory">Device memory for 7B</label>
+        <select id="tutorial-llm-memory" data-field="memory" aria-describedby="tutorial-llm-memory-note">
+          <option value="">Choose to confirm</option>
+          <option value="16">16 GB or more</option>
+        </select>
+        <p class="tutorial-llm-hint" id="tutorial-llm-memory-note">Check your device's memory before using 7B. Browsers may report at most 8 GB or no memory value, even on larger devices; they cannot verify available graphics memory. Choose 3B if you are unsure.</p>
+      </div>
+      <p class="tutorial-llm-hint" id="tutorial-llm-selection-note">Changing the model or engine releases this tab's current model. Downloads are kept until you delete them; selecting a model never starts a download.</p>
+      <p class="tutorial-llm-hint" data-field="sharing-note"></p>
       <label for="tutorial-llm-engine">Run the model using</label>
       <select id="tutorial-llm-engine" data-field="engine">
         <option value="auto">Automatic (recommended)</option>
@@ -65,10 +81,10 @@
         <button type="button" data-action="compare" hidden>Compare downloaded engines</button>
         <button type="button" data-action="unload" disabled>Unload from memory</button>
       </div>
-      <p class="tutorial-llm-hint">Unload keeps the download for next time. Compare tests already downloaded engines without fetching more models.</p>
+      <p class="tutorial-llm-hint">Unload releases this tab's use and keeps the download for next time. Other tabs may still use the shared model. Compare tests already downloaded engines without fetching more models.</p>
       <div class="tutorial-llm-storage">
         <button type="button" data-action="delete">Delete downloaded model</button>
-        <p class="tutorial-llm-hint">Removes all formats and partial downloads, including those used in other tabs. Your Python work stays. Also available on the <a href="{{ '/cookies/#browser-model-storage' | relative_url }}">storage page</a>.</p>
+        <p class="tutorial-llm-hint">Removes both model sizes, all formats, and partial downloads, including those used in other tabs. Your Python work stays. Also available on the <a href="{{ '/cookies/#browser-model-storage' | relative_url }}">storage page</a>.</p>
       </div>
     </details>
   </section>

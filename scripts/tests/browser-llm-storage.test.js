@@ -38,6 +38,26 @@ test('deletion clears all complete and partial inference stores but preserves st
   assert.deepEqual(await cacheStorage.keys(),['vm-assets-v2']);
 });
 
+for (const complete of [false,true]) {
+  test('storage reports and removes 7B '+(complete?'complete downloads':'partial downloads')+' alongside 3B',async()=>{
+    const {modelStorageStatus,clearModelCaches}=await storage;
+    const {ARTIFACTS}=await import('../../js/browser-llm/catalog.mjs');
+    const cacheStorage=cachesForTest();
+    const upgrade=complete ? ARTIFACTS.mlc7b.assets : ARTIFACTS.mlc7b.assets.slice(0,3);
+    const saved=[...ARTIFACTS.mlc.assets,...upgrade];
+    // Cache metadata models stored files without allocating model-sized fixtures.
+    for (const asset of saved) await (await cacheStorage.open(asset.cache)).put(asset.url,
+      new Response('',{headers:{'x-sebook-model-bytes':String(asset.bytes)}}));
+    await cacheStorage.open('tutorial-work');
+    const status=await modelStorageStatus(cacheStorage);
+    assert.deepEqual(status.cached.sort(),complete?['mlc','mlc7b']:['mlc']);
+    assert.equal(status.bytes,saved.reduce((sum,asset)=>sum+asset.bytes,0));
+    await clearModelCaches(cacheStorage);
+    assert.deepEqual(await cacheStorage.keys(),['tutorial-work']);
+    assert.deepEqual(await modelStorageStatus(cacheStorage),{available:true,cached:[],bytes:0});
+  });
+}
+
 test('a multi-file model serves only the requested cached file, assembling its ranges without refetching',async()=>{
   const {acquireArtifact,readArtifactFile}=await storage;
   const fileUrl='https://example.test/model.onnx';

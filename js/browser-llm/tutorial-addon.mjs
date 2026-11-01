@@ -1,10 +1,25 @@
 import {BrowserLLM} from './runtime.mjs';
 import {renderTutorReply} from './tutor-diagrams.mjs';
-import {ModelView,formatBytes} from './view.mjs';
-import {feedbackMessages,CATEGORIES} from './prompts.mjs';
+import {ModelView} from './view.mjs';
+import {feedbackMessages,CATEGORIES,wantsTutorDiagram} from './prompts.mjs';
 import {generateStandalonePython,generationProblem,GENERATION_PHASES} from './program-generation.mjs';
 import {runTutorTurn} from './tutor-session.mjs';
 import {checkSpecification,specificationFeedback,specificationStatus} from './specification-exercise.mjs';
+
+async function addSourceEvidence(context,signal,{optional}) {
+  try {
+    if(!window.SEBookPythonAst)throw new Error('Source analysis is unavailable. Reload this page, or use the lesson and ask a TA.');
+    const model=await window.SEBookPythonAst.analyze(context.files.filter(file=>file.path.endsWith('.py'))
+      .map(file=>({filename:file.path,content:file.content})));
+    signal.throwIfAborted();
+    if(model.errors?.length)throw new Error('The Python source could not be parsed. Restore the supplied source before asking about its statements.');
+    context.sourceModel=model;
+  } catch(error) {
+    signal.throwIfAborted();
+    if(!optional)throw error;
+    // A drawing still gets the complete source when this optional outline is unavailable.
+  }
+}
 
 class TutorialModelAddon {
   constructor(tutorial,template) {
@@ -19,6 +34,11 @@ class TutorialModelAddon {
       cancel:()=>this.cancel(),compare:()=>this.compare(),generate:()=>this.generate(),apply:()=>this.apply(),check:()=>this.check()};
     for (const [name,handler] of Object.entries(actions)) on(this.view.buttons[name],'click',handler);
     on(this.view.fields.engine,'change',()=>{this.unload();this.prepare();});
+    on(this.view.fields.model,'change',()=>{
+      this.view.fields.engine.value = 'auto';
+      this.unload();this.prepare();
+    });
+    on(this.view.fields.memory,'change',()=>{this.unload();this.prepare();});
     on(this.view.fields.specification,'input',()=>{
       this.specifications.set(this.specificationKey(),this.view.fields.specification.value);
       this.invalidate();
@@ -28,7 +48,7 @@ class TutorialModelAddon {
     this.prepare();
   }
   refresh() {
-    this.view.controls({busy:!!this.operation,ready:this.runtime.ready,cached:!!this.plan?.cached,prepared:!!this.plan,
+    this.view.controls({busy:!!this.operation,ready:this.runtime.ready,cached:!!this.plan?.cached && !!this.plan?.canLoad,prepared:!!this.plan?.canLoad,
       suggestion:!!this.suggestion,exercise:!!this.exercise,specificationOnly:this.exercise?.mode === 'specification',
       chat:this.tutorial.config.ai_tutor === true,
       deleting:this.operation?.kind === 'delete',comparable:!!this.plan?.comparable,operation:this.operation?.kind});
@@ -36,26 +56,19 @@ class TutorialModelAddon {
   async prepare() {
     const request = this.prepareRequest = (this.prepareRequest || 0)+1;
     this.plan = null; this.refresh();
+    this.view.describeSelection();
     try {
-      const plan = await this.runtime.prepare(this.view.fields.engine.value);
+      const plan = await this.runtime.prepare(this.view.fields.engine.value,this.view.selection());
       if (request !== this.prepareRequest || this.destroyed) return;
       this.plan = plan;
-      this.view.fields.setup.textContent = plan.cached
-        ? 'The downloaded model loads automatically when needed.'
-        : 'Download '+formatBytes(plan.artifact.bytes)+' once to generate Python on this device.';
-      this.view.fields.device.textContent = this.runtime.ready
-        ? 'Running on this device: '+this.runtime.activeProfile.label+'.'
-        : 'Selected: '+plan.profile.label+'. '+
-        (plan.cached ? 'Downloaded; loads automatically when needed.' : 'Model download: '+formatBytes(plan.artifact.bytes)+'.')+
-        (plan.profile.gpu ? '' : ' Uses '+plan.profile.threads+' processor thread'+(plan.profile.threads===1?'':'s')+'.');
-      for (const option of this.view.fields.engine.options) {
-        option.disabled = option.value !== 'auto' && !plan.available.includes(option.value === 'cpu' ? 'wllama-cpu' : option.value);
+      this.view.showPlan(plan,this.runtime);
+    } catch(error) {
+      if (request === this.prepareRequest && error.name !== 'AbortError') {
+        this.view.status(error.message);
+        this.view.fields.setup.textContent = error.message;
+        this.view.fields.device.textContent = 'No compatible engine selected.';
       }
-      this.view.fields['browser-note'].textContent = plan.capabilities.firefox
-        ? (plan.available.includes('onnx-gpu')
-          ? 'For Firefox graphics, choose Graphics — ONNX. Automatic reuses compatible downloads first.'
-          : 'Graphics options depend on this Firefox version and its device limits. Processor reuses the GGUF download. Compare downloaded engines when more than one compatible option is available.') : '';
-    } catch(error) { if (request === this.prepareRequest && error.name !== 'AbortError') this.view.status(error.message); }
+    }
     this.refresh();
   }
   beforeStepChange() { this.cancel(); this.view.clearInspection(); this.chat?.destroy(); this.chat=null; this.watchers.forEach(w=>w.dispose()); this.watchers=[]; }
@@ -125,12 +138,8 @@ class TutorialModelAddon {
     try {
       return await this.perform('chat',async signal=>{
         if(context.coaching==='source') {
-          onStatus('Checking source locations…');
-          if(!window.SEBookPythonAst)throw new Error('Source analysis is unavailable. Reload this page, or use the lesson and ask a TA.');
-          context.sourceModel=await window.SEBookPythonAst.analyze(context.files.filter(file=>file.path.endsWith('.py'))
-            .map(file=>({filename:file.path,content:file.content})));
-          signal.throwIfAborted();
-          if(context.sourceModel.errors?.length)throw new Error('The Python source could not be parsed. Restore the supplied source before asking about its statements.');
+          onStatus('Reading source structure…');
+          await addSourceEvidence(context,signal,{optional:wantsTutorDiagram(question)});
         }
         let stage='Writing a local coaching reply…';
         const result = await runTutorTurn({context,question,history,signal,
@@ -177,7 +186,9 @@ class TutorialModelAddon {
   }
   unload() {
     this.cancel(); this.runtime.unload();
-    this.view.status('Model unloaded from memory. The download is kept for next time.'); this.refresh();
+    this.view.status(this.runtime.shared
+      ? 'Model released for this tab. Other tabs may still use it; the download is kept for next time.'
+      : 'Model unloaded from memory. The download is kept for next time.'); this.refresh();
   }
   async remove() {
     this.cancel();

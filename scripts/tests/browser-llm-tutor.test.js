@@ -40,7 +40,15 @@ test('typed complete diagram fences are separated from literal prose; unknown an
   assert.equal(tutorReplyParts(block.replace('@enduml',''))[0].valid,false);
   assert.equal(tutorReplyParts(block.slice(0,-3))[0].valid,true);
   assert.equal(tutorReplyParts(block+'\n'+block).filter(p=>p.valid).length,1);
-  assert.equal(tutorReplyParts(block.replace('[*] --> Ready','x'.repeat(2500)))[0].valid,false);
+  assert.equal(tutorReplyParts(block.replace('[*] --> Ready','x'.repeat(8001)))[0].valid,false);
+});
+
+test('branching sequence views fit beyond the old 45-line cap while rendering stays bounded',async()=>{
+  const {tutorReplyParts}=await import('../../js/browser-llm/tutor-diagrams.mjs');
+  const branches=Array.from({length:8},(_,index)=>'alt condition_'+index+'\na -> b: request_'+index+'\nb --> a: result\nelse ignored\nb --> a: unchanged\nend');
+  const source='@startuml\nparticipant a: navigate\nparticipant b: process_command\n'+branches.join('\n')+'\n@enduml';
+  assert.equal(tutorReplyParts('```uml-sequence\n'+source+'\n```')[0].valid,true);
+  assert.equal(tutorReplyParts('```uml-sequence\n'+source.replace('@enduml','a -> b: call\n'.repeat(121)+'@enduml')+'\n```')[0].valid,false);
 });
 
 

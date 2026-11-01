@@ -1,3 +1,5 @@
+import {MODELS} from './catalog.mjs';
+
 export const formatBytes = bytes => bytes >= 1e9 ? (bytes/1e9).toFixed(2)+' GB' : (bytes/1e6).toFixed(1)+' MB';
 export class ModelView {
   constructor(host,template) {
@@ -7,6 +9,42 @@ export class ModelView {
     this.buttons = Object.fromEntries([...this.element.querySelectorAll('[data-action]')].map(el=>[el.dataset.action,el]));
   }
   status(text) { this.fields.status.textContent = text; }
+  selection() {
+    return {model:this.fields.model.value,memoryConfirmed:this.fields.memory.value === '16'};
+  }
+  describeSelection() {
+    const model = MODELS[this.fields.model.value];
+    this.fields['model-note'].textContent = model.memoryNote+
+      (model.requiresMemoryConfirmation ? ' 7B is available only with compatible WebLLM graphics acceleration.' : '');
+    this.fields['memory-confirmation'].hidden = !model.requiresMemoryConfirmation;
+    for (const option of this.fields.engine.options) {
+      option.disabled = model.requiresMemoryConfirmation && !['auto','webllm-gpu'].includes(option.value);
+    }
+    this.fields.device.textContent = 'Checking this selection…';
+    this.fields['browser-note'].textContent = '';
+  }
+  showPlan(plan,{ready,activeProfile}) {
+    this.fields['sharing-note'].textContent = plan.sharing?.message || '';
+    const downloaded = plan.canLoad ? 'Downloaded; loads automatically when needed.' : 'Downloaded; memory confirmation required.';
+    this.fields.setup.textContent = plan.cached
+      ? downloaded
+      : 'Download '+formatBytes(plan.artifact.bytes)+' once to use '+plan.model.label+' on this device.';
+    if (!plan.canLoad) this.fields.setup.textContent += ' Confirm at least 16 GB of device memory in Model & storage first.';
+    this.fields.device.textContent = ready
+      ? 'Running on this device: '+plan.model.label+' · '+activeProfile.label+'.'
+      : 'Selected: '+plan.model.label+' · '+plan.profile.label+'. '+
+      (plan.cached ? downloaded : 'Model download: '+formatBytes(plan.artifact.bytes)+'.')+
+      (plan.profile.gpu ? '' : ' Uses '+plan.profile.threads+' processor thread'+(plan.profile.threads===1?'':'s')+'.');
+    for (const option of this.fields.engine.options) {
+      option.disabled = option.value !== 'auto' && !plan.available.includes(option.value === 'cpu' ? 'wllama-cpu' : option.value);
+    }
+    this.fields['browser-note'].textContent = plan.model.requiresMemoryConfirmation
+      ? '7B has no processor or ONNX fallback. If graphics initialization runs out of memory, select 3B.'
+      : plan.capabilities.firefox
+        ? (plan.available.includes('onnx-gpu')
+          ? 'For Firefox graphics, choose Graphics — ONNX. Automatic reuses compatible downloads first.'
+          : 'Graphics options depend on this Firefox version and its device limits. Processor reuses the GGUF download. Compare downloaded engines when more than one compatible option is available.') : '';
+  }
   feedback(text) {
     this.fields.feedback.textContent = text;
     this.fields['feedback-wrap'].hidden = !text;
@@ -35,6 +73,8 @@ export class ModelView {
       ? 'Generates and checks an implementation from your prose. You only work on the specification.'
       : usable ? 'Checks the code in your editor.' : 'Checks the code in your editor. No download needed.';
     this.fields.engine.disabled = busy;
+    this.fields.model.disabled = busy;
+    this.fields.memory.disabled = busy;
     this.buttons.download.hidden = usable || !(exercise || chat);
     this.buttons.download.disabled = busy || ready || !prepared;
     this.buttons.unload.disabled = busy || !ready;

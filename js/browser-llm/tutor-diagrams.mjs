@@ -25,7 +25,7 @@ export function tutorReplyParts(reply) {
     const type = generic ? inferDiagramType(source) : language.replace(/^(?:archuml|uml)-/, '');
     if (!TYPES.has(type)) continue;
     if (match.index > end) parts.push({text:reply.slice(end,match.index)});
-    const valid = /^@startuml\s*\n[\s\S]*\n@enduml$/.test(source) && source.length <= 2400 && source.split('\n').length <= 45;
+    const valid = /^@startuml\s*\n[\s\S]*\n@enduml$/.test(source) && source.length <= 8000 && source.split('\n').length <= 120;
     parts.push({type,source,valid:valid && ++diagrams <= 1});
     end = match.index + match[0].length;
   }
@@ -73,7 +73,7 @@ export function sanitizedDiagram(svg,purifier) {
   return fragment;
 }
 
-async function renderDiagram(host,part,signal) {
+async function renderDiagram(host,part,signal,required) {
   const figure = document.createElement('figure');
   figure.className = 'tvm-tutor-diagram';
   const canvas = document.createElement('div');
@@ -89,7 +89,7 @@ async function renderDiagram(host,part,signal) {
   code.textContent = part.source;
   source.append(summary,code); figure.append(status,canvas,source); host.appendChild(figure);
   try {
-    if (!part.valid) throw new Error('Use one complete diagram of up to 45 lines.');
+    if (!part.valid) throw new Error('Use one complete diagram of up to 120 lines.');
     // Rendering runs in a disposable worker. Untrusted SVG is sanitized before
     // it reaches the document; never run model markup in a live render surface.
     const renderSource = normalizeDiagramSource(part.source);
@@ -104,18 +104,22 @@ async function renderDiagram(host,part,signal) {
     status.remove();
   } catch(error) {
     if (error.name === 'AbortError') {figure.remove(); throw error;}
+    if (required) {
+      figure.remove();
+      throw new Error('The diagram could not be rendered. Your request is kept; retry or ask for a simpler view.');
+    }
     canvas.remove(); source.open = true;
     status.textContent = 'Diagram unavailable. You can read its source below or ask the tutor to simplify it.';
   }
 }
 
-export async function renderTutorReply(host,reply,signal) {
+export async function renderTutorReply(host,reply,signal,{diagramRequired=false}={}) {
   for (const part of tutorReplyParts(reply)) {
     signal.throwIfAborted();
     if ('text' in part) {
       if (!part.text.trim()) continue;
       const text = document.createElement('p');
       text.textContent = part.text.trim(); host.appendChild(text);
-    } else await renderDiagram(host,part,signal);
+    } else await renderDiagram(host,part,signal,diagramRequired);
   }
 }

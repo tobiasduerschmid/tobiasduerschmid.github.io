@@ -359,7 +359,8 @@
     "wllama-compat-3.8.1.wasm": "2db3f67d0bcc19cdf8f14f129e46cab691bff898954808f8a2dc4c586eb5bb68",
     "transformers-3.8.1.mjs": "aa5002b70e789798da263f5f99c62bd3e8fcd0c119258a493c40c180648365fa",
     "onnx-jsep-1.22.mjs": "08fb86ec433c78bfb032c5d84a68b8e8e5a8d81268fa39e24314179a5767a5b9",
-    "onnx-jsep-1.22.wasm": "c46655e8a94afc45338d4cb2b840475f88e5012d524509916e505079c00bfa39"
+    "onnx-jsep-1.22.wasm": "c46655e8a94afc45338d4cb2b840475f88e5012d524509916e505079c00bfa39",
+    "qwen2-7b-webllm-0.2.87.wasm": "ef1e03de04aa7bd0486ee9b5391d9021b0f230d7a6c4ef96a6cd822eebecdd28"
   },
   "runtime_urls": {
     "webllm-0.2.87.mjs": "https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.87/lib/index.js",
@@ -370,6 +371,23 @@
     "qwen2.5-3b-webllm-0.2.87.wasm": "https://raw.githubusercontent.com/mlc-ai/binary-mlc-llm-libs/146ed9cd4b4062e967b017fd2291f7106b50599f/web-llm-models/v0_2_87/base/Qwen2.5-3B-Instruct-q4f16_1_cs1k-webgpu.wasm",
     "transformers-3.8.1.mjs": "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1/dist/transformers.min.js",
     "onnx-jsep-1.22.mjs": "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1/dist/ort-wasm-simd-threaded.jsep.mjs",
-    "onnx-jsep-1.22.wasm": "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1/dist/ort-wasm-simd-threaded.jsep.wasm"
-  }
+    "onnx-jsep-1.22.wasm": "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1/dist/ort-wasm-simd-threaded.jsep.wasm",
+    "qwen2-7b-webllm-0.2.87.wasm": "https://raw.githubusercontent.com/mlc-ai/binary-mlc-llm-libs/146ed9cd4b4062e967b017fd2291f7106b50599f/web-llm-models/v0_2_87/base/Qwen2-7B-Instruct-q4f16_1_cs1k-webgpu.wasm"
+  },
+  "optional_models": [
+    {
+      "name": "Qwen2.5-Coder-7B-Instruct",
+      "upstream_revision": "c03e6d358207e414f1eca0bb1891e29f1db0e242",
+      "license": "apache-2.0",
+      "license_url": "https://huggingface.co/Qwen/Qwen2.5-Coder-7B-Instruct/blob/c03e6d358207e414f1eca0bb1891e29f1db0e242/LICENSE",
+      "mlc_revision": "56dea5411b44b2a45cf0ceb16ead4c1f30141f49",
+      "download_bytes": 4291435425,
+      "model_library": "https://raw.githubusercontent.com/mlc-ai/binary-mlc-llm-libs/146ed9cd4b4062e967b017fd2291f7106b50599f/web-llm-models/v0_2_87/base/Qwen2-7B-Instruct-q4f16_1_cs1k-webgpu.wasm",
+      "model_library_bytes": 6358681,
+      "supported_engine": "WebLLM",
+      "context_tokens": 4096,
+      "upstream_vram_required_MB": 5106.67,
+      "configuration_source": "https://github.com/mlc-ai/web-llm/blob/v0.2.87/src/config.ts"
+    }
+  ]
 }

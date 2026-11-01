@@ -49,7 +49,7 @@ test('ordinary questions do not invite an irrelevant drawing or expose a copyabl
 
 test('declining diagrams and stopping preserve ordinary coaching and pause choices',async()=>{
   const {tutorMessages,wantsTutorDiagram}=await import('../../js/browser-llm/prompts.mjs');
-  for(const question of ['No diagrams, just a hint.','Stop drawing diagrams; I want to stop here.','Do not draw another diagram.']) {
+  for(const question of ['No diagrams, just a hint.','Stop drawing diagrams; I want to stop here.','Do not draw another diagram.','No found messages, just a hint.']) {
     assert.equal(wantsTutorDiagram(question),false);
     const messages=tutorMessages({coaching:'source'},question,[]);
     assert.match(messages[0].content,/pause/);assert.doesNotMatch(messages[0].content,/draw_diagram/);
@@ -71,6 +71,77 @@ test('plain coaching uses one model call; requested diagrams use exactly one add
   assert.match(prompts[2][0].content,/@startuml/);
 });
 
+for(const [type,question,source] of [
+  ['class','Show me a class diagram of this program.','class Rover\nclass Controller\nController --> Rover : controls'],
+  ['sequence','Show how this program starts, using a found message.','participant rover: navigate\no-> rover: navigate(commands)'],
+  ['activity','Draw an activity diagram of the entry point.','(*) --> "Read commands"\n"Read commands" --> (*)']
+])test(`source tutor draws a requested ${type} view without requiring a learner-named call`,async()=>{
+  const {runTutorTurn}=await import('../../js/browser-llm/tutor-session.mjs');
+  const files=[{path:'rover.py',content:'# Current workspace\n'.repeat(40)+'class Rover:\n    pass\n'},
+    {path:'controller.py',content:'from rover import Rover\nclass Controller:\n    def __init__(self):\n        self.rover = Rover()\n\ndef navigate(commands):\n    return Controller()\n'}];
+  const context={coaching:'source',files,checks:'PRIVATE_CHECK',solution:'PRIVATE_SOLUTION'};
+  const diagram='```uml-'+type+'\n@startuml\n'+source+'\n@enduml\n```';
+  const replies=['```json\n'+JSON.stringify({tool:'draw_diagram',type,focus:'the requested source view'})+'\n```',diagram];
+  const prompts=[];
+  const result=await runTutorTurn({context,question,history:[],signal:new AbortController().signal,
+    generate:async messages=>{prompts.push(messages);return {text:replies.shift(),finishReason:'stop'};}});
+  assert.equal(prompts.length,2);
+  for(const messages of prompts) {
+    for(const file of files)assert.ok(messages.some(message=>message.content.includes(file.path) && message.content.includes(file.content)),file.path+' must remain complete');
+    assert.doesNotMatch(JSON.stringify(messages),/PRIVATE_CHECK|PRIVATE_SOLUTION/);
+  }
+  assert.ok(result.text.includes(diagram));assert.equal(result.notice,'');
+});
+
+test('an unsuitable requested view can explain why without inventing classes or exposing tool syntax',async()=>{
+  const {runTutorTurn}=await import('../../js/browser-llm/tutor-session.mjs');
+  const reason='This program has functions but no classes. A sequence diagram can show their interactions.';
+  const replies=['```json\n{"tool":"draw_diagram","type":"class","focus":"the program structure"}\n```','NO_DIAGRAM: '+reason];
+  const result=await runTutorTurn({context:{coaching:'source',files:[{path:'main.py',content:'def start(): return 0'}]},
+    question:'Draw a class diagram.',history:[],signal:new AbortController().signal,
+    generate:async()=>({text:replies.shift(),finishReason:'stop'})});
+  assert.equal(result.text,reason);assert.equal(result.notice,'');
+});
+
+test('a model-selected drawing cannot override a learner declining diagrams',async()=>{
+  const {runTutorTurn}=await import('../../js/browser-llm/tutor-session.mjs');let calls=0;
+  await assert.rejects(runTutorTurn({context:{coaching:'source'},question:'No diagrams, just a hint.',history:[],signal:new AbortController().signal,
+    generate:async()=>{calls++;return {text:'```json\n{"tool":"draw_diagram","type":"class","focus":"program"}\n```',finishReason:'stop'};}}),/not requested/i);
+  assert.equal(calls,1);
+});
+
+test('a failed diagram-only request remains unsuccessful instead of substituting a generic coaching question',async()=>{
+  const {runTutorTurn}=await import('../../js/browser-llm/tutor-session.mjs');let calls=0;
+  await assert.rejects(runTutorTurn({context:{coaching:'source'},question:'Show a class diagram.',history:[],signal:new AbortController().signal,
+    generate:async()=>{if(calls++)throw new Error('drawing unavailable');
+      return {text:'```json\n{"tool":"draw_diagram","type":"class","focus":"program structure"}\n```',finishReason:'stop'};}}),/diagram.*unavailable/i);
+  assert.equal(calls,2);
+});
+
+test('a diagram with ALT fragments has room beyond the former short-answer budget',async()=>{
+  const {runTutorTurn}=await import('../../js/browser-llm/tutor-session.mjs');let calls=0;
+  const source='@startuml\nparticipant entry: navigate\nparticipant dispatch: process_command\no-> entry: navigate(commands)\nloop each command\nentry -> dispatch: process_command\nalt accepted\ndispatch --> entry: next state\nelse ignored\ndispatch --> entry: same state\nend\nend\n@enduml';
+  const result=await runTutorTurn({context:{coaching:'source'},question:'Generate a sequence diagram with ALT fragments.',history:[],signal:new AbortController().signal,
+    generate:async(_,options)=>{
+      if(calls++) {
+        assert.ok(options.maxTokens>=768,'Branching drawings need more than the old 384-token cap');
+        return {text:'```uml-sequence\n'+source+'\n```',finishReason:'stop'};
+      }
+      return {text:'```json\n{"tool":"draw_diagram","type":"sequence","focus":"the requested branches"}\n```',finishReason:'stop'};
+    }});
+  assert.ok(result.text.includes(source));assert.equal(calls,2);
+});
+
+test('an exhausted drawing output budget does not tell the learner to clear the conversation',async()=>{
+  const {runTutorTurn}=await import('../../js/browser-llm/tutor-session.mjs');let calls=0;
+  await assert.rejects(runTutorTurn({context:{coaching:'source'},question:'Draw a sequence diagram with ALT fragments.',history:[],signal:new AbortController().signal,
+    generate:async(_,options)=>calls++
+      ? {text:'```uml-sequence\n@startuml\nparticipant a',finishReason:'length',usage:{completion_tokens:options.maxTokens,prompt_tokens:1000}}
+      : {text:'```json\n{"tool":"draw_diagram","type":"sequence","focus":"the branches"}\n```',finishReason:'stop'}}),error=>{
+        assert.match(error.message,/generation limit/i);assert.doesNotMatch(error.message,/fresh context|recap/i);return true;
+      });
+});
+
 test('an unavailable optional diagram retains the completed coaching question',async()=>{
   const {runTutorTurn}=await import('../../js/browser-llm/tutor-session.mjs');
   let calls=0;
@@ -87,6 +158,19 @@ test('stopping a diagram generation discards the entire pending turn',async()=>{
   await assert.rejects(runTutorTurn({context:{},question:'Diagram?',history:[],signal:controller.signal,
     generate:async()=>{if(calls++){controller.abort();return {text:'late',finishReason:'stop'};}
       return {text:'Which call follows?\n```tutor-tool\n{"tool":"draw_diagram","type":"sequence","focus":"one call"}\n```',finishReason:'stop'};}}),{name:'AbortError'});
+});
+
+test('losing the shared model host during drawing preserves the retryable failure instead of committing a partial turn',async()=>{
+  const {runTutorTurn}=await import('../../js/browser-llm/tutor-session.mjs');
+  for(const coaching of ['', 'Which call follows?\n']) {
+    let calls=0;
+    const error=Object.assign(new Error('The tab hosting the shared model closed. Try again to reload the downloaded model.'),{name:'HostLostError'});
+    await assert.rejects(runTutorTurn({context:{},question:'Draw the calls.',history:[],signal:new AbortController().signal,
+      generate:async()=>{if(calls++)throw error;
+        return {text:coaching+'```tutor-tool\n{"tool":"draw_diagram","type":"sequence","focus":"source calls"}\n```',finishReason:'stop'};}}),
+      actual=>actual===error);
+    assert.equal(calls,2,'An interrupted drawing must not replay automatically');
+  }
 });
 
 test('partial replies and context rejection never produce a successful turn or a shortened retry',async()=>{

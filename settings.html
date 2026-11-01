@@ -703,14 +703,22 @@ info_nav_title: "My Settings"
             <p class="setting-name">Local specification assistant</p>
             <p class="setting-description">
               Enabled Python tutorials offer an optional model download after checking
-              your browser's capabilities. Choose Automatic or a processor/graphics
-              engine inside the tutorial. The choice, specification, and model replies
+              your browser's capabilities. In <em>Model &amp; storage</em>, the default
+              3B model offers Automatic or a processor/graphics engine. The optional
+              7B model requires compatible WebLLM graphics and confirmation of at least
+              16 GB of device memory. These choices, the specification, and model replies
               last only for the current page; applied Python uses the save preference above.
-              Use <em>Unload from memory</em> to release the running model, or
+              Compatible tabs on this site share one running model and take turns
+              generating; their chats remain separate. Closing the hosting tab can
+              interrupt a reply; try again to reload the downloaded model. If sharing
+              is unavailable, <em>Model &amp; storage</em> explains the per-tab fallback.
+              Use <em>Unload from memory</em> to release this tab's model use (other
+              tabs may keep the shared model loaded), or
               <em>Delete downloaded model</em> to remove complete and partial downloads.
               You can also <a href="{{ '/cookies/#browser-model-storage' | relative_url }}">delete the model in Browser storage</a>
-              without deleting your Python work. Model files need about 0.88–1.36 GB per
-              format; private browsing or limited storage may prevent downloads.
+              without deleting your Python work. The 3B model needs about 1.74–2.38 GB per
+              format; 7B needs about 4.29 GB. Switching keeps downloads until you delete
+              them. Private browsing or limited storage may prevent downloads.
             </p>
           </div>
         </div>

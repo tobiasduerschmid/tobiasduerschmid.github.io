@@ -3,7 +3,7 @@ const {test,expect}=require('@playwright/test');
 const http=require('node:http');
 const {auditInteractiveState}=require('./a11y-helpers');
 const {textContrast}=require('./print-helpers');
-const {setEditorContent}=require('./tutorial-helpers');
+const {setEditorContent,setTutorialFileContent}=require('./tutorial-helpers');
 const URL='/SEBook/tools/python-specification-tutorial';
 const correct='def unique_in_order(items):\n    return list(dict.fromkeys(items))\n';
 async function open(page) {
@@ -115,24 +115,97 @@ test('Rover coaching checks source locations and offers prerequisite links; tran
   await expect(page.locator('.tvm-tutor-local').getByRole('status')).toContainText('independent mission');
 });
 
-test('Rover diagram tool renders only the source-verified call, including in its disclosure',async({page})=>{
+for(const example of [
+  {type:'class',question:'Show me a class diagram of this program.',
+    program:'class Rover:\n    pass\n\nclass Controller:\n    def __init__(self):\n        self.rover = Rover()\n',
+    source:'class Rover\nclass Controller\nController --> Rover : controls',names:/Controller.*Rover|Rover.*Controller/},
+  {type:'sequence',question:'Show how the program starts, using a found message.',
+    source:'participant rover: navigate\no-> rover: navigate(commands)',names:/navigate/},
+  {type:'class',label:'class despite an unfinished Python edit',question:'Show a class diagram.',
+    program:'class Rover:\n    pass\n\nunfinished_call(',source:'class Rover',names:/Rover/}
+])test(`source tutor renders a ${example.label || example.type} view without asking the learner to identify a call`,async({page})=>{
+  test.setTimeout(90000);
+  await page.goto('/SEBook/development_practices/code-specification-tutorial/#handover');
+  await expect(page.getByRole('button',{name:'Download model',exact:true})).toBeEnabled({timeout:90000});
+  if(example.program)expect(await setTutorialFileContent(page,'rover_reference.py',example.program)).toBe(true);
+  const files=await page.evaluate(example=>{
+    const addon=window._tutorial.llmAddon;addon.plan.cached=true;
+    const replies=['```json\n'+JSON.stringify({tool:'draw_diagram',type:example.type,focus:'the requested program view'})+'\n```',
+      '```uml-'+example.type+'\n@startuml\n'+example.source+'\n@enduml\n```'];
+    // Only inference is stubbed; dispatch and accessible rendering remain real.
+    window.modelRequests=[];
+    addon.runtime.generate=async messages=>{window.modelRequests.push(messages);return {text:replies.shift(),finishReason:'stop'};};
+    return window._tutorial.captureTutorFiles();
+  },example);
+  await page.getByRole('region',{name:'Specification assistant'}).getByText('AI tutor',{exact:true}).click();
+  await page.getByLabel('Ask the AI tutor').fill(example.question);
+  await page.getByRole('button',{name:'Send',exact:true}).click();
+  const diagram=page.getByRole('log').getByRole('img',{name:new RegExp(example.type+' diagram','i')});
+  await expect(diagram).toBeVisible({timeout:60000});
+  await expect(diagram).toHaveAttribute('aria-label',example.names);
+  await page.getByText('Diagram source (ArchUML)',{exact:true}).press('Enter');
+  await expect(page.getByRole('log').getByText('@startuml\n'+example.source+'\n@enduml',{exact:true})).toBeVisible();
+  await expect(page.getByRole('log')).not.toContainText('tutor-tool');
+  const requests=await page.evaluate(()=>window.modelRequests);
+  expect(requests).toHaveLength(2);
+  for(const messages of requests)for(const file of files)expect(messages.some(message=>message.content.includes(file.path) && message.content.includes(file.content))).toBe(true);
+  await auditInteractiveState(page,'Requested '+example.type+' view',{include:'.tutorial-llm'});
+});
+
+test('a truncated drawing preserves the request and retries without adding a generic tutor answer',async({page})=>{
+  await page.goto('/SEBook/development_practices/code-specification-tutorial/#handover');
+  await expect(page.getByRole('button',{name:'Download model',exact:true})).toBeEnabled({timeout:90000});
+  await page.evaluate(()=>{
+    const addon=window._tutorial.llmAddon;addon.plan.cached=true;let calls=0;
+    addon.runtime.generate=async(_,options)=>{
+      calls++;
+      if(calls%2)return {text:'```json\n{"tool":"draw_diagram","type":"sequence","focus":"navigate branches"}\n```',finishReason:'stop'};
+      if(calls===2)return {text:'```uml-sequence\n@startuml\nparticipant nav: navigate',finishReason:'length',
+        usage:{prompt_tokens:1400,completion_tokens:options.maxTokens}};
+      return {text:'```uml-sequence\n@startuml\nparticipant nav: navigate\nparticipant dispatch: process_command\no-> nav: navigate(commands)\nloop each command\nnav -> dispatch: process_command\nalt accepted\ndispatch --> nav: next state\nelse ignored\ndispatch --> nav: same state\nend\nend\n@enduml\n```',finishReason:'stop'};
+    };
+  });
+  const assistant=page.getByRole('region',{name:'Specification assistant'});
+  await assistant.getByText('AI tutor',{exact:true}).click();
+  const input=page.getByLabel('Ask the AI tutor');
+  const question='Generate a sequence diagram showing the internals of navigate with ALT fragments.';
+  await input.fill(question);
+  await page.getByRole('button',{name:'Send',exact:true}).click();
+  const chat=assistant.getByRole('group').filter({has:page.getByRole('log',{name:'Tutor conversation'})});
+  await expect(chat.getByRole('status')).toContainText('generation limit');
+  await expect(input).toHaveValue(question);
+  await expect(page.getByRole('log')).not.toContainText('Which part of the source would you inspect next?');
+  await expect(page.getByRole('log').getByRole('img')).toHaveCount(0);
+  await expect(page.getByRole('button',{name:'Download model',exact:true})).toBeEnabled();
+  await page.evaluate(()=>{window._tutorial.llmAddon.plan.cached=true;});
+  await page.getByRole('button',{name:'Send',exact:true}).click();
+  await expect(page.getByRole('log').getByRole('img',{name:/sequence diagram/i})).toBeVisible();
+  await expect(input).toHaveValue('');
+  await expect(page.getByRole('log').getByRole('img')).toHaveAttribute('aria-label',/alt branch.*accepted/);
+});
+
+test('an unrenderable diagram-only reply also preserves the draft without a generic answer',async({page})=>{
   test.setTimeout(90000);
   await page.goto('/SEBook/development_practices/code-specification-tutorial/#handover');
   await expect(page.getByRole('button',{name:'Download model',exact:true})).toBeEnabled({timeout:90000});
   await page.evaluate(()=>{
     const addon=window._tutorial.llmAddon;addon.plan.cached=true;
-    const replies=['```json\n{"tool":"draw_diagram","type":"sequence","focus":"navigate calls process_command"}\n```',
-      '@startuml\nparticipant navigate\nparticipant process_command\nnavigate -> process_command: UNVERIFIED_BEHAVIOR\n@enduml'];
+    const replies=['```json\n{"tool":"draw_diagram","type":"class","focus":"program structure"}\n```',
+      '```uml-class\n@startuml\nnot a diagram\n@enduml\n```'];
     addon.runtime.generate=async()=>({text:replies.shift(),finishReason:'stop'});
   });
-  await page.locator('.tvm-tutor-local').getByText('AI tutor',{exact:true}).click();
-  await page.getByLabel('Ask the AI tutor').fill('I traced navigate calling process_command. Draw that call.');
+  const assistant=page.getByRole('region',{name:'Specification assistant'});
+  await assistant.getByText('AI tutor',{exact:true}).click();
+  const input=page.getByLabel('Ask the AI tutor');
+  await input.fill('Draw a class diagram.');
   await page.getByRole('button',{name:'Send',exact:true}).click();
-  await expect(page.locator('.tvm-tutor-diagram-canvas svg')).toBeVisible({timeout:60000});
-  await page.getByText('Diagram source (ArchUML)',{exact:true}).press('Enter');
-  await expect(page.locator('.tvm-tutor-diagram pre')).toContainText('a -> b: calls');
-  await expect(page.getByRole('log')).not.toContainText('UNVERIFIED_BEHAVIOR');
-  await auditInteractiveState(page,'Source-verified call map',{include:'.tutorial-llm'});
+  const chat=assistant.getByRole('group').filter({has:page.getByRole('log',{name:'Tutor conversation'})});
+  // This exercises real cold Python analysis and the diagram worker, as do
+  // the successful diagram cases above; wait for that operation's outcome.
+  await expect(chat.getByRole('status')).toContainText('could not be rendered',{timeout:60000});
+  await expect(input).toHaveValue('Draw a class diagram.');
+  await expect(page.getByRole('log')).not.toContainText('Which part of the source would you inspect next?');
+  await expect(page.getByRole('log').getByRole('img')).toHaveCount(0);
 });
 
 test('tutor uses automatic cached loading and Stop reply cancels initialization',async({page,context})=>{
@@ -381,7 +454,7 @@ test('Firefox graphics limits are explained before any download and unavailable 
   const requests=[];page.on('request',r=>{if(r.url().includes('huggingface.co'))requests.push(r.url());});
   await open(page);
   await page.getByText('Model & storage',{exact:true}).click();
-  await expect(page.getByText(/Selected: Graphics acceleration \(ONNX\)/)).toBeVisible();
+  await expect(page.getByText(/Selected: .*Graphics acceleration \(ONNX\)/)).toBeVisible();
   await expect(page.getByText(/For Firefox graphics, choose Graphics — ONNX/)).toBeVisible();
   const engines=page.getByLabel('Run the model using');
   await expect(engines.locator('option[value="webllm-gpu"]')).toBeDisabled();

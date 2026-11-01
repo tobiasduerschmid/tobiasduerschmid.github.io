@@ -40,6 +40,16 @@ for(const [type,source] of Object.entries(examples)) {
   });
 }
 
+test('a found message renders with an accessible external-sender description',async({page})=>{
+  const source='@startuml\nparticipant rover: navigate\no-> rover: navigate(commands)\n@enduml';
+  await openChat(page,'```uml-sequence\n'+source+'\n```');
+  const diagram=page.getByRole('log').getByRole('img',{name:/sequence diagram/i});
+  await expect(diagram).toBeVisible();
+  await expect(diagram).toHaveAttribute('aria-label',/found message from outside the diagram to rover/i);
+  await page.getByText('Diagram source (ArchUML)',{exact:true}).press('Enter');
+  await expect(page.getByRole('log').getByText(source,{exact:true})).toBeVisible();
+});
+
 test('diagrams remain readable in both themes and narrow panes',async({page})=>{
   await openChat(page,'A request passes from Client to Service.\n```uml-component\n@startuml\n'+examples.component+'\n@enduml\n```');
   for(const dark of [false,true]) {

@@ -303,6 +303,7 @@
       return (reversed ? message.to : message.from) + ' creates ' + (reversed ? message.from : message.to);
     }
     var payload = message.text ? ' with "' + message.text + '"' : '';
+    if (message.from === 'o') return 'found message from outside the diagram to ' + message.to + payload;
     return message.from + ' ' + messageVerb(message.arrow) + ' ' + message.to + payload;
   }
 

@@ -3,7 +3,7 @@ import {ARTIFACTS,CONTEXT_TOKENS} from '../catalog.mjs';
 
 export async function load(profile) {
   const {CreateMLCEngine} = await importRuntime('webllm-0.2.87.mjs');
-  const model = ARTIFACTS.mlc;
+  const model = ARTIFACTS[profile.artifact];
   const library = await runtimeWasm(model.library);
   let engine;
   try {

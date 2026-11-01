@@ -21,7 +21,7 @@ async function browser(t,{cached=['mlc','gguf'],reply=()=>true}={}) {
       postMessage(message) {
         calls.push(message);
         queueMicrotask(async()=>{
-          const result=await reply(message);
+          const result=await reply(message,value=>this.onmessage?.({data:{id:message.id,type:'progress',value}}));
           if (result instanceof Error) this.onmessage?.({data:{id:message.id,type:'error',value:{name:result.name,message:result.message}}});
           else this.onmessage?.({data:{id:message.id,type:'result',value:message.action==='generate' ? {text:message.payload.maxTokens===96?message.payload.messages[1].content:'ready',finishReason:'stop'} : result}});
         });
@@ -139,8 +139,28 @@ test('comparison uses cached candidates only and retains measurements in this se
   assert.equal(runtime.ready,true);
 });
 
+test('waiting for another tab and reloading a profile do not make a faster engine lose the comparison',async t=>{
+  let clock=0;
+  t.mock.method(performance,'now',()=>clock);
+  const {runtime}=await browser(t,{cached:['gguf'],reply:(message,progress)=>{
+    if(message.action==='generate' && message.payload.maxTokens===96) {
+      if(message.payload.profile.gpu) {
+        progress({phase:'queued'});clock+=1000;
+        progress({phase:'initializing'});clock+=500;
+      }
+      progress({phase:'generating'});
+      clock+=message.payload.profile.gpu ? 20 : 100;
+    }
+    return true;
+  }});
+  await runtime.prepare();
+  const result=await runtime.compare();
+  assert.equal(result.measured,true);
+  assert.equal(result.profile.id,'wllama-gpu','Compare should select the faster inference, excluding another tab’s wait');
+});
 
-for (const name of ['TimeoutError','InputError','AbortError']) {
+
+for (const name of ['TimeoutError','InputError','AbortError','HostLostError']) {
   test(name+' during generation does not mark a compatible GPU as broken',async t=>{
     let broken=false;
     const {runtime}=await browser(t,{cached:['gguf'],reply:m=>broken&&m.action==='generate'?failure(name):true});
@@ -159,4 +179,36 @@ test('a comparison deadline releases the model and does not benchmark another ca
   assert.equal(runtime.ready,false);
   assert.equal(runtime.releaseLock,null);
   assert.equal(calls.filter(c=>c.action==='load').length,1);
+});
+
+test('7B needs an explicit memory confirmation even when its weights are already downloaded',async t=>{
+  const {runtime,calls}=await browser(t,{cached:['mlc7b']});
+  const plan=await runtime.prepare('auto',{model:'7b'});
+  assert.equal(plan.cached,true);
+  assert.equal(plan.canLoad,false);
+  await assert.rejects(runtime.load({cachedOnly:true}),/16 GB/);
+  assert.equal(calls.length,0);
+  await runtime.prepare('auto',{model:'7b',memoryConfirmed:true});
+  await runtime.load({cachedOnly:true});
+  assert.deepEqual(calls.filter(c=>c.action==='load').map(c=>c.payload.profile.artifact),['mlc7b']);
+});
+
+test('changing model releases the previous model before the selected cached model can load',async t=>{
+  const {runtime,calls}=await browser(t,{cached:['mlc','mlc7b']});
+  await runtime.prepare();await runtime.load({cachedOnly:true});
+  const plan=await runtime.prepare('auto',{model:'7b',memoryConfirmed:true});
+  assert.equal(runtime.ready,false);
+  assert.equal(runtime.releaseLock,null);
+  assert.equal(plan.profile.artifact,'mlc7b');
+  await runtime.load({cachedOnly:true});
+  assert.deepEqual(calls.filter(c=>c.action==='load').map(c=>c.payload.profile.artifact),['mlc','mlc7b']);
+});
+
+test('7B backend failure never substitutes the 3B model or downloads another representation',async t=>{
+  const {runtime,calls}=await browser(t,{cached:['mlc7b','gguf'],reply:m=>m.action==='load'?failure('BackendError'):true});
+  await runtime.prepare('auto',{model:'7b',memoryConfirmed:true});
+  await assert.rejects(runtime.load({cachedOnly:true}),{name:'BackendError'});
+  assert.deepEqual(calls.filter(c=>c.action==='load').map(c=>c.payload.profile.artifact),['mlc7b']);
+  const plan=await runtime.prepare('auto',{model:'3b'});
+  assert.equal(plan.profile.artifact,'gguf','a 7B failure must not blacklist the lower-memory model');
 });
