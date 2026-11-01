@@ -321,6 +321,9 @@
   <script src="{{ '/js/keyboard-shortcut-labels.js' | relative_url }}"></script>
   <script src="{{ '/js/uml-live.js' | relative_url }}"></script>
   <script src="{{ '/js/uml-view-controls.js' | relative_url }}"></script>
+  {% if tutorial_llm_enabled and tutorial_data.ai_tutor %}
+  <script src="{{ '/js/vendor/dompurify/3.4.17/purify.min.js' | relative_url }}"></script>
+  {% endif %}
   <script src="{{ '/js/monaco-loader.js' | relative_url }}"></script>
   <script src="{{ '/js/tutorial-code.js' | relative_url }}"></script>
   {% if tutorial_llm_enabled %}
@@ -440,6 +443,7 @@
         {% if tutorial_backend == 'shell-pipeline' %}shellManuals: {{ site.data.shell_command_manuals | jsonify | replace: '</script', '<\/script' }},{% endif %}
         tutorialId:   '{{ page.tutorial }}',
         steps:        config.steps,
+        ai_tutor:     config.ai_tutor === true,
         progressVersion: config.progress_version || null,
         legacyStepKeys: config.legacy_step_keys || [],
         setupCommands: config.setup_commands || [],

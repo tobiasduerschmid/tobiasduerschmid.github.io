@@ -2,6 +2,7 @@ title: "From Specification to Python"
 description: "A short experiment in making program requirements precise, checking generated Python, and separating specification ambiguity from implementation mistakes. Basic Python functions and lists are prerequisites. Allow 15–20 minutes, plus the optional model download."
 backend: pyodide
 llm: true
+ai_tutor: true
 autosave_type: files
 require_tests: false
 learning_objectives:
@@ -10,6 +11,11 @@ learning_objectives:
   - Review a generated implementation and explain the limits of passing checks.
 steps:
   - title: Make the requirements explicit
+    ai_tutor_instructions: |
+      Help the student distinguish an ambiguous requirement from an implementation mistake.
+      Ask one guiding question at a time about observable behavior, ordering, or mutation.
+      Refer to their current source files, but do not supply a complete implementation.
+      Use a small ArchUML diagram when relationships or behavior need visualization.
     instructions: |
       ### Your task
 
@@ -62,6 +68,10 @@ steps:
             assert original == before
             assert result is not original
   - title: Transfer the reasoning
+    ai_tutor_instructions: |
+      Guide the student to explain the last-occurrence variation in their own words.
+      Ask for a distinguishing example and the empty-input and mutation rules.
+      Help them reason from their reflection file without writing the answer for them.
     instructions: |
       ### Check what you learned
 

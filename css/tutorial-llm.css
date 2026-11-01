@@ -96,6 +96,27 @@ html.dark-mode .tutorial-llm {
 .tutorial-llm-storage { border-top: 1px solid var(--llm-divider); margin-top: 1em; padding-top: 1em; }
 .tutorial-llm a { color: var(--llm-focus); text-decoration: underline; }
 .tutorial-llm [hidden] { display: none !important; }
+/* The optional tutor shares the model panel's light/dark contrast tokens. */
+html .tutorial-llm .tvm-tutor-local { background: var(--llm-bg); border-color: var(--llm-divider); overflow: visible; }
+html .tutorial-llm .tvm-tutor-local > summary { background: var(--llm-control); color: var(--llm-text); padding: .65em; }
+html .tutorial-llm .tvm-tutor-local > summary:hover { background: var(--llm-hover); }
+.tutorial-llm .tvm-tutor-local .tvm-tutor-body { padding: .8em; }
+html .tutorial-llm .tvm-tutor-local .tvm-tutor-input {
+  display: block; width: 100%; box-sizing: border-box; min-height: 44px;
+  font: inherit; padding: .55em; margin-top: .4em;
+  background: var(--llm-control); color: var(--llm-text); border: 1px solid var(--llm-border);
+}
+.tutorial-llm .tvm-tutor-local .tvm-tutor-input:focus-visible { outline: 3px solid var(--llm-focus); outline-offset: 3px; box-shadow: none; }
+.tutorial-llm .tvm-tutor-local :disabled { opacity: 1; }
+html .tutorial-llm .tvm-tutor-local .tvm-tutor-input-row { background: transparent; border: 0; padding: .4em 0; flex-wrap: wrap; }
+html .tutorial-llm .tvm-tutor-local .tvm-tutor-msg { white-space: pre-wrap; overflow-wrap: anywhere; color: var(--llm-text); background: var(--llm-control); border-color: var(--llm-divider); }
+html .tutorial-llm .tvm-tutor-local .tvm-tutor-status { color: var(--llm-muted); }
+.tutorial-llm .tvm-tutor-local .tvm-tutor-messages { max-height: none; padding: .5em 0; }
+.tutorial-llm .tvm-tutor-local .tvm-tutor-msg.assistant { max-width: 100%; width: 100%; box-sizing: border-box; }
+.tutorial-llm .tvm-tutor-diagram { margin: .75em 0; white-space: normal; min-width: 0; }
+.tutorial-llm .tvm-tutor-diagram-canvas { max-width: 100%; overflow: auto; }
+.tutorial-llm .tvm-tutor-diagram-canvas:focus-visible { outline: 3px solid var(--llm-focus); outline-offset: 2px; }
+.tutorial-llm .tvm-tutor-diagram pre { max-height: none; white-space: pre-wrap; font: inherit; }
 @media (max-width: 480px) {
   .tutorial-llm { padding: .8em; }
   .tutorial-llm-actions button { flex-grow: 1; }

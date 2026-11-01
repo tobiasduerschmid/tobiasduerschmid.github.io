@@ -606,6 +606,7 @@
 
     this.config = {
       backend: backend,
+      ai_tutor: options.ai_tutor === true,
       shellManuals: options.shellManuals || {},
       tla: options.tla || {},
       defaultBackend: backend,

@@ -1,0 +1,109 @@
+const {test,expect}=require('@playwright/test');
+const {auditInteractiveState}=require('./a11y-helpers');
+const URL='/SEBook/tools/python-specification-tutorial/';
+const examples={
+  class:'class Catalog\nclass Item\nCatalog --> Item : contains',
+  sequence:'participant student: Student\nparticipant tutor: Tutor\nstudent -> tutor: ask',
+  state:'[*] --> Ready\nReady --> Done : finish\nDone --> [*]',
+  activity:'(*) --> "Read input"\n"Read input" --> "Check input"\n"Check input" --> (*)',
+  component:'component Client\ncomponent Service\nClient --> Service : request',
+  deployment:'node Client\nnode Server\nClient --> Server : request',
+  usecase:'actor Student\nusecase "Ask question" as Ask\nStudent --> Ask'
+};
+
+async function openChat(page,reply) {
+  await page.goto(URL);
+  await expect(page.getByText('AI tutor',{exact:true})).toBeVisible({timeout:90000});
+  // A deterministic model-output boundary: real chat UI, worker, ArchUML,
+  // sanitizer, accessibility and styles, without downloading model weights.
+  await page.evaluate(async reply=>{
+    const {renderTutorReply}=await import('/js/browser-llm/tutor-diagrams.mjs');
+    window._tutorial.llmAddon.chat.destroy();
+    window.diagramChat=TutorChat.createLocal(document.querySelector('.tutorial-llm'),async()=>reply,()=>{},renderTutorReply);
+  },reply);
+  await page.getByText('AI tutor',{exact:true}).click();
+  await page.getByLabel('Ask the AI tutor').fill('Explain this with a diagram');
+  await page.getByRole('button',{name:'Send',exact:true}).click();
+  await expect(page.getByRole('button',{name:'Send',exact:true})).toBeEnabled();
+}
+
+for(const [type,source] of Object.entries(examples)) {
+  test(`tutor renders an accessible ${type} diagram and preserves source`,async({page})=>{
+    const errors=[];page.on('pageerror',e=>errors.push(e.message));
+    await openChat(page,'Follow the labeled relationship.\n```uml-'+type+'\n@startuml\n'+source+'\n@enduml\n```');
+    const diagram=page.locator('.tvm-tutor-diagram-canvas');
+    await expect(diagram.locator('svg')).toBeVisible();
+    await expect(diagram).toHaveAttribute('aria-label',new RegExp(type==='usecase'?'use case':type,'i'));
+    await page.getByText('Diagram source (ArchUML)',{exact:true}).press('Enter');
+    await expect(page.locator('.tvm-tutor-diagram pre')).toContainText(source);
+    expect(errors).toEqual([]);
+  });
+}
+
+test('diagrams remain readable in both themes and narrow panes',async({page})=>{
+  await openChat(page,'A request passes from Client to Service.\n```uml-component\n@startuml\n'+examples.component+'\n@enduml\n```');
+  for(const dark of [false,true]) {
+    const toggle=page.getByLabel('Toggle dark mode');
+    if(await toggle.isChecked()!==dark) await toggle.press('Space');
+    await expect(page.locator('.tutorial-llm')).toHaveCSS('background-color',dark?'rgb(32, 38, 46)':'rgb(255, 255, 255)');
+    await auditInteractiveState(page,'Tutor diagram '+(dark?'dark':'light'),{include:'.tutorial-llm'});
+  }
+  await page.setViewportSize({width:390,height:844});
+  const diagram=page.locator('.tvm-tutor-diagram-canvas');
+  await expect(diagram.locator('svg')).toBeVisible();
+  await expect.poll(()=>page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
+  const svg=diagram.locator('svg');
+  const fontSize=await svg.locator('text').first().evaluate(el=>{
+    const scale=el.getScreenCTM().a;
+    return parseFloat(getComputedStyle(el).fontSize)*scale;
+  });
+  expect(fontSize).toBeGreaterThanOrEqual(16);
+});
+
+test('invalid diagrams retain explanation and source without running markup',async({page})=>{
+  await openChat(page,'<img src=x onerror="window.injected=true">\n```uml-class\n@startuml\nnot a diagram\n@enduml\n```');
+  await expect(page.getByRole('log')).toContainText('Diagram unavailable');
+  await expect(page.getByRole('log')).toContainText('<img src=x');
+  await expect(page.getByRole('log').locator('img')).toHaveCount(0);
+  expect(await page.evaluate(()=>window.injected)).toBeUndefined();
+  await expect(page.locator('.tvm-tutor-diagram pre')).toBeVisible();
+});
+
+test('SVG sanitization drops executable content and external resources',async({page})=>{
+  await page.goto(URL);
+  await expect(page.getByText('AI tutor',{exact:true})).toBeVisible({timeout:90000});
+  const result=await page.evaluate(async()=>{
+    const {sanitizedDiagram}=await import('/js/browser-llm/tutor-diagrams.mjs');
+    const fragment=sanitizedDiagram('<svg xmlns="http://www.w3.org/2000/svg" onload="alert(1)"><script>alert(1)</script><foreignObject>Bad</foreignObject><image href="https://example.com/a"/><a href="javascript:alert(1)"><text>Safe label</text></a><text>Kept text</text></svg>',DOMPurify);
+    const host=document.createElement('div');host.append(fragment);
+    return host.innerHTML;
+  });
+  expect(result).toContain('Kept text');
+  expect(result).not.toMatch(/script|onload|foreignObject|<image|href=/i);
+});
+
+for(const fenced of [true,false]) {
+  test(`reported class reply renders ${fenced?'with a generic UML fence':'without a fence'}`,async({page})=>{
+    const source='@startuml\nclass A {\n +unique_in_order(items: List[int]) → List[int]\n}\nclass B {\n +remove_repeated_values(items: list[int]) → list[int]\n}\nA → B : remove_repeated_values\n@enduml';
+    await openChat(page,'Explanation.\n'+(fenced?'```uml\n'+source+'\n```':source)+'\n**Takeaway:** Follow the relationship.');
+    await expect(page.locator('.tvm-tutor-diagram-canvas svg')).toBeVisible();
+    await expect(page.locator('.tvm-tutor-diagram-canvas')).toHaveAttribute('aria-label',/A.*B/);
+    await expect(page.getByRole('log')).toContainText('Takeaway');
+  });
+}
+
+test('the compact syntax reference renders with the actual ArchUML engines',async({page})=>{
+  await page.goto(URL);
+  await expect(page.getByText('AI tutor',{exact:true})).toBeVisible({timeout:90000});
+  for(const type of Object.keys(examples)) {
+    await page.evaluate(async type=>{
+      const {tutorDiagramGuidance}=await import('/js/browser-llm/tutor-syntax.mjs');
+      const {renderTutorReply}=await import('/js/browser-llm/tutor-diagrams.mjs');
+      let host=document.getElementById('syntax-preview');
+      if(!host){host=document.createElement('div');host.id='syntax-preview';document.querySelector('.tutorial-llm').append(host);}
+      host.replaceChildren();
+      await renderTutorReply(host,tutorDiagramGuidance({},type+' diagram'),new AbortController().signal);
+    },type);
+    await expect(page.locator('#syntax-preview svg')).toBeVisible();
+  }
+});

@@ -4647,3 +4647,30 @@ Browser capability rules must match the pinned engines: WebLLM 0.2.87 needs at l
 
 
 Firefox graphics uses the pinned Transformers.js 3.8.1 / ONNX Runtime Web JavaScript WebGPU backend with the same Qwen checkpoint. Preflight requires shader-f16, nine storage buffers per stage, 512 MiB buffer/binding capacity, and 32 KiB workgroup storage. Do not replace it with the newer native backend without retesting: Transformers.js 4.3.2 exceeded the nine-buffer limit on real inference. The ONNX representation is 1,355,668,005 bytes; its weights use validated 32 MiB ranges in `sebook-llm-onnx-v1`, with a read-only custom cache and no remote loader downloads or extra Transformers cache. Deletion must clear this store too. The full templated ONNX prompt is capped at 768 input tokens before GPU inference because this graph returns FP32 logits for every input position; oversized prompts get an input error rather than truncation or a GPU allocation failure. The initialization buffer adds peak memory; physical 8 GB acceptance is still required. For fresh Firefox downloads Automatic prefers ONNX, while existing compatible cached formats and explicit choices take precedence. Runtime binaries remain pinned, integrity-verified hosted assets outside the repository.
+
+### AI tutor authoring and ArchUML output contract
+
+For a Python-only tutorial, enable the shared local model with `llm: true` and the chat with `ai_tutor: true`. Set `ai_tutor: false` or omit it to hide chat. Existing authored failure hints remain independent. Chat reuses the same downloaded model, engine selection, automatic cached loading, spinner, cancellation and deletion controls; it downloads no second model. Conversation history is memory-only. The Python specification demo enables it and gives both steps explicit tutor guidance.
+
+```yaml
+backend: pyodide
+llm: true
+ai_tutor: true
+steps:
+  - title: Explore the behavior
+    ai_tutor_instructions: |
+      Ask for a prediction before explaining the code.
+      Discuss ordering and mutation using the student's current files.
+      Use ArchUML when a diagram helps; do not write the complete solution.
+    files:
+      - path: main.py
+        content: "# Student workspace"
+```
+
+- **Every chat turn:** combine global tutor behavior, the selected compact syntax card, and the current step's complete `ai_tutor_instructions` in one system message. Include every step workspace file path and full contents with the current question; use live editor values when present, otherwise authored file content. Keep the recent conversation bounded. Changing steps switches guidance/files and resets chat history. Missing step guidance defaults to empty for existing YAML.
+- **Keep tutor context separate:** do not give `ai_tutor_instructions`, workspace code, or diagram guidance to specification-generation/feedback prompts. Do not serialize hidden `llm.checks`, ordinary grading metadata, or instructor-only `solution` fields into tutor context. Files and guidance are not silently truncated; finite engine context limits can still reject large steps.
+- **ArchUML is the tutor's default modeling/visualization/architecture notation.** `js/browser-llm/tutor-syntax.mjs` owns small examples verified against `js/ArchUML/REFERENCE.md` and the renderer. Select one card from the current request, recent user request, step guidance, and source shape, in that order. Procedural code defaults to activity; actual classes can use class diagrams. Examples teach syntax, not exercise answers. Never manufacture classes merely to represent standalone functions. Do not insert the full ArchUML manual or all seven cards into every prompt.
+- **Output syntax:** prefer a fenced `uml-TYPE` block with `@startuml` and `@enduml`. Supported TYPEs: class, sequence, state, activity, component, deployment, usecase. `archuml-TYPE` aliases also work. Keep one diagram small, adjacent to an explanatory takeaway. Activity syntax uses `(*)`, quoted action names and `if "condition" then` / `else` / `endif`, not PlantUML's newer `start` / `stop` activity syntax.
+- **Model-output tolerance:** `tutor-diagrams.mjs` also recognizes generic `uml`, `archuml`, `plantuml`, and unlabelled fences, or bare complete `@startuml` … `@enduml` blocks, inferring a supported type from declarations. A complete diagram may survive a missing closing Markdown fence. Do not extract diagrams from explicitly unrelated code fences. Normalize a Unicode right arrow only on simple relationship lines; retain original source in the disclosure. Unsupported or incomplete source stays readable rather than executing as markup.
+- **Rendering boundary:** disposable, time-limited UML worker → sanitized SVG → shared readable sizing, theme and structural description. Block executable markup and external SVG resources. Cancellation/step changes discard pending diagram rendering. Source is always available; rendering failures retain the explanation and show a recoverable message.
+- **Verification:** unit tests pin context privacy, complete file retention, guidance on every turn, syntax-card selection, generic/bare blocks and arrow normalization. `tests/tutor-diagrams.spec.js` renders the cards and reported model outputs through the real workers in Chromium/Firefox, checks safe fallback, sanitization, both themes and narrow panes. These deterministic replies verify the renderer contract, not the language model's semantic accuracy. Check real model output when evaluating tutoring quality.

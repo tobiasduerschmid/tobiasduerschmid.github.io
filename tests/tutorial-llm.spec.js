@@ -13,6 +13,75 @@ async function open(page) {
 }
 function status(page) {return page.getByRole('region',{name:'Specification assistant'}).getByRole('status');}
 
+test('tutor requests include step guidance and fresh files, including a step without a specification exercise',async({page})=>{
+  await open(page);
+  const first=await page.evaluate(async()=>{
+    const tutorial=window._tutorial,addon=tutorial.llmAddon,requests=[];
+    // Stub only inference: capture the actual production prompt without weights.
+    addon.runtime.generate=async messages=>{requests.push(messages);return {text:'Consider the ordering.',finishReason:'stop'};};
+    addon.plan.cached=true;
+    await addon.askTutor('Why?',[],()=>{});
+    tutorial.editorModels['solution.py'].model.setValue('# CURRENT_EDIT\ndef unique_in_order(items): return items');
+    addon.plan.cached=true;
+    await addon.askTutor('What now?',[{role:'user',content:'Why?'},{role:'assistant',content:'Consider ordering.'}],()=>{});
+    return {requests,instructions:tutorial.steps[0].ai_tutor_instructions};
+  });
+  for(const request of first.requests) expect(request.some(m=>m.role==='system'&&m.content.includes(first.instructions))).toBe(true);
+  expect(first.requests[1].some(m=>m.content.includes('CURRENT_EDIT'))).toBe(true);
+  await page.getByRole('button',{name:'Next →',exact:true}).click();
+  await expect(page.getByRole('heading',{name:'Transfer the reasoning',exact:true})).toBeVisible();
+  const second=await page.evaluate(async()=>{
+    const tutorial=window._tutorial,addon=tutorial.llmAddon;let request;
+    addon.runtime.generate=async messages=>{request=messages;return {text:'Explain your example.',finishReason:'stop'};};
+    addon.plan.cached=true;await addon.askTutor('Help?',[],()=>{});
+    return {request,instructions:tutorial.steps[1].ai_tutor_instructions,source:tutorial.editorModels['reflection.py'].model.getValue()};
+  });
+  expect(second.request.some(m=>m.role==='system'&&m.content.includes(second.instructions))).toBe(true);
+  expect(second.request.some(m=>m.content.includes('reflection.py')&&m.content.includes(second.source))).toBe(true);
+  expect(JSON.stringify(second.request)).not.toContain('CURRENT_EDIT');
+  expect(JSON.stringify(second.request)).not.toContain(first.instructions);
+});
+
+test('YAML enables local tutor, requires explicit download, and can disable it',async({page})=>{
+  const requests=[];page.on('request',r=>{if(r.url().includes('huggingface.co'))requests.push(r.url());});
+  await open(page);
+  await page.getByText('AI tutor',{exact:true}).click();
+  await page.getByLabel('Ask the AI tutor').fill('How should I think about duplicates?');
+  await page.getByRole('button',{name:'Send',exact:true}).click();
+  await expect(page.locator('.tvm-tutor-local').getByRole('status')).toContainText('Download the model');
+  for(const dark of [false,true]) {
+    const theme=page.getByLabel('Toggle dark mode');
+    if(await theme.isChecked()!==dark) await theme.press('Space');
+    const send=page.getByRole('button',{name:'Send',exact:true});
+    await page.mouse.move(0,0);
+    await expect.poll(()=>textContrast(send)).toBeGreaterThanOrEqual(4.5);
+    await send.hover();
+    await expect.poll(()=>textContrast(send)).toBeGreaterThanOrEqual(4.5);
+    await auditInteractiveState(page,'Local tutor '+(dark?'dark':'light'),{include:'.tutorial-llm'});
+  }
+  expect(requests).toEqual([]);
+  await page.evaluate(()=>{window._tutorial.config.ai_tutor=false;window._tutorial.llmAddon.setStep();});
+  await expect(page.getByText('AI tutor',{exact:true})).toHaveCount(0);
+});
+
+test('tutor uses automatic cached loading and Stop reply cancels initialization',async({page,context})=>{
+  await open(page);
+  await cachedModelMetadata(page);
+  let vendorRequest;
+  await context.route('https://cdn.jsdelivr.net/npm/@wllama/**',route=>{vendorRequest=route;});
+  try {
+    await page.getByText('AI tutor',{exact:true}).click();
+    await page.getByLabel('Ask the AI tutor').fill('What does preserving order mean?');
+    await page.getByRole('button',{name:'Send',exact:true}).click();
+    await expect(page.getByTestId('model-loading-indicator')).toBeVisible();
+    await expect.poll(()=>!!vendorRequest).toBe(true);
+    await page.getByRole('button',{name:'Stop reply',exact:true}).click();
+    await expect(page.getByTestId('model-loading-indicator')).toBeHidden();
+    await expect(page.getByRole('button',{name:'Send',exact:true})).toBeEnabled();
+    await expect(page.locator('.tvm-tutor-local').getByRole('status')).toContainText('stopped');
+  } finally {await vendorRequest?.abort().catch(()=>{});}
+});
+
 async function cachedModelMetadata(page) {
   // Cache metadata is sufficient for the UI lifecycle fixture. Vendor loading
   // is held at its network boundary below; these entries are not real weights.

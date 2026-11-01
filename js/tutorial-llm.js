@@ -3,6 +3,16 @@
   'use strict';
   var modules = new URL('browser-llm/checks.mjs', document.currentScript.src).href;
   var proto = window.TutorialCode.prototype;
+  proto.captureTutorFiles = function () {
+    var authored = new Map((this.steps[this.currentStep].files || []).map(function (file) { return [file.path,file]; }));
+    var paths = new Set([...authored.keys(),...Object.keys(this.editorModels)]);
+    return Array.from(paths,function (path) {
+      var entry = this.editorModels[path];
+      var content = entry ? entry.model.getValue() : authored.get(path).content;
+      if (typeof content !== 'string') throw new Error('The source file '+path+' is not ready for the tutor.');
+      return {path:path,content:content};
+    },this);
+  };
   proto.captureLlmSnapshot = function (file) {
     var entry = this.editorModels[file];
     if (!entry) throw new Error('The Python file is not ready.');

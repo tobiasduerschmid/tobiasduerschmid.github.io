@@ -255,6 +255,11 @@ function handleRender(msg) {
     var RENDERERS = {
       class:    self.UMLClassDiagram,
       sequence: self.UMLSequenceDiagram,
+      state: self.UMLStateDiagram,
+      activity: self.UMLActivityDiagram,
+      component: self.UMLComponentDiagram,
+      deployment: self.UMLDeploymentDiagram,
+      usecase: self.UMLUseCaseDiagram,
     };
     var R = RENDERERS[msg.diagramType];
     if (!R || typeof R.render !== 'function') {

@@ -4,6 +4,25 @@ const { a11yCheckpoint } = require('./a11y-helpers');
 const { loadTutorialConfig } = require('./tutorial-helpers');
 const pageErrors = new WeakMap();
 
+test('local chat renders replies as text and discards stopped replies',async({page})=>{
+  await openHintsFixture(page);
+  await page.evaluate(()=>{
+    window.localTutor=TutorChat.createLocal(document.querySelector('main'),()=>new Promise(resolve=>{window.reply=resolve;}),()=>{});
+  });
+  await page.getByText('AI tutor',{exact:true}).click();
+  await page.getByLabel('Ask the AI tutor').fill('Explain lists');
+  await page.getByRole('button',{name:'Send',exact:true}).click();
+  await page.evaluate(()=>window.reply('<img src=x onerror="alert(1)"> Consider the order.'));
+  await expect(page.getByRole('log')).toContainText('<img src=x onerror="alert(1)">');
+  await expect(page.getByRole('log').locator('img')).toHaveCount(0);
+  await page.getByLabel('Ask the AI tutor').fill('Another question');
+  await page.getByRole('button',{name:'Send',exact:true}).click();
+  await page.getByRole('button',{name:'Stop reply',exact:true}).click();
+  await page.evaluate(()=>window.reply('STALE REPLY'));
+  await expect(page.getByRole('log')).not.toContainText('STALE REPLY');
+  await expect(page.getByRole('button',{name:'Send',exact:true})).toBeEnabled();
+});
+
 test.beforeEach(async ({ page }) => {
   const errors = [];
   pageErrors.set(page, errors);

@@ -1,6 +1,7 @@
 import {BrowserLLM} from './runtime.mjs';
+import {renderTutorReply} from './tutor-diagrams.mjs';
 import {ModelView,formatBytes} from './view.mjs';
-import {generationMessages,feedbackMessages,pythonFromResult,CATEGORIES} from './prompts.mjs';
+import {generationMessages,feedbackMessages,pythonFromResult,tutorMessages,CATEGORIES} from './prompts.mjs';
 
 class TutorialModelAddon {
   constructor(tutorial,template) {
@@ -52,7 +53,7 @@ class TutorialModelAddon {
     } catch(error) { if (request === this.prepareRequest && error.name !== 'AbortError') this.view.status(error.message); }
     this.refresh();
   }
-  beforeStepChange() { this.cancel(); this.watchers.forEach(w=>w.dispose()); this.watchers=[]; }
+  beforeStepChange() { this.cancel(); this.chat?.destroy(); this.chat=null; this.watchers.forEach(w=>w.dispose()); this.watchers=[]; }
   setStep() {
     this.beforeStepChange();
     this.suggestion = null;
@@ -63,9 +64,14 @@ class TutorialModelAddon {
     if (this.exercise) {
       this.view.fields.contract.textContent = this.exercise.interface;
       this.view.fields.specification.value = this.specifications.get(this.tutorial.currentStep) ?? this.exercise.specification ?? '';
-      this.watchers = Object.values(this.tutorial.editorModels).map(entry=>entry.model.onDidChangeContent(()=>this.invalidate()));
     }
+    this.watchers = Object.values(this.tutorial.editorModels).map(entry=>entry.model.onDidChangeContent(()=>this.invalidate()));
     this.refresh();
+    if (this.tutorial.config.ai_tutor === true && window.TutorChat) {
+      this.chat = window.TutorChat.createLocal(this.view.element,
+        (question,history,onStatus)=>this.askTutor(question,history,onStatus),
+        ()=>{if (this.operation?.kind === 'chat') this.cancel();},renderTutorReply);
+    }
   }
   invalidate() {
     this.suggestion = null;
@@ -82,13 +88,14 @@ class TutorialModelAddon {
     this.view.status('Cancelled. Downloaded files remain until you delete them.');
     this.refresh();
   }
-  async perform(kind,action) {
-    if (this.operation) return;
+  async perform(kind,action,{rethrow=false}={}) {
+    if (this.operation) { if (rethrow) throw new Error('Wait for the current model operation, or cancel it first.'); return; }
     const operation = {kind,controller:new AbortController()};
     this.operation = operation; this.refresh();
-    try { await action(operation.controller.signal); }
+    try { return await action(operation.controller.signal); }
     catch(error) {
       if (this.operation === operation && error.name !== 'AbortError') this.view.status(error.message);
+      if (rethrow) throw error;
     } finally {
       if (this.operation === operation) {
         this.operation = null;
@@ -96,6 +103,30 @@ class TutorialModelAddon {
       }
       this.refresh();
     }
+  }
+  async askTutor(question,history,onStatus) {
+    if (!this.runtime.ready && !this.plan?.cached) throw new Error('Download the model using the button above, then send your question.');
+    const step = this.tutorial.steps[this.tutorial.currentStep];
+    const messages = tutorMessages({title:step.title,contract:this.exercise?.interface,instructions:step.ai_tutor_instructions,
+      specification:this.exercise ? this.view.fields.specification.value : '',
+      files:this.tutorial.captureTutorFiles()},question,history);
+    try {
+      return await this.perform('chat',async signal=>{
+        const result = await this.runtime.generate(messages,{signal,maxTokens:384,onProgress:value=>{
+          this.generationProgress(value,signal,'Writing a tutor reply locally…');
+          onStatus(value.phase === 'generating' ? 'Writing a local reply…' : value.message || 'Loading model into memory…');
+        }});
+        if (result.finishReason === 'length') throw new Error('The reply was too long. Try a more focused question.');
+        if (!result.text.trim()) throw new Error('The model returned no reply. Try again.');
+        this.view.status('Tutor reply ready.');
+        return result.text.trim();
+      },{rethrow:true});
+    } catch(error) {
+      if (/input limit|context window|context length/i.test(error.message)) {
+        throw new Error('This step’s instructions and source files exceed the selected engine’s context limit. Try Processor in Model & storage. No files were shortened for the prompt.');
+      }
+      throw error;
+    } finally { if (!this.runtime.ready && !this.operation) await this.prepare(); }
   }
   async download() {
     const focused = document.activeElement;
@@ -197,7 +228,7 @@ class TutorialModelAddon {
   }
   destroy() {
     this.destroyed=true;this.prepareRequest++;
-    this.cancel();this.runtime.destroy();this.listeners.abort();
+    this.cancel();this.chat?.destroy();this.runtime.destroy();this.listeners.abort();
     this.watchers.forEach(w=>w.dispose());this.view.destroy();
   }
 }

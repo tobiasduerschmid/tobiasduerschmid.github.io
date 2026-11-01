@@ -1,29 +1,18 @@
 /**
- * TutorChat — Rule-based hint engine with optional Chrome AI chat.
+ * TutorChat — Authored hints and optional local-model tutor chat.
  *
  * When tests fail, a hint panel appears below the test results with specific,
  * condition-matched hints for each failed check. Authored hints take priority
  * over generated guidance.
- * If Chrome's Prompt API (Gemini Nano) is available, a chat input also appears
- * so students can ask follow-up questions.
+ * Tutorials can opt into local-model follow-up chat through their YAML configuration.
  *
  * The rule-based hints are the primary feedback mechanism — they always work,
- * even without Chrome AI.
+ * even without a downloaded model.
  */
 (function () {
   'use strict';
 
-  // ─── Feature flag ───────────────────────────────────────────────────────────
-  var ENABLE_AI_CHAT = false; // set to true to enable Chrome Prompt API chat
-
-  // ─── State ──────────────────────────────────────────────────────────────────
-  var session = null;
   var chatEl = null;
-  var messagesEl = null;
-  var inputEl = null;
-  var sendBtn = null;
-  var statusEl = null;
-  var generating = false;
   let currentHintGroups = [];
 
   // ─── Public API ─────────────────────────────────────────────────────────────
@@ -46,7 +35,7 @@
     // groups for context, but show each identical hint only once in the panel.
     _buildUI(panel, _finalizeHints(currentHintGroups.flatMap(function (group) { return group.hints; })));
 
-    if (ENABLE_AI_CHAT) _initAIChat(tutorial);
+
   };
 
   TutorChat.onTestPass = function () { _destroy(); };
@@ -410,77 +399,9 @@
       body.appendChild(hintsEl);
     }
 
-    // AI chat elements (only created when feature flag is on)
-    if (ENABLE_AI_CHAT) {
-      statusEl = document.createElement('div');
-      statusEl.className = 'tvm-tutor-status';
-      statusEl.setAttribute('role', 'status');
-      statusEl.setAttribute('aria-live', 'polite');
-      statusEl.setAttribute('aria-atomic', 'true');
-      statusEl.style.display = 'none';
-      body.appendChild(statusEl);
-
-      messagesEl = document.createElement('div');
-      messagesEl.className = 'tvm-tutor-messages';
-      messagesEl.style.display = 'none';
-      body.appendChild(messagesEl);
-
-      var inputRow = document.createElement('div');
-      inputRow.className = 'tvm-tutor-input-row';
-      inputRow.style.display = 'none';
-
-      inputEl = document.createElement('input');
-      inputEl.className = 'tvm-tutor-input';
-      inputEl.placeholder = 'Ask the AI tutor a follow-up question\u2026';
-      inputEl.disabled = true;
-      inputEl.addEventListener('keydown', function (e) {
-        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); _onSend(); }
-      });
-
-      sendBtn = document.createElement('button');
-      sendBtn.className = 'tvm-tutor-send';
-      sendBtn.textContent = 'Send';
-      sendBtn.disabled = true;
-      sendBtn.addEventListener('click', _onSend);
-
-      inputRow.appendChild(inputEl);
-      inputRow.appendChild(sendBtn);
-      body.appendChild(inputRow);
-    }
-
     chatEl.appendChild(body);
     panel.appendChild(chatEl);
     chatEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  }
-
-  function _showStatus(html) {
-    if (!statusEl) return;
-    statusEl.innerHTML = html;
-    statusEl.style.display = '';
-  }
-
-  function _appendMessage(role, text) {
-    if (!messagesEl) return null;
-    var div = document.createElement('div');
-    div.className = 'tvm-tutor-msg ' + role;
-    if (role === 'assistant' && window.marked) {
-      div.innerHTML = window.marked.parse(text);
-    } else {
-      div.textContent = text;
-    }
-    messagesEl.appendChild(div);
-    messagesEl.scrollTop = messagesEl.scrollHeight;
-    return div;
-  }
-
-  function _showTyping() {
-    if (!messagesEl) return null;
-    var div = document.createElement('div');
-    div.className = 'tvm-tutor-typing';
-    div.innerHTML = '<span></span><span></span><span></span>';
-    messagesEl.appendChild(div);
-    messagesEl.scrollTop = messagesEl.scrollHeight;
-    return div;
   }
 
   function _escapeHtml(str) {
@@ -490,15 +411,8 @@
   }
 
   function _removePanel() {
-    if (session) { try { session.destroy(); } catch (e) { /* ok */ } }
-    session = null;
     if (chatEl && chatEl.parentNode) chatEl.parentNode.removeChild(chatEl);
     chatEl = null;
-    messagesEl = null;
-    inputEl = null;
-    sendBtn = null;
-    statusEl = null;
-    generating = false;
   }
 
   function _destroy() {
@@ -506,126 +420,90 @@
     currentHintGroups = [];
   }
 
-  // ─── AI Chat (optional — Chrome Prompt API) ────────────────────────────────
-
-  async function _initAIChat(tutorial) {
-    if (typeof LanguageModel === 'undefined') return; // no Chrome AI — hints only
-
-    var avail;
-    try { avail = await LanguageModel.availability(); } catch (e) { return; }
-    if (avail === 'unavailable') return;
-
-    // Show the chat input
-    var inputRow = chatEl && chatEl.querySelector('.tvm-tutor-input-row');
-    if (inputRow) inputRow.style.display = '';
-    _showStatus('Loading AI tutor\u2026');
-
-    var systemPrompt = _buildSystemPrompt(tutorial);
-
-    try {
-      session = await LanguageModel.create({
-        initialPrompts: [{ role: 'system', content: systemPrompt }],
-        monitor: function (m) {
-          m.addEventListener('downloadprogress', function (e) {
-            _showStatus('Downloading AI model\u2026 ' + Math.round(e.loaded * 100) + '%');
-          });
-        }
-      });
-    } catch (e) {
-      if (statusEl) statusEl.style.display = 'none';
-      if (inputRow) inputRow.style.display = 'none';
-      return;
+  // Local chat has its own lifecycle; authored failure hints remain independent.
+  TutorChat.createLocal = function (host, ask, cancel, renderReply) {
+    var root = document.createElement('details');
+    root.className = 'tvm-tutor-chat tvm-tutor-local';
+    var header = document.createElement('summary');
+    header.className = 'tvm-tutor-header';
+    header.textContent = 'AI tutor';
+    root.appendChild(header);
+    var body = document.createElement('div');
+    body.className = 'tvm-tutor-body';
+    var note = document.createElement('p');
+    note.textContent = 'Ask for a hint or explanation. The tutor uses ArchUML diagrams to explain models, behavior, and architecture. Replies run on this device and may be wrong. Download the model above before your first question.';
+    body.appendChild(note);
+    var messages = document.createElement('div');
+    messages.className = 'tvm-tutor-messages';
+    messages.setAttribute('role', 'log');
+    messages.setAttribute('aria-label', 'Tutor conversation');
+    messages.setAttribute('aria-live', 'polite');
+    body.appendChild(messages);
+    var form = document.createElement('form');
+    var label = document.createElement('label');
+    label.textContent = 'Ask the AI tutor';
+    var input = document.createElement('input');
+    input.className = 'tvm-tutor-input';
+    input.type = 'text'; input.maxLength = 600; input.required = true;
+    label.appendChild(input); form.appendChild(label);
+    var row = document.createElement('div');
+    row.className = 'tvm-tutor-input-row';
+    var send = document.createElement('button');
+    send.type = 'submit'; send.textContent = 'Send';
+    send.className = 'tvm-tutor-send tutorial-llm-primary';
+    var stop = document.createElement('button');
+    stop.type = 'button'; stop.textContent = 'Stop reply'; stop.hidden = true;
+    row.append(send, stop); form.appendChild(row); body.appendChild(form);
+    var status = document.createElement('p');
+    status.className = 'tvm-tutor-status';
+    status.setAttribute('role', 'status');
+    status.setAttribute('aria-live', 'polite');
+    body.appendChild(status); root.appendChild(body); host.appendChild(root);
+    var history = [], busy = false, revision = 0, rendering = null;
+    function append(role, text) {
+      var message = document.createElement('div');
+      message.className = 'tvm-tutor-msg ' + role;
+      // Model output is untrusted text, never executable markup.
+      message.textContent = text;
+      messages.appendChild(message);
+      messages.scrollTop = messages.scrollHeight;
+      return message;
     }
-
-    if (statusEl) statusEl.style.display = 'none';
-    if (inputEl) inputEl.disabled = false;
-    if (sendBtn) sendBtn.disabled = false;
-    if (messagesEl) messagesEl.style.display = '';
-  }
-
-  function _buildSystemPrompt(tutorial) {
-    var step = tutorial.steps[tutorial.currentStep];
-    var tests = step.tests || [];
-    var results = tutorial._testResults || [];
-
-    var passing = [], failing = [];
-    tests.forEach(function (t, i) {
-      if (results[i] === true) passing.push(t.description);
-      else failing.push(t.description);
+    function controls(value) {
+      busy = value; input.disabled = value; send.disabled = value; stop.hidden = !value;
+    }
+    stop.addEventListener('click', function () {
+      revision++; rendering?.abort(); cancel(); controls(false); status.textContent = 'Reply stopped.'; input.focus();
     });
-
-    var studentCode = _getStudentCode(tutorial, step);
-
-    // Include the rule-based hints so the LLM can build on them
-    var hintsText = currentHintGroups.map(function (group) {
-      return group.hints.map(function (hint) {
-        return '- ' + group.description + ': ' + hint.body;
-      }).join('\n');
-    }).join('\n');
-
-    var instructions = step.instructions || '';
-    if (instructions.length > 1000) instructions = instructions.substring(0, 1000) + '\n[truncated]';
-
-    return [
-      'You are a Socratic tutor. The student is working on: "' + step.title + '".',
-      '',
-      'Step instructions:',
-      instructions,
-      '',
-      'Tests passing: ' + (passing.join(', ') || 'none'),
-      'Tests failing: ' + (failing.join(', ') || 'none'),
-      '',
-      'The student has already seen these hints:',
-      hintsText || '(none)',
-      '',
-      'Student code:',
-      studentCode,
-      '',
-      'Rules:',
-      '- NEVER show corrected code or reveal the solution.',
-      '- Ask ONE guiding question per response.',
-      '- Keep responses to 2-3 sentences.',
-      '- Build on the hints above — go deeper, not broader.',
-      '- Reference specific line numbers or variable names from the student\'s code.',
-    ].join('\n');
-  }
-
-  function _onSend() {
-    if (!inputEl || !session || generating) return;
-    var text = inputEl.value.trim();
-    if (!text) return;
-    inputEl.value = '';
-    _getAssistantResponse(text);
-  }
-
-  async function _getAssistantResponse(userText) {
-    if (!session || generating) return;
-    generating = true;
-    if (inputEl) inputEl.disabled = true;
-    if (sendBtn) sendBtn.disabled = true;
-
-    _appendMessage('user', userText);
-    var typingEl = _showTyping();
-
-    try {
-      var result = await session.prompt(userText);
-      if (typingEl && typingEl.parentNode) typingEl.parentNode.removeChild(typingEl);
-
-      if (result && result.trim()) {
-        _appendMessage('assistant', result.trim());
-      } else {
-        _appendMessage('assistant', 'Try re-reading the failing test description \u2014 what specific thing is it checking for?');
+    form.addEventListener('submit', async function (event) {
+      event.preventDefault();
+      var question = input.value.trim();
+      if (!question || busy) return;
+      var request = ++revision;
+      controls(true); status.textContent = 'Preparing a local reply…';
+      append('user', question);
+      try {
+        var answer = await ask(question, history.slice(-2), function (message) {
+          if (request === revision) status.textContent = message;
+        });
+        if (request !== revision) return;
+        var message = append('assistant', renderReply ? '' : answer);
+        if (renderReply) {
+          rendering = new AbortController();
+          status.textContent = 'Preparing the explanation…';
+          await renderReply(message,answer,rendering.signal);
+          if (request !== revision) return;
+        }
+        history = [{role:'user',content:question}, {role:'assistant',content:answer}];
+        input.value = ''; status.textContent = 'Reply ready. Check the guidance against the lesson.';
+      } catch (error) {
+        if (request === revision) status.textContent = error.name === 'AbortError' ? 'Reply stopped.' : error.message;
+      } finally {
+        if (request === revision) { controls(false); input.focus(); }
       }
-    } catch (e) {
-      if (typingEl && typingEl.parentNode) typingEl.parentNode.removeChild(typingEl);
-      _appendMessage('assistant', 'Error: ' + e.message);
-    }
-
-    generating = false;
-    if (inputEl) inputEl.disabled = false;
-    if (sendBtn) sendBtn.disabled = false;
-    if (inputEl) inputEl.focus();
-  }
+    });
+    return {destroy:function () {revision++; rendering?.abort(); if (busy) cancel(); root.remove();}};
+  };
 
   // ─── Expose ─────────────────────────────────────────────────────────────────
   window.TutorChat = TutorChat;
