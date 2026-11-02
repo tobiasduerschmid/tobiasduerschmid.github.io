@@ -371,16 +371,16 @@ questions:
     type: multiple
     question: "In the 2026 Hugging Face case study, which facts establish an **integrity** violation **at Hugging Face**? (Select all that apply.)"
     options:
-      - "The agents installed a control program on 41 production dataset workers."
-      - "The agents changed a private Hugging Face repository and opened a draft pull request."
       - "The agents downloaded four of Hugging Face's private code repositories."
+      - "The agents installed a control program on 41 production dataset workers."
       - "The agents' traffic crashed the package proxy inside OpenAI's lab."
-    correct_indices: [0, 1]
+      - "The agents changed a private Hugging Face repository and opened a draft pull request."
+    correct_indices: [1, 3]
     option_feedback:
-      0: "Installing and running a program nobody authorized changes what production machines do. That is an unauthorized modification of the system."
-      1: "Changing a repository is an unauthorized modification even though the pull request was closed unmerged. Integrity is violated by the change itself, not only by a shipped change."
-      2: "Downloading copies reads data without changing it. That establishes a confidentiality violation."
-      3: "The crashed proxy belonged to OpenAI, so it is not evidence about Hugging Face. A crash also concerns availability rather than integrity."
+      0: "Downloading copies reads data without changing it. That establishes a confidentiality violation."
+      1: "Installing and running a program nobody authorized changes what production machines do. That is an unauthorized modification of the system."
+      2: "The crashed proxy belonged to OpenAI, so it is not evidence about Hugging Face. A crash also concerns availability rather than integrity."
+      3: "Changing a repository is an unauthorized modification even though the pull request was closed unmerged. Integrity is violated by the change itself, not only by a shipped change."
     explanation: "Integrity means only authorized parties may change data, and the software and configuration that process it. A control program installed on production workers and a modified private repository are both unauthorized changes at Hugging Face. Downloads violate confidentiality, and the proxy outage was an availability failure of a different organization's system."
 
   - id: 18
@@ -388,14 +388,14 @@ questions:
     type: single
     question: "A dataset-hosting site previews each uploaded file in a worker process whose environment holds production credentials. An attacker uploads a crafted file using a genuine, stolen write token, and parsing the file reveals the worker's environment. Which **trust boundary and rule** would still have kept the credentials safe?"
     options:
-      - "Around the preview worker: parse uploads in an isolated sandbox that holds no secrets."
       - "At the login page: require two-factor authentication for every account that uploads."
       - "Between the upload service and the workers: encrypt traffic so nobody can tamper with uploads."
+      - "Around the preview worker: parse uploads in an isolated sandbox that holds no secrets."
       - "Around the preview worker: keep its network address secret so attackers cannot reach it."
-    correct_index: 0
+    correct_index: 2
     option_feedback:
-      1: "Two-factor authentication guards the login page, but these uploads used an already-issued token, which skips it. Knowing who uploaded a file does not make parsing it safe."
-      2: "Encryption protects data in transit from eavesdroppers. The crafted file arrived intact; the damage came from what the worker did when it parsed the file."
+      0: "Two-factor authentication guards the login page, but these uploads used an already-issued token, which skips it. Knowing who uploaded a file does not make parsing it safe."
+      1: "Encryption protects data in transit from eavesdroppers. The crafted file arrived intact; the damage came from what the worker did when it parsed the file."
       3: "Hiding an address is security through obscurity, and the attacker never needed it: the upload service delivered the crafted file to the worker."
     explanation: "The danger lay in processing input that someone else wrote, inside a process that held secrets. A boundary around the parser, enforced by an isolated sandbox with no secrets, holds even when the uploader is authenticated, because it limits what parsing can reach. Identity checks, transport encryption, and hidden addresses all act on something other than the parsing step. The 2026 Hugging Face case study in this chapter followed exactly this path."
 
@@ -404,13 +404,13 @@ questions:
     type: single
     question: "A course's autograder runs each student submission in a container to execute its tests. So that results can be posted, every container's environment holds an API key with **write access to the whole gradebook**. Which change most reduces the damage one malicious submission could do?"
     options:
-      - "Run submissions in containers with no secrets or network; a separate service posts only the test results."
       - "Stop each submission after 60 seconds, so that malicious code has no time to use the gradebook key."
+      - "Run submissions in containers with no secrets or network; a separate service posts only the test results."
       - "Scan every submission with antivirus software before the autograder runs any of its tests."
       - "Reject any submission whose source code contains words such as import os or subprocess."
-    correct_index: 0
+    correct_index: 1
     option_feedback:
-      1: "Reading an environment variable and calling an API takes milliseconds. A time limit protects availability, not the key."
+      0: "Reading an environment variable and calling an API takes milliseconds. A time limit protects availability, not the key."
       2: "New code written for one course has no known signature for antivirus software to match, and the key stays in reach of anything that slips through."
       3: "Keyword blocklists are easy to evade with indirection or encoding, and they leave the key in reach of any code that slips through. The fix is to remove what the code can reach."
     explanation: "The autograder has the dataset worker's shape: it executes input that someone else wrote, in a process that holds a powerful credential. Isolating the submission with no secrets or network is a trust boundary around the untrusted code, and moving the gradebook key to a separate service applies least privilege. Together they shrink the blast radius from the whole gradebook to one submission's own test result."
