@@ -382,9 +382,10 @@ at, or circling the answer. Where the lyric sheet splits a sentence across
 short lines to slow the singing, the storyboard keeps the sentence, or a
 clause of a long one, as one line.
 
-"My Teammate (It Works on My Machine)", a comic opera about teamwork, is in the
-CS 35L video playlist only: it has no chapter page, so its player page prints
-the transcript. It uses the `opera-house` theme (`js/song-video/opera-house.js`):
+"My Teammate (It Works on My Machine)", a comic opera about teamwork, is only in
+the video library on `/SEBook/playlist.html`: it has no chapter page, so its
+player page prints the transcript. It uses the `opera-house` theme
+(`js/song-video/opera-house.js`):
 a gilded proscenium with velvet drapes, a fringed valance, a curtain,
 footlights, and a conductor in the pit, framing a software team's office.
 The curtain is flown, rising and falling: a curtain drawn sideways sweeps its
