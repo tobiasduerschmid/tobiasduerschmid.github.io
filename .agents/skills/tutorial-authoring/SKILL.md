@@ -848,7 +848,7 @@ exclude_from_index: boolean            # If true, /SEBook/tutorials hides
                                        # and any non-student-facing tutorial.
 
 # === Backend selection ===
-backend: v86 | cpp | pyodide | webcontainer | react | prolog | haskell | smalltalk | compiler | shell-pipeline | tla | uml-editor | multiple
+backend: v86 | cpp | pyodide | webcontainer | react | prolog | haskell | smalltalk | compiler | shell-pipeline | tla | aadl | uml-editor | multiple
                                        # default: v86
 
 # v86           — full Linux VM (shell, gcc, git, etc.). Most tutorials.
@@ -875,6 +875,13 @@ backend: v86 | cpp | pyodide | webcontainer | react | prolog | haskell | smallta
 #                 Model checking, counterexamples, and chosen-behavior
 #                 exploration have distinct meanings. See §4.6 and
 #                 docs/tla-backend.md for runtime and resource boundaries.
+# aadl          — Official OSATE validation, instantiation, and flow-latency
+#                 analysis through Java 25 in CheerpJ 5 (Java 21 bytecode).
+#                 Single-backend only.
+#                 Ordinary editable .aadl files; aadl.root selects the fully
+#                 qualified system implementation. Automatic validation after
+#                 edits is distinct from explicit analysis and exercise checks.
+#                 See §4.6 and docs/aadl/ for evidence and limitations.
 # webcontainer  — Node.js + npm + dev server (StackBlitz). Needs COOP/COEP.
 # react         — React + Vite + live preview iframe + Playwright-compat.
 # prolog        — Single-backend Tau Prolog 0.3.4 worker, locally pinned under
@@ -916,7 +923,7 @@ backend: v86 | cpp | pyodide | webcontainer | react | prolog | haskell | smallta
 # tutorial-level default per step. Mixed mode supports `v86`, `cpp`, `pyodide`,
 # `react`, `webcontainer`, and `browser` steps, with `browser` serving as the
 # in-page Node fallback if WebContainers cannot boot. Keep `haskell`,
-# `uml-editor`, `shell-pipeline`, `tla`, SQL, Prolog, Java, and debugger tutorials single-backend until
+# `uml-editor`, `shell-pipeline`, `tla`, `aadl`, SQL, Prolog, Java, and debugger tutorials single-backend until
 # the runtime explicitly supports those combinations.
 # Mixed tutorials with multiple worker backends (such as cpp and pyodide)
 # replace the active worker lazily when switching languages, restoring the
@@ -1368,6 +1375,10 @@ steps:
                                              # root. run_file selects the .tla
                                              # entry. Both files use ordinary
                                              # files/autosave/solution handling.
+    aadl:                                    # aadl backend only; optional at root
+      root: Rover_Budget::Loop.budget         # and step. Step overrides tutorial.
+                                             # Complete workspace is submitted;
+                                             # run_file is not the analysis root.
     default_query: string                    # prolog only. Authored goal used by
                                              # Run and Debug, independent of the
                                              # Terminal prompt and history.
@@ -1455,6 +1466,10 @@ steps:
           model_config: |                    # Trusted instructor configuration.
             SPECIFICATION Spec
             CHECK_DEADLOCK FALSE
+        aadl:                                # aadl backend only; instead of command.
+          fixture: rover-budget-v1            # Fixed resolved-model exercise contract.
+          criterion: complete-budget         # connected-flow | complete-budget |
+                                             # tight-bound. See §4.6; not regex grading.
         signature:                           # Haskell only; optional explicit
           name: canAffordPizza                # top-level declaration in run_file.
           type: "Double -> Double -> Bool"    # Compiler-resolved exact monomorphic type.
@@ -3046,6 +3061,12 @@ channel.
   tutorial boundary, bounded private-port requests, and state exploration;
   `tla-runtime-frame.html` + `js/tla/frame.js` run the official Java tools
   through CheerpJ in a disposable opaque-origin data-URL frame),
+  `js/tutorial-aadl.js` + `js/aadl/{client,controller,model,assessment}.mjs`
+  (the AADL tutorial boundary, source freshness, bounded execution, and resolved
+  evidence checks), `js/aadl/{view,diagram,diagram-projection}.mjs` (presentation
+  and pure scope projection), and `js/aadl/runtime-session.mjs` with
+  `js/aadl/frame.js` and `aadl-runtime-frame.html` (official OSATE through
+  CheerpJ; see `docs/aadl/`),
   `js/playwright-compat/runner.js` (in-browser Playwright for React; host-side
   preview proxy plus an opaque-origin, terminable learner-spec worker),
   `js/pyodide-git.js` / `js/pyodide-unix.js` (POSIX mocks).
@@ -3215,24 +3236,112 @@ snapshot-input, or checksum drift.
 
 ### 4.6 Backends — what each supports
 
-| Feature                | v86 | cpp | pyodide | webcontainer | browser | react | prolog | haskell | uml-editor | compiler | shell-pipeline | tla |
-|------------------------|-----|-----|---------|--------------|---------|-------|--------|---------|------------|----------|----------------|-----|
-| Shell terminal         | ✅  | ❌  | ❌      | ✅           | ❌      | ❌    | ❌     | ❌      | ❌         | ❌ | ❌ | ❌ |
-| Compiled languages     | C   | C++17 | ❌    | (npm only)   | ❌      | ❌    | ❌     | ✅      | ❌         | ❌ | ❌ | ❌ |
-| `git`                  | ✅  | ❌  | mocked  | ✅           | ❌      | ❌    | ❌     | ❌      | ❌         | ❌ | ❌ | ❌ |
-| Debugger / recorded history | ❌ | ❌ | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ | State traces |
-| Live preview iframe    | ❌  | ❌  | ❌      | ✅           | ❌      | ✅    | ❌     | ❌      | ❌         | ❌ | ❌ | ❌ |
-| Playwright tests       | ❌  | ❌  | ❌      | ❌           | ❌      | ✅    | ❌     | ❌      | ❌         | ❌ | ❌ | ❌ |
-| UML assertion tests    | ❌  | ❌  | ❌      | ❌           | ❌      | ❌    | ❌     | ❌      | ✅         | ❌ | ❌ | ❌ |
-| `pytest`               | ❌  | ❌  | ✅      | ❌           | ❌      | ❌    | ❌     | ❌      | ❌         | ❌ | ❌ | ❌ |
-| Linter                 | ✅  | ❌  | ✅      | ✅           | ✅      | ✅    | ❌     | ❌      | ❌         | ❌ | ❌ | ❌ |
-| Regex / EBNF / AST checks | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ |
-| Separate Bash command box / fixture checks | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ |
-| TLA+ model checking / behavior exploration | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Feature                | v86 | cpp | pyodide | webcontainer | browser | react | prolog | haskell | uml-editor | compiler | shell-pipeline | tla | aadl |
+|------------------------|-----|-----|---------|--------------|---------|-------|--------|---------|------------|----------|----------------|-----|------|
+| Shell terminal         | ✅  | ❌  | ❌      | ✅           | ❌      | ❌    | ❌     | ❌      | ❌         | ❌ | ❌ | ❌ | ❌ |
+| Compiled languages     | C   | C++17 | ❌    | (npm only)   | ❌      | ❌    | ❌     | ✅      | ❌         | ❌ | ❌ | ❌ | ❌ |
+| `git`                  | ✅  | ❌  | mocked  | ✅           | ❌      | ❌    | ❌     | ❌      | ❌         | ❌ | ❌ | ❌ | ❌ |
+| Debugger / recorded history | ❌ | ❌ | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ | State traces | ❌ |
+| Live preview iframe    | ❌  | ❌  | ❌      | ✅           | ❌      | ✅    | ❌     | ❌      | ❌         | ❌ | ❌ | ❌ | ❌ |
+| Playwright tests       | ❌  | ❌  | ❌      | ❌           | ❌      | ✅    | ❌     | ❌      | ❌         | ❌ | ❌ | ❌ | ❌ |
+| UML assertion tests    | ❌  | ❌  | ❌      | ❌           | ❌      | ❌    | ❌     | ❌      | ✅         | ❌ | ❌ | ❌ | ❌ |
+| `pytest`               | ❌  | ❌  | ✅      | ❌           | ❌      | ❌    | ❌     | ❌      | ❌         | ❌ | ❌ | ❌ | ❌ |
+| Linter                 | ✅  | ❌  | ✅      | ✅           | ✅      | ✅    | ❌     | ❌      | ❌         | ❌ | ❌ | ❌ | OSATE validation |
+| Regex / EBNF / AST checks | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ |
+| Separate Bash command box / fixture checks | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ |
+| TLA+ model checking / behavior exploration | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ |
+| Resolved architecture / flow-latency analysis | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
 
 Mixed-backend tutorials support `v86`, `cpp`, `pyodide`, `react`, `webcontainer`,
 and `browser`. They are for author-controlled backend switches between steps,
 not for debugger flows or terminal-first Node labs.
+
+#### AADL architecture modeling
+
+`aadl` is a single-backend workspace using the pinned official OSATE Java
+libraries (Java 21 bytecode) through CheerpJ 5 / Java 25 in the browser. It does not use the
+Java-subset tutorial worker or an independently written AADL parser. The runtime
+bundle and supported analyses are documented in `docs/aadl/`; official core
+validation does not imply that every desktop annex or analysis plug-in is present.
+
+Use ordinary `files` entries ending in `.aadl`, with `language: aadl` when an
+explicit language is needed, plus `aadl: {root: Rover_Budget::Loop.budget}` at tutorial or
+step level. The step root overrides the tutorial default. The workspace submits
+all editor files, not just `run_file`. The root field in the result pane is a
+transient selection: it is not written into authored configuration or persisted
+as a new preference, and step loading, Reset, and Apply Solution restore the
+authored root. No shell setup or solution commands are supported. Keep lessons
+single-backend and provide source replacements in solutions.
+
+`js/aadl/language.mjs` registers case-insensitive Monaco lexical highlighting
+before editor models are created. It colors core/property keywords, comments,
+strings, numbers, common units, and connection/property operators. This is a
+presentation aid, not a second parser or a source of semantic validity; OSATE
+remains authoritative for diagnostics and the resolved diagram.
+File and pane popouts await the same module in their separate browser context
+before creating AADL models. The shared extension map also recognizes `.aadl`;
+do not duplicate the tokenizer in a popout or the general language registry.
+
+After committed step loading, saved-file restoration, Reset, Apply Solution,
+and ordinary edits, the controller schedules validation/instantiation after
+1,200 ms. Programmatic restore retains saved completion; student edits, root
+changes, Reset, and Apply Solution invalidate exercise credit. The Run action
+and Ctrl/Cmd+Enter request analysis. **Test My Work** performs one analysis for
+the captured submission and applies every criterion to that result. Automatic
+validation never awards credit. Source/root identity and the step-load sequence
+are checked before publishing completion; Stop, edits, navigation, destruction,
+and stale or incomplete results cannot produce a passing exercise record.
+
+The architecture pane separates diagnostics, the resolved hierarchy/port graph,
+and actual latency evidence. The simplified **AADL architecture overview** uses
+local ELK layout; it is not complete standard graphical notation. Root and
+interior views retain connection-reference boundary segments. Deployment shows
+actual bindings separately. Model details provide equivalent component, feature,
+connection, and binding tables. Feature-group drawing currently reports an
+explicit unsupported-view state; scopes above seven nodes keep complete tables
+and ask for a smaller visual scope. Diagram limits do not redefine AADL validity.
+There is no text-output popout for this pane. Source buttons use official source
+locations and are disabled on stale models. Direct workspace printing uses
+light-palette tables for the selected scope; ordinary tutorial print pages retain
+the authored instructions and files.
+
+Narrow panes use a vertical ELK layout with top/bottom ports and wrapped labels
+at the inherited paragraph size. Resizing reflows the current resolved snapshot
+without rerunning OSATE. The three-component teaching model fits 320 px and
+600 px viewports; more complex scopes can still require horizontal scrolling.
+Access connections preserve valid component endpoints and their access kind.
+
+The first exercise contract is deliberately specific: `tests[].aadl` has
+`fixture: rover-budget-v1` and `criterion: connected-flow`, `complete-budget`,
+or `tight-bound`. These require the resolved sensor → control → actuator response
+path in `Rover_Budget::Loop.budget`. The timing criteria retain the supplied
+4 ms source, 8–12 ms control, 6 ms sink, and explicit zero-delay connections.
+`complete-budget` needs complete OSATE evidence of 18–22 ms;
+lessons that retain the original requirement also set
+`required_upper_bound_ms: 25` on that criterion so changing the requirement cannot
+satisfy the exercise. Omit that optional field only when the lesson permits a
+different requirement.
+`tight-bound` additionally requires a 0–22 ms end-to-end requirement that is
+satisfied at equality. Removing a path or contributor, or receiving a smaller
+number from absent latency properties, does not satisfy these checks. Do not
+reuse this fixture identifier for a different exercise model or describe these
+checks as general schedulability, behavioral, or safety proof.
+
+`js/aadl/model.mjs` owns request/result limits and validation; the host adapter
+does not inspect source syntax. Completed sessions may retain immutable language
+services for a warm next request, while per-request model resources remain
+isolated. Ordinary source/root edits supersede the result promise without
+restarting engine initialization or overlapping Java operations. While an old
+request drains, only the latest queued snapshot is retained. Startup and active
+request deadlines belong to that engine work and are not extended by edits.
+Stop, reset/navigation, and destruction still terminate active startup/work;
+idle Stop preserves the loaded engine. Progress reports verified artifact counts,
+Java/language/service initialization stages, and elapsed startup time every
+15 seconds. Do not invent a percentage for JVM initialization. Actual-engine
+browser tests restore normal Chromium background scheduling, which Playwright
+otherwise disables. Timeout/runtime errors remain unassessed. Exercise and renderer unit
+tests use recorded official results; actual engine tests are separately needed
+to validate the browser transport, model isolation, and current source revisions.
 
 #### TLA+ and PlusCal
 

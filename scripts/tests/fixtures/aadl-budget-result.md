@@ -1,0 +1,11 @@
+# AADL budget result fixture
+
+`aadl-budget-result.json` is the structured output from the project's Java bridge executing the original `docs/aadl/examples/flow-budget.aadl` in native OSATE 2.21.0-SNAPSHOT (`b8308b7`), distributed with `osate-cli` 0.3.0. Captured 1 November 2026, with the unchanged source submitted as `model.aadl`. Source locations preserve that authored file-map path. It is a test fixture, not evidence of browser compatibility; the separate browser sequence is recorded in `docs/aadl/runtime.md`.
+
+The hand-checkable reference is sensor 4 + controller 8..12 + actuator 6 + two explicit zero-delay connections = 18..22 ms, against 0..25 ms. Host tests mutate independently specified missing/changed properties and bounds; the bridge's real-engine contract suite verifies the corresponding source variants. `sourceAvailable: false` with `sources: []` identifies unavailable property provenance, not an assertion that the property has no declaration.
+
+`aadl-rover-result.json` is the same bridge's resolved projection of `docs/aadl/examples/rover.aadl`, using the same engine. It preserves the native connection segments through the motion process boundary and the actual processor bindings on its two threads. It supports projection/renderer contract tests; it is not a latency-completeness fixture.
+
+`aadl-access-result.json` was captured with the same native bridge during independent review. Its `Access_Test::Top.impl` has a bus `link` and device `sensor`, whose `link` feature requires bus access. The legal connection `attachment: bus access link -> sensor.link;` resolves from a component instance to a feature instance. It guards against treating every connection endpoint as a port.
+
+`aadl-modal-result.json` was captured from the budget model with controller modes `fast` (initial) and `slow`, with flow latency `8 ms .. 12 ms in modes (fast)` and `80 ms .. 120 ms in modes (slow)`. Native rows identify `som_1(control.fast)` and `som_2(control.slow)` and report 18–22 ms versus 90–130 ms. Generic effective-property projection does not resolve each mode, so the static tutorial profile must retain those scopes and report inconclusive coverage rather than claim per-mode adequacy.

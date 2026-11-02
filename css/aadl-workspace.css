@@ -1,0 +1,64 @@
+/* The host workspace presents engine status; diagram geometry lives separately. */
+.aadl-workspace {
+  --aadl-bg: #fff;
+  --aadl-fg: #172d42;
+  --aadl-line: #526b82;
+  --aadl-accent: #075b9c;
+  --aadl-panel: #edf5fc;
+  background: var(--aadl-bg);
+  color: var(--aadl-fg);
+  color-scheme: light;
+  font: 18px/1.5 system-ui, sans-serif;
+  min-width: 0;
+  padding: 1em;
+  overflow-wrap: anywhere;
+}
+html.dark-mode .aadl-workspace {
+  --aadl-bg: #152332;
+  --aadl-fg: #f1f6fb;
+  --aadl-line: #b2c5d8;
+  --aadl-accent: #8ecbff;
+  --aadl-panel: #243b50;
+  color-scheme: dark;
+}
+.aadl-workspace p, .aadl-workspace li, .aadl-workspace summary { font: inherit; }
+.aadl-workspace h3 { font-size: 1.3em; line-height: 1.3; margin: 1em 0 .5em; }
+.aadl-workspace h4 { font-size: 1.1em; line-height: 1.3; margin: .5em 0; }
+.aadl-workspace input, .aadl-workspace button {
+  font: inherit;
+  color: var(--aadl-fg);
+  background: var(--aadl-bg);
+  border: 1px solid var(--aadl-line);
+  border-radius: .25em;
+  padding: .4em .6em;
+  min-height: 2.2em;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+.aadl-workspace button, .aadl-workspace summary { cursor: pointer; }
+.aadl-workspace button:hover:not(:disabled) { background: var(--aadl-panel); }
+.aadl-workspace :focus-visible { outline: 3px solid var(--aadl-accent); outline-offset: 3px; }
+.aadl-workspace__root { display: flex; flex-wrap: wrap; align-items: end; gap: .75em; }
+.aadl-workspace__root label { display: flex; flex: 1 1 18em; flex-direction: column; min-width: 0; gap: .3em; }
+.aadl-workspace__root input { width: 100%; }
+.aadl-workspace__status { border-inline-start: .3em solid var(--aadl-accent); padding-inline-start: .75em; }
+.aadl-workspace__finding { padding: 1em; margin-block: 1em; border: 1px solid var(--aadl-line); border-radius: .4em; }
+.aadl-workspace details > summary { padding-block: .5em; }
+.aadl-workspace [hidden] { display: none !important; }
+.aadl-tutorial .tvm-output-container { padding: 0; }
+.aadl-tutorial .tvm-output-pre:empty { display: none; }
+
+@media print {
+  .aadl-workspace, html.dark-mode .aadl-workspace {
+    --aadl-bg: #fff;
+    --aadl-fg: #172d42;
+    --aadl-line: #526b82;
+    --aadl-accent: #075b9c;
+    --aadl-panel: #edf5fc;
+    color-scheme: light;
+    padding: 0;
+  }
+  .aadl-workspace__root, .aadl-workspace button { display: none; }
+  .aadl-workspace details > div { display: block !important; }
+  .aadl-workspace details::details-content { content-visibility: visible; }
+}

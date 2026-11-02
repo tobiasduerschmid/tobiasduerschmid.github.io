@@ -1,0 +1,428 @@
+{
+  "version": 1,
+  "diagnostics": [],
+  "analyses": [
+    {
+      "kind": "latency",
+      "status": "complete",
+      "assumptions": {
+        "majorFrameDelay": true,
+        "worstCaseDeadline": true,
+        "asynchronousSystem": true,
+        "disableQueuingLatency": false,
+        "bestCaseEmptyQueue": true
+      },
+      "diagnostics": [],
+      "results": [
+        {
+          "elementId": "Loop_budget_Instance.response",
+          "message": "Latency results for response",
+          "resultType": "SUCCESS",
+          "values": [
+            "",
+            18.0,
+            22.0,
+            18.0,
+            22.0,
+            0.0,
+            25.0
+          ],
+          "diagnostics": [
+            {
+              "severity": "info",
+              "message": "Minimum actual latency total 18.0ms is greater or equal to expected minimum end to end latency 0.000ms",
+              "elementId": "Loop_budget_Instance.response"
+            },
+            {
+              "severity": "info",
+              "message": "Maximum actual latency total 22.0ms is less or equal to expected maximum end to end latency 25.0ms",
+              "elementId": "Loop_budget_Instance.response"
+            },
+            {
+              "severity": "info",
+              "message": "Jitter of actual flow latency 18.0..22.0ms is within expected end to end latency jitter 0.000..25.0ms",
+              "elementId": "Loop_budget_Instance.response"
+            }
+          ],
+          "contributors": [
+            {
+              "elementId": "Loop_budget_Instance.sensor",
+              "message": null,
+              "resultType": "TBD",
+              "values": [
+                4.0,
+                4.0,
+                4.0,
+                4.0,
+                "specified",
+                "specified",
+                "source sample"
+              ],
+              "diagnostics": [],
+              "contributors": []
+            },
+            {
+              "elementId": "Loop_budget_Instance.sensor.speed -> control.speed",
+              "message": null,
+              "resultType": "TBD",
+              "values": [
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                "no sampling/queuing latency",
+                "no sampling/queuing latency",
+                ""
+              ],
+              "diagnostics": [],
+              "contributors": []
+            },
+            {
+              "elementId": "Loop_budget_Instance.control",
+              "message": null,
+              "resultType": "TBD",
+              "values": [
+                8.0,
+                12.0,
+                8.0,
+                12.0,
+                "specified",
+                "specified",
+                "path control"
+              ],
+              "diagnostics": [],
+              "contributors": []
+            },
+            {
+              "elementId": "Loop_budget_Instance.control.command -> actuator.command",
+              "message": null,
+              "resultType": "TBD",
+              "values": [
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                "no sampling/queuing latency",
+                "no sampling/queuing latency",
+                ""
+              ],
+              "diagnostics": [],
+              "contributors": []
+            },
+            {
+              "elementId": "Loop_budget_Instance.actuator",
+              "message": null,
+              "resultType": "TBD",
+              "values": [
+                6.0,
+                6.0,
+                6.0,
+                6.0,
+                "specified",
+                "specified",
+                "sink apply"
+              ],
+              "diagnostics": [],
+              "contributors": []
+            }
+          ],
+          "minimumMs": 18.0,
+          "maximumMs": 22.0,
+          "minimumRequirementMs": 0.0,
+          "maximumRequirementMs": 25.0
+        }
+      ]
+    }
+  ],
+  "model": {
+    "connections": [
+      {
+        "id": "Loop_budget_Instance.sensor.speed -> control.speed",
+        "name": "sensor.speed -> control.speed",
+        "source": "Loop_budget_Instance.sensor.speed",
+        "target": "Loop_budget_Instance.control.speed",
+        "contextId": "Loop_budget_Instance",
+        "kind": "portConnection",
+        "bidirectional": false,
+        "segments": [
+          {
+            "id": "Loop_budget_Instance.sensor.speed -> control.speed.sample_link",
+            "name": "sample_link",
+            "contextId": "Loop_budget_Instance",
+            "source": "Loop_budget_Instance.sensor.speed",
+            "target": "Loop_budget_Instance.control.speed",
+            "sourceLocation": {
+              "line": 41,
+              "file": "model.aadl",
+              "column": 5,
+              "endLine": 41,
+              "endColumn": 53
+            }
+          }
+        ],
+        "latency": {
+          "present": true,
+          "minimumMs": 0.0,
+          "maximumMs": 0.0,
+          "sourceAvailable": false,
+          "sources": []
+        }
+      },
+      {
+        "id": "Loop_budget_Instance.control.command -> actuator.command",
+        "name": "control.command -> actuator.command",
+        "source": "Loop_budget_Instance.control.command",
+        "target": "Loop_budget_Instance.actuator.command",
+        "contextId": "Loop_budget_Instance",
+        "kind": "portConnection",
+        "bidirectional": false,
+        "segments": [
+          {
+            "id": "Loop_budget_Instance.control.command -> actuator.command.command_link",
+            "name": "command_link",
+            "contextId": "Loop_budget_Instance",
+            "source": "Loop_budget_Instance.control.command",
+            "target": "Loop_budget_Instance.actuator.command",
+            "sourceLocation": {
+              "line": 42,
+              "file": "model.aadl",
+              "column": 5,
+              "endLine": 42,
+              "endColumn": 60
+            }
+          }
+        ],
+        "latency": {
+          "present": true,
+          "minimumMs": 0.0,
+          "maximumMs": 0.0,
+          "sourceAvailable": false,
+          "sources": []
+        }
+      }
+    ],
+    "flows": [
+      {
+        "id": "Loop_budget_Instance.response",
+        "name": "response",
+        "contextId": "Loop_budget_Instance",
+        "latency": {
+          "present": true,
+          "minimumMs": 0.0,
+          "maximumMs": 25.0,
+          "sourceAvailable": false,
+          "sources": []
+        },
+        "kind": "end-to-end",
+        "elements": [
+          "Loop_budget_Instance.sensor.sample",
+          "Loop_budget_Instance.sensor.speed -> control.speed",
+          "Loop_budget_Instance.control.control",
+          "Loop_budget_Instance.control.command -> actuator.command",
+          "Loop_budget_Instance.actuator.apply"
+        ],
+        "sourceLocation": {
+          "line": 44,
+          "file": "model.aadl",
+          "column": 5,
+          "endLine": 45,
+          "endColumn": 57
+        }
+      },
+      {
+        "id": "Loop_budget_Instance.sensor.sample",
+        "name": "sample",
+        "contextId": "Loop_budget_Instance.sensor",
+        "latency": {
+          "present": true,
+          "minimumMs": 4.0,
+          "maximumMs": 4.0,
+          "sourceAvailable": false,
+          "sources": []
+        },
+        "kind": "source",
+        "source": null,
+        "target": "Loop_budget_Instance.sensor.speed",
+        "sourceLocation": {
+          "line": 14,
+          "file": "model.aadl",
+          "column": 5,
+          "endLine": 14,
+          "endColumn": 58
+        }
+      },
+      {
+        "id": "Loop_budget_Instance.actuator.apply",
+        "name": "apply",
+        "contextId": "Loop_budget_Instance.actuator",
+        "latency": {
+          "present": true,
+          "minimumMs": 6.0,
+          "maximumMs": 6.0,
+          "sourceAvailable": false,
+          "sources": []
+        },
+        "kind": "sink",
+        "source": "Loop_budget_Instance.actuator.command",
+        "target": null,
+        "sourceLocation": {
+          "line": 29,
+          "file": "model.aadl",
+          "column": 5,
+          "endLine": 29,
+          "endColumn": 57
+        }
+      },
+      {
+        "id": "Loop_budget_Instance.control.control",
+        "name": "control",
+        "contextId": "Loop_budget_Instance.control",
+        "latency": {
+          "present": true,
+          "minimumMs": 8.0,
+          "maximumMs": 12.0,
+          "sourceAvailable": false,
+          "sources": []
+        },
+        "kind": "path",
+        "source": "Loop_budget_Instance.control.speed",
+        "target": "Loop_budget_Instance.control.command",
+        "sourceLocation": {
+          "line": 22,
+          "file": "model.aadl",
+          "column": 5,
+          "endLine": 22,
+          "endColumn": 69
+        }
+      }
+    ],
+    "bindings": [],
+    "rootId": "Loop_budget_Instance",
+    "components": [
+      {
+        "id": "Loop_budget_Instance",
+        "name": "Loop_budget_Instance",
+        "parentId": null,
+        "category": "system",
+        "classifier": "Rover_Budget::Loop.budget",
+        "features": [],
+        "source": {
+          "line": 35,
+          "file": "model.aadl",
+          "column": 3,
+          "endLine": 49,
+          "endColumn": 19
+        }
+      },
+      {
+        "id": "Loop_budget_Instance.sensor",
+        "name": "sensor",
+        "parentId": "Loop_budget_Instance",
+        "category": "device",
+        "classifier": "Rover_Budget::Sensor",
+        "features": [
+          {
+            "id": "Loop_budget_Instance.sensor.speed",
+            "name": "speed",
+            "direction": "out",
+            "kind": "dataPort",
+            "dataClassifier": "Rover_Budget::Speed",
+            "source": {
+              "line": 12,
+              "file": "model.aadl",
+              "column": 5,
+              "endLine": 12,
+              "endColumn": 32
+            },
+            "features": []
+          }
+        ],
+        "source": {
+          "line": 37,
+          "file": "model.aadl",
+          "column": 5,
+          "endLine": 37,
+          "endColumn": 27
+        }
+      },
+      {
+        "id": "Loop_budget_Instance.actuator",
+        "name": "actuator",
+        "parentId": "Loop_budget_Instance",
+        "category": "device",
+        "classifier": "Rover_Budget::Actuator",
+        "features": [
+          {
+            "id": "Loop_budget_Instance.actuator.command",
+            "name": "command",
+            "direction": "in",
+            "kind": "dataPort",
+            "dataClassifier": "Rover_Budget::Drive_Command",
+            "source": {
+              "line": 27,
+              "file": "model.aadl",
+              "column": 5,
+              "endLine": 27,
+              "endColumn": 41
+            },
+            "features": []
+          }
+        ],
+        "source": {
+          "line": 39,
+          "file": "model.aadl",
+          "column": 5,
+          "endLine": 39,
+          "endColumn": 31
+        }
+      },
+      {
+        "id": "Loop_budget_Instance.control",
+        "name": "control",
+        "parentId": "Loop_budget_Instance",
+        "category": "system",
+        "classifier": "Rover_Budget::Controller",
+        "features": [
+          {
+            "id": "Loop_budget_Instance.control.speed",
+            "name": "speed",
+            "direction": "in",
+            "kind": "dataPort",
+            "dataClassifier": "Rover_Budget::Speed",
+            "source": {
+              "line": 19,
+              "file": "model.aadl",
+              "column": 5,
+              "endLine": 19,
+              "endColumn": 31
+            },
+            "features": []
+          },
+          {
+            "id": "Loop_budget_Instance.control.command",
+            "name": "command",
+            "direction": "out",
+            "kind": "dataPort",
+            "dataClassifier": "Rover_Budget::Drive_Command",
+            "source": {
+              "line": 20,
+              "file": "model.aadl",
+              "column": 5,
+              "endLine": 20,
+              "endColumn": 42
+            },
+            "features": []
+          }
+        ],
+        "source": {
+          "line": 38,
+          "file": "model.aadl",
+          "column": 5,
+          "endLine": 38,
+          "endColumn": 32
+        }
+      }
+    ]
+  },
+  "status": "complete"
+}

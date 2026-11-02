@@ -1,0 +1,100 @@
+/* Resolved-model diagrams: presentation only. Geometry is measured at runtime. */
+.aadl-diagram {
+  --aadl-diagram-bg: #fff;
+  --aadl-diagram-fg: #172d42;
+  --aadl-diagram-muted: #405970;
+  --aadl-diagram-line: #526b82;
+  --aadl-diagram-node: #edf5fc;
+  --aadl-diagram-focus: #075b9c;
+  --aadl-diagram-stale: #76520b;
+  color: var(--aadl-diagram-fg);
+  background: var(--aadl-diagram-bg);
+  color-scheme: light;
+  font: inherit;
+  line-height: 1.5;
+  min-width: 0;
+  padding: 1em;
+}
+
+html.dark-mode .aadl-diagram {
+  --aadl-diagram-bg: #152332;
+  --aadl-diagram-fg: #f1f6fb;
+  --aadl-diagram-muted: #bfcedd;
+  --aadl-diagram-line: #b2c5d8;
+  --aadl-diagram-node: #243b50;
+  --aadl-diagram-focus: #8ecbff;
+  --aadl-diagram-stale: #f4d38c;
+  color-scheme: dark;
+}
+
+.aadl-diagram__toolbar { display: flex; flex-wrap: wrap; gap: 1em; }
+.aadl-diagram__control { display: flex; flex-direction: column; gap: .3em; min-width: 0; max-width: 100%; }
+.aadl-diagram select, .aadl-diagram button {
+  font: inherit;
+  color: var(--aadl-diagram-fg);
+  background: var(--aadl-diagram-bg);
+  border: 1px solid var(--aadl-diagram-line);
+  border-radius: .25em;
+  padding: .4em .6em;
+  min-height: 2.2em;
+  max-width: 100%;
+}
+.aadl-diagram button { cursor: pointer; }
+.aadl-diagram button:disabled { cursor: default; color: var(--aadl-diagram-muted); }
+.aadl-diagram button:hover:not(:disabled), .aadl-diagram summary:hover { background: var(--aadl-diagram-node); }
+.aadl-diagram :focus-visible { outline: 3px solid var(--aadl-diagram-focus); outline-offset: 3px; }
+.aadl-diagram p, .aadl-diagram figure { margin: 1em 0; }
+.aadl-diagram__path { overflow-wrap: anywhere; font-weight: 600; }
+.aadl-diagram__status { border-inline-start: .3em solid var(--aadl-diagram-line); padding-inline-start: .75em; }
+.aadl-diagram.is-stale .aadl-diagram__status { color: var(--aadl-diagram-stale); border-color: currentColor; font-weight: 600; }
+.aadl-diagram figcaption { margin-bottom: .75em; font: inherit; }
+.aadl-diagram__canvas, .aadl-diagram__table-scroll { overflow: auto; max-width: 100%; margin: .5em 0 1em; padding: .3em; }
+.aadl-diagram__canvas { border: 1px solid var(--aadl-diagram-line); border-radius: .4em; }
+.aadl-diagram__canvas svg { display: block; max-width: none; font: inherit; }
+.aadl-diagram__canvas text { fill: var(--aadl-diagram-fg); font: inherit; }
+.aadl-diagram__canvas .aadl-diagram__node-name, .aadl-diagram__canvas .aadl-diagram__scope-label { font-weight: 600; }
+.aadl-diagram__boundary { fill: var(--aadl-diagram-bg); stroke: var(--aadl-diagram-line); stroke-width: 1.5; }
+.aadl-diagram__node { fill: var(--aadl-diagram-node); stroke: var(--aadl-diagram-line); stroke-width: 2; }
+.aadl-diagram__port, .aadl-diagram__arrow { fill: var(--aadl-diagram-fg); stroke: var(--aadl-diagram-fg); }
+.aadl-diagram__edge { fill: none; stroke: var(--aadl-diagram-fg); stroke-width: 2; }
+.aadl-diagram__binding { stroke-dasharray: 8 5; }
+.aadl-diagram__label-ground { fill: var(--aadl-diagram-bg); }
+.aadl-diagram__details > summary { cursor: pointer; padding: .5em; border: 1px solid var(--aadl-diagram-line); border-radius: .25em; }
+.aadl-diagram table { border-collapse: collapse; font: inherit; width: 100%; }
+.aadl-diagram caption { text-align: start; font-weight: 600; padding: .7em 0; }
+.aadl-diagram th, .aadl-diagram td { text-align: start; vertical-align: top; padding: .6em; border: 1px solid var(--aadl-diagram-line); font: inherit; overflow-wrap: anywhere; }
+.aadl-diagram th { font-weight: 600; background: var(--aadl-diagram-node); }
+.aadl-diagram__note { color: var(--aadl-diagram-muted); }
+
+@media (forced-colors: active) {
+  .aadl-diagram, html.dark-mode .aadl-diagram {
+    --aadl-diagram-bg: Canvas;
+    --aadl-diagram-fg: CanvasText;
+    --aadl-diagram-muted: CanvasText;
+    --aadl-diagram-line: CanvasText;
+    --aadl-diagram-node: Canvas;
+    --aadl-diagram-focus: Highlight;
+    --aadl-diagram-stale: CanvasText;
+  }
+}
+
+@media print {
+  .aadl-diagram, html.dark-mode .aadl-diagram {
+    --aadl-diagram-bg: #fff;
+    --aadl-diagram-fg: #172d42;
+    --aadl-diagram-muted: #405970;
+    --aadl-diagram-line: #526b82;
+    --aadl-diagram-node: #edf5fc;
+    --aadl-diagram-focus: #075b9c;
+    --aadl-diagram-stale: #76520b;
+    color-scheme: light;
+    padding: 0;
+  }
+  .aadl-diagram__toolbar, .aadl-diagram button, .aadl-diagram__canvas, .aadl-diagram__scroll-help { display: none; }
+  .aadl-diagram__details > summary { border: 0; padding: 0; }
+  .aadl-diagram__details > div { display: block !important; }
+  .aadl-diagram__details::details-content { content-visibility: visible; }
+  .aadl-diagram__table-scroll { overflow: visible; padding: 0; }
+  .aadl-diagram th, .aadl-diagram td { overflow-wrap: anywhere; }
+  .aadl-diagram tr { break-inside: avoid; }
+}

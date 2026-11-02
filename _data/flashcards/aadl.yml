@@ -1,0 +1,54 @@
+title: 'AADL Architecture and Timing'
+description: 'Model levels, communication, deployment, timing, and the evidence behind an architectural claim.'
+active: true
+cards:
+  - id: aadl-model-levels
+    difficulty: basic
+    question: 'In AADL, how do a component type, an implementation, and an instance differ?'
+    answer: 'A **type** declares the interface and applicable properties. An **implementation** describes an architectural realization. An **instance** is a resolved occurrence in a system instance model.'
+    explanation: 'Two subcomponents can select the same classifier and still become distinct occurrences. An AADL implementation describes architecture; it need not contain executable application code.'
+
+  - id: aadl-instance-binding
+    difficulty: intermediate
+    question: 'Two AADL subcomponents use Filter.basic. An Actual_Processor_Binding association targets only left.filter. Does that association also move right.filter? Explain.'
+    hint: 'Locate the target named by the association, then distinguish that occurrence from the classifier it uses.'
+    answer: 'No. The association targets **left.filter**. Inspect the effective binding of each instance separately.'
+    explanation: 'Sharing a classifier does not merge two component occurrences. A classifier-level property can affect multiple uses, but an association targeting one occurrence has a narrower scope.'
+
+  - id: aadl-data-port
+    difficulty: basic
+    question: 'In AADL, does a data port promise that a consumer processes every update as a separate queued message?'
+    answer: 'No. A data port represents state-like data, normally sampled as the latest available value. It does not promise a queue of all updates.'
+    explanation: 'Event and event-data ports represent occurrences. Preserving every occurrence also requires suitable queue, overflow, dispatch, and timing assumptions.'
+
+  - id: aadl-process-processor
+    difficulty: basic
+    question: 'In AADL, what is the difference between a process and a processor?'
+    answer: 'A **process** supplies a protected address-space boundary for software. A **processor** represents an execution resource.'
+    explanation: 'Containment describes which threads belong to the process. Processor binding describes where those threads execute; placing a processor nearby in a diagram does not establish that allocation.'
+
+  - id: aadl-allowed-actual
+    difficulty: basic
+    question: 'In AADL deployment properties, how does an allowed processor binding differ from an actual processor binding?'
+    answer: 'An **allowed** binding constrains permissible choices. An **actual** binding records the selected allocation.'
+    explanation: 'Listing two permitted processors does not state which one executes a thread. An analysis of a selected deployment needs the relevant actual binding resolved.'
+
+  - id: aadl-demand-limit
+    difficulty: intermediate
+    question: 'An AADL model declares two periodic threads with upper execution times 2 ms and 3 ms, and periods 10 ms and 20 ms. What processor-demand estimate follows, and what does it leave unproved?'
+    hint: 'For each thread, compare the assumed computation demand with its own period. Then ask whether that ratio locates every completion relative to its deadline.'
+    answer: 'The estimate is **2/10 + 3/20 = 35%** of one processor. It does not prove that every deadline is met.'
+    explanation: 'Schedulability also depends on the task and scheduler model, deadlines, priorities, blocking, jitter, overhead, and other work. The execution-time values themselves need justified provenance.'
+
+  - id: aadl-flow-budget
+    difficulty: intermediate
+    question: 'An abstract AADL end-to-end flow has successive budgets 2–3 ms, 4–6 ms, and 1–1 ms; its connections explicitly add zero. What interval follows, and does it satisfy a 9 ms upper requirement?'
+    hint: 'Keep separate columns for the lower and upper contributions. Compare the completed upper column with the requirement.'
+    answer: 'The interval is **7–10 ms**. It violates the 9 ms upper requirement by 1 ms.'
+    explanation: 'This calculation adds declared budgets under the stated abstraction. It does not derive sampling or scheduling delay from a runtime task model.'
+
+  - id: aadl-missing-evidence
+    difficulty: intermediate
+    question: 'An AADL latency result becomes smaller after a required component budget is deleted, and the tool reports no warning. What must be checked before accepting the timing claim?'
+    answer: 'Check whether every required contribution is still represented and justified. A calculation over incomplete evidence cannot establish the original claim.'
+    explanation: 'Missing evidence does not establish zero cost. Completion and diagnostic severity describe the tool run; they do not by themselves establish that the model contains everything the engineering question requires.'

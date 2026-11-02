@@ -22,7 +22,7 @@
     css: 'css', txt: 'plaintext', c: 'c', h: 'c', cpp: 'cpp',
     makefile: 'makefile', Makefile: 'makefile',
     pl: 'prolog', pro: 'prolog',
-    java: 'java', tla: 'tlaplus',
+    java: 'java', tla: 'tlaplus', aadl: 'aadl',
     hs: 'haskell', lhs: 'haskell', st: 'smalltalk',
   };
 

@@ -287,6 +287,10 @@
   {% if tutorial_backend == 'tla' %}
   <link rel="stylesheet" href="{{ '/css/tla-workspace.css' | relative_url }}">
   {% endif %}
+  {% if tutorial_backend == 'aadl' %}
+  <link rel="stylesheet" href="{{ '/css/aadl-workspace.css' | relative_url }}">
+  <link rel="stylesheet" href="{{ '/css/aadl-diagram.css' | relative_url }}">
+  {% endif %}
   {% if tutorial_backend == 'compiler' %}
   <link rel="stylesheet" href="{{ '/css/compiler-lab.css' | relative_url }}">
   {% endif %}
@@ -332,6 +336,9 @@
   {% if tutorial_backend == 'tla' %}
   <script src="{{ '/js/tla/view.js' | relative_url }}"></script>
   <script src="{{ '/js/tutorial-tla.js' | relative_url }}"></script>
+  {% endif %}
+  {% if tutorial_backend == 'aadl' %}
+  <script src="{{ '/js/tutorial-aadl.js' | relative_url }}"></script>
   {% endif %}
   {% if tutorial_backend == 'shell-pipeline' %}
   <script src="{{ '/js/tutorial-shell-command.js' | relative_url }}"></script>
@@ -440,6 +447,7 @@
       var tutorial = new TutorialCode('#tutorial-container', {
         backend:      '{{ tutorial_backend }}',
         tla: config.tla || {},
+        aadl: config.aadl || {},
         {% if tutorial_backend == 'shell-pipeline' %}shellManuals: {{ site.data.shell_command_manuals | jsonify | replace: '</script', '<\/script' }},{% endif %}
         tutorialId:   '{{ page.tutorial }}',
         steps:        config.steps,

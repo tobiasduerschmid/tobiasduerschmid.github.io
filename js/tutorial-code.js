@@ -525,7 +525,7 @@
     cc: 'cpp', cxx: 'cpp', 'c++': 'cpp', hpp: 'cpp', hh: 'cpp', hxx: 'cpp',
     makefile: 'makefile', Makefile: 'makefile',
     pl: 'prolog', pro: 'prolog',
-    java: 'java', tla: 'tlaplus',
+    java: 'java', tla: 'tlaplus', aadl: 'aadl',
     hs: 'haskell', lhs: 'haskell',
   };
 
@@ -565,6 +565,7 @@
     if (backend === 'haskell') return 'Haskell';
     if (backend === 'compiler') return 'Compiler lab';
     if (backend === 'tla') return 'TLA+ / PlusCal';
+    if (backend === 'aadl') return 'AADL';
     if (backend === 'shell-pipeline') return 'Shell pipeline';
     if (backend === 'v86') return 'Linux VM';
     return backend;
@@ -599,6 +600,7 @@
       normalizeBackendName(declaredBackends[0]) !== backend
     ));
     if (mixedBackendMode && declaredBackends.includes('tla')) throw new Error('TLA+ uses a single-backend tutorial workspace.');
+    if (mixedBackendMode && declaredBackends.includes('aadl')) throw new Error('AADL uses a single-backend tutorial workspace.');
     var hasReactStep = declaredBackends.indexOf('react') !== -1;
     var hasV86Step = declaredBackends.indexOf('v86') !== -1;
     var useTerminal = !mixedBackendMode &&
@@ -610,6 +612,7 @@
       ai_tutor_mode: options.ai_tutor_mode,
       shellManuals: options.shellManuals || {},
       tla: options.tla || {},
+      aadl: options.aadl || {},
       defaultBackend: backend,
       v86Path: options.v86Path || '/assets/v86',
       vmPath: options.vmPath || '/vm/dist',
@@ -1525,6 +1528,7 @@
     if (this._umlClient) this._umlClient.dispose();
     if (this._compilerAdapter) this._compilerAdapter.destroy();
     if (this._tlaController) this._tlaController.destroy();
+    if (this._aadlController) this._aadlController.destroy();
     if (this.config.backend === 'shell-pipeline') this._stopShellPipeline({ silent: true });
     if (this._compilerRulesEditor) this._compilerRulesEditor.destroy();
     if (this._compilerSourceEditor) this._compilerSourceEditor.destroy();
@@ -1653,6 +1657,10 @@
     if (this.config.backend === 'tla') {
       this.root.classList.add('tla-tutorial');
       outputContainerHtml = '<div class="tvm-output-container" tabindex="0" role="region" aria-label="Model results"><pre class="tvm-output-pre"></pre><div class="tla-tutorial-results"></div></div>';
+    }
+    if (this.config.backend === 'aadl') {
+      this.root.classList.add('aadl-tutorial');
+      outputContainerHtml = '<div class="tvm-output-container" tabindex="0" role="region" aria-label="Architecture results"><pre class="tvm-output-pre"></pre><div class="aadl-workspace"></div></div>';
     }
     // tabindex="0" makes this container focusable so keyboard users can pan
     // and zoom the diagram; without role+aria-label the WCAG 4.1.2 audit
@@ -1792,7 +1800,7 @@
         '<button class="tvm-test-run-btn" data-original-title="Run the test file" style="display:none;">&#10003; Test</button>' +
         '<button class="tvm-stop-btn" data-original-title="Stop execution" style="display:none;">&#9208; Stop</button>' +
         '<button class="tvm-clear-btn" data-original-title="Clear output">Clear</button>' +
-        (['compiler', 'tla'].includes(this.config.backend) ? '' : '<button class="tvm-output-popout-btn" data-original-title="Open output in separate window">⧉<span class="sr-only">Open output in separate window</span></button>') +
+        (['compiler', 'tla', 'aadl'].includes(this.config.backend) ? '' : '<button class="tvm-output-popout-btn" data-original-title="Open output in separate window">⧉<span class="sr-only">Open output in separate window</span></button>') +
         '</div></div>' +
         outputContainerHtml;
 
@@ -2903,6 +2911,7 @@
 
       var monacoPromise = window.SEBookMonaco.load().then(function () {
         self._registerMonacoLanguages();
+        if (self.config.backend === 'aadl') return self._registerAADLLanguage();
       });
 
       var playwrightPromise = self._playwrightMode
@@ -3736,6 +3745,7 @@
     if (backend === 'smalltalk') return this._initSmalltalk();
     if (backend === 'compiler') return this._initCompiler();
     if (backend === 'tla') return this._initTLA();
+    if (backend === 'aadl') return this._initAADL();
     if (backend === 'shell-pipeline') return this._initShellPipeline();
     return Promise.reject(new Error('Unknown backend: ' + backend));
   };
@@ -5838,7 +5848,7 @@
       message = { type: 'runProlog', code: commands.join('\n'), silent: true };
     } else if (this.config.backend === 'sql') {
       message = { type: 'runSQL', sql: commands.join('\n'), silent: true };
-    } else if (this.config.backend === 'haskell' || this.config.backend === 'cpp' || this.config.backend === 'compiler' || this.config.backend === 'tla') {
+    } else if (this.config.backend === 'haskell' || this.config.backend === 'cpp' || this.config.backend === 'compiler' || this.config.backend === 'tla' || this.config.backend === 'aadl') {
       return Promise.reject(new Error(
         backendLabel(this.config.backend) + ' does not support setup_commands; provide step files instead.'
       ));
@@ -6002,6 +6012,7 @@
     if (this.outputPre) this.outputPre.innerHTML = '';
     if (this._compilerResultHost) this._compilerResultHost.replaceChildren();
     if (this._tlaController) this._tlaController.reset();
+    if (this._aadlController) this._aadlController.reset();
   };
 
   TutorialCode.prototype._setRunTransactionControls = function (state, label) {
@@ -6017,6 +6028,7 @@
     if (state === 'running' || state === 'restarting') {
       if (this.config.backend === 'shell-pipeline' && document.activeElement === runBtn) this._shellPipelineRestoreRunFocus = true;
       if (this.config.backend === 'tla' && document.activeElement === runBtn) this._tlaRestoreRunFocus = true;
+      if (this.config.backend === 'aadl' && document.activeElement === runBtn) this._aadlRestoreRunFocus = true;
       if (runBtn) {
         runBtn.disabled = true;
         this._renderRunButtonLabel(runBtn, label || (state === 'restarting'
@@ -6058,6 +6070,10 @@
     }
     if (this._tlaRestoreRunFocus) {
       this._tlaRestoreRunFocus = false;
+      if (runBtn && !runBtn.disabled && (document.activeElement === document.body || document.activeElement === stopBtn || document.activeElement === runBtn)) runBtn.focus();
+    }
+    if (this._aadlRestoreRunFocus) {
+      this._aadlRestoreRunFocus = false;
       if (runBtn && !runBtn.disabled && (document.activeElement === document.body || document.activeElement === stopBtn || document.activeElement === runBtn)) runBtn.focus();
     }
     if (this._shellPipelineRestoreRunFocus) {
@@ -6122,8 +6138,8 @@
 
   TutorialCode.prototype._runCurrentFile = function (options) {
     if (this._activeRunTransaction) return this._activeRunTransaction.promise;
-    if ((this.config.backend === 'cpp' || this.config.backend === 'haskell' || this.config.backend === 'prolog' || this.config.backend === 'smalltalk' || this.config.backend === 'compiler' || this.config.backend === 'tla' || this.config.backend === 'shell-pipeline') && this._testRunInFlight) return Promise.resolve(false);
-    if ((this.config.backend === 'compiler' || this.config.backend === 'tla' || this.config.backend === 'shell-pipeline') && this._activeStepLoadRequest) return Promise.resolve(false);
+    if ((this.config.backend === 'cpp' || this.config.backend === 'haskell' || this.config.backend === 'prolog' || this.config.backend === 'smalltalk' || this.config.backend === 'compiler' || this.config.backend === 'tla' || this.config.backend === 'aadl' || this.config.backend === 'shell-pipeline') && this._testRunInFlight) return Promise.resolve(false);
+    if ((this.config.backend === 'compiler' || this.config.backend === 'tla' || this.config.backend === 'aadl' || this.config.backend === 'shell-pipeline') && this._activeStepLoadRequest) return Promise.resolve(false);
     if (this._haskellInterpreter) this._haskellInterpreter.showOutput();
     if (this._prologInterpreter) {
       if (this._activeStepLoadRequest || this._workerRestartPromise || (this._debuggerCtl && this._debuggerCtl.session)) return Promise.resolve(false);
@@ -6174,6 +6190,7 @@
     if (backend === 'smalltalk') return this._runSmalltalk(run);
     if (backend === 'compiler') return this._runCompiler(run);
     if (backend === 'tla') return this._runTLA(run);
+    if (backend === 'aadl') return this._runAADL(run);
     if (backend === 'shell-pipeline') return this._runShellPipeline(run);
 
     if (backend === 'v86') {
@@ -7206,6 +7223,11 @@
    * host-owned deadline can terminate even a Worker blocked in a tight loop.
    */
   TutorialCode.prototype._stopExecution = function () {
+    if (this._aadlController) {
+      this._aadlRestoreRunFocus = document.activeElement === this.root.querySelector('.tvm-stop-btn');
+      this._aadlController.stop();
+      return;
+    }
     if (this._tlaController) {
       this._tlaRestoreRunFocus = document.activeElement === this.root.querySelector('.tvm-stop-btn');
       this._tlaController.stop();
@@ -7752,6 +7774,7 @@
     haskell: { id: 'haskell', label: 'Haskell' },
     compiler: { id: 'plaintext', label: 'Compiler rules' },
     tla: { id: 'tlaplus', label: 'TLA+ / PlusCal' },
+    aadl: { id: 'aadl', label: 'AADL' },
     smalltalk: { id: 'smalltalk', label: 'Smalltalk' },
     sql: { id: 'sql', label: 'SQL' },
     v86: { id: 'shell-sebook', label: 'Shell' },
@@ -7934,7 +7957,7 @@
       monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS,
       function () { self._saveCurrentFile(); }
     );
-    if (this._mixedBackendMode || this.config.backend === 'pyodide' || this.config.backend === 'browser' || this.config.backend === 'java' || this.config.backend === 'cpp' || this.config.backend === 'haskell' || this.config.backend === 'tla' || this.config.backend === 'shell-pipeline') {
+    if (this._mixedBackendMode || this.config.backend === 'pyodide' || this.config.backend === 'browser' || this.config.backend === 'java' || this.config.backend === 'cpp' || this.config.backend === 'haskell' || this.config.backend === 'tla' || this.config.backend === 'aadl' || this.config.backend === 'shell-pipeline') {
       editor.addCommand(
         monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
         function () { self._runCurrentFile(); }
@@ -8028,6 +8051,10 @@
         if (self.config.enableGitGutter) {
           clearTimeout(gutterTimer);
           gutterTimer = setTimeout(function () { self._refreshGitGutter(filename); }, 300);
+        }
+        if (self.config.backend === 'aadl') {
+          self._aadlEditorChanged();
+          return;
         }
         if (self.config.backend === 'tla') {
           // Restoring persisted files must retain their saved completion record.
@@ -10650,6 +10677,10 @@
     var step = this.steps[this.currentStep];
     if (!step || !step.solution) return;
     if (this.config.backend === 'tla') this._invalidateTLA();
+    if (this.config.backend === 'aadl') {
+      this._aadlRootOverride = null;
+      this._invalidateAADL();
+    }
     var self = this;
     if (this._prologInterpreter && this._prologInterpreter.busy) {
       return this._prologInterpreter.stopForWorkspaceChange().then(function () { return self.applySolution(); });
@@ -10750,7 +10781,7 @@
             }, resolve);
           });
         });
-      } else if (this.config.backend === 'haskell' || this.config.backend === 'cpp' || this.config.backend === 'compiler' || this.config.backend === 'tla') {
+      } else if (this.config.backend === 'haskell' || this.config.backend === 'cpp' || this.config.backend === 'compiler' || this.config.backend === 'tla' || this.config.backend === 'aadl') {
         p = p.then(function () {
           return Promise.reject(new Error(
             backendLabel(self.config.backend) + ' solutions support file replacements, not solution commands.'
@@ -10773,6 +10804,7 @@
 
     // 6. Show explanation if present
     p = p.then(function () {
+      if (self._aadlController) self._aadlController.schedule();
       if (solution.explanationHTML) {
         self._showSolutionExplanation(solution.explanationHTML);
       }
@@ -11057,7 +11089,10 @@
    * returned Promise is just ignored.
    */
   TutorialCode.prototype._applySavedFiles = function (files, activeFile) {
-    if (!files) return Promise.resolve();
+    if (!files) {
+      if (this._aadlController) this._aadlController.schedule();
+      return Promise.resolve();
+    }
     files = this._draftsForStep(Object.assign({}, this._draftProgress(), { files: files }), this.currentStep);
     if (this._smalltalkAdapter) {
       // Native accepted source and legacy file drafts were restored together
@@ -11095,7 +11130,9 @@
     self._scheduleUMLRefresh(true);
     // React: rebuild preview after restoring autosaved files
     if (self.config.backend === 'react') self._rebuildReactPreview();
-    return Promise.all(syncs);
+    return Promise.all(syncs).then(function () {
+      if (self._aadlController) self._aadlController.schedule();
+    });
   };
 
   TutorialCode.prototype._replayPriorStepsForCommands = function (targetStep) {
@@ -11176,6 +11213,10 @@
     var step = this.steps[this.currentStep];
     if (!step) return;
     if (this.config.backend === 'tla') this._invalidateTLA();
+    if (this.config.backend === 'aadl') {
+      this._aadlRootOverride = null;
+      this._invalidateAADL();
+    }
     if (this.config.backend === 'smalltalk') return this._replaceSmalltalkFiles(step.files || []);
     var self = this;
     // A VM restore abandons pending serial listeners. Wait for preparation
@@ -11235,6 +11276,7 @@
     }).then(function () {
       self._rememberEditorDrafts();
       self._autoSaveProgress();
+      if (self._aadlController) self._aadlController.schedule();
     });
   };
 
@@ -11926,6 +11968,10 @@
     if (this.llmAddon) this.llmAddon.beforeStepChange();
     this._cancelPlaywrightRun();
     if (this._tlaController) this._tlaController.reset();
+    if (this._aadlController) {
+      this._aadlRootOverride = null;
+      this._aadlController.reset();
+    }
     if (this._compilerAdapter) this._compilerAdapter.cancel();
     if (this.config.backend === 'shell-pipeline') this._stopShellPipeline({ silent: true });
 
@@ -11996,6 +12042,7 @@
       this._showError(prefix + (error && error.message || error));
       console.error('TutorialCode step preparation error:', error);
     }
+    if (!error && this._aadlController && !this._suppressAutoSave) this._aadlController.schedule();
     request.waiters.forEach(function (waiter) {
       if (error) waiter.reject(error);
       else waiter.resolve(waiter.id === request.id);
@@ -12306,7 +12353,7 @@
     }
 
     // Clear output panel between steps
-    if (this.config.backend === 'pyodide' || this.config.backend === 'browser' || this.config.backend === 'webcontainer' || this.config.backend === 'prolog' || this.config.backend === 'java' || this.config.backend === 'cpp' || this.config.backend === 'haskell' || this.config.backend === 'compiler' || this.config.backend === 'tla' || this.config.backend === 'shell-pipeline') this._clearOutput();
+    if (this.config.backend === 'pyodide' || this.config.backend === 'browser' || this.config.backend === 'webcontainer' || this.config.backend === 'prolog' || this.config.backend === 'java' || this.config.backend === 'cpp' || this.config.backend === 'haskell' || this.config.backend === 'compiler' || this.config.backend === 'tla' || this.config.backend === 'aadl' || this.config.backend === 'shell-pipeline') this._clearOutput();
     // Rebuild React preview when a new step is loaded
     if (this.config.backend === 'react') {
       this._rebuildReactPreview();
@@ -13101,8 +13148,8 @@
     // results return. Without this guard, the second run can replace the
     // pending test buffer/state and produce ghost results in the panel.
     if (this._testRunInFlight || this._llmChecksInFlight || this._studentPlaywrightRun || this._destroyed) return;
-    if ((this.config.backend === 'cpp' || this.config.backend === 'haskell' || this.config.backend === 'prolog' || this.config.backend === 'smalltalk' || this.config.backend === 'compiler' || this.config.backend === 'tla' || this.config.backend === 'shell-pipeline') && this._activeRunTransaction) return;
-    if ((this.config.backend === 'compiler' || this.config.backend === 'tla' || this.config.backend === 'shell-pipeline') && this._activeStepLoadRequest) return;
+    if ((this.config.backend === 'cpp' || this.config.backend === 'haskell' || this.config.backend === 'prolog' || this.config.backend === 'smalltalk' || this.config.backend === 'compiler' || this.config.backend === 'tla' || this.config.backend === 'aadl' || this.config.backend === 'shell-pipeline') && this._activeRunTransaction) return;
+    if ((this.config.backend === 'compiler' || this.config.backend === 'tla' || this.config.backend === 'aadl' || this.config.backend === 'shell-pipeline') && this._activeStepLoadRequest) return;
     if (this.config.backend === 'prolog' && (this._activeStepLoadRequest || this._workerRestartPromise || (this._debuggerCtl && this._debuggerCtl.session))) return;
     var stepIndex = this.currentStep;
     var step = this.steps[stepIndex];
@@ -13147,6 +13194,7 @@
     else if (backend === 'smalltalk') this._runTestsSmalltalk(run);
     else if (backend === 'compiler') this._runTestsCompiler(run);
     else if (backend === 'tla') this._runTestsTLA(run);
+    else if (backend === 'aadl') this._runTestsAADL(run);
     else if (backend === 'shell-pipeline') this._runTestsShellPipeline(run);
     else {
       run.completed = true;
@@ -14238,6 +14286,7 @@
     }
     if (run.shellPipelineLoad !== undefined && this._stepLoadSequence !== run.shellPipelineLoad) return;
     if (run.tlaLoad !== undefined && this._stepLoadSequence !== run.tlaLoad) return;
+    if (run.aadlLoad !== undefined && this._stepLoadSequence !== run.aadlLoad) return;
     if (run.smalltalkLoad !== undefined && (this._smalltalkChecksStale(run) || run.smalltalkFailure)) {
       if (this._stepLoadSequence !== run.smalltalkLoad) return;
       var message = this._smalltalkChecksStale(run)
@@ -14261,7 +14310,7 @@
     var stepIndex = run.stepIndex;
 
     var details = run.reactFailure ? tests.map(function () { return run.reactFailure; })
-      : run.smalltalkResults ? this._smalltalkCheckDetails(run.smalltalkResults) : run.tlaDetails;
+      : run.smalltalkResults ? this._smalltalkCheckDetails(run.smalltalkResults) : run.aadlDetails || run.tlaDetails;
     var html = this._buildTestResultsHTML(tests, results, details);
     if (run.smalltalkProgram) html = this._smalltalkCheckPanel(run, html);
     if (!silent) {

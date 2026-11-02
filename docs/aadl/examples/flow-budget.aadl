@@ -1,0 +1,50 @@
+package Rover_Budget
+public
+  -- Original conceptual latency allocation. Values are illustrative budgets.
+  -- No periodic tasks, queuing, network transmission, or physical dynamics.
+  data Speed
+  end Speed;
+  data Drive_Command
+  end Drive_Command;
+
+  device Sensor
+  features
+    speed: out data port Speed;
+  flows
+    sample: flow source speed {Latency => 4 ms .. 4 ms;};
+  end Sensor;
+
+  system Controller
+  features
+    speed: in data port Speed;
+    command: out data port Drive_Command;
+  flows
+    control: flow path speed -> command {Latency => 8 ms .. 12 ms;};
+  end Controller;
+
+  device Actuator
+  features
+    command: in data port Drive_Command;
+  flows
+    apply: flow sink command {Latency => 6 ms .. 6 ms;};
+  end Actuator;
+
+  system Loop
+  end Loop;
+
+  system implementation Loop.budget
+  subcomponents
+    sensor: device Sensor;
+    control: system Controller;
+    actuator: device Actuator;
+  connections
+    sample_link: port sensor.speed -> control.speed;
+    command_link: port control.command -> actuator.command;
+  flows
+    response: end to end flow sensor.sample -> sample_link ->
+      control.control -> command_link -> actuator.apply;
+  properties
+    Latency => 0 ms .. 25 ms applies to response;
+    Latency => 0 ms .. 0 ms applies to sample_link, command_link;
+  end Loop.budget;
+end Rover_Budget;

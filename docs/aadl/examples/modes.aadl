@@ -1,0 +1,17 @@
+package Rover_Modes
+public
+  -- Architectural modes only. This does not implement safe motor behavior.
+  system Supervisory_Control
+  features
+    engage: in event port;
+    disengage: in event port;
+  modes
+    manual: initial mode;
+    automatic: mode;
+    manual -[engage]-> automatic;
+    automatic -[disengage]-> manual;
+  end Supervisory_Control;
+
+  system implementation Supervisory_Control.basic
+  end Supervisory_Control.basic;
+end Rover_Modes;

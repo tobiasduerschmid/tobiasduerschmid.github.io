@@ -1,0 +1,90 @@
+title: 'AADL Architecture and Timing'
+description: 'Apply interface, deployment, and timing reasoning to new model fragments.'
+active: true
+questions:
+  - id: aadl-compatible-endpoints
+    type: single
+    difficulty: intermediate
+    question: 'In an AADL model, a sensor has an out data port named temperature and a controller has an in data port named measured. Both use the same data classifier. What establishes communication between these sibling components?'
+    options:
+      - 'An explicit port connection from temperature to measured.'
+      - 'Matching feature names on the sensor and the controller.'
+      - 'An end-to-end flow with no connection between the features.'
+    correct_index: 0
+    option_feedback:
+      1: 'Feature names can differ across a connection. Compatible interfaces still require an explicit connection.'
+      2: 'An end-to-end flow composes component flows and connections. Naming a route does not supply a missing connection.'
+    explanation: 'The connection joins a compatible output to a compatible input. Its endpoints and their declarations matter; similar names or visual proximity do not create communication.'
+
+  - id: aadl-binding-choice
+    type: single
+    difficulty: intermediate
+    question: 'An AADL thread has an allowed processor-binding set containing cpu_a and cpu_b. No actual binding is present. What does this establish?'
+    options:
+      - 'The thread executes once on each listed processor.'
+      - 'Either listed processor is permitted; allocation is unresolved.'
+      - 'The first listed processor is the selected execution resource.'
+    correct_index: 1
+    option_feedback:
+      0: 'A set of permitted allocations does not create replicated thread executions.'
+      2: 'List order does not turn an allowed binding into an actual binding. The selected deployment must be represented separately.'
+    explanation: 'An allowed binding constrains the choice. The actual binding records that choice; the model does not yet identify one selected processor for this thread.'
+
+  - id: aadl-deadline-counterexample
+    type: single
+    difficulty: advanced
+    question: 'Two tasks in an AADL scheduling scenario release together on one fully preemptive, fixed-priority processor. The higher-priority task needs 1 ms every 8 ms. The lower-priority task needs 4 ms every 16 ms and has a 4 ms deadline. Assume no blocking, jitter, overhead, or other work. What happens to the lower-priority task’s first job?'
+    options:
+      - 'It finishes at 4 ms and meets its deadline exactly.'
+      - 'It finishes at 5 ms and misses its deadline by 1 ms.'
+      - 'It finishes at 3 ms and has 1 ms of deadline margin.'
+    correct_index: 1
+    option_feedback:
+      0: 'Four milliseconds is its computation demand, not its completion time after a simultaneous higher-priority release.'
+      2: 'The higher-priority work consumes processor time before this job can finish; it does not reduce the job’s own computation demand.'
+    explanation: 'The higher-priority task occupies the first millisecond; the lower-priority task then needs four more. It finishes at 5 ms, after its 4 ms deadline, even though total utilization is only 1/8 + 4/16 = 37.5%.'
+
+  - id: aadl-interval-bound
+    type: single
+    difficulty: intermediate
+    question: 'An abstract AADL flow assigns 2 ms to a sensor, 5–9 ms to a controller, and 3 ms to an actuator. Connections explicitly add zero. What follows for a 13 ms upper latency requirement?'
+    options:
+      - 'A 10–14 ms interval; the upper requirement is violated.'
+      - 'A 10–14 ms interval; the upper requirement is satisfied.'
+      - 'A 5–9 ms interval; the upper requirement is satisfied.'
+    correct_index: 0
+    option_feedback:
+      1: 'An upper guarantee must cover the interval’s maximum. A minimum below the bound does not establish that guarantee.'
+      2: 'The controller is only one contribution. The sensor and actuator are also on the specified end-to-end route.'
+    explanation: 'The minimum is 2 + 5 + 3 = 10 ms and the maximum is 2 + 9 + 3 = 14 ms. The assumed maximum exceeds the requirement by 1 ms.'
+
+  - id: aadl-incomplete-result
+    type: single
+    difficulty: intermediate
+    question: 'An AADL analysis reports a smaller, satisfied latency total after a required controller budget is removed. No warning appears. Which interpretation is justified?'
+    options:
+      - 'The satisfied result establishes the original timing claim.'
+      - 'The analysis has established that controller execution is free.'
+      - 'The subtotal omits evidence required for the original claim.'
+    correct_index: 2
+    option_feedback:
+      0: 'The original claim requires the controller contribution. A successful comparison using less evidence does not establish it.'
+      1: 'Deleting a model property supplies no measurement or argument that the component takes zero time.'
+    explanation: 'The modeler must check completeness independently of the tool’s completed calculation and diagnostic severity. Restore or justify every required contribution before interpreting satisfaction as evidence.'
+
+  - id: aadl-fixed-requirement
+    type: multiple
+    difficulty: intermediate
+    question: 'An AADL latency analysis violates a fixed stakeholder requirement. Which proposed changes preserve that requirement while offering a candidate design to reanalyze? Select all that apply.'
+    options:
+      - 'Reduce computation with an implementation change and new evidence.'
+      - 'Change deployment and account for its timing and communication effects.'
+      - 'Increase the permitted latency until the current model satisfies it.'
+      - 'Remove a required component flow from the analyzed end-to-end route.'
+    correct_indices: [0, 1]
+    option_feedback:
+      0: 'Changing the design can preserve the requirement, but the reduced computation bound needs evidence and reanalysis.'
+      1: 'A deployment change can preserve the requirement. Its effect must include the relevant execution and communication assumptions.'
+      2: 'Increasing the permitted latency changes the obligation. It does not repair a design against the fixed original requirement.'
+      3: 'Removing a required part of the route changes what is being assessed. A smaller subtotal would not establish the original claim.'
+    explanation: 'Computation and deployment changes can improve a design while retaining its obligation. Neither is guaranteed to succeed before reanalysis. Weakening the requirement or omitting required behavior changes the question instead.'

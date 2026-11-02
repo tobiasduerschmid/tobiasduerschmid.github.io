@@ -71,6 +71,20 @@
     });
   }
 
+  function loadFileLanguages(filenames, onReady, onError) {
+    if (!filenames.some(function (filename) { return /\.aadl$/i.test(filename); })) return onReady();
+    import('/js/aadl/language.mjs').then(function (language) {
+      language.registerAADLLanguage(monaco);
+      onReady();
+    }).catch(onError);
+  }
+
+  function showLanguageError(els, error) {
+    var message = 'Could not prepare the editor language: ' + error.message;
+    if (els.overlay) els.overlay.textContent = message;
+    if (els.status) els.status.textContent = message;
+  }
+
   // Build the optional debugger sync mirror. Returns a function the booter
   // calls every time a `debugger:enabled` flag arrives, so it can attach the
   // editor(s) once. Gracefully no-ops when the debugger modules aren't loaded.
@@ -153,23 +167,30 @@
 
     function bootMonaco() {
       loadMonaco(function () {
-        var initial = pendingBootstrap;
-        pendingBootstrap = null;
-        var lang = languageForFile(filename, initial.language);
-        var dark = document.documentElement.classList.contains('dark-mode');
-        monacoModel = monaco.editor.createModel(initial.content, lang);
-        var options = Object.assign({}, DEFAULT_OPTIONS, {
-          model: monacoModel,
-          theme: pickTheme(dark),
-          ariaLabel: filename + ', ' + (lang || 'code') + ' editor. Press Control F1 (Command F1 on macOS) for accessibility help. Press Escape to release focus to the surrounding page.',
+        loadFileLanguages([filename], createEditorFromSnapshot, function (error) {
+          editorBooting = false;
+          showLanguageError(els, error);
         });
-        editor = monaco.editor.create(els.editor, options);
-        window.SebookMonacoFocusExit.attach(editor);
-        wireFileEditing();
-        wireRefactorings();
-        ensureDebuggerAttached();
-        editorBooting = false;
       });
+    }
+
+    function createEditorFromSnapshot() {
+      var initial = pendingBootstrap;
+      pendingBootstrap = null;
+      var lang = languageForFile(filename, initial.language);
+      var dark = document.documentElement.classList.contains('dark-mode');
+      monacoModel = monaco.editor.createModel(initial.content, lang);
+      var options = Object.assign({}, DEFAULT_OPTIONS, {
+        model: monacoModel,
+        theme: pickTheme(dark),
+        ariaLabel: filename + ', ' + (lang || 'code') + ' editor. Press Control F1 (Command F1 on macOS) for accessibility help. Press Escape to release focus to the surrounding page.',
+      });
+      editor = monaco.editor.create(els.editor, options);
+      window.SebookMonacoFocusExit.attach(editor);
+      wireFileEditing();
+      wireRefactorings();
+      ensureDebuggerAttached();
+      editorBooting = false;
     }
 
     function wireFileEditing() {
@@ -292,6 +313,7 @@
     var monacoReady = false;
     var monacoLoading = false;
     var pendingLoadCallbacks = [];
+    var paneSnapshotSequence = 0;
     var editor = null;
     var models = {};      // filename -> { model, version }
     var activeFile = null;
@@ -434,43 +456,50 @@
 
     function applyPaneSnapshot(snap) {
       if (!snap) return;
+      var sequence = ++paneSnapshotSequence;
       if (typeof snap.darkMode === 'boolean') {
         document.documentElement.classList.toggle('dark-mode', snap.darkMode);
       }
       ensureMonacoLoaded(function () {
-        var seen = {};
-        var snapFiles = snap.files || {};
-        Object.keys(snapFiles).forEach(function (fn) {
-          seen[fn] = true;
-          var sf = snapFiles[fn];
-          var lang = languageForFile(fn, sf.language);
-          if (!models[fn]) {
-            models[fn] = { model: monaco.editor.createModel(sf.content || '', lang), version: sf.version || 0 };
-          } else {
-            if (typeof sf.version === 'number' && sf.version < (models[fn].version || 0)) return;
-            if (models[fn].model.getValue() !== (sf.content || '')) {
-              suppressEditEvents = true;
-              try { models[fn].model.setValue(sf.content || ''); }
-              finally { suppressEditEvents = false; }
-            }
-            if (typeof sf.version === 'number') models[fn].version = sf.version;
-          }
-        });
-        Object.keys(models).forEach(function (fn) {
-          if (!seen[fn]) {
-            try { models[fn].model.dispose(); } catch (e) {}
-            delete models[fn];
-          }
-        });
-        var prefer = snap.activeFile || Object.keys(models)[0];
-        if (prefer && models[prefer]) {
-          activeFile = prefer;
-          editor.setModel(models[activeFile].model);
-        }
-        renderTabs();
-        client.markConnected();
-        ensureDebuggerAttached();
+        loadFileLanguages(Object.keys(snap.files || {}), function () {
+          if (sequence === paneSnapshotSequence) applyLoadedPaneSnapshot(snap);
+        }, function (error) { showLanguageError(els, error); });
       });
+    }
+
+    function applyLoadedPaneSnapshot(snap) {
+      var seen = {};
+      var snapFiles = snap.files || {};
+      Object.keys(snapFiles).forEach(function (fn) {
+        seen[fn] = true;
+        var sf = snapFiles[fn];
+        var lang = languageForFile(fn, sf.language);
+        if (!models[fn]) {
+          models[fn] = { model: monaco.editor.createModel(sf.content || '', lang), version: sf.version || 0 };
+        } else {
+          if (typeof sf.version === 'number' && sf.version < (models[fn].version || 0)) return;
+          if (models[fn].model.getValue() !== (sf.content || '')) {
+            suppressEditEvents = true;
+            try { models[fn].model.setValue(sf.content || ''); }
+            finally { suppressEditEvents = false; }
+          }
+          if (typeof sf.version === 'number') models[fn].version = sf.version;
+        }
+      });
+      Object.keys(models).forEach(function (fn) {
+        if (!seen[fn]) {
+          try { models[fn].model.dispose(); } catch (e) {}
+          delete models[fn];
+        }
+      });
+      var prefer = snap.activeFile || Object.keys(models)[0];
+      if (prefer && models[prefer]) {
+        activeFile = prefer;
+        editor.setModel(models[activeFile].model);
+      }
+      renderTabs();
+      client.markConnected();
+      ensureDebuggerAttached();
     }
 
     function handleMessage(msg) {

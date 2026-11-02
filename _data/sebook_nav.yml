@@ -64,6 +64,11 @@ topics:
     url: /SEBook/software_architecture.html
     subtopics:
 
+    - name: AADL
+      url: /SEBook/architecture/aadl
+      items:
+        - name: AADL Architecture and Timing Tutorial
+          url: /SEBook/architecture/aadl-tutorial
 
     - name: Quality Attributes
       icon: null

@@ -14,6 +14,11 @@
 #
 # Sorted alphabetically by term for easy scanning.
 
+- term: AADL
+  definition: Architecture Analysis and Design Language
+  description: A standardized language for modeling software components, execution platforms, interfaces, connections, and properties so tools can analyze an architecture under explicit assumptions.
+  related: [OSATE, WCET, EMV2, AGREE, HAMR]
+
 - term: ACID
   definition: Atomicity, Consistency, Isolation, Durability
   description: A set of properties that database transactions are expected to satisfy. Atomicity means a transaction either completes fully or has no effect; Consistency means the database moves between valid states; Isolation means concurrent transactions don't interfere; Durability means committed changes survive crashes.
@@ -24,6 +29,11 @@
   description: A class that defines a shared interface or contract but is not meant to be instantiated directly. In Python, ABCs are commonly created with the abc module and abstractmethod decorators.
   related: [OOP]
 
+- term: AGREE
+  definition: Assume Guarantee Reasoning Environment
+  description: A compositional model checker for AADL that reasons about component assumptions and guarantees to establish properties of their composition.
+  related: [AADL, OSATE]
+
 - term: AI
   definition: Artificial Intelligence
   description: Software techniques that make systems perform tasks associated with human intelligence, such as classification, planning, natural-language processing, or code generation.
@@ -33,6 +43,11 @@
   definition: Application Programming Interface
   description: A contract that lets one piece of software call another. APIs hide implementation details and expose a stable surface — function names, parameter types, and return values — that callers can depend on.
   related: [REST, HTTP, SDK]
+
+- term: ARINC
+  definition: Aeronautical Radio, Incorporated
+  description: A name associated with aviation standards. ARINC 653 describes interfaces and services for partitioned avionics software; an architecture model must represent the relevant partitioning assumptions.
+  related: [AADL]
 
 - term: AST
   definition: Abstract Syntax Tree
@@ -145,6 +160,11 @@
   description: A programming style that attempts an operation and handles a specific expected exception if it fails. Keep the protected operation narrow so unrelated failures are not hidden.
   related: [LBYL]
 
+- term: EMV2
+  definition: Error Model Annex version 2
+  description: An AADL annex for describing errors, propagation, and related fault-modeling assumptions used in architecture safety and dependability analyses.
+  related: [AADL, OSATE]
+
 - term: ER
   definition: Entity-Relationship
   description: A data-modelling notation. An ER diagram shows the entities a system stores, their attributes and primary keys, and the relationships between them; Chen notation draws entities as rectangles, relationships as diamonds, and attributes as ellipses.
@@ -202,6 +222,11 @@
   definition: Gigabyte
   description: A decimal unit of data size equal to one billion bytes. Download sizes on this site use decimal gigabytes.
   related: [MB]
+
+- term: HAMR
+  definition: High Assurance Modeling and Rapid engineering
+  description: A framework for model-based development of critical embedded systems, including generation of infrastructure and application skeletons from supported architecture models.
+  related: [AADL]
 
 - term: HTML
   definition: HyperText Markup Language
@@ -387,6 +412,11 @@
   description: System software that manages hardware, files, memory, processes, networking, and device access for applications.
   related: [CLI, I/O, VM]
 
+- term: OSATE
+  definition: Open Source AADL Tool Environment
+  description: An open-source environment for editing, validating, instantiating, and analyzing AADL models. Available analyses depend on the installed version and extensions.
+  related: [AADL, AGREE, EMV2]
+
 - term: PDF
   definition: Portable Document Format
   description: A file format for preserving document layout across devices, printers, and operating systems.
@@ -475,6 +505,11 @@
   definition: Remote Procedure Call
   description: A communication style where code invokes a procedure on another process or machine as if it were a local function call.
   related: [API, gRPC]
+
+- term: SAE
+  definition: SAE International, formerly Society of Automotive Engineers
+  description: A standards organization that publishes the AS5506 Architecture Analysis and Design Language standard and its annexes.
+  related: [AADL]
 
 - term: SDK
   definition: Software Development Kit
@@ -619,6 +654,11 @@
   definition: Virtual Machine
   description: A software execution environment that abstracts an underlying machine or runtime, such as the JVM for Java bytecode or the Python virtual machine for Python bytecode.
   related: [OS, JVM, PVM]
+
+- term: WCET
+  definition: Worst-case execution time
+  description: An upper bound on computation time under stated hardware and execution assumptions. A declared bound needs evidence; it is not automatically an end-to-end response-time bound.
+  related: [AADL, CPU]
 
 - term: WIP
   definition: Work In Progress

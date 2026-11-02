@@ -1,0 +1,587 @@
+{
+  "version": 1,
+  "diagnostics": [],
+  "analyses": [],
+  "model": {
+    "connections": [
+      {
+        "id": "Rover_single_cpu_Instance.encoder.measured_speed -> motion.filter_task.raw_speed",
+        "name": "encoder.measured_speed -> motion.filter_task.raw_speed",
+        "source": "Rover_single_cpu_Instance.encoder.measured_speed",
+        "target": "Rover_single_cpu_Instance.motion.filter_task.raw_speed",
+        "contextId": "Rover_single_cpu_Instance",
+        "kind": "portConnection",
+        "bidirectional": false,
+        "segments": [
+          {
+            "id": "Rover_single_cpu_Instance.encoder.measured_speed -> motion.filter_task.raw_speed.sensed_speed",
+            "name": "sensed_speed",
+            "contextId": "Rover_single_cpu_Instance",
+            "source": "Rover_single_cpu_Instance.encoder.measured_speed",
+            "target": "Rover_single_cpu_Instance.motion.raw_speed",
+            "sourceLocation": {
+              "endColumn": 67,
+              "line": 102,
+              "file": "rover.aadl",
+              "column": 5,
+              "endLine": 102
+            }
+          },
+          {
+            "id": "Rover_single_cpu_Instance.encoder.measured_speed -> motion.filter_task.raw_speed.sample_in",
+            "name": "sample_in",
+            "contextId": "Rover_single_cpu_Instance.motion",
+            "source": "Rover_single_cpu_Instance.motion.raw_speed",
+            "target": "Rover_single_cpu_Instance.motion.filter_task.raw_speed",
+            "sourceLocation": {
+              "endColumn": 56,
+              "line": 77,
+              "file": "rover.aadl",
+              "column": 5,
+              "endLine": 77
+            }
+          }
+        ],
+        "latency": {
+          "present": false
+        }
+      },
+      {
+        "id": "Rover_single_cpu_Instance.operator_console.requested_speed -> motion.controller_task.requested_speed",
+        "name": "operator_console.requested_speed -> motion.controller_task.requested_speed",
+        "source": "Rover_single_cpu_Instance.operator_console.requested_speed",
+        "target": "Rover_single_cpu_Instance.motion.controller_task.requested_speed",
+        "contextId": "Rover_single_cpu_Instance",
+        "kind": "portConnection",
+        "bidirectional": false,
+        "segments": [
+          {
+            "id": "Rover_single_cpu_Instance.operator_console.requested_speed -> motion.controller_task.requested_speed.target_speed",
+            "name": "target_speed",
+            "contextId": "Rover_single_cpu_Instance",
+            "source": "Rover_single_cpu_Instance.operator_console.requested_speed",
+            "target": "Rover_single_cpu_Instance.motion.requested_speed",
+            "sourceLocation": {
+              "endColumn": 83,
+              "line": 103,
+              "file": "rover.aadl",
+              "column": 5,
+              "endLine": 103
+            }
+          },
+          {
+            "id": "Rover_single_cpu_Instance.operator_console.requested_speed -> motion.controller_task.requested_speed.target_in",
+            "name": "target_in",
+            "contextId": "Rover_single_cpu_Instance.motion",
+            "source": "Rover_single_cpu_Instance.motion.requested_speed",
+            "target": "Rover_single_cpu_Instance.motion.controller_task.requested_speed",
+            "sourceLocation": {
+              "endColumn": 72,
+              "line": 79,
+              "file": "rover.aadl",
+              "column": 5,
+              "endLine": 79
+            }
+          }
+        ],
+        "latency": {
+          "present": false
+        }
+      },
+      {
+        "id": "Rover_single_cpu_Instance.motion.controller_task.command -> motor.command",
+        "name": "motion.controller_task.command -> motor.command",
+        "source": "Rover_single_cpu_Instance.motion.controller_task.command",
+        "target": "Rover_single_cpu_Instance.motor.command",
+        "contextId": "Rover_single_cpu_Instance",
+        "kind": "portConnection",
+        "bidirectional": false,
+        "segments": [
+          {
+            "id": "Rover_single_cpu_Instance.motion.controller_task.command -> motor.command.command_out",
+            "name": "command_out",
+            "contextId": "Rover_single_cpu_Instance.motion",
+            "source": "Rover_single_cpu_Instance.motion.controller_task.command",
+            "target": "Rover_single_cpu_Instance.motion.command",
+            "sourceLocation": {
+              "endColumn": 58,
+              "line": 80,
+              "file": "rover.aadl",
+              "column": 5,
+              "endLine": 80
+            }
+          },
+          {
+            "id": "Rover_single_cpu_Instance.motion.controller_task.command -> motor.command.motor_command",
+            "name": "motor_command",
+            "contextId": "Rover_single_cpu_Instance",
+            "source": "Rover_single_cpu_Instance.motion.command",
+            "target": "Rover_single_cpu_Instance.motor.command",
+            "sourceLocation": {
+              "endColumn": 57,
+              "line": 104,
+              "file": "rover.aadl",
+              "column": 5,
+              "endLine": 104
+            }
+          }
+        ],
+        "latency": {
+          "present": false
+        }
+      },
+      {
+        "id": "Rover_single_cpu_Instance.motion.filter_task.filtered_speed -> controller_task.measured_speed",
+        "name": "filter_task.filtered_speed -> controller_task.measured_speed",
+        "source": "Rover_single_cpu_Instance.motion.filter_task.filtered_speed",
+        "target": "Rover_single_cpu_Instance.motion.controller_task.measured_speed",
+        "contextId": "Rover_single_cpu_Instance.motion",
+        "kind": "portConnection",
+        "bidirectional": false,
+        "segments": [
+          {
+            "id": "Rover_single_cpu_Instance.motion.filter_task.filtered_speed -> controller_task.measured_speed.filtered",
+            "name": "filtered",
+            "contextId": "Rover_single_cpu_Instance.motion",
+            "source": "Rover_single_cpu_Instance.motion.filter_task.filtered_speed",
+            "target": "Rover_single_cpu_Instance.motion.controller_task.measured_speed",
+            "sourceLocation": {
+              "endColumn": 81,
+              "line": 78,
+              "file": "rover.aadl",
+              "column": 5,
+              "endLine": 78
+            }
+          }
+        ],
+        "latency": {
+          "present": false
+        }
+      }
+    ],
+    "flows": [
+      {
+        "id": "Rover_single_cpu_Instance.speed_response",
+        "name": "speed_response",
+        "contextId": "Rover_single_cpu_Instance",
+        "latency": {
+          "present": false
+        },
+        "kind": "end-to-end",
+        "elements": [
+          "Rover_single_cpu_Instance.encoder.sample",
+          "Rover_single_cpu_Instance.encoder.measured_speed -> motion.filter_task.raw_speed",
+          "Rover_single_cpu_Instance.motion.filter_task.filter",
+          "Rover_single_cpu_Instance.motion.filter_task.filtered_speed -> controller_task.measured_speed",
+          "Rover_single_cpu_Instance.motion.controller_task.regulate",
+          "Rover_single_cpu_Instance.motion.controller_task.command -> motor.command",
+          "Rover_single_cpu_Instance.motor.apply"
+        ],
+        "sourceLocation": {
+          "endColumn": 54,
+          "line": 106,
+          "file": "rover.aadl",
+          "column": 5,
+          "endLine": 107
+        }
+      },
+      {
+        "id": "Rover_single_cpu_Instance.encoder.sample",
+        "name": "sample",
+        "contextId": "Rover_single_cpu_Instance.encoder",
+        "latency": {
+          "present": false
+        },
+        "kind": "source",
+        "source": null,
+        "target": "Rover_single_cpu_Instance.encoder.measured_speed",
+        "sourceLocation": {
+          "endColumn": 40,
+          "line": 15,
+          "file": "rover.aadl",
+          "column": 5,
+          "endLine": 15
+        }
+      },
+      {
+        "id": "Rover_single_cpu_Instance.motor.apply",
+        "name": "apply",
+        "contextId": "Rover_single_cpu_Instance.motor",
+        "latency": {
+          "present": false
+        },
+        "kind": "sink",
+        "source": "Rover_single_cpu_Instance.motor.command",
+        "target": null,
+        "sourceLocation": {
+          "endColumn": 30,
+          "line": 27,
+          "file": "rover.aadl",
+          "column": 5,
+          "endLine": 27
+        }
+      },
+      {
+        "id": "Rover_single_cpu_Instance.motion.control",
+        "name": "control",
+        "contextId": "Rover_single_cpu_Instance.motion",
+        "latency": {
+          "present": false
+        },
+        "kind": "path",
+        "source": "Rover_single_cpu_Instance.motion.raw_speed",
+        "target": "Rover_single_cpu_Instance.motion.command",
+        "sourceLocation": {
+          "endColumn": 45,
+          "line": 69,
+          "file": "rover.aadl",
+          "column": 5,
+          "endLine": 69
+        }
+      },
+      {
+        "id": "Rover_single_cpu_Instance.motion.filter_task.filter",
+        "name": "filter",
+        "contextId": "Rover_single_cpu_Instance.motion.filter_task",
+        "latency": {
+          "present": false
+        },
+        "kind": "path",
+        "source": "Rover_single_cpu_Instance.motion.filter_task.raw_speed",
+        "target": "Rover_single_cpu_Instance.motion.filter_task.filtered_speed",
+        "sourceLocation": {
+          "endColumn": 51,
+          "line": 35,
+          "file": "rover.aadl",
+          "column": 5,
+          "endLine": 35
+        }
+      },
+      {
+        "id": "Rover_single_cpu_Instance.motion.controller_task.regulate",
+        "name": "regulate",
+        "contextId": "Rover_single_cpu_Instance.motion.controller_task",
+        "latency": {
+          "present": false
+        },
+        "kind": "path",
+        "source": "Rover_single_cpu_Instance.motion.controller_task.measured_speed",
+        "target": "Rover_single_cpu_Instance.motion.controller_task.command",
+        "sourceLocation": {
+          "endColumn": 51,
+          "line": 52,
+          "file": "rover.aadl",
+          "column": 5,
+          "endLine": 52
+        }
+      }
+    ],
+    "bindings": [
+      {
+        "targetId": "Rover_single_cpu_Instance.cpu",
+        "kind": "processor",
+        "sourceId": "Rover_single_cpu_Instance.motion.filter_task"
+      },
+      {
+        "targetId": "Rover_single_cpu_Instance.cpu",
+        "kind": "processor",
+        "sourceId": "Rover_single_cpu_Instance.motion.controller_task"
+      }
+    ],
+    "rootId": "Rover_single_cpu_Instance",
+    "components": [
+      {
+        "id": "Rover_single_cpu_Instance",
+        "name": "Rover_single_cpu_Instance",
+        "parentId": null,
+        "category": "system",
+        "classifier": "Campus_Rover::Rover.single_cpu",
+        "features": [],
+        "source": {
+          "endColumn": 24,
+          "line": 94,
+          "file": "rover.aadl",
+          "column": 3,
+          "endLine": 113
+        }
+      },
+      {
+        "id": "Rover_single_cpu_Instance.encoder",
+        "name": "encoder",
+        "parentId": "Rover_single_cpu_Instance",
+        "category": "device",
+        "classifier": "Campus_Rover::Wheel_Encoder",
+        "features": [
+          {
+            "id": "Rover_single_cpu_Instance.encoder.measured_speed",
+            "name": "measured_speed",
+            "direction": "out",
+            "kind": "dataPort",
+            "dataClassifier": "Campus_Rover::Speed",
+            "source": {
+              "endColumn": 41,
+              "line": 13,
+              "file": "rover.aadl",
+              "column": 5,
+              "endLine": 13
+            },
+            "features": []
+          }
+        ],
+        "source": {
+          "endColumn": 35,
+          "line": 96,
+          "file": "rover.aadl",
+          "column": 5,
+          "endLine": 96
+        }
+      },
+      {
+        "id": "Rover_single_cpu_Instance.operator_console",
+        "name": "operator_console",
+        "parentId": "Rover_single_cpu_Instance",
+        "category": "device",
+        "classifier": "Campus_Rover::Operator_Console",
+        "features": [
+          {
+            "id": "Rover_single_cpu_Instance.operator_console.requested_speed",
+            "name": "requested_speed",
+            "direction": "out",
+            "kind": "dataPort",
+            "dataClassifier": "Campus_Rover::Speed",
+            "source": {
+              "endColumn": 42,
+              "line": 20,
+              "file": "rover.aadl",
+              "column": 5,
+              "endLine": 20
+            },
+            "features": []
+          }
+        ],
+        "source": {
+          "endColumn": 47,
+          "line": 97,
+          "file": "rover.aadl",
+          "column": 5,
+          "endLine": 97
+        }
+      },
+      {
+        "id": "Rover_single_cpu_Instance.motor",
+        "name": "motor",
+        "parentId": "Rover_single_cpu_Instance",
+        "category": "device",
+        "classifier": "Campus_Rover::Motor_Drive",
+        "features": [
+          {
+            "id": "Rover_single_cpu_Instance.motor.command",
+            "name": "command",
+            "direction": "in",
+            "kind": "dataPort",
+            "dataClassifier": "Campus_Rover::Drive_Command",
+            "source": {
+              "endColumn": 41,
+              "line": 25,
+              "file": "rover.aadl",
+              "column": 5,
+              "endLine": 25
+            },
+            "features": []
+          }
+        ],
+        "source": {
+          "endColumn": 31,
+          "line": 98,
+          "file": "rover.aadl",
+          "column": 5,
+          "endLine": 98
+        }
+      },
+      {
+        "id": "Rover_single_cpu_Instance.motion",
+        "name": "motion",
+        "parentId": "Rover_single_cpu_Instance",
+        "category": "process",
+        "classifier": "Campus_Rover::Motion_Control.two_tasks",
+        "features": [
+          {
+            "id": "Rover_single_cpu_Instance.motion.raw_speed",
+            "name": "raw_speed",
+            "direction": "in",
+            "kind": "dataPort",
+            "dataClassifier": "Campus_Rover::Speed",
+            "source": {
+              "endColumn": 35,
+              "line": 65,
+              "file": "rover.aadl",
+              "column": 5,
+              "endLine": 65
+            },
+            "features": []
+          },
+          {
+            "id": "Rover_single_cpu_Instance.motion.requested_speed",
+            "name": "requested_speed",
+            "direction": "in",
+            "kind": "dataPort",
+            "dataClassifier": "Campus_Rover::Speed",
+            "source": {
+              "endColumn": 41,
+              "line": 66,
+              "file": "rover.aadl",
+              "column": 5,
+              "endLine": 66
+            },
+            "features": []
+          },
+          {
+            "id": "Rover_single_cpu_Instance.motion.command",
+            "name": "command",
+            "direction": "out",
+            "kind": "dataPort",
+            "dataClassifier": "Campus_Rover::Drive_Command",
+            "source": {
+              "endColumn": 42,
+              "line": 67,
+              "file": "rover.aadl",
+              "column": 5,
+              "endLine": 67
+            },
+            "features": []
+          }
+        ],
+        "source": {
+          "endColumn": 46,
+          "line": 99,
+          "file": "rover.aadl",
+          "column": 5,
+          "endLine": 99
+        }
+      },
+      {
+        "id": "Rover_single_cpu_Instance.motion.filter_task",
+        "name": "filter_task",
+        "parentId": "Rover_single_cpu_Instance.motion",
+        "category": "thread",
+        "classifier": "Campus_Rover::Speed_Filter.basic",
+        "features": [
+          {
+            "id": "Rover_single_cpu_Instance.motion.filter_task.raw_speed",
+            "name": "raw_speed",
+            "direction": "in",
+            "kind": "dataPort",
+            "dataClassifier": "Campus_Rover::Speed",
+            "source": {
+              "endColumn": 35,
+              "line": 32,
+              "file": "rover.aadl",
+              "column": 5,
+              "endLine": 32
+            },
+            "features": []
+          },
+          {
+            "id": "Rover_single_cpu_Instance.motion.filter_task.filtered_speed",
+            "name": "filtered_speed",
+            "direction": "out",
+            "kind": "dataPort",
+            "dataClassifier": "Campus_Rover::Speed",
+            "source": {
+              "endColumn": 41,
+              "line": 33,
+              "file": "rover.aadl",
+              "column": 5,
+              "endLine": 33
+            },
+            "features": []
+          }
+        ],
+        "source": {
+          "endColumn": 44,
+          "line": 74,
+          "file": "rover.aadl",
+          "column": 5,
+          "endLine": 74
+        }
+      },
+      {
+        "id": "Rover_single_cpu_Instance.motion.controller_task",
+        "name": "controller_task",
+        "parentId": "Rover_single_cpu_Instance.motion",
+        "category": "thread",
+        "classifier": "Campus_Rover::Speed_Controller.basic",
+        "features": [
+          {
+            "id": "Rover_single_cpu_Instance.motion.controller_task.measured_speed",
+            "name": "measured_speed",
+            "direction": "in",
+            "kind": "dataPort",
+            "dataClassifier": "Campus_Rover::Speed",
+            "source": {
+              "endColumn": 40,
+              "line": 48,
+              "file": "rover.aadl",
+              "column": 5,
+              "endLine": 48
+            },
+            "features": []
+          },
+          {
+            "id": "Rover_single_cpu_Instance.motion.controller_task.requested_speed",
+            "name": "requested_speed",
+            "direction": "in",
+            "kind": "dataPort",
+            "dataClassifier": "Campus_Rover::Speed",
+            "source": {
+              "endColumn": 41,
+              "line": 49,
+              "file": "rover.aadl",
+              "column": 5,
+              "endLine": 49
+            },
+            "features": []
+          },
+          {
+            "id": "Rover_single_cpu_Instance.motion.controller_task.command",
+            "name": "command",
+            "direction": "out",
+            "kind": "dataPort",
+            "dataClassifier": "Campus_Rover::Drive_Command",
+            "source": {
+              "endColumn": 42,
+              "line": 50,
+              "file": "rover.aadl",
+              "column": 5,
+              "endLine": 50
+            },
+            "features": []
+          }
+        ],
+        "source": {
+          "endColumn": 52,
+          "line": 75,
+          "file": "rover.aadl",
+          "column": 5,
+          "endLine": 75
+        }
+      },
+      {
+        "id": "Rover_single_cpu_Instance.cpu",
+        "name": "cpu",
+        "parentId": "Rover_single_cpu_Instance",
+        "category": "processor",
+        "classifier": "Campus_Rover::Onboard_CPU",
+        "features": [],
+        "source": {
+          "endColumn": 32,
+          "line": 100,
+          "file": "rover.aadl",
+          "column": 5,
+          "endLine": 100
+        }
+      }
+    ]
+  },
+  "status": "complete"
+}

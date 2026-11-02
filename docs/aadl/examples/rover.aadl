@@ -1,0 +1,114 @@
+package Campus_Rover
+public
+  -- Original teaching model. Timing values are assumptions, not measurements.
+  -- Speed and Drive_Command are distinct architectural data classifiers.
+  data Speed
+  end Speed;
+
+  data Drive_Command
+  end Drive_Command;
+
+  device Wheel_Encoder
+  features
+    measured_speed: out data port Speed;
+  flows
+    sample: flow source measured_speed;
+  end Wheel_Encoder;
+
+  device Operator_Console
+  features
+    requested_speed: out data port Speed;
+  end Operator_Console;
+
+  device Motor_Drive
+  features
+    command: in data port Drive_Command;
+  flows
+    apply: flow sink command;
+  end Motor_Drive;
+
+  thread Speed_Filter
+  features
+    raw_speed: in data port Speed;
+    filtered_speed: out data port Speed;
+  flows
+    filter: flow path raw_speed -> filtered_speed;
+  properties
+    Dispatch_Protocol => Periodic;
+    Period => 20 ms;
+    Deadline => 20 ms;
+    Compute_Execution_Time => 1 ms .. 2 ms;
+  end Speed_Filter;
+
+  thread implementation Speed_Filter.basic
+  end Speed_Filter.basic;
+
+  thread Speed_Controller
+  features
+    measured_speed: in data port Speed;
+    requested_speed: in data port Speed;
+    command: out data port Drive_Command;
+  flows
+    regulate: flow path measured_speed -> command;
+  properties
+    Dispatch_Protocol => Periodic;
+    Period => 20 ms;
+    Deadline => 20 ms;
+    Compute_Execution_Time => 2 ms .. 3 ms;
+  end Speed_Controller;
+
+  thread implementation Speed_Controller.basic
+  end Speed_Controller.basic;
+
+  process Motion_Control
+  features
+    raw_speed: in data port Speed;
+    requested_speed: in data port Speed;
+    command: out data port Drive_Command;
+  flows
+    control: flow path raw_speed -> command;
+  end Motion_Control;
+
+  process implementation Motion_Control.two_tasks
+  subcomponents
+    filter_task: thread Speed_Filter.basic;
+    controller_task: thread Speed_Controller.basic;
+  connections
+    sample_in: port raw_speed -> filter_task.raw_speed;
+    filtered: port filter_task.filtered_speed -> controller_task.measured_speed;
+    target_in: port requested_speed -> controller_task.requested_speed;
+    command_out: port controller_task.command -> command;
+  flows
+    control: flow path raw_speed -> sample_in -> filter_task.filter ->
+      filtered -> controller_task.regulate -> command_out -> command;
+  end Motion_Control.two_tasks;
+
+  processor Onboard_CPU
+  properties
+    Scheduling_Protocol => (RMS);
+  end Onboard_CPU;
+
+  system Rover
+  end Rover;
+
+  system implementation Rover.single_cpu
+  subcomponents
+    encoder: device Wheel_Encoder;
+    operator_console: device Operator_Console;
+    motor: device Motor_Drive;
+    motion: process Motion_Control.two_tasks;
+    cpu: processor Onboard_CPU;
+  connections
+    sensed_speed: port encoder.measured_speed -> motion.raw_speed;
+    target_speed: port operator_console.requested_speed -> motion.requested_speed;
+    motor_command: port motion.command -> motor.command;
+  flows
+    speed_response: end to end flow encoder.sample -> sensed_speed ->
+      motion.control -> motor_command -> motor.apply;
+  properties
+    Actual_Processor_Binding => (reference (cpu))
+      applies to motion.filter_task;
+    Actual_Processor_Binding => (reference (cpu))
+      applies to motion.controller_task;
+  end Rover.single_cpu;
+end Campus_Rover;

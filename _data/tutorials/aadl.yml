@@ -1,0 +1,508 @@
+# Native fixture evidence: docs/aadl/verification.md.
+# Assessment uses the resolved OSATE model; source patterns below select hints only.
+title: 'AADL Architecture and Timing'
+description: 'Read a delivery rover architecture, repair a port contract, and evaluate a timing claim in four small exercises. For programmers familiar with types and directed connections; no previous AADL experience required. Allow about 25 minutes.'
+learning_objectives:
+  - Distinguish a component type, an implementation, and a component instance.
+  - Trace a typed connection from its sending feature to its receiving feature.
+  - Repair a port direction while preserving the intended architecture.
+  - Supply complete latency evidence for an end-to-end flow.
+  - Evaluate a timing requirement at and around its boundary.
+  - Explain the assumptions that limit a model-based timing claim.
+backend: aadl
+require_tests: false
+require_quiz: false
+allow_skip_steps: true
+autosave_type: files
+reset_type: files
+progress_version: 1
+run_label: Analyze model
+aadl:
+  root: Rover_Budget::Loop.budget
+steps:
+  # Pedagogy: PRIMM — read a complete worked example, predict, then make an equivalent rename.
+  - title: The Architecture Model
+    key: architecture-model
+    run_file: Model.aadl
+    open_file: Model.aadl
+    instructions: |
+      ### Why this matters
+
+      Architecture models let you inspect how components fit together before their implementations are ready. They also make the assumptions behind an engineering claim visible.
+
+      ### 🎯 You will learn to
+
+      - Distinguish a component's interface from an assembled architecture.
+      - Trace the evidence used to calculate an end-to-end latency interval.
+
+      **AADL** means Architecture Analysis and Design Language. Our delivery rover has a speed sensor, a controller, and a motor actuator. **OSATE**, the Open Source AADL Tool Environment, checks the model. An analysis examines the declared architecture; it does not execute a rover controller or simulate motion. The [AADL chapter](/SEBook/architecture/aadl) explains the wider language.
+
+      Open **Model.aadl** and find these four parts:
+
+      - **Types:** `Sensor`, `Controller`, and `Actuator` declare interfaces. `Speed` and `Drive_Command` classify the data carried by ports.
+      - **Implementation:** `Loop.budget` assembles the architecture. Here, “implementation” means an architectural realization, not executable source code.
+      - **Subcomponents:** `sensor`, `control`, and `actuator` name occurrences of those types. Instantiating `Rover_Budget::Loop.budget` produces the concrete model used for analysis.
+      - **Connections and flow:** the two connections carry data between features. The `response` end-to-end flow identifies the route through the component flows and connections that we want to analyze.
+
+      A `Latency` association gives an interval with units. `4 ms .. 4 ms` is an exact four-millisecond budget. The controller's interval is eight to twelve milliseconds. The end-to-end association `0 ms .. 25 ms` states the requirement; it is not a measured response time.
+
+      1. **Predict:** Given the sensor's 4 ms, controller's 8–12 ms, actuator's 6 ms, and zero connection budgets, which interval should the analysis calculate: **8–12 ms**, **18–22 ms**, or **0–25 ms**? Write your choice before running.
+      2. **Analyze:** Choose **Analyze model**. Compare the calculated interval with your prediction and with the required upper bound.
+      3. **Modify:** Rename only the `control` subcomponent to `navigator`, updating every reference to that subcomponent. Keep its `Controller` type and the type's `control` flow name unchanged. Predict whether the timing result will change, then analyze again.
+      4. **Explain:** In the original `control.control`, which name identifies a subcomponent and which identifies a flow declared by its type?
+
+      This is an **exploratory step** with no graded check. Continue when you can explain why a consistent rename preserves the result. Each later step starts with its own model; your drafts remain separate.
+
+      These are illustrative **declared budgets**. The model has no periodic threads, network delays, queues, or physical dynamics. A satisfied bound is a statement about these assumptions, not evidence that a real rover meets that bound.
+    files:
+      - path: Model.aadl
+        language: aadl
+        reseed: true
+        content: &budget_model |
+          package Rover_Budget
+          public
+            -- Illustrative budgets; no scheduling or physical dynamics.
+            data Speed
+            end Speed;
+            data Drive_Command
+            end Drive_Command;
+
+            device Sensor
+            features
+              speed: out data port Speed;
+            flows
+              sample: flow source speed {Latency => 4 ms .. 4 ms;};
+            end Sensor;
+
+            system Controller
+            features
+              speed: in data port Speed;
+              command: out data port Drive_Command;
+            flows
+              control: flow path speed -> command {Latency => 8 ms .. 12 ms;};
+            end Controller;
+
+            device Actuator
+            features
+              command: in data port Drive_Command;
+            flows
+              apply: flow sink command {Latency => 6 ms .. 6 ms;};
+            end Actuator;
+
+            system Loop
+            end Loop;
+
+            system implementation Loop.budget
+            subcomponents
+              sensor: device Sensor;
+              control: system Controller;
+              actuator: device Actuator;
+            connections
+              sample_link: port sensor.speed -> control.speed;
+              command_link: port control.command -> actuator.command;
+            flows
+              response: end to end flow sensor.sample -> sample_link ->
+                control.control -> command_link -> actuator.apply;
+            properties
+              Latency => 0 ms .. 25 ms applies to response;
+              Latency => 0 ms .. 0 ms applies to sample_link, command_link;
+            end Loop.budget;
+          end Rover_Budget;
+    solution:
+      files:
+        - path: Model.aadl
+          language: aadl
+          content: |
+            package Rover_Budget
+            public
+              data Speed
+              end Speed;
+              data Drive_Command
+              end Drive_Command;
+
+              device Sensor
+              features
+                speed: out data port Speed;
+              flows
+                sample: flow source speed {Latency => 4 ms .. 4 ms;};
+              end Sensor;
+
+              system Controller
+              features
+                speed: in data port Speed;
+                command: out data port Drive_Command;
+              flows
+                control: flow path speed -> command {Latency => 8 ms .. 12 ms;};
+              end Controller;
+
+              device Actuator
+              features
+                command: in data port Drive_Command;
+              flows
+                apply: flow sink command {Latency => 6 ms .. 6 ms;};
+              end Actuator;
+
+              system Loop
+              end Loop;
+
+              system implementation Loop.budget
+              subcomponents
+                sensor: device Sensor;
+                navigator: system Controller;
+                actuator: device Actuator;
+              connections
+                sample_link: port sensor.speed -> navigator.speed;
+                command_link: port navigator.command -> actuator.command;
+              flows
+                response: end to end flow sensor.sample -> sample_link ->
+                  navigator.control -> command_link -> actuator.apply;
+              properties
+                Latency => 0 ms .. 25 ms applies to response;
+                Latency => 0 ms .. 0 ms applies to sample_link, command_link;
+              end Loop.budget;
+            end Rover_Budget;
+      explanation: |
+        The minimum is 4 + 8 + 6 = **18 ms**; the maximum is 4 + 12 + 6 = **22 ms**. Both connections explicitly contribute zero. The 25 ms upper requirement therefore has 3 ms of margin.
+
+        The rename changes the instance path, not its type, connections, or budgets. `navigator.control` identifies the `control` flow of the `navigator` subcomponent. Renaming that flow as well would be a different edit and would require updating its declaration and references.
+
+        The numbers describe the chosen abstraction. They do not establish scheduling behavior or a measured sensor-to-motor response.
+
+  # Pedagogy: mistake-based familiarization — predict the failure, then repair one interface contract.
+  - title: Port Contracts
+    key: port-contracts
+    run_file: Model.aadl
+    open_file: Model.aadl
+    instructions: |
+      ### Why this matters
+
+      Matching data names do not guarantee compatible interfaces. Checking the direction and type of each connection catches wiring mistakes before the components are implemented.
+
+      ### 🎯 You will learn to
+
+      - Interpret a port direction from its owning component's perspective.
+      - Repair an interface while preserving a complete end-to-end route.
+
+      The rover's controller produces a drive command, and the actuator receives it. A port's `in` or `out` direction is relative to **the component that owns the port**. The connection arrow runs from its source feature to its destination feature; matching names alone do not create a connection.
+
+      This model has one interface mistake. Preserve the sensor-to-controller-to-actuator route, the payload classifiers, the `response` flow, and all timing budgets.
+
+      1. **Predict:** Inspect `Actuator` and `command_link`. Can this connection deliver a command as declared? Would renaming the connection change that answer?
+      2. **Analyze:** Run the model and read the diagnostics. Locate the feature that conflicts with the actuator's role.
+      3. **Repair:** Correct that feature's direction. Keep the actuator as the receiver; reversing the intended route would change the architecture.
+      4. **Check:** Choose **Test My Work** for feedback on the connected flow, then analyze the repaired model. Explain why the timing budgets need no change.
+
+      A valid model is a prerequisite for this analysis. Removing the faulty connection would also remove required architecture; it would not complete the task.
+    files:
+      - path: Model.aadl
+        language: aadl
+        reseed: true
+        content: |
+          package Rover_Budget
+          public
+            data Speed
+            end Speed;
+            data Drive_Command
+            end Drive_Command;
+
+            device Sensor
+            features
+              speed: out data port Speed;
+            flows
+              sample: flow source speed {Latency => 4 ms .. 4 ms;};
+            end Sensor;
+
+            system Controller
+            features
+              speed: in data port Speed;
+              command: out data port Drive_Command;
+            flows
+              control: flow path speed -> command {Latency => 8 ms .. 12 ms;};
+            end Controller;
+
+            device Actuator
+            features
+              command: out data port Drive_Command;
+            flows
+              apply: flow sink command {Latency => 6 ms .. 6 ms;};
+            end Actuator;
+
+            system Loop
+            end Loop;
+
+            system implementation Loop.budget
+            subcomponents
+              sensor: device Sensor;
+              control: system Controller;
+              actuator: device Actuator;
+            connections
+              sample_link: port sensor.speed -> control.speed;
+              command_link: port control.command -> actuator.command;
+            flows
+              response: end to end flow sensor.sample -> sample_link ->
+                control.control -> command_link -> actuator.apply;
+            properties
+              Latency => 0 ms .. 25 ms applies to response;
+              Latency => 0 ms .. 0 ms applies to sample_link, command_link;
+            end Loop.budget;
+          end Rover_Budget;
+    tests:
+      - description: The typed flow connects the sensor through the controller to the receiving actuator.
+        aadl:
+          criterion: connected-flow
+          fixture: rover-budget-v1
+        hints: &connection_hints
+          - title: The Port's Owner
+            condition: 'code_matches: /\bdevice\s+Actuator\b(?:(?!\bend\s+Actuator\b)[\s\S])*?\bcommand\s*:\s*out\b/i'
+            text: 'Read the direction from the actuator’s perspective. Is this component producing the command or consuming the controller’s command? Compare that role with its declared feature.'
+          - title: A Complete Feature Declaration
+            condition: 'code_not_matches: /\bdevice\s+Actuator\b(?:(?!\bend\s+Actuator\b)[\s\S])*?\bcommand\s*:\s*(?:in\s+out|in|out)\s+data\s+port\b/i'
+            text: 'Check that the actuator still declares its command feature. Use another feature declaration as a syntax reference, then choose the direction from this component’s role and retain its payload classifier.'
+          - title: The Whole Route
+            condition: 'code_matches: /\bdevice\s+Actuator\b(?:(?!\bend\s+Actuator\b)[\s\S])*?\bcommand\s*:\s*in\b/i'
+            text: 'Trace three stages: the sensor’s output, the controller’s input and output, and the actuator’s receiving feature. For each adjacent pair, find a connection; then check that response names those connections and the intervening component flows in order.'
+      - description: Every flow and connection retains the supplied timing evidence.
+        aadl:
+          criterion: complete-budget
+          required_upper_bound_ms: 25
+          fixture: rover-budget-v1
+        hints: &budget_hints
+          - title: The Missing Contribution
+            condition: 'code_not_matches: /\bcontrol\s*:\s*flow\s+path\b[^;]*\{\s*Latency\s*=>/i'
+            text: 'Compare the controller’s flow declaration with the sensor’s and actuator’s. Which declaration describes a route but supplies no duration for its part of the route?'
+          - title: An Interval With Units
+            condition: 'code_matches: /\bcontrol\s*:\s*flow\s+path\b[^;]*\{\s*Latency\s*=>(?:(?!\.\.)[^;])*;/i'
+            text: 'The supplied controller evidence has a lower and an upper duration. Compare the shape of your association with an existing latency interval, including its range separator and units.'
+          - title: An Evidence Ledger
+            condition: 'code_matches: /\bcontrol\s*:\s*flow\s+path\b[^;]*\{\s*Latency\s*=>[^;]*\.\./i'
+            text: 'Make one row for each of the three component flows and two connections. Record the lower and upper duration attached to each. Normalize units, compare every row with the supplied budgets, and keep the end-to-end requirement separate from those contributions.'
+    solution:
+      files:
+        - path: Model.aadl
+          language: aadl
+          content: *budget_model
+      explanation: |
+        `Actuator.command` must be an `in data port Drive_Command` for this receiving interface. The controller's command feature remains an output. The connection then joins compatible endpoints, and `apply` is a flow sink on an incoming feature.
+
+        Renaming a connection cannot change its endpoint directions. Deleting it would break the required route. With the interface repaired, the declared budgets still yield 18–22 ms.
+
+  # Pedagogy: PRIMM — contrast an incomplete numerical result with complete evidence, then restore the missing association.
+  - title: Complete Timing Evidence
+    key: complete-timing-evidence
+    run_file: Model.aadl
+    open_file: Model.aadl
+    instructions: |
+      ### Why this matters
+
+      A tool can calculate a number from incomplete evidence. Reviewing the inputs to an analysis prevents a plausible-looking result from becoming an unsupported engineering claim.
+
+      ### 🎯 You will learn to
+
+      - Distinguish a completed calculation from a fully supported timing claim.
+      - Associate a latency interval with the flow whose contribution it describes.
+
+      The architecture is connected, but one flow has lost its timing evidence. Use this **budget contract** for the exercise:
+
+      - Sensor flow: **4–4 ms**.
+      - Controller flow: **8–12 ms**.
+      - Actuator flow: **6–6 ms**.
+      - Each connection: **0–0 ms**, an explicit simplification of this model.
+      - End-to-end requirement: **0–25 ms**.
+
+      These values are supplied assumptions, not measurements taken by the analysis. Preserve every contribution and the route. Equivalent units are allowed: for example, `4 ms` and `4000 us` express the same duration.
+
+      1. **Predict:** If the controller's flow has no `Latency` association, is a smaller calculated result evidence that the controller became faster? Explain your answer before analyzing.
+      2. **Inspect:** Analyze the starter and compare the available contributions with the budget contract. A numerical result alone cannot establish completeness. Use **Test My Work** to distinguish the connected architecture from its missing timing evidence.
+      3. **Complete:** Add the missing interval to the controller's `control` flow. Use the other flow declarations to infer the association syntax. Keep the end-to-end requirement and all other contributions unchanged.
+      4. **Check:** Run the analysis and checks again. Explain why adding evidence can increase the reported latency without changing the component's actual behavior.
+
+      The checks report connectivity and budget completeness separately. An omitted contribution must not earn credit merely because the analysis reports that the remaining total fits inside the requirement.
+    files:
+      - path: Model.aadl
+        language: aadl
+        reseed: true
+        content: |
+          package Rover_Budget
+          public
+            data Speed
+            end Speed;
+            data Drive_Command
+            end Drive_Command;
+
+            device Sensor
+            features
+              speed: out data port Speed;
+            flows
+              sample: flow source speed {Latency => 4 ms .. 4 ms;};
+            end Sensor;
+
+            system Controller
+            features
+              speed: in data port Speed;
+              command: out data port Drive_Command;
+            flows
+              control: flow path speed -> command;
+            end Controller;
+
+            device Actuator
+            features
+              command: in data port Drive_Command;
+            flows
+              apply: flow sink command {Latency => 6 ms .. 6 ms;};
+            end Actuator;
+
+            system Loop
+            end Loop;
+
+            system implementation Loop.budget
+            subcomponents
+              sensor: device Sensor;
+              control: system Controller;
+              actuator: device Actuator;
+            connections
+              sample_link: port sensor.speed -> control.speed;
+              command_link: port control.command -> actuator.command;
+            flows
+              response: end to end flow sensor.sample -> sample_link ->
+                control.control -> command_link -> actuator.apply;
+            properties
+              Latency => 0 ms .. 25 ms applies to response;
+              Latency => 0 ms .. 0 ms applies to sample_link, command_link;
+            end Loop.budget;
+          end Rover_Budget;
+    tests:
+      - description: The typed flow connects the sensor through the controller to the receiving actuator.
+        aadl:
+          criterion: connected-flow
+          fixture: rover-budget-v1
+        hints: *connection_hints
+      - description: Every flow and connection retains the supplied timing evidence.
+        aadl:
+          criterion: complete-budget
+          required_upper_bound_ms: 25
+          fixture: rover-budget-v1
+        hints: *budget_hints
+    solution:
+      files:
+        - path: Model.aadl
+          language: aadl
+          content: *budget_model
+      explanation: |
+        The controller's flow carries `{Latency => 8 ms .. 12 ms;}`. The route therefore has all five contributions: three component flows and two explicitly zero-cost connections. Their intervals produce 18–22 ms against the unchanged 25 ms upper requirement.
+
+        In the verified native fixture, omitting the controller association produced 10–10 ms with no warning: only the 4 ms sensor and 6 ms actuator contributed. That result did not show an improvement. It omitted evidence required by this exercise. The lesson's completeness check is therefore separate from the analysis tool's numerical comparison.
+
+  # Pedagogy: retrieval and boundary contrast — preserve evidence while deriving the strongest supported upper claim.
+  - title: A Defensible Timing Claim
+    key: defensible-timing-claim
+    run_file: Model.aadl
+    open_file: Model.aadl
+    instructions: |
+      ### Why this matters
+
+      A satisfied requirement can still be weaker than the evidence supports. Comparing a claim with the full calculated interval helps you distinguish a tight bound, spare margin, and an actual violation.
+
+      ### 🎯 You will learn to
+
+      - Evaluate an upper-bound requirement just below, at, and above the calculated maximum.
+      - State the tightest upper timing claim supported by fixed evidence.
+
+      The supplied budgets are complete again. This task is to **characterize their guarantee**, not redesign the controller or negotiate a real stakeholder requirement. Keep the sensor at 4–4 ms, controller at 8–12 ms, actuator at 6–6 ms, and both connections at 0–0 ms. Keep the route and the requirement's lower endpoint unchanged.
+
+      1. **Predict:** For upper requirements of **21 ms**, **22 ms**, and **23 ms**, which will be violated, which will be satisfied exactly at the boundary, and which will leave margin? Write all three predictions before running.
+      2. **Compare:** Change only the end-to-end requirement's upper endpoint and analyze each candidate. Check the calculated interval as well as the satisfaction result; changing a requirement should not change the component contributions.
+      3. **State:** Leave the model with the **smallest supported upper bound**. Equivalent time units are allowed. Do not lower a component budget or remove a flow to obtain a smaller number.
+      4. **Check and explain:** Choose **Test My Work**. Explain why equality is sufficient, why the next smaller candidate fails, and why a larger satisfied bound is less informative.
+
+      If an external requirement really demanded the smaller bound, changing that requirement would not fix the system. You would need a justified architectural or implementation change, new evidence, or an agreed requirement revision.
+
+      **Transfer:** Before using this result for a deployed rover, identify one omitted effect—such as periodic sampling, scheduling, or communication delay—and say what evidence or additional model detail you would need. A numerical pass does not establish that the model includes everything that matters.
+    files:
+      - path: Model.aadl
+        language: aadl
+        reseed: true
+        content: *budget_model
+    tests:
+      - description: The typed flow connects the sensor through the controller to the receiving actuator.
+        aadl:
+          criterion: connected-flow
+          fixture: rover-budget-v1
+        hints: *connection_hints
+      - description: Every flow and connection retains the supplied timing evidence.
+        aadl:
+          criterion: complete-budget
+          fixture: rover-budget-v1
+        hints: *budget_hints
+      - description: The end-to-end requirement states the tightest supported upper bound.
+        aadl:
+          criterion: tight-bound
+          fixture: rover-budget-v1
+        hints:
+          - title: Satisfaction and Precision
+            condition: 'code_matches: /\bLatency\s*=>\s*0\s*ms\s*\.\.\s*25\s*ms\s+applies\s+to\s+response\b/i'
+            text: 'The starter’s requirement can be satisfied while leaving unused margin. Compare its upper endpoint with the calculated maximum. Which of your three candidates makes the strongest claim that the evidence still supports?'
+          - title: The Entire Interval
+            condition: 'code_matches: /\bLatency\s*=>\s*0\s*ms\s*\.\.\s*21\s*ms\s+applies\s+to\s+response\b/i'
+            text: 'A bound must cover the whole calculated interval, including its maximum. A duration somewhere inside the interval is not an upper guarantee. Revisit your boundary predictions without changing the contributing budgets.'
+          - title: The Claim and Its Evidence
+            condition: 'code_not_matches: /\bLatency\s*=>\s*0\s*ms\s*\.\.\s*(?:21|25)\s*ms\s+applies\s+to\s+response\b/i'
+            text: 'Locate the requirement attached to response, then compare its normalized upper duration with the unchanged calculated maximum. A smaller claim must fail; a larger claim leaves margin. Check that the lower endpoint and all supporting contributions still match the exercise contract.'
+    solution:
+      files:
+        - path: Model.aadl
+          language: aadl
+          content: |
+            package Rover_Budget
+            public
+              data Speed
+              end Speed;
+              data Drive_Command
+              end Drive_Command;
+
+              device Sensor
+              features
+                speed: out data port Speed;
+              flows
+                sample: flow source speed {Latency => 4 ms .. 4 ms;};
+              end Sensor;
+
+              system Controller
+              features
+                speed: in data port Speed;
+                command: out data port Drive_Command;
+              flows
+                control: flow path speed -> command {Latency => 8 ms .. 12 ms;};
+              end Controller;
+
+              device Actuator
+              features
+                command: in data port Drive_Command;
+              flows
+                apply: flow sink command {Latency => 6 ms .. 6 ms;};
+              end Actuator;
+
+              system Loop
+              end Loop;
+
+              system implementation Loop.budget
+              subcomponents
+                sensor: device Sensor;
+                control: system Controller;
+                actuator: device Actuator;
+              connections
+                sample_link: port sensor.speed -> control.speed;
+                command_link: port control.command -> actuator.command;
+              flows
+                response: end to end flow sensor.sample -> sample_link ->
+                  control.control -> command_link -> actuator.apply;
+              properties
+                Latency => 0 ms .. 22 ms applies to response;
+                Latency => 0 ms .. 0 ms applies to sample_link, command_link;
+              end Loop.budget;
+            end Rover_Budget;
+      explanation: |
+        The contributions still calculate to **18–22 ms**. A **21 ms** upper requirement fails by 1 ms. **22 ms** is satisfied at equality, so it is the tightest supported upper bound. **23 ms** is also satisfied but leaves 1 ms of margin.
+
+        The solution changes only the upper endpoint of the requirement on `response`. It preserves the lower endpoint, component budgets, explicit zero connection budgets, and architecture. `22000 us` would express the same upper bound.
+
+        This characterizes an abstract model. An external 21 ms deadline would remain an unmet requirement; editing its number is not a performance improvement.
