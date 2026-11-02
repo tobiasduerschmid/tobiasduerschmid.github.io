@@ -82,6 +82,11 @@
   definition: Cognitive Load Theory
   description: A theory of learning and instruction based on limited working memory and knowledge stored in long-term memory. Intrinsic load depends on how ideas interact and what the learner already knows; extraneous load comes from avoidable demands of the presentation or activity. Guidance should reduce unnecessary effort and adapt as knowledge grows.
 
+- term: CNBC
+  definition: Consumer News and Business Channel
+  description: A U.S. business-news television network and website, now known only by its initials. The Security chapter links to its reporting on the 2026 Hugging Face incident.
+  related: []
+
 - term: CPU
   definition: Central Processing Unit
   description: The processor that executes machine instructions. CPU speed and workload shape performance for compute-heavy programs.
@@ -555,6 +560,11 @@
   definition: Server-Side Rendering
   description: A web rendering approach where the server sends already-rendered HTML for a page, improving initial load and search indexing for many content-heavy sites.
   related: [HTML, SPA]
+
+- term: SSRF
+  definition: Server-Side Request Forgery
+  description: A web security vulnerability in which an attacker makes a server send requests to addresses the attacker chooses. The forged requests carry the server's network position and trust, so they can reach systems the attacker cannot reach directly.
+  related: [CSRF, HTTP]
 
 - term: SUT
   definition: System Under Test

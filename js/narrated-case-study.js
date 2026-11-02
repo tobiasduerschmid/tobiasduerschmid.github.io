@@ -45,42 +45,11 @@
     image.setAttribute('aria-describedby', `${prefix}-description`);
   }
 
-  // A text-only story (no media yet) has no audio clock. This transport shows
-  // the same cues and scene choices directly, with the player's interface.
-  function silentTransport(root, story, render, onSeek) {
-    const scenes = Array.from(root.querySelectorAll('[data-scene]'));
-    const sceneSelect = root.querySelector('[data-setting="scene"]');
-    const narration = root.querySelector('.nja-narration p');
-    const status = root.querySelector('.nja-status');
-    let sceneIndex = -1;
-    function showCue(index, cueIndex) {
-      onSeek();
-      const scene = story.scenes[index];
-      const cue = scene.cues[cueIndex];
-      scenes.forEach((element, number) => { element.hidden = number !== index; });
-      sceneSelect.value = String(index);
-      narration.textContent = cue.text;
-      scenes[index].querySelector('.nja-art').setAttribute('aria-label', cue.visual);
-      sceneIndex = index;
-      render(scenes[index], scene, cue);
-    }
-    function selectScene(index) {
-      showCue(index, 0);
-      status.textContent = `${index + 1}. ${story.scenes[index].label}`;
-    }
-    sceneSelect.addEventListener('change', () => selectScene(Number(sceneSelect.value)));
-    root.classList.add('is-enhanced');
-    root.querySelectorAll('.nja-controls').forEach((controls) => { controls.hidden = false; });
-    showCue(0, 0);
-    return { showCue, selectScene, play() {}, pause() {}, currentScene: () => sceneIndex };
-  }
-
   function enhance(root) {
     if (root.classList.contains('is-enhanced') || !window.NarratedExplainer || !window.SebookQuiz) return;
     const { story, timing } = window.NarratedExplainer.readData(root);
     // The readable version remains fully available while rendered narration is incomplete.
     if (story.audio && !timing) return;
-    const audio = root.querySelector('audio');
     const playButton = root.querySelector('[data-action="play"]');
     const stage = root.querySelector('.nja-stage');
     const quizPanel = root.querySelector('.case-quiz');
@@ -166,11 +135,11 @@
       if (!story.scenes[index].checkpoint) {
         // The transport first seeks back to the completed section. Allow that
         // seek to finish before seeking forward and resuming an ungated scene.
-        if (playNarration && audio.seeking) {
-          audio.addEventListener('seeked', () => {
+        if (playNarration) {
+          player.afterSeek(() => {
             if (player.currentScene() === index && quizPanel.hidden) continueScene(index, true);
-          }, { once: true });
-        } else continueScene(index, playNarration);
+          });
+        } else continueScene(index, false);
         return;
       }
       mountedQuizzes.forEach(host => { host.hidden = true; });
@@ -194,6 +163,7 @@
 
     // With rendered speech, the shared transport's audio clock selects each cue.
     function audioTransport() {
+      const audio = root.querySelector('audio');
       const transport = window.NarratedExplainer.enhance(root, {
         storyboard: story, timing, render,
         onSectionEnd: index => finishScene(index, true),
@@ -211,9 +181,19 @@
           seek.value = String(Math.ceil(timing.scenes[sceneIndex].cues[cueIndex].start * 100) / 100);
           seek.dispatchEvent(new Event('input', { bubbles: true }));
         },
+        afterSeek(callback) {
+          if (audio.seeking) audio.addEventListener('seeked', callback, { once: true });
+          else callback();
+        },
       };
     }
-    const player = story.audio ? audioTransport() : silentTransport(root, story, render, closeQuiz);
+
+    // A text-only story has no audio clock; the reader steps through the same cues.
+    function stepTransport() {
+      const transport = window.NarratedExplainer.step(root, { storyboard: story, render, onSeek: closeQuiz });
+      return { ...transport, play() {}, pause() {}, afterSeek: callback => callback() };
+    }
+    const player = story.audio ? audioTransport() : stepTransport();
 
     function selectStep(sceneIndex, cueIndex) {
       player.showCue(sceneIndex, cueIndex);
@@ -242,9 +222,9 @@
     root.querySelector('.case-reading-actions').hidden = false;
     transcript.open = false;
     let openBeforePrint = [];
+    // The shared transport opens and restores the transcript itself; this opens its answers.
     window.addEventListener('beforeprint', () => {
-      // The transcript itself must open too: a text-only story has no transport to open it.
-      openBeforePrint = [transcript, ...transcript.querySelectorAll('details')].map(details => ({ details, open: details.open }));
+      openBeforePrint = Array.from(transcript.querySelectorAll('details'), details => ({ details, open: details.open }));
       openBeforePrint.forEach(({ details }) => { details.open = true; });
     });
     window.addEventListener('afterprint', () => {

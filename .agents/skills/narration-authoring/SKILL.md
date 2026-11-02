@@ -52,8 +52,9 @@ Like tutorials, a new lesson supplies data and a page referencing its ID; do not
 - `case-study`: evidence and decision checkpoints, supporting narrated and
   self-paced investigation. Keep its decision controller in its adapter.
   A case study may be text only: omit `media` until its speech is rendered.
-  Its player then steps silently, `check` reports it as text only, and a
-  leftover timing file is an error. Other kinds always need `media`.
+  Its player then steps through cues with `NarratedExplainer.step`, `check`
+  reports it as text only, and a leftover timing file is an error. Other
+  kinds always need `media`.
 
 A new topic does not require a new kind. Add a new adapter only when a concrete
 interaction cannot fit these contracts. Do not force distinct teaching flows
@@ -74,7 +75,9 @@ the editable notes view automatically; all views consume the same compiled story
 
 `narration-data.html` and `NarratedExplainer.readData` define one browser data
 boundary. `NarratedExplainer.enhance` owns audio time, seeking, captions, motion,
-speed, and fullscreen. Pattern/video adapters use `NarratedLesson.mount` for
+speed, and fullscreen. `NarratedExplainer.step` presents the same cues without
+a clock, sharing the scene display, fullscreen, and transcript printing; do not
+copy that logic into an adapter. Pattern/video adapters use `NarratedLesson.mount` for
 section checks, navigation/focus, and language refresh; adapters supply cue
 rendering only. Keep all players paused until explicit playback.
 

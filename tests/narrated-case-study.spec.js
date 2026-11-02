@@ -131,6 +131,38 @@ for (const { topic, url } of cases) {
       await expect(study.getByRole('combobox', { name: 'Review a scene' })).toBeFocused();
     });
 
+    test('full screen keeps step navigation and the narration, then returns to the page', async ({ page }) => {
+      await page.goto(url);
+      const study = caseStudy(page);
+      await study.getByRole('button', { name: 'Enter full screen', exact: true }).press('Enter');
+      const exit = study.getByRole('button', { name: 'Exit full screen', exact: true });
+      await expect(exit).toBeFocused();
+      const insideFullScreen = locator => locator.evaluate(element =>
+        Boolean(document.fullscreenElement && document.fullscreenElement.contains(element)));
+      expect(await insideFullScreen(study.getByRole('button', { name: 'Next step', exact: true }))).toBe(true);
+      expect(await insideFullScreen(study.getByRole('region', { name: 'Current narration' }))).toBe(true);
+      await exit.click();
+      await expect(study.getByRole('button', { name: 'Enter full screen', exact: true })).toBeFocused();
+      expect(await page.evaluate(() => document.fullscreenElement)).toBeNull();
+    });
+
+    test('printing opens the full transcript and its answers, then restores what the reader had open', async ({ page }) => {
+      await page.goto(url);
+      const study = caseStudy(page);
+      await expect(study.getByRole('button', { name: 'Next step', exact: true })).toBeVisible();
+      const readingScene = study.getByRole('region', { name: `1. ${story.scenes[0].title}`, exact: true });
+      const decisionScene = story.scenes.find(scene => scene.checkpoint);
+      const answer = study.getByRole('region', { name: `Decision for ${decisionScene.label}`, exact: true })
+        .getByText(decisionScene.checkpoint.explanation, { exact: true });
+      await expect(readingScene).toBeHidden();
+      await page.evaluate(() => window.dispatchEvent(new Event('beforeprint')));
+      await expect(readingScene).toBeVisible();
+      await expect(answer).toBeVisible();
+      await page.evaluate(() => window.dispatchEvent(new Event('afterprint')));
+      await expect(readingScene).toBeHidden();
+      await expect(answer).toBeHidden();
+    });
+
     for (const theme of ['light', 'dark']) {
       test(`diagram and decision remain readable and accessible at a narrow viewport in ${theme} mode`, async ({ page }) => {
         test.setTimeout(120000);

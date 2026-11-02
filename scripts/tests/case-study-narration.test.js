@@ -1,23 +1,26 @@
-const { loadStory } = require('../narration/source');
-const { test, describe, before } = require('node:test');
+const { lessonIds, loadLesson } = require('../narration/source');
+const { test, describe } = require('node:test');
 const assert = require('node:assert/strict');
 const { readFileSync } = require('node:fs');
 const path = require('node:path');
 
 const root = path.resolve(__dirname, '../..');
 const readAsset = filename => readFileSync(path.join(root, filename));
+const caseStudies = lessonIds().map(id => loadLesson(id)).filter(lesson => lesson.kind === 'case-study');
 
 function assertText(value, label) {
   assert.equal(typeof value, 'string', `${label} must be text`);
   assert.ok(value.trim(), `${label} must not be empty`);
 }
 
-for (const topic of ['therac25', 'cloudflare2019']) {
+test('the published case studies are discovered', () => {
+  assert.ok(caseStudies.length > 0, 'No case-study narration was found.');
+});
+
+for (const { id: topic, story } of caseStudies) {
   describe(topic, () => {
-    let story;
-    before(() => {
-      story = loadStory(topic);
-    });
+    // A text-only case study has no rendered speech to check yet.
+    const media = { skip: !story.audio && 'text only: speech not yet rendered' };
     const readTiming = () => JSON.parse(readAsset(`_data/explainers/${topic}_timing.json`));
 
     test('decisions have distinct choices, a valid answer, and feedback for every misconception', () => {
@@ -87,7 +90,7 @@ for (const topic of ['therac25', 'cloudflare2019']) {
       }
     });
 
-    test('published narration timings cover the current storyboard in order without gaps', () => {
+    test('published narration timings cover the current storyboard in order without gaps', media, () => {
       const timing = readTiming();
       assert.equal(timing.speech_sha256, story.speech_sha256,
         'Regenerate narration assets after editing the storyboard.');
@@ -115,7 +118,7 @@ for (const topic of ['therac25', 'cloudflare2019']) {
       return hours * 3600 + minutes * 60 + seconds;
     }
 
-    test('captions preserve every cue in order at the corresponding narration time', () => {
+    test('captions preserve every cue in order at the corresponding narration time', media, () => {
       const captions = readAsset(story.captions).toString();
       const timing = readTiming().scenes.flatMap(scene => scene.cues);
       const cues = story.scenes.flatMap(scene => scene.cues);
@@ -131,7 +134,7 @@ for (const topic of ['therac25', 'cloudflare2019']) {
       }
     });
 
-    test('the downloadable script applies the authored pronunciations to every cue', () => {
+    test('the downloadable script applies the authored pronunciations to every cue', media, () => {
       const substitutions = Object.entries(story.pronunciations)
         .sort(([left], [right]) => right.length - left.length);
       const spoken = story.scenes.flatMap(scene => scene.cues).map(cue => substitutions
@@ -139,7 +142,7 @@ for (const topic of ['therac25', 'cloudflare2019']) {
       assert.equal(readAsset(story.script).toString(), `${spoken.join('\n\n')}\n`);
     });
 
-    test('published narration is an MP3 within the compressed speech bandwidth budget', () => {
+    test('published narration is an MP3 within the compressed speech bandwidth budget', media, () => {
       const audio = readAsset(story.audio);
       const duration = readTiming().duration;
       assert.equal(path.extname(story.audio), '.mp3');

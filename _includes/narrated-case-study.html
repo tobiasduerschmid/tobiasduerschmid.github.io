@@ -67,7 +67,7 @@
       </div>
       <div class="nja-settings">
         <label class="nja-scene-select">Review a scene<select data-setting="scene">{% for scene in case_story.scenes %}<option value="{{ forloop.index0 }}">{{ forloop.index }}. {{ scene.label | escape }}</option>{% endfor %}</select></label>
-        {% if case_story.audio %}<label>Narration speed<select data-setting="speed"><option value="0.75">0.75x</option><option value="1" selected>1x</option><option value="1.25">1.25x</option><option value="1.5">1.5x</option></select></label>{% endif %}
+        {% if case_story.audio %}<label>Narration speed<select data-setting="speed"><option value="0.75">0.75x</option><option value="1" selected>1x</option><option value="1.25">1.25x</option><option value="1.5">1.5x</option></select></label>{% else %}<button type="button" data-action="fullscreen" aria-label="Enter full screen" hidden><i class="fa fa-expand" aria-hidden="true"></i></button>{% endif %}
       </div>
     </div>
     <p class="nja-status" role="status" aria-live="polite"></p>

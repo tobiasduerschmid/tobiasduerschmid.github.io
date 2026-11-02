@@ -3,9 +3,10 @@
 All narrated lessons use one source contract: Scrum's animated video, Observer,
 State, Strategy, MVC, the UML diagram lessons, the Node.js and React explainers,
 and the Therac-25, Cloudflare, and Hugging Face case studies. They share
-compilation, audio timing, captions,
-transport, fullscreen handling, and a browser data interface. Presentation
-adapters retain their distinct teaching interactions.
+compilation, the player's scene display, fullscreen handling, and a browser
+data interface; lessons with rendered speech also share audio timing,
+captions, and the transport. Presentation adapters retain their distinct
+teaching interactions.
 
 ## Files and ownership
 
@@ -76,8 +77,9 @@ insertion. New cues should use meaningful names such as `waiting`.
 
 A `case-study` lesson may omit `media` while its speech is not yet rendered.
 Such a text-only lesson keeps the same `say` text, fingerprint, and decisions,
-but it has no audio, captions, script, or timing file. Its player offers only
-silent cue navigation and decisions, and `node scripts/narration.js check`
+but it has no audio, captions, script, or timing file. Its player offers
+step-by-step cue navigation, decisions, scene review, and full screen through
+`NarratedExplainer.step`, and `node scripts/narration.js check`
 reports it as text only instead of requiring timing. A text-only lesson that
 still has a timing file is an error. To add narration later, add the `media`
 block and render the audio as described below. Other kinds always need `media`,
@@ -303,6 +305,9 @@ and verification screenshots outside the repository.
   and export orchestration in `narration-notes.js`.
 - `js/narrated-explainer.js`: shared audio clock, seeking, speed, motion,
   fullscreen, print lifecycle, and `readData` boundary for every adapter.
+  `enhance` follows the audio clock; `step` shows the same cues without one
+  for a text-only case study, sharing the scene display, fullscreen, and
+  transcript printing.
 - `js/narrated-lesson.js`: common mounting, quiz lifecycle, navigation/focus,
   language refresh, diagram copying, and code highlighting for pattern/video lessons.
 - The four presentation adapters own cue rendering and their distinct learning
