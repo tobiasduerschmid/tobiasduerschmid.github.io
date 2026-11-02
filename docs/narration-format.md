@@ -1,8 +1,9 @@
 # Shared narration format, version 1
 
 All narrated lessons use one source contract: Scrum's animated video, Observer,
-State, Strategy, MVC, the Node.js and React explainers, and the Therac-25 and
-Cloudflare investigations. They share compilation, audio timing, captions,
+State, Strategy, MVC, the UML diagram lessons, the Node.js and React explainers,
+and the Therac-25, Cloudflare, and Hugging Face case studies. They share
+compilation, audio timing, captions,
 transport, fullscreen handling, and a browser data interface. Presentation
 adapters retain their distinct teaching interactions.
 
@@ -72,6 +73,15 @@ unique within the lesson; cue IDs are unique within a scene. IDs are permanent
 identities, not positions: retain them when moving or rewording a cue. The
 migrated `cue-1`, `cue-2`, etc. are stable names; never renumber them after an
 insertion. New cues should use meaningful names such as `waiting`.
+
+A `case-study` lesson may omit `media` while its speech is not yet rendered.
+Such a text-only lesson keeps the same `say` text, fingerprint, and decisions,
+but it has no audio, captions, script, or timing file. Its player offers only
+silent cue navigation and decisions, and `node scripts/narration.js check`
+reports it as text only instead of requiring timing. A text-only lesson that
+still has a timing file is an error. To add narration later, add the `media`
+block and render the audio as described below. Other kinds always need `media`,
+because their players depend on the audio clock.
 
 `lesson` contains name, summary, prerequisites, chapter/views links, optional
 parts/parts_label, and optional `outline_labels` keyed by scene ID. Pattern
@@ -191,8 +201,7 @@ cue IDs and the speech fingerprint.
 
 ## Editable lesson notes and PDF export
 
-All nine lessons share the same handout: Scrum, Observer, State, Strategy,
-MVC, Node.js, React, Therac-25, and Cloudflare. The public `narration.html`
+Every lesson shares the same handout, whatever its kind. The public `narration.html`
 entry point adds **Save lesson notes as PDF** (`lesson.notes_url#export`) and
 **Edit lesson notes** (`lesson.notes_url`). The actions are navigation links
 styled as buttons directly below each player, before tips, credits, and the

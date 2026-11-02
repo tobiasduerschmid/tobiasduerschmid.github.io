@@ -68,6 +68,11 @@
   description: The practice of merging every developer's work into a shared mainline frequently — usually several times a day — and running automated tests on each merge to catch integration problems early.
   related: [CD, TDD]
 
+- term: CIA
+  definition: Confidentiality, Integrity, Availability
+  description: The three core security attributes. Confidentiality means only authorized parties can read sensitive data; integrity means only authorized parties can change data and systems; availability means legitimate users get service when they need it.
+  related: [XSS, CSRF, TLS]
+
 - term: CLI
   definition: Command-Line Interface
   description: A text-based interface where users type commands instead of clicking graphical controls. Shells, Git, package managers, and many developer tools expose CLIs.
@@ -203,6 +208,11 @@
   description: A decimal unit of data size equal to one billion bytes. Download sizes on this site use decimal gigabytes.
   related: [MB]
 
+- term: HDF5
+  definition: Hierarchical Data Format version 5
+  description: A file format for large scientific and numeric datasets. An HDF5 file can store its data in other files, so software that opens untrusted HDF5 files must restrict which files those references may reach.
+  related: [CSV, JSON]
+
 - term: HTML
   definition: HyperText Markup Language
   description: The markup language used to structure web pages. HTML elements describe meaning (heading, paragraph, list, link); CSS describes presentation; JavaScript describes behaviour.
@@ -317,6 +327,11 @@
   definition: Linear Temporal Logic
   description: A logic for expressing properties along an infinite sequence of states, using operators such as always, eventually, next, and until. A model satisfies an LTL property when every behavior allowed by the model satisfies it.
   related: [TLA+, TLC]
+
+- term: METR
+  definition: Model Evaluation and Threat Research
+  description: An independent research organization that evaluates the capabilities and risks of frontier AI systems. METR investigated the agents' behavior in the 2026 Hugging Face incident.
+  related: [AI, LLM]
 
 - term: MRO
   definition: Method Resolution Order

@@ -120,6 +120,22 @@ seeking does not require replaying prior frames. Only the visible cue changes;
 there are no timed transitions beyond the existing audio clock. Reduced-motion
 users therefore receive the same evidence and controls.
 
+## Text-only case studies
+
+A case study can ship before its narration audio exists, as the Hugging Face
+case on the Security chapter does. Omit the `media` block from
+`_data/narrations/<topic>.yml` and keep `speech`: the speech fingerprint still
+identifies the text that later audio must match. The include then renders no
+audio element, transport, narration speed, or download links, and its
+introduction invites self-paced study. The adapter replaces the audio clock
+with a silent transport. **Next step**, **Previous step**, scene review, and
+every decision behave as in the narrated player; the reading version, print
+view, and lesson notes are unchanged. `node scripts/narration.js check` reports
+the lesson as text only, and fails if a stale timing file remains.
+
+To add narration later, add the `media` paths and render the audio. Once the
+timing file exists, the player uses the shared audio transport again.
+
 ## Verification
 
 After building the site and generating narration, run the focused case-study

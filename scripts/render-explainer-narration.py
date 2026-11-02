@@ -39,10 +39,14 @@ def load_storyboard(topic):
 
 def render(args):
     storyboard = load_storyboard(args.topic)
+    text_only = "audio" not in storyboard
     if args.check:
         cues = sum(len(scene["cues"]) for scene in storyboard["scenes"])
-        print(f"Valid script: {len(storyboard['scenes'])} scenes, {cues} cues; speech {storyboard['speech_sha256']}")
+        pending = "; text only until a media block is added" if text_only else ""
+        print(f"Valid script: {len(storyboard['scenes'])} scenes, {cues} cues; speech {storyboard['speech_sha256']}{pending}")
         return
+    if text_only:
+        raise ValueError(f"{args.topic} is text only; add a media block (audio, captions, script under /assets/) before rendering")
     if not args.model or not args.voices:
         raise ValueError("Audio rendering requires --model and --voices")
     import numpy as np

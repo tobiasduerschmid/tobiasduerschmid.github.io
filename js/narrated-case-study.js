@@ -45,12 +45,43 @@
     image.setAttribute('aria-describedby', `${prefix}-description`);
   }
 
+  // A text-only story (no media yet) has no audio clock. This transport shows
+  // the same cues and scene choices directly, with the player's interface.
+  function silentTransport(root, story, render, onSeek) {
+    const scenes = Array.from(root.querySelectorAll('[data-scene]'));
+    const sceneSelect = root.querySelector('[data-setting="scene"]');
+    const narration = root.querySelector('.nja-narration p');
+    const status = root.querySelector('.nja-status');
+    let sceneIndex = -1;
+    function showCue(index, cueIndex) {
+      onSeek();
+      const scene = story.scenes[index];
+      const cue = scene.cues[cueIndex];
+      scenes.forEach((element, number) => { element.hidden = number !== index; });
+      sceneSelect.value = String(index);
+      narration.textContent = cue.text;
+      scenes[index].querySelector('.nja-art').setAttribute('aria-label', cue.visual);
+      sceneIndex = index;
+      render(scenes[index], scene, cue);
+    }
+    function selectScene(index) {
+      showCue(index, 0);
+      status.textContent = `${index + 1}. ${story.scenes[index].label}`;
+    }
+    sceneSelect.addEventListener('change', () => selectScene(Number(sceneSelect.value)));
+    root.classList.add('is-enhanced');
+    root.querySelectorAll('.nja-controls').forEach((controls) => { controls.hidden = false; });
+    showCue(0, 0);
+    return { showCue, selectScene, play() {}, pause() {}, currentScene: () => sceneIndex };
+  }
+
   function enhance(root) {
-    if (root.classList.contains('is-enhanced')) return;
+    if (root.classList.contains('is-enhanced') || !window.NarratedExplainer || !window.SebookQuiz) return;
     const { story, timing } = window.NarratedExplainer.readData(root);
-    // The readable version remains fully available while narration is unbuilt.
-    if (!timing || !window.NarratedExplainer || !window.SebookQuiz) return;
+    // The readable version remains fully available while rendered narration is incomplete.
+    if (story.audio && !timing) return;
     const audio = root.querySelector('audio');
+    const playButton = root.querySelector('[data-action="play"]');
     const stage = root.querySelector('.nja-stage');
     const quizPanel = root.querySelector('.case-quiz');
     const quizHost = root.querySelector('[data-quiz-host]');
@@ -95,7 +126,7 @@
       stage.hidden = false;
       root.querySelector('.nja-narration').hidden = false;
       root.querySelector('.case-step-actions').hidden = false;
-      root.querySelector('[data-action="play"]').disabled = false;
+      if (playButton) playButton.disabled = false;
     }
 
     function continueScene(index, playNarration) {
@@ -106,7 +137,8 @@
         if (playNarration) player.play();
       } else {
         status.textContent = 'Case study complete. Revisit any scene to review your reasoning.';
-        root.querySelector('[data-action="restart"]').focus({ preventScroll: true });
+        // A text-only story has no restart button; scene review stays available.
+        (root.querySelector('[data-action="restart"]') || root.querySelector('[data-setting="scene"]')).focus({ preventScroll: true });
       }
     }
 
@@ -130,7 +162,7 @@
 
     function finishScene(index, playNarration = false) {
       resumeNarration = playNarration;
-      audio.pause();
+      player.pause();
       if (!story.scenes[index].checkpoint) {
         // The transport first seeks back to the completed section. Allow that
         // seek to finish before seeking forward and resuming an ungated scene.
@@ -147,7 +179,7 @@
       stage.hidden = true;
       root.querySelector('.nja-narration').hidden = true;
       root.querySelector('.case-step-actions').hidden = true;
-      root.querySelector('[data-action="play"]').disabled = true;
+      if (playButton) playButton.disabled = true;
       quizPanel.querySelector('.tvm-quiz-status').textContent = 'Make a prediction before revealing the next evidence. You can retry or continue after feedback.';
       const heading = quizPanel.querySelector('h3');
       heading.textContent = `${index + 1}. ${story.scenes[index].label} — Choose the next action`;
@@ -160,20 +192,31 @@
       quizPanel.scrollIntoView({ block: 'nearest', behavior: 'instant' });
     }
 
-    const player = window.NarratedExplainer.enhance(root, {
-      storyboard: story, timing, render,
-      onSectionEnd: index => finishScene(index, true),
-      onSeek: closeQuiz,
-      canPlay: () => quizPanel.hidden,
-    });
+    // With rendered speech, the shared transport's audio clock selects each cue.
+    function audioTransport() {
+      const transport = window.NarratedExplainer.enhance(root, {
+        storyboard: story, timing, render,
+        onSectionEnd: index => finishScene(index, true),
+        onSeek: closeQuiz,
+        canPlay: () => quizPanel.hidden,
+      });
+      return {
+        ...transport,
+        pause: () => audio.pause(),
+        showCue(sceneIndex, cueIndex) {
+          audio.pause();
+          const seek = root.querySelector('.nja-seek');
+          // A range input quantizes to hundredths; round forward so it cannot
+          // place a requested cue just before its own start boundary.
+          seek.value = String(Math.ceil(timing.scenes[sceneIndex].cues[cueIndex].start * 100) / 100);
+          seek.dispatchEvent(new Event('input', { bubbles: true }));
+        },
+      };
+    }
+    const player = story.audio ? audioTransport() : silentTransport(root, story, render, closeQuiz);
 
     function selectStep(sceneIndex, cueIndex) {
-      audio.pause();
-      const seek = root.querySelector('.nja-seek');
-      // A range input quantizes to hundredths; round forward so it cannot
-      // place a requested cue just before its own start boundary.
-      seek.value = String(Math.ceil(timing.scenes[sceneIndex].cues[cueIndex].start * 100) / 100);
-      seek.dispatchEvent(new Event('input', { bubbles: true }));
+      player.showCue(sceneIndex, cueIndex);
       status.textContent = `Step ${cueIndex + 1}: ${story.scenes[sceneIndex].cues[cueIndex].step}`;
     }
 
@@ -190,7 +233,7 @@
       nextStep.focus({ preventScroll: true });
     });
     root.querySelector('[data-case-action="read"]').addEventListener('click', () => {
-      audio.pause();
+      player.pause();
       transcript.open = true;
       transcript.querySelector('summary').focus();
       transcript.scrollIntoView({ block: 'start', behavior: 'instant' });
@@ -200,7 +243,8 @@
     transcript.open = false;
     let openBeforePrint = [];
     window.addEventListener('beforeprint', () => {
-      openBeforePrint = Array.from(transcript.querySelectorAll('details'), details => ({ details, open: details.open }));
+      // The transcript itself must open too: a text-only story has no transport to open it.
+      openBeforePrint = [transcript, ...transcript.querySelectorAll('details')].map(details => ({ details, open: details.open }));
       openBeforePrint.forEach(({ details }) => { details.open = true; });
     });
     window.addEventListener('afterprint', () => {

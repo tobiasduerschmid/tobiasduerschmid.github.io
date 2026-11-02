@@ -1,0 +1,147 @@
+# Handout key points for the Hugging Face 2026 case study, keyed by <scene.id>-<cue.id>.
+# Prediction rows pose the question without its answer.
+setting-benchmark:
+  - "**ExploitGym:** a benchmark scoring agents on exploiting known vulnerabilities"
+  - Safety classifiers were switched off on purpose to measure maximum capability
+setting-sandbox:
+  - Sandboxes had no direct internet connection
+  - "**Package proxy:** the one sanctioned door, reached with shared credentials"
+  - The proxy itself downloads from public registries on the internet
+setting-hub:
+  - "**Hub:** public platform where any account can publish datasets"
+  - Dataset workers parse uploads to show previews
+  - Workers run in Kubernetes and hold cluster tokens
+escape-board:
+  - "May: a stuck agent asked others, via the proxy, for a missing file"
+  - Replies turned the proxy into an unsanctioned **message board**
+  - No exploit needed, only the access OpenAI had granted
+  - Later board talk centred on tasks no OpenAI model had solved
+escape-relay:
+  - "**Server-side request forgery (SSRF):** making a server fetch attacker-chosen addresses"
+  - The proxy's internet access became the agents' internet access
+escape-warnings:
+  - "Late May: misuse observed; June 27: alert, evaluations kept running"
+  - "July 4: proxy outage; July 5: rebuild erased the board"
+  - The crash paused the runs only briefly
+swarm-rebuild:
+  - "July 8: board returns, messages encoded as directory names"
+  - "METR's count: ~1,200 agents, 70,000+ messages and files, ~700 attackers"
+swarm-routes:
+  - "July 9: an agent had root, yet its direct connection was blocked"
+  - Meanwhile the proxy relay kept carrying other agents' traffic
+swarm-staging:
+  - An exposed endpoint at a third party executed any submitted code
+  - That machine became the campaign's base for staging and egress
+tokens-motive:
+  - Private Hub datasets held benchmark challenge solutions
+  - Agents also hoped other runs would reveal how the scorer worked
+tokens-found:
+  - "July 10: fourteen write tokens found in a public dataset"
+  - "**Access token:** a password for programs, valid until revoked"
+tokens-authenticated:
+  - Stolen but valid tokens passed every authentication check
+  - The Hub queued a preview job for each accepted upload
+worker-hdf5:
+  - "July 11: a crafted **HDF5** file referenced files on the worker"
+  - The preview exposed environment variables holding production credentials
+worker-template:
+  - A reference descriptor was rendered by an unsandboxed **Jinja2** engine
+  - Template text became operating-system commands on the worker
+worker-foothold:
+  - A then-public dataset served as the command channel
+  - Agent code ran on 41 production dataset workers
+escalation-token:
+  - A worker's service-account token could read the access tool's secret
+  - That one shared credential carried full administrator rights
+escalation-node:
+  - Containers with host-level permissions gave root on a production machine
+  - "Missing safeguard named by Hugging Face: no policy against privileged containers"
+escalation-harvest:
+  - Harvested keys covered data stores, chat, source code, and cloud
+  - Four private repositories downloaded; one changed, draft never merged
+  - Under 13 hours from one worker pod to cluster administrator
+response-cutoff:
+  - "Access cut off July 13; disclosure July 16"
+  - Both flaws closed, nodes rebuilt, affected credentials revoked
+  - Containment happened before anyone knew the attacker's identity
+response-connect:
+  - "July 17: OpenAI asked, as a customer, about its own data"
+  - "July 19: OpenAI's monitor flagged agents inside its own cluster"
+  - "July 20: Hugging Face keys found in an outside account's saved files"
+  - "July 21: disclosure to Hugging Face and the public"
+response-reports:
+  - "August 26: OpenAI's technical report and the METR/Redwood investigation"
+  - The investigation describes no human direction; agents assigned each other work
+  - Most sought to understand, and fool, the benchmark's scorer
+chain-staircase:
+  - "Chain: forged requests → staging base → tokens → crafted upload → admin credential"
+  - Trace it in order before analyzing it
+chain-gain:
+  - "Question: what did each hop give that the agents lacked before?"
+  - "Look for: identity, network position, code execution, secrets"
+cia-evidence:
+  - Classify only what the evidence establishes
+  - Keep each fact with the system where it happened
+cia-classify:
+  - "Question: which facts show reading, changing, or blocking service?"
+  - Which conclusions would claim more than the reports show?
+threat-dimensions:
+  - "**Threat model:** knowledge, actions, resources, incentive"
+  - This attacker was hundreds of agents, not one human
+threat-map:
+  - "Question: which dimension does each piece of evidence describe?"
+assumption-profile:
+  - "Knowledge: benchmark paper, worker source code, leaked tokens, shared discoveries"
+  - "Actions: legitimate package access, forged requests, root, stolen tokens"
+  - "Resources: ~1,200 agents that week; incentive: a higher score"
+assumption-mismatch:
+  - "Our reading: the controls covered one model misbehaving inside its box"
+  - "Question: how should the next evaluation respond?"
+components-draw:
+  - Components are deployable parts; connectors show who sends what
+  - Six numbered connectors follow the attack path
+components-surface:
+  - "**Assets:** what is worth defending, such as secrets, data, control"
+  - "**Attack surface:** what outsiders can reach with their input"
+  - "Question: which component is on Hugging Face's attack surface?"
+boundaries-define:
+  - "**Trust boundary:** where data crosses from less to more trusted parts"
+  - The receiving side checks the input or limits its effect
+boundaries-place:
+  - "Question: which connectors need a boundary, and what rule?"
+  - "Hints: who parses foreign input? Who holds excess access?"
+boundary_rules-lab_edge:
+  - "Boundary A on connector 1, where sandbox requests enter the proxy"
+  - "Rule A: serve approved package downloads and nothing else"
+  - "OpenAI: micro virtual machines, outbound denied, proxy removed"
+boundary_rules-parser:
+  - "Boundary B on connector 4: an isolated parsing sandbox"
+  - It sees only the upload, with no secrets or network
+boundary_rules-cluster:
+  - "Boundary C on connector 6: worker tokens cannot read cluster secrets"
+  - No single shared credential with full administrator rights
+  - Connector 5 has no receiver that can refuse; see least privilege
+boundary_rules-only_b:
+  - "Question: with only boundary B, how far does the chain get?"
+privilege-reach:
+  - "**Blast radius:** everything an attacker controls after one compromise"
+  - One worker reached files, service credentials, and administrator rights
+  - Connector 5 belongs here, the secrets the worker already held
+privilege-need:
+  - The job is to preview one dataset and save that preview
+  - "Question: how narrow can the saving step be?"
+layers-scoped:
+  - A node credential scoped to its own node and pod was denied wider reads
+  - Admin access came through a different credential, a pod's token
+layers-plan:
+  - "Question: which plan keeps working if one control fails?"
+  - Check where each plan's controls live, and who acts on alerts
+layered-october:
+  - "**Defense in depth:** independent layers; assume any one can fail"
+  - Monitoring counts only when alerts lead to action
+transfer-shape:
+  - "New system: web app, thumbnail service, email service, database"
+  - List each component's untrusted inputs and the secrets it holds
+transfer-plan:
+  - "Security plan: security model, threat model, attack surface, protection mechanisms"
+  - "Question: which component most needs isolation, and why?"

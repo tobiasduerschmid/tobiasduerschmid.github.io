@@ -51,6 +51,9 @@ Like tutorials, a new lesson supplies data and a page referencing its ID; do not
 - `explainer`: the Node.js/React artwork adapters with the shared transport.
 - `case-study`: evidence and decision checkpoints, supporting narrated and
   self-paced investigation. Keep its decision controller in its adapter.
+  A case study may be text only: omit `media` until its speech is rendered.
+  Its player then steps silently, `check` reports it as text only, and a
+  leftover timing file is an error. Other kinds always need `media`.
 
 A new topic does not require a new kind. Add a new adapter only when a concrete
 interaction cannot fit these contracts. Do not force distinct teaching flows
