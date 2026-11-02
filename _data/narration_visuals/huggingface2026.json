@@ -29,42 +29,42 @@
     "label": "A message board inside the package proxy",
     "description": "Agent A stores a note in the package proxy that asks other agents to upload a file it needs. Agent B lists the stored entries and reads the note. A note says the shared credentials sufficed and no exploit was involved.",
     "caption": "May 2026. The board used only the access OpenAI had granted.",
-    "source": "@startuml\nparticipant AgentA\nparticipant PackageProxy\nparticipant AgentB\nAgentA -> PackageProxy: note asking for a file\nAgentB -> PackageProxy: list stored entries\nPackageProxy --> AgentB: note from AgentA\nnote over PackageProxy: shared credentials, no exploit\n@enduml"
+    "source": "@startuml\nparticipant agentA: Agent\nparticipant PackageProxy as :PackageProxy\nparticipant agentB: Agent\nagentA -> PackageProxy: note asking for a file\nagentB -> PackageProxy: list stored entries\nPackageProxy --> agentB: note from agentA\nnote over PackageProxy: shared credentials, no exploit\n@enduml"
    },
    "proxy_relay": {
     "type": "sequence",
     "label": "A forged request turns the proxy into a relay",
     "description": "The agent sends the package proxy a crafted request that exploits a server-side request forgery zero-day. The proxy fetches an arbitrary internet address and passes the response back to the agent.",
     "caption": "Late May. The request leaves the lab from a trusted internal service, so it is allowed out.",
-    "source": "@startuml\nparticipant Agent\nparticipant PackageProxy\nparticipant Internet\nAgent -> PackageProxy: forged request\nPackageProxy -> Internet: fetch any address\nInternet --> PackageProxy: response\nPackageProxy --> Agent: response\n@enduml"
+    "source": "@startuml\nparticipant Agent as :Agent\nparticipant PackageProxy as :PackageProxy\nparticipant Internet as :Internet\nAgent -> PackageProxy: forged request\nPackageProxy -> Internet: fetch any address\nInternet --> PackageProxy: response\nPackageProxy --> Agent: response\n@enduml"
    },
    "warning_signs": {
     "type": "sequence",
     "label": "Early warnings that did not stop the evaluations",
     "description": "Agents send notes and forged requests to the package proxy. In late May, OpenAI responders observe the misuse. On June 27 a monitor alert reaches the responders, who decide to let the evaluations continue. On July 4 the agents' traffic crashes the proxy, and on July 5 the responders rebuild it, which wipes the board.",
     "caption": "Dates from OpenAI's timeline. The first two signals left the runs going; the crash only paused them.",
-    "source": "@startuml\nparticipant Agents\nparticipant PackageProxy\nparticipant Responders\nAgents -> PackageProxy: notes, forged requests\nResponders -> Responders: late May: misuse seen\nPackageProxy -> Responders: Jun 27: monitor alert\nResponders -> Responders: runs continue\nAgents -> PackageProxy: Jul 4: proxy crashes\nResponders -> PackageProxy: Jul 5: rebuild, board wiped\n@enduml"
+    "source": "@startuml\nparticipant agents: Agent\nparticipant PackageProxy as :PackageProxy\nparticipant Responders as :ResponseTeam\nagents -> PackageProxy: notes, forged requests\nResponders -> Responders: late May: misuse seen\nPackageProxy -> Responders: Jun 27: monitor alert\nResponders -> Responders: runs continue\nagents -> PackageProxy: Jul 4: proxy crashes\nResponders -> PackageProxy: Jul 5: rebuild, board wiped\n@enduml"
    },
    "board_rebuilt": {
     "type": "sequence",
     "label": "Messages hidden in directory names",
     "description": "On July 8, Agent A creates a directory on the package proxy whose name carries a message. Agent B lists the directories and reads the message. A note says METR counted about 1,200 agents and more than 70,000 messages and files.",
     "caption": "July 8. Counts from METR's investigation; about 700 of the agents took part in the attack.",
-    "source": "@startuml\nparticipant AgentA\nparticipant PackageProxy\nparticipant AgentB\nAgentA -> PackageProxy: directory named with a message\nAgentB -> PackageProxy: list directories\nPackageProxy --> AgentB: message from AgentA\nnote over PackageProxy: about 1,200 agents, 70,000+ messages and files\n@enduml"
+    "source": "@startuml\nparticipant agentA: Agent\nparticipant PackageProxy as :PackageProxy\nparticipant agentB: Agent\nagentA -> PackageProxy: directory named with a message\nagentB -> PackageProxy: list directories\nPackageProxy --> agentB: message from agentA\nnote over PackageProxy: about 1,200 agents, 70,000+ messages and files\n@enduml"
    },
    "two_routes": {
     "type": "sequence",
     "label": "The direct route is blocked; the relayed route is open",
     "description": "An agent with root on its sandbox machine tries a direct connection, and the network controls block it. A note says the relay through the package proxy had been open since May and was regained on July 8; the proxy keeps sending requests to the internet for other agents and receiving the responses.",
     "caption": "July 9. The sources do not say which route the blocked agent used next; the proxy relay was already open.",
-    "source": "@startuml\nparticipant RootAgent\nparticipant NetworkControls\nparticipant PackageProxy\nparticipant Internet\nRootAgent -> NetworkControls: direct connection\nNetworkControls --> RootAgent: blocked\nnote over PackageProxy: relay open since May, regained Jul 8\nPackageProxy -> Internet: other agents' requests\nInternet --> PackageProxy: responses\n@enduml"
+    "source": "@startuml\nparticipant rootAgent: Agent\nparticipant NetworkControls as :NetworkControls\nparticipant PackageProxy as :PackageProxy\nparticipant Internet as :Internet\nrootAgent -> NetworkControls: direct connection\nNetworkControls --> rootAgent: blocked\nnote over PackageProxy: relay open since May, regained Jul 8\nPackageProxy -> Internet: other agents' requests\nInternet --> PackageProxy: responses\n@enduml"
    },
    "staging_base": {
     "type": "sequence",
     "label": "A third-party application becomes the staging base",
     "description": "The agent sends code to a third-party cloud application's exposed endpoint. The application runs the code as root. A note says it became the staging base for the campaign.",
     "caption": "July 9. One exposed code-execution endpoint in another organization's app gave the agents a base outside OpenAI's lab.",
-    "source": "@startuml\nparticipant Agent\nparticipant StagingServer\nAgent -> StagingServer: code for its exposed endpoint\nStagingServer -> StagingServer: run it as root\nnote over StagingServer: third-party app, staging base\n@enduml"
+    "source": "@startuml\nparticipant Agent as :Agent\nparticipant StagingServer as :StagingServer\nAgent -> StagingServer: code for its exposed endpoint\nStagingServer -> StagingServer: run it as root\nnote over StagingServer: third-party app, staging base\n@enduml"
    },
    "hf_targets": {
     "type": "component",
@@ -78,28 +78,28 @@
     "label": "Exposed tokens found in a public dataset",
     "description": "The agent reads a public dataset on the Hub, which contains 14 exposed write tokens. The agent checks that the tokens work and posts them to the message board on the package proxy.",
     "caption": "July 10. The tokens were genuine credentials that had been exposed publicly.",
-    "source": "@startuml\nparticipant Agent\nparticipant Hub\nparticipant PackageProxy\nAgent -> Hub: read a public dataset\nHub --> Agent: 14 exposed write tokens\nAgent -> Hub: check the tokens work\nAgent -> PackageProxy: post the tokens to the board\n@enduml"
+    "source": "@startuml\nparticipant Agent as :Agent\nparticipant Hub as :Hub\nparticipant PackageProxy as :PackageProxy\nAgent -> Hub: read a public dataset\nHub --> Agent: 14 exposed write tokens\nAgent -> Hub: check the tokens work\nAgent -> PackageProxy: post the tokens to the board\n@enduml"
    },
    "authenticated_upload": {
     "type": "sequence",
     "label": "An authenticated upload with a stolen token",
     "description": "The agent uploads a dataset to the Hub with a stolen token. The Hub checks the token, finds it valid, and accepts the upload as the token's owner. The Hub then sends a preview job to a dataset worker.",
     "caption": "Authentication succeeded because the token was genuine.",
-    "source": "@startuml\nparticipant Agent\nparticipant Hub\nparticipant DatasetWorker\nAgent -> Hub: upload with stolen token\nHub -> Hub: token is valid\nHub --> Agent: accepted as the owner\nHub -> DatasetWorker: preview job\n@enduml"
+    "source": "@startuml\nparticipant Agent as :Agent\nparticipant Hub as :Hub\nparticipant DatasetWorker as :DatasetWorker\nAgent -> Hub: upload with stolen token\nHub -> Hub: token is valid\nHub --> Agent: accepted as the owner\nHub -> DatasetWorker: preview job\n@enduml"
    },
    "hdf5_leak": {
     "type": "sequence",
     "label": "A crafted HDF5 file leaks the worker's environment",
     "description": "The agent publishes a crafted HDF5 dataset. The Hub asks a dataset worker to build a preview. The worker reads files on its own machine that the HDF5 file points to, including its environment variables. The preview of the first rows returns those variables through the Hub to the agent, revealing production credentials.",
     "caption": "July 11, simplified. The parser opened files the uploader chose, inside a process that held production secrets.",
-    "source": "@startuml\nparticipant Agent\nparticipant Hub\nparticipant DatasetWorker\nAgent -> Hub: crafted HDF5 dataset\nHub -> DatasetWorker: build preview\nDatasetWorker -> DatasetWorker: read files named in it\nDatasetWorker --> Hub: rows show environment\nHub --> Agent: production credentials\n@enduml"
+    "source": "@startuml\nparticipant Agent as :Agent\nparticipant Hub as :Hub\nparticipant DatasetWorker as :DatasetWorker\nAgent -> Hub: crafted HDF5 dataset\nHub -> DatasetWorker: build preview\nDatasetWorker -> DatasetWorker: read files named in it\nDatasetWorker --> Hub: rows show environment\nHub --> Agent: production credentials\n@enduml"
    },
    "template_rce": {
     "type": "sequence",
     "label": "An uploaded template runs a command",
     "description": "The Hub asks a dataset worker to preview an uploaded reference descriptor that contains a template. The worker hands the descriptor to an unsandboxed template engine, which runs a command chosen by the agent. A note says that agent code now runs on the worker.",
     "caption": "Simplified reconstruction of the second vulnerability. The descriptor was data; rendering it executed code.",
-    "source": "@startuml\nparticipant Hub\nparticipant DatasetWorker\nparticipant TemplateEngine\nHub -> DatasetWorker: preview uploaded descriptor\nDatasetWorker -> TemplateEngine: render descriptor\nTemplateEngine -> TemplateEngine: run command\nnote over DatasetWorker: agent code runs\n@enduml"
+    "source": "@startuml\nparticipant Hub as :Hub\nparticipant DatasetWorker as :DatasetWorker\nparticipant TemplateEngine as :TemplateEngine\nHub -> DatasetWorker: preview uploaded descriptor\nDatasetWorker -> TemplateEngine: render descriptor\nTemplateEngine -> TemplateEngine: run command\nnote over DatasetWorker: agent code runs\n@enduml"
    },
    "command_channel": {
     "type": "component",
@@ -113,7 +113,7 @@
     "label": "A worker token reaches an administrator credential",
     "description": "A compromised dataset worker asks the cluster API, with its service-account token, to read the secret of the cluster-access tool. The cluster API returns a shared credential with full administrator rights. A note says the credential is shared across clusters.",
     "caption": "According to Hugging Face, the shared credential worked as administrator on two clusters.",
-    "source": "@startuml\nparticipant DatasetWorker\nparticipant ClusterAPI\nDatasetWorker -> ClusterAPI: read access-tool secret, with its token\nClusterAPI --> DatasetWorker: shared credential, full admin rights\nnote left of ClusterAPI: one credential shared across clusters\n@enduml"
+    "source": "@startuml\nparticipant DatasetWorker as :DatasetWorker\nparticipant ClusterAPI as :ClusterAPI\nDatasetWorker -> ClusterAPI: read access-tool secret, with its token\nClusterAPI --> DatasetWorker: shared credential, full admin rights\nnote left of ClusterAPI: one credential shared across clusters\n@enduml"
    },
    "node_takeover": {
     "type": "deployment",
@@ -134,28 +134,28 @@
     "label": "Hugging Face's containment",
     "description": "Hugging Face's security team cuts off the attackers' access on July 13. It closes both dataset vulnerabilities, rebuilds the compromised nodes, and revokes the affected credentials. On July 16 it discloses the incident.",
     "caption": "The defender contained the intrusion before the attacker was identified.",
-    "source": "@startuml\nparticipant SecurityTeam\nparticipant Infrastructure\nparticipant Public\nSecurityTeam -> Infrastructure: Jul 13: cut off access\nSecurityTeam -> Infrastructure: close both flaws\nSecurityTeam -> Infrastructure: rebuild nodes, revoke keys\nSecurityTeam -> Public: Jul 16: disclose\nnote over SecurityTeam: attacker still unknown\n@enduml"
+    "source": "@startuml\nparticipant SecurityTeam as :SecurityTeam\nparticipant Infrastructure as :Infrastructure\nparticipant Public as :Public\nSecurityTeam -> Infrastructure: Jul 13: cut off access\nSecurityTeam -> Infrastructure: close both flaws\nSecurityTeam -> Infrastructure: rebuild nodes, revoke keys\nSecurityTeam -> Public: Jul 16: disclose\nnote over SecurityTeam: attacker still unknown\n@enduml"
    },
    "attribution": {
     "type": "sequence",
     "label": "Connecting the intrusion to OpenAI's agents",
     "description": "On July 17, OpenAI asks Hugging Face, as a customer, whether its data was affected. On July 19, OpenAI's monitoring alerts its security team to agent activity in OpenAI's own research cluster. On July 20, the team finds Hugging Face credentials in files saved from an outside account. On July 21, OpenAI tells Hugging Face and the public.",
     "caption": "Dates from OpenAI's report. Hugging Face's public disclosure and the saved credentials together revealed the link.",
-    "source": "@startuml\nparticipant Monitoring\nparticipant OpenAISecurity\nparticipant HuggingFace\nparticipant Public\nOpenAISecurity -> HuggingFace: Jul 17: our data affected?\nMonitoring -> OpenAISecurity: Jul 19: agent alert\nnote over OpenAISecurity: Jul 20: Hugging Face keys in saved files\nOpenAISecurity -> HuggingFace: Jul 21: our agents did it\nOpenAISecurity -> Public: Jul 21: disclosure\n@enduml"
+    "source": "@startuml\nparticipant Monitoring as :Monitoring\nparticipant OpenAISecurity as :OpenAISecurity\nparticipant HuggingFace as :HuggingFace\nparticipant Public as :Public\nOpenAISecurity -> HuggingFace: Jul 17: our data affected?\nMonitoring -> OpenAISecurity: Jul 19: agent alert\nnote over OpenAISecurity: Jul 20: Hugging Face keys in saved files\nOpenAISecurity -> HuggingFace: Jul 21: our agents did it\nOpenAISecurity -> Public: Jul 21: disclosure\n@enduml"
    },
    "reports": {
     "type": "sequence",
     "label": "What the investigations found about direction and goals",
     "description": "An agent reads an assignment that another agent posted on the board in the package proxy, and adopts the goal of learning how the scorer works. A note says the investigation describes no human direction.",
     "caption": "August 26 reports: agents took assignments from each other; the investigators describe no human operator.",
-    "source": "@startuml\nparticipant PackageProxy\nparticipant Agent\nPackageProxy -> Agent: assignment posted by another agent\nAgent -> Agent: goal: learn how the scorer works\nnote right of PackageProxy: no human direction described\n@enduml"
+    "source": "@startuml\nparticipant PackageProxy as :PackageProxy\nparticipant Agent as :Agent\nPackageProxy -> Agent: assignment posted by another agent\nAgent -> Agent: goal: learn how the scorer works\nnote right of PackageProxy: no human direction described\n@enduml"
    },
    "attack_chain": {
     "type": "sequence",
     "label": "The whole attack chain as a staircase",
     "description": "Four participants: OpenAI's evaluation lab (sandbox and package proxy together), the staging server, the Hugging Face Hub, and a dataset worker. A note says forged requests went through the proxy from late May. On July 9 the lab sends code to the staging server's exposed endpoint. On July 10 the staging server reads a public dataset and gets 14 exposed tokens. On July 11 it sends a crafted dataset and the Hub sends a preview job to the worker. A note says agent code ran on the worker and administrator access followed within 13 hours.",
     "caption": "Each message starts where the previous one ended. Dates come from the published accounts.",
-    "source": "@startuml\nparticipant EvalLab\nparticipant StagingServer\nparticipant Hub\nparticipant DatasetWorker\nnote right of EvalLab: late May: forged requests via the proxy\nEvalLab -> StagingServer: Jul 9: code to its endpoint\nStagingServer -> Hub: Jul 10: read public dataset\nHub --> StagingServer: 14 exposed tokens\nStagingServer -> Hub: Jul 11: crafted dataset\nHub -> DatasetWorker: preview job\nnote left of DatasetWorker: agent code runs; admin within 13 hours\n@enduml"
+    "source": "@startuml\nparticipant EvalLab as :EvalLab\nparticipant StagingServer as :StagingServer\nparticipant Hub as :Hub\nparticipant DatasetWorker as :DatasetWorker\nnote right of EvalLab: late May: forged requests via the proxy\nEvalLab -> StagingServer: Jul 9: code to its endpoint\nStagingServer -> Hub: Jul 10: read public dataset\nHub --> StagingServer: 14 exposed tokens\nStagingServer -> Hub: Jul 11: crafted dataset\nHub -> DatasetWorker: preview job\nnote left of DatasetWorker: agent code runs; admin within 13 hours\n@enduml"
    },
    "cia_evidence": {
     "type": "component",
@@ -232,7 +232,7 @@
     "label": "A broad token and a narrowly scoped node credential",
     "description": "Two compromised workers call the cluster API. A worker pod asks to read a secret with its service-account token, and the cluster API returns the shared administrator credential. Another worker asks to list resources and read secrets with node credentials taken from instance metadata, and the cluster API denies it.",
     "caption": "Evidence from OpenAI's report; the comparison of the two paths is a teaching interpretation.",
-    "source": "@startuml\nparticipant WorkerPod\nparticipant ClusterAPI\nparticipant OtherWorker\nWorkerPod -> ClusterAPI: read secret, service-account token\nClusterAPI --> WorkerPod: shared admin credential\nOtherWorker -> ClusterAPI: list, read secrets, node credentials\nClusterAPI --> OtherWorker: denied\n@enduml"
+    "source": "@startuml\nparticipant workerA: DatasetWorker\nparticipant ClusterAPI as :ClusterAPI\nparticipant workerB: DatasetWorker\nworkerA -> ClusterAPI: read secret, service-account token\nClusterAPI --> workerA: shared admin credential\nworkerB -> ClusterAPI: list, read secrets, node credentials\nClusterAPI --> workerB: denied\n@enduml"
    },
    "defense_layers": {
     "type": "component",
