@@ -96,6 +96,19 @@ These are traps this renderer does **not** forgive. Hit one and the diagram ship
 - **Prefer plain identifiers over `"Display Name" as Alias`.** The `"X" as Y` aliasing form has produced duplicate / stray boxes in component diagrams here (the display string leaks out as its own component). Use a single-word identifier directly (`component EventBus`) instead of aliasing. If you truly need a multi-word display label, verify it renders cleanly before committing.
 - **Avoid special characters in labels.** Symbols like `✗`, `✓`, em-dashes, and parentheses-heavy labels have caused layout issues. Spell the meaning out in words.
 
+## Sequence diagram notation (UML 2.5.1, clause 17)
+
+Every SEBook sequence diagram must follow these rules. They were audited across the book in November 2026; most violations were lifelines named like classes and dashed replies used for messages that are not replies.
+
+- **Lifelines are instances.** Declare `participant name: Type` (named) or `participant id as : Type` (anonymous). A bare `participant Client`, or an endpoint used without a declaration, renders as a class name. For one element of a collection, use a selector: `participant sensor[i]: WindowSensor`, never `: SlackClient[*]`. Write types as class names (`BankServer`, not `Bank Server`) in teaching examples. The one deliberate exception is a class-scope (static) call, such as Singleton's `getInstance()`, whose callout explains the class lifeline.
+- **Synchronous `->`** (filled arrowhead): the sender waits for the receiver, as in a method call.
+- **Asynchronous `->>`** (open arrowhead): the sender continues at once. Use it for events, signals, push notifications, and fire-and-forget network messages.
+- **Reply `-->`**: returns only to the lifeline that made a still-open synchronous call. Never reply to an asynchronous message, never send a "reply" to a lifeline that did not call, and never send repeated replies inside a `loop` to one call made outside it. Label a reply with the returned value (`status`), not an operation-call form (`statusData()`).
+- **Creation**: `create x` followed by a dashed `-->` message labeled `<<create>>`, so the head appears where the object is created. Declare progressively revealed narration lifelines in the step that creates them.
+- **Guards** are Boolean conditions evaluated before a branch. Make the call that produces the data before the `alt`/`opt`, then branch on its reply; do not repeat the call in each branch.
+- **Messages match operations.** A self-message must be an operation of the receiver. Show a field assignment as a note (`note right of remote: undoCommand := command`).
+- **Renderer limits (ArchUML):** lost (`->o`) and found (`o->`) messages always draw a filled arrowhead, so do not use them for asynchronous traffic. Fragment conditions always render inside `[...]`, so UML's `loop(1,5)` bound form is unavailable.
+
 ## Accessibility — aria-label is auto-generated; figcaptions are *contextual only*
 
 Every rendered diagram is wrapped in a `<figure>`. The describer walks the `@startuml` source and emits a verbal structural description that gets set as the `aria-label` on the `role="img"` SVG container — e.g. *"UML class diagram with 6 classes (Customer, VIP, Guest, Order, LineItem, Product) and 1 interface (Billable). VIP extends Customer. Order implements Billable. Customer is associated with Order with multiplicity one to many. Order composes LineItem with multiplicity one to one or more."* That auto-generated text is the WCAG 2.2 §1.1.1 (Non-text Content) text alternative — authors do **not** need to write a description that retells what's on the diagram.

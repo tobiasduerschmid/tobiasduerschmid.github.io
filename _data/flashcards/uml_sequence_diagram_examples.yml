@@ -41,7 +41,7 @@ cards:
     explanation: >
       The `loop` fragment repeats the enclosed messages. It can specify bounds like `loop [1, 5]` (min 1, max 5 iterations) or a guard condition like `loop [items remaining]`.
 
-      <div data-uml-type="sequence" data-uml-spec="participant a: App&#10;participant b: Server&#10;loop [1, 3]&#10;  a -> b: retry()&#10;  activate b&#10;  b --> a: ack()&#10;  deactivate b&#10;end"></div>
+      <div data-uml-type="sequence" data-uml-spec="participant a: App&#10;participant b: Server&#10;loop [1, 3]&#10;  a -> b: retry()&#10;  activate b&#10;  b --> a: ack&#10;  deactivate b&#10;end"></div>
 
   - id: 6
     difficulty: basic

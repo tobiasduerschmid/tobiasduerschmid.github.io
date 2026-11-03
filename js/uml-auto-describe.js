@@ -203,6 +203,13 @@
   var SEQ_FRAGMENT_ELSE = /^else\b\s*(.*)$/i;
   var SEQ_FRAGMENT_END  = /^end\b/i;
   var SEQ_LIFECYCLE     = /^(activate|deactivate|create|destroy|return|ref)\b/i;
+  // A lifeline id may carry a selector for one element of a collection, such
+  // as `sensor[i]` (UML 2.5.1, 17.3.4).
+  var SEQ_ID = '\\w+(?:\\[[^\\]]*\\])?';
+  var SEQ_DECLARATION = new RegExp('^(?:participant|actor)\\s+(' + SEQ_ID + ')\\s*(?:(?:\\s+as\\s+|:)\\s*(.+))?$', 'i');
+  var SEQ_LOST = new RegExp('^(' + SEQ_ID + ')\\s+-{1,2}>o\\s*(?::\\s*(.*))?$');
+  var SEQ_MESSAGE = new RegExp('^(' + SEQ_ID + '|o)\\s*(->>|->|-->|<<-|<-|<--)\\s*(' + SEQ_ID + ')\\s*(?::\\s*(.+))?$');
+  var SEQ_CREATE = /^(?:<<\s*create\s*>>|«\s*create\s*»)(.*)$/i;
 
   function fragmentLabel(kind, rawLabel) {
     var label = String(rawLabel || '').trim().replace(/^\[(.*)\]$/, '$1').trim();
@@ -257,17 +264,23 @@
         return;
       }
       if (SEQ_LIFECYCLE.test(line)) return;
-      if ((m = line.match(/^(participant|actor)\s+(\w+)\s*(?::\s*(.+))?$/i))) {
-        if (!participantIds[m[2]]) {
-          participantIds[m[2]] = true;
-          participants.push((m[3] || '').trim() || m[2]);
+      // A trailing `#color [texture]` only highlights an existing lifeline.
+      if ((m = line.replace(/\s+#\S+(?:\s+\w+)?$/, '').match(SEQ_DECLARATION))) {
+        if (!participantIds[m[1]]) {
+          participantIds[m[1]] = true;
+          // `as : Cls` is an anonymous instance; name it by its type.
+          participants.push((m[2] || '').replace(/^:\s*/, '').trim() || m[1]);
         }
         return;
       }
-      if ((m = line.match(/^(\w+|o)\s*(->>|->|-->|<<-|<-|<--)\s*(\w+)\s*(?::\s*(.+))?$/))) {
-        // Deep-copy frames so a later `else` that mutates the live stack
-        // doesn't retroactively rewrite this message's branch label.
-        var frozenPath = stack.map(function (f) { return { id: f.id, kind: f.kind, label: f.label }; });
+      // Deep-copy frames so a later `else` that mutates the live stack
+      // doesn't retroactively rewrite this message's branch label.
+      var frozenPath = stack.map(function (f) { return { id: f.id, kind: f.kind, label: f.label }; });
+      if ((m = line.match(SEQ_LOST))) {
+        messages.push({ from: m[1], arrow: '->o', to: null, lost: true, text: m[2] && m[2].trim(), fragmentPath: frozenPath });
+        return;
+      }
+      if ((m = line.match(SEQ_MESSAGE))) {
         messages.push({
           from: m[1], arrow: m[2], to: m[3],
           text: m[4] && m[4].trim(),
@@ -279,7 +292,7 @@
     // Resolve declarations first so aliases do not create duplicate lifelines.
     messages.forEach(function (message) {
       [message.from, message.to].forEach(function (id) {
-        if (id !== 'o' && !participantIds[id]) {
+        if (id && id !== 'o' && !participantIds[id]) {
           participantIds[id] = true;
           participants.push(id);
         }
@@ -298,11 +311,15 @@
   }
 
   function describeSequenceMessage(message) {
-    if (/^<<create>>$/i.test(message.text || '')) {
+    var creation = (message.text || '').match(SEQ_CREATE);
+    if (creation && !message.lost) {
       var reversed = message.arrow.charAt(0) === '<';
-      return (reversed ? message.to : message.from) + ' creates ' + (reversed ? message.from : message.to);
+      var args = creation[1].trim();
+      return (reversed ? message.to : message.from) + ' creates ' + (reversed ? message.from : message.to) +
+        (args ? ' with "' + args + '"' : '');
     }
     var payload = message.text ? ' with "' + message.text + '"' : '';
+    if (message.lost) return 'lost message from ' + message.from + payload + ', which never reaches a receiver';
     if (message.from === 'o') return 'found message from outside the diagram to ' + message.to + payload;
     return message.from + ' ' + messageVerb(message.arrow) + ' ' + message.to + payload;
   }
