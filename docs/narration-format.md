@@ -174,6 +174,13 @@ local, trusted author assets; they are not an untrusted upload format.
    `static_uml: true` to the page if the lesson uses UML. Add the reader/print
    views described in the corresponding narration skill. Jekyll generates
    the notes page automatically; do not copy a per-topic notes page.
+   `jekyll serve --incremental` rebuilds a page when the narration it names
+   changes: its script, visual package, or `_data/explainers/<id>_*`
+   companions. A page names a narration with `topic="..."` on an include, as
+   above, or with `topic:` or `narration:` front matter, as the reader, print,
+   notes, and stage views do (`_plugins/data_regenerator.rb`). Name the topic
+   one of these ways in any new view that reads narration data, or incremental
+   builds keep serving its old content.
 3. Validate before rendering audio:
    ```sh
    node scripts/narration.js compile queues
