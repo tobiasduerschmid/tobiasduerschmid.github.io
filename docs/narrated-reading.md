@@ -35,7 +35,9 @@ Observer retains its per-section knowledge checks and complete code examples.
 - `_plugins/narration_snapshots.rb` invokes `scripts/render-narration-snapshots.js`
   once per uncached lesson. It reuses the live artwork renderer with reduced motion
   at the end of each cue. A renderer can provide `renderStatic` when a moving
-  element needs a different, responsive DOM placement in a document. No artwork
+  element needs a different, responsive DOM placement in a document; React's
+  reordered list uses it to commit its rows in document order, because the
+  snapshot page has no stylesheet to measure a translation against. No artwork
   script is needed in the built reader.
 
 Build snapshots are cached in `.cache/narration-reading/`, keyed by the generated

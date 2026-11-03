@@ -82,5 +82,15 @@
       });
       poses[sceneId](root, cue.pose, animate ? progress : 1);
     },
+    // A reading view snapshots each cue once, without its stylesheet, and then
+    // shows it at any width, so a reordered list commits its rows in document
+    // order instead of translating them by a measured distance.
+    renderStatic(root, sceneId, cue) {
+      this.render(root, sceneId, cue, 1, false);
+      if (sceneId !== 'lists') return;
+      root.style.removeProperty('--item-offset');
+      const list = root.querySelector('.ra-keyed-list');
+      if (cue.pose !== 'map') list.prepend(list.querySelector('.ra-item-node'));
+    },
   };
 })();
