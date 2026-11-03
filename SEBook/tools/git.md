@@ -1248,10 +1248,10 @@ The diagram below shows how each command moves data between the four areas Git w
 
 <pre><code class="language-uml-sequence">
 @startuml
-participant WorkingTree
-participant StagingArea
-participant LocalRepo
-participant RemoteRepo
+participant WorkingTree as : WorkingTree
+participant StagingArea as : StagingArea
+participant LocalRepo as : LocalRepo
+participant RemoteRepo as : RemoteRepo
 
 RemoteRepo ->> LocalRepo: git clone / git fetch
 LocalRepo ->> WorkingTree: git checkout

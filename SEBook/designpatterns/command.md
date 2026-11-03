@@ -165,9 +165,9 @@ actor user: User
 participant remote: RemoteControl
 participant command: LightOnCommand
 participant light: Light
-user -> remote: pressOn
+user -> remote: pressOn()
 activate remote
-remote -> command: execute
+remote -> command: execute()
 activate command
 command -> light: isOn()
 activate light
@@ -177,27 +177,23 @@ command -> light: on()
 activate light
 deactivate light
 deactivate command
-remote -> remote: remember command
-activate remote
+note right of remote: undoCommand := command
 deactivate remote
-deactivate remote
-user -> remote: pressUndo
+user -> remote: pressUndo()
 activate remote
-remote -> command: undo
+remote -> command: undo()
 activate command
 command -> light: setOn(previousOn)
 activate light
 deactivate light
 deactivate command
-remote -> remote: clear undoCommand
-activate remote
+note right of remote: undoCommand := new NoCommand()
 deactivate remote
-deactivate remote
-callout right of text "pressOn" : The user triggers the invoker
-callout right of text "execute" : The remote calls execute() without knowing a light is involved
+callout right of text "pressOn()" : The user triggers the invoker
+callout right of text "execute()" : The remote calls execute() without knowing a light is involved
 callout right of text "isOn()" : The command records the previous state so undo can restore it
-callout right of text "remember command" : History: the invoker keeps the last command for undo
-callout bottom of text "undo" : Undo: the same command object reverses its own effect
+callout right of text "undoCommand := command" : History: the invoker keeps the last command for undo
+callout bottom of text "undo()" : Undo: the same command object reverses its own effect
 @enduml'></div>
 
 # Refactoring Path
