@@ -1,0 +1,17 @@
+nodejs:
+  path: /SEBook/tools/nodejs
+  chapter: /SEBook/tools/nodejs.html#nodejs-animation
+  title: Node.js in motion
+  introduction: Follow JavaScript from a runtime to callbacks, promises, and a server. Assumes familiarity with variables and functions.
+  renderer: NodejsAnimationArt
+react:
+  path: /SEBook/tools/react
+  chapter: /SEBook/tools/react.html#react-animation
+  title: React in motion
+  introduction: Follow a course's Like button from data to a changing interface. Assumes familiarity with JavaScript functions, objects, and arrays.
+  renderer: ReactAnimationArt
+observer:
+  path: /SEBook/designpatterns/observer
+  chapter: /SEBook/designpatterns/observer.html#observer-animation
+  title: Observer in a user interface
+  introduction: Follow a text editor from conditional-heavy updates to cooperating Subjects and Observers. Assumes familiarity with objects, methods, and collections.

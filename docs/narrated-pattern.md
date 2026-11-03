@@ -99,9 +99,11 @@ section checks, and the `mount` lifecycle shared by both adapters. The roadmap m
 move keyboard focus to the matching control in the destination scene.
 Shared styles apply to the `narrated-lesson` class, and the
 reader layout serves both lesson types.
-`js/narrated-pattern-document.js` handles the shared language preference and the
-theme carried in view links; it is safe to load once per lesson on combined
-course pages.
+`js/narrated-pattern-document.js` and `css/narrated-pattern-document.css` are
+the reader shell of every narration kind: they handle the shared language
+preference and the theme carried in view links, and the explainer reader
+(`_layouts/narrated-reader.html`) uses the same `np-*` hooks. The script is
+safe to load once per lesson on combined course pages.
 
 `js/narrated-explainer.js` stops for each section's check 0.3 s before the
 section boundary, inside the silence after its last cue, because the next

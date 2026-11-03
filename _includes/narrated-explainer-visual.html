@@ -1,0 +1,11 @@
+            <div class="nja-lesson-layout{% unless scene.code %} nja-visual-only{% endunless %}">
+              {% if scene.code %}
+              <div class="nja-code-column">
+                <div data-code-variant="main">{% include narrated-explainer-code.html code=scene.code filename=scene.filename language=explainer.language %}</div>
+                {% if scene.alternate_code %}<div data-code-variant="alternate" hidden>{% assign alternate_filename = scene.alternate_filename | default: scene.filename %}{% include narrated-explainer-code.html code=scene.alternate_code filename=alternate_filename language=explainer.language %}</div>{% endif %}
+                {% if scene.context %}<p class="nja-code-context"{% if scene.alternate_context %} data-code-variant="main"{% endif %}>{{ scene.context | escape }}</p>{% endif %}
+                {% if scene.alternate_context %}<p class="nja-code-context" data-code-variant="alternate" hidden>{{ scene.alternate_context | escape }}</p>{% endif %}
+              </div>
+              {% endif %}
+              {% include {{ art_include }} scene=scene %}
+            </div>
