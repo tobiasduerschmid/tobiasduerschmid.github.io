@@ -7,7 +7,6 @@ const { a11yCheckpoint } = require('./a11y-helpers');
 const cases = [
   { topic: 'therac25', url: '/SEBook/development_practices/therac-25.html' },
   { topic: 'cloudflare2019', url: '/SEBook/development_practices/cloudflare-2019.html' },
-  // Text only until its speech is rendered: no media block, timing, or audio controls.
   { topic: 'huggingface2026', url: '/SEBook/systems/security.html' },
 ];
 const decisionName = (scene, index) => `${index + 1}. ${scene.label} — Choose the next action`;

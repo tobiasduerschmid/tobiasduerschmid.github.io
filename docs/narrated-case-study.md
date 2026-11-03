@@ -124,7 +124,7 @@ users therefore receive the same evidence and controls.
 ## Text-only case studies
 
 A case study can ship before its narration audio exists, as the Hugging Face
-case on the Security chapter does. Omit the `media` block from
+case on the Security chapter did before its narration was rendered. Omit the `media` block from
 `_data/narrations/<topic>.yml` and keep `speech`: the speech fingerprint still
 identifies the text that later audio must match. The include then renders no
 audio element, transport, narration speed, or download links, and its

@@ -1,6 +1,4 @@
 # Edit speech and teaching text here. Visual state lives in ../narration_visuals/huggingface2026.json.
-# Text only: there is deliberately no media block yet. To add narration audio, add media paths under
-# /assets/ and render with scripts/render-explainer-narration.py --topic huggingface2026.
 version: 1
 id: huggingface2026
 kind: case-study
@@ -20,6 +18,10 @@ speech:
     HDF5: H D F five
     Jinja2: Jinja two
     METR: meter
+media:
+  audio: /assets/audio/huggingface2026-case-study.mp3
+  captions: /assets/narration/huggingface2026-case-study.vtt
+  script: /assets/narration/huggingface2026-case-study.txt
 scenes:
   # Part 1: what happened. These scenes tell the story without asking for analysis yet.
   - id: setting
