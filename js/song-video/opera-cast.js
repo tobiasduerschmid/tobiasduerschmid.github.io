@@ -17,6 +17,9 @@
  *     a hoodie, and the Security Engineer in a black field jacket;
  *   - the viewer's own hero (SongStudentAvatar's heroHead), who joins them
  *     at the end in a blue hoodie.
+ *   Other songs reuse the cast; `coder` dresses a singer as a developer in
+ *   the same hoodie in green, with a code tag on the chest, and `maintainer`
+ *   as a lead developer in plum, with a git branch.
  *   Export stages never load the hero renderer, so there each keeps a
  *   drawn face.
  *
@@ -881,6 +884,16 @@
     // blue with a gold star on the chest; jeans and sneakers.
     hero: hoodie((layer) => {
       svg('path', { class: 'oc-print', d: 'M91.6 102.6 L93.2 106 L96.9 106.4 L94.1 108.9 L94.9 112.6 L91.6 110.7 L88.3 112.6 L89.1 108.9 L86.3 106.4 L90 106 Z' }, layer);
+    }),
+    // A developer: the same hoodie in green with a code tag, </>, on the
+    // chest; dark jeans and sneakers.
+    coder: hoodie((layer) => {
+      svg('path', { class: 'oc-print-code', d: 'M88.4 104.6 L85.8 108 L88.4 111.4 M94.8 104.6 L97.4 108 L94.8 111.4 M92.6 103.8 L90.6 112.2' }, layer);
+    }),
+    // A lead developer: the hoodie in plum with a merged git branch on the chest.
+    maintainer: hoodie((layer) => {
+      svg('path', { class: 'oc-print-code', d: 'M88.6 112.4 V103.6 M88.6 109.6 C88.6 106.6 94.6 107.4 94.6 104.4' }, layer);
+      for (const [cx, cy] of [[88.6, 103.2], [88.6, 112.6], [94.6, 103.6]]) svg('circle', { class: 'oc-print-dot', cx, cy, r: 1.3 }, layer);
     }),
     // The Security Engineer: a black field jacket zipped to its stand
     // collar, flapped chest pockets, epaulettes, a gold shield badge, and

@@ -1,0 +1,836 @@
+# Storyboard for "Same Shape, Not the Same", the design patterns song: a
+# short hip-hop musical about patterns that share a class diagram but solve
+# different problems (lyrics, review, and Suno brief: design_patterns_rap.md).
+#
+# This file is the single source of truth for the song's words and timing:
+#   - js/song-video/songs/same_shape_not_the_same.js choreographs the live
+#     vector player (/assets/song-player/same-shape-not-the-same.html) against
+#     each line's `start` and its `marks` (the times of the words the visuals
+#     hit). The cast are the singers of js/song-video/opera-cast.js on the
+#     Broadway stage of js/song-video/review-stage.js; ArchUML
+#     (js/ArchUML/uml-bundle.js) draws every pattern's class or state diagram
+#     through js/song-video/model-kit.js, and js/song-video/pattern-kit.js
+#     draws the app screens, name plates, price tags, verdict cards, and quiz;
+#   - render.js writes the captions and the audio-described soundtrack from
+#     `text`, `answer`, and `narration`. This song has no MP4: it plays only
+#     in the live player;
+#   - the player page prints every line with its `visual` description as the
+#     transcript (WCAG 1.2.1 / 1.2.3), and each section's `narration` is
+#     spoken in the audio-described track (WCAG 1.2.5).
+# Each section names its singer (`voice`), so the captions and transcript say
+# who sings: the Intern, the Lead, the six patterns, or the Crowd.
+#
+# Times are seconds into the Suno take "Same Shape, Not the Same" (about 92
+# BPM), decoded, normalized to -16 LUFS, and stored as stereo AAC at 160 kb/s
+# with its index first. Line boundaries and word marks come from local Whisper
+# word timestamps (mlx whisper-large-v3-turbo) aligned to the lyric sheet:
+# 748 of 765 sheet words matched, and the rest are interpolated between their
+# neighbours. Captions follow the sheet, which the take sings as written;
+# Whisper's mishearings ("Stay" for "State", "same trick" for "same trip")
+# are its own. The take sings each quiz answer right after its question, so
+# each `pause_at` sits just before the answer. Beats were tracked with librosa
+# on the percussion and smoothed over ±5 beats.
+
+title: "Same Shape, Not the Same: a song about design patterns"   # the player's accessible name
+credit: Lyrics written for this page; music and vocals generated with Suno.
+theme: review-stage   # stage look: the Broadway stage of js/song-video/review-stage.js
+extras:   # the song's own art and styles, loaded before its choreography
+  styles:
+    - /css/song-video-review-stage.css
+    - /css/song-video-opera-cast.css
+    - /css/song-video-model-kit.css
+    - /css/song-video-pattern-kit.css
+  scripts:
+    - /js/song-video/review-stage.js
+    - /js/song-video/figure-geometry.js
+    - /js/song-video/opera-cast.js
+    - /js/ArchUML/uml-bundle.js
+    - /js/song-video/model-kit.js
+    - /js/song-video/pattern-kit.js
+player: /assets/song-player/same-shape-not-the-same.html
+captions: /assets/audio/same-shape-not-the-same.vtt
+described_captions: /assets/audio/same-shape-not-the-same-described.vtt
+soundtrack: assets/audio/same-shape-not-the-same.m4a   # repo path, played by the live player
+described_soundtrack: assets/audio/same-shape-not-the-same-described.m4a
+described_timeline: /assets/audio/same-shape-not-the-same-described.json
+narrator:
+  voice: Samantha   # macOS `say` voice for the audio-described track
+  rate: 205         # words per minute
+  pronounce:        # how the narrator says notation the captions keep as written
+    Façade: fuh-sahd
+    SplitRule: split rule
+    ByItem: by item
+    OneTreats: one treats
+    ByPercent: by percent
+    OnTheWay: on the way
+    OrderStatus: order status
+    TabletAdapter: tablet adapter
+    OrderFacade: order fuh-sahd
+    DriverApp: driver app
+    DispatchHub: dispatch hub
+    CardPayment: card payment
+    SDK: S D K
+    CSV: C S V
+width: 1920
+height: 1080
+fps: 30
+duration: 274.04
+beats:
+  bpm: 92.02   # median of the tracked beats
+  first: 0.24
+  times: [
+    0.24, 0.904, 1.568, 2.234, 2.901, 3.567, 4.234, 4.904, 5.575, 6.25, 6.924, 7.599,
+    8.277, 8.95, 9.622, 10.297, 10.981, 11.663, 12.338, 13.007, 13.677, 14.35, 15.028, 15.701,
+    16.376, 17.052, 17.719, 18.378, 19.036, 19.697, 20.36, 21.018, 21.673, 22.321, 22.969, 23.617,
+    24.265, 24.915, 25.565, 26.217, 26.87, 27.522, 28.172, 28.822, 29.475, 30.125, 30.775, 31.425,
+    32.077, 32.727, 33.378, 34.028, 34.678, 35.33, 35.982, 36.633, 37.285, 37.937, 38.589, 39.238,
+    39.89, 40.54, 41.19, 41.838, 42.488, 43.136, 43.787, 44.435, 45.085, 45.735, 46.389, 47.042,
+    47.694, 48.346, 49.0, 49.651, 50.303, 50.953, 51.605, 52.258, 52.91, 53.56, 54.21, 54.86,
+    55.506, 56.156, 56.809, 57.461, 58.117, 58.772, 59.422, 60.072, 60.72, 61.37, 62.023, 62.677,
+    63.336, 63.994, 64.649, 65.297, 65.947, 66.599, 67.253, 67.908, 68.56, 69.21, 69.865, 70.508,
+    71.154, 71.802, 72.455, 73.109, 73.761, 74.409, 75.062, 75.714, 76.366, 77.016, 77.669, 78.319,
+    78.973, 79.623, 80.271, 80.922, 81.576, 82.228, 82.88, 83.531, 84.181, 84.833, 85.485, 86.135,
+    86.79, 87.442, 88.094, 88.745, 89.397, 90.047, 90.699, 91.349, 92.0, 92.654, 93.308, 93.961,
+    94.615, 95.269, 95.922, 96.572, 97.226, 97.878, 98.535, 99.187, 99.837, 100.485, 101.133, 101.782,
+    102.432, 103.084, 103.736, 104.386, 105.039, 105.689, 106.343, 106.995, 107.65, 108.304, 108.959, 109.611,
+    110.265, 110.918, 111.57, 112.222, 112.876, 113.527, 114.177, 114.827, 115.477, 116.127, 116.773, 117.421,
+    118.069, 118.719, 119.372, 120.022, 120.674, 121.326, 121.981, 122.635, 123.29, 123.948, 124.602, 125.259,
+    125.915, 126.57, 127.224, 127.877, 128.531, 129.183, 129.835, 130.488, 131.14, 131.792, 132.445, 133.095,
+    133.747, 134.397, 135.049, 135.7, 136.352, 137.004, 137.656, 138.309, 138.959, 139.607, 140.255, 140.903,
+    141.549, 142.201, 142.853, 143.506, 144.156, 144.808, 145.46, 146.113, 146.769, 147.423, 148.078, 148.734,
+    149.387, 150.039, 150.689, 151.341, 151.994, 152.646, 153.3, 153.953, 154.607, 155.259, 155.914, 156.566,
+    157.22, 157.872, 158.527, 159.177, 159.829, 160.479, 161.13, 161.78, 162.432, 163.084, 163.739, 164.389,
+    165.041, 165.691, 166.344, 166.992, 167.644, 168.298, 168.953, 169.605, 170.257, 170.907, 171.56, 172.212,
+    172.866, 173.518, 174.175, 174.831, 175.484, 176.134, 176.786, 177.438, 178.091, 178.743, 179.397, 180.048,
+    180.7, 181.35, 182.0, 182.65, 183.305, 183.955, 184.603, 185.251, 185.903, 186.553, 187.206, 187.858,
+    188.512, 189.162, 189.815, 190.465, 191.115, 191.769, 192.424, 193.074, 193.724, 194.376, 195.027, 195.679,
+    196.335, 196.994, 197.652, 198.309, 198.963, 199.62, 200.274, 200.929, 201.581, 202.235, 202.885, 203.533,
+    204.179, 204.83, 205.48, 206.128, 206.776, 207.43, 208.082, 208.737, 209.389, 210.039, 210.692, 211.346,
+    211.996, 212.653, 213.309, 213.963, 214.614, 215.266, 215.916, 216.57, 217.227, 217.881, 218.534, 219.186,
+    219.834, 220.486, 221.136, 221.789, 222.441, 223.093, 223.741, 224.387, 225.035, 225.685, 226.335, 226.99,
+    227.642, 228.296, 228.949, 229.601, 230.253, 230.91, 231.566, 232.221, 232.873, 233.527, 234.177, 234.826,
+    235.478, 236.13, 236.782, 237.435, 238.085, 238.737, 239.391, 240.046, 240.696, 241.348, 242.003, 242.655,
+    243.307, 243.959, 244.612, 245.264, 245.914, 246.564, 247.212, 247.862, 248.515, 249.167, 249.817, 250.469,
+    251.122, 251.776, 252.433, 253.089, 253.741, 254.398, 255.054, 255.709, 256.361, 257.013, 257.661, 258.314,
+    258.966, 259.616, 260.268, 260.923, 261.583, 262.246, 262.905, 263.559, 264.211, 264.866, 265.516, 266.164,
+    266.81, 267.466, 268.125, 268.767, 269.412, 270.07, 270.738, 271.416
+  ]
+sections:
+  - id: intro
+    title: "Intro"
+    delivery: spoken
+    voice: "Intern"
+    narration: "Audio-described version: before each section, the picture pauses while I describe it. The song is a hip-hop musical on a Broadway stage: a gold proscenium, red velvet drapes, footlights, and a big screen upstage under a lit marquee. The intro: the intern, your own hero in a blue hoodie, opens a pull request titled Order status: Strategy pattern, with a class diagram of Order and its status classes. The tech lead, in a blazer, comments: That's not Strategy. That's State. A Strategy diagram appears beside it: the same boxes and arrows."
+    lines:
+      - id: intro-1
+        start: 1.32
+        end: 4.62
+        text: "Internship, week one: a food-delivery app."
+        marks: {"internship": 1.32, "week": 2.1, "one": 2.54, "a": 3.1, "food": 3.56, "delivery": 3.84, "app": 4.26}
+        visual: "Lights up on a Broadway stage: gold proscenium, red velvet drapes, footlights, and a big screen upstage under a lit marquee reading “Same shape”. The intern, your own SE Gym hero in a blue hoodie, walks in from the left. The screen shows the app's splash card: “Night Bites · Late-night food delivery”."
+      - id: intro-2
+        start: 5.1
+        end: 7.04
+        text: "I know all twenty-three patterns!"
+        marks: {"i": 5.1, "know": 5.64, "all": 5.78, "twenty": 6.02, "three": 6.02, "patterns": 6.48}
+        visual: "The intern thumps their chest. A gold card pops up beside the splash: “23 / 23 patterns”."
+      - id: intro-3
+        start: 7.44
+        end: 10.52
+        text: "First PR: \"Order status, Strategy pattern.\""
+        marks: {"first": 7.44, "pr": 7.72, "order": 8.7, "status": 8.88, "strategy": 9.66, "pattern": 10.12}
+        visual: "The screen opens a pull request: “#1 by intern · Order status: Strategy pattern”, with an ArchUML class diagram: Order holds an «interface» OrderStatus, which Placed and Cooking realize."
+      - id: intro-4
+        start: 11.36
+        end: 12.46
+        text: "Review comes back:"
+        marks: {"review": 11.36, "comes": 11.86, "back": 12.16}
+        visual: "The tech lead, in a blazer, walks in from the right, and a review card appears beside the PR: “Lead commented”."
+      - id: intro-5
+        voice: "Lead"
+        start: 12.7
+        end: 14.62
+        text: "That's not Strategy. That's State."
+        marks: {"thats": 12.7, "not": 13.12, "strategy": 13.26, "thats_2": 14.06, "state": 14.34}
+        visual: "The comment reads “That's not Strategy.”, then, larger, “That's State.” The lead points at the PR, and “Strategy” in its title is struck through."
+      - id: intro-6
+        voice: "Lead"
+        start: 15.26
+        end: 18.24
+        text: "Same shape, sure. But not the same."
+        marks: {"same": 15.26, "shape": 15.82, "sure": 16.54, "but": 17.24, "not": 17.6, "the": 17.76, "same_2": 17.92}
+        visual: "The comment gives way to a second class diagram titled “A Strategy”: Checkout holds an «interface» SplitRule, which Even and ByItem realize. A gold sticker on the floor reads “Same boxes, same arrows”, and a red stamp lands on the PR: “Changes requested”."
+  - id: verse-1
+    title: "Verse 1: what a pattern is"
+    delivery: sung
+    voice: "Lead"
+    narration: "Verse 1, sung by the lead. The marquee reads Design patterns. Three apps share one problem, and one name sums up the plan: Observer. Copy-paste code is crossed out; a card of roles gets a price tag. A class diagram shows Checkout using an interface, Payment, with two payment classes behind it that are likely to change, while Checkout stays the same. Then the Strategy and State diagrams stand side by side: the boxes show how; the problem gives the name."
+    lines:
+      - id: verse-1-1
+        start: 20.38
+        end: 23.14
+        text: "A pattern's a fix for a problem that comes back,"
+        marks: {"a": 20.38, "patterns": 20.94, "a_2": 21.36, "fix": 21.48, "for": 21.7, "a_3": 21.96, "problem": 22.16, "that": 22.4, "comes": 22.56, "back": 22.82}
+        visual: "The marquee lights up: “Design patterns”. On the screen, three app cards (Food app, Music app, Game) each show the same problem: “When this changes, tell the others.”"
+      - id: verse-1-2
+        start: 23.28
+        end: 25.54
+        text: "named, so one word gives the team the plan of attack,"
+        marks: {"named": 23.28, "so": 23.52, "one": 23.56, "word": 23.74, "gives": 24.12, "the": 24.24, "team": 24.38, "the_2": 24.64, "plan": 24.84, "of": 25.08, "attack": 25.22}
+        visual: "Below them, a card titled “One name for the whole plan” reads “Observer” and “problem · roles · price”. The lead presents it."
+      - id: verse-1-3
+        start: 25.76
+        end: 28.1
+        text: "not code to copy: roles, and a price to track."
+        marks: {"not": 25.76, "code": 25.88, "to": 26.36, "copy": 26.46, "roles": 26.74, "and": 27.1, "a": 27.32, "price": 27.46, "to_2": 27.7, "track": 27.9}
+        visual: "A copy_paste.py code card is struck through; a Roles card appears (“who holds what”, “who calls whom”) with a price tag hanging from it: “+ classes · + hops to trace”."
+      - id: verse-1-4
+        start: 28.14
+        end: 30.82
+        text: "Lots of patterns hide the part that's likely to change"
+        marks: {"lots": 28.14, "of": 28.6, "patterns": 28.76, "hide": 29.08, "the": 29.26, "part": 29.42, "thats": 29.66, "likely": 29.94, "to": 30.32, "change": 30.52}
+        visual: "An ArchUML class diagram: Checkout uses an «interface» Payment with pay(total), realized by CardPayment and WalletPayment. The two payment classes are ringed in amber: “likely to change”."
+      - id: verse-1-5
+        start: 30.86
+        end: 33.28
+        text: "behind an interface, so the rest won't rearrange."
+        marks: {"behind": 30.86, "an": 31.14, "interface": 31.4, "so": 31.84, "the": 32.16, "rest": 32.3, "wont": 32.5, "rearrange": 32.7}
+        visual: "The interface is ringed in violet, “the interface”, and Checkout gets a green callout: “stays the same”."
+      - id: verse-1-6
+        start: 33.32
+        end: 36.06
+        text: "When two draw the same boxes, don't go by the frame:"
+        marks: {"when": 33.32, "two": 33.64, "draw": 33.78, "the": 34.02, "same": 34.26, "boxes": 34.52, "dont": 34.88, "go": 35.12, "by": 35.22, "the_2": 35.44, "frame": 35.62}
+        visual: "Two class diagrams stand side by side, titled Strategy and State: Checkout holds an «interface» SplitRule realized by Even and ByItem; Order holds an «interface» OrderStatus realized by Placed and Cooking. The same shape."
+      - id: verse-1-7
+        start: 36.1
+        end: 40.12
+        text: "the boxes show how; the problem gives the name."
+        marks: {"the": 36.1, "boxes": 36.36, "show": 36.78, "how": 37.12, "the_2": 37.54, "problem": 37.82, "gives": 38.36, "the_3": 38.82, "name": 38.98}
+        visual: "Stickers land on the floor below: “The boxes show how” and, in gold, “The problem gives the name”. The lead raises both arms; the intern gives a thumbs-up."
+  - id: chorus-1
+    title: "Chorus"
+    delivery: sung
+    voice: "Crowd"
+    narration: "Chorus. The words Same shape? Not the same! What's it for? That's the name! slam onto the screen. Then a boxing card: Round 1, Strategy versus State. Twins in identical teal quarter-zips with headphones walk in under glowing name plates, Strategy on the left and State on the right."
+    lines:
+      - id: chorus-1-1
+        start: 41.12
+        end: 43.32
+        text: "Same shape? Not the same!"
+        marks: {"same": 41.12, "shape": 41.64, "not": 42.42, "the": 42.8, "same_2": 43.02}
+        visual: "Kinetic type slams in, one phrase per line: “Same shape?” “Not the same!”"
+      - id: chorus-1-2
+        start: 43.36
+        end: 45.94
+        text: "What's it for? That's the name!"
+        marks: {"whats": 43.36, "it": 44.12, "for": 44.2, "thats": 45.1, "the": 45.5, "name": 45.64}
+        visual: "“What's it for?” “That's the name!”"
+      - id: chorus-1-3
+        start: 45.98
+        end: 50.1
+        text: "Round one! Strategy, State!"
+        marks: {"round": 45.98, "one": 46.78, "strategy": 48.82, "state": 49.34}
+        visual: "A boxing-style card fills the screen: “Round 1 · Strategy vs. State”. Two twins walk in, one from each wing, in identical teal quarter-zips with headphones round their necks, under glowing name plates: “Strategy” on the left, “State” on the right."
+  - id: strategy
+    title: "Round 1: Strategy"
+    delivery: sung
+    voice: "Strategy"
+    narration: "Round 1. Strategy sings; the marquee reads Strategy. A phone shows the app's Split the check sheet with three options, beside a sixty-dollar bill for three friends split each way. Then a class diagram: Checkout holds an interface, SplitRule, with Even, ByItem, and OneTreats; a token runs from Checkout toward the picked class, ByItem. A new class, ByPercent, joins, and a badge says checkout.py, zero lines changed. Strategy's roast hangs a price tag on State: stages know each other."
+    lines:
+      - id: strategy-1
+        start: 51.34
+        end: 54.28
+        text: "I'm Strategy: one job, a few ways to get through."
+        marks: {"im": 51.34, "strategy": 51.86, "one": 52.58, "job": 52.72, "a": 53.12, "few": 53.22, "ways": 53.34, "to": 53.66, "get": 53.8, "through": 54.02}
+        visual: "The marquee reads “Strategy”. Strategy steps forward and presents. A phone opens the Night Bites app, and beside it a card: “Bill $60 · three friends”."
+      - id: strategy-2
+        start: 54.32
+        end: 56.94
+        text: "Split the check: even, by item, one treats the crew."
+        marks: {"split": 54.32, "the": 54.56, "check": 54.78, "even": 55.26, "by": 55.38, "item": 55.6, "one": 55.9, "treats": 56.14, "the_2": 56.48, "crew": 56.74}
+        visual: "The phone's sheet, “Split the check”, shows three toggles as they are named: Even, By item, One treats. The bill card fills in each way: Even, $20 · $20 · $20; By item, $12 · $18 · $30; One treats, $60 · $0 · $0. “By item” switches on, and the card sums up: “Same job, three ways”."
+      - id: strategy-3
+        start: 56.98
+        end: 59.44
+        text: "Each way's a class, and they all fit one interface;"
+        marks: {"each": 56.98, "ways": 57.24, "a": 57.62, "class": 57.7, "and": 58.0, "they": 58.22, "all": 58.36, "fit": 58.56, "one": 58.8, "interface": 59.02}
+        visual: "An ArchUML class diagram fills the screen: Checkout holds an «interface» SplitRule with split(bill), realized by Even, ByItem, and OneTreats. The three classes are ringed in green, then the interface in violet: “one interface”."
+      - id: strategy-4
+        start: 59.69
+        end: 62.16
+        text: "checkout calls the one you picked: no switch, no case."
+        marks: {"checkout": 59.69, "calls": 59.93, "the": 60.18, "one": 60.32, "you": 60.46, "picked": 60.64, "no": 60.86, "switch": 61.12, "no_2": 61.68, "case": 61.8}
+        visual: "A token runs from Checkout down to SplitRule; ByItem is ringed in amber: “the one you picked”. A gold sticker on the floor: “No switch, no case”."
+      - id: strategy-5
+        start: 62.2
+        end: 65.06
+        text: "New way next week? Add a class. (Checkout? Untouched!)"
+        marks: {"new": 62.2, "way": 62.44, "next": 62.98, "week": 63.16, "add": 63.5, "a": 63.78, "class": 63.88, "checkout": 64.44, "untouched": 64.7}
+        visual: "The diagram is redrawn with a fourth class, ByPercent, ringed in green: “new class”. A green badge lands on the floor: “checkout.py · 0 lines changed”."
+      - id: strategy-6
+        start: 65.1
+        end: 67.26
+        text: "And State, your stages gossip: each one knows the next. (Ooh!)"
+        marks: {"and": 65.1, "state": 65.22, "your": 65.38, "stages": 65.52, "gossip": 65.92, "each": 66.2, "one": 66.38, "knows": 66.56, "the": 66.82, "next": 66.98, "ooh": 67.3}
+        visual: "Strategy wags a finger at State. A price tag drops onto State's chest: “Stages know each other”. The crowd's “Ooh!” bursts up."
+  - id: state
+    title: "Round 1: State"
+    delivery: sung
+    voice: "State"
+    narration: "State sings; the marquee reads State. The phone tracks an order through Placed, Cooking, and On the way, and a card spells out what Cancel does at each: a full refund, half, or too late; Edit, Track, and Rate change by stage too. An if-else code card gets a red stamp: Nah. A class diagram shows Order delegating to an interface, Stage, with one class per stage; then a state diagram lights Placed, Cooking, and On the way in turn. State's roast hangs a price tag on Strategy: callers must know every option."
+    lines:
+      - id: state-1
+        start: 67.3
+        end: 69.92
+        text: "I'm State, that PR's mine: taps depend on the stage."
+        marks: {"im": 67.3, "state": 67.8, "that": 67.96, "prs": 68.16, "mine": 68.5, "taps": 68.74, "depend": 68.98, "on": 69.22, "the": 69.46, "stage": 69.58}
+        visual: "The marquee switches to “State”. State thumps their chest. A phone shows “Your order” with a tracker: Placed, Cooking, On the way."
+      - id: state-2
+        start: 69.96
+        end: 72.32
+        text: "Cancel while it's placed? Full refund. Cooking? Half."
+        marks: {"cancel": 69.96, "while": 70.42, "its": 70.6, "placed": 70.74, "full": 71.14, "refund": 71.22, "cooking": 71.82, "half": 72.04}
+        visual: "A red Cancel button appears, and a card beside the phone: “Tap Cancel while it's…”. At Placed: “full refund”. The tracker moves to Cooking: “half”."
+      - id: state-3
+        start: 72.36
+        end: 74.8
+        text: "On the way? Too late. Edit, Track, and Rate shift too;"
+        marks: {"on": 72.36, "the": 72.54, "way": 72.68, "too": 73.1, "late": 73.18, "edit": 73.44, "track": 73.78, "and": 73.9, "rate": 74.04, "shift": 74.26, "too_2": 74.56}
+        visual: "The tracker reaches On the way: “too late”. Edit, Track, and Rate buttons appear, and the card adds: “Edit, Track, Rate: by stage too”."
+      - id: state-4
+        start: 74.84
+        end: 77.48
+        text: "if-else in every button? Nah. Here's what I do:"
+        marks: {"if": 74.84, "else": 75.3, "in": 75.58, "every": 75.66, "button": 75.88, "nah": 76.3, "heres": 76.82, "what": 77.0, "i": 77.14, "do": 77.26}
+        visual: "An order.py code card replaces the card: cancel() with an if-elif chain on the stage, “…again in edit, track, rate”. On “Nah”, a red stamp lands on it: “Nah”."
+      - id: state-5
+        start: 77.52
+        end: 80.38
+        text: "each stage gets a class, with its own rule for each tap;"
+        marks: {"each": 77.52, "stage": 77.92, "gets": 78.2, "a": 78.4, "class": 78.56, "with": 78.86, "its": 79.1, "own": 79.26, "rule": 79.48, "for": 79.72, "each_2": 79.86, "tap": 80.1}
+        visual: "An ArchUML class diagram fills the screen: Order holds an «interface» Stage, realized by Placed, Cooking, and OnTheWay, each ringed in green. Stage gets a callout: “cancel() · edit() · track() · rate()”."
+      - id: state-6
+        start: 80.42
+        end: 82.84
+        text: "order delegates; its stage rolls it down the track."
+        marks: {"order": 80.42, "delegates": 80.74, "its": 81.42, "stage": 81.5, "rolls": 81.78, "it": 82.02, "down": 82.18, "the": 82.42, "track": 82.62}
+        visual: "Order is ringed, and a token runs from Order to Stage: “delegates every tap”. Then an ArchUML state diagram, “The order's stages”: Placed, “kitchen starts”, Cooking, “driver picks up”, OnTheWay. Each stage lights up in turn."
+      - id: state-7
+        start: 82.88
+        end: 85.56
+        text: "Strategy? Callers need your whole menu to choose. (Ooh!)"
+        marks: {"strategy": 82.88, "callers": 83.78, "need": 84.12, "your": 84.28, "whole": 84.44, "menu": 84.66, "to": 85.0, "choose": 85.2, "ooh": 85.6}
+        visual: "State points across at Strategy. A price tag drops onto Strategy's chest: “Callers must know every option”. “Ooh!”"
+  - id: ruling-1
+    title: "Ruling 1"
+    delivery: sung
+    voice: "Lead"
+    narration: "The ruling. The lead steps in at centre stage between the twins, under a verdict card: one job, a few ways to do it? Strategy. What it does depends on the stage? State. Each twin bows as the crowd shouts its name. A last line: who picks is just a clue; the problem decides."
+    lines:
+      - id: ruling-1-1
+        start: 85.6
+        end: 88.26
+        text: "One job, a few ways to do it? (Strategy!)"
+        marks: {"one": 85.6, "job": 86.58, "a": 87.16, "few": 87.22, "ways": 87.42, "to": 87.82, "do": 87.98, "it": 88.2, "strategy": 88.3}
+        visual: "The marquee reads “The ruling”. The lead walks in to centre stage, between the twins. A verdict card fills the screen; its left half asks “One job, a few ways to do it?”, and the crowd's answer slams in: “Strategy”. Strategy bows."
+      - id: ruling-1-2
+        start: 88.3
+        end: 90.78
+        text: "What it does depends on the stage? (State!)"
+        marks: {"what": 88.3, "it": 89.12, "does": 89.32, "depends": 89.6, "on": 90.02, "the": 90.4, "stage": 90.58, "state": 90.58}
+        visual: "The right half: “What it does depends on the stage?” “State”. State bows."
+      - id: ruling-1-3
+        start: 90.82
+        end: 94.16
+        text: "Who picks? Just a clue. The problem has the say."
+        marks: {"who": 90.82, "picks": 91.56, "just": 91.92, "a": 92.26, "clue": 92.44, "the": 92.78, "problem": 92.88, "has": 93.2, "the_2": 93.58, "say": 93.78}
+        visual: "A line appears under both halves: “Who picks? Just a clue. The problem decides.” The lead raises a finger."
+  - id: interlude
+    title: "Interlude"
+    delivery: spoken
+    voice: "Intern"
+    narration: "The twins bow out and the intern walks back in. The pull request returns; Strategy in its title changes to State, and a green stamp lands: Approved."
+    lines:
+      - id: interlude-1
+        start: 94.2
+        end: 96.78
+        text: "My order status? State, all along."
+        marks: {"my": 94.2, "order": 94.64, "status": 94.88, "state": 95.58, "all": 96.3, "along": 96.42}
+        visual: "The twins leave and the lead returns to her spot. The intern walks back in; the marquee reads “PR #1”. The intro's pull request returns, and “Strategy” in its title changes to “State”."
+      - id: interlude-2
+        start: 96.92
+        end: 98.62
+        text: "Same picture, new problem. I'm in."
+        marks: {"same": 96.92, "picture": 97.24, "new": 97.84, "problem": 97.94, "im": 98.3, "in": 98.52}
+        visual: "A green stamp lands on the PR: “Approved”. The intern gives a thumbs-up."
+  - id: chorus-2
+    title: "Chorus"
+    delivery: sung
+    voice: "Crowd"
+    narration: "Chorus again, then Round 2: Adapter versus Façade. Twins in identical charcoal hoodies walk in under name plates; Adapter holds a wrench."
+    lines:
+      - id: chorus-2-1
+        start: 98.66
+        end: 100.68
+        text: "Same shape? Not the same!"
+        marks: {"same": 98.66, "shape": 99.0, "not": 99.76, "the": 100.14, "same_2": 100.38}
+        visual: "Kinetic type slams in, one phrase per line: “Same shape?” “Not the same!”"
+      - id: chorus-2-2
+        start: 100.72
+        end: 103.28
+        text: "What's it for? That's the name!"
+        marks: {"whats": 100.72, "it": 101.46, "for": 101.58, "thats": 102.34, "the": 102.86, "name": 102.98}
+        visual: "“What's it for?” “That's the name!”"
+      - id: chorus-2-3
+        start: 103.32
+        end: 107.21
+        text: "Round two! Adapter, Façade!"
+        marks: {"round": 103.32, "two": 104.2, "adapter": 104.88, "facade": 107.06}
+        visual: "A boxing card: “Round 2 · Adapter vs. Façade”. Two new twins walk in, in identical charcoal hoodies, under name plates: Adapter on the left, holding a wrench, and Façade on the right."
+  - id: adapter
+    title: "Round 2: Adapter"
+    delivery: sung
+    voice: "Adapter"
+    narration: "Adapter sings; the marquee reads Adapter. Our app's call, order with a total of twelve fifty, doesn't fit a new restaurant's tablet, which wants ticket in cents. A class diagram: TabletAdapter realizes our interface, Kitchen, and calls their Tablet, converting each call. Badges: our app and their tablet, zero lines changed. The roast hangs a price tag on Façade: it can grow into a god class."
+    lines:
+      - id: adapter-1
+        start: 108.76
+        end: 111.5
+        text: "I'm Adapter. New spot's tablet won't take our call:"
+        marks: {"im": 108.76, "adapter": 109.28, "new": 109.92, "spots": 110.02, "tablet": 110.52, "wont": 110.78, "take": 111.02, "our": 111.2, "call": 111.32}
+        visual: "The marquee reads “Adapter”. A card shows what our app says, and beside it a new restaurant's tablet with a red chip: “✗ won't take it”."
+      - id: adapter-2
+        start: 111.54
+        end: 114.32
+        text: "we say \"order\"; it wants \"ticket,\" in cents and all."
+        marks: {"we": 111.54, "say": 111.8, "order": 112.04, "it": 112.56, "wants": 112.62, "ticket": 112.88, "in": 113.28, "cents": 113.54, "and": 113.94, "all": 114.14}
+        visual: "Our card fills in, order(total=12.50); a second card shows what their tablet wants: ticket(cents=1250)."
+      - id: adapter-3
+        start: 114.36
+        end: 116.66
+        text: "Outside, I'm the interface our app knows;"
+        marks: {"outside": 114.36, "im": 114.9, "the": 115.26, "interface": 115.38, "our": 115.88, "app": 116.08, "knows": 116.34}
+        visual: "An ArchUML class diagram: TabletAdapter realizes the «interface» Kitchen, with send(order), and calls Tablet, with ticket(cents). Kitchen is ringed in violet: “outside: what our app calls”."
+      - id: adapter-4
+        start: 116.7
+        end: 119.52
+        text: "inside, I call theirs, converting as I go."
+        marks: {"inside": 116.7, "i": 117.3, "call": 117.68, "theirs": 117.94, "converting": 118.24, "as": 118.84, "i_2": 119.18, "go": 119.3}
+        visual: "TabletAdapter is ringed in amber, “inside: converts each call”, and Tablet in teal, “their code”. A token labelled 1250¢ runs from TabletAdapter to Tablet."
+      - id: adapter-5
+        voice: "Crowd"
+        start: 119.56
+        end: 122.16
+        text: "(Our code? Untouched!) (Their code? Untouched!)"
+        marks: {"our": 119.56, "code": 119.8, "untouched": 120.44, "their": 120.92, "code_2": 121.12, "untouched_2": 121.72}
+        visual: "Two green badges land on the floor: “our app · 0 lines changed” and “their tablet · 0 lines changed”."
+      - id: adapter-6
+        start: 122.2
+        end: 124.72
+        text: "Façade, keep adding chores and you're a god-class door. (Ooh!)"
+        marks: {"facade": 122.2, "keep": 122.82, "adding": 122.92, "chores": 123.16, "and": 123.46, "youre": 123.62, "a": 123.76, "god": 123.9, "class": 124.1, "door": 124.42, "ooh": 124.76}
+        visual: "Adapter points at Façade. A price tag drops onto Façade's chest: “Can grow into a god class”. “Ooh!”"
+  - id: facade
+    title: "Round 2: Façade"
+    delivery: sung
+    voice: "Façade"
+    narration: "Façade sings; the marquee reads Façade. A class diagram shows two screens, Phone and Web, each wired to Payment, Kitchen, Driver, and Receipt. It is redrawn with both screens calling one OrderFacade, which calls the four. The roast hangs a price tag on Adapter: one more layer to trace."
+    lines:
+      - id: facade-1
+        start: 124.76
+        end: 127.2
+        text: "I'm Façade. Each screen made four calls in a row:"
+        marks: {"im": 124.76, "facade": 125.02, "each": 125.54, "screen": 125.74, "made": 126.0, "four": 126.22, "calls": 126.4, "in": 126.76, "a": 126.88, "row": 127.0}
+        visual: "The marquee switches to “Façade”. An ArchUML class diagram: Phone and Web each wired to Payment, Kitchen, Driver, and Receipt, eight crossing arrows."
+      - id: facade-2
+        start: 127.24
+        end: 129.78
+        text: "pay, kitchen, driver, receipt. Each screen had to know."
+        marks: {"pay": 127.24, "kitchen": 127.46, "driver": 127.74, "receipt": 128.08, "each": 128.62, "screen": 129.0, "had": 129.3, "to": 129.48, "know": 129.6}
+        visual: "Payment, Kitchen, Driver, and Receipt are ringed in turn as each is named. A red sticker on the floor: “Each screen had to know”."
+      - id: facade-3
+        start: 129.82
+        end: 132.26
+        text: "Now they knock once, \"place order,\" and I run the four;"
+        marks: {"now": 129.82, "they": 130.06, "knock": 130.2, "once": 130.42, "place": 130.72, "order": 131.0, "and": 131.34, "i": 131.56, "run": 131.66, "the": 131.86, "four": 132.04}
+        visual: "The diagram is redrawn: Phone and Web each call one OrderFacade, which calls the four. A token runs from Phone to OrderFacade, which is ringed, “placeOrder()”; then four tokens run out to the four."
+      - id: facade-4
+        start: 132.3
+        end: 135.0
+        text: "screens stay simple; the steps live behind my door."
+        marks: {"screens": 132.3, "stay": 132.9, "simple": 133.14, "the": 133.72, "steps": 133.8, "live": 134.0, "behind": 134.16, "my": 134.52, "door": 134.78}
+        visual: "A green sticker on the floor: “Screens stay simple”."
+      - id: facade-5
+        start: 135.04
+        end: 137.44
+        text: "You, Adapter? One more hop when they're debugging. (Ooh!)"
+        marks: {"you": 135.04, "adapter": 135.44, "one": 136.22, "more": 136.44, "hop": 136.58, "when": 136.82, "theyre": 136.96, "debugging": 137.14, "ooh": 137.48}
+        visual: "Façade points at Adapter. A price tag drops onto Adapter's chest: “One more layer to trace”. “Ooh!”"
+  - id: ruling-2
+    title: "Ruling 2"
+    delivery: sung
+    voice: "Lead"
+    narration: "The lead's ruling at centre stage, on a verdict card titled Don't count the classes: what is it for? Make their interface fit yours? Adapter. A shortcut through a tangled system? Façade. Then: round three is the intern's call. The twins bow out and the intern walks on."
+    lines:
+      - id: ruling-2-1
+        start: 137.48
+        end: 140.2
+        text: "Don't count the classes; both can wrap one or a few."
+        marks: {"dont": 137.48, "count": 137.94, "the": 138.08, "classes": 138.22, "both": 138.9, "can": 139.06, "wrap": 139.22, "one": 139.46, "or": 139.7, "a": 139.88, "few": 140.08}
+        visual: "The marquee reads “The ruling”. The lead walks in to centre stage between the twins. The verdict card's title: “Don't count the classes: what is it for?”"
+      - id: ruling-2-2
+        start: 140.24
+        end: 142.82
+        text: "Make their interface fit yours? (Adapter!)"
+        marks: {"make": 140.24, "their": 140.66, "interface": 140.84, "fit": 141.36, "yours": 141.68, "adapter": 142.38}
+        visual: "Its left half: “Make their interface fit yours?” “Adapter”. Adapter bows."
+      - id: ruling-2-3
+        start: 142.86
+        end: 145.6
+        text: "A shortcut through a tangled system? (Façade!)"
+        marks: {"a": 142.86, "shortcut": 143.08, "through": 143.56, "a_2": 143.92, "tangled": 144.1, "system": 144.32, "facade": 144.9}
+        visual: "The right half: “A shortcut through a tangled system?” “Façade”. Façade bows."
+      - id: ruling-2-4
+        start: 145.64
+        end: 147.64
+        text: "Intern? Round three is your call."
+        marks: {"intern": 145.64, "round": 146.08, "three": 146.64, "is": 146.94, "your": 147.2, "call": 147.32}
+        visual: "The twins leave. The intern walks in from the left, and the lead presents the stage to them: “Round 3: the intern's call”. Then she goes back to her spot."
+  - id: chorus-3
+    title: "Chorus"
+    delivery: sung
+    voice: "Crowd"
+    narration: "Chorus, then Round 3: Observer versus Mediator. Twins in identical green hoodies walk in under name plates; Observer holds a magnifier, Mediator a clipboard."
+    lines:
+      - id: chorus-3-1
+        start: 147.68
+        end: 150.2
+        text: "Same shape? Not the same!"
+        marks: {"same": 147.68, "shape": 148.54, "not": 149.14, "the": 149.7, "same_2": 149.92}
+        visual: "Kinetic type slams in, one phrase per line: “Same shape?” “Not the same!”"
+      - id: chorus-3-2
+        start: 150.24
+        end: 152.84
+        text: "What's it for? That's the name!"
+        marks: {"whats": 150.24, "it": 151.02, "for": 151.1, "thats": 152.02, "the": 152.4, "name": 152.54}
+        visual: "“What's it for?” “That's the name!”"
+      - id: chorus-3-3
+        start: 152.88
+        end: 156.16
+        text: "Round three! Observer, Mediator!"
+        marks: {"round": 152.88, "three": 153.72, "observer": 154.16, "mediator": 155.0}
+        visual: "A boxing card: “Round 3 · Observer vs. Mediator”. Two new twins walk in, in identical green hoodies with a code tag on the chest, under name plates: Observer on the left, holding a magnifier, and Mediator on the right, holding a clipboard."
+  - id: observer
+    title: "Round 3: Observer"
+    delivery: sung
+    voice: "Observer"
+    narration: "Observer sings; the marquee reads Observer. The order's status flips to Ready; a phone, a tablet, and a driver, each tagged observer, need to know. A class diagram: Order holds its followers, a list of an interface, Observer, realized by Phone, Tablet, and DriverApp. Pings run to each, and each reacts its own way: a banner, a ding, a pin. A Watch subscribes, and order.py has zero lines changed. The roast hangs a price tag on Mediator: the hub can grow into a god class."
+    lines:
+      - id: observer-1
+        start: 158.3
+        end: 160.98
+        text: "I'm Observer. Status flips; who needs to know?"
+        marks: {"im": 158.3, "observer": 158.82, "status": 159.3, "flips": 159.64, "who": 160.02, "needs": 160.4, "to": 160.62, "know": 160.76}
+        visual: "The marquee reads “Observer”. A phone shows “Your order”: the status chip flips from Cooking to Ready. A sticker asks: “Who needs to know?”"
+      - id: observer-2
+        start: 161.12
+        end: 163.5
+        text: "Phone, tablet, driver: the observers on the go."
+        marks: {"phone": 161.12, "tablet": 161.6, "driver": 161.88, "the": 162.26, "observers": 162.5, "on": 163.06, "the_2": 163.2, "go": 163.3}
+        visual: "Three devices appear beside the phone as they are named, each tagged “observer”: Phone, Tablet, Driver."
+      - id: observer-3
+        start: 163.54
+        end: 166.18
+        text: "They subscribe; on each change, the order pings the list;"
+        marks: {"they": 163.54, "subscribe": 163.94, "on": 164.36, "each": 164.68, "change": 164.88, "the": 165.2, "order": 165.36, "pings": 165.56, "the_2": 165.86, "list": 166.0}
+        visual: "An ArchUML class diagram fills the screen: Order holds “followers”, a list of «interface» Observer with update(status), realized by Phone, Tablet, and DriverApp. The followers label is ringed, “the list”; Order is ringed; pings run from Order through Observer to each class."
+      - id: observer-4
+        start: 166.22
+        end: 168.86
+        text: "each reacts its own way. New screen? Just subscribe."
+        marks: {"each": 166.22, "reacts": 166.46, "its": 166.86, "own": 167.02, "way": 167.22, "new": 167.46, "screen": 167.72, "just": 168.2, "subscribe": 168.44}
+        visual: "Each reacts its own way: “Banner” under Phone, “Ding!” under Tablet, “Pin” under DriverApp. The diagram is redrawn with a fourth class, Watch, ringed in green: “new: just subscribes”."
+      - id: observer-5
+        voice: "Crowd"
+        start: 168.9
+        end: 170.44
+        text: "(The order? Untouched!)"
+        marks: {"the": 168.9, "order": 169.22, "untouched": 169.82}
+        visual: "A green badge lands on the floor: “order.py · 0 lines changed”."
+      - id: observer-6
+        start: 170.48
+        end: 173.29
+        text: "Mediator? Your hub keeps growing. God class! (Ooh!)"
+        marks: {"mediator": 170.48, "your": 171.3, "hub": 171.5, "keeps": 171.72, "growing": 172.06, "god": 172.4, "class": 172.72, "ooh": 173.21}
+        visual: "Observer points at Mediator. A price tag drops onto Mediator's chest: “The hub can grow into a god class”. “Ooh!”"
+  - id: mediator
+    title: "Round 3: Mediator"
+    delivery: sung
+    voice: "Mediator"
+    narration: "Mediator sings; the marquee reads Mediator. The kitchen calls order up while both drivers are busy; one rule needs the kitchen, the drivers, and the customer. A class diagram of the three wired to each other is redrawn with all three reporting to one DispatchHub, where the rules live: a new rule changes only the hub. The roast hangs a price tag on Observer: one update can set off a chain."
+    lines:
+      - id: mediator-1
+        start: 173.33
+        end: 175.52
+        text: "I'm Mediator. Food's up, but no driver's free:"
+        marks: {"im": 173.33, "mediator": 173.46, "foods": 174.16, "up": 174.48, "but": 174.64, "no": 174.76, "drivers": 174.9, "free": 175.28}
+        visual: "The marquee switches to “Mediator”. Icons appear: the kitchen with “Order up!”, and two drivers, each marked “busy”."
+      - id: mediator-2
+        start: 175.56
+        end: 178.24
+        text: "keep it warm, ping the customer: one rule, all three."
+        marks: {"keep": 175.56, "it": 175.84, "warm": 176.04, "ping": 176.42, "the": 176.54, "customer": 176.7, "one": 177.26, "rule": 177.38, "all": 177.76, "three": 177.9}
+        visual: "A customer icon appears, and a card titled “One rule”: “Food ready + no driver free → keep it warm → ping the customer”, then in red: “needs all three”."
+      - id: mediator-3
+        start: 178.28
+        end: 180.74
+        text: "Link 'em to each other? Rules scatter everywhere,"
+        marks: {"link": 178.28, "em": 178.86, "to": 178.98, "each": 179.14, "other": 179.36, "rules": 179.68, "scatter": 179.84, "everywhere": 180.2}
+        visual: "An ArchUML class diagram: Kitchen, Drivers, and Customer wired to each other, arrows crossing. A red sticker on the floor: “Rules everywhere”."
+      - id: mediator-4
+        start: 180.78
+        end: 183.44
+        text: "so they all report to me, and the rules live here."
+        marks: {"so": 180.78, "they": 181.08, "all": 181.26, "report": 181.44, "to": 181.74, "me": 181.9, "and": 182.14, "the": 182.44, "rules": 182.56, "live": 182.86, "here": 183.14}
+        visual: "The diagram is redrawn: Kitchen, Drivers, and Customer each send one arrow to DispatchHub, with notify(event), and tokens run in from all three. DispatchHub is ringed: “the rules live here”."
+      - id: mediator-5
+        start: 183.48
+        end: 185.98
+        text: "They never call each other. New rule? Just change me."
+        marks: {"they": 183.48, "never": 183.86, "call": 184.12, "each": 184.4, "other": 184.58, "new": 184.78, "rule": 184.98, "just": 185.36, "change": 185.48, "me": 185.8}
+        visual: "A sticker on the floor: “They never call each other”. The hub's callout changes: “New rule? Change only the hub.”"
+      - id: mediator-6
+        start: 186.02
+        end: 188.6
+        text: "Observer? One ping sets off ten. Surprise! (Ooh!)"
+        marks: {"observer": 186.02, "one": 186.88, "ping": 187.04, "sets": 187.36, "off": 187.62, "ten": 187.88, "surprise": 188.58, "ooh": 188.64}
+        visual: "Mediator points at Observer. A price tag drops onto Observer's chest: “One update can set off a chain”. “Ooh!”"
+  - id: ruling-3
+    title: "Ruling 3: the intern's call"
+    delivery: sung
+    voice: "Intern"
+    narration: "The intern makes the ruling from centre stage: one change, each reacts on its own? Observer. Each move depends on the rest? Mediator. Each twin bows as the crowd shouts its name."
+    lines:
+      - id: ruling-3-1
+        start: 188.64
+        end: 190.02
+        text: "Okay, my call:"
+        marks: {"okay": 188.64, "my": 189.58, "call": 189.7}
+        visual: "The marquee reads “My call”. The intern walks in to centre stage between the twins, under a verdict card titled “The intern's call”."
+      - id: ruling-3-2
+        start: 190.44
+        end: 193.06
+        text: "one change, each reacts on its own? (Observer!)"
+        marks: {"one": 190.44, "change": 190.58, "each": 191.32, "reacts": 191.46, "on": 191.84, "its": 192.02, "own": 192.16, "observer": 192.4}
+        visual: "Its left half: “One change, each reacts on its own?” “Observer”. Observer bows."
+      - id: ruling-3-3
+        start: 193.32
+        end: 195.62
+        text: "Each move depends on the rest? (Mediator!)"
+        marks: {"each": 193.32, "move": 193.48, "depends": 193.76, "on": 194.14, "the": 194.4, "rest": 194.5, "mediator": 194.82}
+        visual: "The right half: “Each move depends on the rest?” “Mediator”. Mediator bows."
+  - id: bridge
+    title: "Bridge: the intern overcorrects"
+    delivery: spoken
+    voice: "Intern"
+    narration: "The beat drops to piano. The twins leave; the intern, back at the side, sketches a Strategy for a CSV export with one lonely class. The lead asks how many formats, and the intern shrugs: just one."
+    lines:
+      - id: bridge-1
+        start: 195.86
+        end: 198.8
+        text: "So I'm hyped: CSV export? Strategy too!"
+        marks: {"so": 195.86, "im": 195.96, "hyped": 196.1, "csv": 196.42, "export": 197.18, "strategy": 198.16, "too": 198.52}
+        visual: "The twins leave, the marquee reads “When?”, and the lead walks back in. The intern hops with excitement; a class diagram titled “Intern's sketch” appears: Exporter uses an «interface» Format, realized by one class, CSV."
+      - id: bridge-2
+        start: 198.84
+        end: 200.72
+        text: "Lead asks: \"How many formats?\""
+        marks: {"lead": 198.84, "asks": 199.32, "how": 199.84, "many": 199.96, "formats": 200.16}
+        visual: "A review card beside it: “How many formats?” The lead points at the sketch."
+      - id: bridge-3
+        start: 200.92
+        end: 201.04
+        text: "...One."
+        marks: {"one": 200.92}
+        visual: "CSV is ringed: “just one”. The intern shrugs."
+  - id: lesson
+    title: "Bridge: when to use a pattern"
+    delivery: sung
+    voice: "Lead"
+    narration: "The lead's lesson. The sketch is crossed out, nothing varies, and a plain function, export CSV, appears; a pattern-maxxing gauge swings into the red and back. Price tags: more classes, one more hop to trace. A roadmap keeps the real tickets and strikes out the someday lane. A change spreading through five files earns the pattern, and a stamp says Earned; when it stops paying, the pattern is crossed out and the plain function returns. Lesson learned."
+    lines:
+      - id: lesson-1
+        start: 201.08
+        end: 203.78
+        text: "One? Then nothing varies. Don't go pattern-maxxing."
+        marks: {"one": 201.08, "then": 201.92, "nothing": 202.14, "varies": 202.4, "dont": 202.88, "go": 203.02, "pattern": 203.12, "maxxing": 203.42}
+        visual: "The sketch is crossed out: “nothing varies”. A gauge labelled “Pattern-maxxing” swings into the red, and a plain code card appears: def export_csv(report). The lead holds up a hand."
+      - id: lesson-2
+        start: 203.82
+        end: 206.3
+        text: "Each pattern costs: more classes, one more hop to trace."
+        marks: {"each": 203.82, "pattern": 204.04, "costs": 204.4, "more": 204.72, "classes": 204.92, "one": 205.42, "more_2": 205.58, "hop": 205.72, "to": 205.9, "trace": 206.06}
+        visual: "Two price tags drop onto the screen: “+ classes” and “+1 hop to trace”."
+      - id: lesson-3
+        start: 206.34
+        end: 208.84
+        text: "Real change, here or planned? Use one. Not \"just in case.\""
+        marks: {"real": 206.34, "change": 206.62, "here": 207.12, "or": 207.22, "planned": 207.36, "use": 207.72, "one": 207.86, "not": 208.02, "just": 208.22, "in": 208.5, "case": 208.64}
+        visual: "A roadmap card: Now, CSV; Next sprint, PDF and Excel; a “Someday?” lane with XML and Fax is greyed and struck out."
+      - id: lesson-4
+        start: 208.88
+        end: 211.52
+        text: "Start plain. When one change keeps spreading file to file,"
+        marks: {"start": 208.88, "plain": 209.18, "when": 209.52, "one": 209.66, "change": 209.84, "keeps": 210.34, "spreading": 210.48, "file": 210.86, "to": 211.14, "file_2": 211.28}
+        visual: "The plain export_csv function returns, and a change ticket fans out into one file card after another: export.py, report.py, email.py, admin.py, api.py."
+      - id: lesson-5
+        start: 211.56
+        end: 213.9
+        text: "refactor toward the pattern. (That's when it's earned!)"
+        marks: {"refactor": 211.56, "toward": 212.2, "the": 212.44, "pattern": 212.58, "thats": 213.0, "when": 213.22, "its": 213.4, "earned": 213.58}
+        visual: "An ArchUML class diagram: Exporter uses an «interface» Format, realized by CSV, PDF, and Excel. A green stamp: “Earned”."
+      - id: lesson-6
+        start: 213.94
+        end: 216.12
+        text: "Stops paying? Pull it out. (Lesson learned!)"
+        marks: {"stops": 213.94, "paying": 214.46, "pull": 214.92, "it": 215.06, "out": 215.2, "lesson": 215.56, "learned": 215.8}
+        visual: "The diagram is ringed in red and crossed out, and the plain function returns. A gold sticker on the floor: “Lesson learned”."
+  - id: pre-chorus
+    title: "Pre-chorus"
+    delivery: sung
+    voice: "Intern"
+    narration: "The intern sings; a gold badge, twenty-three of twenty-three patterns, flips over: the one the problem needs."
+    lines:
+      - id: pre-chorus-1
+        start: 216.16
+        end: 218.66
+        text: "Not all twenty-three. Not a pattern every time."
+        marks: {"not": 216.16, "all": 216.5, "twenty": 216.74, "three": 216.74, "not_2": 217.48, "a": 217.64, "pattern": 217.8, "every": 218.1, "time": 218.34}
+        visual: "The marquee reads “Just one”. A gold badge appears, “23 / 23 patterns”, and the intern wags a finger."
+      - id: pre-chorus-2
+        start: 218.7
+        end: 220.22
+        text: "Just the one the problem needs."
+        marks: {"just": 218.7, "the": 218.92, "one": 219.08, "the_2": 219.24, "problem": 219.38, "needs": 219.7}
+        visual: "The badge flips over: “The one the problem needs”."
+  - id: final-chorus
+    title: "Final chorus"
+    delivery: sung
+    voice: "Crowd"
+    narration: "The whole cast lines up across the stage in their pairs, under their name plates, for the last chorus, and bows."
+    lines:
+      - id: final-chorus-1
+        start: 221.76
+        end: 223.92
+        text: "Same shape? Not the same!"
+        marks: {"same": 221.76, "shape": 222.24, "not": 223.0, "the": 223.38, "same_2": 223.64}
+        visual: "The whole cast lines up across the stage: the intern, Strategy and State in teal quarter-zips, Adapter and Façade in charcoal hoodies, Observer and Mediator in green hoodies, and the lead, each pattern under a small name plate. The chant: “Same shape? Not the same!”"
+      - id: final-chorus-2
+        start: 223.96
+        end: 226.52
+        text: "What's it for? That's the name!"
+        marks: {"whats": 223.96, "it": 224.72, "for": 224.8, "thats": 225.7, "the": 226.1, "name": 226.26}
+        visual: "“What's it for? That's the name!” Everyone bows, and the twins leave."
+  - id: quiz-intro
+    title: "Pop quiz"
+    delivery: spoken
+    voice: "Lead"
+    narration: "Pop quiz. A live poll shows six answer cards, Strategy, State, Adapter, Façade, Observer, and Mediator; each appears as it is named and stays on screen for every question."
+    lines:
+      - id: quiz-intro-1
+        start: 226.56
+        end: 230.8
+        text: "Pop quiz! Pick one: Strategy, State,"
+        marks: {"pop": 226.56, "quiz": 227.44, "pick": 228.22, "one": 228.72, "strategy": 229.06, "state": 230.26}
+        visual: "The marquee reads “Pop quiz”. A card on the screen: “Pick one for each problem · No diagrams: just the problem”. Answer cards appear as they are named: Strategy, State."
+      - id: quiz-intro-2
+        start: 232.66
+        end: 235.0
+        text: "Adapter, Façade, Observer, Mediator."
+        marks: {"adapter": 232.66, "facade": 233.34, "observer": 233.92, "mediator": 234.5}
+        visual: "Adapter, Façade, Observer, Mediator: all six answer cards stay on screen for the whole quiz."
+  - id: quiz
+    title: "Pop quiz"
+    delivery: call
+    voice: "Lead"
+    narration: "Six questions, one card each, with all six answers always on screen. The right card lights up with its reason when the crowd shouts the answer."
+    lines:
+      - id: quiz-1
+        start: 235.04
+        end: 238.82
+        text: "The payment SDK won't match our calls."
+        answer: "Adapter! Make it fit!"
+        answer_at: 237.5
+        pause_at: 237.38
+        marks: {"the": 235.04, "payment": 235.38, "sdk": 235.66, "wont": 236.18, "match": 236.66, "our": 236.96, "calls": 237.14, "adapter": 237.5, "make": 238.2, "it": 238.44, "fit": 238.54}
+        visual: "Question 1 of 6: our charge() plug beside a payment SDK's differently shaped socket. On the answer, an adapter piece fits between them and the Adapter card lights up: “Make it fit”."
+      - id: quiz-2
+        start: 238.86
+        end: 243.24
+        text: "Get hit while big? You shrink. Get hit while small? You're out."
+        answer: "State! Depends where it's at!"
+        answer_at: 242.02
+        pause_at: 241.96
+        marks: {"get": 238.86, "hit": 239.12, "while": 239.36, "big": 239.6, "you": 240.02, "shrink": 240.24, "get_2": 240.52, "hit_2": 240.76, "while_2": 240.92, "small": 241.14, "youre": 241.52, "out": 241.76, "state": 242.02, "depends": 242.54, "where": 242.74, "its": 242.94, "at": 243.12}
+        visual: "Question 2: a hero, big, gets hit and turns small; hit again while small: out. On the answer, the State card lights: “Depends where it's at”."
+      - id: quiz-3
+        start: 243.28
+        end: 248.0
+        text: "Price climbs: chart, alert, and watchlist each update."
+        answer: "Observer! Ping the list!"
+        answer_at: 246.9
+        pause_at: 246.78
+        marks: {"price": 243.28, "climbs": 243.78, "chart": 244.32, "alert": 244.74, "and": 245.2, "watchlist": 245.77, "each": 246.06, "update": 246.36, "observer": 246.9, "ping": 247.38, "the": 247.68, "list": 247.8}
+        visual: "Question 3: a price line climbs; a chart, an alert, and a watchlist pop up. On the answer, the Observer card lights: “Ping the list”."
+      - id: quiz-4
+        start: 248.04
+        end: 253.22
+        text: "Maps app: fastest, shortest, or no tolls: same trip."
+        answer: "Strategy! One job, a few ways!"
+        answer_at: 251.22
+        pause_at: 251.16
+        marks: {"maps": 248.04, "app": 248.36, "fastest": 248.68, "shortest": 249.12, "or": 249.98, "no": 250.06, "tolls": 250.32, "same": 250.74, "trip": 250.96, "strategy": 251.22, "one": 252.06, "job": 252.2, "a": 252.6, "few": 252.72, "ways": 252.94}
+        visual: "Question 4: three routes between two points: fastest, shortest, no tolls. On the answer, the Strategy card lights: “One job, a few ways”."
+      - id: quiz-5
+        start: 253.26
+        end: 258.26
+        text: "One runway, ten planes: who lands depends on the rest."
+        answer: "Mediator! Rules in one hub!"
+        answer_at: 256.38
+        pause_at: 256.3
+        marks: {"one": 253.26, "runway": 253.97, "ten": 254.38, "planes": 254.52, "who": 254.96, "lands": 255.26, "depends": 255.54, "on": 255.72, "the": 256.02, "rest": 256.1, "mediator": 256.38, "rules": 257.42, "in": 257.68, "one_2": 257.8, "hub": 257.98}
+        visual: "Question 5: ten planes circle one runway. On the answer, a control tower appears and the Mediator card lights: “Rules in one hub”."
+      - id: quiz-6
+        start: 258.3
+        end: 262.84
+        text: "Every screen books flight, then hotel, then car."
+        answer: "Façade! A shortcut in!"
+        answer_at: 261.12
+        pause_at: 261.0
+        marks: {"every": 258.3, "screen": 258.76, "books": 259.1, "flight": 259.5, "then": 259.88, "hotel": 260.0, "then_2": 260.58, "car": 260.76, "facade": 261.12, "a": 261.92, "shortcut": 262.1, "in": 262.46}
+        visual: "Question 6: three screens, each wired to Flight, Hotel, and Car. On the answer, one “Book” door appears between them and the Façade card lights: “A shortcut in”."
+  - id: outro
+    title: "Outro"
+    delivery: spoken
+    voice: "Intern"
+    narration: "Six months later. The intern, now the reviewer, opens a new intern's pull request titled Strategy pattern, with the same class diagram, and comments: Nice diagram. What's it for? The intern and the lead bow."
+    lines:
+      - id: outro-1
+        start: 263.94
+        end: 266.28
+        text: "Six months on, I'm the reviewer."
+        marks: {"six": 263.94, "months": 264.6, "on": 264.86, "im": 265.54, "the": 265.7, "reviewer": 265.8}
+        visual: "The marquee reads “Same shape” again. Six months later, the intern, now the reviewer, thumps their chest."
+      - id: outro-2
+        start: 266.32
+        end: 269.04
+        text: "New intern's PR: \"Strategy pattern.\""
+        marks: {"new": 266.32, "interns": 267.16, "pr": 267.78, "strategy": 268.34, "pattern": 268.68}
+        visual: "A new pull request appears: “#42 by new intern · Strategy pattern”, with the same Order and OrderStatus class diagram."
+      - id: outro-3
+        start: 269.08
+        end: 271.18
+        text: "Nice diagram. What's it for?"
+        marks: {"nice": 269.08, "diagram": 269.84, "whats": 270.7, "it": 270.86, "for": 270.96}
+        visual: "A review card from “You”: “Nice diagram.”, then, larger, “What's it for?” The intern points at it, the lead gives a thumbs-up, and both bow."

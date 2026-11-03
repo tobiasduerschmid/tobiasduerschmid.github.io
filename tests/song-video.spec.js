@@ -30,6 +30,7 @@ const SONGS = [
   { id: 'draw_it_out', page: '/SEBook/uml.html' },
   { id: 'always_code', page: '/SEBook/always-code.html' },
   { id: 'it_works_on_my_machine', page: '/assets/song-player/it-works-on-my-machine.html', standalone: true },
+  { id: 'same_shape_not_the_same', page: '/SEBook/designpatterns.html' },
 ];
 const EXTRAS_TOGGLE = 'Full transcript';
 const NARRATOR = '(narrator) ';

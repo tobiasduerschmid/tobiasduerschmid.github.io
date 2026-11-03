@@ -9910,8 +9910,13 @@
         </g>
         <path d="M 354 136 C 356 130 360 125 365 122 M 375 116 C 378 114 381 113 384 113 M 395 110 C 398 109 400 110 403 111 M 428 120 C 434 123 438 127 440 132" fill="none" stroke="#b9a184" stroke-width=".65" opacity=".72"/>
         <!-- Soft brows and lower-lid highlights keep the gaze open and encouraging. -->
-        <path d="M 368 172 C 374 167 383 166.5 390 170 C 383 168.5 375 170 369 173.5 C 368.6 173.2 368.1 172.6 368 172 Z M 432 172 C 426 167 417 166.5 410 170 C 417 168.5 425 170 431 173.5 C 431.4 173.2 431.9 172.6 432 172 Z" fill="#77614d" opacity=".82"/>
-        <path d="M 371 170.5 C 376 168 382 167.8 387 169 M 429 170.5 C 424 168 418 167.8 413 169" fill="none" stroke="#b1997e" stroke-width=".55" opacity=".55"/>
+        <!-- Each brow is its own pair of paths, so a song can raise or knit them one at a time. -->
+        <g data-hero-tobias="brows">
+          <path d="M 368 172 C 374 167 383 166.5 390 170 C 383 168.5 375 170 369 173.5 C 368.6 173.2 368.1 172.6 368 172 Z" fill="#77614d" opacity=".82"/>
+          <path d="M 371 170.5 C 376 168 382 167.8 387 169" fill="none" stroke="#b1997e" stroke-width=".55" opacity=".55"/>
+          <path d="M 432 172 C 426 167 417 166.5 410 170 C 417 168.5 425 170 431 173.5 C 431.4 173.2 431.9 172.6 432 172 Z" fill="#77614d" opacity=".82"/>
+          <path d="M 429 170.5 C 424 168 418 167.8 413 169" fill="none" stroke="#b1997e" stroke-width=".55" opacity=".55"/>
+        </g>
         <path d="M 368 180 C 374 175 382 175 390 180 M 410 180 C 418 175 426 175 433 180" fill="none" stroke="#b08570" stroke-width="1" opacity=".35"/>
         <g data-hero-tobias="eyes-open">
           <animate attributeName="opacity" values="1;1;0;1;1" keyTimes="0;.45;.47;.49;1" dur="4.4s" begin="0s" repeatCount="indefinite"/>
@@ -9944,14 +9949,17 @@
         <path d="M 362 177.6 C 371 176.1 384 176.5 391 177.6 M 409 177.6 C 417 176.1 430 176.5 438 177.6" fill="none" stroke="#8ca1a9" stroke-width=".45" opacity=".72"/>
         <path d="M 365 180 C 369 178 373 179 375 179 M 411 180 C 415 178 419 179 421 179 M 386 191 C 389 190 391 187 392 185 M 430 191 C 433 190 435 187 436 185" fill="none" stroke="#ffffff" stroke-width=".85" opacity=".55"/>
         <!-- Lifted smile corners preserve the original enamel shape and tooth detail. -->
-        <path d="M 376.5 211 C 386 215 394 216 400 215 C 409 216 417 213 424.5 209.5 C 420 217 410 223 401 224 C 391 224 383 219 376.5 211 Z" fill="#bc8374" opacity=".42"/>
-        <path d="M 378.5 212 C 390 217 411 217 422.5 211 C 418 220 409 226 401 226 C 392 226 383 220 378.5 212 Z" fill="url(#prof-mouth-{{ hero_variant }})"/>
-        <path d="M 383 216 C 393 219 409 219 418 215 C 415 220 408 223 401 223 C 393 223 387 220 383 216 Z" fill="url(#prof-teeth-{{ hero_variant }})"/>
-        <path d="M 391 218 C 391 220 392 221 392 221 M 400 219 C 400 221 400 222 400 222 M 409 218 C 409 220 409 221 409 221" fill="none" stroke="#bda997" stroke-width=".45" opacity=".46"/>
-        <path d="M 379.5 212 C 391 217 411 217 421.5 212" fill="none" stroke="#916556" stroke-width=".8" opacity=".6"/>
-        <path d="M 387 224 C 395 228 408 229 418 223 C 411 230 398 231 391 227 C 389 226 388 225 387 224 Z" fill="#c99180" opacity=".34"/>
-        <path d="M 394 228 C 399 230 406 230 411 227" fill="none" stroke="#fbe0c5" stroke-width=".85" opacity=".4"/>
-        <path d="M 377 210 C 375.6 211.5 375.4 213 376.5 214 M 423 210 C 424.4 211.5 424.6 213 423.5 214" fill="none" stroke="#ae7b66" stroke-width=".75" opacity=".3"/>
+        <!-- The smile, with its lower lip and lifted corners. A song draws its open mouth singing in place of it: at (400.5, 216), 16 units to each side of centre. -->
+        <g data-hero-tobias="mouth" data-hero-singing-mouth="400.5 216 16">
+          <path d="M 376.5 211 C 386 215 394 216 400 215 C 409 216 417 213 424.5 209.5 C 420 217 410 223 401 224 C 391 224 383 219 376.5 211 Z" fill="#bc8374" opacity=".42"/>
+          <path d="M 378.5 212 C 390 217 411 217 422.5 211 C 418 220 409 226 401 226 C 392 226 383 220 378.5 212 Z" fill="url(#prof-mouth-{{ hero_variant }})"/>
+          <path d="M 383 216 C 393 219 409 219 418 215 C 415 220 408 223 401 223 C 393 223 387 220 383 216 Z" fill="url(#prof-teeth-{{ hero_variant }})"/>
+          <path d="M 391 218 C 391 220 392 221 392 221 M 400 219 C 400 221 400 222 400 222 M 409 218 C 409 220 409 221 409 221" fill="none" stroke="#bda997" stroke-width=".45" opacity=".46"/>
+          <path d="M 379.5 212 C 391 217 411 217 421.5 212" fill="none" stroke="#916556" stroke-width=".8" opacity=".6"/>
+          <path d="M 387 224 C 395 228 408 229 418 223 C 411 230 398 231 391 227 C 389 226 388 225 387 224 Z" fill="#c99180" opacity=".34"/>
+          <path d="M 394 228 C 399 230 406 230 411 227" fill="none" stroke="#fbe0c5" stroke-width=".85" opacity=".4"/>
+          <path d="M 377 210 C 375.6 211.5 375.4 213 376.5 214 M 423 210 C 424.4 211.5 424.6 213 423.5 214" fill="none" stroke="#ae7b66" stroke-width=".75" opacity=".3"/>
+        </g>
         <path d="M 369 202.5 C 371 206 373 208 376 209 M 424 209 C 427 208 429 206 431 202.5" fill="none" stroke="#b9816d" stroke-width=".8" opacity=".21"/>
       </g>
 </g>
