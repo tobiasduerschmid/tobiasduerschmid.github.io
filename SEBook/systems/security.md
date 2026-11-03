@@ -222,14 +222,20 @@ The most direct design is for the client to attach the username and password to 
 participant client: Client
 participant server: Server
 
-client -> server : Username, Password
-server --> client : OK
+client -> server : POST /login (username, password)
+activate server
+server --> client : 200 OK
+deactivate server
 
-client -> server : Request, Username, Password
-server --> client : Reply
+client -> server : GET /data (username, password)
+activate server
+server --> client : 200 data
+deactivate server
 
-client -> server : Request, Username, Password
-server --> client : Reply
+client -> server : GET /data (username, password)
+activate server
+server --> client : 200 data
+deactivate server
 @enduml</code></pre>
 
 This works, but it is bad on two counts:
@@ -247,14 +253,20 @@ The standard fix is to authenticate *once* with username and password, and then 
 participant client: Client
 participant server: Server
 
-client -> server : Username, Password
-server --> client : Set-Cookie: SessionID
+client -> server : POST /login (username, password)
+activate server
+server --> client : 200 OK, Set-Cookie: sessionId
+deactivate server
 
-client -> server : Request + Cookie(SessionID)
-server --> client : Reply
+client -> server : GET /data (Cookie: sessionId)
+activate server
+server --> client : 200 data
+deactivate server
 
-client -> server : Request + Cookie(SessionID)
-server --> client : Reply
+client -> server : GET /data (Cookie: sessionId)
+activate server
+server --> client : 200 data
+deactivate server
 @enduml</code></pre>
 
 The session ID is stored client-side in a **cookie** that the browser automatically attaches to every subsequent request to the same domain. On each request, the server looks up the session ID in its own session store, finds the associated user, and serves the request as that user.
@@ -280,14 +292,20 @@ A **JSON Web Token (JWT)** sidesteps the server-side session store. After succes
 participant client: Client
 participant server: Server
 
-client -> server : Username, Password
-server --> client : JWT (signed)
+client -> server : POST /login (username, password)
+activate server
+server --> client : 200 signed JWT
+deactivate server
 
-client -> server : Request + JWT
-server --> client : Reply
+client -> server : GET /data (Authorization: Bearer JWT)
+activate server
+server --> client : 200 data
+deactivate server
 
-client -> server : Request + JWT
-server --> client : Reply
+client -> server : GET /data (Authorization: Bearer JWT)
+activate server
+server --> client : 200 data
+deactivate server
 @enduml</code></pre>
 
 The client attaches the JWT to every subsequent request — typically in an `Authorization: Bearer <jwt>` header, or in a cookie. The server verifies the signature *with its own key* and trusts the claims inside without any database lookup. There is no server-side session store to consult — a validated JWT carries the claims. Forgery resistance depends on a secure algorithm, protected signing keys, and correct validation of the signature and claims (including issuer, audience, and expiry).
