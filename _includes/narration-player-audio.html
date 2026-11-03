@@ -1,0 +1,8 @@
+{%- comment -%}
+  The narration's native audio: the clock of an enhanced player, and the
+  player itself without JavaScript. Params: story (with audio and captions), label.
+{%- endcomment -%}
+<audio class="nja-audio" controls preload="none" aria-label="{{ include.label | escape }}">
+  <source src="{{ include.story.audio | relative_url }}" type="audio/mpeg">
+  <track kind="captions" src="{{ include.story.captions | relative_url }}" srclang="en" label="English">
+</audio>

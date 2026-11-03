@@ -111,9 +111,13 @@ section's speech begins exactly at the boundary. Every section must therefore
 end with at least 2.5 s of silence, giving learners time to inspect the
 completed picture before the check (ordinary cues default to 0.55 s).
 
-The shared transport also adds the full-screen button to every narration
-(Node.js, React, and the pattern lessons). The whole `.nja-player` fills the
-screen, so captions, settings, and knowledge checks stay available. It uses
+Every narration (Node.js, React, the pattern lessons, video narrations, and
+case studies) shares one thin control bar, its settings panel, its keyboard
+shortcuts, and its full screen (see the shared core in
+`docs/narration-format.md`). A pattern lesson passes its knowledge-check
+button and code-language select into the bar's settings. Full screen fills
+the screen with the player's video: the scene or knowledge check scrolls
+inside it, and the captions and the bar overlay its lower edge. It uses
 the standard or Safari's prefixed API; where neither exists (Safari on
 iPhone) or the browser refuses, the player fills the viewport itself and makes
 the page behind it inert until the button or Escape returns it. Style full

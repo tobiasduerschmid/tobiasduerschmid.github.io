@@ -29,7 +29,7 @@ test('Therac-25 explains the machine and normal setup before asking for a silent
       const diagram = story.diagrams[cue.diagram || scene.diagram];
       await expect(study.getByRole('img', { name: diagram.label, exact: true })).toBeVisible();
       await expect(sceneView.getByText(diagram.caption, { exact: true })).toBeVisible();
-      await expect(study.getByRole('region', { name: 'Current narration' })).toHaveText(cue.text);
+      await expect(study.getByRole('region', { name: 'Narration', exact: true })).toHaveText(cue.text);
       await expect(study.getByRole('button', { name: 'Choose next action', exact: true })).toBeHidden();
       await expect(study.getByRole('radio')).toHaveCount(0);
       await expect(study.getByRole('button', { name: 'Play narration', exact: true })).toBeEnabled();
@@ -39,10 +39,10 @@ test('Therac-25 explains the machine and normal setup before asking for a silent
   }
 
   await expect(study.getByRole('heading', { name: firstDecision.title, exact: true })).toBeVisible();
-  await expect(study.getByRole('region', { name: 'Current narration' })).toHaveText(firstDecision.cues[0].text);
+  await expect(study.getByRole('region', { name: 'Narration', exact: true })).toHaveText(firstDecision.cues[0].text);
   for (const cue of firstDecision.cues.slice(1)) {
     await study.getByRole('button', { name: 'Next step', exact: true }).click();
-    await expect(study.getByRole('region', { name: 'Current narration' })).toHaveText(cue.text);
+    await expect(study.getByRole('region', { name: 'Narration', exact: true })).toHaveText(cue.text);
   }
   await study.getByRole('button', { name: 'Choose next action', exact: true }).click();
   const question = study.getByRole('region', { name: `${firstDecisionIndex + 1}. ${firstDecision.label} — Choose the next action`, exact: true });
@@ -61,11 +61,13 @@ test('Therac-25 narration continues through orientation and pauses at the first 
   await expect(study.getByRole('heading', { name: firstDecision.title, exact: true })).toBeVisible();
   await expect(study.getByRole('button', { name: 'Pause narration', exact: true })).toBeVisible();
   await expect(study.getByRole('radio')).toHaveCount(0);
-  await expect(study.getByRole('region', { name: 'Current narration' })).toHaveText(firstDecision.cues[0].text);
+  await expect(study.getByRole('region', { name: 'Narration', exact: true })).toHaveText(firstDecision.cues[0].text);
   const decisionBoundary = timing.scenes.find(scene => scene.id === firstDecision.id).end;
   await study.getByRole('slider', { name: 'Narration position' }).fill((decisionBoundary - 0.2).toFixed(2));
   const question = study.getByRole('region', { name: `${firstDecisionIndex + 1}. ${firstDecision.label} — Choose the next action`, exact: true });
   await expect(question).toBeVisible();
-  await expect(study.getByRole('button', { name: 'Play narration', exact: true })).toBeDisabled();
+  // The decision replaces the control bar until the learner answers or skips it.
+  expect(await study.locator('audio').evaluate(audio => audio.paused)).toBe(true);
+  await expect(study.getByRole('button', { name: 'Play narration', exact: true })).toBeHidden();
   await expect(study.getByRole('heading', { name: story.scenes[firstDecisionIndex + 1].title, exact: true })).toBeHidden();
 });

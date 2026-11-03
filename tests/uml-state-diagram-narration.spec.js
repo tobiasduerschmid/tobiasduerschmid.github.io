@@ -1,6 +1,7 @@
 const { loadLesson } = require('../scripts/narration/source');
 const { test, expect } = require('@playwright/test');
 const { a11yCheckpoint } = require('./a11y-helpers');
+const { openPlayerSettings } = require('./helpers/narration-player');
 const { readFileSync } = require('node:fs');
 const yaml = require('js-yaml');
 
@@ -56,6 +57,7 @@ for (const viewport of [{ width: 1280, height: 720 }, { width: 1440, height: 900
         await seek(page, cueMiddle(scene.id, cueIndex));
         for (const language of story.languages) {
           const where = `${language}/${scene.id}/${cue.id}`;
+          await openPlayerSettings(animation);
           await animation.getByRole('combobox', { name: 'Code language' }).selectOption(language);
           await expect(animation.getByRole('region', { name: 'Narration', exact: true })).toHaveText(cue.text);
           const code = animation.locator('.nja-stage pre:visible');
@@ -193,6 +195,7 @@ for (const dark of [false, true]) {
       await expect.poll(() => animation.evaluate(element => element.scrollWidth - element.clientWidth)).toBeLessThanOrEqual(1);
       await a11yCheckpoint(page, `mobile ${id}`, { include: root, feature: 'uml-state-diagram-narration' });
     }
+    await openPlayerSettings(animation);
     await animation.getByRole('button', { name: 'Knowledge check', exact: true }).click();
     const question = questionsOf('composite')[0];
     const wrong = Number(Object.keys(question.option_feedback)[0]);
@@ -226,6 +229,7 @@ test('reading and print views include every step, diagram, and question without 
 
 test('reading view keeps the chosen language and theme and is accessible', async ({ page }) => {
   await page.goto(url);
+  await openPlayerSettings(player(page));
   await player(page).getByRole('combobox', { name: 'Code language' }).selectOption('cpp');
   await theme(page, true);
   await player(page).getByRole('link', { name: 'Read at my own pace', exact: true }).click();

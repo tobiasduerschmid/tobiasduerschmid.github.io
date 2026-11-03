@@ -1,6 +1,7 @@
 const { loadStory } = require('../scripts/narration/source');
 const { test, expect } = require('@playwright/test');
 const { a11yCheckpoint } = require('./a11y-helpers');
+const { openPlayerSettings } = require('./helpers/narration-player');
 const { chromiumLaunchOptions } = require('../scripts/chromium-launch-options');
 // Decode real audio on a virtual output; CI must not depend on a sound device.
 test.use({ launchOptions: { ...chromiumLaunchOptions(), args: ['--disable-audio-output'] } });
@@ -15,6 +16,7 @@ async function seekToCue(page, sceneId, pose) {
   const index = story.scenes.findIndex((scene) => scene.id === sceneId);
   const cueIndex = story.scenes[index].cues.findIndex((cue) => cue.pose === pose);
   const animation = player(page);
+  await openPlayerSettings(animation);
   await animation.getByRole('combobox', { name: 'Scene' }).selectOption(String(index));
   const cue = timing.scenes[index].cues[cueIndex];
   const time = Number(((cue.start + cue.end) / 2).toFixed(2));
@@ -33,7 +35,7 @@ test('Node.js explainer starts paused and provides its complete narration', asyn
   await expect(animation.getByRole('slider', { name: 'Animation position' })).toHaveValue('0');
   await animation.getByText('Transcript and visual descriptions', { exact: true }).click();
   await expect(animation.getByText(/A callback is a function you pass/)).toBeVisible();
-  const scriptLink = animation.getByRole('link', { name: 'Download TTS script' });
+  const scriptLink = animation.getByRole('link', { name: 'Download narration script' });
   const response = await request.get(await scriptLink.getAttribute('href'));
   expect(response.ok()).toBe(true);
   expect(await response.text()).toContain('A callback is a function you pass');
@@ -42,6 +44,7 @@ test('Node.js explainer starts paused and provides its complete narration', asyn
 test('scene navigation synchronizes the blocking and non-blocking explanations', async ({ page }) => {
   await page.goto(pageURL);
   const animation = player(page);
+  await openPlayerSettings(animation);
   await animation.getByRole('combobox', { name: 'Scene' }).selectOption({ label: '3. Blocking' });
   await expect(animation.getByRole('heading', { name: 'Blocking: the thread waits' })).toBeVisible();
   await expect(animation.getByRole('region', { name: 'Narration' })).toContainText('readFileSync');
@@ -143,6 +146,7 @@ test('a newer seek wins when metadata arrives during a chapter jump', async ({ p
       seek.dispatchEvent(new Event('input', { bubbles: true }));
     }, { once: true, capture: true });
   }, target);
+  await openPlayerSettings(animation);
   await animation.getByRole('combobox', { name: 'Scene' }).selectOption('2');
   await expect.poll(() => audio.evaluate((element) => element.currentTime)).toBeCloseTo(target, 1);
   await expect(animation.getByRole('region', { name: 'Narration' })).toContainText('This call does not return');
@@ -172,6 +176,7 @@ test('reduced motion preserves all explanations and mobile controls remain usabl
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto(pageURL);
   const animation = player(page);
+  await openPlayerSettings(animation);
   await expect(animation.getByLabel('Animate visuals')).not.toBeChecked();
   await animation.getByRole('combobox', { name: 'Scene' }).selectOption({ label: '5. Callbacks' });
   await expect(animation.getByRole('heading', { name: 'A function you hand over' })).toBeVisible();
@@ -255,6 +260,7 @@ for (const variant of [
     await expect(theme).toBeChecked({ checked: variant.dark });
     const animation = player(page);
     for (let index = 0; index < 9; index++) {
+      await openPlayerSettings(animation);
       await animation.getByRole('combobox', { name: 'Scene' }).selectOption(String(index));
       const art = animation.getByRole('img');
       await expect(art).toBeVisible();

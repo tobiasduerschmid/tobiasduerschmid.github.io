@@ -1,6 +1,7 @@
 const { loadStory, loadRegistry } = require('../scripts/narration/source');
 const { test, expect } = require('@playwright/test');
 const { a11yCheckpoint } = require('./a11y-helpers');
+const { openPlayerSettings } = require('./helpers/narration-player');
 const { readFileSync } = require('node:fs');
 const yaml = require('js-yaml');
 
@@ -47,6 +48,7 @@ test('each cue shows its panels on one screen named by the cue\'s visual', async
   page.on('pageerror', error => errors.push(error.message));
   await page.goto(url);
   const animation = player(page);
+  await openPlayerSettings(animation);
   await expect(animation.getByRole('combobox', { name: 'Code language' })).toHaveCount(0);
   for (const [sceneIndex, scene] of story.scenes.entries()) {
     for (const [cueIndex, cue] of scene.cues.entries()) {

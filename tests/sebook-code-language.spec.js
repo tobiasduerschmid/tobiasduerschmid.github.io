@@ -1,4 +1,5 @@
 const { test, expect } = require('@playwright/test');
+const { openPlayerSettings } = require('./helpers/narration-player');
 const { a11yCheckpoint } = require('./a11y-helpers');
 
 const classChapter = '/SEBook/uml_class_diagram.html';
@@ -120,6 +121,7 @@ test('Observer tabs and dropdowns share the preference without restarting narrat
   const tabs = page.getByRole('tablist', { name: 'Observer code language' });
   const position = animation.getByRole('slider', { name: 'Animation position' });
   await expect(animation.getByRole('button', { name: 'Play narration' })).toBeVisible();
+  await openPlayerSettings(animation);
   await position.fill('120');
   await expect.poll(() => animation.locator('audio').evaluate(audio => audio.currentTime)).toBeCloseTo(120, 1);
   await tab(tabs, 'Java').click();

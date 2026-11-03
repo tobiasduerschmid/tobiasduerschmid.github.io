@@ -1,0 +1,11 @@
+{%- comment -%}
+  The runtime every narration player shares, in dependency order: the song
+  player's control-visibility, gesture, and keyboard modules, the shared
+  control bar, and the narration transport, which binds the bar to each
+  player it enhances. A player's own scripts follow this include.
+{%- endcomment -%}
+<script src="{{ '/js/song-video/controls-visibility.js' | relative_url }}?v={{ site.asset_version }}" defer></script>
+<script src="{{ '/js/song-video/gestures.js' | relative_url }}?v={{ site.asset_version }}" defer></script>
+<script src="{{ '/js/song-video/keyboard.js' | relative_url }}?v={{ site.asset_version }}" defer></script>
+<script src="{{ '/js/narration-player-controls.js' | relative_url }}?v={{ site.asset_version }}" defer></script>
+<script src="{{ '/js/narrated-explainer.js' | relative_url }}?v={{ site.asset_version }}" defer></script>

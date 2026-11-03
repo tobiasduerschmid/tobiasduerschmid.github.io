@@ -1,0 +1,20 @@
+{%- comment -%}
+  How to operate a narration player with the pointer and the keyboard; the
+  keys are the song player's (js/song-video/keyboard.js), so /shortcuts/
+  documents them once. Params: id (the player prefix; a picture control
+  describes itself with "<id>-help"), picture (the screen plays and skips on
+  click), text_only (no narration clock), pause_note (where playback pauses).
+{%- endcomment -%}
+<details class="vn-tips">
+  <summary>Playback tips and shortcuts</summary>
+  {%- if include.text_only %}
+  <p>With focus on the player or its controls, <kbd>F</kbd> toggles full screen, and <kbd>Esc</kbd> leaves it.</p>
+  {%- else %}
+  {%- if include.picture %}
+  <p id="{{ include.id }}-help">Click or tap the picture to play or pause. Double-click or double-tap its left half to go back 5 seconds, or its right half to go forward 5 seconds. In full screen, the controls hide after 3 seconds of playback; move the pointer, press a key, or tap the picture to show them.</p>
+  {%- else %}
+  <p>In full screen, the controls hide after 3 seconds of playback; move the pointer or press a key to show them.</p>
+  {%- endif %}
+  <p>With focus on the {% if include.picture %}picture{% else %}player{% endif %} or the controls: <kbd>K</kbd> or <kbd>Space</kbd> plays or pauses, <kbd>←</kbd> and <kbd>→</kbd> go back or forward 5 seconds, <kbd>0</kbd> to <kbd>9</kbd> jump to the start or 10% to 90% of the narration, <kbd>C</kbd> turns captions on or off, and <kbd>F</kbd> toggles full screen. <kbd>Esc</kbd> leaves full screen.{% if include.pause_note %} {{ include.pause_note }}{% endif %}</p>
+  {%- endif %}
+</details>

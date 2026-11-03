@@ -1,6 +1,7 @@
 const { loadStory, loadRegistry } = require('../scripts/narration/source');
 const { test, expect } = require('@playwright/test');
 const { a11yCheckpoint } = require('./a11y-helpers');
+const { openPlayerSettings } = require('./helpers/narration-player');
 const { readFileSync } = require('node:fs');
 const yaml = require('js-yaml');
 
@@ -43,6 +44,7 @@ test('a lesson without code offers no language choice and names its own parts', 
   page.on('pageerror', error => errors.push(error.message));
   await page.goto(url);
   const animation = player(page);
+  await openPlayerSettings(animation);
   await expect(animation.getByRole('combobox', { name: 'Code language' })).toHaveCount(0);
   for (const [index, scene] of story.scenes.entries()) {
     await seek(page, timing.scenes[index].start + 0.5);
@@ -148,6 +150,7 @@ for (const dark of [false, true]) {
       await expect.poll(() => animation.evaluate(element => element.scrollWidth - element.clientWidth)).toBeLessThanOrEqual(1);
       await a11yCheckpoint(page, `mobile ${id}`, { include: '#uml_component_diagram-animation .nja-player', feature: 'uml-component-diagram-narration' });
     }
+    await openPlayerSettings(animation);
     await animation.getByRole('button', { name: 'Knowledge check', exact: true }).click();
     const question = questionsOf('trace')[0];
     const wrong = Number(Object.keys(question.option_feedback)[0]);

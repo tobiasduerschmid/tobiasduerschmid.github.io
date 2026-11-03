@@ -1,43 +1,17 @@
-/* Diagram case studies adapt the shared narration clock and quiz engine. */
+/* Diagram case studies adapt the shared narration clock and quiz engine. While
+   a decision is open, the shared control bar, step buttons included, steps
+   aside (js/narration-player-controls.js). */
 (function () {
   'use strict';
 
-  function cloneDiagram(source, prefix) {
-    const svg = source.cloneNode(true);
-    const elements = [svg, ...svg.querySelectorAll('*')];
-    const ids = new Map(elements.filter(element => element.id)
-      .map(element => [element.id, `${prefix}-${element.id}`]));
-    elements.forEach(element => {
-      Array.from(element.attributes).forEach(attribute => {
-        let value = attribute.value.replace(/url\(#([^)]*)\)/g,
-          (match, id) => ids.has(id) ? `url(#${ids.get(id)})` : match);
-        if (attribute.name === 'id') value = ids.get(value);
-        if (['href', 'xlink:href'].includes(attribute.name) && ids.has(value.slice(1))) {
-          value = `#${ids.get(value.slice(1))}`;
-        }
-        if (['aria-labelledby', 'aria-describedby'].includes(attribute.name)) {
-          value = value.split(' ').map(id => ids.get(id) || id).join(' ');
-        }
-        if (value !== attribute.value) element.setAttribute(attribute.name, value);
-      });
-    });
-    return svg;
-  }
-
   function showDiagram(container, readingStep, diagram, prefix) {
-    const source = readingStep.querySelector('.case-diagram svg');
-    if (!source) {
+    const settled = readingStep.querySelector('.case-diagram svg');
+    if (!settled) {
       // A missing static render must leave the meaning available, never raw UML.
       container.textContent = diagram.description;
       return;
     }
-    container.dataset.umlRendered = 'true';
-    container.dataset.umlType = diagram.type;
-    container.dataset.umlSpec = diagram.source;
-    window.UMLShared.prepareDiagramContainer(container, diagram.type);
-    container.replaceChildren(cloneDiagram(source, prefix));
-    window.UMLShared.autoFitSVG(container);
-    window.UMLShared.applySvgAccessibility(container, diagram.type, diagram.source, diagram.label);
+    window.NarrationDiagram.show(container, settled, diagram, prefix);
     // The site's automatic describer supplies a structural breakdown; this
     // authored caption and description supply the case-specific interpretation.
     const image = container.querySelector('svg');
@@ -94,7 +68,6 @@
       quizPanel.hidden = true;
       stage.hidden = false;
       root.querySelector('.nja-narration').hidden = false;
-      root.querySelector('.case-step-actions').hidden = false;
       if (playButton) playButton.disabled = false;
     }
 
@@ -106,8 +79,8 @@
         if (playNarration) player.play();
       } else {
         status.textContent = 'Case study complete. Revisit any scene to review your reasoning.';
-        // A text-only story has no restart button; scene review stays available.
-        (root.querySelector('[data-action="restart"]') || root.querySelector('[data-setting="scene"]')).focus({ preventScroll: true });
+        // A text-only story has no restart button; its player settings hold scene review.
+        (root.querySelector('[data-action="restart"]') || root.querySelector('.vn-settings-toggle')).focus({ preventScroll: true });
       }
     }
 
@@ -147,7 +120,6 @@
       host.hidden = false;
       stage.hidden = true;
       root.querySelector('.nja-narration').hidden = true;
-      root.querySelector('.case-step-actions').hidden = true;
       if (playButton) playButton.disabled = true;
       quizPanel.querySelector('.tvm-quiz-status').textContent = 'Make a prediction before revealing the next evidence. You can retry or continue after feedback.';
       const heading = quizPanel.querySelector('h3');

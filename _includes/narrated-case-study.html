@@ -7,21 +7,10 @@
   {% if case_story.description %}<p>{{ case_story.description | escape }}</p>{% endif %}
   <p>Use <strong>Next step</strong> to investigate {% if case_story.audio %}without audio, or play the narration{% else %}at your own pace{% endif %}. Each decision pauses before the next evidence. You may revisit any scene; this is practice, not an exam.</p>
   <div class="nja-player">
-    {%- comment -%} A text-only story has no media until its speech is rendered, so it offers no audio controls. {%- endcomment -%}
-    {% if case_story.audio %}
-    <div class="nja-controls nja-playback-controls" hidden>
-      <div class="nja-transport">
-        <button type="button" data-action="play" aria-label="Play narration"><i class="fa fa-play" aria-hidden="true"></i></button>
-        <button type="button" data-action="restart" aria-label="Restart narration"><i class="fa fa-undo" aria-hidden="true"></i></button>
-        <button type="button" data-action="previous" aria-label="Previous scene"><i class="fa fa-step-backward" aria-hidden="true"></i></button>
-        <button type="button" data-action="next" aria-label="Next scene"><i class="fa fa-step-forward" aria-hidden="true"></i></button>
-        <button type="button" data-action="mute" aria-label="Mute narration" aria-pressed="false"><i class="fa fa-volume-up" aria-hidden="true"></i></button>
-        <output class="nja-time" aria-label="Playback time">0:00</output>
-      </div>
-      <label class="nja-seek-label">Narration position<input type="range" class="nja-seek" min="0" max="{{ case_timing.duration | default: 1 }}" step="0.01" value="0" aria-valuetext="0:00"></label>
-    </div>
-    {% endif %}
-    <div class="nja-stage">
+    <div class="vn-video song-player-screen" data-vn-video tabindex="-1">
+    <div class="vn-surface">
+    <div class="vn-frame">
+    <div class="nja-stage" role="region" aria-label="Scene" data-fullscreen-scroll>
       {% for scene in case_story.scenes %}
       <section class="nja-scene" data-scene="{{ scene.id | escape }}" aria-labelledby="{{ case_id }}-{{ scene.id }}-title"{% unless forloop.first %} hidden{% endunless %}>
         <p class="nja-scene-meta">{{ forloop.index }} / {{ case_story.scenes.size }} · {{ scene.label | escape }}</p>
@@ -47,33 +36,36 @@
       {% endfor %}
     </div>
     <section class="case-quiz" aria-labelledby="{{ case_id }}-decision-title" hidden>
+      <button type="button" class="vn-check-exit">Exit full screen</button>
       <h3 id="{{ case_id }}-decision-title" tabindex="-1">Choose the next action</h3>
       <div data-quiz-host></div>
       <p class="tvm-quiz-status" role="status" aria-live="polite"></p>
       <button type="button" data-case-action="review-evidence">Review this scene</button>
     </section>
-    <div class="nja-narration" role="region" aria-label="Current narration"><p>{{ case_story.scenes.first.cues.first.text | escape }}</p></div>
+    <div class="nja-narration vn-captions" id="{{ case_id }}-captions" role="region" aria-label="Narration" tabindex="0"><p>{{ case_story.scenes.first.cues.first.text | escape }}</p></div>
+    {% capture case_steps %}<span class="case-step-actions"><button type="button" data-case-action="previous-step">Previous step</button><button type="button" data-case-action="next-step">Next step</button><output data-case-progress aria-label="Current step"></output></span>{% endcapture %}
+    {%- comment -%} A text-only story has no media until its speech is rendered, so its bar offers no audio controls. {%- endcomment %}
     {% if case_story.audio %}
-    <audio class="nja-audio" controls preload="none" aria-label="{{ case_story.title | escape }} narration">
-      <source src="{{ case_story.audio | relative_url }}" type="audio/mpeg">
-      <track kind="captions" src="{{ case_story.captions | relative_url }}" srclang="en" label="English">
-    </audio>
+    {% include narration-player-controls.html id=case_id duration=case_timing.duration seek_label="Narration position" scenes=case_story.scenes scene_label="Review a scene" speed_label="Narration speed" lead=case_steps %}
+    {% else %}
+    {% include narration-player-controls.html id=case_id text_only=true scenes=case_story.scenes scene_label="Review a scene" lead=case_steps %}
     {% endif %}
-    <div class="nja-controls case-step-controls" hidden>
-      <div class="case-step-actions">
-        <button type="button" data-case-action="previous-step">Previous step</button>
-        <button type="button" data-case-action="next-step">Next step</button>
-        <output data-case-progress aria-label="Current step"></output>
-      </div>
-      <div class="nja-settings">
-        <label class="nja-scene-select">Review a scene<select data-setting="scene">{% for scene in case_story.scenes %}<option value="{{ forloop.index0 }}">{{ forloop.index }}. {{ scene.label | escape }}</option>{% endfor %}</select></label>
-        {% if case_story.audio %}<label>Narration speed<select data-setting="speed"><option value="0.75">0.75x</option><option value="1" selected>1x</option><option value="1.25">1.25x</option><option value="1.5">1.5x</option></select></label>{% else %}<button type="button" data-action="fullscreen" aria-label="Enter full screen" hidden><i class="fa fa-expand" aria-hidden="true"></i></button>{% endif %}
-      </div>
     </div>
+    </div>
+    </div>
+    {% if case_story.audio %}
+    {% capture audio_label %}{{ case_story.title }} narration{% endcapture %}
+    {% include narration-player-audio.html story=case_story label=audio_label %}
+    {% endif %}
     <p class="nja-status" role="status" aria-live="polite"></p>
   </div>
   {{ include.notes_actions }}
-  {% if case_story.audio %}<p class="nja-credit">Synthetic narration: Kokoro. <a href="{{ case_story.script | relative_url }}" download>Download narration script</a> · <a href="{{ case_story.audio | relative_url }}" download>Download narration</a> · <a href="{{ case_story.captions | relative_url }}" download>Download captions</a></p>{% endif %}
+  {% if case_story.audio %}
+  {% include narration-player-tips.html id=case_id pause_note="The narration pauses at each decision." %}
+  {% include narration-player-credit.html story=case_story %}
+  {% else %}
+  {% include narration-player-tips.html id=case_id text_only=true %}
+  {% endif %}
   <div class="case-reading-actions" hidden><button type="button" data-case-action="read">Read at my own pace</button><button type="button" data-case-action="print">Print the case study</button></div>
   <details class="nja-transcript" open>
     <summary>Complete transcript, diagrams, and decision explanations (contains later findings)</summary>
@@ -81,7 +73,8 @@
   </details>
   {% include narration-data.html topic=include.topic %}
 </section>
-<script src="{{ '/js/narrated-explainer.js' | relative_url }}" defer></script>
-<script src="{{ '/js/parsons-grading.js' | relative_url }}" defer></script>
-<script src="{{ '/js/tutorial-quiz.js' | relative_url }}" defer></script>
-<script src="{{ '/js/narrated-case-study.js' | relative_url }}" defer></script>
+{% include narration-player-scripts.html %}
+<script src="{{ '/js/parsons-grading.js' | relative_url }}?v={{ site.asset_version }}" defer></script>
+<script src="{{ '/js/tutorial-quiz.js' | relative_url }}?v={{ site.asset_version }}" defer></script>
+<script src="{{ '/js/narration-diagram.js' | relative_url }}?v={{ site.asset_version }}" defer></script>
+<script src="{{ '/js/narrated-case-study.js' | relative_url }}?v={{ site.asset_version }}" defer></script>

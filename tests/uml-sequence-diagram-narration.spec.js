@@ -1,6 +1,7 @@
 const { loadStory, loadRegistry } = require('../scripts/narration/source');
 const { test, expect } = require('@playwright/test');
 const { a11yCheckpoint } = require('./a11y-helpers');
+const { openPlayerSettings } = require('./helpers/narration-player');
 const { readFileSync } = require('node:fs');
 const yaml = require('js-yaml');
 
@@ -71,6 +72,7 @@ test('code marks follow every cue in all four languages without moving the narra
     for (const [cueIndex, cue] of scene.cues.entries()) {
       await seek(page, cueMiddle(scene.id, cueIndex));
       for (const language of story.languages) {
+        await openPlayerSettings(animation);
         await animation.getByRole('combobox', { name: 'Code language' }).selectOption(language);
         await expect(animation.getByRole('region', { name: 'Narration', exact: true })).toHaveText(cue.text);
         const code = animation.locator('.nja-stage pre:visible');
@@ -252,6 +254,7 @@ for (const dark of [false, true]) {
       }
       await a11yCheckpoint(page, `mobile ${id}`, { include: '#uml_sequence_diagram-animation .nja-player', feature: 'uml-sequence-diagram-narration' });
     }
+    await openPlayerSettings(animation);
     await animation.getByRole('button', { name: 'Knowledge check', exact: true }).click();
     const question = questionsOf('runs')[0];
     const wrong = Number(Object.keys(question.option_feedback)[0]);
@@ -290,6 +293,7 @@ test('reading view keeps the chosen language and theme and is accessible', async
   // The reader is every step in four languages; auditing it twice takes longer than the default.
   test.setTimeout(120000);
   await page.goto(url);
+  await openPlayerSettings(player(page));
   await player(page).getByRole('combobox', { name: 'Code language' }).selectOption('cpp');
   await theme(page, true);
   await player(page).getByRole('link', { name: 'Read at my own pace', exact: true }).click();
