@@ -35,6 +35,24 @@ def values(step, identity):
 
 
 class ObjectReferenceTracerTests(unittest.TestCase):
+    def test_python_names_and_members_explicitly_use_object_reference_semantics(self):
+        result = trace("row = [1]\nalias = row")
+        final = result["steps"][-1]
+        names = final["scopes"][0]["bindings"]
+        self.assertEqual({name["semantics"] for name in names}, {"object-reference"})
+        self.assertEqual(names[0]["target"], names[1]["target"])
+        row = objects(final)[names[0]["target"]]
+        self.assertEqual(row["entries"][0]["semantics"], "object-reference")
+
+    def test_python_producer_marks_incidental_objects_without_hiding_like_named_user_types(self):
+        result = trace("class function: pass\ndef helper(): pass\nitem = function()")
+        final = result["steps"][-1]
+        graph, names = objects(final), bindings(final)
+        self.assertTrue(graph[names["helper"]]["hidden"])
+        self.assertTrue(graph[names["function"]]["hidden"])
+        self.assertFalse(graph[names["item"]].get("hidden", False))
+        self.assertEqual(graph[names["item"]]["entries"][0]["displayLabel"], "class")
+
     def test_playback_skips_pure_multiline_definitions_but_keeps_raw_states_and_function_body(self):
         result = trace("""
             def collect(
@@ -489,6 +507,8 @@ class ObjectReferenceTracerTests(unittest.TestCase):
             class Meta(type):
                 def __hash__(self):
                     raise RuntimeError('metaclass hashing')
+                def __eq__(self, other):
+                    raise RuntimeError('metaclass equality')
             class Quiet(metaclass=Meta):
                 def __repr__(self):
                     raise RuntimeError('repr called')

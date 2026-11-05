@@ -1,4 +1,4 @@
-/** Python presentation for the reference lab. The native textarea owns editing,
+/** Code presentation for the reference lab. The native textarea owns editing,
  * selection, undo, IME, and accessibility; an inert mirror owns syntax and the
  * execution marker. Neither highlighting nor playback rewrites the input. */
 (function () {
@@ -13,13 +13,29 @@
   // colored while typing; f-string contents deliberately stay string-colored.
   const pattern = /(#[^\n]*)|((?:[rRbBfFuU]{1,2})?(?:"""[\s\S]*?(?:"""|$)|'''[\s\S]*?(?:'''|$)|"(?:\\[\s\S]|[^"\\\n])*(?:"|(?=\n)|$)|'(?:\\[\s\S]|[^'\\\n])*(?:'|(?=\n)|$)))|(\b(?:0[xX][\da-fA-F_]+|0[bB][01_]+|0[oO][0-7_]+|\d[\d_]*(?:\.[\d_]*)?(?:[eE][+-]?[\d_]+)?j?))|([A-Za-z_]\w*)/g;
 
-  function tokens(source) {
+  const languages = {
+    python: { label: 'Python', keywords, builtins, pattern },
+    cpp: {
+      label: 'C++',
+      keywords: new Set(('alignas auto bool break case char class const constexpr continue default delete do double '
+        + 'else enum explicit extern false float for friend if inline int long namespace new nullptr operator private '
+        + 'protected public return short signed sizeof static struct switch template this true typedef typename union '
+        + 'unsigned using virtual void volatile while').split(' ')),
+      builtins: new Set(['std', 'string', 'cout', 'endl']),
+      pattern: /(\/\/[^\n]*|\/\*[\s\S]*?(?:\*\/|$)|^\s*#\s*\w+)|("(?:\\[\s\S]|[^"\\\n])*(?:"|(?=\n)|$)|'(?:\\[\s\S]|[^'\\\n])*(?:'|(?=\n)|$))|(\b(?:0[xX][\da-fA-F']+|0[bB][01']+|\d[\d']*(?:\.[\d']*)?(?:[eE][+-]?[\d']+)?)[uUlLfF]*)|([A-Za-z_]\w*)/gm
+    }
+  };
+
+  function languageLabel(language = 'python') { return languages[language].label; }
+
+  function tokens(source, language = 'python') {
+    const syntax = languages[language];
     const result = [];
     let end = 0;
-    for (const match of source.matchAll(pattern)) {
+    for (const match of source.matchAll(syntax.pattern)) {
       if (match.index > end) result.push({ text: source.slice(end, match.index) });
       const kind = match[1] ? 'comment' : match[2] ? 'string' : match[3] ? 'number'
-        : keywords.has(match[0]) ? 'keyword' : builtins.has(match[0]) ? 'builtin' : '';
+        : syntax.keywords.has(match[0]) ? 'keyword' : syntax.builtins.has(match[0]) ? 'builtin' : '';
       result.push({ text: match[0], kind });
       end = match.index + match[0].length;
     }
@@ -35,9 +51,9 @@
     return span;
   }
 
-  function highlight(source) {
+  function highlight(source, language = 'python') {
     const fragment = document.createDocumentFragment();
-    tokens(source).forEach(token => fragment.append(tokenNode(token.text, token.kind)));
+    tokens(source, language).forEach(token => fragment.append(tokenNode(token.text, token.kind)));
     return fragment;
   }
 
@@ -48,13 +64,14 @@
   }
 
   class Editor {
-    constructor(host, { id, describedBy, rows, onInput }) {
+    constructor(host, { id, describedBy, rows, onInput, language = 'python' }) {
       this.host = host;
+      this.language = language;
       this.listeners = new AbortController();
       const header = node('div', 'orl-code-header');
       const label = node('label', 'orl-editor-label');
       label.htmlFor = id;
-      label.textContent = 'Python code';
+      label.textContent = languageLabel(language) + ' code';
       this.position = node('span', 'orl-code-position');
       // The live status describes execution to assistive technology once.
       this.position.setAttribute('aria-hidden', 'true');
@@ -102,7 +119,7 @@
         this.numbers.append(number);
       };
       appendLine();
-      tokens(this.input.value).forEach(token => {
+      tokens(this.input.value, this.language).forEach(token => {
         token.text.split('\n').forEach((part, index) => {
           if (index) appendLine();
           if (part) line.append(tokenNode(part, token.kind));
@@ -144,5 +161,5 @@
     }
   }
 
-  window.ObjectReferenceCode = { Editor, highlight };
+  window.ObjectReferenceCode = { Editor, highlight, languageLabel };
 }());

@@ -305,6 +305,17 @@ class _ObjectGraph:
             node, value, depth = self.pending[position]
             self._describe(node, value, depth)
             position += 1
+        # Presentation policy belongs to the Python producer. Other languages
+        # can use the graph renderer without inheriting Python's type rules.
+        incidental_types = (types.FunctionType, types.BuiltinFunctionType, types.MethodType, types.ModuleType)
+        hidden = {node["id"] for node, value, _ in self.pending
+                  if any(type(value) is cls for cls in incidental_types)}
+        for node, value, _ in self.pending:
+            if _is_class(value) and "entries" in node and not any(
+                    entry["target"] not in hidden for entry in node["entries"]):
+                hidden.add(node["id"])
+        for identity in hidden:
+            self.nodes[identity]["hidden"] = True
         return list(self.nodes.values())
 
     def _describe(self, node, value, depth):
@@ -325,7 +336,11 @@ class _ObjectGraph:
                 node["value"] = "Additional entries omitted"
                 self.notes.add("Objects show at most " + str(MAX_ENTRIES) + " entries.")
                 break
-            node["entries"].append({"label": _clip(label), "target": self.reference(child, depth + 1)})
+            entry = {"label": _clip(label), "target": self.reference(child, depth + 1),
+                     "semantics": "object-reference"}
+            if label == "__class__":
+                entry["displayLabel"] = "class"
+            node["entries"].append(entry)
 
     def _entries(self, node, value):
         value_type = type(value)
@@ -433,7 +448,8 @@ class _ExecutionTrace:
             hidden_names = _HIDDEN_CLASS_NAMES if class_body else _HIDDEN_NAMES
             scope = self._scope(self.frame_ids[identity][0], name, active_frame.f_locals, graph, hidden_names)
             if returned is not None and active_frame is frames[0]:
-                scope["bindings"].append({"name": "(return value)", "target": graph.reference(returned[0])})
+                scope["bindings"].append({"name": "(return value)", "target": graph.reference(returned[0]),
+                                          "semantics": "object-reference"})
             scopes.append(scope)
         return scopes
 
@@ -446,7 +462,8 @@ class _ExecutionTrace:
             if len(bindings) >= MAX_ENTRIES:
                 graph.notes.add("Scopes show at most " + str(MAX_ENTRIES) + " bindings.")
                 break
-            bindings.append({"name": _clip(binding), "target": graph.reference(value)})
+            bindings.append({"name": _clip(binding), "target": graph.reference(value),
+                             "semantics": "object-reference"})
         return {"id": identity, "name": name, "bindings": bindings}
 
     def observe(self, frame, event, argument):

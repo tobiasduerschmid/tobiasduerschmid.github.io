@@ -448,6 +448,33 @@ html.dark-mode .post-content .object-reference-lab :is(svg.orl-local-edges, svg.
 .orl-binding > .orl-reference-name { grid-area: 1 / 1; }
 .orl-name-slot { grid-area: 1 / 2; }
 
+/* Values occupy this card; aliases name the same storage. Only indirect
+ * bindings live outside it and receive a pointer slot and arrow. */
+.orl-direct-bindings {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35em;
+  margin-bottom: 0.4em;
+  padding-bottom: 0.4em;
+  border-bottom: 1px solid var(--orl-divider);
+}
+
+.orl-direct-binding { align-self: flex-start; }
+.orl-binding-kind { grid-area: 1 / 2; color: var(--orl-muted); }
+.orl-change-announcement {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.orl-contained-value .orl-value {
+  padding: 0.1em 0.35em;
+  border: 1px solid var(--orl-border);
+}
+
 .orl-reference-name,
 .orl-primitive,
 .orl-value {
@@ -573,13 +600,17 @@ html.dark-mode .post-content .object-reference-lab :is(svg.orl-local-edges, svg.
 }
 
 .orl-binding.is-updated { border-radius: 3px; }
+.orl-direct-binding.is-updated {
+  outline: 2px solid var(--orl-edge);
+  outline-offset: 2px;
+}
 .object-reference-lab :is(.orl-reference-edge, .orl-binding-edge, .orl-edge-bridge).is-updated {
   stroke-width: 3;
   filter: drop-shadow(0 0 3px var(--orl-highlight));
 }
 
 @media print {
-  .object-reference-lab .is-updated { box-shadow: none; filter: none; }
+  .object-reference-lab .is-updated { box-shadow: none; filter: none; outline: none; }
 }
 
 .object-reference-lab .orl-empty {

@@ -25,6 +25,10 @@ The [Python RegEx Simulator & Debugger]({{ '/SEBook/tools/regex-simulator.html' 
 
 [Python](/SEBook/tools/python.html) is the scripting and automation language used throughout many SEBook examples, with emphasis on syntax, data structures, functions, modules, and idiomatic problem solving. The [Python Essentials Tutorial](/SEBook/tools/python-tutorial) builds fluency, and the [Python Debugging Tutorial](/SEBook/tools/python-debugging) practices debugger-driven fault localization.
 
+[C++ Parameter Passing Lab](/SEBook/tools/cpp-parameter-passing-lab.html){: .sebook-reading-link} uses editable
+storage diagrams to compare value copies, reference aliases, pointer parameters,
+explicit copy-in/copy-out, macro expansion, and Python argument binding.
+
 # Node.js
 
 [Node.js](/SEBook/tools/nodejs.html) introduces JavaScript on the server: modules, asynchronous callbacks, event loops, package management, HTTP servers, and Express-style routing. The [Node.js Essentials Tutorial](/SEBook/tools/nodejs-tutorial) gives the same concepts a live coding path.

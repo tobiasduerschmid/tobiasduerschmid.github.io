@@ -6,20 +6,70 @@ Research and implementation review: 2026-10-06. This is an engineering note, not
 
 The original fixed, full-width rows made routes unnecessarily long. The current
 renderer uses ELK Layered 0.12.0, served from local pinned assets, with measured
-card dimensions and fixed member ports. Each Python identity gets one node,
-including primitive objects. Aliases sit immediately above their target card;
-this avoids an extra global-names column. Cards size to their text, without
-scaling text down. Container slots keep their Python order.
+card dimensions and fixed member ports. Each producer-supplied identity gets one
+node. Indirect bindings sit immediately above their target card; direct value
+names and reference aliases sit inside the storage card. This avoids an extra
+global-names column. Cards size to their text, without scaling text down. Entries
+keep their producer-supplied order.
 
-The source highlight identifies the operation represented by the displayed
-snapshot. The tracer supplies `visualizedLine` separately from its raw event
-`line`: ordinary states highlight the previously executed line in that frame,
-entry states highlight the call site that bound the arguments, and a resumed
-caller highlights its call or assignment. Return and error events keep their
-own source line. Initial states have no highlight; the final state retains the
-last represented operation or error. Passive declaration bookkeeping does not
-become a highlight. The editor, status label, and printed source excerpt use
-this same metadata, including during backward playback.
+## Language-independent binding contract
+
+The graph and print renderer consume snapshots, with no language detection or
+type-name heuristics. The lab controller selects a producer using `language`
+(`python` by default, or `cpp`). Python execution, C++ instrumentation, editor
+syntax coloring, and runtime limits stay outside the renderer.
+
+- A scope binding is `{name, target, semantics?}`. `value` puts a name inside its
+  own storage card; `reference` puts an alias name on that same card, with no
+  pointer arrow; `object-reference` gives each name its own pointer slot and
+  arrow. Missing semantics preserves the older object-reference contract.
+- An object is `{id, type, value?, entries?, note?, hidden?}`. Stable IDs express
+  identity rather than equality. Separate copied values must have different IDs.
+- Reference entries use `{label, target}`; contained values use `{label, value}`.
+  `displayLabel` optionally changes the displayed label while retaining the
+  stable `label` key. Values have bordered cells; reference entries have their
+  own pointer boxes and arrows.
+- Producers mark incidental runtime objects with `hidden`; the full text state
+  still describes them. Python owns its function/module/class filtering and
+  `__class__` display label. Another producer can display a type named `function`.
+- Text alternatives use “occupies” for a value, “aliases” for a reference, and
+  an arrow for an indirect binding. Print uses the same descriptions and shapes.
+
+The rendering hooks `.orl-direct-binding`, `.orl-name-slot`, `.orl-binding-edge`, and
+`.orl-reference-target` identify binding labels, pointer glyphs and drawn paths
+for geometry checks. Assertions may verify change cues, source attachment and visible borders;
+they must not prescribe a particular optimizer route or card ordering.
+
+The Python tracer always emits object-reference semantics, including for numeric
+and string objects. The C++ adapter observes actual storage lifetimes and bindings;
+its supported language subset and compiler behavior are documented in
+`docs/object-reference-cpp.md`. The guided C++ lab maps Data Palooza PDF pages
+164–166, 169, 172, 177, 184–186 and Function Palooza pages 9–14 to executable
+comparisons. Copy-in/out is an explicit simulation. Macro examples avoid the
+unsequenced modifications in the slides' `square(++x)` example.
+
+## Source positions and layout
+
+The producer supplies `visualizedLine` separately from its raw event `line`.
+The editor, status label, and printed source excerpt consume that same metadata,
+including during backward playback. The shared entry caption says “Entering a
+scope · Line N” without assuming that the line is a call site. The editor's
+`.orl-source-line.is-current` rendering hook identifies the highlighted source.
+
+Python records pre-line observations: ordinary states highlight the previously
+completed operation in that frame, entry states highlight the call site that
+bound the arguments, and a resumed caller highlights its call or assignment.
+Python return, exception, and error events keep their own source line; passive
+declaration bookkeeping does not become a highlight.
+
+C++ observes completed declaration and expression statements. Function entry
+highlights the function definition, before its first body statement. A return
+observation highlights the return statement before evaluating its expression;
+those effects appear in nested calls or the next completed caller statement.
+Expanded macro statements retain their original invocation line. See
+`docs/object-reference-cpp.md` for closing-brace and lifetime details.
+Initial states have no highlight; final states retain the last represented
+source line. Error states retain their producer's source mapping.
 
 The lab supplies its filtered playback steps through `graph.setTimeline(steps)`.
 A bounded window reserves space for objects that will appear or grow, using each
@@ -304,11 +354,11 @@ Zero crossings is not a valid universal invariant. Three source lists, each refe
 
 ## Layout pipeline and failure behavior
 
-1. Build one node per visible trace identity, including strings, numbers, Boolean
-   values, and None. Never merge equal values; use actual Python identity.
+1. Build one node per visible trace identity. Never merge equal values; producers
+   supply the identities for objects or storage locations in their language.
 2. Measure the actual card, aliases, and each slot's button. Supply fixed outgoing
-   ports and a shared incoming port to ELK. Runtime functions/modules remain in
-   Reference details but are omitted from the compact data diagram.
+   ports and a shared incoming port to ELK. Objects marked hidden by the producer
+   remain in Reference details but are omitted from the compact data diagram.
 3. Measure the bounded future window in yielding slices. Build a union of measured
    envelopes and actual reference variants, then route around the entire reserved
    nodes, including their alias areas. Future content stays out of the displayed

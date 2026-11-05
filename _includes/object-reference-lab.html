@@ -4,7 +4,7 @@
   <div class="object-reference-lab__fallback">
     <p><strong>Object reference lab: {{ lab.title | escape }}</strong></p>
     <p>{{ lab.prediction | escape }}</p>
-    <pre><code class="language-python">{{ lab.code | escape }}</code></pre>
+    <pre><code class="language-{{ lab.language | default: 'python' | escape }}">{{ lab.code | escape }}</code></pre>
     <details>
       <summary>Check the references</summary>
       <p>{{ lab.explanation | escape }}</p>
