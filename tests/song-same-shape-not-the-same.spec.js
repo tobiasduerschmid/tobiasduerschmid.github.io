@@ -107,3 +107,15 @@ test('the Prof hero, as the intern, opens their mouth on the intern\'s words and
   await seek(page, introLine(5).marks.state + 0.1);
   await expect(singing, '"That\'s State", the lead speaking').toBeHidden();
 });
+
+// Routing ArchUML's connectors in the browser held the player's first frame
+// back by over a second, so the build draws every view the storyboard lists.
+test('the player page carries a drawing of every diagram in the storyboard', async ({ request }) => {
+  const html = await (await request.get(PLAYER)).text();
+  const data = html.match(/<script type="application\/json" id="song-diagrams">([\s\S]*?)<\/script>/);
+  expect(data, 'the song-diagrams data block').not.toBeNull();
+  const drawn = JSON.parse(data[1]);
+  const views = Object.values(storyboard.diagrams);
+  expect(drawn.map(({ kind, spec }) => ({ kind, spec }))).toEqual(views.map(({ kind, spec }) => ({ kind, spec })));
+  for (const { spec, svg } of drawn) expect(svg, spec).toMatch(/^<svg[\s>]/);
+});

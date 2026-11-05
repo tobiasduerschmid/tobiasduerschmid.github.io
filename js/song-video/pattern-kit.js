@@ -172,9 +172,12 @@
     return node;
   }
 
-  /** A row of app buttons that light up one after another. */
-  function buttons(app, names, { at, every = 0.25, until, tone = 'cream' }) {
-    const wrap = el('div', 'pk-buttons', app.body);
+  /**
+   * App buttons that light up one after another, in a row that wraps;
+   * `row` adds them to the row of an earlier call's buttons.
+   */
+  function buttons(app, names, { at, every = 0.25, until, tone = 'cream', row }) {
+    const wrap = row || el('div', 'pk-buttons', app.body);
     return names.map((name, i) => {
       const node = el('span', `pk-button pk-button--${tone} is-staged`, wrap, name);
       show(node, at + i * every, until);
@@ -527,13 +530,15 @@
       });
     },
     routes(art, { at }) {
-      const s = svg('svg', { viewBox: '0 0 240 90', width: 240, height: 90, 'aria-hidden': 'true' }, art);
-      svg('circle', { cx: 18, cy: 45, r: 7, class: 'pk-pic-dot' }, s);
-      svg('circle', { cx: 222, cy: 45, r: 7, class: 'pk-pic-dot' }, s);
-      [['M24 45 C80 0 160 0 216 45', 'fastest'], ['M24 45 L216 45', 'shortest'], ['M24 45 C80 90 160 90 216 45', 'no tolls']].forEach(([d, name], i) => {
+      // Each name sits clear of every route: above the top arc, in the gap
+      // over the straight road, and under the bottom arc.
+      const s = svg('svg', { viewBox: '0 0 240 100', width: 240, height: 100, 'aria-hidden': 'true' }, art);
+      svg('circle', { cx: 18, cy: 50, r: 7, class: 'pk-pic-dot' }, s);
+      svg('circle', { cx: 222, cy: 50, r: 7, class: 'pk-pic-dot' }, s);
+      [['M24 50 C80 13 160 13 216 50', 'fastest'], ['M24 50 L216 50', 'shortest'], ['M24 50 C80 87 160 87 216 50', 'no tolls']].forEach(([d, name], i) => {
         const p = svg('path', { d, class: `pk-pic-route pk-pic-route--${i}`, pathLength: 1 }, s);
         fx.draw(p, at + i * 0.35, 0.5);
-        const label = svg('text', { x: 120, y: [14, 40, 86][i], class: 'pk-pic-label is-staged' }, s);
+        const label = svg('text', { x: 120, y: [14, 43, 96][i], class: 'pk-pic-label is-staged' }, s);
         label.textContent = name;
         fx.fadeIn(label, at + i * 0.35 + 0.3, 0.2);
       });

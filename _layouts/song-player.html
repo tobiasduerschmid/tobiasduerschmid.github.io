@@ -128,6 +128,9 @@
     </noscript>
   </main>
   <script type="application/json" id="song-data">{{ song | jsonify | replace: '<', '\u003c' }}</script>
+  {%- if song.diagrams %}
+  <script type="application/json" id="song-diagrams">{{ song.diagrams | song_diagram_svgs }}</script>
+  {%- endif %}
   <script src="{{ '/js/song-video/virtual-clock.js' | relative_url }}"></script>
   <script src="{{ '/js/git-graph.js' | relative_url }}?v={{ site.asset_version }}-song-vector-2"></script>
   <script src="{{ '/js/song-video/graph-track.js' | relative_url }}?v={{ site.asset_version }}-song-vector-2"></script>

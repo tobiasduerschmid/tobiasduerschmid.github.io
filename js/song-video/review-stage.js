@@ -10,16 +10,16 @@
  * audience sits in silhouette below.
  *
  * Everything is a pure function of song time. The light only drifts: the
- * cones sway a few pixels over several seconds and the audience nods on the
- * beat in the choruses, so nothing large changes brightness quickly
- * (WCAG 2.3.1). Under reduced motion the room holds still. Storyboards
+ * cones sway a few pixels over several seconds, so nothing large changes
+ * brightness quickly (WCAG 2.3.1). The audience sits still, so nothing
+ * moves on stage without a cue. Under reduced motion the room holds still. Storyboards
  * select it with `theme: review-stage`; css/song-video-review-stage.css holds
  * its look and restyles the shared stickers, stamps, and badge.
  */
 (function () {
   'use strict';
 
-  const { onFrame, beats, hash01 } = window.Timeline;
+  const { onFrame, hash01 } = window.Timeline;
   const { el, svg } = window.SongKit;
   const W = 960;
   const H = 540;
@@ -178,32 +178,21 @@
     svg('rect', { x: 0, y: 0, width: W, height: 6, fill: 'url(#rs-gold)' }, root);
   }
 
-  /** The audience in silhouette along the bottom edge; heads nod on the beat. */
+  /** The audience in silhouette along the bottom edge. */
   function audience(root) {
     const g = svg('g', { class: 'rs-audience' }, root);
     const rows = [
       { y: 528, r: 15, step: 38, offset: 6, seed: 1 },
       { y: 546, r: 17, step: 44, offset: 24, seed: 2 },
     ];
-    const heads = [];
     for (const row of rows) {
       for (let x = row.offset; x < W + 20; x += row.step) {
         const jitter = hash01(Math.round(x * 7 + row.seed * 131));
-        const head = svg('g', {}, g);
+        const head = svg('g', { transform: `translate(${(x + (jitter - 0.5) * 10).toFixed(1)} ${row.y})` }, g);
         svg('ellipse', { cx: 0, cy: 0, rx: row.r * (0.85 + 0.25 * jitter), ry: row.r * 1.05 }, head);
         svg('path', { d: `M${-row.r * 1.6} ${row.r * 2.6} Q0 ${row.r * 0.6} ${row.r * 1.6} ${row.r * 2.6} Z` }, head);
-        heads.push({ node: head, x: x + (jitter - 0.5) * 10, y: row.y, phase: jitter });
       }
     }
-    function pose(t) {
-      const lift = reducedMotion.matches ? 0 : 3 * beats.pulse(t, 0.18);
-      for (const head of heads) {
-        const dy = lift * (0.6 + 0.4 * Math.sin(head.phase * 6.28 + t));
-        head.node.setAttribute('transform', `translate(${head.x.toFixed(1)} ${(head.y - dy).toFixed(1)})`);
-      }
-    }
-    pose(0);
-    onFrame(pose);
   }
 
   function reviewStage(stage) {

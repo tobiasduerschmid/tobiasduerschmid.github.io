@@ -8,7 +8,8 @@
  * review: the intern's pull request calls a State a Strategy, and the lead
  * answers with three rounds in which two patterns that look alike explain
  * what each is for. Each pattern's structure is real ArchUML notation on the
- * upstage screen (model-kit.js), drawn as large as the screen allows; the
+ * upstage screen (model-kit.js), drawn as large as the screen allows from
+ * the storyboard's `diagrams`, which the build draws ahead of time; the
  * food app, the price tags each rival hangs on the other, the rulings, and
  * the quiz are pattern-kit.js pieces. The marquee over the screen names the
  * pattern of every verse, and a name plate glows over each singer.
@@ -17,7 +18,7 @@
  * intern is the viewer's own hero in a blue hoodie, the lead a plum hoodie,
  * and each round's twins wear the same outfit (the shared shape) under
  * different name plates and with different props (what each one is for):
- * teal quarter-zips with headphones, charcoal hoodies, green hoodies. Every figure sings its own lines
+ * rust hoodies, charcoal hoodies, green hoodies. Every figure sings its own lines
  * and joins the crowd's. Each round's twins stand in the room's two side
  * spotlights through their ruling, and the judge of the ruling steps in
  * between them, centre stage; everyone lines up for the final chorus.
@@ -61,7 +62,7 @@
       adapter: 'Adapter', facade: 'Façade', observer: 'Observer', mediator: 'Mediator',
     };
     const COSTUME = {
-      intern: 'hero', lead: 'maintainer', strategy: 'tenor', state: 'tenor',
+      intern: 'hero', lead: 'maintainer', strategy: 'engineer', state: 'engineer',
       adapter: 'backend', facade: 'backend', observer: 'coder', mediator: 'coder',
     };
     const FEMININE = new Set(['lead', 'strategy', 'adapter', 'mediator']);
@@ -132,9 +133,9 @@
      * A sheet as large as the screen allows (its drawing never above
      * `scale`); `below` keeps room under the drawing for callouts there.
      */
-    function wide(parent, spec, { at, until, title, kind = 'class', scale = 1.2, top = 4, h = S.h - 8, below = 0 }) {
+    function wide(parent, view, { at, until, title, scale = 1.2, top = 4, h = S.h - 8, below = 0 }) {
       const fitH = h - 28 - (title ? 22 : 0) - below;
-      const sheet = M.diagram(parent, { kind, spec, x: S.x + 4, y: S.y + top, w: S.w - 8, fit: { w: S.w - 36, h: fitH }, scale, title, at, until });
+      const sheet = M.diagram(parent, { ...view, x: S.x + 4, y: S.y + top, w: S.w - 8, fit: { w: S.w - 36, h: fitH }, scale, title, at, until });
       sheet.body.style.paddingBottom = `${below}px`;
       return sheet;
     }
@@ -159,167 +160,9 @@
       return [[a.x + a.w / 2, a.y + a.h], [b.x + b.w / 2, b.y]];
     }
 
-    // ArchUML specs: each pattern's structure, and the look-alikes the song
-    // compares. ArchUML stacks a class chain top to bottom.
-    const SPEC = {
-      statusTwin: `@startuml
-layout vertical
-class Order
-interface OrderStatus
-class Placed
-class Cooking
-Order o--> OrderStatus
-Placed ..|> OrderStatus
-Cooking ..|> OrderStatus
-@enduml`,
-      splitTwin: `@startuml
-layout vertical
-class Checkout
-interface SplitRule
-class Even
-class ByItem
-Checkout o--> SplitRule
-Even ..|> SplitRule
-ByItem ..|> SplitRule
-@enduml`,
-      payment: `@startuml
-layout vertical
-class Checkout
-interface Payment {
-  + pay(total)
-}
-class CardPayment
-class WalletPayment
-Checkout --> Payment
-CardPayment ..|> Payment
-WalletPayment ..|> Payment
-@enduml`,
-      split: (extra) => `@startuml
-layout vertical
-class Checkout
-interface SplitRule {
-  + split(bill)
-}
-class Even
-class ByItem
-class OneTreats
-${extra ? 'class ByPercent\n' : ''}Checkout o--> SplitRule
-Even ..|> SplitRule
-ByItem ..|> SplitRule
-OneTreats ..|> SplitRule
-${extra ? 'ByPercent ..|> SplitRule\n' : ''}@enduml`,
-      stage: `@startuml
-layout vertical
-class Order
-interface Stage
-class Placed
-class Cooking
-class OnTheWay
-Order o--> Stage
-Placed ..|> Stage
-Cooking ..|> Stage
-OnTheWay ..|> Stage
-@enduml`,
-      stageMachine: `@startuml
-[*] --> Placed
-Placed --> Cooking : kitchen starts
-Cooking --> OnTheWay : driver picks up
-@enduml`,
-      adapter: `@startuml
-layout vertical
-interface Kitchen {
-  + send(order)
-}
-class TabletAdapter {
-  + send(order)
-}
-class Tablet {
-  + ticket(cents)
-}
-TabletAdapter ..|> Kitchen
-TabletAdapter --> Tablet : converts
-@enduml`,
-      tangle: `@startuml
-layout vertical
-class Phone
-class Web
-class Payment
-class Kitchen
-class Driver
-class Receipt
-Phone --> Payment
-Phone --> Kitchen
-Phone --> Driver
-Phone --> Receipt
-Web --> Payment
-Web --> Kitchen
-Web --> Driver
-Web --> Receipt
-@enduml`,
-      facade: `@startuml
-layout vertical
-class Phone
-class Web
-class OrderFacade
-class Payment
-class Kitchen
-class Driver
-class Receipt
-Phone --> OrderFacade
-Web --> OrderFacade
-OrderFacade --> Payment
-OrderFacade --> Kitchen
-OrderFacade --> Driver
-OrderFacade --> Receipt
-@enduml`,
-      observer: (watch) => `@startuml
-layout vertical
-class Order
-interface Observer {
-  + update(status)
-}
-class Phone
-class Tablet
-class DriverApp
-${watch ? 'class Watch\n' : ''}Order o--> Observer : followers
-Phone ..|> Observer
-Tablet ..|> Observer
-DriverApp ..|> Observer
-${watch ? 'Watch ..|> Observer\n' : ''}@enduml`,
-      mesh: `@startuml
-layout vertical
-class Kitchen
-class Drivers
-class Customer
-Kitchen --> Drivers
-Drivers --> Customer
-Customer --> Kitchen
-Kitchen --> Customer
-Drivers --> Kitchen
-@enduml`,
-      hub: `@startuml
-layout vertical
-class Kitchen
-class Drivers
-class Customer
-class DispatchHub {
-  + notify(event)
-}
-Kitchen --> DispatchHub
-Drivers --> DispatchHub
-Customer --> DispatchHub
-@enduml`,
-      exporter: (formats) => `@startuml
-layout vertical
-class Exporter
-interface Format {
-  + write(report)
-}
-${formats.map((f) => `class ${f}`).join('\n')}
-Exporter --> Format
-${formats.map((f) => `${f} ..|> Format`).join('\n')}
-@enduml`,
-    };
+    // ArchUML views ({ kind, spec }) from the storyboard, which the build
+    // draws into the player page ahead of time.
+    const VIEW = song.storyboard.diagrams;
 
     // ----------------------------------------------------------------
     // Intro: the pull request
@@ -347,7 +190,7 @@ ${formats.map((f) => `${f} ..|> Format`).join('\n')}
       const prAt = mark('intro-3', 'first');
       const pr = kit.scene(content, prAt - 0.1, start('verse-1') + 0.3, { exit: 'fade' });
       const request = P.pr(pr, { x: S.x + 6, y: S.y + 6, w: 290, parts: ['Order status:', 'Strategy', 'pattern'], at: prAt });
-      M.diagram(request.body, { kind: 'class', spec: SPEC.statusTwin, x: 0, y: 0, w: 262, fit: { w: 234, h: 206 }, scale: 1, at: mark('intro-3', 'order') });
+      M.diagram(request.body, { ...VIEW.status_twin, x: 0, y: 0, w: 262, fit: { w: 234, h: 206 }, scale: 1, at: mark('intro-3', 'order') });
       move('intern', mark('intro-3', 'pr'), 'present', { to: screenAt(0.25, 0.3), hold: 1.6 });
 
       // "Review comes back: That's not Strategy. That's State."
@@ -364,7 +207,7 @@ ${formats.map((f) => `${f} ..|> Format`).join('\n')}
       // "Same shape, sure. But not the same." A Strategy beside it draws the
       // same boxes and arrows.
       M.diagram(pr, {
-        kind: 'class', spec: SPEC.splitTwin, x: S.x + 306, y: S.y + 6, w: 276, fit: { w: 248, h: 236 }, scale: 1,
+        ...VIEW.split_twin, x: S.x + 306, y: S.y + 6, w: 276, fit: { w: 248, h: 236 }, scale: 1,
         title: 'A Strategy', at: mark('intro-6', 'same'),
       });
       kit.sticker(pr, 'Same boxes, same arrows', { x: S.x + 170, y: SILL, at: mark('intro-6', 'shape'), variant: 'gold', rotate: -2 });
@@ -406,7 +249,7 @@ ${formats.map((f) => `${f} ..|> Format`).join('\n')}
       // "Lots of patterns hide the part that's likely to change behind an
       // interface, so the rest won't rearrange."
       const c = kit.scene(content, line(v(4)).start - 0.1, line(v(6)).start - 0.1, { exit: 'fade' });
-      const hide = wide(c, SPEC.payment, { at: mark(v(4), 'lots'), scale: 1.1 });
+      const hide = wide(c, VIEW.payment, { at: mark(v(4), 'lots'), scale: 1.1 });
       hide.ring(hide.union([hide.box('CardPayment'), hide.box('WalletPayment')]), { at: mark(v(4), 'likely'), tone: 'amber' });
       hide.callout('WalletPayment', 'likely to change', { side: 'right', at: mark(v(4), 'change'), tone: 'amber' });
       hide.ring('Payment', { at: mark(v(5), 'interface'), tone: 'violet' });
@@ -417,9 +260,9 @@ ${formats.map((f) => `${f} ..|> Format`).join('\n')}
       // "When two draw the same boxes, don't go by the frame: the boxes show
       // how; the problem gives the name."
       const d = kit.scene(content, line(v(6)).start - 0.1, start('chorus-1') + 0.2, { exit: 'fade' });
-      const pair = { kind: 'class', y: S.y + 4, w: 286, fit: { w: 258, h: 242 }, scale: 1 };
-      M.diagram(d, { ...pair, spec: SPEC.splitTwin, x: S.x + 4, title: 'Strategy', at: mark(v(6), 'two') });
-      M.diagram(d, { ...pair, spec: SPEC.statusTwin, x: S.x + 298, title: 'State', at: mark(v(6), 'draw') });
+      const pair = { y: S.y + 4, w: 286, fit: { w: 258, h: 242 }, scale: 1 };
+      M.diagram(d, { ...pair, ...VIEW.split_twin, x: S.x + 4, title: 'Strategy', at: mark(v(6), 'two') });
+      M.diagram(d, { ...pair, ...VIEW.status_twin, x: S.x + 298, title: 'State', at: mark(v(6), 'draw') });
       kit.sticker(d, 'The boxes show how', { x: S.x + 40, y: SILL, at: mark(v(7), 'show'), variant: 'white', rotate: -2 });
       kit.sticker(d, 'The problem gives the name', { x: S.x + 290, y: SILL, at: mark(v(7), 'problem'), variant: 'gold', rotate: 2 });
       move('lead', mark(v(7), 'problem') - 0.1, 'operatic', { hold: 1.4 });
@@ -486,7 +329,7 @@ ${formats.map((f) => `${f} ..|> Format`).join('\n')}
       // "Each way's a class, and they all fit one interface; checkout calls
       // the one you picked: no switch, no case."
       const b = kit.scene(content, mark(s(3), 'class') - 0.1, line('state-1').start - 0.1, { exit: 'fade' });
-      const plain = wide(b, SPEC.split(false), { at: mark(s(3), 'class') - 0.1, until: mark(s(5), 'add') - 0.05, below: 40 });
+      const plain = wide(b, VIEW.split, { at: mark(s(3), 'class') - 0.1, until: mark(s(5), 'add') - 0.05, below: 40 });
       ['Even', 'ByItem', 'OneTreats'].forEach((name, i) => {
         plain.ring(name, { at: mark(s(3), 'class') + i * 0.15, until: mark(s(3), 'interface'), tone: 'green' });
       });
@@ -499,7 +342,7 @@ ${formats.map((f) => `${f} ..|> Format`).join('\n')}
       move('strategy', mark(s(3), 'class') - 0.1, 'point', { to: screenAt(0.6, 0.45), hold: 1.4 });
 
       // "New way next week? Add a class. (Checkout? Untouched!)"
-      const grown = wide(b, SPEC.split(true), { at: mark(s(5), 'add'), below: 40 });
+      const grown = wide(b, VIEW.split_grown, { at: mark(s(5), 'add'), below: 40 });
       grown.ring('ByPercent', { at: mark(s(5), 'class'), tone: 'green' });
       grown.callout('ByPercent', 'new class', { side: 'below', at: mark(s(5), 'class'), tone: 'green' });
       P.diffBadge(b, 'checkout.py · 0 lines changed', { x: S.x + 166, y: SILL, at: mark(s(5), 'untouched') });
@@ -523,13 +366,14 @@ ${formats.map((f) => `${f} ..|> Format`).join('\n')}
         stages: ['Placed', 'Cooking', 'On the way'], at: mark(t(1), 'stage'),
         moves: [[mark(t(1), 'stage'), 0], [mark(t(2), 'cooking'), 1], [mark(t(3), 'way'), 2]],
       });
-      P.buttons(order, ['Cancel'], { at: mark(t(2), 'cancel'), tone: 'alert' });
+      // The four taps share one row, two by two, above Cancel's result.
+      const [cancel] = P.buttons(order, ['Cancel'], { at: mark(t(2), 'cancel'), tone: 'alert' });
+      P.buttons(order, ['Edit', 'Track', 'Rate'], { at: mark(t(3), 'edit'), every: 0.3, row: cancel.parentElement });
       P.results(order, [
         { at: mark(t(2), 'refund'), text: 'Full refund', tone: 'green' },
         { at: mark(t(2), 'half'), text: 'Half refund', tone: 'gold' },
         { at: mark(t(3), 'late'), text: 'Too late', tone: 'red' },
       ]);
-      P.buttons(order, ['Edit', 'Track', 'Rate'], { at: mark(t(3), 'edit'), every: 0.3 });
       const rules = P.card(c, { x: S.x + 240, y: S.y + 30, w: 326, title: 'Tap Cancel while it’s…', at: mark(t(2), 'cancel'), until: line(t(4)).start - 0.05 });
       P.row(rules.body, 'Placed: full refund', { at: mark(t(2), 'refund'), tone: 'green' });
       P.row(rules.body, 'Cooking: half', { at: mark(t(2), 'half') });
@@ -549,7 +393,7 @@ ${formats.map((f) => `${f} ..|> Format`).join('\n')}
       // "each stage gets a class, with its own rule for each tap; order
       // delegates;"
       const d = kit.scene(content, line(t(5)).start - 0.05, mark(t(6), 'its') + 0.1, { exit: 'fade' });
-      const classes = wide(d, SPEC.stage, { at: line(t(5)).start });
+      const classes = wide(d, VIEW.stage, { at: line(t(5)).start });
       ['Placed', 'Cooking', 'OnTheWay'].forEach((name, i) => {
         classes.ring(name, { at: mark(t(5), 'class') + i * 0.15, until: mark(t(6), 'order'), tone: 'green' });
       });
@@ -564,7 +408,7 @@ ${formats.map((f) => `${f} ..|> Format`).join('\n')}
       // machine, the current one lit as it moves on.
       const e = kit.scene(content, mark(t(6), 'its'), clearFor('ruling-1'), { exit: 'fade' });
       const machine = M.diagram(e, {
-        kind: 'state', spec: SPEC.stageMachine, x: S.x + 4, y: S.y + 96, w: S.w - 8, fit: { w: S.w - 36, h: 120 }, scale: 1,
+        ...VIEW.stage_machine, x: S.x + 4, y: S.y + 96, w: S.w - 8, fit: { w: S.w - 36, h: 120 }, scale: 1,
         title: 'The order’s stages', at: mark(t(6), 'its'),
       });
       machine.ring('Placed', { at: mark(t(6), 'stage'), until: mark(t(6), 'rolls') + 0.25, tone: 'amber' });
@@ -621,7 +465,7 @@ ${formats.map((f) => `${f} ..|> Format`).join('\n')}
       sign('PR #1', line(i(1)).start - 0.2);
       const scene = kit.scene(content, line(i(1)).start - 0.3, start('chorus-2') + 0.2, { exit: 'fade' });
       const request = P.pr(scene, { x: S.x + 134, y: S.y + 6, w: 320, parts: ['Order status:', 'Strategy', 'pattern'], at: line(i(1)).start + 0.3 });
-      M.diagram(request.body, { kind: 'class', spec: SPEC.statusTwin, x: 0, y: 0, w: 292, fit: { w: 264, h: 222 }, scale: 1, at: line(i(1)).start + 0.6 });
+      M.diagram(request.body, { ...VIEW.status_twin, x: 0, y: 0, w: 292, fit: { w: 264, h: 222 }, scale: 1, at: line(i(1)).start + 0.6 });
       request.swap(1, 'State', mark(i(1), 'state'));
       kit.stamp(scene, 'Approved', { x: S.x + 330, y: S.y + 190, at: mark(i(2), 'im'), color: 'green', small: true, shake: false, from: 1.5, rotate: -8 });
       move('intern', mark(i(1), 'state') - 0.1, 'mood', { hold: 1.2, brow: 0.8, smile: 0.6 });
@@ -656,7 +500,7 @@ ${formats.map((f) => `${f} ..|> Format`).join('\n')}
       // "Outside, I'm the interface our app knows; inside, I call theirs,
       // converting as I go."
       const b = kit.scene(content, line(d(3)).start - 0.1, line('facade-1').start - 0.1, { exit: 'fade' });
-      const notation = wide(b, SPEC.adapter, { at: mark(d(3), 'outside'), scale: 1.1 });
+      const notation = wide(b, VIEW.adapter, { at: mark(d(3), 'outside'), scale: 1.1 });
       notation.ring('Kitchen', { at: mark(d(3), 'interface'), tone: 'violet' });
       notation.callout('Kitchen', 'outside: what our app calls', { side: 'right', at: mark(d(3), 'app'), tone: 'violet' });
       notation.ring('TabletAdapter', { at: mark(d(4), 'inside'), tone: 'amber' });
@@ -680,7 +524,7 @@ ${formats.map((f) => `${f} ..|> Format`).join('\n')}
       sign('Façade', line(f(1)).start - 0.2);
       move('facade', mark(f(1), 'facade') - 0.1, 'chest', { hold: 0.8, pats: 1 });
       const c = kit.scene(content, line(f(1)).start - 0.1, mark(f(3), 'knock') - 0.05, { exit: 'fade' });
-      const tangle = wide(c, SPEC.tangle, { at: mark(f(1), 'screen'), top: 30, h: S.h - 60 });
+      const tangle = wide(c, VIEW.tangle, { at: mark(f(1), 'screen'), top: 30, h: S.h - 60 });
       ['pay', 'kitchen', 'driver', 'receipt'].forEach((word, i) => {
         tangle.ring(['Payment', 'Kitchen', 'Driver', 'Receipt'][i], { at: mark(f(2), word), tone: 'amber' });
       });
@@ -689,7 +533,7 @@ ${formats.map((f) => `${f} ..|> Format`).join('\n')}
       // "Now they knock once, 'place order,' and I run the four; screens stay
       // simple; the steps live behind my door."
       const e = kit.scene(content, mark(f(3), 'knock') - 0.05, clearFor('ruling-2'), { exit: 'fade' });
-      const front = wide(e, SPEC.facade, { at: mark(f(3), 'knock') });
+      const front = wide(e, VIEW.facade, { at: mark(f(3), 'knock') });
       front.token(route(front, 'Phone', 'OrderFacade'), { at: mark(f(3), 'knock'), duration: 0.5, until: mark(f(3), 'run') });
       front.ring('OrderFacade', { at: mark(f(3), 'place'), tone: 'amber' });
       front.callout('OrderFacade', 'placeOrder()', { side: 'right', at: mark(f(3), 'place'), tone: 'amber' });
@@ -754,7 +598,7 @@ ${formats.map((f) => `${f} ..|> Format`).join('\n')}
       // "They subscribe; on each change, the order pings the list; each
       // reacts its own way. New screen? Just subscribe."
       const b = kit.scene(content, line(o(3)).start - 0.05, line('mediator-1').start - 0.1, { exit: 'fade' });
-      const list = wide(b, SPEC.observer(false), { at: line(o(3)).start, until: mark(o(4), 'subscribe') - 0.05, below: 40 });
+      const list = wide(b, VIEW.observer, { at: line(o(3)).start, until: mark(o(4), 'subscribe') - 0.05, below: 40 });
       const followers = list.textBox('followers');
       list.ring(followers, { at: mark(o(3), 'subscribe'), tone: 'teal', pad: 4 });
       list.callout(followers, 'the list', { side: 'right', at: mark(o(3), 'subscribe'), tone: 'teal' });
@@ -767,7 +611,7 @@ ${formats.map((f) => `${f} ..|> Format`).join('\n')}
       [['Phone', 'Banner', 'reacts'], ['Tablet', 'Ding!', 'own'], ['DriverApp', 'Pin', 'way']].forEach(([name, reaction, word]) => {
         list.callout(name, reaction, { side: 'below', at: mark(o(4), word), tone: 'white' });
       });
-      const grown = wide(b, SPEC.observer(true), { at: mark(o(4), 'subscribe'), below: 40 });
+      const grown = wide(b, VIEW.observer_grown, { at: mark(o(4), 'subscribe'), below: 40 });
       grown.ring('Watch', { at: mark(o(4), 'subscribe') + 0.1, tone: 'green' });
       grown.callout('Watch', 'new: just subscribes', { side: 'below', at: mark(o(4), 'subscribe') + 0.1, tone: 'green' });
       move('observer', mark(o(3), 'pings') - 0.1, 'point', { to: screenAt(0.5, 0.25), hold: 1.6 });
@@ -801,10 +645,10 @@ ${formats.map((f) => `${f} ..|> Format`).join('\n')}
       // report to me, and the rules live here. They never call each other.
       // New rule? Just change me."
       const e = kit.scene(content, line(m(3)).start - 0.05, line(m(4)).start - 0.05, { exit: 'fade' });
-      wide(e, SPEC.mesh, { at: mark(m(3), 'link'), scale: 1.3 });
+      wide(e, VIEW.mesh, { at: mark(m(3), 'link'), scale: 1.3 });
       kit.sticker(e, 'Rules everywhere', { x: S.x + 210, y: SILL, at: mark(m(3), 'scatter'), variant: 'red', rotate: -3 });
       const g = kit.scene(content, line(m(4)).start - 0.05, clearFor('ruling-3'), { exit: 'fade' });
-      const hub = wide(g, SPEC.hub, { at: mark(m(4), 'report'), scale: 1.25, below: 40 });
+      const hub = wide(g, VIEW.hub, { at: mark(m(4), 'report'), scale: 1.25, below: 40 });
       ['Kitchen', 'Drivers', 'Customer'].forEach((name, i) => {
         hub.token(route(hub, name, 'DispatchHub'), { at: mark(m(4), 'report') + i * 0.12, duration: 0.5, until: mark(m(4), 'rules') });
       });
@@ -848,7 +692,7 @@ ${formats.map((f) => `${f} ..|> Format`).join('\n')}
       // formats?' ...One."
       const a = kit.scene(content, start('bridge') - 0.1, mark(l(2), 'each') - 0.1, { exit: 'fade' });
       const sketch = M.diagram(a, {
-        kind: 'class', spec: SPEC.exporter(['CSV']), x: S.x + 14, y: S.y + 6, w: 260, fit: { w: 232, h: 238 }, scale: 1.1,
+        ...VIEW.exporter, x: S.x + 14, y: S.y + 6, w: 260, fit: { w: 232, h: 238 }, scale: 1.1,
         title: 'Intern’s sketch', at: mark('bridge-1', 'export'),
       });
       P.review(a, {
@@ -892,7 +736,7 @@ ${formats.map((f) => `${f} ..|> Format`).join('\n')}
       P.fileFan(d, { x: S.x + 30, y: S.y + 150, files: ['export.py', 'report.py', 'email.py', 'admin.py', 'api.py'], at: mark(l(4), 'change'), every: 0.22 });
       const e = kit.scene(content, line(l(5)).start - 0.05, end('lesson') + 0.4, { exit: 'fade' });
       const earned = M.diagram(e, {
-        kind: 'class', spec: SPEC.exporter(['CSV', 'PDF', 'Excel']), x: S.x + 20, y: S.y + 6, w: 380, fit: { w: 352, h: 260 }, scale: 1.1,
+        ...VIEW.exporter_grown, x: S.x + 20, y: S.y + 6, w: 380, fit: { w: 352, h: 260 }, scale: 1.1,
         at: mark(l(5), 'refactor'), until: mark(l(6), 'out') + 0.1,
       });
       kit.stamp(e, 'Earned', { x: S.x + 420, y: S.y + 150, at: mark(l(5), 'earned'), until: mark(l(6), 'stops'), color: 'green', small: true, shake: false, from: 1.5, rotate: -8 });
@@ -983,7 +827,7 @@ ${formats.map((f) => `${f} ..|> Format`).join('\n')}
       sign('Same shape', start('outro'));
       const a = kit.scene(content, start('outro') - 0.1, undefined, { exit: 'fade' });
       const request = P.pr(a, { x: S.x + 6, y: S.y + 6, w: 290, number: 42, author: 'new intern', parts: ['Strategy pattern'], at: mark(o(2), 'new') });
-      M.diagram(request.body, { kind: 'class', spec: SPEC.statusTwin, x: 0, y: 0, w: 262, fit: { w: 234, h: 222 }, scale: 1, at: mark(o(2), 'pr') });
+      M.diagram(request.body, { ...VIEW.status_twin, x: 0, y: 0, w: 262, fit: { w: 234, h: 222 }, scale: 1, at: mark(o(2), 'pr') });
       P.review(a, {
         x: S.x + 312, y: S.y + 70, w: 268, who: 'You', at: mark(o(3), 'nice') - 0.1,
         lines: [

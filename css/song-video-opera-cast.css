@@ -401,6 +401,32 @@
 .oc-figure--maintainer .oc-hood-edge { stroke: #44235e; }
 .oc-figure--maintainer .oc-pocket-patch { fill: #623382; }
 
+/* A software engineer: the hoodie in rust with curly braces, stone chinos. */
+.oc-figure--engineer {
+  --oc-cloth: #b9541f;
+  --oc-cloth-light: #ec9a68;
+  --oc-cloth-shade: #7a3311;
+}
+.oc-figure--engineer .oc-top-stop-0 { stop-color: #cc6430; }
+.oc-figure--engineer .oc-top-stop-1 { stop-color: #b9541f; }
+.oc-figure--engineer .oc-top-stop-2 { stop-color: #933f15; }
+.oc-figure--engineer .oc-sleeve-stop-0 { stop-color: #c45d29; }
+.oc-figure--engineer .oc-sleeve-stop-1 { stop-color: #ad4c1b; }
+.oc-figure--engineer .oc-sleeve-stop-2 { stop-color: #863712; }
+.oc-figure--engineer .oc-trouser-stop-0 { stop-color: #b9ae96; }
+.oc-figure--engineer .oc-trouser-stop-1 { stop-color: #a69a80; }
+.oc-figure--engineer .oc-trouser-stop-2 { stop-color: #8f846b; }
+.oc-figure--engineer .oc-trouser-stop-3 { stop-color: #776d57; }
+.oc-figure--engineer .oc-shoe-stop-0 { stop-color: #f2f4f7; }
+.oc-figure--engineer .oc-shoe-stop-1 { stop-color: #c9ced6; }
+.oc-figure--engineer .oc-shoe-stop-2 { stop-color: #8e95a1; }
+.oc-figure--engineer .oc-shoes { --oc-sole: #e7eaee; --oc-laces: #b9541f; }
+.oc-figure--engineer .oc-seam { --oc-seam: #ffd2b0; }
+.oc-figure--engineer .oc-hood { fill: #a64a1a; }
+.oc-figure--engineer .oc-hood-inside { stroke: #6b2d0d; }
+.oc-figure--engineer .oc-hood-edge { stroke: #8a3c14; }
+.oc-figure--engineer .oc-pocket-patch { fill: #ad4e1c; }
+
 /* The Security Engineer. */
 .oc-figure--security {
   --oc-cloth: #2b2f37;

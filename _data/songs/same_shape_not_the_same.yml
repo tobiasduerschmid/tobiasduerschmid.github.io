@@ -47,6 +47,262 @@ extras:   # the song's own art and styles, loaded before its choreography
     - /js/ArchUML/uml-bundle.js
     - /js/song-video/model-kit.js
     - /js/song-video/pattern-kit.js
+# ArchUML views the choreography draws: each pattern's structure and the
+# look-alikes the song compares. The build draws them into the player page
+# (_plugins/song_diagrams.rb), so the browser doesn't route their connectors
+# while the player loads. ArchUML stacks a class chain top to bottom.
+diagrams:
+  status_twin:
+    kind: class
+    spec: |
+      @startuml
+      layout vertical
+      class Order
+      interface OrderStatus
+      class Placed
+      class Cooking
+      Order o--> OrderStatus
+      Placed ..|> OrderStatus
+      Cooking ..|> OrderStatus
+      @enduml
+  split_twin:
+    kind: class
+    spec: |
+      @startuml
+      layout vertical
+      class Checkout
+      interface SplitRule
+      class Even
+      class ByItem
+      Checkout o--> SplitRule
+      Even ..|> SplitRule
+      ByItem ..|> SplitRule
+      @enduml
+  payment:
+    kind: class
+    spec: |
+      @startuml
+      layout vertical
+      class Checkout
+      interface Payment {
+        + pay(total)
+      }
+      class CardPayment
+      class WalletPayment
+      Checkout --> Payment
+      CardPayment ..|> Payment
+      WalletPayment ..|> Payment
+      @enduml
+  split:
+    kind: class
+    spec: |
+      @startuml
+      layout vertical
+      class Checkout
+      interface SplitRule {
+        + split(bill)
+      }
+      class Even
+      class ByItem
+      class OneTreats
+      Checkout o--> SplitRule
+      Even ..|> SplitRule
+      ByItem ..|> SplitRule
+      OneTreats ..|> SplitRule
+      @enduml
+  split_grown:   # `split` after the new rule
+    kind: class
+    spec: |
+      @startuml
+      layout vertical
+      class Checkout
+      interface SplitRule {
+        + split(bill)
+      }
+      class Even
+      class ByItem
+      class OneTreats
+      class ByPercent
+      Checkout o--> SplitRule
+      Even ..|> SplitRule
+      ByItem ..|> SplitRule
+      OneTreats ..|> SplitRule
+      ByPercent ..|> SplitRule
+      @enduml
+  stage:
+    kind: class
+    spec: |
+      @startuml
+      layout vertical
+      class Order
+      interface Stage
+      class Placed
+      class Cooking
+      class OnTheWay
+      Order o--> Stage
+      Placed ..|> Stage
+      Cooking ..|> Stage
+      OnTheWay ..|> Stage
+      @enduml
+  stage_machine:
+    kind: state
+    spec: |
+      @startuml
+      [*] --> Placed
+      Placed --> Cooking : kitchen starts
+      Cooking --> OnTheWay : driver picks up
+      @enduml
+  adapter:
+    kind: class
+    spec: |
+      @startuml
+      layout vertical
+      interface Kitchen {
+        + send(order)
+      }
+      class TabletAdapter {
+        + send(order)
+      }
+      class Tablet {
+        + ticket(cents)
+      }
+      TabletAdapter ..|> Kitchen
+      TabletAdapter --> Tablet : converts
+      @enduml
+  tangle:
+    kind: class
+    spec: |
+      @startuml
+      layout vertical
+      class Phone
+      class Web
+      class Payment
+      class Kitchen
+      class Driver
+      class Receipt
+      Phone --> Payment
+      Phone --> Kitchen
+      Phone --> Driver
+      Phone --> Receipt
+      Web --> Payment
+      Web --> Kitchen
+      Web --> Driver
+      Web --> Receipt
+      @enduml
+  facade:
+    kind: class
+    spec: |
+      @startuml
+      layout vertical
+      class Phone
+      class Web
+      class OrderFacade
+      class Payment
+      class Kitchen
+      class Driver
+      class Receipt
+      Phone --> OrderFacade
+      Web --> OrderFacade
+      OrderFacade --> Payment
+      OrderFacade --> Kitchen
+      OrderFacade --> Driver
+      OrderFacade --> Receipt
+      @enduml
+  observer:
+    kind: class
+    spec: |
+      @startuml
+      layout vertical
+      class Order
+      interface Observer {
+        + update(status)
+      }
+      class Phone
+      class Tablet
+      class DriverApp
+      Order o--> Observer : followers
+      Phone ..|> Observer
+      Tablet ..|> Observer
+      DriverApp ..|> Observer
+      @enduml
+  observer_grown:   # `observer` after the watch subscribes
+    kind: class
+    spec: |
+      @startuml
+      layout vertical
+      class Order
+      interface Observer {
+        + update(status)
+      }
+      class Phone
+      class Tablet
+      class DriverApp
+      class Watch
+      Order o--> Observer : followers
+      Phone ..|> Observer
+      Tablet ..|> Observer
+      DriverApp ..|> Observer
+      Watch ..|> Observer
+      @enduml
+  mesh:
+    kind: class
+    spec: |
+      @startuml
+      layout vertical
+      class Kitchen
+      class Drivers
+      class Customer
+      Kitchen --> Drivers
+      Drivers --> Customer
+      Customer --> Kitchen
+      Kitchen --> Customer
+      Drivers --> Kitchen
+      @enduml
+  hub:
+    kind: class
+    spec: |
+      @startuml
+      layout vertical
+      class Kitchen
+      class Drivers
+      class Customer
+      class DispatchHub {
+        + notify(event)
+      }
+      Kitchen --> DispatchHub
+      Drivers --> DispatchHub
+      Customer --> DispatchHub
+      @enduml
+  exporter:   # the first format
+    kind: class
+    spec: |
+      @startuml
+      layout vertical
+      class Exporter
+      interface Format {
+        + write(report)
+      }
+      class CSV
+      Exporter --> Format
+      CSV ..|> Format
+      @enduml
+  exporter_grown:   # three formats, when the pattern has earned its place
+    kind: class
+    spec: |
+      @startuml
+      layout vertical
+      class Exporter
+      interface Format {
+        + write(report)
+      }
+      class CSV
+      class PDF
+      class Excel
+      Exporter --> Format
+      CSV ..|> Format
+      PDF ..|> Format
+      Excel ..|> Format
+      @enduml
 player: /assets/song-player/same-shape-not-the-same.html
 captions: /assets/audio/same-shape-not-the-same.vtt
 described_captions: /assets/audio/same-shape-not-the-same-described.vtt
@@ -212,7 +468,7 @@ sections:
     title: "Chorus"
     delivery: sung
     voice: "Crowd"
-    narration: "Chorus. The words Same shape? Not the same! What's it for? That's the name! slam onto the screen. Then a boxing card: Round 1, Strategy versus State. Twins in identical teal quarter-zips with headphones walk in under glowing name plates, Strategy on the left and State on the right."
+    narration: "Chorus. The words Same shape? Not the same! What's it for? That's the name! slam onto the screen. Then a boxing card: Round 1, Strategy versus State. Twins in identical rust hoodies walk in under glowing name plates, Strategy on the left and State on the right."
     lines:
       - id: chorus-1-1
         start: 41.12
@@ -231,7 +487,7 @@ sections:
         end: 50.1
         text: "Round one! Strategy, State!"
         marks: {"round": 45.98, "one": 46.78, "strategy": 48.82, "state": 49.34}
-        visual: "A boxing-style card fills the screen: “Round 1 · Strategy vs. State”. Two twins walk in, one from each wing, in identical teal quarter-zips with headphones round their necks, under glowing name plates: “Strategy” on the left, “State” on the right."
+        visual: "A boxing-style card fills the screen: “Round 1 · Strategy vs. State”. Two twins walk in, one from each wing, in identical rust hoodies with curly braces on the chest, under glowing name plates: “Strategy” on the left, “State” on the right."
   - id: strategy
     title: "Round 1: Strategy"
     delivery: sung
@@ -725,7 +981,7 @@ sections:
         end: 223.92
         text: "Same shape? Not the same!"
         marks: {"same": 221.76, "shape": 222.24, "not": 223.0, "the": 223.38, "same_2": 223.64}
-        visual: "The whole cast lines up across the stage: the intern, Strategy and State in teal quarter-zips, Adapter and Façade in charcoal hoodies, Observer and Mediator in green hoodies, and the lead, each pattern under a small name plate. The chant: “Same shape? Not the same!”"
+        visual: "The whole cast lines up across the stage: the intern, Strategy and State in rust hoodies, Adapter and Façade in charcoal hoodies, Observer and Mediator in green hoodies, and the lead, each pattern under a small name plate. The chant: “Same shape? Not the same!”"
       - id: final-chorus-2
         start: 223.96
         end: 226.52
