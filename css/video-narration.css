@@ -16,16 +16,12 @@
 .video-narration > .nja-player > :is(.nja-explanation, .nja-takeaway) { margin-left: 1.4em; margin-right: 1.4em; }
 .video-narration > .nja-player > .nja-takeaway { margin-bottom: 1.2em; }
 
-/* The video: the scene's header, then a frame with the screen, captions, and
-   a control bar, like a video player. The whole video is what full screen
-   fills, so the header stays in view there. */
-.video-narration .vn-video { position: relative; container-type: inline-size; }
-.video-narration .vn-surface { display: flex; flex-direction: column; }
-.video-narration .vn-check-exit { display: none; }
-.video-narration :is(.vn-scenes, .vn-captions):focus-visible { outline: 3px solid var(--nja-cyan); outline-offset: -3px; }
+/* The video: the scene's header, then the shared player frame
+   (css/narrated-explainer.css), set in from the player's edges. The whole
+   video is what full screen fills, so the header stays in view there. */
+.video-narration .vn-scenes:focus-visible { outline: 3px solid var(--nja-cyan); outline-offset: -3px; }
 .video-narration .vn-phone-tip { display: none; }
-.video-narration .vn-frame { position: relative; display: flex; flex-direction: column; margin: 0 1.4em; border: 2px solid var(--nja-line); border-radius: 8px; overflow: hidden; background: var(--nja-panel); }
-.video-narration .vn-video:focus-visible { outline: 3px solid var(--nja-cyan); outline-offset: 3px; }
+.video-narration .vn-frame { margin: 0 1.4em; border: 2px solid var(--nja-line); border-radius: 8px; }
 /* The screen keeps a video's 16:9 frame so the controls stay put from cue to
    cue; it grows when a slide needs more room, so text is never clipped. */
 .video-narration .vn-screen.nja-stage { position: relative; display: grid; grid-template-columns: minmax(0, 1fr); align-content: center; gap: 1em; aspect-ratio: 16 / 9; padding: 0.8em; min-width: 0; }
@@ -46,56 +42,10 @@
 .video-narration .vn-gesture-feedback { position: absolute; top: 50%; left: 82%; z-index: 3; translate: -50% -50%; padding: 0.4em 0.9em; border-radius: 999px; background: #0b0f1a; color: #fff; font-weight: 800; pointer-events: none; }
 .video-narration .vn-gesture-feedback.is-back { left: 18%; }
 
-/* Captions sit under the picture, at a size the viewer chooses. */
-.video-narration .vn-captions.nja-narration { min-height: 5.6em; padding: 0.8em 1.2em; border-top: 1px solid var(--nja-line); font-size: calc(1em * var(--vn-caption-scale, 1)); }
-.video-narration .vn-video.are-captions-off .vn-captions { display: none; }
-
-/* The control bar: the position, then playback on the left and the view on the right. */
-.video-narration .vn-controls.nja-controls { padding: 0.4em 0.9em 0.6em; border-top: 1px solid var(--nja-line); border-bottom: 0; }
-.video-narration .vn-seek-label.nja-seek-label { margin: 0; }
-.video-narration .vn-hidden-label { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-.video-narration .vn-toolbar { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.5em; margin-top: 0.2em; }
-.video-narration .vn-toolbar-group { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4em; }
-.video-narration .vn-toolbar .nja-time { margin-left: 0.3em; }
-/* A skip button reads as its arrow and its seconds side by side, so the digit never sits on the arrow's stroke. */
-.video-narration .nja-controls button[data-vn-skip] { display: inline-flex; align-items: center; justify-content: center; gap: 0.15em; width: auto; padding: 0.3em 0.55em; }
-.video-narration [data-vn-skip] span { font-weight: 900; }
-.video-narration [data-vn-skip] i { font-size: 1.05em; }
-.video-narration .vn-volume { width: 6em; min-height: 2.4em; accent-color: var(--nja-accent); }
-.video-narration .vn-volume:focus-visible { outline: 3px solid var(--nja-cyan); outline-offset: 3px; }
-.video-narration .nja-controls .vn-cc { width: auto; padding: 0.3em 0.6em; font-weight: 900; }
-/* Captions off is shown by a strike, not color alone. */
-.video-narration .vn-cc[aria-pressed="false"] { text-decoration: line-through; text-decoration-thickness: 0.15em; }
-/* While a knowledge check is open, the control bar steps aside so the quiz
-   has the room; the quiz's own buttons continue the narration. */
-.video-narration .vn-video.has-open-check .vn-controls { display: none; }
-.video-narration .vn-settings { margin-top: 0.6em; padding: 0.8em; background: var(--nja-bg); border: 1px solid var(--nja-line); border-radius: 6px; }
-.video-narration .vn-settings .nja-settings { align-items: end; }
-
-/* The outer element owns fullscreen and focus. The inner surface owns layout,
-   so a portrait touch screen can rotate the complete lesson, including controls.
-   The grid uses the surface dimensions, not the unrotated media viewport. */
+/* Full screen keeps one horizontal roadmap on laptops and phones above the
+   shared overlay layout. Each level can scroll sideways without wrapping
+   into a sidebar or reducing the type size. */
 @media screen {
-.video-narration .vn-video.is-fullscreen { --vn-chrome: 4em; width: 100%; height: 100%; margin: 0; background: var(--nja-bg); color: var(--nja-text); font-size: clamp(16px, 1.05vw, 22px); overflow: hidden; }
-.video-narration .vn-video.is-fullscreen .vn-surface {
-  position: absolute; top: 50%; left: 50%;
-  width: var(--vn-surface-width, 100%); height: var(--vn-surface-height, 100%);
-  transform: translate(-50%, -50%);
-  display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) auto;
-  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
-  overflow: hidden;
-}
-.video-narration .vn-video.is-fullscreen.is-rotated .vn-surface {
-  transform: translate(-50%, -50%) rotate(90deg);
-  padding: env(safe-area-inset-left) env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom);
-}
-html.has-viewport-fullscreen .video-narration .vn-video.is-viewport-fullscreen {
-  top: var(--vn-viewport-top, 0px); left: var(--vn-viewport-left, 0px);
-  width: var(--vn-viewport-width, 100vw); height: var(--vn-viewport-height, 100vh);
-}
-/* One horizontal roadmap on laptops and phones. Each level can scroll sideways
-   without wrapping into a sidebar or reducing the type size. */
-.video-narration .vn-video.is-fullscreen .vn-frame { display: contents; }
 .video-narration .vn-video.is-fullscreen .vn-phone-tip { display: none; }
 .video-narration .vn-video.is-fullscreen .vn-scenes { grid-area: 1 / 1; min-width: 0; max-height: calc(var(--vn-surface-height) * 0.3); padding: 0.25em 0.6em; overflow-y: auto; }
 .video-narration .vn-video.is-fullscreen .nja-scene-meta { flex-wrap: nowrap; gap: 0.7em; padding: 0.2em; overflow-x: auto; font-size: 1em; }
@@ -108,36 +58,15 @@ html.has-viewport-fullscreen .video-narration .vn-video.is-viewport-fullscreen {
 /* The inline player keeps the full title and task. In fullscreen the roadmap
    identifies the scene; retain the additional context for screen readers. */
 .video-narration .vn-video.is-fullscreen .vn-scene > :is(h3, .nja-purpose) { position: absolute; width: 1px; height: 1px; padding: 0; margin: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-/* The picture uses all space below the roadmap. Controls and captions overlay
-   its lower edge instead of reserving large empty bands around the picture. */
+/* The picture uses all space below the roadmap; the shared captions and
+   controls overlay its lower edge. */
 .video-narration .vn-video.is-fullscreen .vn-screen { grid-area: 2 / 1 / 4 / 2; container-type: size; aspect-ratio: auto; min-height: 0; height: 100%; padding: 0; place-items: center; background: var(--nja-bg); font-size: 1em; }
-.video-narration .vn-video.is-fullscreen .np-quiz { grid-area: 2 / 1 / 4 / 2; z-index: 5; min-height: 0; overflow-y: auto; background: var(--nja-bg); }
-.video-narration .vn-video.is-fullscreen .vn-check-exit { display: block; margin: 0 0 0.6em auto; min-height: 2.4em; padding: 0.3em 0.7em; font: inherit; color: var(--nja-text); background: var(--nja-chrome); border: 1px solid var(--nja-line); border-radius: 4px; cursor: pointer; }
-.video-narration .vn-video.is-fullscreen .vn-check-exit:focus-visible { outline: 3px solid var(--nja-cyan); outline-offset: 2px; }
-.video-narration .vn-video.is-fullscreen .vn-captions { grid-area: 2 / 1; z-index: 3; align-self: end; justify-self: center; width: min(60em, calc(100% - 1em)); min-height: 0; max-height: min(5em, 40%); overflow-y: auto; margin-bottom: 0.35em; padding: 0.3em 0.6em; background: var(--nja-bg); border: 1px solid var(--nja-line); border-radius: 5px; color: var(--nja-text); font-size: calc(1em * var(--vn-caption-scale, 1)); line-height: 1.4; text-align: center; }
-.video-narration .vn-video.is-fullscreen .vn-captions p { margin: 0 auto; color: var(--nja-text); line-height: inherit; }
-.video-narration .vn-video.is-fullscreen .vn-controls { grid-area: 3 / 1; z-index: 4; min-height: 0; max-height: calc(var(--vn-surface-height) * 0.45); padding: 0 0.6em 0.2em; overflow-y: auto; }
-.video-narration .vn-video.is-fullscreen .nja-seek { height: 24px; margin: 0; }
-.video-narration .vn-video.is-fullscreen .vn-toolbar { gap: 0.25em; margin-top: 0; }
-.video-narration .vn-video.is-fullscreen .vn-toolbar-group { gap: 0.15em; }
-.video-narration .vn-video.is-fullscreen .vn-toolbar button { width: 2em; height: 2em; min-width: 32px; min-height: 32px; padding: 0.15em; }
-.video-narration .vn-video.is-fullscreen .vn-toolbar :is(button[data-vn-skip], .vn-cc) { width: auto; padding-inline: 0.3em; }
-.video-narration .vn-video.is-fullscreen .nja-time { flex-basis: auto; margin-left: 0.2em; white-space: nowrap; }
-.video-narration .vn-video.is-fullscreen .vn-volume { width: 3em; min-height: 32px; }
-/* Settings scroll independently and remain above the caption overlay. */
-.video-narration .vn-video.is-fullscreen .vn-settings { position: absolute; z-index: 6; inset: 0.5em 0.5em auto; max-height: calc(var(--vn-surface-height) * 0.7); overflow-y: auto; margin: 0; }
+.video-narration .vn-video.is-fullscreen.are-controls-hidden .vn-picture-control { cursor: none; }
 }
 .video-narration .vn-video.is-fullscreen .vn-panel { width: 100%; max-height: 100%; }
 .video-narration .vn-video.is-fullscreen .vn-panel--slide { padding: 1em 1.4em; background: var(--nja-panel); border-radius: 8px; overflow-y: auto; }
 /* Container units fit the picture to its cell; older browsers use the viewport estimate. */
 .video-narration .vn-video.is-fullscreen .vn-panel--animation { width: min(100%, calc((var(--vn-surface-height, 100vh) - var(--vn-chrome)) * 16 / 9)); width: min(100cqw, calc(100cqh * 16 / 9)); max-height: none; }
-.video-narration .vn-video.is-fullscreen .vn-controls { transition: opacity 180ms ease, visibility 0s; }
-.video-narration .vn-video.is-fullscreen.are-controls-hidden .vn-controls { opacity: 0; visibility: hidden; pointer-events: none; transition-delay: 0s, 180ms; }
-.video-narration .vn-video.is-fullscreen.are-controls-hidden,
-.video-narration .vn-video.is-fullscreen.are-controls-hidden .vn-picture-control { cursor: none; }
-@media (prefers-reduced-motion: reduce) {
-  .video-narration .vn-video.is-fullscreen .vn-controls { transition: none; }
-}
 
 /* The animated stage. Until the frame's stage is ready, or if it fails, a
    poster describes the cue; it stays in the flow so long text is never clipped. */
@@ -193,7 +122,6 @@ html.has-viewport-fullscreen .video-narration .vn-video.is-viewport-fullscreen {
   .video-narration .vn-phone-tip { display: block; margin: 0.5em 0.85em 0; color: var(--nja-muted); font-size: 0.9em; }
   .video-narration > .nja-player > :is(.nja-explanation, .nja-takeaway) { margin-left: 0.85em; margin-right: 0.85em; }
   .video-narration .vn-screen.nja-stage { padding: 0.4em; }
-  .video-narration .vn-volume { width: 4.5em; }
 }
 
 /* A table slide: the first cell heads its row. Whole words stay whole; where

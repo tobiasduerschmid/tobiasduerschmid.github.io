@@ -56,21 +56,24 @@ clickable part strip stays visible on every scene, including the opening frame
 before playback and the summary. Each part jumps to its first scene. The
 second-level outline shows the current part's scenes; an overview without a
 `part` previews the first registered part's scenes without marking either a
-part or a scene as current. The control bar
-has: position; play, back and forward 5 seconds, previous and
-next scene, restart, and time; mute, volume, captions (CC), settings (scene,
-speed, caption size, "Animate visuals", knowledge check, and code language
-when there is code), and full screen.
+part or a scene as current. The control bar is the one every narration
+shares (`_includes/narration-player-controls.html`, see
+`docs/narration-format.md`): position; play, back and forward 5 seconds,
+previous and next scene, restart, and time; mute, volume, captions (CC),
+settings (scene, speed, caption size, landscape in full screen, and this
+player's "Animate visuals", knowledge check, and code language when there is
+code), and full screen.
 
-The controls behave like the music player's because they reuse its modules:
+The controls behave like the music player's because they reuse its modules
+through `js/narration-player-controls.js`:
 `js/song-video/controls-visibility.js` (controls hide after 3 seconds of
 playback in full screen and return on pointer, key, or tap),
 `js/song-video/gestures.js` (click the picture to play or pause, double-click
-its left or right half to skip 5 seconds), and `js/song-video/keyboard.js`
-(K or Space, the arrow keys, 0 to 9, C, and F). They find the video, control
-bar, and settings through the song player's class hooks, which
-`_includes/video-narration.html` adds beside its own classes. Keys typed in a
-knowledge check stay with the quiz.
+its left or right half to skip 5 seconds; only a video narration has this
+picture control), and `js/song-video/keyboard.js` (K or Space, the arrow
+keys, 0 to 9, C, and F). They find the video, control bar, and settings
+through the song player's class hooks, which the shared includes add beside
+their own classes. Keys typed in a knowledge check stay with the quiz.
 
 Full screen keeps a horizontal, two-level roadmap across the top on laptops
 and phones. Each level scrolls sideways when its labels do not fit; it never
@@ -87,8 +90,9 @@ Escape returns. Both modes set `.is-fullscreen` on the video and send a
 `narration-fullscreenchange` event, which the full-screen layout and the
 control-visibility timer follow.
 
-On touch screens held upright, `bindFullscreenLayout` rotates the inner
-`.vn-surface` clockwise into landscape. It leaves the device's orientation
+On touch screens held upright, the shared control bar
+(`js/narration-player-controls.js`) rotates the inner `.vn-surface`
+clockwise into landscape, in every narration player. It leaves the device's orientation
 unlocked, works in both native and viewport fullscreen, and stops rotating
 when the phone turns sideways. The **Landscape in full screen** checkbox in
 settings lets viewers use portrait instead; its choice lasts for this page

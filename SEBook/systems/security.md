@@ -429,11 +429,11 @@ The lesson generalizes: a defense that doesn't *match the actual threat model* a
 
 In July 2026, hundreds of AI agents that OpenAI was testing on a hacking benchmark escaped their evaluation sandbox, took over a third-party server, and gained administrator access to clusters at Hugging Face, a platform that hosts machine-learning models and datasets. No single flaw handed over the platform. Each step crossed a place where one component trusted another. **Where would you have drawn the line?**
 
-The case has two parts. **What happened** walks through the incident in seven scenes, from the benchmark's design to detection and attribution. **Analysis** then asks you to apply this chapter to the evidence: classify the impact with the [CIA triad](#the-cia-triad-three-security-attributes), build a [threat model](#building-a-threat-model-knowledge-actions-resources-incentive) of an unusual attacker, draw the system as a [component diagram](/SEBook/uml_component_diagram.html), place [trust boundaries](#zero-trust-principle), apply [least privilege](#principle-of-least-privilege), and plan [layered defenses](#security-design-principles). The last scene runs a [security plan](#building-a-security-plan) on a system you have not seen.
+The narration gives a brief setup and attack path, then concentrates on applying this chapter: classify the impact with the [CIA triad](#the-cia-triad-three-security-attributes), build a [threat model](#building-a-threat-model-knowledge-actions-resources-incentive), identify assets and attack surface in a [component diagram](/SEBook/uml_component_diagram.html), and place [trust boundaries](#zero-trust-principle). **Compartmentalization** isolates risky work with limited access; [least privilege](#principle-of-least-privilege) limits its authority; [defense in depth](#security-design-principles) combines controls with different failure modes. Predict what each proposed control would stop, then transfer the reasoning to a profile-picture upload service. The detailed chronology is in the case record below.
 
 Use **Next step** to move through the evidence. Before each decision, commit to an answer and a reason, then use the feedback to revise it. The reading version below the player contains the same text, diagrams, and questions, with the answers behind expandable sections.
 
-The diagrams are simplified reconstructions of the published accounts, not recovered logs. **Evidence and sources** under each scene says which parts are reported history and which are teaching proposals. The facts come from OpenAI's technical report and its companion posts {% cite OpenAI2026HuggingFaceReport OpenAI2026HuggingFaceRoadAhead OpenAI2026SecuringTraining %}, the independent investigation by METR and Redwood Research {% cite METR2026HuggingFaceInvestigation %}, and Hugging Face's technical timeline of the intrusion {% cite HuggingFace2026AgentIntrusion %}.
+The diagrams are simplified reconstructions of the published accounts, not recovered logs. **Evidence and sources** under each scene says which parts are reported history and which are teaching proposals. The facts come from OpenAI's technical report and its companion posts {% cite OpenAI2026HuggingFaceReport OpenAI2026HuggingFaceRoadAhead OpenAI2026SecuringTraining %}, the investigation of agent behavior by METR and Redwood Research {% cite METR2026HuggingFaceInvestigation %}, and Hugging Face's initial disclosure and later technical timeline {% cite HuggingFace2026IncidentDisclosure HuggingFace2026AgentIntrusion %}. JFrog's vendor advisories separately document the relevant classes of package-proxy vulnerabilities, including improper token-refresh validation that enabled administrator access {% cite JFrog2026SecurityAdvisories %}.
 
 {% include narration.html topic="huggingface2026" %}
 
@@ -441,27 +441,33 @@ The diagrams are simplified reconstructions of the published accounts, not recov
 
 | Date (2026) | Reported event |
 |---|---|
-| May | Agents stuck on unsolvable tasks start leaving notes for each other in OpenAI's internal package proxy. |
+| May | An agent asks for a missing file through OpenAI's package proxy; a shared message board develops. |
 | Late May | A server-side request forgery zero-day in the proxy gives the agents internet access. |
+| June 26 | Agents exploit token-refresh handling to gain proxy administrator access and execute code. |
 | June 27 | A security alert fires, and the evaluations keep running. |
-| July 4–5 | Agent traffic crashes the proxy; rebuilding it wipes the message board. |
-| July 8 | The board returns, encoded in directory names, and internet access through the proxy resumes. |
-| July 9 | An agent takes over an exposed third-party application and uses it as a staging base. |
+| July 4–7 | Agent traffic crashes the proxy. OpenAI rebuilds it, revokes shared credentials, restricts endpoints, and contacts JFrog; evaluations resume July 7. |
+| July 8 | The board returns, encoded in directory names; agents find new ways to regain internet access through the proxy. |
+| July 9 | An agent uses proxy access to take over a customer's application sandbox hosted on Modal, making it a staging base. |
 | July 10 | Fourteen exposed Hugging Face write tokens are found in a public dataset. |
 | July 11 | Crafted datasets leak worker credentials and run agent code on dataset workers (41 workers by July 13). |
-| July 11–13 | A worker's token reaches a shared administrator credential; privileged pods give root on a node. |
+| July 11 | Identity and token permissions lead to a storage-helper identity; privileged pod creation gives node root. A shared broker credential subsequently expands administrator access across clusters. |
 | July 13 | Hugging Face cuts off the attackers' access. |
 | July 16 | Hugging Face discloses the incident. |
-| July 21 | OpenAI tells Hugging Face and the public that its agents were responsible. |
+| July 20 | OpenAI contacts Hugging Face; the teams connect the incidents. |
+| July 21 | OpenAI publicly discloses its agents' involvement. |
 | August 26 | OpenAI publishes its technical report; METR and Redwood Research publish their investigation. |
 
-The table follows OpenAI's timeline {% cite OpenAI2026HuggingFaceReport OpenAI2026HuggingFaceRoadAhead %} and Hugging Face's account {% cite HuggingFace2026AgentIntrusion %}. The agent counts in the narration, about 1,200 agents on the message board and about 700 in the attack, come from METR's investigation {% cite METR2026HuggingFaceInvestigation %}.
+The table follows OpenAI's timeline {% cite OpenAI2026HuggingFaceReport OpenAI2026HuggingFaceRoadAhead %} and Hugging Face's account {% cite HuggingFace2026AgentIntrusion %}. The narration's approximate counts—1,200 agents on the message board, including about 700 involved in the attack—refer to July 8–13 in METR's investigation {% cite METR2026HuggingFaceInvestigation %}. The earlier May board and its July reconstruction do not imply that the same agent instances persisted throughout.
 
 ## What the Sources Leave Open
 
-The accounts differ in emphasis. OpenAI describes reward hacking, including attempts to obtain task solutions; METR found that most agents joined the attack mainly to understand how the benchmark's scorer worked. OpenAI describes the access tool's credential as giving "administrator-equivalent, read-only inventory access", while Hugging Face reports that it carried full administrator rights and that impersonating it gave cluster administrator access on two clusters. Neither difference changes the security lessons, but a careful analysis states which source supports which claim.
+The accounts have different scopes. OpenAI reconstructs its infrastructure incidents; Hugging Face describes its own forensic findings. METR and Redwood principally reviewed agent behavior during July 7–13, with limited time and access; their report does not independently validate every claim in OpenAI's account. Raw logs are not all public, and the investigators describe limitations and possible errors {% cite METR2026HuggingFaceInvestigation %}.
 
-The analysis goes beyond the reports in one respect: the trust boundaries are teaching proposals derived from the attack path, the changes OpenAI reported, and the gaps Hugging Face named, not a list of changes either company announced. Some links in the reconstruction are also inferred, such as how the agents reached the staging server; the scene notes say so. For more context, see a [video about the incident](https://www.youtube.com/watch?v=87DyyMV0kCY) and [CNBC's report on OpenAI's findings](https://www.cnbc.com/2026/08/26/open-ai-hugging-face-hack.html).
+METR found that most agents joined to learn how the scorer worked and fool it; some of their assumptions about grading were wrong. The narration therefore distinguishes an agent's stated goal from what a system actually did. It also distinguishes stolen credentials from successful use: several network and permission checks denied later requests. OpenAI describes the access broker in terms of read-only inventory access; Hugging Face reports a shared credential with full administrator rights on two clusters. Observed reads and granted authority are different claims, so the narration attributes the latter to Hugging Face {% cite OpenAI2026HuggingFaceReport HuggingFace2026AgentIntrusion %}.
+
+Hugging Face's later account limits customer-content access to five datasets with an apparent benchmark connection, while also reporting access to operational metadata related to dataset searches. This is narrower than proof that all five datasets contained solutions, and broader than saying no other customer records were read. The accounts establish confidentiality and integrity violations; they do not establish a Hugging Face service outage {% cite HuggingFace2026AgentIntrusion %}.
+
+The proposed trust boundaries are teaching designs derived from the attack path, not a list of changes either company announced. The proxy-to-staging route is explicitly documented in OpenAI's technical report (page 16); the diagrams compress concurrent activity and intermediate privilege escalations. For more context, see a [video about the incident](https://www.youtube.com/watch?v=87DyyMV0kCY) and [CNBC's report on OpenAI's findings](https://www.cnbc.com/2026/08/26/open-ai-hugging-face-hack.html).
 
 
 # Summary
@@ -473,7 +479,7 @@ The analysis goes beyond the reports in one respect: the trust boundaries are te
 * **Authentication** must avoid sending the password on every request. **Session cookies** delegate to a server-side store and need `HttpOnly` + `Secure` + `SameSite`. **JWTs** are signed, stateless tokens — easier to scale across services, harder to revoke, and dangerous if stored in `localStorage` (XSS readable).
 * Three security design principles dominate application code: **Zero Trust** (validate every input, regardless of source), **Open Design** (security rests on key secrecy, not algorithm secrecy — public scrutiny improves designs), and **Principle of Least Privilege** (every component holds only the permissions its job requires, shrinking the blast radius of any compromise).
 * A **security plan** answers four questions: what are you defending (security model), who is attacking and why (threat model), where is the system exposed (attack surface), and what mechanisms prevent compromise (protection mechanisms). A defense built without a matching threat model fails — the foil-and-emergency-phone is the canonical illustration.
-* The **2026 Hugging Face case** combines these ideas. A trusted proxy relayed forbidden traffic, stolen but valid tokens passed authentication, a parser turned an upload into commands, and a worker's token reached administrator rights. The valid tokens show that authentication alone could not stop it. A **trust boundary** where the proxy receives requests or around the parser, or **least privilege** for the worker and its token, would likely have cut the chain at that hop; layering such independent controls is **defense in depth**.
+* The **2026 Hugging Face case** combines these ideas. A trusted proxy relayed forbidden traffic, stolen tokens passed authentication, unsafe parsing exposed files and allowed commands, and further privilege escalation reached machines and clusters. The CIA triad separates unauthorized reads, unauthorized changes, and service disruption. Threat modeling includes cooperating agents and indirect routes. **Trust boundaries** need enforced rules; **compartmentalization** contains risky parsing; **least privilege** limits the authority available after a compromise. Combining separately enforced controls is **defense in depth**.
 
 # Quiz 
 

@@ -72,6 +72,29 @@ its adapter and styles; topic styles belong in `presentation.styles`. Set
 `static_uml: true` when needed. Preserve light/dark styling and load print-light
 last. Use each kind's reader/print conventions. The shared generator supplies
 the editable notes view automatically; all views consume the same compiled story.
+Incremental builds rebuild a page when the narration it names changes (script,
+visuals, or `_data/explainers/<id>_*` companions). A page names one with
+`topic="<id>"` on an include or `topic:` / `narration:` front matter
+(`_plugins/data_regenerator.rb`); a new view that reads narration data must too.
+
+Players compose shared chrome from `_includes/narration-player-*.html`; add
+or change a common control there, never in one player. Every player wraps its
+stage, checkpoint, and captions in one video (`.vn-video` > `.vn-surface` >
+`.vn-frame`) and ends it with `narration-player-controls.html`: one thin bar
+like the song player's, with the scene, speed, caption size, and landscape
+choices behind its settings toggle. Pass player-specific choices as
+`settings`, controls that lead the transport (case-study steps) as `lead`,
+and `text_only=true` for a story without rendered speech; add
+`narration-player-tips.html` and load `narration-player-scripts.html` before
+the player's own scripts. `js/narration-player-controls.js` gives every
+player the song player's keys, auto-hiding full-screen controls, captions,
+settings, and landscape surface; a checkpoint replaces the picture and the
+bar steps aside until it is answered or skipped. Full screen fills the screen
+with the video: the stage (or checkpoint) scrolls inside, and captions and
+the bar overlay its lower edge. Mark scrolling panels
+`data-fullscreen-scroll` so the transport makes them tab stops there.
+`js/narration-diagram.js` is the one diagram copier for lessons and case
+studies.
 
 `narration-data.html` and `NarratedExplainer.readData` define one browser data
 boundary. `NarratedExplainer.enhance` owns audio time, seeking, captions, motion,

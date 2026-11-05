@@ -3,6 +3,7 @@ const { test, expect } = require('@playwright/test');
 const { readFileSync } = require('node:fs');
 const path = require('node:path');
 const { a11yCheckpoint } = require('./a11y-helpers');
+const { openPlayerSettings } = require('./helpers/narration-player');
 
 const cases = [
   { topic: 'therac25', url: '/SEBook/development_practices/therac-25.html' },
@@ -19,10 +20,10 @@ async function expectPlaybackAvailable(study, story) {
 }
 
 async function readThroughScene(study, scene) {
-  await expect(study.getByRole('region', { name: 'Current narration' })).toHaveText(scene.cues[0].text);
+  await expect(study.getByRole('region', { name: 'Narration', exact: true })).toHaveText(scene.cues[0].text);
   for (const cue of scene.cues.slice(1)) {
     await study.getByRole('button', { name: 'Next step', exact: true }).click();
-    await expect(study.getByRole('region', { name: 'Current narration' })).toHaveText(cue.text);
+    await expect(study.getByRole('region', { name: 'Narration', exact: true })).toHaveText(cue.text);
   }
 }
 
@@ -47,6 +48,7 @@ for (const { topic, url } of cases) {
       const scene = story.scenes[decisionIndex];
       const question = scene.checkpoint;
       const followingScene = story.scenes[decisionIndex + 1];
+      await openPlayerSettings(study);
       await study.getByRole('combobox', { name: 'Review a scene' }).selectOption(String(decisionIndex));
       await readThroughScene(study, scene);
       await expect(study.getByRole('heading', { name: followingScene.title, exact: true })).toBeHidden();
@@ -75,6 +77,7 @@ for (const { topic, url } of cases) {
     test('review navigation reconstructs each cue without requiring earlier decisions or audio', async ({ page }) => {
       await page.goto(url);
       const study = caseStudy(page);
+      await openPlayerSettings(study);
       // Reverse order catches state left behind by a later scene as well as forward navigation.
       for (let index = story.scenes.length - 1; index >= 0; index--) {
         const scene = story.scenes[index];
@@ -84,12 +87,12 @@ for (const { topic, url } of cases) {
           if (cueIndex > 0) await study.getByRole('button', { name: 'Next step', exact: true }).click();
           const diagram = story.diagrams[cue.diagram || scene.diagram];
           await expect(study.getByRole('img', { name: diagram.label, exact: true })).toBeVisible();
-          await expect(study.getByRole('region', { name: 'Current narration' })).toHaveText(cue.text);
+          await expect(study.getByRole('region', { name: 'Narration', exact: true })).toHaveText(cue.text);
         }
         const nextAction = scene.checkpoint ? 'Choose next action'
           : index < story.scenes.length - 1 ? 'Next scene' : 'Finish case study';
         // Step navigation and the media transport both offer "Next scene".
-        await expect(study.locator('.case-step-controls').getByRole('button', { name: nextAction, exact: true })).toBeVisible();
+        await expect(study.locator('.case-step-actions').getByRole('button', { name: nextAction, exact: true })).toBeVisible();
         await expectPlaybackAvailable(study, story);
       }
     });
@@ -103,7 +106,9 @@ for (const { topic, url } of cases) {
       await study.getByRole('button', { name: 'Play narration', exact: true }).click();
       const decision = study.getByRole('region', { name: decisionName(story.scenes[decisionIndex], decisionIndex), exact: true });
       await expect(decision).toBeVisible();
-      await expect(study.getByRole('button', { name: 'Play narration', exact: true })).toBeDisabled();
+      // The decision replaces the control bar until the learner answers or skips it.
+      expect(await study.locator('audio').evaluate(audio => audio.paused)).toBe(true);
+      await expect(study.getByRole('button', { name: 'Play narration', exact: true })).toBeHidden();
       await expect(study.getByRole('heading', { name: story.scenes[decisionIndex + 1].title, exact: true })).toBeHidden();
       await decision.getByRole('button', { name: 'Skip decision and reveal next evidence' }).click();
       await expect(study.getByRole('heading', { name: story.scenes[decisionIndex + 1].title, exact: true })).toBeVisible();
@@ -117,17 +122,19 @@ for (const { topic, url } of cases) {
       const study = caseStudy(page);
       await expect(study.locator('audio')).toHaveCount(0);
       await expect(study.getByRole('link', { name: /Download narration/ })).toHaveCount(0);
+      await openPlayerSettings(study);
       await expect(study.getByRole('combobox', { name: 'Narration speed' })).toHaveCount(0);
       const last = story.scenes.length - 1;
       await study.getByRole('combobox', { name: 'Review a scene' }).selectOption(String(last));
       await readThroughScene(study, story.scenes[last]);
-      await study.locator('.case-step-controls').getByRole('button', { name: story.scenes[last].checkpoint ? 'Choose next action' : 'Finish case study', exact: true }).click();
+      await study.locator('.case-step-actions').getByRole('button', { name: story.scenes[last].checkpoint ? 'Choose next action' : 'Finish case study', exact: true }).click();
       if (story.scenes[last].checkpoint) {
         const decision = study.getByRole('region', { name: decisionName(story.scenes[last], last), exact: true });
         await decision.getByRole('button', { name: 'Skip decision and finish' }).click();
       }
       await expect(study.getByRole('status').filter({ hasText: 'Case study complete.' })).toBeVisible();
-      await expect(study.getByRole('combobox', { name: 'Review a scene' })).toBeFocused();
+      // Scene review is in the player settings; a text-only story has no restart button.
+      await expect(study.getByRole('button', { name: 'Player settings' })).toBeFocused();
     });
 
     test('full screen keeps step navigation and the narration, then returns to the page', async ({ page }) => {
@@ -139,7 +146,7 @@ for (const { topic, url } of cases) {
       const insideFullScreen = locator => locator.evaluate(element =>
         Boolean(document.fullscreenElement && document.fullscreenElement.contains(element)));
       expect(await insideFullScreen(study.getByRole('button', { name: 'Next step', exact: true }))).toBe(true);
-      expect(await insideFullScreen(study.getByRole('region', { name: 'Current narration' }))).toBe(true);
+      expect(await insideFullScreen(study.getByRole('region', { name: 'Narration', exact: true }))).toBe(true);
       await exit.click();
       await expect(study.getByRole('button', { name: 'Enter full screen', exact: true })).toBeFocused();
       expect(await page.evaluate(() => document.fullscreenElement)).toBeNull();
@@ -180,6 +187,7 @@ for (const { topic, url } of cases) {
         expect(textSizes.width, 'story must fit within the narrow page').toBeLessThanOrEqual(320);
         for (const size of textSizes.buttonSizes) expect(size).toBeGreaterThanOrEqual(textSizes.paragraphSize);
         await a11yCheckpoint(page, 'narrow case study diagram', auditScope);
+        await openPlayerSettings(study);
         await study.getByRole('combobox', { name: 'Review a scene' }).selectOption(String(decisionIndex));
         await readThroughScene(study, story.scenes[decisionIndex]);
         await study.getByRole('button', { name: 'Choose next action', exact: true }).click();

@@ -1,0 +1,5 @@
+{%- comment -%}
+  The scene select that the narration transport keeps on the current scene.
+  Params: scenes (the story's scenes), label (default "Scene").
+{%- endcomment -%}
+<label class="nja-scene-select">{{ include.label | default: 'Scene' }}<select data-setting="scene">{% for scene in include.scenes %}<option value="{{ forloop.index0 }}">{{ forloop.index }}. {{ scene.label | escape }}</option>{% endfor %}</select></label>

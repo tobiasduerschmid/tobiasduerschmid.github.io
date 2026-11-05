@@ -30,7 +30,7 @@ async function playFirstCue(page, topic) {
   await play.click();
   await expect(player.getByRole('button', { name: 'Pause narration', exact: true })).toBeVisible();
   await expect.poll(() => player.locator('audio').evaluate(audio => audio.currentTime)).toBeGreaterThan(0.5);
-  const narration = player.getByRole('region', { name: topic === 'therac25' ? 'Current narration' : 'Narration', exact: true });
+  const narration = player.getByRole('region', { name: 'Narration', exact: true });
   await expect(narration).toHaveText(story.scenes[0].cues[0].text);
   return { player, story, errors };
 }

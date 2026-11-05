@@ -8,11 +8,19 @@
 #   - `tutorial: <name>` frontmatter → _data/tutorials/<name>.yml
 #   - `{% include quiz.html id="..." %}` → _data/quizzes/<id>.yml
 #   - `{% include flashcards.html id="..." %}` → _data/flashcards/<id>.yml
+#   - a narration topic, named by `topic="..."` on an include (a chapter's
+#     `{% include narration.html topic="..." %}`) or by `topic:` / `narration:`
+#     frontmatter (reader, print, notes, and stage views)
+#       → _data/narrations/<topic>.yml, _data/narration_visuals/<topic>.json,
+#         and its _data/explainers/<topic>_{notes,timing,code,quizzes,ui} files
 
 module Jekyll
   module DataRegenerator
     QUIZ_INCLUDE_RE       = /\{%\s*include\s+quiz\.html\s+id=["']([^"']+)["']/
     FLASHCARDS_INCLUDE_RE = /\{%\s*include\s+flashcards\.html\s+id=["']([^"']+)["']/
+    TOPIC_INCLUDE_RE      = /\{%-?\s*include\s+[\w.-]+\s[^%]*?\btopic=["']([^"']+)["']/
+    # The per-lesson companions that narration includes read from _data/explainers/.
+    NARRATION_COMPANIONS  = %w[notes timing code quizzes ui]
     AUTO_ABBR_LAYOUTS      = %w[sebook sebook-combined tutorial print-tutorial blog-post]
 
     def self.collect_deps(doc, source)
@@ -33,8 +41,28 @@ module Jekyll
       content.scan(FLASHCARDS_INCLUDE_RE).each do |m|
         deps << File.join(source, "_data", "flashcards", "#{m[0]}.yml")
       end
+      narration_topics(doc, content).each do |topic|
+        deps.concat(narration_deps(source, topic))
+      end
 
       deps.select { |p| File.exist?(p) }
+    end
+
+    def self.narration_topics(doc, content)
+      named = [doc.data["topic"], doc.data["narration"]].compact.map(&:to_s)
+      (named + content.scan(TOPIC_INCLUDE_RE).flatten).uniq
+    end
+
+    # A topic is a narration lesson only when its script exists; other `topic`
+    # values add nothing.
+    def self.narration_deps(source, topic)
+      script = File.join(source, "_data", "narrations", "#{topic}.yml")
+      return [] unless File.exist?(script)
+
+      companions = NARRATION_COMPANIONS.product(%w[yml json]).map do |name, extension|
+        File.join(source, "_data", "explainers", "#{topic}_#{name}.#{extension}")
+      end
+      [script, File.join(source, "_data", "narration_visuals", "#{topic}.json")] + companions
     end
 
     def self.register(site)

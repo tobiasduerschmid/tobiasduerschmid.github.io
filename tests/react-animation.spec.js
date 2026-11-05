@@ -1,6 +1,7 @@
 const { loadStory } = require('../scripts/narration/source');
 const { test, expect } = require('@playwright/test');
 const { a11yCheckpoint } = require('./a11y-helpers');
+const { openPlayerSettings } = require('./helpers/narration-player');
 const { chromiumLaunchOptions } = require('../scripts/chromium-launch-options');
 // Decode real audio on a virtual output; CI must not depend on a sound device.
 test.use({ launchOptions: { ...chromiumLaunchOptions(), args: ['--disable-audio-output'] } });
@@ -13,6 +14,7 @@ async function seekToCue(page, sceneId, pose) {
   const sceneIndex = story.scenes.findIndex((scene) => scene.id === sceneId);
   const cueIndex = story.scenes[sceneIndex].cues.findIndex((cue) => cue.pose === pose);
   const animation = player(page);
+  await openPlayerSettings(animation);
   await animation.getByRole('combobox', { name: 'Scene', exact: true }).selectOption(String(sceneIndex));
   const cue = timing.scenes[sceneIndex].cues[cueIndex];
   const time = Number(((cue.start + cue.end) / 2).toFixed(2));
@@ -30,7 +32,7 @@ test('starts paused with a complete downloadable script, captions and compressed
   await expect(animation.getByRole('heading', { name: 'Describe the screen from data' })).toBeVisible();
   await expect(animation.getByText('Narration: Kokoro.', { exact: false })).toBeVisible();
   await expect(animation.getByText('No music.', { exact: false })).toHaveCount(0);
-  for (const [name, phrase] of [['Download TTS script', 'React is a Javascript library'], ['Download narration', null]]) {
+  for (const [name, phrase] of [['Download narration script', 'React is a Javascript library'], ['Download narration', null]]) {
     const link = animation.getByRole('link', { name, exact: true });
     const response = await request.get(await link.getAttribute('href'));
     expect(response.ok()).toBe(true);
@@ -53,6 +55,7 @@ test('actual MP3 playback drives progress, pauses, and supports transport and sp
   await expect.poll(async () => Number(await slider.inputValue())).toBeGreaterThan(0.2);
   const audio = animation.getByLabel('React narration by Kokoro');
   expect(await audio.evaluate((element) => element.duration)).toBeCloseTo(timing.duration, 0);
+  await openPlayerSettings(animation);
   await animation.getByRole('combobox', { name: 'Speed', exact: true }).selectOption('1.25');
   expect(await audio.evaluate((element) => element.playbackRate)).toBe(1.25);
   await animation.getByRole('button', { name: 'Mute narration', exact: true }).click();
@@ -129,6 +132,7 @@ test('shared state, stable keys, and effects agree with their narrated outcomes'
 test('reduced motion, no-JavaScript and print retain the complete lesson', async ({ browser, page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto(pageURL);
+  await openPlayerSettings(player(page));
   await expect(player(page).getByLabel('Animate visuals')).not.toBeChecked();
   await player(page).getByRole('combobox', { name: 'Scene', exact: true }).selectOption('7');
   await expect(player(page).getByRole('img')).toContainText('Course data');
@@ -161,8 +165,10 @@ for (const combinedPage of ['/SEBook/CS35L.html', '/SEBook/all.html']) {
     const node = page.getByRole('region', { name: 'Node.js in motion', exact: true });
     await expect(react.getByRole('button', { name: 'Play narration' })).toBeVisible();
     await expect(node.getByRole('button', { name: 'Play narration' })).toBeVisible();
+    await openPlayerSettings(react);
     await react.getByRole('combobox', { name: 'Scene', exact: true }).selectOption('4');
     await expect(react.getByRole('heading', { name: 'Follow one click to the screen' })).toBeVisible();
+    await openPlayerSettings(node);
     await expect(node.getByRole('combobox', { name: 'Scene', exact: true })).toHaveValue('0');
     await node.getByRole('combobox', { name: 'Scene', exact: true }).selectOption('2');
     await expect(node.getByRole('heading', { name: 'Blocking: the thread waits' })).toBeVisible();

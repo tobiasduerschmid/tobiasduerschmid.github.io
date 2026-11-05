@@ -21,7 +21,7 @@ All ArchUML types are invoked with `<pre><code class="<class-name>">…@startuml
 |---|---|---|
 | Classes, interfaces, inheritance, associations | `language-uml-class` | [REFERENCE.md §Class Diagrams (L266)](../../../js/ArchUML/REFERENCE.md) |
 | Class names, responsibilities, and collaborators during design exploration | `diagram-crc` (Markdown fence: `crc`) | [REFERENCE.md §CRC Cards](../../../js/ArchUML/REFERENCE.md#crc-cards) |
-| Interactions / messages between participants over time | `language-uml-sequence` | [REFERENCE.md §Sequence Diagrams (L646)](../../../js/ArchUML/REFERENCE.md) |
+| Interactions / messages between participants over time; group lifelines by owning organization or trust zone with `box "Name" … end box` | `language-uml-sequence` | [REFERENCE.md §Sequence Diagrams (L646)](../../../js/ArchUML/REFERENCE.md), [§Organization Boxes](../../../js/ArchUML/REFERENCE.md#organization-boxes) |
 | Named states and transitions (behavioral modeling) | `language-uml-state` | [REFERENCE.md §State Machine Diagrams (L974)](../../../js/ArchUML/REFERENCE.md) |
 | Components, ports, ball-and-socket interfaces | `language-uml-component` | [REFERENCE.md §Component Diagrams (L1167)](../../../js/ArchUML/REFERENCE.md) |
 | Nodes, artifacts, infrastructure topology | `language-uml-deployment` | [REFERENCE.md §Deployment Diagrams (L1322)](../../../js/ArchUML/REFERENCE.md) |

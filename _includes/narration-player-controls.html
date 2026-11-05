@@ -1,0 +1,57 @@
+{%- comment -%}
+  The control bar of every narration player, modeled on the song player
+  (_layouts/song-player.html): the position line, then playback on the left
+  and the view on the right, with the remaining choices behind the settings
+  toggle. Its song-player class hooks give every player the same keyboard
+  shortcuts and full-screen behavior (js/narration-player-controls.js).
+  Params:
+    id           prefix of the ids this bar refers to (captions, settings)
+    text_only    true for a story without rendered speech: no transport,
+                 position, volume, captions toggle, or speed
+    duration     the narration's length in seconds
+    seek_label   the position slider's accessible name
+    scenes       the story's scenes, for the scene select
+    scene_label  the scene select's label (default "Scene")
+    speed_label, rates   see narration-player-speed.html
+    lead         controls before the transport, such as a case study's steps
+    settings     settings that only this kind of player offers
+{%- endcomment -%}
+<div class="nja-controls nja-playback-controls vn-controls song-player-controls" hidden>
+  {%- unless include.text_only %}
+  <label class="nja-seek-label vn-seek-label"><span class="vn-hidden-label">{{ include.seek_label }}</span><input type="range" min="0" max="{{ include.duration | default: 1 }}" step="0.01" value="0" aria-valuetext="0:00" class="nja-seek" aria-keyshortcuts="ArrowLeft ArrowRight 0 1 2 3 4 5 6 7 8 9"></label>
+  {%- endunless %}
+  <div class="vn-toolbar">
+    <div class="nja-transport vn-toolbar-group">
+      {{- include.lead -}}
+      {%- unless include.text_only %}
+      <button type="button" data-action="play" aria-label="Play narration" aria-keyshortcuts="k Space"><i class="fa fa-play" aria-hidden="true"></i></button>
+      <button type="button" data-vn-skip="-5" aria-label="Back 5 seconds" aria-keyshortcuts="ArrowLeft"><i class="fa fa-rotate-left" aria-hidden="true"></i><span aria-hidden="true">5</span></button>
+      <button type="button" data-vn-skip="5" aria-label="Forward 5 seconds" aria-keyshortcuts="ArrowRight"><i class="fa fa-rotate-right" aria-hidden="true"></i><span aria-hidden="true">5</span></button>
+      <button type="button" data-action="previous" aria-label="Previous scene"><i class="fa fa-step-backward" aria-hidden="true"></i></button>
+      <button type="button" data-action="next" aria-label="Next scene"><i class="fa fa-step-forward" aria-hidden="true"></i></button>
+      <button type="button" data-action="restart" aria-label="Restart narration"><i class="fa fa-fast-backward" aria-hidden="true"></i></button>
+      <output class="nja-time" aria-label="Playback time">0:00</output>
+      {%- endunless %}
+    </div>
+    <div class="vn-toolbar-group vn-view-controls">
+      {%- unless include.text_only %}
+      <button type="button" data-action="mute" aria-label="Mute narration" aria-pressed="false"><i class="fa fa-volume-up" aria-hidden="true"></i></button>
+      <input type="range" class="vn-volume" min="0" max="100" step="1" value="100" aria-label="Volume">
+      <button type="button" class="vn-cc" aria-label="Closed captions (CC)" aria-pressed="true" aria-controls="{{ include.id }}-captions" aria-keyshortcuts="c">CC</button>
+      {%- endunless %}
+      <button type="button" class="vn-settings-toggle song-player-settings-toggle" aria-label="Player settings" aria-expanded="false" aria-controls="{{ include.id }}-settings"><i class="fa fa-cog" aria-hidden="true"></i></button>
+      <button type="button" data-action="fullscreen" aria-label="Enter full screen" aria-keyshortcuts="f" hidden><i class="fa fa-expand" aria-hidden="true"></i></button>
+    </div>
+  </div>
+  <section class="vn-settings song-player-settings" id="{{ include.id }}-settings" role="region" aria-label="Player settings" hidden>
+    <div class="nja-settings">
+      {% include narration-player-scene-select.html scenes=include.scenes label=include.scene_label %}
+      {%- unless include.text_only %}
+      {% include narration-player-speed.html label=include.speed_label rates=include.rates %}
+      {%- endunless %}
+      <label>Caption size<select class="vn-caption-size"><option value="1" selected>100%</option><option value="1.25">125%</option><option value="1.5">150%</option><option value="2">200%</option></select></label>
+      <label class="nja-motion"><input type="checkbox" class="vn-landscape" checked> Landscape in full screen</label>
+      {{- include.settings -}}
+    </div>
+  </section>
+</div>

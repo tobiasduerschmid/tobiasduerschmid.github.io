@@ -1,5 +1,7 @@
-/* Narrated lessons share the SEBook language preference; URLs can select a view.
-   A lesson without code has no language control and carries only the theme. */
+/* The reader shell of every narration kind. Lesson players and their reading
+   and print views share the SEBook language preference; URLs carry the
+   language and theme between views. A lesson without code has no language
+   control and carries only the theme. */
 (function () {
   'use strict';
   const params = new URLSearchParams(window.location.search);
@@ -83,9 +85,18 @@
     }
   }
 
+  // Every reading or print view (an np-document-page), every pattern or video
+  // player, and any other narration whose view links carry the preferences.
+  function lessonRoots() {
+    const roots = new Set(document.querySelectorAll('.narrated-lesson, .np-document-page'));
+    document.querySelectorAll('[data-np-view-link]').forEach(link => roots.add(link.closest('.narrated-explainer')));
+    roots.delete(null);
+    return roots;
+  }
+
   function init() {
     applyRequestedTheme();
-    document.querySelectorAll('.narrated-lesson').forEach(enhancePreferences);
+    lessonRoots().forEach(enhancePreferences);
   }
   // Deferred scripts run while readyState is interactive, before the site's
   // DOMContentLoaded handlers initialize its theme controls from saved preferences.

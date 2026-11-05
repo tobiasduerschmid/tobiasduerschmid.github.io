@@ -3,58 +3,13 @@
    or the animated stage. Slides, diagrams, and code are copied from the
    build-time reading step for the cue; the animated stage is a same-origin
    frame that poses the song-video engine at the narration's time.
-   js/narrated-lesson.js holds what every narrated lesson shares. */
+   js/narrated-lesson.js holds what every narrated lesson shares, and
+   js/narration-player-controls.js the control bar of every player. */
 (function () {
   'use strict';
   // Every cue ends with silence; a still picture rests this long before the
   // next cue, after everything the cue introduces has appeared.
   const REST_BEFORE_NEXT_CUE = 0.3;
-
-  // Rotate the inner surface, not the native fullscreen element (whose
-  // transform the browser resets). This also works without orientation-lock
-  // support on iPhone. The viewer can keep device orientation in settings.
-  function bindFullscreenLayout(root) {
-    const video = root.querySelector('[data-vn-video]');
-    const landscape = root.querySelector('.vn-landscape');
-    const touch = window.matchMedia('(any-pointer: coarse)');
-    let active = false;
-
-    function resize() {
-      const viewport = window.visualViewport;
-      const width = viewport ? viewport.width : window.innerWidth;
-      const height = viewport ? viewport.height : window.innerHeight;
-      const rotated = active && landscape.checked && touch.matches && height > width;
-      const surfaceWidth = rotated ? height : width;
-      const surfaceHeight = rotated ? width : height;
-      video.classList.toggle('is-rotated', rotated);
-      if (!active) return;
-      video.style.setProperty('--vn-surface-width', `${surfaceWidth}px`);
-      video.style.setProperty('--vn-surface-height', `${surfaceHeight}px`);
-      video.style.setProperty('--vn-viewport-width', `${width}px`);
-      video.style.setProperty('--vn-viewport-height', `${height}px`);
-      video.style.setProperty('--vn-viewport-left', `${viewport ? viewport.offsetLeft : 0}px`);
-      video.style.setProperty('--vn-viewport-top', `${viewport ? viewport.offsetTop : 0}px`);
-    }
-
-    root.addEventListener('narration-fullscreenchange', event => {
-      active = event.detail.active;
-      resize();
-      const quiz = root.querySelector('.np-quiz');
-      // The quiz replaces the toolbar, so its heading is the return target
-      // when the full-screen-only exit button disappears.
-      if (!active && !quiz.hidden) quiz.querySelector('h3').focus({ preventScroll: true });
-    });
-    landscape.addEventListener('change', resize);
-    window.addEventListener('resize', resize);
-    touch.addEventListener('change', resize);
-    if (window.visualViewport) {
-      window.visualViewport.addEventListener('resize', resize);
-      window.visualViewport.addEventListener('scroll', resize);
-    }
-    root.querySelector('.vn-check-exit').addEventListener('click', () => {
-      root.querySelector('[data-action="fullscreen"]').click();
-    });
-  }
 
   // The frame loads once the screen comes near the viewport, or when playback
   // starts (a page in a background tab may not report visibility). Until its
@@ -99,87 +54,6 @@
         }
       },
     };
-  }
-
-  /*
-   * The controls a video player has beyond the shared transport: five-second
-   * skips, volume, captions and their size, settings, the picture's click and
-   * double-click, keyboard shortcuts, and controls that hide during playback in
-   * full screen. The last three are the song player's own modules
-   * (js/song-video/), bound through their class hooks on the video.
-   */
-  function bindVideoControls(root, player) {
-    const audio = root.querySelector('audio');
-    const video = root.querySelector('[data-vn-video]');
-    const seek = root.querySelector('.nja-seek');
-    const picture = root.querySelector('.vn-picture-control');
-    const feedback = root.querySelector('.vn-gesture-feedback');
-    const cc = root.querySelector('.vn-cc');
-    const settingsToggle = root.querySelector('.vn-settings-toggle');
-    const settings = root.querySelector('.vn-settings');
-    const volume = root.querySelector('.vn-volume');
-    const listen = (target, type, handler, options) => target.addEventListener(type, handler, options);
-    let feedbackTimer = 0;
-
-    const visibility = window.SongControlsVisibility.bind({ player: root, audio, listen });
-    const togglePlayback = () => root.querySelector('[data-action="play"]').click();
-    function skip(direction) {
-      player.seekTo(Number(seek.value) + 5 * direction);
-      clearTimeout(feedbackTimer);
-      feedback.textContent = direction < 0 ? '−5 seconds' : '+5 seconds';
-      feedback.classList.toggle('is-back', direction < 0);
-      feedback.hidden = false;
-      feedbackTimer = setTimeout(() => { feedback.hidden = true; }, 700);
-    }
-    function toggleCaptions() {
-      const on = cc.getAttribute('aria-pressed') !== 'true';
-      cc.setAttribute('aria-pressed', String(on));
-      video.classList.toggle('are-captions-off', !on);
-    }
-    function toggleFullscreen() {
-      const button = root.querySelector('[data-action="fullscreen"]');
-      if (button) button.click();
-    }
-    function syncPicture() {
-      picture.setAttribute('aria-label', audio.paused ? 'Play video' : 'Pause video');
-    }
-
-    picture.hidden = false;
-    window.SongGestures.bind({ button: picture, screen: video, listen, toggle: togglePlayback, skip, revealControls: visibility.reveal });
-    window.SongKeyboard.bind({
-      player: video, positionControl: seek, listen, toggle: togglePlayback, skip,
-      seekToFraction: fraction => player.seekTo(Number(seek.max) * fraction),
-      fullscreen: toggleFullscreen, captions: toggleCaptions,
-    });
-    // Keys typed in a knowledge check belong to the quiz, never to playback.
-    listen(root.querySelector('.np-quiz'), 'keydown', event => event.stopPropagation());
-    root.querySelectorAll('[data-vn-skip]').forEach(button => listen(button, 'click', () => skip(Math.sign(Number(button.dataset.vnSkip)))));
-    listen(cc, 'click', toggleCaptions);
-    listen(root.querySelector('.vn-caption-size'), 'change', event => video.style.setProperty('--vn-caption-scale', event.target.value));
-    listen(volume, 'input', () => {
-      audio.volume = Number(volume.value) / 100;
-      if (audio.volume > 0 && audio.muted) root.querySelector('[data-action="mute"]').click();
-    });
-    listen(settingsToggle, 'click', () => {
-      const open = settings.hidden;
-      settings.hidden = !open;
-      settingsToggle.setAttribute('aria-expanded', String(open));
-      visibility.reveal();
-    });
-    listen(settings, 'keydown', event => {
-      if (event.key !== 'Escape') return;
-      // Escape closes the settings first; in full screen, a second Escape leaves it.
-      event.preventDefault();
-      settings.hidden = true;
-      settingsToggle.setAttribute('aria-expanded', 'false');
-      visibility.focusControl(settingsToggle);
-    });
-    for (const type of ['play', 'pause', 'ended']) listen(audio, type, syncPicture);
-    listen(root, 'narration-fullscreenchange', event => visibility.setFullscreen(event.detail.active));
-    // While a knowledge check is open, the control bar steps aside (css/video-narration.css).
-    const quiz = root.querySelector('.np-quiz');
-    new MutationObserver(() => video.classList.toggle('has-open-check', !quiz.hidden)).observe(quiz, { attributes: true, attributeFilter: ['hidden'] });
-    syncPicture();
   }
 
   function enhance(root) {
@@ -261,12 +135,8 @@
       root.querySelector('.nja-takeaway').hidden = Boolean(cue.prediction);
     }
 
-    const player = mount(root, {
-      story, timing, quizzes, examples, render,
-      fullscreenTarget: root.querySelector('[data-vn-video]'),
-    });
-    bindFullscreenLayout(root);
-    bindVideoControls(root, player);
+    // The shared control bar comes with the transport (js/narration-player-controls.js).
+    mount(root, { story, timing, quizzes, examples, render });
   }
 
   function init() { document.querySelectorAll('section.video-narration').forEach(enhance); }

@@ -176,6 +176,96 @@ test('sequence participant names may begin with fragment keywords', () => {
   assert.equal(model.messages[1].from, 'elsewhere');
 });
 
+test('sequence boxes keep the participants declared inside them together', () => {
+  const model = parsers().sequence([
+    'participant web: WebApp',
+    'participant bank: Bank',
+    'box "Shop" <<external>> #fdf3e1',
+    'participant db: Database',
+    'participant web',
+    'end box',
+    'box Payments',
+    'end box',
+    'participant audit: AuditLog',
+    'box -> bank : not a box',
+  ].join('\n'));
+  // The parser runs in its own realm; copying its arrays lets deepEqual compare values.
+  assert.deepEqual([...model.boxes].map(box => [box.title, box.stereotype, box.highlight]),
+    [['Shop', 'external', '#fdf3e1'], ['Payments', null, null]]);
+  assert.deepEqual([...model.participants].map(part => [part.id, part.box]),
+    [['web', 0], ['db', 0], ['bank', undefined], ['audit', undefined], ['box', undefined]],
+    'a re-declared participant joins the box beside its other members; end box closes the box');
+  assert.deepEqual([...model.messages].map(message => [message.type, message.from, message.to]), [['message', 'box', 'bank']],
+    'a message from a participant named box stays a message');
+});
+
+test('rendered sequence boxes are labeled lanes around their own lifelines', async () => {
+  const browser = await chromium.launch(chromiumLaunchOptions());
+  try {
+    const page = await browser.newPage();
+    await page.setContent('<!doctype html><html lang="en"><title>Sequence box regression</title><body><div id="diagram"></div></body></html>');
+    await page.addScriptTag({ path: bundlePath });
+    const result = await page.evaluate(text => {
+      const container = document.getElementById('diagram');
+      window.UMLSequenceDiagram.render(container, text);
+      const svg = container.querySelector('svg');
+      const edges = element => {
+        const box = element.getBBox();
+        return { left: box.x, right: box.x + box.width, top: box.y, bottom: box.y + box.height };
+      };
+      const lanes = [...svg.querySelectorAll('.uml-sequence-box')].map(lane => {
+        const [body, header] = lane.querySelectorAll('rect');
+        return { names: [...lane.querySelectorAll('text')].map(name => name.textContent), body: edges(body), header: edges(header) };
+      });
+      const heads = Object.fromEntries([...svg.querySelectorAll('text')]
+        .filter(name => ['user: Customer', ': WebApp', ': Database', ': PaymentGateway'].includes(name.textContent))
+        .map(name => [name.textContent, edges(name)]));
+      const lifelines = [...svg.querySelectorAll('line.uml-sequence-lifeline')];
+      return {
+        lanes,
+        heads,
+        lifelineBottom: Math.max(...lifelines.map(line => Number(line.getAttribute('y2')))),
+        lanesPaintedFirst: [...svg.querySelectorAll('.uml-sequence-box rect')].every(lane =>
+          lifelines.every(line => lane.compareDocumentPosition(line) & Node.DOCUMENT_POSITION_FOLLOWING)),
+        invalidGeometry: /NaN|Infinity/.test(svg.outerHTML),
+      };
+    }, [
+      'actor user: Customer',
+      'box "Shop"',
+      'participant web as : WebApp',
+      'participant db as : Database',
+      'end box',
+      'box "Payment provider" <<external>> #fdf3e1',
+      'participant pay as : PaymentGateway',
+      'end box',
+      'box "Unused"',
+      'end box',
+      'user -> web: checkout()',
+      'web -> pay: charge(card)',
+      'pay --> web: approved',
+      'web -> db: save(order)',
+    ].join('\n'));
+    assert.equal(result.invalidGeometry, false);
+    assert.deepEqual(result.lanes.map(lane => lane.names), [['Shop'], ['«external»', 'Payment provider']],
+      'each box with participants draws one lane named in its header');
+    const [shop, payments] = result.lanes;
+    assert.ok(Math.abs(shop.body.right - payments.body.left) < 0.5, 'neighboring lanes share one dividing line');
+    const within = (head, lane) => head.left >= lane.body.left && head.right <= lane.body.right && head.top >= lane.header.bottom;
+    for (const [name, lane] of [[': WebApp', shop], [': Database', shop], [': PaymentGateway', payments]]) {
+      assert.ok(within(result.heads[name], lane), `${name} must sit in its lane below the lane header`);
+    }
+    const customer = result.heads['user: Customer'];
+    assert.ok(result.lanes.every(lane => customer.right <= lane.body.left || customer.left >= lane.body.right),
+      'a participant outside every box stays outside the lanes');
+    for (const lane of result.lanes) {
+      assert.ok(lane.body.bottom >= result.lifelineBottom, 'a lane runs the full length of the lifelines');
+    }
+    assert.equal(result.lanesPaintedFirst, true, 'lanes paint behind the lifelines');
+  } finally {
+    await browser.close();
+  }
+});
+
 test('rendered nested composites contain their descendants and show their own actions', async () => {
   const browser = await chromium.launch(chromiumLaunchOptions());
   try {

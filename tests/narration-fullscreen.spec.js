@@ -1,6 +1,7 @@
 const { loadStory } = require('../scripts/narration/source');
 const { test, expect } = require('@playwright/test');
 const { a11yCheckpoint } = require('./a11y-helpers');
+const { openPlayerSettings } = require('./helpers/narration-player');
 
 const sceneNumber = (topic, id) => loadStory(topic)
   .scenes.findIndex(scene => scene.id === id);
@@ -55,6 +56,7 @@ for (const narration of narrations.filter(item => item.diagramScene !== undefine
     await page.goto(narration.url);
     const lesson = lessonOf(page, narration);
     const diagram = lesson.locator('[data-np-diagram]:visible');
+    await openPlayerSettings(lesson);
     await lesson.getByRole('combobox', { name: 'Scene' }).selectOption(String(narration.diagramScene));
     const fitsColumn = () => diagram.evaluate(container =>
       container.querySelector('svg').getBoundingClientRect().width <= container.getBoundingClientRect().width + 1);
@@ -70,12 +72,53 @@ for (const narration of narrations.filter(item => item.diagramScene !== undefine
     await expect.poll(fitsColumn).toBe(true);
 
     await enter.click();
+    await openPlayerSettings(lesson);
     await lesson.getByRole('button', { name: 'Knowledge check', exact: true }).click();
     // Focus lands on the heading or, once the window has focus, the first answer.
     const check = lesson.getByRole('region', { name: /Knowledge check$/ });
     await expect.poll(() => check.evaluate(region => region.contains(document.activeElement))).toBe(true);
     expect(await insideFullScreen(check)).toBe(true);
     await a11yCheckpoint(page, `${narration.id} full-screen check`, { include: `#${narration.id} .nja-player`, feature: 'narration-fullscreen' });
+  });
+}
+
+// Full screen frames the lesson like a video player: on a small laptop screen,
+// every control and the narration stay on screen. One lesson of each kind.
+// Content inside the scene may scroll out of view; the scene itself may not.
+const caseStudy = { url: '/SEBook/systems/security.html', id: 'huggingface2026-case-study', title: 'Hugging Face 2026: applying security principles' };
+const offScreen = lesson => lesson.evaluate(root => Array.from(root.querySelectorAll('button, select, input, [role="region"]'))
+  .filter(element => element.checkVisibility() && document.fullscreenElement.contains(element))
+  .filter(element => !element.parentElement.closest('[role="region"][aria-label="Scene"]'))
+  .filter(element => {
+    const box = element.getBoundingClientRect();
+    return box.top < 0 || box.left < 0 || box.bottom > window.innerHeight + 0.5 || box.right > window.innerWidth + 0.5;
+  })
+  .map(element => element.getAttribute('aria-label') || element.textContent.trim().slice(0, 40)));
+
+for (const narration of [narrations[0], narrations[2], caseStudy, narrations[narrations.length - 1]]) {
+  test(`${narration.title}: full screen keeps every control on screen`, async ({ page }) => {
+    await page.setViewportSize({ width: 1024, height: 640 });
+    await page.goto(narration.url);
+    const lesson = lessonOf(page, narration);
+    await lesson.getByRole('button', { name: 'Enter full screen' }).press('Enter');
+    await expect(lesson.getByRole('button', { name: 'Exit full screen' })).toBeFocused();
+    expect(await offScreen(lesson)).toEqual([]);
+  });
+}
+
+// A scene taller than the full-screen frame scrolls inside it, also by keyboard.
+for (const narration of [narrations[0], narrations[2], caseStudy]) {
+  test(`${narration.title}: a tall scene scrolls inside full screen`, async ({ page }) => {
+    await page.setViewportSize({ width: 1024, height: 640 });
+    await page.goto(narration.url);
+    const lesson = lessonOf(page, narration);
+    await lesson.getByRole('button', { name: 'Enter full screen' }).press('Enter');
+    const scene = lesson.getByRole('region', { name: 'Scene', exact: true });
+    await expect.poll(() => scene.evaluate(panel => panel.scrollHeight > panel.clientHeight)).toBe(true);
+    await scene.focus();
+    await page.keyboard.press('PageDown');
+    await expect.poll(() => scene.evaluate(panel => panel.scrollTop)).toBeGreaterThan(0);
+    expect(await offScreen(lesson)).toEqual([]);
   });
 }
 

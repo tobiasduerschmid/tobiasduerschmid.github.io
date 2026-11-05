@@ -20,6 +20,15 @@
     exit: () => (document.exitFullscreen ? document.exitFullscreen() : document.webkitExitFullscreen()),
   };
 
+  // A toggle names its next action in its accessible name and tooltip (both
+  // the native title and the site's tooltip copy) and shows the matching icon.
+  function labelControl(button, label, icon) {
+    button.setAttribute('aria-label', label);
+    button.title = label;
+    button.setAttribute('data-original-title', label);
+    button.querySelector('i').className = `fa ${icon}`;
+  }
+
   // A player may place its own hidden button; otherwise one follows the mute button.
   function addFullscreenButton(root) {
     const placed = root.querySelector('[data-action="fullscreen"]');
@@ -100,16 +109,22 @@
     const isFullscreen = () => viewportFullscreen || nativeFullscreen.element() === target;
 
     function updateButton(active) {
-      const label = active ? 'Exit full screen' : 'Enter full screen';
-      button.setAttribute('aria-label', label);
-      button.title = label;
-      button.setAttribute('data-original-title', label);
-      button.querySelector('i').className = active ? 'fa fa-compress' : 'fa fa-expand';
+      labelControl(button, active ? 'Exit full screen' : 'Enter full screen', active ? 'fa-compress' : 'fa-expand');
+    }
+
+    // Panels marked data-fullscreen-scroll scroll inside the full-screen frame,
+    // so they are tab stops there and the keyboard can scroll them.
+    function syncScrollPanels(active) {
+      target.querySelectorAll('[data-fullscreen-scroll]').forEach((panel) => {
+        if (active) panel.tabIndex = 0;
+        else panel.removeAttribute('tabindex');
+      });
     }
 
     function sync() {
       const active = isFullscreen();
       target.classList.toggle('is-fullscreen', active);
+      syncScrollPanels(active);
       updateButton(active);
       root.dispatchEvent(new CustomEvent('narration-fullscreenchange', { detail: { active } }));
     }
@@ -161,6 +176,18 @@
     return { isFullscreen };
   }
 
+  // Full screen fills the player's video frame; markup from an older build
+  // without one fills the whole player.
+  function fullscreenTargetOf(root, options) {
+    return options.fullscreenTarget || root.querySelector('[data-vn-video]') || root.querySelector('.nja-player');
+  }
+
+  // Every player shares the song player's control bar, keyboard shortcuts, and
+  // full-screen behavior (js/narration-player-controls.js).
+  function bindPlayerControls(root, api) {
+    if (window.NarrationPlayerControls) window.NarrationPlayerControls.bind(root, api);
+  }
+
   // Printing includes the complete transcript, then restores the reader's choice.
   function printTranscript(root, beforePrint) {
     let wasOpen = false;
@@ -186,8 +213,7 @@
     const motion = root.querySelector('[data-setting="motion"]');
     const status = root.querySelector('.nja-status');
     const playButton = root.querySelector('[data-action="play"]');
-    // The element that fills the screen: the whole player, or a video narration's video.
-    const fullscreen = fullscreenControl(root, options.fullscreenTarget || root.querySelector('.nja-player'));
+    const fullscreen = fullscreenControl(root, fullscreenTargetOf(root, options));
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
     let frame = 0;
     let position = 0;
@@ -219,12 +245,7 @@
     }
 
     function updatePlayButton() {
-      const paused = audio.paused;
-      const label = paused ? 'Play narration' : 'Pause narration';
-      playButton.setAttribute('aria-label', label);
-      playButton.title = label;
-      playButton.setAttribute('data-original-title', label);
-      playButton.querySelector('i').className = paused ? 'fa fa-play' : 'fa fa-pause';
+      labelControl(playButton, audio.paused ? 'Play narration' : 'Pause narration', audio.paused ? 'fa-play' : 'fa-pause');
     }
 
     function renderPlayback(time) {
@@ -292,12 +313,8 @@
       mute() {
         audio.muted = !audio.muted;
         const button = root.querySelector('[data-action="mute"]');
-        const label = audio.muted ? 'Unmute narration' : 'Mute narration';
-        button.setAttribute('aria-label', label);
+        labelControl(button, audio.muted ? 'Unmute narration' : 'Mute narration', audio.muted ? 'fa-volume-off' : 'fa-volume-up');
         button.setAttribute('aria-pressed', String(audio.muted));
-        button.title = label;
-        button.setAttribute('data-original-title', label);
-        button.querySelector('i').className = audio.muted ? 'fa fa-volume-off' : 'fa fa-volume-up';
       },
     };
 
@@ -360,7 +377,7 @@
     root.classList.add('is-enhanced');
     root.querySelectorAll('.nja-controls').forEach((controls) => { controls.hidden = false; });
     render(0);
-    return {
+    const api = {
       refresh: () => render(position),
       seekTo,
       isFullscreen: fullscreen.isFullscreen,
@@ -368,6 +385,8 @@
       play,
       currentScene: () => currentScene,
     };
+    bindPlayerControls(root, api);
+    return api;
   }
 
   // A lesson without rendered speech: the reader moves through the same cues,
@@ -379,7 +398,7 @@
     const presenter = cuePresenter(root, storyboard);
     const sceneSelect = root.querySelector('[data-setting="scene"]');
     const status = root.querySelector('.nja-status');
-    const fullscreen = fullscreenControl(root, options.fullscreenTarget || root.querySelector('.nja-player'));
+    const fullscreen = fullscreenControl(root, fullscreenTargetOf(root, options));
     let currentScene = -1;
 
     function showCue(index, cueIndex) {
@@ -401,7 +420,9 @@
     root.classList.add('is-enhanced');
     root.querySelectorAll('.nja-controls').forEach((controls) => { controls.hidden = false; });
     showCue(0, 0);
-    return { showCue, selectScene, isFullscreen: fullscreen.isFullscreen, currentScene: () => currentScene };
+    const api = { showCue, selectScene, isFullscreen: fullscreen.isFullscreen, currentScene: () => currentScene };
+    bindPlayerControls(root, api);
+    return api;
   }
 
   // Templates and adapters share one compiled lesson data boundary.
