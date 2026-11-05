@@ -41,6 +41,51 @@ for (const creation of ['Main --> sensor: <<create>>', 'sensor <-- Main: <<creat
   });
 }
 
+function messageTexts(source) {
+  const summary = descriptions.describe('sequence', source);
+  const verbose = descriptions.describeVerbose('sequence', source);
+  const messages = verbose.sections.find(section => section.heading === 'Messages').items.join('; ');
+  const participants = Array.from(verbose.sections.find(section => section.heading === 'Participants').items);
+  return { summary, messages, participants };
+}
+
+test('messages to a selector lifeline such as sensor[i] stay in both text alternatives', () => {
+  const { summary, messages, participants } = messageTexts(
+    'participant hub: AlarmHub\nparticipant sensor[i]: WindowSensor\nloop [for each window]\nhub -> sensor[i]: getStatus()\nsensor[i] --> hub: status\nend');
+  for (const text of [summary, messages]) {
+    assert.match(text, /hub calls sensor\[i\] with "getStatus\(\)"/);
+    assert.match(text, /sensor\[i\] replies to hub with "status"/);
+  }
+  assert.match(summary, /2 participants/);
+  assert.deepEqual(participants, ['AlarmHub', 'WindowSensor']);
+});
+
+test('anonymous lifelines are named by their type, and a highlight line adds no lifeline', () => {
+  const { summary, participants } = messageTexts(
+    'participant dog: Dog\nparticipant following as : Following\ndog -> following: throwBall(dog)\nparticipant following #fff0ac hatched');
+  assert.match(summary, /2 participants \(Dog, Following\)/);
+  assert.deepEqual(participants, ['Dog', 'Following']);
+});
+
+test('a lost message names its sender and no fictitious receiver', () => {
+  const { summary, messages, participants } = messageTexts(
+    'participant sender: Sender\nparticipant receiver: Receiver\nsender ->> receiver: Datagram [3]\nsender ->o : Datagram [4]');
+  for (const text of [summary, messages]) {
+    assert.match(text, /lost message from sender with "Datagram \[4\]", which never reaches a receiver/);
+    assert.doesNotMatch(text, /calls o\b/);
+  }
+  assert.deepEqual(participants, ['Sender', 'Receiver']);
+});
+
+test('a guillemet creation message with arguments is described as creation, not a reply', () => {
+  const { summary, messages } = messageTexts(
+    'participant main as : Main\nparticipant bars: BarChartView\ncreate bars\nmain --> bars: «create»(dataset)');
+  for (const text of [summary, messages]) {
+    assert.match(text, /main creates bars with "\(dataset\)"/);
+    assert.doesNotMatch(text, /replies to/);
+  }
+});
+
 test('implicit lifelines are counted once across repeated calls and later declarations', () => {
   const source = 'Main -> service: start()\nservice -> service: finish()\nparticipant service: Service';
   const summary = descriptions.describe('sequence', source);

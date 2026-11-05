@@ -216,6 +216,13 @@ class LessonMaterials(unittest.TestCase):
         self.assertEqual(kept, files_of("weakened-test", solution=True)["test_helpdesk.py"])
         self.assertEqual(apply_diff(kept, weaken), files_of("weakened-test")["test_helpdesk.py"])
 
+    def test_each_knowledge_check_lets_a_learner_miss_one_question(self):
+        # The quiz runtime scores each question all or nothing.
+        for key, step in STEPS.items():
+            with self.subTest(step=key):
+                questions = len(step["quiz"]["questions"])
+                self.assertGreaterEqual((questions - 1) / questions, step["quiz"]["min_score"])
+
     @unittest.skipIf(pyflakes_check is None, "pyflakes is not installed")
     def test_editor_lint_does_not_point_at_the_seeded_faults(self):
         for key in STEPS:

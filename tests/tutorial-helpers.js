@@ -110,6 +110,16 @@ async function pressOptionShortcut(page, option) {
  * Reads data-correct / data-correct-indices attributes — robust to shuffling.
  */
 async function answerQuizCorrectly(page) {
+  await answerQuiz(page);
+}
+
+/**
+ * Answer the currently visible quiz, deliberately choosing a wrong option on
+ * the first `wrongSingleAnswers` single-choice questions and answering every
+ * other question correctly.
+ */
+async function answerQuiz(page, { wrongSingleAnswers = 0 } = {}) {
+  let misses = wrongSingleAnswers;
   while (true) {
     const results = page.locator('.tvm-quiz-panel .quiz-results:not(.hidden)');
     if (await results.count() > 0) break;
@@ -149,12 +159,14 @@ async function answerQuizCorrectly(page) {
     } else {
       const firstOption = card.locator('.quiz-option').first();
       const correctIdx = await firstOption.getAttribute('data-correct');
+      const answerWrong = misses > 0;
       const options = card.locator('.quiz-option');
       const count = await options.count();
       for (let i = 0; i < count; i++) {
         const option = options.nth(i);
-        if (await option.getAttribute('data-index') === correctIdx) {
+        if ((await option.getAttribute('data-index') === correctIdx) !== answerWrong) {
           await pressOptionShortcut(page, option);
+          if (answerWrong) misses -= 1;
           break;
         }
       }
@@ -163,6 +175,9 @@ async function answerQuizCorrectly(page) {
     const nextBtn = card.locator('.next-btn');
     await expect(nextBtn).toBeVisible({ timeout: 3_000 });
     await nextBtn.click();
+  }
+  if (misses > 0) {
+    throw new Error(`The quiz had fewer than ${wrongSingleAnswers} single-choice questions to miss`);
   }
 }
 
@@ -233,6 +248,7 @@ module.exports = {
   runCurrentStepTests,
   expectRenderedStepTests,
   passCurrentStepTests,
+  answerQuiz,
   answerQuizCorrectly,
   unlockNextStep,
   setEditorContent,

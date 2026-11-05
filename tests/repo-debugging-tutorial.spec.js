@@ -1,6 +1,6 @@
 // @ts-check
 const { test, expect } = require('@playwright/test');
-const { loadTutorialConfig, applySolution, setTutorialFileContent } = require('./tutorial-helpers');
+const { loadTutorialConfig, applySolution, setTutorialFileContent, answerQuiz } = require('./tutorial-helpers');
 const { a11yCheckpoint } = require('./a11y-helpers');
 
 // scripts/tests/test_repo_debugging_graders.py replays every check against
@@ -42,6 +42,26 @@ test('each starter fails its checks and the model solution passes them in Pyodid
       await page.getByRole('button', { name: /Test My Work/ }).click();
       await expect(page.getByText(`✅ All ${step.tests.length} tests passed!`, { exact: true }))
         .toBeVisible({ timeout: TIMEOUT });
+    });
+  }
+});
+
+test('a learner who misses one question still passes every knowledge check', async ({ page }) => {
+  test.setTimeout(420_000);
+  await openLesson(page, 0);
+  for (const [index, step] of config.steps.entries()) {
+    await test.step(step.title, async () => {
+      await page.evaluate(async target => window._tutorial.loadStep(target), index);
+      await applySolution(page);
+      await page.getByRole('button', { name: /Test My Work/ }).click();
+      await expect(page.getByText(`✅ All ${step.tests.length} tests passed!`, { exact: true }))
+        .toBeVisible({ timeout: TIMEOUT });
+      await page.getByRole('button', { name: 'Next →', exact: true }).click();
+      await answerQuiz(page, { wrongSingleAnswers: 1 });
+      const passed = index === config.steps.length - 1
+        ? 'Tutorial complete — great job!'
+        : "Great job! You're ready for the next step.";
+      await expect(page.getByText(passed, { exact: true })).toBeVisible();
     });
   }
 });

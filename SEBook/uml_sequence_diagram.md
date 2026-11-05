@@ -69,17 +69,17 @@ Let's look at the sequence of a user inserting a card into an ATM.
 <div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
 actor customer: Customer
 participant atm: ATM
-participant bank: Bank Server
+participant bank: BankServer
 customer -> atm: insertCard()
 activate atm
 atm -> bank: verifyCard()
 activate bank
-bank --> atm: cardValid()
+bank --> atm: cardValid
 deactivate bank
-atm -> customer: promptPIN()
+atm --> customer: promptPIN
 deactivate atm
+callout right of edge 2 end : Synchronous call: the sender waits for completion
 callout left of edge 3 end : Reply: returns control and any results
-callout left of edge 4 end : Synchronous call: the sender waits for completion
 callout right of element actbar:7 : Execution specification: while this behavior runs
 callout left of shape line occurrence 1 : Lifeline: one participant; time runs downward
 callout top of text "ATM" : Participant type: its class or other type
@@ -189,8 +189,8 @@ The `opt` fragment is equivalent to an `if` statement without an `else`. The mes
 **Scenario:** A customer is buying an item. *If* they have a loyalty account, they receive a discount.
 
 <div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
-participant checkout: Checkout System
-participant pricing: Pricing Engine
+participant checkout: CheckoutSystem
+participant pricing: PricingEngine
 checkout -> pricing: calculateTotal()
 activate pricing
 pricing --> checkout: subtotal
@@ -198,7 +198,7 @@ deactivate pricing
 opt [hasLoyaltyAccount == true]
   checkout -> pricing: applyDiscount()
   activate pricing
-  pricing --> checkout: discountApplied()
+  pricing --> checkout: discountedTotal
   deactivate pricing
 end
 callout right of text "OPT" : Opt: runs only when its guard is true
@@ -216,15 +216,17 @@ The `alt` fragment is equivalent to an `if-else` or `switch` statement. The box 
 <div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
 participant system: System
 participant db: Database
+system -> db: checkPassword(user, password)
+activate db
+db --> system: isCorrect
+deactivate db
 alt [password is correct]
-  system -> db: checkPassword()
+  system -> db: recordLogin(user)
   activate db
-  db --> system: loginSuccess()
   deactivate db
 else [password is incorrect]
-  system -> db: checkPassword()
+  system -> db: recordFailedAttempt(user)
   activate db
-  db --> system: loginFailed()
   deactivate db
 end
 callout right of text "ALT" : Alt: at most one guarded branch runs
@@ -245,7 +247,7 @@ participant server: Server
 loop [up to 3 times]
   app -> server: ping()
   activate server
-  server --> app: ack()
+  server --> app: ack
   deactivate server
 end
 callout right of text "LOOP" : Loop: repeats while the guard allows
@@ -270,22 +272,22 @@ To truly understand how these elements work, we must view them interacting in a 
 
 <div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
 actor user: User
-participant hub: Alarm Hub
-participant sensors: Window Sensors
-participant sms: SMS API
+participant hub: AlarmHub
+participant sensor[i]: WindowSensor
+participant sms: SmsGateway
 user -> hub: armSystem()
 activate hub
 loop [for each window]
-  hub -> sensors: getStatus()
-  activate sensors
-  sensors --> hub: statusData()
-  deactivate sensors
+  hub -> sensor[i]: getStatus()
+  activate sensor[i]
+  sensor[i] --> hub: status
+  deactivate sensor[i]
   alt [status == "Open"]
-    hub --> user: warn()
+    hub ->> user: warn()
   else [status == "Closed"]
-    hub -> sensors: lock()
-    activate sensors
-    deactivate sensors
+    hub -> sensor[i]: lock()
+    activate sensor[i]
+    deactivate sensor[i]
   end
 end
 opt [smsEnabled == true]
@@ -963,7 +965,7 @@ callout top of text "app: MobileApp" : Lifeline header: name, then type
 
 ### Example 3: GitHub Actions — CI/CD Pipeline Trigger
 
-**Scenario:** A developer pushes code, GitHub triggers a build, tests run, and deployment happens only if tests pass. This diagram uses `opt` for conditional deployment and a self-call for internal processing.
+**Scenario:** A developer pushes code, GitHub triggers a build, tests run, and deployment happens only if tests pass. This diagram uses `opt` for conditional deployment, a self-call for internal processing, and asynchronous messages for work that continues after the push returns.
 
 <div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
 actor dev: Developer
@@ -972,32 +974,36 @@ participant build: BuildService
 participant deploy: DeployService
 dev -> gh: git push origin main
 activate gh
-gh -> build: triggerBuild(commitSha)
+gh ->> build: triggerBuild(commitSha)
 activate build
+gh --> dev: pushAccepted
+deactivate gh
 build -> build: runTests()
 activate build
 deactivate build
-build --> gh: testResults
+build ->> gh: reportResults(testResults)
 deactivate build
+activate gh
 opt [all tests passed]
   gh -> deploy: deployToStaging(artifact)
   activate deploy
   deploy --> gh: stagingUrl
   deactivate deploy
 end
-gh --> dev: notify(testResults)
+gh ->> dev: notify(testResults)
 deactivate gh
+callout right of edge 2 end : Asynchronous message: the sender continues at once
 callout right of text "runTests()" : Self-call: a message to the same participant
 callout left of text "OPT" : Opt: runs only when its guard is true
-callout left of edge 7 end : Reply: returns control and any results
+callout bottom of text "pushAccepted" : Reply: returns control and any results
 @enduml'></div>
 
 **What the UML notation captures:**
 
 1. **Self-call (`build -> build`):** A message from a lifeline back to itself models an internal call — `BuildService` running its own test suite. The arrow loops back to the same column.
 2. **`opt` fragment (if, no else):** Deployment only happens if all tests pass. There is no "else" branch — on failure the flow skips the `opt` block and continues to the notification.
-3. **Return after the fragment:** `gh --> dev: notify(testResults)` executes regardless of whether deployment occurred — it is outside the `opt` box, at the outer sequence level.
-4. **Activation ordering:** `build` runs `runTests()` before returning `testResults` to `gh`. Top-to-bottom ordering guarantees tests complete before GitHub is notified.
+3. **Asynchronous messages for long-running work:** `git push` returns as soon as GitHub accepts the commits (`pushAccepted`); the developer does not wait for the build. `triggerBuild`, `reportResults`, and `notify` use open arrowheads because their senders continue at once. None of them is a reply: a reply answers a synchronous call.
+4. **Notification after the fragment:** `gh ->> dev: notify(testResults)` is outside the `opt` box, so it is sent whether or not deployment occurred. Top-to-bottom ordering guarantees that tests finish before GitHub deploys or notifies the developer.
 
 ---
 
@@ -1020,7 +1026,7 @@ loop [no driver has accepted]
 end
 match -> notif: notifyRider(driverId, eta)
 activate notif
-notif --> rider: driverAssigned(eta)
+notif ->> rider: driverAssigned(eta)
 deactivate notif
 deactivate match
 callout left of edge 3 end : Reply: returns control and any results
@@ -1046,7 +1052,7 @@ participant sender: SlackClient
 participant ws: WebSocketGateway
 participant msg: MessageService
 participant notif: NotificationService
-participant subscriber: SlackClient[*]
+participant subscriber[i]: SlackClient
 sender -> ws: sendMessage(channelId, text)
 activate ws
 ws -> msg: persist(channelId, text, userId)
@@ -1058,7 +1064,7 @@ activate notif
 loop [for each online subscriber]
   notif -> ws: deliver(userId, message)
   activate ws
-  ws ->> subscriber: messageReceived
+  ws ->> subscriber[i]: messageReceived
   deactivate ws
 end
 deactivate notif
@@ -1072,8 +1078,8 @@ callout left of text "ack(messageId)" : Reply: returns control and any results
 **What the UML notation captures:**
 
 1. **Sequence before the loop:** `persist` and get `messageId` happen exactly once — before the broadcast. The diagram makes this ordering explicit: a message is saved before it is delivered to anyone.
-2. **`loop` for fan-out delivery:** Each online subscriber receives their own delivery. The lifeline `subscriber : SlackClient[*]` represents the *set* of recipient clients (distinct from the original `sender`); the asynchronous arrow `->>` shows the gateway *pushes* the message — this is server-pushed, not a return value. In a channel with 200 members, the loop body executes 200 times.
-3. **`ack` after the loop:** The original sender receives their acknowledgment (`ack(messageId)`) only after the broadcast completes. This is outside the loop — it is unconditional and happens once. Note that `ack` returns to `sender`, while delivery flows to `subscriber` — distinguishing these two lifelines is essential to model fan-out correctly.
+2. **`loop` for fan-out delivery:** Each online subscriber receives their own delivery. The lifeline `subscriber[i] : SlackClient` uses a selector: each iteration delivers to one recipient client, distinct from the original `sender`. The asynchronous arrow `->>` shows the gateway *pushes* the message — this is server-pushed, not a return value. In a channel with 200 members, the loop body executes 200 times.
+3. **`ack` after the loop:** The original sender receives their acknowledgment (`ack(messageId)`) only after the broadcast completes. This is outside the loop — it is unconditional and happens once. Note that `ack` returns to `sender`, while delivery flows to `subscriber[i]` — distinguishing these two lifelines is essential to model fan-out correctly.
 4. **`WebSocketGateway` as the central hub:** All messages flow in and out through the gateway. The diagram shows this hub topology clearly — every arrow touches `ws`, revealing it as the architectural bottleneck. This is a useful architectural insight visible only in the sequence diagram.
 
 ---

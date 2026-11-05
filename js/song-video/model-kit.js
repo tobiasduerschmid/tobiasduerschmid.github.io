@@ -11,7 +11,8 @@
  *                 can be marked or rewritten.
  *
  * ArchUML draws each diagram once, in an off-screen host that is laid out
- * even while the player keeps the stage hidden. The kit records the geometry
+ * even while the player keeps the stage hidden (or the build drew it, for
+ * views a storyboard lists under `diagrams`). The kit records the geometry
  * of every drawn element there (in the SVG's own user units), then moves the
  * SVG onto its sheet. Emphasis lives in an overlay group inside the same
  * SVG, so it scales with the notation it points at. Every pose is a pure
@@ -180,11 +181,32 @@
     }
   }
 
+  // SVGs the build drew for a song's storyboard `diagrams`
+  // (_plugins/song_diagrams.rb), by kind and spec text.
+  let prebuilt = null;
+  function prebuiltSvg(kind, spec) {
+    if (!prebuilt) {
+      const data = document.getElementById('song-diagrams');
+      prebuilt = new Map(data ? JSON.parse(data.textContent).map((d) => [`${d.kind}\n${d.spec}`, d.svg]) : []);
+    }
+    return prebuilt.get(`${kind}\n${spec}`);
+  }
+
+  /**
+   * ArchUML's drawing of a spec: the build's copy when the page has one
+   * (routing a tangle of connectors takes the browser a second), else drawn
+   * here. Either way it is laid out in the measuring host.
+   */
   function render(kind, spec) {
-    const renderer = window[RENDERERS[kind]];
-    if (!renderer) throw new Error(`model-kit.js cannot render "${kind}" diagrams; is uml-bundle.js loaded?`);
     const container = el('div', 'mk-render', host());
-    renderer.render(container, spec);
+    const prebuiltMarkup = prebuiltSvg(kind, spec);
+    if (prebuiltMarkup) {
+      container.innerHTML = prebuiltMarkup;
+    } else {
+      const renderer = window[RENDERERS[kind]];
+      if (!renderer) throw new Error(`model-kit.js cannot render "${kind}" diagrams; is uml-bundle.js loaded?`);
+      renderer.render(container, spec);
+    }
     const root = container.querySelector('svg');
     if (!root) throw new Error(`ArchUML drew no ${kind} diagram:\n${spec}`);
     if (kind === 'component') centreAssemblies(root);

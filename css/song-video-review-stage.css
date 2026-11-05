@@ -1,0 +1,181 @@
+/*
+ * The "review-stage" theme (js/song-video/review-stage.js): the Broadway
+ * stage of "Same Shape, Not the Same". The scenery stays dark and warm so the
+ * screen's cards and the cast read clearly against it: card text is dark on
+ * cream (≥ 12:1), the marquee's gold lettering on velvet is ≈ 9:1, and white
+ * text on the screen's navy panel ≈ 15:1. Light only drifts, never flashes.
+ * Like stage.css this styles the 960×540 stage, which keeps its artwork in
+ * both page themes; the player's print styles hide it. This file also
+ * restyles the shared stickers, stamps, and badge in the room's language:
+ * brass-rimmed show cards and a backstage-pass badge.
+ */
+
+.theme-review-stage {
+  background: #0a0b1c;
+  overflow-wrap: normal;
+}
+
+.rs-room {
+  overflow: hidden;
+}
+
+.rs-art {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+
+.rs-pilaster {
+  fill: #2a1a46;
+  opacity: 0.45;
+}
+
+.rs-screen-glow {
+  fill: #2f4ea8;
+  opacity: 0.14;
+}
+
+.rs-bezel-line {
+  fill: none;
+  stroke: #d9b25a;
+  stroke-opacity: 0.55;
+  stroke-width: 1.4;
+}
+
+.rs-screen-foot {
+  fill: #1a1e2e;
+}
+
+.rs-planks path {
+  fill: none;
+  stroke: #120a05;
+  stroke-opacity: 0.45;
+  stroke-width: 1.4;
+}
+
+.rs-reflection {
+  fill: #3d63c9;
+  opacity: 0.08;
+}
+
+.rs-lip-trim {
+  fill: #d8a948;
+  opacity: 0.8;
+}
+
+.rs-footlight {
+  fill: #fff2c4;
+}
+
+.rs-footlight-glow {
+  fill: #ffcf73;
+  opacity: 0.32;
+}
+
+.rs-spot {
+  mix-blend-mode: screen;
+}
+
+.rs-spot--center {
+  opacity: 0.7;
+}
+
+.rs-drape {
+  stroke: #1c020a;
+  stroke-width: 1;
+}
+
+.rs-drape-tie {
+  fill: none;
+  stroke: #e3b95a;
+  stroke-width: 4;
+  stroke-linecap: round;
+}
+
+.rs-tassel {
+  fill: #e9c46a;
+}
+
+.rs-valance {
+  stroke: #24030c;
+  stroke-width: 1;
+}
+
+.rs-fringe path {
+  fill: none;
+  stroke: #e7c16a;
+  stroke-width: 3;
+  stroke-dasharray: 2 2.4;
+}
+
+.rs-flute {
+  fill: #7c5218;
+  opacity: 0.35;
+}
+
+.rs-audience {
+  fill: #04030a;
+}
+
+/* A soft vignette pulls the eye to the screen and the cast. */
+.rs-vignette {
+  pointer-events: none;
+  background: radial-gradient(ellipse 72% 70% at 50% 44%, transparent 58%, rgba(3, 2, 10, 0.55) 100%);
+}
+
+/* ------------------------------------------------------------------ */
+/* The shared kit in the room's language                               */
+/* ------------------------------------------------------------------ */
+
+/* The section badge becomes a backstage pass on a lanyard clip. */
+.theme-review-stage .badge {
+  top: 16px;
+  left: 22px;
+  border: 2px solid #e3b95a;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #2a1640, #160b26);
+  color: #ffe7a6;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+  rotate: -3deg;
+}
+
+.theme-review-stage .badge::before {
+  content: '';
+  position: absolute;
+  top: -9px;
+  left: calc(50% - 9px);
+  width: 18px;
+  height: 7px;
+  border: 2px solid #e3b95a;
+  border-bottom: 0;
+  border-radius: 6px 6px 0 0;
+}
+
+/* Stickers become cream show cards with a brass rim. */
+.theme-review-stage .sticker {
+  border-color: #6b4718;
+  background: #fff7e2;
+  color: #2a1606;
+  box-shadow: 0 0 0 2px #e3b95a, 0 8px 16px rgba(0, 0, 0, 0.45);
+}
+
+.theme-review-stage .sticker--gold { background: #ffd66e; }
+.theme-review-stage .sticker--green { background: #b9f3c9; }
+.theme-review-stage .sticker--red { background: #ffc6cd; }
+.theme-review-stage .sticker--pink { background: #ffc8e6; }
+.theme-review-stage .sticker--cyan { background: #bdeefb; }
+.theme-review-stage .sticker--violet { background: #e1d6ff; }
+
+/* Stamps become a reviewer's rubber stamp on the PR. */
+.theme-review-stage .stamp {
+  background: rgba(255, 250, 238, 0.94);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
+}
+
+.theme-review-stage .stamp--red { color: #b3122b; }
+.theme-review-stage .stamp--green { color: #157a3c; }
+
+/* Kinetic type: gold show lettering with a warm glow. */
+.theme-review-stage .kinetic-word {
+  text-shadow: 0 2px 0 #3a1d05, 0 0 22px rgba(255, 196, 92, 0.45);
+}

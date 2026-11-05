@@ -3,6 +3,15 @@ title: Design Patterns
 layout: sebook
 ---
 
+<link rel="stylesheet" href="/css/song-video.css">
+<link rel="stylesheet" href="/css/print-light.css">
+
+**Start with the song.** *Same Shape, Not the Same* is a four-and-a-half-minute musical about why two patterns can draw the same class diagram and still be different patterns. An intern's first pull request calls an order's status a Strategy; the review comes back: that's State. Then three rounds put look-alike patterns side by side, each pair in the same costume: Strategy and State, Adapter and Façade, Observer and Mediator. Each pattern shows its structure as a UML diagram on a food-delivery app and names the price its rival pays, and each ruling decides by the problem a pattern solves, not by its boxes. The bridge asks when a pattern is worth its cost at all. It ends with a six-question pop quiz, sung as call and response: think of your answer before the crowd shouts it, or turn on the player's quiz pauses to stop before each answer. Captions are on by default.
+
+Before you press play, predict: two designs draw the same diagram, a class that holds an interface with three implementations. In one, the caller picks how to split a restaurant bill; in the other, an order moves itself from placed to cooking to on the way. Which is Strategy, which is State, and what tells you, if not the boxes?
+
+{% include song-video.html song=site.data.songs.same_shape_not_the_same id="design-patterns-song" %}
+
 # Overview
 
 **Learning goal:** Given a proposed change, identify what varies, compare a pattern with a simpler design, and explain both the benefit and the new cost. The examples assume familiarity with interfaces, inheritance, and object composition; recognizing a class diagram alone is not the goal.

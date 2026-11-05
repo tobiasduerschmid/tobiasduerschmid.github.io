@@ -17,6 +17,10 @@
  *     a hoodie, and the Security Engineer in a black field jacket;
  *   - the viewer's own hero (SongStudentAvatar's heroHead), who joins them
  *     at the end in a blue hoodie.
+ *   Other songs reuse the cast; `coder` dresses a singer as a developer in
+ *   the same hoodie in green, with a code tag on the chest, `maintainer`
+ *   as a lead developer in plum, with a git branch, and `engineer` as a
+ *   software engineer in rust, with curly braces.
  *   Export stages never load the hero renderer, so there each keeps a
  *   drawn face.
  *
@@ -881,6 +885,25 @@
     // blue with a gold star on the chest; jeans and sneakers.
     hero: hoodie((layer) => {
       svg('path', { class: 'oc-print', d: 'M91.6 102.6 L93.2 106 L96.9 106.4 L94.1 108.9 L94.9 112.6 L91.6 110.7 L88.3 112.6 L89.1 108.9 L86.3 106.4 L90 106 Z' }, layer);
+    }),
+    // A developer: the same hoodie in green with a code tag, </>, on the
+    // chest; dark jeans and sneakers.
+    coder: hoodie((layer) => {
+      svg('path', { class: 'oc-print-code', d: 'M88.4 104.6 L85.8 108 L88.4 111.4 M94.8 104.6 L97.4 108 L94.8 111.4 M92.6 103.8 L90.6 112.2' }, layer);
+    }),
+    // A lead developer: the hoodie in plum with a merged git branch on the chest.
+    maintainer: hoodie((layer) => {
+      svg('path', { class: 'oc-print-code', d: 'M88.6 112.4 V103.6 M88.6 109.6 C88.6 106.6 94.6 107.4 94.6 104.4' }, layer);
+      for (const [cx, cy] of [[88.6, 103.2], [88.6, 112.6], [94.6, 103.6]]) svg('circle', { class: 'oc-print-dot', cx, cy, r: 1.3 }, layer);
+    }),
+    // A software engineer: the hoodie in rust with curly braces on the
+    // chest; stone chinos and white sneakers.
+    engineer: hoodie((layer) => {
+      svg('path', {
+        class: 'oc-print-code',
+        d: 'M89.6 103.2 C88.2 103.2 88 104 88 105.4 V106.6 C88 107.6 87.4 108 86.4 108 C87.4 108 88 108.4 88 109.4 V110.6 C88 112 88.2 112.8 89.6 112.8 '
+          + 'M93.6 103.2 C95 103.2 95.2 104 95.2 105.4 V106.6 C95.2 107.6 95.8 108 96.8 108 C95.8 108 95.2 108.4 95.2 109.4 V110.6 C95.2 112 95 112.8 93.6 112.8',
+      }, layer);
     }),
     // The Security Engineer: a black field jacket zipped to its stand
     // collar, flapped chest pockets, epaulettes, a gold shield badge, and
@@ -1815,12 +1838,11 @@
       const stride = reduced ? 0 : step;
       const phase = t * 2 * Math.PI * 1.7;
       const bob = -2.2 * stride * Math.abs(Math.sin(phase));
-      // At ease: a slow, uneven shift of weight and a breath.
-      const shift = (reduced ? 0 : 0.5 * Math.sin(t * 0.9 + seed) + 0.25 * Math.sin(t * 2.1 + 0.7 + seed)) + p.lean + lean;
-      const breath = reduced ? 1 : 1 + 0.004 * Math.sin(t * 1.6 + seed);
+      // At ease the figure stands still: it leans only into a move or a glide.
+      const shift = p.lean + lean;
       travel.setAttribute('transform', `translate(${(glide / scale).toFixed(2)} ${bob.toFixed(2)})`);
       hopper.setAttribute('transform', `translate(0 ${(-p.hop).toFixed(2)})`);
-      sway.setAttribute('transform', `rotate(${shift.toFixed(2)} 80 290) translate(80 290) scale(1 ${breath.toFixed(4)}) translate(-80 -290)`);
+      sway.setAttribute('transform', `rotate(${shift.toFixed(2)} 80 290)`);
       shadow.setAttribute('transform', `translate(80 293) scale(${(1 - p.hop / 60).toFixed(3)}) translate(-80 -293)`);
       shadow.setAttribute('opacity', (1 - bed.lie).toFixed(3));
       recline.setAttribute('transform', bed.lie ? `translate(0 ${(LIE_SINK * bed.lie).toFixed(2)}) rotate(${(-90 * bed.lie).toFixed(2)} ${LIE_PIVOT[0]} ${LIE_PIVOT[1]})` : '');

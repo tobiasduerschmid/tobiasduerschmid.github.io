@@ -92,7 +92,7 @@
         "label": "A new investigation at a printer boundary",
         "description": "An interface first requests one copy, a worker begins preparing a job, and the interface changes to two copies. The worker submits a job to a printer, which produces one copy. The submitted copy count is deliberately unknown.",
         "caption": "Teaching scenario. Locate an observation that separates two explanations before choosing a repair.",
-        "source": "@startuml\nparticipant ui: Print interface\nparticipant worker: Job preparation\nparticipant printer: Printer\nui -> worker: request one copy\nworker -> worker: begin preparation\nnote over ui: Request changed to two copies\nworker -> printer: submit job (count unknown)\nprinter --> ui: one copy produced\n@enduml\n"
+        "source": "@startuml\nparticipant ui: Print interface\nparticipant worker: Job preparation\nparticipant printer: Printer\nui -> worker: request one copy\nworker -> worker: begin preparation\nnote over ui: Request changed to two copies\nworker -> printer: submit job (count unknown)\nprinter --> worker: one copy produced\n@enduml\n"
       },
       "system_overview": {
         "type": "component",

@@ -28,12 +28,12 @@ decks:
   - dev_practice_refactoring
   - git_advanced
   - debugging
+  - security
 
 other:
   - design_pattern_observer
   - c
   - design_principle_information_hiding
   - design_with_reuse
-  - security
   - dev_practice_genai
   - process_people_tailoring

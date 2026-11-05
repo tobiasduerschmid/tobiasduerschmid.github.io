@@ -117,19 +117,19 @@ activate pizza
 pizza -> factory: createDough()
 activate factory
 create dough
-factory -> dough: <<create>>
+factory --> dough: <<create>>
 factory --> pizza: Dough
 deactivate factory
 pizza -> factory: createSauce()
 activate factory
 create sauce
-factory -> sauce: <<create>>
+factory --> sauce: <<create>>
 factory --> pizza: Sauce
 deactivate factory
 pizza -> factory: createCheese()
 activate factory
 create cheese
-factory -> cheese: <<create>>
+factory --> cheese: <<create>>
 factory --> pizza: Cheese
 deactivate factory
 deactivate pizza
