@@ -34,7 +34,7 @@
       title: 'Review: Simple Email Shape',
       goal: 'Match strings that look like simple email addresses: one or more word characters, an <code>@</code>, one or more word characters, a dot, then one or more letters. Validate the entire string.',
       sampleText: null,
-      solution: '^\\w+@\\w+\\.[a-zA-Z]+$',
+      solution: '^\\w+@\\w+\\.[a-zA-Z]+\\Z',
       tests: [
         { input: 'user@example.com', shouldMatch: true, expectedMatches: ["user@example.com"], label: 'valid email shape' },
         { input: 'test@host.org', shouldMatch: true, expectedMatches: ["test@host.org"], label: 'another valid shape' },
@@ -131,7 +131,7 @@
       goal: 'This regex tries to match 3-letter airport codes (like LAX, JFK) but it incorrectly matches <code>LA</code> and <code>ABCD</code>. Fix it.',
       sampleText: null,
       brokenRegex: '[A-Z]+',
-      solution: '^[A-Z]{3}$',
+      solution: '^[A-Z]{3}\\Z',
       hint: 'You need to specify exactly 3 letters, and use anchors to prevent partial matching.',
       tests: [
         { input: 'LAX', shouldMatch: true, expectedMatches: ["LAX"], label: '3 uppercase letters' },
@@ -149,10 +149,10 @@
       id: 'group-3', type: 'parsons',
       section: 'Groups & Named Groups',
       title: 'Named Log Parser',
-      goal: 'Build a regex to parse log entries like <code>[ERROR] 404 Not Found</code>. Capture the level (e.g., ERROR) as <code>(?&lt;level&gt;...)</code> and the status code as <code>(?&lt;code&gt;...)</code>.',
+      goal: 'Build a regex to parse log entries like <code>[ERROR] 404 Not Found</code>. Capture the level (e.g., ERROR) as <code>(?P&lt;level&gt;...)</code> and the status code as <code>(?P&lt;code&gt;...)</code>.',
       sampleText: '[ERROR] 404 Not Found\n[WARN] 301 Moved\n[INFO] 200 OK',
-      fragments: ['\\[(?<level>', '\\w+', ')\\]', '\\s+', '(?<code>', '\\d+', ')'],
-      solution: '\\[(?<level>\\w+)\\]\\s+(?<code>\\d+)',
+      fragments: ['\\[(?P<level>', '\\w+', ')\\]', '\\s+', '(?P<code>', '\\d+', ')'],
+      solution: '\\[(?P<level>\\w+)\\]\\s+(?P<code>\\d+)',
       requiredGroups: ['level', 'code'],
       tests: [
         { input: '[ERROR] 404 Not Found', shouldMatch: true, expectedMatches: ["[ERROR] 404"], namedGroups: { level: 'ERROR', code: '404' }, label: '"level" captures "ERROR", "code" captures "404"' },
@@ -168,13 +168,14 @@
       id: 'group-4', type: 'free',
       section: 'Groups & Named Groups',
       title: 'Named Email Parts',
-      goal: 'Match a simple email address and extract the <strong>username</strong> and <strong>domain</strong> using named groups: <code>(?&lt;user&gt;...)</code> and <code>(?&lt;domain&gt;...)</code>. Username is one or more word characters, domain is one or more word characters, a dot, then one or more letters. Validate the entire string.',
+      goal: 'Match a simple email address and extract the <strong>username</strong> and <strong>domain</strong> using named groups: <code>(?P&lt;user&gt;...)</code> and <code>(?P&lt;domain&gt;...)</code>. Username is one or more word characters, domain is one or more word characters, a dot, then one or more letters. Validate the entire string.',
       sampleText: null,
-      solution: '^(?<user>\\w+)@(?<domain>\\w+\\.[a-zA-Z]+)$',
+      solution: '^(?P<user>\\w+)@(?P<domain>\\w+\\.[a-zA-Z]+)\\Z',
       requiredGroups: ['user', 'domain'],
       tests: [
         { input: 'alice@example.com', shouldMatch: true, expectedMatches: ["alice@example.com"], namedGroups: { user: 'alice', domain: 'example.com' }, label: '"user" captures "alice", "domain" captures "example.com"' },
         { input: 'bob@host.org', shouldMatch: true, expectedMatches: ["bob@host.org"], namedGroups: { user: 'bob', domain: 'host.org' }, label: '"user" captures "bob", "domain" captures "host.org"' },
+        { input: 'café@hôte.fr', shouldMatch: true, expectedMatches: ['café@hôte.fr'], namedGroups: { user: 'café', domain: 'hôte.fr' }, label: 'Unicode word characters in user and domain' },
         { input: 'no-at-sign.com', shouldMatch: false, label: 'missing @ — should NOT match' },
         { input: '@host.com', shouldMatch: false, label: 'missing username — should NOT match' }
       ],
@@ -187,9 +188,9 @@
       id: 'group-5', type: 'free',
       section: 'Groups & Named Groups',
       title: 'Named Date Parts',
-      goal: 'Match dates in <code>YYYY-MM-DD</code> format using named groups: <code>(?&lt;year&gt;...)</code>, <code>(?&lt;month&gt;...)</code>, and <code>(?&lt;day&gt;...)</code>. Year is 4 digits, month and day are each 2 digits, separated by hyphens. Validate the entire string.',
+      goal: 'Match dates in <code>YYYY-MM-DD</code> format using named groups: <code>(?P&lt;year&gt;...)</code>, <code>(?P&lt;month&gt;...)</code>, and <code>(?P&lt;day&gt;...)</code>. Year is 4 digits, month and day are each 2 digits, separated by hyphens. Validate the entire string.',
       sampleText: null,
-      solution: '^(?<year>\\d{4})-(?<month>\\d{2})-(?<day>\\d{2})$',
+      solution: '^(?P<year>\\d{4})-(?P<month>\\d{2})-(?P<day>\\d{2})\\Z',
       requiredGroups: ['year', 'month', 'day'],
       tests: [
         { input: '2026-04-01', shouldMatch: true, expectedMatches: ["2026-04-01"], namedGroups: { year: '2026', month: '04', day: '01' }, label: 'groups capture year, month, day' },
@@ -229,7 +230,7 @@
       title: 'Password Check',
       goal: 'Validate that the entire string has at least one digit <strong>and</strong> at least one uppercase letter. Hint: Use positive lookaheads',
       sampleText: null,
-      solution: '^(?=.*\\d)(?=.*[A-Z]).+$',
+      solution: '^(?=.*\\d)(?=.*[A-Z]).+\\Z',
       tests: [
         { input: 'Hello1', shouldMatch: true, expectedMatches: ["Hello1"], label: 'uppercase + digit' },
         { input: 'hello1', shouldMatch: false, label: 'no uppercase — should NOT match' },
@@ -250,7 +251,7 @@
       title: 'CSS Hex Color',
       goal: 'Validate a CSS hex color code: a <code>#</code> followed by exactly 3 <strong>or</strong> 6 hex digits (0-9, a-f, A-F). The entire string must match. Combine: anchors, character classes, quantifiers, alternation, and grouping.',
       sampleText: null,
-      solution: '^#([a-fA-F0-9]{6}|[a-fA-F0-9]{3})$',
+      solution: '^#([a-fA-F0-9]{6}|[a-fA-F0-9]{3})\\Z',
       tests: [
         { input: '#FFF', shouldMatch: true, expectedMatches: ["#FFF"], label: '3-digit hex' },
         { input: '#1A2B3C', shouldMatch: true, expectedMatches: ["#1A2B3C"], label: '6-digit hex' },
@@ -271,7 +272,7 @@
       title: 'Student ID Validator',
       goal: 'Validate a student ID: exactly one uppercase letter followed by exactly 9 digits (e.g., <code>A123456789</code>). The entire string must match. Combine: anchors, character classes, and quantifiers.',
       sampleText: null,
-      solution: '^[A-Z]\\d{9}$',
+      solution: '^[A-Z]\\d{9}\\Z',
       tests: [
         { input: 'A123456789', shouldMatch: true, expectedMatches: ["A123456789"], label: 'valid ID' },
         { input: 'B000000001', shouldMatch: true, expectedMatches: ["B000000001"], label: 'another valid ID' },
@@ -375,67 +376,17 @@
     catch (e) { /* ignore */ }
   }
 
-  // ── Regex Helpers ──────────────────────────────────────────────────────────
+  const pythonRunner = window.RegexTutorialPython.create({
+    exercises: EXERCISES,
+    highlightText: highlightText,
+    onChecked: finishCheck
+  });
 
-  function tryCompile(pattern, flags) {
-    if (!pattern) return null;
-    try { return new RegExp(pattern, flags || 'g'); }
-    catch (e) { return { error: e.message }; }
-  }
+  const exerciseIds = new Set(EXERCISES.map(function (exercise) { return exercise.id; }));
 
-  function findMatches(regex, text) {
-    if (!regex || regex.error || !text) return [];
-    var matches = [], m, safety = 0;
-    regex.lastIndex = 0;
-    while ((m = regex.exec(text)) !== null) {
-      matches.push({ start: m.index, end: m.index + m[0].length, text: m[0] });
-      if (m[0].length === 0) regex.lastIndex++;
-      if (++safety > 1000) break;
-    }
-    return matches;
-  }
-
-  function testRegex(pattern, input) {
-    var re = tryCompile(pattern, 'g');
-    if (!re || re.error) return false;
-    re.lastIndex = 0;
-    return re.test(input);
-  }
-
-  // Extended test: supports expectedMatches, firstMatch, matchCount, and namedGroups
-  function checkSingleTest(pattern, t) {
-    var re = tryCompile(pattern, 'g');
-    if (!re || re.error) return false;
-    re.lastIndex = 0;
-    var matches = [], firstExec = null, m, safety = 0;
-    while ((m = re.exec(t.input)) !== null) {
-      if (!firstExec) firstExec = m;
-      matches.push(m[0]);
-      if (m[0].length === 0) re.lastIndex++;
-      if (++safety > 1000) break;
-    }
-    var matched = matches.length > 0;
-    if (matched !== t.shouldMatch) return false;
-    if (t.expectedMatches && (matches.length !== t.expectedMatches.length ||
-      !matches.every(function (text, index) { return text === t.expectedMatches[index]; }))) return false;
-    if (matched && t.firstMatch !== undefined && matches[0] !== t.firstMatch) return false;
-    if (matched && t.matchCount !== undefined && matches.length !== t.matchCount) return false;
-    if (matched && t.namedGroups && firstExec) {
-      var groups = firstExec.groups;
-      if (!groups) return false;
-      for (var k in t.namedGroups) {
-        if (groups[k] !== t.namedGroups[k]) return false;
-      }
-    }
-    return true;
-  }
-
-  // Check that a pattern uses specific named groups (validates the pattern itself, not just matches)
-  function hasNamedGroups(pattern, groupNames) {
-    for (var i = 0; i < groupNames.length; i++) {
-      if (pattern.indexOf('(?<' + groupNames[i] + '>') === -1) return false;
-    }
-    return true;
+  function ownsExerciseEvent(event) {
+    const exercise = event.target.closest('.rt-exercise');
+    return exercise && exerciseIds.has(exercise.id.slice(3));
   }
 
   // ── HTML Helpers ───────────────────────────────────────────────────────────
@@ -503,6 +454,7 @@
     // Actions
     h += '<div class="rt-actions">';
     h += '<button class="rt-btn rt-btn-check" data-exid="' + ex.id + '">Check Answer</button>';
+    h += '<button type="button" class="rt-btn rt-btn-clear rt-btn-stop" data-exid="' + ex.id + '" hidden>Stop</button>';
     h += '<button class="rt-btn rt-btn-skip" data-exid="' + ex.id + '">Skip &rarr;</button>';
     h += '</div>';
     h += '<div class="rt-result" id="rt-result-' + ex.id + '" data-exid="' + ex.id + '" role="status" aria-live="polite" aria-atomic="true"></div>';
@@ -517,16 +469,16 @@
   }
 
   function renderFreeInput(ex) {
-    return '<div class="rt-input-wrap"><span class="rt-delim">/</span>' +
-      '<input type="text" class="rt-input" data-exid="' + ex.id + '" aria-label="Regular expression for ' + esc(ex.title || ex.id) + '" aria-describedby="rt-error-' + ex.id + ' rt-result-' + ex.id + '" aria-invalid="false" placeholder="type your regex here" spellcheck="false" autocomplete="off">' +
-      '<span class="rt-delim">/g</span></div>';
+    return '<div class="rt-input-wrap">' +
+      '<input type="text" class="rt-input" data-exid="' + ex.id + '" aria-label="Python regular expression for ' + esc(ex.title || ex.id) + '" aria-describedby="rt-error-' + ex.id + ' rt-result-' + ex.id + '" aria-invalid="false" placeholder="type a Python pattern here" spellcheck="false" autocomplete="off">' +
+      '</div>';
   }
 
   function renderFixerInput(ex) {
     return '<div class="rt-fixer-label">Broken regex (edit to fix):</div>' +
-      '<div class="rt-input-wrap rt-input-fixer"><span class="rt-delim">/</span>' +
-      '<input type="text" class="rt-input" data-exid="' + ex.id + '" aria-label="Broken regular expression for ' + esc(ex.title || ex.id) + '" aria-describedby="rt-error-' + ex.id + ' rt-result-' + ex.id + '" aria-invalid="false" value="' + esc(ex.brokenRegex) + '" spellcheck="false" autocomplete="off">' +
-      '<span class="rt-delim">/g</span></div>' +
+      '<div class="rt-input-wrap rt-input-fixer">' +
+      '<input type="text" class="rt-input" data-exid="' + ex.id + '" aria-label="Broken Python regular expression for ' + esc(ex.title || ex.id) + '" aria-describedby="rt-error-' + ex.id + ' rt-result-' + ex.id + '" aria-invalid="false" value="' + esc(ex.brokenRegex) + '" spellcheck="false" autocomplete="off">' +
+      '</div>' +
       (ex.hint ? '<details class="rt-hint"><summary>Why is it broken?</summary><p>' + ex.hint + '</p></details>' : '');
   }
 
@@ -545,9 +497,7 @@
     }
     h += '</div>';
     h += '<div class="rt-parsons-target" data-exid="' + ex.id + '">';
-    h += '<span class="rt-delim">/</span>';
     h += '<span class="rt-parsons-drop" data-exid="' + ex.id + '" role="group" aria-label="Answer fragments"></span>';
-    h += '<span class="rt-delim">/g</span>';
     h += '</div>';
     h += '<button type="button" class="rt-btn rt-btn-clear" data-exid="' + ex.id + '">Clear</button>';
     // Hidden input for the assembled regex
@@ -655,80 +605,24 @@
 
   // ── Exercise Logic ─────────────────────────────────────────────────────────
 
-  function getPattern(exId) {
-    var el = document.querySelector('.rt-input[data-exid="' + exId + '"]');
-    return el ? el.value : '';
-  }
-
   function setInputInvalid(exId, invalid) {
     var input = document.querySelector('.rt-input[data-exid="' + exId + '"]');
     if (input) input.setAttribute('aria-invalid', invalid ? 'true' : 'false');
   }
 
   function onInput(exId) {
-    var pattern = getPattern(exId);
-    var ex = EXERCISES.filter(function (e) { return e.id === exId; })[0];
-    if (!ex) return;
-
-    var compiled = tryCompile(pattern, 'g');
-    var errEl = document.querySelector('.rt-error[data-exid="' + exId + '"]');
-
-    if (compiled && compiled.error) {
-      if (errEl) { errEl.textContent = compiled.error; errEl.style.display = 'block'; }
-      setInputInvalid(exId, true);
-      clearSample(exId); clearTests(exId);
-      return;
-    }
-    if (errEl) errEl.style.display = 'none';
-    setInputInvalid(exId, false);
-
-    // Highlight sample text
-    if (ex.sampleText !== null) {
-      var sEl = document.querySelector('.rt-sample[data-exid="' + exId + '"]');
-      if (sEl && compiled) sEl.innerHTML = highlightText(ex.sampleText, findMatches(compiled, ex.sampleText));
-      else if (sEl) sEl.innerHTML = esc(ex.sampleText);
-    }
-
-    // Update test icons
-    var testEls = document.querySelectorAll('.rt-tests[data-exid="' + exId + '"] .rt-test');
-    for (var i = 0; i < ex.tests.length; i++) {
-      var t = ex.tests[i], el = testEls[i];
-      if (!el) continue;
-      if (!pattern) { el.className = 'rt-test'; el.querySelector('.rt-test-icon').innerHTML = '&#9679;'; continue; }
-      var ok = checkSingleTest(pattern, t);
-      el.className = 'rt-test ' + (ok ? 'rt-test-pass' : 'rt-test-fail');
-      el.querySelector('.rt-test-icon').innerHTML = ok ? '&#10003;' : '&#10007;';
-    }
-
-    // Hide previous result
-    var rEl = document.querySelector('.rt-result[data-exid="' + exId + '"]');
-    if (rEl) rEl.style.display = 'none';
+    pythonRunner.preview(exId);
   }
 
-  function clearSample(exId) {
-    var ex = EXERCISES.filter(function (e) { return e.id === exId; })[0];
-    if (!ex || ex.sampleText === null) return;
-    var el = document.querySelector('.rt-sample[data-exid="' + exId + '"]');
-    if (el) el.innerHTML = esc(ex.sampleText);
-  }
-
-  function clearTests(exId) {
-    var els = document.querySelectorAll('.rt-tests[data-exid="' + exId + '"] .rt-test');
-    for (var i = 0; i < els.length; i++) {
-      els[i].className = 'rt-test';
-      els[i].querySelector('.rt-test-icon').innerHTML = '&#9679;';
-    }
-  }
-
-  function getFailureHint(ex, pattern) {
+  function getFailureHint(ex, outcomes) {
     // Check visible tests for specific failure patterns to give targeted guidance
     var falsePositives = 0, falseNegatives = 0, wrongExtractions = 0;
     for (var i = 0; i < ex.tests.length; i++) {
       var t = ex.tests[i];
-      var matched = testRegex(pattern, t.input);
+      var matched = outcomes[i].matched;
       if (matched && !t.shouldMatch) falsePositives++;
       if (!matched && t.shouldMatch) falseNegatives++;
-      if (matched && t.shouldMatch && !checkSingleTest(pattern, t)) wrongExtractions++;
+      if (matched && t.shouldMatch && !outcomes[i].passed) wrongExtractions++;
     }
     if (falsePositives > 0 && falseNegatives === 0) {
       return 'Your pattern is matching text it shouldn\'t. Check the failing tests — what is your regex accepting that it should reject?';
@@ -751,13 +645,13 @@
     'greedy-2': { q: 'What would happen if you used a greedy ".*" between the quotes instead of lazy ".*?"?', a: 'The greedy .* would consume everything from the first opening quote to the LAST closing quote in the entire string, treating all text in between as one match.' },
     'group-1': { q: 'What is the difference between na{2,} and (na){2,}?', a: 'na{2,} means "n followed by 2 or more a\'s" (naaa...). (na){2,} means "the group na repeated 2 or more times" (nana, nanana...). Parentheses group multiple characters into a single unit.' },
     'group-2': { q: 'Why did the original [A-Z]+ match both "LA" and "ABCD"?', a: 'The + quantifier means "one or more" with no upper limit. Without {3} to specify exactly 3, and without anchors to prevent substring matching, any sequence of uppercase letters is accepted.' },
-    'group-3': { q: 'Why are named groups especially useful for log parsing?', a: 'Log formats have many fields (level, code, message, timestamp, etc.). Named groups let you write match.groups.level and match.groups.code instead of remembering positional indices. When you add new groups later, existing code that uses names won\'t break.' },
-    'group-4': { q: 'How would you access the user and domain in JavaScript code?', a: 'After const m = str.match(regex), use m.groups.user and m.groups.domain. Named groups make the code self-documenting — compare m.groups.user vs m[1], especially when a regex has many groups.' },
-    'group-5': { q: 'How could you use the named groups year/month/day after matching?', a: 'In JavaScript, match.groups.year, match.groups.month, and match.groups.day give you direct access to each part by name — no need to remember that the year is group 1, month is group 2, etc. This makes code that processes the match much more readable.' },
+    'group-3': { q: 'Why are named groups especially useful for log parsing?', a: 'Log formats have many fields (level, code, message, timestamp, etc.). Named groups let you write match.group("level") and match.group("code") instead of remembering positional indices. When you add new groups later, existing code that uses names won\'t break.' },
+    'group-4': { q: 'How would you access the user and domain in Python code?', a: 'After match = re.search(pattern, text), first check that match is not None. Then use match.group("user") and match.group("domain"). Named groups keep those fields readable without relying on positional indices.' },
+    'group-5': { q: 'How could you use the named groups year/month/day after matching?', a: 'In Python, match.group("year"), match.group("month"), and match.group("day") give you direct access to each part by name — no need to remember that the year is group 1, month is group 2, etc. This makes code that processes the match much more readable.' },
     'look-1': { q: 'Why use a lookbehind instead of just including \\$ in the pattern?', a: 'A lookbehind checks that $ precedes the match but doesn\'t include it in the result. If you used \\$[\\d.]+, the match would be "$25" (with the dollar sign). Lookbehinds let you extract just the number.' },
     'look-2': { q: 'How do chained lookaheads work together at the same position?', a: 'Each lookahead independently checks a condition from the same starting position (like a logical AND). (?=.*\\d) verifies a digit exists somewhere, (?=.*[A-Z]) verifies an uppercase letter exists. Neither consumes characters, so the string pointer stays at the start for the next check.' },
-    'integrate-1': { q: 'Why is the alternation (|) inside a group, and why does the 6-digit option come first?', a: 'The group (...) contains the alternation so that ^ and $ still anchor the whole pattern. Either alternative order works here: the trailing $ forces the whole string to match, so after a 3-digit attempt fails at $, the engine can try the 6-digit alternative.' },
-    'integrate-2': { q: 'Which regex features did you combine, and why was each necessary?', a: 'Anchors (^$) to validate the full string, a character class ([A-Z]) for exactly one uppercase letter, a metacharacter (\\d) for digits, and a quantifier ({9}) for exactly 9 repetitions. Remove any one and the validation breaks.' },
+    'integrate-1': { q: 'Why is the alternation (|) inside a group, and why does the 6-digit option come first?', a: 'The group (...) contains the alternation so that ^ and \\Z still anchor the whole pattern. Either alternative order works here: the trailing \\Z forces the whole string to match, so after a 3-digit attempt fails at \\Z, the engine can try the 6-digit alternative.' },
+    'integrate-2': { q: 'Which regex features did you combine, and why was each necessary?', a: 'Anchors (^ and \\Z) to validate the full string, a character class ([A-Z]) for exactly one uppercase letter, a metacharacter (\\d) for digits, and a quantifier ({9}) for exactly 9 repetitions. Remove any one and the validation breaks.' },
     'integrate-3': { q: 'Why did you group the decimal part and make it optional?', a: 'The decimal part (.XX) is a multi-character unit — the dot and two digits must appear together or not at all. Grouping with (...) treats them as a single unit, and ? makes the whole group optional.' },
     'integrate-4': { q: 'What is the difference between using a lookbehind here versus including "ERROR: " in the match?', a: 'A lookbehind asserts that "ERROR: " precedes the current position without consuming it — so the match result is just the word (e.g., "timeout"), not "ERROR: timeout". This is useful when you want to extract data after a known prefix.' }
   };
@@ -779,30 +673,20 @@
     if (resultEl) resultEl.insertAdjacentHTML('afterend', html);
   }
 
-  function checkAnswer(exId) {
-    var pattern = getPattern(exId);
-    var ex = EXERCISES.filter(function (e) { return e.id === exId; })[0];
-    if (!ex) return;
+  function finishCheck(ex, outcomes) {
+    var exId = ex.id;
     var rEl = document.querySelector('.rt-result[data-exid="' + exId + '"]');
-
-    if (!pattern) {
-      if (rEl) { rEl.textContent = 'Please enter a regex pattern.'; rEl.className = 'rt-result rt-result-fail'; rEl.style.display = 'block'; }
-      setInputInvalid(exId, true);
+    if (ex.requiredGroups && outcomes.some(function (outcome) { return outcome.matched; }) && !outcomes.some(function (outcome) {
+      return ex.requiredGroups.every(function (name) { return outcome.groupNames.indexOf(name) !== -1; });
+    })) {
+      rEl.innerHTML = '&#10007; Your regex must use named groups: <code>' +
+        ex.requiredGroups.map(function (name) { return '(?P&lt;' + name + '&gt;...)'; }).join('</code>, <code>') + '</code>';
+      rEl.className = 'rt-result rt-result-fail';
+      setInputInvalid(ex.id, true);
       return;
     }
 
-    // Check that required named groups are present in the pattern
-    if (ex.requiredGroups && !hasNamedGroups(pattern, ex.requiredGroups)) {
-      if (rEl) { rEl.innerHTML = '&#10007; Your regex must use named groups: <code>' + ex.requiredGroups.map(function (g) { return '(?&lt;' + g + '&gt;...)'; }).join('</code>, <code>') + '</code>'; rEl.className = 'rt-result rt-result-fail'; rEl.style.display = 'block'; }
-      setInputInvalid(exId, true);
-      return;
-    }
-
-    var all = ex.tests.concat(ex.hiddenTests || []);
-    var fails = 0;
-    for (var i = 0; i < all.length; i++) {
-      if (!checkSingleTest(pattern, all[i])) fails++;
-    }
+    var fails = outcomes.filter(function (outcome) { return !outcome.passed; }).length;
 
     if (fails === 0) {
       completedExercises[ex.id] = true;
@@ -811,13 +695,13 @@
       if (exEl) exEl.classList.add('rt-complete');
       var stEl = exEl ? exEl.querySelector('.rt-ex-status') : null;
       if (stEl) stEl.innerHTML = '&#10003;';
-      if (rEl) { rEl.innerHTML = '&#10003; <strong>Correct!</strong> All test cases passed.'; rEl.className = 'rt-result rt-result-pass'; rEl.style.display = 'block'; }
+      if (rEl) { rEl.innerHTML = '&#10003; <strong>Correct!</strong> All test cases passed.'; rEl.className = 'rt-result rt-result-pass'; }
       setInputInvalid(exId, false);
       updateProgress();
       showSelfExplanation(ex);
     } else {
-      var hint = getFailureHint(ex, pattern);
-      if (rEl) { rEl.innerHTML = '&#10007; Not quite — ' + fails + ' test case' + (fails > 1 ? 's' : '') + ' failed (including hidden tests). ' + hint; rEl.className = 'rt-result rt-result-fail'; rEl.style.display = 'block'; }
+      var hint = getFailureHint(ex, outcomes);
+      if (rEl) { rEl.innerHTML = '&#10007; Not quite — ' + fails + ' test case' + (fails > 1 ? 's' : '') + ' failed (including hidden tests). ' + hint; rEl.className = 'rt-result rt-result-fail'; }
       setInputInvalid(exId, true);
     }
   }
@@ -838,6 +722,7 @@
 
   function initParsons() {
     document.addEventListener('dragstart', function (e) {
+      if (!ownsExerciseEvent(e)) return;
       if (e.target.classList.contains('rt-frag')) {
         dragFrag = e.target;
         e.target.classList.add('rt-dragging');
@@ -846,18 +731,21 @@
       }
     });
     document.addEventListener('dragend', function (e) {
+      if (!ownsExerciseEvent(e)) return;
       if (e.target.classList.contains('rt-frag')) {
         e.target.classList.remove('rt-dragging');
         dragFrag = null;
       }
     });
     document.addEventListener('dragover', function (e) {
+      if (!ownsExerciseEvent(e)) return;
       if (e.target.closest('.rt-parsons-drop') || e.target.closest('.rt-parsons-bank')) {
         e.preventDefault();
         e.dataTransfer.dropEffect = 'move';
       }
     });
     document.addEventListener('drop', function (e) {
+      if (!ownsExerciseEvent(e)) return;
       var drop = e.target.closest('.rt-parsons-drop');
       var bank = e.target.closest('.rt-parsons-bank');
       if (drop && dragFrag) {
@@ -872,6 +760,7 @@
     });
     // Click to toggle between bank and drop zone (mobile-friendly)
     document.addEventListener('click', function (e) {
+      if (!ownsExerciseEvent(e)) return;
       var frag = e.target.closest('.rt-frag');
       if (!frag) return;
       var parent = frag.parentElement;
@@ -941,11 +830,14 @@
 
     // Events
     document.addEventListener('input', function (e) {
+      if (!ownsExerciseEvent(e)) return;
       if (e.target.classList.contains('rt-input')) onInput(e.target.getAttribute('data-exid'));
     });
     document.addEventListener('click', function (e) {
+      if (!ownsExerciseEvent(e)) return;
       var btn;
-      if ((btn = e.target.closest('.rt-btn-check'))) { checkAnswer(btn.getAttribute('data-exid')); return; }
+      if ((btn = e.target.closest('.rt-btn-check'))) { pythonRunner.check(btn.getAttribute('data-exid')); return; }
+      if ((btn = e.target.closest('.rt-btn-stop'))) { pythonRunner.stop(btn.getAttribute('data-exid')); return; }
       if ((btn = e.target.closest('.rt-btn-skip'))) { skipExercise(btn.getAttribute('data-exid')); return; }
       if ((btn = e.target.closest('.rt-btn-clear'))) { clearParsons(btn.getAttribute('data-exid')); return; }
       if ((btn = e.target.closest('.rt-viz-btn'))) { vizAction(btn.getAttribute('data-k'), btn.getAttribute('data-a')); return; }

@@ -17,7 +17,7 @@ Use the master deck when you want a mixed review of the standalone tools materia
 
 # Regular Expressions
 
-[Regular Expressions](/SEBook/tools/regex.html) covers the pattern language used by tools such as `grep`, `sed`, programming-language libraries, and data-cleaning workflows. The [basic RegEx tutorial](/SEBook/tools/regex-tutorial.html) introduces matching and groups, while the [advanced RegEx tutorial](/SEBook/tools/regex-tutorial-advanced.html) extends the work to lazy quantifiers and lookarounds.
+[Regular Expressions](/SEBook/tools/regex.html) teaches Python's `re` syntax for searching, extracting, and validating text. The [basic RegEx tutorial](/SEBook/tools/regex-tutorial.html) introduces matching, character classes, anchors, and repetition, while the [advanced RegEx tutorial](/SEBook/tools/regex-tutorial-advanced.html) extends the work to groups, lazy quantifiers, and lookarounds.
 
 The [Python RegEx Simulator & Debugger]({{ '/SEBook/tools/regex-simulator.html' | relative_url }}) lets you try your own patterns, inspect matches and captured groups, and investigate candidate starting positions with Python's `re` engine.
 

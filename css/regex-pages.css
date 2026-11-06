@@ -214,6 +214,11 @@ html.dark-mode .rt-delim {
   display: none;
 }
 
+.rt-error:not(:empty),
+.rt-result:not(:empty) {
+  display: block;
+}
+
 .rt-error {
   color: #dc3545;
   font-size: 0.9em;

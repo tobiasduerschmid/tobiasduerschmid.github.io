@@ -11,6 +11,8 @@ layout: sebook
 
 This hands-on tutorial will walk you through Regular Expressions step by step. Each section builds on the last. Complete exercises to unlock your progress. Don't worry about memorizing everything — focus on understanding the **patterns**.
 
+Every exercise runs Python's built-in `re` engine in your browser. Enter only the pattern, such as `\d+`, without quotes or slash delimiters. In Python code, write that pattern as a raw string: `r'\d+'`. Previews show every non-overlapping match, as `re.finditer()` does. You can stop a pending preview or check with **Stop**.
+
 Regular expressions look intimidating at first — that's completely normal. Even experienced developers regularly look up regex syntax. The key is to break patterns into small, logical pieces. By the end of this tutorial, you'll be able to read and write patterns that would have looked like gibberish an hour ago. If you get stuck, that means you're learning — every programmer has been exactly where you are.
 
 **Three exercise types** appear throughout:
@@ -35,7 +37,7 @@ Key points:
 
 A **character class** `[...]` matches any **single character** listed inside the brackets. For example, `[aeiou]` matches any one lowercase vowel.
 
-You can also use **ranges**: `[a-z]` matches any lowercase letter, `[0-9]` matches any digit, and `[A-Za-z]` matches any letter regardless of case.
+You can also use **ranges**: `[a-z]` matches any lowercase ASCII letter, `[0-9]` matches any ASCII digit, and `[A-Za-z]` matches any ASCII letter regardless of case.
 
 To **negate** a class, place `^` right after the opening bracket: `[^a-z]` matches any character that is **not** a lowercase letter — digits, punctuation, spaces, etc.
 
@@ -46,14 +48,16 @@ To **negate** a class, place `^` right after the opening bracket: `[^a-z]` match
 
 Writing out full character classes every time gets tedious. RegEx provides **meta character** escape sequences:
 
-| meta character | Meaning | Equivalent Class |
-|-----------|---------|-----------------|
-| `\d` | Any digit | `[0-9]` |
-| `\D` | Any non-digit | `[^0-9]` |
-| `\w` | Any "word" character | `[a-zA-Z0-9_]` |
-| `\W` | Any non-word character | `[^a-zA-Z0-9_]` |
-| `\s` | Any whitespace | `[ \t\n\r\f]` |
-| `\S` | Any non-whitespace | `[^ \t\n\r\f]` |
+| Meta character | Meaning in Python string patterns |
+|-----------|---------|
+| `\d` | Any Unicode decimal digit, including `0`–`9`, `١`, and `３` |
+| `\D` | Any character that is not a Unicode decimal digit |
+| `\w` | Any Unicode alphanumeric character or underscore |
+| `\W` | Any character outside `\w` |
+| `\s` | Any Unicode whitespace, including space, tab, and newline |
+| `\S` | Any character outside `\s` |
+
+To restrict these classes to ASCII, put `(?a)` at the start of the pattern. For example, `(?a)\d` matches the same characters as `[0-9]`. Other inline flags include `(?i)` for case-insensitive matching and `(?s)` to let the dot match newlines.
 
 The **dot** `.` is a wildcard that matches **any single character** (except newline). Because the dot matches almost everything, it is powerful but easy to overuse. When you actually need to match a literal period, **escape it**: `\.`
 
@@ -69,10 +73,12 @@ So far every pattern matches **anywhere** inside a string. **Anchors** constrain
 | Anchor | Meaning |
 |--------|---------|
 | `^` | Start of string (or line in multiline mode) |
-| `$` | End of string (or line in multiline mode) |
+| `$` | End of string, or just before a final newline; also before each newline in multiline mode |
+| `\A` | Start of the complete string, even in multiline mode |
+| `\Z` | Strict end of the complete string, even in multiline mode |
 | `\b` | Word boundary — the point between a "word" character (`\w`) and a "non-word" character (`\W`), or vice versa |
 
-Anchors are critical for **validation**. Without them, the pattern `\d+` would match the `42` inside `"hello42world"`. Adding anchors — `^\d+$` — ensures the **entire** string must be digits.
+Anchors are critical for **validation**. Without them, the pattern `\d+` would match the `42` inside `"hello42world"`. Adding anchors — `^\d+\Z` — requires the entire string to be digits in the default mode. Unlike `$`, `\Z` rejects a trailing newline. In Python code, `re.fullmatch(r'\d+', text)` checks the whole string directly; `\A\d+\Z` also stays strict if multiline mode is enabled.
 
 Word boundaries (`\b`) let you match whole words. `\bgo\b` matches the standalone word "go" but not "goal" or "cargo".
 
@@ -110,7 +116,7 @@ The **pipe** `|` works like a logical OR: `cat|dog` matches either "cat" or "dog
 When you combine multiple regex features, patterns become expressive:
 - `gr[ae]y` — character class for the spelling variant.
 - `\d{2}:\d{2}` — two digits, a colon, two digits (time format).
-- `^(0[1-9]|1[0-2])/(0[1-9]|[12]\d|3[01])$` — a month/day format validator. (It accepts impossible combinations like `02/30` and `04/31`; month-specific limits and leap-year rules can be encoded in a much more complex pattern, but a date parser is usually clearer and easier to maintain.)
+- `^(0[1-9]|1[0-2])/(0[1-9]|[12][0-9]|3[01])\Z` — an ASCII month/day format validator. (It accepts impossible combinations like `02/30` and `04/31`; month-specific limits and leap-year rules can be encoded in a much more complex pattern, but a date parser is usually clearer and easier to maintain.)
 
 Start simple and add complexity only when tests demand it.
 
@@ -122,4 +128,6 @@ You've completed the basics! You now know how to match literal text, use charact
 
 **Ready for more?** Continue to the [Advanced RegEx Tutorial](/SEBook/tools/regex-tutorial-advanced.html) to learn greedy vs. lazy matching, groups, lookaheads, and tackle integration challenges.
 
+<script src="/js/python-regex-client.js"></script>
+<script src="/js/regex-tutorial-python.js"></script>
 <script src="/js/regex-tutorial.js"></script>

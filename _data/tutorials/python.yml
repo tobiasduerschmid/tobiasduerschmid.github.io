@@ -4493,7 +4493,7 @@ steps:
   # --------------------------------------------------------------------------
   # STEP 17 — Regular Expressions in Python: the re module
   # Pedagogy:
-  #   Transfer Tutor     — bridges the RegEx tutorial (grep/sed) to Python re.
+  #   Transfer Tutor     — applies the RegEx tutorial's Python patterns through re.
   #   Fading: Minimal    — only first task is partially done; rest is independent.
   #   Spaced Review      — quiz includes list comprehension (Loops) and types (Variables, Types & f-Strings).
   #   Bloom's level      — Apply / Analyze (quiz) + spaced review.
@@ -4503,7 +4503,7 @@ steps:
     instructions: |
       ### Why this matters
 
-      You already know regex from `grep` and `sed`. Python's `re` module brings that same power inside a script — no subprocess, no fragile shell escaping. Whenever you need to extract structured data from text (log lines, HTML, CSV oddities, error messages), `re.findall()`, `re.search()`, and `re.sub()` are the three tools that solve the vast majority of cases.
+      Python's `re` module applies regular-expression patterns directly inside a script. Whenever you need to extract structured data from text (log lines, HTML, CSV oddities, error messages), `re.findall()`, `re.search()`, and `re.sub()` let you find, test, and replace text without launching a subprocess.
 
       ### 🎯 You will learn to
 
@@ -4512,8 +4512,9 @@ steps:
 
       ## From grep to Python
 
-      In the RegEx tutorial you used patterns with `grep -E` and `sed`. Python's built-in
-      `re` module gives you the same power inside a script — no subprocess needed:
+      The RegEx tutorial already uses Python patterns. Here you apply them through
+      the `re` module in your own code. If you also use shell tools, these operations
+      have similar purposes; their pattern dialects are not interchangeable:
 
       | Shell operation | Corresponding Python operation |
       |---|---|
