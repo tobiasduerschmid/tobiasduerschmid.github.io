@@ -475,6 +475,35 @@ individual matches or their boundaries; a boolean match alone cannot verify
 those requirements. Live test indicators and final grading must apply the
 same expectations while accepting equivalent regex patterns.
 
+Both legacy tutorials use **real Python `re`**, through the locally pinned
+Pyodide simulator worker, for live previews and final checks. Enter bare Python
+patterns in their controls; code examples use raw strings. Author named groups
+as `(?P<name>...)`, named backreferences as `(?P=name)`, and Python accessors
+such as `match.group('name')`. String-pattern `\d`, `\w`, and `\s` are Unicode
+by default; `(?a)` selects ASCII behavior. For strict whole-input validation,
+use `\A`/`\Z` or `re.fullmatch()` in Python code: `$` also matches before a
+final newline. Lookbehinds must have fixed width.
+
+The pages load `js/python-regex-client.js`, then
+`js/regex-tutorial-python.js`, then their exercise-definition script. The
+DOM-free client serializes requests to `js/regex-simulator-worker.js` and
+converts Python code-point match spans to JavaScript UTF-16 offsets for
+highlighting. It rejects truncated match lists instead of grading partial
+results. Startup has a 45-second deadline; each analysis has a three-second
+deadline once Python is ready. Cancellation or timeout terminates the active
+worker and the next request starts a replacement. The shared tutorial
+controller debounces previews by 200 ms, snapshots each submitted pattern,
+cancels that exercise's older preview/check on edits, and discards stale
+responses before changing highlights or awarding completion. **Stop** cancels
+the current preview/check, with accessible loading/error/result messages.
+Named-group checks inspect actual Python captures, never source-text spelling.
+Each legacy script handles only events from its own exercise IDs, so embedding
+both tutorials in a combined course page does not toggle Parsons fragments twice.
+Progress keys and exercise identities are unchanged. When changing these
+modules, verify all model solutions, Python-only syntax, Unicode highlights,
+syntax errors, Stop/retry, timeout/retry, and edits during a pending check in
+`tests/regex-tutorial.spec.js`.
+
 ### Multi-layered hints
 
 Hints are the project's primary way to keep students unstuck without giving

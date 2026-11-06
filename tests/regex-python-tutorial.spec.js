@@ -12,7 +12,7 @@ const outputs = [
   '[7, -12, 42, 0]',
   "[('luna_2', 12), ('max7', -7), ('nova', 0), ('luna_2', 2)]",
 ];
-const answers = ['item_24', '-8', 'a1 and b1234567'];
+const answers = ['item_24', '-9', 'a1 and b1234567'];
 
 async function checkWork(page, count) {
   await page.getByRole('button', { name: /Test My Work/ }).click();
