@@ -383,10 +383,6 @@
   description: The standards consortium that publishes the UML specification. A citation such as "OMG, UML 2.5.1, §14.2.3.4" points to a section of that specification.
   related: [UML]
 
-- term: OpenCL
-  definition: Open Computing Language
-  description: An open standard for parallel computation across devices from different vendors. Programs can launch work-items that run a kernel on different portions of the data.
-
 - term: ONNX
   definition: Open Neural Network Exchange
   description: An open format for representing machine-learning models so compatible inference engines can execute them. The browser specification assistant uses an ONNX conversion of the same Qwen checkpoint for Firefox graphics acceleration.

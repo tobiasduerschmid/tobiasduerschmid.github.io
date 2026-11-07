@@ -40,7 +40,7 @@ cards:
           for line in f:
               print(line.strip())
       ```
-    explanation: "The `with` statement is a context manager — it guarantees the file is closed when the block exits, like RAII in C++."
+    explanation: "The `with` statement closes the file when execution leaves its indented block, even if an error occurs. This automatic setup-and-cleanup behavior is called a context manager."
   - id: 7
     difficulty: intermediate
     question: "In Python, iterate over a list `fruits = [\"apple\", \"banana\"]` and print both the index and the value."

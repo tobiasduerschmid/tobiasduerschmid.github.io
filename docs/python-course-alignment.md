@@ -55,7 +55,7 @@ topic in the course.
 | Iterators and generators: Control notes; Homework CTRL2–3; Final F24 V1 Problem 6; Final F23 traversal questions | Independent iterator positions, exhaustion, custom iterator, lazy generator execution, yield from, finite consumption | Iterator and generator questions; write-next and filtering-generator cards |
 | Exceptions and cleanup: Function notes; exception questions in past finals | Narrow handlers, propagation, handler order, else, finally, custom errors, with, mutations surviving failure | Finally-order and no-rollback questions; finally-return card |
 | Threading and async: Control notes; Homework CTRL4–6 | Scheduling versus parallelism, start/join, synchronization, GIL qualification, coroutine versus task, await boundaries | Scheduling and GIL questions; coroutine/task explanation and concurrent-task construction cards |
-| Script tools and OpenCL: Essential Python notes and handouts p. 29 | Files, imports, main guard, command-line arguments, regex, OpenCL sidebar | Retained scripting practice; new module-entry question |
+| Script tools: Essential Python notes and handouts p. 29 | Files, imports, main guard, command-line arguments, regex | Retained scripting practice; new module-entry question |
 
 ## Example variation and assessment design
 

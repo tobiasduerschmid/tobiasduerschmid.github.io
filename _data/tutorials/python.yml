@@ -1,5 +1,5 @@
 title: "Python Essentials: Scripting & Automation"
-description: "A hands-on introduction to Python for students who already know C++ and shell scripting. Practice references, member objects, class objects, copying, calls, and inheritance before applying them to scripting and automation. Choose any step and work across several study sessions; tests and knowledge checks are optional practice."
+description: "A hands-on introduction to Python for students with UCLA CS31-level C++ knowledge: variables, conditionals, loops, and functions. Practice references, member objects, class objects, copying, calls, and inheritance before applying them to scripting and automation. Choose any step and work across several study sessions; tests and knowledge checks are optional practice."
 
 # Authoring-time Bloom-verb objectives. Not yet rendered to students.
 learning_objectives:
@@ -50,12 +50,12 @@ steps:
     instructions: |
       ### Why this matters
 
-      Python is useful for processing text, automating tasks, and prototyping an algorithm. Your C++ and shell experience gives you a head start, but assignment, function calls, and objects follow different rules. We will practice those differences before combining them in scripts.
+      Python is useful for processing text, automating tasks, and trying out algorithms. Your C++ experience from CS31 gives you a head start: variables, conditionals, loops, and functions still matter. We will introduce Python's syntax and how it stores and shares values as we use them; no prior Python or shell scripting is needed.
 
       ### 🎯 You will learn to
 
-      - Apply Python's interpreted execution model by running your first script
-      - Contrast Python's syntax (no semicolons, no `main()`, indentation-based) with C++ and Bash
+      - Run a short Python script and read its output
+      - Contrast Python's syntax (no semicolons, no `main()`, indentation-based) with C++
 
       ### A Study Plan
 
@@ -76,31 +76,14 @@ steps:
       Use the topic titles to revisit the new object-model lessons; you can also
       export your work from [SE Gym](/se-gym).
 
-      You already write C++ and shell scripts. Here is how Python fits into your toolkit:
+      Start with the C++ you know from CS31. Here are a few differences you will use right away:
 
-      | Aspect | C++ | Bash | Python |
-      |---|---|---|---|
-      | Typing | Static (`int x`) | Untyped strings | **Dynamic** (`x = 5`) |
-      | Memory | Object lifetimes, RAII, smart pointers | Managed by the shell | Garbage-collected |
-      | Run with | Compile → `./app` | `bash script.sh` | `python3 script.py` |
-      | Strength | Speed, systems code | Glue commands together | **Rapid prototyping, data, automation** |
-
-      Python often coordinates libraries whose intensive work runs in compiled
-      code. Performance depends on the workload and implementation; measure the
-      part of a program that has a concrete speed or latency requirement.
-
-      ### Lecture Connection: OpenCL
-
-      The lecture also introduces **OpenCL (Open Computing Language)**, a
-      separate standard for parallel work across devices, including graphics processors, from different vendors.
-      First released in 2008, it includes a C-based kernel language. Many
-      *work-items* run a kernel, each using a global ID to select its data.
-      For example, a brightness kernel could multiply image sample `i` by a
-      gain only when `i` is within the image bounds. Different work-items handle
-      different samples. This model supports scientific computing and machine
-      learning, but device capabilities and performance still vary.
-      The Python editor here does not execute OpenCL kernels. See the
-      [OpenCL overview](https://www.khronos.org/opencl/) for that separate topic.
+      | What you want to do | C++ | Python |
+      |---|---|---|
+      | Store a number | `int x = 5;` — declare the variable's type | `x = 5` — no type declaration needed |
+      | Print a message | `cout << "Hi!" << endl;` | `print("Hi!")` |
+      | Group statements in an `if` or loop | Put them inside braces: `{ ... }` | Indent them by the same amount |
+      | Run a program | Compile the source, then run the resulting program | Run the source with `python3 script.py`; here, click **Run** |
 
       ### A Note About Errors
 
@@ -108,16 +91,15 @@ steps:
 
       ### Your First Python Script
 
-      Python's `print()` is the equivalent of C++'s `printf()` / `cout` and Bash's `echo`:
+      Python's `print()` displays text, much like C++'s `cout`:
 
       ```python
-      # Bash:   echo "Hello, World!"
-      # C++:    printf("Hello, World!\n");
+      # C++:    cout << "Hello, World!" << endl;
       # Python:
       print("Hello, World!")
       ```
 
-      Notice there are no semicolons, no `#include`, and no `main()` function. Python scripts run top-to-bottom like shell scripts.
+      Notice there are no semicolons, no `#include`, and no `main()` function. Python executes the statements in this script from top to bottom.
 
       ### Predict Before You Run
 
@@ -4220,12 +4202,12 @@ steps:
     instructions: |
       ### Why this matters
 
-      Reading files is something every program eventually has to do, and resource leaks (forgotten `fclose()`) are a classic C/C++ bug. Python's `with` statement is the language's elegant answer: a context manager that guarantees cleanup, even on exceptions. The same pattern (RAII in C++ terms) extends to network sockets, locks, and database connections — learning it here pays off everywhere.
+      Many programs read saved data, such as scores or a list of songs. Python's `with open(...)` lets you process a file and closes it when you leave the block, even if an error interrupts your code. This keeps file cleanup in one place so you do not have to remember it on every path.
 
       ### 🎯 You will learn to
 
       - Apply `with open()` to read files line-by-line in idiomatic Python
-      - Analyze how Python's context manager pattern relates to C++'s RAII
+      - Explain when a file opened with `with` is closed, including if an error occurs
 
       ## Python's "Batteries Included" Philosophy
 
@@ -4243,9 +4225,9 @@ steps:
 
       ### Reading Files with `open()` and `with`
 
-      C-style file handling pairs `fopen` with `fclose`; modern C++ typically uses an
-      `std::ifstream` whose destructor closes the file at scope exit. Python's `with`
-      provides an explicit block for automatic cleanup, including when an exception occurs:
+      `open("data.txt")` opens the file for reading. In the block below, `as f`
+      gives us a name for the open file. The `with` statement closes it when we
+      leave the indented block, including if an error occurs:
 
       ```python
       # SUB-GOAL: Open the file (with ensures automatic close)
@@ -4256,8 +4238,9 @@ steps:
               print(line.strip())   # removes leading and trailing whitespace
       ```
 
-      The `with` statement is Python's **resource management** idiom — just like RAII in C++,
-      the file is guaranteed to be closed when the block exits.
+      This automatic setup-and-cleanup behavior is called a **context manager**.
+      For an open file, cleanup means closing the file; the name `f` going out of
+      scope is not what guarantees it.
 
       ### Predict Before You Code
 
@@ -4324,7 +4307,7 @@ steps:
       explanation: |
         **Why this is correct:**
 
-        - **`with open("data.txt") as f:`** The file context manager closes the file when the block exits, even on an exception. This resembles C++ RAII. Without `with` or equivalent cleanup, closure is no longer tied reliably to this block's exit; relying on eventual garbage collection is poor resource management.
+        - **`with open("data.txt") as f:`** The file closes when execution leaves the indented block, even if an error occurs. Without `with`, you need to arrange cleanup yourself; do not rely on Python eventually reclaiming the file object's memory.
         - **`for line in f:`** Files are directly iterable. A line includes its trailing newline when present. Iteration avoids retaining the entire file; working memory depends on buffering, the longest line, and any results your program retains.
         - **`line.split()`** without arguments splits on any whitespace and discards empty strings, so `len(words)` correctly counts the words per line.
         - **`total += len(words)`:** Accumulates the count across all lines. The three lines in `data.txt` have 9 + 9 + 6 = 24 words. The checks compare the complete total record, including on empty and mixed-whitespace files.
@@ -4372,8 +4355,7 @@ steps:
           explanation: |
             This is Python's **scripting sweet spot**: the `with` statement handles resource cleanup,
             files are directly iterable (no manual buffering), and the list comprehension filters in one line.
-            C++ can express the same task concisely with `std::ifstream` and `std::getline`;
-            its stream destructor provides automatic cleanup through RAII.
+            The file closes when execution leaves the `with` block, including if an error occurs.
 
         - question: |
             What does `line.strip()` do when reading lines from a file?
