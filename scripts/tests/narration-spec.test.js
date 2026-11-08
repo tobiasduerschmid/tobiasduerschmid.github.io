@@ -1,9 +1,9 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const { spawnSync } = require('node:child_process');
-const { readFileSync } = require('node:fs');
+const { existsSync, readFileSync } = require('node:fs');
 const path = require('node:path');
-const { compileLesson } = require('../narration/compile');
+const { compileLesson, checkSpeech } = require('../narration/compile');
 const { ROOT, lessonIds, loadLesson } = require('../narration/source');
 
 function fixture() {
@@ -81,10 +81,39 @@ test('new lesson IDs and all supported presentation kinds need no topic allowlis
 test('every published lesson has matching speech and stable timing cue IDs', () => {
   for (const topic of lessonIds()) {
     const { story } = loadLesson(topic);
-    const timing = JSON.parse(readFileSync(path.join(ROOT, `_data/explainers/${topic}_timing.json`), 'utf8'));
+    const file = path.join(ROOT, `_data/explainers/${topic}_timing.json`);
+    if (!story.audio) {
+      assert.equal(existsSync(file), false, `${topic}: a text-only lesson must not keep generated timing`);
+      continue;
+    }
+    const timing = JSON.parse(readFileSync(file, 'utf8'));
     assert.equal(timing.speech_sha256, story.speech_sha256, `${topic}: regenerate speech`);
     assert.deepEqual(timing.scenes.map(s => [s.id, s.cues.map(c => c.id)]), story.scenes.map(s => [s.id, s.cues.map(c => c.id)]));
   }
+});
+
+test('a case study may be text only until its speech is rendered', () => {
+  const input = fixture(); input.source.kind = 'case-study'; delete input.source.media;
+  const { story } = compile(input);
+  assert.equal(story.audio, undefined);
+  assert.equal(story.scenes[0].cues[0].text, 'This is the first state.');
+  assert.match(story.speech_sha256, /^[0-9a-f]{64}$/);
+  assert.match(checkSpeech('example', story, null), /text only, speech not yet rendered/);
+  assert.throws(() => checkSpeech('example', story, { speech_sha256: story.speech_sha256 }), /timing exists without a media block/);
+});
+
+test('players that depend on an audio clock still require media', () => {
+  for (const kind of ['video', 'pattern', 'explainer']) {
+    const input = fixture(); input.source.kind = kind; delete input.source.media;
+    assert.throws(() => compile(input), /media: expected an object/);
+  }
+});
+
+test('a lesson with media needs current generated timing', () => {
+  const { story } = compile(fixture());
+  assert.match(checkSpeech('example', story, { speech_sha256: story.speech_sha256 }), /current speech/);
+  assert.throws(() => checkSpeech('example', story, null), /example: no generated timing; render audio/);
+  assert.throws(() => checkSpeech('example', story, { speech_sha256: 'stale' }), /example: speech changed; render audio/);
 });
 
 test('the audio command validates a script without loading Kokoro or writing media', () => {

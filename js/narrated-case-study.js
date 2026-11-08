@@ -1,43 +1,17 @@
-/* Diagram case studies adapt the shared narration clock and quiz engine. */
+/* Diagram case studies adapt the shared narration clock and quiz engine. While
+   a decision is open, the shared control bar, step buttons included, steps
+   aside (js/narration-player-controls.js). */
 (function () {
   'use strict';
 
-  function cloneDiagram(source, prefix) {
-    const svg = source.cloneNode(true);
-    const elements = [svg, ...svg.querySelectorAll('*')];
-    const ids = new Map(elements.filter(element => element.id)
-      .map(element => [element.id, `${prefix}-${element.id}`]));
-    elements.forEach(element => {
-      Array.from(element.attributes).forEach(attribute => {
-        let value = attribute.value.replace(/url\(#([^)]*)\)/g,
-          (match, id) => ids.has(id) ? `url(#${ids.get(id)})` : match);
-        if (attribute.name === 'id') value = ids.get(value);
-        if (['href', 'xlink:href'].includes(attribute.name) && ids.has(value.slice(1))) {
-          value = `#${ids.get(value.slice(1))}`;
-        }
-        if (['aria-labelledby', 'aria-describedby'].includes(attribute.name)) {
-          value = value.split(' ').map(id => ids.get(id) || id).join(' ');
-        }
-        if (value !== attribute.value) element.setAttribute(attribute.name, value);
-      });
-    });
-    return svg;
-  }
-
   function showDiagram(container, readingStep, diagram, prefix) {
-    const source = readingStep.querySelector('.case-diagram svg');
-    if (!source) {
+    const settled = readingStep.querySelector('.case-diagram svg');
+    if (!settled) {
       // A missing static render must leave the meaning available, never raw UML.
       container.textContent = diagram.description;
       return;
     }
-    container.dataset.umlRendered = 'true';
-    container.dataset.umlType = diagram.type;
-    container.dataset.umlSpec = diagram.source;
-    window.UMLShared.prepareDiagramContainer(container, diagram.type);
-    container.replaceChildren(cloneDiagram(source, prefix));
-    window.UMLShared.autoFitSVG(container);
-    window.UMLShared.applySvgAccessibility(container, diagram.type, diagram.source, diagram.label);
+    window.NarrationDiagram.show(container, settled, diagram, prefix);
     // The site's automatic describer supplies a structural breakdown; this
     // authored caption and description supply the case-specific interpretation.
     const image = container.querySelector('svg');
@@ -46,11 +20,11 @@
   }
 
   function enhance(root) {
-    if (root.classList.contains('is-enhanced')) return;
+    if (root.classList.contains('is-enhanced') || !window.NarratedExplainer || !window.SebookQuiz) return;
     const { story, timing } = window.NarratedExplainer.readData(root);
-    // The readable version remains fully available while narration is unbuilt.
-    if (!timing || !window.NarratedExplainer || !window.SebookQuiz) return;
-    const audio = root.querySelector('audio');
+    // The readable version remains fully available while rendered narration is incomplete.
+    if (story.audio && !timing) return;
+    const playButton = root.querySelector('[data-action="play"]');
     const stage = root.querySelector('.nja-stage');
     const quizPanel = root.querySelector('.case-quiz');
     const quizHost = root.querySelector('[data-quiz-host]');
@@ -94,8 +68,7 @@
       quizPanel.hidden = true;
       stage.hidden = false;
       root.querySelector('.nja-narration').hidden = false;
-      root.querySelector('.case-step-actions').hidden = false;
-      root.querySelector('[data-action="play"]').disabled = false;
+      if (playButton) playButton.disabled = false;
     }
 
     function continueScene(index, playNarration) {
@@ -106,7 +79,8 @@
         if (playNarration) player.play();
       } else {
         status.textContent = 'Case study complete. Revisit any scene to review your reasoning.';
-        root.querySelector('[data-action="restart"]').focus({ preventScroll: true });
+        // A text-only story has no restart button; its player settings hold scene review.
+        (root.querySelector('[data-action="restart"]') || root.querySelector('.vn-settings-toggle')).focus({ preventScroll: true });
       }
     }
 
@@ -130,15 +104,15 @@
 
     function finishScene(index, playNarration = false) {
       resumeNarration = playNarration;
-      audio.pause();
+      player.pause();
       if (!story.scenes[index].checkpoint) {
         // The transport first seeks back to the completed section. Allow that
         // seek to finish before seeking forward and resuming an ungated scene.
-        if (playNarration && audio.seeking) {
-          audio.addEventListener('seeked', () => {
+        if (playNarration) {
+          player.afterSeek(() => {
             if (player.currentScene() === index && quizPanel.hidden) continueScene(index, true);
-          }, { once: true });
-        } else continueScene(index, playNarration);
+          });
+        } else continueScene(index, false);
         return;
       }
       mountedQuizzes.forEach(host => { host.hidden = true; });
@@ -146,8 +120,7 @@
       host.hidden = false;
       stage.hidden = true;
       root.querySelector('.nja-narration').hidden = true;
-      root.querySelector('.case-step-actions').hidden = true;
-      root.querySelector('[data-action="play"]').disabled = true;
+      if (playButton) playButton.disabled = true;
       quizPanel.querySelector('.tvm-quiz-status').textContent = 'Make a prediction before revealing the next evidence. You can retry or continue after feedback.';
       const heading = quizPanel.querySelector('h3');
       heading.textContent = `${index + 1}. ${story.scenes[index].label} — Choose the next action`;
@@ -160,20 +133,42 @@
       quizPanel.scrollIntoView({ block: 'nearest', behavior: 'instant' });
     }
 
-    const player = window.NarratedExplainer.enhance(root, {
-      storyboard: story, timing, render,
-      onSectionEnd: index => finishScene(index, true),
-      onSeek: closeQuiz,
-      canPlay: () => quizPanel.hidden,
-    });
+    // With rendered speech, the shared transport's audio clock selects each cue.
+    function audioTransport() {
+      const audio = root.querySelector('audio');
+      const transport = window.NarratedExplainer.enhance(root, {
+        storyboard: story, timing, render,
+        onSectionEnd: index => finishScene(index, true),
+        onSeek: closeQuiz,
+        canPlay: () => quizPanel.hidden,
+      });
+      return {
+        ...transport,
+        pause: () => audio.pause(),
+        showCue(sceneIndex, cueIndex) {
+          audio.pause();
+          const seek = root.querySelector('.nja-seek');
+          // A range input quantizes to hundredths; round forward so it cannot
+          // place a requested cue just before its own start boundary.
+          seek.value = String(Math.ceil(timing.scenes[sceneIndex].cues[cueIndex].start * 100) / 100);
+          seek.dispatchEvent(new Event('input', { bubbles: true }));
+        },
+        afterSeek(callback) {
+          if (audio.seeking) audio.addEventListener('seeked', callback, { once: true });
+          else callback();
+        },
+      };
+    }
+
+    // A text-only story has no audio clock; the reader steps through the same cues.
+    function stepTransport() {
+      const transport = window.NarratedExplainer.step(root, { storyboard: story, render, onSeek: closeQuiz });
+      return { ...transport, play() {}, pause() {}, afterSeek: callback => callback() };
+    }
+    const player = story.audio ? audioTransport() : stepTransport();
 
     function selectStep(sceneIndex, cueIndex) {
-      audio.pause();
-      const seek = root.querySelector('.nja-seek');
-      // A range input quantizes to hundredths; round forward so it cannot
-      // place a requested cue just before its own start boundary.
-      seek.value = String(Math.ceil(timing.scenes[sceneIndex].cues[cueIndex].start * 100) / 100);
-      seek.dispatchEvent(new Event('input', { bubbles: true }));
+      player.showCue(sceneIndex, cueIndex);
       status.textContent = `Step ${cueIndex + 1}: ${story.scenes[sceneIndex].cues[cueIndex].step}`;
     }
 
@@ -190,7 +185,7 @@
       nextStep.focus({ preventScroll: true });
     });
     root.querySelector('[data-case-action="read"]').addEventListener('click', () => {
-      audio.pause();
+      player.pause();
       transcript.open = true;
       transcript.querySelector('summary').focus();
       transcript.scrollIntoView({ block: 'start', behavior: 'instant' });
@@ -199,6 +194,7 @@
     root.querySelector('.case-reading-actions').hidden = false;
     transcript.open = false;
     let openBeforePrint = [];
+    // The shared transport opens and restores the transcript itself; this opens its answers.
     window.addEventListener('beforeprint', () => {
       openBeforePrint = Array.from(transcript.querySelectorAll('details'), details => ({ details, open: details.open }));
       openBeforePrint.forEach(({ details }) => { details.open = true; });

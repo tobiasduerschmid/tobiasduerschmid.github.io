@@ -281,7 +281,8 @@
   function describeObject(object) {
     const parts = [objectTitle(object)];
     if (object.value !== undefined) parts.push(String(object.value));
-    (object.entries || []).forEach(entry => parts.push(entry.label + ' → ' + entry.target));
+    (object.entries || []).forEach(entry => parts.push((entry.displayLabel || entry.label)
+      + (entry.target === undefined ? ' = ' + entry.value : ' → ' + entry.target)));
     if (object.note) parts.push(object.note);
     return parts.join('; ');
   }
@@ -291,7 +292,9 @@
     const lines = [];
     step.scopes.forEach(scope => {
       lines.push(scope.name + ': ' + (scope.bindings.length
-        ? scope.bindings.map(binding => binding.name + ' → ' + binding.target).join('; ')
+        ? scope.bindings.map(binding => binding.name
+          + (binding.semantics === 'value' ? ' occupies ' : binding.semantics === 'reference' ? ' aliases ' : ' → ')
+          + binding.target).join('; ')
         : 'no names bound'));
     });
     step.objects.forEach(object => lines.push(describeObject(object)));
@@ -299,9 +302,6 @@
     if (step.note) lines.push(step.note);
     return lines.join('\n');
   }
-
-  const PRIMITIVES = new Set(['str', 'bytes', 'int', 'float', 'complex', 'bool', 'NoneType']);
-  const INCIDENTAL = new Set(['function', 'builtin_function_or_method', 'method', 'module']);
 
   // The engine is a local, pinned asset. Embedders still load this one renderer;
   // its dependency cannot silently disappear from an older page's script list.
@@ -333,40 +333,53 @@
   }
 
   function visibleObjects(step) {
-    const hidden = new Set(step.objects.filter(object => INCIDENTAL.has(object.type)).map(object => object.id));
-    step.objects.filter(object => object.type.startsWith('class ')).forEach(object => {
-      if (object.entries && !object.entries.some(entry => !hidden.has(entry.target))) hidden.add(object.id);
-    });
-    return step.objects.filter(object => !hidden.has(object.id));
+    // Language adapters decide which runtime bookkeeping is incidental. The
+    // renderer consumes storage and binding semantics, never language types.
+    return step.objects.filter(object => !object.hidden);
   }
 
   function makeView(object, bindings, nodes, interactive) {
     const row = element('div', 'orl-object-row');
     row.dataset.objectId = object.id;
     const aliases = element('div', 'orl-aliases');
+    const directBindings = element('div', 'orl-direct-bindings');
     bindings.forEach(({ binding, scope }) => {
-      const label = element('span', 'orl-binding');
+      const direct = binding.semantics === 'value' || binding.semantics === 'reference';
+      const label = element('span', direct ? 'orl-binding orl-direct-binding' : 'orl-binding');
       label.dataset.bindingId = JSON.stringify([scope.id, binding.name]);
       label.append(element('span', 'orl-reference-name', binding.name));
       if (scope.id !== 'global') label.append(element('span', 'orl-scope-label', '(' + scope.name + ')'));
-      const slot = element('span', 'orl-name-slot');
-      slot.setAttribute('aria-hidden', 'true');
-      label.append(slot, element('span', 'sr-only', ' refers to ' + object.id));
-      aliases.append(label);
+      if (direct) {
+        label.append(element('span', 'orl-binding-kind', binding.semantics === 'reference' ? 'alias' : 'value'));
+        label.append(element('span', 'sr-only', ' in storage ' + object.id));
+        label.append(element('span', 'orl-change-announcement'));
+        directBindings.append(label);
+      } else {
+        const slot = element('span', 'orl-name-slot');
+        slot.setAttribute('aria-hidden', 'true');
+        label.append(slot, element('span', 'sr-only', ' refers to ' + object.id));
+        aliases.append(label);
+      }
     });
     const card = element('section', 'orl-object');
-    card.classList.toggle('orl-scalar', PRIMITIVES.has(object.type));
     card.setAttribute('aria-label', object.id + ': ' + object.type);
     if (interactive) card.tabIndex = -1;
+    if (directBindings.childElementCount) card.append(directBindings);
     const title = element('p', 'orl-object-title');
     title.append(element('span', 'orl-object-type', object.type));
     card.append(title);
     const entries = element('div', 'orl-entries');
     (object.entries || []).forEach(entry => {
+      const label = entry.displayLabel || entry.label;
+      if (entry.target === undefined) {
+        const item = element('div', 'orl-entry orl-contained-value');
+        item.append(element('span', 'orl-reference-name', label), element('span', 'orl-value', String(entry.value)));
+        entries.append(item);
+        return;
+      }
       const target = nodes.get(entry.target);
       if (!target) return;
       const item = element('div', 'orl-entry');
-      const label = entry.label === '__class__' ? 'class' : entry.label;
       const follow = element(interactive ? 'button' : 'span', 'orl-reference-name orl-reference-target', label);
       if (interactive) follow.type = 'button';
       follow.dataset.referenceTarget = entry.target;
@@ -583,7 +596,7 @@
     const facts = { objects: new Map(), references: new Map(), names: new Map() };
     candidate.views.forEach((view, id) => {
       facts.objects.set(id, view.objectSignature);
-      view.namePorts.forEach(port => facts.names.set(port.id, id));
+      view.row.querySelectorAll('[data-binding-id]').forEach(label => facts.names.set(label.dataset.bindingId, id));
     });
     candidate.model.edges.forEach(edge => facts.references.set(edge.id, edge.targets[0].slice(0, -':in'.length)));
     return facts;
@@ -1017,6 +1030,10 @@
     syncBindings(previous) {
       this.bindings = new Map();
       this.objects.forEach((view, target) => {
+        view.card.querySelectorAll('[data-binding-id]').forEach(label => {
+          this.markChange(label, this.interactive
+            ? changeCue((this.cueBaseline || NO_FACTS).names, label.dataset.bindingId, target) : '');
+        });
         view.namePorts.forEach(port => {
           const replacement = Array.from(view.aliases.children).find(label => label.dataset.bindingId === port.id);
           const old = previous.get(port.id);
@@ -1042,6 +1059,8 @@
     markChange(node, change) {
       node.classList.toggle('is-updated', Boolean(change));
       node.dataset.change = change.toLowerCase();
+      const announcement = node.querySelector(':scope > .orl-change-announcement');
+      if (announcement) announcement.textContent = change ? ' ' + change + ' binding.' : '';
       const status = node.querySelector('.orl-change-status');
       if (status) {
         status.replaceChildren();
@@ -1052,7 +1071,7 @@
     clearChanges() {
       this.objects.forEach(view => this.markChange(view.card, ''));
       this.bindings.forEach(binding => { this.markChange(binding.label, ''); binding.label.title = ''; });
-      this.host.querySelectorAll('.is-updated').forEach(node => node.classList.remove('is-updated'));
+      this.host.querySelectorAll('.is-updated').forEach(node => this.markChange(node, ''));
     }
 
     draw(progress = 1, previousRoutes = this.routes, previousBindings = this.bindings) {

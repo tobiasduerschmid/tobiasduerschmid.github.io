@@ -78,6 +78,12 @@ These are the 10 rules a reviewer should check against. Each is tied to a specif
 
 **10. Prose and diagram do different work.** The diagram shows *structure and relationships*. The prose provides *causality, motivation, edge cases, and the "why"*. If your prose reads like a tour of the boxes ("the Controller connects to the Model, which connects to…"), delete one of them — you're just duplicating.
 
+**11. Sequence-diagram lifelines are instances, written `name: Type`.** A lifeline is one object taking part in one interaction, not a class, so UML labels it with a colon and underlines it. A bare type name (`Agent`, `PackageProxy`) reads as a class and hides which object acts. ArchUML renders the instance label from the declaration:
+   - **Named instance:** `participant agentA: Agent` shows the underlined label `agentA: Agent`. Use the instance name (`agentA`) as the id in messages. Do not combine it with `as`; `participant AgentA as agentA:Agent` renders the id twice.
+   - **Anonymous instance:** `participant proxy as : PackageProxy` shows `: PackageProxy` when the diagram has only one object of that type and its name adds nothing.
+   - **Several objects of one type** are different instances of the *same* type: `agentA: Agent` and `agentB: Agent`, or `workerA: DatasetWorker` and `workerB: DatasetWorker`. Never invent `AgentA` / `AgentB` or `WorkerPod` / `OtherWorker` as if they were separate classes; that misstates the model and hides that both run the same code.
+   - Name types in the singular (`: ResponseTeam`, not `: Responders`), and give every lifeline in a diagram the same notation. A human actor uses `actor user: User` in the same form.
+
 ## Placement and caption conventions
 
 - The diagram goes **immediately after** the paragraph that introduces it, not at the top of the section or the end of the page.
@@ -103,6 +109,7 @@ Go through each diagram on the page and ask:
 8. **Redundancy** — every box, arrow, color carries information? Strip what doesn't.
 9. **Right type** — is this freeform when a specific type (`language-uml-state`, `diagram-gitgraph`, `diagram-folder-tree`, etc.) would fit? Switch.
 10. **Co-location** — is the diagram on the same screen as its introducing paragraph? Move it.
+11. **Instances in sequence diagrams** — is every lifeline labeled `name: Type` or `: Type`, with several objects of one type shown as instances of that one type? Fix bare type names and invented per-object types.
 
 ## How this skill pairs with others
 

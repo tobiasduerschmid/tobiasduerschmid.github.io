@@ -3,6 +3,10 @@
  * blocks. Keep dark and print behavior next to the component rules.
  */
 
+/* Explicit reading links keep a non-color cue in light, dark, and print.
+ * The shared print reset otherwise removes their underline. */
+a.sebook-reading-link { text-decoration: underline !important; }
+
 .tutorials-index-list {
   list-style: none;
   padding: 0;

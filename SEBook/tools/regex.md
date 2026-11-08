@@ -5,7 +5,9 @@ layout: sebook
 
 > **New to RegEx? Start here:** The [RegEx Tutorial: Basics](/SEBook/tools/regex-tutorial.html) teaches you Regular Expressions step by step with hands-on exercises and real-time feedback. Then continue with the [Advanced Tutorial](/SEBook/tools/regex-tutorial-advanced.html) for greedy/lazy matching, groups, lookaheads, and integration challenges. Come back to this page as a reference.
 
-This page is a **reference guide** for Regular Expression syntax, engine mechanics, and worked examples. It is designed to be consulted alongside or after the interactive tutorial — not as a replacement for hands-on practice.
+This page is a **reference guide** for Python 3 regular expressions using the standard-library `re` module. The reference, tutorials, flashcards, and quiz use the same Python syntax. It is designed to be consulted alongside or after the interactive tutorial — not as a replacement for hands-on practice.
+
+In Python code, start with `import re` and write patterns as raw strings, such as `r'\d+'`, so backslashes reach the regex engine unchanged. In the tutorial and simulator pattern fields, enter just `\d+`, without the `r` prefix or quotes. Use `re.search(pattern, text)` to find a match, `re.finditer(pattern, text)` to iterate over matches, and `re.fullmatch(pattern, text)` to validate an entire input.
 
 Use the [Python RegEx Simulator & Debugger]({{ '/SEBook/tools/regex-simulator.html' | relative_url }}) to test your own patterns, inspect captured groups, and investigate where a match can start.
 
@@ -85,6 +87,7 @@ Anchors do not match any actual characters; instead, they constrain a match base
 
 * `^` (Caret): Asserts the **start** of a string. `^Hello` matches "Hello world" but not "Say Hello".
 * `$` (Dollar Sign): In Python, asserts the **end** of a string or the position just before a final newline. `end$` matches "The end" but not "endless".
+* `\A` and `\Z`: Assert the absolute start and end of the string. Unlike `$`, `\Z` does not allow a final newline outside the match; `re.MULTILINE` does not change these anchors.
 
 > In Python, `^` matches the start of the string; `$` matches the end or just before a final newline. With **`re.MULTILINE`** (also called `re.M`), `^` additionally matches immediately after each newline and `$` immediately before each newline. Use `re.fullmatch()` when the entire input must match.
 
@@ -94,18 +97,18 @@ Anchors do not match any actual characters; instead, they constrain a match base
 Character classes (or sets) allow you to match any single character from a specified group.
 
 * `[abc]`: Matches either "a", "b", or "c".
-* `[a-z]`: Matches any lowercase letter.
-* `[A-Za-z0-9]`: Matches any alphanumeric character.
-* `[^0-9]`: The caret inside the brackets means **negation**. This matches any character that is *not* a digit.
+* `[a-z]`: Matches any lowercase ASCII letter.
+* `[A-Za-z0-9]`: Matches any ASCII letter or digit.
+* `[^0-9]`: The caret inside the brackets means **negation**. This matches any character that is *not* an ASCII digit.
 
 > **Practice this:** [Character Classes exercises in the Interactive Tutorial](/SEBook/tools/regex-tutorial.html#character-classes)
 
 ### Metacharacters
 Because certain character sets are used so frequently, RegEx provides handy meta characters:
-* `\d`: In Python 3 string patterns, matches a Unicode decimal digit (e.g., Devanagari `९`); pass `re.ASCII` to restrict it to `[0-9]`. JavaScript's `\d` matches `[0-9]` even with its `u` flag; POSIX regular expressions do not define `\d`.
+* `\d`: Matches a Unicode decimal digit (e.g., Devanagari `९`); pass `re.ASCII` to restrict it to `[0-9]`.
 * `\w`: In Python 3 string patterns, matches a Unicode alphanumeric character or underscore. With `re.ASCII`, it matches `[a-zA-Z0-9_]`.
 * `\s`: Matches any whitespace character (spaces, tabs, line breaks).
-* `.` (Dot): The wildcard. Matches *any* single character except a newline (turn on the `s`/DOTALL flag to also match newlines). To match a literal dot, you must escape it with a backslash: `\.`.
+* `.` (Dot): The wildcard. Matches *any* single character except a newline (pass `re.DOTALL` to also match newlines). To match a literal dot, you must escape it with a backslash: `\.`.
 
 > **Practice this:** [Meta Characters exercises in the Interactive Tutorial](/SEBook/tools/regex-tutorial.html#meta-characters)
 
@@ -125,27 +128,26 @@ Quantifiers tell the RegEx engine how many times the preceding element is allowe
 Let's look at how we can combine these rules to solve practical problems.
 
 ### Example A: Password Validation
-Suppose we need to validate a password that must be at least 8 characters long and contain only letters and digits.
+Suppose we need to validate a password that must be at least 8 characters long and contain only ASCII letters and digits.
 
-**The Pattern:** `^[a-zA-Z0-9]{8,}$`
+**The Pattern:** `[a-zA-Z0-9]{8,}` — use `re.fullmatch(r'[a-zA-Z0-9]{8,}', password)`.
 
 **Breakdown:**
-* `^` : Start of the string.
-* `[a-zA-Z0-9]` : Allowed characters (any letter or number).
+* `[a-zA-Z0-9]` : Allowed characters (any ASCII letter or digit).
 * `{8,}` : The previous character class must appear 8 or more times.
-* `$` : End of the string. (This ensures no special characters sneak in at the end).
+* `re.fullmatch()` : Requires the whole input to match, rejecting extra punctuation and trailing newlines. No anchors are needed for this operation.
 
 ### Example B: Email Validation
-Validating an email address perfectly according to the RFC standard is notoriously difficult, but a highly effective, standard RegEx looks like this:
+For a simplified email shape, match a local part, an `@`, a domain, and a top-level domain of at least two ASCII letters. This checks the shape only, not every valid email address or whether the mailbox exists:
 
-**The Pattern:** `^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`
+**The Pattern:** `[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}` — pass it as a raw string to `re.fullmatch(pattern, email)`.
 
 **Breakdown:**
-1. `^[a-zA-Z0-9._%+-]+` : Starts with one or more alphanumeric characters, dots, underscores, percent signs, plus signs, or dashes (the username).
+1. `[a-zA-Z0-9._%+-]+` : One or more ASCII letters, digits, dots, underscores, percent signs, plus signs, or dashes (the local part).
 2. `@` : A literal "@" symbol.
 3. `[a-zA-Z0-9.-]+` : The domain name (e.g., "ucla" or "google").
 4. `\.` : A literal dot (escaped).
-5. `[a-zA-Z]{2,}$` : The top-level domain (e.g., "edu" or "com"), consisting of 2 or more letters, extending to the end of the string.
+5. `[a-zA-Z]{2,}` : The top-level domain (e.g., "edu" or "com"), consisting of 2 or more ASCII letters. `re.fullmatch()` requires the pattern to cover the entire input.
 
 
 ## Groups and Named Groups
@@ -155,10 +157,10 @@ Often, you don't just want to know *if* a string matched; you want to extract sp
 ### Groups
 If you want to extract the domain from an email, you can wrap that section in parentheses:
 `^.+@(.+\.[a-zA-Z]{2,})$`
-The engine will save whatever matched inside the `()` into a numbered variable that you can access in your programming language.
+After a successful match, `match.group(1)` retrieves the text captured inside the first pair of parentheses. `match.group(0)` retrieves the whole match.
 
 ### Named Groups
-When dealing with complex patterns, remembering group numbers gets confusing. Modern RegEx engines support **Named Groups** using the syntax `(?<name>pattern)` (or `(?P<name>pattern)` in Python).
+When dealing with complex patterns, remembering group numbers gets confusing. Python supports **Named Groups** using the syntax `(?P<name>pattern)`. After a successful match, retrieve a named capture with `match.group('name')`.
 
 **Example: Parsing HTML Hex Colors**
 Imagine you want to extract the Red, Green, and Blue values from a hex color string like `#FF00A1`:
@@ -166,9 +168,9 @@ Imagine you want to extract the Red, Green, and Blue values from a hex color str
 **The Pattern:** `#(?P<R>[0-9a-fA-F]{2})(?P<G>[0-9a-fA-F]{2})(?P<B>[0-9a-fA-F]{2})`
 
 Here, we define three named groups (R, G, and B). When this runs against `#FF00A1`, our code can cleanly extract:
-* Group "R": `FF`
-* Group "G": `00`
-* Group "B": `A1`
+* `match.group('R')`: `FF`
+* `match.group('G')`: `00`
+* `match.group('B')`: `A1`
 
 ## Seeing it in Action: Step-by-Step Worked Examples
 
@@ -247,7 +249,7 @@ Let's put the theory of pattern pointers, bumping along, and backtracking into p
 6. **The Named Group:** The engine enters the named group `(?P<IP>...)`.
    * `\d{1,3}` matches `10`.
    * `(\.\d{1,3}){3}` matches `.0`, then matches `.4`, then matches `.19`.
-   * The engine saves the string `"10.0.4.19"` into a variable named "IP".
+   * The match object stores `"10.0.4.19"` in the named capture, retrieved with `match.group('IP')`.
 7. **The Final Stretch:** The final `.*` consumes the rest of the string again, backtracking until it can match the literal phrase `Critical Timeout`.
    * `$` asserts the end of the string.
    * **Match Saved!** The group "IP" successfully holds `"10.0.4.19"`.
@@ -290,15 +292,15 @@ Lookaheads look forward in the string from the current position.
 * **Negative Lookahead `(?!...)`**: Asserts that what immediately follows does *not* match the pattern.
 
 **Example: The Password Condition**
-Lookaheads are the secret to writing complex password validators. Suppose a password must contain at least one number. You can use a positive lookahead at the very start of the string:
-`^(?=.*\d)[A-Za-z\d]{8,}$`
+Suppose a password must contain at least one ASCII digit and consist of at least eight ASCII letters or digits. Pass this pattern to `re.fullmatch()`:
+`(?=.*[0-9])[A-Za-z0-9]{8,}`
 
-* `^` asserts the position at the beginning of the string.
-* `(?=.*\d)` looks ahead through the string from the current position. If it finds a digit, the condition passes. **Crucially, because lookaheads are zero-width, they do not consume characters. After the check passes, the engine's string pointer resets back to the exact position where the lookahead started** (which, in this specific case, is still the beginning of the string).
-* `[A-Za-z\d]{8,}$` then evaluates the string normally from that starting position to ensure it consists of 8+ valid characters.
+* `re.fullmatch()` starts at the beginning and requires a match spanning the entire input.
+* `(?=.*[0-9])` looks ahead through the string from the current position. If it finds an ASCII digit, the condition passes. **Because lookaheads are zero-width, they do not consume characters. After the check passes, matching continues from the position where the lookahead started** (here, the beginning of the string).
+* `[A-Za-z0-9]{8,}` then consumes eight or more allowed characters.
 
 ### Positive and Negative Lookbehinds
-Lookbehinds look backward in the string from the current position.
+Lookbehinds look backward in the string from the current position. In Python's `re` module, the pattern inside a lookbehind must match a fixed number of characters.
 * **Positive Lookbehind `(?<=...)`**: Asserts that what immediately precedes matches the pattern.
 * **Negative Lookbehind `(?<!...)`**: Asserts that what immediately precedes does *not* match the pattern.
 
@@ -347,7 +349,7 @@ If the engine exhausts all possibilities at the current starting position and co
 It resets the pattern pointer to the beginning of your RegEx, advances the string pointer *one character forward* from where the last attempt began, and starts the entire process over again. It will continue this process, checking every single starting index of the string, until it finds a match or reaches the end of the text.
 
 ### Finding *All* Matches (Global Search)
-Usually, a RegEx engine stops the moment it finds the *first* valid match. However, if you instruct the engine to find *all* matches (usually done by appending a global modifier, like `/g` in JavaScript or using `re.findall()` in Python), the engine performs a specific sequence:
+`re.search()` returns the *first* match. Use `re.finditer()` to iterate over all non-overlapping matches as match objects, or `re.findall()` to collect strings (or captured groups, if the pattern has capturing groups). For non-empty matches, the search proceeds as follows:
 
 1. It finds the first successful match.
 2. It saves that match to return to you.
@@ -363,7 +365,7 @@ Let's say you are searching for the pattern `cat` in the string `"The cat and th
 5. It matches `c`, `a`, and `t`. **Match #2 found!**
 6. It resumes at the `a` in `"catalog"`, bumps along to the end of the string, finds nothing else, and completes the search. 
 
-By mechanically stepping forward, backtracking when stuck, and resuming immediately after success, the engine guarantees no potential match is left behind!
+These operations return non-overlapping matches. Patterns that can match an empty string are handled specially so the search makes progress instead of repeatedly returning the same empty match.
 
 ## Limitations of RegEx: The HTML Problem
 

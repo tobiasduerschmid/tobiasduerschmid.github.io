@@ -41,7 +41,7 @@
         "label": "Sequence of the traced requests",
         "description": "The app asks dinner for its shares, and dinner forwards split(total, people) to the shared EqualSplit object. The app calls setStrategy(percent) on dinner and asks for the shares again; dinner forwards split(total, people) to the PercentSplit object. The app asks dinner for its label, and dinner forwards label() to the PercentSplit object.",
         "caption": "Each request goes to whichever strategy the expense holds. The messages appear as the narration reaches them; the panel below shows each result.",
-        "source": "@startuml\nparticipant app\nparticipant dinner: Expense\nparticipant equal as : EqualSplit\nparticipant percent as : PercentSplit\n",
+        "source": "@startuml\nparticipant app: Main\nparticipant dinner: Expense\nparticipant equal as : EqualSplit\nparticipant percent as : PercentSplit\n",
         "steps": [
           "app -> dinner: shares()\nactivate dinner\ndinner -> equal: split(total, people)\nactivate equal\ndeactivate equal\ndeactivate dinner\n",
           "app -> dinner: setStrategy(percent)\napp -> dinner: shares()\nactivate dinner\ndinner -> percent: split(total, people)\nactivate percent\ndeactivate percent\ndeactivate dinner\n",

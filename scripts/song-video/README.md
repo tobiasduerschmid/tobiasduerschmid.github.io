@@ -299,6 +299,14 @@ lifelines). `ModelKit.code()` puts Python source beside the notation, in the
 shared syntax colours. Class diagrams carry no route ids: find their arrows
 by shape (an edge's `polygon` head, the `stroke-dasharray` of a
 realization).
+Routing many connectors is slow in the browser (a tangle of eight arrows
+took about a second), so a storyboard can list its views under `diagrams`
+(name: `kind` and `spec`) and pass them to `ModelKit.diagram()`. The build
+draws each one with the static-diagram renderer and cache
+(`_plugins/uml_static.rb`, through `_plugins/song_diagrams.rb`) into the
+player page, and the kit uses that drawing instead of calling ArchUML. A
+spec the page has no drawing for, as in the export stage, is still drawn in
+the browser.
 `js/song-video/sketch-kit.js` (styles in `css/song-video-sketch-kit.css`)
 draws the pictures beside the notation from the lecture's building
 metaphors: a brick wall laid in a hurry around one crooked brick, four
@@ -382,9 +390,10 @@ at, or circling the answer. Where the lyric sheet splits a sentence across
 short lines to slow the singing, the storyboard keeps the sentence, or a
 clause of a long one, as one line.
 
-"My Teammate (It Works on My Machine)", a comic opera about teamwork, is in the
-CS 35L video playlist only: it has no chapter page, so its player page prints
-the transcript. It uses the `opera-house` theme (`js/song-video/opera-house.js`):
+"My Teammate (It Works on My Machine)", a comic opera about teamwork, is only in
+the video library on `/SEBook/playlist.html`: it has no chapter page, so its
+player page prints the transcript. It uses the `opera-house` theme
+(`js/song-video/opera-house.js`):
 a gilded proscenium with velvet drapes, a fringed valance, a curtain,
 footlights, and a conductor in the pit, framing a software team's office.
 The curtain is flown, rising and falling: a curtain drawn sideways sweeps its

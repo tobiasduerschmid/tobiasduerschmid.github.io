@@ -1,0 +1,6 @@
+{%- comment -%}
+  The narration speed select; 1x is selected.
+  Params: label (default "Speed"), rates (comma-separated, default "0.75,1,1.25,1.5").
+{%- endcomment -%}
+{%- assign speed_rates = include.rates | default: '0.75,1,1.25,1.5' | split: ',' -%}
+<label>{{ include.label | default: 'Speed' }}<select data-setting="speed">{% for rate in speed_rates %}<option value="{{ rate }}"{% if rate == '1' %} selected{% endif %}>{{ rate }}x</option>{% endfor %}</select></label>

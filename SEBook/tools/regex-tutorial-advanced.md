@@ -11,6 +11,8 @@ layout: sebook
 
 This is the second part of the Interactive RegEx Tutorial. If you haven't completed the [Basics Tutorial](/SEBook/tools/regex-tutorial.html) yet, start there first — the exercises here assume you're comfortable with literal matching, character classes, metacharacters, anchors, quantifiers, and alternation.
 
+The exercises use Python's built-in `re` engine. Enter only the pattern, without quotes or slash delimiters; in Python code, store it in a raw string such as `r'\w+'`. Previews use `re.finditer()` to show every non-overlapping match. **Stop** cancels a pending preview or check.
+
 # Warm-Up Review
 
 Before diving into advanced features, let's make sure the basics are solid. These exercises combine concepts from the Basics tutorial. If any feel rusty, revisit the [Basics](/SEBook/tools/regex-tutorial.html).
@@ -35,16 +37,17 @@ Use the step-through visualizer in the first exercise below to see exactly how t
 
 # Groups & Named Groups
 
-Parentheses `(...)` create a **group** — they treat multiple characters as a single unit for quantifiers. `(na){2,}` means "the sequence **na** repeated 2 or more times" — matching `nana`, `nanana`, etc. You can access what each group matched by index (e.g., `match[1]`).
+Parentheses `(...)` create a **group** — they treat multiple characters as a single unit for quantifiers. `(na){2,}` means "the sequence **na** repeated 2 or more times" — matching `nana`, `nanana`, etc. You can access what each group matched by index (e.g., `match.group(1)`).
 
 **Named groups** let you label what each group matches instead of counting parentheses:
 
 | Syntax | Meaning |
 |--------|---------|
-| `(?<name>...)` | Create a group called *name* |
-| `match.groups.name` | Retrieve the matched value in code |
+| `(?P<name>...)` | Create a group called *name* |
+| `match.group('name')` | Retrieve the matched value in Python code |
+| `(?P=name)` | Match the same text captured earlier by *name* |
 
-For example, `^(?<year>\d{4})-(?<month>\d{2})-(?<day>\d{2})$` matches a date and lets you access `match.groups.year`, `match.groups.month`, and `match.groups.day` directly — much clearer than `match[1]`, `match[2]`, `match[3]`.
+For example, `^(?P<year>\d{4})-(?P<month>\d{2})-(?P<day>\d{2})\Z` matches a date's shape and lets you access `match.group('year')`, `match.group('month')`, and `match.group('day')` directly. First check that `re.search()` returned a match rather than `None`; then `match.groupdict()` gives all named captures as a dictionary. This checks the shape, not whether a calendar date exists.
 
 <div class="rt-section" data-section="Groups & Named Groups"></div>
 
@@ -60,9 +63,11 @@ For example, `^(?<year>\d{4})-(?<month>\d{2})-(?<day>\d{2})$` matches a date and
 | `(?<=...)` | Positive lookbehind | What precedes must match `...` |
 | `(?<!...)` | Negative lookbehind | What precedes must NOT match `...` |
 
-A classic use case: **password validation**. To require at least one digit AND one uppercase letter, you can chain lookaheads at the start: `^(?=.*\d)(?=.*[A-Z]).+$`. Each lookahead checks a condition independently, and the `.+` at the end actually consumes the string.
+A classic use case: **password validation**. To require at least one digit AND one uppercase ASCII letter in a single-line string, you can chain lookaheads at the start: `^(?=.*\d)(?=.*[A-Z]).+\Z`. Each lookahead checks a condition independently, and the `.+` at the end actually consumes the string.
 
 Lookbehinds are useful for extracting values after a known prefix — like capturing dollar amounts after a `$` sign without including the `$` itself.
+
+Python lookbehinds must have a **fixed width**: `(?<=USD )\d+` is valid, but `(?<=USD\s+)\d+` is rejected because `\s+` can match different lengths. Use a consuming prefix plus a capture when the prefix length varies.
 
 <div class="rt-section" data-section="Lookaheads & Lookbehinds"></div>
 
@@ -75,4 +80,6 @@ This is where regex goes from "I can follow along" to "I can solve problems on m
 
 <div class="rt-section" data-section="Putting It All Together"></div>
 
+<script src="/js/python-regex-client.js"></script>
+<script src="/js/regex-tutorial-python.js"></script>
 <script src="/js/regex-tutorial-advanced.js"></script>

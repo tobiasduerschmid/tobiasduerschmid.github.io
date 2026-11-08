@@ -99,9 +99,11 @@ section checks, and the `mount` lifecycle shared by both adapters. The roadmap m
 move keyboard focus to the matching control in the destination scene.
 Shared styles apply to the `narrated-lesson` class, and the
 reader layout serves both lesson types.
-`js/narrated-pattern-document.js` handles the shared language preference and the
-theme carried in view links; it is safe to load once per lesson on combined
-course pages.
+`js/narrated-pattern-document.js` and `css/narrated-pattern-document.css` are
+the reader shell of every narration kind: they handle the shared language
+preference and the theme carried in view links, and the explainer reader
+(`_layouts/narrated-reader.html`) uses the same `np-*` hooks. The script is
+safe to load once per lesson on combined course pages.
 
 `js/narrated-explainer.js` stops for each section's check 0.3 s before the
 section boundary, inside the silence after its last cue, because the next
@@ -109,9 +111,13 @@ section's speech begins exactly at the boundary. Every section must therefore
 end with at least 2.5 s of silence, giving learners time to inspect the
 completed picture before the check (ordinary cues default to 0.55 s).
 
-The shared transport also adds the full-screen button to every narration
-(Node.js, React, and the pattern lessons). The whole `.nja-player` fills the
-screen, so captions, settings, and knowledge checks stay available. It uses
+Every narration (Node.js, React, the pattern lessons, video narrations, and
+case studies) shares one thin control bar, its settings panel, its keyboard
+shortcuts, and its full screen (see the shared core in
+`docs/narration-format.md`). A pattern lesson passes its knowledge-check
+button and code-language select into the bar's settings. Full screen fills
+the screen with the player's video: the scene or knowledge check scrolls
+inside it, and the captions and the bar overlay its lower edge. It uses
 the standard or Safari's prefixed API; where neither exists (Safari on
 iPhone) or the browser refuses, the player fills the viewport itself and makes
 the page behind it inert until the button or Escape returns it. Style full

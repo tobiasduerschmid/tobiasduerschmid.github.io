@@ -127,6 +127,20 @@ test('each teammate is a woman with a random face of her own, kept from her solo
   expect(await page.evaluate((key) => localStorage.getItem(key), STORAGE_KEY), 'the song never changes the Gym hero').toBe(saved);
 });
 
+test('a saved Prof hero sings the closing line with the teammates: the mouth opens on its words', async ({ page }) => {
+  await page.addInitScript(({ key, value }) => localStorage.setItem(key, value), { key: STORAGE_KEY, value: JSON.stringify({ ...savedHuman, kind: 'tobias' }) });
+  await page.reload();
+  await expect(page.getByTestId('song-picture')).toBeVisible();
+  // "Step away from the keyboard": the ensemble's "away", sung by the hero too.
+  // The worn head arrives after the first frame, so draw the moment again.
+  const away = mark('outro-3', 'away') + 0.1;
+  await seek(page, away);
+  const hero = page.getByTestId('oc-hero').getByTestId('song-hero-head');
+  await expect(hero).toHaveAttribute('data-hero-kind', 'tobias');
+  await seek(page, away);
+  await expect(hero.locator('.song-hero-singing-mouth'), 'the Prof\'s mouth is open').toBeVisible();
+});
+
 test('without a saved hero, the teammates still wear random women\'s faces, and nothing is saved', async ({ page }) => {
   await expectTeammatesWearHeads(page);
   for (const [role, section] of [TEAMMATES[0], TEAMMATES.at(-1)]) {

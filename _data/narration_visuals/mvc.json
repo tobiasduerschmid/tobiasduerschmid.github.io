@@ -67,7 +67,7 @@
         "label": "Sequence of one edit in the table",
         "description": "The table's controller, handling an edit event, calls setMinutes on the dataset. The dataset calls notify on itself, then update on the table view, which calls rows on the dataset, and update on the bar chart view, which also calls rows on the dataset.",
         "caption": "Lifelines are named like the variables in the main program. The edit enters through the table's controller; every view hears about it from the model. Messages appear as the narration reaches them.",
-        "source": "@startuml\nparticipant controller\nparticipant dataset\nparticipant table\nparticipant bars\n",
+        "source": "@startuml\nparticipant controller: TableController\nparticipant dataset: Dataset\nparticipant table: TableView\nparticipant bars: BarChartView\n",
         "steps": [
           "activate controller\ncontroller -> dataset: setMinutes(\"Study\", 90)\nactivate dataset\n",
           "dataset -> dataset: notify()\ndataset -> table: update()\nactivate table\ntable -> dataset: rows()\ndeactivate table\n",
@@ -79,11 +79,11 @@
         "label": "Sequence of setting up one view",
         "description": "The main program creates the dataset. It then creates the bar chart view with the dataset and calls initialize on it. The view calls attach on the dataset, calls makeController on itself, creates its controller, and calls rows on the dataset to draw itself.",
         "caption": "Lifelines are named like the variables in the main program; the controller is a ChartController. The model is created first, then each view, which joins the model's list and creates its own controller.",
-        "source": "@startuml\nparticipant main\nparticipant dataset\nparticipant bars\nparticipant controller\n",
+        "source": "@startuml\nparticipant main as : Main\n",
         "steps": [
-          "main -> dataset: \u00abcreate\u00bb\n",
-          "main -> bars: \u00abcreate\u00bb(dataset)\nmain -> bars: initialize()\nactivate bars\nbars -> dataset: attach(bars)\n",
-          "bars -> bars: makeController()\nbars -> controller: \u00abcreate\u00bb(bars)\nbars -> dataset: rows()\ndeactivate bars\n"
+          "participant dataset: Dataset\ncreate dataset\nmain --> dataset: \u00abcreate\u00bb\n",
+          "participant bars: BarChartView\ncreate bars\nmain --> bars: \u00abcreate\u00bb(dataset)\nmain -> bars: initialize()\nactivate bars\nbars -> dataset: attach(bars)\n",
+          "bars -> bars: makeController()\nparticipant controller: ChartController\ncreate controller\nbars --> controller: \u00abcreate\u00bb(bars)\nbars -> dataset: rows()\ndeactivate bars\n"
         ]
       }
     }

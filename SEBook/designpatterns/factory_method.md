@@ -110,7 +110,7 @@ activate store
 store -> store: createPizza("cheese")
 activate store
 create pizza
-store -> pizza: <<create>>
+store --> pizza: <<create>>
 deactivate store
 store -> pizza: prepare()
 activate pizza

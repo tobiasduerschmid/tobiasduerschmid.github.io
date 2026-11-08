@@ -385,12 +385,22 @@
   }
 
   /**
+   * A copy's brows or mouth: a customizable hero's chosen option in its
+   * slot, or the feature the Prof's fixed portrait tags with data-hero-tobias.
+   */
+  function faceFeature(svg, slot, tobias) {
+    return svg.getAttribute('data-hero-kind') === 'tobias'
+      ? svg.querySelector(`[data-hero-tobias="${tobias}"]`)
+      : svg.querySelector(`[data-hero-slot="${slot}"]:not([display="none"])`);
+  }
+
+  /**
    * Splits a copy's brows into a group per side of the face's centre line,
    * so each can move on its own: every brow part starts on its own side.
    * Returns [left, right] in the picture, or null without brows.
    */
   function browSides(svg) {
-    const slot = svg.querySelector('[data-hero-slot="eyebrow"]:not([display="none"])');
+    const slot = faceFeature(svg, 'eyebrow', 'brows');
     if (!slot) return null;
     const sides = [0, 1].map(() => document.createElementNS(SVG_NS, 'g'));
     for (const part of Array.from(slot.children)) {
@@ -404,10 +414,10 @@
   /**
    * A copy's mouth in a wrapper that can draw it in to a small pucker about
    * its own centre (measured once it is on screen). Returns pucker(amount),
-   * 0 (as drawn) to 1, or null without a mouth slot (the Prof's portrait).
+   * 0 (as drawn) to 1, or null without a mouth.
    */
   function mouthPucker(svg) {
-    const mouth = svg.querySelector('[data-hero-slot="mouth-style"]:not([display="none"])');
+    const mouth = faceFeature(svg, 'mouth-style', 'mouth');
     if (!mouth) return null;
     const wrapper = document.createElementNS(SVG_NS, 'g');
     mouth.before(wrapper);
@@ -430,25 +440,39 @@
    * hero's own, as wide as it and centred on it (measured once it is on
    * screen), with a dark inside, the upper teeth, and the tongue, its lips
    * in the hero's lip colour. Returns sing(amount), 0 (the hero's own mouth)
-   * to 1 (wide open), or null without a mouth slot (the Prof's portrait).
+   * to 1 (wide open), or null without a mouth.
    */
+  let singingMouths = 0;
+
   function singingMouth(svg) {
-    const mouth = svg.querySelector('[data-hero-slot="mouth-style"]:not([display="none"])');
+    const mouth = faceFeature(svg, 'mouth-style', 'mouth');
     if (!mouth) return null;
     const open = document.createElementNS(SVG_NS, 'g');
     open.setAttribute('class', 'song-hero-singing-mouth');
     mouth.after(open);
-    const part = (fill) => {
+    const part = (fill, parent = open) => {
       const node = document.createElementNS(SVG_NS, 'path');
       node.setAttribute('fill', fill);
-      open.appendChild(node);
+      parent.appendChild(node);
       return node;
     };
     const lips = part('var(--hero-lip-fill, #b65c4e)');
     const inside = part('#3a1014');
-    const teeth = part('#fbf6ee');
-    const tongue = part('#cc5a64');
-    let box = null;
+    // The teeth and tongue stay inside the open mouth, never on the lips.
+    const clip = document.createElementNS(SVG_NS, 'clipPath');
+    clip.id = `song-singing-mouth-${++singingMouths}`;
+    const opening = part('#000', clip);
+    open.appendChild(clip);
+    const within = document.createElementNS(SVG_NS, 'g');
+    within.setAttribute('clip-path', `url(#${clip.id})`);
+    open.appendChild(within);
+    const teeth = part('#fbf6ee', within);
+    const tongue = part('#cc5a64', within);
+    // A mouth may declare where it opens and how wide ("x y halfWidth"):
+    // the Prof's portrait does, since its broad smile is wider than a
+    // singing mouth. Otherwise the open mouth is measured from the drawn one.
+    const declared = mouth.getAttribute('data-hero-singing-mouth')?.split(/\s+/).map(Number);
+    let box = declared?.length === 3 && declared.every(Number.isFinite) ? { x: declared[0], y: declared[1], w: declared[2] } : null;
     return (amount) => {
       if (!box) {
         if (!amount) return;
@@ -467,8 +491,9 @@
       const lens = (inset, top, bottom) => `M${f(x - hw + inset)} ${f(y)} C${f(x - hw * 0.5)} ${f(y - top)} ${f(x + hw * 0.5)} ${f(y - top)} ${f(x + hw - inset)} ${f(y)} C${f(x + hw * 0.62)} ${f(y + bottom)} ${f(x - hw * 0.62)} ${f(y + bottom)} ${f(x - hw + inset)} ${f(y)} Z`;
       lips.setAttribute('d', lens(-1.4, depth * 0.24 + 3, depth + 3.4));
       inside.setAttribute('d', lens(0.6, depth * 0.18, depth));
+      opening.setAttribute('d', inside.getAttribute('d'));
       teeth.setAttribute('d', `M${f(x - hw * 0.66)} ${f(y - depth * 0.08)} C${f(x - hw * 0.3)} ${f(y - depth * 0.2)} ${f(x + hw * 0.3)} ${f(y - depth * 0.2)} ${f(x + hw * 0.66)} ${f(y - depth * 0.08)} L${f(x + hw * 0.6)} ${f(y + Math.min(4.6, depth * 0.3))} L${f(x - hw * 0.6)} ${f(y + Math.min(4.6, depth * 0.3))} Z`);
-      tongue.setAttribute('d', `M${f(x - hw * 0.5)} ${f(y + depth * 0.95)} C${f(x - hw * 0.4)} ${f(y + depth * 0.55)} ${f(x + hw * 0.4)} ${f(y + depth * 0.55)} ${f(x + hw * 0.5)} ${f(y + depth * 0.95)} Z`);
+      tongue.setAttribute('d', `M${f(x - hw * 0.56)} ${f(y + depth * 0.8)} C${f(x - hw * 0.4)} ${f(y + depth * 0.42)} ${f(x + hw * 0.4)} ${f(y + depth * 0.42)} ${f(x + hw * 0.56)} ${f(y + depth * 0.8)} Z`);
     };
   }
 
@@ -627,8 +652,11 @@
       const darkInk = '#1b1640';
       const lightInk = '#ffffff';
       const ink = avatar.contrastRatio(skin, darkInk) >= avatar.contrastRatio(skin, lightInk) ? darkInk : lightInk;
+      const suit = hero.outfit?.suit;
       return {
         kind: hero.kind, skin, ink, glint: ink === darkInk ? lightInk : darkInk,
+        // The outfit's main colour, for a character dressed as the hero.
+        suit: /^#[0-9a-f]{6}$/i.test(suit || '') ? suit : null,
         skinShadow: tones.skinShadow, skinHighlight: tones.skinHighlightSoft,
         skinIsDark: avatar.contrastRatio(skin, lightInk) >= 4.5,
         hair, hairIsDark: avatar.contrastRatio(hair, lightInk) >= 3,

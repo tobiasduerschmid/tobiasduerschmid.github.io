@@ -70,7 +70,8 @@ function validateScript(source) {
   validateText(source.title, `${source.id}.title`);
   assert(Object.hasOwn(PRESENTATIONS, source.kind), source.id, `unknown kind ${source.kind}`);
   validateSpeech(source.speech, `${source.id}.speech`);
-  validateMedia(source.media);
+  // A text-only case study omits media until its speech is rendered; other kinds need their audio clock.
+  if (source.media !== undefined || source.kind !== 'case-study') validateMedia(source.media);
   validateObject(source.lesson, `${source.id}.lesson`);
   validateText(source.lesson.name, 'lesson.name');
 }
@@ -120,6 +121,20 @@ function validateReferences(story, lesson, kind) {
       }
     }
   }
+}
+
+/** Report whether generated speech matches a compiled story; throw when it must be rendered again.
+ * A text-only story (no media) must not keep a timing file from an earlier rendering.
+ */
+function checkSpeech(id, story, timing) {
+  const render = `render audio, captions, and timing with scripts/render-explainer-narration.py --topic ${id}`;
+  if (!story.audio) {
+    assert(!timing, id, 'generated timing exists without a media block; restore the media paths or delete the stale timing');
+    return `${id}: valid script and visual references; text only, speech not yet rendered`;
+  }
+  assert(timing, id, `no generated timing; ${render}`);
+  assert(timing.speech_sha256 === story.speech_sha256, id, `speech changed; ${render}`);
+  return `${id}: valid script, visual references, and current speech`;
 }
 
 // Only speech inputs and ordering invalidate audio. Object key order, descriptions,
@@ -172,4 +187,4 @@ function validateMatchingKeys(value, expected, at) {
   for (const key of expected) assert(Object.hasOwn(value, key), at, `missing visual for ${key}`);
 }
 
-module.exports = { compileLesson };
+module.exports = { compileLesson, checkSpeech };

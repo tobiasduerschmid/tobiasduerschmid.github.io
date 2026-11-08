@@ -83,6 +83,11 @@
   description: The practice of merging every developer's work into a shared mainline frequently — usually several times a day — and running automated tests on each merge to catch integration problems early.
   related: [CD, TDD]
 
+- term: CIA
+  definition: Confidentiality, Integrity, Availability
+  description: The three core security attributes. Confidentiality means only authorized parties can read sensitive data; integrity means only authorized parties can change data and systems; availability means legitimate users get service when they need it.
+  related: [XSS, CSRF, TLS]
+
 - term: CLI
   definition: Command-Line Interface
   description: A text-based interface where users type commands instead of clicking graphical controls. Shells, Git, package managers, and many developer tools expose CLIs.
@@ -91,6 +96,11 @@
 - term: CLT
   definition: Cognitive Load Theory
   description: A theory of learning and instruction based on limited working memory and knowledge stored in long-term memory. Intrinsic load depends on how ideas interact and what the learner already knows; extraneous load comes from avoidable demands of the presentation or activity. Guidance should reduce unnecessary effort and adapt as knowledge grows.
+
+- term: CNBC
+  definition: Consumer News and Business Channel
+  description: A U.S. business-news television network and website, now known only by its initials. The Security chapter links to its reporting on the 2026 Hugging Face incident.
+  related: []
 
 - term: CPU
   definition: Central Processing Unit
@@ -228,6 +238,11 @@
   description: A framework for model-based development of critical embedded systems, including generation of infrastructure and application skeletons from supported architecture models.
   related: [AADL]
 
+- term: HDF5
+  definition: Hierarchical Data Format version 5
+  description: A file format for large scientific and numeric datasets. An HDF5 file can store its data in other files, so software that opens untrusted HDF5 files must restrict which files those references may reach.
+  related: [CSV, JSON]
+
 - term: HTML
   definition: HyperText Markup Language
   description: The markup language used to structure web pages. HTML elements describe meaning (heading, paragraph, list, link); CSS describes presentation; JavaScript describes behaviour.
@@ -343,6 +358,11 @@
   description: A logic for expressing properties along an infinite sequence of states, using operators such as always, eventually, next, and until. A model satisfies an LTL property when every behavior allowed by the model satisfies it.
   related: [TLA+, TLC]
 
+- term: METR
+  definition: Model Evaluation and Threat Research
+  description: An independent research organization that evaluates the capabilities and risks of frontier AI systems. METR investigated the agents' behavior in the 2026 Hugging Face incident.
+  related: [AI, LLM]
+
 - term: MRO
   definition: Method Resolution Order
   description: The order in which Python searches classes for inherited attributes and methods. Cooperative super calls continue along the receiving class's order, which can include another branch of multiple inheritance.
@@ -387,10 +407,6 @@
   definition: Object Management Group
   description: The standards consortium that publishes the UML specification. A citation such as "OMG, UML 2.5.1, §14.2.3.4" points to a section of that specification.
   related: [UML]
-
-- term: OpenCL
-  definition: Open Computing Language
-  description: An open standard for parallel computation across devices from different vendors. Programs can launch work-items that run a kernel on different portions of the data.
 
 - term: ONNX
   definition: Open Neural Network Exchange
@@ -575,6 +591,11 @@
   definition: Server-Side Rendering
   description: A web rendering approach where the server sends already-rendered HTML for a page, improving initial load and search indexing for many content-heavy sites.
   related: [HTML, SPA]
+
+- term: SSRF
+  definition: Server-Side Request Forgery
+  description: A web security vulnerability in which an attacker makes a server send requests to addresses the attacker chooses. The forged requests carry the server's network position and trust, so they can reach systems the attacker cannot reach directly.
+  related: [CSRF, HTTP]
 
 - term: SUT
   definition: System Under Test

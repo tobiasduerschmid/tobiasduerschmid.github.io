@@ -47,7 +47,7 @@
         "label": "Sequence of the traced inputs",
         "description": "The game calls throwBall() on dog, and dog forwards it to the shared Following object, which calls setState(fetching) on dog. The game calls throwBall() again, and dog forwards it to the Fetching object, which changes nothing. The game calls tick(), and dog forwards it to the Fetching object, which calls setState(following) on dog.",
         "caption": "Each input goes to whichever state object is current. The messages appear as the narration reaches them; the panel below shows each reaction.",
-        "source": "@startuml\nparticipant game\nparticipant dog: Dog\nparticipant following as : Following\nparticipant fetching as : Fetching\n",
+        "source": "@startuml\nparticipant game: Main\nparticipant dog: Dog\nparticipant following as : Following\nparticipant fetching as : Fetching\n",
         "steps": [
           "game -> dog: throwBall()\nactivate dog\ndog -> following: throwBall(dog)\nactivate following\nfollowing -> dog: setState(fetching)\nactivate dog\ndeactivate dog\ndeactivate following\ndeactivate dog\n",
           "game -> dog: throwBall()\nactivate dog\ndog -> fetching: throwBall(dog)\nactivate fetching\ndeactivate fetching\ndeactivate dog\n",

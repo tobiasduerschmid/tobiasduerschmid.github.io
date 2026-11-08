@@ -1,5 +1,5 @@
 title: "RegEx Quiz" 
-description: "Test your understanding of regular expressions beyond basic syntax, focusing on underlying mechanics, performance, and theory." 
+description: "Test your understanding of Python's regular expressions beyond basic syntax, focusing on underlying mechanics, performance, and theory."
 active: true
 questions: 
   - id: 1
@@ -25,7 +25,7 @@ questions:
   
   - id: 2 
     difficulty: advanced
-    question: "Using a backtracking regex engine, a developer writes a regex to parse a log file: `^.*error.*$`. They notice that while it works, it runs much slower than expected on very long log lines. What underlying behavior of the `.*` token is causing this inefficiency?"
+    question: "Using Python's `re` module, a developer writes a regex to parse a log file: `^.*error.*$`. They notice that while it works, it runs much slower than expected on very long log lines. What underlying behavior of the `.*` token is causing this inefficiency?"
     options: 
       - "The engine evaluates the string character-by-character from the end of the line backwards."
       - "`.*` is greedy: it swallows the whole line, then backtracks character by character to find 'error'."
@@ -88,11 +88,11 @@ questions:
 
   - id: 5
     difficulty: intermediate
-    question: "In JavaScript, when writing a complex regex to extract phone numbers, you use parentheses `(...)` to group the area code so you can apply a `?` quantifier. However, you also want to extract the area code by name for later use in your code. What is the best approach?"
+    question: "In Python, when writing a complex regex to extract phone numbers, you use parentheses `(...)` to group the area code so you can apply a `?` quantifier. However, you also want to extract the area code by name for later use in your code. What is the best approach?"
     options:
       - "Use a lookahead instead of parentheses."
       - "Remove the parentheses and apply the `?` to the whole pattern."
-      - "Use a named group `(?<areaCode>...)` to access it via `match.groups.areaCode`."
+      - "Use `(?P<area_code>...)` and `match.group('area_code')`."
       - "Escape the parentheses `\\( \\)` to tell the engine to ignore them."
     correct_index: 2
     option_feedback:
@@ -105,28 +105,28 @@ questions:
       3: |
         Escaped parentheses match literal `(` and `)` characters. They no longer group or capture
         pattern text.
-    explanation: "**A named group `(?<areaCode>...)` is best because it both enables the quantifier and provides a readable name for accessing the captured value.** Standard parentheses `(...)` create groups that can be accessed by index (e.g., `match[1]`). Named groups `(?<name>...)` let you assign a meaningful label, so you can access the matched value by name (e.g., `match.groups.areaCode`) — making your code self-documenting and easier to maintain."
+    explanation: "**A named group `(?P<area_code>...)` both groups the area-code pattern and names its captured value.** Apply `?` to the whole group to make it optional. After a successful match, read it with `match.group('area_code')`; numbered access such as `match.group(1)` also remains available."
 
   - id: 6 
     difficulty: intermediate
-    question: "You write a regex to ensure a username is strictly alphanumeric: `[a-zA-Z0-9]+`. However, a user successfully submits the username `admin!@#`. Why did this happen?" 
+    question: "In Python, you accept a username when `re.search(r'[a-zA-Z0-9]+', username)` returns a match. A user successfully submits `admin!@#`. Why did this happen?"
     options: 
       - "You used a character class `[]` instead of a group `()`."
       - "The `+` quantifier allows special characters if they follow valid characters."
-      - "No `^` and `$` anchors — the regex matches the `admin` portion and ignores the rest."
+      - "`re.search()` matches the `admin` substring without requiring the whole input to match."
       - "The RegEx engine defaults to a case-insensitive match, which alters how symbols are processed."
     correct_index: 2 
     option_feedback:
       0: |
         A character class is exactly the right syntax for "one alphanumeric character." The bug is that
-        the whole input was not anchored.
+        the operation did not require the whole input to match.
       1: |
         `+` repeats only alphanumeric characters from the class. The punctuation is accepted because the
         unanchored regex can stop after matching `admin`.
       3: |
         Case-insensitive matching affects letter case, not punctuation. Symbols are ignored here because
         they sit outside the unanchored substring match.
-    explanation: "**Without `^` and `$` anchors, the regex matches any valid substring and ignores the rest of the input.** The pattern found `admin`, counted that as a match, and never looked at the trailing `!@#`. Anchoring both ends forces the pattern to account for the entire string — mandatory for strict validation."
+    explanation: "**`re.search()` accepts a matching substring.** It found `admin` and left `!@#` outside the match. Use `re.fullmatch(r'[a-zA-Z0-9]+', username)` for strict validation; this also rejects a trailing newline, which Python's `$` anchor alone would allow."
 
   - id: 7 
     difficulty: advanced
@@ -183,12 +183,12 @@ questions:
 
   - id: 9
     difficulty: advanced
-    question: "You use the regex `<.*>` to extract a single HTML tag from `<b>bold</b> text`, but it matches the entire string `<b>bold</b>` instead of just `<b>`. What is the simplest fix?"
+    question: "In Python, you use `re.search()` with `<.*>` to extract a single HTML tag from `<b>bold</b> text`, but it matches the entire string `<b>bold</b>` instead of just `<b>`. What is the simplest fix?"
     options:
       - "Change `.*` to `.+` to require at least one character inside the tag."
       - "Add a `?` after `*` to make the quantifier lazy: `<.*?>`."
       - "Wrap the dot in a group: `<(.)*>`."
-      - "Add the `g` flag to enable global matching."
+      - "Use `re.findall()` to request all matches."
     correct_index: 1
     option_feedback:
       0: |
@@ -198,18 +198,18 @@ questions:
         Parentheses group or capture; they do not change greediness. The `*` would still try to consume
         as much as possible.
       3: |
-        The global flag finds multiple matches, but each individual match can still be too large. The
+        `re.findall()` finds multiple matches, but each individual match can still be too large. The
         quantifier needs to be lazy or more specific.
     explanation: "**Adding `?` makes the quantifier lazy (`*?`) so it stops at the first `>` rather than greedily consuming everything.** A greedy `*` runs from the first `<` to the *last* `>`; the lazy form matches as few characters as possible, ending the match at the first `>` it reaches."
 
   - id: 10 
     difficulty: advanced
     type: multiple 
-    question: "Which of the following statements about regex lookaheads `(?=...)` are true? (Select all that apply)" 
+    question: "Which of the following statements about Python regex lookaheads `(?=...)` are true? (Select all that apply)"
     options: 
       - "They assert that a specific pattern must follow, but they do not add those characters to the final match." 
       - "They can be chained together at the same position in the string to test multiple independent conditions." 
-      - "They are natively supported by basic POSIX standard utilities like standard `grep` or `sed`." 
+      - "They advance the main match position past the text they inspect."
       - "They allow you to validate logical 'AND' requirements (e.g., must have a letter AND a number)." 
     correct_indices: [0, 1, 3]
     option_feedback:
@@ -220,51 +220,51 @@ questions:
         Multiple lookaheads can be placed at the same position to test independent requirements over the
         same input.
       2: |
-        Lookaheads are not part of basic POSIX regular expressions. Support depends on the regex engine,
-        so standard `grep` and `sed` cannot be assumed to handle them.
+        Lookaheads leave the main match position unchanged. The next token starts from the same position,
+        even if the lookahead inspected several characters.
       3: |
         Chained lookaheads are a common way to express "must contain A and B" when the order is not
         fixed.
-    explanation: "**Lookaheads are zero-width, chainable, and enable logical AND — but they require a PCRE-style engine and are not in basic POSIX tools.** Because they add nothing to the match, several can stack at one position to enforce independent 'must contain' requirements. Standard `grep`/`sed` (without `-P`) cannot be assumed to support them."
+    explanation: "**Python's `re` module supports zero-width, chainable lookaheads.** Because they leave the main match position unchanged, several can check independent 'must contain' requirements at the same position."
 
   - id: 11
     difficulty: intermediate
-    question: "**Arrange** the regex fragments to build a pattern that validates a simple email address like `user@example.com`. The pattern should be anchored to match the entire string."
+    question: "**Arrange** the Python regex fragments to check a simplified email shape like `user@example.com`. Anchor the pattern to reject extra characters, including a trailing newline."
     type: parsons
     display: inline
     lines:
-      - "^"
+      - "\\A"
       - "[a-zA-Z0-9._%+-]+"
       - "@"
       - "[a-zA-Z0-9.-]+"
       - "\\.[a-zA-Z]{2,}"
-      - "$"
+      - "\\Z"
     distractors:
       - "\\d{3}"
       - "\\s+"
-    explanation: "**The email pattern requires anchors, a local-part character class, a literal `@`, a domain character class, and a TLD pattern — digits and whitespace are distractors.** The pattern anchors with `^` and `$` to match the full string. `[a-zA-Z0-9._%+-]+` matches the local part (username), `@` is the literal at-sign, `[a-zA-Z0-9.-]+` matches the domain name, and `\\.[a-zA-Z]{2,}` matches the dot followed by a TLD of at least 2 letters. The distractors `\\d{3}` (three digits) and `\\s+` (whitespace) have no place in an email pattern."
+    explanation: "**The email pattern uses anchors, a local-part character class, a literal `@`, a domain character class, and a TLD pattern.** Python anchors `\\A` and `\\Z` require the full string, including any final newline, to match. `[a-zA-Z0-9._%+-]+` matches the local part (username), `@` is the literal at-sign, `[a-zA-Z0-9.-]+` matches the domain name, and `\\.[a-zA-Z]{2,}` matches the dot followed by a TLD of at least 2 letters. The distractors `\\d{3}` (three digits) and `\\s+` (whitespace) have no place in an email pattern."
 
   - id: 12
     difficulty: intermediate
-    question: "**Arrange** the regex fragments to build a pattern that matches a date in `YYYY-MM-DD` format (e.g., `2024-01-15`). Anchor the pattern."
+    question: "**Arrange** the Python regex fragments to match a date shape in `YYYY-MM-DD` format using ASCII digits (e.g., `2024-01-15`). Anchor the pattern to reject extra characters, including a trailing newline."
     type: parsons
     display: inline
     lines:
-      - "^"
-      - "\\d{4}"
+      - "\\A"
+      - "[0-9]{4}"
       - "-"
-      - "\\d{2}"
+      - "[0-9]{2}"
       - "-"
-      - "\\d{2}"
-      - "$"
+      - "[0-9]{2}"
+      - "\\Z"
     distractors:
       - "/"
       - "\\w+"
-    explanation: "**The YYYY-MM-DD pattern uses `\\d{4}`, `-`, `\\d{2}`, `-`, `\\d{2}` with anchors; `/` belongs to a different format and `\\w+` is too broad.** The date pattern uses `\\d{4}` for the 4-digit year, literal `-` as separators, and `\\d{2}` for 2-digit month and day. Anchors `^` and `$` ensure the entire string is a date. The `/` distractor would be for a different date format (MM/DD/YYYY), and `\\w+` is too broad (matches letters, digits, and underscores)."
+    explanation: "**The YYYY-MM-DD shape uses `[0-9]{4}`, `-`, `[0-9]{2}`, `-`, `[0-9]{2}` with anchors.** `[0-9]` requires ASCII digits; Python anchors `\\A` and `\\Z` require the entire input to match. This checks only the shape, not calendar validity. The `/` distractor would be for a different date format (MM/DD/YYYY), and `\\w+` is too broad (matches letters, digits, and underscores)."
 
   - id: 13
     difficulty: advanced
-    question: "**Arrange** the regex fragments to extract the protocol (matching only `http` or `https`) and hostname from a simple URL with no credentials, port, query, or fragment from a URL like `https://www.example.com/path`. Use a capturing group for the domain."
+    question: "**Arrange** the Python regex fragments to match the protocol (matching only `http` or `https`) and hostname from a simple URL with no credentials, port, query, or fragment from a URL like `https://www.example.com/path`. Use a capturing group for the domain."
     type: parsons
     display: inline
     lines:

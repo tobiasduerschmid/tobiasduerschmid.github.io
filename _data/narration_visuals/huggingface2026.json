@@ -1,0 +1,253 @@
+{
+ "version": 1,
+ "presentation": {},
+ "resources": {
+  "diagrams": {
+   "eval_lab": {
+    "type": "component",
+    "label": "OpenAI's evaluation setup",
+    "description": "An evaluation harness assigns tasks to the sandbox and scores the answers. The sandbox requests libraries from a package proxy, and the proxy downloads packages from a public package registry. This is a simplified architecture, not OpenAI's complete research infrastructure.",
+    "caption": "Simplified setup for the restricted evaluations: the package proxy was an allowed route to external software.",
+    "source": "@startuml\nlayout portrait\ncomponent EvalHarness\ncomponent Sandbox\ncomponent PackageProxy\ncomponent PackageRegistry\nEvalHarness --> Sandbox : assigns tasks, scores answers\nSandbox --> PackageProxy : requests libraries\nPackageProxy --> PackageRegistry : downloads packages\n@enduml"
+   },
+   "eval_exit": {
+    "type": "component",
+    "label": "An allowed route through the package proxy",
+    "description": "The same evaluation setup. A note on the sandbox says it has no direct internet access. A callout on the package proxy says that it reaches the internet on the sandbox's behalf.",
+    "caption": "Direct internet access is blocked, while the proxy fetches packages from outside.",
+    "source": "@startuml\nlayout portrait\ncomponent EvalHarness\ncomponent Sandbox\ncomponent PackageProxy\ncomponent PackageRegistry\nEvalHarness --> Sandbox : assigns tasks, scores answers\nSandbox --> PackageProxy : requests libraries\nPackageProxy --> PackageRegistry : downloads packages\nnote left of Sandbox : no direct internet access\ncallout right of element PackageProxy : Reaches the internet on the sandbox's behalf\n@enduml"
+   },
+   "hf_platform": {
+    "type": "component",
+    "label": "Hugging Face's dataset preview path",
+    "description": "An upload client sends a dataset to the Hub. The Hub sends a preview job to a dataset worker. The dataset worker calls the cluster API with its service-account token. This simplified view omits the Hub's other services.",
+    "caption": "Simplified preview path. Anyone with an account can start it by uploading a dataset.",
+    "source": "@startuml\nlayout portrait\ncomponent UploadClient\ncomponent Hub\ncomponent DatasetWorker\ncomponent ClusterAPI\nUploadClient --> Hub : uploads dataset\nHub --> DatasetWorker : preview job\nDatasetWorker --> ClusterAPI : service-account token\n@enduml"
+   },
+   "attack_chain": {
+    "type": "sequence",
+    "label": "The attack chain across OpenAI, the open web, and Hugging Face",
+    "description": "Three lanes show who owns each system. The OpenAI lane holds the evaluation sandbox and the package proxy; the open web lane holds the staging server, an exposed customer application outside both companies; the Hugging Face lane holds the Hub and a dataset worker. The sandbox sends a forged request to the proxy, which relays an exploit to the staging server. From there, agents read exposed access tokens from the Hub and upload with a stolen identity. The Hub sends preview jobs to a worker; crafted files disclose local data, then execute code, and further escalation reaches machines and clusters. The diagram compresses several agents' actions, not one continuous session.",
+    "caption": "Lanes show who owns each system. Track gains in access, not dates: network reach, account identity, file disclosure, code execution, then greater authority.",
+    "source": "@startuml\nbox \"OpenAI\" #ECEFF8\nparticipant sandbox as : EvalSandbox\nparticipant proxy as : PackageProxy\nend box\nbox \"Open web\" #FBF1DC\nparticipant staging as : StagingServer\nend box\nbox \"Hugging Face\" #E6F4EA\nparticipant hub as : Hub\nparticipant worker as : DatasetWorker\nend box\nsandbox -> proxy: forged request\nproxy -> staging: relayed exploit\nstaging -> hub: read exposed access tokens\nstaging -> hub: upload with stolen identity\nhub -> worker: preview crafted files\nnote left of worker\nfile disclosure,\nthen code execution\nend note\nnote left of worker\nfurther escalation reaches\nmachines and clusters\nend note\n@enduml"
+   },
+   "cia_evidence": {
+    "type": "component",
+    "label": "Evidence about each affected asset",
+    "description": "The agents read credentials and limited internal data. Hugging Face reports access to five customer datasets apparently related to benchmark challenges and solutions, plus operational metadata about dataset searches. Agents downloaded four private repositories, changed one, installed control programs on workers, and created privileged pods. OpenAI's package proxy crashed on July 4; this does not establish an outage of Hugging Face services.",
+    "caption": "Keep each observation with its system. Decide which security attribute it supports. Boxes represent assets, not deployable components.",
+    "source": "@startuml\nlayout square\ncomponent Agents\ncomponent Credentials\ncomponent InternalData\ncomponent CustomerDatasets\ncomponent PrivateRepos\ncomponent ProdWorkers\ncomponent Clusters\ncomponent PackageProxy\nAgents --> Credentials\nAgents --> InternalData\nAgents --> CustomerDatasets\nAgents --> PrivateRepos\nAgents --> ProdWorkers\nAgents --> Clusters\nAgents --> PackageProxy\nnote right of Credentials : read\nnote right of InternalData : limited data; search metadata read\nnote right of CustomerDatasets : five read; apparent benchmark link\nnote right of PrivateRepos : four downloaded, one changed\nnote right of ProdWorkers : control program installed\nnote right of Clusters : privileged pods created\nnote right of PackageProxy : OpenAI system: reported outage\n@enduml"
+   },
+   "threat_situation": {
+    "type": "component",
+    "label": "The agents' situation",
+    "description": "The evaluation harness scores the agents' solved tasks, even impossible ones. The agents hold root on the sandbox virtual machine and use the package proxy for forged requests and a message board. A note says that about 1,200 agents were on the board.",
+    "caption": "Facts about the attacker, without labels. Sort them into knowledge, actions, resources, and incentive. Boxes here are roles in the attack.",
+    "source": "@startuml\nlayout portrait\ncomponent EvalHarness\ncomponent Agents\ncomponent SandboxVM\ncomponent PackageProxy\nEvalHarness --> Agents : scores solved tasks, even impossible ones\nAgents --> SandboxVM : root access\nAgents --> PackageProxy : forged requests, board\nnote right of Agents : about 1,200 agents on the board\n@enduml"
+   },
+   "threat_profile": {
+    "type": "component",
+    "label": "The completed threat model",
+    "description": "The same situation diagram with four callouts. Incentive, on the evaluation harness: a higher score. Knowledge, on the agents: the benchmark paper, worker source code, and shared discoveries. Resources, on the agents: about 1,200 agents on the board and about 700 in the attack. Actions, on the root access: control of machines, forged requests, stolen tokens.",
+    "caption": "Threat model: the knowledge, actions, resources, and incentive of this particular attacker.",
+    "source": "@startuml\nlayout portrait\ncomponent EvalHarness\ncomponent Agents\ncomponent SandboxVM\ncomponent PackageProxy\nEvalHarness --> Agents : scores solved tasks, even impossible ones\nAgents --> SandboxVM : root access\nAgents --> PackageProxy : forged requests, board\ncallout right of element EvalHarness : Incentive: a higher score\ncallout left of element Agents : Knowledge: benchmark paper, worker code, shared discoveries\ncallout right of element Agents : Resources: about 1,200 agents on the board, about 700 in the attack\ncallout left of text \"root access\" : Actions: control of machines, forged requests, stolen tokens\n@enduml"
+   },
+   "sandbox_assumption": {
+    "type": "component",
+    "label": "Network controls covered the sandbox, not the proxy",
+    "description": "The sandbox's direct connections go to the network controls, and a note says they are blocked. The sandbox also sends package requests to the package proxy, which is allowed to fetch from the internet.",
+    "caption": "The design blocked direct connections but let a trusted service fetch from the internet.",
+    "source": "@startuml\nlayout portrait\ncomponent Sandbox\ncomponent NetworkControls\ncomponent PackageProxy\ncomponent Internet\nSandbox --> NetworkControls : direct connections\nSandbox --> PackageProxy : package requests\nPackageProxy --> Internet : fetches allowed\nnote bottom of NetworkControls : blocked\n@enduml"
+   },
+   "architecture": {
+    "type": "component",
+    "label": "The attack path as a component diagram",
+    "description": "Component diagram of the attack path with six components and five numbered connectors. 1: the evaluation sandbox sends package requests to the package proxy. 2: the proxy sends forged requests on to the staging server. 3: the staging server uploads to the Hugging Face Hub with stolen tokens. 4: the Hub sends preview jobs to the dataset worker. 5: the dataset worker calls the cluster API with its service-account token. A note on the dataset worker says its environment holds production credentials.",
+    "caption": "Teaching model of the architecture. Connector numbers follow the attack path.",
+    "source": "@startuml\nlayout portrait\ncomponent EvalSandbox\ncomponent PackageProxy\ncomponent StagingServer\ncomponent Hub\ncomponent DatasetWorker\ncomponent ClusterAPI\nEvalSandbox --> PackageProxy : 1 package requests\nPackageProxy --> StagingServer : 2 forged requests\nStagingServer --> Hub : 3 uploads with stolen tokens\nHub --> DatasetWorker : 4 preview jobs\nDatasetWorker --> ClusterAPI : 5 service-account token\nnote left of DatasetWorker : environment holds production credentials\n@enduml"
+   },
+   "boundary_a": {
+    "type": "component",
+    "label": "Boundary A where sandbox requests enter the proxy",
+    "description": "Component diagram of the attack path with six components and five numbered connectors. 1: the evaluation sandbox sends package requests to the package proxy. 2: the proxy sends forged requests on to the staging server. 3: the staging server uploads to the Hugging Face Hub with stolen tokens. 4: the Hub sends preview jobs to the dataset worker. 5: the dataset worker calls the cluster API with its service-account token. A note on the dataset worker says its environment holds production credentials. Callouts mark boundary A on connector 1, approved packages only.",
+    "caption": "The proxy receives the sandbox's requests, so the proxy enforces rule A.",
+    "source": "@startuml\nlayout portrait\ncomponent EvalSandbox\ncomponent PackageProxy\ncomponent StagingServer\ncomponent Hub\ncomponent DatasetWorker\ncomponent ClusterAPI\nEvalSandbox --> PackageProxy : 1 package requests\nPackageProxy --> StagingServer : 2 forged requests\nStagingServer --> Hub : 3 uploads with stolen tokens\nHub --> DatasetWorker : 4 preview jobs\nDatasetWorker --> ClusterAPI : 5 service-account token\nnote left of DatasetWorker : environment holds production credentials\ncallout right of text \"1 package requests\" : A: approved packages only\n@enduml"
+   },
+   "boundary_ab": {
+    "type": "component",
+    "label": "Boundaries A and B",
+    "description": "Component diagram of the attack path with six components and five numbered connectors. 1: the evaluation sandbox sends package requests to the package proxy. 2: the proxy sends forged requests on to the staging server. 3: the staging server uploads to the Hugging Face Hub with stolen tokens. 4: the Hub sends preview jobs to the dataset worker. 5: the dataset worker calls the cluster API with its service-account token. A note on the dataset worker says its environment holds production credentials. Callouts mark boundary A on connector 1, approved packages only; boundary B on connector 4, parse in an empty sandbox.",
+    "caption": "Compartmentalization limits what a compromised parser can access; a separate process alone is insufficient.",
+    "source": "@startuml\nlayout portrait\ncomponent EvalSandbox\ncomponent PackageProxy\ncomponent StagingServer\ncomponent Hub\ncomponent DatasetWorker\ncomponent ClusterAPI\nEvalSandbox --> PackageProxy : 1 package requests\nPackageProxy --> StagingServer : 2 forged requests\nStagingServer --> Hub : 3 uploads with stolen tokens\nHub --> DatasetWorker : 4 preview jobs\nDatasetWorker --> ClusterAPI : 5 service-account token\nnote left of DatasetWorker : environment holds production credentials\ncallout right of text \"1 package requests\" : A: approved packages only\ncallout right of text \"4 preview jobs\" : B: parse in an empty sandbox\n@enduml"
+   },
+   "boundary_all": {
+    "type": "component",
+    "label": "Three trust boundaries and their rules",
+    "description": "Component diagram of the attack path with six components and five numbered connectors. 1: the evaluation sandbox sends package requests to the package proxy. 2: the proxy sends forged requests on to the staging server. 3: the staging server uploads to the Hugging Face Hub with stolen tokens. 4: the Hub sends preview jobs to the dataset worker. 5: the dataset worker calls the cluster API with its service-account token. A note on the dataset worker says its environment holds production credentials. Callouts mark boundary A on connector 1, approved packages only; boundary B on connector 4, parse in an empty sandbox; boundary C on connector 5, restrict secrets, identity escalation, and privileged pods.",
+    "caption": "Each boundary is a rule the receiving side enforces. The worker's own secrets have no receiver that can refuse, so they are a privilege question.",
+    "source": "@startuml\nlayout portrait\ncomponent EvalSandbox\ncomponent PackageProxy\ncomponent StagingServer\ncomponent Hub\ncomponent DatasetWorker\ncomponent ClusterAPI\nEvalSandbox --> PackageProxy : 1 package requests\nPackageProxy --> StagingServer : 2 forged requests\nStagingServer --> Hub : 3 uploads with stolen tokens\nHub --> DatasetWorker : 4 preview jobs\nDatasetWorker --> ClusterAPI : 5 service-account token\nnote left of DatasetWorker : environment holds production credentials\ncallout right of text \"1 package requests\" : A: approved packages only\ncallout right of text \"4 preview jobs\" : B: parse in an empty sandbox\ncallout right of text \"5 service-account token\" : C: restrict secrets, identities, pods\n@enduml"
+   },
+   "boundary_b_only": {
+    "type": "component",
+    "label": "Only boundary B in place",
+    "description": "Component diagram of the attack path with six components and five numbered connectors. 1: the evaluation sandbox sends package requests to the package proxy. 2: the proxy sends forged requests on to the staging server. 3: the staging server uploads to the Hugging Face Hub with stolen tokens. 4: the Hub sends preview jobs to the dataset worker. 5: the dataset worker calls the cluster API with its service-account token. A note on the dataset worker says its environment holds production credentials. Callouts mark boundary B on connector 4, parse in an empty sandbox.",
+    "caption": "Assume this isolation holds: the parser sees the upload, without production secrets or network access.",
+    "source": "@startuml\nlayout portrait\ncomponent EvalSandbox\ncomponent PackageProxy\ncomponent StagingServer\ncomponent Hub\ncomponent DatasetWorker\ncomponent ClusterAPI\nEvalSandbox --> PackageProxy : 1 package requests\nPackageProxy --> StagingServer : 2 forged requests\nStagingServer --> Hub : 3 uploads with stolen tokens\nHub --> DatasetWorker : 4 preview jobs\nDatasetWorker --> ClusterAPI : 5 service-account token\nnote left of DatasetWorker : environment holds production credentials\ncallout right of text \"4 preview jobs\" : B: parse in an empty sandbox\n@enduml"
+   },
+   "worker_reach": {
+    "type": "component",
+    "label": "Everything one compromised worker could reach",
+    "description": "A compromised dataset worker can read its upload and other local files, and exposes credentials for databases, messaging, code repositories, and the cloud. Further privilege escalation reaches a shared administrator credential; a worker token does not directly grant that access.",
+    "caption": "Hatched: running attacker code. The blast radius is everything reachable from one foothold. Boxes here are assets.",
+    "source": "@startuml\nlayout square\ncomponent DatasetWorker #fff0ac hatched\ncomponent UploadedDataset\ncomponent LocalFiles\ncomponent ServiceCredentials\ncomponent AdminCredential\nDatasetWorker --> UploadedDataset\nDatasetWorker --> LocalFiles\nDatasetWorker --> ServiceCredentials\nDatasetWorker --> AdminCredential\nnote right of UploadedDataset : the file being previewed\nnote right of LocalFiles : other files on its machine\nnote right of ServiceCredentials : database, messaging, code, cloud\nnote right of AdminCredential : reached after further escalation\n@enduml"
+   },
+   "scoped_tokens": {
+    "type": "sequence",
+    "label": "Successful escalation and specific denied requests",
+    "description": "All three lifelines sit in one Hugging Face lane. In one recorded attempt, a worker uses temporary node credentials to list wider cluster resources and read secrets; the cluster API denies these requests. Elsewhere, additional identity and pod-creation permissions enable escalation. Denied reads alone do not prove all paths are blocked.",
+    "caption": "OpenAI reports these denied reads. Compare individual permissions; do not infer that every escalation path was closed.",
+    "source": "@startuml\nbox \"Hugging Face\" #E6F4EA\nparticipant workerA: DatasetWorker\nparticipant ClusterAPI as :ClusterAPI\nparticipant workerB: DatasetWorker\nend box\nworkerA -> ClusterAPI: identity and pod-creation operations\nClusterAPI --> workerA: escalation permitted\nnote over workerA\nfurther steps reach\nadministrator access\nend note\nworkerB -> ClusterAPI: list resources, read secrets; node credential\nClusterAPI --> workerB: these requests denied\n@enduml"
+   },
+   "defense_layers": {
+    "type": "component",
+    "label": "Independent layers along the attack path",
+    "description": "Component diagram of the attack path with six components and five numbered connectors. 1: the evaluation sandbox sends package requests to the package proxy. 2: the proxy sends forged requests on to the staging server. 3: the staging server uploads to the Hugging Face Hub with stolen tokens. 4: the Hub sends preview jobs to the dataset worker. 5: the dataset worker calls the cluster API with its service-account token. A note on the dataset worker says its environment holds production credentials. Callouts mark boundary A on connector 1, approved packages only; boundary B on connector 4, parse in an empty sandbox; boundary C on connector 5, restrict secrets, identity escalation, and privileged pods. A callout on the dataset worker marks least privilege: no secrets in workers. A callout on the Hub marks monitoring that leads to action.",
+    "caption": "Defense in depth: each layer assumes the one before it may fail, and monitoring only counts when someone acts.",
+    "source": "@startuml\nlayout portrait\ncomponent EvalSandbox\ncomponent PackageProxy\ncomponent StagingServer\ncomponent Hub\ncomponent DatasetWorker\ncomponent ClusterAPI\nEvalSandbox --> PackageProxy : 1 package requests\nPackageProxy --> StagingServer : 2 forged requests\nStagingServer --> Hub : 3 uploads with stolen tokens\nHub --> DatasetWorker : 4 preview jobs\nDatasetWorker --> ClusterAPI : 5 service-account token\nnote left of DatasetWorker : environment holds production credentials\ncallout right of element Hub : Monitoring that leads to action\ncallout right of element DatasetWorker : Least privilege: no secrets in workers\ncallout right of text \"1 package requests\" : A: approved packages only\ncallout right of text \"4 preview jobs\" : B: parse in an empty sandbox\ncallout right of text \"5 service-account token\" : C: restrict secrets, identities, pods\n@enduml"
+   },
+   "thumbnail_app": {
+    "type": "component",
+    "label": "A course project with the same shape",
+    "description": "A browser uploads a picture to a web app. The web app sends a resize job to a thumbnail service, which stores the thumbnail in the database; a note says the thumbnail service's environment holds the database administrator password. The web app also asks an email service to send a welcome message; a note says the email service holds a mail key and sends fixed messages.",
+    "caption": "Invented scenario for practice. It is not part of the incident.",
+    "source": "@startuml\nlayout portrait\ncomponent Browser\ncomponent WebApp\ncomponent EmailService\ncomponent ThumbnailService\ncomponent Database\nBrowser --> WebApp : uploads picture\nWebApp --> EmailService : welcome message\nWebApp --> ThumbnailService : resize job\nThumbnailService --> Database : stores thumbnail\nnote right of ThumbnailService : holds the database admin password\nnote bottom of EmailService : holds a mail key, sends fixed messages\n@enduml"
+   }
+  }
+ },
+ "scenes": {
+  "setting": {
+   "state": {
+    "diagram": "eval_lab"
+   },
+   "cues": {
+    "benchmark": {},
+    "sandbox": {
+     "diagram": "eval_exit"
+    },
+    "hub": {
+     "diagram": "hf_platform"
+    }
+   }
+  },
+  "chain": {
+   "state": {
+    "diagram": "attack_chain"
+   },
+   "cues": {
+    "staircase": {},
+    "gain": {}
+   }
+  },
+  "cia": {
+   "state": {
+    "diagram": "cia_evidence"
+   },
+   "cues": {
+    "evidence": {},
+    "classify": {}
+   }
+  },
+  "threat": {
+   "state": {
+    "diagram": "threat_situation"
+   },
+   "cues": {
+    "dimensions": {},
+    "map": {}
+   }
+  },
+  "assumption": {
+   "state": {
+    "diagram": "threat_profile"
+   },
+   "cues": {
+    "profile": {},
+    "mismatch": {
+     "diagram": "sandbox_assumption"
+    }
+   }
+  },
+  "components": {
+   "state": {
+    "diagram": "architecture"
+   },
+   "cues": {
+    "draw": {},
+    "surface": {}
+   }
+  },
+  "boundaries": {
+   "state": {
+    "diagram": "architecture"
+   },
+   "cues": {
+    "define": {},
+    "place": {}
+   }
+  },
+  "boundary_rules": {
+   "state": {
+    "diagram": "boundary_a"
+   },
+   "cues": {
+    "lab_edge": {},
+    "parser": {
+     "diagram": "boundary_ab"
+    },
+    "cluster": {
+     "diagram": "boundary_all"
+    },
+    "only_b": {
+     "diagram": "boundary_b_only"
+    }
+   }
+  },
+  "privilege": {
+   "state": {
+    "diagram": "worker_reach"
+   },
+   "cues": {
+    "reach": {},
+    "need": {}
+   }
+  },
+  "layers": {
+   "state": {
+    "diagram": "scoped_tokens"
+   },
+   "cues": {
+    "scoped": {},
+    "plan": {
+     "diagram": "architecture"
+    }
+   }
+  },
+  "layered": {
+   "state": {
+    "diagram": "defense_layers"
+   },
+   "cues": {
+    "october": {}
+   }
+  },
+  "transfer": {
+   "state": {
+    "diagram": "thumbnail_app"
+   },
+   "cues": {
+    "shape": {},
+    "plan": {}
+   }
+  }
+ }
+}

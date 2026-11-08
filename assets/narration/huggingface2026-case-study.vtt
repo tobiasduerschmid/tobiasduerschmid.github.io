@@ -1,0 +1,105 @@
+WEBVTT
+
+setting-1
+00:00:00.000 --> 00:00:24.047
+In the 2026 Hugging Face incident, AI agents crossed from OpenAI's internal evaluations into another organization's systems. Their assigned job was to solve security challenges and earn a benchmark score. These were evaluations with reduced safeguards. Our question is architectural: which permissions and boundaries should have contained them?
+
+setting-2
+00:00:24.047 --> 00:00:44.771
+The agents' sandboxes blocked direct internet access but allowed requests to a package proxy. A proxy fetches libraries on a program's behalf. OpenAI gave agents shared credentials for that service. Notice the trust relationship: an untrusted program can ask a more connected service to act for it.
+
+setting-3
+00:00:44.771 --> 00:01:08.605
+Hugging Face's Hub accepts uploaded datasets. Workers open those files and produce previews. Kubernetes manages the workers across a cluster of machines. One machine is a node; a pod groups one or more containers. The legitimate job is small: inspect one upload and return a preview. Remember that job when we examine the worker's permissions.
+
+chain-1
+00:01:08.605 --> 00:01:35.191
+Here is the essential chain. Agents exploited the proxy to reach the internet, then took over a customer application's sandbox as a staging base. Leaked Hugging Face tokens let them upload datasets. One crafted upload disclosed a preview worker's files; a second flaw ran commands there. Further privilege escalation reached machines and clusters. Each step added access the assigned task did not require.
+
+chain-2
+00:01:35.191 --> 00:01:52.740
+For each hop, ask what the agents gained that they did not have before. A new identity? A new network position? The ability to run code somewhere new? A new secret? Answering hop by hop shows every place where a defender could have said no.
+
+cia-1
+00:01:52.740 --> 00:02:25.565
+The CIA triad separates confidentiality, integrity, and availability. Ask who could read, who could change, and whether legitimate users could get service. Here, agents read credentials, private repositories, and limited data. They installed control programs, created privileged pods, and changed a repository. That change ran in test automation, though it was never merged or deployed. The reported proxy outage happened at OpenAI, not Hugging Face.
+
+cia-2
+00:02:25.565 --> 00:02:42.548
+Classify each fact. Which facts show that the wrong party could read something? Which show that the wrong party changed something? Which show that legitimate users could not get service? And which tempting conclusions go beyond the evidence?
+
+threat-1
+00:02:42.548 --> 00:03:01.520
+Next, build the threat model: what the attacker knows, which actions it can take, what resources it can spend, and what incentive drives it. Most threat models picture a human attacker. Here the attacker was hundreds of AI agents, running inside a test that rewarded solved tasks.
+
+threat-2
+00:03:01.520 --> 00:03:26.462
+Map the evidence onto those dimensions. Hundreds of agents could work in parallel and share discoveries on a message board. They could run commands and exploit the proxy. They had read the benchmark's published design. Their goal was a higher score, often by learning how to fool the grader. Which fact describes knowledge, actions, resources, or incentive?
+
+assumption-1
+00:03:26.462 --> 00:03:55.384
+Put together, the threat model reads like this. Knowledge: the benchmark's published design, worker source code, and discoveries shared on the board. Actions: forged proxy requests, commands on compromised machines, and uploads with stolen tokens. Resources: hundreds of cooperating agents and a shared message board. Incentive: a higher score. Some agents had mistaken beliefs about the grader; distinguish what an attacker believes from what the system actually does.
+
+assumption-2
+00:03:55.384 --> 00:04:17.349
+The engineering lesson is to model cooperating agents and indirect routes. Blocking an agent's direct connection was not enough when a trusted proxy could relay its requests. A shared board also let discoveries spread between otherwise separate runs. How should the next evaluation respond?
+
+components-1
+00:04:17.349 --> 00:04:43.978
+To decide where defenses belong, draw the system as a component diagram. Each box is a deployable part with a job, and each connector says who sends what to whom. Number the connectors along the attack: sandbox to proxy, proxy to the staging server, staging server to the Hub, Hub to the dataset worker, and worker to the cluster's control interface. A note on the worker records the secrets in its environment.
+
+components-2
+00:04:43.978 --> 00:05:04.151
+Read the diagram with the first questions of a security plan. Which components hold assets worth defending, such as secrets, data, or control? And which components accept input that someone outside the organization created? That second set is the attack surface.
+
+boundaries-1
+00:05:04.151 --> 00:05:22.136
+A trust boundary marks a change in trust or authority between components. Here, untrusted requests reached services with greater access. At that boundary, the receiving side must check what arrives or limit what it can do. Look at the five numbered connectors again.
+
+boundaries-2
+00:05:22.136 --> 00:05:38.299
+Choose the connectors where you would draw a boundary, and write the rule each one would enforce. Two questions help. Which component processes input it did not create? And which component holds more access than its job needs?
+
+boundary_rules-1
+00:05:38.299 --> 00:06:01.834
+Boundary A is where sandbox requests enter the proxy. A request from an untrusted workload must not choose an arbitrary internet destination. One proposed rule is to serve only approved packages. For higher-risk workloads, remove the live route entirely. Blocking direct connections is not enough if another service will relay the same traffic.
+
+boundary_rules-2
+00:06:01.834 --> 00:06:28.282
+Boundary B surrounds the parser. Compartmentalization means putting risky work in an isolated environment and restricting what it can access. One crafted upload exposed local files; an unsandboxed template engine separately allowed commands. Parse with access only to the upload, no production secrets or network, and a sandboxed template engine. A parser failure should stay inside that compartment.
+
+boundary_rules-3
+00:06:28.282 --> 00:06:56.265
+Boundary C sits where the workers' requests enter the cluster's control interface, on connector five. Rule C: a preview worker cannot obtain more powerful identities, read unrelated secrets, or create privileged pods. Shared credentials must not grant administrator rights across clusters. The note on the worker is different: the worker already holds those secrets, so no receiving side can refuse. That problem belongs to least privilege, in the next scene.
+
+boundary_rules-4
+00:06:56.265 --> 00:07:08.737
+Test the idea with one boundary. Suppose boundary B had existed, and none of the others. Trace the chain hop by hop. How far would the attack have gone?
+
+privilege-1
+00:07:08.737 --> 00:07:38.384
+Least privilege asks what authority a job actually needs. A compromised worker exposed service credentials. By assuming another service's identity, agents could create a privileged pod with access to the machine's files, gaining root, or administrative control. A credential shared across clusters later widened the compromise. That is the blast radius: damage reachable from one foothold. Producing a dataset preview needed none of that administrative authority.
+
+privilege-2
+00:07:38.384 --> 00:07:52.202
+The worker's job is to preview one uploaded dataset and to save that preview, so the Hub can show it. Reading the upload is clearly needed. How narrow can the saving step be?
+
+layers-1
+00:07:52.202 --> 00:08:18.627
+OpenAI's report also records denied requests. An agent obtained a node's temporary credentials from the machine's metadata service. Those credentials let it read the node and its pod, but its attempts to list wider cluster resources and read secrets failed. That shows those checks held. It does not prove the whole cluster was safe: other identity and pod-creation permissions enabled escalation.
+
+layers-2
+00:08:18.627 --> 00:08:38.544
+Now plan the protection for the next evaluation and the next upload pipeline. Defense in depth stacks controls that each still hold when another one fails. Each plan below stacks several controls. Which one gives protection at separate points if an earlier control fails?
+
+layered-1
+00:08:38.544 --> 00:09:11.524
+The layers have different jobs. Compartmentalization contains a parser failure. Least privilege limits the authority of a compromised component. Network controls restrict where it can communicate. Monitoring and response shorten the time it can operate. After the incident, OpenAI described stronger isolation and network perimeters; Hugging Face reported rebuilding nodes and rotating credentials. A good design plans for a layer to fail and asks what protection remains.
+
+transfer-1
+00:09:11.524 --> 00:09:33.310
+Here is a new system, a course project. Users upload profile pictures to a web app. A thumbnail service resizes each picture and stores the result; its environment contains the database administrator's password. An email service holds a key for sending mail and sends fixed welcome messages to new users.
+
+transfer-2
+00:09:33.310 --> 00:09:46.130
+Run the four questions of a security plan. What are you defending? Who might attack, and why? What is exposed? Then decide which component most needs isolation.

@@ -21,7 +21,7 @@ All ArchUML types are invoked with `<pre><code class="<class-name>">…@startuml
 |---|---|---|
 | Classes, interfaces, inheritance, associations | `language-uml-class` | [REFERENCE.md §Class Diagrams (L266)](../../../js/ArchUML/REFERENCE.md) |
 | Class names, responsibilities, and collaborators during design exploration | `diagram-crc` (Markdown fence: `crc`) | [REFERENCE.md §CRC Cards](../../../js/ArchUML/REFERENCE.md#crc-cards) |
-| Interactions / messages between participants over time | `language-uml-sequence` | [REFERENCE.md §Sequence Diagrams (L646)](../../../js/ArchUML/REFERENCE.md) |
+| Interactions / messages between participants over time; group lifelines by owning organization or trust zone with `box "Name" … end box` | `language-uml-sequence` | [REFERENCE.md §Sequence Diagrams (L646)](../../../js/ArchUML/REFERENCE.md), [§Organization Boxes](../../../js/ArchUML/REFERENCE.md#organization-boxes) |
 | Named states and transitions (behavioral modeling) | `language-uml-state` | [REFERENCE.md §State Machine Diagrams (L974)](../../../js/ArchUML/REFERENCE.md) |
 | Components, ports, ball-and-socket interfaces | `language-uml-component` | [REFERENCE.md §Component Diagrams (L1167)](../../../js/ArchUML/REFERENCE.md) |
 | Nodes, artifacts, infrastructure topology | `language-uml-deployment` | [REFERENCE.md §Deployment Diagrams (L1322)](../../../js/ArchUML/REFERENCE.md) |
@@ -95,6 +95,19 @@ These are traps this renderer does **not** forgive. Hit one and the diagram ship
 - **`\n` does not produce a line break inside labels.** Arrow labels (`A --> B : text`), transition labels, and state body descriptions (`StateName : text`) render `\n` as the two characters `\`, `n` — not as a newline. If you need multi-line context, either (a) keep the label short and single-line, or (b) move the detail into a `note ... end note` block attached to the nearest element. Real newlines *do* work inside `note ... end note` bodies and inside `class Foo { ... }` bodies — just not inside label strings.
 - **Prefer plain identifiers over `"Display Name" as Alias`.** The `"X" as Y` aliasing form has produced duplicate / stray boxes in component diagrams here (the display string leaks out as its own component). Use a single-word identifier directly (`component EventBus`) instead of aliasing. If you truly need a multi-word display label, verify it renders cleanly before committing.
 - **Avoid special characters in labels.** Symbols like `✗`, `✓`, em-dashes, and parentheses-heavy labels have caused layout issues. Spell the meaning out in words.
+
+## Sequence diagram notation (UML 2.5.1, clause 17)
+
+Every SEBook sequence diagram must follow these rules. They were audited across the book in November 2026; most violations were lifelines named like classes and dashed replies used for messages that are not replies.
+
+- **Lifelines are instances.** Declare `participant name: Type` (named) or `participant id as : Type` (anonymous). A bare `participant Client`, or an endpoint used without a declaration, renders as a class name. For one element of a collection, use a selector: `participant sensor[i]: WindowSensor`, never `: SlackClient[*]`. Write types as class names (`BankServer`, not `Bank Server`) in teaching examples. The one deliberate exception is a class-scope (static) call, such as Singleton's `getInstance()`, whose callout explains the class lifeline.
+- **Synchronous `->`** (filled arrowhead): the sender waits for the receiver, as in a method call.
+- **Asynchronous `->>`** (open arrowhead): the sender continues at once. Use it for events, signals, push notifications, and fire-and-forget network messages.
+- **Reply `-->`**: returns only to the lifeline that made a still-open synchronous call. Never reply to an asynchronous message, never send a "reply" to a lifeline that did not call, and never send repeated replies inside a `loop` to one call made outside it. Label a reply with the returned value (`status`), not an operation-call form (`statusData()`).
+- **Creation**: `create x` followed by a dashed `-->` message labeled `<<create>>`, so the head appears where the object is created. Declare progressively revealed narration lifelines in the step that creates them.
+- **Guards** are Boolean conditions evaluated before a branch. Make the call that produces the data before the `alt`/`opt`, then branch on its reply; do not repeat the call in each branch.
+- **Messages match operations.** A self-message must be an operation of the receiver. Show a field assignment as a note (`note right of remote: undoCommand := command`).
+- **Renderer limits (ArchUML):** lost (`->o`) and found (`o->`) messages always draw a filled arrowhead, so do not use them for asynchronous traffic. Fragment conditions always render inside `[...]`, so UML's `loop(1,5)` bound form is unavailable.
 
 ## Accessibility — aria-label is auto-generated; figcaptions are *contextual only*
 

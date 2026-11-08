@@ -1,6 +1,7 @@
 ---
 title: Security and Authentication
 layout: sebook
+static_uml: true
 ---
 
 # Background & Motivation
@@ -33,7 +34,7 @@ A confidentiality failure is the system letting the *wrong* person read data the
 
 > *Sensitive data must be **modifiable by authorized users only**, and the system must keep it **accurate, consistent, and trustworthy** over its lifecycle.*
 
-An integrity failure is the system allowing the *wrong* change to be made. The Hollywood Presbyterian ransomware was an integrity failure as well as an availability one: the files on disk had been overwritten with attacker-controlled ciphertext. A more subtle integrity failure is a bank ledger where a row's `amount` is silently mutated by an unauthorized SQL statement, or an audit log into which an attacker can write fake entries to cover their tracks.
+An integrity failure is the system allowing the *wrong* change to be made. The Hollywood Presbyterian ransomware was an integrity failure as well as an availability one: the files on disk had been overwritten with attacker-controlled ciphertext. A more subtle integrity failure is a bank ledger where a row's `amount` is silently mutated by an unauthorized SQL statement, or an audit log into which an attacker can write fake entries to cover their tracks. The same holds for the software and configuration that process the data: an attacker who installs a program on a server or changes how a system is configured has made an unauthorized change, even if no stored record was altered.
 
 ## Availability
 
@@ -219,17 +220,23 @@ Verification uses the document, signature, and authenticated public key to check
 The most direct design is for the client to attach the username and password to *every* request, and the server to verify them every time:
 
 <pre><code class="language-uml-sequence">@startuml
-participant Client
-participant Server
+participant client: Client
+participant server: Server
 
-Client -> Server : Username, Password
-Server --> Client : OK
+client -> server : POST /login (username, password)
+activate server
+server --> client : 200 OK
+deactivate server
 
-Client -> Server : Request, Username, Password
-Server --> Client : Reply
+client -> server : GET /data (username, password)
+activate server
+server --> client : 200 data
+deactivate server
 
-Client -> Server : Request, Username, Password
-Server --> Client : Reply
+client -> server : GET /data (username, password)
+activate server
+server --> client : 200 data
+deactivate server
 @enduml</code></pre>
 
 This works, but it is bad on two counts:
@@ -244,17 +251,23 @@ We need a way to **prove identity without re-sending the password** every time.
 The standard fix is to authenticate *once* with username and password, and then issue the client a short-lived **session ID** — a random, opaque string that the server remembers alongside *which user* it represents.
 
 <pre><code class="language-uml-sequence">@startuml
-participant Client
-participant Server
+participant client: Client
+participant server: Server
 
-Client -> Server : Username, Password
-Server --> Client : Set-Cookie: SessionID
+client -> server : POST /login (username, password)
+activate server
+server --> client : 200 OK, Set-Cookie: sessionId
+deactivate server
 
-Client -> Server : Request + Cookie(SessionID)
-Server --> Client : Reply
+client -> server : GET /data (Cookie: sessionId)
+activate server
+server --> client : 200 data
+deactivate server
 
-Client -> Server : Request + Cookie(SessionID)
-Server --> Client : Reply
+client -> server : GET /data (Cookie: sessionId)
+activate server
+server --> client : 200 data
+deactivate server
 @enduml</code></pre>
 
 The session ID is stored client-side in a **cookie** that the browser automatically attaches to every subsequent request to the same domain. On each request, the server looks up the session ID in its own session store, finds the associated user, and serves the request as that user.
@@ -277,17 +290,23 @@ The session ID is stored client-side in a **cookie** that the browser automatica
 A **JSON Web Token (JWT)** sidesteps the server-side session store. After successful login, the server hands the client a small encoded JSON document — typically containing `{ "sub": "<user-id>", "exp": <expiry timestamp>, ... }` — and **digitally signs it** with the server's private (or symmetric) signing key.
 
 <pre><code class="language-uml-sequence">@startuml
-participant Client
-participant Server
+participant client: Client
+participant server: Server
 
-Client -> Server : Username, Password
-Server --> Client : JWT (signed)
+client -> server : POST /login (username, password)
+activate server
+server --> client : 200 signed JWT
+deactivate server
 
-Client -> Server : Request + JWT
-Server --> Client : Reply
+client -> server : GET /data (Authorization: Bearer JWT)
+activate server
+server --> client : 200 data
+deactivate server
 
-Client -> Server : Request + JWT
-Server --> Client : Reply
+client -> server : GET /data (Authorization: Bearer JWT)
+activate server
+server --> client : 200 data
+deactivate server
 @enduml</code></pre>
 
 The client attaches the JWT to every subsequent request — typically in an `Authorization: Bearer <jwt>` header, or in a cookie. The server verifies the signature *with its own key* and trusts the claims inside without any database lookup. There is no server-side session store to consult — a validated JWT carries the claims. Forgery resistance depends on a secure algorithm, protected signing keys, and correct validation of the signature and claims (including issuer, audience, and expiry).
@@ -309,7 +328,7 @@ The choice is rarely a slam dunk. As a starting point:
 
 # Security Design Principles
 
-Beyond specific vulnerabilities and primitives, security engineering is shaped by a small set of *principles* that have held up across decades of practice. Three are especially load-bearing for application developers.
+Beyond specific vulnerabilities and primitives, security engineering is shaped by a small set of *principles* that have held up across decades of practice. Three are especially load-bearing for application developers. They work best together: **defense in depth** stacks independent controls so that when one fails, another still holds, the way a Content Security Policy backs up output encoding.
 
 ## Zero Trust Principle
 
@@ -317,7 +336,7 @@ Beyond specific vulnerabilities and primitives, security engineering is shaped b
 
 The traditional ("perimeter") model assumed that anything *inside* the corporate network was trustworthy and only outside traffic needed scrutiny. That assumption fails against insider threats, compromised internal hosts, supply-chain attacks, and the simple fact that modern apps span multiple networks. **Zero Trust** flips it: every request, no matter where it originates, is authenticated and authorized; every input, no matter where it comes from, is treated as potentially hostile until validated.
 
-For an application developer, the operational consequence is that the **trust boundary** — the line between "I have to defend against this" and "I can rely on this" — should be drawn very tightly. Inputs from end users, third-party APIs, file uploads, configuration files, and even other internal services should all be validated at the boundary they cross into your code.
+For an application developer, the operational consequence is that the **trust boundary** — the line between "I have to defend against this" and "I can rely on this" — should be drawn very tightly. Inputs from end users, third-party APIs, file uploads, configuration files, and even other internal services should all be validated at the boundary they cross into your code. The [Hugging Face case study](#case-study-hugging-face-2026) below places trust boundaries on the component diagram of a real incident.
 
 ## Open Design (vs. Security Through Obscurity)
 
@@ -406,6 +425,51 @@ The lesson generalizes: a defense that doesn't *match the actual threat model* a
 **Quick Check.** Pick a real application you use daily. Walk through the four questions: what is it defending, who attacks it, what is exposed, what defenses are in place? Where are the weakest links?
 
 
+# Case Study: Hugging Face 2026
+
+In July 2026, hundreds of AI agents that OpenAI was testing on a hacking benchmark escaped their evaluation sandbox, took over a third-party server, and gained administrator access to clusters at Hugging Face, a platform that hosts machine-learning models and datasets. No single flaw handed over the platform. Each step crossed a place where one component trusted another. **Where would you have drawn the line?**
+
+The narration gives a brief setup and attack path, then concentrates on applying this chapter: classify the impact with the [CIA triad](#the-cia-triad-three-security-attributes), build a [threat model](#building-a-threat-model-knowledge-actions-resources-incentive), identify assets and attack surface in a [component diagram](/SEBook/uml_component_diagram.html), and place [trust boundaries](#zero-trust-principle). **Compartmentalization** isolates risky work with limited access; [least privilege](#principle-of-least-privilege) limits its authority; [defense in depth](#security-design-principles) combines controls with different failure modes. Predict what each proposed control would stop, then transfer the reasoning to a profile-picture upload service. The detailed chronology is in the case record below.
+
+Use **Next step** to move through the evidence. Before each decision, commit to an answer and a reason, then use the feedback to revise it. The reading version below the player contains the same text, diagrams, and questions, with the answers behind expandable sections.
+
+The diagrams are simplified reconstructions of the published accounts, not recovered logs. **Evidence and sources** under each scene says which parts are reported history and which are teaching proposals. The facts come from OpenAI's technical report and its companion posts {% cite OpenAI2026HuggingFaceReport OpenAI2026HuggingFaceRoadAhead OpenAI2026SecuringTraining %}, the investigation of agent behavior by METR and Redwood Research {% cite METR2026HuggingFaceInvestigation %}, and Hugging Face's initial disclosure and later technical timeline {% cite HuggingFace2026IncidentDisclosure HuggingFace2026AgentIntrusion %}. JFrog's vendor advisories separately document the relevant classes of package-proxy vulnerabilities, including improper token-refresh validation that enabled administrator access {% cite JFrog2026SecurityAdvisories %}.
+
+{% include narration.html topic="huggingface2026" %}
+
+## Case Record
+
+| Date (2026) | Reported event |
+|---|---|
+| May | An agent asks for a missing file through OpenAI's package proxy; a shared message board develops. |
+| Late May | A server-side request forgery zero-day in the proxy gives the agents internet access. |
+| June 26 | Agents exploit token-refresh handling to gain proxy administrator access and execute code. |
+| June 27 | A security alert fires, and the evaluations keep running. |
+| July 4–7 | Agent traffic crashes the proxy. OpenAI rebuilds it, revokes shared credentials, restricts endpoints, and contacts JFrog; evaluations resume July 7. |
+| July 8 | The board returns, encoded in directory names; agents find new ways to regain internet access through the proxy. |
+| July 9 | An agent uses proxy access to take over a customer's application sandbox hosted on Modal, making it a staging base. |
+| July 10 | Fourteen exposed Hugging Face write tokens are found in a public dataset. |
+| July 11 | Crafted datasets leak worker credentials and run agent code on dataset workers (41 workers by July 13). |
+| July 11 | Identity and token permissions lead to a storage-helper identity; privileged pod creation gives node root. A shared broker credential subsequently expands administrator access across clusters. |
+| July 13 | Hugging Face cuts off the attackers' access. |
+| July 16 | Hugging Face discloses the incident. |
+| July 20 | OpenAI contacts Hugging Face; the teams connect the incidents. |
+| July 21 | OpenAI publicly discloses its agents' involvement. |
+| August 26 | OpenAI publishes its technical report; METR and Redwood Research publish their investigation. |
+
+The table follows OpenAI's timeline {% cite OpenAI2026HuggingFaceReport OpenAI2026HuggingFaceRoadAhead %} and Hugging Face's account {% cite HuggingFace2026AgentIntrusion %}. The narration's approximate counts—1,200 agents on the message board, including about 700 involved in the attack—refer to July 8–13 in METR's investigation {% cite METR2026HuggingFaceInvestigation %}. The earlier May board and its July reconstruction do not imply that the same agent instances persisted throughout.
+
+## What the Sources Leave Open
+
+The accounts have different scopes. OpenAI reconstructs its infrastructure incidents; Hugging Face describes its own forensic findings. METR and Redwood principally reviewed agent behavior during July 7–13, with limited time and access; their report does not independently validate every claim in OpenAI's account. Raw logs are not all public, and the investigators describe limitations and possible errors {% cite METR2026HuggingFaceInvestigation %}.
+
+METR found that most agents joined to learn how the scorer worked and fool it; some of their assumptions about grading were wrong. The narration therefore distinguishes an agent's stated goal from what a system actually did. It also distinguishes stolen credentials from successful use: several network and permission checks denied later requests. OpenAI describes the access broker in terms of read-only inventory access; Hugging Face reports a shared credential with full administrator rights on two clusters. Observed reads and granted authority are different claims, so the narration attributes the latter to Hugging Face {% cite OpenAI2026HuggingFaceReport HuggingFace2026AgentIntrusion %}.
+
+Hugging Face's later account limits customer-content access to five datasets with an apparent benchmark connection, while also reporting access to operational metadata related to dataset searches. This is narrower than proof that all five datasets contained solutions, and broader than saying no other customer records were read. The accounts establish confidentiality and integrity violations; they do not establish a Hugging Face service outage {% cite HuggingFace2026AgentIntrusion %}.
+
+The proposed trust boundaries are teaching designs derived from the attack path, not a list of changes either company announced. The proxy-to-staging route is explicitly documented in OpenAI's technical report (page 16); the diagrams compress concurrent activity and intermediate privilege escalations. For more context, see a [video about the incident](https://www.youtube.com/watch?v=87DyyMV0kCY) and [CNBC's report on OpenAI's findings](https://www.cnbc.com/2026/08/26/open-ai-hugging-face-hack.html).
+
+
 # Summary
 
 * The **CIA triad** classifies security goals into three properties: **Confidentiality** (only authorized users can read), **Integrity** (only authorized users can modify), and **Availability** (the system serves legitimate clients when needed). Every breach is a violation of one or more of these.
@@ -415,6 +479,7 @@ The lesson generalizes: a defense that doesn't *match the actual threat model* a
 * **Authentication** must avoid sending the password on every request. **Session cookies** delegate to a server-side store and need `HttpOnly` + `Secure` + `SameSite`. **JWTs** are signed, stateless tokens — easier to scale across services, harder to revoke, and dangerous if stored in `localStorage` (XSS readable).
 * Three security design principles dominate application code: **Zero Trust** (validate every input, regardless of source), **Open Design** (security rests on key secrecy, not algorithm secrecy — public scrutiny improves designs), and **Principle of Least Privilege** (every component holds only the permissions its job requires, shrinking the blast radius of any compromise).
 * A **security plan** answers four questions: what are you defending (security model), who is attacking and why (threat model), where is the system exposed (attack surface), and what mechanisms prevent compromise (protection mechanisms). A defense built without a matching threat model fails — the foil-and-emergency-phone is the canonical illustration.
+* The **2026 Hugging Face case** combines these ideas. A trusted proxy relayed forbidden traffic, stolen tokens passed authentication, unsafe parsing exposed files and allowed commands, and further privilege escalation reached machines and clusters. The CIA triad separates unauthorized reads, unauthorized changes, and service disruption. Threat modeling includes cooperating agents and indirect routes. **Trust boundaries** need enforced rules; **compartmentalization** contains risky parsing; **least privilege** limits the authority available after a compromise. Combining separately enforced controls is **defense in depth**.
 
 # Quiz 
 

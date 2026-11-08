@@ -91,15 +91,17 @@
       section: 'Meta Characters',
       title: 'Digit Detector',
       goal: 'Match every individual digit.',
-      sampleText: 'Invoice #8842: 3 items at $15 each, total $45. Tax ID: 9021-XB. Ref code: A1B2C3.',
+      sampleText: 'Invoice #8842: 3 items at $15 each, total $45. Tax ID: 9021-XB. Ref code: A1B2C3. 🌿 Unicode digits: ١٢.',
       solution: '\\d',
       tests: [
         { input: 'Room 101', shouldMatch: true, expectedMatches: ["1","0","1"], label: 'contains digits' },
+        { input: 'Room ١٢', shouldMatch: true, expectedMatches: ['١', '٢'], label: 'Unicode decimal digits' },
         { input: 'hello', shouldMatch: false, label: 'no digits' },
         { input: '42!', shouldMatch: true, expectedMatches: ["4","2"], label: 'digits with punctuation' }
       ],
       hiddenTests: [
         { input: '0', shouldMatch: true, expectedMatches: ["0"] },
+        { input: '３', shouldMatch: true, expectedMatches: ['３'] },
         { input: 'abc', shouldMatch: false }
       ]
     },
@@ -128,11 +130,12 @@
       title: 'The Challenge (Try Before You Learn!)',
       goal: 'Can you write a regex that matches <strong>only</strong> if the <em>entire</em> string is digits? Try <code>\\d+</code> — does it work? It shouldn\'t pass all the tests. Read the section above to discover why, then fix your answer.',
       sampleText: null,
-      solution: '^\\d+$',
+      solution: '^\\d+\\Z',
       tests: [
         { input: '12345', shouldMatch: true, expectedMatches: ["12345"], label: 'all digits — should match' },
         { input: 'abc', shouldMatch: false, label: 'all letters — should NOT match' },
         { input: '123abc', shouldMatch: false, label: 'mixed — should NOT match' },
+        { input: '123\n', shouldMatch: false, label: 'trailing newline — should NOT match' },
         { input: '', shouldMatch: false, label: 'empty — should NOT match' }
       ],
       hiddenTests: [
@@ -144,13 +147,14 @@
       id: 'anchor-1', type: 'parsons',
       section: 'Anchors',
       title: 'Build a Full-String Validator',
-      goal: 'Arrange fragments so the regex matches <strong>only</strong> if the <em>entire</em> string is digits. Use <code>^</code> (start) and <code>$</code> (end) anchors.',
+      goal: 'Arrange fragments so the regex matches <strong>only</strong> if the <em>entire</em> string is digits. Use <code>^</code> (start) and <code>\\Z</code> (strict end) anchors.',
       sampleText: null,
-      fragments: ['^', '\\d', '+', '$'],
-      solution: '^\\d+$',
+      fragments: ['^', '\\d', '+', '\\Z'],
+      solution: '^\\d+\\Z',
       tests: [
         { input: '12345', shouldMatch: true, expectedMatches: ["12345"], label: 'all digits' },
         { input: '123abc', shouldMatch: false, label: 'mixed — should NOT match' },
+        { input: '123\n', shouldMatch: false, label: 'trailing newline — should NOT match' },
         { input: '', shouldMatch: false, label: 'empty — should NOT match' },
         { input: '007', shouldMatch: true, expectedMatches: ["007"], label: 'leading zeros OK' }
       ],
@@ -185,7 +189,7 @@
       goal: 'This regex is supposed to validate that a username is <strong>only</strong> alphanumeric characters. But it incorrectly accepts <code>admin!@#</code>. Fix it!',
       sampleText: null,
       brokenRegex: '[a-zA-Z0-9]+',
-      solution: '^[a-zA-Z0-9]+$',
+      solution: '^[a-zA-Z0-9]+\\Z',
       hint: 'Without anchors, the regex finds "admin" as a substring match and considers it a success — ignoring the rest.',
       tests: [
         { input: 'admin', shouldMatch: true, expectedMatches: ["admin"], label: 'valid username' },
@@ -296,7 +300,7 @@
       goal: 'This regex is supposed to validate dates in <code>MM/DD</code> format. But it accepts <code>99/99</code> and rejects nothing. Debug it — the month should be 01–12 and the day 01–31.',
       sampleText: null,
       brokenRegex: '\\d{2}/\\d{2}',
-      solution: '^(0[1-9]|1[0-2])/(0[1-9]|[12]\\d|3[01])$',
+      solution: '^(0[1-9]|1[0-2])/(0[1-9]|[12]\\d|3[01])\\Z',
       hint: 'The current pattern accepts any two digits for month and day. You need to restrict the ranges, and add anchors.',
       tests: [
         { input: '03/15', shouldMatch: true, expectedMatches: ["03/15"], label: 'valid date' },
@@ -352,41 +356,17 @@
     catch (e) { /* ignore */ }
   }
 
-  // ── Regex Helpers ──────────────────────────────────────────────────────────
+  const pythonRunner = window.RegexTutorialPython.create({
+    exercises: EXERCISES,
+    highlightText: highlightText,
+    onChecked: finishCheck
+  });
 
-  function tryCompile(pattern, flags) {
-    if (!pattern) return null;
-    try { return new RegExp(pattern, flags || 'g'); }
-    catch (e) { return { error: e.message }; }
-  }
+  const exerciseIds = new Set(EXERCISES.map(function (exercise) { return exercise.id; }));
 
-  function findMatches(regex, text) {
-    if (!regex || regex.error || text === null || text === undefined) return [];
-    var matches = [], m, safety = 0;
-    regex.lastIndex = 0;
-    while ((m = regex.exec(text)) !== null) {
-      matches.push({ start: m.index, end: m.index + m[0].length, text: m[0] });
-      if (m[0].length === 0) regex.lastIndex++;
-      if (++safety > 1000) break;
-    }
-    return matches;
-  }
-
-  function testRegex(pattern, input) {
-    var re = tryCompile(pattern, 'g');
-    if (!re || re.error) return false;
-    re.lastIndex = 0;
-    return re.test(input);
-  }
-
-  // Check the extracted text, not only whether any match exists.
-  function checkSingleTest(pattern, test) {
-    var regex = tryCompile(pattern, 'g');
-    if (!regex || regex.error) return false;
-    var matches = findMatches(regex, test.input).map(function (match) { return match.text; });
-    if ((matches.length > 0) !== test.shouldMatch) return false;
-    return !test.expectedMatches || (matches.length === test.expectedMatches.length &&
-      matches.every(function (text, index) { return text === test.expectedMatches[index]; }));
+  function ownsExerciseEvent(event) {
+    const exercise = event.target.closest('.rt-exercise');
+    return exercise && exerciseIds.has(exercise.id.slice(3));
   }
 
   // ── HTML Helpers ───────────────────────────────────────────────────────────
@@ -454,6 +434,7 @@
     // Actions
     h += '<div class="rt-actions">';
     h += '<button class="rt-btn rt-btn-check" data-exid="' + ex.id + '">Check Answer</button>';
+    h += '<button type="button" class="rt-btn rt-btn-clear rt-btn-stop" data-exid="' + ex.id + '" hidden>Stop</button>';
     h += '<button class="rt-btn rt-btn-skip" data-exid="' + ex.id + '">Skip &rarr;</button>';
     h += '</div>';
     h += '<div class="rt-result" id="rt-result-' + ex.id + '" data-exid="' + ex.id + '" role="status" aria-live="polite" aria-atomic="true"></div>';
@@ -468,16 +449,16 @@
   }
 
   function renderFreeInput(ex) {
-    return '<div class="rt-input-wrap"><span class="rt-delim">/</span>' +
-      '<input type="text" class="rt-input" data-exid="' + ex.id + '" aria-label="Regular expression for ' + esc(ex.title || ex.id) + '" aria-describedby="rt-error-' + ex.id + ' rt-result-' + ex.id + '" aria-invalid="false" placeholder="type your regex here" spellcheck="false" autocomplete="off">' +
-      '<span class="rt-delim">/g</span></div>';
+    return '<div class="rt-input-wrap">' +
+      '<input type="text" class="rt-input" data-exid="' + ex.id + '" aria-label="Python regular expression for ' + esc(ex.title || ex.id) + '" aria-describedby="rt-error-' + ex.id + ' rt-result-' + ex.id + '" aria-invalid="false" placeholder="type a Python pattern here" spellcheck="false" autocomplete="off">' +
+      '</div>';
   }
 
   function renderFixerInput(ex) {
     return '<div class="rt-fixer-label">Broken regex (edit to fix):</div>' +
-      '<div class="rt-input-wrap rt-input-fixer"><span class="rt-delim">/</span>' +
-      '<input type="text" class="rt-input" data-exid="' + ex.id + '" aria-label="Broken regular expression for ' + esc(ex.title || ex.id) + '" aria-describedby="rt-error-' + ex.id + ' rt-result-' + ex.id + '" aria-invalid="false" value="' + esc(ex.brokenRegex) + '" spellcheck="false" autocomplete="off">' +
-      '<span class="rt-delim">/g</span></div>' +
+      '<div class="rt-input-wrap rt-input-fixer">' +
+      '<input type="text" class="rt-input" data-exid="' + ex.id + '" aria-label="Broken Python regular expression for ' + esc(ex.title || ex.id) + '" aria-describedby="rt-error-' + ex.id + ' rt-result-' + ex.id + '" aria-invalid="false" value="' + esc(ex.brokenRegex) + '" spellcheck="false" autocomplete="off">' +
+      '</div>' +
       (ex.hint ? '<details class="rt-hint"><summary>Why is it broken?</summary><p>' + ex.hint + '</p></details>' : '');
   }
 
@@ -496,9 +477,7 @@
     }
     h += '</div>';
     h += '<div class="rt-parsons-target" data-exid="' + ex.id + '">';
-    h += '<span class="rt-delim">/</span>';
     h += '<span class="rt-parsons-drop" data-exid="' + ex.id + '" role="group" aria-label="Answer fragments"></span>';
-    h += '<span class="rt-delim">/g</span>';
     h += '</div>';
     h += '<button type="button" class="rt-btn rt-btn-clear" data-exid="' + ex.id + '">Clear</button>';
     // Hidden input for the assembled regex
@@ -606,80 +585,24 @@
 
   // ── Exercise Logic ─────────────────────────────────────────────────────────
 
-  function getPattern(exId) {
-    var el = document.querySelector('.rt-input[data-exid="' + exId + '"]');
-    return el ? el.value : '';
-  }
-
   function setInputInvalid(exId, invalid) {
     var input = document.querySelector('.rt-input[data-exid="' + exId + '"]');
     if (input) input.setAttribute('aria-invalid', invalid ? 'true' : 'false');
   }
 
   function onInput(exId) {
-    var pattern = getPattern(exId);
-    var ex = EXERCISES.filter(function (e) { return e.id === exId; })[0];
-    if (!ex) return;
-
-    var compiled = tryCompile(pattern, 'g');
-    var errEl = document.querySelector('.rt-error[data-exid="' + exId + '"]');
-
-    if (compiled && compiled.error) {
-      if (errEl) { errEl.textContent = compiled.error; errEl.style.display = 'block'; }
-      setInputInvalid(exId, true);
-      clearSample(exId); clearTests(exId);
-      return;
-    }
-    if (errEl) errEl.style.display = 'none';
-    setInputInvalid(exId, false);
-
-    // Highlight sample text
-    if (ex.sampleText !== null) {
-      var sEl = document.querySelector('.rt-sample[data-exid="' + exId + '"]');
-      if (sEl && compiled) sEl.innerHTML = highlightText(ex.sampleText, findMatches(compiled, ex.sampleText));
-      else if (sEl) sEl.innerHTML = esc(ex.sampleText);
-    }
-
-    // Update test icons
-    var testEls = document.querySelectorAll('.rt-tests[data-exid="' + exId + '"] .rt-test');
-    for (var i = 0; i < ex.tests.length; i++) {
-      var t = ex.tests[i], el = testEls[i];
-      if (!el) continue;
-      if (!pattern) { el.className = 'rt-test'; el.querySelector('.rt-test-icon').innerHTML = '&#9679;'; continue; }
-      var ok = checkSingleTest(pattern, t);
-      el.className = 'rt-test ' + (ok ? 'rt-test-pass' : 'rt-test-fail');
-      el.querySelector('.rt-test-icon').innerHTML = ok ? '&#10003;' : '&#10007;';
-    }
-
-    // Hide previous result
-    var rEl = document.querySelector('.rt-result[data-exid="' + exId + '"]');
-    if (rEl) rEl.style.display = 'none';
+    pythonRunner.preview(exId);
   }
 
-  function clearSample(exId) {
-    var ex = EXERCISES.filter(function (e) { return e.id === exId; })[0];
-    if (!ex || ex.sampleText === null) return;
-    var el = document.querySelector('.rt-sample[data-exid="' + exId + '"]');
-    if (el) el.innerHTML = esc(ex.sampleText);
-  }
-
-  function clearTests(exId) {
-    var els = document.querySelectorAll('.rt-tests[data-exid="' + exId + '"] .rt-test');
-    for (var i = 0; i < els.length; i++) {
-      els[i].className = 'rt-test';
-      els[i].querySelector('.rt-test-icon').innerHTML = '&#9679;';
-    }
-  }
-
-  function getFailureHint(ex, pattern) {
+  function getFailureHint(ex, outcomes) {
     // Check visible tests for specific failure patterns to give targeted guidance
     var falsePositives = 0, falseNegatives = 0, wrongExtractions = 0;
     for (var i = 0; i < ex.tests.length; i++) {
       var t = ex.tests[i];
-      var matched = testRegex(pattern, t.input);
+      var matched = outcomes[i].matched;
       if (matched && !t.shouldMatch) falsePositives++;
       if (!matched && t.shouldMatch) falseNegatives++;
-      if (matched && t.shouldMatch && !checkSingleTest(pattern, t)) wrongExtractions++;
+      if (matched && t.shouldMatch && !outcomes[i].passed) wrongExtractions++;
     }
     if (falsePositives > 0 && falseNegatives === 0) {
       return 'Your pattern is matching text it shouldn\'t. Check the failing tests — what is your regex accepting that it should reject?';
@@ -699,12 +622,12 @@
     'literal-2': { q: 'Why does your regex match "error" inside "terror" but not "Error"?', a: 'Literal matching is case-sensitive by default. The lowercase "error" appears as a substring in "terror", but "Error" with a capital E is a different character sequence.' },
     'charclass-1': { q: 'What would happen if you added AEIOU inside the brackets?', a: 'The character class [aeiouAEIOU] would also match uppercase vowels. Character classes match any single character listed inside the brackets.' },
     'charclass-2': { q: 'Why does [^a-zA-Z] match spaces and digits, not just punctuation?', a: 'The negated class [^a-zA-Z] matches any character outside the ASCII letter ranges a–z and A–Z — including digits, spaces, punctuation, and letters such as é.' },
-    'meta-character-1': { q: 'What is the difference between \\d and [0-9]?', a: 'They are functionally equivalent — \\d is a shorthand for the character class [0-9]. Meta characters exist for convenience so you don\'t have to write the full class every time.' },
-    'meta-character-2': { q: 'Why do we need \\. instead of just . to match a literal dot?', a: 'The dot . is a metacharacter (wildcard) that matches any character except line terminators by default. To match an actual period, you must escape it with a backslash, telling the engine to treat it literally.' },
-    'anchor-0': { q: 'Why did \\d+ fail to reject "123abc"?', a: 'Without anchors, the regex engine looks for a matching substring anywhere in the input. It found "123" inside "123abc" and reported success — it doesn\'t care about the rest of the string. Anchors (^ and $) force the match to span the entire input.' },
-    'anchor-1': { q: 'What would happen without the ^ and $ anchors?', a: 'Without anchors, \\d+ would match any sequence of digits anywhere in a string — "abc123def" would match on the "123" substring. Anchors force the entire string to consist of digits.' },
+    'meta-character-1': { q: 'What is the difference between \\d and [0-9]?', a: 'In Python string patterns, \\d matches Unicode decimal digits, including ١ and ３. [0-9] matches only ASCII digits. Add (?a) at the start to give \\d ASCII-only behavior.' },
+    'meta-character-2': { q: 'Why do we need \\. instead of just . to match a literal dot?', a: 'The dot . is a metacharacter (wildcard) that matches any character except newline (\\n) by default. To match an actual period, you must escape it with a backslash, telling the engine to treat it literally.' },
+    'anchor-0': { q: 'Why did \\d+ fail to reject "123abc"?', a: 'Without anchors, the regex engine looks for a matching substring anywhere in the input. It found "123" inside "123abc" and reported success — it doesn\'t care about the rest of the string. Anchors (^ and \\Z) force the match to span the entire input.' },
+    'anchor-1': { q: 'What would happen without the ^ and \\Z anchors?', a: 'Without anchors, \\d+ would match any sequence of digits anywhere in a string — "abc123def" would match on the "123" substring. Anchors force the entire string to consist of digits.' },
     'anchor-2': { q: 'Why does \\b reject "go" inside "cargo" but accept "go" after punctuation?', a: '\\b matches the boundary between a word character (\\w) and a non-word character. In "cargo", both sides of "go" are word characters. After punctuation or at string edges, there\'s a word/non-word boundary.' },
-    'anchor-3': { q: 'When should you always use anchors in a regex?', a: 'Whenever you\'re validating that an entire input matches a format (usernames, passwords, ZIP codes, etc.). Without ^ and $, the regex can succeed by matching any valid substring, ignoring invalid characters elsewhere.' },
+    'anchor-3': { q: 'When should you always use anchors in a regex?', a: 'Whenever you\'re validating that an entire input matches a format (usernames, passwords, ZIP codes, etc.). Without ^ and \\Z, the regex can succeed by matching any valid substring, ignoring invalid characters elsewhere.' },
     'quant-1': { q: 'Why do we need \\b on both sides of \\d{5}?', a: 'Without word boundaries, \\d{5} would match the first 5 digits of a longer number like "1234567". The \\b anchors ensure the 5 digits stand alone as a complete unit.' },
     'quant-2': { q: 'When would you use a* instead of a+?', a: 'Use a* when the element is truly optional (zero occurrences is valid). Use a+ when at least one occurrence is required. Getting this wrong is one of the most common regex bugs.' },
     'quant-3': { q: 'What does the ? quantifier do differently than * or +?', a: 'The ? means "zero or one" — it makes the preceding element optional but doesn\'t allow more than one. It\'s like a binary switch: the element is either there or not.' },
@@ -730,23 +653,10 @@
     if (resultEl) resultEl.insertAdjacentHTML('afterend', html);
   }
 
-  function checkAnswer(exId) {
-    var pattern = getPattern(exId);
-    var ex = EXERCISES.filter(function (e) { return e.id === exId; })[0];
-    if (!ex) return;
+  function finishCheck(ex, outcomes) {
+    var exId = ex.id;
     var rEl = document.querySelector('.rt-result[data-exid="' + exId + '"]');
-
-    if (!pattern) {
-      if (rEl) { rEl.textContent = 'Please enter a regex pattern.'; rEl.className = 'rt-result rt-result-fail'; rEl.style.display = 'block'; }
-      setInputInvalid(exId, true);
-      return;
-    }
-
-    var all = ex.tests.concat(ex.hiddenTests || []);
-    var fails = 0;
-    for (var i = 0; i < all.length; i++) {
-      if (!checkSingleTest(pattern, all[i])) fails++;
-    }
+    var fails = outcomes.filter(function (outcome) { return !outcome.passed; }).length;
 
     if (fails === 0) {
       completedExercises[ex.id] = true;
@@ -755,7 +665,7 @@
       if (exEl) exEl.classList.add('rt-complete');
       var stEl = exEl ? exEl.querySelector('.rt-ex-status') : null;
       if (stEl) stEl.innerHTML = '&#10003;';
-      if (rEl) { rEl.innerHTML = '&#10003; <strong>Correct!</strong> All test cases passed.'; rEl.className = 'rt-result rt-result-pass'; rEl.style.display = 'block'; }
+      if (rEl) { rEl.innerHTML = '&#10003; <strong>Correct!</strong> All test cases passed.'; rEl.className = 'rt-result rt-result-pass'; }
       setInputInvalid(exId, false);
       updateProgress();
       var totalEx = EXERCISES.length, doneEx = 0;
@@ -766,8 +676,8 @@
       }
       showSelfExplanation(ex);
     } else {
-      var hint = getFailureHint(ex, pattern);
-      if (rEl) { rEl.innerHTML = '&#10007; Not quite — ' + fails + ' test case' + (fails > 1 ? 's' : '') + ' failed (including hidden tests). ' + hint; rEl.className = 'rt-result rt-result-fail'; rEl.style.display = 'block'; }
+      var hint = getFailureHint(ex, outcomes);
+      if (rEl) { rEl.innerHTML = '&#10007; Not quite — ' + fails + ' test case' + (fails > 1 ? 's' : '') + ' failed (including hidden tests). ' + hint; rEl.className = 'rt-result rt-result-fail'; }
       setInputInvalid(exId, true);
     }
   }
@@ -788,6 +698,7 @@
 
   function initParsons() {
     document.addEventListener('dragstart', function (e) {
+      if (!ownsExerciseEvent(e)) return;
       if (e.target.classList.contains('rt-frag')) {
         dragFrag = e.target;
         e.target.classList.add('rt-dragging');
@@ -796,18 +707,21 @@
       }
     });
     document.addEventListener('dragend', function (e) {
+      if (!ownsExerciseEvent(e)) return;
       if (e.target.classList.contains('rt-frag')) {
         e.target.classList.remove('rt-dragging');
         dragFrag = null;
       }
     });
     document.addEventListener('dragover', function (e) {
+      if (!ownsExerciseEvent(e)) return;
       if (e.target.closest('.rt-parsons-drop') || e.target.closest('.rt-parsons-bank')) {
         e.preventDefault();
         e.dataTransfer.dropEffect = 'move';
       }
     });
     document.addEventListener('drop', function (e) {
+      if (!ownsExerciseEvent(e)) return;
       var drop = e.target.closest('.rt-parsons-drop');
       var bank = e.target.closest('.rt-parsons-bank');
       if (drop && dragFrag) {
@@ -822,6 +736,7 @@
     });
     // Click to toggle between bank and drop zone (mobile-friendly)
     document.addEventListener('click', function (e) {
+      if (!ownsExerciseEvent(e)) return;
       var frag = e.target.closest('.rt-frag');
       if (!frag) return;
       var parent = frag.parentElement;
@@ -891,11 +806,14 @@
 
     // Events
     document.addEventListener('input', function (e) {
+      if (!ownsExerciseEvent(e)) return;
       if (e.target.classList.contains('rt-input')) onInput(e.target.getAttribute('data-exid'));
     });
     document.addEventListener('click', function (e) {
+      if (!ownsExerciseEvent(e)) return;
       var btn;
-      if ((btn = e.target.closest('.rt-btn-check'))) { checkAnswer(btn.getAttribute('data-exid')); return; }
+      if ((btn = e.target.closest('.rt-btn-check'))) { pythonRunner.check(btn.getAttribute('data-exid')); return; }
+      if ((btn = e.target.closest('.rt-btn-stop'))) { pythonRunner.stop(btn.getAttribute('data-exid')); return; }
       if ((btn = e.target.closest('.rt-btn-skip'))) { skipExercise(btn.getAttribute('data-exid')); return; }
       if ((btn = e.target.closest('.rt-btn-clear'))) { clearParsons(btn.getAttribute('data-exid')); return; }
       if ((btn = e.target.closest('.rt-viz-btn'))) { vizAction(btn.getAttribute('data-k'), btn.getAttribute('data-a')); return; }

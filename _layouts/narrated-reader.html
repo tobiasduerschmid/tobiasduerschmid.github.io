@@ -1,0 +1,57 @@
+{%- comment -%}
+  The reading and print views of an explainer narration (Node.js, React).
+  _data/narration_views.yml names each view's route, chapter, and introduction.
+  It shares the reader shell of narrated-pattern-reader.html: the np-* hooks,
+  js/narrated-pattern-document.js, and css/narrated-pattern-document.css.
+  Front matter: narration, print_view.
+{%- endcomment -%}
+{% assign reader = site.data.narration_views[page.narration] %}
+{% assign explainer = site.data.explainers[page.narration] %}
+<!DOCTYPE html>
+<html lang="en"{% if page.print_view %} class="print-light-mode"{% endif %}>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ page.title | escape }}</title>
+  {% include ai-training-opt-out-meta.html %}
+  {% include print-light-controller.html %}
+  <script src="{{ '/js/sebook-code-preferences.js' | relative_url }}"></script>
+  <script src="{{ '/js/sebook-language-viewport.js' | relative_url }}"></script>
+  <script src="{{ '/js/narrated-pattern-document.js' | relative_url }}"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.7.2/css/all.min.css" integrity="sha384-nRgPTkuX86pH8yjPJUAFuASXQSSl2/bBUiNV47vSYpKFxHJhbcrGnmlYpYJMeD7a" crossorigin="anonymous">
+  <link rel="stylesheet" href="{{ '/css/song-video-fonts.css' | relative_url }}">
+  <link rel="stylesheet" href="{{ '/css/narrated-explainer.css' | relative_url }}">
+  <link rel="stylesheet" href="{{ '/css/' | append: page.narration | append: '-animation.css' | relative_url }}">
+  <link rel="stylesheet" href="{{ '/css/narrated-pattern-document.css' | relative_url }}">
+  <link rel="stylesheet" href="{{ '/css/print-light.css' | relative_url }}">
+</head>
+<body class="np-reader-page">
+  <a href="#main-content" class="np-reader-skip">Skip to lesson</a>
+  <main id="main-content" class="narrated-explainer {{ page.narration }}-animation np-document-page" tabindex="-1">
+    <header>
+      <h1>{{ reader.title | escape }}</h1>
+      <p>{{ reader.introduction | escape }} Read at your own pace, with the code and visualizations for every step.</p>
+      <nav class="np-view-links" aria-label="Lesson views">
+        <a data-np-view-link href="{{ reader.chapter | relative_url }}">Back to narrated version</a> ·
+        {% if page.print_view %}<a data-np-view-link href="{{ reader.path | append: '/read/' | relative_url }}">Reading view</a>{% else %}<a data-np-view-link href="{{ reader.path | append: '/print/' | relative_url }}">Print view</a>{% endif %}
+      </nav>
+      <div class="np-document-controls" hidden>
+        {% if explainer.languages %}
+        {% assign examples_key = page.narration | append: '_code' %}
+        <label>Code language <select data-document-language>{% for language in explainer.languages %}<option value="{{ language }}"{% if language == explainer.default_language %} selected{% endif %}>{{ site.data.explainers[examples_key][language].label }}</option>{% endfor %}</select></label>
+        {% endif %}
+        <button type="button" data-document-print>Print / Save as PDF</button>
+        {% unless page.print_view %}<button type="button" data-document-theme aria-pressed="false">Dark mode</button>{% endunless %}
+      </div>
+      <noscript><p>{% if explainer.languages %}All four languages are included below. {% endif %}Use your browser’s Print command to print this document.</p></noscript>
+      <details class="np-reading-contents"><summary>Lesson sections</summary><nav aria-label="Lesson sections"><ol>{% for scene in explainer.scenes %}<li><a href="#{{ page.narration }}-reading-{{ scene.id }}">{{ scene.label | escape }}</a></li>{% endfor %}</ol></nav></details>
+    </header>
+    <h2>Lesson steps</h2>
+    {{ content }}
+  </main>
+  <footer class="np-document-footer">
+    {% include cookie-notice.html %}
+    {% include ai-training-opt-out-notice.txt %}
+  </footer>
+</body>
+</html>

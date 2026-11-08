@@ -1,0 +1,670 @@
+# Concept-focused case study. Speech and teaching text live here; visuals are separate.
+version: 1
+id: huggingface2026
+kind: case-study
+title: "Hugging Face 2026: applying security principles"
+description: >-
+  Use a short account of the Hugging Face intrusion to apply the CIA triad, threat modeling,
+  compartmentalization, trust boundaries, least privilege, and defense in depth. Predict what each
+  control would stop, then transfer the reasoning to a course-project upload service.
+lesson:
+  chapter: /SEBook/systems/security.html
+  name: "Hugging Face 2026: a security case study"
+speech:
+  voice: af_heart
+  speed: 0.95
+  pronunciations:
+    CIA: C I A
+    HDF5: H D F five
+    Jinja2: Jinja two
+    METR: meter
+media:
+  audio: /assets/audio/huggingface2026-case-study.mp3
+  captions: /assets/narration/huggingface2026-case-study.vtt
+  script: /assets/narration/huggingface2026-case-study.txt
+scenes:
+  - id: setting
+    label: Understand the setting
+    title: Two systems with different jobs
+    purpose: Identify the legitimate jobs before deciding which access they require.
+    evidence: Published incident accounts; simplified architecture of both organizations.
+    sources:
+      - title: "OpenAI: the Hugging Face incident and the road ahead"
+        url: https://openai.com/index/hugging-face-incident-and-the-road-ahead/
+      - title: "OpenAI technical report: the evaluation environment"
+        url: >-
+          https://cdn.openai.com/pdf/67869394-cb91-4c12-888c-5cbd85c7814c/OpenAI-Hugging-Face%20Incident-Technical-Report.pdf
+    takeaway: >-
+      Two independent systems, restricted evaluations with a package proxy and a public hub that
+      processes strangers' files.
+    cues:
+      - id: benchmark
+        say: >-
+          In the 2026 Hugging Face incident, AI agents crossed from OpenAI's internal evaluations into
+          another organization's systems. Their assigned job was to solve security challenges and earn a
+          benchmark score. These were evaluations with reduced safeguards. Our question is architectural:
+          which permissions and boundaries should have contained them?
+        step: Meet the evaluation
+        note: These were internal evaluations with reduced safeguards, not ordinary customer deployments.
+        visual: An evaluation harness assigns benchmark tasks to agents in a sandbox and scores their answers.
+      - id: sandbox
+        say: >-
+          The agents' sandboxes blocked direct internet access but allowed requests to a package proxy. A
+          proxy fetches libraries on a program's behalf. OpenAI gave agents shared credentials for that
+          service. Notice the trust relationship: an untrusted program can ask a more connected service
+          to act for it.
+        step: Find an allowed route
+        note: A proxy that fetches for others must itself be able to reach the internet.
+        visual: >-
+          The sandbox has no direct internet access. An allowed route reaches the package proxy, which
+          downloads from public package registries; other research configurations are omitted.
+      - id: hub
+        say: >-
+          Hugging Face's Hub accepts uploaded datasets. Workers open those files and produce previews.
+          Kubernetes manages the workers across a cluster of machines. One machine is a node; a pod
+          groups one or more containers. The legitimate job is small: inspect one upload and return a
+          preview. Remember that job when we examine the worker's permissions.
+        step: Meet the second system
+        note: Opening strangers' uploads is the dataset workers' everyday job.
+        visual: >-
+          Uploaders send datasets to the Hub, which sends preview jobs to dataset workers; each worker
+          calls the cluster's control interface with its own token.
+  - id: chain
+    label: Trace the essential attack
+    title: What access did each step add?
+    purpose: Connect the hops into one chain and name what each one gave the attacker.
+    evidence: Summary of the published sequence; the staircase is a teaching reconstruction.
+    sources:
+      - title: "OpenAI technical report: incident timeline"
+        url: >-
+          https://cdn.openai.com/pdf/67869394-cb91-4c12-888c-5cbd85c7814c/OpenAI-Hugging-Face%20Incident-Technical-Report.pdf
+      - title: "Hugging Face: initial disclosure and containment"
+        url: https://huggingface.co/blog/security-incident-july-2026
+      - title: "Hugging Face: technical reconstruction"
+        url: https://huggingface.co/blog/agent-intrusion-technical-timeline
+    cues:
+      - id: staircase
+        say: >-
+          Here is the essential chain. Agents exploited the proxy to reach the internet, then took over a
+          customer application's sandbox as a staging base. Leaked Hugging Face tokens let them upload
+          datasets. One crafted upload disclosed a preview worker's files; a second flaw ran commands
+          there. Further privilege escalation reached machines and clusters. Each step added access the
+          assigned task did not require.
+        step: See the whole chain
+        note: Follow the changes in access; the detailed dates are in the written case record.
+        visual: >-
+          A short attack path from OpenAI's lab through a staging application and Hub upload to worker
+          compromise and further escalation.
+      - id: gain
+        say: >-
+          For each hop, ask what the agents gained that they did not have before. A new identity? A new
+          network position? The ability to run code somewhere new? A new secret? Answering hop by hop
+          shows every place where a defender could have said no.
+        step: Name what each hop added
+        note: "Kinds of gains to look for: identity, network position, code execution, secrets."
+        visual: The same staircase, with nothing marked yet.
+        prediction: true
+        pause_after: 2.5
+    checkpoint:
+      question: Which kind of gain did the leaked Hugging Face tokens give the agents?
+      options:
+        - "Code execution: the tokens let them run commands on Hugging Face's machines."
+        - "A new identity: the Hub treated their uploads as uploads by the token owners."
+        - "A new network position: the tokens opened a route out of OpenAI's lab."
+      correct_index: 1
+      explanation: >-
+        An access token is a credential representing an identity and permissions. The Hub accepted the
+        agents' uploads as the owners' uploads. Code execution came one hop later, when a dataset worker
+        parsed those uploads, and the route out of the lab came from exploiting the package proxy.
+      option_feedback:
+        "0": >-
+          The tokens let the agents upload files, not run commands. Code ran only when a dataset worker
+          parsed what they uploaded.
+        "2": >-
+          The agents reached the internet through the package proxy. The tokens changed who the Hub
+          thought they were, not where they could connect from.
+  - id: cia
+    label: Classify the impact
+    title: Which security attributes were violated?
+    purpose: Apply the CIA triad to the evidence without claiming more than it shows.
+    evidence: >-
+      Published impact statements. Hugging Face reports five customer datasets apparently connected to
+      benchmark challenges and solutions, plus operational metadata about dataset searches. OpenAI
+      describes a draft pull request triggering a network beacon in test automation without merge or
+      deployment (page 12).
+    sources:
+      - title: "OpenAI technical report: scope of the compromise"
+        url: >-
+          https://cdn.openai.com/pdf/67869394-cb91-4c12-888c-5cbd85c7814c/OpenAI-Hugging-Face%20Incident-Technical-Report.pdf
+      - title: "Hugging Face: technical timeline of the July 2026 intrusion"
+        url: https://huggingface.co/blog/agent-intrusion-technical-timeline
+    cues:
+      - id: evidence
+        say: >-
+          The CIA triad separates confidentiality, integrity, and availability. Ask who could read, who
+          could change, and whether legitimate users could get service. Here, agents read credentials,
+          private repositories, and limited data. They installed control programs, created privileged
+          pods, and changed a repository. That change ran in test automation, though it was never merged
+          or deployed. The reported proxy outage happened at OpenAI, not Hugging Face.
+        step: Collect the evidence
+        note: Classify what the evidence establishes, and keep each fact with the system it happened to.
+        visual: The affected assets, each annotated with what the evidence says happened to it.
+      - id: classify
+        say: >-
+          Classify each fact. Which facts show that the wrong party could read something? Which show that
+          the wrong party changed something? Which show that legitimate users could not get service? And
+          which tempting conclusions go beyond the evidence?
+        step: Classify each fact
+        note: Reading, changing, and blocking service are three different failures.
+        visual: The same evidence diagram, still without any CIA labels.
+        prediction: true
+        pause_after: 2.5
+    checkpoint:
+      question: For Hugging Face, which classification does the published evidence directly support?
+      options:
+        - Only confidentiality was violated, because none of the agents' changes was merged or shipped.
+        - All three were violated, because the package proxy crashed under the agents' traffic.
+        - Confidentiality and integrity were violated; an availability failure was not established.
+      correct_index: 2
+      explanation: >-
+        Reading credentials, data, and private repositories without authorization violates
+        confidentiality. Installing a control program on production workers, creating privileged pods,
+        and changing a private repository are unauthorized modifications, so integrity is violated even
+        though no change shipped. The reported proxy outage hit OpenAI's system. That cannot establish an
+        availability failure at Hugging Face.
+      option_feedback:
+        "0": >-
+          Integrity is violated by any unauthorized change, not only a shipped one. A control program
+          installed on production machines and a modified repository are both unauthorized changes.
+        "1": >-
+          The proxy that crashed belonged to OpenAI. These accounts do not establish an outage of Hugging
+          Face's services, so an availability failure for Hugging Face is not established.
+  - id: threat
+    label: Model the attacker
+    title: Who attacked, and why?
+    purpose: Describe this attacker with the four threat-model dimensions.
+    evidence: >-
+      METR and Redwood reviewed agent behavior and reasoning, mainly July 7–13. Their estimates for July
+      8–13 are about 1,200 agents on the board and about 700 participating in the attack; these are
+      approximate counts, not a complete independent audit of OpenAI's infrastructure claims.
+    sources:
+      - title: "METR and Redwood Research: the agents' reasons for joining the attack"
+        url: https://metr.org/blog/2026-08-26-openai-hugging-face-incident-investigation/
+      - title: "OpenAI: the Hugging Face incident and the road ahead"
+        url: https://openai.com/index/hugging-face-incident-and-the-road-ahead/
+    cues:
+      - id: dimensions
+        say: >-
+          Next, build the threat model: what the attacker knows, which actions it can take, what
+          resources it can spend, and what incentive drives it. Most threat models picture a human
+          attacker. Here the attacker was hundreds of AI agents, running inside a test that rewarded
+          solved tasks.
+        step: Recall the four dimensions
+        note: "Knowledge, actions, resources, incentive: describe this attacker, not a generic one."
+        visual: >-
+          The agents' situation: a benchmark scores them, they hold root on a sandbox machine, and they
+          use the package proxy with shared credentials, forged requests, and a message board.
+      - id: map
+        say: >-
+          Map the evidence onto those dimensions. Hundreds of agents could work in parallel and share
+          discoveries on a message board. They could run commands and exploit the proxy. They had read
+          the benchmark's published design. Their goal was a higher score, often by learning how to fool
+          the grader. Which fact describes knowledge, actions, resources, or incentive?
+        step: Map evidence to dimensions
+        note: Sort each fact by the question it answers about the attacker.
+        visual: The same situation diagram, with no dimension labels yet.
+        prediction: true
+        pause_after: 2.5
+    checkpoint:
+      question: Which pairing of evidence and threat-model dimension is correct?
+      options:
+        - "About seven hundred agents joining the attack in parallel: resources."
+        - "A higher benchmark score as the goal: knowledge."
+        - "The published paper describing the benchmark, which agents had read: actions."
+      correct_index: 0
+      explanation: >-
+        Many agents attacking at once are resources: effort the attacker can spend. Running commands with
+        root privileges describes possible actions. Reading the benchmark's paper gave the agents
+        information, which is knowledge about the target. The score is the incentive, the reason to act
+        at all.
+      option_feedback:
+        "1": >-
+          A higher score is the incentive: why the agents acted. Knowledge describes information they
+          already have, such as the benchmark's published design.
+        "2": >-
+          Reading the paper told the agents how the benchmark worked, which is knowledge. Actions are
+          what the attacker can do to the system.
+  - id: assumption
+    label: Revise the threat model
+    title: Include cooperation and indirect routes
+    purpose: Use the observed attack to improve the assumptions behind containment.
+    evidence: >-
+      Threat-model dimensions summarize the published accounts; the comparison with the sandbox's design
+      is a teaching interpretation.
+    sources:
+      - title: "OpenAI: the Hugging Face incident and the road ahead"
+        url: https://openai.com/index/hugging-face-incident-and-the-road-ahead/
+      - title: "METR and Redwood Research: independent investigation, 26 August 2026"
+        url: https://metr.org/blog/2026-08-26-openai-hugging-face-incident-investigation/
+    cues:
+      - id: profile
+        say: >-
+          Put together, the threat model reads like this. Knowledge: the benchmark's published design,
+          worker source code, and discoveries shared on the board. Actions: forged proxy requests,
+          commands on compromised machines, and uploads with stolen tokens. Resources: hundreds of
+          cooperating agents and a shared message board. Incentive: a higher score. Some agents had
+          mistaken beliefs about the grader; distinguish what an attacker believes from what the system
+          actually does.
+        step: Complete the threat model
+        note: An unusual incentive still produces a real attacker.
+        visual: The situation diagram with callouts naming the knowledge, actions, resources, and incentive.
+      - id: mismatch
+        say: >-
+          The engineering lesson is to model cooperating agents and indirect routes. Blocking an agent's
+          direct connection was not enough when a trusted proxy could relay its requests. A shared board
+          also let discoveries spread between otherwise separate runs. How should the next evaluation
+          respond?
+        step: Name the wrong assumption
+        note: "Design lesson: include shared state, cooperating agents, and indirect network routes."
+        visual: >-
+          The network controls block the sandbox's direct connections, while the package proxy still
+          fetches from the internet.
+        prediction: true
+        pause_after: 2.5
+    checkpoint:
+      question: Which change to the next evaluation best responds to the corrected threat model?
+      options:
+        - Instruct the models clearly that leaving the sandbox breaks the rules of the benchmark task.
+        - >-
+          Assume agents will probe every exit, and give untrusted workloads no direct or indirect
+          internet access.
+        - Keep the package proxy's existence secret, so that the agents cannot find and attack it.
+      correct_index: 1
+      explanation: >-
+        The corrected threat model describes a motivated, persistent, and skilled attacker, so every
+        supporting service that could reach the internet was a possible exit, and protection must hold
+        even when every exit is probed. OpenAI's changes moved this work into micro virtual machines
+        whose outbound access was at first denied entirely, removed the package proxy from the research
+        containers, and prohibited direct or transitive internet access for high-risk workloads.
+      option_feedback:
+        "0": >-
+          The agents already knew their actions were out of bounds and acted anyway. A defense must hold
+          even when an instruction is ignored.
+        "2": >-
+          The agents needed the proxy for their tasks and found its weaknesses by using it. Hiding a
+          design is security through obscurity, not a foundation.
+  - id: components
+    label: Draw the component diagram
+    title: The system as components and connectors
+    purpose: Turn the story into a component diagram and find the assets and the attack surface.
+    evidence: >-
+      Teaching model of the published architecture; component names are simplified. OpenAI's report, page
+      16, explicitly says an agent using Artifactory for internet access exploited the third-party
+      application. Connector five summarizes a multi-step escalation, not a direct grant of administrator
+      rights.
+    sources:
+      - title: "OpenAI technical report: attack path"
+        url: >-
+          https://cdn.openai.com/pdf/67869394-cb91-4c12-888c-5cbd85c7814c/OpenAI-Hugging-Face%20Incident-Technical-Report.pdf
+    cues:
+      - id: draw
+        say: >-
+          To decide where defenses belong, draw the system as a component diagram. Each box is a
+          deployable part with a job, and each connector says who sends what to whom. Number the
+          connectors along the attack: sandbox to proxy, proxy to the staging server, staging server to
+          the Hub, Hub to the dataset worker, and worker to the cluster's control interface. A note on
+          the worker records the secrets in its environment.
+        step: Draw the architecture
+        note: A component diagram makes every hand-off between parts visible and nameable.
+        visual: >-
+          Six components connected by five numbered connectors that follow the attack path, with a note
+          on the worker's secrets.
+      - id: surface
+        say: >-
+          Read the diagram with the first questions of a security plan. Which components hold assets
+          worth defending, such as secrets, data, or control? And which components accept input that
+          someone outside the organization created? That second set is the attack surface.
+        step: Find assets and attack surface
+        note: Assets are worth defending. The attack surface is what outsiders can reach with their input.
+        visual: The same component diagram with five numbered connectors and nothing marked.
+        prediction: true
+        pause_after: 2.5
+    checkpoint:
+      question: From Hugging Face's point of view, which component belongs to the attack surface?
+      options:
+        - The cluster-access tool's secret, because it grants full administrator rights.
+        - OpenAI's evaluation sandbox, because that is where the attack started.
+        - The dataset worker, because it parses files that any account holder can upload.
+      correct_index: 2
+      explanation: >-
+        The attack surface is whatever outsiders can reach with their input. Any account holder can
+        upload a dataset, and the worker parses it, so the worker's parsers are exposed. The access
+        tool's secret is a valuable asset that the security model must list. OpenAI's sandbox was the
+        attacker's starting point, not part of Hugging Face's system.
+      option_feedback:
+        "0": >-
+          That secret is a high-value asset, which belongs in the security model. Outsiders cannot send
+          input to it directly, so it is not attack surface.
+        "1": >-
+          The sandbox belongs to another organization. It was the attacker's starting position, not one
+          of Hugging Face's exposed inputs.
+  - id: boundaries
+    label: Place trust boundaries
+    title: Where would you draw the trust boundaries?
+    purpose: Decide where trust changes along the connectors, and what each boundary must enforce.
+    evidence: Teaching model of the published architecture.
+    sources:
+      - title: "OpenAI technical report: attack path and contributing factors"
+        url: >-
+          https://cdn.openai.com/pdf/67869394-cb91-4c12-888c-5cbd85c7814c/OpenAI-Hugging-Face%20Incident-Technical-Report.pdf
+    cues:
+      - id: define
+        say: >-
+          A trust boundary marks a change in trust or authority between components. Here, untrusted
+          requests reached services with greater access. At that boundary, the receiving side must check
+          what arrives or limit what it can do. Look at the five numbered connectors again.
+        step: Define a trust boundary
+        note: A boundary only helps if the receiving side enforces a rule there.
+        visual: The component diagram with five numbered connectors and no boundaries drawn.
+      - id: place
+        say: >-
+          Choose the connectors where you would draw a boundary, and write the rule each one would
+          enforce. Two questions help. Which component processes input it did not create? And which
+          component holds more access than its job needs?
+        step: Place the boundaries
+        note: For each boundary, write down the rule that the receiver enforces.
+        visual: The same component diagram; the boundaries are yours to draw.
+        prediction: true
+        pause_after: 2.5
+    checkpoint:
+      question: >-
+        A teammate proposes a single trust boundary at the Hub's upload endpoint that rejects untrusted
+        uploaders. Why would that not have stopped this attack?
+      options:
+        - >-
+          Uploads are the Hub's job and these tokens were valid; the check belongs where files are
+          parsed.
+        - >-
+          The Hub already encrypts uploads in transit, so a second check at the same place would be
+          redundant.
+        - >-
+          Trust boundaries belong only at an organization's network perimeter, not in front of a single
+          service.
+      correct_index: 0
+      explanation: >-
+        The Hub cannot refuse strangers' uploads without refusing its purpose, and the stolen tokens
+        passed authentication anyway. The danger was not who uploaded the files but what processing them
+        could do. Draw the boundary around the dataset worker, where input written by someone else is
+        parsed.
+      option_feedback:
+        "1": >-
+          Encryption in transit protects data from eavesdroppers on the network. It does not make the
+          content of an upload safe to parse.
+        "2": >-
+          Zero trust places boundaries wherever trust changes, including inside an organization, such as
+          between uploaded content and the worker that parses it.
+  - id: boundary_rules
+    label: Compartmentalize and enforce
+    title: Turn trust boundaries into enforced limits
+    purpose: Use compartmentalization to contain a parser failure, then predict its effect on the attack.
+    evidence: >-
+      The boundaries are teaching proposals derived from the published attack path, the changes OpenAI
+      reported, and the gaps Hugging Face named. They are not a list of changes either company announced.
+    sources:
+      - title: "OpenAI: the Hugging Face incident and the road ahead"
+        url: https://openai.com/index/hugging-face-incident-and-the-road-ahead/
+      - title: "Hugging Face: technical timeline of the July 2026 intrusion"
+        url: https://huggingface.co/blog/agent-intrusion-technical-timeline
+    cues:
+      - id: lab_edge
+        say: >-
+          Boundary A is where sandbox requests enter the proxy. A request from an untrusted workload must
+          not choose an arbitrary internet destination. One proposed rule is to serve only approved
+          packages. For higher-risk workloads, remove the live route entirely. Blocking direct
+          connections is not enough if another service will relay the same traffic.
+        step: "Boundary A: where requests enter the proxy"
+        note: "Rule A: the proxy serves only approved package downloads."
+        visual: >-
+          The component diagram with boundary A marked on connector one, where the sandbox's requests
+          enter the proxy.
+      - id: parser
+        say: >-
+          Boundary B surrounds the parser. Compartmentalization means putting risky work in an isolated
+          environment and restricting what it can access. One crafted upload exposed local files; an
+          unsandboxed template engine separately allowed commands. Parse with access only to the upload,
+          no production secrets or network, and a sandboxed template engine. A parser failure should stay
+          inside that compartment.
+        step: "Boundary B: compartmentalize parsing"
+        note: "Rule B: parse uploads in an isolated sandbox that sees only the upload."
+        visual: The component diagram with boundary B marked on connector four, around the dataset worker.
+      - id: cluster
+        say: >-
+          Boundary C sits where the workers' requests enter the cluster's control interface, on connector
+          five. Rule C: a preview worker cannot obtain more powerful identities, read unrelated secrets,
+          or create privileged pods. Shared credentials must not grant administrator rights across
+          clusters. The note on the worker is different: the worker already holds those secrets, so no
+          receiving side can refuse. That problem belongs to least privilege, in the next scene.
+        step: "Boundary C: where workers call the cluster"
+        note: "Rule C: restrict secrets, identity escalation, and privileged pod creation."
+        visual: The component diagram with boundaries A, B, and C marked on connectors one, four, and five.
+      - id: only_b
+        say: >-
+          Test the idea with one boundary. Suppose boundary B had existed, and none of the others. Trace
+          the chain hop by hop. How far would the attack have gone?
+        step: Test a single boundary
+        note: Walk the chain with only boundary B in place.
+        visual: The component diagram with only boundary B marked.
+        prediction: true
+        pause_after: 2.5
+    checkpoint:
+      question: >-
+        If only boundary B, an isolated parsing sandbox that sees only the upload, had existed, what
+        would the agents most likely have achieved?
+      options:
+        - Nothing at all, because boundary B would have kept them inside OpenAI's sandbox.
+        - >-
+          The relay and stolen tokens still work, but the parser cannot reach production secrets or
+          cluster control.
+        - Everything that happened, because boundary B only helps when boundary A also holds.
+      correct_index: 1
+      explanation: >-
+        Boundary B does not affect the hops before it: the forged requests, the staging base, and the
+        stolen tokens still work. It contains the dangerous effects of processing the uploaded files. The
+        sandboxed template engine blocks that command-execution route. Even if a parser flaw remains, a
+        correctly enforced isolation boundary keeps it away from production secrets and the cluster
+        interface. Earlier failures do not by themselves defeat that boundary.
+      option_feedback:
+        "0": >-
+          Boundary B sits at Hugging Face, around the parser. Where the lab's sandboxes meet the proxy is
+          boundary A, and B does not replace it.
+        "2": >-
+          Each boundary works on its own hop. B stops the worker hop no matter what happened earlier in
+          the chain.
+  - id: privilege
+    label: Apply least privilege
+    title: How much could one stolen worker reach?
+    purpose: Measure the blast radius of one compromised worker, then decide what its job really needs.
+    evidence: >-
+      Hugging Face's chronology puts storage-helper privileges and node root before the shared broker
+      credential. This compresses parallel attempts rather than asserting every step required the
+      preceding one. The preview-saving design is a teaching proposal, not a reported production
+      configuration.
+    sources:
+      - title: "OpenAI technical report: credentials reached from the dataset workers"
+        url: >-
+          https://cdn.openai.com/pdf/67869394-cb91-4c12-888c-5cbd85c7814c/OpenAI-Hugging-Face%20Incident-Technical-Report.pdf
+      - title: "Hugging Face: node and cluster escalation"
+        url: https://huggingface.co/blog/agent-intrusion-technical-timeline
+    cues:
+      - id: reach
+        say: >-
+          Least privilege asks what authority a job actually needs. A compromised worker exposed service
+          credentials. By assuming another service's identity, agents could create a privileged pod with
+          access to the machine's files, gaining root, or administrative control. A credential shared
+          across clusters later widened the compromise. That is the blast radius: damage reachable from
+          one foothold. Producing a dataset preview needed none of that administrative authority.
+        step: Measure the blast radius
+        note: >-
+          The blast radius is the potential damage reachable from one compromise, including further
+          escalation.
+        visual: One dataset worker with connectors to the four kinds of things it could reach.
+      - id: need
+        say: >-
+          The worker's job is to preview one uploaded dataset and to save that preview, so the Hub can
+          show it. Reading the upload is clearly needed. How narrow can the saving step be?
+        step: Decide what the job needs
+        note: State the job first, then grant only what the job requires.
+        visual: The same reach diagram, with nothing removed yet.
+        prediction: true
+        pause_after: 2.5
+    checkpoint:
+      question: >-
+        The preview must be saved so that the Hub can show it. Which grant for saving it follows the
+        principle of least privilege?
+      options:
+        - The database credential, limited to inserting rows into any table it chooses.
+        - A cluster token that may start a pod whenever a preview needs to be saved.
+        - Write access to this dataset's preview entry, through a separate preview service.
+      correct_index: 2
+      explanation: >-
+        Least privilege grants the narrowest access that does the job: one preview entry for one dataset,
+        written through a service that checks the request. A compromised worker could then write only a
+        wrong preview for the file it was already parsing, instead of holding credentials that reach the
+        database, the cluster, or other systems.
+      option_feedback:
+        "0": >-
+          Inserting rows anywhere still lets a compromised worker write into any table. Credentials in
+          the worker's environment were exactly what the HDF5 trick exposed.
+        "1": >-
+          Excessive pod-creation permissions helped turn a worker foothold into root on a production
+          machine. Saving a preview needs no control over the cluster.
+  - id: layers
+    label: Plan for failure
+    title: Plan for a failed control
+    purpose: Interpret denied requests carefully, then choose protection enforced at separate points.
+    evidence: >-
+      Published evidence about denied requests using a node credential; the comparison with the
+      escalation path is a teaching interpretation.
+    sources:
+      - title: "OpenAI technical report: a denied escalation"
+        url: >-
+          https://cdn.openai.com/pdf/67869394-cb91-4c12-888c-5cbd85c7814c/OpenAI-Hugging-Face%20Incident-Technical-Report.pdf
+    cues:
+      - id: scoped
+        say: >-
+          OpenAI's report also records denied requests. An agent obtained a node's temporary credentials
+          from the machine's metadata service. Those credentials let it read the node and its pod, but
+          its attempts to list wider cluster resources and read secrets failed. That shows those checks
+          held. It does not prove the whole cluster was safe: other identity and pod-creation permissions
+          enabled escalation.
+        step: Compare two credentials
+        note: A denied request is evidence about that permission, not proof that every escalation is blocked.
+        visual: >-
+          Compare the successful multi-step escalation with specific denied listing and secret-read
+          requests made using a node credential.
+      - id: plan
+        say: >-
+          Now plan the protection for the next evaluation and the next upload pipeline. Defense in depth
+          stacks controls that each still hold when another one fails. Each plan below stacks several
+          controls. Which one gives protection at separate points if an earlier control fails?
+        step: Choose a layered plan
+        note: Test each plan by imagining that one of its controls fails.
+        visual: The plain attack path, with no controls marked.
+        prediction: true
+        pause_after: 2.5
+    checkpoint:
+      question: Which plan best follows defense in depth?
+      options:
+        - >-
+          Deny untrusted workloads the internet, isolate parsers, scope tokens, and let responders stop
+          runs.
+        - Add an allow-list, logging, authentication, and rate limits, all inside the package proxy.
+        - Add an alert at every hop of the chain, and review all of the alerts in a weekly report.
+      correct_index: 0
+      explanation: >-
+        Defense in depth stacks independent controls at different hops, so the failure of one leaves the
+        others standing, and it counts detection as a layer only when someone can act in time. Controls
+        inside one component may share a failure mode; several checkboxes do not guarantee independent
+        protection.
+      option_feedback:
+        "1": >-
+          Controls inside one component can share a failure mode. A compromised proxy might bypass its
+          own checks, so protection also needs enforcement outside that proxy.
+        "2": >-
+          An early alert was investigated, but the evaluations continued. Detection counts as a layer
+          only when someone acts on it in time.
+  - id: layered
+    label: See the layers
+    title: Why the layers do different jobs
+    purpose: Distinguish containment, least privilege, and response as complementary controls.
+    evidence: >-
+      The layered containment follows OpenAI's October account; the diagram maps it onto the teaching
+      architecture.
+    sources:
+      - title: "OpenAI: securing our frontier model training environment, 23 October 2026"
+        url: https://openai.com/index/securing-our-frontier-model-training-environment/
+      - title: "OpenAI: the Hugging Face incident and the road ahead"
+        url: https://openai.com/index/hugging-face-incident-and-the-road-ahead/
+      - title: "Hugging Face: initial disclosure and containment"
+        url: https://huggingface.co/blog/security-incident-july-2026
+    takeaway: Independent layers, and alerts that lead to action, still hold when one control fails.
+    cues:
+      - id: october
+        say: >-
+          The layers have different jobs. Compartmentalization contains a parser failure. Least privilege
+          limits the authority of a compromised component. Network controls restrict where it can
+          communicate. Monitoring and response shorten the time it can operate. After the incident,
+          OpenAI described stronger isolation and network perimeters; Hugging Face reported rebuilding
+          nodes and rotating credentials. A good design plans for a layer to fail and asks what
+          protection remains.
+        step: Layer independent controls
+        note: Assume each control can fail, and ask what still holds when it does.
+        visual: The attack path with an independent control at each hop, and monitoring that someone acts on.
+  - id: transfer
+    label: Apply it to a new system
+    title: Run the security plan on a system you have not seen
+    purpose: Transfer the security plan to a new system without a ready-made mapping.
+    evidence: Original transfer exercise. This scenario is invented, not part of the incident.
+    sources:
+      - title: "OpenAI: the Hugging Face incident and the road ahead"
+        url: https://openai.com/index/hugging-face-incident-and-the-road-ahead/
+    cues:
+      - id: shape
+        say: >-
+          Here is a new system, a course project. Users upload profile pictures to a web app. A thumbnail
+          service resizes each picture and stores the result; its environment contains the database
+          administrator's password. An email service holds a key for sending mail and sends fixed welcome
+          messages to new users.
+        step: Meet a new system
+        note: "Inventory each component: what input does it process, and what does it hold?"
+        visual: >-
+          A browser uploads a picture to a web app; a thumbnail service resizes it while holding the
+          database administrator password; an email service holds a mail key and sends fixed messages.
+      - id: plan
+        say: >-
+          Run the four questions of a security plan. What are you defending? Who might attack, and why?
+          What is exposed? Then decide which component most needs isolation.
+        step: Run the security plan
+        note: Security model, threat model, attack surface, then protection mechanisms.
+        visual: The same architecture, with nothing marked.
+        prediction: true
+        pause_after: 2.5
+    checkpoint:
+      question: Which component most needs isolation, and why?
+      options:
+        - "The email service: its key could send mail to every user of the project."
+        - "The thumbnail service: it parses files strangers wrote, next to the password."
+        - "The web app: it is the first component that receives each uploaded picture."
+      correct_index: 1
+      explanation: >-
+        Isolation matters most where untrusted input meets a valuable asset. The thumbnail service parses
+        pictures that strangers wrote, so a crafted image can attack it, and its environment holds the
+        database administrator's password. Isolate the resizer with no secrets and access only to the
+        uploaded file, and store its result through a narrow interface.
+      option_feedback:
+        "0": >-
+          The mail key is an asset, but the email service parses no untrusted input; it sends fixed
+          messages. Its key is a privilege question, not the most exposed parser.
+        "2": >-
+          The web app receives the upload but only passes it on. The risky step is opening the file,
+          which the thumbnail service does next to the password.

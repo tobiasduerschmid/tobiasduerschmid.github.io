@@ -1,10 +1,12 @@
 # Shared narration format, version 1
 
 All narrated lessons use one source contract: Scrum's animated video, Observer,
-State, Strategy, MVC, the Node.js and React explainers, and the Therac-25 and
-Cloudflare investigations. They share compilation, audio timing, captions,
-transport, fullscreen handling, and a browser data interface. Presentation
-adapters retain their distinct teaching interactions.
+State, Strategy, MVC, the UML diagram lessons, the Node.js and React explainers,
+and the Therac-25, Cloudflare, and Hugging Face case studies. They share
+compilation, the player's scene display, fullscreen handling, and a browser
+data interface; lessons with rendered speech also share audio timing,
+captions, and the transport. Presentation adapters retain their distinct
+teaching interactions.
 
 ## Files and ownership
 
@@ -72,6 +74,16 @@ unique within the lesson; cue IDs are unique within a scene. IDs are permanent
 identities, not positions: retain them when moving or rewording a cue. The
 migrated `cue-1`, `cue-2`, etc. are stable names; never renumber them after an
 insertion. New cues should use meaningful names such as `waiting`.
+
+A `case-study` lesson may omit `media` while its speech is not yet rendered.
+Such a text-only lesson keeps the same `say` text, fingerprint, and decisions,
+but it has no audio, captions, script, or timing file. Its player offers
+step-by-step cue navigation, decisions, scene review, and full screen through
+`NarratedExplainer.step`, and `node scripts/narration.js check`
+reports it as text only instead of requiring timing. A text-only lesson that
+still has a timing file is an error. To add narration later, add the `media`
+block and render the audio as described below. Other kinds always need `media`,
+because their players depend on the audio clock.
 
 `lesson` contains name, summary, prerequisites, chapter/views links, optional
 parts/parts_label, and optional `outline_labels` keyed by scene ID. Pattern
@@ -162,6 +174,13 @@ local, trusted author assets; they are not an untrusted upload format.
    `static_uml: true` to the page if the lesson uses UML. Add the reader/print
    views described in the corresponding narration skill. Jekyll generates
    the notes page automatically; do not copy a per-topic notes page.
+   `jekyll serve --incremental` rebuilds a page when the narration it names
+   changes: its script, visual package, or `_data/explainers/<id>_*`
+   companions. A page names a narration with `topic="..."` on an include, as
+   above, or with `topic:` or `narration:` front matter, as the reader, print,
+   notes, and stage views do (`_plugins/data_regenerator.rb`). Name the topic
+   one of these ways in any new view that reads narration data, or incremental
+   builds keep serving its old content.
 3. Validate before rendering audio:
    ```sh
    node scripts/narration.js compile queues
@@ -191,8 +210,7 @@ cue IDs and the speech fingerprint.
 
 ## Editable lesson notes and PDF export
 
-All nine lessons share the same handout: Scrum, Observer, State, Strategy,
-MVC, Node.js, React, Therac-25, and Cloudflare. The public `narration.html`
+Every lesson shares the same handout, whatever its kind. The public `narration.html`
 entry point adds **Save lesson notes as PDF** (`lesson.notes_url#export`) and
 **Edit lesson notes** (`lesson.notes_url`). The actions are navigation links
 styled as buttons directly below each player, before tips, credits, and the
@@ -292,10 +310,51 @@ and verification screenshots outside the repository.
   keyboard/paste behavior, using the local pinned DOMPurify dependency.
   Native editing commands preserve the browser's undo history; keep storage
   and export orchestration in `narration-notes.js`.
+- `_includes/narration-player-*.html`: the player chrome every kind shares.
+  Every player wraps its stage, checkpoint, and captions in one video
+  (`.vn-video` > `.vn-surface` > `.vn-frame`) and ends it with
+  `narration-player-controls.html`, the one thin control bar, modeled on the
+  song player: the position line; then play, back and forward 5 seconds,
+  previous and next scene, restart, and the clock on the left; mute, volume,
+  captions (CC), the settings toggle, and full screen on the right. Its
+  settings panel holds the scene select, speed, caption size, and landscape
+  in full screen; a player passes its own choices (motion, knowledge check,
+  code language) as `settings` and controls that lead the transport (a case
+  study's step buttons) as `lead`. A case study without rendered speech
+  passes `text_only=true` and gets no position, transport, volume, captions
+  toggle, or speed. `narration-player-tips.html` explains the pointer and
+  keyboard use, `narration-player-scripts.html` loads the shared runtime
+  before a player's own scripts, and the scene and speed selects, the audio
+  element, and the download credit complete the set. Change a shared control
+  here once, not in each player.
 - `js/narrated-explainer.js`: shared audio clock, seeking, speed, motion,
   fullscreen, print lifecycle, and `readData` boundary for every adapter.
+  `enhance` follows the audio clock; `step` shows the same cues without one
+  for a text-only case study, sharing the scene display, fullscreen, and
+  transcript printing. Both bind the control bar to the player they create.
+- `js/narration-player-controls.js`: the control bar's behavior, from the song
+  player's own modules (`js/song-video/`): the same keys in every player (K or
+  Space, the arrow keys, 0 to 9, C, F, and Escape, documented at
+  `/shortcuts/`), controls that hide after 3 seconds of playback in full
+  screen, 5-second skips, captions and their size, volume, the settings panel,
+  and the landscape surface on portrait touch screens. A player with a picture
+  control (video narrations) also plays and skips by click and double-click.
+  While a knowledge check or decision is open, the bar steps aside: the
+  checkpoint replaces the picture, keys typed in it answer it, and its own
+  buttons continue or skip.
+- Full screen fills the screen with the player's video
+  (`css/narrated-explainer.css`): the stage, or the checkpoint that replaces
+  it, takes the whole surface and scrolls inside; captions and the bar
+  overlay its lower edge. Panels marked `data-fullscreen-scroll` become tab
+  stops while the player fills the screen, so the keyboard can scroll them.
+  A checkpoint offers its own **Exit full screen** button there. A video
+  narration adds its 16:9 screen and roadmap (`css/video-narration.css`).
+- `js/narration-diagram.js`: copies a diagram the build drew in the reading
+  version into a player, renaming its ids, for lessons and case studies.
 - `js/narrated-lesson.js`: common mounting, quiz lifecycle, navigation/focus,
-  language refresh, diagram copying, and code highlighting for pattern/video lessons.
+  language refresh, diagram focus, and code highlighting for pattern/video lessons.
+- In-player checkpoints (`.np-quiz` and a case study's `.case-quiz`) share one
+  SebookQuiz style in `css/narrated-explainer.css`.
 - The four presentation adapters own cue rendering and their distinct learning
   interactions. They do not reimplement the clock or parse a second source format.
 

@@ -672,6 +672,44 @@ steps:
             3: Methods in one class often follow one rule, but not always. A two-line test settles it.
           explanation: A learning test turns a claim about unfamiliar code into an observation. It also stays in
             the suite, so it fails if the behavior ever changes.
+        - type: single
+          difficulty: intermediate
+          question: In the help desk repository, you need tickets within one priority to show newest first in
+            `GET /queue`. Where does that ordering rule live?
+          options:
+            - The sort key inside `TicketService.queue`
+            - The `_queue` route handler in `helpdesk/api.py`
+            - The order of rows that `TicketStore.all()` returns
+            - The `PRIORITY_RANK` table in `helpdesk/models.py`
+          correct_index: 0
+          option_feedback:
+            1: The route handler only wraps whatever the service returns in a response. It makes no decisions
+              about order.
+            2: "`queue()` sorts the tickets itself, so the order rows come back from the store does not decide
+              the result."
+            3: That table ranks the priorities against each other. Age within one priority comes from the second
+              part of the sort key.
+          explanation: "`queue()` sorts on `(PRIORITY_RANK[priority], id)`. The first part orders the priorities;
+            the ID, oldest first, orders tickets within one priority, so that is the part to change."
+        - type: single
+          difficulty: intermediate
+          question: "`TicketService.queue` gets its tickets from `store.all()`. Suppose `queue()` changed a
+            ticket's title while building its list and never saved it. What would a later `GET` of that ticket
+            show?"
+          options:
+            - The old title, because `all()` also hands out copies
+            - The new title, because `all()` returns the stored tickets
+            - The new title, because sorting the list saves each ticket
+            - A 500, because the copy no longer matches the store
+          correct_index: 0
+          option_feedback:
+            1: The storage contract covers `all()` as well as `get()`. Both return copies, so changing one never
+              reaches the store.
+            2: Sorting reorders a Python list in memory. Nothing reaches the store until `save()` is called.
+            3: The store never compares copies with its rows, so nothing can fail. The changed copy is simply
+              discarded.
+          explanation: README's storage contract says `get()` and `all()` both return copies. A change to a
+            loaded ticket stays in that copy unless the service calls `store.save(ticket)`.
     solution:
       files:
         - path: test_learning.py
@@ -990,6 +1028,42 @@ steps:
           explanation: A test written after the fix might pass even on the buggy code, in which case it proves
             nothing. Watching it fail first, for the reported reason, shows it detects the bug; watching it pass
             after the fix shows the fix removed it.
+        - type: parsons
+          difficulty: basic
+          question: "Arrange the steps of the debugging process used for report #212 in order. Two of these steps
+            do not belong in it."
+          lines:
+            - Reproduce the report with a test that fails
+            - Name a hypothesis and an observation that could refute it
+            - Make that observation and record the result
+            - Fix the cause in production code
+            - Rerun your test and the team suite
+          distractors:
+            - Edit the team test until the suite passes
+            - Rewrite the whole module from scratch
+          explanation: Reproduce first, so you can trigger the bug on demand. Test a hypothesis with an
+            observation that could prove it wrong before you change code, then fix the cause and rerun both your
+            regression test and the team suite.
+        - type: single
+          difficulty: advanced
+          question: "A new report for the help desk says: \"I changed a ticket to urgent and the response said
+            urgent, but the queue still lists it as low.\" Which first test reproduces it most directly?"
+          options:
+            - Change the priority, then check the ticket in `GET /queue`
+            - Change the priority, then check the change response says urgent
+            - Call `set_priority` on the service and check what it returns
+            - Check that `PRIORITY_RANK` contains the key `urgent`
+          correct_index: 0
+          option_feedback:
+            1: The report already says the response looked right. A test that reads only the response passes
+              whether or not the change was stored.
+            2: "`set_priority` returns the copy it changed, so this checks the same thing as the response. Only a
+              later read shows what was stored."
+            3: That tests a constant, not the user's steps. The report is about what the queue shows after a
+              change.
+          explanation: "Follow the user's steps through the public API and assert on the read that showed the
+            problem, here the queue after the change. A write's own response comes from its copy, as with the
+            replies in #212."
     solution:
       files:
         - path: helpdesk/service.py
@@ -1268,6 +1342,41 @@ steps:
           explanation: A regression test earns trust by failing for the reported reason before the fix. If it
             passes on buggy code, it checks something else, so revise its steps or assertion until it fails,
             then fix the code.
+        - type: single
+          difficulty: advanced
+          question: Besides deleting the newest of two tickets, which sequence also makes `next_id` reuse an ID
+            when it returns `max(self._rows, default=0) + 1`?
+          options:
+            - Delete every ticket, then create one
+            - Delete the oldest of two tickets, then create one
+            - Create 100 tickets without deleting any
+            - Delete an ID that does not exist, then create one
+          correct_index: 0
+          option_feedback:
+            1: The newest ticket still exists, so the highest ID stays in place and `max` steps past it. That is
+              the case the team test covers.
+            2: Without deletes, the highest ID only grows, so `max(...) + 1` never repeats one.
+            3: Deleting an unknown ID changes nothing in the store, so the highest ID is the same as before.
+          explanation: "`max(...) + 1` repeats an ID whenever the highest ID issued so far is no longer stored.
+            Deleting the newest ticket does that, and so does deleting every ticket: with no rows, `max` falls
+            back to 0 and hands out ID 1 again."
+        - type: single
+          difficulty: intermediate
+          question: "Your regression test for report #219 fails before your fix and passes after it. What does
+            that pair of results show?"
+          options:
+            - The test detects this bug, and your fix removes it
+            - Rule 2 now holds for every sequence of creates and deletes
+            - The fix cannot have broken any other README rule
+            - The team suite needed no changes after all
+          correct_index: 0
+          option_feedback:
+            1: The test checks the sequences it runs. Other sequences, like deleting every ticket, need their own
+              evidence or a fix that clearly covers them.
+            2: One test watches one behavior. The team suite and the other README rules are what show nothing
+              else broke.
+          explanation: Failing first shows the test can see the bug; passing after shows the fix removed what
+            the test sees. Wider claims need wider evidence, such as the team suite and the rule itself.
     solution:
       files:
         - path: helpdesk/store.py
@@ -1553,6 +1662,43 @@ steps:
             3: It computes the cleaned value and returns it. Whether that value is stored is up to the caller.
           explanation: Two paths write a priority, creation and the priority change. Both must store what
             `clean_priority` returns, or rule 3 breaks on whichever path was missed.
+        - type: single
+          difficulty: advanced
+          question: "For report #231, a teammate proposes lowercasing the priority only in `Ticket.to_dict()`.
+            Does that fix the crash?"
+          options:
+            - No, because `queue()` sorts on the stored value first
+            - Yes, because every response now shows lowercase priorities
+            - Yes, as long as `GET /tickets/<id>` shows `high`
+            - No, because `queue()` never calls `to_dict()`
+          correct_index: 0
+          option_feedback:
+            1: The responses would look right, but the crash happens before any response is built, while
+              `queue()` sorts the stored tickets.
+            2: GET reads through `to_dict()`, so it would show `high` even though the store still holds `High`.
+              That is the same response-versus-store gap as before.
+            3: It does call `to_dict()`, but only after sorting. The sort key reads `ticket.priority` directly,
+              which is still `High`.
+          explanation: "`queue()` computes `PRIORITY_RANK[ticket.priority]` on the stored ticket before
+            `to_dict()` runs, so it still raises `KeyError`. Only storing the cleaned value fixes every reader."
+        - type: single
+          difficulty: intermediate
+          question: "After you fix both write paths for report #231, every team test passes. What does the
+            green suite tell you about rule 3 on `POST /tickets/<id>/priority`?"
+          options:
+            - Nothing, because no team test calls that request
+            - That rule 3 holds there, since the whole suite passes
+            - That the request crashes no more, though case may still differ
+            - That rule 3 holds there, because both paths use `clean_priority`
+          correct_index: 0
+          option_feedback:
+            1: A suite only speaks for the requests it makes. None of the team tests changes a priority, so it
+              is silent about that path.
+            2: The suite never sends that request, so it cannot show a crash is gone either.
+            3: Sharing a helper is not the same as being tested. In this very bug, one path called
+              `clean_priority` and still stored the raw text.
+          explanation: A passing suite is evidence only for what it runs. The priority-change path needs its own
+            test, which is why this step asks you to write one.
     solution:
       files:
         - path: helpdesk/service.py
@@ -1907,6 +2053,41 @@ steps:
             3: "`to_dict()` includes every field, whether it changed or not."
           explanation: As in step 2, a write's response comes from the copy it changed. Patch B never saves that
             copy, so the stored ticket stays closed; a GET after the reopen exposes it.
+        - type: single
+          difficulty: advanced
+          question: "A fourth assistant proposes `if day - ticket.closed_on > REOPEN_WINDOW_DAYS + 1:` for report
+            #240. Which test rejects that patch?"
+          options:
+            - Reopen on day 10 after a day-2 close, expecting 409
+            - Reopen on day 9 after a day-2 close, expecting 200
+            - Reopen the day after closing, expecting 200
+            - Reopen a ticket that was never closed, expecting 409
+          correct_index: 0
+          option_feedback:
+            1: Day 9 is 7 days after day 2, and 7 is not greater than 8, so this patch allows it, as rule 7 does.
+              The test passes.
+            2: One day after closing is well inside both the patch's window and rule 7's, so the test passes.
+            3: The patch leaves the open-ticket check alone, so that request still returns 409 and the test passes.
+          explanation: The patch moves the boundary outward by one day, so it wrongly allows day 10, which is 8
+            days after day 2. Only a test of the first day outside the window can tell. Boundaries have two
+            sides, and each needs its own test.
+        - type: single
+          difficulty: intermediate
+          question: "You accept Patch C for report #240. What makes that a sound decision rather than trust in
+            the assistant?"
+          options:
+            - Your tests of rule 7's boundaries and a fresh GET pass on it
+            - The other two patches failed, so the third is likely right
+            - It passes every test in the team suite
+            - Its explanation describes the change confidently and clearly
+          correct_index: 0
+          option_feedback:
+            1: Each patch stands or falls on its own evidence. Two wrong answers say nothing about the third.
+            2: All three patches passed the team suite, including the two that were wrong.
+            3: Its explanation was actually wrong about the cause. Confidence and clarity are not evidence about
+              the code.
+          explanation: Accepting a patch is a claim, too, so it needs the same kind of evidence as rejecting one,
+            here tests at rule 7's boundaries and a fresh GET after the reopen.
     solution:
       files:
         - path: helpdesk/service.py
@@ -2272,7 +2453,7 @@ steps:
           question: The pull request edits two team tests. Which edit should you keep?
           options:
             - The new `closed_on` check, which rule 7 requires
-            - The relaxed priority check, which matches the API today
+            - The relaxed `in (201, 400)` check, which matches the API
             - Both, because the agent's edits leave the suite green
             - Neither, because a pull request should never edit tests
           correct_index: 0
@@ -2304,6 +2485,40 @@ steps:
               authorize.
           explanation: Reject invalid input where it enters, so no invalid ticket ever exists. It is the same
             move as in step 4, fixing where the bad value is created instead of where it is used.
+        - type: single
+          difficulty: advanced
+          question: The festival decides to widen the help desk's reopen window to 10 days, and README rule 7 is
+            updated. What should happen to the tests that encode the old 7-day window?
+          options:
+            - Update them to the new window, along with the README
+            - Leave them alone, since tests should never be edited
+            - Delete them, since the rule they checked no longer exists
+            - Relax them to accept both 200 and 409 near the boundary
+          correct_index: 0
+          option_feedback:
+            1: Tests encode requirements. When a requirement changes on purpose, its tests change with it, or
+              they keep enforcing the old rule.
+            2: The rule still exists with a new boundary. Without tests, a later change could break it unnoticed.
+            3: That is the agent's weakening again. A test that accepts both answers checks neither boundary.
+          explanation: Edit tests when the requirement itself changed on purpose, and make them encode the new
+            rule exactly, including its new boundary days.
+        - type: single
+          difficulty: intermediate
+          question: "Before you trust the restored `test_unknown_priority_is_rejected` for report #248, what
+            shows that it can catch the bug?"
+          options:
+            - It fails on the current code and passes after your fix
+            - It passes on the current code, before you fix anything
+            - It has more assertions than the agent's version
+            - The agent reviews it and agrees it is correct
+          correct_index: 0
+          option_feedback:
+            1: A test that passes on buggy code cannot see the bug. Watching it fail first is the evidence.
+            2: More assertions are not stronger by themselves. What matters is whether it fails when the rule
+              is broken.
+            3: The agent wrote the weakened version. Its agreement is a claim, not an observation of the test.
+          explanation: As with a new regression test, watch the restored test fail for the reported reason, then
+            pass once the cause is fixed.
     solution:
       files:
         - path: helpdesk/validation.py
@@ -2694,6 +2909,45 @@ steps:
               rule.
           explanation: Evidence comes from running the code against the spec, with tests that encode the README's
             rules and observations of the stored state. Claims and agreement are not observations.
+        - type: single
+          difficulty: advanced
+          question: "For report #255, your first test closes a ticket and then reads `GET /queue`. It passes on
+            the buggy code. Why?"
+          options:
+            - Nothing was cached, because the queue wasn't viewed first
+            - pytest resets the queue cache between the two requests
+            - Closing clears the cache in tests but not at the info tent
+            - The close was not saved, so the queue never saw it
+          correct_index: 0
+          option_feedback:
+            1: The `app` fixture builds one app per test, and both requests go to that same app. Nothing resets
+              the cache in between.
+            2: Tests and the screen run the same service code. The difference is the order of requests, not
+              where they run.
+            3: Closing does reach the store; a fresh GET shows `closed`. The stale list only exists once the
+              queue was viewed first.
+          explanation: The cache fills on the first `GET /queue`. If the test closes before any view, the queue
+            is built fresh from the store and already leaves the ticket out. Only view, close, view reproduces
+            what the screen does.
+        - type: single
+          difficulty: expert
+          question: In an unfamiliar repository, a POST returns the right data, but a later GET of the same
+            resource does not. Which cause does this tutorial suggest checking first?
+          options:
+            - The write changed a copy that never reached the store
+            - The GET route parses the ID differently from the POST route
+            - The test client caches GET responses between requests
+            - The two requests ran in parallel and raced each other
+          correct_index: 0
+          option_feedback:
+            1: Possible, but it would usually return a 404 or another ticket, not the same ticket in an older
+              state.
+            2: Test clients like this one call the app directly on every request. Check for that only after the
+              cheaper explanation is ruled out.
+            3: These requests run one after another. Race conditions need concurrency the steps never had.
+          explanation: "A response built from a changed copy and a read from the store disagree exactly when the
+            change never reached the store. Replies in #212 and Patch B both had this shape, and one fresh GET
+            tests for it."
     solution:
       files:
         - path: helpdesk/service.py

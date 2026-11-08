@@ -475,6 +475,35 @@ individual matches or their boundaries; a boolean match alone cannot verify
 those requirements. Live test indicators and final grading must apply the
 same expectations while accepting equivalent regex patterns.
 
+Both legacy tutorials use **real Python `re`**, through the locally pinned
+Pyodide simulator worker, for live previews and final checks. Enter bare Python
+patterns in their controls; code examples use raw strings. Author named groups
+as `(?P<name>...)`, named backreferences as `(?P=name)`, and Python accessors
+such as `match.group('name')`. String-pattern `\d`, `\w`, and `\s` are Unicode
+by default; `(?a)` selects ASCII behavior. For strict whole-input validation,
+use `\A`/`\Z` or `re.fullmatch()` in Python code: `$` also matches before a
+final newline. Lookbehinds must have fixed width.
+
+The pages load `js/python-regex-client.js`, then
+`js/regex-tutorial-python.js`, then their exercise-definition script. The
+DOM-free client serializes requests to `js/regex-simulator-worker.js` and
+converts Python code-point match spans to JavaScript UTF-16 offsets for
+highlighting. It rejects truncated match lists instead of grading partial
+results. Startup has a 45-second deadline; each analysis has a three-second
+deadline once Python is ready. Cancellation or timeout terminates the active
+worker and the next request starts a replacement. The shared tutorial
+controller debounces previews by 200 ms, snapshots each submitted pattern,
+cancels that exercise's older preview/check on edits, and discards stale
+responses before changing highlights or awarding completion. **Stop** cancels
+the current preview/check, with accessible loading/error/result messages.
+Named-group checks inspect actual Python captures, never source-text spelling.
+Each legacy script handles only events from its own exercise IDs, so embedding
+both tutorials in a combined course page does not toggle Parsons fragments twice.
+Progress keys and exercise identities are unchanged. When changing these
+modules, verify all model solutions, Python-only syntax, Unicode highlights,
+syntax errors, Stop/retry, timeout/retry, and edits during a pending check in
+`tests/regex-tutorial.spec.js`.
+
 ### Multi-layered hints
 
 Hints are the project's primary way to keep students unstuck without giving
@@ -1654,7 +1683,7 @@ shown either. `code_*`/`source_*` read only the step's open editor file. Hints
 about repository state should be unconditional and self-diagnosing ("If
 `git status` says …, run …").
 
-### 3.4 Inline Python object-reference labs
+### 3.4 Inline value and object-reference labs (Python and C++)
 
 **Use an object-reference lab when a mistaken model of identity or sharing
 would change the learner's prediction and the diagram can reveal why.** Use it
@@ -1662,7 +1691,7 @@ for assignment mistaken for copying, mutation confused with rebinding, nested
 members assumed independent, parameters or loop names mistaken for caller or
 container slots, equality mistaken for identity, shared defaults across calls,
 and class state confused with instance state. Choose the learner's likely
-reasoning error first; a matching Python keyword is not sufficient.
+reasoning error first; a matching language keyword is not sufficient.
 
 Apply an editorial test before embedding:
 
@@ -1712,7 +1741,7 @@ separately from empirically observed student models. Do not claim that the
 examples are validated interventions or that all targets are the most frequent
 errors without corresponding learner evidence.
 
-An `instructions:` Markdown block can embed a prepared, editable Python lab:
+An `instructions:` Markdown block can embed a prepared, editable lab:
 
 ```yaml
 instructions: |
@@ -1723,7 +1752,8 @@ instructions: |
 
 The marker is ordinary authored HTML, not a new step field or a code fence.
 Place it beside the concept it explains. Prepared definitions live in
-`_data/object_reference_examples.yml`, keyed by example name, with `title`,
+`_data/object_reference_examples.yml` (Python) and
+`_data/object_reference_cpp_examples.yml` (C++), keyed by example name, with `title`,
 `code`, `prediction`, and `explanation`. Optional `variation` contains the
 controlled-edit question; optional `variation_explanation` supplies its separate
 answer disclosure. Both are plain text like the other prose fields. Keep the
@@ -1731,8 +1761,11 @@ question free of its answer and specify that it starts from the prepared code.
 Printing an unchanged prepared example includes both the variation and its
 answer. Printing arbitrary edited code omits prepared explanations and variation
 feedback, so an old answer cannot describe a new program. Generated
-`_data/object_reference_labs.json` adds `trace` using the same Python tracer
-as the browser lab. The generated data is exposed at
+`_data/object_reference_labs.json` adds `trace` using the same language producer
+as the browser lab. `language: cpp` selects C++; omitted `language` defaults to
+Python. The build invokes `scripts/build-object-reference-cpp-traces.mjs` for
+trusted authored C++ snippets, using the shared instrumenter/header and native
+Clang; browser edits execute with the pinned Clang/WASI worker. The generated data is exposed at
 `/assets/object-reference-labs.json` by `object-reference-lab-examples.json`.
 Keep source definitions and generated traces synchronized after editing code:
 run `python3 scripts/build-object-reference-traces.py`, then validate with
@@ -1742,8 +1775,8 @@ The chapter include `{% include object-reference-lab.html example="shared_slots"
 embeds that same record directly in a static SEBook page; use the HTML marker
 inside tutorial YAML because its content is not processed as a Liquid template.
 
-Every lab now has one always-visible **Python code** editor beside the diagram.
-It combines editing, Python syntax highlighting, line numbers, and a marker for
+Every lab has one always-visible **Python code** or **C++ code** editor beside the diagram.
+It combines editing, language-appropriate syntax highlighting, line numbers, and a marker for
 the operation represented by the displayed state. The old `data-object-reference-editor="inline"` and include
 `editor="inline"` options remain harmless compatibility attributes; omitting
 them no longer hides the editor. Do not add a separate read-only source pane.
@@ -1771,7 +1804,7 @@ list construction rather than another widget.
 The unified editor supports automatic retracing and forward/backward playback.
 
 The lab shows recorded scopes, objects, and references alongside editable
-Python. **Forward**, **Back**, and **Play** use one filtered timeline without executing
+source code. **Forward**, **Back**, and **Play** use one filtered timeline without executing
 the program again. The Python tracer marks definition-only bookkeeping with
 `skipPlayback: true`; the controller omits those stops and numbers the visible
 steps consecutively. Raw traces retain every recorded event. Skip ordinary
@@ -1780,9 +1813,9 @@ class-body assignments, called bodies, function returns, and errors. Potentially
 effectful defaults, decorators, bases, and annotations stay visible conservatively.
 Definitions still execute; skipping a playback stop does not bypass Python code.
 Edits automatically record the current code after 650 ms without further input,
-using a fresh disposable Pyodide worker; it does not execute the tutorial editor's files or change the
-tutorial's own Python interpreter. Prepared examples work without starting that
-worker. There is no Trace Python button; editing is the execution trigger.
+using a fresh disposable language worker (Pyodide or C++ Clang/WASI); it does
+not execute the tutorial editor's files or change its runtime. Prepared examples work without starting that
+worker. There is no separate trace button; editing is the execution trigger.
 Each update reruns
 the whole program and restores the same visible step number, clamping to the
 last available step if the successful trace is shorter. This is not execution
@@ -1799,29 +1832,61 @@ messages. Do not execute during IME composition. Restore original code cancels
 queued/running work. Restart during an update selects step 1 when it is ready. Dispose queued work
 as well as workers when instructions unmount or the page is left. Do not steal
 focus, selection, or editor scroll on an automatic result while it is focused.
-The tracer's additive `visualizedLine` identifies the operation represented by
-that snapshot, separately from the raw Python event's `line`. Ordinary pre-line
-events highlight the previously executed line in that frame; call entry highlights
+Each producer's additive `visualizedLine` supplies the source location represented
+by that snapshot, separately from its raw event's `line`. For Python, ordinary pre-line
+events highlight the previously completed operation in that frame; call entry highlights
 the call site that bound its arguments; resuming a caller highlights its call or
 assignment. Return, exception, and error events identify their own source line.
-Passive declaration bookkeeping is excluded from highlights. Initial states have
-no marker, and final states retain the last represented operation or error.
+Python's passive declaration bookkeeping is excluded from highlights.
+C++ observes completed declaration and expression statements, maps function entry
+to the definition line, and observes return before evaluating its expression.
+Return-expression effects appear in nested calls or the next completed caller
+statement; expanded macros retain their invocation line. See
+`docs/object-reference-cpp.md` for the producer's timing and lifetime details.
+Initial states have no marker, and final states retain the last represented
+source line; errors retain their producer's source mapping.
 The editor, status label, and printed source excerpt all use `visualizedLine`.
 Ordinary status labels say `Line N`, or `Before first statement` when no operation
-has run; special event labels retain their entry/return/error description. Keep
+has run; the shared entry caption says `Entering a scope · Line N` without
+assuming a call site, and return/error labels retain their description. Keep
 raw events, `line`, and `skipPlayback` unchanged so source metadata does not alter
 recorded scopes, values, or filtering. Object IDs are diagram identities, not
 memory addresses. Collection timing is not represented as a guarantee.
 Bounded source, execution, output, and graph
 limits report incomplete traces rather than silently presenting them as complete.
 
-The diagram keeps individual name/reference slots beside their objects, without
-scope panels. **Every visible data identity has one card, including strings,
-numbers, Boolean values, and None.** Never inline primitive values at each use
+The diagram consumes language-independent storage snapshots. Each binding has
+`name`, `target`, and optional `semantics`: `value` names appear inside their own
+storage card; `reference` names are labeled aliases inside that same card;
+`object-reference` names each have a separate pointer box and arrow. Omitted
+semantics means object-reference for older embeds. Do not draw a pointer arrow
+for a C++ reference alias. The renderer never chooses semantics from a type name.
+Each object has `id`, `type`, optional `value`, `entries`, `note`, and `hidden`.
+Entries with `target` are reference slots; entries with `value` are contained
+value cells. Optional `displayLabel` supplies a producer-selected label without
+changing an entry's stable `label` identity. `hidden` omits incidental objects
+only from the diagram; Reference details retains the full recorded state.
+
+The Python producer explicitly emits object-reference semantics, marks its
+incidental function/module/empty-class objects hidden, and labels `__class__`
+edges. **Every visible Python data identity has one card, including strings,
+numbers, Boolean values, and None.** Never inline Python primitives at each use
 or merge equal literals: both hide sharing. For `t = "draft"; row = [t]`, the
-name and slot point to the same string card. Member reference buttons focus
-the target card. Function/module objects and classes without displayed data
-attributes remain omitted; Reference details retains the complete recorded state.
+name and slot point to the same string card. Member reference buttons focus the
+target card. Language-specific presentation policy belongs to the producer.
+
+The separate `/SEBook/tools/cpp-parameter-passing-lab.html` walkthrough compares
+value copies, reference aliases, pointers passed by value, explicit copy-in/out,
+macro precedence, repeated evaluation, name capture, and Python argument binding.
+Copy-in/out is labeled a simulation; it is not a native C++ parameter mode.
+Use defined macro examples: `(++x) * (++x)` has undefined behavior, not a portable
+numeric output. Macro expansion states retain their invocation's source line.
+See `docs/object-reference-cpp.md` for supported syntax, lifetime handling,
+diagnostics, and bounds; do not present this observer as a general C++ debugger.
+Both languages share renderer, replay, accessible descriptions, and print history.
+C++ workers report `ready` after loading and `running` before execution; loading,
+compilation, and execution have separate deadlines and cancellation stays owned
+by the lab controller.
 
 `js/object-reference-graph.js` loads its pinned local ELK 0.12.0 API and worker;
 the ESM adapter isolates its API from Monaco’s AMD loader. No extra script tag

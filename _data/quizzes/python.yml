@@ -127,24 +127,24 @@ questions:
 
   - id: 4
     difficulty: advanced
-    question: "A student writes a function that opens a file, but forgets to close it. Their C++ instinct says 'this will leak the file handle.' Is this concern valid in Python, and what is the recommended solution?"
+    question: "A Python function opens a file without using `with`, and never calls `close()`. Does the programmer need to arrange for the file to close, and what is the recommended approach?"
     options:
-      - "Not valid — Python's garbage collector will always close the file immediately"
-      - "Valid — use the `with` statement (context manager); it guarantees cleanup like C++ RAII."
-      - "Not valid — Python files are always auto-closed when the variable goes out of scope"
-      - "Valid, but there is no Python equivalent of RAII — you must always use try/finally"
+      - "No — Python's garbage collector always closes files immediately."
+      - "Yes — use `with open(...)` to close it when the block ends."
+      - "No — Python always closes files when their names leave scope."
+      - "Yes — manually call `close()` after each statement that could fail."
     correct_index: 1
     option_feedback:
       0: |
-        Python may eventually close the file, but correctness for files, locks, and sockets needs
-        deterministic cleanup at block exit.
+        Python may eventually close the file, but that does not tell you when it will close.
+        Use `with open(...)` so it closes when you leave the block.
       2: |
-        Python variables going out of scope is not the portable cleanup guarantee; context managers
-        provide the RAII-like boundary.
+        Leaving a function does not guarantee immediate file closure across Python implementations.
+        A `with open(...)` block gives an explicit point where the file closes.
       3: |
-        `with` is the standard Python abstraction for `try/finally` cleanup, and it keeps the resource
-        protocol local and readable.
-    explanation: "Do not rely on garbage-collection timing to release a file. `with open('file') as f:` closes it when the block exits, including when an exception unwinds the block. Other context managers define their own exit behavior; for example, a database context may manage a transaction without closing the connection."
+        If a statement raises an error, a following `close()` call may never execute.
+        `with open(...)` handles cleanup even when an error leaves the block.
+    explanation: "Use `with open('file') as f:` to close the file when execution leaves the indented block, even if an error occurs. Python reclaiming an object's memory is a separate process; do not rely on its timing to close a file."
 
   - id: 5
     difficulty: intermediate
@@ -535,24 +535,6 @@ questions:
       1: "A membership search can inspect all n values; a new concatenated list needs n + m references."
       2: "Indexed access does not traverse earlier slots, and concatenation must populate its new outer list."
     explanation: "CPython lists use an array of references. Concatenation differs from append, which adds one object in amortized O(1), and extend, which adds m references in amortized O(m)."
-
-  - id: 22
-    type: single
-    difficulty: basic
-    question: |
-      An OpenCL kernel converts many temperature samples in parallel.
-      What role does a work-item's global ID play?
-    options:
-      - "It selects which sample that work-item handles."
-      - "It gives every sample the same numeric value."
-      - "It chooses the Python class used for each sample."
-      - "It guarantees equal speed on every supported device."
-    correct_index: 0
-    option_feedback:
-      1: "The ID identifies work; the kernel still computes a result from its own input sample."
-      2: "OpenCL is a separate parallel-computing standard, not Python's object-allocation mechanism."
-      3: "Portable programming interfaces do not guarantee identical device capabilities or performance."
-    explanation: "A kernel can use its global ID as an index, check that it is within the data bounds, and process that sample. Different work-items handle different indices."
 
   # Later practice combines ownership decisions with the earlier reference model.
   - id: 23

@@ -99,7 +99,7 @@
     {% for question in vn_check_questions %}
       <li>
         <p><strong>Answer {{ vn_letters[question.correct_index] }}: {{ question.options[question.correct_index] | escape }}.</strong> {{ question.explanation | escape }}</p>
-        {% for option in question.options %}{% assign vn_why_not = question.option_feedback[forloop.index0] %}{% if vn_why_not and forloop.index0 != question.correct_index %}<p><strong>Why not {{ vn_letters[forloop.index0] }}:</strong> {{ vn_why_not | escape }}</p>{% endif %}{% endfor %}
+        {% for option in question.options %}{% comment %} Feedback keys are quoted strings in case-study YAML and integers in quiz files. {% endcomment %}{% capture vn_feedback_key %}{{ forloop.index0 }}{% endcapture %}{% assign vn_why_not = question.option_feedback[vn_feedback_key] | default: question.option_feedback[forloop.index0] %}{% if vn_why_not and forloop.index0 != question.correct_index %}<p><strong>Why not {{ vn_letters[forloop.index0] }}:</strong> {{ vn_why_not | escape }}</p>{% endif %}{% endfor %}
       </li>
     {% endfor %}
     {% endif %}

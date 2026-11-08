@@ -36,13 +36,14 @@
     /** Replace the history with already-filtered playback steps. labelStep(step)
      * supplies the same execution-position wording as the interactive view.
      * Prepared guidance is optional; callers omit it for edited programs. */
-    render({ code, steps, labelStep, explanation, variation, variationExplanation, error }) {
+    render({ code, steps, labelStep, explanation, variation, variationExplanation, error, language = 'python' }) {
+      this.language = language;
       this.timeline?.cancel();
       this.timeline = new window.ObjectReferenceGraph.ReferenceTimeline(steps);
       this.snapshots.forEach(snapshot => snapshot.graph?.destroy());
       const source = element('pre', 'orl-print-source');
-      source.append(window.ObjectReferenceCode.highlight(code));
-      this.host.replaceChildren(element('p', 'orl-panel-title', 'Python code'), source);
+      source.append(window.ObjectReferenceCode.highlight(code, language));
+      this.host.replaceChildren(element('p', 'orl-panel-title', window.ObjectReferenceCode.languageLabel(language) + ' code'), source);
       const lines = code.split('\n');
       // Do not build thousands of hidden cards for a long edited trace.
       // Native printing still prepares every requested state synchronously.
@@ -70,7 +71,7 @@
       block.append(caption);
       if (step.visualizedLine > 0 && lines[step.visualizedLine - 1] !== undefined) {
         const sourceLine = element('pre', 'orl-print-line');
-        sourceLine.append(window.ObjectReferenceCode.highlight(lines[step.visualizedLine - 1]));
+        sourceLine.append(window.ObjectReferenceCode.highlight(lines[step.visualizedLine - 1], this.language));
         block.append(sourceLine);
       }
       const description = window.ObjectReferenceGraph.describeState(step);

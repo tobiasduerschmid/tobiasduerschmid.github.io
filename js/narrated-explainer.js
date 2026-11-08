@@ -1,4 +1,4 @@
-/* Shared narration transport. Native audio is the only clock; scene renderers own visuals. */
+/* Shared narration transport. Native audio is the only clock (step() has none); scene renderers own visuals. */
 (function () {
   'use strict';
   // Media clocks quantize timestamps; a sub-millisecond roundoff is not a previous cue.
@@ -19,6 +19,15 @@
     request: (target) => (target.requestFullscreen ? target.requestFullscreen() : target.webkitRequestFullscreen()),
     exit: () => (document.exitFullscreen ? document.exitFullscreen() : document.webkitExitFullscreen()),
   };
+
+  // A toggle names its next action in its accessible name and tooltip (both
+  // the native title and the site's tooltip copy) and shows the matching icon.
+  function labelControl(button, label, icon) {
+    button.setAttribute('aria-label', label);
+    button.title = label;
+    button.setAttribute('data-original-title', label);
+    button.querySelector('i').className = `fa ${icon}`;
+  }
 
   // A player may place its own hidden button; otherwise one follows the mute button.
   function addFullscreenButton(root) {
@@ -62,28 +71,155 @@
     return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, '0')}`;
   }
 
+  // Shows one cue: its scene panel, the scene select, the narration text, and
+  // the art label. show() reports whether the scene changed.
+  function cuePresenter(root, storyboard) {
+    const scenes = Array.from(root.querySelectorAll('[data-scene]'));
+    const sceneSelect = root.querySelector('[data-setting="scene"]');
+    const narration = root.querySelector('.nja-narration p');
+    let shownScene = -1;
+    let shownCue = -1;
+    function show(index, cueIndex) {
+      const sceneChanged = index !== shownScene;
+      if (sceneChanged) {
+        scenes.forEach((scene, number) => { scene.hidden = number !== index; });
+        sceneSelect.value = String(index);
+      }
+      if (sceneChanged || cueIndex !== shownCue) {
+        const cue = storyboard.scenes[index].cues[cueIndex];
+        narration.textContent = cue.text;
+        // A scene's own art region names what it shows; a player with one
+        // screen shared by every scene labels that screen in its renderer.
+        const art = scenes[index].querySelector('.nja-art');
+        if (art) art.setAttribute('aria-label', cue.visual);
+      }
+      shownScene = index;
+      shownCue = cueIndex;
+      return sceneChanged;
+    }
+    return { scenes, show };
+  }
+
+  // Makes the target fill the screen and keeps the button and the
+  // narration-fullscreenchange event in step, however full screen changed.
+  function fullscreenControl(root, target) {
+    const button = addFullscreenButton(root);
+    let viewportFullscreen = false;
+    let wakePage = null;
+    const isFullscreen = () => viewportFullscreen || nativeFullscreen.element() === target;
+
+    function updateButton(active) {
+      labelControl(button, active ? 'Exit full screen' : 'Enter full screen', active ? 'fa-compress' : 'fa-expand');
+    }
+
+    // Panels marked data-fullscreen-scroll scroll inside the full-screen frame,
+    // so they are tab stops there and the keyboard can scroll them.
+    function syncScrollPanels(active) {
+      target.querySelectorAll('[data-fullscreen-scroll]').forEach((panel) => {
+        if (active) panel.tabIndex = 0;
+        else panel.removeAttribute('tabindex');
+      });
+    }
+
+    function sync() {
+      const active = isFullscreen();
+      target.classList.toggle('is-fullscreen', active);
+      syncScrollPanels(active);
+      updateButton(active);
+      root.dispatchEvent(new CustomEvent('narration-fullscreenchange', { detail: { active } }));
+    }
+
+    function setViewportFullscreen(active) {
+      if (active === viewportFullscreen) return;
+      viewportFullscreen = active;
+      target.classList.toggle('is-viewport-fullscreen', active);
+      document.documentElement.classList.toggle('has-viewport-fullscreen', active);
+      if (active) wakePage = inertOutside(target);
+      else wakePage();
+      sync();
+    }
+
+    // The whole player, including checkpoints, fills the screen; Escape also exits.
+    async function toggle() {
+      if (viewportFullscreen) {
+        setViewportFullscreen(false);
+        return;
+      }
+      if (nativeFullscreen.element() === target) {
+        await nativeFullscreen.exit();
+        return;
+      }
+      if (!nativeFullscreen.supported(target)) {
+        setViewportFullscreen(true);
+        return;
+      }
+      try {
+        await nativeFullscreen.request(target);
+      } catch (error) {
+        // A browser that refuses to show the element full screen still gets the whole viewport.
+        setViewportFullscreen(true);
+      }
+    }
+
+    button.addEventListener('click', toggle);
+    document.addEventListener('fullscreenchange', sync);
+    document.addEventListener('webkitfullscreenchange', sync);
+    // Older Safari reports a refused prefixed request only as an event.
+    document.addEventListener('webkitfullscreenerror', (event) => {
+      if (event.target === target) setViewportFullscreen(true);
+    });
+    // Escape leaves the drawn full screen, as it leaves the browser's own.
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && viewportFullscreen && !event.defaultPrevented) setViewportFullscreen(false);
+    });
+    updateButton(false);
+    return { isFullscreen };
+  }
+
+  // Full screen fills the player's video frame; markup from an older build
+  // without one fills the whole player.
+  function fullscreenTargetOf(root, options) {
+    return options.fullscreenTarget || root.querySelector('[data-vn-video]') || root.querySelector('.nja-player');
+  }
+
+  // Every player shares the song player's control bar, keyboard shortcuts, and
+  // full-screen behavior (js/narration-player-controls.js).
+  function bindPlayerControls(root, api) {
+    if (window.NarrationPlayerControls) window.NarrationPlayerControls.bind(root, api);
+  }
+
+  // Printing includes the complete transcript, then restores the reader's choice.
+  function printTranscript(root, beforePrint) {
+    let wasOpen = false;
+    window.addEventListener('beforeprint', () => {
+      if (beforePrint) beforePrint();
+      const transcript = root.querySelector('.nja-transcript');
+      wasOpen = transcript.open;
+      transcript.open = true;
+    });
+    window.addEventListener('afterprint', () => {
+      root.querySelector('.nja-transcript').open = wasOpen;
+    });
+  }
+
   function enhance(root, options) {
     if (root.classList.contains('is-enhanced')) return;
     const { storyboard, timing } = options;
-    const scenes = Array.from(root.querySelectorAll('[data-scene]'));
+    const presenter = cuePresenter(root, storyboard);
+    const scenes = presenter.scenes;
     const audio = root.querySelector('audio');
     const seek = root.querySelector('.nja-seek');
     const sceneSelect = root.querySelector('[data-setting="scene"]');
     const motion = root.querySelector('[data-setting="motion"]');
-    const narration = root.querySelector('.nja-narration p');
     const status = root.querySelector('.nja-status');
     const playButton = root.querySelector('[data-action="play"]');
-    // The element that fills the screen: the whole player, or a video narration's video.
-    const player = options.fullscreenTarget || root.querySelector('.nja-player');
-    const fullscreenButton = addFullscreenButton(root);
-    let viewportFullscreen = false;
+    const fullscreen = fullscreenControl(root, fullscreenTargetOf(root, options));
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
     let frame = 0;
     let position = 0;
     let currentScene = -1;
     let currentCue = -1;
     let pendingSeek = null;
-    let wasTranscriptOpen = false;
 
     if (motion) motion.checked = !reducedMotion.matches;
 
@@ -93,19 +229,9 @@
       const sceneTiming = timing.scenes[index];
       const cueIndex = Math.max(0, lastIndexWhere(sceneTiming.cues, (cue) => position + TIME_EPSILON >= cue.start));
       const cueTiming = sceneTiming.cues[cueIndex];
-      if (index !== currentScene) {
-        scenes.forEach((scene, number) => { scene.hidden = number !== index; });
-        sceneSelect.value = String(index);
+      if (presenter.show(index, cueIndex)) {
         root.querySelector('[data-action="previous"]').disabled = index === 0;
         root.querySelector('[data-action="next"]').disabled = index === scenes.length - 1;
-      }
-      if (index !== currentScene || cueIndex !== currentCue) {
-        const cue = storyboard.scenes[index].cues[cueIndex];
-        narration.textContent = cue.text;
-        // A scene's own art region names what it shows; a player with one
-        // screen shared by every scene labels that screen in its renderer.
-        const art = scenes[index].querySelector('.nja-art');
-        if (art) art.setAttribute('aria-label', cue.visual);
       }
       currentScene = index;
       currentCue = cueIndex;
@@ -119,42 +245,7 @@
     }
 
     function updatePlayButton() {
-      const paused = audio.paused;
-      const label = paused ? 'Play narration' : 'Pause narration';
-      playButton.setAttribute('aria-label', label);
-      playButton.title = label;
-      playButton.setAttribute('data-original-title', label);
-      playButton.querySelector('i').className = paused ? 'fa fa-play' : 'fa fa-pause';
-    }
-
-    const isFullscreen = () => viewportFullscreen || nativeFullscreen.element() === player;
-
-    // However full screen changed, the player, its button, and its listeners follow.
-    function syncFullscreen() {
-      const active = isFullscreen();
-      player.classList.toggle('is-fullscreen', active);
-      updateFullscreenButton(active);
-      root.dispatchEvent(new CustomEvent('narration-fullscreenchange', { detail: { active } }));
-    }
-
-    let wakePage = null;
-    function setViewportFullscreen(active) {
-      if (active === viewportFullscreen) return;
-      viewportFullscreen = active;
-      player.classList.toggle('is-viewport-fullscreen', active);
-      document.documentElement.classList.toggle('has-viewport-fullscreen', active);
-      if (active) wakePage = inertOutside(player);
-      else wakePage();
-      syncFullscreen();
-    }
-
-    function updateFullscreenButton(active) {
-      if (!fullscreenButton) return;
-      const label = active ? 'Exit full screen' : 'Enter full screen';
-      fullscreenButton.setAttribute('aria-label', label);
-      fullscreenButton.title = label;
-      fullscreenButton.setAttribute('data-original-title', label);
-      fullscreenButton.querySelector('i').className = active ? 'fa fa-compress' : 'fa fa-expand';
+      labelControl(playButton, audio.paused ? 'Play narration' : 'Pause narration', audio.paused ? 'fa-play' : 'fa-pause');
     }
 
     function renderPlayback(time) {
@@ -222,38 +313,15 @@
       mute() {
         audio.muted = !audio.muted;
         const button = root.querySelector('[data-action="mute"]');
-        const label = audio.muted ? 'Unmute narration' : 'Mute narration';
-        button.setAttribute('aria-label', label);
+        labelControl(button, audio.muted ? 'Unmute narration' : 'Mute narration', audio.muted ? 'fa-volume-off' : 'fa-volume-up');
         button.setAttribute('aria-pressed', String(audio.muted));
-        button.title = label;
-        button.setAttribute('data-original-title', label);
-        button.querySelector('i').className = audio.muted ? 'fa fa-volume-off' : 'fa fa-volume-up';
-      },
-      // The whole player, including checkpoints, fills the screen; Escape also exits.
-      async fullscreen() {
-        if (viewportFullscreen) {
-          setViewportFullscreen(false);
-          return;
-        }
-        if (nativeFullscreen.element() === player) {
-          await nativeFullscreen.exit();
-          return;
-        }
-        if (!nativeFullscreen.supported(player)) {
-          setViewportFullscreen(true);
-          return;
-        }
-        try {
-          await nativeFullscreen.request(player);
-        } catch (error) {
-          // A browser that refuses to show the element full screen still gets the whole viewport.
-          setViewportFullscreen(true);
-        }
       },
     };
 
+    // The full-screen button already has its own handler.
     root.querySelectorAll('[data-action]').forEach((button) => {
-      button.addEventListener('click', actions[button.dataset.action]);
+      const action = actions[button.dataset.action];
+      if (action) button.addEventListener('click', action);
     });
     seek.addEventListener('input', () => seekTo(Number(seek.value)));
     sceneSelect.addEventListener('change', () => selectScene(Number(sceneSelect.value)));
@@ -261,6 +329,7 @@
       audio.playbackRate = Number(event.target.value);
     });
     if (motion) motion.addEventListener('change', () => render(position));
+    // Full screen also resizes the window, so this refits the stage.
     window.addEventListener('resize', () => render(position));
     reducedMotion.addEventListener('change', (event) => {
       if (motion) motion.checked = !event.matches;
@@ -303,39 +372,57 @@
       stopFrames();
       if (!document.hidden && !audio.paused) frame = requestAnimationFrame(tick);
     });
-    // Full screen also resizes the window, so the resize listener refits the stage.
-    document.addEventListener('fullscreenchange', syncFullscreen);
-    document.addEventListener('webkitfullscreenchange', syncFullscreen);
-    // Older Safari reports a refused prefixed request only as an event.
-    document.addEventListener('webkitfullscreenerror', (event) => {
-      if (event.target === player) setViewportFullscreen(true);
-    });
-    // Escape leaves the drawn full screen, as it leaves the browser's own.
-    document.addEventListener('keydown', (event) => {
-      if (event.key === 'Escape' && viewportFullscreen && !event.defaultPrevented) setViewportFullscreen(false);
-    });
-    updateFullscreenButton(false);
     window.addEventListener('pagehide', () => { audio.pause(); stopFrames(); });
-    window.addEventListener('beforeprint', () => {
-      audio.pause();
-      const transcript = root.querySelector('.nja-transcript');
-      wasTranscriptOpen = transcript.open;
-      transcript.open = true;
-    });
-    window.addEventListener('afterprint', () => {
-      root.querySelector('.nja-transcript').open = wasTranscriptOpen;
-    });
+    printTranscript(root, () => audio.pause());
     root.classList.add('is-enhanced');
     root.querySelectorAll('.nja-controls').forEach((controls) => { controls.hidden = false; });
     render(0);
-    return {
+    const api = {
       refresh: () => render(position),
       seekTo,
-      isFullscreen,
+      isFullscreen: fullscreen.isFullscreen,
       selectScene,
       play,
       currentScene: () => currentScene,
     };
+    bindPlayerControls(root, api);
+    return api;
+  }
+
+  // A lesson without rendered speech: the reader moves through the same cues,
+  // and the adapter calls showCue instead of following an audio clock. The
+  // scene display, scene select, full screen, and printing match enhance.
+  function step(root, options) {
+    if (root.classList.contains('is-enhanced')) return null;
+    const { storyboard } = options;
+    const presenter = cuePresenter(root, storyboard);
+    const sceneSelect = root.querySelector('[data-setting="scene"]');
+    const status = root.querySelector('.nja-status');
+    const fullscreen = fullscreenControl(root, fullscreenTargetOf(root, options));
+    let currentScene = -1;
+
+    function showCue(index, cueIndex) {
+      if (options.onSeek) options.onSeek();
+      presenter.show(index, cueIndex);
+      currentScene = index;
+      const scene = storyboard.scenes[index];
+      // Without a clock, each cue shows its settled picture without motion.
+      options.render(presenter.scenes[index], scene, scene.cues[cueIndex], 1, false);
+    }
+
+    function selectScene(index) {
+      showCue(index, 0);
+      status.textContent = `${index + 1}. ${storyboard.scenes[index].label}`;
+    }
+
+    sceneSelect.addEventListener('change', () => selectScene(Number(sceneSelect.value)));
+    printTranscript(root);
+    root.classList.add('is-enhanced');
+    root.querySelectorAll('.nja-controls').forEach((controls) => { controls.hidden = false; });
+    showCue(0, 0);
+    const api = { showCue, selectScene, isFullscreen: fullscreen.isFullscreen, currentScene: () => currentScene };
+    bindPlayerControls(root, api);
+    return api;
   }
 
   // Templates and adapters share one compiled lesson data boundary.
@@ -357,7 +444,7 @@
     return { story: read('story'), timing: read('timing'), examples: read('examples', {}), quizzes: read('quizzes', {}) || {} };
   }
 
-  window.NarratedExplainer = { enhance, readData };
+  window.NarratedExplainer = { enhance, step, readData };
 
   // Generic lessons supply a renderer by name. Observer supplies its own
   // adapter so section checkpoints stay outside the shared transport.

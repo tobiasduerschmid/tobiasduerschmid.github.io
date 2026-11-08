@@ -1,9 +1,9 @@
 /**
- * ObjectReferenceLab — real Python traces with reversible visual playback.
+ * ObjectReferenceLab — language adapters with reversible visual playback.
  *
  * Embed a prepared example: <div data-object-reference-example="shared_slots"></div>
  * Or embed {title, code, prediction?, explanation?, variation?,
- * variation_explanation?, trace?} as application/json
+ * variation_explanation?, language?: 'python' | 'cpp', trace?} as application/json
  * inside <div data-object-reference-lab>. Edits automatically record a program
  * in a disposable worker; Forward/Back replay snapshots without re-execution.
  * The source editor also displays the current execution position.
@@ -15,7 +15,16 @@
   'use strict';
   if (window.ObjectReferenceLab) return;
   const scriptURL = new URL(document.currentScript.src);
-  const workerURL = new URL('object-reference-worker.js', scriptURL);
+  const runtimes = {
+    python: {
+      worker: 'object-reference-worker.js', workerOptions: {}, loadTimeout: 60000, traceTimeout: 10000,
+      details: 'Python names and members hold object references, including references to strings and numbers. Repeated literals do not imply separate objects. Function/module objects and classes without displayed data attributes are omitted from the diagram; Reference details retains the full recorded identities and scopes. Playback skips function/class declaration bookkeeping; those definitions still execute. Class-body assignments, function bodies, returns, and errors remain visible. Some built-in or extension objects are shown without internals. input() and interactive programs are not supported.'
+    },
+    cpp: {
+      worker: 'object-reference-cpp-worker.js', workerOptions: { type: 'module' }, loadTimeout: 180000, traceTimeout: 90000,
+      details: 'C++17 code is compiled and executed in your browser. Value names occupy storage; reference names alias that same storage; pointer names hold separate pointer slots. Use one initialized scalar or string variable per declaration, ordinary quoted strings, and single-level pointers. References must alias a named whole scalar or string of the same type; string characters, subobjects, conversions, and temporary values are unsupported reference targets. Other unsupported tracing constructs produce a diagnostic. Macros are expanded before execution; their steps retain the source invocation line. A macro does not create a function parameter scope. Null and unavailable pointer targets are labeled explicitly. Copy-in/copy-out examples perform their copies explicitly; C++ has no native value-result parameter mode.'
+    }
+  };
   const examplesURL = new URL('../assets/object-reference-labs.json', scriptURL);
   const selector = '[data-object-reference-lab], [data-object-reference-example]';
   const instances = new Map();
@@ -37,7 +46,7 @@
     if (step.event === 'final') return 'End of execution' + (line ? ' · Line ' + line : '');
     if (step.event === 'error') return 'Execution stopped with an error' + (line ? ' at line ' + line : '');
     if (step.event === 'exception') return 'Exception at line ' + line;
-    if (step.event === 'call') return line ? 'Entering a scope from line ' + line : 'Entering a scope';
+    if (step.event === 'call') return line ? 'Entering a scope · Line ' + line : 'Entering a scope';
     if (step.event === 'return') return line ? 'Leaving a scope at line ' + line : 'Leaving a scope';
     return line ? 'Line ' + line : 'Before first statement';
   }
@@ -46,11 +55,15 @@
     constructor(host, example) {
       this.host = host;
       this.example = example;
+      this.language = example.language || 'python';
+      this.runtime = runtimes[this.language];
+      if (!this.runtime) throw new Error('Unsupported object-reference lab language: ' + this.language);
+      this.languageName = window.ObjectReferenceCode.languageLabel(this.language);
       this.trace = null;
       this.steps = [];
       this.index = 0;
       // The requested playback position survives pending edits and errors.
-      // It is a visible step index, not a source line or Python object identity.
+      // It is a visible step index, not a source line or object identity.
       this.resumeIndex = 0;
       this.dirty = false;
       this.worker = null;
@@ -92,6 +105,7 @@
       this.codePanel = element('div', 'orl-code-panel');
       this.codeEditor = new window.ObjectReferenceCode.Editor(this.codePanel, {
         id: this.id + '-editor',
+        language: this.language,
         rows: Math.min(12, Math.max(6, this.example.code.trimEnd().split('\n').length)),
         describedBy: this.id + '-instructions ' + this.status.id,
         onInput: () => this.invalidate()
@@ -145,7 +159,7 @@
 
     buildStateViews(toolbar) {
       this.screen.append(element('p', 'orl-legend',
-        'Each box is one object, including strings and numbers. Names and members point to these objects. Glow marks changes at this step. Select a labeled reference to follow it. A bridge means two arrows pass without joining.'));
+        'A value name sits inside its storage box. An alias names that same storage. A pointer has its own small box and an arrow to its target. Outlines, change labels, and glow mark changes at this step. Select a labeled member reference to follow it. A bridge means two arrows pass without joining.'));
       const columns = element('div', 'orl-columns');
       this.buildEditor();
       const codeColumn = element('div', 'orl-code-column');
@@ -179,9 +193,10 @@
       const limits = element('details', 'orl-limits');
       limits.append(element('summary', '', 'What the trace shows'));
       limits.append(element('p', '',
-        'The highlighted line is the operation represented by the displayed state. When a call binds local parameters, the call site is highlighted; returning to the caller highlights the completed call there. Before the first statement, no line is highlighted. The final state retains the last visualized line. Playback skips function/class declaration bookkeeping; those definitions still execute. Class-body assignments, called function bodies, returns, and errors remain visible. Local parameter names appear beside their objects. Only this program’s source is stepped through; built-in operations and imported code execute between steps. Individual names have reference slots; cards contain objects. Strings, numbers, and other primitive values have their own object cards, so shared references remain visible. Repeated literals do not imply separate objects. Function/module objects and classes without displayed data attributes are omitted from the diagram; Reference details retains the full recorded identities and scopes of the displayed state. Arrows show which object each reference points to. Object labels in Reference details identify objects within this run, not memory addresses. Collection and reference counts are not modeled.'));
+        'The highlighted line is the operation represented by the displayed state. Local parameter names appear with their function scope. Only this program’s source is stepped through; library operations execute between steps. Object labels in Reference details identify storage or objects within this run, not memory addresses. Diagram placement does not represent a physical stack or heap.'));
+      limits.append(element('p', '', this.runtime.details));
       limits.append(element('p', '',
-        'Edited code runs automatically in your browser after you pause typing. Each update executes the whole program again and displays your previous step number; it does not continue a running Python process. That number may describe a different statement if you change the control flow. The previous diagram stays visible while the update runs. Temporary errors retain your requested position for the next correction. Restart returns to step 1 without changing your code. Restore original code returns to the prepared example. Editing again replaces any running update. Back restores recorded views without undoing external side effects. Small programs work best: execution stops after 10 seconds or at the trace limit, and any omitted graph details or output are reported. Some built-in or extension objects are shown without internals. The initial Python download may take longer. input() and interactive programs are not supported. Edits are kept only while this lab is open.'));
+        'Edited code runs automatically in your browser after you pause typing. Each update executes the whole program again and displays your previous step number. That number may describe a different statement if you change the control flow. The previous diagram stays visible while the update runs. Temporary errors retain your requested position for the next correction. Restart returns to step 1 without changing your code. Restore original code returns to the prepared example. Editing again replaces any running update. Back restores recorded views without undoing external side effects. Small programs work best: execution stops after 10 seconds or at the trace limit, and any omitted graph details or output are reported. The initial runtime download and C++ compilation may take longer. Edits are kept only while this lab is open.'));
       this.screen.append(limits);
     }
 
@@ -247,7 +262,7 @@
     setTrace(trace, { index = 0, reveal = true } = {}) {
       this.trace = trace;
       this.dirty = false;
-      // Python classifies execution events; never infer Python syntax from
+      // The language producer classifies events; never infer source syntax from
       // source text here. One timeline keeps Back, Play, and print consistent.
       this.steps = trace ? trace.steps.filter(step => !step.skipPlayback && !(step.event === 'line' && step.line === 0)) : [];
       this.graph.setTimeline(this.steps);
@@ -315,21 +330,21 @@
       this.cancelRun();
       this.pause();
       this.error.hidden = true;
-      this.status.textContent = 'Loading Python…' + (this.trace ? ' Showing the previous run until ready.' : '');
+      this.status.textContent = 'Loading ' + this.languageName + '…' + (this.trace ? ' Showing the previous run until ready.' : '');
       try {
-        this.worker = new Worker(workerURL);
+        this.worker = new Worker(new URL(this.runtime.worker, scriptURL), this.runtime.workerOptions);
       } catch (error) {
-        this.fail('Python could not start: ' + error.message);
+        this.fail(this.languageName + ' could not start: ' + error.message);
         return;
       }
       this.updateControls();
-      this.runTimer = setTimeout(() => this.stop('Python loading timed out. Edit the code to retry.'), 60000);
+      this.runTimer = setTimeout(() => this.stop(this.languageName + ' loading timed out. Edit the code to retry.'), this.runtime.loadTimeout);
       const worker = this.worker;
       // Edits can replace a worker while it is loading or executing. Only the
       // current worker may publish results, errors, or timeout transitions.
       worker.onmessage = event => { if (this.worker === worker) this.receive(event.data); };
       worker.onerror = event => {
-        if (this.worker === worker) this.fail('Python could not run. ' + (event.message || 'Please retry.'));
+        if (this.worker === worker) this.fail(this.languageName + ' could not run. ' + (event.message || 'Please retry.'));
       };
       this.worker.postMessage({ type: 'trace', code: this.editor.value });
     }
@@ -337,12 +352,17 @@
     receive(message) {
       if (message.type === 'ready') {
         clearTimeout(this.runTimer);
+        this.runTimer = setTimeout(() => this.stop('Tracing timed out. Shorten the program to retry.'), this.runtime.traceTimeout);
+        this.status.textContent = (this.language === 'cpp' ? 'Compiling and recording execution…' : 'Recording execution…')
+          + (this.trace ? ' Showing the previous run until ready.' : '');
+      } else if (message.type === 'running') {
+        clearTimeout(this.runTimer);
         this.runTimer = setTimeout(() => this.stop('Execution stopped after 10 seconds. Shorten the program to retry.'), 10000);
         this.status.textContent = 'Recording execution…' + (this.trace ? ' Showing the previous run until ready.' : '');
       } else if (message.type === 'result') {
         this.cancelRun();
         if (!message.trace || !message.trace.steps.length) {
-          this.fail(message.error || (message.trace && message.trace.error) || 'Python could not produce a trace.');
+          this.fail(message.error || (message.trace && message.trace.error) || this.languageName + ' could not produce a trace.');
           return;
         }
         if (message.trace.error && !message.trace.steps.some(step => step.event === 'line' && step.line > 0)) {
@@ -361,7 +381,7 @@
         }
         if (message.trace.error) this.showError(message.trace.error);
       } else if (message.type === 'error') {
-        this.fail(message.error || 'Python could not load. Edit the code to retry.');
+        this.fail(message.error || message.message || this.languageName + ' could not load. Edit the code to retry.');
       }
     }
 
@@ -402,6 +422,7 @@
       const prepared = this.editor.value.trimEnd() === this.example.code.trimEnd();
       this.printHistory.render({
         code: this.editor.value,
+        language: this.language,
         steps: this.dirty ? [] : this.steps,
         labelStep: eventLabel,
         error: this.dirty ? (this.error.hidden ? undefined : this.error.textContent) : this.trace && this.trace.error,
@@ -452,7 +473,7 @@
           const example = await readExample(host);
           if (!host.isConnected) return;
           if (!example || typeof example.code !== 'string' || typeof example.title !== 'string') {
-            throw new Error('A lab requires a title and Python code.');
+            throw new Error('A lab requires a title and source code.');
           }
           instances.set(host, new Lab(host, example));
         } catch (error) {

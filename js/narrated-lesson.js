@@ -5,32 +5,11 @@
 (function () {
   'use strict';
 
-  function cloneSvg(source, prefix) {
-    const svg = source.cloneNode(true);
-    const ids = new Map(Array.from(svg.querySelectorAll('[id]'), element => [element.id, `${prefix}-${element.id}`]));
-    svg.querySelectorAll('*').forEach(element => {
-      Array.from(element.attributes).forEach(attribute => {
-        let value = attribute.value.replace(/url\(#([^)]*)\)/g, (match, id) => ids.has(id) ? `url(#${ids.get(id)})` : match);
-        if (attribute.name === 'id') value = ids.get(value) || value;
-        if (['href', 'xlink:href'].includes(attribute.name) && ids.has(value.slice(1))) value = `#${ids.get(value.slice(1))}`;
-        if (['aria-labelledby', 'aria-describedby'].includes(attribute.name)) value = value.split(' ').map(id => ids.get(id) || id).join(' ');
-        if (value !== attribute.value) element.setAttribute(attribute.name, value);
-      });
-    });
-    return svg;
-  }
-
   function renderDiagram(container, settled, type, focus, prefix) {
     // Reuse the finished ArchUML geometry from the HTML reading version. A cue
     // changes emphasis or adds steps, never the fitting scale of a drawn step.
     const source = settled.dataset.npDiagramSource;
-    container.dataset.umlRendered = 'true';
-    container.dataset.umlType = type;
-    container.dataset.umlSpec = source;
-    window.UMLShared.prepareDiagramContainer(container, type);
-    container.replaceChildren(cloneSvg(settled.querySelector('svg'), prefix));
-    window.UMLShared.autoFitSVG(container);
-    window.UMLShared.applySvgAccessibility(container, type, source);
+    window.NarrationDiagram.show(container, settled.querySelector('svg'), { type, source }, prefix);
     // An anonymous lifeline (`participant x as : Cls`) displays its label, not its id.
     const alias = focus && source.match(new RegExp(`^participant ${focus} as (.+)$`, 'm'));
     const shown = alias ? alias[1].trim() : focus;
@@ -197,11 +176,11 @@
   }
 
   // Shared lifecycle for lessons with section checks and an optional language
-  // selector. Adapters supply only their cue rendering and fullscreen target.
-  function mount(root, { story, timing, quizzes, examples, render, fullscreenTarget }) {
+  // selector. Adapters supply only their cue rendering.
+  function mount(root, { story, timing, quizzes, examples, render }) {
     const checks = sectionChecks(root, story, quizzes);
     const player = window.NarratedExplainer.enhance(root, {
-      storyboard: story, timing, render, fullscreenTarget,
+      storyboard: story, timing, render,
       onSectionEnd: checks.sectionEnded, onSeek: checks.close, canPlay: checks.isClosed,
     });
     checks.attach(player);

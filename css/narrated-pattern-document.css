@@ -1,4 +1,5 @@
-/* One HTML lesson supplies the self-paced reader and both print surfaces. */
+/* The reader shell of every narration kind: one HTML lesson supplies the
+   self-paced reader and both print surfaces. */
 .np-reader-page { margin: 0; background: #fff; color: #192d43; font: 18px/1.6 system-ui, sans-serif; }
 html.dark-mode:not(.print-light-mode) .np-reader-page { background: #0c1118; color: #f6f8ff; }
 .np-document-page { max-width: 1450px; margin: 0 auto; padding: 1.5em; }
@@ -32,6 +33,10 @@ html.dark-mode:not(.print-light-mode) .np-reading .np-diagram .sebook-figure__ve
 .np-reading-note { padding: 0.7em 1em; border-left: 3px solid var(--nja-accent); background: var(--nja-note-bg); }
 .np-reading .np-print-question { padding: 1em; background: var(--nja-panel); border: 1px solid var(--nja-line); border-radius: 5px; }
 .np-reading .np-print-question summary { font: inherit; }
+/* Explainer readers (Node.js, React): a moving token rests in the document
+   flow, and a prediction's answer opens on request. */
+.np-reading .nja-callback-token { position: static; transform: none; }
+.np-reading-answer > summary { color: var(--nja-accent); font-weight: 700; }
 .np-document-footer { max-width: 1450px; margin: 1em auto; padding: 1.5em; font-size: 0.9em; }
 .np-document-footer a, .np-document-footer a:visited { color: inherit; text-decoration: underline; }
 .np-document-footer a:focus-visible { outline: 3px solid currentColor; outline-offset: 3px; }
@@ -59,4 +64,9 @@ html.dark-mode:not(.print-light-mode) .np-reading .np-diagram .sebook-figure__ve
   .np-reading .nja-code-line.is-highlighted { border-left-color: #000; font-weight: 700; }
   .np-reading .np-print-question { break-inside: avoid; }
   .np-reading .np-print-question details::details-content { display: block; content-visibility: visible; }
+  .np-reading .nja-lesson-layout { display: block; }
+  .np-reading .nja-model { margin-top: 1em; }
+  .np-reading .nja-model > * { break-inside: avoid; }
+  .np-reading-answer > summary { display: none !important; }
+  .np-reading-answer::details-content { display: block; content-visibility: visible; }
 }

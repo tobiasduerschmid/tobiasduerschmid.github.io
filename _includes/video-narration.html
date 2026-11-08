@@ -26,6 +26,7 @@
 {% assign quizzes = site.data.explainers[quizzes_key] %}
 {% assign first_scene = explainer.scenes.first %}
 {% assign first_cue = first_scene.cues.first %}
+{% assign player_id = topic | append: '-video' %}
 <section class="narrated-explainer narrated-lesson video-narration {{ topic }}-video mathjax_ignore" id="{{ topic }}-video" aria-labelledby="{{ topic }}-video-title" data-vn-topic="{{ topic }}">
   <h2 id="{{ topic }}-video-title">{{ explainer.title }}</h2>
   <p>{{ lesson.summary }} {{ lesson.prerequisites }}</p>
@@ -73,61 +74,25 @@
           <p class="tvm-quiz-status" role="status" aria-live="polite"></p>
         </section>
         <div class="nja-narration vn-captions" id="{{ topic }}-video-captions" role="region" aria-label="Narration" tabindex="0"><p>{{ first_cue.text }}</p></div>
-        <div class="nja-controls nja-playback-controls vn-controls song-player-controls" hidden>
-          <label class="nja-seek-label vn-seek-label"><span class="vn-hidden-label">Narration position</span><input type="range" min="0" max="{{ timing.duration | default: 1 }}" step="0.01" value="0" aria-valuetext="0:00" class="nja-seek" aria-keyshortcuts="ArrowLeft ArrowRight 0 1 2 3 4 5 6 7 8 9"></label>
-          <div class="vn-toolbar">
-            <div class="nja-transport vn-toolbar-group">
-              <button type="button" data-action="play" aria-label="Play narration" aria-keyshortcuts="k Space"><i class="fa fa-play" aria-hidden="true"></i></button>
-              <button type="button" data-vn-skip="-5" aria-label="Back 5 seconds" aria-keyshortcuts="ArrowLeft"><i class="fa fa-rotate-left" aria-hidden="true"></i><span aria-hidden="true">5</span></button>
-              <button type="button" data-vn-skip="5" aria-label="Forward 5 seconds" aria-keyshortcuts="ArrowRight"><i class="fa fa-rotate-right" aria-hidden="true"></i><span aria-hidden="true">5</span></button>
-              <button type="button" data-action="previous" aria-label="Previous scene"><i class="fa fa-step-backward" aria-hidden="true"></i></button>
-              <button type="button" data-action="next" aria-label="Next scene"><i class="fa fa-step-forward" aria-hidden="true"></i></button>
-              <button type="button" data-action="restart" aria-label="Restart narration"><i class="fa fa-fast-backward" aria-hidden="true"></i></button>
-              <output class="nja-time" aria-label="Playback time">0:00</output>
-            </div>
-            <div class="vn-toolbar-group">
-              <button type="button" data-action="mute" aria-label="Mute narration" aria-pressed="false"><i class="fa fa-volume-up" aria-hidden="true"></i></button>
-              <input type="range" class="vn-volume" min="0" max="100" step="1" value="100" aria-label="Volume">
-              <button type="button" class="vn-cc" aria-label="Closed captions (CC)" aria-pressed="true" aria-controls="{{ topic }}-video-captions" aria-keyshortcuts="c">CC</button>
-              <button type="button" class="vn-settings-toggle song-player-settings-toggle" aria-label="Player settings" aria-expanded="false" aria-controls="{{ topic }}-video-settings"><i class="fa fa-cog" aria-hidden="true"></i></button>
-              <button type="button" data-action="fullscreen" aria-label="Enter full screen" aria-keyshortcuts="f" hidden><i class="fa fa-expand" aria-hidden="true"></i></button>
-            </div>
-          </div>
-          <section class="vn-settings song-player-settings" id="{{ topic }}-video-settings" role="region" aria-label="Player settings" hidden>
-            <div class="nja-settings">
-              <label class="nja-scene-select">Scene<select data-setting="scene">{% for scene in explainer.scenes %}<option value="{{ forloop.index0 }}">{{ forloop.index }}. {{ scene.label }}</option>{% endfor %}</select></label>
-              <label>Speed<select data-setting="speed"><option value="0.5">0.5x</option><option value="0.75">0.75x</option><option value="1" selected>1x</option><option value="1.25">1.25x</option><option value="1.5">1.5x</option><option value="2">2x</option></select></label>
-              <label>Caption size<select class="vn-caption-size"><option value="1" selected>100%</option><option value="1.25">125%</option><option value="1.5">150%</option><option value="2">200%</option></select></label>
-              <label class="nja-motion"><input type="checkbox" class="vn-landscape" checked> Landscape in full screen</label>
-              {% if lesson.animation %}<label class="nja-motion"><input type="checkbox" data-setting="motion" checked> Animate visuals</label>{% endif %}
-              <button type="button" class="np-review-check" data-review-check>Knowledge check</button>
-              {% if explainer.languages %}
-              <label class="np-language">Code language<select data-setting="language" aria-describedby="{{ topic }}-language-help">{% for language in explainer.languages %}<option value="{{ language }}"{% if language == explainer.default_language %} selected{% endif %}>{{ examples[language].label }}</option>{% endfor %}</select></label>
-              <span id="{{ topic }}-language-help" class="np-control-help">You can switch languages without restarting the narration.</span>
-              {% endif %}
-            </div>
-          </section>
-        </div>
+        {% capture video_settings %}{% if lesson.animation %}<label class="nja-motion"><input type="checkbox" data-setting="motion" checked> Animate visuals</label>{% endif %}
+          <button type="button" class="np-review-check" data-review-check>Knowledge check</button>
+          {% if explainer.languages %}<label class="np-language">Code language<select data-setting="language" aria-describedby="{{ topic }}-language-help">{% for language in explainer.languages %}<option value="{{ language }}"{% if language == explainer.default_language %} selected{% endif %}>{{ examples[language].label }}</option>{% endfor %}</select></label>
+          <span id="{{ topic }}-language-help" class="np-control-help">You can switch languages without restarting the narration.</span>{% endif %}{% endcapture %}
+        {% include narration-player-controls.html id=player_id duration=timing.duration seek_label="Narration position" scenes=explainer.scenes rates="0.5,0.75,1,1.25,1.5,2" settings=video_settings %}
       </div>
       <p class="vn-phone-tip">Tip: turn your phone sideways for a bigger picture.</p>
       </div>
     </div>
     <div class="nja-explanation"><strong class="nja-step">{{ first_cue.step }}</strong><p class="nja-note">{{ first_cue.note | escape }}</p></div>
     <p class="nja-takeaway"><i class="fa fa-lightbulb" aria-hidden="true"></i><span data-vn-takeaway>{{ first_scene.takeaway }}</span></p>
-    <audio class="nja-audio" controls preload="none" aria-label="{{ lesson.name }} narration by Kokoro">
-      <source src="{{ explainer.audio | relative_url }}" type="audio/mpeg">
-      <track kind="captions" src="{{ explainer.captions | relative_url }}" srclang="en" label="English">
-    </audio>
+    {% capture audio_label %}{{ lesson.name }} narration by Kokoro{% endcapture %}
+    {% include narration-player-audio.html story=explainer label=audio_label %}
     <p class="nja-status" role="status" aria-live="polite"></p>
   </div>
   {{ include.notes_actions }}
 
-  <details class="vn-tips">
-    <summary>Playback tips and shortcuts</summary>
-    <p id="{{ topic }}-video-help">Click or tap the picture to play or pause. Double-click or double-tap its left half to go back 5 seconds, or its right half to go forward 5 seconds. In full screen, the controls hide after 3 seconds of playback; move the pointer, press a key, or tap the picture to show them.</p>
-    <p>With focus on the picture or the controls: <kbd>K</kbd> or <kbd>Space</kbd> plays or pauses, <kbd>←</kbd> and <kbd>→</kbd> go back or forward 5 seconds, <kbd>0</kbd> to <kbd>9</kbd> jump to the start or 10% to 90% of the narration, <kbd>C</kbd> turns captions on or off, and <kbd>F</kbd> toggles full screen. <kbd>Esc</kbd> leaves full screen. The narration pauses for a knowledge check at the end of each section.</p>
-  </details>
-  <p class="nja-credit">Synthetic narration: Kokoro. <a href="{{ explainer.script | relative_url }}" download>Download narration script</a> &middot; <a href="{{ explainer.audio | relative_url }}" download>Download narration</a> &middot; <a href="{{ explainer.captions | relative_url }}" download>Download captions</a></p>
+  {% include narration-player-tips.html id=player_id picture=true pause_note="The narration pauses for a knowledge check at the end of each section." %}
+  {% include narration-player-credit.html story=explainer %}
   <p class="np-view-links"><a data-np-view-link href="{{ lesson.views | append: '/read/' | relative_url }}">Read at my own pace</a> · <a data-np-view-link href="{{ lesson.views | append: '/print/' | relative_url }}">Print step-by-step version</a>{% if notes %} · <a href="{{ lesson.views | append: '/notes/' | relative_url }}">Lesson notes with pictures</a>{% endif %}</p>
   <details class="nja-transcript">
     <summary>Transcript{% if explainer.languages %}, code,{% endif %} and visual descriptions</summary>
@@ -135,12 +100,10 @@
   </details>
   {% include narration-data.html topic=include.topic %}
 </section>
-<script src="{{ '/js/narrated-explainer.js' | relative_url }}?v={{ site.asset_version }}" defer></script>
+{% include narration-player-scripts.html %}
 <script src="{{ '/js/parsons-grading.js' | relative_url }}?v={{ site.asset_version }}" defer></script>
 <script src="{{ '/js/tutorial-quiz.js' | relative_url }}?v={{ site.asset_version }}" defer></script>
 <script src="{{ '/js/narrated-pattern-document.js' | relative_url }}?v={{ site.asset_version }}" defer></script>
+<script src="{{ '/js/narration-diagram.js' | relative_url }}?v={{ site.asset_version }}" defer></script>
 <script src="{{ '/js/narrated-lesson.js' | relative_url }}?v={{ site.asset_version }}" defer></script>
-<script src="{{ '/js/song-video/controls-visibility.js' | relative_url }}?v={{ site.asset_version }}" defer></script>
-<script src="{{ '/js/song-video/gestures.js' | relative_url }}?v={{ site.asset_version }}" defer></script>
-<script src="{{ '/js/song-video/keyboard.js' | relative_url }}?v={{ site.asset_version }}" defer></script>
 <script src="{{ '/js/video-narration.js' | relative_url }}?v={{ site.asset_version }}" defer></script>

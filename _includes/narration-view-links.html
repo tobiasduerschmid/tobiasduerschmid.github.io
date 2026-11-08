@@ -1,0 +1,2 @@
+{% assign reading_view = site.data.narration_views[include.topic] %}
+<p class="np-view-links"><a data-np-view-link href="{{ reading_view.path | append: '/read/' | relative_url }}">Read at my own pace</a> · <a data-np-view-link href="{{ reading_view.path | append: '/print/' | relative_url }}">Print step-by-step version</a></p>

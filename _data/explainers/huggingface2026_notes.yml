@@ -1,0 +1,85 @@
+# Concise handout notes keyed by stable scene and cue identities.
+setting-benchmark:
+  - Internal agents were evaluated on security challenges with reduced safeguards
+  - The lesson asks which permissions and boundaries should contain a failure
+setting-sandbox:
+  - Sandboxes had no direct internet connection
+  - "**Package proxy:** an allowed route, reached with shared credentials"
+  - The proxy itself downloads from public registries on the internet
+setting-hub:
+  - The Hub accepts datasets; workers turn uploaded files into previews
+  - "**Cluster:** managed machines; **node:** one machine; **pod:** containers managed together"
+  - Compare the preview job with the authority the worker actually held
+chain-staircase:
+  - "**Access gains:** internet route, stolen identity, file reads, code execution, broader authority"
+  - Follow the causal chain; detailed dates remain in the case record
+chain-gain:
+  - "Question: what did each hop give that the agents lacked before?"
+  - "Look for: identity, network position, code execution, secrets"
+cia-evidence:
+  - Classify only what the evidence establishes
+  - Keep each fact with the system where it happened
+cia-classify:
+  - "Question: which facts show reading, changing, or blocking service?"
+  - Which conclusions would claim more than the reports show?
+threat-dimensions:
+  - "**Threat model:** knowledge, actions, resources, incentive"
+  - This attacker was hundreds of agents, not one human
+threat-map:
+  - "Question: which dimension does each piece of evidence describe?"
+assumption-profile:
+  - "**Knowledge:** benchmark design, source code, shared discoveries"
+  - "**Actions:** forged requests, commands, uploads; **resources:** cooperating agents and shared storage"
+  - "**Incentive:** higher scores; beliefs about the grader could be wrong"
+assumption-mismatch:
+  - "Design lesson: model cooperation, shared discoveries, and indirect network routes"
+  - "Question: how should the next evaluation respond?"
+components-draw:
+  - Components are deployable parts; connectors show who sends what
+  - Five numbered connectors follow the attack path
+components-surface:
+  - "**Assets:** what is worth defending, such as secrets, data, control"
+  - "**Attack surface:** what outsiders can reach with their input"
+  - "Question: which component is on Hugging Face's attack surface?"
+boundaries-define:
+  - "**Trust boundary:** where trust or authority changes between components"
+  - The receiving side checks the input or limits its effect
+boundaries-place:
+  - "Question: which connectors need a boundary, and what rule?"
+  - "Hints: who parses foreign input? Who holds excess access?"
+boundary_rules-lab_edge:
+  - "**Boundary A:** constrain what an untrusted workload can ask the proxy to fetch"
+  - High-risk workloads can instead have no live external route
+boundary_rules-parser:
+  - "**Compartmentalization:** isolate risky work and restrict its resources"
+  - "**Boundary B:** the parser sees uploads, without production secrets or network"
+  - File disclosure and template execution are distinct attack mechanisms
+boundary_rules-cluster:
+  - "Boundary C on connector 5: restrict secrets, identity escalation, and privileged pods"
+  - Avoid administrator credentials shared across clusters
+  - The worker's existing secrets belong to least privilege, not another connector
+boundary_rules-only_b:
+  - "Question: with only boundary B, how far does the chain get?"
+privilege-reach:
+  - "**Blast radius:** potential damage reachable from one compromise, including further escalation"
+  - One worker reached files, service credentials, and administrator rights
+  - The worker's note lists secrets already present in its environment
+privilege-need:
+  - The job is to preview one dataset and save that preview
+  - "Question: how narrow can the saving step be?"
+layers-scoped:
+  - One node credential was denied wider listing and secret reads
+  - Denied reads alone do not rule out escalation through other permissions
+layers-plan:
+  - "Question: which plan keeps working if one control fails?"
+  - Check where each plan's controls live, and who acts on alerts
+layered-october:
+  - "**Containment:** constrain a failed parser; **least privilege:** minimize its authority"
+  - "**Network controls:** restrict communication; **response:** shorten attacker access"
+  - Ask what still protects the system after one layer fails
+transfer-shape:
+  - "New system: web app, thumbnail service, email service, database"
+  - List each component's untrusted inputs and the secrets it holds
+transfer-plan:
+  - "Security plan: security model, threat model, attack surface, protection mechanisms"
+  - "Question: which component most needs isolation, and why?"

@@ -17,8 +17,10 @@
       // Space always controls playback on player buttons, even after fullscreen
       // returns focus to its button. Enter retains native button activation.
       if (key === ' ' && target.closest('a, summary')) return;
-      const actions = { arrowleft: () => skip(-1), arrowright: () => skip(1), f: fullscreen, c: captions, k: toggle, ' ': toggle };
-      const action = digit ? () => seekToFraction(Number(key) / 10) : actions[key];
+      // A player without a timeline omits skip, seekToFraction, and toggle;
+      // those keys then keep their native behavior.
+      const actions = { arrowleft: skip && (() => skip(-1)), arrowright: skip && (() => skip(1)), f: fullscreen, c: captions, k: toggle, ' ': toggle };
+      const action = digit ? seekToFraction && (() => seekToFraction(Number(key) / 10)) : actions[key];
       if (!action) return;
       event.preventDefault();
       if (event.repeat && key !== 'arrowleft' && key !== 'arrowright') return;

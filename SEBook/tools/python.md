@@ -9,6 +9,9 @@ program_output_labs: true
 
 For a brief file-parsing exercise, try [Regex in Python](/SEBook/tools/regex-python-tutorial): three steps on patterns, named capture groups, and extracted values.
 
+Compare these reference diagrams with value copies, aliases, pointer parameters,
+and macros in the [C++ Parameter Passing Lab](/SEBook/tools/cpp-parameter-passing-lab.html){: .sebook-reading-link}.
+
 # Python from C++
 
 You already know variables, functions, loops, and classes from C++. Python lets you use those ideas with less declaration syntax, but similar-looking code can behave differently. The durable rule is this: **names, collection elements, and object attributes hold references to objects; assignment and mutation are different operations**.
@@ -204,13 +207,13 @@ It prints `['M31', 'M13']`. Only `pending` was rebound. `saved` still reaches th
 
 </details>
 
-## Memory Management: RAII vs. Garbage Collection
+## Memory Management: Automatic Cleanup {#memory-management-raii-vs-garbage-collection}
 
 Python manages object memory, but “a name went away” does not imply “the object was destroyed”. When an object becomes unreachable, it **may be garbage-collected**. Neither assignment to `None` nor `del name` guarantees immediate destruction; `del` removes the binding, not every reference to its object.
 
 CPython uses reference counting together with machinery for collecting reference cycles. That is an implementation detail, not a requirement that all Python implementations share. Cycles, runtime optimizations, and references retained by debuggers complicate simplistic lifetime predictions. Do not use the moment a local name disappears as your resource-cleanup policy.
 
-C++'s Resource Acquisition Is Initialization (RAII) ties resource release to object lifetime. In Python, use a context manager such as `with open(...)` to close a file at the end of a block, including when an exception leaves the block. Reclaiming an object's memory and releasing an external resource are distinct concerns.
+Closing a file is a separate job from reclaiming its object's memory. In Python, `with open(...)` closes the file when execution leaves its indented block, even if an error occurs. This setup-and-cleanup behavior is called a **context manager**. You do not need to predict when Python will collect the object to know when the file closes.
 
 # Text & Numbers
 
@@ -2032,26 +2035,6 @@ asyncio.run(main())  # EAST WEST
 Both tasks are scheduled before either is awaited. Writing `left = await fetch_label("east")` followed by the second await instead waits sequentially. A blocking `time.sleep(...)` or CPU-heavy loop inside a coroutine blocks that event-loop thread. `await` does not promise a context switch when the result is already available. Await the tasks you start so their results and exceptions are handled; this driver belongs in a script, not inside an event loop that is already running. See the [coroutine and task reference](https://docs.python.org/3/library/asyncio-task.html).
 
 **Transfer check:** can two async tasks lose an update even on one thread? Yes: if each reads a shared count, then suspends before writing its computed result, both can write from the same stale value. Cooperative scheduling changes where interleaving occurs, not the need to reason about shared state.
-
-## OpenCL Sidebar: Parallel Work on Many Elements
-
-Python can coordinate a scientific computation while a different language executes a demanding parallel kernel. **OpenCL** (Open Computing Language) is a Khronos standard for programming heterogeneous devices, including central and graphics processors. Its first specification was released in 2008. Portability depends on supported device capabilities and versions; it does not mean every kernel runs unchanged or equally fast on every device. [Khronos's OpenCL overview](https://www.khronos.org/opencl/) and [OpenCL 1.0 announcement](https://www.khronos.org/news/press/the_khronos_group_releases_opencl_1.0_specification) describe this scope.
-
-For example, an observatory could flag saturated image pixels with this C-based OpenCL kernel. Each output byte is 1 if the input reaches the threshold and 0 otherwise:
-
-```c
-__kernel void mark_saturation(__global const float* input,
-                              __global uchar* saturated,
-                              const float threshold,
-                              const int count) {
-    const size_t index = get_global_id(0);
-    if (index < count) {
-        saturated[index] = input[index] >= threshold;
-    }
-}
-```
-
-A host program launches many **work-items**. Each work-item uses its global identifier to select an element, and the bounds check protects extra work-items if the launch size is rounded up. The host must still allocate buffers, transfer data where necessary, and launch the kernel; the kernel alone is not a runnable Python script. Launching many work-items does not promise one physical processor core per work-item. The useful contrast is automatic Python object management versus explicitly organized, data-parallel device computation.
 
 ## Top 10 Python Best Practices
 

@@ -1,5 +1,5 @@
 # Storyboard for "My Teammate (It Works on My Machine)", a comic opera about one teammate
-# who keeps "helping", in the CS 35L video playlist (_data/song_playlists.yml).
+# who keeps "helping", in the video library on /SEBook/playlist.html.
 # It has no chapter page: its player page (/assets/song-player/it-works-on-my-machine.html)
 # prints the transcript itself.
 #

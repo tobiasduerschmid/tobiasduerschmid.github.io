@@ -110,15 +110,36 @@ authoring data, never student code exercises.
   documented keys work only while it has focus.
 - **Read at my own pace** pauses audio and opens the full transcript. It warns
   that later findings appear there. Answers require opening a native details
-  element. Without JavaScript, the full reading version and native audio player
-  remain available. Printing shows the full reading version, including answers,
-  in light mode. Printing restores the earlier disclosure state afterward.
+  element. Without JavaScript, the full reading version (and, for a narrated
+  case, the native audio player) remains available. Printing shows the full
+  reading version, including answers, in light mode. Printing restores the
+  earlier disclosure state afterward.
 
 The reading include is the source of static ArchUML geometry for the player.
 The adapter clones the current cue's figure and rewrites its identifiers, so
 seeking does not require replaying prior frames. Only the visible cue changes;
 there are no timed transitions beyond the existing audio clock. Reduced-motion
 users therefore receive the same evidence and controls.
+
+## Text-only case studies
+
+A case study can ship before its narration audio exists, as the Hugging Face
+case on the Security chapter did before its narration was rendered. Omit the `media` block from
+`_data/narrations/<topic>.yml` and keep `speech`: the speech fingerprint still
+identifies the text that later audio must match. The include then renders no
+audio element, transport, narration speed, or download links, and its
+introduction invites self-paced study. The include places a hidden full-screen
+button in the settings row, and the adapter uses `NarratedExplainer.step`
+instead of the audio clock. **Next step**, **Previous step**, scene review,
+full screen, and every decision behave as in the narrated player; the reading
+version, print view, and lesson notes are unchanged.
+`node scripts/narration.js check` reports the lesson as text only, and fails
+if a stale timing file remains.
+
+Adding the `media` block switches the player to the shared audio transport.
+Until the audio and timing are rendered, the page shows only the reading
+version and `node scripts/narration.js check` fails, so add the media block
+and render the audio in the same change.
 
 ## Verification
 
