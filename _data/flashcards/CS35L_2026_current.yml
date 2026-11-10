@@ -29,10 +29,13 @@ decks:
   - git_advanced
   - debugging
   - security
+  - c
+  - makefile_syntax
+  - makefile_examples
+  - makefile_examples_2
 
 other:
   - design_pattern_observer
-  - c
   - design_principle_information_hiding
   - design_with_reuse
   - uml_class_diagram_examples

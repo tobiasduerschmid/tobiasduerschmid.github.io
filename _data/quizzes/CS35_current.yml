@@ -29,10 +29,11 @@ decks:
   - git_advanced
   - debugging
   - security
+  - c
+  - makefile
 
 other:
   - design_pattern_observer
-  - c
   - design_principle_information_hiding
   - design_with_reuse
   - dev_practice_genai
