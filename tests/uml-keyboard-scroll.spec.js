@@ -12,6 +12,7 @@ for (const example of examples) {
     await page.goto(example.url);
     const diagram = page.getByRole('img', { name: example.diagram });
     await expect(diagram).toBeVisible();
+    await diagram.locator('..').getByRole('button', { name: 'Restore previous diagram view', exact: true }).press('Enter');
     await expect.poll(() => diagram.evaluate(element => element.scrollWidth - element.clientWidth)).toBeGreaterThan(1);
     await expect(diagram).toHaveAttribute('tabindex', '0');
 
@@ -25,7 +26,7 @@ for (const example of examples) {
   });
 }
 
-test('diagram tab stops follow overflow when the viewport changes', async ({ page }) => {
+test('diagram tab stops follow fitted and enlarged views across viewport changes', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/SEBook/uml.html');
   const diagram = page.getByRole('img', { name: /^UML class diagram/ }).first();
@@ -34,9 +35,12 @@ test('diagram tab stops follow overflow when the viewport changes', async ({ pag
   await expect(diagram).not.toHaveAttribute('tabindex', '0');
 
   await page.setViewportSize({ width: 320, height: 900 });
+  await diagram.locator('..').getByRole('button', { name: 'Restore previous diagram view', exact: true }).press('Enter');
   await expect.poll(() => diagram.evaluate(element => element.scrollWidth - element.clientWidth)).toBeGreaterThan(1);
   await expect(diagram).toHaveAttribute('tabindex', '0');
 
   await page.setViewportSize({ width: 1440, height: 900 });
+  await diagram.locator('..').getByRole('button', { name: 'Fit diagram to screen', exact: true }).press('Enter');
+  await expect.poll(() => diagram.evaluate(element => element.scrollWidth - element.clientWidth)).toBeLessThanOrEqual(1);
   await expect(diagram).not.toHaveAttribute('tabindex', '0');
 });

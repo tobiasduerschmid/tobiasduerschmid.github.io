@@ -4,7 +4,12 @@ const { execFileSync } = require('node:child_process');
 const path = require('node:path');
 
 // The renderer measures geometry in SVG units. Readability is a screen-space
-// contract: a 14-unit label must not become 5px just to fit a narrow column.
+// contract in the expanded reading view, available from the fitted overview.
+async function expandDiagrams(page) {
+  const expand = page.getByRole('button', { name: 'Restore previous diagram view', exact: true });
+  while (await expand.count()) await expand.first().click();
+}
+
 function measureReadability(elements) {
   return elements.flatMap((element) => {
     const svg = element.querySelector('svg');
@@ -22,7 +27,7 @@ function measureReadability(elements) {
 
 for (const width of [1440, 320]) {
   for (const dark of [false, true]) {
-    test(`diagram text stays paragraph-sized at ${width}px in ${dark ? 'dark' : 'light'} mode`, async ({ page }) => {
+    test(`expanded diagram text stays paragraph-sized at ${width}px in ${dark ? 'dark' : 'light'} mode`, async ({ page }) => {
       await page.setViewportSize({ width, height: 1000 });
       for (const url of ['/test-uml.html', '/SEBook/uml_component_diagram.html']) {
         await page.goto(url);
@@ -32,6 +37,7 @@ for (const width of [1440, 320]) {
         }, dark);
         const diagrams = page.getByRole('img').and(page.locator('.sebook-figure--archuml > [role="img"]'));
         await expect(diagrams.first()).toBeVisible();
+        await expandDiagrams(page);
         expect(await diagrams.evaluateAll(measureReadability), `${url}: rendered label sizes`).toEqual([]);
         expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `${url}: page reflows`).toBe(true);
       }
@@ -44,6 +50,7 @@ test('wide diagrams scroll with the keyboard while fitting diagrams do not add t
   await page.goto('/test-uml.html');
   const heading = page.getByRole('heading', { name: '27b. Component API Back-Edges with Shared Ports', exact: true });
   const wide = heading.locator('xpath=following-sibling::figure[1]').getByRole('img');
+  await heading.locator('xpath=following-sibling::figure[1]').getByRole('button', { name: 'Restore previous diagram view', exact: true }).press('Enter');
   await expect(wide).toHaveAttribute('tabindex', '0');
   await wide.focus();
   await expect(wide).toBeFocused();
@@ -57,6 +64,8 @@ test('wide diagrams scroll with the keyboard while fitting diagrams do not add t
   expect(await small.evaluate(element => element.scrollWidth <= element.clientWidth + 1)).toBe(true);
   await expect(small).not.toHaveAttribute('tabindex', '0');
   await page.setViewportSize({ width: 320, height: 1000 });
+  await page.getByRole('heading', { name: '1. Shared-Target Inheritance', exact: true })
+    .locator('xpath=following-sibling::figure[1]').getByRole('button', { name: 'Restore previous diagram view', exact: true }).click();
   await expect(small).toHaveAttribute('tabindex', '0');
   await page.setViewportSize({ width: 1440, height: 1000 });
   await expect(small).not.toHaveAttribute('tabindex', '0');
@@ -67,6 +76,7 @@ test('diagram text follows a doubled surrounding font size', async ({ page }) =>
   const diagrams = page.getByRole('img').and(page.locator('.sebook-figure--archuml > [role="img"]'));
   await expect(diagrams.first()).toBeVisible();
   await page.evaluate(() => { document.body.style.fontSize = `${parseFloat(getComputedStyle(document.body).fontSize) * 2}px`; });
+  await expandDiagrams(page);
   expect(await diagrams.evaluateAll(measureReadability)).toEqual([]);
 });
 

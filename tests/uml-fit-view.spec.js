@@ -12,7 +12,7 @@ function readStyle(file) {
 
 // Real renderer + stylesheet, with deliberately wide/tall SVG content. These
 // dimensions exercise the view contract independently of layout algorithms.
-async function diagramFixture(page, { width = 2000, height = 900 } = {}) {
+async function diagramFixture(page, { width = 2000, height = 900, expanded = true } = {}) {
   await page.setViewportSize({ width: 800, height: 600 });
   await page.setContent(`<html lang="en"><head><title>Diagram view</title></head><body>
     <main><p>Diagram view test</p><figure><div class="uml-class-diagram-container" role="img" aria-label="Example diagram">
@@ -21,6 +21,8 @@ async function diagramFixture(page, { width = 2000, height = 900 } = {}) {
   await page.addStyleTag({ content: readStyle(path.join(root, 'css/uml-diagram.css')) });
   await page.addScriptTag({ path: path.join(root, 'js/ArchUML/uml-bundle.js') });
   await page.evaluate(() => window.UMLShared.autoFitSVG(document.querySelector('[aria-label="Example diagram"]')));
+  // Manual fit/restore tests start in the readable, expanded view.
+  if (expanded && await restoreButton(page).count()) await restoreButton(page).press('Enter');
   return page.getByRole('img', { name: 'Example diagram' });
 }
 
@@ -34,6 +36,17 @@ async function expectFits(page, diagram) {
   expect(size.height).toBeLessThanOrEqual(page.viewportSize().height);
   expect(await diagram.evaluate(el => el.scrollWidth <= el.clientWidth + 1)).toBe(true);
 }
+
+test('diagrams start fitted without moving focus and can be enlarged for reading', async ({ page }) => {
+  const diagram = await diagramFixture(page, { expanded: false });
+  await expect(restoreButton(page)).toBeVisible();
+  await expect(restoreButton(page)).not.toBeFocused();
+  await expectFits(page, diagram);
+  const fittedWidth = (await diagram.locator('svg').boundingBox()).width;
+  await restoreButton(page).click();
+  expect((await diagram.locator('svg').boundingBox()).width).toBeGreaterThan(fittedWidth);
+  await expect(fitButtons(page)).toBeFocused();
+});
 
 test('overflowing diagrams offer one top-right control and restore their previous scale and scroll', async ({ page }) => {
   const diagram = await diagramFixture(page);
@@ -59,12 +72,14 @@ test('overflowing diagrams offer one top-right control and restore their previou
   expect(await diagram.evaluate(el => el.scrollLeft)).toBe(scroll);
 });
 
-test('fitting diagrams have no controls until resizing makes them overflow', async ({ page }) => {
+test('small diagrams start fitted when resizing first makes them overflow', async ({ page }) => {
   await diagramFixture(page, { width: 400, height: 150 });
   await expect(fitButtons(page)).toHaveCount(0);
   await page.setViewportSize({ width: 320, height: 600 });
-  await expect(fitButtons(page)).toHaveCount(1);
+  await expect(restoreButton(page)).toHaveCount(1);
+  await expectFits(page, page.getByRole('img', { name: 'Example diagram' }));
   await page.setViewportSize({ width: 800, height: 600 });
+  await restoreButton(page).click();
   await expect(fitButtons(page)).toHaveCount(0);
 });
 
@@ -97,6 +112,7 @@ test('fit survives resizing and repeated renderer updates without duplicate cont
 test('tooltips support keyboard dismissal and pointer travel onto the help', async ({ page }) => {
   await diagramFixture(page);
   const button = fitButtons(page);
+  await page.getByRole('button', { name: 'After diagram' }).focus();
   await button.focus();
   const tip = page.getByRole('tooltip');
   await expect(tip).toHaveText('Fit diagram to screen');
@@ -162,7 +178,9 @@ test('editor canvas fitting preserves its existing zoom and pan for restoration'
 
 test('vertical scroll containers fit the full diagram and restore vertical position', async ({ page }) => {
   const diagram = await diagramFixture(page, { width: 300, height: 1000 });
-  await diagram.evaluate(el => { el.style.height = '250px'; el.style.overflow = 'auto'; el.scrollTop = 200; });
+  await diagram.evaluate(el => { el.style.height = '250px'; el.style.overflow = 'auto'; });
+  await restoreButton(page).click();
+  await diagram.evaluate(el => { el.scrollTop = 200; });
   await expect(fitButtons(page)).toHaveCount(1);
   const previous = await diagram.evaluate(el => el.scrollTop);
   await fitButtons(page).click();

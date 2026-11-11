@@ -2977,7 +2977,9 @@ channel.
   review; do not represent structural success as full UML/domain validation.
 - **Shared UML editor behavior** — `_includes/uml-editor.html` keeps Undo/Redo
   histories per diagram type alongside each type's session draft. Switching
-  types must not clear another draft's history. Keyboard activation of an
+  types must not clear another draft's history. Shared renderer previews,
+  including Earlier Diagrams, start fitted to their viewing pane without moving
+  focus; the corner control restores reading size. Keyboard activation of an
   element palette button creates the element directly on either an empty or
   populated canvas; pointer activation can retain placement mode. Use-case
   system Properties expose membership checkboxes while preserving the member

@@ -4,6 +4,36 @@ const { test, expect } = require('@playwright/test');
 const fit = page => page.getByRole('button', { name: 'Fit diagram to screen', exact: true });
 const restore = page => page.getByRole('button', { name: 'Restore previous diagram view', exact: true });
 
+for (const dark of [false, true]) {
+  test(`Monopoly earlier diagrams start fully visible on mobile in ${dark ? 'dark' : 'light'} mode`, async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.addInitScript(diagrams => {
+      for (const [type, text] of Object.entries(diagrams)) {
+        localStorage.setItem('uml-pg-autosave-monopoly-state-pattern-uml-' + type, text);
+      }
+    }, require('./fixtures/monopoly-uml'));
+    await page.goto('/SEBook/designpatterns/monopoly-state-pattern-uml-homework');
+    await page.evaluate(dark => document.documentElement.classList.toggle('dark-mode', dark), dark);
+    await page.getByRole('button', { name: 'Next →', exact: true }).click();
+    await page.getByRole('button', { name: 'Next →', exact: true }).click();
+    const earlier = page.getByRole('region', { name: 'Earlier Diagrams', exact: true });
+    const diagrams = earlier.getByRole('img');
+    await expect(diagrams).toHaveCount(2);
+    for (const diagram of await diagrams.all()) {
+      await expect(diagram.locator('svg')).toBeVisible();
+      await expect.poll(() => diagram.evaluate(container => {
+        const drawing = container.querySelector('svg').getBoundingClientRect();
+        return drawing.width <= container.clientWidth + 1 &&
+          drawing.height <= container.clientHeight + 1 &&
+          container.scrollWidth <= container.clientWidth + 1 &&
+          container.scrollHeight <= container.clientHeight + 1;
+      })).toBe(true);
+    }
+    await expect(earlier.getByRole('button', { name: 'Fit diagram to screen', exact: true })).toHaveCount(0);
+    await earlier.screenshot({ path: test.info().outputPath(`earlier-diagrams-${dark ? 'dark' : 'light'}.png`) });
+  });
+}
+
 test('the playground keeps its existing zoom controls without a duplicate fit button', async ({ page }) => {
   await page.setViewportSize({ width: 900, height: 800 });
   await page.goto('/SEBook/tools/uml-playground.html');
@@ -16,13 +46,11 @@ test('the playground keeps its existing zoom controls without a duplicate fit bu
   await expect(fit(page)).toHaveCount(0);
 });
 
-test('authored UML pages receive controls automatically without exposing them in print', async ({ page }) => {
+test('authored UML pages start fitted without exposing controls in print', async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 700 });
   await page.goto('/test-uml.html');
-  await expect(fit(page).first()).toBeVisible();
-  await fit(page).first().click();
-  await expect(restore(page)).toHaveCount(1);
-  await expect(restore(page)).toBeInViewport();
+  await expect(restore(page).first()).toBeVisible();
+  await expect(fit(page)).toHaveCount(0);
   await page.emulateMedia({ media: 'print' });
   await expect(fit(page)).toHaveCount(0);
   await expect(restore(page)).toHaveCount(0);
@@ -38,6 +66,9 @@ test('the tutorial target keeps its fit control attached and fits inside the les
   const pane = page.locator('.tvm-step-content-wrap');
   await expect(target.locator('svg')).toBeVisible();
   await target.scrollIntoViewIfNeeded();
+  await expect(restore(page)).toHaveCount(1);
+  // Explicitly enlarge before testing the fit/restore interaction.
+  await restore(page).click();
   await expect(fit(page)).toHaveCount(1);
   await fit(page).scrollIntoViewIfNeeded();
   // Fitting preserves the lesson's scroll position. Align the diagram with
