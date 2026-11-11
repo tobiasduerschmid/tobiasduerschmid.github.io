@@ -834,6 +834,60 @@ Supported options:
     var currentType = supportedTypes.indexOf(typeSelect.value) >= 0 ? typeSelect.value : defaultType;
     typeSelect.value = currentType;
     var sourceDrafts = Object.create(null);
+    const draftControlCommits = new WeakMap();
+    let retainedControlPanel = null;
+    let sequenceModelRecords = [];
+
+    function bindDraftControl(control, onChange) {
+      const ownerType = currentType;
+      const readValue = function () { return control.type === 'checkbox' ? control.checked : control.value; };
+      let committedValue = readValue();
+      const commit = function () {
+        if (!control.isConnected || currentType !== ownerType || typeSelect.value !== ownerType ||
+            readValue() === committedValue) return;
+        const previousPanel = retainedControlPanel;
+        retainedControlPanel = control.closest('#uml-pg-props-content, #uml-pg-sequence-model');
+        try {
+          onChange(readValue());
+          committedValue = readValue();
+        } finally {
+          retainedControlPanel = previousPanel;
+        }
+      };
+      draftControlCommits.set(control, {
+        commit: commit,
+        setValue: function (value) {
+          if (control.type === 'checkbox') control.checked = value;
+          else control.value = value;
+          committedValue = readValue();
+        }
+      });
+      control.addEventListener('change', commit);
+      return commit;
+    }
+
+    function flushPendingControlEdit() {
+      const control = document.activeElement;
+      const draft = draftControlCommits.get(control);
+      if (draft) draft.commit();
+      else if (control && control === inlineRenameInput) control.blur();
+      else if (control && control.closest('#uml-pg-props-content, #uml-pg-sequence-model')) {
+        control.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+    }
+
+    // Leave the native Tab/click destination in place while a field commits.
+    // Once focus leaves the form, rebuild it from the authoritative source.
+    [propsContent, sequenceModel].forEach(function (panel) {
+      if (!panel) return;
+      panel.addEventListener('focusout', function () {
+        setTimeout(function () {
+          if (panel.contains(document.activeElement)) return;
+          if (panel === propsContent) rebuildPropsPane();
+          else rebuildSequenceModelPanel();
+        }, 0);
+      });
+    });
     var selectedLayoutId = null;
     var selectedLayoutKind = null;
     // Multi-select: keys = ids, values = 'node' | 'route'. Single-select scalars
@@ -992,7 +1046,7 @@ Supported options:
     function collectModelElements(text, type) {
       var lines = stripLayoutMetadata(text).split('\n');
       var elements = [];
-      var seen = {};
+      var seen = Object.create(null);
       var componentContext = null;
       var stateInitialCount = 0;
       var stateFinalCount = 0;
@@ -1006,6 +1060,14 @@ Supported options:
         var deployment = window.UMLDeploymentDiagram.parse(text);
         (deployment.elements || []).forEach(function (item) {
           addElement(elements, seen, item.name, item.label || item.name);
+        });
+      }
+      if (type === 'sequence') {
+        window.UMLSequenceDiagram.parse(lines.join('\n')).participants.forEach(function (participant) {
+          const label = participant.isInstance && participant.id === participant.label
+            ? participant.id + ': ' + participant.label
+            : sequenceDisplay(participant.id, participant.label);
+          addElement(elements, seen, participant.id, label, 'x');
         });
       }
 
@@ -1048,41 +1110,9 @@ Supported options:
           m = line.match(/^(?:abstract\s+class|class|interface|enum)\s+("[^"]+"|\S+)(?:\s+as\s+(\S+))?/i);
           if (m) addElement(elements, seen, m[2] || m[1], m[1]);
         } else if (type === 'sequence') {
-          m = line.match(/^(participant|actor)\s+(.+)$/i);
-          if (m) {
-            var decl = m[2].replace(/\s*\{.*$/, '').trim();
-            var asIdx = decl.indexOf(' as ');
-            var colonIdx = decl.indexOf(':');
-            var id, label;
-            if (asIdx !== -1) {
-              id = decl.substring(0, asIdx).trim();
-              label = decl.substring(asIdx + 4).trim();
-            } else if (colonIdx !== -1) {
-              id = decl.substring(0, colonIdx).trim();
-              label = decl.substring(colonIdx + 1).trim();
-            } else {
-              id = decl;
-              label = decl;
-            }
-            addElement(elements, seen, id, sequenceDisplay(id, label), 'x');
-          }
-          m = line.match(/^(\S+)\s+->o(?:\s*:.*)?$/);
-          if (m) {
-            addElement(elements, seen, m[1], m[1], 'x');
-            continue;
-          }
-          m = line.match(/^o->\s+(\S+)(?:\s*:.*)?$/);
-          if (m) {
-            addElement(elements, seen, m[1], m[1], 'x');
-            continue;
-          }
-          m = line.match(/^(\S+)\s+(--?>|--?>>|<--?|<<--?|->\s*\*|->x)\s+(\S+)/);
-          if (m) {
-            addElement(elements, seen, m[1], m[1], 'x');
-            addElement(elements, seen, m[3].replace(/:.*$/, ''), m[3].replace(/:.*$/, ''), 'x');
-          }
-          m = line.match(/^(?:activate|deactivate|destroy|create(?:\s+participant)?)\s+(\S+)/i);
-          if (m) addElement(elements, seen, m[1], m[1], 'x');
+          // Participants already come from the renderer's model; note prose
+          // and declaration order must not invent different editable heads.
+          continue;
         } else if (type === 'state') {
           m = line.match(/^state\s+("[^"]+"|\S+)/i);
           if (m) addElement(elements, seen, m[1], m[1]);
@@ -1282,12 +1312,9 @@ Supported options:
         return m ? unquoteId(m[2] || m[1]) : null;
       }
       if (type === 'sequence') {
-        m = clean.match(/^(participant|actor)\s+(.+)$/i);
-        if (!m) return null;
-        var decl = m[2].trim();
-        var asIdx = decl.indexOf(' as ');
-        var colonIdx = decl.indexOf(':');
-        return unquoteId(asIdx !== -1 ? decl.substring(0, asIdx) : (colonIdx !== -1 ? decl.substring(0, colonIdx) : decl));
+        if (!/^(?:participant|actor)\s/i.test(clean)) return null;
+        const participant = window.UMLSequenceDiagram.parse(stripLayoutMetadata(clean)).participants[0];
+        return participant ? unquoteId(participant.id) : null;
       }
       if (type === 'state') {
         m = clean.match(/^(?:state|choice)\s+("[^"]+"|\S+)/i);
@@ -4637,16 +4664,40 @@ Supported options:
       return model;
     }
 
-    function replaceSequenceLineRange(start, end, replacement) {
+    function replaceSequenceLineRange(editedRecord, replacement) {
+      const start = editedRecord.index;
+      const end = editedRecord.endIndex;
       var positions = readLayoutPositions(textarea.value);
       var routes = readLayoutRoutes(textarea.value);
       var lines = stripLayoutMetadata(sequenceSourceWithScaffold(textarea.value)).split('\n');
       if (start < 0 || start >= lines.length) return;
       var nextLines = String(replacement || '').split('\n');
       if (!String(replacement || '').trim()) nextLines = [];
-      lines.splice.apply(lines, [start, Math.max(1, end - start + 1)].concat(nextLines));
+      const removedCount = Math.max(0, end - start + 1);
+      lines.splice.apply(lines, [start, removedCount].concat(nextLines));
+      const delta = nextLines.length - removedCount;
+      // Several cleared rows can share an insertion point. Retain their form
+      // order even when the student fills those empty rows in reverse order.
+      const editedOrdinal = sequenceModelRecords.indexOf(editedRecord);
+      sequenceModelRecords.forEach(function (record, ordinal) {
+        if (record === editedRecord) {
+          record.endIndex = start + nextLines.length - 1;
+        } else if (removedCount === 0
+          ? record.index > start || (record.index === start && ordinal > editedOrdinal)
+          : record.index > end) {
+          record.index += delta;
+          record.endIndex += delta;
+        }
+      });
       textarea.value = writePositionsIntoSource(lines.join('\n'), 'sequence', positions, routes);
-      renderDiagram();
+    }
+
+    function refreshSequenceRowDrafts() {
+      const lines = stripLayoutMetadata(sequenceSourceWithScaffold(textarea.value)).split('\n');
+      sequenceModelRecords.forEach(function (record) {
+        record.line = lines.slice(record.index, record.endIndex + 1).join('\n');
+        if (record.refresh) record.refresh();
+      });
     }
 
     function updateSequenceParticipant(record, nextKind, nextId, nextLabel) {
@@ -4659,24 +4710,33 @@ Supported options:
       }
       var kind = nextKind === 'actor' ? 'actor' : 'participant';
       var schema = findElementSchema('sequence', kind);
-      var line = buildElementLine(schema, newId, { label: (nextLabel || newId).trim() || newId });
+      const info = parseGenericElement(record.line, 'sequence');
+      info.label = (nextLabel || newId).trim() || newId;
+      var line = buildElementLine(schema, newId, info);
       snapshotForUndo('sequence-participant:' + oldId);
-      replaceSequenceLineRange(record.index, record.endIndex, line);
+      replaceSequenceLineRange(record, line);
       if (newId !== oldId) {
         textarea.value = renameReferencesInRelations(textarea.value, oldId, newId);
-        renderDiagram();
         selectAfterRender(newId, 'node');
       }
+      record.id = newId;
+      record.kind = kind;
+      record.label = info.label;
+      refreshSequenceRowDrafts();
+      renderDiagram();
     }
 
     function deleteSequenceRange(record) {
       snapshotForUndo();
-      replaceSequenceLineRange(record.index, record.endIndex, '');
+      replaceSequenceLineRange(record, '');
+      renderDiagram();
       announce('Removed ' + (record.kind || 'sequence item') + '.', false);
     }
 
     function rebuildSequenceModelPanel() {
-      if (!sequenceModel) return;
+      if (!sequenceModel || retainedControlPanel === sequenceModel) return;
+      const previousDetails = sequenceModel.querySelector('details');
+      const rowsOpen = previousDetails && previousDetails.open;
       var t = typeSelect.value;
       var sourceRowsNeeded = !!(EDITOR_CONFIG && EDITOR_CONFIG.hideArchUml);
       var show = !!(editToggle && editToggle.checked) && (
@@ -4691,6 +4751,7 @@ Supported options:
       }
 
       var model = parseSequenceModel(textarea.value);
+      sequenceModelRecords = model.participants.concat(model.events).sort(function (a, b) { return a.index - b.index; });
       var panel = document.createElement('div');
       panel.className = 'uml-pg-sequence-model';
       var summary = document.createElement('p');
@@ -4700,6 +4761,7 @@ Supported options:
       panel.appendChild(summary);
       var details = document.createElement('details');
       details.className = 'uml-pg-sequence-model-disclosure';
+      details.open = !!rowsOpen;
       var visibleSummary = document.createElement('summary');
       visibleSummary.textContent = 'Advanced sequence rows (' + model.participants.length + ' lifeline' + (model.participants.length === 1 ? '' : 's') +
         ', ' + model.events.length + ' timeline item' + (model.events.length === 1 ? '' : 's') + ')';
@@ -4786,9 +4848,9 @@ Supported options:
       function commit() {
         updateSequenceParticipant(record, kind.value, idInput.value, labelInput.value);
       }
-      kind.addEventListener('change', commit);
-      idInput.addEventListener('change', commit);
-      labelInput.addEventListener('change', commit);
+      bindDraftControl(kind, commit);
+      bindDraftControl(idInput, commit);
+      bindDraftControl(labelInput, commit);
       var del = document.createElement('button');
       del.type = 'button';
       del.className = 'uml-pg-sequence-model-delete';
@@ -4800,6 +4862,12 @@ Supported options:
         renderDiagram();
         announce('Deleted lifeline "' + record.id + '".', false);
       });
+      record.refresh = function () {
+        draftControlCommits.get(idInput).setValue(record.id);
+        draftControlCommits.get(labelInput).setValue(record.label);
+        draftControlCommits.get(kind).setValue(record.kind);
+        del.setAttribute('aria-label', 'Delete lifeline ' + record.id);
+      };
       row.appendChild(kind);
       row.appendChild(fields);
       row.appendChild(del);
@@ -4815,10 +4883,13 @@ Supported options:
       var input = document.createElement('textarea');
       input.value = record.line;
       input.setAttribute('aria-label', record.kind + ' source line ' + (index + 1));
-      input.addEventListener('change', function () {
+      bindDraftControl(input, function () {
         snapshotForUndo('sequence-line:' + record.index);
-        replaceSequenceLineRange(record.index, record.endIndex, input.value);
+        replaceSequenceLineRange(record, input.value);
+        refreshSequenceRowDrafts();
+        renderDiagram();
       });
+      record.refresh = function () { draftControlCommits.get(input).setValue(record.line); };
       var del = document.createElement('button');
       del.type = 'button';
       del.className = 'uml-pg-sequence-model-delete';
@@ -6907,7 +6978,7 @@ Supported options:
 
     function rebuildPropsPane() {
       updateClassActions();
-      if (!propsPane) return;
+      if (!propsPane || retainedControlPanel === propsContent) return;
       if (!editToggle || !editToggle.checked || selectionSize() === 0) {
         clearPropsPane();
         return;
@@ -6994,6 +7065,19 @@ Supported options:
       propsContent.appendChild(hint);
     }
 
+    function rebuildPropsAfterStructuralChange(control, selector) {
+      const restoreFocus = document.activeElement === control;
+      const previousPanel = retainedControlPanel;
+      retainedControlPanel = null;
+      try {
+        rebuildPropsPane();
+      } finally {
+        retainedControlPanel = previousPanel;
+      }
+      const nextControl = propsContent.querySelector(selector);
+      if (restoreFocus && nextControl) nextControl.focus();
+    }
+
     function buildFragmentProps() {
       var id = String(selectedLayoutId || '');
       var info = fragmentInfoForId(id);
@@ -7007,13 +7091,18 @@ Supported options:
       }
       propsTitle.textContent = 'Fragment — ' + info.kind;
 
-      propsContent.appendChild(field('Kind', selectInput(
+      const kindControl = selectInput(
         SEQUENCE_FRAGMENT_KINDS.map(function (k) {
           return { value: k, label: SEQUENCE_FRAGMENT_KIND_LABEL[k] || k };
         }),
         info.kind,
-        function (v) { changeFragmentKind(id, v); }
-      )));
+        function (v) {
+          changeFragmentKind(id, v);
+          rebuildPropsAfterStructuralChange(kindControl, '[data-fragment-property="kind"]');
+        }
+      );
+      kindControl.setAttribute('data-fragment-property', 'kind');
+      propsContent.appendChild(field('Kind', kindControl));
 
       propsContent.appendChild(field('Condition', textInput(info.condition, function (v) {
         changeFragmentCondition(id, v);
@@ -7261,7 +7350,7 @@ Supported options:
       var box = document.createElement('input');
       box.type = 'checkbox';
       box.checked = !!checked;
-      box.addEventListener('change', function () { onChange(box.checked); });
+      bindDraftControl(box, onChange);
       wrap.appendChild(box);
       wrap.appendChild(document.createTextNode(' ' + label));
       return wrap;
@@ -7271,14 +7360,7 @@ Supported options:
       var inp = document.createElement('input');
       inp.type = 'text';
       inp.value = value || '';
-      const diagramType = typeSelect.value;
-      let committedValue = inp.value;
-      var commit = function () {
-        if (typeSelect.value !== diagramType || inp.value === committedValue) return;
-        committedValue = inp.value;
-        onChange(inp.value);
-      };
-      inp.addEventListener('change', commit);
+      const commit = bindDraftControl(inp, onChange);
       inp.addEventListener('keydown', function (e) {
         if (e.key === 'Enter') { e.preventDefault(); commit(); }
       });
@@ -7294,7 +7376,7 @@ Supported options:
         if (opt.value === value) o.selected = true;
         sel.appendChild(o);
       });
-      sel.addEventListener('change', function () { onChange(sel.value); });
+      bindDraftControl(sel, onChange);
       return sel;
     }
 
@@ -7382,7 +7464,8 @@ Supported options:
       propsContent.appendChild(hint);
     }
 
-    function buildSystemMembershipProps(id) {
+    function buildSystemMembershipProps(currentSystemId) {
+      var id = currentSystemId();
       var model = window.UMLUseCaseDiagram.parse(stripLayoutMetadata(textarea.value));
       var system = model.systems.find(function (item) { return (item.id || item.name) === id; });
       var members = system ? system.members : [];
@@ -7395,7 +7478,7 @@ Supported options:
         var duplicateName = model.usecases.some(function (other) { return other.id !== usecase.id && other.name === usecase.name; });
         var label = usecase.name + (duplicateName ? ' (' + usecase.id + ')' : '');
         group.appendChild(checkbox('Include ' + label, members.indexOf(usecase.id) !== -1, function (included) {
-          changeSystemMembership(id, usecase.id, included);
+          changeSystemMembership(currentSystemId(), usecase.id, included);
         }));
       });
       if (!model.usecases.length) {
@@ -7528,6 +7611,7 @@ Supported options:
       if (type === 'activity' && !line) {
         propsContent.appendChild(field('Action text', textInput(id, function (v) {
           renameActivityElement(id, v);
+          if (selectedLayoutId === v) id = v;
         })));
         var activityHint = document.createElement('p');
         activityHint.className = 'uml-pg-prop-hint';
@@ -7539,9 +7623,22 @@ Supported options:
       // Class — full editor (name, kind, stereotype, abstract, members)
       if (type === 'class' && schema) {
         var info = parseClassDeclaration(line || (schema.keyword + ' ' + id));
+        const memberInputs = [];
         propsContent.appendChild(field('Name (id)', textInput(info.name, function (v) {
           info.name = v.trim() || info.name;
           replaceClassDeclaration(id, info);
+          if (selectedLayoutId === info.name) {
+            id = info.name;
+            // Renaming also rewrites self-references in member types. Keep
+            // retained controls and their model current for the next edit.
+            const updated = parseClassDeclaration(getDeclarationLine(textarea.value, type, id));
+            info.members.forEach(function (member, index) {
+              Object.assign(member, updated.members[index]);
+              draftControlCommits.get(memberInputs[index]).setValue(member.text || '');
+            });
+          } else {
+            info.name = id;
+          }
         })));
         propsContent.appendChild(field('Kind', selectInput(
           [{ value: 'class', label: 'Class' }, { value: 'abstract', label: 'Abstract Class' },
@@ -7582,6 +7679,7 @@ Supported options:
 
         function renderMembers() {
           list.textContent = '';
+          memberInputs.length = 0;
           info.members.forEach(function (m, idx) {
             var row = document.createElement('div');
             row.className = 'uml-pg-member';
@@ -7595,15 +7693,16 @@ Supported options:
               if (o.value === m.visibility) o.selected = true;
               vis.appendChild(o);
             });
-            vis.addEventListener('change', function () { m.visibility = vis.value; replaceClassDeclaration(id, info); });
+            bindDraftControl(vis, function (value) { m.visibility = value; replaceClassDeclaration(id, info); });
 
             var txt = document.createElement('input');
             txt.type = 'text';
             txt.placeholder = 'name: type   or   method(args): type';
             txt.value = m.text || '';
             txt.setAttribute('aria-label', 'Member text (member ' + (idx + 1) + ')');
-            txt.addEventListener('change', function () { m.text = txt.value; replaceClassDeclaration(id, info); });
-            txt.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); m.text = txt.value; replaceClassDeclaration(id, info); } });
+            const commitMember = bindDraftControl(txt, function (value) { m.text = value; replaceClassDeclaration(id, info); });
+            memberInputs.push(txt);
+            txt.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); commitMember(); } });
 
             var rm = document.createElement('button');
             rm.type = 'button';
@@ -7612,7 +7711,7 @@ Supported options:
             rm.textContent = '✕';
             rm.addEventListener('click', function () {
               info.members.splice(idx, 1);
-              replaceClassDeclaration(id, info);
+              replaceClassDeclaration(id, info, null);
               renderMembers();
             });
 
@@ -7637,7 +7736,7 @@ Supported options:
         addBtn.textContent = '+ Add Member';
         addBtn.addEventListener('click', function () {
           info.members.push({ visibility: '+', text: 'newMember', isAbstract: false, isStatic: false });
-          replaceClassDeclaration(id, info);
+          replaceClassDeclaration(id, info, null);
           renderMembers();
         });
         memFs.appendChild(addBtn);
@@ -7647,17 +7746,29 @@ Supported options:
 
       // Generic element editor for the other types — name, label, stereotype.
       var current = parseGenericElement(line, type);
-      propsContent.appendChild(field('Identifier', textInput(id, function (v) {
-        renameElement(id, v.trim() || id);
-      })));
+      let displayLabelInput = null;
+      const identifierInput = textInput(id, function (v) {
+        const nextId = v.trim() || id;
+        renameElement(id, nextId);
+        if (selectedLayoutId === nextId) id = nextId;
+        Object.assign(current, parseGenericElement(getDeclarationLine(textarea.value, type, id), type));
+        draftControlCommits.get(identifierInput).setValue(id);
+        if (displayLabelInput) {
+          draftControlCommits.get(displayLabelInput).setValue(current.label || id);
+        }
+      });
+      propsContent.appendChild(field('Identifier', identifierInput));
       if (schema && schema.supports && schema.supports.displayLabel) {
-        propsContent.appendChild(field('Display label', textInput(current.label || id, function (v) {
+        displayLabelInput = textInput(current.label || id, function (v) {
           current.label = v;
           replaceGenericElement(id, schema, current);
-        })));
+          if (selectedLayoutId) id = current.name = selectedLayoutId;
+          draftControlCommits.get(identifierInput).setValue(id);
+        });
+        propsContent.appendChild(field('Display label', displayLabelInput));
       }
       if (type === 'usecase' && schema && schema.supports.system) {
-        buildSystemMembershipProps(id);
+        buildSystemMembershipProps(function () { return id; });
       }
       if (schema && schema.supports && schema.supports.stereotype) {
         propsContent.appendChild(field('Stereotype (e.g. <<choice>>)', textInput(current.stereotype || '', function (v) {
@@ -7710,7 +7821,7 @@ Supported options:
 
           function commitState() {
             var newBody = buildStateBody(parsed);
-            var newLine = setBraceBody(line, newBody, true);
+            var newLine = setBraceBody(getDeclarationLine(textarea.value, type, id), newBody, true);
             replaceLineForElementId(id, newLine);
           }
           function renderChildren() {
@@ -7757,6 +7868,7 @@ Supported options:
             var stateIds = window.UMLStateDiagram.parse(textarea.value).states.map(function (state) { return state.name; });
             var suffix = 1;
             while (stateIds.indexOf(newName) !== -1) newName = 'Sub' + suffix++;
+            parsed = parseStateBody(parseBraceBody(getDeclarationLine(textarea.value, type, id)));
             parsed.children.push({ kind: 'state', name: newName, stereotype: '' });
             commitState();
           });
@@ -7778,7 +7890,7 @@ Supported options:
         compFs.appendChild(compList);
 
         function commitComp() {
-          replaceLineForElementId(id, setComponentBody(line, parsedComp));
+          replaceLineForElementId(id, setComponentBody(getDeclarationLine(textarea.value, type, id), parsedComp));
         }
         function renderPorts() {
           compList.textContent = '';
@@ -7896,7 +8008,7 @@ Supported options:
 
         function commitDeploymentNode() {
           var newBody = buildDeploymentNodeBody(parsedDep);
-          var newLine = setBraceBody(line, newBody);
+          var newLine = setBraceBody(getDeclarationLine(textarea.value, type, id), newBody);
           replaceLineForElementId(id, newLine);
         }
         function renderDeploymentChildren() {
@@ -7980,7 +8092,7 @@ Supported options:
 
         function commitEr() {
           var newBody = buildEntityBody(parsedEr);
-          var newLine = setBraceBody(line, newBody, true);
+          var newLine = setBraceBody(getDeclarationLine(textarea.value, type, id), newBody, true);
           replaceLineForElementId(id, newLine);
         }
         function renderAttrs() {
@@ -8036,9 +8148,9 @@ Supported options:
         var seqLeg = document.createElement('legend');
         seqLeg.textContent = 'Lifeline';
         seqFs.appendChild(seqLeg);
-        seqFs.appendChild(makeQuickInsertButton('activate', 'activate ' + id, 'Add an activate ' + id + ' bar'));
-        seqFs.appendChild(makeQuickInsertButton('deactivate', 'deactivate ' + id, 'Add a deactivate ' + id + ' marker'));
-        seqFs.appendChild(makeQuickInsertButton('destroy', 'destroy ' + id, 'Mark ' + id + ' as destroyed (X)'));
+        seqFs.appendChild(makeQuickInsertButton('activate', function () { return 'activate ' + id; }, 'Add an activate ' + id + ' bar'));
+        seqFs.appendChild(makeQuickInsertButton('deactivate', function () { return 'deactivate ' + id; }, 'Add a deactivate ' + id + ' marker'));
+        seqFs.appendChild(makeQuickInsertButton('destroy', function () { return 'destroy ' + id; }, 'Mark ' + id + ' as destroyed (X)'));
         propsContent.appendChild(seqFs);
       }
 
@@ -8057,9 +8169,10 @@ Supported options:
       btn.style.alignSelf = 'flex-start';
       btn.addEventListener('click', function () {
         snapshotForUndo();
-        textarea.value = appendRawLine(textarea.value, line);
+        const insertion = typeof line === 'function' ? line() : line;
+        textarea.value = appendRawLine(textarea.value, insertion);
         renderDiagram();
-        announce('Inserted: ' + line, false);
+        announce('Inserted: ' + insertion, false);
       });
       return btn;
     }
@@ -8342,6 +8455,16 @@ Supported options:
       }
       var st = t.match(/<<\s*([^>]+?)\s*>>/);
       if (st) info.stereotype = '<<' + st[1] + '>>';
+      if (type === 'sequence' && /^(?:participant|actor)\s/i.test(t)) {
+        // Sequence `id as Class` runs in the opposite direction to the
+        // generic `label as id` syntax. Use the renderer's declaration model.
+        const participant = window.UMLSequenceDiagram.parse(t.replace(/\s*<<\s*[^>]+?\s*>>/, '')).participants[0];
+        if (participant) {
+          info.name = participant.id;
+          info.label = participant.label;
+        }
+        return info;
+      }
       var box = t.match(/^box(?:\s+([a-z]+))?\s+"((?:[^"\\]|\\.)*)"\s+as\s+(\S+)/i);
       if (box) {
         info.shape = (box[1] || 'rect').toLowerCase();
@@ -8461,6 +8584,28 @@ Supported options:
       return result + declaration.slice(range.end);
     }
 
+    function sequenceArgumentReferenceSpans(line) {
+      const labelIndex = relationLabelIndex(line);
+      if (labelIndex < 0 || !tokenizeRelationParts(line.slice(0, labelIndex)).some(isRelationOperatorToken)) return [];
+      const call = line.slice(labelIndex + 1).match(/^\s*[A-Za-z_$][\w$]*\s*\(/);
+      if (!call) return [];
+      const offset = labelIndex + 1 + call[0].length;
+      const tokens = Array.from(line.slice(offset).matchAll(/"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|[A-Za-z_$][\w$]*|[^\s]/g));
+      const spans = [];
+      let depth = 1;
+      for (let index = 0; index < tokens.length && depth > 0; index++) {
+        const token = tokens[index];
+        if (token[0] === '(') depth++;
+        if (token[0] === ')') depth--;
+        const before = index ? tokens[index - 1][0] : '(';
+        const after = tokens[index + 1] && tokens[index + 1][0];
+        if (/^[A-Za-z_$][\w$]*$/.test(token[0]) && ['(', ',', '['].includes(before) && [')', ',', ']'].includes(after)) {
+          spans.push({ value: token[0], start: offset + token.index, end: offset + token.index + token[0].length });
+        }
+      }
+      return spans;
+    }
+
     function renameReferencesInRelations(text, oldId, newId) {
       if (typeSelect.value === 'usecase') text = rewriteUsecaseMembershipReferences(text, oldId, newId);
       text = rewriteOwnedElementStatements(text, typeSelect.value, oldId, newId);
@@ -8494,6 +8639,11 @@ Supported options:
           continue;
         }
         const spans = referenceSpans(lines[i], typeSelect.value);
+        // Argument references are renamed, but are not structural endpoints for
+        // deletion or duplication. Quoted strings and method names stay literal.
+        if (typeSelect.value === 'sequence' && spans.length && !/^\s*(?:note|callout)\b/i.test(lines[i])) {
+          spans.push.apply(spans, sequenceArgumentReferenceSpans(lines[i]));
+        }
         spans.reverse().forEach(function (span) {
           if (!idIsReferenceTo(span.value, oldId)) return;
           const renamed = newId + span.value.slice(oldId.length);
@@ -8506,6 +8656,13 @@ Supported options:
     }
 
     function renameDeclarationIdentifier(declaration, type, oldId, newId) {
+      if (type === 'sequence') {
+        // A sequence declaration puts the id before either ':' or 'as'.
+        // The generic alias grammar below puts it after 'as' instead.
+        const prefix = declaration.match(/^\s*(?:participant|actor)\s+/i);
+        if (!prefix || declaration.slice(prefix[0].length, prefix[0].length + oldId.length) !== oldId) return declaration;
+        return declaration.slice(0, prefix[0].length) + newId + declaration.slice(prefix[0].length + oldId.length);
+      }
       const range = declarationBraceRange(declaration);
       const headerEnd = range ? range.start : declaration.indexOf('\n');
       const header = headerEnd < 0 ? declaration : declaration.slice(0, headerEnd);
@@ -8863,7 +9020,38 @@ Supported options:
       info.source = sourceId; info.target = targetId;
       var rels = relationSchemasFor(type);
 
-      propsContent.appendChild(field('Type', selectInput(
+      const relationControls = Object.create(null);
+      function relationField(label, property, control) {
+        relationControls[property] = control;
+        control.setAttribute('data-relation-property', property);
+        return field(label, control);
+      }
+      function refreshRelationDraft() {
+        const sourceLine = stripLayoutMetadata(textarea.value).split('\n')[lineIdx];
+        const current = parseRelationLine(sourceLine);
+        normalizeRelationInfoForType(current, type, sourceLine);
+        Object.assign(info, current);
+        id = String(selectedLayoutId || id);
+        propsTitle.textContent = 'Relation — ' + info.source + ' → ' + info.target;
+        Object.keys(relationControls).forEach(function (property) {
+          const fragment = property === 'branch' ? fragmentForMessageLine(lineIdx) : null;
+          const value = property === 'branch' && fragment ? String(fragment.branchIdx) : info[property];
+          draftControlCommits.get(relationControls[property]).setValue(value == null ? '' : value);
+        });
+      }
+      function commitRelationDraft() {
+        replaceRelationLine(lineIdx, info);
+        refreshRelationDraft();
+      }
+      function commitEndpoint(side, value) {
+        rewireRelationEndpoint(id, lineIdx, info, side, value);
+        refreshRelationDraft();
+      }
+      function rebuildForRelationChange(property) {
+        rebuildPropsAfterStructuralChange(relationControls[property], '[data-relation-property="' + property + '"]');
+      }
+
+      propsContent.appendChild(relationField('Type', 'kind', selectInput(
         rels.map(function (r) { return { value: r.id, label: r.label }; }),
         info.kind, function (v) {
           info.kind = v;
@@ -8876,75 +9064,76 @@ Supported options:
             info.sourceNavigability = defaults.sourceNavigability;
             info.targetNavigability = defaults.targetNavigability;
           }
-          replaceRelationLine(lineIdx, info);
+          commitRelationDraft();
+          rebuildForRelationChange('kind');
         }
       )));
       var endpointOptions = relationEndpointOptions(info);
       if (lineIdx !== -1 && endpointOptions.length) {
         if (type === 'sequence' && /^(lost|found)$/.test(info.kind || '')) {
-          propsContent.appendChild(field('Endpoint', selectInput(
+          propsContent.appendChild(relationField('Endpoint', 'source', selectInput(
             endpointOptions,
             info.source || info.target,
-            function (v) { rewireRelationEndpoint(id, lineIdx, info, 'endpoint', v); }
+            function (v) { commitEndpoint('endpoint', v); }
           )));
         } else {
           // A continuation flow's source is whichever step precedes it.
           if (!info.implicitSource) {
-            propsContent.appendChild(field('Source endpoint', selectInput(
+            propsContent.appendChild(relationField('Source endpoint', 'source', selectInput(
               endpointOptions,
               info.source,
-              function (v) { rewireRelationEndpoint(id, lineIdx, info, 'source', v); }
+              function (v) { commitEndpoint('source', v); }
             )));
           }
-          propsContent.appendChild(field('Target endpoint', selectInput(
+          propsContent.appendChild(relationField('Target endpoint', 'target', selectInput(
             endpointOptions,
             info.target,
-            function (v) { rewireRelationEndpoint(id, lineIdx, info, 'target', v); }
+            function (v) { commitEndpoint('target', v); }
           )));
         }
       }
-      propsContent.appendChild(field(info.labelIsGuard ? 'Guard' : 'Label', textInput(info.label, function (v) {
+      propsContent.appendChild(relationField(info.labelIsGuard ? 'Guard' : 'Label', 'label', textInput(info.label, function (v) {
         info.label = v;
-        replaceRelationLine(lineIdx, info);
+        commitRelationDraft();
       })));
       var multSpec = (rels.find(function (r) { return r.id === info.kind; }) || {}).supports || {};
       if (multSpec.multiplicity || type === 'er') {
-        propsContent.appendChild(field('Source multiplicity / cardinality', textInput(info.sourceMult, function (v) {
+        propsContent.appendChild(relationField('Source multiplicity / cardinality', 'sourceMult', textInput(info.sourceMult, function (v) {
           info.sourceMult = v;
-          replaceRelationLine(lineIdx, info);
+          commitRelationDraft();
         })));
-        propsContent.appendChild(field('Target multiplicity / cardinality', textInput(info.targetMult, function (v) {
+        propsContent.appendChild(relationField('Target multiplicity / cardinality', 'targetMult', textInput(info.targetMult, function (v) {
           info.targetMult = v;
-          replaceRelationLine(lineIdx, info);
+          commitRelationDraft();
         })));
       }
       if (type === 'class' && /^(compose|aggregate|plain|assoc|biassoc)$/.test(info.kind)) {
         ['source', 'target'].forEach(function (end) {
-          propsContent.appendChild(field((end === 'source' ? 'Source' : 'Target') + ' navigability', selectInput(
+          propsContent.appendChild(relationField((end === 'source' ? 'Source' : 'Target') + ' navigability', end + 'Navigability', selectInput(
             [{ value: '', label: 'Unspecified' }, { value: 'navigable', label: 'Navigable' }, { value: 'nonnav', label: 'Non-navigable' }],
             info[end + 'Navigability'], function (v) {
               info[end + 'Navigability'] = v;
-              replaceRelationLine(lineIdx, info);
+              commitRelationDraft();
             }
           )));
         });
       } else if (multSpec.navigability || /^(compose|aggregate|plain|assoc)$/.test(info.kind)) {
-        propsContent.appendChild(field('Navigability', selectInput(
+        propsContent.appendChild(relationField('Navigability', 'navigability', selectInput(
           [{ value: '', label: 'Default' }, { value: 'navigable', label: 'Navigable →' },
            { value: 'bidirectional', label: 'Bidirectional ↔' }, { value: 'nonnav', label: 'Non-navigable ✕' }],
-          info.navigability, function (v) { info.navigability = v; replaceRelationLine(lineIdx, info); }
+          info.navigability, function (v) { info.navigability = v; commitRelationDraft(); }
         )));
       }
       if (multSpec.stereotype || /^(include|extend|depend)$/.test(info.kind)) {
-        propsContent.appendChild(field('Stereotype', textInput(info.stereotype, function (v) {
+        propsContent.appendChild(relationField('Stereotype', 'stereotype', textInput(info.stereotype, function (v) {
           info.stereotype = v.trim() ? (/^<</.test(v.trim()) ? v.trim() : '<<' + v.trim().replace(/<<|>>/g, '') + '>>') : '';
-          replaceRelationLine(lineIdx, info);
+          commitRelationDraft();
         })));
       }
       if (multSpec.dashed) {
         propsContent.appendChild(checkbox('Dashed connector', info.dashed, function (b) {
           info.dashed = b;
-          replaceRelationLine(lineIdx, info);
+          commitRelationDraft();
         }));
       }
       if (lineIdx !== -1 && info.source && info.target) {
@@ -8990,10 +9179,13 @@ Supported options:
             var lbl = br.condition ? '[' + br.condition + ']' : '(no condition)';
             branchOptions.push({ value: String(bIdx + 1), label: (bIdx + 2) + ': else ' + lbl });
           });
-          propsContent.appendChild(field('Branch', selectInput(
+          propsContent.appendChild(relationField('Branch', 'branch', selectInput(
             branchOptions,
             String(fragCtx.branchIdx),
-            function (v) { moveSequenceMessageToBranch(id, Number(v)); }
+            function (v) {
+              moveSequenceMessageToBranch(id, Number(v));
+              rebuildForRelationChange('branch');
+            }
           )));
         }
       }
@@ -10426,7 +10618,9 @@ Supported options:
       var kind = /^actor\b/i.test(line.trim()) ? 'actor' : 'participant';
       var schema = findElementSchema('sequence', kind);
       if (!schema) return;
-      var newLine = buildElementLine(schema, newId, { label: parsed.label });
+      const info = parseGenericElement(line, 'sequence');
+      info.label = parsed.label;
+      var newLine = buildElementLine(schema, newId, info);
       snapshotForUndo('rename-sequence:' + id);
       var sourceText = replaceLineByMatch(textarea.value, 'sequence', function (candidate) {
         return declarationIdForLine(candidate, 'sequence') === id;
@@ -11481,6 +11675,9 @@ Supported options:
     window.UMLEditor = window.UMLEditor || {};
     window.UMLEditor.autosaveKey = autosaveKey;
     window.UMLEditor.storageScope = autosaveScope;
+    // Consumers such as cross-diagram checks must see retained drafts even
+    // when browser storage is unavailable or the save debounce has not run.
+    window.UMLEditor.sourceForDiagramType = sourceDraftForType;
 
     // Load the configured starter text; persistent playground instances prefer
     // autosaved content so switching pages does not discard drafts.
@@ -11545,6 +11742,7 @@ Supported options:
 
     function renderDiagram(options) {
       options = options || {};
+      clearTimeout(debounceTimer);
       classActionsRenderedSource = null;
       updateClassActions(true);
       rememberCurrentSource(currentType);
@@ -11935,23 +12133,36 @@ Supported options:
       if (!persistenceEnabled) return;
       if (autosaveTimer) clearTimeout(autosaveTimer);
       autosaveTimer = setTimeout(function () {
-        try {
-          localStorage.setItem(autosaveKey(), textarea.value);
-          if (autosaveFailed) {
-            // Recovered after a previous failure — clear the warning.
-            autosaveFailed = false;
-            announce('Autosave recovered.', false);
-          }
-          showSavedIndicator();
-        } catch (e) {
-          // Quota exceeded, private-mode storage disabled, or storage
-          // partitioning blocked us. Surface it — the original code swallowed
-          // this and the user could lose work without warning.
-          showSaveFailedIndicator(e);
-        }
         autosaveTimer = null;
+        saveCurrentSource();
       }, 250);
     }
+    function saveCurrentSource() {
+      rememberCurrentSource(currentType);
+      if (!persistenceEnabled) return;
+      try {
+        localStorage.setItem(autosaveKey(currentType), textarea.value);
+        if (autosaveFailed) {
+          autosaveFailed = false;
+          announce('Autosave recovered.', false);
+        }
+        showSavedIndicator();
+      } catch (e) {
+        showSaveFailedIndicator(e);
+      }
+    }
+    function flushAutosave() {
+      // A focused property or inline field may not have emitted change/blur.
+      // Commit it before saving; page suspension can cancel every pending timer.
+      flushPendingControlEdit();
+      clearTimeout(autosaveTimer);
+      autosaveTimer = null;
+      saveCurrentSource();
+    }
+    window.addEventListener('pagehide', flushAutosave);
+    document.addEventListener('visibilitychange', function () {
+      if (document.visibilityState === 'hidden') flushAutosave();
+    });
     function showSavedIndicator() {
       if (!autosaveIndicator) return;
       autosaveIndicator.classList.remove('is-error');
@@ -13431,11 +13642,27 @@ Supported options:
       setTimeout(function () { status.textContent = ''; }, 2000);
     });
 
+    // Theme refreshes do not end an edit session or replace an action's status.
+    function renderAppearance() {
+      const previousPanel = retainedControlPanel;
+      const previousStatus = status.textContent;
+      const activeControl = document.activeElement;
+      retainedControlPanel = activeControl && activeControl.closest('#uml-pg-props-content, #uml-pg-sequence-model');
+      try {
+        renderDiagram();
+        if (errorBox.classList.contains('is-hidden')) status.textContent = previousStatus;
+      } finally {
+        retainedControlPanel = previousPanel;
+      }
+    }
+
     // Re-render on dark mode toggle
+    let appearanceRenderTimer;
     var observer = new MutationObserver(function (mutations) {
       for (var m = 0; m < mutations.length; m++) {
         if (mutations[m].attributeName === 'class') {
-          setTimeout(renderDiagram, 60);
+          clearTimeout(appearanceRenderTimer);
+          appearanceRenderTimer = setTimeout(renderAppearance, 60);
           break;
         }
       }

@@ -93,6 +93,19 @@ test('a response cannot substitute for a state change', () => rejects('sequence'
 test('real calls can be interleaved with response messages', () => passes('sequence', diagrams.sequence.replace('normal -> player: setState(jail)', 'normal --> player: done\nnormal -> player: setState(jail)')));
 test('sequence names inferred from the class design remain accepted', () => passes('sequence', diagrams.sequence.replaceAll('takeTurn', 'advanceTurn').replaceAll('setState', 'adopt'), { class: diagrams.class.replaceAll('takeTurn', 'advanceTurn').replaceAll('setState', 'adopt') }));
 test('sequence permits unused contextual lifelines', () => passes('sequence', diagrams.sequence.replace('participant player: Player', 'participant observer: Player\nparticipant player: Player\nparticipant bankrupt: BankruptState')));
+test('sequence lifeline declarations after messages retain their classifier types', () => {
+  const lines = diagrams.sequence.split('\n');
+  const declarations = lines.filter(line => line.startsWith('participant '));
+  const messagesFirst = lines.filter(line => !line.startsWith('participant ')).join('\n');
+  passes('sequence', insert(messagesFirst, declarations.join('\n')));
+});
+test('a sequence object may have the same identifier as its classifier', () => {
+  const sameNamedInstances = diagrams.sequence
+    .replaceAll(/\bplayer\b/g, 'Player')
+    .replaceAll(/\bnormal\b/g, 'NormalState')
+    .replaceAll(/\bjail\b/g, 'JailState');
+  passes('sequence', sameNamedInstances);
+});
 test('sequence rejects a wrong argument count', () => rejects('sequence', diagrams.sequence.replaceAll('takeTurn(player)', 'takeTurn(17, true, player)')));
 test('sequence rejects a known incompatible lifeline argument type', () => rejects('sequence', diagrams.sequence.replaceAll('takeTurn(player)', 'takeTurn(jail)')));
 test('sequence must follow a transition in the saved state model', () => rejects('sequence', diagrams.sequence, { state: diagrams.state.replace('NormalState --> JailState : third double\n', '') }));

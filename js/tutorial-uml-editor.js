@@ -553,6 +553,9 @@
   UMLTutorialEditor.prototype.sourceForDiagramType = function (type) {
     type = type || (this.typeEl && this.typeEl.value) || 'class';
     if (this.typeEl && this.typeEl.value === type) return this.currentSource();
+    if (window.UMLEditor && typeof window.UMLEditor.sourceForDiagramType === 'function') {
+      return window.UMLEditor.sourceForDiagramType(type);
+    }
     try {
       return localStorage.getItem(autosaveKeyForType(type)) || '';
     } catch (e) {

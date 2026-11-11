@@ -4,11 +4,13 @@ const { a11yCheckpoint } = require('./a11y-helpers');
 const url = '/SEBook/designpatterns/monopoly-state-pattern-uml-homework';
 
 async function prepareStep(page, type, source, saved = diagrams) {
-  await page.goto(url);
-  // Seed prior learner drafts at the persistence boundary; exercise grading via UI.
-  await page.evaluate(saved => {
+  // Load saved drafts before the editor creates its session copies; later
+  // changes to localStorage must not replace a student's current session work.
+  await page.addInitScript(saved => {
     for (const [type, source] of Object.entries(saved)) localStorage.setItem('uml-pg-autosave-monopoly-state-pattern-uml-' + type, source);
   }, saved);
+  await page.goto(url);
+  await expect(page.getByLabel('ArchUML diagram source')).toHaveValue(saved.class);
   if (type !== 'class') await page.getByRole('button', { name: 'Next →', exact: true }).click();
   if (type === 'sequence') await page.getByRole('button', { name: 'Next →', exact: true }).click();
   // The homework hides the optional source pane; this only supplies the draft,
@@ -16,11 +18,6 @@ async function prepareStep(page, type, source, saved = diagrams) {
   await page.getByLabel('ArchUML diagram source').evaluate((input, source) => {
     input.value = source; input.dispatchEvent(new Event('input', { bubbles: true }));
   }, source);
-  // Switching away from a blank earlier editor can save it; restore the explicit
-  // prior-diagram fixture before exercising the consistency check.
-  await page.evaluate(({saved,type}) => {
-    for (const [name,source] of Object.entries(saved)) if (name !== type) localStorage.setItem('uml-pg-autosave-monopoly-state-pattern-uml-' + name, source);
-  }, {saved,type});
 }
 async function checkWork(page) {
   await page.getByRole('button', { name: /Test My Work/ }).click();

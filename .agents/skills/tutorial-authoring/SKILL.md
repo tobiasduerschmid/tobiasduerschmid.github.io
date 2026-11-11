@@ -2946,7 +2946,12 @@ channel.
   public ArchUML parsers as the renderer, on the same layout-free source
   (`UMLShared.extractLayoutMetadata`): inline `@pos`, `@layout` route bends, and
   callouts written by the visual editor never become part of a name, so moving
-  an element cannot change a grade. Notes cannot supply model evidence;
+  an element cannot change a grade. Cross-diagram checks and previous-diagram
+  previews read `UMLEditor.sourceForDiagramType(type)`, the same active/session
+  draft source used by exports; localStorage is only the fallback for a type
+  without a retained session draft. Failed autosaves must not make checks or
+  previews use an older saved diagram. No storage keys or schema change.
+  Notes cannot supply model evidence;
   sequence arrows retain semantic direction and response messages are excluded
   from call checks. `class_consistency` also supports `state_roles`,
   `state_operations`, `state_ownership`, and `state_inheritance`. These infer the
@@ -2978,6 +2983,14 @@ channel.
   system Properties expose membership checkboxes while preserving the member
   elements and their relationships when membership is removed. Composite-state
   edits preserve nested declarations, pseudostate kinds, and state actions.
+  Property and advanced-sequence field commits preserve the native Tab/click
+  destination. Retained controls must refresh their models and committed-value
+  baselines after renames, endpoint edits, or source-line shifts; container
+  changes must read the current declaration. Structural selectors rebuild their
+  dependent controls and restore focus. Advanced sequence disclosures retain
+  their open state, and cleared timeline rows retain their insertion order.
+  Page hiding/suspension flushes the focused field and pending autosave; theme
+  rerenders preserve focused form drafts and the preceding action's status.
   Draft diagnostics are nonblocking and never discard or rewrite invalid or
   incomplete work. Current checks cover unclosed sequence fragments, excess
   operands for `opt`, `loop`, `break`, and `neg`, direct self-generalization,
@@ -3009,6 +3022,11 @@ channel.
   relationship endpoints. Reference edits share the properties panel's tokenizer,
   including namespace separators (`::`) and both multiplicity quote styles.
   Member types inside angle- and square-bracket generics follow type renames.
+  Sequence lifeline renames also update bare object arguments in message calls,
+  including state-change arguments, while leaving quoted text and method names
+  intact. Explicit lifeline declarations supply classifier types even after
+  earlier messages introduced the object implicitly; `Player: Player` remains
+  an explicitly typed instance in both the renderer and the editor.
   Dotted identifiers are independent unless they identify an actual component
   port; deleting or renaming `A` must preserve a separately declared `A.Part`.
   Port edits keep a component body's form, because ArchUML splits a one-line

@@ -40,8 +40,16 @@ for (const [surface, url] of [['playground', PLAYGROUND], ['tutorial', TUTORIAL]
       await expect(exit).toBeInViewport({ ratio: 1 });
       await exit.click({ trial: true });
       await a11yCheckpoint(page, 'UML fullscreen exit controls', { include: '#uml-pg-fullscreen-bar' });
+      // Chromium cannot resize a native fullscreen window. Exit through the
+      // real control, resize, then exercise fullscreen again at the new size.
+      await exit.click();
+      await expectBrowserFullscreen(page, false);
+      await expect(entry).toBeFocused();
       // Narrow screens may scroll the palette/editor; exit must remain reachable.
       await page.setViewportSize({ width: 390, height: 700 });
+      await entry.click();
+      await expectBrowserFullscreen(page, true);
+      await expect(exit).toBeFocused();
       await page.locator('#uml-playground-wrap').evaluate(el => { el.scrollTop = el.scrollHeight; });
       await expect(exit).toBeInViewport({ ratio: 1 });
       await exit.click();
