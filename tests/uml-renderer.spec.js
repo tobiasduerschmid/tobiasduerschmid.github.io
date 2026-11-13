@@ -5035,12 +5035,13 @@ Done --> [*]
 
   test('state example keeps the context, interface, and center state visually aligned', async ({ page }) => {
     await page.goto('/SEBook/designpatterns/state.html');
-    await page.waitForSelector('.uml-class-diagram-container svg');
+    // The page's other class diagrams sit in the narrated lesson's transcript;
+    // the Gumball example is identified by the classes its description names.
+    const gumballDiagram = page.getByRole('img', { name: /^UML class diagram .*GumballMachine/ });
+    await expect(gumballDiagram).toBeVisible();
 
-    const centers = await page.evaluate(() => {
-      const svg = document.querySelectorAll('.uml-class-diagram-container svg')[1];
-      if (!svg) return null;
-
+    const centers = await gumballDiagram.evaluate((container) => {
+      const svg = container.querySelector('svg');
       const texts = Array.from(svg.querySelectorAll('.uml-model-layer text'));
       const rects = Array.from(svg.querySelectorAll('.uml-model-layer rect'));
 
@@ -5075,11 +5076,12 @@ Done --> [*]
       };
     });
 
-    expect(centers).not.toBeNull();
-    if (!centers || centers.machine == null || centers.state == null || centers.hasQuarter == null) {
-      throw new Error('Expected GumballMachine, State, and HasQuarterState boxes in the rendered UML example.');
-    }
-    expect(Math.abs(centers.machine - centers.state)).toBeLessThanOrEqual(12);
-    expect(Math.abs(centers.machine - centers.hasQuarter)).toBeLessThanOrEqual(12);
+    expect(centers, 'GumballMachine, State, and HasQuarterState boxes are drawn').toEqual({
+      machine: expect.any(Number),
+      state: expect.any(Number),
+      hasQuarter: expect.any(Number),
+    });
+    expect(Math.abs(centers.machine - centers.state), 'State sits under GumballMachine').toBeLessThanOrEqual(12);
+    expect(Math.abs(centers.machine - centers.hasQuarter), 'HasQuarterState sits under GumballMachine').toBeLessThanOrEqual(12);
   });
 });
