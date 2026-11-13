@@ -21,11 +21,15 @@ choreography implements speed or controls.
 1. Add the usual song storyboard in `_data/songs/` and its `song-player` page.
    The storyboard's `player` URL makes it appear in the playlist library;
    titles, durations, and credits are read from that same storyboard.
-2. Add a short title, topic, and category in `_data/song_library.yml`. The library
+2. Add a short title, topic, category, and `thumbnail_time` (seconds) in
+   `_data/song_library.yml`. The library
    shows every playable video by default; search and categories narrow the view
-   without changing playlist membership. Generate a real frame with
-   `node scripts/song-video/render.js <song> --stills 18 --out /tmp/song-preview`,
-   then export it as a 640×360 WebP to `assets/song-playlist/<song>.webp`.
+   without changing playlist membership. Choose a frame that shows the song's
+   central idea, with settled animation and a clear composition at card size.
+   Compare candidate timestamps with
+   `node scripts/song-video/render.js <song> --stills <seconds,...> --out /tmp/song-preview`,
+   record the selected timestamp as `thumbnail_time`, and export that frame as
+   a 640×360 WebP to `assets/song-playlist/<song>.webp`.
    Videos without library metadata still appear with their full storyboard title.
 3. Add a record in `_data/song_playlists.yml` with a unique `id`, a `title`, a
    `description`, and ordered `songs` (storyboard filenames without `.yml`).
