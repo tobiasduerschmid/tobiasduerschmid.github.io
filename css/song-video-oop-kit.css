@@ -445,11 +445,12 @@
 .oop-label-mark--fail { color: #9f1239; }
 
 .oop-bubble {
+  --oop-bubble-fill: #f8fafc;
   position: absolute;
   padding: 8px 14px;
   border: 2px solid var(--ink);
   border-radius: 16px;
-  background: #f8fafc;
+  background: var(--oop-bubble-fill);
   color: var(--ink);
   font-size: 17px;
   font-weight: 800;
@@ -458,21 +459,46 @@
   white-space: nowrap;
 }
 
+/* Solid triangles overlap the frame with the bubble's fill. Do not inherit
+   its background: Firefox's rounded-frame repair adds border paint layers.
+   Clipping one fill also avoids seams between CSS border-triangle halves. */
+.oop-bubble::before,
 .oop-bubble::after {
   content: '';
   position: absolute;
-  width: 14px;
-  height: 14px;
-  border: 2px solid var(--ink);
-  border-top: 0;
-  border-left: 0;
-  background: inherit;
 }
 
-.oop-bubble--down::after { left: 22px; bottom: -9px; rotate: 45deg; }
-.oop-bubble--left::after { left: -9px; top: 12px; rotate: 135deg; }
-.oop-bubble--right::after { right: -9px; top: 12px; rotate: -45deg; }
-.oop-bubble--gold { background: var(--gold); }
+.oop-bubble::before { background: var(--ink); }
+.oop-bubble::after { background: var(--oop-bubble-fill); }
+
+.oop-bubble--left::before,
+.oop-bubble--right::before,
+.oop-bubble--left::after,
+.oop-bubble--right::after {
+  top: calc(50% - 12px);
+  width: 16px;
+  height: 24px;
+}
+
+.oop-bubble--left::before,
+.oop-bubble--left::after { clip-path: polygon(100% 0, 100% 100%, 0 50%); }
+.oop-bubble--right::before,
+.oop-bubble--right::after { clip-path: polygon(0 0, 100% 50%, 0 100%); }
+.oop-bubble--left::before { left: -16px; }
+.oop-bubble--left::after { left: -12px; }
+.oop-bubble--right::before { right: -16px; }
+.oop-bubble--right::after { right: -12px; }
+
+.oop-bubble--down::before,
+.oop-bubble--down::after {
+  left: 19px;
+  width: 24px;
+  height: 16px;
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+}
+.oop-bubble--down::before { bottom: -16px; }
+.oop-bubble--down::after { bottom: -12px; }
+.oop-bubble--gold { --oop-bubble-fill: var(--gold); }
 
 .oop-chat {
   position: absolute;
