@@ -1,0 +1,13 @@
+@startuml
+participant client: Client
+participant service: Service
+participant store: Storage
+client -> service: request()
+activate service
+service -> store: load()
+activate store
+store --> service: data
+deactivate store
+service --> client: result
+deactivate service
+@enduml

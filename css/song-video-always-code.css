@@ -1,0 +1,117 @@
+/* A self-contained dark stage in both site themes; the shared player owns reflow. */
+.ac-song, html.dark-mode .ac-song {
+  --ac-ink: #f5f7ff;
+  --ac-gold: #ffe082;
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  color: var(--ac-ink);
+  background: radial-gradient(ellipse at 65% 20%, #253964, #10182f 75%);
+  font-family: Inter, sans-serif;
+}
+.ac-song [hidden] { display: none !important; }
+.ac-label, .ac-section { position: absolute; top: 22px; font-size: 18px; font-weight: 800; letter-spacing: 2px; }
+.ac-label { left: 34px; color: var(--ac-gold); }
+.ac-section { right: 34px; }
+.ac-heading { position: absolute; top: 62px; left: 320px; width: 605px; text-align: center; font-size: 29px; font-weight: 800; }
+.ac-art { position: absolute; left: 0; top: 0; width: 960px; height: 330px; overflow: visible; }
+.ac-art path { stroke-linecap: round; stroke-linejoin: round; }
+.ac-floor { stroke: #8293b8; stroke-width: 2; }
+.ac-shadow { fill: #080f24; opacity: .6; }
+.ac-body { fill: #8ee3c8; stroke: #163a42; stroke-width: 4; }
+.ac-chassis-depth { fill: #3e9b91; stroke: #163a42; stroke-width: 4; }
+.ac-screen { fill: #183c47; stroke: #427e7b; stroke-width: 3; }
+.ac-screen-shine { fill: #b5fff1; opacity: .08; }
+.ac-rim { fill: none; stroke: #f3fff8; stroke-width: 3; opacity: .7; }
+.ac-eye { fill: #fffdf5; }
+.ac-pupil { fill: #11243a; }
+.ac-blush { fill: #f9a897; opacity: .8; }
+.ac-smile { fill: #fffdf5; }
+.ac-closed-eyes { fill: none; stroke: #fffdf5; stroke-width: 4; }
+.ac-limbs { fill: none; stroke: #8ee3c8; stroke-width: 10; }
+.ac-glove, .ac-shoe { fill: #f5f7ff; stroke: #173b4a; stroke-width: 3; }
+.ac-finger { fill: none; stroke: #f5f7ff; stroke-width: 7; }
+.ac-shoe-detail { fill: none; stroke: #4a747e; stroke-width: 3; }
+.ac-window-dot { fill: #173e43; }
+.ac-prompt { fill: none; stroke: #ffe082; stroke-width: 5; }
+.ac-headband { fill: none; stroke: #ffe082; stroke-width: 10; }
+.ac-headphone { fill: #e9b960; stroke: #513e32; stroke-width: 3; }
+.ac-crew { --ac-shell: #92b2f1; --ac-shell-dark: #526faf; }
+.ac-crew-1 { --ac-shell: #dab0ec; --ac-shell-dark: #986cb1; }
+.ac-crew-2 { --ac-shell: #f3c27e; --ac-shell-dark: #b9874d; }
+.ac-card-body { fill: var(--ac-shell); stroke: #263654; stroke-width: 3; }
+.ac-card-depth { fill: var(--ac-shell-dark); stroke: #263654; stroke-width: 3; }
+.ac-crew-limb { fill: none; stroke: var(--ac-shell); stroke-width: 7; }
+.ac-crew-shoe { fill: #eef2ff; stroke: #263654; stroke-width: 2; }
+.ac-card-label { fill: #15263d; font-size: 24px; font-weight: 800; text-anchor: middle; }
+.ac-card-icon { color: #1a304b; }
+.ac-envelope-flap { fill: #fff0d0; stroke: #69583e; stroke-width: 3; }
+.ac-envelope-fold { fill: none; stroke: #69583e; stroke-width: 2; opacity: .6; }
+.ac-lens-handle { fill: none; stroke: #182b45; stroke-width: 12; }
+.ac-lens-glass { fill: #d7f4ff; fill-opacity: .2; stroke: #20324f; stroke-width: 7; }
+.ac-test .ac-card-body { fill: #a5e9bc; }
+.ac-test .ac-card-depth { fill: #65b585; }
+.ac-curtain-cloth { fill: #b4a0ed; stroke: #4b3d79; stroke-width: 3; }
+.ac-curtain-fold { fill: none; stroke: #7561ae; stroke-width: 7; }
+.ac-curtain-sign { fill: #fff0c3; }
+.ac-curtain text { fill: #202c46; font-size: 26px; font-weight: 800; text-anchor: middle; }
+.ac-spark { fill: #ffe082; }
+.ac-song .is-hidden { display: none; }
+.ac-lyrics-area { position: absolute; top: 332px; left: 40px; right: 40px; display: grid; gap: 12px; }
+/* The title card sits beside the mascot, clear of the player's unscaled captions. */
+.ac-song.is-intro .ac-lyrics-area { top: 145px; left: 330px; right: 35px; gap: 24px; }
+.ac-song.is-intro .ac-heading { visibility: hidden; }
+.ac-intro { display: grid; gap: 8px; text-align: center; }
+.ac-intro strong { display: block; font-size: 58px; font-weight: 900; line-height: 1.05; }
+.ac-intro span { display: block; font-size: 25px; line-height: 1.2; }
+.ac-lyric { min-height: 100px; display: flex; justify-content: center; align-content: center; flex-wrap: wrap; column-gap: 12px; line-height: 1.24; font-size: 40px; font-weight: 900; text-align: center; }
+.stage .ac-song .ac-word { color: var(--ac-ink); background: linear-gradient(to right, var(--ac-gold) var(--ac-fill, 0%), var(--ac-ink) var(--ac-fill, 0%)); background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.ac-current-word { text-decoration: underline; text-decoration-color: var(--ac-gold); text-underline-offset: 7px; }
+.ac-next { text-align: center; font-size: 20px; line-height: 1.2; color: #d5dff5; }
+.ac-progress { position: absolute; bottom: 0; left: 0; width: 100%; height: 5px; background: var(--ac-gold); transform-origin: left; }
+@media (prefers-reduced-motion: reduce) {
+  .ac-motion, .ac-curtain { transform: none !important; }
+}
+@media print {
+  .ac-song, html.dark-mode .ac-song { color: #111; background: white; }
+  .stage .ac-song .ac-word { background: none; -webkit-text-fill-color: #111; }
+  .ac-label, .ac-next { color: #111; }
+  .ac-art, .ac-progress { display: none; }
+}
+
+/* Concept scenes: each lyric cuts to a distinct composition in the upper stage. */
+.ac-concept-panel { fill: #203354; stroke: #a9bcf5; stroke-width: 3; }
+.ac-panel-rule { fill: none; stroke: #a9bcf5; stroke-width: 2; }
+.ac-concept-label, .ac-centered-label, .ac-concept-small { fill: #f5f7ff; font-size: 24px; font-weight: 700; }
+.ac-centered-label { text-anchor: middle; }
+.ac-concept-small { font-size: 22px; }
+.ac-code-large { fill: #ffe082; font: 700 38px ui-monospace, monospace; }
+.ac-code-text { fill: #b8f6da; font: 700 24px ui-monospace, monospace; }
+.ac-concept-wire { fill: none; stroke: #a9bcf5; stroke-width: 4; }
+.ac-greeting-wave { fill: none; stroke: #ffe082; stroke-width: 5; }
+.ac-git-dot { fill: #a9bcf5; stroke: #203354; stroke-width: 3; }
+.ac-git-feature { fill: #ffe082; }
+.ac-diff-old, .ac-diff-new { fill: #ffc3b9; font-size: 24px; font-weight: 700; }
+.ac-diff-new { fill: #b8f6da; }
+.ac-mail { fill: #fff0d0; stroke: #69583e; stroke-width: 3; }
+.ac-mail-fold { fill: none; stroke: #69583e; stroke-width: 3; }
+.ac-pause-panel { fill: #ffe082; stroke: #937645; stroke-width: 4; }
+.ac-pause-bar { fill: #203354; }
+.ac-impact-pulse { fill: #ffe082; stroke: #fff5d4; stroke-width: 3; }
+.ac-pass-panel { fill: #b8f6da; stroke: #295a50; stroke-width: 2; }
+.ac-pass-label { fill: #173c36; font-size: 22px; font-weight: 800; text-anchor: middle; }
+.ac-pointer { fill: none; stroke: #ffe082; stroke-width: 6; }
+.ac-test-input { fill: #ffe082; font: 700 27px ui-monospace, monospace; text-anchor: middle; }
+.ac-socket { fill: #203354; stroke: #ffe082; stroke-width: 4; stroke-dasharray: 10 5; }
+.ac-code-piece { fill: #b8f6da; stroke: #295a50; stroke-width: 3; }
+.ac-sequence { overflow: visible; }
+.ac-sequence-participant { fill: #c5d9ff; stroke: #a9bcf5; stroke-width: 2; }
+.ac-sequence-participant-text { fill: #14253d; font-size: 22px; font-weight: 800; }
+.ac-sequence-text { fill: #f5f7ff; font-size: 21px; font-weight: 700; stroke: #10182f; stroke-width: 5; paint-order: stroke; }
+.ac-sequence-lifeline { stroke: #a9bcf5; stroke-width: 2; }
+.ac-sequence-activation { fill: #b8f6da; stroke: #a9bcf5; stroke-width: 2; }
+.ac-sequence-arrow { fill: none; stroke: #ffe082; stroke-width: 2.5; }
+.ac-sequence-call-head { fill: #ffe082; }
+.ac-concept-scene .ac-lens-glass { stroke: #ffe082; }
+.ac-concept-scene .ac-lens-handle { stroke: #e9b960; }
+.ac-transfer-icon { color: #b8f6da; }

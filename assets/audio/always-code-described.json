@@ -1,0 +1,21 @@
+{
+  "fps": 30,
+  "frameCount": 6018,
+  "duration": 200.6,
+  "holds": [
+    {
+      "section": "verse",
+      "outputStart": 0,
+      "outputEnd": 66.3,
+      "songTime": 0,
+      "pictureTime": 19.433333333333334
+    },
+    {
+      "section": "chorus",
+      "outputStart": 109.46666666666667,
+      "outputEnd": 183.46666666666667,
+      "songTime": 43.166666666666664,
+      "pictureTime": 43.833333333333336
+    }
+  ]
+}

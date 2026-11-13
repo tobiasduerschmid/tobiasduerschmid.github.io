@@ -1,0 +1,152 @@
+# Live SVG karaoke, with a hard cut at each lyric start.
+# Instrumental trim: source seconds 10.65–70.95.
+# Phrase cues follow the source video; word highlights interpolate within phrases.
+title: "Always Code: clean-design karaoke"
+credit: >-
+  Adapted lyrics supplied by Tobias Dürschmid. Instrumental backing: “Never Gonna Give You Up”
+  karaoke by Sing King, extracted from the supplied video. Original song performed by Rick Astley;
+  written by Stock, Aitken and Waterman.
+player: /assets/song-player/always-code.html
+soundtrack: assets/audio/always-code.m4a
+captions: /assets/audio/always-code.vtt
+described_soundtrack: assets/audio/always-code-described.m4a
+described_captions: /assets/audio/always-code-described.vtt
+described_timeline: /assets/audio/always-code-described.json
+width: 1920
+height: 1080
+fps: 30
+duration: 60.3
+beats:
+  bpm: 113.3
+  first: 1.62
+narrator:
+  voice: Samantha
+  rate: 180
+extras:
+  styles:
+    - /css/song-video-always-code.css
+  scripts:
+    - /js/song-video/always-code-sequence.js
+    - /js/song-video/always-code-scenes.js
+sections:
+  - id: verse
+    title: Verse
+    delivery: sung
+    narration: >-
+      This is instrumental karaoke. Each lyric has a separate illustrated scene. The lyric is:
+      You're no strangers to code. A smiling terminal in gold headphones waves beside an editor that
+      greets you with hello, code. The lyric is: You know commands of shell and git. A shell window
+      reveals pwd, git status, and git diff beside a Git history with a feature branch. The lyric
+      is: A pull request is what you’re thinking of. A pull request shows an old behavior and a
+      proposed fix. An envelope moves toward a review window labeled Discuss before merge. The lyric
+      is: You shouldn’t do this without considering…. A large pause sign accompanies a magnifying
+      glass that scans three review questions: Callers? Contracts? Failure cases? The lyric is: how
+      this impacts all the other modules. A change signal travels from a changed module toward its
+      callers. Both callers receive a check-impact reminder; a change can affect other modules. The
+      lyric is: Gotta make you understand. A pointer guides a teammate through three questions on a
+      whiteboard: What changes? Who is affected? Why is it safe?
+    lines:
+      - id: line-1
+        start: 18.83
+        end: 22.05
+        text: You're no strangers to code
+        visual: >-
+          A smiling terminal in gold headphones waves beside an editor that greets you with hello,
+          code.
+      - id: line-2
+        start: 23
+        end: 26
+        text: You know commands of shell and git
+        visual: >-
+          A shell window reveals pwd, git status, and git diff beside a Git history with a feature
+          branch.
+      - id: line-3
+        start: 27.05
+        end: 30.75
+        text: A pull request is what you’re thinking of
+        visual: >-
+          A pull request shows an old behavior and a proposed fix. An envelope moves toward a review
+          window labeled Discuss before merge.
+      - id: line-4
+        start: 31.3
+        end: 34.8
+        text: You shouldn’t do this without considering…
+        visual: >-
+          A large pause sign accompanies a magnifying glass that scans three review questions:
+          Callers? Contracts? Failure cases?
+      - id: line-5
+        start: 36.25
+        end: 39.95
+        text: how this impacts all the other modules
+        visual: >-
+          A change signal travels from a changed module toward its callers. Both callers receive a
+          check-impact reminder; a change can affect other modules.
+      - id: line-6
+        start: 40.4
+        end: 42.8
+        text: Gotta make you understand
+        visual: >-
+          A pointer guides a teammate through three questions on a whiteboard: What changes? Who is
+          affected? Why is it safe?
+  - id: chorus
+    title: Chorus
+    delivery: sung
+    narration: >-
+      The lyric is: Always code with clean design. Tilted modules straighten into an orderly row,
+      each with one responsibility: parse, calculate, or format. The lyric is: Always code with many
+      tests. Test cases for a normal input, a boundary input, and an invalid input receive PASS
+      checks in sequence. The lyric is: Always code with a good view of the system. A UML sequence
+      diagram traces a request from Client to Service, then load from Service to Storage. Dashed
+      returns carry data back to Service and the result back to Client. Messages appear in time
+      order. The lyric is: Always code with change in mind. Inside a fixed socket labeled same
+      interface, implementation v1 leaves and v2 takes its place. The surrounding connections remain
+      unchanged. The lyric is: Always code details behind. A purple curtain closes over cache,
+      helpers, and algorithm inside the implementation. The public getResult interface remains
+      visible. The lyric is: Always code with refactorings of new code. Before and after code
+      windows show duplicated x plus x expressions extracted into a shared double function used by A
+      and B. The tests stay green on both sides, emphasizing preserved behavior.
+    lines:
+      - id: line-7
+        start: 43.23
+        end: 45.2
+        text: Always code with clean design
+        visual: >-
+          Tilted modules straighten into an orderly row, each with one responsibility: parse,
+          calculate, or format.
+      - id: line-8
+        start: 45.37
+        end: 47.32
+        text: Always code with many tests
+        visual: >-
+          Test cases for a normal input, a boundary input, and an invalid input receive PASS checks
+          in sequence.
+      - id: line-9
+        start: 47.51
+        end: 50.95
+        text: Always code with a good view of the system
+        visual: >-
+          A UML sequence diagram traces a request from Client to Service, then load from Service to
+          Storage. Dashed returns carry data back to Service and the result back to Client. Messages
+          appear in time order.
+      - id: line-10
+        start: 51.63
+        end: 53.55
+        text: Always code with change in mind
+        visual: >-
+          Inside a fixed socket labeled same interface, implementation v1 leaves and v2 takes its
+          place. The surrounding connections remain unchanged.
+      - id: line-11
+        start: 53.75
+        end: 55.63
+        text: Always code details behind
+        visual: >-
+          A purple curtain closes over cache, helpers, and algorithm inside the implementation. The
+          public getResult interface remains visible.
+      - id: line-12
+        start: 55.85
+        end: 59.37
+        text: Always code with refactorings of new code
+        visual: >-
+          Before and after code windows show duplicated x plus x expressions extracted into a shared
+          double function used by A and B. The tests stay green on both sides, emphasizing preserved
+          behavior.
