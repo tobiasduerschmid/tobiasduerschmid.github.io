@@ -21,12 +21,21 @@ choreography implements speed or controls.
 1. Add the usual song storyboard in `_data/songs/` and its `song-player` page.
    The storyboard's `player` URL makes it appear in the playlist library;
    titles, durations, and credits are read from that same storyboard.
-2. Add a record in `_data/song_playlists.yml` with a unique `id`, a `title`, a
+2. Add a short title, topic, and category in `_data/song_library.yml`. The library
+   shows every playable video by default; search and categories narrow the view
+   without changing playlist membership. Generate a real frame with
+   `node scripts/song-video/render.js <song> --stills 18 --out /tmp/song-preview`,
+   then export it as a 640×360 WebP to `assets/song-playlist/<song>.webp`.
+   Videos without library metadata still appear with their full storyboard title.
+3. Add a record in `_data/song_playlists.yml` with a unique `id`, a `title`, a
    `description`, and ordered `songs` (storyboard filenames without `.yml`).
    The first course playlist supplies the initial student list. The browser
    never changes these authored defaults.
 
-`playlist-model.js` owns pure ordering and saved-data validation.
+`playlist-model.js` owns pure ordering. `playlist-collection.js` owns named
+playlists, active selection, and saved-data migration. `playlist-library.js`
+owns the search/category intersection. The page uses the standard SE Book
+layout and shared theme tokens; container queries adapt to its sidebar.
 `preferences.js` owns storage access. `playlist-page.js` renders edits and
 keeps one-step Undo in memory. `playlist-player.js` owns the single player
 iframe; `embed.js` retains shared sizing, theme, and full-screen behavior.
@@ -40,15 +49,21 @@ song IDs prevent late events from a replaced video affecting the new one.
 Playback starts only after a user action, continues in the current list order,
 and stops after the last video. If a browser blocks playback (including the
 next video), both the playlist and player ask the student to press Play in the
-video. Loading another course list stops playback.
+video. Loading another course list or switching saved playlists stops playback.
+New playlist creates an empty, named list. Playlist options offer Rename,
+Clear, and Delete (disabled for the only remaining list). Undo restores the
+last edit, including list creation/deletion; switching lists clears Undo.
 
 ## Browser storage
 
 - `song-player-speed`: a JSON number, one of 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2.
   Missing or invalid values use 1. Shared with the control on `/settings/`.
-- `song-player-playlist`: `{ "version": 1, "songs": ["snapshots_and_pointers", "unbox_the_stack"] }`.
-  Missing/malformed/unknown-version records use the first default playlist.
-  Unknown IDs and duplicates are removed; an explicit empty list stays empty.
+- `song-player-playlist`: `{ "version": 2, "activeId": "default", "playlists": [{ "id": "default", "name": "CS 35L", "songs": ["snapshots_and_pointers"] }] }`.
+  Version 1 `{ "version": 1, "songs": [...] }` records become one named list,
+  preserving order and explicit emptiness. Migration is saved on the next edit
+  or playlist selection. Missing/malformed/unknown-version records use the
+  first default playlist. Unknown song IDs and duplicates are removed; a
+  missing active ID selects the first valid list.
   No playback position, history, or media is stored.
 - `song-player-quiz-pause` and `song-player-random-avatar`: JSON booleans set by
   the playlist's options (below). Anything but `true` means off.
@@ -65,7 +80,7 @@ players keep them hidden. The parent owns order and boundary availability.
 cancellation. Only a completed, changed drop edits the model, saves, and sets Undo.
 Native Move up/down buttons remain the keyboard and single-pointer alternative.
 
-The playlist checkbox stores `song-player-quiz-pause` (default false).
+The checkbox under Study settings stores `song-player-quiz-pause` (default false).
 `quiz-pause.js` schedules a stop just before each line's `answer_at`, or at an
 explicit `pause_at` if provided. New songs participate through their storyboard,
 without their own control code. Playback speed and described-audio time mapping

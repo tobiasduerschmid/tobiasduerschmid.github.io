@@ -1,0 +1,44 @@
+always_code:
+  title: Always Code
+  topic: Clean design
+  category: Design & modeling
+snapshots_and_pointers:
+  title: Snapshots and Pointers
+  topic: Git
+  category: Tools & systems
+small_tools_one_job_each:
+  title: Small Tools, One Job Each
+  topic: Unix shell
+  category: Tools & systems
+let_the_object_decide:
+  title: Let the Object Decide
+  topic: Object-oriented programming
+  category: Design & modeling
+red_green_refactor:
+  title: Red, Green, Refactor
+  topic: Test-driven development
+  category: Testing
+same_shape_not_the_same:
+  title: Same Shape, Not the Same
+  topic: Design patterns
+  category: Design & modeling
+invest_in_your_stories:
+  title: Invest in Your Stories
+  topic: User stories & INVEST
+  category: Teamwork
+it_works_on_my_machine:
+  title: It Works on My Machine
+  topic: Teamwork
+  category: Teamwork
+unbox_the_stack:
+  title: Unbox the Stack
+  topic: Networking
+  category: Tools & systems
+draw_it_out:
+  title: Draw It Out
+  topic: UML diagrams
+  category: Design & modeling
+every_module_keeps_a_secret:
+  title: Every Module Keeps a Secret
+  topic: Information hiding
+  category: Design & modeling

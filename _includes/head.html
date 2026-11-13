@@ -236,7 +236,7 @@
   {% endif %}
   {% if page.song_playlist %}
   <link rel="stylesheet" href="{{ '/css/song-video.css' | relative_url }}">
-  <link rel="stylesheet" href="{{ '/css/song-playlist.css' | relative_url }}">
+  <link rel="stylesheet" href="{{ '/css/song-playlist.css' | relative_url }}?v={{ asset_version }}-playlist-2">
   {% endif %}
   <link rel="stylesheet" href="{{ "/css/print-light.css" | prepend: site.baseurl }}?v={{ asset_version }}">
 

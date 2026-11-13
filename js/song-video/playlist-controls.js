@@ -9,6 +9,7 @@
     }
     return {
       update(options) {
+        player.classList.add('is-playlist-player');
         for (const button of buttons) {
           button.hidden = false;
           button.disabled = options[button.dataset.trackNavigation] !== true;

@@ -7,13 +7,28 @@ const yaml = require('js-yaml');
 const coursePlaylists = yaml.load(fs.readFileSync(path.join(__dirname, '../_data/song_playlists.yml'), 'utf8'));
 const defaultSongCount = coursePlaylists.find(playlist => playlist.id === 'cs35l').songs.length;
 
-const git = { title: 'Snapshots and Pointers: a song about Git', path: '/assets/song-player/snapshots-and-pointers.html' };
-const network = { title: 'Unbox the Stack: a song about networking', path: '/assets/song-player/unbox-the-stack.html' };
-const shell = { title: 'Small Tools, One Job Each: a song about the Unix shell', path: '/assets/song-player/small-tools-one-job-each.html', addLabel: /^Add to playlist\s*: Small Tools/ };
+const git = { shortTitle: 'Snapshots and Pointers', title: 'Snapshots and Pointers: a song about Git', path: '/assets/song-player/snapshots-and-pointers.html' };
+const network = { shortTitle: 'Unbox the Stack', title: 'Unbox the Stack: a song about networking', path: '/assets/song-player/unbox-the-stack.html' };
+const shell = { shortTitle: 'Small Tools, One Job Each', title: 'Small Tools, One Job Each: a song about the Unix shell', path: '/assets/song-player/small-tools-one-job-each.html', addLabel: /^Add to playlist\s*: Small Tools/ };
 // A sung call-and-response quiz: each checkpoint sits right after its question.
 const uml = { title: 'Draw It Out While It’s Cheap to Change: a song about UML diagrams', path: '/assets/song-player/draw-it-out.html', addLabel: /^Add to playlist\s*: Draw It Out/ };
 const playlistPath = '/SEBook/playlist.html';
 const queue = (page) => page.getByRole('list', { name: 'Your playlist', exact: true });
+async function openDisclosure(summary) {
+  if (await summary.locator('..').getAttribute('open') === null) await summary.click();
+}
+async function rowAction(page, song, action) {
+  await openDisclosure(page.getByLabel(`Options: ${song.title}`, { exact: true }));
+  await page.getByRole('button', { name: `${action}: ${song.title}`, exact: true }).click();
+}
+async function clearPlaylist(page) {
+  await openDisclosure(page.getByLabel('Playlist options', { exact: true }));
+  await page.getByRole('button', { name: 'Clear playlist', exact: true }).click();
+}
+async function loadCourse(page) {
+  await openDisclosure(page.getByText('Start with a course playlist', { exact: true }));
+  await page.getByRole('button', { name: 'Load playlist', exact: true }).click();
+}
 const audioFor = (page, song) => page.getByLabel(`${song.title} audio`, { exact: true });
 
 // Editing/playback cases use an existing student's two-song list. Adding a
@@ -278,7 +293,7 @@ test('previous and next songs follow edited order and stop at the list boundarie
   await expect(frame.getByRole('heading', { name: git.title, exact: true })).toBeVisible();
   await expect(previous).toBeDisabled();
   await expect(next).toBeFocused();
-  await page.getByRole('button', { name: `Move up: ${network.title}`, exact: true }).click();
+  await rowAction(page, network, 'Move up');
   await expect(next).toBeDisabled();
   await expect(previous).toBeEnabled();
   await previous.click();
@@ -286,7 +301,7 @@ test('previous and next songs follow edited order and stop at the list boundarie
   await expect(previous).toBeDisabled();
   await expect(next).toBeEnabled();
   await a11yCheckpoint(page, 'playlist song navigation', { feature: 'song-playlist', include: '#song-playlist' });
-  await page.getByRole('button', { name: 'Clear playlist', exact: true }).click();
+  await clearPlaylist(page);
   await expect(page.locator('#playlist-frame')).toBeHidden();
 });
 
@@ -296,31 +311,32 @@ test('playlist defaults, editing, Undo, and reload preserve student order', asyn
   await page.goto(playlistPath);
   await page.evaluate(() => localStorage.removeItem('song-player-playlist'));
   await page.reload();
-  await expect(page.getByRole('combobox', { name: 'Start from a playlist' })).toHaveValue('cs35l');
+  await openDisclosure(page.getByText('Start with a course playlist', { exact: true }));
+  await expect(page.getByRole('combobox', { name: 'Course playlist', exact: true })).toHaveValue('cs35l');
   await expect(queue(page).getByRole('listitem')).toHaveCount(defaultSongCount);
-  await expect(queue(page).getByRole('listitem').nth(0)).toContainText(shell.title);
-  await expect(queue(page).getByRole('listitem').nth(1)).toContainText(git.title);
-  await expect(queue(page).getByRole('listitem').nth(2)).toContainText(network.title);
-  await page.getByRole('button', { name: `Move up: ${network.title}`, exact: true }).click();
-  await page.getByRole('button', { name: `Move up: ${network.title}`, exact: true }).click();
-  await expect(queue(page).getByRole('listitem').nth(0)).toContainText(network.title);
+  await expect(queue(page).getByRole('listitem').nth(0)).toContainText(shell.shortTitle);
+  await expect(queue(page).getByRole('listitem').nth(1)).toContainText(git.shortTitle);
+  await expect(queue(page).getByRole('listitem').nth(2)).toContainText(network.shortTitle);
+  await rowAction(page, network, 'Move up');
+  await rowAction(page, network, 'Move up');
+  await expect(queue(page).getByRole('listitem').nth(0)).toContainText(network.shortTitle);
   await page.reload();
-  await expect(queue(page).getByRole('listitem').nth(0)).toContainText(network.title);
-  await page.getByRole('button', { name: `Remove: ${git.title}`, exact: true }).click();
+  await expect(queue(page).getByRole('listitem').nth(0)).toContainText(network.shortTitle);
+  await rowAction(page, git, 'Remove');
   await expect(queue(page).getByRole('listitem')).toHaveCount(defaultSongCount - 1);
   await page.getByRole('button', { name: /^Add to playlist\s*: Snapshots and Pointers: a song about Git$/ }).click();
-  await expect(queue(page).getByRole('listitem').last()).toContainText(git.title);
-  await page.getByRole('button', { name: 'Load playlist', exact: true }).click();
-  await expect(queue(page).getByRole('listitem').nth(0)).toContainText(shell.title);
+  await expect(queue(page).getByRole('listitem').last()).toContainText(git.shortTitle);
+  await loadCourse(page);
+  await expect(queue(page).getByRole('listitem').nth(0)).toContainText(shell.shortTitle);
   await page.getByRole('button', { name: 'Undo change', exact: true }).click();
-  await expect(queue(page).getByRole('listitem').nth(0)).toContainText(network.title);
+  await expect(queue(page).getByRole('listitem').nth(0)).toContainText(network.shortTitle);
   await a11yCheckpoint(page, 'edited video playlist', { feature: 'song-playlist', include: '#song-playlist' });
   expect(errors).toEqual([]);
 });
 
 test('an empty list survives reload and remains editable without browser storage', async ({ page, context }) => {
   await page.goto(playlistPath);
-  await page.getByRole('button', { name: 'Clear playlist', exact: true }).click();
+  await clearPlaylist(page);
   await page.reload();
   await expect(queue(page).getByRole('listitem')).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Play playlist', exact: true })).toBeDisabled();
@@ -329,16 +345,16 @@ test('an empty list survives reload and remains editable without browser storage
   });
   await page.reload();
   await expect(queue(page).getByRole('listitem')).toHaveCount(defaultSongCount);
-  await page.getByRole('button', { name: `Remove: ${git.title}`, exact: true }).click();
+  await rowAction(page, git, 'Remove');
   await expect(queue(page).getByRole('listitem')).toHaveCount(defaultSongCount - 1);
-  await expect(page.getByRole('status')).toContainText('this visit only');
+  await expect(page.locator('#playlist-status')).toContainText('this visit only');
 });
 
 test('playlist playback begins only on request and advances through the edited order', async ({ page }) => {
   await page.goto(playlistPath);
   const frame = page.locator('#playlist-frame').contentFrame();
   await expect(audioFor(frame, git)).toHaveJSProperty('paused', true);
-  await page.getByRole('button', { name: `Move up: ${network.title}`, exact: true }).click();
+  await rowAction(page, network, 'Move up');
   await page.getByRole('button', { name: 'Play playlist', exact: true }).click();
   const networkAudio = audioFor(frame, network);
   await expect.poll(() => networkAudio.evaluate((media) => media.currentTime)).toBeGreaterThan(0);
@@ -348,15 +364,15 @@ test('playlist playback begins only on request and advances through the edited o
   // Browser autoplay policies can require another gesture for a new media element.
   // Either start the next song, or provide an explicit, working continuation.
   await expect.poll(async () => (await gitAudio.evaluate((media) => media.currentTime)) > 0
-    || (await page.getByRole('status').textContent()) === 'Video ready. Press Play in the video to continue.').toBe(true);
+    || (await page.locator('#playlist-status').textContent()) === 'Video ready. Press Play in the video to continue.').toBe(true);
   if (await gitAudio.evaluate((media) => media.paused)) {
-    await expect(page.getByRole('status')).toHaveText('Video ready. Press Play in the video to continue.');
+    await expect(page.locator('#playlist-status')).toHaveText('Video ready. Press Play in the video to continue.');
     await frame.getByRole('button', { name: 'Play video', exact: true }).click();
   }
   await expect.poll(() => gitAudio.evaluate((media) => media.currentTime)).toBeGreaterThan(0);
   await expect(frame.getByText('Press the Play song button to start playback.', { exact: true })).toBeHidden();
   await gitAudio.evaluate((media) => { media.muted = true; media.currentTime = media.duration - 0.3; });
-  await expect(page.getByRole('status')).toHaveText('Playlist finished.');
+  await expect(page.locator('#playlist-status')).toHaveText('Playlist finished.');
   await expect(gitAudio).toHaveJSProperty('paused', true);
 });
 
@@ -367,7 +383,7 @@ test('speed settings are shared with the players and storage entries are deletab
   await openPlayerSettings(page);
   await expect(page.getByRole('combobox', { name: 'Playback speed' })).toHaveValue('2');
   await page.goto(playlistPath);
-  await page.getByRole('button', { name: 'Load playlist', exact: true }).click();
+  await loadCourse(page);
   await page.goto('/cookies/');
   for (const key of ['song-player-speed', 'song-player-playlist']) {
     const row = page.getByRole('row').filter({ has: page.getByText(key, { exact: true }) });
@@ -383,15 +399,16 @@ test('speed settings are shared with the players and storage entries are deletab
 test('playlist reflows at 320 pixels, supports keyboard reordering, and prints a readable list', async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 800 });
   await page.goto(playlistPath);
+  await openDisclosure(page.getByLabel(`Options: ${network.title}`, { exact: true }));
   const up = page.getByRole('button', { name: `Move up: ${network.title}`, exact: true });
   await up.focus();
   await page.keyboard.press('Enter');
-  await expect(queue(page).getByRole('listitem').nth(0)).toContainText(network.title);
+  await expect(queue(page).getByRole('listitem').nth(0)).toContainText(network.shortTitle);
   await expect(page.getByRole('button', { name: `Play: ${network.title}`, exact: true })).toBeFocused();
   await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1);
   await a11yCheckpoint(page, 'mobile playlist', { feature: 'song-playlist', include: '#song-playlist' });
   await page.emulateMedia({ media: 'print' });
-  await expect(queue(page).getByRole('listitem').nth(0)).toContainText(network.title);
+  await expect(queue(page).getByRole('listitem').nth(0)).toContainText(network.shortTitle);
   await expect(page.getByRole('button', { name: 'Play playlist', exact: true })).toBeHidden();
   await expect(page.locator('#playlist-frame')).toBeHidden();
 });
@@ -420,20 +437,20 @@ test('drag reordering preserves the current song, supports Undo and persistence,
   await seek(audio, 40);
   for (const cancellation of ['escape', 'outside']) {
     await dragRow(page, 0, 1, cancellation);
-    await expect(queue(page).getByRole('listitem').first()).toContainText(git.title);
+    await expect(queue(page).getByRole('listitem').first()).toContainText(git.shortTitle);
     await expect(page.getByRole('button', { name: 'Undo change', exact: true })).toBeDisabled();
   }
   await dragRow(page, 0, 1);
-  await expect(queue(page).getByRole('listitem').first()).toContainText(network.title);
+  await expect(queue(page).getByRole('listitem').first()).toContainText(network.shortTitle);
   await expect(audio).toHaveJSProperty('currentTime', 40);
   await expect(frame.getByRole('button', { name: 'Next song', exact: true })).toBeDisabled();
   await page.getByRole('button', { name: 'Undo change', exact: true }).click();
-  await expect(queue(page).getByRole('listitem').first()).toContainText(git.title);
+  await expect(queue(page).getByRole('listitem').first()).toContainText(git.shortTitle);
   await dragRow(page, 1, 0);
-  await expect(queue(page).getByRole('listitem').first()).toContainText(network.title);
+  await expect(queue(page).getByRole('listitem').first()).toContainText(network.shortTitle);
   await page.reload();
-  await expect(queue(page).getByRole('listitem').first()).toContainText(network.title);
-  await page.getByRole('button', { name: `Remove: ${git.title}`, exact: true }).click();
+  await expect(queue(page).getByRole('listitem').first()).toContainText(network.shortTitle);
+  await rowAction(page, git, 'Remove');
   await expect(queue(page).locator('.song-playlist-drag-handle')).toBeHidden();
   await expect(frame.getByRole('button', { name: 'Previous song', exact: true })).toBeDisabled();
   await expect(frame.getByRole('button', { name: 'Next song', exact: true })).toBeDisabled();
@@ -456,7 +473,7 @@ test('touch dragging reorders without scrolling the grip @chromium', async ({ br
   await session.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x, y: y - 20 }] });
   await session.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x, y: first.y + 12 }] });
   await session.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
-  await expect(queue(page).getByRole('listitem').first()).toContainText(network.title);
+  await expect(queue(page).getByRole('listitem').first()).toContainText(network.shortTitle);
   await context.close();
 });
 
@@ -471,10 +488,12 @@ for (const song of [git, network, shell, uml]) {
   test(`${song.title}: quiz mode pauses each question, resumes manually, and supports replay and audio description`, async ({ page }) => {
     test.setTimeout(90000);
     await page.goto(playlistPath);
+    await openDisclosure(page.getByText('Study settings', { exact: true }));
     const checkbox = page.getByRole('checkbox', { name: 'Pause before quiz answers' });
     await expect(checkbox).not.toBeChecked();
     await checkbox.check();
     await page.reload();
+    await openDisclosure(page.getByText('Study settings', { exact: true }));
     await expect(checkbox).toBeChecked();
     if (song.addLabel) await page.getByRole('button', { name: song.addLabel }).click();
     await page.getByRole('button', { name: `Play: ${song.title}`, exact: true }).click();

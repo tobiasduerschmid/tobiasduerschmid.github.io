@@ -478,9 +478,11 @@ for (const native of [false, true]) {
     await expect(enter(player)).toBeFocused();
     await expect(page.locator('#playlist-frame')).not.toHaveClass(/is-song-fullscreen/);
     await expect.poll(() => page.evaluate(() => Boolean(document.fullscreenElement))).toBe(false);
+    await page.getByText('Study settings', { exact: true }).click();
     const checkbox = page.getByRole('checkbox', { name: 'Pause before quiz answers' });
     await checkbox.focus();
     await expect(checkbox).toBeFocused();
+    await page.getByLabel('Playlist options', { exact: true }).click();
     await page.getByRole('button', { name: 'Clear playlist', exact: true }).click();
     await expect(page.locator('#playlist-frame')).toBeHidden();
   });

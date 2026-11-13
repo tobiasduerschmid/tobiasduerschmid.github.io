@@ -650,3 +650,16 @@ body {
     display: none !important;
   }
 }
+
+/* The playlist supplies the surrounding title and navigation. Keep all media
+   controls, accessible alternatives, and standalone player behavior intact. */
+.song-player.is-playlist-player { padding: 0; }
+.song-player.is-playlist-player > h1 { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.song-player.is-playlist-player .song-player-playlist-link { display: none; }
+.song-player.is-playlist-player .song-player-options,
+.song-player.is-playlist-player .song-player-tips,
+.song-player.is-playlist-player .song-player-resources { padding-inline: .65em; }
+
+.song-player.is-playlist-player .song-player-options { display: inline-flex; margin: .4em 0; vertical-align: middle; }
+.song-player.is-playlist-player .song-player-tips { display: inline-block; margin: .4em 0; vertical-align: middle; }
+.song-player.is-playlist-player .song-player-tips[open] { display: block; }

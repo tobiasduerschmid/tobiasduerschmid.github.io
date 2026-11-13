@@ -87,17 +87,19 @@ test('the Random avatar switch is off by default, remembered, and offered only o
   await expect(page.getByRole('switch', { name: 'Random avatar' })).toHaveCount(0);
 
   await page.goto(PLAYLIST);
+  await page.getByText('Study settings', { exact: true }).click();
   const toggle = page.getByRole('switch', { name: 'Random avatar' });
   await expect(toggle).not.toBeChecked();
   await flip(page, toggle);
   await expect(toggle).toBeChecked();
-  await expect(page.getByRole('status')).toHaveText('Random avatar on.');
+  await expect(page.locator('#playlist-status')).toHaveText('Random avatar on.');
   await a11yCheckpoint(page, 'random avatar switch', { feature: 'song-playlist', include: '#song-playlist' });
   await page.reload();
+  await page.getByText('Study settings', { exact: true }).click();
   await expect(toggle).toBeChecked();
   await toggle.press('Space');
   await expect(toggle).not.toBeChecked();
-  await expect(page.getByRole('status')).toHaveText('Random avatar off.');
+  await expect(page.locator('#playlist-status')).toHaveText('Random avatar off.');
 });
 
 test('with Random avatar on, a player shows a new hero at each entrance and never changes the saved one', async ({ page }) => {
@@ -139,6 +141,7 @@ test('switching Random avatar in the playlist re-dresses the loaded video at onc
   const student = frame.getByTestId('song-student-avatar');
   const audio = frame.getByLabel(`${TITLE} audio`, { exact: true });
   await expect(student).toHaveAttribute('data-avatar-state', 'saved');
+  await page.getByText('Study settings', { exact: true }).click();
   const toggle = page.getByRole('switch', { name: 'Random avatar' });
   await flip(page, toggle);
   await expect(student).toHaveAttribute('data-avatar-state', 'random');

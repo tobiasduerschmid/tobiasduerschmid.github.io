@@ -36,5 +36,6 @@
     saveSpeed: (value) => write(SPEED_KEY, normalizeSpeed(value)),
     playlist: () => read(PLAYLIST_KEY),
     savePlaylist: (ids) => write(PLAYLIST_KEY, { version: 1, songs: ids }),
+    savePlaylistCollection: (collection) => write(PLAYLIST_KEY, collection),
   };
 })();

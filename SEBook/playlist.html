@@ -5,83 +5,85 @@ permalink: /SEBook/playlist.html
 song_playlist: true
 ---
 <div class="song-playlist" id="song-playlist">
-  <p>Build a study playlist from the videos below. Start with a course playlist, then add, remove, or reorder videos to suit your review.</p>
-  <section class="song-playlist-presets" aria-labelledby="playlist-defaults-heading">
-    <h2 id="playlist-defaults-heading">Course playlists</h2>
-    <div class="song-playlist-actions">
-      <label for="playlist-preset">Start from a playlist</label>
-      <select id="playlist-preset">
-        {% for playlist in site.data.song_playlists %}<option value="{{ playlist.id | escape }}">{{ playlist.title | escape }}</option>{% endfor %}
-      </select>
-      <button type="button" id="playlist-load" disabled>Load playlist</button>
-    </div>
-    <p id="playlist-preset-description">{{ site.data.song_playlists.first.description | escape }}</p>
-    <p class="song-playlist-hint">Loading a course playlist replaces your list. You can undo the change.</p>
-  </section>
-
+  <div class="playlist-page-heading">
+    <p>Build your study mix from the complete video library.</p>
+    <div class="playlist-page-actions"><button type="button" id="playlist-new"><i class="fa-solid fa-plus" aria-hidden="true"></i> New playlist</button><a class="playlist-library-link" href="#playlist-library">Browse all videos <span aria-hidden="true">↓</span></a></div>
+  </div>
   <div class="song-playlist-workspace">
     <section class="song-playlist-watch" aria-labelledby="playlist-watching-heading">
-      <h2 id="playlist-watching-heading">Now playing</h2>
-      <p id="playlist-current-title">Choose a video from your playlist.</p>
-      <label class="song-playlist-quiz-option"><input type="checkbox" id="playlist-quiz-pause" aria-describedby="playlist-quiz-help"> Pause before quiz answers</label>
-      <p class="song-playlist-hint" id="playlist-quiz-help">Each quiz question pauses before its answer. Think it through, then press Play to reveal the answer and continue. This preference is saved in this browser.</p>
-      <label class="song-playlist-avatar-option"><span class="switch"><input type="checkbox" role="switch" id="playlist-random-avatar" aria-describedby="playlist-random-avatar-help"><span class="slider round" aria-hidden="true"></span></span> Random avatar</label>
-      <p class="song-playlist-hint" id="playlist-random-avatar-help">Each time your SE Gym hero enters a video, a new random hero takes its place and stays while it remains on screen. This applies to every music video on this site, and your saved hero is not changed. This preference is saved in this browser.</p>
+      <h2 id="playlist-watching-heading" class="sr-only">Now playing</h2>
       <figure class="song-video" id="playlist-video" data-song-fullscreen-host hidden>
         <iframe class="song-video-frame" id="playlist-frame" title="Playlist video player" allow="autoplay; fullscreen" allowfullscreen width="960" height="900"></iframe>
-        <figcaption id="playlist-credit"></figcaption>
+        <figcaption id="playlist-credit" class="song-playlist-hint"></figcaption>
       </figure>
+      <div id="playlist-player-empty"><i class="fa-solid fa-circle-play" aria-hidden="true"></i><p>Your next study session starts here.</p><a href="#playlist-library">Find a video in the library</a></div>
+      <div class="playlist-now-playing"><p class="playlist-eyebrow">Now playing</p><h2 id="playlist-current-title">Choose a video from your playlist.</h2><p id="playlist-current-topic"></p></div>
+      <details class="playlist-study-settings">
+        <summary><i class="fa-solid fa-sliders" aria-hidden="true"></i> Study settings</summary>
+        <label class="song-playlist-quiz-option"><input type="checkbox" id="playlist-quiz-pause" aria-describedby="playlist-quiz-help"> Pause before quiz answers</label>
+        <p class="song-playlist-hint" id="playlist-quiz-help">Think it through, then press Play to reveal the answer and continue.</p>
+        <label class="song-playlist-avatar-option"><input type="checkbox" role="switch" id="playlist-random-avatar" aria-describedby="playlist-random-avatar-help"> Random avatar</label>
+        <p class="song-playlist-hint" id="playlist-random-avatar-help">Show a new random hero each time your hero enters a music video. Your saved SE Gym hero stays unchanged.</p>
+        <p class="song-playlist-hint">These preferences are saved in this browser and apply across videos.</p>
+      </details>
     </section>
 
     <section class="song-playlist-queue" aria-labelledby="playlist-queue-heading">
-      <h2 id="playlist-queue-heading">Your playlist</h2>
-      <p id="playlist-summary"></p>
-      <div class="song-playlist-actions">
-        <button type="button" id="playlist-play" disabled>Play playlist</button>
-        <button type="button" id="playlist-undo" disabled>Undo change</button>
-        <button type="button" id="playlist-clear" disabled>Clear playlist</button>
-      </div>
-      <p class="song-playlist-hint">Play starts with the first video, then continues in your order. Your browser may ask you to press Play again for the next video. Pause in the player at any time. Nothing plays automatically when you open this page.</p>
-      <p class="song-playlist-hint">Drag a grip to reorder, or use Move up and Move down. Press Escape or release outside the list to cancel a drag.</p>
+      <div class="playlist-queue-heading"><h2 id="playlist-queue-heading">Your playlists</h2></div>
+      <label for="playlist-select" class="sr-only">Current playlist</label>
+      <select id="playlist-select"></select>
+      <div class="playlist-queue-summary"><p id="playlist-summary"></p><details class="playlist-menu"><summary aria-label="Playlist options"><i class="fa-solid fa-ellipsis" aria-hidden="true"></i></summary><div class="playlist-menu-items"><button type="button" id="playlist-rename">Rename playlist</button><button type="button" id="playlist-clear" disabled>Clear playlist</button><button type="button" id="playlist-delete" disabled>Delete playlist</button></div></details></div>
+      <div class="song-playlist-actions playlist-queue-actions"><button type="button" class="playlist-primary" id="playlist-play" disabled><i class="fa-solid fa-play" aria-hidden="true"></i> Play playlist</button><button type="button" id="playlist-undo" disabled>Undo change</button></div>
       <ol id="playlist-queue" aria-label="Your playlist" tabindex="-1"></ol>
-      <p id="playlist-empty" hidden>Your playlist is empty. Add a video below or load a course playlist.</p>
+      <p id="playlist-empty" hidden>Your playlist is empty. <a href="#playlist-library">Add a video below</a> or load a course playlist.</p>
+      <details class="song-playlist-presets"><summary>Start with a course playlist</summary>
+        <label for="playlist-preset">Course playlist</label>
+        <select id="playlist-preset">{% for playlist in site.data.song_playlists %}<option value="{{ playlist.id | escape }}">{{ playlist.title | escape }}</option>{% endfor %}</select>
+        <p id="playlist-preset-description">{{ site.data.song_playlists.first.description | escape }}</p>
+        <button type="button" id="playlist-load" disabled>Load playlist</button>
+        <p class="song-playlist-hint">Replaces the videos in your current playlist. You can undo this change.</p>
+      </details>
+      <details class="playlist-help"><summary>Playlist help</summary><p class="song-playlist-hint">Play starts at the first video and continues in order. Your browser may ask you to press Play again for the next video. Nothing plays automatically when you open this page.</p><p class="song-playlist-hint">Drag a grip to reorder, or open a video’s options for Move up and Move down. Press Escape or release outside the list to cancel a drag.</p></details>
       <p id="playlist-status" role="status" aria-atomic="true"></p>
-      <p class="song-playlist-hint">Your list is saved in this browser. Manage saved data in <a href="{{ '/cookies/' | relative_url }}">Browser storage</a>.</p>
+      <p class="song-playlist-hint playlist-storage-note">Saved on this browser. <a href="{{ '/cookies/' | relative_url }}">Manage saved data</a></p>
     </section>
   </div>
 
-  <section class="song-playlist-library" aria-labelledby="playlist-library-heading">
-    <h2 id="playlist-library-heading">Video library</h2>
+  <section class="song-playlist-library" id="playlist-library" tabindex="-1" aria-labelledby="playlist-library-heading">
+    <div class="playlist-library-heading"><div><h2 id="playlist-library-heading" tabindex="-1">Video library</h2><p>Explore every video, then add your favorites to a playlist.</p></div><div class="playlist-search"><label for="playlist-search">Search videos</label><input type="search" id="playlist-search" placeholder="Search by title or topic"></div></div>
+    <div class="playlist-categories" role="group" aria-label="Filter videos by category">
+      <button type="button" data-category-filter="" aria-pressed="true">All videos</button>
+      {% assign categories = 'Tools & systems|Design & modeling|Testing|Teamwork' | split: '|' %}{% for category in categories %}<button type="button" data-category-filter="{{ category | escape }}" aria-pressed="false">{{ category | escape }}</button>{% endfor %}
+    </div>
+    <div class="playlist-library-meta"><p id="playlist-library-count" role="status" aria-atomic="true"></p><p>Captions, transcripts &amp; audio description available</p></div>
     <ul class="song-playlist-catalog" id="playlist-catalog">
-      {% for entry in site.data.songs %}{% assign song = entry[1] %}{% if song.player %}
-      <li data-song-id="{{ entry[0] | escape }}" data-player="{{ song.player | relative_url }}" data-duration="{{ song.duration }}" data-credit="{{ song.credit | escape }}">
-        <h3><a href="{{ song.player | relative_url }}">{{ song.title | escape }}</a></h3>
+      {% for entry in site.data.songs %}{% assign song = entry[1] %}{% assign song_id = entry[0] %}{% assign card = site.data.song_library[song_id] %}{% if song.player %}
+      <li data-song-id="{{ entry[0] | escape }}" data-title="{{ song.title | escape }}" data-short-title="{{ card.title | default: song.title | escape }}" data-topic="{{ card.topic | default: 'Software engineering' | escape }}" data-category="{{ card.category | default: 'Other' | escape }}" data-player="{{ song.player | relative_url }}" data-duration="{{ song.duration }}" data-credit="{{ song.credit | escape }}">
         {% assign minutes = song.duration | divided_by: 60 | floor %}{% assign seconds = song.duration | modulo: 60 | floor %}
-        <p>{{ minutes }}:{% if seconds < 10 %}0{% endif %}{{ seconds }} · Captions and audio description available</p>
-        <button type="button" data-add-song="{{ entry[0] | escape }}" disabled>Add to playlist<span class="sr-only">: {{ song.title | escape }}</span></button>
+        <a class="playlist-cover" href="{{ song.player | relative_url }}" data-preview-song="{{ entry[0] | escape }}" aria-label="Play: {{ song.title | escape }}">{% if card %}<img src="{{ '/assets/song-playlist/' | append: entry[0] | append: '.webp' | relative_url }}" alt="" width="640" height="360" loading="lazy">{% endif %}<span class="playlist-cover-play" aria-hidden="true"><i class="fa-solid fa-play"></i></span><span class="playlist-duration" aria-hidden="true">{{ minutes }}:{% if seconds < 10 %}0{% endif %}{{ seconds }}</span></a>
+        <div class="playlist-card-content"><p class="playlist-card-topic">{{ card.topic | default: 'Software engineering' | escape }}</p><h3><a href="{{ song.player | relative_url }}">{{ card.title | default: song.title | escape }}</a></h3><p class="sr-only">{{ minutes }} minutes {{ seconds }} seconds</p><button type="button" data-add-song="{{ entry[0] | escape }}" disabled>Add to playlist<span class="sr-only">: {{ song.title | escape }}</span></button></div>
       </li>
       {% endif %}{% endfor %}
     </ul>
+    <div id="playlist-no-results" hidden><h3>No videos found</h3><p>Try a different title, topic, or category.</p><button type="button" id="playlist-reset-search">Clear filters</button></div>
   </section>
-  <noscript><p>Playlist editing needs JavaScript. You can still open each video from the library above to find its audio downloads and full transcript.</p></noscript>
+  <noscript><p>Playlist editing needs JavaScript. Open any video in the library for its player, audio downloads, and full transcript.</p></noscript>
   <template id="playlist-row">
     <li class="song-playlist-item">
-      <span class="song-playlist-drag-handle" aria-hidden="true" title="Drag to reorder"><svg viewBox="0 0 24 24" focusable="false"><path d="M8 5h1m6 0h1M8 12h1m6 0h1M8 19h1m6 0h1"/></svg></span>
-      <span class="song-playlist-item-title"></span>
-      <span class="song-playlist-current" hidden>Current video</span>
-      <div class="song-playlist-actions">
-        <button type="button" data-action="play">Play</button>
-        <button type="button" data-action="up">Move up</button>
-        <button type="button" data-action="down">Move down</button>
-        <button type="button" data-action="remove">Remove</button>
-      </div>
+      <span class="song-playlist-drag-handle" aria-hidden="true" title="Drag to reorder"><i class="fa-solid fa-grip-vertical"></i></span>
+      <button type="button" data-action="play" class="playlist-track"><img alt="" width="96" height="54"><span><span class="song-playlist-item-title"></span><span class="playlist-track-topic" aria-hidden="true"></span><span class="song-playlist-current" aria-hidden="true" hidden>Current video</span></span></button>
+      <span class="playlist-track-duration"></span>
+      <details class="playlist-menu"><summary><i class="fa-solid fa-ellipsis-vertical" aria-hidden="true"></i></summary><div class="playlist-menu-items"><button type="button" data-action="up">Move up</button><button type="button" data-action="down">Move down</button><button type="button" data-action="remove">Remove</button></div></details>
     </li>
   </template>
+  <dialog id="playlist-name-dialog" aria-labelledby="playlist-dialog-title"><form id="playlist-name-form"><h2 id="playlist-dialog-title">New playlist</h2><label for="playlist-name">Playlist name</label><input id="playlist-name" name="name" maxlength="60" required autocomplete="off"><p id="playlist-name-error" role="alert"></p><div class="song-playlist-actions"><button type="button" id="playlist-dialog-cancel">Cancel</button><button type="submit" class="playlist-primary" id="playlist-dialog-save">Create playlist</button></div></form></dialog>
 </div>
 <script type="application/json" id="playlist-defaults">{{ site.data.song_playlists | jsonify | replace: '<', '\u003c' }}</script>
-<script src="{{ '/js/song-video/preferences.js' | relative_url }}" defer></script>
-<script src="{{ '/js/song-video/playlist-model.js' | relative_url }}" defer></script>
-<script src="{{ '/js/song-video/playlist-player.js' | relative_url }}" defer></script>
-<script src="{{ '/js/song-video/playlist-reorder.js' | relative_url }}" defer></script>
-<script src="{{ '/js/song-video/playlist-page.js' | relative_url }}" defer></script>
-<script src="{{ '/js/song-video/embed.js' | relative_url }}" defer></script>
+<script src="{{ '/js/song-video/preferences.js' | relative_url }}?v=playlist-2" defer></script>
+<script src="{{ '/js/song-video/playlist-model.js' | relative_url }}?v=playlist-2" defer></script>
+<script src="{{ '/js/song-video/playlist-collection.js' | relative_url }}?v=playlist-2" defer></script>
+<script src="{{ '/js/song-video/playlist-library.js' | relative_url }}?v=playlist-2" defer></script>
+<script src="{{ '/js/song-video/playlist-player.js' | relative_url }}?v=playlist-2" defer></script>
+<script src="{{ '/js/song-video/playlist-reorder.js' | relative_url }}?v=playlist-2" defer></script>
+<script src="{{ '/js/song-video/playlist-page.js' | relative_url }}?v=playlist-2" defer></script>
+<script src="{{ '/js/song-video/embed.js' | relative_url }}?v=playlist-2" defer></script>

@@ -14,7 +14,7 @@
   {%- for href in song.extras.styles %}
   <link rel="stylesheet" href="{{ href | relative_url }}">
   {%- endfor %}
-  <link rel="stylesheet" href="{{ '/css/song-player.css' | relative_url }}">
+  <link rel="stylesheet" href="{{ '/css/song-player.css' | relative_url }}?v={{ site.asset_version }}-playlist-2">
   <link rel="stylesheet" href="{{ '/css/print-light.css' | relative_url }}">
 </head>
 <body>
@@ -151,7 +151,7 @@
   <script src="{{ '/js/song-video/controls.js' | relative_url }}"></script>
   <script src="{{ '/js/song-video/tracks.js' | relative_url }}"></script>
   <script src="{{ '/js/song-video/presentation.js' | relative_url }}"></script>
-  <script src="{{ '/js/song-video/playlist-controls.js' | relative_url }}"></script>
+  <script src="{{ '/js/song-video/playlist-controls.js' | relative_url }}?v={{ site.asset_version }}-playlist-2"></script>
   <script src="{{ '/js/song-video/quiz-pause.js' | relative_url }}"></script>
   <script src="{{ '/js/song-video/player.js' | relative_url }}?v={{ site.asset_version }}-song-vector-2"></script>
 </body>
