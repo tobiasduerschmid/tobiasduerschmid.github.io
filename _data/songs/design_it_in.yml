@@ -154,7 +154,7 @@ sections:
         end: 10.98
         text: "So, you built a web app."
         marks: {"so": 8.9, "you": 9.46, "built": 9.98, "a": 10.22, "web": 10.34, "app": 10.56}
-        visual: "The town at dusk. A browser window: your web app, the lecture's post by Tobias Dürschmid, “UCLA students are by far the best students. Go Bruins!”, liked by David Smallberg, Sandra Batista, and 999 others, with 5 comments, Like, Comment, and Share buttons, Paul Eggert's comment “Facts”, and a box: “Write a comment …”. Your hero stands by as the town sheriff, in a white felt hat, a leather vest with a silver star, a bandana, boots, and a holstered revolver, and tips the hat."
+        visual: "The town at dusk. A browser window: your web app, the lecture's post by Tobias Dürschmid, “UCLA students are by far the best students. Go Bruins!”, liked by David Smallberg, Sandra Batista, and 999 others, with 5 comments, Like, Comment, and Share buttons, Carey Nachenberg's comment “Facts”, and a box: “Write a comment …”. Your hero stands by as the town sheriff, in a white felt hat, a leather vest with a silver star, a bandana, boots, and a holstered revolver, and tips the hat."
       - id: intro-2
         start: 12.34
         end: 14.6

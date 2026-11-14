@@ -287,7 +287,7 @@
    * count goes up by one); a posted script shows nothing until `escapeAt`,
    * when the page escapes it and the comment shows the script as text.
    */
-  function post(view, { comments = [['Paul Eggert', 'Facts']], typedText, typedAt, postAt, commenter = 'Attacker', escapeAt, count = 5 } = {}) {
+  function post(view, { comments = [['Carey Nachenberg', 'Facts']], typedText, typedAt, postAt, commenter = 'Attacker', escapeAt, count = 5 } = {}) {
     const card = el('div', 'wk-post', view);
     const head = el('div', 'wk-post-head', card);
     avatar(head, 'blue');
