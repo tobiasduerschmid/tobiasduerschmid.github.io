@@ -2,7 +2,7 @@
  * Visual kit for song-video choreographies: DOM builders for the recurring
  * pieces of a music video (stickers, stamps, kinetic type, a terminal, Git
  * stations, file chips, flow arrows, snapshot cards, syntax colours for code
- * cards, GitGraph panels, the Time Stone, confetti). Every builder schedules
+ * cards (Python and JavaScript), GitGraph panels, the Time Stone, confetti). Every builder schedules
  * its own motion on the Timeline, so a choreography reads as "what appears
  * when".
  *
@@ -473,6 +473,31 @@
     return runs;
   }
 
+  const JAVASCRIPT_KEYWORDS = new Set(['function', 'return', 'var', 'let', 'const', 'if', 'else', 'while', 'for', 'of', 'in', 'new', 'await', 'async', 'class', 'import', 'from', 'export', 'typeof', 'null', 'undefined', 'true', 'false', 'this']);
+  const JAVASCRIPT_TOKEN = /(\/\/.*$)|('[^']*'|"[^"]*"|`[^`]*`)|(\b\d+(?:\.\d+)?\b)|(\b[A-Za-z_$][\w$]*\b)|(\s+)|(.)/g;
+
+  /** Splits one line of JavaScript into [text, tone] runs, in the Python highlighter's tones. */
+  function highlightJavaScript(source) {
+    const runs = [];
+    let previous = '';
+    for (const match of source.matchAll(JAVASCRIPT_TOKEN)) {
+      const [text, comment, string, number, word] = match;
+      let tone = null;
+      if (comment) tone = 'cm';
+      else if (string) tone = 'str';
+      else if (number) tone = 'num';
+      else if (word) {
+        if (JAVASCRIPT_KEYWORDS.has(word)) tone = 'kw';
+        else if (previous === 'function') tone = 'fn';
+        else if (previous === 'class' || /^[A-Z]/.test(word)) tone = 'cls';
+        else if (source[match.index + word.length] === '(') tone = 'call';
+        previous = word;
+      }
+      runs.push([text, tone]);
+    }
+    return runs;
+  }
+
   /** Writes [text, tone] runs (from any language's highlighter) into `parent`. */
   function writeCode(parent, runs) {
     for (const [text, tone] of runs) {
@@ -781,6 +806,6 @@
   window.SongKit = {
     el, svg, place, icon, scene, sticker, stamp, kinetic, badge, terminal,
     station, chip, flyIn, flow, polaroid, typewriter, scramble, pin,
-    highlightPython, writeCode, graph, timeStone, confetti, fall, backdrop, themes,
+    highlightPython, highlightJavaScript, writeCode, graph, timeStone, confetti, fall, backdrop, themes,
   };
 })();

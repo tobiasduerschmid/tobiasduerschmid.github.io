@@ -42,6 +42,12 @@ const songPlayers = [
     storyboard: yaml.load(fs.readFileSync(path.join(__dirname, '..', '_data/songs/draw_it_out.yml'), 'utf8')),
   },
   {
+    // The hero works at a laptop on the brick site in the outro (the intro
+    // keeps the stage clear while the site builds itself).
+    name: 'Design with reuse', path: '/assets/song-player/not-a-one-time-investment.html', cameoTime: 276,
+    storyboard: yaml.load(fs.readFileSync(path.join(__dirname, '..', '_data/songs/not_a_one_time_investment.yml'), 'utf8')),
+  },
+  {
     // The hero types at a desk while the Teammate sings "No need to worry".
     name: 'Working on a team', path: '/assets/song-player/it-works-on-my-machine.html', cameoTime: 5,
     storyboard: yaml.load(fs.readFileSync(path.join(__dirname, '..', '_data/songs/it_works_on_my_machine.yml'), 'utf8')),

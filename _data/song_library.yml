@@ -43,6 +43,11 @@ unbox_the_stack:
   title: Unbox the Stack
   topic: Networking
   category: Tools & systems
+not_a_one_time_investment:
+  thumbnail_time: 147
+  title: Not a One-Time Investment
+  topic: Design with reuse
+  category: Design & modeling
 draw_it_out:
   thumbnail_time: 170
   title: Draw It Out

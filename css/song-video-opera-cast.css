@@ -224,6 +224,43 @@
 .oc-reflective { fill: #d9dee6; }
 .oc-reflective-shine { fill: none; stroke: #ffffff; stroke-width: 0.7; opacity: 0.8; }
 
+/* The site foreman of the reuse song. */
+.oc-figure--foreman {
+  --oc-cloth: #ff7a1a;
+  --oc-cloth-light: #ffb067;
+  --oc-cloth-shade: #b84a00;
+  --oc-under: #2774ae;
+  --oc-under-shade: #174a75;
+}
+.oc-figure--foreman .oc-top-stop-0 { stop-color: #ff9a45; }
+.oc-figure--foreman .oc-top-stop-1 { stop-color: #ff7a1a; }
+.oc-figure--foreman .oc-top-stop-2 { stop-color: #d65a00; }
+.oc-figure--foreman .oc-sleeve-stop-0 { stop-color: #3a86c2; }
+.oc-figure--foreman .oc-sleeve-stop-1 { stop-color: #2774ae; }
+.oc-figure--foreman .oc-sleeve-stop-2 { stop-color: #1a5584; }
+.oc-figure--foreman .oc-trouser-stop-0 { stop-color: #3f5f8c; }
+.oc-figure--foreman .oc-trouser-stop-1 { stop-color: #4c6e9e; }
+.oc-figure--foreman .oc-trouser-stop-2 { stop-color: #34507a; }
+.oc-figure--foreman .oc-trouser-stop-3 { stop-color: #263c5e; }
+.oc-figure--foreman .oc-shoe-stop-0 { stop-color: #b0753f; }
+.oc-figure--foreman .oc-shoe-stop-1 { stop-color: #8a5528; }
+.oc-figure--foreman .oc-shoe-stop-2 { stop-color: #5b3415; }
+.oc-figure--foreman .oc-sleeve-fold { stroke: #0e2f4c; }
+.oc-placket { fill: none; stroke: #174a75; stroke-width: 0.8; }
+.oc-shirt-collar { fill: #2f7cb8; stroke: #0e2f4c; stroke-width: 0.7; }
+.oc-vest-pocket { fill: #e8670c; }
+.oc-pencil { fill: #ffd100; stroke: #6b5200; stroke-width: 0.5; }
+.oc-pouch { fill: #8a5528; }
+.oc-pouch-flap { fill: #6e4120; }
+.oc-hammer { fill: none; stroke: #4b5260; stroke-width: 1.6; stroke-linecap: round; }
+.oc-hardhat { fill: #ffd100; }
+.oc-hardhat-ridge { fill: #ffe25c; }
+.oc-hardhat-brim { fill: #e6b800; }
+.oc-hardhat-shine { fill: none; stroke: #fff6c7; stroke-width: 1.6; stroke-linecap: round; }
+.oc-brick { fill: #ffd100; }
+.oc-brick-stud { fill: #ffe25c; }
+.oc-brick-shine { fill: none; stroke: #fff6c7; stroke-width: 1; }
+
 /* The Test Engineer. */
 .oc-figure--test {
   --oc-cloth: #f4f7fb;

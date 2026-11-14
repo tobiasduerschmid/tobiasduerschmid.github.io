@@ -1,0 +1,98 @@
+{
+  "fps": 30,
+  "frameCount": 23673,
+  "duration": 789.1,
+  "holds": [
+    {
+      "section": "intro",
+      "outputStart": 0,
+      "outputEnd": 44.56666666666667,
+      "songTime": 0,
+      "pictureTime": 2.8333333333333335
+    },
+    {
+      "section": "verse-1",
+      "outputStart": 57.36666666666667,
+      "outputEnd": 97,
+      "songTime": 12.8,
+      "pictureTime": 13.5
+    },
+    {
+      "section": "refrain-1",
+      "outputStart": 121.16666666666667,
+      "outputEnd": 154.7,
+      "songTime": 36.96666666666667,
+      "pictureTime": 37.63333333333333
+    },
+    {
+      "section": "verse-2",
+      "outputStart": 171.9,
+      "outputEnd": 233.26666666666668,
+      "songTime": 54.166666666666664,
+      "pictureTime": 54.86666666666667
+    },
+    {
+      "section": "verse-3",
+      "outputStart": 256.6,
+      "outputEnd": 303.9,
+      "songTime": 77.5,
+      "pictureTime": 78.16666666666667
+    },
+    {
+      "section": "refrain-2",
+      "outputStart": 332.43333333333334,
+      "outputEnd": 341.1666666666667,
+      "songTime": 106.03333333333333,
+      "pictureTime": 106.73333333333333
+    },
+    {
+      "section": "verse-4",
+      "outputStart": 358.6666666666667,
+      "outputEnd": 441.23333333333335,
+      "songTime": 123.53333333333333,
+      "pictureTime": 124.23333333333333
+    },
+    {
+      "section": "bridge",
+      "outputStart": 479.2,
+      "outputEnd": 543.1,
+      "songTime": 161.5,
+      "pictureTime": 162.2
+    },
+    {
+      "section": "verse-5",
+      "outputStart": 580.8666666666667,
+      "outputEnd": 616.1333333333333,
+      "songTime": 199.26666666666668,
+      "pictureTime": 199.96666666666667
+    },
+    {
+      "section": "quiz-intro",
+      "outputStart": 632.1666666666666,
+      "outputEnd": 635.2,
+      "songTime": 215.3,
+      "pictureTime": 215.96666666666667
+    },
+    {
+      "section": "quiz",
+      "outputStart": 637.6666666666666,
+      "outputEnd": 675.5666666666667,
+      "songTime": 217.76666666666668,
+      "pictureTime": 218.46666666666667
+    },
+    {
+      "section": "refrain-3",
+      "outputStart": 712.7333333333333,
+      "outputEnd": 726.6666666666666,
+      "songTime": 254.93333333333334,
+      "pictureTime": 255.63333333333333
+    },
+    {
+      "section": "outro",
+      "outputStart": 744.3333333333334,
+      "outputEnd": 771.3333333333334,
+      "songTime": 272.6,
+      "pictureTime": 273.26666666666665
+    }
+  ]
+}

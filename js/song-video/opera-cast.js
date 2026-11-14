@@ -26,7 +26,11 @@
  *   its Product Owner, the value navigator, in a navy double-breasted sea
  *   coat with brass buttons and gold cuff braid over a Breton shirt, with a
  *   gold compass pin. A costume's `sleeveTrim(upper, fore)` adds stripes or
- *   braid to its sleeves.
+ *   braid to its sleeves. The reuse song adds `foreman`, the viewer's hero
+ *   as the site foreman on its brick construction site: a safety-orange
+ *   hi-vis vest with silver bands over a blue work shirt, sleeves rolled
+ *   up, a leather tool pouch, jeans, work boots, and a gold hard hat (a
+ *   costume's `headwear(layer)` goes over the worn head).
  *   Export stages never load the hero renderer, so there each keeps a
  *   drawn face: the costume's, or a woman's (long hair, finer brows) for a
  *   figure whose `gender` is 'woman', a role a woman sings.
@@ -856,6 +860,43 @@
         svg('path', { class: 'oc-under-neck', d: 'M74.8 79.2 C77.2 82.4 82.8 82.4 85.2 79.2' }, layer);
       },
     },
+    // The site foreman ("Not a One-Time Investment"): a safety-orange hi-vis
+    // vest with silver bands over a blue work shirt, its sleeves rolled up,
+    // a leather tool pouch on the hip, jeans, work boots, and a gold hard hat.
+    foreman: {
+      sleeve: 'pushed', head: TEAMMATE_HEAD, shoes: 'boot',
+      top(layer, paint) {
+        inked(layer, TOP, 'oc-under', 'oc-ink oc-ink--cool');
+        svg('path', { class: 'oc-placket', d: 'M80 82 V160' }, layer);
+        const vest = 'M74 79.2 C68 81 60 84.4 55.4 87 C56.6 92 58 98 59 104 C59.6 108 58.6 111 57.6 113.6 C58.2 124 58.4 136 58.4 146 C58.4 151 58 156 57.6 160.4 C66 162 94 162 102.4 160.4 C102 156 101.6 151 101.6 146 C101.6 136 101.8 124 102.4 113.6 C101.4 111 100.4 108 101 104 C102 98 103.4 92 104.6 87 C100 84.4 92 81 86 79.2 C84.6 92 82.4 104 80 116 C77.6 104 75.4 92 74 79.2 Z';
+        inked(layer, vest, 'oc-top', 'oc-ink oc-ink--cool', paint.top);
+        const clip = svg('clipPath', { id: `oc-vest-${++uid}` }, paint.defs);
+        svg('path', { d: vest }, clip);
+        const bands = svg('g', { 'clip-path': `url(#${clip.id})` }, layer);
+        svg('path', { class: 'oc-top-shade', d: TOP_SHADE }, bands);
+        svg('path', { class: 'oc-reflective', d: 'M50 127.6 H110 V133.4 H50 Z M50 145 H110 V150.8 H50 Z M63.4 80 H69.2 V127.6 H63.4 Z M90.8 80 H96.6 V127.6 H90.8 Z' }, bands);
+        svg('path', { class: 'oc-reflective-shine', d: 'M50 129 H110 M50 146.4 H110 M64.8 82 V127 M92.2 82 V127' }, bands);
+        svg('path', { class: 'oc-fold', d: 'M62 116 C66 120 70 122 74 122.6 M98 118 C94 121 90 122.6 86 123' }, layer);
+        // A pencil in the vest's chest pocket, and the tool pouch on the hip.
+        inked(layer, 'M71 104 H78 V112 H71 Z', 'oc-vest-pocket', 'oc-ink oc-ink--cool');
+        svg('path', { class: 'oc-pencil', d: 'M73.4 104 V97.4 L74.6 95.4 L75.8 97.4 V104 Z' }, layer);
+        inked(layer, 'M88 157 H100.6 L100 170 C99.8 172 98.6 173 96.6 173 H91.6 C89.6 173 88.4 172 88.2 170 Z', 'oc-pouch', 'oc-ink oc-ink--cool');
+        svg('path', { class: 'oc-pouch-flap', d: 'M88 157 H100.6 L100.4 162 C96.6 163.4 92 163.4 88.2 162 Z' }, layer);
+        svg('path', { class: 'oc-hammer', d: 'M86.6 156 V174 M83.6 155 H89.6' }, layer);
+      },
+      collar(layer) {
+        svg('path', { class: 'oc-under-neck', d: 'M74.8 79.2 C77.2 82.4 82.8 82.4 85.2 79.2' }, layer);
+        svg('path', { class: 'oc-shirt-collar', d: 'M73.6 76.6 L80 84 L76.6 85.6 C74.6 83.4 73.4 80.6 73.6 76.6 Z M86.4 76.6 L80 84 L83.4 85.6 C85.4 83.4 86.6 80.6 86.4 76.6 Z' }, layer);
+      },
+      headwear(layer) {
+        // A gold hard hat: its dome with a raised centre ridge, the brim, and
+        // a highlight from the upper left.
+        inked(layer, 'M60.6 31.4 C60.6 17.6 69 9.4 80 9.4 C91 9.4 99.4 17.6 99.4 31.4 Z', 'oc-hardhat', 'oc-ink oc-ink--cool');
+        svg('path', { class: 'oc-hardhat-ridge', d: 'M76.6 10 C76.4 17 76.6 24 77 31.2 H83 C83.4 24 83.6 17 83.4 10 C81.4 9.4 78.6 9.4 76.6 10 Z' }, layer);
+        inked(layer, 'M55 32.4 C55 30.4 57 29.6 60 29.6 H100 C103 29.6 105 30.4 105 32.4 C105 34.6 103 35.6 100 35.6 H60 C57 35.6 55 34.6 55 32.4 Z', 'oc-hardhat-brim', 'oc-ink oc-ink--cool');
+        svg('path', { class: 'oc-hardhat-shine', d: 'M64.6 25 C65.6 18 69.6 13.6 74 12' }, layer);
+      },
+    },
     // The Test Engineer: a white lab coat to the knees, a lilac shirt at
     // its neck, pens in the pocket, and safety goggles hung round the neck.
     test: {
@@ -1157,6 +1198,7 @@
     const drawnFace = svg('g', { 'data-testid': 'oc-drawn-face' }, headGroup);
     const setFace = drawnHead(drawnFace, gender === 'woman' ? WOMAN_HEAD : costume.head, paint);
     const wornOver = svg('g', {}, headGroup);
+    if (costume.headwear) costume.headwear(svg('g', { class: 'oc-headwear' }, headGroup), paint);
     const sleepMask = drawSleepMask(svg('g', { class: 'oc-sleep-mask', 'data-testid': 'oc-sleep-mask' }, headGroup));
     const arms = svg('g', {}, trunk);
 
@@ -1355,6 +1397,13 @@
   const UPRIGHT = new Set(['mug', 'trophy', 'stamp', 'cane']);
 
   const PROPS = {
+    // A gold 2×2 toy brick, held from below: its studs up.
+    brick(g) {
+      inked(g, 'M-2 -6 H22 V8 H-2 Z', 'oc-brick', 'oc-ink oc-ink--cool');
+      inked(g, 'M1.6 -9.4 H8 V-6 H1.6 Z M12 -9.4 H18.4 V-6 H12 Z', 'oc-brick-stud', 'oc-ink oc-ink--cool');
+      svg('path', { class: 'oc-brick-shine', d: 'M0 -4 H20' }, g);
+      return g;
+    },
     // A clipboard held by its side edge: the board, its steel clip, and a
     // sheet with a ticked list.
     clipboard(g) {

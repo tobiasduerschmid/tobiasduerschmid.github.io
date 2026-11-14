@@ -1,0 +1,1260 @@
+/*
+ * Reuse kit (js/song-video/reuse-kit.js): the casebook spreads of
+ * "Not a One-Time Investment" and the pictures on their pages, in the
+ * language of toy bricks: cream tiles hold text and pictures, studded navy
+ * plates hold the tiles, and coloured bricks are the pieces (packages,
+ * modules, principles, answers).
+ *
+ * One colour, one meaning, across the whole song: blue for reused packages
+ * and libraries (and the case tabs and page headings that file them), gold
+ * for your own code and what is worth keeping (principles, the refrain's
+ * questions), red for what breaks, green for what is fixed or right, grey
+ * for a framework's structure, tan for neutral filler.
+ *
+ * Every text colour below keeps at least 4.5:1 on its own surface: ink,
+ * blue, red, and green text on the cream tiles; white or ink names on brick colours chosen
+ * for that (white on blue 4.9:1, on red 5.4:1, on green 5.1:1, on grey
+ * 4.8:1; ink on gold 11.5:1 and on tan 10.6:1). Code and terminal cards are
+ * the stage's dark cards with its syntax colours. Like stage.css this styles
+ * the 960×540 stage, which keeps its own artwork in both page themes.
+ */
+
+.stage {
+  --rk-paper: #f7f0e1;
+  --rk-ink: #1f2430;
+  --rk-muted: #575c68;
+  --rk-line: #b9ad94;
+  --rk-red: #b42318;
+  --rk-green: #13703a;
+  --rk-blue: #1d5fbf;
+  --rk-card: #172039;
+  --rk-plate: #1d3557;
+  --rk-plate-edge: #0e1b30;
+  /* The shading every brick shares: a lit top edge, a darker bottom. */
+  --rk-brick-shade: linear-gradient(180deg, rgba(255, 255, 255, 0.3) 0 3px, rgba(255, 255, 255, 0) 3px 55%, rgba(0, 0, 0, 0.18));
+  --rk-stud-shade: linear-gradient(90deg, rgba(0, 0, 0, 0.2), rgba(255, 255, 255, 0.38) 30%, rgba(255, 255, 255, 0.05) 60%, rgba(0, 0, 0, 0.24));
+  /* Plastic sheen: a soft diagonal highlight across a brick's face. */
+  --rk-brick-sheen: linear-gradient(112deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.06) 30%, rgba(255, 255, 255, 0) 31%);
+  --rk-tile: linear-gradient(180deg, #fbf6ea, #f3ead6);
+}
+
+/* Brick colours: the face, the outline, and the text on it. */
+.rk-c-blue { --brick: #2774ae; --brick-edge: #0e3a5e; --brick-ink: #ffffff; }
+.rk-c-gold { --brick: #ffd100; --brick-edge: #8a6d00; --brick-ink: #1f2430; }
+.rk-c-tan { --brick: #dcc79c; --brick-edge: #7d6a45; --brick-ink: #1f2430; }
+.rk-c-red { --brick: #c0392b; --brick-edge: #5c1a13; --brick-ink: #ffffff; }
+.rk-c-green { --brick: #2e7d4f; --brick-edge: #123f25; --brick-ink: #ffffff; }
+.rk-c-grey { --brick: #6b7280; --brick-edge: #2f343c; --brick-ink: #ffffff; }
+.rk-c-white { --brick: #f3f1ea; --brick-edge: #8f8a7c; --brick-ink: #1f2430; }
+
+/* ------------------------------------------------------------------ */
+/* Studs and bricks                                                    */
+/* ------------------------------------------------------------------ */
+
+.rk-studs {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  top: -9px;
+  height: 9px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-evenly;
+  pointer-events: none;
+}
+
+.rk-studs i {
+  width: 22px;
+  height: 11px;
+  box-sizing: border-box;
+  border: 2px solid var(--brick-edge);
+  border-bottom: 0;
+  border-radius: 5px 5px 0 0;
+  background: var(--rk-stud-shade), var(--brick);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.4);
+}
+
+.rk-studs--plate {
+  left: 4px;
+  right: 4px;
+  top: -6px;
+  height: 6px;
+}
+
+.rk-studs--plate i {
+  width: 13px;
+  height: 8px;
+  border-radius: 4px 4px 0 0;
+}
+
+.rk-pkg {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 6px 12px;
+  border: 2px solid var(--brick-edge);
+  border-radius: 4px;
+  background: var(--rk-brick-sheen), var(--rk-brick-shade), var(--brick);
+  color: var(--brick-ink);
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.3),
+    inset 3px 0 0 rgba(255, 255, 255, 0.14),
+    inset -4px 0 0 rgba(0, 0, 0, 0.16),
+    inset 0 -3px 0 rgba(0, 0, 0, 0.12),
+    0 3px 0 rgba(0, 0, 0, 0.18),
+    0 8px 14px rgba(0, 0, 0, 0.24);
+  box-sizing: border-box;
+  text-align: center;
+}
+
+/* A stack of many packages: courses of bricks with their seams, the name on
+   a dark tag so it stays readable over them. */
+.rk-pkg--stack {
+  background:
+    var(--rk-brick-sheen),
+    var(--rk-brick-shade),
+    repeating-linear-gradient(180deg, transparent 0 25px, rgba(0, 0, 0, 0.22) 25px 27px, rgba(255, 255, 255, 0.16) 27px 28px),
+    repeating-linear-gradient(90deg, transparent 0 38px, rgba(0, 0, 0, 0.16) 38px 40px),
+    var(--brick);
+}
+
+.rk-pkg--stack .rk-pkg-name {
+  padding: 1px 6px 2px;
+  border-radius: 6px;
+  background: rgba(10, 32, 54, 0.82);
+  color: #ffffff;
+}
+
+/* A brick of a set height (a course in a wall) drops the minimum. */
+.rk-pkg--sized { min-height: 0; }
+
+/* Another brick sits on it: its studs are inside that brick. */
+.rk-pkg--under .rk-studs { visibility: hidden; }
+
+/* A changed interface: thin, tall studs in new places. */
+.rk-pkg--odd .rk-studs { left: 18px; right: 34px; justify-content: space-between; }
+.rk-pkg--odd .rk-studs i { width: 10px; height: 15px; border-radius: 2px 2px 0 0; }
+
+.rk-pkg--small { padding: 2px 6px; }
+.rk-pkg--small .rk-pkg-name { font-size: 16px; }
+
+.rk-pkg-words { min-width: 0; }
+
+.rk-pkg-name {
+  font-family: var(--font-mono);
+  font-size: 17px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.rk-pkg-tag {
+  display: inline-block;
+  margin-top: 3px;
+  padding: 1px 7px;
+  border: 1.5px solid rgba(31, 36, 48, 0.35);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.94);
+  color: var(--rk-ink);
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.rk-pkg-tag--any { border: 1.5px dashed var(--rk-muted); }
+.rk-pkg-tag--new { border-color: var(--rk-red); background: #fde2e1; color: var(--rk-red); }
+.rk-pkg-tag--bad { border-color: #5c1a13; background: var(--rk-red); color: #ffffff; }
+.rk-pkg-tag--pinned { border-color: var(--rk-green); background: #e3f4e8; color: var(--rk-green); }
+
+.rk-pkg-marks {
+  position: absolute;
+  right: -14px;
+  top: calc(50% - 14px);
+  width: 28px;
+  height: 28px;
+}
+
+/* Marks share one spot: a cross fades before a check takes its place, and a
+   hidden mark never pushes a visible one onto the brick's name. */
+.rk-pkg-mark {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 2px solid var(--rk-ink);
+  border-radius: 50%;
+  color: #ffffff;
+}
+
+.rk-pkg-mark svg { width: 18px; height: 18px; stroke-width: 3; }
+.rk-pkg-mark--cross { background: var(--rk-red); }
+.rk-pkg-mark--check { background: var(--rk-green); }
+
+.rk-ring {
+  position: absolute;
+  inset: -8px;
+  border: 3px solid var(--rk-red);
+  border-radius: 10px;
+  pointer-events: none;
+}
+
+.rk-ring--green { border-color: var(--rk-green); }
+.rk-ring--gold { border-color: #f2b900; }
+
+/* A brick on the lit path of a dependency chain. */
+.rk-pkg.is-path { box-shadow: 0 0 0 3px var(--rk-red), 0 6px 12px rgba(0, 0, 0, 0.28); }
+.rk-pkg.is-listed { box-shadow: 0 0 0 3px #f2b900, 0 6px 12px rgba(0, 0, 0, 0.28); }
+
+.rk-plate {
+  position: absolute;
+  border: 2px solid var(--brick-edge);
+  border-radius: 3px;
+  background: var(--rk-brick-sheen), var(--rk-brick-shade), var(--brick);
+  box-shadow: 0 6px 10px rgba(0, 0, 0, 0.25);
+  box-sizing: border-box;
+}
+
+.rk-plate--label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--brick-ink);
+  font-family: var(--font-mono);
+  font-size: 18px;
+  font-weight: 700;
+}
+
+/* SVG bricks (vision, wall, rocket, scale, icons). */
+.rk-sb-body,
+.rk-sb-stud { fill: var(--brick); stroke: var(--brick-edge); stroke-width: 1.2; }
+.rk-sb-shine { fill: rgba(255, 255, 255, 0.38); }
+.rk-sb-shade { fill: rgba(0, 0, 0, 0.18); }
+.rk-brick-icon { flex: none; overflow: visible; }
+
+.rk-crack { position: absolute; overflow: visible; fill: none; }
+.rk-crack-light { stroke: rgba(255, 255, 255, 0.6); stroke-width: 5; stroke-linejoin: round; }
+.rk-crack-line { stroke: #141821; stroke-width: 2.6; stroke-linejoin: round; }
+
+/* A cartoon dust puff, and comic strain lines around an overloaded brick. */
+.rk-dust { position: absolute; overflow: visible; pointer-events: none; fill: #cdbfa3; }
+.rk-strain { position: absolute; overflow: visible; pointer-events: none; }
+.rk-strain-lines { fill: none; stroke: var(--rk-ink); stroke-width: 2.6; stroke-linecap: round; }
+
+.rk-layer {
+  position: absolute;
+  inset: 0;
+}
+
+/* A brick that has gone: its dashed outline. */
+.rk-ghost {
+  position: absolute;
+  border: 3px dashed var(--rk-red);
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+/* ------------------------------------------------------------------ */
+/* The spread: page tiles on a studded navy plate                       */
+/* ------------------------------------------------------------------ */
+
+.rk-spread {
+  position: absolute;
+  border-radius: 10px;
+  background:
+    radial-gradient(circle at 44% 38%, rgba(255, 255, 255, 0.28) 0 1.3px, transparent 1.7px) 0 0 / 14px 14px,
+    radial-gradient(circle at 50% 50%, #3b5f95 0 3.3px, #12223b 3.6px, transparent 4.3px) 0 0 / 14px 14px,
+    linear-gradient(180deg, #223d66, #182c4c);
+  box-shadow: 0 0 0 2px var(--rk-plate-edge), 0 18px 36px rgba(0, 0, 0, 0.55);
+}
+
+/* Its shadow on the ground. */
+.rk-spread::after {
+  content: '';
+  position: absolute;
+  left: 3%;
+  right: 3%;
+  bottom: -20px;
+  height: 22px;
+  background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.5), transparent 70%);
+  z-index: -1;
+}
+
+.rk-page {
+  position: absolute;
+  top: 14px;
+  bottom: 14px;
+  width: calc(50% - 20px);
+  border-radius: 4px;
+  background: var(--rk-tile);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.8), inset 0 -3px 0 rgba(0, 0, 0, 0.08), 0 2px 0 rgba(0, 0, 0, 0.35);
+}
+
+.rk-page--left { left: 14px; }
+.rk-page--right { right: 14px; }
+
+.rk-spine {
+  position: absolute;
+  top: 14px;
+  bottom: 14px;
+  left: calc(50% - 3px);
+  width: 6px;
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.rk-tab {
+  position: absolute;
+  top: -18px;
+  right: 40px;
+  padding: 5px 14px 6px;
+  border: 2px solid var(--brick-edge);
+  border-radius: 4px;
+  background: var(--rk-brick-sheen), var(--rk-brick-shade), var(--brick);
+  color: var(--brick-ink);
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.3);
+}
+
+.rk-head {
+  position: absolute;
+  top: 22px;
+  color: var(--rk-blue);
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.rk-head--left { left: 30px; }
+.rk-head--right { left: calc(50% + 24px); }
+
+/* The principle: a long brick that snaps on across the bottom. */
+.rk-ribbon {
+  position: absolute;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 10px;
+  padding: 9px 18px 10px;
+  border: 2px solid var(--brick-edge);
+  border-radius: 4px;
+  background: var(--rk-brick-sheen), var(--rk-brick-shade), var(--brick);
+  color: var(--brick-ink);
+  box-shadow: inset 3px 0 0 rgba(255, 255, 255, 0.14), inset -4px 0 0 rgba(0, 0, 0, 0.16), 0 6px 0 rgba(0, 0, 0, 0.3);
+  text-align: center;
+  text-wrap: balance;
+}
+
+.rk-ribbon-kicker {
+  flex: none;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.rk-ribbon-text { font-size: 21px; font-weight: 800; }
+.rk-ribbon-sub { font-size: 17px; font-weight: 600; }
+
+.rk-group {
+  position: absolute;
+  inset: 0;
+}
+
+/* ------------------------------------------------------------------ */
+/* left-pad's column: calls, character tiles, and padding bricks        */
+/* ------------------------------------------------------------------ */
+
+.rk-pad {
+  position: absolute;
+}
+
+.rk-pad-row {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 40px;
+}
+
+.rk-pad-call {
+  position: absolute;
+  left: 0;
+  top: 4px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: var(--rk-card);
+  color: #eef2fb;
+  font-family: var(--font-mono);
+  font-size: 17px;
+  line-height: 1.4;
+  white-space: nowrap;
+  font-variant-ligatures: none;
+}
+
+.rk-pad-arrow {
+  position: absolute;
+  top: 0;
+  width: 26px;
+  line-height: 40px;
+  color: var(--rk-muted);
+  font-size: 22px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.rk-pad-tiles,
+.rk-pad-chars {
+  position: absolute;
+  top: 0;
+  height: 40px;
+}
+
+.rk-pad-chars {
+  left: 0;
+  right: 0;
+}
+
+.rk-pad-cell {
+  position: absolute;
+  top: 0;
+  width: 40px;
+  height: 40px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--brick-edge);
+  border-radius: 4px;
+  background: var(--rk-brick-sheen), var(--rk-brick-shade), var(--brick);
+  color: var(--brick-ink);
+  font-family: var(--font-mono);
+  font-size: 24px;
+  font-weight: 700;
+}
+
+/* A printed tile: smooth on top. A padding brick: one stud, a space dot. */
+.rk-pad-char { box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2); }
+.rk-pad-space { box-shadow: inset 3px 0 0 rgba(255, 255, 255, 0.16), inset -3px 0 0 rgba(0, 0, 0, 0.14); }
+.rk-pad-space .rk-studs { left: 7px; right: 7px; }
+.rk-pad-dot { opacity: 0.7; }
+
+.rk-pad-guide {
+  position: absolute;
+  width: 0;
+  border-left: 3px dashed var(--rk-green);
+}
+
+/* ------------------------------------------------------------------ */
+/* Arrows                                                               */
+/* ------------------------------------------------------------------ */
+
+.rk-arrow {
+  position: absolute;
+  inset: 0;
+  width: 960px;
+  height: 540px;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.rk-arrow-path { fill: none; stroke-width: 3; stroke-linecap: round; }
+.rk-arrow-path--dashed { stroke-dasharray: 7 6; }
+.rk-arrow-ink--ink { stroke: var(--rk-ink); fill: var(--rk-ink); }
+.rk-arrow-ink--red { stroke: var(--rk-red); fill: var(--rk-red); }
+.rk-arrow-ink--green { stroke: var(--rk-green); fill: var(--rk-green); }
+.rk-arrow-ink--muted { stroke: var(--rk-muted); fill: var(--rk-muted); }
+.rk-arrow-ink .rk-arrow-path { fill: none; }
+.rk-arrow-head { stroke: none; }
+
+.rk-arrow-label {
+  position: absolute;
+  padding: 1px 8px;
+  border-radius: 6px;
+  background: var(--rk-paper);
+  color: var(--rk-ink);
+  font-size: 17px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* ------------------------------------------------------------------ */
+/* Code and terminal cards                                              */
+/* ------------------------------------------------------------------ */
+
+.rk-code,
+.rk-term {
+  position: absolute;
+  border: 1px solid rgba(160, 190, 255, 0.3);
+  border-radius: 10px;
+  background: var(--rk-card);
+  color: #e6edf3;
+  font-family: var(--font-mono);
+  font-size: 16px;
+  line-height: 1.45;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.35);
+  box-sizing: border-box;
+}
+
+/* Code reads as typed: no Fira Code ligatures (=== must not become one glyph). */
+.rk-code,
+.rk-term,
+.rk-pkg-name,
+.rk-pkg-tag,
+.rk-shelf-name,
+.rk-plate--label,
+.rk-label--mono {
+  font-variant-ligatures: none;
+  font-feature-settings: 'liga' 0, 'calt' 0;
+}
+
+.rk-code-title {
+  padding: 5px 12px;
+  border-bottom: 1px solid rgba(160, 190, 255, 0.2);
+  color: #b4c3e0;
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.rk-code-body { padding: 8px 12px; }
+.rk-code-line { min-height: 1.45em; white-space: pre; }
+.rk-code--numbered .rk-code-body { counter-reset: rk-line; }
+.rk-code--numbered { line-height: 1.32; }
+.rk-code--numbered .rk-code-line { min-height: 1.32em; }
+
+.rk-code--numbered .rk-code-line::before {
+  counter-increment: rk-line;
+  content: counter(rk-line);
+  display: inline-block;
+  width: 2.2ch;
+  margin-right: 1.2ch;
+  color: #9aa7bd;
+  text-align: right;
+}
+
+.rk-code--error .rk-code-line { color: #ffb3ba; }
+.rk-code.is-struck { outline: 4px solid var(--rk-red); outline-offset: 2px; }
+
+.rk-hl { border-radius: 4px; }
+.rk-hl.is-lit { outline: 2px solid #ff8a95; background: rgba(255, 107, 125, 0.22); }
+.rk-hl--green.is-lit { outline-color: #7ee787; background: rgba(74, 222, 128, 0.2); }
+
+.rk-term-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-bottom: 1px solid rgba(160, 190, 255, 0.2);
+}
+
+.rk-term-dot { width: 9px; height: 9px; border-radius: 50%; background: #5b6b8c; }
+.rk-term-title { margin-left: 6px; color: #b4c3e0; font-family: var(--font-display); font-size: 15px; font-weight: 700; }
+.rk-term-body { padding: 8px 12px 10px; }
+.rk-term-line { white-space: pre-wrap; overflow-wrap: anywhere; }
+.rk-term-line--cmd { color: #f6f8ff; }
+.rk-term-line--out { color: #c9d4e8; }
+.rk-term-line--err { color: #ff9aa5; }
+.rk-term-line--ok { color: #86efac; }
+.rk-term-cursor[hidden],
+.rk-term-line[hidden] { display: none; }
+
+.rk-term-cursor {
+  display: inline-block;
+  width: 0.6em;
+  height: 1.05em;
+  margin-left: 1px;
+  vertical-align: -0.15em;
+  background: #f6f8ff;
+}
+
+/* ------------------------------------------------------------------ */
+/* Ink on the tiles                                                     */
+/* ------------------------------------------------------------------ */
+
+.rk-label {
+  position: absolute;
+  color: var(--rk-ink);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.25;
+  text-wrap: balance;
+}
+
+.rk-label--muted { color: var(--rk-muted); }
+.rk-label--red { color: var(--rk-red); }
+.rk-label--green { color: var(--rk-green); }
+.rk-label--light { color: #f6f8ff; }
+.rk-label--center { text-align: center; }
+.rk-label--right { text-align: right; }
+.rk-label--mono { font-family: var(--font-mono); letter-spacing: 0.02em; }
+
+/* Light lettering on the backdrop sits on its own dark backing. */
+.rk-label-pill {
+  display: inline-block;
+  padding: 4px 12px 5px;
+  border-radius: 8px;
+  background: rgba(11, 23, 52, 0.8);
+}
+
+.rk-note {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 2px solid var(--rk-ink);
+  border-radius: 8px;
+  background: #fffaf0;
+  color: var(--rk-ink);
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.25;
+  box-shadow: 3px 3px 0 rgba(31, 36, 48, 0.85);
+  box-sizing: border-box;
+  text-wrap: balance;
+}
+
+.rk-note svg { flex: none; width: 22px; height: 22px; }
+.rk-note--small { padding: 4px 8px; font-size: 16px; box-shadow: 2px 2px 0 rgba(31, 36, 48, 0.85); }
+.rk-note--good { border-color: var(--rk-green); color: var(--rk-green); }
+.rk-note--bad { border-color: var(--rk-red); color: var(--rk-red); }
+.rk-note--tag { background: #fff4c2; }
+.rk-note--good svg,
+.rk-note--bad svg { stroke-width: 2.6; }
+
+.rk-stamp {
+  position: absolute;
+  padding: 3px 10px 2px;
+  border: 3px solid currentColor;
+  border-radius: 6px;
+  background: rgba(247, 240, 225, 0.88);
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.rk-stamp--green { color: var(--rk-green); }
+.rk-stamp--red { color: var(--rk-red); }
+.rk-stamp--big { font-size: 28px; padding: 4px 14px 3px; border-width: 4px; }
+
+.rk-tick {
+  position: absolute;
+  overflow: visible;
+  fill: none;
+  stroke-width: 5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.rk-tick--check { stroke: var(--rk-green); }
+.rk-tick--cross { stroke: var(--rk-red); }
+
+/* ------------------------------------------------------------------ */
+/* Pictures                                                             */
+/* ------------------------------------------------------------------ */
+
+.rk-shelf { position: absolute; }
+
+.rk-shelf-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 8px 14px;
+  padding: 0 8px;
+}
+
+.rk-shelf-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+
+.rk-shelf-name {
+  color: var(--rk-ink);
+  font-family: var(--font-mono);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.rk-shelf--desk .rk-shelf-name {
+  padding: 1px 6px;
+  border-radius: 5px;
+  background: rgba(11, 23, 52, 0.8);
+  color: #f6f8ff;
+}
+
+.rk-shelf-board {
+  height: 12px;
+  margin-top: 4px;
+  border-radius: 3px;
+  background: #8b5e34;
+  box-shadow: 0 4px 0 #5e3d1f;
+}
+
+.rk-users { position: absolute; inset: 0; width: 960px; height: 540px; overflow: visible; }
+.rk-users-line { stroke: var(--rk-line); stroke-width: 2; fill: none; }
+
+.rk-app {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 30px;
+  border: 2px solid var(--rk-ink);
+  border-radius: 6px;
+  background: #e8f0ff;
+  color: var(--rk-ink);
+}
+
+.rk-app svg { width: 20px; height: 20px; }
+
+.rk-bars { position: absolute; display: grid; gap: 14px; }
+
+.rk-bar-row {
+  display: grid;
+  grid-template-columns: 130px 1fr;
+  align-items: center;
+  gap: 10px;
+}
+
+.rk-bar-label { color: var(--rk-ink); font-size: 17px; font-weight: 700; }
+
+.rk-bar-track {
+  height: 22px;
+  border: 2px solid var(--rk-ink);
+  border-radius: 6px;
+  background: #fffaf0;
+  overflow: hidden;
+}
+
+.rk-bar-fill {
+  display: block;
+  height: 100%;
+  background: linear-gradient(180deg, #ffe066, #f2b900);
+  box-shadow: inset 0 -2px 0 rgba(122, 90, 0, 0.45);
+  transform-origin: 0 50%;
+}
+
+.rk-vision { position: absolute; }
+.rk-vision svg { overflow: visible; }
+
+.rk-vision-lib {
+  position: absolute;
+  width: 120px;
+  font-size: 17px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.rk-vision-lib--blue { color: var(--rk-blue); }
+.rk-vision-lib--tan { color: #6b5530; }
+
+.rk-glue {
+  fill: rgba(255, 238, 150, 0.92);
+  stroke: #8a6d00;
+  stroke-width: 1.5;
+  stroke-dasharray: 3 2;
+}
+
+.rk-glue.is-lit { stroke: var(--rk-red); stroke-width: 3; stroke-dasharray: none; }
+
+.rk-wall { position: absolute; }
+.rk-wall svg { overflow: visible; }
+.rk-wall-gap { fill: rgba(31, 36, 48, 0.06); stroke: var(--rk-muted); stroke-width: 2; stroke-dasharray: 5 4; }
+
+.rk-timeline { position: absolute; height: 74px; }
+
+.rk-timeline-track {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 10px;
+  height: 8px;
+  border-radius: 4px;
+  background: #e7dcc4;
+  overflow: hidden;
+}
+
+.rk-timeline-fill { height: 100%; background: var(--rk-ink); transform-origin: 0 50%; }
+.rk-timeline-fill--red { background: var(--rk-red); }
+.rk-timeline-fill--green { background: var(--rk-green); }
+
+.rk-timeline-point {
+  position: absolute;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 0;
+}
+
+.rk-timeline-dot {
+  width: 18px;
+  height: 18px;
+  margin-top: 5px;
+  border: 3px solid var(--rk-ink);
+  border-radius: 50%;
+  background: #fffaf0;
+}
+
+.rk-timeline-text {
+  margin-top: 6px;
+  color: var(--rk-ink);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.rk-timeline-point--left { align-items: flex-start; }
+.rk-timeline-point--left .rk-timeline-text { text-align: left; }
+.rk-timeline-point--right { align-items: flex-end; }
+.rk-timeline-point--right .rk-timeline-text { text-align: right; }
+
+.rk-padlock { position: absolute; display: grid; justify-items: center; gap: 4px; }
+.rk-padlock svg { overflow: visible; }
+.rk-padlock-shackle { fill: none; stroke: #6b7280; stroke-width: 9; }
+.rk-padlock-body { fill: #d4a017; stroke: var(--rk-ink); stroke-width: 3; }
+.rk-padlock-body.is-fixed { fill: #4caf6a; }
+.rk-padlock-hole { fill: var(--rk-ink); }
+.rk-padlock-crack { fill: none; stroke: var(--rk-red); stroke-width: 4; stroke-linejoin: round; }
+
+.rk-padlock-label {
+  color: var(--rk-ink);
+  font-size: 17px;
+  font-weight: 700;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* Apps as bricks: red until they take the fix, then green. */
+.rk-appgrid {
+  position: absolute;
+  display: grid;
+  gap: 14px 10px;
+}
+
+.rk-appgrid-cell {
+  --brick: #c0392b;
+  --brick-edge: #5c1a13;
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 34px;
+  border: 2px solid var(--brick-edge);
+  border-radius: 3px;
+  background: var(--rk-brick-sheen), var(--rk-brick-shade), var(--brick);
+  color: #ffffff;
+  box-sizing: border-box;
+}
+
+.rk-appgrid-cell.is-green { --brick: #2e7d4f; --brick-edge: #123f25; }
+.rk-appgrid-cell svg { width: 20px; height: 20px; }
+.rk-appgrid-cell .rk-studs { left: 6px; right: 6px; top: -7px; height: 7px; }
+.rk-appgrid-cell .rk-studs i { width: 12px; height: 8px; }
+
+/* The Ariane rockets. */
+.rk-rocket { position: absolute; }
+.rk-rocket svg { overflow: visible; }
+
+/* The Ariane rockets: white shells shaded as cylinders (lit from the left),
+   dark interstages and engines, and a cut-away window onto the gold module
+   in the equipment bay. Not bricks: the case is about a real rocket. */
+.rk-rkt-shell { stroke: #8f8a7c; stroke-width: 1.1; stroke-linejoin: round; }
+.rk-rkt-body-0 { stop-color: #e4e0d6; }
+.rk-rkt-body-1 { stop-color: #ffffff; }
+.rk-rkt-body-2 { stop-color: #e8e5dc; }
+.rk-rkt-body-3 { stop-color: #b5b0a3; }
+.rk-rkt-metal,
+.rk-rkt-band { stroke: #22262e; stroke-width: 0.9; stroke-linejoin: round; }
+.rk-rkt-metal-0 { stop-color: #59606d; }
+.rk-rkt-metal-1 { stop-color: #8c939f; }
+.rk-rkt-metal-2 { stop-color: #2b3039; }
+.rk-rkt-seam { fill: none; stroke: rgba(70, 64, 52, 0.38); stroke-width: 0.9; }
+.rk-rkt-raceway { fill: #d6d2c7; stroke: rgba(70, 64, 52, 0.35); stroke-width: 0.6; }
+.rk-rkt-hatch { fill: #dedad0; stroke: rgba(70, 64, 52, 0.5); stroke-width: 0.7; }
+.rk-rkt-strut { fill: none; stroke: #59606d; stroke-width: 1.8; stroke-linecap: round; }
+.rk-rkt-window-frame { fill: none; stroke: #454c59; stroke-width: 1.4; }
+.rk-rkt-bay-0 { stop-color: #34425f; }
+.rk-rkt-bay-1 { stop-color: #111725; }
+.rk-rkt-window-ring { fill: none; stroke: #e8741a; stroke-width: 2.6; opacity: 0; }
+.rk-module-lit .rk-rkt-window-ring { opacity: 1; }
+.rk-rkt-module-box { stroke: #7a5f00; stroke-width: 1; }
+.rk-rkt-gold-0 { stop-color: #fff2b0; }
+.rk-rkt-gold-1 { stop-color: #ffd100; }
+.rk-rkt-gold-2 { stop-color: #c49600; }
+.rk-rkt-module-lid { fill: rgba(255, 255, 255, 0.5); }
+.rk-rkt-gyro { fill: #ffe372; stroke: #7a5f00; stroke-width: 0.9; }
+.rk-rkt-gyro-axis,
+.rk-rkt-vents { fill: none; stroke: #7a5f00; stroke-width: 0.8; }
+.rk-rkt-cable { fill: none; stroke: #9aa4b6; stroke-width: 0.9; }
+.rk-rkt-pad { stroke: #22262e; stroke-width: 0.9; }
+.rk-rkt-trench { fill: #1b1e24; }
+.rk-rkt-legs { fill: none; stroke: #2b3039; stroke-width: 5; }
+.rk-rkt-mast { fill: none; stroke: #6b7280; stroke-width: 1.2; stroke-linejoin: round; }
+.rk-rkt-mast-cap { fill: #59606d; }
+.rk-rkt-arm { fill: none; stroke: #6b7280; stroke-width: 1.6; stroke-linecap: round; }
+.rk-rkt-smoke { fill: #c4bcad; }
+.rk-rkt-flame { stroke: none; }
+.rk-rkt-flame-0 { stop-color: #ffd36b; }
+.rk-rkt-flame-1 { stop-color: #f59e0b; }
+.rk-rkt-flame-2 { stop-color: rgba(234, 88, 12, 0); }
+.rk-rkt-flame-core { fill: #ffe7a3; }
+.rk-rkt-debris-panel { fill: #f1eee6; stroke: #8f8a7c; stroke-width: 1; }
+.rk-rkt-debris-metal { fill: #59606d; stroke: #22262e; stroke-width: 0.8; }
+.rk-rkt-blast-fire { fill: #f59e0b; }
+.rk-rkt-blast-fire circle:nth-child(odd) { fill: #ea580c; }
+.rk-rkt-blast-smoke { fill: #8f877a; }
+.rk-rkt-debris-gold { fill: #ffd100; stroke: #7a5f00; stroke-width: 1; }
+
+.rk-rocket-name {
+  position: absolute;
+  left: -10px;
+  right: -10px;
+  bottom: -30px;
+  color: var(--rk-ink);
+  font-size: 18px;
+  font-weight: 800;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* The breakup: a slow orange bloom, never white, never a flash. */
+.rk-bloom {
+  position: absolute;
+  left: -20px;
+  top: 30px;
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(245, 158, 11, 0.75), rgba(194, 65, 12, 0.35) 55%, transparent 72%);
+}
+
+.rk-gauge { position: absolute; display: grid; justify-items: center; }
+.rk-gauge svg { overflow: visible; }
+.rk-gauge-title { color: var(--rk-ink); font-size: 18px; font-weight: 800; text-align: center; }
+.rk-gauge-safe { fill: none; stroke: #4caf6a; stroke-width: 16; }
+.rk-gauge-over { fill: none; stroke: #e05a4f; stroke-width: 16; }
+.rk-gauge-limit path { stroke: var(--rk-ink); stroke-width: 4; }
+.rk-gauge-needle { stroke: var(--rk-ink); stroke-width: 5; stroke-linecap: round; }
+.rk-gauge-hub { fill: var(--rk-ink); }
+
+.rk-gauge-readout {
+  margin-top: -6px;
+  color: var(--rk-ink);
+  font-family: var(--font-mono);
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.rk-gauge-readout.is-over { color: var(--rk-red); }
+
+.rk-gauge-limit-text {
+  position: absolute;
+  right: -68px;
+  top: 92px;
+  color: var(--rk-ink);
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.rk-checks { position: absolute; display: grid; gap: 12px; }
+
+.rk-check-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--rk-muted);
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.rk-check-row.is-done { color: var(--rk-ink); }
+
+.rk-check-box {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border: 2.5px solid var(--rk-ink);
+  border-radius: 6px;
+  background: #fffaf0;
+  color: var(--rk-green);
+}
+
+.rk-check-box svg { width: 22px; height: 22px; stroke-width: 3.5; }
+
+.rk-scale { position: absolute; }
+.rk-scale svg { overflow: visible; }
+.rk-scale-stand { stroke: #6b4a22; stroke-width: 6; stroke-linecap: round; fill: none; }
+.rk-scale-bar { stroke: #6b4a22; stroke-width: 6; stroke-linecap: round; }
+.rk-scale-pivot { fill: #d4a017; stroke: #6b4a22; stroke-width: 2; }
+.rk-scale-string { stroke: #8b6b3c; stroke-width: 1.6; fill: none; }
+.rk-scale-pan { fill: #d4a017; stroke: #6b4a22; stroke-width: 2; }
+
+.rk-scale-label {
+  position: absolute;
+  top: 136px;
+  width: 140px;
+  color: var(--rk-ink);
+  font-size: 17px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.rk-scale-label--left { left: -20px; }
+.rk-scale-label--right { right: -20px; }
+
+/* ------------------------------------------------------------------ */
+/* Cards: tiles on a navy plate (checklist, quiz, cover)                */
+/* ------------------------------------------------------------------ */
+
+.rk-list,
+.rk-quiz,
+.rk-cover {
+  position: absolute;
+  border-radius: 6px;
+  background: var(--rk-tile);
+  color: var(--rk-ink);
+  box-shadow:
+    0 0 0 10px var(--rk-plate),
+    0 0 0 12px var(--rk-plate-edge),
+    0 18px 36px rgba(0, 0, 0, 0.55);
+  box-sizing: border-box;
+}
+
+.rk-list { padding: 14px 140px 12px 22px; }
+
+.rk-list-title {
+  margin-bottom: 8px;
+  font-size: 24px;
+  font-weight: 900;
+}
+
+.rk-list-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: 44px 1fr auto;
+  align-items: center;
+  gap: 12px;
+  margin: 4px -10px;
+  padding: 5px 10px;
+  border-radius: 8px;
+}
+
+/* Not yet sung: muted ink (5.9:1), never transparency, so it stays readable. */
+.rk-list-row:not(.is-lit) .rk-list-q { color: var(--rk-muted); }
+.rk-list-row.is-lit { background: rgba(212, 160, 23, 0.18); }
+
+.rk-list-icon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 2px solid var(--brick-edge);
+  border-radius: 50%;
+  background: var(--rk-brick-sheen), var(--rk-brick-shade), var(--brick);
+  color: var(--brick-ink);
+  box-sizing: border-box;
+}
+
+.rk-list-row:not(.is-lit) .rk-list-icon {
+  border-color: var(--rk-line);
+  background: #fffaf0;
+  color: var(--rk-muted);
+}
+
+.rk-list-icon svg { width: 24px; height: 24px; }
+.rk-list-q { font-size: 21px; font-weight: 800; }
+.rk-list-name { color: var(--rk-muted); font-size: 16px; font-weight: 700; }
+.rk-list-tabs { display: flex; gap: 6px; }
+
+.rk-list-tab {
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: var(--rk-ink);
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.rk-list-footer {
+  margin-top: 10px;
+  padding: 8px 12px;
+  border-top: 2px dashed var(--rk-line);
+  color: var(--rk-muted);
+  font-size: 22px;
+  font-weight: 900;
+  text-align: center;
+}
+
+.rk-list-footer.is-lit { color: var(--rk-ink); }
+
+/* The takeaway, lit: ink on a bright gold highlighter band (gold is what to
+   keep), not gold-brown text, which reads as olive on the cream tile. */
+.rk-list-footer-text {
+  padding: 1px 10px 3px;
+  border-radius: 6px;
+  background-size: 0% 100%;
+  background-repeat: no-repeat;
+  background-image: linear-gradient(100deg, #ffd84a, #ffc400);
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+  transition: none;
+}
+.rk-list-footer.is-lit .rk-list-footer-text { background-size: 100% 100%; }
+
+/* The tower in the checklist card's right column: one brick per question. */
+.rk-list-tower {
+  position: absolute;
+  right: 24px;
+  bottom: 14px;
+  width: 92px;
+  height: calc(100% - 28px);
+}
+
+.rk-list-base {
+  position: absolute;
+  left: -6px;
+  right: -6px;
+  bottom: 0;
+  height: 16px;
+  border: 2px solid var(--brick-edge);
+  border-radius: 3px;
+  background: var(--rk-brick-sheen), var(--rk-brick-shade), var(--brick);
+  box-sizing: border-box;
+}
+
+.rk-list-base.is-lit { --brick: #ffd100; --brick-edge: #8a6d00; box-shadow: 0 0 0 3px rgba(255, 209, 0, 0.35); }
+
+.rk-list-brick {
+  position: absolute;
+  left: 0;
+  width: 92px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border: 2px solid var(--brick-edge);
+  border-radius: 3px;
+  background: var(--rk-brick-sheen), var(--rk-brick-shade), var(--brick);
+  color: var(--brick-ink);
+  box-sizing: border-box;
+}
+
+.rk-list-brick svg { width: 22px; height: 22px; }
+
+.rk-quiz { padding: 14px 18px 16px; }
+
+.rk-quiz-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.rk-quiz-pill {
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--rk-ink);
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.rk-quiz-number { color: var(--rk-muted); font-size: 16px; font-weight: 800; }
+
+.rk-quiz-question {
+  font-size: 23px;
+  font-weight: 800;
+  line-height: 1.25;
+  text-wrap: balance;
+}
+
+/* The answer: a green brick that snaps onto the card. */
+.rk-quiz-answer {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 20px;
+  padding: 9px 12px;
+  border: 2px solid var(--brick-edge);
+  border-radius: 4px;
+  background: var(--rk-brick-sheen), var(--rk-brick-shade), var(--brick);
+  color: #ffffff;
+}
+
+.rk-quiz-emblem {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.rk-quiz-emblem svg { width: 22px; height: 22px; }
+.rk-quiz-answer-text { font-size: 21px; font-weight: 800; }
+
+.rk-cover { padding: 18px 22px 20px; }
+.rk-cover-title { font-size: 24px; font-weight: 900; text-wrap: balance; }
+
+.rk-cover-done {
+  color: var(--rk-green);
+  font-size: 28px;
+  font-weight: 900;
+}
+
+/* ------------------------------------------------------------------ */
+/* Choreography pieces                                                  */
+/* ------------------------------------------------------------------ */
+
+.rk-xray {
+  position: absolute;
+  border: 3px dashed var(--rk-muted);
+  border-radius: 12px;
+  background: rgba(31, 36, 48, 0.05);
+  box-sizing: border-box;
+}
+
+.rk-xray-label {
+  position: absolute;
+  left: 12px;
+  top: 8px;
+  color: var(--rk-ink);
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.rk-clip {
+  position: absolute;
+  overflow: hidden;
+}
+
+.rk-ghost.is-ringed { border-width: 4px; box-shadow: 0 0 0 5px rgba(180, 35, 24, 0.22); }
+.rk-ghost--socket { border-color: var(--rk-muted); }
+.rk-ghost--frame { border-width: 4px; border-radius: 10px; }
+
+/* In this song the section badge and stickers read at paragraph size too. */
+.theme-brick-site .badge { font-size: 16px; }
+.theme-brick-site .sticker { font-size: 16px; }
+.theme-brick-site .sticker svg { width: 18px; height: 18px; }
