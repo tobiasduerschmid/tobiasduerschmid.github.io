@@ -24,16 +24,29 @@
   display: block;
 }
 
-.fr-sky-0 { stop-color: color-mix(in srgb, color-mix(in srgb, #506ba5, #10204b var(--fr-blue-hour)), #070e23 var(--fr-night)); }
-.fr-sky-1 { stop-color: color-mix(in srgb, color-mix(in srgb, #cd836b, #294372 var(--fr-blue-hour)), #12223e var(--fr-night)); }
-.fr-sky-2 { stop-color: color-mix(in srgb, color-mix(in srgb, #f69354, #586484 var(--fr-blue-hour)), #29334d var(--fr-night)); }
-.fr-sky-3 { stop-color: color-mix(in srgb, color-mix(in srgb, #ffd080, #a27c70 var(--fr-blue-hour)), #4c454e var(--fr-night)); }
+/* Keep long section badges beside the signs now aligned to the top edge. */
+.theme-frontier .badge {
+  box-sizing: border-box;
+  max-width: 200px;
+  white-space: normal;
+  text-wrap: balance;
+}
 
-.fr-sun-0 { stop-color: color-mix(in srgb, #ffd17a, #f48b50 var(--fr-sun-red)); stop-opacity: 0.5; }
-.fr-sun-1 { stop-color: #e88150; stop-opacity: 0; }
+.fr-sky-0 { stop-color: color-mix(in srgb, color-mix(in srgb, #506ba5, #10204b var(--fr-blue-hour)), #070e23 var(--fr-night)); }
+.fr-sky-1 { stop-color: color-mix(in srgb, color-mix(in srgb, #db8664, #294372 var(--fr-blue-hour)), #12223e var(--fr-night)); }
+.fr-sky-2 { stop-color: color-mix(in srgb, color-mix(in srgb, #ff8c42, #586484 var(--fr-blue-hour)), #29334d var(--fr-night)); }
+.fr-sky-3 { stop-color: color-mix(in srgb, color-mix(in srgb, #ffbc67, #a27c70 var(--fr-blue-hour)), #4c454e var(--fr-night)); }
+
+.fr-sun-0 { stop-color: color-mix(in srgb, #ffc374, #f36635 var(--fr-sun-red)); stop-opacity: 0.5; }
+.fr-sun-1 { stop-color: #ee6539; stop-opacity: 0; }
 .fr-sun-disc { fill: url(#fr-sun-face); }
-.fr-sun-upper { stop-color: color-mix(in srgb, #ffebad, #ffc572 var(--fr-sun-red)); }
-.fr-sun-lower { stop-color: color-mix(in srgb, #ffc65e, #f6763b var(--fr-sun-red)); }
+/* The upper limb must redden too: it is the last part visible above the
+   horizon. Keep the lower limb deeper, with the warm haze behind the disc. */
+.fr-sun-upper { stop-color: color-mix(in srgb, #ffe3a0, #ff6840 var(--fr-sun-red)); }
+.fr-sun-lower { stop-color: color-mix(in srgb, #ffbb50, #dc321e var(--fr-sun-red)); }
+.fr-horizon-core { stop-color: color-mix(in srgb, #ffc273, #ee5832 var(--fr-sun-red)); stop-opacity: 0.72; }
+.fr-horizon-warm { stop-color: color-mix(in srgb, #ef8150, #d8472d var(--fr-sun-red)); stop-opacity: 0.28; }
+.fr-horizon-edge { stop-color: #d8472d; stop-opacity: 0; }
 
 .fr-stars circle { fill: #f4ead8; }
 
@@ -48,9 +61,9 @@
 .fr-cloud-wisp { fill: url(#fr-cloud); opacity: 0.45; }
 .fr-cloud-direct { opacity: var(--fr-cloud-light, 0); }
 .fr-cloud-sun-shade { stop-color: #e79065; stop-opacity: 0; }
-.fr-cloud-sun-middle { stop-color: color-mix(in srgb, #eeb784, #c9684b var(--fr-cloud-red, 0%)); stop-opacity: 0.16; }
-.fr-cloud-sun-warm { stop-color: color-mix(in srgb, #ffca70, #f16f3c var(--fr-cloud-red, 0%)); stop-opacity: 0.85; }
-.fr-cloud-sun-rim { stop-color: color-mix(in srgb, #ffdf8d, #ffa35a var(--fr-cloud-red, 0%)); }
+.fr-cloud-sun-middle { stop-color: color-mix(in srgb, #f4b67b, #d4623f var(--fr-cloud-red, 0%)); stop-opacity: 0.18; }
+.fr-cloud-sun-warm { stop-color: color-mix(in srgb, #ffbe60, #f66b32 var(--fr-cloud-red, 0%)); stop-opacity: 0.85; }
+.fr-cloud-sun-rim { stop-color: color-mix(in srgb, #ffdb80, #ff9852 var(--fr-cloud-red, 0%)); }
 .fr-cloud-lit-wisp { opacity: 0.5; }
 .fr-cloud-fold { fill: color-mix(in srgb, #596578, #142039 var(--fr-night)); opacity: 0.18; }
 .fr-cloud-filament { opacity: calc(var(--fr-cloud-light, 0) * 0.38); }

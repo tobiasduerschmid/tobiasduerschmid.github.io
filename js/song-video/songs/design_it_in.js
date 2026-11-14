@@ -78,9 +78,9 @@
       return keys.map(([i, from], k) => [i, from, k + 1 < keys.length ? keys[k + 1][1] : last]);
     }
 
-    /** The scene's plank sign: the plan question being answered. */
-    function header(parent, text, sub, at, until, { y = 50 } = {}) {
-      return W.plank(parent, text, { x: 250, y, w: 460, sub, at, until });
+    /** The scene's plank sign, aligned just inside the top edge. */
+    function header(parent, text, sub, at, until) {
+      return W.plank(parent, text, { x: 250, y: 6, w: 460, sub, at, until });
     }
 
     // ----------------------------------------------------------------
@@ -108,7 +108,7 @@
       const house = W.porch(s, { x: 330, ground: FEET, w: 280, sign: 'YOUR APP', at: planAt });
       const [lockX, lockY] = house.point('lock');
       W.padlock(s, { x: lockX - 32, y: lockY - 44, size: 64, tone: 'brass', sketchAt: design + 0.1, at: lockAt, how: 'slam', jiggleAt: beat(2.3) });
-      header(s, 'Design Security in', undefined, planAt, leave, { y: 58 });
+      header(s, 'Design Security in', undefined, planAt, leave);
       sheriff(content, 868, 2, leave - 0.3, {
         moves: [
           [5.6, 'tip', { hold: 1 }], [mark('intro-2', 'break') + 0.2, 'look', { dir: -1, hold: 1.4 }],
@@ -302,7 +302,7 @@
       // "Security through obscurity lasts till someone looks."
       const lockAt = before('v2-7');
       const b = W.group(s, before('v2-6'), lockAt);
-      W.plank(b, 'Security through obscurity', { x: 220, y: 60, w: 520, at: mark('v2-6', 'security'), tone: 'red' });
+      W.plank(b, 'Security through obscurity', { x: 250, y: 6, w: 460, at: mark('v2-6', 'security'), tone: 'red' });
       W.tag(b, 'lasts till someone looks', { x: 340, y: 130, w: 280, at: mark('v2-6', 'obscurity'), icon: 'eye' });
       // "Use locks the world has tested, their blueprints out on view."
       const c = W.group(s, lockAt, before('v2-9'));
@@ -515,8 +515,7 @@
       const leave = end('verse-4');
       const s = kit.scene(content, from, leave, { exit: 'fade' });
       const leastAt = mark('v4-9', 'least');
-      // A little lower than the others: this verse's badge is the widest.
-      header(s, '4 · Protection Mechanisms', 'How do you stop them?', from + 0.1, leastAt, { y: 58 });
+      header(s, '4 · Protection Mechanisms', 'How do you stop them?', from + 0.1, leastAt);
       // "With every lock you've got, and a plan for when one breaks."
       const townAt = before('v4-3');
       const a = W.group(s, from + 0.1, townAt);

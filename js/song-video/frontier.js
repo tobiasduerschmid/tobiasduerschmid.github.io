@@ -93,7 +93,9 @@
       ry: (bottom - top) / 2 * SUN_DISPLAY_SCALE,
       elevation,
       azimuth: Math.atan2(north, west),
-      reddening: span(2 - elevation, [0, 2.6]),
+      // Reach red while the upper limb is still visible, rather than only
+      // after the horizon has hidden the warmer bottom of the disc.
+      reddening: span(1.2 - elevation, [0, 1.4]),
       afterglow: 1 - span(-elevation, [0.5, 7]),
     };
   }
@@ -327,6 +329,7 @@
     };
     grad('fr-sky', 'linearGradient', { x1: 0, y1: 0, x2: 0, y2: 1 }, [['0', 'fr-sky-0'], ['0.55', 'fr-sky-1'], ['0.82', 'fr-sky-2'], ['1', 'fr-sky-3']]);
     grad('fr-sun', 'radialGradient', { cx: 0.5, cy: 0.5, r: 0.5 }, [['0', 'fr-sun-0'], ['1', 'fr-sun-1']]);
+    grad('fr-horizon-glow', 'radialGradient', { cx: 0.5, cy: 0.5, r: 0.5 }, [['0', 'fr-horizon-core'], ['0.5', 'fr-horizon-warm'], ['1', 'fr-horizon-edge']]);
     grad('fr-sun-face', 'linearGradient', { x1: 0, y1: 0, x2: 0, y2: 1 }, [['0', 'fr-sun-upper'], ['1', 'fr-sun-lower']]);
     grad('fr-road', 'linearGradient', { x1: 0, y1: 0, x2: 0, y2: 1 }, [['0', 'fr-road-0'], ['0.45', 'fr-road-1'], ['1', 'fr-road-2']]);
     grad('fr-cloud', 'linearGradient', { x1: 0, y1: 0, x2: 0, y2: 1 }, [['0', 'fr-cloud-0'], ['0.48', 'fr-cloud-1'], ['0.8', 'fr-cloud-2'], ['1', 'fr-cloud-3']]);
@@ -338,7 +341,7 @@
     const skyClip = svg('clipPath', { id: 'fr-sky-clip' }, defs);
     svg('rect', { width: W, height: HORIZON }, skyClip);
     const sunlight = svg('g', { 'clip-path': 'url(#fr-sky-clip)' }, art);
-    const horizonGlow = svg('ellipse', { class: 'fr-sun', cy: HORIZON - 4, rx: 270, ry: 100, fill: 'url(#fr-sun)' }, sunlight);
+    const horizonGlow = svg('ellipse', { class: 'fr-horizon-glow', cy: HORIZON - 4, rx: 300, ry: 108, fill: 'url(#fr-horizon-glow)' }, sunlight);
     const sunGlow = svg('ellipse', { class: 'fr-sun', rx: 64, ry: 56, fill: 'url(#fr-sun)' }, sunlight);
     const sun = svg('ellipse', { class: 'fr-sun-disc' }, sunlight);
     const clouds = [[-110, 24, 1.65, 0.18, 11], [240, 82, 1.15, 0.12, 7], [535, 18, 1.8, 0.16, 9.5], [760, 153, 1.1, 0.16, 2.4], [15, 210, 0.85, 0.22, 1.6]]
@@ -409,7 +412,7 @@
       stage.style.setProperty('--fr-sun-red', `${(100 * light.reddening).toFixed(2)}%`);
       stars.setAttribute('opacity', (0.4 * span(lightTime, [duration * 0.3 / twilightSpeed, blueHourAt]) + 0.38 * night).toFixed(3));
       horizonGlow.setAttribute('cx', light.x.toFixed(2));
-      horizonGlow.setAttribute('opacity', (0.75 * light.afterglow).toFixed(3));
+      horizonGlow.setAttribute('opacity', ((0.62 + 0.3 * light.reddening) * light.afterglow).toFixed(3));
       sunGlow.setAttribute('cx', light.x.toFixed(2));
       sunGlow.setAttribute('cy', light.y.toFixed(2));
       sunGlow.setAttribute('opacity', (0.75 * (1 - span(-light.elevation, [0, 1]))).toFixed(3));
