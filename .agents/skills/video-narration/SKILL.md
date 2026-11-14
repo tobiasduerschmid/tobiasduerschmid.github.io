@@ -372,15 +372,3 @@ run the topic's node test, its Playwright spec,
 `tests/narration-fullscreen.spec.js`, the notes tests (section 6), and
 `tests/wcag22-complete-audit.spec.js` filtered to the chapter, both views, and
 the notes page.
-
-### Every song-video gets a playlist thumbnail
-
-The same rule holds for every song video (`_data/songs/*.yml` with a
-`player`): before it ships, give it a library card thumbnail, or the SE Book
-playlist shows an empty grey box. Pick a frame that shows the song's central
-idea in a settled, uncluttered pose that still reads at card size (render
-candidates with `node scripts/song-video/render.js <song> --stills t1,t2,… --out DIR`),
-record it as `thumbnail_time` in `_data/song_library.yml`, and export that
-frame as a 640×360 WebP to `assets/song-playlist/<song>.webp`
-(`docs/song-playlists.md`, step 2). Re-export it whenever the scene's art
-changes.
