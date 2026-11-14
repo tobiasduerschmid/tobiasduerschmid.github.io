@@ -267,8 +267,10 @@ repeat signs for regression tests, flaky-noise waves, a fence of tests).
 returning to: a top-down game window with two crossing roads, a traffic
 light, a bus stop, and a bike lane. Its vehicles (car, hybrid, bus, bike,
 ambulance, grey type-code tokens, and dashed outlines of kinds nobody has
-written yet) drive keyframed routes, brake, and dance on the beat, all as
-pure functions of song time; `sprite()` draws one vehicle large with a hood
+written yet) drive routes nose first, with rounded corners, pulling away and
+braking smoothly and slowing into turns, all as pure functions of song time
+(`distanceFor()` sizes a drive so that the next one starts at the same speed);
+`sprite()` draws one vehicle large with a hood
 that opens. `js/song-video/oop-kit.js` draws the notation in one consistent
 language: UML-style object cards (state behind a padlock, methods as buttons
 on a door), message envelopes flying on dashed arcs, C++ code cards that

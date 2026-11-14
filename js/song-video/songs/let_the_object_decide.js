@@ -68,8 +68,9 @@
       town.vehicle('car', { x: 40, y: L.e, until: tokenAt }).drive(4.2, 6.4, [[150, L.e]]);
       town.vehicle('bus', { x: 420, y: L.w, a: 180, until: tokenAt }).drive(4.4, 6.4, [[300, L.w, 180]]);
       town.vehicle('bike', { x: 20, y: L.bike, until: tokenAt }).drive(4.6, 6.4, [[110, L.bike]]);
+      // The car token stops behind the bus token instead of driving through it.
       town.vehicle('token', { x: 150, y: L.e, label: 'CAR', at: tokenAt })
-        .drive(mark('intro-4', 'drive'), mark('intro-4', 'lane') + 0.8, [[410, L.e]]);
+        .drive(mark('intro-4', 'drive'), mark('intro-4', 'lane') + 0.8, [[200, L.e]]);
       // The bus drives to its stop, then rolls backward when its speed becomes −10.
       town.vehicle('token', { x: 250, y: L.e, label: 'BUS', at: tokenAt })
         .drive(mark('intro-5', 'stop'), mark('intro-5', 'stop_2') + 0.3, [[L.stop, L.e]])
@@ -195,9 +196,10 @@
       ['x', 'y', 'speed'].forEach((name) => object.focus(name, mark('verse-1-7', 'knows'), line('verse-1-8').start));
       const road = city.town(b, { x: 420, y: 150, w: 500, h: 200, at: mark('verse-1-7', 'now'), title: 'Simulation' });
       const R = lanes(road);
+      // It pulls away, changes lanes, and brakes to a stop without pausing in between.
       const car = road.vehicle('car', { x: 70, y: R.e })
-        .drive(mark('verse-1-8', 'steer'), mark('verse-1-8', 'and_2'), [[150, R.e], [230, R.w]])
-        .drive(mark('verse-1-8', 'brake'), mark('verse-1-8', 'too') + 0.3, [[300, R.w]], { ease: 'out' });
+        .drive(mark('verse-1-8', 'steer'), mark('verse-1-8', 'brake'), [[150, R.e], [210, R.w], [240, R.w]], { ease: 'in' })
+        .drive(mark('verse-1-8', 'brake'), mark('verse-1-8', 'too') + 0.3, [[345, R.w]], { ease: 'out' });
       car.brake(mark('verse-1-8', 'brake'), line('verse-1-9').start);
       const [px, py] = at(road, car, mark('verse-1-7', 'place'));
       ok.label(b, 'x, y', { x: px - 20, y: py - 62, at: mark('verse-1-7', 'place'), until: mark('verse-1-8', 'steer'), tone: 'cyan' });
@@ -313,11 +315,13 @@
       tween(card.methodBox, [{ backgroundColor: 'rgba(255, 209, 0, 0)' }, { backgroundColor: 'rgba(255, 209, 0, 0.3)' }, { backgroundColor: 'rgba(255, 209, 0, 0)' }], mark(l2, 'code'), 0.8, EASE.inOut);
       ok.label(b, 'locked', { x: 800, y: 40, at: mark(l2, 'locked'), tone: 'gold', rotate: 4 });
       ok.reach(b, { from: [960, 330], to: [760, 160], at: mark(l3, 'dont') - 0.15, blockAt: mark(l3, 'in'), until: line(l5).start - 0.3, stopShort: 6 });
+      // The car rolls along until the object decides to brake, then slows to a stop.
+      fleet.car.drive(line(l2).start, mark(l4, 'object'), [[100, L.e]], { ease: 'in' })
+        .drive(mark(l4, 'object'), mark(l4, 'decide') + 0.4, [[122, L.e]], { ease: 'out' });
+      fleet.car.brake(mark(l4, 'object'), line(l5).start);
       const [cx, cy] = at(town, fleet.car, mark(l3, 'send'));
       ok.envelope(b, { from: [cx, cy], to: [620, 222], label: 'brake()', at: mark(l3, 'send'), dur: 0.7, bend: -70 });
       card.light('brake()', mark(l3, 'message') + 0.3, line(l5).start);
-      fleet.car.drive(mark(l4, 'object'), mark(l4, 'decide') + 0.4, [[130, L.e]], { ease: 'out' });
-      fleet.car.brake(mark(l4, 'object'), line(l5).start);
 
       // Line 5: one move() message, different moves.
       const c = scene(s, line(l5).start - 0.12, line(rest[0]).start - 0.12, { exit: 'fade' });
@@ -328,7 +332,7 @@
         const v = fleet[kind];
         const [vx, vy] = at(town, v, sendAt + 0.6);
         ok.envelope(c, { from: [560, 130], to: [vx, vy - 10], label: 'move()', at: sendAt + i * 0.08, dur: 0.55, bend: -40, stay: 1.25, tone: i % 2 ? 'cyan' : 'gold' });
-        moveOf(kind, v, L, moveAt, line(l6).start);
+        moveOf(kind, v, L, moveAt, line(rest[0]).start + 0.5);
         methodTag(c, kind, i, mark(l5, 'moves') + i * 0.06);
       });
       const ask = ok.bubble(c, 'What type are you?', { x: 560, y: 316, at: mark(l6, 'dont'), tail: 'left' });
@@ -380,21 +384,120 @@
 
     /**
      * Each kind's own move(): the car turns north at the crossing, the bus
-     * pulls into its stop, the bike rides its lane, the hybrid and the
-     * ambulance drive west. Paths never cross, so no vehicle hides another.
+     * pulls into its stop, the bike rides its lane up to the crossing (and
+     * waits at the curb while the car turns), the hybrid and the ambulance
+     * drive west. No vehicle drives through another.
      */
     function moveOf(kind, v, L, from, to) {
       const p = v.position(from);
       if (kind === 'car') return v.drive(from, to, [[L.n, L.e], [L.n, 14]]);
       if (kind === 'bus') return v.drive(from, to, [[L.stop, L.e]]);
-      if (kind === 'bike') return v.drive(from, to, [[Math.min(420, p.x + 170), L.bike]]);
+      if (kind === 'bike') return v.drive(from, to, [[p.x < L.x ? L.x - 46 : Math.min(420, p.x + 170), L.bike]]);
       if (kind === 'hybrid') return v.drive(from, to, [[Math.max(220, p.x - 90), L.w, 180]]);
       return v.drive(from, to, [[Math.max(320, p.x - 90), L.w, 180]]).flag('is-siren', from, to + 1);
     }
 
     // ----------------------------------------------------------------
-    // Post-chorus: just send it — every vehicle answers the beat its own way
+    // Post-chorus: just send it — every vehicle answers the message its own way
     // ----------------------------------------------------------------
+
+    /**
+     * A label that rides beside a vehicle: its top edge sits (dx, dy) from
+     * the vehicle on the stage, at the edge's middle (`align: 'center'`), its
+     * left end ('start'), or its right end ('end'). It hides while the
+     * vehicle is at or past the edge of its town.
+     */
+    function rideAlong(parent, town, vehicle, text, { from, until, dx = 0, dy = 0, tone = 'mono', align = 'center' }) {
+      const spot = (t) => {
+        const [vx, vy] = at(town, vehicle, t);
+        return [vx + dx, vy + dy];
+      };
+      const [x0, y0] = spot(from);
+      const node = ok.label(parent, text, { x: x0, y: y0, at: from, until, tone });
+      node.classList.add(`oop-label--ride-${align}`, 'oop-label--chip');
+      if (tone === 'mono') node.classList.add('oop-label--mono');
+      const margin = 24;
+      onFrame((t) => {
+        if (t < from - 0.5 || t > until + 0.5) return;
+        const [x, y] = spot(t);
+        node.style.left = `${x.toFixed(1)}px`;
+        node.style.top = `${y.toFixed(1)}px`;
+        const p = vehicle.position(t);
+        node.classList.toggle('is-offstage', p.x < margin || p.x > town.w - margin || p.y < margin || p.y > town.h - margin);
+      });
+      return node;
+    }
+
+    /**
+     * Where each move() label (a chip about 23 px tall) rides, over ground
+     * no other vehicle crosses: the car's and the bus's below the east lane
+     * (the bus's clear of its stop sign), the bike's above the bike lane,
+     * the hybrid's behind it in its own lane, and the parked ambulance's in
+     * the empty block beside it.
+     */
+    const RIDE = {
+      car: { dy: 14 },
+      bus: { dx: 24, dy: 16, align: 'end' },
+      bike: { dy: -34 },
+      hybrid: { dx: 26, dy: -12, align: 'start' },
+      ambulance: { dx: -24, dy: -12, align: 'end' },
+    };
+
+    /**
+     * move() in the big town, one step per volley (the two times this
+     * vehicle's envelopes land). The light holds the east and west lanes at
+     * red until `greenAt`. The car waits at the light, then drives on down
+     * its lane; the bus pulls into its stop, then leaves; the bike keeps
+     * pedalling down its lane; the hybrid coasts to the light, recharging,
+     * then drives on; the ambulance races north across the junction with its
+     * siren and parks up the cross street. No two routes meet at one time.
+     */
+    function moveSteps(town, kind, [land1, land2], greenAt, until) {
+      const L = lanes(town);
+      const go1 = land1 + 0.15;
+      const go2 = Math.max(land2 + 0.15, greenAt + 0.15);
+      if (kind === 'car') {
+        return town.vehicle('car', { x: 40, y: L.e })
+          .drive(go1, go1 + 1.8, [[118, L.e]])
+          .drive(go2, until, [[town.w + 60, L.e]], { ease: 'in' });
+      }
+      if (kind === 'bus') {
+        const bus = town.vehicle('bus', { x: 300, y: L.e })
+          .drive(go1, go1 + 2.45, [[L.stop, L.e]])
+          .drive(land2 + 0.4, until, [[town.w + 60, L.e]], { ease: 'in' });
+        return bus.brake(go1 + 2, land2 + 0.4);
+      }
+      if (kind === 'bike') return town.vehicle('bike', { x: 250, y: L.bike }).drive(go1, until, [[town.w - 20, L.bike]], { ease: 'in' });
+      if (kind === 'hybrid') {
+        const hybrid = town.vehicle('hybrid', { x: 560, y: L.w, a: 180 })
+          .drive(go1, go1 + 2.25, [[262, L.w]])
+          .drive(go2, until, [[-60, L.w]], { ease: 'in' });
+        return hybrid.flag('is-battery-full', go1 + 1.4, go2 + 0.6).brake(go1 + 1.5, go2);
+      }
+      return town.vehicle('ambulance', { x: L.n, y: town.h + 30, a: -90 })
+        .drive(go1, go1 + 3, [[L.n, 62]])
+        .flag('is-siren', -Infinity);
+    }
+
+    /**
+     * brake() in the big town: both cars are cruising east when the first
+     * volley lands, and each stops its own way, the hybrid more gently,
+     * recharging. Each drive ends at the speed the next one starts with.
+     */
+    function brakeStep(town, kind, land1, from) {
+      const L = lanes(town);
+      const rollFrom = from + 0.3;
+      const cruise = 107;   // px/s
+      const stopFor = kind === 'hybrid' ? 1.6 : 1.1;
+      const x0 = kind === 'hybrid' ? 130 : 250;
+      const toCruise = city.distanceFor(cruise, land1 - rollFrom, 'in');
+      const toStop = city.distanceFor(cruise, stopFor, 'out');
+      const v = town.vehicle(kind, { x: x0, y: L.e })
+        .drive(rollFrom, land1, [[x0 + toCruise, L.e]], { ease: 'in' })
+        .drive(land1, land1 + stopFor, [[x0 + toCruise + toStop, L.e]], { ease: 'out' })
+        .brake(land1, Infinity);
+      return kind === 'hybrid' ? v.flag('is-battery-full', land1 + 0.6) : v;
+    }
 
     function postChorus(sectionId, { cast = ['car', 'bus', 'bike'], message = 'move()' } = {}) {
       badge('Post-chorus · Just send it', sectionId);
@@ -404,34 +507,36 @@
       const s = scene(content, from, until);
       student?.appear({ from, to: until, x: 0, y: 236, scale: 0.72 });
       const town = city.town(s, { x: 250, y: 56, w: 660, h: 300, at: from + 0.05, title: 'City Builder' });
-      const L = lanes(town);
-      const spots = {
-        car: [120, L.e, 0], hybrid: [520, L.w, 180], bus: [L.stop + 30, L.e, 0], bike: [300, L.bike, 0], ambulance: [380, L.w, 180],
-      };
-      if (message === 'brake()') { spots.car = [140, L.e, 0]; spots.hybrid = [60, L.e, 0]; }
-      const fleet = cast.map((kind) => {
-        const [x, y, a] = spots[kind];
-        return { kind, v: town.vehicle(kind, { x, y, a }) };
-      });
       const laptop = [150, 400];
-      const volley = (atTime) => fleet.forEach(({ v }, i) => {
-        const [vx, vy] = at(town, v, atTime + 0.5);
-        ok.envelope(s, { from: laptop, to: [vx, vy - 10], label: i === 0 ? message : undefined, at: atTime + i * 0.05, dur: 0.45, bend: -80, stay: 1.1, tone: i % 2 ? 'cyan' : 'gold' });
-      });
-      volley(mark(id(1), 'send'));
-      volley(mark(id(3), 'send'));
-      const danceFrom = mark(id(2), 'same');
-      const danceTo = line(id(4)).start;
+      const sends = [mark(id(1), 'send'), mark(id(3), 'send')];
+      // Envelopes leave 0.05 s apart, in cast order, and land 0.45 s later.
+      const landings = (i) => sends.map((sendAt) => sendAt + i * 0.05 + 0.45);
+      let greenAt = landings(0)[1] - 0.25;
+      if (message === 'move()') {
+        // With an ambulance crossing, the light turns green once it is past.
+        if (cast.includes('ambulance')) greenAt = landings(cast.indexOf('ambulance'))[0] + 0.15 + 2.5;
+        town.signal('red', from);
+        town.signal('green', greenAt);
+      }
+      const fleet = cast.map((kind, i) => ({
+        kind,
+        v: message === 'brake()' ? brakeStep(town, kind, landings(i)[0], from) : moveSteps(town, kind, landings(i), greenAt, until),
+      }));
+      sends.forEach((sendAt) => fleet.forEach(({ v }, i) => {
+        const [vx, vy] = at(town, v, sendAt + i * 0.05 + 0.45);
+        ok.envelope(s, { from: laptop, to: [vx, vy - 10], label: i === 0 ? message : undefined, at: sendAt + i * 0.05, dur: 0.45, bend: -80, stay: 0.6, tone: i % 2 ? 'cyan' : 'gold' });
+      }));
+      const labelsAt = mark(id(2), 'different');
       fleet.forEach(({ kind, v }, i) => {
         if (message === 'brake()') {
-          v.brake(danceFrom, until);
-          if (kind === 'hybrid') v.flag('is-battery-full', mark(id(2), 'moves'), until);
-          const [vx, vy] = at(town, v, danceFrom);
-          ok.label(s, kind === 'hybrid' ? 'HybridCar::brake · battery' : 'Car::brake · pads', { x: vx - 70, y: vy + (i ? 30 : -62), at: mark(id(2), 'different') + i * 0.12, until: danceTo + 0.4, tone: kind === 'hybrid' ? 'cyan' : 'gold' });
+          const hybrid = kind === 'hybrid';
+          rideAlong(s, town, v, hybrid ? 'HybridCar::brake · battery' : 'Car::brake · pads', {
+            from: labelsAt + i * 0.12, until: until - 0.3, dy: hybrid ? 14 : -38, tone: hybrid ? 'cyan' : 'gold',
+          });
         } else {
-          v.dance(danceFrom, until);
-          const [vx, vy] = at(town, v, danceFrom);
-          ok.label(s, `${className(kind)}::move`, { x: vx - 50, y: vy - 56, at: mark(id(2), 'different') + i * 0.06, until: danceTo + 0.4, tone: 'mono' }).classList.add('oop-label--mono');
+          // The ambulance's label waits until it has parked.
+          const labelFrom = kind === 'ambulance' ? Math.max(labelsAt, landings(i)[0] + 0.15 + 2.7) : labelsAt + i * 0.06;
+          rideAlong(s, town, v, `${className(kind)}::move`, { from: labelFrom, until: until - 0.3, ...RIDE[kind] });
         }
       });
       kit.kinetic(s, [
@@ -456,14 +561,14 @@
       const car = town.vehicle('car', { x: 20, y: L.e });
       const hybrid = town.vehicle('hybrid', { x: -40, y: L.e });
       const zero = mark('verse-2-3', 'zero');
-      // The old way: driving, then a jolt to zero.
-      car.drive(from, zero, [[110, L.e]]);
-      hybrid.drive(from, zero, [[50, L.e]]);
+      // The old way: driving, then a jolt to zero (no braking at all).
+      car.drive(from, zero, [[110, L.e]], { ease: 'in' });
+      hybrid.drive(from, zero, [[50, L.e]], { ease: 'in' });
       // The new way: the same approach again, slowing on brake().
       const replay = mark('verse-2-5', 'new');
-      car.set(replay, 20, L.e).drive(replay + 0.05, mark('verse-2-6', 'squeezes'), [[90, L.e]])
+      car.set(replay, 20, L.e).drive(replay + 0.05, mark('verse-2-6', 'squeezes'), [[90, L.e]], { ease: 'in' })
         .drive(mark('verse-2-6', 'squeezes'), mark('verse-2-6', 'pads') + 0.5, [[130, L.e]], { ease: 'out' });
-      hybrid.set(replay, -40, L.e).drive(replay + 0.05, mark('verse-2-7', 'recharges'), [[50, L.e]])
+      hybrid.set(replay, -40, L.e).drive(replay + 0.05, mark('verse-2-7', 'recharges'), [[50, L.e]], { ease: 'in' })
         .drive(mark('verse-2-7', 'recharges'), mark('verse-2-7', 'battery') + 0.4, [[80, L.e]], { ease: 'out' });
       car.brake(mark('verse-2-6', 'squeezes'), sceneEnd);
       hybrid.brake(mark('verse-2-7', 'recharges'), sceneEnd);
@@ -519,20 +624,19 @@
 
       // Getters and setters for every field: a struct in a trench coat.
       const b = scene(content, sceneEnd, end('verse-2'));
+      // One getter/setter pair per row, bottom field first, so the wire from
+      // each pair into its field nests inside the others instead of crossing.
+      const accessors = [['speed', 'getSpeed()', 'setSpeed()'], ['y', 'getY()', 'setY()'], ['x', 'getX()', 'setX()']];
       const exposed = ok.objectCard(b, {
-        x: 70, y: 84, w: 340, title: 'car : Car', fields: [['x', '120'], ['y', '151'], ['speed', '40']],
-        methods: ['getX()', 'setX()', 'getY()', 'setY()', 'getSpeed()', 'setSpeed()'], at: line('verse-2-10').start,
+        x: 70, y: 84, w: 340, title: 'car : Car', fields: [['x', '120'], ['y', '151'], ['speed', '40']], pairs: true,
+        methods: accessors.flatMap(([, getter, setter]) => [getter, setter]), at: line('verse-2-10').start,
       });
       exposed.unlock(mark('verse-2-10', 'field'));
-      ['getX()', 'setX()', 'getY()', 'setY()', 'getSpeed()', 'setSpeed()'].forEach((name, i) => {
-        exposed.light(name, mark('verse-2-10', i % 2 ? 'setters' : 'getters') + Math.floor(i / 2) * 0.1, end('verse-2'));
+      accessors.forEach(([field, getter, setter], row) => {
+        exposed.light(getter, mark('verse-2-10', 'getters') + row * 0.1, end('verse-2'));
+        exposed.light(setter, mark('verse-2-10', 'setters') + row * 0.1, end('verse-2'));
+        exposed.wire(field, [getter, setter], mark('verse-2-10', 'every') + (2 - row) * 0.12);
       });
-      const wires = kit.svg('svg', { class: 'oop-wires is-staged', viewBox: '0 0 960 540' }, b);
-      [[150, 300, 140, 186], [240, 300, 150, 186], [140, 330, 150, 208], [230, 330, 160, 208], [320, 300, 180, 230], [330, 330, 190, 230]].forEach(([x1, y1, x2, y2], i) => {
-        const wire = kit.svg('path', { class: 'oop-wire', d: `M ${x1} ${y1} Q ${(x1 + x2) / 2 + 60} ${(y1 + y2) / 2} ${x2} ${y2}` }, wires);
-        fx.draw(wire, mark('verse-2-10', 'every') + i * 0.06, 0.3);
-      });
-      fx.fadeIn(wires, mark('verse-2-10', 'every') - 0.05, 0.1);
       ok.trenchCoat(b, { x: 560, y: 70, at: mark('verse-2-11', 'thats'), dropAt: mark('verse-2-11', 'trench') });
       kit.stamp(b, 'Busted!', { x: 600, y: 340, at: mark('verse-2-11', 'trench'), small: true, rotate: 6 });
     }
@@ -549,7 +653,7 @@
       const town = city.town(s, { x: 24, y: 64, w: 470, h: 270, at: from + 0.05, title: 'City Builder' });
       const L = lanes(town);
       const car = town.vehicle('car', { x: 40, y: L.e });
-      town.vehicle('hybrid', { x: 400, y: L.w, a: 180 });
+      town.vehicle('hybrid', { x: 250, y: L.w, a: 180 });
       const bus = town.vehicle('bus', { x: 250, y: L.e });
       const bike = town.vehicle('bike', { x: 30, y: L.bike });
       const loop = ok.code(s, { x: 528, y: 66, w: 410, title: 'city.cpp', at: mark('verse-3-1', 'frame'), lines: ['for (Vehicle* v : vehicles)', '  v->move();'] });
@@ -560,7 +664,7 @@
         const replyAt = mark('verse-3-2', reply);
         const [vx, vy] = at(town, v, sendAt + 0.4);
         ok.envelope(s, { from: [560, 124], to: [vx, vy - 10], label: 'move()', at: sendAt - 0.2, dur: 0.45, bend: -50, stay: 1.1, tone: i % 2 ? 'cyan' : 'gold' });
-        moveOf(word, v, L, replyAt, replyAt + 1.6);
+        moveOf(word, v, L, replyAt, replyAt + 3.6);
         town.bubble(text, { follow: v, at: replyAt, until: replyAt + 1.3 });
       });
       ['Car::move', 'Bus::move', 'Bike::move'].forEach((text, i) => {
@@ -575,7 +679,7 @@
       [0, 1, 2].forEach((i) => ghost.mark(i, mark('verse-3-4', 'asks') + i * 0.1, Infinity, 'struck'));
       ok.ticket(s, { x: 680, y: 250, from: 'Mayor’s office', title: 'Feature request: ambulances', at: mark('verse-3-5', 'mayor'), until: line('verse-3-6').start });
       const ambulance = town.vehicle('ambulance', { x: -40, y: L.e, at: mark('verse-3-5', 'ambulances') })
-        .drive(mark('verse-3-5', 'ambulances'), mark('verse-3-6', 'move'), [[150, L.e]]);
+        .drive(mark('verse-3-5', 'ambulances'), mark('verse-3-6', 'move'), [[110, L.e]]);
       ambulance.flag('is-siren', mark('verse-3-5', 'wee'), until);
       // It turns south at the crossing, clear of the bus at its stop.
       ambulance.drive(mark('verse-3-9', 'drives'), until, [[L.s, L.e], [L.s, town.geo.h - 14]]);
@@ -589,8 +693,9 @@
       loop.mark(0, mark('verse-3-8', 'vehicle'), until);
       const tram = town.vehicle('ghost', { x: 520, y: L.w, a: 180, label: 'tram ?', at: mark('verse-3-9', 'kinds') });
       tram.drive(mark('verse-3-9', 'kinds'), until, [[320, L.w, 180]]);
+      // The scooter pulls up behind the bike, which waits at the crossing.
       const scooter = town.vehicle('ghost', { x: -40, y: L.bike, label: 'scooter ?', at: mark('verse-3-9', 'havent') });
-      scooter.drive(mark('verse-3-9', 'havent'), until, [[140, L.bike]]);
+      scooter.drive(mark('verse-3-9', 'havent'), until, [[80, L.bike]]);
     }
 
     // ----------------------------------------------------------------
@@ -657,7 +762,7 @@
       Object.entries(fleet).forEach(([kind, v], i) => {
         const [vx, vy] = at(town, v, mark('chorus-2-1', 'message') + 0.6);
         ok.envelope(s, { from: [560, 130], to: [vx, vy - 10], label: 'move()', at: mark('chorus-2-1', 'message') + i * 0.08, dur: 0.55, bend: -40, stay: 1.25, tone: i % 2 ? 'cyan' : 'gold' });
-        moveOf(kind, v, L, mark('chorus-2-1', 'different'), line('chorus-2-2').start + 0.6);
+        moveOf(kind, v, L, mark('chorus-2-1', 'different'), line('chorus-2-3').start + 0.5);
         methodTag(s, kind, i, mark('chorus-2-1', 'moves') + i * 0.06, line('chorus-2-3').start);
       });
       const ask = ok.bubble(s, 'What type are you?', { x: 560, y: 286, at: mark('chorus-2-2', 'what'), tail: 'left' });
@@ -944,10 +1049,19 @@
       const cast = ['car', 'hybrid', 'bus', 'bike', 'ambulance'];
       const strip = city.town(s, { x: 20, y: 54, w: 920, h: 120, at: from + 0.05, title: 'Curtain call' });
       const L = lanes(strip);
+      // "Different moves": each vehicle takes one short drive its own way and stays above its card.
+      const moveAt = mark(l(5), 'different') - 0.2;
+      const curtainMoves = {
+        car: (v) => v.drive(moveAt, moveAt + 1.1, [[125, L.e]]),
+        hybrid: (v) => v.drive(moveAt, moveAt + 1.7, [[330, L.e]]).flag('is-battery-full', moveAt + 1, Infinity).brake(moveAt + 1.1, Infinity),
+        bus: (v) => v.drive(moveAt, moveAt + 1.5, [[505, L.e + 7, 0]]).brake(moveAt + 1, Infinity),
+        bike: (v) => v.drive(moveAt, moveAt + 1.8, [[655, L.e], [700, L.bike], [725, L.bike]], { turn: 20 }),
+        ambulance: (v) => v.drive(moveAt, moveAt + 0.9, [[880, L.e]]),
+      };
       cast.forEach((kind, i) => {
-        const x = 100 + i * 180;
+        const x = kind === 'car' ? 70 : 100 + i * 180;
         const v = strip.vehicle(kind, { x, y: L.e, at: mark(l(1), 'simulate') + i * 0.12 });
-        v.dance(mark(l(5), 'different'), line(l(6)).start + 0.4);
+        curtainMoves[kind](v);
         if (kind === 'ambulance') v.flag('is-siren', from, until);
         const card = ok.objectCard(s, {
           x: 20 + i * 186, y: 198, w: 178, compact: true, title: objectTitle(kind),

@@ -19,7 +19,7 @@
 (function () {
   'use strict';
 
-  const { onFrame, fx, hash01, beats, clamp, easeInOutCubic } = window.Timeline;
+  const { onFrame, fx, hash01, beats, clamp } = window.Timeline;
   const { el, svg, place } = window.SongKit;
   const W = 960;
   const H = 540;
@@ -150,36 +150,130 @@
     }
   }
 
-  /**
-   * Interpolates keyframes [{ t, x, y, a, ease }] (sorted by t). A key's
-   * `ease` shapes the segment that ends at it: 'linear', 'step' (hold the
-   * previous pose, then cut), or eased by default.
-   */
-  function poseAt(keys, t) {
-    if (t <= keys[0].t) return keys[0];
-    for (let i = 1; i < keys.length; i++) {
-      const k0 = keys[i - 1];
-      const k1 = keys[i];
-      if (t < k1.t) {
-        if (k1.ease === 'step' || !Number.isFinite(k0.t)) return k0;
-        const raw = (t - k0.t) / (k1.t - k0.t);
-        const p = k1.ease === 'linear' ? raw : easeInOutCubic(raw);
-        return { x: k0.x + (k1.x - k0.x) * p, y: k0.y + (k1.y - k0.y) * p, a: k0.a + (k1.a - k0.a) * p };
-      }
-    }
-    return keys[keys.length - 1];
+  // ------------------------------------------------------------------
+  // Driving: rounded routes and a speed that builds and fades
+  // ------------------------------------------------------------------
+
+  /** The signed turn, in degrees, from heading `a` to heading `b` (−180..180). */
+  function turnBetween(a, b) {
+    return ((((b - a) % 360) + 540) % 360) - 180;
   }
 
-  /** Dance moves on the beat: each kind answers the same beat its own way. */
-  const DANCES = {
-    car: (p) => ({ rotate: 14 * p, dx: -3 * p, sx: 1, sy: 1 }),          // a drift
-    hybrid: (p) => ({ rotate: -8 * p, dx: 0, sx: 1 + 0.08 * p, sy: 1 + 0.08 * p }),
-    bus: (p) => ({ rotate: 0, dx: 0, sx: 1 + 0.06 * p, sy: 1 - 0.22 * p }), // kneels
-    bike: (p) => ({ rotate: -24 * p, dx: 2 * p, sx: 1, sy: 1 }),          // a wheelie
-    ambulance: (p) => ({ rotate: 6 * p, dx: 0, sx: 1 + 0.05 * p, sy: 1 + 0.05 * p }),
-    token: () => ({ rotate: 0, dx: 0, sx: 1, sy: 1 }),
-    ghost: () => ({ rotate: 0, dx: 0, sx: 1, sy: 1 }),
-  };
+  /** Pulling away and braking each take this share of a drive's time. */
+  const RAMP = 0.3;
+
+  /**
+   * The share of its route a vehicle has covered after a share `p` of the
+   * drive's time. 'inOut' pulls away, cruises, and brakes to a stop; 'in'
+   * pulls away and leaves at cruising speed; 'out' arrives at cruising speed
+   * and brakes; 'linear' holds one speed and stops dead.
+   */
+  function travelled(p, ease) {
+    const f = RAMP;
+    if (ease === 'linear') return p;
+    if (ease === 'in') return p < f ? (p * p) / (f * (2 - f)) : (2 * p - f) / (2 - f);
+    if (ease === 'out') return 1 - travelled(1 - p, 'in');
+    if (p < f) return (p * p) / (2 * f * (1 - f));
+    if (p > 1 - f) return 1 - ((1 - p) * (1 - p)) / (2 * f * (1 - f));
+    return (p - f / 2) / (1 - f);
+  }
+
+  /**
+   * How far a drive of `seconds` goes when it cruises at `speed` px/s, with
+   * `ease` as in drive(), so one drive can end at the speed the next begins.
+   */
+  function distanceFor(speed, seconds, ease = 'inOut') {
+    const share = { linear: 1, in: 1 - RAMP / 2, out: 1 - RAMP / 2 }[ease] ?? 1 - RAMP;
+    return speed * seconds * share;
+  }
+
+  /** Extra effort, in pixels of straight road, per degree a route turns. */
+  const CORNER_EFFORT = 1.2;
+
+  /**
+   * A route through waypoints as a dense polyline: straight runs, with every
+   * corner rounded into a curve that starts `turn` pixels before it (less
+   * where a run is short). Returns { along(u) }: the point and heading a
+   * share `u` of the way along by effort, where a degree of turning costs
+   * CORNER_EFFORT pixels, so a vehicle slows into a corner and speeds up
+   * out of it. The heading eases from the vehicle's own (`startA`) over the
+   * first few pixels, so no drive snaps it round.
+   */
+  function route(start, points, turn, startA) {
+    const corners = [[start.x, start.y], ...points];
+    const pts = [corners[0]];
+    for (let i = 1; i < corners.length; i++) {
+      const [px, py] = corners[i];
+      const next = corners[i + 1];
+      if (!next) {
+        pts.push([px, py]);
+        break;
+      }
+      const [ax, ay] = corners[i - 1];
+      const inLen = Math.hypot(px - ax, py - ay);
+      const outLen = Math.hypot(next[0] - px, next[1] - py);
+      const cut = Math.min(turn, inLen / 2, outLen / 2);
+      if (!cut) {
+        pts.push([px, py]);
+        continue;
+      }
+      const sx = px - ((px - ax) / inLen) * cut;
+      const sy = py - ((py - ay) / inLen) * cut;
+      const ex = px + ((next[0] - px) / outLen) * cut;
+      const ey = py + ((next[1] - py) / outLen) * cut;
+      for (let k = 0; k <= 8; k++) {
+        const u = k / 8;
+        pts.push([
+          (1 - u) * (1 - u) * sx + 2 * (1 - u) * u * px + u * u * ex,
+          (1 - u) * (1 - u) * sy + 2 * (1 - u) * u * py + u * u * ey,
+        ]);
+      }
+    }
+    const dist = [0];
+    const effort = [0];
+    let lastHeading = null;
+    for (let i = 1; i < pts.length; i++) {
+      const dx = pts[i][0] - pts[i - 1][0];
+      const dy = pts[i][1] - pts[i - 1][1];
+      const step = Math.hypot(dx, dy);
+      const heading = step ? (Math.atan2(dy, dx) * 180) / Math.PI : lastHeading;
+      const bend = lastHeading === null || heading === null ? 0 : Math.abs(turnBetween(lastHeading, heading));
+      lastHeading = heading;
+      dist.push(dist[i - 1] + step);
+      effort.push(effort[i - 1] + step + bend * CORNER_EFFORT);
+    }
+    const len = dist[dist.length - 1];
+    const work = effort[effort.length - 1];
+    /** The distance along the route at which `e` of the effort is spent. */
+    function distanceAt(e) {
+      const target = clamp(e, 0, work);
+      let i = 1;
+      while (i < pts.length - 1 && effort[i] < target) i++;
+      const span = effort[i] - effort[i - 1] || 1;
+      return dist[i - 1] + ((target - effort[i - 1]) / span) * (dist[i] - dist[i - 1]);
+    }
+    function point(d) {
+      const target = clamp(d, 0, len);
+      let i = 1;
+      while (i < pts.length - 1 && dist[i] < target) i++;
+      const span = dist[i] - dist[i - 1] || 1;
+      const u = (target - dist[i - 1]) / span;
+      return [pts[i - 1][0] + (pts[i][0] - pts[i - 1][0]) * u, pts[i - 1][1] + (pts[i][1] - pts[i - 1][1]) * u];
+    }
+    const settle = Math.min(24, len / 2);
+    return {
+      along(u) {
+        const d = distanceAt(u * work);
+        const [x, y] = point(d);
+        const [bx, by] = point(d - 4);
+        const [fx2, fy2] = point(d + 4);
+        const heading = len ? (Math.atan2(fy2 - by, fx2 - bx) * 180) / Math.PI : startA;
+        const blend = settle ? clamp(d / settle, 0, 1) : 1;
+        const smooth = blend * blend * (3 - 2 * blend);
+        return { x, y, a: startA + turnBetween(startA, heading) * smooth };
+      },
+    };
+  }
 
   // ------------------------------------------------------------------
   // The town: a game window with roads, a traffic light, and vehicles
@@ -278,9 +372,25 @@
       const holder = svg('g', { class: `oc-vehicle oc-vehicle--${kind}${cls ? ` ${cls}` : ''}` }, fleet);
       const body = svg('g', { class: 'oc-vehicle-body' }, holder);
       drawSprite(kind, body, label);
-      const keys = [{ t: -Infinity, x: vx, y: vy, a }];
+      // A token's or ghost's name stays upright whichever way the vehicle faces.
+      const name = body.querySelector('text');
+      // Legs of motion, sorted by start time; the latest leg that has
+      // started poses the vehicle (a new drive takes over from an old one).
+      const initial = { x: vx, y: vy, a };
+      const legs = [];
+      const addLeg = (leg) => {
+        legs.push(leg);
+        legs.sort((p, q) => p.t0 - q.t0);
+      };
+      const poseAt = (t) => {
+        let leg = null;
+        for (const l of legs) {
+          if (l.t0 > t) break;
+          leg = l;
+        }
+        return leg ? leg.pose(Math.min(t, leg.t1)) : initial;
+      };
       const flags = [];
-      const dances = [];
       // Visibility events; with none, the vehicle is always shown.
       const shows = [];
       const addShow = (atTime, on) => {
@@ -293,44 +403,47 @@
         node: holder,
         kind,
         /**
-         * Drive through waypoints [[x, y, a?], …] from `from` to `to` at a
-         * steady speed (one waypoint: an eased glide). Add drives in time order.
+         * Drive through waypoints [[x, y], …] from `from` to `to`, nose first
+         * along the road, with corners rounded (`turn`, in pixels) and the
+         * speed shaped by `ease` ('inOut' by default; see travelled()). One
+         * waypoint with a heading, [[x, y, a]], is a glide instead: the
+         * vehicle slides there while turning to `a`, for reversing and for
+         * pulling aside. Add drives in time order.
          */
-        drive(from, to, points, { ease } = {}) {
-          const start = poseAt(keys, from);
-          keys.push({ t: from, x: start.x, y: start.y, a: start.a });
-          let len = 0;
-          let px = start.x;
-          let py = start.y;
-          const lens = points.map(([qx, qy]) => {
-            len += Math.hypot(qx - px, qy - py);
-            px = qx;
-            py = qy;
-            return len;
-          });
-          points.forEach(([qx, qy, qa], i) => {
-            const prev = i ? points[i - 1] : [start.x, start.y];
-            const angle = qa !== undefined ? qa : (Math.atan2(qy - prev[1], qx - prev[0]) * 180) / Math.PI;
-            keys.push({ t: from + ((to - from) * lens[i]) / (len || 1), x: qx, y: qy, a: angle, ease: points.length > 1 ? 'linear' : ease });
-          });
-          keys.sort((p, q) => p.t - q.t);
+        drive(from, to, points, { ease = 'inOut', turn = 36 } = {}) {
+          const start = poseAt(from);
+          const span = Math.max(to - from, 1e-6);
+          const share = (t) => travelled(clamp((t - from) / span, 0, 1), ease);
+          const [gx, gy, ga] = points[points.length - 1];
+          if (points.length === 1 && ga !== undefined) {
+            const turnBy = turnBetween(start.a, ga);
+            addLeg({
+              t0: from, t1: to,
+              pose: (t) => {
+                const p = share(t);
+                return { x: start.x + (gx - start.x) * p, y: start.y + (gy - start.y) * p, a: start.a + turnBy * p };
+              },
+            });
+          } else {
+            const path = route(start, points.map(([qx, qy]) => [qx, qy]), turn, start.a);
+            addLeg({ t0: from, t1: to, pose: (t) => path.along(share(t)) });
+          }
           return api;
         },
         /** Jump to a pose at time `at` (for scene cuts). */
         set(atTime, qx, qy, qa = 0) {
-          keys.push({ t: atTime, x: qx, y: qy, a: qa, ease: 'step' });
-          keys.sort((p, q) => p.t - q.t);
+          const pose = { x: qx, y: qy, a: qa };
+          addLeg({ t0: atTime, t1: atTime, pose: () => pose });
           return api;
         },
         flag(className, from, to = Infinity) { flags.push({ className, from, to }); return api; },
         brake(from, to) { return api.flag('is-braking', from, to); },
-        dance(from, to) { dances.push({ from, to }); return api; },
         show(from, to) {
           addShow(from, true);
           if (to !== undefined) addShow(to, false);
           return api;
         },
-        position(t) { return poseAt(keys, t); },
+        position(t) { return poseAt(t); },
       };
       onFrame((t) => {
         if (!live(t)) return;
@@ -338,13 +451,9 @@
         for (const s of shows) if (s.at <= t) visible = s.on;
         holder.style.display = visible ? '' : 'none';
         if (!visible) return;
-        const pose = poseAt(keys, t);
+        const pose = poseAt(t);
         holder.setAttribute('transform', `translate(${pose.x.toFixed(1)} ${pose.y.toFixed(1)}) rotate(${pose.a.toFixed(1)})`);
-        let move = { rotate: 0, dx: 0, sx: 1, sy: 1 };
-        for (const d of dances) {
-          if (t >= d.from && t < d.to) move = DANCES[kind](beats.pulse(t, 0.22));
-        }
-        body.setAttribute('transform', `translate(${move.dx.toFixed(2)} 0) rotate(${move.rotate.toFixed(2)}) scale(${move.sx.toFixed(3)} ${move.sy.toFixed(3)})`);
+        if (name) name.setAttribute('transform', `rotate(${(-pose.a).toFixed(1)})`);
         for (const f of flags) holder.classList.toggle(f.className, t >= f.from && t < f.to);
       });
       return api;
@@ -412,5 +521,5 @@
     };
   }
 
-  window.ObjectCity = { town, sprite, SPRITES };
+  window.ObjectCity = { town, sprite, distanceFor, SPRITES };
 })();

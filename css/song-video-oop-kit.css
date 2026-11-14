@@ -435,6 +435,19 @@
 .oop-label--violet { background: #ddd6fe; }
 .oop-label--mono span { font-family: var(--font-mono); font-weight: 700; }
 
+/* A label riding beside a moving vehicle: its left/top point is the
+   middle of its top edge, its top-left corner, or its top-right corner. */
+.oop-label--ride-center { translate: -50% 0; }
+.oop-label--ride-end { translate: -100% 0; }
+.oop-label.is-offstage { visibility: hidden; }
+
+/* A riding label fits between two lanes of traffic: same type, less padding. */
+.oop-label--chip {
+  padding: 0 9px;
+  line-height: 1.2;
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
 .oop-label-mark {
   width: 18px;
   height: 18px;
@@ -1121,23 +1134,35 @@
   stroke-width: 1.5;
 }
 
-.oop-wires {
+/* Getter/setter pairs, one pair per row, and the wires from each pair into
+   its field. The wire colour is the open padlock's and clears 3:1 against
+   both compartments. */
+.oop-card--pairs .oop-door {
+  display: grid;
+  grid-template-columns: repeat(2, max-content);
+}
+
+.oop-card-wires {
   position: absolute;
   left: 0;
   top: 0;
-  width: 960px;
-  height: 540px;
+  width: 100%;
+  height: 100%;
   overflow: visible;
   pointer-events: none;
 }
 
-.oop-wire {
+.oop-card-wire {
   fill: none;
-  stroke: #fda4af;
+  stroke: #be123c;
   stroke-width: 2.5;
+  stroke-linecap: butt;
+  stroke-linejoin: round;
   stroke-dasharray: 1;
   stroke-dashoffset: 1;
 }
+
+.oop-card-wire-end { fill: #be123c; }
 
 /* Dimmed with a filter, not opacity, so the card's staged entrance still works. */
 .oop-code--ghost {
