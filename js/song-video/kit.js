@@ -2,7 +2,7 @@
  * Visual kit for song-video choreographies: DOM builders for the recurring
  * pieces of a music video (stickers, stamps, kinetic type, a terminal, Git
  * stations, file chips, flow arrows, snapshot cards, syntax colours for code
- * cards (Python and JavaScript), GitGraph panels, the Time Stone, confetti). Every builder schedules
+ * cards (Python, JavaScript, SQL, and HTML), GitGraph panels, the Time Stone, confetti). Every builder schedules
  * its own motion on the Timeline, so a choreography reads as "what appears
  * when".
  *
@@ -498,6 +498,46 @@
     return runs;
   }
 
+  const SQL_KEYWORDS = new Set(['select', 'from', 'where', 'and', 'or', 'not', 'insert', 'into', 'values', 'update', 'set', 'delete', 'drop', 'table', 'like', 'null', 'order', 'by']);
+  const SQL_TOKEN = /(--.*$)|('[^']*'|"[^"]*")|(@\d+|\?|\$\d+)|(\b\d+(?:\.\d+)?\b)|(\*)|(\b[A-Za-z_]\w*\b)|(\s+)|(.)/g;
+
+  /** Splits one line of SQL into [text, tone] runs: keywords, strings, placeholders (@0, ?, $1). */
+  function highlightSql(source) {
+    const runs = [];
+    for (const match of source.matchAll(SQL_TOKEN)) {
+      const [text, comment, string, placeholder, number, star, word] = match;
+      let tone = null;
+      if (comment) tone = 'cm';
+      else if (string) tone = 'str';
+      else if (placeholder) tone = 'const';
+      else if (number) tone = 'num';
+      else if (star) tone = 'kw';
+      else if (word) tone = SQL_KEYWORDS.has(word.toLowerCase()) ? 'kw' : /^[A-Z]/.test(word) ? 'cls' : null;
+      runs.push([text, tone]);
+    }
+    return runs;
+  }
+
+  const HTML_TOKEN = /(<\/?)([A-Za-z][\w-]*)|(\/?>)|(&[a-z]+;|&#\d+;)|("[^"]*"|'[^']*')|(\s+)|([^<>&"'\s]+)|(.)/g;
+
+  /** Splits one line of HTML into [text, tone] runs: tag names, attribute values, and entities. */
+  function highlightHtml(source) {
+    const runs = [];
+    for (const match of source.matchAll(HTML_TOKEN)) {
+      const [text, open, name, close, entity, string] = match;
+      if (open) {
+        runs.push([open, 'cm'], [name, 'kw']);
+        continue;
+      }
+      let tone = null;
+      if (close) tone = 'cm';
+      else if (entity) tone = 'const';
+      else if (string) tone = 'str';
+      runs.push([text, tone]);
+    }
+    return runs;
+  }
+
   /** Writes [text, tone] runs (from any language's highlighter) into `parent`. */
   function writeCode(parent, runs) {
     for (const [text, tone] of runs) {
@@ -806,6 +846,6 @@
   window.SongKit = {
     el, svg, place, icon, scene, sticker, stamp, kinetic, badge, terminal,
     station, chip, flyIn, flow, polaroid, typewriter, scramble, pin,
-    highlightPython, highlightJavaScript, writeCode, graph, timeStone, confetti, fall, backdrop, themes,
+    highlightPython, highlightJavaScript, highlightSql, highlightHtml, writeCode, graph, timeStone, confetti, fall, backdrop, themes,
   };
 })();

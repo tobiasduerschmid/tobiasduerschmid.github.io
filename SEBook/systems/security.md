@@ -3,6 +3,7 @@ title: Security and Authentication
 layout: sebook
 static_uml: true
 ---
+<link rel="stylesheet" href="/css/song-video.css">
 
 # Background & Motivation
 
@@ -471,6 +472,12 @@ The proposed trust boundaries are teaching designs derived from the attack path,
 
 
 # Summary
+
+**Review the chapter as a song.** *Design It In* is a six-minute music video that walks through the four questions of a security plan in a frontier town, with you as the sheriff: the CIA triad, a threat model, the attack surface with SQL injection and cross-site scripting, and protection mechanisms, ending on Open Design, Zero Trust, and Least Privilege. The bridge retells the Hugging Face case and its lessons. It ends with six quiz questions: think of your answer before the singer gives it, or turn on the player's quiz pauses to stop before each answer. Captions are on by default.
+
+Before you press play, write one sentence: a login form passes the password straight into its SQL query. Which CIA property is at risk, and why isn't hiding the source code a fix?
+
+{% include song-video.html song=site.data.songs.design_it_in id="security-song" %}
 
 * The **CIA triad** classifies security goals into three properties: **Confidentiality** (only authorized users can read), **Integrity** (only authorized users can modify), and **Availability** (the system serves legitimate clients when needed). Every breach is a violation of one or more of these.
 * **SQL injection (SQLi)** treats user-supplied strings as SQL code by string-concatenating them into queries. The fix is **prepared statements / parameterized queries**, which let the database parse the SQL once and bind values separately. Don't roll your own escaping.

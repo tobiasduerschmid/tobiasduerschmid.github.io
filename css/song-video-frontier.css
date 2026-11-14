@@ -1,0 +1,93 @@
+/*
+ * The "frontier" stage theme (js/song-video/frontier.js): a frontier town at
+ * dusk behind the scenes of "Design It In". Only the backdrop changes. The
+ * scenery stays dim and low in contrast: every text in the scenes sits on
+ * its own card, plank, or slate, and nothing large changes brightness
+ * quickly. Like stage.css this styles the 960×540 stage, which keeps its
+ * dusk artwork in both page themes; the player's print styles hide it.
+ */
+
+.theme-frontier {
+  background: #120c14;
+}
+
+.frontier {
+  overflow: hidden;
+}
+
+.fr-art {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+
+.fr-sky-0 { stop-color: #120f26; }
+.fr-sky-1 { stop-color: #2c1a33; }
+.fr-sky-2 { stop-color: #5a2d2e; }
+.fr-sky-3 { stop-color: #7a4128; }
+
+.fr-sun-0 { stop-color: #e08a3c; stop-opacity: 0.32; }
+.fr-sun-1 { stop-color: #e08a3c; stop-opacity: 0; }
+.fr-sun-disc { fill: #e9a25a; opacity: 0.55; }
+
+.fr-stars circle { fill: #f4ead8; }
+
+.fr-cloud path { fill: #3a2236; opacity: 0.7; }
+.fr-cloud .fr-cloud-lit { fill: #8a4a38; opacity: 0.35; }
+
+.fr-mesa { fill: #34202c; }
+
+.fr-town .fr-wall,
+.fr-town .fr-front,
+.fr-town .fr-porch,
+.fr-town .fr-post,
+.fr-town .fr-tank { fill: #1c1219; }
+.fr-town .fr-door { fill: #120b10; }
+.fr-town .fr-window { fill: #120b10; }
+.fr-window-lit { fill: #e3a25a; }
+.fr-town .fr-unit { fill: #241820; stroke: #120b10; stroke-width: 0.8; }
+.fr-town .fr-vent { fill: none; stroke: #120b10; stroke-width: 1.2; }
+.fr-town .fr-module { fill: #22161d; stroke: #120b10; stroke-width: 1; }
+.fr-town .fr-pin,
+.fr-town .fr-socket { fill: none; stroke: #3a2732; stroke-width: 1.4; stroke-linecap: round; }
+.fr-town .fr-disk { fill: none; stroke: #33222c; stroke-width: 1.4; }
+.fr-town .fr-tank-top { fill: #2a1c24; stroke: #120b10; stroke-width: 1; }
+.fr-led-off { fill: #120b10; }
+.fr-led--green { fill: #6fcf8a; }
+.fr-led--amber { fill: #e3a25a; }
+.fr-signal path { fill: none; stroke: #c9a070; stroke-width: 1.2; stroke-linecap: round; }
+.fr-packet { fill: #e3b46a; opacity: 0.7; }
+.fr-town .fr-jack { fill: #3a2732; stroke: #120b10; stroke-width: 0.8; }
+.fr-town .fr-hoop { fill: none; stroke: #2c1d26; stroke-width: 1.2; }
+.fr-town .fr-leg,
+.fr-town .fr-cross { fill: none; stroke: #1c1219; stroke-width: 2.4; stroke-linecap: round; }
+.fr-windmill .fr-vane,
+.fr-windmill .fr-blade,
+.fr-windmill .fr-hub { fill: #1c1219; }
+
+.fr-poles path { fill: none; stroke: #1c1219; stroke-width: 2.2; }
+.fr-poles .fr-wire { stroke-width: 0.8; stroke: #2a1b24; }
+
+.fr-road-0 { stop-color: #3a2620; }
+.fr-road-1 { stop-color: #1e1412; }
+.fr-rut { fill: none; stroke: #2a1b17; stroke-width: 3; opacity: 0.8; }
+.fr-rail { fill: none; stroke: #241713; stroke-width: 3; stroke-linecap: round; }
+
+.fr-tumbleweed path { fill: none; stroke: #5a3d28; stroke-width: 1.1; opacity: 0.75; }
+.fr-tumbleweed circle { fill: none; stroke: #5a3d28; stroke-width: 0.9; opacity: 0.6; }
+
+.fr-mote { fill: #f0c890; }
+
+/* Street dressing: dim, so the captions above it stay clear. */
+.fr-boardwalk { fill: #2a1b17; }
+.fr-plank { fill: none; stroke: #1c1210; stroke-width: 1; }
+.fr-tie { fill: none; stroke: #2a1b16; stroke-width: 4; stroke-linecap: round; }
+.fr-track { fill: none; stroke: #3a2a24; stroke-width: 2.2; }
+.fr-cactus { fill: #1d2a1e; stroke: #121a12; stroke-width: 1.2; }
+.fr-crate { fill: #3a2618; stroke: #1c1210; stroke-width: 1.2; }
+.fr-crate-slat { fill: none; stroke: #2a1b12; stroke-width: 1.4; }
+.fr-stencil { fill: #5a4030; font-family: var(--font-mono); font-size: 8px; font-weight: 700; }
+.fr-lasso { fill: none; stroke: #3d4a5a; stroke-width: 2.2; stroke-linecap: round; }
+.fr-stone { fill: #2e201a; }
+
+.fr-night { fill: #050712; }

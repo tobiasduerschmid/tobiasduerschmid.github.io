@@ -543,6 +543,49 @@ goes over the worn head) in the intro, with a clipboard, and at the end,
 with a gold brick. The light stays a warm golden hour, and over the last
 twenty seconds night falls slowly: a deep blue sky, a moon, and stars.
 
+"Design It In", the security song, is embedded at the top of the Summary of
+`SEBook/systems/security.md`, as a review of the whole chapter. It walks the
+lecture's four-question security plan (security model, threat model, attack
+surface, protection mechanisms), naming SQL injection and cross-site
+scripting as separate attacks with one shared mistake, and its bridge retells
+the 2026 Hugging Face case and its lessons. The `frontier` theme
+(`js/song-video/frontier.js`, colours in `css/song-video-frontier.css`) is a
+desert town at dusk built of computing: false-front saloons that are server
+racks, general stores stacked from software modules, a water tower whose tank
+is a database cylinder, a radio mast, and a router shack, all joined by one
+network cable (a jack on every building) with data packets travelling it both
+ways. Their status lights come on one by one, and night falls over the last
+half minute.
+`js/song-video/western-kit.js` (styles in `css/song-video-western-kit.css`)
+draws the pieces: the plan board with a pictogram per question and a stamp
+per principle, its sung poster and principle lit in turn; wooden planks for
+headings; slates for code (SQL and HTML through the shared
+`SongKit.highlightSql` and `highlightHtml`); the lecture's post (slides
+12–14) as a social-media post whose timestamp is the viewer's current date
+and time; the login form; the app as a building whose ways in are its attack
+surface (`appFront`); crimson attack vectors (`vector`) for attacks coming
+in and amber trails for stolen data going out; a wanted poster for the threat
+model; padlocks, keys, the town's services and their database, the
+blast-radius ring, and a porch whose flowerpot can hide a key or a honeypot.
+`js/song-video/principle-scenes.js` (styles in
+`css/song-video-principle-scenes.css`) shows each principle at work under its
+stamp: a see-through padlock beside its published blueprint (Open Design), a
+checkpoint that inspects every input (Zero Trust), and a key rack with one
+narrow key per job and the admin master key retired (Least Privilege).
+`js/song-video/sheriff.js` is the hero: a rigged sheriff (felt hat, leather
+vest, star, bandana, boots, a gun belt with a holstered revolver it reaches
+for but never draws) wearing the viewer's head, with two-bone arms and moves
+(point, present, tip, hips, draw, nod, look, hold); the mouth opens on sung
+words, from the storyboard's word marks. `js/song-video/outlaw.js` (styles in
+`css/song-video-outlaw.css`) is the singer, the hired tester: a masked outlaw
+in profile who sneaks along routes of stage points with a step cycle locked
+to the distance travelled, freezes, reaches, lifts, types, shrugs, and
+carries props (a laptop, a cookie jar for stolen cookies, a magnifier, a
+loot sack, a honeypot jar), with a line of little robot AI agents (`bot`).
+It appears wherever the song talks about an attacker, and in the closing
+bars it falls for a honeypot under the flowerpot. Both figures share their
+hands, built joint by joint, from `js/song-video/frontier-hand.js`.
+
 A section's `delivery` sets its captions: `sung` and `spoken` lines are one
 cue each, while `call` lines are quiz questions with an `answer` and
 `answer_at`, captioned as two cues. A question the recording never answers
@@ -574,7 +617,7 @@ storyboard's `narrator.pronounce` (for example `SYN-ACK: sin ack`).
 | `../../js/song-video/scene.js` | Shared scene assembly, authored timing lookup, typography loading and disposal |
 | `../../js/song-video/rounded-surfaces.js` | One-time Firefox rounded-border paint preparation for every song |
 | `../../js/song-video/timeline.js` | Paused Web Animations posed by `seek(t)`, per-frame updaters, the beat grid, camera punches and shakes |
-| `../../js/song-video/kit.js` | Builders for stickers, kinetic type, terminals, stations, paths and graphs; the Python and JavaScript highlighters (`highlightPython()`, `highlightJavaScript()`) and `writeCode()`, which every code card uses for the shared `.code-tok--*` syntax colours in `css/song-video-stage.css` |
+| `../../js/song-video/kit.js` | Builders for stickers, kinetic type, terminals, stations, paths and graphs; the Python, JavaScript, SQL, and HTML highlighters (`highlightPython()`, `highlightJavaScript()`, `highlightSql()`, `highlightHtml()`) and `writeCode()`, which every code card uses for the shared `.code-tok--*` syntax colours in `css/song-video-stage.css` |
 | `../../js/song-video/virtual-clock.js` | Independent graph clocks; never replaces browser timers |
 | `../../js/song-video/graph-track.js` | Retained graph transitions with deterministic seeking and disposal |
 | `../../js/song-video/songs/<song>.js` | The choreography: what appears on which sung word |

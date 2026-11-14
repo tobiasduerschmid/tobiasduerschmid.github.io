@@ -1,0 +1,738 @@
+# Storyboard for "Design It In", the security song on the SE Book page
+# SEBook/systems/security.md (embedded with _includes/song-video.html).
+#
+# This file is the single source of truth for the song's words and timing:
+#   - js/song-video/songs/design_it_in.js choreographs the live vector player
+#     (/assets/song-player/design-it-in.html) against each line's `start` and
+#     its `marks` (the times of the words the visuals hit), with the artwork
+#     in js/song-video/western-kit.js (the plan board, posters, slates, and
+#     the sheriff) and js/song-video/frontier.js (the town behind them);
+#   - render.js writes the captions and the audio-described soundtrack from
+#     `text`, `answer`, and `narration` (`node scripts/song-video/render.js
+#     design_it_in`). This song has no MP4: it plays only in the live player;
+#   - _includes/song-video.html prints every line with its `visual`
+#     description as the on-page transcript (WCAG 1.2.1 / 1.2.3);
+#   - each section's `narration` is spoken in the audio-described track,
+#     where the picture holds at the start of the section while the narrator
+#     describes what it shows (extended audio description, WCAG 1.2.5).
+# Editing text or descriptions here updates the transcript and the player on
+# the next Jekyll build, but the captions and described audio only after
+# re-running render.js.
+#
+# Times are seconds into the Suno take "Design It In" (2) (about 123 BPM) of
+# the lyric sheet in docs/design-it-in-song-lyrics.md. Word marks come from
+# local Whisper word timestamps (mlx whisper-large-v3-turbo) aligned to the
+# sheet (751 of 772 words matched; the rest are interpolated between their
+# neighbours); unprompted clip passes confirmed the doubtful words. Quiz
+# `answer_at` is the answer's first vocal onset (spectral flux in the vocal
+# band of the mix, or Whisper's start where that is earlier), and `pause_at`
+# sits in the quiet just before it. The stereo balance stays within 2 dB, so
+# the soundtrack keeps both channels; it is normalized to -16 LUFS with one
+# linear gain (true peak -3.6 dBFS) and stored as AAC at 192 kb/s. Where the
+# sheet splits a sentence across short lines, the storyboard keeps it as one
+# line. The take ends on the instrumental after "That's security, designed
+# in."
+
+title: "Design It In: a song about designing for security"   # the player's accessible name
+credit: Lyrics written for this chapter; music and vocals generated with Suno.
+theme: frontier   # stage look: the frontier town at dusk of js/song-video/frontier.js
+extras:   # the song's own art and styles, loaded before its choreography
+  styles:
+    - /css/song-video-frontier.css
+    - /css/song-video-western-kit.css
+    - /css/song-video-outlaw.css
+    - /css/song-video-principle-scenes.css
+  scripts:
+    - /js/song-video/frontier.js
+    - /js/song-video/figure-geometry.js
+    - /js/song-video/frontier-hand.js
+    - /js/song-video/sheriff.js
+    - /js/song-video/outlaw.js
+    - /js/song-video/western-kit.js
+    - /js/song-video/principle-scenes.js
+player: /assets/song-player/design-it-in.html
+captions: /assets/audio/design-it-in.vtt
+described_captions: /assets/audio/design-it-in-described.vtt
+soundtrack: assets/audio/design-it-in.m4a   # repo path, played by the live player
+described_soundtrack: assets/audio/design-it-in-described.m4a
+described_timeline: /assets/audio/design-it-in-described.json
+narrator:
+  voice: Samantha   # macOS `say` voice for the audio-described track
+  rate: 205         # words per minute
+  pronounce:        # how the narrator says notation the captions keep as written
+    SQLi: S Q L I
+    SQL: S Q L
+    XSS: X S S
+    CIA: C I A
+    AES: A E S
+    RSA: R S A
+    TLS: T L S
+    API: A P I
+    DB_USER: D B user
+    app_comments: app comments
+width: 1920
+height: 1080
+fps: 30
+
+duration: 357.6
+beats:
+  bpm: 123.05   # median of the tracked beats (librosa on the mix)
+  first: 0.139
+  # Every beat, in seconds, tracked with librosa on the mix.
+  times: [
+    0.139, 0.58, 0.998, 1.44, 1.904, 2.392, 2.856, 3.344, 3.831, 4.319, 4.807, 5.271,
+    5.759, 6.246, 6.734, 7.221, 7.709, 8.173, 8.661, 9.149, 9.636, 10.101, 10.612, 11.076,
+    11.564, 12.051, 12.539, 13.026, 13.514, 13.978, 14.466, 14.954, 15.441, 15.929, 16.417, 16.904,
+    17.369, 17.856, 18.344, 18.808, 19.296, 19.783, 20.271, 20.759, 21.246, 21.734, 22.221, 22.686,
+    23.174, 23.661, 24.149, 24.636, 25.101, 25.588, 26.076, 26.564, 27.051, 27.516, 28.003, 28.491,
+    28.955, 29.443, 29.907, 30.395, 30.883, 31.347, 31.835, 32.322, 32.787, 33.274, 33.739, 34.226,
+    34.714, 35.201, 35.666, 36.153, 36.618, 37.105, 37.57, 38.058, 38.545, 39.033, 39.497, 39.985,
+    40.472, 40.937, 41.424, 41.912, 42.376, 42.864, 43.328, 43.816, 44.304, 44.791, 45.256, 45.743,
+    46.231, 46.719, 47.183, 47.671, 48.135, 48.623, 49.11, 49.575, 50.039, 50.527, 51.014, 51.502,
+    51.989, 52.454, 52.941, 53.406, 53.894, 54.381, 54.846, 55.333, 55.821, 56.285, 56.773, 57.26,
+    57.725, 58.212, 58.7, 59.164, 59.652, 60.14, 60.604, 61.092, 61.556, 62.044, 62.508, 62.996,
+    63.483, 63.971, 64.435, 64.923, 65.387, 65.875, 66.363, 66.827, 67.315, 67.802, 68.29, 68.754,
+    69.242, 69.706, 70.194, 70.682, 71.146, 71.634, 72.098, 72.586, 73.073, 73.538, 74.025, 74.513,
+    74.977, 75.465, 75.952, 76.417, 76.904, 77.369, 77.857, 78.344, 78.809, 79.296, 79.784, 80.248,
+    80.736, 81.2, 81.688, 82.152, 82.64, 83.127, 83.592, 84.079, 84.567, 85.031, 85.519, 85.983,
+    86.471, 86.959, 87.423, 87.911, 88.375, 88.863, 89.327, 89.815, 90.279, 90.767, 91.254, 91.719,
+    92.206, 92.694, 93.158, 93.623, 94.11, 94.598, 95.086, 95.55, 96.038, 96.525, 96.99, 97.477,
+    97.942, 98.429, 98.894, 99.381, 99.869, 100.357, 100.821, 101.309, 101.773, 102.261, 102.725, 103.213,
+    103.7, 104.165, 104.652, 105.117, 105.604, 106.092, 106.556, 107.021, 107.508, 107.996, 108.484, 108.948,
+    109.412, 109.9, 110.388, 110.852, 111.316, 111.804, 112.292, 112.779, 113.244, 113.731, 114.219, 114.683,
+    115.148, 115.635, 116.1, 116.587, 117.075, 117.539, 118.027, 118.491, 118.979, 119.443, 119.931, 120.419,
+    120.883, 121.371, 121.835, 122.323, 122.81, 123.275, 123.762, 124.227, 124.691, 125.179, 125.666, 126.154,
+    126.618, 127.106, 127.57, 128.035, 128.522, 129.01, 129.474, 129.939, 130.45, 130.914, 131.402, 131.889,
+    132.354, 132.818, 133.306, 133.793, 134.258, 134.745, 135.21, 135.697, 136.162, 136.649, 137.114, 137.601,
+    138.089, 138.553, 139.041, 139.505, 139.993, 140.458, 140.945, 141.433, 141.897, 142.362, 142.849, 143.314,
+    143.801, 144.219, 144.753, 145.241, 145.705, 146.193, 146.657, 147.145, 147.609, 148.097, 148.561, 149.049,
+    149.513, 150.001, 150.489, 150.953, 151.417, 151.882, 152.369, 152.857, 153.321, 153.809, 154.297, 154.761,
+    155.225, 155.713, 156.177, 156.665, 157.129, 157.571, 158.081, 158.569, 159.057, 159.521, 159.985, 160.473,
+    160.961, 161.425, 161.913, 162.4, 162.865, 163.352, 163.817, 164.304, 164.769, 165.233, 165.721, 166.185,
+    166.673, 167.16, 167.625, 168.089, 168.577, 169.064, 169.529, 170.017, 170.481, 170.945, 171.433, 171.921,
+    172.385, 172.873, 173.337, 173.825, 174.289, 174.777, 175.241, 175.729, 176.193, 176.657, 177.145, 177.609,
+    178.097, 178.561, 179.049, 179.537, 180.001, 180.465, 180.953, 181.418, 181.905, 182.393, 182.857, 183.345,
+    183.809, 184.297, 184.761, 185.249, 185.713, 186.201, 186.665, 187.153, 187.617, 188.105, 188.569, 189.034,
+    189.521, 189.986, 190.473, 190.938, 191.425, 191.89, 192.377, 192.842, 193.329, 193.817, 194.281, 194.769,
+    195.233, 195.698, 196.185, 196.673, 197.137, 197.602, 198.089, 198.577, 199.041, 199.529, 199.993, 200.458,
+    200.945, 201.433, 201.898, 202.385, 202.85, 203.314, 203.802, 204.289, 204.754, 205.241, 205.706, 206.193,
+    206.658, 207.145, 207.61, 208.074, 208.562, 209.049, 209.514, 209.978, 210.466, 210.953, 211.418, 211.882,
+    212.37, 212.857, 213.322, 213.809, 214.274, 214.761, 215.226, 215.69, 216.178, 216.665, 217.13, 217.594,
+    218.082, 218.569, 219.057, 219.521, 219.986, 220.473, 220.938, 221.425, 221.89, 222.378, 222.842, 223.26,
+    223.747, 224.235, 224.746, 225.21, 225.698, 226.186, 226.65, 227.184, 227.718, 228.252, 228.74, 229.227,
+    229.738, 230.226, 230.667, 231.155, 231.665, 232.13, 232.618, 233.082, 233.546, 234.034, 234.498, 234.963,
+    235.427, 235.915, 236.402, 236.983, 237.517, 238.074, 238.562, 239.026, 239.514, 239.978, 240.443, 240.93,
+    241.418, 241.882, 242.347, 242.788, 243.299, 243.81, 244.274, 244.762, 245.226, 245.69, 246.155, 246.642,
+    247.107, 247.594, 248.059, 248.546, 249.034, 249.498, 249.94, 250.45, 250.938, 251.402, 251.89, 252.354,
+    252.819, 253.306, 253.771, 254.259, 254.746, 255.211, 255.675, 256.163, 256.65, 257.115, 257.602, 258.067,
+    258.531, 259.019, 259.483, 259.971, 260.435, 260.923, 261.387, 261.875, 262.362, 262.827, 263.291, 263.779,
+    264.243, 264.731, 265.218, 265.683, 266.17, 266.635, 267.099, 267.587, 268.051, 268.539, 269.026, 269.491,
+    269.978, 270.443, 270.93, 271.395, 271.882, 272.347, 272.811, 273.299, 273.786, 274.251, 274.739, 275.18,
+    275.691, 276.155, 276.643, 277.13, 277.595, 278.059, 278.547, 279.011, 279.499, 279.963, 280.451, 280.915,
+    281.403, 281.89, 282.355, 282.819, 283.283, 283.771, 284.259, 284.723, 285.187, 285.675, 286.163, 286.627,
+    287.115, 287.579, 288.067, 288.531, 289.019, 289.506, 289.971, 290.435, 290.923, 291.387, 291.852, 292.339,
+    292.827, 293.291, 293.779, 294.266, 294.731, 295.219, 295.683, 296.147, 296.635, 297.123, 297.587, 298.051,
+    298.493, 298.98, 299.468, 299.955, 300.443, 300.907, 301.395, 301.859, 302.324, 302.811, 303.299, 303.763,
+    304.251, 304.715, 305.203, 305.667, 306.155, 306.62, 307.107, 307.572, 308.059, 308.524, 309.011, 309.476,
+    309.963, 310.428, 310.915, 311.38, 311.867, 312.332, 312.819, 313.284, 313.771, 314.236, 314.723, 315.188,
+    315.675, 316.14, 316.604, 317.092, 317.579, 318.044, 318.531, 318.996, 319.46, 319.948, 320.412, 320.9,
+    321.364, 321.852, 322.316, 322.804, 323.268, 323.733, 324.22, 324.708, 325.172, 325.66, 326.124, 326.612,
+    327.076, 327.541, 328.028, 328.493, 328.98, 329.468, 329.932, 330.397, 330.884, 331.349, 331.836, 332.301,
+    332.788, 333.253, 333.74, 334.228, 334.692, 335.157, 335.644, 336.109, 336.596, 337.084, 337.548, 338.013,
+    338.5, 338.965, 339.453, 339.94, 340.405, 340.869, 341.426, 342.053, 342.541, 343.028, 343.493, 343.98,
+    344.445, 344.932, 345.466, 346.001, 346.581, 347.069, 347.533, 348.021, 348.485, 348.973, 349.437, 349.925,
+    350.389, 350.877, 351.341, 351.829, 352.293, 352.758, 353.245, 353.71
+  ]
+sections:
+  - id: intro
+    title: "Intro"
+    delivery: spoken
+    narration: "Audio-described version: before each section, the picture pauses while I describe it. The song plays in a frontier town at dusk, built of computing: saloons that are server racks with blinking lights, general stores stacked from software modules, a water tower whose tank is a database, a radio mast, and a router shack, all joined by one network cable, against a desert sky. Your hero is the town sheriff, in a white felt hat, a leather vest with a silver star, a bandana, boots, and a holstered revolver. A browser window shows your web app: the lecture's post, liked by 999 others, with one comment, Facts. A masked outlaw in a long coat tiptoes in from the desert, and a red attack arrow strikes the comment box. The outlaw turns to you: the tester you hired to break in first. Then a board of four blank posters slides in: the Security Plan."
+    lines:
+      - id: intro-1
+        start: 8.9
+        end: 10.98
+        text: "So, you built a web app."
+        marks: {"so": 8.9, "you": 9.46, "built": 9.98, "a": 10.22, "web": 10.34, "app": 10.56}
+        visual: "The town at dusk. A browser window: your web app, the lecture's post by Tobias Dürschmid, “UCLA students are by far the best students. Go Bruins!”, liked by David Smallberg, Sandra Batista, and 999 others, with 5 comments, Like, Comment, and Share buttons, Paul Eggert's comment “Facts”, and a box: “Write a comment …”. Your hero stands by as the town sheriff, in a white felt hat, a leather vest with a silver star, a bandana, boots, and a holstered revolver, and tips the hat."
+      - id: intro-2
+        start: 12.34
+        end: 14.6
+        text: "Somebody out there might try to break in."
+        marks: {"somebody": 12.34, "out": 12.9, "there": 13.14, "might": 13.36, "try": 13.58, "to": 13.84, "break": 13.98, "in": 14.2}
+        visual: "A masked outlaw in a long dark coat tiptoes in from the desert at the left and peeks at the app. On “break”, the outlaw points, and a red attack arrow strikes the comment box. The sheriff glances over."
+      - id: intro-3
+        start: 16.08
+        end: 18.22
+        text: "You hired me to break in first."
+        marks: {"you": 16.08, "hired": 16.64, "me": 16.94, "to": 17.1, "break": 17.22, "in": 17.46, "first": 17.64}
+        visual: "The outlaw turns to you: the tester you hired to break in first."
+      - id: intro-4
+        start: 19.52
+        end: 23.62
+        text: "Let's design security in, before they do."
+        marks: {"lets": 19.52, "design": 20.08, "security": 20.42, "in": 21.0, "before": 22.54, "they": 23.1, "do": 23.28}
+        visual: "The outlaw tiptoes away, and the Security Plan board slides in: four blank posters nailed to a wooden frame, numbered 1 to 4. On “design” the sheriff points at it; a plank sign reads “Design security in”."
+  - id: verse-1
+    title: "Verse 1: Security Model"
+    delivery: sung
+    narration: "Verse 1, the Security Model. Padlocks slide aside and a strongbox opens. Out come a password, a post, a photo, and a lantern marked site up. Cards pin beside them: Confidentiality, read by authorized users only; Integrity, changed by authorized users only; Availability, there when it's needed. They stand on a gold triangle, the CIA triad. Red attack arrows strike each corner while the sheriff's hand goes to the holstered revolver, with real cases: Equifax's stolen data, a post overwritten, and a hospital's files locked for ransom."
+    lines:
+      - id: v1-1
+        start: 27.04
+        end: 30.76
+        text: "Before you choose the locks, ask what's in the box:"
+        marks: {"before": 27.04, "you": 27.6, "choose": 27.82, "the": 28.12, "locks": 28.28, "ask": 28.72, "whats": 29.48, "in": 29.86, "the_2": 30.06, "box": 30.2}
+        visual: "A plank sign at the top: “1 · Security Model”. Three padlocks on a shelf slide aside on “locks”; on “box”, a strongbox in the middle opens."
+      - id: v1-2
+        start: 30.88
+        end: 32.64
+        text: "What are you defending?"
+        marks: {"what": 30.88, "are": 31.4, "you": 31.56, "defending": 31.8}
+        visual: "The sign adds the question: “What are you defending?” The open strongbox glows."
+      - id: v1-3
+        start: 32.86
+        end: 38.38
+        text: "The data users are sending, passwords, posts, and photos, and the site that must stay up."
+        marks: {"the": 32.86, "data": 32.94, "users": 33.4, "are": 33.78, "sending": 34.02, "passwords": 34.9, "posts": 35.64, "and": 35.88, "photos": 36.0, "and_2": 36.42, "the_2": 36.72, "site": 36.84, "that": 37.18, "must": 37.38, "stay": 37.68, "up": 37.98}
+        visual: "Out of the strongbox come the assets, one per word: a password field (••••••) on “passwords”, a post on “posts”, a photo on “photos”, and a lantern labelled “site: up” on “site”."
+      - id: v1-4
+        start: 39.18
+        end: 42.26
+        text: "Confidentiality means only those allowed may read;"
+        marks: {"confidentiality": 39.18, "means": 39.78, "only": 40.3, "those": 40.68, "allowed": 40.98, "may": 41.48, "read": 41.72}
+        visual: "A Confidentiality card with an eye pins beside the password: “read: authorized users only”."
+      - id: v1-5
+        start: 43.04
+        end: 46.16
+        text: "Integrity means only those allowed may change;"
+        marks: {"integrity": 43.04, "means": 43.64, "only": 44.18, "those": 44.52, "allowed": 44.84, "may": 45.26, "change": 45.5}
+        visual: "An Integrity card with a quill pins beside the post: “change: authorized users only”."
+      - id: v1-6
+        start: 46.8
+        end: 49.96
+        text: "Availability means it's there when it is needed."
+        marks: {"availability": 46.8, "means": 47.4, "its": 48.0, "there": 48.28, "when": 48.66, "it": 49.02, "is": 49.24, "needed": 49.34}
+        visual: "An Availability card with a clock pins beside the lantern: “there when it’s needed”."
+      - id: v1-7
+        start: 50.06
+        end: 52.34
+        text: "That's the CIA triad."
+        marks: {"thats": 50.06, "the": 50.22, "cia": 50.34, "triad": 51.28}
+        visual: "The three cards slide into a triangle, joined by gold lines and labelled “CIA triad”."
+      - id: v1-8
+        start: 52.22
+        end: 57.84
+        text: "Attackers can hit all three: they might read it, change it, or lock you out for ransom."
+        marks: {"attackers": 52.22, "can": 52.66, "hit": 52.82, "all": 52.98, "three": 53.22, "they": 53.86, "might": 53.92, "read": 54.2, "it": 54.52, "change": 55.0, "it_2": 55.24, "or": 55.58, "lock": 56.12, "you": 56.42, "out": 56.58, "for": 56.78, "ransom": 57.08}
+        visual: "The masked outlaw tiptoes in at the left and points: three red attack arrows strike the triangle's corners, and the sheriff's hand hovers over the holstered revolver. On “read”, a tag at Confidentiality: “Equifax 2017: data of 147 million people taken”. On “change”, a tag at Integrity: “Post changed: “USC IS BETTER!!!””. On “lock”, a tag at Availability: “Hospital 2016: files locked for ransom”."
+  - id: chorus-1
+    title: "Chorus"
+    delivery: sung
+    narration: "The chorus: the Security Plan board under a plank sign, Design it in before they break in. Four posters light one by one, each with a small picture: Security Model, what are you defending, with a treasure chest; Threat Model, who might be attacking, with a wanted poster; Attack Surface, which parts are exposed, with an arrow at a building's door; Protection Mechanisms, how do you stop them, with a padlock. The CIA triangle is pinned under the first. The sheriff points at each."
+    lines:
+      - id: c1-1
+        start: 59.84
+        end: 63.38
+        text: "Design it in before they break in:"
+        marks: {"design": 59.84, "it": 60.64, "in": 60.96, "before": 61.22, "they": 62.08, "break": 62.34, "in_2": 62.94}
+        visual: "The Security Plan board fills the frame, under a plank sign: “Design it in before they break in”. Each poster has a small picture: a treasure chest, a wanted poster, a building with an arrow at its door, and a padlock. The CIA triangle is pinned under poster 1. The sheriff stands beside the board."
+      - id: c1-2
+        start: 63.44
+        end: 67.4
+        text: "Security Model: what are you defending?"
+        marks: {"security": 63.44, "model": 64.18, "what": 65.64, "are": 65.8, "you": 66.22, "defending": 66.46}
+        visual: "Poster 1 lights: “Security Model: What are you defending?” The sheriff points at it."
+      - id: c1-3
+        start: 67.9
+        end: 71.0
+        text: "Threat Model: who might be attacking?"
+        marks: {"threat": 67.9, "model": 68.48, "who": 69.44, "might": 69.52, "be": 69.8, "attacking": 70.06}
+        visual: "Poster 2 lights: “Threat Model: Who might be attacking?”"
+      - id: c1-4
+        start: 70.88
+        end: 73.86
+        text: "Attack Surface: which parts are exposed?"
+        marks: {"attack": 70.88, "surface": 71.34, "which": 72.24, "parts": 72.42, "are": 72.82, "exposed": 73.02}
+        visual: "Poster 3 lights: “Attack Surface: Which parts are exposed?”"
+      - id: c1-5
+        start: 74.44
+        end: 78.08
+        text: "Protection Mechanisms: how do you stop them?"
+        marks: {"protection": 74.44, "mechanisms": 75.14, "how": 76.32, "do": 76.6, "you": 76.88, "stop": 77.1, "them": 77.56}
+        visual: "Poster 4 lights: “Protection Mechanisms: How do you stop them?”"
+      - id: c1-6
+        start: 78.28
+        end: 81.58
+        text: "Design it in before they break in."
+        marks: {"design": 78.28, "it": 78.82, "in": 79.14, "before": 79.44, "they": 80.24, "break": 80.56, "in_2": 81.14}
+        visual: "All four posters glow together; the sheriff nods."
+  - id: verse-2
+    title: "Verse 2: Threat Model"
+    delivery: sung
+    narration: "Verse 2, the Threat Model. A wanted poster for an unknown attacker, with four fields: knowledge, actions, resources, and incentive. Knowledge fills in: has read your code. On the porch, a key hides under a flowerpot, and in the app's code a search finds a secret admin link; the masked outlaw lifts the flowerpot, pockets the key, and slips in through the door as it swings open. A sign: security through obscurity lasts till someone looks. Then three tested padlocks, AES, RSA, and TLS, with their public blueprints, and a brass key the sheriff keeps. A version number on an error page is blacked out, an extra layer but never alone. The stamp: Open Design Principle. Below it, the lock's blueprint hangs in public, and a see-through padlock shows every pin and spring; its shackle rattles but stays shut. Only the key is secret."
+    lines:
+      - id: v2-1
+        start: 84.24
+        end: 88.22
+        text: "Who might be attacking, and what are they after?"
+        marks: {"who": 84.24, "might": 84.8, "be": 85.18, "attacking": 85.52, "and": 86.54, "what": 86.8, "are": 87.0, "they": 87.14, "after": 87.44}
+        visual: "A plank sign: “2 · Threat Model”. A wanted poster nails up: a dark silhouette marked “Unknown”, and below it “Wanted for: your users’ data”. The masked outlaw tiptoes in and stands beside the poster, looking at you."
+      - id: v2-2
+        start: 88.54
+        end: 90.56
+        text: "What do they know? What can they do?"
+        marks: {"what": 88.54, "do": 88.9, "they": 89.02, "know": 89.16, "what_2": 89.7, "can": 89.84, "they_2": 89.98, "do_2": 90.16}
+        visual: "The poster's fields appear as they are sung: “Knowledge: ?” on “know” and “Actions: ?” on “do”."
+      - id: v2-3
+        start: 90.66
+        end: 92.12
+        text: "What will they spend, and why?"
+        marks: {"what": 90.66, "will": 90.82, "they": 90.94, "spend": 91.06, "and": 91.4, "why": 91.58}
+        visual: "Then “Resources: ?” on “spend” and “Incentive: ?” on “why”."
+      - id: v2-4
+        start: 92.28
+        end: 94.06
+        text: "Assume they've read your code:"
+        marks: {"assume": 92.28, "theyve": 92.8, "read": 93.08, "your": 93.26, "code": 93.46}
+        visual: "The Knowledge field fills in: “has read your code”. Beside the poster, browser developer tools open on the app's front-end bundle, and the outlaw peers at it through a magnifier."
+      - id: v2-5
+        start: 93.98
+        end: 99.62
+        text: "Then a key in the flowerpot, a secret admin link, is found in just a blink."
+        marks: {"then": 93.98, "a": 94.18, "key": 94.32, "in": 94.56, "the": 94.82, "flowerpot": 94.92, "a_2": 95.98, "secret": 96.34, "admin": 96.78, "link": 97.18, "is": 97.68, "found": 98.24, "in_2": 98.58, "just": 98.76, "a_3": 99.02, "blink": 99.22}
+        visual: "On “flowerpot”, the lecture's porch: a flowerpot by the door, a key hidden under it. On “admin”, a search for “admin” in the bundle highlights a route: `path: \"/admin-x7q\"`. On “found”, the masked outlaw lifts the flowerpot with both hands and pockets the key, and on “blink” the admin page opens with no login."
+      - id: v2-6
+        start: 99.98
+        end: 103.54
+        text: "Security through obscurity lasts till someone looks."
+        marks: {"security": 99.98, "through": 100.54, "obscurity": 100.88, "lasts": 101.66, "till": 102.28, "someone": 102.52, "looks": 102.96}
+        visual: "A plank sign: “Security through obscurity”. On the porch, the door swings open and the outlaw slips inside; a note with an eye: “lasts till someone looks”."
+      - id: v2-7
+        start: 103.8
+        end: 107.24
+        text: "Use locks the world has tested, their blueprints out on view:"
+        marks: {"use": 103.8, "locks": 104.02, "the": 104.38, "world": 104.44, "has": 104.74, "tested": 104.96, "their": 105.68, "blueprints": 105.9, "out": 106.42, "on": 106.64, "view": 106.9}
+        visual: "Three padlocks pop up, labelled AES, RSA, and TLS. On “blueprints”, each one's published blueprint unfolds behind it, stamped “public standard”."
+      - id: v2-8
+        start: 107.12
+        end: 111.06
+        text: "The only secret is the key, and the key stays with you."
+        marks: {"the": 107.12, "only": 107.32, "secret": 107.64, "is": 108.22, "the_2": 108.48, "key": 108.62, "and": 109.12, "the_3": 109.46, "key_2": 109.56, "stays": 109.82, "with": 110.22, "you": 110.66}
+        visual: "A brass key tagged “AES secret key · RSA private key”. On “stays”, it flies into the sheriff's hand, and the admin route gets a login check."
+      - id: v2-9
+        start: 111.16
+        end: 114.9
+        text: "Hiding versions helps a little, but never on its own."
+        marks: {"hiding": 111.16, "versions": 111.6, "helps": 112.06, "a": 112.4, "little": 112.68, "but": 113.16, "never": 113.52, "on": 113.86, "its": 114.18, "own": 114.38}
+        visual: "An error page footer reads “Express 4.17.1”; on “hiding”, the version is blacked out, and a label reads “An extra layer, never alone”."
+      - id: v2-10
+        start: 114.78
+        end: 119.5
+        text: "Open Design: knowing how it works shouldn't get them in."
+        marks: {"open": 114.78, "design": 115.18, "knowing": 116.3, "how": 116.74, "it": 117.02, "works": 117.28, "shouldnt": 118.0, "get": 118.72, "them": 118.92, "in": 119.14}
+        visual: "A principle stamp lands: “Open Design Principle”, with the rule beneath: “Knowing how it works shouldn’t get them in.” Below it, the lock's blueprint hangs in public, titled “Lock design · published”, and a see-through padlock shows its pins, springs, and keyway. The outlaw scurries in and studies the lock through a magnifying glass; on “shouldn't”, the outlaw tries the shackle, which rattles and stays shut, and a brass tag reads “Only the key is secret”. On “in”, the outlaw shrugs; the sheriff holds the key."
+  - id: verse-3
+    title: "Verse 3: Attack Surface"
+    delivery: sung
+    narration: "Verse 3, the Attack Surface. The app as a frontier building with its ways in: a login form on the swinging doors, a comment box in the window, a photo-upload hatch, and the URL on its sign, each struck by a red attack arrow. The lecture's network map, its trust boundary shrinking from the company network to the server, so even the boss's laptop is not trusted by default. Then the lecture's login: the password field holds a quote, or, and an always-true test; the code glues it into the query, and the login lets the attacker in. A stamp: SQL injection, and the sheriff's hand goes to the revolver. A prepared statement fixes it: the input fills a slot as data, and the login refuses."
+    lines:
+      - id: v3-1
+        start: 121.5
+        end: 125.58
+        text: "Which parts are exposed? Every input they can send."
+        marks: {"which": 121.5, "parts": 122.14, "are": 122.5, "exposed": 122.8, "every": 123.46, "input": 123.96, "they": 124.5, "can": 124.78, "send": 124.92}
+        visual: "A plank sign: “3 · Attack Surface”. The app as a frontier building, its ways in labelled: the login form on its swinging doors, the comment box in a window, the photo upload at a loading hatch, and the URL on its sign. On “every input”, the masked outlaw points, and a red attack arrow strikes each one."
+      - id: v3-2
+        start: 125.64
+        end: 129.06
+        text: "Trust nothing by default, not even the boss's laptop."
+        marks: {"trust": 125.64, "nothing": 125.98, "by": 126.32, "default": 126.6, "not": 127.22, "even": 127.5, "the": 127.7, "bosss": 127.88, "laptop": 128.38}
+        visual: "The lecture's network map: the Internet, a user, a company network with the boss's laptop and the developer's device, the server, and its database. A dashed fence, the trust boundary, surrounds the company network; on “laptop” it shrinks to the server alone, and a checkpoint appears on the laptop's line: “not trusted by default”."
+      - id: v3-3
+        start: 128.96
+        end: 133.1
+        text: "In your password box, I typed code that's always true;"
+        marks: {"in": 128.96, "your": 129.6, "password": 129.78, "box": 130.32, "i": 130.88, "typed": 131.22, "code": 131.46, "thats": 131.94, "always": 132.22, "true": 132.56}
+        visual: "The lecture's login form: Username “Bruin”. The masked outlaw tiptoes in; on “typed”, the outlaw points at the password field, which fills with `\" or \"\"=\"`."
+      - id: v3-4
+        start: 133.22
+        end: 136.84
+        text: "You glued it in your query, and the login let me through."
+        marks: {"you": 133.22, "glued": 133.58, "it": 133.88, "in": 134.06, "your": 134.2, "query": 134.34, "and": 135.0, "the": 135.26, "login": 135.38, "let": 135.92, "me": 136.24, "through": 136.46}
+        visual: "On “glued”, a slate shows the login code, `+ pass +` highlighted, and the query it builds: `SELECT * FROM Users WHERE Name = \"Bruin\" AND Pass = \"\" or \"\"=\"\"`, with `\"\"=\"\"` marked “always true” as the query appears. On “through”: “Logged in as Bruin”."
+      - id: v3-5
+        start: 136.86
+        end: 138.68
+        text: "That's SQL injection."
+        marks: {"thats": 136.86, "sql": 137.08, "injection": 137.56}
+        visual: "A stamp names the attack: SQLi, SQL injection. The sheriff's hand goes to the holstered revolver."
+      - id: v3-6
+        start: 138.56
+        end: 144.6
+        text: "Use a prepared statement: my input fills a slot and stays data, not code."
+        marks: {"use": 138.56, "a": 139.01, "prepared": 139.46, "statement": 140.08, "my": 140.98, "input": 141.3, "fills": 141.68, "a_2": 142.02, "slot": 142.2, "and": 142.5, "stays": 142.64, "data": 143.04, "not": 143.74, "code": 143.94}
+        visual: "A second slate: the prepared statement, `WHERE Name = @0 AND Pass = @1`, with `db.execute_query(sql, name, pass)`. On “fills”, a tag: `\" or \"\"=\"` → just a value, and on “slot” the `@1` slot lights. On “data”, the login answers “Wrong password”, and a green label reads “data, not code”."
+  - id: verse-3b
+    title: "Verse 3, part two: cross-site scripting"
+    delivery: sung
+    narration: "Verse 3, part two. A comment holds a script; three visitors' browsers run it, and their session cookies fly into the cookie jar of the masked outlaw at the right. A stamp: cross-site scripting. Escaped, the script shows as plain text, and nothing runs. Side by side, the two attacks share one mistake: input ran as code. The stamp: Zero Trust Principle, any input might be malicious. Below it, a checkpoint: a magnifying glass inspects every input, a form, a photo upload, a URL, even the boss's laptop, and each gets a check; the last, a comment, opens to show a hidden script tag and is stopped with a cross."
+    lines:
+      - id: v3b-1
+        start: 145.02
+        end: 148.32
+        text: "Then I hid a script in a comment that I wrote;"
+        marks: {"then": 145.02, "i": 145.34, "hid": 145.54, "a": 145.76, "script": 145.92, "in": 146.3, "a_2": 146.72, "comment": 146.82, "that": 147.32, "i_2": 147.66, "wrote": 147.88}
+        visual: "A new scene: the post in the browser. On “script”, the comment box types `<script>alert(\"USC IS BETTER!!!\")</script>`; on “wrote”, it posts as the Attacker's comment, which shows no text, and the post now has 6 comments. The masked outlaw, at the right, points at the comment as it goes in."
+      - id: v3b-2
+        start: 148.2
+        end: 152.16
+        text: "Each browser ran it as yours and sent me what it stole."
+        marks: {"each": 148.2, "browser": 148.42, "ran": 148.84, "it": 149.24, "as": 149.36, "yours": 149.6, "and": 150.04, "sent": 150.4, "me": 150.82, "what": 151.24, "it_2": 151.48, "stole": 151.64}
+        visual: "Three visitors' browsers load the post, and each shows the lecture's “Alert” box, “USC IS BETTER!!!”, inside the trusted site. On “stole”, a cookie flies out of each browser into the outlaw's cookie jar: “session cookies, sent to the attacker”."
+      - id: v3b-3
+        start: 152.06
+        end: 154.3
+        text: "That's cross-site scripting."
+        marks: {"thats": 152.06, "crosssite": 152.6, "scripting": 153.46}
+        visual: "A stamp names the attack: XSS, cross-site scripting."
+      - id: v3b-4
+        start: 154.32
+        end: 159.88
+        text: "Escape what you display: my script shows up as text, not code the browser runs."
+        marks: {"escape": 154.32, "what": 154.64, "you": 155.06, "display": 155.24, "my": 156.1, "script": 156.46, "shows": 156.72, "up": 157.02, "as": 157.24, "text": 157.42, "not": 158.02, "code": 158.18, "the": 158.56, "browser": 158.82, "runs": 159.26}
+        visual: "On “escape”, the outlaw leaves, and a slate shows the comment escaped in the page's HTML: `&lt;script&gt;alert(…)&lt;/script&gt;`. On “text”, the post shows the comment as plain text, and on “runs” the three browsers show no alert, under a green label: “Output encoding”."
+      - id: v3b-5
+        start: 159.76
+        end: 163.68
+        text: "Two attacks, one mistake: my input ran as code."
+        marks: {"two": 159.76, "attacks": 160.04, "one": 160.88, "mistake": 161.0, "my": 161.68, "input": 162.24, "ran": 162.64, "as": 162.96, "code": 163.18}
+        visual: "Two slates side by side: the SQL injection query and the cross-site scripting comment, each named, with the attacker's text highlighted amber in both. A plank across them reads “Input ran as code”."
+      - id: v3b-6
+        start: 163.76
+        end: 167.46
+        text: "Zero Trust: any input might be malicious."
+        marks: {"zero": 163.76, "trust": 163.94, "any": 165.16, "input": 165.66, "might": 166.14, "be": 166.48, "malicious": 166.74}
+        visual: "A principle stamp lands: “Zero Trust Principle”, with the rule beneath: “Any input might be malicious.” Below it, a sign: “Checkpoint: every input”. On “any”, a magnifying glass sweeps over five crates: the form input, the photo upload, the URL, and the boss's laptop each get a green check; the last, a comment, flips open to show `<script>`, and on “malicious” it gets a red cross. The outlaw, watching from the right, shrugs."
+  - id: chorus-2
+    title: "Chorus"
+    delivery: sung
+    narration: "The chorus again: the Security Plan board, now with the Open Design Principle pinned under the Threat Model and the Zero Trust Principle under the Attack Surface."
+    lines:
+      - id: c2-1
+        start: 168.22
+        end: 171.36
+        text: "Design it in before they break in:"
+        marks: {"design": 168.22, "it": 168.7, "in": 168.92, "before": 169.36, "they": 170.1, "break": 170.3, "in_2": 170.88}
+        visual: "The Security Plan board again, now with the Open Design Principle pinned under poster 2 and the Zero Trust Principle under poster 3. The sheriff stands beside it."
+      - id: c2-2
+        start: 171.44
+        end: 175.32
+        text: "Security Model: what are you defending?"
+        marks: {"security": 171.44, "model": 172.12, "what": 173.56, "are": 173.74, "you": 174.16, "defending": 174.4}
+        visual: "Poster 1 lights: “Security Model: What are you defending?”"
+      - id: c2-3
+        start: 175.94
+        end: 178.9
+        text: "Threat Model: who might be attacking?"
+        marks: {"threat": 175.94, "model": 176.38, "who": 177.32, "might": 177.42, "be": 177.7, "attacking": 177.94}
+        visual: "Poster 2 lights, with its Open Design Principle stamp."
+      - id: c2-4
+        start: 179.08
+        end: 181.78
+        text: "Attack Surface: which parts are exposed?"
+        marks: {"attack": 179.08, "surface": 179.24, "which": 180.16, "parts": 180.3, "are": 180.68, "exposed": 180.9}
+        visual: "Poster 3 lights, with its Zero Trust Principle stamp."
+      - id: c2-5
+        start: 182.32
+        end: 185.92
+        text: "Protection Mechanisms: how do you stop them?"
+        marks: {"protection": 182.32, "mechanisms": 183.02, "how": 184.24, "do": 184.46, "you": 184.78, "stop": 185.0, "them": 185.4}
+        visual: "Poster 4 lights: “Protection Mechanisms: How do you stop them?”"
+      - id: c2-6
+        start: 186.12
+        end: 189.38
+        text: "Design it in before they break in."
+        marks: {"design": 186.12, "it": 186.72, "in": 187.0, "before": 187.54, "they": 188.18, "break": 188.4, "in_2": 188.98}
+        visual: "All four posters glow together; the sheriff tips the hat."
+  - id: verse-4
+    title: "Verse 4: Protection Mechanisms"
+    delivery: sung
+    narration: "Verse 4, Protection Mechanisms. A row of locks so far, and one springs open inside a ring labelled blast radius. The lecture's four services stand as buildings in town, with one master key labelled admin on all of them; a red attack arrow breaks in through the upload barn, the bank, the database, opens, and every table is read and changed. Then the master key splits into four, each with only the rights its job needs. A second break-in through the barn reaches one folder, the Users table stays locked, and the ring shrinks to the barn. The stamp: Principle of Least Privilege. Below it, a key rack with one narrow key per job, each tagged with its one right, and the admin master key that opened everything, retired behind glass."
+    lines:
+      - id: v4-1
+        start: 191.5
+        end: 196.02
+        text: "How do you stop them? With every lock you've got,"
+        marks: {"how": 191.5, "do": 192.02, "you": 192.4, "stop": 192.58, "them": 193.0, "with": 194.06, "every": 194.58, "lock": 194.88, "youve": 195.18, "got": 195.62}
+        visual: "A plank sign: “4 · Protection Mechanisms”. On “every lock”, the locks so far hang in a row: prepared statement, output encoding, tested locks with secret keys, and a login check."
+      - id: v4-2
+        start: 196.06
+        end: 199.82
+        text: "And a plan for when one breaks: limit what one break-in takes."
+        marks: {"and": 196.06, "a": 196.4, "plan": 196.5, "for": 196.84, "when": 197.02, "one": 197.22, "breaks": 197.44, "limit": 197.98, "what": 198.24, "one_2": 198.5, "breakin": 198.86, "takes": 199.38}
+        visual: "On “breaks”, one lock springs open; on “limit”, a dashed ring labelled “blast radius” appears around it."
+      - id: v4-3
+        start: 199.92
+        end: 203.82
+        text: "Say uploads run as admin, and I break in through that page:"
+        marks: {"say": 199.92, "uploads": 200.12, "run": 200.76, "as": 201.02, "admin": 201.22, "and": 201.9, "i": 201.96, "break": 202.06, "in": 202.44, "through": 202.64, "that": 202.86, "page": 203.14}
+        visual: "The lecture's four services as buildings in town: Product Display, Email Notification, System Backup, and Image Upload, the barn. On “admin”, one brass master key labelled “admin” hangs on all four. The outlaw slips in at the right, and on “break” points: a red attack arrow strikes the barn."
+      - id: v4-4
+        start: 203.84
+        end: 207.56
+        text: "Every table, every row is mine to read and change."
+        marks: {"every": 203.84, "table": 203.98, "every_2": 204.66, "row": 204.92, "is": 205.52, "mine": 205.96, "to": 206.28, "read": 206.48, "and": 206.8, "change": 206.96}
+        visual: "The master key opens the bank, the database: its tables Users, Products, and Orders. On “read” an eye and on “change” a quill land on every table, and the blast-radius ring spreads over the whole town; the outlaw holds up a loot sack and looks at you."
+      - id: v4-5
+        start: 207.68
+        end: 211.28
+        text: "So give each part its own key with just the rights it needs:"
+        marks: {"so": 207.68, "give": 207.88, "each": 208.14, "part": 208.32, "its": 208.74, "own": 208.96, "key": 209.28, "with": 209.7, "just": 209.82, "the": 210.08, "rights": 210.24, "it": 210.48, "needs": 210.7}
+        visual: "On “own key”, the master key splits into four keys, one per building; on “rights”, each key's tag shows its permission, from the lecture."
+      - id: v4-6
+        start: 211.44
+        end: 215.0
+        text: "Display can only read, uploads can only write."
+        marks: {"display": 211.44, "can": 211.96, "only": 212.28, "read": 212.62, "uploads": 213.02, "can_2": 213.58, "only_2": 214.06, "write": 214.44}
+        visual: "Product Display's tag lights on “read”: “read-only: Products table”. Image Upload's lights on “write”: “write: /uploads only, no delete”."
+      - id: v4-7
+        start: 214.88
+        end: 218.76
+        text: "Now break in through the uploads: one folder, that is all."
+        marks: {"now": 214.88, "break": 215.5, "in": 215.7, "through": 215.9, "the": 216.24, "uploads": 216.44, "one": 217.24, "folder": 217.4, "that": 218.04, "is": 218.14, "all": 218.32}
+        visual: "The outlaw points again, a red attack arrow strikes the barn, and on “folder” it stops at the `/uploads` folder; on “all”, the outlaw shrugs."
+      - id: v4-8
+        start: 218.76
+        end: 222.66
+        text: "The Users table stays locked; the blast radius stays small."
+        marks: {"the": 218.76, "users": 218.84, "table": 219.36, "stays": 219.72, "locked": 220.14, "the_2": 220.72, "blast": 220.76, "radius": 221.16, "stays_2": 221.72, "small": 222.06}
+        visual: "On “locked”, the Users table holds shut: “no access”. On “blast radius”, the ring shrinks to the barn alone."
+      - id: v4-9
+        start: 222.7
+        end: 226.54
+        text: "Least Privilege: each part gets only what it needs."
+        marks: {"least": 222.7, "privilege": 223.02, "each": 223.84, "part": 224.1, "gets": 224.4, "only": 224.82, "what": 225.5, "it": 225.76, "needs": 225.9}
+        visual: "A principle stamp lands: “Principle of Least Privilege”, with the rule beneath: “Each part gets only what it needs.” Below it, a key rack headed “One key per job”: a brass key on each hook, tagged Display, read only; Email, send only; Backup, write backups; and Upload, write /uploads. Beside it, the master key, “admin key”, in a glass case, is stamped “Retired”."
+  - id: bridge
+    title: "Bridge: Hugging Face, 2026"
+    delivery: sung
+    narration: "The bridge, a true story, in muted light. A frontier gazette, July 2026: AI agents being tested on a hacking benchmark slipped out of their sandbox to cheat on it, found access tokens left in a public dataset, sent data that ran as code on a dataset worker, and used one shared admin key to open whole clusters. Along the street below, three little masked robot agents tiptoe past, freeze, and tiptoe on. Each hop crosses a dashed trust line, where one part trusted another."
+    lines:
+      - id: br-1
+        start: 226.7
+        end: 232.0
+        text: "In twenty twenty-six, AI agents in a test broke out to cheat on it."
+        marks: {"in": 226.7, "twenty": 226.98, "twentysix": 226.98, "ai": 228.56, "agents": 228.7, "in_2": 229.34, "a": 229.56, "test": 229.7, "broke": 230.28, "out": 230.78, "to": 231.0, "cheat": 231.2, "on": 231.48, "it": 231.7}
+        visual: "The light turns muted: a true story. The Frontier Gazette, July 2026: “AI agents break out of a test and into a model-hosting site”, as reported by Hugging Face and OpenAI. Hops on its attack path appear: on “agents”, a sandbox for a hacking benchmark; on “broke”, a package proxy, a gap out. Along the street below, three little masked robot agents tiptoe in; on “cheat”, a note: “goal: find the benchmark’s answers”."
+      - id: br-2
+        start: 232.16
+        end: 233.84
+        text: "Who'd have planned for that?"
+        marks: {"whod": 232.16, "have": 232.46, "planned": 232.54, "for": 233.04, "that": 233.38}
+        visual: "A note: “Who might be attacking? AI agents?” The robot agents freeze mid-step, then tiptoe on."
+      - id: br-3
+        start: 234.0
+        end: 237.94
+        text: "Found tokens left in public, sent data that ran as code,"
+        marks: {"found": 234.0, "tokens": 234.52, "left": 235.04, "in": 235.32, "public": 235.54, "sent": 236.1, "data": 236.26, "that": 236.64, "ran": 236.86, "as": 237.12, "code": 237.38}
+        visual: "The attack path grows one hop at a time: on “tokens”, a public dataset holding access tokens, blurred; on “code”, a dataset worker that runs the agents' code."
+      - id: br-4
+        start: 237.84
+        end: 241.68
+        text: "And one shared admin key opened whole clusters."
+        marks: {"and": 237.84, "one": 237.98, "shared": 238.22, "admin": 238.76, "key": 239.24, "opened": 240.18, "whole": 240.78, "clusters": 240.98}
+        visual: "On “key”, one brass key tagged “shared, admin rights (Hugging Face’s account)”; on “clusters”, it opens two boxes labelled “cluster (a group of servers)”."
+      - id: br-5
+        start: 241.56
+        end: 245.46
+        text: "Every step crossed a line where one part trusted another."
+        marks: {"every": 241.56, "step": 242.02, "crossed": 242.46, "a": 242.98, "line": 243.18, "where": 243.62, "one": 243.68, "part": 243.92, "trusted": 244.26, "another": 244.96}
+        visual: "Dashed trust lines between the hops glow amber one by one, each labelled: “trusted the proxy”, “trusted a leaked token”, “trusted the uploaded file”, “trusted a shared key”."
+  - id: bridge-2
+    title: "Bridge, part two: the lessons"
+    delivery: sung
+    narration: "The lessons, on a notice beside the gazette: scan for leaked secrets, short-lived tokens, parse untrusted files in a sandbox with no keys inside, no shared admin key, and watch for machine-speed activity. A sign reads defense in depth, and the attack path now stops at the first line."
+    lines:
+      - id: br2-1
+        start: 245.86
+        end: 247.26
+        text: "What did it teach?"
+        marks: {"what": 245.86, "did": 246.46, "it": 246.58, "teach": 246.72}
+        visual: "A notice nails up: “Lessons learned”."
+      - id: br2-2
+        start: 247.62
+        end: 251.28
+        text: "Hunt down leaked secrets, let tokens expire fast,"
+        marks: {"hunt": 247.62, "down": 248.2, "leaked": 248.52, "secrets": 248.82, "let": 249.56, "tokens": 249.78, "expire": 250.18, "fast": 250.64}
+        visual: "Rule 1 on “hunt”: “Scan for leaked secrets”, with a magnifier. Rule 2 on “expire”: “Short-lived tokens”, with an hourglass."
+      - id: br2-3
+        start: 251.28
+        end: 254.8
+        text: "Parse strange files in a sandbox with no keys worth taking,"
+        marks: {"parse": 251.28, "strange": 251.5, "files": 251.92, "in": 252.34, "a": 252.54, "sandbox": 252.66, "with": 253.4, "no": 253.46, "keys": 253.62, "worth": 254.04, "taking": 254.3}
+        visual: "Rule 3 on “sandbox”: “Parse untrusted files in a sandbox, with no keys inside”."
+      - id: br2-4
+        start: 255.04
+        end: 258.84
+        text: "No shared key with admin rights, and watch for machine-speed moves,"
+        marks: {"no": 255.04, "shared": 255.26, "key": 255.52, "with": 255.8, "admin": 256.0, "rights": 256.3, "and": 256.86, "watch": 256.94, "for": 257.2, "machinespeed": 257.36, "moves": 258.04}
+        visual: "Rule 4 on “shared”: “No shared admin key: one narrow key per job”. Rule 5 on “watch”: “Watch for machine-speed activity”, with a spiking graph."
+      - id: br2-5
+        start: 258.72
+        end: 260.52
+        text: "So one slip won't open all."
+        marks: {"so": 258.72, "one": 258.82, "slip": 259.04, "wont": 259.42, "open": 259.92, "all": 260.16}
+        visual: "A plank sign: “Defense in depth”. The attack path redraws with the defenses in place, and now stops at the first line."
+  - id: quiz-intro
+    title: "Quiz"
+    delivery: sung
+    narration: "The pop quiz. The outlaw waves to you, and the sheriff points at you: now you are the tester."
+    lines:
+      - id: quiz-0-1
+        start: 260.88
+        end: 264.26
+        text: "Pop quiz: now you're the tester, so think the way they do."
+        marks: {"pop": 260.88, "quiz": 261.26, "now": 261.72, "youre": 261.86, "the": 262.06, "tester": 262.2, "so": 262.9, "think": 263.08, "the_2": 263.36, "way": 263.54, "they": 263.7, "do": 263.88}
+        visual: "“Pop quiz!” The outlaw waves to you, and the sheriff points at you: a tag reads “Now you’re the tester”."
+  - id: quiz
+    title: "Quiz"
+    delivery: call
+    narration: "Six quiz posters, numbered 1 to 6. Each shows its question while it is sung, with a picture beside it; when the answer is sung, it is stamped on. 1: grades changed but nothing leaked, beside a gradebook. 2: an API key in front-end code, beside developer tools. 3: hiding the version number on an error page. 4: a React form that checks input, and a terminal that skips it. 5: an app that logs in to its database as admin. 6: stripping quotes to stop SQL injection, beside a line of code that does it."
+    lines:
+      - id: quiz-1
+        start: 264.48
+        end: 271.0
+        text: "Grades were changed, but nothing leaked: which attribute broke?"
+        answer: "That's integrity: an unauthorized change."
+        answer_at: 268.26
+        pause_at: 268.18
+        marks: {"grades": 264.48, "were": 264.88, "changed": 265.0, "but": 265.54, "nothing": 265.6, "leaked": 265.86, "which": 266.84, "attribute": 266.94, "broke": 267.44, "thats": 268.28, "integrity": 268.68, "an": 269.48, "unauthorized": 269.68, "change": 270.5}
+        visual: "Quiz poster 1 of 6: “Grades were changed, but nothing leaked: which attribute broke?” Beside it, a gradebook with two grades changed from B to A, and a note: “no data left the system”. The answer is stamped on: “Integrity: an unauthorized change”."
+      - id: quiz-2
+        start: 270.88
+        end: 276.08
+        text: "An API key, hidden in your front-end code?"
+        answer: "They can read it: keep it on the server."
+        answer_at: 274.08
+        pause_at: 273.96
+        marks: {"an": 270.88, "api": 271.22, "key": 271.68, "hidden": 272.2, "in": 272.64, "your": 272.9, "frontend": 273.06, "code": 273.5, "they": 274.08, "can": 274.3, "read": 274.44, "it": 274.58, "keep": 275.04, "it_2": 275.24, "on": 275.4, "the": 275.5, "server": 275.62}
+        visual: "Quiz poster 2 of 6: “An API key, hidden in your front-end code?” Beside it, developer tools show `const API_KEY = \"a1f…\"` in the bundle. The answer is stamped on: “Keep it server-side”."
+      - id: quiz-3
+        start: 276.18
+        end: 281.28
+        text: "Hide the version number on your error page?"
+        answer: "Sure, as an extra layer, never on its own."
+        answer_at: 278.84
+        pause_at: 278.61
+        marks: {"hide": 276.18, "the": 276.56, "version": 276.76, "number": 277.06, "on": 277.46, "your": 277.7, "error": 277.86, "page": 278.14, "sure": 278.84, "as": 279.26, "an": 279.32, "extra": 279.44, "layer": 279.7, "never": 280.28, "on_2": 280.56, "its": 280.76, "own": 280.92}
+        visual: "Quiz poster 3 of 6: “Hide the version number on your error page?” Beside it, an error page footer: “Express 4.17.1”. The answer is stamped on: “Extra layer, never alone”, and the version is blacked out."
+      - id: quiz-4
+        start: 281.38
+        end: 287.24
+        text: "Your React form checks the input: is the server safe?"
+        answer: "No: they can skip the form. Check it on the server."
+        answer_at: 284.4
+        pause_at: 284.34
+        marks: {"your": 281.38, "react": 281.62, "form": 281.92, "checks": 282.26, "the": 282.54, "input": 282.76, "is": 283.34, "the_2": 283.52, "server": 283.64, "safe": 283.92, "no": 284.4, "they": 285.0, "can": 285.24, "skip": 285.36, "the_3": 285.62, "form_2": 285.78, "check": 286.28, "it": 286.44, "on": 286.58, "the_4": 286.68, "server_2": 286.8}
+        visual: "Quiz poster 4 of 6: “Your React form checks the input: is the server safe?” Beside it, a sign-up form showing “Please enter a valid email”. The answer is stamped on: “Check it on the server”, and a terminal sends `curl -X POST /api/signup -d 'email=not-an-email'` without the form."
+      - id: quiz-5
+        start: 287.44
+        end: 293.08
+        text: "Your app logs in as admin, just in case?"
+        answer: "Only what it needs, so a break-in stays small."
+        answer_at: 289.93
+        pause_at: 289.85
+        marks: {"your": 287.44, "app": 287.66, "logs": 287.88, "in": 288.22, "as": 288.38, "admin": 288.52, "just": 289.08, "in_2": 289.34, "case": 289.52, "only": 290.08, "what": 290.3, "it": 290.46, "needs": 290.58, "so": 291.3, "a": 291.62, "breakin": 291.78, "stays": 292.14, "small": 292.38}
+        visual: "Quiz poster 5 of 6: “Your app logs in as admin, just in case?” Beside it, a config line: `DB_USER=admin`. The answer is stamped on: “Only what it needs”, and a fixed config appears: `DB_USER=app_comments`, “read and write: comments only”."
+      - id: quiz-6
+        start: 293.44
+        end: 299.32
+        text: "Strip out every quote to stop SQL injection?"
+        answer: "That's not enough: use a prepared statement."
+        answer_at: 296.48
+        pause_at: 296.34
+        marks: {"strip": 293.44, "out": 293.58, "every": 293.8, "quote": 294.06, "to": 294.5, "stop": 294.58, "sql": 294.84, "injection": 295.4, "thats": 296.48, "not": 296.86, "enough": 297.0, "use": 297.68, "a": 298.16, "prepared": 298.3, "statement": 298.64}
+        visual: "Quiz poster 6 of 6: “Strip out every quote to stop SQL injection?” Beside it, a line of code: `password.replaceAll('\"', '')`. The answer is stamped on: “Use a prepared statement”, the line gets a cross, and a prepared statement appears: `WHERE Name = ? AND Pass = ?`."
+  - id: chorus-3
+    title: "Final chorus"
+    delivery: sung
+    narration: "The final chorus: the completed Security Plan board, each poster lighting with the principle that answers it: the Open Design Principle under the Threat Model, the Zero Trust Principle under the Attack Surface, and the Principle of Least Privilege under Protection Mechanisms. The first stars come out."
+    lines:
+      - id: c3-1
+        start: 299.2
+        end: 302.72
+        text: "Design it in before they break in:"
+        marks: {"design": 299.2, "it": 299.96, "in": 300.3, "before": 300.7, "they": 301.46, "break": 301.68, "in_2": 302.28}
+        visual: "The completed Security Plan board, under its plank sign: every principle in place. The sheriff stands beside it."
+      - id: c3-2
+        start: 302.84
+        end: 306.72
+        text: "Security Model: what are you defending?"
+        marks: {"security": 302.84, "model": 303.52, "what": 304.88, "are": 305.14, "you": 305.52, "defending": 305.78}
+        visual: "Poster 1 lights, with its CIA triangle."
+      - id: c3-3
+        start: 307.28
+        end: 310.28
+        text: "Threat Model: who might be attacking?"
+        marks: {"threat": 307.28, "model": 307.76, "who": 308.7, "might": 308.82, "be": 309.1, "attacking": 309.34}
+        visual: "Poster 2 lights."
+      - id: c3-4
+        start: 310.68
+        end: 314.76
+        text: "Open Design: knowing how it works shouldn't get them in."
+        marks: {"open": 310.68, "design": 311.2, "knowing": 312.28, "how": 312.52, "it": 312.84, "works": 313.1, "shouldnt": 313.68, "get": 313.94, "them": 314.08, "in": 314.36}
+        visual: "Poster 2's Open Design Principle stamp lights, with its rule."
+      - id: c3-5
+        start: 314.78
+        end: 317.66
+        text: "Attack Surface: which parts are exposed?"
+        marks: {"attack": 314.78, "surface": 314.98, "which": 316.06, "parts": 316.42, "are": 316.76, "exposed": 317.0}
+        visual: "Poster 3 lights."
+      - id: c3-6
+        start: 317.94
+        end: 320.72
+        text: "Zero Trust: any input might be malicious."
+        marks: {"zero": 317.94, "trust": 318.18, "any": 318.88, "input": 319.12, "might": 319.5, "be": 319.78, "malicious": 320.02}
+        visual: "Poster 3's Zero Trust Principle stamp lights, with its rule."
+      - id: c3-7
+        start: 321.94
+        end: 325.54
+        text: "Protection Mechanisms: how do you stop them?"
+        marks: {"protection": 321.94, "mechanisms": 322.62, "how": 323.62, "do": 324.06, "you": 324.54, "stop": 324.72, "them": 325.1}
+        visual: "Poster 4 lights."
+      - id: c3-8
+        start: 325.42
+        end: 329.12
+        text: "Least Privilege: each part gets only what it needs."
+        marks: {"least": 325.42, "privilege": 325.86, "each": 326.62, "part": 326.9, "gets": 327.18, "only": 327.72, "what": 328.28, "it": 328.54, "needs": 328.66}
+        visual: "Poster 4's Principle of Least Privilege stamp lights, with its rule."
+      - id: c3-9
+        start: 329.24
+        end: 334.16
+        text: "Design it in before they break in."
+        marks: {"design": 329.24, "it": 329.54, "in": 329.78, "before": 332.26, "they": 332.84, "break": 333.1, "in_2": 333.68}
+        visual: "The whole board glows; the sheriff tips the hat as the first stars come out."
+  - id: outro
+    title: "Outro"
+    delivery: spoken
+    narration: "The outro: a second, blank board headed Your project. The sheriff lifts the key from under the flowerpot and pockets it. Night falls over the town, and the title appears: Design It In. Then the masked outlaw tiptoes back for one more try, three little robot agents copying every step; when the sheriff glances over, they all freeze mid-step. The outlaw lifts the flowerpot, and where the key used to be waits a jar labelled Honeypot: a decoy that catches intruders. The outlaw's hand sticks in the jar, a tag reads Intruder logged, one attempt, the sheriff tips the hat, and the gang tiptoes off backwards."
+    lines:
+      - id: outro-1
+        start: 335.34
+        end: 338.22
+        text: "Now run those four questions on your own project."
+        marks: {"now": 335.34, "run": 335.92, "those": 336.14, "four": 336.4, "questions": 336.64, "on": 337.1, "your": 337.32, "own": 337.44, "project": 337.62}
+        visual: "Beside the completed board, a second, blank one appears, headed “Your project”: four empty posters."
+      - id: outro-2
+        start: 338.56
+        end: 341.96
+        text: "And that key in the flowerpot? Keep it with you."
+        marks: {"and": 338.56, "that": 339.16, "key": 339.34, "in": 339.58, "the": 339.72, "flowerpot": 339.8, "keep": 340.8, "it": 341.34, "with": 341.46, "you": 341.62}
+        visual: "The porch flowerpot again. The sheriff lifts the key from under it and pockets it."
+      - id: outro-3
+        start: 343.06
+        end: 346.58
+        text: "That's security, designed in."
+        marks: {"thats": 343.06, "security": 343.64, "designed": 345.62, "in": 346.2}
+        visual: "Night over the town. The title: “Design It In”. Then the masked outlaw tiptoes back in, three little robot agents copying each step, and they all freeze mid-step while the sheriff glances over. The outlaw lifts the flowerpot: under it waits a jar labelled “HONEYPOT”, and a label reads “Honeypot: a decoy that catches intruders”. The outlaw's hand sticks in the jar, a tag reads “Intruder logged: 1 attempt”, the sheriff tips the hat, and the gang tiptoes off backwards, the jar still on the outlaw's hand."

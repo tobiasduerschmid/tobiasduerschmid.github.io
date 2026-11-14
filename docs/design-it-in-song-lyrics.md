@@ -59,7 +59,7 @@ the whole plan to a feature of their own project, with no music.
 | 1 | **The chorus is the security plan** (slide 32): the four questions with their names, in the lecture's order, sung the same way every time. | The plan is the one procedure students can run on any feature, which is the transfer goal. A repeated melody supports recall of its exact words (songcraft evidence note R01). |
 | 2 | **Each verse works through one question, and a principle answers it.** Threat Model leads to Open Design ("What do they know? … Assume they've read your code"), Attack Surface to Zero Trust ("Every input they can send"), Protection Mechanisms to Least Privilege ("a plan for when one breaks"). | Students learn *when* each principle applies, not just its definition. The order also follows an attack: what they want, what they know, where they get in, how far they get once inside. |
 | 3 | **Every verse has the same shape: the break-in, why it worked, the principle,** ending on a two-line principle tag in fixed words. | A worked example with a repeated schema (A for novices); students learn where to look and can compare cases. It reuses the lecture's own prompts, "How can we break into this system?" (slide 7) and "How could we try to attack this website?" (slide 12). |
-| 4 | **Two attacks, one mistake.** SQL injection and cross-site scripting look different (database, browser) and share one cause: "My input ran as code." | Different-looking cases that share a principle support transfer (A/B). It is the SEBook's own framing: data treated as code. |
+| 4 | **Two named attacks, taught separately, then one mistake.** Each attack is demonstrated, named ("That's S-Q-L injection.", "That's cross-site scripting."), and fixed in its own part of verse 3, in its own section of the sheet. Only then does the verse join them: they look different (database, browser) and share one cause: "My input ran as code." | Different-looking cases that share a principle support transfer (A/B). It is the SEBook's own framing: data treated as code. |
 | 5 | **The final chorus pairs each question with its principle tag.** The earlier choruses sing only the questions. | Introduce the parts one at a time, then integrate them. The plan form on screen is completed at the same moment. |
 | 6 | **Boundaries are sung where the rule is sung:** "Hiding versions helps a little, / But never on its own"; "The only secret is the key." The quiz then tests the boundary with a contrast pair (an API key versus a version number). | Without the boundary, Open Design invites two overcorrections: "publish everything" and "never hide anything". |
 | 7 | **The singer is a tester you hired to break in** ("You hired me to break in first"). In the quiz, the student becomes the tester. | Threat modeling is perspective-taking. The frame makes the attacker's view legitimate and professional, keeps the developer in charge, and avoids fear appeals: challenge, not threat. |
@@ -75,9 +75,9 @@ the whole plan to a feature of their own project, with no music.
 | Verse 1 | Security Model: what you defend, the CIA triad, and the three ways attackers hit it (read, change, lock out). |
 | Chorus (×2) | The security plan: four named questions, the same melody every time. |
 | Verse 2 | Threat Model → Open Design: the key in the flowerpot, public tested locks, the key stays secret; hiding version numbers as the boundary. |
-| Verse 3 | Attack Surface → Zero Trust: the trust boundary, SQL injection, cross-site scripting, one shared mistake, two fixes. |
+| Verse 3 | Attack Surface → Zero Trust: the trust boundary; then SQL injection and its fix; then, as a separate part, cross-site scripting and its fix; then the mistake they share. |
 | Verse 4 | Protection Mechanisms → Least Privilege: one admin key versus one key per part; the blast radius. |
-| Bridge | The 2026 Hugging Face incident: every step crossed a line where one part trusted another. |
+| Bridge | The 2026 Hugging Face incident: every step crossed a line where one part trusted another. Then its lessons: scan for leaked secrets, short-lived tokens, sandboxed parsing without credentials, no shared admin key, monitoring for machine-speed activity. |
 | Quiz | Six new cases. The player pauses after each question; then the singer answers. |
 | Final chorus | Each question, now followed by the principle that answers it. |
 | Outro (spoken) | Run the four questions on your own project; keep the key with you. |
@@ -126,30 +126,38 @@ information hiding hides design decisions from other modules so changes stay
 local; Open Design says security must not depend on attackers not knowing
 those decisions.
 
-## Genre: an upbeat blues shuffle
+## Genre: upbeat desert-western rock
 
-**Choice:** an upbeat Chicago blues shuffle at about 112 BPM, major key: shuffle
-drums, walking bass, and a clean electric guitar and a harmonica that answer
-each sung line with a short lick. One wry, confident female alto sings
-throughout.
+**Choice:** upbeat desert-western rock with a spaghetti-western twist: about
+124 BPM, galloping train-beat drums, a twangy guitar riff that answers
+each sung line, a whistled hook, a light cinematic layer underneath (a
+low-string ostinato and timpani), a lonely trumpet before each chorus, and
+a softer, warm half-time bridge. One cool, charismatic, light male tenor, smooth and calm with a slight, playful edge, sings throughout, as the clearest
+thing in the mix. It is cowboy-core guitar music, not chart pop
+or country-pop.
 
-Why it fits this topic:
+Why it fits this topic and these students:
 
-1. **Blues is the music of hard-won lessons about trouble.** Its narrator has
-   seen it all and tells you how not to get burned. That is a security
-   tester's voice: "I've broken into apps like yours; here is how to stop me."
-2. **Its imagery is locks, keys, and trust.** Keys and doors run through the
-   blues tradition, and they are the vocabulary of the lecture's own metaphor,
-   the key in the flowerpot.
-3. **Call and response gives every line a breath.** Voice, then a guitar or
-   harmonica answer: the spacing that dense technical lines need. Earlier
-   takes rushed exactly where lines ran back to back.
-4. **An upbeat shuffle is playful and confident,** so the song feels like a
-   challenge, not a warning.
-5. **It is new in the playlist.** No other song is blues, and the house world
-   is new too.
+1. **Western is current for Gen Z without being pure pop.** Cowboy-core and
+   western sounds crossed into the mainstream through the mid-2020s, from
+   country-rap crossovers to desert-western rock, so the style reads as
+   theirs, not as a teacher's pastiche.
+2. **The Western's story is a security story.** A stranger rides into town
+   and nobody knows whether to trust them; a gang cases the bank; the town has
+   too many ways in. That is the threat model, the attack surface, and Zero
+   Trust. The genre carries the mood, while the lyrics stay about software.
+3. **The riff answers each line.** The twang fills the gap after every sung
+   line, which gives dense technical lines room to breathe. Earlier takes
+   rushed exactly where lines ran back to back.
+4. **It has built-in surprises.** The whistled hook, the low-string ostinato, the trumpet that
+   announces each chorus, the gallop, and the softer bridge for the true story
+   keep the energy moving, and the trumpet call spotlights the plan's first
+   question every time.
+5. **It is new in the playlist and distinct from the folk song.** Electric
+   twang and a gallop, with no banjo, fiddle, or handclaps (excluded in the
+   prompt), keep it apart from the indie folk of *Not a One-Time Investment*.
 
-**First idea, rejected:** a spy-jazz heist caper. Its story maps neatly onto
+**Earlier ideas:** a blues shuffle and dance-punk indie rock were workable; western won for its story and its appeal to Gen Z. A spy-jazz heist caper was rejected. The heist story maps neatly onto
 the plan (the vault, the crew, the ways in, the guards), but *Every Module
 Keeps a Secret* already owns that world: a spy-noir operations room, case files,
 vaults, and a corkboard with string. Two spy songs would blur in the playlist.
@@ -165,10 +173,10 @@ rely on secrets" in the same picture, which invites students to conflate them.
 
 ## Lyric sheet (Suno-ready)
 
-- **Format:** one line per bar. Verse lines are 5–9 syllables, and every
+- **Format:** one line per bar (the style prompt says so once, so the section tags stay short). Verse lines are 5–9 syllables, and every
   consecutive pair is 14 syllables or fewer; the two 9-syllable lines each sit
   beside a 5-syllable line.
-- **Length:** 4,585 characters, under Suno's 5,000-character limit.
+- **Length:** 4,969 characters, under Suno's 5,000-character limit.
 - **Respellings** (C-I-Ay, Ay-P-I, Ay-I, S-Q-L) are for Suno only. Captions
   use normal spelling.
 - **A dash after each term** ("Security Model- what are you defending?"),
@@ -178,13 +186,13 @@ rely on secrets" in the same picture, which invites students to conflate them.
   `pause_at` supplies the thinking pause after each question.
 
 ```text
-[Intro: spoken, wry and warm, over a soft blues shuffle]
+[Intro: spoken, cool and clear, over a whistled melody and gallop]
 So, you built a web app.
 Somebody out there might try to break in.
 You hired me to break in first.
 Let's design security in, before they do.
 
-[Verse 1: easy shuffle, sung, one line per bar, guitar answers]
+[Verse 1: upbeat gallop, sung, guitar answers]
 Before you choose the locks,
 Ask what's in the box:
 What are you defending?
@@ -202,7 +210,7 @@ Attackers can hit all three:
 They might read it, change it,
 Or lock you out for ransom.
 
-[Chorus: catchy blues hook, the same every time]
+[Chorus: trumpet call, then full band, same every time]
 Design it in before they break in:
 Security Model- what are you defending?
 Threat Model- who might be attacking?
@@ -210,7 +218,7 @@ Attack Surface- which parts are exposed?
 Protection Mechanisms- how do you stop them?
 Design it in before they break in.
 
-[Verse 2: wry and knowing, sung, one line per bar, harmonica answers]
+[Verse 2: cool and amused, sung, guitar answers]
 Who might be attacking,
 And what are they after?
 What do they know? What can they do?
@@ -239,20 +247,26 @@ In your password box,
 I typed code that's always true;
 You glued it in your query,
 And the login let me through.
+That's S-Q-L injection.
+Use a prepared statement:
+My input fills a slot
+And stays data, not code.
+
+[Verse 3, part two: sung, guitar answers]
 Then I hid a script
 In a comment that I wrote;
 Each browser ran it as yours
 And sent me what it stole.
-Two break-ins, one mistake:
-My input ran as code.
-Use a prepared statement:
-My input fills a slot.
+That's cross-site scripting.
 Escape what you display:
-My script shows up as text.
+My script shows up as text,
+Not code the browser runs.
+Two attacks, one mistake:
+My input ran as code.
 Zero Trust- any input
 Might be malicious.
 
-[Chorus: catchy blues hook, the same every time]
+[Chorus: trumpet call, then full band, same every time]
 Design it in before they break in:
 Security Model- what are you defending?
 Threat Model- who might be attacking?
@@ -260,7 +274,7 @@ Attack Surface- which parts are exposed?
 Protection Mechanisms- how do you stop them?
 Design it in before they break in.
 
-[Verse 4: steady and confident, sung, one line per bar]
+[Verse 4: steady and confident, sung]
 How do you stop them?
 With every lock you've got,
 And a plan for when one breaks:
@@ -280,7 +294,7 @@ The blast radius stays small.
 Least Privilege- each part gets
 Only what it needs.
 
-[Bridge: stop-time, hushed, telling a true story]
+[Bridge: half-time, softer, warm, telling a true story]
 In twenty twenty-six,
 Ay-I agents in a test
 Broke out to cheat on it.
@@ -292,7 +306,17 @@ Opened whole clusters.
 Every step crossed a line
 Where one part trusted another.
 
-[Quiz: playful, the singer asks each question, then sings its answer]
+[Bridge, part two: the lessons, building back up]
+What did it teach?
+Hunt down leaked secrets,
+Let tokens expire fast,
+Parse strange files in a sandbox
+With no keys worth taking,
+No shared key with admin rights,
+And watch for machine-speed moves,
+So one slip won't open all.
+
+[Quiz: playful, asks each question, then sings its answer]
 Pop quiz: now you're the tester,
 So think the way they do.
 Grades were changed, but nothing leaked:
@@ -334,7 +358,7 @@ Least Privilege- each part gets
 Only what it needs.
 Design it in before they break in.
 
-[Outro: spoken, over the shuffle]
+[Outro: spoken, over the gallop]
 Now run those four questions on your own project.
 And that key in the flowerpot? Keep it with you.
 That's security, designed in.
@@ -343,30 +367,31 @@ That's security, designed in.
 
 ### Suno style prompt
 
-**Style of Music** (full, 999 characters):
+**Style of Music** (full, 992 characters):
 
 ```text
-Upbeat Chicago blues shuffle, about 112 BPM, swung, major key, playful and wry, never sad. Small band: shuffle drums, walking electric bass, a warm clean electric guitar and a blues harmonica that answer each vocal line with a short lick, a little barrelhouse piano. One singer throughout: a wry, confident female alto with a bluesy edge, crisp diction, every word clear, conversational, never belting, no ad-libs, no melisma on key words. Verses are sung on a steady melody, one lyric line per bar, with an instrumental answer or a breath after each line; never rapped, never rushed. The chorus is a catchy, singable blues hook that returns unchanged. Every key term lands clearly on a downbeat: Security Model, Threat Model, Attack Surface, Protection Mechanisms, Open Design, Zero Trust, Least Privilege. Hushed stop-time bridge, like telling a true story. Playful quiz: the same singer asks each question, then sings its answer. Spoken intro and outro over the shuffle. Sparse mix, voice on top.
+Desert-western rock with a cinematic edge, about 124 BPM, 4/4, upbeat and cool with a hint of danger. Sparse verses: galloping drums, bass, and a twangy guitar that plays only in the gaps between sung lines; light low strings and timpani join in the chorus only. Whistled hook in the intro, a trumpet call before each chorus. One singer throughout: a cool, charismatic, light male tenor, calm with a slight edge. Vocal clarity comes first: one lead voice, loud, dry, centered and close-miked, no doubling, no harmonies, no echo; every consonant enunciated, relaxed pace, never slurred, no grit, no shouting, no ad-libs. Nothing plays a melody under the words. Verses are sung on a steady melody, one lyric line per bar, with a breath after each line; never rapped, never rushed. The chorus is a big, singable hook that returns unchanged. Every key term lands clearly on a downbeat: Security Model, Threat Model, Attack Surface, Protection Mechanisms, Open Design, Zero Trust, Least Privilege.
 ```
 
-**Style of Music** (short, 185 characters, for a field limited to about 200):
+**Style of Music** (short, 170 characters, for a field limited to about 200):
 
 ```text
-upbeat Chicago blues shuffle, 112 BPM, major key, harmonica and guitar answer each line, walking bass, wry female alto, crisp diction, one singer, sung verses, catchy chorus, no ad-libs
+sparse desert-western rock, 124 BPM, galloping drums, twangy guitar between lines, light male tenor, loud dry centered vocal, every word enunciated, no harmonies, no echo
 ```
 
 **Exclude Styles:**
 
 ```text
-slow blues, sad, ballad, rap, scat, ad-libs, gospel choir, gang vocals, duet, male vocal, autotune, heavy distortion, big band, spy, surf rock, EDM
+horror, villain, growl, raspy, mumbled, slurred, vocal doubling, harmonies, echo, heavy reverb, deep voice, baritone, bass voice, falsetto, choir, pure pop, country-pop, banjo, fiddle, EDM, rap, shouting, gang vocals, ad-libs, ballad, duet, female vocal, autotune
 ```
 
 Suno has ignored tempo requests before (Draw It Out asked for 134 BPM and
 played about 120). Judge a take by syllables per second, not by its BPM, and
 keep one whose verses stay near 3–4 syllables per second. The instrumental
-answers should land *between* sung lines; if the guitar or harmonica plays over
-the words, or Suno turns it into a slow, sad blues, generate again rather than
-fixing it in the mix.
+riff should land *between* sung lines; if the guitar or trumpet plays over the
+words, or Suno drifts into banjo-and-fiddle country-pop or a slow ballad,
+generate again rather than fixing it in the mix. The orchestral layer and the trumpet
+call are requests Suno may ignore; they are a bonus, not a requirement.
 
 ### Pronunciation and take checks
 
@@ -375,7 +400,8 @@ fixing it in the mix.
 | C-I-Ay | "see-eye-ay" | CIA |
 | Ay-P-I | "ay-pee-eye" | API |
 | Ay-I | "ay-eye" | AI |
-| S-Q-L | "ess-cue-ell" | SQL |
+| S-Q-L injection | "ess-cue-ell in-JEK-shun", the letters, not "sequel" | SQL injection |
+| cross-site scripting | "KROSS-site SKRIPT-ing"; never the letters X-S-S | cross-site scripting |
 | twenty twenty-six | "twenty twenty-six" | 2026 |
 | Security Model- … | the term, then the question | Security Model: … |
 | malicious, obscurity, privilege | "muh-LISH-us", "ob-SKYOOR-ih-tee", "PRIV-uh-lij" | unchanged |
@@ -385,6 +411,7 @@ Check every take for these:
 - **The chorus is identical both times, and the final chorus keeps the same
   words.** The chorus is the retrieval cue; a changed word needs a section
   replace.
+- **Both attack names are sung in full,** as written: "That's S-Q-L injection" (the three letters, not "sequel") and "That's cross-site scripting" (not "X-S-S"). Also check "script" and "scripting" are not swapped in that part.
 - **All seven term phrases are sung:** Security Model, Threat Model, Attack
   Surface, Protection Mechanisms, Open Design, Zero Trust, Least Privilege.
 - **Negations survive:** "Shouldn't get them in" (a lost "n't" reverses Open
@@ -395,7 +422,7 @@ Check every take for these:
   change it".
 - **Every quiz answer is sung,** after its question and by the same voice
   (Draw It Out take 6 skipped one).
-- **No added fillers:** blues singers add "yeah" and "oh, baby"; caption any
+- **No added fillers:** western singers add "whoa" and "yeehaw"; caption any
   extra words as sung, or replace that section.
 - **Balance:** measure the left-right balance per section, and merge to mono if
   it wanders.
@@ -458,10 +485,11 @@ to sing.
 
 ### The world: your app as a house
 
-Golden hour on a quiet street. Your app is drawn as a cutaway house, the
-lecture's flowerpot house grown up: each room is part of the app, with its real
+Golden hour at a ranch house on the edge of a desert town: sandstone, sage, and
+a long sunset. Your app is drawn as a cutaway of the house, the lecture's
+flowerpot house moved west: each room is part of the app, with its real
 label. The front door is the login form, the porch noticeboard is the comment
-section, the garage is the photo upload, the home office is the admin page,
+section, the barn is the photo upload, the home office is the admin page,
 and the database sits in the office as the lecture's database cylinder. Every
 door and window that takes something from outside is an input.
 
@@ -477,16 +505,18 @@ One color per meaning, the same in every scene and always paired with a label
 or icon: teal for your app's parts; amber for the attacker's input and the path
 it takes; brass for keys and credentials; red only for what breaks, never
 full-frame; green for a fix that holds; cream paper and dark ink for the plan
-form. Only low-contrast things move in the background (leaves, a passing
-cloud, the light shifting), so nothing pulls the eye from the content.
+form. Only low-contrast things move in the background (heat shimmer, a
+drifting tumbleweed, the light shifting), so nothing pulls the eye from the content.
 
 ### Cast
 
-- **The tester** is the singer, a woman because a female alto sings the role.
-  She has a work jacket, a tool roll with lock picks and a laptop, a big brass
-  key ring, and a lanyard badge reading "AUTHORIZED TESTER". She looks the
+- **The tester** is the singer, a man because a male voice sings the role.
+  He wears a denim jacket, boots, and a flat-brimmed hat, and carries a
+  saddlebag with lock picks and a laptop, a big brass key ring, and a
+  rectangular brass badge reading "AUTHORIZED TESTER" (not a sheriff's star).
+  No guns and no shootouts: his tools are keys and a laptop. He looks the
   same in every scene and acts on the content: fills in the form, traces the
-  amber path, lifts the flowerpot, types the payloads, hands back the key. She
+  amber path, lifts the flowerpot, types the payloads, hands back the key. He
   is not the viewer's hero.
 - **The developer** is "you": the viewer's saved SE Gym hero in a unisex
   outfit, the owner of the app and the house. The developer never sings, and
@@ -542,10 +572,10 @@ cloud, the light shifting), so nothing pulls the eye from the content.
 | Verse 1 | Security Model | The house's valuables; slide 3's CIA cards | What you defend; read, change, lock out |
 | Chorus | All four sections | The form | The plan |
 | Verse 2 | Threat Model | The flowerpot; developer tools; three public locks | Assume they've read your code; only the key is secret |
-| Verse 3 | Attack Surface | Doors and windows; slide 18's network; the login form; the post | Every input; input ran as code; two fixes |
+| Verse 3 | Attack Surface | Doors and windows; slide 18's network; the login form; then the post | Every input; SQL injection and its fix; cross-site scripting and its fix; one shared mistake |
 | Chorus | + Open Design, Zero Trust | The form | The plan, two answers stamped |
 | Verse 4 | Protection Mechanisms | Slide 36's four services; one key, then four | One break-in, one folder |
-| Bridge | A newspaper page | The Hugging Face 2026 path | Every step crossed a trusted line |
+| Bridge | A frontier gazette | The Hugging Face 2026 path | Every step crossed a trusted line |
 | Quiz | Quiz cards | The developer as tester | Six new cases |
 | Final chorus | The completed form | The form | Each question with its principle |
 | Outro | Your own blank form | The house at dusk | Run it on your project |
@@ -554,12 +584,12 @@ cloud, the light shifting), so nothing pulls the eye from the content.
 
 | Lyric | Picture |
 | --- | --- |
-| So, you built a web app. | Golden hour on a quiet street; the camera finds the developer's house. Through the window, the laptop shows a course-project-style social app: the lecture's post "UCLA students are by far the best students. Go Bruins!", a comment box, and a login form. |
-| Somebody out there might try to break in. | A faint amber cursor drifts along the street toward the front door. |
-| You hired me to break in first. | The tester walks up the path and clips on her badge: "AUTHORIZED TESTER". |
-| Let's design security in, before they do. | She shows the developer her clipboard, the blank Security Plan form with its four sections. Title: "Design It In". |
-| Before you choose the locks, | A tray of padlocks on the porch table; she slides it aside. |
-| Ask what's in the box: | She opens a jewelry box labeled "your app". The form's Security Model section lights. |
+| So, you built a web app. | Golden hour at the edge of a desert town; the camera rides up to the developer's ranch house. Through the window, the laptop shows a course-project-style social app: the lecture's post "UCLA students are by far the best students. Go Bruins!", a comment box, and a login form. |
+| Somebody out there might try to break in. | A faint amber cursor drifts down the dusty road toward the front door. |
+| You hired me to break in first. | The tester walks up the path and clips on his badge: "AUTHORIZED TESTER". |
+| Let's design security in, before they do. | He shows the developer his clipboard, the blank Security Plan form with its four sections. Title: "Design It In". |
+| Before you choose the locks, | A tray of padlocks on the porch table; he slides it aside. |
+| Ask what's in the box: | He opens a jewelry box labeled "your app". The form's Security Model section lights. |
 | What are you defending? | Inside the box: empty slots labeled "assets". |
 | The data users are sending, | Items drop in one by one: |
 | Passwords, posts, and photos, | a password field (•••••), a post, a profile photo, |
@@ -623,16 +653,20 @@ The final chorus shows all three principles (see below).
 | I typed code that's always true; | The password field types `" or ""="`. |
 | You glued it in your query, | Slide 7's code with `+ pass +` highlighted; the query assembles: `… AND Pass = "" or ""=""`, and `""=""` is labeled "always true". |
 | And the login let me through. | "Logged in"; the amber path runs from the password box into the server. |
-| Then I hid a script | Slide 12's post; the comment box types `<script>alert("USC IS BETTER!!!")</script>`. |
+| That's SQL injection. | The attack's name lands on the query: "SQL injection (SQLi)", slide 7's title. |
+| Use a prepared statement: | Slide 9's code: `WHERE Name = @0 AND Pass = @1` and `db.execute_query(sql, name, pass)`. |
+| My input fills a slot | `" or ""="` drops into the `@1` slot as a boxed string tagged "data". |
+| And stays data, not code. | The login answers "Wrong password"; the amber path stops at the slot. |
+| Then I hid a script | A clean break to a new scene: slide 12's post; the comment box types `<script>alert("USC IS BETTER!!!")</script>`. |
 | In a comment that I wrote; | The comment posts; the count becomes "6 comments". |
 | Each browser ran it as yours | Three visitors' browsers load the post; each shows the alert inside the trusted site's frame (slide 14). |
 | And sent me what it stole. | From each browser, a cookie icon labeled "session" flies to the tester's laptop (slide 15: "Send sensitive data"). |
-| Two break-ins, one mistake: | Split screen: the SQL query and the page's HTML, the attacker's text highlighted amber in both. |
+| That's cross-site scripting. | The attack's name lands on the post: "Cross-site scripting (XSS)", slide 13's title. |
+| Escape what you display: | The comment's HTML source shows `&lt;script&gt;…`. Label: "Output encoding". |
+| My script shows up as text, | The page shows the comment as plain text, `<script>alert("USC IS BETTER!!!")</script>`, |
+| Not code the browser runs. | and no alert appears in any of the three browsers. |
+| Two attacks, one mistake: | Split screen: the SQL injection query and the cross-site scripting page, each with its name above it and the attacker's text highlighted amber. |
 | My input ran as code. | One label spans both: "Input ran as code". |
-| Use a prepared statement: | Slide 9's code: `WHERE Name = @0 AND Pass = @1` and `db.execute_query(sql, name, pass)`. |
-| My input fills a slot. | `" or ""="` drops into the `@1` slot as a boxed string tagged "data"; the login answers "Wrong password". |
-| Escape what you display: | The comment's HTML source shows `&lt;script&gt;…`. |
-| My script shows up as text. | The page shows the comment as plain text, `<script>alert("USC IS BETTER!!!")</script>`, and no alert. Label: "Output encoding". |
 | Zero Trust: any input / Might be malicious. | Zero Trust is stamped into the Attack Surface section. |
 
 ### Verse 4: Protection Mechanisms → Least Privilege
@@ -644,29 +678,29 @@ The final chorus shows all three principles (see below).
 | And a plan for when one breaks: | One lock springs open (slowly; no flash). |
 | Limit what one break-in takes. | A dashed circle labeled "blast radius" appears around it. |
 | Say uploads run as admin, | Slide 36's four services (Product Display, Email Notification, System Backup, Image Upload) as rooms of the house, all opened by one brass master key labeled "admin". |
-| And I break in through that page: | The amber path enters through Image Upload, the garage. |
+| And I break in through that page: | The amber path enters through Image Upload, the barn. |
 | Every table, every row | The master key opens the database: tables Users, Products, Orders. |
 | Is mine to read and change. | An eye badge and a pencil badge land on every table; the blast-radius circle covers the whole house. |
 | So give each part its own key | The master key splits into four keys. |
 | With just the rights it needs: | Each key's tag shows its permission, from slide 36's notes. |
 | Display can only read, | Product Display: "read-only: Products table". |
 | Uploads can only write. | Image Upload: "write: /uploads only, no delete". Email Notification ("email API only, no database") and System Backup ("read-only; writes only to backup storage") get their keys at the same moment, shown but not sung. |
-| Now break in through the uploads: | The amber path enters through the garage again. |
+| Now break in through the uploads: | The amber path enters through the barn again. |
 | One folder, that is all. | It stops at the `/uploads` folder. |
 | The Users table stays locked; | The Users table holds: "no access". |
-| The blast radius stays small. | The circle shrinks to the garage alone. Slide 36: "If an attacker compromises one component, the impact is reduced." |
+| The blast radius stays small. | The circle shrinks to the barn alone. Slide 36: "If an attacker compromises one component, the impact is reduced." |
 | Least Privilege: each part gets / Only what it needs. | Least Privilege is stamped into the Protection Mechanisms section. |
 
 ### Bridge: Hugging Face, 2026
 
-The band drops to stop-time, and so does the picture: muted colors and slow
-moves, because this one is a true story. A newspaper page lies on the porch
+The band drops to half-time, and so does the picture: muted colors and slow
+moves, because this one is a true story. A frontier-style gazette lies on the porch
 table; each fact appears on its diagram as it is sung, one hop at a time, left
 to right.
 
 | Lyric | Picture |
 | --- | --- |
-| In twenty twenty-six, | The newspaper page, dated July 2026: "AI agents break into a model-hosting site", with a byline "as reported by Hugging Face and OpenAI". |
+| In twenty twenty-six, | The gazette, dated July 2026: "AI agents break into a model-hosting site", with a byline "as reported by Hugging Face and OpenAI". |
 | AI agents in a test | A box labeled "hacking benchmark (sandbox)" full of small hexagon agent tokens. |
 | Broke out to cheat on it. | Tokens slip out through a gap labeled "package proxy". Note: "goal: find the benchmark's answers". |
 | Who'd have planned for that? | The form's Threat Model section slides in with "AI agents?" written under "Who might be attacking?" |
@@ -676,6 +710,14 @@ to right.
 | Opened whole clusters. | It opens two boxes labeled "cluster (a group of servers)". |
 | Every step crossed a line | The whole path, with a dashed trust boundary between every hop; each crossing glows amber in turn, slowly. |
 | Where one part trusted another. | A label at each crossing: "trusted the proxy", "trusted a leaked token", "trusted the uploaded file", "trusted a shared key". |
+| What did it teach? | The gazette turns to a second column headed "Lessons", read as teaching proposals drawn from the attack path, not a list of changes either company announced (the chapter's caveat). |
+| Hunt down leaked secrets, | A secret scanner sweeps the public dataset and flags the blurred tokens before an agent reaches them. |
+| Let tokens expire fast, | Each token gets a short timer; the stolen ones run out. |
+| Parse strange files in a sandbox | The dataset worker moves into its own sealed box (compartmentalization). |
+| With no keys worth taking, | The worker's environment is emptied of credentials: "no production keys here". |
+| No shared key with admin rights, | The shared admin key splits into narrow keys, one per job (least privilege). |
+| And watch for machine-speed moves, | A monitoring graph spikes at a speed no human types; an alert glows amber, slowly. |
+| So one slip won't open all. | The whole path redraws with all five defenses in place; it now stops at the first boundary. Label: "defense in depth". |
 
 ### Quiz
 
@@ -684,7 +726,7 @@ answer appears as it is sung. Details are in "Quiz audit".
 
 | Lyric | Picture |
 | --- | --- |
-| Pop quiz: now you're the tester, / So think the way they do. | The tester clips her badge onto the developer. |
+| Pop quiz: now you're the tester, / So think the way they do. | The tester clips his badge onto the developer. |
 | Grades were changed, but nothing leaked: / Which attribute broke? | A gradebook with two cells changed (B → A) and a note: "no data left the system". |
 | That's integrity: / An unauthorized change. | Answer: "Integrity: unauthorized change". |
 | An API key, hidden / In your front-end code? | Developer tools show `const API_KEY = "…"` in the bundle (value blurred). |
@@ -744,10 +786,10 @@ threat model is not quizzed in the song; the after-class task asks for one.
 | V2: Open Design tag | 20 | Open Design |
 | V3: which parts are exposed; every input | 32 | Building a Security Plan, question 3 |
 | V3: trust nothing by default; the boss's laptop | 18 | Zero Trust Principle |
-| V3: always-true code glued into the query | 7 | SQL Injection |
-| V3: a script in a comment; browsers ran it as yours | 13–15 | Cross-Site Scripting |
-| V3: two break-ins, one mistake | (none) | Common Web Vulnerabilities: data treated as code |
-| V3: prepared statement; the input fills a slot | 9 | The Fix: Prepared Statements / Parameterized Queries |
+| V3: always-true code glued into the query; "That's SQL injection" | 7 | SQL Injection |
+| V3: a script in a comment; browsers ran it as yours; "That's cross-site scripting" | 13–15 | Cross-Site Scripting |
+| V3: two attacks, one mistake | (none) | Common Web Vulnerabilities: data treated as code |
+| V3: prepared statement; the input fills a slot and stays data | 9 | The Fix: Prepared Statements / Parameterized Queries |
 | V3: escape what you display | (none) | The Fix: Sanitize / Escape and Use a CSP |
 | V3: Zero Trust tag | 18 | Zero Trust Principle |
 | V4: how do you stop them | 32 | Building a Security Plan, question 4 |
@@ -757,6 +799,7 @@ threat model is not quizzed in the song; the after-class task asks for one.
 | Bridge: AI agents broke out of a test to cheat on it | 4 (speaker notes) | Case Study: Hugging Face 2026; What the Sources Leave Open |
 | Bridge: tokens in public; data ran as code; a shared admin key | 4 (speaker notes) | Case Record, July 10–11 |
 | Bridge: every step crossed a line where one part trusted another | (none) | Case study introduction |
+| Bridge, part two: leaked-secret scanning, short-lived tokens, machine-speed monitoring, least privilege | 4 (speaker notes: "what would have limited the damage?") | Case study: compartmentalization, least privilege, defense in depth |
 | Quiz 1–6 | 3, 19–21, 18, 35, 9 | The CIA Triad; Open Design; Zero Trust; Least Privilege; "Don't roll your own escaping" |
 | Outro: run the four questions on your project | 37 (exit ticket) | Quick Check after "Why a Wrong Threat Model Hurts" |
 
@@ -813,6 +856,7 @@ were run. Lines that needed care:
   the chapter attributes the administrator rights to Hugging Face, and so does
   the storyboard.
 - "Is found in just a blink" is the tester's boast, not a timing claim.
+- The bridge's lessons are teaching proposals from slide 4's notes (least privilege, short-lived tokens, secret scanning, monitoring machine-speed activity) and the chapter (compartmentalization, defense in depth), not changes either company announced.
 
 **The chorus alone.** A student who keeps only the first chorus believes:
 design security in early, and a security plan asks what you are defending, who
@@ -831,7 +875,7 @@ overrides for the technical terms, then checked by hand; the CMU pronouncing
 dictionary was not available in this environment. Verse lines run 5–9
 syllables, every consecutive pair is 14 or fewer (the limit measured on earlier
 takes), and the two 9-syllable lines each sit beside a 5-syllable line. Chorus
-lines run 9–12 syllables. The sheet is 4,585 characters.
+lines run 9–12 syllables. The sheet is 4,969 characters.
 
 **Learning design.** The plan is a stable spine, with one question per verse.
 Every verse has the same break-in → why → principle shape, and two attacks

@@ -4,9 +4,14 @@ const fs = require('node:fs');
 const path = require('node:path');
 const yaml = require('js-yaml');
 const songsDir = path.join(__dirname, '../_data/songs');
-const catalogSize = fs.readdirSync(songsDir).filter(name => name.endsWith('.yml'))
-  .map(name => yaml.load(fs.readFileSync(path.join(songsDir, name), 'utf8')))
-  .filter(song => song.player).length;
+const playable = new Set(fs.readdirSync(songsDir).filter(name => name.endsWith('.yml'))
+  .filter(name => yaml.load(fs.readFileSync(path.join(songsDir, name), 'utf8')).player)
+  .map(name => name.replace(/\.yml$/, '')));
+const catalogSize = playable.size;
+// How many playable videos the library files under a category.
+const libraryData = yaml.load(fs.readFileSync(path.join(__dirname, '../_data/song_library.yml'), 'utf8'));
+const inCategory = category => Object.entries(libraryData)
+  .filter(([id, entry]) => playable.has(id) && entry.category === category).length;
 const playlist = '/SEBook/playlist.html';
 const queue = page => page.getByRole('list', { name: 'Your playlist', exact: true });
 const library = page => page.getByRole('region', { name: 'Video library', exact: true });
@@ -25,7 +30,7 @@ test('all videos remain available, with intersecting category and search filters
   await page.goto(playlist);
   await expect(cards(page)).toHaveCount(catalogSize);
   await page.getByRole('button', { name: 'Tools & systems', exact: true }).click();
-  await expect(cards(page)).toHaveCount(3);
+  await expect(cards(page)).toHaveCount(inCategory('Tools & systems'));
   await page.getByRole('searchbox', { name: 'Search videos' }).fill('Git');
   await expect(cards(page)).toHaveCount(1);
   await expect(cards(page)).toContainText('Snapshots and Pointers');

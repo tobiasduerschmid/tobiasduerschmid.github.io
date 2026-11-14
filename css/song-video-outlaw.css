@@ -1,0 +1,152 @@
+/*
+ * The outlaw of "Design It In" and its robot bandits (js/song-video/outlaw.js).
+ * Like the rest of the song's artwork this styles the 960×540 stage, which
+ * keeps its dusk colours in both page themes; the player's print styles hide
+ * the stage. The figure is lit from the upper left, outlined in the sheriff's
+ * dark brown, and kept a little lighter than the town's silhouettes so it
+ * reads against the dusk; nothing glows.
+ */
+
+.ol-outlaw,
+.ol-bot {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+}
+
+.ol-art { display: block; overflow: visible; }
+.ol-shadow { fill: rgba(0, 0, 0, 0.45); }
+
+/* The far arm and leg sit in shadow behind the body. */
+.ol-far { filter: brightness(0.66); }
+
+.ol-ink,
+.ol-coat-ink { fill: #1e140c; stroke: #1e140c; stroke-width: 2.8; stroke-linejoin: round; }
+.ol-outline,
+.ol-cape,
+.ol-collar,
+.ol-hat,
+.ol-mask,
+.ol-boot,
+.ol-lining,
+.ol-coat-edge { stroke: #1e140c; stroke-width: 1.3; stroke-linejoin: round; }
+
+/* Gradient stops. */
+.ol-coat-stop-0 { stop-color: #6a7080; }
+.ol-coat-stop-1 { stop-color: #474b57; }
+.ol-coat-stop-2 { stop-color: #2b2e36; }
+.ol-sleeve-stop-0 { stop-color: #7d8496; }
+.ol-sleeve-stop-1 { stop-color: #4a4f5c; }
+.ol-felt-stop-0 { stop-color: #45464f; }
+.ol-felt-stop-1 { stop-color: #17171c; }
+.ol-pants-stop-0 { stop-color: #4f4741; }
+.ol-pants-stop-1 { stop-color: #2a2420; }
+.ol-boot-stop-0 { stop-color: #7a4e2c; }
+.ol-boot-stop-1 { stop-color: #3e2614; }
+.ol-mask-stop-0 { stop-color: #2f7a78; }
+.ol-mask-stop-1 { stop-color: #164446; }
+.ol-skin-stop-0 { stop-color: #e0a982; }
+.ol-skin-stop-1 { stop-color: #b47a52; }
+.ol-glove-stop-0 { stop-color: #e6b47a; }
+.ol-glove-stop-1 { stop-color: #c08750; }
+.ol-glove-stop-2 { stop-color: #8c5a2e; }
+.ol-lining-stop-0 { stop-color: #a8343e; }
+.ol-lining-stop-1 { stop-color: #5e1822; }
+.ol-brass-stop-0 { stop-color: #fff2b8; }
+.ol-brass-stop-1 { stop-color: #d9a441; }
+.ol-brass-stop-2 { stop-color: #8a5e1c; }
+
+/* Clothes. */
+.ol-sleeve,
+.ol-pants,
+.ol-coat { stroke: none; }
+.ol-gauntlet { stroke: #1e140c; stroke-width: 1.1; stroke-linejoin: round; }
+.ol-gauntlet-stitch { fill: none; stroke: #6a3e18; stroke-width: 0.6; stroke-dasharray: 1.3 1.2; }
+.ol-fold { fill: none; stroke: #23262d; stroke-width: 1; stroke-linecap: round; }
+.ol-seam { fill: none; stroke: #23262d; stroke-width: 1.1; stroke-linecap: round; }
+.ol-pocket { fill: none; stroke: #1b1d22; stroke-width: 1.6; stroke-linecap: round; }
+.ol-panel-edge { fill: none; stroke: #1e140c; stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round; }
+.ol-button { fill: #c9b27a; stroke: #3a2c12; stroke-width: 0.6; }
+.ol-boot-stitch { fill: none; stroke: #d9b07a; stroke-width: 0.7; stroke-dasharray: 1.4 1.2; }
+.ol-heel { fill: #2a1a0e; }
+.ol-sole { fill: none; stroke: #1e140c; stroke-width: 1.4; stroke-linecap: round; }
+.ol-boot-shine { fill: none; stroke: #b98a5c; stroke-width: 1; stroke-linecap: round; }
+.ol-spur-strap { fill: none; stroke: #3a2414; stroke-width: 1.6; stroke-linecap: round; }
+.ol-spur { fill: none; stroke: #b9c0c8; stroke-width: 1.2; stroke-linecap: round; }
+.ol-rowel { fill: #c9ced6; stroke: #4a5058; stroke-width: 0.6; }
+
+/* The head. */
+.ol-skin { stroke: none; }
+.ol-skin.ol-outline { stroke: #1e140c; }
+.ol-hair { fill: #2a1d16; }
+.ol-ear { fill: #c38a62; stroke: #1e140c; stroke-width: 1; }
+.ol-ear-line { fill: none; stroke: #7a4a2c; stroke-width: 0.8; stroke-linecap: round; }
+.ol-eye-white { fill: #f4ecdf; stroke: none; }
+.ol-pupil { fill: #1e140c; }
+.ol-lid { fill: none; stroke: #1e140c; stroke-width: 1.5; stroke-linecap: round; }
+.ol-lash { fill: none; stroke: #1e140c; stroke-width: 1.1; stroke-linecap: round; }
+.ol-brow { fill: none; stroke: #1e140c; stroke-width: 2.4; stroke-linecap: round; }
+.ol-mask-stitch { fill: none; stroke: #6fb3ae; stroke-width: 0.7; stroke-dasharray: 1.4 1.4; opacity: 0.8; }
+.ol-mask-dot { fill: #9fd2cc; opacity: 0.75; }
+.ol-band { fill: #6b4a2a; stroke: #1e140c; stroke-width: 0.8; }
+.ol-concho { fill: #d8dde4; stroke: #4a5058; stroke-width: 0.6; }
+.ol-hat-shine { fill: none; stroke: #6c6e78; stroke-width: 1; stroke-linecap: round; opacity: 0.85; }
+
+/* The coat's lining and the badge pinned to it. */
+.ol-badge-plate { stroke: #5e3e10; stroke-width: 1.2; }
+.ol-badge-rim { fill: none; stroke: #8a5e1c; stroke-width: 0.8; }
+
+/* Gloves: FrontierHand's hand in tan leather, its far fingers in shadow. */
+.ol-outlaw .sh-finger--far { fill: #93602f; }
+.ol-outlaw .sh-nail { display: none; }
+.ol-outlaw .sh-hand-line { stroke: #5a3418; }
+
+/* Labels on props and the badge (≥ 12 px on stage at scale 1). */
+.ol-label { font-family: inherit; font-weight: 800; letter-spacing: 0.02em; }
+.ol-label--ink { fill: #2a1c10; }
+.ol-label--heavy { font-weight: 900; }
+.ol-label--badge { fill: #3a2408; font-weight: 900; }
+
+/* Props. */
+.ol-brass { fill: var(--wk-brass, #d9a441); stroke: #5b3d0e; stroke-width: 0.8; }
+.ol-hole { fill: #2a1c10; }
+.ol-pick { fill: none; stroke: #c9ced6; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
+.ol-wood { fill: #7a4a26; stroke: #2a1608; stroke-width: 0.9; }
+.ol-lens { fill: rgba(190, 220, 240, 0.35); stroke: var(--wk-brass, #d9a441); stroke-width: 3.4; }
+.ol-lens-shine { fill: none; stroke: #ffffff; stroke-width: 1.4; stroke-linecap: round; opacity: 0.8; }
+.ol-paper { fill: #f2e4c4; stroke: #6b5232; stroke-width: 1; }
+.ol-paper-roll { fill: none; stroke: #9a7d52; stroke-width: 1; }
+.ol-ribbon { fill: #a3271c; stroke: #5a120c; stroke-width: 0.6; }
+.ol-sack { fill: #b99b68; stroke: #4a3418; stroke-width: 1.2; stroke-linejoin: round; }
+.ol-sack-weave { fill: none; stroke: #8f7444; stroke-width: 0.7; opacity: 0.7; }
+.ol-rope { fill: none; stroke: #5a3e1a; stroke-width: 1.8; stroke-linecap: round; }
+.ol-lid { fill: #9aa3ad; stroke: #3a3e44; stroke-width: 0.9; }
+.ol-glass { fill: rgba(200, 228, 236, 0.32); stroke: #dfeff4; stroke-width: 1.4; }
+.ol-glass-shine { fill: none; stroke: #ffffff; stroke-width: 1.6; stroke-linecap: round; opacity: 0.7; }
+.ol-glass-rim { fill: rgba(220, 238, 244, 0.6); stroke: #6a7880; stroke-width: 1; }
+.ol-cookie { fill: #c98a44; stroke: #6b4214; stroke-width: 0.8; }
+.ol-chip { fill: #4a2810; }
+.ol-honey-jar { fill: rgba(225, 240, 244, 0.45); stroke: #6a7880; stroke-width: 1.3; }
+.ol-honey { fill: #e8a632; opacity: 0.92; }
+.ol-honey-drip { fill: #f0b440; stroke: #a8680c; stroke-width: 0.6; }
+.ol-laptop { fill: #3a3e46; stroke: #1e140c; stroke-width: 1; }
+.ol-screen { fill: #1f3a40; }
+.ol-code { fill: none; stroke: #7fd4a8; stroke-width: 1.6; stroke-linecap: round; }
+
+/* The robot bandits. */
+.ol-bot-metal { fill: #8e9bab; stroke: #1e140c; stroke-width: 1.3; }
+.ol-bot-panel { fill: #5d6978; stroke: #1e140c; stroke-width: 0.8; }
+.ol-bot-light { fill: #6fcf8a; }
+.ol-bot-light--1 { fill: #ffb547; }
+.ol-bot-light--2 { fill: #e05a4a; }
+.ol-bot-visor { fill: #20252c; stroke: #1e140c; stroke-width: 1; }
+.ol-bot-eye { fill: #ffb547; }
+.ol-bot-mask { fill: #1f5a5a; stroke: #1e140c; stroke-width: 1; stroke-linejoin: round; }
+.ol-bot-antenna { fill: none; stroke: #4a5260; stroke-width: 1.6; stroke-linecap: round; }
+.ol-bot-bulb { fill: #e05a4a; stroke: #1e140c; stroke-width: 0.8; }
+.ol-bot-leg { fill: none; stroke: #4a5260; stroke-width: 4; stroke-linecap: round; }
+.ol-bot-foot { fill: #3a4048; stroke: #1e140c; stroke-width: 0.9; }
+.ol-bot-arm { fill: none; stroke: #6c7888; stroke-width: 2.6; stroke-linecap: round; }
+.ol-bot-mitten { fill: #e6b47a; stroke: #1e140c; stroke-width: 1; }
+.ol-bot-bolt { fill: none; stroke: #4a5260; stroke-width: 2.2; stroke-linecap: round; }
