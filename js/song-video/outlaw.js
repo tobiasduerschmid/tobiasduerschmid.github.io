@@ -22,14 +22,17 @@
  *     route  [[t, x, y, facing?], …] the stage point between the feet at
  *            song time t; between keys it sneaks (a key with the same point
  *            is a pause), standing still before the first and after the
- *            last. facing 1 faces right, −1 left; by default it faces the
- *            way it travels, and travelling against a key's explicit facing
- *            tiptoes backwards.
+ *            last. facing 1 faces right, −1 left: the way it faces at that
+ *            key. A move faces the way it travels when either end does
+ *            (turning first, or on arrival); only a move whose ends both
+ *            face against its travel tiptoes backwards. Every change of
+ *            facing is a quick eased turn (0.2 s), not a jump.
  *     moves  [[t, name, options]] from MOVES: reach, both, type, lift, peek,
  *            look, freeze, crouch, shake, shrug, badge, wave.
  *     holds  [[t, 'near' | 'far', prop | null]] from PROPS: sack, cookieJar,
  *            key, lockpick, magnifier, scroll, honeyJar (over the hand),
- *            laptop.
+ *            laptop. Each prop fades in over the one it replaces
+ *            (PROP_FADE), so nothing pops in or out of a hand.
  *   Outlaw.bot(parent, { at, until, route, freezes, scale, delay })
  *     a robot bandit that waddles along `route` read at t − delay;
  *     freezes [[t, hold]] are comic statue holds.
@@ -64,6 +67,7 @@
   const STEP = 28;           // body travel per step
   const LIFT = 38;           // how high a sneaking foot rises
   const TORSO = { neck: [3, -102], near: [3, -86], far: [-4, -88] };
+  const PROP_FADE = 0.22;    // a prop fades in (and the one it replaces out) over this long
 
   // ------------------------------------------------------------------
   // Geometry
@@ -136,6 +140,7 @@
     const keys = route.map(([t, x, y, facing]) => ({ t, x, y, facing }));
     if (!keys.length) keys.push({ t: 0, x: 480, y: 460 });
     const segments = [];
+    const turns = [];
     let facing = keys[0].facing ?? 1, walked = 0, phase = 0;
     keys[0].after = facing;
     for (let i = 0; i + 1 < keys.length; i += 1) {
@@ -143,7 +148,13 @@
       const len = Math.hypot(b.x - a.x, b.y - a.y);
       const travel = Math.sign(Math.round(b.x - a.x));
       const moving = len >= 0.5;
-      const face = moving ? (a.facing ?? b.facing ?? (travel || facing)) : a.after;
+      // A key's facing is the way it faces there. A move faces the way it
+      // travels when either end does (turning first, or on arrival); only a
+      // move whose ends both face against its travel tiptoes backwards.
+      let face = a.after;
+      if (moving && travel) face = b.facing === travel || (a.facing ?? a.after) === travel ? travel : (a.facing ?? b.facing ?? travel);
+      else if (moving) face = a.facing ?? a.after;
+      if (face !== a.after) turns.push({ t: a.t, from: a.after, to: face });
       const dir = travel && travel !== face ? -1 : 1;
       // A fast scurry takes longer strides rather than a blur of short ones;
       // each segment keeps one stride, so its planted feet stay put.
@@ -154,11 +165,25 @@
       phase += (moving ? len : 0) * dir / scale / (2 * step);
       facing = b.facing ?? face;
       b.after = facing;
+      if (b.after !== face) turns.push({ t: b.t, from: face, to: b.after });
     }
+    /** The facing as a horizontal scale: ±1, easing through a quick turn (0.2 s) about each change. */
+    const TURN = 0.1;
+    const turnAt = (t) => {
+      let f = keys[0].after;
+      for (const turn of turns) {
+        if (t < turn.t - TURN) break;
+        if (t >= turn.t + TURN) { f = turn.to; continue; }
+        const u = ease((t - turn.t + TURN) / (2 * TURN));
+        const v = lerp(turn.from, turn.to, u);
+        return Math.sign(v || turn.to) * Math.max(0.22, Math.abs(v));
+      }
+      return f;
+    };
     const frozen = (from, to) => freezes.reduce((sum, [ft, hold]) => sum + Math.max(0, Math.min(to, ft + hold) - Math.max(from, ft)), 0);
     return (t) => {
       const first = keys[0];
-      if (!segments.length || t <= first.t) return { x: first.x, y: first.y, facing: first.after, s: 0, phase: 0, step: STEP, gait: 0 };
+      if (!segments.length || t <= first.t) return { x: first.x, y: first.y, facing: first.after, turn: turnAt(t), s: 0, phase: 0, step: STEP, gait: 0 };
       const gaitOf = (seg, now) => {
         if (!seg || !seg.len || now < seg.a.t) return 0;
         if (now < seg.b.t) return clamp((now - seg.a.t) / 0.3, 0, 1);
@@ -174,6 +199,7 @@
           x: seg.a.x + (seg.b.x - seg.a.x) * e,
           y: seg.a.y + (seg.b.y - seg.a.y) * e,
           facing: seg.face,
+          turn: turnAt(t),
           s: seg.walked + seg.len * seg.dir * e,
           phase: seg.phase + seg.len * seg.dir * e / scale / (2 * seg.step),
           step: seg.len ? seg.step : (previous?.step ?? STEP),
@@ -183,7 +209,7 @@
       const last = segments[segments.length - 1];
       const lastMove = segments.slice().reverse().find((s) => s.len);
       const end = segments.length ? last.phase + last.len * last.dir / scale / (2 * last.step) : 0;
-      return { x: last.b.x, y: last.b.y, facing: last.b.after, s: last.walked + last.len * last.dir, phase: end, step: lastMove?.step ?? STEP, gait: gaitOf(lastMove, t) };
+      return { x: last.b.x, y: last.b.y, facing: last.b.after, turn: turnAt(t), s: last.walked + last.len * last.dir, phase: end, step: lastMove?.step ?? STEP, gait: gaitOf(lastMove, t) };
     };
   }
 
@@ -268,8 +294,10 @@
       svg('path', { class: 'ol-honey', d: 'M-38 10 C-41 26 -39 40 -33 45 C-22 52 16 52 27 45 C33 40 34 26 32 10 Z' }, front);
       svg('rect', { class: 'ol-glass-rim', x: -33, y: -8, width: 60, height: 7, rx: 2.4 }, front);
       svg('path', { class: 'ol-honey-drip', d: 'M-26 -2 C-26.6 4 -26.4 9 -25 12 A2.6 2.6 0 1 0 -21.6 10.6 C-22.6 7 -22.4 2 -21 -2 Z M12 -2 C11.4 6 11.8 13 13.4 17 A2.8 2.8 0 1 0 17 15.2 C15.8 10 15.8 4 16.6 -2 Z' }, front);
-      svg('rect', { class: 'ol-paper', x: -35, y: 15, width: 66, height: 18, rx: 3 }, front);
-      label(front, 'HONEYPOT', -2, 28.4, 12.5, 'ol-label ol-label--ink ol-label--heavy');
+      // Two lines, so the words stay readable at the figure's scale.
+      svg('rect', { class: 'ol-paper', x: -35, y: 11, width: 66, height: 33, rx: 3 }, front);
+      label(front, 'HONEY', -2, 25.6, 14, 'ol-label ol-label--ink ol-label--heavy');
+      label(front, 'POT', -2, 39.6, 14, 'ol-label ol-label--ink ol-label--heavy');
       svg('path', { class: 'ol-glass-shine', d: 'M-36 14 C-37.4 24 -36.6 34 -33 40' }, front);
     },
     laptop({ hangFront: front }) {
@@ -352,7 +380,9 @@
       const fingers = svg('g', {}, handG);
       const drawn = hand(fingers, glove);
       const front = svg('g', {}, handG);
-      return { inks, upper, fore, fold, cuff, stitch, handG, behind, fingers, front, drawn, prop: null, hang: null, hangFront: null, rot: 0 };
+      // Two prop slots, so one prop can fade in as another fades out.
+      const slots = [0, 1].map(() => ({ behind: svg('g', {}, behind), front: svg('g', {}, front), prop: null, hang: null, hangFront: null, upright: null }));
+      return { inks, upper, fore, fold, cuff, stitch, handG, behind, fingers, front, drawn, slots, rot: 0 };
     };
     const arms = { near: arm(nearArmG), far: arm(farArmG) };
 
@@ -453,29 +483,45 @@
       }
     }
 
-    /** Puts `prop` (a PROPS key, or null) in the near or far hand. */
-    function holdIn(side, prop) {
-      const a = arms[side];
-      a.behind.replaceChildren();
-      a.front.replaceChildren();
-      a.prop = prop;
+    /** Draws `prop` (a PROPS key, or null) into one of a hand's two prop slots. */
+    function fill(side, slot, prop) {
+      for (const g of [slot.behind, slot.front]) g.replaceChildren();
+      slot.prop = prop;
       // Props that hang from the hand (a sack, a jar) turn back against the
       // hand's turn about the grip, so they always hang straight down.
-      a.hang = svg('g', { class: 'ol-hang' }, a.behind);
-      a.hangFront = svg('g', { class: 'ol-hang' }, a.front);
+      slot.hang = svg('g', { class: 'ol-hang' }, slot.behind);
+      slot.hangFront = svg('g', { class: 'ol-hang' }, slot.front);
       // Props held upright in the fist (a magnifying glass) turn back about
       // the middle of the fist, so the handle always runs through the hand.
-      a.upright = svg('g', { class: 'ol-upright' }, a.behind);
+      slot.upright = svg('g', { class: 'ol-upright' }, slot.behind);
       const before = labels.length;
-      if (prop && PROPS[prop]) PROPS[prop]({ behind: a.behind, front: a.front, hang: a.hang, hangFront: a.hangFront, upright: a.upright }, label);
+      if (prop && PROPS[prop]) PROPS[prop]({ behind: slot.behind, front: slot.front, hang: slot.hang, hangFront: slot.hangFront, upright: slot.upright }, label);
       for (const entry of labels.slice(before)) {
         entry.side = side;
-        entry.hang = a.hang.contains(entry.node) || a.hangFront.contains(entry.node);
+        entry.hang = slot.hang.contains(entry.node) || slot.hangFront.contains(entry.node);
       }
-      // A jar over the hand hides the hand.
-      a.fingers.setAttribute('display', prop === 'honeyJar' ? 'none' : 'inline');
       // Forget the labels of props that were put away.
       for (let i = labels.length - 1; i >= 0; i -= 1) if (!root.contains(labels[i].node)) labels.splice(i, 1);
+    }
+
+    /**
+     * Shows `prop` in the near or far hand, faded in by `u` (0 to 1) over the
+     * prop it replaces, `old`, which fades out: nothing pops in or out.
+     */
+    function holdIn(side, prop, old = null, u = 1) {
+      const a = arms[side];
+      let [now, was] = a.slots;
+      if (prop && was.prop === prop) [now, was] = [was, now];
+      if (now.prop !== prop) fill(side, now, prop);
+      if (was.prop !== old) fill(side, was, old);
+      a.slots = [now, was];
+      const e = ease(clamp(u, 0, 1));
+      for (const [slot, o] of [[now, prop ? e : 0], [was, old ? 1 - e : 0]]) {
+        for (const g of [slot.behind, slot.front]) g.setAttribute('opacity', f2(o));
+      }
+      // A jar over the hand hides the hand as it comes on.
+      const jar = (now.prop === 'honeyJar' ? e : 0) + (was.prop === 'honeyJar' ? 1 - e : 0);
+      a.fingers.setAttribute('opacity', f2(1 - jar));
     }
 
     function drawArm(a, shoulder, wristTarget, flex, curls, swing = 0) {
@@ -497,9 +543,11 @@
       a.handG.setAttribute('transform', `translate(${pt(wrist)}) rotate(${f2(a.rot)}) scale(${HAND_SCALE})`);
       // Hanging props stay plumb, swinging a little when the hand shakes.
       const plumb = `rotate(${f2(-a.rot + swing)} ${pt(HANG)})`;
-      a.hang?.setAttribute('transform', plumb);
-      a.hangFront?.setAttribute('transform', plumb);
-      a.upright?.setAttribute('transform', `rotate(${f2(-a.rot)} ${pt(FIST)})`);
+      for (const slot of a.slots) {
+        slot.hang?.setAttribute('transform', plumb);
+        slot.hangFront?.setAttribute('transform', plumb);
+        slot.upright?.setAttribute('transform', `rotate(${f2(-a.rot)} ${pt(FIST)})`);
+      }
       a.drawn.shape(curls);
       return { elbow, wrist };
     }
@@ -694,9 +742,10 @@
         release(hold, [s]),
       ];
     },
+    // Shoulders up, elbows at the sides, forearms out with open hands, head tipped.
     shrug: ({ hold = 1 }) => [
-      now(-0.2, { nearTo: [MID + 44, 150], farTo: [MID + 30, 152] }),
-      [-0.2, 0.35, { shrug: 1, nearW: 1, farW: 1, nearShape: SHAPES.open, farShape: SHAPES.open, nearWrist: -50, farWrist: -50, tilt: 7, brow: 0.9 }],
+      now(-0.2, { nearTo: [MID + 50, 172], farTo: [MID + 38, 170] }),
+      [-0.2, 0.35, { shrug: 1, nearW: 1, farW: 1, nearShape: SHAPES.open, farShape: SHAPES.open, nearWrist: -18, farWrist: -18, tilt: 7, brow: 0.9 }],
       [hold, 0.4, { shrug: 0, tilt: 0, brow: 0 }],
       release(hold, ['near', 'far']),
     ],
@@ -830,17 +879,17 @@
     };
     const track = poseTrack(moves.filter(([, name]) => MOVES[name]).flatMap(([when, name, options = {}]) => MOVES[name](options, frameAt(when)).map(([delay, duration, fields]) => [when + delay, duration, fields])));
     const heldAt = holds.slice().sort((a, b) => a[0] - b[0]);
-    const holding = { near: undefined, far: undefined };
 
     onFrame((t) => {
       const reduced = reducedMotion.matches;
+      // Each prop fades in over the last one held in that hand (PROP_FADE).
       for (const s of ['near', 'far']) {
-        const latest = heldAt.filter(([when, which]) => which === s && when <= t).pop();
-        const prop = latest ? latest[2] : null;
-        if (prop !== holding[s]) {
-          holding[s] = prop;
-          body.holdIn(s, prop);
-        }
+        const list = heldAt.filter(([, which]) => which === s);
+        let i = -1;
+        list.forEach(([when], k) => { if (when <= t) i = k; });
+        const prop = i >= 0 ? list[i][2] : null, old = i > 0 ? list[i - 1][2] : null;
+        const u = i >= 0 ? (t - list[i][0]) / PROP_FADE : 1;
+        body.holdIn(s, prop, u < 1 ? old : null, u);
       }
       // In a freeze, everything holds where it was when the freeze began.
       const active = freezes.find(([when, hold]) => t >= when && t <= when + hold);
@@ -853,8 +902,9 @@
       const freeze = active ? { age: t - active[0], lift: reduced ? 1 : clamp((t - active[0]) / 0.14, 0, 1) }
         : after && !reduced ? { age: t - after[0], lift: ease(1 - (t - after[0] - after[1]) / 0.3), melting: true } : null;
       const pose = compose(time, walk, track(time, reduced), freeze, reduced);
-      body.setFacing(walk.facing);
-      root.setAttribute('transform', walk.facing < 0 ? `translate(${BOX.w} 0) scale(-1 1)` : '');
+      const turn = reduced ? walk.facing : walk.turn;
+      body.setFacing(Math.sign(turn));
+      root.setAttribute('transform', turn === 1 ? '' : `translate(${f2(MID * (1 - turn))} 0) scale(${f2(turn)} 1)`);
       wrap.style.transform = `translate(${f2(walk.x - MID * scale)}px, ${f2(walk.y - GROUND * scale)}px)`;
       body.draw(pose);
     });
@@ -933,7 +983,8 @@
         eye.setAttribute('rx', f2(1.9 + 1 * up));
         eye.setAttribute('ry', f2(1.9 + 1 * up));
       });
-      root.setAttribute('transform', w.facing < 0 ? `translate(${BOT.w} 0) scale(-1 1)` : '');
+      const turn = reduced ? w.facing : w.turn;
+      root.setAttribute('transform', turn === 1 ? '' : `translate(${f2(BOT.mid * (1 - turn))} 0) scale(${f2(turn)} 1)`);
       wrap.style.transform = `translate(${f2(w.x - BOT.mid * scale)}px, ${f2(w.y - BOT.ground * scale)}px)`;
     });
     fx.fadeIn(wrap, at, 0.3);

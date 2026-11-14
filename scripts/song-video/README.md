@@ -565,8 +565,11 @@ headings; slates for code (SQL and HTML through the shared
 and time; the login form; the app as a building whose ways in are its attack
 surface (`appFront`); crimson attack vectors (`vector`) for attacks coming
 in and amber trails for stolen data going out; a wanted poster for the threat
-model; padlocks, keys, the town's services and their database, the
-blast-radius ring, and a porch whose flowerpot can hide a key or a honeypot.
+model; padlocks (hung on a wooden `lockBoard`, or drawn first as a blueprint
+sketch), keys, the town's services (each building's icon on a brass-rimmed
+emblem; thick cables join them until each gets its own key, when the cables
+thin and fences rise between them) and their database, the blast-radius
+ring, and the app's porch, whose flowerpot can hide a key or a honeypot.
 `js/song-video/principle-scenes.js` (styles in
 `css/song-video-principle-scenes.css`) shows each principle at work under its
 stamp: a see-through padlock beside its published blueprint (Open Design), a

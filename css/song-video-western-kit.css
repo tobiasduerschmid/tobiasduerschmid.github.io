@@ -128,13 +128,15 @@
 .wk-tag::before {
   content: '';
   position: absolute;
-  left: 8px;
+  left: 6px;
   top: 50%;
-  width: 7px;
-  height: 7px;
-  margin-top: -3.5px;
+  width: 10px;
+  height: 10px;
+  margin-top: -5px;
   border-radius: 50%;
-  background: #6a4a2a;
+  /* A brass eyelet: the hole the tag's string goes through. */
+  background: radial-gradient(circle, #2a1c10 0 32%, #d9b45c 36% 64%, #8a6424 70%);
+  box-shadow: 0 0 0 1px rgba(60, 40, 16, 0.45);
 }
 
 .wk-tag--red { background: #f6d6cc; border-color: #c98a7a; color: #5a130b; }
@@ -379,7 +381,8 @@
 }
 
 .wk-post-likes { display: inline-flex; align-items: center; min-width: 0; }
-.wk-post-likers { margin-left: 4px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+/* Wraps rather than cutting a name off with an ellipsis. */
+.wk-post-likers { margin-left: 4px; line-height: 1.25; }
 .wk-post-count { flex: none; white-space: nowrap; }
 
 .wk-reaction {
@@ -548,13 +551,40 @@
 /* ---------------------------------------------------------------- */
 
 .wk-padlock { position: absolute; text-align: center; }
+/* The nail a hung padlock hangs from, through the top of its shackle. */
+.wk-padlock-nail {
+  position: absolute;
+  top: 3%;
+  left: 50%;
+  z-index: 1;
+  width: 9px;
+  height: 9px;
+  margin-left: -4.5px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #e0d6c8, #6f665c);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+}
+/* The display board padlocks hang on: the plan board without its padding. */
+.wk-lock-board { padding: 10px 14px; }
 .wk-padlock svg { display: block; margin: 0 auto; overflow: visible; }
-.wk-shackle { fill: none; stroke: #9aa3ad; stroke-width: 7; stroke-linecap: round; transform-box: fill-box; transform-origin: 100% 100%; }
-.wk-lock-body { fill: #59616b; stroke: #1c2026; stroke-width: 2; }
-.wk-padlock--brass .wk-lock-body { fill: var(--wk-brass); stroke: #4d3510; }
-.wk-padlock--brass .wk-shackle { stroke: #c9cfd6; }
-.wk-lock-shine { stroke: rgba(255, 255, 255, 0.4); stroke-width: 3; stroke-linecap: round; }
+.wk-padlock svg { transform-box: view-box; transform-origin: 50% 0; }
+/* Steel shackle with a dark outline, a body shaded at the lower right with
+   rivets at its corners: the porch's drawing style. */
+.wk-shackle-ink { fill: none; stroke: #1c2026; stroke-width: 10; stroke-linecap: round; }
+.wk-shackle { fill: none; stroke: #b4bcc6; stroke-width: 6; stroke-linecap: round; transform-box: fill-box; transform-origin: 100% 100%; }
+.wk-lock-body { fill: #6a737e; stroke: #1c2026; stroke-width: 2.2; }
+.wk-lock-shade { fill: rgba(16, 20, 26, 0.3); }
+.wk-lock-rivet { fill: rgba(255, 255, 255, 0.45); stroke: rgba(16, 20, 26, 0.5); stroke-width: 0.6; }
+.wk-padlock--brass .wk-lock-body { fill: var(--wk-brass); stroke: #3d2a0c; }
+.wk-padlock--brass .wk-lock-shade { fill: rgba(80, 48, 8, 0.3); }
+.wk-padlock--brass .wk-shackle { stroke: #ccd3da; }
+.wk-lock-shine { stroke: rgba(255, 255, 255, 0.45); stroke-width: 3; stroke-linecap: round; }
 .wk-keyhole { fill: #15181c; }
+/* The blueprint of a lock before it is built: dashed white lines. */
+.wk-padlock--sketch .wk-shackle-ink, .wk-padlock--sketch .wk-lock-shade, .wk-padlock--sketch .wk-lock-rivet, .wk-padlock--sketch .wk-lock-shine { display: none; }
+.wk-padlock--sketch .wk-shackle { stroke: #d6ecff; stroke-width: 2.4; stroke-dasharray: 5 4; }
+.wk-padlock--sketch .wk-lock-body { fill: rgba(60, 120, 200, 0.28); stroke: #d6ecff; stroke-width: 2.4; stroke-dasharray: 6 4; }
+.wk-padlock--sketch .wk-keyhole { fill: none; stroke: #d6ecff; stroke-width: 1.6; }
 
 /* Centred under the lock, and wrapping instead of running into a neighbour. */
 .wk-padlock-label {
@@ -596,7 +626,15 @@
 .wk-box-body { fill: #6a4022; stroke: #241409; stroke-width: 2.5; }
 .wk-box-band { fill: none; stroke: #b8862f; stroke-width: 5; }
 .wk-box-lock { fill: var(--wk-brass); stroke: #4d3510; stroke-width: 2; }
-.wk-box-lid { transform-box: fill-box; transform-origin: 50% 100%; }
+/* The lid's hinge runs along the back of the chest's top (y 62). */
+.wk-box-lid, .wk-box-lid-open { transform-box: view-box; transform-origin: 100px 62px; }
+.wk-box-lid-open { transform: scaleY(0); }
+.wk-box-inside { fill: #3b2210; stroke: #241409; stroke-width: 2.5; }
+.wk-box-inside-rim { fill: none; stroke: #5a3618; stroke-width: 3; }
+.wk-box-grain { fill: none; stroke: #4a2c16; stroke-width: 1.4; opacity: 0.8; }
+.wk-box-shade { fill: rgba(20, 10, 4, 0.25); }
+.wk-box-rivet { fill: #e0c070; stroke: #6a4a16; stroke-width: 0.8; }
+.wk-box-corner { fill: none; stroke: #c99a3a; stroke-width: 4.5; stroke-linecap: round; }
 .wk-box-loot { transform: translateY(34px); }
 .wk-box-keyhole { fill: #2a1c10; }
 .wk-loot-db { fill: #5b7fa8; stroke: #1c2a3a; stroke-width: 2; }
@@ -663,26 +701,63 @@
 .wk-cia-icon { flex: none; width: 24px; height: 24px; }
 .wk-cia-rule { margin-top: 3px; font-size: 16px; font-weight: 600; text-wrap: balance; }
 
+/* The porch: a frontier house front, outlined and lit from the upper left. */
 .wk-porch { position: absolute; }
 .wk-porch svg { display: block; overflow: visible; }
-.wk-porch-wall { fill: #8a6440; }
-.wk-porch-boards { stroke: #6a4a2c; stroke-width: 2; }
-.wk-porch-door { fill: #5a3a20; stroke: #2a1a0c; stroke-width: 2; }
-.wk-porch-doorway { fill: #120a06; stroke: #2a1a0c; stroke-width: 2; }
+.wk-pr-ground-shadow { fill: rgba(0, 0, 0, 0.35); }
+.wk-pr-wall-0 { stop-color: #9a6a40; }
+.wk-pr-wall-1 { stop-color: #6e4626; }
+.wk-pr-wall { stroke: #2a1608; stroke-width: 2; }
+.wk-pr-board-shadow { fill: none; stroke: #4a2e18; stroke-width: 1.6; }
+.wk-pr-board-light { fill: none; stroke: #b0804e; stroke-width: 0.8; opacity: 0.6; }
+.wk-pr-shade { fill: rgba(20, 10, 4, 0.35); }
+.wk-pr-window-frame { fill: #5a3a20; stroke: #2a1608; stroke-width: 2; }
+.wk-pr-glass { fill: #e8b058; stroke: #2a1608; stroke-width: 1.2; }
+.wk-pr-mullion { fill: none; stroke: #3b2412; stroke-width: 3; }
+.wk-pr-sill { fill: #6b4728; stroke: #2a1608; stroke-width: 1.4; }
+.wk-pr-frame { fill: #5a3a20; stroke: #2a1608; stroke-width: 2; }
+.wk-pr-dark { fill: #120a06; }
+.wk-pr-swing { transform-box: view-box; transform-origin: 34px 50%; }
+.wk-pr-door { fill: #a8703c; stroke: #2a1608; stroke-width: 2; }
+.wk-pr-panel { fill: #8e5c30; stroke: #4a2e18; stroke-width: 1.3; }
+.wk-pr-panel-light { fill: none; stroke: #c99060; stroke-width: 1; opacity: 0.8; }
+.wk-pr-plate { fill: #b8862f; stroke: #4d3510; stroke-width: 0.8; }
+.wk-pr-knob { fill: var(--wk-brass); stroke: #4d3510; stroke-width: 1; }
+.wk-pr-knob-shine { fill: #fde9b4; }
+.wk-pr-sign { fill: #6b4728; stroke: #2a1608; stroke-width: 1.6; }
+.wk-pr-sign-text { fill: var(--wk-cream); font-size: 12.5px; font-weight: 900; letter-spacing: 0.08em; }
+.wk-pr-chain { fill: none; stroke: #2a1608; stroke-width: 1.2; }
+.wk-pr-lantern { fill: #3b2a1c; stroke: #1e140c; stroke-width: 1.2; stroke-linejoin: round; }
+.wk-pr-lantern-glass { fill: #ffd27a; }
+.wk-pr-post { fill: #5a3a20; stroke: #2a1608; stroke-width: 1.8; stroke-linejoin: round; }
+.wk-pr-post-light { fill: none; stroke: #8a6440; stroke-width: 1.4; }
+.wk-pr-roof { fill: #4a2e18; stroke: #1e1008; stroke-width: 2; stroke-linejoin: round; }
+.wk-pr-shingle { fill: none; stroke: #2e1c0e; stroke-width: 1.1; }
+.wk-pr-beam { fill: #6b4728; stroke: #1e1008; stroke-width: 1.8; }
+.wk-pr-barrel { fill: #8a5a34; stroke: #2a1608; stroke-width: 1.8; }
+.wk-pr-stave { fill: none; stroke: #5e3c20; stroke-width: 1.2; }
+.wk-pr-hoop { fill: none; stroke: #3a3e44; stroke-width: 3; }
+.wk-pr-barrel-top { fill: #6b4728; stroke: #2a1608; stroke-width: 1.4; }
+.wk-pr-key { fill: var(--wk-brass); stroke: #4d3510; stroke-width: 0.9; }
+.wk-pr-key-hole { fill: #2a1c10; }
+.wk-pr-deck { fill: #9a6a3c; stroke: #2a1608; stroke-width: 1.6; }
+.wk-pr-seam { fill: none; stroke: #5e3c20; stroke-width: 1.2; }
+.wk-pr-fascia { fill: #5a3a20; stroke: #2a1608; stroke-width: 1.6; }
 .wk-honeypot { opacity: 0; }
-.wk-honey-jar { fill: #e8a83a; stroke: #5a3a0c; stroke-width: 2; }
-.wk-honey-lid { fill: #c9a24a; stroke: #5a3a0c; stroke-width: 1.6; }
-.wk-honey-drip { fill: none; stroke: #f2c45a; stroke-width: 3; stroke-linecap: round; }
-.wk-honey-label { fill: #fbf2d8; stroke: #5a3a0c; stroke-width: 1; }
-.wk-honey-text { fill: #5a2a0c; font-size: 11.6px; font-weight: 900; }
-.wk-porch-swing { transform-box: fill-box; transform-origin: 0 50%; }
-.wk-porch-knob { fill: var(--wk-brass); }
-.wk-porch-floor { fill: #6a4a2c; }
-.wk-porch-key { fill: var(--wk-brass); stroke: #4d3510; stroke-width: 1.5; }
-.wk-pot { transform-box: fill-box; transform-origin: 50% 100%; }
-.wk-pot-clay { fill: #b5562e; stroke: #5a2410; stroke-width: 2; }
-.wk-pot-rim { fill: #c9663a; stroke: #5a2410; stroke-width: 2; }
-.wk-pot-leaf { fill: #3f7a3a; stroke: #1d3d1a; stroke-width: 1.5; }
+/* The barrel's honey jar: the glass jar of the outlaw's honeyJar prop. */
+.wk-honey-glass { fill: rgba(225, 240, 244, 0.45); stroke: #6a7880; stroke-width: 1.3; }
+.wk-honey { fill: #e8a632; opacity: 0.92; }
+.wk-honey-rim { fill: rgba(220, 238, 244, 0.6); stroke: #6a7880; stroke-width: 1; }
+.wk-honey-drip { fill: #f0b440; stroke: #a8680c; stroke-width: 0.6; }
+.wk-honey-label { fill: #f2e4c4; stroke: #6b5232; stroke-width: 1; }
+.wk-honey-text { fill: #2a1c10; font-size: 10.4px; font-weight: 900; letter-spacing: 0.02em; }
+.wk-honey-shine { fill: none; stroke: #ffffff; stroke-width: 1.6; stroke-linecap: round; opacity: 0.7; }
+.wk-pot-clay { fill: #b5562e; stroke: #4a1c0a; stroke-width: 1.8; stroke-linejoin: round; }
+.wk-pot-shine { fill: none; stroke: #e08a5a; stroke-width: 2.4; stroke-linecap: round; opacity: 0.7; }
+.wk-pot-rim { fill: #c9663a; stroke: #4a1c0a; stroke-width: 1.8; }
+.wk-pot-soil { fill: none; stroke: #3a2210; stroke-width: 2; }
+.wk-pot-leaf { fill: #4a8a44; stroke: #1d3d1a; stroke-width: 1.5; stroke-linejoin: round; }
+.wk-pot-vein { fill: none; stroke: #2a5a26; stroke-width: 1; stroke-linecap: round; }
 
 /* ---------------------------------------------------------------- */
 /* Trails, rings, the glove, ticks                                    */
@@ -704,22 +779,16 @@
 /* The attack surface: the app as a building with its ways in. */
 .wk-app-front { position: absolute; }
 .wk-app-front svg { display: block; overflow: visible; filter: drop-shadow(0 12px 18px rgba(0, 0, 0, 0.5)); }
-.wk-af-wall { fill: #8a5a34; stroke: #2a1608; stroke-width: 2.4; }
-.wk-af-siding { fill: none; stroke: #6b4426; stroke-width: 1.4; }
-.wk-af-front { fill: #6b4728; stroke: #2a1608; stroke-width: 2.4; stroke-linejoin: round; }
-.wk-af-sign { fill: #f2e4c4; stroke: #3b2412; stroke-width: 2.4; }
-.wk-af-sign-text { fill: #2a1608; font-size: 22px; font-weight: 800; }
-.wk-af-porch { fill: #3b2412; stroke: #1e1008; stroke-width: 1.6; }
-.wk-af-post { fill: #5a3a20; stroke: #1e1008; stroke-width: 1.2; }
-.wk-af-dark { fill: #160c06; }
-.wk-af-door { fill: #a8703c; stroke: #2a1608; stroke-width: 2; }
+.wk-af-front { fill: #6b4728; stroke: #2a1608; stroke-width: 2.2; stroke-linejoin: round; }
+.wk-af-cornice { fill: #4a2e18; stroke: #1e1008; stroke-width: 1.8; stroke-linejoin: round; }
+/* The address sign: dark board, brass rim, cream letters (the service emblems' style). */
+.wk-af-sign { fill: #2e1d10; stroke: #c9a24a; stroke-width: 2.4; }
+.wk-af-sign-text { fill: #f6e7c4; font-size: 23px; font-weight: 800; }
 .wk-af-card { fill: #fbfaf7; stroke: #2774ae; stroke-width: 2; }
 .wk-af-card-line { fill: none; stroke: #8a8c94; stroke-width: 2.2; stroke-linecap: round; }
-.wk-af-window { fill: #e8b058; stroke: #2a1608; stroke-width: 3; }
-.wk-af-mullion { fill: none; stroke: #2a1608; stroke-width: 3; }
 .wk-af-bubble { fill: #fbfaf7; stroke: #2a1608; stroke-width: 2; }
-.wk-af-hatch { fill: #5e3e22; stroke: #2a1608; stroke-width: 2.4; }
-.wk-af-hatch-boards { fill: none; stroke: #3b2412; stroke-width: 1.6; }
+.wk-af-hatch { fill: #6b4728; stroke: #2a1608; stroke-width: 1.8; }
+.wk-af-hatch-boards { fill: none; stroke: #4a2e18; stroke-width: 1.6; }
 .wk-af-picture { fill: #cfe3f2; stroke: #2a1608; stroke-width: 2.2; }
 .wk-af-picture-art { fill: #3e8a52; }
 .wk-af-sun { fill: #e8b84a; }
@@ -905,8 +974,25 @@
 }
 
 .wk-board-slot {
+  position: relative;
   min-height: 104px;
 }
+
+/* An empty slot on the plan board, waiting for its principle. */
+.wk-board-spot {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px dashed rgba(245, 223, 180, 0.32);
+  border-radius: 8px;
+  color: rgba(245, 223, 180, 0.4);
+  font-size: 30px;
+  font-weight: 900;
+}
+
+.wk-board-slot > :not(.wk-board-spot) { position: relative; }
 
 .wk-cia-mini,
 .wk-principle-mini {
@@ -966,13 +1052,16 @@
   color: #fbefd8;
 }
 
+/* A node's icon on a brass-rimmed board: the service emblems' style. */
 .wk-net-icon {
   width: 40px;
   height: 40px;
   padding: 7px;
-  border-radius: 10px;
-  background: rgba(20, 12, 10, 0.9);
-  border: 1px solid rgba(255, 220, 170, 0.35);
+  border-radius: 8px;
+  background: #2e1d10;
+  border: 2px solid #c9a24a;
+  color: #f6e7c4;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.45);
 }
 
 .wk-net-name {
@@ -1019,13 +1108,64 @@
 }
 
 .wk-service svg { display: block; }
-.wk-bld-wall { fill: #8a6440; stroke: #2a1a0c; stroke-width: 2; }
-.wk-bld-wall--post { fill: #6f7f8a; }
-.wk-bld-wall--warehouse { fill: #7a6a58; }
-.wk-bld-wall--barn { fill: #9a3a28; }
-.wk-bld-trim { fill: none; stroke: #f2e4c4; stroke-width: 3; }
-.wk-bld-door { fill: #3b2412; }
-.wk-bld-window { fill: #f2c46a; stroke: #2a1a0c; stroke-width: 1.5; }
+/* The service buildings (western-kit.js BUILDINGS), drawn like the porch. */
+.wk-bld-shadow { fill: rgba(0, 0, 0, 0.35); }
+.wk-bld-wall { stroke: #2a1608; stroke-width: 1.8; stroke-linejoin: round; }
+.wk-bld--store .wk-bld-lit { stop-color: #a8774a; }
+.wk-bld--store .wk-bld-shaded { stop-color: #6e4626; }
+.wk-bld--post .wk-bld-lit { stop-color: #8aa0ae; }
+.wk-bld--post .wk-bld-shaded { stop-color: #4c5e6a; }
+.wk-bld--warehouse .wk-bld-lit { stop-color: #9a8a74; }
+.wk-bld--warehouse .wk-bld-shaded { stop-color: #5e5244; }
+.wk-bld--barn .wk-bld-lit { stop-color: #b8483a; }
+.wk-bld--barn .wk-bld-shaded { stop-color: #7a2418; }
+.wk-bld-board { fill: none; stroke: rgba(30, 16, 6, 0.45); stroke-width: 0.9; }
+.wk-bld-board-light { fill: none; stroke: rgba(255, 236, 200, 0.16); stroke-width: 0.7; }
+.wk-bld-cap { fill: #4a2e18; stroke: #2a1608; stroke-width: 1.2; stroke-linejoin: round; }
+.wk-bld-frame { fill: #3a2210; stroke: #2a1608; stroke-width: 1; }
+.wk-bld-glass { fill: #e8b058; }
+.wk-bld-mullion { fill: none; stroke: #3a2210; stroke-width: 1.4; }
+.wk-bld-sill { fill: #5a3a20; stroke: #2a1608; stroke-width: 0.8; }
+.wk-bld-goods { fill: #b0702c; stroke: #6a3a10; stroke-width: 0.8; }
+.wk-bld-door { fill: #6a4426; stroke: #2a1608; stroke-width: 1; }
+.wk-bld-panel { fill: none; stroke: #3e2410; stroke-width: 0.9; }
+.wk-bld-knob { fill: #e0b24a; }
+.wk-bld-awning { fill: #b8483a; stroke: #2a1608; stroke-width: 1.2; stroke-linejoin: round; }
+.wk-bld-stripe { fill: #f2e4c4; }
+.wk-bld-scallop { fill: #b8483a; stroke: #2a1608; stroke-width: 1; }
+.wk-bld-post { fill: #4a2e18; stroke: #2a1608; stroke-width: 0.8; }
+.wk-bld-mailbox { fill: #3e6a9a; stroke: #142438; stroke-width: 1.2; }
+.wk-bld-slot { fill: none; stroke: #142438; stroke-width: 1.4; stroke-linecap: round; }
+.wk-bld-roof { fill: #4a3a30; stroke: #1e140c; stroke-width: 1.6; stroke-linejoin: round; }
+.wk-bld-slider { fill: #7a6a56; stroke: #2a1608; stroke-width: 1.1; }
+.wk-bld-brace { fill: none; stroke: #4a3a2a; stroke-width: 2; stroke-linecap: round; }
+.wk-bld-rail { fill: #3a3e44; }
+.wk-bld-drum { fill: #6a7480; stroke: #1e2630; stroke-width: 1.2; }
+.wk-bld-hoop { fill: none; stroke: #2e3640; stroke-width: 1.1; }
+.wk-bld-crate { fill: #a07a48; stroke: #2a1608; stroke-width: 1.2; stroke-linejoin: round; }
+.wk-bld-crate-line { fill: none; stroke: #5a3e1e; stroke-width: 1; }
+.wk-bld-trim { fill: none; stroke: #f2e4c4; stroke-width: 2.2; stroke-linejoin: round; }
+.wk-bld-barn-door { fill: #8a2a1e; stroke: #2a1608; stroke-width: 1.2; }
+.wk-bld-deck { fill: #9a6a3c; stroke: #2a1608; stroke-width: 1.1; }
+.wk-bld-roof-edge { fill: none; stroke: #3e3026; stroke-width: 4.4; stroke-linecap: round; stroke-linejoin: round; }
+/* The emblem: the service's icon on a brass-rimmed board. */
+.wk-bld-emblem { fill: #2e1d10; stroke: #c9a24a; stroke-width: 1.8; }
+.wk-bld-emblem-shine { fill: none; stroke: rgba(255, 236, 200, 0.14); stroke-width: 1; }
+.wk-bld-emblem-icon { color: #f6e7c4; overflow: visible; }
+/* The cables between the services: thick while one key opens everything,
+   thinned by services() once each part has its own key. */
+.wk-service-links { position: absolute; left: 0; top: 0; overflow: visible; }
+.wk-link-sheath { fill: none; stroke: #241610; stroke-width: 19px; stroke-linecap: round; }
+.wk-link-core { fill: none; stroke: #d89a3e; stroke-width: 13px; stroke-linecap: round; }
+.wk-link-shine { fill: none; stroke: rgba(255, 232, 190, 0.7); stroke-width: 3px; stroke-linecap: round; }
+/* The fences that rise between the services once each has its own key;
+   hidden (flat on the ground) until services() raises them. */
+.wk-lot-fence { transform: scaleY(0); transform-box: fill-box; transform-origin: 50% 100%; }
+.wk-lot-fence-post { fill: #8a6238; stroke: #2a1608; stroke-width: 1.4; }
+.wk-lot-fence-picket { fill: #c79a62; stroke: #2a1608; stroke-width: 1.4; stroke-linejoin: round; }
+.wk-lot-fence-rail { fill: none; stroke: #2a1608; stroke-width: 5.6; stroke-linecap: round; }
+.wk-lot-fence-rail-wood { fill: none; stroke: #a87c4a; stroke-width: 2.8; stroke-linecap: round; }
+.wk-bld-seam { fill: none; stroke: #5e3c20; stroke-width: 0.8; }
 
 .wk-service-name {
   margin-top: 4px;
@@ -1041,8 +1181,8 @@
 
 .wk-service-key {
   position: absolute;
-  top: -4px;
-  right: 8px;
+  top: -14px;
+  right: -4px;
   width: 32px;
   height: 32px;
   padding: 5px;

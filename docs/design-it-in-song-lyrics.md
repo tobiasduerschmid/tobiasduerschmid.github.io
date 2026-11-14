@@ -176,14 +176,18 @@ rely on secrets" in the same picture, which invites students to conflate them.
 - **Format:** one line per bar (the style prompt says so once, so the section tags stay short). Verse lines are 5–9 syllables, and every
   consecutive pair is 14 syllables or fewer; the two 9-syllable lines each sit
   beside a 5-syllable line.
-- **Length:** 4,969 characters, under Suno's 5,000-character limit.
+- **Length:** 4,997 characters, under Suno's 5,000-character limit.
 - **Respellings** (C-I-Ay, Ay-P-I, Ay-I, S-Q-L) are for Suno only. Captions
   use normal spelling.
 - **A dash after each term** ("Security Model- what are you defending?"),
   because Suno dropped title-only lines and colon cues in earlier takes and
   sang dashed term phrases. Captions use a colon.
-- **Quiz pauses:** Suno ignores pause and break tags, so the player's
-  `pause_at` supplies the thinking pause after each question.
+- **Quiz pauses:** a `[Guitar lick]` tag sits between each question and its
+  answer, asking for a short instrumental break. Earlier songs' `[Break]`,
+  `[Instrumental break — 2 bars]`, and `[instrumental bar]` tags were all
+  ignored. Take 5 left only 0.2 to 1.3 s between question and answer with
+  this instrument-named tag too, so the player's `pause_at` supplies the
+  thinking pause.
 
 ```text
 [Intro: spoken, cool and clear, over a whistled melody and gallop]
@@ -238,7 +242,7 @@ But never on its own.
 Open Design- knowing how it works
 Shouldn't get them in.
 
-[Verse 3: playful, sung, one line per bar, guitar answers]
+[Verse 3: playful, sung, guitar answers]
 Which parts are exposed?
 Every input they can send.
 Trust nothing by default,
@@ -297,7 +301,7 @@ Only what it needs.
 [Bridge: half-time, softer, warm, telling a true story]
 In twenty twenty-six,
 Ay-I agents in a test
-Broke out to cheat on it.
+Broke out of their sandbox.
 Who'd have planned for that?
 Found tokens left in public,
 Sent data that ran as code,
@@ -306,7 +310,7 @@ Opened whole clusters.
 Every step crossed a line
 Where one part trusted another.
 
-[Bridge, part two: the lessons, building back up]
+[Bridge, part two: building back up]
 What did it teach?
 Hunt down leaked secrets,
 Let tokens expire fast,
@@ -316,35 +320,41 @@ No shared key with admin rights,
 And watch for machine-speed moves,
 So one slip won't open all.
 
-[Quiz: playful, asks each question, then sings its answer]
+[Quiz: playful]
 Pop quiz: now you're the tester,
 So think the way they do.
 Grades were changed, but nothing leaked:
 Which attribute broke?
+[Guitar lick]
 That's integrity:
 An unauthorized change.
-An Ay-P-I key, hidden
-In your front-end code?
-They can read it:
+Is a secret Ay-P-I key
+Safe in front-end code?
+[Guitar lick]
+No: anyone can read it.
 Keep it on the server.
-Hide the version number
+Should you hide the version number
 On your error page?
+[Guitar lick]
 Sure, as an extra layer,
 Never on its own.
-Your React form checks the input:
-Is the server safe?
-No: they can skip the form.
-Check it on the server.
-Your app logs in as admin,
-Just in case?
-Only what it needs,
+Your React form checks input:
+Must the server check it too?
+[Guitar lick]
+Yes: they can skip the form
+And call the Ay-P-I.
+Should your app reach the database
+As admin, just in case?
+[Guitar lick]
+No: only what it needs,
 So a break-in stays small.
-Strip out every quote
-To stop S-Q-L injection?
-That's not enough:
+Will stripping every quote
+Stop S-Q-L injection?
+[Guitar lick]
+Not reliably:
 Use a prepared statement.
 
-[Final Chorus: full band, confident, same melody]
+[Final Chorus: full band]
 Design it in before they break in:
 Security Model- what are you defending?
 Threat Model- who might be attacking?
@@ -416,7 +426,8 @@ Check every take for these:
   Surface, Protection Mechanisms, Open Design, Zero Trust, Least Privilege.
 - **Negations survive:** "Shouldn't get them in" (a lost "n't" reverses Open
   Design), "Trust nothing by default", "Not even the boss's laptop", "Never on
-  its own" (twice), "That's not enough", "No: they can skip the form".
+  its own" (twice), "Not reliably", and the quiz answers' "No" and "Yes"
+  (questions 2, 4, and 5 hinge on them).
 - **No swapped pairs:** "Security Model" and "Threat Model" in adjacent chorus
   lines; "Display can only read" and "Uploads can only write"; "read it,
   change it".
@@ -702,7 +713,7 @@ to right.
 | --- | --- |
 | In twenty twenty-six, | The gazette, dated July 2026: "AI agents break into a model-hosting site", with a byline "as reported by Hugging Face and OpenAI". |
 | AI agents in a test | A box labeled "hacking benchmark (sandbox)" full of small hexagon agent tokens. |
-| Broke out to cheat on it. | Tokens slip out through a gap labeled "package proxy". Note: "goal: find the benchmark's answers". |
+| Broke out of their sandbox. | Tokens slip out through a gap labeled "package proxy". Note: "goal: find the benchmark's answers". |
 | Who'd have planned for that? | The form's Threat Model section slides in with "AI agents?" written under "Who might be attacking?" |
 | Found tokens left in public, | A public dataset page with access tokens in it, blurred. |
 | Sent data that ran as code, | A crafted dataset enters a "dataset worker", and the worker runs the agents' code, in amber. Label: "unsafe parsing ran their code". |
@@ -729,16 +740,16 @@ answer appears as it is sung. Details are in "Quiz audit".
 | Pop quiz: now you're the tester, / So think the way they do. | The tester clips his badge onto the developer. |
 | Grades were changed, but nothing leaked: / Which attribute broke? | A gradebook with two cells changed (B → A) and a note: "no data left the system". |
 | That's integrity: / An unauthorized change. | Answer: "Integrity: unauthorized change". |
-| An API key, hidden / In your front-end code? | Developer tools show `const API_KEY = "…"` in the bundle (value blurred). |
-| They can read it: / Keep it on the server. | Answer: the key moves to the server; the browser now calls the server, which holds it. |
-| Hide the version number / On your error page? | The error page's footer: "Express 4.17.1". |
+| Is a secret API key / Safe in front-end code? | Developer tools show `const API_KEY = "…"` in the bundle (value blurred). |
+| No: anyone can read it. / Keep it on the server. | Answer: the key moves to the server; the browser now calls the server, which holds it. |
+| Should you hide the version number / On your error page? | The error page's footer: "Express 4.17.1". |
 | Sure, as an extra layer, / Never on its own. | Answer: "Complementary obscurity: an extra layer". It stays beside the previous card, so the contrast is visible. |
-| Your React form checks the input: / Is the server safe? | A React sign-up form showing "Please enter a valid email". |
-| No: they can skip the form. / Check it on the server. | Answer: a terminal sends the same request without the form, `curl -X POST /api/signup …`; the check moves into the Express handler. Label: "The browser is outside the trust boundary". |
-| Your app logs in as admin, / Just in case? | A config line: `DB_USER=admin`. |
-| Only what it needs, / So a break-in stays small. | Answer: `DB_USER=app_comments`, "read and write: comments only"; a blast-radius circle shrinks. |
-| Strip out every quote / To stop SQL injection? | A line of code: `password.replaceAll('"', '')`. |
-| That's not enough: / Use a prepared statement. | Answer: the line is crossed out, replaced by `WHERE Pass = ?` with the value bound. Label: "Don't roll your own escaping". |
+| Your React form checks input: / Must the server check it too? | A React sign-up form showing "Please enter a valid email". |
+| Yes: they can skip the form / And call the API. | Answer: a terminal sends the same request without the form, `curl -X POST /api/signup …`; the check moves into the Express handler. Label: "The browser is outside the trust boundary". |
+| Should your app reach the database / As admin, just in case? | A config line: `DB_USER=admin`. |
+| No: only what it needs, / So a break-in stays small. | Answer: `DB_USER=app_comments`, "read and write: comments only"; a blast-radius circle shrinks. |
+| Will stripping every quote / Stop SQL injection? | A line of code: `password.replaceAll('"', '')`. |
+| Not reliably: / Use a prepared statement. | Answer: the line is crossed out, replaced by `WHERE Pass = ?` with the value bound. Label: "Don't roll your own escaping". |
 
 ### Final chorus and outro
 
@@ -759,11 +770,11 @@ answer appears as it is sung. Details are in "Quiz audit".
 | # | Question | Answer | What it checks | The tempting wrong answer |
 | --- | --- | --- | --- | --- |
 | 1 | Grades were changed, but nothing leaked: which attribute broke? | That's integrity: an unauthorized change. | Classifying a new incident with the CIA triad (slide 3). | "Confidentiality: it's a breach." Treats every breach as a leak. |
-| 2 | An API key, hidden in your front-end code? | They can read it: keep it on the server. | Obscurity fails; the secret must actually stay secret (slides 19–20). | "It's minified, so it's hidden." Every browser downloads that code. |
-| 3 | Hide the version number on your error page? | Sure, as an extra layer, never on its own. | Complementary obscurity (slides 20–21). Questions 2 and 3 are a contrast pair. | "No: Open Design means hiding nothing." The overcorrection. |
-| 4 | Your React form checks the input: is the server safe? | No: they can skip the form. Check it on the server. | The trust boundary (slide 18) applied to their own stack: the browser is a user's device. | "Yes: bad input never gets past the form." Anyone can send the request without the form. |
-| 5 | Your app logs in as admin, just in case? | Only what it needs, so a break-in stays small. | Least privilege applies to programs, not only to people (slide 35). | "Admin avoids permission errors." It also hands an attacker every table. |
-| 6 | Strip out every quote to stop SQL injection? | That's not enough: use a prepared statement. | The real fix versus a home-made filter (slide 9; SEBook: "Don't roll your own escaping"). | "No quotes, no injection." Filters miss cases and mangle legitimate input. |
+| 2 | Is a secret API key safe in front-end code? | No: anyone can read it. Keep it on the server. | Obscurity fails; the secret must actually stay secret (slides 19–20). | "It's minified, so it's hidden." Every browser downloads that code. |
+| 3 | Should you hide the version number on your error page? | Sure, as an extra layer, never on its own. | Complementary obscurity (slides 20–21). Questions 2 and 3 are a contrast pair. | "No: Open Design means hiding nothing." The overcorrection. |
+| 4 | Your React form checks input: must the server check it too? | Yes: they can skip the form and call the API. | The trust boundary (slide 18) applied to their own stack: the browser is a user's device. | "No: bad input never gets past the form." Anyone can send the request without the form. |
+| 5 | Should your app reach the database as admin, just in case? | No: only what it needs, so a break-in stays small. | Least privilege applies to programs, not only to people (slide 35). | "Admin avoids permission errors." It also hands an attacker every table. |
+| 6 | Will stripping every quote stop SQL injection? | Not reliably: use a prepared statement. | The real fix versus a home-made filter (slide 9; SEBook: "Don't roll your own escaping"). | "No quotes, no injection." Filters miss cases and mangle legitimate input. |
 
 Each question applies a principle from the song to a case the verses never
 sang, in the stack sophomores use. None can be answered by completing a rhyme.
@@ -796,7 +807,7 @@ threat model is not quizzed in the song; the after-class task asks for one.
 | V4: a plan for when one breaks; the blast radius | 35 | Principle of Least Privilege; defense in depth (Security Design Principles) |
 | V4: admin rights expose every table; one key per part; read-only display; write-only uploads | 36 | Principle of Least Privilege (component diagram) |
 | V4: Least Privilege tag | 35 | Principle of Least Privilege |
-| Bridge: AI agents broke out of a test to cheat on it | 4 (speaker notes) | Case Study: Hugging Face 2026; What the Sources Leave Open |
+| Bridge: AI agents in a test broke out of their sandbox | 4 (speaker notes) | Case Study: Hugging Face 2026; What the Sources Leave Open |
 | Bridge: tokens in public; data ran as code; a shared admin key | 4 (speaker notes) | Case Record, July 10–11 |
 | Bridge: every step crossed a line where one part trusted another | (none) | Case study introduction |
 | Bridge, part two: leaked-secret scanning, short-lived tokens, machine-speed monitoring, least privilege | 4 (speaker notes: "what would have limited the damage?") | Case study: compartmentalization, least privilege, defense in depth |

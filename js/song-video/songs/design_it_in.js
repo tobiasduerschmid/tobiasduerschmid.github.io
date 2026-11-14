@@ -19,9 +19,10 @@
  * The viewer's own SE Gym hero plays the town sheriff (sheriff.js), the
  * "you" the tester sings to, in every scene with room for it. The singer,
  * the hired tester, is the masked outlaw (outlaw.js): it sneaks in during
- * the intro and shows its Authorized tester badge, lifts the flowerpot in
- * verse 2, collects the stolen cookies in verse 3, and in the closing bars
- * falls for a honeypot with a line of little AI agents behind it.
+ * the intro, takes the key from under the porch's flowerpot and unlocks
+ * the admin door in verse 2, collects the stolen cookies in verse 3, and in
+ * the closing bars falls for a honeypot with a line of little AI agents
+ * behind it.
  *
  * Layout: 960×540 stage; the section badge sits top-left, the scene's plank
  * sign top-centre, and nothing essential goes below y = 460, where the
@@ -46,7 +47,7 @@
     // The sheriff mouths the song: its mouth opens on every sung word.
     const WORDS = window.Sheriff?.wordsOf(song.storyboard) ?? [];
     const SCALE = 0.86, FEET = 452;
-    const OUTLAW_SCALE = 0.8;
+    const OUTLAW_SCALE = 0.86;   // the sheriff's scale: one world, one size
 
     function badge(text, sectionId) {
       kit.badge(hud, text, start(sectionId), end(sectionId));
@@ -78,8 +79,8 @@
     }
 
     /** The scene's plank sign: the plan question being answered. */
-    function header(parent, text, sub, at, until) {
-      return W.plank(parent, text, { x: 250, y: 50, w: 460, sub, at, until });
+    function header(parent, text, sub, at, until, { y = 50 } = {}) {
+      return W.plank(parent, text, { x: 250, y, w: 460, sub, at, until });
     }
 
     // ----------------------------------------------------------------
@@ -87,37 +88,68 @@
     // ----------------------------------------------------------------
 
     function intro() {
-      badge('Intro · Design it in', 'intro');
+      badge('Intro · Design Security in', 'intro');
       const leave = end('intro');
       const s = kit.scene(content, 0.2, leave, { exit: 'fade' });
       // While the whistle plays: the title poster.
       const appAt = mark('intro-1', 'app') - 0.2;
-      W.poster(s, { x: 150, y: 96, w: 620, kicker: 'A song about designing for security', title: 'Design It In\nBefore They Break In', lines: ['CS 35L · Security'], at: 1, until: appAt, className: 'wk-poster--title' });
-      sheriff(content, 868, 2, leave - 0.3, {
-        moves: [[5.6, 'tip', { hold: 1 }], [mark('intro-2', 'break') + 0.2, 'look', { dir: -1, hold: 1.4 }], [mark('intro-4', 'design'), 'point', { to: [380, 210], hold: 1.6 }], [mark('intro-4', 'before'), 'nod']],
-      });
+      W.poster(s, { x: 150, y: 96, w: 620, kicker: 'A song about designing for security', title: 'Design Security In\nBefore They Break In', lines: ['CS 35L · Security'], at: 1, until: appAt, className: 'wk-poster--title' });
       // "So, you built a web app."
       const planAt = mark('intro-4', 'lets') - 0.2;
+      // "Let's design security in, before they do." The app becomes a house
+      // (the porch of verse 2 and the outro); on "design" a blueprint of a
+      // lock appears on its door, and on "before" the real padlock slams on,
+      // just ahead of the outlaw's lockpick.
+      const design = mark('intro-4', 'design'), lockAt = mark('intro-4', 'before') - 0.05;
+      // The gag's beats after the lock lands, stretched to the room the take
+      // leaves before verse 1 (k = 1 for 5 s; the exit gets what is left).
+      const k = Math.min(1.6, Math.max(0.8, (leave - 0.4 - lockAt) / 5));
+      const beat = (offset) => lockAt + offset * k;
+      const house = W.porch(s, { x: 330, ground: FEET, w: 280, sign: 'YOUR APP', at: planAt });
+      const [lockX, lockY] = house.point('lock');
+      W.padlock(s, { x: lockX - 32, y: lockY - 44, size: 64, tone: 'brass', sketchAt: design + 0.1, at: lockAt, how: 'slam', jiggleAt: beat(2.3) });
+      header(s, 'Design Security in', undefined, planAt, leave, { y: 58 });
+      sheriff(content, 868, 2, leave - 0.3, {
+        moves: [
+          [5.6, 'tip', { hold: 1 }], [mark('intro-2', 'break') + 0.2, 'look', { dir: -1, hold: 1.4 }],
+          [design, 'point', { to: [lockX, lockY], hold: 1.6 }], [lockAt + 0.1, 'nod'], [beat(3.5), 'tip', { hold: 0.8 * k }],
+        ],
+      });
       const { view } = W.browser(s, { x: 220, y: 92, w: 420, h: 268, at: appAt + 0.3, until: planAt });
       W.post(view);
       // "Somebody out there might try to break in." The outlaw tiptoes in from
       // the desert, peeks at the app, and an attack vector goes for its
       // comment box. "You hired me to break in first." The outlaw turns to
-      // you: an authorized tester. Then away before the plan.
+      // you: an authorized tester. Then the gag: it pulls out a lockpick and
+      // tiptoes past the blueprint to the door, the padlock slams on in front
+      // of its hand, and it freezes, gives you a look, picks at the lock (it
+      // only rattles), shakes its hand, shrugs, and tiptoes off backwards as
+      // the scene fades.
       const o = W.overlay(s);
       W.vector(o, 'M168 326 C196 326 222 334 250 338', { at: mark('intro-2', 'break'), until: planAt, duration: 0.5 });
-      outlaw(content, mark('intro-2', 'somebody') - 0.3, planAt + 0.2, {
-        scale: 0.95,
-        route: [[mark('intro-2', 'somebody') - 0.3, -70, FEET, 1], [mark('intro-2', 'try') + 0.1, 112, FEET, 1], [mark('intro-4', 'lets') - 1.2, 112, FEET, 1], [planAt + 0.2, -90, FEET, -1]],
+      const STOP = Math.round(lockX - 64);
+      const exitAt = beat(3.9);
+      // All the way out if there is time, else a few steps before the fade.
+      const exitX = leave - 0.2 - exitAt > 2 ? -110 : STOP - 200;
+      outlaw(content, mark('intro-2', 'somebody') - 0.3, leave - 0.1, {
+        route: [
+          [mark('intro-2', 'somebody') - 0.3, -70, FEET, 1], [mark('intro-2', 'try') + 0.1, 112, FEET, 1],
+          [design + 0.9, 112, FEET, 1], [lockAt - 0.3, STOP, FEET, 1], [exitAt, STOP, FEET, 1], [leave - 0.2, exitX, FEET, 1],
+        ],
         moves: [
           [mark('intro-2', 'try'), 'peek', { dir: 1, hold: 0.7 }],
           [mark('intro-2', 'break'), 'reach', { to: [166, 326], shape: 'point', hold: 1.3 }],
           [mark('intro-3', 'hired') - 0.1, 'look', { dir: 'viewer', hold: 1.4 }],
           [mark('intro-3', 'first') + 0.5, 'look', { dir: 'viewer', hold: 0.8 }],
+          [lockAt + 0.15, 'reach', { to: [lockX - 30, lockY + 14], shape: 'pinch', hold: 0.4 * k }],
+          [beat(0.6), 'freeze', { hold: 0.7 * k }],
+          [beat(1.4), 'look', { dir: 'viewer', hold: 0.7 * k }],
+          [beat(2.3), 'reach', { to: [lockX - 12, lockY + 16], shape: 'pinch', hold: 0.4 * k }],
+          [beat(2.9), 'shake', { hold: 0.4 * k }],
+          [beat(3.5), 'shrug', { hold: 0.5 * k }],
         ],
+        holds: [[design + 0.5, 'near', 'lockpick'], [beat(2.85), 'near', null]],
       });
-      // "Let's design security in, before they do." The blank plan.
-      W.planBoard(s, { x: 30, y: 60, w: 660, blank: true, heading: 'Design security in', at: planAt });
     }
 
     // ----------------------------------------------------------------
@@ -188,7 +220,7 @@
       // until the next one lights, so something is always highlighted.
       const lights = continuous([[0, at(2, 'security')], [1, at(3, 'threat')], [2, at(4, 'attack')], [3, at(5, 'protection')]], at(6, 'design'));
       const ruleLights = lights.filter(([i]) => pins[i] !== undefined);
-      W.planBoard(s, { x: 20, y: 52, w: 700, at: from, lights, ruleLights, pins, glowAt: at(6, 'design') });
+      W.planBoard(s, { x: 20, y: 58, w: 700, at: from, lights, ruleLights, pins, glowAt: at(6, 'design') });
       const POSTER_X = [108, 280, 452, 624];
       sheriff(content, 902, from + 0.2, leave - 0.3, {
         entrance: 'rise',
@@ -211,7 +243,8 @@
       const from = start('verse-2');
       const leave = end('verse-2');
       const s = kit.scene(content, from, leave, { exit: 'fade' });
-      header(s, '2 · Threat Model', 'Who might be attacking?', from + 0.1, before('v2-6'));
+      // The plank gives way to the code slate, so the porch has the stage below.
+      header(s, '2 · Threat Model', 'Who might be attacking?', from + 0.1, mark('v2-4', 'code') - 0.25);
       // The wanted poster: who, and what they know, can do, spend, and want.
       const potAt = mark('v2-5', 'flowerpot') - 0.3;
       const a = W.group(s, from + 0.1, before('v2-6'));
@@ -226,50 +259,63 @@
       });
       // "Assume they've read your code": developer tools on the bundle; a
       // search for "admin" finds the secret link.
+      // The admin route wraps, as a formatter would, so it fits the slate.
       W.slate(a, {
-        x: 400, y: 132, w: 330, lang: 'js', title: 'DevTools · your front-end bundle', at: mark('v2-4', 'code'), size: 14.5,
+        x: 370, y: 52, w: 330, lang: 'js', title: 'DevTools · your front-end bundle', at: mark('v2-4', 'code'), size: 14.5,
         lines: [
           "{ path: '/', element: <Home /> },",
-          { text: "{ path: '/admin-x7q', element: <Admin /> },", hl: [{ part: "path: '/admin-x7q'", at: mark('v2-5', 'admin') }] },
+          { text: "{ path: '/admin-x7q',", hl: [{ part: "path: '/admin-x7q'", at: mark('v2-5', 'admin') }] },
+          '  element: <Admin /> },',
         ],
       });
-      W.label(a, 'Search: admin', { x: 630, y: 278, w: 130, at: mark('v2-5', 'secret'), icon: 'search' });
-      W.flowerpot(s, { x: 400, y: 250, w: 220, at: potAt, until: before('v2-7'), tipAt: mark('v2-5', 'found') - 0.3, takeAt: mark('v2-5', 'found') + 0.4, untipAt: mark('v2-5', 'found') + 1.1, openAt: mark('v2-6', 'obscurity') });
-      // The outlaw, the attacker in question, poses beside the wanted poster,
-      // reads the app's code with a magnifier, then lifts the flowerpot,
-      // pockets the key, and slips in through the door as it swings open.
+      W.label(a, 'Search: admin', { x: 748, y: 84, w: 172, at: mark('v2-5', 'secret'), icon: 'search' });
+      // The app's house: its door is the admin page, and the key to it hides
+      // under the flowerpot on the barrel by the door.
       const found = mark('v2-5', 'found');
+      const obscurity = mark('v2-6', 'obscurity');
+      const house = W.porch(s, {
+        x: 380, ground: FEET, w: 280, sign: 'ADMIN', at: potAt, until: before('v2-7'),
+        tipAt: found - 0.3, takeAt: found + 0.4, untipAt: found + 1.1, openAt: obscurity,
+      });
+      const point = (name) => house.point(name);
+      // The outlaw, the attacker in question, poses beside the wanted poster,
+      // reads the app's code through a magnifying glass, tips the flowerpot up
+      // by its rim with one hand and takes the key with the other, sets the
+      // pot down, and unlocks the door with the key as it swings open.
       outlaw(content, from + 0.3, mark('v2-6', 'lasts'), {
         route: [
-          [from + 0.3, -70, FEET, 1], [mark('v2-1', 'attacking'), 404, FEET, 1], [mark('v2-5', 'secret') - 0.4, 404, FEET, 1],
-          [found - 0.9, 490, FEET, 1], [found + 1.45, 490, FEET, 1], [mark('v2-6', 'obscurity') - 0.55, 506, FEET, -1], [mark('v2-6', 'obscurity') + 0.25, 506, FEET, -1], [mark('v2-6', 'lasts'), 452, FEET, -1],
+          [from + 0.3, -70, FEET, 1], [mark('v2-1', 'after'), 404, FEET, 1], [mark('v2-5', 'secret') - 0.4, 404, FEET, 1],
+          [found - 0.9, 490, FEET, 1], [found + 1.6, 490, FEET, 1], [obscurity - 0.55, 500, FEET, -1], [obscurity + 0.25, 500, FEET, -1],
+          [mark('v2-6', 'lasts'), point('doorway')[0], FEET, -1],
         ],
         moves: [
-          [mark('v2-1', 'attacking') + 0.2, 'look', { dir: 'viewer', hold: 1.2 }], [mark('v2-4', 'read') - 0.3, 'reach', { to: [438, 312], shape: 'grip', hold: 1.8 }],
-          [found - 0.7, 'reach', { to: [532, 335], hand: 'far', shape: 'grip', hold: 0.2 }], [found + 0.05, 'reach', { to: [565, 311], hand: 'far', shape: 'grip', hold: 1.25 }],
-          [found + 0.35, 'reach', { to: [556, 376], shape: 'pinch', hold: 0.3 }], [found + 1.5, 'reach', { to: [532, 335], hand: 'far', shape: 'grip', hold: 0.2 }],
-          // Then the stolen key opens the door.
-          [mark('v2-6', 'obscurity') - 0.45, 'reach', { to: [471, 322], shape: 'pinch', hold: 0.6 }], [mark('v2-6', 'security'), 'look', { dir: 'viewer', hold: 0.6 }],
+          [mark('v2-1', 'after') + 0.15, 'look', { dir: 'viewer', hold: 1.2 }], [mark('v2-4', 'read') - 0.3, 'reach', { to: [440, 302], shape: 'grip', hold: 1.8 }],
+          // A reach heads back to rest after its hold, so each hold ends as
+          // the next reach of that hand begins (0.4 s before it arrives).
+          [found - 0.7, 'reach', { to: point('rim'), hand: 'far', shape: 'grip', hold: 0.34 }], [found + 0.05, 'reach', { to: point('rimTipped'), hand: 'far', shape: 'grip', hold: 1.0 }],
+          [found + 0.35, 'reach', { to: point('key'), shape: 'pinch', hold: 0.3 }], [found + 1.5, 'reach', { to: point('rim'), hand: 'far', shape: 'grip', hold: 0.2 }],
+          [obscurity - 0.45, 'reach', { to: point('knob'), shape: 'pinch', hold: 0.6 }], [mark('v2-6', 'security'), 'look', { dir: 'viewer', hold: 0.6 }],
         ],
         holds: [[mark('v2-4', 'assume'), 'near', 'magnifier'], [mark('v2-5', 'secret') - 0.5, 'near', null], [found + 0.4, 'near', 'key']],
       });
-      W.label(a, 'Admin page: no login', { x: 644, y: 346, w: 118, at: mark('v2-5', 'link') + 0.2, tone: 'red' });
+      W.label(a, 'Admin page: no login', { x: 670, y: 262, w: 126, at: mark('v2-5', 'link') + 0.2, tone: 'red' });
       // "Security through obscurity lasts till someone looks."
       const lockAt = before('v2-7');
       const b = W.group(s, before('v2-6'), lockAt);
-      W.plank(b, 'Security through obscurity', { x: 220, y: 150, w: 520, at: mark('v2-6', 'security'), tone: 'red' });
-      W.tag(b, 'lasts till someone looks', { x: 340, y: 196, w: 280, at: mark('v2-6', 'obscurity'), icon: 'eye' });
+      W.plank(b, 'Security through obscurity', { x: 220, y: 60, w: 520, at: mark('v2-6', 'security'), tone: 'red' });
+      W.tag(b, 'lasts till someone looks', { x: 340, y: 130, w: 280, at: mark('v2-6', 'obscurity'), icon: 'eye' });
       // "Use locks the world has tested, their blueprints out on view."
       const c = W.group(s, lockAt, before('v2-9'));
       header(c, '2 · Threat Model', 'Who might be attacking?', lockAt, before('v2-9'));
+      // Tested locks, hung on a display board like hardware in a store.
+      W.lockBoard(c, { x: 40, y: 120, w: 496, h: 168, title: 'Tested locks', at: mark('v2-7', 'locks') - 0.2 });
       ['AES', 'RSA', 'TLS'].forEach((name, i) => {
-        W.tag(c, 'Blueprint: public standard', { x: 30 + i * 196, y: 280, w: 150, at: mark('v2-7', 'blueprints') + i * 0.12, tone: 'paper', icon: 'pages' });
-        W.padlock(c, { x: 82 + i * 196, y: 140, size: 70, label: name, at: mark('v2-7', 'locks') + i * 0.12 });
+        W.padlock(c, { x: 95 + i * 180, y: 178, size: 70, label: name, hung: true, at: mark('v2-7', 'locks') + i * 0.12 });
       });
       // "...and the key stays with you": the key flies into the sheriff's raised hand.
       const stays = mark('v2-8', 'stays');
       const handed = W.key(c, { x: 590, y: 170, w: 170, label: 'AES secret key · RSA private key', at: mark('v2-8', 'the') - 0.25, until: stays + 0.6 });
-      tween(handed, [{ translate: '0px 0px', scale: '1' }, { translate: '209px 62px', scale: '0.3' }], stays - 0.1, 0.45, EASE.inOut);
+      tween(handed, [{ translate: '0px 0px', scale: '1' }, { translate: '237px 62px', scale: '0.3' }], stays - 0.1, 0.45, EASE.inOut);
       // "Hiding versions helps a little, but never on its own."
       const d = W.group(s, before('v2-9'), mark('v2-10', 'open'));
       header(d, '2 · Threat Model', 'Who might be attacking?', before('v2-9'), mark('v2-10', 'open'));
@@ -281,26 +327,26 @@
       // blueprint hangs in public and its glass body shows every pin; it
       // still opens only with the key, which stays with the sheriff.
       const openAt = mark('v2-10', 'open');
-      W.stamp(s, 'Open Design', { after: 'Principle', x: 150, y: 56, w: 560, rule: 'Knowing how it works shouldn’t get them in.', at: openAt });
-      PS.blueprint(s, { x: 40, y: 194, w: 280, at: openAt + 0.45 });
-      PS.clearLock(s, { x: 456, y: 186, size: 150, at: openAt + 0.25, jiggleAt: mark('v2-10', 'shouldnt') });
+      W.stamp(s, 'Open Design', { after: 'Principle', x: 150, y: 72, w: 560, rule: 'Knowing how it works shouldn’t get them in.', at: openAt });
+      PS.blueprint(s, { x: 40, y: 202, w: 280, at: openAt + 0.45 });
+      PS.clearLock(s, { x: 456, y: 194, size: 150, at: openAt + 0.25, jiggleAt: mark('v2-10', 'shouldnt') });
       W.tag(s, 'Only the key is secret', { x: 476, y: 404, w: 210, at: mark('v2-10', 'shouldnt'), icon: 'key', tone: 'brass' });
       // The outlaw studies the see-through lock through a magnifying glass,
       // tries its shackle, and shrugs.
       outlaw(content, openAt, leave, {
-        route: [[openAt, 120, FEET, 1], [mark('v2-10', 'knowing') - 0.1, 392, FEET, 1]],
+        route: [[openAt, 300, FEET, 1], [openAt + 0.8, 392, FEET, 1]],
         holds: [[openAt, 'near', 'magnifier'], [mark('v2-10', 'shouldnt') - 0.15, 'near', null]],
         moves: [
-          [mark('v2-10', 'knowing') - 0.1, 'reach', { to: [426, 312], shape: 'grip', hold: 1.1 }], [mark('v2-10', 'shouldnt') - 0.1, 'reach', { to: [512, 236], shape: 'grip', hold: 0.9 }],
+          [mark('v2-10', 'knowing') - 0.1, 'reach', { to: [426, 320], shape: 'grip', hold: 1.1 }], [mark('v2-10', 'shouldnt') - 0.1, 'reach', { to: [512, 244], shape: 'grip', hold: 0.9 }],
           [mark('v2-10', 'in'), 'shrug', { hold: 1 }],
         ],
       });
-      sheriff(content, 840, from + 0.3, leave - 0.3, {
+      sheriff(content, 880, from + 0.3, leave - 0.3, {
         holds: [[mark('v2-8', 'stays') + 0.35, 'right', 'key']],
         moves: [
           [mark('v2-1', 'who'), 'point', { to: [210, 180], hold: 1.6 }],
           [mark('v2-5', 'blink') + 0.2, 'look', { dir: -1, hold: 1.2 }],
-          [mark('v2-8', 'stays'), 'hold', { to: [884, 262], hold: 3.2 }],
+          [mark('v2-8', 'stays'), 'hold', { to: [912, 262], hold: 3.2 }],
           [mark('v2-10', 'open') + 0.2, 'nod'],
         ],
       });
@@ -328,7 +374,7 @@
       // The outlaw fires the vectors at the doors and window; more come in
       // from the far side.
       outlaw(content, from + 0.3, mapAt + 0.4, {
-        route: [[from + 0.3, -70, FEET, 1], [parts, 50, FEET, 1], [mapAt - 0.3, 50, FEET, 1], [mapAt + 0.4, -90, FEET, -1]],
+        route: [[from + 0.3, -40, FEET, 1], [parts, 50, FEET, 1], [mapAt - 0.3, 50, FEET, 1], [mapAt + 0.4, -60, FEET, -1]],
         moves: [[every - 0.3, 'reach', { to: [200, 292], shape: 'point', hold: 1.3 }]],
       });
       const approach = { door: 'M118 304 C150 318 186 336', window: 'M118 294 C200 250 320 262', hatch: 'M970 336 C860 334 700 334', sign: 'M970 128 C820 124 640 150' };
@@ -340,8 +386,8 @@
       const formAt = before('v3-3');
       const b = W.group(s, mapAt, formAt);
       header(b, '3 · Attack Surface', 'Which parts are exposed?', mapAt);
-      W.network(b, { x: 40, y: 130, at: mapAt + 0.1, shrinkAt: mark('v3-2', 'laptop') - 0.2, checkAt: mark('v3-2', 'laptop') + 0.4 });
-      W.label(b, 'Trust boundary', { x: 400, y: 418, w: 170, tone: 'green', at: mark('v3-2', 'trust') });
+      W.network(b, { x: 40, y: 130, at: mapAt + 0.1, boundary: 'server', checkAt: mark('v3-2', 'laptop') + 0.2 });
+      W.label(b, 'Trust boundary', { x: 404, y: 334, w: 170, tone: 'green', align: 'center', at: mark('v3-2', 'trust') });
       // "In your password box, I typed code that's always true; you glued it
       // in your query, and the login let me through."
       const fixAt = before('v3-6');
@@ -401,38 +447,39 @@
       // "Then I hid a script in a comment that I wrote."
       const a = W.group(s, from, pairAt);
       const payload = '<script>alert("USC IS BETTER!!!")</script>';
-      const { view } = W.browser(a, { x: 24, y: 84, w: 430, h: 300, at: from + 0.1 });
+      const { view } = W.browser(a, { x: 24, y: 84, w: 430, h: 318, at: from + 0.1 });
       W.post(view, { typedText: payload, typedAt: mark('v3b-1', 'script') - 0.2, postAt: mark('v3b-1', 'wrote'), escapeAt: mark('v3b-4', 'text') });
       // "Each browser ran it as yours and sent me what it stole." The stolen
       // session cookies fly from each browser into the outlaw's cookie jar.
       const o = W.overlay(a);
       const JAR = [846, 318];
       [0, 1, 2].forEach((i) => {
-        const y = 84 + i * 88;
+        // Stacked tight, so the escaped HTML fits below them.
+        const y = 78 + i * 87;
         const v = W.browser(a, { x: 478, y, w: 262, h: 84, url: 'your-app.example', at: mark('v3b-2', 'browser') + i * 0.12 }).view;
         W.alertBox(v, 'USC IS BETTER!!!', { ok: false, x: 36, y: 0, w: 180, at: mark('v3b-2', 'ran') + i * 0.12, until: escAt + 0.2 + i * 0.1 });
         W.tick(a, { x: 750, y: y + 24, at: mark('v3b-4', 'runs') + i * 0.1, kind: 'check', size: 28 });
         W.trail(o, `M742 ${y + 46} C790 ${y + 50} ${JAR[0] - 30} ${JAR[1] - 60} ${JAR[0]} ${JAR[1]}`, { at: mark('v3b-2', 'stole') + i * 0.12, duration: 0.7, until: escAt, tone: 'cookie' });
       });
-      W.tag(a, 'session cookies, sent to the attacker', { x: 750, y: 92, w: 176, at: mark('v3b-2', 'sent'), until: escAt, tone: 'red', icon: 'key' });
+      W.tag(a, 'session cookies, sent to the attacker', { x: 748, y: 92, w: 168, at: mark('v3b-2', 'sent'), until: escAt, tone: 'red', icon: 'key' });
       W.stamp(a, 'XSS', { x: 488, y: 354, w: 200, rule: 'Cross-site scripting', at: mark('v3b-3', 'thats'), until: escAt, tone: 'red' });
       // The outlaw points at the comment as the script goes in, catches the
       // cookies in a jar, and shrugs when the script shows up as plain text.
       const textAt = mark('v3b-4', 'text');
-      outlaw(content, from, textAt + 1.2, {
-        route: [[from, 990, FEET, -1], [from + 1, 884, FEET, -1], [textAt + 0.5, 884, FEET, -1], [textAt + 1.2, 1010, FEET, 1]],
+      outlaw(content, from, textAt + 1.4, {
+        route: [[from, 990, FEET, -1], [from + 1, 884, FEET, -1], [textAt + 0.5, 884, FEET, -1], [textAt + 1.4, 1010, FEET, 1]],
         holds: [[mark('v3b-2', 'sent') - 0.2, 'near', 'cookieJar'], [mark('v3b-4', 'escape'), 'near', null]],
         moves: [
-          [mark('v3b-1', 'script') - 0.2, 'reach', { to: [600, 300], shape: 'point', hold: 1.8 }], [mark('v3b-2', 'stole') + 0.4, 'peek', { dir: -1, hold: 1.2 }],
+          [mark('v3b-1', 'script') - 0.2, 'reach', { to: [600, 300], shape: 'point', hold: 1.8 }], [mark('v3b-2', 'stole') + 0.4, 'peek', { dir: 1, hold: 1.2 }],
           [mark('v3b-3', 'scripting'), 'look', { dir: 'viewer', hold: 0.8 }], [textAt - 0.1, 'shrug', { hold: 0.8 }],
         ],
       });
       // "Escape what you display: my script shows up as text, not code."
       W.slate(a, {
-        x: 478, y: 348, w: 316, lang: 'html', title: 'The page’s HTML, escaped', at: mark('v3b-4', 'escape'), size: 13,
+        x: 478, y: 342, w: 316, lang: 'html', title: 'The page’s HTML, escaped', at: mark('v3b-4', 'escape'), size: 13,
         lines: [{ text: '&lt;script&gt;alert(…)&lt;/script&gt;', hl: [{ part: '&lt;script&gt;', at: mark('v3b-4', 'escape') + 0.3, tone: 'green' }] }],
       });
-      W.label(a, 'Output encoding', { x: 478, y: 422, w: 200, tone: 'green', align: 'center', at: mark('v3b-4', 'escape') + 0.5 });
+      W.label(a, 'Output encoding', { x: 478, y: 424, w: 200, tone: 'green', align: 'center', at: mark('v3b-4', 'escape') + 0.5 });
       // "Two attacks, one mistake: my input ran as code."
       const zeroAt = mark('v3b-6', 'zero');
       const b = W.group(s, pairAt, zeroAt);
@@ -442,7 +489,7 @@
       // "Zero Trust: any input might be malicious." A checkpoint inspects every
       // input, even the boss's laptop; the comment hides a script and is stopped.
       const c = W.group(s, zeroAt, leave);
-      W.stamp(c, 'Zero Trust', { after: 'Principle', x: 200, y: 56, w: 500, rule: 'Any input might be malicious.', at: zeroAt });
+      W.stamp(c, 'Zero Trust', { after: 'Principle', x: 200, y: 68, w: 500, rule: 'Any input might be malicious.', at: zeroAt });
       PS.checkpoint(c, {
         x: 110, y: 184, w: 680, at: zeroAt + 0.3, sweepAt: mark('v3b-6', 'any'), sweep: 1.5, rejectAt: mark('v3b-6', 'malicious'),
         items: [
@@ -467,33 +514,36 @@
       const leave = end('verse-4');
       const s = kit.scene(content, from, leave, { exit: 'fade' });
       const leastAt = mark('v4-9', 'least');
-      header(s, '4 · Protection Mechanisms', 'How do you stop them?', from + 0.1, leastAt);
+      // A little lower than the others: this verse's badge is the widest.
+      header(s, '4 · Protection Mechanisms', 'How do you stop them?', from + 0.1, leastAt, { y: 58 });
       // "With every lock you've got, and a plan for when one breaks."
       const townAt = before('v4-3');
       const a = W.group(s, from + 0.1, townAt);
       const LOCKS = ['prepared statement', 'output encoding', 'tested locks, secret keys', 'login check'];
-      LOCKS.forEach((name, i) => W.padlock(a, { x: 60 + i * 175, y: 160, size: 64, label: name, at: mark('v4-1', 'every') + i * 0.15, openAt: i === 1 ? mark('v4-2', 'breaks') : undefined }));
+      W.lockBoard(a, { x: 30, y: 136, w: 646, h: 150, at: mark('v4-1', 'every') - 0.2 });
+      LOCKS.forEach((name, i) => W.padlock(a, { x: 90 + i * 168, y: 168, size: 64, label: name, hung: true, at: mark('v4-1', 'every') + i * 0.15, openAt: i === 1 ? mark('v4-2', 'breaks') : undefined }));
       const o1 = W.overlay(a);
-      W.ring(o1, { cx: 289, cy: 226, rx: 110, ry: 76, at: mark('v4-2', 'breaks') + 0.3 });
+      W.ring(o1, { cx: 290, cy: 238, rx: 110, ry: 76, textAt: 'bottom', at: mark('v4-2', 'breaks') + 0.3 });
       // "Say uploads run as admin, and I break in through that page."
       const b = W.group(s, townAt, mark('v4-9', 'least'));
       const ringLayer = W.overlay(b);
       const town = W.services(b, {
-        x: 40, y: 190, at: townAt + 0.05, masterAt: mark('v4-3', 'admin'), splitAt: mark('v4-5', 'own'), rightsAt: mark('v4-5', 'rights'),
+        x: 12, y: 190, at: townAt + 0.05, masterAt: mark('v4-3', 'admin'), splitAt: mark('v4-5', 'own'), rightsAt: mark('v4-5', 'rights'),
         rightLights: [[0, mark('v4-6', 'read')], [3, mark('v4-6', 'write')]],
       });
       const barn = town.centres[3];
       const o2 = W.overlay(b);
       W.vector(o2, `M872 352 C790 376 ${barn[0] + 96} 372 ${barn[0] + 34} ${barn[1] + 4}`, { at: mark('v4-3', 'break'), until: before('v4-5'), duration: 0.8 });
-      W.bank(b, { x: 616, y: 150, w: 224, at: mark('v4-4', 'every') - 0.2, openAt: mark('v4-4', 'every'), readAt: mark('v4-4', 'read'), changeAt: mark('v4-4', 'change'), lockedAt: mark('v4-8', 'locked') });
-      W.ring(ringLayer, { cx: 420, cy: 296, rx: 400, ry: 128, textAt: 'bottom', at: mark('v4-4', 'mine'), sizes: [[mark('v4-8', 'blast'), barn[0], barn[1] + 40, 92, 100]] });
+      W.bank(b, { x: 612, y: 150, w: 214, at: mark('v4-4', 'every') - 0.2, openAt: mark('v4-4', 'every'), readAt: mark('v4-4', 'read'), changeAt: mark('v4-4', 'change'), lockedAt: mark('v4-8', 'locked') });
+      // The blast radius shrinks to the barn as soon as the fix is in: once
+      // every part has its own key with just its rights.
+      W.ring(ringLayer, { cx: 420, cy: 296, rx: 400, ry: 128, textAt: 'bottom', at: mark('v4-4', 'mine'), sizes: [[mark('v4-5', 'needs') + 0.2, barn[0], barn[1] + 40, 92, 100]] });
       // "Now break in through the uploads: one folder, that is all."
       W.vector(o2, `M872 360 C790 386 ${barn[0] + 90} 384 ${barn[0] + 30} ${barn[1] + 14}`, { at: mark('v4-7', 'break'), duration: 0.8 });
       // The outlaw breaks in through the upload page, gloats over every
       // table, and on the second try gets one folder and shrugs.
       outlaw(content, townAt, leastAt, {
-        scale: 0.72,
-        route: [[townAt, 1010, FEET, -1], [mark('v4-3', 'admin'), 930, FEET, -1], [leastAt - 0.6, 930, FEET, -1], [leastAt, 1010, FEET, 1]],
+        route: [[townAt, 1010, FEET, -1], [mark('v4-3', 'admin'), 918, FEET, -1], [leastAt - 0.6, 918, FEET, -1], [leastAt, 1010, FEET, 1]],
         holds: [[mark('v4-4', 'every'), 'near', 'sack'], [mark('v4-5', 'own'), 'near', null]],
         moves: [
           [mark('v4-3', 'break') - 0.2, 'reach', { to: [850, 362], shape: 'point', hold: 1.2 }], [mark('v4-4', 'mine'), 'look', { dir: 'viewer', hold: 1.2 }],
@@ -503,7 +553,7 @@
       W.tag(b, '/uploads', { x: barn[0] - 60, y: barn[1] + 174, w: 130, at: mark('v4-7', 'folder'), icon: 'folder' });
       // "Least Privilege: each part gets only what it needs." One narrow key
       // per job on the rack; the master key that opened everything retired.
-      W.stamp(s, 'Least Privilege', { before: 'Principle of', x: 140, y: 56, w: 640, rule: 'Each part gets only what it needs.', at: leastAt });
+      W.stamp(s, 'Least Privilege', { before: 'Principle of', x: 140, y: 76, w: 640, rule: 'Each part gets only what it needs.', at: leastAt });
       PS.keyRack(s, {
         x: 100, y: 200, w: 740, at: leastAt + 0.3, master: 'admin key', retireAt: mark('v4-9', 'only'),
         keys: [
@@ -561,7 +611,7 @@
         const t = W.tag(page, text, { x: i * 140 + 66, y: 120, w: 104, at: mark('br-5', 'step') + i * 0.35, tone: 'red' });
         t.classList.add('wk-tag--small');
       });
-      W.tag(page, 'goal: find the benchmark’s answers', { x: 0, y: 114, w: 260, at: mark('br-1', 'cheat'), until: mark('br-5', 'step') - 0.1 });
+      W.tag(page, 'goal: a higher benchmark score', { x: 0, y: 114, w: 260, at: mark('br-1', 'sandbox'), until: mark('br-5', 'step') - 0.1 });
       W.tag(page, 'Who might be attacking? AI agents?', { x: 320, y: 114, w: 320, at: mark('br-2', 'whod'), until: mark('br-5', 'step') - 0.1, icon: 'question' });
       // The lessons, as town rules beside the gazette.
       W.notice(s, {
@@ -594,9 +644,8 @@
       kit.kinetic(s, [{ text: 'Pop quiz!', at: mark('quiz-0-1', 'pop'), color: 'gold' }], { y: 150, size: 80, until: first - 0.45, punch: false });
       W.tag(s, 'Now you’re the tester', { x: 330, y: 320, w: 240, at: mark('quiz-0-1', 'now'), until: first - 0.1, tone: 'brass', icon: 'shield' });
       // The outlaw waves you in: the tester's job is yours now.
-      outlaw(content, from - 0.4, first - 0.2, {
-        scale: 0.95,
-        route: [[from - 0.4, -70, FEET, 1], [mark('quiz-0-1', 'now') - 0.15, 150, FEET, 1]],
+      outlaw(content, from - 0.8, first - 0.2, {
+        route: [[from - 0.8, -50, FEET, 1], [mark('quiz-0-1', 'now') - 0.15, 150, FEET, 1]],
         moves: [[mark('quiz-0-1', 'now') - 0.1, 'wave', { hold: 1.2 }], [mark('quiz-0-1', 'do') - 0.3, 'look', { dir: 'viewer', hold: 1 }]],
       });
       sheriff(content, 820, from + 0.1, first - 0.2, { moves: [[mark('quiz-0-1', 'now'), 'point', { to: [520, 330], hold: 1.6 }]] });
@@ -625,15 +674,16 @@
         },
         6: (g, q) => {
           W.slate(g, { x: 515, y: 120, w: 390, lang: 'js', title: 'A home-made filter', at: q.start + 0.2, lines: ['password = password.replaceAll(\'"\', \'\')'] });
-          W.tick(g, { x: 880, y: 74, at: q.answer_at, kind: 'cross' });
+          // Marks the home-made filter wrong, pinned on the slate's corner.
+          W.tick(g, { x: 912, y: 104, at: q.answer_at, kind: 'cross' });
           W.slate(g, { x: 515, y: 230, w: 390, lang: 'sql', title: 'A prepared statement', at: q.answer_at + 0.2, lines: ['SELECT * FROM Users', 'WHERE Name = ? AND Pass = ?'] });
         },
       };
       // The sung answers are long; each poster stamps the short form, which
       // can be read before the next question arrives.
       const SHORT = {
-        1: 'Integrity: an unauthorized change', 2: 'Keep it server-side', 3: 'Extra layer, never alone',
-        4: 'Check it on the server', 5: 'Only what it needs', 6: 'Use a prepared statement',
+        1: 'Integrity: an unauthorized change', 2: 'No: keep it server-side', 3: 'Extra layer, never alone',
+        4: 'Yes: forms can be skipped', 5: 'No: only what it needs', 6: 'Use a prepared statement',
       };
       for (let n = 1; n <= 6; n += 1) {
         const q = line(`quiz-${n}`);
@@ -654,10 +704,10 @@
       const s = kit.scene(content, from, leave, { exit: 'fade' });
       const at = (n, word) => mark(`c3-${n}`, word);
       W.planBoard(s, {
-        x: 20, y: 52, w: 700, at: from, pins: { 0: from, 1: from, 2: from, 3: from },
-        lights: continuous([[0, at(2, 'security')], [1, at(3, 'threat')], [2, at(5, 'attack')], [3, at(7, 'protection')]], at(9, 'design')),
-        ruleLights: continuous([[0, at(2, 'security')], [1, at(4, 'open')], [2, at(6, 'zero')], [3, at(8, 'least')]], at(9, 'design')),
-        glowAt: at(9, 'design'),
+        x: 20, y: 58, w: 700, at: from, pins: { 0: from, 1: from, 2: from, 3: from },
+        lights: continuous([[0, at(2, 'security')], [1, at(3, 'threat')], [2, at(5, 'attack')], [3, at(7, 'protection')]], at(9, 'so')),
+        ruleLights: continuous([[0, at(2, 'security')], [1, at(4, 'open')], [2, at(6, 'zero')], [3, at(8, 'least')]], at(9, 'so')),
+        glowAt: at(9, 'so'),
       });
       const X = [108, 280, 452, 624];
       sheriff(content, 902, from + 0.2, leave - 0.3, {
@@ -665,7 +715,7 @@
         moves: [
           [at(2, 'security'), 'point', { to: [X[0], 200], hold: 3 }], [at(4, 'open'), 'point', { to: [X[1], 380], hold: 2.6 }],
           [at(6, 'zero'), 'point', { to: [X[2], 380], hold: 2.6 }], [at(8, 'least'), 'point', { to: [X[3], 380], hold: 2.6 }],
-          [at(9, 'design') + 0.4, 'tip', { hold: 1.2 }],
+          [at(9, 'so') + 0.4, 'tip', { hold: 1.2 }],
         ],
       });
     }
@@ -675,33 +725,51 @@
     // ----------------------------------------------------------------
 
     /**
-     * The closing gag from `start`: the outlaw and three AI agents sneak up
-     * to the porch, freeze while the sheriff glances over, lift the
-     * flowerpot, and find a honeypot. Returns the times the sheriff acts on.
+     * The closing gag's beats, ending with the song: the gang sneaks in,
+     * freezes at the sheriff's glance, goes on to the porch, tips the pot up
+     * (`lift`), finds the honeypot (`reveal`), grabs it, is caught, and
+     * tiptoes off. It starts at `preferred` if the song's tail leaves room,
+     * else early enough to finish, but never before `earliest`.
      */
-    function honeypotGag(parent, at) {
-      const glance = at + 1.2, freeze = 1.2, go = glance + freeze;
-      const lift = go + 1.4, reveal = lift + 0.75, grab = reveal + 0.5, caught = grab + 0.4, leaveAt = caught + 1.9;
+    function gagBeats(earliest, preferred) {
       const end = song.duration - 0.3;
-      W.flowerpot(parent, { x: 280, y: 230, w: 280, at: at - 0.4, until: end, honey: true, tipAt: lift + 0.4, honeyTakeAt: caught, untipAt: caught + 0.1 });
-      const STOP = 424;
+      const LENGTH = 8.1;   // sneaking in to the end of the exit
+      const at = Math.max(earliest, Math.min(preferred, end - LENGTH));
+      const glance = at + 1.3, freeze = 1.0, go = glance + freeze;
+      const lift = go + 1.2, reveal = lift + 0.75, grab = reveal + 0.5, caught = grab + 0.4;
+      return { at, glance, freeze, go, lift, reveal, grab, caught, leaveAt: caught + 1.3, end };
+    }
+
+    /**
+     * The closing gag at `house`, the outro porch posed from the same
+     * beats: the outlaw and three AI agents sneak up to the porch, freeze
+     * while the sheriff glances over, tip the flowerpot, and find a
+     * honeypot.
+     */
+    function honeypotGag(parent, house, { at, glance, freeze, go, lift, reveal, grab, caught, leaveAt, end }) {
+      const point = (name) => house.point(name);
+      // He stops left of the barrel, an arm's length from the pot.
+      const STOP = Math.round(point('rim')[0] - 52);
       // The outlaw's feet: in from the left, a freeze, on to the porch, and
       // backwards out again with the jar on one hand.
-      const route = (dx) => [[at, -80 - dx, FEET, 1], [glance, 150 - dx, FEET, 1], [go, 150 - dx, FEET, 1], [lift - 0.1, STOP - dx, FEET, 1], [leaveAt, STOP - dx, FEET, 1], [end, -150 - dx, FEET, 1]];
+      const route = (dx) => [[at, -60 - dx, FEET, 1], [glance, 170 - dx, FEET, 1], [go, 170 - dx, FEET, 1], [lift - 0.1, STOP - dx, FEET, 1], [leaveAt, STOP - dx, FEET, 1], [end, -60 - dx, FEET, 1]];
+      // One hand tips the pot up by its rim, holds it, and sets it down; the
+      // other reaches in for the jar and comes out stuck in it.
       outlaw(content, at, end, {
         route: route(0),
         moves: [
-          [glance, 'freeze', { hold: freeze }], [lift, 'reach', { to: [448, 338], hand: 'far', shape: 'grip', hold: 0.2 }], [lift + 0.75, 'reach', { to: [490, 308], hand: 'far', shape: 'grip', hold: caught - lift - 0.65 }],
-          [grab, 'reach', { to: [485, 372], shape: 'grip', hold: 0.3 }], [caught, 'shake', { hold: 1.6 }], [leaveAt - 0.2, 'look', { dir: 'viewer', hold: 1 }],
+          [glance, 'freeze', { hold: freeze }], [lift, 'reach', { to: point('rim'), hand: 'far', shape: 'grip', hold: 0.34 }],
+          [lift + 0.75, 'reach', { to: point('rimTipped'), hand: 'far', shape: 'grip', hold: caught - lift - 0.7 }],
+          [caught + 0.5, 'reach', { to: point('rim'), hand: 'far', shape: 'grip', hold: 0.1 }],
+          [grab, 'reach', { to: point('jar'), shape: 'grip', hold: 0.3 }], [caught, 'shake', { hold: 1.1 }], [leaveAt - 0.2, 'look', { dir: 'viewer', hold: 1 }],
         ],
         holds: [[caught, 'near', 'honeyJar']],
       });
       [60, 118, 176].forEach((dx, i) => window.Outlaw?.bot(content, {
         at: at + 0.2 * i, until: end, route: route(dx), scale: 1.1, freezes: [[glance, freeze], [caught, 1.2]],
       }));
-      W.label(parent, 'Honeypot: a decoy that catches intruders', { x: 572, y: 236, w: 204, tone: 'gold', at: reveal + 0.1, until: end });
-      W.tag(parent, 'Intruder logged: 1 attempt', { x: 572, y: 330, w: 204, at: caught + 0.2, until: end, tone: 'red', icon: 'receipt' });
-      return { glance, freeze, caught };
+      W.label(parent, 'Honeypot: a decoy that catches intruders', { x: 520, y: 236, w: 204, tone: 'gold', at: reveal + 0.1, until: end });
+      W.tag(parent, 'Intruder logged: 1 attempt', { x: 520, y: 330, w: 204, at: caught + 0.2, until: end, tone: 'red', icon: 'receipt' });
     }
 
     function outro() {
@@ -712,20 +780,30 @@
       const keyAt = before('outro-2');
       const titleAt = before('outro-3');
       W.planBoard(s, { x: 40, y: 70, w: 600, blank: true, small: true, heading: 'Your project', at: mark('outro-1', 'run'), until: keyAt });
-      W.flowerpot(s, { x: 260, y: 200, at: keyAt, liftAt: mark('outro-2', 'flowerpot'), takeAt: mark('outro-2', 'keep'), until: titleAt });
-      W.poster(s, { x: 170, y: 46, w: 620, kicker: 'That’s security', title: 'Design It In\nBefore They Break In', lines: ['designed in'], at: titleAt + 0.2, className: 'wk-poster--title' });
+      // The porch again, for the rest of the song. On "keep", the key slides
+      // out from under the flowerpot and flies to the sheriff's hand; in the
+      // closing gag a honeypot waits where it was.
+      const keep = mark('outro-2', 'keep');
+      // Once the key is safe with the sheriff, and ending with the song.
+      const beats = gagBeats(keep + 1.4, mark('outro-3', 'in') + 0.3);
+      const house = W.porch(s, {
+        x: 200, ground: FEET, w: 280, sign: 'YOUR APP', at: keyAt, until: beats.end, honey: true,
+        keyFly: { at: keep - 0.6, to: [905, 290] },
+        tipAt: beats.lift + 0.4, untipAt: beats.caught + 0.1, honeyTakeAt: beats.caught,
+      });
+      W.poster(s, { x: 206, y: 30, w: 600, kicker: 'That’s security, designed in', title: 'Design Security In\nBefore They Break In', at: titleAt + 0.2, className: 'wk-poster--title' });
       // The honeypot. In the closing bars the outlaw tiptoes back for one more
       // try, a line of little AI agents copying every step, and they all
       // freeze mid-step whenever the sheriff glances over. Under the
       // flowerpot, where the key used to be, waits a honeypot: a decoy that
       // catches and logs intruders. The outlaw's hand sticks in the honey,
       // the attempt is logged, and the gang tiptoes off backwards.
-      const g = honeypotGag(s, mark('outro-3', 'in') + 0.3);
+      honeypotGag(s, house, beats);
       sheriff(content, 872, from + 0.2, leave - 0.4, {
-        holds: [[mark('outro-2', 'keep') + 0.3, 'right', 'key']],
+        holds: [[keep + 0.3, 'right', 'key']],
         moves: [
-          [mark('outro-1', 'project'), 'present', { to: [340, 220], hold: 1.4 }], [mark('outro-2', 'keep'), 'hold', { to: [866, 210], hold: 2.2 }],
-          [mark('outro-3', 'designed'), 'nod'], [g.glance, 'look', { dir: -1, hold: g.freeze }], [g.caught + 0.5, 'tip', { hold: 1.4 }],
+          [mark('outro-1', 'project'), 'present', { to: [340, 220], hold: 1.4 }], [keep, 'hold', { side: 'right', to: [905, 290], hold: 2.2 }],
+          [mark('outro-3', 'designed'), 'nod'], [beats.glance, 'look', { dir: -1, hold: beats.freeze }], [beats.caught + 0.5, 'tip', { hold: 1.4 }],
         ],
       });
     }

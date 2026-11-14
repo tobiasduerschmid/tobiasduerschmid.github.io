@@ -68,26 +68,27 @@
 .fr-poles path { fill: none; stroke: #1c1219; stroke-width: 2.2; }
 .fr-poles .fr-wire { stroke-width: 0.8; stroke: #2a1b24; }
 
-.fr-road-0 { stop-color: #3a2620; }
-.fr-road-1 { stop-color: #1e1412; }
-.fr-rut { fill: none; stroke: #2a1b17; stroke-width: 3; opacity: 0.8; }
-.fr-rail { fill: none; stroke: #241713; stroke-width: 3; stroke-linecap: round; }
+.fr-road-0 { stop-color: #5a3b2b; }
+.fr-road-1 { stop-color: #33221a; }
+.fr-rut { fill: none; stroke: #3e281d; stroke-width: 3; opacity: 0.8; }
+.fr-rail { fill: none; stroke: #4a3222; stroke-width: 3; stroke-linecap: round; }
 
-.fr-tumbleweed path { fill: none; stroke: #5a3d28; stroke-width: 1.1; opacity: 0.75; }
-.fr-tumbleweed circle { fill: none; stroke: #5a3d28; stroke-width: 0.9; opacity: 0.6; }
+.fr-tumbleweed path { fill: none; stroke: #8a6442; stroke-width: 1.1; opacity: 0.8; }
+.fr-tumbleweed circle { fill: none; stroke: #8a6442; stroke-width: 0.9; opacity: 0.65; }
 
 .fr-mote { fill: #f0c890; }
 
-/* Street dressing: dim, so the captions above it stay clear. */
-.fr-boardwalk { fill: #2a1b17; }
-.fr-plank { fill: none; stroke: #1c1210; stroke-width: 1; }
-.fr-tie { fill: none; stroke: #2a1b16; stroke-width: 4; stroke-linecap: round; }
-.fr-track { fill: none; stroke: #3a2a24; stroke-width: 2.2; }
-.fr-cactus { fill: #1d2a1e; stroke: #121a12; stroke-width: 1.2; }
-.fr-crate { fill: #3a2618; stroke: #1c1210; stroke-width: 1.2; }
-.fr-crate-slat { fill: none; stroke: #2a1b12; stroke-width: 1.4; }
-.fr-stencil { fill: #5a4030; font-family: var(--font-mono); font-size: 8px; font-weight: 700; }
-.fr-lasso { fill: none; stroke: #3d4a5a; stroke-width: 2.2; stroke-linecap: round; }
-.fr-stone { fill: #2e201a; }
+/* Street dressing: lit a little by the dusk so its details read; the
+   captions keep their own dark box over it (song-player.css). */
+.fr-boardwalk { fill: #55392a; }
+.fr-plank { fill: none; stroke: #33231a; stroke-width: 1; }
+.fr-tie { fill: none; stroke: #4c3426; stroke-width: 4; stroke-linecap: round; }
+.fr-track { fill: none; stroke: #7a6a62; stroke-width: 2.2; }
+.fr-cactus { fill: #2f4f35; stroke: #16241a; stroke-width: 1.2; }
+.fr-crate { fill: #6b4a2c; stroke: #2a1a10; stroke-width: 1.2; }
+.fr-crate-slat { fill: none; stroke: #4a3220; stroke-width: 1.4; }
+.fr-stencil { fill: #a88460; font-family: var(--font-mono); font-size: 8px; font-weight: 700; }
+.fr-lasso { fill: none; stroke: #a8865a; stroke-width: 2.2; stroke-linecap: round; }
+.fr-stone { fill: #54402e; }
 
 .fr-night { fill: #050712; }
