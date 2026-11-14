@@ -360,7 +360,7 @@ sections:
         end: 138.36
         text: "Trust nothing by default, not even the boss's laptop."
         marks: {"trust": 134.66, "nothing": 135.2, "by": 135.54, "default": 135.9, "not": 136.58, "even": 136.8, "the": 137.0, "bosss": 137.2, "laptop": 137.72}
-        visual: "The lecture's network map: the Internet, a user, the boss's laptop, the developer's device, the server, and its database. A dashed fence, the trust boundary, surrounds the server alone, labelled “Trust boundary”; on “laptop”, a checkpoint appears on the laptop's line: “not trusted by default”."
+        visual: "The lecture's network map: the Internet, a user, the boss's laptop, the developer's device, the server, and its database. A dashed fence, the trust boundary, surrounds the server alone, labelled “Trust boundary”; on “trust”, a checkpoint appears on the laptop's line: “Not trusted by default”."
       - id: v3-3
         start: 138.36
         end: 142.46

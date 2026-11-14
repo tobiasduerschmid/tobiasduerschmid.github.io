@@ -386,7 +386,8 @@
       const formAt = before('v3-3');
       const b = W.group(s, mapAt, formAt);
       header(b, '3 · Attack Surface', 'Which parts are exposed?', mapAt);
-      W.network(b, { x: 40, y: 130, at: mapAt + 0.1, boundary: 'server', checkAt: mark('v3-2', 'laptop') + 0.2 });
+      // "Not trusted by default" arrives with the map, on "Trust".
+      W.network(b, { x: 40, y: 130, at: mapAt + 0.1, boundary: 'server', checkAt: mark('v3-2', 'trust') + 0.4 });
       W.label(b, 'Trust boundary', { x: 404, y: 334, w: 170, tone: 'green', align: 'center', at: mark('v3-2', 'trust') });
       // "In your password box, I typed code that's always true; you glued it
       // in your query, and the login let me through."

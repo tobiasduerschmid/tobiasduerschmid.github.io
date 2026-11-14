@@ -174,8 +174,7 @@
    * Quiet dressing on the street, all dim and mostly at the edges, under
    * the captions: a boardwalk below the town, the railroad of the town's
    * data line across the foreground, saguaros in the corners, crates
-   * stencilled with bits, a network cable coiled like a lasso on the
-   * hitching rail, and a few stones.
+   * stencilled with bits, and a few stones.
    */
   function streetDressing(art) {
     const g = svg('g', { class: 'fr-street' }, art);
@@ -197,7 +196,6 @@
     crate(842, 422, 34);
     crate(878, 428, 28);
     crate(858, 396, 26);
-    svg('path', { class: 'fr-lasso', d: `M58 ${HORIZON + 30} c-8 6 -8 16 0 20 c8 4 16 -4 12 -12 c-4 -8 -18 -6 -18 4 c0 10 14 12 18 4 M64 ${HORIZON + 54} q4 10 -6 18` }, g);
     for (const [x, y, r] of [[210, 496, 5], [226, 500, 3], [700, 492, 4], [520, 532, 3], [760, 528, 5]]) svg('ellipse', { class: 'fr-stone', cx: x, cy: y, rx: r * 1.5, ry: r }, g);
   }
 
