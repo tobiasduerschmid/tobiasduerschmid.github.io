@@ -100,9 +100,27 @@
     token: { w: 40, h: 24 },
   };
 
+  /** Tyres peeking out from under a body, one pair per axle at `xs`, `half` from the centre line. */
+  function wheels(g, xs, half, length = 8) {
+    for (const x of xs) {
+      for (const y of [-half - 1.6, half - 1.4]) svg('rect', { class: 'oc-wheel', x: x - length / 2, y, width: length, height: 3, rx: 1.2 }, g);
+    }
+  }
+
+  /** Door mirrors just behind the windscreen. */
+  function mirrors(g, x, half) {
+    svg('rect', { class: 'oc-mirror', x, y: -half - 2.2, width: 3, height: 2.6, rx: 0.8 }, g);
+    svg('rect', { class: 'oc-mirror', x, y: half - 0.4, width: 3, height: 2.6, rx: 0.8 }, g);
+  }
+
   function carBody(g, cls) {
     svg('rect', { class: `oc-shadow`, x: -19, y: -8, width: 42, height: 20, rx: 6 }, g);
+    wheels(g, [-12, 12], 10);
     svg('rect', { class: `oc-body ${cls}`, x: -21, y: -10, width: 42, height: 20, rx: 6 }, g);
+    mirrors(g, 8, 10);
+    // Light falls from the top of the stage: a sheen down the near side, hood creases, door seams.
+    svg('rect', { class: 'oc-sheen', x: -18, y: -9, width: 35, height: 3, rx: 1.5 }, g);
+    svg('path', { class: 'oc-seam', d: 'M13 -6.5 Q16 -3 18.5 -3.5 M13 6.5 Q16 3 18.5 3.5 M-3 -10 V-7.5 M-3 10 V7.5' }, g);
     svg('rect', { class: 'oc-glass', x: 2, y: -8, width: 9, height: 16, rx: 2.5 }, g);
     svg('rect', { class: 'oc-glass', x: -15, y: -7.5, width: 6, height: 15, rx: 2 }, g);
     svg('rect', { class: 'oc-roof', x: -9, y: -8, width: 11, height: 16, rx: 2 }, g);
@@ -121,9 +139,15 @@
       svg('path', { class: 'oc-bolt', d: 'M-2 -6 L-6 1 L-3 1 L-5 6 L1 -1 L-2 -1 Z' }, g);
     } else if (kind === 'bus') {
       svg('rect', { class: 'oc-shadow', x: -33, y: -10, width: 70, height: 24, rx: 4 }, g);
+      wheels(g, [-22, 22], 12, 10);
       svg('rect', { class: 'oc-body oc-body--bus', x: -35, y: -12, width: 70, height: 24, rx: 4 }, g);
+      mirrors(g, 31, 12);
       for (let i = 0; i < 5; i++) svg('rect', { class: 'oc-glass', x: -28 + i * 11, y: -9, width: 8, height: 18, rx: 1.5 }, g);
       svg('rect', { class: 'oc-glass', x: 26, y: -10, width: 6, height: 20, rx: 1.5 }, g);
+      // The roof's air-conditioning unit and, on the kerb side, the front door.
+      svg('rect', { class: 'oc-roof-unit', x: -12, y: -5, width: 14, height: 10, rx: 2 }, g);
+      svg('path', { class: 'oc-seam', d: 'M-12 0 H2 M-5 -5 V5' }, g);
+      svg('rect', { class: 'oc-door', x: 16, y: 9.5, width: 8, height: 2.5, rx: 0.8 }, g);
       svg('rect', { class: 'oc-brakelight', x: -35, y: -10, width: 2.5, height: 5, rx: 1 }, g);
       svg('rect', { class: 'oc-brakelight', x: -35, y: 5, width: 2.5, height: 5, rx: 1 }, g);
     } else if (kind === 'bike') {
@@ -132,10 +156,19 @@
       svg('rect', { class: 'oc-bike-wheel', x: 6, y: -1.5, width: 7, height: 3, rx: 1.5 }, g);
       svg('path', { class: 'oc-bike-bar', d: 'M6 -5 V5' }, g);
       svg('ellipse', { class: 'oc-rider', cx: -1, cy: 0, rx: 5, ry: 6 }, g);
+      // Arms reach forward to the grips; a helmet with a centre stripe.
+      svg('path', { class: 'oc-rider-arm', d: 'M0 -4.5 L5.5 -4.5 M0 4.5 L5.5 4.5' }, g);
       svg('circle', { class: 'oc-rider-head', cx: 3, cy: 0, r: 3.4 }, g);
+      svg('circle', { class: 'oc-helmet', cx: 2.3, cy: 0, r: 3.2 }, g);
+      svg('path', { class: 'oc-helmet-stripe', d: 'M-0.6 0 H5.2' }, g);
     } else if (kind === 'ambulance') {
       svg('rect', { class: 'oc-shadow', x: -23, y: -10, width: 50, height: 24, rx: 4 }, g);
+      wheels(g, [-15, 14], 12);
       svg('rect', { class: 'oc-body oc-body--ambulance', x: -25, y: -12, width: 50, height: 24, rx: 4 }, g);
+      mirrors(g, 15, 12);
+      // A red band down both sides.
+      svg('rect', { class: 'oc-amb-stripe', x: -24, y: -11, width: 36, height: 2.4 }, g);
+      svg('rect', { class: 'oc-amb-stripe', x: -24, y: 8.6, width: 36, height: 2.4 }, g);
       svg('rect', { class: 'oc-glass', x: 12, y: -9, width: 8, height: 18, rx: 2 }, g);
       svg('path', { class: 'oc-cross', d: 'M-9 -2 H-3 V-8 H3 V-2 H9 V4 H3 V10 H-3 V4 H-9 Z', transform: 'scale(0.75) translate(-4 -1)' }, g);
       svg('rect', { class: 'oc-lightbar', x: 4, y: -10, width: 5, height: 20, rx: 1.5 }, g);
@@ -316,16 +349,34 @@
         if (bh > 40) {
           const roofs = svg('rect', { class: 'oc-roof-block', x: cx, y: by + 12, width: rw, height: rh, rx: 3 }, blocks);
           roofs.dataset.ocBlock = '';
+          // A parapet inset, and on some roofs an air-conditioning unit or a stair hatch.
+          if (rw > 12 && rh > 12) svg('rect', { class: 'oc-roof-inset', x: cx + 3, y: by + 15, width: rw - 6, height: rh - 6, rx: 2 }, blocks);
+          const fixture = hash01(qi * 61 + k * 17);
+          if (fixture > 0.35 && rw > 20 && rh > 20) {
+            const fx0 = cx + 5 + Math.floor(hash01(qi * 7 + k * 3) * (rw - 18));
+            const fy0 = by + 17 + Math.floor(hash01(qi * 11 + k * 5) * (rh - 18));
+            svg('rect', { class: fixture > 0.7 ? 'oc-roof-hatch' : 'oc-roof-ac', x: fx0, y: fy0, width: 8, height: 7, rx: 1.2 }, blocks);
+          }
         }
-        if (hash01(qi * 5 + k) > 0.45 && bh > 50) svg('circle', { class: 'oc-tree', cx: cx + rw + 7, cy: by + bh - 16, r: 6 }, blocks);
+        if (hash01(qi * 5 + k) > 0.45 && bh > 50) {
+          // A two-tone canopy, lit from the top left.
+          svg('circle', { class: 'oc-tree', cx: cx + rw + 7, cy: by + bh - 16, r: 6 }, blocks);
+          svg('circle', { class: 'oc-tree-light', cx: cx + rw + 5.4, cy: by + bh - 17.6, r: 3 }, blocks);
+        }
         cx += rw + 16;
         k += 1;
       }
     });
     // Roads, lane markings, crosswalks.
     const roads = svg('g', { class: 'oc-roads' }, art);
+    // Sidewalks with a kerb line, under both roads.
+    svg('rect', { class: 'oc-sidewalk', x: 0, y: roadY - 30, width: w, height: 60 }, roads);
+    svg('rect', { class: 'oc-sidewalk', x: roadX - 30, y: 0, width: 60, height: h }, roads);
     svg('rect', { class: 'oc-road', x: 0, y: roadY - 26, width: w, height: 52 }, roads);
     svg('rect', { class: 'oc-road', x: roadX - 26, y: 0, width: 52, height: h }, roads);
+    svg('path', { class: 'oc-kerb', d: `M0 ${roadY - 26} H${roadX - 26} V0 M${roadX + 26} 0 V${roadY - 26} H${w} M0 ${roadY + 26} H${roadX - 26} V${h} M${roadX + 26} ${h} V${roadY + 26} H${w}` }, roads);
+    // Stop lines before each crosswalk, across the lane that drives toward it.
+    svg('path', { class: 'oc-stop-line', d: `M${roadX - 43} ${roadY + 2} V${roadY + 25} M${roadX + 43} ${roadY - 25} V${roadY - 2} M${roadX - 25} ${roadY - 43} H${roadX - 2} M${roadX + 2} ${roadY + 43} H${roadX + 25}` }, roads);
     svg('path', { class: 'oc-lane-dash', d: `M0 ${roadY} H${roadX - 30} M${roadX + 30} ${roadY} H${w}` }, roads);
     svg('path', { class: 'oc-lane-dash', d: `M${roadX} 0 V${roadY - 30} M${roadX} ${roadY + 30} V${h}` }, roads);
     for (let i = 0; i < 5; i++) {

@@ -1,11 +1,27 @@
 # Let the Object Decide: revised lyrics
 
 Lyric repairs for the object-oriented programming song on `SEBook/oop-song.md`.
-**Status: written, not recorded.** The integrated take is unchanged, and
-`_data/songs/let_the_object_decide.yml` still holds the words as sung, with their
-timing. The storyboard header lists where that take differs from its original
-sheet. In particular, Suno sang the final chorus twice with an ad-lib between
-them on its own.
+**Status: recorded and integrated.** Take 2 ("Let the Object Decide" (2))
+sings the sheet below and is the song on the chapter page;
+`_data/songs/let_the_object_decide.yml` holds the words as sung, with their
+timing.
+
+### How take 2 came out
+
+- Every revised line was sung as written, including "even minus ten",
+  "thirty-seven to change", "them apart", and "Now a Square" (Whisper heard
+  the numbers as digits, "runtime" as one word, and "plain" as "plane").
+- It is a full new take, not a section replace: about 92 BPM like take 1, but
+  5:06 long instead of 5:45, so every line was re-aligned (781 of 819 words
+  heard by Whisper; the rest, mostly quiet backing echoes, interpolated).
+- It sings one final chorus. Take 1 repeated the final chorus with an ad-lib
+  on its own; those two sections and their scenes are gone, and the curtain
+  call is now the final chorus.
+- Every quiz answer was sung. An unprompted clip pass confirmed the last one,
+  whose "fine" is held for several seconds. In question 4 the answer follows
+  "right?" with almost no gap, so each question now has a `pause_at` in the
+  quiet before its answer.
+- The stereo balance stays within 2 dB, so the soundtrack keeps both channels.
 
 ## What changed, and why
 
@@ -13,9 +29,9 @@ Six lines asked the listener to see the screen before they made sense. A student
 who only hears the song (on a walk, with the screen off, or in the
 audio-described cut) heard a bare number or a pronoun without a referent. Each
 repair moves the meaning into the sung words and keeps the line's length, so
-each one fits the slot its line has in the current take.
+each one fits the slot its line had in take 1.
 
-| Line (current take) | Sung now | Revised | Why |
+| Line (take 1) | Sung in take 1 | Revised | Why |
 | --- | --- | --- | --- |
 | `intro-8`, 21.1–23.8 s | "And any line can write any speed. (Minus ten?!)" | "Any code can set any speed— / even minus ten!" | "Any line" can be heard as "any lane" in a song full of lanes, and the bare "minus ten" never says what is −10. The revision states the problem with a table: nothing stops any code from setting an impossible speed. Verse 4's "who changed that speed?" calls back to it. |
 | `intro-10`, 26.6–29.2 s | "Search for every type check… (Thirty-seven!)" | "Search the type checks: / thirty-seven to change!" | The bare number never said what 37 counts. Now it is 37 places to edit for one new kind of vehicle. |
@@ -54,7 +70,9 @@ and the quiz were already clear without the picture.
 
 ## Recording it
 
-**Recommended: replace only the six lines in the current take.** In Suno's song
+Take 2 was recorded as a full new take. For later fixes:
+
+**Recommended: replace only the lines in question in the current take.** In Suno's song
 editor, use Replace Section on each line's time range from the table above, with
 the revised words and **Make Same Length as Section on**. Every other word, the
 timing of the rest of the song, and the sound all stay as they are. Only the six
@@ -62,7 +80,7 @@ lines' word marks then need re-aligning before the choreography is updated.
 
 **Alternative: a full new take** from the sheet below. That changes every
 line's timing, so the whole storyboard has to be re-aligned. A new take may not
-repeat the final chorus with an ad-lib the way the current take did. If it
+repeat the final chorus with an ad-lib the way take 1 did. If it
 doesn't, the curtain-call and ad-lib scenes need re-timing or removing.
 
 ### Lyric sheet (4,874 characters)
@@ -235,7 +253,7 @@ Let the object decide.
 
 ### Suno style prompt
 
-The style of the current take isn't on record, so this prompt describes the
+The style of take 1 isn't on record, so this prompt describes the
 recording as measured: tempo from its beat track, key from chroma, the mix
 from Demucs stems, and the voice from pitch tracking on the vocal stem. If the
 take's original **Style of Music** text is still on its Suno page, reuse that
@@ -267,7 +285,7 @@ playful pop with a hip-hop groove, 92 BPM, G major, punchy drums and bass, spars
 fast rap, double-time vocals, mumble rap, trap hi-hat rolls, slurred vocals, heavy autotune, distorted vocals, screaming, heavy reverb, lo-fi muffled vocals, female vocals, duet, key change, EDM drop
 ```
 
-Generate several candidates and keep the one closest to the current take: tempo
+Generate several candidates and keep the one closest to take 1: tempo
 near 92 BPM, a male lead around G3, and every revised line sung in full.
 
 ### Pronunciation and performance notes

@@ -65,9 +65,11 @@
       // One town for the first ten lines: real vehicles, then grey tokens.
       const town = city.town(content, { x: 492, y: 72, w: 440, h: 250, at: mark('intro-1', 'coding'), until: chainEnd, title: 'City Builder' });
       const L = lanes(town);
-      town.vehicle('car', { x: 40, y: L.e, until: tokenAt }).drive(4.2, 6.4, [[150, L.e]]);
-      town.vehicle('bus', { x: 420, y: L.w, a: 180, until: tokenAt }).drive(4.4, 6.4, [[300, L.w, 180]]);
-      town.vehicle('bike', { x: 20, y: L.bike, until: tokenAt }).drive(4.6, 6.4, [[110, L.bike]]);
+      const rollFrom = line('intro-1').start + 0.2;
+      const rollTo = tokenAt - 0.1;
+      town.vehicle('car', { x: 40, y: L.e, until: tokenAt }).drive(rollFrom, rollTo, [[150, L.e]]);
+      town.vehicle('bus', { x: 420, y: L.w, a: 180, until: tokenAt }).drive(rollFrom + 0.2, rollTo, [[300, L.w, 180]]);
+      town.vehicle('bike', { x: 20, y: L.bike, until: tokenAt }).drive(rollFrom + 0.4, rollTo, [[110, L.bike]]);
       // The car token stops behind the bus token instead of driving through it.
       town.vehicle('token', { x: 150, y: L.e, label: 'CAR', at: tokenAt })
         .drive(mark('intro-4', 'drive'), mark('intro-4', 'lane') + 0.8, [[200, L.e]]);
@@ -109,9 +111,9 @@
       // Any line can write any speed: the bus goes −10.
       const writers = ['speed[0] += 5;', 'speed[1] = -10;', 'speed[2] = 0;'];
       writers.forEach((text, i) => {
-        const chip = ok.label(b, text, { x: 394, y: 62 + i * 40, at: mark('intro-8', 'line') + i * 0.12, until: line('intro-9').start + 0.6, tone: 'mono' });
+        const chip = ok.label(b, text, { x: 394, y: 62 + i * 40, at: mark('intro-8', 'code') + i * 0.12, until: line('intro-9').start + 0.6, tone: 'mono' });
         chip.classList.add('oop-label--mono');
-        kit.flow(b, { from: [392, 78 + i * 40], to: [258, 102 + i * 31], bend: -14, color: i === 1 ? 'pink' : 'gold', at: mark('intro-8', 'write') + i * 0.1, until: line('intro-9').start + 0.6 });
+        kit.flow(b, { from: [392, 78 + i * 40], to: [258, 102 + i * 31], bend: -14, color: i === 1 ? 'pink' : 'gold', at: mark('intro-8', 'set') + i * 0.1, until: line('intro-9').start + 0.6 });
       });
       data.set(1, 2, mark('intro-8', 'minus'), '-10', 'bad');
       kit.stamp(b, '−10?!', { x: 640, y: 300, at: mark('intro-8', 'ten'), until: line('intro-9').start + 0.4, small: true, rotate: -6 });
@@ -135,9 +137,11 @@
       ok.nameCard(d, { x: 280, y: 74, name: 'Ole-Johan Dahl & Kristen Nygaard', detail: 'Norway · 1960s', at: mark('intro-12', 'sixties'), until: line('intro-13').start - 0.1 });
       const world = city.town(d, { x: 260, y: 96, w: 440, h: 240, at: mark('intro-13', 'make'), until: mark('intro-14', 'let') - 0.1, title: 'City Builder' });
       const WL = lanes(world);
-      const wCar = world.vehicle('car', { x: 60, y: WL.e }).drive(34.5, 37, [[150, WL.e]]);
-      const wBus = world.vehicle('bus', { x: 320, y: WL.e }).drive(34.5, 37, [[WL.stop, WL.e]]);
-      const wBike = world.vehicle('bike', { x: 260, y: WL.bike }).drive(34.5, 37, [[400, WL.bike]]);
+      const worldFrom = line('intro-13').start + 0.05;
+      const worldTo = line('intro-14').start;
+      const wCar = world.vehicle('car', { x: 60, y: WL.e }).drive(worldFrom, worldTo, [[150, WL.e]]);
+      const wBus = world.vehicle('bus', { x: 320, y: WL.e }).drive(worldFrom, worldTo, [[WL.stop, WL.e]]);
+      const wBike = world.vehicle('bike', { x: 260, y: WL.bike }).drive(worldFrom, worldTo, [[400, WL.bike]]);
       ok.magnifier(d, { x: 250, y: 160, at: mark('intro-13', 'every'), until: mark('intro-13', 'code') + 0.4, hat: false, path: [[0, 0], [380, 10]] });
       [[wCar, 'car : Car', 'world'], [wBus, 'bus : Bus', 'a'], [wBike, 'bike : Bike', 'thing_2']].forEach(([v, title, word], i) => {
         const [sx, sy] = at(world, v, mark('intro-13', word));
@@ -241,10 +245,11 @@
       }
       ok.label(c, 'same methods', { x: 600, y: 226, at: mark('verse-1-11', 'methods'), until: line('verse-1-12').start, tone: 'gold' });
       ok.label(c, 'different values', { x: 770, y: 226, at: mark('verse-1-11', 'values'), until: line('verse-1-12').start, tone: 'cyan' });
-      ok.label(c, 'mine', { x: 360, y: 226, at: mark('verse-1-12', 'mine'), tone: 'violet' });
-      cards[0].focus('color', mark('verse-1-12', 'red'), end('verse-1'), 'good');
-      ok.label(c, 'yours', { x: 560, y: 226, at: mark('verse-1-12', 'yours'), tone: 'violet' });
+      // Speeding one car up leaves the other's speed alone.
+      ok.label(c, 'your car', { x: 548, y: 226, at: mark('verse-1-12', 'your'), tone: 'violet' });
       cards[1].setValue('speed', mark('verse-1-12', 'eighty'), '80', 'focus');
+      ok.label(c, 'my car', { x: 352, y: 226, at: mark('verse-1-12', 'my'), tone: 'violet' });
+      cards[0].focus('speed', mark('verse-1-12', 'twenty'), end('verse-1'), 'good');
     }
 
     // ----------------------------------------------------------------
@@ -274,15 +279,13 @@
     // The chorus: world → objects, state inside, messages, the object decides
     // ----------------------------------------------------------------
 
-    /**
-     * One chorus. ids = the section's line ids in order (7 or 8 lines);
-     * `cast` = the vehicles in town; `promise` adds the seal line (final).
-     */
-    function chorus(sectionId, ids, { cast = ['car', 'bus', 'bike'], promise = false, rulesShown = 0, titleUntil } = {}) {
-      badge(promise ? 'Final chorus' : 'Chorus', sectionId);
+    /** The first chorus. ids = the section's seven line ids in order. */
+    function chorus(sectionId, ids) {
+      badge('Chorus', sectionId);
+      const cast = ['car', 'bus', 'bike'];
       const from = start(sectionId);
-      const until = titleUntil ?? end(sectionId);
-      const [l1, l2, l3, l4, l5, l6, ...rest] = ids;
+      const until = end(sectionId);
+      const [l1, l2, l3, l4, l5, l6, titleLine] = ids;
       const s = scene(content, from, until);
       const town = city.town(s, { x: 24, y: 64, w: 440, h: 250, at: from + 0.05, title: 'The world' });
       const L = lanes(town);
@@ -324,7 +327,7 @@
       card.light('brake()', mark(l3, 'message') + 0.3, line(l5).start);
 
       // Line 5: one move() message, different moves.
-      const c = scene(s, line(l5).start - 0.12, line(rest[0]).start - 0.12, { exit: 'fade' });
+      const c = scene(s, line(l5).start - 0.12, line(titleLine).start - 0.12, { exit: 'fade' });
       ok.code(c, { x: 520, y: 72, w: 410, title: 'loop', at: line(l5).start, lines: ['for (Vehicle* v : vehicles)', '  v->move();'] });
       const sendAt = mark(l5, 'message');
       const moveAt = mark(l5, 'different');
@@ -332,23 +335,12 @@
         const v = fleet[kind];
         const [vx, vy] = at(town, v, sendAt + 0.6);
         ok.envelope(c, { from: [560, 130], to: [vx, vy - 10], label: 'move()', at: sendAt + i * 0.08, dur: 0.55, bend: -40, stay: 1.25, tone: i % 2 ? 'cyan' : 'gold' });
-        moveOf(kind, v, L, moveAt, line(rest[0]).start + 0.5);
+        moveOf(kind, v, L, moveAt, line(titleLine).start + 0.5);
         methodTag(c, kind, i, mark(l5, 'moves') + i * 0.06);
       });
       const ask = ok.bubble(c, 'What type are you?', { x: 560, y: 316, at: mark(l6, 'dont'), tail: 'left' });
       tween(ask, { opacity: 0, translate: '220px -20px', rotate: '12deg' }, mark(l6, 'you') + 0.25, 0.35, EASE.in);
 
-      // Promise line (final chorus): every card gets its seal.
-      let titleLine = rest[0];
-      if (promise) {
-        const [lp, lt] = rest;
-        titleLine = lt;
-        const p = scene(s, line(lp).start - 0.12, line(lt).start - 0.12, { exit: 'fade' });
-        cast.forEach((kind, i) => {
-          const sealCard = ok.objectCard(p, { x: 24 + i * 184, y: 346, w: 170, compact: true, title: objectTitle(kind), methods: ['move()'], at: line(lp).start + i * 0.06 });
-          sealCard.seal(mark(lp, 'keep') + i * 0.08);
-        });
-      }
       // The title line: the words stamp in, and the rule card lists the rules so far.
       const t = scene(s, line(titleLine).start - 0.12, until, { exit: 'fade' });
       kit.kinetic(t, [
@@ -356,14 +348,9 @@
         { text: 'object', at: mark(titleLine, 'object'), color: 'gold' },
         { text: 'decide', at: mark(titleLine, 'decide'), color: 'cyan' },
       ], { y: 372, size: 50 });
-      const rules = ok.ruleCard(t, { x: 708, y: 150, at: line(titleLine).start, shown: rulesShown });
-      if (rulesShown < 3) [0, 1, 2].forEach((i) => rules.add(i, mark(titleLine, 'let') + i * 0.18));
-      if (promise) {
-        rules.add(3, line(titleLine).start + 0.15);
-        rules.glow(3, line(titleLine).start + 0.15, until);
-      } else {
-        rules.glow(2, mark(titleLine, 'decide'), until);
-      }
+      const rules = ok.ruleCard(t, { x: 708, y: 150, at: line(titleLine).start });
+      [0, 1, 2].forEach((i) => rules.add(i, mark(titleLine, 'let') + i * 0.18));
+      rules.glow(2, mark(titleLine, 'decide'), until);
     }
 
     function className(kind) {
@@ -731,9 +718,9 @@
       kit.flow(s, { from: [300, 325], to: [376, 300], bend: -16, color: 'cyan', at: mark('breakdown-4', 'v') });
       callCard.mark(0, mark('breakdown-5', 'call'), mark('breakdown-6', 'not'));
       kit.flow(s, { from: [760, 128], to: [700, 300], bend: -40, color: 'cyan', at: mark('breakdown-5', 'call'), until: mark('breakdown-6', 'not') });
-      table.light(0, mark('breakdown-5', 'slot'), until);
+      table.light(0, mark('breakdown-5', 'table'), until);
       ok.label(s, 'run time', { x: 520, y: 360, at: mark('breakdown-5', 'run'), tone: 'cyan' });
-      big.bump(mark('breakdown-5', 'slot'));
+      big.bump(mark('breakdown-5', 'table'));
       callCard.mark(1, mark('breakdown-6', 'not'), until);
       kit.flow(s, { from: [820, 160], to: [820, 206], bend: 0, color: 'pink', at: mark('breakdown-6', 'compiler') - 0.2 });
       ok.label(s, 'Vehicle::plate', { x: 750, y: 212, at: mark('breakdown-6', 'compiler'), tone: 'mono' }).classList.add('oop-label--mono');
@@ -821,9 +808,9 @@
       const bench = ok.bench(c, { x: 80, y: 84, w: 50, h: 20, at: mark('bridge-5', 'rectangle'), labelText: 'Rectangle' });
       bench.resize(mark('bridge-5', 'width'), 100, 20);
       bench.verdict(mark('bridge-6', 'twenty'), true, 'assert passes', line('bridge-7').start);
-      const square = mark('bridge-7', 'set');
+      const square = mark('bridge-7', 'square');
       bench.resize(square, 20, 20, { label: 'Square', square: true, jump: true });
-      bench.resize(mark('bridge-7', 'width_2'), 100, 100, { label: 'Square', square: true });
+      bench.resize(mark('bridge-7', 'hundred'), 100, 100, { label: 'Square', square: true });
       bench.verdict(mark('bridge-8', 'jumps'), false, 'assert fails');
       const test = ok.code(c, {
         x: 470, y: 120, w: 450, title: 'test.cpp', at: line('bridge-5').start,
@@ -835,8 +822,8 @@
       });
       test.mark(1, mark('bridge-5', 'width'), line('bridge-6').start);
       test.mark(2, mark('bridge-6', 'twenty'), square, 'add');
-      test.mark(0, square, mark('bridge-7', 'width'));
-      test.mark(1, mark('bridge-7', 'width_2'), mark('bridge-8', 'height'));
+      test.mark(0, square, mark('bridge-7', 'set'));
+      test.mark(1, mark('bridge-7', 'set'), mark('bridge-8', 'height'));
       test.mark(2, mark('bridge-8', 'jumps'), Infinity, 'del');
 
       // Same messages, but not the same meaning: Liskov.
@@ -1022,25 +1009,11 @@
     }
 
     // ----------------------------------------------------------------
-    // Ad-lib: two flag answers again
-    // ----------------------------------------------------------------
-
-    function adLib() {
-      badge('Ad-lib', 'ad-lib');
-      const s = scene(content, start('ad-lib'), end('ad-lib'));
-      [0, 1, 2, 3].forEach((i) => ok.envelope(s, { from: [80, 420], to: [300 + i * 160, 100 + (i % 2) * 40], label: i ? undefined : 'send it', at: mark('ad-lib-1', 'send_2') + i * 0.12, dur: 0.45, bend: -60, stay: 0.3, tone: i % 2 ? 'cyan' : 'gold' }));
-      ok.code(s, { x: 120, y: 160, w: 300, title: 'flashback', at: mark('ad-lib-1', 'the'), lines: ['v->plate();   // not virtual'] });
-      ok.label(s, 'Vehicle::plate · compile time', { x: 440, y: 176, at: mark('ad-lib-1', 'compiler'), tone: 'gold' });
-      ok.code(s, { x: 120, y: 260, w: 470, title: 'convert.cpp', at: mark('ad-lib-2', 'celsius'), lines: ['double toF(double c) {', '  return c * 9 / 5 + 32;', '}'] });
-      ok.flag(s, { x: 640, y: 250, kind: 'green', at: mark('ad-lib-3', 'green') });
-    }
-
-    // ----------------------------------------------------------------
-    // Final chorus 2: the curtain call
+    // Final chorus: the curtain call
     // ----------------------------------------------------------------
 
     function curtainCall() {
-      const id = 'final-chorus-2';
+      const id = 'final-chorus';
       const l = (n) => `${id}-${n}`;
       badge('Final chorus · Curtain call', id);
       const from = start(id);
@@ -1157,10 +1130,6 @@
     bridge();
     verse4();
     quiz();
-    chorus('final-chorus-1', ['final-chorus-1-1', 'final-chorus-1-2', 'final-chorus-1-3', 'final-chorus-1-4', 'final-chorus-1-5', 'final-chorus-1-6', 'final-chorus-1-7', 'final-chorus-1-8'], {
-      cast: ['car', 'hybrid', 'bus', 'bike', 'ambulance'], promise: true, rulesShown: 3, titleUntil: start('ad-lib') + 0.8,
-    });
-    adLib();
     curtainCall();
     postChorus('post-chorus-3', { cast: ['car', 'hybrid', 'bus', 'bike', 'ambulance'] });
     outro();

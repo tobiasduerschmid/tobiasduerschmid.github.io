@@ -14,7 +14,7 @@ small_tools_one_job_each:
   topic: Unix shell
   category: Tools & systems
 let_the_object_decide:
-  thumbnail_time: 179
+  thumbnail_time: 169.34
   title: Let the Object Decide
   topic: Object-oriented programming
   category: Design & modeling

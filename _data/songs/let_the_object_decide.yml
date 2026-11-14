@@ -21,17 +21,20 @@
 # the next Jekyll build, but the captions and described audio only after
 # re-running render.js.
 #
-# Times are seconds into the Suno take, normalized to -16 LUFS. Line
-# boundaries and word marks come from local Whisper word timestamps (mlx
-# whisper-large-v3-turbo) aligned to the lyric sheet, with prompted clip
-# passes for the intro, the verse 3 call-and-response, the bridge, the flag
-# quiz, and the ending. Captions follow the recording, which differs from the
-# lyric sheet: the intro skips "POV:" and "Version one", the bridge sings
-# "Set the width, set the width to a hundred" where the sheet has "Square:
-# set the width to a hundred", the quiz opens with a spoken "Stop time", and
-# the take sings the final chorus twice, with an ad-lib between them
-# ("Just send it! Send it! The compiler picks! / Celsius to Fahrenheit, one
-# plain function. / Green flag! A function's fine!").
+# Times are seconds into the Suno take "Let the Object Decide" (2) (about 92
+# BPM) of the lyric sheet in docs/let-the-object-decide-song-lyrics.md, which
+# revises six lines of the first take so they make sense by ear. Word marks
+# come from local Whisper word timestamps (mlx whisper-large-v3-turbo) on the
+# Demucs vocal stem, aligned to the sheet (781 of 819 words heard; the rest,
+# mostly quiet backing echoes, are interpolated between their neighbours); an
+# unprompted clip pass confirmed the last quiz answer, whose "fine" is held.
+# Quiz `answer_at` is the answer's first vocal onset, read from the vocal
+# stem's envelope, and `pause_at` sits in the quiet just before it. The stereo
+# balance stays within 2 dB, so the soundtrack keeps both channels; it is
+# normalized to -16 LUFS with one linear gain (true peak -3.3 dBFS) and stored
+# as AAC at 192 kb/s. Where the sheet splits a sentence across short lines,
+# the storyboard keeps it as one line. The take sings the sheet as written,
+# with one final chorus (the first take repeated it with an ad-lib).
 title: "Let the Object Decide: a song about object-oriented programming"   # the player's accessible name
 credit: Lyrics written for this page; music and vocals generated with Suno.
 student:
@@ -74,60 +77,54 @@ narrator:
 width: 1920
 height: 1080
 fps: 30
-duration: 344.81
+duration: 306.01
 beats:
-  bpm: 92.29   # fitted with librosa to the take's percussion
-  first: 0.309
+  bpm: 91.91   # fitted with librosa to the take's percussion
+  first: 1.264
   # Every beat, in seconds: tracked on the percussion (librosa,
   # harmonic/percussive split) and smoothed by a local linear fit over ±5
   # beats, so the town's beat pulse follows the take's small tempo drift.
   # Overrides bpm/first for Timeline.beats.
   times: [
-    2.24, 2.89, 3.56, 4.22, 4.89, 5.56, 6.22, 6.89, 7.55, 8.21, 8.87, 9.52,
-    10.17, 10.82, 11.46, 12.1, 12.74, 13.38, 14.01, 14.65, 15.29, 15.93, 16.57, 17.21,
-    17.85, 18.49, 19.12, 19.76, 20.4, 21.04, 21.67, 22.31, 22.95, 23.59, 24.23, 24.87,
-    25.51, 26.15, 26.79, 27.42, 28.06, 28.7, 29.34, 29.97, 30.61, 31.25, 31.89, 32.53,
-    33.17, 33.81, 34.45, 35.09, 35.73, 36.37, 37.01, 37.65, 38.29, 38.92, 39.56, 40.2,
-    40.84, 41.48, 42.12, 42.76, 43.39, 44.03, 44.67, 45.31, 45.95, 46.59, 47.22, 47.86,
-    48.5, 49.14, 49.78, 50.42, 51.06, 51.7, 52.33, 52.97, 53.61, 54.25, 54.89, 55.53,
-    56.16, 56.8, 57.44, 58.08, 58.72, 59.36, 59.99, 60.63, 61.27, 61.9, 62.54, 63.18,
-    63.82, 64.46, 65.1, 65.74, 66.38, 67.01, 67.65, 68.29, 68.93, 69.57, 70.21, 70.85,
-    71.49, 72.13, 72.76, 73.4, 74.04, 74.68, 75.32, 75.96, 76.59, 77.23, 77.87, 78.51,
-    79.15, 79.79, 80.43, 81.07, 81.7, 82.34, 82.98, 83.62, 84.26, 84.9, 85.54, 86.18,
-    86.81, 87.45, 88.09, 88.73, 89.37, 90.0, 90.64, 91.28, 91.92, 92.56, 93.19, 93.83,
-    94.47, 95.1, 95.74, 96.38, 97.02, 97.66, 98.3, 98.93, 99.57, 100.21, 100.85, 101.49,
-    102.13, 102.77, 103.4, 104.04, 104.68, 105.32, 105.96, 106.6, 107.24, 107.87, 108.51, 109.15,
-    109.79, 110.43, 111.07, 111.7, 112.34, 112.98, 113.62, 114.25, 114.89, 115.53, 116.17, 116.81,
-    117.45, 118.09, 118.73, 119.37, 120.0, 120.64, 121.28, 121.92, 122.56, 123.2, 123.83, 124.47,
-    125.11, 125.74, 126.38, 127.02, 127.66, 128.3, 128.94, 129.58, 130.22, 130.86, 131.49, 132.13,
-    132.77, 133.41, 134.05, 134.69, 135.33, 135.97, 136.61, 137.24, 137.88, 138.52, 139.16, 139.8,
-    140.44, 141.08, 141.72, 142.35, 142.99, 143.63, 144.26, 144.9, 145.54, 146.17, 146.81, 147.44,
-    148.08, 148.72, 149.36, 150.0, 150.64, 151.28, 151.92, 152.56, 153.19, 153.83, 154.47, 155.11,
-    155.75, 156.39, 157.03, 157.67, 158.3, 158.94, 159.58, 160.22, 160.86, 161.49, 162.13, 162.77,
-    163.41, 164.04, 164.68, 165.32, 165.95, 166.59, 167.23, 167.87, 168.51, 169.14, 169.78, 170.42,
-    171.06, 171.7, 172.34, 172.98, 173.62, 174.26, 174.9, 175.53, 176.17, 176.81, 177.45, 178.09,
-    178.73, 179.36, 180.0, 180.64, 181.28, 181.92, 182.56, 183.2, 183.83, 184.47, 185.11, 185.75,
-    186.39, 187.02, 187.66, 188.3, 188.94, 189.58, 190.22, 190.86, 191.5, 192.14, 192.78, 193.42,
-    194.05, 194.69, 195.33, 195.97, 196.61, 197.24, 197.88, 198.52, 199.15, 199.79, 200.43, 201.07,
-    201.71, 202.35, 202.98, 203.62, 204.26, 204.9, 205.54, 206.18, 206.81, 207.45, 208.09, 208.73,
-    209.37, 210.01, 210.64, 211.28, 211.92, 212.56, 213.2, 213.84, 214.47, 215.11, 215.75, 216.39,
-    217.03, 217.67, 218.31, 218.95, 219.58, 220.22, 220.86, 221.5, 222.13, 222.77, 223.41, 224.05,
-    224.69, 225.32, 225.96, 226.6, 227.24, 227.88, 228.52, 229.15, 229.79, 230.43, 231.07, 231.72,
-    232.36, 232.99, 233.63, 234.27, 234.91, 235.55, 236.18, 236.82, 237.46, 238.09, 238.73, 239.37,
-    240.01, 240.65, 241.29, 241.93, 242.57, 243.21, 243.86, 244.5, 245.14, 245.79, 246.43, 247.07,
-    247.71, 248.36, 249.0, 249.64, 250.28, 250.92, 251.57, 252.21, 252.85, 253.5, 254.14, 254.78,
-    255.43, 256.07, 256.72, 257.36, 258.01, 258.65, 259.3, 259.94, 260.58, 261.23, 261.87, 262.52,
-    263.16, 263.81, 264.45, 265.1, 265.74, 266.39, 267.03, 267.68, 268.32, 268.97, 269.61, 270.26,
-    270.9, 271.55, 272.19, 272.83, 273.47, 274.11, 274.76, 275.4, 276.04, 276.68, 277.32, 277.96,
-    278.61, 279.25, 279.89, 280.54, 281.18, 281.82, 282.46, 283.11, 283.75, 284.39, 285.04, 285.68,
-    286.32, 286.96, 287.6, 288.25, 288.89, 289.53, 290.17, 290.82, 291.46, 292.1, 292.75, 293.39,
-    294.04, 294.68, 295.33, 295.97, 296.62, 297.26, 297.91, 298.55, 299.2, 299.85, 300.49, 301.14,
-    301.79, 302.44, 303.09, 303.74, 304.39, 305.04, 305.7, 306.35, 307.01, 307.67, 308.32, 308.98,
-    309.64, 310.3, 310.96, 311.63, 312.29, 312.96, 313.62, 314.29, 314.96, 315.63, 316.3, 316.97,
-    317.63, 318.3, 318.96, 319.62, 320.27, 320.93, 321.58, 322.23, 322.88, 323.53, 324.18, 324.83,
-    325.47, 326.12, 326.77, 327.41, 328.06, 328.71, 329.36, 330.01, 330.67, 331.32, 331.97, 332.62,
-    333.27, 333.93, 334.58, 335.23, 335.87, 336.52, 337.15, 337.79, 338.43, 339.07, 339.71, 340.35,
-    340.99, 341.63, 342.28, 342.92, 343.57
+    0.98, 1.65, 2.32, 3.0, 3.67, 4.34, 5.0, 5.65, 6.3, 6.95, 7.6, 8.25,
+    8.89, 9.54, 10.19, 10.84, 11.5, 12.17, 12.84, 13.51, 14.18, 14.85, 15.52, 16.19,
+    16.86, 17.52, 18.19, 18.85, 19.51, 20.18, 20.84, 21.5, 22.15, 22.81, 23.46, 24.11,
+    24.76, 25.4, 26.05, 26.69, 27.33, 27.98, 28.64, 29.3, 29.95, 30.61, 31.27, 31.92,
+    32.58, 33.24, 33.89, 34.56, 35.23, 35.9, 36.56, 37.21, 37.87, 38.52, 39.18, 39.83,
+    40.49, 41.14, 41.79, 42.43, 43.07, 43.72, 44.38, 45.03, 45.69, 46.34, 47.0, 47.65,
+    48.3, 48.96, 49.61, 50.27, 50.92, 51.58, 52.23, 52.88, 53.54, 54.19, 54.85, 55.5,
+    56.16, 56.81, 57.47, 58.11, 58.76, 59.42, 60.07, 60.73, 61.38, 62.04, 62.69, 63.34,
+    64.0, 64.65, 65.31, 65.97, 66.62, 67.28, 67.93, 68.58, 69.24, 69.89, 70.54, 71.19,
+    71.85, 72.5, 73.15, 73.81, 74.46, 75.11, 75.76, 76.41, 77.06, 77.72, 78.37, 79.02,
+    79.67, 80.32, 80.98, 81.63, 82.28, 82.93, 83.59, 84.24, 84.9, 85.55, 86.2, 86.86,
+    87.51, 88.16, 88.81, 89.47, 90.12, 90.77, 91.42, 92.07, 92.73, 93.38, 94.03, 94.68,
+    95.33, 95.98, 96.64, 97.29, 97.94, 98.6, 99.25, 99.9, 100.56, 101.21, 101.86, 102.51,
+    103.16, 103.81, 104.47, 105.12, 105.77, 106.43, 107.08, 107.73, 108.38, 109.03, 109.69, 110.34,
+    110.99, 111.65, 112.3, 112.95, 113.6, 114.25, 114.91, 115.56, 116.21, 116.86, 117.51, 118.16,
+    118.82, 119.47, 120.12, 120.77, 121.43, 122.08, 122.73, 123.38, 124.04, 124.69, 125.34, 125.99,
+    126.65, 127.3, 127.95, 128.6, 129.25, 129.91, 130.56, 131.21, 131.86, 132.51, 133.17, 133.82,
+    134.47, 135.12, 135.77, 136.42, 137.08, 137.73, 138.38, 139.03, 139.68, 140.34, 140.99, 141.65,
+    142.3, 142.95, 143.6, 144.26, 144.91, 145.56, 146.21, 146.86, 147.52, 148.17, 148.82, 149.47,
+    150.13, 150.78, 151.43, 152.08, 152.73, 153.39, 154.04, 154.69, 155.34, 155.99, 156.64, 157.3,
+    157.95, 158.6, 159.25, 159.91, 160.56, 161.21, 161.86, 162.51, 163.17, 163.82, 164.47, 165.13,
+    165.78, 166.43, 167.09, 167.74, 168.39, 169.05, 169.7, 170.35, 171.01, 171.66, 172.31, 172.96,
+    173.61, 174.26, 174.92, 175.57, 176.22, 176.87, 177.52, 178.17, 178.83, 179.48, 180.13, 180.78,
+    181.43, 182.09, 182.74, 183.39, 184.04, 184.69, 185.35, 186.0, 186.65, 187.3, 187.95, 188.61,
+    189.26, 189.91, 190.56, 191.22, 191.87, 192.52, 193.17, 193.82, 194.48, 195.13, 195.78, 196.43,
+    197.08, 197.74, 198.39, 199.04, 199.69, 200.35, 201.0, 201.65, 202.3, 202.96, 203.61, 204.26,
+    204.91, 205.56, 206.22, 206.87, 207.52, 208.18, 208.83, 209.48, 210.13, 210.78, 211.44, 212.09,
+    212.74, 213.39, 214.04, 214.7, 215.35, 216.0, 216.65, 217.31, 217.96, 218.61, 219.26, 219.91,
+    220.57, 221.22, 221.87, 222.52, 223.17, 223.83, 224.48, 225.13, 225.78, 226.44, 227.09, 227.75,
+    228.4, 229.06, 229.71, 230.37, 231.02, 231.67, 232.32, 232.97, 233.62, 234.28, 234.93, 235.58,
+    236.23, 236.88, 237.53, 238.18, 238.83, 239.49, 240.14, 240.8, 241.45, 242.1, 242.75, 243.4,
+    244.05, 244.7, 245.36, 246.01, 246.66, 247.31, 247.96, 248.62, 249.27, 249.92, 250.57, 251.23,
+    251.88, 252.53, 253.19, 253.84, 254.5, 255.15, 255.8, 256.46, 257.11, 257.76, 258.41, 259.07,
+    259.72, 260.37, 261.02, 261.67, 262.32, 262.97, 263.63, 264.28, 264.93, 265.59, 266.24, 266.89,
+    267.54, 268.2, 268.85, 269.5, 270.15, 270.81, 271.46, 272.11, 272.76, 273.41, 274.07, 274.72,
+    275.37, 276.02, 276.68, 277.33, 277.98, 278.63, 279.29, 279.94, 280.59, 281.25, 281.91, 282.56,
+    283.22, 283.89, 284.55, 285.21, 285.87, 286.53, 287.19, 287.86, 288.52, 289.19, 289.85, 290.51,
+    291.17, 291.84, 292.5, 293.17, 293.84, 294.5, 295.17, 295.84, 296.5, 297.17, 297.84, 298.51,
+    299.17, 299.84, 300.5, 301.17, 301.83, 302.49, 303.15, 303.81
   ]
 
 sections:
@@ -137,200 +134,200 @@ sections:
     narration: "Audio-described version: before each section, the picture pauses while I describe it. The setting is a city-builder game at dusk, with a faint skyline and a glowing game board. The intro: you sit at a laptop beside a game window showing a little town with two crossing roads, a traffic light, a bus stop, a bike lane, a car, a bus, and a bike. Version one stores the town as a table with columns x, y, speed, and type, and the vehicles become grey tokens. A code card builds one big loop with an if-chain on the type: if the type is CAR, drive the lane; if BUS, stop at the stop; if BIKE, use the bike lane. Two more copies of the same chain, for drawing and braking, stack behind it. Arrows from scattered code write into the speed column, the bus's speed becomes minus 10, and the bus rolls backward. The mayor sends a feature request for ambulances, and a search for type checks finds 37. The town's buildings turn into towers of else-if lines. A name card shows Ole-Johan Dahl and Kristen Nygaard, Norway, 1960s; an inspector lens sweeps the town and every vehicle pops up its own object name, like car colon Car; then the title, Let the Object Decide."
     lines:
       - id: intro-1
-        start: 4.0
-        end: 6.06
+        start: 1.58
+        end: 3.84
         text: "You’re coding a city-builder game."
-        marks: {"youre": 4.0, "coding": 4.56, "a": 4.84, "city": 5.08, "builder": 5.24, "game": 5.62}
+        marks: {"youre": 1.58, "coding": 2.1, "a": 2.42, "city": 2.66, "builder": 2.84, "game": 3.1}
         visual: "Dusk. You sit at a laptop on the left; on the right, a game window titled “City Builder” opens on a little town: two crossing roads, a traffic light, a bus stop, a bike lane, and a car, a bus, and a bike driving."
       - id: intro-2
-        start: 6.06
-        end: 9.16
+        start: 3.84
+        end: 6.74
         text: "A table: x, y, speed, type."
-        marks: {"a": 6.06, "table": 6.5, "x": 6.78, "y": 7.36, "speed": 7.78, "type": 8.26}
+        marks: {"a": 3.84, "table": 4.1, "x": 4.62, "y": 4.99, "speed": 5.36, "type": 5.96}
         visual: "Version one is a table with columns x, y, speed, and type, and one row each for the car, the bus, and the bike. In the game window the vehicles turn into plain grey tokens labeled CAR, BUS, and BIKE."
       - id: intro-3
-        start: 9.16
-        end: 11.34
+        start: 6.74
+        end: 9.1
         text: "Every frame, one big loop:"
-        marks: {"every": 9.16, "frame": 9.72, "one": 10.14, "big": 10.44, "loop": 10.68}
+        marks: {"every": 6.74, "frame": 7.2, "one": 7.86, "big": 8.0, "loop": 8.22}
         visual: "A code card starts the loop: for (int i = 0; i < n; i++) {. A frame counter ticks in the game window."
       - id: intro-4
-        start: 11.34
-        end: 13.82
+        start: 9.1
+        end: 11.2
         text: "if it’s a car, drive the lane;"
-        marks: {"if": 11.34, "its": 11.74, "a": 11.92, "car": 12.21, "drive": 12.5, "the": 12.74, "lane": 12.9}
+        marks: {"if": 9.1, "its": 9.54, "a": 9.66, "car": 9.72, "drive": 10.24, "the": 10.5, "lane": 10.66}
         visual: "The branch if (type[i] == CAR) driveLane(i); types in, and the CAR token drives along its lane."
       - id: intro-5
-        start: 13.82
-        end: 16.14
+        start: 11.2
+        end: 13.32
         text: "if it’s a bus, stop at the stop;"
-        marks: {"if": 13.82, "its": 14.3, "a": 14.44, "bus": 14.52, "stop": 15.06, "at": 15.24, "the": 15.36, "stop_2": 15.48}
+        marks: {"if": 11.2, "its": 11.64, "a": 11.76, "bus": 11.84, "stop": 12.4, "at": 12.58, "the": 12.72, "stop_2": 12.8}
         visual: "else if (type[i] == BUS) stopAtStop(i); types in, and the BUS token pulls into the bus stop."
       - id: intro-6
-        start: 16.14
-        end: 18.26
+        start: 13.32
+        end: 15.18
         text: "if it’s a bike, take the bike lane."
-        marks: {"if": 16.14, "its": 16.62, "a": 16.76, "bike": 16.84, "take": 17.28, "the": 17.46, "bike_2": 17.6, "lane": 17.84}
+        marks: {"if": 13.32, "its": 13.54, "a": 13.66, "bike": 13.76, "take": 14.2, "the": 14.4, "bike_2": 14.54, "lane": 14.78}
         visual: "else if (type[i] == BIKE) useBikeLane(i); types in, and the BIKE token rides the bike lane."
       - id: intro-7
-        start: 18.26
-        end: 21.1
+        start: 15.18
+        end: 18.2
         text: "Drawing? Same if-chain. Braking? Same again."
-        marks: {"drawing": 18.26, "same": 18.8, "if": 19.2, "chain": 19.36, "braking": 19.6, "same_2": 20.2, "again": 20.46}
+        marks: {"drawing": 15.18, "same": 15.66, "if": 16.02, "chain": 16.2, "braking": 16.44, "same_2": 17.06, "again": 17.4}
         visual: "Two more cards, draw() and brake(), stack behind the loop with the same three branches, CAR, BUS, and BIKE, highlighted in all three."
       - id: intro-8
-        start: 21.1
-        end: 23.78
-        text: "And any line can write any speed. (Minus ten?!)"
-        marks: {"and": 21.1, "any": 21.28, "line": 21.44, "can": 21.72, "write": 21.88, "any_2": 22.06, "speed": 22.26, "minus": 22.82, "ten": 23.2}
+        start: 18.2
+        end: 21.92
+        text: "Any code can set any speed, even minus ten!"
+        marks: {"any": 18.2, "code": 18.58, "can": 18.86, "set": 19.06, "any_2": 19.28, "speed": 19.48, "even": 20.18, "minus": 20.48, "ten": 20.96}
         visual: "Arrows from three scattered lines of code all write into the table’s speed column; the bus’s speed becomes −10, the BUS token rolls backward, and a stamp asks “−10?!”."
       - id: intro-9
-        start: 23.78
-        end: 26.62
+        start: 21.92
+        end: 25.0
         text: "And the mayor drops a feature request: ambulances."
-        marks: {"and": 23.78, "the": 24.04, "mayor": 24.16, "drops": 24.38, "a": 24.7, "feature": 24.86, "request": 25.1, "ambulances": 25.9}
+        marks: {"and": 21.92, "the": 22.4, "mayor": 22.52, "drops": 22.76, "a": 23.08, "feature": 23.2, "request": 23.44, "ambulances": 24.28}
         visual: "A ticket slides in from the Mayor’s office: “Feature request: ambulances”."
       - id: intro-10
-        start: 26.62
-        end: 29.18
-        text: "Search for every type check… (Thirty-seven!)"
-        marks: {"search": 26.62, "for": 26.86, "every": 27.08, "type": 27.38, "check": 27.66, "thirty": 28.2, "seven": 28.43}
+        start: 25.0
+        end: 28.26
+        text: "Search the type checks: thirty-seven to change!"
+        marks: {"search": 25.0, "the": 25.26, "type": 25.46, "checks": 25.64, "thirty": 26.4, "seven": 26.64, "to": 26.88, "change": 27.26}
         visual: "A search box for type[i] == counts its matches up to 37."
       - id: intro-11
-        start: 29.18
-        end: 31.42
+        start: 28.26
+        end: 30.56
         text: "That’s not a city. That’s a switch statement."
-        marks: {"thats": 29.18, "not": 29.48, "a": 29.58, "city": 29.74, "thats_2": 29.92, "a_2": 30.4, "switch": 30.48, "statement": 30.72}
+        marks: {"thats": 28.26, "not": 28.74, "a": 28.82, "city": 28.96, "thats_2": 29.36, "a_2": 29.62, "switch": 29.68, "statement": 29.9}
         visual: "The town’s buildings turn into towers of stacked else if lines: a skyline made of one giant if-chain."
       - id: intro-12
-        start: 31.42
-        end: 34.46
+        start: 30.56
+        end: 33.42
         text: "In the sixties, two Norwegians had a better idea:"
-        marks: {"in": 31.42, "the": 31.62, "sixties": 31.76, "two": 32.44, "norwegians": 32.62, "had": 33.24, "a": 33.4, "better": 33.5, "idea": 33.68}
+        marks: {"in": 30.56, "the": 30.68, "sixties": 30.78, "two": 31.52, "norwegians": 31.66, "had": 32.26, "a": 32.42, "better": 32.54, "idea": 32.76}
         visual: "A name card: Ole-Johan Dahl and Kristen Nygaard, Norway, 1960s."
       - id: intro-13
-        start: 34.46
+        start: 33.42
         end: 36.92
         text: "make every thing in the world a thing in the code,"
-        marks: {"make": 34.46, "every": 34.68, "thing": 34.9, "in": 35.12, "the": 35.3, "world": 35.38, "a": 35.7, "thing_2": 36.0, "in_2": 36.18, "the_2": 36.3, "code": 36.4}
+        marks: {"make": 33.42, "every": 33.79, "thing": 33.97, "in": 34.24, "the": 34.42, "world": 34.5, "a": 34.84, "thing_2": 35.1, "in_2": 35.24, "the_2": 35.36, "code": 35.44}
         visual: "The town returns with real vehicles; an inspector lens sweeps across it, and each vehicle pops up its own object name: car : Car, bus : Bus, bike : Bike."
       - id: intro-14
         start: 36.92
-        end: 39.0
+        end: 38.61
         text: "and let the object decide."
-        marks: {"and": 36.92, "let": 37.54, "the": 37.7, "object": 37.86, "decide": 38.26}
+        marks: {"and": 36.92, "let": 37.4, "the": 37.56, "object": 37.72, "decide": 38.12}
         visual: "The title: Let the Object Decide."
   - id: verse-1
     title: "Verse 1"
     delivery: sung
-    narration: "Verse 1, from record to object. A record card for Car holds only fields: x, y, and speed. It idles like a game NPC, with a floating NPC tag and a speech bubble with three dots, while an outside function reads its speed. Then a card for Simula 67, short for simulation language, and the record grows a second compartment for methods, steer and brake, and becomes an object card. A car on a strip of road steers and brakes as its methods light. Last, a blueprint for class Car, and a rubber stamp labeled new makes three cars, each with its own object card: same methods, different values. Car 1 is red; car 2 is doing 80."
+    narration: "Verse 1, from record to object. A record card for Car holds only fields: x, y, and speed. It idles like a game NPC, with a floating NPC tag and a speech bubble with three dots, while an outside function reads its speed. Then a card for Simula 67, short for simulation language, and the record grows a second compartment for methods, steer and brake, and becomes an object card. A car on a strip of road steers and brakes as its methods light. Last, a blueprint for class Car, and a rubber stamp labeled new makes three cars, each with its own object card: same methods, different values. Car 2 speeds up to 80; car 1 is still at 20."
     lines:
       - id: verse-1-1
-        start: 41.62
-        end: 43.8
+        start: 39.66
+        end: 42.36
         text: "Sixty-six: Tony Hoare’s record."
-        marks: {"sixty": 41.62, "six": 41.86, "tony": 42.44, "hoares": 42.62, "record": 43.16}
+        marks: {"sixty": 39.66, "six": 39.9, "tony": 40.74, "hoares": 40.92, "record": 41.6}
         visual: "A name card, “Tony Hoare · record · 1966”, and a record card for Car with a single compartment of fields."
       - id: verse-1-2
-        start: 43.8
-        end: 46.18
+        start: 42.36
+        end: 44.58
         text: "A car was just fields: x, y, speed."
-        marks: {"a": 43.8, "car": 43.96, "was": 44.12, "just": 44.28, "fields": 44.48, "x": 45.18, "y": 45.35, "speed": 45.52}
+        marks: {"a": 42.36, "car": 42.38, "was": 42.5, "just": 42.68, "fields": 42.86, "x": 43.46, "y": 43.84, "speed": 44.28}
         visual: "Its fields x, y, and speed light up one by one."
       - id: verse-1-3
-        start: 46.18
-        end: 50.08
+        start: 44.58
+        end: 47.4
         text: "No moves of its own. NPC energy. (NPC!)"
-        marks: {"no": 46.18, "moves": 46.36, "of": 46.86, "its": 47.02, "own": 47.18, "npc": 47.68, "energy": 48.16, "npc_2": 49.2}
+        marks: {"no": 44.58, "moves": 44.76, "of": 45.16, "its": 45.32, "own": 45.46, "npc": 45.88, "energy": 46.16, "npc_2": 46.98}
         visual: "The record card idles like a game NPC: a floating “NPC” tag above it, a “…” speech bubble, and a slow sway."
       - id: verse-1-4
-        start: 50.08
-        end: 51.8
+        start: 47.4
+        end: 49.78
         text: "Waiting for other code to read."
-        marks: {"waiting": 50.08, "for": 50.24, "other": 50.48, "code": 50.76, "to": 51.08, "read": 51.32}
+        marks: {"waiting": 47.4, "for": 47.96, "other": 48.2, "code": 48.52, "to": 48.98, "read": 49.24}
         visual: "An outside function, updateCar(), reaches over with an arrow and reads car.speed; the record does not react."
       - id: verse-1-5
-        start: 51.8
-        end: 54.54
+        start: 49.78
+        end: 52.84
         text: "Then Dahl and Nygaard, in Simula. (Simulation!)"
-        marks: {"then": 51.8, "dahl": 51.94, "and": 52.16, "nygaard": 52.28, "in": 52.72, "simula": 53.08, "simulation": 53.94}
+        marks: {"then": 49.78, "dahl": 49.94, "and": 50.38, "nygaard": 50.72, "in": 51.18, "simula": 51.48, "simulation": 52.16}
         visual: "A card reads “Simula 67”; on “Simulation!” the letters SIMU and LA light up in “SIMUlation LAnguage”."
       - id: verse-1-6
-        start: 54.54
-        end: 56.24
+        start: 52.84
+        end: 54.5
         text: "Gave each record work to do."
-        marks: {"gave": 54.54, "each": 54.68, "record": 54.84, "work": 55.12, "to": 55.48, "do": 55.74}
+        marks: {"gave": 52.84, "each": 53.0, "record": 53.14, "work": 53.38, "to": 53.64, "do": 53.94}
         visual: "The record card grows a second compartment for methods and becomes an object card; a label reads “data + behavior”."
       - id: verse-1-7
-        start: 56.24
-        end: 58.26
+        start: 54.5
+        end: 57.1
         text: "Now a car knows its place and speed,"
-        marks: {"now": 56.24, "a": 56.4, "car": 56.58, "knows": 56.84, "its": 57.22, "place": 57.36, "and": 57.7, "speed": 57.86}
+        marks: {"now": 54.5, "a": 55.06, "car": 55.22, "knows": 55.48, "its": 55.84, "place": 56.04, "and": 56.3, "speed": 56.56}
         visual: "The state compartment glows (x, y, speed), and a car on a strip of road shows a position pin and a speedometer."
       - id: verse-1-8
-        start: 58.26
-        end: 61.36
+        start: 57.1
+        end: 59.66
         text: "and it can steer and brake, too."
-        marks: {"and": 58.26, "it": 58.66, "can": 58.8, "steer": 59.04, "and_2": 59.74, "brake": 60.42, "too": 61.0}
+        marks: {"and": 57.1, "it": 57.42, "can": 57.54, "steer": 57.78, "and_2": 58.28, "brake": 58.78, "too": 59.16}
         visual: "steer() and brake() light up on their words: the car steers into the next lane, then brakes with its brake lights on."
       - id: verse-1-9
-        start: 61.36
-        end: 63.04
+        start: 59.66
+        end: 61.64
         text: "Write the class once: the blueprint."
-        marks: {"write": 61.36, "the": 61.68, "class": 61.8, "once": 62.1, "the_2": 62.66, "blueprint": 62.74}
+        marks: {"write": 59.66, "the": 59.8, "class": 59.94, "once": 60.24, "the_2": 60.86, "blueprint": 60.92}
         visual: "A blueprint sheet for class Car shows the two compartments with names but no values."
       - id: verse-1-10
-        start: 63.04
-        end: 65.2
+        start: 61.64
+        end: 64.12
         text: "“New” builds a car, and a car, and a car:"
-        marks: {"new": 63.04, "builds": 63.32, "a": 63.6, "car": 63.76, "and": 64.08, "a_2": 64.26, "car_2": 64.4, "and_2": 64.68, "a_3": 64.88, "car_3": 65.0}
+        marks: {"new": 61.64, "builds": 62.06, "a": 62.54, "car": 62.62, "and": 63.02, "a_2": 63.14, "car_2": 63.26, "and_2": 63.58, "a_3": 63.8, "car_3": 63.92}
         visual: "A rubber stamp labeled new hits three times; three cars appear, each with its own object card: car1 : Car, car2 : Car, car3 : Car."
       - id: verse-1-11
-        start: 65.2
-        end: 66.76
+        start: 64.12
+        end: 65.88
         text: "same methods, different values."
-        marks: {"same": 65.2, "methods": 65.56, "different": 66.04, "values": 66.18}
+        marks: {"same": 64.12, "methods": 64.48, "different": 64.96, "values": 65.1}
         visual: "The three identical method compartments light up together, “same methods”, and then their values, “different values”."
       - id: verse-1-12
-        start: 66.76
-        end: 71.45
-        text: "Mine is red. Yours is doing eighty."
-        marks: {"mine": 66.76, "is": 67.48, "red": 68.08, "yours": 68.86, "is_2": 69.18, "doing": 69.46, "eighty": 70.22}
-        visual: "car1’s card shows color = red, and car2’s card shows speed = 80 as car2 speeds off."
+        start: 65.88
+        end: 70.11
+        text: "Your car speeds up to eighty; my car’s still at twenty."
+        marks: {"your": 65.88, "car": 66.18, "speeds": 66.4, "up": 66.74, "to": 67.0, "eighty": 67.14, "my": 67.96, "cars": 68.36, "still": 69.14, "at": 69.3, "twenty": 69.62}
+        visual: "car2’s card changes to speed = 80 as car2 speeds off, while car1’s card still shows speed = 20: each object keeps its own state."
   - id: pre-chorus
     title: "Pre-chorus"
     delivery: sung
     narration: "Pre-chorus, messages. A name card for Alan Kay and Smalltalk, 1970s. Three living cells, each with a nucleus labeled state, turn into three small computers joined by network cables, and envelopes travel between them. A hand reaching into one computer is crossed out, and a paper-plane envelope launches toward you."
     lines:
       - id: pre-chorus-1
-        start: 71.52
-        end: 73.7
+        start: 70.4
+        end: 73.1
         text: "Alan Kay, designing Smalltalk,"
-        marks: {"alan": 71.52, "kay": 72.3, "designing": 72.56, "smalltalk": 72.96}
+        marks: {"alan": 70.4, "kay": 70.76, "designing": 71.14, "smalltalk": 72.29}
         visual: "A name card: “Alan Kay · Smalltalk · 1970s”."
       - id: pre-chorus-2
-        start: 73.7
-        end: 76.18
+        start: 73.1
+        end: 75.26
         text: "pictured objects as living cells,"
-        marks: {"pictured": 73.7, "objects": 74.46, "as": 74.98, "living": 75.24, "cells": 75.5}
+        marks: {"pictured": 73.1, "objects": 73.56, "as": 74.06, "living": 74.32, "cells": 74.64}
         visual: "Three cells appear, each with a membrane and a nucleus labeled “state”."
       - id: pre-chorus-3
-        start: 76.18
-        end: 78.08
+        start: 75.26
+        end: 77.38
         text: "or computers on a network"
-        marks: {"or": 76.18, "computers": 76.74, "on": 77.42, "a": 77.66, "network": 77.78}
+        marks: {"or": 75.26, "computers": 75.86, "on": 76.62, "a": 76.86, "network": 76.98}
         visual: "The cells turn into three small computers joined by network cables."
       - id: pre-chorus-4
-        start: 78.08
-        end: 79.48
+        start: 77.38
+        end: 78.7
         text: "that only talk in messages."
-        marks: {"that": 78.08, "only": 78.26, "talk": 78.66, "in": 78.94, "messages": 79.06}
+        marks: {"that": 77.38, "only": 77.64, "talk": 77.86, "in": 78.14, "messages": 78.26}
         visual: "Envelopes travel along the cables from computer to computer."
       - id: pre-chorus-5
-        start: 79.48
-        end: 82.0
+        start: 78.7
+        end: 81.41
         text: "So you don’t reach in. You just… send it!"
-        marks: {"so": 79.48, "you": 79.98, "dont": 80.12, "reach": 80.34, "in": 80.64, "you_2": 81.16, "just": 81.26, "send": 81.5, "it": 81.8}
+        marks: {"so": 78.7, "you": 79.06, "dont": 79.26, "reach": 79.54, "in": 79.94, "you_2": 80.24, "just": 80.48, "send": 80.72, "it": 81.1}
         visual: "A hand reaching into one computer’s case stops in mid-air and is crossed out; on “send it”, a paper-plane envelope launches toward you."
   - id: chorus-1
     title: "Chorus"
@@ -338,46 +335,46 @@ sections:
     narration: "The chorus. The town on the left is the world; object cards on the right are the code. One card's state padlock clicks shut. A hand reaching in is blocked, and a brake envelope flies to the card's door; the car brakes. One move envelope splits to the car, the bus, and the bike, and each moves its own way. A bubble asking what type are you is swiped away, and a rule card lists: state and code inside, send a message, the object decides."
     lines:
       - id: chorus-1-1
-        start: 82.0
-        end: 84.7
+        start: 81.36
+        end: 83.32
         text: "Simulate the world in objects,"
-        marks: {"simulate": 82.0, "the": 82.98, "world": 83.26, "in": 83.78, "objects": 84.12}
+        marks: {"simulate": 81.36, "the": 82.02, "world": 82.16, "in": 82.5, "objects": 82.74}
         visual: "Split screen: the town on the left, labeled “the world”, and object cards on the right, labeled “the code”, joined by leader lines."
       - id: chorus-1-2
-        start: 84.7
-        end: 86.9
+        start: 83.32
+        end: 85.54
         text: "state and code locked up inside."
-        marks: {"state": 84.7, "and": 85.02, "code": 85.24, "locked": 85.56, "up": 85.9, "inside": 86.16}
+        marks: {"state": 83.32, "and": 83.72, "code": 83.94, "locked": 84.36, "up": 84.74, "inside": 85.02}
         visual: "One object card zooms in: the padlock on its state compartment clicks shut, and the gear in its code compartment turns."
       - id: chorus-1-3
-        start: 86.9
-        end: 88.96
+        start: 85.54
+        end: 88.38
         text: "Don’t reach in: send a message,"
-        marks: {"dont": 86.9, "reach": 87.38, "in": 87.7, "send": 87.9, "a": 88.26, "message": 88.52}
+        marks: {"dont": 85.54, "reach": 86.48, "in": 86.78, "send": 87.2, "a": 87.64, "message": 87.96}
         visual: "A hand reaching into the card hits its wall (✕ “reach in”); a brake() envelope flies to the card’s door instead."
       - id: chorus-1-4
-        start: 88.96
-        end: 92.38
+        start: 88.38
+        end: 90.86
         text: "and let the object decide."
-        marks: {"and": 88.96, "let": 89.3, "the": 89.56, "object": 89.88, "decide": 91.28}
+        marks: {"and": 88.38, "let": 88.72, "the": 88.98, "object": 89.26, "decide": 90.1}
         visual: "The brake() button lights up inside the card, and the car in the town brakes."
       - id: chorus-1-5
-        start: 92.38
-        end: 94.6
+        start: 90.86
+        end: 93.44
         text: "Same message, different moves!"
-        marks: {"same": 92.38, "message": 92.98, "different": 93.72, "moves": 94.04}
+        marks: {"same": 90.86, "message": 91.72, "different": 92.64, "moves": 92.94}
         visual: "One move() envelope splits three ways, to the car, the bus, and the bike; each moves its own way, tagged Car::move, Bus::move, and Bike::move."
       - id: chorus-1-6
-        start: 94.6
-        end: 96.68
+        start: 93.44
+        end: 96.24
         text: "Don’t ask, “What type are you?”"
-        marks: {"dont": 94.6, "ask": 95.1, "what": 95.52, "type": 95.56, "are": 95.9, "you": 96.12}
+        marks: {"dont": 93.44, "ask": 93.88, "what": 94.98, "type": 95.12, "are": 95.48, "you": 95.7}
         visual: "A speech bubble from the loop, “What type are you?”, is swiped away."
       - id: chorus-1-7
-        start: 96.68
-        end: 100.1
+        start: 96.24
+        end: 99.79
         text: "Let the object decide!"
-        marks: {"let": 96.68, "the": 96.94, "object": 97.5, "decide": 98.98}
+        marks: {"let": 96.24, "the": 96.74, "object": 97.1, "decide": 98.58}
         visual: "The words “Let the object decide” stamp in, and the rule card in the corner lists ① state + code inside, ② send a message, ③ the object decides."
   - id: post-chorus-1
     title: "Post-chorus"
@@ -385,28 +382,28 @@ sections:
     narration: "Post-chorus: envelopes fire on the beat to every vehicle, and each one answers by driving its own way: the car waits at the red light, then drives on down its lane; the bus pulls into its stop, then leaves; and the bike rides on down its lane."
     lines:
       - id: post-chorus-1-1
-        start: 100.08
-        end: 101.66
+        start: 99.74
+        end: 100.84
         text: "Just send it! (Send it!)"
-        marks: {"just": 100.08, "send": 100.7, "it": 100.98, "send_2": 101.16, "it_2": 101.48}
+        marks: {"just": 99.74, "send": 100.34, "it": 100.34, "send_2": 100.34, "it_2": 100.66}
         visual: "Envelopes fire on the beat from your laptop to every vehicle in the town; as each one lands, that vehicle starts its own move."
       - id: post-chorus-1-2
-        start: 101.66
-        end: 104.48
+        start: 100.84
+        end: 102.7
         text: "Same message, different moves!"
-        marks: {"same": 101.66, "message": 101.92, "different": 102.44, "moves": 102.58}
+        marks: {"same": 100.84, "message": 101.58, "different": 102.18, "moves": 102.34}
         visual: "Same message, different moves: the car pulls up to the red light, the bus pulls into its stop, and the bike rides on down its lane, each tagged with its own move()."
       - id: post-chorus-1-3
-        start: 104.48
-        end: 106.36
+        start: 102.7
+        end: 104.02
         text: "Just send it! (Send it!)"
-        marks: {"just": 104.48, "send": 105.1, "it": 105.52, "send_2": 105.78, "it_2": 106.04}
+        marks: {"just": 102.7, "send": 102.96, "it": 103.26, "send_2": 103.54, "it_2": 103.82}
         visual: "A second volley of envelopes flies out: the light turns green, the car drives on, and the bus pulls away."
       - id: post-chorus-1-4
-        start: 106.36
-        end: 108.42
+        start: 104.02
+        end: 105.11
         text: "Let the object decide!"
-        marks: {"let": 106.36, "the": 106.96, "object": 107.16, "decide": 107.42}
+        marks: {"let": 104.02, "the": 104.18, "object": 104.38, "decide": 104.68}
         visual: "Everyone freezes in a pose, and the words “Let the object decide” stamp in."
   - id: verse-2
     title: "Verse 2"
@@ -414,70 +411,70 @@ sections:
     narration: "Verse 2, don't reach in. The traffic light turns red. The old way: long arms reach from the light into each car's state and set its speed to zero, the cars jolt to a stop, and a chat notice says physics has left the chat. The new way: the light sends a brake envelope. The gas car's card opens Car brake with brake pads; the hybrid's opens HybridCar brake with a battery that fills. The light sees both only as Vehicle silhouettes. Then a card sprouts a getter and a setter for every field and its padlock pops open; it is a struct in a trench coat, and the coat drops."
     lines:
       - id: verse-2-1
-        start: 112.14
-        end: 114.0
+        start: 105.06
+        end: 106.82
         text: "Red light! The old way:"
-        marks: {"red": 112.14, "light": 112.76, "the": 113.34, "old": 113.54, "way": 113.78}
+        marks: {"red": 105.06, "light": 105.54, "the": 106.22, "old": 106.3, "way": 106.56}
         visual: "In the town the traffic light turns red and reads STOP; a code card labeled “old way” shows car->speed = 0;"
       - id: verse-2-2
-        start: 114.0
-        end: 115.78
+        start: 106.82
+        end: 108.92
         text: "the light reaches into every car"
-        marks: {"the": 114.0, "light": 114.16, "reaches": 114.34, "into": 114.76, "every": 115.06, "car": 115.4}
+        marks: {"the": 106.82, "light": 107.3, "reaches": 107.54, "into": 107.96, "every": 108.18, "car": 108.56}
         visual: "Long arms stretch from the traffic light into each car’s state compartment."
       - id: verse-2-3
-        start: 115.78
-        end: 117.84
+        start: 108.92
+        end: 110.94
         text: "and sets its speed to zero. (Screech!)"
-        marks: {"and": 115.78, "sets": 116.04, "its": 116.28, "speed": 116.4, "to": 116.62, "zero": 116.9, "screech": 117.24}
+        marks: {"and": 108.92, "sets": 109.22, "its": 109.44, "speed": 109.56, "to": 109.84, "zero": 110.06, "screech": 110.38}
         visual: "Every speed value snaps to 0, the cars jolt to a stop with skid marks, and a stamp reads “Screech!”."
       - id: verse-2-4
-        start: 117.84
-        end: 119.7
+        start: 110.94
+        end: 112.76
         text: "No brake lights. Physics left the chat."
-        marks: {"no": 117.84, "brake": 117.98, "lights": 118.28, "physics": 118.66, "left": 118.94, "the": 119.12, "chat": 119.26}
+        marks: {"no": 110.94, "brake": 111.18, "lights": 111.46, "physics": 111.78, "left": 112.1, "the": 112.36, "chat": 112.48}
         visual: "The brake lights stay dark (✕ no brake lights), and a group-chat notice slides in: “Physics has left the chat”."
       - id: verse-2-5
-        start: 119.7
-        end: 122.38
+        start: 112.76
+        end: 115.02
         text: "The new way: one message. “Brake!” (Brake!)"
-        marks: {"the": 119.7, "new": 119.9, "way": 120.12, "one": 120.46, "message": 120.76, "brake": 121.28, "brake_2": 122.18}
+        marks: {"the": 112.76, "new": 113.14, "way": 113.34, "one": 113.6, "message": 113.94, "brake": 114.82, "brake_2": 115.02}
         visual: "The arms pull back; the light sends brake() envelopes to each car, and the code card changes to car->brake();"
       - id: verse-2-6
-        start: 122.38
-        end: 124.26
+        start: 115.02
+        end: 117.22
         text: "A gas car squeezes its brake pads;"
-        marks: {"a": 122.38, "gas": 122.48, "car": 122.74, "squeezes": 123.0, "its": 123.48, "brake": 123.68, "pads": 123.97}
+        marks: {"a": 115.02, "gas": 115.4, "car": 115.74, "squeezes": 116.02, "its": 116.44, "brake": 116.58, "pads": 116.86}
         visual: "The gas car’s card opens Car::brake with a brake-pad icon; the car slows smoothly with its brake lights on."
       - id: verse-2-7
-        start: 124.26
-        end: 126.02
+        start: 117.22
+        end: 119.08
         text: "a hybrid recharges its battery."
-        marks: {"a": 124.26, "hybrid": 124.42, "recharges": 124.68, "its": 125.32, "battery": 125.58}
+        marks: {"a": 117.22, "hybrid": 117.42, "recharges": 117.72, "its": 118.36, "battery": 118.6}
         visual: "The hybrid’s card opens HybridCar::brake with a battery icon that fills as it slows."
       - id: verse-2-8
-        start: 126.02
-        end: 128.06
-        text: "The light can’t tell, and doesn’t need to:"
-        marks: {"the": 126.02, "light": 126.28, "cant": 126.54, "tell": 126.92, "and": 127.14, "doesnt": 127.24, "need": 127.58, "to": 127.82}
+        start: 119.08
+        end: 120.84
+        text: "The light can’t tell them apart:"
+        marks: {"the": 119.08, "light": 119.34, "cant": 119.54, "tell": 119.9, "them": 120.14, "apart": 120.4}
         visual: "“What the light sees”: both cars as identical Vehicle silhouettes."
       - id: verse-2-9
-        start: 128.06
-        end: 129.78
+        start: 120.84
+        end: 122.58
         text: "how to brake stays in the car."
-        marks: {"how": 128.06, "to": 128.34, "brake": 128.5, "stays": 128.74, "in": 129.06, "the": 129.36, "car": 129.44}
+        marks: {"how": 120.84, "to": 121.16, "brake": 121.32, "stays": 121.56, "in": 121.86, "the": 122.18, "car": 122.28}
         visual: "Both brake panels fold back inside their cards."
       - id: verse-2-10
-        start: 129.78
-        end: 131.68
+        start: 122.58
+        end: 124.22
         text: "Getters and setters on every field?"
-        marks: {"getters": 129.78, "and": 130.3, "setters": 130.48, "on": 130.78, "every": 130.98, "field": 131.34}
+        marks: {"getters": 122.58, "and": 122.98, "setters": 123.18, "on": 123.46, "every": 123.66, "field": 123.9}
         visual: "A card sprouts a getter and a setter for each field, getSpeed and setSpeed, getY and setY, getX and setX; an arrow runs from each pair straight into its field, and the padlock pops open."
       - id: verse-2-11
-        start: 131.68
-        end: 133.65
+        start: 124.22
+        end: 126.51
         text: "That’s a struct in a trench coat. (Busted!)"
-        marks: {"thats": 131.68, "a": 131.94, "struct": 132.06, "in": 132.24, "a_2": 132.54, "trench": 132.64, "coat": 132.9, "busted": 133.22}
+        marks: {"thats": 124.22, "a": 124.5, "struct": 124.62, "in": 124.86, "a_2": 125.1, "trench": 125.18, "coat": 125.48, "busted": 125.78}
         visual: "A plain struct Car { x, y, speed } peeks out of a trench coat and hat; the coat drops, and a stamp reads “Busted!”."
   - id: post-chorus-2
     title: "Post-chorus"
@@ -485,28 +482,28 @@ sections:
     narration: "Post-chorus: two cars are cruising when brake envelopes fire on the beat. Same message, different moves: the gas car clamps its pads and stops short; the hybrid slows more gently, and its battery fills."
     lines:
       - id: post-chorus-2-1
-        start: 133.68
-        end: 135.7
+        start: 126.46
+        end: 127.52
         text: "Just send it! (Send it!)"
-        marks: {"just": 133.68, "send": 134.48, "it": 134.88, "send_2": 135.16, "it_2": 135.4}
+        marks: {"just": 126.46, "send": 127.08, "it": 127.42, "send_2": 127.52, "it_2": 127.52}
         visual: "Two cars cruise down the road; envelopes labeled brake() fire on the beat from your laptop, and each car brakes as its envelope lands."
       - id: post-chorus-2-2
-        start: 135.7
-        end: 137.4
+        start: 127.52
+        end: 129.42
         text: "Same message, different moves!"
-        marks: {"same": 135.7, "message": 136.4, "different": 136.88, "moves": 137.08}
+        marks: {"same": 127.52, "message": 128.34, "different": 128.84, "moves": 129.1}
         visual: "Same message, different moves: the gas car clamps its brake pads and stops short; the hybrid slows more gently, and its battery fills."
       - id: post-chorus-2-3
-        start: 137.4
-        end: 138.74
+        start: 129.42
+        end: 130.5
         text: "Just send it! (Send it!)"
-        marks: {"just": 137.4, "send": 137.66, "it": 137.98, "send_2": 138.32, "it_2": 138.58}
+        marks: {"just": 129.42, "send": 129.68, "it": 129.68, "send_2": 129.68, "it_2": 130.02}
         visual: "A second volley of brake() envelopes flies out."
       - id: post-chorus-2-4
-        start: 138.74
-        end: 140.2
+        start: 130.5
+        end: 132.69
         text: "Let the object decide!"
-        marks: {"let": 138.74, "the": 138.9, "object": 139.08, "decide": 139.38}
+        marks: {"let": 130.5, "the": 130.9, "object": 131.14, "decide": 131.94}
         visual: "Both cars stop in a pose, and the words “Let the object decide” stamp in."
   - id: verse-3
     title: "Verse 3"
@@ -514,58 +511,58 @@ sections:
     narration: "Verse 3, one message, many moves. Back in the busy town, a code card reads: for each Vehicle v in vehicles, v arrow move. A move envelope reaches the car, the bus, and the bike, and each answers and moves its own way; three method cards fan out under the one envelope, and the old if-chain is struck out. The mayor's ticket returns and an ambulance drives in. A new card declares class Ambulance, a public Vehicle, overriding move. Badges show the loop file with 0 lines changed, ambulance.cpp as a new file, and a note: plus 1 line where ambulances are created. Dashed outlines of a tram and a scooter, not yet written, join the traffic."
     lines:
       - id: verse-3-1
-        start: 143.94
-        end: 146.48
+        start: 133.44
+        end: 136.04
         text: "Back to the city. Every frame: “Move!” (Move!)"
-        marks: {"back": 143.94, "to": 144.34, "the": 144.62, "city": 144.78, "every": 145.24, "frame": 145.4, "move": 145.6, "move_2": 145.8}
+        marks: {"back": 133.44, "to": 133.88, "the": 134.02, "city": 134.1, "every": 134.44, "frame": 134.64, "move": 135.1, "move_2": 135.6}
         visual: "The busy town returns: cars, the hybrid, a bus, and a bike. A code card, for (Vehicle* v : vehicles) v->move();, stays up for the whole verse."
       - id: verse-3-2
-        start: 146.48
-        end: 149.0
+        start: 136.04
+        end: 138.68
         text: "Car? (Vroom!) Bus? (Next stop!) Bike? (Ring ring!)"
-        marks: {"car": 146.48, "vroom": 146.76, "bus": 147.12, "next": 147.36, "stop": 147.6, "bike": 148.04, "ring": 148.36, "ring_2": 148.52}
+        marks: {"car": 136.04, "vroom": 136.31, "bus": 136.4, "next": 137.0, "stop": 137.18, "bike": 137.62, "ring": 137.96, "ring_2": 138.32}
         visual: "A move() envelope reaches the car (“Vroom!”), then the bus (“Next stop!”), then the bike (“Ring ring!”); each answers in a speech bubble and moves its own way."
       - id: verse-3-3
-        start: 149.0
-        end: 150.86
+        start: 138.68
+        end: 140.68
         text: "One message, three different moves,"
-        marks: {"one": 149.0, "message": 149.18, "three": 149.96, "different": 150.12, "moves": 150.46}
+        marks: {"one": 138.68, "message": 138.82, "three": 139.48, "different": 139.64, "moves": 140.0}
         visual: "Under the one envelope, three method cards fan out: Car::move, Bus::move, Bike::move."
       - id: verse-3-4
-        start: 150.86
-        end: 152.72
+        start: 140.68
+        end: 143.16
         text: "and the loop never asks what you are."
-        marks: {"and": 150.86, "the": 151.06, "loop": 151.18, "never": 151.44, "asks": 151.78, "what": 152.12, "you": 152.28, "are": 152.46}
+        marks: {"and": 140.68, "the": 140.74, "loop": 140.88, "never": 141.1, "asks": 141.44, "what": 141.94, "you": 142.24, "are": 142.5}
         visual: "The intro’s if-chain appears, faded, beside the loop and is struck out."
       - id: verse-3-5
-        start: 152.72
-        end: 155.62
+        start: 143.16
+        end: 145.8
         text: "Then the mayor wants ambulances: (Wee-oo!)"
-        marks: {"then": 152.72, "the": 152.96, "mayor": 153.1, "wants": 153.36, "ambulances": 153.72, "wee": 154.68, "oo": 155.03}
+        marks: {"then": 143.16, "the": 143.32, "mayor": 143.48, "wants": 143.74, "ambulances": 144.12, "wee": 145.02, "oo": 145.33}
         visual: "The mayor’s ticket returns, and an ambulance drives into town, its light bar glowing slowly."
       - id: verse-3-6
-        start: 155.62
-        end: 157.86
+        start: 145.8
+        end: 148.3
         text: "one new class that knows how to move."
-        marks: {"one": 155.62, "new": 155.92, "class": 156.2, "that": 156.54, "knows": 156.78, "how": 157.06, "to": 157.34, "move": 157.52}
+        marks: {"one": 145.8, "new": 146.04, "class": 146.28, "that": 146.68, "knows": 147.06, "how": 147.32, "to": 147.64, "move": 147.88}
         visual: "A new card: class Ambulance : public Vehicle { void move() override; };"
       - id: verse-3-7
-        start: 157.86
-        end: 160.32
+        start: 148.3
+        end: 150.76
         text: "The loop? Not a single line changed. (Not one!)"
-        marks: {"the": 157.86, "loop": 158.16, "not": 158.5, "a": 158.68, "single": 158.84, "line": 159.08, "changed": 159.42, "not_2": 159.76, "one": 160.02}
+        marks: {"the": 148.3, "loop": 148.38, "not": 148.74, "a": 148.9, "single": 149.04, "line": 149.3, "changed": 149.62, "not_2": 150.1, "one": 150.28}
         visual: "Badges: the loop file “0 lines changed”, ambulance.cpp “new file”, and a small note, “+1 line where ambulances are created”."
       - id: verse-3-8
-        start: 160.32
-        end: 162.02
+        start: 150.76
+        end: 152.64
         text: "Code that talks to a Vehicle"
-        marks: {"code": 160.32, "that": 160.7, "talks": 160.92, "to": 161.24, "a": 161.42, "vehicle": 161.58}
+        marks: {"code": 150.76, "that": 150.94, "talks": 151.18, "to": 151.5, "a": 151.72, "vehicle": 152.0}
         visual: "Vehicle* lights up in the loop card."
       - id: verse-3-9
-        start: 162.02
-        end: 164.42
+        start: 152.64
+        end: 154.53
         text: "drives kinds you haven’t written yet."
-        marks: {"drives": 162.02, "kinds": 162.54, "you": 162.96, "havent": 163.6, "written": 163.94, "yet": 164.14}
+        marks: {"drives": 152.64, "kinds": 152.94, "you": 153.4, "havent": 153.64, "written": 153.96, "yet": 154.16}
         visual: "Dashed outlines of vehicles nobody has written yet, a tram and a scooter marked “?”, join the traffic."
   - id: breakdown
     title: "Breakdown"
@@ -573,46 +570,46 @@ sections:
     narration: "Breakdown, under the hood. The ambulance's hood flips open on an X-ray view. The class Vehicle declares virtual void move. A hidden field, vptr, points to Ambulance's vtable, where move maps to Ambulance move and brake to the inherited Vehicle brake. The call to move lights the vtable's move slot, labeled run time. Beside it, a non-virtual call to plate goes straight to Vehicle plate with no table, labeled static dispatch, compile time."
     lines:
       - id: breakdown-1
-        start: 164.46
-        end: 166.66
+        start: 154.8
+        end: 157.08
         text: "Okay, but how? Pop the hood! (Pop the hood!)"
-        marks: {"okay": 164.46, "but": 165.06, "how": 165.2, "pop": 165.56, "the": 165.72, "hood": 165.86, "pop_2": 166.18, "the_2": 166.34, "hood_2": 166.5}
+        marks: {"okay": 154.8, "but": 155.42, "how": 155.52, "pop": 155.92, "the": 156.06, "hood": 156.22, "pop_2": 156.58, "the_2": 156.7, "hood_2": 156.86}
         visual: "The ambulance grows large and its hood flips open; the background dims to an X-ray look."
       - id: breakdown-2
-        start: 166.66
-        end: 168.72
+        start: 157.08
+        end: 159.38
         text: "In C plus plus, mark the method virtual:"
-        marks: {"in": 166.66, "c": 166.82, "plus": 167.07, "plus_2": 167.33, "mark": 167.7, "the": 167.96, "method": 168.08, "virtual": 168.38}
+        marks: {"in": 157.08, "c": 157.22, "plus": 157.46, "plus_2": 157.7, "mark": 158.26, "the": 158.36, "method": 158.48, "virtual": 158.78}
         visual: "Under the hood: class Vehicle { virtual void move(); }, with virtual highlighted."
       - id: breakdown-3
-        start: 168.72
-        end: 169.96
+        start: 159.38
+        end: 160.72
         text: "each object hides a pointer"
-        marks: {"each": 168.72, "object": 169.08, "hides": 169.36, "a": 169.58, "pointer": 169.74}
+        marks: {"each": 159.38, "object": 159.58, "hides": 160.08, "a": 160.32, "pointer": 160.5}
         visual: "A hidden field, vptr, lights up inside the ambulance object."
       - id: breakdown-4
-        start: 169.96
-        end: 172.04
+        start: 160.72
+        end: 162.84
         text: "to its class’s method table, the v-table."
-        marks: {"to": 169.96, "its": 170.16, "classs": 170.32, "method": 170.68, "table": 170.92, "the": 171.24, "v": 171.46, "table_2": 171.66}
+        marks: {"to": 160.72, "its": 160.92, "classs": 161.08, "method": 161.46, "table": 161.66, "the": 162.12, "v": 162.26, "table_2": 162.64}
         visual: "An arrow runs from vptr to a table, Ambulance’s vtable: move → Ambulance::move, brake → Vehicle::brake (inherited)."
       - id: breakdown-5
-        start: 172.04
-        end: 174.16
-        text: "At run time, the call looks up the slot."
-        marks: {"at": 172.04, "run": 172.24, "time": 172.44, "the": 172.64, "call": 172.92, "looks": 173.16, "up": 173.4, "the_2": 173.58, "slot": 173.78}
+        start: 162.84
+        end: 164.66
+        text: "At run time, the call looks in that table."
+        marks: {"at": 162.84, "run": 163.12, "time": 163.21, "the": 163.29, "call": 163.42, "looks": 163.88, "in": 164.1, "that": 164.22, "table": 164.36}
         visual: "The call v->move() lights up, an arrow runs to the vtable, and its move slot lights: Ambulance::move, labeled “run time”."
       - id: breakdown-6
-        start: 174.16
-        end: 176.06
+        start: 164.66
+        end: 166.52
         text: "Not virtual? The compiler picks,"
-        marks: {"not": 174.16, "virtual": 174.38, "the": 174.86, "compiler": 175.28, "picks": 175.7}
+        marks: {"not": 164.66, "virtual": 164.92, "the": 165.4, "compiler": 165.82, "picks": 166.28}
         visual: "A non-virtual call, v->plate(), gets a straight arrow to Vehicle::plate with no table, labeled “static dispatch”."
       - id: breakdown-7
-        start: 176.06
-        end: 177.65
+        start: 166.52
+        end: 167.79
         text: "before the program runs."
-        marks: {"before": 176.06, "the": 176.5, "program": 176.72, "runs": 177.08}
+        marks: {"before": 166.52, "the": 166.82, "program": 166.96, "runs": 167.3}
         visual: "The label “compile time” appears beside it; the two paths sit side by side, and the hood closes."
   - id: chorus-2
     title: "Chorus"
@@ -620,22 +617,22 @@ sections:
     narration: "The chorus's second half: one move envelope reaches the car, the bus, the bike, and now the ambulance, and each moves its own way."
     lines:
       - id: chorus-2-1
-        start: 177.68
-        end: 180.3
+        start: 167.74
+        end: 170.42
         text: "Same message, different moves!"
-        marks: {"same": 177.68, "message": 178.54, "different": 179.32, "moves": 179.58}
+        marks: {"same": 167.74, "message": 168.88, "different": 169.4, "moves": 169.9}
         visual: "One move() envelope splits four ways, to the car, the bus, the bike, and the ambulance; each moves its own way, tagged with its own move()."
       - id: chorus-2-2
-        start: 180.3
-        end: 182.36
+        start: 170.42
+        end: 173.38
         text: "Don’t ask, “What type are you?” (Nah!)"
-        marks: {"dont": 180.3, "ask": 180.64, "what": 180.86, "type": 181.08, "are": 181.42, "you": 181.66, "nah": 182.16}
+        marks: {"dont": 170.42, "ask": 170.84, "what": 171.2, "type": 172.08, "are": 172.44, "you": 172.68, "nah": 172.96}
         visual: "A speech bubble from the loop, “What type are you?”, is swiped away."
       - id: chorus-2-3
-        start: 182.36
-        end: 185.55
+        start: 173.38
+        end: 177.01
         text: "Let the object decide!"
-        marks: {"let": 182.36, "the": 182.74, "object": 183.04, "decide": 184.46}
+        marks: {"let": 173.38, "the": 173.78, "object": 174.12, "decide": 175.66}
         visual: "The words “Let the object decide” stamp in, and rule ③, the object decides, glows on the rule card."
   - id: bridge
     title: "Bridge"
@@ -643,88 +640,88 @@ sections:
     narration: "Bridge, plot twist. A record-scratch freeze on a square. In a math notebook, squares sit inside rectangles, so Square extends Rectangle, and a test sets the width to 100 and asserts the height is still 20. A 50 by 20 rectangle stretches to 100 by 20 and the test passes. The same test with a 20 by 20 square stretches it to 100 by 100, and the test fails. Rectangle's promise card tears; same messages, but not the same meaning: Barbara Liskov's substitution principle. The inheritance arrow is struck out; instead, Square and Rectangle both implement a Shape interface, and a Set holds a Collection inside and delegates to it."
     lines:
       - id: bridge-1
-        start: 185.58
-        end: 187.32
+        start: 176.96
+        end: 178.32
         text: "Plot twist! (Plot twist!)"
-        marks: {"plot": 185.58, "twist": 186.26, "plot_2": 186.68, "twist_2": 186.84}
+        marks: {"plot": 176.96, "twist": 177.32, "plot_2": 177.72, "twist_2": 177.96}
         visual: "A record-scratch freeze frame on a tile labeled Square."
       - id: bridge-2
-        start: 187.32
-        end: 189.0
+        start: 178.32
+        end: 180.18
         text: "Careful how you copy the world."
-        marks: {"careful": 187.32, "how": 187.8, "you": 188.04, "copy": 188.2, "the": 188.5, "world": 188.68}
+        marks: {"careful": 178.32, "how": 178.66, "you": 178.96, "copy": 179.24, "the": 179.7, "world": 179.84}
         visual: "An arrow from the world to the code gets a caution sign."
       - id: bridge-3
-        start: 189.0
-        end: 190.96
+        start: 180.18
+        end: 181.9
         text: "In math, a square’s a rectangle,"
-        marks: {"in": 189.0, "math": 189.18, "a": 189.46, "squares": 189.66, "a_2": 190.04, "rectangle": 190.14}
+        marks: {"in": 180.18, "math": 180.36, "a": 180.6, "squares": 180.82, "a_2": 181.16, "rectangle": 181.34}
         visual: "A notebook page: a Venn diagram with squares inside rectangles."
       - id: bridge-4
-        start: 190.96
-        end: 193.82
+        start: 181.9
+        end: 184.48
         text: "so Square extends Rectangle. Easy, right?"
-        marks: {"so": 190.96, "square": 191.02, "extends": 191.38, "rectangle": 192.0, "easy": 192.76, "right": 193.08}
+        marks: {"so": 181.9, "square": 182.14, "extends": 182.64, "rectangle": 183.22, "easy": 183.84, "right": 184.2}
         visual: "A class diagram, Square → Rectangle, and a test card: r->setWidth(100); assert(r->height() == 20);"
       - id: bridge-5
-        start: 193.82
-        end: 195.76
+        start: 184.48
+        end: 186.58
         text: "Rectangle: set the width to a hundred;"
-        marks: {"rectangle": 193.82, "set": 194.32, "the": 194.44, "width": 194.6, "to": 194.84, "a": 195.08, "hundred": 195.3}
+        marks: {"rectangle": 184.48, "set": 185.14, "the": 185.4, "width": 185.56, "to": 185.82, "a": 186.06, "hundred": 186.06}
         visual: "On a grid, a 50 × 20 rectangle stretches to 100 × 20."
       - id: bridge-6
-        start: 195.76
-        end: 197.5
+        start: 186.58
+        end: 188.78
         text: "the height stays twenty. (Still twenty!)"
-        marks: {"the": 195.76, "height": 195.84, "stays": 196.06, "twenty": 196.44, "still": 196.88, "twenty_2": 197.06}
+        marks: {"the": 186.58, "height": 186.88, "stays": 187.08, "twenty": 187.48, "still": 187.84, "twenty_2": 188.42}
         visual: "Height 20 ✓, and the assert passes ✓."
       - id: bridge-7
-        start: 197.5
-        end: 199.56
-        text: "Set the width, set the width to a hundred;"
-        marks: {"set": 197.5, "the": 197.68, "width": 197.8, "set_2": 198.14, "the_2": 198.28, "width_2": 198.42, "to": 198.66, "a": 198.9, "hundred": 199.1}
+        start: 188.78
+        end: 190.84
+        text: "Now a Square: set the width to a hundred;"
+        marks: {"now": 188.78, "a": 189.04, "square": 189.18, "set": 189.42, "the": 189.66, "width": 189.8, "to": 190.04, "a_2": 190.3, "hundred": 190.3}
         visual: "The same test now holds a Square, 20 × 20, and stretches it…"
       - id: bridge-8
-        start: 199.56
-        end: 201.34
+        start: 190.84
+        end: 192.88
         text: "the height jumps too! (Wait, what?!)"
-        marks: {"the": 199.56, "height": 199.66, "jumps": 199.88, "too": 200.26, "wait": 200.72, "what": 201.04}
+        marks: {"the": 190.84, "height": 191.1, "jumps": 191.34, "too": 191.72, "wait": 192.0, "what": 192.44}
         visual: "…to 100 × 100: height 100 ✗, and the assert fails ✗."
       - id: bridge-9
-        start: 201.34
-        end: 203.66
+        start: 192.88
+        end: 195.28
         text: "A subclass must keep its parent’s promises:"
-        marks: {"a": 201.34, "subclass": 201.58, "must": 202.07, "keep": 202.56, "its": 202.76, "parents": 202.9, "promises": 203.32}
+        marks: {"a": 192.88, "subclass": 193.04, "must": 193.6, "keep": 193.92, "its": 194.2, "parents": 194.36, "promises": 194.92}
         visual: "Rectangle’s promise card, “setWidth: height stays the same”, tears in two as Square takes it."
       - id: bridge-10
-        start: 203.66
-        end: 206.5
+        start: 195.28
+        end: 198.04
         text: "same messages, same meaning. (That’s Liskov!)"
-        marks: {"same": 203.66, "messages": 204.1, "same_2": 204.5, "meaning": 205.06, "thats": 205.5, "liskov": 205.8}
+        marks: {"same": 195.28, "messages": 195.62, "same_2": 196.14, "meaning": 196.58, "thats": 197.04, "liskov": 197.46}
         visual: "Two checks: “same messages ✓”, “same meaning ✗”; a name card: “Barbara Liskov · substitution principle”."
       - id: bridge-11
-        start: 206.5
-        end: 208.78
+        start: 198.04
+        end: 199.66
         text: "Is-a in the world isn’t enough."
-        marks: {"is": 206.5, "a": 206.6, "in": 206.74, "the": 206.96, "world": 207.2, "isnt": 207.7, "enough": 208.24}
+        marks: {"is": 198.04, "a": 198.26, "in": 198.36, "the": 198.48, "world": 198.6, "isnt": 198.96, "enough": 199.34}
         visual: "Left, “is-a in math ✓”; right, “substitutable in code? ✗”."
       - id: bridge-12
-        start: 208.78
-        end: 210.56
+        start: 199.66
+        end: 201.16
         text: "Can’t keep the promise? Don’t inherit."
-        marks: {"cant": 208.78, "keep": 209.02, "the": 209.1, "promise": 209.26, "dont": 209.68, "inherit": 209.88}
+        marks: {"cant": 199.66, "keep": 199.96, "the": 200.08, "promise": 200.24, "dont": 200.64, "inherit": 200.88}
         visual: "The Square → Rectangle arrow is struck out."
       - id: bridge-13
-        start: 210.56
-        end: 212.04
+        start: 201.16
+        end: 202.46
         text: "Share an interface. (Shape!)"
-        marks: {"share": 210.56, "an": 210.76, "interface": 210.94, "shape": 211.54}
+        marks: {"share": 201.16, "an": 201.44, "interface": 201.64, "shape": 202.02}
         visual: "Square and Rectangle each implement an interface, Shape { area() }, with dashed arrows."
       - id: bridge-14
-        start: 212.04
-        end: 214.55
+        start: 202.46
+        end: 205.27
         text: "Just want its code? Hold one inside, and delegate."
-        marks: {"just": 212.04, "want": 212.16, "its": 212.34, "code": 212.46, "hold": 212.82, "one": 213.06, "inside": 213.26, "and": 213.96, "delegate": 214.08}
+        marks: {"just": 202.46, "want": 202.84, "its": 203.04, "code": 203.18, "hold": 203.64, "one": 203.86, "inside": 204.02, "and": 204.44, "delegate": 204.8}
         visual: "A Set card holds a Collection card inside it; a call, add(x), enters the Set and is passed on to the Collection. Rule ④, keep the promise, joins the rule card."
   - id: verse-4
     title: "Verse 4"
@@ -732,64 +729,64 @@ sections:
     narration: "Verse 4, what it changed and the price. The camera pulls back: the town is one district of a big map of object cards, and three teams each build a district behind an interface gate. One List component is reused in a shop, a playlist, and a to-do app. Then a price tag: a swarm of objects, each with its own state, and a detective's magnifier hunting for who set the speed to minus 10. A grid with rows for Car, Bus, and Bike and columns for move, brake, and draw: a new row, Ambulance, means one class to write; a new column, export, means touching every class. Objects suit things with state that act; a plain average function with no class is fine."
     lines:
       - id: verse-4-1
-        start: 214.63
-        end: 216.8
+        start: 205.22
+        end: 207.16
         text: "Big systems split into objects;"
-        marks: {"big": 214.63, "systems": 214.88, "split": 215.46, "into": 215.84, "objects": 216.24}
+        marks: {"big": 205.22, "systems": 205.66, "split": 206.04, "into": 206.32, "objects": 206.56}
         visual: "The camera pulls back: the town is one district of a big map made of clusters of object cards."
       - id: verse-4-2
-        start: 216.8
-        end: 219.34
+        start: 207.16
+        end: 209.54
         text: "teams build each piece behind its interface."
-        marks: {"teams": 216.8, "build": 217.16, "each": 217.5, "piece": 217.82, "behind": 218.12, "its": 218.52, "interface": 218.9}
+        marks: {"teams": 207.16, "build": 207.58, "each": 207.92, "piece": 208.1, "behind": 208.34, "its": 208.72, "interface": 209.12}
         visual: "Three teams each build a district behind an interface gate."
       - id: verse-4-3
-        start: 219.34
-        end: 222.24
+        start: 209.54
+        end: 212.2
         text: "Write a List once, reuse it app after app."
-        marks: {"write": 219.34, "a": 219.66, "list": 219.84, "once": 220.04, "reuse": 220.42, "it": 221.02, "app": 221.2, "after": 221.56, "app_2": 222.02}
+        marks: {"write": 209.54, "a": 209.88, "list": 210.08, "once": 210.26, "reuse": 210.66, "it": 211.26, "app": 211.4, "after": 211.66, "app_2": 211.96}
         visual: "One List component card is copied into three apps: a shop, a playlist, and a to-do list."
       - id: verse-4-4
-        start: 222.24
-        end: 223.8
+        start: 212.2
+        end: 213.7
         text: "But there’s a price! (A price!)"
-        marks: {"but": 222.24, "theres": 222.38, "a": 222.6, "price": 222.7, "a_2": 223.08, "price_2": 223.32}
+        marks: {"but": 212.2, "theres": 212.32, "a": 212.54, "price": 212.66, "a_2": 213.06, "price_2": 213.28}
         visual: "A price tag stamps down."
       - id: verse-4-5
-        start: 223.8
-        end: 225.66
+        start: 213.7
+        end: 215.68
         text: "State spreads across a thousand objects:"
-        marks: {"state": 223.8, "spreads": 224.14, "across": 224.46, "a": 224.78, "thousand": 224.96, "objects": 225.22}
+        marks: {"state": 213.7, "spreads": 214.12, "across": 214.48, "a": 214.76, "thousand": 214.98, "objects": 215.22}
         visual: "A swarm of small object cards, each with its state lit."
       - id: verse-4-6
-        start: 225.66
-        end: 228.02
+        start: 215.68
+        end: 218.02
         text: "who changed that speed? Good luck, detective."
-        marks: {"who": 225.66, "changed": 225.88, "that": 226.18, "speed": 226.4, "good": 226.92, "luck": 227.06, "detective": 227.36}
+        marks: {"who": 215.68, "changed": 215.9, "that": 216.22, "speed": 216.58, "good": 216.8, "luck": 217.04, "detective": 217.36}
         visual: "A tangle of message arrows; a magnifier in a deerstalker hat hunts for who set speed = −10."
       - id: verse-4-7
-        start: 228.02
-        end: 230.58
+        start: 218.02
+        end: 220.82
         text: "New kind of thing? Add one class. (Easy!)"
-        marks: {"new": 228.02, "kind": 228.32, "of": 228.72, "thing": 228.94, "add": 229.18, "one": 229.48, "class": 229.7, "easy": 229.94}
+        marks: {"new": 218.02, "kind": 218.36, "of": 218.66, "thing": 218.84, "add": 219.08, "one": 219.42, "class": 219.74, "easy": 220.28}
         visual: "A grid: rows Car, Bus, Bike; columns move, brake, draw. A new row, Ambulance, fills in: 1 class to write."
       - id: verse-4-8
-        start: 230.58
-        end: 233.36
+        start: 220.82
+        end: 223.28
         text: "New kind of action? Touch every class. (Ouch!)"
-        marks: {"new": 230.58, "kind": 230.88, "of": 231.24, "action": 231.48, "touch": 231.84, "every": 232.24, "class": 232.56, "ouch": 232.84}
+        marks: {"new": 220.82, "kind": 220.82, "of": 220.98, "action": 221.14, "touch": 221.82, "every": 221.98, "class": 222.36, "ouch": 222.84}
         visual: "A new column, export, adds a cell to every row: 4 classes to touch."
       - id: verse-4-9
-        start: 233.36
-        end: 235.96
+        start: 223.28
+        end: 225.42
         text: "Things with state that act? Use objects."
-        marks: {"things": 233.36, "with": 234.02, "state": 234.18, "that": 234.42, "act": 234.66, "use": 235.04, "objects": 235.38}
+        marks: {"things": 223.28, "with": 223.5, "state": 223.68, "that": 223.96, "act": 224.26, "use": 224.66, "objects": 224.9}
         visual: "Back to the town of object cards, with a check mark."
       - id: verse-4-10
-        start: 235.96
-        end: 238.5
+        start: 225.42
+        end: 228.03
         text: "Plain math? A plain function’s fine."
-        marks: {"plain": 235.96, "math": 236.7, "a": 237.2, "plain_2": 237.36, "functions": 237.6, "fine": 238.14}
+        marks: {"plain": 225.42, "math": 225.68, "a": 226.2, "plain_2": 226.32, "functions": 226.66, "fine": 227.34}
         visual: "A lone function, double average(const vector<double>& xs), with no class around it and a check mark. Rule ⑤, use where it fits, joins the rule card."
   - id: quiz
     title: "Red flag or green flag?"
@@ -797,173 +794,102 @@ sections:
     narration: "Red flag or green flag: five cards, one at a time. Each card waves both flags until the answer is called; then the right flag plants beside it with the reason."
     lines:
       - id: quiz-1
-        start: 238.54
-        end: 248.04
+        start: 228.4
+        end: 236.02
         text: "Stop time. Red flag or green flag? Your game checks: if zombie, if creeper, if skeleton…"
         answer: "Red flag! Send one message!"
-        answer_at: 245.46
-        marks: {"stop": 238.54, "time": 239.12, "red": 239.64, "flag": 240.42, "or": 240.8, "green": 241.52, "flag_2": 241.78, "your": 242.34, "game": 242.48, "checks": 242.72, "if": 243.14, "zombie": 243.76, "if_2": 244.28, "creeper": 244.38, "if_3": 244.8, "skeleton": 244.98, "red_2": 245.46, "flag_3": 246.2, "send": 246.86, "one": 247.2, "message": 247.48}
+        answer_at: 233.72
+        pause_at: 233.66
+        marks: {"stop": 228.4, "time": 228.74, "red": 229.34, "flag": 229.5, "or": 230.04, "green": 230.1, "flag_2": 230.36, "your": 230.84, "game": 230.94, "checks": 231.18, "if": 231.76, "zombie": 231.86, "if_2": 232.48, "creeper": 232.66, "if_3": 233.16, "skeleton": 233.26, "red_2": 233.72, "flag_3": 234.06, "send": 234.76, "one": 235.0, "message": 235.26}
         visual: "Flag card 1 of 5: “Your game checks: if zombie, if creeper, if skeleton…” Both flags wave until the answer; then a red pennant marked ✗ RED FLAG plants beside it, with the fix: for (Enemy* e : enemies) e->takeAction();"
       - id: quiz-2
-        start: 248.04
-        end: 252.86
+        start: 236.02
+        end: 241.0
         text: "Stack holds a list inside and only shows push and pop."
         answer: "Green flag! That’s delegation!"
-        answer_at: 251.06
-        marks: {"stack": 248.04, "holds": 248.44, "a": 248.8, "list": 248.94, "inside": 249.12, "and": 249.52, "only": 249.9, "shows": 250.1, "push": 250.42, "and_2": 250.74, "pop": 250.84, "green": 251.06, "flag": 251.36, "thats": 251.9, "delegation": 252.18}
+        answer_at: 239.06
+        pause_at: 238.96
+        marks: {"stack": 236.02, "holds": 236.32, "a": 236.64, "list": 236.8, "inside": 237.0, "and": 237.3, "only": 237.48, "shows": 237.7, "push": 237.98, "and_2": 238.42, "pop": 238.56, "green": 239.06, "flag": 239.3, "thats": 239.78, "delegation": 240.06}
         visual: "Flag card 2 of 5: “Stack holds a list inside and only shows push and pop.” A green banner marked ✓ GREEN FLAG plants, beside a Stack card that holds a List inside and shows only push, pop, and top."
       - id: quiz-3
-        start: 252.86
-        end: 257.04
+        start: 241.0
+        end: 245.36
         text: "Shapes use radians. Square uses degrees."
         answer: "Red flag! Broken promise!"
-        answer_at: 255.42
-        marks: {"shapes": 252.86, "use": 253.42, "radians": 253.64, "square": 254.26, "uses": 254.58, "degrees": 254.94, "red": 255.42, "flag": 255.86, "broken": 256.3, "promise": 256.58}
+        answer_at: 243.6
+        pause_at: 243.54
+        marks: {"shapes": 241.0, "use": 241.36, "radians": 241.6, "square": 242.36, "uses": 242.54, "degrees": 242.92, "red": 243.6, "flag": 243.84, "broken": 244.32, "promise": 244.56}
         visual: "Flag card 3 of 5: “Shapes use radians. Square uses degrees.” ✗ RED FLAG, with a torn promise card: same message, different meaning."
       - id: quiz-4
-        start: 257.04
-        end: 261.74
+        start: 245.36
+        end: 250.62
         text: "C plus plus, not virtual: the object picks, right?"
         answer: "Red flag! The compiler picks!"
-        answer_at: 260.16
-        marks: {"c": 257.04, "plus": 257.37, "plus_2": 257.69, "not": 258.02, "virtual": 258.44, "the": 258.96, "object": 259.22, "picks": 259.52, "right": 259.88, "red": 260.16, "flag": 260.36, "the_2": 260.86, "compiler": 260.96, "picks_2": 261.4}
+        answer_at: 248.72
+        pause_at: 248.62
+        marks: {"c": 245.36, "plus": 245.53, "plus_2": 245.71, "not": 246.26, "virtual": 246.44, "the": 247.14, "object": 247.24, "picks": 247.66, "right": 248.18, "red": 248.72, "flag": 249.04, "the_2": 249.66, "compiler": 249.66, "picks_2": 250.22}
         visual: "Flag card 4 of 5: “C++, not virtual: the object picks, right?” ✗ RED FLAG, with the note “Vehicle::plate · compile time”."
       - id: quiz-5
-        start: 261.74
-        end: 266.82
+        start: 250.62
+        end: 256.67
         text: "Celsius to Fahrenheit? One plain function."
         answer: "Green flag! A function’s fine!"
-        answer_at: 264.44
-        marks: {"celsius": 261.74, "to": 262.34, "fahrenheit": 262.76, "one": 263.14, "plain": 263.62, "function": 263.98, "green": 264.44, "flag": 264.88, "a": 265.28, "functions": 265.66, "fine": 266.16}
+        answer_at: 253.76
+        pause_at: 253.66
+        marks: {"celsius": 250.62, "to": 251.08, "fahrenheit": 251.62, "one": 252.46, "plain": 252.64, "function": 252.98, "green": 253.76, "flag": 254.14, "a": 255.02, "functions": 255.04, "fine": 255.84}
         visual: "Flag card 5 of 5: “Celsius to Fahrenheit? One plain function.” ✓ GREEN FLAG, with double toF(double c) { return c * 9 / 5 + 32; }"
-  - id: final-chorus-1
+  - id: final-chorus
     title: "Final chorus"
     delivery: sung
-    narration: "The final chorus, in a higher key, over the whole town: the car, the hybrid, the bus, the bike, and the ambulance. On decide how, keep the promise, every object card gets a gold seal reading keeps the promise."
+    narration: "The final chorus, as a curtain call: every object card lines up in a row with its vehicle, the rule card glows one rule per line, and every card gets its promise seal."
     lines:
-      - id: final-chorus-1-1
-        start: 267.62
-        end: 270.0
+      - id: final-chorus-1
+        start: 257.54
+        end: 259.52
         text: "Simulate the world in objects,"
-        marks: {"simulate": 267.62, "the": 268.34, "world": 268.6, "in": 269.16, "objects": 269.48}
-        visual: "Split screen: the town on the left, labeled “the world”, and object cards on the right, labeled “the code”, joined by leader lines."
-      - id: final-chorus-1-2
-        start: 270.0
-        end: 272.24
-        text: "state and code locked up inside."
-        marks: {"state": 270.0, "and": 270.36, "code": 270.58, "locked": 270.9, "up": 271.22, "inside": 271.62}
-        visual: "One object card zooms in: the padlock on its state compartment clicks shut, and the gear in its code compartment turns."
-      - id: final-chorus-1-3
-        start: 272.24
-        end: 274.36
-        text: "Don’t reach in: send a message,"
-        marks: {"dont": 272.24, "reach": 272.74, "in": 273.08, "send": 273.26, "a": 273.62, "message": 273.86}
-        visual: "A hand reaching into the card hits its wall (✕ “reach in”); a brake() envelope flies to the card’s door instead."
-      - id: final-chorus-1-4
-        start: 274.36
-        end: 277.72
-        text: "let the object decide."
-        marks: {"let": 274.36, "the": 274.88, "object": 275.24, "decide": 276.68}
-        visual: "The brake() button lights up inside the card, and the car in the town brakes."
-      - id: final-chorus-1-5
-        start: 277.72
-        end: 280.06
-        text: "Same message, different moves!"
-        marks: {"same": 277.72, "message": 278.36, "different": 279.1, "moves": 279.58}
-        visual: "One move() envelope splits five ways, to the car, the hybrid, the bus, the bike, and the ambulance; each moves its own way."
-      - id: final-chorus-1-6
-        start: 280.06
-        end: 282.32
-        text: "Don’t ask, “What type are you?” (Nah!)"
-        marks: {"dont": 280.06, "ask": 280.46, "what": 280.7, "type": 280.94, "are": 281.34, "you": 281.56, "nah": 282.16}
-        visual: "A speech bubble from the loop, “What type are you?”, is swiped away."
-      - id: final-chorus-1-7
-        start: 282.32
-        end: 285.3
-        text: "Decide how, keep the promise, keep the promise!"
-        marks: {"decide": 282.32, "how": 282.98, "keep": 283.36, "the": 283.98, "promise": 284.14, "keep_2": 284.58, "the_2": 284.78, "promise_2": 284.94}
-        visual: "Every object card gets a gold seal, “keeps the promise”, and rule ④ glows on the rule card."
-      - id: final-chorus-1-8
-        start: 285.3
-        end: 288.1
-        text: "Let the object decide!"
-        marks: {"let": 285.3, "the": 285.62, "object": 287.5, "decide": 287.8}
-        visual: "The words “Let the object decide” stamp in."
-  - id: ad-lib
-    title: "Ad-lib"
-    delivery: sung
-    narration: "An ad-lib: envelopes fire again; flashback cards replay two flag answers: a non-virtual call whose code the compiler picks, and a plain Celsius-to-Fahrenheit function with a green flag."
-    lines:
-      - id: ad-lib-1
-        start: 288.22
-        end: 290.72
-        text: "Just send it! Send it! The compiler picks!"
-        marks: {"just": 288.22, "send": 288.7, "it": 289.0, "send_2": 289.2, "it_2": 289.6, "the": 289.76, "compiler": 289.9, "picks": 290.36}
-        visual: "Envelopes fire again; a flashback card shows the non-virtual call v->plate(), with the note “Vehicle::plate · compile time”."
-      - id: ad-lib-2
-        start: 290.72
-        end: 293.4
-        text: "Celsius to Fahrenheit, one plain function."
-        marks: {"celsius": 290.72, "to": 291.32, "fahrenheit": 291.68, "one": 292.24, "plain": 292.52, "function": 292.86}
-        visual: "The plain toF function card flips in."
-      - id: ad-lib-3
-        start: 293.4
-        end: 295.88
-        text: "Green flag! A function’s fine!"
-        marks: {"green": 293.4, "flag": 293.8, "a": 294.0, "functions": 294.2, "fine": 295.0}
-        visual: "A green banner marked ✓ GREEN FLAG plants beside it."
-  - id: final-chorus-2
-    title: "Final chorus"
-    delivery: sung
-    narration: "The chorus once more, as a curtain call: every object card lines up in a row with its vehicle, the rule card glows one rule per line, and every card gets its promise seal."
-    lines:
-      - id: final-chorus-2-1
-        start: 298.6
-        end: 300.9
-        text: "Simulate the world in objects,"
-        marks: {"simulate": 298.6, "the": 299.2, "world": 299.46, "in": 300.06, "objects": 300.36}
+        marks: {"simulate": 257.54, "the": 258.16, "world": 258.3, "in": 258.62, "objects": 258.88}
         visual: "Curtain call: every vehicle in the town lines up above its own object card."
-      - id: final-chorus-2-2
-        start: 300.9
-        end: 303.12
+      - id: final-chorus-2
+        start: 259.52
+        end: 262.28
         text: "state and code locked up inside."
-        marks: {"state": 300.9, "and": 301.28, "code": 301.46, "locked": 301.8, "up": 302.12, "inside": 302.52}
+        marks: {"state": 259.52, "and": 259.8, "code": 260.04, "locked": 260.5, "up": 260.86, "inside": 261.14}
         visual: "Every card’s padlock clicks shut in turn, and rule ① glows."
-      - id: final-chorus-2-3
-        start: 303.12
-        end: 305.32
+      - id: final-chorus-3
+        start: 262.28
+        end: 264.76
         text: "Don’t reach in: send a message,"
-        marks: {"dont": 303.12, "reach": 303.64, "in": 304.02, "send": 304.14, "a": 304.48, "message": 304.8}
+        marks: {"dont": 262.28, "reach": 262.56, "in": 262.92, "send": 263.28, "a": 263.8, "message": 264.04}
         visual: "A row of envelopes flies to every card’s door, and rule ② glows."
-      - id: final-chorus-2-4
-        start: 305.32
-        end: 308.74
+      - id: final-chorus-4
+        start: 264.76
+        end: 267.48
         text: "and let the object decide."
-        marks: {"and": 305.32, "let": 305.64, "the": 305.86, "object": 306.2, "decide": 307.68}
+        marks: {"and": 264.76, "let": 264.86, "the": 265.1, "object": 265.42, "decide": 266.26}
         visual: "Each card lights its own method, and rule ③ glows."
-      - id: final-chorus-2-5
-        start: 308.74
-        end: 311.16
+      - id: final-chorus-5
+        start: 267.48
+        end: 269.76
         text: "Same message, different moves!"
-        marks: {"same": 308.74, "message": 309.46, "different": 310.16, "moves": 310.52}
+        marks: {"same": 267.48, "message": 267.88, "different": 268.8, "moves": 269.08}
         visual: "Each vehicle makes its own short move: the car rolls up to the crossing, the hybrid glides and recharges, the bus pulls in to the curb, the bike swerves into its lane, and the ambulance darts ahead."
-      - id: final-chorus-2-6
-        start: 311.16
-        end: 313.74
+      - id: final-chorus-6
+        start: 269.76
+        end: 272.9
         text: "Don’t ask, “What type are you?” (Nah!)"
-        marks: {"dont": 311.16, "ask": 311.6, "what": 311.98, "type": 312.1, "are": 312.46, "you": 312.7, "nah": 313.32}
+        marks: {"dont": 269.76, "ask": 270.0, "what": 271.0, "type": 271.28, "are": 271.6, "you": 271.84, "nah": 272.3}
         visual: "A speech bubble from the loop, “What type are you?”, is swiped away."
-      - id: final-chorus-2-7
-        start: 313.74
-        end: 316.6
+      - id: final-chorus-7
+        start: 272.9
+        end: 275.64
         text: "Decide how, but keep the promise! (Keep the promise!)"
-        marks: {"decide": 313.74, "how": 314.02, "but": 314.76, "keep": 314.84, "the": 315.12, "promise": 315.36, "keep_2": 315.8, "the_2": 316.04, "promise_2": 316.2}
+        marks: {"decide": 272.9, "how": 273.3, "but": 273.86, "keep": 273.96, "the": 274.22, "promise": 274.46, "keep_2": 275.0, "the_2": 275.1, "promise_2": 275.28}
         visual: "Every card gets its gold “keeps the promise” seal, and rule ④ glows."
-      - id: final-chorus-2-8
-        start: 316.6
-        end: 319.4
+      - id: final-chorus-8
+        start: 275.64
+        end: 278.51
         text: "Let the object decide!"
-        marks: {"let": 316.6, "the": 316.76, "object": 316.94, "decide": 318.4}
+        marks: {"let": 275.64, "the": 275.8, "object": 276.0, "decide": 277.38}
         visual: "The words “Let the object decide” stamp in, and rule ⑤ glows."
   - id: post-chorus-3
     title: "Post-chorus"
@@ -971,28 +897,28 @@ sections:
     narration: "The last post-chorus: every vehicle answers the same message its own way. While the light is red, the ambulance races north across the junction with its siren and parks, the car and the hybrid wait at the light, the bus pulls into its stop, and the bike rides on. Then the light turns green: the car and the hybrid drive on, and the bus pulls away."
     lines:
       - id: post-chorus-3-1
-        start: 319.54
-        end: 321.14
+        start: 278.58
+        end: 279.98
         text: "Just send it! (Send it!)"
-        marks: {"just": 319.54, "send": 320.08, "it": 320.42, "send_2": 320.68, "it_2": 321.0}
+        marks: {"just": 278.58, "send": 279.08, "it": 279.08, "send_2": 279.08, "it_2": 279.4}
         visual: "Envelopes fire on the beat from your laptop to every vehicle in the town; as each one lands, that vehicle starts its own move."
       - id: post-chorus-3-2
-        start: 321.14
-        end: 322.38
+        start: 279.98
+        end: 281.8
         text: "Same message, different moves!"
-        marks: {"same": 321.14, "message": 321.38, "different": 321.88, "moves": 322.08}
+        marks: {"same": 279.98, "message": 280.44, "different": 280.92, "moves": 281.08}
         visual: "Same message, different moves: the ambulance races north across the junction with its siren and parks, the car and the hybrid wait at the red light, the hybrid’s battery filling as it slows, the bus pulls into its stop, and the bike rides on, each tagged with its own move()."
       - id: post-chorus-3-3
-        start: 322.38
-        end: 323.76
+        start: 281.8
+        end: 282.82
         text: "Just send it! (Send it!)"
-        marks: {"just": 322.38, "send": 322.66, "it": 323.0, "send_2": 323.3, "it_2": 323.58}
+        marks: {"just": 281.8, "send": 281.8, "it": 282.04, "send_2": 282.32, "it_2": 282.54}
         visual: "A second volley of envelopes flies out; with the ambulance past, the light turns green: the car and the hybrid drive on, and the bus pulls away."
       - id: post-chorus-3-4
-        start: 323.76
-        end: 325.18
+        start: 282.82
+        end: 283.93
         text: "Let the object decide!"
-        marks: {"let": 323.76, "the": 323.9, "object": 324.08, "decide": 324.38}
+        marks: {"let": 282.82, "the": 282.94, "object": 283.14, "decide": 283.44}
         visual: "Everyone freezes in a pose, and the words “Let the object decide” stamp in."
   - id: outro
     title: "Outro"
@@ -1000,38 +926,38 @@ sections:
     narration: "The outro: the ambulance crosses town while the others pull aside, and the loop card shows 0 lines changed. The camera rises until the town becomes object cards joined by message arrows, then folds back into the town. A real window opens onto grass and sky. The title: Let the Object Decide."
     lines:
       - id: outro-1
-        start: 327.4
-        end: 329.28
+        start: 284.44
+        end: 286.2
         text: "The ambulance rolls out."
-        marks: {"the": 327.4, "ambulance": 328.0, "rolls": 328.42, "out": 328.72}
+        marks: {"the": 284.44, "ambulance": 284.72, "rolls": 285.16, "out": 285.5}
         visual: "The ambulance crosses the town, and the other vehicles pull aside."
       - id: outro-2
-        start: 329.28
-        end: 332.56
+        start: 286.2
+        end: 289.14
         text: "One new class. The loop didn’t change a line."
-        marks: {"one": 329.28, "new": 329.7, "class": 329.86, "the": 330.7, "loop": 331.18, "didnt": 331.38, "change": 331.68, "a": 331.9, "line": 332.08}
+        marks: {"one": 286.2, "new": 286.58, "class": 286.76, "the": 287.36, "loop": 287.44, "didnt": 287.66, "change": 287.98, "a": 288.3, "line": 288.44}
         visual: "The loop card again: “0 lines changed”."
       - id: outro-3
-        start: 332.56
-        end: 334.92
+        start: 289.14
+        end: 291.54
         text: "That’s object-oriented programming:"
-        marks: {"thats": 332.56, "object": 333.1, "oriented": 333.44, "programming": 333.8}
+        marks: {"thats": 289.14, "object": 289.5, "oriented": 289.88, "programming": 290.36}
         visual: "The camera rises; the town becomes object cards joined by message arrows."
       - id: outro-4
-        start: 334.92
-        end: 338.58
+        start: 291.54
+        end: 295.2
         text: "simulate the world, one object at a time."
-        marks: {"simulate": 334.92, "the": 335.52, "world": 335.64, "one": 336.4, "object": 336.96, "at": 337.26, "a": 337.46, "time": 337.56}
+        marks: {"simulate": 291.54, "the": 292.12, "world": 292.26, "one": 292.86, "object": 293.6, "at": 293.98, "a": 294.24, "time": 294.34}
         visual: "The cards fold back into the town."
       - id: outro-5
-        start: 338.58
-        end: 341.74
+        start: 295.2
+        end: 298.78
         text: "Now go touch, like, some real grass."
-        marks: {"now": 338.58, "go": 338.8, "touch": 338.94, "like": 339.18, "some": 339.34, "real": 339.5, "grass": 339.72}
+        marks: {"now": 295.2, "go": 295.68, "touch": 295.84, "like": 296.5, "some": 296.88, "real": 297.5, "grass": 297.76}
         visual: "A real window opens onto grass and sky, with a sticker: “real grass”."
       - id: outro-6
-        start: 341.74
-        end: 343.56
+        start: 298.78
+        end: 303.81
         text: "Let the object decide."
-        marks: {"let": 341.74, "the": 342.34, "object": 342.52, "decide": 342.8}
+        marks: {"let": 298.78, "the": 299.34, "object": 299.7, "decide": 301.18}
         visual: "The title: Let the Object Decide."
