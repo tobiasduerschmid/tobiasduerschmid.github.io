@@ -464,15 +464,15 @@ navigator (a navy double-breasted sea coat with brass buttons and gold cuff
 braid over a Breton shirt, a compass pin, and a spyglass prop); a costume's
 `sleeveTrim(upper, fore)` adds the stripes and the braid. Three Developers wear
 the UI Developer's apron, `coder`'s hoodie, and the Test Engineer's lab coat.
-Each character is the gender of the voice that sings it, measured on the
-take: one man sings the New Developer and the Scrum Master, a woman the
-Product Owner, and a mixed choir the Developers, drawn as two men and a woman
-(the Test Engineer). Each keeps one face all song, in every viewing: in the
-player a hero head built from fixed traits (`CAST` in the choreography, through
-`castHead`), and on export stages the drawn face for the gender, where a
-figure's `gender: 'woman'` gives it a woman's face with long hair. The New
-Developer sings solo, so the viewer's hero, who may be any gender, doesn't
-play the part.
+The New Developer, the main character, is the viewer's own SE Gym hero
+(`heroHead`). Every other character is the gender of the voice that sings it,
+measured on the take: a woman sings the Product Owner, a man the Scrum Master,
+and a mixed choir the Developers, drawn as two men and a woman (the Test
+Engineer). In the player each wears a random human hero's head restyled within
+the gender (`castLook` in the choreography, through `castHead`): drawn once per
+viewing and kept all song. On export stages each wears the drawn face for its
+gender, where a figure's `gender: 'woman'` gives it a woman's face with long
+hair.
 `js/song-video/scrum-scenes.js` (styles in `css/song-video-scrum-scenes.css`)
 draws the metaphors as slides: a header band with the role's emblem (a
 whistle, a compass, a hard hat), its name, and its metaphor; a scene; and a

@@ -18,9 +18,10 @@
  * as the lyrics move them, and the coach's and the navigator's emblems return
  * when they act. The quiz asks seven questions about a new team.
  *
- * The cast are the singers of opera-cast.js, each the gender of the voice
- * that sings the part (CAST): the New Developer, a young man in a blue
- * hoodie; the Scrum Master, the team coach, a man in a teal track jacket
+ * The cast are the singers of opera-cast.js. The New Developer, the main
+ * character, is the viewer's own hero in a blue hoodie; the others are each
+ * the gender of the voice that sings the part, with a face drawn at random
+ * once per viewing: the Scrum Master, the team coach, a man in a teal track jacket
  * with a whistle and a clipboard; the Product Owner, the value navigator, a
  * woman in a navy sea coat with brass buttons, a compass pin, and a
  * spyglass; and three Developers who cover design, code, and test, two men
@@ -90,21 +91,13 @@
     };
     const COSTUME = { newdev: 'hero', sm: 'coach', po: 'navigator', ui: 'ui', coder: 'coder', test: 'test' };
     // Each character's gender is that of the voice that sings it (take 5,
-    // measured on the vocal stem): one man sings the New Developer and the
-    // Scrum Master, a woman the Product Owner, and a mixed choir the
-    // Developers, here two men and a woman. Each wears one face all song, in
-    // every viewing: where the SE Gym renderer loads, a hero head with these
-    // traits on the default hero; elsewhere the drawn face for the gender.
-    // The New Developer sings solo, so the viewer's hero, who may be any
-    // gender, doesn't play the part.
-    const CAST = {
-      newdev: { gender: 'man', look: { skin: '#cf9e82', hairColor: '#3d2818', hairStyle: 'tousled-wispy-fringe', eyebrowStyle: 'straight', eyelashStyle: 'none', mouthStyle: 'smile', facialHair: 'none' } },
-      sm: { gender: 'man', look: { skin: '#754b39', hairColor: '#b7bdc8', hairStyle: 'crew-cut', headStyle: 'square', eyebrowStyle: 'full-straight', eyelashStyle: 'none', mouthStyle: 'warm-smile', facialHair: 'trimmed-beard' } },
-      po: { gender: 'woman', look: { skin: '#e8c8a8', hairColor: '#854a3a', hairStyle: 'long-layers', headStyle: 'soft-oval', eyebrowStyle: 'soft-arched', eyelashStyle: 'long-classic', mouthStyle: 'full-lips', facialHair: 'none' } },
-      ui: { gender: 'man', look: { skin: '#9b6042', hairColor: '#1a1a1a', hairStyle: 'tapered-coils', eyebrowStyle: 'thick', eyelashStyle: 'none', mouthStyle: 'grin', facialHair: 'stubble' } },
-      coder: { gender: 'man', look: { skin: '#f4d0c4', hairColor: '#d8b074', hairStyle: 'side-parted-short', eyebrowStyle: 'straight', eyelashStyle: 'none', mouthStyle: 'small-smile', facialHair: 'none' }, accessories: ['round-rim-glasses'] },
-      test: { gender: 'woman', look: { skin: '#512d22', hairColor: '#1f140c', hairStyle: 'box-braids', eyebrowStyle: 'soft-arched', eyelashStyle: 'balanced-fan', mouthStyle: 'soft-smile', facialHair: 'none' } },
-    };
+    // measured on the vocal stem): a woman sings the Product Owner, and the
+    // mixed choir of Developers is drawn as two men and a woman. The New
+    // Developer, the song's main character, is the viewer's own hero. Where
+    // the SE Gym renderer loads, every other singer wears a random human
+    // hero's head, restyled within the gender, one face all song; elsewhere
+    // (and on export stages) each wears the drawn face for its gender.
+    const GENDER = { newdev: 'man', sm: 'man', po: 'woman', ui: 'man', coder: 'man', test: 'woman' };
     const DEVS = ['ui', 'coder', 'test'];
     const EVERYONE = Object.keys(VOICE);
 
@@ -124,12 +117,32 @@
       }
     }
 
-    /** A cast member's fixed hero state: the default hero with their traits. */
-    const castLook = ({ look, accessories = [] }) => (avatar) => {
-      const state = JSON.parse(JSON.stringify(avatar.DEFAULTS));
-      Object.assign(state.appearance, look);
-      state.outfit.accessories = accessories;
-      state.outfit.accessory = accessories[0] || 'none';
+    /**
+     * A cast member's look: a random human hero, restyled within the gender.
+     * Women get the generator's hair and lashes that go without facial hair,
+     * and no beard; men get short, textured, or no hair, leaving out the
+     * styles the generator keeps for faces without facial hair (pixies,
+     * puffs, bobs) and Bantu knots, with no lashes and no earrings or head
+     * wraps.
+     */
+    const castLook = (gender) => (avatar) => {
+      const pick = (values) => values[Math.floor(Math.random() * values.length)];
+      const state = avatar.randomAvatar(null, 'human');
+      const { appearance, outfit } = state;
+      const { hairFamilies, facialHairCompatibility } = avatar.RANDOM_TRAIT_POLICY;
+      const { hairStylesWithoutFacialHair, eyelashStylesWithoutFacialHair } = facialHairCompatibility;
+      if (gender === 'woman') {
+        appearance.hairStyle = pick(hairStylesWithoutFacialHair.filter((style) => avatar.ENUMS.hairStyle.includes(style)));
+        appearance.eyelashStyle = pick(eyelashStylesWithoutFacialHair.filter((style) => avatar.ENUMS.eyelashStyle.includes(style)));
+        appearance.facialHair = 'none';
+      } else {
+        const { short, textured, bald } = hairFamilies;
+        const masculine = (style) => !hairStylesWithoutFacialHair.includes(style) && style !== 'bantu-knots';
+        appearance.hairStyle = pick([...short, ...textured, ...bald].filter(masculine));
+        appearance.eyelashStyle = 'none';
+        outfit.accessories = (outfit.accessories || []).filter((item) => !['hoop-earrings', 'headwrap', 'draped-scarf'].includes(item));
+        outfit.accessory = outfit.accessories[0] || 'none';
+      }
       return avatar.normalizeAvatar(state);
     };
 
@@ -810,7 +823,8 @@
     EVERYONE.forEach((who, seed) => {
       const p = plan[who];
       C.figure(content, {
-        role: COSTUME[who], gender: CAST[who].gender, hero: student?.castHead(castLook(CAST[who])),
+        role: COSTUME[who], gender: GENDER[who],
+        hero: who === 'newdev' ? student?.heroHead() : student?.castHead(castLook(GENDER[who])),
         stage: p.stage.sort(byTime), places: p.places.sort(byTime),
         moves: p.moves.sort(byTime), holds: p.holds.sort(byTime), words: wordsFor(VOICE[who]), seed,
       });
