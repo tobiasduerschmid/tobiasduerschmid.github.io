@@ -1,6 +1,6 @@
 /*
  * The western kit (js/song-video/western-kit.js) and the sheriff
- * (js/song-video/sheriff.js) of "Design It In". Text sits on its own
+ * (js/song-video/sheriff.js) of "Design It In Before They Break In". Text sits on its own
  * surface: wood planks with cream lettering, parchment with dark ink, slates
  * with the shared syntax colours, or dark chips; each pairing keeps at least
  * 4.5:1. Like stage.css this styles the 960×540 stage, which keeps its dusk
@@ -201,6 +201,8 @@
 
 .wk-poster-line + .wk-poster-line { margin-top: 4px; }
 .wk-poster--title .wk-poster-body { text-align: center; font-size: 20px; }
+/* A title poster breaks its title only where the title says (at a newline). */
+.wk-poster--title .wk-poster-title { white-space: pre-line; }
 
 .wk-stamp {
   position: absolute;

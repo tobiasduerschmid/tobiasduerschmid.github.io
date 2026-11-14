@@ -1,5 +1,5 @@
 /*
- * The principle scenes of "Design It In": one picture per security design
+ * The principle scenes of "Design It In Before They Break In": one picture per security design
  * principle, each the scene under its stamp (western-kit.js `stamp`), so a
  * principle is seen working, not only read:
  *

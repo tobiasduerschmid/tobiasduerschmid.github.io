@@ -1,5 +1,5 @@
 /*
- * The western kit for "Design It In", the security song: a frontier-town
+ * The western kit for "Design It In Before They Break In", the security song: a frontier-town
  * visual language whose pictures carry the concepts, drawn in front of the
  * "frontier" theme (frontier.js). The real notation always stands beside
  * its picture:

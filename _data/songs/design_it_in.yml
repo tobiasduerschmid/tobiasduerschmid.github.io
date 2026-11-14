@@ -1,4 +1,4 @@
-# Storyboard for "Design It In", the security song on the SE Book page
+# Storyboard for "Design It In Before They Break In", the security song on the SE Book page
 # SEBook/systems/security.md (embedded with _includes/song-video.html).
 #
 # This file is the single source of truth for the song's words and timing:
@@ -33,7 +33,7 @@
 # line. The take ends on the instrumental after "That's security, designed
 # in."
 
-title: "Design It In: a song about designing for security"   # the player's accessible name
+title: "Design It In Before They Break In: a song about designing for security"   # the player's accessible name
 credit: Lyrics written for this chapter; music and vocals generated with Suno.
 theme: frontier   # stage look: the frontier town at dusk of js/song-video/frontier.js
 extras:   # the song's own art and styles, loaded before its choreography
@@ -716,7 +716,7 @@ sections:
   - id: outro
     title: "Outro"
     delivery: spoken
-    narration: "The outro: a second, blank board headed Your project. The sheriff lifts the key from under the flowerpot and pockets it. Night falls over the town, and the title appears: Design It In. Then the masked outlaw tiptoes back for one more try, three little robot agents copying every step; when the sheriff glances over, they all freeze mid-step. The outlaw lifts the flowerpot, and where the key used to be waits a jar labelled Honeypot: a decoy that catches intruders. The outlaw's hand sticks in the jar, a tag reads Intruder logged, one attempt, the sheriff tips the hat, and the gang tiptoes off backwards."
+    narration: "The outro: a second, blank board headed Your project. The sheriff lifts the key from under the flowerpot and pockets it. Night falls over the town, and the title appears: Design It In Before They Break In. Then the masked outlaw tiptoes back for one more try, three little robot agents copying every step; when the sheriff glances over, they all freeze mid-step. The outlaw lifts the flowerpot, and where the key used to be waits a jar labelled Honeypot: a decoy that catches intruders. The outlaw's hand sticks in the jar, a tag reads Intruder logged, one attempt, the sheriff tips the hat, and the gang tiptoes off backwards."
     lines:
       - id: outro-1
         start: 335.34
@@ -735,4 +735,4 @@ sections:
         end: 346.58
         text: "That's security, designed in."
         marks: {"thats": 343.06, "security": 343.64, "designed": 345.62, "in": 346.2}
-        visual: "Night over the town. The title: “Design It In”. Then the masked outlaw tiptoes back in, three little robot agents copying each step, and they all freeze mid-step while the sheriff glances over. The outlaw lifts the flowerpot: under it waits a jar labelled “HONEYPOT”, and a label reads “Honeypot: a decoy that catches intruders”. The outlaw's hand sticks in the jar, a tag reads “Intruder logged: 1 attempt”, the sheriff tips the hat, and the gang tiptoes off backwards, the jar still on the outlaw's hand."
+        visual: "Night over the town. The title: “Design It In Before They Break In”. Then the masked outlaw tiptoes back in, three little robot agents copying each step, and they all freeze mid-step while the sheriff glances over. The outlaw lifts the flowerpot: under it waits a jar labelled “HONEYPOT”, and a label reads “Honeypot: a decoy that catches intruders”. The outlaw's hand sticks in the jar, a tag reads “Intruder logged: 1 attempt”, the sheriff tips the hat, and the gang tiptoes off backwards, the jar still on the outlaw's hand."

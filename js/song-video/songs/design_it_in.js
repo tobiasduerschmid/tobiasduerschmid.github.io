@@ -1,5 +1,5 @@
 /*
- * Choreography for "Design It In", the security song
+ * Choreography for "Design It In Before They Break In", the security song
  * (storyboard: _data/songs/design_it_in.yml).
  *
  * Every visual hits a sung word: `mark(lineId, word)` is that word's time in
@@ -92,7 +92,7 @@
       const s = kit.scene(content, 0.2, leave, { exit: 'fade' });
       // While the whistle plays: the title poster.
       const appAt = mark('intro-1', 'app') - 0.2;
-      W.poster(s, { x: 270, y: 110, w: 420, kicker: 'A song about designing for security', title: 'Design It In', lines: ['CS 35L · Security'], at: 1, until: appAt, className: 'wk-poster--title' });
+      W.poster(s, { x: 150, y: 96, w: 620, kicker: 'A song about designing for security', title: 'Design It In\nBefore They Break In', lines: ['CS 35L · Security'], at: 1, until: appAt, className: 'wk-poster--title' });
       sheriff(content, 868, 2, leave - 0.3, {
         moves: [[5.6, 'tip', { hold: 1 }], [mark('intro-2', 'break') + 0.2, 'look', { dir: -1, hold: 1.4 }], [mark('intro-4', 'design'), 'point', { to: [380, 210], hold: 1.6 }], [mark('intro-4', 'before'), 'nod']],
       });
@@ -234,7 +234,7 @@
         ],
       });
       W.label(a, 'Search: admin', { x: 630, y: 278, w: 130, at: mark('v2-5', 'secret'), icon: 'search' });
-      W.flowerpot(s, { x: 400, y: 262, w: 220, at: potAt, until: before('v2-7'), tipAt: mark('v2-5', 'found') - 0.3, takeAt: mark('v2-5', 'found') + 0.4, untipAt: mark('v2-5', 'found') + 1.1, openAt: mark('v2-6', 'obscurity') });
+      W.flowerpot(s, { x: 400, y: 250, w: 220, at: potAt, until: before('v2-7'), tipAt: mark('v2-5', 'found') - 0.3, takeAt: mark('v2-5', 'found') + 0.4, untipAt: mark('v2-5', 'found') + 1.1, openAt: mark('v2-6', 'obscurity') });
       // The outlaw, the attacker in question, poses beside the wanted poster,
       // reads the app's code with a magnifier, then lifts the flowerpot,
       // pockets the key, and slips in through the door as it swings open.
@@ -242,12 +242,14 @@
       outlaw(content, from + 0.3, mark('v2-6', 'lasts'), {
         route: [
           [from + 0.3, -70, FEET, 1], [mark('v2-1', 'attacking'), 404, FEET, 1], [mark('v2-5', 'secret') - 0.4, 404, FEET, 1],
-          [found - 0.9, 512, FEET, 1], [mark('v2-6', 'obscurity') - 0.2, 512, FEET, 1], [mark('v2-6', 'lasts'), 450, FEET, -1],
+          [found - 0.9, 490, FEET, 1], [found + 1.45, 490, FEET, 1], [mark('v2-6', 'obscurity') - 0.55, 506, FEET, -1], [mark('v2-6', 'obscurity') + 0.25, 506, FEET, -1], [mark('v2-6', 'lasts'), 452, FEET, -1],
         ],
         moves: [
           [mark('v2-1', 'attacking') + 0.2, 'look', { dir: 'viewer', hold: 1.2 }], [mark('v2-4', 'read') - 0.3, 'reach', { to: [438, 312], shape: 'grip', hold: 1.8 }],
-          [found - 0.7, 'reach', { to: [532, 347], hand: 'far', shape: 'grip', hold: 0.2 }], [found - 0.3, 'reach', { to: [565, 323], hand: 'far', shape: 'grip', hold: 1.2 }],
-          [found + 0.05, 'reach', { to: [560, 386], shape: 'pinch', hold: 0.3 }], [found + 1.1, 'reach', { to: [532, 347], hand: 'far', shape: 'grip', hold: 0.15 }], [mark('v2-6', 'security'), 'look', { dir: 'viewer', hold: 0.6 }],
+          [found - 0.7, 'reach', { to: [532, 335], hand: 'far', shape: 'grip', hold: 0.2 }], [found + 0.05, 'reach', { to: [565, 311], hand: 'far', shape: 'grip', hold: 1.25 }],
+          [found + 0.35, 'reach', { to: [556, 376], shape: 'pinch', hold: 0.3 }], [found + 1.5, 'reach', { to: [532, 335], hand: 'far', shape: 'grip', hold: 0.2 }],
+          // Then the stolen key opens the door.
+          [mark('v2-6', 'obscurity') - 0.45, 'reach', { to: [471, 322], shape: 'pinch', hold: 0.6 }], [mark('v2-6', 'security'), 'look', { dir: 'viewer', hold: 0.6 }],
         ],
         holds: [[mark('v2-4', 'assume'), 'near', 'magnifier'], [mark('v2-5', 'secret') - 0.5, 'near', null], [found + 0.4, 'near', 'key']],
       });
@@ -680,14 +682,14 @@
       const lift = go + 1.4, reveal = lift + 0.75, grab = reveal + 0.5, caught = grab + 0.4, leaveAt = caught + 1.9;
       const end = song.duration - 0.3;
       W.flowerpot(parent, { x: 280, y: 230, w: 280, at: at - 0.4, until: end, honey: true, tipAt: lift + 0.4, honeyTakeAt: caught, untipAt: caught + 0.1 });
-      const STOP = 440;
+      const STOP = 424;
       // The outlaw's feet: in from the left, a freeze, on to the porch, and
       // backwards out again with the jar on one hand.
       const route = (dx) => [[at, -80 - dx, FEET, 1], [glance, 150 - dx, FEET, 1], [go, 150 - dx, FEET, 1], [lift - 0.1, STOP - dx, FEET, 1], [leaveAt, STOP - dx, FEET, 1], [end, -150 - dx, FEET, 1]];
       outlaw(content, at, end, {
         route: route(0),
         moves: [
-          [glance, 'freeze', { hold: freeze }], [lift, 'reach', { to: [448, 338], hand: 'far', shape: 'grip', hold: 0.2 }], [lift + 0.4, 'reach', { to: [490, 308], hand: 'far', shape: 'grip', hold: caught - lift - 0.3 }],
+          [glance, 'freeze', { hold: freeze }], [lift, 'reach', { to: [448, 338], hand: 'far', shape: 'grip', hold: 0.2 }], [lift + 0.75, 'reach', { to: [490, 308], hand: 'far', shape: 'grip', hold: caught - lift - 0.65 }],
           [grab, 'reach', { to: [485, 372], shape: 'grip', hold: 0.3 }], [caught, 'shake', { hold: 1.6 }], [leaveAt - 0.2, 'look', { dir: 'viewer', hold: 1 }],
         ],
         holds: [[caught, 'near', 'honeyJar']],
@@ -709,7 +711,7 @@
       const titleAt = before('outro-3');
       W.planBoard(s, { x: 40, y: 70, w: 600, blank: true, small: true, heading: 'Your project', at: mark('outro-1', 'run'), until: keyAt });
       W.flowerpot(s, { x: 260, y: 200, at: keyAt, liftAt: mark('outro-2', 'flowerpot'), takeAt: mark('outro-2', 'keep'), until: titleAt });
-      W.poster(s, { x: 250, y: 46, w: 420, kicker: 'That’s security', title: 'Design It In', lines: ['designed in'], at: titleAt + 0.2, className: 'wk-poster--title' });
+      W.poster(s, { x: 170, y: 46, w: 620, kicker: 'That’s security', title: 'Design It In\nBefore They Break In', lines: ['designed in'], at: titleAt + 0.2, className: 'wk-poster--title' });
       // The honeypot. In the closing bars the outlaw tiptoes back for one more
       // try, a line of little AI agents copying every step, and they all
       // freeze mid-step whenever the sheriff glances over. Under the

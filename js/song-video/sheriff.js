@@ -1,5 +1,5 @@
 /*
- * The sheriff of "Design It In": the viewer's own SE Gym hero as the town
+ * The sheriff of "Design It In Before They Break In": the viewer's own SE Gym hero as the town
  * sheriff, a rigged figure in the manner of the information-hiding song's
  * Agent 00 (ih-kit.js). It stands at ease in a 160×300 box, its feet at the
  * bottom, lit from the upper left, in unisex clothes on a unisex build

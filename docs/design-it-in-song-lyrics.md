@@ -1,4 +1,4 @@
-# Design It In: a song about designing for security
+# Design It In Before They Break In: a song about designing for security
 
 Lyrics, Suno prompt, music-video storyboard, and a short class plan for a
 CS 35L song on Lecture 11, *Security & Authentication*, and the SEBook
@@ -587,7 +587,7 @@ drifting tumbleweed, the light shifting), so nothing pulls the eye from the cont
 | So, you built a web app. | Golden hour at the edge of a desert town; the camera rides up to the developer's ranch house. Through the window, the laptop shows a course-project-style social app: the lecture's post "UCLA students are by far the best students. Go Bruins!", a comment box, and a login form. |
 | Somebody out there might try to break in. | A faint amber cursor drifts down the dusty road toward the front door. |
 | You hired me to break in first. | The tester walks up the path and clips on his badge: "AUTHORIZED TESTER". |
-| Let's design security in, before they do. | He shows the developer his clipboard, the blank Security Plan form with its four sections. Title: "Design It In". |
+| Let's design security in, before they do. | He shows the developer his clipboard, the blank Security Plan form with its four sections. Title: "Design It In Before They Break In". |
 | Before you choose the locks, | A tray of padlocks on the porch table; he slides it aside. |
 | Ask what's in the box: | He opens a jewelry box labeled "your app". The form's Security Model section lights. |
 | What are you defending? | Inside the box: empty slots labeled "assets". |
@@ -752,7 +752,7 @@ answer appears as it is sung. Details are in "Quiz audit".
 | Design it in before they break in. | The whole form glows at once, a slow fade, not a flash. |
 | Now run those four questions on your own project. | Beside the completed form, a second, blank one appears, headed with the developer's project: four empty sections. |
 | And that key in the flowerpot? Keep it with you. | The tester lifts the key from the flowerpot and puts it in the developer's hand. |
-| That's security, designed in. | Dusk; the porch light comes on slowly. Title: "Design It In". |
+| That's security, designed in. | Dusk; the porch light comes on slowly. Title: "Design It In Before They Break In". |
 
 ## Quiz audit
 

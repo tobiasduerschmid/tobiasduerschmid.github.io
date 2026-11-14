@@ -1,5 +1,5 @@
 /*
- * The hands of the "Design It In" figures: the sheriff (sheriff.js) and the
+ * The hands of the "Design It In Before They Break In" figures: the sheriff (sheriff.js) and the
  * outlaw (outlaw.js). A hand is seen from the thumb's side and built from
  * its joints with SongFigure.finger (figure-geometry.js), so a pose blends
  * from one grip to another joint by joint. In a hand's own frame the wrist

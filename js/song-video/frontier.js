@@ -1,5 +1,5 @@
 /*
- * The "frontier" stage theme for "Design It In", the security song: a
+ * The "frontier" stage theme for "Design It In Before They Break In", the security song: a
  * frontier town at dusk behind the scenes. Storyboards select it with
  * `theme: frontier`; css/song-video-frontier.css holds its colours.
  *

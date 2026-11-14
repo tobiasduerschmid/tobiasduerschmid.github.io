@@ -543,7 +543,7 @@ goes over the worn head) in the intro, with a clipboard, and at the end,
 with a gold brick. The light stays a warm golden hour, and over the last
 twenty seconds night falls slowly: a deep blue sky, a moon, and stars.
 
-"Design It In", the security song, is embedded at the top of the Summary of
+"Design It In Before They Break In", the security song, is embedded at the top of the Summary of
 `SEBook/systems/security.md`, as a review of the whole chapter. It walks the
 lecture's four-question security plan (security model, threat model, attack
 surface, protection mechanisms), naming SQL injection and cross-site

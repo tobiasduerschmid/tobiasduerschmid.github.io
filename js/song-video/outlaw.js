@@ -1,5 +1,5 @@
 /*
- * The outlaw of "Design It In": the masked attacker who sneaks through the
+ * The outlaw of "Design It In Before They Break In": the masked attacker who sneaks through the
  * scenes (in the song, the authorized tester hired to break in first), and
  * the tiny AI-agent robot bandits that follow it in single file. Drawn
  * side-on, facing right (mirrored to face left), lit from the upper left,
@@ -215,6 +215,7 @@
   // ------------------------------------------------------------------
 
   const HANG = [-2.5, 12];   // where a hanging prop hangs from
+  const FIST = [-1, 6.4];    // the middle of a closed fist, where a held handle runs through
   const PROPS = {
     key({ front }) {
       const k = svg('g', { transform: 'translate(-2 9) rotate(-80)' }, front);
@@ -229,11 +230,14 @@
     // Held as a magnifying glass is: upright whatever the hand's turn (in the
     // plumb layer), the handle down through the fist and the lens above it,
     // tipped a little forward, so a raised hand holds it before the eye.
-    magnifier({ hang: behind }) {
-      const g = svg('g', { transform: `rotate(12 ${HANG[0]} ${HANG[1]})` }, behind);
-      svg('rect', { class: 'ol-wood', x: HANG[0] - 2.4, y: HANG[1] - 18, width: 4.8, height: 28, rx: 2.2 }, g);
-      svg('circle', { class: 'ol-lens', cx: HANG[0], cy: HANG[1] - 30, r: 10.6 }, g);
-      svg('path', { class: 'ol-lens-shine', d: `M${HANG[0] - 6.4} ${HANG[1] - 33} A7 7 0 0 1 ${HANG[0] - 1.4} ${HANG[1] - 37}` }, g);
+    magnifier({ upright }) {
+      // The handle runs down through the middle of the fist, its butt just
+      // below the little finger, and the lens stands above the thumb.
+      const [fx, fy] = FIST;
+      const g = svg('g', { transform: `rotate(10 ${fx} ${fy})` }, upright);
+      svg('rect', { class: 'ol-wood', x: fx - 2.4, y: fy - 16, width: 4.8, height: 26, rx: 2.2 }, g);
+      svg('circle', { class: 'ol-lens', cx: fx, cy: fy - 27, r: 10.6 }, g);
+      svg('path', { class: 'ol-lens-shine', d: `M${fx - 6.4} ${fy - 30} A7 7 0 0 1 ${fx - 1.4} ${fy - 34}` }, g);
     },
     scroll({ behind }, label) {
       svg('rect', { class: 'ol-paper', x: -22, y: 7, width: 88, height: 14, rx: 7 }, behind);
@@ -459,8 +463,11 @@
       // hand's turn about the grip, so they always hang straight down.
       a.hang = svg('g', { class: 'ol-hang' }, a.behind);
       a.hangFront = svg('g', { class: 'ol-hang' }, a.front);
+      // Props held upright in the fist (a magnifying glass) turn back about
+      // the middle of the fist, so the handle always runs through the hand.
+      a.upright = svg('g', { class: 'ol-upright' }, a.behind);
       const before = labels.length;
-      if (prop && PROPS[prop]) PROPS[prop]({ behind: a.behind, front: a.front, hang: a.hang, hangFront: a.hangFront }, label);
+      if (prop && PROPS[prop]) PROPS[prop]({ behind: a.behind, front: a.front, hang: a.hang, hangFront: a.hangFront, upright: a.upright }, label);
       for (const entry of labels.slice(before)) {
         entry.side = side;
         entry.hang = a.hang.contains(entry.node) || a.hangFront.contains(entry.node);
@@ -492,6 +499,7 @@
       const plumb = `rotate(${f2(-a.rot + swing)} ${pt(HANG)})`;
       a.hang?.setAttribute('transform', plumb);
       a.hangFront?.setAttribute('transform', plumb);
+      a.upright?.setAttribute('transform', `rotate(${f2(-a.rot)} ${pt(FIST)})`);
       a.drawn.shape(curls);
       return { elbow, wrist };
     }
