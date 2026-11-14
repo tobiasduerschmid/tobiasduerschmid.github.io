@@ -3,6 +3,9 @@ title: Scrum
 layout: sebook
 ---
 
+<link rel="stylesheet" href="/css/song-video.css">
+<link rel="stylesheet" href="/css/print-light.css">
+
 While many organizations claim to be "Agile", the ==vast majority — historically reported around 60–80% in the annual *State of Agile* surveys — implement the Scrum framework or a Scrum/Kanban hybrid==. 
 
 {% include narration.html topic="scrum" %}
@@ -57,6 +60,14 @@ SprintRetrospective --> SprintPlanning : next sprint
 @enduml'></div>
 
 The retrospective's arrow back to planning is the engine of empiricism: each cycle the team inspects both the *product* (in review) and the *process* (in retro), and adapts before the next sprint starts.
+
+# Song: Inspect and Adapt
+
+**Now sing it back.** *Inspect and Adapt* is a four-and-a-half-minute musical that pulls this chapter together. A New Developer joins the team behind Found It, an app that returns lost wallets, and asks who the boss is. The Scrum Master, the Product Owner, and the Developers each answer with what they are accountable for, and what they are not. Then the cast runs one Sprint, event by event, while the stories on its Scrum board move from the Product Backlog to the Sprint Backlog and, once they meet the Definition of Done, into the Increment. It ends with a seven-question pop quiz about a new team, sung as call and response: say the role or event, and why, before the cast sings the answer, or turn on the player's quiz pauses to stop before each answer. Captions are on by default.
+
+Before you press play, write one sentence: who is the boss of a Scrum Team? Keep it, and correct it afterwards.
+
+{% include song-video.html song=site.data.songs.inspect_and_adapt id="scrum-song" %}
 
 # Scaling Scrum with SAFe
 When a product is too massive for a single Scrum Team (typically 10 or fewer people, per the 2020 Scrum Guide), organizations often use the Scaled Agile Framework (SAFe). SAFe introduces the Agile Release Train (ART)—a "team of teams" that synchronizes their sprints. It operates on Program Increments (PI), typically lasting 8–12 weeks, which align multiple teams toward quarterly goals. While SAFe provides predictability for Fortune 500 companies, critics sometimes call it "Scrum-but-for-managers" because it can reduce individual team autonomy through heavy planning requirements.

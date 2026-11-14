@@ -474,6 +474,10 @@
 .oc-brass { fill: #d7a744; }
 .oc-lens { fill: #bfe7f4; opacity: 0.85; }
 .oc-lens-glint { fill: none; stroke: #ffffff; stroke-width: 1.2; stroke-linecap: round; }
+/* The Product Owner's spyglass: dark leather draw tubes between brass. */
+.oc-spyglass { fill: #3d2a1f; }
+.oc-spyglass-ring { fill: none; stroke: #d7a744; stroke-width: 1.2; }
+.oc-spyglass-shine { fill: none; stroke: #b98e62; stroke-width: 0.8; stroke-linecap: round; opacity: 0.8; }
 .oc-palette { fill: #d9a96b; }
 .oc-palette-hole { fill: #24344f; }
 .oc-dab--red { fill: #ef4b5b; }
@@ -534,3 +538,68 @@
 .oc-bed-quilt-check { fill: none; stroke: #a98cf0; stroke-width: 3; opacity: 0.7; }
 .oc-bed-quilt-fold { fill: #f4f1fb; }
 .oc-z { fill: #eef3fa; font: 900 18px var(--font-display); }
+
+/* The Scrum song's Scrum Master (`coach`), the team coach: a teal track
+   jacket with white and gold stripes, navy track trousers, white sneakers,
+   and a silver whistle on a yellow lanyard. */
+.oc-figure--coach {
+  --oc-cloth: #13808a;
+  --oc-cloth-light: #5cc1c8;
+  --oc-cloth-shade: #0b4e55;
+}
+.oc-figure--coach .oc-top-stop-0 { stop-color: #1b949e; }
+.oc-figure--coach .oc-top-stop-1 { stop-color: #13808a; }
+.oc-figure--coach .oc-top-stop-2 { stop-color: #0e646c; }
+.oc-figure--coach .oc-sleeve-stop-0 { stop-color: #198d97; }
+.oc-figure--coach .oc-sleeve-stop-1 { stop-color: #127a83; }
+.oc-figure--coach .oc-sleeve-stop-2 { stop-color: #0c5a61; }
+.oc-figure--coach .oc-trouser-stop-0 { stop-color: #33415e; }
+.oc-figure--coach .oc-trouser-stop-1 { stop-color: #2a3650; }
+.oc-figure--coach .oc-trouser-stop-2 { stop-color: #222c42; }
+.oc-figure--coach .oc-trouser-stop-3 { stop-color: #182032; }
+.oc-figure--coach .oc-shoe-stop-0 { stop-color: #ffffff; }
+.oc-figure--coach .oc-shoe-stop-1 { stop-color: #e8ebf0; }
+.oc-figure--coach .oc-shoe-stop-2 { stop-color: #b9bfc8; }
+.oc-figure--coach .oc-shoes { --oc-sole: #d9dde4; --oc-laces: #13808a; }
+.oc-figure--coach .oc-collar { fill: #0f6f78; }
+.oc-track-stripe { fill: none; stroke: #f5f7fa; stroke-width: 1.3; stroke-linecap: round; }
+.oc-track-stripe--gold { stroke: #f2c14e; }
+.oc-zip--light { stroke: #e6ebf0; stroke-dasharray: none; stroke-width: 0.8; }
+.oc-whistle-body { fill: #d9dee6; }
+.oc-whistle-ring { fill: none; stroke: #9aa3b0; stroke-width: 0.8; }
+.oc-whistle-hole { fill: #3b4352; }
+.oc-whistle-shine { fill: none; stroke: #ffffff; stroke-width: 0.6; stroke-linecap: round; opacity: 0.9; }
+
+/* The Scrum song's Product Owner (`navigator`), the value navigator: a navy
+   double-breasted sea coat with brass buttons and gold cuff braid over a
+   white Breton shirt with navy stripes, navy trousers, tan deck shoes, and
+   a gold compass pin. */
+.oc-figure--navigator {
+  --oc-cloth: #1f2f5c;
+  --oc-cloth-light: #5a6ea8;
+  --oc-cloth-shade: #111a38;
+  --oc-under: #f6f3ea;
+  --oc-under-shade: #b9b19e;
+  --oc-button: #1f2f5c;
+}
+.oc-figure--navigator .oc-top-stop-0 { stop-color: #2c3f74; }
+.oc-figure--navigator .oc-top-stop-1 { stop-color: #1f2f5c; }
+.oc-figure--navigator .oc-top-stop-2 { stop-color: #152249; }
+.oc-figure--navigator .oc-sleeve-stop-0 { stop-color: #2a3c70; }
+.oc-figure--navigator .oc-sleeve-stop-1 { stop-color: #1d2c57; }
+.oc-figure--navigator .oc-sleeve-stop-2 { stop-color: #131f44; }
+.oc-figure--navigator .oc-trouser-stop-0 { stop-color: #2f3a5a; }
+.oc-figure--navigator .oc-trouser-stop-1 { stop-color: #27314d; }
+.oc-figure--navigator .oc-trouser-stop-2 { stop-color: #1f2841; }
+.oc-figure--navigator .oc-trouser-stop-3 { stop-color: #171e33; }
+.oc-figure--navigator .oc-shoe-stop-0 { stop-color: #b8875a; }
+.oc-figure--navigator .oc-shoe-stop-1 { stop-color: #9a6c42; }
+.oc-figure--navigator .oc-shoe-stop-2 { stop-color: #6e4a2a; }
+.oc-figure--navigator .oc-shoes { --oc-sole: #f1ece2; --oc-laces: #6e4a2a; }
+.oc-breton { fill: none; stroke: #1f2f5c; stroke-width: 1.7; }
+.oc-brass-button { fill: #d7a744; }
+.oc-braid { fill: none; stroke: #e4b84f; stroke-width: 1.3; stroke-linecap: round; }
+.oc-compass-ring { fill: #e4b84f; }
+.oc-compass-face { fill: #1d2c55; }
+.oc-compass-north { fill: #e8553f; }
+.oc-compass-south { fill: #f3f5f8; }

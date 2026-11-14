@@ -20,9 +20,16 @@
  *   Other songs reuse the cast; `coder` dresses a singer as a developer in
  *   the same hoodie in green, with a code tag on the chest, `maintainer`
  *   as a lead developer in plum, with a git branch, and `engineer` as a
- *   software engineer in rust, with curly braces.
+ *   software engineer in rust, with curly braces. The Scrum song adds
+ *   `coach`, its Scrum Master, the team coach, in a teal track jacket with
+ *   striped sides and sleeves and a whistle on a lanyard, and `navigator`,
+ *   its Product Owner, the value navigator, in a navy double-breasted sea
+ *   coat with brass buttons and gold cuff braid over a Breton shirt, with a
+ *   gold compass pin. A costume's `sleeveTrim(upper, fore)` adds stripes or
+ *   braid to its sleeves.
  *   Export stages never load the hero renderer, so there each keeps a
- *   drawn face.
+ *   drawn face: the costume's, or a woman's (long hair, finer brows) for a
+ *   figure whose `gender` is 'woman', a role a woman sings.
  *
  * Every figure lives for the whole song: `stage` lists when it is on stage,
  * `places` where it stands (it walks there), `moves` what it does on which
@@ -508,6 +515,34 @@
     cheeks: [[-28, -46], [28, -46]],
   };
 
+  // A woman's face for export stages, for a role a woman sings: long hair
+  // with a side-swept fringe that falls past the ears to the shoulders
+  // (backHair: two lengths either side of the neck, over the collar),
+  // finer arched brows, lashes flicked at the outer corners, a softer jaw.
+  const WOMAN_HEAD = {
+    width: 34,
+    face: 'M-46 -74 C-47 -104 -26.6 -125 0 -125 C26.6 -125 47 -104 46 -74 C45.4 -54 40.6 -37 32.4 -23 C24.4 -10 13.4 0 0 0 C-13.4 0 -24.4 -10 -32.4 -23 C-40.6 -37 -45.4 -54 -46 -74 Z',
+    jawShade: 'M46 -74 C45.4 -54 40.6 -37 32.4 -23 C24.4 -10 13.4 0 0 0 C11 -4 20.4 -13 27.8 -26 C35.4 -39 39.6 -55 40.6 -74 C41.6 -88 41.6 -98 39.6 -106 C44.2 -98 46.6 -86 46 -74 Z',
+    ear: 'M-45 -78 C-55 -85 -60 -72 -58.4 -62 C-56.6 -52 -51 -47 -44.4 -51 Z',
+    earInner: 'M-48 -74 C-53.6 -75 -55.6 -68 -53.8 -61.4 C-52.8 -57.6 -50 -55.6 -47.2 -56.4',
+    backHair: 'M0 -146 C-30 -146 -56 -128 -60 -96 C-63 -70 -62 -40 -60 -12 C-58.6 10 -61 30 -64 46 C-60 54 -52 58 -44 56 C-40 44 -36 28 -32 8 C-30 -2 -28 -10 -26 -14 L26 -14 C28 -10 30 -2 32 8 C36 28 40 44 44 56 C52 58 60 54 64 46 C61 30 58.6 10 60 -12 C62 -40 63 -70 60 -96 C56 -128 30 -146 0 -146 Z',
+    backHairShade: 'M44 56 C52 58 60 54 64 46 C61 30 58.6 10 60 -12 C57 6 55 26 54 40 C52 48 48 53 44 56 Z',
+    backHairStrands: 'M-54 -40 C-52 -10 -54 20 -57 44 M-46 -20 C-42 4 -42 26 -45 48 M54 -40 C52 -10 54 20 57 44 M46 -20 C42 4 42 26 45 48',
+    hair: 'M-54 -36 C-62 -70 -60 -112 -36 -134 C-18 -148 18 -150 38 -138 C57 -126 63 -98 61 -70 C60 -56 57 -44 53 -36 C49 -52 47 -68 46 -82 C43 -94 36 -100 26 -102 C10 -104 -4 -110 -13 -121 C-20 -112 -32 -104 -40 -94 C-45 -86 -47 -72 -47 -58 C-48 -50 -50 -42 -54 -36 Z',
+    hairShade: 'M61 -70 C60 -56 57 -44 53 -36 C49 -52 47 -68 46 -82 C50 -92 55 -106 55 -120 C60 -108 62 -88 61 -70 Z',
+    hairStrands: 'M-12 -128 C2 -132 22 -128 40 -116 M-8 -120 C8 -120 26 -114 44 -100 M-20 -130 C-32 -128 -44 -116 -52 -96 M-26 -122 C-36 -116 -46 -102 -52 -82 M56 -72 C56 -60 55 -50 53 -42 M-56 -70 C-57 -58 -56 -48 -54 -42',
+    hairSheen: 'M-40 -124 C-30 -136 -14 -142 4 -143 M-30 -118 C-22 -128 -8 -134 8 -135',
+    eyes: [-20, 20],
+    eyeY: -70,
+    lashes: true,
+    brows: ['M-31 -86 C-25 -93 -15 -93.4 -8.6 -89 C-10 -88 -16.4 -89.2 -29.8 -84 Z', 'M31 -86 C25 -93 15 -93.4 8.6 -89 C10 -88 16.4 -89.2 29.8 -84 Z'],
+    nose: 'M-0.8 -67 C-1.4 -60 -3.4 -51 -5.2 -45.6 C-3.8 -41.4 -0.4 -40.8 1.4 -41.8 C3.6 -40.8 6.4 -41.6 6.6 -45 C4.8 -50 2.4 -58 1.6 -67',
+    noseLight: 'M0 -63 C-0.4 -57 -1.2 -52 -2.2 -48',
+    nostrils: 'M-3.2 -43 C-2.6 -42 -1.2 -42 -0.6 -42.6 M3 -42.6 C3.6 -42 5 -42 5.6 -43',
+    mouth: { y: -23, halfWidth: 10.4 },
+    cheeks: [[-27, -46], [27, -46]],
+  };
+
   /**
    * A mouth at openness `open` (0 shut … 1 wide), `smile` (−1 … 1) and
    * `round` (0 … 1, an "O"), in head units: its lips, the dark inside, the
@@ -561,6 +596,12 @@
     const scale = spec.width / 100;
     const g = svg('g', { class: 'oc-face', transform: `translate(${HEAD.x} ${HEAD.chin}) scale(${scale.toFixed(4)})` }, parent);
     const ink = (d, cls) => inked(g, d, cls, 'oc-ink oc-ink--face');
+    // Long hair behind the ears and face; it falls over the collar.
+    if (spec.backHair) {
+      ink(spec.backHair, 'oc-hair');
+      svg('path', { class: 'oc-hair-shade', d: spec.backHairShade }, g);
+      svg('path', { class: 'oc-hair-strand', d: spec.backHairStrands }, g);
+    }
     for (const side of [1, -1]) {
       const ear = svg('g', { transform: side < 0 ? 'scale(-1 1)' : '' }, g);
       inked(ear, spec.ear, 'oc-face-skin', 'oc-ink oc-ink--face', paint.face);
@@ -569,7 +610,6 @@
     inked(g, spec.face, 'oc-face-skin', 'oc-ink oc-ink--face', paint.face);
     svg('path', { class: 'oc-face-shade', d: spec.jawShade }, g);
     const cheeks = spec.cheeks.map(([cx, cy]) => svg('ellipse', { class: 'oc-blush', cx, cy, rx: 9, ry: 5.4 }, g));
-    if (spec.backHair) parent.insertBefore(svg('path', { class: 'oc-hair', d: spec.backHair }), parent.firstChild);
     for (const d of spec.sideburns || []) svg('path', { class: 'oc-hair', d }, g);
     ink(spec.hair, 'oc-hair');
     svg('path', { class: 'oc-hair-shade', d: spec.hairShade }, g);
@@ -594,6 +634,11 @@
       svg('circle', { class: 'oc-catchlight oc-catchlight--soft', cx: ex - 1.6, cy: spec.eyeY + 2.2, r: 0.7 }, look);
       const lid = svg('path', { class: 'oc-lid', d: '' }, open);
       svg('path', { class: 'oc-lash-line', d: `M${ex - 12} ${spec.eyeY + 0.4} C${ex - 7.6} ${spec.eyeY - 7.2} ${ex + 7.6} ${spec.eyeY - 7.2} ${ex + 12} ${spec.eyeY + 0.4}` }, open);
+      if (spec.lashes) {
+        const out = Math.sign(ex);
+        const y = spec.eyeY;
+        svg('path', { class: 'oc-lash-line', d: `M${ex + out * 10.6} ${y - 1.4} Q${ex + out * 14} ${y - 2.4} ${ex + out * 15.6} ${y - 5.8} M${ex + out * 8} ${y - 3.6} Q${ex + out * 11} ${y - 5.8} ${ex + out * 12} ${y - 8.2}` }, open);
+      }
       const shut = svg('path', { class: 'oc-eye-shut', d: `M${ex - 11} ${spec.eyeY - 1} C${ex - 6} ${spec.eyeY - 7} ${ex + 6} ${spec.eyeY - 7} ${ex + 11} ${spec.eyeY - 1}`, opacity: 0 }, eye);
       return { ex, open, look, lid, shut, white };
     });
@@ -679,6 +724,10 @@
   // kinds. Colours live in the stylesheet, under the costume's class.
   // ------------------------------------------------------------------
 
+  // A zip-front jacket, longer than the hoodie, and its stand collar: the
+  // Security Engineer's field jacket and the Scrum song's track jacket.
+  const ZIP_JACKET = 'M73.6 78.6 C70 79.6 62 82.4 56.6 85.2 C52.6 87.4 51.4 92.6 53.4 98 C55.4 103.6 57.6 108.4 58.4 114 C59 124 58.6 134 58.8 142 C58.9 150 58.4 157 57.8 163.4 C66 165.2 94 165.2 102.2 163.4 C101.6 157 101.1 150 101.2 142 C101.4 134 101 124 101.6 114 C102.4 108.4 104.6 103.6 106.6 98 C108.6 92.6 107.4 87.4 103.4 85.2 C98 82.4 90 79.6 86.4 78.6 C84 80.2 76 80.2 73.6 78.6 Z';
+  const STAND_COLLAR = 'M72 70.4 C71.6 74.6 72.4 78.6 74.2 81.4 C77.4 83.4 82.6 83.4 85.8 81.4 C87.6 78.6 88.4 74.6 88 70.4 C84.4 72 75.6 72 72 70.4 Z';
   const RIB_HEM = 'M57.8 151.6 C66 153.4 94 153.4 102.2 151.6 L102.4 157.4 C94 159.2 66 159.2 57.6 157.4 Z';
   /**
    * A hoodie, its hood behind the neck, drawstrings, a kangaroo pocket, and
@@ -911,8 +960,7 @@
     security: {
       sleeve: 'long', head: TEAMMATE_HEAD, shoes: 'boot', cargo: true,
       top(layer, paint) {
-        const jacket = 'M73.6 78.6 C70 79.6 62 82.4 56.6 85.2 C52.6 87.4 51.4 92.6 53.4 98 C55.4 103.6 57.6 108.4 58.4 114 C59 124 58.6 134 58.8 142 C58.9 150 58.4 157 57.8 163.4 C66 165.2 94 165.2 102.2 163.4 C101.6 157 101.1 150 101.2 142 C101.4 134 101 124 101.6 114 C102.4 108.4 104.6 103.6 106.6 98 C108.6 92.6 107.4 87.4 103.4 85.2 C98 82.4 90 79.6 86.4 78.6 C84 80.2 76 80.2 73.6 78.6 Z';
-        inked(layer, jacket, 'oc-top', 'oc-ink oc-ink--cool', paint.top);
+        inked(layer, ZIP_JACKET, 'oc-top', 'oc-ink oc-ink--cool', paint.top);
         drawParts(layer, [
           ['oc-top-shade', TOP_SHADE],
           ['oc-top-light', TOP_LIGHT],
@@ -929,7 +977,7 @@
         svg('path', { class: 'oc-shield-star', d: 'M0 -2.2 L0.7 -0.4 L2.4 -0.4 L1 0.7 L1.5 2.4 L0 1.4 L-1.5 2.4 L-1 0.7 L-2.4 -0.4 L-0.7 -0.4 Z' }, badge);
       },
       collar(layer) {
-        inked(layer, 'M72 70.4 C71.6 74.6 72.4 78.6 74.2 81.4 C77.4 83.4 82.6 83.4 85.8 81.4 C87.6 78.6 88.4 74.6 88 70.4 C84.4 72 75.6 72 72 70.4 Z', 'oc-collar', 'oc-ink oc-ink--cool');
+        inked(layer, STAND_COLLAR, 'oc-collar', 'oc-ink oc-ink--cool');
         svg('path', { class: 'oc-zip oc-zip--dark', d: 'M80 72 V83' }, layer);
       },
       neckwear(layer) {
@@ -938,8 +986,99 @@
         svg('path', { class: 'oc-earwire-coil', d: 'M86.8 73 l1.6 -0.6 M87.6 71.2 l1.6 -0.6 M88.4 69.4 l1.6 -0.6 M89.2 67.6 l1.6 -0.6 M90 65.8 l1.6 -0.6 M90.8 64 l1.6 -0.6' }, layer);
       },
     },
+    // The Scrum song's Scrum Master, the team coach: a zip-up track jacket
+    // in teal with a stand collar, white and gold stripes down its sides and
+    // sleeves, and a whistle on a lanyard; track trousers and sneakers.
+    coach: {
+      sleeve: 'long', head: TEAMMATE_HEAD, shoes: 'sneaker',
+      top(layer, paint) {
+        inked(layer, ZIP_JACKET, 'oc-top', 'oc-ink oc-ink--cool', paint.top);
+        drawParts(layer, [
+          ['oc-top-shade', TOP_SHADE],
+          ['oc-top-light', TOP_LIGHT],
+          ['oc-track-stripe', 'M60.6 113 C61 124 60.6 134 60.8 142 C60.9 150 60.4 157 59.9 163'],
+          ['oc-track-stripe oc-track-stripe--gold', 'M63 112 C63.4 124 63 134 63.2 142 C63.3 150 62.8 157 62.4 163.4'],
+          ['oc-track-stripe', 'M99.4 113 C99 124 99.4 134 99.2 142 C99.1 150 99.6 157 100.1 163'],
+          ['oc-track-stripe oc-track-stripe--gold', 'M97 112 C96.6 124 97 134 96.8 142 C96.7 150 97.2 157 97.6 163.4'],
+          ['oc-zip oc-zip--light', 'M80 82 V164'],
+          ['oc-welt', 'M66.4 134 L70.4 147 M93.6 134 L89.6 147'],
+          ['oc-fold', 'M62 156 C70 158.4 90 158.4 98 156'],
+        ]);
+      },
+      collar(layer) {
+        inked(layer, STAND_COLLAR, 'oc-collar', 'oc-ink oc-ink--cool');
+        svg('path', { class: 'oc-track-stripe', d: 'M72.4 73.4 C76 74.8 84 74.8 87.6 73.4' }, layer);
+        svg('path', { class: 'oc-zip oc-zip--light', d: 'M80 72 V83' }, layer);
+      },
+      neckwear(layer) {
+        // The whistle on a yellow lanyard, its mouthpiece to the side.
+        svg('path', { class: 'oc-lanyard', d: 'M75.6 80 C76.4 94 78.4 106 79.4 112.6 M84.4 80 C83.6 94 81.6 106 80.6 112.6' }, layer);
+        const whistle = svg('g', { class: 'oc-whistle', transform: 'translate(80 117.6)' }, layer);
+        svg('circle', { class: 'oc-whistle-ring', cx: 0, cy: -4.4, r: 1.2 }, whistle);
+        inked(whistle, 'M-7.4 -2.6 H-0.4 V0.8 H-7.4 Z', 'oc-whistle-body', 'oc-ink oc-ink--cool');
+        inked(whistle, 'M-3 0.8 A3.6 3.6 0 1 0 4.2 0.8 A3.6 3.6 0 1 0 -3 0.8 Z', 'oc-whistle-body', 'oc-ink oc-ink--cool');
+        svg('circle', { class: 'oc-whistle-hole', cx: 0.6, cy: 0.8, r: 1.1 }, whistle);
+        svg('path', { class: 'oc-whistle-shine', d: 'M-6.4 -1.6 H-2 M-1.4 -1.6 C0 -2.4 1.6 -2.4 2.8 -1.6' }, whistle);
+      },
+      sleeveTrim(upper, fore) {
+        // The two stripes run down each sleeve's outer side to the cuff.
+        svg('path', { class: 'oc-track-stripe', d: 'M110.6 99.6 C111.8 108 112.8 118 113.4 128 C113.6 133 113.6 137 113.4 140' }, upper);
+        svg('path', { class: 'oc-track-stripe oc-track-stripe--gold', d: 'M108.2 101.2 C109.6 109 110.6 119 111.2 128 C111.4 133 111.4 137 111.2 140' }, upper);
+        svg('path', { class: 'oc-track-stripe', d: 'M113.6 140.4 C113.8 147 113.4 155 112.8 162 C112.5 165 112.2 167 112 168' }, fore);
+        svg('path', { class: 'oc-track-stripe oc-track-stripe--gold', d: 'M111.2 140.6 C111.4 147 111 155 110.4 162 C110.1 165 109.8 167 109.6 168' }, fore);
+      },
+    },
   };
+  /**
+   * The open neck of a blazer: the band between its two lapels' inner
+   * edges, as [y, half-width] pairs from the collar down to where the
+   * fronts meet, for a print on what shows underneath.
+   */
+  function blazerNeck() {
+    const [p0, p1, p2, p3] = [[80.8, 128.4], [82.6, 116], [85.2, 100], [86.4, 78.6]];
+    const at = (t) => [0, 1].map((k) => (1 - t) ** 3 * p0[k] + 3 * (1 - t) ** 2 * t * p1[k] + 3 * (1 - t) * t ** 2 * p2[k] + t ** 3 * p3[k]);
+    const edge = Array.from({ length: 41 }, (_, i) => at(i / 40)).sort((a, b) => a[1] - b[1]);
+    return (y) => {
+      const i = edge.findIndex((point) => point[1] >= y);
+      if (i <= 0) return 0;
+      const [a, b] = [edge[i - 1], edge[i]];
+      return a[0] + (b[0] - a[0]) * ((y - a[1]) / (b[1] - a[1])) - 80;
+    };
+  }
 
+  // The Scrum song's Product Owner, the value navigator: a navy
+  // double-breasted sea coat (the Product Manager's blazer, closed with two
+  // rows of brass buttons, gold braid at its cuffs) over a striped Breton
+  // shirt, and a gold compass pin on the lapel; the spyglass is a prop.
+  const neckWidth = blazerNeck();
+  COSTUMES.navigator = {
+    ...COSTUMES.pm,
+    shoes: 'sneaker',
+    top(layer, paint) {
+      COSTUMES.pm.top(layer, paint);
+      // The Breton shirt's stripes, where it shows between the lapels.
+      const stripes = [];
+      for (let y = 84; y < 127; y += 4.4) {
+        const half = neckWidth(y) - 0.6;
+        if (half > 1) stripes.push(`M${(80 - half).toFixed(2)} ${y.toFixed(1)} H${(80 + half).toFixed(2)}`);
+      }
+      svg('path', { class: 'oc-breton', d: stripes.join(' ') }, layer);
+      for (const y of [132, 141.6, 151.2]) {
+        for (const x of [74.6, 85.4]) inked(layer, `M${x - 1.7} ${y} A1.7 1.7 0 1 0 ${x + 1.7} ${y} A1.7 1.7 0 1 0 ${x - 1.7} ${y} Z`, 'oc-brass-button', 'oc-ink oc-ink--cool');
+      }
+    },
+    neckwear(layer) {
+      const pin = svg('g', { class: 'oc-compass-pin', transform: 'translate(91.8 98.6)' }, layer);
+      inked(pin, 'M0 -3 A3 3 0 1 1 -0.01 -3 Z', 'oc-compass-ring', 'oc-ink oc-ink--cool');
+      svg('circle', { class: 'oc-compass-face', cx: 0, cy: 0, r: 2 }, pin);
+      svg('path', { class: 'oc-compass-north', d: 'M0 -1.9 L0.7 0 H-0.7 Z' }, pin);
+      svg('path', { class: 'oc-compass-south', d: 'M0 1.9 L0.7 0 H-0.7 Z' }, pin);
+    },
+    sleeveTrim(upper, fore) {
+      // Two rings of gold braid above each cuff.
+      svg('path', { class: 'oc-braid', d: 'M104.5 159.8 C108 161 112.2 161 115.3 159.6 M104.9 163 C108.4 164.2 112.4 164.2 115.1 162.8' }, fore);
+    },
+  };
   // ------------------------------------------------------------------
   // The figure
   // ------------------------------------------------------------------
@@ -958,8 +1097,9 @@
    * pose(p, time, open) places every joint from a REST-shaped pose, sets
    * the face, and opens the mouth; wear(heroHead) swaps the drawn face for
    * a hero's; hold(side, prop) puts a prop (PROPS) in a hand or empties it.
+   * A 'woman' wears WOMAN_HEAD as her drawn face, anyone else the costume's.
    */
-  function buildFigure(fig, sway, costumeName) {
+  function buildFigure(fig, sway, costumeName, gender) {
     const costume = COSTUMES[costumeName];
     const defs = svg('defs', {}, fig);
     const id = (name) => `oc-${name}-${++uid}`;
@@ -1015,7 +1155,7 @@
     if (costume.neckwear) costume.neckwear(svg('g', {}, trunk));
     const headGroup = svg('g', {}, trunk);
     const drawnFace = svg('g', { 'data-testid': 'oc-drawn-face' }, headGroup);
-    const setFace = drawnHead(drawnFace, costume.head, paint);
+    const setFace = drawnHead(drawnFace, gender === 'woman' ? WOMAN_HEAD : costume.head, paint);
     const wornOver = svg('g', {}, headGroup);
     const sleepMask = drawSleepMask(svg('g', { class: 'oc-sleep-mask', 'data-testid': 'oc-sleep-mask' }, headGroup));
     const arms = svg('g', {}, trunk);
@@ -1047,6 +1187,7 @@
       const heldBehind = svg('g', {}, wrist);
       const hand = svg('g', { class: 'oc-hand', 'data-testid': 'oc-hand', transform: `translate(${WRIST[0]} ${WRIST[1]})` }, wrist);
       if (costume.sleeve === 'long') inked(fore, CUFF, 'oc-cuff', 'oc-ink oc-ink--cool');
+      if (costume.sleeveTrim) costume.sleeveTrim(upper, fore);
       if (costume.sleeve === 'pushed') {
         inked(fore, PUSHED, 'oc-sleeve', 'oc-ink oc-ink--cool', paint.sleeve);
         svg('path', { class: 'oc-sleeve-fold', d: PUSHED_FOLDS }, fore);
@@ -1248,6 +1389,17 @@
       svg('circle', { class: 'oc-brass', cx: 24.4, cy: 0, r: 9 }, g);
       svg('circle', { class: 'oc-lens', cx: 24.4, cy: 0, r: 7.2 }, g);
       svg('path', { class: 'oc-lens-glint', d: 'M19.6 -3 C20.6 -5 22.4 -6.2 24.4 -6.4' }, g);
+      return g;
+    },
+    // A navigator's brass spyglass held by its eyepiece: three leather-bound
+    // draw tubes, each wider than the last, and a brass hood at the lens.
+    spyglass(g) {
+      inked(g, 'M-6 -2 H6 V2 H-6 Z', 'oc-brass', 'oc-ink oc-ink--cool');
+      inked(g, 'M6 -2.8 H17 V2.8 H6 Z', 'oc-spyglass', 'oc-ink oc-ink--cool');
+      inked(g, 'M17 -3.8 H31 V3.8 H17 Z', 'oc-spyglass', 'oc-ink oc-ink--cool');
+      inked(g, 'M31 -4.8 H35 V4.8 H31 Z', 'oc-brass', 'oc-ink oc-ink--cool');
+      svg('path', { class: 'oc-spyglass-ring', d: 'M6 -2.8 V2.8 M17 -3.8 V3.8' }, g);
+      svg('path', { class: 'oc-spyglass-shine', d: 'M8 -1.6 H15.4 M19 -2.4 H29.4' }, g);
       return g;
     },
     // A painter's palette held by its thumb hole, with dabs of colour.
@@ -1626,7 +1778,10 @@
   /**
    * A cast member for the whole song:
    *   role      'tenor', 'pm', 'build', 'test', 'ui', 'backend', 'security', 'hero'
-   *   hero      a promise of SongStudentAvatar's heroHead (teammates); it
+   *   gender    'woman' or 'man' (the default), the gender of the voice
+   *             that sings the role: the drawn face a woman wears is
+   *             WOMAN_HEAD; anyone else wears the costume's
+   *   hero      a promise of SongStudentAvatar's heroHead or castHead; it
    *             resolves to null on export stages, and the drawn face stays
    *   stage     [[from, to, { enter, exit }]]: when it is on stage;
    *             'left' / 'right' glide in from (or out to) that wing,
@@ -1642,7 +1797,7 @@
    *             (or its stage exit, when the bed glides off with it)
    * Returns the wrapper and where() (its place at a time).
    */
-  function figure(parent, { role, hero, stage = [], places, moves = [], holds = [], words = [], beds = [], seed = 0 }) {
+  function figure(parent, { role, gender = 'man', hero, stage = [], places, moves = [], holds = [], words = [], beds = [], seed = 0 }) {
     const wrap = el('div', `oc-figure oc-figure--${role} is-staged`, parent);
     wrap.dataset.testid = `oc-${role}`;
     const fig = svg('svg', { class: 'oc-art', viewBox: '0 0 160 300', width: 160, height: 300, 'aria-hidden': 'true' }, wrap);
@@ -1653,7 +1808,7 @@
     const hopper = svg('g', {}, travel);
     const recline = svg('g', {}, hopper);
     const sway = svg('g', {}, recline);
-    const body = buildFigure(fig, sway, role);
+    const body = buildFigure(fig, sway, role, gender);
     const bedFront = beds.length ? svg('g', { class: 'oc-bed oc-bed--front' }, travel) : null;
     const zs = bedFront ? drawBedFront(bedFront) : [];
 

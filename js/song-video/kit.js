@@ -121,6 +121,16 @@
     cash: [['rect', { x: 2.5, y: 6.5, width: 19, height: 11, rx: 1.5 }], ['circle', { cx: 12, cy: 12, r: 2.6 }], ['path', { d: 'M6 9.5v5M18 9.5v5' }]],
     percent: [['path', { d: 'M18.5 5.5l-13 13' }], ['circle', { cx: 7.5, cy: 7.5, r: 2.2 }], ['circle', { cx: 16.5, cy: 16.5, r: 2.2 }]],
     truck: [['path', { d: 'M2.5 6h11.5v10H2.5zM14 9.5h3.6l3.4 3.6V16H14' }], ['circle', { cx: 6.5, cy: 17.5, r: 1.9 }], ['circle', { cx: 17, cy: 17.5, r: 1.9 }]],
+    // Role emblems of the Scrum song: the coach's whistle, the navigator's
+    // compass, the builders' hard hat; and Scrum's goal, flag, and guide.
+    whistle: [['circle', { cx: 14.6, cy: 14, r: 5.6 }], ['path', { d: 'M10.6 9.6H2.8V13.2H9.2' }], ['circle', { cx: 14.6, cy: 14, r: 1.5 }], ['circle', { cx: 19.6, cy: 6.4, r: 1.6 }], ['path', { d: 'M18.7 7.7l-1.3 1.6' }]],
+    compass: [['circle', { cx: 12, cy: 12, r: 9 }], ['path', { d: 'M12 6.2l2.3 5.8-2.3 5.8-2.3-5.8z' }], ['path', { d: 'M12 1.8v1.6M12 20.6v1.6M1.8 12h1.6M20.6 12h1.6' }]],
+    hardhat: [['path', { d: 'M4.6 16a7.4 7.4 0 0 1 14.8 0' }], ['path', { d: 'M2.6 16h18.8v2.6H2.6z' }], ['path', { d: 'M10.2 8.9l.8 4.1M13.8 8.9l-.8 4.1' }]],
+    target: [['circle', { cx: 12, cy: 12, r: 9 }], ['circle', { cx: 12, cy: 12, r: 5.4 }], ['circle', { cx: 12, cy: 12, r: 1.8 }]],
+    flag: [['path', { d: 'M5 21V3.6' }], ['path', { d: 'M5 4.4h11.6l-2.2 3.6 2.2 3.6H5' }]],
+    book: [['path', { d: 'M12 6.6C10 5 7.1 4.5 3.4 5v13.2c3.7-.5 6.6 0 8.6 1.5 2-1.5 4.9-2 8.6-1.5V5C16.9 4.5 14 5 12 6.6z' }], ['path', { d: 'M12 6.6v13.1' }]],
+    ship: [['path', { d: 'M3 16.4h18l-2.7 4H5.7z' }], ['path', { d: 'M12 2.8v13.6' }], ['path', { d: 'M12 4.2l6.4 10H12zM10.8 7.2l-4.8 7h4.8z' }]],
+    code: [['path', { d: 'M8.4 7.2L3.6 12l4.8 4.8M15.6 7.2l4.8 4.8-4.8 4.8M13.6 4.8l-3.2 14.4' }]],
   };
 
   function icon(name, className) {

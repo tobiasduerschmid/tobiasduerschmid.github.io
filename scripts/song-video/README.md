@@ -42,7 +42,9 @@ is not enough: WebKit keeps allocating style data for paused animations posed
 inside a once-rendered `display: none` subtree, which grew Safari's memory by
 megabytes per frame until an iPhone reloaded the page. Native animation
 timing restores pictures before frame callbacks measure them, including
-backward seeks; nested words and cards retain their layout space.
+backward seeks; nested words and cards retain their layout space. A
+choreography that adds stage layers of its own returns them, `return { layers:
+[…] }`, and their pictures are culled the same way.
 `SongScene.culledPictures(stage)` lists the pictures currently out of the
 document, for tests that inspect a song's whole artwork.
 Lyrics-only mode avoids building the scene and disposes existing artwork.
@@ -223,8 +225,9 @@ operations room, `object-city` the city-builder game at dusk of "Let
 the Object Decide", `drafting-room` the architectural blueprint of
 "Draw It Out While It's Cheap to Change" (cyanotype paper in UCLA Blue
 with fold creases and a white grid, a bordered sheet with a title block, a plan fragment with dimension
-lines, and drafting tools at the edges), and `opera-house` the opera house of
-"It Works on My Machine". A theme script registers itself
+lines, and drafting tools at the edges), `opera-house` the opera house of
+"It Works on My Machine", and `team-room` the office of "Inspect and Adapt".
+A theme script registers itself
 in `SongKit.themes`, draws its room once, and poses it only from song time;
 its stylesheet keeps the scenery faint enough that text over it keeps 4.5:1.
 `extras` lists the song's own stylesheets and scripts (`styles`, `scripts`),
@@ -433,6 +436,71 @@ its props in the room its singers leave: no prop drawn in front of a singer
 may cover their face, and none covers the clock, the board, or another
 prop's text (`tests/song-it-works-on-my-machine.spec.js` checks the faces,
 every teammate's worn face, and the laptop raised on the Teammate's palm).
+
+"Inspect and Adapt", a Scrum musical, is embedded in `SEBook/process/scrum.md`
+after the Scrum Events section, as a consolidation of the chapter. It plays
+in the `team-room` theme (`js/song-video/team-room.js`, styles in
+`css/song-video-team-room.css`), the Found It team's office: a large display
+fills a warm white wall under a team sign that names each section
+(`TeamRoom.sign()`), with a floor-to-ceiling window over the city on the left
+and, on the right, the team's task board (sticky notes held by magnets) and a
+clock; downlights wash the wall, and a rug lies on the oak planks beside a
+plant. The room moves gently all song, each motion slow, small, and posed from
+song time (`animate()` in the theme): clouds drift past the window, the city's
+lit windows glow up and down, the daylight shaft dims as clouds pass and creeps
+across the floor with dust floating in it, the plant sways, a few notes stir,
+and the clock keeps the song's time. Under reduced motion it holds still. Slides are laid out on the
+display's logical 588 × 300 screen (`TeamRoom.SCREEN`) in a layer of their own,
+`TeamRoom.slides(layers)`, behind the cast, which the display shows 1.2 times
+larger (`TeamRoom.ZOOM`) round the screen's centre; `TeamRoom.toDisplay([x,
+y])` turns a screen point into the stage point a singer points or presents at.
+The choreography returns that layer so `scene.js` culls its pictures. The
+opera cast performs there, and each role is drawn in the metaphor of the
+CS 130 Scrum lecture. `opera-cast.js` dresses the
+Scrum Master as `coach`, the team coach (a teal track jacket with white and
+gold stripes down its sides and sleeves, a stand collar, and a whistle on a
+lanyard, holding a clipboard), and the Product Owner as `navigator`, the value
+navigator (a navy double-breasted sea coat with brass buttons and gold cuff
+braid over a Breton shirt, a compass pin, and a spyglass prop); a costume's
+`sleeveTrim(upper, fore)` adds the stripes and the braid. Three Developers wear
+the UI Developer's apron, `coder`'s hoodie, and the Test Engineer's lab coat.
+Each character is the gender of the voice that sings it, measured on the
+take: one man sings the New Developer and the Scrum Master, a woman the
+Product Owner, and a mixed choir the Developers, drawn as two men and a woman
+(the Test Engineer). Each keeps one face all song, in every viewing: in the
+player a hero head built from fixed traits (`CAST` in the choreography, through
+`castHead`), and on export stages the drawn face for the gender, where a
+figure's `gender: 'woman'` gives it a woman's face with long hair. The New
+Developer sings solo, so the viewer's hero, who may be any gender, doesn't
+play the part.
+`js/song-video/scrum-scenes.js` (styles in `css/song-video-scrum-scenes.css`)
+draws the metaphors as slides: a header band with the role's emblem (a
+whistle, a compass, a hard hat), its name, and its metaphor; a scene; and a
+list of what the role is accountable for (✓) above a "Not" row. The coach's
+scene is a basketball court seen from above, the Developers on it and the
+coach on the sideline: they draw their own plays and huddle, a game clock runs
+a timebox down, a project manager's pyramid gives way to a servant-leader's
+inverted one, and the coach clears a wall from a player's path. The
+navigator's is a sea chart whose compass reads Value: the user stories are
+waypoints on a course ordered by value to the product vision, and an idea off
+the course is not sailed to. The builders stack the Increment block by block.
+The same module draws the chorus's temple (Empiricism on its three pillars)
+and the role cards. In act one each role stands beside the display; from the
+chorus on, the whole cast stands in a line downstage, in front of its lower
+edge, each singer stepping forward toward the viewer, so the slides keep the
+display's height above their heads.
+`js/song-video/scrum-kit.js` (styles in `css/song-video-scrum-kit.css`)
+draws the rest: the Sprint strip (a frame named Sprint holding its four
+events, each with its icon and lit while it is sung, with the arrow back to
+the start), the Scrum board (Product Backlog, Sprint Backlog, and Increment,
+its empty slots drawn dashed, whose one-line story cards, each edged in its
+kind's colour, move, swell, split, lock, and stack as the lyrics
+move them, over an explanation bar that carries the coach's or the
+navigator's emblem when they act), checklists ticked on cue, the quiz card
+with its answer bar and emblem, and the intro's pictures. The Sprint loop is a
+strip rather than an ArchUML state diagram because the diagram, even laid
+out horizontally, only fits the space above the cast at about half size, too
+small to read.
 
 A section's `delivery` sets its captions: `sung` and `spoken` lines are one
 cue each, while `call` lines are quiz questions with an `answer` and

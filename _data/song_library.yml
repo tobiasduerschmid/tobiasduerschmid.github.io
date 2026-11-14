@@ -53,3 +53,8 @@ every_module_keeps_a_secret:
   title: Every Module Keeps a Secret
   topic: Information hiding
   category: Design & modeling
+inspect_and_adapt:
+  thumbnail_time: 99.5
+  title: Inspect and Adapt
+  topic: Scrum
+  category: Teamwork
