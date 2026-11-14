@@ -24,16 +24,15 @@
  *   - the refrain's questions each add a brick to a tower, and every
  *     principle is a brick that snaps onto the spread.
  *
- * Each lecture case gets one casebook spread with the same three parts,
- * filled in as the verse sings them: the left page shows what happened, the
- * right page why it happened (in bricks), and the principle brick across the
- * bottom names the principle in the lecture's words. The quiz asks six new
- * cases on numbered cards, each answer brick snapping on as it is sung,
+ * Each lecture case presents what happened and why in sequence, in the clear
+ * space between the towers. Its principle brick sits below the current picture.
+ * The quiz presents six question plaques; each gives way to its illustration
+ * and answer brick when the answer is sung,
  * after the player's quiz pause. Each line's `visual` text in the storyboard
  * describes this file.
  *
- * Layout: 960×540 stage; the section badge sits top-left, the spread's case
- * tab top-right, and nothing essential goes below y = 460, where the player
+ * Layout: 960×540 stage; the section badge and case tab sit above the central
+ * illustration, and nothing essential goes below y = 460, where the player
  * draws captions.
  */
 (function () {
@@ -43,14 +42,9 @@
   window.SongChoreographies.not_a_one_time_investment = function choreograph({ song, kit, layers, student }) {
     const { fx, tween, EASE, onFrame } = window.Timeline;
     const R = window.ReuseKit;
-    // The viewer's own hero as the site foreman (opera-cast.js's `foreman`):
-    // hi-vis vest, gold hard hat, the saved SE Gym face where it loads.
-    const FOREMAN = { role: 'foreman', hero: student?.heroHead() };
-    /** The foreman on a casebook page that is empty for a while (feet on its bottom edge). */
-    const foremanOnPage = (x, from, until, moves, holds = []) => window.OperaCast?.figure(content, {
-      ...FOREMAN, stage: [[from, until]], places: [[from, x, 388, 0.72, 0]], moves, holds,
-    });
-    const { content, hud } = layers;
+    const { content: stageContent, hud } = layers;
+    // Full-size illustrations take turns in the clear sky between the towers.
+    const content = kit.el('div', 'rk-teaching-scenes', stageContent);
     const mark = (id, word) => song.mark(id, word);
     const line = (id) => song.line(id);
     const start = (id) => song.sectionStart(id);
@@ -58,16 +52,70 @@
     /** Just before line `id` starts: where one picture hands over to the next. */
     const before = (id) => line(id).start - 0.15;
 
+    /** Keep the original illustration coordinates, but center its whole
+     * composition. Multiple windows revisit a causal diagram on its lyrics. */
+    function focusPanel(parent, side, windows) {
+      const node = R.layer(parent);
+      node.classList.add('is-staged', `rk-focus-panel--${side}`);
+      node.dataset.testid = 'reuse-focus-panel';
+      windows.forEach(([at, until]) => {
+        fx.fadeIn(node, at, 0.18);
+        fx.fadeOut(node, until - 0.18, 0.18);
+      });
+      return node;
+    }
+
+    /** One continuous performer, with a quiet place beside every lesson. */
+    function mainHero() {
+      const cast = window.OperaCast;
+      const words = cast.wordsFor(song.storyboard);
+      // The singer rests during the quiz's listening pause, including when
+      // the player freezes the picture there while waiting for the reader.
+      for (const section of song.storyboard.sections) {
+        for (const lyric of section.lines) {
+          if (lyric.pause_at === undefined) continue;
+          const question = words.findLast(([from, to]) => from < lyric.pause_at && to >= lyric.pause_at);
+          if (question) question[1] = lyric.pause_at - 0.04;
+        }
+      }
+      const done = mark('outro-3', 'thats');
+      const hero = cast.figure(stageContent, {
+        role: 'foreman', hero: student?.heroHead(),
+        stage: [[-0.3, song.duration + 0.3]],
+        places: [
+          [0, 150, 466, 0.84, 0],
+          [start('verse-1') - 0.6, 42, 466, 0.68, 0.6],
+          [start('outro'), 200, 466, 0.92, 0.7],
+        ],
+        words, singInReducedMotion: false,
+        holds: [[0, 'left', 'clipboard'], [start('verse-1'), 'left', null], [done, 'right', 'brick']],
+        moves: [
+          [mark('intro-1', 'yourself') - 0.2, 'point', { to: [470, 300], hold: 1.6 }],
+          [mark('intro-2', 'well'), 'thumbs', { hold: 1.2 }],
+          [mark('intro-2', 'well') + 1.8, 'point', { to: [812, 130], hold: 2 }],
+          [mark('v1-1', 'out'), 'point', { to: [286, 200], hold: 1.4 }],
+          [mark('v1-4', 'repaired'), 'thumbs', { hold: 1.2 }],
+          [mark('v1-5', 'write'), 'point', { to: [366, 170], hold: 1.6 }],
+          [mark('v3-1', 'flaw'), 'point', { to: [284, 170], hold: 1.4 }],
+          [mark('v3-2', 'saw'), 'shrug', { hold: 1 }],
+          [mark('quiz-0', 'your') + 0.1, 'thumbs', { hold: 0.6 }],
+          [done + 0.4, 'point', { to: [560, 330], hold: 0.9 }],
+          [mark('outro-3', 'right'), 'thumbs', { hold: 1.4, side: 'left' }],
+        ],
+      });
+      hero.node.classList.add('rk-main-hero');
+    }
+
     function badge(text, sectionId) {
       kit.badge(hud, text, start(sectionId), end(sectionId));
     }
 
-    /** The casebook's cover: a tile on its plate, with its title. */
-    function cover(parent, { x, y, w, h, at, until, title = 'Casebook: Design with Reuse' }) {
-      const node = R.show(kit.place(kit.el('div', 'rk-cover is-staged', parent), x, y), at, until, 'rise');
+    /** An open showcase: a small title plaque above a floating illustration. */
+    function showcase(parent, { x, y, w, h, at, until, title = 'Casebook: Design with Reuse' }) {
+      const node = R.show(kit.place(kit.el('div', 'rk-showcase is-staged', parent), x, y), at, until, 'rise');
       node.style.width = `${w}px`;
       if (h !== undefined) node.style.height = `${h}px`;
-      kit.el('div', 'rk-cover-title', node, title);
+      kit.el('div', 'rk-showcase-title', node, title);
       return node;
     }
 
@@ -91,21 +139,7 @@
     function intro() {
       badge('Intro · Good news', 'intro');
       const leave = end('intro');
-      // The foreman walks onto the site with a clipboard while it builds
-      // itself, points at the shelf on "yourself", gives a thumbs-up on
-      // "well", and looks up as the crane lifts the module.
-      window.OperaCast?.figure(content, {
-        ...FOREMAN,
-        stage: [[1.2, leave - 0.3, { enter: 'left', exit: 'left' }]],
-        places: [[1.2, 150, 470, 0.84, 0]],
-        holds: [[0, 'left', 'clipboard']],
-        moves: [
-          [mark('intro-1', 'yourself') - 0.2, 'point', { to: [470, 300], hold: 1.6 }],
-          [mark('intro-2', 'well'), 'thumbs', { hold: 1.2 }],
-          [mark('intro-2', 'well') + 1.8, 'point', { to: [812, 130], hold: 2 }],
-        ],
-      });
-      const s = kit.scene(content, 0.2, leave, { exit: 'fade' });
+      const s = kit.scene(stageContent, 0.2, leave, { exit: 'fade' });
       // While the intro speaks, the backdrop builds itself from bricks
       // (brick-site.js), so the pictures keep to the middle of the stage.
       // "Good news: you don't have to write it all yourself." The command
@@ -113,14 +147,14 @@
       const firstLook = mark('intro-2', 'lets') - 0.15;
       const look = R.group(s, 0.4, firstLook);
       R.term(look, {
-        x: 316, y: 104, w: 330, at: 0.6, title: 'terminal',
+        x: 366, y: 104, w: 330, at: 0.6, title: 'terminal',
         lines: [{ text: 'npm install left-pad', at: 1.0, kind: 'cmd', wait: true }],
       });
-      R.label(look, 'Open source, ready to reuse', { x: 300, y: 212, w: 360, at: mark('intro-1', 'write'), tone: 'light', align: 'center' });
-      R.shelf(look, { x: 300, y: 262, w: 360, names: ['requests', 'numpy', 'React', 'Express'], at: mark('intro-1', 'yourself') - 0.2, every: 0.15, tone: 'desk' });
-      // "Let's learn to reuse it well." The casebook opens on a balance:
+      R.label(look, 'Open source, ready to reuse', { x: 350, y: 212, w: 360, at: mark('intro-1', 'write'), tone: 'light', align: 'center' });
+      R.shelf(look, { x: 350, y: 262, w: 360, names: ['requests', 'numpy', 'React', 'Express'], at: mark('intro-1', 'yourself') - 0.2, every: 0.15, tone: 'desk' });
+      // "Let's learn to reuse it well." A title plaque introduces a balance:
       // three bricks of effort saved outweigh one brick of effort to adapt.
-      const book = cover(s, { x: 260, y: 100, w: 440, h: 300, at: firstLook + 0.1 });
+      const book = showcase(s, { x: 310, y: 100, w: 440, h: 300, at: firstLook + 0.1 });
       R.scale(book, { x: 50, y: 66, at: mark('intro-2', 'reuse'), left: 'Effort saved', right: 'Effort to adapt', weights: [3, 1], tilt: -1, tiltAt: mark('intro-2', 'well') });
     }
 
@@ -133,52 +167,45 @@
       const from = start('verse-1');
       const leave = end('verse-1');
       const s = kit.scene(content, from, leave, { exit: 'fade' });
-      R.spread(s, { at: from, tab: 'What reuse saves', left: 'What it saves', right: 'The catch' });
+      R.spread(s, { at: from, tab: 'What reuse saves' });
 
       // "Most code I need is out there, written once and shared."
       const shelfEnd = mark('v1-3', 'run');
-      const a = R.group(s, from, shelfEnd);
+      const a = focusPanel(s, 'left', [[from, shelfEnd]]);
       R.shelf(a, { x: 70, y: 150, w: 380, names: ['requests', 'urllib3', 'numpy', 'pandas', 'docker'], at: mark('v1-1', 'most'), every: 0.18 });
       R.note(a, 'Written once, shared', { x: 126, y: 318, w: 270, at: mark('v1-2', 'written'), tone: 'tag', icon: 'globe' });
 
       // "It's run in working systems, so bugs were found and repaired."
       const testedEnd = mark('v1-5', 'and');
-      const b = R.group(s, shelfEnd, testedEnd);
+      const b = focusPanel(s, 'left', [[shelfEnd, testedEnd]]);
       R.users(b, { cx: 172, cy: 236, r: 96, w: 148, name: 'requests', at: shelfEnd, every: 0.07 });
-      R.label(b, 'Used in working systems', { x: 64, y: 350, w: 230, at: mark('v1-3', 'working'), tone: 'muted', align: 'center', size: 18 });
+      R.label(b, 'Used in working systems', { x: 64, y: 350, w: 380, at: mark('v1-3', 'working'), until: mark('v1-4', 'found'), tone: 'muted', align: 'center', size: 18 });
       ['Bug 1', 'Bug 2', 'Bug 3'].forEach((text, i) => {
         R.note(b, text, { x: 294, y: 150 + i * 62, w: 72, at: mark('v1-4', 'bugs') + i * 0.1, small: true });
         R.inkStamp(b, 'fixed', { x: 372, y: 152 + i * 62, at: mark('v1-4', 'found') + i * 0.15, tone: 'green', rotate: -6 });
       });
-      R.label(b, 'Tried and tested', { x: 294, y: 350, w: 164, at: mark('v1-4', 'found'), tone: 'green', align: 'center' });
+      R.note(b, 'Higher software quality, fewer defects', { x: 72, y: 330, w: 370, at: mark('v1-4', 'found'), icon: 'shield' }).dataset.testid = 'reuse-benefit-quality';
 
       // "Less to write and less to test, so the feature ships sooner."
-      const c = R.group(s, testedEnd, leave);
+      const catchAt = before('v1-7');
+      const c = focusPanel(s, 'left', [[testedEnd, catchAt]]);
       R.bars(c, {
         x: 72, y: 128, w: 370, at: testedEnd, shrinkAt: mark('v1-5', 'test'),
         items: [{ label: 'Code to write', to: 0.3 }, { label: 'Code to test', to: 0.3 }],
       });
-      R.note(c, 'Higher productivity, faster time to market', { x: 72, y: 232, w: 370, at: mark('v1-6', 'feature'), icon: 'forward' });
-      R.note(c, 'Higher software quality, fewer defects', { x: 72, y: 300, w: 370, at: mark('v1-6', 'ships'), icon: 'shield' });
+      R.note(c, 'Higher productivity, faster time to market', { x: 72, y: 270, w: 370, at: mark('v1-6', 'feature'), icon: 'forward' }).dataset.testid = 'reuse-benefit-productivity';
 
       // "But modules aren't neat building blocks: each one assumes its world,
       // and glue code joins the pieces where those worlds don't fit."
+      const catchPanel = focusPanel(s, 'right', [[catchAt, leave]]);
       const realityAt = mark('v1-8', 'each');
       const glueAt = mark('v1-9', 'glue');
       const fitAt = mark('v1-10', 'where');
-      R.label(s, 'The vision: compatible blocks', { x: 512, y: 108, w: 380, at: mark('v1-7', 'but'), until: realityAt, align: 'center' });
-      R.label(s, 'The reality: they don’t fit', { x: 512, y: 108, w: 380, at: realityAt, until: glueAt, align: 'center', tone: 'red' });
-      R.label(s, 'Glue code fills the gaps', { x: 512, y: 108, w: 380, at: glueAt, until: fitAt, align: 'center' });
-      R.label(s, 'Where the assumptions don’t fit', { x: 512, y: 108, w: 380, at: fitAt, align: 'center', tone: 'red' });
-      // Until the vision arrives, the foreman stands on the empty right
-      // page: points at the shelf on "out there", gives a thumbs-up on
-      // "repaired", and points at the shrinking bars on "write".
-      foremanOnPage(700, start('verse-1') + 0.4, mark('v1-7', 'but') - 0.2, [
-        [mark('v1-1', 'out'), 'point', { to: [250, 200], hold: 1.4 }],
-        [mark('v1-4', 'repaired'), 'thumbs', { hold: 1.2, side: 'left' }],
-        [mark('v1-5', 'write'), 'point', { to: [330, 170], hold: 1.6 }],
-      ], [[0, 'right', 'clipboard']]);
-      R.vision(s, {
+      R.label(catchPanel, 'The vision: compatible blocks', { x: 512, y: 108, w: 380, at: mark('v1-7', 'but'), until: realityAt, align: 'center' });
+      R.label(catchPanel, 'The reality: they don’t fit', { x: 512, y: 108, w: 380, at: realityAt, until: glueAt, align: 'center', tone: 'red' });
+      R.label(catchPanel, 'Glue code fills the gaps', { x: 512, y: 108, w: 380, at: glueAt, until: fitAt, align: 'center' });
+      R.label(catchPanel, 'Where the assumptions don’t fit', { x: 512, y: 108, w: 380, at: fitAt, align: 'center', tone: 'red' });
+      R.vision(catchPanel, {
         x: 552, y: 136, at: mark('v1-7', 'neat'), realityAt,
         glueAt: [glueAt, mark('v1-9', 'joins'), mark('v1-9', 'pieces')], outlineAt: fitAt,
         notes: [
@@ -199,7 +226,7 @@
       const s = kit.scene(content, from, leave, { exit: 'fade' });
       const at = (n, word) => mark(`${prefix}-${n}`, word);
       R.checklist(s, {
-        x: 90, y: 78, w: 780, at: from, title: 'Before you reuse, ask:',
+        x: 310, y: 78, w: 440, at: from, title: 'Before you reuse, ask:',
         tabsAt: from + 0.4,
         items: [
           { q: 'What will it save? What will it cost?', name: 'Cost-benefit analysis', icon: 'wallet', at: at(2, 'what'), tabs: tabs.cost },
@@ -210,7 +237,7 @@
         footer: 'External reuse is not a one-time investment.',
         footerAt: at(6, 'external'),
       });
-      if (confetti) kit.confetti(s, { x: 480, y: 40, at: at(6, 'investment'), count: 40, seed: 7 });
+      if (confetti) kit.confetti(s, { x: 530, y: 40, at: at(6, 'investment'), count: 40, seed: 7 });
     }
 
     // ----------------------------------------------------------------
@@ -222,12 +249,15 @@
       const from = start('verse-2');
       const leave = end('verse-2');
       const s = kit.scene(content, from, leave, { exit: 'fade' });
-      const book = R.spread(s, { at: from, tab: 'Case 1 · urllib3', left: 'What happened', right: 'Why' });
+      const book = R.spread(s, { at: from, tab: 'Case 1 · urllib3' });
 
       // What happened: "My code had not changed a line, yet docker broke today."
       const pinAt = mark('v2-9', 'pin');
       const okAt = mark('v2-10', 'nothing');
-      const a = R.group(s, from, pinAt - 0.1);
+      const whyAt = before('v2-3');
+      const apiAt = before('v2-7');
+      const brokenAt = before('v2-8');
+      const a = focusPanel(s, 'left', [[from, whyAt]]);
       R.term(a, {
         x: 63, y: 112, w: 390, at: mark('v2-1', 'my'), title: 'terminal',
         lines: [
@@ -235,7 +265,7 @@
           { text: 'nothing to commit, working tree clean', at: mark('v2-1', 'changed'), kind: 'ok' },
         ],
       });
-      const errorUntil = mark('v2-7', 'version') - 0.1;
+      const errorUntil = apiAt;
       R.code(a, {
         x: 63, y: 214, w: 390, lang: 'plain', title: 'docker', at: mark('v2-2', 'yet'), until: errorUntil, how: 'pop',
         lines: [
@@ -246,8 +276,9 @@
         ],
       }).classList.add('rk-code--error');
       // "Version two changed its API": the call inside requests that 2.0.0 rejects.
-      R.code(a, {
-        x: 63, y: 214, w: 390, lang: 'python', title: 'inside requests: its call to urllib3', at: errorUntil + 0.1,
+      const api = focusPanel(s, 'left', [[apiAt, brokenAt]]);
+      R.code(api, {
+        x: 63, y: 146, w: 390, lang: 'python', title: 'inside requests: its call to urllib3', at: errorUntil + 0.1,
         lines: [
           'response = self._make_request(',
           '    conn, method, url,',
@@ -255,15 +286,16 @@
           ')',
         ],
       });
-      R.label(a, '2.0.0 changed its API', { x: 70, y: 362, w: 376, at: mark('v2-7', 'api'), tone: 'red', align: 'center' });
+      R.label(api, '2.0.0 changed its API', { x: 70, y: 306, w: 376, at: mark('v2-7', 'api'), tone: 'red', align: 'center' });
 
       // Why: a tower of package bricks. docker sits on requests, which sits
       // on urllib3: each depends on the brick below it.
       const twoAt = mark('v2-6', 'two');
-      R.plate(s, { x: 580, y: 372, w: 240, at: mark('v2-3', 'docker') - 0.2 });
-      const upper = R.layer(s);
+      const tower = focusPanel(s, 'right', [[whyAt, apiAt], [brokenAt, pinAt], [okAt, leave]]);
+      R.plate(tower, { x: 580, y: 372, w: 240, at: mark('v2-3', 'docker') - 0.2 });
+      const upper = R.layer(tower);
       const top = R.layer(upper);
-      const oldU = R.pkg(s, {
+      const oldU = R.pkg(tower, {
         x: 590, y: 312, w: 220, h: 60, name: 'urllib3', version: '1.26', tone: 'blue', under: true, how: 'drop', at: mark('v2-4', 'urllib3') - 0.1,
         tags: [
           { at: mark('v2-5', 'pinned'), text: '1.26 · not pinned', kind: 'any' },
@@ -272,19 +304,19 @@
       });
       const requests = R.pkg(upper, { x: 590, y: 252, w: 220, h: 60, name: 'requests', tone: 'blue', under: true, how: 'drop', at: mark('v2-3', 'requests') });
       const docker = R.pkg(top, { x: 590, y: 192, w: 220, h: 60, name: 'docker', tone: 'blue', how: 'drop', at: mark('v2-3', 'docker') });
-      R.label(s, 'calls ↓', { x: 828, y: 234, w: 74, at: mark('v2-3', 'calls'), tone: 'muted', size: 17 });
-      R.label(s, 'calls ↓', { x: 828, y: 294, w: 74, at: mark('v2-4', 'calls'), tone: 'muted', size: 17 });
-      R.label(s, 'nothing pinned', { x: 504, y: 326, w: 84, at: mark('v2-5', 'pinned'), until: mark('v2-6', 'two'), tone: 'red', size: 17 });
-      kit.sticker(s, 'Clean install', { x: 626, y: 138, at: mark('v2-6', 'clean'), until: mark('v2-7', 'version'), iconName: 'resend', rotate: -4 });
+      R.label(tower, 'calls ↓', { x: 828, y: 234, w: 74, at: mark('v2-3', 'calls'), tone: 'muted', size: 17 });
+      R.label(tower, 'calls ↓', { x: 828, y: 294, w: 74, at: mark('v2-4', 'calls'), tone: 'muted', size: 17 });
+      R.label(tower, 'nothing pinned', { x: 504, y: 326, w: 84, at: mark('v2-5', 'pinned'), until: mark('v2-6', 'two'), tone: 'red', size: 17 });
+      kit.sticker(tower, 'Clean install', { x: 626, y: 138, at: mark('v2-6', 'clean'), until: mark('v2-7', 'version'), iconName: 'resend', rotate: -4 });
       // "So a clean install got two": the old brick slides out, version 2.0.0
       // slides in with different studs, and the bricks above no longer seat.
       shift(oldU.node, twoAt, { opacity: 1, translate: '0 0' }, { opacity: 0, translate: '30px 0' }, 0.35);
-      const newU = R.pkg(s, { x: 590, y: 312, w: 220, h: 60, name: 'urllib3', version: '2.0.0', tone: 'red', odd: true, how: 'none', at: twoAt, tags: [{ at: 0, text: '2.0.0', kind: 'new' }] });
+      const newU = R.pkg(tower, { x: 590, y: 312, w: 220, h: 60, name: 'urllib3', version: '2.0.0', tone: 'red', odd: true, how: 'none', at: twoAt, tags: [{ at: 0, text: '2.0.0', kind: 'new' }] });
       shift(newU.node, twoAt + 0.15, { opacity: 0, translate: '30px 0' }, { opacity: 1, translate: '0 0' }, 0.4);
       shift(upper, twoAt + 0.4, { translate: '0 0' }, { translate: '0 -12px' }, 0.3, EASE.back);
       // "Version two changed its API": the new studs.
-      R.label(s, 'new studs: a changed API', { x: 500, y: 250, w: 84, at: mark('v2-7', 'changed'), until: okAt, tone: 'red', size: 16 });
-      R.arrow(s, { x1: 572, y1: 300, x2: 600, y2: 305, at: mark('v2-7', 'changed'), until: okAt, tone: 'red' });
+      R.label(tower, 'new studs: a changed API', { x: 500, y: 250, w: 84, at: mark('v2-7', 'changed'), until: okAt, tone: 'red', size: 16 });
+      R.arrow(tower, { x1: 572, y1: 300, x2: 600, y2: 305, at: mark('v2-7', 'changed'), until: okAt, tone: 'red' });
       // "And requests' calls broke too": the break travels up the tower,
       // each brick sliding off the one below.
       shift(upper, mark('v2-8', 'requests'), { translate: '0 -12px' }, { translate: '-10px -12px' }, 0.35, EASE.back);
@@ -300,14 +332,13 @@
       shift(upper, okAt + 0.5, { translate: '-10px -12px' }, { translate: '0 0' }, 0.4, EASE.back);
       shift(top, okAt + 0.5, { translate: '-12px 0' }, { translate: '0 0' }, 0.4, EASE.back);
       [docker, requests, oldU].forEach((p, i) => p.check(mark('v2-10', 'choose') + i * 0.12));
-      const b = R.group(s, pinAt, leave);
+      const b = focusPanel(s, 'left', [[pinAt, okAt]]);
       R.code(b, {
         x: 90, y: 126, w: 336, lang: 'plain', title: 'Pipfile (Python)', at: pinAt,
         lines: ['[packages]', { text: 'urllib3 = "<2.0.0"', hl: { part: 'urllib3 = "<2.0.0"', at: mark('v2-9', 'versions'), tone: 'green' } }, 'docker = "==7.1.0"'],
       });
       R.inkStamp(b, 'pinned', { x: 318, y: 252, at: mark('v2-9', 'versions') + 0.2, tone: 'green' });
-      R.note(b, 'A lockfile is your parts list: every build gets the same bricks', { x: 90, y: 298, w: 336, at: mark('v2-9', 'versions') + 0.3, icon: 'list', small: true });
-      R.note(b, 'Node.js: commit package-lock.json', { x: 90, y: 354, w: 336, at: okAt + 0.6, icon: 'pin', small: true });
+      R.note(b, 'Lockfile = the same bricks in every build', { x: 90, y: 298, w: 336, at: mark('v2-9', 'versions') + 0.3, icon: 'list', small: true });
     }
 
     // ----------------------------------------------------------------
@@ -319,11 +350,12 @@
       const from = start('verse-3');
       const leave = end('verse-3');
       const s = kit.scene(content, from, leave, { exit: 'fade' });
-      const book = R.spread(s, { at: from, tab: 'Case 2 · Heartbleed', left: 'What happened', right: 'Why' });
+      const book = R.spread(s, { at: from, tab: 'Case 2 · Heartbleed' });
 
       // What happened: "OpenSSL had a flaw; for two years, no one saw."
       const mineAt = before('v3-7');
-      const a = R.group(s, from, mineAt);
+      const requestAt = mark('v3-3', 'a') - 0.1;
+      const a = focusPanel(s, 'left', [[from, requestAt]]);
       R.padlock(a, { x: 200, y: 112, size: 96, at: mark('v3-1', 'openssl'), crackAt: mark('v3-1', 'flaw'), label: 'OpenSSL 1.0.1 (TLS)' });
       R.timeline(a, {
         x: 96, y: 290, w: 320, at: mark('v3-2', 'for'), fillAt: mark('v3-2', 'two'), fillTo: mark('v3-2', 'saw'), fillTone: 'red',
@@ -336,14 +368,7 @@
 
       // Why: "A request claimed a length; the server trusted it and sent back
       // its own memory: passwords, private keys."
-      const fixAt = before('v3-9');
-      const b = R.group(s, mark('v3-3', 'a') - 0.1, fixAt);
-      // While the right page is still empty, the foreman points at the
-      // cracked padlock on "flaw" and shrugs on "no one saw".
-      foremanOnPage(700, from + 0.4, mark('v3-3', 'a') - 0.3, [
-        [mark('v3-1', 'flaw'), 'point', { to: [248, 170], hold: 1.4 }],
-        [mark('v3-2', 'saw'), 'shrug', { hold: 1 }],
-      ]);
+      const b = focusPanel(s, 'right', [[requestAt, mineAt]]);
       R.code(b, {
         x: 514, y: 108, w: 236, lang: 'plain', title: 'heartbeat request', at: mark('v3-3', 'request'),
         lines: ['send back: "a"', { text: 'length: 64 KB', hl: { part: '64 KB', at: mark('v3-3', 'length') } }],
@@ -365,7 +390,8 @@
       // shows the crack inside.
       const pinAt = mark('v3-13', 'pinned');
       const shipped = mark('v3-8', 'shipped');
-      const c = R.group(s, mineAt, pinAt - 0.1);
+      const shareAt = before('v3-10');
+      const c = focusPanel(s, 'left', [[mineAt, shareAt]]);
       const xray = R.show(kit.place(kit.el('div', 'rk-xray is-staged', c), 70, 108), shipped, undefined, 'fade');
       xray.style.width = '376px';
       xray.style.height = '154px';
@@ -385,8 +411,8 @@
           { pos: 1, text: '7 April: 1.0.1g', at: mark('v3-9', 'week'), align: 'right' },
         ],
       });
-      // Right page: "That's reuse on your side: one fix, shared by all."
-      const d = R.group(s, fixAt, leave);
+      // Next picture: "That's reuse on your side: one fix, shared by all."
+      const d = focusPanel(s, 'right', [[shareAt, pinAt]]);
       R.label(d, 'Apps that update to 1.0.1g', { x: 512, y: 108, w: 380, at: mark('v3-10', 'to'), tone: 'muted', align: 'center', size: 18 });
       R.appGrid(d, { x: 590, y: 152, at: mark('v3-9', 'fix'), greenAt: mark('v3-10', 'all'), every: 0.13 });
       R.label(d, 'One fix, many apps', { x: 512, y: 312, w: 380, at: mark('v3-11', 'thats'), tone: 'green', align: 'center', size: 22 });
@@ -395,7 +421,7 @@
       // The principle: "Pinned doesn't mean frozen: update to the fix, then test."
       book.ribbon('Pinned doesn’t mean frozen', { at: pinAt, until: mark('v3-14', 'update') });
       book.ribbon('Update to receive security patches', { at: mark('v3-14', 'update') });
-      const e = R.group(s, pinAt, leave);
+      const e = focusPanel(s, 'left', [[pinAt, leave]]);
       R.pkg(e, {
         x: 120, y: 140, w: 280, name: 'openssl', version: '1.0.1f · pinned', tone: 'blue', at: pinAt,
         tags: [
@@ -421,11 +447,12 @@
       const from = start('verse-4');
       const leave = end('verse-4');
       const s = kit.scene(content, from, leave, { exit: 'fade' });
-      const book = R.spread(s, { at: from, tab: 'Case 3 · left-pad', left: 'What happened', right: 'Why' });
+      const book = R.spread(s, { at: from, tab: 'Case 3 · left-pad' });
 
       // What happened: "Left-pad: eleven lines that pad a string on the left."
       const failAt = before('v4-6');
-      const a = R.group(s, from, failAt);
+      const padAt = before('v4-2');
+      const a = focusPanel(s, 'left', [[from, padAt]]);
       R.code(a, {
         x: 66, y: 106, w: 384, lang: 'js', numbers: true, size: 15, title: 'left-pad, as published on npm', at: mark('v4-1', 'leftpad'),
         lines: [
@@ -443,13 +470,13 @@
         ],
       });
 
-      // What it does: "... that pad a string on the left." The right page
+      // What it does: "... that pad a string on the left." The next picture
       // shows what left-pad is for: three numbers padded to width 3 line up
       // on the right. Padding bricks drop in on the left of 7 and 42 and
       // push their digits over, until all three share a right edge.
       const built = mark('v4-3', 'pulled') - 0.25;
-      R.textAt(book.heads.right, 'What it does', [{ at: built - 0.2, text: 'Why' }]);
-      R.padColumn(s, {
+      const padding = focusPanel(s, 'right', [[padAt, built - 0.2]]);
+      R.padColumn(padding, {
         x: 515, y: 150, values: ['7', '42', '317'], width: 3, caption: 'aligned on the right',
         at: mark('v4-1', 'lines'), padAt: mark('v4-2', 'pad'), every: 0.15, alignAt: mark('v4-2', 'string'), until: built - 0.2,
       });
@@ -458,7 +485,8 @@
       // app is a build: it stands on react and babel-core, and babel-core
       // stands on more packages, which stand on one tiny brick, left-pad.
       const trickAt = before('v4-11');
-      const b = R.group(s, built - 0.2, trickAt);
+      const hijackAt = before('v4-9');
+      const b = focusPanel(s, 'right', [[built - 0.2, failAt], [before('v4-7'), hijackAt]]);
       R.plate(b, { x: 514, y: 354, w: 380, at: built - 0.2 });
       const right = R.layer(b);
       const app = R.layer(b);
@@ -524,8 +552,7 @@
       say('3 levels down', mark('v4-8', 'down'), trickAt);
 
       // "Thousands of builds failed."
-      const hijackAt = before('v4-9');
-      const c = R.group(s, failAt, hijackAt);
+      const c = focusPanel(s, 'left', [[failAt, before('v4-7')]]);
       ['thousands', 'builds', 'failed'].forEach((word, i) => R.term(c, {
         x: 70, y: 106 + i * 102, w: 380, at: mark('v4-6', word), title: `build ${i + 1}`, how: 'pop',
         lines: [{ text: "npm ERR! 404 'left-pad' is not in the npm registry", at: mark('v4-6', word), kind: 'err' }],
@@ -533,7 +560,7 @@
 
       // "When eslint-scope was hijacked, its new release stole tokens."
       const cryptoAt = before('v4-15');
-      const d = R.group(s, hijackAt, cryptoAt);
+      const d = focusPanel(s, 'left', [[hijackAt, trickAt]]);
       R.pkg(d, { x: 90, y: 116, w: 280, name: 'eslint-scope', version: '3.7.2', tone: 'blue', at: mark('v4-9', 'eslintscope'), tags: [{ at: mark('v4-9', 'hijacked'), text: '3.7.2 · malicious', kind: 'bad' }] });
       R.note(d, 'maintainer account taken over (July 2018)', { x: 90, y: 200, w: 340, at: mark('v4-9', 'hijacked'), tone: 'bad', icon: 'key' });
       const npmrc = R.code(d, { x: 90, y: 270, w: 300, lang: 'plain', title: '.npmrc', at: mark('v4-10', 'release'), lines: ['_authToken=npm_••••••••'] });
@@ -545,7 +572,7 @@
       book.ribbon('Avoid reusing trivial code', { at: mark('v4-11', 'write'), until: mark('v4-12', 'keep') });
       book.ribbon('Strive for fewer package dependencies', { at: mark('v4-12', 'keep'), until: mark('v4-16', 'dont') });
       const fameAt = before('v4-17');
-      const e = R.group(s, trickAt, fameAt);
+      const e = focusPanel(s, 'right', [[trickAt, cryptoAt]]);
       R.code(e, {
         x: 512, y: 108, w: 386, lang: 'js', size: 15, title: 'isarray: the whole package, 1 line', at: mark('v4-11', 'trivial'),
         lines: ["toString.call(arr) == '[object Array]'"],
@@ -563,7 +590,7 @@
       R.note(e, 'can disappear', { x: 782, y: 336, w: 122, at: mark('v4-14', 'vanish'), tone: 'bad', small: true });
 
       // The boundary: "But code that's hard to get right, like crypto: don't write your own."
-      const f = R.group(s, cryptoAt, leave);
+      const f = focusPanel(s, 'left', [[cryptoAt, fameAt]]);
       const homemade = R.code(f, {
         x: 90, y: 120, w: 330, lang: 'js', title: 'hand-written crypto', at: mark('v4-15', 'code'),
         lines: ['function myEncrypt (text) {', '  // my own cipher… secure?', '}'],
@@ -577,7 +604,7 @@
       // "Choose maintained and popular, but fit comes before fame." The
       // project is a wall with a gap: the popular brick is too big for it,
       // a smaller one fits.
-      const g = R.group(s, fameAt, leave);
+      const g = focusPanel(s, 'right', [[fameAt, leave]]);
       R.note(g, 'A · updated weekly · many users · good docs', { x: 512, y: 108, w: 386, at: mark('v4-17', 'maintained'), tone: 'good', icon: 'check' });
       R.note(g, 'B · last commit 4 years ago', { x: 512, y: 170, w: 386, at: mark('v4-17', 'popular') - 0.3, icon: 'hourglass' });
       const shown = mark('v4-17', 'popular');
@@ -614,12 +641,16 @@
       const from = start('bridge');
       const leave = end('bridge');
       const s = kit.scene(content, from, leave, { exit: 'fade' });
-      const book = R.spread(s, { at: from, tab: 'Case 4 · Ariane 5', left: 'What happened', right: 'Why' });
+      const book = R.spread(s, { at: from, tab: 'Case 4 · Ariane 5' });
 
       // What happened: the same gold module flies on two rockets: Ariane 4,
       // then Ariane 5, each with a cut-away window onto its equipment bay.
       const verdictAt = before('br-9');
-      const a = R.group(s, from, verdictAt);
+      const gaugeAt = before('br-2');
+      const firstFlight = before('br-4');
+      const overflowAt = before('br-6');
+      const failureAt = before('br-7');
+      const a = focusPanel(s, 'left', [[from, gaugeAt], [firstFlight, overflowAt], [failureAt, verdictAt]]);
       const sky = kit.place(kit.el('div', 'rk-clip', a), 56, 98);
       sky.style.width = '404px';
       sky.style.height = '292px';
@@ -636,21 +667,21 @@
 
       // Why: the 16-bit gauge.
       const rule = mark('br-12', 'identify');
-      const b = R.group(s, mark('br-2', 'stored') - 0.1, rule - 0.1);
+      const b = focusPanel(s, 'right', [[gaugeAt, firstFlight], [overflowAt, failureAt]]);
       const flyA = mark('br-4', 'since');
       const flyB = mark('br-6', 'which');
       R.gauge(b, {
         x: 572, y: 104, at: mark('br-2', 'stored'), title: 'Horizontal velocity → 16-bit integer', limitAt: mark('br-3', 'sixteen'),
         values: [[0, 0], [flyA, 0], [flyA + 1.6, 21000], [mark('br-5', 'reused'), 21000], [mark('br-5', 'five'), 0], [flyB, 0], [mark('br-6', 'overflow'), 39000]],
       });
-      R.label(b, 'fits ✓', { x: 590, y: 336, w: 220, at: mark('br-4', 'slower'), until: mark('br-5', 'five'), tone: 'green', align: 'center', size: 22 });
+      R.label(a, 'Within 16-bit range · fits ✓', { x: 70, y: 364, w: 376, at: mark('br-4', 'slower'), until: before('br-5'), tone: 'green', align: 'center', size: 22 });
       R.inkStamp(b, 'Overflow', { x: 606, y: 336, at: mark('br-6', 'overflow'), until: mark('br-8', 'veered'), tone: 'red', rotate: -4 }).classList.add('rk-stamp--big');
-      R.label(b, 'T + 37 s', { x: 590, y: 396, w: 220, at: mark('br-7', 'thirtyseven'), tone: 'red', align: 'center', size: 28 });
+      R.label(a, 'T + 37 s', { x: 148, y: 364, w: 220, at: mark('br-7', 'thirtyseven'), tone: 'red', align: 'center', size: 28 });
 
       // "It worked where it was built, and failed where it was sent: its
       // assumption didn't hold."
       const driftAt = before('br-16');
-      const c = R.group(s, verdictAt, driftAt);
+      const c = focusPanel(s, 'left', [[verdictAt, rule]]);
       R.note(c, 'Ariane 4: fits ✓', { x: 90, y: 120, w: 340, at: mark('br-9', 'worked'), tone: 'good', icon: 'check' });
       R.note(c, 'Ariane 5: overflows ✗', { x: 90, y: 186, w: 340, at: mark('br-10', 'failed'), tone: 'bad', icon: 'cross' });
       R.note(c, 'Assumes: horizontal velocity fits in 16 bits', { x: 90, y: 260, w: 340, at: mark('br-11', 'assumption'), tone: 'tag', icon: 'pin' });
@@ -658,7 +689,7 @@
 
       // The principle: identify violated assumptions, in three steps.
       book.ribbon('Identify violated assumptions', { at: rule, until: mark('br-17', 'version') });
-      const d = R.group(s, rule, leave);
+      const d = focusPanel(s, 'right', [[rule, driftAt]]);
       R.checkboxes(d, {
         x: 524, y: 118, w: 370, at: rule,
         items: [
@@ -677,7 +708,7 @@
 
       // "If two systems drift apart, version it, or clone and own: copy it,
       // so each can change." One module brick becomes two, one per team.
-      const e = R.group(s, driftAt, leave);
+      const e = focusPanel(s, 'left', [[driftAt, leave]]);
       R.pkg(e, { x: 66, y: 196, w: 120, name: 'IRS', tone: 'gold', at: mark('br-16', 'two') });
       R.arrow(e, { x1: 190, y1: 210, x2: 248, y2: 140, at: mark('br-16', 'drift'), bend: -8 });
       R.arrow(e, { x1: 190, y1: 236, x2: 248, y2: 262, at: mark('br-16', 'drift'), bend: 8 });
@@ -699,43 +730,46 @@
       const from = start('verse-5');
       const leave = end('verse-5');
       const s = kit.scene(content, from, leave, { exit: 'fade' });
-      const book = R.spread(s, { at: from, tab: 'Case 5 · Library or framework', left: 'Library', right: 'Framework' });
+      const book = R.spread(s, { at: from, tab: 'Case 5 · Library or framework' });
       const ask = mark('v5-2', 'ask');
       const youCall = mark('v5-3', 'call');
       const itCalls = mark('v5-4', 'calls');
 
+      const frameworkAt = before('v5-4');
+      const library = focusPanel(s, 'left', [[from, frameworkAt]]);
       // Library: "I call axios when I choose." A loose brick you pick up and
       // place where you want it.
-      R.pkg(s, { x: 76, y: 120, w: 160, name: 'your code', tone: 'gold', at: from + 0.3 });
-      R.pkg(s, { x: 300, y: 120, w: 140, name: 'axios', tone: 'blue', at: from + 0.4 });
-      R.arrow(s, { x1: 240, y1: 147, x2: 296, y2: 147, at: ask, until: youCall, dashed: true, tone: 'muted', label: '?', labelAt: [260, 104] });
-      R.arrow(s, { x1: 240, y1: 147, x2: 296, y2: 147, at: youCall, label: 'you call it', labelAt: [212, 186] });
-      R.code(s, { x: 70, y: 226, w: 380, lang: 'js', at: mark('v5-3', 'axios'), lines: ['const response = await axios', "  .get('/user?ID=12345');"] });
+      R.pkg(library, { x: 76, y: 120, w: 160, name: 'your code', tone: 'gold', at: from + 0.3 });
+      R.pkg(library, { x: 300, y: 120, w: 140, name: 'axios', tone: 'blue', at: from + 0.4 });
+      R.arrow(library, { x1: 240, y1: 147, x2: 296, y2: 147, at: ask, until: youCall, dashed: true, tone: 'muted', label: '?', labelAt: [260, 104] });
+      R.arrow(library, { x1: 240, y1: 147, x2: 296, y2: 147, at: youCall, label: 'you call it', labelAt: [212, 186] });
+      R.code(library, { x: 70, y: 226, w: 380, lang: 'js', at: mark('v5-3', 'axios'), lines: ['const response = await axios', "  .get('/user?ID=12345');"] });
 
+      const framework = focusPanel(s, 'right', [[frameworkAt, leave]]);
       // Framework: "Express calls my code." A baseplate with a socket that
       // decides where your brick goes.
-      R.plate(s, { x: 512, y: 168, w: 392, h: 34, label: 'Express (the framework)', tone: 'grey', at: from + 0.3 });
-      const socket = ghost(s, { x: 660, y: 112, w: 150, h: 56, at: ask, until: itCalls });
+      R.plate(framework, { x: 512, y: 168, w: 392, h: 34, label: 'Express (the framework)', tone: 'grey', at: from + 0.3 });
+      const socket = ghost(framework, { x: 660, y: 112, w: 150, h: 56, at: ask, until: itCalls });
       socket.classList.add('rk-ghost--socket');
-      R.label(s, '?', { x: 660, y: 124, w: 150, at: ask, until: itCalls, align: 'center', tone: 'muted', size: 24 });
-      const handler = R.pkg(s, { x: 660, y: 112, w: 150, h: 56, name: 'your handler', tone: 'gold', how: 'drop', at: itCalls - 0.1 });
-      R.arrow(s, { x1: 600, y1: 166, x2: 652, y2: 140, at: itCalls, until: mark('v5-6', 'dont'), bend: -10, label: 'it calls you', labelAt: [516, 118] });
-      R.code(s, { x: 514, y: 226, w: 386, lang: 'js', at: mark('v5-4', 'express'), lines: ["app.get('/', (req, res) => {", "  res.send('Hello World!')", '})'] });
+      R.label(framework, '?', { x: 660, y: 124, w: 150, at: ask, until: itCalls, align: 'center', tone: 'muted', size: 24 });
+      const handler = R.pkg(framework, { x: 660, y: 112, w: 150, h: 56, name: 'your handler', tone: 'gold', how: 'drop', at: itCalls - 0.1 });
+      R.arrow(framework, { x1: 600, y1: 166, x2: 652, y2: 140, at: itCalls, until: mark('v5-6', 'dont'), bend: -10, label: 'it calls you', labelAt: [516, 118] });
+      R.code(framework, { x: 514, y: 226, w: 386, lang: 'js', at: mark('v5-4', 'express'), lines: ["app.get('/', (req, res) => {", "  res.send('Hello World!')", '})'] });
 
       // "That's the Hollywood Principle: don't call us, we'll call you."
       book.ribbon('Hollywood Principle', { at: mark('v5-5', 'hollywood'), sub: '(inversion of control)' });
-      const request = R.note(s, 'GET /', { x: 518, y: 122, w: 104, at: mark('v5-6', 'dont'), until: mark('v5-7', 'decides'), small: true, icon: 'globe' });
+      const request = R.note(framework, 'GET /', { x: 518, y: 122, w: 104, at: mark('v5-6', 'dont'), until: mark('v5-7', 'decides'), small: true, icon: 'globe' });
       tween(request, [{ translate: '0 0' }, { translate: '38px 0' }], mark('v5-6', 'call'), 0.4, EASE.inOut);
       handler.ring(mark('v5-6', 'you'), mark('v5-7', 'more'), 'green');
 
       // "It decides more; I write less, but it's harder to undo." The
       // framework's own bricks go up around yours.
-      R.pkg(s, { x: 528, y: 112, w: 124, h: 56, name: 'routing', tone: 'grey', small: true, how: 'drop', at: mark('v5-7', 'decides') });
-      R.pkg(s, { x: 818, y: 112, w: 80, h: 56, name: 'server', tone: 'grey', small: true, how: 'drop', at: mark('v5-7', 'more') });
-      R.label(s, 'It decides more. You write less.', { x: 514, y: 330, w: 386, at: mark('v5-7', 'decides'), align: 'center' });
-      const locked = ghost(s, { x: 518, y: 98, w: 386, h: 112, at: mark('v5-8', 'but') });
+      R.pkg(framework, { x: 528, y: 112, w: 124, h: 56, name: 'routing', tone: 'grey', small: true, how: 'drop', at: mark('v5-7', 'decides') });
+      R.pkg(framework, { x: 818, y: 112, w: 80, h: 56, name: 'server', tone: 'grey', small: true, how: 'drop', at: mark('v5-7', 'more') });
+      R.label(framework, 'It decides more. You write less.', { x: 514, y: 330, w: 386, at: mark('v5-7', 'decides'), align: 'center' });
+      const locked = ghost(framework, { x: 518, y: 98, w: 386, h: 112, at: mark('v5-8', 'but') });
       locked.classList.add('rk-ghost--frame');
-      R.label(s, 'Harder to reverse', { x: 514, y: 362, w: 386, at: mark('v5-8', 'but'), align: 'center', tone: 'red' });
+      R.label(framework, 'Harder to reverse', { x: 514, y: 362, w: 386, at: mark('v5-8', 'but'), align: 'center', tone: 'red' });
     }
 
     // ----------------------------------------------------------------
@@ -748,14 +782,8 @@
       const from = start('quiz-intro');
       const leave = end('quiz');
       const s = kit.scene(content, from, leave, { exit: 'fade' });
-      R.spread(s, { at: from, tab: 'Your cases' });
-      R.label(s, 'Your turn!', { x: 56, y: 108, w: 404, at: mark('quiz-0', 'your'), until: before('quiz-1'), align: 'center', size: 40, weight: 900 });
-      R.label(s, 'Try these cases.', { x: 500, y: 214, w: 404, at: mark('quiz-0', 'turn'), until: before('quiz-1'), align: 'center', size: 28, tone: 'muted' });
-      // The foreman hands over: a thumbs-up, then a point at the cases.
-      foremanOnPage(258, mark('quiz-0', 'your') - 0.2, before('quiz-1') - 0.1, [
-        [mark('quiz-0', 'your') + 0.1, 'thumbs', { hold: 0.6 }],
-        [mark('quiz-0', 'try'), 'point', { to: [700, 230], hold: 1 }],
-      ]);
+      R.label(s, 'Your turn!', { x: 310, y: 148, w: 440, at: mark('quiz-0', 'your'), until: before('quiz-1'), align: 'center', size: 40, weight: 900 });
+      R.label(s, 'Try these cases.', { x: 310, y: 240, w: 440, at: mark('quiz-0', 'turn'), until: before('quiz-1'), align: 'center', size: 28, tone: 'muted' });
 
       const ART = {
         1: (g, q) => {
@@ -813,8 +841,8 @@
       QUESTIONS.forEach(([n, icon]) => {
         const q = line(`quiz-${n}`);
         const until = n < 6 ? before(`quiz-${n + 1}`) : leave;
-        R.quiz(s, { x: 60, y: 110, w: 396, n, total: 6, question: q.text, answer: q.answer, icon, at: q.start - 0.1, answerAt: q.answer_at, until });
-        ART[n](R.group(s, q.start - 0.1, until), q);
+        R.quiz(s, { x: 310, y: 86, w: 440, n, total: 6, question: q.text, answer: q.answer, icon, at: q.start - 0.1, answerAt: q.answer_at, until });
+        ART[n](focusPanel(s, 'right', [[q.answer_at, until]]), q);
       });
     }
 
@@ -826,39 +854,26 @@
       badge('Outro · Reuse done right', 'outro');
       const from = start('outro');
       const leave = song.duration;
-      const s = kit.scene(content, from, leave - 0.2, { exit: 'fade' });
+      const s = kit.scene(stageContent, from, leave - 0.2, { exit: 'fade' });
       const done = mark('outro-3', 'thats');
-      student?.appear({ from: from + 0.1, to: done - 0.3, x: 60, y: 150, scale: 0.95 });
-      // "That's reuse done right": the foreman carries a gold brick in and
-      // gives the finished build a thumbs-up.
-      window.OperaCast?.figure(content, {
-        ...FOREMAN,
-        stage: [[done - 0.1, leave - 0.2, { enter: 'left' }]],
-        places: [[done - 0.1, 200, 470, 1, 0]],
-        holds: [[0, 'right', 'brick']],
-        moves: [
-          [done + 0.4, 'point', { to: [560, 330], hold: 0.9 }],
-          [mark('outro-3', 'right'), 'thumbs', { hold: 1.4, side: 'left' }],
-        ],
-      });
       const builtIn = mark('outro-2', 'need');
       R.term(s, {
-        x: 380, y: 96, w: 520, at: from + 0.1, title: 'terminal',
+        x: 310, y: 96, w: 440, at: from + 0.1, title: 'terminal',
         lines: [
           { text: 'npm install left-pad', at: from + 0.2, until: builtIn, kind: 'cmd', wait: true },
           { text: 'String(str).padStart(length, paddingCharacter)', at: builtIn + 0.1, kind: 'cmd', wait: true },
         ],
       });
-      R.label(s, 'Eleven lines → one built-in', { x: 380, y: 168, w: 520, at: mark('outro-2', 'built'), tone: 'light', align: 'center', size: 22 });
+      R.label(s, 'Eleven lines → one built-in', { x: 310, y: 180, w: 440, at: mark('outro-2', 'built'), tone: 'light', align: 'center', size: 22 });
       // "That's reuse done right." The five cases snap together into one
       // build: lessons to keep, so gold.
-      const book = cover(s, { x: 430, y: 210, w: 420, h: 240, at: done - 0.1 });
+      const book = showcase(s, { x: 310, y: 222, w: 440, h: 240, at: done - 0.1 });
       R.plate(book, { x: 20, y: 206, w: 200, at: done });
       ['framework', 'Ariane 5', 'left-pad', 'Heartbleed', 'urllib3'].forEach((name, i) => {
         R.pkg(book, { x: 30, y: 178 - i * 28, w: 180, h: 28, name, tone: 'gold', small: true, under: i < 4, how: 'drop', at: done + 0.2 + i * 0.18 });
       });
       const words = R.label(book, 'Reuse done right', { x: 232, y: 150, w: 170, at: mark('outro-3', 'right'), tone: 'green', size: 28, weight: 900 });
-      words.classList.add('rk-cover-done');
+      words.classList.add('rk-showcase-done');
     }
 
     intro();
@@ -873,5 +888,7 @@
     quiz();
     refrain('refrain-3', 'refrain3', { tabs: { assume: ['Ariane 5'], pull: ['left-pad'], pin: ['urllib3', 'Heartbleed'] }, confetti: true });
     outro();
+    mainHero();
+    return { layers: [content] };
   };
 })();

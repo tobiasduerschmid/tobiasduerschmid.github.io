@@ -1,9 +1,8 @@
 /*
- * Reuse kit (js/song-video/reuse-kit.js): the casebook spreads of
- * "Not a One-Time Investment" and the pictures on their pages, in the
- * language of toy bricks: cream tiles hold text and pictures, studded navy
- * plates hold the tiles, and coloured bricks are the pieces (packages,
- * modules, principles, answers).
+ * Open compositions for "Not a One-Time Investment" (js/song-video/reuse-kit.js).
+ * The site remains visible between teaching objects. Fine cream outlines
+ * separate silhouettes; compact opaque plaques protect text contrast; code
+ * and terminals retain their own screens. No full-page or cover surfaces.
  *
  * One colour, one meaning, across the whole song: blue for reused packages
  * and libraries (and the case tabs and page headings that file them), gold
@@ -12,40 +11,45 @@
  * for a framework's structure, tan for neutral filler.
  *
  * Every text colour below keeps at least 4.5:1 on its own surface: ink,
- * blue, red, and green text on the cream tiles; white or ink names on brick colours chosen
- * for that (white on blue 4.9:1, on red 5.4:1, on green 5.1:1, on grey
- * 4.8:1; ink on gold 11.5:1 and on tan 10.6:1). Code and terminal cards are
+ * red and green text on cream plaques; white names on navy; ink names on brick
+ * colours chosen for that. Shading stays quiet behind labels. Code and terminal cards are
  * the stage's dark cards with its syntax colours. Like stage.css this styles
- * the 960×540 stage, which keeps its own artwork in both page themes.
+ * the 960×540 stage, which keeps its own artwork in both page themes;
+ * the player's print styles replace the stage with its transcript.
  */
 
 .stage {
-  --rk-paper: #f7f0e1;
-  --rk-ink: #1f2430;
-  --rk-muted: #575c68;
-  --rk-line: #b9ad94;
-  --rk-red: #b42318;
-  --rk-green: #13703a;
-  --rk-blue: #1d5fbf;
-  --rk-card: #172039;
-  --rk-plate: #1d3557;
-  --rk-plate-edge: #0e1b30;
+  --rk-ucla-blue: #2774ae;
+  --rk-ucla-gold: #ffd100;
+  --rk-paper: #fff5e5;
+  --rk-ink: #202f46;
+  --rk-muted: #525f6c;
+  --rk-line: #b99b71;
+  --rk-red: #b83232;
+  --rk-green: #076442;
+  --rk-blue: #1e5d93;
+  --rk-card: #172e4b;
   /* The shading every brick shares: a lit top edge, a darker bottom. */
-  --rk-brick-shade: linear-gradient(180deg, rgba(255, 255, 255, 0.3) 0 3px, rgba(255, 255, 255, 0) 3px 55%, rgba(0, 0, 0, 0.18));
-  --rk-stud-shade: linear-gradient(90deg, rgba(0, 0, 0, 0.2), rgba(255, 255, 255, 0.38) 30%, rgba(255, 255, 255, 0.05) 60%, rgba(0, 0, 0, 0.24));
+  --rk-brick-shade: linear-gradient(180deg, rgba(255, 255, 255, 0.3) 0 3px, transparent 3px 65%, rgba(20, 32, 35, 0.16));
+  --rk-stud-shade: linear-gradient(90deg, rgba(20, 32, 35, 0.2), rgba(255, 255, 255, 0.26) 30%, rgba(255, 255, 255, 0.04) 60%, rgba(20, 32, 35, 0.24));
   /* Plastic sheen: a soft diagonal highlight across a brick's face. */
-  --rk-brick-sheen: linear-gradient(112deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.06) 30%, rgba(255, 255, 255, 0) 31%);
-  --rk-tile: linear-gradient(180deg, #fbf6ea, #f3ead6);
+  --rk-brick-sheen: linear-gradient(112deg, rgba(255, 255, 255, 0.09) 0%, rgba(255, 255, 255, 0.03) 30%, transparent 31%);
 }
 
 /* Brick colours: the face, the outline, and the text on it. */
-.rk-c-blue { --brick: #2774ae; --brick-edge: #0e3a5e; --brick-ink: #ffffff; }
-.rk-c-gold { --brick: #ffd100; --brick-edge: #8a6d00; --brick-ink: #1f2430; }
-.rk-c-tan { --brick: #dcc79c; --brick-edge: #7d6a45; --brick-ink: #1f2430; }
-.rk-c-red { --brick: #c0392b; --brick-edge: #5c1a13; --brick-ink: #ffffff; }
-.rk-c-green { --brick: #2e7d4f; --brick-edge: #123f25; --brick-ink: #ffffff; }
-.rk-c-grey { --brick: #6b7280; --brick-edge: #2f343c; --brick-ink: #ffffff; }
-.rk-c-white { --brick: #f3f1ea; --brick-edge: #8f8a7c; --brick-ink: #1f2430; }
+.rk-c-blue {
+  --brick: var(--rk-ucla-blue);
+  --brick-edge: #123c71;
+  --brick-ink: #ffffff;
+  /* Shade the label-bearing face; the lit edge and studs retain UCLA blue. */
+  --rk-brick-shade: linear-gradient(180deg, rgba(255, 255, 255, 0.3) 0 3px, rgba(5, 32, 68, 0.12) 3px 65%, rgba(5, 32, 68, 0.22));
+}
+.rk-c-gold { --brick: var(--rk-ucla-gold); --brick-edge: #996419; --brick-ink: #202f46; }
+.rk-c-tan { --brick: #e5bd82; --brick-edge: #906531; --brick-ink: #202f46; }
+.rk-c-red { --brick: #ba382d; --brick-edge: #78281f; --brick-ink: #ffffff; }
+.rk-c-green { --brick: #087653; --brick-edge: #064c36; --brick-ink: #ffffff; }
+.rk-c-grey { --brick: #59666d; --brick-edge: #35434a; --brick-ink: #ffffff; }
+.rk-c-white { --brick: #fff6e7; --brick-edge: #ab8c63; --brick-ink: #202f46; }
 
 /* ------------------------------------------------------------------ */
 /* Studs and bricks                                                    */
@@ -64,6 +68,7 @@
 }
 
 .rk-studs i {
+  position: relative;
   width: 22px;
   height: 11px;
   box-sizing: border-box;
@@ -72,6 +77,20 @@
   border-radius: 5px 5px 0 0;
   background: var(--rk-stud-shade), var(--brick);
   box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.4);
+}
+
+/* Elliptical caps and inset rings make the studs read as cylinders. */
+.rk-studs i::before {
+  content: '';
+  position: absolute;
+  top: -3px;
+  left: -2px;
+  right: -2px;
+  height: 5px;
+  border: 1px solid var(--brick-edge);
+  border-radius: 50%;
+  background: linear-gradient(165deg, rgba(255, 255, 255, 0.32), transparent), var(--brick);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16);
 }
 
 .rk-studs--plate {
@@ -107,6 +126,17 @@
     0 8px 14px rgba(0, 0, 0, 0.24);
   box-sizing: border-box;
   text-align: center;
+}
+
+/* Molded perimeter inset: outside the label's reading area. */
+.rk-pkg::after {
+  content: '';
+  position: absolute;
+  inset: 5px;
+  border: 1px solid rgba(20, 32, 35, 0.17);
+  border-radius: 2px;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.12);
+  pointer-events: none;
 }
 
 /* A stack of many packages: courses of bricks with their seams, the name on
@@ -164,9 +194,9 @@
 }
 
 .rk-pkg-tag--any { border: 1.5px dashed var(--rk-muted); }
-.rk-pkg-tag--new { border-color: var(--rk-red); background: #fde2e1; color: var(--rk-red); }
-.rk-pkg-tag--bad { border-color: #5c1a13; background: var(--rk-red); color: #ffffff; }
-.rk-pkg-tag--pinned { border-color: var(--rk-green); background: #e3f4e8; color: var(--rk-green); }
+.rk-pkg-tag--new { border-color: var(--rk-red); background: #ffe1d5; color: var(--rk-red); }
+.rk-pkg-tag--bad { border-color: #78281f; background: var(--rk-red); color: #ffffff; }
+.rk-pkg-tag--pinned { border-color: var(--rk-green); background: #dff3e5; color: var(--rk-green); }
 
 .rk-pkg-marks {
   position: absolute;
@@ -203,11 +233,11 @@
 }
 
 .rk-ring--green { border-color: var(--rk-green); }
-.rk-ring--gold { border-color: #f2b900; }
+.rk-ring--gold { border-color: #b27616; }
 
 /* A brick on the lit path of a dependency chain. */
 .rk-pkg.is-path { box-shadow: 0 0 0 3px var(--rk-red), 0 6px 12px rgba(0, 0, 0, 0.28); }
-.rk-pkg.is-listed { box-shadow: 0 0 0 3px #f2b900, 0 6px 12px rgba(0, 0, 0, 0.28); }
+.rk-pkg.is-listed { box-shadow: 0 0 0 3px #b27616, 0 6px 12px rgba(0, 0, 0, 0.28); }
 
 .rk-plate {
   position: absolute;
@@ -231,8 +261,10 @@
 /* SVG bricks (vision, wall, rocket, scale, icons). */
 .rk-sb-body,
 .rk-sb-stud { fill: var(--brick); stroke: var(--brick-edge); stroke-width: 1.2; }
-.rk-sb-shine { fill: rgba(255, 255, 255, 0.38); }
-.rk-sb-shade { fill: rgba(0, 0, 0, 0.18); }
+.rk-sb-stud-cap { fill: var(--brick); stroke: var(--brick-edge); stroke-width: 0.75; }
+.rk-sb-shine { fill: rgba(255, 255, 255, 0.3); }
+.rk-sb-facet { fill: rgba(20, 32, 35, 0.2); }
+.rk-sb-panel { fill: none; stroke: rgba(20, 32, 35, 0.17); stroke-width: 0.7; }
 .rk-brick-icon { flex: none; overflow: visible; }
 
 .rk-crack { position: absolute; overflow: visible; fill: none; }
@@ -258,58 +290,29 @@
 }
 
 /* ------------------------------------------------------------------ */
-/* The spread: page tiles on a studded navy plate                       */
+/* Open case columns: leave the sky unobscured and separate each object. */
 /* ------------------------------------------------------------------ */
+
+.rk-teaching-scenes {
+  position: absolute;
+  inset: 0;
+}
+
+/* Reuse each illustration's coordinate system without scaling its type.
+   Both origins place its 404px-wide composition at x=324, in the clear sky. */
+.rk-focus-panel--left { transform: translateX(268px); }
+.rk-focus-panel--right { transform: translateX(-176px); }
 
 .rk-spread {
   position: absolute;
-  border-radius: 10px;
-  background:
-    radial-gradient(circle at 44% 38%, rgba(255, 255, 255, 0.28) 0 1.3px, transparent 1.7px) 0 0 / 14px 14px,
-    radial-gradient(circle at 50% 50%, #3b5f95 0 3.3px, #12223b 3.6px, transparent 4.3px) 0 0 / 14px 14px,
-    linear-gradient(180deg, #223d66, #182c4c);
-  box-shadow: 0 0 0 2px var(--rk-plate-edge), 0 18px 36px rgba(0, 0, 0, 0.55);
-}
-
-/* Its shadow on the ground. */
-.rk-spread::after {
-  content: '';
-  position: absolute;
-  left: 3%;
-  right: 3%;
-  bottom: -20px;
-  height: 22px;
-  background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.5), transparent 70%);
-  z-index: -1;
-}
-
-.rk-page {
-  position: absolute;
-  top: 14px;
-  bottom: 14px;
-  width: calc(50% - 20px);
-  border-radius: 4px;
-  background: var(--rk-tile);
-  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.8), inset 0 -3px 0 rgba(0, 0, 0, 0.08), 0 2px 0 rgba(0, 0, 0, 0.35);
-}
-
-.rk-page--left { left: 14px; }
-.rk-page--right { right: 14px; }
-
-.rk-spine {
-  position: absolute;
-  top: 14px;
-  bottom: 14px;
-  left: calc(50% - 3px);
-  width: 6px;
-  border-radius: 3px;
-  background: rgba(0, 0, 0, 0.35);
 }
 
 .rk-tab {
   position: absolute;
-  top: -18px;
-  right: 40px;
+  top: 8px;
+  left: 0;
+  max-width: 100%;
+  box-sizing: border-box;
   padding: 5px 14px 6px;
   border: 2px solid var(--brick-edge);
   border-radius: 4px;
@@ -322,28 +325,12 @@
   box-shadow: 0 4px 0 rgba(0, 0, 0, 0.3);
 }
 
-.rk-head {
-  position: absolute;
-  top: 22px;
-  color: var(--rk-blue);
-  font-size: 17px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
-.rk-head--left { left: 30px; }
-.rk-head--right { left: calc(50% + 24px); }
-
 /* The principle: a long brick that snaps on across the bottom. */
 .rk-ribbon {
   position: absolute;
-  display: flex;
-  align-items: baseline;
-  justify-content: center;
-  gap: 10px;
-  padding: 9px 18px 10px;
+  box-sizing: border-box;
+  display: block;
+  padding: 7px 12px;
   border: 2px solid var(--brick-edge);
   border-radius: 4px;
   background: var(--rk-brick-sheen), var(--rk-brick-shade), var(--brick);
@@ -353,16 +340,8 @@
   text-wrap: balance;
 }
 
-.rk-ribbon-kicker {
-  flex: none;
-  font-size: 15px;
-  font-weight: 800;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-
 .rk-ribbon-text { font-size: 21px; font-weight: 800; }
-.rk-ribbon-sub { font-size: 17px; font-weight: 600; }
+.rk-ribbon-sub { display: block; font-size: 17px; font-weight: 600; }
 
 .rk-group {
   position: absolute;
@@ -404,7 +383,7 @@
   top: 0;
   width: 26px;
   line-height: 40px;
-  color: var(--rk-muted);
+  color: var(--rk-paper);
   font-size: 22px;
   font-weight: 700;
   text-align: center;
@@ -463,6 +442,7 @@
   height: 540px;
   overflow: visible;
   pointer-events: none;
+  filter: drop-shadow(0 1px 0 #fff5e5) drop-shadow(0 -1px 0 #fff5e5);
 }
 
 .rk-arrow-path { fill: none; stroke-width: 3; stroke-linecap: round; }
@@ -540,29 +520,29 @@
   text-align: right;
 }
 
-.rk-code--error .rk-code-line { color: #ffb3ba; }
+.rk-code--error .rk-code-line { color: #ffb5a6; }
 .rk-code.is-struck { outline: 4px solid var(--rk-red); outline-offset: 2px; }
 
 .rk-hl { border-radius: 4px; }
-.rk-hl.is-lit { outline: 2px solid #ff8a95; background: rgba(255, 107, 125, 0.22); }
-.rk-hl--green.is-lit { outline-color: #7ee787; background: rgba(74, 222, 128, 0.2); }
+.rk-hl.is-lit { outline: 2px solid #ffad98; background: rgba(211, 136, 114, 0.18); }
+.rk-hl--green.is-lit { outline-color: #9ce4bd; background: rgba(135, 174, 144, 0.18); }
 
 .rk-term-bar {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 10px;
+  padding: 4px 10px;
   border-bottom: 1px solid rgba(160, 190, 255, 0.2);
 }
 
-.rk-term-dot { width: 9px; height: 9px; border-radius: 50%; background: #5b6b8c; }
+.rk-term-dot { width: 9px; height: 9px; border-radius: 50%; background: #789dc3; }
 .rk-term-title { margin-left: 6px; color: #b4c3e0; font-family: var(--font-display); font-size: 15px; font-weight: 700; }
 .rk-term-body { padding: 8px 12px 10px; }
 .rk-term-line { white-space: pre-wrap; overflow-wrap: anywhere; }
 .rk-term-line--cmd { color: #f6f8ff; }
 .rk-term-line--out { color: #c9d4e8; }
-.rk-term-line--err { color: #ff9aa5; }
-.rk-term-line--ok { color: #86efac; }
+.rk-term-line--err { color: #ffb5a6; }
+.rk-term-line--ok { color: #9ce4bd; }
 .rk-term-cursor[hidden],
 .rk-term-line[hidden] { display: none; }
 
@@ -581,27 +561,32 @@
 
 .rk-label {
   position: absolute;
-  color: var(--rk-ink);
+  --label-paper: var(--rk-card);
+  color: var(--rk-paper);
   font-size: 18px;
   font-weight: 700;
   line-height: 1.25;
   text-wrap: balance;
 }
 
-.rk-label--muted { color: var(--rk-muted); }
-.rk-label--red { color: var(--rk-red); }
-.rk-label--green { color: var(--rk-green); }
+.rk-label--muted { color: #c8d8ea; }
+.rk-label--red { --label-paper: var(--rk-paper); color: var(--rk-red); }
+.rk-label--green { --label-paper: var(--rk-paper); color: var(--rk-green); }
 .rk-label--light { color: #f6f8ff; }
 .rk-label--center { text-align: center; }
 .rk-label--right { text-align: right; }
 .rk-label--mono { font-family: var(--font-mono); letter-spacing: 0.02em; }
 
-/* Light lettering on the backdrop sits on its own dark backing. */
+/* Negative margins preserve the authored text coordinates and line wrapping. */
 .rk-label-pill {
   display: inline-block;
-  padding: 4px 12px 5px;
-  border-radius: 8px;
-  background: rgba(11, 23, 52, 0.8);
+  box-sizing: border-box;
+  max-width: calc(100% + 12px);
+  padding: 4px 6px;
+  margin: -4px -6px;
+  border-radius: 4px;
+  background: var(--label-paper);
+  box-shadow: 0 3px 8px rgba(13, 31, 54, 0.2);
 }
 
 .rk-note {
@@ -626,7 +611,7 @@
 .rk-note--small { padding: 4px 8px; font-size: 16px; box-shadow: 2px 2px 0 rgba(31, 36, 48, 0.85); }
 .rk-note--good { border-color: var(--rk-green); color: var(--rk-green); }
 .rk-note--bad { border-color: var(--rk-red); color: var(--rk-red); }
-.rk-note--tag { background: #fff4c2; }
+.rk-note--tag { background: #ffe7ac; }
 .rk-note--good svg,
 .rk-note--bad svg { stroke-width: 2.6; }
 
@@ -635,7 +620,7 @@
   padding: 3px 10px 2px;
   border: 3px solid currentColor;
   border-radius: 6px;
-  background: rgba(247, 240, 225, 0.88);
+  background: var(--rk-paper);
   font-size: 18px;
   font-weight: 900;
   letter-spacing: 0.08em;
@@ -654,6 +639,7 @@
   stroke-width: 5;
   stroke-linecap: round;
   stroke-linejoin: round;
+  filter: drop-shadow(0 1px 0 #fff5e5) drop-shadow(0 -1px 0 #fff5e5);
 }
 
 .rk-tick--check { stroke: var(--rk-green); }
@@ -682,29 +668,25 @@
 }
 
 .rk-shelf-name {
-  color: var(--rk-ink);
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--rk-card);
+  color: var(--rk-paper);
   font-family: var(--font-mono);
   font-size: 16px;
   font-weight: 600;
-}
-
-.rk-shelf--desk .rk-shelf-name {
-  padding: 1px 6px;
-  border-radius: 5px;
-  background: rgba(11, 23, 52, 0.8);
-  color: #f6f8ff;
 }
 
 .rk-shelf-board {
   height: 12px;
   margin-top: 4px;
   border-radius: 3px;
-  background: #8b5e34;
-  box-shadow: 0 4px 0 #5e3d1f;
+  background: linear-gradient(180deg, #b29470 0 2px, #8e7355 2px 9px, #735c44 9px);
+  box-shadow: 0 4px 0 #564837;
 }
 
 .rk-users { position: absolute; inset: 0; width: 960px; height: 540px; overflow: visible; }
-.rk-users-line { stroke: var(--rk-line); stroke-width: 2; fill: none; }
+.rk-users-line { stroke: #ffe4a3; stroke-width: 2; fill: none; }
 
 .rk-app {
   position: absolute;
@@ -714,7 +696,7 @@
   height: 30px;
   border: 2px solid var(--rk-ink);
   border-radius: 6px;
-  background: #e8f0ff;
+  background: #ddeeff;
   color: var(--rk-ink);
 }
 
@@ -729,7 +711,7 @@
   gap: 10px;
 }
 
-.rk-bar-label { color: var(--rk-ink); font-size: 17px; font-weight: 700; }
+.rk-bar-label { color: var(--rk-paper); font-size: 17px; font-weight: 700; }
 
 .rk-bar-track {
   height: 22px;
@@ -742,7 +724,7 @@
 .rk-bar-fill {
   display: block;
   height: 100%;
-  background: linear-gradient(180deg, #ffe066, #f2b900);
+  background: linear-gradient(180deg, #ffe16b, #e7a727);
   box-shadow: inset 0 -2px 0 rgba(122, 90, 0, 0.45);
   transform-origin: 0 50%;
 }
@@ -756,14 +738,16 @@
   font-size: 17px;
   font-weight: 800;
   text-align: center;
+  background: var(--rk-paper);
+  border-radius: 4px;
 }
 
 .rk-vision-lib--blue { color: var(--rk-blue); }
 .rk-vision-lib--tan { color: #6b5530; }
 
 .rk-glue {
-  fill: rgba(255, 238, 150, 0.92);
-  stroke: #8a6d00;
+  fill: rgba(255, 223, 132, 0.92);
+  stroke: #996419;
   stroke-width: 1.5;
   stroke-dasharray: 3 2;
 }
@@ -772,7 +756,7 @@
 
 .rk-wall { position: absolute; }
 .rk-wall svg { overflow: visible; }
-.rk-wall-gap { fill: rgba(31, 36, 48, 0.06); stroke: var(--rk-muted); stroke-width: 2; stroke-dasharray: 5 4; }
+.rk-wall-gap { fill: rgba(255, 245, 229, 0.12); stroke: var(--rk-paper); stroke-width: 2; stroke-dasharray: 5 4; }
 
 .rk-timeline { position: absolute; height: 74px; }
 
@@ -826,9 +810,14 @@
 
 .rk-padlock { position: absolute; display: grid; justify-items: center; gap: 4px; }
 .rk-padlock svg { overflow: visible; }
-.rk-padlock-shackle { fill: none; stroke: #6b7280; stroke-width: 9; }
-.rk-padlock-body { fill: #d4a017; stroke: var(--rk-ink); stroke-width: 3; }
-.rk-padlock-body.is-fixed { fill: #4caf6a; }
+.rk-padlock-shackle { fill: none; stroke: #647780; stroke-width: 9; }
+.rk-padlock-shackle-shine { fill: none; stroke: #c6d0cc; stroke-width: 2.2; stroke-linecap: round; }
+.rk-padlock-body { fill: #efbe24; stroke: var(--rk-ink); stroke-width: 3; }
+.rk-padlock-body.is-fixed { fill: #49b884; }
+.rk-padlock-bevel { fill: none; stroke: rgba(40, 56, 62, 0.24); stroke-width: 3; stroke-linecap: round; }
+.rk-padlock-shine { fill: none; stroke: rgba(255, 250, 235, 0.6); stroke-width: 3; stroke-linecap: round; }
+.rk-padlock-escutcheon { fill: rgba(255, 250, 235, 0.22); stroke: rgba(40, 56, 62, 0.28); stroke-width: 1.4; }
+.rk-padlock-fasteners { fill: none; stroke: #655b45; stroke-width: 2; stroke-linecap: round; }
 .rk-padlock-hole { fill: var(--rk-ink); }
 .rk-padlock-crack { fill: none; stroke: var(--rk-red); stroke-width: 4; stroke-linejoin: round; }
 
@@ -848,8 +837,8 @@
 }
 
 .rk-appgrid-cell {
-  --brick: #c0392b;
-  --brick-edge: #5c1a13;
+  --brick: #ba382d;
+  --brick-edge: #78281f;
   position: relative;
   display: grid;
   place-items: center;
@@ -862,7 +851,7 @@
   box-sizing: border-box;
 }
 
-.rk-appgrid-cell.is-green { --brick: #2e7d4f; --brick-edge: #123f25; }
+.rk-appgrid-cell.is-green { --brick: #087653; --brick-edge: #064c36; }
 .rk-appgrid-cell svg { width: 20px; height: 20px; }
 .rk-appgrid-cell .rk-studs { left: 6px; right: 6px; top: -7px; height: 7px; }
 .rk-appgrid-cell .rk-studs i { width: 12px; height: 8px; }
@@ -875,30 +864,38 @@
    dark interstages and engines, and a cut-away window onto the gold module
    in the equipment bay. Not bricks: the case is about a real rocket. */
 .rk-rkt-shell { stroke: #8f8a7c; stroke-width: 1.1; stroke-linejoin: round; }
-.rk-rkt-body-0 { stop-color: #e4e0d6; }
-.rk-rkt-body-1 { stop-color: #ffffff; }
-.rk-rkt-body-2 { stop-color: #e8e5dc; }
-.rk-rkt-body-3 { stop-color: #b5b0a3; }
+.rk-rkt-body-0 { stop-color: #cad5d3; }
+.rk-rkt-body-1 { stop-color: #fffcf2; }
+.rk-rkt-body-2 { stop-color: #e9e7db; }
+.rk-rkt-body-3 { stop-color: #9faeb0; }
 .rk-rkt-metal,
 .rk-rkt-band { stroke: #22262e; stroke-width: 0.9; stroke-linejoin: round; }
-.rk-rkt-metal-0 { stop-color: #59606d; }
-.rk-rkt-metal-1 { stop-color: #8c939f; }
-.rk-rkt-metal-2 { stop-color: #2b3039; }
+.rk-rkt-metal-0 { stop-color: #526874; }
+.rk-rkt-metal-1 { stop-color: #98aaa9; }
+.rk-rkt-metal-2 { stop-color: #283e49; }
 .rk-rkt-seam { fill: none; stroke: rgba(70, 64, 52, 0.38); stroke-width: 0.9; }
+.rk-rkt-panel-seam { fill: none; stroke: #889a9c; stroke-width: 0.65; }
+.rk-rkt-fasteners { fill: none; stroke: #7c9195; stroke-width: 0.9; stroke-dasharray: 0.5 3; stroke-linecap: round; }
+.rk-rkt-shell-shine { fill: none; stroke: rgba(255, 255, 248, 0.65); stroke-width: 1.7; }
+.rk-rkt-fairing-shine { fill: none; stroke: rgba(255, 255, 248, 0.8); stroke-width: 2.4; stroke-linecap: round; }
+.rk-rkt-insignia { fill: #176daf; }
+.rk-rkt-insignia-light { fill: none; stroke: #d9edff; stroke-width: 1.2; }
+.rk-rkt-engine-ribs { fill: none; stroke: #b2c1bc; stroke-width: 0.6; }
+.rk-rkt-nozzle { fill: #25353c; }
 .rk-rkt-raceway { fill: #d6d2c7; stroke: rgba(70, 64, 52, 0.35); stroke-width: 0.6; }
 .rk-rkt-hatch { fill: #dedad0; stroke: rgba(70, 64, 52, 0.5); stroke-width: 0.7; }
 .rk-rkt-strut { fill: none; stroke: #59606d; stroke-width: 1.8; stroke-linecap: round; }
 .rk-rkt-window-frame { fill: none; stroke: #454c59; stroke-width: 1.4; }
 .rk-rkt-bay-0 { stop-color: #34425f; }
 .rk-rkt-bay-1 { stop-color: #111725; }
-.rk-rkt-window-ring { fill: none; stroke: #e8741a; stroke-width: 2.6; opacity: 0; }
+.rk-rkt-window-ring { fill: none; stroke: #cf7e0e; stroke-width: 2.6; opacity: 0; }
 .rk-module-lit .rk-rkt-window-ring { opacity: 1; }
 .rk-rkt-module-box { stroke: #7a5f00; stroke-width: 1; }
-.rk-rkt-gold-0 { stop-color: #fff2b0; }
-.rk-rkt-gold-1 { stop-color: #ffd100; }
-.rk-rkt-gold-2 { stop-color: #c49600; }
+.rk-rkt-gold-0 { stop-color: #fff0b0; }
+.rk-rkt-gold-1 { stop-color: var(--rk-ucla-gold); }
+.rk-rkt-gold-2 { stop-color: #c58a1d; }
 .rk-rkt-module-lid { fill: rgba(255, 255, 255, 0.5); }
-.rk-rkt-gyro { fill: #ffe372; stroke: #7a5f00; stroke-width: 0.9; }
+.rk-rkt-gyro { fill: #ffda70; stroke: #7a5f00; stroke-width: 0.9; }
 .rk-rkt-gyro-axis,
 .rk-rkt-vents { fill: none; stroke: #7a5f00; stroke-width: 0.8; }
 .rk-rkt-cable { fill: none; stroke: #9aa4b6; stroke-width: 0.9; }
@@ -910,16 +907,16 @@
 .rk-rkt-arm { fill: none; stroke: #6b7280; stroke-width: 1.6; stroke-linecap: round; }
 .rk-rkt-smoke { fill: #c4bcad; }
 .rk-rkt-flame { stroke: none; }
-.rk-rkt-flame-0 { stop-color: #ffd36b; }
-.rk-rkt-flame-1 { stop-color: #f59e0b; }
-.rk-rkt-flame-2 { stop-color: rgba(234, 88, 12, 0); }
-.rk-rkt-flame-core { fill: #ffe7a3; }
+.rk-rkt-flame-0 { stop-color: #ffd170; }
+.rk-rkt-flame-1 { stop-color: #f09a3b; }
+.rk-rkt-flame-2 { stop-color: rgba(216, 99, 36, 0); }
+.rk-rkt-flame-core { fill: #fff0b5; }
 .rk-rkt-debris-panel { fill: #f1eee6; stroke: #8f8a7c; stroke-width: 1; }
 .rk-rkt-debris-metal { fill: #59606d; stroke: #22262e; stroke-width: 0.8; }
-.rk-rkt-blast-fire { fill: #f59e0b; }
-.rk-rkt-blast-fire circle:nth-child(odd) { fill: #ea580c; }
+.rk-rkt-blast-fire { fill: #ef9a3d; }
+.rk-rkt-blast-fire circle:nth-child(odd) { fill: #d96830; }
 .rk-rkt-blast-smoke { fill: #8f877a; }
-.rk-rkt-debris-gold { fill: #ffd100; stroke: #7a5f00; stroke-width: 1; }
+.rk-rkt-debris-gold { fill: var(--rk-ucla-gold); stroke: #7a5f00; stroke-width: 1; }
 
 .rk-rocket-name {
   position: absolute;
@@ -941,17 +938,21 @@
   width: 140px;
   height: 140px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(245, 158, 11, 0.75), rgba(194, 65, 12, 0.35) 55%, transparent 72%);
+  background: radial-gradient(circle, rgba(239, 154, 61, 0.7), rgba(202, 95, 39, 0.3) 55%, transparent 72%);
 }
 
 .rk-gauge { position: absolute; display: grid; justify-items: center; }
 .rk-gauge svg { overflow: visible; }
 .rk-gauge-title { color: var(--rk-ink); font-size: 18px; font-weight: 800; text-align: center; }
-.rk-gauge-safe { fill: none; stroke: #4caf6a; stroke-width: 16; }
-.rk-gauge-over { fill: none; stroke: #e05a4f; stroke-width: 16; }
+.rk-gauge-face { fill: #f6eddf; }
+.rk-gauge-rim { fill: none; stroke: #b5b5a7; stroke-width: 2; }
+.rk-gauge-safe { fill: none; stroke: #0c9467; stroke-width: 16; }
+.rk-gauge-over { fill: none; stroke: #d34835; stroke-width: 16; }
+.rk-gauge-ticks { fill: none; stroke: #6c7974; stroke-width: 1.2; }
 .rk-gauge-limit path { stroke: var(--rk-ink); stroke-width: 4; }
 .rk-gauge-needle { stroke: var(--rk-ink); stroke-width: 5; stroke-linecap: round; }
 .rk-gauge-hub { fill: var(--rk-ink); }
+.rk-gauge-hub-cap { fill: #bbcbc4; }
 
 .rk-gauge-readout {
   margin-top: -6px;
@@ -1001,11 +1002,11 @@
 
 .rk-scale { position: absolute; }
 .rk-scale svg { overflow: visible; }
-.rk-scale-stand { stroke: #6b4a22; stroke-width: 6; stroke-linecap: round; fill: none; }
-.rk-scale-bar { stroke: #6b4a22; stroke-width: 6; stroke-linecap: round; }
-.rk-scale-pivot { fill: #d4a017; stroke: #6b4a22; stroke-width: 2; }
-.rk-scale-string { stroke: #8b6b3c; stroke-width: 1.6; fill: none; }
-.rk-scale-pan { fill: #d4a017; stroke: #6b4a22; stroke-width: 2; }
+.rk-scale-stand { stroke: #ffe4a3; stroke-width: 6; stroke-linecap: round; fill: none; }
+.rk-scale-bar { stroke: #ffe4a3; stroke-width: 6; stroke-linecap: round; }
+.rk-scale-pivot { fill: #efbe24; stroke: #6b4a22; stroke-width: 2; }
+.rk-scale-string { stroke: #ffe4a3; stroke-width: 2; fill: none; }
+.rk-scale-pan { fill: #efbe24; stroke: #6b4a22; stroke-width: 2; }
 
 .rk-scale-label {
   position: absolute;
@@ -1021,45 +1022,50 @@
 .rk-scale-label--right { right: -20px; }
 
 /* ------------------------------------------------------------------ */
-/* Cards: tiles on a navy plate (checklist, quiz, cover)                */
+/* Open compositions: separate question strips, plaques, and brick towers */
 /* ------------------------------------------------------------------ */
 
 .rk-list,
 .rk-quiz,
-.rk-cover {
+.rk-showcase {
   position: absolute;
-  border-radius: 6px;
-  background: var(--rk-tile);
   color: var(--rk-ink);
-  box-shadow:
-    0 0 0 10px var(--rk-plate),
-    0 0 0 12px var(--rk-plate-edge),
-    0 18px 36px rgba(0, 0, 0, 0.55);
   box-sizing: border-box;
 }
 
-.rk-list { padding: 14px 140px 12px 22px; }
+.rk-list { height: 360px; }
 
 .rk-list-title {
+  display: inline-block;
   margin-bottom: 8px;
+  padding: 6px 10px;
+  border-left: 4px solid var(--rk-ucla-gold);
+  border-radius: 4px;
+  background: var(--rk-card);
+  color: var(--rk-paper);
   font-size: 24px;
   font-weight: 900;
 }
 
 .rk-list-row {
-  position: relative;
+  position: absolute;
+  top: 66px;
+  left: 0;
+  width: 310px;
+  box-sizing: border-box;
   display: grid;
-  grid-template-columns: 44px 1fr auto;
+  grid-template-columns: 40px 1fr;
   align-items: center;
-  gap: 12px;
-  margin: 4px -10px;
-  padding: 5px 10px;
-  border-radius: 8px;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 5px;
+  background: var(--rk-paper);
+  box-shadow: 0 3px 10px rgba(13, 31, 54, 0.3);
 }
 
 /* Not yet sung: muted ink (5.9:1), never transparency, so it stays readable. */
 .rk-list-row:not(.is-lit) .rk-list-q { color: var(--rk-muted); }
-.rk-list-row.is-lit { background: rgba(212, 160, 23, 0.18); }
+.rk-list-row.is-lit { background: #ffe9a6; box-shadow: inset 4px 0 0 var(--rk-ucla-gold), 0 3px 10px rgba(13, 31, 54, 0.3); }
 
 .rk-list-icon {
   display: grid;
@@ -1082,7 +1088,7 @@
 .rk-list-icon svg { width: 24px; height: 24px; }
 .rk-list-q { font-size: 21px; font-weight: 800; }
 .rk-list-name { color: var(--rk-muted); font-size: 16px; font-weight: 700; }
-.rk-list-tabs { display: flex; gap: 6px; }
+.rk-list-tabs { grid-column: 2; display: flex; flex-wrap: wrap; gap: 6px; }
 
 .rk-list-tab {
   padding: 2px 9px;
@@ -1095,38 +1101,33 @@
 }
 
 .rk-list-footer {
-  margin-top: 10px;
-  padding: 8px 12px;
-  border-top: 2px dashed var(--rk-line);
-  color: var(--rk-muted);
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 6px 12px;
+  border-radius: 4px;
+  background: var(--rk-card);
+  color: var(--rk-paper);
   font-size: 22px;
   font-weight: 900;
   text-align: center;
 }
 
-.rk-list-footer.is-lit { color: var(--rk-ink); }
+.rk-list-footer.is-lit { color: var(--rk-ink); background: var(--rk-ucla-gold); }
 
-/* The takeaway, lit: ink on a bright gold highlighter band (gold is what to
-   keep), not gold-brown text, which reads as olive on the cream tile. */
+/* A sunlit UCLA-gold highlight repeats the principle bricks' colour. */
 .rk-list-footer-text {
-  padding: 1px 10px 3px;
-  border-radius: 6px;
-  background-size: 0% 100%;
-  background-repeat: no-repeat;
-  background-image: linear-gradient(100deg, #ffd84a, #ffc400);
-  box-decoration-break: clone;
-  -webkit-box-decoration-break: clone;
-  transition: none;
+  display: block;
 }
-.rk-list-footer.is-lit .rk-list-footer-text { background-size: 100% 100%; }
 
 /* The tower in the checklist card's right column: one brick per question. */
 .rk-list-tower {
   position: absolute;
-  right: 24px;
-  bottom: 14px;
+  right: 6px;
+  bottom: 94px;
   width: 92px;
-  height: calc(100% - 28px);
+  height: 176px;
 }
 
 .rk-list-base {
@@ -1141,7 +1142,7 @@
   box-sizing: border-box;
 }
 
-.rk-list-base.is-lit { --brick: #ffd100; --brick-edge: #8a6d00; box-shadow: 0 0 0 3px rgba(255, 209, 0, 0.35); }
+.rk-list-base.is-lit { --brick: var(--rk-ucla-gold); --brick-edge: #996419; box-shadow: 0 0 0 3px rgba(236, 173, 40, 0.3); }
 
 .rk-list-brick {
   position: absolute;
@@ -1159,7 +1160,7 @@
 
 .rk-list-brick svg { width: 22px; height: 22px; }
 
-.rk-quiz { padding: 14px 18px 16px; }
+.rk-quiz { padding: 0; }
 
 .rk-quiz-head {
   display: flex;
@@ -1179,9 +1180,14 @@
   text-transform: uppercase;
 }
 
-.rk-quiz-number { color: var(--rk-muted); font-size: 16px; font-weight: 800; }
+.rk-quiz-number { color: var(--rk-paper); font-size: 16px; font-weight: 800; }
 
 .rk-quiz-question {
+  padding: 10px 12px;
+  border-left: 4px solid var(--rk-ucla-gold);
+  border-radius: 4px;
+  background: var(--rk-card);
+  color: var(--rk-paper);
   font-size: 23px;
   font-weight: 800;
   line-height: 1.25;
@@ -1190,11 +1196,14 @@
 
 /* The answer: a green brick that snaps onto the card. */
 .rk-quiz-answer {
-  position: relative;
+  position: absolute;
+  top: 304px;
+  left: 0;
+  right: 0;
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-top: 20px;
+  margin-top: 0;
   padding: 9px 12px;
   border: 2px solid var(--brick-edge);
   border-radius: 4px;
@@ -1215,13 +1224,67 @@
 .rk-quiz-emblem svg { width: 22px; height: 22px; }
 .rk-quiz-answer-text { font-size: 21px; font-weight: 800; }
 
-.rk-cover { padding: 18px 22px 20px; }
-.rk-cover-title { font-size: 24px; font-weight: 900; text-wrap: balance; }
+.rk-showcase { padding: 18px 22px 20px; }
+.rk-showcase-title {
+  display: inline-block;
+  margin: -8px -12px;
+  padding: 8px 12px;
+  border-left: 4px solid var(--rk-ucla-gold);
+  border-radius: 4px;
+  background: var(--rk-card);
+  color: var(--rk-paper);
+  font-size: 24px;
+  font-weight: 900;
+  text-wrap: balance;
+}
 
-.rk-cover-done {
+.rk-showcase-done {
   color: var(--rk-green);
   font-size: 28px;
   font-weight: 900;
+}
+
+/* These captions previously relied on a page. Their small, opaque backings
+   now preserve text contrast through every sunrise frame, in both page themes.
+   The player replaces the entire decorative stage with its transcript in print. */
+.rk-bar-label,
+.rk-timeline-text,
+.rk-padlock-label,
+.rk-rocket-name,
+.rk-gauge-title,
+.rk-gauge-limit-text,
+.rk-scale-label,
+.rk-quiz-number,
+.rk-xray-label {
+  border-radius: 3px;
+  background: var(--rk-card);
+  color: var(--rk-paper);
+  box-shadow: 0 0 0 4px var(--rk-card), 0 4px 10px rgba(13, 31, 54, 0.25);
+}
+
+.rk-gauge-readout {
+  min-width: 100px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: var(--rk-paper);
+}
+
+.rk-check-row {
+  margin: -3px -5px;
+  padding: 3px 5px;
+  border-radius: 4px;
+  background: var(--rk-paper);
+}
+
+/* A fine cream contour separates the foreground from the brickwork.
+   Zero blur keeps the edge crisp and leaves the surrounding sky untouched. */
+.rk-scale svg,
+.rk-rocket > svg,
+.rk-padlock > svg,
+.rk-vision > svg,
+.rk-wall > svg {
+  filter: drop-shadow(1px 0 0 #fff2cf) drop-shadow(-1px 0 0 #fff2cf)
+    drop-shadow(0 1px 0 #fff2cf) drop-shadow(0 -1px 0 #fff2cf);
 }
 
 /* ------------------------------------------------------------------ */
@@ -1240,7 +1303,7 @@
   position: absolute;
   left: 12px;
   top: 8px;
-  color: var(--rk-ink);
+  color: var(--rk-paper);
   font-size: 17px;
   font-weight: 800;
 }
@@ -1255,6 +1318,6 @@
 .rk-ghost--frame { border-width: 4px; border-radius: 10px; }
 
 /* In this song the section badge and stickers read at paragraph size too. */
-.theme-brick-site .badge { font-size: 16px; }
+.theme-brick-site .badge { left: 310px; max-width: 440px; font-size: 16px; color: var(--rk-ink); background: linear-gradient(165deg, #ffe778, var(--rk-ucla-gold) 60%, #efb80c); border-color: #996419; }
 .theme-brick-site .sticker { font-size: 16px; }
 .theme-brick-site .sticker svg { width: 18px; height: 18px; }

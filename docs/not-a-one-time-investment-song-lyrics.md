@@ -20,9 +20,16 @@ per case with one colour per meaning, the same in every case: blue for reused
 packages and libraries (and the case tabs and page headings that file them),
 gold for your own code and what is worth keeping (principles, the refrain's
 questions), red for what breaks, green for what is fixed or right, grey for a
-framework's structure, and tan for neutral filler. Only low-contrast things
-move in the backdrop (drifting clouds, the light in lit windows, a dim
-forklift on the ground), so nothing pulls the eye from the casebook.
+framework's structure, and tan for neutral filler. The teaching objects sit
+in sequence between the towers, with small opaque text plaques and one
+checklist question at a time. One continuous foreman sings with the words
+beside every lesson, without a halo. Clouds and the forklift hold still
+during explanations, while the buildings remain sharp. The ground and its
+studs are present from the beginning; only the buildings and crane assemble.
+The sun follows a rising arc to the right, and its elevation
+drives the sky, cloud, and site lighting from blue hour through coral dawn
+into golden hour. The stars and site lights fade as daylight arrives, with
+UCLA blue and gold accents throughout.
 
 ## What changed from the dance-pop draft
 
@@ -363,7 +370,13 @@ to sing.
    don't use the song's wording, so it checks retrieval without the melody as
    a cue.
 
-## Music video storyboard
+## Original music video storyboard notes
+
+These early planning notes preserve the original desk-and-casebook concept.
+The implemented video now uses an open composition over a brick construction
+site, with compact text plaques, separate checklist strips, and a blue-hour
+sunrise. The current pictures and descriptions are maintained in
+`_data/songs/not_a_one_time_investment.yml` and its song choreography.
 
 ### The world: the casebook
 

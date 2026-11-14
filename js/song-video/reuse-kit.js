@@ -1,49 +1,18 @@
 /*
  * Reuse kit for "Not a One-Time Investment", the design-with-reuse song
- * (storyboard: _data/songs/not_a_one_time_investment.yml): the casebook
- * spreads the choreography stands on the brick construction site of
- * js/song-video/brick-site.js, and the pictures on their pages.
+ * (storyboard: _data/songs/not_a_one_time_investment.yml).
  *
- * The song's metaphor is the lecture's own (Lecture 12, "Composing Existing
- * Building Blocks"): a module is a toy brick. Every package is a brick with
- * studs on top; what a brick offers others to build on, its interface, is
- * its studs; a brick stacked on another depends on it; a baseplate is a
- * framework that decides where your bricks go; a principle is a brick to
- * keep. The kit draws in three surfaces:
+ * The lecture's building-block metaphor stands directly over the brick
+ * construction site. spread() supplies a central case tab and principle,
+ * without a page background. Text uses compact opaque plaques; code and
+ * terminals keep their own screens. checklist() presents one question at a
+ * time beside its growing brick tower. quiz() replaces the question with its
+ * answer illustration, keeping the answer brick underneath.
  *
- *   tiles     smooth cream surfaces for text and pictures: the pages, the
- *             cards (and their code and terminal screens);
- *   plates    studded baseplates that hold them: the casebook's cover, the
- *             frames of the cards, the ground of a build;
- *   bricks    coloured, studded pieces: packages, modules, principles,
- *             answers.
- *
- *   spread()      an open casebook on a studded navy plate: a case-tab brick,
- *                 the left and right page tiles with their headings ("What
- *                 happened", "Why"), and a principle brick across the bottom;
- *   group(), layer()  pictures that come and go together; a stage-sized
- *                 layer that a build tilts or drops as one;
- *   pkg()         a package brick: its name on the front, a version tag that
- *                 flips, dashes, and pins, its studs (hidden when another
- *                 brick sits on it, changed when its interface changes), and
- *                 a ring, a cross, or a check;
- *   plate()       a baseplate strip under a build, or a framework's base;
- *   brickIcon(), crack(), dust(), strain():  a small brick drawing; a crack
- *                 drawn into a brick; a cartoon dust puff; comic strain lines;
- *   arrow(), code(), term(), label(), note(), inkStamp(), tick():
- *                 ink arrows, code and terminal cards, ink lettering, cream
- *                 notes, rubber stamps, a check or cross drawn on;
- *   shelf(), users(), bars(), vision(), wallGap(), padColumn(), timeline(),
- *   padlock(), appGrid(), rocket(), gauge(), checkboxes(), scale():
- *                 the pictures the cases need: a shelf of package bricks,
- *                 one brick used by many apps, compatible bricks against
- *                 mismatched ones held by glue, a wall with a gap a brick
- *                 must fit, a column lined up on the right by padding
- *                 bricks, apps as bricks, and the two Ariane rockets with
- *                 the gold module in a cut-away equipment bay;
- *   checklist()   the refrain's card: four questions that light as they are
- *                 sung, each adding its brick to a tower beside the card;
- *   quiz()        a numbered question card whose answer brick snaps on.
+ * Blue package bricks expose studs as their interface; stacked bricks
+ * depend on the pieces below; a framework is a baseplate that decides where
+ * bricks go. The picture helpers draw these mechanisms and the real-world
+ * cases (including the two Ariane rockets and their integer gauge).
  *
  * One colour means one thing across the whole song: blue bricks are reused
  * packages and libraries (and the case tabs and page headings that file
@@ -65,11 +34,9 @@
   const kit = window.SongKit;
   const { el, svg, place } = kit;
 
-  /** The open casebook and its two pages, in stage coordinates. */
-  const SPREAD = { x: 36, y: 56, w: 888, h: 394 };
-  const LEFT = { x: 56, y: 104, w: 404, h: 286 };
-  const RIGHT = { x: 500, y: 104, w: 404, h: 286 };
-  const RIBBON_Y = 400;
+  /** The clear space between the hall and construction tower. */
+  const SPREAD = { x: 310, y: 56, w: 440, h: 394 };
+  const RIBBON_Y = 390;
 
   /** Shows a node from `at` and, with `until`, hides it again. */
   function show(node, at, until, how = 'pop') {
@@ -120,33 +87,21 @@
   // ------------------------------------------------------------------
 
   /**
-   * An open casebook: a studded navy plate holding two page tiles. `tab`
-   * names the case on a blue brick at the top ("Case 1 · urllib3"), `left`
-   * and `right` head the pages (`heads` returns them, for a heading that
-   * changes). ribbon(text, { at, until }) snaps the principle, a gold brick,
-   * on across the bottom; each call replaces the one before.
+   * A central composition with no backing surface. `tab` names the case on
+   * a blue brick; ribbon() snaps its principle below the current illustration.
    */
-  function spread(layer, { at, until, tab, left, right }) {
+  function spread(layer, { at, until, tab }) {
     const node = show(box(layer, 'rk-spread', SPREAD), at, until, 'fade');
-    el('div', 'rk-page rk-page--left', node);
-    el('div', 'rk-page rk-page--right', node);
-    el('div', 'rk-spine', node);
     if (tab) {
       const tabNode = el('div', 'rk-tab rk-c-blue', node, tab);
       studs(tabNode, 3);
     }
-    const heads = {
-      left: left ? el('div', 'rk-head rk-head--left', node, left) : null,
-      right: right ? el('div', 'rk-head rk-head--right', node, right) : null,
-    };
     const ribbons = [];
     return {
       node,
-      heads,
       ribbon(text, { at: from, until: to, sub } = {}) {
-        const ribbon = box(layer, 'rk-ribbon rk-c-gold', { x: 150, y: RIBBON_Y, w: 660 });
-        studs(ribbon, 12);
-        el('span', 'rk-ribbon-kicker', ribbon, 'Principle');
+        const ribbon = box(layer, 'rk-ribbon rk-c-gold', { x: SPREAD.x, y: RIBBON_Y, w: SPREAD.w });
+        studs(ribbon, 8);
         el('span', 'rk-ribbon-text', ribbon, text);
         if (sub) el('span', 'rk-ribbon-sub', ribbon, sub);
         const previous = ribbons[ribbons.length - 1];
@@ -178,32 +133,29 @@
   // Bricks
   // ------------------------------------------------------------------
 
-  /** A small brick seen from the front: body, studs, shine, and shade. */
+  /** A small molded brick, using the same artwork as the larger scene pieces. */
   function brickIcon(parent, { tone = 'blue', studs: count = 2, w = 44, h = 28 } = {}) {
     const sh = 6;
     const art = svg('svg', { class: `rk-brick-icon rk-c-${tone}`, viewBox: `0 0 ${w} ${h + sh}`, width: w, height: h + sh, 'aria-hidden': 'true' }, parent);
-    const pitch = (w - 4) / count;
-    for (let i = 0; i < count; i++) {
-      svg('rect', { class: 'rk-sb-stud', x: 2 + i * pitch + pitch * 0.18, y: 1, width: pitch * 0.64, height: sh + 2, rx: 2 }, art);
-    }
-    svg('rect', { class: 'rk-sb-body', x: 1, y: sh, width: w - 2, height: h - 1, rx: 2.5 }, art);
-    svg('rect', { class: 'rk-sb-shine', x: 3.5, y: sh + 2, width: w - 7, height: 3, rx: 1.5 }, art);
-    svg('rect', { class: 'rk-sb-shade', x: 3.5, y: sh + h - 7, width: w - 7, height: 3.5, rx: 1.5 }, art);
+    svgBrick(art, { x: 1, y: sh, w: w - 2, h: h - 1, tone, studs: count, studW: ((w - 4) / count) * 0.64, studH: 4 });
     return art;
   }
 
-  /** A brick drawn into an SVG `parent`: body, studs (pitch-spaced), shine, shade. */
+  /** A molded brick with cylindrical stud caps and a recessed front panel. */
   function svgBrick(parent, { x, y, w, h, tone, studs: count = 0, studW = 9, studH = 4.5 }) {
     const g = svg('g', { class: `rk-c-${tone}` }, parent);
     if (count) {
       const pitch = w / count;
       for (let i = 0; i < count; i++) {
-        svg('rect', { class: 'rk-sb-stud', x: x + i * pitch + (pitch - studW) / 2, y: y - studH, width: studW, height: studH + 1.5, rx: 1.6 }, g);
+        const cx = x + (i + 0.5) * pitch;
+        svg('rect', { class: 'rk-sb-stud', x: cx - studW / 2, y: y - studH, width: studW, height: studH + 1.5, rx: 1.6 }, g);
+        svg('ellipse', { class: 'rk-sb-stud-cap', cx, cy: y - studH, rx: studW / 2, ry: Math.min(2, studH * 0.4) }, g);
       }
     }
     svg('rect', { class: 'rk-sb-body', x, y, width: w, height: h, rx: 2 }, g);
+    svg('path', { class: 'rk-sb-facet', d: `M${x + w - 4} ${y + 2} L${x + w - 1} ${y + 1} V${y + h - 1} H${x + 1} L${x + 3} ${y + h - 4} H${x + w - 4} Z` }, g);
     svg('rect', { class: 'rk-sb-shine', x: x + 2, y: y + 2, width: Math.max(0, w - 4), height: 2.5, rx: 1 }, g);
-    svg('rect', { class: 'rk-sb-shade', x: x + 2, y: y + h - 4.5, width: Math.max(0, w - 4), height: 2.5, rx: 1 }, g);
+    if (w >= 24 && h >= 18) svg('rect', { class: 'rk-sb-panel', x: x + 5, y: y + 7, width: w - 12, height: h - 13, rx: 1.5 }, g);
     return g;
   }
 
@@ -429,11 +381,10 @@
   // Ink on paper
   // ------------------------------------------------------------------
 
-  /** Lettering on a page: tone ink, muted, red, or green; 'light' on the backdrop. */
+  /** A snug text plaque: its opaque backing keeps contrast independent of the sky. */
   function label(parent, text, { x, y, w, at, until, tone = 'ink', size, align = 'left', how = 'rise', weight }) {
     const node = show(box(parent, `rk-label rk-label--${tone} rk-label--${align}`, { x, y, w }), at, until, how);
-    if (tone === 'light') el('span', 'rk-label-pill', node, text);
-    else node.textContent = text;
+    el('span', 'rk-label-pill', node, text);
     if (size) node.style.fontSize = `${size}px`;
     if (weight) node.style.fontWeight = weight;
     return node;
@@ -664,9 +615,14 @@
     const node = show(box(parent, 'rk-padlock', { x, y, w: size }), at, until, 'pop');
     const art = svg('svg', { viewBox: '0 0 100 110', width: size, height: size * 1.1, 'aria-hidden': 'true' }, node);
     svg('path', { class: 'rk-padlock-shackle', d: 'M26 48 V32 a24 24 0 0 1 48 0 V48' }, art);
+    svg('path', { class: 'rk-padlock-shackle-shine', d: 'M24 42 V32 a26 26 0 0 1 32 -25' }, art);
     const body = svg('rect', { class: `rk-padlock-body${tone ? ` rk-padlock-body--${tone}` : ''}`, x: 12, y: 46, width: 76, height: 58, rx: 10 }, art);
+    svg('path', { class: 'rk-padlock-bevel', d: 'M15 91 Q15 101 25 101 H77 Q85 101 85 93 V55 M19 97 H78' }, art);
+    svg('path', { class: 'rk-padlock-shine', d: 'M19 64 V58 Q19 52 25 52 H74' }, art);
+    svg('rect', { class: 'rk-padlock-escutcheon', x: 37, y: 58, width: 26, height: 36, rx: 12 }, art);
     svg('circle', { class: 'rk-padlock-hole', cx: 50, cy: 70, r: 7 }, art);
     svg('path', { class: 'rk-padlock-hole', d: 'M47 72 L45 88 H55 L53 72 Z' }, art);
+    svg('path', { class: 'rk-padlock-fasteners', d: 'M23 60 H27 M73 60 H77 M23 90 H27 M73 90 H77' }, art);
     if (crackAt !== undefined) {
       const crackPath = svg('path', { class: 'rk-padlock-crack', d: 'M30 46 L40 60 L33 70 L46 82 L40 96 L48 104' }, art);
       fx.draw(crackPath, crackAt, 0.4);
@@ -702,6 +658,30 @@
   /** An engine bell at (cx, y): `top` wide at its throat, `bottom` wide `h` below. */
   const bell = (cx, y, top, bottom, h) =>
     `M${cx - top / 2} ${y} L${cx + top / 2} ${y} L${cx + bottom / 2} ${y + h} Q${cx} ${y + h + 2.5} ${cx - bottom / 2} ${y + h} Z`;
+
+  /** A bell's cooling ribs follow its widening walls, with a dark nozzle exit. */
+  function engineBell(parent, fill, { cx, y, top, bottom, h }) {
+    svg('path', { class: 'rk-rkt-metal', fill, d: bell(cx, y, top, bottom, h) }, parent);
+    const ribs = [0.3, 0.55, 0.8].map((p) => {
+      const half = (top + (bottom - top) * p) / 2;
+      return `M${cx - half} ${y + h * p} Q${cx} ${y + h * p + 1} ${cx + half} ${y + h * p}`;
+    });
+    svg('path', { class: 'rk-rkt-engine-ribs', d: ribs.join(' ') }, parent);
+    svg('ellipse', { class: 'rk-rkt-nozzle', cx, cy: y + h, rx: bottom / 2 - 0.7, ry: 1.2 }, parent);
+  }
+
+  /** Surface details stay inside the shell, leaving the equipment bay unobstructed. */
+  function rocketTankDetails(parent, { x, y, w, h, seams = [] }) {
+    svg('path', { class: 'rk-rkt-shell-shine', d: `M${x + 4} ${y + 4} V${y + h - 4}` }, parent);
+    svg('path', { class: 'rk-rkt-panel-seam', d: `M${x + w - 6} ${y + 3} V${y + h - 3}` }, parent);
+    svg('path', { class: 'rk-rkt-fasteners', d: seams.map((sy) => `M${x + 2} ${sy + 2} H${x + w - 2}`).join(' ') }, parent);
+    if (w >= 24) {
+      svg('rect', { class: 'rk-rkt-insignia', x: x + 6, y: y + 8, width: w - 14, height: 9, rx: 1 }, parent);
+      svg('path', { class: 'rk-rkt-insignia-light', d: `M${x + 9} ${y + 13} H${x + w - 12}` }, parent);
+      svg('rect', { class: 'rk-rkt-hatch', x: x + 7, y: y + h - 18, width: 9, height: 8, rx: 1.5 }, parent);
+      svg('path', { class: 'rk-rkt-panel-seam', d: `M${x + 10} ${y + h - 14} H${x + 13}` }, parent);
+    }
+  }
 
   /**
    * The cut-away window into a rocket's equipment bay, and inside it the
@@ -743,16 +723,17 @@
         svg('path', { class: 'rk-rkt-shell', fill: fills.body, d: `M${cx - 6} 150 C${cx - 6} 142 ${cx - 3} 137 ${cx} 133 C${cx + 3} 137 ${cx + 6} 142 ${cx + 6} 150 V220 H${cx - 6} Z` }, ship);
         svg('rect', { class: 'rk-rkt-band', fill: fills.metal, x: cx - 6, y: 150, width: 12, height: 3 }, ship);
         svg('path', { class: 'rk-rkt-seam', d: `M${cx - 6} 186 H${cx + 6}` }, ship);
+        rocketTankDetails(ship, { x: cx - 6, y: 150, w: 12, h: 70, seams: [186] });
         svg('path', { class: 'rk-rkt-metal', fill: fills.metal, d: `M${cx - 6} 220 H${cx + 6} L${cx + 7} 225 H${cx - 7} Z` }, ship);
-        svg('path', { class: 'rk-rkt-metal', fill: fills.metal, d: bell(cx, 225, 7, 10, 9) }, ship);
+        engineBell(ship, fills.metal, { cx, y: 225, top: 7, bottom: 10, h: 9 });
       });
       svg('path', { class: 'rk-rkt-strut', d: 'M41 158 L44 157 M41 214 L44 213 M79 158 L76 157 M79 214 L76 213' }, ship);
       svg('path', { class: 'rk-rkt-metal', fill: fills.metal, d: 'M44 222 H76 L79 229 H41 Z' }, ship);
-      [49, 60, 71].forEach((cx) => svg('path', { class: 'rk-rkt-metal', fill: fills.metal, d: bell(cx, 229, 6, 9, 8) }, ship));
+      [49, 60, 71].forEach((cx) => engineBell(ship, fills.metal, { cx, y: 229, top: 6, bottom: 9, h: 8 }));
       svg('rect', { class: 'rk-rkt-shell', fill: fills.body, x: 44, y: 150, width: 32, height: 72 }, ship);
       svg('path', { class: 'rk-rkt-seam', d: 'M44 186 H76' }, ship);
       svg('rect', { class: 'rk-rkt-raceway', x: 69, y: 152, width: 2.5, height: 68 }, ship);
-      svg('rect', { class: 'rk-rkt-hatch', x: 51, y: 198, width: 7, height: 5, rx: 1 }, ship);
+      rocketTankDetails(ship, { x: 44, y: 150, w: 32, h: 72, seams: [186] });
       svg('rect', { class: 'rk-rkt-band', fill: fills.metal, x: 44, y: 145, width: 32, height: 5 }, ship);
       svg('rect', { class: 'rk-rkt-shell', fill: fills.body, x: 44, y: 116, width: 32, height: 29 }, ship);
       svg('path', { class: 'rk-rkt-seam', d: 'M44 131 H76' }, ship);
@@ -762,6 +743,8 @@
       svg('path', { class: 'rk-rkt-shell', fill: fills.body, d: 'M47 80 H73 L78 74 H42 Z' }, ship);
       svg('path', { class: 'rk-rkt-shell', fill: fills.body, d: 'M42 74 V44 C42 29 50 19 60 14 C70 19 78 29 78 44 V74 Z' }, ship);
       svg('path', { class: 'rk-rkt-seam', d: 'M60 16 V74 M42 44 H78' }, ship);
+      svg('path', { class: 'rk-rkt-fairing-shine', d: 'M47 64 V44 C47 33 52 24 57 20' }, ship);
+      svg('path', { class: 'rk-rkt-fasteners', d: 'M45 71 H75 M47 113 H73' }, ship);
       return { bay, nozzles: [[49, 237], [60, 237], [71, 237], [35, 234], [85, 234]], arm: 122, mastTop: 104 };
     },
     // Ariane 5: a wide cryogenic core with its Vulcain engine, two big solid
@@ -771,20 +754,24 @@
         svg('path', { class: 'rk-rkt-shell', fill: fills.body, d: `M${cx - 8} 98 C${cx - 8} 87 ${cx - 4} 79 ${cx} 74 C${cx + 4} 79 ${cx + 8} 87 ${cx + 8} 98 V212 H${cx - 8} Z` }, ship);
         svg('rect', { class: 'rk-rkt-band', fill: fills.metal, x: cx - 8, y: 98, width: 16, height: 3 }, ship);
         svg('path', { class: 'rk-rkt-seam', d: `M${cx - 8} 136 H${cx + 8} M${cx - 8} 174 H${cx + 8}` }, ship);
+        rocketTankDetails(ship, { x: cx - 8, y: 101, w: 16, h: 110, seams: [136, 174] });
         svg('path', { class: 'rk-rkt-metal', fill: fills.metal, d: `M${cx - 8} 212 H${cx + 8} L${cx + 9.5} 218 H${cx - 9.5} Z` }, ship);
-        svg('path', { class: 'rk-rkt-metal', fill: fills.metal, d: bell(cx, 218, 9, 14, 12) }, ship);
+        engineBell(ship, fills.metal, { cx, y: 218, top: 9, bottom: 14, h: 12 });
       });
       svg('path', { class: 'rk-rkt-strut', d: 'M36 106 L42 105 M36 204 L42 203 M84 106 L78 105 M84 204 L78 203' }, ship);
       svg('path', { class: 'rk-rkt-metal', fill: fills.metal, d: 'M42 220 H78 L80 225 H40 Z' }, ship);
-      svg('path', { class: 'rk-rkt-metal', fill: fills.metal, d: bell(60, 225, 12, 20, 11) }, ship);
+      engineBell(ship, fills.metal, { cx: 60, y: 225, top: 12, bottom: 20, h: 11 });
       svg('rect', { class: 'rk-rkt-shell', fill: fills.body, x: 42, y: 100, width: 36, height: 120 }, ship);
       svg('path', { class: 'rk-rkt-seam', d: 'M42 140 H78 M42 182 H78' }, ship);
       svg('rect', { class: 'rk-rkt-raceway', x: 72, y: 102, width: 2.5, height: 116 }, ship);
+      rocketTankDetails(ship, { x: 42, y: 102, w: 36, h: 118, seams: [140, 182] });
       svg('rect', { class: 'rk-rkt-shell', fill: fills.body, x: 42, y: 70, width: 36, height: 30 }, ship);
       svg('rect', { class: 'rk-rkt-band', fill: fills.metal, x: 42, y: 98, width: 36, height: 4 }, ship);
       const bay = equipmentBay(ship, fills, { x: 50.5, y: 73, w: 19, h: 23 });
       svg('path', { class: 'rk-rkt-shell', fill: fills.body, d: 'M42 70 V40 C42 25 50 14 60 9 C70 14 78 25 78 40 V70 Z' }, ship);
       svg('path', { class: 'rk-rkt-seam', d: 'M60 11 V70 M42 40 H78' }, ship);
+      svg('path', { class: 'rk-rkt-fairing-shine', d: 'M47 61 V40 C47 29 52 19 57 15' }, ship);
+      svg('path', { class: 'rk-rkt-fasteners', d: 'M45 67 H75 M44 99 H76' }, ship);
       return { bay, nozzles: [[60, 236], [28, 230], [92, 230]], arm: 64, mastTop: 52 };
     },
   };
@@ -960,8 +947,17 @@
       const [x2, y2] = point(to, r);
       return `M${x1.toFixed(1)} ${y1.toFixed(1)} A${r} ${r} 0 0 1 ${x2.toFixed(1)} ${y2.toFixed(1)}`;
     };
+    // The dial has its own matte now that it sits directly over the scenery.
+    svg('path', { class: 'rk-gauge-face', d: `${arc(0, MAX, R + 12)} Z` }, art);
+    svg('path', { class: 'rk-gauge-rim', d: arc(0, MAX, R + 10) }, art);
     svg('path', { class: 'rk-gauge-safe', d: arc(0, LIMIT, R) }, art);
     svg('path', { class: 'rk-gauge-over', d: arc(LIMIT, MAX, R) }, art);
+    const ticks = Array.from({ length: 21 }, (_, i) => {
+      const [x1, y1] = point((MAX * i) / 20, R - (i % 5 === 0 ? 23 : 17));
+      const [x2, y2] = point((MAX * i) / 20, R - 11);
+      return `M${x1.toFixed(1)} ${y1.toFixed(1)} L${x2.toFixed(1)} ${y2.toFixed(1)}`;
+    });
+    svg('path', { class: 'rk-gauge-ticks', d: ticks.join(' ') }, art);
     const limit = svg('g', { class: 'rk-gauge-limit is-staged' }, art);
     const [lx1, ly1] = point(LIMIT, R - 16);
     const [lx2, ly2] = point(LIMIT, R + 12);
@@ -969,6 +965,7 @@
     if (limitAt !== undefined) fx.fadeIn(limit, limitAt, 0.3);
     const needle = svg('path', { class: 'rk-gauge-needle', d: `M${cx} ${cy} L${cx - R + 18} ${cy}` }, art);
     svg('circle', { class: 'rk-gauge-hub', cx, cy, r: 7 }, art);
+    svg('circle', { class: 'rk-gauge-hub-cap', cx: cx - 0.5, cy: cy - 0.5, r: 3 }, art);
     const readout = el('div', 'rk-gauge-readout', node);
     const limitText = el('div', 'rk-gauge-limit-text is-staged', node, 'limit 32,767');
     if (limitAt !== undefined) fx.fadeIn(limitText, limitAt, 0.3);
@@ -1051,9 +1048,9 @@
   // ------------------------------------------------------------------
 
   /**
-   * The refrain's card: items = [{ q, name, icon, at, tabs: [text] }], each
-   * lit from its `at`, when its brick (gold, a principle to keep) also drops
-   * onto the tower in the card's right column; the footer and the tower's
+   * The refrain: items = [{ q, name, icon, at, tabs: [text] }], each replacing
+   * the previous question at its sung word while its gold brick drops
+   * onto the tower beside it. The footer and the tower's
    * baseplate light at footerAt; tabsAt shows the case tabs beside the
    * items.
    */
@@ -1065,7 +1062,8 @@
     studs(base, 4, 'rk-studs rk-studs--plate');
     classAt(base, 'is-lit', footerAt);
     items.forEach((item, i) => {
-      const row = el('div', 'rk-list-row', node);
+      const row = show(el('div', 'rk-list-row is-staged', node), i === 0 ? at : item.at,
+        items[i + 1]?.at, 'fade');
       const badge = el('span', 'rk-list-icon rk-c-gold', row);
       badge.append(kit.icon(item.icon));
       const words = el('div', 'rk-list-words', row);
@@ -1096,7 +1094,8 @@
     const head = el('div', 'rk-quiz-head', card);
     el('span', 'rk-quiz-pill', head, 'Your case');
     el('span', 'rk-quiz-number', head, `Question ${n} of ${total}`);
-    el('div', 'rk-quiz-question', card, question);
+    const questionNode = el('div', 'rk-quiz-question', card, question);
+    fx.fadeOut(questionNode, answerAt - 0.18, 0.18);
     const bar = el('div', 'rk-quiz-answer rk-c-green is-staged', card);
     studs(bar, 6);
     el('span', 'rk-quiz-emblem', bar).append(kit.icon(icon));
@@ -1106,7 +1105,7 @@
   }
 
   window.ReuseKit = {
-    SPREAD, LEFT, RIGHT, show, classAt, textAt,
+    SPREAD, show, classAt, textAt,
     spread, group, layer, brickIcon, pkg, plate, crack, dust, strain, arrow, code, term, label, note, inkStamp, tick,
     shelf, users, bars, vision, wallGap, padColumn, timeline, padlock, appGrid, rocket, gauge,
     checkboxes, scale, checklist, quiz,

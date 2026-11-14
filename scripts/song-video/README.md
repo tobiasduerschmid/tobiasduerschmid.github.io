@@ -507,24 +507,32 @@ small to read.
 section, as a review of the chapter's cases. It keeps the lecture's own
 metaphor for reuse, composing existing building blocks, all the way through,
 in toy bricks. The `brick-site` theme (`js/song-video/brick-site.js`, colours
-in `css/song-video-brick-site.css`) is a construction site at golden hour,
+in `css/song-video-brick-site.css`) is a construction site at sunrise,
 after the lecture's title picture: a twin-towered hall and a building going
 up, brick courses in tan with blue and gold cornices, tiled roofs, toy window
-pieces whose rooms light one by one as the evening comes, lamp posts, a tower
+pieces whose room lights fade as morning arrives, lamp posts, a tower
 crane carrying a prebuilt module of bricks, and a studded baseplate as the
-ground. During the intro the whole site builds itself (`BUILD` in the
-theme): the baseplate is laid, the walls rise course by course under a clip
-path while the next brick drops into its slot, the crane climbs and reaches
-out, and in the instrumental the crane lifts the module, which it sets onto
-the building at the end of the song. In between, only low-contrast things
-move, slowly (the clouds, the light in lit windows, a forklift dim in the
-dusk shadow), so the backdrop stays alive without pulling the eye from the
-casebook. Every pose is a function of song time, so a seek shows the right
-stage of the build.
+ground. The ground, studs, loose bricks, and lamps are present from the first
+frame. During the intro (`BUILD` in the theme), the walls rise course by
+course under a clip path while the next brick drops into its slot, and the
+crane climbs and reaches out, and in the instrumental the crane lifts the module, which it sets onto
+the building at the end of the song. During explanations the clouds and
+forklift hold still; the sunrise continues slowly. The buildings stay sharp
+on either side of the central teaching area.
+Selected illustration contours stay crisp; the hero has no surrounding halo.
+The sky stays unobscured, with no broad dark scrim. Every pose is a function of song
+time, so a seek shows the right stage of the build.
 `js/song-video/reuse-kit.js` (styles in `css/song-video-reuse-kit.css`)
-draws in three surfaces: cream tiles for text and pictures (the casebook's
-pages, the cards), studded navy plates that hold them, and coloured bricks
-for the pieces. A package is a brick whose studs are its interface; a brick
+draws open compositions: compact opaque plaques for text, self-contained
+code/terminal screens, and coloured bricks directly over the site. Case
+illustrations take turns in the 440px-wide space between the towers,
+without scaling down their type. `focusPanel()` gives each illustration its
+own lyric-timed windows and returns to causal diagrams when the song needs
+them. The two benefit cards appear separately. Each checklist question
+replaces the previous one beside its growing brick tower. Quiz questions
+remain through the listening pause, then give way to their answer pictures
+and green answer bricks.
+A package is a brick whose studs are its interface; a brick
 stacked on another depends on it, so the urllib3 tower tilts when version
 2.0.0 brings different studs, and the left-pad build drops when its tiny
 1×1 brick goes; a framework is a baseplate with a socket for your brick; the
@@ -536,12 +544,25 @@ reused packages (and the case tabs and headings that file them), gold for
 your own code and what is worth keeping, red for what breaks, green for what
 is fixed or right, grey for a framework's structure. Code cards (JavaScript through the shared
 `SongKit.highlightJavaScript`) turn off Fira Code's ligatures, so `===` and
-`!==` read as typed. The student cameo works at the laptop in the outro, and
-the viewer's hero also plays the site foreman (opera-cast.js's `foreman`
-costume: hi-vis vest, gold hard hat, tool pouch; a costume's `headwear`
-goes over the worn head) in the intro, with a clipboard, and at the end,
-with a gold brick. The light stays a warm golden hour, and over the last
-twenty seconds night falls slowly: a deep blue sky, a moon, and stars.
+`!==` read as typed. One continuous hero performs as the site foreman
+(opera-cast.js's `foreman` costume: hi-vis vest, gold hard hat, tool pouch).
+The hero has a place at the left of every lesson and steps forward in the
+outro. The shared word-timed singing rig follows the storyboard's marks,
+resting during instrumental gaps and quiz pauses. Reduced motion keeps the
+mouth neutral. The intro clipboard gives way to a gold brick for the finale.
+
+The sky begins in cool blue hour with rose beneath the clouds. `sunriseAt()`
+projects a uniformly advancing solar hour angle into an east-facing view at
+34° north, for an illustrative morning with fixed declination. The sun rises
+up and right; its elevation drives every lighting change. Rose and coral
+intensify before the horizon crossing, then the upper sky clears to azure
+while cloud undersides become peach and cream. Window reflections and brick
+faces brighten, and stars, room lights, and lamps fade at elevation thresholds.
+The cloud treatment retains the security song's cool upper masses and warm
+lower surfaces; its changing light follows [NOAA's cloud-colour explanation](https://www.noaa.gov/jetstream/clouds/color-of-clouds).
+UCLA blue and gold accent the construction and teaching bricks.
+Reduced motion holds a settled morning pose. The transcript, audio description, and
+playlist thumbnail must be regenerated when that visual story changes.
 
 "Design It In Before They Break In", the security song, is embedded at the top of the Summary of
 `SEBook/systems/security.md`, as a review of the whole chapter. It walks the

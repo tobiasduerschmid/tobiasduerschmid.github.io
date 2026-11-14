@@ -1499,13 +1499,14 @@
   /**
    * Word intervals [start, end] for a voice from the storyboard: each line's
    * marks, every word lasting until the next one starts, the last until the
-   * line ends (a held note stays open).
+   * line ends (a held note stays open). Omit voice for a solo performer
+   * who sings every line.
    */
   function wordsFor(storyboard, voice) {
     const words = [];
     for (const section of storyboard.sections) {
       for (const line of section.lines) {
-        if ((line.voice || section.voice) !== voice) continue;
+        if (voice !== undefined && (line.voice || section.voice) !== voice) continue;
         const times = Object.values(line.marks || {}).sort((a, b) => a - b);
         times.forEach((at, i) => words.push([at, i + 1 < times.length ? times[i + 1] : line.end]));
       }
@@ -1841,12 +1842,14 @@
    *   holds     [[time, side, prop]]: a prop in a hand from then on (null
    *             empties it)
    *   words     [start, end] sung word intervals (wordsFor)
+   *   singInReducedMotion  false holds a neutral mouth with reduced motion;
+   *                        true preserves the cast's word-by-word poses
    *   beds      [[from, to]]: a bed appears behind it just before `from`;
    *             it lies down in it, mask on, under the quilt, until `to`
    *             (or its stage exit, when the bed glides off with it)
    * Returns the wrapper and where() (its place at a time).
    */
-  function figure(parent, { role, gender = 'man', hero, stage = [], places, moves = [], holds = [], words = [], beds = [], seed = 0 }) {
+  function figure(parent, { role, gender = 'man', hero, stage = [], places, moves = [], holds = [], words = [], singInReducedMotion = true, beds = [], seed = 0 }) {
     const wrap = el('div', `oc-figure oc-figure--${role} is-staged`, parent);
     wrap.dataset.testid = `oc-${role}`;
     const fig = svg('svg', { class: 'oc-art', viewBox: '0 0 160 300', width: 160, height: 300, 'aria-hidden': 'true' }, wrap);
@@ -2052,7 +2055,7 @@
       recline.setAttribute('transform', bed.lie ? `translate(0 ${(LIE_SINK * bed.lie).toFixed(2)}) rotate(${(-90 * bed.lie).toFixed(2)} ${LIE_PIVOT[0]} ${LIE_PIVOT[1]})` : '');
       body.swing(stride * Math.sin(phase) * 9);
       p.crouch = Math.max(p.crouch, settleKnees);
-      const open = mouthAt(sortedWords, t, reduced);
+      const open = reduced && !singInReducedMotion ? 0 : mouthAt(sortedWords, t, reduced);
       body.pose(p, t, open, reduced ? 0 : blinkAt(t, seed));
       body.level();
     });
