@@ -536,14 +536,16 @@
       // that?", and leave only when the lessons begin. Each keeps its own
       // place in the line, so they never overlap.
       const HOP_TIMES = [mark('br-1', 'agents'), mark('br-1', 'broke'), mark('br-3', 'tokens'), mark('br-3', 'code'), mark('br-4', 'key'), mark('br-4', 'clusters')];
+      // They walk a little in front of the street line, below the page's notes.
+      const STREET = FEET + 6;
       const agentRoute = (dx) => [
-        [mark('br-1', 'ai') - 0.8, -60 - dx, FEET, 1],
-        ...HOP_TIMES.flatMap((t, i) => [[t - 0.5, (i ? 132 + 140 * (i - 1) : -60) + 50 - dx, FEET, 1], [t + 0.5, 132 + 140 * i + 50 - dx, FEET, 1]]),
-        [lessonsAt - 0.9, 132 + 140 * 5 + 50 - dx, FEET, 1], [lessonsAt + 0.6, 1060 - dx, FEET, 1],
+        [mark('br-1', 'ai') - 0.8, -60 - dx, STREET, 1],
+        ...HOP_TIMES.flatMap((t, i) => [[t - 0.5, (i ? 132 + 140 * (i - 1) : -60) + 60 - dx, STREET, 1], [t + 0.5, Math.min(132 + 140 * i + 60, 912) - dx, STREET, 1]]),
+        [lessonsAt - 0.9, 912 - dx, STREET, 1], [lessonsAt + 0.6, 1100 - dx, STREET, 1],
       ];
       [0, 1, 2].forEach((i) => window.Outlaw?.bot(content, {
-        at: mark('br-1', 'ai') - 0.8, until: lessonsAt + 0.6, scale: 0.8, delay: 0.1 * i,
-        route: agentRoute(50 * i), freezes: [[mark('br-2', 'whod'), 1.2]],
+        at: mark('br-1', 'ai') - 0.8, until: lessonsAt + 0.6, scale: 1.15, delay: 0.1 * i,
+        route: agentRoute(60 * i), freezes: [[mark('br-2', 'whod'), 1.2]],
       }));
       const HOPS = [
         { title: 'Sandbox', sub: 'hacking benchmark', iconName: 'box', at: mark('br-1', 'agents') },
@@ -559,8 +561,8 @@
         const t = W.tag(page, text, { x: i * 140 + 66, y: 120, w: 104, at: mark('br-5', 'step') + i * 0.35, tone: 'red' });
         t.classList.add('wk-tag--small');
       });
-      W.tag(page, 'goal: find the benchmark’s answers', { x: 0, y: 130, w: 260, at: mark('br-1', 'cheat'), until: mark('br-5', 'step') - 0.1 });
-      W.tag(page, 'Who might be attacking? AI agents?', { x: 320, y: 130, w: 320, at: mark('br-2', 'whod'), until: mark('br-5', 'step') - 0.1, icon: 'question' });
+      W.tag(page, 'goal: find the benchmark’s answers', { x: 0, y: 114, w: 260, at: mark('br-1', 'cheat'), until: mark('br-5', 'step') - 0.1 });
+      W.tag(page, 'Who might be attacking? AI agents?', { x: 320, y: 114, w: 320, at: mark('br-2', 'whod'), until: mark('br-5', 'step') - 0.1, icon: 'question' });
       // The lessons, as town rules beside the gazette.
       W.notice(s, {
         x: 110, y: 60, w: 520, title: 'Lessons learned', at: mark('br2-1', 'what'),
@@ -694,8 +696,8 @@
         ],
         holds: [[caught, 'near', 'honeyJar']],
       });
-      [58, 112, 166].forEach((dx, i) => window.Outlaw?.bot(content, {
-        at: at + 0.2 * i, until: end, route: route(dx), scale: 0.9, freezes: [[glance, freeze], [caught, 1.2]],
+      [60, 118, 176].forEach((dx, i) => window.Outlaw?.bot(content, {
+        at: at + 0.2 * i, until: end, route: route(dx), scale: 1.1, freezes: [[glance, freeze], [caught, 1.2]],
       }));
       W.label(parent, 'Honeypot: a decoy that catches intruders', { x: 572, y: 236, w: 204, tone: 'gold', at: reveal + 0.1, until: end });
       W.tag(parent, 'Intruder logged: 1 attempt', { x: 572, y: 330, w: 204, at: caught + 0.2, until: end, tone: 'red', icon: 'receipt' });
