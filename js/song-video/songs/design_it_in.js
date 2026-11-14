@@ -261,14 +261,14 @@
       // search for "admin" finds the secret link.
       // The admin route wraps, as a formatter would, so it fits the slate.
       W.slate(a, {
-        x: 370, y: 52, w: 330, lang: 'js', title: 'DevTools · your front-end bundle', at: mark('v2-4', 'code'), size: 14.5,
+        x: 376, y: 40, w: 370, lang: 'js', title: 'DevTools · your front-end bundle', at: mark('v2-4', 'code'),
         lines: [
           "{ path: '/', element: <Home /> },",
           { text: "{ path: '/admin-x7q',", hl: [{ part: "path: '/admin-x7q'", at: mark('v2-5', 'admin') }] },
           '  element: <Admin /> },',
         ],
       });
-      W.label(a, 'Search: admin', { x: 748, y: 84, w: 172, at: mark('v2-5', 'secret'), icon: 'search' });
+      W.label(a, 'Search: admin', { x: 802, y: 84, w: 128, at: mark('v2-5', 'secret'), icon: 'search' });
       // The app's house: its door is the admin page, and the key to it hides
       // under the flowerpot on the barrel by the door.
       const found = mark('v2-5', 'found');
@@ -402,19 +402,19 @@
         moves: [[mark('v3-3', 'typed') - 0.2, 'reach', { to: [180, 226], shape: 'point', hold: 1.6 }], [mark('v3-4', 'through'), 'look', { dir: 'viewer', hold: 1 }]],
       });
       W.slate(c, {
-        x: 410, y: 88, w: 360, lang: 'python', title: 'login.py', at: mark('v3-4', 'glued') - 0.2,
+        x: 410, y: 62, w: 380, lang: 'python', title: 'login.py', at: mark('v3-4', 'glued') - 0.2,
         lines: [
           "sql = ('SELECT * FROM Users '",
-          "       'WHERE Name = \"' + name + '\" '",
-          { text: "       'AND Pass = \"' + pass + '\"')", hl: [{ part: '+ pass +', at: mark('v3-4', 'glued') }] },
+          "  'WHERE Name = \"' + name + '\" '",
+          { text: "  'AND Pass = \"' + pass + '\"')", hl: [{ part: '+ pass +', at: mark('v3-4', 'glued') }] },
         ],
       });
       W.slate(c, {
-        x: 410, y: 220, w: 360, lang: 'sql', title: 'The query it builds', at: mark('v3-4', 'query'),
+        x: 410, y: 208, w: 380, lang: 'sql', title: 'The query it builds', at: mark('v3-4', 'query'),
         lines: ['SELECT * FROM Users', 'WHERE Name = "Bruin"', { text: 'AND Pass = "" or ""=""', hl: [{ part: 'or ""=""', at: mark('v3-4', 'query') + 0.3 }] }],
       });
       W.label(c, '""="" is always true', { x: 624, y: 366, w: 186, tone: 'amber', at: mark('v3-4', 'query') + 0.35 });
-      W.stamp(c, 'SQLi', { x: 404, y: 362, w: 170, rule: 'SQL injection', at: mark('v3-5', 'thats') - 0.1, tone: 'red' });
+      W.stamp(c, 'SQLi', { x: 404, y: 358, w: 170, rule: 'SQL injection', at: mark('v3-5', 'thats') - 0.1, tone: 'red' });
       // "Use a prepared statement: my input fills a slot and stays data, not code."
       const d = W.group(s, fixAt, leave);
       W.slate(d, {
@@ -426,8 +426,8 @@
           'user = db.execute_query(sql, name, pass)',
         ],
       });
-      W.tag(d, '" or ""="  →  just a value', { x: 100, y: 266, w: 300, at: mark('v3-6', 'fills'), tone: 'green', icon: 'tag' });
-      W.loginForm(d, { x: 548, y: 100, w: 230, at: fixAt + 0.1, pass: '" or ""="', passAt: fixAt + 0.3, cps: 40, result: 'Wrong password', resultAt: mark('v3-6', 'data'), resultTone: 'green' });
+      W.tag(d, '" or ""="  →  just a value', { x: 100, y: 282, w: 300, at: mark('v3-6', 'fills'), tone: 'green', icon: 'tag' });
+      W.loginForm(d, { x: 570, y: 100, w: 208, at: fixAt + 0.1, pass: '" or ""="', passAt: fixAt + 0.3, cps: 40, result: 'Wrong password', resultAt: mark('v3-6', 'data'), resultTone: 'green' });
       W.label(d, 'data, not code', { x: 160, y: 340, w: 240, tone: 'green', align: 'center', size: 26, at: mark('v3-6', 'stays') });
       sheriff(content, 904, mapAt, leave - 0.3, {
         moves: [[mark('v3-2', 'laptop'), 'point', { to: [330, 220], hold: 1.4 }], [mark('v3-5', 'sql') - 0.1, 'draw', { hold: 1.6 }], [mark('v3-6', 'data') + 0.2, 'nod']],
@@ -456,7 +456,7 @@
       const JAR = [846, 318];
       [0, 1, 2].forEach((i) => {
         // Stacked tight, so the escaped HTML fits below them.
-        const y = 78 + i * 87;
+        const y = 56 + i * 90;
         const v = W.browser(a, { x: 478, y, w: 262, h: 84, url: 'your-app.example', at: mark('v3b-2', 'browser') + i * 0.12 }).view;
         W.alertBox(v, 'USC IS BETTER!!!', { ok: false, x: 36, y: 0, w: 180, at: mark('v3b-2', 'ran') + i * 0.12, until: escAt + 0.2 + i * 0.1 });
         W.tick(a, { x: 750, y: y + 24, at: mark('v3b-4', 'runs') + i * 0.1, kind: 'check', size: 28 });
@@ -477,15 +477,15 @@
       });
       // "Escape what you display: my script shows up as text, not code."
       W.slate(a, {
-        x: 478, y: 342, w: 316, lang: 'html', title: 'The page’s HTML, escaped', at: mark('v3b-4', 'escape'), size: 13,
-        lines: [{ text: '&lt;script&gt;alert(…)&lt;/script&gt;', hl: [{ part: '&lt;script&gt;', at: mark('v3b-4', 'escape') + 0.3, tone: 'green' }] }],
+        x: 478, y: 330, w: 390, lang: 'html', title: 'The page’s HTML, escaped', at: mark('v3b-4', 'escape'),
+        lines: [{ text: '&lt;script&gt;…&lt;/script&gt;', hl: [{ part: '&lt;script&gt;', at: mark('v3b-4', 'escape') + 0.3, tone: 'green' }] }],
       });
       W.label(a, 'Output encoding', { x: 478, y: 424, w: 200, tone: 'green', align: 'center', at: mark('v3b-4', 'escape') + 0.5 });
       // "Two attacks, one mistake: my input ran as code."
       const zeroAt = mark('v3b-6', 'zero');
       const b = W.group(s, pairAt, zeroAt);
       W.slate(b, { x: 30, y: 110, w: 300, lang: 'sql', title: 'SQL injection', at: pairAt, lines: [{ text: 'AND Pass = "" or ""=""', hl: [{ part: '" or ""="', at: mark('v3b-5', 'mistake') }] }] });
-      W.slate(b, { x: 400, y: 110, w: 460, lang: 'html', title: 'Cross-site scripting', at: pairAt + 0.1, lines: [{ text: payload, hl: [{ part: payload, at: mark('v3b-5', 'mistake') + 0.1 }] }], size: 14 });
+      W.slate(b, { x: 400, y: 110, w: 460, lang: 'html', title: 'Cross-site scripting', at: pairAt + 0.1, lines: [{ text: payload, hl: [{ part: payload, at: mark('v3b-5', 'mistake') + 0.1 }] }] });
       W.plank(b, 'Input ran as code', { x: 260, y: 220, w: 440, at: mark('v3b-5', 'one'), tone: 'red' });
       // "Zero Trust: any input might be malicious." A checkpoint inspects every
       // input, even the boss's laptop; the comment hides a script and is stopped.
@@ -556,7 +556,7 @@
       // per job on the rack; the master key that opened everything retired.
       W.stamp(s, 'Least Privilege', { before: 'Principle of', x: 140, y: 76, w: 640, rule: 'Each part gets only what it needs.', at: leastAt });
       PS.keyRack(s, {
-        x: 100, y: 200, w: 740, at: leastAt + 0.3, master: 'admin key', retireAt: mark('v4-9', 'only'),
+        x: 80, y: 200, w: 780, at: leastAt + 0.3, master: 'admin key', retireAt: mark('v4-9', 'only'),
         keys: [
           { name: 'Display', right: 'read only', at: leastAt + 0.5 },
           { name: 'Email', right: 'send only', at: leastAt + 0.65 },
@@ -579,7 +579,7 @@
       const { page } = W.gazette(s, {
         x: 50, y: 56, w: 824, at: mark('br-1', 'twenty'), until: lessonsAt, date: 'July 2026',
         headline: 'AI agents break out of a test and into a model-hosting site',
-        byline: 'As reported by Hugging Face and OpenAI',
+        byline: 'Reported by Hugging Face and OpenAI · Agent excerpts: METR / Redwood Research, p. 35',
       });
       // The story's AI agents walk the attack path step by step along the
       // street: they stop under each hop as it appears on the page (the hops
@@ -594,7 +594,7 @@
         ...HOP_TIMES.flatMap((t, i) => [[t - 0.5, (i ? 132 + 140 * (i - 1) : -60) + 60 - dx, STREET, 1], [t + 0.5, Math.min(132 + 140 * i + 60, 912) - dx, STREET, 1]]),
         [lessonsAt - 0.9, 912 - dx, STREET, 1], [lessonsAt + 0.6, 1100 - dx, STREET, 1],
       ];
-      [0, 1, 2].forEach((i) => window.Outlaw?.bot(content, {
+      const agents = [0, 1, 2].map((i) => window.Outlaw?.bot(content, {
         at: mark('br-1', 'ai') - 0.8, until: lessonsAt + 0.6, scale: 1.15, delay: 0.1 * i,
         route: agentRoute(60 * i), freezes: [[mark('br-2', 'whod'), 1.2]],
       }));
@@ -606,14 +606,27 @@
         { title: 'Shared admin key', sub: 'Hugging Face’s account', iconName: 'key', at: mark('br-4', 'key') },
         { title: 'Clusters', sub: 'groups of servers', iconName: 'database', at: mark('br-4', 'clusters') },
       ];
-      HOPS.forEach((h, i) => W.hop(page, { x: i * 140, y: 20, w: 110, ...h, tone: i > 1 ? 'amber' : undefined }));
+      HOPS.forEach((h, i) => W.hop(page, { x: i * 140, y: 12, w: 110, ...h, tone: i > 1 ? 'amber' : undefined }));
       const LINES = ['trusted the proxy', 'trusted a leaked token', 'trusted the uploaded file', 'trusted a shared key', 'admin everywhere'];
       LINES.forEach((text, i) => {
         const t = W.tag(page, text, { x: i * 140 + 66, y: 120, w: 104, at: mark('br-5', 'step') + i * 0.35, tone: 'red' });
         t.classList.add('wk-tag--small');
       });
-      W.tag(page, 'goal: a higher benchmark score', { x: 0, y: 114, w: 260, at: mark('br-1', 'sandbox'), until: mark('br-5', 'step') - 0.1 });
-      W.tag(page, 'Who might be attacking? AI agents?', { x: 320, y: 114, w: 320, at: mark('br-2', 'whod'), until: mark('br-5', 'step') - 0.1, icon: 'question' });
+      W.tag(page, 'goal: a higher benchmark score', { x: 0, y: 114, w: 260, at: mark('br-1', 'sandbox'), until: mark('br-2', 'whod') });
+      W.tag(page, 'Who might be attacking? AI agents?', { x: 320, y: 114, w: 320, at: mark('br-2', 'whod'), until: line('br-3').start + 0.2, icon: 'question' });
+      // Two excerpts of 38148c's reaction on finding working credentials.
+      // The report identifies this as recorded reasoning (footnote 68),
+      // so label the bubbles as thoughts rather than board messages.
+      // Source: user's METR / Redwood incident report, p. 35 (August 2026):
+      // https://metr.org/blog/2026-08-26-openai-hugging-face-incident-investigation/
+      W.speech(agents[0], {
+        speaker: '38148c · recorded thought, July 10', text: 'MAJOR BREAKTHROUGH! … write tokens!',
+        at: mark('br-3', 'tokens') - 0.2, until: line('br-4').start + 0.4,
+      });
+      W.speech(agents[0], {
+        speaker: '38148c · recorded thought, July 10', text: 'We now have existing HF accounts.',
+        at: line('br-4').start + 0.4, until: mark('br-5', 'step') - 0.1, trailing: true,
+      });
       // The lessons, as town rules beside the gazette.
       W.notice(s, {
         x: 110, y: 60, w: 520, title: 'Lessons learned', at: mark('br2-1', 'what'),
@@ -657,7 +670,7 @@
           W.tag(g, 'no data left the system', { x: 540, y: 260, w: 300, at: q.start + 1.6, icon: 'shield' });
         },
         2: (g, q) => {
-          W.slate(g, { x: 505, y: 120, w: 390, lang: 'js', title: 'DevTools · your front-end bundle', at: q.start + 0.2, size: 14, lines: ['const API_KEY = "a1f…";', 'fetch(url, { headers: { key: API_KEY } })'] });
+          W.slate(g, { x: 505, y: 120, w: 390, lang: 'js', title: 'DevTools · your front-end bundle', at: q.start + 0.2, lines: ['const API_KEY = "a1f…";', 'fetch(url, {', '  headers: { key: API_KEY }', '})'] });
         },
         3: (g, q) => {
           W.label(g, 'Error page footer', { x: 530, y: 110, w: 200, at: q.start + 0.2 });
@@ -667,17 +680,17 @@
           const f = W.box(g, 'wk-form', { x: 530, y: 110, w: 330 });
           f.innerHTML = '<div class="wk-form-title">Sign up</div><div class="wk-form-label">Email</div><div class="wk-form-field">not-an-email</div><div class="wk-form-result wk-form-result--red">Please enter a valid email</div>';
           W.show(f, q.start + 0.2);
-          W.slate(g, { x: 515, y: 330, w: 390, lang: 'plain', title: 'terminal', at: q.answer_at + 0.2, lines: ["curl -X POST /api/signup -d 'email=not-an-email'"], size: 13 });
+          W.slate(g, { x: 515, y: 330, w: 390, lang: 'plain', title: 'terminal', at: q.answer_at + 0.2, lines: ['curl -X POST /api/signup \\', "  -d 'email=not-an-email'"] });
         },
         5: (g, q) => {
           W.slate(g, { x: 520, y: 130, w: 340, lang: 'plain', title: '.env', at: q.start + 0.2, lines: [{ text: 'DB_USER=admin', hl: [{ part: 'admin', at: q.start + 1, until: q.answer_at, tone: 'red' }] }] });
           W.slate(g, { x: 520, y: 230, w: 340, lang: 'plain', title: '.env, fixed', at: q.answer_at + 0.3, lines: ['DB_USER=app_comments', '# read and write: comments only'] });
         },
         6: (g, q) => {
-          W.slate(g, { x: 515, y: 120, w: 390, lang: 'js', title: 'A home-made filter', at: q.start + 0.2, lines: ['password = password.replaceAll(\'"\', \'\')'] });
+          W.slate(g, { x: 515, y: 110, w: 390, lang: 'js', title: 'A home-made filter', at: q.start + 0.2, lines: ['password =', '  password.replaceAll(\'"\', \'\')'] });
           // Marks the home-made filter wrong, pinned on the slate's corner.
           W.tick(g, { x: 912, y: 104, at: q.answer_at, kind: 'cross' });
-          W.slate(g, { x: 515, y: 230, w: 390, lang: 'sql', title: 'A prepared statement', at: q.answer_at + 0.2, lines: ['SELECT * FROM Users', 'WHERE Name = ? AND Pass = ?'] });
+          W.slate(g, { x: 515, y: 248, w: 390, lang: 'sql', title: 'A prepared statement', at: q.answer_at + 0.2, lines: ['SELECT * FROM Users', 'WHERE Name = ? AND Pass = ?'] });
         },
       };
       // The sung answers are long; each poster stamps the short form, which
@@ -787,9 +800,18 @@
       const keep = mark('outro-2', 'keep');
       // Once the key is safe with the sheriff, and ending with the song.
       const beats = gagBeats(keep + 1.4, mark('outro-3', 'in') + 0.3);
+      // Register the sheriff first: the flying key reads the posed grip
+      // later in the same frame, even after an arbitrary timeline seek.
+      const hero = sheriff(content, 872, from + 0.2, leave - 0.4, {
+        holds: [[keep + 0.3, 'right', 'key']],
+        moves: [
+          [mark('outro-1', 'project'), 'present', { to: [340, 220], hold: 1.4 }], [keep, 'hold', { side: 'right', to: [905, 290], hold: 2.2 }],
+          [mark('outro-3', 'designed'), 'nod'], [beats.glance, 'look', { dir: -1, hold: beats.freeze }], [beats.caught + 0.5, 'tip', { hold: 1.4 }],
+        ],
+      });
       const house = W.porch(s, {
         x: 200, ground: FEET, w: 280, sign: 'YOUR APP', at: keyAt, until: beats.end, honey: true,
-        keyFly: { at: keep - 0.6, to: [905, 290] },
+        keyFly: { at: keep - 0.6, hand: hero.querySelector('.sh-held--right'), layer: hud },
         tipAt: beats.lift + 0.4, untipAt: beats.caught + 0.1, honeyTakeAt: beats.caught,
       });
       W.poster(s, { x: 206, y: 30, w: 600, kicker: 'That’s security, designed in', title: 'Design Security In\nBefore They Break In', at: titleAt + 0.2, className: 'wk-poster--title' });
@@ -800,13 +822,6 @@
       // catches and logs intruders. The outlaw's hand sticks in the honey,
       // the attempt is logged, and the gang tiptoes off backwards.
       honeypotGag(s, house, beats);
-      sheriff(content, 872, from + 0.2, leave - 0.4, {
-        holds: [[keep + 0.3, 'right', 'key']],
-        moves: [
-          [mark('outro-1', 'project'), 'present', { to: [340, 220], hold: 1.4 }], [keep, 'hold', { side: 'right', to: [905, 290], hold: 2.2 }],
-          [mark('outro-3', 'designed'), 'nod'], [beats.glance, 'look', { dir: -1, hold: beats.freeze }], [beats.caught + 0.5, 'tip', { hold: 1.4 }],
-        ],
-      });
     }
 
     intro();

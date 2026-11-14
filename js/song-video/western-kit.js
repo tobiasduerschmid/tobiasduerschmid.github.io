@@ -165,11 +165,10 @@
    * at, until, tone }] } to mark a part of the line from `at` (tone amber,
    * green, red), or { text, at } for a line that appears later.
    */
-  function slate(parent, { x, y, w, title, lang = 'js', lines, at, until, how = 'rise', size }) {
+  function slate(parent, { x, y, w, title, lang = 'js', lines, at, until, how = 'rise' }) {
     const node = box(parent, 'wk-slate', { x, y, w });
     if (title) el('div', 'wk-slate-title', node, title);
     const code = el('div', 'wk-slate-code', node);
-    if (size) code.style.fontSize = `${size}px`;
     for (const line of lines) {
       const spec = typeof line === 'string' ? { text: line } : line;
       const row = el('div', 'wk-code-line', code);
@@ -367,12 +366,17 @@
 
   /** The padlock's parts in its 64×76 frame; returns the shackle. */
   function lockArt(art) {
-    svg('path', { class: 'wk-shackle-ink', d: 'M18 34 V22 A14 14 0 0 1 46 22 V34' }, art);
-    const shackle = svg('path', { class: 'wk-shackle', d: 'M18 34 V22 A14 14 0 0 1 46 22 V34' }, art);
+    // The outline, steel and reflection all belong to the moving shackle.
+    const shackle = svg('g', { class: 'wk-shackle-part' }, art);
+    svg('path', { class: 'wk-shackle-ink', d: 'M18 34 V22 A14 14 0 0 1 46 22 V34' }, shackle);
+    svg('path', { class: 'wk-shackle', d: 'M18 34 V22 A14 14 0 0 1 46 22 V34' }, shackle);
+    svg('path', { class: 'wk-shackle-shine', d: 'M17 29 V22 A15 15 0 0 1 29 7.3' }, shackle);
     svg('rect', { class: 'wk-lock-body', x: 8, y: 32, width: 48, height: 40, rx: 7 }, art);
     svg('path', { class: 'wk-lock-shade', d: 'M56 40 V65 C56 69 53 72 49 72 H15 C11.5 72 9 70 8.4 67 C24 68 44 66 56 40 Z' }, art);
-    svg('path', { class: 'wk-lock-shine', d: 'M14 38 H30' }, art);
+    svg('path', { class: 'wk-lock-rim', d: 'M13 43 V63 Q13 67 17 67 H47 Q51 67 51 63 V43' }, art);
+    svg('path', { class: 'wk-lock-shine', d: 'M18 36 H44' }, art);
     for (const [cx, cy] of [[14, 38], [50, 38], [14, 66], [50, 66]]) svg('circle', { class: 'wk-lock-rivet', cx, cy, r: 1.8 }, art);
+    svg('ellipse', { class: 'wk-lock-bezel', cx: 32, cy: 54, rx: 10, ry: 13 }, art);
     svg('path', { class: 'wk-keyhole', d: 'M32 46 A5 5 0 1 1 31.9 46 Z M29.6 52 L34.4 52 L35.6 63 L28.4 63 Z' }, art);
     return shackle;
   }
@@ -418,10 +422,8 @@
     return show(node, at, until, how);
   }
 
-  /** The strongbox the assets come out of; its lid opens at `openAt`. */
-  function strongbox(parent, { x, y, w = 200, at, until, openAt }) {
-    const node = box(parent, 'wk-strongbox', { x, y, w });
-    const art = svg('svg', { viewBox: '0 0 200 150', width: w, height: w * 0.75, 'aria-hidden': 'true' }, node);
+  /** Shared 200×150 chest artwork for the animated prop and plan-card icon. */
+  function strongboxArt(art) {
     // The open lid, standing up behind the contents once it has tipped back
     // on its hinge along the back of the chest's top: its dark inside shows.
     const open = svg('g', { class: 'wk-box-lid-open' }, art);
@@ -463,6 +465,14 @@
     svg('path', { class: 'wk-box-body', d: 'M14 62 V40 Q14 20 40 20 H160 Q186 20 186 40 V62 Z' }, lid);
     svg('path', { class: 'wk-box-grain', d: 'M17 33 H183 M15 48 H185' }, lid);
     svg('path', { class: 'wk-box-band', d: 'M54 21 V62 M146 21 V62 M14 59 H186' }, lid);
+    return { lid, open, loot };
+  }
+
+  /** The strongbox the assets come out of; its lid opens at `openAt`. */
+  function strongbox(parent, { x, y, w = 200, at, until, openAt }) {
+    const node = box(parent, 'wk-strongbox', { x, y, w });
+    const art = svg('svg', { viewBox: '0 0 200 150', width: w, height: w * 0.75, 'aria-hidden': 'true' }, node);
+    const { lid, open, loot } = strongboxArt(art);
     if (openAt !== undefined) {
       // The lid tips back on its hinge: seen from the front it folds down
       // to the hinge line, and its inside rises up behind the contents.
@@ -529,8 +539,9 @@
    *
    * Motion: the pot tips up on its corner at `tipAt` and back at `untipAt`
    * (a hand at its rim does it, see point('rim') and point('rimTipped'));
-   * the key is taken at `takeAt`, or slides out and flies to stage point
-   * `keyFly.to` at `keyFly.at`; a honeypot shows once the pot tips and is
+   * the key is taken at `takeAt`, or slides out and flies to `keyFly.hand`
+   * (the sheriff's grip group) at `keyFly.at`, above the scene in
+   * `keyFly.layer`; a honeypot shows once the pot tips and is
    * taken at `honeyTakeAt`; the door swings open at `openAt`. Returns
    * { node, point(name) } with the porch's points (PORCH, plus rimTipped)
    * in stage coordinates.
@@ -545,55 +556,112 @@
     const wallGrad = svg('linearGradient', { id: `${id}-wall`, x1: 0, y1: 0, x2: 1, y2: 1 }, defs);
     svg('stop', { offset: 0, class: 'wk-pr-wall-0' }, wallGrad);
     svg('stop', { offset: 1, class: 'wk-pr-wall-1' }, wallGrad);
+    const material = (name, radial = false) => {
+      const grad = svg(radial ? 'radialGradient' : 'linearGradient', {
+        id: `${id}-${name}`, ...(radial ? { cx: 0.5, cy: 0.4, r: 0.6 } : { x1: 0, y1: 0, x2: 0.9, y2: 1 }),
+      }, defs);
+      [0, 0.55, 1].forEach((offset, i) => svg('stop', { offset, class: `wk-pr-${name}-${i}` }, grad));
+      return `url(#${id}-${name})`;
+    };
+    const glass = material('window-light');
+    const lanternGlow = material('lamp-glow', true);
+    const barrelWood = material('barrel-wood');
+    const potClay = material('pot-clay');
     svg('ellipse', { class: 'wk-pr-ground-shadow', cx: 120, cy: 228, rx: 128, ry: 5 }, art);
     // The wall: clapboards in the shade of the porch roof.
     svg('rect', { class: 'wk-pr-wall', x: 14, y: 28, width: 212, height: 178, fill: `url(#${id}-wall)` }, art);
     for (let by = 43; by < 204; by += 15) {
       svg('path', { class: 'wk-pr-board-shadow', d: `M14 ${by} H226` }, art);
       svg('path', { class: 'wk-pr-board-light', d: `M14 ${by + 1.6} H226` }, art);
+      const joint = 115 + ((by * 7) % 72);
+      svg('path', { class: 'wk-pr-grain', d: `M${joint} ${by - 12} v10 M${joint + 6} ${by - 8} q12 -1 25 0 M18 ${by - 5} q19 -1 34 0` }, art);
+      [19, 220].forEach((cx) => svg('circle', { class: 'wk-pr-nail', cx, cy: by - 6, r: 0.65 }, art));
     }
+    [[116, 119], [208, 65], [119, 186], [205, 173]].forEach(([cx, cy]) => {
+      svg('path', { class: 'wk-pr-grain', d: `M${cx - 7} ${cy} Q${cx} ${cy - 4} ${cx + 8} ${cy} Q${cx} ${cy + 3} ${cx - 7} ${cy} M${cx - 2} ${cy} h4` }, art);
+    });
     svg('rect', { class: 'wk-pr-shade', x: 14, y: 28, width: 212, height: 18 }, art);
+    svg('ellipse', { class: 'wk-pr-lamp-pool', cx: 112, cy: 65, rx: 44, ry: 48, fill: lanternGlow }, art);
     // The window, lit from inside, with its sill.
+    svg('rect', { class: 'wk-pr-recess', x: 130, y: 55, width: 73, height: 51, rx: 2 }, art);
     svg('rect', { class: 'wk-pr-window-frame', x: 128, y: 52, width: 72, height: 50, rx: 2 }, art);
-    svg('rect', { class: 'wk-pr-glass', x: 133, y: 57, width: 62, height: 40 }, art);
+    svg('rect', { class: 'wk-pr-glass wk-pr-glass--lit', x: 133, y: 57, width: 62, height: 40, fill: glass }, art);
+    svg('path', { class: 'wk-pr-curtain', d: 'M134 58 H143 C143 69 140 75 134 79 Z M185 58 H194 V79 C188 74 186 67 185 58 Z' }, art);
+    svg('path', { class: 'wk-pr-glass-reflection', d: 'M147 59 h8 l-13 16 h-6 Z M183 80 h7 l-11 14 h-7 Z' }, art);
     svg('path', { class: 'wk-pr-mullion', d: 'M164 57 V97 M133 77 H195' }, art);
+    svg('path', { class: 'wk-pr-trim-light', d: 'M130 99 V54 H198 M134 78 H193 M165 58 V96' }, art);
+    svg('path', { class: 'wk-pr-recess', d: 'M127 106 H202 L199 110 H130 Z' }, art);
     svg('rect', { class: 'wk-pr-sill', x: 124, y: 101, width: 80, height: 5, rx: 1 }, art);
+    svg('path', { class: 'wk-pr-trim-light', d: 'M126 102 H202' }, art);
     // The door in its frame; it swings open on its left hinges.
     svg('rect', { class: 'wk-pr-frame', x: 27, y: 55, width: 72, height: 151 }, art);
+    svg('path', { class: 'wk-pr-trim-light', d: 'M29 203 V57 H97' }, art);
     svg('rect', { class: 'wk-pr-dark', x: 34, y: 62, width: 58, height: 144 }, art);
     const door = svg('g', { class: 'wk-pr-swing' }, art);
     svg('rect', { class: 'wk-pr-door', x: 34, y: 62, width: 58, height: 144 }, door);
     for (const [px, py, ph] of [[40, 70, 56], [66, 70, 56], [40, 134, 62], [66, 134, 62]]) {
       svg('rect', { class: 'wk-pr-panel', x: px, y: py, width: 20, height: ph, rx: 1.5 }, door);
       svg('path', { class: 'wk-pr-panel-light', d: `M${px + 20} ${py + 2} V${py + ph} H${px + 2}` }, door);
+      svg('path', { class: 'wk-pr-grain', d: `M${px + 5} ${py + 5} q-1 ${ph / 3} 0 ${ph - 12} M${px + 15} ${py + 9} q1 ${ph / 4} 0 ${ph - 18}` }, door);
     }
+    [82, 173].forEach((hy) => {
+      svg('path', { class: 'wk-pr-hinge', d: `M34 ${hy} H44 L47 ${hy + 2} L44 ${hy + 4} H34 Z` }, door);
+      svg('path', { class: 'wk-pr-hinge-pin', d: `M34 ${hy - 1} v6` }, door);
+      [37, 42].forEach((cx) => svg('circle', { class: 'wk-pr-fastener', cx, cy: hy + 2, r: 0.6 }, door));
+    });
     svg('rect', { class: 'wk-pr-plate', x: 79, y: 134, width: 6, height: 13, rx: 1.6 }, door);
     svg('circle', { class: 'wk-pr-knob', cx: PORCH.knob[0], cy: PORCH.knob[1], r: 3.4 }, door);
     svg('circle', { class: 'wk-pr-knob-shine', cx: PORCH.knob[0] - 1, cy: PORCH.knob[1] - 1, r: 1 }, door);
     if (openAt !== undefined) tween(door, [{ transform: 'scaleX(1)' }, { transform: 'scaleX(0.2)' }], openAt, 0.5, EASE.inOut);
     if (sign) {
       svg('rect', { class: 'wk-pr-sign', x: 22, y: 33, width: 82, height: 19, rx: 2 }, art);
+      svg('path', { class: 'wk-pr-sign-rim', d: 'M24 49 V35 H102' }, art);
+      [25.5, 100.5].forEach((cx) => svg('circle', { class: 'wk-pr-fastener', cx, cy: 42.5, r: 0.8 }, art));
       const t = svg('text', { class: 'wk-pr-sign-text', x: 63, y: 47, 'text-anchor': 'middle' }, art);
       t.textContent = sign;
     }
     // The lantern by the door.
     svg('path', { class: 'wk-pr-chain', d: 'M112 28 V38' }, art);
+    svg('ellipse', { class: 'wk-pr-chain', cx: 112, cy: 39, rx: 2.2, ry: 2.7 }, art);
     svg('path', { class: 'wk-pr-lantern', d: 'M106 40 H118 L117 44 V56 L119 58 H105 L107 56 V44 Z' }, art);
     svg('rect', { class: 'wk-pr-lantern-glass', x: 108.5, y: 44, width: 7, height: 11, rx: 1 }, art);
+    svg('path', { class: 'wk-pr-lamp-flame', d: 'M112 46 C111 48 109.5 50 110.5 52 C111 53.5 113.5 53 113.7 51.4 C114 49.8 112.6 49 112 46 Z' }, art);
+    svg('path', { class: 'wk-pr-lantern-bars', d: 'M108 44 L116 56 M116 44 L108 56 M105.5 41 H118.5 M106 57 H118' }, art);
     // The posts, their brackets, and the porch roof.
     for (const px of [2, 226]) {
       svg('rect', { class: 'wk-pr-post', x: px, y: 26, width: 12, height: 180 }, art);
       svg('path', { class: 'wk-pr-post-light', d: `M${px + 2.5} 30 V202` }, art);
+      svg('path', { class: 'wk-pr-grain', d: `M${px + 7} 55 q-1 30 0 64 t0 65` }, art);
+      svg('rect', { class: 'wk-pr-post-foot', x: px - 0.5, y: 194, width: 13, height: 10, rx: 0.6 }, art);
+      [36, 198].forEach((cy) => svg('circle', { class: 'wk-pr-fastener', cx: px + 6, cy, r: 1 }, art));
     }
     svg('path', { class: 'wk-pr-post', d: 'M14 30 H28 L14 44 Z M226 30 H212 L226 44 Z' }, art);
-    svg('path', { class: 'wk-pr-roof', d: 'M-12 21 L-4 0 H244 L252 21 Z' }, art);
-    svg('path', { class: 'wk-pr-shingle', d: 'M-8 7 H248 M-10 14 H250 ' + Array.from({ length: 22 }, (_, i) => `M${-2 + i * 12} 0 V7 M${4 + i * 12} 7 V14 M${-2 + i * 12} 14 V21`).join(' ') }, art);
+    const roofShape = 'M-12 21 L-4 0 H244 L252 21 Z';
+    const roofClip = svg('clipPath', { id: `${id}-roof-clip` }, defs);
+    svg('path', { d: roofShape }, roofClip);
+    svg('path', { class: 'wk-pr-roof', d: roofShape }, art);
+    const roof = svg('g', { 'clip-path': `url(#${id}-roof-clip)` }, art);
+    for (let row = 0; row < 3; row += 1) {
+      for (let col = 0; col < 23; col += 1) {
+        const sx = -14 + col * 12 + (row % 2) * 6;
+        svg('path', { class: `wk-pr-shingle-tile wk-pr-shingle-tile--${(row + col * 2) % 3}`, d: `M${sx} ${row * 7} h12 v7 h-12 Z` }, roof);
+        if (col % 3 === row) svg('path', { class: 'wk-pr-roof-grain', d: `M${sx + 4} ${row * 7 + 2} l-0.7 4` }, roof);
+      }
+    }
+    svg('path', { class: 'wk-pr-roof-edge', d: 'M-4 0 H244 M-10 19 H250' }, art);
     svg('rect', { class: 'wk-pr-beam', x: -12, y: 20, width: 264, height: 9 }, art);
+    svg('path', { class: 'wk-pr-trim-light', d: 'M-10 22 H250' }, art);
+    svg('path', { class: 'wk-pr-eave-shadow', d: 'M-11 28 H251' }, art);
+    [8, 232].forEach((cx) => svg('circle', { class: 'wk-pr-fastener', cx, cy: 24.5, r: 1.1 }, art));
     // The barrel by the door, the pot on it, and what the pot hides.
-    svg('path', { class: 'wk-pr-barrel', d: 'M138 152 C133.5 170 133.5 186 138 204 H188 C192.5 186 192.5 170 188 152 Z' }, art);
+    svg('path', { class: 'wk-pr-barrel', d: 'M138 152 C133.5 170 133.5 186 138 204 H188 C192.5 186 192.5 170 188 152 Z', fill: barrelWood }, art);
     svg('path', { class: 'wk-pr-stave', d: 'M150 152 C148 170 148 186 150 204 M163 152 V204 M176 152 C178 170 178 186 176 204' }, art);
     svg('path', { class: 'wk-pr-hoop', d: 'M135.6 162 H190.4 M135.6 194 H190.4' }, art);
+    svg('path', { class: 'wk-pr-metal-light', d: 'M136 161 H190 M136 193 H190' }, art);
+    for (const cy of [162, 194]) for (const cx of [140, 151, 175, 186]) svg('circle', { class: 'wk-pr-fastener', cx, cy, r: 0.7 }, art);
+    svg('path', { class: 'wk-pr-grain', d: 'M141 169 q-2 10 0 18 M154 168 q1 11 0 17 M181 170 q2 8 0 16' }, art);
     svg('ellipse', { class: 'wk-pr-barrel-top', cx: 163, cy: 152, rx: 25, ry: 3 }, art);
+    svg('ellipse', { class: 'wk-pr-barrel-ring', cx: 163, cy: 152, rx: 21, ry: 1.8 }, art);
     const jar = honey ? svg('g', { class: 'wk-honeypot' }, art) : null;
     if (jar) {
       // The glass jar of honey that ends up on the outlaw's hand (outlaw.js
@@ -617,29 +685,84 @@
     const pot = svg('g', { class: 'wk-pot' }, art);
     pot.style.transformBox = 'view-box';
     pot.style.transformOrigin = `${PORCH.pivot[0]}px ${PORCH.pivot[1]}px`;
-    svg('path', { class: 'wk-pot-leaf', d: 'M163 110 C150 96 145 84 147 70 C158 78 164 92 163 110 Z M163 110 C172 92 184 84 196 84 C192 98 178 106 163 110 Z M163 110 C160 90 164 72 172 60 C178 76 172 96 163 110 Z M163 110 C154 102 140 100 132 102 C140 110 152 112 163 110 Z' }, pot);
-    svg('path', { class: 'wk-pot-vein', d: 'M163 108 C156 96 151 86 149 74 M164 108 C172 96 182 90 192 87 M163 106 C164 90 167 76 171 64 M162 109 C154 106 145 104 136 103' }, pot);
-    svg('path', { class: 'wk-pot-clay', d: 'M141 116 H185 L179 150 H147 Z' }, pot);
-    svg('path', { class: 'wk-pot-shine', d: 'M146 120 L150 146' }, pot);
-    svg('rect', { class: 'wk-pot-rim', x: 138, y: 108, width: 50, height: 9, rx: 2.5 }, pot);
-    svg('path', { class: 'wk-pot-soil', d: 'M141 109.6 H185' }, pot);
+    // A rounded lip, visible soil, and wheel-thrown body give the pot
+    // depth without moving the rim/pivot used by the lifting animation.
+    svg('path', { class: 'wk-pot-clay', fill: potClay, d: 'M141 114 Q163 117 185 114 L179 149 Q163 152 147 149 Z' }, pot);
+    svg('path', { class: 'wk-pot-foot', d: 'M147.2 146.6 Q163 149 179.4 146.6 L179 150 Q163 152 147.8 150 Z' }, pot);
+    svg('ellipse', { class: 'wk-pot-rim', cx: 163, cy: 110, rx: 25, ry: 5 }, pot);
+    svg('ellipse', { class: 'wk-pot-earth', cx: 163, cy: 110, rx: 21.5, ry: 3.3 }, pot);
+    [[144, 110, 1.2], [150, 111, 0.8], [176, 109.8, 1.3], [182, 110.4, 0.9]].forEach(([cx, cy, rx]) => svg('ellipse', { class: 'wk-pot-gravel', cx, cy, rx, ry: rx * 0.55 }, pot));
+    // A flowering desert succulent: fleshy, overlapping leaves support
+    // three loose stems. Everything belongs to the pot's tipping group.
+    svg('path', { class: 'wk-pot-stem', d: 'M162 110 C155 99 157 86 150 76 M164 110 C167 94 166 80 169 65 M165 110 C171 101 179 98 183 87 M168 91 Q174 87 177 79' }, pot);
+    svg('path', { class: 'wk-pot-leaf wk-pot-leaf--shade', d: 'M162 111 C150 104 142 93 145 85 C156 87 162 99 162 111 Z M165 111 C165 98 171 88 179 87 C182 97 174 106 165 111 Z M161 110 C148 112 137 107 134 101 C143 96 156 101 161 110 Z' }, pot);
+    svg('path', { class: 'wk-pot-leaf', d: 'M163 111 C154 100 153 88 158 80 C166 87 168 102 163 111 Z M164 111 C169 101 180 97 191 99 C189 107 174 113 164 111 Z M161 111 C149 109 142 103 142 96 C151 94 160 102 161 111 Z' }, pot);
+    svg('path', { class: 'wk-pot-leaf-fold', d: 'M158 81 C162 91 162 103 163 111 C169 101 166 88 158 81 Z M166 111 Q179 109 190 99 C187 108 175 113 166 111 Z M144 97 Q151 105 161 111 C151 110 143 104 144 97 Z' }, pot);
+    svg('path', { class: 'wk-pot-vein', d: 'M162 108 Q158 97 158 85 M168 109 Q177 104 186 102 M157 108 Q149 103 145 99 M151 93 Q154 100 159 105' }, pot);
+    svg('path', { class: 'wk-pot-fine-vein', d: 'M158.5 91 Q156.5 89.5 156.2 87 M159 96 Q156.5 94.5 155.7 92 M160 101 Q157.8 100 156.8 97 M160.6 104.5 Q163 101.7 163.5 99 M159.5 98.6 Q162 96 162.2 93.5 M172.5 107 Q172.8 104.5 176 102 M177.6 105 Q182 106.3 185 104.6 M152.4 105.2 Q151 102.5 149 101 M150 103.3 Q146.5 103.5 145.5 102 M152.5 96 Q148.7 94.5 148 91' }, pot);
+    svg('path', { class: 'wk-pot-leaf-light', d: 'M159 84 Q164 93 163 103 M176 104 Q181 101 186 101' }, pot);
+    svg('path', { class: 'wk-pot-small-leaf', d: 'M167 85 C171 79 174 80 174 82 C173 86 170 87 167 85 Z M155 88 C151 83 148 82 147 84 C147 87 152 90 155 88 Z' }, pot);
+    [[150, 76, 0.85, -12], [169, 65, 1, 8], [183, 87, 0.72, 25]].forEach(([cx, cy, size, turn]) => {
+      const flower = svg('g', { transform: `translate(${cx} ${cy}) rotate(${turn}) scale(${size})` }, pot);
+      for (let petal = 0; petal < 5; petal += 1) {
+        svg('path', { class: 'wk-pot-petal', transform: `rotate(${petal * 72})`, d: 'M0 1 C-4 -1 -5.5 -6 -2.6 -8 C-0.8 -9.4 1 -9 2.6 -7.5 C5 -5 3 -1 0 1 Z' }, flower);
+        svg('path', { class: 'wk-pot-petal-fold', transform: `rotate(${petal * 72})`, d: 'M0 0 Q1 -3 2.4 -5.5 Q3.4 -2.5 0 0 Z' }, flower);
+        svg('path', { class: 'wk-pot-petal-light', transform: `rotate(${petal * 72})`, d: 'M-1.1 -3 Q-2.5 -5.7 -1.5 -7' }, flower);
+      }
+      svg('circle', { class: 'wk-pot-flower-heart', cx: 0, cy: 0, r: 2.8 }, flower);
+      svg('path', { class: 'wk-pot-pollen', d: 'M0 -1.5 h0.1 M1.5 -0.5 h0.1 M0.9 1.2 h0.1 M-0.9 1.2 h0.1 M-1.5 -0.5 h0.1 M0 0 h0.1' }, flower);
+    });
+    svg('path', { class: 'wk-pot-bud', d: 'M177 81 C173 79 174 73 177 72 C181 74 180 79 177 81 Z' }, pot);
+    svg('path', { class: 'wk-pot-shine', d: 'M145 122 Q147 135 149 144' }, pot);
+    svg('path', { class: 'wk-pot-texture', d: 'M144 123 Q163 126 182 123 M146 132 Q162 135 180.5 132 M148 141 Q163 143.5 179 141' }, pot);
+    svg('path', { class: 'wk-pot-etch', d: 'M151 127 Q154 130 157 127 Q160 130 163 127 Q166 130 169 127 Q172 130 175 127 M151.7 137 h1.3 M159 139 h1 M172 136 h1.7 M176 143 h0.8 M150 121 h1 M167 145 h1.2' }, pot);
+    svg('path', { class: 'wk-pot-rim', d: 'M138 110 Q163 117 188 110 V114 Q188 117 184 118 Q163 122 142 118 Q138 117 138 114 Z' }, pot);
+    svg('path', { class: 'wk-pot-rim-light', d: 'M140 111.5 Q162 117 186 111.5 M142 114 Q160 119 178 115.8' }, pot);
     if (tipAt !== undefined) tween(pot, [{ transform: 'rotate(0deg)' }, { transform: `rotate(${PORCH_TIP}deg)` }], tipAt, 0.35, EASE.inOut);
     if (untipAt !== undefined) tween(pot, [{ transform: `rotate(${PORCH_TIP}deg)` }, { transform: 'rotate(0deg)' }], untipAt, 0.35, EASE.inOut);
     // The boardwalk on the street.
     svg('rect', { class: 'wk-pr-deck', x: -8, y: 204, width: 256, height: 9 }, art);
     svg('path', { class: 'wk-pr-seam', d: Array.from({ length: 14 }, (_, i) => `M${4 + i * 18} 204 V213`).join(' ') }, art);
     svg('rect', { class: 'wk-pr-fascia', x: -8, y: 213, width: 256, height: 15 }, art);
+    svg('path', { class: 'wk-pr-trim-light', d: 'M-6 205 H246 M-6 214 H246' }, art);
+    svg('path', { class: 'wk-pr-grain', d: 'M4 219 q35 -2 60 0 M88 224 q29 -2 58 0 M165 219 q35 -2 68 0' }, art);
+    for (let dx = 13; dx < 240; dx += 36) {
+      svg('path', { class: 'wk-pr-grain', d: `M${dx - 4} 208 h8` }, art);
+      svg('circle', { class: 'wk-pr-nail', cx: dx, cy: 211, r: 0.6 }, art);
+    }
     const stage = ([px, py]) => [x + px * k, y + py * k];
     const points = { ...PORCH, rimTipped: turnAbout(PORCH.rim, PORCH.pivot, PORCH_TIP) };
     if (key && takeAt !== undefined) tween(key, [{ opacity: 1 }, { opacity: 0 }], takeAt, 0.12, EASE.inOut);
     if (key && keyFly) {
-      // The key slides out from under the pot and flies to keyFly.to.
-      const [kx, ky] = stage(PORCH.key);
-      const dx = (keyFly.to[0] - kx) / k, dy = (keyFly.to[1] - ky) / k;
-      key.style.transformBox = 'view-box';
-      key.style.transformOrigin = `${PORCH.key[0]}px ${PORCH.key[1]}px`;
-      tween(key, [{ transform: 'translate(0px, 0px)' }, { transform: 'translate(18px, 0px)', offset: 0.3 }, { transform: `translate(${dx}px, ${dy}px) scale(0.6)` }], keyFly.at, 0.9, EASE.inOut);
-      tween(key, [{ opacity: 1 }, { opacity: 0 }], keyFly.at + 0.88, 0.1, EASE.inOut);
+      // Once clear of the pot, the key leaves the house's stacking layer.
+      // Follow the actual grip, including arm pose and idle sway, so the
+      // hand takes over at precisely the same place, angle, and size.
+      const flightArt = overlay(keyFly.layer);
+      const flight = svg('g', { class: 'wk-key-flight' }, flightArt);
+      const drawing = svg('g', { transform: 'translate(-154 -147)' }, flight);
+      Array.from(key.children).forEach((part) => drawing.append(part.cloneNode(true)));
+      const [kx, ky] = stage([154, 147]);
+      const departure = keyFly.at + 0.27, arrival = keyFly.at + 0.9;
+      const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
+      onFrame((t) => {
+        const slide = reduced.matches ? 0 : clamp((t - keyFly.at) / 0.27, 0, 1);
+        key.setAttribute('transform', `translate(${18 * slide} 0)`);
+        key.setAttribute('opacity', t < (reduced.matches ? arrival : departure) ? 1 : 0);
+        const flying = !reduced.matches && t >= departure && t < arrival;
+        flight.setAttribute('opacity', flying ? 1 : 0);
+        if (!flying) return;
+        const matrix = flightArt.getScreenCTM().inverse().multiply(keyFly.hand.getScreenCTM());
+        // PROPS.key puts the bow at (-2, 9), its shaft ten degrees down
+        // from the hand's x-axis. Its bow radius is four hand units.
+        const target = new DOMPoint(-2, 9).matrixTransform(matrix);
+        const u = clamp((t - departure) / (arrival - departure), 0, 1);
+        const eased = u * u * (3 - 2 * u);
+        const px = kx + 18 * k + (target.x - kx - 18 * k) * eased;
+        const py = ky + (target.y - ky) * eased - 30 * Math.sin(Math.PI * u);
+        const size = k + (Math.hypot(matrix.a, matrix.b) * 4 / 3.6 - k) * eased;
+        const angle = (Math.atan2(matrix.b, matrix.a) * 180 / Math.PI + 10) * eased;
+        flight.setAttribute('transform', `translate(${px} ${py}) rotate(${angle}) scale(${size})`);
+      });
     }
     // A honeypot shows once the pot has tipped off it.
     if (jar && tipAt !== undefined) tween(jar, [{ opacity: 0 }, { opacity: 1 }], tipAt + 0.08, 0.15, EASE.inOut);
@@ -751,15 +874,17 @@
     const path = svg('path', { class: 'wk-trail-line', d, pathLength: 1 }, g);
     if (dashed) svg('path', { class: 'wk-trail-dash', d }, g);
     fx.fadeIn(g, at, 0.15);
-    fx.draw(path, at, duration);
+    const drawing = tween(path, [{ strokeDashoffset: 1 }, { strokeDashoffset: 0 }], at, duration, EASE.inOut);
     if (arrow) {
       const head = svg('g', {}, g);
       if (tone === 'cookie') {
         svg('circle', { class: 'wk-trail-head', r: 7.5 }, head);
         for (const [cx, cy] of [[-2.6, -2.2], [2.4, -0.6], [-0.6, 3]]) svg('circle', { class: 'wk-cookie-chip', cx, cy, r: 1.3 }, head);
       } else svg('circle', { class: 'wk-trail-head', r: 4.5 }, head);
-      onFrame((t) => {
-        const u = clamp((t - at) / duration, 0, 1);
+      onFrame(() => {
+        // Follow the same eased progress as the visible stroke, so the
+        // travelling cookie cannot separate from the end of its trail.
+        const u = drawing.effect.getComputedTiming().progress ?? 0;
         const p = path.getPointAtLength ? path.getPointAtLength(u * path.getTotalLength()) : { x: 0, y: 0 };
         head.setAttribute('transform', `translate(${p.x.toFixed(1)} ${p.y.toFixed(1)})`);
       });
@@ -801,12 +926,12 @@
     }
     fx.fadeIn(g, at - (impact ? aim : 0), 0.12);
     fx.draw(casing, at, duration);
-    fx.draw(line, at, duration);
+    const drawing = tween(line, [{ strokeDashoffset: 1 }, { strokeDashoffset: 0 }], at, duration, EASE.inOut);
     let length = 0;
     onFrame((t) => {
       length ||= line.getTotalLength ? line.getTotalLength() : 0;
       if (!length) return;
-      const u = clamp((t - at) / duration, 0, 1);
+      const u = drawing.effect.getComputedTiming().progress ?? 0;
       const tip = line.getPointAtLength(u * length);
       const back = line.getPointAtLength(Math.max(0, u * length - 3));
       const angle = Math.atan2(tip.y - back.y, tip.x - back.x) * 180 / Math.PI;
@@ -927,9 +1052,13 @@
   function ciaMini(parent) {
     const node = el('div', 'wk-cia-mini', parent);
     const art = svg('svg', { viewBox: '0 0 120 80', width: 120, height: 80, 'aria-hidden': 'true' }, node);
-    svg('path', { class: 'wk-cia-tri', d: 'M60 8 L112 74 H8 Z' }, art);
-    [['C', 60, 30], ['I', 30, 66], ['A', 90, 66]].forEach(([letter, cx, cy]) => {
-      const tx = svg('text', { class: 'wk-cia-letter', x: cx, y: cy, 'text-anchor': 'middle' }, art);
+    // Three equal brass-rimmed medallions, connected as one triad. The
+    // letters belong to the vertices, with breathing room around each.
+    svg('path', { class: 'wk-cia-tri', d: 'M60 18 L99 62 H21 Z' }, art);
+    [['C', 60, 18], ['I', 21, 62], ['A', 99, 62]].forEach(([letter, cx, cy]) => {
+      svg('circle', { class: 'wk-cia-medallion', cx, cy, r: 16 }, art);
+      svg('circle', { class: 'wk-cia-medallion-rim', cx, cy, r: 12.8 }, art);
+      const tx = svg('text', { class: 'wk-cia-letter', x: cx, y: cy + 7, 'text-anchor': 'middle' }, art);
       tx.textContent = letter;
     });
     el('div', 'wk-cia-mini-label', node, 'CIA triad');
@@ -956,28 +1085,29 @@
     const art = svg('svg', { class: `wk-pictogram wk-pictogram--${kind}`, viewBox: '0 0 44 36', 'aria-hidden': 'true' }, parent);
     const add = (tag, cls, attrs) => svg(tag, { class: cls, ...attrs }, art);
     if (kind === 'chest') {
-      add('path', 'wk-pg-gold', { d: 'M10 15 C12 9 18 8 22 11 C26 8 32 9 34 15 Z' });
-      add('path', 'wk-pg-wood', { d: 'M7 16 H37 V31 H7 Z' });
-      add('path', 'wk-pg-wood', { d: 'M7 16 C7 9 13 6 22 6 C31 6 37 9 37 16 Z', transform: 'rotate(-14 7 16)' });
-      add('path', 'wk-pg-band', { d: 'M13 16 V31 M31 16 V31 M7 22 H37' });
-      add('rect', 'wk-pg-plate', { x: 19, y: 19, width: 6, height: 7, rx: 1 });
+      art.setAttribute('viewBox', '0 0 200 150');
+      strongboxArt(art);
     } else if (kind === 'wanted') {
       add('rect', 'wk-pg-paper', { x: 9, y: 2, width: 26, height: 32, rx: 1.5 });
       add('path', 'wk-pg-ink', { d: 'M13 7 H31' });
-      add('circle', 'wk-pg-ink-fill', { cx: 22, cy: 17, r: 4.4 });
-      add('path', 'wk-pg-ink-fill', { d: 'M14 12.6 H30 L27.6 10.6 C26 7.6 18 7.6 16.4 10.6 Z M13.6 30 C14.4 24.6 18 22.6 22 22.6 C26 22.6 29.6 24.6 30.4 30 Z' });
+      const portrait = wantedPortrait(art);
+      portrait.setAttribute('transform', 'translate(10.8 9) scale(0.28)');
     } else if (kind === 'entry') {
-      add('path', 'wk-pg-wood', { d: 'M14 10 H40 V33 H14 Z' });
-      add('path', 'wk-pg-front', { d: 'M12 10 V5 H42 V10 Z' });
-      add('rect', 'wk-pg-door', { x: 23, y: 20, width: 8, height: 13 });
-      add('rect', 'wk-pg-window', { x: 16, y: 14, width: 5, height: 5 });
-      add('rect', 'wk-pg-window', { x: 33, y: 14, width: 5, height: 5 });
-      add('path', 'wk-pg-vector', { d: 'M1 27 H18' });
-      add('path', 'wk-pg-vector-head', { d: 'M22 27 L15.6 23.4 L17 27 L15.6 30.6 Z' });
+      add('path', 'wk-pg-side', { d: 'M35 9 L41 13 V32 H35 Z' });
+      add('path', 'wk-pg-wood', { d: 'M13 9 H37 V32 H13 Z' });
+      add('path', 'wk-pg-plank', { d: 'M14 13 H36 M14 20 H36 M14 25 H36 M14 30 H36' });
+      add('path', 'wk-pg-front', { d: 'M11 10 V5 H39 V10 Z' });
+      add('path', 'wk-pg-trim', { d: 'M11 5 H39 M12 33 H41' });
+      add('rect', 'wk-pg-window', { x: 16, y: 14, width: 5, height: 6 });
+      add('rect', 'wk-pg-window', { x: 29, y: 14, width: 5, height: 6 });
+      add('path', 'wk-pg-window-bar', { d: 'M18.5 14 V20 M31.5 14 V20' });
+      add('path', 'wk-pg-door-frame', { d: 'M23 32 V22 H32 V32' });
+      add('rect', 'wk-pg-door', { x: 24, y: 23, width: 7, height: 9 });
+      add('path', 'wk-pg-vector', { d: 'M2 25.5 H20 V22 L28 27 L20 32 V28.5 H2 Z' });
     } else {
-      add('path', 'wk-pg-shackle', { d: 'M15 17 V11 A7 7 0 0 1 29 11 V17' });
-      add('rect', 'wk-pg-brass', { x: 10, y: 16, width: 24, height: 18, rx: 3.4 });
-      add('path', 'wk-pg-keyhole', { d: 'M22 21.6 A2.6 2.6 0 1 1 21.9 21.6 Z M20.8 24.6 H23.2 L23.8 30 H20.2 Z' });
+      art.setAttribute('viewBox', '0 0 64 76');
+      art.classList.add('wk-padlock--brass');
+      lockArt(art);
     }
     return art;
   }
@@ -985,6 +1115,20 @@
   // ------------------------------------------------------------------
   // The threat model: a wanted poster
   // ------------------------------------------------------------------
+
+  /** The same masked frontier portrait at poster and chorus-icon sizes. */
+  function wantedPortrait(parent) {
+    const portrait = svg('g', { class: 'wk-wanted-portrait' }, parent);
+    svg('path', { class: 'wk-wanted-coat', d: 'M9 78 L13 62 Q16 55 29 51 L40 57 L51 51 Q64 55 67 62 L71 78 Z' }, portrait);
+    svg('path', { class: 'wk-wanted-lapel', d: 'M29 51 L21 60 L32 64 L36 78 M51 51 L59 60 L48 64 L44 78' }, portrait);
+    svg('path', { class: 'wk-wanted-head', d: 'M23 25 Q22 12 40 12 Q58 12 57 25 L55 42 Q53 53 40 56 Q27 53 25 42 Z' }, portrait);
+    svg('path', { class: 'wk-wanted-mask', d: 'M24 36 Q40 41 56 36 L55 46 L40 61 L25 46 Z M25 41 L16 38 L19 46 L25 45' }, portrait);
+    svg('path', { class: 'wk-wanted-mask-fold', d: 'M29 44 L40 53 L51 44' }, portrait);
+    svg('path', { class: 'wk-wanted-eyes', d: 'M28 31 Q32 29 36 32 Q32 35 28 31 Z M44 32 Q48 29 52 31 Q48 35 44 32 Z' }, portrait);
+    svg('path', { class: 'wk-wanted-hat', d: 'M23 22 L26 9 Q31 5 40 9 Q49 5 54 9 L57 22 Z M9 23 Q24 19 40 22 Q56 19 71 23 Q61 30 40 28 Q19 30 9 23 Z' }, portrait);
+    svg('path', { class: 'wk-wanted-hatband', d: 'M25 18 Q40 21 55 18' }, portrait);
+    return portrait;
+  }
 
   /**
    * A wanted poster for the attacker: a silhouette, "Wanted for", and the
@@ -995,8 +1139,7 @@
     const { node, body } = poster(parent, { x, y, w, title: 'Wanted', at, until, className: 'wk-wanted' });
     const face = el('div', 'wk-wanted-face', body);
     const art = svg('svg', { viewBox: '0 0 80 80', width: 80, height: 80, 'aria-hidden': 'true' }, face);
-    svg('path', { class: 'wk-silhouette', d: 'M40 12 C30 12 25 20 25 30 C25 40 31 47 40 47 C49 47 55 40 55 30 C55 20 50 12 40 12 Z M14 80 C16 62 26 54 40 54 C54 54 64 62 66 80 Z' }, art);
-    svg('path', { class: 'wk-silhouette', d: 'M18 22 H62 L58 16 C54 6 26 6 22 16 Z' }, art);
+    wantedPortrait(art);
     el('div', 'wk-wanted-who', face, who);
     el('div', 'wk-wanted-for', body, `Wanted for: ${wantedFor}`);
     const list = el('div', 'wk-wanted-fields', body);
@@ -1306,6 +1449,14 @@
   // The gazette and the lessons notice
   // ------------------------------------------------------------------
 
+  /** A short, attributed message attached to a moving character. */
+  function speech(parent, { speaker, text, at, until, trailing = false }) {
+    const node = el('div', `wk-agent-speech is-staged${trailing ? ' wk-agent-speech--trailing' : ''}`, parent);
+    el('div', 'wk-agent-speech-name', node, speaker);
+    el('div', 'wk-agent-speech-text', node, `“${text}”`);
+    return show(node, at, until, 'fade');
+  }
+
   /** The Frontier Gazette's front page: masthead, date, headline, and byline. */
   function gazette(parent, { x, y, w = 880, at, until, headline, byline, date }) {
     const node = box(parent, 'wk-gazette', { x, y, w });
@@ -1356,6 +1507,6 @@
   window.WesternKit = {
     show, box, during, group, overlay, plank, label, tag, poster, stamp, slate, browser, typed, loginForm, post,
     alertBox, avatar, padlock, lockBoard, key, strongbox, asset, ciaCard, porch, appFront, trail, vector, triangle, ring, tick, planBoard, wanted,
-    network, services, bank, gazette, hop, notice, quiz, PLAN, PRINCIPLES,
+    network, services, bank, gazette, speech, hop, notice, quiz, PLAN, PRINCIPLES,
   };
 })();

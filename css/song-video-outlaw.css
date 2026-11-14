@@ -84,7 +84,8 @@
 .ol-ear-line { fill: none; stroke: #7a4a2c; stroke-width: 0.8; stroke-linecap: round; }
 .ol-eye-white { fill: #f4ecdf; stroke: none; }
 .ol-pupil { fill: #1e140c; }
-.ol-lid { fill: none; stroke: #1e140c; stroke-width: 1.5; stroke-linecap: round; }
+.ol-eye-glint { fill: #f4ecdf; }
+.ol-eyelid { fill: none; stroke: #1e140c; stroke-width: 1.5; stroke-linecap: round; }
 .ol-lash { fill: none; stroke: #1e140c; stroke-width: 1.1; stroke-linecap: round; }
 .ol-brow { fill: none; stroke: #1e140c; stroke-width: 2.4; stroke-linecap: round; }
 .ol-mask-stitch { fill: none; stroke: #6fb3ae; stroke-width: 0.7; stroke-dasharray: 1.4 1.4; opacity: 0.8; }
@@ -100,7 +101,7 @@
 /* Gloves: FrontierHand's hand in tan leather, its far fingers in shadow. */
 .ol-outlaw .sh-finger--far { fill: #93602f; }
 .ol-outlaw .sh-nail { display: none; }
-.ol-outlaw .sh-hand-line { stroke: #5a3418; }
+.ol-outlaw .sh-hand-contour { stroke: #5a3418; stroke-width: 0.8; }
 
 /* Labels on props and the badge (≥ 12 px on stage at scale 1). */
 .ol-label { font-family: inherit; font-weight: 800; letter-spacing: 0.02em; }

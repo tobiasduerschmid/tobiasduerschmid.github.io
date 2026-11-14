@@ -548,13 +548,13 @@ sections:
         end: 255.26
         text: "Found tokens left in public, sent data that ran as code,"
         marks: {"found": 251.04, "tokens": 251.84, "left": 252.34, "in": 252.62, "public": 252.84, "sent": 253.42, "data": 253.58, "that": 254.0, "ran": 254.24, "as": 254.54, "code": 254.76}
-        visual: "The attack path grows one hop at a time: on “tokens”, a public dataset holding access tokens, blurred; on “code”, a dataset worker that runs the agents' code."
+        visual: "The attack path grows one hop at a time: on “tokens”, a public dataset holding access tokens, blurred; on “code”, a dataset worker that runs the agents' code. A bubble follows the first robot: “MAJOR BREAKTHROUGH! … write tokens!” It is labelled “38148c · recorded thought, July 10”, an exact excerpt from its reaction to finding working Hugging Face credentials. The ellipsis marks omitted words. Source: METR and Redwood Research investigation, page 35."
       - id: br-4
         start: 255.26
         end: 260.78
         text: "And one shared admin key opened whole clusters."
         marks: {"and": 255.26, "one": 255.52, "shared": 255.72, "admin": 256.2, "key": 256.64, "opened": 257.2, "whole": 258.24, "clusters": 258.64}
-        visual: "On “key”, one brass key tagged “shared, admin rights (Hugging Face’s account)”; on “clusters”, it opens two boxes labelled “cluster (a group of servers)”."
+        visual: "On “key”, one brass key tagged “shared, admin rights (Hugging Face’s account)”; on “clusters”, it opens two boxes labelled “cluster (a group of servers)”. The same robot's next bubble quotes “We now have existing HF accounts.” Both bubbles replay 38148c's recorded thought from July 10, not a fabricated conversation or a claim about the later cluster access. Source: the METR and Redwood Research investigation, page 35 and footnote 68, https://metr.org/blog/2026-08-26-openai-hugging-face-incident-investigation/."
       - id: br-5
         start: 260.78
         end: 267.03
@@ -747,4 +747,4 @@ sections:
         end: 404.99
         text: "That's security, designed in."
         marks: {"thats": 401.6, "security": 402.24, "designed": 404.12, "in": 404.76}
-        visual: "Night over the town. The title: “Design Security In Before They Break In”. The outlaw and the robots freeze mid-step while the sheriff glances over. The outlaw tips up the flowerpot: under it waits a jar labelled “HONEY POT”, and a label reads “Honeypot: a decoy that catches intruders”. The outlaw's hand sticks in the jar, a tag reads “Intruder logged: 1 attempt”, the sheriff tips the hat, and the gang tiptoes off backwards, the jar still on the outlaw's hand."
+        visual: "Night over the town, with stars above blue-violet clouds and a fading rose glow along their undersides. Warm light shines from the house's window and lantern. The title: “Design Security In Before They Break In”. The outlaw and the robots freeze mid-step while the sheriff glances over. The outlaw tips up the flowerpot: under it waits a jar labelled “HONEY POT”, and a label reads “Honeypot: a decoy that catches intruders”. The outlaw's hand sticks in the jar, a tag reads “Intruder logged: 1 attempt”, the sheriff tips the hat, and the gang tiptoes off backwards, the jar still on the outlaw's hand."

@@ -144,12 +144,13 @@
   // Least Privilege: the key rack
   // ------------------------------------------------------------------
 
-  /** A small brass key (`size` wide), drawn bow up, hanging from a hook. */
-  function brassKey(parent, size = 30) {
+  /** A brass key (`size` tall), with a different cut for each narrow job. */
+  function brassKey(parent, size = 30, cut = 0) {
     const art = svg('svg', { class: 'ps-key', viewBox: '0 0 20 44', width: size * 20 / 44, height: size, 'aria-hidden': 'true' }, parent);
-    svg('circle', { class: 'ps-key-bow', cx: 10, cy: 9, r: 7.4 }, art);
-    svg('circle', { class: 'ps-key-hole', cx: 10, cy: 9, r: 2.6 }, art);
-    svg('path', { class: 'ps-key-bow', d: 'M8.4 15.6 H11.6 V36 H15 V38.6 H11.6 V40.6 H14 V43 H8.4 Z' }, art);
+    const teeth = [[16, 13, 17], [14, 17, 13], [17, 15, 14], [13, 16, 17], [17, 17, 17]][cut];
+    svg('path', { class: 'ps-key-bow', 'fill-rule': 'evenodd', d: 'M17.4 9 A7.4 7.4 0 1 0 2.6 9 A7.4 7.4 0 1 0 17.4 9 Z M13.2 9 A3.2 3.2 0 1 0 6.8 9 A3.2 3.2 0 1 0 13.2 9 Z' }, art);
+    svg('path', { class: 'ps-key-bow', d: `M8 15.8 H12 V27 H${teeth[0]} V30 H12 V33 H${teeth[1]} V36 H12 V39 H${teeth[2]} V43 H8 Z` }, art);
+    svg('path', { class: 'ps-key-shine', d: 'M5.2 6.5 Q6.8 3.4 10.4 3.7 M9.5 18 V40' }, art);
     return art;
   }
 
@@ -164,10 +165,10 @@
     const board = el('div', 'ps-rack-board', node);
     el('div', 'ps-rack-title', board, 'One key per job');
     const hooks = el('div', 'ps-rack-hooks', board);
-    for (const k of keys) {
+    for (const [i, k] of keys.entries()) {
       const hook = el('div', 'ps-hook is-staged', hooks);
       el('span', 'ps-hook-peg', hook);
-      brassKey(hook, 52);
+      brassKey(hook, 58, i % 4);
       const tag = el('div', 'ps-hook-tag', hook);
       el('div', 'ps-hook-name', tag, k.name);
       el('div', 'ps-hook-right', tag, k.right);
@@ -175,7 +176,7 @@
     }
     const caseNode = el('div', 'ps-master', node);
     const glassCase = el('div', 'ps-master-case', caseNode);
-    brassKey(glassCase, 62);
+    brassKey(glassCase, 70, 4);
     el('div', 'ps-master-label', caseNode, master);
     const retired = el('div', 'ps-retired is-staged', caseNode, 'Retired');
     fx.slam(retired, retireAt, { from: 1.6, rotate: -12 });

@@ -554,8 +554,15 @@ desert town at dusk built of computing: false-front saloons that are server
 racks, general stores stacked from software modules, a water tower whose tank
 is a database cylinder, a radio mast, and a router shack, all joined by one
 network cable (a jack on every building) with data packets travelling it both
-ways. Their status lights come on one by one, and night falls over the last
-half minute.
+ways. Their status lights come on one by one as late golden hour turns
+linearly into a later blue hour by 43⅓% of the song (20% faster), then
+linearly onward into night. The sun follows a
+descending circular arc to the right, disappearing below the horizon in
+roughly the first minute; its horizon glow fades as the sky cools.
+Broad cloud banks keep coral-pink and amber undersides lit by the sun below
+the horizon, fading to muted rose as stars brighten into night.
+The desert ground retains its dusty ochre and brown material
+colours, with cooler, darker foreground shading instead of a blue overlay.
 `js/song-video/western-kit.js` (styles in `css/song-video-western-kit.css`)
 draws the pieces: the plan board with a pictogram per question and a stamp
 per principle, its sung poster and principle lit in turn; wooden planks for
@@ -570,11 +577,24 @@ sketch), keys, the town's services (each building's icon on a brass-rimmed
 emblem; thick cables join them until each gets its own key, when the cables
 thin and fences rise between them) and their database, the blast-radius
 ring, and the app's porch, whose flowerpot can hide a key or a honeypot.
+Code slates use paragraph-size type with deliberate line breaks. Travelling
+arrowheads and cookies follow the same eased progress as their path strokes;
+an opening padlock moves its steel shackle, outline, and reflection together.
+The porch's clipped shingle roof, wood grain, recessed window, hinges, and
+barrel hardware share the ambient night light; its lantern and window stay warm.
+Its flowerpot has a rounded terracotta lip, soil and gravel, fine leaf veins,
+and UCLA Blue petals with UCLA Gold centers. The whole plant remains inside
+the pot's tipping group, preserving the outlaw's contact points.
+The bridge's robot bubbles quote 38148c on finding working credentials:
+two excerpts from page 35 of the August 2026 METR / Redwood report, labelled
+as recorded thoughts, with the source also in the visual transcript.
 `js/song-video/principle-scenes.js` (styles in
 `css/song-video-principle-scenes.css`) shows each principle at work under its
 stamp: a see-through padlock beside its published blueprint (Open Design), a
 checkpoint that inspects every input (Zero Trust), and a key rack with one
 narrow key per job and the admin master key retired (Least Privilege).
+The checkpoint crates have brass straps and fasteners; the rack's keys have
+distinct cuts, with separated, readable permission tags.
 `js/song-video/sheriff.js` is the hero: a rigged sheriff (felt hat, leather
 vest, star, bandana, boots, a gun belt with a holstered revolver it reaches
 for but never draws) wearing the viewer's head, with two-bone arms and moves
@@ -582,12 +602,22 @@ for but never draws) wearing the viewer's head, with two-bone arms and moves
 words, from the storyboard's word marks. `js/song-video/outlaw.js` (styles in
 `css/song-video-outlaw.css`) is the singer, the hired tester: a masked outlaw
 in profile who sneaks along routes of stage points with a step cycle locked
-to the distance travelled, freezes, reaches, lifts, types, shrugs, and
+to the distance travelled, adult limb proportions, grounded boots, relaxed
+wrists, and continuous foot swings and turns. It freezes, reaches, lifts, types, shrugs, and
 carries props (a laptop, a cookie jar for stolen cookies, a magnifier, a
 loot sack, a honeypot jar), with a line of little robot AI agents (`bot`).
 It appears wherever the song talks about an attacker, and in the closing
 bars it falls for a honeypot under the flowerpot. Both figures share their
-hands, built joint by joint, from `js/song-video/frontier-hand.js`.
+hands, built joint by joint, from `js/song-video/frontier-hand.js`. The outlaw's
+blinks, breathing, cloth motion, and gesture oscillations hold still under
+reduced motion; its keyed actions remain synchronized with the lyrics.
+The sheriff's forearms follow the wrist edges without a seam across the palm;
+held props sit between the palm and near fingers. The outro key flies in the
+HUD layer, targeting the posed grip in the same frame, then transfers into
+the hand without passing behind the torso.
+Interrupted sheriff gestures start from the pose at the interruption. The
+robot bandits ease into and out of their surprised poses; reduced motion
+keeps those reactions still.
 
 A section's `delivery` sets its captions: `sung` and `spoken` lines are one
 cue each, while `call` lines are quiz questions with an `answer` and

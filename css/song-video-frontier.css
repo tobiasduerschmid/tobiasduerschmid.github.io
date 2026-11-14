@@ -1,7 +1,7 @@
 /*
  * The "frontier" stage theme (js/song-video/frontier.js): a frontier town at
- * dusk behind the scenes of "Design It In Before They Break In". Only the backdrop changes. The
- * scenery stays dim and low in contrast: every text in the scenes sits on
+ * sunset behind the scenes of "Design It In Before They Break In". Only the backdrop changes. The
+ * scenery moves from golden hour to blue hour: every text in the scenes sits on
  * its own card, plank, or slate, and nothing large changes brightness
  * quickly. Like stage.css this styles the 960×540 stage, which keeps its
  * dusk artwork in both page themes; the player's print styles hide it.
@@ -9,6 +9,8 @@
 
 .theme-frontier {
   background: #120c14;
+  --fr-blue-hour: 0%;
+  --fr-night: 0%;
 }
 
 .frontier {
@@ -21,21 +23,27 @@
   display: block;
 }
 
-.fr-sky-0 { stop-color: #120f26; }
-.fr-sky-1 { stop-color: #2c1a33; }
-.fr-sky-2 { stop-color: #5a2d2e; }
-.fr-sky-3 { stop-color: #7a4128; }
+.fr-sky-0 { stop-color: color-mix(in srgb, color-mix(in srgb, #586b9c, #0d1d40 var(--fr-blue-hour)), #070e23 var(--fr-night)); }
+.fr-sky-1 { stop-color: color-mix(in srgb, color-mix(in srgb, #c187a2, #263b68 var(--fr-blue-hour)), #12223e var(--fr-night)); }
+.fr-sky-2 { stop-color: color-mix(in srgb, color-mix(in srgb, #eea079, #565b83 var(--fr-blue-hour)), #29334d var(--fr-night)); }
+.fr-sky-3 { stop-color: color-mix(in srgb, color-mix(in srgb, #ffd08b, #92758e var(--fr-blue-hour)), #4c435b var(--fr-night)); }
 
-.fr-sun-0 { stop-color: #e08a3c; stop-opacity: 0.32; }
-.fr-sun-1 { stop-color: #e08a3c; stop-opacity: 0; }
-.fr-sun-disc { fill: #e9a25a; opacity: 0.55; }
+.fr-sun-0 { stop-color: #ffce86; stop-opacity: 0.5; }
+.fr-sun-1 { stop-color: #ff9a70; stop-opacity: 0; }
+.fr-sun-disc { fill: #ffe2a1; }
 
 .fr-stars circle { fill: #f4ead8; }
 
-.fr-cloud path { fill: #3a2236; opacity: 0.7; }
-.fr-cloud .fr-cloud-lit { fill: #8a4a38; opacity: 0.35; }
+/* Cool upper masses, broad rose undersides, and a thin amber lower rim:
+   the sun is below the clouds even after its disc slips behind the town. */
+.fr-cloud-body { fill: url(#fr-cloud); }
+.fr-cloud-0 { stop-color: color-mix(in srgb, color-mix(in srgb, #77718e, #253258 var(--fr-blue-hour)), #19263e var(--fr-night)); }
+.fr-cloud-1 { stop-color: color-mix(in srgb, color-mix(in srgb, #b4839c, #65527d var(--fr-blue-hour)), #34364d var(--fr-night)); }
+.fr-cloud-2 { stop-color: color-mix(in srgb, color-mix(in srgb, #f2ac8c, #be718e var(--fr-blue-hour)), #654758 var(--fr-night)); }
+.fr-cloud-3 { stop-color: color-mix(in srgb, color-mix(in srgb, #ffda99, #df9589 var(--fr-blue-hour)), #865963 var(--fr-night)); }
+.fr-cloud-wisp { fill: url(#fr-cloud); opacity: 0.45; }
 
-.fr-mesa { fill: #34202c; }
+.fr-mesa { fill: color-mix(in srgb, color-mix(in srgb, #69516b, #303b5c var(--fr-blue-hour)), #242b40 var(--fr-night)); }
 
 .fr-town .fr-wall,
 .fr-town .fr-front,
@@ -68,10 +76,13 @@
 .fr-poles path { fill: none; stroke: #1c1219; stroke-width: 2.2; }
 .fr-poles .fr-wire { stroke-width: 0.8; stroke: #2a1b24; }
 
-.fr-road-0 { stop-color: #5a3b2b; }
-.fr-road-1 { stop-color: #33221a; }
-.fr-rut { fill: none; stroke: #3e281d; stroke-width: 3; opacity: 0.8; }
-.fr-rail { fill: none; stroke: #4a3222; stroke-width: 3; stroke-linecap: round; }
+/* Sand keeps its ochre material colour after sunset. The near ground loses
+   warmth to the open sky, rather than turning into a uniform blue surface. */
+.fr-road-0 { stop-color: color-mix(in srgb, color-mix(in srgb, #a6754d, #615247 var(--fr-blue-hour)), #3d3834 var(--fr-night)); }
+.fr-road-1 { stop-color: color-mix(in srgb, color-mix(in srgb, #896045, #4d433e var(--fr-blue-hour)), #302c2b var(--fr-night)); }
+.fr-road-2 { stop-color: color-mix(in srgb, color-mix(in srgb, #694832, #343134 var(--fr-blue-hour)), #242328 var(--fr-night)); }
+.fr-rut { fill: none; stroke: color-mix(in srgb, #654531, #403a38 var(--fr-blue-hour)); stroke-width: 3; opacity: 0.65; }
+.fr-rail { fill: none; stroke: color-mix(in srgb, #62432d, #493e36 var(--fr-blue-hour)); stroke-width: 3; stroke-linecap: round; }
 
 .fr-tumbleweed path { fill: none; stroke: #8a6442; stroke-width: 1.1; opacity: 0.8; }
 .fr-tumbleweed circle { fill: none; stroke: #8a6442; stroke-width: 0.9; opacity: 0.65; }
@@ -80,14 +91,16 @@
 
 /* Street dressing: lit a little by the dusk so its details read; the
    captions keep their own dark box over it (song-player.css). */
-.fr-boardwalk { fill: #55392a; }
+.fr-boardwalk { fill: color-mix(in srgb, #654631, #4a3d35 var(--fr-blue-hour)); }
 .fr-plank { fill: none; stroke: #33231a; stroke-width: 1; }
 .fr-tie { fill: none; stroke: #4c3426; stroke-width: 4; stroke-linecap: round; }
 .fr-track { fill: none; stroke: #7a6a62; stroke-width: 2.2; }
-.fr-cactus { fill: #2f4f35; stroke: #16241a; stroke-width: 1.2; }
-.fr-crate { fill: #6b4a2c; stroke: #2a1a10; stroke-width: 1.2; }
+.fr-cactus { fill: color-mix(in srgb, #526342, #303f38 var(--fr-blue-hour)); stroke: #16241a; stroke-width: 1.2; }
+.fr-crate { fill: color-mix(in srgb, #80603d, #5b4b3e var(--fr-blue-hour)); stroke: #2a1a10; stroke-width: 1.2; }
 .fr-crate-slat { fill: none; stroke: #4a3220; stroke-width: 1.4; }
 .fr-stencil { fill: #a88460; font-family: var(--font-mono); font-size: 8px; font-weight: 700; }
-.fr-stone { fill: #54402e; }
+.fr-stone { fill: color-mix(in srgb, #9a7956, #6c5e50 var(--fr-blue-hour)); }
 
-.fr-night { fill: #050712; }
+.theme-frontier .vignette {
+  background: radial-gradient(ellipse at 50% 45%, transparent 55%, rgba(14, 20, 46, 0.3) 100%);
+}

@@ -15,14 +15,16 @@
   const { svg } = window.SongKit;
 
   // Each finger's root on the knuckle line, its phalanx lengths, and its
-  // half-widths at root, knuckles, and tip.
+  // half-widths at root, knuckles, and tip. Stagger the four roots across
+  // the palm instead of stacking them on one point; this keeps their
+  // overlapping silhouettes readable in both open and curled poses.
   const FINGERS = [
-    { root: [1.2, 10.4], bones: [5.2, 3.4, 2.6], w: [1.9, 1.75, 1.6, 1.45] },
-    { root: [0.4, 10.9], bones: [5.6, 3.6, 2.7], w: [1.9, 1.75, 1.6, 1.45] },
-    { root: [-0.2, 10.6], bones: [5.2, 3.4, 2.5], w: [1.8, 1.65, 1.5, 1.35] },
-    { root: [-0.6, 10.0], bones: [4.2, 2.8, 2.2], w: [1.6, 1.5, 1.35, 1.2] },
+    { root: [-1.6, 10.8], bones: [5.2, 3.3, 2.6], w: [1.55, 1.45, 1.25, 1.05] },
+    { root: [0.4, 11.8], bones: [5.6, 3.6, 2.7], w: [1.6, 1.5, 1.3, 1.1] },
+    { root: [2.3, 11.0], bones: [5.2, 3.4, 2.5], w: [1.5, 1.4, 1.2, 1.0] },
+    { root: [4.0, 9.8], bones: [4.2, 2.8, 2.2], w: [1.3, 1.2, 1.05, 0.9] },
   ];
-  const THUMB = { root: [-2.6, 3.4], bones: [4.4, 3.2], w: [2.2, 1.9, 1.6] };
+  const THUMB = { root: [-2.8, 4.8], bones: [4.2, 3.2], w: [2.0, 1.7, 1.3] };
 
   /**
    * Hand shapes as curls in degrees: for each finger [knuckle, middle, tip]
@@ -33,12 +35,12 @@
    * past the knuckles.
    */
   const SHAPES = {
-    rest: [22, 32, 20, 26, 36, 22, 30, 38, 24, 34, 40, 26, 18, 20],
-    fist: [84, 96, 62, 86, 98, 64, 88, 98, 62, 90, 96, 60, -2, 6],
-    point: [2, 4, 2, 84, 98, 64, 88, 98, 62, 90, 96, 60, -2, 8],
+    rest: [8, 18, 10, 12, 24, 12, 16, 28, 14, 20, 32, 16, 14, 16],
+    fist: [75, 85, 45, 78, 88, 48, 80, 88, 46, 82, 86, 44, -2, 6],
+    point: [0, 3, 2, 76, 88, 48, 80, 88, 46, 82, 86, 44, -2, 8],
     open: [6, 8, 4, 4, 6, 4, 8, 8, 4, 12, 10, 6, -18, 6],
-    grip: [62, 78, 46, 64, 80, 48, 66, 80, 46, 68, 78, 44, 40, 22],
-    pinch: [44, 52, 30, 70, 84, 52, 76, 86, 52, 80, 84, 50, 34, 30],
+    grip: [42, 65, 35, 46, 68, 38, 50, 70, 38, 54, 70, 36, 10, 18],
+    pinch: [55, 60, 30, 62, 76, 40, 68, 78, 42, 72, 78, 40, 18, 20],
     // A gunslinger's hand over the grip: fingers half curled, thumb out.
     claw: [30, 40, 22, 34, 44, 24, 38, 46, 26, 42, 48, 26, -14, 12],
   };
@@ -58,34 +60,33 @@
 
   /**
    * Draws one hand into `g`, filled with `fill` (a skin gradient, or a
-   * glove's leather), and returns { shape(curls) }, which redraws its
-   * fingers and returns the index fingertip.
+   * glove's leather), and returns { shape(curls), grip }. The grip layer
+   * sits between the palm and the near fingers for held handles. Each
+   * part owns its fill and contour, so nearer skin occludes both together.
    */
   function hand(g, fill) {
-    const halo = svg('g', {}, g);
-    const parts = [];
     const add = (cls) => {
-      const ink = svg('path', { class: 'sh-hand-ink' }, halo);
-      const body = svg('path', { class: `sh-skin ${cls}`, fill }, g);
-      const line = svg('path', { class: 'sh-hand-line' }, g);
-      parts.push({ ink, fill: body, line });
-      return parts[parts.length - 1];
+      const part = svg('g', {}, g);
+      const body = svg('path', { class: `sh-skin ${cls}`, fill }, part);
+      const ink = svg('path', { class: 'sh-hand-contour' }, part);
+      return { ink, fill: body };
     };
     // The far fingers go first, then the palm, the index, and the thumb.
     const far = [3, 2, 1].map(() => add('sh-finger sh-finger--far'));
     const palm = add('sh-palm');
+    const grip = svg('g', {}, g);
     const index = add('sh-finger');
     const thumb = add('sh-thumb');
     const nail = svg('ellipse', { class: 'sh-nail', rx: 0.7, ry: 1 }, g);
-    const PALM = 'M-3.4 -0.6 C-3.9 3 -3.8 7.4 -2.6 10.6 C-1.4 12.2 1.8 12.4 3.2 11 C4.2 7.6 4.2 3 3.6 -0.6 Z';
-    palm.ink.setAttribute('d', PALM);
+    const PALM = 'M-3.2 -0.8 C-3.4 1.4 -4 3.6 -3.8 6 C-3.8 8.4 -3.2 10.4 -1.8 11.6 C0 12.8 3.8 12.6 5.1 10.8 C5.6 8.6 5 6.2 4.4 4 C3.9 2 3.6 0.6 3.6 -0.8 Z';
+    palm.ink.setAttribute('d', PALM.replace(/ Z$/, ''));
     palm.fill.setAttribute('d', PALM);
-    palm.line.setAttribute('d', 'M3.6 -0.6 C4.2 3 4.2 7.6 3.2 11');
     const draw = (part, joints, widths) => {
-      const drawn = finger(joints, widths, 1, [], [1, 1]);
-      part.ink.setAttribute('d', drawn.fill);
+      // Leave the root open where a finger merges into the palm; drawing
+      // that hidden edge makes a detached, stacked-on finger seam.
+      const drawn = finger(joints, widths, 1, [], [2, 2]);
+      part.ink.setAttribute('d', drawn.ink);
       part.fill.setAttribute('d', drawn.fill);
-      part.line.setAttribute('d', drawn.ink);
     };
     function shape(c) {
       const fingerAt = (i, part) => {
@@ -103,7 +104,7 @@
       nail.setAttribute('cy', ny.toFixed(2));
       return tip[tip.length - 1];
     }
-    return { shape };
+    return { shape, grip };
   }
 
   window.FrontierHand = { hand, chain, SHAPES };

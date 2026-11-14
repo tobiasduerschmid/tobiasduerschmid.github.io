@@ -260,18 +260,21 @@
 .wk-slate-title {
   margin-bottom: 6px;
   color: #c9d3cd;
-  font-size: 15px;
+  font-size: 16.2px;
   font-weight: 700;
   letter-spacing: 0.04em;
 }
 
 .wk-slate-code {
   font-family: var(--font-mono);
-  font-size: 16px;
+  font-size: 18px;
   font-variant-ligatures: none;
   line-height: 1.45;
-  white-space: pre;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
+
+.wk-code-line { min-height: 1.45em; }
 
 .wk-mark {
   border-radius: 4px;
@@ -482,7 +485,7 @@
 .wk-form-label {
   margin-top: 6px;
   color: #474952;
-  font-size: 15px;
+  font-size: 18px;
   font-weight: 600;
 }
 
@@ -494,7 +497,7 @@
   border-radius: 6px;
   background: #fff;
   font-family: var(--font-mono);
-  font-size: 16px;
+  font-size: 18px;
   white-space: pre;
 }
 
@@ -504,7 +507,7 @@
   border-radius: 6px;
   background: #2774ae;
   color: #fff;
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 700;
   text-align: center;
 }
@@ -513,7 +516,7 @@
   margin-top: 10px;
   padding: 6px 9px;
   border-radius: 6px;
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 800;
   text-align: center;
 }
@@ -571,9 +574,13 @@
 /* Steel shackle with a dark outline, a body shaded at the lower right with
    rivets at its corners: the porch's drawing style. */
 .wk-shackle-ink { fill: none; stroke: #1c2026; stroke-width: 10; stroke-linecap: round; }
-.wk-shackle { fill: none; stroke: #b4bcc6; stroke-width: 6; stroke-linecap: round; transform-box: fill-box; transform-origin: 100% 100%; }
+.wk-shackle-part { transform-box: fill-box; transform-origin: 100% 100%; }
+.wk-shackle { fill: none; stroke: #b4bcc6; stroke-width: 6; stroke-linecap: round; }
+.wk-shackle-shine { fill: none; stroke: #eef2f6; stroke-width: 1.5; stroke-linecap: round; }
 .wk-lock-body { fill: #6a737e; stroke: #1c2026; stroke-width: 2.2; }
 .wk-lock-shade { fill: rgba(16, 20, 26, 0.3); }
+.wk-lock-rim { fill: none; stroke: rgba(20, 24, 30, 0.35); stroke-width: 1; }
+.wk-lock-bezel { fill: rgba(255, 255, 255, 0.08); stroke: rgba(20, 24, 30, 0.4); stroke-width: 1; }
 .wk-lock-rivet { fill: rgba(255, 255, 255, 0.45); stroke: rgba(16, 20, 26, 0.5); stroke-width: 0.6; }
 .wk-padlock--brass .wk-lock-body { fill: var(--wk-brass); stroke: #3d2a0c; }
 .wk-padlock--brass .wk-lock-shade { fill: rgba(80, 48, 8, 0.3); }
@@ -581,7 +588,7 @@
 .wk-lock-shine { stroke: rgba(255, 255, 255, 0.45); stroke-width: 3; stroke-linecap: round; }
 .wk-keyhole { fill: #15181c; }
 /* The blueprint of a lock before it is built: dashed white lines. */
-.wk-padlock--sketch .wk-shackle-ink, .wk-padlock--sketch .wk-lock-shade, .wk-padlock--sketch .wk-lock-rivet, .wk-padlock--sketch .wk-lock-shine { display: none; }
+.wk-padlock--sketch .wk-shackle-ink, .wk-padlock--sketch .wk-shackle-shine, .wk-padlock--sketch .wk-lock-shade, .wk-padlock--sketch .wk-lock-rim, .wk-padlock--sketch .wk-lock-bezel, .wk-padlock--sketch .wk-lock-rivet, .wk-padlock--sketch .wk-lock-shine { display: none; }
 .wk-padlock--sketch .wk-shackle { stroke: #d6ecff; stroke-width: 2.4; stroke-dasharray: 5 4; }
 .wk-padlock--sketch .wk-lock-body { fill: rgba(60, 120, 200, 0.28); stroke: #d6ecff; stroke-width: 2.4; stroke-dasharray: 6 4; }
 .wk-padlock--sketch .wk-keyhole { fill: none; stroke: #d6ecff; stroke-width: 1.6; }
@@ -712,7 +719,8 @@
 .wk-pr-board-light { fill: none; stroke: #b0804e; stroke-width: 0.8; opacity: 0.6; }
 .wk-pr-shade { fill: rgba(20, 10, 4, 0.35); }
 .wk-pr-window-frame { fill: #5a3a20; stroke: #2a1608; stroke-width: 2; }
-.wk-pr-glass { fill: #e8b058; stroke: #2a1608; stroke-width: 1.2; }
+.wk-pr-glass { stroke: #2a1608; stroke-width: 1.2; }
+.wk-pr-glass:not(.wk-pr-glass--lit) { fill: #e8b058; }
 .wk-pr-mullion { fill: none; stroke: #3b2412; stroke-width: 3; }
 .wk-pr-sill { fill: #6b4728; stroke: #2a1608; stroke-width: 1.4; }
 .wk-pr-frame { fill: #5a3a20; stroke: #2a1608; stroke-width: 2; }
@@ -734,7 +742,7 @@
 .wk-pr-roof { fill: #4a2e18; stroke: #1e1008; stroke-width: 2; stroke-linejoin: round; }
 .wk-pr-shingle { fill: none; stroke: #2e1c0e; stroke-width: 1.1; }
 .wk-pr-beam { fill: #6b4728; stroke: #1e1008; stroke-width: 1.8; }
-.wk-pr-barrel { fill: #8a5a34; stroke: #2a1608; stroke-width: 1.8; }
+.wk-pr-barrel { stroke: #2a1608; stroke-width: 1.8; }
 .wk-pr-stave { fill: none; stroke: #5e3c20; stroke-width: 1.2; }
 .wk-pr-hoop { fill: none; stroke: #3a3e44; stroke-width: 3; }
 .wk-pr-barrel-top { fill: #6b4728; stroke: #2a1608; stroke-width: 1.4; }
@@ -743,6 +751,79 @@
 .wk-pr-deck { fill: #9a6a3c; stroke: #2a1608; stroke-width: 1.6; }
 .wk-pr-seam { fill: none; stroke: #5e3c20; stroke-width: 1.2; }
 .wk-pr-fascia { fill: #5a3a20; stroke: #2a1608; stroke-width: 1.6; }
+
+/* Porch details share the scene's ambient night light; the warm lantern
+   and window remain local light sources. The sign keeps its own contrast. */
+.wk-porch .wk-pr-wall-0 { stop-color: color-mix(in srgb, #977452, #514741 var(--fr-night, 0%)); }
+.wk-porch .wk-pr-wall-1 { stop-color: color-mix(in srgb, #705135, #393436 var(--fr-night, 0%)); }
+.wk-porch .wk-pr-board-shadow { stroke: #443124; stroke-width: 1.2; }
+.wk-porch .wk-pr-board-light { stroke: #c29a70; opacity: 0.38; }
+.wk-porch .wk-pr-door { fill: color-mix(in srgb, #9f754b, #6b5645 var(--fr-night, 0%)); }
+.wk-porch .wk-pr-panel { fill: color-mix(in srgb, #87603e, #554536 var(--fr-night, 0%)); }
+.wk-porch .wk-pr-panel-light { stroke: #c49c70; opacity: 0.5; }
+.wk-porch .wk-pr-post,
+.wk-porch .wk-pr-frame,
+.wk-porch .wk-pr-window-frame,
+.wk-porch .wk-pr-fascia { fill: color-mix(in srgb, #59412d, #373437 var(--fr-night, 0%)); }
+.wk-porch .wk-pr-beam,
+.wk-porch .wk-pr-sill { fill: color-mix(in srgb, #745536, #51453d var(--fr-night, 0%)); }
+.wk-porch .wk-pr-deck { fill: color-mix(in srgb, #a27b52, #6d5744 var(--fr-night, 0%)); }
+.wk-pr-window-light-0 { stop-color: #a46a35; }
+.wk-pr-window-light-1 { stop-color: #e3ae59; }
+.wk-pr-window-light-2 { stop-color: #f1ce83; }
+.wk-pr-lamp-glow-0 { stop-color: #ffc96c; stop-opacity: 0.2; }
+.wk-pr-lamp-glow-1 { stop-color: #e9a444; stop-opacity: 0.09; }
+.wk-pr-lamp-glow-2 { stop-color: #e9a444; stop-opacity: 0; }
+.wk-pr-barrel-wood-0 { stop-color: color-mix(in srgb, #ad8253, #75634e var(--fr-night, 0%)); }
+.wk-pr-barrel-wood-1 { stop-color: color-mix(in srgb, #89613d, #514535 var(--fr-night, 0%)); }
+.wk-pr-barrel-wood-2 { stop-color: color-mix(in srgb, #60422c, #393234 var(--fr-night, 0%)); }
+.wk-pr-grain { fill: none; stroke: #3d2d21; stroke-width: 0.55; opacity: 0.38; stroke-linecap: round; }
+.wk-pr-nail { fill: #44382c; }
+.wk-pr-fastener { fill: #aa9774; stroke: #3b3025; stroke-width: 0.45; }
+.wk-pr-recess { fill: #271e1a; opacity: 0.5; }
+.wk-pr-curtain { fill: #815c40; opacity: 0.6; }
+.wk-pr-glass-reflection { fill: #fff3d0; opacity: 0.15; }
+.wk-pr-trim-light { fill: none; stroke: #c2a078; stroke-width: 0.7; opacity: 0.45; stroke-linecap: round; }
+.wk-pr-hinge { fill: #403c36; stroke: #241c14; stroke-width: 0.65; }
+.wk-pr-hinge-pin { fill: none; stroke: #706a5c; stroke-width: 1.1; stroke-linecap: round; }
+.wk-pr-sign-rim { fill: none; stroke: #aa8250; stroke-width: 0.65; }
+.wk-pr-lamp-flame { fill: #fff2b9; }
+.wk-pr-lantern-bars { fill: none; stroke: #654c32; stroke-width: 0.55; }
+.wk-pr-post-foot { fill: #4a4238; stroke: #2a211b; stroke-width: 0.7; }
+.wk-pr-shingle-tile { stroke: #30251c; stroke-width: 0.6; }
+.wk-pr-shingle-tile--0 { fill: color-mix(in srgb, #5d4935, #353136 var(--fr-night, 0%)); }
+.wk-pr-shingle-tile--1 { fill: color-mix(in srgb, #6c5137, #42393b var(--fr-night, 0%)); }
+.wk-pr-shingle-tile--2 { fill: color-mix(in srgb, #534333, #302e34 var(--fr-night, 0%)); }
+.wk-pr-roof-grain { fill: none; stroke: #b2936b; stroke-width: 0.45; opacity: 0.4; }
+.wk-pr-roof-edge { fill: none; stroke: #987953; stroke-width: 0.8; }
+.wk-pr-eave-shadow { fill: none; stroke: #241c18; stroke-width: 1.6; }
+.wk-pr-metal-light { fill: none; stroke: #999889; stroke-width: 0.65; opacity: 0.7; }
+.wk-pr-barrel-ring { fill: none; stroke: #a18359; stroke-width: 0.5; }
+.wk-pot-texture { fill: none; stroke: #e39b69; stroke-width: 0.7; opacity: 0.32; }
+.wk-pr-pot-clay-0 { stop-color: color-mix(in srgb, #d99868, #aa795a var(--fr-night, 0%)); }
+.wk-pr-pot-clay-1 { stop-color: color-mix(in srgb, #b9693f, #895137 var(--fr-night, 0%)); }
+.wk-pr-pot-clay-2 { stop-color: color-mix(in srgb, #8b452d, #5b382e var(--fr-night, 0%)); }
+.wk-porch .wk-pot-rim { fill: color-mix(in srgb, #c87c51, #9e6245 var(--fr-night, 0%)); }
+.wk-porch .wk-pot-leaf { fill: color-mix(in srgb, #587c49, #3c5345 var(--fr-night, 0%)); }
+.wk-porch .wk-pot-vein { stroke: #2e4930; }
+.wk-pot-stem { fill: none; stroke: #4a6940; stroke-width: 1.6; stroke-linecap: round; }
+.wk-porch .wk-pot-leaf--shade { fill: color-mix(in srgb, #47613f, #35473b var(--fr-night, 0%)); }
+.wk-pot-leaf-light { fill: none; stroke: #9eaf78; stroke-width: 0.9; stroke-linecap: round; opacity: 0.65; }
+.wk-pot-leaf-fold { fill: #233e2d; opacity: 0.3; }
+.wk-pot-fine-vein { fill: none; stroke: #a0b184; stroke-width: 0.45; stroke-linecap: round; opacity: 0.6; }
+.wk-pot-small-leaf { fill: #6d8955; stroke: #355039; stroke-width: 0.7; }
+/* UCLA Blue and Gold, with the secondary blues defining petal folds. */
+.wk-pot-petal,
+.wk-pot-bud { fill: #2774ae; stroke: #003b5c; stroke-width: 0.75; stroke-linejoin: round; }
+.wk-pot-petal-fold { fill: #005587; }
+.wk-pot-petal-light { fill: none; stroke: #8bb8e8; stroke-width: 0.8; stroke-linecap: round; }
+.wk-pot-flower-heart { fill: #ffd100; stroke: #9a6c17; stroke-width: 0.7; }
+.wk-pot-pollen { fill: none; stroke: #8b6415; stroke-width: 0.55; stroke-linecap: round; }
+.wk-pot-earth { fill: #44311e; stroke: #674328; stroke-width: 0.7; }
+.wk-pot-gravel { fill: #b0a082; }
+.wk-pot-foot { fill: #74432e; stroke: #4a2c21; stroke-width: 0.6; }
+.wk-pot-etch { fill: none; stroke: #713c26; stroke-width: 0.55; stroke-linecap: round; opacity: 0.5; }
+.wk-pot-rim-light { fill: none; stroke: #e5aa76; stroke-width: 0.7; stroke-linecap: round; opacity: 0.65; }
 .wk-honeypot { opacity: 0; }
 /* The barrel's honey jar: the glass jar of the outlaw's honeyJar prop. */
 .wk-honey-glass { fill: rgba(225, 240, 244, 0.45); stroke: #6a7880; stroke-width: 1.3; }
@@ -752,7 +833,7 @@
 .wk-honey-label { fill: #f2e4c4; stroke: #6b5232; stroke-width: 1; }
 .wk-honey-text { fill: #2a1c10; font-size: 10.4px; font-weight: 900; letter-spacing: 0.02em; }
 .wk-honey-shine { fill: none; stroke: #ffffff; stroke-width: 1.6; stroke-linecap: round; opacity: 0.7; }
-.wk-pot-clay { fill: #b5562e; stroke: #4a1c0a; stroke-width: 1.8; stroke-linejoin: round; }
+.wk-pot-clay { stroke: #4a1c0a; stroke-width: 1.8; stroke-linejoin: round; }
 .wk-pot-shine { fill: none; stroke: #e08a5a; stroke-width: 2.4; stroke-linecap: round; opacity: 0.7; }
 .wk-pot-rim { fill: #c9663a; stroke: #4a1c0a; stroke-width: 1.8; }
 .wk-pot-soil { fill: none; stroke: #3a2210; stroke-width: 2; }
@@ -913,27 +994,27 @@
 .wk-pictogram {
   position: absolute;
   top: 4px;
-  right: 6px;
+  right: 10px;
   width: 36px;
-  height: 29px;
+  height: 28px;
   overflow: visible;
 }
 
 .wk-pg-wood { fill: #8a5a34; stroke: #2a1608; stroke-width: 1.4; stroke-linejoin: round; }
-.wk-pg-gold { fill: #e8b84a; stroke: #7a5200; stroke-width: 1.2; }
-.wk-pg-band { fill: none; stroke: #c9a24a; stroke-width: 2; }
-.wk-pg-plate { fill: #d8a84a; stroke: #4d3510; stroke-width: 1; }
+.wk-pg-side { fill: #563821; stroke: #2a1608; stroke-width: 1; }
+.wk-pg-plank { fill: none; stroke: #674126; stroke-width: 0.65; }
+.wk-pg-trim { fill: none; stroke: #bd9560; stroke-width: 1.2; stroke-linecap: round; }
 .wk-pg-paper { fill: #f6ead0; stroke: #6b4a2a; stroke-width: 1.4; }
 .wk-pg-ink { fill: none; stroke: var(--wk-ink); stroke-width: 2.2; stroke-linecap: round; }
-.wk-pg-ink-fill { fill: var(--wk-ink); }
 .wk-pg-front { fill: #5e3e22; stroke: #2a1608; stroke-width: 1.4; }
 .wk-pg-door { fill: #2a1608; }
+.wk-pg-door-frame { fill: none; stroke: #d2a970; stroke-width: 1.2; }
 .wk-pg-window { fill: #e8b84a; stroke: #2a1608; stroke-width: 1; }
-.wk-pg-vector { fill: none; stroke: #c8322a; stroke-width: 2.6; stroke-linecap: round; }
-.wk-pg-vector-head { fill: #c8322a; stroke: #5a0f0a; stroke-width: 0.8; stroke-linejoin: round; }
-.wk-pg-shackle { fill: none; stroke: #7d858f; stroke-width: 3.6; }
-.wk-pg-brass { fill: var(--wk-brass); stroke: #4d3510; stroke-width: 1.4; }
-.wk-pg-keyhole { fill: #2a1c10; }
+.wk-pg-window-bar { fill: none; stroke: #6a4527; stroke-width: 0.7; }
+.wk-pg-vector { fill: #c8322a; stroke: #5a0f0a; stroke-width: 0.9; stroke-linejoin: round; }
+.wk-pictogram--chest .wk-box-lid { display: none; }
+.wk-pictogram--chest .wk-box-lid-open,
+.wk-pictogram--chest .wk-box-loot { transform: none; }
 
 .wk-board-poster.is-lit {
   background: #fff4d4;
@@ -1005,7 +1086,9 @@
 
 .wk-cia-mini { color: #7a5200; }
 .wk-cia-mini svg { display: block; margin: 0 auto; }
-.wk-cia-tri { fill: none; stroke: #7a5200; stroke-width: 3; }
+.wk-cia-tri { fill: #ead8ad; stroke: #9a742c; stroke-width: 2.5; stroke-linejoin: round; }
+.wk-cia-medallion { fill: #fff5d9; stroke: #7a5200; stroke-width: 2; }
+.wk-cia-medallion-rim { fill: none; stroke: #d4b774; stroke-width: 0.7; }
 .wk-cia-letter { fill: var(--wk-ink); font-size: 20px; font-weight: 900; }
 .wk-cia-mini-label { color: var(--wk-ink); font-size: 16px; font-weight: 800; }
 
@@ -1030,12 +1113,21 @@
   margin: 2px auto 6px;
 }
 
-.wk-silhouette { fill: #3a2a1c; }
+.wk-wanted-portrait { stroke-linecap: round; stroke-linejoin: round; }
+.wk-wanted-coat { fill: #554a40; stroke: #30271f; stroke-width: 2; }
+.wk-wanted-lapel { fill: none; stroke: #9c856b; stroke-width: 1.8; }
+.wk-wanted-head { fill: #4c3b2b; stroke: #30271f; stroke-width: 1.8; }
+.wk-wanted-mask { fill: #42676a; stroke: #243e40; stroke-width: 1.8; }
+.wk-wanted-mask-fold { fill: none; stroke: #8eafb0; stroke-width: 1.4; }
+.wk-wanted-eyes { fill: #f6ead0; }
+.wk-wanted-hat { fill: #35302c; stroke: #211b17; stroke-width: 2; }
+.wk-wanted-hatband { fill: none; stroke: #96816a; stroke-width: 2.5; }
 .wk-wanted-who { font-size: 16px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; }
 .wk-wanted-for { font-size: 18px; font-weight: 800; text-align: center; text-wrap: balance; }
 .wk-wanted-fields { display: grid; gap: 4px; margin-top: 8px; }
-.wk-wanted-field { display: flex; gap: 6px; font-size: 18px; }
-.wk-wanted-name { font-weight: 900; }
+.wk-wanted-field { display: flex; align-items: baseline; gap: 8px; font-size: 18px; }
+.wk-wanted-name { flex: 0 0 auto; white-space: nowrap; font-weight: 900; }
+.wk-wanted-value { min-width: 0; }
 .wk-wanted-field.is-filled .wk-wanted-value { color: var(--wk-red); font-weight: 800; }
 
 .wk-network { position: absolute; }
@@ -1310,8 +1402,38 @@
 
 .wk-gazette-date { margin-top: 4px; font-size: 14.5px; font-weight: 700; text-align: center; letter-spacing: 0.08em; text-transform: uppercase; }
 .wk-gazette-head { margin-top: 6px; font-family: Georgia, 'Times New Roman', serif; font-size: 26px; font-weight: 700; text-align: center; line-height: 1.15; text-wrap: balance; }
-.wk-gazette-by { margin-top: 2px; font-size: 15px; font-style: italic; text-align: center; }
+.wk-gazette-by { margin-top: 2px; font-size: 16.2px; font-style: italic; text-align: center; }
 .wk-gazette-page { position: relative; height: 200px; margin-top: 10px; }
+
+.wk-agent-speech {
+  --wk-speech-tail: 235px;
+  position: absolute;
+  box-sizing: border-box;
+  bottom: calc(100% + 10px);
+  left: calc(50% - 235px);
+  width: 470px;
+  padding: 8px 12px 10px;
+  border: 2px solid #684c2b;
+  border-radius: 14px;
+  background: #fff5dc;
+  color: var(--wk-ink);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+.wk-agent-speech--trailing { --wk-speech-tail: 430px; left: calc(50% - 430px); }
+.wk-agent-speech::after {
+  content: '';
+  position: absolute;
+  left: calc(var(--wk-speech-tail) - 8px);
+  bottom: -8px;
+  width: 12px;
+  height: 12px;
+  background: #fff5dc;
+  border-right: 2px solid #684c2b;
+  border-bottom: 2px solid #684c2b;
+  transform: rotate(45deg);
+}
+.wk-agent-speech-name { font-size: 16.2px; font-weight: 700; line-height: 1.2; color: #684c2b; }
+.wk-agent-speech-text { margin-top: 4px; font-size: 18px; font-weight: 800; line-height: 1.2; text-wrap: balance; }
 
 .wk-hop {
   position: absolute;
@@ -1419,8 +1541,9 @@
 .sh-crease { fill: none; stroke: #9a8f7a; stroke-width: 0.9; stroke-linecap: round; }
 .sh-brim-shine,
 .sh-crown-shine { fill: none; stroke: #ffffff; stroke-width: 1.1; stroke-linecap: round; opacity: 0.9; }
-.sh-hand-ink { fill: #1e140c; stroke: #1e140c; stroke-width: 1.8; stroke-linejoin: round; }
+.sh-hand-contour { fill: none; stroke: #1e140c; stroke-width: 1.2; stroke-linejoin: round; stroke-linecap: round; }
 .sh-hand-line { fill: none; stroke: #4a2c1a; stroke-width: 0.5; opacity: 0.7; }
+.sh-forearm-contour { fill: none; stroke: #6e4428; stroke-width: 0.9; stroke-linecap: round; }
 .sh-finger--far { fill: var(--hero-skin-dark, #a8704c); }
 .sh-nail { fill: rgba(255, 235, 220, 0.6); }
 .sh-ring { fill: none; stroke: #9aa3ad; stroke-width: 1.4; }

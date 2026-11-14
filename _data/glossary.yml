@@ -243,6 +243,11 @@
   description: A file format for large scientific and numeric datasets. An HDF5 file can store its data in other files, so software that opens untrusted HDF5 files must restrict which files those references may reach.
   related: [CSV, JSON]
 
+- term: HF
+  definition: Hugging Face
+  description: A platform for hosting and sharing machine-learning models and datasets. The security song preserves this abbreviation in a quoted agent reaction from the 2026 incident investigation.
+  related: [AI, METR]
+
 - term: HTML
   definition: HyperText Markup Language
   description: The markup language used to structure web pages. HTML elements describe meaning (heading, paragraph, list, link); CSS describes presentation; JavaScript describes behaviour.

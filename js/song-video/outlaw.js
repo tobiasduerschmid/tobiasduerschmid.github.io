@@ -3,7 +3,7 @@
  * scenes (in the song, the authorized tester hired to break in first), and
  * the tiny AI-agent robot bandits that follow it in single file. Drawn
  * side-on, facing right (mirrored to face left), lit from the upper left,
- * in the sheriff's line weights (sheriff.js): a flat-crowned black hat, a
+ * in the sheriff's line weights (sheriff.js): a creased black western hat, a
  * teal bandana mask over the nose and mouth with one sly eye above it, a
  * charcoal duster coat with the collar up and a short shoulder cape, tan
  * leather gloves (the glove cursor's), dark trousers, and boots with spurs.
@@ -12,8 +12,8 @@
  * The figure is rigged: arms and legs are two bones each (inverse
  * kinematics to stage points), the hands are FrontierHand's hands
  * (frontier-hand.js) in glove leather, and the coat's skirt follows the
- * knees. It sneaks between route points in the cartoon tiptoe (knees high,
- * toes pointed, leaning forward, hands up like paws), each step's planted
+ * knees. It sneaks between route points with a low, cautious stride,
+ * relaxed wrists and a little forward lean, each step's planted
  * foot locked to the ground: the step cycle is a function of the distance
  * travelled. Every pose is a pure function of song time; under reduced
  * motion the moves snap and the idle motion holds still.
@@ -26,7 +26,7 @@
  *            key. A move faces the way it travels when either end does
  *            (turning first, or on arrival); only a move whose ends both
  *            face against its travel tiptoes backwards. Every change of
- *            facing is a quick eased turn (0.2 s), not a jump.
+ *            facing is an eased turn (0.36 s), not a jump.
  *     moves  [[t, name, options]] from MOVES: reach, both, type, lift, peek,
  *            look, freeze, crouch, shake, shrug, badge, wave.
  *     holds  [[t, 'near' | 'far', prop | null]] from PROPS: sack, cookieJar,
@@ -58,14 +58,15 @@
   const BOX = { w: 160, h: 300 };
   const MID = 80;            // the feet's midpoint, and the hips' when standing
   const GROUND = 292;        // the soles
-  const HIP_Y = 195;         // the hip joint, standing straight
-  const THIGH = 44, SHIN = 43;
+  const HIP_Y = 174;         // adult proportions: longer legs, shorter ribcage
+  const THIGH = 55, SHIN = 53;
   const BALL = [11, 10.4];   // the ball of the foot from the ankle, the foot flat
-  const UPPER = 40, FORE = 36;
-  const HAND_SCALE = 1.2;
+  const UPPER = 46, FORE = 42;
+  const HAND_SCALE = 1;
   const GRIP = 13;           // wrist to the grip, along the hand
   const STEP = 28;           // body travel per step
-  const LIFT = 38;           // how high a sneaking foot rises
+  const LIFT = 23;           // clearance, without marching knees or pointed toes
+  const TORSO_LENGTH = 0.8;  // shared by the coat, collar, shoulders, and neck
   const TORSO = { neck: [3, -102], near: [3, -86], far: [-4, -88] };
   const PROP_FADE = 0.22;    // a prop fades in (and the one it replaces out) over this long
 
@@ -88,8 +89,14 @@
   const f2 = (v) => v.toFixed(2);
   const pt = (p) => `${f2(p[0])} ${f2(p[1])}`;
   const ease = (u) => (u < 0.5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2);
-  /** Starts and stops at rest: the speed rises and falls as 1 − cos. */
-  const cycloid = (u) => u - Math.sin(2 * Math.PI * u) / (2 * Math.PI);
+  /** Brief acceleration and braking, with a steady pace between them. */
+  function routeProgress(u, duration) {
+    const ramp = Math.min(0.25, 0.3 / Math.max(0.001, duration));
+    const accelerate = (v) => (v ** 3 / ramp ** 2 - v ** 4 / (2 * ramp ** 3)) / (1 - ramp);
+    if (u < ramp) return accelerate(u);
+    if (u > 1 - ramp) return 1 - accelerate(1 - u);
+    return (u - ramp / 2) / (1 - ramp);
+  }
 
   /**
    * Two-bone inverse kinematics: [joint, end] for bones l1, l2 from
@@ -159,7 +166,10 @@
       // A fast scurry takes longer strides rather than a blur of short ones;
       // each segment keeps one stride, so its planted feet stay put.
       const speed = moving ? len / scale / Math.max(0.05, b.t - a.t) : 0;
-      const step = clamp(STEP * Math.sqrt(speed / 70), STEP, 48);
+      const nominalStep = clamp(STEP * Math.sqrt(speed / 70), STEP, 48);
+      // Finish complete strides so both boots are down when a route stops.
+      const strides = Math.max(1, Math.round(len / scale / (2 * nominalStep)));
+      const step = moving ? len / scale / (2 * strides) : STEP;
       segments.push({ a, b, len: moving ? len : 0, face, dir, walked, phase, step });
       walked += (moving ? len : 0) * dir;
       phase += (moving ? len : 0) * dir / scale / (2 * step);
@@ -167,16 +177,15 @@
       b.after = facing;
       if (b.after !== face) turns.push({ t: b.t, from: face, to: b.after });
     }
-    /** The facing as a horizontal scale: ±1, easing through a quick turn (0.2 s) about each change. */
-    const TURN = 0.1;
+    /** Continuous foreshortening through the turn; no minimum-width flip. */
+    const TURN = 0.18;
     const turnAt = (t) => {
       let f = keys[0].after;
       for (const turn of turns) {
         if (t < turn.t - TURN) break;
         if (t >= turn.t + TURN) { f = turn.to; continue; }
         const u = ease((t - turn.t + TURN) / (2 * TURN));
-        const v = lerp(turn.from, turn.to, u);
-        return Math.sign(v || turn.to) * Math.max(0.22, Math.abs(v));
+        return turn.from * Math.cos(Math.PI * u);
       }
       return f;
     };
@@ -186,14 +195,14 @@
       if (!segments.length || t <= first.t) return { x: first.x, y: first.y, facing: first.after, turn: turnAt(t), s: 0, phase: 0, step: STEP, gait: 0 };
       const gaitOf = (seg, now) => {
         if (!seg || !seg.len || now < seg.a.t) return 0;
-        if (now < seg.b.t) return clamp((now - seg.a.t) / 0.3, 0, 1);
-        return clamp(1 - (now - seg.b.t - frozen(seg.b.t, now)) / 0.35, 0, 1);
+        if (now < seg.b.t) return ease(clamp((now - seg.a.t) / 0.3, 0, 1));
+        return ease(clamp(1 - (now - seg.b.t - frozen(seg.b.t, now)) / 0.35, 0, 1));
       };
       const i = segments.findIndex((seg) => t < seg.b.t);
       if (i >= 0) {
         const seg = segments[i];
         const u = clamp((t - seg.a.t) / Math.max(0.001, seg.b.t - seg.a.t), 0, 1);
-        const e = cycloid(u);
+        const e = routeProgress(u, seg.b.t - seg.a.t);
         const previous = segments.slice(0, i).reverse().find((s) => s.len);
         return {
           x: seg.a.x + (seg.b.x - seg.a.x) * e,
@@ -202,7 +211,7 @@
           turn: turnAt(t),
           s: seg.walked + seg.len * seg.dir * e,
           phase: seg.phase + seg.len * seg.dir * e / scale / (2 * seg.step),
-          step: seg.len ? seg.step : (previous?.step ?? STEP),
+          step: seg.len ? lerp(previous?.step ?? STEP, seg.step, ease(clamp((t - seg.a.t) / 0.3, 0, 1))) : (previous?.step ?? STEP),
           gait: Math.max(gaitOf(seg, t), gaitOf(previous, t)),
         };
       }
@@ -220,19 +229,20 @@
   /**
    * A foot at step phase φ (0 to 1; it stands for the first half, swings
    * for the second): its offset from the hips, how high it is, and its
-   * pitch (toe down). Standing on tiptoe, the planted ball moves back
+   * pitch (toe down). During support, the planted foot moves back
    * exactly as fast as the body moves forward, so it never slides; the
-   * swinging foot rises high, toe pointed, and lands a step ahead.
+   * swinging foot clears the ground and lands a step ahead. Its horizontal
+   * velocity matches support at both joins; its vertical velocity is zero.
    */
   function footAt(phase, step = STEP) {
     const φ = ((phase % 1) + 1) % 1;
-    if (φ < 0.5) return { rel: step * (0.5 - φ / 0.5), lift: 0, pitch: 26 };
+    if (φ < 0.5) return { rel: step * (0.5 - 2 * φ), lift: 0, pitch: 4 + 11 * ease(clamp((2 * φ - 0.55) / 0.45, 0, 1)) };
     const w = (φ - 0.5) / 0.5, arc = Math.sin(Math.PI * w);
     // Lifted and set down gently: the foot rises and lands with no speed.
-    const up = Math.sin(Math.PI * w) ** 1.2;
-    return { rel: step * (0.5 - Math.cos(Math.PI * w) / 2 - 0.5) + 12 * arc, lift: LIFT * Math.sqrt(step / STEP) * up, pitch: 26 + 34 * arc };
+    const travel = -0.5 - w + 20 * w ** 3 - 30 * w ** 4 + 12 * w ** 5;
+    return { rel: step * travel, lift: LIFT * Math.sqrt(step / STEP) * arc ** 2, pitch: 15 + 12 * arc ** 2 - 11 * ease(w) };
   }
-  const STAND = [{ rel: 6, lift: 0, pitch: 7 }, { rel: -6, lift: 0, pitch: 7 }];
+  const STAND = [{ rel: 8, lift: 0, pitch: 0 }, { rel: -8, lift: 0, pitch: 0 }];
 
   // ------------------------------------------------------------------
   // Props, drawn in the hand's frame (the wrist at (0, 0), the fingers
@@ -243,15 +253,15 @@
   const HANG = [-2.5, 12];   // where a hanging prop hangs from
   const FIST = [-1, 6.4];    // the middle of a closed fist, where a held handle runs through
   const PROPS = {
-    key({ front }) {
-      const k = svg('g', { transform: 'translate(-2 9) rotate(-80)' }, front);
+    key({ grip }) {
+      const k = svg('g', { transform: 'translate(-7 11) rotate(-80)' }, grip);
       svg('circle', { class: 'ol-brass', cx: 0, cy: 0, r: 4.4 }, k);
       svg('circle', { class: 'ol-hole', cx: 0, cy: 0, r: 1.5 }, k);
       svg('path', { class: 'ol-brass', d: 'M-1.1 4 H1.1 V19 H4 V21.2 H1.1 V23.2 H3.4 V25.4 H-1.1 Z' }, k);
     },
-    lockpick({ front }) {
-      svg('path', { class: 'ol-pick', d: 'M-3 9 L-3 33 L-0.4 35.6' }, front);
-      svg('path', { class: 'ol-pick', d: 'M-5.6 10 L-5.6 25 L-9.4 26.8' }, front);
+    lockpick({ grip }) {
+      svg('path', { class: 'ol-pick', d: 'M-8 11 L-8 35 L-5.4 37.6' }, grip);
+      svg('path', { class: 'ol-pick', d: 'M-10.5 11 L-10.5 26 L-14.3 27.8' }, grip);
     },
     // Held as a magnifying glass is: upright whatever the hand's turn (in the
     // plumb layer), the handle down through the fist and the lens above it,
@@ -373,15 +383,16 @@
       const upper = svg('path', { class: 'ol-sleeve', fill: sleeve }, g);
       const fore = svg('path', { class: 'ol-sleeve', fill: sleeve }, g);
       const fold = svg('path', { class: 'ol-fold' }, g);
-      const cuff = svg('path', { class: 'ol-gauntlet', fill: glove }, g);
-      const stitch = svg('path', { class: 'ol-gauntlet-stitch' }, g);
       const handG = svg('g', { class: 'ol-glove' }, g);
       const behind = svg('g', {}, handG);
       const fingers = svg('g', {}, handG);
       const drawn = hand(fingers, glove);
       const front = svg('g', {}, handG);
+      // The gauntlet covers the wrist root, not the other way around.
+      const cuff = svg('path', { class: 'ol-gauntlet', fill: glove }, g);
+      const stitch = svg('path', { class: 'ol-gauntlet-stitch' }, g);
       // Two prop slots, so one prop can fade in as another fades out.
-      const slots = [0, 1].map(() => ({ behind: svg('g', {}, behind), front: svg('g', {}, front), prop: null, hang: null, hangFront: null, upright: null }));
+      const slots = [0, 1].map(() => ({ behind: svg('g', {}, behind), grip: svg('g', {}, drawn.grip), front: svg('g', {}, front), prop: null, hang: null, hangFront: null, upright: null }));
       return { inks, upper, fore, fold, cuff, stitch, handG, behind, fingers, front, drawn, slots, rot: 0 };
     };
     const arms = { near: arm(nearArmG), far: arm(farArmG) };
@@ -432,7 +443,8 @@
     svg('path', { class: 'ol-ear-line', d: 'M-2.4 -24.6 C-4.6 -23.4 -4.6 -19.8 -2.6 -18.6' }, head);
     const eyeWhite = svg('path', { class: 'ol-eye-white' }, head);
     const pupil = svg('ellipse', { class: 'ol-pupil', rx: 1.5, ry: 1.8 }, head);
-    const lid = svg('path', { class: 'ol-lid' }, head);
+    const glint = svg('circle', { class: 'ol-eye-glint', r: 0.55 }, head);
+    const lid = svg('path', { class: 'ol-eyelid' }, head);
     const lash = svg('path', { class: 'ol-lash' }, head);
     const brow = svg('path', { class: 'ol-brow' }, head);
 
@@ -449,11 +461,11 @@
     [[6, -12], [12, -6], [3, -5], [13, -14], [8, 0]].forEach(([cx, cy]) => svg('circle', { class: 'ol-mask-dot', cx, cy, r: 0.75 }, face));
     svg('circle', { class: 'ol-mask', fill: mask, cx: -15.2, cy: -14.8, r: 3 }, face);
     const hat = svg('g', {}, face);
-    svg('path', { class: 'ol-hat', fill: felt, d: 'M-14.2 -35.6 C-14.6 -44 -14 -52 -12.8 -57.4 C-4 -59 6 -59 14.6 -57.4 C15.8 -52 16.4 -44 16.2 -35.6 Z' }, hat);
+    svg('path', { class: 'ol-hat', fill: felt, d: 'M-16 -35.6 C-15.8 -42.8 -14.6 -50.6 -11.2 -54 C-7.6 -56.2 -3.8 -53.4 0 -53.8 C4.2 -54.2 9 -56 12.2 -53.8 C15.2 -49.8 16.6 -42 17 -35.6 Z' }, hat);
     svg('path', { class: 'ol-band', d: 'M-14.4 -41.6 C-4 -40.4 6 -40.4 16.2 -41.6 L16.2 -36.4 C6 -35.4 -4 -35.4 -14.4 -36.4 Z' }, hat);
     svg('circle', { class: 'ol-concho', cx: 9.6, cy: -38.8, r: 1.9 }, hat);
-    svg('path', { class: 'ol-hat', fill: felt, d: 'M-30.4 -35.6 C-20 -38.2 10 -38.6 31.6 -35.8 C34 -35.4 34.4 -32.6 31.8 -32.4 C10 -34 -20 -33.6 -28.8 -31.6 C-31.6 -31 -32.6 -34.8 -30.4 -35.6 Z' }, hat);
-    svg('path', { class: 'ol-hat-shine', d: 'M-11.4 -44 C-11.6 -49 -11 -53 -10 -55.6 M-26 -35.2 C-16 -36.6 -6 -37 4 -37' }, hat);
+    svg('path', { class: 'ol-hat', fill: felt, d: 'M-31 -36.6 C-23 -34.4 -21 -36.2 -14 -36.8 C0 -38 16 -37.4 23 -35.6 C27 -34.6 30 -35 33 -36.6 C35 -37.2 35 -34.8 32 -33.2 C21 -28.8 -17 -30.2 -29 -32.4 C-32 -33 -34 -36.8 -31 -36.6 Z' }, hat);
+    svg('path', { class: 'ol-hat-shine', d: 'M-12 -44 C-11.8 -48 -10.6 -50.8 -9 -52 M3 -51.6 C2 -47.8 2.4 -45.2 3 -43 M-26 -33.8 C-16 -32.4 -7 -32.2 3 -32.4' }, hat);
 
     // The coat's lining, swung open by the near hand to show the badge.
     const flap = svg('g', { class: 'ol-flap' }, flapG);
@@ -485,7 +497,7 @@
 
     /** Draws `prop` (a PROPS key, or null) into one of a hand's two prop slots. */
     function fill(side, slot, prop) {
-      for (const g of [slot.behind, slot.front]) g.replaceChildren();
+      for (const g of [slot.behind, slot.grip, slot.front]) g.replaceChildren();
       slot.prop = prop;
       // Props that hang from the hand (a sack, a jar) turn back against the
       // hand's turn about the grip, so they always hang straight down.
@@ -495,7 +507,7 @@
       // the middle of the fist, so the handle always runs through the hand.
       slot.upright = svg('g', { class: 'ol-upright' }, slot.behind);
       const before = labels.length;
-      if (prop && PROPS[prop]) PROPS[prop]({ behind: slot.behind, front: slot.front, hang: slot.hang, hangFront: slot.hangFront, upright: slot.upright }, label);
+      if (prop && PROPS[prop]) PROPS[prop]({ behind: slot.behind, grip: slot.grip, front: slot.front, hang: slot.hang, hangFront: slot.hangFront, upright: slot.upright }, label);
       for (const entry of labels.slice(before)) {
         entry.side = side;
         entry.hang = slot.hang.contains(entry.node) || slot.hangFront.contains(entry.node);
@@ -517,7 +529,7 @@
       a.slots = [now, was];
       const e = ease(clamp(u, 0, 1));
       for (const [slot, o] of [[now, prop ? e : 0], [was, old ? 1 - e : 0]]) {
-        for (const g of [slot.behind, slot.front]) g.setAttribute('opacity', f2(o));
+        for (const g of [slot.behind, slot.grip, slot.front]) g.setAttribute('opacity', f2(o));
       }
       // A jar over the hand hides the hand as it comes on.
       const jar = (now.prop === 'honeyJar' ? e : 0) + (was.prop === 'honeyJar' ? 1 - e : 0);
@@ -529,17 +541,19 @@
       const u = unit(minus(wrist, elbow));
       const sleeveEnd = minus(wrist, times(u, 7));
       const cuffBack = minus(wrist, times(u, 11));
-      const d = [capsule(shoulder, elbow, 8.6, 7.2), capsule(elbow, sleeveEnd, 7.2, 6.4), capsule(cuffBack, wrist, 7.6, 5.6)];
+      const n = [-u[1], u[0]];
+      const cuffEnd = minus(wrist, times(u, 0.8));
+      const cuffD = `M${pt(plus(cuffBack, times(n, 7.2)))} L${pt(plus(cuffEnd, times(n, 4.3)))} Q${pt(plus(cuffEnd, times(u, 1)))} ${pt(plus(cuffEnd, times(n, -4.3)))} L${pt(plus(cuffBack, times(n, -7.2)))} Q${pt(minus(cuffBack, times(u, 1.8)))} ${pt(plus(cuffBack, times(n, 7.2)))} Z`;
+      const d = [capsule(shoulder, elbow, 8.6, 7.2), capsule(elbow, sleeveEnd, 7.2, 6.4), cuffD];
       a.inks.forEach((ink, i) => ink.setAttribute('d', d[i]));
       a.upper.setAttribute('d', d[0]);
       a.fore.setAttribute('d', d[1]);
       a.cuff.setAttribute('d', d[2]);
-      const n = [-u[1], u[0]];
       const s0 = plus(cuffBack, times(u, 2.4)), s1 = plus(wrist, times(u, -1.4));
       a.stitch.setAttribute('d', `M${pt(plus(s0, times(n, 5.6)))} L${pt(plus(s1, times(n, 4)))} M${pt(plus(s0, times(n, -5.6)))} L${pt(plus(s1, times(n, -4)))}`);
       const inner = plus(elbow, times(n, -4.6));
       a.fold.setAttribute('d', `M${pt(plus(inner, times(u, -4)))} Q${pt(plus(elbow, times(n, -1.6)))} ${pt(plus(inner, times(u, 4)))}`);
-      a.rot = angleOf(u) - 90 + clamp(flex, -70, 80);
+      a.rot = angleOf(u) - 90 + clamp(flex, -55, 65);
       a.handG.setAttribute('transform', `translate(${pt(wrist)}) rotate(${f2(a.rot)}) scale(${HAND_SCALE})`);
       // Hanging props stay plumb, swinging a little when the hand shakes.
       const plumb = `rotate(${f2(-a.rot + swing)} ${pt(HANG)})`;
@@ -553,7 +567,11 @@
     }
 
     function drawLeg(l, hip, foot) {
-      const ankle = minus(foot.ball, turn(BALL, foot.pitch));
+      // Rock over the boot's actual sole/heel, so a pitched boot cannot sink
+      // into the sand. The leg solves to that ankle without moving the foot.
+      const sole = [[-6.6, 12], [-1.2, 12], [15.4, 10.4], [19, 8]];
+      const support = Math.max(...sole.map((point) => turn(point, foot.pitch)[1]));
+      const ankle = minus(foot.ball, [turn(BALL, foot.pitch)[0], support]);
       const [knee, end] = bend(hip, ankle, THIGH, SHIN, -1);
       const u = unit(minus(end, knee));
       const shaftTop = minus(end, times(u, 19));
@@ -583,7 +601,7 @@
       // around the far knee, and its back covers whichever knee is behind.
       const waistBack = T([-17.6, -6]), waistFront = T([15.6, -4]);
       const back = kneeNear[0] > kneeFar[0] ? kneeFar : kneeNear;
-      const hemY = p.hip[1] + 33;
+      const hemY = p.hip[1] + 42;
       const flutter = p.flutter;
       const frontHem = [Math.max(waistFront[0] + 4, kneeFar[0] + 4), Math.min(hemY, kneeFar[1] - 3)];
       const backHem = [Math.min(waistBack[0] - 4, back[0] - 9) - 3 * flutter, hemY + 3];
@@ -614,7 +632,7 @@
       panelEdge.setAttribute('d', `M${pt(T([14.6, -24]))} Q${pt(T([15.4, -12]))} ${pt(waistFront)} L${pt(T([17.6, 8]))} Q${pt(T([14, 14.4]))} ${pt(T([6, 13.8]))} Q${pt(T([-4, 13]))} ${pt(T([-11, 10]))}`);
 
       // The head, the collar, the mask and hat.
-      const torsoT = `translate(${pt(p.hip)}) rotate(${f2(p.lean)})`;
+      const torsoT = `translate(${pt(p.hip)}) rotate(${f2(p.lean)}) scale(1 ${TORSO_LENGTH})`;
       collarG.setAttribute('transform', torsoT);
       const neck = T(TORSO.neck);
       const headT = `translate(${pt(neck)}) rotate(${f2(p.headTilt)})${p.headFlip !== 1 ? ` translate(4 0) scale(${f2(p.headFlip)} 1) translate(-4 0)` : ''}`;
@@ -625,13 +643,16 @@
       tails.setAttribute('d', `M-15 -16.8 C-19 -16 -23 ${f2(-14 - wag)} -27.4 ${f2(-11.2 - wag)} C-24.6 -10.6 -21.6 -11.6 -17.6 -13 C-20.6 ${f2(-8 + wag)} -23.4 ${f2(-4 + wag)} -25 ${f2(-1.2 + wag)} C-21 -2.6 -17.6 -7 -14.4 -12.8 Z`);
       // The eye: narrowed and sly; turned to the viewer it opens and its
       // pupil comes round to the front.
-      const open = 1 + 0.6 * p.side + 0.5 * p.alarm;
+      const open = (1 + 0.6 * p.side + 0.5 * p.alarm) * (1 - p.blink);
       const ex = 11.8, ey = -25.8;
       eyeWhite.setAttribute('d', `M${f2(ex - 4)} ${f2(ey + 0.2)} Q${f2(ex)} ${f2(ey - 2.2 * open)} ${f2(ex + 3.8)} ${f2(ey - 0.4)} Q${f2(ex)} ${f2(ey + 1.8 * open)} ${f2(ex - 4)} ${f2(ey + 0.2)} Z`);
       const px = ex + 1.4 + 1.1 * clamp(p.look, -1, 1) - 1.4 * p.side;
       pupil.setAttribute('cx', f2(px));
       pupil.setAttribute('cy', f2(ey + 0.1 + 0.3 * p.side));
-      pupil.setAttribute('ry', f2(1.5 + 0.4 * open - 0.4));
+      pupil.setAttribute('ry', f2((1.1 + 0.4 * open) * (1 - p.blink)));
+      glint.setAttribute('cx', f2(px - 0.45));
+      glint.setAttribute('cy', f2(ey - 0.4));
+      glint.setAttribute('opacity', f2(1 - p.blink));
       lid.setAttribute('d', `M${f2(ex - 4.4)} ${f2(ey - 0.2)} Q${f2(ex)} ${f2(ey - 2.6 * open)} ${f2(ex + 4.2)} ${f2(ey - 0.8)}`);
       lash.setAttribute('d', `M${f2(ex + 4.2)} ${f2(ey - 0.8)} L${f2(ex + 5.6)} ${f2(ey - 1.8)}`);
       const by = ey - 5.2 - 1.8 * p.brow - 1.2 * p.alarm;
@@ -674,8 +695,6 @@
   const SIDES = { near: 'near', far: 'far' };
   /** Lets go with `sides` at `at`: the hands go back to the sneak. */
   const release = (at, sides) => [at, 0.4, Object.fromEntries(sides.flatMap((s) => [[`${s}W`, 0], [`${s}Shape`, SHAPES.rest], [`${s}Wrist`, 0]]))];
-  /** Sets `fields` at once (targets), so the hand eases only in its weight. */
-  const now = (delay, fields) => [delay, 0.001, fields];
   // Two typing hands: a finger raised, alternately.
   const TAP = [-8, 2, 2, 30, 40, 24, 34, 42, 26, 38, 44, 26, 12, 18];
 
@@ -690,7 +709,7 @@
     reach: ({ to, hand: side = 'near', shape = 'grip', hold = 1.2 }, frame) => {
       const s = SIDES[side] ?? 'near';
       return [
-        now(-0.4, { [`${s}To`]: frame(to), [`${s}Tip`]: shape === 'point' ? 1 : 0 }),
+        [-0.4, 0.42, { [`${s}To`]: frame(to), [`${s}Tip`]: shape === 'point' ? 1 : 0 }],
         [-0.4, 0.42, { [`${s}W`]: 1, [`${s}Shape`]: SHAPES[shape] ?? SHAPES.grip, [`${s}Wrist`]: shape === 'point' ? 0 : 14 }],
         release(hold, [s]),
       ];
@@ -698,7 +717,7 @@
     both: ({ to, shape = 'grip', hold = 1.2 }, frame) => {
       const [x, y] = frame(to), gap = 7;
       return [
-        now(-0.4, { nearTo: [x + gap, y], farTo: [x - gap, y - 1] }),
+        [-0.4, 0.42, { nearTo: [x + gap, y], farTo: [x - gap, y - 1] }],
         [-0.4, 0.42, { nearW: 1, farW: 1, nearShape: SHAPES[shape] ?? SHAPES.grip, farShape: SHAPES[shape] ?? SHAPES.grip, nearWrist: 16, farWrist: 16 }],
         release(hold, ['near', 'far']),
       ];
@@ -706,7 +725,7 @@
     type: ({ to, hold = 1.6 }, frame) => {
       const [x, y] = frame(to);
       return [
-        now(-0.4, { nearTo: [x + 6, y], farTo: [x - 6, y - 1] }),
+        [-0.4, 0.42, { nearTo: [x + 6, y], farTo: [x - 6, y - 1] }],
         [-0.4, 0.42, { nearW: 1, farW: 1, nearShape: SHAPES.rest, farShape: SHAPES.rest, nearWrist: 38, farWrist: 38, lean: 6, look: 0.6 }],
         [-0.1, 0.25, { tap: 1 }],
         [hold, 0.2, { tap: 0, lean: 0, look: 0 }],
@@ -717,7 +736,7 @@
       const [x, y] = frame(to), up = height / frame.scale, gap = 8;
       const at = (dy) => ({ nearTo: [x + gap, y - dy], farTo: [x - gap, y - dy - 1] });
       return [
-        now(-0.4, at(0)),
+        [-0.4, 0.4, at(0)],
         [-0.4, 0.4, { nearW: 1, farW: 1, nearShape: SHAPES.grip, farShape: SHAPES.grip, nearWrist: 22, farWrist: 22, crouch: 5 }],
         [0.35, 0.5, { ...at(up), crouch: -2, lean: -5, brow: 0.5 }],
         [0.85 + hold, 0.5, { ...at(0), crouch: 0, lean: 0, brow: 0 }],
@@ -726,8 +745,8 @@
     },
     peek: ({ dir = 1, hold = 1.2 }) => [[-0.2, 0.4, { lean: 12, rise: 1, look: dir, brow: 0.6 }], [hold, 0.4, { lean: 0, rise: 0, look: 0, brow: 0 }]],
     look: ({ dir = 1, hold = 1 }) => [
-      [0, 0.18, dir === 'viewer' ? { side: 1, brow: 0.5 } : { look: dir }],
-      [hold, 0.22, { side: 0, brow: 0, look: 0 }],
+      [0, 0.32, dir === 'viewer' ? { side: 1, brow: 0.5 } : { look: dir }],
+      [hold, 0.38, { side: 0, brow: 0, look: 0 }],
     ],
     // Freezes are poses held from their moment (outlaw() reads them).
     freeze: () => [],
@@ -735,16 +754,16 @@
     shake: ({ hand: side = 'near', hold = 1.4 }) => {
       const s = SIDES[side] ?? 'near';
       return [
-        now(-0.15, { [`${s}To`]: [MID + 50, 152] }),
+        [-0.15, 0.3, { [`${s}To`]: [MID + 50, 152] }],
         // The hand hangs from the wrist, so a jar stuck on it hangs label up.
-        [-0.15, 0.25, { [`${s}W`]: 1, [`${s}Shape`]: SHAPES.fist, [`${s}Wrist`]: 66, shake: 1, lean: -9, alarm: 1 }],
+        [-0.15, 0.3, { [`${s}W`]: 1, [`${s}Shape`]: SHAPES.fist, [`${s}Wrist`]: 30, shake: 1, lean: -6, alarm: 1 }],
         [hold, 0.3, { shake: 0, lean: 0, alarm: 0 }],
         release(hold, [s]),
       ];
     },
     // Shoulders up, elbows at the sides, forearms out with open hands, head tipped.
     shrug: ({ hold = 1 }) => [
-      now(-0.2, { nearTo: [MID + 50, 172], farTo: [MID + 38, 170] }),
+      [-0.2, 0.35, { nearTo: [MID + 50, 150], farTo: [MID + 38, 148] }],
       [-0.2, 0.35, { shrug: 1, nearW: 1, farW: 1, nearShape: SHAPES.open, farShape: SHAPES.open, nearWrist: -18, farWrist: -18, tilt: 7, brow: 0.9 }],
       [hold, 0.4, { shrug: 0, tilt: 0, brow: 0 }],
       release(hold, ['near', 'far']),
@@ -756,15 +775,26 @@
   /** A pose at song time t from timed keys: each field eases to its key's value. */
   function poseTrack(keys) {
     const sorted = keys.slice().sort((a, b) => a[0] - b[0]);
-    return (t, reduced) => {
-      const state = { ...IDLE };
-      for (const [start, duration, fields] of sorted) {
-        if (t < start) break;
-        const u = reduced ? 1 : ease(clamp((t - start) / duration, 0, 1));
-        for (const [name, value] of Object.entries(fields)) state[name] = lerp(state[name], value, u);
+    const tracks = new Map();
+    const sample = (name, t, reduced = false) => {
+      const track = tracks.get(name) ?? [];
+      for (let i = track.length - 1; i >= 0; i -= 1) {
+        const key = track[i];
+        if (t < key.start) continue;
+        return lerp(key.from, key.to, reduced ? 1 : ease(clamp((t - key.start) / key.duration, 0, 1)));
       }
-      return state;
+      return IDLE[name];
     };
+    for (const [start, duration, fields] of sorted) {
+      for (const [name, to] of Object.entries(fields)) {
+        // Capture the interrupted gesture at this key's start. Re-evaluating
+        // it at the current frame makes a prior release fight the new reach.
+        const from = sample(name, start);
+        if (!tracks.has(name)) tracks.set(name, []);
+        tracks.get(name).push({ start, duration, from, to });
+      }
+    }
+    return (t, reduced) => Object.fromEntries(Object.keys(IDLE).map((name) => [name, sample(name, t, reduced)]));
   }
 
   // ------------------------------------------------------------------
@@ -779,12 +809,12 @@
     const gait = walk.gait;
     const phase = walk.phase;
     const calm = reduced ? 0 : 1;
-    const crouch = lerp(8, 20, gait) + k.crouch - 5 * k.rise;
-    const lean = lerp(10, 22, gait) + k.lean;
-    const bob = calm * gait * 2.2 * Math.cos(4 * Math.PI * phase);
+    const crouch = lerp(6, 14, gait) + k.crouch - 5 * k.rise;
+    const lean = lerp(3, 11, gait) + k.lean;
+    const bob = calm * gait * 1.2 * Math.cos(4 * Math.PI * phase);
     const breath = calm * (1 - gait) * 0.8 * Math.sin(t * 1.7);
     const hip = [MID + 2 * gait, HIP_Y + crouch + bob];
-    const T = (p) => plus(hip, turn(p, lean));
+    const T = ([x, y]) => plus(hip, turn([x, y * TORSO_LENGTH], lean));
     const lift = 6 * k.shrug + breath;
     const shoulders = [T([TORSO.near[0], TORSO.near[1] - lift]), T([TORSO.far[0], TORSO.far[1] - lift])];
 
@@ -792,40 +822,40 @@
     const feet = [0, 0.5].map((offset, i) => {
       const step = footAt(phase + offset, walk.step), stand = STAND[i];
       const f = {
-        rel: lerp(stand.rel, step.rel, gait),
+        // Keep the support foot in place as the torso settles after a walk.
+        rel: reduced ? stand.rel : step.rel,
         lift: lerp(stand.lift, step.lift, gait),
-        pitch: lerp(stand.pitch, step.pitch, gait) + 20 * k.rise,
+        pitch: lerp(stand.pitch, step.pitch, gait) + 10 * k.rise,
       };
       return f;
     });
-    // A freeze is a statue on one leg: the near knee snaps up high, toe
-    // pointed, the far foot on tiptoe under the body.
+    // The comic freeze lifts a knee but keeps the supporting boot grounded.
     if (freeze) {
       const w = freeze.lift, [n, f] = feet;
-      feet[0] = { rel: lerp(n.rel, 10, w), lift: lerp(n.lift, LIFT, w), pitch: lerp(n.pitch, 58, w) };
-      feet[1] = { rel: lerp(f.rel, -2, w), lift: lerp(f.lift, 0, w), pitch: lerp(f.pitch, 30, w) };
+      feet[0] = { rel: lerp(n.rel, 12, w), lift: lerp(n.lift, LIFT + 5, w), pitch: lerp(n.pitch, 24, w) };
+      feet[1] = { rel: lerp(f.rel, -2, w), lift: lerp(f.lift, 0, w), pitch: lerp(f.pitch, 5, w) };
     }
     const placed = feet.map((f) => ({ ball: [MID + f.rel + BALL[0], GROUND - f.lift], pitch: f.pitch }));
     const planted = feet[0].lift <= feet[1].lift ? placed[0].ball : placed[1].ball;
 
-    // Hands: up like paws while sneaking; then a wave, the coat's edge, or a move's target.
-    const swing = calm * gait * 2.6 * Math.sin(2 * Math.PI * phase);
-    const paws = [plus(T([25, -66]), [0, swing]), plus(T([18, -63]), [0, -swing])];
+    // Relaxed elbows and wrists, with the arms counter-swinging the legs.
+    const swing = calm * gait * 5 * Math.sin(2 * Math.PI * phase);
+    const rest = [T([lerp(16, 30, gait) - swing, lerp(-19, -44, gait)]), T([lerp(9, 22, gait) + swing, lerp(-22, -47, gait)])];
     // The wrist stops short of a target by the grip, or by the pointing finger.
     const reachFor = (shoulder, target, tip) => minus(target, times(unit(minus(target, shoulder)), (GRIP + 11 * tip) * HAND_SCALE));
     const wrists = [0, 1].map((i) => {
       const s = i ? 'far' : 'near';
-      let w = paws[i];
+      let w = rest[i];
       if (!i && k.wave) w = lerp(w, T([42, -122]), k.wave);
       if (!i && k.coat) w = lerp(w, T([15 + 96 * k.coat, -62]), clamp(k.coat * 1.6, 0, 1));
       if (k[`${s}W`]) w = lerp(w, reachFor(shoulders[i], k[`${s}To`], k[`${s}Tip`]), k[`${s}W`]);
-      if (!i && k.shake) w = plus(w, [0, 9 * k.shake * Math.sin(2 * Math.PI * 6.5 * t)]);
+      if (!i && k.shake) w = plus(w, [3 * k.shake * calm * Math.sin(2 * Math.PI * 3.2 * t), 5 * k.shake * calm * Math.sin(2 * Math.PI * 3.2 * t + 0.4)]);
       return w;
     });
-    const waveFlex = k.wave * (10 + 24 * calm * Math.sin(2 * Math.PI * 2.6 * t));
+    const waveFlex = k.wave * (8 + 18 * calm * Math.sin(2 * Math.PI * 1.6 * t));
     const flex = [
-      lerp(78, k.nearWrist, clamp(k.nearW + k.coat + k.wave, 0, 1)) + waveFlex + 26 * k.shake * calm * Math.sin(2 * Math.PI * 6.5 * t + 0.6),
-      lerp(72, k.farWrist, k.farW),
+      lerp(lerp(5, 15, gait), k.nearWrist, clamp(k.nearW + k.coat + k.wave, 0, 1)) + waveFlex + 12 * k.shake * calm * Math.sin(2 * Math.PI * 3.2 * t + 0.6),
+      lerp(lerp(3, 12, gait), k.farWrist, k.farW),
     ];
     const tapAt = (shift) => (calm ? (Math.sin(2 * Math.PI * 6 * t + shift) + 1) / 2 : 0.5) * k.tap;
     const curls = [
@@ -838,19 +868,22 @@
 
     // The head stays nearly upright while the body leans; idle, it glances back now and then.
     const glanceCycle = ((t / 4.6) % 1 + 1) % 1;
-    const glance = calm * (1 - gait) * (glanceCycle > 0.56 && glanceCycle < 0.72 ? -0.8 : 0.35);
+    const glanceWeight = ease(clamp((glanceCycle - 0.52) / 0.09, 0, 1)) * (1 - ease(clamp((glanceCycle - 0.72) / 0.09, 0, 1)));
+    const glance = calm * (1 - gait) * lerp(0.25, -0.65, glanceWeight);
     let look = k.look + glance * (1 - Math.min(1, Math.abs(k.look) + k.side));
     if (freeze) look = lerp(look, calm * 0.9 * Math.sin(2 * Math.PI * 1.3 * freeze.age), freeze.lift);
-    const headFlip = k.look < -0.5 ? lerp(1, -1, clamp((-k.look - 0.5) / 0.4, 0, 1)) : 1;
+    const headFlip = k.look < -0.2 ? Math.cos(Math.PI * ease(clamp((-k.look - 0.2) / 0.8, 0, 1))) : 1;
+    const blinkPhase = ((t + 0.8) % 4.7 + 4.7) % 4.7;
+    const blink = calm * (1 - k.alarm) * (blinkPhase < 0.18 ? Math.sin(Math.PI * blinkPhase / 0.18) ** 2 : 0);
 
     return {
       hip, lean, T, shoulders, feet: placed, wrists, flex, curls,
       headTilt: 0.25 * lean - 6 + k.tilt + 5 * k.dip,
-      headFlip: Math.abs(headFlip) < 0.08 ? 0.08 * Math.sign(headFlip || 1) : headFlip,
-      look, brow: k.brow, side: k.side, alarm: Math.max(k.alarm, freeze ? 0.6 * freeze.lift : 0), dip: k.dip, coat: k.coat,
+      headFlip,
+      look, blink, brow: k.brow, side: k.side, alarm: Math.max(k.alarm, freeze ? 0.6 * freeze.lift : 0), dip: k.dip, coat: k.coat,
       flutter: calm * (gait * Math.sin(2 * Math.PI * phase + 1) + 0.3 * Math.sin(t * 1.3)),
-      wobble: freeze ? calm * 1.6 * Math.sin(2 * Math.PI * 2.4 * freeze.age) * freeze.lift : 0, pivot: planted,
-      swing: 22 * k.shake * calm * Math.sin(2 * Math.PI * 6.5 * t + 1.2),
+      wobble: freeze ? calm * 0.45 * Math.sin(2 * Math.PI * 1.8 * freeze.age) * freeze.lift : 0, pivot: planted,
+      swing: 9 * k.shake * calm * Math.sin(2 * Math.PI * 3.2 * t + 1.2),
     };
   }
 
@@ -899,7 +932,7 @@
       // Under reduced motion it glides along its route standing, without the step cycle.
       const walk = { ...walkAt(time), scale };
       if (reduced) walk.gait = 0;
-      const freeze = active ? { age: t - active[0], lift: reduced ? 1 : clamp((t - active[0]) / 0.14, 0, 1) }
+      const freeze = active ? { age: t - active[0], lift: reduced ? 1 : ease(clamp((t - active[0]) / 0.24, 0, 1)) }
         : after && !reduced ? { age: t - after[0], lift: ease(1 - (t - after[0] - after[1]) / 0.3), melting: true } : null;
       const pose = compose(time, walk, track(time, reduced), freeze, reduced);
       const turn = reduced ? walk.facing : walk.turn;
@@ -957,24 +990,26 @@
     onFrame((t) => {
       const reduced = reducedMotion.matches;
       const active = freezeHolds.find(([when, hold]) => t >= when && t <= when + hold);
+      const after = active ? null : freezeHolds.find(([when, hold]) => t > when + hold && t < when + hold + 0.24);
       const time = active ? active[0] : t;
       const w = walkAt(time - delay);
       const calm = reduced ? 0 : 1;
       const phase = w.s / scale / (2 * BOT.step);
       const step = Math.sin(2 * Math.PI * phase) * w.gait * calm;
-      const up = active ? 1 : 0;
-      const age = active ? t - active[0] : 0;
-      const tilt = active ? 2 * calm * Math.sin(2 * Math.PI * 2.6 * age) : 5 * step;
+      const up = active ? (reduced ? 1 : ease(clamp((t - active[0]) / 0.18, 0, 1)))
+        : after && !reduced ? ease(1 - (t - after[0] - after[1]) / 0.24) : 0;
+      const age = active || after ? t - (active ?? after)[0] : 0;
+      const tilt = lerp(5 * step, 2 * calm * Math.sin(2 * Math.PI * 2.6 * age), up);
       body.setAttribute('transform', `translate(0 ${f2(-1.6 * Math.abs(step))}) rotate(${f2(tilt)} 30 64)`);
       [0, 1].forEach((i) => {
         const sign = i ? -1 : 1;
-        const raise = active ? (i ? 7 : 0) : Math.max(0, 3.6 * step * sign);
-        const x = (i ? 34 : 25) + (active ? 0 : 2 * step * sign);
+        const raise = lerp(Math.max(0, 3.6 * step * sign), i ? 7 : 0, up);
+        const x = (i ? 34 : 25) + 2 * step * sign * (1 - up);
         legs[i].setAttribute('d', `M${f2(i ? 34 : 25)} 53 L${f2(x)} ${f2(62 - raise)}`);
         feet[i].setAttribute('cx', f2(x + 1.6));
         feet[i].setAttribute('cy', f2(64 - raise));
         const shoulder = [i ? 41 : 19, 37];
-        const hand = active ? [i ? 58 : 2, 4] : [shoulder[0] + (i ? 4 : -4) + 3 * step * -sign, 50];
+        const hand = lerp([shoulder[0] + (i ? 4 : -4) + 3 * step * -sign, 50], [i ? 58 : 2, 4], up);
         arms[i].setAttribute('d', `M${pt(shoulder)} Q${pt([(shoulder[0] + hand[0]) / 2 + (i ? 3 : -3), (shoulder[1] + hand[1]) / 2])} ${pt(hand)}`);
         mittens[i].setAttribute('cx', f2(hand[0]));
         mittens[i].setAttribute('cy', f2(hand[1]));

@@ -115,7 +115,15 @@
     const denim = gradient('linearGradient', 'denim', { gradientUnits: 'userSpaceOnUse', x1: 50, y1: 200, x2: 112, y2: 286 }, ['0', '0.6', '1']).url;
     const felt = gradient('linearGradient', 'felt', { x1: 0, y1: 0, x2: 0.4, y2: 1 }, ['0', '1']).url;
     const silver = gradient('radialGradient', 'silver', { cx: 0.35, cy: 0.3, r: 0.85 }, ['0', '0.6', '1']).url;
-    const skins = [1, -1].map((side) => gradient('radialGradient', 'skin', { cx: side < 0 ? 0.62 : 0.38, cy: 0.3, r: 0.9 }, ['0', '0.55', '1']));
+    // Shade across the limb, not down each separate piece. Matching tones
+    // at the wrist avoid a dark forearm ending on a bright, detached hand.
+    const skins = [1, -1].map((side) => gradient('linearGradient', 'skin', {
+      gradientUnits: 'userSpaceOnUse', x1: -6 * side, y1: 0, x2: 6 * side, y2: 0,
+    }, ['0', '0.55', '1']));
+    const foreSkins = [1, -1].map((side) => gradient('linearGradient', 'skin', {
+      gradientUnits: 'userSpaceOnUse', x1: ARM.wx - 6 * HAND_SCALE * side, y1: ARM.wy - 2,
+      x2: ARM.wx + 6 * HAND_SCALE * side, y2: ARM.wy - 2,
+    }, ['0', '0.55', '1']));
 
     // Legs: straight jeans from the hips to the boot shafts, then boots with
     // a stitched shaft, a slanted heel, and a pointed toe turned out.
@@ -191,12 +199,8 @@
     // shoulder and a round elbow, coming out of the vest's armhole. Arms
     // reach out to their own side (MOVES), never across the chest.
     const UPPER = `M${ARM.sx - 7.4} ${ARM.sy} A7.4 7.4 0 0 1 ${ARM.sx + 7.4} ${ARM.sy - 1} L${ARM.ex + 7} ${ARM.ey} L${ARM.ex - 7} ${ARM.ey + 1} Z`;
-    // The forearm tapers to the wrist, where it is as wide as the hand it
-    // runs on into, with a rounded end over the top of the palm, so the
-    // wrist has no step.
-    const WRIST = 3.9 * HAND_SCALE;
-    const FORE = `M${ARM.ex - 6.6} ${ARM.ey} L${ARM.ex + 6.6} ${ARM.ey - 0.6} L${ARM.wx + WRIST} ${ARM.wy - 1.6} Q${ARM.wx} ${ARM.wy + 1.6} ${ARM.wx - WRIST} ${ARM.wy - 1.2} Z`;
-    const FORE_SIDES = `M${ARM.ex + 6.6} ${ARM.ey - 0.6} L${ARM.wx + WRIST} ${ARM.wy - 1.6} M${ARM.wx - WRIST} ${ARM.wy - 1.2} L${ARM.ex - 6.6} ${ARM.ey}`;
+    // The forearm's distal edge follows the turning wrist. Its open side
+    // contours meet the palm, with no rounded cap drawn across the joint.
     const arm = (side) => {
       const upper = svg('g', {}, svg('g', { transform: mirror(side) }, upperArms));
       svg('path', { class: 'sh-limb-ink', d: UPPER }, upper);
@@ -208,15 +212,15 @@
       // arm, then at the elbow; its sleeve rolled to below the elbow.
       const reachG = svg('g', {}, svg('g', { transform: mirror(side) }, frontArms));
       const fore = svg('g', {}, reachG);
-      const grip = svg('g', {}, fore);
-      svg('path', { class: 'sh-skin sh-forearm', fill: skins[side > 0 ? 0 : 1].url, d: FORE }, fore);
-      svg('path', { class: 'sh-hand-line', d: FORE_SIDES }, fore);
+      const skinIndex = side > 0 ? 0 : 1;
+      const foreFill = svg('path', { class: 'sh-skin sh-forearm', fill: foreSkins[skinIndex].url }, fore);
+      const foreSides = svg('path', { class: 'sh-forearm-contour' }, fore);
       svg('path', { class: 'sh-cuff sh-outline', fill: shirt, d: `M${ARM.ex - 7.4} ${ARM.ey - 2} L${ARM.ex + 7.4} ${ARM.ey - 2.6} L${ARM.ex + 7.2} ${ARM.ey + 9} L${ARM.ex - 7} ${ARM.ey + 9.6} Z` }, fore);
       svg('path', { class: 'sh-fold', d: `M${ARM.ex - 6.6} ${ARM.ey + 3.6} L${ARM.ex + 6.6} ${ARM.ey + 3}` }, fore);
-      const handG = svg('g', {}, grip);
-      const drawn = hand(handG, skins[side > 0 ? 0 : 1].url);
-      const held = svg('g', { class: 'sh-held' }, handG);
-      return { side, upper, reachG, fore, grip, handG, held, drawn, skin: skins[side > 0 ? 0 : 1] };
+      const handG = svg('g', {}, fore);
+      const drawn = hand(handG, skins[skinIndex].url);
+      const held = svg('g', { class: `sh-held sh-held--${side > 0 ? 'right' : 'left'}` }, drawn.grip);
+      return { side, upper, reachG, fore, foreFill, foreSides, handG, held, drawn, skin: skins[skinIndex], foreSkin: foreSkins[skinIndex] };
     };
     const arms = { right: arm(1), left: arm(-1) };
 
@@ -284,9 +288,20 @@
       a.fore.setAttribute('transform', `rotate(${(up - fo).toFixed(1)} ${ARM.ex} ${ARM.ey})`);
       // The hand turns at the wrist, its fingers down the forearm; its light
       // turns back so the upper left stays lit.
-      const turn = ARM.foreDir - 90;
-      a.handG.setAttribute('transform', `translate(${ARM.wx} ${ARM.wy - 2}) rotate(${(turn - clamp(wrist, -70, 70)).toFixed(1)}) scale(${HAND_SCALE})`);
-      a.skin.g.setAttribute('gradientTransform', `rotate(${fo.toFixed(1)} .5 .5)`);
+      const turn = ARM.foreDir - 90 - clamp(wrist, -60, 60);
+      const rad = turn * Math.PI / 180;
+      const wristPoint = (x, y) => [
+        ARM.wx + HAND_SCALE * (x * Math.cos(rad) - y * Math.sin(rad)),
+        ARM.wy - 2 + HAND_SCALE * (x * Math.sin(rad) + y * Math.cos(rad)),
+      ].map((v) => v.toFixed(2)).join(' ');
+      const left = wristPoint(-3.2, -0.8), right = wristPoint(3.6, -0.8);
+      const leftEdge = `M${ARM.ex - 6.6} ${ARM.ey} Q${ARM.ex - 6} ${ARM.ey + 19} ${left}`;
+      const rightEdge = `Q${ARM.ex + 5.8} ${ARM.ey + 19} ${ARM.ex + 6.6} ${ARM.ey - 0.6}`;
+      a.foreSides.setAttribute('d', `${leftEdge} M${right} ${rightEdge}`);
+      a.foreFill.setAttribute('d', `${leftEdge} L${wristPoint(-3.2, 0.4)} L${wristPoint(3.6, 0.4)} L${right} ${rightEdge} Z`);
+      a.handG.setAttribute('transform', `translate(${ARM.wx} ${ARM.wy - 2}) rotate(${turn.toFixed(2)}) scale(${HAND_SCALE})`);
+      a.skin.g.setAttribute('gradientTransform', `rotate(${(fo - turn).toFixed(2)} 0 0)`);
+      a.foreSkin.g.setAttribute('gradientTransform', `rotate(${fo.toFixed(2)} ${ARM.wx} ${ARM.wy - 2})`);
       a.drawn.shape(curls);
     };
     function pose(p) {
@@ -393,15 +408,27 @@
   function poseTrack(keys) {
     const sorted = keys.slice().sort((a, b) => a[0] - b[0]);
     const lerp = (a, b, u) => (Array.isArray(a) ? a.map((v, i) => v + (b[i] - v) * u) : a + (b - a) * u);
-    return (t, reduced) => {
-      const state = { ...AT_EASE };
-      for (const [start, duration, fields] of sorted) {
-        if (t < start) break;
-        const u = reduced ? 1 : easeInOutCubic(clamp((t - start) / duration, 0, 1));
-        for (const [name, value] of Object.entries(fields)) state[name] = lerp(state[name], value, u);
+    const tracks = new Map();
+    const sample = (name, t, reduced = false) => {
+      const track = tracks.get(name) ?? [];
+      for (let i = track.length - 1; i >= 0; i -= 1) {
+        const key = track[i];
+        if (t < key.start) continue;
+        const u = reduced ? 1 : easeInOutCubic(clamp((t - key.start) / key.duration, 0, 1));
+        return lerp(key.from, key.to, u);
       }
-      return state;
+      return AT_EASE[name];
     };
+    for (const [start, duration, fields] of sorted) {
+      for (const [name, to] of Object.entries(fields)) {
+        // Start a release from the hand's actual pose when it interrupts
+        // a reach, so the old gesture cannot keep pulling it forward.
+        const from = sample(name, start);
+        if (!tracks.has(name)) tracks.set(name, []);
+        tracks.get(name).push({ start, duration, from, to });
+      }
+    }
+    return (t, reduced) => Object.fromEntries(Object.keys(AT_EASE).map((name) => [name, sample(name, t, reduced)]));
   }
 
   /**
