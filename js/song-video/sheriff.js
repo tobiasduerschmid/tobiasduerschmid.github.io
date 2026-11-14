@@ -29,7 +29,7 @@
 (function () {
   'use strict';
 
-  const { fx, onFrame, onDispose, progress, easeInOutCubic } = window.Timeline;
+  const { fx, onFrame, onDispose, progress } = window.Timeline;
   const { el, svg, place } = window.SongKit;
   const { clamp } = window.SongFigure;
   const { hand, SHAPES } = window.FrontierHand;
@@ -61,7 +61,8 @@
     const tx = side > 0 ? x : 160 - x;
     const dx = tx - ARM.sx, dy = y - ARM.sy;
     const full = Math.hypot(dx, dy) || 1;
-    const d = clamp(full, Math.abs(ARM.upper - ARM.fore) + 0.5, ARM.upper + ARM.fore - 0.4);
+    // Keep a small bend even at full reach, avoiding a locked straight elbow.
+    const d = clamp(full, Math.abs(ARM.upper - ARM.fore) + 0.5, ARM.upper + ARM.fore - 1.6);
     const toward = Math.atan2(dy, dx);
     const bend = Math.acos(clamp((ARM.upper ** 2 + d ** 2 - ARM.fore ** 2) / (2 * ARM.upper * d), -1, 1));
     const elbows = [toward + bend, toward - bend].map((dir) => ({ dir, ex: ARM.sx + ARM.upper * Math.cos(dir), ey: ARM.sy + ARM.upper * Math.sin(dir) }));
@@ -198,11 +199,11 @@
     // Upper arms, under the vest: a sleeve with a round head at the
     // shoulder and a round elbow, coming out of the vest's armhole. Arms
     // reach out to their own side (MOVES), never across the chest.
-    const UPPER = `M${ARM.sx - 7.4} ${ARM.sy} A7.4 7.4 0 0 1 ${ARM.sx + 7.4} ${ARM.sy - 1} L${ARM.ex + 7} ${ARM.ey} L${ARM.ex - 7} ${ARM.ey + 1} Z`;
+    const UPPER = 'M106.6 112 C106 106 112 103.6 117 105.8 C121 107.4 122.3 115 122.2 124 C123.4 136 125.9 144 128 154 L114 155 C113.7 143 111 134 109.4 124 C107 119 106.6 115 106.6 112 Z';
     // The forearm's distal edge follows the turning wrist. Its open side
     // contours meet the palm, with no rounded cap drawn across the joint.
     const arm = (side) => {
-      const upper = svg('g', {}, svg('g', { transform: mirror(side) }, upperArms));
+      const upper = svg('g', { class: 'sh-upper-arm' }, svg('g', { transform: mirror(side) }, upperArms));
       svg('path', { class: 'sh-limb-ink', d: UPPER }, upper);
       svg('circle', { class: 'sh-limb-ink', cx: ARM.ex, cy: ARM.ey, r: 7 }, upper);
       svg('path', { class: 'sh-shirt', fill: shirt, d: UPPER }, upper);
@@ -211,13 +212,13 @@
       // The forearm and hand: in front of everything, turning with the upper
       // arm, then at the elbow; its sleeve rolled to below the elbow.
       const reachG = svg('g', {}, svg('g', { transform: mirror(side) }, frontArms));
-      const fore = svg('g', {}, reachG);
+      const fore = svg('g', { class: 'sh-lower-arm' }, reachG);
       const skinIndex = side > 0 ? 0 : 1;
       const foreFill = svg('path', { class: 'sh-skin sh-forearm', fill: foreSkins[skinIndex].url }, fore);
       const foreSides = svg('path', { class: 'sh-forearm-contour' }, fore);
       svg('path', { class: 'sh-cuff sh-outline', fill: shirt, d: `M${ARM.ex - 7.4} ${ARM.ey - 2} L${ARM.ex + 7.4} ${ARM.ey - 2.6} L${ARM.ex + 7.2} ${ARM.ey + 9} L${ARM.ex - 7} ${ARM.ey + 9.6} Z` }, fore);
       svg('path', { class: 'sh-fold', d: `M${ARM.ex - 6.6} ${ARM.ey + 3.6} L${ARM.ex + 6.6} ${ARM.ey + 3}` }, fore);
-      const handG = svg('g', {}, fore);
+      const handG = svg('g', { class: 'sh-hand' }, fore);
       const drawn = hand(handG, skins[skinIndex].url);
       const held = svg('g', { class: `sh-held sh-held--${side > 0 ? 'right' : 'left'}` }, drawn.grip);
       return { side, upper, reachG, fore, foreFill, foreSides, handG, held, drawn, skin: skins[skinIndex], foreSkin: foreSkins[skinIndex] };
@@ -282,10 +283,10 @@
     svg('path', { class: 'sh-crown-shine', d: 'M63 40 C62.4 32 63.6 27 66.4 24.4' }, hat);
 
     const poseArm = (a, [up, fo], wrist, curls) => {
-      const shoulder = `rotate(${(-up).toFixed(1)} ${ARM.sx} ${ARM.sy})`;
+      const shoulder = `rotate(${(-up).toFixed(3)} ${ARM.sx} ${ARM.sy})`;
       a.upper.setAttribute('transform', shoulder);
       a.reachG.setAttribute('transform', shoulder);
-      a.fore.setAttribute('transform', `rotate(${(up - fo).toFixed(1)} ${ARM.ex} ${ARM.ey})`);
+      a.fore.setAttribute('transform', `rotate(${(up - fo).toFixed(3)} ${ARM.ex} ${ARM.ey})`);
       // The hand turns at the wrist, its fingers down the forearm; its light
       // turns back so the upper left stays lit.
       const turn = ARM.foreDir - 90 - clamp(wrist, -60, 60);
@@ -295,8 +296,10 @@
         ARM.wy - 2 + HAND_SCALE * (x * Math.sin(rad) + y * Math.cos(rad)),
       ].map((v) => v.toFixed(2)).join(' ');
       const left = wristPoint(-3.2, -0.8), right = wristPoint(3.6, -0.8);
-      const leftEdge = `M${ARM.ex - 6.6} ${ARM.ey} Q${ARM.ex - 6} ${ARM.ey + 19} ${left}`;
-      const rightEdge = `Q${ARM.ex + 5.8} ${ARM.ey + 19} ${ARM.ex + 6.6} ${ARM.ey - 0.6}`;
+      // The proximal forearm has volume; both distal tangents follow the
+      // wrist so its rotation never leaves a corner or a floating hand.
+      const leftEdge = `M${ARM.ex - 6.6} ${ARM.ey} C${ARM.ex - 6.8} ${ARM.ey + 16} ${wristPoint(-3.2, -6)} ${left}`;
+      const rightEdge = `C${wristPoint(3.6, -6)} ${ARM.ex + 6.4} ${ARM.ey + 15} ${ARM.ex + 6.6} ${ARM.ey - 0.6}`;
       a.foreSides.setAttribute('d', `${leftEdge} M${right} ${rightEdge}`);
       a.foreFill.setAttribute('d', `${leftEdge} L${wristPoint(-3.2, 0.4)} L${wristPoint(3.6, 0.4)} L${right} ${rightEdge} Z`);
       a.handG.setAttribute('transform', `translate(${ARM.wx} ${ARM.wy - 2}) rotate(${turn.toFixed(2)}) scale(${HAND_SCALE})`);
@@ -362,7 +365,7 @@
   const DRAW = { right: reach([115, 177], 1, 'out'), rightWrist: 34, rightCurl: SHAPES.claw, left: HIPS.left, leftWrist: 30, leftCurl: SHAPES.fist };
   // The hat tip: the elbow out and up, the fingers pinching the brim.
   const TIP_HAND = reach([110, 50], 1, 'out');
-  const toRest = (at, sides = ['right'], duration = 0.6) => [at, duration, Object.fromEntries(sides.flatMap((s) => [[s, AT_EASE[s]], [`${s}Wrist`, 0], [`${s}Curl`, SHAPES.rest]]))];
+  const toRest = (at, sides = ['right'], duration = 0.72) => [at, duration, Object.fromEntries(sides.flatMap((s) => [[s, AT_EASE[s]], [`${s}Wrist`, 0], [`${s}Curl`, SHAPES.rest]]))];
 
   /**
    * The sheriff's moves for sheriff({ moves }): each a list of pose keys
@@ -376,13 +379,13 @@
       const target = frame(to);
       const side = forced ?? (target[0] < 80 ? 'left' : 'right');
       const pose = reach(target, side === 'right' ? 1 : -1, 'down');
-      return [[-0.25, 0.5, { [side]: pose, [`${side}Wrist`]: 0, [`${side}Curl`]: SHAPES.point }], [-0.05, 0.35, { look: target[0] < 80 ? -0.8 : 0.8 }], [hold, 0.4, { look: 0 }], toRest(hold, [side])];
+      return [[-0.42, 0.68, { [side]: pose, [`${side}Wrist`]: 0, [`${side}Curl`]: SHAPES.point }], [-0.15, 0.4, { look: target[0] < 80 ? -0.8 : 0.8 }], [hold, 0.4, { look: 0 }], toRest(hold, [side])];
     },
     present: ({ to, hold = 1.4, side: forced }, frame) => {
       const target = frame(to);
       const side = forced ?? (target[0] < 80 ? 'left' : 'right');
       const pose = reach([80 + (target[0] - 80) * 0.5, Math.min(170, 120 + (target[1] - 120) * 0.3)], side === 'right' ? 1 : -1, 'down');
-      return [[-0.25, 0.55, { [side]: pose, [`${side}Wrist`]: -30, [`${side}Curl`]: SHAPES.open }], [-0.05, 0.35, { look: target[0] < 80 ? -0.7 : 0.7, brow: 0.5 }], [hold, 0.45, { look: 0, brow: 0 }], toRest(hold, [side])];
+      return [[-0.42, 0.72, { [side]: pose, [`${side}Wrist`]: -24, [`${side}Curl`]: SHAPES.open }], [-0.15, 0.4, { look: target[0] < 80 ? -0.7 : 0.7, brow: 0.5 }], [hold, 0.45, { look: 0, brow: 0 }], toRest(hold, [side])];
     },
     tip: ({ hold = 0.9 }) => [
       [-0.4, 0.5, { right: TIP_HAND, rightWrist: -20, rightCurl: SHAPES.pinch }], [0.05, 0.3, { hatTip: 1, nod: 0.8, brow: 0.6 }],
@@ -407,15 +410,28 @@
   /** A pose at song time t from timed keys: each field eases to its key's value. */
   function poseTrack(keys) {
     const sorted = keys.slice().sort((a, b) => a[0] - b[0]);
-    const lerp = (a, b, u) => (Array.isArray(a) ? a.map((v, i) => v + (b[i] - v) * u) : a + (b - a) * u);
+    // Minimum-jerk easing has continuous velocity and acceleration at both
+    // ends. Distal joints follow the shoulder by a few frames, all settling
+    // on the authored cue so contact with a prop stays synchronized.
+    const eased = (u) => u ** 3 * (10 - 15 * u + 6 * u ** 2);
+    const lag = (name, i) => {
+      if (name === 'right' || name === 'left') return i * 0.06;
+      if (name.endsWith('Wrist')) return 0.04;
+      if (name.endsWith('Curl')) return 0.04 + (i % 3) * 0.012;
+      return 0;
+    };
     const tracks = new Map();
     const sample = (name, t, reduced = false) => {
       const track = tracks.get(name) ?? [];
       for (let i = track.length - 1; i >= 0; i -= 1) {
         const key = track[i];
         if (t < key.start) continue;
-        const u = reduced ? 1 : easeInOutCubic(clamp((t - key.start) / key.duration, 0, 1));
-        return lerp(key.from, key.to, u);
+        const mix = (from, to, i = 0) => {
+          const delay = Math.min(lag(name, i), key.duration * 0.2);
+          const u = reduced ? 1 : eased(clamp((t - key.start - delay) / (key.duration - delay), 0, 1));
+          return from + (to - from) * u;
+        };
+        return Array.isArray(key.to) ? key.from.map((v, i) => mix(v, key.to[i], i)) : mix(key.from, key.to);
       }
       return AT_EASE[name];
     };

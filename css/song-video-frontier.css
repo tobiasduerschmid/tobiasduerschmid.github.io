@@ -11,6 +11,7 @@
   background: #120c14;
   --fr-blue-hour: 0%;
   --fr-night: 0%;
+  --fr-sun-red: 0%;
 }
 
 .frontier {
@@ -23,25 +24,36 @@
   display: block;
 }
 
-.fr-sky-0 { stop-color: color-mix(in srgb, color-mix(in srgb, #586b9c, #0d1d40 var(--fr-blue-hour)), #070e23 var(--fr-night)); }
-.fr-sky-1 { stop-color: color-mix(in srgb, color-mix(in srgb, #c187a2, #263b68 var(--fr-blue-hour)), #12223e var(--fr-night)); }
-.fr-sky-2 { stop-color: color-mix(in srgb, color-mix(in srgb, #eea079, #565b83 var(--fr-blue-hour)), #29334d var(--fr-night)); }
-.fr-sky-3 { stop-color: color-mix(in srgb, color-mix(in srgb, #ffd08b, #92758e var(--fr-blue-hour)), #4c435b var(--fr-night)); }
+.fr-sky-0 { stop-color: color-mix(in srgb, color-mix(in srgb, #506ba5, #10204b var(--fr-blue-hour)), #070e23 var(--fr-night)); }
+.fr-sky-1 { stop-color: color-mix(in srgb, color-mix(in srgb, #cd836b, #294372 var(--fr-blue-hour)), #12223e var(--fr-night)); }
+.fr-sky-2 { stop-color: color-mix(in srgb, color-mix(in srgb, #f69354, #586484 var(--fr-blue-hour)), #29334d var(--fr-night)); }
+.fr-sky-3 { stop-color: color-mix(in srgb, color-mix(in srgb, #ffd080, #a27c70 var(--fr-blue-hour)), #4c454e var(--fr-night)); }
 
-.fr-sun-0 { stop-color: #ffce86; stop-opacity: 0.5; }
-.fr-sun-1 { stop-color: #ff9a70; stop-opacity: 0; }
-.fr-sun-disc { fill: #ffe2a1; }
+.fr-sun-0 { stop-color: color-mix(in srgb, #ffd17a, #f48b50 var(--fr-sun-red)); stop-opacity: 0.5; }
+.fr-sun-1 { stop-color: #e88150; stop-opacity: 0; }
+.fr-sun-disc { fill: url(#fr-sun-face); }
+.fr-sun-upper { stop-color: color-mix(in srgb, #ffebad, #ffc572 var(--fr-sun-red)); }
+.fr-sun-lower { stop-color: color-mix(in srgb, #ffc65e, #f6763b var(--fr-sun-red)); }
 
 .fr-stars circle { fill: #f4ead8; }
 
-/* Cool upper masses, broad rose undersides, and a thin amber lower rim:
-   the sun is below the clouds even after its disc slips behind the town. */
+/* Separate ambient skylight from direct sunlight. Each cloud's elevation
+   controls when its warm lower relief enters Earth's shadow. The blue-hour
+   clouds retain cool volume instead of glowing orange through the night. */
 .fr-cloud-body { fill: url(#fr-cloud); }
-.fr-cloud-0 { stop-color: color-mix(in srgb, color-mix(in srgb, #77718e, #253258 var(--fr-blue-hour)), #19263e var(--fr-night)); }
-.fr-cloud-1 { stop-color: color-mix(in srgb, color-mix(in srgb, #b4839c, #65527d var(--fr-blue-hour)), #34364d var(--fr-night)); }
-.fr-cloud-2 { stop-color: color-mix(in srgb, color-mix(in srgb, #f2ac8c, #be718e var(--fr-blue-hour)), #654758 var(--fr-night)); }
-.fr-cloud-3 { stop-color: color-mix(in srgb, color-mix(in srgb, #ffda99, #df9589 var(--fr-blue-hour)), #865963 var(--fr-night)); }
+.fr-cloud-0 { stop-color: color-mix(in srgb, color-mix(in srgb, #70778a, #2d3b59 var(--fr-blue-hour)), #18243a var(--fr-night)); }
+.fr-cloud-1 { stop-color: color-mix(in srgb, color-mix(in srgb, #87818a, #4a506b var(--fr-blue-hour)), #223047 var(--fr-night)); }
+.fr-cloud-2 { stop-color: color-mix(in srgb, color-mix(in srgb, #a28983, #5d5d76 var(--fr-blue-hour)), #29354a var(--fr-night)); }
+.fr-cloud-3 { stop-color: color-mix(in srgb, color-mix(in srgb, #ba9b85, #736b7d var(--fr-blue-hour)), #344056 var(--fr-night)); }
 .fr-cloud-wisp { fill: url(#fr-cloud); opacity: 0.45; }
+.fr-cloud-direct { opacity: var(--fr-cloud-light, 0); }
+.fr-cloud-sun-shade { stop-color: #e79065; stop-opacity: 0; }
+.fr-cloud-sun-middle { stop-color: color-mix(in srgb, #eeb784, #c9684b var(--fr-cloud-red, 0%)); stop-opacity: 0.16; }
+.fr-cloud-sun-warm { stop-color: color-mix(in srgb, #ffca70, #f16f3c var(--fr-cloud-red, 0%)); stop-opacity: 0.85; }
+.fr-cloud-sun-rim { stop-color: color-mix(in srgb, #ffdf8d, #ffa35a var(--fr-cloud-red, 0%)); }
+.fr-cloud-lit-wisp { opacity: 0.5; }
+.fr-cloud-fold { fill: color-mix(in srgb, #596578, #142039 var(--fr-night)); opacity: 0.18; }
+.fr-cloud-filament { opacity: calc(var(--fr-cloud-light, 0) * 0.38); }
 
 .fr-mesa { fill: color-mix(in srgb, color-mix(in srgb, #69516b, #303b5c var(--fr-blue-hour)), #242b40 var(--fr-night)); }
 

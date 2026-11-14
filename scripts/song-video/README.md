@@ -576,12 +576,27 @@ racks, general stores stacked from software modules, a water tower whose tank
 is a database cylinder, a radio mast, and a router shack, all joined by one
 network cable (a jack on every building) with data packets travelling it both
 ways. Their status lights come on one by one as late golden hour turns
-linearly into a later blue hour by 43⅓% of the song (20% faster), then
-linearly onward into night. The sun follows a
-descending circular arc to the right, disappearing below the horizon in
-roughly the first minute; its horizon glow fades as the sky cools.
-Broad cloud banks keep coral-pink and amber undersides lit by the sun below
-the horizon, fading to muted rose as stars brighten into night.
+linearly into blue hour, then onward toward night. The shared sunset clock
+runs at 88% speed from the same golden-hour starting point, placing blue
+hour at about 49% of the song and retaining more afterglow at the end.
+The sun follows a west-facing equinox path at 34° north, using a constant
+solar hour-angle clock (88.8° to 99° before the shared 12% slowdown)
+compressed into the song. The slower clock keeps the red disc visible longer
+and the high clouds colourful through most of the song, ending in later blue hour.
+Its disc warms from gold to orange-red and flattens near the horizon through
+NOAA's standard-atmosphere refraction approximation. The disc is enlarged
+1.5× for readability; it sets during the second minute. A local halo
+follows the disc while a wider horizon afterglow fades with solar elevation.
+Broad cloud banks have sun-facing amber and red-orange relief over cool
+ambient shading. Their illustrative heights (1.6–11 km) determine when they
+enter Earth's shadow: low clouds darken first, high banks retain the last
+warm light, followed by a restrained scattered afterglow fading into blue-grey.
+One steady wind carries the banks, with subtle shear in their wisps and
+clipped internal folds. Lighting follows their current positions; seeking
+recreates the same sky exactly. Reduced motion holds a
+settled blue-hour sky. Geometry follows [NOAA's solar equations](https://gml.noaa.gov/grad/solcalc/solareqns.PDF);
+the illustrated lighting follows the [WMO Cloud Atlas](https://cloudatlas.wmo.int/en/appearance-of-clouds-colour.html),
+with art-directed colours rather than a full atmospheric scattering model.
 The desert ground retains its dusty ochre and brown material
 colours, with cooler, darker foreground shading instead of a blue overlay.
 `js/song-video/western-kit.js` (styles in `css/song-video-western-kit.css`)
@@ -620,7 +635,15 @@ distinct cuts, with separated, readable permission tags.
 vest, star, bandana, boots, a gun belt with a holstered revolver it reaches
 for but never draws) wearing the viewer's head, with two-bone arms and moves
 (point, present, tip, hips, draw, nod, look, hold); the mouth opens on sung
-words, from the storyboard's word marks. `js/song-video/outlaw.js` (styles in
+words, from the storyboard's word marks. Its sleeve, forearm, hand, and
+head silhouettes share warm brown ink, with finer lines inside the fingers.
+Pointing rolls the hand to place the straight index along its upper edge,
+with the other fingers curled below and the thumb across them.
+The arms retain a slight elbow bend at full reach; tapered forearms follow
+the wrist tangents. Gesture easing settles velocity and acceleration at
+each endpoint, with a small shoulder-to-elbow-to-finger delay and a slower
+release. Every contact pose still settles at its authored cue.
+`js/song-video/outlaw.js` (styles in
 `css/song-video-outlaw.css`) is the singer, the hired tester: a masked outlaw
 in profile who sneaks along routes of stage points with a step cycle locked
 to the distance travelled, adult limb proportions, grounded boots, relaxed

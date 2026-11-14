@@ -18,7 +18,8 @@
  * the clouds drift, the windmill turns, the packets travel, the LEDs come
  * on one by one as the evening comes, dust motes float, and now and then a
  * tumbleweed rolls along the street. Golden hour cools linearly into blue
- * hour by the midpoint, with rose and amber light below the clouds.
+ * hour by the midpoint. Cloud illumination follows the setting sun, with
+ * lower banks entering Earth's shadow before the higher banks.
  *
  * The scenery stays behind the lesson (text sits on its own cards, never on
  * the sky), and nothing large changes brightness quickly (WCAG 2.3.1): the
@@ -50,25 +51,113 @@
     },
   ];
 
-  /** A low sun follows a descending arc to the right, continuing below the
-   * horizon. Constant angular speed keeps seeking and playback identical. */
-  function sunsetPosition(progress) {
-    const radius = 360;
-    const startAngle = 35 * Math.PI / 180;
-    const angle = startAngle + progress * 28 * Math.PI / 180;
+  const RADIANS = Math.PI / 180;
+  const FOCAL_LENGTH = 1800;
+  const SKY_CENTER = 565;
+  const SOLAR_RADIUS = 0.266;
+  // A modest cinematic enlargement keeps the disc legible behind the lesson;
+  // orbital geometry and cloud-shadow timing still use the real solar radius.
+  const SUN_DISPLAY_SCALE = 1.5;
+  const EARTH_RADIUS_KM = 6371;
+
+  // NOAA's standard-atmosphere approximation; only the low-altitude range
+  // used here. Refraction raises the lower limb more than the upper limb.
+  // https://gml.noaa.gov/grad/solcalc/calcdetails.html
+  function apparentElevation(elevation) {
+    const correction = elevation > -0.575
+      ? (1735 - 518.2 * elevation + 103.4 * elevation ** 2
+        - 12.79 * elevation ** 3 + 0.711 * elevation ** 4) / 3600
+      : -20.774 / Math.tan(elevation * RADIANS) / 3600;
+    return elevation + correction;
+  }
+
+  /** West-facing, 34° north, equinox: a constant hour-angle clock, compressed
+   * into the song. The same perspective projects both the path and the Sun's
+   * half-degree disc. Illustrative weather/palette, not a dated ephemeris.
+   * https://gml.noaa.gov/grad/solcalc/solareqns.PDF */
+  function sunsetLighting(progress) {
+    const latitude = 34 * RADIANS;
+    const hourAngle = (88.8 + 10.2 * progress) * RADIANS;
+    const west = Math.sin(hourAngle);
+    const north = -Math.sin(latitude) * Math.cos(hourAngle);
+    const up = Math.cos(latitude) * Math.cos(hourAngle);
+    const elevation = Math.asin(up) / RADIANS;
+    const horizontal = Math.hypot(west, north);
+    const projectY = (angle) => HORIZON - FOCAL_LENGTH * Math.tan(apparentElevation(angle) * RADIANS) * horizontal / west;
+    const top = projectY(elevation + SOLAR_RADIUS);
+    const bottom = projectY(elevation - SOLAR_RADIUS);
     return {
-      x: 550 + radius * (Math.sin(angle) - Math.sin(startAngle)),
-      y: HORIZON - 28 + radius * (Math.cos(startAngle) - Math.cos(angle)),
+      x: SKY_CENTER + FOCAL_LENGTH * north / west,
+      y: (top + bottom) / 2,
+      rx: FOCAL_LENGTH * Math.tan(SOLAR_RADIUS * RADIANS) / west * SUN_DISPLAY_SCALE,
+      ry: (bottom - top) / 2 * SUN_DISPLAY_SCALE,
+      elevation,
+      azimuth: Math.atan2(north, west),
+      reddening: span(2 - elevation, [0, 2.6]),
+      afterglow: 1 - span(-elevation, [0.5, 7]),
     };
   }
 
-  /** A layered cloud bank, with the light on its lower surface. */
-  function cloud(parent, scale, shape) {
+  /** Ambient body, directional sunlight, then soft overlapping shadow folds.
+   * All detail is clipped to the original silhouette, keeping the song's
+   * broad, quiet shapes rather than adding photographic noise. */
+  function cloud(parent, { scale, variant }) {
+    const shape = CLOUD_SHAPES[variant % CLOUD_SHAPES.length];
     const g = svg('g', { class: 'fr-cloud' }, parent);
     const bank = svg('g', { transform: `scale(${scale})` }, g);
+    const defs = svg('defs', {}, bank);
+    const clipId = `fr-cloud-clip-${variant}`;
+    const lightId = `fr-cloud-light-${variant}`;
+    svg('path', { d: shape.body }, svg('clipPath', { id: clipId }, defs));
+    const gradient = svg('linearGradient', { id: lightId, gradientUnits: 'userSpaceOnUse' }, defs);
+    [[0, 'shade'], [0.48, 'middle'], [0.82, 'warm'], [1, 'rim']].forEach(([offset, name]) => {
+      svg('stop', { offset, class: `fr-cloud-sun-${name}` }, gradient);
+    });
     svg('path', { class: 'fr-cloud-body', d: shape.body }, bank);
-    svg('path', { class: 'fr-cloud-wisp', d: shape.wisp }, bank);
-    return g;
+    const ambientWisp = svg('path', { class: 'fr-cloud-wisp', d: shape.wisp }, bank);
+    const direct = svg('g', { class: 'fr-cloud-direct', fill: `url(#${lightId})` }, bank);
+    svg('path', { d: shape.body }, direct);
+    const litWisp = svg('path', { d: shape.wisp, class: 'fr-cloud-lit-wisp' }, direct);
+    const clipped = svg('g', { 'clip-path': `url(#${clipId})` }, bank);
+    const folds = svg('g', {}, clipped);
+    [[-12, 7, 0.57], [118, 2, 0.48], [208, 16, 0.35]].forEach(([x, y, size], i) => {
+      svg('path', {
+        class: 'fr-cloud-fold', d: CLOUD_SHAPES[(variant + i + 1) % CLOUD_SHAPES.length].body,
+        transform: `translate(${x} ${y}) scale(${size} 0.55)`,
+      }, folds);
+    });
+    svg('path', { d: shape.wisp, transform: 'translate(20 -13)', class: 'fr-cloud-filament', fill: `url(#${lightId})` }, folds);
+    return { node: g, gradient, folds, wisps: [ambientWisp, litWisp] };
+  }
+
+  /** Elevated clouds retain sunlight after the observer's sunset. Horizon
+   * dip accounts for Earth's curvature; a solar-disc-width fade avoids a
+   * hard on/off edge as each layer crosses into shadow. */
+  function lightCloud(c, light, x) {
+    const centerX = x + 160 * c.scale;
+    const centerY = c.y + 32 * c.scale;
+    const azimuth = Math.atan2(centerX - SKY_CENTER, FOCAL_LENGTH);
+    const rangeKm = c.heightKm * Math.hypot(FOCAL_LENGTH, centerX - SKY_CENTER) / (HORIZON - centerY);
+    const horizonDip = Math.acos(EARTH_RADIUS_KM / (EARTH_RADIUS_KM + c.heightKm)) / RADIANS;
+    const localElevation = light.elevation + rangeKm / EARTH_RADIUS_KM / RADIANS * Math.cos(azimuth - light.azimuth);
+    const clearance = localElevation + horizonDip;
+    const direct = span(clearance, [-SOLAR_RADIUS, SOLAR_RADIUS]);
+    const reddening = 1 - span(clearance, [0, 5]);
+    // A restrained scattered afterglow survives direct illumination, then
+    // gives way to blue skylight. This palette is illustrative, not a
+    // multiple-scattering simulation of a particular atmosphere.
+    const scattered = 0.5 * (1 - span(-clearance, [0, 4]))
+      * (1 - span(-localElevation, [6, 8]));
+    const warmth = direct * (0.82 + 0.18 * (1 - reddening)) + (1 - direct) * scattered;
+    c.node.style.setProperty('--fr-cloud-light', warmth.toFixed(3));
+    c.node.style.setProperty('--fr-cloud-red', `${(100 * reddening).toFixed(2)}%`);
+    // Project the sun-facing direction: left banks catch light on the right,
+    // right banks on the left. Keep the strongest light on the lower relief.
+    const lean = clamp((light.x - centerX) / 600, -1, 1);
+    c.gradient.setAttribute('x1', (160 - lean * 8).toFixed(2));
+    c.gradient.setAttribute('y1', '4');
+    c.gradient.setAttribute('x2', (160 + lean * 8).toFixed(2));
+    c.gradient.setAttribute('y2', '57');
   }
 
   /** Status LEDs (lit later, in `windows`) at points [[x, y], …]. */
@@ -238,6 +327,7 @@
     };
     grad('fr-sky', 'linearGradient', { x1: 0, y1: 0, x2: 0, y2: 1 }, [['0', 'fr-sky-0'], ['0.55', 'fr-sky-1'], ['0.82', 'fr-sky-2'], ['1', 'fr-sky-3']]);
     grad('fr-sun', 'radialGradient', { cx: 0.5, cy: 0.5, r: 0.5 }, [['0', 'fr-sun-0'], ['1', 'fr-sun-1']]);
+    grad('fr-sun-face', 'linearGradient', { x1: 0, y1: 0, x2: 0, y2: 1 }, [['0', 'fr-sun-upper'], ['1', 'fr-sun-lower']]);
     grad('fr-road', 'linearGradient', { x1: 0, y1: 0, x2: 0, y2: 1 }, [['0', 'fr-road-0'], ['0.45', 'fr-road-1'], ['1', 'fr-road-2']]);
     grad('fr-cloud', 'linearGradient', { x1: 0, y1: 0, x2: 0, y2: 1 }, [['0', 'fr-cloud-0'], ['0.48', 'fr-cloud-1'], ['0.8', 'fr-cloud-2'], ['1', 'fr-cloud-3']]);
     svg('rect', { class: 'fr-sky', x: 0, y: 0, width: W, height: HORIZON + 10, fill: 'url(#fr-sky)' }, art);
@@ -245,10 +335,14 @@
     for (let k = 0; k < 70; k += 1) {
       svg('circle', { cx: (hash01(k * 7 + 1) * W).toFixed(1), cy: (hash01(k * 13 + 5) * 300).toFixed(1), r: (0.5 + hash01(k * 3) * 0.9).toFixed(2) }, stars);
     }
-    const sunGlow = svg('ellipse', { class: 'fr-sun', cx: 550, cy: HORIZON - 6, rx: 260, ry: 120, fill: 'url(#fr-sun)' }, art);
-    const sun = svg('circle', { class: 'fr-sun-disc', cx: 550, cy: HORIZON - 28, r: 22 }, art);
-    const clouds = [[-110, 24, 1.65, 0.12], [240, 82, 1.15, 0.08], [535, 18, 1.8, 0.1], [760, 153, 1.1, 0.07], [15, 210, 0.85, 0.06]]
-      .map(([x, y, scale, speed], i) => ({ node: cloud(art, scale, CLOUD_SHAPES[i % CLOUD_SHAPES.length]), x, y, speed }));
+    const skyClip = svg('clipPath', { id: 'fr-sky-clip' }, defs);
+    svg('rect', { width: W, height: HORIZON }, skyClip);
+    const sunlight = svg('g', { 'clip-path': 'url(#fr-sky-clip)' }, art);
+    const horizonGlow = svg('ellipse', { class: 'fr-sun', cy: HORIZON - 4, rx: 270, ry: 100, fill: 'url(#fr-sun)' }, sunlight);
+    const sunGlow = svg('ellipse', { class: 'fr-sun', rx: 64, ry: 56, fill: 'url(#fr-sun)' }, sunlight);
+    const sun = svg('ellipse', { class: 'fr-sun-disc' }, sunlight);
+    const clouds = [[-110, 24, 1.65, 0.18, 11], [240, 82, 1.15, 0.12, 7], [535, 18, 1.8, 0.16, 9.5], [760, 153, 1.1, 0.16, 2.4], [15, 210, 0.85, 0.22, 1.6]]
+      .map(([x, y, scale, speed, heightKm], variant) => ({ ...cloud(art, { scale, variant }), x, y, scale, speed, heightKm }));
     // Mesas on the horizon, then the town.
     svg('path', { class: 'fr-mesa', d: `M0 ${HORIZON} V362 H60 L76 348 H184 L204 ${HORIZON - 30} L250 ${HORIZON - 26} L300 ${HORIZON} Z M640 ${HORIZON} L680 352 H760 L774 340 H860 L884 360 L960 368 V${HORIZON} Z` }, art);
     const town = svg('g', { class: 'fr-town' }, art);
@@ -302,24 +396,39 @@
     const blueHourAt = duration * 0.52 / twilightSpeed;
     onFrame((t) => {
       const still = reducedMotion.matches;
-      const blueHour = span(t, [0, blueHourAt]);
-      const night = span(t, [blueHourAt, duration]);
-      const sunPosition = sunsetPosition(span(t, [0, duration * 0.38 / twilightSpeed]));
+      // Same golden-hour starting point; the whole sunset clock now runs
+      // 12% slower, keeping its sky, ground, and cloud illumination together.
+      const lightTime = still ? blueHourAt : t * 0.88;
+      const blueHour = span(lightTime, [0, blueHourAt]);
+      const night = span(lightTime, [blueHourAt, duration]);
+      const light = sunsetLighting(span(lightTime, [0, duration]));
       // Shared ambient light also reaches the foreground house. Both colour
       // legs advance linearly, without easing or a pause at blue hour.
       stage.style.setProperty('--fr-blue-hour', `${(100 * blueHour).toFixed(2)}%`);
       stage.style.setProperty('--fr-night', `${(100 * night).toFixed(2)}%`);
-      stars.setAttribute('opacity', (0.4 * span(t, [duration * 0.3 / twilightSpeed, blueHourAt]) + 0.38 * night).toFixed(3));
-      sunGlow.setAttribute('cx', sunPosition.x.toFixed(2));
-      sunGlow.setAttribute('opacity', ((1 - 0.85 * blueHour) * (1 - night)).toFixed(3));
-      sun.setAttribute('cx', sunPosition.x.toFixed(2));
-      sun.setAttribute('cy', sunPosition.y.toFixed(2));
+      stage.style.setProperty('--fr-sun-red', `${(100 * light.reddening).toFixed(2)}%`);
+      stars.setAttribute('opacity', (0.4 * span(lightTime, [duration * 0.3 / twilightSpeed, blueHourAt]) + 0.38 * night).toFixed(3));
+      horizonGlow.setAttribute('cx', light.x.toFixed(2));
+      horizonGlow.setAttribute('opacity', (0.75 * light.afterglow).toFixed(3));
+      sunGlow.setAttribute('cx', light.x.toFixed(2));
+      sunGlow.setAttribute('cy', light.y.toFixed(2));
+      sunGlow.setAttribute('opacity', (0.75 * (1 - span(-light.elevation, [0, 1]))).toFixed(3));
+      sun.setAttribute('cx', light.x.toFixed(2));
+      sun.setAttribute('cy', light.y.toFixed(2));
+      sun.setAttribute('rx', light.rx.toFixed(2));
+      sun.setAttribute('ry', light.ry.toFixed(2));
       // The windows light over the first two thirds of the song, each over two seconds.
       const evening = clamp(t / (duration * 0.66), 0, 1);
       for (const w of windows) w.lit.setAttribute('opacity', clamp((evening - w.at) * (duration * 0.66) / 2, 0, 1).toFixed(3));
       for (const c of clouds) {
         const x = c.x + (still ? 0 : t * c.speed);
         c.node.setAttribute('transform', `translate(${x.toFixed(1)} ${c.y})`);
+        // One steady wind, with a little shear in the thin edges and folds.
+        // No loops, bobs, or wrapping jumps; every pose is seekable.
+        const shear = still ? 0 : t * 0.025;
+        for (const wisp of c.wisps) wisp.setAttribute('transform', `translate(${shear.toFixed(2)} 0)`);
+        c.folds.setAttribute('transform', `translate(${(shear * 0.4).toFixed(2)} 0)`);
+        lightCloud(c, light, x);
       }
       const length = wire.getTotalLength ? wire.getTotalLength() : 0;
       packets.forEach((packet, k) => {

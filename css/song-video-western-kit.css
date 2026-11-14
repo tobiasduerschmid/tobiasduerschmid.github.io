@@ -1476,6 +1476,7 @@
 .sh-sheriff {
   position: absolute;
   pointer-events: none;
+  --sh-ink: #302015;
 }
 
 .sh-art { display: block; overflow: visible; }
@@ -1483,7 +1484,7 @@
 
 .sh-outline,
 .sh-jeans,
-.sh-boot { stroke: #1e140c; stroke-width: 1.4; stroke-linejoin: round; }
+.sh-boot { stroke: var(--sh-ink); stroke-width: 1.4; stroke-linejoin: round; stroke-linecap: round; }
 
 .sh-shirt-stop-0 { stop-color: #8fb0d2; }
 .sh-shirt-stop-1 { stop-color: #6f93bb; }
@@ -1516,7 +1517,9 @@
 .sh-sole { fill: none; stroke: #2a1a0e; stroke-width: 1.4; }
 .sh-stitch { fill: none; stroke: #e2c08a; stroke-width: 0.6; }
 .sh-boot-shine { fill: none; stroke: #c99a6a; stroke-width: 1; stroke-linecap: round; }
-.sh-limb-ink { fill: #1e140c; stroke: #1e140c; stroke-width: 2.8; stroke-linejoin: round; }
+/* The fills cover the inner half of this backing stroke: the visible rim
+   matches the 1.4-unit outlines on the vest, cuff, and exposed forearm. */
+.sh-limb-ink { fill: var(--sh-ink); stroke: var(--sh-ink); stroke-width: 2.8; stroke-linejoin: round; }
 .sh-fold { fill: none; stroke: #3d5a80; stroke-width: 0.8; stroke-linecap: round; }
 .sh-vest-stitch { fill: none; stroke: #c99a6a; stroke-width: 0.6; stroke-dasharray: 1.4 1.2; }
 .sh-pocket { fill: none; stroke: #2e1a0c; stroke-width: 1.2; }
@@ -1529,7 +1532,7 @@
 .sh-bandana-fold { fill: none; stroke: #7a1c16; stroke-width: 0.8; }
 .sh-bandana-knot { fill: #9a2a22; stroke: #1e140c; stroke-width: 0.8; }
 .sh-bandana-dot { fill: #f4e6d0; }
-.sh-face { fill: #d9a07a; stroke: #6e4428; stroke-width: 0.9; }
+.sh-face { fill: #d9a07a; stroke: var(--sh-ink); stroke-width: 1.3; }
 .sh-hair { fill: #4a3020; }
 .sh-brow { fill: none; stroke: #3a2416; stroke-width: 1.6; stroke-linecap: round; }
 .sh-eye { fill: #241810; }
@@ -1541,11 +1544,22 @@
 .sh-crease { fill: none; stroke: #9a8f7a; stroke-width: 0.9; stroke-linecap: round; }
 .sh-brim-shine,
 .sh-crown-shine { fill: none; stroke: #ffffff; stroke-width: 1.1; stroke-linecap: round; opacity: 0.9; }
-.sh-hand-contour { fill: none; stroke: #1e140c; stroke-width: 1.2; stroke-linejoin: round; stroke-linecap: round; }
+.sh-hand-backing { fill: var(--sh-ink, #302015); }
+.sh-hand-rim { fill: none; stroke: var(--sh-ink, #302015); stroke-width: 2.1; stroke-linejoin: round; stroke-linecap: round; }
+.sh-hand-contour { fill: none; stroke: var(--sh-ink, #302015); stroke-width: 0.55; stroke-linejoin: round; stroke-linecap: round; }
 .sh-hand-line { fill: none; stroke: #4a2c1a; stroke-width: 0.5; opacity: 0.7; }
-.sh-forearm-contour { fill: none; stroke: #6e4428; stroke-width: 0.9; stroke-linecap: round; }
-.sh-finger--far { fill: var(--hero-skin-dark, #a8704c); }
-.sh-nail { fill: rgba(255, 235, 220, 0.6); }
+.sh-forearm-contour { fill: none; stroke: var(--sh-ink); stroke-width: 1.4; stroke-linecap: round; }
+.sh-nail { fill: rgba(255, 235, 220, 0.35); }
+/* Worn heads use a larger internal coordinate system (38 / 100 scale).
+   Give their silhouette the same ink weight as the sheriff's body while
+   leaving the saved face's expression and fine features untouched. */
+.sh-art .song-hero-head [data-hero-slot="head-shape"] > path[stroke],
+.sh-art .song-hero-head use[href*="prof-face-outline"][stroke] {
+  stroke: var(--sh-ink);
+  stroke-width: 3.1;
+  stroke-opacity: 1;
+  stroke-linejoin: round;
+}
 .sh-ring { fill: none; stroke: #9aa3ad; stroke-width: 1.4; }
 .sh-key { fill: var(--wk-brass); stroke: #5b3d0e; stroke-width: 0.7; }
 .sh-key-hole { fill: #2a1c10; }

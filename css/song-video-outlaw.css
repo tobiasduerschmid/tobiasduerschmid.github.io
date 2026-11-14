@@ -101,7 +101,8 @@
 /* Gloves: FrontierHand's hand in tan leather, its far fingers in shadow. */
 .ol-outlaw .sh-finger--far { fill: #93602f; }
 .ol-outlaw .sh-nail { display: none; }
-.ol-outlaw .sh-hand-contour { stroke: #5a3418; stroke-width: 0.8; }
+.ol-outlaw { --sh-ink: #5a3418; }
+.ol-outlaw .sh-hand-contour { stroke: var(--sh-ink); stroke-width: 0.55; }
 
 /* Labels on props and the badge (≥ 12 px on stage at scale 1). */
 .ol-label { font-family: inherit; font-weight: 800; letter-spacing: 0.02em; }
