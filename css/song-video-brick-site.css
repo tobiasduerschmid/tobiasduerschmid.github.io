@@ -46,7 +46,10 @@
 .bs-sun-2 { stop-color: rgba(255, 184, 105, 0); }
 
 /* Golden shafts of light become clearer as the sun climbs. */
-.bs-ray { fill: url(#bs-ray); }
+.bs-ray { fill: url(#bs-ray-soft); }
+.bs-ray-soft-0 { stop-color: #fff1c4; stop-opacity: 0.42; }
+.bs-ray-soft-1 { stop-color: #ffd08a; stop-opacity: 0.18; }
+.bs-ray-soft-2 { stop-color: #ffd08a; stop-opacity: 0; }
 .bs-ray-0 { stop-color: rgba(255, 196, 140, 0.13); }
 .bs-ray-1 { stop-color: rgba(255, 196, 140, 0); }
 
@@ -80,7 +83,27 @@
 .bs-cloud-light { opacity: calc(var(--bs-cloud-warmth, 0) * 0.4); }
 .bs-cloud-filament { opacity: calc(var(--bs-cloud-warmth, 0) * 0.24); }
 .bs-cloud-wisp { fill: color-mix(in srgb, #aa91ce, #e5d7e3 var(--bs-golden, 0%)); opacity: 0.24; }
-.bs-sun-disc { fill: color-mix(in srgb, #ffac57, #fff5c5 var(--bs-golden, 0%)); stroke: #ffc16d; stroke-width: 1.5; }
+.bs-sun-disc { fill: color-mix(in srgb, #ffd2a0, #fffaf0 var(--bs-golden, 0%)); }
+.bs-sun-disc-core { fill: url(#bs-sun-core); }
+.bs-sun-core-0 { stop-color: #ffffff; }
+.bs-sun-core-1 { stop-color: #fffbee; stop-opacity: 0.9; }
+.bs-sun-core-2 { stop-color: color-mix(in srgb, #ffc890, #fff3c8 var(--bs-golden, 0%)); stop-opacity: 0.6; }
+.bs-sun-bloom { fill: url(#bs-sun-bloom); }
+.bs-sun-bloom-0 { stop-color: #fff6dc; stop-opacity: 0.95; }
+.bs-sun-bloom-1 { stop-color: color-mix(in srgb, #ffb27a, #ffe6a8 var(--bs-golden, 0%)); stop-opacity: 0.55; }
+.bs-sun-bloom-2 { stop-color: #ffb27a; stop-opacity: 0; }
+.bs-sun-corona-disc { fill: url(#bs-sun-corona); }
+.bs-sun-corona-0 { stop-color: color-mix(in srgb, #ff9a5c, #fff0bd var(--bs-golden, 0%)); stop-opacity: 0.85; }
+.bs-sun-corona-1 { stop-color: color-mix(in srgb, #ff7a4a, #ffd27a var(--bs-golden, 0%)); stop-opacity: 0.38; }
+.bs-sun-corona-2 { stop-color: #ffb36b; stop-opacity: 0; }
+.bs-horizon-glow { fill: url(#bs-horizon-glow); }
+.bs-horizon-glow-0 { stop-color: color-mix(in srgb, #ff7f5a, #ffd38f var(--bs-golden, 0%)); stop-opacity: 0.6; }
+.bs-horizon-glow-1 { stop-color: color-mix(in srgb, #e8608a, #ffb37a var(--bs-golden, 0%)); stop-opacity: 0.22; }
+.bs-horizon-glow-2 { stop-color: #e8608a; stop-opacity: 0; }
+.bs-flare-dot { mix-blend-mode: screen; }
+.bs-flare-dot--0 { fill: rgba(255, 214, 160, 0.1); }
+.bs-flare-dot--1 { fill: rgba(255, 170, 120, 0.08); }
+.bs-flare-dot--2 { fill: rgba(190, 220, 255, 0.07); }
 .bs-morning-sky { fill: url(#bs-morning); opacity: 0; }
 .bs-morning-0 { stop-color: #277ac7; }
 .bs-morning-1 { stop-color: #82b5e5; }
@@ -90,6 +113,9 @@
 
 .bs-far-shape { fill: color-mix(in srgb, #29446c, #709ba8 var(--bs-ambient, 0%)); }
 .bs-far-window { fill: #ffd58b; opacity: 0; }
+.bs-far-back { fill: color-mix(in srgb, #4a6590, #a3bfc8 var(--bs-ambient, 0%)); }
+.bs-far-back-line { fill: none; stroke: color-mix(in srgb, #4a6590, #a3bfc8 var(--bs-ambient, 0%)); stroke-width: 2; }
+.bs-far-line { fill: none; stroke: color-mix(in srgb, #29446c, #709ba8 var(--bs-ambient, 0%)); stroke-width: 1.6; }
 
 /* ------------------------------------------------------------------ */
 /* Brick walls                                                          */
@@ -215,7 +241,7 @@
 
 /* The forklift, dim in the ground shadow: it moves, so it stays low in
    contrast against the ground (about 2:1), never a bright accent. */
-.bs-fork-shadow { fill: rgba(5, 8, 16, 0.3); }
+.bs-fork-shadow { fill: url(#bs-soft-shadow); }
 .bs-fork-weight { fill: #353943; stroke: #22252c; stroke-width: 1; }
 .bs-fork-body { fill: #5d7290; stroke: #34445c; stroke-width: 1; }
 .bs-fork-shine { fill: rgba(255, 255, 255, 0.12); }
@@ -240,7 +266,10 @@
 .bs-base-shadow { fill: url(#bs-base-shadow); }
 .bs-base-shadow-0 { stop-color: rgba(0, 0, 0, 0.35); }
 .bs-base-shadow-1 { stop-color: rgba(0, 0, 0, 0); }
-.bs-gstud-shadow { fill: rgba(10, 12, 20, 0.35); }
+.bs-gstud-shadow { fill: url(#bs-soft-shadow); }
+.bs-soft-shadow-0 { stop-color: #06100a; stop-opacity: 0.26; }
+.bs-soft-shadow-1 { stop-color: #06100a; stop-opacity: 0.12; }
+.bs-soft-shadow-2 { stop-color: #06100a; stop-opacity: 0; }
 .bs-gstud { fill: url(#bs-stud-side); }
 .bs-stud-side-0 { stop-color: #69ac77; }
 .bs-stud-side-1 { stop-color: #458d5d; }
@@ -252,10 +281,10 @@
 .bs-cast { fill: url(#bs-cast); }
 .bs-cast-0 { stop-color: rgba(4, 6, 14, 0.5); }
 .bs-cast-1 { stop-color: rgba(4, 6, 14, 0); }
-.bs-lamp-shadow { fill: rgba(4, 6, 14, 0.4); }
+.bs-lamp-shadow { fill: url(#bs-soft-shadow); }
 
 /* Large loose bricks in front: shadow, faces, studs. */
-.bs-big-shadow { fill: rgba(5, 8, 16, 0.35); }
+.bs-big-shadow { fill: url(#bs-soft-shadow); }
 .bs-big-edge { fill: none; stroke: rgba(255, 255, 255, 0.35); stroke-width: 1.5; }
 .bs-big-bevel { fill: none; stroke: rgba(255, 247, 225, 0.2); stroke-width: 1; }
 .bs-big-mold { fill: none; stroke: rgba(29, 42, 44, 0.22); stroke-width: 1; }
@@ -290,3 +319,11 @@
 .bs-vignette {
   background: radial-gradient(ellipse 80% 75% at 50% 45%, transparent 65%, rgba(30, 43, 57, 0.14));
 }
+
+/* A falling brick's edge: the cut piece of wall reads as one brick. */
+.bs-drop-edge { fill: none; stroke: rgba(30, 18, 6, 0.55); stroke-width: 1; }
+
+/* The finale's flag on tower B: UCLA blue with a gold brick. */
+.bs-flag-pole { fill: none; stroke: #5b5346; stroke-width: 1.6; stroke-linecap: round; }
+.bs-flag-cloth { fill: #2774ae; stroke: #0e3a5e; stroke-width: 0.8; stroke-linejoin: round; }
+.bs-flag-brick rect { fill: #ffd100; stroke: #8a6d00; stroke-width: 0.6; }

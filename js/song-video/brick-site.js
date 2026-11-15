@@ -109,6 +109,14 @@
     gradient(defs, 'radialGradient', 'bs-glass-lit', { cx: 0.42, cy: 0.24, r: 0.9 }, [[0, 'bs-glass-lit-0'], [0.38, 'bs-glass-lit-1'], [0.75, 'bs-glass-lit-2'], [1, 'bs-glass-lit-3']]);
     gradient(defs, 'linearGradient', 'bs-stud-side', horizontal, [[0, 'bs-stud-side-0'], [0.35, 'bs-stud-side-1'], [1, 'bs-stud-side-2']]);
     gradient(defs, 'linearGradient', 'bs-cast', vertical, [[0, 'bs-cast-0'], [1, 'bs-cast-1']]);
+    // Soft shadows: dark at the middle, fading to nothing at the edge.
+    gradient(defs, 'radialGradient', 'bs-soft-shadow', { cx: 0.5, cy: 0.5, r: 0.5 }, [[0, 'bs-soft-shadow-0'], [0.55, 'bs-soft-shadow-1'], [1, 'bs-soft-shadow-2']]);
+    // The sun: a hot core, a corona, and a wide glow low over the horizon.
+    gradient(defs, 'radialGradient', 'bs-sun-core', { cx: 0.5, cy: 0.5, r: 0.5 }, [[0, 'bs-sun-core-0'], [0.75, 'bs-sun-core-1'], [1, 'bs-sun-core-2']]);
+    gradient(defs, 'radialGradient', 'bs-sun-bloom', { cx: 0.5, cy: 0.5, r: 0.5 }, [[0, 'bs-sun-bloom-0'], [0.56, 'bs-sun-bloom-1'], [1, 'bs-sun-bloom-2']]);
+    gradient(defs, 'radialGradient', 'bs-sun-corona', { cx: 0.5, cy: 0.5, r: 0.5 }, [[0, 'bs-sun-corona-0'], [0.3, 'bs-sun-corona-1'], [1, 'bs-sun-corona-2']]);
+    gradient(defs, 'radialGradient', 'bs-horizon-glow', { cx: 0.5, cy: 0.5, r: 0.5 }, [[0, 'bs-horizon-glow-0'], [0.5, 'bs-horizon-glow-1'], [1, 'bs-horizon-glow-2']]);
+    gradient(defs, 'linearGradient', 'bs-ray-soft', { x1: 0, y1: 0, x2: 1, y2: 0 }, [[0, 'bs-ray-soft-0'], [0.35, 'bs-ray-soft-1'], [1, 'bs-ray-soft-2']]);
     gradient(defs, 'linearGradient', 'bs-ray', horizontal, [[0, 'bs-ray-0'], [1, 'bs-ray-1']]);
     // Brick courses: mortar lines in running bond, one pattern for every wall.
     const bond = svg('pattern', { id: 'bs-bond', width: 28, height: 24, patternUnits: 'userSpaceOnUse' }, defs);
@@ -599,7 +607,7 @@
       .forEach(([y, rx, ry, h, pitch], row) => {
         const rowGroup = svg('g', { class: 'bs-gstud-row' }, g);
         for (let x = (row % 2 ? pitch / 2 : 0) + 4; x < W + rx; x += pitch) {
-          svg('ellipse', { class: 'bs-gstud-shadow', cx: (x + rx * 0.5).toFixed(1), cy: (y + ry * 0.4).toFixed(1), rx: rx * 1.15, ry: ry * 1.1 }, rowGroup);
+          svg('ellipse', { class: 'bs-gstud-shadow', cx: (x + rx * 0.45).toFixed(1), cy: (y + ry * 0.45).toFixed(1), rx: rx * 1.55, ry: ry * 1.6 }, rowGroup);
           svg('path', {
             class: 'bs-gstud',
             d: `M${(x - rx).toFixed(1)} ${(y - h).toFixed(1)} V${y} A${rx} ${ry} 0 0 0 ${(x + rx).toFixed(1)} ${y} V${(y - h).toFixed(1)} Z`,
@@ -617,7 +625,7 @@
    */
   function looseBrick(parent, { x, y, w, h, dx = 0, dy = 0, cols = 1, rows = 1, tone, round = false }) {
     const g = svg('g', { class: `bs-big bs-big--${tone}` }, parent);
-    svg('ellipse', { class: 'bs-big-shadow', cx: x + w / 2 + dx, cy: y + h - 2, rx: w / 2 + dx, ry: 8 }, g);
+    svg('ellipse', { class: 'bs-big-shadow', cx: x + w / 2 + dx, cy: y + h - 2, rx: w / 2 + dx + 18, ry: 16 }, g);
     if (round) {
       // A round 1×1 brick: a cylinder with one stud.
       const r = w / 2;
@@ -765,13 +773,43 @@
     const laid = svg('rect', { 'data-testid': 'reuse-building-courses', x: x0, width: x1 - x0, y: bottom, height: 0 }, clip);
     const course = svg('rect', { x: x0, y: bottom, width: 0, height: COURSE }, clip);
     group.setAttribute('clip-path', `url(#${id})`);
+    // The falling brick is cut from the building's own face at its slot (a
+    // clipped copy of the wall: its stone, cornice, or window), with studs
+    // on top, so it lands as the piece of wall it becomes.
+    const face = svg('g', { id: `${id}-face` }, group);
+    [...group.childNodes].forEach((child) => { if (child !== face) face.appendChild(child); });
+    const slotClip = svg('clipPath', { id: `${id}-slot` }, defs);
+    const slot = svg('rect', { x: 0, y: 0, width: BRICK - 1, height: COURSE - 1, rx: 1.5 }, slotClip);
+    // Studs stay on top of the laid bricks until the next course covers
+    // them: the bricks laid so far in the current course, and the rest of
+    // the course below. A pattern places two studs on every brick.
+    const studPattern = svg('pattern', { id: `${id}-studs`, x: x0, y: bottom - COURSE, width: BRICK, height: COURSE, patternUnits: 'userSpaceOnUse' }, defs);
+    [6, 16].forEach((sx) => svg('rect', { class: 'bs-drop-stud', x: sx, y: COURSE - 4, width: 6, height: 4, rx: 1.2 }, studPattern));
+    const studRows = svg('g', { class: 'bs-top-studs' }, art);
+    const studPool = Array.from({ length: 2 * solid.length }, () => svg('rect', { fill: `url(#${id}-studs)`, x: 0, y: 0, width: 0, height: 4 }, studRows));
+    /** Stud strips along a course top between from and to, wherever the wall reaches that course. */
+    function placeStuds(rects, yTop, from, to) {
+      solid.forEach(([left, right, wallTop], i) => {
+        const rect = rects[i];
+        const l = Math.max(left, from);
+        const r = Math.min(right, to);
+        const shown = r - l > 1 && yTop + COURSE >= wallTop && yTop < bottom;
+        rect.setAttribute('x', shown ? l.toFixed(1) : '0');
+        rect.setAttribute('y', (yTop - 4).toFixed(1));
+        rect.setAttribute('width', shown ? (r - l).toFixed(1) : '0');
+      });
+    }
     const drop = svg('g', { class: 'bs-drop' }, art);
-    const brick = svg('rect', { class: 'bs-drop-brick', x: 0, y: 0, width: BRICK - 1, height: COURSE - 1, rx: 1.5 }, drop);
-    [6, 16].forEach((sx) => svg('rect', { class: 'bs-drop-stud', x: sx, y: -3.5, width: 6, height: 4, rx: 1.2 }, drop));
+    // Both sit right after their own building, so a brick laid on a wing
+    // behind a tower stays behind that tower.
+    group.after(studRows, drop);
+    const backing = svg('rect', { class: 'bs-face', x: 0, y: 0, width: BRICK - 1, height: COURSE - 1, rx: 1.5 }, drop);
+    svg('use', { href: `#${id}-face`, 'clip-path': `url(#${id}-slot)` }, drop);
+    const edge = svg('rect', { class: 'bs-drop-edge', x: 0, y: 0, width: BRICK - 1, height: COURSE - 1, rx: 1.5 }, drop);
+    const studTops = [6, 16].map((sx) => svg('rect', { class: 'bs-drop-stud', x: sx, y: -3.5, width: 6, height: 4, rx: 1.2 }, drop));
     const phases = constructionPhases(specification);
     const courses = phases.at(-1).target;
     const perCourse = Math.ceil((x1 - x0) / BRICK);
-    const tones = ['tan', 'blue', 'gold'];
     return (t, still) => {
       const construction = still ? { courses, active: false } : constructionAt(t, phases);
       const done = construction.courses;
@@ -782,6 +820,15 @@
       course.setAttribute('y', String(bottom - (full + 1) * COURSE));
       course.setAttribute('width', String(done >= courses ? 0 : bricks * BRICK));
       const x = x0 + bricks * BRICK;
+      const upper = studPool.slice(0, solid.length);
+      const lower = studPool.slice(solid.length);
+      if (done >= courses || done <= 0) {
+        placeStuds(upper, bottom, 0, 0);
+        placeStuds(lower, bottom, 0, 0);
+      } else {
+        placeStuds(upper, bottom - (full + 1) * COURSE, x0, x);
+        placeStuds(lower, bottom - full * COURSE, full > 0 ? x : x1, x1);
+      }
       const slotY = bottom - (full + 1) * COURSE;
       const overWall = solid.some(([left, right, wallTop]) => x + BRICK / 2 >= left && x + BRICK / 2 <= right && slotY + COURSE >= wallTop);
       const building = construction.active && done > 0 && done < courses && overWall;
@@ -789,11 +836,15 @@
       if (!building) return;
       // The next brick falls the last 18 px into its slot.
       const fall = 1 - ((done - full) * perCourse - bricks);
-      const y = slotY - 18 * fall * fall;
-      drop.setAttribute('transform', `translate(${x.toFixed(1)} ${y.toFixed(1)})`);
-      const tone = tones[(full * 7 + bricks * 3) % tones.length];
-      const className = `bs-drop-brick bs-drop-brick--${tone}`;
-      if (brick.getAttribute('class') !== className) brick.setAttribute('class', className);
+      drop.setAttribute('transform', `translate(0 ${(-18 * fall * fall).toFixed(1)})`);
+      for (const piece of [slot, backing, edge]) {
+        piece.setAttribute('x', x.toFixed(1));
+        piece.setAttribute('y', slotY.toFixed(1));
+      }
+      studTops.forEach((stud, i) => {
+        stud.setAttribute('x', (x + [6, 16][i]).toFixed(1));
+        stud.setAttribute('y', (slotY - 3.5).toFixed(1));
+      });
     };
   }
 
@@ -813,12 +864,24 @@
     const sky = svg('g', {}, art);
     const rays = svg('g', { class: 'bs-rays' }, sky);
     const sun = svg('g', { class: 'bs-sunrise', 'data-testid': 'reuse-sun' }, sky);
-    svg('circle', { class: 'bs-sun', cx: 0, cy: 0, r: 180 }, sun);
-    svg('circle', { class: 'bs-sun-disc', cx: 0, cy: 0, r: 22 }, sun);
-    // Rays sit behind the disc, so their overlaps never mark its face.
-    [-18, -31, -44, -58].forEach((deg, i) => svg('path', {
-      class: 'bs-ray', d: `M0 -2 L${640 - i * 60} ${-14 - 4 * i} L${640 - i * 60} ${14 + 4 * i} L0 2 Z`, transform: `rotate(${deg})`,
-    }, rays));
+    svg('circle', { class: 'bs-sun', cx: 0, cy: 0, r: 240 }, sun);
+    svg('circle', { class: 'bs-sun-corona-disc', cx: 0, cy: 0, r: 96 }, sun);
+    const disc = svg('g', {}, sun);
+    // A real sun has no shading: a white-hot disc whose edge melts into a
+    // tight bloom of light.
+    svg('circle', { class: 'bs-sun-bloom', cx: 0, cy: 0, r: 46 }, disc);
+    svg('circle', { class: 'bs-sun-disc', cx: 0, cy: 0, r: 26 }, disc);
+    svg('circle', { class: 'bs-sun-disc-core', cx: 0, cy: 0, r: 26 }, disc);
+    // Soft rays of light fan from behind the disc, of varied length and
+    // width, turning very slowly.
+    const rayFan = svg('g', {}, rays);
+    Array.from({ length: 24 }, (_, i) => i * 15 + 6 * (hash01(i * 3 + 1) - 0.5)).forEach((deg, i) => {
+      const len = 420 + 260 * hash01(i * 13 + 2);
+      const half = 18 + 26 * hash01(i * 7 + 5);
+      svg('path', { class: 'bs-ray', d: `M0 -1.5 L${len.toFixed(0)} ${(-half).toFixed(1)} L${len.toFixed(0)} ${half.toFixed(1)} L0 1.5 Z`, transform: `rotate(${deg})` }, rayFan);
+    });
+    // A wide warm glow along the horizon, centred under the sun.
+    const horizonGlow = svg('ellipse', { class: 'bs-horizon-glow', cx: 0, cy: 392, rx: 470, ry: 110 }, sky);
     svg('path', { class: 'bs-hills bs-hills--far', d: 'M0 404 Q160 360 330 384 T640 370 T960 362 V466 H0 Z' }, sky);
     svg('path', { class: 'bs-hills', d: 'M0 420 Q120 372 250 398 T520 384 T780 396 T960 380 V466 H0 Z' }, sky);
     svg('rect', { class: 'bs-haze', x: 0, y: 330, width: W, height: GROUND - 330 }, sky);
@@ -826,14 +889,28 @@
     const band = cloudBand(sky, 40, BAND);
     const clouds = [[-120, 5, 1.35, 0.09], [240, 56, 1.25, 0.12], [650, 18, 1.4, 0.07], [-75, 155, 0.9, 0.15], [510, 194, 1.05, 0.1]]
       .map(([x, y, scale, speed], variant) => ({ ...cloud(sky, { scale, variant }), x, y, speed }));
-    // A far skyline between the two buildings, a few rooms still lit.
+    // A far skyline between the two buildings, in two rows: a hazy back
+    // row of towers, domes, and spires with a water tower and a distant
+    // crane, and a nearer row of blocks with a dome and antennas, its
+    // windows a grid in which a few rooms are still lit.
     const far = svg('g', { class: 'bs-far' }, art);
-    svg('path', { class: 'bs-far-shape', d: 'M240 466 V420 H290 V398 H340 V410 H400 V380 H446 V404 H520 V388 H580 V412 H650 V394 H700 V408 H780 V466 Z' }, far);
-    [[296, 408], [308, 408], [352, 418], [410, 390], [422, 400], [458, 412], [530, 398], [542, 398], [590, 420], [660, 404], [710, 416]]
-      .forEach(([fx, fy], i) => {
-        const lit = svg('rect', { class: 'bs-far-window', x: fx, y: fy, width: 4, height: 5 }, far);
-        windows.push({ lit, brightness: 0.45 + 0.4 * hash01(i * 19 + 5), lightsOffAt: 0.16 + hash01(i * 7 + 3) * 0.28, shown: -1 });
-      });
+    svg('path', { class: 'bs-far-back', d: 'M236 466 V392 H258 V368 H280 V392 H300 V350 L306 336 L312 350 V392 H338 V374 H362 V356 H388 V374 H404 V392 H430 V362 Q446 338 462 362 V392 H486 V378 H508 V346 H530 V378 H556 V392 H640 V352 L648 334 L656 352 V392 H684 V372 H714 V392 H744 V380 H784 V466 Z' }, far);
+    svg('path', { class: 'bs-far-back-line', d: 'M592 392 L596 366 M612 392 L608 366 M596 380 H608 M690 466 V328 M652 330 H742 M690 328 L742 332 M690 328 L652 330' }, far);
+    svg('path', { class: 'bs-far-back', d: 'M588 366 H616 V352 L602 344 L588 352 Z' }, far);
+    svg('path', { class: 'bs-far-shape', d: 'M240 466 V420 H290 V398 H340 V410 H400 V380 Q423 360 446 380 V404 H520 V388 H580 V412 H650 V394 H700 V408 H780 V466 Z' }, far);
+    svg('path', { class: 'bs-far-line', d: 'M318 398 V384 M556 388 V370 M553 374 H559 M676 394 V382' }, far);
+    const BLOCKS = [[240, 290, 420], [290, 340, 398], [340, 400, 410], [400, 446, 384], [446, 520, 404], [520, 580, 388], [580, 650, 412], [650, 700, 394], [700, 780, 408]];
+    let pane = 0;
+    BLOCKS.forEach(([left, right, top]) => {
+      for (let wy = top + 8; wy <= 452; wy += 12) {
+        for (let wx = left + 6; wx <= right - 10; wx += 10) {
+          pane++;
+          if (hash01(pane * 31 + 7) > 0.34) continue;
+          const lit = svg('rect', { class: 'bs-far-window', x: wx, y: wy, width: 4, height: 5 }, far);
+          windows.push({ lit, brightness: 0.35 + 0.45 * hash01(pane * 19 + 5), lightsOffAt: 0.12 + hash01(pane * 7 + 3) * 0.32, shown: -1 });
+        }
+      }
+    });
     const { node: hallGroup, parts: hallParts } = hall(art);
     const siteGroup = site(art);
     const lampGroup = svg('g', {}, art);
@@ -867,11 +944,40 @@
     const mastRect = svg('rect', { x: 892, width: 34, y: 470, height: 0 }, craneClip);
     const jibRect = svg('rect', { x: 980, y: 0, width: 0, height: 60 }, craneClip);
     craneGroup.setAttribute('clip-path', 'url(#bs-clip-crane)');
+    // The finale: a flag runs up a pole on tower B's finial once the
+    // building is finished, and flies there to the end.
+    const FLAG_X = 213;
+    const FLAG_FOOT = 104;
+    const FLAG_TOP = 60;
+    const flag = svg('g', { class: 'bs-flag' }, art);
+    const flagPole = svg('path', { class: 'bs-flag-pole', d: `M${FLAG_X} ${FLAG_FOOT} V${FLAG_TOP}` }, flag);
+    const flagCloth = svg('path', { class: 'bs-flag-cloth' }, flag);
+    const flagBrick = svg('g', { class: 'bs-flag-brick' }, flag);
+    svg('rect', { x: 0, y: 0, width: 12, height: 6, rx: 1 }, flagBrick);
+    svg('rect', { x: 1.5, y: -2.4, width: 3.5, height: 2.6, rx: 0.8 }, flagBrick);
+    svg('rect', { x: 7, y: -2.4, width: 3.5, height: 2.6, rx: 0.8 }, flagBrick);
+    const flagFrom = duration - 7;
     const dawnShade = svg('rect', { class: 'bs-dawn-shade', x: 0, y: 0, width: W, height: H }, art);
+    const flare = svg('g', { class: 'bs-flare' }, art);
+    const flareDots = [[0.32, 9], [0.55, 18], [0.78, 7], [1.15, 28], [1.4, 12]]
+      .map(([k, r], i) => ({ k, node: svg('circle', { class: `bs-flare-dot bs-flare-dot--${i % 3}`, cx: 0, cy: 0, r }, flare) }));
     const goldenLight = svg('rect', { class: 'bs-golden-light', x: 0, y: 0, width: W, height: H }, art);
     onFrame((t) => {
       const still = reducedMotion.matches;
       const light = sunriseAt(still ? 0.62 : clamp(t / duration, 0, 1));
+      {
+        const up = still ? 0 : clamp((t - flagFrom) / 0.5, 0, 1);
+        const hoist = still ? 0 : easeInOutCubic(clamp((t - flagFrom - 0.5) / 2.5, 0, 1));
+        flag.style.display = up > 0 ? '' : 'none';
+        flagPole.setAttribute('d', `M${FLAG_X} ${FLAG_FOOT} V${(FLAG_FOOT - (FLAG_FOOT - FLAG_TOP) * up).toFixed(1)}`);
+        const top = FLAG_FOOT - 4 - (FLAG_FOOT - 4 - FLAG_TOP) * hoist - 24 * (1 - hoist);
+        const wave = Math.sin(t * 2.2);
+        const y0 = Math.max(FLAG_TOP, top);
+        flagCloth.setAttribute('d', `M${FLAG_X} ${y0.toFixed(1)} Q${FLAG_X + 19} ${(y0 - 2.5 * wave).toFixed(1)} ${FLAG_X + 40} ${(y0 + 2 * wave).toFixed(1)} V${(y0 + 24 + 2 * wave).toFixed(1)} Q${FLAG_X + 19} ${(y0 + 24 - 2.5 * wave).toFixed(1)} ${FLAG_X} ${(y0 + 24).toFixed(1)} Z`);
+        flagCloth.style.opacity = hoist > 0 ? '1' : '0';
+        flagBrick.style.opacity = hoist > 0 ? '1' : '0';
+        flagBrick.setAttribute('transform', `translate(${FLAG_X + 12} ${(y0 + 10).toFixed(1)}) scale(1.3)`);
+      }
       const built = (part) => (still ? 1 : span(t, BUILD[part]));
       // Site activity settles during explanations; the sky keeps drifting
       // slowly. Both clocks rewind exactly and stop under reduced motion.
@@ -896,7 +1002,18 @@
       const sunAt = `translate(${light.x.toFixed(1)} ${light.y.toFixed(1)})`;
       sun.setAttribute('transform', sunAt);
       rays.setAttribute('transform', sunAt);
-      rays.style.opacity = (0.42 * light.golden).toFixed(3);
+      rays.style.opacity = (0.9 * Math.max(light.golden, 0.45 * light.firstLight)).toFixed(3);
+      rayFan.setAttribute('transform', `rotate(${(still ? 0 : t * 0.35).toFixed(2)})`);
+      // Near the horizon the disc is squashed by refraction and burns red.
+      disc.setAttribute('transform', `scale(1 ${(0.86 + 0.14 * span(light.elevation, [-1, 4])).toFixed(3)})`);
+      horizonGlow.setAttribute('cx', light.x.toFixed(1));
+      horizonGlow.style.opacity = (0.35 + 0.65 * light.firstLight * (1 - 0.55 * light.golden)).toFixed(3);
+      // A faint lens flare along the line from the sun through the centre.
+      flare.style.opacity = (0.9 * light.golden * (1 - span(light.elevation, [10, 16]))).toFixed(3);
+      flareDots.forEach(({ node, k }) => {
+        node.setAttribute('cx', (light.x + (480 - light.x) * k).toFixed(1));
+        node.setAttribute('cy', (light.y + (250 - light.y) * k).toFixed(1));
+      });
       dawnShade.style.opacity = (0.16 * (1 - light.ambient)).toFixed(3);
       goldenLight.style.opacity = (0.1 * light.golden).toFixed(3);
       morningSky.style.opacity = light.golden.toFixed(3);

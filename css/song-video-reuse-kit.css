@@ -1330,3 +1330,66 @@
 .theme-brick-site .badge { left: 20px; max-width: 440px; font-size: 16px; color: var(--rk-ink); background: linear-gradient(165deg, #ffe778, var(--rk-ucla-gold) 60%, #efb80c); border-color: #996419; }
 .theme-brick-site .sticker { font-size: 16px; }
 .theme-brick-site .sticker svg { width: 18px; height: 18px; }
+
+/* The site crane's hook when it works on a picture: trolley, cable, hook. */
+.rk-crane-hook { position: absolute; inset: 0; width: 960px; height: 540px; overflow: visible; pointer-events: none; }
+.rk-crane-hook-trolley { fill: #b58300; stroke: #6b4e00; stroke-width: 1; }
+.rk-crane-hook-cable { fill: none; stroke: #4b5260; stroke-width: 1.3; }
+.rk-crane-hook-block { fill: #e0a800; stroke: #6b4e00; stroke-width: 1; }
+.rk-crane-hook-iron { fill: none; stroke: #4b5260; stroke-width: 2.6; stroke-linecap: round; }
+
+/* The crane's hook lowering a refrain brick: a block above its studs and a
+   cable up to the jib. */
+.rk-list-hook { position: absolute; left: 50%; bottom: calc(100% + 8px); width: 0; pointer-events: none; }
+.rk-list-hook-block { position: absolute; left: -7px; bottom: 0; width: 14px; height: 10px; box-sizing: border-box; border: 1px solid #6b4e00; border-radius: 2px; background: #e0a800; }
+.rk-list-hook-cable { position: absolute; left: -2.5px; bottom: 10px; width: 5px; border-left: 1.3px solid #4b5260; border-right: 1.3px solid #4b5260; box-sizing: border-box; }
+
+/* The glue bottle that fills the gaps, and the glue's drip. */
+.rk-glue-drip { fill: rgba(255, 238, 150, 0.95); stroke: #8a6d00; stroke-width: 1; }
+.rk-glue-bottle-body { fill: #f7f4ec; stroke: #5b5346; stroke-width: 1.2; stroke-linejoin: round; }
+.rk-glue-bottle-label { fill: #e8741a; }
+.rk-glue-bottle-cap { fill: #e8741a; stroke: #7a3b0a; stroke-width: 1; stroke-linejoin: round; }
+
+/* The left-pad heist: the forklift, its speed lines, flying chips, the "!". */
+.rk-forklift { position: absolute; inset: 0; width: 960px; height: 540px; overflow: visible; pointer-events: none; }
+.rk-forklift-body { fill: #ff8a1c; stroke: #8a3d00; stroke-width: 1.2; }
+.rk-forklift-weight { fill: #4a4f5a; stroke: #22252c; stroke-width: 1; }
+.rk-forklift-cage { fill: none; stroke: #22252c; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.rk-forklift-seat { fill: #22252c; }
+.rk-forklift-mast { fill: #3d424d; }
+.rk-forklift-fork { fill: #9aa0aa; stroke: #3d424d; stroke-width: 0.8; }
+.rk-forklift-tyre { fill: #1b1d22; }
+.rk-forklift-spoke { fill: none; stroke: #9aa0aa; stroke-width: 1.4; }
+.rk-forklift-speed { fill: none; stroke: rgba(255, 255, 255, 0.85); stroke-width: 2.4; stroke-linecap: round; }
+.rk-chip { stroke: rgba(0, 0, 0, 0.45); stroke-width: 0.8; }
+.rk-chip--blue { fill: #2774ae; }
+.rk-chip--tan { fill: #dcc79c; }
+.rk-alarm circle { fill: #ffffff; stroke: var(--rk-red); stroke-width: 3; }
+.rk-alarm-mark { fill: var(--rk-red); }
+
+/* A code card that prints line after line and scrolls, like a receipt. */
+.rk-code-roll { will-change: translate; }
+.rk-code:has(.rk-code-roll) .rk-code-body {
+  overflow: hidden;
+  box-sizing: content-box;
+  -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 14px, #000 calc(100% - 10px), transparent);
+  mask-image: linear-gradient(180deg, transparent 0, #000 14px, #000 calc(100% - 10px), transparent);
+}
+
+/* Scaffolding under a build's plate, down to the ground. */
+.rk-scaffold { position: absolute; overflow: visible; pointer-events: none; }
+.rk-scaffold-pole { fill: none; stroke: #7d8592; stroke-width: 3.5; stroke-linecap: round; }
+.rk-scaffold-brace { fill: none; stroke: #9aa2ae; stroke-width: 2; stroke-linecap: round; opacity: 0.85; }
+.rk-list-base::before {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 8px;
+  right: 8px;
+  height: var(--rk-ground-gap, 0px);
+  background:
+    linear-gradient(90deg, #7d8592 0 4px, transparent 4px calc(100% - 4px), #7d8592 calc(100% - 4px)),
+    repeating-linear-gradient(180deg, transparent 0 34px, #7d8592 34px 38px),
+    repeating-linear-gradient(135deg, transparent 0 26px, rgba(154, 162, 174, 0.85) 26px 28px, transparent 28px 54px);
+  pointer-events: none;
+}

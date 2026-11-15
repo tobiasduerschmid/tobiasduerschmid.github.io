@@ -40,11 +40,15 @@
 
   window.SongChoreographies = window.SongChoreographies || {};
   window.SongChoreographies.not_a_one_time_investment = function choreograph({ song, kit, layers, student }) {
-    const { fx, tween, EASE, onFrame } = window.Timeline;
+    const { fx, tween, EASE, onFrame, clamp, easeOutCubic, easeInOutCubic, hash01 } = window.Timeline;
     const R = window.ReuseKit;
     const { content: stageContent, hud } = layers;
     // Full-size illustrations take turns in the clear sky between the towers.
     const content = kit.el('div', 'rk-teaching-scenes', stageContent);
+    // The crane's working hook: on stage from the moment the jib is built
+    // to the end, behind the teaching pictures, resting between jobs.
+    const HOOK_REST = [640, 70];
+    const hook = R.siteHook(stageContent, { before: content, from: 7.6, rest: HOOK_REST });
     const mark = (id, word) => song.mark(id, word);
     const line = (id) => song.line(id);
     const start = (id) => song.sectionStart(id);
@@ -94,9 +98,37 @@
           [mark('v1-5', 'write'), 'point', { to: [366, 170], hold: 1.6 }],
           [mark('v3-1', 'flaw'), 'point', { to: [284, 170], hold: 1.4 }],
           [mark('v3-2', 'saw'), 'shrug', { hold: 1 }],
+          // Verse 2: he points at the crane doing the clean install, and
+          // facepalms as the calls break up the tower.
+          [mark('v2-6', 'clean'), 'point', { to: [524, 160], hold: 1.2 }],
+          [mark('v2-8', 'broke'), 'facepalm', { hold: 1.3 }],
+          [mark('v2-10', 'choose'), 'thumbs', { hold: 1, side: 'left' }],
+          // Verse 3: despair as the server hands out passwords and keys.
+          [mark('v3-6', 'passwords'), 'despair', { hold: 1.2 }],
+          [mark('v3-12', 'all'), 'thumbs', { hold: 1, side: 'left' }],
+          // Refrains: a thumbs-up on the takeaway.
+          [mark('refrain1-6', 'external'), 'thumbs', { hold: 1.4, side: 'left' }],
+          [mark('refrain2-6', 'external'), 'thumbs', { hold: 1.4, side: 'left' }],
+          // Left-pad: he points at the forklift stealing it, despairs as the
+          // build crashes, and facepalms as the builds fail.
+          [mark('v4-5', 'its'), 'point', { to: [680, 360], hold: 1 }],
+          [mark('v4-5', 'unpublished') + 1.05, 'despair', { hold: 1.2 }],
+          [mark('v4-6', 'failed'), 'facepalm', { hold: 1.2 }],
+          // Crypto: a stop palm on "don't write your own".
+          [mark('v4-16', 'dont'), 'stop', { hold: 0.9 }],
+          // Ariane 5: hands up as it self-destructs, then a shrug.
+          [mark('br-8', 'selfdestructed'), 'surrender', { hold: 0.9 }],
+          [mark('br-9', 'worked'), 'shrug', { hold: 0.9 }],
+          // "Don't call us, we'll call you": a stop palm, then a point at
+          // the handler the framework calls.
+          [mark('v5-6', 'dont'), 'stop', { hold: 0.5 }],
+          [mark('v5-6', 'call_2'), 'point', { to: [560, 240], hold: 1 }],
           [mark('quiz-0', 'your') + 0.1, 'thumbs', { hold: 0.6, side: 'left' }],
+          [mark('refrain3-6', 'investment'), 'hop', { height: 12 }],
           [done + 0.4, 'point', { to: [560, 330], hold: 0.9 }],
           [mark('outro-3', 'right'), 'thumbs', { hold: 1.4, side: 'left' }],
+          [song.duration - 6.2, 'salute', { hold: 1.6 }],
+          [song.duration - 3.4, 'hop', { height: 14 }],
         ],
       });
       hero.node.classList.add('rk-main-hero');
@@ -220,7 +252,7 @@
       badge(sectionId === 'refrain-3' ? 'Final refrain · Before you reuse' : 'Refrain · Before you reuse', sectionId, { at: from });
       const s = kit.scene(content, from, leave, { exit: 'fade' });
       const at = (n, word) => mark(`${prefix}-${n}`, word);
-      R.checklist(s, {
+      const list = R.checklist(s, {
         x: 310, y: 78, w: 440, at: from, title: 'Before you reuse, ask:',
         tabsAt: from + 0.4,
         items: [
@@ -233,6 +265,15 @@
         footerAt: at(6, 'external'),
       });
       if (confetti) kit.confetti(s, { x: 530, y: 40, at: at(6, 'investment'), count: 40, seed: 7 });
+      // The crane lowers each question's brick onto the tower, then its
+      // hook goes back to rest.
+      list.lowered.forEach(({ lowerFrom, lands, pose }) => {
+        hook.go(lowerFrom - 0.75, () => pose(lowerFrom)?.x, () => pose(lowerFrom)?.y, 0.7);
+        hook.carry(lowerFrom, lands, pose);
+        hook.go(lands + 0.1, () => pose(lands)?.x, 60, 0.5);
+      });
+      const last = list.lowered.at(-1);
+      hook.go(last.lands + 0.7, HOOK_REST[0], HOOK_REST[1], 1);
     }
 
     // ----------------------------------------------------------------
@@ -272,9 +313,21 @@
       // visible as the changed studs break compatibility up the tower.
       const twoAt = mark('v2-6', 'two');
       const tower = focusPanel(s, 'right', [[whyAt, pinAt], [okAt, leave]]);
-      R.plate(tower, { x: 580, y: 372, w: 240, at: mark('v2-3', 'docker') - 0.2 });
-      const upper = R.layer(tower);
+      R.plate(tower, { x: 580, y: 372, w: 240, at: mark('v2-3', 'docker') - 0.2, scaffold: true });
+      // The crane does the clean install: its hook takes docker and requests
+      // up off urllib3, holds them while the bricks swap underneath, and
+      // lowers them onto studs that no longer fit.
+      const hoisted = R.layer(tower);
+      const upper = R.layer(hoisted);
       const top = R.layer(upper);
+      const GRAB = 183;
+      hook.go(63.0, 524, 60, 0.8).go(63.9, 524, GRAB, 0.8).go(64.8, 524, GRAB - 80, 0.6)
+        .go(66.5, 524, GRAB, 0.35).go(67.0, 524, 60, 0.7).go(67.8, HOOK_REST[0], HOOK_REST[1], 1);
+      const hookY = (t) => hook.at(t).y;
+      onFrame((t) => {
+        const lifted = t > 64.8 && t < 66.9 ? hookY(t) - GRAB : 0;
+        hoisted.style.translate = `0 ${lifted.toFixed(1)}px`;
+      });
       const oldU = R.pkg(tower, {
         x: 590, y: 312, w: 220, h: 60, name: 'urllib3', version: '1.26', tone: 'blue', under: true, how: 'drop', at: mark('v2-4', 'urllib3') - 0.1,
         tags: [
@@ -287,7 +340,7 @@
       R.label(tower, 'calls ↓', { x: 828, y: 234, w: 74, at: mark('v2-3', 'calls'), tone: 'muted', size: 17 });
       R.label(tower, 'calls ↓', { x: 828, y: 294, w: 74, at: mark('v2-4', 'calls'), tone: 'muted', size: 17 });
       R.label(tower, 'nothing pinned', { x: 504, y: 326, w: 84, at: mark('v2-5', 'pinned'), until: mark('v2-6', 'two'), tone: 'red', size: 17 });
-      kit.sticker(tower, 'Clean install', { x: 626, y: 138, at: mark('v2-6', 'clean'), until: mark('v2-7', 'version'), iconName: 'resend', rotate: -4 });
+      kit.sticker(tower, 'Clean install', { x: 640, y: 396, at: mark('v2-6', 'clean'), until: mark('v2-7', 'version'), iconName: 'resend', rotate: -4 });
       // "So a clean install got two": the old brick slides out, version 2.0.0
       // slides in with different studs, and the bricks above no longer seat.
       shift(oldU.node, twoAt, { opacity: 1, translate: '0 0' }, { opacity: 0, translate: '30px 0' }, 0.35);
@@ -295,8 +348,8 @@
       shift(newU.node, twoAt + 0.15, { opacity: 0, translate: '30px 0' }, { opacity: 1, translate: '0 0' }, 0.4);
       shift(upper, twoAt + 0.4, { translate: '0 0' }, { translate: '0 -12px' }, 0.3, EASE.back);
       // "Version two changed its API": the new studs.
-      R.label(tower, 'new studs: a changed API', { x: 500, y: 250, w: 84, at: mark('v2-7', 'changed'), until: okAt, tone: 'red', size: 16 });
-      R.arrow(tower, { x1: 572, y1: 300, x2: 600, y2: 305, at: mark('v2-7', 'changed'), until: okAt, tone: 'red' });
+      R.label(tower, 'new studs: a changed API', { x: 468, y: 304, w: 116, align: 'right', at: mark('v2-7', 'changed'), until: okAt, tone: 'red', size: 16 });
+      R.arrow(tower, { x1: 586, y1: 318, x2: 604, y2: 307, at: mark('v2-7', 'changed'), until: okAt, tone: 'red' });
       // "And requests' calls broke too": the break travels up the tower,
       // each brick sliding off the one below.
       shift(upper, mark('v2-8', 'requests'), { translate: '0 -12px' }, { translate: '-10px -12px' }, 0.35, EASE.back);
@@ -358,13 +411,43 @@
       R.label(b, 'trusted, never checked', { x: 760, y: 136, w: 142, at: mark('v3-4', 'trusted'), tone: 'red', size: 17 });
       R.note(b, 'OpenSSL server', { x: 514, y: 212, w: 200, at: mark('v3-4', 'server'), icon: 'database' });
       R.note(b, 'Heartbleed: buffer over-read', { x: 724, y: 212, w: 176, at: mark('v3-6', 'passwords'), tone: 'bad', small: true });
-      R.code(b, {
-        x: 514, y: 268, w: 386, lang: 'plain', title: 'reply: "a" + server memory', at: mark('v3-5', 'sent'),
+      // The reply keeps printing, line after line of the server's memory,
+      // far past the one letter asked for: it scrolls like a receipt, and
+      // the password and the private key are lit as they are sung.
+      const sent = mark('v3-5', 'sent');
+      const reply = R.code(b, {
+        x: 514, y: 268, w: 386, lang: 'plain', title: 'reply: "a" + server memory', at: sent,
         lines: [
-          '"a" session=7f3a9c… user=ana',
+          '"a"',
+          'session=7f3a9c… user=ana',
+          'cookie=SID_91f0e2…',
+          'GET /inbox HTTP/1.1',
           { text: 'password=••••••••', hl: { part: 'password=••••••••', at: mark('v3-6', 'passwords') } },
+          'email=ana@…',
           { text: '-----BEGIN PRIVATE KEY-----', hl: { part: '-----BEGIN PRIVATE KEY-----', at: mark('v3-6', 'private') } },
+          'MIIEvQIBADANBgkqhkiG9w0BAQEFAA…',
+          '… 64 KB of server memory …',
         ],
+      });
+      const body = reply.querySelector('.rk-code-body');
+      const roll = kit.el('div', 'rk-code-roll', body);
+      const printed = [...body.children].filter((line) => line !== roll);
+      printed.forEach((line) => roll.appendChild(line));
+      const SHOWN = 5;
+      const EVERY = 0.4;
+      onFrame((t) => {
+        const lineH = printed[0].offsetHeight || 23;
+        body.style.height = `${(SHOWN * lineH).toFixed(1)}px`;
+        const count = clamp(Math.floor((t - sent) / EVERY) + 1, 1, printed.length);
+        const into = clamp((t - sent - (count - 1) * EVERY) / 0.18, 0, 1);
+        const scroll = Math.max(0, count - 1 - (SHOWN - 1) - (1 - easeOutCubic(into)));
+        // Lines that have scrolled out of the window fade away above it.
+        printed.forEach((line, i) => {
+          const above = clamp(scroll - i, 0, 1);
+          const shown = i < count - 1 ? 1 : i === count - 1 ? into : 0;
+          line.style.opacity = (shown * (1 - above)).toFixed(2);
+        });
+        roll.style.translate = `0 ${(-scroll * lineH).toFixed(1)}px`;
       });
 
       // "I didn't write that bug, but I shipped it, all the same." Your app
@@ -378,7 +461,7 @@
       xray.style.width = '376px';
       xray.style.height = '154px';
       kit.el('div', 'rk-xray-label', xray, 'your app, X-rayed');
-      R.plate(c, { x: 230, y: 240, w: 206, at: mark('v3-7', 'i') - 0.1 });
+      R.plate(c, { x: 230, y: 240, w: 206, at: mark('v3-7', 'i') - 0.1, scaffold: true });
       const openssl = R.pkg(c, { x: 240, y: 186, w: 186, h: 54, name: 'OpenSSL 1.0.1', tone: 'blue', under: true, how: 'drop', at: mark('v3-7', 'i') });
       const yours = R.pkg(c, { x: 240, y: 132, w: 186, h: 54, name: 'your code', tone: 'gold', how: 'drop', at: mark('v3-7', 'i') + 0.15 });
       yours.check(mark('v3-7', 'bug'));
@@ -474,63 +557,147 @@
       const baseY = 390;
       const supportHeight = 56;
       const supportY = baseY - supportHeight;
-      R.plate(b, { x: 514, y: baseY, w: 380, at: built - 0.2 }).dataset.testid = 'reuse-dependency-platform';
+      R.plate(b, { x: 514, y: baseY, w: 380, at: built - 0.2, scaffold: true }).dataset.testid = 'reuse-dependency-platform';
       const right = R.layer(b);
       const app = R.layer(b);
       right.style.transformOrigin = `884px ${supportY}px`;
       app.style.transformOrigin = '700px 150px';
-      const leftpad = R.pkg(b, { x: 748, y: supportY, w: 100, h: supportHeight, name: 'left-pad', tone: 'blue', small: true, under: true, how: 'drop', at: built });
+      const carried = R.layer(b);
+      const leftpad = R.pkg(carried, { x: 748, y: supportY, w: 100, h: supportHeight, name: 'left-pad', tone: 'blue', small: true, under: true, how: 'drop', at: built });
       R.pkg(b, { x: 528, y: 206, w: 172, h: baseY - 206, name: '… more packages', tone: 'blue', small: true, under: true, stack: true, how: 'drop', at: built + 0.1 });
       const more = R.pkg(right, { x: 712, y: 206, w: 172, h: supportY - 206, name: '… more packages', tone: 'blue', small: true, under: true, stack: true, how: 'drop', at: built + 0.15 });
       more.node.dataset.testid = 'reuse-fallen-dependencies';
       const react = R.pkg(b, { x: 528, y: 150, w: 172, h: 56, name: 'react', tone: 'blue', under: true, how: 'drop', at: built + 0.3 });
-      const babel = R.pkg(right, { x: 712, y: 150, w: 172, h: 56, name: 'babel-core', tone: 'blue', under: true, how: 'drop', at: built + 0.35 });
+      const tumble = R.layer(right);
+      tumble.style.transformOrigin = '884px 206px';
+      const babel = R.pkg(tumble, { x: 712, y: 150, w: 172, h: 56, name: 'babel-core', tone: 'blue', under: true, how: 'drop', at: built + 0.35 });
       const yourApp = R.pkg(app, { x: 520, y: 94, w: 372, h: 56, name: 'your-app', tone: 'gold', how: 'drop', at: built + 0.5 });
       // "Through packages they used": the path down to left-pad lights.
       const through = mark('v4-4', 'through');
       [babel, more, leftpad].forEach((p, i) => R.classAt(p.node, 'is-path', through + i * 0.35));
-      // "...they used": the tiny brick squashes and strains under all of it.
-      // "Its author unpublished it": it goes poof. The build hangs in the
-      // air for a cartoon beat, shivering, then the right column drops and
-      // tips to the right with a bounce, and your-app, balanced on react's
-      // corner like a seesaw, teeters before it settles askew.
+      // "...they used": the tiny brick squashes under all of it, and the
+      // whole build starts to tremble, harder and harder. "Its author
+      // unpublished it": a forklift races in, yanks left-pad out, and
+      // speeds off with it. The build hangs in the air for a cartoon beat,
+      // shivering; then the right column crashes down with a jolt, brick
+      // chips and dust flying, babel-core tumbles askew on top, and
+      // your-app seesaws on react's corner before it settles, crooked.
       const gone = mark('v4-5', 'unpublished');
       const strainAt = mark('v4-4', 'used');
       R.strain(b, { x: 748, y: supportY, w: 100, h: supportHeight, at: strainAt, until: gone + 0.05 });
-      tween(leftpad.node, [{ scale: '1 1' }, { scale: '1.06 0.92' }], strainAt, 0.3, EASE.out);
-      tween(leftpad.node, [
-        { scale: '1.06 0.92', rotate: '0deg', opacity: 1 },
-        { scale: '1.2 1.2', rotate: '-6deg', opacity: 1, offset: 0.35 },
-        { scale: '0.1 0.1', rotate: '35deg', opacity: 0 },
-      ], gone, 0.4, EASE.in);
-      R.dust(b, { x: 798, y: supportY + supportHeight / 2, at: gone + 0.15, duration: 0.9 });
-      const hangAt = gone + 0.45;
-      const dropAt = gone + 0.72;
+      tween(leftpad.node, [{ scale: '1 1' }, { scale: '1.06 0.9' }], strainAt, 0.3, EASE.out);
+      const hangAt = gone + 0.5;
+      const dropAt = gone + 0.85;
+      const FALL = 0.2;
+      const landAt = dropAt + FALL;
       ghost(b, { x: 748, y: supportY, w: 100, h: supportHeight, at: hangAt, until: dropAt });
-      const FALL = 0.24;
+      // The forklift, facing left, its forks at the platform.
+      const lift = kit.svg('svg', { class: 'rk-forklift', viewBox: '0 0 960 540', 'aria-hidden': 'true' }, b);
+      const truck = kit.svg('g', {}, lift);
+      const lines = kit.svg('path', { class: 'rk-forklift-speed', d: 'M54 -34 H86 M60 -22 H98 M54 -10 H82' }, truck);
+      kit.svg('rect', { class: 'rk-forklift-fork', x: -30, y: -6, width: 32, height: 4, rx: 1 }, truck);
+      kit.svg('rect', { class: 'rk-forklift-mast', x: -2, y: -54, width: 6, height: 50 }, truck);
+      kit.svg('rect', { class: 'rk-forklift-weight', x: 40, y: -26, width: 12, height: 18, rx: 2 }, truck);
+      kit.svg('rect', { class: 'rk-forklift-body', x: 4, y: -24, width: 40, height: 16, rx: 3 }, truck);
+      kit.svg('path', { class: 'rk-forklift-cage', d: 'M10 -24 V-46 H34 V-24 M10 -46 L34 -46' }, truck);
+      kit.svg('rect', { class: 'rk-forklift-seat', x: 22, y: -34, width: 10, height: 10, rx: 2 }, truck);
+      const wheels = [12, 36].map((wx) => {
+        kit.svg('circle', { class: 'rk-forklift-tyre', cx: wx, cy: -7, r: 7 }, truck);
+        return kit.svg('path', { class: 'rk-forklift-spoke', d: `M${wx - 4} -7 H${wx + 4} M${wx} -11 V-3` }, truck);
+      });
+      const arriveFrom = gone - 0.65;
+      const arriveAt = gone - 0.1;
+      const leaveAt = gone + 0.6;
+      const DOCK = 850;
+      const truckX = (t) => {
+        if (t < arriveAt) return 1180 - (1180 - DOCK) * easeOutCubic(clamp((t - arriveFrom) / (arriveAt - arriveFrom), 0, 1));
+        if (t < gone) return DOCK;
+        return DOCK + 380 * clamp((t - gone) / (leaveAt - gone), 0, 1) ** 2;
+      };
+      // A cartoon "!" over your-app while the build hangs in the air.
+      const alarm = kit.svg('g', { class: 'rk-alarm' }, lift);
+      kit.svg('circle', { cx: 0, cy: 0, r: 17 }, alarm);
+      kit.svg('path', { class: 'rk-alarm-mark', d: 'M-3 -11 H3 L2 3 H-2 Z M0 6.5 a3 3 0 1 1 0 0.1 Z' }, alarm);
+      // Brick chips that fly from the crash, each on its own arc.
+      const chips = kit.svg('g', { class: 'rk-chips' }, lift);
+      const chipParts = Array.from({ length: 9 }, (_, i) => ({
+        node: kit.svg('rect', { class: `rk-chip rk-chip--${i % 3 ? 'blue' : 'tan'}`, x: -4, y: -3, width: 8 + 4 * hash01(i * 7 + 1), height: 6, rx: 1 }, chips),
+        vx: (hash01(i * 11 + 3) - 0.35) * 260, vy: -160 - 140 * hash01(i * 5 + 2), spin: (hash01(i * 13 + 4) - 0.5) * 900,
+      }));
+      R.dust(b, { x: DOCK + 14, y: baseY - 6, at: gone, duration: 0.7, size: 0.8 });
+      R.dust(b, { x: 798, y: baseY - 8, at: landAt, duration: 1, size: 1.2 });
+      R.dust(b, { x: 870, y: 150, at: landAt + 0.25, duration: 0.8, size: 0.7 });
       const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
       onFrame((t) => {
         // With motion reduced, show the supported/broken states directly.
         const time = reducedMotion.matches && t >= gone ? dropAt + 4 : t;
+        const still = reducedMotion.matches;
+        // The forklift's run, and left-pad riding off on its forks.
+        const tx = truckX(time);
+        const truckOn = !still && time >= arriveFrom && time < leaveAt;
+        const alarmOn = !still && time >= gone + 0.25 && time < landAt + 0.2;
+        lift.style.display = truckOn || alarmOn || (time >= landAt && time < landAt + 1) ? '' : 'none';
+        alarm.style.display = alarmOn ? '' : 'none';
+        const pop = clamp((time - gone - 0.25) / 0.18, 0, 1);
+        alarm.setAttribute('transform', `translate(912 ${(128 - 6 * Math.sin(Math.PI * pop)).toFixed(1)}) scale(${(0.4 + 0.6 * easeOutCubic(pop)).toFixed(3)})`);
+        // The camera pushes in slowly on the straining brick, then eases
+        // back out after the crash.
+        const push = still ? 0 : easeInOutCubic(clamp((time - strainAt) / (gone - strainAt), 0, 1)) * (1 - easeInOutCubic(clamp((time - landAt) / 0.6, 0, 1)));
+        b.style.transformOrigin = '798px 300px';
+        b.style.scale = (1 + 0.035 * push).toFixed(4);
+        truck.style.display = truckOn ? '' : 'none';
+        truck.setAttribute('transform', `translate(${tx.toFixed(1)} ${baseY}) scale(1.4)`);
+        lines.style.opacity = time < arriveAt || time > gone + 0.05 ? '1' : '0';
+        lines.setAttribute('transform', time < arriveAt ? '' : 'translate(-150 0) scale(-1 1) translate(-140 0)');
+        const roll = ((tx - DOCK) / 7) * 57.3;
+        wheels.forEach((spoke, i) => spoke.setAttribute('transform', `rotate(${roll.toFixed(1)} ${[12, 36][i]} -7)`));
+        const away = time >= gone ? tx - DOCK : 0;
+        const lifted = time >= gone ? -8 * clamp((time - gone) / 0.12, 0, 1) : 0;
+        carried.style.translate = `${away.toFixed(1)}px ${lifted.toFixed(1)}px`;
+        carried.style.rotate = time >= gone ? `${(-4 * Math.sin(Math.min(1, (time - gone) / 0.5) * Math.PI)).toFixed(2)}deg` : '0deg';
+        carried.style.transformOrigin = '798px 390px';
+        carried.style.opacity = time >= leaveAt ? '0' : '1';
+        // The whole build trembles as the strain grows, and jolts on landing.
+        let shake = 0;
+        if (!still && time >= strainAt && time < gone) shake = 1.4 * ((time - strainAt) / (gone - strainAt)) * Math.sin(time * 2 * Math.PI * 9);
+        if (!still && time >= landAt && time < landAt + 0.35) shake = 2.2 * Math.exp(-(time - landAt) / 0.1) * Math.sin((time - landAt) * 2 * Math.PI * 14);
+        b.style.translate = `${shake.toFixed(2)}px 0`;
+        // The unsupported column: hangs, shivers, crashes, bounces, rests.
         let dx = 0;
         let dy = 0;
         let turn = 0;
-        if (time >= hangAt && time < dropAt) dx = 0.8 * Math.sin((time - hangAt) * 2 * Math.PI * 4);
+        if (time >= hangAt && time < dropAt) dx = 1.2 * Math.sin((time - hangAt) * 2 * Math.PI * 7);
         if (time >= dropAt) {
           const fall = Math.min(1, (time - dropAt) / FALL) ** 2;
-          const after = Math.max(0, time - dropAt - FALL);
-          const rebound = after > 0 ? Math.exp(-after / 0.18) * Math.sin(after * 2 * Math.PI * 2.4) : 0;
-          dy = supportHeight * fall - 6 * rebound;
-          turn = 4 * fall - 1.5 * rebound;
+          const after = Math.max(0, time - landAt);
+          const rebound = after > 0 ? Math.exp(-after / 0.12) * Math.sin(after * 2 * Math.PI * 2.6) : 0;
+          dy = supportHeight * fall - 8 * rebound;
+          turn = 4 * fall - 2 * rebound;
         }
         right.style.translate = `${dx.toFixed(2)}px ${dy.toFixed(2)}px`;
         right.style.rotate = `${turn.toFixed(2)}deg`;
+        // babel-core slides and tips on top of the fallen column.
+        const slip = time >= landAt ? easeOutCubic(clamp((time - landAt) / 0.4, 0, 1)) : 0;
+        tumble.style.translate = `${(10 * slip).toFixed(2)}px ${(4 * slip).toFixed(2)}px`;
+        tumble.style.rotate = `${(7 * slip).toFixed(2)}deg`;
+        // your-app seesaws on react's corner, then settles crooked.
         let tip = 0;
-        if (time >= dropAt + 0.1) {
-          const u = time - dropAt - 0.1;
-          tip = 8 * (1 - Math.exp(-u / 0.1)) + Math.exp(-u / 0.4) * Math.sin(u * 2 * Math.PI * 1.25);
+        if (time >= landAt) {
+          const u = time - landAt;
+          tip = 9 * (1 - Math.exp(-u / 0.08)) + 5 * Math.exp(-u / 0.3) * Math.sin(u * 2 * Math.PI * 1.6);
         }
         app.style.rotate = `${tip.toFixed(2)}deg`;
+        // The chips fly on their arcs and fade.
+        const c = time - landAt;
+        chips.style.display = !still && c >= 0 && c < 1 ? '' : 'none';
+        if (!still && c >= 0 && c < 1) {
+          chipParts.forEach(({ node, vx, vy, spin }) => {
+            const px = 798 + vx * c;
+            const py = baseY - 10 + vy * c + 520 * c * c;
+            node.setAttribute('transform', `translate(${px.toFixed(1)} ${Math.min(py, baseY - 2).toFixed(1)}) rotate(${(spin * c).toFixed(1)})`);
+            node.style.opacity = String(clamp(1 - (c - 0.55) / 0.45, 0, 1));
+          });
+        }
       });
       yourApp.cross(mark('v4-6', 'failed'));
       // "Many never saw it: a dependency, deep down."
@@ -582,7 +749,7 @@
       });
       R.note(e, 'can break', { x: 512, y: 336, w: 104, at: mark('v4-13', 'break'), tone: 'bad', small: true });
       R.note(e, 'can be hijacked', { x: 624, y: 336, w: 150, at: mark('v4-13', 'hijacked'), tone: 'bad', small: true });
-      R.note(e, 'can disappear', { x: 782, y: 336, w: 122, at: mark('v4-14', 'vanish'), tone: 'bad', small: true });
+      R.note(e, 'can vanish', { x: 782, y: 336, w: 122, at: mark('v4-14', 'vanish'), tone: 'bad', small: true });
 
       // The boundary: "But code that's hard to get right, like crypto: don't write your own."
       const f = focusPanel(s, 'left', [[cryptoAt, fameAt]]);
@@ -677,8 +844,8 @@
       // assumption didn't hold."
       const driftAt = mark('br-16', 'systems');
       const c = focusPanel(s, 'left', [[verdictAt, rule]]);
-      R.note(c, 'Ariane 4: fits ✓', { x: 90, y: 120, w: 340, at: verdictAt, tone: 'good', icon: 'check' });
-      R.note(c, 'Ariane 5: overflows ✗', { x: 90, y: 186, w: 340, at: mark('br-10', 'failed'), tone: 'bad', icon: 'cross' });
+      R.note(c, 'Ariane 4: fits', { x: 90, y: 120, w: 340, at: verdictAt, tone: 'good', icon: 'check' });
+      R.note(c, 'Ariane 5: overflows', { x: 90, y: 186, w: 340, at: mark('br-10', 'failed'), tone: 'bad', icon: 'cross' });
       R.note(c, 'Assumes: horizontal velocity fits in 16 bits', { x: 90, y: 260, w: 340, at: mark('br-11', 'assumption'), tone: 'tag', icon: 'pin' });
       R.note(c, 'Cost of the failure: $370 million', { x: 90, y: 340, w: 340, at: verdictAt, tone: 'bad', icon: 'cash' });
 
@@ -743,7 +910,7 @@
       const framework = focusPanel(s, 'right', [[frameworkAt, leave]]);
       // Framework: "Express calls my code." A baseplate with a socket that
       // decides where your brick goes.
-      R.plate(framework, { x: 512, y: 168, w: 392, h: 34, label: 'Express (the framework)', tone: 'grey', at: from + 0.3 });
+      R.plate(framework, { x: 512, y: 168, w: 392, h: 34, label: 'Express (the framework)', tone: 'grey', at: from + 0.3, scaffold: true });
       const socket = ghost(framework, { x: 660, y: 112, w: 150, h: 56, at: ask, until: itCalls });
       socket.classList.add('rk-ghost--socket');
       R.label(framework, '?', { x: 660, y: 124, w: 150, at: ask, until: itCalls, align: 'center', tone: 'muted', size: 24 });
@@ -872,6 +1039,8 @@
       });
       const words = R.label(book, 'Reuse done right', { x: 232, y: 150, w: 170, at: mark('outro-3', 'right'), tone: 'green', size: 28, weight: 900 });
       words.classList.add('rk-showcase-done');
+      // The finale: confetti over the finished casebook as the flag goes up.
+      kit.confetti(s, { x: 530, y: 30, at: song.duration - 6.5, count: 36, seed: 21 });
     }
 
     intro();

@@ -209,7 +209,28 @@
   }
 
   /** A baseplate strip (studs on top): the ground of a build, or a framework's base with a label. */
-  function plate(parent, { x, y, w, h = 14, tone = 'grey', label, at, until, how = 'fade' }) {
+  function plate(parent, { x, y, w, h = 14, tone = 'grey', label, at, until, how = 'fade', scaffold = false, groundY = 466 }) {
+    // Scaffolding under it, down to the site's ground: poles, ledgers, and
+    // cross-braces, so the build stands on something.
+    if (scaffold && groundY > y + h + 8) {
+      const depth = groundY - (y + h);
+      const art = svg('svg', { class: 'rk-scaffold is-staged', viewBox: `0 0 ${w} ${depth}`, width: w, height: depth, 'aria-hidden': 'true' }, parent);
+      art.style.left = `${x}px`;
+      art.style.top = `${y + h}px`;
+      const poles = w > 220 ? [10, w / 2, w - 10] : [10, w - 10];
+      let d = poles.map((px) => `M${px} 0 V${depth}`).join(' ');
+      let braces = '';
+      for (let ly = 0; ly <= depth; ly += 40) {
+        d += ` M4 ${Math.min(ly, depth - 2)} H${w - 4}`;
+        for (let i = 0; i + 1 < poles.length; i++) {
+          const ny = Math.min(depth, ly + 40);
+          if (ny - ly > 10) braces += ` M${poles[i]} ${ly} L${poles[i + 1]} ${ny}`;
+        }
+      }
+      svg('path', { class: 'rk-scaffold-brace', d: braces }, art);
+      svg('path', { class: 'rk-scaffold-pole', d }, art);
+      show(art, at, until, 'fade');
+    }
     const node = show(box(parent, `rk-plate rk-c-${tone}${label ? ' rk-plate--label' : ''}`, { x, y, w, h }), at, until, how);
     studs(node, Math.max(2, Math.round(w / 24)), 'rk-studs rk-studs--plate');
     if (label) el('span', 'rk-plate-label', node, label);
@@ -266,6 +287,72 @@
     }
     if (until !== undefined) fx.fadeOut(art, until - 0.25, 0.25);
     return { art, labelNode };
+  }
+
+  /** A node's box in stage coordinates (the stage is 960 wide), or null if it is not laid out. */
+  function stageBox(node) {
+    const stage = node.closest('.stage');
+    if (!stage) return null;
+    const r = node.getBoundingClientRect();
+    const sr = stage.getBoundingClientRect();
+    if (!r.width || !sr.width) return null;
+    const k = sr.width / 960;
+    return { x: (r.left - sr.left) / k, y: (r.top - sr.top) / k, w: r.width / k, h: r.height / k };
+  }
+
+  /**
+   * The site crane's working hook: a trolley on the jib (y 34), a cable,
+   * and a hook, visible from `from` (when the jib is built) to the end,
+   * resting at `rest` between jobs. go(at, x, y, duration) travels to a
+   * point (x and y may be functions, read when the move runs); carry(from,
+   * to, pose) follows pose(t) = { x, y } (the hook's bottom) while it
+   * carries something. Moves are applied in time order. Returns the hook,
+   * with at(t), its position.
+   */
+  function siteHook(parent, { before = null, from = 0, rest = [640, 70], jibY = 34 } = {}) {
+    const art = svg('svg', { class: 'rk-crane-hook', viewBox: '0 0 960 540', 'aria-hidden': 'true' });
+    parent.insertBefore(art, before);
+    const trolley = svg('rect', { class: 'rk-crane-hook-trolley', x: -9, y: jibY - 1, width: 18, height: 6, rx: 1.5 }, art);
+    const cable = svg('path', { class: 'rk-crane-hook-cable' }, art);
+    const hook = svg('g', {}, art);
+    svg('rect', { class: 'rk-crane-hook-block', x: -6, y: -16, width: 12, height: 9, rx: 2 }, hook);
+    svg('path', { class: 'rk-crane-hook-iron', d: 'M0 -7 V-2 C0 3 -6 3 -6 -1' }, hook);
+    const moves = [];
+    const value = (v, fallback) => {
+      const got = typeof v === 'function' ? v() : v;
+      return got === null || got === undefined || Number.isNaN(got) ? fallback : got;
+    };
+    const api = {
+      go(at, x, y, duration = 0.8) { moves.push({ at, x, y, duration }); moves.sort((a, b) => a.at - b.at); return api; },
+      carry(at, to, pose) { moves.push({ at, to, pose }); moves.sort((a, b) => a.at - b.at); return api; },
+      at(t) {
+        let [x, y] = rest;
+        for (const move of moves) {
+          if (t < move.at) break;
+          if (move.pose) {
+            const p = move.pose(Math.min(t, move.to));
+            if (p) ({ x, y } = p);
+            continue;
+          }
+          const tx = value(move.x, x);
+          const ty = value(move.y, y);
+          const e = easeInOutCubic(clamp((t - move.at) / move.duration, 0, 1));
+          x += (tx - x) * e;
+          y += (ty - y) * e;
+        }
+        return { x, y };
+      },
+    };
+    onFrame((t) => {
+      const shown = clamp((t - from) / 0.3, 0, 1);
+      art.style.opacity = String(shown);
+      if (!shown) return;
+      const { x, y } = api.at(t);
+      trolley.setAttribute('x', (x - 9).toFixed(1));
+      cable.setAttribute('d', `M${(x - 1.5).toFixed(1)} ${jibY + 5} V${(y - 16).toFixed(1)} M${(x + 1.5).toFixed(1)} ${jibY + 5} V${(y - 16).toFixed(1)}`);
+      hook.setAttribute('transform', `translate(${x.toFixed(1)} ${y.toFixed(1)})`);
+    });
+    return api;
   }
 
   /**
@@ -509,13 +596,57 @@
     const floating = svgBrick(real, { x: 34, y: 66, w: 78, h: 24, tone: 'red', studs: 3 });
     floating.setAttribute('transform', 'rotate(5 73 78)');
     const GLUE = [[106, 118, 30, 44], [196, 150, 40, 18], [58, 86, 46, 16], [180, 104, 34, 20], [214, 128, 24, 22]];
-    GLUE.forEach(([gx, gy, gw, gh], i) => {
-      const strip = svg('rect', { class: 'rk-glue is-staged', x: gx, y: gy, width: gw, height: gh, rx: 2 }, art);
-      const when = glueAt[Math.min(i, glueAt.length - 1)] ?? realityAt + 1;
-      strip.style.transformOrigin = `${gx + gw / 2}px ${gy + gh / 2}px`;
-      strip.style.transformBox = 'view-box';
-      tween(strip, [{ opacity: 0, scale: '0.4' }, { opacity: 1, scale: '1' }], when + (i % 2) * 0.18, 0.25, EASE.back);
+    // A glue bottle visits the gaps one by one and squeezes glue into each:
+    // it fills down from the top, sags into a drip, and sets.
+    const FILL = 0.45;
+    const gaps = GLUE.map(([gx, gy, gw, gh], i) => {
+      const when = (glueAt[Math.min(i, glueAt.length - 1)] ?? realityAt + 1) + (i >= 2 ? (i - 2) * 0.34 : 0);
+      const strip = svg('rect', { class: 'rk-glue', x: gx, y: gy, width: gw, height: 0, rx: 2 }, art);
+      const drip = svg('ellipse', { class: 'rk-glue-drip', cx: gx + gw / 2, cy: gy, rx: Math.min(5, gw / 4), ry: 0 }, art);
       if (outlineAt !== undefined) classAt(strip, 'is-lit', outlineAt);
+      return { gx, gy, gw, gh, when, strip, drip, tipX: gx + gw / 2, tipY: gy - 1 };
+    });
+    const bottle = svg('g', { class: 'rk-glue-bottle' }, art);
+    const squeeze = svg('g', {}, bottle);
+    svg('path', { class: 'rk-glue-bottle-body', d: 'M-7 -36 H7 V-14 L3 -8 H-3 L-7 -14 Z' }, squeeze);
+    svg('rect', { class: 'rk-glue-bottle-label', x: -7, y: -28, width: 14, height: 7 }, squeeze);
+    svg('path', { class: 'rk-glue-bottle-cap', d: 'M-3 -8 H3 L1 0 H-1 Z' }, bottle);
+    const order = [...gaps].sort((p, q) => p.when - q.when);
+    const firstAt = order[0].when - 0.35;
+    const lastAt = order.at(-1).when + FILL + 0.35;
+    onFrame((t) => {
+      gaps.forEach((g) => {
+        const p = clamp((t - g.when) / FILL, 0, 1);
+        g.strip.setAttribute('height', (g.gh * easeOutCubic(p)).toFixed(2));
+        const sag = p > 0 && p < 1 ? Math.sin(Math.PI * p) : 0;
+        g.drip.setAttribute('cy', (g.gy + g.gh * easeOutCubic(p)).toFixed(2));
+        g.drip.setAttribute('ry', (3.5 * sag).toFixed(2));
+      });
+      const shown = t >= firstAt && t <= lastAt;
+      bottle.style.opacity = shown ? String(clamp(Math.min((t - firstAt) / 0.2, (lastAt - t) / 0.2), 0, 1)) : '0';
+      if (!shown) return;
+      // Hop from gap to gap, arriving just before each fill begins.
+      let at = order[0];
+      let hop = 1;
+      for (let i = 0; i < order.length; i++) {
+        if (t >= order[i].when - 0.3) {
+          at = order[i];
+          const prev = order[i - 1];
+          hop = prev ? clamp((t - (at.when - 0.3)) / 0.28, 0, 1) : 1;
+          if (prev && hop < 1) {
+            const e = easeInOutCubic(hop);
+            const x = prev.tipX + (at.tipX - prev.tipX) * e;
+            const y = prev.tipY + (at.tipY - prev.tipY) * e - 18 * Math.sin(Math.PI * hop);
+            bottle.setAttribute('transform', `translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(20)`);
+            squeeze.setAttribute('transform', '');
+            return;
+          }
+        }
+      }
+      const dispensing = t >= at.when && t < at.when + FILL;
+      const squash = dispensing ? 1 - 0.18 * Math.sin(Math.PI * (t - at.when) / FILL) : 1;
+      bottle.setAttribute('transform', `translate(${at.tipX.toFixed(1)} ${at.tipY.toFixed(1)}) rotate(20)`);
+      squeeze.setAttribute('transform', `scale(${squash.toFixed(3)} 1)`);
     });
     notes.forEach((n) => note(node, n.text, { x: n.x, y: n.y, w: n.w, at: n.at, until, small: true, tone: 'tag' }));
     return node;
@@ -1100,9 +1231,16 @@
     const node = show(box(parent, 'rk-list', { x, y, w }), at, until, 'rise');
     el('div', 'rk-list-title', node, title);
     const tower = el('div', 'rk-list-tower', node);
+    const lowered = [];
     const base = el('div', 'rk-list-base rk-c-grey', tower);
     studs(base, 4, 'rk-studs rk-studs--plate');
     classAt(base, 'is-lit', footerAt);
+    // Its scaffold reaches down to the site's ground (stage y 466).
+    onFrame(() => {
+      if (base.style.getPropertyValue('--rk-ground-gap')) return;
+      const box = stageBox(base);
+      if (box) base.style.setProperty('--rk-ground-gap', `${Math.max(0, 466 - box.y - box.h).toFixed(0)}px`);
+    });
     items.forEach((item, i) => {
       const row = show(el('div', 'rk-list-row is-staged', node), i === 0 ? at : item.at,
         items[i + 1]?.at, 'fade');
@@ -1121,8 +1259,25 @@
       studs(brick, 2);
       brick.append(kit.icon(item.icon));
       brick.style.bottom = `${16 + i * 40}px`;
-      tween(brick, [{ opacity: 0, translate: '0 -60px' }, { opacity: 1, translate: '0 0' }], item.at, 0.45, EASE.back);
+      // The site crane lowers it on its hook from just under the jib,
+      // landing as the line lights (`lowered` tells the choreography where
+      // the hook is, so it can carry the brick).
+      const lowerFrom = item.at - 0.8;
+      const lands = item.at + 0.3;
+      let landing = null;
+      const drop = () => (landing ? Math.max(30, landing.y - 52) : 220);
+      const offset = (t) => drop() * (1 - easeInOutCubic(clamp((t - lowerFrom) / (lands - lowerFrom), 0, 1)));
+      onFrame((t) => {
+        if (!landing) {
+          const box = stageBox(brick);
+          if (box) landing = { x: box.x + box.w / 2, y: box.y - (parseFloat(brick.style.translate.split(' ')[1]) || 0) };
+        }
+        brick.style.opacity = t < lowerFrom ? '0' : String(clamp((t - lowerFrom) / 0.15, 0, 1));
+        brick.style.translate = `0 ${(-offset(t)).toFixed(1)}px`;
+      });
+      lowered.push({ lowerFrom, lands, pose: (t) => (landing ? { x: landing.x, y: landing.y - offset(t) - 10 } : null) });
     });
+    node.lowered = lowered;
     const foot = el('div', 'rk-list-footer', node);
     el('span', 'rk-list-footer-text', foot, footer);
     classAt(foot, 'is-lit', footerAt);
@@ -1148,7 +1303,7 @@
 
   window.ReuseKit = {
     SPREAD, show, classAt, textAt,
-    spread, group, layer, brickIcon, pkg, plate, crack, dust, strain, arrow, code, term, label, note, inkStamp, tick,
+    spread, group, layer, brickIcon, pkg, plate, crack, dust, strain, siteHook, stageBox, arrow, code, term, label, note, inkStamp, tick,
     shelf, users, bars, vision, wallGap, padColumn, timeline, padlock, appGrid, rocket, gauge,
     checkboxes, scale, checklist, quiz,
   };
