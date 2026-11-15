@@ -443,6 +443,24 @@ Three companion conventions from the July 2026 arm cleanup:
 - **No elbow joint lens.** The forearm's own base arc reads as the elbow crease. The old `arm-joint` radial-gradient lens read as a doll-joint ball and was removed.
 - **The deltoid overlap caps** (one per shoulder, after the tier groups) are filled with `url(#arm-suit-…)` so they extend the sleeve invisibly while masking the shoulder pivot. Don't give them their own gradient or rim stroke — that recreates the "balloon knot".
 
+## Optical clarity at small sizes
+
+Follow the [optical clarity review](../../../docs/hero-optical-clarity.md) when
+polishing small heroes. Prioritize the eye aperture/upper lid, brow silhouette,
+and mouth seam over secondary lower-lid, nose, ear, iris, and hair detail. Do
+not globally thicken every contour or use `crispEdges` to sharpen organic curves.
+
+Clear lenses must not veil the pupil, iris, or sclera with broad opaque tint or
+reflection. Keep glass highlights localized; compare with and without the lens
+across light and deep skin. Preserve intentionally tinted eyewear as its own choice.
+
+Check composited pixels and visual feature separation at the actual display size,
+including 1×/2× device scale. Raw token contrast and enlarged crops are insufficient.
+Review the same change in live song ensembles, student portraits, the full Gym,
+and customizer previews, with fitted traits, accessories, both themes, turn/blink
+extremes, and transitions. Keep shared corrections in their common owner and
+record which configurations were checked; do not claim exhaustive optical perfection.
+
 ## Small facial edges and reusable head turns
 
 At small sizes, use a few short, thin accents to preserve anatomy: the

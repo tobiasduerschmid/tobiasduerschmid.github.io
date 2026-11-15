@@ -2196,7 +2196,9 @@
       glassesFrame: glassesFrame,
       glassesFrameDark: glassesFrameDark,
       glassesMetal: metalFrame,
-      lensFill: darkSkin ? 'rgba(255,255,255,.2)' : 'rgba(255,255,255,.12)'
+      // Clear glass transmits the same eye contrast on every complexion.
+      // Peripheral reflections, rather than a white veil, describe its surface.
+      lensFill: 'rgba(255,255,255,.025)'
     };
   }
 
