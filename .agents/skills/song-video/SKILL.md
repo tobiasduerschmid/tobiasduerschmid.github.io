@@ -25,3 +25,21 @@ thumbnail its card shows an empty grey box, so before a song ships:
    (`docs/song-playlists.md`, step 2).
 4. Commit the WebP with the song. Re-export it whenever the scene's art
    changes.
+
+## Character anatomy and object handling
+
+When changing character art or motion, follow the required
+[hand, arm, sleeve, and contact review](../asset-creator/references/character/hand-arm-contact.md).
+Treat this as a release gate for every affected main and supporting character,
+including empty hands. Inventory the actual choreography, check both mirrored
+sides and extreme/interrupted poses, and inspect rendered contacts in context.
+Held objects need explicit grips and appropriate motion: cups remain upright,
+canes meet the floor, tools stay enclosed by fingers, and supported loads stay
+on the palm throughout travel. Do not independently animate an object and its
+hand and check only their final alignment. Fix shared causes, add behavioral
+regressions, and visually inspect the results before claiming completion.
+
+For hand revisions, inspect the enlarged silhouette before shading: use coherent
+palm/back views, no palm-side nails on extended fingers, and no intersecting
+finger tubes or internal overlap outlines. Verify wrist ink and shading joins.
+The contact solver must include the actual posed grip after wrist limits.

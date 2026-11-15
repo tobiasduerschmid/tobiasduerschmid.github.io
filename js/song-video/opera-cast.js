@@ -39,7 +39,7 @@
  * `places` where it stands (it walks there), `moves` what it does on which
  * sung word (MOVES), and `sings` the word intervals its mouth follows
  * (lipSync). Arms are two-bone limbs that reach for stage points; each hand
- * is built from its joints (figure-geometry.js), about three quarters as
+ * has a continuous, view-specific silhouette, about three quarters as
  * long as the forearm, in one view per shape, and turns at the wrist only
  * as far as a wrist can. Every pose is a pure function of song time; under
  * reduced motion the figures hold still between moves and each move snaps
@@ -51,7 +51,7 @@
 
   const { fx, onFrame, onDispose, progress, easeInOutCubic, hash01 } = window.Timeline;
   const { el, svg, place } = window.SongKit;
-  const { clamp, handPart, finger } = window.SongFigure;
+  const { clamp, handPart } = window.SongFigure;
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   let uid = 0;
 
@@ -87,6 +87,7 @@
   // A wrist turns this far each way (degrees, clockwise in the hand's
   // frame): bending towards the palm or the thumb is the positive side.
   const WRIST_RANGE = [-55, 65];
+  const ELBOW_FLEXION = 150;
   // The trousers foreshorten between their waist and hems when the knees give.
   const WAIST = 150;
   const HEMS = 286;
@@ -102,8 +103,11 @@
     const fore = Math.hypot(end[0] - ELBOW[0], end[1] - ELBOW[1]);
     const foreRest = degrees(Math.atan2(end[1] - ELBOW[1], end[0] - ELBOW[0]));
     const dx = x - SHOULDER[0], dy = y - SHOULDER[1];
-    const distance = Math.hypot(dx, dy) || 1;
-    const d = clamp(distance, Math.abs(upper - fore) + 0.5, upper + fore - 0.5);
+    const distance = Math.hypot(dx, dy);
+    // A target close to the shoulder must not fold the forearm through the
+    // upper arm. Keep a soft elbow even at either end of the reach envelope.
+    const closest = Math.sqrt(upper ** 2 + fore ** 2 + 2 * upper * fore * Math.cos(radians(ELBOW_FLEXION)));
+    const d = clamp(distance, closest, upper + fore - 0.5);
     const toward = Math.atan2(dy, dx);
     const bend = Math.acos(clamp((upper ** 2 + d ** 2 - fore ** 2) / (2 * upper * d), -1, 1));
     const elbows = [toward + bend, toward - bend].map((angle) => ({ angle, ex: SHOULDER[0] + upper * Math.cos(angle), ey: SHOULDER[1] + upper * Math.sin(angle) }));
@@ -111,8 +115,7 @@
     const score = (e) => e.ey - 3 * Math.max(0, SHOULDER[0] - e.ex);
     elbows.sort((a, b) => score(b) - score(a));
     const { angle, ex, ey } = elbows[0];
-    const k = Math.min(1, d / distance);
-    const foreDir = Math.atan2(SHOULDER[1] + dy * k - ey, SHOULDER[0] + dx * k - ex);
+    const foreDir = Math.atan2(SHOULDER[1] + Math.sin(toward) * d - ey, SHOULDER[0] + Math.cos(toward) * d - ex);
     return [raise(UPPER_REST, degrees(angle)), raise(foreRest, degrees(foreDir))];
   }
 
@@ -122,219 +125,103 @@
   const handToward = ([, fore], dir) => aroundZero(dir - 90 + fore);
 
   // ------------------------------------------------------------------
-  // Hands, each in its own frame: the wrist at (0, 0) and the fingers down
-  // (+y), for the picture's right arm (the left arm's mirrors it). About 26
-  // long from the wrist to the middle finger's tip, three quarters of the
-  // forearm, with the knuckles half way. Views:
-  //   thumb side (rest, point, fist, thumb, pinch): the back of the hand
-  //     towards +x, the palm towards −x, the thumb in front;
-  //   palm (open, spread): the palm to the viewer, the thumb towards +x
-  //     (outwards while the arm hangs, inwards once it is raised);
-  //   back (flat, grip): the back of the hand to the viewer, the thumb
-  //     towards −x, the nails showing.
-  // Each shape: parts behind what it holds, parts in front, and where a
-  // held thing goes (`hold`: point, angle of its long axis).
+  // Hands are authored as continuous silhouettes, wrist at (0, 0),
+  // fingers along +y. Separate swept finger tubes cannot describe folded
+  // fingers: they self-intersect and leave seams where the palm covers them.
+  // Palm views have the thumb/index on +x; dorsal views on −x. Mirror the
+  // entire arm, never individual digits. Surface marks belong to that view:
+  // an extended palm-facing finger has flexion creases, never a visible nail.
   // ------------------------------------------------------------------
 
-  const fingerDetail = (knuckles, creases, nail) => [
-    ...(knuckles ? [['oc-knuckle', knuckles]] : []),
-    ...(creases ? [['oc-crease', creases]] : []),
-    ...(nail ? [['oc-nail', nail]] : []),
-  ];
+  /** One silhouette, an open wrist boundary, and view-specific interior ink.
+   * The fill overlaps the forearm; the contour has no transverse wrist line. */
+  function handSilhouette(outline, details = []) {
+    return handPart(`${outline} Z`, outline, details);
+  }
 
-  // The palm of a hand seen from its thumb side, from the wrist to the
-  // knuckles, full on the palm side where the thumb's mount is.
-  const SIDE_PALM = handPart(
-    'M-3.8 -0.6 H3.8 C4.1 1.6 3.9 3.6 3.8 5.4 C3.7 7.6 4 9.6 4.4 11.6 C4.6 12.8 4.4 14 3.6 14.8 C2.4 15.8 0.6 16 -1 15.6 C-2.6 15.2 -3.8 14.2 -4.6 12.8 C-5.4 11 -5.6 7.6 -5.2 4.8 C-4.8 2.6 -4.2 1 -3.8 -0.6 Z',
-    'M3.8 -0.6 C4.1 1.6 3.9 3.6 3.8 5.4 C3.7 7.6 4 9.6 4.4 11.6 M-5.2 4.8 C-4.8 2.6 -4.2 1 -3.8 -0.6',
-    [
-      ['oc-hand-shade', 'M3.8 -0.6 C4.1 1.6 3.9 3.6 3.8 5.4 C3.7 7.6 4 9.6 4.4 11.6 C3.6 11.4 3 10.4 2.9 8.8 C2.7 6.6 2.8 4.2 3 2.2 C3.1 1.2 3.2 0.3 3.3 -0.6 Z'],
-      ['oc-tendon', 'M2.4 1.6 C2.2 4.6 2.4 7.6 2.9 10.2'],
-    ],
-  );
-  // A nail on a finger seen from the side, along its back near the tip.
-  const sideNail = ([x, y], angle) => `M${x} ${y} m-0.5 -1 c0.5 -0.2 1 0 1.1 0.6 c0.1 0.7 -0.1 1.3 -0.6 1.5 c-0.5 0 -0.8 -0.6 -0.8 -1.2 c0 -0.4 0.1 -0.7 0.3 -0.9 z`;
-  const sideFinger = (joints, widths, nail) => finger(joints, widths, 1, nail ? [['oc-nail', nail]] : []);
-  const INDEX_W = [1.45, 1.45, 1.32, 1.18, 1.05];
-  const MIDDLE_W = [1.38, 1.38, 1.26, 1.12, 1.02];
-  const THUMB_W = [2.1, 1.8, 1.55, 1.38];
-  const thumbNail = (x, y) => `M${x - 0.6} ${y - 0.9} C${x - 0.1} ${y - 1.2} ${x + 0.6} ${y - 0.8} ${x + 0.6} ${y} C${x + 0.6} ${y + 0.8} ${x + 0.1} ${y + 1.2} ${x - 0.4} ${y + 1} C${x - 0.8} ${y + 0.6} ${x - 0.9} ${y - 0.4} ${x - 0.6} ${y - 0.9} Z`;
-  const sideThumb = (joints, nailAt, knuckle) => finger(joints, THUMB_W, -1, [
-    ['oc-knuckle', knuckle],
-    ['oc-nail', thumbNail(...nailAt)],
-  ], [1, 3]);
+  const palmCreases = ['oc-palm-crease',
+    'M-3.7 7.5 C-1.5 7.8 0.4 7.2 1.6 6.3 M-3.8 10.1 Q-1 10.8 1.2 9.8'];
+  const foldedThumb = ['oc-crease',
+    'M5.8 6.3 C5.5 8.2 3.6 9.8 1.2 11 C0.3 11.5 0.5 12.8 1.6 13 C3.1 13.2 4.5 12.4 5.3 11.7 M3.6 9.8 Q4.4 10.2 4.8 10.9'];
+  const foldedFingers = ['oc-crease',
+    'M-3.2 13.7 Q-3 12.2 -3.2 11.6 M-0.8 15 Q-0.5 13.4 -0.8 12.6 M1.8 15.5 Q2 14.2 1.8 13.5'];
+  const fistContour = 'M4.4 0 C4.6 2.8 6.6 4.8 6.9 7.4 C7.2 9.3 6.7 11.4 5.5 12.6 L5.4 14.4 C5.4 16.1 4 16.8 2.9 15.8 C2.4 17.4 0.5 17.6 -0.5 16 C-1.3 17 -2.9 16.4 -3.4 14.9 C-4.5 15.4 -5.6 14.3 -5.7 12.8 C-6.1 8.3 -5.3 3.8 -4.4 0';
+  const fist = handSilhouette(fistContour, [foldedFingers, foldedThumb, palmCreases]);
 
   const HANDS = {
-    // Hanging easy, the back of the hand a little towards the viewer: the
-    // fingers together and a little curled, the thumb along the index
-    // finger.
-    rest: {
-      behind: [],
-      front: [
-        handPart(
-          'M-4.4 -0.6 H4.4 C4.7 1 5 2.6 5.2 4.6 C5.6 7.4 5.6 10.6 5.2 12.8 L-5.4 12.8 C-6.2 11.6 -6.6 9.6 -6.4 7.6 C-6 4.8 -5.2 2.2 -4.4 -0.6 Z',
-          'M-4.4 -0.6 C-5.2 2.2 -6 4.8 -6.4 7.6 M5.2 4.6 C5 2.6 4.7 1 4.4 -0.6 M5.2 4.6 C5.6 7.4 5.6 10.6 5.2 12.8',
-          [
-            ['oc-hand-shade', 'M3.4 -0.6 H4.4 C4.7 1 5 2.6 5.2 4.6 C5.6 7.4 5.6 10.6 5.2 12.8 L3.6 12.8 C3.9 10 3.9 6.4 3.6 3.4 Z'],
-            ['oc-tendon', 'M-2.4 1.8 C-2.8 4.8 -3.2 8 -3.6 10.6 M-0.7 2 C-0.9 5 -1.1 8.2 -1.2 10.8 M1 2 C1.2 5 1.3 8.2 1.4 10.8 M2.6 1.8 C3 4.8 3.3 8 3.6 10.6'],
-            ['oc-knuckle', 'M-4.4 11.6 C-3.6 10.8 -2.6 10.8 -2 11.6 M-1.7 11.8 C-0.9 11 0.2 11 0.8 11.8 M1 11.8 C1.8 11 2.8 11 3.4 11.8 M3.5 11.6 C4.1 10.9 4.8 11 5.1 11.6'],
-          ],
-        ),
-        finger([[3.8, 10.4], [3.9, 12.4], [3.9, 16.4], [3.5, 18.8], [2.9, 20.6]], [1.15, 1.15, 1.05, 0.95, 0.88], -1, [['oc-crease', 'M3 16.4 H4.8']]),
-        finger([[1.4, 10.6], [1.4, 12.8], [1.3, 17.4], [0.8, 20.2], [0.1, 22.4]], [1.3, 1.3, 1.18, 1.06, 0.98], -1, [['oc-crease', 'M0.3 17.4 H2.4']]),
-        finger([[-1.2, 10.6], [-1.2, 12.8], [-1.4, 18], [-2, 21], [-2.8, 23.2]], [1.35, 1.35, 1.22, 1.1, 1], -1, [['oc-crease', 'M-2.5 18 H-0.3']]),
-        finger([[-3.8, 10.4], [-3.8, 12.6], [-4.2, 17.2], [-4.8, 19.8], [-5.6, 21.8]], [1.3, 1.3, 1.18, 1.06, 0.98], -1, [['oc-crease', 'M-5.3 17.2 H-3.1']]),
-        finger([[-3.4, 2.6], [-5.6, 7.2], [-6.6, 11.2], [-6.6, 14.8]], [2, 1.7, 1.45, 1.3], 1, [['oc-nail', 'M-7.2 12.8 C-7.1 12.3 -6.6 12.1 -6.2 12.3 C-5.8 12.5 -5.8 13.1 -6 13.6 C-6.2 14.1 -6.7 14.3 -7.1 14.1 C-7.4 13.8 -7.4 13.2 -7.2 12.8 Z']], [2, 2]),
-      ],
-      hold: [-1, 18, 90],
-    },
-    // Pointing: the index finger straight on along the hand, the others
-    // curled into the palm under the thumb.
     point: {
-      behind: [
-        sideFinger([[2.4, 11.8], [2.2, 13.6], [-0.4, 18], [-3, 17.6], [-3.6, 15.2]], MIDDLE_W),
-        SIDE_PALM,
-        sideFinger([[3, 10], [3, 12.6], [3, 18.2], [2.95, 21.8], [2.9, 25.2]], INDEX_W, 'M3.95 23.2 C3.95 24.2 3.6 25 3 25.3 C3.25 24.6 3.4 23.9 3.45 23.1 Z'),
-      ],
-      front: [sideThumb([[-2.8, 2.8], [-5.2, 8.8], [-4.6, 13], [-2.2, 15.8]], [-3, 14.8], 'M-6.9 7.2 C-7.2 8.4 -7.2 9.6 -7 10.8')],
-      tip: [2.9, 26.3],
+      behind: [], front: [handSilhouette(
+        'M4.4 0 C4.8 2.8 6.7 4.7 6.9 7.2 C7.1 9 6.1 10.7 5.6 12.2 C5.3 15.8 5.6 20.7 5.3 24.5 C5.2 26.3 2.7 26.3 2.6 24.4 L2.5 15.1 C2.1 16.9 0.3 17.1 -0.6 15.2 C-1.2 16.3 -2.8 15.9 -3.3 14.3 C-4.5 15 -5.6 13.9 -5.7 12.4 C-6 8 -5.3 3.6 -4.4 0',
+        [palmCreases, foldedThumb,
+          ['oc-crease', 'M3.2 18.1 Q4 17.8 4.8 18.1 M3.2 22 Q4 21.7 4.7 22 M-3.1 13.6 L-3.2 11.8 M-0.6 14.7 L-0.8 12.8']],
+      )], tip: [4, 25.8],
     },
-    // A fist from the thumb side, the thumb wrapped over the curled fingers.
-    fist: {
-      behind: [
-        SIDE_PALM,
-        sideFinger([[3, 10], [3, 12.8], [2.6, 18.2], [-1.2, 19.6], [-3.2, 17]], INDEX_W),
-      ],
-      front: [sideThumb([[-2.8, 2.8], [-5.4, 8.6], [-4.6, 13.4], [-1.4, 16.4]], [-2.2, 15.6], 'M-7.1 7 C-7.4 8.2 -7.4 9.4 -7.2 10.6')],
-      hold: [-0.4, 15.6, 0],
-    },
-    // Thumbs up: a compact fist from the thumb side, the thumb straight
-    // on along the hand, well past the curled fingers.
+    fist: { behind: [], front: [fist], hold: [0, 11, 0] },
     thumb: {
-      behind: [
-        sideFinger([[2.4, 11.8], [2.4, 13.6], [1.2, 18.4], [-2, 19.4], [-3.4, 16.4]], MIDDLE_W),
-        SIDE_PALM,
-        sideFinger([[3, 10], [3, 12.8], [2.4, 17.4], [-1.4, 18.2], [-2.8, 15.2]], INDEX_W),
-      ],
-      front: [finger([[-3, 3.6], [-4.6, 11.4], [-4.8, 20.4], [-4.4, 28]], [2.25, 2, 1.75, 1.55], -1, [
-        ['oc-knuckle', 'M-6.9 10 C-7.2 11.4 -7.2 13 -7 14.4'],
-        ['oc-crease', 'M-6.6 20.4 C-5.7 20.9 -4.4 20.9 -3.3 20.4'],
-        ['oc-nail', thumbNail(-4.6, 26.2)],
-      ], [1, 3])],
+      behind: [], front: [handSilhouette(
+        'M4.4 0 C5 2.6 6.8 4.2 7.3 7 C7.8 10.3 8.1 14.6 7.9 19.1 C7.8 21.2 5.4 21.6 5 19.3 L4.1 12.3 C4.2 14 4.4 15.4 3.6 16 C2.8 16.7 2 16.4 1.5 15.8 C0.8 17.3 -0.9 16.9 -1.6 15.5 C-2.5 16.2 -3.7 15.5 -4 14.2 C-4.9 14.5 -5.5 13.8 -5.6 12.7 C-6 8.1 -5.3 3.5 -4.4 0',
+        [palmCreases, ['oc-crease', 'M5.2 14.8 Q6.2 14.3 7.3 14.5 M4.1 12.3 C2.7 11.5 0.2 11.2 -3.9 11.7 M1.5 15.8 L1.4 13.7 M-1.6 15.5 L-1.7 13.5 M-4 14.2 L-4.1 12.7']],
+      )],
     },
-    // A pinch: the thumb's pad on the index finger's, the others curled
-    // behind (a chef's kiss, or holding a card, a brush, or a pen).
     pinch: {
-      behind: [
-        sideFinger([[2.4, 11.8], [2.2, 13.6], [0.2, 18.8], [-2.8, 19.4], [-3.8, 17]], MIDDLE_W),
-        SIDE_PALM,
-        sideFinger([[3, 10], [3, 12.6], [1.4, 18], [-1.6, 20.4], [-4, 20.8]], INDEX_W, 'M-2.6 21.4 C-3.2 21.8 -3.9 21.9 -4.5 21.7 C-3.9 21.4 -3.4 21.1 -3 20.7 Z'),
-      ],
-      front: [sideThumb([[-2.8, 2.8], [-5.4, 8.8], [-5.8, 13.6], [-4.8, 19.4]], [-5.2, 17.8], 'M-7.1 7.4 C-7.4 8.6 -7.4 9.8 -7.2 11')],
-      hold: [-4.4, 20.4, 120],
+      behind: [], front: [handSilhouette(
+        'M4.4 0 C5 2.7 7.2 4.9 8.1 7.5 L10 11.8 C10.7 13.5 10 15.4 8.4 16.1 C6.9 16.7 5.4 15.7 4.3 14.6 L2.8 13.1 C2.6 15 1.2 16.5 -0.2 15.5 C-1.1 16.2 -2.6 15.8 -3.2 14.3 C-4.4 14.9 -5.5 13.9 -5.7 12.4 C-6 8 -5.3 3.5 -4.4 0',
+        [palmCreases, ['oc-crease', 'M4.5 6.7 C4.1 8.1 5.9 10.6 8.6 12.7 M8.6 12.7 C6.6 13.7 5.5 12.3 4.2 11 M-3 13.6 L-3.1 11.7 M-0.3 14.3 L-0.5 12.6']],
+      )], hold: [8.6, 12.7, 60],
     },
-    // The palm to the viewer, the fingers together and straight, the
-    // thumb out to the side: stop, presenting, reassuring.
-    open: {
-      behind: [],
-      front: [
-        handPart(
-          'M-4.4 -0.6 H4.4 C5.4 2.2 6.6 4.8 7 7.6 C7.2 9.6 6.6 11.6 5.6 12.8 L-5.2 12.8 C-5.6 10.6 -5.6 7.4 -5.2 4.6 C-5 2.6 -4.7 1 -4.4 -0.6 Z',
-          'M4.4 -0.6 C5.4 2.2 6.6 4.8 7 7.6 M-5.2 4.6 C-5 2.6 -4.7 1 -4.4 -0.6 M-5.2 4.6 C-5.6 7.4 -5.6 10.6 -5.2 12.8',
-          [
-            ['oc-palm-mount', 'M1.4 1.6 C3.6 2.6 5.4 4.8 5.8 7.4 C5.9 8.8 5.4 9.8 4.6 10.2 C3.4 8.2 2.2 5.4 1.4 1.6 Z'],
-            ['oc-palm-crease', 'M-4.4 6.6 C-1.6 7 1.4 6 3.4 4 M-4.2 9.4 C-1.4 9.8 1.6 9.4 4.2 8.4 M1.8 2.4 C1.4 5.2 1.8 8 3 10.4'],
-          ],
-        ),
-        finger([[-3.8, 10.4], [-3.9, 12.4], [-4.3, 16.6], [-4.6, 19.1], [-4.8, 21.2]], [1.15, 1.15, 1.05, 0.95, 0.88], 1, fingerDetail(null, 'M-5.3 16.6 H-3.3 M-5.5 19.1 H-3.7')),
-        finger([[-1.4, 10.6], [-1.4, 12.8], [-1.5, 17.6], [-1.6, 20.6], [-1.7, 23.2]], [1.3, 1.3, 1.18, 1.06, 0.98], 1, fingerDetail(null, 'M-2.6 17.6 H-0.4 M-2.6 20.6 H-0.6')),
-        finger([[1.2, 10.6], [1.2, 12.8], [1.2, 18.2], [1.2, 21.6], [1.2, 24.4]], [1.35, 1.35, 1.22, 1.1, 1], 1, fingerDetail(null, 'M0.1 18.2 H2.3 M0.1 21.6 H2.3')),
-        finger([[3.8, 10.4], [3.8, 12.6], [4.2, 17.4], [4.5, 20.4], [4.7, 22.8]], [1.3, 1.3, 1.18, 1.06, 0.98], 1, fingerDetail(null, 'M3.1 17.4 H5.3 M3.4 20.4 H5.6')),
-        finger([[3.6, 2.6], [6.2, 6.6], [8.6, 10], [10, 13.4]], [2, 1.7, 1.45, 1.3], -1, fingerDetail(null, 'M7.4 8.4 C8 9 8.6 9.2 9.4 9.2'), [2, 2]),
-      ],
-    },
-    // The palm to the viewer, the fingers spread wide (jazz hands, despair).
-    spread: {
-      behind: [],
-      front: [
-        handPart(
-          'M-4.4 -0.6 H4.4 C5.4 2.2 6.6 4.8 7 7.6 C7.2 9.6 6.6 11.6 5.6 12.8 L-5.2 12.8 C-5.6 10.6 -5.6 7.4 -5.2 4.6 C-5 2.6 -4.7 1 -4.4 -0.6 Z',
-          'M4.4 -0.6 C5.4 2.2 6.6 4.8 7 7.6 M-5.2 4.6 C-5 2.6 -4.7 1 -4.4 -0.6 M-5.2 4.6 C-5.6 7.4 -5.6 10.6 -5.2 12.8',
-          [
-            ['oc-palm-mount', 'M1.4 1.6 C3.6 2.6 5.4 4.8 5.8 7.4 C5.9 8.8 5.4 9.8 4.6 10.2 C3.4 8.2 2.2 5.4 1.4 1.6 Z'],
-            ['oc-palm-crease', 'M-4.4 6.6 C-1.6 7 1.4 6 3.4 4 M-4.2 9.4 C-1.4 9.8 1.6 9.4 4.2 8.4'],
-          ],
-        ),
-        finger([[-3.8, 10.4], [-4.2, 12.2], [-6.2, 15.8], [-7.4, 18], [-8.4, 19.8]], [1.15, 1.15, 1.05, 0.95, 0.88], 1),
-        finger([[-1.4, 10.6], [-1.6, 12.8], [-2.8, 17.6], [-3.4, 20.6], [-3.9, 23]], [1.3, 1.3, 1.18, 1.06, 0.98], 1),
-        finger([[1.2, 10.6], [1.3, 12.8], [1.6, 18.2], [1.8, 21.6], [1.9, 24.4]], [1.35, 1.35, 1.22, 1.1, 1], 1),
-        finger([[3.8, 10.4], [4.2, 12.6], [5.8, 17], [6.8, 19.8], [7.6, 22]], [1.3, 1.3, 1.18, 1.06, 0.98], 1),
-        finger([[3.6, 2.6], [6.6, 5.8], [9.6, 8], [11.8, 10]], [2, 1.7, 1.45, 1.3], -1, null, [2, 2]),
-      ],
-    },
-    // The back of the hand to the viewer, the fingers together: on the
-    // chest, over the eyes, patting a shoulder.
-    flat: {
-      behind: [],
-      front: [
-        handPart(
-          'M-4.4 -0.6 H4.4 C4.7 1 5 2.6 5.2 4.6 C5.6 7.4 5.6 10.6 5.2 12.8 L-5.6 12.8 C-6.6 11.6 -7.2 9.6 -7 7.6 C-6.6 4.8 -5.4 2.2 -4.4 -0.6 Z',
-          'M-4.4 -0.6 C-5.4 2.2 -6.6 4.8 -7 7.6 M5.2 4.6 C5 2.6 4.7 1 4.4 -0.6 M5.2 4.6 C5.6 7.4 5.6 10.6 5.2 12.8',
-          [
-            ['oc-hand-shade', 'M3.4 -0.6 H4.4 C4.7 1 5 2.6 5.2 4.6 C5.6 7.4 5.6 10.6 5.2 12.8 L3.6 12.8 C3.9 10 3.9 6.4 3.6 3.4 Z'],
-            ['oc-tendon', 'M-2.6 1.6 C-3 4.6 -3.4 8 -3.8 10.6 M-0.8 1.8 C-1 5 -1.2 8.2 -1.3 10.8 M0.9 1.8 C1.1 5 1.3 8.2 1.4 10.8 M2.6 1.6 C3 4.6 3.4 8 3.7 10.6'],
-            ['oc-knuckle', 'M-4.6 11.6 C-3.8 10.8 -2.8 10.8 -2.2 11.6 M-1.9 11.8 C-1.1 11 0 11 0.6 11.8 M0.8 11.8 C1.6 11 2.6 11 3.2 11.8 M3.3 11.6 C4 10.9 4.8 11 5.2 11.6'],
-          ],
-        ),
-        finger([[3.8, 10.4], [3.9, 12.4], [4.3, 16.6], [4.6, 19.1], [4.8, 21.2]], [1.15, 1.15, 1.05, 0.95, 0.88], -1, fingerDetail(null, null, 'M4.1 19.9 C4.2 19.4 4.6 19.2 5 19.3 C5.4 19.4 5.5 19.9 5.5 20.4 C5.4 20.9 5 21.2 4.6 21.1 C4.2 20.9 4.1 20.4 4.1 19.9 Z')),
-        finger([[1.4, 10.6], [1.4, 12.8], [1.5, 17.6], [1.6, 20.6], [1.7, 23.2]], [1.3, 1.3, 1.18, 1.06, 0.98], -1, fingerDetail(null, null, 'M0.9 21.6 C1 21.1 1.4 20.9 1.8 21 C2.2 21.1 2.4 21.6 2.4 22.2 C2.3 22.8 1.9 23.1 1.5 23 C1.1 22.8 0.9 22.2 0.9 21.6 Z')),
-        finger([[-1.2, 10.6], [-1.2, 12.8], [-1.2, 18.2], [-1.2, 21.6], [-1.2, 24.4]], [1.35, 1.35, 1.22, 1.1, 1], -1, fingerDetail(null, null, 'M-1.9 22.8 C-1.8 22.3 -1.4 22.1 -1 22.2 C-0.6 22.3 -0.4 22.8 -0.4 23.4 C-0.5 24 -0.9 24.3 -1.3 24.2 C-1.7 24 -1.9 23.4 -1.9 22.8 Z')),
-        finger([[-3.8, 10.4], [-3.8, 12.6], [-4.2, 17.4], [-4.5, 20.4], [-4.7, 22.8]], [1.3, 1.3, 1.18, 1.06, 0.98], -1, fingerDetail(null, null, 'M-5.4 21.2 C-5.3 20.7 -4.9 20.5 -4.5 20.6 C-4.1 20.7 -3.9 21.2 -3.9 21.8 C-4 22.4 -4.4 22.7 -4.8 22.6 C-5.2 22.4 -5.4 21.8 -5.4 21.2 Z')),
-        finger([[-3.6, 2.6], [-6.2, 6.6], [-8.4, 10.2], [-9.4, 13.6]], [2, 1.7, 1.45, 1.3], 1, fingerDetail(null, null, 'M-9.9 11.9 C-9.7 11.4 -9.2 11.3 -8.8 11.5 C-8.4 11.7 -8.4 12.3 -8.6 12.8 C-8.8 13.3 -9.3 13.5 -9.7 13.3 C-10 13 -10.1 12.4 -9.9 11.9 Z'), [2, 2]),
-      ],
-    },
-    // A fist from its back round something held across behind the fingers
-    // (a handle, a mug's handle, a rolled thing), the thumb wrapped round
-    // the near side.
-    grip: {
-      behind: [],
-      front: [
-        handPart(
-          'M-4.4 -0.6 H4.4 C4.8 1.6 5.4 4.6 5.8 7.6 C6.2 9.6 6.4 11 6.3 12.2 L6.3 13.6 L-6 13.6 C-6.1 12.2 -6 10.4 -5.6 8.4 C-5.2 6 -4.8 3.2 -4.4 -0.6 Z',
-          'M4.4 -0.6 C4.8 1.6 5.4 4.6 5.8 7.6 C6.2 9.6 6.4 11 6.3 12.2 M-5 4.8 C-4.7 3 -4.5 1.4 -4.4 -0.6',
-          [
-            ['oc-hand-shade', 'M4.4 -0.6 C4.8 1.6 5.4 4.6 5.8 7.6 C6.2 9.6 6.4 11 6.3 12.2 C5.7 12.4 5.1 12 4.8 11.2 C4.3 8.8 3.9 5.6 3.7 3 C3.6 1.6 3.6 0.4 3.7 -0.6 Z'],
-            ['oc-tendon', 'M-2 1.4 C-2.6 5 -3.2 8.6 -3.8 11.4 M-0.4 1.6 C-0.6 5.4 -1 9 -1.2 12 M1.2 1.6 C1.4 5.2 1.4 8.8 1.4 11.8 M2.8 1.4 C3.2 4.8 3.6 8 4 10.8'],
-          ],
-        ),
-        finger([[-2.6, 2.2], [-6.4, 7.6], [-7.6, 12.2], [-6.2, 15.8]], [2, 1.75, 1.55, 1.38], -1, fingerDetail(
-          'M-8.1 6.6 C-8.5 7.6 -8.6 8.6 -8.5 9.6', null,
-          'M-8 13.6 C-8.1 14.5 -7.8 15.6 -7.2 16 C-6.8 15.6 -6.7 14.6 -6.9 13.8 C-7.2 13.4 -7.7 13.4 -8 13.6 Z',
-        ), [1, 4]),
-        handPart('M3.2 11.4 C3.3 13.4 3.3 15.2 3.5 16.4 C3.7 17.3 4.4 17.6 5.2 17.3 C5.8 17 6 16.1 6 15.1 C6 13.7 5.9 12.4 5.75 11.2 Z',
-          'M3.2 12.6 C3.3 13.4 3.3 15.2 3.5 16.4 C3.7 17.3 4.4 17.6 5.2 17.3 C5.8 17 6 16.1 6 15.1 C6 13.7 5.9 12.4 5.75 11.2',
-          [['oc-knuckle', 'M3.5 12.4 C4 11.7 5 11.6 5.6 12.2']]),
-        handPart('M0.4 12 C0.3 14.2 0.4 16.4 0.6 17.8 C0.8 18.7 1.6 19 2.3 18.8 C2.9 18.6 3.2 17.9 3.2 16.8 C3.2 15 3.1 13.4 3.05 12 Z',
-          'M0.4 13 C0.3 14.2 0.4 16.4 0.6 17.8 C0.8 18.7 1.6 19 2.3 18.8 C2.9 18.6 3.2 17.9 3.2 16.8 C3.2 15 3.1 13.4 3.05 13',
-          [['oc-knuckle', 'M0.6 13 C1.2 12.3 2.2 12.3 2.8 13']]),
-        handPart('M-2.6 12.6 C-2.7 14.8 -2.6 17 -2.4 18.4 C-2.2 19.3 -1.4 19.6 -0.7 19.4 C-0.1 19.2 0.3 18.5 0.3 17.4 C0.3 15.6 0.3 14 0.3 12.6 Z',
-          'M-2.6 13.4 C-2.7 14.8 -2.6 17 -2.4 18.4 C-2.2 19.3 -1.4 19.6 -0.7 19.4 C-0.1 19.2 0.3 18.5 0.3 17.4 C0.3 15.6 0.3 14 0.3 13.4',
-          [['oc-knuckle', 'M-2.3 13.5 C-1.7 12.8 -0.6 12.8 -0.1 13.5']]),
-        handPart('M-5.6 12 C-5.7 14 -5.7 16 -5.4 17.4 C-5.2 18.3 -4.4 18.6 -3.7 18.4 C-3.1 18.2 -2.7 17.5 -2.6 16.4 C-2.6 14.8 -2.6 13.4 -2.6 12 Z',
-          'M-5.6 12 C-5.7 14 -5.7 16 -5.4 17.4 C-5.2 18.3 -4.4 18.6 -3.7 18.4 C-3.1 18.2 -2.7 17.5 -2.6 16.4 C-2.6 14.8 -2.6 13.4 -2.6 12.8',
-          [['oc-knuckle', 'M-5.2 12.8 C-4.6 12.1 -3.6 12.1 -3 12.8']]),
-      ],
-      hold: [0.2, 15.4, 0],
-      heldBehind: true,
-    },
+    // The thumb crosses the curled index, with the shaft behind the fingers.
+    grip: { behind: [], front: [fist], hold: [0, 11, 0], heldBehind: true },
   };
 
-  /** Draws a hand's parts into parent, each part's ink under its skin and then its details. */
+  /** Open fingers share one outer contour and properly formed web spaces.
+   * Back views are the mirrored anatomy, with dorsal marks instead of palm
+   * creases. This is an authored view change, not an isolated thumb flip. */
+  function extendedHand({ spread = false, back = false, relaxed = false } = {}) {
+    const contour = relaxed
+      ? 'M4.4 0 C4.8 2.5 6 4.4 6.5 7.1 L7.1 13.6 C7.2 15.4 5.1 15.9 4.7 14.1 L4.1 10.8 L5.2 20.3 C5.4 22.2 3.2 22.7 2.9 20.8 L1.9 14.1 L1.9 22.5 C1.9 24.6 -0.5 24.7 -0.6 22.6 L-0.7 14.5 L-1.2 21.8 C-1.3 23.8 -3.5 23.5 -3.5 21.6 L-3.1 14 L-4 19.5 C-4.3 21.3 -6.4 20.9 -6.2 19.1 L-5.6 11.6 C-5.6 7.7 -5.2 3.5 -4.4 0'
+      : spread
+      ? 'M4.4 0 C4.8 2.6 6.2 4.7 8.1 6.4 L12.3 9 C14 10.1 12.6 12.5 11 11.5 L6.7 9.1 Q5.6 8.4 5.7 10.1 L8.6 20.9 C9.1 23.1 6.8 23.9 6.1 21.8 L3.1 13.8 Q2.7 12.7 2.7 14 L3 23.8 C3 26 0.5 26.1 0.4 23.9 L-0.1 14.1 Q-0.3 13 -0.7 14.1 L-2.5 22.8 C-2.9 24.9 -5.2 24.3 -4.8 22.2 L-3.2 13.7 Q-3 12.7 -3.6 13.5 L-7.1 19.7 C-8.2 21.5 -10.1 20.1 -9.2 18.5 L-5.6 11.9 C-4.6 9.1 -5.2 4 -4.4 0'
+      : 'M4.4 0 C4.8 2.6 6.1 4.7 7.5 6.8 L10.6 12 C11.5 13.6 9.5 15 8.5 13.5 L6.3 10.4 Q5.1 9 5.1 10.8 L5.9 22.1 C6 24.1 3.8 24.3 3.6 22.3 L2.7 14 Q2.5 13.3 2.4 14 L2.5 24.1 C2.5 26.2 0 26.2 0 24.1 L-0.2 14.3 Q-0.3 13.5 -0.5 14.3 L-0.9 23 C-1 25 -3.3 24.8 -3.3 22.8 L-3 13.8 Q-3.1 13 -3.3 13.8 L-4.1 20.5 C-4.4 22.3 -6.5 21.9 -6.3 20.1 L-5.6 11.9 C-5.5 8.1 -5.3 3.6 -4.4 0';
+    const details = relaxed ? [['oc-crease', 'M-4.7 16 L-3.7 16.2 M-2.8 17 L-1.5 17.1 M0 17.5 L1.3 17.5 M3.1 16.7 L4.1 16.5']] : back ? [
+      ['oc-tendon', 'M-2.5 2.6 Q-3 6.6 -3.6 10.4 M-0.8 2.8 L-1.2 10.9 M1 2.8 L1.2 10.9'],
+      ['oc-crease', 'M-4.9 16.3 L-3.8 16.4 M-2.6 17.5 L-1.4 17.5 M0.6 18 L1.9 18 M4.1 17.3 L5.2 17.2'],
+      ['oc-nail', 'M-5.7 19.8 Q-5 19.3 -4.5 19.9 L-4.6 20.8 Q-5.3 21.3 -5.8 20.7 Z M-2.7 22.3 Q-2 21.8 -1.4 22.4 L-1.5 23.3 Q-2.2 23.8 -2.7 23.2 Z M0.6 23.3 Q1.2 22.8 1.9 23.3 L1.9 24.3 Q1.2 24.8 0.6 24.3 Z M4.1 21.6 Q4.7 21 5.3 21.5 L5.4 22.4 Q4.8 22.9 4.2 22.5 Z'],
+    ] : [palmCreases, ['oc-crease', spread
+      ? 'M-7 16.4 L-6 17 M-4.2 18 L-3 18.3 M0.5 18.4 L2 18.4 M5.2 17.7 L6.5 17.3 M9.1 9.2 L9.8 8.2'
+      : 'M-5.1 16.3 L-4.1 16.4 M-2.7 17.5 L-1.4 17.5 M0.6 18 L1.9 18 M4 17.3 L5.2 17.2 M7.8 9.7 L8.8 9.1']];
+    const part = handSilhouette(contour, details);
+    // Reflection is baked into a group, retaining one continuous silhouette.
+    part.transform = back ? 'scale(-1 1)' : null;
+    return { behind: [], front: [part] };
+  }
+  HANDS.open = extendedHand();
+  HANDS.spread = extendedHand({ spread: true });
+  HANDS.flat = extendedHand({ back: true });
+  HANDS.rest = extendedHand({ back: true, relaxed: true });
+  // A side view of an upturned supporting hand: compact fingers beneath
+  // the load, with the thumb rising over its front rim. +x faces upward
+  // when the fingers point right; this is not a dorsal waving hand.
+  HANDS.support = {
+    behind: [], front: [handSilhouette(
+      'M4.4 0 C4.6 2.5 6.2 4.5 7.8 6.5 L9.1 10.8 C9.7 12.8 8.2 14.1 6.9 12.8 L4.8 10.6 C4.5 13.5 4.7 17.6 4.7 21.8 C4.7 24 2.9 24.6 1.7 23.4 C0.9 24.6 -0.9 24.1 -1.4 22.6 C-2.4 23.2 -3.9 22.2 -3.8 20.5 C-4.8 20.7 -5.6 19.3 -5.3 18 L-4.7 10 C-4.4 6 -4.4 3 -4.4 0',
+      [['oc-crease', 'M4.8 10.6 Q3.2 8.9 2.6 6.5 M1.7 23.4 L1.6 16.6 M-1.4 22.6 L-1.2 16 M-3.8 20.5 L-3.4 15.4']],
+    )], contact: [4.6, 17],
+  };
+  // Thin objects lie between the supporting fingers and the opposing thumb.
+  HANDS.edge = {
+    behind: [fist], front: [handPart(
+      'M5.8 6.3 C5.5 8.2 3.6 9.8 1.2 11 C0.3 11.5 0.5 12.8 1.6 13 C3.1 13.2 4.5 12.4 5.3 11.7 C6.4 10.1 6.5 8.3 5.8 6.3 Z',
+      'M5.8 6.3 C5.5 8.2 3.6 9.8 1.2 11 C0.3 11.5 0.5 12.8 1.6 13 C3.1 13.2 4.5 12.4 5.3 11.7',
+      [['oc-crease', 'M3.6 9.8 Q4.4 10.2 4.8 10.9']],
+    )],
+  };
+
   function drawHandParts(parent, parts) {
-    for (const { fill, ink, details } of parts) {
-      svg('path', { class: 'oc-ink oc-ink--fine', d: ink }, parent);
-      svg('path', { class: 'oc-skin', d: fill }, parent);
-      for (const [cls, d] of details || []) svg('path', { class: cls, d }, parent);
+    for (const { fill, ink, details, transform } of parts) {
+      const layer = transform ? svg('g', { transform }, parent) : parent;
+      svg('path', { class: 'oc-skin', d: fill }, layer);
+      svg('path', { class: 'oc-hand-outline', d: ink }, layer);
+      for (const [cls, d] of details || []) svg('path', { class: cls, d }, layer);
     }
   }
 
@@ -366,25 +253,46 @@
   const REST = {
     right: [4, -6], rightLift: 0, rightHand: -8, rightShape: 'rest',
     left: [4, -6], leftLift: 0, leftHand: -8, leftShape: 'rest',
-    look: 0, down: 0, brow: 0, frown: 0, smile: 0.4, wide: 0, happy: 0, sweat: 0, blush: 0,
+    look: 0, down: 0, brow: 0, frown: 0, smile: 0.4, wide: 0, happy: 0, round: 0, sweat: 0, blush: 0,
     nod: 0, tilt: 0, crouch: 0, hop: 0, lean: 0, age: 0, mask: 0,
   };
   const DISCRETE = new Set(['rightShape', 'leftShape']);
+  const poseTracks = new WeakMap();
+  // Zero velocity and acceleration at both ends, without the cubic
+  // ease-in/out's sudden acceleration reversal halfway through a gesture.
+  const easePose = (u) => u ** 3 * (10 + u * (-15 + 6 * u));
+
+  function samplePoseKey(key, t, reduced) {
+    const { start, duration, from, target, discrete } = key;
+    const u = reduced ? 1 : easePose(progress(t, start, duration));
+    if (discrete) return u >= 0.4 ? target : from;
+    return Array.isArray(target)
+      ? target.map((value, i) => from[i] + (value - from[i]) * u)
+      : from + (target - from) * u;
+  }
+
+  function tracksFor(keys) {
+    if (poseTracks.has(keys)) return poseTracks.get(keys);
+    const tracks = new Map();
+    for (const [start, duration, fields] of keys) {
+      for (const [name, target] of Object.entries(fields)) {
+        if (!tracks.has(name)) tracks.set(name, []);
+        const track = tracks.get(name);
+        const previous = track.at(-1);
+        const from = previous ? samplePoseKey(previous, start, false) : REST[name];
+        track.push({ start, duration, from, target, discrete: DISCRETE.has(name) });
+      }
+    }
+    poseTracks.set(keys, tracks);
+    return tracks;
+  }
 
   /** The pose at song time t: each key eases its fields from wherever they are when it starts, in cue order. */
   function poseAt(keys, t, reduced) {
     const pose = { ...REST };
-    for (const [start, duration, fields] of keys) {
-      if (t < start) break;
-      const u = reduced ? 1 : easeInOutCubic(progress(t, start, duration));
-      for (const [name, target] of Object.entries(fields)) {
-        if (DISCRETE.has(name)) {
-          if (u >= 0.4) pose[name] = target;
-          continue;
-        }
-        const from = pose[name];
-        pose[name] = Array.isArray(target) ? target.map((value, i) => from[i] + (value - from[i]) * u) : from + (target - from) * u;
-      }
+    for (const [name, track] of tracksFor(keys)) {
+      const key = track.findLast((entry) => entry.start <= t);
+      if (key) pose[name] = samplePoseKey(key, t, reduced);
     }
     return pose;
   }
@@ -394,11 +302,8 @@
   // than the hips, with no waist shaping. Each costume draws over it.
   // ------------------------------------------------------------------
 
-  // A top from the neck to the hips; the sleeves' heads cover its shoulders.
+  // A top from the neck to the hips; attached sleeves meet it beneath its details.
   const TOP = 'M73.6 78.6 C70 79.6 62 82.4 56.6 85.2 C52.6 87.4 51.4 92.6 53.4 98 C55.4 103.6 57.6 108.4 58.4 114 C59 124 58.6 134 58.8 142 C58.9 148 58.2 153 57.6 157.4 C66 159.2 94 159.2 102.4 157.4 C101.8 153 101.1 148 101.2 142 C101.4 134 101 124 101.6 114 C102.4 108.4 104.6 103.6 106.6 98 C108.6 92.6 107.4 87.4 103.4 85.2 C98 82.4 90 79.6 86.4 78.6 C84 80.2 76 80.2 73.6 78.6 Z';
-  // Its far side turned from the light, and its near side catching it.
-  const TOP_SHADE = 'M106.6 98 C104.6 103.6 102.4 108.4 101.6 114 C101 124 101.4 134 101.2 142 C101.1 148 101.8 153 102.4 157.4 C99 158.2 95.4 158.6 92 158.8 C93.2 148 93.6 136 93.2 124 C93 114 95.6 104 100.6 96 C102.4 93 104.6 90.6 106.4 89 Z';
-  const TOP_LIGHT = 'M56.6 85.2 C52.6 87.4 51.4 92.6 53.4 98 C55.4 103.6 57.6 108.4 58.4 114 C59 124 58.6 134 58.8 142 L62.6 142 C62.6 130 62.4 116 61 106 C59.8 98 58.4 91 56.6 85.2 Z';
   const NECK = 'M74.4 58 C74.6 66 74.2 74 73.4 82.6 L86.6 82.6 C85.8 74 85.4 66 85.6 58 Z';
   const NECK_SHADE = 'M74.4 64.4 C77.8 67.4 82.2 67.4 85.6 64.4 L85.7 68.6 C82.2 71.4 77.8 71.4 74.3 68.6 Z';
 
@@ -462,10 +367,6 @@
     ['oc-muscle', 'M114 147.4 C112.6 153 111.4 159.4 110.8 166'],
     ['oc-wrist-crease', 'M107.2 171.6 C109.4 172.2 112 172.2 114.2 171.6'],
   ];
-  // A sleeve pushed up to the elbow, bunched in rings there.
-  const PUSHED = 'M101 137.2 C105.4 135.4 112.6 135.4 117 137.2 C117.6 140.4 117.8 144 117.2 147.4 C116.8 148.8 116 149.6 115.2 150 C111 151.2 106.8 151.2 102.6 150 C101.8 149.6 101.2 148.8 100.8 147.4 C100.2 144 100.4 140.4 101 137.2 Z';
-  const PUSHED_FOLDS = 'M101 141.8 C105.6 143.4 112.4 143.4 117.2 141.8 M101.2 146 C105.8 147.4 112.2 147.4 116.8 146 M102.4 138.8 C103 140.4 103 141.6 102.6 142.8 M115.4 138.8 C114.8 140.4 114.8 141.6 115.2 142.8';
-
   // ------------------------------------------------------------------
   // The Teammate's face, drawn in head units: the chin at (0, 0), the face
   // 100 wide; placed on the neck by drawnHead(). A towering pompadour with
@@ -474,7 +375,7 @@
   // ------------------------------------------------------------------
 
   const TENOR_HEAD = {
-    width: 40,
+    width: 40, detailed: true,
     face: 'M-49 -74 C-50 -104 -28 -127 0 -127 C28 -127 50 -104 49 -74 C48.4 -52 44 -33 35 -19 C26.6 -7 14.6 0 0 0 C-14.6 0 -26.6 -7 -35 -19 C-44 -33 -48.4 -52 -49 -74 Z',
     jawShade: 'M49 -74 C48.4 -52 44 -33 35 -19 C26.6 -7 14.6 0 0 0 C12 -4 22 -12 30 -24 C38 -37 42 -54 43 -74 C44 -88 44 -98 42 -106 C47 -98 49.6 -86 49 -74 Z',
     ear: 'M-47 -79 C-57 -86 -63 -73 -61 -62 C-59 -51 -53 -46 -46 -50 Z',
@@ -484,12 +385,12 @@
     hairStrands: 'M-30 -106 C-34 -130 -24 -156 -2 -170 M-14 -110 C-14 -136 -4 -158 18 -170 M2 -110 C6 -134 18 -154 38 -164 M18 -108 C26 -128 38 -144 54 -150 M-42 -98 C-48 -118 -42 -140 -28 -156',
     hairSheen: 'M-40 -122 C-34 -150 -16 -170 8 -173 M-24 -118 C-20 -140 -8 -156 10 -162',
     sideburns: ['M-49.4 -70 C-50.6 -62 -50.4 -54 -48.4 -46 L-44.6 -48 C-45 -56 -45 -63 -44.4 -70 Z', 'M49.4 -70 C50.6 -62 50.4 -54 48.4 -46 L44.6 -48 C45 -56 45 -63 44.4 -70 Z'],
-    brows: ['M-35 -85 C-29 -92 -18 -93 -9 -88 C-11 -85 -19 -86 -33 -81 Z', 'M35 -85 C29 -92 18 -93 9 -88 C11 -85 19 -86 33 -81 Z'],
+    brows: ['M-35 -85 C-29 -90 -20 -92 -11 -88.5 Q-9 -87 -10 -85.8 C-19 -88 -27 -85.8 -34 -82.8 Z', 'M35 -85 C29 -90 20 -92 11 -88.5 Q9 -87 10 -85.8 C19 -88 27 -85.8 34 -82.8 Z'],
     eyes: [-21, 21],
     eyeY: -70,
-    nose: 'M-1.6 -70 C-2.4 -60 -5.6 -48 -8.6 -41 C-6.6 -35.4 -1.4 -34.4 2 -36.4 C5.4 -34.4 9.6 -35.8 9.8 -40.6 C7 -47 3.4 -58 2.4 -70',
-    noseLight: 'M-0.4 -66 C-1 -58 -2.4 -50 -3.8 -45',
-    nostrils: 'M-5.6 -38.6 C-4.6 -37 -2.6 -37 -1.8 -38.2 M4.4 -38.2 C5.2 -37 7.2 -37 8 -38.6',
+    nose: 'M-1.8 -68 C-2.4 -58 -4.2 -50 -6.5 -44 C-8 -40 -4.4 -37.6 0 -38.4 C4.4 -36.8 8.4 -39 7.8 -42.8 C5.2 -48 3.3 -58 2 -68 Z',
+    noseLight: 'M-0.5 -61 C-1 -55 -2 -49 -3 -45',
+    nostrils: 'M-5.1 -40.2 Q-3.6 -41.4 -2.1 -40.1 M3.5 -40 Q5 -41.2 6.2 -40',
     moustache: 'M0 -29.6 C-6 -33 -14 -33 -20 -29 C-26 -25 -30 -25.4 -34 -28.4 C-36.4 -30.4 -35.4 -33.8 -32 -33.4 C-34 -30.6 -31.4 -29.4 -29.4 -31.2 C-24 -36.4 -12 -36.6 -4 -31.6 C-2 -30.6 2 -30.6 4 -31.6 C12 -36.6 24 -36.4 29.4 -31.2 C31.4 -29.4 34 -30.6 32 -33.4 C35.4 -33.8 36.4 -30.4 34 -28.4 C30 -25.4 26 -25 20 -29 C14 -33 6 -33 0 -29.6 Z',
     moustacheSheen: 'M-22 -33 C-16 -35 -8 -34.6 -3 -32.4 M22 -33 C16 -35 8 -34.6 3 -32.4',
     mouth: { y: -20, halfWidth: 13 },
@@ -586,6 +487,25 @@
     return svg('path', { class: cls, d, ...(fill ? { fill } : {}) }, parent);
   }
 
+  /** Torso outlines sit beneath BOTH torso and sleeves, so their overlap
+   * is cloth, not an inked socket. Vest armholes keep their own seam. */
+  function garment(parent, d, cls, paint, fill) {
+    const outline = svg('g', { transform: parent.getAttribute('transform') || '' }, paint.garmentOutline);
+    svg('path', { class: 'oc-ink oc-ink--cool', d }, outline);
+    const cloth = fill === paint.top && parent.getAttribute('transform') === MIRROR ? paint.topLeft : fill;
+    const surface = svg('path', { class: cls, d, ...(cloth ? { fill: cloth } : {}) }, parent);
+    shadeCloth(parent, d, paint);
+    return surface;
+  }
+
+  /** Broad, continuous light gives cloth volume without polygonal panels. */
+  function shadeCloth(parent, d, paint) {
+    const mirrored = parent.getAttribute('transform') === MIRROR;
+    for (const name of ['clothDepth', 'clothGlow']) {
+      svg('path', { class: 'oc-surface-volume', d, fill: paint[mirrored ? `${name}Left` : name] }, parent);
+    }
+  }
+
   // ------------------------------------------------------------------
   // Faces
   // ------------------------------------------------------------------
@@ -598,7 +518,7 @@
    */
   function drawnHead(parent, spec, paint) {
     const scale = spec.width / 100;
-    const g = svg('g', { class: 'oc-face', transform: `translate(${HEAD.x} ${HEAD.chin}) scale(${scale.toFixed(4)})` }, parent);
+    const g = svg('g', { class: `oc-face${spec.detailed ? ' oc-face--detailed' : ''}`, transform: `translate(${HEAD.x} ${HEAD.chin}) scale(${scale.toFixed(4)})` }, parent);
     const ink = (d, cls) => inked(g, d, cls, 'oc-ink oc-ink--face');
     // Long hair behind the ears and face; it falls over the collar.
     if (spec.backHair) {
@@ -610,15 +530,27 @@
       const ear = svg('g', { transform: side < 0 ? 'scale(-1 1)' : '' }, g);
       inked(ear, spec.ear, 'oc-face-skin', 'oc-ink oc-ink--face', paint.face);
       svg('path', { class: 'oc-ear-line', d: spec.earInner }, ear);
+      if (spec.detailed) {
+        svg('path', { class: 'oc-face-plane', d: 'M-50 -72 C-56 -73 -57 -66 -54 -61 L-49 -59 C-51 -64 -48 -67 -50 -72 Z' }, ear);
+        svg('path', { class: 'oc-face-contour', d: 'M-51 -69 C-54 -68 -54 -64 -51 -63 M-50 -58 Q-52 -54 -55 -57' }, ear);
+      }
     }
     inked(g, spec.face, 'oc-face-skin', 'oc-ink oc-ink--face', paint.face);
     svg('path', { class: 'oc-face-shade', d: spec.jawShade }, g);
-    const cheeks = spec.cheeks.map(([cx, cy]) => svg('ellipse', { class: 'oc-blush', cx, cy, rx: 9, ry: 5.4 }, g));
+    const cheeks = spec.cheeks.map(([cx, cy]) => svg('ellipse', { class: spec.detailed ? 'oc-cheek-color' : 'oc-blush', ...(spec.detailed ? { fill: paint.blush } : {}), cx, cy, rx: spec.detailed ? 15 : 9, ry: spec.detailed ? 10 : 5.4 }, g));
     for (const d of spec.sideburns || []) svg('path', { class: 'oc-hair', d }, g);
-    ink(spec.hair, 'oc-hair');
-    svg('path', { class: 'oc-hair-shade', d: spec.hairShade }, g);
-    svg('path', { class: 'oc-hair-strand', d: spec.hairStrands }, g);
-    svg('path', { class: 'oc-hair-sheen', d: spec.hairSheen }, g);
+    if (spec.detailed) inked(g, spec.hair, 'oc-rendered-hair', 'oc-ink oc-ink--face', paint.hair);
+    else ink(spec.hair, 'oc-hair');
+    const hairClip = svg('clipPath', { id: `oc-hair-detail-${++uid}` }, paint.defs);
+    svg('path', { d: spec.hair }, hairClip);
+    const hairDetail = svg('g', { 'clip-path': `url(#${hairClip.id})` }, g);
+    svg('path', { class: 'oc-hair-shade', d: spec.hairShade }, hairDetail);
+    svg('path', { class: 'oc-hair-strand', d: spec.hairStrands }, hairDetail);
+    svg('path', { class: 'oc-hair-sheen', d: spec.hairSheen }, hairDetail);
+    if (spec.detailed) drawParts(hairDetail, [
+      ['oc-hair-fine', 'M-44 -102 C-47 -128 -33 -152 -15 -161 M-36 -108 C-38 -134 -23 -156 -5 -165 M-22 -110 C-22 -133 -7 -157 14 -167 M-5 -110 C-1 -137 17 -155 35 -164 M12 -109 C21 -131 35 -146 49 -151 M28 -104 C39 -120 49 -132 55 -141 M41 -96 Q49 -111 53 -123'],
+      ['oc-hair-glint', 'M-43 -130 C-35 -152 -15 -169 5 -173 M-32 -128 C-25 -147 -13 -158 1 -164 M-13 -128 C-5 -145 8 -156 20 -160'],
+    ]);
     if (spec.curl) svg('path', { class: 'oc-hair-curl', d: spec.curl }, g);
     // Eyes: the white, then the iris, pupil, and catchlights clipped to it,
     // then the upper lid's line; a lid of skin closes over it to blink, and
@@ -632,10 +564,18 @@
       svg('path', { class: 'oc-eye-white', d: white }, open);
       const iris = svg('g', { 'clip-path': `url(#${clip.id})` }, open);
       const look = svg('g', {}, iris);
-      svg('circle', { class: 'oc-iris', cx: ex, cy: spec.eyeY + 0.4, r: 5.2 }, look);
+      svg('circle', { class: spec.detailed ? 'oc-rendered-iris' : 'oc-iris', ...(spec.detailed ? { fill: paint.iris } : {}), cx: ex, cy: spec.eyeY + 0.4, r: 5.2 }, look);
+      if (spec.detailed) {
+        svg('circle', { class: 'oc-iris-rim', cx: ex, cy: spec.eyeY + 0.4, r: 5.1 }, look);
+        const rays = Array.from({ length: 13 }, (_, i) => {
+          const a = i * Math.PI * 2 / 13;
+          return `M${ex + 3.1 * Math.cos(a)} ${spec.eyeY + 0.4 + 3.1 * Math.sin(a)} L${ex + 4.5 * Math.cos(a)} ${spec.eyeY + 0.4 + 4.5 * Math.sin(a)}`;
+        }).join(' ');
+        svg('path', { class: 'oc-iris-fiber', d: rays }, look);
+      }
       svg('circle', { class: 'oc-pupil', cx: ex, cy: spec.eyeY + 0.4, r: 2.6 }, look);
-      svg('circle', { class: 'oc-catchlight', cx: ex + 1.8, cy: spec.eyeY - 1.6, r: 1.5 }, look);
-      svg('circle', { class: 'oc-catchlight oc-catchlight--soft', cx: ex - 1.6, cy: spec.eyeY + 2.2, r: 0.7 }, look);
+      svg('circle', { class: 'oc-catchlight', cx: ex - 1.8, cy: spec.eyeY - 1.6, r: spec.detailed ? 1.15 : 1.5 }, look);
+      svg('circle', { class: 'oc-catchlight oc-catchlight--soft', cx: ex + 1.6, cy: spec.eyeY + 2.2, r: 0.6 }, look);
       const lid = svg('path', { class: 'oc-lid', d: '' }, open);
       svg('path', { class: 'oc-lash-line', d: `M${ex - 12} ${spec.eyeY + 0.4} C${ex - 7.6} ${spec.eyeY - 7.2} ${ex + 7.6} ${spec.eyeY - 7.2} ${ex + 12} ${spec.eyeY + 0.4}` }, open);
       if (spec.lashes) {
@@ -643,11 +583,31 @@
         const y = spec.eyeY;
         svg('path', { class: 'oc-lash-line', d: `M${ex + out * 10.6} ${y - 1.4} Q${ex + out * 14} ${y - 2.4} ${ex + out * 15.6} ${y - 5.8} M${ex + out * 8} ${y - 3.6} Q${ex + out * 11} ${y - 5.8} ${ex + out * 12} ${y - 8.2}` }, open);
       }
+      if (spec.detailed) {
+        svg('path', { class: 'oc-eye-fold', d: `M${ex - 8.5} ${spec.eyeY - 8.5} Q${ex} ${spec.eyeY - 12} ${ex + 8} ${spec.eyeY - 8.3}` }, eye);
+        svg('path', { class: 'oc-lower-lid', d: `M${ex - 8.5} ${spec.eyeY + 1.5} Q${ex} ${spec.eyeY + 5.8} ${ex + 8.5} ${spec.eyeY + 1.5}` }, open);
+        svg('ellipse', { class: 'oc-tear-duct', cx: ex - Math.sign(ex) * 9.6, cy: spec.eyeY + 0.6, rx: 0.9, ry: 0.65 }, open);
+      }
       const shut = svg('path', { class: 'oc-eye-shut', d: `M${ex - 11} ${spec.eyeY - 1} C${ex - 6} ${spec.eyeY - 7} ${ex + 6} ${spec.eyeY - 7} ${ex + 11} ${spec.eyeY - 1}`, opacity: 0 }, eye);
       return { ex, open, look, lid, shut, white };
     });
-    const brows = spec.brows.map((d) => svg('path', { class: 'oc-brow', d }, g));
-    inked(g, spec.nose, 'oc-face-skin oc-nose', 'oc-ink oc-ink--face', paint.face);
+    const brows = spec.brows.map((d, i) => {
+      const brow = svg('g', {}, g);
+      svg('path', { class: 'oc-brow', d }, brow);
+      if (spec.detailed) {
+        const clip = svg('clipPath', { id: `oc-brow-${++uid}` }, paint.defs);
+        svg('path', { d }, clip);
+        const side = i ? 1 : -1;
+        const hairs = [[12, -87, 14, -89], [16, -87.5, 19, -89.5], [22, -86.8, 25, -88.8], [28, -84.8, 31, -86.4]]
+          .map(([x, y, tx, ty]) => `M${side * x} ${y} Q${side * (x + 1)} ${ty} ${side * tx} ${ty}`).join(' ');
+        svg('path', { class: 'oc-brow-hair', d: hairs, 'clip-path': `url(#${clip.id})` }, brow);
+      }
+      return brow;
+    });
+    if (spec.detailed) {
+      svg('path', { class: 'oc-nose', d: spec.nose, fill: paint.nose }, g);
+      svg('path', { class: 'oc-nose-contour', d: 'M3 -59 C4 -53 5.3 -48 7.8 -42.8 C8.4 -39 4.4 -36.8 0 -38.4 M-6.5 -44 Q-8 -41 -5.8 -39.4' }, g);
+    } else inked(g, spec.nose, 'oc-face-skin oc-nose', 'oc-ink oc-ink--face', paint.face);
     svg('path', { class: 'oc-nose-light', d: spec.noseLight }, g);
     svg('path', { class: 'oc-nostril', d: spec.nostrils }, g);
     // The mouth: its inside, teeth, and tongue while open, the lower lip's
@@ -664,6 +624,7 @@
     if (spec.moustache) {
       inked(g, spec.moustache, 'oc-hair oc-moustache', 'oc-ink oc-ink--face');
       svg('path', { class: 'oc-hair-sheen', d: spec.moustacheSheen }, g);
+      if (spec.detailed) svg('path', { class: 'oc-moustache-hair', d: 'M-3 -32 Q-12 -36 -23 -31 M-7 -30 Q-16 -34 -26 -29 M-14 -29 Q-23 -32 -30 -28 M3 -32 Q12 -36 23 -31 M7 -30 Q16 -34 26 -29 M14 -29 Q23 -32 30 -28' }, g);
     }
     if (spec.dimple) svg('path', { class: 'oc-dimple', d: spec.dimple }, g);
     const sweat = svg('path', { class: 'oc-sweat', d: 'M44 -100 C47 -94 49 -90 49 -87 C49 -84 47 -82 44.5 -82 C42 -82 40 -84 40.4 -87 C40.6 -90 42 -94 44 -100 Z', opacity: 0 }, g);
@@ -700,6 +661,7 @@
       if (shape.line) {
         line.setAttribute('d', shape.line);
         for (const node of [inside, teeth, tongue, lip]) node.setAttribute('d', '');
+        if (spec.detailed) lip.setAttribute('d', `M-7 ${spec.mouth.y + 2.2} Q0 ${spec.mouth.y + 4} 7 ${spec.mouth.y + 2.2}`);
         clipPathNode.setAttribute('d', '');
       } else {
         line.setAttribute('d', '');
@@ -745,9 +707,7 @@
         inked(layer, 'M64 86 C62 76 66 66.6 73 63.4 C78 61.4 82 61.4 87 63.4 C94 66.6 98 76 96 86 C91 82.6 86 81 80 81 C74 81 69 82.6 64 86 Z', 'oc-hood', 'oc-ink oc-ink--cool');
       },
       top(layer, paint) {
-        inked(layer, TOP, 'oc-top', 'oc-ink oc-ink--cool', paint.top);
-        svg('path', { class: 'oc-top-shade', d: TOP_SHADE }, layer);
-        svg('path', { class: 'oc-top-light', d: TOP_LIGHT }, layer);
+        garment(layer, TOP, 'oc-top', paint, paint.top);
         inked(layer, RIB_HEM, 'oc-rib-band', 'oc-ink oc-ink--cool');
         svg('path', { class: 'oc-rib', d: Array.from({ length: 21 }, (_, i) => `M${59.6 + i * 2.05} 152.4 V157.6`).join(' ') }, layer);
         inked(layer, 'M64 128.4 C72 127.4 88 127.4 96 128.4 C97.4 134 99 140 100.6 146.6 C88 148.4 72 148.4 59.4 146.6 C61 140 62.6 134 64 128.4 Z', 'oc-pocket-patch', 'oc-ink oc-ink--cool');
@@ -770,9 +730,7 @@
     tenor: {
       sleeve: 'pushed', head: TENOR_HEAD,
       top(layer, paint) {
-        inked(layer, TOP, 'oc-top', 'oc-ink oc-ink--cool', paint.top);
-        svg('path', { class: 'oc-top-shade', d: TOP_SHADE }, layer);
-        svg('path', { class: 'oc-top-light', d: TOP_LIGHT }, layer);
+        garment(layer, TOP, 'oc-top', paint, paint.top);
         inked(layer, RIB_HEM, 'oc-rib-band', 'oc-ink oc-ink--cool');
         svg('path', { class: 'oc-rib', d: Array.from({ length: 21 }, (_, i) => `M${59.6 + i * 2.05} ${152.4 + (i === 0 || i === 20 ? 0.6 : 0)} V${157.6}`).join(' ') }, layer);
         drawParts(layer, [
@@ -814,12 +772,11 @@
     pm: {
       sleeve: 'long', head: TEAMMATE_HEAD, shoes: 'sneaker',
       top(layer, paint) {
-        inked(layer, TOP, 'oc-under', 'oc-ink oc-ink--cool');
+        garment(layer, TOP, 'oc-under', paint);
         for (const side of [1, -1]) {
           const panel = svg('g', { transform: side < 0 ? MIRROR : '' }, layer);
-          inked(panel, 'M86.4 78.6 C90 79.6 98 82.4 103.4 85.2 C107.4 87.4 108.6 92.6 106.6 98 C104.6 103.6 102.4 108.4 101.6 114 C101 124 101.4 134 101.2 142 C101.1 150 101.6 156 102.4 162.4 C96.6 163.6 88.6 163.8 82.6 163 C81.6 154 81 142 80.8 128.4 C82.6 116 85.2 100 86.4 78.6 Z', 'oc-top', 'oc-ink oc-ink--cool', paint.top);
+          garment(panel, 'M86.4 78.6 C90 79.6 98 82.4 103.4 85.2 C107.4 87.4 108.6 92.6 106.6 98 C104.6 103.6 102.4 108.4 101.6 114 C101 124 101.4 134 101.2 142 C101.1 150 101.6 156 102.4 162.4 C96.6 163.6 88.6 163.8 82.6 163 C81.6 154 81 142 80.8 128.4 C82.6 116 85.2 100 86.4 78.6 Z', 'oc-top', paint, paint.top);
           drawParts(panel, [
-            ['oc-top-shade', 'M106.6 98 C104.6 103.6 102.4 108.4 101.6 114 C101 124 101.4 134 101.2 142 C101.1 150 101.6 156 102.4 162.4 C99.6 162.9 96.6 163.3 93.6 163.5 C94.6 150 95 136 94.6 124 C94.4 114 96.6 104 101 96 C102.6 93 104.4 90.6 106.2 89 Z'],
             ['oc-lapel', 'M85.8 79.6 C88 86 90.6 90 94.4 92.4 L91.6 95.4 C88 104 84 116 80.6 127.6 C83 116 84.4 100 85.8 79.6 Z'],
             ['oc-lapel-edge', 'M94.4 92.4 L91.6 95.4 M85.8 79.6 C88 86 90.6 90 94.4 92.4'],
             ['oc-welt', 'M88.6 106.4 L97 105.4'],
@@ -842,15 +799,15 @@
     // The Build Engineer: a hi-vis safety vest with reflective bands over a
     // navy tee, olive cargo trousers, and work boots.
     build: {
-      sleeve: 'short', head: TEAMMATE_HEAD, shoes: 'boot', cargo: true,
+      sleeve: 'short', undershirt: true, head: TEAMMATE_HEAD, shoes: 'boot', cargo: true,
       top(layer, paint) {
-        inked(layer, TOP, 'oc-under', 'oc-ink oc-ink--cool');
+        garment(layer, TOP, 'oc-under', paint);
         const vest = 'M74 79.2 C68 81 60 84.4 55.4 87 C56.6 92 58 98 59 104 C59.6 108 58.6 111 57.6 113.6 C58.2 124 58.4 136 58.4 146 C58.4 151 58 156 57.6 160.4 C66 162 94 162 102.4 160.4 C102 156 101.6 151 101.6 146 C101.6 136 101.8 124 102.4 113.6 C101.4 111 100.4 108 101 104 C102 98 103.4 92 104.6 87 C100 84.4 92 81 86 79.2 C84.6 92 82.4 104 80 116 C77.6 104 75.4 92 74 79.2 Z';
         inked(layer, vest, 'oc-top', 'oc-ink oc-ink--cool', paint.top);
+        shadeCloth(layer, vest, paint);
         const clip = svg('clipPath', { id: `oc-vest-${++uid}` }, paint.defs);
         svg('path', { d: vest }, clip);
         const bands = svg('g', { 'clip-path': `url(#${clip.id})` }, layer);
-        svg('path', { class: 'oc-top-shade', d: TOP_SHADE }, bands);
         svg('path', { class: 'oc-reflective', d: 'M50 127.6 H110 V133.4 H50 Z M50 145 H110 V150.8 H50 Z M63.4 80 H69.2 V127.6 H63.4 Z M90.8 80 H96.6 V127.6 H90.8 Z' }, bands);
         svg('path', { class: 'oc-reflective-shine', d: 'M50 129 H110 M50 146.4 H110 M64.8 82 V127 M92.2 82 V127' }, bands);
         svg('path', { class: 'oc-zip', d: 'M80 116 V160' }, layer);
@@ -864,16 +821,16 @@
     // vest with silver bands over a blue work shirt, its sleeves rolled up,
     // a leather tool pouch on the hip, jeans, work boots, and a gold hard hat.
     foreman: {
-      sleeve: 'pushed', head: TEAMMATE_HEAD, shoes: 'boot',
+      sleeve: 'pushed', undershirt: true, head: TEAMMATE_HEAD, shoes: 'boot',
       top(layer, paint) {
-        inked(layer, TOP, 'oc-under', 'oc-ink oc-ink--cool');
+        garment(layer, TOP, 'oc-under', paint);
         svg('path', { class: 'oc-placket', d: 'M80 82 V160' }, layer);
         const vest = 'M74 79.2 C68 81 60 84.4 55.4 87 C56.6 92 58 98 59 104 C59.6 108 58.6 111 57.6 113.6 C58.2 124 58.4 136 58.4 146 C58.4 151 58 156 57.6 160.4 C66 162 94 162 102.4 160.4 C102 156 101.6 151 101.6 146 C101.6 136 101.8 124 102.4 113.6 C101.4 111 100.4 108 101 104 C102 98 103.4 92 104.6 87 C100 84.4 92 81 86 79.2 C84.6 92 82.4 104 80 116 C77.6 104 75.4 92 74 79.2 Z';
         inked(layer, vest, 'oc-top', 'oc-ink oc-ink--cool', paint.top);
+        shadeCloth(layer, vest, paint);
         const clip = svg('clipPath', { id: `oc-vest-${++uid}` }, paint.defs);
         svg('path', { d: vest }, clip);
         const bands = svg('g', { 'clip-path': `url(#${clip.id})` }, layer);
-        svg('path', { class: 'oc-top-shade', d: TOP_SHADE }, bands);
         svg('path', { class: 'oc-reflective', d: 'M50 127.6 H110 V133.4 H50 Z M50 145 H110 V150.8 H50 Z M63.4 80 H69.2 V127.6 H63.4 Z M90.8 80 H96.6 V127.6 H90.8 Z' }, bands);
         svg('path', { class: 'oc-reflective-shine', d: 'M50 129 H110 M50 146.4 H110 M64.8 82 V127 M92.2 82 V127' }, bands);
         svg('path', { class: 'oc-fold', d: 'M62 116 C66 120 70 122 74 122.6 M98 118 C94 121 90 122.6 86 123' }, layer);
@@ -902,11 +859,10 @@
     test: {
       sleeve: 'long', head: TEAMMATE_HEAD, shoes: 'shoe',
       top(layer, paint) {
-        inked(layer, TOP, 'oc-under', 'oc-ink oc-ink--cool');
+        garment(layer, TOP, 'oc-under', paint);
         const coat = 'M73.6 78.6 C70 79.6 62 82.4 56.6 85.2 C52.6 87.4 51.4 92.6 53.4 98 C55.4 103.6 57.6 108.4 58.4 114 C59 124 58.6 134 58.6 144 C58.4 162 57.2 186 56.2 206 C55.6 216 55.2 224 55 232 C62 233.8 72 234.2 78.4 233.6 C79.2 220 79.6 206 80 196 C80.4 206 80.8 220 81.6 233.6 C88 234.2 98 233.8 105 232 C104.8 224 104.4 216 103.8 206 C102.8 186 101.6 162 101.4 144 C101.4 134 101 124 101.6 114 C102.4 108.4 104.6 103.6 106.6 98 C108.6 92.6 107.4 87.4 103.4 85.2 C98 82.4 90 79.6 86.4 78.6 C84.6 92 82.4 106 80 118 C77.6 106 75.4 92 73.6 78.6 Z';
-        inked(layer, coat, 'oc-top', 'oc-ink oc-ink--cool', paint.top);
+        garment(layer, coat, 'oc-top', paint, paint.top);
         drawParts(layer, [
-          ['oc-top-shade', 'M106.6 98 C104.6 103.6 102.4 108.4 101.6 114 C101 124 101.4 134 101.4 144 C101.6 162 102.8 186 103.8 206 C104.4 216 104.8 224 105 232 C101.6 232.8 98 233.4 94.6 233.8 C95 214 95 190 94.4 168 C94 146 94.4 124 97 108 C98.4 100 102 93 106.2 89 Z'],
           ['oc-lapel', 'M85.6 79.4 C88 86 90.4 90.4 94.2 92.8 L91.4 96 C88 106 84.4 116 80.6 124.6 C83 112 84.4 98 85.6 79.4 Z'],
           ['oc-lapel', 'M74.4 79.4 C72 86 69.6 90.4 65.8 92.8 L68.6 96 C72 106 75.6 116 79.4 124.6 C77 112 75.6 98 74.4 79.4 Z'],
           ['oc-coat-seam', 'M80 124 V196'],
@@ -934,9 +890,7 @@
     ui: {
       sleeve: 'long', head: TEAMMATE_HEAD, shoes: 'sneaker',
       top(layer, paint) {
-        inked(layer, TOP, 'oc-top', 'oc-ink oc-ink--cool', paint.top);
-        svg('path', { class: 'oc-top-shade', d: TOP_SHADE }, layer);
-        svg('path', { class: 'oc-top-light', d: TOP_LIGHT }, layer);
+        garment(layer, TOP, 'oc-top', paint, paint.top);
         const apron = 'M68.4 96.4 C74 95.4 86 95.4 91.6 96.4 C92 106 92.8 116 94.6 124 C97.6 126.6 100.6 128.4 102.6 130.4 C103.4 156 103.4 186 102.8 212 C88 214.6 72 214.6 57.2 212 C56.6 186 56.6 156 57.4 130.4 C59.4 128.4 62.4 126.6 65.4 124 C67.2 116 68 106 68.4 96.4 Z';
         inked(layer, apron, 'oc-apron', 'oc-ink oc-ink--cool');
         drawParts(layer, [
@@ -1001,10 +955,8 @@
     security: {
       sleeve: 'long', head: TEAMMATE_HEAD, shoes: 'boot', cargo: true,
       top(layer, paint) {
-        inked(layer, ZIP_JACKET, 'oc-top', 'oc-ink oc-ink--cool', paint.top);
+        garment(layer, ZIP_JACKET, 'oc-top', paint, paint.top);
         drawParts(layer, [
-          ['oc-top-shade', TOP_SHADE],
-          ['oc-top-light', TOP_LIGHT],
           ['oc-zip oc-zip--dark', 'M80 82 V164'],
           ['oc-pocket-flap', 'M62 101.6 H75 V107.6 C71 108.8 66 108.8 62 107.6 Z M85 101.6 H98 V107.6 C94 108.8 89 108.8 85 107.6 Z'],
           ['oc-welt', 'M62.4 107.6 V121 H74.6 V107.6 M85.4 107.6 V121 H97.6 V107.6'],
@@ -1033,10 +985,8 @@
     coach: {
       sleeve: 'long', head: TEAMMATE_HEAD, shoes: 'sneaker',
       top(layer, paint) {
-        inked(layer, ZIP_JACKET, 'oc-top', 'oc-ink oc-ink--cool', paint.top);
+        garment(layer, ZIP_JACKET, 'oc-top', paint, paint.top);
         drawParts(layer, [
-          ['oc-top-shade', TOP_SHADE],
-          ['oc-top-light', TOP_LIGHT],
           ['oc-track-stripe', 'M60.6 113 C61 124 60.6 134 60.8 142 C60.9 150 60.4 157 59.9 163'],
           ['oc-track-stripe oc-track-stripe--gold', 'M63 112 C63.4 124 63 134 63.2 142 C63.3 150 62.8 157 62.4 163.4'],
           ['oc-track-stripe', 'M99.4 113 C99 124 99.4 134 99.2 142 C99.1 150 99.6 157 100.1 163'],
@@ -1124,9 +1074,113 @@
   // The figure
   // ------------------------------------------------------------------
 
-  // A bare upper arm under a short sleeve (the picture's right arm).
-  const UPPER_ARM = 'M96.8 100 A8.6 8.6 0 1 1 113 95.6 C114 104 115 116 115.6 126 C115.9 131 116 135.6 115.8 139.4 A6.9 6.9 0 0 1 102 139.6 C102.2 131 102.6 120 103.2 111.6 C101.8 106.4 99.4 102 96.8 100 Z';
-  const SHORT_SLEEVE = 'M95.6 99.4 A9.2 9.2 0 1 1 113.6 95 C114.4 102 115 109 115.4 116.2 C111.4 118.6 106.6 119 102.6 117.6 C102.8 115 103 113 103 111.4 C101.4 106 98.6 101.6 95.6 99.4 Z';
+  const addPoint = (a, b) => a.map((v, i) => v + b[i]);
+  const scalePoint = (a, scale) => a.map((v) => v * scale);
+  const mixPoint = (a, b, u) => a.map((v, i) => v + (b[i] - v) * u);
+  const unitPoint = (a) => scalePoint(a, 1 / (Math.hypot(...a) || 1));
+  const xy = (point) => point.map((v) => v.toFixed(2)).join(' ');
+
+  /** One skeletal frame drives both sides of each limb and its lighting. */
+  function armFrame(up, fore, length, hand) {
+    const upper = rotate([ELBOW[0] - SHOULDER[0], ELBOW[1] - SHOULDER[1]], -up);
+    const elbow = addPoint(SHOULDER, scalePoint(upper, length));
+    const lower = rotate([WRIST[0] - ELBOW[0], WRIST[1] - ELBOW[1]], -fore);
+    const wrist = addPoint(elbow, lower);
+    const u = unitPoint(upper), v = unitPoint(lower);
+    const normal = ([x, y]) => [y, -x];
+    return { elbow, wrist, u, v, nu: normal(u), nv: normal(v),
+      hand: rotate([0, 1], hand - fore), handNormal: rotate([1, 0], hand - fore),
+      point: (along, across) => addPoint(SHOULDER, addPoint(scalePoint(u, along * length), scalePoint(normal(u), across))),
+    };
+  }
+
+  /** A rounded deltoid flows into a narrow upper arm. Only its short root
+   * bridges to the torso; the upper arm does not stretch a web from the neck. */
+  function attachedSleeve(frame, style, surface) {
+    const { point, u } = frame;
+    const short = style === 'short';
+    const end = short ? UPPER * 0.52 : UPPER;
+    const width = short ? 7.8 : 7.2;
+    // Rolled cloth belongs to the upper arm, above the elbow. The bare
+    // elbow articulates below it; the roll is not a rotating joint cap.
+    const endpoint = (side) => style === 'pushed' ? surface[side > 0 ? 'outside' : 'inside'].start
+      : style === 'long' ? elbowContour(frame, side, width).start : point(end, side * width);
+    const outside = `M91 80.2 C99 81 ${xy(point(-3, 10))} ${xy(point(6, 9.4))} C${xy(point(12, 9.2))} ${xy(addPoint(endpoint(1), scalePoint(u, -6)))} ${xy(endpoint(1))}`;
+    const inside = `M${xy(endpoint(-1))} C${xy(addPoint(endpoint(-1), scalePoint(u, -6)))} ${xy(point(10, -8))} ${xy(point(8, -8))} C${xy(point(4, -8))} 102 110 101.4 118`;
+    const hem = short ? `Q${xy(point(end + 1.6, 0))} ${xy(endpoint(-1))}` : `L${xy(endpoint(-1))}`;
+    const tail = inside.replace(/^M[^C]+/, '');
+    const close = ' C101 103 97 88 91 80.2 Z';
+    // A long sleeve is one continuous surface through the elbow. The
+    // foreground forearm pass overlaps it only to cover the torso.
+    const full = outside + traceContour(surface.outside).replace(/^M[^C]+/, '')
+      + traceContour(surface.inside, true).replace(/^M/, 'L') + tail;
+    const roll = (depth) => {
+      const a = addPoint(endpoint(1), scalePoint(u, -depth));
+      const b = addPoint(endpoint(-1), scalePoint(u, -depth));
+      return `M${xy(a)} Q${xy(addPoint(mixPoint(a, b, 0.5), scalePoint(u, 1)))} ${xy(b)}`;
+    };
+    return { edge: style === 'long' ? full : outside + hem + tail,
+      fill: (style === 'long' ? full : outside + hem + tail) + close,
+      upper: outside + hem + tail + close,
+      roll: style === 'pushed' ? roll(6) : '' };
+  }
+
+  /** Offset the elbow differently on its two sides. The outside rounds
+   * around the joint; the inside cuts back to the crease. A symmetric
+   * swollen cap on both sides is neither an elbow nor a cloth fold. */
+  function elbowContour({ elbow, u, v, nu, nv }, side, radius) {
+    const angle = Math.acos(clamp(u[0] * v[0] + u[1] * v[1], -1, 1));
+    const inner = side * (u[0] * v[1] - u[1] * v[0]) < 0;
+    const halfTangent = Math.tan(angle / 2);
+    const inset = inner ? Math.min(29, (radius + 1.2) * halfTangent) : 0;
+    const start = addPoint(elbow, addPoint(scalePoint(u, -inset), scalePoint(nu, side * radius)));
+    const end = addPoint(elbow, addPoint(scalePoint(v, inset), scalePoint(nv, side * radius)));
+    // Offset-line intersection plus a small tangent fillet. An arbitrary
+    // inset/control length reverses the inner contour at deep flexion.
+    const fillet = inner ? Math.max(0, halfTangent > 1e-5 ? inset / halfTangent - radius : 0) : radius;
+    const tangent = 4 / 3 * Math.tan(angle / 4) * fillet;
+    return { inner, inset, start, end, curve: [addPoint(start, scalePoint(u, tangent)), addPoint(end, scalePoint(v, -tangent)), end] };
+  }
+
+  /** Reversible cubic contours let skin and shading use the identical
+   * elbow and wrist boundary, without overlapping capsule caps or seams. */
+  function traceContour({ start, curves }, reverse = false) {
+    if (!reverse) return `M${xy(start)}` + curves.map(([a, b, end]) => `C${xy(a)} ${xy(b)} ${xy(end)}`).join('');
+    return `M${xy(curves.at(-1)[2])}` + curves.map((curve, i) => [curve[1], curve[0], i ? curves[i - 1][2] : start]).reverse()
+      .map(([a, b, end]) => `C${xy(a)} ${xy(b)} ${xy(end)}`).join('');
+  }
+
+  function limbSurface(frame, sleeve) {
+    const { elbow, wrist, u, v, nu, nv, hand, handNormal, point } = frame;
+    const bare = sleeve !== 'long';
+    const radius = bare ? 6.5 : 7.2;
+    const contour = (side, fraction = 1) => {
+      const edge = (center, normal, width) => addPoint(center, scalePoint(normal, side * width * fraction));
+      const joint = elbowContour(frame, side, radius * fraction);
+      const wristEdge = addPoint(edge(wrist, handNormal, 4.4), scalePoint(hand, 0.25));
+      const exposed = sleeve === 'short' ? 20 : UPPER - 8;
+      const remaining = Math.max(2, FORE - joint.inset);
+      const distal = [addPoint(joint.end, scalePoint(v, remaining * 0.32)), addPoint(wristEdge, scalePoint(hand, -Math.min(7, remaining * 0.3))), wristEdge];
+      const opening = point(exposed, side * radius * fraction);
+      if (sleeve === 'pushed' && joint.inner) {
+        // One inner contour runs from the cloth opening to the wrist.
+        // Ease the opening toward the forearm as it folds, so no hidden
+        // return arc appears as a hook or pops into view at a threshold.
+        const available = Math.hypot(...addPoint(elbow, scalePoint(point(exposed, 0), -1)));
+        const t = clamp(joint.inset / Math.max(1, available), 0, 1);
+        return { start: mixPoint(opening, joint.end, t * t * (3 - 2 * t)), curves: [distal] };
+      }
+      const start = bare && joint.inset < UPPER - exposed ? opening : joint.start;
+      const curves = bare ? [[mixPoint(start, joint.start, 0.35), mixPoint(start, joint.start, 0.7), joint.start]] : [];
+      curves.push(joint.curve, distal);
+      return { start, curves };
+    };
+    const outside = contour(1), inside = contour(-1);
+    const join = (a, b) => traceContour(a) + traceContour(b, true).replace(/^M/, 'L') + ' Z';
+    return { outside, inside, fill: join(outside, inside), edge: traceContour(outside) + traceContour(inside),
+      shade: join(outside, contour(1, 0.55)), light: join(contour(-1, 0.6), contour(-1, 0.1)) };
+  }
+
   // A cargo pocket on each thigh, and its flap.
   const CARGO = [
     ['M57.4 186 H67 V203.4 C63.8 204.6 60.6 204.6 57.4 203.4 Z', 'M57.2 186 H67.2 V190 H57.2 Z'],
@@ -1154,14 +1208,33 @@
     const paint = {
       defs,
       top: gradient('linearGradient', 'top', { ...user, x1: 56, y1: 80, x2: 104, y2: 160 }, ['0', '0.5', '1']),
-      sleeve: gradient('linearGradient', 'sleeve', { x1: 1, y1: 0, x2: 0, y2: 0 }, ['0', '0.6', '1']),
+      sleeve: gradient('linearGradient', 'sleeve', { ...user, x1: 56, y1: 80, x2: 104, y2: 160 }, ['0', '0.6', '1']),
       trouserLeft: gradient('linearGradient', 'trouser', { ...user, x1: 56.4, y1: 0, x2: 80, y2: 0 }, ['0', '0.34', '0.74', '1']),
       trouserRight: gradient('linearGradient', 'trouser', { ...user, x1: 80.6, y1: 0, x2: 103.6, y2: 0 }, ['0', '0.34', '0.74', '1']),
       trouserFall: gradient('linearGradient', 'trouser-fall', { ...user, x1: 0, y1: 150, x2: 0, y2: 290 }, ['0', '1']),
       shoe: gradient('linearGradient', 'shoe', { x1: 0, y1: 0, x2: 0.3, y2: 1 }, ['0', '0.55', '1']),
       skin: gradient('linearGradient', 'skin', { x1: 1, y1: 0, x2: 0, y2: 0 }, ['0', '0.55', '1']),
-      face: gradient('linearGradient', 'face', { ...user, x1: -40, y1: -120, x2: 40, y2: 0 }, ['0', '0.6', '1']),
+      hair: gradient('linearGradient', 'hair', { x1: 0, y1: 0, x2: 1, y2: 0.8 }, ['0', '0.4', '0.75', '1']),
+      iris: gradient('radialGradient', 'iris', { cx: 0.4, cy: 0.35, r: 0.7 }, ['0', '0.6', '1']),
+      blush: gradient('radialGradient', 'blush', { cx: 0.5, cy: 0.5, r: 0.5 }, ['0', '1']),
+      face: gradient('radialGradient', 'face', { ...user, cx: -10, cy: -78, r: 70, fx: -18, fy: -92, gradientTransform: 'translate(0 23.4) scale(1 1.3)' }, ['0', '0.6', '1']),
+      nose: gradient('linearGradient', 'face', { ...user, x1: -5, y1: -48, x2: 9, y2: -44 }, ['0', '0.55', '1']),
+      clothDepth: gradient('radialGradient', 'cloth-depth', { ...user, cx: 78, cy: 111, r: 34, gradientTransform: 'translate(0 -77.7) scale(1 1.7)' }, ['0', '0.45', '0.78', '1']),
+      clothGlow: gradient('radialGradient', 'cloth-glow', { ...user, cx: 71, cy: 106, r: 26, gradientTransform: 'translate(0 -74.2) scale(1 1.7)' }, ['0', '0.5', '1']),
     };
+
+    for (const [name, transform] of [['clothDepth', 'translate(0 -77.7) scale(1 1.7)'], ['clothGlow', 'translate(0 -74.2) scale(1 1.7)']]) {
+      const gid = id(name);
+      svg('radialGradient', { id: gid, href: paint[name].slice(4, -1), gradientTransform: `${MIRROR} ${transform}` }, defs);
+      paint[`${name}Left`] = `url(#${gid})`;
+    }
+    const softVolumeId = id('soft-volume');
+    const softVolume = svg('filter', { id: softVolumeId, x: '-50%', y: '-50%', width: '200%', height: '200%', 'color-interpolation-filters': 'sRGB' }, defs);
+    svg('feGaussianBlur', { stdDeviation: 1.3 }, softVolume);
+
+    const topLeftId = id('top-left');
+    svg('linearGradient', { id: topLeftId, href: paint.top.slice(4, -1), gradientTransform: MIRROR }, defs);
+    paint.topLeft = `url(#${topLeftId})`;
 
     // Shoes, then the trousers over their tops; the trousers foreshorten
     // about their hems when the knees give, so the shoes stay put.
@@ -1187,6 +1260,8 @@
     const trunk = svg('g', {}, sway);
     svg('path', { class: 'oc-hem-shadow', d: 'M58.4 158.8 C66 160.8 94 160.8 101.6 158.8' }, trunk);
     if (costume.back) costume.back(svg('g', {}, trunk), paint);
+    paint.garmentOutline = svg('g', {}, trunk);
+    const upperArms = svg('g', {}, trunk);
     costume.top(svg('g', { class: 'oc-top-layer' }, trunk), paint);
     const wornUnder = svg('g', {}, trunk);
     const drawnNeck = svg('g', {}, trunk);
@@ -1202,57 +1277,71 @@
     const sleepMask = drawSleepMask(svg('g', { class: 'oc-sleep-mask', 'data-testid': 'oc-sleep-mask' }, headGroup));
     const arms = svg('g', {}, trunk);
 
-    // The arms: the sleeve turns at the shoulder; the forearm turns with it,
+    // The arms: the sleeve deforms from its attached root; the forearm turns with it,
     // then at the elbow; the hand at the wrist, holding what it holds
     // between its parts behind and in front (or behind them all).
     const arm = (side) => {
       const root = svg('g', { transform: side < 0 ? MIRROR : '', 'data-testid': `oc-arm-${side < 0 ? 'left' : 'right'}` }, arms);
-      const upper = svg('g', {}, root);
-      if (costume.sleeve === 'short') {
-        inked(upper, UPPER_ARM, 'oc-skin-arm', 'oc-ink oc-ink--face', paint.skin);
-        inked(upper, SHORT_SLEEVE, 'oc-sleeve', 'oc-ink oc-ink--cool', paint.sleeve);
-        svg('path', { class: 'oc-sleeve-fold', d: 'M103.4 114.6 C107 116.2 111.4 116 115 114' }, upper);
-      } else {
-        inked(upper, SLEEVE, 'oc-sleeve', 'oc-ink oc-ink--cool', paint.sleeve);
-        svg('path', { class: 'oc-sleeve-fold', d: SLEEVE_FOLDS }, upper);
-      }
+      // Like the sheriff in Design It In: upper sleeves emerge beneath
+      // the garment; forearms and hands remain in front. The shoulder and
+      // axilla stay attached while the sleeve's distal end follows the bone.
+      const shoulder = svg('g', { transform: side < 0 ? MIRROR : '' }, upperArms);
+      const fabric = costume.undershirt ? paint.sleeve : paint.top;
+      const sleevePaintId = id('upper-fabric');
+      svg('linearGradient', { id: sleevePaintId, href: fabric.slice(4, -1), gradientTransform: side < 0 ? MIRROR : '' }, defs);
+      const sleeveInk = svg('path', { class: 'oc-ink oc-ink--cool' }, shoulder);
+      const sleeveFill = svg('path', { class: 'oc-sleeve', fill: `url(#${sleevePaintId})` }, shoulder);
+      const sleeveClip = svg('clipPath', { id: id('sleeve-volume') }, defs);
+      const sleeveBoundary = svg('path', {}, sleeveClip);
+      const sleeveLight = svg('path', { class: 'oc-sleeve-volume-light', filter: `url(#${softVolumeId})`, 'clip-path': `url(#${sleeveClip.id})` }, shoulder);
+      const foldWindow = svg('g', { 'clip-path': `url(#${sleeveClip.id})` }, shoulder);
+      const folds = svg('g', {}, foldWindow);
+      const rollDetail = svg('path', { class: 'oc-sleeve-fold' }, foldWindow);
+      const upperFolds = costume.sleeve === 'short' ? 'M103.4 114.6 C107 116.2 111.4 116 115 114'
+        : costume.sleeve === 'pushed' ? 'M111.6 101.4 C112.4 107 112.8 112 112.8 116' : SLEEVE_FOLDS;
+      svg('path', { class: 'oc-sleeve-fold', d: upperFolds }, folds);
+      const limb = svg('g', {}, root);
+      const contourClipId = id('elbow-contour');
+      const contourClip = svg('clipPath', { id: contourClipId }, defs);
+      const contourWindow = svg('path', { 'clip-rule': 'evenodd' }, contourClip);
+      // The shirt hem covers the bare upper arm, including its ink. Skin
+      // must not paint over the hem and leave isolated fragments of outline.
+      if (costume.sleeve === 'short') limb.setAttribute('clip-path', `url(#${contourClipId})`);
+      const limbInk = svg('path', { class: costume.sleeve === 'long' ? 'oc-ink oc-ink--cool oc-limb-edge' : 'oc-hand-outline', ...(costume.sleeve === 'long' ? { 'clip-path': `url(#${contourClipId})` } : {}) }, limb);
+      const limbFill = svg('path', { class: costume.sleeve === 'long' ? 'oc-sleeve' : 'oc-skin', ...(costume.sleeve === 'long' ? { fill: `url(#${sleevePaintId})` } : {}) }, limb);
+      const limbClip = svg('clipPath', { id: id('limb-volume') }, defs);
+      const limbBoundary = svg('path', {}, limbClip);
+      const volume = svg('g', { 'clip-path': `url(#${limbClip.id})` }, limb);
+      const limbShade = svg('path', { class: costume.sleeve === 'long' ? 'oc-cloth-volume-shade' : 'oc-limb-shade', filter: `url(#${softVolumeId})` }, volume);
+      const limbLight = svg('path', { class: 'oc-surface-volume-light', filter: `url(#${softVolumeId})` }, volume);
+      if (costume.sleeve !== 'long') limb.appendChild(limbInk);
+      const wristFade = svg('linearGradient', { id: id('wrist-fade'), gradientUnits: 'userSpaceOnUse' }, defs);
+      svg('stop', { offset: 0, 'stop-color': 'white' }, wristFade);
+      svg('stop', { offset: 1, 'stop-color': 'black' }, wristFade);
+      const wristMask = svg('mask', { id: id('wrist-light'), maskUnits: 'userSpaceOnUse', x: -500, y: -500, width: 1000, height: 1000 }, defs);
+      svg('rect', { x: -500, y: -500, width: 1000, height: 1000, fill: `url(#${wristFade.id})` }, wristMask);
+      if (costume.sleeve !== 'long') volume.setAttribute('mask', `url(#${wristMask.id})`);
+      const foreDetailWindow = svg('g', { 'clip-path': `url(#${limbClip.id})` }, root);
+      const foreDetails = svg('g', {}, foreDetailWindow);
       const reachGroup = svg('g', {}, root);
       const fore = svg('g', {}, reachGroup);
-      if (costume.sleeve === 'long') {
-        inked(fore, FORE_SLEEVE, 'oc-sleeve', 'oc-ink oc-ink--cool', paint.sleeve);
-        svg('path', { class: 'oc-sleeve-fold', d: FORE_SLEEVE_FOLDS }, fore);
-      } else {
-        const skin = svg('g', {}, fore);
-        if (costume.sleeve === 'pushed') {
-          // The round elbow belongs inside the rolled sleeve. Clip its skin
-          // in forearm coordinates so it cannot peek out when the arm bends.
-          const clipId = id('rolled-sleeve-skin');
-          const clip = svg('clipPath', { id: clipId }, defs);
-          svg('rect', { x: 98, y: 146, width: 24, height: 34 }, clip);
-          skin.setAttribute('clip-path', `url(#${clipId})`);
-        }
-        inked(skin, FOREARM, 'oc-skin-arm', 'oc-ink oc-ink--face', paint.skin);
-        drawParts(skin, FOREARM_DETAIL);
-      }
+      if (costume.sleeve === 'long') svg('path', { class: 'oc-sleeve-fold', d: FORE_SLEEVE_FOLDS }, foreDetails);
       const wrist = svg('g', {}, fore);
       const heldBehind = svg('g', {}, wrist);
       const hand = svg('g', { class: 'oc-hand', 'data-testid': 'oc-hand', transform: `translate(${WRIST[0]} ${WRIST[1]})` }, wrist);
       if (costume.sleeve === 'long') inked(fore, CUFF, 'oc-cuff', 'oc-ink oc-ink--cool');
-      if (costume.sleeveTrim) costume.sleeveTrim(upper, fore);
-      if (costume.sleeve === 'pushed') {
-        inked(fore, PUSHED, 'oc-sleeve', 'oc-ink oc-ink--cool', paint.sleeve);
-        svg('path', { class: 'oc-sleeve-fold', d: PUSHED_FOLDS }, fore);
-      }
+      if (costume.sleeveTrim) costume.sleeveTrim(folds, foreDetails);
       const shapes = new Map();
       let shown = null;
       const held = { name: null, node: null };
       return {
-        side, root, upper, reach: reachGroup, fore, wrist, heldBehind, hand, held,
+        side, root, shoulder, sleeveInk, sleeveFill, sleeveLight, sleeveBoundary, folds, rollDetail, foreDetails, limb, limbInk, limbFill, limbShade, limbLight, limbBoundary, wristFade, contourWindow, reach: reachGroup, fore, wrist, heldBehind, hand, held,
         get shown() { return shown; },
         shape(asked, force = false) {
-          // A hand holding a prop keeps hold of it: an open-hand gesture
-          // closes into a grip around the prop instead.
-          const name = held.node && !HANDS[asked].hold ? 'grip' : asked;
+          const grip = held.node ? HOLDING[held.name] : null;
+          // Holding is a persistent contact, never an incidental gesture.
+          // In particular, REST's open fingers cannot retain a tool.
+          const name = grip ? grip.shape : asked;
           if (name === shown && !force) return;
           if (!shapes.has(name)) {
             const g = svg('g', {}, hand);
@@ -1264,23 +1353,24 @@
           }
           for (const [key, { g }] of shapes) g.setAttribute('display', key === name ? 'inline' : 'none');
           shown = name;
+          hand.setAttribute('data-hand-shape', name);
           // A held prop sits between the hand's parts behind and in front,
           // at its hold, or behind the whole hand.
           if (held.node) {
-            const { hold, heldBehind: behindAll } = HANDS[name];
-            const parent = behindAll ? heldBehind : shapes.get(name).between;
-            const [hx, hy, ha] = hold || [0, 16, 0];
-            held.at = behindAll ? [WRIST[0] + hx, WRIST[1] + hy] : [hx, hy];
-            held.node.setAttribute('transform', `translate(${held.at[0]} ${held.at[1]}) rotate(${ha})`);
+            const parent = grip.shape === 'edge' ? shapes.get(name).between : heldBehind;
+            held.at = parent === heldBehind ? addPoint(WRIST, grip.hand) : grip.hand;
+            held.node.setAttribute('transform', `translate(${xy(held.at)}) rotate(${grip.turn || 0}) translate(${-grip.contact[0]} ${-grip.contact[1]})`);
             if (held.node.parentNode !== parent) parent.appendChild(held.node);
           }
         },
         /**
-         * Keeps an UPRIGHT prop level whatever the arm does: turns it so its
-         * up (-y) points up in the figure, about its grip.
+         * Cancels body sway at the contact point for gravity-sensitive props.
+         * Their carrying wrist compensates as well: the prop does not spin
+         * inside an independently rotating fist.
          */
         level(fig) {
-          if (!held.node || !UPRIGHT.has(held.name)) return;
+          const grip = HOLDING[held.name];
+          if (!held.node || !grip.upright) return;
           const parent = held.node.parentNode?.getCTM?.();
           const base = fig.getCTM?.();
           if (!parent || !base) return;
@@ -1290,7 +1380,7 @@
           if (!det) return;
           const [vx, vy] = [m.c / det, -m.a / det];
           const angle = degrees(Math.atan2(vx, -vy));
-          held.node.setAttribute('transform', `translate(${held.at[0]} ${held.at[1]}) rotate(${angle.toFixed(2)})`);
+          held.node.setAttribute('transform', `translate(${xy(held.at)}) rotate(${angle.toFixed(2)}) translate(${-grip.contact[0]} ${-grip.contact[1]})`);
         },
       };
     };
@@ -1302,10 +1392,38 @@
     const shorten = (f) => `translate(${SHOULDER[0]} ${SHOULDER[1]}) rotate(${axis.toFixed(2)}) scale(1 ${f.toFixed(4)}) rotate(${(-axis).toFixed(2)}) translate(${-SHOULDER[0]} ${-SHOULDER[1]})`;
     function poseArm(a, [up, fo], lift, hand, shape) {
       const f = 1 - LIFT * lift;
-      a.upper.setAttribute('transform', `${turn(-up, SHOULDER)} ${shorten(f)}`);
+      const upperTransform = `${turn(-up, SHOULDER)} ${shorten(f)}`;
+      a.folds.setAttribute('transform', upperTransform);
+      const frame = armFrame(up, fo, f, clamp(hand, ...WRIST_RANGE));
+      const fadeStart = addPoint(frame.wrist, scalePoint(frame.hand, -12));
+      for (const [key, value] of Object.entries({ x1: fadeStart[0], y1: fadeStart[1], x2: frame.wrist[0], y2: frame.wrist[1] })) a.wristFade.setAttribute(key, value);
+      const surface = limbSurface(frame, costume.sleeve);
+      const sleeve = attachedSleeve(frame, costume.sleeve, surface);
+      a.limbInk.setAttribute('d', surface.edge);
+      a.limbFill.setAttribute('d', surface.fill);
+      a.limbShade.setAttribute('d', surface.shade);
+      a.limbLight.setAttribute('d', surface.light);
+      a.limbBoundary.setAttribute('d', surface.fill);
+      a.sleeveInk.setAttribute('d', sleeve.edge);
+      a.sleeveFill.setAttribute('d', sleeve.fill);
+      a.sleeveBoundary.setAttribute('d', sleeve.fill);
+      a.rollDetail.setAttribute('d', sleeve.roll);
+      const sleeveEnd = costume.sleeve === 'short' ? UPPER * 0.52 : costume.sleeve === 'pushed' ? UPPER - 8 : UPPER;
+      a.sleeveLight.setAttribute('d', `M${xy(frame.point(-3, -2.5))} C${xy(frame.point(6, -3.5))} ${xy(frame.point(sleeveEnd - 8, -2.8))} ${xy(frame.point(sleeveEnd, -2))}`);
+      // Ink only the union's silhouette: the sleeve hides the proximal
+      // forearm contour, just as the forearm fill hides the sleeve's end.
+      a.contourWindow.setAttribute('d', `M-500 -500 H500 V500 H-500 Z ${sleeve.upper}`);
+      const inFront = up < -18;
+      const sleeveParent = inFront ? a.root : upperArms;
+      if (a.shoulder.parentNode !== sleeveParent) {
+        if (inFront) a.root.insertBefore(a.shoulder, a.limb);
+        else upperArms.appendChild(a.shoulder);
+      }
+      a.shoulder.setAttribute('transform', !inFront && a.side < 0 ? MIRROR : '');
       a.reach.setAttribute('transform', turn(-up, SHOULDER));
       const [dx, dy] = [(f - 1) * (ELBOW[0] - SHOULDER[0]), (f - 1) * (ELBOW[1] - SHOULDER[1])];
       a.fore.setAttribute('transform', `translate(${dx.toFixed(2)} ${dy.toFixed(2)}) ${turn(up - fo, ELBOW)}`);
+      a.foreDetails.setAttribute('transform', `${turn(-up, SHOULDER)} ${a.fore.getAttribute('transform')}`);
       a.wrist.setAttribute('transform', turn(clamp(hand, ...WRIST_RANGE), WRIST));
       a.shape(shape);
     }
@@ -1316,8 +1434,30 @@
       const squash = 1 - drop / (HEMS - WAIST);
       legs.setAttribute('transform', `translate(0 ${HEMS}) scale(1 ${squash.toFixed(4)}) translate(0 ${-HEMS})`);
       trunk.setAttribute('transform', `translate(0 ${drop.toFixed(2)})`);
-      poseArm(right, p.right, p.rightLift, p.rightHand, p.rightShape);
-      poseArm(left, p.left, p.leftLift, p.leftHand, p.leftShape);
+      const base = fig.getCTM(), matrix = trunk.getCTM();
+      const relative = base && matrix ? base.inverse().multiply(matrix) : null;
+      const bodyTurn = relative ? degrees(Math.atan2(relative.b, relative.a)) : 0;
+      for (const [side, arm] of [['right', right], ['left', left]]) {
+        const grip = HOLDING[arm.held.name];
+        let joints = p[side], wristTurn = p[`${side}Hand`];
+        if (arm.held.name === 'cane' && relative) {
+          // A rigid cane plants at the floor; crouching or leaning moves
+          // the supporting wrist, not the cane's length or its foot. Solve
+          // the actual grip point after wrist limits, not just the wrist.
+          const x = grip.carry.reach[0], figureX = side === 'left' ? 160 - x : x;
+          let contactY = 0;
+          for (let pass = 0; pass < 8; pass++) {
+            const y = (162 - contactY - relative.f - relative.b * figureX) / relative.d;
+            joints = reach([x, y]);
+            wristTurn = handToward(joints, 0);
+            const turn = clamp(wristTurn - bodyTurn * arm.side, ...WRIST_RANGE);
+            const offset = rotate(grip.hand, turn - joints[1]);
+            contactY = relative.b * offset[0] * arm.side + relative.d * offset[1];
+          }
+        }
+        const hand = wristTurn - (grip?.upright ? bodyTurn * arm.side : 0);
+        poseArm(arm, joints, arm.held.name === 'cane' ? 0 : p[`${side}Lift`], hand, p[`${side}Shape`]);
+      }
       // An arm raised across the body comes in front of the other.
       const across = (a, [up]) => -up > 18;
       const front = across(left, p.left) && !across(right, p.right) ? left : right;
@@ -1379,7 +1519,7 @@
       if (a.held.name === prop) return;
       a.held.node?.remove();
       a.held.name = prop;
-      a.held.node = prop ? PROPS[prop](svg('g', { class: `oc-prop oc-prop--${prop}` })) : null;
+      a.held.node = prop ? PROPS[prop](svg('g', { class: `oc-prop oc-prop--${prop}`, 'data-testid': 'oc-held-prop', 'data-prop': prop })) : null;
       if (a.shown) a.shape(a.shown, true);
     }
 
@@ -1402,8 +1542,23 @@
   // the origin and its long axis along +x.
   // ------------------------------------------------------------------
 
-  // Props that stay upright in the hand, whatever the arm does (see level()).
-  const UPRIGHT = new Set(['mug', 'trophy', 'stamp', 'cane']);
+  // Contacts are expressed in each object's drawing coordinates and in the
+  // hand's wrist-local coordinates. One profile owns grip AND orientation.
+  // Persistent carry poses reserve the occupied arm; transient actions
+  // (raising a trophy, sweeping, stamping) author their own coordinated reach.
+  const HOLDING = {
+    clipboard: { shape: 'edge', hand: [2.4, 12.3], contact: [-1, 0], upright: true, carry: { reach: [142, 132], dir: 0 } },
+    palette: { shape: 'edge', hand: [2.4, 12.3], contact: [1.6, 3], upright: true, carry: { reach: [143, 140], dir: 0 } },
+    mug: { shape: 'grip', hand: [0, 11], contact: [-4, 0], upright: true, carry: { reach: [146, 128], dir: 0 } },
+    wrench: { shape: 'grip', hand: [0, 11], contact: [0, 0], carry: { reach: [143, 140], dir: 24 } },
+    magnifier: { shape: 'grip', hand: [0, 11], contact: [0, 0], carry: { reach: [142, 132], dir: 8 } },
+    spyglass: { shape: 'grip', hand: [0, 11], contact: [0, 0], turn: 90 },
+    trophy: { shape: 'grip', hand: [0, 11], contact: [0, 2], upright: true },
+    stamp: { shape: 'grip', hand: [0, 12], contact: [0, 0], upright: true },
+    broom: { shape: 'grip', hand: [0, 11], contact: [0, 0], turn: 116 },
+    cane: { shape: 'grip', hand: [0, 12], contact: [0, -3], upright: true, carry: { reach: [128, 159], dir: 0 } },
+    brick: { shape: 'flat', hand: [6.1, 19.5], contact: [10, 8], upright: true, carry: { reach: [143, 128], dir: 0 } },
+  };
 
   const PROPS = {
     // A gold 2×2 toy brick, held from below: its studs up.
@@ -1479,9 +1634,9 @@
     },
     // A broom: a long handle and its straw head.
     broom(g) {
-      inked(g, 'M-40 -1.4 H30 V1.4 H-40 Z', 'oc-handle', 'oc-ink oc-ink--cool');
-      inked(g, 'M30 -3 H34 L50 -9 C52 -3 52 3 50 9 L34 3 H30 Z', 'oc-straw', 'oc-ink oc-ink--cool');
-      svg('path', { class: 'oc-straw-line', d: 'M36 -2.4 L50 -6.6 M36 0 L51 0 M36 2.4 L50 6.6 M33 -3 V3' }, g);
+      inked(g, 'M-40 -1.4 H85 V1.4 H-40 Z', 'oc-handle', 'oc-ink oc-ink--cool');
+      inked(g, 'M85 -3 H89 L108 -11 C110 -4 110 4 108 11 L89 3 H85 Z', 'oc-straw', 'oc-ink oc-ink--cool');
+      svg('path', { class: 'oc-straw-line', d: 'M91 -2.4 L108 -8 M91 0 L109 0 M91 2.4 L108 8 M88 -3 V3' }, g);
       return g;
     },
     // A gold trophy cup held by its stem.
@@ -1495,8 +1650,8 @@
     },
     // A wooden walking cane, its crook in the hand.
     cane(g) {
-      svg('path', { class: 'oc-cane-ink', d: 'M-5 -2 C-6 -8 2 -10 3 -4 L3 68' }, g);
-      svg('path', { class: 'oc-cane', d: 'M-5 -2 C-6 -8 2 -10 3 -4 L3 68' }, g);
+      svg('path', { class: 'oc-cane-ink', d: 'M-5 -2 C-6 -8 2 -10 3 -4 L3 128' }, g);
+      svg('path', { class: 'oc-cane', d: 'M-5 -2 C-6 -8 2 -10 3 -4 L3 128' }, g);
       return g;
     },
   };
@@ -1572,7 +1727,7 @@
    */
   const natural = ([up, fo]) => [up, up - (((up - fo) % 360) + 540) % 360 + 180];
   const armFields = (side, { arm: pose, lift = 0, hand = 0, dir, shape }) => ({
-    [side]: natural(pose), [`${side}Lift`]: lift, [`${side}Hand`]: dir === undefined ? hand : handToward(pose, dir),
+    [side]: natural(pose), [`${side}Lift`]: lift, [`${side}Hand`]: clamp(dir === undefined ? hand : handToward(pose, dir), ...WRIST_RANGE),
     ...(shape ? { [`${side}Shape`]: shape } : {}),
   });
   const restArm = (side) => armFields(side, { arm: REST[side], hand: REST[`${side}Hand`], shape: 'rest' });
@@ -1582,9 +1737,17 @@
   const settle = (at, sides = ['right', 'left']) => {
     const arms = Object.assign({}, ...sides.map(restArm));
     RESTS.add(arms);
-    return [[at, 0.5, arms], [at + 0.1, 0.4, FACE_REST]];
+    return [[at, 0.65, arms], [at + 0.1, 0.4, FACE_REST]];
   };
   const other = (side) => (side === 'right' ? 'left' : 'right');
+  // Fit complete repetitions inside a short sung phrase. A trailing tap
+  // must never re-raise an arm after the gesture has started settling.
+  const repetitions = (count, hold, fields) => {
+    const duration = 0.14;
+    const start = 0.25;
+    const pairs = Math.min(count, Math.max(0, Math.floor((hold - start) / (2 * duration))));
+    return Array.from({ length: pairs * 2 }, (_, i) => [start + i * duration, duration, fields(i)]);
+  };
 
   // Hand-to-body targets in figure units (the picture's right arm's frame;
   // the left arm mirrors them): the chest over the heart, the chin, the
@@ -1599,11 +1762,11 @@
     /** Points at a stage point with the near arm. */
     point: ({ to, hold = 1.2, side }, g) => {
       const s = side || g.side(to);
-      return [[-0.2, 0.45, { ...armFields(s, { ...g.aim(s, to), shape: 'point' }) }], [-0.05, 0.3, g.glance(to)], ...settle(hold, [s])];
+      return [[-0.4, 0.65, { ...armFields(s, { ...g.aim(s, to), shape: 'point' }) }], [-0.05, 0.3, g.glance(to)], ...settle(hold, [s])];
     },
     /** Both arms flung wide, palms up, chest out: the operatic gesture. */
     operatic: ({ hold = 1.6, high = 0 }) => [
-      [-0.15, 0.5, {
+      [-0.3, 0.65, {
         ...armFields('right', { arm: outstretched(-28 - 30 * high), shape: 'open', dir: -18 - 30 * high }),
         ...armFields('left', { arm: outstretched(-28 - 30 * high), shape: 'open', dir: -18 - 30 * high }),
         brow: 0.7, tilt: -2, lean: -1,
@@ -1613,51 +1776,52 @@
     /** One arm out towards something, palm up: "this". */
     present: ({ to, hold = 1.4, side }, g) => {
       const s = side || g.side(to);
-      return [[-0.2, 0.5, { ...armFields(s, { arm: g.toward(s, to, 14), shape: 'open', dir: g.along(s, to) }), ...g.glance(to), brow: 0.4 }], ...settle(hold, [s])];
+      return [[-0.35, 0.65, { ...armFields(s, { arm: g.toward(s, to, 14), shape: 'open', dir: g.along(s, to) }), ...g.glance(to), brow: 0.4 }], ...settle(hold, [s])];
     },
     /** A palm raised to the audience: "no need to worry". */
     reassure: ({ hold = 1.4, side = 'right' }) => [
       // Raised beside the shoulder, the whole arm in view: an arm swung
       // toward the viewer hides its upper half behind the forearm.
-      [-0.2, 0.5, { ...armFields(side, { arm: reach([134, 70]), shape: 'open', dir: -84 }), brow: 0.5, smile: 0.9, tilt: 2 }],
+      [-0.35, 0.65, { ...armFields(side, { arm: reach([134, 70]), shape: 'open', dir: -84 }), brow: 0.5, smile: 0.9, tilt: 2 }],
       ...settle(hold, [side]),
     ],
     /** A hand pressed flat on the chest: "leave it to me". */
     chest: ({ hold = 1.2, side = 'left', pats = 2 }) => {
       const at = reach(CHEST, { shorten: 1 - LIFT * 0.6 });
       const off = reach([CHEST[0] + 4, CHEST[1] + 4], { shorten: 1 - LIFT * 0.6 });
-      const pat = Array.from({ length: pats * 2 }, (_, i) => [0.35 + i * 0.16, 0.14, armFields(side, { arm: i % 2 ? at : off, lift: 0.6, shape: 'flat', dir: -150 })]);
-      return [[-0.2, 0.4, { ...armFields(side, { arm: at, lift: 0.6, shape: 'flat', dir: -150 }), smile: 1, brow: 0.5, tilt: -3 }], ...pat, ...settle(hold, [side])];
+      const pat = repetitions(pats, hold, (i) => armFields(side, { arm: i % 2 ? at : off, lift: 0.6, shape: 'flat', dir: -150 }));
+      return [[-0.4, 0.6, { ...armFields(side, { arm: at, lift: 0.6, shape: 'flat', dir: -150 }), smile: 1, brow: 0.5, tilt: -3 }], ...pat, ...settle(hold, [side])];
     },
     /** An index finger raised beside the face: "quite simple!" */
     finger: ({ hold = 1, side = 'right' }) => [
-      [-0.2, 0.4, { ...armFields(side, { arm: reach([116, 66]), shape: 'point', dir: -88 }), brow: 0.8, smile: 0.9, tilt: 3 }],
+      [-0.35, 0.65, { ...armFields(side, { arm: reach([128, 82]), shape: 'point', dir: -88 }), brow: 0.8, smile: 0.9, tilt: 3 }],
       ...settle(hold, [side]),
     ],
     /** A finger wagged side to side: "no, no". */
     wag: ({ hold = 1.2, side = 'right', times = 3 }) => {
-      const pose = reach([114, 70]);
-      const wags = Array.from({ length: times * 2 }, (_, i) => [0.3 + i * 0.13, 0.12, { [`${side}Hand`]: handToward(pose, -88 + (i % 2 ? -16 : 16)) }]);
-      return [[-0.2, 0.4, { ...armFields(side, { arm: pose, shape: 'point', dir: -88 }), brow: 0.6, smile: 0.7 }], ...wags, ...settle(hold, [side])];
+      const pose = reach([128, 82]);
+      const wags = repetitions(times, hold, (i) => ({ [`${side}Hand`]: clamp(handToward(pose, -100 + (i % 2 ? -12 : 12)), ...WRIST_RANGE) }));
+      return [[-0.4, 0.6, { ...armFields(side, { arm: pose, shape: 'point', dir: -88 }), brow: 0.6, smile: 0.7 }], ...wags, ...settle(hold, [side])];
     },
     /** A finger to the lips: "shh". */
     shh: ({ hold = 1.2, side = 'right' }) => [
-      [-0.2, 0.45, { ...armFields(side, { arm: reach([88, 94], { shorten: 1 - LIFT * 0.8 }), lift: 0.8, shape: 'point', dir: -92 }), brow: 0.6, look: side === 'right' ? -0.5 : 0.5 }],
+      [-0.4, 0.65, { ...armFields(side, { arm: reach([88, 94], { shorten: 1 - LIFT * 0.8 }), lift: 0.8, shape: 'point', dir: -92 }), brow: 0.6, look: side === 'right' ? -0.5 : 0.5 }],
       ...settle(hold, [side]),
     ],
     /** A knowing tap at the temple: "I'm certain I know". */
     temple: ({ hold = 1.2, side = 'right', taps = 2 }) => {
       const at = reach([TEMPLE[0] + 12, TEMPLE[1] + 25], { shorten: 1 - LIFT * 0.5 });
       const off = reach([TEMPLE[0] + 15, TEMPLE[1] + 28], { shorten: 1 - LIFT * 0.5 });
-      const taps2 = Array.from({ length: taps * 2 }, (_, i) => [0.35 + i * 0.14, 0.12, { [side]: i % 2 ? at : off }]);
-      return [[-0.2, 0.45, { ...armFields(side, { arm: at, lift: 0.5, shape: 'point', dir: -112 }), brow: 0.8, smile: 1, tilt: 4 }], ...taps2, ...settle(hold, [side])];
+      const taps2 = repetitions(taps, hold, (i) => armFields(side, { arm: i % 2 ? at : off, lift: 0.5, shape: 'point', dir: -112 }));
+      return [[-0.4, 0.65, { ...armFields(side, { arm: at, lift: 0.5, shape: 'point', dir: -112 }), brow: 0.8, smile: 1, tilt: 4 }], ...taps2, ...settle(hold, [side])];
     },
     /** A chef's kiss: pinched fingers to the lips, then flung open. */
     kiss: ({ hold = 0.6, side = 'right' }) => [
-      // Pinched fingers at the lips, the elbow down (as for "shh").
-      [-0.25, 0.35, { ...armFields(side, { arm: reach([88, 94], { shorten: 1 - LIFT * 0.8 }), lift: 0.8, shape: 'pinch', dir: -100 }), happy: 1, round: 0.8 }],
-      [0.25, 0.3, { ...armFields(side, { arm: reach([128, 54]), lift: 0.2, shape: 'spread', dir: -60 }), round: 0, smile: 1 }],
-      ...settle(0.55 + hold, [side]),
+      // Approach the lips from beside the face, keeping the elbow on the
+      // same side of the arm's plane as the release: no sweep via the waist.
+      [-0.4, 0.5, { ...armFields(side, { arm: reach([104, 74], { shorten: 1 - LIFT * 0.2 }), lift: 0.2, shape: 'pinch', dir: -165 }), happy: 1, round: 0.8 }],
+      [0.25, 0.6, { ...armFields(side, { arm: reach([128, 54], { shorten: 1 - LIFT * 0.2 }), lift: 0.2, shape: 'spread', dir: -60 }), round: 0, smile: 1 }],
+      ...settle(0.85 + hold, [side]),
     ],
     /** A deep bow, a hand at the waist and the other swept out. */
     bow: ({ hold = 0.9, side = 'right' }) => [
@@ -1670,12 +1834,12 @@
     ],
     /** A thumbs-up held out. */
     thumbs: ({ hold = 1.2, side = 'right' }) => [
-      [-0.2, 0.4, { ...armFields(side, { arm: reach([128, 92]), shape: 'thumb', dir: -90 }), smile: 1, brow: 0.5, tilt: 3 }],
+      [-0.35, 0.65, { ...armFields(side, { arm: reach([132, 100]), shape: 'thumb', dir: -90 }), smile: 1, brow: 0.5, tilt: 3 }],
       ...settle(hold, [side]),
     ],
     /** A shrug: hands out palm up at the hips, shoulders and brows up. */
     shrug: ({ hold = 1.1 }) => [
-      [-0.15, 0.4, {
+      [-0.35, 0.6, {
         // Elbows at the sides, forearms out, palms up.
         ...armFields('right', { arm: [raise(UPPER_REST, 78), raise(FOREARM_REST, -6)], shape: 'open', dir: -24 }),
         ...armFields('left', { arm: [raise(UPPER_REST, 78), raise(FOREARM_REST, -6)], shape: 'open', dir: -24 }),
@@ -1686,12 +1850,12 @@
     /** A crisp salute. */
     salute: ({ hold = 1, side = 'right' }) => [
       // The fingertips at the outer end of the brow, not over the eye.
-      [-0.2, 0.35, { ...armFields(side, { arm: reach([BROW[0] + 40, BROW[1] + 12]), shape: 'flat', dir: -166 }), brow: 0.3, smile: 0.8 }],
+      [-0.4, 0.55, { ...armFields(side, { arm: reach([BROW[0] + 40, BROW[1] + 12]), shape: 'flat', dir: -166 }), brow: 0.3, smile: 0.8 }],
       ...settle(hold, [side]),
     ],
     /** Both hands up, palms out: "I surrender". */
     surrender: ({ hold = 2 }) => [
-      [-0.1, 0.45, {
+      [-0.25, 0.6, {
         ...armFields('right', { arm: reach([124, 62]), shape: 'open', dir: -84 }),
         ...armFields('left', { arm: reach([124, 62]), shape: 'open', dir: -84 }),
         wide: 1, brow: 1, smile: -0.2, sweat: 1, lean: 1.4,
@@ -1701,17 +1865,17 @@
     /** A palm thrust at the viewer: "stop". */
     stop: ({ hold = 1.6, side = 'right' }) => [
       // Thrust out to the side at shoulder height, palm up and out.
-      [-0.2, 0.35, { ...armFields(side, { arm: reach([142, 84]), shape: 'open', dir: -88 }), frown: 1, brow: 0, smile: -0.4 }],
+      [-0.4, 0.55, { ...armFields(side, { arm: reach([142, 84]), shape: 'open', dir: -88 }), frown: 1, brow: 0, smile: -0.4 }],
       ...settle(hold, [side]),
     ],
     /** A hand flat over the eyes. */
     facepalm: ({ hold = 1.4, side = 'right' }) => [
-      [-0.2, 0.35, { ...armFields(side, { arm: reach(BROW, { shorten: 1 - LIFT }), lift: 1, shape: 'flat', dir: -158 }), nod: 0.6, smile: -0.6, frown: 0.6 }],
+      [-0.2, 0.65, { ...armFields(side, { arm: reach(BROW, { shorten: 1 - LIFT }), lift: 1, shape: 'flat', dir: -158 }), nod: 0.6, smile: -0.6, frown: 0.6 }],
       ...settle(hold, [side]),
     ],
     /** Hands up beside the head, fingers spread: despair. */
     despair: ({ hold = 1.4 }) => [
-      [-0.15, 0.35, {
+      [-0.4, 0.6, {
         ...armFields('right', { arm: reach([118, 50]), shape: 'spread', dir: -96 }),
         ...armFields('left', { arm: reach([118, 50]), shape: 'spread', dir: -96 }),
         wide: 1, brow: 1, smile: -0.8, round: 0.6,
@@ -1720,7 +1884,7 @@
     ],
     /** Both hands thrown up: "everywhere!" */
     throwUp: ({ hold = 1.2 }) => [
-      [-0.15, 0.3, {
+      [-0.15, 0.6, {
         ...armFields('right', { arm: outstretched(-62), shape: 'spread', dir: -62 }),
         ...armFields('left', { arm: outstretched(-62), shape: 'spread', dir: -62 }),
         wide: 1, brow: 1, frown: 0.4,
@@ -1729,7 +1893,7 @@
     ],
     /** Hands on the hips, impatient. */
     hips: ({ hold = 1.6 }) => [
-      [-0.15, 0.45, {
+      [-0.3, 0.6, {
         ...armFields('right', { arm: reach([106, 146]), shape: 'grip', dir: 150 }),
         ...armFields('left', { arm: reach([106, 146]), shape: 'grip', dir: 150 }),
         frown: 0.8, smile: -0.4, tilt: -3,
@@ -1741,7 +1905,7 @@
       // A hard push out to the side of `to`: the near arm straight out, palm
       // first; the other fist braced at the chest.
       const near = to ? g.side(to) : 'right';
-      return [[-0.2, 0.3, {
+      return [[-0.4, 0.5, {
         ...armFields(near, { arm: outstretched(-4, 10), shape: 'open', dir: -84 }),
         ...armFields(other(near), { arm: reach([CHEST[0] + 22, CHEST[1] + 14]), shape: 'fist', dir: 150 }),
         lean: near === 'left' ? -4 : 4, frown: 0.6, smile: 0.6,
@@ -1750,13 +1914,13 @@
     },
     /** A hand cupped behind an ear. */
     listen: ({ hold = 1.2, side = 'right' }) => [
-      [-0.2, 0.4, { ...armFields(side, { arm: reach([104, 50]), shape: 'open', dir: -100 }), brow: 1, tilt: 6, look: side === 'right' ? 1 : -1 }],
+      [-0.4, 0.6, { ...armFields(side, { arm: reach([104, 50]), shape: 'open', dir: -100 }), brow: 1, tilt: 6, look: side === 'right' ? 1 : -1 }],
       ...settle(hold, [side]),
     ],
     /** A hand over a yawn. */
     yawn: ({ hold = 1.4, side = 'right' }) => [
       // The palm up at the mouth, the elbow down: the eyes stay clear.
-      [-0.2, 0.4, { ...armFields(side, { arm: reach([88, 94], { shorten: 1 - LIFT * 0.8 }), lift: 0.8, shape: 'flat', dir: -96 }), happy: 1, round: 1, tilt: -4 }],
+      [-0.4, 0.6, { ...armFields(side, { arm: reach([88, 94], { shorten: 1 - LIFT * 0.8 }), lift: 0.8, shape: 'flat', dir: -96 }), happy: 1, round: 1, tilt: -4 }],
       ...settle(hold, [side]),
     ],
     /** Knees give and the head drops: exhausted. */
@@ -1770,10 +1934,11 @@
       const fields = {};
       for (const [side, spec] of [['right', right], ['left', left]]) {
         if (!spec) continue;
-        const arm = spec.to ? g.aim(side, spec.to).arm : spec.arm || (spec.reach ? reach(spec.reach, { shorten: 1 - LIFT * (spec.lift || 0) }) : REST[side]);
-        Object.assign(fields, armFields(side, { arm, lift: spec.lift || 0, hand: spec.hand ?? 0, dir: spec.dir, shape: spec.shape }));
+        const aimed = spec.to ? g.aim(side, spec.to) : null;
+        const arm = aimed ? aimed.arm : spec.arm || (spec.reach ? reach(spec.reach, { shorten: 1 - LIFT * (spec.lift || 0) }) : REST[side]);
+        Object.assign(fields, armFields(side, { arm, lift: spec.lift || 0, hand: spec.hand ?? aimed?.hand ?? 0, dir: spec.dir, shape: spec.shape }));
       }
-      return [[-0.2, 0.4, fields], ...(hold === Infinity ? [] : settle(hold, Object.keys(fields).filter((k) => k === 'right' || k === 'left')))];
+      return [[-0.4, 0.6, fields], ...(hold === Infinity ? [] : settle(hold, Object.keys(fields).filter((k) => k === 'right' || k === 'left')))];
     },
   };
 
@@ -1850,6 +2015,7 @@
    *             or (time, reducedMotion) => { x, y, scale, walking } for a
    *             performer following a moving surface; walking is 0–1
    *   moves     [[time, name, options]] from MOVES
+   *   gestureSpeed  transition speed (default 1); preserves anticipated cue landings
    *   holds     [[time, side, prop]]: a prop in a hand from then on (null
    *             empties it)
    *   words     [start, end] sung word intervals (wordsFor)
@@ -1860,7 +2026,7 @@
    *             (or its stage exit, when the bed glides off with it)
    * Returns the wrapper and where() (its place at a time).
    */
-  function figure(parent, { role, gender = 'man', hero, stage = [], places, moves = [], holds = [], words = [], singInReducedMotion = true, beds = [], seed = 0 }) {
+  function figure(parent, { role, gender = 'man', hero, stage = [], places, moves = [], gestureSpeed = 1, holds = [], words = [], singInReducedMotion = true, beds = [], seed = 0 }) {
     const wrap = el('div', `oc-figure oc-figure--${role} is-staged`, parent);
     wrap.dataset.testid = `oc-${role}`;
     const fig = svg('svg', { class: 'oc-art', viewBox: '0 0 160 300', width: 160, height: 300, 'aria-hidden': 'true' }, wrap);
@@ -1914,6 +2080,15 @@
       return { x, y, scale, walking };
     }
 
+    const holdKeys = [...holds].sort((a, b) => a[0] - b[0]);
+    const carries = holdKeys.flatMap(([from, side, prop], i) => {
+      const carry = HOLDING[prop]?.carry;
+      if (!carry) return [];
+      const until = holdKeys.slice(i + 1).find(([, nextSide]) => nextSide === side)?.[0] ?? Infinity;
+      return [{ from, until, side, prop, carry }];
+    });
+    const occupied = (side, t) => carries.some((c) => c.side === side && t >= c.from - 0.35 && t < c.until);
+
     // Moves are aimed from wherever the figure stands when they are cued.
     const geometry = (t) => {
       const { x, y, scale } = where(t);
@@ -1927,13 +2102,20 @@
           look: clamp((to[0] - (left + HEAD.x * scale)) / (150 * scale), -1, 1),
           down: clamp((to[1] - (top + EYES * scale)) / (160 * scale), -0.8, 1),
         }),
-        side: (to) => (to[0] < left + 80 * scale ? 'left' : 'right'),
+        side: (to) => {
+          const near = to[0] < left + 80 * scale ? 'left' : 'right';
+          return occupied(near, t) && !occupied(other(near), t) ? other(near) : near;
+        },
         // Points the arm on `side` at a stage point: within reach the
         // fingertip touches it, further off the whole arm points.
         aim: (side, to) => {
           const [fx, fy] = toFigure(to, side);
           const distance = Math.hypot(fx - SHOULDER[0], fy - SHOULDER[1]);
           const along = degrees(Math.atan2(fy - SHOULDER[1], fx - SHOULDER[0]));
+          if (fx < 80) {
+            const arm = reach([76, 126]);
+            return { arm, hand: handToward(arm, along) };
+          }
           if (distance < UPPER + FORE + 18) {
             const arm = reach([fx, fy], { end: [WRIST[0] + 1, WRIST[1] + 22] });
             return { arm, hand: handToward(arm, along) };
@@ -1947,6 +2129,7 @@
         },
         toward: (side, to, bend) => {
           const [fx, fy] = toFigure(to, side);
+          if (fx < 80) return reach([78, 130]);
           return outstretched(degrees(Math.atan2(fy - SHOULDER[1], fx - SHOULDER[0])), bend);
         },
       };
@@ -1954,7 +2137,19 @@
     const gestures = moves
       .map(([time, name, options = {}]) => {
         if (!MOVES[name]) throw new Error(`opera-cast.js has no move "${name}".`);
-        const own = MOVES[name](options, geometry(time)).map(([delay, duration, fields]) => [time + delay, duration, fields]);
+        const raw = MOVES[name](options, geometry(time));
+        const moved = ['left', 'right'].filter((side) => raw.some(([, , fields]) => fields[side] && !RESTS.has(fields)));
+        const swap = moved.length === 1 && occupied(moved[0], time) && !occupied(other(moved[0]), time) ? moved[0] : null;
+        const own = raw.map(([delay, duration, fields]) => {
+          const span = Math.max(Math.min(duration, 0.12), duration / gestureSpeed);
+          if (swap) {
+            const renamed = Object.fromEntries(Object.entries(fields).map(([key, value]) => [key.startsWith(swap) ? other(swap) + key.slice(swap.length) : key, value]));
+            if (RESTS.has(fields)) RESTS.add(renamed);
+            fields = renamed;
+          }
+          // Quicker anticipation still arrives on the same sung word.
+          return [time + delay + (delay < 0 ? duration - span : 0), span, fields];
+        });
         return { time, start: Math.min(...own.map(([at]) => at)), keys: own };
       })
       .sort((a, b) => a.time - b.time);
@@ -1962,7 +2157,7 @@
     // and gives way to a later gesture that has already taken the same
     // part: a long hold never snaps an arm or a face out of the next pose.
     const posed = gestures.map(({ keys: own }) => new Set(own.filter(([, , fields]) => !RESTS.has(fields)).flatMap(([, , fields]) => Object.keys(fields))));
-    const keys = gestures
+    const gestureKeys = gestures
       .flatMap(({ keys: own }, i) => own.flatMap(([at, duration, fields]) => {
         if (!RESTS.has(fields)) return [[at, duration, fields]];
         const kept = Object.entries(fields).filter(([name]) => posed[i].has(name)
@@ -1970,7 +2165,14 @@
         return kept.length ? [[at, duration, Object.fromEntries(kept)]] : [];
       }))
       .sort((a, b) => a[0] - b[0]);
-    const holdKeys = [...holds].sort((a, b) => a[0] - b[0]);
+    const keys = [
+      ...gestureKeys.map(([at, duration, fields]) => [at, duration, Object.fromEntries(Object.entries(fields)
+        .filter(([name]) => !['left', 'right'].some((side) => name.startsWith(side) && occupied(side, at))))]),
+      ...carries.flatMap(({ from, until, side, prop, carry }) => {
+        const pose = armFields(side, { arm: reach(carry.reach), dir: carry.dir, shape: HOLDING[prop].shape });
+        return [[from - 0.35, 0.35, pose], ...(Number.isFinite(until) ? [[until, 0.4, restArm(side)]] : [])];
+      }),
+    ].sort((a, b) => a[0] - b[0]);
     const sortedWords = [...words].sort((a, b) => a[0] - b[0]);
 
     // On stage: each window fades the wrapper in and out (so the scene
@@ -2071,13 +2273,20 @@
       body.pose(p, t, open, reduced ? 0 : blinkAt(t, seed));
       body.level();
     });
-    return { node: wrap, where };
+    /** A supplied hand-surface contact in stage coordinates, including walking and sway. */
+    function handPoint(side, at) {
+      const matrix = fig.getCTM().inverse().multiply(body.arms[side].hand.getCTM());
+      const point = new DOMPoint(...at).matrixTransform(matrix);
+      const scale = parseFloat(fig.getAttribute('width')) / 160;
+      return [parseFloat(wrap.style.left) + point.x * scale, parseFloat(wrap.style.top) + point.y * scale];
+    }
+    return { node: wrap, where, handPoint };
   }
 
   window.OperaCast = {
-    HANDS, HEAD, SHOULDER, ELBOW, WRIST, MIRROR, REST, TEAMMATE_HEAD, TOP, TOP_SHADE, TOP_LIGHT, NECK, NECK_SHADE, LEGS, LEG_DETAIL, FEET,
-    SLEEVE, SLEEVE_FOLDS, FORE_SLEEVE, FORE_SLEEVE_FOLDS, CUFF, FOREARM, FOREARM_DETAIL, PUSHED, PUSHED_FOLDS, TENOR_HEAD,
+    HANDS, HEAD, SHOULDER, ELBOW, WRIST, MIRROR, REST, TEAMMATE_HEAD, TOP, NECK, NECK_SHADE, LEGS, LEG_DETAIL, FEET,
+    SLEEVE, SLEEVE_FOLDS, FORE_SLEEVE, FORE_SLEEVE_FOLDS, CUFF, FOREARM, FOREARM_DETAIL, TENOR_HEAD,
     reach, outstretched, handToward, poseAt, drawHandParts, rotate, raise, aroundZero, degrees, mouthShape,
-    buildFigure, blinkAt, COSTUMES, PROPS, MOVES, figure, wordsFor, mouthAt,
+    buildFigure, blinkAt, COSTUMES, PROPS, HOLDING, MOVES, figure, wordsFor, mouthAt,
   };
 })();

@@ -271,8 +271,8 @@
 /* A plug for the old call, a socket for the new interface. */
 .mk-socket { fill: #e8ecf1; }
 .mk-socket-hole { fill: #1a1410; }
-.mk-plug-body { fill: #2f3644; }
-.mk-cord { fill: none; stroke: #2f3644; stroke-width: 6; stroke-linecap: round; }
+.mk-plug-body { fill: #9fb3ca; }
+.mk-cord { fill: none; stroke: #9fb3ca; stroke-width: 6; stroke-linecap: round; }
 .mk-prong { fill: #d7a744; }
 .mk-spark { fill: none; stroke: #ffe27a; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
 .mk-code-chip { position: absolute; padding: 3px 8px; border-radius: 6px; background: #0b1122; border: 1px solid rgba(160, 190, 255, 0.45); color: #e6edf3; font: 600 14px var(--font-mono); white-space: nowrap; }
@@ -329,8 +329,9 @@
 .mk-client-icon { position: absolute; left: 44px; top: 47px; width: 32px; height: 30px; color: #ffd36b; }
 .mk-client-name { position: absolute; left: 0; top: 108px; width: 120px; text-align: center; color: #fbf7ec; font-size: 14px; font-weight: 800; text-shadow: 0 1px 2px #000; }
 .mk-reach { pointer-events: none; }
-.mk-reach-arm { fill: none; stroke: #ffd36b; stroke-width: 4; stroke-linecap: round; }
-.mk-reach-hand { fill: #ffd36b; stroke: #1a1410; stroke-width: 1.5; }
+.mk-reach-line { fill: none; stroke: #ffd36b; stroke-width: 3; stroke-linecap: round; }
+.mk-reach-arrow { fill: #ffd36b; }
+.mk-reach-port { fill: #ffd36b; stroke: #1a1410; stroke-width: 1.5; }
 .mk-bandage { fill: #f3c79a; stroke: #9a6a3e; stroke-width: 1; }
 .mk-bandage-pad { fill: #fbf7ec; }
 .mk-ripple { pointer-events: none; }

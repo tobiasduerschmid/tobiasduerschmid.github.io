@@ -300,7 +300,7 @@
       const person = svg('g', { transform: `translate(${x.toFixed(1)} ${y.toFixed(1)})` }, g);
       if (i % 3 === 1) {
         const hand = svg('g', { class: 'mk-asker' }, person);
-        svg('path', { class: 'mk-asker-arm', d: 'M14 4 C16 -20 18 -46 20 -64' }, hand);
+        svg('path', { class: 'mk-asker-arm', 'data-testid': 'mk-audience-arm', d: 'M14 4 C16 -20 18 -46 20 -64' }, hand);
         svg('circle', { class: 'mk-asker-hand', cx: 20, cy: -66, r: 5.4 }, hand);
         if (signs) {
           const sign = svg('g', { transform: 'translate(20 -92)' }, hand);
@@ -317,9 +317,13 @@
     fx.fadeIn(node, at, 0.4);
     onFrame((t) => {
       hands.forEach((hand, i) => {
-        const up = easeInOutCubic(progress(t, askAt + i * 0.1, 0.35)) * (1 - easeInOutCubic(progress(t, downAt, 0.35)));
-        hand.setAttribute('transform', `translate(0 ${(90 * (1 - up)).toFixed(1)})`);
-        hand.setAttribute('opacity', up.toFixed(3));
+        const raisedAt = askAt + i * 0.1;
+        const up = reducedMotion.matches
+          ? Number(t >= raisedAt && t < downAt)
+          : easeInOutCubic(progress(t, raisedAt, 0.65)) * (1 - easeInOutCubic(progress(t, downAt, 0.65)));
+        // Keep the shoulder attached while the whole arm swings up from
+        // below the stalls; translating the arm made it slide out of its body.
+        hand.setAttribute('transform', `rotate(${(150 * (1 - up)).toFixed(2)} 14 4)`);
       });
     });
     if (until !== undefined) fx.fadeOut(node, until - 0.4, 0.4);
@@ -774,7 +778,11 @@
         });
       }
     });
-    popped(node, at, until, { rotate: 0, from: 0.7 });
+    // Keep the declared size after the entrance as well as during travel.
+    // A generic pop ends at scale 1 and would detach a carried laptop from
+    // the palm contact computed for its declared scale.
+    tween(node, [{ opacity: 0, scale: scale * 0.7 }, { opacity: 1, scale }], at, 0.42, EASE.back);
+    if (until !== undefined) fx.popOut(node, until - 0.25);
     for (const [when, nx, ny, ns = scale, duration = 0.5] of path) {
       tween(node, { translate: `${nx - x}px ${ny - y}px`, scale: String(ns) }, when, duration, EASE.inOut);
     }
@@ -1040,11 +1048,11 @@
   }
 
   /**
-   * A client module as a kiosk with an arm reaching to (tx, ty): its roof,
-   * name, and window; the arm draws on at `reachAt`. From `brokeAt` it
+   * A client module as a kiosk consuming data from a rendered source cell: its roof,
+   * name, and window; the connection draws on at `reachAt`. From `brokeAt` it
    * cracks and shows a cross; from `patchAt` a bandage covers the crack.
    */
-  function client(parent, { x, y, at, until, name, iconName, tx, ty, reachAt, brokeAt, patchAt }) {
+  function client(parent, { x, y, at, until, name, iconName, source, reachAt, brokeAt, patchAt }) {
     const node = place(el('div', 'mk-client is-staged', parent), x, y);
     const g = art(node, 'mk-client-art', 0, 0, 120, 110);
     inked(g, 'M6 30 L60 4 L114 30 Z', 'mk-client-roof');
@@ -1063,16 +1071,34 @@
     cross.style.top = '-12px';
     if (brokeAt !== undefined) fx.pop(cross, brokeAt, { from: 0.3 });
     if (patchAt !== undefined) fx.popOut(cross, patchAt);
-    // The arm: from the kiosk's door to the target, in stage coordinates.
+    // Data flows into the kiosk's left edge, never across its icon. The
+    // final tangent is horizontal so the separate arrowhead stays legible.
     const armArt = art(parent, 'mk-reach', 0, 0, 960, 540);
-    const armPath = svg('path', { class: 'mk-reach-arm', d: `M${x + 60} ${y + 70} C${(x + 60 + tx) / 2} ${y - 20} ${tx} ${ty - 40} ${tx} ${ty}` }, armArt);
-    const hand = svg('circle', { class: 'mk-reach-hand', cx: tx, cy: ty, r: 6, opacity: 0 }, armArt);
+    const tipX = x + 6, tipY = y + 62;
+    const armPath = svg('path', { class: 'mk-reach-line', 'data-testid': 'mk-client-connection' }, armArt);
+    const port = svg('circle', { class: 'mk-reach-port', r: 4, opacity: 0 }, armArt);
+    const arrow = svg('path', { class: 'mk-reach-arrow', 'data-testid': 'mk-client-arrow',
+      d: `M${tipX} ${tipY} L${tipX - 9} ${tipY - 4.5} V${tipY + 4.5} Z`, opacity: 0 }, armArt);
+    const connect = () => {
+      const box = source.getBoundingClientRect();
+      const matrix = armArt.getScreenCTM();
+      if (!matrix || !box.width || !box.height) return;
+      const point = new DOMPoint(box.right, box.top + box.height / 2).matrixTransform(matrix.inverse());
+      const tx = point.x - 4, ty = point.y;
+      const bendX = (tx + tipX - 7) / 2;
+      armPath.setAttribute('d', `M${tx} ${ty} C${bendX} ${ty} ${bendX} ${tipY} ${tipX - 7} ${tipY}`);
+      port.setAttribute('cx', tx);
+      port.setAttribute('cy', ty);
+    };
+    connect();
     armArt.classList.add('is-staged');
     fx.fadeIn(armArt, reachAt, 0.1);
     fx.draw(armPath, reachAt, 0.4);
-    tween(hand, [{ opacity: 0 }, { opacity: 1 }], reachAt + 0.35, 0.1);
+    tween(port, [{ opacity: 0 }, { opacity: 1 }], reachAt, 0.1);
+    tween(arrow, [{ opacity: 0 }, { opacity: 1 }], reachAt + 0.35, 0.1);
     if (until !== undefined) fx.fadeOut(armArt, until - 0.3, 0.3);
     onFrame((t) => {
+      connect();
       crackG.setAttribute('opacity', brokeAt !== undefined && t >= brokeAt ? '1' : '0');
       bandage.setAttribute('opacity', patchAt !== undefined && t >= patchAt ? '1' : '0');
     });

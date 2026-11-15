@@ -65,6 +65,8 @@
     const plan = Object.fromEntries(Object.keys(VOICES).map((role) => [role, { stage: [], places: [], moves: [], holds: [], beds: [] }]));
     const move = (role, at, name, options) => plan[role].moves.push([at, name, options]);
     const placeAt = (role, at, x, y = FLOOR, scale = 0.95, duration = 0.8) => plan[role].places.push([at, x, y, scale, duration]);
+    // Screens, code, and information panels sit behind every singer, so
+    // a pointing arm or hand never disappears into the UI it presents.
     const behind = [];
     const lights = [];
     const ahead = [];
@@ -143,7 +145,7 @@
       badge('Act I · Requirements', start('verse-1'), end('pm'));
       // "Requirements? Quite simple!": a scroll of them unrolls and he
       // snaps it shut with one raised finger.
-      ahead.push(() => {
+      behind.push(() => {
         const a = kit.scene(content, line(v(1)).start - 0.2, mark(v(1), 'tickets') + 0.4, { exit: 'fade' });
         M.scroll(a, { x: 500, y: 52, at: mark(v(1), 'requirements'), rollAt: mark(v(1), 'simple') + 0.1, title: 'Requirements' });
       });
@@ -174,7 +176,7 @@
       // "How refined!": a chef's kiss.
       move('tenor', mark(v(3), 'refined'), 'kiss', { hold: 0.3 });
       // "I'll save them a meeting": the meeting with the users is torn up.
-      ahead.push(() => {
+      behind.push(() => {
         const memo = kit.scene(content, mark(v(4), 'save') - 0.2, mark(v(4), 'theyll') + 0.6, { exit: 'fade' });
         M.tornCard(memo, {
           x: 440, y: 60, w: 230, at: mark(v(4), 'save') - 0.1, tearAt: mark(v(4), 'meeting') + 0.1,
@@ -229,7 +231,7 @@
       // "As a fan, I want to pass my ticket on, so a friend can use my
       // seat when I can't come along!": the user story he never asked
       // for, written out part by part on a card; the phone says no.
-      ahead.push(() => {
+      behind.push(() => {
         const story = kit.scene(content, line(v(1)).start - 0.2, mark(v(3), 'promised') - 0.1, { exit: 'fade' });
         const card = M.card(story, {
           x: 470, y: 56, w: 218, title: 'User story', iconName: 'user', tone: 'gold', at: line(v(1)).start,
@@ -243,7 +245,7 @@
       move('pm', mark(v(2), 'cant') - 0.2, 'point', { to: [390, 250], hold: 1 });
       move('pm', mark(v(2), 'along'), 'shrug', { hold: 0.9 });
       // "I promised a demo of what they could use."
-      ahead.push(() => {
+      behind.push(() => {
         const promise = kit.scene(content, mark(v(3), 'promised') - 0.2, mark(v(4), 'built'), { exit: 'fade' });
         M.card(promise, {
           x: 440, y: 58, w: 214, title: 'Demo today', iconName: 'video', tone: 'gold', at: mark(v(3), 'demo'),
@@ -255,7 +257,7 @@
       // "You've built the wrong product — in six lovely hues!": the phone
       // fans out in six colours; he presents them proudly; the PM facepalms.
       move('pm', mark(v(4), 'wrong') - 0.1, 'point', { to: [400, 250], hold: 0.8 });
-      ahead.push(() => {
+      behind.push(() => {
         const fan = kit.scene(content, mark(v(4), 'six') - 0.1, line('verse-2-1').start + 1.2, { exit: 'fade' });
         ['red', 'orange', 'gold', 'green', 'blue', 'violet'].forEach((hue, i) => {
           M.phone(fan, { x: 300 + i * 64, y: 176 + Math.abs(i - 2.5) * 10, scale: 0.42, hue, label: 'SeatSwap', buttonText: 'BUY', lists: {}, at: mark(v(4), 'six') + i * 0.07, screens: [[0, 'button']] });
@@ -288,7 +290,7 @@
       });
       // "Design with reuse! Why build it anew?"
       move('tenor', mark(v(2), 'reuse') - 0.2, 'present', { to: [450, 250], hold: 1.2 });
-      ahead.push(() => {
+      behind.push(() => {
         const notes = kit.scene(content, mark(v(2), 'reuse'), mark(v(3), 'do'), { exit: 'fade' });
         kit.sticker(notes, 'Reuse!', { x: 330, y: 132, at: mark(v(2), 'reuse'), variant: 'gold', iconName: 'loop', rotate: -5 });
         M.card(notes, { x: 470, y: 92, w: 190, title: 'Build it anew', iconName: 'gear', tone: 'red', at: mark(v(2), 'build'), lines: ['No, thanks!'], rotate: 3 });
@@ -358,7 +360,7 @@
         M.buildMachine(works, { x: 470, y: 196, at: mark(v(1), 'clean') - 0.2, label: 'Clean build' });
         M.packageBox(works, { x: 640, y: 312, at: mark(v(1), 'got') - 0.3, name: 'transfers', version: '2.1.0', tone: 'new', path: [[mark(v(1), 'got'), 560, 312, 0.6]] });
       });
-      ahead.push(() => {
+      behind.push(() => {
         const notes = kit.scene(content, mark(v(1), 'old'), line(v(2)).start - 0.1, { exit: 'fade' });
         kit.sticker(notes, 'Kept the old one', { x: 282, y: 330, at: mark(v(1), 'old'), variant: 'white', iconName: 'laptop', rotate: -3 });
         kit.sticker(notes, 'Fetched the new one', { x: 462, y: 150, at: mark(v(1), 'new'), variant: 'gold', iconName: 'box', rotate: 3 });
@@ -378,7 +380,7 @@
       move('build', mark(v(2), 'wont') - 0.1, 'shrug', { hold: 0.6 });
       // "Next time, pin your versions! Till then, the builds fail.": a
       // lockfile pins the old version; the build board goes red.
-      ahead.push(() => {
+      behind.push(() => {
         const pinned = kit.scene(content, line(v(3)).start - 0.2, line(v(4)).start, { exit: 'fade' });
         const card = M.card(pinned, {
           x: 330, y: 222, w: 260, title: 'package-lock.json', iconName: 'pin', tone: 'paper', at: mark(v(3), 'pin'),
@@ -400,7 +402,7 @@
         const mail = kit.scene(content, line(v(4)).start - 0.2, line('refrain-1-1').start - 0.2, { exit: 'fade' });
         M.shippingBox(mail, { x: 470, y: 316, at: line(v(4)).start - 0.1, labelAt: mark(v(4), 'mail') });
       });
-      ahead.push(() => {
+      behind.push(() => {
         const drop = kit.scene(content, mark(v(4), 'ship') - 0.2, mark(v(4), 'laptop') + 0.6, { exit: 'fade' });
         M.laptop(drop, { x: 486, y: 150, scale: 0.8, at: mark(v(4), 'ship') - 0.2, screens: [[0, 'cached']], cached: { name: 'transfers', version: '1.4.2' }, path: [[mark(v(4), 'laptop'), 486, 300, 0.6, 0.4]] });
       });
@@ -422,7 +424,9 @@
     const LAPTOP_ON_DESK = [134, 250];
     // On his raised palm, beside his head: its bottom centre on his hand,
     // where the pose below puts it.
-    const PALM = { reach: [158, 42], shape: 'flat', dir: -6 };
+    const PALM = { reach: [158, 42], shape: 'support', dir: 0 };
+    const PICKUP_PALM = { reach: [133, 160], shape: 'support', dir: 0 };
+    const carriedLaptops = [];
     const LAPTOP_HIGH = [411, 125];
     const LAPTOP_MIDDLE = [LAPTOP_HIGH[0] + 53, LAPTOP_HIGH[1] + 40];
     function refrain(n, fixes) {
@@ -430,16 +434,22 @@
       const from = line(r(1)).start - 1.4;
       const to = line(r(4)).end + 0.6;
       if (n < 3) badge('Refrain', from, to);
-      placeAt('tenor', from, 380, FLOOR, 0.95, 0.9);
+      const pickup = mark(r(1), 'works') - 0.65;
+      const lower = mark(r(2), 'the') - 0.15;
+      const release = lower + 0.6;
+      placeAt('tenor', from, 123, FLOOR, 0.95, 0.65);
+      placeAt('tenor', pickup + 0.05, 380, FLOOR, 0.95, 0.65);
+      placeAt('tenor', lower, 123, FLOOR, 0.95, 0.6);
+      placeAt('tenor', release + 0.05, 380, FLOOR, 0.95, 0.6);
       behind.push(() => {
         const office = kit.scene(content, from, n === 3 ? undefined : to, { exit: 'fade' });
         M.desk(office, { x: DESK.x, top: DESK.top, w: DESK.w });
-        M.laptop(office, {
+        const laptop = M.laptop(office, {
           x: LAPTOP_ON_DESK[0], y: LAPTOP_ON_DESK[1], scale: 0.8, at: from + 0.2,
           screens: [[from, 'green'], [mark(r(2), 'the') - 0.2, 'code'], [mark(r(4), 'and') - 0.1, 'lamps'], ...(n === 3 ? [[mark('outro-1', 'strange') - 0.2, 'error']] : [])],
           lampsAt: mark(r(4), 'all'), lampsEvery: n === 3 ? 0.3 : 0.18,
-          path: [[mark(r(1), 'works') - 0.25, LAPTOP_HIGH[0], LAPTOP_HIGH[1], 0.8, 0.45], [mark(r(2), 'the') - 0.4, LAPTOP_ON_DESK[0], LAPTOP_ON_DESK[1], 0.8, 0.45]],
         });
+        carriedLaptops.push({ node: laptop, pickup, release });
         M.tally(office, { x: DESK.x + 18, y: DESK.top + 14, at: mark(r(3), 'one') - 0.2, until: n === 3 ? undefined : to, title: 'Tiny fixes', values: [[mark(r(3), 'tiny'), 1], ...fixes.map(([word, count]) => [mark(r(3), word), count])] });
       });
       ahead.push(() => {
@@ -450,11 +460,14 @@
       lights.push(() => M.spot(content, () => ({ where: () => ({ x: LAPTOP_MIDDLE[0], y: LAPTOP_MIDDLE[1] + 70, scale: 0.6 }) }), { from: mark(r(1), 'works') - 0.2, to: mark(r(2), 'the') }));
       // "It works on my machine!": the laptop held high on his palm, the
       // other arm flung wide, until he puts it back on the desk.
-      move('tenor', mark(r(1), 'it') - 0.3, 'point', { to: [180, 300], hold: 0.3 });
+      move('tenor', pickup - 0.2, 'arms', { right: PICKUP_PALM, hold: 1.2 });
+      move('tenor', pickup - 0.2, 'mood', { crouch: 1, hold: 0.3 });
       const raised = mark(r(1), 'works') - 0.15;
       move('tenor', raised, 'arms', {
-        right: PALM, left: { arm: C.outstretched(-24), shape: 'open', dir: -14 }, hold: mark(r(2), 'the') - 0.4 - raised,
+        right: PALM, left: { arm: C.outstretched(-24), shape: 'open', dir: -14 }, hold: lower + 0.3 - raised,
       });
+      move('tenor', lower + 0.4, 'arms', { right: PICKUP_PALM, hold: 0.3 });
+      move('tenor', lower + 0.3, 'mood', { crouch: 1, hold: 0.3 });
       move('tenor', mark(r(1), 'works'), 'mood', { hold: 2.2, happy: 1, brow: 0.8, smile: 1 });
       // "The finest code you've seen!": back on the desk, in a gilded frame; a chef's kiss.
       move('tenor', mark(r(2), 'finest') - 0.1, 'present', { to: [190, 290], hold: 1 });
@@ -533,7 +546,7 @@
       });
       move('tenor', mark(v(2), 'check') - 0.1, 'point', { to: [520, 360], hold: 0.8 });
       // "My implementation is captured just so!": a plaster cast closes round the code.
-      ahead.push(() => {
+      behind.push(() => {
         const cast = kit.scene(content, mark(v(3), 'implementation') - 0.1, line('test-1').start + 0.2, { exit: 'fade' });
         M.mold(cast, { x: CODE_X, y: CODE_Y, w: 330, h: 172, at: mark(v(3), 'implementation'), sealAt: mark(v(3), 'captured') });
       });
@@ -578,7 +591,7 @@
       // "Test what it does, not how: then my friend's ticket should show!":
       // the rule on a sticker; the test now checks that Sam has the seat,
       // and it passes.
-      ahead.push(() => {
+      behind.push(() => {
         const rule = kit.scene(content, mark(v(3), 'test') - 0.1, line(v(4)).start, { exit: 'fade' });
         kit.sticker(rule, 'Test the behavior', { x: 430, y: 256, at: mark(v(3), 'test'), variant: 'gold', iconName: 'check', rotate: -4 });
         kit.sticker(rule, 'Passes', { x: CODE_X + 236, y: 300, at: mark(v(3), 'show'), variant: 'green', iconName: 'check', rotate: 6 });
@@ -599,7 +612,7 @@
           tween(node, [{ translate: '0 0' }, { translate: '34px 0' }, { translate: '10px 0' }, { translate: '30px 0' }, { translate: '0 0' }], mark(v(4), 'wont'), 1.4, EASE.inOut);
         }
       });
-      move('test', mark(v(4), 'wont') - 0.2, 'arms', { right: { to: [CODE_X + 336, 150], shape: 'grip', dir: 180 }, left: { to: [CODE_X + 332, 176], shape: 'grip', dir: 180 }, hold: 1.4 });
+      move('test', mark(v(4), 'wont') - 0.2, 'arms', { right: { to: [CODE_X + 336, 150], shape: 'grip' }, left: { to: [CODE_X + 332, 176], shape: 'grip' }, hold: 1.4 });
       move('test', mark(v(4), 'wont') - 0.2, 'mood', { lean: -5, frown: 0.8, hold: 1.4 });
       spotlight('test', line(v(1)).start - 0.3, line(v(4)).end + 0.2);
     }
@@ -629,20 +642,20 @@
       move('tenor', mark(v(1), 'conceal') - 0.15, 'shove', { to: [400, 260], hold: 0.6 });
       // "Each page reads the showtime its own way! Ideal!": its table of
       // shows, and three pages that reach straight into the times.
-      ahead.push(() => {
+      behind.push(() => {
         const inside = kit.scene(content, mark(v(1), 'conceal') - 0.1, until, { exit: 'fade' });
-        M.dataTable(inside, {
+        const table = M.dataTable(inside, {
           x: 292, y: 222, at: mark(v(1), 'conceal'), title: 'shows', columns: ['id', 'show', 'time'],
           rows: [['1', 'Jazz Night', SHOWTIMES_BEFORE[0]], ['2', 'Choir', SHOWTIMES_BEFORE[1]], ['3', 'Comedy', SHOWTIMES_BEFORE[2]]],
           dateColumn: 2, newDates: SHOWTIMES_AFTER, dateAt: mark(v(4), 'utc'), glowAt: mark('ui-2', 'detail'),
         });
         const pages = [
-          { name: 'Tickets', iconName: 'tag', x: 572, y: 60, broke: mark('ui-1', 'tickets'), patch: mark('ui-3', 'choices'), tx: 548, ty: 268 },
-          { name: 'Reminders', iconName: 'calendar', x: 572, y: 197, broke: mark('ui-1', 'reminders'), patch: mark('ui-3', 'change'), tx: 548, ty: 292 },
-          { name: 'Check-in', iconName: 'check', x: 572, y: 334, broke: mark('ui-1', 'checkin'), patch: mark('ui-3', 'module'), tx: 548, ty: 316 },
+          { name: 'Tickets', iconName: 'tag', x: 572, y: 60, broke: mark('ui-1', 'tickets'), patch: mark('ui-3', 'choices') },
+          { name: 'Reminders', iconName: 'calendar', x: 572, y: 197, broke: mark('ui-1', 'reminders'), patch: mark('ui-3', 'change') },
+          { name: 'Check-in', iconName: 'check', x: 572, y: 334, broke: mark('ui-1', 'checkin'), patch: mark('ui-3', 'module') },
         ];
         pages.forEach((c, i) => M.client(inside, {
-          x: c.x, y: c.y, at: mark(v(2), 'each') + i * 0.12, name: c.name, iconName: c.iconName, tx: c.tx, ty: c.ty,
+          x: c.x, y: c.y, at: mark(v(2), 'each') + i * 0.12, name: c.name, iconName: c.iconName, source: table.dates[i].node,
           reachAt: mark(v(2), 'showtime') + i * 0.1, brokeAt: c.broke, patchAt: c.patch, until,
         }));
         // "Let every page do the math!": each page's own time math.
@@ -680,7 +693,7 @@
       // "One detail has changed — it's used EVERYWHERE!": the times glow
       // red, and dashed lines run to everything that used them: chips in
       // the space above and below the Shows module.
-      ahead.push(() => {
+      behind.push(() => {
         const spread = kit.scene(content, mark(v(2), 'used') - 0.2, mark(v(3), 'hide') - 0.1, { exit: 'fade' });
         M.ripple(spread, {
           x: 470, y: 290, at: mark(v(2), 'used'), every: 0.07,
@@ -695,7 +708,7 @@
       move('ui', mark(v(2), 'everywhere') - 0.15, 'throwUp', { hold: 0.8 });
       // "Hide choices that change in one module — right?": the fix, one
       // module that alone knows how times are stored; the pages get patched.
-      ahead.push(() => {
+      behind.push(() => {
         const fix = kit.scene(content, mark(v(3), 'hide') - 0.2, line('refrain-2-1').start - 1.5, { exit: 'fade' });
         const card = M.card(fix, {
           x: 300, y: 366, w: 230, title: 'Showtime module', iconName: 'lock', tone: 'gold', at: mark(v(3), 'hide'),
@@ -738,7 +751,7 @@
       });
       // "I'll squash all my changes to one tidy line!"
       move('tenor', mark(v(1), 'squash') - 0.2, 'arms', {
-        right: { reach: [148, 128], shape: 'open', dir: 180 }, left: { reach: [148, 128], shape: 'open', dir: 180 }, hold: 0.8,
+        right: { reach: [148, 128], shape: 'open', dir: -36 }, left: { reach: [148, 128], shape: 'open', dir: -36 }, hold: 0.8,
       });
       // "Then force-push to shared main — that history will shine!"
       move('tenor', mark(v(2), 'forcepush') - 0.2, 'shove', { to: [520, 200], hold: 0.9 });
@@ -752,10 +765,10 @@
       // "One clean line of progress! Less clutter to see!": he sweeps the
       // fallen commits off with a broom.
       plan.tenor.holds.push([mark(v(3), 'less') - 0.6, 'right', 'broom'], [mark(v(4), 'review') - 0.2, 'right', null]);
-      move('tenor', mark(v(3), 'less') - 0.5, 'arms', { right: { reach: [138, 190], shape: 'grip', dir: 60 }, left: { reach: [100, 170], shape: 'grip', dir: 60 }, hold: 0.4 });
-      move('tenor', mark(v(3), 'clutter'), 'arms', { right: { reach: [66, 200], shape: 'grip', dir: 140 }, left: { reach: [56, 176], shape: 'grip', dir: 140 }, hold: 0.6 });
+      move('tenor', mark(v(3), 'less') - 0.5, 'arms', { right: { reach: [136, 170], shape: 'grip', dir: 50 }, left: { reach: [110, 154], shape: 'open', dir: 50 }, hold: 0.4 });
+      move('tenor', mark(v(3), 'clutter'), 'arms', { right: { reach: [94, 174], shape: 'grip', dir: 50 }, left: { reach: [108, 150], shape: 'open', dir: 25 }, hold: 0.6 });
       // "Review will be easy — that's teamwork from me!"
-      ahead.push(() => {
+      behind.push(() => {
         const review = kit.scene(content, mark(v(4), 'review') - 0.1, line('backend-1').start + 0.4, { exit: 'fade' });
         M.card(review, { x: 430, y: 300, w: 200, title: 'Code review', iconName: 'eye', tone: 'blue', at: mark(v(4), 'review'), lines: ['1 commit to read'] });
         kit.sticker(review, 'Easy!', { x: 644, y: 314, at: mark(v(4), 'easy'), variant: 'green', iconName: 'check', rotate: 8 });
@@ -791,7 +804,7 @@
       // "Never force-push! Merge first! I'll restore them by dawn.": the
       // rule on a card; their commits fly back onto main after his; the
       // sun comes up.
-      ahead.push(() => {
+      behind.push(() => {
         const rule = kit.scene(content, mark(v(3), 'never') - 0.2, mark(v(3), 'dawn') + 0.6, { exit: 'fade' });
         const card = M.card(rule, { x: 540, y: 320, w: 210, title: 'Never force-push', iconName: 'warning', tone: 'red', at: mark(v(3), 'never'), lines: ['Merge first.'] });
         onFrame((t) => card.rows[0].classList.toggle('mk-card-line--pending', t < mark(v(3), 'merge')));
@@ -804,7 +817,7 @@
       house.board(mark(v(3), 'dawn'), ['green', 'green', 'green', 'green', 'green', 'green'], 0.1);
       // "Some sprint that you saved us! My weekend is gone!": Saturday and
       // Sunday drift up and vanish.
-      ahead.push(() => {
+      behind.push(() => {
         const weekend = kit.scene(content, mark(v(4), 'weekend') - 0.2, line(v(4)).end, { exit: 'fade' });
         ['Sat', 'Sun'].forEach((day, i) => {
           const page = M.card(weekend, { x: 560 + i * 92, y: 300, w: 82, title: day, iconName: 'calendar', tone: 'gold', at: mark(v(4), 'weekend') + i * 0.12, lines: ['free'] });
@@ -842,7 +855,7 @@
       // Asleep under the quilt, smiling, head nodding.
       move('backend', mark(v(1), 'sleep') + 1, 'mood', { nod: 0.7, happy: 1, smile: 0.6, hold: 6 });
       // "The keys live in dot-env, not hard-coded now!"
-      ahead.push(() => {
+      behind.push(() => {
         const keys = kit.scene(content, mark(v(2), 'keys') - 0.2, line(v(3)).end, { exit: 'fade' });
         M.card(keys, { x: 330, y: 92, w: 300, title: '.env', iconName: 'key', tone: 'dark', at: mark(v(2), 'dotenv') - 0.1, lines: ['API_KEY=sk-live-4f2a…'] });
         M.code(keys, {
@@ -857,7 +870,7 @@
       move('tenor', mark(v(3), 'bow') - 0.3, 'bow', { hold: 1 });
       // "I add the whole folder; one push, and we're done!": git add . puts
       // .env in the commit too; git push sends it to the public repo.
-      ahead.push(() => {
+      behind.push(() => {
         const commit = kit.scene(content, mark(v(4), 'i') - 0.2, mark(v(4), 'push') + 0.9, { exit: 'fade' });
         M.folderToCommit(commit, {
           x: 300, y: 330, at: mark(v(4), 'i') - 0.1, addAt: mark(v(4), 'add'), pushAt: mark(v(4), 'push'), toX: 450, toY: 90,
@@ -926,7 +939,7 @@
       placeAt('security', 0, 790, FLOOR, 0.95);
       move('tenor', enter + 1.6, 'mood', { hold: line(v(4)).end - enter - 1.6, sweat: 1, smile: 0.4, brow: 0.8, look: 0.8 });
       // "Dot-env's not in gitignore — you committed the keys!"
-      ahead.push(() => {
+      behind.push(() => {
         const files = kit.scene(content, line(v(1)).start - 0.2, mark(v(2), 'strangers') - 0.3, { exit: 'fade' });
         gitignoreCard(files, line(v(1)).start - 0.1);
         commitCard(files, mark(v(1), 'committed'));
@@ -947,7 +960,7 @@
         const farm = kit.scene(content, mark(v(3), 'thieves') - 0.2, line(v(4)).end, { exit: 'fade' });
         [0, 1, 2].forEach((i) => M.serverRack(farm, { x: 300 + i * 92, y: 222, at: mark(v(3), 'thieves') + i * 0.1, spinAt: mark(v(3), 'spinning') + i * 0.1 }));
       });
-      ahead.push(() => {
+      behind.push(() => {
         const money = kit.scene(content, mark(v(3), 'were') - 0.2, line('refrain-3-1').start - 0.6, { exit: 'fade' });
         M.bill(money, { x: 380, y: 64, at: mark(v(3), 'were') - 0.1, counts: [[mark(v(3), 'deep'), 48200, 1.2], [mark(v(9), 'spending'), 61900, 1.4]] });
       });
@@ -965,7 +978,7 @@
       // .gitignore card is back, and .env goes into it.
       move('tenor', mark(v(5), 'ill') - 0.2, 'mood', { hold: 1.6, sweat: 1, wide: 1, brow: 1, smile: 0.3 });
       move('tenor', mark(v(5), 'add') - 0.2, 'point', { to: [420, 250], hold: 1 });
-      ahead.push(() => {
+      behind.push(() => {
         const again = kit.scene(content, line(v(5)).start - 0.3, line(v(6)).end, { exit: 'fade' });
         gitignoreCard(again, line(v(5)).start - 0.2, mark(v(5), 'gitignore'));
         // "That won't uncommit it!": the commit, keys and all, is still there.
@@ -976,7 +989,7 @@
       move('security', mark(v(6), 'wont') - 0.1, 'wag', { hold: 0.8 });
       // The copies and the stamps clear the stage before the finale's line-up comes on.
       const cleared = line('refrain-3-1').start - 1.65;
-      ahead.push(() => {
+      behind.push(() => {
         const copies = kit.scene(content, mark(v(7), 'copies') - 0.2, cleared, { exit: 'fade' });
         M.forks(copies, { x: 320, y: 330, at: mark(v(7), 'copies'), count: 5 });
       });
@@ -985,8 +998,8 @@
       // "Rotate those credentials—" (the Security Engineer): the old keys are
       // stamped ROTATED.
       plan.security.holds.push([mark(v(8), 'rotate') - 0.8, 'right', 'stamp'], [line(v(8)).end, 'right', null]);
-      move('security', mark(v(8), 'rotate') - 0.5, 'arms', { right: { reach: [124, 40], shape: 'grip', dir: -90 }, hold: 0.25 });
-      move('security', mark(v(8), 'rotate'), 'arms', { right: { reach: [130, 150], shape: 'grip', dir: 90 }, hold: 0.5 });
+      move('security', mark(v(8), 'rotate') - 0.5, 'arms', { right: { reach: [146, 106], shape: 'grip', dir: 0 }, hold: 0.25 });
+      move('security', mark(v(8), 'rotate'), 'arms', { right: { reach: [146, 148], shape: 'grip', dir: 0 }, hold: 0.5 });
       ahead.push(() => {
         const revoke = kit.scene(content, mark(v(8), 'rotate'), cleared, { exit: 'fade' });
         kit.stamp(revoke, 'Rotated', { x: 330, y: 300, at: mark(v(8), 'rotate'), rotate: -8, shake: false, from: 1.5, small: true });
@@ -1045,7 +1058,7 @@
       // "I'll just make one small change.": he reaches for the keyboard.
       placeAt('tenor', line(v(2)).start - 0.6, 312, FLOOR, 0.95, 0.6);
       move('tenor', mark(v(2), 'just') - 0.1, 'arms', {
-        right: { to: [214, 316], shape: 'point', dir: 150 }, left: { to: [196, 322], shape: 'point', dir: 150 }, hold: 1.4,
+        right: { to: [214, 316], shape: 'point' }, left: { to: [196, 322], shape: 'point' }, hold: 1.4,
       });
       move('tenor', mark(v(2), 'just'), 'mood', { hold: 1.4, lean: -5, smile: 0.9, brow: 0.6 });
       // "Step away from the keyboard!", sung by all six teammates: the
@@ -1093,6 +1106,30 @@
     refrain(3, [['ninetysix', 96]]);
     outro();
 
+    // Extra lyric accents for his tireless self-confidence. These use the
+    // free hand or gaps between prop actions; the other singers still get
+    // their reaction beats and the laptop/keyboarding contacts keep time.
+    for (const [id, word, name, options] of [
+      ['intro-1', 'worry', 'wag', { side: 'left', hold: 0.65 }],
+      ['intro-2', 'whole', 'finger', { side: 'left', hold: 0.55 }],
+      ['verse-1-1', 'requirements', 'shrug', { hold: 0.7 }],
+      ['verse-1-3', 'name', 'finger', { side: 'left', hold: 0.55 }],
+      ['verse-2-1', 'borrow', 'present', { to: [450, 250], hold: 0.8 }],
+      ['verse-2-3', 'know', 'temple', { side: 'left', hold: 0.65 }],
+      ['verse-3-2', 'order', 'finger', { side: 'left', hold: 1 }],
+      ['verse-3-3', 'implementation', 'operatic', { hold: 1.2 }],
+      ['verse-3-3', 'so', 'temple', { hold: 0.55 }],
+      ['verse-5-1', 'one', 'finger', { hold: 0.55 }],
+      ['verse-5-4', 'review', 'reassure', { hold: 0.7 }],
+      ['verse-5-4', 'easy', 'chest', { hold: 0.7, pats: 2 }],
+      ['verse-6-2', 'not', 'wag', { hold: 0.65 }],
+      ['verse-6-3', 'safer', 'thumbs', { hold: 0.6 }],
+      ['verse-6-5', 'handoff', 'present', { side: 'left', to: [600, 300], hold: 0.7 }],
+    ]) move('tenor', mark(id, word), name, options);
+    for (const n of [1, 2, 3]) {
+      move('tenor', mark(`refrain-${n}-4`, 'all'), 'operatic', { high: 0.15, hold: 0.55 });
+    }
+
     // ----------------------------------------------------------------
     // Build: the scenery behind, the cast and its spotlights, the props in front.
     // ----------------------------------------------------------------
@@ -1114,10 +1151,20 @@
       if (!p.stage.length) continue;
       if (!p.places.length) placeAt(role, 0, ...(role === 'tenor' ? HOME.tenor : HOME.mate));
       figures[role] = C.figure(content, {
-        role, hero: headFor(role), stage: p.stage, places: p.places,
+        role, gestureSpeed: role === 'tenor' ? 1.55 : 1, hero: headFor(role), stage: p.stage, places: p.places,
         moves: p.moves, holds: p.holds, beds: p.beds, words: wordsOf(role, voice), seed: Object.keys(VOICES).indexOf(role),
       });
     }
     for (const draw of ahead) draw();
+    // The laptop is supported throughout the lift and return. Its base
+    // follows the same palm contact, rather than an unrelated screen tween.
+    window.Timeline.onFrame((t) => {
+      for (const { node, pickup, release } of carriedLaptops) {
+        const carried = t >= pickup && t < release;
+        const contact = carried ? figures.tenor.handPoint('right', C.HANDS.support.contact) : null;
+        node.style.left = `${contact ? contact[0] - 66 * 0.8 : LAPTOP_ON_DESK[0]}px`;
+        node.style.top = `${contact ? contact[1] - 97 * 0.8 : LAPTOP_ON_DESK[1]}px`;
+      }
+    });
   };
 })();

@@ -441,6 +441,59 @@ kinematics, with the finger and hand geometry the architect shares through
 mouth on its own sung words (`wordsFor()`). A move's return to rest puts back
 only what that move posed, and gives way to a later move that has already
 posed the same arm or face, so overlapping holds never snap a pose away.
+Arm reaches retain a soft elbow and cap flexion at 150 degrees. Wrist targets
+are bounded before interpolation so the hands ease into their poses instead
+of hitting a hard limit early. Immutable pose keys compile into per-field
+tracks that begin at the actual interrupted pose, with zero velocity and
+acceleration at the ends of an uninterrupted transition. Temple taps use the
+same angle convention as their opening pose; taps and wags fit complete
+repetitions inside their hold. The audience's raised arms pivot at their
+shoulders, and reduced motion holds each commanded pose. The lead's
+`gestureSpeed: 1.55` gives him brisker transitions while retaining the same
+anticipated cue landings; eighteen extra word accents keep his delivery busy.
+Across the cast, upper sleeves attach at the collarbone and underarm instead
+of rotating an outlined shoulder cap. Torso outlines sit beneath the joined
+cloth, upper sleeves sit beneath costume details until crossing the chest,
+and a shared lighting field runs through the elbow without a shaded joint
+cap. A rounded shoulder leads into a narrow upper arm and a concave axilla.
+Bare arms use one continuous surface through the elbow; forearm endpoints
+follow the rotating hand's wrist edge. This follows the layered arms in
+“Design It In”; vest armholes and costume trim remain distinct garment details.
+Every hand view has a continuous authored silhouette, with the index beside
+the thumb; overlapping finger tubes are not used. Palm-facing extended fingers
+have creases rather than nails. Dorsal views have their own surface details.
+Wrist outline widths match, and forearm shading fades into the hand. Curled poses use a palm-side
+view: a sideways point puts the index above the three folded fingers, whose
+distal joints disappear behind the palm; the thumb wraps across them. Power
+grips use that same thumb/index relationship on both mirrored arms. Rolled
+sleeves end above the exposed elbow, with their fold drawn inside the sleeve
+surface rather than as a separate outlined cap. The bare elbow's outside
+rounds the joint; its inside runs smoothly from the cloth opening to the wrist,
+without a hidden return arc forming a hook at deep flexion. Long sleeves have
+one continuous shoulder-to-wrist surface. A matching foreground forearm pass
+handles torso occlusion, overlapping the base fill and suppressing internal
+ink and stroke-cap nubs. Short sleeves cover the bare arm's proximal contour.
+Sleeve folds are clipped to the moving cloth surface,
+so bends cannot leave protruding corners or detached ink. The lead's drawn face adds
+iris texture, eyelid folds, brow and moustache hairs, ear anatomy, and
+layered facial and hair shading without changing expression or lip-sync cues.
+Cloth uses broad radial light and shade instead of hard polygonal facets;
+clipped, softened highlights follow the arm contours through bends. Facial
+shading stays subtle, with warm blush, tapered brows, and hair detail clipped
+to its silhouette.
+`HOLDING` specifies each prop's hand contact, object contact, grip, orientation,
+and optional carrying pose. Persistent objects reserve their arm and the free
+hand gestures; a resting hand never releases its fingers while retaining a
+tool. Clipboards and palettes sit between supporting fingers and the thumb.
+The mug stays upright, the cane's fixed shaft reaches the floor through an
+adjusted supporting wrist, and the broom and stamp have coordinated working
+strokes. During the refrain the lead walks to the desk, and the laptop base
+follows the side-view supporting hand's contact through `figure.handPoint()`
+throughout pickup, lifting and lowering. Compact fingers sit beneath the base
+and the thumb overlaps its rim. Regression checks inspect the painted support
+area and rim overlap rather than comparing two copies of a contact constant.
+The required review is documented in
+`.agents/skills/asset-creator/references/character/hand-arm-contact.md`.
 `js/song-video/machine-kit.js` (styles in `css/song-video-machine-kit.css`)
 draws the pictures: the coffee app on a giant phone, a shelf of package
 versions and the new ones marching in, a clean-build machine, code cards

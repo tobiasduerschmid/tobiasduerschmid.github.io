@@ -1,6 +1,6 @@
 ---
 name: asset-creator
-description: Create SVG assets — logos, icons, customized icons, primitive characters, full comic-style illustrations (heroes, mascots, scene props), and parametrizable avatar systems (customizer-driven, themed via CSS variables, multi-instance) with or without animation. USE THIS SKILL EVERY SINGLE TIME you are about to write or edit a `.svg` file, an inline `<svg>` block in a Jekyll include / HTML / Markdown page, an SVG built in JS (`document.createElementNS('http://www.w3.org/2000/svg', …)`, JS template-literal SVG strings), an SVG used as `<img src>` / `background-image: url(…svg)`, or any standalone illustration asset (`_includes/*.svg`, `assets/**/*.svg`, `<symbol>`/`<defs>`/`<use>` sprite or symbol sheets, hero/avatar artwork, customizer-driven avatars, scene illustrations, decorative graphics, mascots, animated badges, exercise/topic icons, animated loaders). Trigger when drawing a path, placing a gradient, building a multi-layered comic illustration (head/hair/eye/body assembly), designing an avatar customizer or descriptor schema, picking a visual style family (flat / soft-flat / semi-realistic / isometric / iconographic), adding or tuning an idle animation cycle (breathing, blinking, sway, weight shift), composing multiple animations on one element, building a sprite-like discrete frame cycle, morphing a path between two shapes, choosing between SMIL / CSS / WAAPI for an animation, or honoring `prefers-reduced-motion`. Also trigger on requests like "draw an SVG of …", "make me a hero / avatar / mascot", "build an avatar customizer", "animate this icon", "morph this shape into that one", "make it breathe / blink / wave", "add a catchlight", "ink the outline", "layer the hair", "make the cape billow", "give it a comic look", or any task that involves authoring an illustration asset. NOTE: ArchUML / Mermaid / data-driven diagrams have a dedicated skill (`diagrams`) — defer to it for those; this skill is for illustration / decorative / character / icon / avatar assets.
+description: Create, edit, or review SVG illustrations, icons, logos, comic characters, avatars, scene props, and their animation. Use for every SVG file, inline SVG in HTML/Liquid/Markdown, JS-generated SVG, sprite, gradient, customizer artwork, or idle/gesture/morph animation edit. Includes human hand/arm anatomy, sleeves, object grips, and contact motion; read the relevant reference before editing. For Mermaid, ArchUML, and data diagrams, use diagrams instead.
 ---
 
 # Asset Creator
@@ -73,6 +73,16 @@ For each asset, retrieve several candidates and pick the best match rather than 
 - Animate **rig variables** (e.g. `--blink`, `--smile`), not raw path data. Code that rewrites `<path d="…">` strings breaks every time an illustrator redraws the path; code that sets CSS custom properties survives illustration churn. See [path-morphing.md](./references/animations/path-morphing.md) for the three-level mental model (attribute / rig / topology animation).
 - **Author the option space deliberately.** Skin tones, hair textures, head coverings, assistive devices, body proportions — narrow defaults silently exclude users. See the representation section in [avatar-system.md](./references/character/avatar-system.md).
 - For student / minor data: prefer non-biometric descriptors over stored face embeddings; if photo-assisted personalization exists, frame it as assistive editing not automatic identity inference, and document retention/deletion behavior.
+
+## Human limbs and held objects are a correctness gate
+
+For any character hand, arm, sleeve, gesture, or held-object edit, read
+[hand-arm-contact.md](./references/character/hand-arm-contact.md). Verify the
+complete interaction: anatomical hand view and thumb/index order, elbow and
+wrist motion, cloth continuity, actual grip, object orientation, and contact
+through transitions. Apply the review to all affected cast members and both
+mirrored sides, with extra samples at extreme poses. Numerical checks and
+visual inspection are both required; a plausible endpoint is insufficient.
 
 ## Complexity tiers
 
