@@ -7,6 +7,9 @@ accumulating office damage, with less clutter than the first mockups. Keep
 the coffee throw near 3:32, add a permanent paper bin, and give every new
 element detailed artwork consistent with the existing stage. Animation must
 have convincing spatial relationships, contact, release, impact, and settling.
+Each of the six issues adds one compact, identifiable residue group, clearly
+caused by a visible on-stage action. That cause may be an animated visual
+element, the Teammate, or a supporting cast member.
 
 The singers, instructional diagrams, captions, and central performance area
 remain the focus. Detail comes from coherent materials, folds, edges, and
@@ -26,25 +29,35 @@ hand, sleeve, and grip improvements must be preserved.
 ## Visual progression
 
 Times below refer to the original song. Bind production cues to its existing
-word marks, not duplicated timing literals. All aftermath remains through the
-following acts and final refrain unless an explicit cleanup action moves it.
+word marks, not duplicated timing literals. The staging actions below are
+proposed builder choices for satisfying the visible-cause requirement, not
+exact gestures specified by the user. Refine their placement and choreography
+against the full scene while preserving each cause and its physical outcome.
 
-| Beat | Action | Retained trace |
+Opening: establish the clean office and a permanent, empty paper bin beside
+the desk. The bin is part of the set, not an additional residue group.
+
+| Issue | Visible cause/action | Lasting trace |
 | --- | --- | --- |
-| Opening | Establish the clean office and a paper bin beside the desk. | Empty bin; clear floor. |
-| PM, 0:41–0:45 | Discard rejected demo papers into the bin; one misses. | A small amount of paper in the bin and one sheet next to it. |
-| Build, 1:14–1:19 | Preserve the overnight-shipping gag and return the laptop correctly. | A small packing-tape remnant on the desk or bin area; remove the large carton after the gag. |
-| Test, 2:07–2:10 | Show the cost of the lost night in the existing time lapse. | Two used cups and a compact folded test report at the desk; no floor-length printout. |
-| UI, 2:34–2:49 | Echo the spreading changes with a small shift in the low wall paneling, followed by repair. | Two or three short, subdued tape patches near panel seams; preserve the legibility of all UI icons. |
-| Force-push, 3:05–3:31 | Extend the existing sweep into the bin/desk area. Restore all recovered commits to their correct locations. | Move existing clutter rather than multiplying it. The discarded weekend cards become one small folded pair near the bin. |
-| Back-End Developer, “gone”, 3:31.6 | Throw the existing mug toward an unoccupied patch of the rear wall. | A compact coffee stain with two thin drips; a few recognisable mug pieces and a small wet patch by the wall. |
-| Security, 3:57–4:04 | Use the existing bill and rocket beats. | A small, softly edged exhaust mark high on the wall. Keep the bill in its existing presentation; no giant hanging receipt. |
-| Final refrain and outro | Preserve the contrast between his green laptop/footlights and the red shared build board. | Earlier traces stay. Only a few confetti pieces remain near existing debris; one can catch in the stain. |
+| 1. Requirements / Product Manager | On the existing “meeting” cue at 0:27.56, the Teammate tears the meeting-with-users card. Its two halves follow visible paths: one falls through the bin opening and one misses, landing beside it. | One torn-card group: a half inside the bin and a half on the floor. |
+| 2. Unpinned dependencies / Build Engineer | During the overnight-mail gag at 1:13.86–1:18.88, close and remove the carton while returning the laptop correctly. A short torn tape strip visibly detaches from the carton during its removal, catches on the bin rim, and settles. | One curled packing-tape remnant on the bin rim; the carton leaves. |
+| 3. Brittle tests / Test Engineer | Begin at the lost-night beat, 2:08.94–2:09.86: the Test Engineer pulls a compact report from a visible paper slot in the failing-test visual, folds it, and drops it onto the desk. Allow the sequence to continue beyond that short cue window so release, desk contact, and settling remain readable. | One compact folded test report at the desk. It remains when the test is rewritten and passes. |
+| 4. Exposed implementation decisions / UI Developer | Link a visibly snagged cable to the existing spreading-UI-change gag. The UI Developer tugs it, pulling one low wall panel slightly loose, then presses the panel back and applies two short tape strips. Keep the pull, snag, panel movement, and repair spatially connected. | One repaired panel-seam group with two short, subdued tape strips; all instructional UI icons remain legible. |
+| 5. Force-pushed shared history / Back-End Developer | At backend-4 “gone”, 3:31.60, the Back-End Developer throws the existing mug toward an unoccupied patch of rear wall. Show the held mug, release, flight, wall impact, and fragments falling to the floor directly below. | One compact coffee-impact group: a wall stain with two thin drips, a few recognisable mug pieces, and a small wet patch by the wall. |
+| 6. Committed secrets / Security Engineer | On the existing rocket “launch” cue at 4:01.66, its exhaust visibly contacts a rear-wall patch along the launch path. The exhaust dissipates from that same contact area as the rocket leaves. Keep the bill in its existing presentation. | One small, softly edged soot mark at the exhaust contact area. |
 
-A very slight plant droop and a small curled poster corner are optional
-background accents from the mockups, not additional headline events. Retain
-them only if they remain unobtrusive with the actual cast and diagrams present.
-Do not tilt the clock, sag the curtains, or introduce structural collapse.
+The force-push broom may visibly move earlier physical traces, but must not
+erase them or create another residue group. Restore all four “fix” commits to
+their correct locations on “restore” at 3:26.08; none remains as floor debris.
+The discarded weekend cards retain their existing transient role.
+
+Final refrain and outro: all six residue groups remain, including when the
+instructional diagrams reset or a depicted software problem is repaired.
+Preserve the contrast between his green laptop/footlights and the red shared
+build board. The completed accumulation contains exactly six compact residue
+groups. Used cups, plant/poster damage, weekend cards, and confetti add no
+persistent clutter. Do not tilt the clock, sag the curtains, or introduce
+structural collapse.
 
 ## Artwork and composition
 
@@ -52,11 +65,12 @@ The permanent bin belongs beside the desk, with its base on the same floor
 plane as nearby furniture. Give it a tapered metal body, elliptical opening,
 dark interior, restrained mesh or seam detail, a highlighted rim, and a contact
 shadow. Paper inside must sit behind the front rim and front body. Its fill
-increases slightly across the song without becoming a towering pile.
+comes only from the specified torn-card half; the later tape catches on its
+rim. Keep both small enough to preserve the visible opening and interior.
 
 Paper needs thickness suggested by folded corners, crease shadows, different
 front/back planes, and a small floor shadow. Tape needs a lifted edge, subdued
-material texture, and a shadow aligned with the wall. Coffee is a translucent
+material texture, and a shadow aligned with its supporting surface. Coffee is a translucent
 irregular deposit flattened onto the wall, with rounded satellites, a faint
 drying edge, and gravity-aligned drips. Mug fragments retain the original mug's
 ivory material and red band. Soot has a soft falloff, not an opaque black blob.
@@ -73,6 +87,13 @@ consistent depth ordering and cannot mask a hand, face, foot contact, or
 caption. Check desktop and narrow player sizes, with the complete scene.
 
 ## Motion and spatial model
+
+Every trace follows a readable chain: visible cause → continuous trajectory
+or connected contact → settling → persistence. A stain, tape patch, loose
+panel, or paper cannot pop into place as incidental damage. Show the action
+that creates it, with the same object and contact location carried through
+each phase. For a direct seek, derive the correct phase or settled result
+without replaying earlier actions.
 
 Use the existing deterministic song clock. Derive each event's state from
 absolute song time so direct seeks, reverse seeks, pauses, and replay produce
@@ -96,7 +117,7 @@ force every phase into the gap before the next lyric if that makes it snap;
 release belongs on “gone”, while quiet settling may continue into the handoff.
 Remove later held-mug cues that would make the thrown mug reappear.
 
-For paper, show a continuous path from the actual source to the bin or floor.
+For paper, show a continuous path from the actual source to the bin, desk, or floor.
 Foreshorten a sheet as it turns, switch the visible side coherently, and avoid
 stretching its silhouette. Use rear-rim → paper → front-rim depth ordering at
 the opening. Floor contact removes downward motion before any small slide.
@@ -124,6 +145,15 @@ the playlist thumbnail according to the song-video workflow. Temporary review
 scripts, screenshots, and mockups stay outside the repository.
 
 ## Verification and completion
+
+Check the six cumulative steps individually at before/action/after times.
+Before an issue's action its residue is absent; during the action the visible
+source, trajectory, or contact explains it; afterward exactly that one compact
+group has been added. Recheck all earlier groups after each later step and
+each diagram reset, including the finale and outro. Broom movement must leave
+earlier traces present in their new positions, and all four restored commits
+must return to the graph. Verify six residue groups total, without incidental
+extra debris.
 
 Numerical checks should cover deterministic direct/reverse seeks, bounded
 prop counts, unique mug ownership, continuous release position/orientation,
