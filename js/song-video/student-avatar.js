@@ -449,58 +449,50 @@
     };
   }
 
-  /** Reveal the face around moving lips and keep a beard's mustache attached. */
-  function expressionBeard(svg, mouth) {
+  /** Fit one fixed beard opening around the hero's original mouth. */
+  function beardMouthOpening(svg, mouth) {
     const beard = faceFeature(svg, 'facial-hair');
     if (!beard?.getAttribute('data-hero-option')?.includes('beard')) return null;
+    const silhouette = beard.querySelector(':scope > path');
+    if (!silhouette) return null;
     const mask = document.createElementNS(SVG_NS, 'mask');
     mask.id = `${svg.getAttribute('data-hero-style-scope')}-expression-beard`;
     for (const [key, value] of Object.entries({ maskUnits: 'userSpaceOnUse', x: 0, y: 0, width: 800, height: 480 })) mask.setAttribute(key, value);
-    const background = document.createElementNS(SVG_NS, 'rect');
-    for (const [key, value] of Object.entries({ width: 800, height: 480, fill: '#fff' })) background.setAttribute(key, value);
+    // Contain every shading layer in the same outer outline; individual
+    // hair locks must not leave small spikes along the cheek boundary.
+    const background = document.createElementNS(SVG_NS, 'path');
+    for (const [key, value] of Object.entries({ d: silhouette.getAttribute('d'), transform: silhouette.getAttribute('transform') || '', fill: '#fff', stroke: 'none' })) background.setAttribute(key, value);
     const opening = document.createElementNS(SVG_NS, 'path');
     opening.setAttribute('fill', '#000');
-    opening.setAttribute('fill-opacity', '0');
     mask.append(background, opening);
     svg.querySelector('defs').appendChild(mask);
     const mustache = beard.querySelector('[data-hero-mustache]');
     const wrapper = document.createElementNS(SVG_NS, 'g');
     wrapper.setAttribute('mask', `url(#${mask.id})`);
-    // Keep the mustache above the skin opening; its own fit follows the
-    // upper lip. Apply the clearance to every other shaded beard layer.
+    // Preserve the mustache's original shape and placement. Only the beard
+    // underneath needs clearance for the mouth's range of expressions.
     wrapper.append(...Array.from(beard.children).filter((part) => part !== mustache));
     beard.prepend(wrapper);
-    const restingMustache = mustache?.getAttribute('transform') || '';
-    let mustacheAnchor;
-    return (landmarks, weight) => {
-      opening.setAttribute('fill-opacity', String(weight));
-      if (!weight) {
-        mustache?.setAttribute('transform', restingMustache);
-        return;
-      }
+    let fitted = false;
+    return () => {
+      if (fitted) return;
+      const box = mouth.getBBox();
+      if (!box.width) return;
       const mouthMatrix = mouth.getCTM();
       const beardMatrix = wrapper.getCTM();
       if (!mouthMatrix || !beardMatrix) return;
-      const [width, left, centre, right, upper, lower] = landmarks;
-      const p = (x, y) => `${(x * width).toFixed(3)} ${y.toFixed(3)}`;
-      // Blend the cheek edges into a rounded opening under the lower lip.
-      // The mask reveals the original shaded skin and keeps hair detail
-      // outside the clearance, without a painted patch over the beard.
-      opening.setAttribute('d', `M${p(-1.5, -.9)} C${p(-1.22, -.25)} ${p(-1.2, left + .3)} ${p(-.68, centre + lower + .3)} C${p(-.4, centre + lower + .42)} ${p(.4, centre + lower + .42)} ${p(.68, centre + lower + .3)} C${p(1.2, right + .3)} ${p(1.22, -.25)} ${p(1.5, -.9)} Z`);
+      const x = box.x + box.width / 2;
+      const y = box.y + box.height * .4;
+      const scale = box.width * .36;
+      const p = (dx, dy) => `${(x + dx * scale).toFixed(3)} ${(y + dy * scale).toFixed(3)}`;
+      // This rounded opening accommodates the original smile and the
+      // closed-mouth reactions. Fit it once, before any expression is
+      // painted, so changing mood never reshapes or fades the facial hair.
+      // Close above the beard, with continuous cheek curves, so the top
+      // edge of the mask cannot leave triangular slivers beside the mouth.
+      opening.setAttribute('d', `M${p(-2.8, -3)} C${p(-2.6, -2.4)} ${p(-2.2, -1.55)} ${p(-1.9, -.9)} C${p(-1.6, -.25)} ${p(-1.5, .3)} ${p(-.88, .6)} C${p(-.5, .72)} ${p(.5, .72)} ${p(.88, .6)} C${p(1.5, .3)} ${p(1.6, -.25)} ${p(1.9, -.9)} C${p(2.2, -1.55)} ${p(2.6, -2.4)} ${p(2.8, -3)} Z`);
       opening.transform.baseVal.initialize(svg.createSVGTransformFromMatrix(beardMatrix.inverse().multiply(mouthMatrix)));
-      if (mustache) {
-        if (!mustacheAnchor) {
-          const box = mustache.getBBox();
-          const anchor = new DOMPoint(box.x + box.width / 2, box.y + box.height);
-          const fit = mustache.transform.baseVal.consolidate()?.matrix;
-          mustacheAnchor = fit ? anchor.matrixTransform(fit) : anchor;
-        }
-        const toMustache = mustache.parentElement.getCTM().inverse().multiply(mouthMatrix);
-        const upperLip = new DOMPoint(0, centre - upper * .8 - .06).matrixTransform(toMustache);
-        const lift = (upperLip.y - mustacheAnchor.y) * weight;
-        const tilt = Math.atan2(right - left, 2 * width) * 180 / Math.PI * .5 * weight;
-        mustache.setAttribute('transform', `translate(0 ${lift.toFixed(3)}) rotate(${tilt.toFixed(3)} ${mustacheAnchor.x} ${mustacheAnchor.y}) ${restingMustache}`.trim());
-      }
+      fitted = true;
     };
   }
 
@@ -533,17 +525,17 @@
     paths.upper.setAttribute('fill', mouth.querySelector('path[fill*="human-upper-lip"]')?.getAttribute('fill') || 'var(--hero-lip-shadow, #8f3232)');
     paths.lower.setAttribute('fill', mouth.querySelector('path[fill*="lip-volume"]')?.getAttribute('fill') || 'var(--hero-lip-fill, #b44a4a)');
     mouth.after(reaction);
-    const fitBeard = expressionBeard(svg, reaction);
+    const fitBeard = beardMouthOpening(svg, mouth);
     let fitted = false;
     let active = false;
     return (expression, from, blend, singing) => {
+      fitBeard?.();
       const end = shapes[expression] ? expression : 'neutral';
       const start = shapes[from] ? from : 'neutral';
       const weight = Number(start !== 'neutral') * (1 - blend) + Number(end !== 'neutral') * blend;
       reaction.setAttribute('display', weight ? 'inline' : 'none');
       singingLayer?.setAttribute('opacity', String(1 - weight));
       if (!weight) {
-        fitBeard?.(shapes.neutral, 0);
         if (active && !singing) mouth.setAttribute('opacity', '1');
         active = false;
         return;
@@ -562,7 +554,6 @@
       reaction.setAttribute('opacity', String(weight));
       const landmarks = shapes[start].map((value, i) => value + (shapes[end][i] - value) * blend);
       for (const [part, d] of Object.entries(closedLipPaths(landmarks))) paths[part].setAttribute('d', d);
-      fitBeard?.(landmarks, weight);
     };
   }
 
