@@ -336,16 +336,18 @@ class House {
           at: mark(v(8), 'team') + i * 0.06, moods: [[mark(v(8), 'team'), 'happy']],
         });
       });
-      kit.flow(hand, { from: [410, 200], to: [600, 120], bend: -40, color: 'gold', at: mark(v(8), 'team') });
+      // Leave breathing room beside the shoulder, robot, and checklist;
+      // arrow tips belong outside their artwork and text.
+      kit.flow(hand, { from: [418, 200], to: [550, 144], bend: -35, color: 'gold', at: mark(v(8), 'team') });
       S.robot(hand, { x: 746, y: 268, size: 132, at: mark(v(8), 'agent'), typeAt: mark(v(8), 'agent') + 0.3, typeUntil: mark(v(9), 'back') });
-      kit.flow(hand, { from: [412, 236], to: [742, 300], bend: -50, color: 'gold', at: mark(v(8), 'agent') });
+      kit.flow(hand, { from: [418, 236], to: [754, 316], bend: -50, color: 'gold', at: mark(v(8), 'agent') });
       // Short rows, in right after the work comes back, so the card can be read before the chorus.
       S.checklist(hand, {
         x: 430, y: 300, w: 250, title: 'Tested against the plan', at: mark(v(8), 'too'),
         rows: ['floors', 'rooms', 'build()'].map((text, i) => ({ text, at: mark(v(9), 'then') + 0.2 + i * 0.12, ok: true })),
       });
       // The robot's work comes back first, then each row checks it.
-      kit.flow(hand, { from: [744, 360], to: [686, 360], bend: 0, color: 'cyan', at: mark(v(9), 'then') });
+      kit.flow(hand, { from: [752, 360], to: [720, 360], bend: 0, color: 'cyan', at: mark(v(9), 'then') });
       const planAt = handPlan.stagePoint(handPlan.box('House'), 'center');
       A.architect(hand, {
         ...ARCHITECT, x: 22, y: 166, scale: 0.84, tag: '', at: handAt + 0.1,

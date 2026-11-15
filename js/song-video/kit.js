@@ -340,13 +340,17 @@
     const [x2, y2] = to;
     const cx = (x1 + x2) / 2;
     const cy = (y1 + y2) / 2 + bend;
-    const path = svg('path', { class: `flow-path flow-path--${color}`, d: `M ${x1} ${y1} Q ${cx} ${cy} ${x2} ${y2}` }, art);
+    const angle = Math.atan2(y2 - cy, x2 - cx);
+    // Stop inside the head so the shaft's round cap cannot protrude past
+    // its point. Keeping the endpoint on the final tangent aligns both.
+    const shaftX = x2 - Math.cos(angle) * 7;
+    const shaftY = y2 - Math.sin(angle) * 7;
+    const path = svg('path', { class: `flow-path flow-path--${color}`, d: `M ${x1} ${y1} Q ${cx} ${cy} ${shaftX} ${shaftY}` }, art);
     fx.draw(path, at, 0.32);
-    const angle = Math.atan2(y2 - cy, x2 - cx) * 180 / Math.PI;
     const head = svg('path', {
       class: `flow-head flow-head--${color} is-staged`,
       d: 'M 0 0 L -14 -7 L -14 7 Z',
-      transform: `translate(${x2} ${y2}) rotate(${angle.toFixed(1)})`,
+      transform: `translate(${x2} ${y2}) rotate(${(angle * 180 / Math.PI).toFixed(1)})`,
     }, art);
     fx.fadeIn(head, at + 0.28, 0.08);
     let labelNode = null;
