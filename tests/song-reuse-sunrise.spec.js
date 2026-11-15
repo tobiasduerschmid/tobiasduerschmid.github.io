@@ -130,6 +130,7 @@ test('Not a One-Time Investment: patch outcomes hold long enough to read before 
   const fixedDate = page.getByText('7 April: 1.0.1g', { exact: true });
   const passed = page.getByTestId('reuse-patch-result').getByText('✓ all tests passed', { exact: true });
   for (const [time, outcome] of [
+    [lyric('v3-9').marks.fix + 0.35, fixedDate],
     [lyric('v3-9').marks.week + 0.55, fixedDate],
     [lyric('v3-14').marks.test + 0.8, passed],
     [lyric('v3-9').marks.week + 0.55, fixedDate],
@@ -195,10 +196,13 @@ for (const [number, word, answerPicture] of [
   });
 }
 
-test('Not a One-Time Investment: the quiz version change is visible after the reveal', async ({ page }) => {
+test('Not a One-Time Investment: the quiz previews the pinned version but waits to update until the answer', async ({ page }) => {
   await page.goto(song.player);
   const q = song.sections.flatMap(section => section.lines).find(line => line.id === 'quiz-3');
   const art = page.getByTestId('reuse-quiz-art-3');
+  await seek(page, q.pause_at);
+  expect(await paintOpacity(art.getByText('==3.4.1 · pinned', { exact: true }))).toBeGreaterThan(0.95);
+  expect(await painted(art.locator('.rk-term')), 'test results stay hidden until the answer').toBe(false);
   await seek(page, q.answer_at + 0.2);
   expect(await painted(art.getByText('==3.4.1 · pinned', { exact: true }))).toBe(true);
   await seek(page, q.marks.then + 0.2);
@@ -207,17 +211,46 @@ test('Not a One-Time Investment: the quiz version change is visible after the re
   expect(await painted(art.getByText('==3.4.1 · pinned', { exact: true }))).toBe(true);
 });
 
+for (const [number, premise] of [
+  [3, 'Security fix: 3.4.2'],
+  [4, 'Europe: 3 April'],
+  [5, 'shared module'],
+]) {
+  test(`Not a One-Time Investment: quiz ${number} keeps its setup readable at the pause without revealing the answer`, async ({ page }) => {
+    await page.goto(song.player);
+    const q = song.sections.flatMap(section => section.lines).find(line => line.id === `quiz-${number}`);
+    // Include a rewind from the solution: question/premise visibility must
+    // depend on song time, not on whether the answer has already been seen.
+    for (const time of [q.start + 2, q.answer_at + 0.7, q.pause_at]) {
+      await seek(page, time);
+      if (time > q.answer_at) continue;
+      const question = page.locator('.stage').getByText(q.text, { exact: true });
+      const art = page.getByTestId(`reuse-quiz-art-${number}`);
+      expect(await paintOpacity(question), 'the question does not fade while waiting for the learner').toBeGreaterThan(0.95);
+      expect(await paintOpacity(art.getByText(premise, { exact: true })), 'the premise is available before the answer').toBeGreaterThan(0.95);
+      expect(await painted(question.locator('..').locator('.rk-quiz-answer')), 'the answer remains hidden').toBe(false);
+      const prompt = await question.boundingBox();
+      const visibleText = await art.locator('.rk-label, .rk-note, .rk-pkg-name').all();
+      for (const label of visibleText) {
+        if (await paintOpacity(label) < 0.95) continue;
+        const box = await label.boundingBox();
+        expect(box.y, 'problem artwork stays below the question').toBeGreaterThan(prompt.y + prompt.height);
+      }
+    }
+  });
+}
+
 test('Not a One-Time Investment: both apps settle on separate modules before the quiz advances', async ({ page }) => {
   await page.goto(song.player);
   const q = song.sections.flatMap(section => section.lines).find(line => line.id === 'quiz-5');
   const art = page.getByTestId('reuse-quiz-art-5');
   const appA = art.getByText('App A', { exact: true });
   const appB = art.getByText('App B', { exact: true });
-  await seek(page, q.answer_at + 0.2);
+  await seek(page, q.pause_at);
   expect(await painted(art.getByText('shared module', { exact: true }))).toBe(true);
   const beforeA = await appA.boundingBox();
   const beforeB = await appB.boundingBox();
-  expect(beforeA.y - beforeB.y, 'the initial answer picture shows B displaced').toBeGreaterThan(beforeA.height / 2);
+  expect(beforeA.y - beforeB.y, 'the problem picture shows B displaced').toBeGreaterThan(beforeA.height / 2);
   await seek(page, q.end - 0.3);
   const afterA = await appA.boundingBox();
   const afterB = await appB.boundingBox();
@@ -227,7 +260,7 @@ test('Not a One-Time Investment: both apps settle on separate modules before the
   expect(await paintOpacity(secondModule), 'the completed solution is fully visible before the next question').toBeGreaterThan(0.95);
   const module = await secondModule.boundingBox();
   expect(Math.abs(afterB.x + afterB.width / 2 - module.x - module.width / 2), 'B sits over its own module').toBeLessThan(4);
-  await seek(page, q.answer_at + 0.2);
+  await seek(page, q.pause_at);
   expect(await painted(art.getByText('shared module', { exact: true })), 'rewinding restores the shared dependency').toBe(true);
 });
 
@@ -417,7 +450,7 @@ test('Not a One-Time Investment: Ariane 5 breakup resolves into rising smoke bef
   expect(aftermath.fragments, 'the rocket sections tumble apart').not.toEqual(burst.fragments);
   await seek(page, lines.find(line => line.id === 'br-10').marks.failed + 0.5);
   expect(await painted(blast), 'the finished explosion gives way to the comparison').toBe(false);
-  await expect(page.getByText('Ariane 5: overflows ✗', { exact: true })).toBeVisible();
+  await expect(page.getByText('Ariane 5: overflows', { exact: true })).toBeVisible();
 
   await seek(page, at - 0.1);
   expect(await painted(body), 'rewinding restores the intact rocket').toBe(true);

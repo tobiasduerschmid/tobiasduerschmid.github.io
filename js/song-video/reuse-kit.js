@@ -1227,9 +1227,8 @@
    * baseplate light at footerAt; tabsAt shows the case tabs beside the
    * items.
    */
-  function checklist(parent, { x, y, w, title, items, footer, at, until, footerAt, tabsAt }) {
+  function checklist(parent, { x, y, w, items, footer, at, until, footerAt, tabsAt }) {
     const node = show(box(parent, 'rk-list', { x, y, w }), at, until, 'rise');
-    el('div', 'rk-list-title', node, title);
     const tower = el('div', 'rk-list-tower', node);
     const lowered = [];
     const base = el('div', 'rk-list-base rk-c-grey', tower);
@@ -1242,13 +1241,13 @@
       if (box) base.style.setProperty('--rk-ground-gap', `${Math.max(0, 466 - box.y - box.h).toFixed(0)}px`);
     });
     items.forEach((item, i) => {
-      const row = show(el('div', 'rk-list-row is-staged', node), i === 0 ? at : item.at,
-        items[i + 1]?.at, 'fade');
+      const next = items[i + 1];
+      const row = show(el('div', 'rk-list-row is-staged', node), i === 0 ? at : (item.showAt ?? item.at),
+        next?.showAt ?? next?.at, 'fade');
       const badge = el('span', 'rk-list-icon rk-c-gold', row);
       badge.append(kit.icon(item.icon));
       const words = el('div', 'rk-list-words', row);
       el('div', 'rk-list-q', words, item.q);
-      el('div', 'rk-list-name', words, item.name);
       classAt(row, 'is-lit', item.at);
       if (item.tabs && tabsAt !== undefined) {
         const tabs = el('div', 'rk-list-tabs', row);
@@ -1278,7 +1277,7 @@
       lowered.push({ lowerFrom, lands, pose: (t) => (landing ? { x: landing.x, y: landing.y - offset(t) - 10 } : null) });
     });
     node.lowered = lowered;
-    const foot = el('div', 'rk-list-footer', node);
+    const foot = show(el('div', 'rk-list-footer is-staged', node), footerAt, undefined, 'fade');
     el('span', 'rk-list-footer-text', foot, footer);
     classAt(foot, 'is-lit', footerAt);
     fx.bump(foot, footerAt, 0.06);
@@ -1292,7 +1291,9 @@
     el('span', 'rk-quiz-pill', head, 'Your case');
     el('span', 'rk-quiz-number', head, `Question ${n} of ${total}`);
     const questionNode = el('div', 'rk-quiz-question', card, question);
-    fx.fadeOut(questionNode, answerAt - 0.18, 0.18);
+    // The learner may pause just before answerAt. Keep the prompt fully
+    // readable at that pause; only clear it once the answer actually begins.
+    fx.fadeOut(questionNode, answerAt, 0.12);
     const bar = el('div', 'rk-quiz-answer rk-c-green is-staged', card);
     studs(bar, 6);
     el('span', 'rk-quiz-emblem', bar).append(kit.icon(icon));

@@ -123,7 +123,7 @@ sections:
   - id: intro
     title: "Intro"
     delivery: spoken
-    narration: "Audio-described version: before each section, the picture pauses while I describe it. The song plays on a toy-brick construction site before sunrise. The studded ground, loose bricks, lamps, and blue-hour sky are there from the first frame. The ground floors and crane assemble during the opening. Each chorus adds another stage: lower floors, upper floors, then belfries, roofs, and the final wall courses. Completed floors stay in place between choruses. The sun rises in an arc to the right. Violet cloud undersides turn rose and coral, then peach and cream, as the upper sky changes from deep blue to azure above a golden horizon. Your hero is the foreman, in a hi-vis vest and gold hard hat, holding a clipboard. On the right, the foreman steps onto the tower as its ground floor rises, then climbs each new course during the choruses. Between builds, the foreman stands on the completed layers, facing the central illustrations. The hero stays on screen, singing with word-timed mouth movements and resting during instrumental gaps and quiz pauses. The buildings stay sharp. Illustrations take turns in the clear space between the towers, with readable text plaques. A terminal types npm install left-pad and waits, while a shelf of reusable package bricks appears. A title introduces a balance scale: three blue bricks of effort saved outweigh one gold brick of effort to adapt. During the instrumental, the crane lifts a prebuilt module off the ground."
+    narration: "Audio-described version: before each section, the picture pauses while I describe it. The song plays on a toy-brick construction site before sunrise. The studded ground, loose bricks, lamps, and blue-hour sky are there from the first frame. The ground floors and crane assemble during the opening. Each chorus adds another stage: lower floors, upper floors, then belfries, roofs, and the final wall courses. Completed floors stay in place between choruses. The sun rises in an arc to the right. Violet cloud undersides turn rose and coral, then peach and cream, as the upper sky changes from deep blue to azure above a golden horizon. Your hero is the foreman, in a luminous orange vest with ivory reflective strips, deep blue work clothes, and a gold hard hat, holding a clipboard. On the right, the foreman steps onto the tower as its ground floor rises, then climbs each new course during the choruses. Between builds, the foreman stands on the completed layers, facing the central illustrations. The hero stays on screen, singing with word-timed mouth movements and resting during instrumental gaps and quiz pauses. The buildings stay sharp. Illustrations take turns in the clear space between the towers, with readable text plaques. A terminal types npm install left-pad and waits, while a shelf of reusable package bricks appears. A title introduces a balance scale: three blue bricks of effort saved outweigh one gold brick of effort to adapt. During the instrumental, the crane lifts a prebuilt module off the ground."
     lines:
       - id: intro-1
         start: 2.23
@@ -140,7 +140,7 @@ sections:
   - id: verse-1
     title: "Verse 1"
     delivery: sung
-    narration: "Verse 1, what reuse saves. The illustrations take turns between the towers; the foreman sings from the completed ground-floor roof of the right-hand tower. Clouds drift gently, their highlights facing the sun; the forklift holds still. First, a shelf of package bricks with an open-source tag. Then requests connects to eight apps, and three bugs are stamped fixed. One card reads higher software quality, fewer defects. It clears before two bars, code to write and code to test, shrink; another card reads higher productivity, faster time to market. The benefits disappear before the catch. Blue Library 1 and tan Library 2 bricks form a neat wall, the vision, then separate into mismatched pieces, the reality. Notes say assumes one thread and assumes low speeds. A glue bottle squeezes glue code into the gaps, one after another."
+    narration: "Verse 1, what reuse saves. The illustrations take turns between the towers; the foreman sings from the completed ground-floor roof of the right-hand tower. Clouds drift gently, their highlights facing the sun; the forklift holds still. First, a shelf of package bricks with an open-source tag. Then requests connects to eight apps, and three bugs are stamped fixed. The concise benefit, fewer defects, stays beside the bug repairs. It clears before two bars, code to write and code to test, shrink; the next benefit, ship sooner, stays beside the bars. The benefits disappear before the catch. Blue Library 1 and tan Library 2 bricks form a neat wall, the vision, then separate into mismatched pieces, the reality. Notes say assumes one thread and assumes low speeds. A glue bottle squeezes glue code into the gaps, one after another."
     lines:
       - id: v1-1
         start: 12.89
@@ -159,37 +159,37 @@ sections:
         end: 18.72
         text: "It's run in working systems,"
         marks: {"its": 16.52, "run": 16.88, "in": 17.34, "working": 17.34, "systems": 17.7}
-        visual: "The shelf gives way to the requests brick, with thin lines running from it to eight small apps that use it. Label: “Used in working systems”."
+        visual: "The shelf clears for a requests brick connected to several working apps. The concise benefit “Fewer defects” appears immediately and stays through the bug-repair animation."
       - id: v1-4
         start: 18.72
         end: 20.56
         text: "So bugs were found and repaired."
         marks: {"so": 18.72, "bugs": 18.82, "were": 19.18, "found": 19.32, "and": 19.62, "repaired": 19.76}
-        visual: "Three bugs beside requests receive green “fixed” stamps. One central card appears: “Higher software quality, fewer defects”. The foreman gives a thumbs-up on “repaired”."
+        visual: "Three bugs beside requests receive green “fixed” stamps. “Fewer defects” stays visible below them. The foreman gives a thumbs-up on “repaired”."
       - id: v1-5
         start: 20.56
         end: 22.5
         text: "Less to write and less to test,"
         marks: {"less": 20.56, "to": 20.7, "write": 20.9, "and": 21.22, "less_2": 21.56, "to_2": 21.76, "test": 21.94}
-        visual: "The requests picture gives way to two bars that shrink: “Code to write” and “Code to test”. The foreman points at the shrinking bars."
+        visual: "The repaired-bugs illustration clears. Two bars, “Code to write” and “Code to test”, shrink. The benefit “Ship sooner” appears with the bars and holds through the next line."
       - id: v1-6
         start: 22.5
         end: 24.98
         text: "So the feature ships sooner."
         marks: {"so": 22.5, "the": 22.78, "feature": 22.98, "ships": 23.44, "sooner": 23.96}
-        visual: "After the quality card has cleared, one central card appears beneath the shrinking bars: “Higher productivity, faster time to market”."
+        visual: "“Ship sooner” continues to hold beneath the shrinking bars, so the benefit can be read before the next illustration."
       - id: v1-7
         start: 24.98
         end: 27.04
         text: "But modules aren't neat building blocks:"
         marks: {"but": 24.98, "modules": 25.12, "arent": 25.66, "neat": 26.0, "building": 26.2, "blocks": 26.52}
-        visual: "The benefit cards and bars clear. In their place between the towers, Library 1 and Library 2 bricks snap into a neat wall: “The vision: compatible blocks”."
+        visual: "The benefit cards and bars clear. In their place between the towers, Library 1 and Library 2 bricks snap into a neat wall: “Perfect fit?”"
       - id: v1-8
         start: 27.04
         end: 29.18
         text: "Each one assumes its world,"
         marks: {"each": 27.04, "one": 27.3, "assumes": 27.52, "its": 28.02, "world": 28.34}
-        visual: "The wall gives way to mismatched pieces with gaps between them: a giant blue brick, a thin tan plate, a tilted tan brick, a blue brick on its side, a red brick floating above a gap, and another tan brick. Two notes: “assumes one thread” and “assumes low speeds”. Label: “The reality: they don’t fit”."
+        visual: "The wall gives way to mismatched pieces with gaps between them: a giant blue brick, a thin tan plate, a tilted tan brick, a blue brick on its side, a red brick floating above a gap, and another tan brick. Two notes: “assumes one thread” and “assumes low speeds”. Label: “Different assumptions”."
       - id: v1-9
         start: 29.18
         end: 32.73
@@ -201,52 +201,52 @@ sections:
         end: 34.6
         text: "Where those worlds don't fit."
         marks: {"where": 32.73, "those": 32.8, "worlds": 33.04, "dont": 33.32, "fit": 33.64}
-        visual: "The glue strips are outlined in red, under the label “Where the assumptions don’t fit”."
+        visual: "The glue strips are outlined in red, under the label “Check the assumptions”."
   - id: refrain-1
     title: "Refrain"
     delivery: sung
-    narration: "The first chorus adds lower floors to both background buildings, brick by brick, above the ground-floor bases. A compact checklist appears in the middle, titled before you reuse, ask. One question appears at a time, with its principle underneath. The crane lowers a gold brick for each onto the tower beside it. What will it save, what will it cost: cost-benefit analysis. What does it assume: identify violated assumptions. What does it pull in: strive for fewer dependencies. Pin it, but update for patches: keep versions fixed, update for security patches. The footer lights: external reuse is not a one-time investment, and the baseplate turns gold."
+    narration: "The first chorus adds lower floors to both background buildings, brick by brick, above the ground-floor bases. Beneath the section banner, one concise prompt appears at a time: savings and costs; what does it assume; what does it pull in; pin versions, update for patches. The assumption question appears slightly early. The crane lowers a gold brick for each prompt onto the tower beside it. The footer appears on the final line: external reuse is not a one-time investment, and the baseplate turns gold."
     lines:
       - id: refrain1-1
         start: 37.04
         end: 38.76
         text: "Before you reuse, ask:"
         marks: {"before": 37.04, "you": 37.3, "reuse": 37.54, "ask": 38.32}
-        visual: "One question at a time, with a growing brick tower beside it, under a small title plaque: “Before you reuse, ask:”."
+        visual: "One question at a time, with a growing brick tower beside it, under the top-left section banner."
       - id: refrain1-2
         start: 38.76
         end: 41.26
         text: "What will it save? What will it cost?"
         marks: {"what": 38.76, "will": 39.02, "it": 39.36, "save": 39.58, "what_2": 39.94, "will_2": 40.36, "it_2": 40.6, "cost": 40.76}
-        visual: "The first question lights, with a gold wallet badge: “What will it save? What will it cost?”, and the lecture’s name beneath it, “Cost-benefit analysis”. The crane’s hook lowers a gold brick with the same badge onto the baseplate beside the checklist."
+        visual: "The first question lights, with a gold wallet badge: “Savings? Costs?” The crane’s hook lowers a gold brick with the same badge onto the baseplate beside the checklist."
       - id: refrain1-3
         start: 41.26
         end: 43.02
         text: "What does it assume?"
         marks: {"what": 41.26, "does": 41.4, "it": 41.64, "assume": 41.78}
-        visual: "The second question replaces the first, with a gold magnifying-glass badge: “What does it assume?”, and beneath it “Identify violated assumptions”. A second gold brick, with the same badge, stacks on the first."
+        visual: "The second question replaces the first, with a gold magnifying-glass badge: “What does it assume?”. A second gold brick, with the same badge, stacks on the first."
       - id: refrain1-4
         start: 43.02
         end: 44.96
         text: "What does it pull in?"
         marks: {"what": 43.02, "does": 43.24, "it": 43.48, "pull": 43.66, "in": 44.12}
-        visual: "The third question replaces the second, with a gold box badge: “What does it pull in?”, and beneath it “Strive for fewer dependencies”. A third gold brick stacks on top."
+        visual: "The third question replaces the second, with a gold box badge: “What does it pull in?”. A third gold brick stacks on top."
       - id: refrain1-5
         start: 46.0
         end: 48.0
         text: "Pin it, but update for patches."
         marks: {"pin": 46.0, "it": 46.32, "but": 46.78, "update": 47.0, "for": 47.38, "patches": 47.6}
-        visual: "The fourth question replaces the third, with a gold pin badge: “Pin it, but update for patches.”, and beneath it “Keep versions fixed · Update for security patches”. A fourth gold brick completes the tower."
+        visual: "The fourth question replaces the third, with a gold pin badge: “Pin versions. Update for patches.” A fourth gold brick completes the tower."
       - id: refrain1-6
         start: 48.0
         end: 53.24
         text: "External reuse is not a one-time investment."
         marks: {"external": 48.0, "reuse": 48.6, "is": 49.32, "not": 49.8, "a": 50.1, "onetime": 50.82, "investment": 51.84}
-        visual: "A separate footer strip, the lecture’s key takeaway, lights in large type: “External reuse is not a one-time investment.”, and the tower’s baseplate turns gold."
+        visual: "The takeaway footer now appears in large type: “External reuse is not a one-time investment.”, and the tower’s baseplate turns gold."
   - id: verse-2
     title: "Verse 2"
     delivery: sung
-    narration: "Verse 2, case 1, urllib3. Each explanation takes its turn in the middle, with a gold principle brick below. Blue bricks mean reused packages, gold means your own code and lessons to keep, red means broken, and green means fixed. A clean git status gives way to a docker error: request got an unexpected keyword argument chunked. The terminal clears for a dependency tower: docker on requests on urllib3 1.26. In a clean install the crane lifts the upper bricks, the unpinned bottom brick is swapped for red version 2.0.0 with different studs, and the upper bricks are set back down. The tower stays visible while an arrow points to the new studs: a changed API. The break travels upward. A Pipfile pins urllib3 below 2.0.0; a note says a lockfile gives every build the same bricks. The tower returns, the old brick slides back, and green checks appear. The principle is keep versions of your dependencies fixed."
+    narration: "Verse 2, case 1, urllib3. Each explanation takes its turn in the middle, with a gold principle brick below. Blue bricks mean reused packages, gold means your own code and lessons to keep, red means broken, and green means fixed. A clean git status gives way to a docker error: request got an unexpected keyword argument chunked. The terminal clears for a dependency tower: docker on requests on urllib3 1.26. In a clean install the crane lifts the upper bricks, the unpinned bottom brick is swapped for red version 2.0.0 with different studs, and the upper bricks are set back down. The tower stays visible while an arrow points to the new studs: a changed API. The break travels upward. A Pipfile pins urllib3 below 2.0.0; a note says lockfile, repeatable versions. The tower returns, the old brick slides back, and green checks appear. The principle is pin dependency versions."
     lines:
       - id: v2-1
         start: 54.25
@@ -277,7 +277,7 @@ sections:
         end: 64.56
         text: "No version had been pinned,"
         marks: {"no": 62.4, "version": 62.64, "had": 63.34, "been": 63.64, "pinned": 63.86}
-        visual: "urllib3’s tag turns into a dashed “1.26 · not pinned”, and a note beside it says “nothing pinned”."
+        visual: "The urllib3 version tag becomes “1.26 · not pinned”. The same message is not repeated beside the tower."
       - id: v2-6
         start: 64.56
         end: 66.6
@@ -289,7 +289,7 @@ sections:
         end: 68.93
         text: "Version two changed its API,"
         marks: {"version": 66.6, "two": 66.9, "changed": 67.22, "its": 67.84, "api": 68.14}
-        visual: "The dependency tower stays in the middle: requests and docker remain lifted above the red urllib3 2.0.0 brick. A note and arrow point to its incompatible studs: “new studs: a changed API”."
+        visual: "The dependency tower stays in the middle: requests and docker remain lifted above the red urllib3 2.0.0 brick. A note and arrow point to its incompatible studs: “Changed API”."
       - id: v2-8
         start: 68.93
         end: 70.78
@@ -301,7 +301,7 @@ sections:
         end: 74.03
         text: "Pin dependency versions:"
         marks: {"pin": 70.78, "dependency": 71.12, "versions": 71.86}
-        visual: "The tower clears for a Pipfile with `urllib3 = \"<2.0.0\"` outlined in green and stamped “pinned”. A note says “Lockfile = the same bricks in every build”. Below: “Keep versions of your dependencies fixed”. The foreman, holding a rubber stamp, stamps “pinned” onto the Pipfile himself."
+        visual: "The tower clears for a Pipfile with `urllib3 = \"<2.0.0\"` outlined in green and stamped “pinned”. A note says “Lockfile: repeatable versions”. Below: “Pin dependency versions”. The foreman, holding a rubber stamp, stamps “pinned” onto the Pipfile himself."
       - id: v2-10
         start: 74.03
         end: 76.38
@@ -311,20 +311,20 @@ sections:
   - id: verse-3
     title: "Verse 3"
     delivery: sung
-    narration: "Verse 3, case 2, Heartbleed. A padlock labelled OpenSSL cracks, and a timeline shows the bug unseen for two years. Why: a request asks the server to send back the letter a, with a length of 64 kilobytes. The server trusts the length and keeps printing its memory, line after line like a receipt, including a password and a private key. Your app is a small build: your code brick, with a check, on an OpenSSL brick. An X-ray shows a crack in the OpenSSL brick: reused code brings its bugs. The fix ships on 7 April 2014, and a grid of app bricks turns from red to green as each one updates: one fix, many apps. The principle brick: pinned doesn't mean frozen. The openssl brick moves from 1.0.1f to 1.0.1g, the tests pass, and the principle brick says update to receive security patches."
+    narration: "Verse 3, case 2, Heartbleed. A padlock labelled OpenSSL cracks, and a timeline shows the bug unseen for two years. Why: a request asks the server to send back the letter a, with a length of 64 kilobytes. The server trusts the length and keeps printing its memory, line after line like a receipt, including a password and a private key. Your app is a small build: your code brick, with a check, on an OpenSSL brick. An X-ray shows a crack in the OpenSSL brick: reused code brings its bugs. The fix ships on 7 April 2014, and a grid of app bricks turns from red to green as each one updates: one fix, many apps. The principle brick: pinned doesn't mean frozen. The openssl brick moves from 1.0.1f to 1.0.1g, the tests pass, and the principle brick says update, then test."
     lines:
       - id: v3-1
         start: 77.58
         end: 79.16
         text: "OpenSSL had a flaw;"
         marks: {"openssl": 77.58, "had": 78.34, "a": 78.52, "flaw": 78.62}
-        visual: "Case 2, “Heartbleed”. In the middle appears a padlock labelled “OpenSSL 1.0.1 (TLS)”, and a crack runs across it. From the growing right-hand tower, the foreman sings and points at the cracked padlock."
+        visual: "An OpenSSL 1.0.1 padlock develops a crack. Its timeline is already labelled “2012: bug ships” and “2014: found”, so both endpoints can be read before the line fills."
       - id: v3-2
         start: 79.16
         end: 81.42
         text: "For two years, no one saw."
         marks: {"for": 79.16, "two": 79.42, "years": 79.6, "no": 80.08, "one": 80.38, "saw": 80.58}
-        visual: "A timeline bar fills in red from “2012: bug ships” to “April 2014: found”. Label: “2 years unseen”. The foreman shrugs on “no one saw”."
+        visual: "A timeline bar fills in red from “2012: bug ships” to “2014: found”. Label: “2 years unseen”. The foreman shrugs on “no one saw”."
       - id: v3-3
         start: 81.42
         end: 83.04
@@ -342,7 +342,7 @@ sections:
         end: 87.84
         text: "And sent back its own memory:"
         marks: {"and": 85.55, "sent": 85.62, "back": 85.94, "its": 86.26, "own": 86.73, "memory": 86.94}
-        visual: "The server’s reply starts with “a” and keeps printing, line after line of its memory, scrolling like a receipt: session, cookie, a request, and more. A buffer over-read."
+        visual: "The reply prints past the requested letter into the server’s own memory. “Heartbleed: buffer over-read” appears alongside it and holds through the passwords and private keys."
       - id: v3-6
         start: 87.84
         end: 89.36
@@ -366,13 +366,13 @@ sections:
         end: 95.62
         text: "The fix shipped within a week"
         marks: {"the": 94.17, "fix": 94.32, "shipped": 94.56, "within": 94.84, "a": 95.28, "week": 95.42}
-        visual: "The timeline continues: “1 April 2014: found”, then “7 April: fixed version 1.0.1g”."
+        visual: "The timeline reads “1 April 2014: found” and “7 April: 1.0.1g”. Both dates appear before its green fill finishes, then hold until the sung word “update” in the next line."
       - id: v3-10
         start: 95.62
         end: 97.83
         text: "To all who chose to update;"
         marks: {"to": 95.62, "all": 95.8, "who": 96.12, "chose": 96.34, "to_2": 96.8, "update": 97.14}
-        visual: "A grid of twelve app bricks, each with a padlock, turns from red to green one after another, as each updates to 1.0.1g."
+        visual: "The fix timeline stays while the singer says “to all who chose”. On “update”, the app grid replaces it and turns green under “Apps that update to 1.0.1g”."
       - id: v3-11
         start: 97.83
         end: 99.94
@@ -390,13 +390,13 @@ sections:
         end: 104.78
         text: "Pinned doesn't mean frozen:"
         marks: {"pinned": 102.12, "doesnt": 102.56, "mean": 103.1, "frozen": 103.3}
-        visual: "A gold principle brick: “Pinned doesn’t mean frozen”. A blue brick “openssl” tagged “1.0.1f · pinned” moves to 1.0.1g and is pinned again. With a wrench, the foreman points at the pinned openssl brick as he updates it."
+        visual: "A pinned OpenSSL 1.0.1f brick appears. On “frozen”, its tag changes directly to “1.0.1g · pinned”, without a fleeting intermediate tag. The principle reads “Pinned doesn’t mean frozen”."
       - id: v3-14
         start: 104.78
         end: 106.12
         text: "Update to the fix, then test."
         marks: {"update": 104.78, "to": 104.94, "the": 105.22, "fix": 105.32, "then": 105.6, "test": 105.78}
-        visual: "A terminal runs `npm test`: “✓ all tests passed”. The principle brick now reads “Update to receive security patches”. He gives the passing tests a thumbs-up."
+        visual: "A terminal runs `npm test`: “✓ all tests passed”. The principle brick now reads “Update, then test”. He gives the passing tests a thumbs-up."
   - id: refrain-2
     title: "Refrain"
     delivery: sung
@@ -407,41 +407,41 @@ sections:
         end: 107.84
         text: "Before you reuse, ask:"
         marks: {"before": 106.12, "you": 106.46, "reuse": 106.66, "ask": 107.26}
-        visual: "One question at a time, with a growing brick tower beside it, under a small title plaque: “Before you reuse, ask:”."
+        visual: "One question at a time, with a growing brick tower beside it, under the top-left section banner."
       - id: refrain2-2
         start: 107.84
         end: 110.36
         text: "What will it save? What will it cost?"
         marks: {"what": 107.84, "will": 108.18, "it": 108.52, "save": 108.72, "what_2": 109.08, "will_2": 109.48, "it_2": 109.74, "cost": 109.9}
-        visual: "The first question lights, with a gold wallet badge: “What will it save? What will it cost?”, and the lecture’s name beneath it, “Cost-benefit analysis”. The crane’s hook lowers a gold brick with the same badge onto the baseplate beside the checklist."
+        visual: "The first question lights, with a gold wallet badge: “Savings? Costs?” The crane’s hook lowers a gold brick with the same badge onto the baseplate beside the checklist."
       - id: refrain2-3
         start: 110.36
         end: 112.16
         text: "What does it assume?"
         marks: {"what": 110.36, "does": 110.54, "it": 110.8, "assume": 110.94}
-        visual: "The second question replaces the first, with a gold magnifying-glass badge: “What does it assume?”, and beneath it “Identify violated assumptions”. A second gold brick, with the same badge, stacks on the first."
+        visual: "The second question replaces the first, with a gold magnifying-glass badge: “What does it assume?”. A second gold brick, with the same badge, stacks on the first."
       - id: refrain2-4
         start: 112.16
         end: 114.06
         text: "What does it pull in?"
         marks: {"what": 112.16, "does": 112.38, "it": 112.62, "pull": 112.8, "in": 113.28}
-        visual: "The third question replaces the second, with a gold box badge: “What does it pull in?”, and beneath it “Strive for fewer dependencies”. A third gold brick stacks on top."
+        visual: "The third question replaces the second, with a gold box badge: “What does it pull in?”. A third gold brick stacks on top."
       - id: refrain2-5
         start: 115.4
         end: 117.14
         text: "Pin it, but update for patches."
         marks: {"pin": 115.4, "it": 115.46, "but": 115.9, "update": 116.16, "for": 116.56, "patches": 116.74}
-        visual: "The fourth question replaces the third, with a gold pin badge: “Pin it, but update for patches.”, and beneath it “Keep versions fixed · Update for security patches”. A fourth gold brick completes the tower. Case tabs from verses 2 and 3 sit beside this line: “urllib3” and “Heartbleed”."
+        visual: "The fourth question replaces the third, with a gold pin badge: “Pin versions. Update for patches.” A fourth gold brick completes the tower. Case tabs from verses 2 and 3 sit beside this line: “urllib3” and “Heartbleed”."
       - id: refrain2-6
         start: 117.14
         end: 122.42
         text: "External reuse is not a one-time investment."
         marks: {"external": 117.14, "reuse": 117.82, "is": 118.74, "not": 118.96, "a": 119.28, "onetime": 120.02, "investment": 120.9}
-        visual: "A separate footer strip, the lecture’s key takeaway, lights in large type: “External reuse is not a one-time investment.”, and the tower’s baseplate turns gold."
+        visual: "The takeaway footer now appears in large type: “External reuse is not a one-time investment.”, and the tower’s baseplate turns gold."
   - id: verse-4
     title: "Verse 4"
     delivery: sung
-    narration: "Verse 4, case 3, left-pad. Left-pad's eleven lines of JavaScript, and what they are for: three numbers, 7, 42, and 317, padded to width 3. Padding bricks drop in on the left of the short ones until all three line up on the right. Why: a tall tower of individual blue blocks in staggered courses. Your app stands on react and babel-core; babel-core stands on a cluster of smaller package blocks, which stand on one tiny brick, left-pad. The path down to it lights: a transitive dependency. The tiny brick strains under the load as the build trembles; then a forklift races in and drives off with it: unpublished in March 2016. The bricks above it hang in the air for a cartoon moment, then crash down, chips flying, and your app seesaws and settles crooked. The broken tower stays visible while three compact terminals below its base print npm error 404, and your app gets a red cross. You only listed react and babel-core; left-pad sat three levels down. Next, eslint-scope 3.7.2, its maintainer's account taken over, and an npm token sliding away. The principle bricks follow in turn: avoid reusing trivial code, beside a one-line isArray; strive for fewer package dependencies, as a shelf of eight package bricks loses its five trivial ones and tags say each can break, be hijacked, or vanish. A homemade encrypt function is crossed out for a vetted crypto library brick: don't roll your own crypto. Last, a well-maintained profile card is ticked over an abandoned one, and at a brick wall with a gap, the popular brick is too wide to fit while a smaller brick fills the gap: fit matters more than popularity."
+    narration: "Verse 4, case 3, left-pad. Left-pad's eleven lines of JavaScript, and what they are for: three numbers, 7, 42, and 317, padded to width 3. Padding bricks drop in on the left of the short ones until all three line up on the right. Why: a tall tower of individual blue blocks in staggered courses. Your app stands on react and babel-core; babel-core stands on a cluster of smaller package blocks, which stand on one tiny brick, left-pad. The path down to it lights: a transitive dependency. The tiny brick strains under the load as the build trembles; then a forklift races in and drives off with it: unpublished in March 2016. The bricks above it hang in the air for a cartoon moment, then crash down, chips flying, and your app seesaws and settles crooked. The broken tower stays visible while three compact terminals below its base print npm error 404, and your app gets a red cross. You only listed react and babel-core; left-pad sat three levels down. Next, eslint-scope 3.7.2, its maintainer's account taken over, and an npm token sliding away. The principle bricks follow in turn: write trivial code yourself, beside a one-line isArray; keep dependencies few, as a shelf of eight package bricks loses its five trivial ones and tags say each can break, be hijacked, or vanish. A vetted crypto library and the principle, use vetted crypto, appear beside a homemade encrypt function; then the homemade function is crossed out and the library checked. Last, a well-maintained profile card is ticked over a profile inactive for four years, and at a brick wall with a gap, the popular brick is too wide to fit while a smaller brick fills the gap: fit before fame."
     lines:
       - id: v4-1
         start: 123.62
@@ -472,7 +472,7 @@ sections:
         end: 133.98
         text: "Its author unpublished it;"
         marks: {"its": 131.76, "author": 132.02, "unpublished": 132.5, "it": 133.54}
-        visual: "An orange forklift races in from the right, slides its forks under left-pad, and on “unpublished” speeds off with it in a puff of dust, leaving a dashed outline. Cartoon-style, the bricks above hang in the air for a moment, shivering, beside a red “!”; then the right column crashes down with a jolt, brick chips and dust flying, babel-core slides askew on top, and your-app seesaws on react’s corner before it settles crooked. The foreman points at the forklift, then clutches his head. Label: “unpublished, March 2016”."
+        visual: "An orange forklift races in from the right, slides its forks under left-pad, and on “unpublished” speeds off with it in a puff of dust, leaving a dashed outline. Cartoon-style, the bricks above hang in the air for a moment, shivering, beside a red “!”; then the right column crashes down with a jolt, brick chips and dust flying, babel-core slides askew on top, and your-app seesaws on react’s corner before it settles crooked. The foreman points at the forklift, then clutches his head. Label: “Unpublished”."
       - id: v4-6
         start: 133.98
         end: 135.62
@@ -484,102 +484,102 @@ sections:
         end: 137.6
         text: "Many never saw it:"
         marks: {"many": 135.62, "never": 135.96, "saw": 136.52, "it": 136.96}
-        visual: "The broken dependency tower remains in place, with a red cross on your-app. The three error readouts clear. react and babel-core, its directly listed dependencies, get gold outlines: “what you listed: react, babel-core”."
+        visual: "The broken dependency tower remains in place, with a red cross on your-app. The three error readouts clear. react and babel-core, its directly listed dependencies, get gold outlines: “Direct dependencies”."
       - id: v4-8
         start: 137.6
         end: 139.69
         text: "A dependency, deep down."
         marks: {"a": 137.6, "dependency": 137.72, "deep": 138.2, "down": 138.86}
-        visual: "The lower cluster of packages is ringed: “3 levels down”."
+        visual: "On “dependency”, the lower package cluster is ringed and the caption becomes “3 levels down”, holding through the rest of the line."
       - id: v4-9
         start: 139.69
         end: 141.77
         text: "When eslint-scope was hijacked,"
         marks: {"when": 139.69, "eslintscope": 139.88, "was": 140.64, "hijacked": 140.94}
-        visual: "In the middle: a blue brick “eslint-scope”, its tag turning to a red “3.7.2 · malicious”, and a note: “maintainer account taken over (July 2018)”."
+        visual: "In the middle: a blue brick “eslint-scope”, its tag turning to a red “3.7.2 · malicious”, and a note: “Maintainer account hijacked”."
       - id: v4-10
         start: 141.77
         end: 143.86
         text: "Its new release stole tokens."
         marks: {"its": 141.77, "new": 142.02, "release": 142.22, "stole": 142.68, "tokens": 143.14}
-        visual: "An `.npmrc` card holding an npm auth token slides away. Label: “stole npm tokens”."
+        visual: "An `.npmrc` card holding an npm auth token slides away. The maintainer-hijack note stays visible; no second caption competes with the theft."
       - id: v4-11
         start: 143.86
         end: 145.94
         text: "Write trivial code yourself;"
         marks: {"write": 143.86, "trivial": 144.08, "code": 144.46, "yourself": 144.94}
-        visual: "A gold principle brick: “Avoid reusing trivial code”. In the middle, the lecture’s isArray package, all of it one line: `toString.call(arr) == '[object Array]'`."
+        visual: "A gold principle brick: “Write trivial code yourself”. In the middle, the lecture’s isArray package, all of it one line: `toString.call(arr) == '[object Array]'`."
       - id: v4-12
         start: 145.94
         end: 148.02
         text: "Keep dependencies few:"
         marks: {"keep": 145.94, "dependencies": 146.22, "few": 147.28}
-        visual: "The principle brick: “Strive for fewer package dependencies”. A shelf of eight blue package bricks loses its five trivial ones (left-pad, is-odd, is-even, isarray, is-number), leaving express, react, and axios."
+        visual: "The principle brick: “Keep dependencies few”. A shelf of eight blue package bricks loses its five trivial ones (left-pad, is-odd, is-even, isarray, is-number), leaving express, react, and axios."
       - id: v4-13
         start: 148.02
         end: 150.76
         text: "Each one can break, be hijacked,"
         marks: {"each": 148.02, "one": 148.32, "can": 148.54, "break": 148.76, "be": 149.48, "hijacked": 149.7}
-        visual: "Tags appear under the shelf: “can break” and “can be hijacked”."
+        visual: "Tags appear under the shelf: “Breaks” and “Hijacked”."
       - id: v4-14
         start: 150.76
         end: 152.32
         text: "Or vanish out of view."
         marks: {"or": 150.76, "vanish": 150.86, "out": 151.32, "of": 151.6, "view": 151.76}
-        visual: "A third tag joins them: “can vanish”."
+        visual: "A third tag joins them: “Vanishes”."
       - id: v4-15
         start: 152.32
         end: 154.28
         text: "But code that's hard to get right,"
         marks: {"but": 152.32, "code": 152.44, "thats": 152.78, "hard": 153.02, "to": 153.28, "get": 153.44, "right": 153.66}
-        visual: "In the middle: a card “hand-written crypto” with `myEncrypt()` and the comment “my own cipher… secure?”. Label: “hard to get right”."
+        visual: "A hand-written crypto function appears beside a vetted crypto library brick. The principle “Use vetted crypto” is already visible, establishing the important exception to fewer dependencies."
       - id: v4-16
         start: 154.28
         end: 156.65
         text: "Like crypto: don't write your own."
         marks: {"like": 154.28, "crypto": 154.56, "dont": 155.18, "write": 155.66, "your": 155.86, "own": 156.04}
-        visual: "It is crossed out and outlined in red, and a blue brick “vetted crypto library” drops in with a green check. The principle brick: “Don’t roll your own crypto”. The foreman holds up a stop palm."
+        visual: "The homemade encrypt function gets a red cross, and the already-visible vetted library receives a green check. “Use vetted crypto” stays on screen. The foreman holds up a stop palm."
       - id: v4-17
         start: 156.65
         end: 159.04
         text: "Choose maintained and popular,"
         marks: {"choose": 156.65, "maintained": 156.9, "and": 157.58, "popular": 158.18}
-        visual: "In the middle: two profile cards. A: “updated weekly, many users, good docs”, with a check. B: “last commit 4 years ago”. Below them, a brick wall labelled “your project” with a gap in its top course, and a wide blue brick, “popular-lib”. The principle brick reads “Choose maintained dependencies”."
+        visual: "In the middle: two profile cards. A: “maintained, documented”, with a check. B: “inactive 4 years”. Below them, a brick wall labelled “your project” with a gap in its top course, and a wide blue brick, “popular-lib”. The principle brick reads “Choose maintained dependencies”."
       - id: v4-18
         start: 159.04
         end: 161.59
         text: "But fit comes before fame."
         marks: {"but": 159.04, "fit": 159.14, "comes": 159.5, "before": 159.84, "fame": 160.2}
-        visual: "popular-lib moves over the gap but is too wide to seat, gets a red cross, and backs off; a smaller blue brick, “fit-lib”, exactly the gap’s size, slides into it and gets a green check. The principle brick: “Fit matters more than popularity”."
+        visual: "popular-lib moves over the gap but is too wide to seat, gets a red cross, and backs off; a smaller blue brick, “fit-lib”, exactly the gap’s size, slides into it and gets a green check. The principle brick: “Fit before fame”."
   - id: bridge
     title: "Bridge"
     delivery: sung
-    narration: "The bridge, case 4, Ariane 5. Both rockets stand on launch platforms resting on the scene's ground, their names below the platforms. They stay visible through the launch sequence. Ariane 4 carries a gold inertial-reference module inside a cut-away window. Compact labels explain speed stored in 16 bits and the limit, 32,767. Ariane 4 makes a slower ascent at full size and exits the top of the frame; a label confirms its value fits the range. The same module is reused in the larger Ariane 5. It climbs roughly twice as fast at full size, reaching the clouds as an overflow label appears. The second rocket holds that failure moment for the 37-second label; then the rocket veers and breaks apart. Its fairing, tanks, boosters, and gold module separate through an expanding amber fireball. The fire dims as smoke billows upward and disperses. A comparison reads Ariane 4 fits, Ariane 5 overflows, assumes horizontal velocity fits in 16 bits, and cost of failure, 370 million dollars. The principle is identify violated assumptions. Three checkboxes appear in turn: read the documentation and code, check the intended conditions, and test. A ground test catches the overflow before launch. Finally, one module branches into two, 16-bit version 1 and 32-bit version 2, each with its own team: evolve separately, version it, or clone and own."
+    narration: "The bridge, case 4, Ariane 5. Both rockets stand on launch platforms resting on the scene's ground, their names below the platforms. They stay visible through the launch sequence. Ariane 4 carries a gold inertial-reference module inside a cut-away window. Compact labels explain speed stored in 16 bits and the limit, 32,767. Ariane 4 makes a slower ascent at full size and exits the top of the frame; a label confirms its value fits the range. The same module is reused in the larger Ariane 5. It climbs roughly twice as fast at full size, reaching the clouds as an overflow label appears. The second rocket holds that failure moment for the 37-second label; then the rocket veers and breaks apart. Its fairing, tanks, boosters, and gold module separate through an expanding amber fireball. The fire dims as smoke billows upward and disperses. A comparison reads Ariane 4 fits, Ariane 5 overflows, and assumes velocity fits 16 bits. The assumption stays visible throughout the comparison. The principle is identify violated assumptions. Three checkboxes are ticked in turn: read docs and code, match your conditions, and test. A ground test catches the overflow before launch. Finally, one module branches into two, 16-bit version 1 and 32-bit version 2, each with its own team: evolve separately, version it, or clone and own."
     lines:
       - id: br-1
         start: 161.59
         end: 163.78
         text: "Code built for Ariane Four"
         marks: {"code": 161.59, "built": 161.7, "for": 162.16, "ariane": 162.52, "four": 163.0}
-        visual: "Case 4, “Ariane 5”. In the middle: the Ariane 4 rocket on its ground-level launch table beside a service mast, with its name directly below the platform: a white three-stage core under a wide payload fairing, two strap-on boosters, and a cut-away window in its equipment bay showing the gold module inside, ringed in orange. An arrow points to it: “Inertial Reference System: the gold module”."
+        visual: "Case 4, “Ariane 5”. In the middle: the Ariane 4 rocket on its ground-level launch table beside a service mast, with its name directly below the platform: a white three-stage core under a wide payload fairing, two strap-on boosters, and a cut-away window in its equipment bay showing the gold module inside, ringed in orange. An arrow points to it: “Inertial Reference System”."
       - id: br-2
         start: 163.78
         end: 165.5
         text: "Stored horizontal speed"
         marks: {"stored": 163.78, "horizontal": 164.02, "speed": 164.82}
-        visual: "The rocket stays visible. A compact label beside it reads “Speed stored in 16 bits”."
+        visual: "The rocket stays visible. Two compact labels beside it read “Speed stored in 16 bits” and “Limit: 32,767”."
       - id: br-3
         start: 165.5
         end: 167.08
         text: "In sixteen bits: enough,"
         marks: {"in": 165.5, "sixteen": 165.54, "bits": 165.98, "enough": 166.36}
-        visual: "Another compact label beside Ariane 4 reads “Limit: 32,767”."
+        visual: "The speed and limit labels remain beside Ariane 4 while the singer names the 16-bit range."
       - id: br-4
         start: 167.08
         end: 169.48
         text: "Since that rocket flew slower."
         marks: {"since": 167.08, "that": 167.34, "rocket": 167.66, "flew": 168.06, "slower": 168.46}
-        visual: "Ariane 4 rises slowly from the ground at full size and continues upward until it exits through the top of the frame. Its platform and name stay below, with a label: “Within 16-bit range · fits ✓”."
+        visual: "Ariane 4 rises slowly from the ground at full size and continues upward until it exits through the top of the frame. Its platform and name stay below, with a label: “Fits ✓”."
       - id: br-5
         start: 169.48
         end: 171.48
@@ -609,7 +609,7 @@ sections:
         end: 180.11
         text: "It worked where it was built,"
         marks: {"it": 177.74, "worked": 178.14, "where": 178.44, "it_2": 178.66, "was": 178.88, "built": 179.04}
-        visual: "The rockets give way to a card: “Ariane 4: fits”, with a check, and below it the cost: “Cost of the failure: $370 million”."
+        visual: "The comparison replaces the rockets. “Ariane 4: fits” appears with a check, alongside the persistent note “Assumes velocity fits 16 bits”."
       - id: br-10
         start: 180.11
         end: 182.12
@@ -621,7 +621,7 @@ sections:
         end: 183.84
         text: "Its assumption didn't hold."
         marks: {"its": 182.12, "assumption": 182.3, "didnt": 182.7, "hold": 183.26}
-        visual: "A note pinned to the module: “Assumes: horizontal velocity fits in 16 bits”."
+        visual: "The assumption note remains visible while the comparison shows that Ariane 4 fits but Ariane 5 overflows."
       - id: br-12
         start: 183.84
         end: 186.84
@@ -633,13 +633,13 @@ sections:
         end: 188.46
         text: "Read the docs and read the code,"
         marks: {"read": 186.84, "the": 187.0, "docs": 187.12, "and": 187.48, "read_2": 187.66, "the_2": 187.88, "code": 188.02}
-        visual: "Box 1 is ticked: “Check the documentation and the code”. The foreman, holding a magnifier, points at each check in turn as it is ticked."
+        visual: "Box 1 is ticked: “Read docs and code”. The foreman, holding a magnifier, points at each check in turn as it is ticked."
       - id: br-14
         start: 188.46
         end: 189.92
         text: "Check what it was built for,"
         marks: {"check": 188.46, "what": 188.62, "it": 188.98, "was": 189.1, "built": 189.22, "for": 189.42}
-        visual: "Box 2 is ticked: “Check it was designed for your conditions”."
+        visual: "Box 2 is ticked: “Match your conditions”."
       - id: br-15
         start: 189.92
         end: 192.13
@@ -657,17 +657,17 @@ sections:
         end: 196.52
         text: "Version it, or clone and own:"
         marks: {"version": 194.36, "it": 194.84, "or": 195.1, "clone": 195.4, "and": 195.78, "own": 195.94}
-        visual: "The notes give way to two module bricks, “IRS v1” tagged 16-bit and “IRS v2” tagged 32-bit. The principle brick: “Evolve separately: version it, or clone and own”."
+        visual: "The notes give way to two module bricks, “IRS v1” tagged 16-bit and “IRS v2” tagged 32-bit. The principle brick: “Version it, or clone and own”."
       - id: br-18
         start: 196.52
         end: 199.36
         text: "Copy it, so each can change."
         marks: {"copy": 196.52, "it": 196.82, "so": 197.08, "each": 197.58, "can": 197.8, "change": 197.98}
-        visual: "Each copy gets its own owner tag: “Ariane 4 team” and “Ariane 5 team”."
+        visual: "Both module copies keep their already-visible owner tags, “Ariane 4 team” and “Ariane 5 team”, as the singer explains that each can change."
   - id: verse-5
     title: "Verse 5"
     delivery: sung
-    narration: "Verse 5, case 5, library or framework. First, the library example fills the central space: your code calls the axios brick, with its code underneath. Then the framework example replaces it. A handler brick drops into a socket on the Express baseplate, which calls your code. The gold principle brick says Hollywood Principle, inversion of control. A GET request arrives and the handler lights. Framework bricks, routing and server, enclose it: the framework decides more, you write less. A red dashed frame marks the cost: harder to reverse."
+    narration: "Verse 5, case 5, library or framework. First, the library example fills the central space: your code calls the axios brick, with its code underneath. Then the framework example replaces it. A handler brick drops into a socket on the Express baseplate, which calls your code. The gold principle brick says Hollywood Principle, inversion of control. A GET request arrives and the handler lights. Framework bricks, routing and server, enclose it: the framework decides more, you write less. A red dashed frame marks the cost: harder to replace."
     lines:
       - id: v5-1
         start: 199.36
@@ -710,13 +710,13 @@ sections:
         end: 213.45
         text: "It decides more; I write less,"
         marks: {"it": 210.96, "decides": 211.1, "more": 211.5, "i": 211.82, "write": 212.2, "less": 212.48}
-        visual: "Grey framework bricks, “routing” and “server”, drop onto the baseplate on both sides of your handler. Label: “It decides more. You write less.”"
+        visual: "Grey framework bricks, “routing” and “server”, enclose the handler. One concise label states the tradeoff: “Less code · harder to replace”."
       - id: v5-8
         start: 213.45
         end: 215.38
         text: "But it's harder to undo."
         marks: {"but": 213.45, "its": 213.6, "harder": 213.78, "to": 214.18, "undo": 214.48}
-        visual: "A red dashed frame closes around the baseplate and its bricks, and under “It decides more. You write less.” a second line: “Harder to reverse”."
+        visual: "A red dashed frame closes around the baseplate and its bricks. “Less code · harder to replace” remains visible above the principle brick."
   - id: quiz-intro
     title: "Quiz"
     delivery: sung
@@ -731,7 +731,7 @@ sections:
   - id: quiz
     title: "Quiz"
     delivery: call
-    narration: "Six questions appear one at a time in the middle. Each remains on screen while the song waits for your answer. When the answer is sung, its illustration replaces the question and a green answer brick appears below. First: an unnecessary is-even package is crossed out beside a one-line check. Second: hand-written encryption is crossed out beside a vetted crypto library. Third: a pinned library updates for a security patch, then passes its tests. Fourth: 03/04/2026 means March 4 to old code, but 3 April to European users. Fifth: two apps with diverging needs receive separate copies of a module. Sixth: pytest calls a test function you wrote, so it is the framework."
+    narration: "Six questions appear one at a time in the middle. Each remains on screen while the song waits for your answer. The library-update, date-format, and shared-module cases show their problem diagrams during the question. The library starts pinned at 3.4.1, with a security fix available in 3.4.2. The date is 03/04/2026: the old code reads March 4, but the European users mean 3 April. Two apps start on one shared module, and one app shifts as their needs drift. The solutions stay hidden until each sung answer, when a concise green answer brick appears below and the illustration changes. Try each case before continuing."
     lines:
       - id: quiz-1
         start: 217.85
@@ -741,7 +741,7 @@ sections:
         answer_at: 220.9
         pause_at: 220.78
         marks: {"a": 217.85, "package": 217.9, "just": 218.38, "to": 218.76, "check": 218.94, "if": 219.2, "a_2": 219.52, "number": 219.62, "is": 219.92, "even": 220.18, "no": 220.9, "its": 221.44, "one": 221.66, "line": 221.88, "write": 222.48, "it": 222.92}
-        visual: "Question 1 asks about a package for checking even numbers. It clears when the answer begins: a terminal installing is-even is crossed out, and `const isEven = (n) => n % 2 === 0;` receives a check. The green answer brick reads “No. It’s one line: write it.”"
+        visual: "The question clears when the answer begins: a terminal installing is-even is crossed out, and `const isEven = (n) => n % 2 === 0;` receives a check. The concise green answer reads “Write the one-liner.”"
       - id: quiz-2
         start: 223.48
         end: 229.42
@@ -750,7 +750,7 @@ sections:
         answer_at: 227.22
         pause_at: 227.1
         marks: {"keep": 223.48, "dependencies": 223.66, "few": 224.14, "so": 224.9, "write": 225.6, "your": 225.8, "own": 225.92, "encryption": 226.1, "no": 227.22, "reuse": 227.8, "the": 228.22, "tested": 228.42, "one": 228.78}
-        visual: "Question 2 asks whether fewer dependencies means writing your own encryption. The answer replaces it with crossed-out `myEncrypt()` code and a checked vetted-crypto-library brick: “No: reuse the tested one.”"
+        visual: "The question asks whether fewer dependencies means writing your own encryption. Only on the answer do crossed-out homemade encryption and a checked vetted library appear, with “Use vetted crypto.”"
       - id: quiz-3
         start: 229.42
         end: 234.04
@@ -759,7 +759,7 @@ sections:
         answer_at: 232.23
         pause_at: 232.11
         marks: {"your": 229.42, "pinned": 229.54, "library": 229.76, "gets": 230.32, "a": 230.86, "security": 231.02, "fix": 231.4, "update": 232.23, "on": 232.28, "purpose": 232.58, "then": 233.44, "test": 233.68}
-        visual: "Question 3 asks about a pinned library receiving a security fix. On the answer, a library brick updates from 3.4.1 to pinned 3.4.2, then its terminal reports passing tests. The answer brick reads “Update on purpose, then test.”"
+        visual: "While the question is asked, a library brick shows pinned 3.4.1 and a note announces a security fix in 3.4.2. These stay available at the quiz pause. The version changes only after the answer begins, directly to pinned 3.4.2; then its terminal reports passing tests. The green answer reads “Update, then test.”"
       - id: quiz-4
         start: 234.04
         end: 240.57
@@ -768,7 +768,7 @@ sections:
         answer_at: 238.46
         pause_at: 238.31
         marks: {"your": 234.04, "old": 234.28, "date": 234.54, "code": 234.82, "now": 235.34, "runs": 235.72, "for": 236.34, "users": 236.78, "in": 237.34, "europe": 237.64, "check": 238.46, "if": 238.6, "it": 238.78, "assumes": 238.86, "month": 239.32, "first": 239.8}
-        visual: "Question 4 asks about old date code and European users. The answer reveals `03/04/2026`, interpreted as March 4 by the old code and 3 April by those users: “Check if it assumes month first.”"
+        visual: "While the question is asked, 03/04/2026 appears below it, followed by “Old code: March 4” and “Europe: 3 April”. The two interpretations remain available at the pause. On the sung answer, the green brick says “Check month-first assumption.”"
       - id: quiz-5
         start: 240.57
         end: 246.52
@@ -777,7 +777,7 @@ sections:
         answer_at: 244.76
         pause_at: 244.64
         marks: {"two": 240.57, "apps": 240.82, "share": 241.4, "a": 241.8, "module": 242.04, "and": 242.46, "their": 242.82, "needs": 242.98, "drift": 243.58, "apart": 243.88, "version": 244.76, "it": 245.12, "or": 245.38, "clone": 245.68, "and_2": 246.08, "own": 246.24}
-        visual: "Question 5 asks about two apps sharing a module while their needs drift apart. On the answer, the diagram shows App B displaced from the shared module. The module splits into copies labelled “module v1” and “module v2”; App B settles on its own copy with a check. The answer is “Version it, or clone and own.”"
+        visual: "During the question, two app bricks stand on a shared module; App B shifts as their needs drift. The shared dependency remains intact at the pause. Only on the answer does the module split into v1 and v2, with App B settling on its own copy. The answer reads “Version, or clone and own.”"
       - id: quiz-6
         start: 246.52
         end: 255.02
@@ -786,7 +786,7 @@ sections:
         answer_at: 251.54
         pause_at: 251.42
         marks: {"pytest": 246.52, "runs": 247.2, "the": 247.7, "tests": 247.8, "you": 248.08, "wrote": 248.44, "library": 248.72, "or": 249.88, "framework": 250.42, "framework_2": 251.54, "it": 252.3, "calls": 253.04, "your": 253.4, "code": 253.56}
-        visual: "Question 6 asks whether pytest is a library or framework. On the answer, a pytest brick calls the FizzBuzz test function you wrote. The answer brick reads “Framework: it calls your code.”"
+        visual: "On the answer, a pytest brick calls the FizzBuzz test function you wrote. The arrow carries the relationship; the green answer reads “Framework: it calls you.”"
   - id: refrain-3
     title: "Final refrain"
     delivery: sung
@@ -797,37 +797,37 @@ sections:
         end: 256.88
         text: "Before you reuse, ask:"
         marks: {"before": 255.02, "you": 255.28, "reuse": 255.52, "ask": 256.32}
-        visual: "One question at a time, with a growing brick tower beside it, under a small title plaque: “Before you reuse, ask:”."
+        visual: "One question at a time, with a growing brick tower beside it, under the top-left section banner."
       - id: refrain3-2
         start: 256.88
         end: 259.18
         text: "What will it save? What will it cost?"
         marks: {"what": 256.88, "will": 257.02, "it": 257.36, "save": 257.56, "what_2": 257.9, "will_2": 258.38, "it_2": 258.58, "cost": 258.72}
-        visual: "The first question lights, with a gold wallet badge: “What will it save? What will it cost?”, and the lecture’s name beneath it, “Cost-benefit analysis”. The crane’s hook lowers a gold brick with the same badge onto the baseplate beside the checklist."
+        visual: "The first question lights, with a gold wallet badge: “Savings? Costs?” The crane’s hook lowers a gold brick with the same badge onto the baseplate beside the checklist."
       - id: refrain3-3
         start: 259.18
         end: 261.02
         text: "What does it assume?"
         marks: {"what": 259.18, "does": 259.34, "it": 259.64, "assume": 259.76}
-        visual: "The second question replaces the first, with a gold magnifying-glass badge: “What does it assume?”, and beneath it “Identify violated assumptions”. A second gold brick, with the same badge, stacks on the first. A case tab sits beside it: “Ariane 5”."
+        visual: "The second question replaces the first, with a gold magnifying-glass badge: “What does it assume?”. A second gold brick, with the same badge, stacks on the first. A case tab sits beside it: “Ariane 5”."
       - id: refrain3-4
         start: 261.02
         end: 262.92
         text: "What does it pull in?"
         marks: {"what": 261.02, "does": 261.24, "it": 261.46, "pull": 261.62, "in": 262.08}
-        visual: "The third question replaces the second, with a gold box badge: “What does it pull in?”, and beneath it “Strive for fewer dependencies”. A third gold brick stacks on top. A case tab sits beside it: “left-pad”."
+        visual: "The third question replaces the second, with a gold box badge: “What does it pull in?”. A third gold brick stacks on top. A case tab sits beside it: “left-pad”."
       - id: refrain3-5
         start: 264.16
         end: 265.96
         text: "Pin it, but update for patches."
         marks: {"pin": 264.16, "it": 264.3, "but": 264.74, "update": 264.98, "for": 265.36, "patches": 265.56}
-        visual: "The fourth question replaces the third, with a gold pin badge: “Pin it, but update for patches.”, and beneath it “Keep versions fixed · Update for security patches”. A fourth gold brick completes the tower. Case tabs sit beside it: “urllib3” and “Heartbleed”."
+        visual: "The fourth question replaces the third, with a gold pin badge: “Pin versions. Update for patches.” A fourth gold brick completes the tower. Case tabs sit beside it: “urllib3” and “Heartbleed”."
       - id: refrain3-6
         start: 265.96
         end: 271.2
         text: "External reuse is not a one-time investment."
         marks: {"external": 265.96, "reuse": 266.58, "is": 267.3, "not": 267.8, "a": 268.08, "onetime": 268.8, "investment": 269.78}
-        visual: "A separate footer strip, the lecture’s key takeaway, lights in large type: “External reuse is not a one-time investment.”, and the tower’s baseplate turns gold. Paper confetti drifts down over the site."
+        visual: "The takeaway footer now appears in large type: “External reuse is not a one-time investment.”, and the tower’s baseplate turns gold. Paper confetti drifts down over the site."
   - id: outro
     title: "Outro"
     delivery: spoken

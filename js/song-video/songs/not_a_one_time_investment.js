@@ -231,7 +231,7 @@
         x: 366, y: 104, w: 330, at: 0.6, title: 'terminal',
         lines: [{ text: 'npm install left-pad', at: 1.0, kind: 'cmd', wait: true }],
       });
-      R.label(look, 'Open source, ready to reuse', { x: 350, y: 212, w: 360, at: mark('intro-1', 'write'), tone: 'light', align: 'center' });
+      R.label(look, 'Ready to reuse', { x: 350, y: 212, w: 360, at: mark('intro-1', 'write'), tone: 'light', align: 'center' });
       R.shelf(look, { x: 350, y: 262, w: 360, names: ['requests', 'numpy', 'React', 'Express'], at: mark('intro-1', 'yourself') - 0.2, every: 0.15, tone: 'desk' });
       // "Let's learn to reuse it well." A title plaque introduces a balance:
       // three bricks of effort saved outweigh one brick of effort to adapt.
@@ -259,12 +259,11 @@
       const testedEnd = mark('v1-5', 'and');
       const b = focusPanel(s, 'left', [[shelfEnd, testedEnd]]);
       R.users(b, { cx: 172, cy: 236, r: 96, w: 148, name: 'requests', at: shelfEnd, every: 0.07 });
-      R.label(b, 'Used in working systems', { x: 64, y: 350, w: 380, at: mark('v1-3', 'working'), until: mark('v1-4', 'found'), tone: 'muted', align: 'center', size: 18 });
       ['Bug 1', 'Bug 2', 'Bug 3'].forEach((text, i) => {
         R.note(b, text, { x: 294, y: 150 + i * 62, w: 72, at: mark('v1-4', 'bugs') + i * 0.1, small: true });
         R.inkStamp(b, 'fixed', { x: 372, y: 152 + i * 62, at: mark('v1-4', 'found') + i * 0.15, tone: 'green', rotate: -6 });
       });
-      R.note(b, 'Higher software quality, fewer defects', { x: 72, y: 330, w: 370, at: mark('v1-4', 'found'), icon: 'shield' }).dataset.testid = 'reuse-benefit-quality';
+      R.note(b, 'Fewer defects', { x: 147, y: 330, w: 220, at: shelfEnd + 0.2, icon: 'shield' }).dataset.testid = 'reuse-benefit-quality';
 
       // "Less to write and less to test, so the feature ships sooner."
       const catchAt = before('v1-7');
@@ -273,7 +272,7 @@
         x: 72, y: 128, w: 370, at: testedEnd, shrinkAt: mark('v1-5', 'test'),
         items: [{ label: 'Code to write', to: 0.3 }, { label: 'Code to test', to: 0.3 }],
       });
-      R.note(c, 'Higher productivity, faster time to market', { x: 72, y: 270, w: 370, at: mark('v1-6', 'feature'), icon: 'forward' }).dataset.testid = 'reuse-benefit-productivity';
+      R.note(c, 'Ship sooner', { x: 147, y: 270, w: 220, at: testedEnd + 0.2, icon: 'forward' }).dataset.testid = 'reuse-benefit-productivity';
 
       // "But modules aren't neat building blocks: each one assumes its world,
       // and glue code joins the pieces where those worlds don't fit."
@@ -281,10 +280,10 @@
       const realityAt = mark('v1-8', 'each');
       const glueAt = mark('v1-9', 'glue');
       const fitAt = mark('v1-10', 'where');
-      R.label(catchPanel, 'The vision: compatible blocks', { x: 512, y: 108, w: 380, at: mark('v1-7', 'but'), until: realityAt, align: 'center' });
-      R.label(catchPanel, 'The reality: they don’t fit', { x: 512, y: 108, w: 380, at: realityAt, until: glueAt, align: 'center', tone: 'red' });
+      R.label(catchPanel, 'Perfect fit?', { x: 512, y: 108, w: 380, at: mark('v1-7', 'but'), until: realityAt, align: 'center' });
+      R.label(catchPanel, 'Different assumptions', { x: 512, y: 108, w: 380, at: realityAt, until: glueAt, align: 'center', tone: 'red' });
       R.label(catchPanel, 'Glue code fills the gaps', { x: 512, y: 108, w: 380, at: glueAt, until: fitAt, align: 'center' });
-      R.label(catchPanel, 'Where the assumptions don’t fit', { x: 512, y: 108, w: 380, at: fitAt, align: 'center', tone: 'red' });
+      R.label(catchPanel, 'Check the assumptions', { x: 512, y: 108, w: 380, at: fitAt, align: 'center', tone: 'red' });
       R.vision(catchPanel, {
         x: 552, y: 136, at: mark('v1-7', 'modules'), realityAt,
         glueAt: [glueAt, mark('v1-9', 'joins'), mark('v1-9', 'pieces')], outlineAt: fitAt,
@@ -306,13 +305,13 @@
       const s = kit.scene(content, from, leave, { exit: 'fade' });
       const at = (n, word) => mark(`${prefix}-${n}`, word);
       const list = R.checklist(s, {
-        x: 310, y: 78, w: 440, at: from, title: 'Before you reuse, ask:',
+        x: 310, y: 78, w: 440, at: from,
         tabsAt: from + 0.4,
         items: [
-          { q: 'What will it save? What will it cost?', name: 'Cost-benefit analysis', icon: 'wallet', at: at(2, 'what'), tabs: tabs.cost },
-          { q: 'What does it assume?', name: 'Identify violated assumptions', icon: 'search', at: at(3, 'what'), tabs: tabs.assume },
-          { q: 'What does it pull in?', name: 'Strive for fewer dependencies', icon: 'box', at: at(4, 'what'), tabs: tabs.pull },
-          { q: 'Pin it, but update for patches.', name: 'Keep versions fixed · Update for security patches', icon: 'pin', at: at(5, 'pin'), tabs: tabs.pin },
+          { q: 'Savings? Costs?', icon: 'wallet', at: at(2, 'what'), tabs: tabs.cost },
+          { q: 'What does it assume?', icon: 'search', at: at(3, 'what'), showAt: at(3, 'what') - 0.4, tabs: tabs.assume },
+          { q: 'What does it pull in?', icon: 'box', at: at(4, 'what'), tabs: tabs.pull },
+          { q: 'Pin versions. Update for patches.', icon: 'pin', at: at(5, 'pin'), tabs: tabs.pin },
         ],
         footer: 'External reuse is not a one-time investment.',
         footerAt: at(6, 'external'),
@@ -392,7 +391,6 @@
       const docker = R.pkg(top, { x: 590, y: 192, w: 220, h: 60, name: 'docker', tone: 'blue', how: 'drop', at: mark('v2-3', 'docker') });
       R.label(tower, 'calls ↓', { x: 828, y: 234, w: 74, at: mark('v2-3', 'calls'), tone: 'muted', size: 17 });
       R.label(tower, 'calls ↓', { x: 828, y: 294, w: 74, at: mark('v2-4', 'calls'), tone: 'muted', size: 17 });
-      R.label(tower, 'nothing pinned', { x: 504, y: 326, w: 84, at: mark('v2-5', 'pinned'), until: mark('v2-6', 'two'), tone: 'red', size: 17 });
       kit.sticker(tower, 'Clean install', { x: 640, y: 396, at: mark('v2-6', 'clean'), until: mark('v2-7', 'version'), iconName: 'resend', rotate: -4 });
       // "So a clean install got two": the old brick slides out, version 2.0.0
       // slides in with different studs, and the bricks above no longer seat.
@@ -401,7 +399,7 @@
       shift(newU.node, twoAt + 0.15, { opacity: 0, translate: '30px 0' }, { opacity: 1, translate: '0 0' }, 0.4);
       shift(upper, twoAt + 0.4, { translate: '0 0' }, { translate: '0 -12px' }, 0.3, EASE.back);
       // "Version two changed its API": the new studs.
-      R.label(tower, 'new studs: a changed API', { x: 468, y: 304, w: 116, align: 'right', at: mark('v2-7', 'changed'), until: okAt, tone: 'red', size: 16 });
+      R.label(tower, 'Changed API', { x: 468, y: 304, w: 116, align: 'right', at: mark('v2-7', 'changed'), until: okAt, tone: 'red', size: 18 });
       R.arrow(tower, { x1: 586, y1: 318, x2: 604, y2: 307, at: mark('v2-7', 'changed'), until: okAt, tone: 'red' });
       // "And requests' calls broke too": the break travels up the tower,
       // each brick sliding off the one below.
@@ -412,7 +410,7 @@
 
       // The principle: "Pin dependency versions: nothing moves till you
       // choose." The old brick comes back, pinned, and the tower seats again.
-      book.ribbon('Keep versions of your dependencies fixed', { at: pinAt });
+      book.ribbon('Pin dependency versions', { at: pinAt });
       shift(newU.node, okAt, { opacity: 1, translate: '0 0' }, { opacity: 0, translate: '30px 0' }, 0.3);
       shift(oldU.node, okAt + 0.2, { opacity: 0, translate: '30px 0' }, { opacity: 1, translate: '0 0' }, 0.4);
       shift(upper, okAt + 0.5, { translate: '-10px -12px' }, { translate: '0 0' }, 0.4, EASE.back);
@@ -424,7 +422,7 @@
         lines: ['[packages]', { text: 'urllib3 = "<2.0.0"', hl: { part: 'urllib3 = "<2.0.0"', at: mark('v2-9', 'versions'), tone: 'green' } }, 'docker = "==7.1.0"'],
       });
       R.inkStamp(b, 'pinned', { x: 318, y: 252, at: mark('v2-9', 'versions') + 0.2, tone: 'green' });
-      R.note(b, 'Lockfile = the same bricks in every build', { x: 90, y: 298, w: 336, at: mark('v2-9', 'versions') + 0.3, icon: 'list', small: true });
+      R.note(b, 'Lockfile: repeatable versions', { x: 90, y: 298, w: 336, at: pinAt, icon: 'list', small: true });
     }
 
     // ----------------------------------------------------------------
@@ -446,13 +444,13 @@
       const a = focusPanel(s, 'left', [[from, requestAt]]);
       R.padlock(a, { x: 200, y: 112, size: 96, at: mark('v3-1', 'openssl'), crackAt: mark('v3-1', 'flaw'), label: 'OpenSSL 1.0.1 (TLS)' });
       R.timeline(a, {
-        x: 96, y: 290, w: 320, at: mark('v3-2', 'for'), fillAt: mark('v3-2', 'two'), fillTo: mark('v3-2', 'saw'), fillTone: 'red',
+        x: 96, y: 290, w: 320, at: from + 0.3, fillAt: mark('v3-2', 'two'), fillTo: mark('v3-2', 'saw'), fillTone: 'red',
         points: [
-          { pos: 0, text: '2012: bug ships', at: mark('v3-2', 'for'), align: 'left' },
-          { pos: 1, text: 'April 2014: found', at: mark('v3-2', 'no'), align: 'right' },
+          { pos: 0, text: '2012: bug ships', at: from, align: 'left' },
+          { pos: 1, text: '2014: found', at: from, align: 'right' },
         ],
       });
-      R.label(a, '2 years unseen', { x: 96, y: 368, w: 320, at: mark('v3-2', 'years'), tone: 'red', align: 'center' });
+      R.label(a, '2 years unseen', { x: 96, y: 368, w: 320, at: mark('v3-2', 'for') - 0.5, tone: 'red', align: 'center' });
 
       // Why: "A request claimed a length; the server trusted it and sent back
       // its own memory: passwords, private keys."
@@ -463,7 +461,7 @@
       });
       R.label(b, 'trusted, never checked', { x: 760, y: 136, w: 142, at: mark('v3-4', 'trusted'), tone: 'red', size: 17 });
       R.note(b, 'OpenSSL server', { x: 514, y: 212, w: 200, at: mark('v3-4', 'server'), icon: 'database' });
-      R.note(b, 'Heartbleed: buffer over-read', { x: 724, y: 212, w: 176, at: mark('v3-6', 'passwords'), tone: 'bad', small: true });
+      R.note(b, 'Heartbleed: buffer over-read', { x: 724, y: 212, w: 176, at: mark('v3-5', 'sent'), tone: 'bad', small: true });
       // The reply keeps printing, line after line of the server's memory,
       // far past the one letter asked for: it scrolls like a receipt, and
       // the password and the private key are lit as they are sung.
@@ -508,7 +506,7 @@
       // shows the crack inside.
       const pinAt = mark('v3-13', 'pinned');
       const shipped = mark('v3-8', 'shipped');
-      const shareAt = mark('v3-10', 'chose');
+      const shareAt = mark('v3-10', 'update');
       const c = focusPanel(s, 'left', [[mineAt, shareAt]]);
       const xray = R.show(kit.place(kit.el('div', 'rk-xray is-staged', c), 70, 108), shipped, undefined, 'fade');
       xray.style.width = '376px';
@@ -526,7 +524,7 @@
         x: 110, y: 306, w: 300, at: mark('v3-9', 'the'), fillAt: mark('v3-9', 'fix'), fillTo: mark('v3-9', 'week'), fillTone: 'green',
         points: [
           { pos: 0, text: '1 April 2014: found', at: mark('v3-9', 'the'), align: 'left' },
-          { pos: 1, text: '7 April: 1.0.1g', at: mark('v3-9', 'week'), align: 'right' },
+          { pos: 1, text: '7 April: 1.0.1g', at: mark('v3-9', 'fix'), align: 'right' },
         ],
       });
       // Next picture: "That's reuse on your side: one fix, shared by all."
@@ -538,12 +536,11 @@
 
       // The principle: "Pinned doesn't mean frozen: update to the fix, then test."
       book.ribbon('Pinned doesn’t mean frozen', { at: pinAt, until: mark('v3-14', 'update') });
-      book.ribbon('Update to receive security patches', { at: mark('v3-14', 'update') });
+      book.ribbon('Update, then test', { at: mark('v3-14', 'update') });
       const e = focusPanel(s, 'left', [[pinAt, leave]]);
       R.pkg(e, {
         x: 120, y: 140, w: 280, name: 'openssl', version: '1.0.1f · pinned', tone: 'blue', at: pinAt,
         tags: [
-          { at: mark('v3-13', 'mean'), text: '1.0.1g', kind: 'new' },
           { at: mark('v3-13', 'frozen'), text: '1.0.1g · pinned', kind: 'pinned' },
         ],
       });
@@ -572,7 +569,7 @@
       const padAt = before('v4-2');
       const a = focusPanel(s, 'left', [[from, padAt]]);
       R.code(a, {
-        x: 66, y: 106, w: 384, lang: 'js', numbers: true, size: 16, title: 'left-pad, as published on npm', at: mark('v4-1', 'leftpad'),
+        x: 66, y: 106, w: 384, lang: 'js', numbers: true, size: 16, title: 'left-pad', at: mark('v4-1', 'leftpad'),
         lines: [
           'module.exports = leftpad;',
           'function leftpad (str, len, ch) {',
@@ -595,7 +592,7 @@
       const built = mark('v4-3', 'pulled') - 0.25;
       const padding = focusPanel(s, 'right', [[padAt, built - 0.2]]);
       R.padColumn(padding, {
-        x: 515, y: 150, values: ['7', '42', '317'], width: 3, caption: 'aligned on the right',
+        x: 515, y: 150, values: ['7', '42', '317'], width: 3, caption: 'Right-aligned',
         at: mark('v4-1', 'lines'), padAt: mark('v4-2', 'pad'), every: 0.15, alignAt: mark('v4-2', 'string'), until: built - 0.2,
       });
 
@@ -758,9 +755,9 @@
       more.ring(mark('v4-8', 'dependency'), undefined, 'red');
       const say = (text, at, until, tone = 'red') => R.label(b, text, { x: 510, y: 418, w: 384, at, until, tone, align: 'center', size: 19 });
       say('transitive dependency', mark('v4-4', 'packages'), mark('v4-5', 'its'));
-      say('unpublished, March 2016', gone, failAt);
-      say('what you listed: react, babel-core', mark('v4-7', 'never'), mark('v4-8', 'down'), 'ink');
-      say('3 levels down', mark('v4-8', 'down'), trickAt);
+      say('Unpublished', gone, failAt);
+      say('Direct dependencies', mark('v4-7', 'many'), mark('v4-8', 'dependency'), 'ink');
+      say('3 levels down', mark('v4-8', 'dependency'), hijackAt);
 
       // "Thousands of builds failed": compact readouts below the still-visible build.
       const c = R.group(s, failAt, traceAt);
@@ -777,15 +774,14 @@
       const cryptoAt = before('v4-15');
       const d = focusPanel(s, 'left', [[hijackAt, trickAt]]);
       R.pkg(d, { x: 90, y: 116, w: 280, name: 'eslint-scope', version: '3.7.2', tone: 'blue', at: mark('v4-9', 'eslintscope'), tags: [{ at: mark('v4-9', 'hijacked'), text: '3.7.2 · malicious', kind: 'bad' }] });
-      R.note(d, 'maintainer account taken over (July 2018)', { x: 90, y: 200, w: 340, at: mark('v4-9', 'hijacked'), tone: 'bad', icon: 'key' });
+      R.note(d, 'Maintainer account hijacked', { x: 90, y: 200, w: 340, at: hijackAt, tone: 'bad', icon: 'key' });
       const npmrc = R.code(d, { x: 90, y: 270, w: 300, lang: 'plain', title: '.npmrc', at: mark('v4-10', 'release'), lines: ['_authToken=npm_••••••••'] });
       tween(npmrc, [{ translate: '0 0' }, { translate: '46px 0' }], mark('v4-10', 'stole'), 0.6, EASE.inOut);
-      R.label(d, 'stole npm tokens', { x: 90, y: 352, w: 340, at: mark('v4-10', 'stole'), tone: 'red', align: 'center' });
 
       // The principles: "Write trivial code yourself; keep dependencies few:
       // each one can break, be hijacked, or vanish out of view."
-      book.ribbon('Avoid reusing trivial code', { at: mark('v4-11', 'write'), until: mark('v4-12', 'keep') });
-      book.ribbon('Strive for fewer package dependencies', { at: mark('v4-12', 'keep'), until: mark('v4-16', 'dont') });
+      book.ribbon('Write trivial code yourself', { at: trickAt, until: mark('v4-12', 'keep') });
+      book.ribbon('Keep dependencies few', { at: mark('v4-12', 'keep'), until: cryptoAt });
       const fameAt = before('v4-17');
       const e = focusPanel(s, 'right', [[trickAt, cryptoAt]]);
       R.code(e, {
@@ -800,9 +796,9 @@
       Array.from(many.querySelectorAll('.rk-shelf-item')).forEach((item, i) => {
         if (trivial.includes(i)) fx.fadeOut(item, mark('v4-12', 'few') + i * 0.05, 0.35);
       });
-      R.note(e, 'can break', { x: 512, y: 336, w: 104, at: mark('v4-13', 'break'), tone: 'bad', small: true });
-      R.note(e, 'can be hijacked', { x: 624, y: 336, w: 150, at: mark('v4-13', 'hijacked'), tone: 'bad', small: true });
-      R.note(e, 'can vanish', { x: 782, y: 336, w: 122, at: mark('v4-14', 'vanish'), tone: 'bad', small: true });
+      R.note(e, 'Breaks', { x: 512, y: 336, w: 104, at: mark('v4-13', 'break'), tone: 'bad', small: true });
+      R.note(e, 'Hijacked', { x: 624, y: 336, w: 150, at: mark('v4-13', 'hijacked'), tone: 'bad', small: true });
+      R.note(e, 'Vanishes', { x: 782, y: 336, w: 122, at: before('v4-14'), tone: 'bad', small: true });
 
       // The boundary: "But code that's hard to get right, like crypto: don't write your own."
       const f = focusPanel(s, 'left', [[cryptoAt, fameAt]]);
@@ -813,16 +809,16 @@
       R.label(f, 'hard to get right', { x: 90, y: 246, w: 330, at: mark('v4-15', 'hard'), tone: 'muted', align: 'center' });
       R.tick(f, { x: 384, y: 104, at: mark('v4-16', 'dont'), kind: 'cross', size: 44 });
       R.classAt(homemade, 'is-struck', mark('v4-16', 'dont'));
-      R.pkg(f, { x: 96, y: 296, w: 320, name: 'vetted crypto library', tone: 'blue', how: 'drop', at: mark('v4-16', 'write') }).check(mark('v4-16', 'own'));
-      book.ribbon('Don’t roll your own crypto', { at: mark('v4-16', 'dont'), until: fameAt });
-      book.ribbon('Choose maintained dependencies', { at: fameAt, until: mark('v4-18', 'fit') });
+      R.pkg(f, { x: 96, y: 296, w: 320, name: 'vetted crypto library', tone: 'blue', how: 'drop', at: cryptoAt + 0.2 }).check(mark('v4-16', 'own'));
+      book.ribbon('Use vetted crypto', { at: cryptoAt, until: fameAt });
+      book.ribbon('Choose maintained dependencies', { at: fameAt, until: mark('v4-18', 'but') });
 
       // "Choose maintained and popular, but fit comes before fame." The
       // project is a wall with a gap: the popular brick is too big for it,
       // a smaller one fits.
       const g = focusPanel(s, 'right', [[fameAt, leave]]);
-      R.note(g, 'A · updated weekly · many users · good docs', { x: 512, y: 108, w: 386, at: mark('v4-17', 'maintained'), tone: 'good', icon: 'check' });
-      R.note(g, 'B · last commit 4 years ago', { x: 512, y: 170, w: 386, at: mark('v4-17', 'popular') - 0.3, icon: 'hourglass' });
+      R.note(g, 'A · maintained, documented', { x: 512, y: 108, w: 386, at: fameAt, tone: 'good', icon: 'check' });
+      R.note(g, 'B · inactive 4 years', { x: 512, y: 170, w: 386, at: fameAt + 0.2, icon: 'hourglass' });
       const shown = mark('v4-17', 'popular');
       const wall = R.wallGap(g, { x: 588, y: 290, cols: 6, rows: 3, gapCol: 2, gapCols: 2, brickW: 52, brickH: 30, at: shown });
       R.label(g, 'your project', { x: 504, y: 314, w: 80, at: shown, tone: 'muted', size: 17 });
@@ -845,7 +841,7 @@
       ], comes + 0.4, 0.5, EASE.inOut);
       fx.fadeOut(wall.slot, comes + 0.4, 0.2);
       fits.check(Math.max(mark('v4-18', 'fame'), comes + 0.95));
-      book.ribbon('Fit matters more than popularity', { at: mark('v4-18', 'fit') });
+      book.ribbon('Fit before fame', { at: mark('v4-18', 'but') });
     }
 
     // ----------------------------------------------------------------
@@ -873,7 +869,7 @@
         launchAt: firstLaunch, flightTo: { y: -160, at: firstExit },
       });
       const irsUntil = mark('br-4', 'since') - 0.9;
-      R.label(sky, 'Inertial Reference System: the gold module', { x: 160, y: 290, w: 220, at: mark('br-1', 'built'), until: irsUntil, size: 18 });
+      R.label(sky, 'Inertial Reference System', { x: 160, y: 290, w: 220, at: mark('br-1', 'built'), until: irsUntil, size: 18 });
       R.arrow(sky, { x1: 156, y1: 322, x2: 114, y2: 312, bend: -6, at: mark('br-1', 'built') + 0.2, until: irsUntil });
       const reusedAt = mark('br-5', 'reused');
       R.arrow(a, { x1: 160, y1: 352, x2: 296, y2: 352, at: reusedAt, until: mark('br-6', 'which'), label: 'reused', labelAt: [196, 318] });
@@ -888,8 +884,8 @@
       // Keep the launch visible while compact labels explain the assumption.
       const rule = mark('br-12', 'identify');
       R.label(a, 'Speed stored in 16 bits', { x: 216, y: 210, w: 220, at: mark('br-2', 'stored'), until: mark('br-4', 'since'), size: 20, align: 'center' });
-      R.label(a, 'Limit: 32,767', { x: 216, y: 250, w: 220, at: mark('br-3', 'sixteen'), until: mark('br-4', 'since'), size: 20, align: 'center' });
-      R.label(a, 'Within 16-bit range · fits ✓', { x: 70, y: 364, w: 376, at: mark('br-4', 'slower'), until: before('br-5'), tone: 'green', align: 'center', size: 22 });
+      R.label(a, 'Limit: 32,767', { x: 216, y: 250, w: 220, at: mark('br-2', 'stored'), until: mark('br-4', 'since'), size: 20, align: 'center' });
+      R.label(a, 'Fits ✓', { x: 70, y: 364, w: 376, at: firstLaunch, until: before('br-5'), tone: 'green', align: 'center', size: 22 });
       R.inkStamp(a, 'Overflow', { x: 94, y: 264, at: mark('br-6', 'overflow'), until: mark('br-8', 'veered'), tone: 'red', rotate: -4 });
       R.label(a, 'T + 37 s', { x: 148, y: 364, w: 220, at: mark('br-7', 'thirtyseven'), tone: 'red', align: 'center', size: 28 });
 
@@ -899,8 +895,7 @@
       const c = focusPanel(s, 'left', [[verdictAt, rule]]);
       R.note(c, 'Ariane 4: fits', { x: 90, y: 120, w: 340, at: verdictAt, tone: 'good', icon: 'check' });
       R.note(c, 'Ariane 5: overflows', { x: 90, y: 186, w: 340, at: mark('br-10', 'failed'), tone: 'bad', icon: 'cross' });
-      R.note(c, 'Assumes: horizontal velocity fits in 16 bits', { x: 90, y: 260, w: 340, at: mark('br-11', 'assumption'), tone: 'tag', icon: 'pin' });
-      R.note(c, 'Cost of the failure: $370 million', { x: 90, y: 340, w: 340, at: verdictAt, tone: 'bad', icon: 'cash' });
+      R.note(c, 'Assumes velocity fits 16 bits', { x: 90, y: 260, w: 340, at: verdictAt, tone: 'tag', icon: 'pin' });
 
       // The principle: identify violated assumptions, in three steps.
       book.ribbon('Identify violated assumptions', { at: rule, until: mark('br-17', 'version') });
@@ -908,8 +903,8 @@
       R.checkboxes(d, {
         x: 524, y: 118, w: 370, at: rule,
         items: [
-          { text: 'Check the documentation and the code', at: mark('br-13', 'docs') },
-          { text: 'Check it was designed for your conditions', at: mark('br-14', 'built') },
+          { text: 'Read docs and code', at: mark('br-13', 'docs') },
+          { text: 'Match your conditions', at: mark('br-14', 'built') },
           { text: 'Test it', at: mark('br-15', 'test') },
         ],
       });
@@ -931,9 +926,9 @@
       R.note(e, 'Ariane 5: 32 bits', { x: 252, y: 236, w: 196, at: mark('br-16', 'two') + 0.15, until: mark('br-17', 'or'), small: true });
       R.pkg(e, { x: 252, y: 108, w: 196, name: 'IRS v1', version: '16-bit', tone: 'gold', how: 'drop', at: mark('br-17', 'or') });
       R.pkg(e, { x: 252, y: 230, w: 196, name: 'IRS v2', version: '32-bit', tone: 'gold', how: 'drop', at: mark('br-17', 'clone') });
-      R.note(e, 'Ariane 4 team', { x: 270, y: 182, w: 160, at: mark('br-18', 'copy'), small: true, icon: 'team' });
-      R.note(e, 'Ariane 5 team', { x: 270, y: 304, w: 160, at: mark('br-18', 'it'), small: true, icon: 'team' });
-      book.ribbon('Evolve separately: version it, or clone and own', { at: mark('br-17', 'version') });
+      R.note(e, 'Ariane 4 team', { x: 270, y: 182, w: 160, at: mark('br-17', 'or'), small: true, icon: 'team' });
+      R.note(e, 'Ariane 5 team', { x: 270, y: 304, w: 160, at: mark('br-17', 'clone'), small: true, icon: 'team' });
+      book.ribbon('Version it, or clone and own', { at: mark('br-17', 'version') });
     }
 
     // ----------------------------------------------------------------
@@ -981,10 +976,9 @@
       // framework's own bricks go up around yours.
       R.pkg(framework, { x: 528, y: 112, w: 124, h: 56, name: 'routing', tone: 'grey', small: true, how: 'drop', at: mark('v5-7', 'decides') });
       R.pkg(framework, { x: 818, y: 112, w: 80, h: 56, name: 'server', tone: 'grey', small: true, how: 'drop', at: mark('v5-7', 'more') });
-      R.label(framework, 'It decides more. You write less.', { x: 514, y: 330, w: 386, at: mark('v5-7', 'decides'), align: 'center' });
+      R.label(framework, 'Less code · harder to replace', { x: 514, y: 330, w: 386, at: mark('v5-7', 'decides'), align: 'center' });
       const locked = ghost(framework, { x: 518, y: 98, w: 386, h: 112, at: mark('v5-8', 'but') });
       locked.classList.add('rk-ghost--frame');
-      R.label(framework, 'Harder to reverse', { x: 514, y: 362, w: 386, at: mark('v5-8', 'but'), align: 'center', tone: 'red' });
     }
 
     // ----------------------------------------------------------------
@@ -1014,21 +1008,20 @@
         },
         3: (g, q) => {
           R.pkg(g, {
-            x: 560, y: 124, w: 280, name: 'library', version: '==3.4.1 · pinned', tone: 'blue', at: q.start + 0.2,
-            tags: [{ at: mark('quiz-3', 'purpose') + 0.25, text: '3.4.2', kind: 'new' }, { at: mark('quiz-3', 'then'), text: '==3.4.2 · pinned', kind: 'pinned' }],
+            x: 560, y: 214, w: 280, name: 'library', version: '==3.4.1 · pinned', tone: 'blue', at: q.start + 0.2,
+            tags: [{ at: q.answer_at + 0.45, text: '==3.4.2 · pinned', kind: 'pinned' }],
           });
-          R.note(g, 'Security fix in 3.4.2', { x: 560, y: 220, w: 280, at: mark('quiz-3', 'security'), tone: 'good', icon: 'shield' });
+          R.note(g, 'Security fix: 3.4.2', { x: 560, y: 300, w: 280, at: q.start + 0.4, until: q.answer_at + 0.25, icon: 'shield' });
           R.term(g, { x: 560, y: 284, w: 280, at: mark('quiz-3', 'then'), title: 'terminal', lines: [{ text: '✓ all tests passed', at: mark('quiz-3', 'test'), kind: 'ok' }] });
         },
         4: (g, q) => {
-          R.label(g, '03/04/2026', { x: 512, y: 112, w: 380, at: q.start + 0.2, align: 'center', size: 40, weight: 900 }).classList.add('rk-label--mono');
-          R.note(g, 'Old code reads: March 4', { x: 560, y: 186, w: 280, at: mark('quiz-4', 'code'), icon: 'calendar' });
-          R.note(g, 'Users in Europe mean: 3 April', { x: 560, y: 248, w: 280, at: mark('quiz-4', 'europe'), icon: 'user' });
-          R.label(g, 'assumes month first', { x: 512, y: 318, w: 380, at: mark('quiz-4', 'check'), tone: 'red', align: 'center' });
+          R.label(g, '03/04/2026', { x: 512, y: 200, w: 380, at: q.start + 0.2, align: 'center', size: 40, weight: 900 }).classList.add('rk-label--mono');
+          R.note(g, 'Old code: March 4', { x: 560, y: 260, w: 280, at: q.start + 0.6, icon: 'calendar' });
+          R.note(g, 'Europe: 3 April', { x: 560, y: 310, w: 280, at: q.start + 1.3, icon: 'user' });
         },
         5: (g, q) => {
           // Two app bricks stand on one shared module brick.
-          const splitAt = mark('quiz-5', 'it');
+          const splitAt = q.answer_at + 0.05;
           const shared = R.pkg(g, { x: 560, y: 290, w: 300, h: 48, name: 'shared module', names: [{ at: splitAt + 0.15, text: 'module v1' }], tone: 'blue', small: true, under: true, how: 'drop', at: mark('quiz-5', 'module') });
           R.pkg(g, { x: 566, y: 236, w: 140, h: 48, name: 'App A', tone: 'gold', how: 'drop', at: q.start + 0.2 });
           const leaning = R.layer(g);
@@ -1046,17 +1039,24 @@
           R.pkg(g, { x: 512, y: 112, w: 150, name: 'pytest', tone: 'grey', at: q.start + 0.2 });
           R.arrow(g, { x1: 588, y1: 168, x2: 588, y2: 226, at: mark('quiz-6', 'calls'), label: 'calls', labelAt: [604, 182] });
           R.code(g, { x: 512, y: 234, w: 386, lang: 'python', title: 'test_fizzbuzz.py (the TDD tutorial)', at: q.answer_at + 0.15, lines: ['def test_multiple_of_three_is_fizz():', "    assert fizzbuzz(3) == 'Fizz'"] });
-          R.label(g, 'it calls your code', { x: 680, y: 128, w: 220, at: mark('quiz-6', 'calls'), tone: 'green', align: 'center' });
         },
       };
       const QUESTIONS = [
-        [1, 'pencil'], [2, 'shield'], [3, 'pin'], [4, 'search'], [5, 'copy'], [6, 'resend'],
+        { n: 1, icon: 'pencil', answer: 'Write the one-liner.' },
+        { n: 2, icon: 'shield', answer: 'Use vetted crypto.' },
+        { n: 3, icon: 'pin', answer: 'Update, then test.', preview: true },
+        { n: 4, icon: 'search', answer: 'Check month-first assumption.', preview: true },
+        { n: 5, icon: 'copy', answer: 'Version, or clone and own.', preview: true },
+        { n: 6, icon: 'resend', answer: 'Framework: it calls you.' },
       ];
-      QUESTIONS.forEach(([n, icon]) => {
+      QUESTIONS.forEach(({ n, icon, answer, preview }) => {
         const q = line(`quiz-${n}`);
         const until = n < 6 ? line(`quiz-${n + 1}`).start : leave;
-        R.quiz(s, { x: 310, y: 86, w: 440, n, total: 6, question: q.text, answer: q.answer, icon, at: q.start, answerAt: q.answer_at, until });
-        const art = focusPanel(s, 'right', [[q.answer_at, until]]);
+        // Preview the problem, not its solution: these diagrams need more
+        // inspection time than the brief sung answer can provide. State
+        // changes and answer bricks still wait for answer_at, including on seek.
+        R.quiz(s, { x: 310, y: 86, w: 440, n, total: 6, question: q.text, answer, icon, at: q.start, answerAt: q.answer_at, until });
+        const art = focusPanel(s, 'right', [[preview ? q.start : q.answer_at, until]]);
         art.classList.add('rk-quiz-art');
         art.dataset.testid = `reuse-quiz-art-${n}`;
         ART[n](art, q);

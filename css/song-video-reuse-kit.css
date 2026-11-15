@@ -39,6 +39,32 @@
 /* The foreman's soles meet the tower directly in both page themes. */
 .rk-main-hero .oc-shadow { display: none; }
 
+/* Material contrast keeps the singer distinct from both the blue-hour sky
+   and the sunlit masonry. These colors belong only to the reuse hero's work
+   clothes; personalized skin, hair and facial features retain their palette.
+   The artwork uses this same palette in both page themes. */
+.rk-main-hero.oc-figure--foreman {
+  --oc-cloth: #ff791b;
+  --oc-cloth-light: #ffd093;
+  --oc-cloth-shade: #a63f0b;
+  --oc-under: #2774ae;
+  --oc-under-shade: #103d68;
+}
+.rk-main-hero.oc-figure--foreman .oc-top-stop-0 { stop-color: #ffbb62; }
+.rk-main-hero.oc-figure--foreman .oc-top-stop-1 { stop-color: #ff791b; }
+.rk-main-hero.oc-figure--foreman .oc-top-stop-2 { stop-color: #be430b; }
+.rk-main-hero.oc-figure--foreman .oc-sleeve-stop-0 { stop-color: #58b3e2; }
+.rk-main-hero.oc-figure--foreman .oc-sleeve-stop-1 { stop-color: #2774ae; }
+.rk-main-hero.oc-figure--foreman .oc-sleeve-stop-2 { stop-color: #103d68; }
+.rk-main-hero.oc-figure--foreman .oc-trouser-stop-0 { stop-color: #1a355a; }
+.rk-main-hero.oc-figure--foreman .oc-trouser-stop-1 { stop-color: #345d89; }
+.rk-main-hero.oc-figure--foreman .oc-trouser-stop-2 { stop-color: #172f50; }
+.rk-main-hero.oc-figure--foreman .oc-trouser-stop-3 { stop-color: #101f37; }
+.rk-main-hero .oc-reflective { fill: #fff8e8; }
+.rk-main-hero .oc-reflective-shine { stroke: #ffffff; opacity: 1; }
+.rk-main-hero .oc-shirt-collar { fill: #3b96ce; }
+.rk-main-hero .oc-vest-pocket { fill: #d34c0c; }
+
 /* Brick colours: the face, the outline, and the text on it. */
 .rk-c-blue {
   --brick: var(--rk-ucla-blue);
@@ -209,7 +235,7 @@
   background: rgba(255, 255, 255, 0.94);
   color: var(--rk-ink);
   font-family: var(--font-mono);
-  font-size: 15px;
+  font-size: 17px;
   font-weight: 600;
   white-space: nowrap;
 }
@@ -1039,18 +1065,6 @@
 
 .rk-list { height: 360px; }
 
-.rk-list-title {
-  display: inline-block;
-  margin-bottom: 8px;
-  padding: 6px 10px;
-  border-left: 4px solid var(--rk-ucla-gold);
-  border-radius: 4px;
-  background: var(--rk-card);
-  color: var(--rk-paper);
-  font-size: 24px;
-  font-weight: 900;
-}
-
 .rk-list-row {
   position: absolute;
   top: 66px;
@@ -1091,7 +1105,6 @@
 
 .rk-list-icon svg { width: 24px; height: 24px; }
 .rk-list-q { font-size: 21px; font-weight: 800; }
-.rk-list-name { color: var(--rk-muted); font-size: 16px; font-weight: 700; }
 .rk-list-tabs { grid-column: 2; display: flex; flex-wrap: wrap; gap: 6px; }
 
 .rk-list-tab {
@@ -1099,7 +1112,7 @@
   border-radius: 999px;
   background: var(--rk-ink);
   color: #ffffff;
-  font-size: 15px;
+  font-size: 17px;
   font-weight: 800;
   white-space: nowrap;
 }
@@ -1181,7 +1194,7 @@
   border-radius: 999px;
   background: var(--rk-ink);
   color: #ffffff;
-  font-size: 15px;
+  font-size: 17px;
   font-weight: 800;
   letter-spacing: 0.06em;
   text-transform: uppercase;
