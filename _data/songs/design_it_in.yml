@@ -159,7 +159,7 @@ sections:
   - id: intro
     title: "Intro"
     delivery: spoken
-    narration: "Audio-described version: before each section, the picture pauses while I describe it. The song plays in a frontier town at dusk, built of computing: saloons that are server racks with blinking lights, general stores stacked from software modules, a water tower whose tank is a database, a radio mast, and a router shack, all joined by one network cable, against a desert sky. Your hero is the town sheriff, in a white felt hat, a leather vest with a silver star, a bandana, boots, and a holstered revolver. A browser window shows your web app: the lecture's post, liked by 999 others, with one comment, Facts. A masked outlaw in a long coat tiptoes in from the desert, and a red attack arrow strikes the comment box. The outlaw turns to you: the tester you hired to break in first. Then the app becomes a frontier house with a sign, Your app, over its door. A blueprint of a padlock appears on the door; the outlaw pulls out a lockpick and tiptoes up, and just before it gets there, a real brass padlock slams onto the door. The outlaw freezes, looks at you, picks at the lock, which only rattles, shakes its hand, shrugs, and tiptoes off backwards."
+    narration: "Audio-described version: before each section, the picture pauses while I describe it. The song plays in a frontier town at dusk, built of computing. Its street opens with four dark buildings: a general store, a post office under a radio mast, a storehouse, and a barn, each with a faint icon on a sign across its front. Past them stand a water tower whose tank is a database, a saloon that is a server rack with blinking lights, a store stacked from software modules, and a router shack, all joined by one network cable, against a desert sky. Your hero is the town sheriff, in a white felt hat, a leather vest with a silver star, a bandana, boots, and a holstered revolver. A browser window shows your web app: the lecture's post, liked by 999 others, with one comment, Facts. A masked outlaw in a long coat tiptoes in from the desert, and a red attack arrow strikes the comment box. The outlaw turns to you: the tester you hired to break in first. Then the app becomes a frontier house with a sign, Your app, over its door. A blueprint of a padlock appears on the door; the outlaw pulls out a lockpick and tiptoes up, and just before it gets there, a real brass padlock slams onto the door. The outlaw freezes, looks at you, picks at the lock, which only rattles, shakes its hand, shrugs, and tiptoes off backwards."
     lines:
       - id: intro-1
         start: 8.6
@@ -470,7 +470,7 @@ sections:
   - id: verse-4
     title: "Verse 4: Protection Mechanisms"
     delivery: sung
-    narration: "Verse 4, Protection Mechanisms. The locks so far hang on a wooden board, and one springs open inside a ring labelled blast radius. The lecture's four services stand as buildings in town, each with its icon on a big sign and joined by thick cables, with one master key labelled admin on all of them; a red attack arrow breaks in through the upload barn, the bank, the database, opens, and every table is read and changed. Then the master key splits into four, each with only the rights its job needs: the cables thin to narrow wires, picket fences rise between the buildings, and the ring shrinks to the barn alone. A second break-in through the barn reaches one folder, and the Users table stays locked. The stamp: Principle of Least Privilege. Below it, a key rack with one narrow key per job, each tagged with its one right, and the admin master key that opened everything, retired behind glass."
+    narration: "Verse 4, Protection Mechanisms. The locks so far hang on a wooden board, and one springs open inside a ring labelled blast radius. Then the town's lights come on over the four buildings at the start of its street: they are the lecture's four services, each with its icon on a big sign, the cable between them now thick and bold, with one master key labelled admin on all of them; a red attack arrow breaks in through the upload barn, the bank, the database, opens, and every table is read and changed. Then the master key splits into four, each with only the rights its job needs: the cables thin to narrow wires, picket fences rise between the buildings and stay, and the ring shrinks to the barn alone. A second break-in through the barn reaches one folder, and the Users table stays locked. The stamp: Principle of Least Privilege. Below it, a key rack with one narrow key per job, each tagged with its one right, and the admin master key that opened everything, retired behind glass."
     lines:
       - id: v4-1
         start: 207.84
@@ -489,7 +489,7 @@ sections:
         end: 219.48
         text: "Say uploads run as admin, and I break in through that page:"
         marks: {"say": 215.58, "uploads": 215.96, "run": 216.5, "as": 216.92, "admin": 217.12, "and": 217.46, "i": 217.92, "break": 218.02, "in": 218.4, "through": 218.58, "that": 218.8, "page": 219.0}
-        visual: "The lecture's four services as buildings in town, each with its icon on a big sign across its front: Product Display, a general store with a cart; Email Notification, a post office with an envelope; System Backup, a storehouse with a database; and Image Upload, a red barn with a picture. Thick, bold cables join them. On “admin”, one brass master key labelled “admin” hangs on all four. The outlaw slips in at the right, and on “break” points: a red attack arrow strikes the barn."
+        visual: "The town's lights come on over the four buildings at the start of its street, the lecture's four services, each with its icon on a big sign across its front and its name on the boardwalk: Product Display, a general store with a cart; Email Notification, the post office with an envelope; System Backup, a storehouse with a database; and Image Upload, a red barn with a picture. The town's cable between them glows thick and bold. On “admin”, one brass master key labelled “admin” hangs on all four. The outlaw slips in at the right, and on “break” points: a red attack arrow strikes the barn."
       - id: v4-4
         start: 219.48
         end: 223.66
@@ -501,7 +501,7 @@ sections:
         end: 227.72
         text: "So give each part its own key with just the rights it needs:"
         marks: {"so": 223.66, "give": 224.18, "each": 224.54, "part": 224.54, "its": 224.82, "own": 225.0, "key": 225.16, "with": 225.66, "just": 226.06, "the": 226.34, "rights": 226.5, "it": 226.78, "needs": 227.02}
-        visual: "On “own key”, the master key splits into four keys, one per building; the thick cables between the buildings thin to narrow wires, and a picket fence rises between each pair. On “rights”, each key's tag shows its permission, from the lecture. On “needs”, the blast-radius ring shrinks from the whole town to the barn alone."
+        visual: "On “own key”, the master key splits into four keys, one per building; the thick cables between the buildings thin to narrow wires, and picket fences rise between them, to stay up for the rest of the song. On “rights”, each key's permission appears above its building, from the lecture. On “needs”, the blast-radius ring shrinks from the whole town to the barn alone."
       - id: v4-6
         start: 227.72
         end: 231.16
@@ -606,7 +606,7 @@ sections:
         end: 289.63
         text: "Pop quiz: now you're the tester, so think the way they do."
         marks: {"pop": 286.14, "quiz": 286.36, "now": 286.92, "youre": 287.06, "the": 287.28, "tester": 287.4, "so": 288.46, "think": 288.56, "the_2": 288.78, "way": 288.94, "they": 289.1, "do": 289.26}
-        visual: "“Pop quiz!” The outlaw waves to you, and the sheriff points at you: a tag reads “Now you’re the tester”."
+        visual: "“Pop quiz!” The outlaw waves to you, and the sheriff points at you."
   - id: quiz
     title: "Quiz"
     delivery: call

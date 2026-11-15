@@ -4,19 +4,26 @@
  * `theme: frontier`; css/song-video-frontier.css holds its colours.
  *
  * Back to front: a dusk sky with the low sun and a few long clouds; mesas
- * on the horizon; and a desert town built of computing, each building a
- * metaphor in a frontier silhouette: false-front saloons that are server
- * racks (rack-unit slots, vents, and status LEDs for windows), general
- * stores stacked from software modules (crates with connector pins and
- * sockets), a water tower whose tank is a database (the stacked-disk
- * cylinder), a radio mast where the church steeple stood, a router shack
- * with antennas, and a windmill. One network cable comes in from the
- * desert on the left and runs through every building, plugged into a jack
- * on each, over two telegraph poles to the router shack, and small data
- * packets travel along it both ways. The dusty main street lies in front,
- * where the player draws captions. A few things move, slowly and faintly:
- * the clouds drift, the windmill turns, the packets travel, the LEDs come
- * on one by one as the evening comes, dust motes float, and now and then a
+ * on the horizon; and a desert town built of computing. The street opens
+ * with the four services of verse 4, the lecture's example system: a
+ * general store (Product Display), the post office under the radio mast
+ * (Email Notification), a storehouse (System Backup), and a barn (Image
+ * Upload), each with its icon on a sign across its front. All song long
+ * they are the town's evening silhouettes, their windows glowing; in verse 4
+ * their lights come on (town.light), and once each part has its own key the
+ * cable between them thins and picket fences rise between them
+ * (town.compartments), to stay for the rest of the song. Past them stand a
+ * water tower whose tank is a database (the stacked-disk cylinder), a false-front
+ * saloon that is a server rack (rack-unit slots, vents, and status LEDs
+ * for windows), a general store stacked from software modules (crates with
+ * connector pins and sockets), a router shack with antennas, and a
+ * windmill. One network cable comes in from the desert on the left and
+ * runs behind every building, plugged into its jacks, over a telegraph
+ * pole to the router shack, and small data packets travel along it both
+ * ways. The dusty main street lies in front, where the player draws
+ * captions. A few things move, slowly and faintly: the clouds drift, the
+ * windmill turns, the packets travel, the windows and LEDs come on one by
+ * one as the evening comes, dust motes float, and now and then a
  * tumbleweed rolls along the street. Golden hour cools linearly into blue
  * hour by the midpoint. Cloud illumination follows the setting sun, with
  * lower banks entering Earth's shadow before the higher banks.
@@ -29,10 +36,10 @@
 (function () {
   'use strict';
 
-  const { onFrame, clamp, hash01 } = window.Timeline;
-  const { el, svg } = window.SongKit;
+  const { onFrame, clamp, hash01, tween, EASE } = window.Timeline;
+  const { el, svg, icon } = window.SongKit;
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-  const W = 960, H = 540, HORIZON = 404, STREET = 456;
+  const W = 960, H = 540, HORIZON = 372, STREET = 456;
   const span = (t, [a, b]) => clamp((t - a) / (b - a), 0, 1);
   // Uneven shoulders and broken lower edges give the banks different weather
   // shapes. Every contour closes at a tapered tip, never a vertical cut.
@@ -238,19 +245,6 @@
     return jack(g, x - 4, top + 2);
   }
 
-  /** A radio mast where the steeple stood: a lattice spire, dishes, and faint signal arcs (returned). */
-  function radioMast(parent, windows, x) {
-    const g = svg('g', { class: 'fr-building' }, parent);
-    svg('path', { class: 'fr-wall', d: `M${x - 30} ${HORIZON} V${HORIZON - 56} L${x} ${HORIZON - 78} L${x + 30} ${HORIZON - 56} V${HORIZON} Z` }, g);
-    svg('path', { class: 'fr-leg', d: `M${x - 8} ${HORIZON - 70} L${x} ${HORIZON - 150} L${x + 8} ${HORIZON - 70} M${x - 6} ${HORIZON - 92} L${x + 5} ${HORIZON - 106} M${x + 6} ${HORIZON - 92} L${x - 5} ${HORIZON - 106} M${x - 4} ${HORIZON - 118} L${x + 3} ${HORIZON - 130}` }, g);
-    svg('path', { class: 'fr-tank', d: `M${x + 4} ${HORIZON - 112} a8 8 0 0 1 10 -8 l-3 9 Z M${x - 4} ${HORIZON - 96} a8 8 0 0 0 -10 -8 l3 9 Z` }, g);
-    leds(g, windows, [[x, HORIZON - 152]], 'amber');
-    const arcs = svg('g', { class: 'fr-signal' }, g);
-    for (const r of [10, 18, 26]) svg('path', { d: `M${x - r * 0.7} ${HORIZON - 152 - r * 0.7} A${r} ${r} 0 0 1 ${x + r * 0.7} ${HORIZON - 152 - r * 0.7}` }, arcs);
-    svg('rect', { class: 'fr-door', x: x - 6, y: HORIZON - 20, width: 12, height: 20 }, g);
-    return { arcs, jack: jack(g, x + 9, HORIZON - 84) };
-  }
-
   /** The water tower holds the town's data: its tank is the database cylinder of stacked disks. */
   function databaseTower(parent, windows, x) {
     const g = svg('g', { class: 'fr-tower' }, parent);
@@ -288,6 +282,236 @@
     return { g, ball };
   }
 
+  // ------------------------------------------------------------------
+  // The four services of verse 4, standing in the town
+  // ------------------------------------------------------------------
+
+  // Where the services stand on the street, west to east (their centres),
+  // drawn at this scale from their 120×90 art. They keep west of x 520,
+  // where the sun goes down behind the open lot (sunsetLighting).
+  const SERVICE_LOTS = [['store', 66], ['post', 198], ['warehouse', 330], ['barn', 462]];
+  const SERVICE_SCALE = 0.9;
+
+  // The parts of a service building, in its own 120×90 frame (the street
+  // at y 88), drawn like the song's porch (western-kit.js): dark outlines,
+  // light from the upper left, clapboards, and lit windows.
+  const bldPart = {
+    boards(g, x0, x1, y0, y1, step = 7) {
+      for (let by = y0; by < y1; by += step) {
+        svg('path', { class: 'fr-bld-board', d: `M${x0} ${by} H${x1}` }, g);
+        svg('path', { class: 'fr-bld-board-light', d: `M${x0} ${by + 1.2} H${x1}` }, g);
+      }
+    },
+    window(g, x, y, w, h, { cross = true } = {}) {
+      svg('rect', { class: 'fr-bld-frame', x: x - 2, y: y - 2, width: w + 4, height: h + 4, rx: 1 }, g);
+      svg('rect', { class: 'fr-bld-glass', x, y, width: w, height: h }, g);
+      if (cross) svg('path', { class: 'fr-bld-mullion', d: `M${x + w / 2} ${y} V${y + h} M${x} ${y + h / 2} H${x + w}` }, g);
+      svg('rect', { class: 'fr-bld-sill', x: x - 3, y: y + h + 1.5, width: w + 6, height: 2.6, rx: 0.6 }, g);
+    },
+    door(g, x, y, w, h) {
+      svg('rect', { class: 'fr-bld-frame', x: x - 2, y: y - 2, width: w + 4, height: h + 2 }, g);
+      svg('rect', { class: 'fr-bld-door', x, y, width: w, height: h }, g);
+      svg('path', { class: 'fr-bld-panel', d: `M${x + 3} ${y + 3} h${w - 6} v${h * 0.36} h${-(w - 6)} Z M${x + 3} ${y + h * 0.5} h${w - 6} v${h * 0.42} h${-(w - 6)} Z` }, g);
+      svg('circle', { class: 'fr-bld-knob', cx: x + w - 3.4, cy: y + h * 0.48, r: 1.3 }, g);
+    },
+    boardwalk(g) {
+      svg('rect', { class: 'fr-bld-deck', x: 3, y: 84, width: 114, height: 4.4, rx: 0.6 }, g);
+      svg('path', { class: 'fr-bld-seam', d: Array.from({ length: 9 }, (_, i) => `M${12 + i * 12} 84 V88.4`).join(' ') }, g);
+    },
+  };
+
+  /**
+   * The service's emblem, the main part of its facade: a dark board with a
+   * brass rim and the service's icon from the song kit's icon set (kit.js), as
+   * large as the board allows.
+   */
+  function emblem(g, name, { x, y, w, h }) {
+    svg('rect', { class: 'fr-bld-emblem', x, y, width: w, height: h, rx: 3 }, g);
+    svg('rect', { class: 'fr-bld-emblem-shine', x: x + 2, y: y + 2, width: w - 4, height: h - 4, rx: 2 }, g);
+    const size = Math.min(w, h) - 4;
+    const art = icon(name, 'fr-bld-emblem-icon');
+    for (const [k, v] of Object.entries({ x: x + (w - size) / 2, y: y + (h - size) / 2, width: size, height: size })) art.setAttribute(k, v);
+    g.append(art);
+  }
+
+  // Each service's building, its emblem the largest thing on its facade:
+  // a cart for Product Display, an envelope for Email Notification, a
+  // database for System Backup, and a picture for Image Upload. The door,
+  // windows, and props below say what kind of building it is.
+  const BUILDINGS = {
+    /** Product Display: a general store, its goods behind an awning. */
+    store(g, wall) {
+      svg('path', { class: 'fr-bld-wall', fill: wall, d: 'M10 86 V12 H15 V6 H105 V12 H110 V86 Z' }, g);
+      bldPart.boards(g, 10, 110, 50, 84);
+      svg('path', { class: 'fr-bld-cap', d: 'M12 6 H108 V2.6 H12 Z' }, g);
+      emblem(g, 'cart', { x: 32, y: 10, w: 56, h: 36 });
+      svg('path', { class: 'fr-bld-awning', d: 'M12 49 H108 L104 56 H16 Z' }, g);
+      svg('path', { class: 'fr-bld-stripe', d: Array.from({ length: 8 }, (_, i) => `M${18 + i * 12} 49 h6 l-0.6 7 h-6 Z`).join(' ') }, g);
+      svg('path', { class: 'fr-bld-scallop', d: 'M16 56 ' + Array.from({ length: 11 }, () => 'a4 2.6 0 0 0 8 0').join(' ') }, g);
+      bldPart.window(g, 17, 62, 24, 14, { cross: false });
+      bldPart.window(g, 79, 62, 24, 14, { cross: false });
+      svg('path', { class: 'fr-bld-goods', d: 'M20 76 V70 H25 V76 Z M27 76 V67 C27 65.8 32 65.8 32 67 V76 Z M34 76 V71 H38 V76 Z M82 76 V68 H88 V76 Z M90 76 V70 C90 68.8 94 68.8 94 70 V76 Z M96 76 V67 H100 V76 Z' }, g);
+      bldPart.door(g, 51, 61, 18, 25);
+      bldPart.boardwalk(g);
+    },
+    /** Email Notification: the post office, a mailbox by its door. */
+    post(g, wall) {
+      svg('path', { class: 'fr-bld-wall', fill: wall, d: 'M10 86 V16 H13 C26 2 94 2 107 16 H110 V86 Z' }, g);
+      bldPart.boards(g, 10, 110, 50, 84);
+      svg('path', { class: 'fr-bld-cap', d: 'M8 16 H112 V13.4 C96 -2 24 -2 8 13.4 Z' }, g);
+      emblem(g, 'envelope', { x: 33, y: 12, w: 54, h: 36 });
+      bldPart.window(g, 17, 56, 16, 14);
+      bldPart.window(g, 87, 56, 16, 14);
+      bldPart.door(g, 51, 57, 18, 29);
+      // The mailbox on its post.
+      svg('rect', { class: 'fr-bld-post', x: 93.6, y: 79, width: 2.8, height: 6 }, g);
+      svg('path', { class: 'fr-bld-mailbox', d: 'M88 79 V75 C88 72 102 72 102 75 V79 Z' }, g);
+      svg('path', { class: 'fr-bld-slot', d: 'M91.6 75.6 H98.4' }, g);
+      bldPart.boardwalk(g);
+    },
+    /** System Backup: a storehouse, its stored drums and crates outside. */
+    warehouse(g, wall) {
+      svg('path', { class: 'fr-bld-wall', fill: wall, d: 'M10 86 V30 L60 6 L110 30 V86 Z' }, g);
+      bldPart.boards(g, 10, 110, 36, 84);
+      svg('path', { class: 'fr-bld-roof-edge', d: 'M6 32 L60 4 L114 32' }, g);
+      emblem(g, 'database', { x: 38, y: 17, w: 44, h: 36 });
+      // The sliding doors, braced.
+      svg('rect', { class: 'fr-bld-rail', x: 32, y: 56, width: 56, height: 2.6 }, g);
+      svg('rect', { class: 'fr-bld-frame', x: 34, y: 58.6, width: 52, height: 27.4 }, g);
+      svg('path', { class: 'fr-bld-slider', d: 'M37 61 H59 V86 H37 Z M61 61 H83 V86 H61 Z' }, g);
+      svg('path', { class: 'fr-bld-brace', d: 'M37 61 L59 86 M83 61 L61 86' }, g);
+      // Backups stacked outside: a drum and two crates.
+      svg('path', { class: 'fr-bld-drum', d: 'M14 86 V72 C14 70 26 70 26 72 V86 Z' }, g);
+      svg('path', { class: 'fr-bld-hoop', d: 'M14 76 C14 77.6 26 77.6 26 76 M14 81.4 C14 83 26 83 26 81.4' }, g);
+      svg('path', { class: 'fr-bld-crate', d: 'M90 86 V74 H106 V86 Z M93 74 V64 H104 V74 Z' }, g);
+      svg('path', { class: 'fr-bld-crate-line', d: 'M90 74 L106 86 M106 74 L90 86 M93 64 L104 74 M104 64 L93 74' }, g);
+      bldPart.boardwalk(g);
+    },
+    /** Image Upload: a barn, a picture on its loft. */
+    barn(g, wall) {
+      svg('path', { class: 'fr-bld-wall', fill: wall, d: 'M10 86 V46 L20 28 L60 13 L100 28 L110 46 V86 Z' }, g);
+      svg('path', { class: 'fr-bld-board', d: Array.from({ length: 12 }, (_, i) => `M${15 + i * 8} 48 V84`).join(' ') }, g);
+      svg('path', { class: 'fr-bld-roof', d: 'M5 47 L17 26 L60 9 L103 26 L115 47 L111 47 L100 30 L60 14.6 L20 30 L9 47 Z' }, g);
+      svg('path', { class: 'fr-bld-trim', d: 'M10.5 47 V86 M109.5 47 V86' }, g);
+      emblem(g, 'image', { x: 37, y: 22, w: 46, h: 34 });
+      // The big doors with their white X.
+      svg('rect', { class: 'fr-bld-barn-door', x: 40, y: 60, width: 40, height: 26 }, g);
+      svg('path', { class: 'fr-bld-trim', d: 'M40 60 H80 V86 H40 Z M60 60 V86 M40 60 L60 86 M60 60 L40 86 M80 60 L60 86 M60 60 L80 86' }, g);
+      bldPart.boardwalk(g);
+    },
+  };
+
+  let serviceArtCount = 0;
+
+  /** A service building's art (`kind`, one of BUILDINGS) in its frame `at`, with class `cls`. */
+  function serviceArt(parent, kind, cls, at) {
+    const art = svg('svg', { class: `fr-bld fr-bld--${kind} ${cls}`, viewBox: '0 0 120 90', x: at.x, y: at.y, width: at.w, height: at.h, overflow: 'visible' }, parent);
+    const id = `fr-bld-${++serviceArtCount}`;
+    const grad = svg('linearGradient', { id, x1: 0, y1: 0, x2: 1, y2: 1 }, svg('defs', {}, art));
+    svg('stop', { offset: 0, class: 'fr-bld-stop-lit' }, grad);
+    svg('stop', { offset: 1, class: 'fr-bld-stop-shaded' }, grad);
+    svg('ellipse', { class: 'fr-bld-shadow', cx: 60, cy: 88, rx: 58, ry: 2.4 }, art);
+    BUILDINGS[kind](art, `url(#${id})`);
+    return art;
+  }
+
+  /**
+   * One of the four services as a building of the town, standing on the
+   * street centred on cx: drawn as the town sees it, a silhouette whose
+   * windows glow as the evening comes, with a lit copy on top that only
+   * verse 4 shows (town.light). Plugged into the town's cable by a jack on
+   * each side. Returns where it stands, its lit copy, and its jacks.
+   */
+  function serviceBuilding(parent, windows, kind, cx) {
+    const w = 120 * SERVICE_SCALE, h = 90 * SERVICE_SCALE;
+    // The art's deck ends at y 88.4; it rests a pixel into the boardwalk.
+    const frame = { x: cx - w / 2, y: HORIZON + 1 - 88.4 * SERVICE_SCALE, w, h };
+    const dark = serviceArt(parent, kind, 'fr-service fr-service--dark', frame);
+    dark.querySelectorAll('.fr-bld-glass').forEach((glass) => windows.push({ lit: glass, at: hash01(windows.length * 11 + 3) }));
+    const lit = serviceArt(parent, kind, 'fr-service fr-service--lit', frame);
+    const jackY = frame.y + 30 * SERVICE_SCALE;
+    return {
+      kind, cx, top: frame.y, bottom: HORIZON, left: cx - 50 * SERVICE_SCALE, right: cx + 50 * SERVICE_SCALE, lit,
+      jacks: [jack(parent, cx - 51 * SERVICE_SCALE, jackY), jack(parent, cx + 51 * SERVICE_SCALE, jackY)],
+    };
+  }
+
+  /** The radio mast on the post office's roof (base at x, y): a lattice spire, dishes, and faint signal arcs (returned). */
+  function postMast(parent, windows, x, base) {
+    const g = svg('g', { class: 'fr-building' }, parent);
+    const top = base - 72;
+    svg('path', { class: 'fr-leg', d: `M${x - 7} ${base} L${x} ${top} L${x + 7} ${base} M${x - 5} ${base - 16} L${x + 4} ${base - 28} M${x + 5} ${base - 16} L${x - 4} ${base - 28} M${x - 3} ${base - 40} L${x + 2} ${base - 52}` }, g);
+    svg('path', { class: 'fr-tank', d: `M${x + 3} ${base - 36} a8 8 0 0 1 10 -8 l-3 9 Z M${x - 3} ${base - 22} a8 8 0 0 0 -10 -8 l3 9 Z` }, g);
+    leds(g, windows, [[x, top - 2]], 'amber');
+    const arcs = svg('g', { class: 'fr-signal' }, g);
+    for (const r of [10, 18, 26]) svg('path', { d: `M${x - r * 0.7} ${top - 2 - r * 0.7} A${r} ${r} 0 0 1 ${x + r * 0.7} ${top - 2 - r * 0.7}` }, arcs);
+    return arcs;
+  }
+
+  /**
+   * A picket fence between two lots, centred on x: not there until verse 4
+   * gives each service its own key, when it rises (town.compartments) and
+   * stays up, lit while the services are (town.light) and part of the
+   * town's silhouette after. Returns its node and its lit copy.
+   */
+  function townFence(parent, x) {
+    const node = svg('g', { class: 'fr-fence' }, parent);
+    const pickets = (cls) => {
+      const g = svg('g', { class: cls }, node);
+      const rails = `M${x - 11} ${HORIZON - 30} H${x + 11} M${x - 11} ${HORIZON - 12} H${x + 11}`;
+      svg('path', { class: 'fr-fence-rail', d: rails }, g);
+      svg('path', { class: 'fr-fence-rail-wood', d: rails }, g);
+      for (const px of [x - 5.5, x, x + 5.5]) svg('path', { class: 'fr-fence-picket', d: `M${px - 2.2} ${HORIZON} V${HORIZON - 34} L${px} ${HORIZON - 38} L${px + 2.2} ${HORIZON - 34} V${HORIZON} Z` }, g);
+      for (const px of [x - 11, x + 11]) svg('rect', { class: 'fr-fence-post', x: px - 2.2, y: HORIZON - 42, width: 4.4, height: 42, rx: 1 }, g);
+      return g;
+    };
+    pickets('fr-fence-dark');
+    return { node, lit: pickets('fr-fence-lit') };
+  }
+
+  /**
+   * The cable's span between two neighbouring services as verse 4 lights it
+   * (town.light): a thick cable over the town's wire, in three layers that
+   * thin to a narrow wire (town.compartments).
+   */
+  function serviceLink(parent, d) {
+    const node = svg('g', { class: 'fr-link' }, parent);
+    const layers = [['fr-link-sheath', 4], ['fr-link-core', 1.8], ['fr-link-shine', 0.01]]
+      .map(([cls, thin]) => ({ path: svg('path', { class: cls, d }, node), thin }));
+    return { node, layers };
+  }
+
+  // How long the services' lights take to come on, and to go out.
+  const LIGHT_UP = 0.9, LIGHT_DOWN = 0.6;
+
+  /**
+   * What the town offers verse 4: where its four services stand, and two
+   * changes to them, each a pure function of song time.
+   *   light({ at, until })   lights the services, the cable spans between
+   *                          them, and their fences, and puts the lights out
+   *                          again by `until`
+   *   compartments({ at })   thins those spans to narrow wires and raises
+   *                          picket fences between the services: each part
+   *                          on its own lot, the fences staying up for good
+   */
+  function townLighting(services, links, fences) {
+    return {
+      services: services.map(({ kind, cx, top, bottom, left, right }) => ({ kind, cx, top, bottom, left, right })),
+      light({ at, until }) {
+        for (const node of [...services.map((b) => b.lit), ...links.map((l) => l.node), ...fences.map((f) => f.lit)]) {
+          tween(node, [{ opacity: 0 }, { opacity: 1 }], at, LIGHT_UP, EASE.inOut);
+          if (until !== undefined) tween(node, [{ opacity: 1 }, { opacity: 0 }], until - LIGHT_DOWN, LIGHT_DOWN, EASE.inOut);
+        }
+      },
+      compartments({ at }) {
+        links.forEach((l) => l.layers.forEach(({ path, thin }) => tween(path, [{ strokeWidth: `${thin}px` }], at, 0.7, EASE.inOut)));
+        fences.forEach((f, i) => {
+          tween(f.node, [{ transform: 'scaleY(0)' }, { transform: 'scaleY(1.06)', offset: 0.7 }, { transform: 'scaleY(1)' }], at + 0.1 + i * 0.12, 0.45, EASE.out);
+        });
+      },
+    };
+  }
+
   /**
    * Quiet dressing on the street, all dim and mostly at the edges, under
    * the captions: a boardwalk below the town, the railroad of the town's
@@ -311,10 +535,11 @@
       const t = svg('text', { class: 'fr-stencil', x: x + w / 2, y: y + w * 0.32, 'text-anchor': 'middle' }, g);
       t.textContent = '0101';
     };
-    // A small stack at the far left curb, behind the actors' walking plane.
-    crate(8, 386, 22);
-    crate(32, 389.6, 18);
-    crate(18, 371.6, 18);
+    // A small stack at the water tower's feet, clear of the setting sun and
+    // behind the actors' walking plane.
+    crate(628, HORIZON - 18, 22);
+    crate(652, HORIZON - 14.4, 18);
+    crate(638, HORIZON - 32.4, 18);
     for (const [x, y, r] of [[210, 496, 5], [226, 500, 3], [700, 492, 4], [520, 532, 3], [760, 528, 5]]) svg('ellipse', { class: 'fr-stone', cx: x, cy: y, rx: r * 1.5, ry: r }, g);
   }
 
@@ -344,41 +569,48 @@
     const horizonGlow = svg('ellipse', { class: 'fr-horizon-glow', cy: HORIZON - 4, rx: 300, ry: 108, fill: 'url(#fr-horizon-glow)' }, sunlight);
     const sunGlow = svg('ellipse', { class: 'fr-sun', rx: 64, ry: 56, fill: 'url(#fr-sun)' }, sunlight);
     const sun = svg('ellipse', { class: 'fr-sun-disc' }, sunlight);
-    const clouds = [[-110, 24, 1.65, 0.18, 11], [240, 82, 1.15, 0.12, 7], [535, 18, 1.8, 0.16, 9.5], [760, 153, 1.1, 0.16, 2.4], [15, 210, 0.85, 0.22, 1.6]]
+    const clouds = [[-110, 24, 1.65, 0.18, 11], [240, 82, 1.15, 0.12, 7], [535, 18, 1.8, 0.16, 9.5], [760, 129, 1.1, 0.16, 2.4], [15, 186, 0.85, 0.22, 1.6]]
       .map(([x, y, scale, speed, heightKm], variant) => ({ ...cloud(art, { scale, variant }), x, y, scale, speed, heightKm }));
-    // Mesas on the horizon, then the town.
-    svg('path', { class: 'fr-mesa', d: `M0 ${HORIZON} V362 H60 L76 348 H184 L204 ${HORIZON - 30} L250 ${HORIZON - 26} L300 ${HORIZON} Z M640 ${HORIZON} L680 352 H760 L774 340 H860 L884 360 L960 368 V${HORIZON} Z` }, art);
+    // Mesas on the horizon, then the town. Its one cable runs behind the
+    // buildings, plugged into each one's jacks, so only its spans between
+    // them show, and telegraph poles carry it across the open lot.
+    svg('path', { class: 'fr-mesa', d: `M0 ${HORIZON} V${HORIZON - 42} H60 L76 ${HORIZON - 56} H184 L204 ${HORIZON - 30} L250 ${HORIZON - 26} L300 ${HORIZON} Z M640 ${HORIZON} L680 ${HORIZON - 52} H760 L774 ${HORIZON - 64} H860 L884 ${HORIZON - 44} L960 ${HORIZON - 36} V${HORIZON} Z` }, art);
+    const wires = svg('g', { class: 'fr-wires' }, art);
     const town = svg('g', { class: 'fr-town' }, art);
     const windows = [];
-    const mill = windmill(town, 900);
-    const mast = radioMast(town, windows, 316);
-    const signal = mast.arcs;
-    // Telegraph poles carry the cable across the open lot in the middle.
+    const mill = windmill(town, 936);
+    // The four services of verse 4 lead the street: a store, the post office
+    // under the radio mast, a storehouse, and a barn; verse 4 fences them in.
+    const signal = postMast(town, windows, SERVICE_LOTS[1][1], HORIZON - 90 * SERVICE_SCALE + 3);
+    const services = SERVICE_LOTS.map(([kind, cx]) => serviceBuilding(town, windows, kind, cx));
+    const fences = services.slice(1).map((b, i) => townFence(town, (services[i].right + b.left) / 2));
     const poles = svg('g', { class: 'fr-poles' }, art);
     const pole = (px) => {
       svg('path', { d: `M${px} ${HORIZON} V${HORIZON - 70} M${px - 10} ${HORIZON - 64} H${px + 10}` }, poles);
       return [px, HORIZON - 66];
     };
-    // Every building's jack, west to east: the cable's route.
+    // Every jack, west to east: the cable's route.
     const route = [
       [-12, HORIZON - 74],
-      rackSaloon(town, windows, { x: 30, w: 70, h: 82, units: 4 }),
-      rackSaloon(town, windows, { x: 112, w: 86, h: 100, units: 5, arched: true }),
-      moduleStore(town, windows, { x: 210, w: 64, rows: 3, cols: 2 }),
-      mast.jack,
-      databaseTower(town, windows, 384),
-      pole(458),
-      pole(534),
-      rackSaloon(town, windows, { x: 600, w: 76, h: 92, units: 4 }),
-      moduleStore(town, windows, { x: 688, w: 92, rows: 3, cols: 3 }),
-      routerShack(town, windows, { x: 792, w: 64 }),
+      ...services.flatMap((b) => b.jacks),
+      pole(612),
+      databaseTower(town, windows, 664),
+      rackSaloon(town, windows, { x: 710, w: 68, h: 88, units: 4 }),
+      moduleStore(town, windows, { x: 790, w: 60, rows: 3, cols: 2 }),
+      routerShack(town, windows, { x: 866, w: 44 }),
     ];
     // The cable sags between its jacks, more over a longer span.
     const sag = ([x1, y1], [x2, y2]) => `Q${((x1 + x2) / 2).toFixed(1)} ${(Math.max(y1, y2) + 6 + 0.12 * Math.abs(x2 - x1)).toFixed(1)} ${x2} ${y2}`;
-    const wire = svg('path', { class: 'fr-wire', d: `M${route[0][0]} ${route[0][1]} ` + route.slice(1).map((p, i) => sag(route[i], p)).join(' ') }, poles);
+    const wire = svg('path', { class: 'fr-wire', d: `M${route[0][0]} ${route[0][1]} ` + route.slice(1).map((p, i) => sag(route[i], p)).join(' ') }, wires);
+    // In verse 4 its spans between the services light up as thick cables.
+    const links = services.slice(1).map((b, i) => {
+      const from = services[i].jacks[1];
+      return serviceLink(wires, `M${from[0]} ${from[1]} ${sag(from, b.jacks[0])}`);
+    });
     // Data packets travel the cable both ways at an even speed.
     const PACKETS = 8, PACKET_SPEED = 46;
-    const packets = Array.from({ length: PACKETS }, () => svg('rect', { class: 'fr-packet', width: 5, height: 3.4, rx: 1 }, poles));
+    const packets = Array.from({ length: PACKETS }, () => svg('rect', { class: 'fr-packet', width: 5, height: 3.4, rx: 1 }, wires));
+    window.SongKit.themes.frontier.town = townLighting(services, links, fences);
     // The main street, its wheel ruts, and a hitching rail.
     svg('rect', { class: 'fr-ground', x: 0, y: HORIZON, width: W, height: H - HORIZON, fill: 'url(#fr-road)' }, art);
     svg('path', { class: 'fr-rut', d: `M0 ${STREET + 18} C240 ${STREET + 10} 720 ${STREET + 12} 960 ${STREET + 20} M0 ${STREET + 50} C260 ${STREET + 42} 700 ${STREET + 44} 960 ${STREET + 54}` }, art);

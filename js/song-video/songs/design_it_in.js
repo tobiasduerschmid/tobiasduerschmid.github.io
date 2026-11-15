@@ -105,7 +105,8 @@
       // leaves before verse 1 (k = 1 for 5 s; the exit gets what is left).
       const k = Math.min(1.6, Math.max(0.8, (leave - 0.4 - lockAt) / 5));
       const beat = (offset) => lockAt + offset * k;
-      const house = W.porch(s, { x: 330, ground: FEET, w: 280, sign: 'YOUR APP', at: planAt });
+      // West of the setting sun (frontier.js), which stays in view.
+      const house = W.porch(s, { x: 210, ground: FEET, w: 280, sign: 'YOUR APP', at: planAt });
       const [lockX, lockY] = house.point('lock');
       W.padlock(s, { x: lockX - 32, y: lockY - 44, size: 64, tone: 'brass', sketchAt: design + 0.1, at: lockAt, how: 'slam', jiggleAt: beat(2.3) });
       header(s, 'Design Security in', undefined, planAt, leave);
@@ -115,7 +116,9 @@
           [design, 'point', { to: [lockX, lockY], hold: 1.6 }], [lockAt + 0.1, 'nod'], [beat(3.5), 'tip', { hold: 0.8 * k }],
         ],
       });
-      const { view } = W.browser(s, { x: 220, y: 92, w: 420, h: 268, at: appAt + 0.3, until: planAt });
+      // High in the sky, right of the section badge: it covers as little of
+      // the town as it can and ends above the setting sun (frontier.js).
+      const { view } = W.browser(s, { x: 236, y: 46, w: 470, h: 262, at: appAt + 0.3, until: planAt });
       W.post(view);
       // "Somebody out there might try to break in." The outlaw tiptoes in from
       // the desert, peeks at the app, and an attack vector goes for its
@@ -126,7 +129,7 @@
       // only rattles), shakes its hand, shrugs, and tiptoes off backwards as
       // the scene fades.
       const o = W.overlay(s);
-      W.vector(o, 'M168 326 C196 326 222 334 250 338', { at: mark('intro-2', 'break'), until: planAt, duration: 0.5 });
+      W.vector(o, 'M168 314 C204 306 246 288 284 279', { at: mark('intro-2', 'break'), until: planAt, duration: 0.5 });
       const STOP = Math.round(lockX - 64);
       const exitAt = beat(3.9);
       // All the way out if there is time, else a few steps before the fade.
@@ -138,7 +141,7 @@
         ],
         moves: [
           [mark('intro-2', 'try'), 'peek', { dir: 1, hold: 0.7 }],
-          [mark('intro-2', 'break'), 'reach', { to: [166, 326], shape: 'point', hold: 1.3 }],
+          [mark('intro-2', 'break'), 'reach', { to: [166, 314], shape: 'point', hold: 1.3 }],
           [mark('intro-3', 'hired') - 0.1, 'look', { dir: 'viewer', hold: 1.4 }],
           [mark('intro-3', 'first') + 0.5, 'look', { dir: 'viewer', hold: 0.8 }],
           [lockAt + 0.15, 'reach', { to: [lockX - 30, lockY + 14], shape: 'pinch', hold: 0.4 * k }],
@@ -171,25 +174,27 @@
       sheriff(content, 850, from + 0.3, leave - 0.3, {
         moves: [[mark('v1-1', 'box'), 'point', { to: [470, 220], hold: 1.2 }], [mark('v1-7', 'triad'), 'nod'], [mark('v1-8', 'three') - 0.2, 'draw', { hold: 2.6 }]],
       });
-      // The assets, one per word, and the attribute each needs.
+      // The assets, one per word, on the street below the town's houses,
+      // and the attribute each needs in the sky above them.
       const triAt = mark('v1-7', 'thats') - 0.1;
       const assets = W.group(s, mark('v1-3', 'passwords') - 0.1, triAt);
-      W.asset(assets, 'password', { x: 40, y: 312, w: 150, at: mark('v1-3', 'passwords') });
-      W.asset(assets, 'post', { x: 222, y: 312, w: 150, at: mark('v1-3', 'posts') });
-      W.asset(assets, 'photo', { x: 404, y: 312, w: 130, at: mark('v1-3', 'photos') });
-      W.asset(assets, 'site', { x: 566, y: 302, w: 130, at: mark('v1-3', 'site') });
+      W.asset(assets, 'password', { x: 40, y: 378, w: 150, at: mark('v1-3', 'passwords') });
+      W.asset(assets, 'post', { x: 222, y: 378, w: 150, at: mark('v1-3', 'posts') });
+      W.asset(assets, 'photo', { x: 404, y: 378, w: 130, at: mark('v1-3', 'photos') });
+      W.asset(assets, 'site', { x: 566, y: 378, w: 130, at: mark('v1-3', 'site') });
       W.ciaCard(assets, { x: 30, y: 150, w: 200, name: 'Confidentiality', rule: 'read: authorized users only', iconName: 'eye', at: mark('v1-4', 'confidentiality') });
       W.ciaCard(assets, { x: 262, y: 150, w: 200, name: 'Integrity', rule: 'change: authorized users only', iconName: 'pencil', at: mark('v1-5', 'integrity') });
       W.ciaCard(assets, { x: 494, y: 150, w: 200, name: 'Availability', rule: 'there when it’s needed', iconName: 'timer', at: mark('v1-6', 'availability') });
-      // "That's the CIA triad." The three cards in a triangle.
+      // "That's the CIA triad." The three cards in a triangle, in the sky
+      // above the town's roofs.
       const tri = W.group(s, triAt, leave);
       // The triangle the three attributes stand on, drawn behind the cards.
       const edges = W.overlay(tri);
-      W.triangle(edges, [[415, 168], [252, 338], [578, 338]], { at: mark('v1-7', 'cia') - 0.3, duration: 0.8 });
-      W.ciaCard(tri, { x: 310, y: 130, w: 210, name: 'Confidentiality', rule: 'read: authorized users only', iconName: 'eye', at: triAt, how: 'fade' });
-      W.ciaCard(tri, { x: 150, y: 300, w: 200, name: 'Integrity', rule: 'change: authorized users only', iconName: 'pencil', at: triAt, how: 'fade' });
-      W.ciaCard(tri, { x: 480, y: 300, w: 200, name: 'Availability', rule: 'there when it’s needed', iconName: 'timer', at: triAt, how: 'fade' });
-      W.label(tri, 'CIA triad', { x: 340, y: 248, w: 150, at: mark('v1-7', 'cia'), tone: 'gold', align: 'center', size: 24 });
+      W.triangle(edges, [[415, 112], [252, 242], [578, 242]], { at: mark('v1-7', 'cia') - 0.3, duration: 0.8 });
+      W.ciaCard(tri, { x: 310, y: 76, w: 210, name: 'Confidentiality', rule: 'read: authorized users only', iconName: 'eye', at: triAt, how: 'fade' });
+      W.ciaCard(tri, { x: 150, y: 206, w: 200, name: 'Integrity', rule: 'change: authorized users only', iconName: 'pencil', at: triAt, how: 'fade' });
+      W.ciaCard(tri, { x: 480, y: 206, w: 200, name: 'Availability', rule: 'there when it’s needed', iconName: 'timer', at: triAt, how: 'fade' });
+      W.label(tri, 'CIA triad', { x: 340, y: 164, w: 150, at: mark('v1-7', 'cia'), tone: 'gold', align: 'center', size: 24 });
       // "Attackers can hit all three: read it, change it, or lock you out for
       // ransom." The outlaw sneaks in and fires an attack vector at each corner.
       const three = mark('v1-8', 'three');
@@ -198,11 +203,12 @@
         moves: [[three - 0.35, 'reach', { to: [250, 262], shape: 'point', hold: 1.6 }], [mark('v1-8', 'ransom'), 'look', { dir: 'viewer', hold: 1 }]],
       });
       const o = W.overlay(tri);
-      W.vector(o, 'M122 286 C170 240 240 196 306 180', { at: three - 0.3, duration: 0.5 });
-      W.vector(o, 'M122 300 C132 314 140 328 150 340', { at: three - 0.1, duration: 0.35 });
-      W.vector(o, 'M800 470 C790 410 740 372 686 366', { at: three, duration: 0.4 });
-      W.tag(tri, 'Equifax 2017: data of 147 million people taken', { x: 560, y: 132, w: 200, at: mark('v1-8', 'read'), tone: 'red', icon: 'eye' });
-      W.tag(tri, 'Post changed: “USC IS BETTER!!!”', { x: 150, y: 400, w: 220, at: mark('v1-8', 'change'), tone: 'red', icon: 'pencil' });
+      W.vector(o, 'M122 300 C108 228 176 138 306 116', { at: three - 0.3, duration: 0.5 });
+      W.vector(o, 'M122 312 C128 292 136 270 148 252', { at: three - 0.1, duration: 0.35 });
+      W.vector(o, 'M944 118 C866 146 768 206 708 244', { at: three, duration: 0.4 });
+      // What each attack took, in the news: one in the sky, two on the street.
+      W.tag(tri, 'Equifax 2017: data of 147 million people taken', { x: 600, y: 98, w: 200, at: mark('v1-8', 'read'), tone: 'red', icon: 'eye' });
+      W.tag(tri, 'Post changed: “USC IS BETTER!!!”', { x: 120, y: 384, w: 220, at: mark('v1-8', 'change'), tone: 'red', icon: 'pencil' });
       W.tag(tri, 'Hospital 2016: files locked for ransom', { x: 404, y: 384, w: 214, at: mark('v1-8', 'lock'), tone: 'red', icon: 'lock' });
     }
 
@@ -220,7 +226,8 @@
       // until the next one lights, so something is always highlighted.
       const lights = continuous([[0, at(2, 'security')], [1, at(3, 'threat')], [2, at(4, 'attack')], [3, at(5, 'protection')]], at(6, 'design'));
       const ruleLights = lights.filter(([i]) => pins[i] !== undefined);
-      W.planBoard(s, { x: 20, y: 58, w: 700, at: from, lights, ruleLights, pins, glowAt: at(6, 'design') });
+      // Below the section badge, which wraps to two lines beside the plank.
+      W.planBoard(s, { x: 20, y: 70, w: 700, at: from, lights, ruleLights, pins, glowAt: at(6, 'design') });
       const POSTER_X = [108, 280, 452, 624];
       sheriff(content, 902, from + 0.2, leave - 0.3, {
         entrance: 'rise',
@@ -327,7 +334,7 @@
       // blueprint hangs in public and its glass body shows every pin; it
       // still opens only with the key, which stays with the sheriff.
       const openAt = mark('v2-10', 'open');
-      W.stamp(s, 'Open Design', { after: 'Principle', x: 150, y: 72, w: 560, rule: 'Knowing how it works shouldn’t get them in.', at: openAt });
+      W.stamp(s, 'Open Design', { after: 'Principle', x: 150, y: 84, w: 560, rule: 'Knowing how it works shouldn’t get them in.', at: openAt });
       PS.blueprint(s, { x: 40, y: 202, w: 280, at: openAt + 0.45 });
       PS.clearLock(s, { x: 456, y: 194, size: 150, at: openAt + 0.25, jiggleAt: mark('v2-10', 'shouldnt') });
       W.tag(s, 'Only the key is secret', { x: 476, y: 404, w: 210, at: mark('v2-10', 'shouldnt'), icon: 'key', tone: 'brass' });
@@ -368,7 +375,8 @@
       // Your app as a building: every way in is part of its attack surface,
       // and an attack vector comes at each one from outside.
       const parts = mark('v3-1', 'parts');
-      const front = W.appFront(a, { x: 120, y: 128, w: 560, at: from + 0.2, labels: { door: parts, window: parts + 0.15, hatch: parts + 0.3, sign: parts + 0.45 } });
+      // On the town's ground line (its 280-high art ends at the horizon).
+      const front = W.appFront(a, { x: 120, y: 92, w: 560, at: from + 0.2, labels: { door: parts, window: parts + 0.15, hatch: parts + 0.3, sign: parts + 0.45 } });
       const o = W.overlay(a);
       const every = mark('v3-1', 'every');
       // The outlaw fires the vectors at the doors and window; more come in
@@ -377,7 +385,7 @@
         route: [[from + 0.3, -40, FEET, 1], [parts, 50, FEET, 1], [mapAt - 0.3, 50, FEET, 1], [mapAt + 0.4, -60, FEET, -1]],
         moves: [[every - 0.3, 'reach', { to: [200, 292], shape: 'point', hold: 1.3 }]],
       });
-      const approach = { door: 'M118 304 C150 318 186 336', window: 'M118 294 C200 250 320 262', hatch: 'M970 336 C860 334 700 334', sign: 'M970 128 C820 124 640 150' };
+      const approach = { door: 'M118 300 C150 292 186 300', window: 'M118 290 C200 214 320 226', hatch: 'M970 300 C860 298 700 298', sign: 'M970 92 C820 88 640 114' };
       ['door', 'window', 'hatch', 'sign'].forEach((name, i) => {
         const [px, py] = front.point(name);
         W.vector(o, `${approach[name]} ${px.toFixed(0)} ${py.toFixed(0)}`, { at: every + i * 0.14, duration: 0.45 });
@@ -387,8 +395,8 @@
       const b = W.group(s, mapAt, formAt);
       header(b, '3 · Attack Surface', 'Which parts are exposed?', mapAt);
       // "Not trusted by default" arrives with the map, on "Trust".
-      W.network(b, { x: 40, y: 130, at: mapAt + 0.1, boundary: 'server', checkAt: mark('v3-2', 'trust') + 0.4 });
-      W.label(b, 'Trust boundary', { x: 404, y: 334, w: 170, tone: 'green', align: 'center', at: mark('v3-2', 'trust') });
+      W.network(b, { x: 40, y: 100, at: mapAt + 0.1, boundary: 'server', checkAt: mark('v3-2', 'trust') + 0.4 });
+      W.label(b, 'Trust boundary', { x: 404, y: 304, w: 170, tone: 'green', align: 'center', at: mark('v3-2', 'trust') });
       // "In your password box, I typed code that's always true; you glued it
       // in your query, and the login let me through."
       const fixAt = before('v3-6');
@@ -453,14 +461,16 @@
       // "Each browser ran it as yours and sent me what it stole." The stolen
       // session cookies fly from each browser into the outlaw's cookie jar.
       const o = W.overlay(a);
-      const JAR = [846, 318];
+      // Inside the outlaw's jar (its glass spans x 837–885, y 355–392 here),
+      // entering from above through the lid.
+      const JAR = [860, 380];
       [0, 1, 2].forEach((i) => {
         // Stacked tight, so the escaped HTML fits below them.
         const y = 56 + i * 90;
         const v = W.browser(a, { x: 478, y, w: 262, h: 84, url: 'your-app.example', at: mark('v3b-2', 'browser') + i * 0.12 }).view;
         W.alertBox(v, 'USC IS BETTER!!!', { ok: false, x: 36, y: 0, w: 180, at: mark('v3b-2', 'ran') + i * 0.12, until: escAt + 0.2 + i * 0.1 });
         W.tick(a, { x: 750, y: y + 24, at: mark('v3b-4', 'runs') + i * 0.1, kind: 'check', size: 28 });
-        W.trail(o, `M742 ${y + 46} C790 ${y + 50} ${JAR[0] - 30} ${JAR[1] - 60} ${JAR[0]} ${JAR[1]}`, { at: mark('v3b-2', 'stole') + i * 0.12, duration: 0.7, until: escAt, tone: 'cookie' });
+        W.trail(o, `M742 ${y + 46} C800 ${y + 50} ${JAR[0]} ${JAR[1] - 110} ${JAR[0]} ${JAR[1]}`, { at: mark('v3b-2', 'stole') + i * 0.12, duration: 0.7, until: escAt, tone: 'cookie' });
       });
       W.tag(a, 'session cookies, sent to the attacker', { x: 748, y: 92, w: 168, at: mark('v3b-2', 'sent'), until: escAt, tone: 'red', icon: 'key' });
       W.stamp(a, 'XSS', { x: 488, y: 354, w: 200, rule: 'Cross-site scripting', at: mark('v3b-3', 'thats'), until: escAt, tone: 'red' });
@@ -490,9 +500,9 @@
       // "Zero Trust: any input might be malicious." A checkpoint inspects every
       // input, even the boss's laptop; the comment hides a script and is stopped.
       const c = W.group(s, zeroAt, leave);
-      W.stamp(c, 'Zero Trust', { after: 'Principle', x: 200, y: 68, w: 500, rule: 'Any input might be malicious.', at: zeroAt });
+      W.stamp(c, 'Zero Trust', { after: 'Principle', x: 200, y: 80, w: 500, rule: 'Any input might be malicious.', at: zeroAt });
       PS.checkpoint(c, {
-        x: 110, y: 184, w: 680, at: zeroAt + 0.3, sweepAt: mark('v3b-6', 'any'), sweep: 1.5, rejectAt: mark('v3b-6', 'malicious'),
+        x: 110, y: 196, w: 680, at: zeroAt + 0.3, sweepAt: mark('v3b-6', 'any'), sweep: 1.5, rejectAt: mark('v3b-6', 'malicious'),
         items: [
           { label: 'form input', kind: 'form' }, { label: 'photo upload', kind: 'upload' }, { label: 'URL', kind: 'url' },
           { label: 'boss’s laptop', kind: 'laptop' }, { label: 'comment', kind: 'comment', bad: true, hidden: '<script>' },
@@ -524,20 +534,24 @@
       LOCKS.forEach((name, i) => W.padlock(a, { x: 90 + i * 168, y: 168, size: 64, label: name, hung: true, at: mark('v4-1', 'every') + i * 0.15, openAt: i === 1 ? mark('v4-2', 'breaks') : undefined }));
       const o1 = W.overlay(a);
       W.ring(o1, { cx: 290, cy: 238, rx: 110, ry: 76, textAt: 'bottom', at: mark('v4-2', 'breaks') + 0.3 });
-      // "Say uploads run as admin, and I break in through that page."
+      // "Say uploads run as admin, and I break in through that page." The
+      // town's lights come on over four of its buildings, the services.
       const b = W.group(s, townAt, mark('v4-9', 'least'));
       const ringLayer = W.overlay(b);
       const town = W.services(b, {
-        x: 12, y: 190, at: townAt + 0.05, masterAt: mark('v4-3', 'admin'), splitAt: mark('v4-5', 'own'), rightsAt: mark('v4-5', 'rights'),
+        at: townAt + 0.05, until: leastAt, masterAt: mark('v4-3', 'admin'), splitAt: mark('v4-5', 'own'), rightsAt: mark('v4-5', 'rights'),
         rightLights: [[0, mark('v4-6', 'read')], [3, mark('v4-6', 'write')]],
       });
       const barn = town.centres[3];
       const o2 = W.overlay(b);
       W.vector(o2, `M872 352 C790 376 ${barn[0] + 96} 372 ${barn[0] + 34} ${barn[1] + 4}`, { at: mark('v4-3', 'break'), until: before('v4-5'), duration: 0.8 });
-      W.bank(b, { x: 612, y: 150, w: 214, at: mark('v4-4', 'every') - 0.2, openAt: mark('v4-4', 'every'), readAt: mark('v4-4', 'read'), changeAt: mark('v4-4', 'change'), lockedAt: mark('v4-8', 'locked') });
+      W.bank(b, { x: 612, y: 140, w: 214, at: mark('v4-4', 'every') - 0.2, openAt: mark('v4-4', 'every'), readAt: mark('v4-4', 'read'), changeAt: mark('v4-4', 'change'), lockedAt: mark('v4-8', 'locked') });
       // The blast radius shrinks to the barn as soon as the fix is in: once
       // every part has its own key with just its rights.
-      W.ring(ringLayer, { cx: 420, cy: 296, rx: 400, ry: 128, textAt: 'bottom', at: mark('v4-4', 'mine'), sizes: [[mark('v4-5', 'needs') + 0.2, barn[0], barn[1] + 40, 92, 100]] });
+      // Around the four buildings, its label between their permissions and
+      // their keys; then around the barn alone.
+      const ringY = (town.top + town.bottom) / 2 + 4, ringR = (town.bottom - town.top) / 2 + 20;
+      W.ring(ringLayer, { cx: 264, cy: ringY, rx: 272, ry: ringR, textAt: 'top', at: mark('v4-4', 'mine'), sizes: [[mark('v4-5', 'needs') + 0.2, barn[0], ringY, 70, ringR]] });
       // "Now break in through the uploads: one folder, that is all."
       W.vector(o2, `M872 360 C790 386 ${barn[0] + 90} 384 ${barn[0] + 30} ${barn[1] + 14}`, { at: mark('v4-7', 'break'), duration: 0.8 });
       // The outlaw breaks in through the upload page, gloats over every
@@ -550,10 +564,10 @@
           [mark('v4-7', 'break') - 0.2, 'reach', { to: [850, 368], shape: 'point', hold: 1.2 }], [mark('v4-7', 'all'), 'shrug', { hold: 1 }],
         ],
       });
-      W.tag(b, '/uploads', { x: barn[0] - 60, y: barn[1] + 174, w: 130, at: mark('v4-7', 'folder'), icon: 'folder' });
+      W.tag(b, '/uploads', { x: 604, y: town.bottom + 10, w: 130, at: mark('v4-7', 'folder'), icon: 'folder' });
       // "Least Privilege: each part gets only what it needs." One narrow key
       // per job on the rack; the master key that opened everything retired.
-      W.stamp(s, 'Least Privilege', { before: 'Principle of', x: 140, y: 76, w: 640, rule: 'Each part gets only what it needs.', at: leastAt });
+      W.stamp(s, 'Least Privilege', { before: 'Principle of', x: 140, y: 88, w: 640, rule: 'Each part gets only what it needs.', at: leastAt });
       PS.keyRack(s, {
         x: 80, y: 200, w: 780, at: leastAt + 0.3, master: 'admin key', retireAt: mark('v4-9', 'only'),
         keys: [
@@ -608,7 +622,7 @@
       HOPS.forEach((h, i) => W.hop(page, { x: i * 140, y: 12, w: 110, ...h, tone: i > 1 ? 'amber' : undefined }));
       const LINES = ['trusted the proxy', 'trusted a leaked token', 'trusted the uploaded file', 'trusted a shared key', 'admin everywhere'];
       LINES.forEach((text, i) => {
-        const t = W.tag(page, text, { x: i * 140 + 66, y: 120, w: 104, at: mark('br-5', 'step') + i * 0.35, tone: 'red' });
+        const t = W.tag(page, text, { x: i * 140 + 66, y: 120, w: 104, at: mark('br-5', 'step') + i * 0.35, tone: 'red', centered: true });
         t.classList.add('wk-tag--small');
       });
       W.tag(page, 'goal: a higher benchmark score', { x: 0, y: 114, w: 260, at: mark('br-1', 'sandbox'), until: mark('br-2', 'whod') });
@@ -655,7 +669,6 @@
       const s = kit.scene(content, from, leave, { exit: 'fade' });
       const first = before('quiz-1');
       kit.kinetic(s, [{ text: 'Pop quiz!', at: mark('quiz-0-1', 'pop'), color: 'gold' }], { y: 150, size: 80, until: first - 0.45, punch: false });
-      W.tag(s, 'Now you’re the tester', { x: 330, y: 320, w: 240, at: mark('quiz-0-1', 'now'), until: first - 0.1, tone: 'brass', icon: 'shield' });
       // The outlaw waves you in: the tester's job is yours now.
       outlaw(content, from - 0.8, first - 0.2, {
         route: [[from - 0.8, -50, FEET, 1], [mark('quiz-0-1', 'now') - 0.15, 150, FEET, 1]],
@@ -717,7 +730,7 @@
       const s = kit.scene(content, from, leave, { exit: 'fade' });
       const at = (n, word) => mark(`c3-${n}`, word);
       W.planBoard(s, {
-        x: 20, y: 58, w: 700, at: from, pins: { 0: from, 1: from, 2: from, 3: from },
+        x: 20, y: 70, w: 700, at: from, pins: { 0: from, 1: from, 2: from, 3: from },
         lights: continuous([[0, at(2, 'security')], [1, at(3, 'threat')], [2, at(5, 'attack')], [3, at(7, 'protection')]], at(9, 'so')),
         ruleLights: continuous([[0, at(2, 'security')], [1, at(4, 'open')], [2, at(6, 'zero')], [3, at(8, 'least')]], at(9, 'so')),
         glowAt: at(9, 'so'),
@@ -835,5 +848,6 @@
     quiz();
     finalChorus();
     outro();
+    W.fitToText();
   };
 })();

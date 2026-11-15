@@ -513,15 +513,22 @@ up, brick courses in tan with blue and gold cornices, tiled roofs, toy window
 pieces whose room lights fade as morning arrives, lamp posts, a tower
 crane carrying a prebuilt module of bricks, and a studded baseplate as the
 ground. The ground, studs, loose bricks, and lamps are present from the first
-frame. During the intro (`BUILD` in the theme), the walls rise course by
-course under a clip path while the next brick drops into its slot, and the
-crane climbs and reaches out, and in the instrumental the crane lifts the module, which it sets onto
-the building at the end of the song. During explanations the clouds and
-forklift hold still; the sunrise continues slowly. The buildings stay sharp
+frame. The intro (`BUILD` in the theme) lays the ground-floor bases and
+assembles the crane, which lifts its module during the instrumental.
+The three refrains add lower floors, upper floors and tower shafts, then
+belfries, roofs, and the site's final wall courses. Each brick course rises
+under a clip path while the next brick drops into its slot. The hall's
+staggered towers have separate milestones so pauses leave complete windows.
+Finished floors hold between choruses; seeking backward restores the earlier
+build. `SongScene` passes the authored `song` timing API to the theme alongside
+`duration`, so construction follows the section boundaries. The crane places
+its module in the outro. During explanations the forklift
+holds still; the clouds drift gently as the sunrise continues. The buildings stay sharp
 on either side of the central teaching area.
 Selected illustration contours stay crisp; the hero has no surrounding halo.
 The sky stays unobscured, with no broad dark scrim. Every pose is a function of song
 time, so a seek shows the right stage of the build.
+Gold section banners stay at the top left, clear of the central illustrations.
 `js/song-video/reuse-kit.js` (styles in `css/song-video-reuse-kit.css`)
 draws open compositions: compact opaque plaques for text, self-contained
 code/terminal screens, and coloured bricks directly over the site. Case
@@ -532,6 +539,24 @@ them. The two benefit cards appear separately. Each checklist question
 replaces the previous one beside its growing brick tower. Quiz questions
 remain through the listening pause, then give way to their answer pictures
 and green answer bricks.
+Answer illustrations start their changes on the sung answer, so a version
+update, module split, or framework call is visible rather than already
+finished at the reveal. The Heartbleed fix date and passing tests hold before
+their next picture. The left-pad column lands on its base after losing its
+support; the application pivots on the surviving column. Text and brick
+separation uses crisp outlines and hard offsets, without blurred shadows.
+The outro switches from a shell command to a JavaScript example, then holds
+its completed casebook through the final note.
+Both Ariane launch platforms rest on the ground, with their names underneath.
+The rockets stay full size: Ariane 4 rises out through the top of the frame;
+Ariane 5 climbs roughly twice as fast into the low cloud bank, holds at the
+overflow moment for the 37-second explanation, then veers and breaks apart
+there. The breakup separates clipped sections of the actual rocket artwork
+through an amber fireball, with rising smoke and fading embers. It resolves
+before the comparison appears; reduced motion shows one settled breakup
+illustration. Compact 16-bit and overflow labels accompany the continuous flight, without gauge
+cutaways. `rocket()` takes a ground height and an authored centre destination
+and arrival time, keeping the launch and explosion positions consistent.
 A package is a brick whose studs are its interface; a brick
 stacked on another depends on it, so the urllib3 tower tilts when version
 2.0.0 brings different studs, and the left-pad build drops when its tiny
@@ -558,8 +583,18 @@ up and right; its elevation drives every lighting change. Rose and coral
 intensify before the horizon crossing, then the upper sky clears to azure
 while cloud undersides become peach and cream. Window reflections and brick
 faces brighten, and stars, room lights, and lamps fade at elevation thresholds.
+Only some rooms are lit in blue hour, with stable differences in brightness.
+Their warm interiors have shaded recesses and darker floors; unlit panes
+reflect the cool sky. Broad, subtle reflections replace diagonal shine marks.
+Room lights fade smoothly at staggered dawn thresholds while the frames and
+glass pick up daylight. Seeking restores the same room lighting.
 The cloud treatment retains the security song's cool upper masses and warm
-lower surfaces; its changing light follows [NOAA's cloud-colour explanation](https://www.noaa.gov/jetstream/clouds/color-of-clouds).
+lower surfaces. A separate directional highlight turns toward the sun from
+each bank's current position. Banks drift at slightly different speeds,
+travelling less than five percent of the stage width over the song without
+wrapping or jumping. Both their positions and light directions follow song
+time and remain fixed under reduced motion. The changing palette follows
+[NOAA's cloud-colour explanation](https://www.noaa.gov/jetstream/clouds/color-of-clouds).
 UCLA blue and gold accent the construction and teaching bricks.
 Reduced motion holds a settled morning pose. The transcript, audio description, and
 playlist thumbnail must be regenerated when that visual story changes.
@@ -571,10 +606,17 @@ surface, protection mechanisms), naming SQL injection and cross-site
 scripting as separate attacks with one shared mistake, and its bridge retells
 the 2026 Hugging Face case and its lessons. The `frontier` theme
 (`js/song-video/frontier.js`, colours in `css/song-video-frontier.css`) is a
-desert town at dusk built of computing: false-front saloons that are server
-racks, general stores stacked from software modules, a water tower whose tank
-is a database cylinder, a radio mast, and a router shack, all joined by one
-network cable (a jack on every building) with data packets travelling it both
+desert town at dusk built of computing. Its street opens with the four
+services of verse 4, the lecture's example system: a general store, the post
+office under a radio mast, a storehouse, and a barn, each with its icon on a
+sign. All song long they are the town's evening silhouettes; verse 4 lights
+them (`town.light`), and once each part has its own key the cable between them
+thins and picket fences rise between them, to stay up for the rest of the song
+(`town.compartments`), so the same buildings, wires, and fences serve both the
+backdrop and the lesson. Past them stand a water tower whose tank is a database
+cylinder, a false-front saloon that is a server rack, a store stacked from
+software modules, and a router shack, all joined by one network cable that
+runs behind the buildings (jacks on each) with data packets travelling it both
 ways. Their status lights come on one by one as late golden hour turns
 linearly into blue hour, then onward toward night. The shared sunset clock
 runs at 88% speed from the same golden-hour starting point, placing blue
@@ -609,9 +651,8 @@ and time; the login form; the app as a building whose ways in are its attack
 surface (`appFront`); crimson attack vectors (`vector`) for attacks coming
 in and amber trails for stolen data going out; a wanted poster for the threat
 model; padlocks (hung on a wooden `lockBoard`, or drawn first as a blueprint
-sketch), keys, the town's services (each building's icon on a brass-rimmed
-emblem; thick cables join them until each gets its own key, when the cables
-thin and fences rise between them) and their database, the blast-radius
+sketch), keys, the labels, keys, and permissions over the town's lit services
+(`services`) and their database, the blast-radius
 ring, and the app's porch, whose flowerpot can hide a key or a honeypot.
 Code slates use paragraph-size type with deliberate line breaks. Travelling
 arrowheads and cookies follow the same eased progress as their path strokes;

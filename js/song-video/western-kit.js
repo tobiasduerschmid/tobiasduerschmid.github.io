@@ -62,6 +62,100 @@
     return node;
   }
 
+  // Text boxes are given a width to wrap in; balanced wrapping then leaves
+  // their lines shorter than the box. fitToText() shrinks each box to its
+  // widest line once the whole song is built (every box still in the
+  // document, laid out though not yet shown).
+  const fits = [];
+  function fitLater(node, texts, options = {}) { fits.push({ node, texts, ...options }); }
+
+  /** The linear part of the transforms `node` is drawn through (rotate, scale, transform). */
+  function drawnThrough(node) {
+    let m = new DOMMatrix();
+    for (let n = node; n && n !== document.documentElement; n = n.parentElement) {
+      const cs = getComputedStyle(n);
+      let local = new DOMMatrix();
+      if (cs.rotate && cs.rotate !== 'none') local = local.rotate(parseFloat(cs.rotate.split(' ').pop()));
+      if (cs.scale && cs.scale !== 'none') { const [sx, sy = sx] = cs.scale.split(' ').map(Number); local = local.scale(sx, sy); }
+      if (cs.transform !== 'none') local = local.multiply(new DOMMatrix(cs.transform));
+      m = local.multiply(m);
+    }
+    return m;
+  }
+
+  /**
+   * The widest line of `text`, in layout pixels. Boxes are measured while
+   * their entrances may still rotate or scale them, so each line's on-screen
+   * bounding box is mapped back through those transforms.
+   */
+  function widestLine(text) {
+    if (!text.offsetWidth) return null;
+    const { a, b, c, d } = drawnThrough(text);
+    const [ax, bx, cx, dx] = [a, b, c, d].map(Math.abs);
+    const det = ax * dx - cx * bx;
+    if (Math.abs(det) < 0.2) return null;
+    const range = document.createRange();
+    range.selectNodeContents(text);
+    // A w × h line box drawn through [a c; b d] covers |a|w + |c|h by |b|w + |d|h.
+    // One line may be several boxes (highlighted spans): join those that
+    // share a line, then map each line back.
+    const lines = new Map();
+    for (const r of range.getClientRects()) {
+      if (!r.width) continue;
+      const key = Math.round((r.top + r.bottom) / 2 / 6);
+      const line = lines.get(key) ?? { left: Infinity, right: -Infinity, top: Infinity, bottom: -Infinity };
+      lines.set(key, { left: Math.min(line.left, r.left), right: Math.max(line.right, r.right), top: Math.min(line.top, r.top), bottom: Math.max(line.bottom, r.bottom) });
+    }
+    const widths = [...lines.values()].map((l) => (dx * (l.right - l.left) - cx * (l.bottom - l.top)) / det);
+    return widths.length ? Math.max(...widths) : null;
+  }
+
+  /** Shrinks every text box built so far to its widest line, keeping centred boxes centred. */
+  function fitToText(greedy = false) {
+    // Measure all, then resize all: one layout pass instead of one per box.
+    const sized = fits.splice(0).map((fit) => {
+      const { node } = fit;
+      const widths = fit.texts.map(widestLine);
+      if (widths.includes(null)) return null;
+      // Room the wrapped lines leave inside their text elements, plus room
+      // the box leaves beside its children (a flex row is not stretched).
+      const inText = Math.min(...fit.texts.map((text, i) => text.offsetWidth - Math.ceil(widths[i] + 1)));
+      // Children's used widths come from layout, untouched by transforms: a
+      // flex row adds them up with its gaps, a block stacks them.
+      const style = getComputedStyle(node);
+      const kids = [...node.children].map((kid) => getComputedStyle(kid))
+        .filter((cs) => cs.position !== 'absolute' && cs.display !== 'none')
+        .map((cs) => parseFloat(cs.width) + parseFloat(cs.marginLeft) + parseFloat(cs.marginRight));
+      const row = style.display.endsWith('flex');
+      const extent = row
+        ? kids.reduce((sum, w) => sum + w, 0) + (parseFloat(style.columnGap) || 0) * Math.max(0, kids.length - 1)
+        : Math.max(0, ...kids);
+      const inner = node.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+      const slack = Math.floor(Math.max(0, inText) + Math.max(0, inner - extent));
+      // style.width is the content box (or the border box, per box-sizing).
+      const width = parseFloat(style.width) - slack;
+      return slack > 2 ? { ...fit, width, outer: node.offsetWidth - slack, slack, was: node.style.width, height: node.offsetHeight } : null;
+    }).filter(Boolean);
+    for (const fit of sized) fit.node.style.width = `${fit.width}px`;
+    // Balanced wrapping re-flows at the new width. A box that gained a line
+    // gets its width back and wraps greedily instead, whose lines keep
+    // their breaks at their own widest line.
+    const fitted = sized.filter((fit) => {
+      if (fit.node.offsetHeight <= fit.height) return true;
+      fit.node.style.width = fit.was;
+      if (!greedy) {
+        for (const text of fit.texts) text.style.textWrap = 'wrap';
+        fitLater(fit.node, fit.texts, fit);
+      }
+      return false;
+    });
+    if (!greedy && fits.length) fitToText(true);
+    for (const { node, outer, slack, center, onFit } of fitted) {
+      if (center && node.style.left.endsWith('px')) node.style.left = `${parseFloat(node.style.left) + slack / 2}px`;
+      onFit?.(outer);
+    }
+  }
+
   /** Adds `className` to `node` from song time `from` until `to`. */
   function during(node, className, from, to = Infinity) {
     onFrame((t) => node.classList.toggle(className, t >= from && t < to));
@@ -107,19 +201,21 @@
     const node = box(parent, `wk-label wk-label--${tone}`, { x, y, w });
     node.style.textAlign = align;
     if (iconName) node.append(icon(iconName, 'wk-label-icon'));
-    node.append(document.createTextNode(text));
+    const words = el('span', 'wk-label-text', node, text);
     if (size) node.style.fontSize = `${size}px`;
+    fitLater(node, [words], { center: align === 'center' });
     return show(node, at, until, how);
   }
 
   /** A parchment tag tied on with a string. */
-  function tag(parent, text, { x, y, w, at, until, icon: iconName, tone = 'paper', how = 'pop', rotate = 0, redactAt }) {
+  function tag(parent, text, { x, y, w, at, until, icon: iconName, tone = 'paper', how = 'pop', rotate = 0, redactAt, centered = false }) {
     const node = box(parent, `wk-tag wk-tag--${tone}`, { x, y, w });
     if (rotate) node.style.rotate = `${rotate}deg`;
     if (iconName) node.append(icon(iconName, 'wk-tag-icon'));
     const words = el('span', 'wk-tag-text', node, text);
     // Blacked out from `redactAt`: the text stays in place under a bar.
     if (redactAt !== undefined) during(words, 'is-redacted', redactAt);
+    fitLater(node, [words], { center: centered });
     return show(node, at, until, how);
   }
 
@@ -167,11 +263,13 @@
    */
   function slate(parent, { x, y, w, title, lang = 'js', lines, at, until, how = 'rise' }) {
     const node = box(parent, 'wk-slate', { x, y, w });
-    if (title) el('div', 'wk-slate-title', node, title);
+    const heading = title ? el('div', 'wk-slate-title', node, title) : null;
     const code = el('div', 'wk-slate-code', node);
+    const rows = [];
     for (const line of lines) {
       const spec = typeof line === 'string' ? { text: line } : line;
       const row = el('div', 'wk-code-line', code);
+      rows.push(row);
       const marks = spec.hl ?? [];
       let rest = spec.text;
       for (const mark of marks) {
@@ -189,6 +287,7 @@
         fx.fadeIn(row, spec.at, 0.25);
       }
     }
+    fitLater(node, [heading, ...rows].filter((text) => text?.textContent.trim()));
     return show(node, at, until, how);
   }
 
@@ -490,13 +589,13 @@
     if (kind === 'post') { el('div', 'wk-asset-name', node, 'Post'); el('div', 'wk-asset-text', node, text ?? 'Go Bruins!'); }
     if (kind === 'photo') {
       el('div', 'wk-asset-name', node, 'Photo');
-      const art = svg('svg', { viewBox: '0 0 60 40', width: 60, height: 40, 'aria-hidden': 'true' }, node);
+      const art = svg('svg', { viewBox: '0 0 60 40', width: 48, height: 32, 'aria-hidden': 'true' }, node);
       svg('rect', { class: 'wk-photo-sky', x: 0, y: 0, width: 60, height: 40, rx: 3 }, art);
       svg('path', { class: 'wk-photo-hill', d: 'M0 40 L18 20 L30 32 L42 16 L60 40 Z' }, art);
       svg('circle', { class: 'wk-photo-sun', cx: 46, cy: 10, r: 5 }, art);
     }
     if (kind === 'site') {
-      const art = svg('svg', { viewBox: '0 0 40 56', width: 34, height: 48, 'aria-hidden': 'true' }, node);
+      const art = svg('svg', { viewBox: '0 0 40 56', width: 27, height: 38, 'aria-hidden': 'true' }, node);
       svg('path', { class: 'wk-lantern-frame', d: 'M14 6 H26 M20 2 V6 M10 12 H30 L28 48 H12 Z M8 48 H32 V52 H8 Z' }, art);
       svg('ellipse', { class: 'wk-lantern-flame', cx: 20, cy: 32, rx: 5, ry: 9 }, art);
       el('div', 'wk-asset-name', node, text ?? 'Site: up');
@@ -521,7 +620,10 @@
   // where a hand takes the pot's rim, the corner the pot tips on (by TIP
   // degrees), the key and the honeypot under the pot, the door's knob, and
   // the middle of the doorway on the boardwalk.
-  const PORCH = { rim: [140, 110], pivot: [179, 150], key: [165, 147], jar: [163, 134], knob: [82, 140], lock: [63, 124], doorway: [63, 204] };
+  // The pot and what it hides are drawn POT_LIFT above their sketch, so
+  // their points here (the rim, the pivot corner, key, jar) are lifted too.
+  const POT_LIFT = 2.5;
+  const PORCH = { rim: [140, 110 - POT_LIFT], pivot: [179, 150 - POT_LIFT], key: [165, 147 - POT_LIFT], jar: [163, 134 - POT_LIFT], knob: [82, 140], lock: [63, 124], doorway: [63, 204] };
   const PORCH_TIP = 32;
   const turnAbout = ([x, y], [cx, cy], degrees) => {
     const a = degrees * Math.PI / 180, dx = x - cx, dy = y - cy;
@@ -662,48 +764,54 @@
     svg('path', { class: 'wk-pr-grain', d: 'M141 169 q-2 10 0 18 M154 168 q1 11 0 17 M181 170 q2 8 0 16' }, art);
     svg('ellipse', { class: 'wk-pr-barrel-top', cx: 163, cy: 152, rx: 25, ry: 3 }, art);
     svg('ellipse', { class: 'wk-pr-barrel-ring', cx: 163, cy: 152, rx: 21, ry: 1.8 }, art);
+    // The pot, and the key or honeypot under it, stand on the barrel's lid:
+    // their bottoms rest on its far edge, not sunk to its middle.
+    const lifted = (g) => svg('g', { transform: `translate(0 ${-POT_LIFT})` }, g);
     const jar = honey ? svg('g', { class: 'wk-honeypot' }, art) : null;
     if (jar) {
+      const jarArt = lifted(jar);
       // The glass jar of honey that ends up on the outlaw's hand (outlaw.js
       // PROPS.honeyJar), labelled HONEY POT.
-      svg('path', { class: 'wk-honey-glass', d: 'M147 111 C140 115 139 142 143 148 C148 152.4 178 152.4 183 148 C187 142 186 115 179 111 Z' }, jar);
-      svg('path', { class: 'wk-honey', d: 'M142.4 120 C141.4 133 141.8 143 145 147 C150 150.4 176 150.4 181 147 C184.2 143 184.6 133 183.6 120 Z' }, jar);
-      svg('rect', { class: 'wk-honey-rim', x: 145, y: 105.6, width: 36, height: 6, rx: 2 }, jar);
-      svg('path', { class: 'wk-honey-drip', d: 'M149 111.6 C148.6 116 148.8 119 149.6 121 A1.6 1.6 0 1 0 151.8 120.2 C151.2 118 151.3 115 152 111.6 Z M174 111.6 C173.6 117 173.9 121 174.8 123.4 A1.7 1.7 0 1 0 177 122.4 C176.4 119 176.4 115 177 111.6 Z' }, jar);
-      svg('rect', { class: 'wk-honey-label', x: 144, y: 121.4, width: 38, height: 24.4, rx: 2 }, jar);
+      svg('path', { class: 'wk-honey-glass', d: 'M147 111 C140 115 139 142 143 148 C148 152.4 178 152.4 183 148 C187 142 186 115 179 111 Z' }, jarArt);
+      svg('path', { class: 'wk-honey', d: 'M142.4 120 C141.4 133 141.8 143 145 147 C150 150.4 176 150.4 181 147 C184.2 143 184.6 133 183.6 120 Z' }, jarArt);
+      svg('rect', { class: 'wk-honey-rim', x: 145, y: 105.6, width: 36, height: 6, rx: 2 }, jarArt);
+      svg('path', { class: 'wk-honey-drip', d: 'M149 111.6 C148.6 116 148.8 119 149.6 121 A1.6 1.6 0 1 0 151.8 120.2 C151.2 118 151.3 115 152 111.6 Z M174 111.6 C173.6 117 173.9 121 174.8 123.4 A1.7 1.7 0 1 0 177 122.4 C176.4 119 176.4 115 177 111.6 Z' }, jarArt);
+      svg('rect', { class: 'wk-honey-label', x: 144, y: 121.4, width: 38, height: 24.4, rx: 2 }, jarArt);
       [['HONEY', 132.4], ['POT', 142.8]].forEach(([word, ty]) => {
-        svg('text', { class: 'wk-honey-text', x: 163, y: ty, 'text-anchor': 'middle' }, jar).textContent = word;
+        svg('text', { class: 'wk-honey-text', x: 163, y: ty, 'text-anchor': 'middle' }, jarArt).textContent = word;
       });
-      svg('path', { class: 'wk-honey-shine', d: 'M143.6 118 C142.6 128 143 138 145.2 144' }, jar);
+      svg('path', { class: 'wk-honey-shine', d: 'M143.6 118 C142.6 128 143 138 145.2 144' }, jarArt);
     }
     const key = !honey || keyFly ? svg('g', { class: 'wk-porch-key' }, art) : null;
     if (key) {
-      svg('circle', { class: 'wk-pr-key', cx: 154, cy: 147, r: 3.6 }, key);
-      svg('circle', { class: 'wk-pr-key-hole', cx: 154, cy: 147, r: 1.2 }, key);
-      svg('path', { class: 'wk-pr-key', d: 'M157.4 145.8 H176 V148.2 H174 V150.4 H171.6 V148.2 H169.6 V150 H167.4 V148.2 H157.4 Z' }, key);
+      const keyArt = lifted(key);
+      svg('circle', { class: 'wk-pr-key', cx: 154, cy: 147, r: 3.6 }, keyArt);
+      svg('circle', { class: 'wk-pr-key-hole', cx: 154, cy: 147, r: 1.2 }, keyArt);
+      svg('path', { class: 'wk-pr-key', d: 'M157.4 145.8 H176 V148.2 H174 V150.4 H171.6 V148.2 H169.6 V150 H167.4 V148.2 H157.4 Z' }, keyArt);
     }
     const pot = svg('g', { class: 'wk-pot' }, art);
     pot.style.transformBox = 'view-box';
     pot.style.transformOrigin = `${PORCH.pivot[0]}px ${PORCH.pivot[1]}px`;
+    const potArt = lifted(pot);
     // A rounded lip, visible soil, and wheel-thrown body give the pot
     // depth without moving the rim/pivot used by the lifting animation.
-    svg('path', { class: 'wk-pot-clay', fill: potClay, d: 'M141 114 Q163 117 185 114 L179 149 Q163 152 147 149 Z' }, pot);
-    svg('path', { class: 'wk-pot-foot', d: 'M147.2 146.6 Q163 149 179.4 146.6 L179 150 Q163 152 147.8 150 Z' }, pot);
-    svg('ellipse', { class: 'wk-pot-rim', cx: 163, cy: 110, rx: 25, ry: 5 }, pot);
-    svg('ellipse', { class: 'wk-pot-earth', cx: 163, cy: 110, rx: 21.5, ry: 3.3 }, pot);
-    [[144, 110, 1.2], [150, 111, 0.8], [176, 109.8, 1.3], [182, 110.4, 0.9]].forEach(([cx, cy, rx]) => svg('ellipse', { class: 'wk-pot-gravel', cx, cy, rx, ry: rx * 0.55 }, pot));
+    svg('path', { class: 'wk-pot-clay', fill: potClay, d: 'M141 114 Q163 117 185 114 L179 149 Q163 152 147 149 Z' }, potArt);
+    svg('path', { class: 'wk-pot-foot', d: 'M147.2 146.6 Q163 149 179.4 146.6 L179 150 Q163 152 147.8 150 Z' }, potArt);
+    svg('ellipse', { class: 'wk-pot-rim', cx: 163, cy: 110, rx: 25, ry: 5 }, potArt);
+    svg('ellipse', { class: 'wk-pot-earth', cx: 163, cy: 110, rx: 21.5, ry: 3.3 }, potArt);
+    [[144, 110, 1.2], [150, 111, 0.8], [176, 109.8, 1.3], [182, 110.4, 0.9]].forEach(([cx, cy, rx]) => svg('ellipse', { class: 'wk-pot-gravel', cx, cy, rx, ry: rx * 0.55 }, potArt));
     // A flowering desert succulent: fleshy, overlapping leaves support
     // three loose stems. Everything belongs to the pot's tipping group.
-    svg('path', { class: 'wk-pot-stem', d: 'M162 110 C155 99 157 86 150 76 M164 110 C167 94 166 80 169 65 M165 110 C171 101 179 98 183 87 M168 91 Q174 87 177 79' }, pot);
-    svg('path', { class: 'wk-pot-leaf wk-pot-leaf--shade', d: 'M162 111 C150 104 142 93 145 85 C156 87 162 99 162 111 Z M165 111 C165 98 171 88 179 87 C182 97 174 106 165 111 Z M161 110 C148 112 137 107 134 101 C143 96 156 101 161 110 Z' }, pot);
-    svg('path', { class: 'wk-pot-leaf', d: 'M163 111 C154 100 153 88 158 80 C166 87 168 102 163 111 Z M164 111 C169 101 180 97 191 99 C189 107 174 113 164 111 Z M161 111 C149 109 142 103 142 96 C151 94 160 102 161 111 Z' }, pot);
-    svg('path', { class: 'wk-pot-leaf-fold', d: 'M158 81 C162 91 162 103 163 111 C169 101 166 88 158 81 Z M166 111 Q179 109 190 99 C187 108 175 113 166 111 Z M144 97 Q151 105 161 111 C151 110 143 104 144 97 Z' }, pot);
-    svg('path', { class: 'wk-pot-vein', d: 'M162 108 Q158 97 158 85 M168 109 Q177 104 186 102 M157 108 Q149 103 145 99 M151 93 Q154 100 159 105' }, pot);
-    svg('path', { class: 'wk-pot-fine-vein', d: 'M158.5 91 Q156.5 89.5 156.2 87 M159 96 Q156.5 94.5 155.7 92 M160 101 Q157.8 100 156.8 97 M160.6 104.5 Q163 101.7 163.5 99 M159.5 98.6 Q162 96 162.2 93.5 M172.5 107 Q172.8 104.5 176 102 M177.6 105 Q182 106.3 185 104.6 M152.4 105.2 Q151 102.5 149 101 M150 103.3 Q146.5 103.5 145.5 102 M152.5 96 Q148.7 94.5 148 91' }, pot);
-    svg('path', { class: 'wk-pot-leaf-light', d: 'M159 84 Q164 93 163 103 M176 104 Q181 101 186 101' }, pot);
-    svg('path', { class: 'wk-pot-small-leaf', d: 'M167 85 C171 79 174 80 174 82 C173 86 170 87 167 85 Z M155 88 C151 83 148 82 147 84 C147 87 152 90 155 88 Z' }, pot);
+    svg('path', { class: 'wk-pot-stem', d: 'M162 110 C155 99 157 86 150 76 M164 110 C167 94 166 80 169 65 M165 110 C171 101 179 98 183 87 M168 91 Q174 87 177 79' }, potArt);
+    svg('path', { class: 'wk-pot-leaf wk-pot-leaf--shade', d: 'M162 111 C150 104 142 93 145 85 C156 87 162 99 162 111 Z M165 111 C165 98 171 88 179 87 C182 97 174 106 165 111 Z M161 110 C148 112 137 107 134 101 C143 96 156 101 161 110 Z' }, potArt);
+    svg('path', { class: 'wk-pot-leaf', d: 'M163 111 C154 100 153 88 158 80 C166 87 168 102 163 111 Z M164 111 C169 101 180 97 191 99 C189 107 174 113 164 111 Z M161 111 C149 109 142 103 142 96 C151 94 160 102 161 111 Z' }, potArt);
+    svg('path', { class: 'wk-pot-leaf-fold', d: 'M158 81 C162 91 162 103 163 111 C169 101 166 88 158 81 Z M166 111 Q179 109 190 99 C187 108 175 113 166 111 Z M144 97 Q151 105 161 111 C151 110 143 104 144 97 Z' }, potArt);
+    svg('path', { class: 'wk-pot-vein', d: 'M162 108 Q158 97 158 85 M168 109 Q177 104 186 102 M157 108 Q149 103 145 99 M151 93 Q154 100 159 105' }, potArt);
+    svg('path', { class: 'wk-pot-fine-vein', d: 'M158.5 91 Q156.5 89.5 156.2 87 M159 96 Q156.5 94.5 155.7 92 M160 101 Q157.8 100 156.8 97 M160.6 104.5 Q163 101.7 163.5 99 M159.5 98.6 Q162 96 162.2 93.5 M172.5 107 Q172.8 104.5 176 102 M177.6 105 Q182 106.3 185 104.6 M152.4 105.2 Q151 102.5 149 101 M150 103.3 Q146.5 103.5 145.5 102 M152.5 96 Q148.7 94.5 148 91' }, potArt);
+    svg('path', { class: 'wk-pot-leaf-light', d: 'M159 84 Q164 93 163 103 M176 104 Q181 101 186 101' }, potArt);
+    svg('path', { class: 'wk-pot-small-leaf', d: 'M167 85 C171 79 174 80 174 82 C173 86 170 87 167 85 Z M155 88 C151 83 148 82 147 84 C147 87 152 90 155 88 Z' }, potArt);
     [[150, 76, 0.85, -12], [169, 65, 1, 8], [183, 87, 0.72, 25]].forEach(([cx, cy, size, turn]) => {
-      const flower = svg('g', { transform: `translate(${cx} ${cy}) rotate(${turn}) scale(${size})` }, pot);
+      const flower = svg('g', { transform: `translate(${cx} ${cy}) rotate(${turn}) scale(${size})` }, potArt);
       for (let petal = 0; petal < 5; petal += 1) {
         svg('path', { class: 'wk-pot-petal', transform: `rotate(${petal * 72})`, d: 'M0 1 C-4 -1 -5.5 -6 -2.6 -8 C-0.8 -9.4 1 -9 2.6 -7.5 C5 -5 3 -1 0 1 Z' }, flower);
         svg('path', { class: 'wk-pot-petal-fold', transform: `rotate(${petal * 72})`, d: 'M0 0 Q1 -3 2.4 -5.5 Q3.4 -2.5 0 0 Z' }, flower);
@@ -712,12 +820,12 @@
       svg('circle', { class: 'wk-pot-flower-heart', cx: 0, cy: 0, r: 2.8 }, flower);
       svg('path', { class: 'wk-pot-pollen', d: 'M0 -1.5 h0.1 M1.5 -0.5 h0.1 M0.9 1.2 h0.1 M-0.9 1.2 h0.1 M-1.5 -0.5 h0.1 M0 0 h0.1' }, flower);
     });
-    svg('path', { class: 'wk-pot-bud', d: 'M177 81 C173 79 174 73 177 72 C181 74 180 79 177 81 Z' }, pot);
-    svg('path', { class: 'wk-pot-shine', d: 'M145 122 Q147 135 149 144' }, pot);
-    svg('path', { class: 'wk-pot-texture', d: 'M144 123 Q163 126 182 123 M146 132 Q162 135 180.5 132 M148 141 Q163 143.5 179 141' }, pot);
-    svg('path', { class: 'wk-pot-etch', d: 'M151 127 Q154 130 157 127 Q160 130 163 127 Q166 130 169 127 Q172 130 175 127 M151.7 137 h1.3 M159 139 h1 M172 136 h1.7 M176 143 h0.8 M150 121 h1 M167 145 h1.2' }, pot);
-    svg('path', { class: 'wk-pot-rim', d: 'M138 110 Q163 117 188 110 V114 Q188 117 184 118 Q163 122 142 118 Q138 117 138 114 Z' }, pot);
-    svg('path', { class: 'wk-pot-rim-light', d: 'M140 111.5 Q162 117 186 111.5 M142 114 Q160 119 178 115.8' }, pot);
+    svg('path', { class: 'wk-pot-bud', d: 'M177 81 C173 79 174 73 177 72 C181 74 180 79 177 81 Z' }, potArt);
+    svg('path', { class: 'wk-pot-shine', d: 'M145 122 Q147 135 149 144' }, potArt);
+    svg('path', { class: 'wk-pot-texture', d: 'M144 123 Q163 126 182 123 M146 132 Q162 135 180.5 132 M148 141 Q163 143.5 179 141' }, potArt);
+    svg('path', { class: 'wk-pot-etch', d: 'M151 127 Q154 130 157 127 Q160 130 163 127 Q166 130 169 127 Q172 130 175 127 M151.7 137 h1.3 M159 139 h1 M172 136 h1.7 M176 143 h0.8 M150 121 h1 M167 145 h1.2' }, potArt);
+    svg('path', { class: 'wk-pot-rim', d: 'M138 110 Q163 117 188 110 V114 Q188 117 184 118 Q163 122 142 118 Q138 117 138 114 Z' }, potArt);
+    svg('path', { class: 'wk-pot-rim-light', d: 'M140 111.5 Q162 117 186 111.5 M142 114 Q160 119 178 115.8' }, potArt);
     if (tipAt !== undefined) tween(pot, [{ transform: 'rotate(0deg)' }, { transform: `rotate(${PORCH_TIP}deg)` }], tipAt, 0.35, EASE.inOut);
     if (untipAt !== undefined) tween(pot, [{ transform: `rotate(${PORCH_TIP}deg)` }, { transform: 'rotate(0deg)' }], untipAt, 0.35, EASE.inOut);
     // The boardwalk on the street.
@@ -887,6 +995,8 @@
         const u = drawing.effect.getComputedTiming().progress ?? 0;
         const p = path.getPointAtLength ? path.getPointAtLength(u * path.getTotalLength()) : { x: 0, y: 0 };
         head.setAttribute('transform', `translate(${p.x.toFixed(1)} ${p.y.toFixed(1)})`);
+        // A cookie drops into the jar at the trail's end and joins the others there.
+        if (tone === 'cookie') head.setAttribute('opacity', (1 - Math.min(1, Math.max(0, (u - 0.88) / 0.12))).toFixed(3));
       });
     }
     if (until !== undefined) fx.fadeOut(g, until - 0.27, 0.25);
@@ -1218,200 +1328,54 @@
     { name: 'Image Upload', kind: 'barn', right: 'write: /uploads only, no delete' },
   ];
 
-  // The parts of a service building, in its own 120×90 frame (the street
-  // at y 88), drawn like the porch: dark outlines, light from the upper
-  // left, clapboards, and lit windows.
-  const bldPart = {
-    boards(g, x0, x1, y0, y1, step = 7) {
-      for (let by = y0; by < y1; by += step) {
-        svg('path', { class: 'wk-bld-board', d: `M${x0} ${by} H${x1}` }, g);
-        svg('path', { class: 'wk-bld-board-light', d: `M${x0} ${by + 1.2} H${x1}` }, g);
-      }
-    },
-    window(g, x, y, w, h, { cross = true } = {}) {
-      svg('rect', { class: 'wk-bld-frame', x: x - 2, y: y - 2, width: w + 4, height: h + 4, rx: 1 }, g);
-      svg('rect', { class: 'wk-bld-glass', x, y, width: w, height: h }, g);
-      if (cross) svg('path', { class: 'wk-bld-mullion', d: `M${x + w / 2} ${y} V${y + h} M${x} ${y + h / 2} H${x + w}` }, g);
-      svg('rect', { class: 'wk-bld-sill', x: x - 3, y: y + h + 1.5, width: w + 6, height: 2.6, rx: 0.6 }, g);
-    },
-    door(g, x, y, w, h) {
-      svg('rect', { class: 'wk-bld-frame', x: x - 2, y: y - 2, width: w + 4, height: h + 2 }, g);
-      svg('rect', { class: 'wk-bld-door', x, y, width: w, height: h }, g);
-      svg('path', { class: 'wk-bld-panel', d: `M${x + 3} ${y + 3} h${w - 6} v${h * 0.36} h${-(w - 6)} Z M${x + 3} ${y + h * 0.5} h${w - 6} v${h * 0.42} h${-(w - 6)} Z` }, g);
-      svg('circle', { class: 'wk-bld-knob', cx: x + w - 3.4, cy: y + h * 0.48, r: 1.3 }, g);
-    },
-    boardwalk(g) {
-      svg('rect', { class: 'wk-bld-deck', x: 3, y: 84, width: 114, height: 4.4, rx: 0.6 }, g);
-      svg('path', { class: 'wk-bld-seam', d: Array.from({ length: 9 }, (_, i) => `M${12 + i * 12} 84 V88.4`).join(' ') }, g);
-    },
-  };
-
   /**
-   * The service's emblem, the main part of its facade: a dark board with a
-   * brass rim and the service's icon from the kit's icon set (kit.js), as
-   * large as the board allows.
+   * The four services of verse 4: the town's own buildings (frontier.js),
+   * whose lights come on from `at` and go out by `until`. Over them, in
+   * `parent`: each one's name on the boardwalk, from `masterAt` one admin
+   * key labelled over all of them, from `splitAt` each one's own key on its
+   * roof (the cables between them thin and fences rise between them, to
+   * stay up), and from
+   * `rightsAt` each key's permission above it; `rightLights` = [[index,
+   * from]] lights a permission. Returns each building's centre and the
+   * row's top and bottom, for what is drawn around them.
    */
-  function emblem(g, name, { x, y, w, h }) {
-    svg('rect', { class: 'wk-bld-emblem', x, y, width: w, height: h, rx: 3 }, g);
-    svg('rect', { class: 'wk-bld-emblem-shine', x: x + 2, y: y + 2, width: w - 4, height: h - 4, rx: 2 }, g);
-    const size = Math.min(w, h) - 4;
-    const art = icon(name, 'wk-bld-emblem-icon');
-    for (const [k, v] of Object.entries({ x: x + (w - size) / 2, y: y + (h - size) / 2, width: size, height: size })) art.setAttribute(k, v);
-    g.append(art);
-  }
-
-  // Each service's building, its emblem the largest thing on its facade:
-  // a cart for Product Display, an envelope for Email Notification, a
-  // database for System Backup, and a picture for Image Upload. The door,
-  // windows, and props below say what kind of building it is.
-  const BUILDINGS = {
-    /** Product Display: a general store, its goods behind an awning. */
-    store(g, wall) {
-      svg('path', { class: 'wk-bld-wall', fill: wall, d: 'M10 86 V12 H15 V6 H105 V12 H110 V86 Z' }, g);
-      bldPart.boards(g, 10, 110, 50, 84);
-      svg('path', { class: 'wk-bld-cap', d: 'M12 6 H108 V2.6 H12 Z' }, g);
-      emblem(g, 'cart', { x: 32, y: 10, w: 56, h: 36 });
-      svg('path', { class: 'wk-bld-awning', d: 'M12 49 H108 L104 56 H16 Z' }, g);
-      svg('path', { class: 'wk-bld-stripe', d: Array.from({ length: 8 }, (_, i) => `M${18 + i * 12} 49 h6 l-0.6 7 h-6 Z`).join(' ') }, g);
-      svg('path', { class: 'wk-bld-scallop', d: 'M16 56 ' + Array.from({ length: 11 }, () => 'a4 2.6 0 0 0 8 0').join(' ') }, g);
-      bldPart.window(g, 17, 62, 24, 14, { cross: false });
-      bldPart.window(g, 79, 62, 24, 14, { cross: false });
-      svg('path', { class: 'wk-bld-goods', d: 'M20 76 V70 H25 V76 Z M27 76 V67 C27 65.8 32 65.8 32 67 V76 Z M34 76 V71 H38 V76 Z M82 76 V68 H88 V76 Z M90 76 V70 C90 68.8 94 68.8 94 70 V76 Z M96 76 V67 H100 V76 Z' }, g);
-      bldPart.door(g, 51, 61, 18, 25);
-      bldPart.boardwalk(g);
-    },
-    /** Email Notification: the post office, a mailbox by its door. */
-    post(g, wall) {
-      svg('path', { class: 'wk-bld-wall', fill: wall, d: 'M10 86 V16 H13 C26 2 94 2 107 16 H110 V86 Z' }, g);
-      bldPart.boards(g, 10, 110, 50, 84);
-      svg('path', { class: 'wk-bld-cap', d: 'M8 16 H112 V13.4 C96 -2 24 -2 8 13.4 Z' }, g);
-      emblem(g, 'envelope', { x: 33, y: 12, w: 54, h: 36 });
-      bldPart.window(g, 17, 56, 16, 14);
-      bldPart.window(g, 87, 56, 16, 14);
-      bldPart.door(g, 51, 57, 18, 29);
-      // The mailbox on its post.
-      svg('rect', { class: 'wk-bld-post', x: 93.6, y: 79, width: 2.8, height: 6 }, g);
-      svg('path', { class: 'wk-bld-mailbox', d: 'M88 79 V75 C88 72 102 72 102 75 V79 Z' }, g);
-      svg('path', { class: 'wk-bld-slot', d: 'M91.6 75.6 H98.4' }, g);
-      bldPart.boardwalk(g);
-    },
-    /** System Backup: a storehouse, its stored drums and crates outside. */
-    warehouse(g, wall) {
-      svg('path', { class: 'wk-bld-wall', fill: wall, d: 'M10 86 V30 L60 6 L110 30 V86 Z' }, g);
-      bldPart.boards(g, 10, 110, 36, 84);
-      svg('path', { class: 'wk-bld-roof-edge', d: 'M6 32 L60 4 L114 32' }, g);
-      emblem(g, 'database', { x: 38, y: 17, w: 44, h: 36 });
-      // The sliding doors, braced.
-      svg('rect', { class: 'wk-bld-rail', x: 32, y: 56, width: 56, height: 2.6 }, g);
-      svg('rect', { class: 'wk-bld-frame', x: 34, y: 58.6, width: 52, height: 27.4 }, g);
-      svg('path', { class: 'wk-bld-slider', d: 'M37 61 H59 V86 H37 Z M61 61 H83 V86 H61 Z' }, g);
-      svg('path', { class: 'wk-bld-brace', d: 'M37 61 L59 86 M83 61 L61 86' }, g);
-      // Backups stacked outside: a drum and two crates.
-      svg('path', { class: 'wk-bld-drum', d: 'M14 86 V72 C14 70 26 70 26 72 V86 Z' }, g);
-      svg('path', { class: 'wk-bld-hoop', d: 'M14 76 C14 77.6 26 77.6 26 76 M14 81.4 C14 83 26 83 26 81.4' }, g);
-      svg('path', { class: 'wk-bld-crate', d: 'M90 86 V74 H106 V86 Z M93 74 V64 H104 V74 Z' }, g);
-      svg('path', { class: 'wk-bld-crate-line', d: 'M90 74 L106 86 M106 74 L90 86 M93 64 L104 74 M104 64 L93 74' }, g);
-      bldPart.boardwalk(g);
-    },
-    /** Image Upload: a barn, a picture on its loft. */
-    barn(g, wall) {
-      svg('path', { class: 'wk-bld-wall', fill: wall, d: 'M10 86 V46 L20 28 L60 13 L100 28 L110 46 V86 Z' }, g);
-      svg('path', { class: 'wk-bld-board', d: Array.from({ length: 12 }, (_, i) => `M${15 + i * 8} 48 V84`).join(' ') }, g);
-      svg('path', { class: 'wk-bld-roof', d: 'M5 47 L17 26 L60 9 L103 26 L115 47 L111 47 L100 30 L60 14.6 L20 30 L9 47 Z' }, g);
-      svg('path', { class: 'wk-bld-trim', d: 'M10.5 47 V86 M109.5 47 V86' }, g);
-      emblem(g, 'image', { x: 37, y: 22, w: 46, h: 34 });
-      // The big doors with their white X.
-      svg('rect', { class: 'wk-bld-barn-door', x: 40, y: 60, width: 40, height: 26 }, g);
-      svg('path', { class: 'wk-bld-trim', d: 'M40 60 H80 V86 H40 Z M60 60 V86 M40 60 L60 86 M60 60 L40 86 M80 60 L60 86 M60 60 L80 86' }, g);
-      bldPart.boardwalk(g);
-    },
-  };
-
-  /**
-   * A short picket fence centred on x, standing on y: two posts, three
-   * pointed pickets, and two rails. It grows up out of the ground at `at`.
-   */
-  function fence(parent, x, y, at) {
-    const g = svg('g', { class: 'wk-lot-fence' }, parent);
-    svg('ellipse', { class: 'wk-bld-shadow', cx: x, cy: y, rx: 22, ry: 2 }, g);
-    const rails = `M${x - 19} ${y - 26} H${x + 19} M${x - 19} ${y - 10} H${x + 19}`;
-    svg('path', { class: 'wk-lot-fence-rail', d: rails }, g);
-    svg('path', { class: 'wk-lot-fence-rail-wood', d: rails }, g);
-    for (const px of [x - 9, x, x + 9]) {
-      svg('path', { class: 'wk-lot-fence-picket', d: `M${px - 3} ${y} V${y - 30} L${px} ${y - 35} L${px + 3} ${y - 30} V${y} Z` }, g);
-    }
-    for (const px of [x - 19, x + 19]) {
-      svg('rect', { class: 'wk-lot-fence-post', x: px - 2.6, y: y - 38, width: 5.2, height: 38, rx: 1 }, g);
-    }
-    tween(g, [{ transform: 'scaleY(0)' }, { transform: 'scaleY(1.08)', offset: 0.7 }, { transform: 'scaleY(1)' }], at, 0.45, EASE.out);
-    return g;
-  }
-
-  let buildingCount = 0;
-
-  /** A service's building (`kind`, one of BUILDINGS), 120×90. */
-  function buildingArt(parent, kind) {
-    const art = svg('svg', { class: `wk-bld wk-bld--${kind}`, viewBox: '0 0 120 90', width: 120, height: 90, 'aria-hidden': 'true' }, parent);
-    const id = `wk-bld-${++buildingCount}`;
-    const grad = svg('linearGradient', { id, x1: 0, y1: 0, x2: 1, y2: 1 }, svg('defs', {}, art));
-    svg('stop', { offset: 0, class: 'wk-bld-lit' }, grad);
-    svg('stop', { offset: 1, class: 'wk-bld-shaded' }, grad);
-    svg('ellipse', { class: 'wk-bld-shadow', cx: 60, cy: 88, rx: 58, ry: 2.4 }, art);
-    BUILDINGS[kind](art, `url(#${id})`);
-    return art;
-  }
-
-  /**
-   * The four services as buildings in a row. `masterAt` hangs one admin key
-   * on all of them; `splitAt` gives each its own key; `rightsAt` shows each
-   * key's permission; `rightLights` = [[index, from]] lights a permission.
-   * Returns the node and each building's centre (stage coordinates).
-   */
-  function services(parent, { x, y, at, until, masterAt, splitAt, rightsAt, rightLights = [] }) {
-    const node = box(parent, 'wk-services', { x, y, w: 600 });
-    // The cables joining neighbouring buildings, behind them: thick and
-    // bold while one key opens everything, thin once each part has its own
-    // key with just the rights it needs.
-    const links = svg('svg', { class: 'wk-service-links', viewBox: '0 0 600 210', width: 600, height: 210, 'aria-hidden': 'true' }, node);
-    for (let i = 0; i < SERVICES.length - 1; i += 1) {
-      const x0 = i * 150 + 112, x1 = (i + 1) * 150 + 28, cy = 62;
-      const d = `M${x0} ${cy} C${x0 + 24} ${cy + 15} ${x1 - 24} ${cy + 15} ${x1} ${cy}`;
-      // Thick in the CSS; each layer thins from there to its width here.
-      for (const [cls, thin] of [['wk-link-sheath', 4], ['wk-link-core', 1.8], ['wk-link-shine', 0.01]]) {
-        const cable = svg('path', { class: cls, d }, links);
-        if (splitAt !== undefined) tween(cable, [{ strokeWidth: `${thin}px` }], splitAt + 0.35, 0.7, EASE.inOut);
-      }
-      // With the split a picket fence rises in the gap, the thin wire
-      // running through it: each part kept to its own lot.
-      if (splitAt !== undefined) fence(links, i * 150 + 145, 88, splitAt + 0.45 + i * 0.12);
-    }
+  function services(parent, { at, until, masterAt, splitAt, rightsAt, rightLights = [] }) {
+    const town = window.SongKit.themes.frontier?.town;
+    if (!town) throw new Error('services() lights the frontier theme’s town, and this stage has none.');
+    const top = Math.min(...town.services.map((b) => b.top));
+    const bottom = Math.max(...town.services.map((b) => b.bottom));
+    // The permissions stand clear above the roofs, their keys, and a label
+    // between them (the blast radius's).
+    const rightsBottom = top - 44;
+    town.light({ at, until });
+    if (splitAt !== undefined) town.compartments({ at: splitAt + 0.35 });
+    const node = el('div', 'wk-services is-staged', parent);
     const centres = [];
     SERVICES.forEach((s, i) => {
-      const b = el('div', 'wk-service', node);
-      b.style.left = `${i * 150}px`;
-      buildingArt(b, s.kind);
-      el('div', 'wk-service-name', b, s.name);
-      centres.push([x + i * 150 + 70, y + 46]);
+      const b = town.services.find((t) => t.kind === s.kind);
+      centres.push([b.cx, (b.top + b.bottom) / 2]);
+      place(el('div', 'wk-service-name', node, s.name), b.cx, b.bottom + 10);
       if (splitAt !== undefined) {
-        const k = el('div', 'wk-service-key is-staged', b);
+        const k = place(el('div', 'wk-service-key is-staged', node), b.right - 24, b.top - 18);
         k.append(icon('key', 'wk-service-key-icon'));
         fx.pop(k, splitAt + i * 0.12, { from: 0.4 });
       }
       if (rightsAt !== undefined) {
-        const r = el('div', 'wk-service-right is-staged', b, s.right);
+        const r = place(el('div', 'wk-service-right is-staged', node, s.right), b.cx, rightsBottom);
         fx.fadeIn(r, rightsAt + i * 0.12, 0.25);
         for (const [index, from] of rightLights) if (index === i) during(r, 'is-lit', from);
       }
     });
     if (masterAt !== undefined) {
-      const master = el('div', 'wk-master is-staged', node);
+      const row = town.services;
+      const master = place(el('div', 'wk-master is-staged', node), (row[0].left + row[row.length - 1].right) / 2, rightsBottom);
       master.append(icon('key', 'wk-master-icon'));
       el('span', 'wk-master-text', master, 'admin key: opens everything');
       fx.pop(master, masterAt, { from: 0.5 });
       if (splitAt !== undefined) fx.fadeOut(master, splitAt - 0.1, 0.25);
     }
-    show(node, at, until, 'rise');
-    return { node, centres };
+    show(node, at, until, 'fade');
+    return { node, centres, top, bottom };
   }
 
   /** The bank, the database: its tables in a vault, each opening, read, or changed. */
@@ -1452,8 +1416,14 @@
   /** A short, attributed message attached to a moving character. */
   function speech(parent, { speaker, text, at, until, trailing = false }) {
     const node = el('div', `wk-agent-speech is-staged${trailing ? ' wk-agent-speech--trailing' : ''}`, parent);
-    el('div', 'wk-agent-speech-name', node, speaker);
-    el('div', 'wk-agent-speech-text', node, `“${text}”`);
+    const name = el('div', 'wk-agent-speech-name', node, speaker);
+    const words = el('div', 'wk-agent-speech-text', node, `“${text}”`);
+    // The tail stays on the agent: mid-bubble, or 40 px from a trailing bubble's right end.
+    fitLater(node, [name, words], { onFit: (width) => {
+      const tail = trailing ? width - 40 : width / 2;
+      node.style.setProperty('--wk-speech-tail', `${tail}px`);
+      node.style.left = `calc(50% - ${tail}px)`;
+    } });
     return show(node, at, until, 'fade');
   }
 
@@ -1507,6 +1477,6 @@
   window.WesternKit = {
     show, box, during, group, overlay, plank, label, tag, poster, stamp, slate, browser, typed, loginForm, post,
     alertBox, avatar, padlock, lockBoard, key, strongbox, asset, ciaCard, porch, appFront, trail, vector, triangle, ring, tick, planBoard, wanted,
-    network, services, bank, gazette, speech, hop, notice, quiz, PLAN, PRINCIPLES,
+    network, services, bank, gazette, speech, hop, notice, quiz, fitToText, PLAN, PRINCIPLES,
   };
 })();

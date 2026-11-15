@@ -32,20 +32,20 @@
   text-wrap: balance;
 }
 
-.fr-sky-0 { stop-color: color-mix(in srgb, color-mix(in srgb, #506ba5, #10204b var(--fr-blue-hour)), #070e23 var(--fr-night)); }
-.fr-sky-1 { stop-color: color-mix(in srgb, color-mix(in srgb, #db8664, #294372 var(--fr-blue-hour)), #12223e var(--fr-night)); }
-.fr-sky-2 { stop-color: color-mix(in srgb, color-mix(in srgb, #ff8c42, #586484 var(--fr-blue-hour)), #29334d var(--fr-night)); }
-.fr-sky-3 { stop-color: color-mix(in srgb, color-mix(in srgb, #ffbc67, #a27c70 var(--fr-blue-hour)), #4c454e var(--fr-night)); }
+.fr-sky-0 { stop-color: color-mix(in srgb, color-mix(in srgb, #3c5cae, #10205a var(--fr-blue-hour)), #070e23 var(--fr-night)); }
+.fr-sky-1 { stop-color: color-mix(in srgb, color-mix(in srgb, #ea7563, #33427f var(--fr-blue-hour)), #12223e var(--fr-night)); }
+.fr-sky-2 { stop-color: color-mix(in srgb, color-mix(in srgb, #ff7d34, #775d8c var(--fr-blue-hour)), #29334d var(--fr-night)); }
+.fr-sky-3 { stop-color: color-mix(in srgb, color-mix(in srgb, #ffc35a, #c9786a var(--fr-blue-hour)), #4c454e var(--fr-night)); }
 
-.fr-sun-0 { stop-color: color-mix(in srgb, #ffc374, #f36635 var(--fr-sun-red)); stop-opacity: 0.5; }
+.fr-sun-0 { stop-color: color-mix(in srgb, #ffc368, #f65e2c var(--fr-sun-red)); stop-opacity: 0.58; }
 .fr-sun-1 { stop-color: #ee6539; stop-opacity: 0; }
 .fr-sun-disc { fill: url(#fr-sun-face); }
 /* The upper limb must redden too: it is the last part visible above the
    horizon. Keep the lower limb deeper, with the warm haze behind the disc. */
 .fr-sun-upper { stop-color: color-mix(in srgb, #ffe3a0, #ff6840 var(--fr-sun-red)); }
 .fr-sun-lower { stop-color: color-mix(in srgb, #ffbb50, #dc321e var(--fr-sun-red)); }
-.fr-horizon-core { stop-color: color-mix(in srgb, #ffc273, #ee5832 var(--fr-sun-red)); stop-opacity: 0.72; }
-.fr-horizon-warm { stop-color: color-mix(in srgb, #ef8150, #d8472d var(--fr-sun-red)); stop-opacity: 0.28; }
+.fr-horizon-core { stop-color: color-mix(in srgb, #ffc066, #f2522a var(--fr-sun-red)); stop-opacity: 0.8; }
+.fr-horizon-warm { stop-color: color-mix(in srgb, #f47a45, #dc3f2a var(--fr-sun-red)); stop-opacity: 0.34; }
 .fr-horizon-edge { stop-color: #d8472d; stop-opacity: 0; }
 
 .fr-stars circle { fill: #f4ead8; }
@@ -54,15 +54,15 @@
    controls when its warm lower relief enters Earth's shadow. The blue-hour
    clouds retain cool volume instead of glowing orange through the night. */
 .fr-cloud-body { fill: url(#fr-cloud); }
-.fr-cloud-0 { stop-color: color-mix(in srgb, color-mix(in srgb, #70778a, #2d3b59 var(--fr-blue-hour)), #18243a var(--fr-night)); }
-.fr-cloud-1 { stop-color: color-mix(in srgb, color-mix(in srgb, #87818a, #4a506b var(--fr-blue-hour)), #223047 var(--fr-night)); }
-.fr-cloud-2 { stop-color: color-mix(in srgb, color-mix(in srgb, #a28983, #5d5d76 var(--fr-blue-hour)), #29354a var(--fr-night)); }
-.fr-cloud-3 { stop-color: color-mix(in srgb, color-mix(in srgb, #ba9b85, #736b7d var(--fr-blue-hour)), #344056 var(--fr-night)); }
+.fr-cloud-0 { stop-color: color-mix(in srgb, color-mix(in srgb, #6c7193, #303865 var(--fr-blue-hour)), #18243a var(--fr-night)); }
+.fr-cloud-1 { stop-color: color-mix(in srgb, color-mix(in srgb, #887d94, #554e77 var(--fr-blue-hour)), #223047 var(--fr-night)); }
+.fr-cloud-2 { stop-color: color-mix(in srgb, color-mix(in srgb, #a9838f, #6c5879 var(--fr-blue-hour)), #29354a var(--fr-night)); }
+.fr-cloud-3 { stop-color: color-mix(in srgb, color-mix(in srgb, #c69688, #8a6779 var(--fr-blue-hour)), #344056 var(--fr-night)); }
 .fr-cloud-wisp { fill: url(#fr-cloud); opacity: 0.45; }
 .fr-cloud-direct { opacity: var(--fr-cloud-light, 0); }
 .fr-cloud-sun-shade { stop-color: #e79065; stop-opacity: 0; }
 .fr-cloud-sun-middle { stop-color: color-mix(in srgb, #f4b67b, #d4623f var(--fr-cloud-red, 0%)); stop-opacity: 0.18; }
-.fr-cloud-sun-warm { stop-color: color-mix(in srgb, #ffbe60, #f66b32 var(--fr-cloud-red, 0%)); stop-opacity: 0.85; }
+.fr-cloud-sun-warm { stop-color: color-mix(in srgb, #ffb554, #f8602c var(--fr-cloud-red, 0%)); stop-opacity: 0.9; }
 .fr-cloud-sun-rim { stop-color: color-mix(in srgb, #ffdb80, #ff9852 var(--fr-cloud-red, 0%)); }
 .fr-cloud-lit-wisp { opacity: 0.5; }
 .fr-cloud-fold { fill: color-mix(in srgb, #596578, #142039 var(--fr-night)); opacity: 0.18; }
@@ -99,10 +99,88 @@
 .fr-windmill .fr-hub { fill: #1c1219; }
 
 .fr-poles path { fill: none; stroke: #1c1219; stroke-width: 2.2; }
-.fr-poles .fr-wire { stroke-width: 0.8; stroke: #2a1b24; }
+.fr-wires .fr-wire { fill: none; stroke-width: 0.8; stroke: #2a1b24; }
 
 /* Sand keeps its ochre material colour after sunset. The near ground loses
    warmth to the open sky, rather than turning into a uniform blue surface. */
+/* The four services of verse 4 (frontier.js BUILDINGS), drawn like the
+   song's porch. Each stands twice: the town's silhouette, its windows
+   glowing as the evening comes, and on top the lit copy that verse 4
+   shows (town.light). */
+.fr-service--lit { opacity: 0; }
+.fr-bld-shadow { fill: rgba(0, 0, 0, 0.35); }
+.fr-bld-wall { stroke: #2a1608; stroke-width: 1.8; stroke-linejoin: round; }
+.fr-bld--store .fr-bld-stop-lit { stop-color: #a8774a; }
+.fr-bld--store .fr-bld-stop-shaded { stop-color: #6e4626; }
+.fr-bld--post .fr-bld-stop-lit { stop-color: #8aa0ae; }
+.fr-bld--post .fr-bld-stop-shaded { stop-color: #4c5e6a; }
+.fr-bld--warehouse .fr-bld-stop-lit { stop-color: #9a8a74; }
+.fr-bld--warehouse .fr-bld-stop-shaded { stop-color: #5e5244; }
+.fr-bld--barn .fr-bld-stop-lit { stop-color: #b8483a; }
+.fr-bld--barn .fr-bld-stop-shaded { stop-color: #7a2418; }
+.fr-bld-board { fill: none; stroke: rgba(30, 16, 6, 0.45); stroke-width: 0.9; }
+.fr-bld-board-light { fill: none; stroke: rgba(255, 236, 200, 0.16); stroke-width: 0.7; }
+.fr-bld-cap { fill: #4a2e18; stroke: #2a1608; stroke-width: 1.2; stroke-linejoin: round; }
+.fr-bld-frame { fill: #3a2210; stroke: #2a1608; stroke-width: 1; }
+.fr-bld-glass { fill: #e8b058; }
+.fr-bld-mullion { fill: none; stroke: #3a2210; stroke-width: 1.4; }
+.fr-bld-sill { fill: #5a3a20; stroke: #2a1608; stroke-width: 0.8; }
+.fr-bld-goods { fill: #b0702c; stroke: #6a3a10; stroke-width: 0.8; }
+.fr-bld-door { fill: #6a4426; stroke: #2a1608; stroke-width: 1; }
+.fr-bld-panel { fill: none; stroke: #3e2410; stroke-width: 0.9; }
+.fr-bld-knob { fill: #e0b24a; }
+.fr-bld-awning { fill: #b8483a; stroke: #2a1608; stroke-width: 1.2; stroke-linejoin: round; }
+.fr-bld-stripe { fill: #f2e4c4; }
+.fr-bld-scallop { fill: #b8483a; stroke: #2a1608; stroke-width: 1; }
+.fr-bld-post { fill: #4a2e18; stroke: #2a1608; stroke-width: 0.8; }
+.fr-bld-mailbox { fill: #3e6a9a; stroke: #142438; stroke-width: 1.2; }
+.fr-bld-slot { fill: none; stroke: #142438; stroke-width: 1.4; stroke-linecap: round; }
+.fr-bld-roof { fill: #4a3a30; stroke: #1e140c; stroke-width: 1.6; stroke-linejoin: round; }
+.fr-bld-slider { fill: #7a6a56; stroke: #2a1608; stroke-width: 1.1; }
+.fr-bld-brace { fill: none; stroke: #4a3a2a; stroke-width: 2; stroke-linecap: round; }
+.fr-bld-rail { fill: #3a3e44; }
+.fr-bld-drum { fill: #6a7480; stroke: #1e2630; stroke-width: 1.2; }
+.fr-bld-hoop { fill: none; stroke: #2e3640; stroke-width: 1.1; }
+.fr-bld-crate { fill: #a07a48; stroke: #2a1608; stroke-width: 1.2; stroke-linejoin: round; }
+.fr-bld-crate-line { fill: none; stroke: #5a3e1e; stroke-width: 1; }
+.fr-bld-trim { fill: none; stroke: #f2e4c4; stroke-width: 2.2; stroke-linejoin: round; }
+.fr-bld-barn-door { fill: #8a2a1e; stroke: #2a1608; stroke-width: 1.2; }
+.fr-bld-deck { fill: #9a6a3c; stroke: #2a1608; stroke-width: 1.1; }
+.fr-bld-roof-edge { fill: none; stroke: #3e3026; stroke-width: 4.4; stroke-linecap: round; stroke-linejoin: round; }
+.fr-bld-emblem { fill: #2e1d10; stroke: #c9a24a; stroke-width: 1.8; }
+.fr-bld-emblem-shine { fill: none; stroke: rgba(255, 236, 200, 0.14); stroke-width: 1; }
+.fr-bld-emblem-icon { color: #f6e7c4; overflow: visible; }
+.fr-bld-seam { fill: none; stroke: #5e3c20; stroke-width: 0.8; }
+
+/* The silhouette: the town's shades, the icon faint on its dark sign. */
+.fr-service--dark :is(path, rect, circle, ellipse) { fill: #1c1219; stroke: #120b10; stroke-width: 0.8; }
+.fr-service--dark :is(.fr-bld-board, .fr-bld-board-light, .fr-bld-seam, .fr-bld-panel, .fr-bld-mullion, .fr-bld-crate-line, .fr-bld-hoop, .fr-bld-brace, .fr-bld-slot, .fr-bld-roof-edge, .fr-bld-trim, .fr-bld-emblem-shine) { fill: none; stroke: #120b10; }
+.fr-service--dark :is(.fr-bld-frame, .fr-bld-door, .fr-bld-barn-door) { fill: #120b10; }
+.fr-service--dark :is(.fr-bld-stripe, .fr-bld-emblem) { fill: #241820; }
+.fr-service--dark .fr-bld-shadow { fill: none; stroke: none; }
+.fr-service--dark .fr-bld-emblem-icon { color: #3a2732; }
+.fr-service--dark .fr-bld-emblem-icon :is(path, rect, circle, ellipse) { fill: none; stroke: currentColor; stroke-width: 2; }
+.fr-service--dark .fr-bld-glass { fill: #e3a25a; stroke: none; }
+
+/* The cable's spans between the services as verse 4 lights them: thick
+   while one key opens everything, thinned by town.compartments. */
+.fr-link { opacity: 0; }
+.fr-link-sheath { fill: none; stroke: #241610; stroke-width: 19px; stroke-linecap: round; }
+.fr-link-core { fill: none; stroke: #d89a3e; stroke-width: 13px; stroke-linecap: round; }
+.fr-link-shine { fill: none; stroke: rgba(255, 232, 190, 0.7); stroke-width: 3px; stroke-linecap: round; }
+
+/* A picket fence between two lots: flat, unseen, until town.compartments
+   raises it for good; its lit copy shows while town.light lights the town. */
+.fr-fence { transform: scaleY(0); transform-box: fill-box; transform-origin: 50% 100%; }
+.fr-fence-dark :is(.fr-fence-post, .fr-fence-picket) { fill: #1c1219; stroke: #120b10; stroke-width: 1; }
+.fr-fence-dark .fr-fence-rail { fill: none; stroke: #1c1219; stroke-width: 4; stroke-linecap: round; }
+.fr-fence-dark .fr-fence-rail-wood { display: none; }
+.fr-fence-lit { opacity: 0; }
+.fr-fence-lit .fr-fence-post { fill: #8a6238; stroke: #2a1608; stroke-width: 1.4; }
+.fr-fence-lit .fr-fence-picket { fill: #c79a62; stroke: #2a1608; stroke-width: 1.4; stroke-linejoin: round; }
+.fr-fence-lit .fr-fence-rail { fill: none; stroke: #2a1608; stroke-width: 5.6; stroke-linecap: round; }
+.fr-fence-lit .fr-fence-rail-wood { fill: none; stroke: #a87c4a; stroke-width: 2.8; stroke-linecap: round; }
+
 .fr-road-0 { stop-color: color-mix(in srgb, color-mix(in srgb, #a6754d, #615247 var(--fr-blue-hour)), #3d3834 var(--fr-night)); }
 .fr-road-1 { stop-color: color-mix(in srgb, color-mix(in srgb, #896045, #4d433e var(--fr-blue-hour)), #302c2b var(--fr-night)); }
 .fr-road-2 { stop-color: color-mix(in srgb, color-mix(in srgb, #694832, #343134 var(--fr-blue-hour)), #242328 var(--fr-night)); }

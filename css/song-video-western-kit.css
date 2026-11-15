@@ -1188,93 +1188,28 @@
   white-space: nowrap;
 }
 
-.wk-services { position: absolute; height: 210px; }
 
-.wk-service {
-  position: absolute;
-  top: 0;
-  width: 140px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.wk-service svg { display: block; }
-/* The service buildings (western-kit.js BUILDINGS), drawn like the porch. */
-.wk-bld-shadow { fill: rgba(0, 0, 0, 0.35); }
-.wk-bld-wall { stroke: #2a1608; stroke-width: 1.8; stroke-linejoin: round; }
-.wk-bld--store .wk-bld-lit { stop-color: #a8774a; }
-.wk-bld--store .wk-bld-shaded { stop-color: #6e4626; }
-.wk-bld--post .wk-bld-lit { stop-color: #8aa0ae; }
-.wk-bld--post .wk-bld-shaded { stop-color: #4c5e6a; }
-.wk-bld--warehouse .wk-bld-lit { stop-color: #9a8a74; }
-.wk-bld--warehouse .wk-bld-shaded { stop-color: #5e5244; }
-.wk-bld--barn .wk-bld-lit { stop-color: #b8483a; }
-.wk-bld--barn .wk-bld-shaded { stop-color: #7a2418; }
-.wk-bld-board { fill: none; stroke: rgba(30, 16, 6, 0.45); stroke-width: 0.9; }
-.wk-bld-board-light { fill: none; stroke: rgba(255, 236, 200, 0.16); stroke-width: 0.7; }
-.wk-bld-cap { fill: #4a2e18; stroke: #2a1608; stroke-width: 1.2; stroke-linejoin: round; }
-.wk-bld-frame { fill: #3a2210; stroke: #2a1608; stroke-width: 1; }
-.wk-bld-glass { fill: #e8b058; }
-.wk-bld-mullion { fill: none; stroke: #3a2210; stroke-width: 1.4; }
-.wk-bld-sill { fill: #5a3a20; stroke: #2a1608; stroke-width: 0.8; }
-.wk-bld-goods { fill: #b0702c; stroke: #6a3a10; stroke-width: 0.8; }
-.wk-bld-door { fill: #6a4426; stroke: #2a1608; stroke-width: 1; }
-.wk-bld-panel { fill: none; stroke: #3e2410; stroke-width: 0.9; }
-.wk-bld-knob { fill: #e0b24a; }
-.wk-bld-awning { fill: #b8483a; stroke: #2a1608; stroke-width: 1.2; stroke-linejoin: round; }
-.wk-bld-stripe { fill: #f2e4c4; }
-.wk-bld-scallop { fill: #b8483a; stroke: #2a1608; stroke-width: 1; }
-.wk-bld-post { fill: #4a2e18; stroke: #2a1608; stroke-width: 0.8; }
-.wk-bld-mailbox { fill: #3e6a9a; stroke: #142438; stroke-width: 1.2; }
-.wk-bld-slot { fill: none; stroke: #142438; stroke-width: 1.4; stroke-linecap: round; }
-.wk-bld-roof { fill: #4a3a30; stroke: #1e140c; stroke-width: 1.6; stroke-linejoin: round; }
-.wk-bld-slider { fill: #7a6a56; stroke: #2a1608; stroke-width: 1.1; }
-.wk-bld-brace { fill: none; stroke: #4a3a2a; stroke-width: 2; stroke-linecap: round; }
-.wk-bld-rail { fill: #3a3e44; }
-.wk-bld-drum { fill: #6a7480; stroke: #1e2630; stroke-width: 1.2; }
-.wk-bld-hoop { fill: none; stroke: #2e3640; stroke-width: 1.1; }
-.wk-bld-crate { fill: #a07a48; stroke: #2a1608; stroke-width: 1.2; stroke-linejoin: round; }
-.wk-bld-crate-line { fill: none; stroke: #5a3e1e; stroke-width: 1; }
-.wk-bld-trim { fill: none; stroke: #f2e4c4; stroke-width: 2.2; stroke-linejoin: round; }
-.wk-bld-barn-door { fill: #8a2a1e; stroke: #2a1608; stroke-width: 1.2; }
-.wk-bld-deck { fill: #9a6a3c; stroke: #2a1608; stroke-width: 1.1; }
-.wk-bld-roof-edge { fill: none; stroke: #3e3026; stroke-width: 4.4; stroke-linecap: round; stroke-linejoin: round; }
-/* The emblem: the service's icon on a brass-rimmed board. */
-.wk-bld-emblem { fill: #2e1d10; stroke: #c9a24a; stroke-width: 1.8; }
-.wk-bld-emblem-shine { fill: none; stroke: rgba(255, 236, 200, 0.14); stroke-width: 1; }
-.wk-bld-emblem-icon { color: #f6e7c4; overflow: visible; }
-/* The cables between the services: thick while one key opens everything,
-   thinned by services() once each part has its own key. */
-.wk-service-links { position: absolute; left: 0; top: 0; overflow: visible; }
-.wk-link-sheath { fill: none; stroke: #241610; stroke-width: 19px; stroke-linecap: round; }
-.wk-link-core { fill: none; stroke: #d89a3e; stroke-width: 13px; stroke-linecap: round; }
-.wk-link-shine { fill: none; stroke: rgba(255, 232, 190, 0.7); stroke-width: 3px; stroke-linecap: round; }
-/* The fences that rise between the services once each has its own key;
-   hidden (flat on the ground) until services() raises them. */
-.wk-lot-fence { transform: scaleY(0); transform-box: fill-box; transform-origin: 50% 100%; }
-.wk-lot-fence-post { fill: #8a6238; stroke: #2a1608; stroke-width: 1.4; }
-.wk-lot-fence-picket { fill: #c79a62; stroke: #2a1608; stroke-width: 1.4; stroke-linejoin: round; }
-.wk-lot-fence-rail { fill: none; stroke: #2a1608; stroke-width: 5.6; stroke-linecap: round; }
-.wk-lot-fence-rail-wood { fill: none; stroke: #a87c4a; stroke-width: 2.8; stroke-linecap: round; }
-.wk-bld-seam { fill: none; stroke: #5e3c20; stroke-width: 0.8; }
-
+/* The services' labels in verse 4, placed by services() around each of the
+   town's service buildings (frontier.js): the name on the boardwalk under
+   it, its key on its roof, and its permission above it. */
 .wk-service-name {
-  margin-top: 4px;
+  position: absolute;
+  translate: -50% 0;
+  width: max-content;
+  max-width: 116px;
   padding: 2px 8px;
   border-radius: 5px;
   background: rgba(20, 12, 10, 0.88);
   color: #fbefd8;
   font-size: 15px;
   font-weight: 800;
+  line-height: 1.2;
   text-align: center;
-  white-space: nowrap;
+  text-wrap: balance;
 }
 
 .wk-service-key {
   position: absolute;
-  top: -14px;
-  right: -4px;
   width: 32px;
   height: 32px;
   padding: 5px;
@@ -1286,8 +1221,11 @@
 .wk-service-key-icon { width: 100%; height: 100%; }
 
 .wk-service-right {
-  margin-top: 6px;
-  padding: 5px 8px;
+  position: absolute;
+  translate: -50% -100%;
+  width: max-content;
+  max-width: 108px;
+  padding: 5px 6px;
   border: 1px solid var(--wk-paper-edge);
   border-radius: 6px;
   background: var(--wk-paper);
@@ -1303,9 +1241,7 @@
 
 .wk-master {
   position: absolute;
-  left: 50%;
-  top: -46px;
-  translate: -50% 0;
+  translate: -50% -100%;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -1500,9 +1436,12 @@
 .sh-silver-stop-0 { stop-color: #ffffff; }
 .sh-silver-stop-1 { stop-color: #c9ced6; }
 .sh-silver-stop-2 { stop-color: #7d848f; }
-.sh-skin-stop-0 { stop-color: var(--hero-skin-light, #f2c7a6); }
-.sh-skin-stop-1 { stop-color: var(--hero-skin, #d9a07a); }
-.sh-skin-stop-2 { stop-color: var(--hero-skin-dark, #a8704c); }
+/* Arms and hands wear the hero's own skin, the face's tone, evenly: no
+   light or shade that changes as the arm turns, so the forearm and hand
+   match each other and the face in every pose and every light. */
+.sh-skin-stop-0,
+.sh-skin-stop-1,
+.sh-skin-stop-2 { stop-color: var(--hero-skin, #d9a07a); }
 
 .sh-placket { fill: none; stroke: #3d5a80; stroke-width: 0.9; }
 .sh-snap { fill: #f2efe8; stroke: #6b7a8c; stroke-width: 0.5; }
