@@ -1062,9 +1062,10 @@
     node.append(ic);
     el('div', 'mk-client-name', node, name);
     const crackG = svg('path', { class: 'mk-crack-line', d: 'M30 30 L44 52 L38 66 L56 84 L50 104', opacity: 0 }, g);
-    const bandage = svg('g', { opacity: 0, transform: 'rotate(-30 46 66)' }, g);
-    svg('rect', { class: 'mk-bandage', x: 26, y: 60, width: 40, height: 13, rx: 6 }, bandage);
-    svg('rect', { class: 'mk-bandage-pad', x: 40, y: 62, width: 12, height: 9, rx: 2 }, bandage);
+    // Repair the lower wall crack, leaving the icon window unobstructed.
+    const bandage = svg('g', { opacity: 0, transform: 'rotate(15 54 92)', 'data-testid': 'mk-client-repair' }, g);
+    svg('rect', { class: 'mk-bandage', x: 37, y: 87, width: 34, height: 10, rx: 5 }, bandage);
+    svg('rect', { class: 'mk-bandage-pad', x: 49, y: 88.5, width: 10, height: 7, rx: 1.5 }, bandage);
     const cross = el('div', 'mk-cross is-staged', node);
     cross.append(icon('cross'));
     cross.style.left = '84px';

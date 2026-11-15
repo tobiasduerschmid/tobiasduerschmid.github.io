@@ -43,3 +43,15 @@ For hand revisions, inspect the enlarged silhouette before shading: use coherent
 palm/back views, no palm-side nails on extended fingers, and no intersecting
 finger tubes or internal overlap outlines. Verify wrist ink and shading joins.
 The contact solver must include the actual posed grip after wrist limits.
+
+## Facial expressions
+
+For character face changes, follow the required
+[expression and head-turn review](../asset-creator/references/character/emotions.md).
+Connect the same emotional controls to drawn and worn heads. Keep bright eyes
+visible during joy, keep sung mouths visible during negative expressions,
+and hold the speaking phrase's emotion through gesture resets. Return silent
+listeners to relaxed resting faces. Closed mouths still need filled lips. Inspect maximum turns,
+blinks, vowels, and nearby transition frames in the actual live player, as
+well as export fallbacks. Verify deterministic seeks and reduced motion;
+numeric containment checks supplement, rather than replace, visual review.

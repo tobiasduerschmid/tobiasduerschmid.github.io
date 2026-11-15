@@ -475,8 +475,32 @@ handles torso occlusion, overlapping the base fill and suppressing internal
 ink and stroke-cap nubs. Short sleeves cover the bare arm's proximal contour.
 Sleeve folds are clipped to the moving cloth surface,
 so bends cannot leave protruding corners or detached ink. The lead's drawn face adds
-iris texture, eyelid folds, brow and moustache hairs, ear anatomy, and
-layered facial and hair shading without changing expression or lip-sync cues.
+iris fibers and catchlights, moving eyelid contours, brow and moustache hairs,
+ear folds, clipped hair strands, and a shaded lower lip. Joy raises the cheeks
+while leaving the eyes open. One eye aperture controls its white, iris clip,
+and lid edge through the entire blink. Closed mouths retain filled upper and
+lower lips. Mouth opening separates those same curves, with teeth and tongue
+clipped inside and the lower lip kept above the chin. The `turn` channel (−1…1) gives the lead a shallow head turn of up
+to about 13 degrees, with gaze contributing a small amount. Its chin stays
+anchored; the shared facial plane, projecting nose, hair mass, sideburns,
+clipped cheeks, brows, and eyes move coherently. Ear parallax opposes the
+front facial features, with subtle near/far foreshortening. The pose tracks
+ease turns and restore them on backward seeks.
+
+`figure({ reactions: [[from, to, facialFields]] })` holds an emotional beat
+across gestures, with eased entrance and exit. My Teammate also sets
+`expressWhileSinging: true` for its supporting cast: expressive complaints,
+weary final lines, and ensemble singing ease back to relaxed listening faces.
+Closely spaced words form phrases so the brows do not pulse with every
+syllable. A facepalm or an earlier complaint cannot pin a silent listener's
+mouth into a frown.
+The worn hero renderer receives `smile`, `frown`, `misery`, `wide`, `happy`,
+and `round` as well as the sung opening. Brows pivot around their measured
+centres: inner ends lower for anger and lift for misery. The emotional
+mouth remains active between words, and never hides the singing layer.
+Optional numeric expressions preserve the separate named-reaction API used
+by other songs. Inspect both the drawn export faces and actual worn heads;
+the export stage alone does not exercise the live cast's SVG fits.
 Cloth uses broad radial light and shade instead of hard polygonal facets;
 clipped, softened highlights follow the arm contours through bends. Facial
 shading stays subtle, with warm blush, tapered brows, and hair detail clipped

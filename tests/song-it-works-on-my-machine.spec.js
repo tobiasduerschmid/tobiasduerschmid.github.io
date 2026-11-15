@@ -398,6 +398,110 @@ test('data arrows start inside their corresponding time rows and end before the 
   }
 });
 
+test('repair bandages cover the wall cracks without overlapping the kiosk icons', async ({ page }) => {
+  for (const width of [1280, 320]) {
+    await page.setViewportSize({ width, height: 900 });
+    await seek(page, storyLines.get('ui-3').end - 0.1);
+    const repairs = await page.getByTestId('mk-client-repair').evaluateAll((nodes) => nodes.map((node) => {
+      const client = node.closest('.mk-client');
+      const bandage = node.querySelector('.mk-bandage');
+      const box = node.getBoundingClientRect();
+      const window = client.querySelector('.mk-client-window').getBoundingClientRect();
+      const wall = client.querySelector('.mk-client-wall').getBoundingClientRect();
+      const crack = client.querySelector('.mk-crack-line');
+      const matrix = bandage.getScreenCTM().inverse().multiply(crack.getScreenCTM());
+      const coversCrack = Array.from({ length: 41 }, (_, i) => crack.getPointAtLength(crack.getTotalLength() * i / 40))
+        .some((point) => bandage.isPointInFill(point.matrixTransform(matrix)));
+      return { visible: Number(node.getAttribute('opacity')) > 0.9,
+        belowWindow: box.top > window.bottom, insideWall: box.bottom < wall.bottom, coversCrack };
+    }));
+    expect(repairs).toEqual(Array(3).fill({ visible: true, belowWindow: true, insideWall: true, coversCrack: true }));
+  }
+});
+
+test('joyful eyes stay open and facial features stay on the head through turns and full vowels', async ({ page }) => {
+  const report = await page.evaluate(() => {
+    const { OperaCast: C, SongKit: K } = window;
+    const svg = K.svg('svg', { width: 160, height: 300, viewBox: '0 0 160 300' }, document.body);
+    const body = C.buildFigure(svg, K.svg('g', {}, svg), 'tenor');
+    const face = svg.querySelector('.oc-face-outline');
+    const problems = [], nosePositions = [], chinPositions = [], earPositions = [];
+    const local = (node, point) => point.matrixTransform(face.getScreenCTM().inverse().multiply(node.getScreenCTM()));
+    for (const turn of [-1, -0.5, 0, 0.5, 1]) for (const blink of [0, 0.5, 1]) for (const open of [0, 0.5, 1]) {
+      body.pose({ ...C.REST, turn, happy: 1, wide: 0.8, smile: 1, brow: 0.7 }, 0, open, blink);
+      for (const eye of svg.querySelectorAll('.oc-eye-white')) {
+        const box = eye.getBBox();
+        if (!blink && box.height < 5) problems.push(`joy closed an eye at turn ${turn}`);
+        if (blink === 1 && eye.isPointInFill(new DOMPoint(box.x + box.width / 2, box.y + box.height / 2))) problems.push('blink left an open eye');
+      }
+      for (const node of svg.querySelectorAll('.oc-mouth-inside,.oc-lip-light,.oc-upper-lip-volume,.oc-lower-lip-volume,.oc-eye-white,.oc-brow,.oc-nose')) {
+        if (!node.getAttribute('d')) continue;
+        for (let i = 0; i <= 24; i++) {
+          const point = local(node, node.getPointAtLength(node.getTotalLength() * i / 24));
+          if (!Number.isFinite(point.x + point.y) || !face.isPointInFill(point)) problems.push(`feature outside face: ${node.getAttribute('class')}/${turn}/${open}/${blink}`);
+        }
+      }
+      if (!blink && !open) {
+        const nose = svg.querySelector('.oc-nose');
+        nosePositions.push(local(nose, new DOMPoint(0, -40)).x);
+        const chin = new DOMPoint(0, 0).matrixTransform(face.getScreenCTM());
+        chinPositions.push([chin.x, chin.y]);
+        earPositions.push([...svg.querySelectorAll('.oc-ear')].map((ear) => local(ear, new DOMPoint(-54, -65)).x).reduce((a, b) => a + b) / 2);
+      }
+    }
+    body.pose({ ...C.REST, turn: 1 }, 0, 0, 0);
+    const closedLips = [...svg.querySelectorAll('.oc-upper-lip-volume,.oc-lower-lip-volume')]
+      .map((lip) => lip.getBBox().width > 20 && getComputedStyle(lip).fill !== 'none');
+    svg.remove();
+    return { problems, nosePositions, chinPositions, earPositions, closedLips };
+  });
+  expect(report.problems).toEqual([]);
+  expect(report.nosePositions[0]).toBeLessThan(-2);
+  expect(report.nosePositions.at(-1)).toBeGreaterThan(2);
+  for (let i = 1; i < report.nosePositions.length; i++) expect(report.nosePositions[i]).toBeGreaterThan(report.nosePositions[i - 1]);
+  for (const chin of report.chinPositions) expect(chin).toEqual(report.chinPositions[0]);
+  expect(report.earPositions.at(-1), 'ears sit behind the facial plane, with opposite parallax').toBeLessThan(report.earPositions[0]);
+  expect(report.closedLips, 'closed mouths retain filled upper and lower lips').toEqual([true, true]);
+});
+
+test('supporting cast is expressive while singing and relaxes while listening', async ({ page }) => {
+  await expectTeammatesWearHeads(page);
+  for (const [role, section] of TEAMMATES) {
+    const first = sections.get(section).lines[0];
+    const pauseTime = (first.end + sections.get(section).lines[1].start) / 2;
+    const singingTime = Object.values(first.marks)[1] + 0.12;
+    await seek(page, singingTime);
+    const head = page.getByTestId(`oc-${role}`).getByTestId('song-hero-head');
+    const singing = head.locator('.song-hero-singing-mouth');
+    await expect(singing).toBeVisible();
+    await expect(singing).toHaveAttribute('opacity', '1');
+    await seek(page, pauseTime);
+    const mouth = head.locator('.song-hero-expression-mouth');
+    await expect(mouth).toBeVisible();
+    await expect(mouth.locator('.song-hero-expression-seam'), 'the reaction has visible paint, not only geometry').not.toHaveCSS('fill', 'none');
+    const shape = await mouth.locator('.song-hero-expression-seam').getAttribute('d');
+    const downturned = await mouth.locator('.song-hero-expression-seam').evaluate((seam) => {
+      const length = seam.getTotalLength();
+      const left = seam.getPointAtLength(0), middle = seam.getPointAtLength(length / 2), right = seam.getPointAtLength(length);
+      return left.y > middle.y && right.y > middle.y;
+    });
+    expect(downturned, `${role}: a complaint must not retain the default smile`).toBe(true);
+    await seek(page, singingTime);
+    await expect(singing).toBeVisible();
+    await seek(page, pauseTime);
+    expect(await mouth.locator('.song-hero-expression-seam').getAttribute('d'), 'seeking reproduces the same expression').toBe(shape);
+  }
+  // They are listening during the lead's finale. A facepalm must not pin
+  // every listener into the same unhappy resting mouth indefinitely.
+  await seek(page, mark('refrain-3-3', 'ninetysix') + 0.8);
+  for (const [role] of TEAMMATES) {
+    const seam = page.getByTestId(`oc-${role}`).getByTestId('song-hero-head').locator('.song-hero-expression-seam');
+    await expect(seam).toBeVisible();
+    const relaxed = await seam.evaluate((node) => node.getPointAtLength(0).y <= node.getPointAtLength(node.getTotalLength() / 2).y);
+    expect(relaxed, `${role}: resting face returns to relaxed lips`).toBe(true);
+  }
+});
+
 test('palm gestures have continuous skin and extend the intended digit on both hands', async ({ page }) => {
   const problems = await page.evaluate(() => {
     const { OperaCast: C, SongKit: K } = window;

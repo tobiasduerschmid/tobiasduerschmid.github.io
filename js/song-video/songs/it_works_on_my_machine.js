@@ -468,7 +468,7 @@
       });
       move('tenor', lower + 0.4, 'arms', { right: PICKUP_PALM, hold: 0.3 });
       move('tenor', lower + 0.3, 'mood', { crouch: 1, hold: 0.3 });
-      move('tenor', mark(r(1), 'works'), 'mood', { hold: 2.2, happy: 1, brow: 0.8, smile: 1 });
+      move('tenor', mark(r(1), 'works'), 'mood', { hold: 2.2, happy: 0.85, wide: 0.5, brow: 0.75, smile: 1, turn: n % 2 ? -0.5 : 0.5, nod: -0.25 });
       // "The finest code you've seen!": back on the desk, in a gilded frame; a chef's kiss.
       move('tenor', mark(r(2), 'finest') - 0.1, 'present', { to: [190, 290], hold: 1 });
       move('tenor', mark(r(2), 'seen') - 0.1, 'kiss', { hold: 0.3 });
@@ -479,7 +479,7 @@
       house.footlights(mark(r(4), 'turn'), 'green', 0.6);
       if (n < 3) house.footlights(to + 0.2, 'warm', 0.8);
       move('tenor', mark(r(4), 'green') - 0.2, 'operatic', { high: 1, hold: n === 3 ? line(r(4)).end - mark(r(4), 'green') : 1.4 });
-      move('tenor', mark(r(4), 'green'), 'mood', { hold: n === 3 ? line(r(4)).end - mark(r(4), 'green') : 1.4, happy: 1, brow: 1, blush: 1 });
+      move('tenor', mark(r(4), 'green'), 'mood', { hold: n === 3 ? line(r(4)).end - mark(r(4), 'green') : 1.4, happy: 0.9, wide: 0.65, brow: 0.8, smile: 1, blush: 0.7, turn: n % 2 ? 0.35 : -0.35 });
       spotlight('tenor', from, to);
     }
 
@@ -1144,6 +1144,14 @@
     const wordsOf = (role, voice) => [...C.wordsFor(song.storyboard, voice), ...(role === 'tenor' ? [] : C.wordsFor(song.storyboard, ENSEMBLE))];
     for (const draw of behind) draw();
     for (const draw of lights) draw();
+    const reactions = {
+      pm: { frown: 0.7, smile: -0.55, misery: 0.1 },
+      build: { frown: 0.85, smile: -0.6, misery: 0.1 },
+      test: { frown: 0.65, smile: -0.65, misery: 0.4 },
+      ui: { frown: 0.75, smile: -0.65, misery: 0.2 },
+      backend: { frown: 0.9, smile: -0.65, misery: 0.15 },
+      security: { frown: 1, smile: -0.65, misery: 0.05 },
+    };
     // The Teammate, the lead, is drawn last: in front of everyone around him.
     const castOrder = Object.entries(VOICES).sort(([a], [b]) => (a === 'tenor') - (b === 'tenor'));
     for (const [role, voice] of castOrder) {
@@ -1152,6 +1160,13 @@
       if (!p.places.length) placeAt(role, 0, ...(role === 'tenor' ? HOME.tenor : HOME.mate));
       figures[role] = C.figure(content, {
         role, gestureSpeed: role === 'tenor' ? 1.55 : 1, hero: headFor(role), stage: p.stage, places: p.places,
+        expressWhileSinging: Boolean(reactions[role]),
+        reactions: reactions[role] ? [
+          [start(role) - 0.25, end(role) + 0.35, { brow: 0, ...reactions[role] }],
+          ...(['ui', 'backend', 'test'].includes(role) ? [[line(`${role}-4`).start, p.stage[0][1], { frown: 0.18, smile: -0.85, misery: 0.95, brow: 0.2 }]] : []),
+          [line('refrain-3-1').start - 1.6, Infinity, { brow: 0, ...reactions[role] }],
+          [mark('refrain-3-4', 'green'), line('outro-1').start, { frown: 0.1, smile: -0.9, misery: 0.9, brow: 0.25 }],
+        ] : [],
         moves: p.moves, holds: p.holds, beds: p.beds, words: wordsOf(role, voice), seed: Object.keys(VOICES).indexOf(role),
       });
     }

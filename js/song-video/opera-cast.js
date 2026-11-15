@@ -241,8 +241,10 @@
    *   leftShape     which hand (HANDS)
    *   look, down    the eyes' glance: −1 … 1 left … right, and down
    *   brow          0–1 brows raised; frown 0–1 knitted
-   *   smile         −1 … 1 the mouth's corners down … up (drawn faces)
-   *   wide          0–1 eyes wide; happy 0–1 eyes shut in a smile
+   *   smile         −1 … 1 the mouth's corners down … up
+   *   wide, happy   0–1 alert eyes and raised smiling cheeks
+   *   misery        0–1 tired lids and lifted inner brows
+   *   turn          −1 … 1 a subtle left/right turn of the drawn head
    *   sweat, blush  0–1
    *   nod, tilt     0–1 a dip of the head; its tilt in degrees
    *   crouch        0–1 a give at the knees; hop: how high it jumps
@@ -254,7 +256,7 @@
     right: [4, -6], rightLift: 0, rightHand: -8, rightShape: 'rest',
     left: [4, -6], leftLift: 0, leftHand: -8, leftShape: 'rest',
     look: 0, down: 0, brow: 0, frown: 0, smile: 0.4, wide: 0, happy: 0, round: 0, sweat: 0, blush: 0,
-    nod: 0, tilt: 0, crouch: 0, hop: 0, lean: 0, age: 0, mask: 0,
+    nod: 0, tilt: 0, turn: 0, misery: 0, crouch: 0, hop: 0, lean: 0, age: 0, mask: 0,
   };
   const DISCRETE = new Set(['rightShape', 'leftShape']);
   const poseTracks = new WeakMap();
@@ -455,21 +457,44 @@
    * mouth.
    */
   function mouthShape({ y, halfWidth }, open, smile, round) {
-    const hw = halfWidth * (1 - 0.38 * round);
+    const hw = halfWidth * (1 + 0.1 * Math.max(0, smile)) * (1 - 0.38 * round);
     const corner = y - 3 * smile;
-    const h = 17 * open;
-    const upper = y - 1.6 - 0.18 * h;
-    const lower = y + 0.8 + h;
+    // Keep the lower lip inside the chin even at a full sung vowel.
+    const h = 14.5 * open;
     const f = (n) => n.toFixed(2);
-    if (h < 1.2) {
-      return { line: `M${f(-hw)} ${f(corner)} Q0 ${f(y + 1.2 + 3.4 * smile)} ${f(hw)} ${f(corner)}` };
-    }
-    const inside = `M${f(-hw)} ${f(corner)} C${f(-hw * 0.55)} ${f(upper)} ${f(hw * 0.55)} ${f(upper)} ${f(hw)} ${f(corner)} C${f(hw * 0.7)} ${f(lower + h * 0.08)} ${f(-hw * 0.7)} ${f(lower + h * 0.08)} ${f(-hw)} ${f(corner)} Z`;
+    // Both lips start on the closed smile's exact cubic equivalent.
+    // Opening a syllable separates them continuously, rather than swapping
+    // a curved smile for a flat open-mouth silhouette at a threshold.
+    const closedControl = (corner + 2 * (y + 1.2 + 3.4 * smile)) / 3;
+    const opening = clamp(open / 0.22, 0, 1);
+    const blend = opening * opening * (3 - 2 * opening);
+    const upper = closedControl + (y - 1.6 - 0.18 * h - closedControl) * blend;
+    const lower = closedControl + (y + 0.8 + h - closedControl) * blend;
+    const ux = hw * (1 / 3 + (0.55 - 1 / 3) * blend);
+    const lx = hw * (1 / 3 + (0.7 - 1 / 3) * blend);
+    const bottomControl = lower + h * 0.08;
+    const upperCurve = `M${f(-hw)} ${f(corner)} C${f(-ux)} ${f(upper)} ${f(ux)} ${f(upper)} ${f(hw)} ${f(corner)}`;
+    const lowerCurve = `M${f(-hw)} ${f(corner)} C${f(-lx)} ${f(bottomControl)} ${f(lx)} ${f(bottomControl)} ${f(hw)} ${f(corner)}`;
+    const upperLip = `${upperCurve} C${f(ux)} ${f(upper - 2.6)} ${f(-ux)} ${f(upper - 2.6)} ${f(-hw)} ${f(corner)} Z`;
+    const lowerLip = `${lowerCurve} C${f(lx)} ${f(bottomControl + 4.2)} ${f(-lx)} ${f(bottomControl + 4.2)} ${f(-hw)} ${f(corner)} Z`;
+    // Trim the lower-lip curve to its central 40%, with a small vertical
+    // offset inside the filled lip. Its highlight follows the same volume
+    // when closed, smiling, rounding, or opening fully.
+    const point = (t) => {
+      const u = 1 - t;
+      return [-hw * u ** 3 - 3 * lx * u * u * t + 3 * lx * u * t * t + hw * t ** 3,
+        corner + 3 * (bottomControl - corner) * t * u + 1.25];
+    };
+    const tangent = (t) => [3 * (hw - lx) * ((1 - t) ** 2 + t * t) + 12 * lx * t * (1 - t), 3 * (bottomControl - corner) * (1 - 2 * t)];
+    const a = point(0.3), b = point(0.7), da = tangent(0.3), db = tangent(0.7);
+    const xy = (p) => p.map(f).join(' ');
+    const lip = `M${xy(a)} C${xy(a.map((v, i) => v + da[i] * 0.4 / 3))} ${xy(b.map((v, i) => v - db[i] * 0.4 / 3))} ${xy(b)}`;
+    if (open < 0.006) return { line: upperCurve, upperLip, lowerLip, lip };
+    const inside = `${upperCurve} C${f(lx)} ${f(bottomControl)} ${f(-lx)} ${f(bottomControl)} ${f(-hw)} ${f(corner)} Z`;
     const teeth = `M${f(-hw * 0.78)} ${f(corner + 0.4)} C${f(-hw * 0.45)} ${f(upper + 0.2)} ${f(hw * 0.45)} ${f(upper + 0.2)} ${f(hw * 0.78)} ${f(corner + 0.4)} L${f(hw * 0.7)} ${f(upper + Math.min(4.4, 0.32 * h) + 1)} C${f(hw * 0.3)} ${f(upper + Math.min(4.4, 0.32 * h) + 1.6)} ${f(-hw * 0.3)} ${f(upper + Math.min(4.4, 0.32 * h) + 1.6)} ${f(-hw * 0.7)} ${f(upper + Math.min(4.4, 0.32 * h) + 1)} Z`;
     const tongueTop = lower - Math.min(6, 0.42 * h);
     const tongue = `M${f(-hw * 0.6)} ${f(lower)} C${f(-hw * 0.5)} ${f(tongueTop)} ${f(hw * 0.5)} ${f(tongueTop)} ${f(hw * 0.6)} ${f(lower)} Z`;
-    const lip = `M${f(-hw * 0.6)} ${f(lower + h * 0.06 + 1.4)} C${f(-hw * 0.2)} ${f(lower + h * 0.08 + 3)} ${f(hw * 0.2)} ${f(lower + h * 0.08 + 3)} ${f(hw * 0.6)} ${f(lower + h * 0.06 + 1.4)}`;
-    return { inside, teeth, tongue, lip };
+    return { inside, teeth, tongue, lip, upperLip, lowerLip };
   }
 
   // ------------------------------------------------------------------
@@ -513,7 +538,7 @@
   /**
    * A drawn face (spec: TENOR_HEAD or a teammate's) in `parent`, placed so
    * its chin sits on the neck. Returns set(p, time, mouth) for the pose's
-   * expression: glance, brows, eyes wide or smiling shut, a blink on the
+   * expression: glance, brows, alert eyes with raised smiling cheeks, a blink on the
    * song clock, blush and sweat, and the mouth's openness and shape.
    */
   function drawnHead(parent, spec, paint) {
@@ -526,42 +551,52 @@
       svg('path', { class: 'oc-hair-shade', d: spec.backHairShade }, g);
       svg('path', { class: 'oc-hair-strand', d: spec.backHairStrands }, g);
     }
-    for (const side of [1, -1]) {
-      const ear = svg('g', { transform: side < 0 ? 'scale(-1 1)' : '' }, g);
+    const ears = [1, -1].map((side) => {
+      const ear = svg('g', { class: 'oc-ear', transform: side < 0 ? 'scale(-1 1)' : '' }, g);
       inked(ear, spec.ear, 'oc-face-skin', 'oc-ink oc-ink--face', paint.face);
       svg('path', { class: 'oc-ear-line', d: spec.earInner }, ear);
       if (spec.detailed) {
         svg('path', { class: 'oc-face-plane', d: 'M-50 -72 C-56 -73 -57 -66 -54 -61 L-49 -59 C-51 -64 -48 -67 -50 -72 Z' }, ear);
         svg('path', { class: 'oc-face-contour', d: 'M-51 -69 C-54 -68 -54 -64 -51 -63 M-50 -58 Q-52 -54 -55 -57' }, ear);
+        svg('path', { class: 'oc-ear-highlight', d: 'M-54 -76 C-59 -72 -59 -64 -56 -60 M-52 -53 Q-49 -51 -47 -54' }, ear);
       }
-    }
-    inked(g, spec.face, 'oc-face-skin', 'oc-ink oc-ink--face', paint.face);
+      return { node: ear, side };
+    });
+    inked(g, spec.face, 'oc-face-skin oc-face-outline', 'oc-ink oc-ink--face', paint.face);
     svg('path', { class: 'oc-face-shade', d: spec.jawShade }, g);
-    const cheeks = spec.cheeks.map(([cx, cy]) => svg('ellipse', { class: spec.detailed ? 'oc-cheek-color' : 'oc-blush', ...(spec.detailed ? { fill: paint.blush } : {}), cx, cy, rx: spec.detailed ? 15 : 9, ry: spec.detailed ? 10 : 5.4 }, g));
-    for (const d of spec.sideburns || []) svg('path', { class: 'oc-hair', d }, g);
-    if (spec.detailed) inked(g, spec.hair, 'oc-rendered-hair', 'oc-ink oc-ink--face', paint.hair);
-    else ink(spec.hair, 'oc-hair');
+    const faceClip = svg('clipPath', { id: `oc-face-surface-${++uid}` }, paint.defs);
+    svg('path', { d: spec.face }, faceClip);
+    const cheekPlane = svg('g', { 'clip-path': `url(#${faceClip.id})` }, g);
+    const cheeks = spec.cheeks.map(([cx, cy]) => svg('ellipse', { class: spec.detailed ? 'oc-cheek-color' : 'oc-blush', ...(spec.detailed ? { fill: paint.blush } : {}), cx, cy, rx: spec.detailed ? 15 : 9, ry: spec.detailed ? 10 : 5.4 }, cheekPlane));
+    const sideburns = (spec.sideburns || []).map((d) => svg('path', { class: 'oc-hair oc-sideburn', d }, g));
+    const hair = svg('g', { class: 'oc-hair-volume' }, g);
+    if (spec.detailed) inked(hair, spec.hair, 'oc-rendered-hair', 'oc-ink oc-ink--face', paint.hair);
+    else inked(hair, spec.hair, 'oc-hair', 'oc-ink oc-ink--face');
     const hairClip = svg('clipPath', { id: `oc-hair-detail-${++uid}` }, paint.defs);
     svg('path', { d: spec.hair }, hairClip);
-    const hairDetail = svg('g', { 'clip-path': `url(#${hairClip.id})` }, g);
+    const hairDetail = svg('g', { 'clip-path': `url(#${hairClip.id})` }, hair);
     svg('path', { class: 'oc-hair-shade', d: spec.hairShade }, hairDetail);
     svg('path', { class: 'oc-hair-strand', d: spec.hairStrands }, hairDetail);
     svg('path', { class: 'oc-hair-sheen', d: spec.hairSheen }, hairDetail);
     if (spec.detailed) drawParts(hairDetail, [
       ['oc-hair-fine', 'M-44 -102 C-47 -128 -33 -152 -15 -161 M-36 -108 C-38 -134 -23 -156 -5 -165 M-22 -110 C-22 -133 -7 -157 14 -167 M-5 -110 C-1 -137 17 -155 35 -164 M12 -109 C21 -131 35 -146 49 -151 M28 -104 C39 -120 49 -132 55 -141 M41 -96 Q49 -111 53 -123'],
       ['oc-hair-glint', 'M-43 -130 C-35 -152 -15 -169 5 -173 M-32 -128 C-25 -147 -13 -158 1 -164 M-13 -128 C-5 -145 8 -156 20 -160'],
+      ['oc-hair-flyaway', 'M-46 -116 C-46 -137 -35 -154 -20 -164 M-38 -113 C-37 -136 -23 -158 -8 -166 M-19 -118 C-14 -140 -1 -157 15 -165 M4 -116 C12 -135 26 -150 40 -157 M25 -111 Q39 -129 50 -138'],
     ]);
-    if (spec.curl) svg('path', { class: 'oc-hair-curl', d: spec.curl }, g);
-    // Eyes: the white, then the iris, pupil, and catchlights clipped to it,
-    // then the upper lid's line; a lid of skin closes over it to blink, and
-    // a smiling arc replaces it when the eyes shut happily.
+    if (spec.curl) svg('path', { class: 'oc-hair-curl', d: spec.curl }, hair);
+    // Shallow head turns project one shared facial plane; the nose has a
+    // little more depth. The chin stays fixed, so the neck never separates.
+    const features = svg('g', { class: 'oc-face-features' }, g);
+    // A single aperture drives the sclera, iris clip and lid contours.
+    // Blinks close this shape continuously; joy raises the lower lids but
+    // leaves bright eyes visible, without opaque skin patches or crossfades.
     const eyes = spec.eyes.map((ex) => {
-      const eye = svg('g', {}, g);
+      const eye = svg('g', { class: 'oc-eye' }, features);
       const white = `M${ex - 11} ${spec.eyeY} C${ex - 7} ${spec.eyeY - 6.4} ${ex + 7} ${spec.eyeY - 6.4} ${ex + 11} ${spec.eyeY} C${ex + 7} ${spec.eyeY + 5} ${ex - 7} ${spec.eyeY + 5} ${ex - 11} ${spec.eyeY} Z`;
       const clip = svg('clipPath', { id: `oc-eye-${++uid}` }, paint.defs);
-      svg('path', { d: white }, clip);
+      const aperture = svg('path', { d: white }, clip);
       const open = svg('g', {}, eye);
-      svg('path', { class: 'oc-eye-white', d: white }, open);
+      const sclera = svg('path', { class: 'oc-eye-white', d: white }, open);
       const iris = svg('g', { 'clip-path': `url(#${clip.id})` }, open);
       const look = svg('g', {}, iris);
       svg('circle', { class: spec.detailed ? 'oc-rendered-iris' : 'oc-iris', ...(spec.detailed ? { fill: paint.iris } : {}), cx: ex, cy: spec.eyeY + 0.4, r: 5.2 }, look);
@@ -574,25 +609,21 @@
         svg('path', { class: 'oc-iris-fiber', d: rays }, look);
       }
       svg('circle', { class: 'oc-pupil', cx: ex, cy: spec.eyeY + 0.4, r: 2.6 }, look);
-      svg('circle', { class: 'oc-catchlight', cx: ex - 1.8, cy: spec.eyeY - 1.6, r: spec.detailed ? 1.15 : 1.5 }, look);
+      svg('circle', { class: 'oc-catchlight', cx: ex - 1.8, cy: spec.eyeY - 1.6, r: spec.detailed ? 1.4 : 1.5 }, look);
       svg('circle', { class: 'oc-catchlight oc-catchlight--soft', cx: ex + 1.6, cy: spec.eyeY + 2.2, r: 0.6 }, look);
-      const lid = svg('path', { class: 'oc-lid', d: '' }, open);
-      svg('path', { class: 'oc-lash-line', d: `M${ex - 12} ${spec.eyeY + 0.4} C${ex - 7.6} ${spec.eyeY - 7.2} ${ex + 7.6} ${spec.eyeY - 7.2} ${ex + 12} ${spec.eyeY + 0.4}` }, open);
+      const upper = svg('path', { class: 'oc-lash-line', d: '' }, eye);
       if (spec.lashes) {
         const out = Math.sign(ex);
         const y = spec.eyeY;
         svg('path', { class: 'oc-lash-line', d: `M${ex + out * 10.6} ${y - 1.4} Q${ex + out * 14} ${y - 2.4} ${ex + out * 15.6} ${y - 5.8} M${ex + out * 8} ${y - 3.6} Q${ex + out * 11} ${y - 5.8} ${ex + out * 12} ${y - 8.2}` }, open);
       }
-      if (spec.detailed) {
-        svg('path', { class: 'oc-eye-fold', d: `M${ex - 8.5} ${spec.eyeY - 8.5} Q${ex} ${spec.eyeY - 12} ${ex + 8} ${spec.eyeY - 8.3}` }, eye);
-        svg('path', { class: 'oc-lower-lid', d: `M${ex - 8.5} ${spec.eyeY + 1.5} Q${ex} ${spec.eyeY + 5.8} ${ex + 8.5} ${spec.eyeY + 1.5}` }, open);
-        svg('ellipse', { class: 'oc-tear-duct', cx: ex - Math.sign(ex) * 9.6, cy: spec.eyeY + 0.6, rx: 0.9, ry: 0.65 }, open);
-      }
-      const shut = svg('path', { class: 'oc-eye-shut', d: `M${ex - 11} ${spec.eyeY - 1} C${ex - 6} ${spec.eyeY - 7} ${ex + 6} ${spec.eyeY - 7} ${ex + 11} ${spec.eyeY - 1}`, opacity: 0 }, eye);
-      return { ex, open, look, lid, shut, white };
+      const fold = spec.detailed ? svg('path', { class: 'oc-eye-fold', d: '' }, eye) : null;
+      const lower = svg('path', { class: 'oc-lower-lid', d: '' }, eye);
+      const duct = spec.detailed ? svg('ellipse', { class: 'oc-tear-duct', cx: ex - Math.sign(ex) * 9.6, cy: spec.eyeY + 0.4, rx: 0.8, ry: 0.5 }, eye) : null;
+      return { ex, eye, look, aperture, sclera, upper, lower, fold, duct };
     });
     const brows = spec.brows.map((d, i) => {
-      const brow = svg('g', {}, g);
+      const brow = svg('g', { class: 'oc-eyebrow' }, features);
       svg('path', { class: 'oc-brow', d }, brow);
       if (spec.detailed) {
         const clip = svg('clipPath', { id: `oc-brow-${++uid}` }, paint.defs);
@@ -604,72 +635,121 @@
       }
       return brow;
     });
+    const nose = svg('g', { class: 'oc-nose-plane' }, features);
     if (spec.detailed) {
-      svg('path', { class: 'oc-nose', d: spec.nose, fill: paint.nose }, g);
-      svg('path', { class: 'oc-nose-contour', d: 'M3 -59 C4 -53 5.3 -48 7.8 -42.8 C8.4 -39 4.4 -36.8 0 -38.4 M-6.5 -44 Q-8 -41 -5.8 -39.4' }, g);
-    } else inked(g, spec.nose, 'oc-face-skin oc-nose', 'oc-ink oc-ink--face', paint.face);
-    svg('path', { class: 'oc-nose-light', d: spec.noseLight }, g);
-    svg('path', { class: 'oc-nostril', d: spec.nostrils }, g);
-    // The mouth: its inside, teeth, and tongue while open, the lower lip's
-    // light, or just its line while shut; the moustache over it.
-    const mouth = svg('g', { class: 'oc-mouth' }, g);
+      svg('path', { class: 'oc-nose', d: spec.nose, fill: paint.nose }, nose);
+      svg('path', { class: 'oc-nose-contour', d: 'M3 -59 C4 -53 5.3 -48 7.8 -42.8 C8.4 -39 4.4 -36.8 0 -38.4 M-6.5 -44 Q-8 -41 -5.8 -39.4' }, nose);
+    } else inked(nose, spec.nose, 'oc-face-skin oc-nose', 'oc-ink oc-ink--face', paint.face);
+    svg('path', { class: 'oc-nose-light', d: spec.noseLight }, nose);
+    svg('path', { class: 'oc-nostril', d: spec.nostrils }, nose);
+    // The mouth keeps filled lips when shut. Teeth and tongue stay clipped
+    // to its opening, with the moustache above the moving lip surfaces.
+    const mouth = svg('g', { class: 'oc-mouth' }, features);
+    const upperLip = svg('path', { class: 'oc-upper-lip-volume', d: '' }, mouth);
+    const lowerLip = svg('path', { class: 'oc-lower-lip-volume', d: '' }, mouth);
     const inside = svg('path', { class: 'oc-mouth-inside', d: '' }, mouth);
     const mouthClip = svg('clipPath', { id: `oc-mouth-${++uid}` }, paint.defs);
     const clipPathNode = svg('path', { d: '' }, mouthClip);
     const inner = svg('g', { 'clip-path': `url(#${mouthClip.id})` }, mouth);
     const teeth = svg('path', { class: 'oc-teeth', d: '' }, inner);
+    const toothShade = svg('path', { class: 'oc-tooth-shade', d: '' }, inner);
     const tongue = svg('path', { class: 'oc-tongue', d: '' }, inner);
     const lip = svg('path', { class: 'oc-lip-light', d: '' }, mouth);
     const line = svg('path', { class: 'oc-mouth-line', d: '' }, mouth);
+    const smileCreases = spec.detailed ? svg('path', { class: 'oc-smile-crease', d: '' }, features) : null;
     if (spec.moustache) {
-      inked(g, spec.moustache, 'oc-hair oc-moustache', 'oc-ink oc-ink--face');
-      svg('path', { class: 'oc-hair-sheen', d: spec.moustacheSheen }, g);
-      if (spec.detailed) svg('path', { class: 'oc-moustache-hair', d: 'M-3 -32 Q-12 -36 -23 -31 M-7 -30 Q-16 -34 -26 -29 M-14 -29 Q-23 -32 -30 -28 M3 -32 Q12 -36 23 -31 M7 -30 Q16 -34 26 -29 M14 -29 Q23 -32 30 -28' }, g);
+      inked(features, spec.moustache, 'oc-hair oc-moustache', 'oc-ink oc-ink--face');
+      svg('path', { class: 'oc-hair-sheen', d: spec.moustacheSheen }, features);
+      if (spec.detailed) svg('path', { class: 'oc-moustache-hair', d: 'M-3 -32 Q-12 -36 -23 -31 M-7 -30 Q-16 -34 -26 -29 M-14 -29 Q-23 -32 -30 -28 M3 -32 Q12 -36 23 -31 M7 -30 Q16 -34 26 -29 M14 -29 Q23 -32 30 -28' }, features);
     }
-    if (spec.dimple) svg('path', { class: 'oc-dimple', d: spec.dimple }, g);
+    const dimple = spec.dimple ? svg('path', { class: 'oc-dimple', d: spec.dimple }, features) : null;
     const sweat = svg('path', { class: 'oc-sweat', d: 'M44 -100 C47 -94 49 -90 49 -87 C49 -84 47 -82 44.5 -82 C42 -82 40 -84 40.4 -87 C40.6 -90 42 -94 44 -100 Z', opacity: 0 }, g);
 
     let drawn = '';
     return (p, blink, open) => {
-      const state = [p.look, p.down, p.brow, p.frown, p.smile, p.wide, p.happy, p.sweat, p.blush, blink, open, p.round || 0].map((v) => v.toFixed(3)).join('|');
+      const state = [p.look, p.down, p.brow, p.frown, p.smile, p.wide, p.happy, p.sweat, p.blush, blink, open, p.round || 0, p.turn || 0, p.misery || 0].map((v) => v.toFixed(3)).join('|');
       if (state === drawn) return;
       drawn = state;
       const happy = clamp(p.happy, 0, 1);
+      const misery = clamp(p.misery || 0, 0, 1);
+      const yaw = spec.detailed ? clamp((p.turn || 0) + p.look * 0.45, -1, 1) : 0;
+      const angle = yaw * Math.PI / 14;
+      const depth = Math.sin(angle) / Math.sin(Math.PI / 14);
+      g.setAttribute('transform', `translate(${HEAD.x} ${HEAD.chin}) scale(${scale.toFixed(4)}) scale(${Math.cos(angle).toFixed(4)} 1)`);
+      features.setAttribute('transform', `translate(${(4.4 * depth).toFixed(3)} 0)`);
+      nose.setAttribute('transform', `translate(${(2 * depth).toFixed(3)} 0)`);
+      // The skull, front hair, cheek planes and projecting features occupy
+      // different depths. Ears sit behind the face (and are occluded by it),
+      // so their parallax opposes the nose. Each ear keeps all its folds.
+      hair.setAttribute('transform', `translate(${(1.5 * depth).toFixed(3)} -105) scale(${(1 - 0.018 * depth * depth).toFixed(3)} 1) translate(0 105)`);
+      sideburns.forEach((part) => part.setAttribute('transform', `translate(${(0.65 * depth).toFixed(3)} 0)`));
+      cheeks.forEach((part, i) => {
+        const [x, y] = spec.cheeks[i];
+        const far = Math.max(0, Math.sign(x) * depth);
+        part.setAttribute('transform', `translate(${(x + 3.2 * depth).toFixed(3)} ${y}) scale(${(1 - 0.1 * far).toFixed(3)} 1) translate(${-x} ${-y})`);
+      });
+      for (const ear of ears) {
+        const far = Math.max(0, -ear.side * depth);
+        ear.node.setAttribute('transform', `translate(${(-1.1 * depth).toFixed(3)} 0) scale(${ear.side} 1) translate(-47 -65) scale(${(1 + 0.16 * depth * ear.side).toFixed(3)} ${(1 - 0.025 * far).toFixed(3)}) translate(47 65)`);
+      }
+      sweat.setAttribute('transform', `translate(${(1.5 * depth).toFixed(3)} 0)`);
       for (const eye of eyes) {
         eye.look.setAttribute('transform', `translate(${(4.2 * p.look).toFixed(2)} ${(2.4 * clamp(p.down, -1, 1)).toFixed(2)})`);
-        // The lid comes down from above the eye, to the lower lid at a blink.
-        const shut = clamp(Math.max(blink, happy), 0, 1);
+        const shut = clamp(blink, 0, 1);
         const wide = clamp(p.wide, 0, 1);
-        const top = spec.eyeY - 7.4 - 1.6 * wide;
-        const edge = top + (13.2 + 1.6 * wide) * shut + (wide ? 0 : 1.6);
         const ex = eye.ex;
-        eye.lid.setAttribute('d', `M${ex - 12} ${spec.eyeY + 1} L${ex - 12} ${top} L${ex + 12} ${top} L${ex + 12} ${spec.eyeY + 1} C${ex + 8} ${edge} ${ex - 8} ${edge} ${ex - 12} ${spec.eyeY + 1} Z`);
-        eye.open.setAttribute('opacity', happy > 0.5 ? '0' : '1');
-        eye.shut.setAttribute('opacity', happy > 0.5 ? '1' : '0');
-        eye.open.setAttribute('transform', wide ? `translate(${ex} ${spec.eyeY}) scale(${1 + 0.1 * wide}) translate(${-ex} ${-spec.eyeY})` : '');
+        const f = (v) => v.toFixed(3);
+        const y = spec.eyeY + 0.4 * shut;
+        const top = spec.eyeY - (7.8 + 2.6 * wide - happy - 2.8 * misery) * (1 - shut) + 2.2 * shut;
+        const bottom = spec.eyeY + (5.2 - 1.7 * happy - p.frown) * (1 - shut) + 2.2 * shut;
+        const slant = Math.sign(ex) * (1.2 * p.frown - misery) * (1 - shut);
+        const upper = `M${ex - 11} ${f(y)} C${ex - 7} ${f(top + slant)} ${ex + 7} ${f(top - slant)} ${ex + 11} ${f(y)}`;
+        const lower = `M${ex - 11} ${f(y)} C${ex - 7} ${f(bottom)} ${ex + 7} ${f(bottom)} ${ex + 11} ${f(y)}`;
+        const aperture = `${upper} C${ex + 7} ${f(bottom)} ${ex - 7} ${f(bottom)} ${ex - 11} ${f(y)} Z`;
+        eye.aperture.setAttribute('d', aperture);
+        eye.sclera.setAttribute('d', aperture);
+        eye.upper.setAttribute('d', upper);
+        eye.lower.setAttribute('d', lower);
+        eye.lower.style.opacity = f(0.42 * (1 - shut));
+        if (eye.duct) eye.duct.style.opacity = f(0.4 * (1 - shut));
+        eye.fold?.setAttribute('d', `M${ex - 8.5} ${f(y - 6)} Q${ex} ${f(top - 4.5)} ${ex + 8.5} ${f(y - 6)}`);
+        eye.eye.setAttribute('transform', `translate(${ex} ${spec.eyeY}) scale(${f(1 - 0.075 * Math.max(0, Math.sign(ex) * yaw))} 1) translate(${-ex} ${-spec.eyeY})`);
       }
       // Brows: raised, or knitted (in and down at their inner ends).
       brows.forEach((brow, i) => {
         const side = i === 0 ? -1 : 1;
-        const lift = -7 * p.brow + 3.4 * p.frown;
-        const turn = side * (-9 * p.frown + 4 * p.brow);
-        brow.setAttribute('transform', `translate(0 ${lift.toFixed(2)}) rotate(${turn.toFixed(2)} ${side * 22} -86)`);
+        const lift = -6 * p.brow + 2.8 * p.frown - 1.8 * misery;
+        const turn = side * (-12 * p.frown + 4 * p.brow + 12 * misery);
+        const farWidth = 1 - 0.075 * Math.max(0, side * depth);
+        brow.setAttribute('transform', `translate(0 ${lift.toFixed(2)}) rotate(${turn.toFixed(2)} ${side * 22} -86) translate(${side * 22} -86) scale(${farWidth.toFixed(3)} 1) translate(${-side * 22} 86)`);
       });
       for (const cheek of cheeks) cheek.setAttribute('opacity', (0.32 + 0.5 * clamp(p.blush, 0, 1)).toFixed(2));
       sweat.setAttribute('opacity', clamp(p.sweat, 0, 1).toFixed(2));
-      const shape = mouthShape(spec.mouth, open, p.smile, p.round || 0);
+      const smile = clamp(p.smile - 0.35 * misery, -1, 1);
+      // A pleased resting grin shows a slim row of upper teeth; syllables
+      // still supply the full range of opening and rounding.
+      const restingGrin = spec.detailed ? 0.16 * happy * Math.max(0, smile) * (1 - (p.round || 0)) : 0;
+      const shape = mouthShape(spec.mouth, Math.max(open, restingGrin), smile, p.round || 0);
+      upperLip.setAttribute('d', spec.detailed ? shape.upperLip : '');
+      lowerLip.setAttribute('d', spec.detailed ? shape.lowerLip : '');
+      lip.setAttribute('d', shape.lip);
+      if (dimple) dimple.style.opacity = (0.6 * (1 - 0.85 * open)).toFixed(3);
+      if (smileCreases) {
+        const corner = spec.mouth.y - 3 * smile;
+        smileCreases.setAttribute('d', `M-18 ${corner - 2} Q-20 ${corner + 1} -18.5 ${corner + 4} M18 ${corner - 2} Q20 ${corner + 1} 18.5 ${corner + 4}`);
+        smileCreases.style.opacity = (0.2 + 0.4 * Math.abs(smile)).toFixed(3);
+      }
       if (shape.line) {
         line.setAttribute('d', shape.line);
-        for (const node of [inside, teeth, tongue, lip]) node.setAttribute('d', '');
-        if (spec.detailed) lip.setAttribute('d', `M-7 ${spec.mouth.y + 2.2} Q0 ${spec.mouth.y + 4} 7 ${spec.mouth.y + 2.2}`);
+        for (const node of [inside, teeth, toothShade, tongue]) node.setAttribute('d', '');
         clipPathNode.setAttribute('d', '');
       } else {
         line.setAttribute('d', '');
         inside.setAttribute('d', shape.inside);
         clipPathNode.setAttribute('d', shape.inside);
         teeth.setAttribute('d', shape.teeth);
+        toothShade.setAttribute('d', shape.teeth);
         tongue.setAttribute('d', shape.tongue);
-        lip.setAttribute('d', shape.lip);
       }
     };
   }
@@ -1465,7 +1545,8 @@
       const tilt = `translate(0 ${(1.8 * p.nod).toFixed(2)}) rotate(${p.tilt.toFixed(2)} ${HEAD.x} ${HEAD.chin})`;
       headGroup.setAttribute('transform', tilt);
       wornUnder.setAttribute('transform', tilt);
-      if (worn) worn(time, { look: p.look, down: p.down, brow: p.brow, frown: p.frown, sing: open }, reducedMotion.matches);
+      if (worn) worn(time, { look: p.look, down: p.down, brow: p.brow, frown: p.frown,
+        smile: p.smile, misery: p.misery, wide: p.wide, happy: p.happy, round: p.round, sing: open }, reducedMotion.matches);
       else setFace(p, blink, open);
       age(p.age || 0);
       // The mask slides down from the forehead over the eyes (and glasses).
@@ -1713,7 +1794,7 @@
     right: REST.right, rightLift: 0, rightHand: REST.rightHand, rightShape: 'rest',
     left: REST.left, leftLift: 0, leftHand: REST.leftHand, leftShape: 'rest',
   };
-  const FACE_REST = { look: 0, down: 0, brow: 0, frown: 0, smile: 0.4, wide: 0, happy: 0, round: 0, tilt: 0, nod: 0, lean: 0, crouch: 0 };
+  const FACE_REST = { look: 0, down: 0, brow: 0, frown: 0, smile: 0.4, wide: 0, happy: 0, round: 0, tilt: 0, turn: 0, misery: 0, nod: 0, lean: 0, crouch: 0 };
   /**
    * One arm's fields, named for its side: the arm, how far it comes
    * forward, its hand shape, and the wrist's turn, given directly (hand)
@@ -2015,6 +2096,9 @@
    *             or (time, reducedMotion) => { x, y, scale, walking } for a
    *             performer following a moving surface; walking is 0–1
    *   moves     [[time, name, options]] from MOVES
+   *   reactions [[from, to, facialFields]]: expressions blended over gestures
+   *   expressWhileSinging  relax facial emotion while listening; vocal
+   *                        phrases ease in/out without pulsing per syllable
    *   gestureSpeed  transition speed (default 1); preserves anticipated cue landings
    *   holds     [[time, side, prop]]: a prop in a hand from then on (null
    *             empties it)
@@ -2026,7 +2110,7 @@
    *             (or its stage exit, when the bed glides off with it)
    * Returns the wrapper and where() (its place at a time).
    */
-  function figure(parent, { role, gender = 'man', hero, stage = [], places, moves = [], gestureSpeed = 1, holds = [], words = [], singInReducedMotion = true, beds = [], seed = 0 }) {
+  function figure(parent, { role, gender = 'man', hero, stage = [], places, moves = [], reactions = [], expressWhileSinging = false, gestureSpeed = 1, holds = [], words = [], singInReducedMotion = true, beds = [], seed = 0 }) {
     const wrap = el('div', `oc-figure oc-figure--${role} is-staged`, parent);
     wrap.dataset.testid = `oc-${role}`;
     const fig = svg('svg', { class: 'oc-art', viewBox: '0 0 160 300', width: 160, height: 300, 'aria-hidden': 'true' }, wrap);
@@ -2174,6 +2258,12 @@
       }),
     ].sort((a, b) => a[0] - b[0]);
     const sortedWords = [...words].sort((a, b) => a[0] - b[0]);
+    const phrases = [];
+    for (const [from, to] of sortedWords) {
+      const previous = phrases.at(-1);
+      if (previous && from - previous[1] < 0.28) previous[1] = Math.max(previous[1], to);
+      else phrases.push([from, to]);
+    }
 
     // On stage: each window fades the wrapper in and out (so the scene
     // culls it while it is off), and an entrance or exit glides it from or
@@ -2213,6 +2303,22 @@
       fig.setAttribute('height', (300 * scale).toFixed(2));
 
       const p = poseAt(keys, t, reduced);
+      // Sustained emotional beats survive a hand gesture's return to rest.
+      // They are reconstructed from song time, never accumulated per frame.
+      for (const [from, to, face] of reactions) {
+        const weight = reduced ? Number(t >= from && t < to)
+          : easeInOutCubic(progress(t, from, 0.45)) * (1 - easeInOutCubic(progress(t, to - 0.45, 0.45)));
+        if (weight) for (const [field, target] of Object.entries(face)) p[field] += (target - p[field]) * weight;
+      }
+      if (expressWhileSinging) {
+        const speaking = phrases.reduce((weight, [from, to]) => Math.max(weight, reduced
+          ? Number(t >= from && t < to)
+          : easeInOutCubic(progress(t, from - 0.14, 0.2)) * (1 - easeInOutCubic(progress(t, to - 0.04, 0.24)))), 0);
+        for (const field of ['brow', 'frown', 'smile', 'misery', 'wide', 'happy', 'round']) {
+          const relaxed = field === 'smile' ? 0.25 : REST[field];
+          p[field] = relaxed + (p[field] - relaxed) * speaking;
+        }
+      }
       const bed = inBed(t);
       if (bedBack) {
         bedBack.setAttribute('opacity', bed.shown.toFixed(3));

@@ -83,9 +83,7 @@
 .oc-pupil { fill: #140b06; }
 .oc-catchlight { fill: #ffffff; }
 .oc-catchlight--soft { opacity: 0.55; }
-.oc-lid { fill: var(--oc-skin); }
 .oc-lash-line { fill: none; stroke: #23140c; stroke-width: 2.4; stroke-linecap: round; }
-.oc-eye-shut { fill: none; stroke: #23140c; stroke-width: 2.6; stroke-linecap: round; }
 .oc-brow { fill: var(--oc-hair, #3a2214); stroke: var(--oc-hair-dark, #1e100a); stroke-width: 1; stroke-linejoin: round; }
 
 .oc-mouth-inside { fill: #4a1418; stroke: #2b0c0e; stroke-width: 1.4; stroke-linejoin: round; }
@@ -113,7 +111,14 @@
 .oc-face-contour,
 .oc-nose-contour,
 .oc-eye-fold,
+.oc-smile-crease,
 .oc-lower-lid { fill: none; stroke: var(--oc-skin-line); stroke-width: 1.1; stroke-linecap: round; opacity: 0.32; }
+.oc-ear-highlight { fill: none; stroke: var(--oc-skin-light); stroke-width: 1.3; stroke-linecap: round; opacity: 0.7; }
+.oc-smile-crease { stroke-width: 0.9; }
+.oc-tooth-shade { fill: none; stroke: #c9b9ad; stroke-width: 0.55; stroke-linejoin: round; opacity: 0.6; }
+.oc-lower-lip-volume { fill: #df9a89; opacity: 0.75; }
+.oc-upper-lip-volume { fill: #ba7566; opacity: 0.68; }
+.oc-hair-flyaway { fill: none; stroke: var(--oc-hair-light); stroke-width: 0.55; stroke-linecap: round; opacity: 0.4; }
 .oc-nose-contour { stroke-width: 1.2; opacity: 0.55; }
 .oc-lower-lid { stroke-width: 0.9; opacity: 0.42; }
 .oc-tear-duct { fill: var(--oc-skin-line); opacity: 0.4; }
@@ -132,7 +137,7 @@
 .oc-face--detailed .oc-nose { opacity: 0.45; }
 .oc-face--detailed .oc-nostril { stroke-width: 1.1; opacity: 0.7; }
 .oc-face--detailed .oc-nose-light { stroke-width: 1.5; opacity: 0.5; }
-.oc-face--detailed .oc-mouth-line { stroke: #8b4f42; stroke-width: 1.7; }
+.oc-face--detailed .oc-mouth-line { stroke: #8b4f42; stroke-width: 1.2; }
 .oc-face--detailed .oc-lip-light { stroke-width: 1.2; opacity: 0.65; }
 .oc-face--detailed .oc-moustache + .oc-hair-sheen { stroke-width: 1.4; opacity: 0.5; }
 

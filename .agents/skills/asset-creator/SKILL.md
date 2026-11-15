@@ -84,6 +84,14 @@ through transitions. Apply the review to all affected cast members and both
 mirrored sides, with extra samples at extreme poses. Numerical checks and
 visual inspection are both required; a plausible endpoint is insufficient.
 
+## Facial expressions and head attachment
+
+For facial art or motion, follow [emotions.md](./references/character/emotions.md).
+Coordinate eyes, brows, cheeks, and lips; keep joy distinct from blinking and
+preserve emotion during singing. Small turns must retain neck attachment and
+coherent feature depth. Inspect actual cast renderers at extreme poses and
+intermediate frames, including half blinks and very small mouth openings.
+
 ## Complexity tiers
 
 The same descriptor often needs to render at multiple complexity levels. Most products eventually need this — tiny avatars in a roster, standard avatars in a dashboard, rich avatars on a profile page.

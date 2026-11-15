@@ -528,13 +528,15 @@
     const fitBeard = beardMouthOpening(svg, mouth);
     let fitted = false;
     let active = false;
-    return (expression, from, blend, singing) => {
+    return (expression, from, blend, singing, emotion) => {
       fitBeard?.();
       const end = shapes[expression] ? expression : 'neutral';
       const start = shapes[from] ? from : 'neutral';
-      const weight = Number(start !== 'neutral') * (1 - blend) + Number(end !== 'neutral') * blend;
-      reaction.setAttribute('display', weight ? 'inline' : 'none');
-      singingLayer?.setAttribute('opacity', String(1 - weight));
+      const weight = emotion ? 1 : Number(start !== 'neutral') * (1 - blend) + Number(end !== 'neutral') * blend;
+      reaction.setAttribute('display', weight && !singing ? 'inline' : 'none');
+      // Mood must not mute a sung word. The singing mouth receives the
+      // same emotion; the closed reaction is only used between syllables.
+      singingLayer?.setAttribute('opacity', '1');
       if (!weight) {
         if (active && !singing) mouth.setAttribute('opacity', '1');
         active = false;
@@ -552,7 +554,15 @@
       active = true;
       mouth.setAttribute('opacity', singing ? '0' : String(1 - weight));
       reaction.setAttribute('opacity', String(weight));
-      const landmarks = shapes[start].map((value, i) => value + (shapes[end][i] - value) * blend);
+      let landmarks = shapes[start].map((value, i) => value + (shapes[end][i] - value) * blend);
+      if (emotion) {
+        const { smile, frown, misery } = emotion;
+        const joy = Math.max(0, smile), sad = Math.max(0, -smile);
+        const corner = 0.18 * sad + 0.07 * frown + 0.12 * misery - 0.07 * joy;
+        landmarks = [0.96 + 0.14 * joy - 0.08 * misery, corner,
+          0.13 * joy - 0.07 * sad - 0.06 * misery, corner,
+          0.11 - 0.045 * frown, 0.17 - 0.06 * frown];
+      }
       for (const [part, d] of Object.entries(closedLipPaths(landmarks))) paths[part].setAttribute('d', d);
     };
   }
@@ -595,7 +605,7 @@
     // singing mouth. Otherwise the open mouth is measured from the drawn one.
     const declared = mouth.getAttribute('data-hero-singing-mouth')?.split(/\s+/).map(Number);
     let box = declared?.length === 3 && declared.every(Number.isFinite) ? { x: declared[0], y: declared[1], w: declared[2] } : null;
-    return (amount) => {
+    return (amount, emotion) => {
       if (!box) {
         if (!amount) return;
         const measured = mouth.getBBox();
@@ -607,10 +617,14 @@
       open.setAttribute('display', shown ? 'inline' : 'none');
       if (!shown) return;
       const { x, y, w } = box;
-      const hw = w * 0.82;
+      open.setAttribute('transform', mouth.getAttribute('transform') || '');
+      const smile = emotion?.smile || 0;
+      const round = emotion?.round || 0;
+      const corner = w * (-0.12 * smile + 0.08 * (emotion?.misery || 0));
+      const hw = w * (0.82 + 0.06 * Math.max(0, smile)) * (1 - 0.3 * round);
       const depth = w * 0.95 * amount;
       const f = (n) => n.toFixed(2);
-      const lens = (inset, top, bottom) => `M${f(x - hw + inset)} ${f(y)} C${f(x - hw * 0.5)} ${f(y - top)} ${f(x + hw * 0.5)} ${f(y - top)} ${f(x + hw - inset)} ${f(y)} C${f(x + hw * 0.62)} ${f(y + bottom)} ${f(x - hw * 0.62)} ${f(y + bottom)} ${f(x - hw + inset)} ${f(y)} Z`;
+      const lens = (inset, top, bottom) => `M${f(x - hw + inset)} ${f(y + corner)} C${f(x - hw * 0.5)} ${f(y - top)} ${f(x + hw * 0.5)} ${f(y - top)} ${f(x + hw - inset)} ${f(y + corner)} C${f(x + hw * 0.62)} ${f(y + bottom)} ${f(x - hw * 0.62)} ${f(y + bottom)} ${f(x - hw + inset)} ${f(y + corner)} Z`;
       lips.setAttribute('d', lens(-1.4, depth * 0.24 + 3, depth + 3.4));
       inside.setAttribute('d', lens(0.6, depth * 0.18, depth));
       opening.setAttribute('d', inside.getAttribute('d'));
@@ -629,6 +643,9 @@
    * 'thoughtful', 'puzzled', or 'worried' closed mouth; 'neutral' restores it.
    * expressionFrom and expressionMix (0–1) morph between reactions on the
    * song clock, including when seeking backward.
+   * Supplying numeric smile (−1…1) instead uses continuous cast expressions:
+   * misery lifts the inner brows and droops the lids, wide/happy shape the
+   * eyes, and round narrows a sung vowel. Omit smile to keep named reactions.
    */
   function wornMotion(svg) {
     const eyes = eyeParts(svg);
@@ -637,22 +654,53 @@
     const pucker = mouthPucker(svg);
     const singing = singingMouth(svg);
     const expression = expressionMouth(svg);
-    // Each brow knits about its inner end (FACE.x ± 10, at brow height).
-    const knit = (side, frown) => frown ? ` rotate(${(side * 9 * frown).toFixed(2)} ${FACE.x - side * 10} 176)` : '';
+    // Each selected brow is fitted differently. Measure its own centre,
+    // preserving the hero renderer's outer fit transform.
+    const browPivots = [];
+    const eyeLayers = [eyes.open, eyes.lashes].filter(Boolean).map((layer) => {
+      const wrapper = document.createElementNS(SVG_NS, 'g');
+      layer.before(wrapper);
+      wrapper.appendChild(layer);
+      return { wrapper, pivot: null };
+    });
     let drawn = '';
-    return (time, { look = 0, down = 0, wink = 0, brow = 0, frown = 0, hush = 0, sing = 0, expression: mood = 'neutral', expressionFrom = mood, expressionMix = 1 } = {}, reduced = false) => {
+    return (time, { look = 0, down = 0, wink = 0, brow = 0, frown = 0, hush = 0, sing = 0, smile = null, misery = 0, wide = 0, happy = 0, round = 0, expression: mood = 'neutral', expressionFrom = mood, expressionMix = 1 } = {}, reduced = false) => {
       const blink = reduced ? 0 : blinkAt(time);
       const blend = reduced ? 1 : Math.max(0, Math.min(1, expressionMix));
-      const state = `${look}|${down}|${blink}|${wink}|${brow}|${frown}|${hush}|${sing}|${mood}|${expressionFrom}|${blend}`;
+      const state = `${look}|${down}|${blink}|${wink}|${brow}|${frown}|${hush}|${sing}|${mood}|${expressionFrom}|${blend}|${smile}|${misery}|${wide}|${happy}|${round}`;
       if (state === drawn) return;
       drawn = state;
       glance(eyes.gaze, look * 2.8, down * 2.4);
       shut(blink, Math.max(blink, wink));
-      brows?.[0].setAttribute('transform', `translate(0 ${(-6 * brow + 3 * frown).toFixed(2)})${knit(-1, frown)}`);
-      brows?.[1].setAttribute('transform', `translate(0 ${(2 * wink + 3 * frown).toFixed(2)})${knit(1, frown)}`);
+      const emotion = smile === null ? null : { smile, misery, frown, round };
+      brows?.forEach((node, i) => {
+        if (!browPivots[i]) {
+          const box = node.getBBox();
+          if (!box.width) return;
+          browPivots[i] = [box.x + box.width / 2, box.y + box.height / 2];
+        }
+        const [x, y] = browPivots[i];
+        // Anger lowers the inner ends; misery raises them. SVG's positive
+        // rotation is clockwise, so the picture's left brow turns positive.
+        const angle = (i ? -1 : 1) * ((emotion ? 20 : 13) * frown - 15 * misery);
+        const raised = emotion || i === 0 ? brow : 0;
+        const lift = -6 * raised + (emotion ? 4 : 2.4) * frown - 2 * misery + (i ? 2 * wink : 0);
+        const inward = emotion ? (i ? -1 : 1) * 1.2 * frown : 0;
+        node.setAttribute('transform', `translate(${inward.toFixed(2)} ${lift.toFixed(2)}) rotate(${angle.toFixed(2)} ${x} ${y})`);
+      });
+      for (const eye of eyeLayers) {
+        if (!eye.pivot) {
+          const box = eye.wrapper.getBBox();
+          if (!box.width) continue;
+          eye.pivot = [box.x + box.width / 2, box.y + box.height / 2];
+        }
+        const [x, y] = eye.pivot;
+        const height = 1 + 0.12 * wide - 0.08 * happy - 0.1 * frown - 0.2 * misery;
+        eye.wrapper.setAttribute('transform', `translate(${x} ${y + 0.8 * misery}) scale(1 ${height.toFixed(3)}) translate(${-x} ${-y})`);
+      }
       pucker?.(hush);
-      singing?.(sing);
-      expression?.(mood, expressionFrom, blend, sing > 0.08);
+      singing?.(sing, emotion);
+      expression?.(mood, expressionFrom, blend, sing > 0.08, emotion);
     };
   }
 
