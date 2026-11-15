@@ -46,6 +46,14 @@ svg.song-hero-head [data-hero-slot="hair-root"] path { vector-effect: none; }
 .song-hero-expression-lower { opacity: .78; }
 .song-hero-expression-reflection { fill: var(--hero-lip-reflection, #d68b75); opacity: .38; }
 .song-hero-expression-seam { fill: var(--hero-lip-seam, #492016); opacity: .9; }
+/* Small accents use the hero's skin-relative ink in either site theme. */
+.song-hero-expression-mouth .song-hero-expression-edge {
+  fill: none;
+  stroke: var(--hero-face-accent, #54251f);
+  stroke-width: .055;
+  stroke-linecap: round;
+  opacity: .9;
+}
 .student-ground { fill: #030913; opacity: .42; }
 .student-arms { transform-box: view-box; transform-origin: 130px 160px; transform: scaleX(var(--hero-body-fit-x, 1)); }
 .student-sleeve { fill: var(--hero-arm, var(--hero-suit, #218bb3)); stroke: var(--hero-arm-dark, var(--hero-suit-dark, #0e4d69)); stroke-width: 2; stroke-linejoin: round; }

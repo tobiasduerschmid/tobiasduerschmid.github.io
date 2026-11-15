@@ -4326,12 +4326,6 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
 
     const tokens = await preview.evaluate(async (svg) => {
       const styles = getComputedStyle(svg);
-      function renderedPaint(element, property, tokenName) {
-        if (!element) return '';
-        const value = getComputedStyle(element)[property].trim();
-        if (value) return value;
-        return styles.getPropertyValue(tokenName).trim();
-      }
       const roundFrame = svg.querySelector('[data-hero-slot="accessory"][data-hero-option="glasses"] circle');
       async function materialPaint(element, property, background) {
         // Sample rendered pigment, including gradients and translucency.
@@ -4408,8 +4402,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
         lipPaint: await materialPaint(lip, 'fill', skinColor),
         glassesFrame: styles.getPropertyValue('--hero-glasses-frame').trim(),
         glassesFrameDark: styles.getPropertyValue('--hero-glasses-frame-dark').trim(),
-        noseFill: renderedPaint(nose, 'fill', '--hero-face-line'),
-        noseOpacity: nose ? getComputedStyle(nose).opacity.trim() : '',
+        nosePaint: await materialPaint(nose, 'fill', skinColor),
         noseHighlightOpacity: styles.getPropertyValue('--hero-nose-highlight-opacity').trim(),
         contourOpacity: styles.getPropertyValue('--hero-contour-opacity').trim(),
         hairDetailOpacity: styles.getPropertyValue('--hero-hair-detail-opacity').trim(),
@@ -4468,14 +4461,13 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     expect(Math.max(...tokens.smileLinePaint.colors.map(color => contrastRatio(color, tokens.lipFill))),
       'the closed lip seam stays distinct from the lip pigment').toBeGreaterThan(1.1);
     // The nose plane is form shading, not an ink outline. It should remain
-    // visible on deep skin without becoming a harsh vertical stripe; nostrils
-    // and other semantic marks are covered by the higher-contrast faceMark token.
-    expect(contrastRatio(tokens.noseFill, tokens.skin)).toBeGreaterThanOrEqual(1.4);
-    expect(contrastRatio(tokens.noseFill, tokens.skin)).toBeLessThanOrEqual(2.2);
+    // visible on deep skin without becoming a harsh stripe or bright rim.
+    // Measure its composited pigment, including the soft tip gradient.
+    const noseContrast = tokens.nosePaint.colors.map(color => contrastRatio(color, tokens.skin));
+    expect(Math.max(...noseContrast), 'the nose has visible volume').toBeGreaterThanOrEqual(1.4);
+    expect(Math.max(...noseContrast), 'nose lighting stays relative to the skin').toBeLessThanOrEqual(2.2);
     expect(contrastRatio(tokens.eyebrow, tokens.skin)).toBeGreaterThanOrEqual(3);
     expect(contrastRatio(tokens.jawLine, tokens.skin)).toBeGreaterThanOrEqual(3);
-    expect(Number(tokens.noseOpacity)).toBeGreaterThanOrEqual(0.45);
-    expect(Number(tokens.noseOpacity)).toBeLessThanOrEqual(0.6);
     expect(Number(tokens.noseHighlightOpacity)).toBeGreaterThanOrEqual(0.28);
     expect(Number(tokens.noseHighlightOpacity)).toBeLessThanOrEqual(0.36);
     expect(Number(tokens.contourOpacity)).toBeLessThanOrEqual(0.4);

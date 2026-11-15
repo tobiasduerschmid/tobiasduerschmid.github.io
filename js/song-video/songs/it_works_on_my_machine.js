@@ -1144,14 +1144,32 @@
     const wordsOf = (role, voice) => [...C.wordsFor(song.storyboard, voice), ...(role === 'tenor' ? [] : C.wordsFor(song.storyboard, ENSEMBLE))];
     for (const draw of behind) draw();
     for (const draw of lights) draw();
-    const reactions = {
-      pm: { frown: 0.7, smile: -0.55, misery: 0.1 },
-      build: { frown: 0.85, smile: -0.6, misery: 0.1 },
-      test: { frown: 0.65, smile: -0.65, misery: 0.4 },
-      ui: { frown: 0.75, smile: -0.65, misery: 0.2 },
-      backend: { frown: 0.9, smile: -0.65, misery: 0.15 },
-      security: { frown: 1, smile: -0.65, misery: 0.05 },
+    const expressions = {
+      attentive: { frown: 0, smile: 0.2, misery: 0, brow: 0.12, wide: 0.12 },
+      concerned: { frown: 0, smile: -0.15, misery: 0.25, brow: 0.18, wide: 0.25 },
+      alarmed: { frown: 0.08, smile: -0.2, misery: 0, brow: 0.35, wide: 0.7 },
+      firm: { frown: 0.25, smile: 0, misery: 0, brow: 0.05, wide: 0.18 },
+      angry: { frown: 0.8, smile: -0.55, misery: 0.05, brow: 0, wide: 0 },
+      weary: { frown: 0, smile: -0.4, misery: 0.65, brow: 0.1, wide: 0 },
+      wry: { frown: 0, smile: 0.1, misery: 0.1, brow: 0.4, wide: 0.1 },
     };
+    // Acting follows the meaning of a line, not the fact that a mouth is
+    // open. Explanations stay attentive; only accusations receive anger.
+    const reactionBeats = {
+      pm: [['pm-3', 'concerned'], ['pm-4', 'angry', 'wrong']],
+      build: [['build-2', 'concerned'], ['build-3', 'firm'], ['build-4', 'wry']],
+      test: [['test-2', 'angry'], ['test-4', 'weary']],
+      ui: [['ui-1', 'concerned'], ['ui-2', 'angry'], ['ui-4', 'weary']],
+      backend: [['backend-1', 'alarmed'], ['backend-2', 'angry'], ['backend-3', 'firm'], ['backend-4', 'weary']],
+      security: [['security-1', 'alarmed'], ['security-2', 'concerned'], ['security-3', 'alarmed'],
+        ['security-4', 'angry'], ['security-6', 'firm'], ['security-8', 'firm'], ['security-9', 'angry']],
+    };
+    const reactionsFor = (role) => reactionBeats[role] ? [
+      [0, Infinity, expressions.attentive],
+      ...[...reactionBeats[role], ['outro-3', 'angry']].map(([id, emotion, word]) => [
+        (word ? mark(id, word) : line(id).start) - 0.12, line(id).end + 0.2, expressions[emotion],
+      ]),
+    ] : [];
     // The Teammate, the lead, is drawn last: in front of everyone around him.
     const castOrder = Object.entries(VOICES).sort(([a], [b]) => (a === 'tenor') - (b === 'tenor'));
     for (const [role, voice] of castOrder) {
@@ -1160,13 +1178,8 @@
       if (!p.places.length) placeAt(role, 0, ...(role === 'tenor' ? HOME.tenor : HOME.mate));
       figures[role] = C.figure(content, {
         role, gestureSpeed: role === 'tenor' ? 1.55 : 1, hero: headFor(role), stage: p.stage, places: p.places,
-        expressWhileSinging: Boolean(reactions[role]),
-        reactions: reactions[role] ? [
-          [start(role) - 0.25, end(role) + 0.35, { brow: 0, ...reactions[role] }],
-          ...(['ui', 'backend', 'test'].includes(role) ? [[line(`${role}-4`).start, p.stage[0][1], { frown: 0.18, smile: -0.85, misery: 0.95, brow: 0.2 }]] : []),
-          [line('refrain-3-1').start - 1.6, Infinity, { brow: 0, ...reactions[role] }],
-          [mark('refrain-3-4', 'green'), line('outro-1').start, { frown: 0.1, smile: -0.9, misery: 0.9, brow: 0.25 }],
-        ] : [],
+        expressWhileSinging: Boolean(reactionBeats[role]),
+        reactions: reactionsFor(role),
         moves: p.moves, holds: p.holds, beds: p.beds, words: wordsOf(role, voice), seed: Object.keys(VOICES).indexOf(role),
       });
     }

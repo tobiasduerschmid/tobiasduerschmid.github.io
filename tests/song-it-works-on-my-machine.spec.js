@@ -298,6 +298,76 @@ test('bare and clothed forearms remain joined across the wrist through bends and
   expect(gaps, 'skin or cloth must meet the entire wrist as the hand turns').toEqual([]);
 });
 
+test('folded forearms stay painted and apron edges cannot cut through sleeves', async ({ page }) => {
+  const result = await page.evaluate(() => {
+    const C = window.OperaCast, K = window.SongKit;
+    const failures = [];
+    let sampledSkin = 0, sampledCloth = 0;
+    for (const role of ['build', 'ui']) {
+      const fixture = document.createElement('div');
+      fixture.className = `oc-figure oc-figure--${role}`;
+      fixture.style.cssText = 'position:fixed;inset:0;width:640px;height:800px;z-index:10000';
+      document.body.appendChild(fixture);
+      const svg = K.svg('svg', { viewBox: '-40 0 240 300', width: 640, height: 800 }, fixture);
+      const body = C.buildFigure(svg, K.svg('g', {}, svg), role);
+      const poses = role === 'build'
+        ? [[163, 229], [90, 240], [120, 270], [0, 150], [-20, 130], [90, 240]]
+        : [-4, 0, 2, 4, 6, 10, 2, 0, -4].map(up => [up, 84.6]);
+      for (const angles of poses) {
+        body.pose({ ...C.REST, left: angles, right: angles }, 0, 0, 0);
+        for (const side of ['left', 'right']) {
+          const arm = body.arms[side];
+          const matrix = arm.fore.getScreenCTM();
+          const elbow = new DOMPoint(...C.ELBOW).matrixTransform(matrix);
+          const wrist = new DOMPoint(...C.WRIST).matrixTransform(matrix);
+          const scale = Math.hypot(matrix.a, matrix.b);
+          if (role === 'build') {
+            const length = Math.hypot(wrist.x - elbow.x, wrist.y - elbow.y);
+            // The entire forearm cross-section, including its edges where
+            // deep flexion overlaps the shirt. Hit testing includes clips.
+            for (let t = .06; t <= .94; t += .04) {
+              for (const across of [-6, -5, -4, -3, 0, 3, 4, 5, 6]) {
+                const point = new DOMPoint(
+                  elbow.x + (wrist.x - elbow.x) * t + (wrist.y - elbow.y) / length * across * scale,
+                  elbow.y + (wrist.y - elbow.y) * t - (wrist.x - elbow.x) / length * across * scale,
+                );
+                if (!arm.limbFill.isPointInFill(point.matrixTransform(arm.limbFill.getScreenCTM().inverse()))) continue;
+                sampledSkin++;
+                if (!document.elementsFromPoint(point.x, point.y).includes(arm.limbFill)) {
+                  failures.push({ role, side, angles, t, across, issue: 'clipped forearm' });
+                }
+              }
+            }
+          } else {
+            const shoulder = new DOMPoint(side === 'left' ? 160 - C.SHOULDER[0] : C.SHOULDER[0], C.SHOULDER[1])
+              .matrixTransform(svg.getScreenCTM());
+            const length = Math.hypot(elbow.x - shoulder.x, elbow.y - shoulder.y);
+            const u = [(elbow.x - shoulder.x) / length, (elbow.y - shoulder.y) / length];
+            // Cloth beside the torso must stay continuous on both sides
+            // of the elbow, including before and after changing depth.
+            for (const along of [1, 3, 6]) {
+              const across = side === 'left' ? 6.2 : -6.2;
+              const point = new DOMPoint(elbow.x - u[0] * along * scale + u[1] * across * scale,
+                elbow.y - u[1] * along * scale - u[0] * across * scale);
+              if (!arm.sleeveFill.isPointInFill(point.matrixTransform(arm.sleeveFill.getScreenCTM().inverse()))) continue;
+              sampledCloth++;
+              const top = document.elementsFromPoint(point.x, point.y).find(node => node instanceof SVGGeometryElement);
+              if (!arm.root.contains(top) && !arm.shoulder.contains(top)) {
+                failures.push({ role, side, angles, along, issue: 'garment cuts sleeve' });
+              }
+            }
+          }
+        }
+      }
+      fixture.remove();
+    }
+    return { failures, sampledSkin, sampledCloth };
+  });
+  expect(result.sampledSkin).toBeGreaterThan(1000);
+  expect(result.sampledCloth).toBeGreaterThan(30);
+  expect(result.failures, 'visible arm surfaces must survive clipping and garment layering').toEqual([]);
+});
+
 test('held objects keep a closed contact and their required orientation through gestures', async ({ page }) => {
   const examples = [
     ['pm', 'left', 'clipboard', [-1, 0], ['pm-1', 'pm-2', 'pm-4']],
@@ -480,12 +550,6 @@ test('supporting cast is expressive while singing and relaxes while listening', 
     await expect(mouth).toBeVisible();
     await expect(mouth.locator('.song-hero-expression-seam'), 'the reaction has visible paint, not only geometry').not.toHaveCSS('fill', 'none');
     const shape = await mouth.locator('.song-hero-expression-seam').getAttribute('d');
-    const downturned = await mouth.locator('.song-hero-expression-seam').evaluate((seam) => {
-      const length = seam.getTotalLength();
-      const left = seam.getPointAtLength(0), middle = seam.getPointAtLength(length / 2), right = seam.getPointAtLength(length);
-      return left.y > middle.y && right.y > middle.y;
-    });
-    expect(downturned, `${role}: a complaint must not retain the default smile`).toBe(true);
     await seek(page, singingTime);
     await expect(singing).toBeVisible();
     await seek(page, pauseTime);
@@ -499,6 +563,33 @@ test('supporting cast is expressive while singing and relaxes while listening', 
     await expect(seam).toBeVisible();
     const relaxed = await seam.evaluate((node) => node.getPointAtLength(0).y <= node.getPointAtLength(node.getTotalLength() / 2).y);
     expect(relaxed, `${role}: resting face returns to relaxed lips`).toBe(true);
+  }
+});
+
+test('anger follows an accusation, then clears for an explanation and listening', async ({ page }) => {
+  await expectTeammatesWearHeads(page);
+  // Inspect the visible lip corners between syllables, independently of
+  // which randomized brow or eye shape this cast member happens to wear.
+  async function mouthCurvature(role, time) {
+    await seek(page, time);
+    return page.getByTestId(`oc-${role}`).getByTestId('song-hero-head').locator('.song-hero-expression-seam').evaluate((seam) => {
+      // The filled seam travels across the lips and back. Sample the
+      // painted contour, without depending on its Bézier control points.
+      return seam.getPointAtLength(0).y - seam.getPointAtLength(seam.getTotalLength() / 4).y;
+    });
+  }
+  // Each pair contrasts a specific accusation with an explanation in the
+  // same voice. Revisit the explanation after anger to catch retained state.
+  for (const [role, explanation, accusation] of [
+    ['pm', 'pm-1', 'pm-4'], ['test', 'test-3', 'test-2'],
+    ['ui', 'ui-3', 'ui-2'], ['backend', 'backend-3', 'backend-2'],
+    ['security', 'security-7', 'security-4'],
+  ]) {
+    const sample = (id) => storyLines.get(id).end - 0.45;
+    const before = await mouthCurvature(role, sample(explanation));
+    const angry = await mouthCurvature(role, sample(accusation));
+    expect(angry, `${role}: the accusation firms and lowers the mouth corners`).toBeGreaterThan(before + 0.1);
+    expect(await mouthCurvature(role, sample(explanation)), `${role}: reverse seek restores the explanation`).toBeCloseTo(before, 6);
   }
 });
 

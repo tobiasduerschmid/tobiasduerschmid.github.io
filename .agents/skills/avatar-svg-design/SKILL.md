@@ -353,6 +353,14 @@ The same principles apply, scaled down:
 - **Mouths** range from `smile` (simple curve) to `toothy-bright-smile` (multi-layer with teeth, cheek dimples, soft lip line). Match the mouth's *complexity* to the rest of the option set — a tutorial avatar that already uses a simple round eye should not have a hyper-detailed multi-tooth grin; the visual weight will be lopsided.
 - **Noses** are 90% subtle: a soft shadow plus a single nostril dot is usually enough. The `noseOpacity` and `nostrilOpacity` variables get set by JS based on skin tone — darker skin tones need higher opacity (the contrast against `#dfa07a` skin is different from against `#3d2515` skin). **Keep the bridge contour short.** A bridge shadow/highlight stroke that runs the *full* length of the nose (from between the eyes down to the tip) reads as a long drawn line down the middle of the face — amateurish, and the most common "nose looks off" complaint. For the generic `soft` / `rounded` noses, start the bridge stroke roughly halfway down (≈ `y=197` rather than `y=189`) so it defines only the lower bridge → tip and the upper bridge stays implied by the face's own form shadow. **Do _not_ blanket-shorten every nose option** — characterful noses (aquiline, wide, prominent-bridge variants) keep their full bridge *on purpose*; shortening them all homogenizes the set and erases the variety users pick between.
 
+Nose readability must not come from paired U-shaped wing strokes or an
+isolated septum dot: at song portrait size they read as nose rings or studs.
+Keep nostrils as short filled marks, side creases open and subdued, and the
+tip as soft skin-relative volume. Do not use the bright face-accent token to
+rim the nostrils on dark skin. Check every nose variant at thumbnail size
+across light, medium, and deep complexions; assess the composited shading,
+not only its raw color token.
+
 ## Accessories: glasses, headphones, headwear, jewelry
 
 Most accessories sit inside a `transform:scale(.8620689655); transform-origin: 400px 252px` group in the SVG's scoped styles. This is the inverse of the `1.16x` head-assembly scale, so body-anchored accessories retain their authored size. **If you add a new accessory and it looks "too big", check whether the standard inverse-scale rule applies** — a fresh `<g data-hero-slot="accessory">` without it renders at full head-assembly scale.
@@ -361,6 +369,13 @@ Glasses specifically must:
 
 - Use `var(--hero-glasses-frame, …)` for the frame stroke, `var(--hero-glasses-frame-dark, …)` for the bridge, `var(--hero-lens-fill, …)` for the lens fill (a barely-visible white at low alpha).
 - Have a small white catchlight stroke inside each lens (`stroke="#ffffff"`, `stroke-width="1.2–1.6"`, `opacity=".42–.5"`) — this is the *single* most important detail that makes glasses look like glass instead of paint.
+
+Loose draped accessories must preserve their negative space. The two ends of
+a draped scarf are separate closed panels, not one path closed across the
+chest. Reuse their silhouette for clipping lower folds and highlights; removing
+a bridge from the base fill alone can leave shadow strips or stray ink behind.
+Inspect the open neckline in worn song portraits as well as the full avatar,
+including fitted head shapes and both turn extremes.
 
 ## Body shapes, outfits, and mascots
 
@@ -427,6 +442,39 @@ Three companion conventions from the July 2026 arm cleanup:
 - **`arm-suit` is a `userSpaceOnUse` gradient** spanning wrist (`y=64`) to shoulder (`y=276`), shared by both segments. Bounding-box units gave the upper arm and forearm separate light-to-dark ramps that met at the elbow as a hard value seam. Don't convert it back, and don't fill arm parts with bbox-mapped gradients.
 - **No elbow joint lens.** The forearm's own base arc reads as the elbow crease. The old `arm-joint` radial-gradient lens read as a doll-joint ball and was removed.
 - **The deltoid overlap caps** (one per shoulder, after the tier groups) are filled with `url(#arm-suit-…)` so they extend the sleeve invisibly while masking the shoulder pivot. Don't give them their own gradient or rim stroke — that recreates the "balloon knot".
+
+## Small facial edges and reusable head turns
+
+At small sizes, use a few short, thin accents to preserve anatomy: the
+inner ear fold, brow rim, and lower lip edge. Keep nose-wing creases subdued
+and open rather than outlining the nostrils. `--hero-face-accent`
+comes from `avatarContrastTokens()` and is chosen against the skin midtone
+and shadow; it may be lighter on deep skin. Keep broad shading on the
+existing softer tokens. Do not outline every feature in the accent color or
+add duplicate silhouettes. Preserve selected eyebrow pigment. Inspect the
+paint at song size and thumbnail size, on light and dark skins/backgrounds.
+
+`HeroAvatar.setHeadTurn(svg, amount)` is the shared pose API for human,
+Prof, and Bruin SVGs. `amount` is screen-left `-1` through frontal `0` to
+screen-right `1`, clamped to a shallow ±12° projection. Render/apply the
+avatar first, then send eased amounts from the consumer's existing clock.
+The setter starts no timer, honors reduced motion, and preserves fitting,
+customization, private clip IDs, and paint order. Song portraits and worn
+cast heads already use it; `turn` is also forwarded through OperaCast.
+
+Motion wrappers sit outside the fitted parts: the nose projects ahead of
+the facial plane, ears behind it, and hair/hat motion is smaller. Ear
+accessories travel with ears, eyewear with the eyes; body-bound necklaces,
+lanyards and the neck stay fixed. Fixed portraits use authored
+`data-hero-turn-depth` / `data-hero-turn-fixed` hooks. `applyToSvg()` removes
+pose wrappers before fitting and restores the pose afterwards. Do not
+concatenate a new turn onto an old fitted transform or re-fit every frame.
+
+The consumer owns playback: pause its clock when its motion control pauses,
+and never introduce a second RAF/timer that bypasses the Gym's SVG pause or
+a song's timeline. Inspect ±1, intermediate turns, zero, repeat/backward
+seeks, re-customization while turned, and independent clones. Keep turns
+small; a profile requires different silhouettes and occlusion.
 
 ## Animation: the lift cycle and idle life
 

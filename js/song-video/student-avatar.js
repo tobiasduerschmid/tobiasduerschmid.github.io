@@ -124,6 +124,7 @@
 
   /** Compose outside the shared fit transforms; move pupils inside fixed clips. */
   function portraitMotion(svg) {
+    root.HeroAvatar.setHeadTurn(svg, 0);
     const isBruin = svg.getAttribute('data-hero-kind') === 'bruin';
     const head = motionWrapper(svg.querySelector(isBruin ? '[data-hero-bruin-anatomy="head"]' : '[data-hero-head-assembly]'), 'head');
     const { open, closed, lashes, gaze } = eyeParts(svg);
@@ -139,6 +140,7 @@
       }
       // The eyes track the student's screen.
       const across = reduced ? 0 : Math.sin(time * 0.91) * 0.7;
+      root.HeroAvatar.setHeadTurn(svg, reduced ? 0 : across * 0.45);
       const down = (isBruin ? 2.3 : 1.3) + (reduced ? 0 : Math.sin(time * 0.63) * 0.3);
       glance(gaze, across, down);
       const blink = reduced ? 0 : blinkAt(time);
@@ -445,6 +447,7 @@
       upper: `M${p(-1, left)} C${p(-0.68, left - 0.01)} ${p(-0.42, centre - upper)} ${p(-0.18, centre - upper * 0.9)} C${p(-0.08, centre - upper * 0.8)} ${p(-0.07, centre - upper * 0.25)} ${p(0, centre - upper * 0.2)} C${p(0.07, centre - upper * 0.25)} ${p(0.08, centre - upper * 0.8)} ${p(0.18, centre - upper * 0.9)} C${p(0.42, centre - upper)} ${p(0.68, right - 0.01)} ${p(1, right)} ${back}`,
       lower: `${across} C${p(0.68, right + 0.045)} ${p(0.42, centre + lower)} ${p(0, centre + lower)} C${p(-0.42, centre + lower)} ${p(-0.68, left + 0.045)} ${p(-1, left)} Z`,
       reflection: `M${p(-0.42, centre + lower * 0.58)} C${p(-0.18, centre + lower * 0.69)} ${p(0.18, centre + lower * 0.69)} ${p(0.42, centre + lower * 0.58)} C${p(0.18, centre + lower * 0.91)} ${p(-0.18, centre + lower * 0.91)} ${p(-0.42, centre + lower * 0.58)} Z`,
+      edge: `M${p(-0.38, centre + lower * 0.86)} Q${p(0, centre + lower * 1.12)} ${p(0.38, centre + lower * 0.86)}`,
       seam: `${across} C${p(0.65, right + 0.015)} ${p(0.35, centre + 0.045)} ${p(0, centre + 0.04)} C${p(-0.35, centre + 0.045)} ${p(-0.65, left + 0.015)} ${p(-1, left)} Z`,
     };
   }
@@ -513,7 +516,7 @@
     const reaction = document.createElementNS(SVG_NS, 'g');
     reaction.setAttribute('class', 'song-hero-expression-mouth');
     reaction.setAttribute('display', 'none');
-    const paths = Object.fromEntries(['shadow', 'upper', 'lower', 'reflection', 'seam'].map((part) => {
+    const paths = Object.fromEntries(['shadow', 'upper', 'lower', 'reflection', 'seam', 'edge'].map((part) => {
       const path = document.createElementNS(SVG_NS, 'path');
       path.setAttribute('class', `song-hero-expression-${part}`);
       reaction.appendChild(path);
@@ -648,6 +651,7 @@
    * eyes, and round narrows a sung vowel. Omit smile to keep named reactions.
    */
   function wornMotion(svg) {
+    root.HeroAvatar.setHeadTurn(svg, 0);
     const eyes = eyeParts(svg);
     const shut = eyelids(svg, eyes);
     const brows = browSides(svg);
@@ -664,7 +668,8 @@
       return { wrapper, pivot: null };
     });
     let drawn = '';
-    return (time, { look = 0, down = 0, wink = 0, brow = 0, frown = 0, hush = 0, sing = 0, smile = null, misery = 0, wide = 0, happy = 0, round = 0, expression: mood = 'neutral', expressionFrom = mood, expressionMix = 1 } = {}, reduced = false) => {
+    return (time, { turn = 0, look = 0, down = 0, wink = 0, brow = 0, frown = 0, hush = 0, sing = 0, smile = null, misery = 0, wide = 0, happy = 0, round = 0, expression: mood = 'neutral', expressionFrom = mood, expressionMix = 1 } = {}, reduced = false) => {
+      root.HeroAvatar.setHeadTurn(svg, reduced ? 0 : turn + look * 0.45);
       const blink = reduced ? 0 : blinkAt(time);
       const blend = reduced ? 1 : Math.max(0, Math.min(1, expressionMix));
       const state = `${look}|${down}|${blink}|${wink}|${brow}|${frown}|${hush}|${sing}|${mood}|${expressionFrom}|${blend}|${smile}|${misery}|${wide}|${happy}|${round}`;

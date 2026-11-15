@@ -1257,7 +1257,9 @@
     };
     const outside = contour(1), inside = contour(-1);
     const join = (a, b) => traceContour(a) + traceContour(b, true).replace(/^M/, 'L') + ' Z';
+    const distal = (edge, side) => ({ start: elbowContour(frame, side, radius).start, curves: edge.curves.slice(-2) });
     return { outside, inside, fill: join(outside, inside), edge: traceContour(outside) + traceContour(inside),
+      forearm: sleeve === 'short' ? join(distal(outside, 1), distal(inside, -1)) : '',
       shade: join(outside, contour(1, 0.55)), light: join(contour(-1, 0.6), contour(-1, 0.1)) };
   }
 
@@ -1343,6 +1345,9 @@
     paint.garmentOutline = svg('g', {}, trunk);
     const upperArms = svg('g', {}, trunk);
     costume.top(svg('g', { class: 'oc-top-layer' }, trunk), paint);
+    // Sleeves crossing a garment still sit beneath hair, scarves and the
+    // collar. Forearms have their own foreground pass for facial gestures.
+    const forwardSleeves = svg('g', {}, trunk);
     const wornUnder = svg('g', {}, trunk);
     const drawnNeck = svg('g', {}, trunk);
     inked(drawnNeck, NECK, 'oc-skin-neck', 'oc-ink oc-ink--face', paint.skin);
@@ -1356,6 +1361,11 @@
     if (costume.headwear) costume.headwear(svg('g', { class: 'oc-headwear' }, headGroup), paint);
     const sleepMask = drawSleepMask(svg('g', { class: 'oc-sleep-mask', 'data-testid': 'oc-sleep-mask' }, headGroup));
     const arms = svg('g', {}, trunk);
+    // The bicep merges into the torso; its buried return contour is never
+    // an exposed seam, even when the continuous sleeve moves in front.
+    // The separate forearm ink still owns real crossings over the torso.
+    const sleeveOutlineClip = svg('clipPath', { id: id('sleeve-outline') }, defs);
+    svg('path', { d: `M-500 -500 H500 V500 H-500 Z ${TOP}`, 'clip-rule': 'evenodd' }, sleeveOutlineClip);
 
     // The arms: the sleeve deforms from its attached root; the forearm turns with it,
     // then at the elbow; the hand at the wrist, holding what it holds
@@ -1369,7 +1379,7 @@
       const fabric = costume.undershirt ? paint.sleeve : paint.top;
       const sleevePaintId = id('upper-fabric');
       svg('linearGradient', { id: sleevePaintId, href: fabric.slice(4, -1), gradientTransform: side < 0 ? MIRROR : '' }, defs);
-      const sleeveInk = svg('path', { class: 'oc-ink oc-ink--cool' }, shoulder);
+      const sleeveInk = svg('path', { class: 'oc-ink oc-ink--cool', ...(costume.sleeve === 'long' ? { 'clip-path': `url(#${sleeveOutlineClip.id})` } : {}) }, shoulder);
       const sleeveFill = svg('path', { class: 'oc-sleeve', fill: `url(#${sleevePaintId})` }, shoulder);
       const sleeveClip = svg('clipPath', { id: id('sleeve-volume') }, defs);
       const sleeveBoundary = svg('path', {}, sleeveClip);
@@ -1384,6 +1394,9 @@
       const contourClipId = id('elbow-contour');
       const contourClip = svg('clipPath', { id: contourClipId }, defs);
       const contourWindow = svg('path', { 'clip-rule': 'evenodd' }, contourClip);
+      // A sleeve hides only proximal skin. Its mask must not punch a hole
+      // in the same arm's forearm when that forearm folds across the sleeve.
+      const forearmWindow = costume.sleeve === 'short' ? svg('path', {}, contourClip) : null;
       // The shirt hem covers the bare upper arm, including its ink. Skin
       // must not paint over the hem and leave isolated fragments of outline.
       if (costume.sleeve === 'short') limb.setAttribute('clip-path', `url(#${contourClipId})`);
@@ -1415,7 +1428,7 @@
       let shown = null;
       const held = { name: null, node: null };
       return {
-        side, root, shoulder, sleeveInk, sleeveFill, sleeveLight, sleeveBoundary, folds, rollDetail, foreDetails, limb, limbInk, limbFill, limbShade, limbLight, limbBoundary, wristFade, contourWindow, reach: reachGroup, fore, wrist, heldBehind, hand, held,
+        side, root, shoulder, sleeveInk, sleeveFill, sleeveLight, sleeveBoundary, folds, rollDetail, foreDetails, limb, limbInk, limbFill, limbShade, limbLight, limbBoundary, wristFade, contourWindow, forearmWindow, reach: reachGroup, fore, wrist, heldBehind, hand, held,
         get shown() { return shown; },
         shape(asked, force = false) {
           const grip = held.node ? HOLDING[held.name] : null;
@@ -1493,11 +1506,17 @@
       // Ink only the union's silhouette: the sleeve hides the proximal
       // forearm contour, just as the forearm fill hides the sleeve's end.
       a.contourWindow.setAttribute('d', `M-500 -500 H500 V500 H-500 Z ${sleeve.upper}`);
+      a.forearmWindow?.setAttribute('d', surface.forearm);
+      // If the forearm's proximal boundary crosses the torso, carry the
+      // continuous sleeve in front too. Otherwise the overlaid forearm
+      // exposes its construction cap against an apron, vest or lapel.
+      const crossesTorso = costume.sleeve === 'long' && [surface.outside.start, surface.inside.start]
+        .some(([x, y]) => x < 104 && y > 80 && y < 164);
       const inFront = up < -18;
-      const sleeveParent = inFront ? a.root : upperArms;
+      const sleeveParent = inFront ? a.root : crossesTorso ? forwardSleeves : upperArms;
       if (a.shoulder.parentNode !== sleeveParent) {
         if (inFront) a.root.insertBefore(a.shoulder, a.limb);
-        else upperArms.appendChild(a.shoulder);
+        else sleeveParent.appendChild(a.shoulder);
       }
       a.shoulder.setAttribute('transform', !inFront && a.side < 0 ? MIRROR : '');
       a.reach.setAttribute('transform', turn(-up, SHOULDER));
@@ -1545,7 +1564,7 @@
       const tilt = `translate(0 ${(1.8 * p.nod).toFixed(2)}) rotate(${p.tilt.toFixed(2)} ${HEAD.x} ${HEAD.chin})`;
       headGroup.setAttribute('transform', tilt);
       wornUnder.setAttribute('transform', tilt);
-      if (worn) worn(time, { look: p.look, down: p.down, brow: p.brow, frown: p.frown,
+      if (worn) worn(time, { turn: p.turn, look: p.look, down: p.down, brow: p.brow, frown: p.frown,
         smile: p.smile, misery: p.misery, wide: p.wide, happy: p.happy, round: p.round, sing: open }, reducedMotion.matches);
       else setFace(p, blink, open);
       age(p.age || 0);

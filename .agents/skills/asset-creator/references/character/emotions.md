@@ -15,6 +15,11 @@ at presentation size as well as enlarged. Preserve the character's identity.
   downward-positive coordinates, the picture's left brow rotates clockwise
   to knit inward, while the right rotates counterclockwise. Verify the
   painted result; an incorrect sign can turn anger into surprise or sadness.
+- Choose emotion from the meaning of each line, not from speaking activity.
+  An explanatory line is attentive; an accusation can be angry; exhaustion
+  can be weary. Never assign one angry profile to every solo or every sung
+  phrase. Author specific line/word windows, ease in/out, and compare the
+  same character explaining, accusing, recovering, and listening.
 - A singer's emotion persists through syllables and the gaps between them.
   Forward every supported control to both drawn and worn-head renderers.
   Keep expressive delivery tied to the intended speaking phrases. Restore
@@ -48,6 +53,10 @@ at presentation size as well as enlarged. Preserve the character's identity.
   the silhouette, brow hairs stay inside the brows, ear contours fit inside
   the helix, and lip highlights follow the lip. Avoid duplicate outlines,
   floating accents, sharp shading patches, and texture that obscures emotion.
+- At small sizes, paired curled nose-wing outlines and isolated septum dots
+  can look like jewelry. Use short filled nostrils, open subdued creases, and
+  soft tip volume; never make nostrils bright rings on deep skin. Review all
+  variants at their actual on-page size before calling the detail an improvement.
 - Fit shared/customized features in their own coordinate spaces, preserving
   existing renderer transforms. Measure only after attachment, before the
   expression changes the bounds. Each instance needs private paint/clip IDs.
@@ -70,6 +79,12 @@ Numerical checks should cover finite geometry, visible happy eyes, facial
 paint staying inside the head, fixed attachment during turns, and an audible
 singer retaining its visible mouth opening. These checks complement rendered
 review; they cannot establish that an expression looks human or convincing.
+
+For shared SE Gym heads, use `HeroAvatar.setHeadTurn(svg, amount)` from the
+existing playback clock (−1 screen-left, 0 frontal, +1 screen-right). It owns
+the depth planes, fitting composition, and reduced-motion reset; songs must
+not reimplement those transforms. Thin small-size contours use the renderer's
+skin-relative `--hero-face-accent`, with visible filled closed lips retained.
 
 Project implementation: `js/song-video/opera-cast.js` owns the drawn lead and
 pose channels; `js/song-video/student-avatar.js` fits worn heads. Relevant

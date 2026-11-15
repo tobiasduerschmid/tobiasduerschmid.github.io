@@ -86,6 +86,23 @@ foreground pass is justified by torso occlusion, not by the joint itself.
 Overlap its fill with the base and suppress internal strokes and their end
 caps, so antialiasing cannot expose a slit, diagonal panel edge, or ink nub.
 
+Occlusion masks must distinguish the proximal upper arm from the distal
+forearm. Subtracting the entire upper-sleeve silhouette from exposed skin
+also erases the forearm where a deeply folded arm overlaps its own shirt.
+Keep that distal surface visible through the mask, using the same joint
+contours as the painted limb. Check its edges as well as its centre.
+
+For a long sleeve, the continuous base and its foreground forearm pass must
+agree about torso depth. If their join reaches an apron, vest, or lapel,
+keep connected cloth in front; do not expose a flat construction cap over
+the garment. Buried bicep/axilla return contours remain uninked inside the
+torso even when the sleeve moves forward. The forearm owns the outlines of
+real crossings. A sleeve moving over an apron still belongs beneath hair,
+scarves, and the collar; keep that torso-depth pass separate from the
+foreground forearm used for face-touching gestures. Review depth changes in
+both directions and nearby frames: reparenting a whole sleeve can reveal
+a previously hidden contour loop.
+
 Clip fold lines and shading to the actual moving surface. Give each visible
 boundary one outline owner. Inspect at large scale for detached ink, square
 corners, small skin gaps, abrupt shade ends, and wrist discontinuities, then
@@ -121,6 +138,8 @@ or transfers require an explicit story action, not accidental interpolation.
 2. Sweep the real motion for finite transforms, joint limits, wrist continuity,
    contact drift, orientation changes, and excessive per-frame rotation.
    Test actual world-space geometry, including body sway, scale, and mirroring.
+   A standalone pose atlas does not replace live frames: held-prop orientation,
+   grounded contacts, and scene occlusion may be resolved by the caller.
 3. Render and inspect every hand view and sleeve style on both sides. Include
    maximum flexion/extension, raised and crossed arms, facial contact, maximum
    wrist bends, and the most extreme samples found in the motion sweep.
