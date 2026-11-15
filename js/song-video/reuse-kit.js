@@ -12,7 +12,7 @@
  * Blue package bricks expose studs as their interface; stacked bricks
  * depend on the pieces below; a framework is a baseplate that decides where
  * bricks go. The picture helpers draw these mechanisms and the real-world
- * cases (including the two Ariane rockets and their integer gauge).
+ * cases (including the two Ariane rockets).
  *
  * One colour means one thing across the whole song: blue bricks are reused
  * packages and libraries (and the case tabs and page headings that file
@@ -23,7 +23,8 @@
  *
  * Every pose is a pure function of song time (Timeline tweens and frame
  * updaters). Coordinates are CSS pixels on the 960×540 stage; nothing
- * essential goes below y = 460, where the player draws captions. Every
+ * essential goes below y = 460, apart from the rocket names immediately
+ * under their ground-level launch platforms. Every
  * meaning is written in words; colour only repeats them (WCAG 1.4.1).
  * Styles: css/song-video-reuse-kit.css.
  */
@@ -161,18 +162,20 @@
 
   /**
    * A package brick: its name on the front and an optional version tag.
+   * names = [{ at, text }] changes its name as its role changes.
    * tags = [{ at, text, kind }] changes the tag (kind 'plain', 'any' for a
    * dashed range, 'pinned', 'new', 'bad'). `under` hides its studs (another
    * brick sits on it); `odd` gives it different studs, a changed interface;
    * `stack` draws it as a stack of many bricks, its name on a tag.
    * ring(at, until, tone), cross(at, until), and check(at, until) mark it.
    */
-  function pkg(parent, { x, y, name, version, w = 150, h, tone = 'blue', at, until, tags = [], how = 'pop', under = false, odd = false, small = false, stack = false }) {
+  function pkg(parent, { x, y, name, version, w = 150, h, tone = 'blue', at, until, names = [], tags = [], how = 'pop', under = false, odd = false, small = false, stack = false }) {
     const variants = `${under ? ' rk-pkg--under' : ''}${odd ? ' rk-pkg--odd' : ''}${small ? ' rk-pkg--small' : ''}${stack ? ' rk-pkg--stack' : ''}${h !== undefined ? ' rk-pkg--sized' : ''}`;
     const node = show(box(parent, `rk-pkg rk-c-${tone}${variants}`, { x, y, w, h }), at, until, how);
     studs(node, odd ? studCount(w) + 1 : studCount(w));
     const words = el('div', 'rk-pkg-words', node);
-    el('div', 'rk-pkg-name', words, name);
+    const nameNode = el('div', 'rk-pkg-name', words, name);
+    if (names.length) textAt(nameNode, name, names);
     if (version !== undefined) {
       const tag = el('div', 'rk-pkg-tag', words);
       const changes = [{ at: -1, text: version, kind: 'plain' }, ...tags].sort((a, b) => a.at - b.at);
@@ -776,17 +779,113 @@
     },
   };
 
+  /** Ariane 5's breakup, sampled from song time so pauses and seeks are exact. */
+  function ariane5Breakup(art, defs, body, { id, at, origin }) {
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    body.id = `${id}-shell`;
+    gradientDef(defs, 'radialGradient', `${id}-fire`, { cx: 0.42, cy: 0.55, r: 0.65 },
+      [[0, 'rk-rkt-fire-core'], [0.46, 'rk-rkt-fire-gold'], [1, 'rk-rkt-fire-rim']]);
+    gradientDef(defs, 'linearGradient', `${id}-smoke`, { x1: 0.25, y1: 0, x2: 0.65, y2: 1 },
+      [[0, 'rk-rkt-smoke-top'], [0.58, 'rk-rkt-smoke-mid'], [1, 'rk-rkt-smoke-lit']]);
+    const blast = svg('g', { 'data-testid': 'reuse-rocket-blast', transform: `translate(${origin.cx} ${origin.cy})` }, art);
+    const smoke = svg('g', { 'data-testid': 'reuse-rocket-smoke' }, blast);
+    // Uneven billows with a warm underside: a single expanding cloud, not
+    // a ring of identical circles. It lifts and thins after the fire dies.
+    const billow = 'M-28 12 C-39 10 -40 -5 -28 -11 C-28 -27 -8 -33 2 -21 C16 -29 34 -18 31 -4 C46 2 39 22 25 23 C17 36 -1 33 -8 25 C-20 34 -35 27 -28 12Z';
+    const puffs = [
+      [-31, 8, 1.05, -20], [-12, -26, 1.2, 22], [22, -24, 0.95, -34],
+      [37, 4, 0.9, 18], [16, 27, 0.85, 48], [-20, 28, 0.8, -50],
+    ].map(([x, y, size, angle]) => {
+      const node = svg('g', {}, smoke);
+      svg('path', { d: billow, fill: `url(#${id}-smoke)` }, node);
+      svg('path', { class: 'rk-rkt-smoke-fold', d: 'M-27 10 C-24 21 -11 21 -6 17 C0 27 16 28 23 19 M-17 -11 C-10 -18 1 -18 7 -10' }, node);
+      return { node, x, y, size, angle };
+    });
+
+    // Clip the actual shell artwork into fairing, tank, booster and module
+    // sections. Each starts at its exact pre-breakup position and full size.
+    const fragments = svg('g', { class: 'rk-rkt-fragments', 'data-testid': 'reuse-rocket-fragments' }, blast);
+    const regions = [
+      { box: [40, 5, 40, 65], velocity: [12, -32], spin: 44 },
+      { box: [40, 70, 40, 70], velocity: [29, -10], spin: -58, bay: true },
+      { box: [39, 140, 42, 99], velocity: [-16, 18], spin: 36 },
+      { box: [14, 70, 26, 90], velocity: [-38, -18], spin: -48 },
+      { box: [14, 160, 26, 78], velocity: [-28, 24], spin: 65 },
+      { box: [80, 70, 26, 90], velocity: [35, -8], spin: 58 },
+      { box: [80, 160, 26, 78], velocity: [26, 25], spin: -42 },
+      { box: [53, 75.5, 14, 16], velocity: [-45, -34], spin: -86 },
+    ];
+    const radians = origin.angle * Math.PI / 180;
+    const pieces = regions.map(({ box: [x, y, w, h], velocity, spin, bay }, i) => {
+      const clipId = `${id}-fragment-${i}`;
+      const clip = svg('clipPath', { id: clipId, clipPathUnits: 'userSpaceOnUse' }, defs);
+      // Leave an opening where the gold module separates from its bay.
+      const hole = bay ? ' M53 75.5 H67 V91.5 H53Z' : '';
+      svg('path', { d: `M${x} ${y} h${w} v${h} h${-w}Z${hole}`, 'clip-rule': 'evenodd' }, clip);
+      const node = svg('g', {}, fragments);
+      svg('use', { href: `#${body.id}`, 'clip-path': `url(#${clipId})` }, node);
+      const cx = x + w / 2, cy = y + h / 2;
+      const dx = cx - 60, dy = cy - 126;
+      return { node, cx, cy, x: dx * Math.cos(radians) - dy * Math.sin(radians),
+        y: dx * Math.sin(radians) + dy * Math.cos(radians), velocity, spin };
+    });
+
+    const fire = svg('g', { 'data-testid': 'reuse-rocket-fire' }, blast);
+    svg('path', { fill: `url(#${id}-fire)`, d: 'M-48 14 C-64 6 -58 -13 -44 -17 C-51 -34 -31 -47 -15 -38 C-5 -58 24 -48 26 -31 C46 -36 60 -17 49 -2 C67 11 51 34 34 30 C29 50 7 49 -3 36 C-22 51 -43 38 -38 26 C-47 29 -53 22 -48 14Z' }, fire);
+    svg('path', { class: 'rk-rkt-fire-fold', d: 'M-37 5 C-44 -9 -27 -23 -17 -15 C-13 -33 10 -33 14 -17 C33 -24 43 -5 30 6 C45 21 25 36 13 23 C3 38 -18 31 -18 19 C-29 25 -41 18 -37 5Z' }, fire);
+    svg('path', { class: 'rk-rkt-fire-heart', d: 'M-21 9 C-30 -1 -17 -15 -8 -8 C-6 -24 12 -23 15 -10 C28 -11 33 8 20 13 C17 27 -3 30 -9 17 C-17 23 -27 19 -21 9Z' }, fire);
+    const embers = svg('g', { class: 'rk-rkt-embers' }, blast);
+    const sparks = Array.from({ length: 9 }, (_, i) => {
+      const angle = (i + 0.35 * hash01(i + 17)) * Math.PI * 2 / 9;
+      const distance = 48 + 22 * hash01(i * 11 + 5);
+      return { node: svg('path', { d: 'M-3 0 Q0 -1.5 3 0 Q0 1.5 -3 0Z' }, embers), angle, distance };
+    });
+
+    return (t) => {
+      const visible = t >= at && (reducedMotion.matches || t < at + 1.95);
+      blast.style.display = visible ? '' : 'none';
+      if (!visible) return;
+      // Readers who opt into the artwork with reduced motion get one
+      // settled breakup illustration instead of a burst or flying debris.
+      const elapsed = reducedMotion.matches ? 0.6 : clamp(t - at, 0, 1.95);
+      const expansion = easeOutCubic(progress(elapsed, 0, 0.7));
+      const fireOpacity = 0.96 * progress(elapsed, 0, 0.12) * (1 - progress(elapsed, 0.3, 0.7));
+      fire.setAttribute('opacity', fireOpacity.toFixed(3));
+      fire.setAttribute('transform', `translate(0 ${(-6 * expansion).toFixed(2)}) scale(${(0.18 + 0.94 * expansion).toFixed(3)}) rotate(${-8 * expansion})`);
+      smoke.setAttribute('opacity', (0.86 * progress(elapsed, 0.08, 0.38) * (1 - progress(elapsed, 1.05, 0.85))).toFixed(3));
+      puffs.forEach(({ node, x, y, size, angle }) => {
+        const grow = 0.2 + 0.95 * easeOutCubic(progress(elapsed, 0.05, 1.5));
+        node.setAttribute('transform', `translate(${(x * expansion).toFixed(2)} ${(y * expansion - 20 * elapsed).toFixed(2)}) rotate(${angle}) scale(${(size * grow).toFixed(3)})`);
+      });
+      fragments.setAttribute('opacity', (progress(elapsed, 0, 0.1) * (1 - progress(elapsed, 1.0, 0.72))).toFixed(3));
+      pieces.forEach(({ node, cx, cy, x, y, velocity: [vx, vy], spin }) => {
+        const px = x + vx * elapsed;
+        const py = y + vy * elapsed + 17 * elapsed * elapsed;
+        node.setAttribute('transform', `translate(${px.toFixed(2)} ${py.toFixed(2)}) rotate(${(origin.angle + spin * elapsed).toFixed(2)}) translate(${-cx} ${-cy})`);
+      });
+      embers.setAttribute('opacity', (progress(elapsed, 0.08, 0.12) * (1 - progress(elapsed, 0.5, 0.45))).toFixed(3));
+      sparks.forEach(({ node, angle, distance }) => {
+        const reach = distance * easeOutCubic(progress(elapsed, 0.05, 0.85));
+        node.setAttribute('transform', `translate(${(Math.cos(angle) * reach).toFixed(2)} ${(Math.sin(angle) * reach + 12 * elapsed * elapsed).toFixed(2)}) rotate(${angle * 180 / Math.PI})`);
+      });
+    };
+  }
+
   /**
    * An Ariane rocket on its launch table (kind 'ariane4' or 'ariane5'):
    * white shells shaded as cylinders, dark interstages and engines, and a
    * cut-away window onto the gold module in its equipment bay, which
    * `module` lights. launchAt swings the service arm away, lights the
-   * engines in a cloud of launch smoke, and lifts the rocket off; veerAt
-   * tips it off course; bloomAt breaks it apart: its pieces (and the gold
-   * module) fly off slowly inside a slow orange bloom (no white, no flash).
+   * engines in a cloud of launch smoke, and lifts the rocket off. `groundY`
+   * is the support feet's resting height in the parent's coordinates.
+   * `flightTo` gives the centre's destination { y, at }, without scaling.
+   * veerAt tips it off course; bloomAt separates Ariane 5's shell sections
+   * and gold module through a rolling fireball followed by rising smoke.
    */
-  function rocket(parent, { x, y, name, kind = 'ariane4', at, until, launchAt, veerAt, bloomAt, module: moduleAt }) {
+  function rocket(parent, { x, groundY, name, kind = 'ariane4', at, until, launchAt, flightTo, veerAt, bloomAt, module: moduleAt }) {
+    const y = groundY - 250;
     const node = show(box(parent, 'rk-rocket', { x, y, w: 120, h: 250 }), at, until, 'fade');
+    node.dataset.testid = `reuse-rocket-${kind}`;
     const art = svg('svg', { viewBox: '0 0 120 250', width: 120, height: 250, 'aria-hidden': 'true' }, node);
     const id = `rk-rkt${++rocketCount}`;
     const defs = svg('defs', {}, art);
@@ -801,9 +900,10 @@
     const ground = svg('g', { class: 'rk-rkt-ground' }, art);
     // One group, faded as a whole, so overlapping puffs read as one cloud.
     const smoke = svg('g', { class: 'rk-rkt-smoke', opacity: 0 }, art);
-    const ship = svg('g', { class: 'rk-rocket-ship' }, art);
+    const ship = svg('g', { class: 'rk-rocket-ship', 'data-testid': 'reuse-rocket-flight' }, art);
     const flames = svg('g', { class: 'is-staged' }, ship);
-    const drawn = ROCKETS[kind](ship, fills);
+    const body = svg('g', { 'data-testid': 'reuse-rocket-body' }, ship);
+    const drawn = ROCKETS[kind](body, fills);
     let mast = 'M5 236 V' + drawn.mastTop + ' M13 236 V' + drawn.mastTop + ' ';
     for (let my = 236, left = true; my > drawn.mastTop; my -= 10, left = !left) mast += `M${left ? 5 : 13} ${my} L${left ? 13 : 5} ${Math.max(drawn.mastTop, my - 10)} `;
     svg('path', { class: 'rk-rkt-mast', d: mast }, ground);
@@ -811,7 +911,7 @@
     const arm = svg('path', { class: 'rk-rkt-arm', d: `M13 ${drawn.arm} H${kind === 'ariane5' ? 40 : 42} M13 ${drawn.arm + 4} L${kind === 'ariane5' ? 40 : 42} ${drawn.arm}` }, ground);
     svg('rect', { class: 'rk-rkt-pad', x: 3, y: 238, width: 114, height: 8, rx: 1.5, fill: fills.metal }, ground);
     svg('rect', { class: 'rk-rkt-trench', x: 40, y: 238, width: 40, height: 3, rx: 1 }, ground);
-    svg('path', { class: 'rk-rkt-legs', d: 'M14 246 V250 M106 246 V250' }, ground);
+    svg('path', { class: 'rk-rkt-legs', 'data-testid': 'reuse-rocket-footings', d: 'M14 246 V250 M106 246 V250' }, ground);
     // The engines' flames, under each nozzle: an outer flame and its core.
     const flameShapes = drawn.nozzles.map(([fx0, fy], i) => {
       const w = i === 0 ? (kind === 'ariane5' ? 16 : 7) : (kind === 'ariane5' ? 11 : 7);
@@ -826,44 +926,22 @@
     if (moduleAt !== undefined) classAt(drawn.bay, 'rk-module-lit', moduleAt);
     if (launchAt !== undefined) fx.fadeIn(flames, launchAt - 0.2, 0.2);
     el('div', 'rk-rocket-name', node, name);
-    const bloom = el('div', 'rk-bloom is-staged', node);
-    // The pieces the breakup scatters, each with its own seeded path: shell
-    // panels, dark engine parts, and the gold module.
-    // The self-destruct's fireball and smoke, each one group faded as a whole.
-    const blast = svg('g', { class: 'rk-rkt-blast' }, art);
-    const smokeCloud = svg('g', { class: 'rk-rkt-blast-smoke', opacity: 0 }, blast);
-    const fireball = svg('g', { class: 'rk-rkt-blast-fire', opacity: 0 }, blast);
-    const blastPuffs = Array.from({ length: 7 }, (_, i) => ({
-      a: (i / 7) * Math.PI * 2 + 0.4, d: i === 0 ? 0 : 14 + 6 * hash01(i * 19 + 2),
-      smokeDot: svg('circle', { cx: 0, cy: 0, r: 12 + 4 * hash01(i * 3 + 1) }, smokeCloud),
-      fireDot: svg('circle', { cx: 0, cy: 0, r: 11 + 4 * hash01(i * 5 + 7) }, fireball),
-    }));
-    const debris = svg('g', { class: 'rk-rocket-debris' }, art);
-    const pieces = Array.from({ length: 14 }, (_, i) => {
-      const kindOf = i === 6 ? 'gold' : i % 3 === 2 ? 'metal' : 'panel';
-      const g = svg('g', {}, debris);
-      const w = kindOf === 'gold' ? 10 : 7 + 9 * hash01(i * 13 + 1);
-      const h = kindOf === 'gold' ? 8 : 4 + 4 * hash01(i * 17 + 9);
-      if (kindOf === 'panel' && i % 4 === 0) svg('path', { class: 'rk-rkt-debris-panel', d: `M${-w / 2} ${h / 2} L0 ${-h} L${w / 2} ${h / 2} Z` }, g);
-      else svg('rect', { class: `rk-rkt-debris-${kindOf}`, x: -w / 2, y: -h / 2, width: w, height: h, rx: 1.2 }, g);
-      const angle = (i / 14) * Math.PI * 2 + hash01(i * 7 + 2);
-      return { g, angle, dist: 38 + 52 * hash01(i * 5 + 3), spin: (hash01(i * 11 + 4) - 0.5) * 420 };
-    });
-    // The whole rocket stays in view: it climbs and grows smaller as it
-    // flies up and away (scaled about its base), and veers about its middle.
-    // cx, cy is the middle of the rocket, where it breaks apart.
+    // Keep the rocket's size throughout its flight. The choreography sets
+    // its destination: beyond the frame for Ariane 4, in the clouds for
+    // Ariane 5. cx, cy is its middle, where it veers and breaks apart.
     const BASE = 238;
     const pose = (t) => {
-      const climb = launchAt === undefined ? 0 : easeInOutCubic(progress(t, launchAt, 2.4));
+      const climb = launchAt === undefined ? 0 : progress(t, launchAt, flightTo.at - launchAt);
       const veer = veerAt === undefined ? 0 : progress(t, veerAt, 1.2);
-      const k = 1 - 0.55 * climb;
-      const rise = 112 * climb;
+      const rise = launchAt === undefined ? 0 : (y + BASE - 112 - flightTo.y) * climb;
       const dx = 18 * veer * veer;
-      return { k, rise, dx, angle: 38 * easeInOutCubic(veer), cx: 60 + dx, cy: BASE - rise - 112 * k, lift: rise };
+      return { rise, dx, angle: 38 * easeInOutCubic(veer), cx: 60 + dx, cy: BASE - rise - 112 };
     };
+    const breakup = bloomAt === undefined ? null : ariane5Breakup(art, defs, body, { id, at: bloomAt, origin: pose(bloomAt) });
+    if (bloomAt !== undefined) fx.fadeOut(ship, bloomAt, 0.12);
     onFrame((t) => {
-      const { k, rise, dx, angle, cx, cy } = pose(t);
-      ship.setAttribute('transform', `rotate(${angle.toFixed(1)} ${cx.toFixed(1)} ${cy.toFixed(1)}) translate(${dx.toFixed(1)} ${(-rise).toFixed(1)}) translate(60 ${BASE}) scale(${k.toFixed(3)}) translate(-60 ${-BASE})`);
+      const { rise, dx, angle, cx, cy } = pose(t);
+      ship.setAttribute('transform', `rotate(${angle.toFixed(1)} ${cx.toFixed(1)} ${cy.toFixed(1)}) translate(${dx.toFixed(1)} ${(-rise).toFixed(1)})`);
       if (launchAt !== undefined) {
         // The service arm swings up and away just before ignition.
         const swing = 72 * easeInOutCubic(progress(t, launchAt - 0.9, 0.5));
@@ -886,42 +964,8 @@
           puff.setAttribute('transform', `translate(${(cx + away).toFixed(1)} ${(cy - 5 * out).toFixed(1)}) scale(${(1 + 1.1 * out).toFixed(3)} ${(1 + 0.3 * out).toFixed(3)}) translate(${-cx} ${-cy})`);
         });
       }
-      const breaking = bloomAt !== undefined && t >= bloomAt;
-      debris.style.display = breaking ? '' : 'none';
-      blast.style.display = breaking ? '' : 'none';
-      if (!breaking) return;
-      const at0 = pose(bloomAt);
-      const p = clamp((t - bloomAt) / 1.8, 0, 1);
-      const out = easeOutCubic(p);
-      // The self-destruct: a fireball swells and dims to orange-brown, then
-      // a cloud of smoke spreads and sinks; no white, no flash.
-      const fire = clamp((t - bloomAt) / 0.9, 0, 1);
-      const fade = clamp((t - bloomAt) / 3.2, 0, 1);
-      fireball.setAttribute('opacity', (0.95 * (1 - fire)).toFixed(3));
-      smokeCloud.setAttribute('opacity', (0.85 * Math.min(1, (t - bloomAt) * 4) * (1 - fade)).toFixed(3));
-      blastPuffs.forEach(({ fireDot, smokeDot, a, d }) => {
-        const r = 0.45 + 1.1 * easeOutCubic(fire);
-        const fxp = at0.cx + Math.cos(a) * d * easeOutCubic(fire);
-        const fyp = at0.cy + Math.sin(a) * d * easeOutCubic(fire);
-        fireDot.setAttribute('transform', `translate(${fxp.toFixed(1)} ${fyp.toFixed(1)}) scale(${r.toFixed(3)})`);
-        const sr = 0.7 + 1.3 * easeOutCubic(fade);
-        smokeDot.setAttribute('transform', `translate(${(at0.cx + Math.cos(a) * d * 1.6 * easeOutCubic(fade)).toFixed(1)} ${(at0.cy + Math.sin(a) * d * 1.3 * easeOutCubic(fade) + 14 * fade).toFixed(1)}) scale(${sr.toFixed(3)})`);
-      });
-      pieces.forEach(({ g, angle: a, dist, spin }) => {
-        const px = at0.cx + Math.cos(a) * dist * out;
-        const py = at0.cy + Math.sin(a) * dist * out + 26 * p * p;
-        g.setAttribute('transform', `translate(${px.toFixed(1)} ${py.toFixed(1)}) rotate(${(spin * out).toFixed(1)})`);
-        g.style.opacity = (1 - clamp((p - 0.45) / 0.55, 0, 1)).toFixed(3);
-      });
+      if (breakup) breakup(t);
     });
-    if (bloomAt !== undefined) {
-      // The glow is centred where the rocket breaks apart.
-      const at0 = pose(bloomAt);
-      bloom.style.left = `${(at0.cx - 70).toFixed(1)}px`;
-      bloom.style.top = `${(at0.cy - 70).toFixed(1)}px`;
-      fx.fadeOut(ship, bloomAt, 0.15);
-      tween(bloom, [{ opacity: 0, scale: 0.2 }, { opacity: 0.85, scale: 1 }, { opacity: 0, scale: 1.5 }], bloomAt, 2.4, EASE.out);
-    }
     return { node, ship };
   }
 

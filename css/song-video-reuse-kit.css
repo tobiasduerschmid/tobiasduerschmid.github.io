@@ -122,8 +122,7 @@
     inset 3px 0 0 rgba(255, 255, 255, 0.14),
     inset -4px 0 0 rgba(0, 0, 0, 0.16),
     inset 0 -3px 0 rgba(0, 0, 0, 0.12),
-    0 3px 0 rgba(0, 0, 0, 0.18),
-    0 8px 14px rgba(0, 0, 0, 0.24);
+    0 3px 0 rgba(0, 0, 0, 0.24);
   box-sizing: border-box;
   text-align: center;
 }
@@ -236,15 +235,15 @@
 .rk-ring--gold { border-color: #b27616; }
 
 /* A brick on the lit path of a dependency chain. */
-.rk-pkg.is-path { box-shadow: 0 0 0 3px var(--rk-red), 0 6px 12px rgba(0, 0, 0, 0.28); }
-.rk-pkg.is-listed { box-shadow: 0 0 0 3px #b27616, 0 6px 12px rgba(0, 0, 0, 0.28); }
+.rk-pkg.is-path { box-shadow: 0 0 0 3px var(--rk-red), 0 6px 0 rgba(0, 0, 0, 0.28); }
+.rk-pkg.is-listed { box-shadow: 0 0 0 3px #b27616, 0 6px 0 rgba(0, 0, 0, 0.28); }
 
 .rk-plate {
   position: absolute;
   border: 2px solid var(--brick-edge);
   border-radius: 3px;
   background: var(--rk-brick-sheen), var(--rk-brick-shade), var(--brick);
-  box-shadow: 0 6px 10px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.25);
   box-sizing: border-box;
 }
 
@@ -302,6 +301,7 @@
    Both origins place its 404px-wide composition at x=324, in the clear sky. */
 .rk-focus-panel--left { transform: translateX(268px); }
 .rk-focus-panel--right { transform: translateX(-176px); }
+.rk-quiz-art { top: 16px; }
 
 .rk-spread {
   position: absolute;
@@ -420,7 +420,7 @@
 }
 
 /* A printed tile: smooth on top. A padding brick: one stud, a space dot. */
-.rk-pad-char { box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2); }
+.rk-pad-char { box-shadow: 0 3px 0 rgba(0, 0, 0, 0.2); }
 .rk-pad-space { box-shadow: inset 3px 0 0 rgba(255, 255, 255, 0.16), inset -3px 0 0 rgba(0, 0, 0, 0.14); }
 .rk-pad-space .rk-studs { left: 7px; right: 7px; }
 .rk-pad-dot { opacity: 0.7; }
@@ -479,7 +479,7 @@
   font-family: var(--font-mono);
   font-size: 16px;
   line-height: 1.45;
-  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 3px 0 rgba(13, 31, 54, 0.35);
   box-sizing: border-box;
 }
 
@@ -586,7 +586,7 @@
   margin: -4px -6px;
   border-radius: 4px;
   background: var(--label-paper);
-  box-shadow: 0 3px 8px rgba(13, 31, 54, 0.2);
+  box-shadow: 0 2px 0 rgba(13, 31, 54, 0.2);
 }
 
 .rk-note {
@@ -859,6 +859,8 @@
 /* The Ariane rockets. */
 .rk-rocket { position: absolute; }
 .rk-rocket svg { overflow: visible; }
+.rk-launch-scene { width: 440px; height: 502px; }
+.rk-clear-flight { visibility: hidden; }
 
 /* The Ariane rockets: white shells shaded as cylinders (lit from the left),
    dark interstages and engines, and a cut-away window onto the gold module
@@ -911,34 +913,29 @@
 .rk-rkt-flame-1 { stop-color: #f09a3b; }
 .rk-rkt-flame-2 { stop-color: rgba(216, 99, 36, 0); }
 .rk-rkt-flame-core { fill: #fff0b5; }
-.rk-rkt-debris-panel { fill: #f1eee6; stroke: #8f8a7c; stroke-width: 1; }
-.rk-rkt-debris-metal { fill: #59606d; stroke: #22262e; stroke-width: 0.8; }
-.rk-rkt-blast-fire { fill: #ef9a3d; }
-.rk-rkt-blast-fire circle:nth-child(odd) { fill: #d96830; }
-.rk-rkt-blast-smoke { fill: #8f877a; }
-.rk-rkt-debris-gold { fill: var(--rk-ucla-gold); stroke: #7a5f00; stroke-width: 1; }
+/* One warm burst, with crisp billows and no flashing or blurred halo. */
+.rk-rkt-fire-core { stop-color: #ffe09a; }
+.rk-rkt-fire-gold { stop-color: #ffb343; }
+.rk-rkt-fire-rim { stop-color: #cb573a; }
+.rk-rkt-fire-fold { fill: #f9973d; }
+.rk-rkt-fire-heart { fill: #ffdb7b; }
+.rk-rkt-smoke-top { stop-color: #636d89; }
+.rk-rkt-smoke-mid { stop-color: #887b93; }
+.rk-rkt-smoke-lit { stop-color: #c68e79; }
+.rk-rkt-smoke-fold { fill: none; stroke: #ddab92; stroke-width: 1.8; stroke-linecap: round; opacity: 0.48; }
+.rk-rkt-embers { fill: #ffc65c; }
 
 .rk-rocket-name {
   position: absolute;
   left: -10px;
   right: -10px;
-  bottom: -30px;
+  top: 250px;
   color: var(--rk-ink);
   font-size: 18px;
   font-weight: 800;
+  line-height: 1.25;
   text-align: center;
   white-space: nowrap;
-}
-
-/* The breakup: a slow orange bloom, never white, never a flash. */
-.rk-bloom {
-  position: absolute;
-  left: -20px;
-  top: 30px;
-  width: 140px;
-  height: 140px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(239, 154, 61, 0.7), rgba(202, 95, 39, 0.3) 55%, transparent 72%);
 }
 
 .rk-gauge { position: absolute; display: grid; justify-items: center; }
@@ -1060,12 +1057,12 @@
   padding: 12px;
   border-radius: 5px;
   background: var(--rk-paper);
-  box-shadow: 0 3px 10px rgba(13, 31, 54, 0.3);
+  box-shadow: 0 3px 0 rgba(13, 31, 54, 0.3);
 }
 
 /* Not yet sung: muted ink (5.9:1), never transparency, so it stays readable. */
 .rk-list-row:not(.is-lit) .rk-list-q { color: var(--rk-muted); }
-.rk-list-row.is-lit { background: #ffe9a6; box-shadow: inset 4px 0 0 var(--rk-ucla-gold), 0 3px 10px rgba(13, 31, 54, 0.3); }
+.rk-list-row.is-lit { background: #ffe9a6; box-shadow: inset 4px 0 0 var(--rk-ucla-gold), 0 3px 0 rgba(13, 31, 54, 0.3); }
 
 .rk-list-icon {
   display: grid;
@@ -1259,7 +1256,7 @@
   border-radius: 3px;
   background: var(--rk-card);
   color: var(--rk-paper);
-  box-shadow: 0 0 0 4px var(--rk-card), 0 4px 10px rgba(13, 31, 54, 0.25);
+  box-shadow: 0 0 0 4px var(--rk-card);
 }
 
 .rk-gauge-readout {
@@ -1276,10 +1273,12 @@
   background: var(--rk-paper);
 }
 
-/* A fine cream contour separates the foreground from the brickwork.
-   Zero blur keeps the edge crisp and leaves the surrounding sky untouched. */
+/* A fine cream contour separates solid foreground objects from the brickwork.
+   Apply it inside the fading groups so smoke and fire keep their transparency. */
 .rk-scale svg,
-.rk-rocket > svg,
+.rk-rocket-ship,
+.rk-rkt-ground,
+.rk-rkt-fragments,
 .rk-padlock > svg,
 .rk-vision > svg,
 .rk-wall > svg {
@@ -1318,6 +1317,6 @@
 .rk-ghost--frame { border-width: 4px; border-radius: 10px; }
 
 /* In this song the section badge and stickers read at paragraph size too. */
-.theme-brick-site .badge { left: 310px; max-width: 440px; font-size: 16px; color: var(--rk-ink); background: linear-gradient(165deg, #ffe778, var(--rk-ucla-gold) 60%, #efb80c); border-color: #996419; }
+.theme-brick-site .badge { left: 20px; max-width: 440px; font-size: 16px; color: var(--rk-ink); background: linear-gradient(165deg, #ffe778, var(--rk-ucla-gold) 60%, #efb80c); border-color: #996419; }
 .theme-brick-site .sticker { font-size: 16px; }
 .theme-brick-site .sticker svg { width: 18px; height: 18px; }

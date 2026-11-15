@@ -123,14 +123,14 @@ sections:
   - id: intro
     title: "Intro"
     delivery: spoken
-    narration: "Audio-described version: before each section, the picture pauses while I describe it. The song plays on a toy-brick construction site before sunrise. The studded ground, loose bricks, lamps, and blue-hour sky are there from the first frame. Only the hall, building site, and crane assemble during the opening. The sun rises in an arc to the right. Violet cloud undersides turn rose and coral, then peach and cream, as the upper sky changes from deep blue to azure above a golden horizon. Your hero is the foreman, in a hi-vis vest and gold hard hat, holding a clipboard. The hero stays on screen, singing with word-timed mouth movements and resting during instrumental gaps and quiz pauses. The buildings stay sharp. Illustrations take turns in the clear space between the towers, with readable text plaques. A terminal types npm install left-pad and waits, while a shelf of reusable package bricks appears. A title introduces a balance scale: three blue bricks of effort saved outweigh one gold brick of effort to adapt. During the instrumental, the crane lifts a prebuilt module off the ground."
+    narration: "Audio-described version: before each section, the picture pauses while I describe it. The song plays on a toy-brick construction site before sunrise. The studded ground, loose bricks, lamps, and blue-hour sky are there from the first frame. The ground floors and crane assemble during the opening. Each chorus adds another stage: lower floors, upper floors, then belfries, roofs, and the final wall courses. Completed floors stay in place between choruses. The sun rises in an arc to the right. Violet cloud undersides turn rose and coral, then peach and cream, as the upper sky changes from deep blue to azure above a golden horizon. Your hero is the foreman, in a hi-vis vest and gold hard hat, holding a clipboard. The hero stays on screen, singing with word-timed mouth movements and resting during instrumental gaps and quiz pauses. The buildings stay sharp. Illustrations take turns in the clear space between the towers, with readable text plaques. A terminal types npm install left-pad and waits, while a shelf of reusable package bricks appears. A title introduces a balance scale: three blue bricks of effort saved outweigh one gold brick of effort to adapt. During the instrumental, the crane lifts a prebuilt module off the ground."
     lines:
       - id: intro-1
         start: 2.23
         end: 5.24
         text: "Good news: you don't have to write it all yourself."
         marks: {"good": 2.23, "news": 2.44, "you": 3.04, "dont": 3.46, "have": 3.6, "to": 3.74, "write": 3.86, "it": 4.06, "all": 4.2, "yourself": 4.32}
-        visual: "The blue-hour sky, warm horizon, studded ground, loose bricks, and lamps are visible from the start. The foreman stands on the baseplate with a clipboard, singing in a hi-vis vest and gold hard hat, without a surrounding halo. The hall, building site, and crane rise course by course. Between the towers, a terminal types `npm install left-pad` and waits. On “yourself”, the hero points as the shelf appears: requests, numpy, React, and Express."
+        visual: "The blue-hour sky, warm horizon, studded ground, loose bricks, and lamps are visible from the start. The foreman stands on the baseplate with a clipboard, singing in a hi-vis vest and gold hard hat, without a surrounding halo. The hall and building site assemble their ground-floor bases, and the crane rises. The upper floors wait for the choruses. Between the towers, a terminal types `npm install left-pad` and waits. On “yourself”, the hero points as the shelf appears: requests, numpy, React, and Express."
       - id: intro-2
         start: 6.56
         end: 8.8
@@ -140,7 +140,7 @@ sections:
   - id: verse-1
     title: "Verse 1"
     delivery: sung
-    narration: "Verse 1, what reuse saves. The illustrations take turns between the towers; the foreman sings at the left edge. Clouds and the forklift hold still. First, a shelf of package bricks with an open-source tag. Then requests connects to eight apps, and three bugs are stamped fixed. One card reads higher software quality, fewer defects. It clears before two bars, code to write and code to test, shrink; another card reads higher productivity, faster time to market. The benefits disappear before the catch. Blue Library 1 and tan Library 2 bricks form a neat wall, the vision, then separate into mismatched pieces, the reality. Notes say assumes one thread and assumes low speeds. Glue-code tape covers the gaps."
+    narration: "Verse 1, what reuse saves. The illustrations take turns between the towers; the foreman sings at the left edge. Clouds drift gently, their highlights facing the sun; the forklift holds still. First, a shelf of package bricks with an open-source tag. Then requests connects to eight apps, and three bugs are stamped fixed. One card reads higher software quality, fewer defects. It clears before two bars, code to write and code to test, shrink; another card reads higher productivity, faster time to market. The benefits disappear before the catch. Blue Library 1 and tan Library 2 bricks form a neat wall, the vision, then separate into mismatched pieces, the reality. Notes say assumes one thread and assumes low speeds. Glue-code tape covers the gaps."
     lines:
       - id: v1-1
         start: 12.89
@@ -205,7 +205,7 @@ sections:
   - id: refrain-1
     title: "Refrain"
     delivery: sung
-    narration: "The refrain: a compact checklist in the middle, titled before you reuse, ask. One question appears at a time, with its principle underneath. Each adds a gold brick to the tower beside it. What will it save, what will it cost: cost-benefit analysis. What does it assume: identify violated assumptions. What does it pull in: strive for fewer dependencies. Pin it, but update for patches: keep versions fixed, update for security patches. The footer lights: external reuse is not a one-time investment, and the baseplate turns gold."
+    narration: "The first chorus adds lower floors to both background buildings, brick by brick, above the ground-floor bases. A compact checklist appears in the middle, titled before you reuse, ask. One question appears at a time, with its principle underneath. Each adds a gold brick to the tower beside it. What will it save, what will it cost: cost-benefit analysis. What does it assume: identify violated assumptions. What does it pull in: strive for fewer dependencies. Pin it, but update for patches: keep versions fixed, update for security patches. The footer lights: external reuse is not a one-time investment, and the baseplate turns gold."
     lines:
       - id: refrain1-1
         start: 37.04
@@ -400,7 +400,7 @@ sections:
   - id: refrain-2
     title: "Refrain"
     delivery: sung
-    narration: "The refrain again, one checklist question at a time between the towers. Its gold brick tower grows. The pin-and-update question now carries the case tags urllib3 and Heartbleed."
+    narration: "The second chorus builds the upper floors and tower shafts above the completed lower floors. Between the towers, one checklist question appears at a time. Its gold brick tower grows. The pin-and-update question now carries the case tags urllib3 and Heartbleed."
     lines:
       - id: refrain2-1
         start: 106.12
@@ -544,7 +544,7 @@ sections:
         end: 159.04
         text: "Choose maintained and popular,"
         marks: {"choose": 156.65, "maintained": 156.9, "and": 157.58, "popular": 158.18}
-        visual: "In the middle: two profile cards. A: “updated weekly, many users, good docs”, with a check. B: “last commit 4 years ago”. Below them, a brick wall labelled “your project” with a gap in its top course, and a wide blue brick, “popular-lib”."
+        visual: "In the middle: two profile cards. A: “updated weekly, many users, good docs”, with a check. B: “last commit 4 years ago”. Below them, a brick wall labelled “your project” with a gap in its top course, and a wide blue brick, “popular-lib”. The principle brick reads “Choose maintained dependencies”."
       - id: v4-18
         start: 159.04
         end: 161.59
@@ -554,56 +554,56 @@ sections:
   - id: bridge
     title: "Bridge"
     delivery: sung
-    narration: "The bridge, case 4, Ariane 5. Rockets and their speed gauge take turns in the middle. Ariane 4 carries a gold inertial-reference module inside a cut-away window. The gauge shows its 16-bit limit, 32,767. Ariane 4 launches; a label confirms its value fits the 16-bit range. The same module is reused in the larger Ariane 5. The gauge returns, its needle crosses the limit, and overflow appears. The rocket returns at 37 seconds, veers, and breaks apart in a slow orange bloom. A comparison reads Ariane 4 fits, Ariane 5 overflows, assumes horizontal velocity fits in 16 bits, and cost of failure, 370 million dollars. The principle is identify violated assumptions. Three checkboxes appear in turn: read the documentation and code, check the intended conditions, and test. A ground test catches the overflow before launch. Finally, one module branches into two, 16-bit version 1 and 32-bit version 2, each with its own team: evolve separately, version it, or clone and own."
+    narration: "The bridge, case 4, Ariane 5. Both rockets stand on launch platforms resting on the scene's ground, their names below the platforms. They stay visible through the launch sequence. Ariane 4 carries a gold inertial-reference module inside a cut-away window. Compact labels explain speed stored in 16 bits and the limit, 32,767. Ariane 4 makes a slower ascent at full size and exits the top of the frame; a label confirms its value fits the range. The same module is reused in the larger Ariane 5. It climbs roughly twice as fast at full size, reaching the clouds as an overflow label appears. The second rocket holds that failure moment for the 37-second label; then the rocket veers and breaks apart. Its fairing, tanks, boosters, and gold module separate through an expanding amber fireball. The fire dims as smoke billows upward and disperses. A comparison reads Ariane 4 fits, Ariane 5 overflows, assumes horizontal velocity fits in 16 bits, and cost of failure, 370 million dollars. The principle is identify violated assumptions. Three checkboxes appear in turn: read the documentation and code, check the intended conditions, and test. A ground test catches the overflow before launch. Finally, one module branches into two, 16-bit version 1 and 32-bit version 2, each with its own team: evolve separately, version it, or clone and own."
     lines:
       - id: br-1
         start: 161.59
         end: 163.78
         text: "Code built for Ariane Four"
         marks: {"code": 161.59, "built": 161.7, "for": 162.16, "ariane": 162.52, "four": 163.0}
-        visual: "Case 4, “Ariane 5”. In the middle: the Ariane 4 rocket on its launch table beside a service mast: a white three-stage core under a wide payload fairing, two strap-on boosters, and a cut-away window in its equipment bay showing the gold module inside, ringed in orange. An arrow points to it: “Inertial Reference System: the gold module”."
+        visual: "Case 4, “Ariane 5”. In the middle: the Ariane 4 rocket on its ground-level launch table beside a service mast, with its name directly below the platform: a white three-stage core under a wide payload fairing, two strap-on boosters, and a cut-away window in its equipment bay showing the gold module inside, ringed in orange. An arrow points to it: “Inertial Reference System: the gold module”."
       - id: br-2
         start: 163.78
         end: 165.5
         text: "Stored horizontal speed"
         marks: {"stored": 163.78, "horizontal": 164.02, "speed": 164.82}
-        visual: "The next central illustration: a gauge labelled “horizontal velocity → 16-bit integer”."
+        visual: "The rocket stays visible. A compact label beside it reads “Speed stored in 16 bits”."
       - id: br-3
         start: 165.5
         end: 167.08
         text: "In sixteen bits: enough,"
         marks: {"in": 165.5, "sixteen": 165.54, "bits": 165.98, "enough": 166.36}
-        visual: "The gauge’s limit is marked: 32,767."
+        visual: "Another compact label beside Ariane 4 reads “Limit: 32,767”."
       - id: br-4
         start: 167.08
         end: 169.48
         text: "Since that rocket flew slower."
         marks: {"since": 167.08, "that": 167.34, "rocket": 167.66, "flew": 168.06, "slower": 168.46}
-        visual: "The rocket replaces the gauge. Ariane 4 launches and shrinks into the distance, with a label: “Within 16-bit range · fits ✓”."
+        visual: "Ariane 4 rises slowly from the ground at full size and continues upward until it exits through the top of the frame. Its platform and name stay below, with a label: “Within 16-bit range · fits ✓”."
       - id: br-5
         start: 169.48
         end: 171.48
         text: "Reused in Ariane Five,"
         marks: {"reused": 169.48, "in": 170.1, "ariane": 170.34, "five": 170.98}
-        visual: "A second rocket, Ariane 5, appears beside it along an arrow, “reused”: a wide core with two big solid boosters, and in its equipment bay the same gold module, ringed in orange."
+        visual: "A second rocket, Ariane 5, appears on another ground-level launch platform, its name below, along an arrow from the first platform, “reused”: a wide core with two big solid boosters, and in its equipment bay the same gold module, ringed in orange."
       - id: br-6
         start: 171.48
         end: 173.66
         text: "Which flew faster: overflow!"
         marks: {"which": 171.48, "flew": 171.72, "faster": 171.94, "overflow": 172.68}
-        visual: "The gauge replaces the rockets. Its needle sweeps past 32,767, its readout says “overflow!”, and an “Overflow” stamp lands below it."
+        visual: "Ariane 5 lifts off at full size and climbs roughly twice as fast as Ariane 4. It reaches the clouds on “overflow” and holds at the failure moment. A compact “Overflow” stamp appears beside it; there is no cutaway."
       - id: br-7
         start: 173.66
         end: 175.84
         text: "Thirty-seven seconds in,"
         marks: {"thirtyseven": 173.66, "seconds": 174.08, "in": 174.84}
-        visual: "The rocket returns to the middle, with the label “T + 37 s”."
+        visual: "Ariane 5 holds in the low cloud bank at the failure moment, with the label “T + 37 s” beside it."
       - id: br-8
         start: 175.84
         end: 177.74
         text: "It veered, then self-destructed."
         marks: {"it": 175.84, "veered": 176.0, "then": 176.46, "selfdestructed": 176.88}
-        visual: "The rocket veers off its path, then self-destructs in view: a fireball swells and dims, its pieces, the gold module among them, fly apart inside an orange glow, and a cloud of smoke spreads and sinks."
+        visual: "The full-size rocket veers off its path, then self-destructs in the clouds. Its fairing, tanks, boosters, and gold module tumble apart through an expanding amber fireball and a few fading embers. The fire dims as smoke billows upward and disperses; the breakup finishes before the comparison appears."
       - id: br-9
         start: 177.74
         end: 180.11
@@ -777,7 +777,7 @@ sections:
         answer_at: 244.76
         pause_at: 244.64
         marks: {"two": 240.57, "apps": 240.82, "share": 241.4, "a": 241.8, "module": 242.04, "and": 242.46, "their": 242.82, "needs": 242.98, "drift": 243.58, "apart": 243.88, "version": 244.76, "it": 245.12, "or": 245.38, "clone": 245.68, "and_2": 246.08, "own": 246.24}
-        visual: "Question 5 asks about two apps sharing a module while their needs drift apart. On the answer, the diagram shows App B displaced from the shared module. The module splits into two copies; App B settles on its own copy with a check. The answer is “Version it, or clone and own.”"
+        visual: "Question 5 asks about two apps sharing a module while their needs drift apart. On the answer, the diagram shows App B displaced from the shared module. The module splits into copies labelled “module v1” and “module v2”; App B settles on its own copy with a check. The answer is “Version it, or clone and own.”"
       - id: quiz-6
         start: 246.52
         end: 255.02
@@ -790,7 +790,7 @@ sections:
   - id: refrain-3
     title: "Final refrain"
     delivery: sung
-    narration: "The final refrain presents each question in turn beside the growing gold brick tower. Case tags connect each question to its example: Ariane 5 for assumptions, left-pad for dependencies, urllib3 and Heartbleed for pinning and updating. The final takeaway lights, and paper confetti drifts down."
+    narration: "The final chorus completes the hall's belfries and roofs and the building site's upper wall courses. Each question appears in turn beside the growing gold brick tower. Case tags connect each question to its example: Ariane 5 for assumptions, left-pad for dependencies, urllib3 and Heartbleed for pinning and updating. The final takeaway lights, and paper confetti drifts down."
     lines:
       - id: refrain3-1
         start: 255.02
@@ -831,7 +831,7 @@ sections:
   - id: outro
     title: "Outro"
     delivery: spoken
-    narration: "The outro: your hero steps forward on the brick site, singing beside a terminal that shows npm install left-pad. The command is deleted and replaced by String of str dot padStart: eleven lines become one built-in. Directly over the site, five case bricks stack into one build: reuse done right, and the foreman, carrying a gold brick, gives it a thumbs-up. Behind it, the crane sets its prebuilt module onto the building. The sun has risen to the right into golden hour. The upper sky is bright blue, the horizon glows gold, and the clouds have peach and cream undersides. The stars and site lamps have faded."
+    narration: "The outro: your hero steps forward on the brick site, singing beside a terminal that shows npm install left-pad. A JavaScript example replaces the terminal: String of str dot padStart. Eleven lines become one built-in. Directly over the site, five case bricks stack into one build: reuse done right, and the foreman, carrying a gold brick, gives it a thumbs-up. Behind it, the crane sets its prebuilt module onto the building. The sun has risen to the right into golden hour. The upper sky is bright blue, the horizon glows gold, and the clouds have peach and cream undersides. The stars and site lamps have faded. The completed composition holds through the final note."
     lines:
       - id: outro-1
         start: 272.68
@@ -844,7 +844,7 @@ sections:
         end: 279.28
         text: "No need: padStart is built in."
         marks: {"no": 275.28, "need": 275.54, "padstart": 277.22, "is": 277.58, "built": 278.22, "in": 278.54}
-        visual: "The command is deleted, and the terminal types `String(str).padStart(length, paddingCharacter)`. Label: “Eleven lines → one built-in”."
+        visual: "The terminal gives way to a JavaScript example: `String(str).padStart(length, paddingCharacter)`. A separate label below reads “Eleven lines → one built-in”."
       - id: outro-3
         start: 280.37
         end: 282.72

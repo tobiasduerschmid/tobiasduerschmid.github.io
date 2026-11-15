@@ -14,9 +14,11 @@
  * bricks waiting on a plank); a tower crane whose jib crosses the top of
  * the stage and carries a prebuilt module of bricks slowly towards the
  * site; lamp posts; and a studded baseplate as the ground, with large loose
- * bricks in front. Every window is a toy window piece: a white frame, glass
- * split by mullions, a sill. Dark glass reflects the sky; as the morning
- * brightens, the lamps and rooms behind the windows switch their lights off. Depth comes from light and shadow: the glass sits back in its
+ * bricks in front. Every window is a toy window piece: a pale frame, glass
+ * split by mullions, a sill. Only some rooms are occupied, with varied warm
+ * interior light over cool, recessed glass. As morning brightens, the lamps
+ * and room lights fade while sky reflections and window frames brighten.
+ * Depth comes from light and shadow: the glass sits back in its
  * frame, frames and sills and eaves cast shadows, a few bricks in every
  * wall are a shade lighter or darker, the crane is a square truss with its
  * far faces in shadow, soft contact shadows ground the buildings and lamps
@@ -24,17 +26,17 @@
  * ground in front of all this.
  *
  * The ground, studs, loose bricks, lamps and sky are present from frame zero.
- * During the intro (BUILD), the hall and site rise course by course, each course laid
- * left to right with the next brick dropping into its slot, the crane's
- * mast climbs and its jib reaches out, and in the instrumental the crane
- * lifts the prebuilt module off the ground. At the end of the song it sets
- * the module onto the site's unfinished top course.
+ * During the intro (BUILD), the ground-floor bases rise course by course,
+ * the crane's mast climbs and its jib reaches out, and in the instrumental
+ * the crane lifts the prebuilt module off the ground. The three refrains add
+ * lower floors, upper walls, then belfries and roofs. Construction holds
+ * between refrains. At the end the crane fills the site's final module slot.
  *
  * Between the build and the set-down, the open teaching composition leaves
- * the site visible. Clouds and the forklift settle while the diagrams explain
- * each case; architectural detail stays crisp on both sides. The crane, its
- * pennant, and the hanging module hold still once the module is up. Ambient
- * movement resumes for the finale.
+ * the site visible. Clouds drift gently with their highlights facing the sun;
+ * the forklift settles while the diagrams explain each case. Architectural
+ * detail stays crisp on both sides. The crane, its pennant, and the hanging
+ * module hold still once the module is up. The forklift resumes in the finale.
  *
  * The sky starts in blue hour with cool violet cloud shadows. Their
  * rose undersides are already lit before the sun appears, then brighten into
@@ -97,12 +99,14 @@
     // its palette progressing in reverse: blue hour into golden hour.
     gradient(defs, 'linearGradient', 'bs-cloud', vertical, [[0, 'bs-cloud-0'], [0.48, 'bs-cloud-1'], [0.8, 'bs-cloud-2'], [1, 'bs-cloud-3']]);
     defs.querySelector('.bs-cloud-3').setAttribute('data-testid', 'reuse-cloud-highlight');
+    gradient(defs, 'linearGradient', 'bs-cloud-edge', vertical, [[0, 'bs-cloud-edge-0'], [0.55, 'bs-cloud-edge-1'], [1, 'bs-cloud-edge-2']]);
     gradient(defs, 'linearGradient', 'bs-haze', vertical, [[0, 'bs-haze-0'], [1, 'bs-haze-1']]);
     gradient(defs, 'linearGradient', 'bs-morning', vertical, [[0, 'bs-morning-0'], [0.42, 'bs-morning-1'], [0.7, 'bs-morning-2'], [1, 'bs-morning-3']]);
     gradient(defs, 'linearGradient', 'bs-plate', vertical, [[0, 'bs-plate-0'], [0.1, 'bs-plate-1'], [1, 'bs-plate-2']]);
     gradient(defs, 'linearGradient', 'bs-base-shadow', vertical, [[0, 'bs-base-shadow-0'], [1, 'bs-base-shadow-1']]);
-    gradient(defs, 'linearGradient', 'bs-glass-dark', { x1: 0, y1: 0, x2: 0.4, y2: 1 }, [[0, 'bs-glass-dark-0'], [1, 'bs-glass-dark-1']]);
-    gradient(defs, 'radialGradient', 'bs-glass-lit', { cx: 0.5, cy: 0.62, r: 0.62 }, [[0, 'bs-glass-lit-0'], [0.6, 'bs-glass-lit-1'], [1, 'bs-glass-lit-2']]);
+    gradient(defs, 'linearGradient', 'bs-glass-dark', vertical, [[0, 'bs-glass-dark-0'], [0.46, 'bs-glass-dark-1'], [1, 'bs-glass-dark-2']]);
+    defs.querySelector('.bs-glass-dark-0').setAttribute('data-testid', 'reuse-window-sky-reflection');
+    gradient(defs, 'radialGradient', 'bs-glass-lit', { cx: 0.42, cy: 0.24, r: 0.9 }, [[0, 'bs-glass-lit-0'], [0.38, 'bs-glass-lit-1'], [0.75, 'bs-glass-lit-2'], [1, 'bs-glass-lit-3']]);
     gradient(defs, 'linearGradient', 'bs-stud-side', horizontal, [[0, 'bs-stud-side-0'], [0.35, 'bs-stud-side-1'], [1, 'bs-stud-side-2']]);
     gradient(defs, 'linearGradient', 'bs-cast', vertical, [[0, 'bs-cast-0'], [1, 'bs-cast-1']]);
     gradient(defs, 'linearGradient', 'bs-ray', horizontal, [[0, 'bs-ray-0'], [1, 'bs-ray-1']]);
@@ -159,7 +163,7 @@
   }
 
   /** Small overlapping volumes stay clipped inside their bank's silhouette. */
-  function cloudInterior(parent, variant) {
+  function cloudInterior(parent, variant, highlightId) {
     const rolls = [[24, 7, 1.05], [110, -1, 1.35], [224, 5, 1.1]];
     rolls.forEach(([x, y, scale], i) => {
       const profile = CLOUD_PROFILES[(variant + i + 1) % CLOUD_PROFILES.length];
@@ -169,28 +173,52 @@
     });
     [[41, 25, 0.55], [148, 31, 0.72], [262, 23, 0.48]].forEach(([x, y, scale]) => {
       const points = [[0, 3], [13, 0], [22, -5], [37, -2], [51, -10], [67, -6], [82, -7], [107, -1], [132, -3], [111, 6], [85, 4], [68, 11], [45, 7], [26, 10]];
-      svg('path', { class: 'bs-cloud-filament', d: cloudOutline(points.map(([px, py]) => [x + px * scale, y + py * scale])) }, parent);
+      svg('path', { class: 'bs-cloud-filament', fill: `url(#${highlightId})`, d: cloudOutline(points.map(([px, py]) => [x + px * scale, y + py * scale])) }, parent);
     });
   }
 
   /** A layered bank with shaded billows and fine detached wind-torn wisps. */
   function cloud(parent, { scale = 1, variant = 0 } = {}) {
     const g = svg('g', { class: 'bs-cloud', 'data-testid': 'reuse-cloud-bank' }, parent);
-    const shape = svg('g', { transform: `scale(${scale})` }, g);
+    const shape = svg('g', { transform: `scale(${scale})`, 'data-testid': 'reuse-cloud-shape' }, g);
+    const defs = svg('defs', {}, shape);
+    const lighting = svg('linearGradient', {
+      id: `bs-cloud-edge-${variant}`, href: '#bs-cloud-edge', gradientUnits: 'userSpaceOnUse',
+      'data-testid': 'reuse-cloud-light-direction',
+    }, defs);
+    const highlightId = lighting.id;
     const contours = cloudContours(variant);
     svg('path', { class: 'bs-cloud-body', d: contours.body }, shape);
+    svg('path', { class: 'bs-cloud-sunlight', fill: `url(#${highlightId})`, d: contours.body }, shape);
     const clipId = `bs-cloud-interior-${variant}`;
     const clip = svg('clipPath', { id: clipId }, shape);
     svg('path', { d: contours.body }, clip);
     const interior = svg('g', { 'clip-path': `url(#${clipId})` }, shape);
-    cloudInterior(interior, variant);
-    svg('path', { class: 'bs-cloud-light', d: contours.rim }, shape);
+    cloudInterior(interior, variant, highlightId);
+    svg('path', { class: 'bs-cloud-light', fill: `url(#${highlightId})`, d: contours.rim }, shape);
     // The small scraps vary in position and width; they never repeat evenly.
     [[-39, 31, 32], [317, 40, 44], [365, 25, 24]].forEach(([x, y, w], i) => {
       const shift = 8 * hash01(variant * 31 + i * 7);
       svg('path', { class: 'bs-cloud-scrap', d: cloudOutline([[x, y], [x + w * 0.2, y - 3 - shift * 0.2], [x + w * 0.6, y - 1], [x + w, y - 5], [x + w * 0.75, y + 1], [x + w * 0.35, y + 3]]) }, shape);
     });
-    return g;
+    return { node: g, lighting, scale };
+  }
+
+  /** Move the bank and aim its light in local SVG coordinates. The gradient
+   * runs from the shaded side toward the sun, accounting for drift and scale. */
+  function poseCloud(bank, time, sun) {
+    const x = bank.x + time * bank.speed;
+    bank.node.setAttribute('transform', `translate(${x.toFixed(3)} ${bank.y})`);
+    const dx = (sun.x - x) / bank.scale - 180;
+    const dy = (sun.y - bank.y) / bank.scale - 8;
+    const distance = Math.hypot(dx, dy);
+    const ux = dx / distance;
+    const uy = dy / distance;
+    // Project the bank's half-width/height onto the light direction. This
+    // keeps the same relief when a low bank is lit from the side at sunrise.
+    const reach = 210 * Math.abs(ux) + 46 * Math.abs(uy);
+    const axis = { x1: 180 - ux * reach, y1: 8 - uy * reach, x2: 180 + ux * reach, y2: 8 + uy * reach };
+    Object.entries(axis).forEach(([name, value]) => bank.lighting.setAttribute(name, value.toFixed(3)));
   }
 
   /** Repeated tapered wisps cover the whole top edge while drifting. */
@@ -213,11 +241,12 @@
   const windows = [];
 
   /**
-   * A toy window piece: a white frame (arched or square), glass split by
-   * mullions, and a sill. Its room switches off at `lightsOffAt`,
-   * a fraction of the song; unlit glass reflects the sky.
+   * A toy window piece: a pale frame (arched or square), glass split by
+   * mullions, and a sill. Only occupied rooms have interior light, with a
+   * stable brightness per room. `lightsOffAt` is a threshold in the dawn
+   * lighting progression; unlit glass reflects the brightening sky.
    */
-  function windowPiece(parent, x, y, w, h, { arched = true, lightsOffAt = 0.5, panes = 2 } = {}) {
+  function windowPiece(parent, x, y, w, h, { arched = true, occupied = false, lightsOffAt = 0.5, panes = 2 } = {}) {
     const g = svg('g', { class: 'bs-win' }, parent);
     const r = w / 2;
     const outline = (inset) => {
@@ -232,10 +261,25 @@
     // The frame casts a shadow down and to the right onto the wall.
     svg('path', { class: 'bs-win-cast', d: outline(0), transform: 'translate(2 2.5)' }, g);
     svg('path', { class: 'bs-win-frame', d: outline(0) }, g);
-    svg('path', { class: 'bs-win-dark', d: outline(2.6) }, g);
-    const lit = svg('path', { class: 'bs-win-lit', 'data-testid': 'reuse-window-light', d: outline(2.6) }, g);
-    svg('path', { class: 'bs-win-reflect', d: `M${x + w * 0.22} ${y + h * 0.78} L${x + w * 0.62} ${y + h * 0.3}` }, g);
-    // The glass sits back inside its frame: a soft shade around its edge.
+    const paneId = `bs-window-pane-${windows.length}`;
+    const clip = svg('clipPath', { id: paneId }, g);
+    svg('path', { d: outline(2.6) }, clip);
+    const pane = svg('g', { 'clip-path': `url(#${paneId})` }, g);
+    svg('path', { class: 'bs-win-dark', d: outline(2.6) }, pane);
+    const lit = svg('g', { class: 'bs-win-lit', 'data-testid': 'reuse-window-light' }, pane);
+    svg('path', { class: 'bs-room-light', d: outline(2.6) }, lit);
+    // A ceiling-lit room has a darker floor and recess, not a glowing disc.
+    svg('rect', { class: 'bs-room-floor', x, y: y + h * 0.82, width: w, height: h * 0.18 }, lit);
+    svg('path', { class: 'bs-room-reveal', d: `M${x + 3} ${y + h - 3} V${y + h * 0.28} M${x + w - 3} ${y + h * 0.28} V${y + h - 3}` }, lit);
+    // Broad, quiet sky reflections replace the identical white diagonal slash.
+    // Stable geometry keeps seeking deterministic and avoids decorative motion.
+    const reflectionY = y + h * (0.42 + 0.1 * hash01(x * 13 + y));
+    svg('path', {
+      class: 'bs-win-reflect',
+      d: `M${x} ${y} H${x + w} V${reflectionY.toFixed(1)} Q${x + w * 0.55} ${(reflectionY + 2).toFixed(1)} ${x} ${(reflectionY - h * 0.1).toFixed(1)} Z`,
+    }, pane);
+    svg('path', { class: 'bs-win-glint', d: `M${x + w - 4} ${y + h * 0.3} V${y + h - 5}` }, pane);
+    // The glass sits back inside its frame; the inking stays above the light.
     svg('path', { class: 'bs-win-inner', d: outline(2.6) }, g);
     // Mullions: a centre bar, and a transom bar where the arch begins.
     let bars = `M${x + w / 2} ${y + 2.6} V${y + h - 2.6}`;
@@ -243,7 +287,8 @@
     svg('path', { class: 'bs-win-bar', d: bars }, g);
     svg('rect', { class: 'bs-win-sill-shadow', x: x - 1.5, y: y + h + 3, width: w + 5, height: 2.5 }, g);
     svg('rect', { class: 'bs-win-sill', x: x - 2.5, y: y + h - 0.5, width: w + 5, height: 3.5, rx: 1 }, g);
-    windows.push({ lit, lightsOffAt, shown: -1 });
+    const brightness = occupied ? 0.9 + 0.1 * hash01(x * 17 + y * 11) : 0;
+    windows.push({ lit, brightness, lightsOffAt, shown: -1 });
     return g;
   }
 
@@ -307,7 +352,7 @@
     svg('circle', { class: 'bs-finial', cx: mid, cy: apex - 12, r: 3.6 }, parent);
   }
 
-  /** An open belfry arcade: arches on white columns, warm light inside. */
+  /** A quiet upper arcade: shaded arches on pale columns. */
   function belfry(parent, x, y, w, h, count) {
     const pitch = w / count;
     svg('rect', { class: 'bs-belfry-back', x, y, width: w, height: h }, parent);
@@ -326,24 +371,35 @@
   function hall(parent) {
     const g = svg('g', { class: 'bs-hall' }, parent);
     // The hall between the towers, behind them.
-    wall(g, { x: 104, y: 252, w: 64, h: GROUND - 252, cornices: [[300, 8, 'gold'], [370, 8, 'blue']] });
-    [[112, 266], [142, 266], [112, 318], [142, 318]].forEach(([wx, wy], i) => windowPiece(g, wx, wy, 16, 30, { lightsOffAt: 0.28 + 0.07 * i }));
+    const middle = svg('g', {}, g);
+    wall(middle, { x: 104, y: 252, w: 64, h: GROUND - 252, cornices: [[300, 8, 'gold'], [370, 8, 'blue']] });
+    [[112, 266], [142, 266], [112, 318], [142, 318]].forEach(([wx, wy], i) => windowPiece(middle, wx, wy, 16, 30, { occupied: [false, true, true, false][i], lightsOffAt: 0.28 + 0.07 * i }));
     // Tower A, the taller one.
-    wall(g, { x: 18, y: 124, w: 94, h: GROUND - 124, depth: 12, cornices: [[178, 9, 'blue'], [262, 9, 'gold'], [344, 9, 'blue']], top: false });
-    roof(g, 18, 106, 124, 60);
-    belfry(g, 26, 132, 78, 40, 3);
-    [[30, 196], [70, 196], [30, 280], [70, 280]].forEach(([wx, wy], i) => windowPiece(g, wx, wy, 20, 42, { lightsOffAt: [0.16, 0.38, 0.33, 0.46][i] }));
+    const tall = svg('g', {}, g);
+    wall(tall, { x: 18, y: 124, w: 94, h: GROUND - 124, depth: 12, cornices: [[178, 9, 'blue'], [262, 9, 'gold'], [344, 9, 'blue']], top: false });
+    roof(tall, 18, 106, 124, 60);
+    belfry(tall, 26, 132, 78, 40, 3);
+    [[30, 196], [70, 196], [30, 280], [70, 280]].forEach(([wx, wy], i) => windowPiece(tall, wx, wy, 20, 42, { occupied: [true, false, false, true][i], lightsOffAt: [0.16, 0.38, 0.33, 0.46][i] }));
     // Tower B.
-    wall(g, { x: 168, y: 170, w: 80, h: GROUND - 170, depth: 10, cornices: [[220, 8, 'gold'], [304, 8, 'blue']], top: false });
-    roof(g, 168, 90, 170, 116);
-    belfry(g, 176, 176, 64, 34, 3);
-    [[178, 238], [214, 238], [178, 320], [214, 320]].forEach(([wx, wy], i) => windowPiece(g, wx, wy, 18, 38, { lightsOffAt: [0.26, 0.42, 0.16, 0.35][i] }));
-    // The loggia wing in front: an arcade on white columns, its rooms lit.
-    wall(g, { x: -4, y: 390, w: 306, h: GROUND - 390, depth: 10, cornices: [[390, 6, 'gold']] });
-    [[16, 410], [72, 410], [128, 410], [184, 410], [240, 410]].forEach(([wx, wy], i) => windowPiece(g, wx, wy, 34, 50, { lightsOffAt: [0.16, 0.3, 0.25, 0.4, 0.34][i], panes: 1 }));
+    const short = svg('g', {}, g);
+    wall(short, { x: 168, y: 170, w: 80, h: GROUND - 170, depth: 10, cornices: [[220, 8, 'gold'], [304, 8, 'blue']], top: false });
+    roof(short, 168, 90, 170, 116);
+    belfry(short, 176, 176, 64, 34, 3);
+    [[178, 238], [214, 238], [178, 320], [214, 320]].forEach(([wx, wy], i) => windowPiece(short, wx, wy, 18, 38, { occupied: [false, true, true, false][i], lightsOffAt: [0.26, 0.42, 0.16, 0.35][i] }));
+    // The loggia wing in front: a mix of occupied rooms and unlit bays.
+    const wing = svg('g', {}, g);
+    wall(wing, { x: -4, y: 390, w: 306, h: GROUND - 390, depth: 10, cornices: [[390, 6, 'gold']] });
+    [[16, 410], [72, 410], [128, 410], [184, 410], [240, 410]].forEach(([wx, wy], i) => windowPiece(wing, wx, wy, 34, 50, { occupied: [true, true, false, true, false][i], lightsOffAt: [0.16, 0.3, 0.25, 0.4, 0.34][i], panes: 1 }));
     // Stairs at the central arch.
-    svg('path', { class: 'bs-step', d: 'M118 466 h82 v-3 h-76 v-3 h-6 Z' }, g);
-    return g;
+    svg('path', { class: 'bs-step', d: 'M118 466 h82 v-3 h-76 v-3 h-6 Z' }, wing);
+    // The towers have staggered floors. Separate course milestones keep
+    // each inter-chorus pause above a complete row of windows.
+    return { node: g, parts: [
+      { group: middle, x0: 100, x1: 172, top: 240, levels: [7, 14, 19], solid: [[104, 168, 252]] },
+      { group: tall, x0: 4, x1: 140, top: 40, levels: [7, 17, 24], solid: [[18, 124, 60]] },
+      { group: short, x0: 154, x1: 272, top: 96, levels: [7, 14, 20], solid: [[168, 258, 116]] },
+      { group: wing, x0: -12, x1: 312, top: 382, levels: [7, 7, 7], solid: [[-4, 312, 390]] },
+    ] };
   }
 
   /** The building site on the right: walls going up, scaffolding, bricks on a plank. */
@@ -352,7 +408,7 @@
     // The finished lower storeys.
     wall(g, { x: 766, y: 248, w: 210, h: GROUND - 248, cornices: [[300, 9, 'gold'], [384, 9, 'blue']], top: false });
     [[786, 318], [836, 318], [886, 318], [936, 318], [786, 404], [836, 404], [936, 404]]
-      .forEach(([wx, wy], i) => windowPiece(g, wx, wy, 24, 46, { lightsOffAt: [0.27, 0.16, 0.41, 0.32, 0.48, 0.36, 0.44][i] }));
+      .forEach(([wx, wy], i) => windowPiece(g, wx, wy, 24, 46, { occupied: [false, true, false, false, true, false, true][i], lightsOffAt: [0.27, 0.16, 0.41, 0.32, 0.48, 0.36, 0.44][i] }));
     // The storey going up: unfinished courses stepping down to the right.
     const courses = [[766, 236, 210], [766, 224, 168], [766, 212, 128], [766, 200, 92]];
     courses.forEach(([cx, cy, cw]) => {
@@ -605,37 +661,53 @@
     };
   }
 
+  /** Cumulative course count; completed phases hold until the next chorus. */
+  function constructionAt(t, phases) {
+    let courses = 0;
+    let previous = 0;
+    let active = false;
+    phases.forEach(({ from, to, target }) => {
+      courses += (target - previous) * clamp((t - from) / (to - from), 0, 1);
+      active ||= t >= from && t < to;
+      previous = target;
+    });
+    return { courses, active };
+  }
+
   /**
-   * Lays `group` brick by brick between `from` and `to`: courses from the
+   * Lays `group` brick by brick over its timed phases: courses from the
    * ground up, each course left to right, with the next brick dropping into
    * its slot. It clips the group to what is laid so far. `solid` lists the
    * group's walls as [left, right, top]; the falling brick shows only over a
-   * wall, never in the air beside it. Returns a pose(t).
+   * wall, never in the air beside it. `levels` gives whole-course milestones
+   * before the final phase completes the building. Returns a pose(t).
    */
-  function builder(art, defs, group, id, { x0, x1, bottom, top, from, to, solid }) {
+  function builder(art, defs, group, id, { x0, x1, bottom, top, timing, levels, solid }) {
     const clip = svg('clipPath', { id }, defs);
-    const laid = svg('rect', { x: x0, width: x1 - x0, y: bottom, height: 0 }, clip);
+    const laid = svg('rect', { 'data-testid': 'reuse-building-courses', x: x0, width: x1 - x0, y: bottom, height: 0 }, clip);
     const course = svg('rect', { x: x0, y: bottom, width: 0, height: COURSE }, clip);
     group.setAttribute('clip-path', `url(#${id})`);
     const drop = svg('g', { class: 'bs-drop' }, art);
     const brick = svg('rect', { class: 'bs-drop-brick', x: 0, y: 0, width: BRICK - 1, height: COURSE - 1, rx: 1.5 }, drop);
     [6, 16].forEach((sx) => svg('rect', { class: 'bs-drop-stud', x: sx, y: -3.5, width: 6, height: 4, rx: 1.2 }, drop));
     const courses = Math.ceil((bottom - top) / COURSE);
+    const targets = [...levels, courses];
+    const phases = timing.map(([from, to], i) => ({ from, to, target: targets[i] }));
     const perCourse = Math.ceil((x1 - x0) / BRICK);
     const tones = ['tan', 'blue', 'gold'];
     return (t, still) => {
-      const p = still ? 1 : clamp((t - from) / (to - from), 0, 1);
-      const done = courses * p;
+      const construction = still ? { courses, active: false } : constructionAt(t, phases);
+      const done = construction.courses;
       const full = Math.floor(done);
       const bricks = Math.floor((done - full) * perCourse);
       laid.setAttribute('y', String(bottom - full * COURSE));
       laid.setAttribute('height', String(full * COURSE));
       course.setAttribute('y', String(bottom - (full + 1) * COURSE));
-      course.setAttribute('width', String(p >= 1 ? 0 : bricks * BRICK));
+      course.setAttribute('width', String(done >= courses ? 0 : bricks * BRICK));
       const x = x0 + bricks * BRICK;
       const slotY = bottom - (full + 1) * COURSE;
       const overWall = solid.some(([left, right, wallTop]) => x + BRICK / 2 >= left && x + BRICK / 2 <= right && slotY + COURSE >= wallTop);
-      const building = p > 0 && p < 1 && overWall;
+      const building = construction.active && done > 0 && done < courses && overWall;
       drop.style.display = building ? '' : 'none';
       if (!building) return;
       // The next brick falls the last 18 px into its slot.
@@ -648,7 +720,7 @@
     };
   }
 
-  function brickSite(stage, { duration = 300 } = {}) {
+  function brickSite(stage, { duration = 300, song } = {}) {
     windows.length = 0;
     const layer = el('div', 'layer bs-room', stage);
     const art = svg('svg', { class: 'bs-art', viewBox: `0 0 ${W} ${H}`, width: W, height: H, 'aria-hidden': 'true' }, layer);
@@ -676,16 +748,16 @@
     const BAND = 760;
     const band = cloudBand(sky, 40, BAND);
     const clouds = [[-120, 5, 1.35, 0.09], [240, 56, 1.25, 0.12], [650, 18, 1.4, 0.07], [-75, 155, 0.9, 0.15], [510, 194, 1.05, 0.1]]
-      .map(([x, y, scale, speed], variant) => ({ node: cloud(sky, { scale, variant }), x, y, speed }));
+      .map(([x, y, scale, speed], variant) => ({ ...cloud(sky, { scale, variant }), x, y, speed }));
     // A far skyline between the two buildings, a few rooms still lit.
     const far = svg('g', { class: 'bs-far' }, art);
     svg('path', { class: 'bs-far-shape', d: 'M240 466 V420 H290 V398 H340 V410 H400 V380 H446 V404 H520 V388 H580 V412 H650 V394 H700 V408 H780 V466 Z' }, far);
     [[296, 408], [308, 408], [352, 418], [410, 390], [422, 400], [458, 412], [530, 398], [542, 398], [590, 420], [660, 404], [710, 416]]
       .forEach(([fx, fy], i) => {
         const lit = svg('rect', { class: 'bs-far-window', x: fx, y: fy, width: 4, height: 5 }, far);
-        windows.push({ lit, lightsOffAt: 0.16 + hash01(i * 7 + 3) * 0.28, shown: -1 });
+        windows.push({ lit, brightness: 0.45 + 0.4 * hash01(i * 19 + 5), lightsOffAt: 0.16 + hash01(i * 7 + 3) * 0.28, shown: -1 });
       });
-    const hallGroup = hall(art);
+    const { node: hallGroup, parts: hallParts } = hall(art);
     const siteGroup = site(art);
     const lampGroup = svg('g', {}, art);
     const lamps = [lamp(lampGroup, 18), lamp(lampGroup, 944)];
@@ -705,14 +777,16 @@
     looseBrick(art, { x: 690, y: 508, w: 120, h: 50, dx: 22, dy: 14, cols: 2, rows: 2, tone: 'blue' });
     looseBrick(art, { x: 560, y: 520, w: 62, h: 40, dx: 14, dy: 9, cols: 2, rows: 1, tone: 'gold' });
     looseBrick(art, { x: 452, y: 514, w: 26, h: 24, tone: 'red', round: true });
-    // The builders: the hall (its wing first, then the towers), the site, and the crane.
+    // Both sites start with a complete ground-floor base. Each refrain adds
+    // supported walls above it; the hall's belfries and roofs come last.
+    const choruses = ['refrain-1', 'refrain-2', 'refrain-3']
+      .map((id) => [song.sectionStart(id), song.sectionEnd(id)]);
     const poses = [
-      builder(art, defs, hallGroup, 'bs-clip-hall', {
-        x0: -12, x1: 312, bottom: GROUND, top: 40, from: BUILD.hall[0], to: BUILD.hall[1],
-        solid: [[-4, 302, 390], [18, 124, 66], [104, 168, 252], [168, 258, 120]],
-      }),
+      ...hallParts.map(({ group, ...geometry }, i) => builder(art, defs, group, `bs-clip-hall-${i}`, {
+        ...geometry, bottom: GROUND, timing: [BUILD.hall, ...choruses],
+      })),
       builder(art, defs, siteGroup, 'bs-clip-site', {
-        x0: 760, x1: 984, bottom: GROUND, top: 180, from: BUILD.site[0], to: BUILD.site[1],
+        x0: 760, x1: 984, bottom: GROUND, top: 180, timing: [BUILD.site, ...choruses], levels: [7, 14, 18],
         solid: [[766, 976, 200]],
       }),
     ];
@@ -726,14 +800,15 @@
       const still = reducedMotion.matches;
       const light = sunriseAt(still ? 0.62 : clamp(t / duration, 0, 1));
       const built = (part) => (still ? 1 : span(t, BUILD[part]));
-      // Ambient objects settle after construction and resume for the finale.
-      // The sunrise keeps progressing, but horizontal motion cannot compete
-      // with the open teaching diagrams. This clock also rewinds exactly.
+      // Site activity settles during explanations; the sky keeps drifting
+      // slowly. Both clocks rewind exactly and stop under reduced motion.
       const ambientTime = still ? 0 : Math.min(t, BUILD.lift[1]) + Math.max(0, t - (duration - SET_DOWN - 10));
+      const cloudTime = still ? 0 : clamp(t, 0, duration);
       // Before sunrise, light already reaches the horizon and cloud undersides.
       art.style.setProperty('--bs-first-light', `${(100 * light.firstLight).toFixed(2)}%`);
       art.style.setProperty('--bs-golden', `${(100 * light.golden).toFixed(2)}%`);
       art.style.setProperty('--bs-ambient', `${(100 * light.ambient).toFixed(2)}%`);
+      art.style.setProperty('--bs-glazing-reflection', (0.08 + 0.2 * light.ambient).toFixed(3));
       art.style.setProperty('--bs-cloud-warmth', (0.25 + 0.75 * light.firstLight).toFixed(3));
       // The ground, loose bricks and sky are already present at frame zero.
       // Only the buildings and crane assemble during the opening.
@@ -756,7 +831,8 @@
       band.style.opacity = (0.65 + 0.35 * light.ambient).toFixed(3);
       // Interior lights switch off at staggered times as daylight takes over.
       windows.forEach((win) => {
-        const on = Math.round((1 - clamp((span(light.elevation, [-2, 3]) - win.lightsOffAt) / 0.16, 0, 1)) * 20) / 20;
+        const daylight = clamp((span(light.elevation, [-2, 3]) - win.lightsOffAt) / 0.16, 0, 1);
+        const on = Number((win.brightness * (1 - easeInOutCubic(daylight))).toFixed(3));
         if (on !== win.shown) {
           win.lit.style.opacity = String(on);
           win.shown = on;
@@ -772,18 +848,16 @@
         dot.style.opacity = still ? '0.75' : (0.72 + 0.12 * Math.sin(ambientTime * speed + phase)).toFixed(2);
       });
       // The high cloud band drifts along the top of the stage.
-      band.setAttribute('transform', `translate(${((ambientTime * 0.08) % BAND).toFixed(1)} 0)`);
+      band.setAttribute('transform', `translate(${(cloudTime * 0.08).toFixed(3)} 0)`);
       // The forklift, dim in the ground shadow, carries its brick slowly back
       // and forth along the ground.
       const drive = still ? { x: 312, facing: 1, rolling: 0 } : forkliftPose(Math.max(0, ambientTime - BUILD.lift[0]));
       truck.node.setAttribute('transform', `translate(${drive.x.toFixed(1)} ${GROUND + 22}) scale(${drive.facing} 1)`);
       const spin = (drive.rolling / (2 * Math.PI * 6)) * 360;
       truck.wheels.forEach((hub) => hub.setAttribute('transform', `rotate(${spin.toFixed(1)})`));
-      // Each bank drifts less than its own width over the song: no visible wrap.
-      clouds.forEach(({ node, x, y, speed }) => {
-        const cx = x + ambientTime * speed;
-        node.setAttribute('transform', `translate(${cx.toFixed(1)} ${y})`);
-      });
+      // A bank travels less than five percent of the stage over the whole
+      // song, without wrapping. Its sun-facing relief follows the new pose.
+      clouds.forEach((bank) => poseCloud(bank, cloudTime, light));
       // The module: on the ground until the crane lifts it in the
       // instrumental, swaying a little as it rises and settling still within
       // seconds, then set onto the site at the end of the song.

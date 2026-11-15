@@ -128,7 +128,8 @@
     try {
       Timeline.beats.configure(storyboard.beats);
       stage.classList.add(`theme-${themeName}`);
-      theme.build(stage, { duration: storyboard.duration });
+      const song = songData(storyboard);
+      theme.build(stage, { duration: song.duration, song });
       const content = kit.el('div', 'layer camera', stage);
       Timeline.camera.attach(content);
       const hud = kit.el('div', 'layer hud', stage);
@@ -136,7 +137,7 @@
       const student = root.SongStudentAvatar ? root.SongStudentAvatar.create(content, stage, {
         laptopLogo: storyboard.student?.laptop_logo, randomAvatar,
       }) : null;
-      const own = choreograph({ song: songData(storyboard), kit, layers: { stage, content, hud }, terminal, student });
+      const own = choreograph({ song, kit, layers: { stage, content, hud }, terminal, student });
       root.SongRoundedSurfaces.prepare(stage);
       cullings.set(stage, manageVisibility([content, hud, ...(own?.layers || [])]));
       Timeline.seek(0);

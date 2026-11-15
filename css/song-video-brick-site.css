@@ -62,8 +62,9 @@
 
 /* The lower surfaces catch rose light before sunrise, reach coral/amber
    around the horizon crossing, then turn peach and cream as the sun climbs.
-   Cool upper shadows preserve the cloud volume. Both transitions use the
-   sun's elevation, not independent animation clocks. Same art in both themes. */
+   Cool shadows preserve the cloud volume. Ambient warmth remains beneath
+   the clouds; the stronger direct highlights face the sun as each bank drifts.
+   Both colour transitions follow solar elevation. Same art in both themes. */
 .bs-cloud-body { fill: url(#bs-cloud); }
 .bs-cloud-0 { stop-color: color-mix(in srgb, color-mix(in srgb, #233263, #654b83 var(--bs-first-light, 0%)), #7d94ba var(--bs-golden, 0%)); }
 .bs-cloud-1 { stop-color: color-mix(in srgb, color-mix(in srgb, #64518c, #cc6c91 var(--bs-first-light, 0%)), #c6c2d3 var(--bs-golden, 0%)); }
@@ -71,8 +72,13 @@
 .bs-cloud-3 { stop-color: color-mix(in srgb, color-mix(in srgb, #ec999e, #ffcf7d var(--bs-first-light, 0%)), #fff2ca var(--bs-golden, 0%)); }
 .bs-cloud-roll { fill: color-mix(in srgb, #3a3b79, #8b9fbe var(--bs-golden, 0%)); opacity: 0.18; }
 .bs-cloud-scrap { fill: color-mix(in srgb, #6569a1, #b1bdd7 var(--bs-golden, 0%)); opacity: 0.45; }
-.bs-cloud-light { fill: color-mix(in srgb, #ffbe82, #fff3c8 var(--bs-golden, 0%)); opacity: calc(var(--bs-cloud-warmth, 0) * 0.4); }
-.bs-cloud-filament { fill: color-mix(in srgb, #ffa68b, #ffe8be var(--bs-golden, 0%)); opacity: calc(var(--bs-cloud-warmth, 0) * 0.24); }
+.bs-cloud-edge-0, .bs-cloud-edge-1, .bs-cloud-edge-2 { stop-color: color-mix(in srgb, #ffbe82, #fff3c8 var(--bs-golden, 0%)); }
+.bs-cloud-edge-0 { stop-opacity: 0; }
+.bs-cloud-edge-1 { stop-opacity: 0.2; }
+.bs-cloud-edge-2 { stop-opacity: 1; }
+.bs-cloud-sunlight { opacity: calc(var(--bs-cloud-warmth, 0) * 0.55); }
+.bs-cloud-light { opacity: calc(var(--bs-cloud-warmth, 0) * 0.4); }
+.bs-cloud-filament { opacity: calc(var(--bs-cloud-warmth, 0) * 0.24); }
 .bs-cloud-wisp { fill: color-mix(in srgb, #aa91ce, #e5d7e3 var(--bs-golden, 0%)); opacity: 0.24; }
 .bs-sun-disc { fill: color-mix(in srgb, #ffac57, #fff5c5 var(--bs-golden, 0%)); stroke: #ffc16d; stroke-width: 1.5; }
 .bs-morning-sky { fill: url(#bs-morning); opacity: 0; }
@@ -137,25 +143,31 @@
 .bs-finial { fill: var(--bs-brass-light); stroke: var(--bs-brass-dark); stroke-width: 1; }
 
 .bs-belfry-back { fill: #2a2118; }
-.bs-column { fill: #ece6d6; stroke: rgba(40, 26, 8, 0.4); stroke-width: 0.6; }
+.bs-column { fill: color-mix(in srgb, #9ca6b5, #ece6d6 var(--bs-ambient, 0%)); stroke: rgba(40, 26, 8, 0.4); stroke-width: 0.6; }
 .bs-step { fill: #cbbb98; }
 
-/* Toy window pieces: a white frame, mullions, a sill; dark glass reflects
-   the sky until the room behind it lights up. */
+/* Recessed glass reflects the sky; a few occupied rooms glow warmly before
+   dawn. Frames receive ambient daylight rather than emitting their own light. */
 .bs-win-cast { fill: rgba(20, 12, 4, 0.3); }
-.bs-win-frame { fill: #ece7da; stroke: rgba(30, 20, 8, 0.55); stroke-width: 1; }
+.bs-win-frame { fill: color-mix(in srgb, #9aa5b5, #e7dec9 var(--bs-ambient, 0%)); stroke: rgba(30, 20, 8, 0.55); stroke-width: 1; }
 .bs-win-inner { fill: none; stroke: rgba(12, 10, 24, 0.42); stroke-width: 2.4; }
 .bs-win-sill-shadow { fill: rgba(20, 12, 4, 0.28); }
 .bs-win-dark { fill: url(#bs-glass-dark); }
-.bs-glass-dark-0 { stop-color: color-mix(in srgb, #80779f, #ffe1b6 var(--bs-ambient, 0%)); }
-.bs-glass-dark-1 { stop-color: color-mix(in srgb, #31558b, #69b5e2 var(--bs-ambient, 0%)); }
-.bs-win-lit { fill: url(#bs-glass-lit); opacity: 0; }
-.bs-glass-lit-0 { stop-color: #fff1c4; }
-.bs-glass-lit-1 { stop-color: #f4c56e; }
-.bs-glass-lit-2 { stop-color: #d29a43; }
-.bs-win-reflect { fill: none; stroke: rgba(200, 220, 255, 0.28); stroke-width: 2; stroke-linecap: round; }
-.bs-win-bar { fill: none; stroke: #ece7da; stroke-width: 1.8; }
-.bs-win-sill { fill: #e4d2ac; stroke: rgba(40, 26, 8, 0.45); stroke-width: 0.6; }
+.bs-glass-dark-0 { stop-color: color-mix(in srgb, #172641, #6b9cbb var(--bs-ambient, 0%)); }
+.bs-glass-dark-1 { stop-color: color-mix(in srgb, #223852, #36566e var(--bs-ambient, 0%)); }
+.bs-glass-dark-2 { stop-color: color-mix(in srgb, #101b2c, #1d3442 var(--bs-ambient, 0%)); }
+.bs-win-lit { opacity: 0; }
+.bs-room-light { fill: url(#bs-glass-lit); }
+.bs-glass-lit-0 { stop-color: #fffde8; }
+.bs-glass-lit-1 { stop-color: #ffe7a0; }
+.bs-glass-lit-2 { stop-color: #f6bf59; }
+.bs-glass-lit-3 { stop-color: #bb792e; }
+.bs-room-floor { fill: #2a2022; opacity: 0.12; }
+.bs-room-reveal { fill: none; stroke: #312b28; stroke-width: 1.6; opacity: 0.36; }
+.bs-win-reflect { fill: #b4cce3; opacity: var(--bs-glazing-reflection, 0.08); }
+.bs-win-glint { fill: none; stroke: #cee5f3; stroke-width: 0.7; opacity: var(--bs-glazing-reflection, 0.08); }
+.bs-win-bar { fill: none; stroke: color-mix(in srgb, #a1aabb, #eee5cf var(--bs-ambient, 0%)); stroke-width: 1.8; }
+.bs-win-sill { fill: color-mix(in srgb, #9f9c98, #e4d2ac var(--bs-ambient, 0%)); stroke: rgba(40, 26, 8, 0.45); stroke-width: 0.6; }
 
 .bs-scaffold { fill: none; stroke: rgba(205, 210, 220, 0.5); stroke-width: 2.4; stroke-linecap: round; }
 .bs-scaffold-clamp { fill: #a6aaa8; stroke: #636f74; stroke-width: 0.7; }
