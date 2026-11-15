@@ -282,7 +282,7 @@ sections:
   - id: verse-2
     title: "Verse 2: Threat Model"
     delivery: sung
-    narration: "Verse 2, the Threat Model. A wanted poster for an unknown attacker, with four fields: knowledge, actions, resources, and incentive. Knowledge fills in: has read your code. In the app's code, a search finds a secret admin link. Below it stands a frontier house with a sign reading Admin over its door and a flowerpot on a barrel beside it; the masked outlaw tips the flowerpot up, takes the key hidden under it, sets the pot back down, and unlocks the door, which swings open as the outlaw slips inside. A sign: security through obscurity lasts till someone looks. Then a board of tested locks, AES, RSA, and TLS, and a brass key the sheriff keeps. A version number on an error page is blacked out, an extra layer but never alone. The stamp: Open Design Principle. Below it, the lock's blueprint hangs in public, and a see-through padlock shows every pin and spring; its shackle rattles but stays shut. Only the key is secret."
+    narration: "Verse 2, the Threat Model. A wanted poster for an unknown attacker, with four fields: knowledge, actions, resources, and incentive. Knowledge fills in: has read your code. In the app's code, a search finds a secret admin link. Below it stands a frontier house with a sign reading Admin over its door and a flowerpot on a barrel beside it; the masked outlaw tips the flowerpot up, takes the key hidden under it, sets the pot back down, and unlocks the door, which swings open as the outlaw slips inside. A sign: security through obscurity lasts only till someone looks. Then a board of tested locks, AES, RSA, and TLS, and a brass key the sheriff keeps. A version number on an error page is blacked out, an extra layer but never alone. The stamp: Open Design Principle. Below it, the lock's blueprint hangs in public, and a see-through padlock shows every pin and spring; its shackle rattles but stays shut. Only the key is secret."
     lines:
       - id: v2-1
         start: 89.36
@@ -319,7 +319,7 @@ sections:
         end: 109.16
         text: "Security through obscurity lasts till someone looks."
         marks: {"security": 105.36, "through": 105.92, "obscurity": 106.32, "lasts": 107.12, "till": 107.76, "someone": 108.0, "looks": 108.44}
-        visual: "A plank sign: “Security through obscurity”. On the porch, the outlaw turns the key in the door, the door swings open, and the outlaw slips inside; a note with an eye: “lasts till someone looks”."
+        visual: "A plank sign: “Security through obscurity”. On the porch, the outlaw turns the key in the door, the door swings open, and the outlaw slips inside; a note with an eye: “lasts only till someone looks”."
       - id: v2-7
         start: 109.16
         end: 113.0
@@ -372,7 +372,7 @@ sections:
         end: 146.3
         text: "You glued it in your query, and the login let me through."
         marks: {"you": 142.46, "glued": 143.08, "it": 143.36, "in": 143.64, "your": 143.88, "query": 144.08, "and": 144.6, "the": 144.84, "login": 145.12, "let": 145.6, "me": 145.84, "through": 146.02}
-        visual: "On “glued”, a slate shows the login code, `+ pass +` highlighted, and the query it builds: `SELECT * FROM Users WHERE Name = \"Bruin\" AND Pass = \"\" or \"\"=\"\"`, with `\"\"=\"\"` marked “always true” as the query appears. On “through”: “Logged in as Bruin”."
+        visual: "On “glued”, a slate shows the login code, `+ pass +` highlighted, and the query it builds: `SELECT * FROM Users WHERE Name = \"Bruin\" AND Pass = \"\" or \"\"=\"\"`, the typed input `\" or \"\"=\"` highlighted in it and `\"\"=\"\"` marked “always true” as the query appears. On “through”: “Logged in as Bruin”."
       - id: v3-5
         start: 146.3
         end: 148.48

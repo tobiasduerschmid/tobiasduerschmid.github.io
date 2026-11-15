@@ -22,8 +22,8 @@
  * pole to the router shack, and small data packets travel along it both
  * ways. The dusty main street lies in front, where the player draws
  * captions. A few things move, slowly and faintly: the clouds drift, the
- * windmill turns, the packets travel, the windows and LEDs come on one by
- * one as the evening comes, dust motes float, and now and then a
+ * windmill turns, the packets travel, the LEDs come on one by one and the
+ * houses' windows all at once after sunset, dust motes float, and now and then a
  * tumbleweed rolls along the street. Golden hour cools linearly into blue
  * hour by the midpoint. Cloud illumination follows the setting sun, with
  * lower banks entering Earth's shadow before the higher banks.
@@ -40,6 +40,9 @@
   const { el, svg, icon } = window.SongKit;
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   const W = 960, H = 540, HORIZON = 372, STREET = 456;
+  // When every house's windows light: this fraction of the way from sunset
+  // to lightsOutAt (in the frame loop), about 16 s after the sun is down.
+  const HOUSE_LIGHTS = 0.08;
   const span = (t, [a, b]) => clamp((t - a) / (b - a), 0, 1);
   // Uneven shoulders and broken lower edges give the banks different weather
   // shapes. Every contour closes at a tapered tip, never a vertical cut.
@@ -427,7 +430,8 @@
     // The art's deck ends at y 88.4; it rests a pixel into the boardwalk.
     const frame = { x: cx - w / 2, y: HORIZON + 1 - 88.4 * SERVICE_SCALE, w, h };
     const dark = serviceArt(parent, kind, 'fr-service fr-service--dark', frame);
-    dark.querySelectorAll('.fr-bld-glass').forEach((glass) => windows.push({ lit: glass, at: hash01(windows.length * 11 + 3) }));
+    // Every house's windows light together, soon after the sun is down.
+    dark.querySelectorAll('.fr-bld-glass').forEach((glass) => windows.push({ lit: glass, at: HOUSE_LIGHTS, dusk: true }));
     const lit = serviceArt(parent, kind, 'fr-service fr-service--lit', frame);
     const jackY = frame.y + 30 * SERVICE_SCALE;
     return {
@@ -629,6 +633,12 @@
     const TUMBLE = 47, ROLL = 14;
     const twilightSpeed = 1.2;
     const blueHourAt = duration * 0.52 / twilightSpeed;
+    // Song time when the sun's upper limb sinks below the horizon (the
+    // light clock runs at 0.88 of song time): the windows stay dark until then.
+    let sunset = 0;
+    while (sunset < 1 && apparentElevation(sunsetLighting(sunset).elevation + SOLAR_RADIUS) > 0) sunset += 0.001;
+    const duskAt = sunset * duration / 0.88;
+    const lightsOutAt = Math.max(duskAt + 30, duration * 0.66);
     onFrame((t) => {
       const still = reducedMotion.matches;
       // Same golden-hour starting point; the whole sunset clock now runs
@@ -652,9 +662,13 @@
       sun.setAttribute('cy', light.y.toFixed(2));
       sun.setAttribute('rx', light.rx.toFixed(2));
       sun.setAttribute('ry', light.ry.toFixed(2));
-      // The windows light over the first two thirds of the song, each over two seconds.
-      const evening = clamp(t / (duration * 0.66), 0, 1);
-      for (const w of windows) w.lit.setAttribute('opacity', clamp((evening - w.at) * (duration * 0.66) / 2, 0, 1).toFixed(3));
+      // Status LEDs come on over the first two thirds of the song; house
+      // windows wait until the sun is down, then all light together.
+      // Each light comes on over two seconds.
+      for (const w of windows) {
+        const [from, to] = w.dusk ? [duskAt, lightsOutAt] : [0, duration * 0.66];
+        w.lit.setAttribute('opacity', clamp((span(t, [from, to]) - w.at) * (to - from) / 2, 0, 1).toFixed(3));
+      }
       for (const c of clouds) {
         const x = c.x + (still ? 0 : t * c.speed);
         c.node.setAttribute('transform', `translate(${x.toFixed(1)} ${c.y})`);

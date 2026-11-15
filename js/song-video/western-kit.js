@@ -110,8 +110,34 @@
     return widths.length ? Math.max(...widths) : null;
   }
 
+  /**
+   * Runs `measure` with every hidden ancestor of `node` laid out but
+   * invisible: a player may build its scene before it shows the stage.
+   */
+  function whileLaidOut(node, measure) {
+    const forced = [];
+    for (let n = node; n && n !== document.documentElement; n = n.parentElement) {
+      if (getComputedStyle(n).display !== 'none') continue;
+      forced.push([n, n.style.getPropertyValue('display'), n.style.getPropertyValue('visibility')]);
+      n.style.setProperty('display', 'block', 'important');
+      n.style.setProperty('visibility', 'hidden');
+    }
+    try {
+      return measure();
+    } finally {
+      for (const [n, display, visibility] of forced) {
+        n.style.setProperty('display', display);
+        n.style.setProperty('visibility', visibility);
+      }
+    }
+  }
+
   /** Shrinks every text box built so far to its widest line, keeping centred boxes centred. */
   function fitToText(greedy = false) {
+    if (fits.length) whileLaidOut(fits[0].node, () => fitAll(greedy));
+  }
+
+  function fitAll(greedy) {
     // Measure all, then resize all: one layout pass instead of one per box.
     const sized = fits.splice(0).map((fit) => {
       const { node } = fit;
@@ -131,7 +157,12 @@
         ? kids.reduce((sum, w) => sum + w, 0) + (parseFloat(style.columnGap) || 0) * Math.max(0, kids.length - 1)
         : Math.max(0, ...kids);
       const inner = node.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
-      const slack = Math.floor(Math.max(0, inText) + Math.max(0, inner - extent));
+      // Shrink-wrapped parts (`mins`) must still fit beside their own room.
+      const room = (fit.mins ?? []).map((part) => {
+        const box = getComputedStyle(part.parentElement);
+        return part.parentElement.clientWidth - parseFloat(box.paddingLeft) - parseFloat(box.paddingRight) - part.offsetWidth;
+      });
+      const slack = Math.floor(Math.min(Math.max(0, inText) + Math.max(0, inner - extent), ...room));
       // style.width is the content box (or the border box, per box-sizing).
       const width = parseFloat(style.width) - slack;
       return slack > 2 ? { ...fit, width, outer: node.offsetWidth - slack, slack, was: node.style.width, height: node.offsetHeight } : null;
@@ -149,7 +180,7 @@
       }
       return false;
     });
-    if (!greedy && fits.length) fitToText(true);
+    if (!greedy && fits.length) fitAll(true);
     for (const { node, outer, slack, center, onFit } of fitted) {
       if (center && node.style.left.endsWith('px')) node.style.left = `${parseFloat(node.style.left) + slack / 2}px`;
       onFit?.(outer);
@@ -620,9 +651,11 @@
   // where a hand takes the pot's rim, the corner the pot tips on (by TIP
   // degrees), the key and the honeypot under the pot, the door's knob, and
   // the middle of the doorway on the boardwalk.
-  // The pot and what it hides are drawn POT_LIFT above their sketch, so
-  // their points here (the rim, the pivot corner, key, jar) are lifted too.
-  const POT_LIFT = 2.5;
+  // The pot and what it hides are drawn POT_LIFT above their sketch (a
+  // negative lift lowers them), so their points here (the rim, the pivot
+  // corner, key, jar) move with them. At -1 the pot's base rests on the
+  // middle of the barrel's lid, its near rim showing in front.
+  const POT_LIFT = -1;
   const PORCH = { rim: [140, 110 - POT_LIFT], pivot: [179, 150 - POT_LIFT], key: [165, 147 - POT_LIFT], jar: [163, 134 - POT_LIFT], knob: [82, 140], lock: [63, 124], doorway: [63, 204] };
   const PORCH_TIP = 32;
   const turnAbout = ([x, y], [cx, cy], degrees) => {
@@ -658,13 +691,7 @@
     const wallGrad = svg('linearGradient', { id: `${id}-wall`, x1: 0, y1: 0, x2: 1, y2: 1 }, defs);
     svg('stop', { offset: 0, class: 'wk-pr-wall-0' }, wallGrad);
     svg('stop', { offset: 1, class: 'wk-pr-wall-1' }, wallGrad);
-    const material = (name, radial = false) => {
-      const grad = svg(radial ? 'radialGradient' : 'linearGradient', {
-        id: `${id}-${name}`, ...(radial ? { cx: 0.5, cy: 0.4, r: 0.6 } : { x1: 0, y1: 0, x2: 0.9, y2: 1 }),
-      }, defs);
-      [0, 0.55, 1].forEach((offset, i) => svg('stop', { offset, class: `wk-pr-${name}-${i}` }, grad));
-      return `url(#${id}-${name})`;
-    };
+    const material = (name, radial = false) => porchMaterial(defs, id, name, radial);
     const glass = material('window-light');
     const lanternGlow = material('lamp-glow', true);
     const barrelWood = material('barrel-wood');
@@ -723,12 +750,7 @@
       t.textContent = sign;
     }
     // The lantern by the door.
-    svg('path', { class: 'wk-pr-chain', d: 'M112 28 V38' }, art);
-    svg('ellipse', { class: 'wk-pr-chain', cx: 112, cy: 39, rx: 2.2, ry: 2.7 }, art);
-    svg('path', { class: 'wk-pr-lantern', d: 'M106 40 H118 L117 44 V56 L119 58 H105 L107 56 V44 Z' }, art);
-    svg('rect', { class: 'wk-pr-lantern-glass', x: 108.5, y: 44, width: 7, height: 11, rx: 1 }, art);
-    svg('path', { class: 'wk-pr-lamp-flame', d: 'M112 46 C111 48 109.5 50 110.5 52 C111 53.5 113.5 53 113.7 51.4 C114 49.8 112.6 49 112 46 Z' }, art);
-    svg('path', { class: 'wk-pr-lantern-bars', d: 'M108 44 L116 56 M116 44 L108 56 M105.5 41 H118.5 M106 57 H118' }, art);
+    lantern(art, 112, 28);
     // The posts, their brackets, and the porch roof.
     for (const px of [2, 226]) {
       svg('rect', { class: 'wk-pr-post', x: px, y: 26, width: 12, height: 180 }, art);
@@ -764,8 +786,9 @@
     svg('path', { class: 'wk-pr-grain', d: 'M141 169 q-2 10 0 18 M154 168 q1 11 0 17 M181 170 q2 8 0 16' }, art);
     svg('ellipse', { class: 'wk-pr-barrel-top', cx: 163, cy: 152, rx: 25, ry: 3 }, art);
     svg('ellipse', { class: 'wk-pr-barrel-ring', cx: 163, cy: 152, rx: 21, ry: 1.8 }, art);
-    // The pot, and the key or honeypot under it, stand on the barrel's lid:
-    // their bottoms rest on its far edge, not sunk to its middle.
+    // The pot, and the key or honeypot under it, stand on the barrel's lid,
+    // the pot over a soft contact shadow that lifts away when it tips.
+    const contact = svg('ellipse', { class: 'wk-pot-contact', cx: 163, cy: 151.6 - POT_LIFT, rx: 17.5, ry: 1.9 }, art);
     const lifted = (g) => svg('g', { transform: `translate(0 ${-POT_LIFT})` }, g);
     const jar = honey ? svg('g', { class: 'wk-honeypot' }, art) : null;
     if (jar) {
@@ -826,8 +849,14 @@
     svg('path', { class: 'wk-pot-etch', d: 'M151 127 Q154 130 157 127 Q160 130 163 127 Q166 130 169 127 Q172 130 175 127 M151.7 137 h1.3 M159 139 h1 M172 136 h1.7 M176 143 h0.8 M150 121 h1 M167 145 h1.2' }, potArt);
     svg('path', { class: 'wk-pot-rim', d: 'M138 110 Q163 117 188 110 V114 Q188 117 184 118 Q163 122 142 118 Q138 117 138 114 Z' }, potArt);
     svg('path', { class: 'wk-pot-rim-light', d: 'M140 111.5 Q162 117 186 111.5 M142 114 Q160 119 178 115.8' }, potArt);
-    if (tipAt !== undefined) tween(pot, [{ transform: 'rotate(0deg)' }, { transform: `rotate(${PORCH_TIP}deg)` }], tipAt, 0.35, EASE.inOut);
-    if (untipAt !== undefined) tween(pot, [{ transform: `rotate(${PORCH_TIP}deg)` }, { transform: 'rotate(0deg)' }], untipAt, 0.35, EASE.inOut);
+    if (tipAt !== undefined) {
+      tween(pot, [{ transform: 'rotate(0deg)' }, { transform: `rotate(${PORCH_TIP}deg)` }], tipAt, 0.35, EASE.inOut);
+      tween(contact, [{ opacity: 1 }, { opacity: 0 }], tipAt, 0.2, EASE.inOut);
+    }
+    if (untipAt !== undefined) {
+      tween(pot, [{ transform: `rotate(${PORCH_TIP}deg)` }, { transform: 'rotate(0deg)' }], untipAt, 0.35, EASE.inOut);
+      tween(contact, [{ opacity: 0 }, { opacity: 1 }], untipAt + 0.15, 0.2, EASE.inOut);
+    }
     // The boardwalk on the street.
     svg('rect', { class: 'wk-pr-deck', x: -8, y: 204, width: 256, height: 9 }, art);
     svg('path', { class: 'wk-pr-seam', d: Array.from({ length: 14 }, (_, i) => `M${4 + i * 18} 204 V213`).join(' ') }, art);
@@ -883,6 +912,27 @@
   // The attack surface: the app as a building with its ways in
   // ------------------------------------------------------------------
 
+  /** A porch material: a gradient of the `.wk-pr-<name>-0…2` stops in `defs`, as a fill url. */
+  function porchMaterial(defs, id, name, radial = false) {
+    const grad = svg(radial ? 'radialGradient' : 'linearGradient', {
+      id: `${id}-${name}`, ...(radial ? { cx: 0.5, cy: 0.4, r: 0.6 } : { x1: 0, y1: 0, x2: 0.9, y2: 1 }),
+    }, defs);
+    [0, 0.55, 1].forEach((offset, i) => svg('stop', { offset, class: `wk-pr-${name}-${i}` }, grad));
+    return `url(#${id}-${name})`;
+  }
+
+  /** The porch's hanging lantern, its top at (cx, top), `scale` times its porch size. */
+  function lantern(art, cx, top, scale = 1) {
+    const g = svg('g', { transform: `translate(${cx} ${top}) scale(${scale}) translate(-112 -28)` }, art);
+    svg('path', { class: 'wk-pr-chain', d: 'M112 28 V38' }, g);
+    svg('ellipse', { class: 'wk-pr-chain', cx: 112, cy: 39, rx: 2.2, ry: 2.7 }, g);
+    svg('path', { class: 'wk-pr-lantern', d: 'M106 40 H118 L117 44 V56 L119 58 H105 L107 56 V44 Z' }, g);
+    svg('rect', { class: 'wk-pr-lantern-glass', x: 108.5, y: 44, width: 7, height: 11, rx: 1 }, g);
+    svg('path', { class: 'wk-pr-lamp-flame', d: 'M112 46 C111 48 109.5 50 110.5 52 C111 53.5 113.5 53 113.7 51.4 C114 49.8 112.6 49 112 46 Z' }, g);
+    svg('path', { class: 'wk-pr-lantern-bars', d: 'M108 44 L116 56 M116 44 L108 56 M105.5 41 H118.5 M106 57 H118' }, g);
+    return g;
+  }
+
   // The building's ways in, in its own 560×280 frame: where each opening's
   // label sits (percent of the front) and where an attack strikes it.
   const ENTRIES = {
@@ -904,56 +954,125 @@
     const k = w / 560;
     const node = box(parent, 'wk-app-front', { x, y, w });
     const art = svg('svg', { viewBox: '0 0 560 280', width: w, height: 280 * k, 'aria-hidden': 'true' }, node);
-    // Drawn like the porch (porch() and its .wk-pr-* styles): clapboards lit
-    // from the upper left, dark outlines, a shingled roof on posts.
+    // Drawn like the porch (porch() and its .wk-pr-* styles), at the same
+    // level of detail: clapboards lit from the upper left with grain, knots,
+    // and nails; a boarded false front with its sign bolted on; a shingled
+    // porch roof on bracketed posts with two lanterns under it.
     const id = `wk-porch-${++porchCount}`;
-    const grad = svg('linearGradient', { id: `${id}-wall`, x1: 0, y1: 0, x2: 1, y2: 1 }, svg('defs', {}, art));
+    const defs = svg('defs', {}, art);
+    const grad = svg('linearGradient', { id: `${id}-wall`, x1: 0, y1: 0, x2: 1, y2: 1 }, defs);
     svg('stop', { offset: 0, class: 'wk-pr-wall-0' }, grad);
     svg('stop', { offset: 1, class: 'wk-pr-wall-1' }, grad);
+    const glass = porchMaterial(defs, id, 'window-light');
+    const lanternGlow = porchMaterial(defs, id, 'lamp-glow', true);
     svg('ellipse', { class: 'wk-pr-ground-shadow', cx: 280, cy: 276, rx: 278, ry: 5 }, art);
     svg('path', { class: 'wk-pr-wall', fill: `url(#${id}-wall)`, d: 'M40 82 H520 V272 H40 Z' }, art);
     for (let by = 98; by < 270; by += 16) {
       svg('path', { class: 'wk-pr-board-shadow', d: `M40 ${by} H520` }, art);
       svg('path', { class: 'wk-pr-board-light', d: `M40 ${by + 1.6} H520` }, art);
+      const joint = 60 + ((by * 37) % 430);
+      svg('path', { class: 'wk-pr-grain', d: `M${joint} ${by - 13} v11 M${joint + 8} ${by - 9} q14 -1 28 0 M${60 + ((joint + 190) % 420)} ${by - 6} q18 -1 34 0` }, art);
+      [46, 514].forEach((cx) => svg('circle', { class: 'wk-pr-nail', cx, cy: by - 7, r: 0.75 }, art));
     }
-    // The false front, its cornice, and the app's address on its sign.
+    [[190, 108], [300, 103], [204, 256], [366, 250]].forEach(([cx, cy]) => {
+      svg('path', { class: 'wk-pr-grain', d: `M${cx - 8} ${cy} Q${cx} ${cy - 4.5} ${cx + 9} ${cy} Q${cx} ${cy + 3.5} ${cx - 8} ${cy} M${cx - 2} ${cy} h4` }, art);
+    });
+    // The false front: boards with grain and nails, a lit cornice, and the
+    // app's address on a sign bolted to it.
     svg('path', { class: 'wk-af-front', d: 'M20 82 V18 C120 6 440 6 540 18 V82 Z' }, art);
-    svg('path', { class: 'wk-pr-board-shadow', d: 'M21 46 H539 M21 66 H539' }, art);
+    for (const by of [34, 50, 66]) {
+      svg('path', { class: 'wk-pr-board-shadow', d: `M21 ${by} H539` }, art);
+      svg('path', { class: 'wk-pr-board-light', d: `M21 ${by + 1.6} H539` }, art);
+      [26, 534].forEach((cx) => svg('circle', { class: 'wk-pr-nail', cx, cy: by + 8, r: 0.75 }, art));
+    }
+    svg('path', { class: 'wk-pr-grain', d: 'M40 28 q24 -1 48 0 M96 44 q20 -1 36 0 M30 60 q26 -1 52 0 M70 76 q20 -1 40 0 M430 28 q24 -1 46 0 M470 44 q22 -1 40 0 M428 60 q24 -1 50 0 M488 76 q18 -1 32 0' }, art);
     svg('path', { class: 'wk-af-cornice', d: 'M12 22 C120 6 440 6 548 22 V14 C440 -2 120 -2 12 14 Z' }, art);
+    svg('path', { class: 'wk-pr-trim-light', d: 'M16 23.5 C120 8.5 440 8.5 544 23.5 M14 14.5 C120 -0.5 440 -0.5 546 14.5' }, art);
     svg('rect', { class: 'wk-af-sign', x: 146, y: 24, width: 268, height: 42, rx: 4 }, art);
+    svg('path', { class: 'wk-pr-sign-rim', d: 'M150 62 V28 H410' }, art);
+    [[152, 30], [408, 30], [152, 60], [408, 60]].forEach(([cx, cy]) => svg('circle', { class: 'wk-pr-fastener', cx, cy, r: 1.3 }, art));
     const sign = svg('text', { class: 'wk-af-sign-text', x: 280, y: 52, 'text-anchor': 'middle' }, art);
     sign.textContent = url;
-    // The porch roof on four posts, its shade on the wall.
-    svg('rect', { class: 'wk-pr-shade', x: 40, y: 134, width: 480, height: 14 }, art);
-    svg('path', { class: 'wk-pr-roof', d: 'M22 118 H538 L530 136 H30 Z' }, art);
-    svg('path', { class: 'wk-pr-shingle', d: 'M26 127 H534 ' + Array.from({ length: 43 }, (_, i) => `M${30 + i * 12} 118 V127 M${36 + i * 12} 127 V136`).join(' ') }, art);
-    for (const px of [44, 216, 344, 516]) {
-      svg('rect', { class: 'wk-pr-post', x: px - 4.5, y: 136, width: 9, height: 136 }, art);
-      svg('path', { class: 'wk-pr-post-light', d: `M${px - 2} 140 V268` }, art);
-    }
+    // The porch roof's shade on the wall, and the lanterns' light on it.
+    svg('rect', { class: 'wk-pr-shade', x: 40, y: 136, width: 480, height: 16 }, art);
+    for (const lx of [194, 366]) svg('ellipse', { class: 'wk-pr-lamp-pool', cx: lx, cy: 164, rx: 46, ry: 40, fill: lanternGlow }, art);
     // The swinging doors in their frame, a login card nailed to them.
     svg('rect', { class: 'wk-pr-frame', x: 90, y: 154, width: 80, height: 118 }, art);
+    svg('path', { class: 'wk-pr-trim-light', d: 'M92 270 V156 H168' }, art);
     svg('rect', { class: 'wk-pr-dark', x: 96, y: 160, width: 68, height: 112 }, art);
     svg('path', { class: 'wk-pr-door', d: 'M98 176 H129 V246 H98 Z M131 176 H162 V246 H131 Z' }, art);
     svg('path', { class: 'wk-pr-panel-light', d: 'M127 179 V243 H101 M160 179 V243 H134' }, art);
+    svg('path', { class: 'wk-pr-grain', d: 'M104 181 q-1 24 0 60 M122 183 q1 22 0 56 M137 181 q-1 24 0 60 M155 183 q1 22 0 56' }, art);
+    for (const hy of [184, 234]) {
+      svg('path', { class: 'wk-pr-hinge', d: `M98 ${hy} H106 L108.5 ${hy + 2} L106 ${hy + 4} H98 Z M162 ${hy} H154 L151.5 ${hy + 2} L154 ${hy + 4} H162 Z` }, art);
+      [[101, hy + 2], [159, hy + 2]].forEach(([cx, cy]) => svg('circle', { class: 'wk-pr-fastener', cx, cy, r: 0.6 }, art));
+    }
     svg('rect', { class: 'wk-af-card', x: 106, y: 186, width: 48, height: 34, rx: 3 }, art);
     svg('path', { class: 'wk-af-card-line', d: 'M112 196 H148 M112 204 H148 M118 212 H142' }, art);
-    // The window, lit, with a speech-bubble sign hanging inside.
+    [[109, 189], [151, 189]].forEach(([cx, cy]) => svg('circle', { class: 'wk-pr-fastener', cx, cy, r: 1 }, art));
+    // The window, lit from inside, curtained, with a speech-bubble sign.
+    svg('rect', { class: 'wk-pr-recess', x: 230, y: 149, width: 109, height: 85, rx: 2 }, art);
     svg('rect', { class: 'wk-pr-window-frame', x: 228, y: 146, width: 108, height: 84, rx: 2 }, art);
-    svg('rect', { class: 'wk-pr-glass', x: 234, y: 152, width: 96, height: 72 }, art);
+    svg('rect', { class: 'wk-pr-glass wk-pr-glass--lit', x: 234, y: 152, width: 96, height: 72, fill: glass }, art);
+    svg('path', { class: 'wk-pr-curtain', d: 'M235 153 H248 C248 169 244 178 235 184 Z M316 153 H329 V184 C320 178 317 168 316 153 Z' }, art);
+    svg('path', { class: 'wk-pr-glass-reflection', d: 'M252 154 h11 l-17 21 h-8 Z M312 196 h9 l-14 19 h-9 Z' }, art);
     svg('path', { class: 'wk-pr-mullion', d: 'M282 152 V224 M234 188 H330' }, art);
+    svg('path', { class: 'wk-pr-trim-light', d: 'M230 228 V148 H334 M235 189.5 H329 M283.5 153 V223' }, art);
+    svg('path', { class: 'wk-pr-recess', d: 'M221 236 H343 L339 240 H225 Z' }, art);
     svg('rect', { class: 'wk-pr-sill', x: 222, y: 229, width: 120, height: 7, rx: 1.5 }, art);
+    svg('path', { class: 'wk-pr-trim-light', d: 'M224 230.5 H340' }, art);
     svg('path', { class: 'wk-af-bubble', d: 'M260 166 H304 C308 166 310 168 310 172 V184 C310 188 308 190 304 190 H276 L268 197 V190 H260 C256 190 254 188 254 184 V172 C254 168 256 166 260 166 Z' }, art);
-    // The loading hatch in its frame, a framed picture going in.
+    // The loading hatch in its frame on strap hinges, a framed picture going in.
     svg('rect', { class: 'wk-pr-frame', x: 386, y: 160, width: 108, height: 94, rx: 3 }, art);
+    svg('path', { class: 'wk-pr-trim-light', d: 'M388 252 V162 H492' }, art);
     svg('rect', { class: 'wk-af-hatch', x: 392, y: 166, width: 96, height: 82, rx: 2 }, art);
     svg('path', { class: 'wk-af-hatch-boards', d: 'M392 186 H488 M392 206 H488 M392 226 H488' }, art);
+    svg('path', { class: 'wk-pr-grain', d: 'M398 176 q16 -1 30 0 M450 196 q14 -1 30 0 M400 216 q14 -1 26 0 M446 238 q16 -1 34 0' }, art);
+    for (const by of [176, 196, 216, 237]) [[397, by], [483, by]].forEach(([cx, cy]) => svg('circle', { class: 'wk-pr-nail', cx, cy, r: 0.8 }, art));
+    for (const hy of [172, 236]) {
+      svg('path', { class: 'wk-pr-hinge', d: `M392 ${hy} H406 L409 ${hy + 2.5} L406 ${hy + 5} H392 Z` }, art);
+      svg('path', { class: 'wk-pr-hinge-pin', d: `M392 ${hy - 1} v7` }, art);
+      [396, 402].forEach((cx) => svg('circle', { class: 'wk-pr-fastener', cx, cy: hy + 2.5, r: 0.7 }, art));
+    }
     svg('rect', { class: 'wk-af-picture', x: 414, y: 180, width: 52, height: 40, rx: 2 }, art);
     svg('path', { class: 'wk-af-picture-art', d: 'M418 214 L432 198 L444 210 L452 202 L462 214 Z' }, art);
     svg('circle', { class: 'wk-af-sun', cx: 454, cy: 190, r: 4 }, art);
-    // The boardwalk.
+    // The posts, with feet, bolts, and brackets under the roof.
+    const POSTS = [44, 216, 344, 516];
+    for (const px of POSTS) {
+      svg('rect', { class: 'wk-pr-post', x: px - 4.5, y: 136, width: 9, height: 136 }, art);
+      svg('path', { class: 'wk-pr-post-light', d: `M${px - 2} 140 V258` }, art);
+      svg('path', { class: 'wk-pr-grain', d: `M${px + 2} 150 q-1 30 0 58 t0 46` }, art);
+      svg('rect', { class: 'wk-pr-post-foot', x: px - 5.5, y: 259, width: 11, height: 8, rx: 0.6 }, art);
+      [142, 262].forEach((cy) => svg('circle', { class: 'wk-pr-fastener', cx: px, cy, r: 0.9 }, art));
+      const sides = px === POSTS[0] ? [1] : px === POSTS[POSTS.length - 1] ? [-1] : [-1, 1];
+      for (const side of sides) svg('path', { class: 'wk-pr-post', d: `M${px + side * 4.5} 136 H${px + side * 18} L${px + side * 4.5} 149 Z` }, art);
+    }
+    // Two lanterns hang from the beam, clear of the window.
+    for (const lx of [194, 366]) lantern(art, lx, 136, 1.15);
+    // The porch roof: rows of shingles, its beam, and the eave's shadow.
+    const roofShape = 'M26 116 H534 L542 130 H18 Z';
+    const roofClip = svg('clipPath', { id: `${id}-roof-clip` }, defs);
+    svg('path', { d: roofShape }, roofClip);
+    svg('path', { class: 'wk-pr-roof', d: roofShape }, art);
+    const roof = svg('g', { 'clip-path': `url(#${id}-roof-clip)` }, art);
+    for (let row = 0; row < 2; row += 1) {
+      for (let col = 0; col < 45; col += 1) {
+        const sx = 14 + col * 12 + (row % 2) * 6;
+        svg('path', { class: `wk-pr-shingle-tile wk-pr-shingle-tile--${(row + col * 2) % 3}`, d: `M${sx} ${116 + row * 7} h12 v7 h-12 Z` }, roof);
+        if (col % 3 === row) svg('path', { class: 'wk-pr-roof-grain', d: `M${sx + 4} ${118 + row * 7} l-0.7 4` }, roof);
+      }
+    }
+    svg('path', { class: 'wk-pr-roof-edge', d: 'M26 116 H534 M20 128 H540' }, art);
+    svg('rect', { class: 'wk-pr-beam', x: 16, y: 129, width: 528, height: 8 }, art);
+    svg('path', { class: 'wk-pr-trim-light', d: 'M18 131 H542' }, art);
+    svg('path', { class: 'wk-pr-eave-shadow', d: 'M17 137 H543' }, art);
+    [24, 536].forEach((cx) => svg('circle', { class: 'wk-pr-fastener', cx, cy: 133, r: 1.1 }, art));
+    // The boardwalk, nailed down.
     svg('rect', { class: 'wk-pr-deck', x: 8, y: 266, width: 544, height: 9 }, art);
     svg('path', { class: 'wk-pr-seam', d: Array.from({ length: 30 }, (_, i) => `M${20 + i * 18} 266 V275`).join(' ') }, art);
+    svg('path', { class: 'wk-pr-trim-light', d: 'M10 267.5 H550' }, art);
+    for (let dx = 29; dx < 550; dx += 36) svg('circle', { class: 'wk-pr-nail', cx: dx, cy: 272, r: 0.6 }, art);
     for (const [name, entry] of Object.entries(ENTRIES)) {
       if (labels[name] === undefined) continue;
       const chip = el('div', 'wk-af-chip is-staged', node);
@@ -1468,8 +1587,9 @@
   /** A numbered quiz poster: the question, then the answer stamped on at `answerAt`. */
   function quiz(parent, { x, y, w = 400, n, total, question, answer, at, answerAt, until }) {
     const { node, body } = poster(parent, { x, y, w, kicker: `Pop quiz · ${n} of ${total}`, at, until, className: 'wk-quiz' });
-    el('div', 'wk-quiz-q', body, question);
+    const asked = el('div', 'wk-quiz-q', body, question);
     const a = el('div', 'wk-quiz-a is-staged', body, answer);
+    fitLater(node, [node.querySelector('.wk-poster-kicker'), asked], { mins: [a] });
     fx.slam(a, answerAt, { from: 1.4, rotate: -2 });
     return node;
   }

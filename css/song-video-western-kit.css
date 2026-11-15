@@ -754,20 +754,20 @@
 
 /* Porch details share the scene's ambient night light; the warm lantern
    and window remain local light sources. The sign keeps its own contrast. */
-.wk-porch .wk-pr-wall-0 { stop-color: color-mix(in srgb, #977452, #514741 var(--fr-night, 0%)); }
-.wk-porch .wk-pr-wall-1 { stop-color: color-mix(in srgb, #705135, #393436 var(--fr-night, 0%)); }
-.wk-porch .wk-pr-board-shadow { stroke: #443124; stroke-width: 1.2; }
-.wk-porch .wk-pr-board-light { stroke: #c29a70; opacity: 0.38; }
-.wk-porch .wk-pr-door { fill: color-mix(in srgb, #9f754b, #6b5645 var(--fr-night, 0%)); }
-.wk-porch .wk-pr-panel { fill: color-mix(in srgb, #87603e, #554536 var(--fr-night, 0%)); }
-.wk-porch .wk-pr-panel-light { stroke: #c49c70; opacity: 0.5; }
-.wk-porch .wk-pr-post,
-.wk-porch .wk-pr-frame,
-.wk-porch .wk-pr-window-frame,
-.wk-porch .wk-pr-fascia { fill: color-mix(in srgb, #59412d, #373437 var(--fr-night, 0%)); }
-.wk-porch .wk-pr-beam,
-.wk-porch .wk-pr-sill { fill: color-mix(in srgb, #745536, #51453d var(--fr-night, 0%)); }
-.wk-porch .wk-pr-deck { fill: color-mix(in srgb, #a27b52, #6d5744 var(--fr-night, 0%)); }
+:is(.wk-porch, .wk-app-front) .wk-pr-wall-0 { stop-color: color-mix(in srgb, #977452, #514741 var(--fr-night, 0%)); }
+:is(.wk-porch, .wk-app-front) .wk-pr-wall-1 { stop-color: color-mix(in srgb, #705135, #393436 var(--fr-night, 0%)); }
+:is(.wk-porch, .wk-app-front) .wk-pr-board-shadow { stroke: #443124; stroke-width: 1.2; }
+:is(.wk-porch, .wk-app-front) .wk-pr-board-light { stroke: #c29a70; opacity: 0.38; }
+:is(.wk-porch, .wk-app-front) .wk-pr-door { fill: color-mix(in srgb, #9f754b, #6b5645 var(--fr-night, 0%)); }
+:is(.wk-porch, .wk-app-front) .wk-pr-panel { fill: color-mix(in srgb, #87603e, #554536 var(--fr-night, 0%)); }
+:is(.wk-porch, .wk-app-front) .wk-pr-panel-light { stroke: #c49c70; opacity: 0.5; }
+:is(.wk-porch, .wk-app-front) .wk-pr-post,
+:is(.wk-porch, .wk-app-front) .wk-pr-frame,
+:is(.wk-porch, .wk-app-front) .wk-pr-window-frame,
+:is(.wk-porch, .wk-app-front) .wk-pr-fascia { fill: color-mix(in srgb, #59412d, #373437 var(--fr-night, 0%)); }
+:is(.wk-porch, .wk-app-front) .wk-pr-beam,
+:is(.wk-porch, .wk-app-front) .wk-pr-sill { fill: color-mix(in srgb, #745536, #51453d var(--fr-night, 0%)); }
+:is(.wk-porch, .wk-app-front) .wk-pr-deck { fill: color-mix(in srgb, #a27b52, #6d5744 var(--fr-night, 0%)); }
 .wk-pr-window-light-0 { stop-color: #a46a35; }
 .wk-pr-window-light-1 { stop-color: #e3ae59; }
 .wk-pr-window-light-2 { stop-color: #f1ce83; }
@@ -821,6 +821,7 @@
 .wk-pot-pollen { fill: none; stroke: #8b6415; stroke-width: 0.55; stroke-linecap: round; }
 .wk-pot-earth { fill: #44311e; stroke: #674328; stroke-width: 0.7; }
 .wk-pot-gravel { fill: #b0a082; }
+.wk-pot-contact { fill: #1d0f06; opacity: 1; fill-opacity: 0.55; }
 .wk-pot-foot { fill: #74432e; stroke: #4a2c21; stroke-width: 0.6; }
 .wk-pot-etch { fill: none; stroke: #713c26; stroke-width: 0.55; stroke-linecap: round; opacity: 0.5; }
 .wk-pot-rim-light { fill: none; stroke: #e5aa76; stroke-width: 0.7; stroke-linecap: round; opacity: 0.65; }
@@ -860,15 +861,15 @@
 /* The attack surface: the app as a building with its ways in. */
 .wk-app-front { position: absolute; }
 .wk-app-front svg { display: block; overflow: visible; filter: drop-shadow(0 12px 18px rgba(0, 0, 0, 0.5)); }
-.wk-af-front { fill: #6b4728; stroke: #2a1608; stroke-width: 2.2; stroke-linejoin: round; }
-.wk-af-cornice { fill: #4a2e18; stroke: #1e1008; stroke-width: 1.8; stroke-linejoin: round; }
+.wk-af-front { fill: color-mix(in srgb, #7a5a3c, #463d3a var(--fr-night, 0%)); stroke: #2a1608; stroke-width: 2.2; stroke-linejoin: round; }
+.wk-af-cornice { fill: color-mix(in srgb, #59412d, #373437 var(--fr-night, 0%)); stroke: #1e1008; stroke-width: 1.8; stroke-linejoin: round; }
 /* The address sign: dark board, brass rim, cream letters (the service emblems' style). */
 .wk-af-sign { fill: #2e1d10; stroke: #c9a24a; stroke-width: 2.4; }
 .wk-af-sign-text { fill: #f6e7c4; font-size: 23px; font-weight: 800; }
 .wk-af-card { fill: #fbfaf7; stroke: #2774ae; stroke-width: 2; }
 .wk-af-card-line { fill: none; stroke: #8a8c94; stroke-width: 2.2; stroke-linecap: round; }
 .wk-af-bubble { fill: #fbfaf7; stroke: #2a1608; stroke-width: 2; }
-.wk-af-hatch { fill: #6b4728; stroke: #2a1608; stroke-width: 1.8; }
+.wk-af-hatch { fill: color-mix(in srgb, #87603e, #554536 var(--fr-night, 0%)); stroke: #2a1608; stroke-width: 1.8; }
 .wk-af-hatch-boards { fill: none; stroke: #4a2e18; stroke-width: 1.6; }
 .wk-af-picture { fill: #cfe3f2; stroke: #2a1608; stroke-width: 2.2; }
 .wk-af-picture-art { fill: #3e8a52; }
@@ -1393,6 +1394,9 @@
 .wk-quiz-q { font-size: 23px; font-weight: 800; line-height: 1.25; text-wrap: balance; }
 
 .wk-quiz-a {
+  box-sizing: border-box;
+  width: fit-content;
+  max-width: 100%;
   margin-top: 14px;
   padding: 8px 12px;
   border: 4px solid var(--wk-green);

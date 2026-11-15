@@ -310,7 +310,7 @@
       const lockAt = before('v2-7');
       const b = W.group(s, before('v2-6'), lockAt);
       W.plank(b, 'Security through obscurity', { x: 250, y: 6, w: 460, at: mark('v2-6', 'security'), tone: 'red' });
-      W.tag(b, 'lasts till someone looks', { x: 340, y: 130, w: 280, at: mark('v2-6', 'obscurity'), icon: 'eye' });
+      W.tag(b, 'lasts only till someone looks', { x: 340, y: 130, w: 280, at: mark('v2-6', 'obscurity'), icon: 'eye' });
       // "Use locks the world has tested, their blueprints out on view."
       const c = W.group(s, lockAt, before('v2-9'));
       header(c, '2 · Threat Model', 'Who might be attacking?', lockAt, before('v2-9'));
@@ -419,7 +419,7 @@
       });
       W.slate(c, {
         x: 410, y: 208, w: 380, lang: 'sql', title: 'The query it builds', at: mark('v3-4', 'query'),
-        lines: ['SELECT * FROM Users', 'WHERE Name = "Bruin"', { text: 'AND Pass = "" or ""=""', hl: [{ part: 'or ""=""', at: mark('v3-4', 'query') + 0.3 }] }],
+        lines: ['SELECT * FROM Users', 'WHERE Name = "Bruin"', { text: 'AND Pass = "" or ""=""', hl: [{ part: '" or ""="', at: mark('v3-4', 'query') + 0.3 }] }],
       });
       W.label(c, '""="" is always true', { x: 624, y: 366, w: 186, tone: 'amber', at: mark('v3-4', 'query') + 0.35 });
       W.stamp(c, 'SQLi', { x: 404, y: 358, w: 170, rule: 'SQL injection', at: mark('v3-5', 'thats') - 0.1, tone: 'red' });
