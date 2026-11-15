@@ -327,3 +327,12 @@
 .bs-flag-pole { fill: none; stroke: #5b5346; stroke-width: 1.6; stroke-linecap: round; }
 .bs-flag-cloth { fill: #2774ae; stroke: #0e3a5e; stroke-width: 0.8; stroke-linejoin: round; }
 .bs-flag-brick rect { fill: #ffd100; stroke: #8a6d00; stroke-width: 0.6; }
+
+/* Pieces the sun lights from the right (the hall, left of the sun's path):
+   the mirrored face, shade, and roof, and a sunlit side face. */
+.bs-face--r { fill: url(#bs-lit-r); }
+.bs-shade--r { fill: url(#bs-shadow-r); }
+.bs-roof--r { fill: url(#bs-roof-r); }
+.bs-side--lit { fill: url(#bs-side-lit); }
+.bs-side-lit-0 { stop-color: #e9cb98; }
+.bs-side-lit-1 { stop-color: #d0ad7a; }

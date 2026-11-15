@@ -95,6 +95,11 @@
     gradient(defs, 'linearGradient', 'bs-side', vertical, [[0, 'bs-side-0'], [1, 'bs-side-1']]);
     gradient(defs, 'linearGradient', 'bs-shadow', horizontal, [[0, 'bs-shadow-0'], [0.45, 'bs-shadow-1'], [1, 'bs-shadow-2']]);
     gradient(defs, 'linearGradient', 'bs-roof', horizontal, [[0, 'bs-roof-0'], [0.5, 'bs-roof-1'], [0.5, 'bs-roof-2'], [1, 'bs-roof-3']]);
+    // The same three, mirrored, for pieces the sun lights from the right.
+    gradient(defs, 'linearGradient', 'bs-lit-r', horizontal, [[0, 'bs-lit-2'], [0.45, 'bs-lit-1'], [1, 'bs-lit-0']]);
+    gradient(defs, 'linearGradient', 'bs-shadow-r', horizontal, [[0, 'bs-shadow-2'], [0.55, 'bs-shadow-1'], [1, 'bs-shadow-0']]);
+    gradient(defs, 'linearGradient', 'bs-roof-r', horizontal, [[0, 'bs-roof-3'], [0.5, 'bs-roof-2'], [0.5, 'bs-roof-1'], [1, 'bs-roof-0']]);
+    gradient(defs, 'linearGradient', 'bs-side-lit', vertical, [[0, 'bs-side-lit-0'], [1, 'bs-side-lit-1']]);
     // The same lower-surface lighting as the security song's sunset, with
     // its palette progressing in reverse: blue hour into golden hour.
     gradient(defs, 'linearGradient', 'bs-cloud', vertical, [[0, 'bs-cloud-0'], [0.48, 'bs-cloud-1'], [0.8, 'bs-cloud-2'], [1, 'bs-cloud-3']]);
@@ -297,7 +302,9 @@
       return `M${left} ${bottom} V${y + r} A${rr} ${rr} 0 0 1 ${right} ${y + r} V${bottom} Z`;
     };
     // The frame casts a shadow down and to the right onto the wall.
-    svg('path', { class: 'bs-win-cast', d: outline(0), transform: 'translate(2 2.5)' }, g);
+    // Shadows fall away from the sun.
+    const right = litFromRight(x + w / 2);
+    svg('path', { class: 'bs-win-cast', d: outline(0), transform: `translate(${right ? -2 : 2} 2.5)` }, g);
     svg('path', { class: 'bs-win-frame', d: outline(0) }, g);
     const paneId = `bs-window-pane-${windows.length}`;
     const clip = svg('clipPath', { id: paneId }, g);
@@ -323,7 +330,7 @@
     let bars = `M${x + w / 2} ${y + 2.6} V${y + h - 2.6}`;
     if (panes > 1) bars += ` M${x + 2.6} ${(arched ? y + r : y + h * 0.45).toFixed(1)} H${x + w - 2.6}`;
     svg('path', { class: 'bs-win-bar', d: bars }, g);
-    svg('rect', { class: 'bs-win-sill-shadow', x: x - 1.5, y: y + h + 3, width: w + 5, height: 2.5 }, g);
+    svg('rect', { class: 'bs-win-sill-shadow', x: right ? x - 3.5 : x - 1.5, y: y + h + 3, width: w + 5, height: 2.5 }, g);
     svg('rect', { class: 'bs-win-sill', x: x - 2.5, y: y + h - 0.5, width: w + 5, height: 3.5, rx: 1 }, g);
     const brightness = occupied ? 0.9 + 0.1 * hash01(x * 17 + y * 11) : 0;
     windows.push({ lit, brightness, lightsOffAt, shown: -1 });
@@ -339,17 +346,28 @@
   }
 
   /**
-   * A wall of brick courses: the face (lit from the left, a few bricks a
-   * shade lighter or darker), the right-hand side face receding (depth),
-   * accent cornices that stand out a little and cast a line of shadow,
-   * mortar, studs on top, and a rim of sunlight on the lit edge.
+   * Whether the sun lights a piece centred at x from its right. The sun
+   * rises between x 323 and 540 all song, so everything left of that path
+   * (the hall) is lit from the right and everything right of it (the site)
+   * from the left.
+   */
+  const SUN_PATH_X = 430;
+  const litFromRight = (x) => x < SUN_PATH_X;
+
+  /**
+   * A wall of brick courses: the face (lit from the sun's side, a few bricks a
+   * shade lighter or darker), the right-hand side face receding (depth;
+   * sunlit when the sun is to the right), accent cornices that stand out a
+   * little and cast a line of shadow, mortar, studs on top, and a rim of
+   * sunlight on the lit edge.
    */
   function wall(parent, { x, y, w, h, depth = 0, cornices = [], top = true }) {
+    const right = litFromRight(x + w / 2);
     if (depth) {
-      svg('path', { class: 'bs-side', d: `M${x + w} ${y} L${x + w + depth} ${y - depth * 0.6} V${y + h} H${x + w} Z` }, parent);
+      svg('path', { class: right ? 'bs-side bs-side--lit' : 'bs-side', d: `M${x + w} ${y} L${x + w + depth} ${y - depth * 0.6} V${y + h} H${x + w} Z` }, parent);
       svg('rect', { class: 'bs-bond', x: x + w, y: y - depth * 0.6, width: depth, height: h + depth * 0.6 }, parent);
     }
-    svg('rect', { class: 'bs-face', x, y, width: w, height: h }, parent);
+    svg('rect', { class: right ? 'bs-face bs-face--r' : 'bs-face', x, y, width: w, height: h }, parent);
     svg('rect', { class: 'bs-tinted', x, y, width: w, height: h }, parent);
     svg('rect', { class: 'bs-bond', x, y, width: w, height: h }, parent);
     cornices.forEach(([cy, ch, tone]) => {
@@ -357,8 +375,8 @@
       svg('rect', { class: 'bs-band-light', x: x - 2, y: cy, width: w + 4, height: 2 }, parent);
       svg('rect', { class: 'bs-band-shadow', x, y: cy + ch, width: w, height: 3 }, parent);
     });
-    svg('rect', { class: 'bs-shade', x, y, width: w, height: h }, parent);
-    svg('rect', { class: 'bs-rim', x, y, width: 2.5, height: h }, parent);
+    svg('rect', { class: right ? 'bs-shade bs-shade--r' : 'bs-shade', x, y, width: w, height: h }, parent);
+    svg('rect', { class: 'bs-rim', x: right ? x + w - 2.5 : x, y, width: 2.5, height: h }, parent);
     if (top) {
       svg('path', { class: 'bs-edge', d: `M${x} ${y} H${x + w}` }, parent);
       studs(parent, x, x + w, y);
@@ -368,7 +386,8 @@
   /** A pyramid roof of terracotta tiles with a gold finial. */
   function roof(parent, x, w, base, apex) {
     const mid = x + w / 2;
-    svg('path', { class: 'bs-roof', d: `M${x - 9} ${base} L${mid} ${apex} L${x + w + 9} ${base} Z` }, parent);
+    const right = litFromRight(mid);
+    svg('path', { class: right ? 'bs-roof bs-roof--r' : 'bs-roof', d: `M${x - 9} ${base} L${mid} ${apex} L${x + w + 9} ${base} Z` }, parent);
     for (let i = 1; i < 6; i++) {
       const yy = apex + ((base - apex) * i) / 6;
       const half = ((w / 2 + 9) * i) / 6;
@@ -384,7 +403,7 @@
       }
     }
     svg('path', { class: 'bs-roof-ridge', d: `M${mid} ${apex} V${base}` }, parent);
-    svg('rect', { class: 'bs-eave-shadow', x: x - 2, y: base + 4, width: w + 4, height: 5 }, parent);
+    svg('rect', { class: 'bs-eave-shadow', x: right ? x - 6 : x - 2, y: base + 4, width: w + 4, height: 5 }, parent);
     svg('rect', { class: 'bs-eave', x: x - 11, y: base - 1, width: w + 22, height: 5, rx: 1 }, parent);
     svg('rect', { class: 'bs-finial-post', x: mid - 1.5, y: apex - 10, width: 3, height: 10 }, parent);
     svg('circle', { class: 'bs-finial', cx: mid, cy: apex - 12, r: 3.6 }, parent);
@@ -434,8 +453,8 @@
     // each inter-chorus pause above a complete row of windows.
     return { node: g, parts: [
       { group: middle, x0: 100, x1: 172, top: 240, levels: [7, 14, 19], solid: [[104, 168, 252]] },
-      { group: tall, x0: 4, x1: 140, top: 40, levels: [7, 17, 24], solid: [[18, 124, 60]] },
-      { group: short, x0: 154, x1: 272, top: 96, levels: [7, 14, 20], solid: [[168, 258, 116]] },
+      { group: tall, x0: 4, x1: 140, top: 40, levels: [7, 17, 24], solid: [[18, 112, 124]] },
+      { group: short, x0: 154, x1: 272, top: 96, levels: [7, 14, 20], solid: [[168, 248, 170]] },
       { group: wing, x0: -12, x1: 312, top: 382, levels: [7, 7, 7], solid: [[-4, 312, 390]] },
     ] };
   }
@@ -719,7 +738,8 @@
     return {
       x0: 760, x1: 984, bottom: GROUND, top: 180,
       timing: [BUILD.site, ...chorusTimings(song)], levels: [7, 14, 18],
-      solid: [[766, 976, 200]],
+      // The unfinished top steps down to the right, course by course.
+      solid: [[766, 976, 236], [766, 934, 224], [766, 894, 212], [766, 858, 200]],
     };
   }
 
@@ -793,7 +813,7 @@
         const rect = rects[i];
         const l = Math.max(left, from);
         const r = Math.min(right, to);
-        const shown = r - l > 1 && yTop + COURSE >= wallTop && yTop < bottom;
+        const shown = r - l > 1 && yTop >= wallTop - 2 && yTop < bottom;
         rect.setAttribute('x', shown ? l.toFixed(1) : '0');
         rect.setAttribute('y', (yTop - 4).toFixed(1));
         rect.setAttribute('width', shown ? (r - l).toFixed(1) : '0');
@@ -830,7 +850,7 @@
         placeStuds(lower, bottom - full * COURSE, full > 0 ? x : x1, x1);
       }
       const slotY = bottom - (full + 1) * COURSE;
-      const overWall = solid.some(([left, right, wallTop]) => x + BRICK / 2 >= left && x + BRICK / 2 <= right && slotY + COURSE >= wallTop);
+      const overWall = solid.some(([left, right, wallTop]) => x + BRICK / 2 >= left && x + BRICK / 2 <= right && slotY >= wallTop - 2);
       const building = construction.active && done > 0 && done < courses && overWall;
       drop.style.display = building ? '' : 'none';
       if (!building) return;
@@ -923,7 +943,7 @@
     siteGroup.dataset.testid = 'reuse-site';
     // Soft contact shadows where the buildings and lamps meet the baseplate.
     const contact = svg('g', { class: 'bs-contact' }, art);
-    svg('path', { class: 'bs-cast', d: `M-4 ${GROUND} H312 L332 ${GROUND + 18} H-4 Z` }, contact);
+    svg('path', { class: 'bs-cast', d: `M-24 ${GROUND + 18} L-4 ${GROUND} H312 L296 ${GROUND + 18} Z` }, contact);
     svg('path', { class: 'bs-cast', d: `M766 ${GROUND} H984 L998 ${GROUND + 18} H778 Z` }, contact);
     [18, 944].forEach((lx) => svg('ellipse', { class: 'bs-lamp-shadow', cx: lx + 6, cy: GROUND + 3, rx: 14, ry: 3.5 }, contact));
     const truck = forklift(art);

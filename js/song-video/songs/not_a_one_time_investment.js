@@ -88,43 +88,96 @@
         stage: [[-0.3, song.duration + 0.3]],
         places: kit.themes['brick-site'].foremanPlace(song),
         words, singInReducedMotion: false,
-        holds: [[0, 'right', 'clipboard'], [start('verse-1'), 'right', null], [done, 'right', 'brick']],
+        // The foreman is the "I" of the song: the one who reuses, pays for
+        // it, and learns. He carries the tool each principle needs in the
+        // hand he points with (the picture's left, towards the scenes): a
+        // clipboard for the checklists and the quiz, a stamp to pin, a
+        // wrench to update, a magnifier to check assumptions, and at the
+        // end a gold brick.
+        holds: [
+          [0, 'left', 'clipboard'], [start('verse-1'), 'left', null],
+          [start('refrain-1') - 0.4, 'left', 'clipboard'], [end('refrain-1'), 'left', null],
+          [mark('v2-9', 'pin') - 0.5, 'left', 'stamp'], [end('verse-2'), 'left', null],
+          [mark('v3-13', 'pinned') - 0.4, 'left', 'wrench'], [end('verse-3'), 'left', null],
+          [start('refrain-2') + 0.1, 'left', 'clipboard'], [end('refrain-2'), 'left', null],
+          [mark('br-13', 'read') - 0.6, 'left', 'magnifier'], [mark('br-15', 'goes') + 1.4, 'left', null],
+          [start('quiz-intro'), 'left', 'clipboard'], [end('refrain-3'), 'left', null],
+          [done, 'right', 'brick'],
+        ],
         moves: [
+          // Intro: eager to reuse.
           [mark('intro-1', 'yourself') - 0.2, 'point', { to: [470, 300], hold: 1.6 }],
-          [mark('intro-2', 'well'), 'thumbs', { hold: 1.2, side: 'left' }],
+          [mark('intro-2', 'well'), 'thumbs', { hold: 1.2, side: 'right' }],
           [mark('intro-2', 'well') + 1.8, 'point', { to: [812, 130], hold: 2 }],
+          // Verse 1: what reuse saves him.
           [mark('v1-1', 'out'), 'point', { to: [286, 200], hold: 1.4 }],
           [mark('v1-4', 'repaired'), 'thumbs', { hold: 1.2, side: 'left' }],
           [mark('v1-5', 'write'), 'point', { to: [366, 170], hold: 1.6 }],
+          // Verse 2: "My code had not changed a line" (a pat on his chest),
+          // "yet docker broke" (a shrug); he watches the crane swap the
+          // brick, facepalms as the calls break, then stamps "pinned" on
+          // the Pipfile himself.
+          [mark('v2-1', 'my'), 'chest', { hold: 0.7, side: 'right' }],
+          [mark('v2-2', 'broke'), 'shrug', { hold: 0.8 }],
+          [mark('v2-6', 'clean'), 'point', { to: [524, 160], hold: 1.2 }],
+          [mark('v2-8', 'broke'), 'facepalm', { hold: 1.1 }],
+          [mark('v2-9', 'versions') - 0.15, 'point', { to: [640, 268], hold: 0.8 }],
+          [mark('v2-10', 'choose'), 'thumbs', { hold: 1, side: 'right' }],
+          // Verse 3: he points at the crack, shrugs, despairs at the leak;
+          // "I didn't write that bug" (hand on chest), "but I shipped it"
+          // (facepalm); then he updates the pinned brick with his wrench
+          // and approves the passing tests.
           [mark('v3-1', 'flaw'), 'point', { to: [284, 170], hold: 1.4 }],
           [mark('v3-2', 'saw'), 'shrug', { hold: 1 }],
-          // Verse 2: he points at the crane doing the clean install, and
-          // facepalms as the calls break up the tower.
-          [mark('v2-6', 'clean'), 'point', { to: [524, 160], hold: 1.2 }],
-          [mark('v2-8', 'broke'), 'facepalm', { hold: 1.3 }],
-          [mark('v2-10', 'choose'), 'thumbs', { hold: 1, side: 'left' }],
-          // Verse 3: despair as the server hands out passwords and keys.
-          [mark('v3-6', 'passwords'), 'despair', { hold: 1.2 }],
-          [mark('v3-12', 'all'), 'thumbs', { hold: 1, side: 'left' }],
-          // Refrains: a thumbs-up on the takeaway.
-          [mark('refrain1-6', 'external'), 'thumbs', { hold: 1.4, side: 'left' }],
-          [mark('refrain2-6', 'external'), 'thumbs', { hold: 1.4, side: 'left' }],
-          // Left-pad: he points at the forklift stealing it, despairs as the
-          // build crashes, and facepalms as the builds fail.
+          [mark('v3-6', 'passwords'), 'despair', { hold: 1 }],
+          [mark('v3-7', 'didnt'), 'chest', { hold: 0.7, side: 'right' }],
+          [mark('v3-8', 'shipped'), 'facepalm', { hold: 1 }],
+          [mark('v3-12', 'all'), 'thumbs', { hold: 0.8, side: 'right' }],
+          [mark('v3-13', 'mean'), 'point', { to: [528, 172], hold: 1.2 }],
+          [mark('v3-14', 'test'), 'thumbs', { hold: 0.9, side: 'right' }],
+          // Verse 4: he points at the forklift stealing left-pad, despairs
+          // at the crash, facepalms at the failed builds; "write trivial code
+          // yourself" (hand on chest); a stop palm for hand-rolled crypto;
+          // and he points out the brick that fits.
           [mark('v4-5', 'its'), 'point', { to: [680, 360], hold: 1 }],
           [mark('v4-5', 'unpublished') + 1.05, 'despair', { hold: 1.2 }],
           [mark('v4-6', 'failed'), 'facepalm', { hold: 1.2 }],
-          // Crypto: a stop palm on "don't write your own".
+          [mark('v4-11', 'yourself') - 0.2, 'chest', { hold: 0.7, side: 'right' }],
           [mark('v4-16', 'dont'), 'stop', { hold: 0.9 }],
-          // Ariane 5: hands up as it self-destructs, then a shrug.
+          [mark('v4-18', 'fit'), 'point', { to: [568, 305], hold: 1 }],
+          // Bridge: hands up at the self-destruct, a shrug; then with his
+          // magnifier he checks the docs and code, what it was built for,
+          // and the test, one line at a time.
           [mark('br-8', 'selfdestructed'), 'surrender', { hold: 0.9 }],
           [mark('br-9', 'worked'), 'shrug', { hold: 0.9 }],
-          // "Don't call us, we'll call you": a stop palm, then a point at
-          // the handler the framework calls.
+          [mark('br-13', 'docs') - 0.1, 'point', { to: [533, 134], hold: 0.5 }],
+          [mark('br-14', 'check') - 0.1, 'point', { to: [533, 182], hold: 0.5 }],
+          [mark('br-15', 'test') - 0.1, 'point', { to: [533, 230], hold: 0.9 }],
+          // Verse 5: "I call axios" (hand on chest, then a point at axios);
+          // "Don't call us, we'll call you" (a stop palm, then the handler).
+          [mark('v5-3', 'i'), 'chest', { hold: 0.4, side: 'right' }],
+          [mark('v5-3', 'axios') - 0.1, 'point', { to: [638, 144], hold: 0.8 }],
           [mark('v5-6', 'dont'), 'stop', { hold: 0.5 }],
           [mark('v5-6', 'call_2'), 'point', { to: [560, 240], hold: 1 }],
-          [mark('quiz-0', 'your') + 0.1, 'thumbs', { hold: 0.6, side: 'left' }],
+          // Quiz: he hands the cases over, then checks off each answer.
+          [mark('quiz-0', 'your') + 0.1, 'thumbs', { hold: 0.6, side: 'right' }],
+          ...[1, 2, 3, 4, 5, 6].map((n) => [line(`quiz-${n}`).answer_at + 0.1, 'point', { to: [530, 418], hold: 0.8 }]),
+          // Refrains: he reads each question off the checklist as it lights,
+          // and approves the takeaway.
+          ...['refrain1', 'refrain2', 'refrain3'].flatMap((prefix) => [
+            [mark(`${prefix}-2`, 'what'), 'point', { to: [470, 190], hold: 0.9 }],
+            [mark(`${prefix}-3`, 'what'), 'point', { to: [470, 190], hold: 0.9 }],
+            [mark(`${prefix}-4`, 'what'), 'point', { to: [470, 190], hold: 0.9 }],
+            [mark(`${prefix}-5`, 'pin'), 'point', { to: [470, 190], hold: 0.9 }],
+          ]),
+          [mark('refrain1-6', 'external'), 'thumbs', { hold: 1.4, side: 'right' }],
+          [mark('refrain2-6', 'external'), 'thumbs', { hold: 1.4, side: 'right' }],
           [mark('refrain3-6', 'investment'), 'hop', { height: 12 }],
+          // Outro: "npm install left-pad? No need": the lesson learned, a
+          // finger wag at his old habit and a point at the built-in; then
+          // the gold brick, the thumbs-up, a salute, and a hop.
+          [mark('outro-2', 'no'), 'wag', { hold: 0.8, side: 'right' }],
+          [mark('outro-2', 'padstart'), 'point', { to: [530, 145], hold: 1 }],
           [done + 0.4, 'point', { to: [560, 330], hold: 0.9 }],
           [mark('outro-3', 'right'), 'thumbs', { hold: 1.4, side: 'left' }],
           [song.duration - 6.2, 'salute', { hold: 1.6 }],

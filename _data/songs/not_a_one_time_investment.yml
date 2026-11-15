@@ -253,13 +253,13 @@ sections:
         end: 56.06
         text: "My code had not changed a line,"
         marks: {"my": 54.25, "code": 54.46, "had": 54.82, "not": 55.0, "changed": 55.14, "a": 55.52, "line": 55.72}
-        visual: "Under the top-left section banner, a central terminal shows `git status` and “nothing to commit, working tree clean”."
+        visual: "Under the top-left section banner, a central terminal shows `git status` and “nothing to commit, working tree clean”. The foreman pats his chest: his code."
       - id: v2-2
         start: 56.06
         end: 58.06
         text: "Yet docker broke today."
         marks: {"yet": 56.06, "docker": 56.34, "broke": 56.9, "today": 57.34}
-        visual: "The red error from the lecture appears below it: “docker.errors.DockerException: Error while fetching server API version: request() got an unexpected keyword argument 'chunked'”, with the last part highlighted."
+        visual: "The red error from the lecture appears below it: “docker.errors.DockerException: Error while fetching server API version: request() got an unexpected keyword argument 'chunked'”, with the last part highlighted. He shrugs."
       - id: v2-3
         start: 58.06
         end: 60.14
@@ -301,7 +301,7 @@ sections:
         end: 74.03
         text: "Pin dependency versions:"
         marks: {"pin": 70.78, "dependency": 71.12, "versions": 71.86}
-        visual: "The tower clears for a Pipfile with `urllib3 = \"<2.0.0\"` outlined in green and stamped “pinned”. A note says “Lockfile = the same bricks in every build”. Below: “Keep versions of your dependencies fixed”."
+        visual: "The tower clears for a Pipfile with `urllib3 = \"<2.0.0\"` outlined in green and stamped “pinned”. A note says “Lockfile = the same bricks in every build”. Below: “Keep versions of your dependencies fixed”. The foreman, holding a rubber stamp, stamps “pinned” onto the Pipfile himself."
       - id: v2-10
         start: 74.03
         end: 76.38
@@ -354,13 +354,13 @@ sections:
         end: 91.77
         text: "I didn't write that bug,"
         marks: {"i": 89.36, "didnt": 89.66, "write": 90.02, "that": 90.36, "bug": 90.72}
-        visual: "In the middle: a small build, the gold brick “your code” on a blue brick “OpenSSL 1.0.1”. Your code gets a green check."
+        visual: "In the middle: a small build, the gold brick “your code” on a blue brick “OpenSSL 1.0.1”. Your code gets a green check. The foreman lays a hand on his chest: he didn’t write it."
       - id: v3-8
         start: 91.77
         end: 94.17
         text: "But I shipped it, all the same."
         marks: {"but": 91.77, "i": 91.88, "shipped": 92.06, "it": 92.5, "all": 92.72, "the": 93.0, "same": 93.18}
-        visual: "A dashed outline, “your app, X-rayed”, appears around the build; a crack runs through the OpenSSL brick, which is ringed in red. Label: “Reused code brings its bugs”."
+        visual: "A dashed outline, “your app, X-rayed”, appears around the build; a crack runs through the OpenSSL brick, which is ringed in red. Label: “Reused code brings its bugs”. He facepalms: he shipped it anyway."
       - id: v3-9
         start: 94.17
         end: 95.62
@@ -390,13 +390,13 @@ sections:
         end: 104.78
         text: "Pinned doesn't mean frozen:"
         marks: {"pinned": 102.12, "doesnt": 102.56, "mean": 103.1, "frozen": 103.3}
-        visual: "A gold principle brick: “Pinned doesn’t mean frozen”. A blue brick “openssl” tagged “1.0.1f · pinned” moves to 1.0.1g and is pinned again."
+        visual: "A gold principle brick: “Pinned doesn’t mean frozen”. A blue brick “openssl” tagged “1.0.1f · pinned” moves to 1.0.1g and is pinned again. With a wrench, the foreman points at the pinned openssl brick as he updates it."
       - id: v3-14
         start: 104.78
         end: 106.12
         text: "Update to the fix, then test."
         marks: {"update": 104.78, "to": 104.94, "the": 105.22, "fix": 105.32, "then": 105.6, "test": 105.78}
-        visual: "A terminal runs `npm test`: “✓ all tests passed”. The principle brick now reads “Update to receive security patches”."
+        visual: "A terminal runs `npm test`: “✓ all tests passed”. The principle brick now reads “Update to receive security patches”. He gives the passing tests a thumbs-up."
   - id: refrain-2
     title: "Refrain"
     delivery: sung
@@ -633,7 +633,7 @@ sections:
         end: 188.46
         text: "Read the docs and read the code,"
         marks: {"read": 186.84, "the": 187.0, "docs": 187.12, "and": 187.48, "read_2": 187.66, "the_2": 187.88, "code": 188.02}
-        visual: "Box 1 is ticked: “Check the documentation and the code”."
+        visual: "Box 1 is ticked: “Check the documentation and the code”. The foreman, holding a magnifier, points at each check in turn as it is ticked."
       - id: br-14
         start: 188.46
         end: 189.92
@@ -686,7 +686,7 @@ sections:
         end: 205.2
         text: "I call axios when I choose;"
         marks: {"i": 202.5, "call": 202.86, "axios": 203.3, "when": 203.96, "i_2": 204.3, "choose": 204.46}
-        visual: "In the middle: the lecture’s `const response = await axios.get('/user?ID=12345');`, and the arrow points from your code to axios: “you call it”."
+        visual: "In the middle: the lecture’s `const response = await axios.get('/user?ID=12345');`, and the arrow points from your code to axios: “you call it”. The foreman lays a hand on his chest, then points at axios: he calls it."
       - id: v5-4
         start: 205.2
         end: 206.86
@@ -844,7 +844,7 @@ sections:
         end: 279.28
         text: "No need: padStart is built in."
         marks: {"no": 275.28, "need": 275.54, "padstart": 277.22, "is": 277.58, "built": 278.22, "in": 278.54}
-        visual: "The terminal gives way to a JavaScript example: `String(str).padStart(length, paddingCharacter)`. A separate label below reads “Eleven lines → one built-in”."
+        visual: "The terminal gives way to a JavaScript example: `String(str).padStart(length, paddingCharacter)`. A separate label below reads “Eleven lines → one built-in”. The foreman wags a finger at his old command, then points at the built-in."
       - id: outro-3
         start: 280.37
         end: 282.72
