@@ -291,9 +291,13 @@
     cookieJar({ hang: behind }, label) {
       svg('rect', { class: 'ol-lid', x: -15, y: 8.6, width: 25, height: 8, rx: 2 }, behind);
       svg('path', { class: 'ol-glass', d: 'M-26 17 C-31 21 -31 52 -27 57 C-22 61 18 61 23 57 C27 52 27 21 22 17 Z' }, behind);
-      [[-16, 50], [-3, 52], [10, 49], [-10, 41], [5, 41]].forEach(([cx, cy]) => {
-        svg('circle', { class: 'ol-cookie', cx, cy, r: 6.4 }, behind);
-        [[-2, -2], [2, 1], [-1, 2.6]].forEach(([dx, dy]) => svg('circle', { class: 'ol-chip', cx: cx + dx, cy: cy + dy, r: 1 }, behind));
+      // Bottom row first: cookie k shows once the outlaw's --ol-jar-fill
+      // passes k (css/song-video-outlaw.css), so a jar can fill as cookies land.
+      [[-16, 50], [-3, 52], [10, 49], [-10, 41], [5, 41]].forEach(([cx, cy], k) => {
+        const cookie = svg('g', { class: 'ol-jar-cookie' }, behind);
+        cookie.style.setProperty('--ol-cookie-index', k);
+        svg('circle', { class: 'ol-cookie', cx, cy, r: 6.4 }, cookie);
+        [[-2, -2], [2, 1], [-1, 2.6]].forEach(([dx, dy]) => svg('circle', { class: 'ol-chip', cx: cx + dx, cy: cy + dy, r: 1 }, cookie));
       });
       svg('rect', { class: 'ol-paper', x: -24.6, y: 20, width: 46, height: 14.6, rx: 2 }, behind);
       label(behind, 'cookies', -1.6, 31.2, 12, 'ol-label ol-label--ink');

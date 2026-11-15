@@ -401,7 +401,7 @@ sections:
         end: 164.52
         text: "Each browser ran it as yours and sent me what it stole."
         marks: {"each": 160.22, "browser": 160.4, "ran": 160.86, "it": 161.34, "as": 161.62, "yours": 161.88, "and": 162.38, "sent": 162.72, "me": 163.16, "what": 163.38, "it_2": 163.62, "stole": 163.78}
-        visual: "Three visitors' browsers load the post, and each shows the lecture's “Alert” box, “USC IS BETTER!!!”, inside the trusted site. On “stole”, a cookie flies out of each browser into the outlaw's cookie jar: “session cookies, sent to the attacker”."
+        visual: "Three visitors' browsers load the post, and each shows the lecture's “Alert” box, “USC IS BETTER!!!”, inside the trusted site. The outlaw holds up an empty cookie jar. On “stole”, a cookie flies out of each browser and drops into it, filling the jar: “session cookies, sent to the attacker”."
       - id: v3b-3
         start: 164.52
         end: 166.56

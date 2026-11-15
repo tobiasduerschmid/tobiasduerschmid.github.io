@@ -33,7 +33,7 @@
 
   window.SongChoreographies = window.SongChoreographies || {};
   window.SongChoreographies.design_it_in = function choreograph({ song, kit, layers, student }) {
-    const { tween, EASE } = window.Timeline;
+    const { tween, EASE, onFrame, clamp } = window.Timeline;
     const W = window.WesternKit;
     const PS = window.PrincipleScenes;
     const { content, hud } = layers;
@@ -477,13 +477,20 @@
       // The outlaw points at the comment as the script goes in, catches the
       // cookies in a jar, and shrugs when the script shows up as plain text.
       const textAt = mark('v3b-4', 'text');
-      outlaw(content, from, textAt + 1.4, {
+      const thief = outlaw(content, from, textAt + 1.4, {
         route: [[from, 990, FEET, -1], [from + 1, 884, FEET, -1], [textAt + 0.5, 884, FEET, -1], [textAt + 1.4, 1010, FEET, 1]],
         holds: [[mark('v3b-2', 'sent') - 0.2, 'near', 'cookieJar'], [mark('v3b-4', 'escape'), 'near', null]],
         moves: [
           [mark('v3b-1', 'script') - 0.2, 'reach', { to: [600, 300], shape: 'point', hold: 1.8 }], [mark('v3b-2', 'stole') + 0.4, 'peek', { dir: 1, hold: 1.2 }],
           [mark('v3b-3', 'scripting'), 'look', { dir: 'viewer', hold: 0.8 }], [textAt - 0.1, 'shrug', { hold: 0.8 }],
         ],
+      });
+      // The jar starts empty; each stolen cookie drops in as its trail lands
+      // (0.7 s after it sets off): two, then two more, then the last.
+      const landings = [0, 1, 2].map((i) => mark('v3b-2', 'stole') + i * 0.12 + 0.7);
+      onFrame((t) => {
+        const fill = landings.reduce((n, landAt, i) => n + [2, 2, 1][i] * clamp((t - landAt + 0.15) / 0.15, 0, 1), 0);
+        thief?.style.setProperty('--ol-jar-fill', fill.toFixed(2));
       });
       // "Escape what you display: my script shows up as text, not code."
       W.slate(a, {
