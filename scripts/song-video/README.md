@@ -110,6 +110,17 @@ directs its glance and wink, which masks split per eye, and lifts one brow
 the hero's skin tokens, and a hairline bright halo outlines very dark skin or
 hair against the noir stage.
 
+`student.castHead(style)` renders a fixed supporting character through the
+same wardrobe, keeping that look across its cameos. Draw It Out uses four
+fixed looks for its hoodie, curls, beard, and hijab teammates. A worn head's
+pose can set `expression` to `thoughtful`, `puzzled`, or `worried` for a closed
+mouth fitted to that hero's face; `neutral` restores its chosen mouth and
+allows the existing `hush` and `sing` controls. Expressions, gaze, and blinks
+follow song time, including backward seeks and reduced motion. Set
+`expressionFrom` and `expressionMix` (0–1) to morph between closed-mouth
+reactions and fade to or from the hero's chosen smile. The sketch-kit cast
+eases its mouth, brows, gaze, and head tilt together over each reaction.
+
 The playlist's Random avatar switch (`song-player-random-avatar`, see
 `docs/song-playlists.md`) makes every appearance a new random human hero
 instead. `create` and `heroHead()` then hand out looks through a wardrobe.
@@ -351,7 +362,10 @@ sung words, towards stage points: `point`, `tap`, `trace`, and `sketch` aim
 the pencil (two-bone inverse kinematics, touching the point when in reach;
 further off the elbow stays low and the wrist lays the pencil on the line
 to the point); `check`, `cross`, and `circle` draw a tick, a cross, or a ring
-in the air on the way to it, along smooth paths; `draw`
+in the air on the way to it, along smooth paths. `erase` draws the hand in,
+slides the pencil to its midpoint, rolls it between the moving thumb and
+fingers, and closes the grip near the rubber before pointing and rubbing.
+The barrel stays in the pinch through the turn. `draw`
 draws a route of stage points small in the air, at the pace the drafting
 pencil draws it on the sheet. Out at the side the elbow always goes below
 the line to the point, so it never flips over, and the shoulder turns the
@@ -371,7 +385,9 @@ every reach, the upper arm leading while the forearm, the hand, and the
 head trail it (`LAG`), the hand catching up as the arm slows
 (`followThrough()`), a lean after a sideways reach that the free arm
 balances (`balance()`), and two steps with a give at the knees when it walks
-in. A move cued while another is under way takes over the joints it uses,
+in. Long joint sweeps get more time, including the approach to a moving
+stroke; elbow and wrist limits are applied before interpolation. A move
+cued while another is under way takes over the joints it uses,
 and a return to rest just before it is skipped, so the arm goes straight on
 to its next pose. The architect carries the story, standing wherever a scene
 leaves room beside its content: it steps in after "fix it later" has cracked

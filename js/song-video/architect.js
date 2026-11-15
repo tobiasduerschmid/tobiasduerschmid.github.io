@@ -160,7 +160,10 @@
    */
   const overturned = (pose, limit = outwardLimit) => pose[0] > -35 && outwardFold(pose) > limit(pose[0]);
   /** A pose with its forearm brought back in, as far as the shoulder turns. */
-  const untwist = (pose) => (overturned(pose) ? [pose[0], pose[1] - (outwardFold(pose) - outwardLimit(pose[0]))] : pose);
+  const untwist = (pose) => {
+    const fold = clamp(outwardFold(pose), -145, pose[0] > -35 ? outwardLimit(pose[0]) : 145);
+    return [pose[0], pose[0] + (FOREARM_REST - UPPER_REST) + fold];
+  };
 
   /**
    * The [upper, forearm] raise that puts `end` (a point carried by the
@@ -324,7 +327,7 @@
    *   lean           degrees the whole figure leans about its feet
    */
   const REST = {
-    pen: [3, -8], penLift: 0, penHand: -12,
+    pen: [3, -8], penLift: 0, penHand: -12, penReverse: 0,
     roll: [3, -6], rollLift: 0, rollHand: 6,
     look: 0, down: 0, brow: 0, nod: 0, tilt: 0, crouch: 0, lean: 0,
   };
@@ -339,14 +342,14 @@
    */
   function holdPencilAt([x, y], dir, lift) {
     const [tx, ty] = rotate(TIP_IN_HAND, dir - PENCIL_ANGLE);
-    const pen = reach([x - tx, y - ty], { shorten: 1 - LIFT * lift, end: WRIST });
+    const pen = untwist(reach([x - tx, y - ty], { shorten: 1 - LIFT * lift, end: WRIST }));
     return { pen, penLift: lift, penHand: handToward(pen, dir) };
   }
 
   // Thinking: the elbow out at the side, the upper arm come forward, the
   // hand up at the chest, and the pencil's tip under the chin, its eraser
   // down by the waist; the eyes go up and to the side.
-  const THINK = holdPencilAt([HEAD.x + 0.6, HEAD.chin + 1.2], -106, 1);
+  const THINK = holdPencilAt([HEAD.x + 2, HEAD.chin + 14], -106, 0.45);
   // Presenting the drawing: the arm lifted out to the side, the forearm
   // raised, and the roll held upright in the fist above the shoulder, the
   // back of the hand to the viewer, as a hand goes up.
@@ -363,6 +366,9 @@
   const WIND_UP = { pen: [118, 166], penLift: 0, penHand: REST.penHand };
   // Waving: the elbow out at the shoulder's height and the forearm up.
   const WAVE = { pen: [98, 156], penLift: 0, penHand: -24 };
+  // Bring the writing hand close enough to manipulate the pencil, with
+  // room below and outside the face for the barrel to turn.
+  const REGRIP = { pen: [24, 70], penLift: 0.15, penHand: -4 };
 
   // ------------------------------------------------------------------
   // Timing: how keys move the joints
@@ -380,7 +386,15 @@
    * forearm folded one way to one folded the other, as an elbow does,
    * instead of folding the forearm on back through the upper arm.
    */
-  const unfolded = (pose) => [pose[0], pose[0] + (FOREARM_REST - UPPER_REST) + outwardFold(pose)];
+  const unfolded = untwist;
+  // Constrain the destination before easing so wrists decelerate into
+  // their limits instead of abruptly stopping against a render-time clamp.
+  const jointTarget = (name, value) => {
+    if (Array.isArray(value)) return unfolded(value);
+    if (name === 'penHand') return clamp(value, ...WRIST_RANGE.pen);
+    if (name === 'rollHand') return clamp(value, ...WRIST_RANGE.roll);
+    return value;
+  };
 
   // Joints don't all move at once: the upper arm leads, the forearm
   // follows, and the hand trails, so a reach unfurls from the shoulder
@@ -452,6 +466,22 @@
         [-0.4, 0.65, { ...g.tipAt(off), penLift: 0 }], [-0.4, 0.5, g.attend(to)],
         [0.25, pecks, (u) => g.tipAt(lerp(off, on, 0.5 - 0.5 * Math.cos(2 * Math.PI * times * u)))],
         ...settle(0.25 + pecks + hold),
+      ];
+    },
+    // Turn the pencil in the fingers and regrip near its rubber. The
+    // rubber now occupies the old tip's position, so the same pointing
+    // geometry aims it at the flaw without twisting the wrist backwards.
+    erase: ({ to, duration = 0.6, hold = 0.3 }, g) => {
+      const target = g.point(to);
+      return [
+        [-1.05, 0.3, REGRIP],
+        [-0.8, 0.6, { penReverse: 1 }],
+        [-0.2, 0.35, { ...target, penLift: 0 }],
+        [-0.7, 0.5, g.attend(to)],
+        [0, duration, (u) => ({ ...g.point([to[0] + 6 * Math.sin(4 * Math.PI * u) * Math.sin(Math.PI * u) ** 2, to[1]]), penReverse: 1 })],
+        [duration + hold, 0.4, REGRIP],
+        [duration + hold + 0.3, 0.6, { penReverse: 0 }],
+        ...settle(duration + hold + 0.9),
       ];
     },
     // Ticks a point off in the air: a short stroke down, a long one up.
@@ -593,20 +623,21 @@
    */
   function poseAt(keys, t, reduced) {
     const pose = { ...REST, pen: [...REST.pen], roll: [...REST.roll] };
-    for (const [start, duration, fields] of keys) {
+    for (const [start, duration, fields, , blendDuration = 0.15] of keys) {
       if (t < start - LEAD) break;
       if (typeof fields === 'function') {
         if (t < start) continue;
         const target = fields(reduced ? 1 : progress(t, start, duration));
-        const w = eased(t, start, Math.min(0.15, duration), reduced);
-        for (const [name, value] of Object.entries(target)) pose[name] = mix(pose[name], Array.isArray(value) ? unfolded(value) : value, w);
+        const w = eased(t, start, blendDuration, reduced);
+        for (const [name, value] of Object.entries(target)) pose[name] = mix(pose[name], jointTarget(name, value), w);
         continue;
       }
       for (const [name, target] of Object.entries(fields)) {
         const lag = LAG[name] ?? 0;
-        pose[name] = Array.isArray(target)
-          ? unfolded(target).map((value, i) => pose[name][i] + (value - pose[name][i]) * eased(t, start + lag[i], duration, reduced))
-          : mix(pose[name], target, eased(t, start + lag, duration, reduced));
+        const bounded = jointTarget(name, target);
+        pose[name] = Array.isArray(bounded)
+          ? bounded.map((value, i) => pose[name][i] + (value - pose[name][i]) * eased(t, start + lag[i], duration, reduced))
+          : mix(pose[name], bounded, name === 'penReverse' && !reduced ? progress(t, start, duration) : eased(t, start + lag, duration, reduced));
       }
     }
     return pose;
@@ -618,8 +649,12 @@
    * lags the body's lean.
    */
   function followThrough(p, before) {
-    p.penHand += clamp((p.pen[1] - before.pen[1]) / FRAME * 0.02, -7, 7);
-    p.rollHand += clamp((p.roll[1] - before.roll[1]) / FRAME * 0.02, -7, 7);
+    for (const name of ['pen', 'roll']) {
+      const lag = clamp((p[name][1] - before[name][1]) / FRAME * 0.02, -7, 7);
+      const hand = `${name}Hand`;
+      const room = lag > 0 ? WRIST_RANGE[name][1] - p[hand] : p[hand] - WRIST_RANGE[name][0];
+      p[hand] += lag * smoothstep(room / 7);
+    }
     p.tilt -= clamp((p.lean - before.lean) / FRAME * 0.12, -2, 2);
   }
 
@@ -910,11 +945,13 @@
    * skin and then its details; the first part's skin carries `testid`.
    */
   function drawHand(parent, parts, paint, testid) {
-    parts.forEach(({ fill, ink, details }, i) => {
-      svg('path', { class: 'dio-arch-ink dio-arch-ink--fine', d: ink }, parent);
-      const skin = svg('path', { class: 'dio-arch-skin', d: fill, fill: paint.skinHand }, parent);
+    return parts.map(({ fill, ink, details }, i) => {
+      const part = svg('g', {}, parent);
+      svg('path', { class: 'dio-arch-ink dio-arch-ink--fine', d: ink }, part);
+      const skin = svg('path', { class: 'dio-arch-skin', d: fill, fill: paint.skinHand }, part);
       if (testid && i === 0) skin.dataset.testid = testid;
-      drawParts(parent, details, paint);
+      drawParts(part, details, paint);
+      return part;
     });
   }
 
@@ -945,10 +982,11 @@
     const r = PENCIL_RADIUS, face = r / 3;
     const top = -PENCIL_BACK, ferrule = top + 5.2, barrel = ferrule + 5, sharpened = 2, lead = PENCIL_TIP - 2.8, tip = PENCIL_TIP;
     const [x, y] = [WRIST[0] + PINCH[0], WRIST[1] + PINCH[1]];
-    const g = svg('g', { class: 'dio-arch-pencil', transform: `translate(${x} ${y}) rotate(${PENCIL_ANGLE - 90})` }, parent);
+    const holder = svg('g', { class: 'dio-arch-pencil', transform: `translate(${x} ${y}) rotate(${PENCIL_ANGLE - 90})` }, parent);
+    const g = svg('g', { 'data-testid': 'dio-arch-pencil-grip' }, holder);
     const cap = `M${-r + 0.1} ${ferrule} V${top + 1.6} Q${-r + 0.1} ${top} 0 ${top} Q${r - 0.1} ${top} ${r - 0.1} ${top + 1.6} V${ferrule}`;
     svg('path', { class: 'dio-arch-ink dio-arch-ink--fine', d: `${cap} H${r + 0.15} V${barrel} H${r} V${sharpened} L0.5 ${lead} L0 ${tip} L-0.5 ${lead} L${-r} ${sharpened} V${barrel} H${-r - 0.15} V${ferrule} Z` }, g);
-    svg('path', { class: 'dio-arch-eraser', d: `${cap} Z` }, g);
+    svg('path', { class: 'dio-arch-eraser', d: `${cap} Z`, 'data-testid': 'dio-arch-pencil-eraser' }, g);
     svg('path', { class: 'dio-arch-eraser-light', d: `M-0.9 ${top + 2.6} V${top + 1.6} Q-0.8 ${top + 0.7} 0 ${top + 0.5}` }, g);
     svg('path', { class: 'dio-arch-ferrule', d: `M${-r - 0.15} ${ferrule - 0.2} H${r + 0.15} V${barrel} H${-r - 0.15} Z`, fill: paint.steel }, g);
     svg('path', { class: 'dio-arch-ferrule-crimp', d: [1.2, 2.2, 3.4].map((dy) => `M${-r - 0.15} ${ferrule + dy} H${r + 0.15}`).join(' ') }, g);
@@ -1194,10 +1232,12 @@
       const grip = svg('g', {}, fore);
       const { behind, front, heldBehindForearm } = HANDS[kind];
       const layer = () => svg('g', { class: 'dio-arch-hand', transform: `translate(${WRIST[0]} ${WRIST[1]})` }, grip);
-      drawHand(layer(), behind, paint, 'dio-arch-hand');
+      const backParts = drawHand(layer(), behind, paint, 'dio-arch-hand');
       const held = heldBehindForearm ? gripBehind : svg('g', {}, grip);
-      drawHand(layer(), front, paint);
-      return { side, shoulder, upper, upperShading, armhole, reach: reachGroup, reachRoot, fore, foreShading, cuffShading, wrist, grips: [gripBehind, grip], held, wristRange: WRIST_RANGE[kind] };
+      const frontParts = drawHand(layer(), front, paint);
+      const fingers = kind === 'pen' ? { middle: backParts[0], index: backParts[2], thumb: frontParts[0] } : null;
+      if (fingers) for (const [name, part] of Object.entries(fingers)) part.dataset.testid = `dio-arch-${name}-finger`;
+      return { side, shoulder, upper, upperShading, armhole, reach: reachGroup, reachRoot, fore, foreShading, cuffShading, wrist, grips: [gripBehind, grip], held, fingers, wristRange: WRIST_RANGE[kind] };
     };
     // The pencil is in the hand on the side the figure works towards.
     const right = arm(1, flip ? 'roll' : 'pen');
@@ -1206,7 +1246,25 @@
     const rollArm = flip ? right : left;
     roll(rollArm.held);
     watch(rollArm.wrist, paint);
-    pencil(penArm.held, paint);
+    const pencilArt = pencil(penArm.held, paint);
+
+    function regrip(amount) {
+      // First walk the grip to the pencil's middle, pivot there between
+      // thumb and middle finger while the index finger lifts, then walk
+      // the grip back towards the rubber. The barrel passes through the
+      // pinch throughout: it never orbits away from a closed fist.
+      const slideIn = reachEase(clamp(amount / 0.25, 0, 1));
+      const pivot = reachEase(clamp((amount - 0.25) / 0.5, 0, 1));
+      const slideOut = reachEase(clamp((amount - 0.75) / 0.25, 0, 1));
+      const slide = (PENCIL_BACK - PENCIL_TIP) / 2 * (slideIn + slideOut);
+      pencilArt.setAttribute('transform', `rotate(${(180 * pivot).toFixed(3)}) translate(0 ${slide.toFixed(3)})`);
+      const rolling = Math.sin(Math.PI * pivot);
+      const walking = Math.sin(Math.PI * slideIn) - Math.sin(Math.PI * slideOut);
+      const fingers = penArm.fingers;
+      fingers.index.setAttribute('transform', `rotate(${(-18 * rolling - 9 * walking).toFixed(3)} 3 9.6)`);
+      fingers.middle.setAttribute('transform', `rotate(${(10 * rolling + 7 * walking).toFixed(3)} 2.6 11.6)`);
+      fingers.thumb.setAttribute('transform', `rotate(${(5 * rolling - 6 * walking).toFixed(3)} -2.4 2.6)`);
+    }
 
     const turn = (angle, [cx, cy]) => `rotate(${angle.toFixed(2)} ${cx} ${cy})`;
     // The upper arm, shortened along its own length about the shoulder.
@@ -1251,8 +1309,9 @@
       trunk.setAttribute('transform', `translate(0 ${drop.toFixed(2)})`);
       // Easing between two possible poses can pass through one that turns a
       // shoulder too far; the forearm is held back to what it allows.
-      poseArm(penArm, untwist(p.pen), p.penLift, p.penHand);
+      poseArm(penArm, untwist(p.pen), p.penLift, p.penHand + 5 * Math.sin(Math.PI * p.penReverse));
       poseArm(rollArm, untwist(p.roll), p.rollLift, p.rollHand);
+      regrip(p.penReverse);
       stackForearms();
       // The head dips in a nod and tilts about the chin.
       const tilt = `translate(0 ${(1.6 * p.nod).toFixed(2)}) rotate(${p.tilt.toFixed(2)} ${HEAD.x} ${HEAD.chin})`;
@@ -1409,7 +1468,26 @@
         }
       }
     });
-    const keys = cued.flat().sort((a, b) => a[0] - b[0]);
+    const keys = [];
+    for (const [start, duration, fields, kind] of cued.flat().sort((a, b) => a[0] - b[0])) {
+      let span = duration;
+      let blend = 0.15;
+      const moving = typeof fields === 'function';
+      const initial = moving ? fields(0) : fields;
+      const previous = poseAt(keys, start - (moving ? 0 : LEAD), false);
+      // A long reach needs longer than a small gesture. Minimum-jerk
+      // interpolation peaks at 1.875 times its average angular speed.
+      // A stroke also blends in gently if its approach is still underway.
+      for (const name of ['pen', 'roll']) {
+        if (!initial[name]) continue;
+        const target = jointTarget(name, initial[name]);
+        const travel = Math.max(...target.map((angle, i) => Math.abs(angle - previous[name][i])));
+        const needed = 1.875 * travel / 280;
+        if (moving) blend = Math.max(blend, needed);
+        else span = Math.max(span, needed);
+      }
+      keys.push([start, span, fields, kind, blend]);
+    }
 
     const fromSide = entrance === 'left' ? -1 : 1;
     const penSide = flip ? -1 : 1;

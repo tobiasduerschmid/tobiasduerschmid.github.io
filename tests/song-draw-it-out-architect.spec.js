@@ -68,7 +68,7 @@ const HERO_HEAD = '[data-testid="song-hero-head"]';
 async function expectEveryArchitectWearsAHead(page) {
   const architects = await countInArtwork(page, '[data-testid="dio-architect"]');
   expect(architects, 'the song casts the architect').toBeGreaterThan(0);
-  await expect.poll(() => countInArtwork(page, HERO_HEAD), { message: 'each architect wears its own copy' }).toBe(architects);
+  await expect.poll(() => countInArtwork(page, `[data-testid="dio-architect"] ${HERO_HEAD}`), { message: 'each architect wears its own copy' }).toBe(architects);
 }
 
 /** The architect on stage: painted, not faded out with an earlier scene. */
@@ -97,6 +97,79 @@ test.beforeEach(async ({ page }) => {
   await expect(page.getByRole('button', { name: 'Play song', exact: true })).toBeEnabled();
   await expect(page.getByTestId('song-picture')).toBeVisible();
   await page.evaluate(() => document.fonts.ready);
+});
+
+test('question marks read forwards beside both left- and right-facing teammates', async ({ page }) => {
+  await seek(page, mark('verse-1-2', 'again') + 0.6);
+  const marks = page.getByTestId('song-question-mark');
+  const orientations = await marks.evaluateAll((nodes) => nodes.filter((node) => getComputedStyle(node).display !== 'none').map((node) => {
+    const m = node.getScreenCTM();
+    return m.a * m.d - m.b * m.c;
+  }));
+  expect(orientations).toHaveLength(4);
+  for (const orientation of orientations) expect(orientation, 'the glyph is not reflected').toBeGreaterThan(0);
+});
+
+test('the architect points the pink rubber at the paper during erasing and restores the pencil on backward seek', async ({ page }) => {
+  const rub = mark('verse-1-5', 'rub');
+  for (const time of [rub + 0.12, rub + 0.4, rub - 1.1, rub + 0.3]) {
+    await seek(page, time);
+    const architect = await architectOnStage(page);
+    const tip = await centre(architect.getByTestId('dio-arch-pencil-tip'));
+    const rubber = await centre(architect.getByTestId('dio-arch-pencil-eraser'));
+    if (time > rub) expect(rubber.x, 'the rubber leads towards the paper on the left').toBeLessThan(tip.x);
+    else expect(tip.x, 'before erasing the graphite tip leads towards the flaw').toBeLessThan(rubber.x);
+  }
+});
+
+test('turning the pencil opens and recloses the fingers while the barrel stays in the pinch', async ({ page }) => {
+  const rub = mark('verse-1-5', 'rub');
+  const frames = [];
+  for (const offset of [-0.82, -0.65, -0.5, -0.35, -0.18]) {
+    await seek(page, rub + offset);
+    const architect = await architectOnStage(page);
+    frames.push(await architect.evaluate((node) => {
+      const pencil = node.querySelector('[data-testid="dio-arch-pencil-grip"]');
+      const held = new DOMPoint(0, 0).matrixTransform(pencil.transform.baseVal.consolidate().matrix.inverse());
+      return {
+        held: { x: held.x, y: held.y },
+        fingers: ['index', 'middle', 'thumb'].map((name) => node.querySelector(`[data-testid="dio-arch-${name}-finger"]`).transform.baseVal.getItem(0).angle),
+      };
+    }));
+  }
+  for (const frame of frames) {
+    expect(Math.abs(frame.held.x), 'the pencil stays between the fingers').toBeLessThan(2);
+    expect(frame.held.y, 'the fingers contact the barrel below the ferrule').toBeGreaterThan(-56);
+    expect(frame.held.y, 'the fingers contact the barrel above the sharpened wood').toBeLessThan(2);
+  }
+  expect(frames[2].fingers, 'the fingers visibly reposition for the turn').not.toEqual(frames[0].fingers);
+  frames.at(-1).fingers.forEach((angle, i) => {
+    expect(angle, 'the fingers close around the new grip').toBeCloseTo(frames[0].fingers[i], 3);
+  });
+  await seek(page, rub - 0.5);
+  const index = (await architectOnStage(page)).getByTestId('dio-arch-index-finger');
+  expect(await index.evaluate((node) => node.transform.baseVal.getItem(0).angle), 'backward seeking restores the same regrip').toBe(frames[2].fingers[0]);
+});
+
+test('teammate expressions blend between reactions and reproduce the same face after a backward seek', async ({ page }) => {
+  const start = mark('verse-1-2', 'theyre');
+  await seek(page, start + 1);
+  const face = page.getByTestId('song-teammate').first().getByTestId('song-hero-head');
+  await expect(face).toBeVisible();
+  const mouth = face.locator('.song-hero-expression-mouth');
+  const samples = [];
+  for (const delta of [0, 0.08, 0.16, 0.24, 0.32, 0.4, 0.5]) {
+    await seek(page, start + delta);
+    samples.push(await mouth.evaluate((node) => ({ shape: node.querySelector('path').getAttribute('d'), opacity: getComputedStyle(node).display === 'none' ? 0 : Number(node.getAttribute('opacity')) })));
+  }
+  expect(samples[0].opacity).toBe(0);
+  expect(samples.at(-1).opacity).toBe(1);
+  expect(new Set(samples.map((sample) => sample.shape)).size, 'the mouth changes shape through intermediate curves').toBeGreaterThan(3);
+  for (let i = 1; i < samples.length; i++) {
+    expect(samples[i].opacity - samples[i - 1].opacity, 'the expression fades in without a single-frame swap').toBeLessThan(0.4);
+  }
+  await seek(page, start + 0.24);
+  expect(await mouth.locator('path').first().getAttribute('d')).toBe(samples[3].shape);
 });
 
 for (const sample of [
@@ -140,6 +213,32 @@ test('without a saved hero, the architect wears the SE Gym\'s default human face
     await expect(face).toHaveCSS('--hero-skin-light', defaultSkin);
   }
   expect(await page.evaluate((key) => localStorage.getItem(key), STORAGE_KEY), 'the default face is never saved as the viewer\'s hero').toBeNull();
+});
+
+test('all four teammates keep their own hero-rendered faces across scenes and backward seeks', async ({ page }) => {
+  const teammate = '[data-testid="song-teammate"]';
+  const count = await countInArtwork(page, teammate);
+  expect(count, 'the song includes the four teammates').toBeGreaterThanOrEqual(4);
+  await expect.poll(() => countInArtwork(page, `${teammate} ${HERO_HEAD}`), {
+    message: 'every teammate cameo wears a hero-rendered face',
+  }).toBe(count);
+  const times = [
+    mark('verse-1-2', 'house') + 0.5,
+    mark('verse-1-6', 'change') + 0.3,
+    mark('verse-1-7', 'language') + 0.3,
+    mark('verse-1-8', 'too') + 0.3,
+    mark('verse-1-2', 'house') + 0.5,
+  ];
+  let firstLooks;
+  for (const time of times) {
+    await seek(page, time);
+    const faces = page.getByTestId('song-teammate').getByTestId('song-hero-head');
+    await expect(faces, `the four teammates at ${time}s`).toHaveCount(4);
+    const looks = await faces.evaluateAll((nodes) => nodes.map((node) => node.getAttribute('style')));
+    expect(new Set(looks).size, 'the four characters have distinct appearances').toBe(4);
+    firstLooks ??= looks;
+    expect(looks, 'each character keeps the same appearance').toEqual(firstLooks);
+  }
 });
 
 test('without the SE Gym renderer, the architect keeps a drawn face', async ({ page }) => {
@@ -223,10 +322,10 @@ test('the architect moves smoothly: from frame to frame, its pencil never jumps'
 });
 
 test('ticking, tapping, or ringing something out at its side, the architect reaches out with its whole arm', async ({ page }) => {
-  // The flaw tapped on paper, the class ticked off in the first chorus, the
+  // The flaw erased on paper (after regripping), the class ticked off in the first chorus, the
   // bottleneck ringed, and quiz answers 2 and 6 ticked and ringed.
   const gestures = [
-    mark('verse-1-5', 'flaw') + 0.5,
+    mark('verse-1-5', 'rub') + 0.4,
     mark('chorus-1-2', 'class') + 0.4,
     mark('verse-4-2', 'bottlenecks') + 0.3,
     ...['quiz-2', 'quiz-6'].map((id) => storyLines.get(id).answer_at + 0.9),

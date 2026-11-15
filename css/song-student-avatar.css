@@ -37,6 +37,12 @@
 svg.song-hero-head [data-hero-slot="hair"] path,
 svg.song-hero-head [data-hero-slot="hairline"] path,
 svg.song-hero-head [data-hero-slot="hair-root"] path { vector-effect: none; }
+/* Shared closed-mouth expressions inherit each cast member's skin palette.
+   Like the other video artwork, they keep that palette in both site themes;
+   printable pages use the transcript instead of the stage. */
+.song-hero-expression-mouth path { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.song-hero-expression-lip { stroke: var(--hero-lip-fill, #b65c4e); stroke-width: .26; }
+.song-hero-expression-line { stroke: var(--hero-mouth-line, #3a1408); stroke-width: .12; }
 .student-ground { fill: #030913; opacity: .42; }
 .student-arms { transform-box: view-box; transform-origin: 130px 160px; transform: scaleX(var(--hero-body-fit-x, 1)); }
 .student-sleeve { fill: var(--hero-arm, var(--hero-suit, #218bb3)); stroke: var(--hero-arm-dark, var(--hero-suit-dark, #0e4d69)); stroke-width: 2; stroke-linejoin: round; }

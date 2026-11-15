@@ -435,6 +435,56 @@
     };
   }
 
+  /** Closed-mouth reactions, fitted to the hero's own mouth when on screen. */
+  function expressionMouth(svg) {
+    const mouth = faceFeature(svg, 'mouth-style', 'mouth');
+    if (!mouth) return null;
+    const singingLayer = svg.querySelector('.song-hero-singing-mouth');
+    const shapes = {
+      neutral: [-1, 0, -.6, .45, .6, .45, 1, 0],
+      thoughtful: [-.8, 0, -.3, .04, .3, .04, .8, 0],
+      puzzled: [-1, .1, -.45, -.35, .35, .3, 1, -.12],
+      worried: [-1, .18, -.5, -.4, .5, -.4, 1, .18],
+    };
+    const reaction = document.createElementNS(SVG_NS, 'g');
+    reaction.setAttribute('class', 'song-hero-expression-mouth');
+    reaction.setAttribute('display', 'none');
+    const paths = ['lip', 'line'].map((part) => {
+      const path = document.createElementNS(SVG_NS, 'path');
+      path.setAttribute('class', `song-hero-expression-${part}`);
+      reaction.appendChild(path);
+      return path;
+    });
+    mouth.after(reaction);
+    let fitted = false;
+    let active = false;
+    return (expression, from, blend, singing) => {
+      const end = shapes[expression] ? expression : 'neutral';
+      const start = shapes[from] ? from : 'neutral';
+      const weight = Number(start !== 'neutral') * (1 - blend) + Number(end !== 'neutral') * blend;
+      reaction.setAttribute('display', weight ? 'inline' : 'none');
+      singingLayer?.setAttribute('opacity', String(1 - weight));
+      if (!weight) {
+        if (active && !singing) mouth.setAttribute('opacity', '1');
+        active = false;
+        return;
+      }
+      if (!fitted) {
+        const box = mouth.getBBox();
+        if (!box.width) return;
+        const scale = box.width * 0.36;
+        reaction.setAttribute('transform', `translate(${box.x + box.width / 2} ${box.y + box.height * 0.4}) scale(${scale})`);
+        fitted = true;
+      }
+      active = true;
+      mouth.setAttribute('opacity', singing ? '0' : String(1 - weight));
+      reaction.setAttribute('opacity', String(weight));
+      const points = shapes[start].map((value, i) => (value + (shapes[end][i] - value) * blend).toFixed(3));
+      const shape = `M${points.slice(0, 2).join(' ')} C${points.slice(2).join(' ')}`;
+      for (const path of paths) path.setAttribute('d', shape);
+    };
+  }
+
   /**
    * A copy's mouth that can open to sing: an open mouth drawn over the
    * hero's own, as wide as it and centred on it (measured once it is on
@@ -503,7 +553,10 @@
    * down 0–1 looks down, wink 0–1 shuts the character's left eye (the
    * picture's right), its brow dipping, brow 0–1 raises the other brow,
    * frown 0–1 knits both brows down and in, hush 0–1 purses the lips, and
-   * sing 0–1 opens the mouth.
+   * sing 0–1 opens the mouth. expression can replace the smile with a
+   * 'thoughtful', 'puzzled', or 'worried' closed mouth; 'neutral' restores it.
+   * expressionFrom and expressionMix (0–1) morph between reactions on the
+   * song clock, including when seeking backward.
    */
   function wornMotion(svg) {
     const eyes = eyeParts(svg);
@@ -511,12 +564,14 @@
     const brows = browSides(svg);
     const pucker = mouthPucker(svg);
     const singing = singingMouth(svg);
+    const expression = expressionMouth(svg);
     // Each brow knits about its inner end (FACE.x ± 10, at brow height).
     const knit = (side, frown) => frown ? ` rotate(${(side * 9 * frown).toFixed(2)} ${FACE.x - side * 10} 176)` : '';
     let drawn = '';
-    return (time, { look = 0, down = 0, wink = 0, brow = 0, frown = 0, hush = 0, sing = 0 } = {}, reduced = false) => {
+    return (time, { look = 0, down = 0, wink = 0, brow = 0, frown = 0, hush = 0, sing = 0, expression: mood = 'neutral', expressionFrom = mood, expressionMix = 1 } = {}, reduced = false) => {
       const blink = reduced ? 0 : blinkAt(time);
-      const state = `${look}|${down}|${blink}|${wink}|${brow}|${frown}|${hush}|${sing}`;
+      const blend = reduced ? 1 : Math.max(0, Math.min(1, expressionMix));
+      const state = `${look}|${down}|${blink}|${wink}|${brow}|${frown}|${hush}|${sing}|${mood}|${expressionFrom}|${blend}`;
       if (state === drawn) return;
       drawn = state;
       glance(eyes.gaze, look * 2.8, down * 2.4);
@@ -525,6 +580,7 @@
       brows?.[1].setAttribute('transform', `translate(0 ${(2 * wink + 3 * frown).toFixed(2)})${knit(1, frown)}`);
       pucker?.(hush);
       singing?.(sing);
+      expression?.(mood, expressionFrom, blend, sing > 0.08);
     };
   }
 
