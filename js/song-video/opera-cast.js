@@ -1222,8 +1222,17 @@
         inked(fore, FORE_SLEEVE, 'oc-sleeve', 'oc-ink oc-ink--cool', paint.sleeve);
         svg('path', { class: 'oc-sleeve-fold', d: FORE_SLEEVE_FOLDS }, fore);
       } else {
-        inked(fore, FOREARM, 'oc-skin-arm', 'oc-ink oc-ink--face', paint.skin);
-        drawParts(fore, FOREARM_DETAIL);
+        const skin = svg('g', {}, fore);
+        if (costume.sleeve === 'pushed') {
+          // The round elbow belongs inside the rolled sleeve. Clip its skin
+          // in forearm coordinates so it cannot peek out when the arm bends.
+          const clipId = id('rolled-sleeve-skin');
+          const clip = svg('clipPath', { id: clipId }, defs);
+          svg('rect', { x: 98, y: 146, width: 24, height: 34 }, clip);
+          skin.setAttribute('clip-path', `url(#${clipId})`);
+        }
+        inked(skin, FOREARM, 'oc-skin-arm', 'oc-ink oc-ink--face', paint.skin);
+        drawParts(skin, FOREARM_DETAIL);
       }
       const wrist = svg('g', {}, fore);
       const heldBehind = svg('g', {}, wrist);
@@ -1838,6 +1847,8 @@
    *             'fade' (the default) fades
    *   places    [[time, x, y, scale, duration]]: where its feet stand
    *             (x is its centre); it walks there over `duration` seconds
+   *             or (time, reducedMotion) => { x, y, scale, walking } for a
+   *             performer following a moving surface; walking is 0–1
    *   moves     [[time, name, options]] from MOVES
    *   holds     [[time, side, prop]]: a prop in a hand from then on (null
    *             empties it)
@@ -1885,8 +1896,9 @@
 
     // Where it stands at time t: the last place reached, or on its way to
     // the next, eased, with how fast it is walking (for its step).
-    const sortedPlaces = [...places].sort((a, b) => a[0] - b[0]);
+    const sortedPlaces = typeof places === 'function' ? null : [...places].sort((a, b) => a[0] - b[0]);
     function where(t) {
+      if (typeof places === 'function') return places(t, reducedMotion.matches);
       let [, x, y, scale = 1] = sortedPlaces[0];
       let walking = 0;
       for (let i = 1; i < sortedPlaces.length; i++) {

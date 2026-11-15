@@ -529,6 +529,7 @@ Selected illustration contours stay crisp; the hero has no surrounding halo.
 The sky stays unobscured, with no broad dark scrim. Every pose is a function of song
 time, so a seek shows the right stage of the build.
 Gold section banners stay at the top left, clear of the central illustrations.
+They provide the section heading without a second floating title brick.
 `js/song-video/reuse-kit.js` (styles in `css/song-video-reuse-kit.css`)
 draws open compositions: compact opaque plaques for text, self-contained
 code/terminal screens, and coloured bricks directly over the site. Case
@@ -559,8 +560,10 @@ cutaways. `rocket()` takes a ground height and an authored centre destination
 and arrival time, keeping the launch and explosion positions consistent.
 A package is a brick whose studs are its interface; a brick
 stacked on another depends on it, so the urllib3 tower tilts when version
-2.0.0 brings different studs, and the left-pad build drops when its tiny
-1×1 brick goes; a framework is a baseplate with a socket for your brick; the
+2.0.0 brings different studs. The taller left-pad build uses individual blocks
+in staggered courses; its right column drops when the tiny support goes.
+Three compact build-error readouts sit below the platform while the tower
+remains visible. A framework is a baseplate with a socket for your brick; the
 refrain's questions each add a brick to a tower; principles and quiz answers
 are bricks that snap on; and left-pad's own job is shown with bricks too
 (`padColumn()`: padding bricks drop in on the left until a column of numbers
@@ -571,8 +574,11 @@ is fixed or right, grey for a framework's structure. Code cards (JavaScript thro
 `SongKit.highlightJavaScript`) turn off Fira Code's ligatures, so `===` and
 `!==` read as typed. One continuous hero performs as the site foreman
 (opera-cast.js's `foreman` costume: hi-vis vest, gold hard hat, tool pouch).
-The hero has a place at the left of every lesson and steps forward in the
-outro. The shared word-timed singing rig follows the storyboard's marks,
+The hero stands on the right-hand construction tower, beside the crane.
+The building and performer share the same course schedule: small steps land
+as bricks reach the hero, and completed levels hold between choruses. The
+hero remains on the finished tower for the outro. Reduced motion shows a
+still performer on the completed tower. The shared word-timed singing rig follows the storyboard's marks,
 resting during instrumental gaps and quiz pauses. Reduced motion keeps the
 mouth neutral. The intro clipboard gives way to a gold brick for the finale.
 
@@ -593,7 +599,10 @@ lower surfaces. A separate directional highlight turns toward the sun from
 each bank's current position. Banks drift at slightly different speeds,
 travelling less than five percent of the stage width over the song without
 wrapping or jumping. Both their positions and light directions follow song
-time and remain fixed under reduced motion. The changing palette follows
+time. As in the Security song, thin wisps shear a little faster than the
+clipped inner folds, while sunlit filaments remain anchored to the bank's
+sun-facing light field. All cloud motion remains fixed under reduced motion.
+The changing palette follows
 [NOAA's cloud-colour explanation](https://www.noaa.gov/jetstream/clouds/color-of-clouds).
 UCLA blue and gold accent the construction and teaching bricks.
 Reduced motion holds a settled morning pose. The transcript, audio description, and

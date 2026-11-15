@@ -36,6 +36,9 @@
   --rk-brick-sheen: linear-gradient(112deg, rgba(255, 255, 255, 0.09) 0%, rgba(255, 255, 255, 0.03) 30%, transparent 31%);
 }
 
+/* The foreman's soles meet the tower directly in both page themes. */
+.rk-main-hero .oc-shadow { display: none; }
+
 /* Brick colours: the face, the outline, and the text on it. */
 .rk-c-blue {
   --brick: var(--rk-ucla-blue);
@@ -138,16 +141,35 @@
   pointer-events: none;
 }
 
-/* A stack of many packages: courses of bricks with their seams, the name on
-   a dark tag so it stays readable over them. */
+/* Individual staggered blocks give a package stack its weight and depth. */
 .rk-pkg--stack {
-  background:
-    var(--rk-brick-sheen),
-    var(--rk-brick-shade),
-    repeating-linear-gradient(180deg, transparent 0 25px, rgba(0, 0, 0, 0.22) 25px 27px, rgba(255, 255, 255, 0.16) 27px 28px),
-    repeating-linear-gradient(90deg, transparent 0 38px, rgba(0, 0, 0, 0.16) 38px 40px),
-    var(--brick);
+  border: 0;
+  background: none;
+  box-shadow: none;
 }
+
+.rk-pkg--stack::after { display: none; }
+.rk-pkg--stack .rk-pkg-words { position: relative; z-index: 1; }
+.rk-pkg-courses { position: absolute; inset: 0; display: flex; flex-direction: column; gap: 1px; }
+.rk-pkg-course { display: flex; flex: 1; gap: 2px; }
+.rk-pkg-piece {
+  position: relative;
+  flex: 1;
+  border: 1px solid var(--brick-edge);
+  border-radius: 3px;
+  background: var(--rk-brick-sheen), var(--rk-brick-shade), var(--brick);
+  box-shadow: inset 2px 0 rgba(255, 255, 255, 0.18), inset -4px -3px rgba(0, 0, 0, 0.18);
+}
+.rk-pkg-piece::after {
+  content: '';
+  position: absolute;
+  inset: 5px;
+  border: 1px solid rgba(20, 32, 35, 0.2);
+  border-radius: 2px;
+}
+.rk-pkg-course:nth-child(even) .rk-pkg-piece:first-child,
+.rk-pkg-course:nth-child(even) .rk-pkg-piece:last-child { flex: 0.55; }
+.rk-pkg-course:nth-child(even) .rk-pkg-piece { box-shadow: inset 2px 0 rgba(255, 255, 255, 0.26), inset -3px -3px rgba(0, 0, 0, 0.12); }
 
 .rk-pkg--stack .rk-pkg-name {
   padding: 1px 6px 2px;
@@ -302,28 +324,6 @@
 .rk-focus-panel--left { transform: translateX(268px); }
 .rk-focus-panel--right { transform: translateX(-176px); }
 .rk-quiz-art { top: 16px; }
-
-.rk-spread {
-  position: absolute;
-}
-
-.rk-tab {
-  position: absolute;
-  top: 8px;
-  left: 0;
-  max-width: 100%;
-  box-sizing: border-box;
-  padding: 5px 14px 6px;
-  border: 2px solid var(--brick-edge);
-  border-radius: 4px;
-  background: var(--rk-brick-sheen), var(--rk-brick-shade), var(--brick);
-  color: var(--brick-ink);
-  font-size: 18px;
-  font-weight: 800;
-  letter-spacing: 0.02em;
-  white-space: nowrap;
-  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.3);
-}
 
 /* The principle: a long brick that snaps on across the bottom. */
 .rk-ribbon {
@@ -545,6 +545,14 @@
 .rk-term-line--ok { color: #9ce4bd; }
 .rk-term-cursor[hidden],
 .rk-term-line[hidden] { display: none; }
+
+/* Three build failures sit below the dependency tower without replacing it. */
+.rk-build-error { line-height: 1.2; border-radius: 6px; }
+.rk-build-error .rk-term-bar { padding: 2px 8px; }
+.rk-build-error .rk-term-dot { display: none; }
+.rk-build-error .rk-term-title { margin: 0; font-size: 16px; }
+.rk-build-error .rk-term-body { padding: 1px 8px; }
+.rk-build-error .rk-term-line { white-space: nowrap; }
 
 .rk-term-cursor {
   display: inline-block;
@@ -860,7 +868,6 @@
 .rk-rocket { position: absolute; }
 .rk-rocket svg { overflow: visible; }
 .rk-launch-scene { width: 440px; height: 502px; }
-.rk-clear-flight { visibility: hidden; }
 
 /* The Ariane rockets: white shells shaded as cylinders (lit from the left),
    dark interstages and engines, and a cut-away window onto the gold module
@@ -1099,16 +1106,19 @@
 
 .rk-list-footer {
   position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  padding: 6px 12px;
+  /* Sit below the sunrise, with the highlight bump above the caption reserve. */
+  bottom: -20px;
+  left: -60px;
+  right: -60px;
+  padding: 2px 12px;
   border-radius: 4px;
   background: var(--rk-card);
   color: var(--rk-paper);
   font-size: 22px;
   font-weight: 900;
+  line-height: 1.1;
   text-align: center;
+  white-space: nowrap;
 }
 
 .rk-list-footer.is-lit { color: var(--rk-ink); background: var(--rk-ucla-gold); }

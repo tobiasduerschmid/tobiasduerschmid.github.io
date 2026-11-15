@@ -3,8 +3,8 @@
  * (storyboard: _data/songs/not_a_one_time_investment.yml).
  *
  * The lecture's building-block metaphor stands directly over the brick
- * construction site. spread() supplies a central case tab and principle,
- * without a page background. Text uses compact opaque plaques; code and
+ * construction site. spread() sequences principle ribbons underneath the
+ * central illustration. Text uses compact opaque plaques; code and
  * terminals keep their own screens. checklist() presents one question at a
  * time beside its growing brick tower. quiz() replaces the question with its
  * answer illustration, keeping the answer brick underneath.
@@ -15,8 +15,7 @@
  * cases (including the two Ariane rockets).
  *
  * One colour means one thing across the whole song: blue bricks are reused
- * packages and libraries (and the case tabs and page headings that file
- * them); gold is your own code and everything worth keeping (the
+ * packages and libraries; gold is your own code and everything worth keeping (the
  * principles, the refrain's questions); red is what breaks; green is what
  * is fixed or right (checks, answers); grey is a framework's structure; tan
  * is neutral filler. The choreography keeps to the same meanings.
@@ -87,19 +86,10 @@
   // The casebook spread
   // ------------------------------------------------------------------
 
-  /**
-   * A central composition with no backing surface. `tab` names the case on
-   * a blue brick; ribbon() snaps its principle below the current illustration.
-   */
-  function spread(layer, { at, until, tab }) {
-    const node = show(box(layer, 'rk-spread', SPREAD), at, until, 'fade');
-    if (tab) {
-      const tabNode = el('div', 'rk-tab rk-c-blue', node, tab);
-      studs(tabNode, 3);
-    }
+  /** Sequence principle ribbons below the current central illustration. */
+  function spread(layer, { until } = {}) {
     const ribbons = [];
     return {
-      node,
       ribbon(text, { at: from, until: to, sub } = {}) {
         const ribbon = box(layer, 'rk-ribbon rk-c-gold', { x: SPREAD.x, y: RIBBON_Y, w: SPREAD.w });
         studs(ribbon, 8);
@@ -173,6 +163,14 @@
     const variants = `${under ? ' rk-pkg--under' : ''}${odd ? ' rk-pkg--odd' : ''}${small ? ' rk-pkg--small' : ''}${stack ? ' rk-pkg--stack' : ''}${h !== undefined ? ' rk-pkg--sized' : ''}`;
     const node = show(box(parent, `rk-pkg rk-c-${tone}${variants}`, { x, y, w, h }), at, until, how);
     studs(node, odd ? studCount(w) + 1 : studCount(w));
+    if (stack) {
+      const courses = el('div', 'rk-pkg-courses', node);
+      const rows = Math.max(1, Math.round((h ?? 56) / 32));
+      for (let row = 0; row < rows; row++) {
+        const course = el('div', 'rk-pkg-course', courses);
+        for (let piece = 0; piece < (row % 2 ? 3 : 2); piece++) el('span', 'rk-pkg-piece', course);
+      }
+    }
     const words = el('div', 'rk-pkg-words', node);
     const nameNode = el('div', 'rk-pkg-name', words, name);
     if (names.length) textAt(nameNode, name, names);

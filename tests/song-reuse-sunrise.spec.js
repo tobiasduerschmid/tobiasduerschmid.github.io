@@ -51,6 +51,27 @@ async function buildingHeights(page) {
   return page.getByTestId('reuse-building-courses').evaluateAll(nodes => nodes.map(node => Number(node.getAttribute('height'))));
 }
 
+async function heroFooting(page) {
+  return page.getByTestId('oc-foreman').evaluate(hero => {
+    const stage = document.querySelector('.bs-art').getBoundingClientRect();
+    const feet = [...hero.querySelectorAll('.oc-sole')].map(node => node.getBoundingClientRect());
+    const x = (Math.min(...feet.map(r => r.left)) + Math.max(...feet.map(r => r.right))) / 2;
+    const y = Math.max(...feet.map(r => r.bottom));
+    const localX = (x - stage.x) * 960 / stage.width;
+    const roofs = [...document.querySelectorAll('[data-testid="reuse-site-roof-course"]')]
+      .map(node => node.getBBox()).filter(r => localX >= r.x && localX <= r.x + r.width);
+    const courses = document.querySelectorAll('[data-testid="reuse-building-courses"]');
+    // Clip-path geometry has no painted screen box in Chromium/Firefox.
+    const laid = Number(courses[courses.length - 1].getAttribute('y'));
+    const roof = Math.min(...roofs.map(r => r.y));
+    return {
+      x: localX,
+      y: (y - stage.y) * 540 / stage.height,
+      support: Math.max(laid, roof),
+    };
+  });
+}
+
 // Compare the sun and painted highlights in their shared SVG viewport.
 // WebKit's getScreenCTM omits the stage's CSS scaling; mixing it with a
 // screen bounding box would measure unrelated coordinate systems.
@@ -67,13 +88,29 @@ async function cloudLightAxes(page) {
   }));
 }
 
+// Measure painted details relative to their bank, so a moving bank alone
+// cannot satisfy the local-motion check. SVG coordinates avoid zoom effects.
+async function cloudDetails(page) {
+  return page.getByTestId('reuse-cloud-bank').evaluateAll(banks => banks.map(bank => {
+    const shape = bank.querySelector('[data-testid="reuse-cloud-shape"]');
+    const toLocal = shape.getCTM().inverse();
+    const position = id => {
+      const detail = bank.querySelector(`[data-testid="${id}"] path`);
+      const bounds = detail.getBBox();
+      const local = new DOMPoint(bounds.x, bounds.y).matrixTransform(detail.getCTM()).matrixTransform(toLocal);
+      return [Number(local.x.toFixed(3)), Number(local.y.toFixed(3))];
+    };
+    return { folds: position('reuse-cloud-folds'), wisps: position('reuse-cloud-edge-wisps'), width: shape.getBBox().width };
+  }));
+}
+
 async function ambientPositions(page) {
   const clouds = await page.getByTestId('reuse-cloud-bank').evaluateAll(nodes => nodes.map(node => {
     const rect = node.getBoundingClientRect();
     return [rect.x, rect.y];
   }));
   const truck = await page.getByTestId('reuse-site-forklift').boundingBox();
-  return { clouds, highlights: await cloudLightAxes(page), truck: [truck.x, truck.y] };
+  return { clouds, details: await cloudDetails(page), highlights: await cloudLightAxes(page), truck: [truck.x, truck.y] };
 }
 
 test('Not a One-Time Investment: patch outcomes hold long enough to read before the next picture', async ({ page }) => {
@@ -108,12 +145,26 @@ for (const reducedMotion of ['no-preference', 'reduce']) {
     for (const time of [supportRemoved + 1.4, supportRemoved - 0.1, supportRemoved + 1.4]) {
       await seek(page, time);
       poses.push(await column.boundingBox());
-      expect(await paintOpacity(column), 'the collapse stays visible before the error terminals appear').toBeGreaterThan(0.95);
+      expect(await paintOpacity(column), 'the collapse stays visible throughout the fall').toBeGreaterThan(0.95);
     }
     expect(poses[0].y - supported.y, 'the unsupported column drops into the missing support space').toBeGreaterThan(40 * scale);
     expect(Math.abs(poses[0].y + poses[0].height - base.y), 'the falling column rests on the platform').toBeLessThan(3 * scale);
     expect(poses[1], 'rewinding restores the intact stack').toEqual(supported);
     expect(poses[2], 'replaying restores the same settled collapse').toEqual(poses[0]);
+
+    const failed = song.sections.flatMap(section => section.lines).find(line => line.id === 'v4-6').marks.failed;
+    await seek(page, failed + 0.35);
+    const errors = page.getByTestId('reuse-build-error');
+    await expect(errors).toHaveCount(3);
+    expect(await paintOpacity(column), 'the tower remains visible while the build failures appear').toBeGreaterThan(0.95);
+    const stage = await page.locator('.stage').boundingBox();
+    for (const error of await errors.all()) {
+      await expect(error).toContainText('npm ERR! 404');
+      expect(await paintOpacity(error), 'each build failure can be read alongside the tower').toBeGreaterThan(0.95);
+      const bounds = await error.boundingBox();
+      expect(bounds.y, 'build errors sit below the tower and its platform').toBeGreaterThan(base.y + base.height);
+      expect(bounds.y + bounds.height, 'build errors stay above the caption reserve').toBeLessThan(stage.y + 460 * scale);
+    }
   });
 }
 
@@ -387,11 +438,62 @@ test('Not a One-Time Investment: one hero remains visible across every lyric and
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   await page.goto(song.player);
   const hero = page.getByTestId('oc-foreman');
+  await expect(hero).toBeVisible();
+  await expect(hero.locator('.oc-shadow'), 'the soles meet the roof without a floating shadow').toBeHidden();
   const times = [0, ...song.sections.flatMap(section => section.lines.map(line => line.start + 0.2)), song.duration - 0.1];
   for (const time of [...times, ...times.toReversed()]) {
+    const picture = await page.evaluate(time => {
+      window.Timeline.seek(time);
+      const heroes = document.querySelectorAll('[data-testid="oc-foreman"]');
+      const hero = heroes[0];
+      if (!hero) return { count: 0 };
+      let opacity = 1;
+      for (let node = hero; node; node = node.parentElement) {
+        const style = getComputedStyle(node);
+        opacity *= style.visibility === 'hidden' || style.display === 'none' ? 0 : Number(style.opacity);
+      }
+      const bounds = hero.getBoundingClientRect();
+      const stage = document.querySelector('.bs-art').getBoundingClientRect();
+      return { count: heroes.length, opacity, width: bounds.width,
+        left: (bounds.left - stage.left) / stage.width,
+        top: (bounds.top - stage.top) / stage.height,
+        bottom: (bounds.bottom - stage.top) / stage.height };
+    }, time);
+    expect(picture.count, `one performer is present at ${time}s`).toBe(1);
+    expect(picture.opacity, `the performer is painted at ${time}s`).toBeGreaterThan(0);
+    expect(picture.width).toBeGreaterThan(0);
+    expect(picture.left, 'the hero stays on the right, clear of the central lesson').toBeGreaterThan(0.8);
+    expect(picture.top, 'the hero clears the top of the picture').toBeGreaterThanOrEqual(0);
+    expect(picture.bottom, 'the hero stays inside the picture').toBeLessThan(1);
+  }
+});
+
+test('Not a One-Time Investment: the foreman climbs with the right tower and stays on completed courses', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await page.goto(song.player);
+  await seek(page, EARLY);
+  let previous = await heroFooting(page);
+  const snapshots = [[EARLY, previous]];
+  for (const section of song.sections.filter(section => section.id.startsWith('refrain-'))) {
+    const index = song.sections.indexOf(section);
+    const start = section.lines[0].start - 0.2;
+    const end = song.sections[index + 1].lines[0].start - 0.2;
+    await seek(page, start - 0.5);
+    expect(await heroFooting(page), 'the foreman rests on the previous floor between builds').toEqual(previous);
+    for (const time of [start + (end - start) / 2, end]) {
+      await seek(page, time);
+      const footing = await heroFooting(page);
+      expect(footing.y, 'the foreman climbs as the tower grows').toBeLessThan(previous.y);
+      expect(Math.abs(footing.y - footing.support), 'the feet stay within one brick course of the growing roof').toBeLessThan(14);
+      previous = footing;
+      snapshots.push([time, footing]);
+    }
+  }
+  await seek(page, LATE);
+  expect(await heroFooting(page), 'the foreman remains on the finished tower for the outro').toEqual(previous);
+  for (const [time, picture] of snapshots.toReversed()) {
     await seek(page, time);
-    await expect(hero, `the same performer is present at ${time}s`).toHaveCount(1);
-    await expect(hero).toBeVisible();
+    expect(await heroFooting(page), 'seeking restores the same footing on the tower').toEqual(picture);
   }
 });
 
@@ -449,6 +551,34 @@ test('Not a One-Time Investment: clouds drift gently during explanations while t
   expect(finale.truck, 'the forklift resumes in the finale').not.toEqual(settled.truck);
   await seek(page, 20);
   expect(await ambientPositions(page), 'rewinding restores the settled picture').toEqual(settled);
+});
+
+test('Not a One-Time Investment: cloud folds and wisps move subtly within each bank', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await page.goto(song.player);
+  await expect(page.getByTestId('song-picture')).toBeVisible();
+  await seek(page, 0);
+  const beginning = await cloudDetails(page);
+  expect(beginning.length, 'cloud details are present').toBeGreaterThan(0);
+  let previous = beginning;
+  for (const time of [30, 120, 240, LATE]) {
+    await seek(page, time);
+    const picture = await cloudDetails(page);
+    picture.forEach((bank, i) => {
+      for (const detail of ['folds', 'wisps']) {
+        expect(bank[detail][0], `${detail} continue moving within cloud ${i + 1} at ${time}s`).toBeGreaterThan(previous[i][detail][0]);
+        expect(bank[detail][0] - beginning[i][detail][0], 'local drift stays under three percent of the cloud width').toBeLessThan(beginning[i].width * 0.03);
+        expect(bank[detail][1], 'the wind does not make the clouds bob').toBe(beginning[i][detail][1]);
+      }
+      expect(bank.wisps[0] - beginning[i].wisps[0], 'thin wisps catch a faster wind than the inner folds')
+        .toBeGreaterThan(bank.folds[0] - beginning[i].folds[0]);
+    });
+    previous = picture;
+    await seek(page, time);
+    expect(await cloudDetails(page), 'holding song time still holds the local cloud pose').toEqual(picture);
+  }
+  await seek(page, 0);
+  expect(await cloudDetails(page), 'rewinding restores the original cloud details').toEqual(beginning);
 });
 
 test('Not a One-Time Investment: moving cloud highlights always face the rising sun', async ({ page }) => {
@@ -534,11 +664,13 @@ test('Not a One-Time Investment: reduced motion holds the daylight picture still
   const still = await sunrisePicture(page);
   const ambientStill = await ambientPositions(page);
   const buildingsStill = await buildingHeights(page);
+  const heroStill = await heroFooting(page);
   for (const time of [MIDDLE, LATE, EARLY]) {
     await seek(page, time);
     await expect.poll(() => sunrisePicture(page), { message: 'reduced motion keeps sun position and ambient illumination fixed' }).toEqual(still);
     expect(await ambientPositions(page), 'reduced motion keeps the clouds and forklift still').toEqual(ambientStill);
     expect(await buildingHeights(page), 'reduced motion shows the completed buildings without construction').toEqual(buildingsStill);
+    expect(await heroFooting(page), 'reduced motion holds the hero on the completed tower').toEqual(heroStill);
     await expect(page.getByTestId('oc-foreman')).toBeVisible();
     await expect(page.getByTestId('oc-foreman').locator('.song-hero-singing-mouth')).toBeHidden();
   }

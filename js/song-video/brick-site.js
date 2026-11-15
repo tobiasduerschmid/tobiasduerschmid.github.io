@@ -164,17 +164,21 @@
 
   /** Small overlapping volumes stay clipped inside their bank's silhouette. */
   function cloudInterior(parent, variant, highlightId) {
+    const folds = svg('g', { 'data-testid': 'reuse-cloud-folds' }, parent);
     const rolls = [[24, 7, 1.05], [110, -1, 1.35], [224, 5, 1.1]];
     rolls.forEach(([x, y, scale], i) => {
       const profile = CLOUD_PROFILES[(variant + i + 1) % CLOUD_PROFILES.length];
       const points = [...profile.upper, ...profile.lower.toReversed()];
       const patch = points.map(([px, py]) => [x + (px + 30) * scale * 0.32, y + py * 0.6]);
-      svg('path', { class: 'bs-cloud-roll', d: cloudOutline(patch) }, parent);
+      svg('path', { class: 'bs-cloud-roll', d: cloudOutline(patch) }, folds);
     });
+    // Keep the sunlit filaments in the bank's coordinates: passing shadow
+    // folds reveal the light without dragging its direction with the wind.
     [[41, 25, 0.55], [148, 31, 0.72], [262, 23, 0.48]].forEach(([x, y, scale]) => {
       const points = [[0, 3], [13, 0], [22, -5], [37, -2], [51, -10], [67, -6], [82, -7], [107, -1], [132, -3], [111, 6], [85, 4], [68, 11], [45, 7], [26, 10]];
       svg('path', { class: 'bs-cloud-filament', fill: `url(#${highlightId})`, d: cloudOutline(points.map(([px, py]) => [x + px * scale, y + py * scale])) }, parent);
     });
+    return folds;
   }
 
   /** A layered bank with shaded billows and fine detached wind-torn wisps. */
@@ -194,14 +198,15 @@
     const clip = svg('clipPath', { id: clipId }, shape);
     svg('path', { d: contours.body }, clip);
     const interior = svg('g', { 'clip-path': `url(#${clipId})` }, shape);
-    cloudInterior(interior, variant, highlightId);
+    const folds = cloudInterior(interior, variant, highlightId);
     svg('path', { class: 'bs-cloud-light', fill: `url(#${highlightId})`, d: contours.rim }, shape);
     // The small scraps vary in position and width; they never repeat evenly.
+    const wisps = svg('g', { 'data-testid': 'reuse-cloud-edge-wisps' }, shape);
     [[-39, 31, 32], [317, 40, 44], [365, 25, 24]].forEach(([x, y, w], i) => {
       const shift = 8 * hash01(variant * 31 + i * 7);
-      svg('path', { class: 'bs-cloud-scrap', d: cloudOutline([[x, y], [x + w * 0.2, y - 3 - shift * 0.2], [x + w * 0.6, y - 1], [x + w, y - 5], [x + w * 0.75, y + 1], [x + w * 0.35, y + 3]]) }, shape);
+      svg('path', { class: 'bs-cloud-scrap', d: cloudOutline([[x, y], [x + w * 0.2, y - 3 - shift * 0.2], [x + w * 0.6, y - 1], [x + w, y - 5], [x + w * 0.75, y + 1], [x + w * 0.35, y + 3]]) }, wisps);
     });
-    return { node: g, lighting, scale };
+    return { node: g, lighting, folds, wisps, scale };
   }
 
   /** Move the bank and aim its light in local SVG coordinates. The gradient
@@ -209,6 +214,12 @@
   function poseCloud(bank, time, sun) {
     const x = bank.x + time * bank.speed;
     bank.node.setAttribute('transform', `translate(${x.toFixed(3)} ${bank.y})`);
+    // As in the Security song, thin edges catch a slightly faster wind than
+    // the inner folds. Slow, continuous shear avoids bobbing or reset jumps.
+    // The caller freezes this same song-time clock under reduced motion.
+    const shear = time * 0.025;
+    bank.wisps.setAttribute('transform', `translate(${shear.toFixed(3)} 0)`);
+    bank.folds.setAttribute('transform', `translate(${(shear * 0.4).toFixed(3)} 0)`);
     const dx = (sun.x - x) / bank.scale - 180;
     const dy = (sun.y - bank.y) / bank.scale - 8;
     const distance = Math.hypot(dx, dy);
@@ -410,14 +421,14 @@
     [[786, 318], [836, 318], [886, 318], [936, 318], [786, 404], [836, 404], [936, 404]]
       .forEach(([wx, wy], i) => windowPiece(g, wx, wy, 24, 46, { occupied: [false, true, false, false, true, false, true][i], lightsOffAt: [0.27, 0.16, 0.41, 0.32, 0.48, 0.36, 0.44][i] }));
     // The storey going up: unfinished courses stepping down to the right.
-    const courses = [[766, 236, 210], [766, 224, 168], [766, 212, 128], [766, 200, 92]];
+    const courses = [[766, 236, 210], [766, 224, 168], [766, 212, 140], [766, 200, 92]];
     courses.forEach(([cx, cy, cw]) => {
-      svg('rect', { class: 'bs-course', x: cx, y: cy, width: cw, height: 12 }, g);
+      svg('rect', { class: 'bs-course', 'data-testid': 'reuse-site-roof-course', x: cx, y: cy, width: cw, height: 12 }, g);
       svg('rect', { class: 'bs-bond', x: cx, y: cy, width: cw, height: 12 }, g);
     });
     studs(g, 766, 858, 200);
-    studs(g, 858, 894, 212);
-    studs(g, 894, 934, 224);
+    studs(g, 858, 906, 212);
+    studs(g, 906, 934, 224);
     studs(g, 934, 976, 236);
     [[776, 252, 22, 40], [816, 252, 22, 40]].forEach(([wx, wy, ww, wh]) => windowPiece(g, wx, wy, ww, wh, { arched: false, lightsOffAt: 0.51 }));
     // Scaffolding: poles, ledgers, braces, and planks with bricks waiting on one.
@@ -674,6 +685,53 @@
     return { courses, active };
   }
 
+  const chorusTimings = (song) => ['refrain-1', 'refrain-2', 'refrain-3']
+    .map((id) => [song.sectionStart(id), song.sectionEnd(id)]);
+
+  function siteBuild(song) {
+    return {
+      x0: 760, x1: 984, bottom: GROUND, top: 180,
+      timing: [BUILD.site, ...chorusTimings(song)], levels: [7, 14, 18],
+      solid: [[766, 976, 200]],
+    };
+  }
+
+  function constructionPhases({ bottom, top, timing, levels }) {
+    const targets = [...levels, Math.ceil((bottom - top) / COURSE)];
+    return timing.map(([from, to], i) => ({ from, to, target: targets[i] }));
+  }
+
+  /** The foreman steps onto each course just as the bricks reach his feet.
+   * His narrow perch is the site's second roof step, beside the crane load.
+   * Use the building's own schedule so scrubbing cannot separate them. */
+  function foremanPlace(song) {
+    const build = siteBuild(song);
+    const x = 878, scale = 0.68, roof = 208;
+    const perCourse = Math.ceil((build.x1 - build.x0) / BRICK);
+    const footColumn = Math.ceil((x + 25 - build.x0) / BRICK);
+    const steps = [];
+    let previous = 0;
+    for (const { from, to, target } of constructionPhases(build)) {
+      for (let course = previous + 1; course <= target; course++) {
+        const lands = from + (course - 1 + footColumn / perCourse - previous) / (target - previous) * (to - from);
+        steps.push({ from: lands - 0.32, to: lands, y: Math.max(roof, GROUND - course * COURSE) });
+      }
+      previous = target;
+    }
+    return (t, still) => {
+      let y = still ? roof : GROUND;
+      let walking = 0;
+      if (!still) for (const step of steps) {
+        if (t < step.from) break;
+        const u = span(t, [step.from, step.to]);
+        walking = Math.min(0.65, Math.abs(step.y - y) / COURSE * 0.65) * Math.sin(Math.PI * u);
+        y += (step.y - y) * easeInOutCubic(u);
+      }
+      // The shoe soles extend slightly below the cast's nominal foot anchor.
+      return { x, y: y - 4 * scale, scale, walking };
+    };
+  }
+
   /**
    * Lays `group` brick by brick over its timed phases: courses from the
    * ground up, each course left to right, with the next brick dropping into
@@ -682,7 +740,8 @@
    * wall, never in the air beside it. `levels` gives whole-course milestones
    * before the final phase completes the building. Returns a pose(t).
    */
-  function builder(art, defs, group, id, { x0, x1, bottom, top, timing, levels, solid }) {
+  function builder(art, defs, group, id, specification) {
+    const { x0, x1, bottom, solid } = specification;
     const clip = svg('clipPath', { id }, defs);
     const laid = svg('rect', { 'data-testid': 'reuse-building-courses', x: x0, width: x1 - x0, y: bottom, height: 0 }, clip);
     const course = svg('rect', { x: x0, y: bottom, width: 0, height: COURSE }, clip);
@@ -690,9 +749,8 @@
     const drop = svg('g', { class: 'bs-drop' }, art);
     const brick = svg('rect', { class: 'bs-drop-brick', x: 0, y: 0, width: BRICK - 1, height: COURSE - 1, rx: 1.5 }, drop);
     [6, 16].forEach((sx) => svg('rect', { class: 'bs-drop-stud', x: sx, y: -3.5, width: 6, height: 4, rx: 1.2 }, drop));
-    const courses = Math.ceil((bottom - top) / COURSE);
-    const targets = [...levels, courses];
-    const phases = timing.map(([from, to], i) => ({ from, to, target: targets[i] }));
+    const phases = constructionPhases(specification);
+    const courses = phases.at(-1).target;
     const perCourse = Math.ceil((x1 - x0) / BRICK);
     const tones = ['tan', 'blue', 'gold'];
     return (t, still) => {
@@ -779,16 +837,12 @@
     looseBrick(art, { x: 452, y: 514, w: 26, h: 24, tone: 'red', round: true });
     // Both sites start with a complete ground-floor base. Each refrain adds
     // supported walls above it; the hall's belfries and roofs come last.
-    const choruses = ['refrain-1', 'refrain-2', 'refrain-3']
-      .map((id) => [song.sectionStart(id), song.sectionEnd(id)]);
+    const choruses = chorusTimings(song);
     const poses = [
       ...hallParts.map(({ group, ...geometry }, i) => builder(art, defs, group, `bs-clip-hall-${i}`, {
         ...geometry, bottom: GROUND, timing: [BUILD.hall, ...choruses],
       })),
-      builder(art, defs, siteGroup, 'bs-clip-site', {
-        x0: 760, x1: 984, bottom: GROUND, top: 180, timing: [BUILD.site, ...choruses], levels: [7, 14, 18],
-        solid: [[766, 976, 200]],
-      }),
+      builder(art, defs, siteGroup, 'bs-clip-site', siteBuild(song)),
     ];
     const craneClip = svg('clipPath', { id: 'bs-clip-crane' }, defs);
     const mastRect = svg('rect', { x: 892, width: 34, y: 470, height: 0 }, craneClip);
@@ -879,5 +933,5 @@
     return layer;
   }
 
-  window.SongKit.themes['brick-site'] = { build: brickSite };
+  window.SongKit.themes['brick-site'] = { build: brickSite, foremanPlace };
 })();
