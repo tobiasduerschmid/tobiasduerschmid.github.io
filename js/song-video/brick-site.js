@@ -151,8 +151,22 @@
     },
   ];
 
-  function cloudContours(variant) {
-    const profile = CLOUD_PROFILES[variant % CLOUD_PROFILES.length];
+  /** Gentle travelling ripples keep the tapered tips fixed. Subtract the
+   * initial wave so reduced motion retains the authored cloud silhouette. */
+  function cloudPointAt([x, y], time, variant) {
+    const phase = x / 65 + variant * 1.6;
+    const ripple = 1.4 * (Math.sin(time * 0.42 + phase) - Math.sin(phase))
+      + 0.6 * (Math.sin(time * 0.23 - phase * 0.7) - Math.sin(-phase * 0.7));
+    const taper = Math.sin(Math.PI * (x + 30) / 420);
+    return [x, y + taper * ripple];
+  }
+
+  function cloudContours(variant, time = 0) {
+    const source = CLOUD_PROFILES[variant % CLOUD_PROFILES.length];
+    const profile = {
+      upper: source.upper.map(point => cloudPointAt(point, time, variant)),
+      lower: source.lower.map(point => cloudPointAt(point, time, variant)),
+    };
     const body = cloudOutline([...profile.upper, ...profile.lower.toReversed()]);
     const rim = [[1, 4], [6, 9], [11, 13]].map(([from, to]) => {
       const edge = profile.lower.slice(from, to + 1);
@@ -192,21 +206,21 @@
     }, defs);
     const highlightId = lighting.id;
     const contours = cloudContours(variant);
-    svg('path', { class: 'bs-cloud-body', d: contours.body }, shape);
-    svg('path', { class: 'bs-cloud-sunlight', fill: `url(#${highlightId})`, d: contours.body }, shape);
+    const body = svg('path', { class: 'bs-cloud-body', 'data-testid': 'reuse-cloud-outline', d: contours.body }, shape);
+    const sunlight = svg('path', { class: 'bs-cloud-sunlight', fill: `url(#${highlightId})`, d: contours.body }, shape);
     const clipId = `bs-cloud-interior-${variant}`;
     const clip = svg('clipPath', { id: clipId }, shape);
-    svg('path', { d: contours.body }, clip);
+    const clipShape = svg('path', { d: contours.body }, clip);
     const interior = svg('g', { 'clip-path': `url(#${clipId})` }, shape);
     const folds = cloudInterior(interior, variant, highlightId);
-    svg('path', { class: 'bs-cloud-light', fill: `url(#${highlightId})`, d: contours.rim }, shape);
+    const rim = svg('path', { class: 'bs-cloud-light', fill: `url(#${highlightId})`, d: contours.rim }, shape);
     // The small scraps vary in position and width; they never repeat evenly.
     const wisps = svg('g', { 'data-testid': 'reuse-cloud-edge-wisps' }, shape);
     [[-39, 31, 32], [317, 40, 44], [365, 25, 24]].forEach(([x, y, w], i) => {
       const shift = 8 * hash01(variant * 31 + i * 7);
       svg('path', { class: 'bs-cloud-scrap', d: cloudOutline([[x, y], [x + w * 0.2, y - 3 - shift * 0.2], [x + w * 0.6, y - 1], [x + w, y - 5], [x + w * 0.75, y + 1], [x + w * 0.35, y + 3]]) }, wisps);
     });
-    return { node: g, lighting, folds, wisps, scale };
+    return { node: g, lighting, folds, wisps, scale, variant, bodyPaths: [body, sunlight, clipShape], rim };
   }
 
   /** Move the bank and aim its light in local SVG coordinates. The gradient
@@ -214,6 +228,11 @@
   function poseCloud(bank, time, sun) {
     const x = bank.x + time * bank.speed;
     bank.node.setAttribute('transform', `translate(${x.toFixed(3)} ${bank.y})`);
+    // The body, light overlay, clipping edge, and rim share one moving
+    // silhouette, so the ripple cannot leave a detached highlight or seam.
+    const contours = cloudContours(bank.variant, time);
+    bank.bodyPaths.forEach(path => path.setAttribute('d', contours.body));
+    bank.rim.setAttribute('d', contours.rim);
     // As in the Security song, thin edges catch a slightly faster wind than
     // the inner folds. Slow, continuous shear avoids bobbing or reset jumps.
     // The caller freezes this same song-time clock under reduced motion.

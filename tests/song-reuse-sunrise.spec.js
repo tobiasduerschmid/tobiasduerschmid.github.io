@@ -104,13 +104,24 @@ async function cloudDetails(page) {
   }));
 }
 
+// Sample the painted silhouette in its own coordinates, excluding bank drift.
+async function cloudSilhouettes(page) {
+  return page.getByTestId('reuse-cloud-outline').evaluateAll(paths => paths.map(path => {
+    const length = path.getTotalLength();
+    return Array.from({ length: 24 }, (_, i) => {
+      const point = path.getPointAtLength(length * i / 24);
+      return [Number(point.x.toFixed(3)), Number(point.y.toFixed(3))];
+    });
+  }));
+}
+
 async function ambientPositions(page) {
   const clouds = await page.getByTestId('reuse-cloud-bank').evaluateAll(nodes => nodes.map(node => {
     const rect = node.getBoundingClientRect();
     return [rect.x, rect.y];
   }));
   const truck = await page.getByTestId('reuse-site-forklift').boundingBox();
-  return { clouds, details: await cloudDetails(page), highlights: await cloudLightAxes(page), truck: [truck.x, truck.y] };
+  return { clouds, silhouettes: await cloudSilhouettes(page), details: await cloudDetails(page), highlights: await cloudLightAxes(page), truck: [truck.x, truck.y] };
 }
 
 test('Not a One-Time Investment: patch outcomes hold long enough to read before the next picture', async ({ page }) => {
@@ -579,6 +590,27 @@ test('Not a One-Time Investment: cloud folds and wisps move subtly within each b
   }
   await seek(page, 0);
   expect(await cloudDetails(page), 'rewinding restores the original cloud details').toEqual(beginning);
+});
+
+test('Not a One-Time Investment: cloud silhouettes ripple gently and reproduce the same shape when seeking', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await page.goto(song.player);
+  await expect(page.getByTestId('reuse-cloud-outline').first()).toBeVisible();
+  await seek(page, 0);
+  const beginning = await cloudSilhouettes(page);
+  for (const time of [4, 11, 23, 85, 180, 285]) {
+    await seek(page, time);
+    const picture = await cloudSilhouettes(page);
+    picture.forEach((outline, i) => {
+      const movement = outline.map(([x, y], p) => Math.hypot(x - beginning[i][p][0], y - beginning[i][p][1]));
+      expect(Math.max(...movement), 'the cloud changes shape as well as drifting').toBeGreaterThan(0.25);
+      expect(Math.max(...movement), 'ripples remain small enough to stay behind the lesson').toBeLessThan(6);
+    });
+    await seek(page, 0);
+    expect(await cloudSilhouettes(page), 'rewinding restores the authored silhouette').toEqual(beginning);
+    await seek(page, time);
+    expect(await cloudSilhouettes(page), 'the same song time restores the same shape').toEqual(picture);
+  }
 });
 
 test('Not a One-Time Investment: moving cloud highlights always face the rising sun', async ({ page }) => {

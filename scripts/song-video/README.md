@@ -601,7 +601,10 @@ travelling less than five percent of the stage width over the song without
 wrapping or jumping. Both their positions and light directions follow song
 time. As in the Security song, thin wisps shear a little faster than the
 clipped inner folds, while sunlit filaments remain anchored to the bank's
-sun-facing light field. All cloud motion remains fixed under reduced motion.
+sun-facing light field. Small travelling ripples flex the cloud silhouettes,
+with staggered phases and fixed tapered tips. Body, clipping edge, and lit
+rim share the same contour so the shading stays attached. All cloud motion
+remains fixed under reduced motion.
 The changing palette follows
 [NOAA's cloud-colour explanation](https://www.noaa.gov/jetstream/clouds/color-of-clouds).
 UCLA blue and gold accent the construction and teaching bricks.
