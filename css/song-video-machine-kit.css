@@ -240,6 +240,7 @@
 .mk-screen-tick { fill: none; stroke: #ffffff; stroke-width: 4.5; stroke-linecap: round; stroke-linejoin: round; }
 .mk-screen-text { fill: #e9f6ee; font: 800 12px var(--font-display); }
 .mk-screen-text--error { fill: #ffd5da; }
+.mk-screen-wait-dot { fill: #e9f6ee; }
 .mk-gilt { fill: #121a2b; stroke: #f2c14e; stroke-width: 3.4; }
 .mk-code-stroke { fill: none; stroke-width: 3; stroke-linecap: round; }
 .mk-code-stroke--0 { stroke: #d2a8ff; }

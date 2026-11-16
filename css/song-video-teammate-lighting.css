@@ -1,0 +1,73 @@
+/* The office opera has its own theatrical palette in both page themes.
+ * Print uses the player's light transcript and hides the stage. Captions,
+ * controls, teaching cards and code retain their original contrast. */
+.tm-lit {
+  --tm-key-light: 0;
+  --tm-rest-brightness: 0.84;
+  --tm-key-brightness: 1.07;
+  --tm-rest-chroma: 0.93;
+  --tm-key-chroma: 1.14;
+  --tm-rest-contrast: 0.98;
+  --tm-key-contrast: 1.06;
+  filter:
+    brightness(calc(var(--tm-rest-brightness) + (var(--tm-key-brightness) - var(--tm-rest-brightness)) * var(--tm-key-light)))
+    saturate(calc(var(--tm-rest-chroma) + (var(--tm-key-chroma) - var(--tm-rest-chroma)) * var(--tm-key-light)))
+    contrast(calc(var(--tm-rest-contrast) + (var(--tm-key-contrast) - var(--tm-rest-contrast)) * var(--tm-key-light)));
+}
+
+/* The build board remains readable in ambient light. Its crosses and ticks
+ * never disappear; a reveal simply brings the board forward in the scene. */
+.tm-lit--board {
+  --tm-rest-brightness: 0.92;
+  --tm-key-brightness: 1.08;
+  --tm-rest-chroma: 0.8;
+  --tm-key-chroma: 1.1;
+  --tm-rest-contrast: 1;
+  --tm-key-contrast: 1;
+}
+.tm-lit--clock {
+  --tm-rest-brightness: 0.7;
+  --tm-key-brightness: 1;
+  --tm-rest-chroma: 0.65;
+  --tm-key-chroma: 1;
+  --tm-rest-contrast: 1;
+  --tm-key-contrast: 1;
+}
+.tm-lit--prop {
+  --tm-rest-brightness: 1;
+  --tm-key-brightness: 1.065;
+  --tm-rest-chroma: 1;
+  --tm-key-chroma: 1;
+  --tm-rest-contrast: 1;
+  --tm-key-contrast: 1;
+}
+.tm-lit--detail {
+  --tm-rest-brightness: 0.68;
+  --tm-key-brightness: 1;
+  --tm-rest-chroma: 0.6;
+  --tm-key-chroma: 1;
+  --tm-rest-contrast: 1;
+  --tm-key-contrast: 1;
+}
+
+/* Lower ambient light on the set, with cooler, less saturated surroundings.
+ * Nothing becomes transparent: floorboards cannot show through furniture. */
+.tm-lighting .oh-wall-stop-0 { stop-color: #1d3a50; }
+.tm-lighting .oh-wall-stop-1 { stop-color: #172f42; }
+.tm-lighting .oh-wall-stop-2 { stop-color: #122432; }
+.tm-lighting .oh-rail { stroke: #344d61; }
+.tm-lighting .oh-panel { stroke: #273c50; }
+.tm-lighting .oh-floor-stop-0 { stop-color: #5b4430; }
+.tm-lighting .oh-floor-stop-1 { stop-color: #37291e; }
+.tm-lighting .oh-footglow-stop-1 { stop-opacity: 0.17; }
+.tm-lighting .oh-window { filter: brightness(0.69) saturate(0.78); }
+.tm-lighting .oh-front { filter: brightness(0.84) saturate(0.92); }
+.tm-lighting .mk-desk { filter: brightness(0.8) saturate(0.83) contrast(0.96); }
+.tm-lighting .song-student-avatar { filter: brightness(0.94) saturate(0.985); }
+.tm-lighting .badge { filter: saturate(0.9); }
+
+/* Feather the beam edges; keep the light itself quieter than the subject.
+ * This sits behind the cast, so it cannot wash out faces or teaching text. */
+.tm-lighting .mk-spot-art { filter: blur(3px); opacity: 0.82; }
+.tm-lighting .tm-lit--beam { filter: none; }
+.tm-lighting .tm-lit--beam .mk-spot-art { opacity: calc(0.82 * var(--tm-key-light) * var(--tm-light-presence, 1)); }

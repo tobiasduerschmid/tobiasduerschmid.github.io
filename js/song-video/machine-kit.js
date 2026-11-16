@@ -624,6 +624,8 @@
 
   /** A cardboard package box with a label and a version tag, drawn at (0, 0) top-left, 74×58. */
   function packageArt(g, { name, version, tone = '' }) {
+    g.setAttribute('data-package-name', name);
+    if (version) g.setAttribute('data-package-version', version);
     inked(g, 'M2 10 H72 V56 H2 Z', `mk-box${tone ? ` mk-box--${tone}` : ''}`);
     inked(g, 'M2 10 L12 2 H82 L72 10 Z', 'mk-box-top');
     inked(g, 'M72 10 L82 2 V48 L72 56 Z', 'mk-box-side');
@@ -722,10 +724,11 @@
    * on cues [time, state]: 'green' (a big tick: works on my machine),
    * 'code' (his code in a gilded frame), 'lamps' (six lamps that turn
    * green from `lampsAt`, one every `lampsEvery`), 'cached' (an old
-   * package kept on it: `cached` = { name, version }), 'error' (a red cross). `path` moves it
+   * package kept on it: `cached` = { name, version }), 'running' (CI tests
+   * with waiting dots), 'error' (a red cross, with configurable `errorText`). `path` moves it
    * [[time, x, y, scale, duration]].
    */
-  function laptop(parent, { x, y, scale = 1, at, until, screens = [], lampsAt, lampsEvery = 0.18, path = [], stickers = true, cached = { name: 'orders', version: '2.4.1' } }) {
+  function laptop(parent, { x, y, scale = 1, at, until, screens = [], lampsAt, lampsEvery = 0.18, path = [], stickers = true, errorText = 'Fatal error', cached = { name: 'orders', version: '2.4.1' } }) {
     const node = place(el('div', 'mk-laptop is-staged', parent), x, y);
     node.dataset.testid = 'mk-laptop';
     node.style.transformOrigin = '50% 100%';
@@ -744,8 +747,10 @@
       code: svg('g', { opacity: 0 }, g),
       lamps: svg('g', { opacity: 0 }, g),
       cached: svg('g', { opacity: 0 }, g),
+      running: svg('g', { opacity: 0 }, g),
       error: svg('g', { opacity: 0 }, g),
     };
+    for (const [name, layer] of Object.entries(screens_)) layer.setAttribute('data-testid', `mk-laptop-screen-${name}`);
     svg('circle', { class: 'mk-screen-tick-disc', cx: 66, cy: 38, r: 18 }, screens_.green);
     svg('path', { class: 'mk-screen-tick', d: 'M57 38 L63.5 45 L76 31' }, screens_.green);
     const ok = svg('text', { class: 'mk-screen-text', x: 66, y: 69, 'text-anchor': 'middle' }, screens_.green);
@@ -761,15 +766,22 @@
     const lampsText = svg('text', { class: 'mk-screen-text', x: 66, y: 64, 'text-anchor': 'middle' }, screens_.lamps);
     lampsText.textContent = 'My machine';
     packageArt(svg('g', { transform: 'translate(29 16) scale(0.86)' }, screens_.cached), { ...cached, tone: 'old' });
+    const waiting = [54, 66, 78].map((cx) => svg('circle', { class: 'mk-screen-wait-dot', cx, cy: 38, r: 3 }, screens_.running));
+    const running = svg('text', { class: 'mk-screen-text', x: 66, y: 64, 'text-anchor': 'middle' }, screens_.running);
+    running.textContent = 'CI tests running';
     svg('circle', { class: 'mk-screen-cross-disc', cx: 66, cy: 38, r: 18 }, screens_.error);
     svg('path', { class: 'mk-screen-cross', d: 'M58 30 L74 46 M74 30 L58 46' }, screens_.error);
     const err = svg('text', { class: 'mk-screen-text mk-screen-text--error', x: 66, y: 69, 'text-anchor': 'middle' }, screens_.error);
-    err.textContent = 'Fatal error';
+    err.textContent = errorText;
     const sorted = [...screens].sort((a, b) => a[0] - b[0]);
     onFrame((t) => {
       let state = null, since = 0;
       for (const [when, s] of sorted) if (when <= t) { state = s; since = when; }
       for (const [key, layer] of Object.entries(screens_)) layer.setAttribute('opacity', key === state ? Math.min(1, (t - since) / 0.2).toFixed(3) : '0');
+      if (state === 'running') waiting.forEach((dot, i) => {
+        const level = reducedMotion.matches ? 1 : 0.65 + 0.35 * Math.cos((t - since) * Math.PI * 2 / 1.8 - i * 0.7);
+        dot.setAttribute('opacity', level.toFixed(3));
+      });
       if (state === 'lamps') {
         lamps.forEach(({ lamp, tick }, i) => {
           const on = lampsAt !== undefined && t >= lampsAt + i * lampsEvery;
@@ -1082,10 +1094,13 @@
       d: `M${tipX} ${tipY} L${tipX - 9} ${tipY - 4.5} V${tipY + 4.5} Z`, opacity: 0 }, armArt);
     const connect = () => {
       const box = source.getBoundingClientRect();
-      const matrix = armArt.getScreenCTM();
-      if (!matrix || !box.width || !box.height) return;
-      const point = new DOMPoint(box.right, box.top + box.height / 2).matrixTransform(matrix.inverse());
-      const tx = point.x - 4, ty = point.y;
+      const viewport = armArt.getBoundingClientRect();
+      const viewBox = armArt.viewBox.baseVal;
+      if (!viewport.width || !viewport.height || !box.width || !box.height) return;
+      // This stage-sized SVG is axis-aligned. Its painted rectangle includes
+      // the responsive CSS scale that WebKit omits from getScreenCTM().
+      const tx = viewBox.x + (box.right - viewport.left) * viewBox.width / viewport.width - 4;
+      const ty = viewBox.y + (box.top + box.height / 2 - viewport.top) * viewBox.height / viewport.height;
       const bendX = (tx + tipX - 7) / 2;
       armPath.setAttribute('d', `M${tx} ${ty} C${bendX} ${ty} ${bendX} ${tipY} ${tipX - 7} ${tipY}`);
       port.setAttribute('cx', tx);

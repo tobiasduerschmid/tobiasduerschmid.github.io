@@ -100,8 +100,9 @@
 
     // The build-status board: a title plate and a row of lamps, each grey,
     // green, or red, with a tick or a cross on its lens (never colour alone).
+    // Pending checks have an unlit lens and an ellipsis.
     // It hangs high at the right, by the drapes.
-    const board = svg('g', { class: 'oh-board', transform: 'translate(696 70)' }, art);
+    const board = svg('g', { class: 'oh-board', 'data-testid': 'oh-build-board', transform: 'translate(696 70)' }, art);
     svg('rect', { class: 'oh-board-frame', x: 0, y: 0, width: 200, height: 86, rx: 6 }, board);
     svg('rect', { class: 'oh-board-plate', x: 10, y: 8, width: 180, height: 22, rx: 3 }, board);
     const title = svg('text', { class: 'oh-board-title', x: 100, y: 24, 'text-anchor': 'middle' }, board);
@@ -109,11 +110,13 @@
     const lamps = Array.from({ length: BOARD_LAMPS }, (_, i) => {
       const g = svg('g', { transform: `translate(${25 + i * 30} 58)` }, board);
       svg('circle', { class: 'oh-lamp-socket', r: 12 }, g);
-      const glow = svg('circle', { class: 'oh-lamp-glow', r: 16, opacity: 0 }, g);
-      const lens = svg('circle', { class: 'oh-lamp oh-lamp--off', r: 9.5 }, g);
-      const tick = svg('path', { class: 'oh-lamp-mark', d: 'M-4.4 0.2 L-1.2 3.6 L4.6 -3.4', opacity: 0 }, g);
-      const cross = svg('path', { class: 'oh-lamp-mark', d: 'M-3.6 -3.6 L3.6 3.6 M3.6 -3.6 L-3.6 3.6', opacity: 0 }, g);
-      return { glow, lens, tick, cross, state: 'off' };
+      const glow = svg('circle', { class: 'oh-lamp-glow', 'data-testid': 'oh-build-glow', r: 16, opacity: 0 }, g);
+      const lens = svg('circle', { class: 'oh-lamp oh-lamp--off', 'data-testid': 'oh-build-lens', r: 9.5 }, g);
+      const tick = svg('path', { class: 'oh-lamp-mark', 'data-testid': 'oh-build-pass', d: 'M-4.4 0.2 L-1.2 3.6 L4.6 -3.4', opacity: 0 }, g);
+      const cross = svg('path', { class: 'oh-lamp-mark', 'data-testid': 'oh-build-fail', d: 'M-3.6 -3.6 L3.6 3.6 M3.6 -3.6 L-3.6 3.6', opacity: 0 }, g);
+      const pending = svg('g', { class: 'oh-lamp-pending', 'data-testid': 'oh-build-pending', opacity: 0 }, g);
+      for (const cx of [-3.2, 0, 3.2]) svg('circle', { cx, r: 0.95 }, pending);
+      return { glow, lens, tick, cross, pending, state: 'off' };
     });
 
     // The stage floor: boards running to the back wall.
@@ -219,8 +222,9 @@
       clock(at, hours, duration = 0.8) { clockCues.push([at, hours, duration]); clockCues.sort((a, b) => a[0] - b[0]); },
       /** The window shows `sky` ('day', 'dusk', 'night', 'dawn') from `at`, fading over `duration`. */
       sky(at, sky, duration = 1.2) { skyCues.push([at, SKIES.indexOf(sky), duration]); skyCues.sort((a, b) => a[0] - b[0]); },
-      /** The board's lamps from `at`: an array of 'off', 'green', or 'red', one by one `every` seconds. */
-      board(at, states, every = 0) { boardCues.push([at, states, every]); boardCues.sort((a, b) => a[0] - b[0]); },
+      /** Lamps from `at`: 'off', 'pending', 'green', or 'red', staggered by `every` seconds.
+       * Optional pulse gently modulates failed lamps; reduced motion keeps them steady. */
+      board(at, states, every = 0, { pulse = false } = {}) { boardCues.push([at, states, every, pulse]); boardCues.sort((a, b) => a[0] - b[0]); },
       /** The footlights' colour from `at`: 'warm', 'green', or 'out'. */
       footlights(at, colour, duration = 0.6) { footCues.push([at, colour, duration]); footCues.sort((a, b) => a[0] - b[0]); },
       OPENING,
@@ -286,13 +290,20 @@
             state = before ? before[1][i] || 'off' : 'off';
           }
         }
-        if (state === lamp.state) return;
-        lamp.state = state;
-        lamp.lens.setAttribute('class', `oh-lamp oh-lamp--${state}`);
-        lamp.glow.setAttribute('class', `oh-lamp-glow oh-lamp-glow--${state}`);
-        lamp.glow.setAttribute('opacity', state === 'off' ? '0' : '0.55');
-        lamp.tick.setAttribute('opacity', state === 'green' ? '1' : '0');
-        lamp.cross.setAttribute('opacity', state === 'red' ? '1' : '0');
+        if (state !== lamp.state) {
+          lamp.state = state;
+          lamp.lens.setAttribute('class', `oh-lamp oh-lamp--${state === 'pending' ? 'off' : state}`);
+          lamp.glow.setAttribute('class', `oh-lamp-glow oh-lamp-glow--${state}`);
+          lamp.tick.setAttribute('opacity', state === 'green' ? '1' : '0');
+          lamp.cross.setAttribute('opacity', state === 'red' ? '1' : '0');
+          lamp.pending.setAttribute('opacity', state === 'pending' ? '1' : '0');
+        }
+        // A small, smooth 0.625 Hz pulse, reconstructed from song time.
+        // The crosses remain solid even at the dimmest point and on pause.
+        const pulsing = state === 'red' && cue?.[3] && !reducedMotion.matches;
+        const level = pulsing ? (1 + Math.cos((t - cue[0]) * Math.PI * 2 / 1.6)) / 2 : 1;
+        lamp.lens.setAttribute('opacity', (0.76 + 0.24 * level).toFixed(3));
+        lamp.glow.setAttribute('opacity', state === 'off' || state === 'pending' ? '0' : (0.18 + 0.37 * level).toFixed(3));
       });
       // Footlights: warm, green, or out.
       let colour = 'warm', fade = 1, before = 'warm';

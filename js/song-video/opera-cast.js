@@ -246,6 +246,7 @@
    *   misery        0–1 tired lids and lifted inner brows
    *   turn          −1 … 1 a subtle left/right turn of the drawn head
    *   sweat, blush  0–1
+   *   flush         0–1 sustained cheek warmth, separate from a gesture's brief blush
    *   nod, tilt     0–1 a dip of the head; its tilt in degrees
    *   crouch        0–1 a give at the knees; hop: how high it jumps
    *   lean          degrees the figure leans about its feet
@@ -255,7 +256,7 @@
   const REST = {
     right: [4, -6], rightLift: 0, rightHand: -8, rightShape: 'rest',
     left: [4, -6], leftLift: 0, leftHand: -8, leftShape: 'rest',
-    look: 0, down: 0, brow: 0, frown: 0, smile: 0.4, wide: 0, happy: 0, round: 0, sweat: 0, blush: 0,
+    look: 0, down: 0, brow: 0, frown: 0, smile: 0.4, wide: 0, happy: 0, round: 0, sweat: 0, blush: 0, flush: 0,
     nod: 0, tilt: 0, turn: 0, misery: 0, crouch: 0, hop: 0, lean: 0, age: 0, mask: 0,
   };
   const DISCRETE = new Set(['rightShape', 'leftShape']);
@@ -567,7 +568,16 @@
     const faceClip = svg('clipPath', { id: `oc-face-surface-${++uid}` }, paint.defs);
     svg('path', { d: spec.face }, faceClip);
     const cheekPlane = svg('g', { 'clip-path': `url(#${faceClip.id})` }, g);
-    const cheeks = spec.cheeks.map(([cx, cy]) => svg('ellipse', { class: spec.detailed ? 'oc-cheek-color' : 'oc-blush', ...(spec.detailed ? { fill: paint.blush } : {}), cx, cy, rx: spec.detailed ? 15 : 9, ry: spec.detailed ? 10 : 5.4 }, cheekPlane));
+    const cheeks = spec.cheeks.map(([cx, cy]) => {
+      const node = svg('g', {}, cheekPlane);
+      const surface = { cx, cy, rx: spec.detailed ? 15 : 9, ry: spec.detailed ? 10 : 5.4 };
+      // Two soft cheek washes share the same projected surface: one follows
+      // brief expressions, the other retains the story's accumulated flush.
+      // Neither recolours the forehead, nose, ears, eyes or mouth.
+      const flush = svg('ellipse', { ...surface, class: 'oc-cheek-color', fill: paint.blush, opacity: 0, 'data-testid': 'oc-cheek-flush' }, node);
+      const blush = svg('ellipse', { ...surface, class: spec.detailed ? 'oc-cheek-color' : 'oc-blush', ...(spec.detailed ? { fill: paint.blush } : {}) }, node);
+      return { node, blush, flush };
+    });
     const sideburns = (spec.sideburns || []).map((d) => svg('path', { class: 'oc-hair oc-sideburn', d }, g));
     const hair = svg('g', { class: 'oc-hair-volume' }, g);
     if (spec.detailed) inked(hair, spec.hair, 'oc-rendered-hair', 'oc-ink oc-ink--face', paint.hair);
@@ -667,7 +677,7 @@
 
     let drawn = '';
     return (p, blink, open) => {
-      const state = [p.look, p.down, p.brow, p.frown, p.smile, p.wide, p.happy, p.sweat, p.blush, blink, open, p.round || 0, p.turn || 0, p.misery || 0].map((v) => v.toFixed(3)).join('|');
+      const state = [p.look, p.down, p.brow, p.frown, p.smile, p.wide, p.happy, p.sweat, p.blush, p.flush || 0, blink, open, p.round || 0, p.turn || 0, p.misery || 0].map((v) => v.toFixed(3)).join('|');
       if (state === drawn) return;
       drawn = state;
       const happy = clamp(p.happy, 0, 1);
@@ -683,10 +693,10 @@
       // so their parallax opposes the nose. Each ear keeps all its folds.
       hair.setAttribute('transform', `translate(${(1.5 * depth).toFixed(3)} -105) scale(${(1 - 0.018 * depth * depth).toFixed(3)} 1) translate(0 105)`);
       sideburns.forEach((part) => part.setAttribute('transform', `translate(${(0.65 * depth).toFixed(3)} 0)`));
-      cheeks.forEach((part, i) => {
+      cheeks.forEach(({ node }, i) => {
         const [x, y] = spec.cheeks[i];
         const far = Math.max(0, Math.sign(x) * depth);
-        part.setAttribute('transform', `translate(${(x + 3.2 * depth).toFixed(3)} ${y}) scale(${(1 - 0.1 * far).toFixed(3)} 1) translate(${-x} ${-y})`);
+        node.setAttribute('transform', `translate(${(x + 3.2 * depth).toFixed(3)} ${y}) scale(${(1 - 0.1 * far).toFixed(3)} 1) translate(${-x} ${-y})`);
       });
       for (const ear of ears) {
         const far = Math.max(0, -ear.side * depth);
@@ -723,7 +733,10 @@
         const farWidth = 1 - 0.075 * Math.max(0, side * depth);
         brow.setAttribute('transform', `translate(0 ${lift.toFixed(2)}) rotate(${turn.toFixed(2)} ${side * 22} -86) translate(${side * 22} -86) scale(${farWidth.toFixed(3)} 1) translate(${-side * 22} 86)`);
       });
-      for (const cheek of cheeks) cheek.setAttribute('opacity', (0.32 + 0.5 * clamp(p.blush, 0, 1)).toFixed(2));
+      for (const { blush, flush } of cheeks) {
+        blush.setAttribute('opacity', (0.32 + 0.5 * clamp(p.blush, 0, 1)).toFixed(2));
+        flush.setAttribute('opacity', clamp(p.flush || 0, 0, 1).toFixed(3));
+      }
       sweat.setAttribute('opacity', clamp(p.sweat, 0, 1).toFixed(2));
       const smile = clamp(p.smile - 0.35 * misery, -1, 1);
       // A pleased resting grin shows a slim row of upper teeth; syllables
@@ -1299,7 +1312,7 @@
       hair: gradient('linearGradient', 'hair', { x1: 0, y1: 0, x2: 1, y2: 0.8 }, ['0', '0.4', '0.75', '1']),
       iris: gradient('radialGradient', 'iris', { cx: 0.4, cy: 0.35, r: 0.7 }, ['0', '0.6', '1']),
       blush: gradient('radialGradient', 'blush', { cx: 0.5, cy: 0.5, r: 0.5 }, ['0', '1']),
-      face: gradient('radialGradient', 'face', { ...user, cx: -10, cy: -78, r: 70, fx: -18, fy: -92, gradientTransform: 'translate(0 23.4) scale(1 1.3)' }, ['0', '0.6', '1']),
+      face: gradient('radialGradient', 'face', { ...user, 'data-testid': 'oc-face-complexion', cx: -10, cy: -78, r: 70, fx: -18, fy: -92, gradientTransform: 'translate(0 23.4) scale(1 1.3)' }, ['0', '0.6', '1']),
       nose: gradient('linearGradient', 'face', { ...user, x1: -5, y1: -48, x2: 9, y2: -44 }, ['0', '0.55', '1']),
       clothDepth: gradient('radialGradient', 'cloth-depth', { ...user, cx: 78, cy: 111, r: 34, gradientTransform: 'translate(0 -77.7) scale(1 1.7)' }, ['0', '0.45', '0.78', '1']),
       clothGlow: gradient('radialGradient', 'cloth-glow', { ...user, cx: 71, cy: 106, r: 26, gradientTransform: 'translate(0 -74.2) scale(1 1.7)' }, ['0', '0.5', '1']),
@@ -1464,8 +1477,8 @@
         level(fig) {
           const grip = HOLDING[held.name];
           if (!held.node || !grip.upright) return;
-          const parent = held.node.parentNode?.getCTM?.();
-          const base = fig.getCTM?.();
+          const parent = held.node.parentNode?.getScreenCTM?.();
+          const base = fig.getScreenCTM?.();
           if (!parent || !base) return;
           const m = base.inverse().multiply(parent);
           // up in the figure, as seen from the hand's frame: L⁻¹ (0, -1).
@@ -1533,7 +1546,9 @@
       const squash = 1 - drop / (HEMS - WAIST);
       legs.setAttribute('transform', `translate(0 ${HEMS}) scale(1 ${squash.toFixed(4)}) translate(0 ${-HEMS})`);
       trunk.setAttribute('transform', `translate(0 ${drop.toFixed(2)})`);
-      const base = fig.getCTM(), matrix = trunk.getCTM();
+      // Both matrices must include the same SVG viewport scale, including
+      // in Firefox, before solving a planted cane in figure coordinates.
+      const base = fig.getScreenCTM(), matrix = trunk.getScreenCTM();
       const relative = base && matrix ? base.inverse().multiply(matrix) : null;
       const bodyTurn = relative ? degrees(Math.atan2(relative.b, relative.a)) : 0;
       for (const [side, arm] of [['right', right], ['left', left]]) {
@@ -2114,8 +2129,9 @@
    *             (x is its centre); it walks there over `duration` seconds
    *             or (time, reducedMotion) => { x, y, scale, walking } for a
    *             performer following a moving surface; walking is 0–1
-   *   moves     [[time, name, options]] from MOVES
-   *   reactions [[from, to, facialFields]]: expressions blended over gestures
+   *   moves     [[time, name, options]] from MOVES; options.allowHeld explicitly
+   *             authors an occupied hand's action instead of reserving its carry pose
+   *   reactions [[from, to, facialFields, fade = 0.45]]: expressions blended over gestures
    *   expressWhileSinging  relax facial emotion while listening; vocal
    *                        phrases ease in/out without pulsing per syllable
    *   gestureSpeed  transition speed (default 1); preserves anticipated cue landings
@@ -2127,7 +2143,7 @@
    *   beds      [[from, to]]: a bed appears behind it just before `from`;
    *             it lies down in it, mask on, under the quilt, until `to`
    *             (or its stage exit, when the bed glides off with it)
-   * Returns the wrapper and where() (its place at a time).
+   * Returns node, where(), handPoint(), propMatrix(), and samplePropAt().
    */
   function figure(parent, { role, gender = 'man', hero, stage = [], places, moves = [], reactions = [], expressWhileSinging = false, gestureSpeed = 1, holds = [], words = [], singInReducedMotion = true, beds = [], seed = 0 }) {
     const wrap = el('div', `oc-figure oc-figure--${role} is-staged`, parent);
@@ -2166,8 +2182,8 @@
     // Where it stands at time t: the last place reached, or on its way to
     // the next, eased, with how fast it is walking (for its step).
     const sortedPlaces = typeof places === 'function' ? null : [...places].sort((a, b) => a[0] - b[0]);
-    function where(t) {
-      if (typeof places === 'function') return places(t, reducedMotion.matches);
+    function where(t, reduced = reducedMotion.matches) {
+      if (typeof places === 'function') return places(t, reduced);
       let [, x, y, scale = 1] = sortedPlaces[0];
       let walking = 0;
       for (let i = 1; i < sortedPlaces.length; i++) {
@@ -2193,7 +2209,7 @@
     const occupied = (side, t) => carries.some((c) => c.side === side && t >= c.from - 0.35 && t < c.until);
 
     // Moves are aimed from wherever the figure stands when they are cued.
-    const geometry = (t) => {
+    const geometry = (t, allowHeld = false) => {
       const { x, y, scale } = where(t);
       const left = x - 80 * scale, top = y - 293 * scale;
       const toFigure = ([sx, sy], side) => {
@@ -2207,7 +2223,7 @@
         }),
         side: (to) => {
           const near = to[0] < left + 80 * scale ? 'left' : 'right';
-          return occupied(near, t) && !occupied(other(near), t) ? other(near) : near;
+          return !allowHeld && occupied(near, t) && !occupied(other(near), t) ? other(near) : near;
         },
         // Points the arm on `side` at a stage point: within reach the
         // fingertip touches it, further off the whole arm points.
@@ -2240,9 +2256,10 @@
     const gestures = moves
       .map(([time, name, options = {}]) => {
         if (!MOVES[name]) throw new Error(`opera-cast.js has no move "${name}".`);
-        const raw = MOVES[name](options, geometry(time));
+        const allowHeld = options.allowHeld === true;
+        const raw = MOVES[name](options, geometry(time, allowHeld));
         const moved = ['left', 'right'].filter((side) => raw.some(([, , fields]) => fields[side] && !RESTS.has(fields)));
-        const swap = moved.length === 1 && occupied(moved[0], time) && !occupied(other(moved[0]), time) ? moved[0] : null;
+        const swap = !allowHeld && moved.length === 1 && occupied(moved[0], time) && !occupied(other(moved[0]), time) ? moved[0] : null;
         const own = raw.map(([delay, duration, fields]) => {
           const span = Math.max(Math.min(duration, 0.12), duration / gestureSpeed);
           if (swap) {
@@ -2253,7 +2270,7 @@
           // Quicker anticipation still arrives on the same sung word.
           return [time + delay + (delay < 0 ? duration - span : 0), span, fields];
         });
-        return { time, start: Math.min(...own.map(([at]) => at)), keys: own };
+        return { time, start: Math.min(...own.map(([at]) => at)), keys: own, allowHeld };
       })
       .sort((a, b) => a.time - b.time);
     // A gesture's return to rest puts back only what that gesture moved,
@@ -2261,19 +2278,37 @@
     // part: a long hold never snaps an arm or a face out of the next pose.
     const posed = gestures.map(({ keys: own }) => new Set(own.filter(([, , fields]) => !RESTS.has(fields)).flatMap(([, , fields]) => Object.keys(fields))));
     const gestureKeys = gestures
-      .flatMap(({ keys: own }, i) => own.flatMap(([at, duration, fields]) => {
-        if (!RESTS.has(fields)) return [[at, duration, fields]];
+      .flatMap(({ keys: own, allowHeld }, i) => own.flatMap(([at, duration, fields]) => {
+        if (!RESTS.has(fields)) return [[at, duration, fields, allowHeld]];
         const kept = Object.entries(fields).filter(([name]) => posed[i].has(name)
           && !gestures.some((next, j) => j > i && next.start <= at && posed[j].has(name)));
-        return kept.length ? [[at, duration, Object.fromEntries(kept)]] : [];
+        const resting = Object.fromEntries(kept);
+        if (allowHeld) {
+          // An explicit action returns an object to its carry pose unless it
+          // has been released by then; it never silently drops to an empty rest.
+          for (const { from, until, side, prop, carry } of carries) {
+            if (at < from - 0.35 || at >= until) continue;
+            for (const [name, value] of Object.entries(armFields(side, { arm: reach(carry.reach), dir: carry.dir, shape: HOLDING[prop].shape }))) {
+              if (name in resting) resting[name] = value;
+            }
+          }
+        }
+        return kept.length ? [[at, duration, resting, allowHeld]] : [];
       }))
       .sort((a, b) => a[0] - b[0]);
     const keys = [
-      ...gestureKeys.map(([at, duration, fields]) => [at, duration, Object.fromEntries(Object.entries(fields)
-        .filter(([name]) => !['left', 'right'].some((side) => name.startsWith(side) && occupied(side, at))))]),
+      ...gestureKeys.map(([at, duration, fields, allowHeld]) => [at, duration, Object.fromEntries(Object.entries(fields)
+        .filter(([name]) => allowHeld || !['left', 'right'].some((side) => name.startsWith(side) && occupied(side, at))))]),
       ...carries.flatMap(({ from, until, side, prop, carry }) => {
         const pose = armFields(side, { arm: reach(carry.reach), dir: carry.dir, shape: HOLDING[prop].shape });
-        return [[from - 0.35, 0.35, pose], ...(Number.isFinite(until) ? [[until, 0.4, restArm(side)]] : [])];
+        const action = gestures.findLast(({ allowHeld, keys: own }) => allowHeld && own.some(([at, , fields]) =>
+          at >= from - 0.35 && at <= until && fields[side] && !RESTS.has(fields)));
+        const followsThrough = action && !action.keys.some(([at, , fields]) =>
+          at <= until && fields[side] && RESTS.has(fields));
+        // Releasing an object changes ownership, not an explicitly authored
+        // trajectory. That action supplies its own eventual return to rest.
+        const releaseRest = Number.isFinite(until) && !followsThrough ? [[until, 0.4, restArm(side)]] : [];
+        return [[from - 0.35, 0.35, pose], ...releaseRest];
       }),
     ].sort((a, b) => a[0] - b[0]);
     const sortedWords = [...words].sort((a, b) => a[0] - b[0]);
@@ -2307,14 +2342,19 @@
     });
 
     const GLIDE = 1.1;
-    onFrame((t) => {
-      const reduced = reducedMotion.matches;
+    let renderedTime = 0;
+    let renderedReduced = reducedMotion.matches;
+    function renderAt(t, sampling = false, reduced = reducedMotion.matches) {
       const index = windowAt(t);
       const onStage = index >= 0 && wrap.isConnected;
-      dress?.(onStage ? index + 1 : 0);
-      if (index < 0) return;
-      const [from, to, { enter = 'fade', exit = 'fade' } = {}] = windows[index];
-      const { x, y, scale, walking } = where(t);
+      if (!sampling) {
+        dress?.(onStage ? index + 1 : 0);
+        if (index < 0) return;
+        renderedTime = t;
+        renderedReduced = reduced;
+      }
+      const [from, to, { enter = 'fade', exit = 'fade' } = {}] = windows[index] || [0];
+      const { x, y, scale, walking } = where(t, reduced);
       wrap.style.left = `${(x - 80 * scale).toFixed(2)}px`;
       wrap.style.top = `${(y - 293 * scale).toFixed(2)}px`;
       wrap.style.width = `${(160 * scale).toFixed(2)}px`;
@@ -2324,9 +2364,9 @@
       const p = poseAt(keys, t, reduced);
       // Sustained emotional beats survive a hand gesture's return to rest.
       // They are reconstructed from song time, never accumulated per frame.
-      for (const [from, to, face] of reactions) {
+      for (const [from, to, face, fade = 0.45] of reactions) {
         const weight = reduced ? Number(t >= from && t < to)
-          : easeInOutCubic(progress(t, from, 0.45)) * (1 - easeInOutCubic(progress(t, to - 0.45, 0.45)));
+          : easeInOutCubic(progress(t, from, fade)) * (1 - easeInOutCubic(progress(t, to - fade, fade)));
         if (weight) for (const [field, target] of Object.entries(face)) p[field] += (target - p[field]) * weight;
       }
       if (expressWhileSinging) {
@@ -2397,15 +2437,53 @@
       const open = reduced && !singInReducedMotion ? 0 : mouthAt(sortedWords, t, reduced);
       body.pose(p, t, open, reduced ? 0 : blinkAt(t, seed));
       body.level();
-    });
+    }
+    // A defined hidden pose lets a direct seek sample a singer that has not
+    // entered yet, then restore it without retaining the sampled prop.
+    renderAt(0, true);
+    onFrame((t) => renderAt(t));
+
+    /** The currently held prop's full local-to-stage affine matrix, or null. */
+    function propMatrix(side) {
+      const prop = body.arms[side].held.node;
+      if (!prop) return null;
+      // Firefox omits the outer SVG's viewBox scale from its own getCTM,
+      // while retaining it for descendants. Screen matrices share one frame.
+      const matrix = fig.getScreenCTM().inverse().multiply(prop.getScreenCTM());
+      const scale = parseFloat(fig.getAttribute('width')) / 160;
+      return [matrix.a * scale, matrix.b * scale, matrix.c * scale, matrix.d * scale,
+        parseFloat(wrap.style.left) + matrix.e * scale, parseFloat(wrap.style.top) + matrix.f * scale];
+    }
+
+    /**
+     * Sample a held prop at absolute song time, including its solved grip,
+     * mirroring, travel and upright leveling. Leaves the current pose and
+     * held ownership unchanged; does not seek the scene or dress an avatar.
+     * The optional reducedMotion override affects only the sample, allowing
+     * a canonical full-motion release without changing the visible animation.
+     */
+    function samplePropAt(side, time, { reducedMotion: reduced = reducedMotion.matches } = {}) {
+      // Inactive figures may be detached by scene visibility management.
+      // Their SVG matrices need a document while being measured.
+      const detached = !wrap.parentNode;
+      if (detached) parent.appendChild(wrap);
+      try {
+        renderAt(time, true, reduced);
+        return propMatrix(side);
+      } finally {
+        renderAt(renderedTime, true, renderedReduced);
+        if (detached) wrap.remove();
+      }
+    }
+
     /** A supplied hand-surface contact in stage coordinates, including walking and sway. */
     function handPoint(side, at) {
-      const matrix = fig.getCTM().inverse().multiply(body.arms[side].hand.getCTM());
+      const matrix = fig.getScreenCTM().inverse().multiply(body.arms[side].hand.getScreenCTM());
       const point = new DOMPoint(...at).matrixTransform(matrix);
       const scale = parseFloat(fig.getAttribute('width')) / 160;
       return [parseFloat(wrap.style.left) + point.x * scale, parseFloat(wrap.style.top) + point.y * scale];
     }
-    return { node: wrap, where, handPoint };
+    return { node: wrap, where, handPoint, propMatrix, samplePropAt };
   }
 
   window.OperaCast = {

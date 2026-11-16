@@ -61,6 +61,7 @@
 .oh-lamp-glow--green { fill: #34d27a; }
 .oh-lamp-glow--red { fill: #ff4d5e; }
 .oh-lamp-mark { fill: none; stroke: #0b111b; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.oh-lamp-pending { fill: #e9eff8; }
 
 /* The stage floor and the footlights' warm wash on it. */
 .oh-floor-stop-0 { stop-color: #6e4b2c; }

@@ -30,6 +30,7 @@
     const M = window.MachineKit;
     const house = window.OperaHouse.of(layers.stage);
     const { content, hud } = layers;
+    const lighting = window.TeammateLighting.create(layers.stage);
     const line = (id) => song.line(id);
     const mark = (id, word) => song.mark(id, word);
     const start = (id) => song.sectionStart(id);
@@ -53,6 +54,7 @@
     // it sings. Sections add to these; the figures are drawn after the
     // scenery behind them and before the props in front.
     const FLOOR = 452;
+    const DESK = { x: 96, top: 334, w: 196 };
     const HOME = { tenor: [236, FLOOR, 0.95], mate: [736, FLOOR, 0.95] };
     // The voice of the closing line, sung by every teammate but the tenor.
     const ENSEMBLE = 'All six teammates';
@@ -70,9 +72,26 @@
     const behind = [];
     const lights = [];
     const ahead = [];
-    /** A follow spot on `role` from `from` to `to`. */
-    const spotlight = (role, from, to) => lights.push(() => M.spot(content, () => figures[role], { from, to }));
+    const soloLights = Object.fromEntries(Object.keys(VOICES).filter(role => role !== 'tenor').map(role => [role, []]));
+    /** A scene keeps its speaker in focus between individual sung lines. */
+    const spotlight = (role, from, to) => {
+      soloLights[role].push([from, to]);
+    };
     const figures = {};
+    const aftermathCues = {
+      story: mark('pm-4', 'wrong'),
+      dependency: mark('build-1', 'new'),
+      tests: mark('test-2', 'failed'),
+      palette: mark('ui-4', 'overnight'),
+      coffee: mark('backend-4', 'gone'),
+      secrets: mark('security-4', 'launch') + .2,
+      end: mark('outro-3', 'keyboard_2') + 2.4,
+    };
+    const aftermath = window.TeammateAftermath.create({ content, cues: aftermathCues });
+    // Stable furniture gives discarded papers a surface even between refrains.
+    const desk = kit.scene(content, .8, undefined);
+    M.desk(desk, DESK);
+    aftermath.mountDesk();
     // The ticket app's phone, which stays on into the Product Manager's scene,
     // and its screens.
     let handset = null;
@@ -96,7 +115,37 @@
     house.curtain(0.3, 1, 2.2);
     house.sky(0, 'day', 0.01);
     house.clock(0, 9, 0.01);
-    house.board(0, ['green', 'green', 'green', 'green', 'green', 'green']);
+    // One history owns the accumulated setbacks. Local green laptop screens
+    // and the restored Git history must not erase earlier failed checks.
+    const issueReveals = [
+      mark('pm-4', 'wrong'),
+      mark('build-3', 'fail'),
+      mark('test-2', 'failed'),
+      mark('ui-1', 'repair'),
+      mark('backend-2', 'broken'),
+      mark('security-1', 'keys'),
+    ];
+    const CI_FAILED = mark('outro-1', 'strange') - 1;
+    const CI_RUNNING = CI_FAILED - 3;
+    const ciFocus = [CI_RUNNING, line('outro-1').start + 0.7];
+    lighting.subject(layers.stage.querySelector('.oh-board'), {
+      kind: 'board', windows: [...issueReveals.slice(1).map(at => [at - 0.2, at + 2.8]),
+        [CI_RUNNING, line('outro-3').start]],
+    });
+    lighting.subject(layers.stage.querySelector('.oh-clock'), {
+      kind: 'clock', windows: [
+        [mark('intro-2', 'ship'), line('intro-2').end + 0.5],
+        [mark('test-2', 'whole'), line('test-2').end + 0.5],
+        [mark('ui-4', 'ive'), line('ui-4').end + 0.5],
+        [mark('backend-3', 'by'), line('backend-3').end + 0.5],
+        [start('verse-6') - 0.6, line('verse-6-1').end],
+      ],
+    });
+    const buildLights = (failed) => Array.from({ length: 6 }, (_, i) => i < failed ? 'red' : 'green');
+    house.board(0, buildLights(0));
+    issueReveals.slice(1).forEach((at, i) => house.board(at, buildLights(i + 1)));
+    house.board(CI_RUNNING, Array(6).fill('pending'));
+    house.board(CI_FAILED, Array(6).fill('red'), 0, { pulse: true });
 
     // ----------------------------------------------------------------
     // Intro: "No need to worry! Just leave it to me!"
@@ -133,7 +182,6 @@
       });
       move('tenor', mark('intro-2', 'three'), 'salute', { hold: 1 });
       move('tenor', mark('intro-2', 'three') + 1.1, 'operatic', { hold: 1 });
-      spotlight('tenor', 1, line('pm-1').start - 0.9);
     }
 
     // ----------------------------------------------------------------
@@ -177,7 +225,7 @@
       move('tenor', mark(v(3), 'refined'), 'kiss', { hold: 0.3 });
       // "I'll save them a meeting": the meeting with the users is torn up.
       behind.push(() => {
-        const memo = kit.scene(content, mark(v(4), 'save') - 0.2, mark(v(4), 'theyll') + 0.6, { exit: 'fade' });
+        const memo = kit.scene(content, mark(v(4), 'save') - 0.2, mark(v(4), 'theyll') + .6, { exit: 'fade' });
         M.tornCard(memo, {
           x: 440, y: 60, w: 230, at: mark(v(4), 'save') - 0.1, tearAt: mark(v(4), 'meeting') + 0.1,
           title: 'Meeting with users', lines: ['Monday 10:00', 'What do they need?'],
@@ -226,7 +274,7 @@
       // The phone steps back to the left, out of the user story's way.
       behind.push(() => {
         handset.style.transformOrigin = '50% 0';
-        tween(handset, { scale: '0.84', translate: '-90px 0' }, line(v(1)).start - 0.5, 0.5, EASE.inOut);
+        tween(handset, { scale: '0.84', translate: '-90px -48px' }, line(v(1)).start - 0.5, 0.5, EASE.inOut);
       });
       // "As a fan, I want to pass my ticket on, so a friend can use my
       // seat when I can't come along!": the user story he never asked
@@ -256,7 +304,11 @@
       move('pm', mark(v(3), 'demo'), 'present', { to: [560, 104], hold: 1.2 });
       // "You've built the wrong product — in six lovely hues!": the phone
       // fans out in six colours; he presents them proudly; the PM facepalms.
-      move('pm', mark(v(4), 'wrong') - 0.1, 'point', { to: [400, 250], hold: 0.8 });
+      const discard = aftermathCues.story;
+      move('pm', discard - .85, 'arms', { left: { reach: [104, 80], shape: 'grip', dir: -45 }, hold: 1.2, allowHeld: true });
+      move('pm', discard + .1, 'arms', { left: { reach: [190, 82], shape: 'grip', dir: -15 }, hold: .35, allowHeld: true });
+      plan.pm.holds.push([discard, 'left', null]);
+      move('pm', discard + .65, 'arms', { left: { reach: [186, 98], shape: 'open', dir: -15 }, hold: .3 });
       behind.push(() => {
         const fan = kit.scene(content, mark(v(4), 'six') - 0.1, line('verse-2-1').start + 1.2, { exit: 'fade' });
         ['red', 'orange', 'gold', 'green', 'blue', 'violet'].forEach((hue, i) => {
@@ -338,7 +390,6 @@
         const glory = kit.scene(content, mark(v(5), 'win'), mark(v(5), 'win') + 1.2);
         M.sparkle(glory, { x: 318, y: 150, at: mark(v(5), 'win'), count: 7, spread: 50 });
       });
-      spotlight('tenor', line(v(1)).start - 0.4, line('build-1').start - 0.3);
     }
 
     // ----------------------------------------------------------------
@@ -348,20 +399,25 @@
     function build() {
       const v = (n) => `build-${n}`;
       const enter = line(v(1)).start - 3;
-      plan.build.stage.push([enter, line('refrain-1-1').start - 0.4, { enter: 'right', exit: 'right' }]);
+      // Finish the phrase and its light hold before the 1.1-second exit glide.
+      plan.build.stage.push([enter, line(v(4)).end + 1.4, { enter: 'right', exit: 'right' }]);
       placeAt('build', 0, ...HOME.mate);
       plan.build.holds.push([enter, 'left', 'wrench']);
       move('tenor', enter + 1.5, 'mood', { hold: line(v(4)).end - enter - 1.8, sweat: 1, smile: 0.5, brow: 0.7, look: 0.8 });
       move('build', enter + 1.2, 'hips', { hold: 1 });
+      // Keep this comparison visible through the package's landing and rock.
+      const comparisonEnd = mark(v(2), 'changed');
       // "Your laptop kept old ones; my clean build got new."
       behind.push(() => {
-        const works = kit.scene(content, line(v(1)).start - 0.3, line(v(2)).start - 0.1, { exit: 'fade' });
-        M.laptop(works, { x: 300, y: 214, at: line(v(1)).start - 0.3, screens: [[mark(v(1), 'old'), 'cached']], cached: { name: 'transfers', version: '1.4.2' } });
+        const works = kit.scene(content, line(v(1)).start - 0.3, comparisonEnd, { exit: 'fade' });
+        const laptopPosition = { x: 300, y: 214 };
+        const cachedLaptop = M.laptop(works, { ...laptopPosition, at: line(v(1)).start - 0.3, screens: [[mark(v(1), 'old'), 'cached']], cached: { name: 'transfers', version: '1.4.2' } });
+        aftermath.dependency(cachedLaptop.querySelector('[data-package-name="transfers"]'), laptopPosition);
         M.buildMachine(works, { x: 470, y: 196, at: mark(v(1), 'clean') - 0.2, label: 'Clean build' });
         M.packageBox(works, { x: 640, y: 312, at: mark(v(1), 'got') - 0.3, name: 'transfers', version: '2.1.0', tone: 'new', path: [[mark(v(1), 'got'), 560, 312, 0.6]] });
       });
       behind.push(() => {
-        const notes = kit.scene(content, mark(v(1), 'old'), line(v(2)).start - 0.1, { exit: 'fade' });
+        const notes = kit.scene(content, mark(v(1), 'old'), comparisonEnd, { exit: 'fade' });
         kit.sticker(notes, 'Kept the old one', { x: 282, y: 330, at: mark(v(1), 'old'), variant: 'white', iconName: 'laptop', rotate: -3 });
         kit.sticker(notes, 'Fetched the new one', { x: 462, y: 150, at: mark(v(1), 'new'), variant: 'gold', iconName: 'box', rotate: 3 });
       });
@@ -370,16 +426,16 @@
       // "Version two changed the API — your calls won't go through!": the
       // 2.x socket takes a new call; his old call's plug no longer fits.
       behind.push(() => {
-        const socket = kit.scene(content, line(v(2)).start - 0.1, line(v(3)).start, { exit: 'fade' });
+        const socket = kit.scene(content, comparisonEnd, line(v(3)).start, { exit: 'fade' });
         M.plug(socket, {
-          x: 300, y: 172, at: line(v(2)).start, socketLabel: 'v2: transfer(to)', plugLabel: 'v1: send()',
+          x: 300, y: 172, at: comparisonEnd, socketLabel: 'v2: transfer(to)', plugLabel: 'v1: send()',
           pushAt: mark(v(2), 'calls'), failAt: mark(v(2), 'go'),
         });
       });
-      move('build', mark(v(2), 'version'), 'point', { to: [580, 230], hold: 1.2 });
+      move('build', comparisonEnd, 'point', { to: [580, 230], hold: 1.2 });
       move('build', mark(v(2), 'wont') - 0.1, 'shrug', { hold: 0.6 });
       // "Next time, pin your versions! Till then, the builds fail.": a
-      // lockfile pins the old version; the build board goes red.
+      // lockfile pins the old version; the first build check goes red.
       behind.push(() => {
         const pinned = kit.scene(content, line(v(3)).start - 0.2, line(v(4)).start, { exit: 'fade' });
         const card = M.card(pinned, {
@@ -388,7 +444,6 @@
         });
         card.rows.forEach((row) => row.classList.add('mk-card-line--mono'));
       });
-      house.board(mark(v(3), 'builds'), ['red', 'red', 'red', 'red', 'red', 'red'], 0.14);
       ahead.push(() => {
         const fail = kit.scene(content, mark(v(3), 'fail') - 0.1, line(v(4)).start + 0.6, { exit: 'fade' });
         kit.sticker(fail, 'All builds failed', { x: 470, y: 160, at: mark(v(3), 'fail'), variant: 'red', iconName: 'cross', rotate: 2 });
@@ -420,12 +475,14 @@
     // him stays red; a tally on the desk's front counts the "tiny" fixes;
     // on "green" the laptop's lamps and the footlights turn green. The desk,
     // laptop, and tally are scenery: whoever stands in front hides them.
-    const DESK = { x: 96, top: 334, w: 196 };
-    const LAPTOP_ON_DESK = [134, 250];
+    const LAPTOP_SCALE = 0.8;
+    // MachineKit's painted base ends at local y=97, below its keyboard.
+    const LAPTOP_BASE = 97;
+    const LAPTOP_ON_DESK = [134, DESK.top - LAPTOP_BASE * LAPTOP_SCALE];
     // On his raised palm, beside his head: its bottom centre on his hand,
     // where the pose below puts it.
     const PALM = { reach: [158, 42], shape: 'support', dir: 0 };
-    const PICKUP_PALM = { reach: [133, 160], shape: 'support', dir: 0 };
+    const PICKUP_PALM = { reach: [133, 165.6], shape: 'support', dir: 0 };
     const carriedLaptops = [];
     const LAPTOP_HIGH = [411, 125];
     const LAPTOP_MIDDLE = [LAPTOP_HIGH[0] + 53, LAPTOP_HIGH[1] + 40];
@@ -443,14 +500,18 @@
       placeAt('tenor', release + 0.05, 380, FLOOR, 0.95, 0.6);
       behind.push(() => {
         const office = kit.scene(content, from, n === 3 ? undefined : to, { exit: 'fade' });
-        M.desk(office, { x: DESK.x, top: DESK.top, w: DESK.w });
         const laptop = M.laptop(office, {
-          x: LAPTOP_ON_DESK[0], y: LAPTOP_ON_DESK[1], scale: 0.8, at: from + 0.2,
-          screens: [[from, 'green'], [mark(r(2), 'the') - 0.2, 'code'], [mark(r(4), 'and') - 0.1, 'lamps'], ...(n === 3 ? [[mark('outro-1', 'strange') - 0.2, 'error']] : [])],
+          x: LAPTOP_ON_DESK[0], y: LAPTOP_ON_DESK[1], scale: LAPTOP_SCALE, at: from + 0.2,
+          screens: [[from, 'green'], [mark(r(2), 'the') - 0.2, 'code'], [mark(r(4), 'and') - 0.1, 'lamps'], ...(n === 3 ? [[CI_RUNNING, 'running'], [CI_FAILED, 'error']] : [])],
+          errorText: 'CI Build failed',
           lampsAt: mark(r(4), 'all'), lampsEvery: n === 3 ? 0.3 : 0.18,
         });
         carriedLaptops.push({ node: laptop, pickup, release });
-        M.tally(office, { x: DESK.x + 18, y: DESK.top + 14, at: mark(r(3), 'one') - 0.2, until: n === 3 ? undefined : to, title: 'Tiny fixes', values: [[mark(r(3), 'tiny'), 1], ...fixes.map(([word, count]) => [mark(r(3), word), count])] });
+        lighting.subject(laptop, {
+          kind: 'prop', windows: [[pickup, release], ...(n === 3 ? [ciFocus] : [])],
+        });
+        const tally = M.tally(office, { x: DESK.x + 18, y: DESK.top + 14, at: mark(r(3), 'one') - 0.2, until: n === 3 ? undefined : to, title: 'Tiny fixes', values: [[mark(r(3), 'tiny'), 1], ...fixes.map(([word, count]) => [mark(r(3), word), count])] });
+        lighting.subject(tally, { kind: 'detail', windows: [[line(r(3)).start - 0.2, line(r(3)).end + 1]] });
       });
       ahead.push(() => {
         const glory = kit.scene(content, mark(r(1), 'machine') - 0.3, mark(r(1), 'machine') + 1.4);
@@ -480,7 +541,6 @@
       if (n < 3) house.footlights(to + 0.2, 'warm', 0.8);
       move('tenor', mark(r(4), 'green') - 0.2, 'operatic', { high: 1, hold: n === 3 ? line(r(4)).end - mark(r(4), 'green') : 1.4 });
       move('tenor', mark(r(4), 'green'), 'mood', { hold: n === 3 ? line(r(4)).end - mark(r(4), 'green') : 1.4, happy: 0.9, wide: 0.65, brow: 0.8, smile: 1, blush: 0.7, turn: n % 2 ? 0.35 : -0.35 });
-      spotlight('tenor', from, to);
     }
 
     // ----------------------------------------------------------------
@@ -558,7 +618,6 @@
         kit.stamp(no, 'NO!', { x: 520, y: 330, at: mark(v(4), 'no'), rotate: -10, shake: false, from: 1.6 });
       });
       move('tenor', mark(v(4), 'no'), 'stop', { hold: 0.8 });
-      spotlight('tenor', line(v(1)).start - 0.4, line('test-1').start - 0.2);
     }
 
     // ----------------------------------------------------------------
@@ -669,7 +728,6 @@
       // change to UTC.
       move('tenor', mark(v(4), 'switch') - 0.2, 'point', { to: [470, 290], hold: 0.8 });
       move('tenor', mark(v(4), 'could') - 0.1, 'shrug', { hold: 1 });
-      spotlight('tenor', line(v(1)).start - 0.4, line('ui-1').start - 0.2);
     }
 
     // ----------------------------------------------------------------
@@ -684,7 +742,7 @@
       const leave = mark('refrain-2-1', 'my') + 1.2;
       plan.ui.stage.push([enter, leave, { enter: 'right', exit: 'right' }]);
       placeAt('ui', 0, 800, FLOOR, 0.95);
-      plan.ui.holds.push([enter, 'left', 'palette']);
+      plan.ui.holds.push([enter, 'right', 'palette']);
       move('tenor', enter + 1.4, 'mood', { hold: line(v(4)).end - enter - 1.6, sweat: 1, smile: 0.5, brow: 0.7, look: 0.8 });
       // "Now tickets, reminders, and check-in need repair!": each cracks.
       move('ui', mark(v(1), 'tickets') - 0.1, 'point', { to: [632, 110], hold: 0.6 });
@@ -725,9 +783,14 @@
       house.sky(mark(v(4), 'ive'), 'night', 0.4);
       house.sky(mark(v(4), 'aged') + 0.3, 'day', 0.5);
       house.clock(mark(v(4), 'ive'), 26 + 24, 1.2);
-      plan.ui.holds.push([mark(v(4), 'aged'), 'right', 'cane']);
+      plan.ui.holds.push([mark(v(4), 'aged'), 'left', 'cane']);
       move('ui', mark(v(4), 'aged'), 'mood', { age: 1, hold: leave - mark(v(4), 'aged') + 2, crouch: 0.6, nod: 0.5, lean: 3, smile: -0.4 });
-      move('ui', mark(v(4), 'overnight'), 'arms', { right: { reach: [118, 196], shape: 'grip', dir: 90 }, hold: leave - mark(v(4), 'overnight') + 0.4 });
+      move('ui', mark(v(4), 'overnight'), 'arms', { left: { reach: [118, 196], shape: 'grip', dir: 90 }, hold: leave - mark(v(4), 'overnight') + 0.4 });
+      const discardPalette = aftermathCues.palette;
+      move('ui', discardPalette - .85, 'arms', { right: { reach: [120, 75], shape: 'grip', dir: -45 }, hold: 1.2, allowHeld: true });
+      move('ui', discardPalette + .2, 'arms', { right: { reach: [140, 50], shape: 'grip', dir: -15 }, hold: .3, allowHeld: true });
+      plan.ui.holds.push([discardPalette, 'right', null]);
+      move('ui', discardPalette + .65, 'arms', { right: { reach: [155, 80], shape: 'open', dir: -15 }, hold: .3 });
       spotlight('ui', line(v(1)).start - 0.3, leave);
     }
 
@@ -775,7 +838,6 @@
       });
       move('tenor', mark(v(4), 'teamwork') - 0.2, 'thumbs', { hold: 0.6 });
       move('tenor', mark(v(4), 'me') - 0.1, 'chest', { hold: 0.5, pats: 2 });
-      spotlight('tenor', line(v(1)).start - 0.4, line('backend-1').start - 0.2);
     }
 
     // ----------------------------------------------------------------
@@ -796,7 +858,6 @@
       move('backend', mark(v(1), 'gone') - 0.1, 'despair', { hold: 0.9 });
       // "You forced your OLD history — we're broken again!"
       move('backend', mark(v(2), 'forced') - 0.1, 'point', { to: [200, 230], hold: 0.9 });
-      house.board(mark(v(2), 'broken'), ['red', 'red', 'red', 'red', 'red', 'red'], 0.08);
       ahead.push(() => {
         const smash = kit.scene(content, mark(v(2), 'broken') - 0.1, mark(v(3), 'never') - 0.2, { exit: 'fade' });
         kit.stamp(smash, 'Broken', { x: 430, y: 330, at: mark(v(2), 'broken'), rotate: -6, shake: false, from: 1.5 });
@@ -814,7 +875,6 @@
       move('backend', mark(v(3), 'restore') - 0.1, 'arms', { right: { reach: [150, 60], shape: 'open', dir: -60 }, hold: 0.9 });
       house.sky(mark(v(3), 'by'), 'dawn', 1.2);
       house.clock(mark(v(3), 'restore'), 30, 1);
-      house.board(mark(v(3), 'dawn'), ['green', 'green', 'green', 'green', 'green', 'green'], 0.1);
       // "Some sprint that you saved us! My weekend is gone!": Saturday and
       // Sunday drift up and vanish.
       behind.push(() => {
@@ -825,7 +885,13 @@
         });
       });
       move('backend', mark(v(4), 'some') - 0.1, 'point', { to: [200, 230], hold: 1.2 });
-      move('backend', mark(v(4), 'gone') - 0.1, 'slump', { hold: 2.4 });
+      // The real carrying hand winds up, accelerates through release, and follows through.
+      const release = aftermathCues.coffee;
+      move('backend', release - .85, 'arms', { left: { reach: [104, 110], shape: 'grip', dir: -45 }, hold: 1.2, allowHeld: true });
+      move('backend', release + .05, 'arms', { left: { reach: [190, 55], shape: 'grip', dir: -15 }, hold: .3, allowHeld: true });
+      plan.backend.holds.push([release, 'left', null]);
+      move('backend', release + .65, 'arms', { left: { reach: [186, 98], shape: 'open', dir: -15 }, hold: .3 });
+      move('backend', release + 1.25, 'slump', { hold: 1.1 });
       spotlight('backend', line(v(1)).start - 0.3, line(v(4)).end + 0.2);
     }
 
@@ -857,7 +923,7 @@
       // "The keys live in dot-env, not hard-coded now!"
       behind.push(() => {
         const keys = kit.scene(content, mark(v(2), 'keys') - 0.2, line(v(3)).end, { exit: 'fade' });
-        M.card(keys, { x: 330, y: 92, w: 300, title: '.env', iconName: 'key', tone: 'dark', at: mark(v(2), 'dotenv') - 0.1, lines: ['API_KEY=sk-live-4f2a…'] });
+        M.card(keys, { x: 370, y: 92, w: 270, title: '.env', iconName: 'key', tone: 'dark', at: mark(v(2), 'dotenv') - 0.1, lines: ['API_KEY=sk-live-4f2a…'] });
         M.code(keys, {
           x: 330, y: 196, w: 380, title: 'app.py', at: mark(v(2), 'not') - 0.3,
           lines: ['import os', 'api_key = "sk-live-4f2a…"', 'api_key = os.environ["API_KEY"]'],
@@ -898,7 +964,6 @@
         M.audience(rain, { at: mark(v(5), 'handoff') - 0.2, askAt: mark(v(5), 'for'), downAt: line(v(5)).end - 0.6, signs: false });
       });
       move('tenor', mark(v(5), 'everyone') - 0.2, 'operatic', { hold: 2.6 });
-      spotlight('tenor', line(v(1)).start - 0.4, line('security-1').start - 0.2);
     }
 
     // ----------------------------------------------------------------
@@ -966,7 +1031,6 @@
       });
       move('security', mark(v(3), 'spinning') - 0.1, 'present', { to: [430, 290], hold: 1 });
       move('security', mark(v(3), 'red') - 0.2, 'facepalm', { hold: 0.9 });
-      house.board(mark(v(3), 'servers'), ['red', 'red', 'red', 'red', 'red', 'red'], 0.1);
       // "You wanted a launch — we're funding THEIRS instead!": their
       // rocket, beside the servers, lifts off past the bill.
       ahead.push(() => {
@@ -1009,11 +1073,8 @@
       move('tenor', mark(v(9), 'spending') - 0.2, 'point', { to: [480, 110], hold: 0.3 });
       move('tenor', mark(v(9), 'again') - 0.15, 'despair', { hold: 0.5 });
       spotlight('security', line(v(1)).start - 0.3, line(v(4)).end + 0.2);
-      spotlight('tenor', line(v(5)).start - 0.3, line(v(5)).end);
       spotlight('security', line(v(6)).start - 0.2, line(v(6)).end);
-      spotlight('tenor', line(v(7)).start - 0.1, line(v(7)).end);
       spotlight('security', line(v(8)).start - 0.1, line(v(8)).end);
-      spotlight('tenor', line(v(9)).start - 0.1, line(v(9)).end);
     }
 
     // ----------------------------------------------------------------
@@ -1036,7 +1097,7 @@
         move(role, mark('refrain-3-3', 'ninetysix') + i * 0.05, 'facepalm', { hold: 1.4 });
         move(role, mark('refrain-3-4', 'green') + i * 0.06, 'despair', { hold: 1.8 });
       });
-      plan.ui.holds.push([at, 'right', null]);
+      plan.ui.holds.push([at, 'left', null]);
       move('ui', at, 'mood', { age: 1, hold: 30 });
       ahead.push(() => {
         const party = kit.scene(content, mark('refrain-3-4', 'green'), mark('refrain-3-4', 'green') + 6.5);
@@ -1051,8 +1112,8 @@
 
     function outro() {
       const v = (n) => `outro-${n}`;
-      // "Strange.": the music stops; he looks at his laptop, puzzled; it
-      // shows a fatal error.
+      // "Strange.": the music stops; he looks at the CI failure that
+      // appeared one second before his reaction.
       move('tenor', mark(v(1), 'strange') - 0.1, 'mood', { hold: 3, look: -1, brow: 1, frown: 0.4, smile: -0.2 });
       move('tenor', mark(v(1), 'worked') - 0.1, 'point', { to: [190, 290], hold: 1 });
       // "I'll just make one small change.": he reaches for the keyboard.
@@ -1073,6 +1134,7 @@
       move('tenor', mark(v(3), 'step'), 'surrender', { hold: 4.4 });
       LINEUP.forEach(([role], i) => move(role, mark(v(3), 'away') - 0.2 + i * 0.06, 'stop', { hold: 3.2 }));
       spotlight('hero', OUTRO_RETURN + 0.1, line(v(3)).end + 1);
+      for (const [role] of LINEUP) soloLights[role].push([OUTRO_RETURN, line(v(3)).end + 1]);
       // The final chord: the curtain falls as the last note ends, and the
       // moral is posted on it once it has closed.
       // The ending is sung twice; the curtain falls on the second.
@@ -1142,6 +1204,32 @@
       return student?.castHead(womansLook);
     };
     const wordsOf = (role, voice) => [...C.wordsFor(song.storyboard, voice), ...(role === 'tenor' ? [] : C.wordsFor(song.storyboard, ENSEMBLE))];
+    const speakingLights = Object.fromEntries(Object.entries(VOICES).map(([role, voice]) => [role,
+      song.storyboard.sections.flatMap(section => section.lines.filter(lyric => {
+        const singer = lyric.voice || section.voice;
+        return singer === voice || (role !== 'tenor' && singer === ENSEMBLE);
+      }).map(lyric => [lyric.start, lyric.end])),
+    ]));
+    // His startled hands-up reactions matter even when somebody else sings.
+    const reactionLights = plan.tenor.moves.filter(([, name]) => name === 'despair' || name === 'surrender')
+      .map(([at, , { hold = 1.4 }]) => [at, at + hold + 0.8]);
+    // His light stays on through solo endings and instrumental gaps. Only
+    // another illuminated subject can lower it, and then only halfway.
+    const leadLight = {
+      windows: [[0, Infinity]], minimum: 0.5,
+      recesses: [...Object.values(soloLights).flat(), ciFocus],
+      fullLight: [...speakingLights.tenor, ...reactionLights],
+    };
+    const lightFor = role => role === 'tenor' ? leadLight : {
+      windows: soloLights[role], minimum: 0.5, fullLight: speakingLights[role],
+    };
+    // One continuous cone per actor avoids overlapping lights and gaps in
+    // fast dialogue. Stage-presence cues suppress cones for absent actors.
+    for (const role of Object.keys(VOICES)) lights.push(() => {
+      const spot = M.spot(content, () => figures[role], { from: 0.7, to: aftermathCues.end });
+      spot.dataset.testid = role === 'tenor' ? 'tm-lead-spot' : `tm-${role}-spot`;
+      lighting.subject(spot, { ...lightFor(role), kind: 'beam', presence: plan[role].stage.map(([from, to]) => [from, to]) });
+    });
     for (const draw of behind) draw();
     for (const draw of lights) draw();
     const expressions = {
@@ -1164,7 +1252,9 @@
       security: [['security-1', 'alarmed'], ['security-2', 'concerned'], ['security-3', 'alarmed'],
         ['security-4', 'angry'], ['security-6', 'firm'], ['security-8', 'firm'], ['security-9', 'angry']],
     };
-    const reactionsFor = (role) => reactionBeats[role] ? [
+    const reactionsFor = (role) => role === 'tenor'
+      ? issueReveals.map((at, i) => [at, Infinity, { flush: (i + 1) * 0.06 }, 1.6])
+      : reactionBeats[role] ? [
       [0, Infinity, expressions.attentive],
       ...[...reactionBeats[role], ['outro-3', 'angry']].map(([id, emotion, word]) => [
         (word ? mark(id, word) : line(id).start) - 0.12, line(id).end + 0.2, expressions[emotion],
@@ -1182,16 +1272,19 @@
         reactions: reactionsFor(role),
         moves: p.moves, holds: p.holds, beds: p.beds, words: wordsOf(role, voice), seed: Object.keys(VOICES).indexOf(role),
       });
+      lighting.subject(figures[role].node, lightFor(role));
     }
     for (const draw of ahead) draw();
+    aftermath.mountFront();
+    onFrame((t) => aftermath.update(t, { backend: figures.backend, pm: figures.pm, ui: figures.ui }));
     // The laptop is supported throughout the lift and return. Its base
     // follows the same palm contact, rather than an unrelated screen tween.
     window.Timeline.onFrame((t) => {
       for (const { node, pickup, release } of carriedLaptops) {
         const carried = t >= pickup && t < release;
         const contact = carried ? figures.tenor.handPoint('right', C.HANDS.support.contact) : null;
-        node.style.left = `${contact ? contact[0] - 66 * 0.8 : LAPTOP_ON_DESK[0]}px`;
-        node.style.top = `${contact ? contact[1] - 97 * 0.8 : LAPTOP_ON_DESK[1]}px`;
+        node.style.left = `${contact ? contact[0] - 66 * LAPTOP_SCALE : LAPTOP_ON_DESK[0]}px`;
+        node.style.top = `${contact ? contact[1] - LAPTOP_BASE * LAPTOP_SCALE : LAPTOP_ON_DESK[1]}px`;
       }
     });
   };

@@ -3,7 +3,7 @@ const { test, expect } = require('@playwright/test');
 const fs = require('node:fs');
 const path = require('node:path');
 const yaml = require('js-yaml');
-const { countInArtwork } = require('./song-player-helpers');
+const { countInArtwork, openPlayerSettings } = require('./song-player-helpers');
 
 // "It Works on My Machine" as the live player draws it: the Teammate, the
 // tenor, keeps his own drawn face, and the six teammates who answer him wear
@@ -27,6 +27,10 @@ const TEAMMATES = [
 const CAST = ['tenor', ...TEAMMATES.map(([role]) => role), 'hero'];
 // The viewer's hero pushes him from the keyboard on the closing line.
 const closingLine = () => mark('outro-3', 'keyboard');
+const ISSUE_REVEALS = [
+  ['pm-4', 'wrong'], ['build-3', 'fail'], ['test-2', 'failed'],
+  ['ui-1', 'repair'], ['backend-2', 'broken'], ['security-1', 'keys'],
+].map(([id, word]) => mark(id, word));
 const midSolo = (section) => {
   const [first] = sections.get(section).lines;
   return (first.start + first.end) / 2;
@@ -69,6 +73,219 @@ test.beforeEach(async ({ page }) => {
   await expect(page.getByRole('button', { name: 'Play song', exact: true })).toBeEnabled();
   await expect(page.getByTestId('song-picture')).toBeVisible();
   await page.evaluate(() => document.fonts.ready);
+});
+
+// These are painted SVG marks, not interactive controls. Measure actual
+// opacity because Playwright's visibility check includes transparent SVG.
+const visibleMarks = (locator) => locator.evaluateAll(nodes => nodes.filter(node => Number(getComputedStyle(node).opacity) > 0.5).length);
+async function buildMarks(page) {
+  const board = page.getByTestId('oh-build-board');
+  return {
+    failed: await visibleMarks(board.getByTestId('oh-build-fail')),
+    passed: await visibleMarks(board.getByTestId('oh-build-pass')),
+    pending: await visibleMarks(board.getByTestId('oh-build-pending')),
+  };
+}
+
+// Inspect the rendered light, not the controller's cue tables. These are
+// deliberate color filters on opaque artwork, so geometry and opacity must
+// remain intact when attention passes between singers.
+const paintedLight = locator => locator.evaluate(node => {
+  const style = getComputedStyle(node);
+  const value = name => Number(style.filter.match(new RegExp(`${name}\\(([^)]+)\\)`))?.[1] ?? 1);
+  return { brightness: value('brightness'), chroma: value('saturate'), opacity: Number(style.opacity) };
+});
+
+test('stage light favors each current singer, then brings up the answering ensemble', async ({ page }) => {
+  const lead = page.getByTestId('oc-tenor');
+  await seek(page, midSolo('verse-1'));
+  const leadSolo = await paintedLight(lead);
+  expect(leadSolo.brightness).toBeGreaterThanOrEqual(1);
+  for (const time of [91, 91.5, 117.5, 120, 181.9, 213.6, 260]) {
+    await seek(page, time);
+    expect((await paintedLight(lead)).brightness, `solo or phrase gap at ${time}s keeps his key light on`).toBeGreaterThanOrEqual(1);
+    await expect(page.getByTestId('tm-lead-spot'), `follow spot remains on at ${time}s`).toHaveCSS('opacity', '1');
+  }
+  for (const [role, section] of TEAMMATES) {
+    await seek(page, midSolo(section));
+    const singer = await paintedLight(page.getByTestId(`oc-${role}`));
+    const listener = await paintedLight(lead);
+    expect(singer.brightness, `${role} receives the key light`).toBeGreaterThan(listener.brightness + 0.06);
+    expect(singer.chroma, `${role} retains slightly more color than the listener`).toBeGreaterThan(listener.chroma);
+    expect(listener.brightness, 'the lead retains the brighter half-strength key light').toBeGreaterThanOrEqual(0.93);
+    expect(listener.opacity, 'listening must not make a figure transparent').toBe(1);
+  }
+  await seek(page, midSolo('refrain-3'));
+  const chorusWaiting = await paintedLight(page.getByTestId('oc-pm'));
+  expect(chorusWaiting.brightness, 'the waiting finale cast stays half lit').toBeGreaterThanOrEqual(0.93);
+  expect((await paintedLight(lead)).brightness).toBeGreaterThan(chorusWaiting.brightness + 0.06);
+  await seek(page, closingLine() + 0.5);
+  for (const [role] of TEAMMATES) {
+    expect((await paintedLight(page.getByTestId(`oc-${role}`))).brightness, `${role} joins the final answer`).toBeGreaterThanOrEqual(1);
+  }
+  await seek(page, midSolo('verse-1'));
+  expect(await paintedLight(lead), 'reverse seeks restore the opening light').toEqual(leadSolo);
+});
+
+test('light crossfades smoothly and directs attention to the final CI result without fading the subjects', async ({ page }) => {
+  const lead = page.getByTestId('oc-tenor');
+  const board = page.getByTestId('oh-build-board');
+  const pm = page.getByTestId('oc-pm');
+  const handoff = storyLines.get('pm-1').start;
+  const levels = [];
+  for (const offset of [-0.65, -0.5, -0.35, -0.18]) {
+    await seek(page, handoff + offset);
+    levels.push((await paintedLight(pm)).brightness);
+  }
+  expect(levels[1]).toBeGreaterThan(levels[0]);
+  expect(levels[2]).toBeGreaterThan(levels[1]);
+  expect(levels[3]).toBeGreaterThan(levels[2]);
+  const failed = mark('outro-1', 'strange') - 1;
+  await seek(page, failed - 4);
+  const ambientBoard = await paintedLight(board);
+  await seek(page, failed + 0.15);
+  const resultBoard = await paintedLight(board);
+  const reacting = await paintedLight(lead);
+  expect(resultBoard.brightness).toBeGreaterThan(ambientBoard.brightness + 0.1);
+  expect(reacting.brightness, 'he is still singing: the CI reveal keeps him fully lit').toBeGreaterThanOrEqual(1);
+  expect(resultBoard.opacity).toBe(1);
+  expect(reacting.opacity).toBe(1);
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await openPlayerSettings(page);
+  await page.getByRole('checkbox', { name: 'Use lyrics-only mode' }).uncheck();
+  await seek(page, failed + 0.15);
+  expect(await paintedLight(board), 'reduced motion preserves the intended hierarchy').toEqual(resultBoard);
+  await seek(page, failed - 4);
+  expect(await paintedLight(board), 'no stale light after a reverse seek').toEqual(ambientBoard);
+});
+
+test('speakers keep full light at line boundaries, with bright half light for sleep and quick dialogue', async ({ page }) => {
+  const roleOf = { Teammate: 'tenor', ...Object.fromEntries(TEAMMATES.map(([role, section]) => [sections.get(section).voice, role])) };
+  const cases = storyboard.sections.flatMap(section => section.lines.map(lyric => ({
+    id: lyric.id, start: lyric.start, end: lyric.end,
+    roles: (lyric.voice || section.voice) === 'All six teammates' ? TEAMMATES.map(([role]) => role) : [roleOf[lyric.voice || section.voice]],
+  })));
+  for (const lyric of cases) for (const time of [lyric.start - 0.1, lyric.end + 0.2]) {
+    await test.step(`${lyric.id} at ${time}s`, async () => {
+      await seek(page, time);
+      for (const role of lyric.roles) {
+        const singer = page.getByTestId(`oc-${role}`);
+        await expect(singer, `${role} remains on stage through the phrase`).toBeAttached();
+        expect((await paintedLight(singer)).brightness, `${role} keeps the full-light buffer`).toBeGreaterThanOrEqual(1);
+      }
+    });
+  }
+  // When listening or sleeping, supporting actors retain the brighter half light.
+  for (const [role, time] of [['backend', mark('verse-6-2', 'dotenv')], ['security', 245.2], ['security', 247.7], ['security', 250.5]]) {
+    await seek(page, time);
+    expect((await paintedLight(page.getByTestId(`oc-${role}`))).brightness, `${role} stays half lit at ${time}s`).toBeGreaterThanOrEqual(0.93);
+  }
+  for (const time of [mark('build-4', 'laptop') + 0.5, mark('security-9', 'again') + 0.2, closingLine() + 0.5, 274]) {
+    await seek(page, time);
+    expect((await paintedLight(page.getByTestId('oc-tenor'))).brightness, `important reaction or spoken outro at ${time}s stays fully lit`).toBeGreaterThanOrEqual(1);
+    await expect(page.getByTestId('tm-lead-spot')).toHaveCSS('opacity', '1');
+  }
+});
+
+test('each technical setback adds one failed build check, retained through local successes', async ({ page }) => {
+  for (const [i, at] of ISSUE_REVEALS.entries()) {
+    await seek(page, at - 0.01);
+    const failedBefore = Math.max(0, i - 1);
+    expect(await buildMarks(page), `before issue ${i + 1}`).toEqual({ failed: failedBefore, passed: 6 - failedBefore, pending: 0 });
+    await seek(page, at + 0.3);
+    expect(await buildMarks(page), `after issue ${i + 1}; requirements do not fail a technical check`).toEqual({ failed: i, passed: 6 - i, pending: 0 });
+  }
+  for (const [time, failed] of [
+    [mark('refrain-1-4', 'green') + 1, 1],
+    [mark('refrain-2-4', 'green') + 1, 3],
+    [mark('backend-3', 'dawn') + 1, 4],
+    [mark('refrain-3-4', 'green') + 1, 5],
+  ]) {
+    await seek(page, time);
+    expect(await buildMarks(page), `local success at ${time}s does not erase accumulated failures`).toEqual({ failed, passed: 6 - failed, pending: 0 });
+  }
+});
+
+test('the final CI run waits with unlit ellipses, then fails one second before Strange and pulses every build light', async ({ page }) => {
+  const failed = mark('outro-1', 'strange') - 1;
+  const running = failed - 3;
+  const screen = (state) => page.getByTestId(`mk-laptop-screen-${state}`);
+  const paintedScreenText = (state) => screen(state).evaluateAll(nodes => nodes.filter(node => {
+    for (let part = node; part; part = part.parentElement) {
+      const style = getComputedStyle(part);
+      if (style.display === 'none' || style.visibility === 'hidden' || Number(style.opacity) < 0.5) return false;
+    }
+    return true;
+  }).map(node => node.textContent));
+  const glow = () => page.getByTestId('oh-build-glow').evaluateAll(nodes => nodes.map(node => Number(getComputedStyle(node).opacity)));
+  for (const time of [running + 0.3, failed - 0.01]) {
+    await seek(page, time);
+    expect(await paintedScreenText('running')).toEqual(['CI tests running']);
+    expect(await paintedScreenText('error')).toEqual([]);
+    expect(await buildMarks(page)).toEqual({ failed: 0, passed: 0, pending: 6 });
+    expect(await glow(), 'all lamps are unlit while CI is pending').toEqual(Array(6).fill(0));
+  }
+  await seek(page, failed + 0.3);
+  expect(await paintedScreenText('error')).toEqual(['CI Build failed']);
+  expect(await paintedScreenText('running')).toEqual([]);
+  expect(await buildMarks(page)).toEqual({ failed: 6, passed: 0, pending: 0 });
+  const first = await glow();
+  await seek(page, failed + 0.8);
+  const second = await glow();
+  first.forEach((level, i) => expect(level - second[i], `lamp ${i + 1} visibly pulses`).toBeGreaterThan(0.1));
+  expect(await buildMarks(page), 'the crosses stay legible throughout the pulse').toEqual({ failed: 6, passed: 0, pending: 0 });
+  const colors = await page.getByTestId('oh-build-lens').evaluateAll(nodes => nodes.map(node => getComputedStyle(node).fill.match(/[\d.]+/g).map(Number)));
+  colors.forEach(([red, green, blue]) => { expect(red).toBeGreaterThan(green * 2); expect(red).toBeGreaterThan(blue * 2); });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  // The real player's accessible default switches to lyrics-only mode.
+  // Explicitly opt back into artwork to inspect its reduced-motion states.
+  await openPlayerSettings(page);
+  await expect(page.getByRole('checkbox', { name: 'Use lyrics-only mode' })).toBeChecked();
+  await page.getByRole('checkbox', { name: 'Use lyrics-only mode' }).uncheck();
+  await expect(page.getByTestId('oh-build-board')).toBeVisible();
+  await seek(page, failed + 0.3);
+  const steady = await glow();
+  await seek(page, failed + 1);
+  expect(await glow(), 'reduced motion keeps all failed lights steady').toEqual(steady);
+  await seek(page, running + 0.3);
+  expect(await paintedScreenText('running'), 'rewinding restores the waiting screen').toEqual(['CI tests running']);
+  expect(await buildMarks(page)).toEqual({ failed: 0, passed: 0, pending: 6 });
+});
+
+test('the lead gains a subtle cheek-only blush with all six revelations, retained through gestures and seeks', async ({ page }) => {
+  const tenor = page.getByTestId('oc-tenor');
+  const cheekPaint = () => tenor.getByTestId('oc-cheek-flush').evaluateAll(nodes => nodes.map(node => Number(getComputedStyle(node).opacity)));
+  const skinPaint = () => tenor.getByTestId('oc-face-complexion').evaluate(gradient => [...gradient.children].map(stop => getComputedStyle(stop).stopColor));
+  await seek(page, ISSUE_REVEALS[0] - 0.1);
+  const originalSkin = await skinPaint();
+  let previous = await cheekPaint();
+  expect(previous).toEqual([0, 0]);
+  for (const at of ISSUE_REVEALS) {
+    await seek(page, at + 0.8);
+    const halfway = await cheekPaint();
+    await seek(page, at + 1.7);
+    const settled = await cheekPaint();
+    settled.forEach((amount, i) => {
+      expect(halfway[i], `cheek ${i + 1} eases warmer after ${at}s`).toBeGreaterThan(previous[i]);
+      expect(amount, `each revelation adds warmth after ${at}s`).toBeGreaterThan(halfway[i]);
+      expect(amount, 'the extra cheek wash stays subtle').toBeLessThan(0.5);
+    });
+    expect(await skinPaint(), 'the forehead, nose and ears retain their original skin palette').toEqual(originalSkin);
+    previous = settled;
+  }
+  for (const time of [mark('refrain-3-1', 'machine'), mark('outro-1', 'worked'), closingLine()]) {
+    await seek(page, time);
+    expect(await cheekPaint(), `acting at ${time}s preserves the accumulated cheek flush`).toEqual(previous);
+  }
+  await seek(page, ISSUE_REVEALS[0] - 0.1);
+  expect(await cheekPaint(), 'rewinding removes later redness').toEqual([0, 0]);
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await openPlayerSettings(page);
+  await expect(page.getByRole('checkbox', { name: 'Use lyrics-only mode' })).toBeChecked();
+  await page.getByRole('checkbox', { name: 'Use lyrics-only mode' }).uncheck();
+  await expect(page.getByTestId('oh-build-board')).toBeVisible();
+  await seek(page, closingLine());
+  expect(await cheekPaint(), 'reduced motion retains the same final blush').toEqual(previous);
 });
 
 // What tells one worn face from another: its kind, skin, hair colour, and the
@@ -370,16 +587,20 @@ test('folded forearms stay painted and apron edges cannot cut through sleeves', 
 
 test('held objects keep a closed contact and their required orientation through gestures', async ({ page }) => {
   const examples = [
-    ['pm', 'left', 'clipboard', [-1, 0], ['pm-1', 'pm-2', 'pm-4']],
+    ['pm', 'left', 'clipboard', [-1, 0], ['pm-1', 'pm-2', 'pm-4'], mark('pm-4', 'wrong')],
     ['build', 'left', 'wrench', [0, 0], ['build-1', 'build-2', 'build-4']],
     ['test', 'left', 'magnifier', [0, 0], ['test-1', 'test-2', 'test-4']],
-    ['ui', 'left', 'palette', [1.6, 3], ['ui-1', 'ui-2', 'ui-4']],
-    ['backend', 'left', 'mug', [-4, 0], ['backend-1', 'backend-2', 'backend-4']],
+    ['ui', 'right', 'palette', [1.6, 3], ['ui-1', 'ui-2', 'ui-4'], mark('ui-4', 'overnight')],
+    ['backend', 'left', 'mug', [-4, 0], ['backend-1', 'backend-2', 'backend-4'], mark('backend-4', 'gone')],
   ];
-  for (const [role, side, prop, contact, lines] of examples) {
+  for (const [role, side, prop, contact, lines, heldUntil = Infinity] of examples) {
     for (const line of lines) {
       const { start, end } = storyLines.get(line);
-      for (const time of [start + 0.1, (start + end) / 2, end - 0.65]) {
+      // Grip remains required through the wind-up, ending only at the authored
+      // release. The aftermath suite checks the empty hand and single flying prop.
+      const samples = [start + 0.1, (start + end) / 2, end - 0.65];
+      if (heldUntil >= start && heldUntil < end) samples.push(heldUntil - 0.01);
+      for (const time of samples.filter(time => time < heldUntil)) {
         await seek(page, time);
         const arm = page.getByTestId(`oc-${role}`).getByTestId(`oc-arm-${side}`);
         await expect(arm.getByTestId('oc-hand'), `${role} keeps hold at ${time}`).toHaveAttribute('data-hand-shape', /^(grip|edge)$/);
@@ -406,6 +627,62 @@ test('held objects keep a closed contact and their required orientation through 
   }
 });
 
+test('resting laptops meet their desk surfaces before pickup, after return, and through the outro', async ({ page }) => {
+  const restTimes = [mark('intro-1', 'leave')];
+  for (const n of [1, 2, 3]) {
+    restTimes.push(mark(`refrain-${n}-1`, 'works') - 0.66,
+      mark(`refrain-${n}-2`, 'the') + 0.45,
+      mark(`refrain-${n}-4`, 'green') + 0.5);
+  }
+  restTimes.push(mark('outro-1', 'worked'));
+  for (const motion of ['no-preference', 'reduce']) {
+    await page.emulateMedia({ reducedMotion: motion });
+    if (motion === 'reduce') {
+      // The accessible default is lyrics-only; opt into its reduced-motion
+      // picture explicitly before checking the decorative stage geometry.
+      const lyricsOnly = page.getByRole('checkbox', { name: 'Use lyrics-only mode' });
+      await expect(lyricsOnly).toBeChecked();
+      await lyricsOnly.uncheck();
+      await expect(page.getByTestId('song-picture')).toBeVisible();
+    }
+    for (const time of [...restTimes, ...restTimes.toReversed()]) {
+      await seek(page, time);
+      const contacts = await page.evaluate(() => {
+        const shown = (node) => {
+          for (let n = node; n; n = n.parentElement) {
+            const style = getComputedStyle(n);
+            if (style.display === 'none' || style.visibility === 'hidden' || Number(style.opacity) === 0) return false;
+          }
+          return true;
+        };
+        // Sample painted SVG geometry, not the placement div's dimensions.
+        // Mapping through the SVG viewport also includes responsive CSS scale
+        // in WebKit, whose getScreenCTM omits that outer scale.
+        const paintedBounds = (node) => {
+          const viewport = node.ownerSVGElement;
+          const rect = viewport.getBoundingClientRect(), viewBox = viewport.viewBox.baseVal;
+          const sx = rect.width / viewBox.width, sy = rect.height / viewBox.height;
+          const screen = new DOMMatrix([sx, 0, 0, sy, rect.left - viewBox.x * sx, rect.top - viewBox.y * sy]);
+          const matrix = screen.multiply(viewport.getScreenCTM().inverse()).multiply(node.getScreenCTM());
+          const box = node.getBBox();
+          const top = new DOMPoint(box.x + box.width / 2, box.y).matrixTransform(matrix);
+          const bottom = new DOMPoint(box.x + box.width / 2, box.y + box.height).matrixTransform(matrix);
+          return { x: bottom.x, top: top.y, bottom: bottom.y };
+        };
+        const desks = [...document.querySelectorAll('.mk-desk-top, .student-desk')].filter(shown).map(paintedBounds);
+        const bases = [...document.querySelectorAll('.mk-laptop-base, .student-laptop-base')].filter(shown).map(paintedBounds);
+        const scale = document.querySelector('.stage').getBoundingClientRect().width / 960;
+        return bases.map(base => {
+          const desk = desks.toSorted((a, b) => Math.abs(a.x - base.x) - Math.abs(b.x - base.x))[0];
+          return (base.bottom - desk.top) / scale;
+        });
+      });
+      expect(contacts, `one resting laptop is painted at ${time}s (${motion})`).toHaveLength(1);
+      expect(Math.abs(contacts[0]), `the painted laptop base meets its tabletop at ${time}s (${motion})`).toBeLessThanOrEqual(1);
+    }
+  }
+});
+
 test('the laptop has fingers under its base and a thumb on its rim throughout each lift and return', async ({ page }) => {
   for (const n of [1, 2, 3]) {
     const pickup = mark(`refrain-${n}-1`, 'works') - 0.65;
@@ -421,8 +698,19 @@ test('the laptop has fingers under its base and a thumb on its rim throughout ea
         const base = [...document.querySelectorAll('[data-testid="mk-laptop"] .mk-laptop-base')].find(shown);
         const box = base.getBBox(), center = box.x + box.width / 2, bottom = box.y + box.height;
         const skins = [...hand.querySelectorAll('.oc-skin')].filter(shown);
-        const inHand = (x, y) => skins.some((skin) => skin.isPointInFill(new DOMPoint(x, y)
-          .matrixTransform(skin.getScreenCTM().inverse().multiply(base.getScreenCTM()))));
+        // These outer SVG viewports are axis-aligned. Their painted rectangles
+        // include CSS scale, which WebKit omits from getScreenCTM(). Keep each
+        // descendant's SVG transform, then map through its actual viewport.
+        const paintedMatrix = (node) => {
+          const viewport = node.ownerSVGElement;
+          const rect = viewport.getBoundingClientRect(), viewBox = viewport.viewBox.baseVal;
+          const sx = rect.width / viewBox.width, sy = rect.height / viewBox.height;
+          const screen = new DOMMatrix([sx, 0, 0, sy, rect.left - viewBox.x * sx, rect.top - viewBox.y * sy]);
+          return screen.multiply(viewport.getScreenCTM().inverse()).multiply(node.getScreenCTM());
+        };
+        const baseMatrix = paintedMatrix(base);
+        const surfaces = skins.map((skin) => ({ skin, fromBase: paintedMatrix(skin).inverse().multiply(baseMatrix) }));
+        const inHand = (x, y) => surfaces.some(({ skin, fromBase }) => skin.isPointInFill(new DOMPoint(x, y).matrixTransform(fromBase)));
         // Check the painted surfaces, not a shared contact constant that
         // could be outside the hand. Fingers support a span of the base;
         // the opposing thumb overlaps its front rim.
@@ -448,11 +736,21 @@ test('data arrows start inside their corresponding time rows and end before the 
       const connections = await page.getByTestId('mk-client-connection').evaluateAll((paths) => {
         const rows = [...document.querySelectorAll('.mk-grid-cell--date')];
         const clients = [...document.querySelectorAll('.mk-client')];
+        // The stage SVG is axis-aligned. Its painted viewport includes the
+        // responsive CSS scale that WebKit leaves out of getScreenCTM().
+        const paintedPoint = (node, point) => {
+          const viewport = node.ownerSVGElement;
+          const rect = viewport.getBoundingClientRect(), viewBox = viewport.viewBox.baseVal;
+          const sx = rect.width / viewBox.width, sy = rect.height / viewBox.height;
+          const screen = new DOMMatrix([sx, 0, 0, sy, rect.left - viewBox.x * sx, rect.top - viewBox.y * sy]);
+          const matrix = screen.multiply(viewport.getScreenCTM().inverse()).multiply(node.getScreenCTM());
+          return DOMPoint.fromPoint(point).matrixTransform(matrix);
+        };
         return paths.map((path, i) => {
-          const origin = path.getPointAtLength(0).matrixTransform(path.getScreenCTM());
+          const origin = paintedPoint(path, path.getPointAtLength(0));
           const row = rows[i].getBoundingClientRect();
           const arrow = path.parentElement.querySelector('[data-testid="mk-client-arrow"]');
-          const tip = arrow.getPointAtLength(0).matrixTransform(arrow.getScreenCTM());
+          const tip = paintedPoint(arrow, arrow.getPointAtLength(0));
           const wall = clients[i].querySelector('.mk-client-wall').getBoundingClientRect();
           const icon = clients[i].querySelector('.mk-client-icon').getBoundingClientRect();
           const lineBox = path.getBoundingClientRect(), arrowBox = arrow.getBoundingClientRect();
@@ -645,7 +943,7 @@ test('working props keep their intended direction and the cane stays on the floo
     const result = await prop.evaluateAll((nodes, name) => {
       const node = nodes.find((node) => node.dataset.prop === name);
       const svg = node.ownerSVGElement;
-      const m = svg.getCTM().inverse().multiply(node.getCTM());
+      const m = svg.getScreenCTM().inverse().multiply(node.getScreenCTM());
       const origin = new DOMPoint(0, 0).matrixTransform(m);
       const tip = new DOMPoint(...(name === 'broom' ? [108, 0] : name === 'cane' ? [3, 128] : [0, -10])).matrixTransform(m);
       return { x: tip.x - origin.x, y: tip.y - origin.y, tipY: tip.y };
