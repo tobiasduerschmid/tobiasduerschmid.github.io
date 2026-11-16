@@ -65,7 +65,7 @@
     // The upper wall receives exhaust; the clock/window/build board retain their clear surfaces.
     const prefix = `teammate-aftermath-motion-${++instanceCount}`;
     const wallClip = svg('clipPath', { id: `${prefix}-wall` }, back);
-    svg('path', { d: 'M48 50H914V404H48Z M690 62V164H904V62Z', 'clip-rule': 'evenodd' }, wallClip);
+    svg('path', { d: 'M48 50H914V404H48Z M48 62V164H260V62Z M748 68V236H904V68Z M672 76V148H744V76Z', 'clip-rule': 'evenodd' }, wallClip);
     const depositClip = svg('clipPath', { id: `${prefix}-deposit` }, back);
     const depositArea = svg('rect', { x: 535, y: 345, width: 215, height: 0 }, depositClip);
     const wallScorch = svg('g', { 'clip-path': `url(#${prefix}-wall)` }, back);
@@ -180,7 +180,8 @@
       art.updatePaintDrips(elapsed - duration, { growthDuration: cues.end - cues.palette - duration });
       const impact = reduced.matches || elapsed >= duration;
       visible(art.paint, impact);
-      pose(art.paint, hit, 0, reduced.matches ? 1 : smooth(progress(elapsed, duration, .12)));
+      // A compact splash fits below the sill; its growing trails stay on the wall.
+      pose(art.paint, hit, 0, .9 * (reduced.matches ? 1 : smooth(progress(elapsed, duration, .12))));
       quiet(art.paint, reduced.matches ? 1 : smooth(progress(elapsed, duration + .2, REST_DURATION)));
       quiet(palette, 0);
       let pos = projectile(source, Math.min(duration, elapsed));
@@ -207,8 +208,9 @@
         return;
       }
       const source = { ...sampleRelease(backend, cues.coffee, 'coffee'), gravity: 460 };
-      // Measured arm velocity carries the mug to the blank wall beside the clock.
-      const duration = (315 - source.position[0]) / source.velocity[0];
+      // Measured arm velocity carries the mug across the stage to the clear
+      // wall immediately right of the build board, left of the floating panels.
+      const duration = (295 - source.position[0]) / source.velocity[0];
       art.updateCoffeeDrips(elapsed - duration, { growthDuration: cues.end - cues.coffee - duration });
       visible(mug, elapsed >= 0 && elapsed < duration && !reduced.matches);
       visible(art.coffee, elapsed >= duration || (reduced.matches && elapsed >= 0));

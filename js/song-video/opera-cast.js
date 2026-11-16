@@ -1432,10 +1432,12 @@
       const reachGroup = svg('g', {}, root);
       const fore = svg('g', {}, reachGroup);
       if (costume.sleeve === 'long') svg('path', { class: 'oc-sleeve-fold', d: FORE_SLEEVE_FOLDS }, foreDetails);
+      // The cuff ends behind the wrist assembly. Raised, upright props can
+      // overlap it; only the gripping fingers belong in front of the prop.
+      if (costume.sleeve === 'long') inked(fore, CUFF, 'oc-cuff', 'oc-ink oc-ink--cool');
       const wrist = svg('g', {}, fore);
       const heldBehind = svg('g', {}, wrist);
       const hand = svg('g', { class: 'oc-hand', 'data-testid': 'oc-hand', transform: `translate(${WRIST[0]} ${WRIST[1]})` }, wrist);
-      if (costume.sleeve === 'long') inked(fore, CUFF, 'oc-cuff', 'oc-ink oc-ink--cool');
       if (costume.sleeveTrim) costume.sleeveTrim(folds, foreDetails);
       const shapes = new Map();
       let shown = null;

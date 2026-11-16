@@ -174,9 +174,9 @@
       // "I'll save us a whole sprint": the sprint calendar sheds its fourteen days.
       behind.push(() => {
         const wall = kit.scene(content, 8.2, cleared, { exit: 'fade' });
-        M.calendar(wall, { x: 318, y: 92, at: 8.3, days: 14, tearAt: mark('intro-2', 'save'), tearUntil: mark('intro-2', 'sprint') + 0.9 });
+        M.calendar(wall, { x: 342, y: 92, at: 8.3, days: 14, tearAt: mark('intro-2', 'save'), tearUntil: mark('intro-2', 'sprint') + 0.9 });
       });
-      move('tenor', mark('intro-2', 'save') - 0.1, 'point', { to: [376, 160], hold: 1.6 });
+      move('tenor', mark('intro-2', 'save') - 0.1, 'point', { to: [400, 160], hold: 1.6 });
       // "We'll ship it by three!": the clock spins to three, a toy ship is
       // flown in from the rafters under its pennant, and he salutes it.
       house.clock(mark('intro-2', 'ship'), 15, 0.9);
@@ -286,7 +286,7 @@
       behind.push(() => {
         const story = kit.scene(content, line(v(1)).start - 0.2, mark(v(3), 'promised') - 0.1, { exit: 'fade' });
         const card = M.card(story, {
-          x: 470, y: 56, w: 218, title: 'User story', iconName: 'user', tone: 'gold', at: line(v(1)).start,
+          x: 444, y: 56, w: 210, title: 'User story', iconName: 'user', tone: 'gold', at: line(v(1)).start,
           lines: ['As a fan,', 'I want to pass', 'my ticket on,', 'so a friend', 'can use my seat', 'when I can\'t', 'come along.'],
         });
         const shows = [mark(v(1), 'as'), mark(v(1), 'want'), mark(v(1), 'ticket'), mark(v(2), 'so'), mark(v(2), 'use'), mark(v(2), 'when'), mark(v(2), 'come')];
@@ -453,7 +453,7 @@
         kit.sticker(fail, 'All builds failed', { x: 470, y: 160, at: mark(v(3), 'fail'), variant: 'red', iconName: 'cross', rotate: 2 });
       });
       move('build', mark(v(3), 'pin') - 0.2, 'point', { to: [560, 250], hold: 0.8 });
-      move('build', mark(v(3), 'builds') - 0.2, 'point', { to: [780, 116], hold: 1 });
+      move('build', mark(v(3), 'builds') - 0.2, 'point', { to: [152, 128], hold: 1 });
       // "Shall I ship them your laptop by overnight mail?": his laptop
       // goes into a box marked OVERNIGHT; a FRAGILE label slaps on; he
       // clutches his head.
@@ -499,7 +499,8 @@
       const r = (k) => `refrain-${n}-${k}`;
       const from = line(r(1)).start - 1.4;
       const to = line(r(4)).end + 0.6;
-      if (n < 3) badge('Refrain', from, to);
+      // The scenery enters early, but its label waits for the preceding act.
+      if (n < 3) badge('Refrain', line(r(1)).start, to);
       const pickup = mark(r(1), 'works') - 0.65;
       const lower = mark(r(2), 'the') - 0.15;
       const release = lower + 0.6;
@@ -652,7 +653,7 @@
         M.crack(broken, { x: CODE_X + 30, y: 300, w: 260, h: 118, at: mark(v(2), 'brittle') });
         kit.sticker(broken, 'Failed', { x: CODE_X + 236, y: 300, at: mark(v(2), 'failed'), variant: 'red', iconName: 'cross', rotate: 6 });
       });
-      house.sky(mark(v(2), 'goes'), 'night', 1);
+      house.sky(mark(v(2), 'goes'), 'night', 3);
       house.clock(mark(v(2), 'whole'), 26, 1);
       move('test', mark(v(2), 'failed') - 0.1, 'despair', { hold: 0.7 });
       move('test', mark(v(2), 'night') - 0.2, 'yawn', { hold: 0.9 });
@@ -790,13 +791,13 @@
       // appears.
       move('ui', mark(v(4), 'moved') - 0.1, 'point', { to: [170, 240], hold: 1 });
       house.sky(mark(v(4), 'ive'), 'night', 0.4);
-      house.sky(mark(v(4), 'aged') + 0.3, 'day', 0.5);
+      house.sky(mark(v(4), 'aged') + 0.3, 'day', 3);
       house.clock(mark(v(4), 'ive'), 26 + 24, 1.2);
       plan.ui.holds.push([mark(v(4), 'aged'), 'left', 'cane']);
       move('ui', mark(v(4), 'aged'), 'mood', { age: 1, hold: leave - mark(v(4), 'aged') + 2, crouch: 0.6, nod: 0.5, lean: 3, smile: -0.4 });
       move('ui', mark(v(4), 'overnight'), 'arms', { left: { reach: [118, 196], shape: 'grip', dir: 90 }, hold: leave - mark(v(4), 'overnight') + 0.4 });
       const discardPalette = aftermathCues.palette;
-      move('ui', discardPalette - .85, 'arms', { right: { reach: [120, 75], shape: 'grip', dir: -45 }, hold: 1.2, allowHeld: true });
+      move('ui', discardPalette - .85, 'arms', { right: { reach: [120, 116], shape: 'grip', dir: -45 }, hold: 1.2, allowHeld: true });
       move('ui', discardPalette + .2, 'arms', { right: { reach: [140, 50], shape: 'grip', dir: -15 }, hold: .3, allowHeld: true });
       plan.ui.holds.push([discardPalette, 'right', null]);
       move('ui', discardPalette + .65, 'arms', { right: { reach: [155, 80], shape: 'open', dir: -15 }, hold: .3 });
@@ -815,7 +816,7 @@
       behind.push(() => {
         const repo = kit.scene(content, line(v(1)).start - 0.2, until, { exit: 'fade' });
         M.gitGraph(repo, {
-          x: 306, y: 110, scale: 1.1, at: line(v(1)).start - 0.2, mates: [{ label: 'fix' }, { label: 'fix' }, { label: 'fix' }, { label: 'fix' }],
+          x: 290, y: 110, scale: 1.05, at: line(v(1)).start - 0.2, until, mates: [{ label: 'fix' }, { label: 'fix' }, { label: 'fix' }, { label: 'fix' }],
           mine: ['wip', 'oops', 'fix', 'typo', 'wip2', 'eh'],
           squashAt: mark(v(1), 'squash'), pushAt: mark(v(2), 'forcepush'), shineAt: mark(v(2), 'shine'),
           sweepAt: mark(v(3), 'clutter'), ghostAt: mark('backend-1', 'fixes'), oldAt: mark('backend-2', 'old'), restoreAt: mark('backend-3', 'restore'),
@@ -830,7 +831,7 @@
       ahead.push(() => {
         const push = kit.scene(content, mark(v(2), 'forcepush'), mark(v(2), 'shine') + 0.3, { exit: 'fade' });
         // On main where theirs were, as they fall away.
-        kit.stamp(push, 'Force push', { x: 470, y: 140, at: mark(v(2), 'forcepush') + 0.3, rotate: -6, shake: false, from: 1.5, small: true });
+        kit.stamp(push, 'Force push', { x: 480, y: 202, at: mark(v(2), 'forcepush') + 0.3, rotate: -6, shake: false, from: 1.5, small: true });
         M.sparkle(push, { x: 420, y: 176, at: mark(v(2), 'shine'), count: 6, spread: 44 });
       });
       move('tenor', mark(v(2), 'shine') - 0.1, 'kiss', { hold: 0.3 });
@@ -882,7 +883,7 @@
       move('backend', mark(v(3), 'never') - 0.2, 'stop', { hold: 0.8 });
       move('backend', mark(v(3), 'merge') - 0.1, 'finger', { hold: 0.6 });
       move('backend', mark(v(3), 'restore') - 0.1, 'arms', { right: { reach: [150, 60], shape: 'open', dir: -60 }, hold: 0.9 });
-      house.sky(mark(v(3), 'by'), 'dawn', 1.2);
+      house.sky(mark(v(3), 'by'), 'dawn', 3);
       house.clock(mark(v(3), 'restore'), 30, 1);
       // "Some sprint that you saved us! My weekend is gone!": Saturday and
       // Sunday drift up and vanish.
@@ -914,8 +915,8 @@
       placeAt('tenor', start('verse-6') - 0.2, 200, FLOOR, 0.95, 1);
       // Late that night: the day races by to a quarter to midnight, and the
       // window goes dark, so "You get some sleep!" is bedtime.
-      house.sky(start('verse-6') - 0.6, 'dusk', 0.6);
-      house.sky(start('verse-6'), 'night', 0.8);
+      house.sky(start('verse-6') - 2.2, 'dusk', 2.2);
+      house.sky(start('verse-6'), 'night', 3);
       house.clock(start('verse-6') - 0.6, 23.75, 1.4);
       // "I'll take the deployment! You get some sleep!": a bed for the
       // Back-End Developer, who yawns, lies down in it, and pulls a sleep
@@ -932,7 +933,7 @@
       // "The keys live in dot-env, not hard-coded now!"
       behind.push(() => {
         const keys = kit.scene(content, mark(v(2), 'keys') - 0.2, line(v(3)).end, { exit: 'fade' });
-        M.card(keys, { x: 370, y: 92, w: 270, title: '.env', iconName: 'key', tone: 'dark', at: mark(v(2), 'dotenv') - 0.1, lines: ['API_KEY=sk-live-4f2a…'] });
+        M.card(keys, { x: 338, y: 92, w: 270, title: '.env', iconName: 'key', tone: 'dark', at: mark(v(2), 'dotenv') - 0.1, lines: ['API_KEY=sk-live-4f2a…'] });
         M.code(keys, {
           x: 330, y: 196, w: 380, title: 'app.py', at: mark(v(2), 'not') - 0.3,
           lines: ['import os', 'api_key = "sk-live-4f2a…"', 'api_key = os.environ["API_KEY"]'],

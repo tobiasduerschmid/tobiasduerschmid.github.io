@@ -956,3 +956,41 @@ test('working props keep their intended direction and the cane stays on the floo
     }
   }
 });
+
+test('raised clipboards stay in front of the cuff on either hand', async ({ page }) => {
+  const result = await page.evaluate(() => {
+    const C = window.OperaCast, K = window.SongKit;
+    const fixture = document.createElement('div');
+    fixture.className = 'oc-figure oc-figure--pm';
+    fixture.style.cssText = 'position:fixed;left:0;top:0;width:480px;height:900px;z-index:10000';
+    document.body.appendChild(fixture);
+    const svg = K.svg('svg', { viewBox: '0 0 160 300', width: 480, height: 900 }, fixture);
+    const body = C.buildFigure(svg, K.svg('g', {}, svg), 'pm');
+    const failures = [], overlaps = { left: 0, right: 0 };
+    for (const side of ['left', 'right']) {
+      body.hold(side, 'clipboard');
+      for (const target of [[104, 80], [108, 76], [112, 72]]) {
+        const joints = C.reach(target);
+        body.pose({ ...C.REST, [side]: joints, [`${side}Hand`]: C.handToward(joints, -45) }, 0, 0, 0);
+        body.level();
+        const arm = body.arms[side];
+        const board = arm.held.node.querySelector('.oc-board');
+        const cuff = arm.fore.querySelector('.oc-cuff');
+        board.style.pointerEvents = cuff.style.pointerEvents = 'all';
+        for (let x = 0; x < 22; x += 1) for (let y = -12; y < 15; y += 1) {
+          const screen = new DOMPoint(x, y).matrixTransform(board.getScreenCTM());
+          if (!cuff.isPointInFill(screen.matrixTransform(cuff.getScreenCTM().inverse()))) continue;
+          overlaps[side]++;
+          const painted = document.elementsFromPoint(screen.x, screen.y).filter(node => node === board || node === cuff);
+          if (painted[0] !== board) failures.push({ side, target, x, y });
+        }
+      }
+      body.hold(side, null);
+    }
+    fixture.remove();
+    return { failures, overlaps };
+  });
+  expect(result.overlaps.left, 'the raised left-hand clipboard overlaps cloth').toBeGreaterThan(0);
+  expect(result.overlaps.right, 'the mirrored pose exercises the same crossing').toBeGreaterThan(0);
+  expect(result.failures, 'the cuff must not paint through the solid clipboard').toEqual([]);
+});

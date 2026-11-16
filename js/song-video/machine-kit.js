@@ -1172,7 +1172,7 @@
     // main: base, then the teammates' commits.
     const mainLine = svg('path', { class: 'mk-graph-line', d: `M30 ${mainY} H${30 + step * mates.length}` }, g);
     const mainLabel = svg('text', { class: 'mk-graph-label', x: 0, y: 30 }, g);
-    mainLabel.textContent = 'shared main';
+    mainLabel.textContent = 'main';
     const base = svg('g', { transform: `translate(30 ${mainY})` }, g);
     svg('circle', { class: 'mk-commit mk-commit--base', r: 14 }, base);
     const web = svg('path', { class: 'mk-cobweb', d: 'M-14 -4 L14 4 M-10 -10 L10 10 M-4 -14 L4 14 M-12 6 C-6 2 -2 2 4 -4', opacity: 0 }, base);

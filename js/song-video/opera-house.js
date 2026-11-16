@@ -108,7 +108,7 @@
 
     // The arched window: its skies stacked, faded in turn; a skyline; the
     // sun and the moon; then the frame and mullions over them.
-    const win = svg('g', { class: 'oh-window', transform: 'translate(60 76)' }, art);
+    const win = svg('g', { class: 'oh-window', transform: 'translate(756 76)' }, art);
     const pane = 'M0 150 V58 A70 58 0 0 1 140 58 V150 Z';
     const clip = svg('clipPath', { id: 'oh-window-clip' }, defs);
     svg('path', { d: pane }, clip);
@@ -138,9 +138,8 @@
     svg('path', { class: 'oh-window-frame', d: `${pane} M70 0 V150 M0 92 H140 M20 18 L120 18` }, win);
     svg('path', { class: 'oh-window-sill', d: 'M-8 150 H148 V158 H-8 Z' }, win);
 
-    // The wall clock, beside the window, where the props of every act stay
-    // clear of it.
-    const clock = svg('g', { class: 'oh-clock', transform: 'translate(252 112)' }, art);
+    // The clock sits just left of the window, clear of the floating panels.
+    const clock = svg('g', { class: 'oh-clock', transform: 'translate(708 112)' }, art);
     svg('circle', { class: 'oh-clock-rim', r: 34 }, clock);
     svg('circle', { class: 'oh-clock-face', r: 29 }, clock);
     for (let i = 0; i < 12; i++) {
@@ -155,8 +154,8 @@
     // The build-status board: a title plate and a row of lamps, each grey,
     // green, or red, with a tick or a cross on its lens (never colour alone).
     // Pending checks have an unlit lens and an ellipsis.
-    // It hangs high at the right, by the drapes.
-    const board = svg('g', { class: 'oh-board', 'data-testid': 'oh-build-board', transform: 'translate(696 70)' }, art);
+    // It hangs high at the left, above the Teammate's desk.
+    const board = svg('g', { class: 'oh-board', 'data-testid': 'oh-build-board', transform: 'translate(52 70)' }, art);
     svg('rect', { class: 'oh-board-frame', x: 0, y: 0, width: 200, height: 86, rx: 6 }, board);
     svg('rect', { class: 'oh-board-plate', x: 10, y: 8, width: 180, height: 22, rx: 3 }, board);
     const title = svg('text', { class: 'oh-board-title', x: 100, y: 24, 'text-anchor': 'middle' }, board);

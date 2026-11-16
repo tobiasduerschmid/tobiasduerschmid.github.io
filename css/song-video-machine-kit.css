@@ -344,16 +344,16 @@
 .mk-graph { position: absolute; }
 .mk-graph-line { fill: none; stroke: #e6edf3; stroke-width: 5; stroke-linecap: round; }
 .mk-graph-line--mine { stroke: #2fb5ad; }
-.mk-graph-label { fill: #e6edf3; font: 800 14px var(--font-display); }
+.mk-graph-label { fill: #e6edf3; font: 800 16px var(--font-display); }
 .mk-commit { stroke: #1a1410; stroke-width: 2.4; }
 .mk-commit--base { fill: #9aa6b6; }
 .mk-commit--mate { fill: #ffd100; }
 .mk-commit--mine { fill: #2fb5ad; }
 .mk-commit--tidy { fill: #2fb5ad; }
 .mk-commit--shine { fill: #8ff2ea; }
-.mk-commit-label { fill: #1a1410; font: 900 12px var(--font-display); }
+.mk-commit-label { fill: #1a1410; font: 900 14px var(--font-display); }
 .mk-commit-label--dark { fill: #0b111b; }
-.mk-commit-mini { fill: #cfe9e7; font: 700 12px var(--font-mono); }
+.mk-commit-mini { fill: #cfe9e7; font: 700 14px var(--font-mono); }
 .mk-commit-ghost { fill: none; stroke: #ffd100; stroke-width: 2.4; stroke-dasharray: 4 4; }
 .mk-cobweb { fill: none; stroke: #eef3fa; stroke-width: 1; opacity: 0.8; }
 .mk-graph-old { fill: #ffb3bd; font: 900 13px var(--font-display); }
