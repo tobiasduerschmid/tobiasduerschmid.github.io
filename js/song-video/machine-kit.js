@@ -497,7 +497,11 @@
         : `polygon(0 0, ${m + 6}px 0, ${zig}, ${m}px 100%, 0 100%)`;
       fx.pop(half, at, { rotate: -2 });
       // Tossed over his shoulders: the halves fly up and apart, out of the way.
-      tween(half, { translate: `${side ? 50 : -50}px -90px`, rotate: `${side ? 28 : -24}deg`, opacity: 0 }, tearAt, 0.7, EASE.in);
+      tween(half, { rotate: `${side ? 28 : -24}deg`, opacity: 0 }, tearAt, 0.7, EASE.linear);
+      onFrame(t => {
+        const dt = reducedMotion.matches ? 0 : Math.min(.7, Math.max(0, t - tearAt));
+        half.style.translate = `${(side ? 72 : -72) * dt}px ${-280 * dt + 230 * dt * dt}px`;
+      });
       return half;
     });
     return halves;
@@ -690,7 +694,17 @@
     tag.style.left = '-6px';
     tag.style.top = `${132 * size + 4}px`;
     popped(node, at, undefined, { rotate: -3 });
-    tween(node, { translate: '420px -160px', rotate: '540deg', opacity: 0 }, tossAt, 0.9, EASE.in);
+    // A release impulse, then constant horizontal speed and downward gravity.
+    // Translation precedes rotation; spinning the page cannot tilt gravity.
+    onFrame(t => {
+      const age = Math.max(0, t - tossAt);
+      const flying = t >= tossAt;
+      const dt = Math.min(age, 1.2);
+      node.style.translate = `${560 * dt}px ${-180 * dt + 230 * dt * dt}px`;
+      g.style.rotate = `${600 * dt}deg`;
+      g.style.opacity = flying && (reducedMotion.matches || age >= 1.2) ? '0' : '1';
+      tag.style.opacity = flying ? '0' : '1';
+    });
     return node;
   }
 
@@ -1262,11 +1276,12 @@
       // Theirs: on main, knocked off by the push, swept off, back at restore.
       theirs.forEach(({ c, i, ghost }) => {
         const homeX = 30 + step * (i + 1);
-        const knocked = push;
+        const landingTime = (50 + Math.sqrt(50**2 + 2 * 460 * 120)) / 460;
+        const flight = Math.min(landingTime, Math.max(0, t - pushAt - .2));
+        const knocked = reducedMotion.matches ? Number(t >= pushAt + .2) : flight / landingTime;
         const fallX = homeX + 30 + i * 24;
-        const fallY = mainY + 120 * knocked + 18 * Math.sin(Math.PI * knocked);
         let px = homeX + (fallX - homeX) * knocked;
-        let py = mainY + (fallY - mainY) * knocked;
+        let py = reducedMotion.matches ? mainY + 120 * knocked : mainY - 50 * flight + 230 * flight * flight;
         let opacity = 1;
         if (sweep > 0) { px -= 520 * sweep; opacity = 1 - sweep; }
         if (restore > 0) {

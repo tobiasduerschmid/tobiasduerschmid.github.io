@@ -814,7 +814,7 @@
         svg('path', { class: 'oc-rib', d: Array.from({ length: 21 }, (_, i) => `M${59.6 + i * 2.05} 152.4 V157.6`).join(' ') }, layer);
         inked(layer, 'M64 128.4 C72 127.4 88 127.4 96 128.4 C97.4 134 99 140 100.6 146.6 C88 148.4 72 148.4 59.4 146.6 C61 140 62.6 134 64 128.4 Z', 'oc-pocket-patch', 'oc-ink oc-ink--cool');
         svg('path', { class: 'oc-fold', d: 'M64.4 130 C63 135.4 61.6 140.6 60.4 145.4 M95.6 130 C97 135.4 98.4 140.6 99.6 145.4' }, layer);
-        print(layer);
+        if (!paint.roleSticker) print(layer);
       },
       collar(layer) {
         // The hood's front edges framing the neck, and its drawstrings.
@@ -1311,6 +1311,7 @@
     const user = { gradientUnits: 'userSpaceOnUse' };
     const paint = {
       defs,
+      roleSticker: Boolean(identity),
       top: gradient('linearGradient', 'top', { ...user, x1: 56, y1: 80, x2: 104, y2: 160 }, ['0', '0.5', '1']),
       sleeve: gradient('linearGradient', 'sleeve', { ...user, x1: 56, y1: 80, x2: 104, y2: 160 }, ['0', '0.6', '1']),
       trouserLeft: gradient('linearGradient', 'trouser', { ...user, x1: 56.4, y1: 0, x2: 80, y2: 0 }, ['0', '0.34', '0.74', '1']),
@@ -1368,11 +1369,14 @@
     const upperArms = svg('g', {}, trunk);
     const topLayer = svg('g', { class: 'oc-top-layer' }, trunk);
     costume.top(topLayer, paint);
+    // Sleeves crossing a garment still sit beneath hair, scarves and the
+    // collar. Forearms have their own foreground pass for facial gestures.
+    const forwardSleeves = svg('g', {}, trunk);
     if (identity) {
       // Keep the role marker on the same moving surface as the clothing,
-      // below crossing sleeves, forearms, collars and long hair.
+      // above buried sleeve roots, below foreground arms, collars and hair.
       const [x, y] = identity.sticker;
-      const sticker = svg('g', { class: 'oc-role-sticker', transform: `translate(${x} ${y})`, 'data-testid': 'oc-role-sticker' }, topLayer);
+      const sticker = svg('g', { class: 'oc-role-sticker', transform: `translate(${x} ${y})`, 'data-testid': 'oc-role-sticker' }, trunk);
       svg('rect', { class: 'oc-role-sticker-shadow', x: -8.6, y: -7.4, width: 18, height: 18, rx: 3 }, sticker);
       svg('rect', { class: 'oc-role-sticker-paper', x: -9, y: -9, width: 18, height: 18, rx: 3 }, sticker);
       svg('path', { class: 'oc-role-sticker-rim', d: 'M-6.5 -7 H5.6 M-7 -5.5 V4.5' }, sticker);
@@ -1381,9 +1385,6 @@
       sticker.appendChild(symbol);
       svg('path', { class: 'oc-role-sticker-corner', d: 'M5.4 8.8 L8.8 5.4 Q8.8 8.8 5.4 8.8 Z' }, sticker);
     }
-    // Sleeves crossing a garment still sit beneath hair, scarves and the
-    // collar. Forearms have their own foreground pass for facial gestures.
-    const forwardSleeves = svg('g', {}, trunk);
     const wornUnder = svg('g', {}, trunk);
     const drawnNeck = svg('g', {}, trunk);
     inked(drawnNeck, NECK, 'oc-skin-neck', 'oc-ink oc-ink--face', paint.skin);
@@ -1416,7 +1417,7 @@
       const sleevePaintId = id('upper-fabric');
       svg('linearGradient', { id: sleevePaintId, href: fabric.slice(4, -1), gradientTransform: side < 0 ? MIRROR : '' }, defs);
       const sleeveInk = svg('path', { class: 'oc-ink oc-ink--cool', ...(costume.sleeve === 'long' ? { 'clip-path': `url(#${sleeveOutlineClip.id})` } : {}) }, shoulder);
-      const sleeveFill = svg('path', { class: 'oc-sleeve', fill: `url(#${sleevePaintId})` }, shoulder);
+      const sleeveFill = svg('path', { class: 'oc-sleeve', fill: `url(#${sleevePaintId})`, 'data-testid': 'oc-upper-sleeve' }, shoulder);
       const sleeveClip = svg('clipPath', { id: id('sleeve-volume') }, defs);
       const sleeveBoundary = svg('path', {}, sleeveClip);
       const sleeveLight = svg('path', { class: 'oc-sleeve-volume-light', filter: `url(#${softVolumeId})`, 'clip-path': `url(#${sleeveClip.id})` }, shoulder);

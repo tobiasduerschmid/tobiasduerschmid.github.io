@@ -278,6 +278,34 @@ test('the Product Manager throws the held clipboard into the bin without replaci
   await expectPainted(page, 'requirements', false, 'reverse seeking removes the discarded copy');
 });
 
+test('released props follow gravity without sideways steering between contacts', async ({ page }) => {
+  await openStage(page);
+  const flights = [
+    { name: 'requirements', at: CLIPBOARD_RELEASE, step: .15 },
+    { name: 'flying-mug', at: RELEASE, step: .15 },
+    { name: 'flying-palette', at: PALETTE_RELEASE, step: .01 },
+    { name: 'dependencies', at: PACKAGE_RELEASE, step: .1, center: [41,29] },
+    { name: 'tests', at: mark('test-2','failed'), step: .15 },
+  ];
+  for (const { name, at, step, center = [0,0] } of flights) {
+    const points = [];
+    for (let i = 0; i < 5; i++) {
+      await seek(page, at + .001 + i * step);
+      points.push(await page.getByTestId(`aftermath-${name}`).evaluate((node, center) => {
+        const matrix = node.ownerSVGElement.getScreenCTM().inverse().multiply(node.getScreenCTM());
+        const point = new DOMPoint(...center).matrixTransform(matrix);
+        return [point.x, point.y];
+      }, center));
+    }
+    for (let i = 1; i < points.length - 1; i++) {
+      const acceleration = [0,1].map(axis => (points[i+1][axis]-2*points[i][axis]+points[i-1][axis]) / step**2);
+      // Tolerance covers SVG float matrices, including the palette's short flight.
+      expect(Math.abs(acceleration[0]), `${name} must not steer in midair`).toBeLessThan(2);
+      expect(acceleration[1], `${name} must keep the same downward gravity`).toBeCloseTo(460, -1);
+    }
+  }
+});
+
 test('the discarded clipboard sits inside the bin behind its front wall and rim', async ({ page }) => {
   for (const motion of ['no-preference', 'reduce']) {
     await openStage(page, motion);

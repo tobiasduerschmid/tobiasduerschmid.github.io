@@ -38,6 +38,33 @@ const midSolo = (section) => {
 // The curtain starts to fall on the closing chord, hiding the stage.
 const CURTAIN = 279.5;
 
+test('the office clock and sunrise agree after the overnight aging', async ({ page }) => {
+  const morning = mark('ui-4', 'overnight') + .25;
+  for (const [time, hourAngle, minuteAngle] of [[3,285,180], [storyLines.get('pm-1').start - 2.5,90,0], [morning + 5.1,280,120]]) {
+    await seek(page, time);
+    const hands = await page.locator('.oh-clock-hand').evaluateAll(nodes => nodes.map(node => node.transform.baseVal.getItem(0).angle));
+    expect(hands[0], `hour hand at ${time}s`).toBeCloseTo(hourAngle, 1);
+    expect(hands[1], `minute hand at ${time}s`).toBeCloseTo(minuteAngle, 1);
+  }
+  const samples = [];
+  for (let offset = 0; offset <= 5; offset += .1) {
+    await seek(page, morning + offset);
+    samples.push(await page.locator('.oh-sun').evaluate(node => {
+      const glow = document.querySelector('[fill="url(#oh-sun-glow)"]');
+      return { x: Number(node.getAttribute('cx')), y: Number(node.getAttribute('cy')), opacity: Number(node.getAttribute('opacity')),
+        glowX: Number(glow.getAttribute('cx')), glowY: Number(glow.getAttribute('cy')) };
+    }));
+  }
+  const visible = samples.filter(point => point.opacity > .1);
+  expect(visible.length, 'the sun emerges during the sunrise').toBeGreaterThan(5);
+  for (let i = 1; i < visible.length; i++) {
+    expect(visible[i].x, 'the rising sun advances from the left').toBeGreaterThanOrEqual(visible[i-1].x);
+    expect(visible[i].y, 'the morning sun climbs rather than setting again').toBeLessThanOrEqual(visible[i-1].y);
+    expect(visible[i].glowX).toBe(visible[i].x);
+    expect(visible[i].glowY).toBe(visible[i].y);
+  }
+});
+
 const savedHuman = {
   version: 1,
   kind: 'human',
@@ -964,6 +991,32 @@ test('the Test Engineer sleeve leaves the chest sticker intact while holding the
     });
     expect(covered, 'a construction edge must not cut through the sticker on the chest').toBe(false);
   }
+});
+
+test('role stickers stay clear of sleeve roots and drawstrings throughout the supporting cast choreography', async ({ page }) => {
+  const windows = Object.fromEntries(TEAMMATES.map(([role, section]) => [role, [
+    [sections.get(section).lines[0].start, sections.get(section).lines.at(-1).end],
+    [storyLines.get('refrain-3-1').start, storyLines.get('outro-2').end],
+  ]]));
+  const artifacts = await page.evaluate(windows => {
+    const artifacts = [];
+    for (const [role, ranges] of Object.entries(windows)) for (const [from, to] of ranges) {
+      for (let time = from; time <= to; time += 0.25) {
+        window.Timeline.seek(time);
+        const figure = document.querySelector(`[data-testid="oc-${role}"]`);
+        const sticker = figure.querySelector('[data-testid="oc-role-sticker"]');
+        const surfaces = [...figure.querySelectorAll('[data-testid="oc-upper-sleeve"], .oc-drawstring, .oc-aglet')]
+          .filter(node => sticker.compareDocumentPosition(node) & Node.DOCUMENT_POSITION_FOLLOWING);
+        const points = [-7, 0, 7].flatMap(x => [-7, 0, 7].map(y => new DOMPoint(x, y).matrixTransform(sticker.getScreenCTM())));
+        if (points.some(point => surfaces.some(surface => {
+          const local = point.matrixTransform(surface.getScreenCTM().inverse());
+          return surface.classList.contains('oc-drawstring') ? surface.isPointInStroke(local) : surface.isPointInFill(local);
+        }))) artifacts.push({ role, time });
+      }
+    }
+    return artifacts;
+  }, windows);
+  expect(artifacts, 'upper-sleeve construction and hoodie cords must not cut into the role stickers').toEqual([]);
 });
 
 test('the finale cast keeps empty hands down while watching green, the CI failure, and his excuse', async ({ page }) => {

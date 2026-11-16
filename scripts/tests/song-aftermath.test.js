@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { progress, arcFlight, contactFlight, projectile, floorContactTime } = require('../../js/song-video/teammate-aftermath');
+const { progress, arcFlight, projectile, floorContactTime, bounceHeight } = require('../../js/song-video/teammate-aftermath');
 const close = (actual, wanted) => assert.ok(Math.abs(actual - wanted) < 1e-7, `${actual} != ${wanted}`);
 
 test('an event is absent before its cue and remains settled after its duration', () => {
@@ -27,13 +27,27 @@ test('free flight preserves release position and velocity before gravity acts', 
   assert.ok(Math.abs((p[1]-200)/dt+100)<.01);
 });
 
-test('an aimed discard preserves its hand velocity and descends into the bin', () => {
-  const path = { from: [660,230], to: [330,378], velocity: [-350,-80], landingVelocity: [-20,220], duration: 1.25 };
-  assert.deepEqual(contactFlight(path,0), path.from);
-  assert.deepEqual(contactFlight(path,2), path.to);
-  const p = contactFlight(path,1e-5);
-  path.velocity.forEach((v,i) => assert.ok(Math.abs((p[i]-path.from[i])/1e-5-v)<.01));
-  assert.ok(contactFlight(path,1.24)[1]<path.to[1], 'approaches the opening from above');
+test('free flight cannot steer sideways or change gravity between contacts', () => {
+  for (const velocity of [[-400,14], [150,-80], [-425,-410], [160,0]]) {
+    const path = { position:[680,205], velocity, gravity:460 };
+    const points = [0,.1,.2,.3,.4].map(t => projectile(path,t));
+    for (let i=1;i<points.length-1;i++) {
+      close(points[i+1][0]-2*points[i][0]+points[i-1][0],0);
+      close((points[i+1][1]-2*points[i][1]+points[i-1][1])/.01,460);
+    }
+  }
+});
+
+test('a small rebound leaves and returns to its contact under the same gravity', () => {
+  for (const duration of [.2,.24,.28]) {
+    close(bounceHeight(-1,duration),0);
+    close(bounceHeight(0,duration),0);
+    close(bounceHeight(duration,duration),0);
+    close(bounceHeight(duration+1,duration),0);
+    assert.ok(bounceHeight(duration/2,duration)>0);
+    const t=duration/2, dt=.01;
+    close((bounceHeight(t-dt,duration)-2*bounceHeight(t,duration)+bounceHeight(t+dt,duration))/(dt*dt),-460);
+  }
 });
 
 test('fragment floor contact is the positive crossing even with an initial upward bounce', () => {

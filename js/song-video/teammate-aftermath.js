@@ -5,24 +5,23 @@
   const progress = (time, at, duration) => Math.max(0, Math.min(1, (time - at) / duration));
   const smooth = (u) => u * u * (3 - 2 * u);
   const mix = (a, b, u) => a + (b - a) * u;
+  const GRAVITY = 460; // Stage pixels / second²; shared by free and rebounding props.
 
   /** A ballistic toss between known contacts, clamped only at those contacts. */
   function arcFlight({ from, to, duration, arc }, elapsed) {
     const u = progress(elapsed, 0, duration);
     return [mix(from[0], to[0], u), mix(from[1], to[1], u) - 4 * arc * u * (1 - u)];
   }
-  /** Authored toss with the measured release tangent and a downward rim entry. */
-  function contactFlight({ from, to, velocity, landingVelocity, duration }, elapsed) {
-    const u = progress(elapsed, 0, duration);
-    const h00 = 2*u**3 - 3*u*u + 1, h10 = u**3 - 2*u*u + u;
-    const h01 = -2*u**3 + 3*u*u, h11 = u**3 - u*u;
-    return from.map((value, i) => h00*value + h10*duration*velocity[i] + h01*to[i] + h11*duration*landingVelocity[i]);
-  }
   function projectile({ position, velocity, gravity }, elapsed) {
     return [position[0] + velocity[0] * elapsed, position[1] + velocity[1] * elapsed + gravity * elapsed * elapsed / 2];
   }
   function floorContactTime({ position, velocity, gravity }, floor) {
     return (-velocity[1] + Math.sqrt(velocity[1] ** 2 + 2 * gravity * (floor - position[1]))) / gravity;
+  }
+  // A collision may change velocity; gravity remains constant during the hop.
+  function bounceHeight(elapsed, duration, gravity = GRAVITY) {
+    const t = Math.max(0, Math.min(duration, elapsed));
+    return gravity * t * (duration - t) / 2;
   }
   const visible = (node, show) => node.classList.toggle('tm-aftermath-hidden', !show);
   const pose = (node, [x, y], angle = 0, scale = 1) => node.setAttribute('transform', `translate(${x} ${y}) rotate(${angle}) scale(${scale})`);
@@ -96,16 +95,16 @@
       const elapsed = t - cues.story;
       visible(story, elapsed >= 0);
       if (elapsed < 0) return;
-      const source = sampleRelease(pm, cues.story, 'story');
-      const duration = 1.25;
+      const source = { ...sampleRelease(pm, cues.story, 'story'), gravity: GRAVITY };
+      const duration = floorContactTime(source, 386);
       const down = reduced.matches ? duration : Math.min(duration, elapsed);
       // Sink the bottom of the board into the mouth, behind its front rim.
       // Stopping at the opening's centre left it balanced on top of the lip.
-      const position = contactFlight({ from: source.position, to: [338, 386], velocity: source.velocity,
-        landingVelocity: [-18, 210], duration }, down);
-      const u = down / duration;
-      // Start in exactly the held orientation, then tumble once and settle inside the bin.
-      const angle = -352 * smooth(u);
+      // Continue the actual hand velocity. Never bend the path to steer into
+      // the bin: the release choreography aims it, and gravity does the rest.
+      const position = projectile(source, down);
+      // The carrying grip holds this board upright, with no release spin.
+      const angle = 0;
       const [a,b,c,d] = source.matrix;
       story.setAttribute('transform', `translate(${position[0]} ${position[1]}) rotate(${angle}) matrix(${a} ${b} ${c} ${d} 0 0)`);
       story.dataset.settled = String(down === duration);
@@ -124,7 +123,7 @@
       // The pictured cached package slips out on “new”, keeping its exact
       // silhouette and scale at release before falling toward the rear floor.
       const floor = 414, restScale = .84;
-      const fall = { position: packageRelease.position, velocity: [160, 0], gravity: 280 };
+      const fall = { position: packageRelease.position, velocity: [160, 0], gravity: GRAVITY };
       // Support is the lowest painted box corner, not its centre. It first
       // contacts one corner, then rocks flat without hovering or sinking.
       const foot = angle => {
@@ -133,12 +132,13 @@
           .map(([x,y]) => (x-41)*Math.sin(r) + (y-29)*Math.cos(r)));
       };
       const lands = floorContactTime(fall, floor - restScale * foot(-18));
+      fall.velocity[0] = (520 - fall.position[0]) / lands;
       const down = reduced.matches && elapsed >= 0 ? lands + .25 : Math.max(0, elapsed);
       const position = projectile(fall, Math.min(down, lands));
       const u = progress(down, 0, lands);
       const settling = smooth(progress(down, lands, .24));
-      const angle = -18 * smooth(u) * (1 - settling);
-      const bounce = down > lands && down < lands + .24 ? Math.sin((down - lands) / .24 * Math.PI) * 3 : 0;
+      const angle = -18 * u * (1 - settling);
+      const bounce = bounceHeight(down - lands, .24);
       const scale = mix(packageRelease.scale, restScale, smooth(u));
       if (down >= lands) position[1] = floor - scale * foot(angle);
       oldPackage.setAttribute('transform', `translate(${position[0]} ${position[1] - bounce}) rotate(${angle}) scale(${scale}) translate(-41 -29)`);
@@ -162,15 +162,16 @@
 
     function updateReport(t) {
       const elapsed = t - cues.tests;
-      const u = reduced.matches && elapsed >= 0 ? 1 : progress(elapsed, 0, 1.5);
+      const duration = 1.2;
+      const u = reduced.matches && elapsed >= 0 ? 1 : progress(elapsed, 0, duration);
       visible(slot, elapsed >= -.12 && elapsed < .55);
       visible(art.report, elapsed >= 0);
       // The failing visual ejects the sheet; no independent hand is presented as a grip.
-      pose(art.report, arcFlight({ from: [610, 330], to: [274, 357], duration: 1, arc: 85 }, u), mix(-75, 6, smooth(u)), mix(.85, .64, smooth(u)));
+      pose(art.report, arcFlight({ from: [610, 330], to: [274, 357], duration, arc: GRAVITY * duration**2 / 8 }, u * duration), mix(-75, 6, u), mix(.85, .64, smooth(u)));
       const reportLayer = u < 1 ? front : desk;
       if (art.report.parentNode !== reportLayer) reportLayer.appendChild(art.report);
-      visible(reportShadow, elapsed >= 1.5 || (reduced.matches && elapsed >= 0));
-      quiet(art.report, reduced.matches ? 1 : smooth(progress(elapsed, 1.6, REST_DURATION)));
+      visible(reportShadow, elapsed >= duration || (reduced.matches && elapsed >= 0));
+      quiet(art.report, reduced.matches ? 1 : smooth(progress(elapsed, duration + .1, REST_DURATION)));
     }
 
     function updatePalette(t, ui) {
@@ -178,7 +179,7 @@
       visible(palette, elapsed >= 0);
       visible(art.paint, false);
       if (elapsed < 0) return;
-      const source = { ...sampleRelease(ui, cues.palette, 'palette', 'right'), gravity: 460 };
+      const source = { ...sampleRelease(ui, cues.palette, 'palette', 'right'), gravity: GRAVITY };
       const duration = (874 - source.position[0]) / source.velocity[0];
       const hit = projectile(source, duration);
       art.updatePaintDrips(elapsed - duration, { growthDuration: cues.end - cues.palette - duration });
@@ -189,14 +190,15 @@
       quiet(art.paint, reduced.matches ? 1 : smooth(progress(elapsed, duration + .2, REST_DURATION)));
       quiet(palette, 0);
       let pos = projectile(source, Math.min(duration, elapsed));
-      let angle = elapsed * elapsed * 300;
+      let angle = 0;
       if (impact) {
-        const fall = { position: hit, velocity: [-24, -20], gravity: 680 };
+        const fall = { position: hit, velocity: [-24, -20], gravity: GRAVITY };
         const lands = floorContactTime(fall, 406);
         const down = reduced.matches ? lands + .25 : elapsed - duration;
         pos = projectile(fall, Math.min(down, lands));
-        angle = mix(duration * duration * 300, 180, smooth(progress(down, 0, lands)));
-        if (down >= lands && down < lands + .2) pos[1] -= Math.sin((down - lands) / .2 * Math.PI) * 3;
+        // Wall contact supplies the torque. Free-flight angular speed is constant.
+        angle = 180 * progress(down, 0, lands);
+        pos[1] -= bounceHeight(down - lands, .2);
         quiet(palette, reduced.matches ? 1 : smooth(progress(down, lands + .2, REST_DURATION)));
         const destination = down >= lands ? ground : front;
         if (palette.parentNode !== destination) destination.appendChild(palette);
@@ -211,7 +213,7 @@
         [mug, art.coffee, art.drips, art.fragments, coffeeFloor].forEach(node => visible(node, false));
         return;
       }
-      const source = { ...sampleRelease(backend, cues.coffee, 'coffee'), gravity: 460 };
+      const source = { ...sampleRelease(backend, cues.coffee, 'coffee'), gravity: GRAVITY };
       // Measured arm velocity carries the mug across the stage to the clear
       // wall immediately right of the build board, left of the floating panels.
       const duration = (295 - source.position[0]) / source.velocity[0];
@@ -224,8 +226,8 @@
       const hit = projectile(source, duration);
       const pos = projectile(source, Math.min(duration, elapsed));
       const [a, b, c, d] = source.matrix;
-      // Rotation accelerates after release, so angular velocity is continuous at the handoff.
-      const turn = elapsed * elapsed * 260;
+      // An upright release has no spin; gravity cannot supply a midair torque.
+      const turn = 0;
       mug.setAttribute('transform', `translate(${pos[0]} ${pos[1]}) rotate(${turn}) matrix(${a} ${b} ${c} ${d} 0 0)`);
       const impact = reduced.matches ? 1 : smooth(progress(elapsed, duration, .12));
       pose(art.coffee, hit, 0, impact);
@@ -235,7 +237,7 @@
       art.drips.setAttribute('opacity', String(reduced.matches ? 1 : progress(elapsed, duration + .1, 1.2)));
       // The wall impact dissipates the throw. A small rebound puts the pieces
       // to the right of the bin, while gravity carries them to the upstage floor.
-      const fall = { position: hit, velocity: [0, -22], gravity: 680 };
+      const fall = { position: hit, velocity: [0, -22], gravity: GRAVITY };
       // Centre the debris in the free floor space between bin and package.
       // Derive the rebound speed from that contact, rather than teleporting it.
       const slide = .28 * 14;
@@ -244,8 +246,9 @@
       const lands = floorContactTime(fall, 414);
       const down = reduced.matches ? lands + .28 : Math.max(0, elapsed - duration);
       const fragmentPosition = projectile(fall, Math.min(down, lands));
-      const bounce = down > lands && down < lands + .28 ? Math.sin((down - lands) / .28 * Math.PI) * 7 : 0;
-      pose(art.fragments, [fragmentPosition[0] + Math.max(0, Math.min(.28, down - lands)) * 14, fragmentPosition[1] - bounce]);
+      const bounce = bounceHeight(down - lands, .28);
+      const skid = progress(down, lands, .28);
+      pose(art.fragments, [fragmentPosition[0] + slide * (2 * skid - skid * skid), fragmentPosition[1] - bounce]);
       visible(coffeeFloor, down >= lands);
       pose(coffeeFloor, projectile(fall, lands));
       quiet(art.fragments, reduced.matches ? 1 : smooth(progress(down, lands + .28, REST_DURATION)));
@@ -292,7 +295,7 @@
     };
   }
 
-  const api = { progress, arcFlight, contactFlight, projectile, floorContactTime, create };
+  const api = { progress, arcFlight, projectile, floorContactTime, bounceHeight, create };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.TeammateAftermath = api;
 })(typeof window === 'undefined' ? globalThis : window);

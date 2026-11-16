@@ -115,7 +115,7 @@
     house.curtain(0, 0, 0.01);
     house.curtain(0.3, 1, 2.2);
     house.sky(0, 'day', 0.01);
-    house.clock(0, 9, 0.01);
+    house.clock(0, 9.5, 0.01);
     // One history owns the accumulated setbacks. Local green laptop screens
     // and the restored Git history must not erase earlier failed checks.
     const issueReveals = [
@@ -178,9 +178,8 @@
         M.calendar(wall, { x: 342, y: 92, at: 8.3, days: 14, tearAt: mark('intro-2', 'save'), tearUntil: mark('intro-2', 'sprint') + 0.9 });
       });
       move('tenor', mark('intro-2', 'save') - 0.1, 'point', { to: [400, 160], hold: 1.6 });
-      // "We'll ship it by three!": the clock spins to three, a toy ship is
-      // flown in from the rafters under its pennant, and he salutes it.
-      house.clock(mark('intro-2', 'ship'), 15, 0.9);
+      // "We'll ship it by three!": a toy ship is flown in from the
+      // rafters under its deadline pennant, and he salutes it.
       ahead.push(() => {
         const dock = kit.scene(content, mark('intro-2', 'well'), cleared, { exit: 'fade' });
         M.toyShip(dock, { x: 460, y: 318, at: mark('intro-2', 'well'), rollAt: mark('intro-2', 'well'), leaveAt: cleared - 1.6, label: 'v1.0 by 3:00', from: 'above' });
@@ -270,6 +269,7 @@
     function pm() {
       const v = (n) => `pm-${n}`;
       const enter = line(v(1)).start - 2.4;
+      house.clock(enter - 1.2, 15, 0.9);
       plan.pm.stage.push([enter, line('verse-2-2').start, { enter: 'right', exit: 'right' }]);
       placeAt('pm', 0, ...HOME.mate);
       plan.pm.holds.push([enter, 'left', 'clipboard']);
@@ -611,7 +611,11 @@
           lines: ['def test_transfer(spy):', '    transfer(seat, sam)', '    assert spy.calls == [', '        "check_owner",', '        "notify", "log"]'],
           changes: [
             ...[0, 1, 2, 3, 4].map((i) => [mark('test-2', 'failed'), i, null, 'mark-red']),
-            [fixed, 0, 'def test_transfer():', ''], [fixed, 1, null, ''], [fixed, 2, '    assert sam.has(seat)', 'new'], [fixed, 3, '', ''], [fixed, 4, '', ''],
+            [fixed, 0, 'def test_transfer(seat, sam):', ''],
+            [fixed, 1, '    previous = seat.owner', ''],
+            [fixed, 2, '    transfer(seat, sam)', ''],
+            [fixed, 3, '    assert sam.has(seat)', 'new'],
+            [fixed, 4, '    assert not previous.has(seat)', 'new'],
           ],
         });
       });
@@ -659,8 +663,8 @@
       move('test', mark(v(2), 'failed') - 0.1, 'despair', { hold: 0.7 });
       move('test', mark(v(2), 'night') - 0.2, 'yawn', { hold: 0.9 });
       // "Test what it does, not how: then my friend's ticket should show!":
-      // the rule on a sticker; the test now checks that Sam has the seat,
-      // and it passes.
+      // the rule on a sticker; the test checks both ends of the ownership
+      // transfer, without pinning the helper-call order.
       behind.push(() => {
         const rule = kit.scene(content, mark(v(3), 'test') - 0.1, line(v(4)).start, { exit: 'fade' });
         kit.sticker(rule, 'Test the behavior', { x: 430, y: 256, at: mark(v(3), 'test'), variant: 'gold', iconName: 'check', rotate: -4 });
@@ -731,7 +735,7 @@
           reachAt: mark(v(2), 'showtime') + i * 0.1, brokeAt: c.broke, patchAt: c.patch, until,
         }));
         // "Let every page do the math!": each page's own time math.
-        M.tags(inside, ['+ 7 h?', 'split(":")', 'PM → 24 h'].map((text, i) => [mark(v(3), 'math') + i * 0.14, 702, 162 + i * 137, text, 'gold']), line(v(4)).end);
+        M.tags(inside, ['+ 7 h?', 'split(":")', 'PM → 24 h'].map((text, i) => [mark(v(3), 'math') + i * 0.14, 674, 154 + i * 137, text, 'gold']), line(v(4)).end);
       });
       move('tenor', mark(v(2), 'page') - 0.2, 'present', { to: [600, 250], hold: 1.2 });
       move('tenor', mark(v(2), 'ideal') - 0.1, 'kiss', { hold: 0.3 });
@@ -765,7 +769,7 @@
       // red, and dashed lines run to everything that used them: chips in
       // the space above and below the Shows module.
       behind.push(() => {
-        const spread = kit.scene(content, mark(v(2), 'used') - 0.2, mark(v(3), 'hide') - 0.1, { exit: 'fade' });
+        const spread = kit.scene(content, mark(v(2), 'used') - 0.2, line(v(3)).end + .3, { exit: 'fade' });
         M.ripple(spread, {
           x: 470, y: 290, at: mark(v(2), 'used'), every: 0.07,
           targets: [
@@ -777,25 +781,20 @@
       });
       move('ui', mark(v(2), 'detail') - 0.2, 'point', { to: [482, 290], hold: 0.8 });
       move('ui', mark(v(2), 'everywhere') - 0.15, 'throwUp', { hold: 0.8 });
-      // "Hide choices that change in one module — right?": the fix, one
-      // module that alone knows how times are stored; the pages get patched.
-      behind.push(() => {
-        const fix = kit.scene(content, mark(v(3), 'hide') - 0.2, line('refrain-2-1').start - 1.5, { exit: 'fade' });
-        const card = M.card(fix, {
-          x: 300, y: 50, w: 230, title: 'Showtime module', iconName: 'lock', tone: 'gold', at: mark(v(3), 'hide'),
-          lines: ['showtime(show)', 'hides the time format'], rotate: -1,
-        });
-        card.rows[0].classList.add('mk-card-line--mono');
-      });
-      move('ui', mark(v(3), 'hide') - 0.2, 'present', { to: [420, 100], hold: 1.2 });
+      // Keep the dependency picture through the advice, so the audience can
+      // inspect the affected clients while their cracks are patched.
+      move('ui', mark(v(3), 'hide') - 0.2, 'present', { to: [470, 290], hold: 1.2 });
       move('ui', mark(v(3), 'right'), 'finger', { hold: 0.7 });
       // "You moved every showtime — I've aged overnight!": night and
       // morning race past; the UI Developer's hair goes silver and a cane
       // appears.
       move('ui', mark(v(4), 'moved') - 0.1, 'point', { to: [170, 240], hold: 1 });
       house.sky(mark(v(4), 'ive'), 'night', 0.4);
-      house.sky(mark(v(4), 'aged') + 0.3, 'day', 3);
       house.clock(mark(v(4), 'ive'), 26 + 24, 1.2);
+      const morning = mark(v(4), 'overnight') + .25;
+      house.sky(morning, 'dawn', 2);
+      house.sky(morning + 2, 'day', 3);
+      house.clock(morning, 48 + 9 + 1 / 3, 5);
       plan.ui.holds.push([mark(v(4), 'aged'), 'left', 'cane']);
       move('ui', mark(v(4), 'aged'), 'mood', { age: 1, hold: leave - mark(v(4), 'aged') + 2, crouch: 0.6, nod: 0.5, lean: 3, smile: -0.4 });
       move('ui', mark(v(4), 'overnight'), 'arms', { left: { reach: [118, 196], shape: 'grip', dir: 90 }, hold: leave - mark(v(4), 'overnight') + 0.4 });
@@ -1314,7 +1313,7 @@
       build: { label: ['Build', 'Engineer'], shortLabel: 'Build', icon: 'gear', sticker: [91, 115] },
       test: { label: ['Test', 'Engineer'], shortLabel: 'Test', icon: 'search', sticker: [74, 117] },
       ui: { label: ['UI', 'Developer'], shortLabel: 'UI', icon: 'pencil', sticker: [80, 118] },
-      backend: { label: ['Back-End', 'Developer'], shortLabel: 'Backend', icon: 'database', sticker: [91.6, 108] },
+      backend: { label: ['Back-End', 'Developer'], shortLabel: 'Backend', icon: 'database', sticker: [80, 137] },
       security: { label: ['Security', 'Engineer'], shortLabel: 'Security', icon: 'shield', sticker: [91.4, 114.4] },
     };
     const identityFor = (role) => {

@@ -68,7 +68,6 @@
     back.art.style.setProperty('--oh-sky-warmth', `${(100 * warmth).toFixed(2)}%`);
     back.art.style.setProperty('--oh-sky-night', `${(100 * nightness).toFixed(2)}%`);
     back.haze.setAttribute('opacity', ((0.12 + 0.68 * warmth) * (1 - nightness)).toFixed(3));
-    back.sunGlow.setAttribute('cy', (150 - 70 * sunNow).toFixed(1));
     back.sunGlow.setAttribute('opacity', (0.45 * sunNow).toFixed(3));
     for (const cloud of back.clouds) {
       const x = cloud.x + (reducedMotion.matches ? 0 : t * cloud.speed);
@@ -297,12 +296,19 @@
         half.setAttribute('opacity', open > 0.995 ? '0' : '1');
       });
       // The clock: each cue turns the hands forwards to its time.
-      let hours = 9;
+      let hours = 9, solarHours = 9;
       for (const [at, target, duration] of clockCues) {
         if (t < at) break;
         let to = target;
-        while (to < hours) to += 12;
-        hours += (to - hours) * easeInOutCubic(progress(t, at, duration));
+        while (to < hours) to += 24;
+        const blend = easeInOutCubic(progress(t, at, duration));
+        hours += (to - hours) * blend;
+        // Whole days on the accelerated clock need not spin the sun around
+        // repeatedly. Advance to the next matching time of day, always east
+        // to west, including the hidden night portion of the orbit.
+        let solarTarget = ((target % 24) + 24) % 24;
+        while (solarTarget < solarHours - .00001) solarTarget += 24;
+        solarHours += (solarTarget - solarHours) * blend;
       }
       hands(hours);
       // The sky: each cue fades its sky in over the one before.
@@ -325,10 +331,17 @@
       back.stars.setAttribute('opacity', nightness.toFixed(3));
       back.moon.setAttribute('opacity', nightness.toFixed(3));
       back.lit.setAttribute('opacity', Math.min(1, nightness + (shown === 1 ? mix * 0.6 : 0)).toFixed(3));
-      const sunUp = (index) => (index === 0 ? 1 : index === 3 ? 0.6 : index === 1 ? 0.3 : 0);
-      const sunNow = sunUp(previous) + (sunUp(shown) - sunUp(previous)) * mix;
-      back.sun.setAttribute('opacity', sunNow.toFixed(3));
-      back.sun.setAttribute('cy', (150 - 70 * sunNow).toFixed(1));
+      // One projected solar arc: rise at the left horizon, crest at noon,
+      // set at the right. Brightness never controls position or reverses it.
+      const phase = (solarHours - 6) * Math.PI / 12;
+      const altitude = Math.sin(phase);
+      const sunX = 70 - 64 * Math.cos(phase), sunY = 114 - 96 * altitude;
+      const sunNow = Math.max(0, altitude) * (1 - nightness);
+      back.sun.setAttribute('opacity', (Math.max(0, Math.min(1, altitude * 8 + .15)) * (1 - nightness)).toFixed(3));
+      for (const node of [back.sun, back.sunGlow]) {
+        node.setAttribute('cx', sunX.toFixed(2));
+        node.setAttribute('cy', sunY.toFixed(2));
+      }
       lightWindow(back, t, sunNow, nightness);
       // The board: the latest cue's lamps, each lit after its delay.
       let cue = null;
