@@ -464,7 +464,7 @@
         const beam = M.spot(content, () => ({ where: () => ({ x: 555, y: 432, scale: 0.95 }) }), { from: mailFocus[0], to: mailFocus[1] });
         beam.dataset.testid = 'tm-mail-spot';
         const mail = kit.scene(content, ...mailFocus, { exit: 'fade' });
-        const box = M.shippingBox(mail, { x: 470, y: 316, at: line(v(4)).start - 0.1, labelAt: mark(v(4), 'mail') });
+        const box = M.shippingBox(mail, { x: 470, y: 316, at: line(v(4)).start - 0.1, labelAt: mark(v(4), 'mail') - 1 });
         lighting.subject(box, { kind: 'shipping', windows: [mailFocus] });
       });
       behind.push(() => {
@@ -1105,13 +1105,16 @@
       const at = line('refrain-3-1').start - 1.6;
       badge('Finale', at, undefined);
       LINEUP.forEach(([role, x, wing], i) => {
+        // Leave work props backstage before joining the final chorus.
+        plan[role].holds.push([at - 0.1, 'left', null], [at - 0.1, 'right', null]);
         if (role !== 'security') plan[role].stage.push([at + i * 0.08, undefined, { enter: wing }]);
         placeAt(role, at - 0.1, x, 430, 0.7, role === 'security' ? 1.2 : 0.01);
         move(role, at + 1.4, 'hips', { hold: 6 });
         move(role, mark('refrain-3-3', 'ninetysix') + i * 0.05, 'facepalm', { hold: 1.4 });
-        move(role, mark('refrain-3-4', 'green') + i * 0.06, 'despair', { hold: 1.8 });
+        move(role, mark('refrain-3-4', 'green') - 0.2, 'arms', {
+          left: { shape: 'rest', hand: -8 }, right: { shape: 'rest', hand: -8 }, hold: Infinity,
+        });
       });
-      plan.ui.holds.push([at, 'left', null]);
       move('ui', at, 'mood', { age: 1, hold: 30 });
       ahead.push(() => {
         const party = kit.scene(content, mark('refrain-3-4', 'green'), mark('refrain-3-4', 'green') + 6.5);
@@ -1282,6 +1285,49 @@
         (word ? mark(id, word) : line(id).start) - 0.12, line(id).end + 0.2, expressions[emotion],
       ]),
     ] : [];
+    // Silent ensemble acting follows the result and each excuse, rather
+    // than the lead's triumphant gesture. Later beats ease over the held
+    // earlier expression, avoiding a return to neutral between reactions.
+    const finaleListeningFor = (role) => {
+      const i = LINEUP.findIndex(([name]) => name === role);
+      if (i < 0) return [];
+      const tilt = [-3, 2, -2, 3, -1.5, 1.5][i];
+      const delay = [0.04, 0, 0.07, 0.12, 0.09, 0.02][i];
+      const until = line('outro-3').start + 0.45;
+      const watching = { look: -0.75, down: 0.12, turn: -0.12, tilt, nod: 0,
+        brow: 0.65, wide: 0.55, frown: 0, smile: 0.08, misery: 0, happy: 0, round: 0 };
+      const angry = { ...watching, look: -0.95, down: 0, tilt: tilt * 0.2, nod: 0.22,
+        brow: -0.12, wide: 0, frown: 1 - i * 0.018, smile: -0.82 - i * 0.02 };
+      return [
+        [mark('refrain-3-4', 'green') - 0.35 + delay, until, watching, 0.45],
+        [CI_RUNNING + delay, until, { ...watching, down: 0.5, tilt: tilt * 0.6, brow: 0.38, wide: 0.4, smile: 0 }, 0.5],
+        [CI_FAILED + delay, until, { ...watching, down: 0.4, tilt: -tilt * 0.3, nod: -0.3,
+          brow: 0.65, wide: 0.95, frown: 0.2, smile: -0.4, misery: 0.12 }, 0.28],
+        [mark('outro-1', 'strange') + delay, until, { ...watching, down: 0, tilt: tilt * 0.4,
+          brow: 0.1, wide: 0.3, frown: 0.58, smile: -0.52 }, 0.4],
+        [mark('outro-1', 'it') + delay, until, angry, 0.5],
+        [mark('outro-2', 'just') + delay, until, { ...angry, down: 0.35, wide: 0.3, nod: 0.1 }, 0.4],
+      ];
+    };
+    const roleIdentity = {
+      pm: { label: ['Product', 'Manager'], shortLabel: 'Product', icon: 'list', sticker: [92, 136] },
+      build: { label: ['Build', 'Engineer'], shortLabel: 'Build', icon: 'gear', sticker: [91, 115] },
+      test: { label: ['Test', 'Engineer'], shortLabel: 'Test', icon: 'search', sticker: [74, 117] },
+      ui: { label: ['UI', 'Developer'], shortLabel: 'UI', icon: 'pencil', sticker: [80, 118] },
+      backend: { label: ['Back-End', 'Developer'], shortLabel: 'Backend', icon: 'database', sticker: [91.6, 108] },
+      security: { label: ['Security', 'Engineer'], shortLabel: 'Security', icon: 'shield', sticker: [91.4, 114.4] },
+    };
+    const identityFor = (role) => {
+      if (!roleIdentity[role]) return undefined;
+      const firstEntrance = plan[role].stage[0][0];
+      const returnAt = line('refrain-3-1').start - 1.6;
+      return { ...roleIdentity[role], entrances: [
+        [firstEntrance + 0.85, firstEntrance + 5.2],
+        // A short reminder fits directly above each head in the close lineup.
+        // Clear it before the raised laptop occupies that same space.
+        [returnAt + 1.2, mark('refrain-3-1', 'works') - 0.2, true],
+      ] };
+    };
     // The Teammate, the lead, is drawn last: in front of everyone around him.
     const castOrder = Object.entries(VOICES).sort(([a], [b]) => (a === 'tenor') - (b === 'tenor'));
     for (const [role, voice] of castOrder) {
@@ -1292,6 +1338,8 @@
         role, gestureSpeed: role === 'tenor' ? 1.55 : 1, hero: headFor(role), stage: p.stage, places: p.places,
         expressWhileSinging: Boolean(reactionBeats[role]),
         reactions: reactionsFor(role),
+        listeningReactions: finaleListeningFor(role),
+        identity: identityFor(role),
         moves: p.moves, holds: p.holds, beds: p.beds, words: wordsOf(role, voice), seed: Object.keys(VOICES).indexOf(role),
       });
       lighting.subject(figures[role].node, lightFor(role));

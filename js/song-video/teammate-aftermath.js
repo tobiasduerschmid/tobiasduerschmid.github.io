@@ -99,10 +99,12 @@
       const source = sampleRelease(pm, cues.story, 'story');
       const duration = 1.25;
       const down = reduced.matches ? duration : Math.min(duration, elapsed);
-      const position = contactFlight({ from: source.position, to: [338, 378], velocity: source.velocity,
+      // Sink the bottom of the board into the mouth, behind its front rim.
+      // Stopping at the opening's centre left it balanced on top of the lip.
+      const position = contactFlight({ from: source.position, to: [338, 386], velocity: source.velocity,
         landingVelocity: [-18, 210], duration }, down);
       const u = down / duration;
-      // Start in exactly the held orientation, then tumble once and settle in the rim.
+      // Start in exactly the held orientation, then tumble once and settle inside the bin.
       const angle = -352 * smooth(u);
       const [a,b,c,d] = source.matrix;
       story.setAttribute('transform', `translate(${position[0]} ${position[1]}) rotate(${angle}) matrix(${a} ${b} ${c} ${d} 0 0)`);

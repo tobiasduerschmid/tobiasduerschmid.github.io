@@ -891,6 +891,138 @@ test('anger follows an accusation, then clears for an explanation and listening'
   }
 });
 
+test('entrance role labels identify every teammate, clear the faces and laptop, then leave costume stickers behind', async ({ page }) => {
+  await expectTeammatesWearHeads(page);
+  const shortRoles = { pm: 'Product', build: 'Build', test: 'Test', ui: 'UI', backend: 'Backend', security: 'Security' };
+  const checkIdentity = async (role, section, compact = false) => {
+    const figure = page.getByTestId(`oc-${role}`);
+    const label = figure.getByTestId('oc-role-label');
+    await expect(label.locator(compact ? '.oc-role-label-short' : '.oc-role-label-name')).toHaveText(compact ? shortRoles[role] : sections.get(section).voice);
+    await expect(label).toHaveCSS('opacity', '1');
+    const name = await label.boundingBox();
+    // A worn head's SVG viewport has spare room for other hairstyles.
+    // Compare against the painted assembly, not that invisible rectangle.
+    const head = await figure.getByTestId('song-hero-head').locator('[data-hero-head-assembly]').boundingBox();
+    expect(name.y + name.height, `${role}: the role name stays above the head`).toBeLessThan(head.y);
+    const picture = await page.getByTestId('song-picture').boundingBox();
+    expect(head.y - name.y - name.height, `${role}: the label sits right above the head`).toBeLessThan(picture.width / 960 * 12);
+    const sticker = figure.getByTestId('oc-role-sticker');
+    await expect(sticker).toBeVisible();
+    const patch = await sticker.boundingBox();
+    const body = await figure.locator('.oc-art').boundingBox();
+    expect(patch.y, `${role}: the sticker is on the clothing below the head`).toBeGreaterThan(body.y + body.height * 0.27);
+    expect(patch.y + patch.height, `${role}: the sticker stays above the waist`).toBeLessThan(body.y + body.height * 0.53);
+    return name;
+  };
+  for (const [role, section] of TEAMMATES) {
+    await seek(page, storyLines.get(`${section}-1`).start);
+    await checkIdentity(role, section);
+  }
+  await seek(page, storyLines.get('test-1').start);
+  const fixedLabel = page.getByTestId('oc-test').getByTestId('oc-role-label');
+  const settled = await fixedLabel.boundingBox();
+  for (const offset of [0.3, 0.8, 1.5, 0]) {
+    await seek(page, storyLines.get('test-1').start + offset);
+    const current = await fixedLabel.boundingBox();
+    expect(current.x, 'gestures do not move the positioned label sideways').toBeCloseTo(settled.x, 3);
+    expect(current.y, 'gestures do not move the positioned label vertically').toBeCloseTo(settled.y, 3);
+  }
+  const overlap = (a, b) => a.x < b.x + b.width && a.x + a.width > b.x
+    && a.y < b.y + b.height && a.y + a.height > b.y;
+  await seek(page, storyLines.get('refrain-3-1').start + 0.15);
+  const labels = await Promise.all(TEAMMATES.map(([role, section]) => checkIdentity(role, section, true)));
+  for (const [i, name] of labels.entries()) {
+    expect(labels.slice(i + 1).some(other => overlap(name, other)), 'returning role names do not cover each other').toBe(false);
+  }
+  // The reminders clear before the laptop is lifted into their space.
+  for (const offset of [0, 0.4, 1.2]) {
+    await seek(page, mark('refrain-3-1', 'works') + offset);
+    for (const [role] of TEAMMATES) await expect(page.getByTestId(`oc-${role}`).getByTestId('oc-role-label')).toHaveCSS('opacity', '0');
+  }
+  await seek(page, mark('refrain-3-4', 'green'));
+  for (const [role] of TEAMMATES) {
+    const figure = page.getByTestId(`oc-${role}`);
+    await expect(figure.getByTestId('oc-role-label')).toHaveCSS('opacity', '0');
+    await expect(figure.getByTestId('oc-role-sticker')).toBeVisible();
+  }
+  await seek(page, storyLines.get('pm-1').start);
+  await checkIdentity('pm', 'pm');
+});
+
+test('the Test Engineer sleeve leaves the chest sticker intact while holding the magnifier and yawning', async ({ page }) => {
+  for (const offset of [0, 0.3, 0.5, 0.7]) {
+    await seek(page, mark('test-2', 'night') + offset);
+    const covered = await page.getByTestId('oc-test').getByTestId('oc-role-sticker').evaluate(sticker => {
+      const sleeves = [...sticker.closest('.oc-art').querySelectorAll('.oc-sleeve')]
+        .filter(sleeve => sticker.compareDocumentPosition(sleeve) & Node.DOCUMENT_POSITION_FOLLOWING);
+      const paper = sticker.querySelector('.oc-role-sticker-paper');
+      const box = paper.getBBox();
+      const points = [-0.35, 0, 0.35].flatMap(x => [-0.35, 0, 0.35].map(y => new DOMPoint(
+        box.x + box.width * (0.5 + x), box.y + box.height * (0.5 + y),
+      ).matrixTransform(paper.getScreenCTM())));
+      return points.some(point => sleeves.some(sleeve => sleeve.isPointInFill(point.matrixTransform(sleeve.getScreenCTM().inverse()))));
+    });
+    expect(covered, 'a construction edge must not cut through the sticker on the chest').toBe(false);
+  }
+});
+
+test('the finale cast keeps empty hands down while watching green, the CI failure, and his excuse', async ({ page }) => {
+  const green = mark('refrain-3-4', 'green');
+  const excuse = storyLines.get('outro-1').end;
+  // Include the whole held note and transitions, rather than just settled poses.
+  for (let time = green; time < excuse; time += 0.25) {
+    await seek(page, time);
+    for (const [role] of TEAMMATES) {
+      const figure = page.getByTestId(`oc-${role}`);
+      await expect(figure.getByTestId('oc-held-prop'), `${role} leaves tools backstage`).toHaveCount(0);
+      const handsAreDown = await figure.getByTestId('oc-hand').evaluateAll(hands => hands.every(hand => {
+        const figure = hand.closest('.oc-art').getBoundingClientRect();
+        return hand.getBoundingClientRect().top > figure.top + figure.height * 0.54;
+      }));
+      expect(handsAreDown, `${role}: hands remain below the waist at ${time}`).toBe(true);
+    }
+  }
+});
+
+test('silent finale reactions change from curiosity to dismay to anger at his excuse', async ({ page }) => {
+  await expectTeammatesWearHeads(page);
+  const curiousAt = mark('refrain-3-4', 'green') + 0.8;
+  const failedAt = mark('outro-1', 'strange') - 1 + 0.65;
+  const angryAt = mark('outro-1', 'worked') + 0.4;
+  const expressionsAt = async time => {
+    await seek(page, time);
+    return Promise.all(TEAMMATES.map(async ([role]) => {
+      const mouth = page.getByTestId(`oc-${role}`).getByTestId('song-hero-head').locator('.song-hero-expression-seam');
+      await expect(mouth, `${role}: a painted closed mouth remains visible`).toBeVisible();
+      return mouth.evaluate(seam => {
+        // Compare the painted lip contour in its own coordinates; randomized
+        // face size, gaze, head turns, and the camera must not change the oracle.
+        return (seam.getPointAtLength(0).y - seam.getPointAtLength(seam.getTotalLength() / 4).y) / seam.getBBox().width;
+      });
+    }));
+  };
+  for (const motion of ['no-preference', 'reduce']) {
+    await page.emulateMedia({ reducedMotion: motion });
+    if (motion === 'reduce') {
+      // The player correctly defaults to lyrics-only; opt into the reduced
+      // artwork to verify the same authored reactions without movement.
+      await openPlayerSettings(page);
+      await page.getByRole('checkbox', { name: 'Use lyrics-only mode' }).uncheck();
+      await expectTeammatesWearHeads(page);
+    }
+    const curious = await expressionsAt(curiousAt);
+    const failed = await expressionsAt(failedAt);
+    const angry = await expressionsAt(angryAt);
+    const wary = await expressionsAt(mark('outro-2', 'just') + 0.7);
+    for (const [i, [role]] of TEAMMATES.entries()) {
+      expect(failed[i], `${role}: the failed build lowers the lip corners`).toBeGreaterThan(curious[i] + 0.02);
+      expect(angry[i], `${role}: his excuse deepens the angry mouth`).toBeGreaterThan(failed[i] + 0.02);
+      expect(wary[i], `${role}: anger persists as he reaches for the keyboard`).toBeGreaterThan(failed[i] + 0.02);
+    }
+    expect(await expressionsAt(curiousAt), 'reverse seeking restores curiosity rather than retaining anger').toEqual(curious);
+  }
+});
+
 test('palm gestures have continuous skin and extend the intended digit on both hands', async ({ page }) => {
   const problems = await page.evaluate(() => {
     const { OperaCast: C, SongKit: K } = window;

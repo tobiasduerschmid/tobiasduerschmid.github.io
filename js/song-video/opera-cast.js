@@ -50,7 +50,7 @@
   'use strict';
 
   const { fx, onFrame, onDispose, progress, easeInOutCubic, hash01 } = window.Timeline;
-  const { el, svg, place } = window.SongKit;
+  const { el, svg, place, icon } = window.SongKit;
   const { clamp, handPart } = window.SongFigure;
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   let uid = 0;
@@ -298,6 +298,15 @@
       if (key) pose[name] = samplePoseKey(key, t, reduced);
     }
     return pose;
+  }
+
+  /** Blend explicit acting beats over the sampled pose, using only song time. */
+  function applyReactions(pose, reactions, t, reduced) {
+    for (const [from, to, face, fade = 0.45] of reactions) {
+      const weight = reduced ? Number(t >= from && t < to)
+        : easeInOutCubic(progress(t, from, fade)) * (1 - easeInOutCubic(progress(t, to - fade, fade)));
+      if (weight) for (const [field, target] of Object.entries(face)) pose[field] += (target - pose[field]) * weight;
+    }
   }
 
   // ------------------------------------------------------------------
@@ -1289,7 +1298,7 @@
    * a hero's; hold(side, prop) puts a prop (PROPS) in a hand or empties it.
    * A 'woman' wears WOMAN_HEAD as her drawn face, anyone else the costume's.
    */
-  function buildFigure(fig, sway, costumeName, gender) {
+  function buildFigure(fig, sway, costumeName, gender, identity) {
     const costume = COSTUMES[costumeName];
     const defs = svg('defs', {}, fig);
     const id = (name) => `oc-${name}-${++uid}`;
@@ -1357,7 +1366,21 @@
     if (costume.back) costume.back(svg('g', {}, trunk), paint);
     paint.garmentOutline = svg('g', {}, trunk);
     const upperArms = svg('g', {}, trunk);
-    costume.top(svg('g', { class: 'oc-top-layer' }, trunk), paint);
+    const topLayer = svg('g', { class: 'oc-top-layer' }, trunk);
+    costume.top(topLayer, paint);
+    if (identity) {
+      // Keep the role marker on the same moving surface as the clothing,
+      // below crossing sleeves, forearms, collars and long hair.
+      const [x, y] = identity.sticker;
+      const sticker = svg('g', { class: 'oc-role-sticker', transform: `translate(${x} ${y})`, 'data-testid': 'oc-role-sticker' }, topLayer);
+      svg('rect', { class: 'oc-role-sticker-shadow', x: -8.6, y: -7.4, width: 18, height: 18, rx: 3 }, sticker);
+      svg('rect', { class: 'oc-role-sticker-paper', x: -9, y: -9, width: 18, height: 18, rx: 3 }, sticker);
+      svg('path', { class: 'oc-role-sticker-rim', d: 'M-6.5 -7 H5.6 M-7 -5.5 V4.5' }, sticker);
+      const symbol = icon(identity.icon, 'oc-role-sticker-symbol');
+      for (const [name, value] of Object.entries({ x: -6.7, y: -6.7, width: 13.4, height: 13.4 })) symbol.setAttribute(name, value);
+      sticker.appendChild(symbol);
+      svg('path', { class: 'oc-role-sticker-corner', d: 'M5.4 8.8 L8.8 5.4 Q8.8 8.8 5.4 8.8 Z' }, sticker);
+    }
     // Sleeves crossing a garment still sit beneath hair, scarves and the
     // collar. Forearms have their own foreground pass for facial gestures.
     const forwardSleeves = svg('g', {}, trunk);
@@ -1543,6 +1566,12 @@
     }
 
     let worn = null;
+    let neutralHeadTop = null;
+    function rememberHeadTop() {
+      if (!identity) return;
+      const bounds = [headGroup, wornUnder].map(node => node.getBBox()).filter(rect => rect.width && rect.height);
+      neutralHeadTop = bounds.length ? Math.min(...bounds.map(rect => rect.y)) : null;
+    }
     function pose(p, time, open, blink) {
       const drop = 7 * p.crouch;
       const squash = 1 - drop / (HEMS - WAIST);
@@ -1629,6 +1658,9 @@
       heroHead.paint(fig);
       fig.classList.add('oc-art--hero');
       for (const drawn of [drawnNeck, drawnFace]) drawn.setAttribute('display', 'none');
+      // Measure the new head before its first animated pose. This stays in
+      // figure coordinates, independent of browser zoom and camera transforms.
+      rememberHeadTop();
     }
 
     function hold(side, prop) {
@@ -1651,7 +1683,13 @@
       left.level(fig);
     }
 
-    return { pose, wear, hold, swing, level, arms: { right, left } };
+    function headTop() {
+      if (neutralHeadTop === null) rememberHeadTop();
+      return neutralHeadTop ?? 0;
+    }
+
+    rememberHeadTop();
+    return { pose, wear, hold, swing, level, headTop, arms: { right, left } };
   }
 
   // ------------------------------------------------------------------
@@ -2134,6 +2172,11 @@
    *   moves     [[time, name, options]] from MOVES; options.allowHeld explicitly
    *             authors an occupied hand's action instead of reserving its carry pose
    *   reactions [[from, to, facialFields, fade = 0.45]]: expressions blended over gestures
+   *   listeningReactions  same cue format, explicit reactions to another speaker;
+   *                       these also remain expressive while the figure is silent
+   *   identity  optional { label: [lines], shortLabel, icon, sticker: [x,y],
+   *             entrances: [[from,to,compact=false]] }; a garment sticker and
+   *             brief labels fixed just above the neutral drawn or worn head
    *   expressWhileSinging  relax facial emotion while listening; vocal
    *                        phrases ease in/out without pulsing per syllable
    *   gestureSpeed  transition speed (default 1); preserves anticipated cue landings
@@ -2147,7 +2190,7 @@
    *             (or its stage exit, when the bed glides off with it)
    * Returns node, where(), handPoint(), propMatrix(), and samplePropAt().
    */
-  function figure(parent, { role, gender = 'man', hero, stage = [], places, moves = [], reactions = [], expressWhileSinging = false, gestureSpeed = 1, holds = [], words = [], singInReducedMotion = true, beds = [], seed = 0 }) {
+  function figure(parent, { role, gender = 'man', hero, stage = [], places, moves = [], reactions = [], listeningReactions = [], identity, expressWhileSinging = false, gestureSpeed = 1, holds = [], words = [], singInReducedMotion = true, beds = [], seed = 0 }) {
     const wrap = el('div', `oc-figure oc-figure--${role} is-staged`, parent);
     wrap.dataset.testid = `oc-${role}`;
     const fig = svg('svg', { class: 'oc-art', viewBox: '0 0 160 300', width: 160, height: 300, 'aria-hidden': 'true' }, wrap);
@@ -2158,9 +2201,20 @@
     const hopper = svg('g', {}, travel);
     const recline = svg('g', {}, hopper);
     const sway = svg('g', {}, recline);
-    const body = buildFigure(fig, sway, role, gender);
+    const body = buildFigure(fig, sway, role, gender, identity);
     const bedFront = beds.length ? svg('g', { class: 'oc-bed oc-bed--front' }, travel) : null;
     const zs = bedFront ? drawBedFront(bedFront) : [];
+    const roleLabel = identity ? el('div', 'oc-role-label', wrap) : null;
+    if (roleLabel) {
+      roleLabel.dataset.testid = 'oc-role-label';
+      roleLabel.setAttribute('aria-hidden', 'true');
+      const name = el('span', 'oc-role-label-name', roleLabel);
+      identity.label.forEach((line, i) => {
+        if (i) name.appendChild(document.createTextNode(' '));
+        el('span', 'oc-role-label-line', name, line);
+      });
+      el('span', 'oc-role-label-short', roleLabel, identity.shortLabel);
+    }
 
     // In bed: the bed shows from just before `from`; it lies down over
     // LIE_DOWN seconds, then the quilt and the mask come on and the Zs drift.
@@ -2366,11 +2420,7 @@
       const p = poseAt(keys, t, reduced);
       // Sustained emotional beats survive a hand gesture's return to rest.
       // They are reconstructed from song time, never accumulated per frame.
-      for (const [from, to, face, fade = 0.45] of reactions) {
-        const weight = reduced ? Number(t >= from && t < to)
-          : easeInOutCubic(progress(t, from, fade)) * (1 - easeInOutCubic(progress(t, to - fade, fade)));
-        if (weight) for (const [field, target] of Object.entries(face)) p[field] += (target - p[field]) * weight;
-      }
+      applyReactions(p, reactions, t, reduced);
       if (expressWhileSinging) {
         const speaking = phrases.reduce((weight, [from, to]) => Math.max(weight, reduced
           ? Number(t >= from && t < to)
@@ -2380,6 +2430,9 @@
           p[field] = relaxed + (p[field] - relaxed) * speaking;
         }
       }
+      // Ordinary listening still relaxes the face. Authored silent acting
+      // is a separate layer, so a word gap or gesture reset cannot erase it.
+      applyReactions(p, listeningReactions, t, reduced);
       const bed = inBed(t);
       if (bedBack) {
         bedBack.setAttribute('opacity', bed.shown.toFixed(3));
@@ -2439,6 +2492,20 @@
       const open = reduced && !singInReducedMotion ? 0 : mouthAt(sortedWords, t, reduced);
       body.pose(p, t, open, reduced ? 0 : blinkAt(t, seed));
       body.level();
+      if (roleLabel) {
+        const entrance = identity.entrances.find(([start, end]) => t >= start && t < end);
+        const [start, end, compact = false] = entrance || [0, 0];
+        roleLabel.classList.toggle('oc-role-label--compact', compact);
+        const fade = compact ? 0.16 : 0.28;
+        roleLabel.style.opacity = entrance ? (reduced ? 1
+          : easeInOutCubic(progress(t, start, fade)) * (1 - easeInOutCubic(progress(t, end - fade, fade)))).toFixed(3) : '0';
+        if (entrance && wrap.isConnected) {
+          // The label belongs to the settled entrance position. Head turns,
+          // gestures and walking bob must not drag it around after it appears.
+          roleLabel.style.left = `${80 * scale}px`;
+          roleLabel.style.top = `${body.headTop() * scale - 6}px`;
+        }
+      }
     }
     // A defined hidden pose lets a direct seek sample a singer that has not
     // entered yet, then restore it without retaining the sampled prop.

@@ -278,6 +278,26 @@ test('the Product Manager throws the held clipboard into the bin without replaci
   await expectPainted(page, 'requirements', false, 'reverse seeking removes the discarded copy');
 });
 
+test('the discarded clipboard sits inside the bin behind its front wall and rim', async ({ page }) => {
+  for (const motion of ['no-preference', 'reduce']) {
+    await openStage(page, motion);
+    for (const time of [CLIPBOARD_RELEASE + 3, FINALE, CLIPBOARD_RELEASE + 3]) {
+      await seek(page, time);
+      const contact = await page.getByTestId('aftermath-requirements').evaluate(board => {
+        const wall = document.querySelector('.ta-bin-body');
+        const rim = document.querySelector('.ta-bin-rim-front');
+        const transform = wall.getScreenCTM().inverse().multiply(board.getScreenCTM());
+        return {
+          lowerEdgeHidden: wall.isPointInFill(new DOMPoint(10.5, 14).matrixTransform(transform)),
+          topVisible: !wall.isPointInFill(new DOMPoint(10.5, -13).matrixTransform(transform)),
+          rimInFront: Boolean(board.compareDocumentPosition(rim) & Node.DOCUMENT_POSITION_FOLLOWING),
+        };
+      });
+      expect(contact, 'the lower board is occluded while the top protrudes above the opening').toEqual({ lowerEdgeHidden: true, topVisible: true, rimInFront: true });
+    }
+  }
+});
+
 test('the UI Developer releases the held palette once and leaves paint on the wall', async ({ page }) => {
   await openStage(page);
   const held = page.getByTestId('oc-ui').getByTestId('oc-arm-right').getByTestId('oc-held-prop');

@@ -25,6 +25,35 @@
   overflow: visible;
 }
 
+/* Fixed theatrical artwork palette in both page themes; the player hides
+ * the stage in print. Full role names remain paragraph-sized at stage scale. */
+.oc-role-label {
+  position: absolute;
+  box-sizing: border-box;
+  width: 108px;
+  padding: 7px 9px;
+  border: 1.5px solid #657b88;
+  border-radius: 9px;
+  background: #faf1db;
+  color: #193444;
+  box-shadow: 0 3px 0 #0c1d2b;
+  font: 700 16px/1.15 var(--font-display);
+  text-align: center;
+  transform: translate(-50%, -100%);
+  pointer-events: none;
+  opacity: 0;
+}
+.oc-role-label-line { display: block; }
+.oc-role-label-short { display: none; }
+.oc-role-label--compact { width: 72px; padding: 4px 1px; border-width: 1px; border-radius: 6px; }
+.oc-role-label--compact .oc-role-label-name { display: none; }
+.oc-role-label--compact .oc-role-label-short { display: block; }
+.oc-role-sticker-shadow { fill: #132331; opacity: 0.24; }
+.oc-role-sticker-paper { fill: #f9eed4; stroke: #5a6056; stroke-width: 0.65; }
+.oc-role-sticker-rim { fill: none; stroke: #fffbed; stroke-width: 0.55; stroke-linecap: round; }
+.oc-role-sticker-symbol { color: #244555; }
+.oc-role-sticker-corner { fill: #cabb98; }
+
 .oc-ink {
   fill: none;
   stroke: var(--oc-ink);
