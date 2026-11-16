@@ -56,8 +56,8 @@
 /* Five thick paint colors share the held palette's oc-dab fills. */
 .ta-paint-relief { fill: #122c35; opacity: 0.42; }
 .ta-paint-body { stroke: #173947; stroke-width: 0.45; stroke-opacity: 0.28; }
-.ta-paint-ridge { fill: none; stroke: #fff8df; stroke-width: 2.8; opacity: 0.28; }
-.ta-paint-glint { fill: none; stroke: #e5dfcb; stroke-width: 1.1; opacity: 0.46; }
+.ta-paint-ridge { fill: none; stroke: #fff8df; stroke-width: .9; opacity: .3; }
+.ta-paint-glint { fill: none; stroke: #e5dfcb; stroke-width: .6; opacity: .45; }
 .ta-paint-lowlight { fill: none; stroke: #233e58; stroke-width: 1.1; opacity: 0.2; }
 
 /* Coffee remains translucent, preserving the supporting wall's texture. */
@@ -109,3 +109,16 @@
   /* These animated props have equivalent descriptions in the transcript. */
   .ta-art { display: none; }
 }
+
+/* Small material cues follow the same cylindrical projection and light. */
+.ta-bin-base-light { fill: none; stroke: #9bafad; stroke-width: .8; opacity: .65; }
+.ta-bin-rim-seam { fill: none; stroke: #d0d8cf; stroke-width: .6; opacity: .65; }
+.ta-bin-rivet { fill: #bdcbc5; stroke: #4e686c; stroke-width: .4; }
+.ta-wet-paint-stop-0 { stop-color: #fff7dd; stop-opacity: .2; }
+.ta-wet-paint-stop-1 { stop-color: #fff7dd; stop-opacity: 0; }
+.ta-wet-paint-stop-2 { stop-color: #122b38; stop-opacity: .22; }
+.ta-paint-volume { fill: var(--ta-wet-paint); }
+
+
+.ta-coffee-tide { fill: none; stroke: #ab7d54; stroke-width: .55; opacity: .35; }
+.ta-coffee-speck { fill: #a37450; opacity: .55; }

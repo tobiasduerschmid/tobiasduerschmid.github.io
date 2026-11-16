@@ -65,7 +65,9 @@
     // The upper wall receives exhaust; the clock/window/build board retain their clear surfaces.
     const prefix = `teammate-aftermath-motion-${++instanceCount}`;
     const wallClip = svg('clipPath', { id: `${prefix}-wall` }, back);
-    svg('path', { d: 'M48 50H914V404H48Z M48 62V164H260V62Z M748 68V236H904V68Z M672 76V148H744V76Z', 'clip-rule': 'evenodd' }, wallClip);
+    // Match the painted silhouettes: bounding-box cutouts leave rectangular
+    // patches of clean wall visible through the feathered smoke.
+    svg('path', { d: 'M48 50H914V404H48Z M58 70H246Q252 70 252 76V150Q252 156 246 156H58Q52 156 52 150V76Q52 70 58 70Z M754 226V134A72 60 0 0 1 898 134V226H904V234H748V226Z M742 112A34 34 0 1 1 674 112A34 34 0 1 1 742 112Z', 'clip-rule': 'evenodd' }, wallClip);
     const depositClip = svg('clipPath', { id: `${prefix}-deposit` }, back);
     const depositArea = svg('rect', { x: 535, y: 345, width: 215, height: 0 }, depositClip);
     const wallScorch = svg('g', { 'clip-path': `url(#${prefix}-wall)` }, back);

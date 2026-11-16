@@ -230,9 +230,9 @@
 .mk-marcher-fix { left: 40px; top: -10px; font-size: 13px; }
 
 /* The Teammate's laptop and its screens. */
-.mk-laptop-lid { fill: #c9cfd8; }
+.mk-laptop-lid { fill: var(--mk-device-metal); }
 .mk-laptop-screen { fill: #0f1724; }
-.mk-laptop-base { fill: #aeb6c2; }
+.mk-laptop-base { fill: var(--mk-device-metal); }
 .mk-laptop-lip { fill: none; stroke: #6f7886; stroke-width: 2; stroke-linecap: round; }
 .mk-sticker-dot--duck { fill: #ffd100; stroke: #1a1410; stroke-width: 1; }
 .mk-sticker-dot--tick { fill: none; stroke: #1f9d55; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
@@ -259,7 +259,7 @@
 
 /* The clean-build works. */
 .mk-chimney { fill: #6b7486; }
-.mk-works { fill: #4a6fa5; }
+.mk-works { fill: var(--mk-machine-enamel); }
 .mk-hopper { fill: #8ea6c8; }
 .mk-conveyor { fill: #2a2f3a; }
 .mk-roller { fill: #9aa6b6; }
@@ -270,7 +270,7 @@
 .mk-machine-name { fill: #1a1410; font: 800 12px var(--font-display); }
 
 /* A plug for the old call, a socket for the new interface. */
-.mk-socket { fill: #e8ecf1; }
+.mk-socket { fill: var(--mk-device-metal); }
 .mk-socket-hole { fill: #1a1410; }
 .mk-plug-body { fill: #9fb3ca; }
 .mk-cord { fill: none; stroke: #9fb3ca; stroke-width: 6; stroke-linecap: round; }
@@ -380,17 +380,17 @@
 .mk-falling-key { left: 0; top: 0; }
 .mk-hung-key svg, .mk-falling-key svg { width: 26px; height: 26px; stroke-width: 2.6; }
 .mk-keyrain { position: absolute; inset: 0; pointer-events: none; }
-.mk-burglar-shirt { fill: #f6f3ea; }
+.mk-burglar-shirt { fill: var(--mk-thief-cloth); }
 .mk-burglar-stripes { fill: none; stroke: #1a1410; stroke-width: 5; }
-.mk-burglar-face { fill: #e2b08c; }
-.mk-burglar-cap { fill: #1a1410; }
+.mk-burglar-face { fill: var(--mk-thief-skin); }
+.mk-burglar-cap { fill: #263039; }
 .mk-burglar-mask { fill: #1a1410; }
 .mk-burglar-eye { fill: #ffffff; }
-.mk-burglar-grin { fill: none; stroke: #6b2e22; stroke-width: 2; stroke-linecap: round; }
+.mk-burglar-grin { fill: #f7e7cc; stroke: #754831; stroke-width: 1.1; stroke-linecap: round; }
 .mk-burglar-arm { fill: none; stroke: #f6f3ea; stroke-width: 7; stroke-linecap: round; }
 .mk-burglar-glove { fill: #1a1410; }
 .mk-burglar--flip { transform: scaleX(-1); }
-.mk-rack-body { fill: #232a36; }
+.mk-rack-body { fill: var(--mk-rack-metal); }
 .mk-rack-unit { fill: #2f3846; stroke: #121820; stroke-width: 1; }
 .mk-fan-ring { fill: #121820; stroke: #6f7886; stroke-width: 1.4; }
 .mk-fan-blades { fill: #9aa6b6; }
@@ -403,9 +403,9 @@
 .mk-bill-note { min-height: 20px; padding-bottom: 4px; font-size: 14px; font-weight: 800; }
 .mk-bill.is-red .mk-bill-figure,
 .mk-bill.is-red .mk-bill-note { color: #b8233a; }
-.mk-rocket-body { fill: #e8eef6; }
+.mk-rocket-body { fill: var(--mk-rocket-metal); }
 .mk-rocket-fin { fill: #d6334a; }
-.mk-rocket-window { fill: #4aa3ff; stroke: #1a1410; stroke-width: 2.4; }
+.mk-rocket-window { fill: #234d69; stroke: #122f45; stroke-width: 1.5; }
 .mk-rocket-flame { fill: #ffb35c; stroke: #ff6b3d; stroke-width: 2; }
 .mk-rope { fill: none; stroke: #c9a36a; stroke-width: 1.6; }
 .mk-moneybag { fill: #3d9a5a; }
@@ -448,3 +448,67 @@
 .mk-thought-dot--0 { width: 8px; height: 6px; margin: -3px 0 0 -4px; }
 .mk-thought-dot--1 { width: 12px; height: 9px; margin: -4.5px 0 0 -6px; }
 .mk-thought-dot--2 { width: 17px; height: 13px; margin: -6.5px 0 0 -8.5px; }
+
+/* Theatre props retain their material palette in both page themes. */
+.mk-thief-skin-stop-0 { stop-color: #c48d63; }
+.mk-thief-skin-stop-1 { stop-color: #edc398; }
+.mk-thief-skin-stop-2 { stop-color: #d8a478; }
+.mk-thief-skin-stop-3 { stop-color: #a56949; }
+.mk-thief-cloth-stop-0 { stop-color: #a8afa9; }
+.mk-thief-cloth-stop-1 { stop-color: #f1ecdc; }
+.mk-thief-cloth-stop-2 { stop-color: #dad8c9; }
+.mk-thief-cloth-stop-3 { stop-color: #8d9693; }
+
+
+.mk-burglar-shirt-shade { fill: #26333c; opacity: .2; }
+.mk-burglar-feature { fill: none; stroke: #895537; stroke-width: 1; stroke-linecap: round; }
+.mk-burglar-pupil { fill: #302a23; }
+.mk-burglar-catchlight { fill: #fff9e8; }
+
+.mk-burglar-cap-seam { fill: none; stroke: #56616a; stroke-width: 1.1; stroke-linecap: round; }
+.mk-burglar-collar { fill: none; stroke: #596364; stroke-width: 1.4; }
+
+.mk-rocket-metal-stop-0 { stop-color: #899eaa; }
+.mk-rocket-metal-stop-1 { stop-color: #fbfaf0; }
+.mk-rocket-metal-stop-2 { stop-color: #d8e1e4; }
+.mk-rocket-metal-stop-3 { stop-color: #718797; }
+
+.mk-rocket-nose { fill: #a62f43; stroke: #602a35; stroke-width: 1; }
+.mk-rocket-panel { fill: none; stroke: #6b7c85; stroke-width: 1; }
+.mk-rocket-glint { fill: none; stroke: #fff8df; stroke-width: 1.7; opacity: .65; stroke-linecap: round; }
+.mk-rocket-nozzle { fill: #354550; }
+.mk-rocket-port-rim { fill: #a5b8c1; stroke: #526671; stroke-width: 1.5; }
+
+.mk-rocket-glass-glint { fill: none; stroke: #b2deee; stroke-width: 2.2; stroke-linecap: round; }
+.mk-rocket-rivet { fill: #e2e9e6; stroke: #5b707a; stroke-width: .6; }
+.mk-rocket-flame-core { fill: #fff0ba; }
+
+.mk-burglar-glove-seam { fill: none; stroke: #7b858d; stroke-width: .8; stroke-linecap: round; }
+
+/* Consistent upper-left light across the hardware props; marks stay off screens. */
+.mk-device-metal-stop-0 { stop-color: #8295a4; }
+.mk-device-metal-stop-1 { stop-color: #e1e8eb; }
+.mk-device-metal-stop-2 { stop-color: #c1ccd2; }
+.mk-device-metal-stop-3 { stop-color: #8b9aa6; }
+.mk-machine-enamel-stop-0 { stop-color: #3d6088; }
+.mk-machine-enamel-stop-1 { stop-color: #6087b2; }
+.mk-machine-enamel-stop-2 { stop-color: #4e74a1; }
+.mk-machine-enamel-stop-3 { stop-color: #345476; }
+.mk-rack-metal-stop-0 { stop-color: #303e4a; }
+.mk-rack-metal-stop-1 { stop-color: #46545f; }
+.mk-rack-metal-stop-2 { stop-color: #303e4a; }
+.mk-rack-metal-stop-3 { stop-color: #202d38; }
+.mk-hardware-edge { fill: none; stroke: #f4f5e8; stroke-width: .8; opacity: .55; stroke-linecap: round; }
+.mk-hardware-seam { fill: none; stroke: #657a85; stroke-width: .7; opacity: .7; }
+.mk-camera-lens { fill: #223b4c; stroke: #95b6c6; stroke-width: .4; }
+.mk-hardware-fastener { fill: #a7b6bd; stroke: #263b4b; stroke-width: .5; }
+.mk-cardboard-edge { fill: none; stroke: #f4d4a0; stroke-width: .65; opacity: .55; }
+.mk-cardboard-crease { fill: none; stroke: #815c34; stroke-width: .6; opacity: .5; }
+.mk-machine-side { fill: #2b4665; opacity: .5; }
+.mk-machine-panel { fill: none; stroke: #adc0d2; stroke-width: .6; opacity: .6; }
+.mk-machine-vent { fill: none; stroke: #253d55; stroke-width: 1.8; stroke-linecap: round; }
+.mk-hopper-inner { fill: #4c647f; }
+.mk-socket-screw { fill: #c8d0d0; stroke: #8b9aa0; stroke-width: .6; }
+.mk-plug-ribs { fill: none; stroke: #324958; stroke-width: 1.2; opacity: .45; }
+.mk-rack-rail { fill: none; stroke: #7d919d; stroke-width: 1; opacity: .6; }
+.mk-rack-grille { fill: none; stroke: #a1b1bc; stroke-width: .65; opacity: .5; }

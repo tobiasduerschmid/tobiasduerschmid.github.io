@@ -82,6 +82,10 @@
     bindMaterial(front, 'metal', paints.metal);
     const body = 'M-32 1 A32 10 0 0 0 32 1 L24 57 A24 7.5 0 0 1 -24 57 Z';
     path(front, 'ta-bin-body', body);
+    const meshId = `bin-mesh-${++instanceCount}`;
+    const clip = svg('clipPath', { id: meshId }, svg('defs', {}, front));
+    path(clip, '', body);
+    const mesh = svg('g', { 'clip-path': `url(#${meshId})` }, front);
     path(front, 'ta-bin-side-shade', 'M20 8.8 A32 10 0 0 0 32 1 L24 57 A24 7.5 0 0 1 14 63.1 Z');
     path(front, 'ta-bin-side-light', 'M-26 6.8 Q-22 9-17 9.5 L-13 63.3 Q-17 62.8-20 61.1 Z');
     // Project diagonal wires around the curved front surface. Their spacing
@@ -109,7 +113,7 @@
           d += ` C${point(previous.x + previous.dx * step / 3, previous.y + previous.dy * step / 3)} ${point(next.x - next.dx * step / 3, next.y - next.dy * step / 3)} ${point(next.x, next.y)}`;
           previous = next;
         }
-        path(front, 'ta-bin-mesh', d);
+        path(mesh, 'ta-bin-mesh', d);
       }
     }
     path(front, 'ta-bin-hoop', 'M-30.72 9.96 A30.72 9.6 0 0 0 30.72 9.96 M-24.48 53.64 A24.48 7.65 0 0 0 24.48 53.64');
@@ -117,6 +121,11 @@
     path(front, 'ta-bin-rim-front', 'M-34 0 A34 10.6 0 0 0 34 0 L33 3 A33 10.3 0 0 1 -33 3 Z');
     path(front, 'ta-metal-glint', 'M-29 5.5 A34 10.6 0 0 0 25 7.2');
     path(front, 'ta-bin-foot', 'M-24 57 A24 7.5 0 0 0 24 57');
+    path(front, 'ta-bin-base-light', 'M-21 60 Q0 70 21 60');
+    path(front, 'ta-bin-rim-seam', 'M-32 3 Q0 23 32 3');
+    for (const x of [-28, 28]) {
+      svg('ellipse', { class: 'ta-bin-rivet', cx: x, cy: 13, rx: .8, ry: 1.2 }, front);
+    }
     return { binBack: back, binFront: front };
   }
 
@@ -160,7 +169,13 @@
       return { extension, draw, shadow: path(relief, '', d), body: path(node, `ta-paint-body ta-paint-drip oc-dab--${tone}`, d) };
     });
     pools.forEach(([, d]) => path(relief, '', d));
-    pools.forEach(([tone, d]) => path(node, `ta-paint-body ta-paint-pool oc-dab--${tone}`, d));
+    const defs = svg('defs', {}, node);
+    const sheen = gradient(defs, `paint-${++instanceCount}`, 'wet-paint', { x1: 0, y1: 0, x2: 0.8, y2: 1 }, [0, .45, 1]);
+    pools.forEach(([tone, d]) => {
+      path(node, `ta-paint-body ta-paint-pool oc-dab--${tone}`, d);
+      const volume = path(node, 'ta-paint-volume', d);
+      bindMaterial(volume, 'wet-paint', sheen);
+    });
     // Short curved highlights describe thick wet ridges, not a flat confetti mark.
     path(node, 'ta-paint-ridge', 'M-23-14 C-20-17-16-16-14-12 M-7-16 C-4-21 1-22 5-20 M17-9 C20-11 24-10 25-7 M10 14 C15 11 20 15 21 17 M-20 10 C-17 6-12 6-8 8');
     path(node, 'ta-paint-glint', 'M-21-14 l2-0.5 M-4-18 l2-1 M20-8 l2 1 M12 15 l2 0 M-16 9 l2-0.5');
@@ -191,12 +206,17 @@
   function coffee(root, paints) {
     const stain = group(root, 'coffee');
     bindMaterial(stain, 'coffee', paints.coffee);
-    const outline = 'M-7-22 C-1-27 4-17 11-20 C17-22 16-13 22-10 C31-5 21 2 24 9 C25 15 15 12 11 18 C8 24 1 18-5 21 C-11 25-13 15-18 12 C-26 11-19 3-24-2 C-28-9-17-10-17-16 C-17-22-11-17-7-22 Z';
+    const outline = 'M-8-20 C-6-24-4-24-3-20 C0-16 6-16 11-20 C14-23 16-22 15-18 C14-13 18-12 23-13 C28-14 29-11 25-9 C19-5 22-2 25 0 C28 3 26 5 23 5 C18 5 19 10 21 13 C22 17 18 17 15 15 C11 13 10 21 6 20 C2 19-1 18-5 21 C-9 23-10 19-11 16 C-13 12-17 14-19 10 C-20 7-18 5-23 3 C-28 0-25-3-22-3 C-17-3-18-8-21-10 C-25-14-23-16-19-14 C-14-11-12-14-12-18 C-12-22-10-24-8-20 Z';
     path(stain, 'ta-coffee-wash', outline);
     path(stain, 'ta-coffee-drying-edge', outline);
     path(stain, 'ta-coffee-pooling', 'M-11 5 C-6 10 0 7 4 11 C8 15 14 10 17 9 C12 21 7 17 1 18 C-6 21-10 14-11 5 Z');
     for (const [cx, cy, r] of [[-27, -14, 2.4], [23, -18, 1.7], [29, 3, 2.1], [-22, 22, 1.5], [14, 25, 1.7]]) {
       svg('circle', { class: 'ta-coffee-satellite', cx, cy, r }, stain);
+    }
+    path(stain, 'ta-coffee-tide', 'M-18-8 C-13-5-16 1-12 5 M-9 12 Q0 19 7 15 M15-9 Q20-5 18 0');
+    for (let i = 0; i < 18; i++) {
+      const angle = i * 2.39996, r = 22 + (i % 4) * 1.6;
+      svg('ellipse', { class: 'ta-coffee-speck', cx: Math.cos(angle) * r, cy: Math.sin(angle) * r * .8, rx: .3 + (i % 3) * .15, ry: .6 + (i % 4) * .2, transform: `rotate(${angle * 180 / Math.PI})` }, stain);
     }
     const drips = group(root, 'drips');
     const trails = path(drips, 'ta-coffee-drip', '');

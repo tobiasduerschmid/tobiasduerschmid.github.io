@@ -102,8 +102,9 @@
       transfer: ['Transfer', 'Seat F12', 'To: Sam', 'Sent ✓'],
     };
 
+    const badgeCues = [];
     function badge(text, from, to) {
-      kit.badge(hud, text, from, to);
+      badgeCues.push({ text, from, to });
     }
 
     // ----------------------------------------------------------------
@@ -705,7 +706,9 @@
       // building; he flings its doors open.
       behind.push(() => {
         const street = kit.scene(content, line(v(1)).start - 0.2, until, { exit: 'fade' });
-        M.moduleHouse(street, { x: 270, y: 150, at: line(v(1)).start - 0.2, name: 'SHOWS', openAt: mark(v(1), 'conceal') - 0.1 });
+        // The opening includes the table's widest time format, its shadow,
+        // and the slim door leaves on both sides.
+        M.moduleHouse(street, { x: 234, y: 146, w: 324, h: 218, at: line(v(1)).start - 0.2, name: 'SHOWS', openAt: mark(v(1), 'conceal') - 0.1 });
       });
       move('tenor', mark(v(1), 'hiding') - 0.1, 'shrug', { hold: 0.7 });
       move('tenor', mark(v(1), 'conceal') - 0.15, 'shove', { to: [400, 260], hold: 0.6 });
@@ -714,14 +717,14 @@
       behind.push(() => {
         const inside = kit.scene(content, mark(v(1), 'conceal') - 0.1, until, { exit: 'fade' });
         const table = M.dataTable(inside, {
-          x: 292, y: 222, at: mark(v(1), 'conceal'), title: 'shows', columns: ['id', 'show', 'time'],
+          x: 270, y: 212, at: mark(v(1), 'conceal'), title: 'shows', columns: ['id', 'show', 'time'],
           rows: [['1', 'Jazz Night', SHOWTIMES_BEFORE[0]], ['2', 'Choir', SHOWTIMES_BEFORE[1]], ['3', 'Comedy', SHOWTIMES_BEFORE[2]]],
           dateColumn: 2, newDates: SHOWTIMES_AFTER, dateAt: mark(v(4), 'utc'), glowAt: mark('ui-2', 'detail'),
         });
         const pages = [
-          { name: 'Tickets', iconName: 'tag', x: 572, y: 60, broke: mark('ui-1', 'tickets'), patch: mark('ui-3', 'choices') },
-          { name: 'Reminders', iconName: 'calendar', x: 572, y: 197, broke: mark('ui-1', 'reminders'), patch: mark('ui-3', 'change') },
-          { name: 'Check-in', iconName: 'check', x: 572, y: 334, broke: mark('ui-1', 'checkin'), patch: mark('ui-3', 'module') },
+          { name: 'Tickets', iconName: 'tag', x: 554, y: 60, broke: mark('ui-1', 'tickets'), patch: mark('ui-3', 'choices') },
+          { name: 'Reminders', iconName: 'calendar', x: 554, y: 197, broke: mark('ui-1', 'reminders'), patch: mark('ui-3', 'change') },
+          { name: 'Check-in', iconName: 'check', x: 554, y: 334, broke: mark('ui-1', 'checkin'), patch: mark('ui-3', 'module') },
         ];
         pages.forEach((c, i) => M.client(inside, {
           x: c.x, y: c.y, at: mark(v(2), 'each') + i * 0.12, name: c.name, iconName: c.iconName, source: table.dates[i].node,
@@ -755,9 +758,9 @@
       plan.ui.holds.push([enter, 'right', 'palette']);
       move('tenor', enter + 1.4, 'mood', { hold: line(v(4)).end - enter - 1.6, sweat: 1, smile: 0.5, brow: 0.7, look: 0.8 });
       // "Now tickets, reminders, and check-in need repair!": each cracks.
-      move('ui', mark(v(1), 'tickets') - 0.1, 'point', { to: [632, 110], hold: 0.6 });
-      move('ui', mark(v(1), 'reminders') - 0.1, 'point', { to: [632, 246], hold: 0.5 });
-      move('ui', mark(v(1), 'checkin') - 0.1, 'point', { to: [632, 384], hold: 0.6 });
+      move('ui', mark(v(1), 'tickets') - 0.1, 'point', { to: [614, 110], hold: 0.6 });
+      move('ui', mark(v(1), 'reminders') - 0.1, 'point', { to: [614, 246], hold: 0.5 });
+      move('ui', mark(v(1), 'checkin') - 0.1, 'point', { to: [614, 384], hold: 0.6 });
       // "One detail has changed — it's used EVERYWHERE!": the times glow
       // red, and dashed lines run to everything that used them: chips in
       // the space above and below the Shows module.
@@ -779,12 +782,12 @@
       behind.push(() => {
         const fix = kit.scene(content, mark(v(3), 'hide') - 0.2, line('refrain-2-1').start - 1.5, { exit: 'fade' });
         const card = M.card(fix, {
-          x: 300, y: 366, w: 230, title: 'Showtime module', iconName: 'lock', tone: 'gold', at: mark(v(3), 'hide'),
+          x: 300, y: 50, w: 230, title: 'Showtime module', iconName: 'lock', tone: 'gold', at: mark(v(3), 'hide'),
           lines: ['showtime(show)', 'hides the time format'], rotate: -1,
         });
         card.rows[0].classList.add('mk-card-line--mono');
       });
-      move('ui', mark(v(3), 'hide') - 0.2, 'present', { to: [420, 380], hold: 1.2 });
+      move('ui', mark(v(3), 'hide') - 0.2, 'present', { to: [420, 100], hold: 1.2 });
       move('ui', mark(v(3), 'right'), 'finger', { hold: 0.7 });
       // "You moved every showtime — I've aged overnight!": night and
       // morning race past; the UI Developer's hair goes silver and a cane
@@ -949,22 +952,22 @@
       behind.push(() => {
         const commit = kit.scene(content, mark(v(4), 'i') - 0.2, mark(v(4), 'push') + 0.9, { exit: 'fade' });
         M.folderToCommit(commit, {
-          x: 300, y: 330, at: mark(v(4), 'i') - 0.1, addAt: mark(v(4), 'add'), pushAt: mark(v(4), 'push'), toX: 450, toY: 90,
+          x: 300, y: 260, at: mark(v(4), 'i') - 0.1, addAt: mark(v(4), 'add'), pushAt: mark(v(4), 'push'), toX: 450, toY: 90,
           files: [{ name: 'app.py' }, { name: 'README.md' }, { name: '.env', key: true }],
         });
         // The commands, clear of the files' flight and the box's.
         const add = kit.el('div', 'mk-code-chip is-staged', commit, 'git add .');
-        kit.place(add, 330, 200);
+        kit.place(add, 440, 200);
         fx.pop(add, mark(v(4), 'add'), { rotate: -2 });
         const push = kit.el('div', 'mk-code-chip is-staged', commit, 'git push');
-        kit.place(push, 652, 330);
+        kit.place(push, 652, 280);
         fx.pop(push, mark(v(4), 'push') - 0.2, { rotate: 2 });
       });
       behind.push(() => {
         const cloud = kit.scene(content, mark(v(4), 'one') - 0.2, line('security-2').end, { exit: 'fade' });
         M.repoCloud(cloud, { x: 340, y: 54, at: mark(v(4), 'one') - 0.1, keysAt: mark(v(4), 'done') });
       });
-      move('tenor', mark(v(4), 'add') - 0.1, 'point', { to: [340, 330], hold: 0.8 });
+      move('tenor', mark(v(4), 'add') - 0.1, 'point', { to: [340, 290], hold: 0.8 });
       move('tenor', mark(v(4), 'done') - 0.1, 'thumbs', { hold: 0.6 });
       // "At last, a smooth handoff for everyone!": keys rain on the stalls,
       // where hands reach up for them.
@@ -1032,14 +1035,15 @@
       // "Thieves are spinning up servers; we're deep in the red!": the
       // bill hangs above the servers until the finale's refrain.
       behind.push(() => {
-        const farm = kit.scene(content, mark(v(3), 'thieves') - 0.2, line(v(4)).end, { exit: 'fade' });
-        [0, 1, 2].forEach((i) => M.serverRack(farm, { x: 300 + i * 92, y: 222, at: mark(v(3), 'thieves') + i * 0.1, spinAt: mark(v(3), 'spinning') + i * 0.1 }));
+        const racksAt = Math.max(mark(v(3), 'thieves'), line(v(2)).end + 0.4);
+        const farm = kit.scene(content, racksAt - 0.2, line(v(4)).end, { exit: 'fade' });
+        [0, 1, 2].forEach((i) => M.serverRack(farm, { x: 300 + i * 92, y: 190, at: racksAt + i * 0.1, spinAt: mark(v(3), 'spinning') + i * 0.1 }));
       });
       behind.push(() => {
         const money = kit.scene(content, mark(v(3), 'were') - 0.2, line('refrain-3-1').start - 0.6, { exit: 'fade' });
         M.bill(money, { x: 380, y: 64, at: mark(v(3), 'were') - 0.1, counts: [[mark(v(3), 'deep'), 48200, 1.2], [mark(v(9), 'spending'), 61900, 1.4]] });
       });
-      move('security', mark(v(3), 'spinning') - 0.1, 'present', { to: [430, 290], hold: 1 });
+      move('security', mark(v(3), 'spinning') - 0.1, 'present', { to: [430, 258], hold: 1 });
       move('security', mark(v(3), 'red') - 0.2, 'facepalm', { hold: 0.9 });
       // "You wanted a launch — we're funding THEIRS instead!": their
       // rocket, beside the servers, lifts off past the bill.
@@ -1065,10 +1069,10 @@
       const cleared = line('refrain-3-1').start - 1.65;
       behind.push(() => {
         const copies = kit.scene(content, mark(v(7), 'copies') - 0.2, cleared, { exit: 'fade' });
-        M.forks(copies, { x: 320, y: 330, at: mark(v(7), 'copies'), count: 5 });
+        M.forks(copies, { x: 320, y: 250, at: mark(v(7), 'copies'), count: 5 });
       });
       move('tenor', mark(v(7), 'old') - 0.2, 'mood', { hold: 0.9, sweat: 1, wide: 1, frown: 1, brow: 1 });
-      move('tenor', mark(v(7), 'copies') - 0.1, 'point', { to: [320, 330], hold: 0.7 });
+      move('tenor', mark(v(7), 'copies') - 0.1, 'point', { to: [320, 250], hold: 0.7 });
       // "Rotate those credentials—" (the Security Engineer): the old keys are
       // stamped ROTATED.
       plan.security.holds.push([mark(v(8), 'rotate') - 0.8, 'right', 'stamp'], [line(v(8)).end, 'right', null]);
@@ -1076,8 +1080,8 @@
       move('security', mark(v(8), 'rotate'), 'arms', { right: { reach: [146, 148], shape: 'grip', dir: 0 }, hold: 0.5 });
       ahead.push(() => {
         const revoke = kit.scene(content, mark(v(8), 'rotate'), cleared, { exit: 'fade' });
-        kit.stamp(revoke, 'Rotated', { x: 330, y: 300, at: mark(v(8), 'rotate'), rotate: -8, shake: false, from: 1.5, small: true });
-        kit.stamp(revoke, 'Rotated', { x: 520, y: 360, at: mark(v(8), 'credentials'), rotate: 6, shake: false, from: 1.5, small: true });
+        kit.stamp(revoke, 'Rotated', { x: 330, y: 220, at: mark(v(8), 'rotate'), rotate: -8, shake: false, from: 1.5, small: true });
+        kit.stamp(revoke, 'Rotated', { x: 520, y: 280, at: mark(v(8), 'credentials'), rotate: 6, shake: false, from: 1.5, small: true });
       });
       // "They're spending again!" (the Teammate, aghast): the bill climbs.
       move('tenor', mark(v(9), 'spending') - 0.2, 'point', { to: [480, 110], hold: 0.3 });
@@ -1177,6 +1181,14 @@
     finale();
     refrain(3, [['ninetysix', 96]]);
     outro();
+
+    // Section ranges can overlap; the shared title position cannot. Finish
+    // each badge's exit before the following section starts its entrance.
+    badgeCues.sort((a, b) => a.from - b.from);
+    badgeCues.forEach((cue, index) => {
+      const until = Math.min(cue.to ?? Infinity, badgeCues[index + 1]?.from ?? Infinity);
+      kit.badge(hud, cue.text, cue.from, Number.isFinite(until) ? until : undefined);
+    });
 
     // Extra lyric accents for his tireless self-confidence. These use the
     // free hand or gaps between prop actions; the other singers still get

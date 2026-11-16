@@ -352,6 +352,9 @@
     inked(g, 'M14 4 H136 C144 4 148 10 148 18 V222 C148 230 144 236 136 236 H14 C6 236 2 230 2 222 V18 C2 10 6 4 14 4 Z', 'mk-phone-case');
     svg('path', { class: 'mk-phone-screen', d: 'M12 24 H138 V214 H12 Z' }, g);
     svg('path', { class: 'mk-phone-notch', d: 'M60 12 H90' }, g);
+    svg('path', { class: 'mk-hardware-edge', d: 'M7 215 V18 Q7 9 15 9 H134 M38 258 H112' }, g);
+    svg('path', { class: 'mk-hardware-seam', d: 'M12 225 H138 M46 242 H104' }, g);
+    svg('circle', { class: 'mk-camera-lens', cx: 98, cy: 12, r: 1.8 }, g);
     // The app's bar and name.
     svg('path', { class: 'mk-app-bar', d: 'M12 24 H138 V50 H12 Z' }, g);
     const name = svg('text', { class: 'mk-app-name', x: 75, y: 42, 'text-anchor': 'middle' }, g);
@@ -630,6 +633,8 @@
     inked(g, 'M2 10 L12 2 H82 L72 10 Z', 'mk-box-top');
     inked(g, 'M72 10 L82 2 V48 L72 56 Z', 'mk-box-side');
     svg('path', { class: 'mk-box-tape', d: 'M30 10 V56 M44 10 V56' }, g);
+    svg('path', { class: 'mk-cardboard-edge', d: 'M4 12 H69 M13 3 H77 M4 53 H69 M74 13 L80 8' }, g);
+    svg('path', { class: 'mk-cardboard-crease', d: 'M4 16 L6 20 M65 51 L69 49 M76 43 L79 40 M31 4 L27 8 M45 4 L41 8' }, g);
     svg('rect', { class: 'mk-box-label', x: 8, y: 22, width: 58, height: 26, rx: 3 }, g);
     const label = svg('text', { class: 'mk-box-name', x: 37, y: 33, 'text-anchor': 'middle' }, g);
     label.textContent = name;
@@ -733,10 +738,14 @@
     node.dataset.testid = 'mk-laptop';
     node.style.transformOrigin = '50% 100%';
     const g = art(node, 'mk-laptop-art', 0, 0, 132, 100);
+    propMaterial(g, 'device-metal');
     inked(g, 'M10 4 H122 C126 4 128 6 128 10 V80 H4 V10 C4 6 6 4 10 4 Z', 'mk-laptop-lid');
     svg('path', { class: 'mk-laptop-screen', d: 'M12 12 H120 V74 H12 Z' }, g);
     inked(g, 'M0 80 H132 L126 94 C125 96 123 97 120 97 H12 C9 97 7 96 6 94 Z', 'mk-laptop-base');
     svg('path', { class: 'mk-laptop-lip', d: 'M50 84 H82' }, g);
+    svg('path', { class: 'mk-hardware-edge', d: 'M7 76 V11 Q7 7 12 7 H111 M9 93 Q12 95 18 95 H118' }, g);
+    svg('path', { class: 'mk-hardware-seam', d: 'M18 81 H42 M90 81 H115 M22 88 H40 M92 88 H110' }, g);
+    svg('circle', { class: 'mk-camera-lens', cx: 66, cy: 8, r: 1 }, g);
     if (stickers) {
       // Stickers on the lid's edge: a rocket, a duck, a tick.
       svg('circle', { class: 'mk-sticker-dot mk-sticker-dot--duck', cx: 118, cy: 10, r: 5 }, g);
@@ -822,9 +831,15 @@
   function buildMachine(parent, { x, y, at, until, label = 'Clean build' }) {
     const node = place(el('div', 'mk-machine is-staged', parent), x, y);
     const g = art(node, 'mk-machine-art', 0, 0, 200, 170);
+    propMaterial(g, 'machine-enamel');
     inked(g, 'M120 8 H140 V48 H120 Z', 'mk-chimney');
     inked(g, 'M30 40 H170 V150 H30 Z', 'mk-works');
+    svg('path', { class: 'mk-machine-side', d: 'M159 42 H168 V148 H159 Z' }, g);
+    svg('path', { class: 'mk-machine-panel', d: 'M37 48 H153 V141 H37 Z M123 12 H136 M123 17 H136' }, g);
+    for (const [cx,cy] of [[40,51],[150,51],[40,138],[150,138]]) svg('circle', { class: 'mk-hardware-fastener', cx, cy, r: 1.4 }, g);
+    for (let i=0; i<5; i++) svg('path', { class: 'mk-machine-vent', d: `M100 ${105+i*5} H145` }, g);
     inked(g, 'M70 18 H130 L118 40 H82 Z', 'mk-hopper');
+    svg('path', { class: 'mk-hopper-inner', d: 'M76 22 H124 L120 28 H80 Z' }, g);
     inked(g, 'M0 150 H200 V160 H0 Z', 'mk-conveyor');
     for (let i = 0; i < 9; i++) svg('circle', { class: 'mk-roller', cx: 10 + i * 22.5, cy: 155, r: 3 }, g);
     const gear = svg('g', { transform: 'translate(64 104)' }, g);
@@ -847,12 +862,20 @@
   function plug(parent, { x, y, at, until, socketLabel, plugLabel, pushAt, failAt }) {
     const node = place(el('div', 'mk-plug is-staged', parent), x, y);
     const g = art(node, 'mk-plug-art', 0, 0, 360, 120);
+    propMaterial(g, 'device-metal');
     inked(g, 'M226 14 H330 V106 H226 Z', 'mk-socket');
     for (const sy of [36, 60, 84]) svg('rect', { class: 'mk-socket-hole', x: 238, y: sy - 4, width: 16, height: 8, rx: 2 }, g);
+    svg('path', { class: 'mk-hardware-seam', d: 'M230 102 H326 V18' }, g);
+    for (const cy of [23, 97]) {
+      svg('circle', { class: 'mk-socket-screw', cx: 278, cy, r: 3 }, g);
+      svg('path', { class: 'mk-hardware-seam', d: `M276 ${cy+1} L280 ${cy-1}` }, g);
+    }
     const plugG = svg('g', {}, g);
     inked(plugG, 'M40 38 H130 V82 H40 Z', 'mk-plug-body');
     svg('path', { class: 'mk-cord', d: 'M40 60 C20 60 14 80 0 82' }, plugG);
     for (const py of [46, 74]) inked(plugG, `M130 ${py - 3} H168 V${py + 3} H130 Z`, 'mk-prong');
+    svg('path', { class: 'mk-hardware-edge', d: 'M44 77 V42 H126 M132 44 H164 M132 72 H164' }, plugG);
+    svg('path', { class: 'mk-plug-ribs', d: 'M47 50 V70 M52 50 V70 M57 50 V70 M114 43 V77 M120 43 V77' }, plugG);
     const spark = svg('path', { class: 'mk-spark', d: 'M206 34 L218 50 L208 52 L222 72 M196 70 L210 64 M212 90 L222 80', opacity: 0 }, g);
     const socketTag = el('div', 'mk-code-chip', node, socketLabel);
     socketTag.style.left = '214px';
@@ -886,6 +909,8 @@
     inked(g, 'M8 30 L-12 6 L40 14 L60 30 Z M162 30 L182 6 L130 14 L110 30 Z', 'mk-box-flap');
     inked(g, 'M8 30 H162 V116 H8 Z', 'mk-box');
     svg('path', { class: 'mk-box-tape', d: 'M70 30 V116 M100 30 V116' }, g);
+    svg('path', { class: 'mk-cardboard-edge', d: 'M12 34 H158 M12 112 H158 M-6 9 L38 17 M132 17 L176 9' }, g);
+    svg('path', { class: 'mk-cardboard-crease', d: 'M13 38 L17 43 M151 105 L157 102 M15 29 L39 18 M155 29 L131 18' }, g);
     const stamp = svg('text', { class: 'mk-shipbox-word', x: 85, y: 64, 'text-anchor': 'middle' }, g);
     stamp.textContent = 'OVERNIGHT';
     const label = el('div', 'mk-shipping-label is-staged', node);
@@ -923,7 +948,7 @@
     inked(g, `M0 0 H${w + 32} V${h + 32} H0 Z M16 16 V${h + 16} H${w + 16} V16 Z`, 'mk-plaster');
     svg('path', { class: 'mk-plaster-mark', d: `M6 ${h * 0.3} l6 4 M${w + 22} ${h * 0.6} l6 -3 M${w * 0.4} 6 l5 5 M${w * 0.7} ${h + 24} l4 -4` }, g);
     const seal = el('div', 'mk-seal is-staged', node, 'Cast');
-    seal.style.left = `${w - 10}px`;
+    seal.style.left = `${w - 72}px`;
     seal.style.top = '-14px';
     tween(node, [{ opacity: 0, scale: '1.25' }, { opacity: 1, scale: '1' }], at, 0.45, EASE.out);
     if (sealAt !== undefined) fx.slam(seal, sealAt, { from: 1.8, rotate: 10 });
@@ -988,26 +1013,29 @@
    * The Orders module as a little building: a pediment with its name and
    * two doors that swing open at `openAt`. Its table shows inside.
    */
-  function moduleHouse(parent, { x, y, at, until, name, openAt }) {
+  function moduleHouse(parent, { x, y, w = 260, h = 196, at, until, name, openAt }) {
     const node = place(el('div', 'mk-module is-staged', parent), x, y);
-    const g = art(node, 'mk-module-art', 0, 0, 260, 196);
-    inked(g, 'M0 44 L130 0 L260 44 Z', 'mk-pediment');
-    inked(g, 'M10 44 H250 V196 H10 Z', 'mk-module-wall');
-    svg('rect', { class: 'mk-doorway', x: 26, y: 58, width: 208, height: 134 }, g);
-    const plate = svg('text', { class: 'mk-module-name', x: 130, y: 36, 'text-anchor': 'middle' }, g);
+    const g = art(node, 'mk-module-art', 0, 0, w, h);
+    const center = w / 2, left = 26, right = w - 26, bottom = h - 4;
+    const panelMiddle = (58 + bottom) / 2;
+    inked(g, `M0 44 L${center} 0 L${w} 44 Z`, 'mk-pediment');
+    inked(g, `M10 44 H${w - 10} V${h} H10 Z`, 'mk-module-wall');
+    svg('rect', { class: 'mk-doorway', x: left, y: 58, width: right - left, height: bottom - 58 }, g);
+    const plate = svg('text', { class: 'mk-module-name', x: center, y: 36, 'text-anchor': 'middle' }, g);
     plate.textContent = name;
     const doors = [0, 1].map((side) => {
       const door = svg('g', {}, g);
-      inked(door, side ? 'M130 58 H234 V192 H130 Z' : 'M26 58 H130 V192 H26 Z', 'mk-door');
-      svg('path', { class: 'mk-door-panel', d: side ? 'M142 72 H222 V120 H142 Z M142 132 H222 V180 H142 Z' : 'M38 72 H118 V120 H38 Z M38 132 H118 V180 H38 Z' }, door);
-      svg('circle', { class: 'mk-knob', cx: side ? 140 : 120, cy: 126, r: 4 }, door);
+      const edge = side ? center : left, end = side ? right : center;
+      inked(door, `M${edge} 58 H${end} V${bottom} H${edge} Z`, 'mk-door');
+      svg('path', { class: 'mk-door-panel', d: `M${edge + 12} 72 H${end - 12} V${panelMiddle - 6} H${edge + 12} Z M${edge + 12} ${panelMiddle + 6} H${end - 12} V${bottom - 12} H${edge + 12} Z` }, door);
+      svg('circle', { class: 'mk-knob', cx: center + (side ? 10 : -10), cy: panelMiddle, r: 4 }, door);
       return door;
     });
     onFrame((t) => {
       const open = easeInOutCubic(progress(t, openAt, 0.5));
       doors.forEach((door, side) => {
-        const hinge = side ? 234 : 26;
-        door.setAttribute('transform', `translate(${hinge} 0) scale(${(1 - 0.86 * open).toFixed(3)} 1) translate(${-hinge} 0)`);
+        const hinge = side ? right : left;
+        door.setAttribute('transform', `translate(${hinge} 0) scale(${(1 - 0.96 * open).toFixed(3)} 1) translate(${-hinge} 0)`);
       });
     });
     popped(node, at, until, { rotate: 0, from: 0.7 });
@@ -1366,21 +1394,44 @@
     return node;
   }
 
+  // Instance-local material resources; the palette remains in the CSS module.
+  function propMaterial(root, name) {
+    const id = `machine-${name}-${++uid}`;
+    const gradient = svg('linearGradient', { id, x1: '0%', y1: '0%', x2: '100%', y2: '30%' }, svg('defs', {}, root));
+    [0, .32, .7, 1].forEach((offset, i) => svg('stop', { offset, class: `mk-${name}-stop-${i}` }, gradient));
+    root.style.setProperty(`--mk-${name}`, `url(#${id})`);
+  }
+
   /** A burglar in a mask and a striped shirt popping up from behind something, a hand grabbing. */
   function burglar(parent, { x, y, at, until, flip = false, grabAt }) {
     const node = place(el('div', `mk-burglar${flip ? ' mk-burglar--flip' : ''} is-staged`, parent), x, y);
     const g = art(node, 'mk-burglar-art', 0, 0, 90, 110);
+    propMaterial(g, 'thief-skin');
+    propMaterial(g, 'thief-cloth');
     inked(g, 'M14 110 C14 76 26 62 45 62 C64 62 76 76 76 110 Z', 'mk-burglar-shirt');
     svg('path', { class: 'mk-burglar-stripes', d: 'M18 84 H72 M16 96 H74 M22 72 H68' }, g);
+    svg('path', { class: 'mk-burglar-shirt-shade', d: 'M22 76 Q30 85 28 110 H14 Q14 89 22 76 M63 74 Q76 88 76 110 H64 Q68 93 63 74' }, g);
+    inked(g, 'M37 57 L36 68 Q45 76 54 68 L53 57 Z', 'mk-burglar-face');
+    for (const cx of [22, 68]) {
+      svg('ellipse', { class: 'mk-burglar-face', cx, cy: 42, rx: 4.4, ry: 7 }, g);
+      svg('path', { class: 'mk-burglar-feature', d: `M${cx} 38 Q${cx - 3} 41 ${cx} 46` }, g);
+    }
     inked(g, 'M45 64 C30 64 22 52 22 38 C22 22 32 12 45 12 C58 12 68 22 68 38 C68 52 60 64 45 64 Z', 'mk-burglar-face');
     inked(g, 'M22 30 C22 18 32 8 45 8 C58 8 68 18 68 30 C60 26 30 26 22 30 Z', 'mk-burglar-cap');
     svg('path', { class: 'mk-burglar-mask', d: 'M22 34 C32 30 58 30 68 34 V42 C58 46 32 46 22 42 Z' }, g);
-    svg('circle', { class: 'mk-burglar-eye', cx: 36, cy: 38, r: 2.6 }, g);
-    svg('circle', { class: 'mk-burglar-eye', cx: 54, cy: 38, r: 2.6 }, g);
-    svg('path', { class: 'mk-burglar-grin', d: 'M36 52 Q45 58 54 52' }, g);
+    for (const cx of [36, 54]) {
+      svg('path', { class: 'mk-burglar-eye', d: `M${cx - 5} 38 Q${cx} 33 ${cx + 5} 37 Q${cx} 42 ${cx - 5} 38 Z` }, g);
+      svg('circle', { class: 'mk-burglar-pupil', cx: cx + 1, cy: 37.5, r: 2 }, g);
+      svg('circle', { class: 'mk-burglar-catchlight', cx: cx + .3, cy: 36.8, r: .65 }, g);
+    }
+    svg('path', { class: 'mk-burglar-feature', d: 'M45 39 L42 47 Q45 49 48 46 M32 48 Q30 52 33 54 M57 48 Q60 51 57 54 M39 59 Q45 61 50 58' }, g);
+    svg('path', { class: 'mk-burglar-cap-seam', d: 'M26 24 Q45 18 64 24 M31 17 Q44 10 55 15 M35 10 Q31 14 30 18' }, g);
+    svg('path', { class: 'mk-burglar-collar', d: 'M31 69 Q45 81 59 69 M24 91 L22 106 M65 93 L68 108' }, g);
+    svg('path', { class: 'mk-burglar-grin', d: 'M35 52 Q45 56 55 50 Q49 59 42 57 Q38 56 35 52 Z' }, g);
     const arm = svg('g', {}, g);
     svg('path', { class: 'mk-burglar-arm', d: 'M70 80 C82 70 88 56 88 44' }, arm);
-    svg('circle', { class: 'mk-burglar-glove', cx: 88, cy: 42, r: 6 }, arm);
+    svg('path', { class: 'mk-burglar-glove', d: 'M84 48 L81 43 Q79 40 81 39 Q83 38 84 41 L84 35 Q84 32 86 33 L87 38 L88 32 Q89 30 91 33 L91 38 Q93 34 94 36 L94 41 Q95 40 96 42 L94 47 Q90 51 84 48 Z' }, arm);
+    svg('path', { class: 'mk-burglar-glove-seam', d: 'M84 42 Q88 40 92 43 M85 46 Q89 44 92 46' }, arm);
     onFrame((t) => {
       const grab = grabAt === undefined ? 0 : Math.sin(Math.PI * clamp((t - grabAt) / 0.6, 0, 1));
       arm.setAttribute('transform', `rotate(${(-25 * grab).toFixed(1)} 70 80)`);
@@ -1394,10 +1445,14 @@
   function serverRack(parent, { x, y, at, until, spinAt }) {
     const node = place(el('div', 'mk-rack is-staged', parent), x, y);
     const g = art(node, 'mk-rack-art', 0, 0, 80, 150);
+    propMaterial(g, 'rack-metal');
     inked(g, 'M4 4 H76 V146 H4 Z', 'mk-rack-body');
+    svg('path', { class: 'mk-rack-rail', d: 'M7 8 V142 M73 8 V142' }, g);
     const fans = [0, 1, 2].map((i) => {
       const cy = 30 + i * 44;
       svg('rect', { class: 'mk-rack-unit', x: 10, y: cy - 18, width: 60, height: 36, rx: 3 }, g);
+      svg('path', { class: 'mk-rack-grille', d: `M49 ${cy+3} H63 M49 ${cy+7} H63 M49 ${cy+11} H63` }, g);
+      for (const cx of [14,66]) svg('circle', { class: 'mk-hardware-fastener', cx, cy: cy-13, r: 1 }, g);
       const fan = svg('g', { transform: `translate(30 ${cy})` }, g);
       svg('circle', { class: 'mk-fan-ring', r: 11 }, fan);
       svg('path', { class: 'mk-fan-blades', d: 'M0 0 C4 -8 9 -6 8 -2 Z M0 0 C8 4 6 9 2 8 Z M0 0 C-4 8 -9 6 -8 2 Z M0 0 C-8 -4 -6 -9 -2 -8 Z' }, fan);
@@ -1449,11 +1504,22 @@
   function rocket(parent, { x, y, at, until, label, launchAt }) {
     const node = place(el('div', 'mk-rocket is-staged', parent), x, y);
     const g = art(node, 'mk-rocket-art', 0, 0, 100, 190);
+    propMaterial(g, 'rocket-metal');
     const body = svg('g', {}, g);
     inked(body, 'M50 4 C70 24 76 60 74 110 H26 C24 60 30 24 50 4 Z', 'mk-rocket-body');
     inked(body, 'M26 92 L8 128 L26 122 Z M74 92 L92 128 L74 122 Z', 'mk-rocket-fin');
-    svg('circle', { class: 'mk-rocket-window', cx: 50, cy: 52, r: 11 }, body);
-    const flame = svg('path', { class: 'mk-rocket-flame', d: 'M34 110 C38 132 46 140 50 154 C54 140 62 132 66 110 Z', opacity: 0 }, body);
+    svg('path', { class: 'mk-rocket-nose', d: 'M50 4 C60 14 66 27 69 40 Q50 46 31 40 C34 27 40 14 50 4 Z' }, body);
+    svg('path', { class: 'mk-rocket-panel', d: 'M30 43 Q50 49 70 43 M27 91 Q50 98 73 91 M27 102 H73 M33 61 V83 M67 61 V83' }, body);
+    svg('path', { class: 'mk-rocket-glint', d: 'M44 16 Q35 28 34 37 M30 53 L29 85 M14 120 L24 102' }, body);
+    inked(body, 'M36 110 L32 122 Q50 128 68 122 L64 110 Z', 'mk-rocket-nozzle');
+    svg('path', { class: 'mk-rocket-panel', d: 'M39 113 L37 121 M46 113 V123 M54 113 V123 M61 113 L63 121' }, body);
+    svg('circle', { class: 'mk-rocket-port-rim', cx: 50, cy: 57, r: 15 }, body);
+    svg('circle', { class: 'mk-rocket-window', cx: 50, cy: 57, r: 11 }, body);
+    svg('path', { class: 'mk-rocket-glass-glint', d: 'M42 57 A8 8 0 0 1 53 50 M45 63 L56 52' }, body);
+    for (const [cx,cy] of [[50,44],[63,57],[50,70],[37,57],[31,99],[69,99]]) svg('circle', { class: 'mk-rocket-rivet', cx, cy, r: 1.1 }, body);
+    const flame = svg('g', { opacity: 0 }, body);
+    svg('path', { class: 'mk-rocket-flame', d: 'M36 124 C36 136 44 142 43 151 L50 160 C54 145 65 138 64 124 Z' }, flame);
+    svg('path', { class: 'mk-rocket-flame-core', d: 'M42 125 Q41 138 50 148 Q58 135 58 125 Z' }, flame);
     const bags = [0, 1].map((i) => {
       const bag = svg('g', { transform: `translate(${30 + i * 40} 168)` }, g);
       svg('path', { class: 'mk-rope', d: `M0 -14 L${i ? -18 : 18} -58` }, bag);
