@@ -30,6 +30,53 @@
   const SKIES = ['day', 'dusk', 'night', 'dawn'];
   const BOARD_LAMPS = 6;
 
+  // Thin, uneven banks suit the small city window. Their tapered ends and
+  // overlapping folds carry the volume without noisy texture or hard outlines.
+  const CLOUD_BANKS = [
+    { x: -22, y: 30, scale: 0.74, speed: 0.022, shade: 1.6,
+      shape: 'M0 12 C12 11 15 8 27 9 C35 10 38 4 49 5 C59 6 64 0 75 3 C84 5 85 8 96 8 C106 8 113 12 125 13 C110 15 103 14 94 17 C84 19 79 16 69 18 C59 20 52 17 42 18 C28 18 20 13 0 12 Z' },
+    { x: 77, y: 14, scale: 0.54, speed: 0.012, shade: 0.65,
+      shape: 'M0 13 C15 12 21 8 33 9 C43 10 45 5 56 6 C67 7 72 1 83 4 C94 7 99 5 109 10 C116 13 124 12 134 14 C116 15 108 18 96 17 C85 16 79 21 67 18 C53 16 46 19 35 16 C20 13 13 15 0 13 Z' },
+    { x: 12, y: 62, scale: 0.94, speed: 0.017, shade: 2.3,
+      shape: 'M0 15 C12 14 20 10 30 11 C40 12 44 6 55 7 C66 8 70 3 81 6 C92 9 98 8 108 12 C116 15 124 14 137 16 C122 17 115 20 104 19 C93 18 87 22 76 20 C64 18 58 22 46 19 C33 16 20 18 0 15 Z' },
+  ];
+
+  /** Layers in front of the celestial bodies, behind the city and mullions. */
+  function windowClouds(parent, defs, gradient) {
+    const ambient = gradient('oh-cloud-ambient', { x1: 0, y1: 0, x2: 0, y2: 1 }, ['0', '0.52', '1']);
+    const direct = gradient('oh-cloud-direct', { x1: 0, y1: 0, x2: 0, y2: 1 }, ['0', '0.55', '1']);
+    return CLOUD_BANKS.map((bank, i) => {
+      const node = svg('g', { class: 'oh-cloud', 'data-testid': 'oh-window-cloud' }, parent);
+      const form = svg('g', { transform: `scale(${bank.scale})` }, node);
+      const clipId = `oh-cloud-clip-${i}`;
+      svg('path', { d: bank.shape }, svg('clipPath', { id: clipId }, defs));
+      svg('path', { d: bank.shape, fill: ambient }, form);
+      const rim = svg('path', { class: 'oh-cloud-light', d: bank.shape, fill: direct }, form);
+      const folds = svg('g', { 'clip-path': `url(#${clipId})`, class: 'oh-cloud-folds' }, form);
+      svg('path', { d: bank.shape, transform: 'translate(20 5) scale(0.62 0.7)' }, folds);
+      svg('path', { class: 'oh-cloud-wisp', d: 'M7 21 C22 18 30 21 42 20 C34 24 24 23 7 21 Z M80 25 C92 21 100 24 115 20 C106 26 94 25 80 25 Z', fill: ambient }, form);
+      return { ...bank, node, rim };
+    });
+  }
+
+  /** Atmospheric detail uses the existing sky cue's blend, not a new clock.
+   * Low cloud banks lose their warm underside before the higher thin bank.
+   * Drift is slow, one-way, and deterministic; reduced motion holds it still. */
+  function lightWindow(back, t, sunNow, nightness) {
+    const warmth = Math.min(1, (1 - sunNow) / 0.7);
+    // Both the gradient stops in <defs> and their painted shapes inherit here.
+    back.art.style.setProperty('--oh-sky-warmth', `${(100 * warmth).toFixed(2)}%`);
+    back.art.style.setProperty('--oh-sky-night', `${(100 * nightness).toFixed(2)}%`);
+    back.haze.setAttribute('opacity', ((0.12 + 0.68 * warmth) * (1 - nightness)).toFixed(3));
+    back.sunGlow.setAttribute('cy', (150 - 70 * sunNow).toFixed(1));
+    back.sunGlow.setAttribute('opacity', (0.45 * sunNow).toFixed(3));
+    for (const cloud of back.clouds) {
+      const x = cloud.x + (reducedMotion.matches ? 0 : t * cloud.speed);
+      cloud.node.setAttribute('transform', `translate(${x.toFixed(2)} ${cloud.y})`);
+      cloud.rim.setAttribute('opacity', ((0.35 + 0.5 * warmth) * (1 - nightness) ** cloud.shade).toFixed(3));
+    }
+  }
+
   /** The value of cues [time, value, duration] at t, easing between them; numbers only. */
   function cued(cues, t, initial) {
     let value = initial;
@@ -65,17 +112,24 @@
     const pane = 'M0 150 V58 A70 58 0 0 1 140 58 V150 Z';
     const clip = svg('clipPath', { id: 'oh-window-clip' }, defs);
     svg('path', { d: pane }, clip);
-    const sky = svg('g', { 'clip-path': 'url(#oh-window-clip)' }, win);
+    const sky = svg('g', { class: 'oh-window-sky', 'data-testid': 'oh-window-sky', 'clip-path': 'url(#oh-window-clip)' }, win);
     const skies = SKIES.map((name) => {
-      const fill = gradient(`oh-sky-${name}`, { x1: 0, y1: 0, x2: 0, y2: 1 }, ['0', '1']);
+      const fill = gradient(`oh-sky-${name}`, { gradientUnits: 'userSpaceOnUse', x1: 0, y1: 0, x2: 0, y2: 150 }, ['0', '0.38', '0.7', '1']);
       return svg('rect', { class: `oh-sky oh-sky--${name}`, x: 0, y: 0, width: 140, height: 150, fill, opacity: name === 'day' ? 1 : 0 }, sky);
     });
     const stars = svg('g', { class: 'oh-stars', opacity: 0 }, sky);
     for (let i = 0; i < 16; i++) svg('circle', { cx: (10 + hash01(i * 7) * 120).toFixed(1), cy: (12 + hash01(i * 13) * 60).toFixed(1), r: (0.7 + hash01(i * 3) * 0.8).toFixed(2) }, stars);
+    const hazeFill = gradient('oh-horizon-haze', { cx: 0.5, cy: 0.5, r: 0.5 }, ['0', '0.45', '1'], 'radialGradient');
+    const haze = svg('ellipse', { class: 'oh-horizon-haze', cx: 40, cy: 98, rx: 104, ry: 64, fill: hazeFill }, sky);
+    const glowFill = gradient('oh-sun-glow', { cx: 0.5, cy: 0.5, r: 0.5 }, ['0', '0.4', '1'], 'radialGradient');
+    const sunGlow = svg('ellipse', { cx: 40, cy: 112, rx: 37, ry: 32, fill: glowFill }, sky);
     const moon = svg('g', { class: 'oh-moon', opacity: 0 }, sky);
+    svg('circle', { cx: 100, cy: 34, r: 11 }, svg('clipPath', { id: 'oh-moon-disc' }, defs));
     svg('circle', { cx: 100, cy: 34, r: 11 }, moon);
-    svg('circle', { class: 'oh-moon-shadow', cx: 105, cy: 30, r: 9.4 }, moon);
-    const sun = svg('circle', { class: 'oh-sun', cx: 40, cy: 112, r: 13 }, sky);
+    svg('circle', { class: 'oh-moon-shadow', cx: 105, cy: 30, r: 9.4, 'clip-path': 'url(#oh-moon-disc)' }, moon);
+    const sunFill = gradient('oh-sun-disc', { x1: 0, y1: 0, x2: 0, y2: 1 }, ['0', '0.55', '1']);
+    const sun = svg('circle', { class: 'oh-sun', cx: 40, cy: 112, r: 13, fill: sunFill }, sky);
+    const clouds = windowClouds(sky, defs, gradient);
     svg('path', { class: 'oh-skyline', d: 'M0 150 V112 H12 V96 H24 V104 H34 V84 H48 V100 H58 V90 H70 V108 H82 V78 H96 V98 H106 V92 H118 V104 H130 V96 H140 V150 Z' }, sky);
     const lit = svg('g', { class: 'oh-city-lights', opacity: 0 }, sky);
     for (const [x, y] of [[16, 116], [28, 108], [38, 92], [52, 104], [62, 96], [86, 86], [100, 104], [110, 98], [122, 110], [132, 102], [42, 120], [90, 118]]) {
@@ -127,7 +181,7 @@
     svg('path', { class: 'oh-floor-seam', d: `M0 ${OPENING.floor + 20} H${W} M0 ${OPENING.floor + 44} H${W}` }, art);
     svg('rect', { class: 'oh-floor-glow', x: 0, y: OPENING.floor + 18, width: W, height: OPENING.edge - OPENING.floor - 18, fill: gradient('oh-footglow', { x1: 0, y1: 0, x2: 0, y2: 1 }, ['0', '1']) }, art);
 
-    return { clock: { hourHand, minuteHand }, skies, stars, moon, sun, lit, lamps };
+    return { art, clock: { hourHand, minuteHand }, skies, stars, moon, sun, lit, lamps, haze, sunGlow, clouds };
   }
 
   /** A velvet drape with folds: its lit ridges and shadowed troughs. */
@@ -276,6 +330,7 @@
       const sunNow = sunUp(previous) + (sunUp(shown) - sunUp(previous)) * mix;
       back.sun.setAttribute('opacity', sunNow.toFixed(3));
       back.sun.setAttribute('cy', (150 - 70 * sunNow).toFixed(1));
+      lightWindow(back, t, sunNow, nightness);
       // The board: the latest cue's lamps, each lit after its delay.
       let cue = null;
       for (const c of boardCues) if (c[0] <= t) cue = c;

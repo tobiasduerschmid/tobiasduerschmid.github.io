@@ -128,6 +128,10 @@
     const CI_FAILED = mark('outro-1', 'strange') - 1;
     const CI_RUNNING = CI_FAILED - 3;
     const ciFocus = [CI_RUNNING, line('outro-1').start + 0.7];
+    const mailFocus = [line('build-4').start - 0.2, line('refrain-1-1').start - 0.2];
+    lighting.subject(layers.stage.querySelector('.oh-window'), {
+      kind: 'window', windows: [[0, Infinity]], recesses: [mailFocus],
+    });
     lighting.subject(layers.stage.querySelector('.oh-board'), {
       kind: 'board', windows: [...issueReveals.slice(1).map(at => [at - 0.2, at + 2.8]),
         [CI_RUNNING, line('outro-3').start]],
@@ -454,8 +458,13 @@
       // goes into a box marked OVERNIGHT; a FRAGILE label slaps on; he
       // clutches his head.
       behind.push(() => {
-        const mail = kit.scene(content, line(v(4)).start - 0.2, line('refrain-1-1').start - 0.2, { exit: 'fade' });
-        M.shippingBox(mail, { x: 470, y: 316, at: line(v(4)).start - 0.1, labelAt: mark(v(4), 'mail') });
+        // A warm pool guides the eye to the joke while the speaker and the
+        // Teammate's reaction retain their own full lights.
+        const beam = M.spot(content, () => ({ where: () => ({ x: 555, y: 432, scale: 0.95 }) }), { from: mailFocus[0], to: mailFocus[1] });
+        beam.dataset.testid = 'tm-mail-spot';
+        const mail = kit.scene(content, ...mailFocus, { exit: 'fade' });
+        const box = M.shippingBox(mail, { x: 470, y: 316, at: line(v(4)).start - 0.1, labelAt: mark(v(4), 'mail') });
+        lighting.subject(box, { kind: 'shipping', windows: [mailFocus] });
       });
       behind.push(() => {
         const drop = kit.scene(content, mark(v(4), 'ship') - 0.2, mark(v(4), 'laptop') + 0.6, { exit: 'fade' });

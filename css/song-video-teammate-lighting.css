@@ -41,6 +41,24 @@
   --tm-rest-contrast: 1;
   --tm-key-contrast: 1;
 }
+.tm-lit--shipping {
+  --tm-rest-brightness: 1;
+  --tm-key-brightness: 1.1;
+  --tm-rest-chroma: 1;
+  --tm-key-chroma: 1.12;
+  --tm-rest-contrast: 1;
+  --tm-key-contrast: 1.055;
+}
+/* Preserve white-label contrast when the parcel catches the warmer key. */
+.tm-lit--shipping .mk-shipping-label-head { background: #bb2340; }
+.tm-lit--window {
+  --tm-rest-brightness: 0.78;
+  --tm-key-brightness: 0.92;
+  --tm-rest-chroma: 0.94;
+  --tm-key-chroma: 1.12;
+  --tm-rest-contrast: 1.03;
+  --tm-key-contrast: 1.06;
+}
 .tm-lit--detail {
   --tm-rest-brightness: 0.68;
   --tm-key-brightness: 1;
@@ -60,7 +78,6 @@
 .tm-lighting .oh-floor-stop-0 { stop-color: #5b4430; }
 .tm-lighting .oh-floor-stop-1 { stop-color: #37291e; }
 .tm-lighting .oh-footglow-stop-1 { stop-opacity: 0.17; }
-.tm-lighting .oh-window { filter: brightness(0.69) saturate(0.78); }
 .tm-lighting .oh-front { filter: brightness(0.84) saturate(0.92); }
 .tm-lighting .mk-desk { filter: brightness(0.8) saturate(0.83) contrast(0.96); }
 .tm-lighting .song-student-avatar { filter: brightness(0.94) saturate(0.985); }
