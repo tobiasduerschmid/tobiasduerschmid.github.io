@@ -646,7 +646,7 @@ Supported options:
       NOTE_SCHEMA
     ],
     component: [
-      { id: 'component', label: 'Component', glyph: '▢', base: 'Component', keyword: 'component', supports: { stereotype: true, dashed: true, ports: true, highlight: true, texture: true } },
+      { id: 'component', label: 'Component', glyph: '▢', base: 'Component', keyword: 'component', supports: { displayLabel: true, stereotype: true, dashed: true, ports: true, highlight: true, texture: true } },
       { id: 'portin',    label: 'Port In',   glyph: '▶', base: 'in',  keyword: 'port',    supports: { displayLabel: true }, isPort: true,      portKind: 'portin' },
       { id: 'portout',   label: 'Port Out',  glyph: '◀', base: 'out', keyword: 'port',    supports: { displayLabel: true }, isPort: true,      portKind: 'portout' },
       { id: 'provide',   label: 'Provided I/F', glyph: '○', base: 'p_iface', keyword: 'provide', supports: { displayLabel: true }, isInterface: true, interfaceKind: 'provide' },
@@ -654,8 +654,8 @@ Supported options:
       NOTE_SCHEMA
     ],
     deployment: [
-      { id: 'node',      label: 'Node',      glyph: '□', base: 'Node',     keyword: 'node',      supports: { stereotype: true, highlight: true, texture: true } },
-      { id: 'component', label: 'Component', glyph: '▢', base: 'Component',keyword: 'component', supports: { stereotype: true, highlight: true, texture: true } },
+      { id: 'node',      label: 'Node',      glyph: '□', base: 'Node',     keyword: 'node',      supports: { displayLabel: true, stereotype: true, highlight: true, texture: true } },
+      { id: 'component', label: 'Component', glyph: '▢', base: 'Component',keyword: 'component', supports: { displayLabel: true, stereotype: true, highlight: true, texture: true } },
       { id: 'artifact',  label: 'Artifact',  glyph: '⧉', base: 'Artifact', keyword: 'artifact',  supports: { displayLabel: true, highlight: true, texture: true } },
       NOTE_SCHEMA
     ],
@@ -1036,24 +1036,39 @@ Supported options:
       return id !== label ? id + ': ' + label : label;
     }
 
-    function parseComponentPortLine(line) {
-      var m = String(line || '').trim().match(/^(portin|portout|port|provide|require)\s+"([^"]+)"(?:\s+as\s+(\S+))?/i) ||
-        String(line || '').trim().match(/^(portin|portout|port|provide|require)\s+(\S+?)(?:\s+as\s+(\S+))?(?:\s+dashed)?$/i);
-      if (!m) return null;
-      return { label: m[2], alias: m[3] || m[2] };
+    // Source spans complement the renderer model when rewriting a declaration.
+    function componentDeclaration(line) {
+      const match = String(line || '').match(/^(\s*(?:component\s+)?)(\[[^\]]+\]|"(?:[^"\\]|\\.)*"|[^\s{]+)(?:\s+as\s+("(?:[^"\\]|\\.)*"|[^\s{]+))?/i);
+      if (!match || (!/^\s*component\s/i.test(line) && match[2].charAt(0) !== '[')) return null;
+      if (isRelationOperatorToken({ value: match[2] })) return null;
+      if (isRelationOperatorToken({ value: String(line).slice(match[0].length).trim().split(/\s+/)[0] })) return null;
+      const label = match[2].charAt(0) === '[' ? match[2].slice(1, -1).trim() : unquoteId(match[2]);
+      const token = match[3] || match[2];
+      const start = match[3] ? match[0].lastIndexOf(token) : match[1].length;
+      return { id: match[3] ? unquoteId(match[3]) : label, label: label,
+        start: start, end: start + token.length, headEnd: match[0].length };
     }
 
     function collectModelElements(text, type) {
       var lines = stripLayoutMetadata(text).split('\n');
       var elements = [];
       var seen = Object.create(null);
-      var componentContext = null;
       var stateInitialCount = 0;
       var stateFinalCount = 0;
 
       if (type === 'crc') {
         return window.UMLCRCDiagram.parse(text).cards.map(function (card) {
           return { id: card.id, label: card.name, axis: 'xy' };
+        });
+      }
+      if (type === 'component' && window.UMLComponentDiagram) {
+        const model = window.UMLComponentDiagram.parse(text);
+        model.components.forEach(function (component) {
+          addElement(elements, seen, component.name, model.displayNameMap[component.name] || component.label || component.name,
+            component.standalonePort ? 'port' : 'xy');
+          if (!component.standalonePort) component.ports.forEach(function (port) {
+            addElement(elements, seen, component.name + '.' + port.alias, port.name, 'port');
+          });
         });
       }
       if (type === 'deployment' && window.UMLDeploymentDiagram) {
@@ -1087,10 +1102,6 @@ Supported options:
       for (var i = 0; i < lines.length; i++) {
         var line = lines[i].trim();
         if (!line || line === '@startuml' || line === '@enduml' || /^layout\s+/i.test(line)) continue;
-        if (type === 'component' && line === '}') {
-          componentContext = null;
-          continue;
-        }
         var m;
         if (type !== 'gitgraph' && type !== 'folder-tree' && type !== 'er' && /^note\s+(left|right|top|bottom|over)\b/i.test(line)) {
           var noteLine = line.match(/^note\s+(left|right|top|bottom|over)\s+(?:of\s+)?(\S+)\s*:\s*(.+)$/i);
@@ -1132,35 +1143,8 @@ Supported options:
             }
           }
         } else if (type === 'component') {
-          m = line.match(/^component\s+("[^"]+"|\S+)(?:\s+as\s+(\S+))?/i);
-          if (m) {
-            var componentId = m[2] || unquoteId(m[1]).replace(/^\[|\]$/g, '');
-            addElement(elements, seen, componentId, m[1]);
-            if (line.indexOf('{') !== -1) {
-              componentContext = componentId;
-              var inlineBody = line.match(/\{([^}]*)\}/);
-              if (inlineBody) {
-                var portRe = /(portin|portout|port|provide|require)\s+(?:"([^"]+)"|(\S+?))(?:\s+as\s+(\S+))?(?=\s+(?:portin|portout|port|provide|require)\b|\s*$)/ig;
-                var pm;
-                while ((pm = portRe.exec(inlineBody[1])) !== null) {
-                  var inlinePortLabel = pm[2] || pm[3];
-                  var inlinePortAlias = pm[4] || inlinePortLabel;
-                  addElement(elements, seen, componentId + '.' + inlinePortAlias, inlinePortLabel, 'port');
-                }
-                componentContext = null;
-              }
-            }
-            continue;
-          }
-          var topPort = parseComponentPortLine(line);
-          if (topPort && !componentContext) {
-            addElement(elements, seen, topPort.alias, topPort.label, 'port');
-            continue;
-          }
-          if (componentContext) {
-            var port = parseComponentPortLine(line);
-            if (port) addElement(elements, seen, componentContext + '.' + port.alias, port.label, 'port');
-          }
+          // Components and their ports already come from the renderer model.
+          continue;
         } else if (type === 'deployment') {
           m = line.match(/^node\s+("[^"]+"|\S+)(?:\s+as\s+(\S+))?/i);
           if (m) addElement(elements, seen, m[2] || m[1], m[1]);
@@ -1321,8 +1305,8 @@ Supported options:
         return m ? unquoteId(m[1]) : null;
       }
       if (type === 'component') {
-        m = clean.match(/^component\s+("[^"]+"|\S+)(?:\s+as\s+(\S+))?/i);
-        if (m) return unquoteId(m[2] || m[1]);
+        const component = componentDeclaration(clean);
+        if (component) return component.id;
         m = clean.match(/^(?:portin|portout|port|provide|require)\s+(?:"([^"]+)"|(\S+))(?:\s+as\s+(\S+))?/i);
         return m ? unquoteId(m[3] || m[1] || m[2]) : null;
       }
@@ -2639,6 +2623,8 @@ Supported options:
         line = '"' + escapeQuoted(label) + '"';
       } else if (spec.keyword === '(*)') {
         line = null;
+      } else if ((spec.keyword === 'component' || spec.keyword === 'node') && label !== id) {
+        line = spec.keyword + ' "' + escapeQuoted(label) + '" as ' + formatRelationEndpointId(id);
       } else if (spec.keyword) {
         line = spec.keyword + ' ' + id;
       } else {
@@ -3791,7 +3777,8 @@ Supported options:
           .map(function (endpoint) {
             const first = endpoint.tokens[0];
             const last = endpoint.tokens[endpoint.tokens.length - 1];
-            return { value: endpoint.id, quoted: endpoint.tokens.length === 1 && first.quoted,
+            const id = type === 'component' ? endpoint.id.replace(/^\[([^\]]+)\]$/, '$1') : endpoint.id;
+            return { value: id, quoted: endpoint.tokens.length === 1 && first.quoted,
               start: first.start, end: last.end };
           });
       }
@@ -7572,6 +7559,7 @@ Supported options:
         }
       }
       if (!schema && type === 'activity') schema = findElementSchema('activity', 'action');
+      if (!schema && type === 'component') schema = findElementSchema('component', 'component');
       propsTitle.textContent = (schema ? schema.label + ' — ' : 'Element — ') + id;
 
       if (/^note:\d+$/.test(String(id))) {
@@ -7624,6 +7612,7 @@ Supported options:
       if (type === 'class' && schema) {
         var info = parseClassDeclaration(line || (schema.keyword + ' ' + id));
         const memberInputs = [];
+        let classLabelInput;
         propsContent.appendChild(field('Name (id)', textInput(info.name, function (v) {
           info.name = v.trim() || info.name;
           replaceClassDeclaration(id, info);
@@ -7636,10 +7625,16 @@ Supported options:
               Object.assign(member, updated.members[index]);
               draftControlCommits.get(memberInputs[index]).setValue(member.text || '');
             });
+            draftControlCommits.get(classLabelInput).setValue(info.declarationLabel || info.name);
           } else {
             info.name = id;
           }
         })));
+        classLabelInput = textInput(info.declarationLabel || info.name, function (v) {
+          info.declarationLabel = v.trim() || info.declarationLabel || info.name;
+          replaceClassDeclaration(id, info);
+        });
+        propsContent.appendChild(field('Display label', classLabelInput));
         propsContent.appendChild(field('Kind', selectInput(
           [{ value: 'class', label: 'Class' }, { value: 'abstract', label: 'Abstract Class' },
            { value: 'interface', label: 'Interface' }, { value: 'enum', label: 'Enum' }],
@@ -8455,6 +8450,15 @@ Supported options:
       }
       var st = t.match(/<<\s*([^>]+?)\s*>>/);
       if (st) info.stereotype = '<<' + st[1] + '>>';
+      if (type === 'component') {
+        const component = componentDeclaration(t);
+        if (component) {
+          info.name = component.id;
+          info.label = component.label;
+          info.dashed = /\bdashed\b/i.test(t.slice(component.headEnd));
+          return info;
+        }
+      }
       if (type === 'sequence' && /^(?:participant|actor)\s/i.test(t)) {
         // Sequence `id as Class` runs in the opposite direction to the
         // generic `label as id` syntax. Use the renderer's declaration model.
@@ -8540,7 +8544,7 @@ Supported options:
         declLine = setBraceBody(declLine, parseBraceBody(oldLine), oldLine.indexOf('\n') !== -1);
       }
       var sourceText = textarea.value;
-      sourceText = replaceBlockByMatch(sourceText, type, function (line) {
+      sourceText = !oldLine && type === 'component' ? appendRawLine(sourceText, declLine) : replaceBlockByMatch(sourceText, type, function (line) {
         return declarationIdForLine(line, type) === oldId;
       }, declLine);
       if (newId !== oldId && newId) sourceText = renameReferencesInRelations(sourceText, oldId, newId);
@@ -8656,6 +8660,13 @@ Supported options:
     }
 
     function renameDeclarationIdentifier(declaration, type, oldId, newId) {
+      if (type === 'component') {
+        const component = componentDeclaration(declaration);
+        if (component) {
+          const token = declaration.charAt(component.start) === '[' ? '[' + newId + ']' : formatRelationEndpointId(newId);
+          return declaration.slice(0, component.start) + token + declaration.slice(component.end);
+        }
+      }
       if (type === 'sequence') {
         // A sequence declaration puts the id before either ':' or 'as'.
         // The generic alias grammar below puts it after 'as' instead.
@@ -8788,7 +8799,7 @@ Supported options:
           renameActivityElement(oldId, newId);
           return;
         }
-        if ((type !== 'state' && type !== 'deployment') || oldId === '[*]') return;
+        if ((type !== 'state' && type !== 'deployment' && type !== 'component') || oldId === '[*]') return;
         snapshotForUndo();
         textarea.value = renameReferencesInRelations(sourceText, oldId, newId);
         selectAfterRender(newId, 'node');
@@ -10528,11 +10539,9 @@ Supported options:
      * Rewrite the visible label of an element while preserving its id (used as
      * the cross-reference key in relations).
      *
-     * For schemas that already separate label from id (sequence's
-     * `actor user: User` form, use-case's `usecase "Label" as id` form), this
-     * just rewrites the label part. For schemas that previously had no
-     * separate label (class, state, component, deployment node, ER entity),
-     * this introduces a `keyword "Label" as id` alias so the id keeps working.
+     * Explicit aliases keep their reference key. Unaliased classifiers,
+     * states, deployment elements and ER entities rename their identity;
+     * components and use cases can introduce a separate display label.
      */
     function setElementLabel(id, newLabel) {
       var type = typeSelect.value;
@@ -10552,7 +10561,9 @@ Supported options:
         setSequenceLifelineHead(id, newLabel);
         return;
       }
-      if (type === 'class' || type === 'state') {
+      const declaration = getDeclarationLine(textarea.value, type, id);
+      const hasAlias = declaration && /^\s*(?:abstract\s+class|class|interface|enum|node|component|artifact)\s+(?:"(?:[^"\\]|\\.)*"|\S+)\s+as\s+/i.test(declaration);
+      if ((type === 'class' && !hasAlias) || type === 'state') {
         var nextId = identifierFromInlineLabel(newLabel);
         if (!nextId) return;
         renameElement(id, nextId);
@@ -10562,7 +10573,7 @@ Supported options:
         renameActivityElement(id, newLabel);
         return;
       }
-      if (type === 'deployment' || type === 'er') {
+      if ((type === 'deployment' && !hasAlias) || type === 'er') {
         var nextModelId = identifierFromInlineLabel(newLabel);
         if (!nextModelId) return;
         renameElement(id, nextModelId);
@@ -10573,7 +10584,15 @@ Supported options:
         return;
       }
       var line = getDeclarationLine(textarea.value, type, id);
-      if (line == null) return;
+      if (line == null) {
+        if (type === 'component') {
+          const schema = findElementSchema('component', 'component');
+          textarea.value = addElementToSource(textarea.value, type, schema, { id: id, label: newLabel });
+          selectAfterRender(id, 'node');
+          renderDiagram();
+        }
+        return;
+      }
       var t = line.trim();
       // Preserve any trailing { ... } body so members / ports / attributes survive.
       var bodyMatch = t.match(/(\s*\{[\s\S]*\}\s*)$/);
@@ -10695,6 +10714,12 @@ Supported options:
       var quotedId = /[\s"<>]/.test(id) ? '"' + escapeQuoted(id) + '"' : id;
       var quotedLbl = '"' + escapeQuoted(newLabel) + '"';
 
+      if (type === 'component') {
+        const component = componentDeclaration(head);
+        if (component) return 'component ' + quotedLbl + ' as ' + quotedId + head.slice(component.headEnd);
+      }
+      const alias = head.match(/^(\s*(?:abstract\s+class|\w+)\s+)("(?:[^"\\]|\\.)*"|\S+)(\s+as\s+)/i);
+      if (alias) return alias[1] + quotedLbl + head.slice(alias[1].length + alias[2].length);
       // Sequence: `actor id: Label` or `participant id: Label`
       if (type === 'sequence') {
         var ms = t.match(/^(actor|participant)\s+(\S+?)(?::\s*.*)?$/i);
@@ -10710,7 +10735,7 @@ Supported options:
             // Plain `actor X` — rewrite as `actor "Label" as X`.
             return 'actor ' + quotedLbl + ' as ' + id;
           }
-          if (kw === 'rectangle') return 'rectangle ' + quotedLbl;
+          if (kw === 'rectangle') return 'rectangle ' + quotedLbl + ' as ' + quotedId;
           return kw + ' ' + quotedLbl + ' as ' + id;
         }
       }
