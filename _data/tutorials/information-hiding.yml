@@ -20,6 +20,7 @@
 
 title: "Information Hiding in Python: Who Knows the Secret?"
 description: "Five small designs where a decision has leaked. For each one you work out which files a change would touch, move the knowledge into one module with the editor's refactoring tools, and let tests confirm that nothing broke. About 75 minutes. Builds on the Managing Complexity lecture and on the Python, testing, and UML class diagram tutorials."
+instructions_footer_include: refactoring-tools-reference.html
 
 # Authoring-time Bloom-verb objectives. Not yet rendered to students.
 learning_objectives:
