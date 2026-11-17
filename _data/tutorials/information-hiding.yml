@@ -386,9 +386,13 @@ steps:
           _truth = {"payments.py", "order_service.py", "refund_service.py", "wallet_service.py"}
           _missing = _truth - _files(_ns.get("BEFORE", []))
           assert not _missing, f"BEFORE is missing {len(_missing)} file(s) that use PayPal's calls."
-        hints:
-          - title: "TODO"
-            text: "TODO(step 1 hints): three condition-driven hints for this check; see the design spec."
+        hints: &l1_before
+          - title: "Would this file survive the switch?"
+            text: "Go through the files one at a time and ask: if Boba Run switched from PayPal to Stripe, would this file still be correct exactly as written? If not, it belongs on the list."
+          - title: "Search for PayPal's own words"
+            text: "Search for PayPal's own words, such as the names of its calls, not for imports. A file can run PayPal's protocol without importing anything from PayPal."
+          - title: "Tests and vendor code"
+            text: "Tests are files too: does any test repeat a PayPal detail? PayPal's SDK is PayPal's code, not ours, so it never goes on the list."
       - description: "Before: the analysis lists no file that could stay as it is"
         command: |
           _ns = {}
@@ -402,9 +406,7 @@ steps:
           assert _before, "BEFORE is still empty."
           _extra = _before - _truth
           assert not _extra, f"BEFORE lists {len(_extra)} file(s) that would not need an edit."
-        hints:
-          - title: "TODO"
-            text: "TODO(step 1 hints): three condition-driven hints for this check; see the design spec."
+        hints: *l1_before
       - description: "Checkout works with a payments module from another provider"
         command: |
           import sys
@@ -438,9 +440,13 @@ steps:
           assert _payments.calls == [("charge", 550)], "checkout should ask payments to charge the order total once."
           _big = Order("Boba for the whole lecture hall", 5000)
           assert OrderService().checkout(_payments, _big) is False and _big.status == "new", "A declined payment should leave the order new and return False."
-        hints:
-          - title: "TODO"
-            text: "TODO(step 1 hints): three condition-driven hints for this check; see the design spec."
+        hints: &l1_provider
+          - title: "What the stand-in offers"
+            text: "The check hands your service a payments module from another provider. It offers only the operations shown on `Payments` in the target diagram, with those names. What does your service still ask `Payments` for?"
+          - title: "The last line that knows PayPal"
+            text: "In the service, find the last line that only makes sense if you know PayPal. Is that line inside the method you moved to `Payments`?"
+          - title: "Moved too few lines"
+            text: "If the service still calls a method on what `Payments` returned, you moved too few lines. Undo the move and the extract, then extract through the line that produces a plain value: a number, a string, or `True`/`False`."
       - description: "Refunds work with a payments module from another provider"
         command: |
           import sys
@@ -474,9 +480,7 @@ steps:
           assert _payments.calls == [("refund", 500)], "refund_order should ask payments to refund the order total once."
           _odd = Order("Mystery drink", 777)
           assert RefundService().refund_order(_payments, _odd) is False and _odd.status == "new", "A failed refund should leave the order unchanged and return False."
-        hints:
-          - title: "TODO"
-            text: "TODO(step 1 hints): three condition-driven hints for this check; see the design spec."
+        hints: *l1_provider
       - description: "Saving a card works with a payments module from another provider"
         command: |
           import sys
@@ -507,9 +511,7 @@ steps:
               raise AssertionError(f"add_payment_method still needs something only PayPal has: {_error}")
           assert _card == "card-of-ana" and _wallet.saved_cards == {"ana": "card-of-ana"}, "The wallet should remember the card id that payments returns."
           assert _payments.calls == [("save_card", "ana")], "add_payment_method should ask payments to save the card once."
-        hints:
-          - title: "TODO"
-            text: "TODO(step 1 hints): three condition-driven hints for this check; see the design spec."
+        hints: *l1_provider
       - description: "The shop still behaves the same with PayPal"
         command: |
           import sys
@@ -534,9 +536,18 @@ steps:
               assert _card and _wallet.saved_cards == {"ana": _card}
           except (AttributeError, TypeError, NameError) as _error:
               raise AssertionError(f"The shop no longer runs with PayPal: {_error}")
-        hints:
-          - title: "TODO"
-            text: "TODO(step 1 hints): three condition-driven hints for this check; see the design spec."
+        hints: &l1_same
+          - title: "Read the first failing line"
+            text: "Press **Test** and read the first failing line in the output. It tells you which file and which line broke."
+          - title: "Back out the last refactoring"
+            condition: "code_missing: __paypal"
+            text: "You have not renamed `paypal` yet, so the failure comes from an extract or a move. Undo it in every file it changed, then try again with whole statements selected. Read the preview before you accept it."
+          - title: "An attribute that went missing"
+            condition: "code_contains: __paypal"
+            text: "An `AttributeError` saying that `Payments` has no attribute `paypal` means the client was made private while code outside `Payments` still uses it."
+          - title: "Move first, then rename"
+            condition: "code_contains: __paypal"
+            text: "Undo the rename, finish moving the PayPal lines out of every service, then rename. **Reset Current Step** brings back the starting code if undo gets confusing."
       - description: "Payments keeps its PayPal client to itself"
         command: |
           import sys
@@ -548,9 +559,13 @@ steps:
           _exposed = [name for name, value in vars(Payments()).items()
                       if not name.startswith("_") and type(value).__module__ == "paypal_sdk"]
           assert not _exposed, "Payments still offers its PayPal client as a public attribute."
-        hints:
-          - title: "TODO"
-            text: "TODO(step 1 hints): three condition-driven hints for this check; see the design spec."
+        hints: &l1_private
+          - title: "Who can still reach it?"
+            text: "Which public name on `Payments` still gives a caller the PayPal client?"
+          - title: "Two underscores make it private"
+            text: "Rename that attribute so its name starts with two underscores. Code outside the class can then no longer reach it by that name."
+          - title: "Start where the name is defined"
+            text: "Start **Refactor: Rename Symbol…** on the line where the attribute is defined, not on a line that uses it. The tool only rewrites the file you have open."
       - description: "After: only the payments module would need an edit"
         command: |
           _ns = {}
@@ -562,9 +577,13 @@ steps:
           _after = _files(_ns.get("AFTER", []))
           assert _after, "AFTER is still empty."
           assert _after == {"payments.py"}, "AFTER should list exactly the files that still use PayPal's calls."
-        hints:
-          - title: "TODO"
-            text: "TODO(step 1 hints): three condition-driven hints for this check; see the design spec."
+        hints: &l1_after
+          - title: "Ask the Think question again"
+            text: "Redo the Think question on the new code: if Boba Run switched to Stripe, which files would still be wrong as written?"
+          - title: "Only files that still know the secret"
+            text: "Only files that still contain a PayPal detail belong on the list. A file that calls `charge` does not need to know who carries it out."
+          - title: "More than one file left?"
+            text: "If more than one file is still on your list, a caller or a test still knows the secret. Find it and finish that part of the refactoring first."
     quiz:
       title: "Step 1 — Knowledge Check"
       min_score: 0.8
@@ -826,9 +845,13 @@ steps:
           _truth = {"menu.py", "kiosk.py", "test_kiosk.py"}
           _missing = _truth - _files(_ns.get("BEFORE", []))
           assert not _missing, f"BEFORE is missing {len(_missing)} file(s) that depend on the layout of a CSV row."
-        hints:
-          - title: "TODO"
-            text: "TODO(step 2 hints): three condition-driven hints for this check; see the design spec."
+        hints: &l2_before
+          - title: "Would this file survive JSON?"
+            text: "Go through the files one at a time and ask: if the supplier sent JSON instead of CSV, would this file still be correct exactly as written? A private attribute does not change the answer by itself."
+          - title: "Search for the format's own marks"
+            text: "Search for the CSV format's own marks: the character that separates fields, the one between sizes, a field picked out by its position. Do not search for imports."
+          - title: "Tests are files too"
+            text: "Tests are files too. Does any test repeat a detail of the CSV format?"
       - description: "Before: the analysis lists no file that could stay as it is"
         command: |
           _ns = {}
@@ -842,9 +865,7 @@ steps:
           assert _before, "BEFORE is still empty."
           _extra = _before - _truth
           assert not _extra, f"BEFORE lists {len(_extra)} file(s) that would not need an edit."
-        hints:
-          - title: "TODO"
-            text: "TODO(step 2 hints): three condition-driven hints for this check; see the design spec."
+        hints: *l2_before
       - description: "The kiosk totals an order with a menu that is stored differently"
         command: |
           import sys
@@ -869,9 +890,13 @@ steps:
               raise AssertionError(f"total_cents still needs something only the CSV menu has: {_error}")
           assert _total == 1575, "The total should be the sum of the menu's prices for the drinks ordered."
           assert Kiosk().total_cents(OtherMenu(), []) == 0, "An empty order should total 0."
-        hints:
-          - title: "TODO"
-            text: "TODO(step 2 hints): three condition-driven hints for this check; see the design spec."
+        hints: &l2_provider
+          - title: "What the stand-in offers"
+            text: "The check hands the kiosk a menu that stores its drinks differently. It offers only the operations shown on `Menu` in the target diagram, with those names. What does the kiosk still ask `Menu` for?"
+          - title: "The last line that knows the layout"
+            text: "In the kiosk method, find the last line that only makes sense if you know what a supplier row looks like. Is that line inside the method you moved to `Menu`?"
+          - title: "Moved too few lines"
+            text: "If the kiosk still splits or indexes what `Menu` returned, you moved too few lines. Undo the move and the extract, then extract through the line that produces a plain value: a price, or a list of sizes."
       - description: "The kiosk checks sizes with a menu that is stored differently"
         command: |
           import sys
@@ -897,9 +922,7 @@ steps:
           assert _large is True, "Taro Milk Tea comes in L."
           assert Kiosk().offers_size(OtherMenu(), "Thai Tea", "L") is False, "Thai Tea does not come in L."
           assert Kiosk().offers_size(OtherMenu(), "Yuzu Soda", "M") is False, "Yuzu Soda does not come in M."
-        hints:
-          - title: "TODO"
-            text: "TODO(step 2 hints): three condition-driven hints for this check; see the design spec."
+        hints: *l2_provider
       - description: "Prices and sizes are unchanged for today's menu"
         command: |
           import sys
@@ -917,9 +940,18 @@ steps:
               assert load_menu().drink_names() == ["Taro Milk Tea", "Thai Tea", "Matcha Latte"]
           except (AttributeError, TypeError, NameError) as _error:
               raise AssertionError(f"The kiosk no longer runs with today's menu: {_error}")
-        hints:
-          - title: "TODO"
-            text: "TODO(step 2 hints): three condition-driven hints for this check; see the design spec."
+        hints: &l2_same
+          - title: "Read the first failing line"
+            text: "Press **Test** and read the first failing line in the output. It tells you which file and which line broke."
+          - title: "Back out the last refactoring"
+            condition: "code_missing: __rows"
+            text: "You have not renamed `rows` yet, so the failure comes from an extract or a move. Undo it in every file it changed, then try again with whole statements selected. Read the preview before you accept it."
+          - title: "An attribute that went missing"
+            condition: "code_contains: __rows"
+            text: "An `AttributeError` saying that `Menu` has no attribute `rows` means `rows()` was made private while code outside `Menu` still uses it."
+          - title: "Move first, then rename"
+            condition: "code_contains: __rows"
+            text: "Undo the rename, finish moving the row handling out of both kiosk methods, then rename. **Reset Current Step** brings back the starting code if undo gets confusing."
       - description: "The menu no longer hands out its supplier rows"
         command: |
           import sys
@@ -953,16 +985,24 @@ steps:
               if _leaks(_value):
                   _leaky.append(_name)
           assert not _leaky, "A public part of Menu still returns the supplier's raw rows."
-        hints:
-          - title: "TODO"
-            text: "TODO(step 2 hints): three condition-driven hints for this check; see the design spec."
+        hints: &l2_private
+          - title: "Who can still reach it?"
+            text: "Which public operation on `Menu` still gives a caller the supplier's raw rows?"
+          - title: "Two underscores make it private"
+            text: "Rename that operation so its name starts with two underscores. Code outside the class can then no longer reach it by that name."
+          - title: "Start where the name is defined"
+            text: "Start **Refactor: Rename Symbol…** on the `def` line of the operation, not on a line that uses it. The tool only rewrites the file you have open."
       - description: "Your tests pass on your code"
         command: |
           from tutorial_test_grading import check_suite
           check_suite("/tutorial/test_kiosk.py", "menu", min_tests=3)
-        hints:
-          - title: "TODO"
-            text: "TODO(step 2 hints): three condition-driven hints for this check; see the design spec."
+        hints: &l2_pass
+          - title: "Read which test fails"
+            text: "Press **Test** and read which test fails, and on which line."
+          - title: "How, not what"
+            text: "A test that fails after a correct refactoring was checking how `Menu` stores its drinks, not what it does. What did that test want to guarantee?"
+          - title: "Test a promise of the menu"
+            text: "Rewrite that test so it asks `Menu` through an operation in the target diagram and checks the answer. Keep at least three tests."
       - description: "Your tests still pass when the menu is loaded from JSON"
         command: |
           from tutorial_test_grading import check_suite
@@ -993,9 +1033,7 @@ steps:
               return Menu(SUPPLIER_EXPORT)
           '''
           check_suite("/tutorial/test_kiosk.py", "menu", replacement_source=_CHANGED, min_tests=3)
-        hints:
-          - title: "TODO"
-            text: "TODO(step 2 hints): three condition-driven hints for this check; see the design spec."
+        hints: *l2_pass
       - description: "Your tests still catch a wrong price"
         command: |
           from tutorial_test_grading import check_suite
@@ -1026,9 +1064,13 @@ steps:
               return Menu(SUPPLIER_EXPORT)
           '''
           check_suite("/tutorial/test_kiosk.py", "menu", replacement_source=_CHANGED, expect_failure=True)
-        hints:
-          - title: "TODO"
-            text: "TODO(step 2 hints): three condition-driven hints for this check; see the design spec."
+        hints: &l2_catch
+          - title: "Which input tells them apart?"
+            text: "A wrong menu adds a few cents to every price. Which of your tests would give a different answer for it than for the correct menu?"
+          - title: "Check an exact price"
+            text: "A test catches a wrong price only if it checks an exact number of cents, either directly or through a total."
+          - title: "Assert the whole result"
+            text: "Compare the whole result with `==`. A check that a price exists, or is above zero, passes for a wrong price too."
       - description: "After: only the menu module would need an edit"
         command: |
           _ns = {}
@@ -1040,9 +1082,13 @@ steps:
           _after = _files(_ns.get("AFTER", []))
           assert _after, "AFTER is still empty."
           assert _after == {"menu.py"}, "AFTER should list exactly the files that still depend on the layout of a CSV row."
-        hints:
-          - title: "TODO"
-            text: "TODO(step 2 hints): three condition-driven hints for this check; see the design spec."
+        hints: &l2_after
+          - title: "Ask the Think question again"
+            text: "Redo the Think question on the new code: if the supplier sent JSON, which files would still be wrong as written?"
+          - title: "Only files that still know the secret"
+            text: "Only files that still contain a detail of the CSV format belong on the list. Check your tests too."
+          - title: "More than one file left?"
+            text: "If more than one file is still on your list, a caller or a test still knows the secret. Find it and finish that part of the refactoring first."
     quiz:
       title: "Step 2 — Knowledge Check"
       min_score: 0.8
@@ -1322,9 +1368,13 @@ steps:
           _truth = {"wait_times.py", "pickup_screen.py", "text_message.py", "test_pickup.py"}
           _missing = _truth - _files(_ns.get("BEFORE", []))
           assert not _missing, f"BEFORE is missing {len(_missing)} file(s) that know how the estimate is calculated."
-        hints:
-          - title: "TODO"
-            text: "TODO(step 3 hints): three condition-driven hints for this check; see the design spec."
+        hints: &l3_before
+          - title: "Would this file survive the new rule?"
+            text: "Go through the files one at a time and ask: if the estimate came from the drinks in the queue, would this file still be correct exactly as written?"
+          - title: "Search for the rule itself"
+            text: "Search for the rule itself: the arithmetic that turns a place in the queue into minutes, and any number that only follows from 3 minutes per order. Do not search for imports."
+          - title: "Tests are files too"
+            text: "Tests are files too. Does any test expect a number that you could only work out by knowing the rule?"
       - description: "Before: the analysis lists no file that could stay as it is"
         command: |
           _ns = {}
@@ -1338,9 +1388,7 @@ steps:
           assert _before, "BEFORE is still empty."
           _extra = _before - _truth
           assert not _extra, f"BEFORE lists {len(_extra)} file(s) that would not need an edit."
-        hints:
-          - title: "TODO"
-            text: "TODO(step 3 hints): three condition-driven hints for this check; see the design spec."
+        hints: *l3_before
       - description: "The pickup screen shows whatever estimate it is given"
         command: |
           import sys
@@ -1365,9 +1413,13 @@ steps:
               raise AssertionError(f"message still needs something only today's WaitTimes has: {_error}")
           assert _message == "Order A12: ready in about 7 min", "The screen should show the minutes the estimate returns."
           assert _estimate.asked == ["A12"], "The screen should ask for the estimate of the order it shows."
-        hints:
-          - title: "TODO"
-            text: "TODO(step 3 hints): three condition-driven hints for this check; see the design spec."
+        hints: &l3_provider
+          - title: "What the stand-in offers"
+            text: "The check hands the caller a wait-time module with a different rule. It offers only the operation shown on `WaitTimes` in the target diagram. What does the caller still ask `WaitTimes` for?"
+          - title: "The last line that knows the rule"
+            text: "In the caller, find the last line that only makes sense if you know how the estimate is calculated. Is that line inside `minutes_until_ready` now?"
+          - title: "Moved too few lines"
+            text: "If a caller still does arithmetic with what `WaitTimes` gives it, too few lines moved. In the screen, undo and extract through the line that produces the minutes. In the text message, call the new operation instead of keeping a copy."
       - description: "The text message uses whatever estimate it is given"
         command: |
           import sys
@@ -1391,9 +1443,7 @@ steps:
               raise AssertionError(f"body still needs something only today's WaitTimes has: {_error}")
           assert _soon == "Your boba is next!", "At 3 minutes or less the text should say the order is next."
           assert TextMessage().body(GivenEstimate(12), "A10") == "About 12 min until your boba is ready.", "Above 3 minutes the text should give the minutes."
-        hints:
-          - title: "TODO"
-            text: "TODO(step 3 hints): three condition-driven hints for this check; see the design spec."
+        hints: *l3_provider
       - description: "Estimates are unchanged for today's rule"
         command: |
           import sys
@@ -1413,16 +1463,24 @@ steps:
           except (AttributeError, TypeError, NameError) as _error:
               raise AssertionError(f"minutes_until_ready(order_id) could not be called: {_error}")
           assert _minutes == [3, 6, 9], "Today's rule is 3 minutes for each order up to and including this one."
-        hints:
-          - title: "TODO"
-            text: "TODO(step 3 hints): three condition-driven hints for this check; see the design spec."
+        hints: &l3_same
+          - title: "Read the first failing line"
+            text: "Press **Test** and read the first failing line in the output. It tells you which file and which line broke."
+          - title: "A call that does not match"
+            text: "An `AttributeError` or a `TypeError` means a caller asks `WaitTimes` for an operation it does not offer, or passes different arguments than the operation takes. Compare the call with the operation's definition."
+          - title: "Back out and redo"
+            text: "If the minutes themselves changed, undo the last refactoring in every file it changed and redo it with whole statements selected. **Reset Current Step** brings back the starting code if undo gets confusing."
       - description: "Your tests pass on your code"
         command: |
           from tutorial_test_grading import check_suite
           check_suite("/tutorial/test_pickup.py", "wait_times", min_tests=2)
-        hints:
-          - title: "TODO"
-            text: "TODO(step 3 hints): three condition-driven hints for this check; see the design spec."
+        hints: &l3_pass
+          - title: "Read which test fails"
+            text: "Press **Test** and read which test fails, and on which line."
+          - title: "How, not what"
+            text: "A test that expects 9 minutes checks how the estimate is calculated, not what the screen or the text does with it. What should they promise for any estimate?"
+          - title: "Hand the caller a stub"
+            text: "Give the caller a stand-in for `WaitTimes` with the one method it calls, `minutes_until_ready`. Choose the number it returns yourself, so the expected text no longer depends on the rule."
       - description: "Your tests still pass when the estimate rule changes"
         command: |
           from tutorial_test_grading import check_suite
@@ -1439,9 +1497,7 @@ steps:
                   return self._queue.position(order_id) * 5 + 2
           '''
           check_suite("/tutorial/test_pickup.py", "wait_times", replacement_source=_CHANGED, min_tests=2)
-        hints:
-          - title: "TODO"
-            text: "TODO(step 3 hints): three condition-driven hints for this check; see the design spec."
+        hints: *l3_pass
       - description: "Your tests catch a screen that shows the wrong number of minutes"
         command: |
           from tutorial_test_grading import check_suite
@@ -1451,9 +1507,13 @@ steps:
                   return f"Order {order_id}: ready in about {minutes} min"
           '''
           check_suite("/tutorial/test_pickup.py", "pickup_screen", replacement_source=_CHANGED, expect_failure=True)
-        hints:
-          - title: "TODO"
-            text: "TODO(step 3 hints): three condition-driven hints for this check; see the design spec."
+        hints: &l3_catch
+          - title: "Which input tells them apart?"
+            text: "Which estimate from your stub would make the correct code and the changed code disagree?"
+          - title: "Test both sides of the boundary"
+            text: "The text changes its wording at a cutoff. Test the last estimate that still says next, and the first one that does not."
+          - title: "Assert the whole result"
+            text: "Compare the whole message with `==`. Checking only that it contains a word or a number lets a wrong message pass."
       - description: "Your tests catch a text that stops saying next at exactly 3 minutes"
         command: |
           from tutorial_test_grading import check_suite
@@ -1465,9 +1525,7 @@ steps:
                   return f"About {minutes} min until your boba is ready."
           '''
           check_suite("/tutorial/test_pickup.py", "text_message", replacement_source=_CHANGED, expect_failure=True)
-        hints:
-          - title: "TODO"
-            text: "TODO(step 3 hints): three condition-driven hints for this check; see the design spec."
+        hints: *l3_catch
       - description: "Your tests catch a text that still says next at 4 minutes"
         command: |
           from tutorial_test_grading import check_suite
@@ -1479,9 +1537,7 @@ steps:
                   return f"About {minutes} min until your boba is ready."
           '''
           check_suite("/tutorial/test_pickup.py", "text_message", replacement_source=_CHANGED, expect_failure=True)
-        hints:
-          - title: "TODO"
-            text: "TODO(step 3 hints): three condition-driven hints for this check; see the design spec."
+        hints: *l3_catch
       - description: "After: only the wait-time module would need an edit"
         command: |
           _ns = {}
@@ -1493,9 +1549,13 @@ steps:
           _after = _files(_ns.get("AFTER", []))
           assert _after, "AFTER is still empty."
           assert _after == {"wait_times.py"}, "AFTER should list exactly the files that still know how the estimate is calculated."
-        hints:
-          - title: "TODO"
-            text: "TODO(step 3 hints): three condition-driven hints for this check; see the design spec."
+        hints: &l3_after
+          - title: "Ask the Think question again"
+            text: "Redo the Think question on the new code: if the estimate came from the drinks in the queue, which files would still be wrong as written?"
+          - title: "Only files that still know the secret"
+            text: "Only files that still contain the rule belong on the list. A test that uses a stub no longer knows it."
+          - title: "More than one file left?"
+            text: "If more than one file is still on your list, a caller or a test still knows the secret. Find it and finish that part of the refactoring first."
     quiz:
       title: "Step 3 — Knowledge Check"
       min_score: 0.8
@@ -1713,9 +1773,13 @@ steps:
           _truth = {"rewards.py", "receipt.py", "test_receipt.py"}
           _missing = _truth - _files(_ns.get("BEFORE", []))
           assert not _missing, f"BEFORE is missing {len(_missing)} file(s) that contain the points rule or a number that comes from it."
-        hints:
-          - title: "TODO"
-            text: "TODO(step 4 hints): three condition-driven hints for this check; see the design spec."
+        hints: &l4_before
+          - title: "Would this file survive the relaunch?"
+            text: "Go through the files one at a time and ask: if customers earned 2 points per dollar, would this file still be correct exactly as written? Imports and arrows do not decide this."
+          - title: "Search for the rule itself"
+            text: "Search for the rule itself: the arithmetic that turns cents into points, wherever it appears. A file can know the rule without importing the module that owns it."
+          - title: "Tests are files too"
+            text: "Tests are files too. Does any test expect a number of points that you could only work out by knowing the rule?"
       - description: "Before: the analysis lists no file that could stay as it is"
         command: |
           _ns = {}
@@ -1729,9 +1793,7 @@ steps:
           assert _before, "BEFORE is still empty."
           _extra = _before - _truth
           assert not _extra, f"BEFORE lists {len(_extra)} file(s) that would not need an edit."
-        hints:
-          - title: "TODO"
-            text: "TODO(step 4 hints): three condition-driven hints for this check; see the design spec."
+        hints: *l4_before
       - description: "The receipt shows the points that the rewards module awards"
         command: |
           import sys
@@ -1754,9 +1816,13 @@ steps:
               raise AssertionError(f"Receipt.lines should accept the order and the rewards module: {_error}")
           assert _lines == ["Thai Tea  $5.00", "You earned 42 points"], "The points line should show what rewards.points_for returns."
           assert _rewards.asked == [500], "The receipt should ask rewards about the order's total."
-        hints:
-          - title: "TODO"
-            text: "TODO(step 4 hints): three condition-driven hints for this check; see the design spec."
+        hints: &l4_owner
+          - title: "What the stand-in offers"
+            text: "The check hands the receipt a rewards module with its own rule. It offers only `points_for`. Does the receipt ask it, or work the points out by itself?"
+          - title: "The line that copies the rule"
+            text: "In `Receipt`, find the line that only makes sense if you know the points rule. That is the copy to replace."
+          - title: "Let the owner answer"
+            text: "If the check says the receipt does not accept the rewards module, add it as the second parameter of `lines`. Then let `points_for` answer for the order's total."
       - description: "The receipt is unchanged for today's rule"
         command: |
           import sys
@@ -1773,16 +1839,24 @@ steps:
               raise AssertionError(f"Receipt.lines should accept the order and the rewards module: {_error}")
           assert _lines == ["Thai Tea  $5.00", "You earned 5 points"]
           assert Receipt().lines(Order("Matcha Latte", 625), Rewards()) == ["Matcha Latte  $6.25", "You earned 6 points"]
-        hints:
-          - title: "TODO"
-            text: "TODO(step 4 hints): three condition-driven hints for this check; see the design spec."
+        hints: &l4_same
+          - title: "Read the first failing line"
+            text: "Press **Test** and read the first failing line in the output. It tells you which file and which line broke."
+          - title: "A call that does not match"
+            text: "A `TypeError` means `Receipt.lines` does not take the order and the rewards module yet, or some code still calls it with only the order."
+          - title: "Compare the text"
+            text: "Compare each receipt line with the expected text, character by character. Only the points come from the rewards module now; the line with the drink and the price stays as it was."
       - description: "Your tests pass on your code"
         command: |
           from tutorial_test_grading import check_suite
           check_suite("/tutorial/test_receipt.py", "receipt", min_tests=1)
-        hints:
-          - title: "TODO"
-            text: "TODO(step 4 hints): three condition-driven hints for this check; see the design spec."
+        hints: &l4_pass
+          - title: "Read which test fails"
+            text: "Press **Test** and read which test fails, and on which line."
+          - title: "How, not what"
+            text: "A test that passes the real `Rewards` and expects 5 points checks the rule, not whether the receipt asks for the points. What did it want to guarantee?"
+          - title: "Hand the receipt a stub"
+            text: "Give `Receipt.lines` a stand-in with the one method it calls, `points_for`. Choose the number it returns yourself, so the test no longer depends on the rule."
       - description: "Your tests catch a receipt that works out the points by itself"
         command: |
           from tutorial_test_grading import check_suite
@@ -1795,9 +1869,13 @@ steps:
                   ]
           '''
           check_suite("/tutorial/test_receipt.py", "receipt", replacement_source=_CHANGED, expect_failure=True)
-        hints:
-          - title: "TODO"
-            text: "TODO(step 4 hints): three condition-driven hints for this check; see the design spec."
+        hints: &l4_catch
+          - title: "Which input tells them apart?"
+            text: "Which number from your stub would make a receipt that asks and a receipt that divides by itself disagree?"
+          - title: "A number the rule could never give"
+            text: "If your stub returns what today's rule would give anyway, both receipts print the same line. Pick a number that the rule could never produce for that order."
+          - title: "Assert the whole result"
+            text: "Compare the whole list of lines with `==`, not just that some line mentions points."
       - description: "Your tests still pass when the points rule changes"
         command: |
           from tutorial_test_grading import check_suite
@@ -1817,9 +1895,7 @@ steps:
                   return self._balances.get(customer, 0)
           '''
           check_suite("/tutorial/test_receipt.py", "rewards", replacement_source=_CHANGED, min_tests=1)
-        hints:
-          - title: "TODO"
-            text: "TODO(step 4 hints): three condition-driven hints for this check; see the design spec."
+        hints: *l4_pass
       - description: "After: only the rewards module would need an edit"
         command: |
           _ns = {}
@@ -1831,9 +1907,13 @@ steps:
           _after = _files(_ns.get("AFTER", []))
           assert _after, "AFTER is still empty."
           assert _after == {"rewards.py"}, "AFTER should list exactly the files that still contain the points rule."
-        hints:
-          - title: "TODO"
-            text: "TODO(step 4 hints): three condition-driven hints for this check; see the design spec."
+        hints: &l4_after
+          - title: "Ask the Think question again"
+            text: "Redo the Think question on the new code: if customers earned 2 points per dollar, which files would still be wrong as written?"
+          - title: "Only files that still know the secret"
+            text: "Only files that still contain the points rule belong on the list. A file that calls `points_for` does not need to know the rule."
+          - title: "More than one file left?"
+            text: "If more than one file is still on your list, a caller or a test still knows the secret. Find it and finish that part of the refactoring first."
     quiz:
       title: "Step 4 — Knowledge Check"
       min_score: 0.8
@@ -2098,9 +2178,13 @@ steps:
           _a = _files(_before["A"])
           assert _a, "BEFORE for change A is still empty."
           assert _a == {"notifier.py", "rsvp_service.py", "reminder_service.py"}, "Change A touches exactly the files that use Textly's calls."
-        hints:
-          - title: "TODO"
-            text: "TODO(step 5 hints): three condition-driven hints for this check; see the design spec."
+        hints: &l5_before
+          - title: "Would this file survive the change?"
+            text: "Go through the files one at a time, once for change A and once for change B, and ask: after this change, would this file still be correct exactly as written?"
+          - title: "Search for the decision's own words"
+            text: "For A, search for Textly's own words, such as the names of its calls. For B, search for the comparison that decides when an event is full. Do not search for imports."
+          - title: "Tests and vendor code"
+            text: "Tests are files too: does any test repeat a Textly call or the rule for a full event? Textly's SDK is Textly's code, not ours, so it never goes on a list."
       - description: "Before: change B lists every file that would need an edit, and no others"
         command: |
           _ns = {}
@@ -2114,9 +2198,7 @@ steps:
           _b = _files(_before["B"])
           assert _b, "BEFORE for change B is still empty."
           assert _b == {"event.py", "rsvp_service.py"}, "Change B touches exactly the files that decide when an event is full."
-        hints:
-          - title: "TODO"
-            text: "TODO(step 5 hints): three condition-driven hints for this check; see the design spec."
+        hints: *l5_before
       - description: "The team designs first for the change that is both certain and expensive"
         command: |
           _ns = {}
@@ -2128,9 +2210,13 @@ steps:
           _choice = str(_ns.get("FIX_FIRST", "")).strip().upper()
           assert _choice in {"A", "B", "C"}, "Set FIX_FIRST to A, B, or C."
           assert _choice == "A", "Weigh how likely each change is against how many files it touches today."
-        hints:
-          - title: "TODO"
-            text: "TODO(step 5 hints): three condition-driven hints for this check; see the design spec."
+        hints: &l5_fix_first
+          - title: "Two things matter"
+            text: "Two things matter for each change on the roadmap. Reread how the roadmap describes each one."
+          - title: "Likelihood and cost"
+            text: "For each change, ask: how likely is it, and how many files does it touch today?"
+          - title: "High on both"
+            text: "Pick the change that is high on both."
       - description: "RSVPs work with a notifier from another provider"
         command: |
           import sys
@@ -2158,9 +2244,13 @@ steps:
           assert _result is True and _event.guests == ["310-0100"], "A successful RSVP should add the guest and return True."
           assert _notifier.sent == [("310-0100", "You're in for Boba Social!")], "rsvp should send the guest one confirmation."
           assert RsvpService().rsvp(OtherNotifier(reachable=False), Event("Game Night", 3), "310-0101") is False, "rsvp should return False when the text could not be delivered."
-        hints:
-          - title: "TODO"
-            text: "TODO(step 5 hints): three condition-driven hints for this check; see the design spec."
+        hints: &l5_provider
+          - title: "What the stand-in offers"
+            text: "The check hands your service a notifier from another provider. It offers only `send(phone, text)`, which returns whether the text was delivered. What does your service still ask `Notifier` for?"
+          - title: "The last line that knows Textly"
+            text: "In the service, find the last line that only makes sense if you know Textly. Is that line inside the method you moved to `Notifier`?"
+          - title: "Moved too few lines"
+            text: "If a service still reads something from what `Notifier` returned, you moved too few lines. Undo the move and the extract, then extract through the line that produces a plain value. In the second service, call `send` instead of moving the lines again."
       - description: "Reminders work with a notifier from another provider"
         command: |
           import sys
@@ -2189,9 +2279,7 @@ steps:
           assert _count == 2, "remind_all should count the guests who were reached."
           assert _notifier.sent == [("310-0100", "Reminder: Boba Social is tomorrow."), ("310-0101", "Reminder: Boba Social is tomorrow.")], "Each guest should get one reminder."
           assert ReminderService().remind_all(OtherNotifier(reachable=False), _event) == 0, "Guests who were not reached should not be counted."
-        hints:
-          - title: "TODO"
-            text: "TODO(step 5 hints): three condition-driven hints for this check; see the design spec."
+        hints: *l5_provider
       - description: "The rule for a full event has one owner"
         command: |
           import sys
@@ -2220,9 +2308,13 @@ steps:
               def is_full(self):
                   return True
           assert RsvpService().rsvp(OtherNotifier(), ClosedEvent("Finals Party", 50), "310-0102") is False, "rsvp should turn the guest away when the event says it is full."
-        hints:
-          - title: "TODO"
-            text: "TODO(step 5 hints): three condition-driven hints for this check; see the design spec."
+        hints: &l5_owner
+          - title: "Who owns the rule?"
+            text: "`Event` already decides when it is full. Does `RsvpService` ask it, or decide for itself?"
+          - title: "The line that copies the rule"
+            text: "In `RsvpService`, find the line that only makes sense if you know when an event counts as full."
+          - title: "Ask instead of compare"
+            text: "Replace that copy with a question to the event. The check uses events whose own rule differs from today's, so a copy of today's comparison gives the wrong answer."
       - description: "ClubHub still behaves the same with Textly"
         command: |
           import sys
@@ -2243,9 +2335,18 @@ steps:
               assert ReminderService().remind_all(Notifier(), _big) == 1
           except (AttributeError, TypeError, NameError) as _error:
               raise AssertionError(f"ClubHub no longer runs with Textly: {_error}")
-        hints:
-          - title: "TODO"
-            text: "TODO(step 5 hints): three condition-driven hints for this check; see the design spec."
+        hints: &l5_same
+          - title: "Read the first failing line"
+            text: "Press **Test** and read the first failing line in the output. It tells you which file and which line broke."
+          - title: "Back out the last refactoring"
+            condition: "code_missing: __textly"
+            text: "You have not renamed `textly` yet, so the failure comes from an extract or a move. Undo it in every file it changed, then try again with whole statements selected. Read the preview before you accept it."
+          - title: "An attribute that went missing"
+            condition: "code_contains: __textly"
+            text: "An `AttributeError` saying that `Notifier` has no attribute `textly` means the client was made private while code outside `Notifier` still uses it."
+          - title: "Move first, then rename"
+            condition: "code_contains: __textly"
+            text: "Undo the rename, finish moving the Textly lines out of both services, then rename. **Reset Current Step** brings back the starting code if undo gets confusing."
       - description: "Notifier keeps its Textly client to itself"
         command: |
           import sys
@@ -2257,16 +2358,24 @@ steps:
           _exposed = [name for name, value in vars(Notifier()).items()
                       if not name.startswith("_") and type(value).__module__ == "textly_sdk"]
           assert not _exposed, "Notifier still offers its Textly client as a public attribute."
-        hints:
-          - title: "TODO"
-            text: "TODO(step 5 hints): three condition-driven hints for this check; see the design spec."
+        hints: &l5_private
+          - title: "Who can still reach it?"
+            text: "Which public name on `Notifier` still gives a caller the Textly client?"
+          - title: "Two underscores make it private"
+            text: "Rename that attribute so its name starts with two underscores. Code outside the class can then no longer reach it by that name."
+          - title: "Start where the name is defined"
+            text: "Start **Refactor: Rename Symbol…** on the line where the attribute is defined, not on a line that uses it. The tool only rewrites the file you have open."
       - description: "Your tests pass on your code"
         command: |
           from tutorial_test_grading import check_suite
           check_suite("/tutorial/test_clubhub.py", "rsvp_service", min_tests=4)
-        hints:
-          - title: "TODO"
-            text: "TODO(step 5 hints): three condition-driven hints for this check; see the design spec."
+        hints: &l5_pass
+          - title: "Read which test fails"
+            text: "Press **Test** and read which test fails, and on which line. If every test passes, count them: you need the three you started with plus your spy test."
+          - title: "How, not what"
+            text: "A test that fails after a correct refactoring was checking how, not what. What did it want to guarantee?"
+          - title: "Hand the service a spy"
+            text: "Give `RsvpService.rsvp` a stand-in notifier with the one method it calls, `send`. Have it record every call and return a value you choose."
       - description: "Your tests catch a confirmation sent to the wrong phone"
         command: |
           from tutorial_test_grading import check_suite
@@ -2278,9 +2387,13 @@ steps:
                   return notifier.send("555-0000", f"You're in for {event.name}!")
           '''
           check_suite("/tutorial/test_clubhub.py", "rsvp_service", replacement_source=_CHANGED, expect_failure=True)
-        hints:
-          - title: "TODO"
-            text: "TODO(step 5 hints): three condition-driven hints for this check; see the design spec."
+        hints: &l5_catch
+          - title: "Which input tells them apart?"
+            text: "Which RSVP would make the correct service and the changed one leave different records on your spy?"
+          - title: "Check every recorded call"
+            text: "A spy only catches mistakes if you check what it recorded: all of the calls, not just the first one, and not just that a call happened."
+          - title: "Assert the whole result"
+            text: "Compare the whole list of recorded calls with `==`: the phone, the words, and how many there are."
       - description: "Your tests catch a confirmation sent twice"
         command: |
           from tutorial_test_grading import check_suite
@@ -2294,9 +2407,7 @@ steps:
                   return notifier.send(phone, text)
           '''
           check_suite("/tutorial/test_clubhub.py", "rsvp_service", replacement_source=_CHANGED, expect_failure=True)
-        hints:
-          - title: "TODO"
-            text: "TODO(step 5 hints): three condition-driven hints for this check; see the design spec."
+        hints: *l5_catch
       - description: "After: each change would now touch one file"
         command: |
           _ns = {}
@@ -2309,9 +2420,13 @@ steps:
           assert isinstance(_after, dict) and "A" in _after and "B" in _after, "Keep AFTER as a dictionary with the keys A and B."
           assert _files(_after["A"]) == {"notifier.py"}, "After your refactoring, change A should touch only the file that uses Textly's calls."
           assert _files(_after["B"]) == {"event.py"}, "After your fix, change B should touch only the file that decides when an event is full."
-        hints:
-          - title: "TODO"
-            text: "TODO(step 5 hints): three condition-driven hints for this check; see the design spec."
+        hints: &l5_after
+          - title: "Ask the Think question again"
+            text: "Redo the Think question on the new code: for change A and for change B, which files would still be wrong as written?"
+          - title: "Only files that still know the secret"
+            text: "Only files that still contain the secret of that change belong on the list. For A that is Textly's calls; for B it is the rule for a full event."
+          - title: "More than one file left?"
+            text: "If more than one file is still on your list, a caller or a test still knows the secret. Find it and finish that part of the refactoring first."
     quiz:
       title: "Step 5 — Knowledge Check"
       min_score: 0.8
