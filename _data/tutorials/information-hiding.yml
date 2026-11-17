@@ -539,6 +539,9 @@ steps:
         hints: &l1_same
           - title: "Read the first failing line"
             text: "Press **Test** and read the first failing line in the output. It tells you which file and which line broke."
+          - title: "A call that does not match"
+            condition: "code_missing: __paypal"
+            text: "An `AttributeError` or a `TypeError` after an extract or a move means a service asks `Payments` for an operation it does not offer, or passes different arguments than the operation takes. Compare the call with the method's `def` line in `payments.py`."
           - title: "Back out the last refactoring"
             condition: "code_missing: __paypal"
             text: "You have not renamed `paypal` yet, so the failure comes from an extract or a move. Undo it in every file it changed, then try again with whole statements selected. Read the preview before you accept it."
@@ -547,7 +550,7 @@ steps:
             text: "An `AttributeError` saying that `Payments` has no attribute `paypal` means the client was made private while code outside `Payments` still uses it."
           - title: "Move first, then rename"
             condition: "code_contains: __paypal"
-            text: "Undo the rename, finish moving the PayPal lines out of every service, then rename. **Reset Current Step** brings back the starting code if undo gets confusing."
+            text: "If that is the error you see, undo the rename, finish moving the PayPal lines out of every service, then rename again. **Reset Current Step** brings back the starting code if undo gets confusing."
       - description: "Payments keeps its PayPal client to itself"
         command: |
           import sys
@@ -943,6 +946,9 @@ steps:
         hints: &l2_same
           - title: "Read the first failing line"
             text: "Press **Test** and read the first failing line in the output. It tells you which file and which line broke."
+          - title: "A call that does not match"
+            condition: "code_missing: __rows"
+            text: "An `AttributeError` or a `TypeError` after an extract or a move means the kiosk asks `Menu` for an operation it does not offer, or passes different arguments than the operation takes. Compare the call with the method's `def` line in `menu.py`."
           - title: "Back out the last refactoring"
             condition: "code_missing: __rows"
             text: "You have not renamed `rows` yet, so the failure comes from an extract or a move. Undo it in every file it changed, then try again with whole statements selected. Read the preview before you accept it."
@@ -951,7 +957,7 @@ steps:
             text: "An `AttributeError` saying that `Menu` has no attribute `rows` means `rows()` was made private while code outside `Menu` still uses it."
           - title: "Move first, then rename"
             condition: "code_contains: __rows"
-            text: "Undo the rename, finish moving the row handling out of both kiosk methods, then rename. **Reset Current Step** brings back the starting code if undo gets confusing."
+            text: "If that is the error you see, undo the rename, finish moving the row handling out of both kiosk methods, then rename again. **Reset Current Step** brings back the starting code if undo gets confusing."
       - description: "The menu no longer hands out its supplier rows"
         command: |
           import sys
@@ -1415,11 +1421,11 @@ steps:
           assert _estimate.asked == ["A12"], "The screen should ask for the estimate of the order it shows."
         hints: &l3_provider
           - title: "What the stand-in offers"
-            text: "The check hands the caller a wait-time module with a different rule. It offers only the operation shown on `WaitTimes` in the target diagram. What does the caller still ask `WaitTimes` for?"
+            text: "The check hands the caller a stand-in for `WaitTimes` that returns a fixed number of minutes. It has no queue and no minutes per drink: it offers only the operation shown on `WaitTimes` in the target diagram. What does the caller still ask `WaitTimes` for?"
           - title: "The last line that knows the rule"
             text: "In the caller, find the last line that only makes sense if you know how the estimate is calculated. Is that line inside `minutes_until_ready` now?"
-          - title: "Moved too few lines"
-            text: "If a caller still does arithmetic with what `WaitTimes` gives it, too few lines moved. In the screen, undo and extract through the line that produces the minutes. In the text message, call the new operation instead of keeping a copy."
+          - title: "Every line of the rule"
+            text: "A caller that still works out minutes itself needs `minutes_until_ready` to take over every line of that calculation, through the line that produces the minutes. In the screen, extract those lines and move them; if you already extracted fewer, undo first. In the text message, call the new operation instead of keeping a copy."
       - description: "The text message uses whatever estimate it is given"
         command: |
           import sys
@@ -1507,11 +1513,11 @@ steps:
                   return f"Order {order_id}: ready in about {minutes} min"
           '''
           check_suite("/tutorial/test_pickup.py", "pickup_screen", replacement_source=_CHANGED, expect_failure=True)
-        hints: &l3_catch
+        hints:
           - title: "Which input tells them apart?"
-            text: "Which estimate from your stub would make the correct code and the changed code disagree?"
-          - title: "Test both sides of the boundary"
-            text: "The text changes its wording at a cutoff. Test the last estimate that still says next, and the first one that does not."
+            text: "Which estimate from your stub would make the correct screen and the changed screen disagree?"
+          - title: "Check the exact minutes shown"
+            text: "A wrong screen could show a different number than the estimate it was given. Your screen test catches that only if it checks the exact number of minutes the screen shows for the number your stub returns."
           - title: "Assert the whole result"
             text: "Compare the whole message with `==`. Checking only that it contains a word or a number lets a wrong message pass."
       - description: "Your tests catch a text that stops saying next at exactly 3 minutes"
@@ -1525,7 +1531,13 @@ steps:
                   return f"About {minutes} min until your boba is ready."
           '''
           check_suite("/tutorial/test_pickup.py", "text_message", replacement_source=_CHANGED, expect_failure=True)
-        hints: *l3_catch
+        hints: &l3_catch
+          - title: "Which input tells them apart?"
+            text: "Which estimate from your stub would make the correct text message and the changed one disagree?"
+          - title: "Test both sides of the boundary"
+            text: "The text changes its wording at a cutoff. Test the last estimate that still says next, and the first one that does not."
+          - title: "Assert the whole result"
+            text: "Compare the whole message with `==`. Checking only that it contains a word or a number lets a wrong message pass."
       - description: "Your tests catch a text that still says next at 4 minutes"
         command: |
           from tutorial_test_grading import check_suite
@@ -1853,6 +1865,8 @@ steps:
         hints: &l4_pass
           - title: "Read which test fails"
             text: "Press **Test** and read which test fails, and on which line."
+          - title: "A test that calls lines the old way"
+            text: "A `TypeError` saying that `lines()` is missing an argument means a test still calls `Receipt.lines` with only the order. Since your fix, `lines` also takes the rewards module, so every call must hand it one."
           - title: "How, not what"
             text: "A test that passes the real `Rewards` and expects 5 points checks the rule, not whether the receipt asks for the points. What did it want to guarantee?"
           - title: "Hand the receipt a stub"
@@ -2338,15 +2352,18 @@ steps:
         hints: &l5_same
           - title: "Read the first failing line"
             text: "Press **Test** and read the first failing line in the output. It tells you which file and which line broke."
-          - title: "Back out the last refactoring"
+          - title: "A call that does not match"
             condition: "code_missing: __textly"
-            text: "You have not renamed `textly` yet, so the failure comes from an extract or a move. Undo it in every file it changed, then try again with whole statements selected. Read the preview before you accept it."
+            text: "An `AttributeError` or a `TypeError` means a service asks `Notifier` or `Event` for an operation it does not offer, or passes different arguments than the operation takes. Compare the call with the method's `def` line."
+          - title: "Back out the last change"
+            condition: "code_missing: __textly"
+            text: "You have not renamed `textly` yet, so the failure comes from an extract, a move, or your hand edit for change B. Undo the last of these in every file it changed, then try again. For an extract, select whole statements and read the preview before you accept it."
           - title: "An attribute that went missing"
             condition: "code_contains: __textly"
             text: "An `AttributeError` saying that `Notifier` has no attribute `textly` means the client was made private while code outside `Notifier` still uses it."
           - title: "Move first, then rename"
             condition: "code_contains: __textly"
-            text: "Undo the rename, finish moving the Textly lines out of both services, then rename. **Reset Current Step** brings back the starting code if undo gets confusing."
+            text: "If that is the error you see, undo the rename, finish moving the Textly lines out of both services, then rename again. **Reset Current Step** brings back the starting code if undo gets confusing."
       - description: "Notifier keeps its Textly client to itself"
         command: |
           import sys
