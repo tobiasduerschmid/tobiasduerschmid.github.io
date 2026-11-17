@@ -452,6 +452,29 @@ class Playlist:
     });
   });
 
+  test('extract accepts whole lines selected together with their indentation', () => {
+    const before = text`
+class OrderService:
+    def checkout(self, payments, cents):
+        token = payments.authenticate()
+        paid = payments.capture(token, cents)
+        return paid
+`;
+    const workspace = workspaceFrom({ 'order_service.py': before }, 'order_service.py');
+    const analysis = analyze(workspace);
+    const exact = selectionBetween(before, 'token = payments.authenticate()', 'paid = payments.capture(token, cents)');
+    const fromColumnOne = { ...exact, startColumn: 1 };
+    const throughNextLineStart = { ...exact, startColumn: 1, endLineNumber: exact.endLineNumber + 1, endColumn: 1 };
+    const expected = applyPlan(workspace, adapter.planExtract(workspace, analysis, 'order_service.py', exact, 'charge'));
+    for (const selection of [fromColumnOne, throughNextLineStart]) {
+      const plan = adapter.planExtract(workspace, analysis, 'order_service.py', selection, 'charge');
+      expect(plan.error).toBeFalsy();
+      expect(applyPlan(workspace, plan)).toEqual(expected);
+      expect(api.computePythonActionAvailability(workspace, analysis, 'order_service.py',
+        { lineNumber: selection.startLineNumber, column: selection.startColumn }, selection, null).extract).toBe(true);
+    }
+  });
+
   test('does not extract partial expressions or indentation-only selections', () => {
     const before = text`
 def summarize(track, tax_rate):

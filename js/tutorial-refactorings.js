@@ -1420,6 +1420,7 @@
     if (!normalized || normalized.empty) {
       return { error: 'Select complete Python statements to extract.' };
     }
+    skipLeadingIndentation(normalized, content);
     var file = analysisFile(analysis, filename);
     if (!file) return { error: 'Select complete Python statements to extract.' };
 
@@ -1459,6 +1460,17 @@
       startLine: first.startLine - 1,
       endLine: last.endLine - 1,
     };
+  }
+
+  // Learners select whole lines, so a selection may start inside the first
+  // line's indentation. Move its start to the first token when the selection
+  // reaches past that indentation; an indentation-only selection stays as is.
+  function skipLeadingIndentation(normalized, content) {
+    var line = (content || '').split('\n')[normalized.startLine - 1] || '';
+    var indent = line.length - line.replace(/^\s+/, '').length;
+    if (indent === line.length || normalized.startCol >= indent) return;
+    var reachesPastIndent = normalized.endLine > normalized.startLine || normalized.endCol > indent;
+    if (reachesPastIndent) normalized.startCol = indent;
   }
 
   function isExtractableStatementKind(kind) {

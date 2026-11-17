@@ -2888,6 +2888,28 @@ channel.
   `js/python-ast-service.js` (`SEBookPythonAst`), the page's single client for
   `js/python-ast-worker.js`. Load it before this module on every host page
   (tutorial layout, both tutorial popups, `uml-python-workspace.html`).
+  Extract accepts selections that start in the first statement's
+  indentation (whole lines selected from column 1), not only selections that
+  start on its first token.
+
+  **Designing steps for the refactoring tools.** When a step asks learners
+  to make a change with these tools, shape the starter code to fit their
+  limits:
+  1. Extract refuses a helper name already used in the enclosing function,
+     even as another object's attribute (`payments.capture` blocks a helper
+     named `capture`). Give vendor APIs and our own modules different verbs.
+  2. Move Method needs a parameter typed as the target class and does not add
+     imports to the target file. Extracted helpers should take only
+     unannotated locals or built-in types.
+  3. Rename rewrites only the active file. A method rename must start on the
+     `def` line; started from a call site it renames only the calls.
+  4. Move Method leaves a forwarding method in the source class, and moving
+     the same lines from a second caller creates a duplicate method. Graders
+     must accept both.
+
+  Pin each taught tool path with a test that replays it through the real
+  engine and runs the step's own tests on the result;
+  `scripts/tests/information-hiding-tool-paths.test.js` is the pattern.
 - **`js/debugger/*.js`** — time-travel debugger: `sync.js`,
   `ui-render.js`, `editor-attach.js`, `main.js`, `worker-extension.js`.
   Browser-backend Stop is a hard cancellation: `browser-channel.js`
