@@ -747,7 +747,7 @@ steps:
             # Fill this in after your refactoring passes the tests.
             AFTER = ["payments.py"]
       explanation: |
-        In each service, the three lines from `token = …` through the `was_successful()` call moved to `Payments` as `charge`, `refund`, and `save_card`. Those are exactly the lines that only make sense if you know PayPal, and the last one produces a plain `True`/`False` or card id, so no PayPal object reaches a caller. The published `payments.py` is exactly what Extract, Move Method, and Rename Symbol produce; the forwarding methods that Move Method left in the services were deleted, though keeping them passes every check too. `test_shop.py` was not edited: its four behavior tests pass before and after, which is the evidence that the refactoring kept the shop's behavior.
+        In each service, the lines from `token = …` through the line that produces a plain value moved to `Payments` as `charge`, `refund`, and `save_card`: through the `was_successful()` call in the order and refund services, and through the `vault` call in the wallet. Those are exactly the lines that only make sense if you know PayPal, and they end in a plain `True`/`False` or card id, so no PayPal object reaches a caller. The published `payments.py` is exactly what Extract, Move Method, and Rename Symbol produce; the forwarding methods that Move Method left in the services were deleted, though keeping them passes every check too. `test_shop.py` was not edited: its four behavior tests pass before and after, which is the evidence that the refactoring kept the shop's behavior.
 
   # =========================================================================
   # STEP 2 — Private Is Not Hidden
@@ -1170,12 +1170,12 @@ steps:
           difficulty: basic
           options:
             - "The public `rows()` returned the raw supplier rows"
-            - "Python does not truly enforce names that start with two underscores"
+            - "Python ignored the two underscores, so the kiosk read `__lines`"
             - "`drink_names()` splits each line on commas"
             - "The kiosk imported `SUPPLIER_EXPORT` from `menu.py`"
           correct_index: 0
           option_feedback:
-            1: "The kiosk never touched `__lines` at all. It took the public route: `rows()` handed out the same strings, so the attribute's name did not matter."
+            1: "The kiosk never mentions `__lines`; look at its code. It took the public route: `rows()` handed out the same strings, so the attribute's name did not matter."
             2: "That split happens inside `Menu`, and callers only get the names back. A detail that stays inside the owner is hidden, not leaked."
             3: "`kiosk.py` imports only `Menu`. The layout reached it through what a public operation returned, not through an import."
           explanation: "What other code can depend on is the whole interface: every public operation and what it returns. `rows()` returned rows like `Taro Milk Tea,550,M|L`, so every caller that split them learned the CSV layout. A private attribute cannot hide a decision that a public operation hands out."
@@ -2063,9 +2063,7 @@ steps:
           check_suite("/tutorial/test_receipt.py", "receipt", min_tests=1)
         hints: &l4_pass
           - title: "Read which test fails"
-            text: "Press **Test** and read which test fails, and on which line."
-          - title: "A test that calls lines the old way"
-            text: "A `TypeError` saying that `lines()` is missing an argument means a test still calls `Receipt.lines` with only the order. Since your fix, `lines` also takes the rewards module, so every call must hand it one."
+            text: "Press **Test** and read which test fails, and on which line. A `TypeError` saying that `lines()` is missing an argument means a test still calls `Receipt.lines` with only the order: since your fix, every call must also hand it the rewards module."
           - title: "How, not what"
             text: "A test that passes the real `Rewards` and expects 5 points checks the rule, not whether the receipt asks for the points. What did it want to guarantee?"
           - title: "Hand the receipt a stub"
@@ -2158,12 +2156,12 @@ steps:
           options:
             - "Yes: it passes a real `Rewards` and the points line is right"
             - "No: a receipt that divides by itself also prints 5"
-            - "No: it should compare the whole list with `==`"
+            - "Yes: the test would fail if `Receipt` ignored `Rewards`"
             - "Yes, since `lines` now takes the rewards module too"
           correct_index: 1
           option_feedback:
             0: "Passing `Rewards` in does not mean the receipt uses it. The copied rule and the real rule both give 5 points for 500 cents, so the line would be right either way."
-            2: "Comparing the whole list is a good habit, but it does not help here: a receipt with the copied rule prints the same whole list."
+            2: "It would not: a receipt that ignores `Rewards` and divides by 100 itself also prints 5 points for 500 cents, so the test still passes."
             3: "Accepting a parameter is not the same as using it. A receipt can take `rewards` and still compute `total_cents // 100` on its own."
           explanation: "A test can only tell two implementations apart if they give different results for its input. With the real `Rewards`, the copy and the real rule agree, so the test passes for both. A stub that answers 99, a number the rule can never give for this order, makes them disagree."
         - question: "Which pair of Python classes has a semantic dependency?"
@@ -2172,7 +2170,7 @@ steps:
           options:
             - "`Kiosk` calls `menu.price_cents(drink)` and adds up the prices it gets"
             - "`Receipt` imports `Order` and reads `order.total_cents` for every receipt"
-            - "`OrderDesk` writes `f\"B-{n:04d}\"` codes; `KitchenDisplay` reads `code[2:]`"
+            - "`OrderDesk` makes `B-{n:04d}` codes; `KitchenDisplay` reads `code[2:]`"
             - "`Payments` wraps PayPal's SDK, and `Notifier` wraps Textly's SDK"
           correct_index: 2
           option_feedback:
@@ -2778,7 +2776,7 @@ steps:
           option_feedback:
             0: "The attribute's name is private, but `get_guests()` returns the very same list. Callers can still loop over it and append to it."
             1: "A method that returns the raw list is the attribute under another name. Callers still depend on it being a Python list."
-            2: "One underscore marks a name as protected, which hides even less. The number of underscores is not the problem: the getter that hands out the list is."
+            2: "One underscore is only a convention for internal use, which hides even less. The number of underscores is not the problem: the getter that hands out the list is."
           explanation: "This is `rows()` from `Menu` again: private storage, handed out by a public operation. Hiding a decision means the interface no longer reveals it, so `Event` needs operations that answer callers' questions rather than one that returns its list."
     solution:
       files:
