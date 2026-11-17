@@ -81,6 +81,8 @@ topics:
     subtopics:
       - name: Information Hiding
         url: /SEBook/designprinciples/informationhiding.html
+      - name: Information Hiding Tutorial
+        url: /SEBook/designprinciples/information-hiding-tutorial
       - name: SOLID
         url: /SEBook/designprinciples/solid.html
       - name: Design with Reuse
