@@ -1,11 +1,9 @@
-# Information Hiding in Python: verified code skeleton.
+# Information Hiding in Python.
 #
-# GENERATED from a prototype that was run against the real refactoring engine
-# (js/tutorial-refactorings.js) and against every grader below. Do not retype
-# the code blocks: copy this file to _data/tutorials/information-hiding.yml and
-# replace each TODO(...) marker by following the plan
-# (docs/superpowers/plans/2026-11-17-information-hiding-tutorial.md) and the
-# design (docs/superpowers/specs/2026-11-17-information-hiding-tutorial-design.md).
+# The code blocks were GENERATED from a prototype that was run against the real
+# refactoring engine (js/tutorial-refactorings.js) and against every grader
+# below. Do not retype them. The design is in
+# docs/superpowers/specs/2026-11-17-information-hiding-tutorial-design.md.
 #
 # The starter files are shaped for the editor's refactoring tools. Three limits
 # of those tools are load-bearing, so keep these properties when editing code:
@@ -590,7 +588,75 @@ steps:
     quiz:
       title: "Step 1 — Knowledge Check"
       min_score: 0.8
-      questions: []  # TODO(step 1 quiz): see the design spec, section "Step 1".
+      questions:
+        - question: "After your refactoring, `Payments` has a secret. What is it?"
+          type: single
+          difficulty: basic
+          options:
+            - "The card numbers that customers save in the wallet"
+            - "The `PayPalClient` object stored in its attribute"
+            - "The choice of PayPal and its protocol"
+            - "The total of each order, in cents"
+          correct_index: 2
+          option_feedback:
+            0: "`Payments` never sees a card number: PayPal's `vault` hands back a card id. A secret is a design decision that is likely to change, not a piece of data the shop handles."
+            1: "The private attribute is how `Payments` keeps its secret, not the secret itself. What it protects is the decision behind that object: that Boba Run pays through PayPal, using PayPal's calls."
+            3: "Callers pass the total to `charge(cents)` openly, so the amount is part of the interface. What callers no longer see is who carries out the charge and how."
+          explanation: "A module's secret is a design decision that is likely to change. Here it is the decision to pay through PayPal, together with PayPal's protocol: authenticate first, then pass the token to `capture`, `reverse`, or `vault`. Only `Payments` knows that now, so a switch to Stripe touches one file."
+        - question: |
+            Boba Run adds a `TipService`, written the old way. To give the PayPal decision one owner, which lines of `add_tip` belong in `Payments`?
+
+            ```python
+            class TipService:
+                def add_tip(self, payments, order, cents):
+                    token = payments.paypal.authenticate()
+                    result = payments.paypal.capture(token, cents)
+                    ok = result.was_successful()
+                    if ok:
+                        order.tip_cents = cents
+                    return ok
+            ```
+          type: single
+          difficulty: intermediate
+          options:
+            - "Only the line that calls `capture`"
+            - "The `authenticate`, `capture`, and `was_successful` lines"
+            - "Every line in the body of `add_tip`"
+            - "None, since it reaches PayPal through the public `paypal` attribute"
+          correct_index: 1
+          option_feedback:
+            0: "Then `TipService` still calls `authenticate` itself and calls `was_successful()` on the object PayPal returned. Both only make sense if you know PayPal, so a switch to Stripe would still touch this file."
+            2: "Recording the tip on the order is Boba Run's own business logic. It has nothing to do with PayPal, and moving it would make `Payments` know about orders and tips."
+            3: "A public attribute is exactly how the protocol leaked. `TipService` still makes PayPal's calls itself, so it would need an edit if Boba Run switched providers."
+          explanation: "Move every line that only makes sense if you know PayPal, through the line that produces a plain value: here, `ok` is just `True` or `False`. The `if` that records the tip stays in `TipService`. Since `Payments` already has `charge`, the three lines become one call to it."
+        - question: "Suppose the starting design had changed in only one way: `paypal` renamed to `__paypal`, with all of PayPal's calls still in the three services. Ignoring that the services would now break, how many files of ours would a switch to Stripe touch?"
+          type: single
+          difficulty: intermediate
+          options:
+            - "One: only `payments.py`, since the client is private"
+            - "Three: only the services, since they make the calls"
+            - "Five: the four code files and `test_shop.py`"
+            - "Four: `payments.py` and the three services"
+          correct_index: 3
+          option_feedback:
+            0: "A private name changes who may reach the client, not who knows the protocol. Each service still contains `authenticate` and `capture`, `reverse`, or `vault`, and each of those lines would need an edit."
+            1: "`payments.py` creates the `PayPalClient`, so it changes too when Boba Run picks a new provider."
+            2: "`test_shop.py` checks what the services do and never mentions PayPal, so it stays as it is."
+          explanation: "Making the client private hides a name, not a decision. As long as the services make PayPal's calls themselves, the switch touches `payments.py` and all three services. The count drops to one only when the protocol moves into `Payments`."
+        - question: "The four tests in `test_shop.py` stayed green through every extract, move, and rename. Why?"
+          type: single
+          difficulty: basic
+          options:
+            - "They check what the services do, not how they pay"
+            - "The refactoring tools updated the tests along with the code"
+            - "They only check that checkout finishes without an error"
+            - "They pass a stand-in payments module instead of the real one"
+          correct_index: 0
+          option_feedback:
+            1: "The tools changed only the services and `payments.py`. `test_shop.py` was never edited, which is why its passing means something."
+            2: "The tests compare exact results, such as `order.status == \"paid\"` and a return value of `True` or `False`, so a broken refactoring would turn them red."
+            3: "They pass the real `Payments()`. The stand-ins from another provider belong to the tutorial's checks, not to `test_shop.py`."
+          explanation: "The tests call the services and check their observable results: the return value, the order's status, and the saved card. None of that depends on where the PayPal calls live, so the tests act as a safety net while you move code around."
     solution:
       files:
         - path: order_service.py
@@ -681,7 +747,7 @@ steps:
             # Fill this in after your refactoring passes the tests.
             AFTER = ["payments.py"]
       explanation: |
-        TODO(step 1 explanation): see the design spec, section "Step 1".
+        In each service, the three lines from `token = …` through the `was_successful()` call moved to `Payments` as `charge`, `refund`, and `save_card`. Those are exactly the lines that only make sense if you know PayPal, and the last one produces a plain `True`/`False` or card id, so no PayPal object reaches a caller. The published `payments.py` is exactly what Extract, Move Method, and Rename Symbol produce; the forwarding methods that Move Method left in the services were deleted, though keeping them passes every check too. `test_shop.py` was not edited: its four behavior tests pass before and after, which is the evidence that the refactoring kept the shop's behavior.
 
   # =========================================================================
   # STEP 2 — Private Is Not Hidden
@@ -1098,7 +1164,84 @@ steps:
     quiz:
       title: "Step 2 — Knowledge Check"
       min_score: 0.8
-      questions: []  # TODO(step 2 quiz): see the design spec, section "Step 2".
+      questions:
+        - question: "In the starting design, `Menu.__lines` was private, yet `kiosk.py` still depended on the layout of a CSV row. What let the layout leak?"
+          type: single
+          difficulty: basic
+          options:
+            - "The public `rows()` returned the raw supplier rows"
+            - "Python does not truly enforce names that start with two underscores"
+            - "`drink_names()` splits each line on commas"
+            - "The kiosk imported `SUPPLIER_EXPORT` from `menu.py`"
+          correct_index: 0
+          option_feedback:
+            1: "The kiosk never touched `__lines` at all. It took the public route: `rows()` handed out the same strings, so the attribute's name did not matter."
+            2: "That split happens inside `Menu`, and callers only get the names back. A detail that stays inside the owner is hidden, not leaked."
+            3: "`kiosk.py` imports only `Menu`. The layout reached it through what a public operation returned, not through an import."
+          explanation: "What other code can depend on is the whole interface: every public operation and what it returns. `rows()` returned rows like `Taro Milk Tea,550,M|L`, so every caller that split them learned the CSV layout. A private attribute cannot hide a decision that a public operation hands out."
+        - question: |
+            Callers of this Python `Roster` loop over `export()` and do `name, number, position = line.split(";")` on each line. Where does the line format leak?
+
+            ```python
+            class Roster:
+                def __init__(self, lines):
+                    self.__players = lines   # e.g. "Ana;7;forward"
+
+                def export(self):
+                    return self.__players
+            ```
+          type: single
+          difficulty: intermediate
+          options:
+            - "In `__players`, because it stores lines in that format"
+            - "Nowhere, since `__players` is private"
+            - "In the callers' loop only; `Roster` itself is fine"
+            - "In what `export()` returns to its callers"
+          correct_index: 3
+          option_feedback:
+            0: "Storing the format inside `Roster` is fine: that is where the decision should live. It leaks only when something outside can see it."
+            1: "Privacy of the attribute does not help when a public operation returns the same strings. Callers now split on `;`, so a new format would break all of them."
+            2: "The callers split only because `export()` gave them raw strings. The fix belongs in `Roster`'s interface: operations that return names, numbers, and positions."
+          explanation: "The return value of a public operation is part of the interface. `export()` returns `Ana;7;forward`-style strings, so the separator and the field order became promises that every caller relies on, just like `rows()` in `Menu`."
+        - question: |
+            A Python `Cart` with `add` and `count` operations keeps its items in a list called `_items`. It is changed to keep a dictionary of counts instead. Which of these tests still pass?
+
+            ```python
+            def test_a():
+                c = Cart(); c.add("pen")
+                assert c._items == ["pen"]
+
+            def test_b():
+                c = Cart(); c.add("pen")
+                assert c.count("pen") == 1
+            ```
+          type: single
+          difficulty: intermediate
+          options:
+            - "Both, since the cart still holds one pen"
+            - "Only `test_a`"
+            - "Only `test_b`"
+            - "Neither, since tests must be rewritten after a storage change"
+          correct_index: 2
+          option_feedback:
+            0: "`test_a` compares the stored list itself. After the change there is no such list, so the check fails even though the cart still holds one pen."
+            1: "`test_a` is the one tied to storage: it reads `_items` and expects a list. `test_b` asks through `count`, which works the same for a list or a dictionary."
+            3: "Only tests that read the storage need a rewrite. `test_b` asks through an operation the cart promises, so it passes for any correct storage."
+          explanation: "`test_b` checks what the cart promises; `test_a` checks how it stores things. A good test passes for any correct implementation, so a change of storage is no reason to rewrite it. In this lesson, the test that read `rows()` was a `test_a`."
+        - question: "After your refactoring, which of these is something `Menu` promises to its callers, rather than a detail it hides?"
+          type: single
+          difficulty: intermediate
+          options:
+            - "A row lists the name, then the price, then the sizes"
+            - "The fields in a row are separated by commas"
+            - "A drink has a price in cents"
+            - "Prices are stored as text, such as `\"550\"`"
+          correct_index: 2
+          option_feedback:
+            0: "Column order is part of the supplier's CSV layout. A JSON export has no column order at all, and no caller depends on it any more."
+            1: "The comma separator belongs to the CSV export. After the refactoring, only `Menu` splits on it."
+            3: "The CSV file does hold prices as text, but `price_cents` returns an `int`. Turning the text into a number is now `Menu`'s job, hidden from callers."
+          explanation: "`price_cents(drink)` promises a price in cents, whatever the supplier sends. The layout of a row, its separator, and how prices are written in the file are hidden details: `Menu` can switch to JSON without breaking that promise."
     solution:
       files:
         - path: kiosk.py
@@ -1197,7 +1340,7 @@ steps:
             def test_menu_knows_the_price_of_a_drink():
                 assert load_menu().price_cents("Taro Milk Tea") == 550
       explanation: |
-        TODO(step 2 explanation): see the design spec, section "Step 2".
+        In each kiosk method, the lines from `price = 0` (or `available = []`) through the end of the loop over `menu.rows()` moved to `Menu` as `price_cents` and `sizes`. Those lines are the ones that split and index a CSV row, and they end in a plain value, a price or a list of sizes, so the kiosk no longer sees a row. The forwarding methods that Move Method left in `Kiosk` were deleted, and renaming `rows` to `__rows` from its `def` line took the raw rows out of the interface. The test that read `rows()[0]` checked how `Menu` stores drinks; its replacement asks `price_cents("Taro Milk Tea")`, a promise that holds for the CSV menu and for a JSON one.
 
   # =========================================================================
   # STEP 3 — The Algorithm Is a Secret Too
@@ -1571,7 +1714,63 @@ steps:
     quiz:
       title: "Step 3 — Knowledge Check"
       min_score: 0.8
-      questions: []  # TODO(step 3 quiz): see the design spec, section "Step 3".
+      questions:
+        - question: "Before your refactoring, what did `PickupScreen` know that it should not have known?"
+          type: single
+          difficulty: basic
+          options:
+            - "The id of the order whose message it shows"
+            - "The wording of the message it displays"
+            - "The number of minutes it displays for an order"
+            - "How the wait estimate is worked out"
+          correct_index: 3
+          option_feedback:
+            0: "The screen needs the order id to show the right message; it is part of `message(wait_times, order_id)`. Knowing an input is not knowing a secret."
+            1: "The wording is the screen's own job. No other module knows it, so it is not a leak."
+            2: "Showing the minutes is exactly what the screen is for. The problem was that it also calculated them from the queue position and `minutes_per_drink`."
+          explanation: "The screen read `queue.position` and `minutes_per_drink` and did the arithmetic itself, so it carried out `WaitTimes`' algorithm. An algorithm is a secret too: now the screen only asks `minutes_until_ready(order_id)`, and a new rule changes one file."
+        - question: "In your tests, the stub's `minutes_until_ready` returns whatever number the test chooses. Why does that make the text message's boundary, 3 minutes against 4, easy to test?"
+          type: single
+          difficulty: intermediate
+          options:
+            - "The test sets the estimate itself instead of building a queue that leads to it"
+            - "The stub responds faster than the real `WaitTimes` does"
+            - "The stub checks that the text message asks for the estimate once"
+            - "The stub repeats the 3-minutes-per-order rule, so the expected text is easy to work out"
+          correct_index: 0
+          option_feedback:
+            1: "Speed is not the point: the real `WaitTimes` answers instantly too. What matters is who decides the number the text message receives."
+            2: "Recording calls is what a spy does. This stub only answers with a number; it checks nothing."
+            3: "The stub knows no rule at all. That is what frees the tests from it: the new blended-drink rule cannot break them."
+          explanation: "The estimate is an indirect input to the text message: it comes from a collaborator, not from the test's arguments. A stub lets the test choose it in one line. With the real rule you would have to arrange a queue and work out the minutes, and today's rule cannot even produce 4 minutes, since it counts in steps of 3."
+        - question: "A Python `SalesReport` has a public `to_rows()` that returns strings like `\"2026-11-17|Taro|12\"`. Three callers split them on `\"|\"`. Which kind of secret has leaked to those callers?"
+          type: single
+          difficulty: intermediate
+          options:
+            - "An algorithm"
+            - "A data format"
+            - "A library or technology choice"
+            - "None, since returning strings is not a leak"
+          correct_index: 1
+          option_feedback:
+            0: "The callers do not calculate anything the report should calculate. They decode the layout of its rows, which is a format."
+            2: "No vendor or library is involved. The decision the callers depend on is how a row is written: the separator and the order of the fields."
+            3: "Returning strings is fine; returning strings that callers must take apart is the leak. Switch the separator to a comma and all three callers break."
+          explanation: "This is the `rows()` problem from `Menu` again: a public operation returns raw rows, so the row layout becomes part of the interface. The fix is the same too: operations that return plain values, so only `SalesReport` knows the format."
+        - question: "The estimate will soon depend on which drinks are in the queue. Which operation on `WaitTimes` keeps that change inside `WaitTimes`?"
+          type: single
+          difficulty: advanced
+          options:
+            - "`estimate(orders_ahead, minutes_per_drink)`"
+            - "`minutes_per_drink()`, which returns 3"
+            - "`minutes_until_ready(order_id)`"
+            - "`waiting_orders()`, which returns the queue"
+          correct_index: 2
+          option_feedback:
+            0: "Callers would have to supply the algorithm's inputs. A drink-based rule needs different inputs, so every caller would change along with the signature."
+            1: "Callers would still multiply by it themselves, so they would still carry out the rule, and a drink-based rule would break them all."
+            3: "Handing out the queue invites every caller to work the estimate out itself, which is exactly the leak this lesson removed."
+          explanation: "`minutes_until_ready(order_id)` asks only for what every caller already has, the order, and returns the answer. Which inputs the rule needs is part of the secret, so a drink-based rule changes `WaitTimes` and nothing else."
     solution:
       files:
         - path: pickup_screen.py
@@ -1658,7 +1857,7 @@ steps:
             def test_text_gives_the_minutes_above_three():
                 assert TextMessage().body(StubWaitTimes(4), "A10") == "About 4 min until your boba is ready."
       explanation: |
-        TODO(step 3 explanation): see the design spec, section "Step 3".
+        In `pickup_screen.py`, the two lines that compute `ahead` and `minutes` moved to `WaitTimes` as `minutes_until_ready(order_id)`: together they are the whole rule, and they end in a plain number. `text_message.py` had the same two lines, so instead of moving them again it now calls `minutes_until_ready`; the forwarding method that Move Method left in `PickupScreen` was deleted. The new tests hand each caller a `StubWaitTimes` that returns a chosen number, so they check what the screen and the text do with any estimate: one screen test, and text tests at 3 and 4 minutes, the last value on each side of the cutoff. None of them knows the 3-minute rule, so they keep passing when the rule changes.
 
   # =========================================================================
   # STEP 4 — The Secret Nobody Imported
@@ -1931,7 +2130,70 @@ steps:
     quiz:
       title: "Step 4 — Knowledge Check"
       min_score: 0.8
-      questions: []  # TODO(step 4 quiz): see the design spec, section "Step 4".
+      questions:
+        - question: "In the starting code, `Receipt` did not import `Rewards`, and the class diagram showed no arrow between them. What kind of dependency did they have?"
+          type: single
+          difficulty: basic
+          options:
+            - "None, since neither one imports or calls the other"
+            - "A semantic dependency: both held the points rule"
+            - "A syntactic dependency through the shared `Order` class"
+            - "A syntactic dependency that the diagram left out"
+          correct_index: 1
+          option_feedback:
+            0: "The relaunch to 2 points per dollar would have to touch both files. Whether two modules depend on each other is decided by what a change touches, not by imports."
+            2: "`Rewards` does not use `Order` at all; it works with plain cents. And a shared import would show up as arrows, while this dependency had none."
+            3: "A syntactic dependency is an import or a call, and the diagram does draw those. There was none here: each class simply contained its own copy of the rule."
+          explanation: "`Receipt` computed `order.total_cents // 100` itself, the same rule as `Rewards.points_for`. Two modules that implement the same design decision have a semantic dependency: change the decision and both must change, yet no arrow shows it."
+        - question: |
+            Does this Python test show that `Receipt` asks `Rewards` for the points?
+
+            ```python
+            def test_receipt_asks_rewards():
+                lines = Receipt().lines(Order("Thai Tea", 500), Rewards())
+                assert lines[1] == "You earned 5 points"
+            ```
+          type: single
+          difficulty: intermediate
+          options:
+            - "Yes: it passes a real `Rewards` and the points line is right"
+            - "No: a receipt that divides by itself also prints 5"
+            - "No: it should compare the whole list with `==`"
+            - "Yes, since `lines` now takes the rewards module too"
+          correct_index: 1
+          option_feedback:
+            0: "Passing `Rewards` in does not mean the receipt uses it. The copied rule and the real rule both give 5 points for 500 cents, so the line would be right either way."
+            2: "Comparing the whole list is a good habit, but it does not help here: a receipt with the copied rule prints the same whole list."
+            3: "Accepting a parameter is not the same as using it. A receipt can take `rewards` and still compute `total_cents // 100` on its own."
+          explanation: "A test can only tell two implementations apart if they give different results for its input. With the real `Rewards`, the copy and the real rule agree, so the test passes for both. A stub that answers 99, a number the rule can never give for this order, makes them disagree."
+        - question: "Which pair of Python classes has a semantic dependency?"
+          type: single
+          difficulty: intermediate
+          options:
+            - "`Kiosk` calls `menu.price_cents(drink)` and adds up the prices it gets"
+            - "`Receipt` imports `Order` and reads `order.total_cents` for every receipt"
+            - "`OrderDesk` writes `f\"B-{n:04d}\"` codes; `KitchenDisplay` reads `code[2:]`"
+            - "`Payments` wraps PayPal's SDK, and `Notifier` wraps Textly's SDK"
+          correct_index: 2
+          option_feedback:
+            0: "That is a syntactic dependency: a call, which the class diagram shows as an arrow. The kiosk does not know how `Menu` stores prices."
+            1: "An import and an attribute read are syntactic dependencies, visible in code and in the diagram."
+            3: "Both wrap a vendor, but they make different decisions. Switching texting providers would not touch `Payments`, so nothing ties them together."
+          explanation: "`KitchenDisplay` only works because it knows how `OrderDesk` builds a code: `\"B-\"` plus a number. Neither class has to import the other, yet a new code format, such as `\"BR-0042\"`, breaks the display. That shared design decision is a semantic dependency."
+        - question: "After your fix, the class diagram shows a new arrow from `Receipt` to `Rewards`. Is the design better or worse?"
+          type: single
+          difficulty: intermediate
+          options:
+            - "Better: a visible call replaced a hidden copy of the rule"
+            - "Worse: a new arrow means the two classes are now more coupled"
+            - "No different: the same two classes still depend on each other"
+            - "Worse: `Receipt` can no longer be tested without the real `Rewards`"
+          correct_index: 0
+          option_feedback:
+            1: "The classes were coupled before, just invisibly. The arrow shows a dependency that already existed, now on one small operation instead of on a copied rule."
+            2: "The kind of dependency changed, and so did the cost: the relaunch now touches one file instead of three."
+            3: "Your test hands `Receipt` a stub with one method, `points_for`. A dependency on a small interface is easy to replace in a test."
+          explanation: "A dependency you can see, on a small interface, is better than a copy you cannot see. The arrow to `points_for` tells a reader exactly what `Receipt` needs, and the points rule now has one owner."
     solution:
       files:
         - path: receipt.py
@@ -1982,7 +2244,7 @@ steps:
                 lines = Receipt().lines(Order("Thai Tea", 500), StubRewards())
                 assert lines == ["Thai Tea  $5.00", "You earned 99 points"]
       explanation: |
-        TODO(step 4 explanation): see the design spec, section "Step 4".
+        One line changed: `earned = order.total_cents // 100` became `earned = rewards.points_for(order.total_cents)`, and `lines` gained the `rewards` parameter, so no refactoring tool and no forwarding method were involved. The test was written first and failed: its `StubRewards` answers 99, a number today's rule can never give for a 500-cent order. A receipt that copies the rule prints 5 and fails that test; only a receipt that asks `Rewards` prints 99, so the test proves the receipt asks instead of copying.
 
   # =========================================================================
   # STEP 5 — Change Impact Analysis
@@ -2447,7 +2709,77 @@ steps:
     quiz:
       title: "Step 5 — Knowledge Check"
       min_score: 0.8
-      questions: []  # TODO(step 5 quiz): see the design spec, section "Step 5".
+      questions:
+        - question: "On the ClubHub roadmap, change C touches 4 files today and change A touches 3, yet the team designs for A first. Why?"
+          type: single
+          difficulty: advanced
+          options:
+            - "A touches vendor code, which is always the riskier kind of change"
+            - "Smaller changes should come first, to build momentum"
+            - "A is certain and costly; C is costly but unlikely"
+            - "C cannot be hidden behind an interface"
+          correct_index: 2
+          option_feedback:
+            0: "`textly_sdk.py` is Textly's code and is not on anyone's list. What ranks a change is how likely it is and how much it costs, not which kind of code it involves."
+            1: "Size alone does not set the order. Change C is the biggest, and it still waits, because nobody is asking for it."
+            3: "It can: `Event` could offer operations and keep its guests private. The team waits on C because it may never happen, and hiding a decision costs effort too."
+          explanation: "A change impact analysis weighs likelihood and cost together. A is decided for next month and touches three files, so it is both likely and expensive. C touches more files, but it is only a someday idea, so the effort of redesigning for it may never pay off."
+        - question: "After your refactoring, what is `Notifier`'s secret?"
+          type: single
+          difficulty: intermediate
+          options:
+            - "That ClubHub sends text messages to its members at all"
+            - "Which texting provider it uses, and its protocol"
+            - "The phone number that each text is sent to"
+            - "Whether each text was actually delivered"
+          correct_index: 1
+          option_feedback:
+            0: "That texts get sent is what callers rely on: it is the promise behind `send(phone, text)`. A promise is visible on purpose."
+            2: "The caller passes the phone number in. It is the caller's data and part of the interface, not something `Notifier` hides."
+            3: "`send` returns whether the text was delivered, so callers see that. How Textly reports it, through a receipt's `delivered` attribute, is what stays hidden."
+          explanation: "The decision likely to change is the provider: Textly, with its open-a-session-then-push protocol. Only `Notifier` knows it now. That ClubHub sends texts, to which phone, and whether they arrived are part of the visible contract."
+        - question: "You want a test that checks an RSVP texts the right phone, with the right words, exactly once. Which stand-in notifier fits?"
+          type: single
+          difficulty: basic
+          options:
+            - "A stub whose `send` always returns `True`"
+            - "A spy whose `send` records every call it gets"
+            - "The real `Notifier`, so the test sees what Textly delivers"
+            - "No stand-in: check that `rsvp` returns `True`"
+          correct_index: 1
+          option_feedback:
+            0: "A stub feeds the code an input. It keeps no record, so the test cannot see which phone was texted or how many times."
+            2: "Textly only reports whether a text was delivered. The real notifier keeps no list of what was sent, and the test would depend on the vendor."
+            3: "A service that texts the wrong phone can still return `True`, so the return value cannot catch that mistake."
+          explanation: "The texts are indirect outputs: they leave the service through a collaborator, not through its return value. A spy records them, so the test can compare the whole list of calls with `==` and catch a wrong phone, wrong words, or a second text."
+        - question: "Change C, storing guests in a database, touches 4 files because callers use `event.guests` directly. What would shrink it to one file?"
+          type: single
+          difficulty: advanced
+          options:
+            - "Rename `guests` to `__guests` and change nothing else"
+            - "Move the guest list from `Event` into `RsvpService`"
+            - "Store each event's guests in a dictionary instead of a list"
+            - "Add `Event` operations for callers; make the list private"
+          correct_index: 3
+          option_feedback:
+            0: "A rename alone only breaks the callers that still read `guests`. They need operations to call instead, or every one of them still knows how guests are stored."
+            1: "That moves the decision into one caller. `ReminderService` and the tests would still need the list, so the change would spread again."
+            2: "A dictionary is another storage choice that callers could still reach into. The number of files depends on who can see the storage, not on which one it is."
+          explanation: "The fix follows the pattern from every lesson: let `Event` offer operations for what callers need, such as adding a guest or listing who to remind, and keep the list private. Then only `event.py` knows how guests are stored, and a database touches one file."
+        - question: "To hide `Event`'s guest list, a teammate renames `guests` to `__guests` and adds a public `get_guests()` that returns that list. Is the guest list hidden now?"
+          type: single
+          difficulty: intermediate
+          options:
+            - "Yes, since two underscores make it private"
+            - "Yes, since callers now go through a method"
+            - "No, since the name should start with one underscore"
+            - "No: `get_guests()` hands callers the same list"
+          correct_index: 3
+          option_feedback:
+            0: "The attribute's name is private, but `get_guests()` returns the very same list. Callers can still loop over it and append to it."
+            1: "A method that returns the raw list is the attribute under another name. Callers still depend on it being a Python list."
+            2: "One underscore marks a name as protected, which hides even less. The number of underscores is not the problem: the getter that hands out the list is."
+          explanation: "This is `rows()` from `Menu` again: private storage, handed out by a public operation. Hiding a decision means the interface no longer reveals it, so `Event` needs operations that answer callers' questions rather than one that returns its list."
     solution:
       files:
         - path: change_impact.py
@@ -2573,4 +2905,4 @@ steps:
                 RsvpService().rsvp(spy, Event("Boba Social", 2), "555-0100")
                 assert spy.sent == [("555-0100", "You're in for Boba Social!")]
       explanation: |
-        TODO(step 5 explanation): see the design spec, section "Step 5".
+        For change A, the three lines in `rsvp_service.py` from `session = …` through `sent = receipt.delivered` moved to `Notifier` as `send(phone, text)`, because they are the Textly protocol and end in a plain `True`/`False`. `reminder_service.py` now calls `send` instead of keeping a copy, the forwarding method left in `RsvpService` was deleted, and `textly` became `__textly`. For change B, a hand edit replaced `len(event.guests) >= event.capacity` with `event.is_full()`, the rule's existing owner. The spy test records every `send` and compares the whole list with `==`, so it fails for a text to the wrong phone and for a text sent twice; change C was written down and left alone because nobody is asking for it yet.
