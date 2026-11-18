@@ -483,6 +483,14 @@ class ClubHubLesson(GraderCase):
             patch(model, "rsvp_service.py", "if event.is_full():",
                   "if len(event.guests) >= event.capacity:"),
             "PPPPPFPPPPPP")
+        # The starter's full-event test checks the rule itself, so under the
+        # waitlist rule it has to be rewritten: it is part of change B's cost.
+        self.assert_outcomes(
+            "analysis of change B leaves out the test of the rule",
+            patch(model, "change_impact.py",
+                  '"B": ["event.py", "rsvp_service.py", "test_clubhub.py"]',
+                  '"B": ["event.py", "rsvp_service.py"]'),
+            "PFPPPPPPPPPP")
         self.assert_outcomes(
             "designs first for the change nobody asked for",
             patch(model, "change_impact.py", 'FIX_FIRST = "A"', 'FIX_FIRST = "C"'),

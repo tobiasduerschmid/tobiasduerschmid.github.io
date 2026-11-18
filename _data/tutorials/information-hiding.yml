@@ -167,15 +167,15 @@ steps:
          - Press **Test**.
       4. **Refactor the other two services** the same way. This time you pick the lines. Name the methods `refund` and `save_card`.
       5. **Lock it.** Only `PayPalGateway` needs the client now. In `paypal_gateway.py`, click on `paypal` in the line `self.paypal = …`, choose **Refactor: Rename Symbol…**, and rename it to `__paypal`. Press **Test**.
-      6. **Depend on the interface.** Make `PayPalGateway` implement `PaymentGateway`. Then only `gateway_choice.py` may name `PayPalGateway`, and only to create one. Press **Test**: if Python cannot instantiate `PayPalGateway`, the error names a missing operation.
+      6. **Depend on the interface.** Make `PayPalGateway` implement `PaymentGateway`. Then only `gateway_choice.py` may name `PayPalGateway`. Press **Test**: if Python cannot instantiate `PayPalGateway`, the error names a missing operation.
       7. **Reason.** Fill in `AFTER`: which files would the switch to Stripe touch now?
 
-      Move Method leaves a forwarding method in each service. Nothing calls it, so you can delete it.
+      Move Method leaves a forwarding method in each service. Delete it: it still names `PayPalGateway`.
 
       <details markdown="1">
       <summary>What you just did</summary>
 
-      The services now know only the interface `PaymentGateway`. In the lecture's words: the decision to use PayPal is hidden in one module, and other services don't know PayPal exists. That decision is the **secret** of `PayPalGateway`. Switching to Stripe takes one new class plus one line in `gateway_choice.py`.
+      The services now know only the interface `PaymentGateway`. In the lecture's words: the decision to use PayPal is hidden in one module, and other services don't know PayPal exists. That decision is the **secret** of `PayPalGateway`. Switching to Stripe takes one new class plus one line in the one place where the provider is chosen.
 
       `PayPalGateway` is no longer a **shallow module**: three small operations hide a whole protocol.
 
@@ -364,7 +364,7 @@ steps:
               assert order.status == "paid"
 
 
-          def test_checkout_over_the_card_limit_is_declined():
+          def test_a_declined_payment_leaves_the_order_new():
               order = Order("Boba for the whole lecture hall", 250_000)
               assert OrderService().checkout(current_gateway(), order) is False
               assert order.status == "new"
@@ -614,6 +614,8 @@ steps:
           except TypeError as _error:
               raise AssertionError(f"PayPalGateway cannot be created: an operation of PaymentGateway is still missing. {_error}")
         hints:
+          - title: "What every provider must offer"
+            text: "`payment_gateway.py` lists the operations that any payment provider has to offer. Put that list next to `PayPalGateway`: what does the class say about itself, and which operations does it have?"
           - title: "Does the class say what it promises?"
             condition: "code_missing: PayPalGateway(PaymentGateway"
             text: "`PaymentGateway` is the interface and `PayPalGateway` should be one implementation of it. Read the `class` line of `PayPalGateway`: does it say so? The UML class diagram tutorial showed how a Python class names the abstract class it implements."
@@ -1371,6 +1373,7 @@ steps:
                         price = menu.price_cents(drink)
                         total += price
                     return total
+
                 def offers_size(self, menu: Menu, drink: str, size: str) -> bool:
                     available = menu.sizes(drink)
                     return size in available
@@ -1503,7 +1506,7 @@ steps:
 
       | Kind of secret | Example | Owner |
       |---|---|---|
-      | Library or technology | which payment provider we use | `Payments` |
+      | Library or technology | which payment provider we use | `PayPalGateway` |
       | Data format | the layout of the supplier's file | `Menu` |
       | Algorithm | how the wait is estimated | `WaitTimes` |
 
@@ -2281,12 +2284,12 @@ steps:
             - "`Kiosk` calls `menu.price_cents(drink)` and adds up the prices it gets"
             - "`Receipt` imports `Order` and reads `order.total_cents` for every receipt"
             - "`OrderDesk` makes `B-{n:04d}` codes; `KitchenDisplay` reads `code[2:]`"
-            - "`Payments` wraps PayPal's SDK, and `Notifier` wraps Textly's SDK"
+            - "`PayPalGateway` wraps PayPal's SDK, and `Notifier` wraps Textly's SDK"
           correct_index: 2
           option_feedback:
             0: "That is a syntactic dependency: a call, which the class diagram shows as an arrow. The kiosk does not know how `Menu` stores prices."
             1: "An import and an attribute read are syntactic dependencies, visible in code and in the diagram."
-            3: "Both wrap a vendor, but they make different decisions. Switching texting providers would not touch `Payments`, so nothing ties them together."
+            3: "Both wrap a vendor, but they make different decisions. Switching texting providers would not touch `PayPalGateway`, so nothing ties them together."
           explanation: "`KitchenDisplay` only works because it knows how `OrderDesk` builds a code: `\"B-\"` plus a number. Neither class has to import the other, yet a new code format, such as `\"BR-0042\"`, breaks the display. That shared design decision is a semantic dependency."
         - question: "After your fix, the class diagram shows a new arrow from `Receipt` to `Rewards`. Is the design better or worse?"
           type: single
@@ -2581,7 +2584,7 @@ steps:
           assert isinstance(_before, dict) and "B" in _before, "Keep BEFORE as a dictionary with the keys A and B."
           _b = _files(_before["B"])
           assert _b, "BEFORE for change B is still empty."
-          assert _b == {"event.py", "rsvp_service.py"}, "Change B touches exactly the files that decide when an event is full."
+          assert _b == {"event.py", "rsvp_service.py", "test_clubhub.py"}, "Change B touches exactly the files that decide or test when an event is full."
         hints: *l5_before
       - description: "The team designs first for the change that is both certain and expensive"
         command: |
@@ -2795,7 +2798,7 @@ steps:
           '''
           check_suite("/tutorial/test_clubhub.py", "rsvp_service", replacement_source=_CHANGED, expect_failure=True)
         hints: *l5_catch
-      - description: "After: each change would now touch one file"
+      - description: "After: the analysis lists exactly the files each change would still edit"
         command: |
           _ns = {}
           exec(open("/tutorial/change_impact.py").read(), _ns)
@@ -2805,15 +2808,15 @@ steps:
 
           _after = _ns.get("AFTER", {})
           assert isinstance(_after, dict) and "A" in _after and "B" in _after, "Keep AFTER as a dictionary with the keys A and B."
-          assert _files(_after["A"]) == {"notifier.py"}, "After your refactoring, change A should touch only the file that uses Textly's calls."
-          assert _files(_after["B"]) == {"event.py"}, "After your fix, change B should touch only the file that decides when an event is full."
+          assert _files(_after["A"]) == {"notifier.py"}, "After your refactoring, change A should touch only the code that owns the texting provider."
+          assert _files(_after["B"]) == {"event.py", "test_clubhub.py"}, "After your fix, change B should touch only the owner of the full-event rule and the test of that rule."
         hints: &l5_after
           - title: "Ask the Think question again"
             text: "Redo the Think question on the new code: for change A and for change B, which files would still be wrong as written?"
           - title: "Only files that still know the secret"
-            text: "Only files that still contain the secret of that change belong on the list. For A that is Textly's calls; for B it is the rule for a full event."
-          - title: "More than one file left?"
-            text: "If more than one file is still on your list, a caller or a test still knows the secret. Find it and finish that part of the refactoring first."
+            text: "Only files that still know the secret of that change belong on the list. For A that is Textly's calls; for B it is the rule for a full event, which a test can check too."
+          - title: "Why is each file still there?"
+            text: "Ask of each file on your list: does it copy the secret, or does it test the very rule that changes? A test of the rule changes with the rule, and that is expected. A service that still copies the secret means that part of the refactoring is unfinished."
     quiz:
       title: "Step 5 — Knowledge Check"
       min_score: 0.8
@@ -2911,7 +2914,7 @@ steps:
             # Your analysis of the starting design.
             BEFORE = {
                 "A": ["notifier.py", "rsvp_service.py", "reminder_service.py"],
-                "B": ["event.py", "rsvp_service.py"],
+                "B": ["event.py", "rsvp_service.py", "test_clubhub.py"],
             }
 
             # Which change should the team design for first: "A", "B", or "C"?
@@ -2920,7 +2923,7 @@ steps:
             # Fill this in after your refactoring passes the tests.
             AFTER = {
                 "A": ["notifier.py"],
-                "B": ["event.py"],
+                "B": ["event.py", "test_clubhub.py"],
             }
         - path: rsvp_service.py
           language: python
@@ -3013,4 +3016,4 @@ steps:
                 RsvpService().rsvp(spy, Event("Boba Social", 2), "555-0100")
                 assert spy.sent == [("555-0100", "You're in for Boba Social!")]
       explanation: |
-        For change A, the three lines in `rsvp_service.py` from `session = …` through `sent = receipt.delivered` moved to `Notifier` as `send(phone, text)`, because they are the Textly protocol and end in a plain `True`/`False`. `reminder_service.py` now calls `send` instead of keeping a copy, the forwarding method left in `RsvpService` was deleted, and `textly` became `__textly`. For change B, a hand edit replaced `len(event.guests) >= event.capacity` with `event.is_full()`, the rule's existing owner. The spy test records every `send` and compares the whole list with `==`, so it fails for a text to the wrong phone and for a text sent twice; change C was written down and left alone because nobody is asking for it yet.
+        For change A, the three lines in `rsvp_service.py` from `session = …` through `sent = receipt.delivered` moved to `Notifier` as `send(phone, text)`, because they are the Textly protocol and end in a plain `True`/`False`. `reminder_service.py` now calls `send` instead of keeping a copy, the forwarding method left in `RsvpService` was deleted, and `textly` became `__textly`. For change B, a hand edit replaced `len(event.guests) >= event.capacity` with `event.is_full()`, the rule's existing owner. `test_clubhub.py` stays on both lists for B: `test_a_full_event_turns_the_guest_away` checks the rule itself, so it has to be rewritten along with the rule, which is expected. The spy test records every `send` and compares the whole list with `==`, so it fails for a text to the wrong phone and for a text sent twice; change C was written down and left alone because nobody is asking for it yet.
