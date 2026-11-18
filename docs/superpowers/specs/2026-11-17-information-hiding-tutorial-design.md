@@ -43,7 +43,7 @@ The term is **change impact analysis** everywhere. Do not write "change test".
 
 ## Lessons
 
-Exact starter code, model solutions, grader commands, and instruction text are in `docs/superpowers/specs/2026-11-17-information-hiding-tutorial-kit/skeleton.yml`. That file is authoritative for lessons 2–5; lesson 1 was later reworked to the lecture's gateway design, and its authoritative version is the tutorial YAML itself (prototype: `.superpowers/sdd/2026-11-17-information-hiding-tutorial/lesson1-gateway/`). This table is the map.
+Exact starter code, model solutions, grader commands, and instruction text for all five lessons are in `_data/tutorials/information-hiding.yml`. That file is authoritative; where this document and the YAML disagree, the YAML wins. (The earlier design kit with its `skeleton.yml` has been deleted.) This table is the map.
 
 Lesson 1 follows the lecture's design: the services depend on an interface `PaymentGateway` (given in `payment_gateway.py`, an ABC with `charge`, `refund`, `save_card`), `PayPalGateway` in `paypal_gateway.py` implements it and is the only class that knows PayPal, and `current_gateway()` in `gateway_choice.py` is the one place that picks the provider (the lecture's `getPaymentGateway()`). The tools move the protocol into `PayPalGateway`; the hand edits are the design decision: the base class, the services' imports and annotations, and the return type of `current_gateway()`. Adding the base class before all three operations exist makes `PayPalGateway()` fail to instantiate, and the instructions and hints use that error as feedback. Change impact analysis for "Switch to Stripe": `BEFORE` must list the three services and may list `paypal_gateway.py` and `gateway_choice.py`; `AFTER` is exactly `gateway_choice.py`, since Stripe gets a new class in a new file.
 
@@ -70,20 +70,20 @@ Verified against `js/tutorial-refactorings.js`:
 ### UML
 
 - Live class diagram pane is on (`uml_diagram: true`, layout copied from `code-smells-refactoring.yml`). It shows the "before" in lessons 2–5, shows `PayPalGateway` gaining operations and implementing `PaymentGateway` in lesson 1, and gains a `Receipt ..> Rewards` arrow in lesson 4.
-- Four authored diagrams (in the skeleton's instruction text): lesson 1 today and target (the live pane cannot show that services reach `PayPalClient`; the target shows the services depending on the `PaymentGateway` interface, which `PayPalGateway` realizes), lesson 2 target, lesson 3 target. All four parse with `js/uml-describe-cli.js`.
+- Four authored diagrams (in the lessons' instruction text): lesson 1 today and target (the live pane cannot show that services reach `PayPalClient`; the target shows the services depending on the `PaymentGateway` interface, which `PayPalGateway` realizes), lesson 2 target, lesson 3 target. All four parse with `js/uml-describe-cli.js`.
 
 ### Tool reference footer
 
 Create `_includes/refactoring-tools-reference.html` and set `instructions_footer_include: refactoring-tools-reference.html`. One native `<details>` with summary "How to use the refactoring tools", no inline styles, containing:
 
-- **Extract Function/Method:** select whole statements, right-click, choose *Refactor: Extract Function/Method…*, type a name. If the entry is missing, start the selection on the first word of the first line.
-- **Move Method:** click inside the method, right-click, *Refactor: Move Method…*, pick the target class.
-- **Rename Symbol:** click the name where it is defined (the `def` line or the `self.name = …` line), right-click, *Refactor: Rename Symbol…*.
+- **Extract Function/Method:** select whole statements, right-click, choose *Refactor: Extract Function/Method…*, and type a name. If the entry is missing, the selection probably starts on a blank line or ends in the middle of a statement.
+- **Move Method:** click inside the method, right-click, choose *Refactor: Move Method…*, and pick the target class.
+- **Rename Symbol:** click the name where it is defined (the `def` line or the `self.name = …` line), right-click, and choose *Refactor: Rename Symbol…*.
 - Every tool shows a preview first. Accept it to apply the change.
-- Keyboard: press F1 and type "Refactor" to reach the same actions.
-- To back out: undo in each changed file, or use Reset Step.
+- Keyboard: instead of right-clicking, press <kbd>Shift</kbd>+<kbd>F10</kbd> in the editor to open the same menu. On a Mac keyboard, hold <kbd>fn</kbd> as well.
+- To back out: undo in each changed file, or use **Reset Current Step**.
 
-Use the platform-aware `<kbd>` markup from the tutorial-authoring skill for any modifier key.
+The shipped include is the source of truth for this text; it marks up the key chord as nested `<kbd>` elements.
 
 ### Hints
 
@@ -149,7 +149,7 @@ Reviewed with `pedagogical-advisor` (quality gates, cognitive load), `cs-tutoria
 
 ## Verification
 
-Kit tests, all green against the skeleton today except the unwritten content:
+Tests that read the shipped tutorial YAML:
 
 - `test_information_hiding_graders.py` — every check against starter, model solution, other correct submissions, and mistakes (13 tests).
 - `information-hiding-tool-paths.test.js` — replays every tool path through the real engine and runs each lesson's pytest file (5 tests).
