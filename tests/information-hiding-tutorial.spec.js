@@ -31,19 +31,22 @@ const steps = config.steps;
 // lesson that silently loses a check or a quiz question must fail here.
 const EXPECTED_TEST_COUNTS = [10, 10, 11, 8, 12];
 const EXPECTED_QUIZ_SIZES = [4, 4, 4, 4, 5];
-// Class names in each lesson's authored diagrams, one list per diagram in
-// page order: lesson 1 has two diagrams, lessons 2 and 3 one each.
+// Labels in each lesson's authored diagrams, one list per diagram in page
+// order: lesson 1 has two diagrams, lessons 2 and 3 one each. Mostly class
+// names; the lesson 1 target also lists one operation, which learners must
+// read to name their extracted methods.
 const LESSON_1_SERVICES = ['OrderService', 'RefundService', 'WalletService'];
-const AUTHORED_DIAGRAM_CLASSES = [
+const AUTHORED_DIAGRAM_LABELS = [
   [
     [...LESSON_1_SERVICES, 'PayPalGateway', 'PayPalClient'],
-    [...LESSON_1_SERVICES, 'PaymentGateway', 'PayPalGateway', 'PayPalClient'],
+    [...LESSON_1_SERVICES, 'PaymentGateway', '+save_card(customer): str', 'PayPalGateway', 'PayPalClient'],
   ],
   [['Kiosk', 'Menu']],
   [['PickupScreen', 'TextMessage', 'WaitTimes']],
 ];
-// A diagram label may be a little smaller than paragraph text, not much.
-const READABLE_LABEL_RATIO = 0.85;
+// A diagram label may be a little smaller than paragraph text: at least
+// 0.9 of it, the project's minimum for secondary text.
+const READABLE_LABEL_RATIO = 0.9;
 
 function testMyWork(page) {
   return page.getByRole('button', { name: /test my work/i });
@@ -138,22 +141,22 @@ test.describe.serial('Information Hiding tutorial journey', () => {
     const lesson = i + 1;
     const isLast = i === steps.length - 1;
 
-    if (i < AUTHORED_DIAGRAM_CLASSES.length) {
+    if (i < AUTHORED_DIAGRAM_LABELS.length) {
       test(`lesson ${lesson} shows its authored diagrams`, async () => {
-        await expectAuthoredDiagrams(page, AUTHORED_DIAGRAM_CLASSES[i].length);
+        await expectAuthoredDiagrams(page, AUTHORED_DIAGRAM_LABELS[i].length);
       });
 
-      test(`lesson ${lesson} diagrams render class names at a readable size`, async () => {
+      test(`lesson ${lesson} diagrams render their labels at a readable size`, async () => {
         // The instructions pane fits a wide diagram to its width, which can
         // shrink the labels far below the surrounding text.
         const diagrams = authoredDiagrams(page);
-        for (let d = 0; d < AUTHORED_DIAGRAM_CLASSES[i].length; d++) {
-          for (const className of AUTHORED_DIAGRAM_CLASSES[i][d]) {
+        for (let d = 0; d < AUTHORED_DIAGRAM_LABELS[i].length; d++) {
+          for (const label of AUTHORED_DIAGRAM_LABELS[i][d]) {
             // Polled: the pane fits the drawing after it renders.
             await expect.poll(async () => {
-              const sizes = await renderedLabelSize(diagrams.nth(d), className);
+              const sizes = await renderedLabelSize(diagrams.nth(d), label);
               return sizes.label / sizes.paragraph;
-            }, { message: `diagram ${d + 1}: "${className}" size relative to paragraph text` })
+            }, { message: `diagram ${d + 1}: "${label}" size relative to paragraph text` })
               .toBeGreaterThanOrEqual(READABLE_LABEL_RATIO);
           }
         }

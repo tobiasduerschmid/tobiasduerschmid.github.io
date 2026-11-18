@@ -142,13 +142,10 @@ steps:
         + refund(cents): bool
         + save_card(customer): str
       }
-      class PayPalGateway @pos(110, 220) {
+      class PayPalGateway @pos(120, 220) {
         - __paypal: PayPalClient
-        + charge(cents): bool
-        + refund(cents): bool
-        + save_card(customer): str
       }
-      class PayPalClient <<PayPal SDK>> @pos(136, 395)
+      class PayPalClient <<PayPal SDK>> @pos(155, 317)
       PayPalGateway ..|> PaymentGateway
       PayPalGateway --> PayPalClient
       OrderService ..> PaymentGateway
