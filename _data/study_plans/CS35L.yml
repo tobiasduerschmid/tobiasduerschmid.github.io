@@ -77,6 +77,9 @@ items:
     url: /se-gym/?quiz=security
 
   # Design and process
+  - title: "Information Hiding Tutorial"
+    type: tutorial
+    url: /SEBook/designprinciples/information-hiding-tutorial
   - title: "Observer Pattern Quiz"
     type: gym
     url: /se-gym/?quiz=design_pattern_observer
