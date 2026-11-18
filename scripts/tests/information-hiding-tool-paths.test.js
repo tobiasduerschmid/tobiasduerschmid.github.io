@@ -140,29 +140,45 @@ function assertAllPass(key, files) {
     'every test should still pass after the refactoring');
 }
 
-test('payments: three Extract + Move rounds and one Rename give Payments the PayPal protocol', () => {
+test('payments: three Extract + Move rounds and one Rename give PayPalGateway the PayPal protocol', () => {
   const key = 'payments';
-  const speaksPayPal = 'token = payments.paypal.authenticate()';
+  const speaksPayPal = 'token = gateway.paypal.authenticate()';
   let files = starterFiles(key);
   assertAllPass(key, files);
 
   files = extract(files, 'order_service.py', speaksPayPal, 'paid = result.was_successful()', 'charge');
-  files = move(files, 'order_service.py', speaksPayPal, 'Payments');
+  files = move(files, 'order_service.py', speaksPayPal, 'PayPalGateway');
   assertAllPass(key, files);
 
   files = extract(files, 'refund_service.py', speaksPayPal, 'refunded = result.was_successful()', 'refund');
-  files = move(files, 'refund_service.py', speaksPayPal, 'Payments');
-  files = extract(files, 'wallet_service.py', speaksPayPal, 'card_id = payments.paypal.vault(token, customer)', 'save_card');
-  files = move(files, 'wallet_service.py', speaksPayPal, 'Payments');
-  files = rename(files, 'payments.py', 'self.paypal = PayPalClient', 'paypal', '__paypal');
+  files = move(files, 'refund_service.py', speaksPayPal, 'PayPalGateway');
+  files = extract(files, 'wallet_service.py', speaksPayPal, 'card_id = gateway.paypal.vault(token, customer)', 'save_card');
+  files = move(files, 'wallet_service.py', speaksPayPal, 'PayPalGateway');
+  files = rename(files, 'paypal_gateway.py', 'self.paypal = PayPalClient', 'paypal', '__paypal');
   assertAllPass(key, files);
 
   for (const service of ['order_service.py', 'refund_service.py', 'wallet_service.py']) {
-    assert.doesNotMatch(files[service], /paypal|authenticate|capture|reverse|vault/,
+    assert.doesNotMatch(files[service], /\.paypal\b|authenticate|capture|reverse|vault/,
       `${service} should no longer mention PayPal's calls`);
   }
-  assert.equal(files['payments.py'], solutionFiles(key)['payments.py'],
-    'the published solution should be exactly what the tools produce');
+  for (const operation of ['charge', 'refund', 'save_card']) {
+    assert.match(files['paypal_gateway.py'], new RegExp(`^    def ${operation}\\(`, 'm'),
+      `the tools should give PayPalGateway the ${operation} operation`);
+  }
+
+  // Promising the interface is the one hand edit in paypal_gateway.py.
+  const promised = `from payment_gateway import PaymentGateway\n${files['paypal_gateway.py']}`
+    .replace('class PayPalGateway:', 'class PayPalGateway(PaymentGateway):');
+  const solution = solutionFiles(key);
+  assert.equal(promised, solution['paypal_gateway.py'],
+    'the published solution should be the tool output plus the base class and its import');
+
+  // The services and gateway_choice.py then name only the interface, by hand.
+  assertAllPass(key, { ...files, 'paypal_gateway.py': promised,
+    'order_service.py': solution['order_service.py'],
+    'refund_service.py': solution['refund_service.py'],
+    'wallet_service.py': solution['wallet_service.py'],
+    'gateway_choice.py': solution['gateway_choice.py'] });
 });
 
 test('menu: Extract + Move twice, then Rename from the def line; only the test that knew the layout fails', () => {

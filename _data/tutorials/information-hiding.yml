@@ -112,20 +112,20 @@ steps:
 
       ### The design
 
-      Boba Run lets you order boba ahead. This is the payment example from lecture: three services each run the PayPal protocol themselves, through the `paypal` client that `Payments` hands out.
+      This is the payment example from lecture, in a boba shop: three services each run PayPal's protocol themselves, through the `paypal` client of `PayPalGateway`. The interface `PaymentGateway` lists what the shop needs from any provider, but nothing uses it yet.
 
       <div class="uml-class-diagram-container" data-uml-type="class" data-uml-role="reference-design" data-uml-caption="Today: count the arrows that reach PayPalClient. Every service has one." data-uml-spec='@startuml
       layout horizontal
       class OrderService {
-        + checkout(payments, order): bool
+        + checkout(gateway, order): bool
       }
       class RefundService {
-        + refund_order(payments, order): bool
+        + refund_order(gateway, order): bool
       }
       class WalletService {
-        + add_payment_method(payments, customer): str
+        + add_payment_method(gateway, customer): str
       }
-      class Payments {
+      class PayPalGateway {
         + paypal: PayPalClient
       }
       class PayPalClient <<PayPal SDK>> {
@@ -134,27 +134,32 @@ steps:
         + reverse(token, cents): PayPalCharge
         + vault(token, customer): str
       }
-      OrderService ..> Payments
-      RefundService ..> Payments
-      WalletService ..> Payments
+      OrderService ..> PayPalGateway
+      RefundService ..> PayPalGateway
+      WalletService ..> PayPalGateway
       OrderService ..> PayPalClient : runs the protocol
       RefundService ..> PayPalClient : runs the protocol
       WalletService ..> PayPalClient : runs the protocol
-      Payments --> PayPalClient
+      PayPalGateway --> PayPalClient
       @enduml'></div>
 
-      <div class="uml-class-diagram-container" data-uml-type="class" data-uml-role="reference-design" data-uml-caption="Target: only Payments reaches PayPalClient. Give your extracted methods the names shown on Payments." data-uml-spec='@startuml
+      <div class="uml-class-diagram-container" data-uml-type="class" data-uml-role="reference-design" data-uml-caption="Target: the services know only the PaymentGateway interface, and only PayPalGateway reaches PayPalClient. Give your extracted methods the names shown on PaymentGateway." data-uml-spec='@startuml
       layout horizontal
       class OrderService {
-        + checkout(payments, order): bool
+        + checkout(gateway, order): bool
       }
       class RefundService {
-        + refund_order(payments, order): bool
+        + refund_order(gateway, order): bool
       }
       class WalletService {
-        + add_payment_method(payments, customer): str
+        + add_payment_method(gateway, customer): str
       }
-      class Payments {
+      interface PaymentGateway {
+        + charge(cents): bool
+        + refund(cents): bool
+        + save_card(customer): str
+      }
+      class PayPalGateway {
         - __paypal: PayPalClient
         + charge(cents): bool
         + refund(cents): bool
@@ -166,35 +171,35 @@ steps:
         + reverse(token, cents): PayPalCharge
         + vault(token, customer): str
       }
-      OrderService ..> Payments : charge
-      RefundService ..> Payments : refund
-      WalletService ..> Payments : save_card
-      Payments --> PayPalClient
+      OrderService ..> PaymentGateway : charge
+      RefundService ..> PaymentGateway : refund
+      WalletService ..> PaymentGateway : save_card
+      PayPalGateway ..|> PaymentGateway
+      PayPalGateway --> PayPalClient
       @enduml'></div>
 
       ### Your tasks
 
-      1. **Think.** The change request: *"PayPal is raising its fees. Switch to Stripe."* Open `change_impact.py` and list in `BEFORE` every file of ours that someone would have to edit.
-      2. **Test.** Press **Test**. All four tests pass. They check what the shop does, not how it pays, so they should stay green while you move code around.
+      1. **Think.** The change request: *"PayPal is raising its fees. Switch to Stripe."* Open `change_impact.py` and list in `BEFORE` every file of ours that would need an edit.
+      2. **Test.** Press **Test**. All four tests pass. They check what the shop does, not how it pays, so they must stay green.
       3. **Refactor `order_service.py`.**
          - Select the three lines that only make sense if you know PayPal: from `token = …` through `paid = …`.
-         - Right-click, choose **Refactor: Extract Function/Method…**, and name the method `charge`. Check the preview, then accept it.
-         - Click inside the new `charge` method. Right-click, choose **Refactor: Move Method…**, and pick `Payments`.
+         - Right-click, choose **Refactor: Extract Function/Method…**, and name the method `charge`.
+         - Click inside the new `charge` method. Right-click, choose **Refactor: Move Method…**, and pick `PayPalGateway`.
          - Press **Test**.
       4. **Refactor the other two services** the same way. This time you pick the lines. Name the methods `refund` and `save_card`.
-      5. **Lock it.** Nobody outside `Payments` needs the client now. In `payments.py`, click on `paypal` in the line `self.paypal = …`, choose **Refactor: Rename Symbol…**, and rename it to `__paypal`. Press **Test**.
-      6. **Reason.** Fill in `AFTER`: which files would the switch to Stripe touch now?
+      5. **Lock it.** Only `PayPalGateway` needs the client now. In `paypal_gateway.py`, click on `paypal` in the line `self.paypal = …`, choose **Refactor: Rename Symbol…**, and rename it to `__paypal`. Press **Test**.
+      6. **Depend on the interface.** Make `PayPalGateway` implement `PaymentGateway`. Then only `gateway_choice.py` may name `PayPalGateway`, and only to create one. Press **Test**: if Python cannot instantiate `PayPalGateway`, the error names a missing operation.
+      7. **Reason.** Fill in `AFTER`: which files would the switch to Stripe touch now?
 
-      Each move leaves a small forwarding method behind in the service. Nothing calls it, so you can delete it.
+      Move Method leaves a forwarding method in each service. Nothing calls it, so you can delete it.
 
       <details markdown="1">
       <summary>What you just did</summary>
 
-      Before, four files knew that Boba Run pays with PayPal. Now one does. `OrderService` can be read, tested, and changed by someone who has never heard of PayPal.
+      The services now know only the interface `PaymentGateway`. In the lecture's words: the decision to use PayPal is hidden in one module, and other services don't know PayPal exists. That decision is the **secret** of `PayPalGateway`. Switching to Stripe takes one new class plus one line in `gateway_choice.py`.
 
-      `Payments` started as a **shallow module**: a class that hid nothing. It is deeper now: three small operations hide a whole protocol.
-
-      The decision to use PayPal is the **secret** of `Payments`.
+      `PayPalGateway` is no longer a **shallow module**: three small operations hide a whole protocol.
 
       </details>
     files:
@@ -203,14 +208,14 @@ steps:
         reseed: true
         content: |
           from order import Order
-          from payments import Payments
+          from paypal_gateway import PayPalGateway
 
 
           class OrderService:
-              def checkout(self, payments: Payments, order: Order) -> bool:
+              def checkout(self, gateway: PayPalGateway, order: Order) -> bool:
                   cents = order.total_cents
-                  token = payments.paypal.authenticate()
-                  result = payments.paypal.capture(token, cents)
+                  token = gateway.paypal.authenticate()
+                  result = gateway.paypal.capture(token, cents)
                   paid = result.was_successful()
                   if paid:
                       order.status = "paid"
@@ -220,14 +225,14 @@ steps:
         reseed: true
         content: |
           from order import Order
-          from payments import Payments
+          from paypal_gateway import PayPalGateway
 
 
           class RefundService:
-              def refund_order(self, payments: Payments, order: Order) -> bool:
+              def refund_order(self, gateway: PayPalGateway, order: Order) -> bool:
                   cents = order.total_cents
-                  token = payments.paypal.authenticate()
-                  result = payments.paypal.reverse(token, cents)
+                  token = gateway.paypal.authenticate()
+                  result = gateway.paypal.reverse(token, cents)
                   refunded = result.was_successful()
                   if refunded:
                       order.status = "refunded"
@@ -236,30 +241,61 @@ steps:
         language: python
         reseed: true
         content: |
-          from payments import Payments
+          from paypal_gateway import PayPalGateway
 
 
           class WalletService:
               def __init__(self) -> None:
                   self.saved_cards: dict[str, str] = {}
 
-              def add_payment_method(self, payments: Payments, customer: str) -> str:
-                  token = payments.paypal.authenticate()
-                  card_id = payments.paypal.vault(token, customer)
+              def add_payment_method(self, gateway: PayPalGateway, customer: str) -> str:
+                  token = gateway.paypal.authenticate()
+                  card_id = gateway.paypal.vault(token, customer)
                   self.saved_cards[customer] = card_id
                   return card_id
-      - path: payments.py
+      - path: paypal_gateway.py
         language: python
         reseed: true
         content: |
           from paypal_sdk import PayPalClient
 
 
-          class Payments:
-              """Boba Run's payments module."""
+          class PayPalGateway:
+              """Boba Run's connection to PayPal."""
 
               def __init__(self) -> None:
                   self.paypal = PayPalClient("boba-run")
+      - path: payment_gateway.py
+        language: python
+        reseed: true
+        content: |
+          from abc import ABC, abstractmethod
+
+
+          class PaymentGateway(ABC):
+              """What Boba Run needs from any payment provider."""
+
+              @abstractmethod
+              def charge(self, cents: int) -> bool:
+                  """Charge the customer; True if the payment went through."""
+
+              @abstractmethod
+              def refund(self, cents: int) -> bool:
+                  """Give money back; True if the refund went through."""
+
+              @abstractmethod
+              def save_card(self, customer: str) -> str:
+                  """Store the customer's card; return an id for it."""
+      - path: gateway_choice.py
+        language: python
+        reseed: true
+        content: |
+          from paypal_gateway import PayPalGateway
+
+
+          def current_gateway() -> PayPalGateway:
+              """The payment provider Boba Run uses today."""
+              return PayPalGateway()
       - path: order.py
         language: python
         reseed: true
@@ -322,7 +358,8 @@ steps:
 
           Change request: "PayPal is raising its fees. Switch Boba Run to Stripe."
 
-          List every file of ours that someone would have to edit to make that change.
+          List every existing file of ours that someone would have to edit to make that change.
+          - A brand-new file, such as stripe_gateway.py, does not count: it is written, not edited.
           - paypal_sdk.py is PayPal's code, not ours, so it never goes on a list.
           - Test files count: a test that must be rewritten is part of the cost.
           """
@@ -336,42 +373,44 @@ steps:
         language: python
         reseed: true
         content: |
+          from gateway_choice import current_gateway
           from order import Order
           from order_service import OrderService
-          from payments import Payments
           from refund_service import RefundService
           from wallet_service import WalletService
 
 
           def test_checkout_marks_the_order_paid():
               order = Order("Taro Milk Tea", 550)
-              assert OrderService().checkout(Payments(), order) is True
+              assert OrderService().checkout(current_gateway(), order) is True
               assert order.status == "paid"
 
 
           def test_checkout_over_the_card_limit_is_declined():
               order = Order("Boba for the whole lecture hall", 250_000)
-              assert OrderService().checkout(Payments(), order) is False
+              assert OrderService().checkout(current_gateway(), order) is False
               assert order.status == "new"
 
 
           def test_refund_marks_the_order_refunded():
               order = Order("Thai Tea", 500)
-              assert RefundService().refund_order(Payments(), order) is True
+              assert RefundService().refund_order(current_gateway(), order) is True
               assert order.status == "refunded"
 
 
           def test_saving_a_card_remembers_it_for_the_customer():
               wallet = WalletService()
-              card_id = wallet.add_payment_method(Payments(), "ana")
+              card_id = wallet.add_payment_method(current_gateway(), "ana")
               assert wallet.saved_cards["ana"] == card_id
     open_file: order_service.py
     run_file: test_shop.py
     uml_files:
-      - payments.py
+      - payment_gateway.py
+      - paypal_gateway.py
       - order_service.py
       - refund_service.py
       - wallet_service.py
+      - gateway_choice.py
     tests:
       - description: "Before: the analysis lists every file that would need an edit"
         command: |
@@ -381,16 +420,16 @@ steps:
               assert isinstance(value, (list, tuple, set)), "Keep each analysis as a list of file names."
               return {str(name).strip() for name in value}
 
-          _truth = {"payments.py", "order_service.py", "refund_service.py", "wallet_service.py"}
-          _missing = _truth - _files(_ns.get("BEFORE", []))
+          _required = {"order_service.py", "refund_service.py", "wallet_service.py"}
+          _missing = _required - _files(_ns.get("BEFORE", []))
           assert not _missing, f"BEFORE is missing {len(_missing)} file(s) that use PayPal's calls."
         hints: &l1_before
           - title: "Would this file survive the switch?"
             text: "Go through the files one at a time and ask: if Boba Run switched from PayPal to Stripe, would this file still be correct exactly as written? If not, it belongs on the list."
           - title: "Search for PayPal's own words"
             text: "Search for PayPal's own words, such as the names of its calls, not for imports. A file can run PayPal's protocol without importing anything from PayPal."
-          - title: "Tests and vendor code"
-            text: "Tests are files too: does any test repeat a PayPal detail? PayPal's SDK is PayPal's code, not ours, so it never goes on the list."
+          - title: "Tests, vendor code, and new files"
+            text: "Tests are files too: does any test repeat a PayPal detail? PayPal's SDK is PayPal's code, not ours, and a file nobody has written yet is not an edit, so neither goes on the list."
       - description: "Before: the analysis lists no file that could stay as it is"
         command: |
           _ns = {}
@@ -399,21 +438,25 @@ steps:
               assert isinstance(value, (list, tuple, set)), "Keep each analysis as a list of file names."
               return {str(name).strip() for name in value}
 
-          _truth = {"payments.py", "order_service.py", "refund_service.py", "wallet_service.py"}
+          # The two gateway files are defensible either way in the starting design.
+          _allowed = {"order_service.py", "refund_service.py", "wallet_service.py",
+                      "paypal_gateway.py", "gateway_choice.py"}
           _before = _files(_ns.get("BEFORE", []))
           assert _before, "BEFORE is still empty."
-          _extra = _before - _truth
+          _extra = _before - _allowed
           assert not _extra, f"BEFORE lists {len(_extra)} file(s) that would not need an edit."
         hints: *l1_before
-      - description: "Checkout works with a payments module from another provider"
+      - description: "Checkout works with a gateway from another provider"
         command: |
           import sys
           for _name in list(sys.modules):
               if (getattr(sys.modules[_name], "__file__", "") or "").startswith("/tutorial/"):
                   del sys.modules[_name]
 
-          class OtherProvider:
-              """A payments module from another provider. It has never heard of PayPal."""
+          from payment_gateway import PaymentGateway
+
+          class OtherProvider(PaymentGateway):
+              """A gateway from another provider. It has never heard of PayPal."""
               def __init__(self):
                   self.calls = []
               def charge(self, cents):
@@ -428,32 +471,34 @@ steps:
 
           from order import Order
           from order_service import OrderService
-          _payments = OtherProvider()
+          _gateway = OtherProvider()
           _order = Order("Taro Milk Tea", 550)
           try:
-              _result = OrderService().checkout(_payments, _order)
+              _result = OrderService().checkout(_gateway, _order)
           except AttributeError as _error:
               raise AssertionError(f"checkout still needs something only PayPal has: {_error}")
           assert _result is True and _order.status == "paid", "An accepted payment should mark the order paid and return True."
-          assert _payments.calls == [("charge", 550)], "checkout should ask payments to charge the order total once."
+          assert _gateway.calls == [("charge", 550)], "checkout should ask the gateway to charge the order total once."
           _big = Order("Boba for the whole lecture hall", 5000)
-          assert OrderService().checkout(_payments, _big) is False and _big.status == "new", "A declined payment should leave the order new and return False."
+          assert OrderService().checkout(_gateway, _big) is False and _big.status == "new", "A declined payment should leave the order new and return False."
         hints: &l1_provider
           - title: "What the stand-in offers"
-            text: "The check hands your service a payments module from another provider. It offers only the operations shown on `Payments` in the target diagram, with those names. What does your service still ask `Payments` for?"
+            text: "The check hands your service a gateway from another provider. It offers only the operations of `PaymentGateway`, with those names. What does your service still ask the gateway for?"
           - title: "The last line that knows PayPal"
-            text: "In the service, find the last line that only makes sense if you know PayPal. Is that line inside the method you moved to `Payments`?"
+            text: "In the service, find the last line that only makes sense if you know PayPal. Is that line inside the method you moved to `PayPalGateway`?"
           - title: "Moved too few lines"
-            text: "If the service still calls a method on what `Payments` returned, you moved too few lines. Undo the move and the extract, then extract through the line that produces a plain value: a number, a string, or `True`/`False`."
-      - description: "Refunds work with a payments module from another provider"
+            text: "If the service still calls a method on what the gateway returned, you moved too few lines. Undo the move and the extract, then extract through the line that produces a plain value: a number, a string, or `True`/`False`."
+      - description: "Refunds work with a gateway from another provider"
         command: |
           import sys
           for _name in list(sys.modules):
               if (getattr(sys.modules[_name], "__file__", "") or "").startswith("/tutorial/"):
                   del sys.modules[_name]
 
-          class OtherProvider:
-              """A payments module from another provider. It has never heard of PayPal."""
+          from payment_gateway import PaymentGateway
+
+          class OtherProvider(PaymentGateway):
+              """A gateway from another provider. It has never heard of PayPal."""
               def __init__(self):
                   self.calls = []
               def charge(self, cents):
@@ -468,26 +513,28 @@ steps:
 
           from order import Order
           from refund_service import RefundService
-          _payments = OtherProvider()
+          _gateway = OtherProvider()
           _order = Order("Thai Tea", 500)
           try:
-              _result = RefundService().refund_order(_payments, _order)
+              _result = RefundService().refund_order(_gateway, _order)
           except AttributeError as _error:
               raise AssertionError(f"refund_order still needs something only PayPal has: {_error}")
           assert _result is True and _order.status == "refunded", "A successful refund should mark the order refunded and return True."
-          assert _payments.calls == [("refund", 500)], "refund_order should ask payments to refund the order total once."
+          assert _gateway.calls == [("refund", 500)], "refund_order should ask the gateway to refund the order total once."
           _odd = Order("Mystery drink", 777)
-          assert RefundService().refund_order(_payments, _odd) is False and _odd.status == "new", "A failed refund should leave the order unchanged and return False."
+          assert RefundService().refund_order(_gateway, _odd) is False and _odd.status == "new", "A failed refund should leave the order unchanged and return False."
         hints: *l1_provider
-      - description: "Saving a card works with a payments module from another provider"
+      - description: "Saving a card works with a gateway from another provider"
         command: |
           import sys
           for _name in list(sys.modules):
               if (getattr(sys.modules[_name], "__file__", "") or "").startswith("/tutorial/"):
                   del sys.modules[_name]
 
-          class OtherProvider:
-              """A payments module from another provider. It has never heard of PayPal."""
+          from payment_gateway import PaymentGateway
+
+          class OtherProvider(PaymentGateway):
+              """A gateway from another provider. It has never heard of PayPal."""
               def __init__(self):
                   self.calls = []
               def charge(self, cents):
@@ -501,14 +548,14 @@ steps:
                   return "card-of-" + customer
 
           from wallet_service import WalletService
-          _payments = OtherProvider()
+          _gateway = OtherProvider()
           _wallet = WalletService()
           try:
-              _card = _wallet.add_payment_method(_payments, "ana")
+              _card = _wallet.add_payment_method(_gateway, "ana")
           except AttributeError as _error:
               raise AssertionError(f"add_payment_method still needs something only PayPal has: {_error}")
-          assert _card == "card-of-ana" and _wallet.saved_cards == {"ana": "card-of-ana"}, "The wallet should remember the card id that payments returns."
-          assert _payments.calls == [("save_card", "ana")], "add_payment_method should ask payments to save the card once."
+          assert _card == "card-of-ana" and _wallet.saved_cards == {"ana": "card-of-ana"}, "The wallet should remember the card id that the gateway returns."
+          assert _gateway.calls == [("save_card", "ana")], "add_payment_method should ask the gateway to save the card once."
         hints: *l1_provider
       - description: "The shop still behaves the same with PayPal"
         command: |
@@ -517,20 +564,20 @@ steps:
               if (getattr(sys.modules[_name], "__file__", "") or "").startswith("/tutorial/"):
                   del sys.modules[_name]
 
+          from gateway_choice import current_gateway
           from order import Order
           from order_service import OrderService
-          from payments import Payments
           from refund_service import RefundService
           from wallet_service import WalletService
           try:
               _order = Order("Taro Milk Tea", 550)
-              assert OrderService().checkout(Payments(), _order) is True and _order.status == "paid"
+              assert OrderService().checkout(current_gateway(), _order) is True and _order.status == "paid"
               _big = Order("Boba for the whole lecture hall", 250_000)
-              assert OrderService().checkout(Payments(), _big) is False and _big.status == "new"
+              assert OrderService().checkout(current_gateway(), _big) is False and _big.status == "new"
               _back = Order("Thai Tea", 500)
-              assert RefundService().refund_order(Payments(), _back) is True and _back.status == "refunded"
+              assert RefundService().refund_order(current_gateway(), _back) is True and _back.status == "refunded"
               _wallet = WalletService()
-              _card = _wallet.add_payment_method(Payments(), "ana")
+              _card = _wallet.add_payment_method(current_gateway(), "ana")
               assert _card and _wallet.saved_cards == {"ana": _card}
           except (AttributeError, TypeError, NameError) as _error:
               raise AssertionError(f"The shop no longer runs with PayPal: {_error}")
@@ -539,35 +586,112 @@ steps:
             text: "Press **Test** and read the first failing line in the output. It tells you which file and which line broke."
           - title: "A call that does not match"
             condition: "code_missing: __paypal"
-            text: "An `AttributeError` or a `TypeError` after an extract or a move means a service asks `Payments` for an operation it does not offer, or passes different arguments than the operation takes. Compare the call with the method's `def` line in `payments.py`."
+            text: "An `AttributeError` or a `TypeError` after an extract or a move means a service asks `PayPalGateway` for an operation it does not offer, or passes different arguments than the operation takes. Compare the call with the method's `def` line in `paypal_gateway.py`."
           - title: "Back out the last refactoring"
             condition: "code_missing: __paypal"
             text: "You have not renamed `paypal` yet, so the failure comes from an extract or a move. Undo it in every file it changed, then try again with whole statements selected. Read the preview before you accept it."
           - title: "An attribute that went missing"
             condition: "code_contains: __paypal"
-            text: "An `AttributeError` saying that `Payments` has no attribute `paypal` means the client was made private while code outside `Payments` still uses it."
+            text: "An `AttributeError` saying that `PayPalGateway` has no attribute `paypal` means the client was made private while code outside `PayPalGateway` still uses it."
           - title: "Move first, then rename"
             condition: "code_contains: __paypal"
             text: "If that is the error you see, undo the rename, finish moving the PayPal lines out of every service, then rename again. **Reset Current Step** brings back the starting code if undo gets confusing."
-      - description: "Payments keeps its PayPal client to itself"
+          - title: "A class Python cannot create"
+            condition: "code_contains: PayPalGateway(PaymentGateway"
+            text: "A `TypeError` saying Python \"Can't instantiate abstract class PayPalGateway\" means it promises `PaymentGateway` but still lacks an operation. The message names the missing one."
+      - description: "PayPalGateway keeps its PayPal client to itself"
         command: |
           import sys
           for _name in list(sys.modules):
               if (getattr(sys.modules[_name], "__file__", "") or "").startswith("/tutorial/"):
                   del sys.modules[_name]
 
-          from payments import Payments
-          _exposed = [name for name, value in vars(Payments()).items()
+          from paypal_gateway import PayPalGateway
+          # Fill in any operation that is still missing, so that this check
+          # looks only at the client and not at the interface.
+          _missing = getattr(PayPalGateway, "__abstractmethods__", frozenset())
+          _probe = type("_Probe", (PayPalGateway,), {name: (lambda self, *args: None) for name in _missing})
+          _exposed = [name for name, value in vars(_probe()).items()
                       if not name.startswith("_") and type(value).__module__ == "paypal_sdk"]
-          assert not _exposed, "Payments still offers its PayPal client as a public attribute."
+          assert not _exposed, "PayPalGateway still offers its PayPal client as a public attribute."
         hints: &l1_private
           - title: "Who can still reach it?"
-            text: "Which public name on `Payments` still gives a caller the PayPal client?"
+            text: "Which public name on `PayPalGateway` still gives a caller the PayPal client?"
           - title: "Two underscores make it private"
             text: "Rename that attribute so its name starts with two underscores. Code outside the class can then no longer reach it by that name."
           - title: "Start where the name is defined"
             text: "Start **Refactor: Rename Symbol…** on the line where the attribute is defined, not on a line that uses it. The tool only rewrites the file you have open."
-      - description: "After: only the payments module would need an edit"
+      - description: "PayPalGateway implements the PaymentGateway interface"
+        command: |
+          import sys
+          for _name in list(sys.modules):
+              if (getattr(sys.modules[_name], "__file__", "") or "").startswith("/tutorial/"):
+                  del sys.modules[_name]
+
+          from payment_gateway import PaymentGateway
+          from paypal_gateway import PayPalGateway
+          assert issubclass(PayPalGateway, PaymentGateway), "PayPalGateway does not say that it implements PaymentGateway."
+          try:
+              PayPalGateway()
+          except TypeError as _error:
+              raise AssertionError(f"PayPalGateway cannot be created: an operation of PaymentGateway is still missing. {_error}")
+        hints:
+          - title: "Does the class say what it promises?"
+            condition: "code_missing: PayPalGateway(PaymentGateway"
+            text: "`PaymentGateway` is the interface and `PayPalGateway` should be one implementation of it. Read the `class` line of `PayPalGateway`: does it say so? The UML class diagram tutorial showed how a Python class names the abstract class it implements."
+          - title: "Python holds it to the promise"
+            condition: "code_missing: PayPalGateway(PaymentGateway"
+            text: "Once `PayPalGateway` promises `PaymentGateway`, Python refuses to create it until it has every operation the interface lists. Which of those operations does it have so far?"
+          - title: "Read the \"Can't instantiate\" message"
+            condition: "code_contains: PayPalGateway(PaymentGateway"
+            text: "Press **Test**. If the output says Python \"Can't instantiate abstract class PayPalGateway\", the message names the operations that are still missing."
+          - title: "Where is the missing operation?"
+            condition: "code_contains: PayPalGateway(PaymentGateway"
+            text: "A missing operation either still sits in a service, so its PayPal lines were not moved yet, or it was moved under a different name than the interface uses. Which is it for the name in the message?"
+      - description: "The services depend only on the interface"
+        command: |
+          import ast, inspect, sys, typing
+          for _name in list(sys.modules):
+              if (getattr(sys.modules[_name], "__file__", "") or "").startswith("/tutorial/"):
+                  del sys.modules[_name]
+
+          from payment_gateway import PaymentGateway
+          from order_service import OrderService
+          from refund_service import RefundService
+          from wallet_service import WalletService
+          for _service, _method, _file in ((OrderService, "checkout", "order_service.py"),
+                                           (RefundService, "refund_order", "refund_service.py"),
+                                           (WalletService, "add_payment_method", "wallet_service.py")):
+              _function = getattr(_service, _method, None)
+              assert callable(_function), f"{_service.__name__} no longer offers {_method}."
+              try:
+                  _types = typing.get_type_hints(_function)
+              except Exception:
+                  _types = getattr(_function, "__annotations__", {})
+              _parameters = list(inspect.signature(_function).parameters)
+              assert len(_parameters) >= 2, f"{_method} no longer takes a gateway."
+              assert _types.get(_parameters[1]) is PaymentGateway, (
+                  f"{_method} should accept any PaymentGateway, not one provider's class.")
+              _tree = ast.parse(open("/tutorial/" + _file).read())
+              _knows = set()
+              for _node in ast.walk(_tree):
+                  if isinstance(_node, ast.Name):
+                      _knows.add(_node.id)
+                  elif isinstance(_node, ast.ImportFrom):
+                      _knows.add(_node.module or "")
+                      _knows.update(alias.name for alias in _node.names)
+                  elif isinstance(_node, ast.Import):
+                      _knows.update(alias.name for alias in _node.names)
+              assert not _knows & {"PayPalGateway", "paypal_gateway"}, (
+                  f"{_file} still names PayPal's gateway, so it still knows which provider Boba Run uses.")
+        hints:
+          - title: "Annotations name what a parameter may be"
+            text: "An annotation such as `gateway: SomeClass` tells readers which objects a service accepts. If it names one provider's class, the service knows the provider. Which name would let a gateway from any provider in?"
+          - title: "Every mention counts"
+            text: "An import or an annotation is knowledge too, even if the service never calls anything on it. Check every line of each service that names a gateway class, including any forwarding method that Move Method left behind."
+          - title: "One file may name PayPalGateway"
+            text: "`gateway_choice.py` is the only place allowed to name `PayPalGateway`: it picks the provider. Search each service for `PayPalGateway`. Every hit is a place that still knows the choice."
+      - description: "After: the analysis lists exactly the files that would still need an edit"
         command: |
           _ns = {}
           exec(open("/tutorial/change_impact.py").read(), _ns)
@@ -577,19 +701,19 @@ steps:
 
           _after = _files(_ns.get("AFTER", []))
           assert _after, "AFTER is still empty."
-          assert _after == {"payments.py"}, "AFTER should list exactly the files that still use PayPal's calls."
+          assert _after == {"gateway_choice.py"}, "AFTER should list exactly the existing files a switch would edit."
         hints: &l1_after
           - title: "Ask the Think question again"
-            text: "Redo the Think question on the new code: if Boba Run switched to Stripe, which files would still be wrong as written?"
-          - title: "Only files that still know the secret"
-            text: "Only files that still contain a PayPal detail belong on the list. A file that calls `charge` does not need to know who carries it out."
-          - title: "More than one file left?"
-            text: "If more than one file is still on your list, a caller or a test still knows the secret. Find it and finish that part of the refactoring first."
+            text: "Redo the Think question on the new code: if Boba Run switched to Stripe, which existing files would still be wrong as written?"
+          - title: "A new class is not an edit"
+            text: "Stripe gets its own class that implements `PaymentGateway`, in a new file, and new files do not count. A file that calls `charge` does not need to know who carries it out. Would anything inside `PayPalGateway` have to change for Stripe to work?"
+          - title: "Something still has to choose"
+            text: "The shop must start using the new class instead of `PayPalGateway`. Which file makes that choice? If a service is still on your list, it still knows the secret: finish that part of the refactoring first."
     quiz:
       title: "Step 1 — Knowledge Check"
       min_score: 0.8
       questions:
-        - question: "After your refactoring, `Payments` has a secret. What is it?"
+        - question: "After your refactoring, `PayPalGateway` has a secret. What is it?"
           type: single
           difficulty: basic
           options:
@@ -599,18 +723,18 @@ steps:
             - "The total of each order, in cents"
           correct_index: 2
           option_feedback:
-            0: "`Payments` never sees a card number: PayPal's `vault` hands back a card id. A secret is a design decision that is likely to change, not a piece of data the shop handles."
-            1: "The private attribute is how `Payments` keeps its secret, not the secret itself. What it protects is the decision behind that object: that Boba Run pays through PayPal, using PayPal's calls."
-            3: "Callers pass the total to `charge(cents)` openly, so the amount is part of the interface. What callers no longer see is who carries out the charge and how."
-          explanation: "A module's secret is a design decision that is likely to change. Here it is the decision to pay through PayPal, together with PayPal's protocol: authenticate first, then pass the token to `capture`, `reverse`, or `vault`. Only `Payments` knows that now, so a switch to Stripe touches one file."
+            0: "`PayPalGateway` never sees a card number: PayPal's `vault` hands back a card id. A secret is a design decision that is likely to change, not a piece of data the shop handles."
+            1: "The private attribute is how `PayPalGateway` keeps its secret, not the secret itself. What it protects is the decision behind that object: that Boba Run pays through PayPal, using PayPal's calls."
+            3: "Callers pass the total to `charge(cents)` openly, so the amount is part of the `PaymentGateway` interface. What callers no longer see is who carries out the charge and how."
+          explanation: "A module's secret is a design decision that is likely to change. Here it is the decision to pay through PayPal, together with PayPal's protocol: authenticate first, then pass the token to `capture`, `reverse`, or `vault`. Only `PayPalGateway` knows that now, so the services can stay as they are when Boba Run switches providers."
         - question: |
-            Boba Run adds a `TipService`, written the old way. To give the PayPal decision one owner, which lines of `add_tip` belong in `Payments`?
+            Boba Run adds a `TipService`, written the old way. To give the PayPal decision one owner, which lines of `add_tip` belong in `PayPalGateway`?
 
             ```python
             class TipService:
-                def add_tip(self, payments, order, cents):
-                    token = payments.paypal.authenticate()
-                    result = payments.paypal.capture(token, cents)
+                def add_tip(self, gateway, order, cents):
+                    token = gateway.paypal.authenticate()
+                    result = gateway.paypal.capture(token, cents)
                     ok = result.was_successful()
                     if ok:
                         order.tip_cents = cents
@@ -626,23 +750,23 @@ steps:
           correct_index: 1
           option_feedback:
             0: "Then `TipService` still calls `authenticate` itself and calls `was_successful()` on the object PayPal returned. Both only make sense if you know PayPal, so a switch to Stripe would still touch this file."
-            2: "Recording the tip on the order is Boba Run's own business logic. It has nothing to do with PayPal, and moving it would make `Payments` know about orders and tips."
+            2: "Recording the tip on the order is Boba Run's own business logic. It has nothing to do with PayPal, and moving it would make `PayPalGateway` know about orders and tips."
             3: "A public attribute is exactly how the protocol leaked. `TipService` still makes PayPal's calls itself, so it would need an edit if Boba Run switched providers."
-          explanation: "Move every line that only makes sense if you know PayPal, through the line that produces a plain value: here, `ok` is just `True` or `False`. The `if` that records the tip stays in `TipService`. Since `Payments` already has `charge`, the three lines become one call to it."
-        - question: "Suppose the starting design had changed in only one way: `paypal` renamed to `__paypal`, with all of PayPal's calls still in the three services. Ignoring that the services would now break, how many files of ours would a switch to Stripe touch?"
+          explanation: "Move every line that only makes sense if you know PayPal, through the line that produces a plain value: here, `ok` is just `True` or `False`. The `if` that records the tip stays in `TipService`. Since `PaymentGateway` already offers `charge`, the three lines become one call to it."
+        - question: "After your refactoring, the services ask for a `PaymentGateway`, not a `PayPalGateway`. What does that buy when Boba Run switches to Stripe?"
           type: single
           difficulty: intermediate
           options:
-            - "One: only `payments.py`, since the client is private"
-            - "Three: only the services, since they make the calls"
-            - "Five: the four code files and `test_shop.py`"
-            - "Four: `payments.py` and the three services"
-          correct_index: 3
+            - "None of the three service files changes, since none of them names a provider"
+            - "`StripeGateway` can reuse the token handling it inherits from `PaymentGateway`"
+            - "Each service can pick Stripe or PayPal itself, with an `if` on the provider"
+            - "Nothing, since Python ignores annotations when the code runs"
+          correct_index: 0
           option_feedback:
-            0: "A private name changes who may reach the client, not who knows the protocol. Each service still contains `authenticate` and `capture`, `reverse`, or `vault`, and each of those lines would need an edit."
-            1: "`payments.py` creates the `PayPalClient`, so it changes too when Boba Run picks a new provider."
-            2: "`test_shop.py` checks what the services do and never mentions PayPal, so it stays as it is."
-          explanation: "Making the client private hides a name, not a decision. As long as the services make PayPal's calls themselves, the switch touches `payments.py` and all three services. The count drops to one only when the protocol moves into `Payments`."
+            1: "`PaymentGateway` lists operations but implements none of them. Tokens are part of PayPal's protocol, so they live in `PayPalGateway`; Stripe's class carries out its own protocol behind the same three operations."
+            2: "Then every service would know both providers, and a third one would touch all three again. The choice belongs in one place, `gateway_choice.py`, so that the services never learn it."
+            3: "Python does not check annotations at run time, but the source still names the class. A service that imports and annotates `PayPalGateway` would need an edit in a switch, while one that names only `PaymentGateway` stays as it is."
+          explanation: "The services name only the interface, so any class that implements `PaymentGateway` fits. Switching to Stripe means writing `StripeGateway(PaymentGateway)` and changing the one line in `gateway_choice.py` that picks the provider. No service, and no test, is edited."
         - question: "The four tests in `test_shop.py` stayed green through every extract, move, and rename. Why?"
           type: single
           difficulty: basic
@@ -650,12 +774,12 @@ steps:
             - "They check what the services do, not how they pay"
             - "The refactoring tools updated the tests along with the code"
             - "They only check that checkout finishes without an error"
-            - "They pass a stand-in payments module instead of the real one"
+            - "They pass a stand-in gateway instead of the real one"
           correct_index: 0
           option_feedback:
-            1: "The tools changed only the services and `payments.py`. `test_shop.py` was never edited, which is why its passing means something."
+            1: "The tools changed only the services and `paypal_gateway.py`. `test_shop.py` was never edited, which is why its passing means something."
             2: "The tests compare exact results, such as `order.status == \"paid\"` and a return value of `True` or `False`, so a broken refactoring would turn them red."
-            3: "They pass the real `Payments()`. The stand-ins from another provider belong to the tutorial's checks, not to `test_shop.py`."
+            3: "They get the real `PayPalGateway` from `current_gateway()`. The stand-ins from another provider belong to the tutorial's checks, not to `test_shop.py`."
           explanation: "The tests call the services and check their observable results: the return value, the order's status, and the saved card. None of that depends on where the PayPal calls live, so the tests act as a safety net while you move code around."
     solution:
       files:
@@ -663,13 +787,13 @@ steps:
           language: python
           content: |
             from order import Order
-            from payments import Payments
+            from payment_gateway import PaymentGateway
 
 
             class OrderService:
-                def checkout(self, payments: Payments, order: Order) -> bool:
+                def checkout(self, gateway: PaymentGateway, order: Order) -> bool:
                     cents = order.total_cents
-                    paid = payments.charge(cents)
+                    paid = gateway.charge(cents)
                     if paid:
                         order.status = "paid"
                     return paid
@@ -677,38 +801,39 @@ steps:
           language: python
           content: |
             from order import Order
-            from payments import Payments
+            from payment_gateway import PaymentGateway
 
 
             class RefundService:
-                def refund_order(self, payments: Payments, order: Order) -> bool:
+                def refund_order(self, gateway: PaymentGateway, order: Order) -> bool:
                     cents = order.total_cents
-                    refunded = payments.refund(cents)
+                    refunded = gateway.refund(cents)
                     if refunded:
                         order.status = "refunded"
                     return refunded
         - path: wallet_service.py
           language: python
           content: |
-            from payments import Payments
+            from payment_gateway import PaymentGateway
 
 
             class WalletService:
                 def __init__(self) -> None:
                     self.saved_cards: dict[str, str] = {}
 
-                def add_payment_method(self, payments: Payments, customer: str) -> str:
-                    card_id = payments.save_card(customer)
+                def add_payment_method(self, gateway: PaymentGateway, customer: str) -> str:
+                    card_id = gateway.save_card(customer)
                     self.saved_cards[customer] = card_id
                     return card_id
-        - path: payments.py
+        - path: paypal_gateway.py
           language: python
           content: |
+            from payment_gateway import PaymentGateway
             from paypal_sdk import PayPalClient
 
 
-            class Payments:
-                """Boba Run's payments module."""
+            class PayPalGateway(PaymentGateway):
+                """Boba Run's connection to PayPal."""
 
                 def __init__(self) -> None:
                     self.__paypal = PayPalClient("boba-run")
@@ -729,6 +854,16 @@ steps:
                     token = self.__paypal.authenticate()
                     card_id = self.__paypal.vault(token, customer)
                     return card_id
+        - path: gateway_choice.py
+          language: python
+          content: |
+            from payment_gateway import PaymentGateway
+            from paypal_gateway import PayPalGateway
+
+
+            def current_gateway() -> PaymentGateway:
+                """The payment provider Boba Run uses today."""
+                return PayPalGateway()
         - path: change_impact.py
           language: python
           content: |
@@ -736,18 +871,19 @@ steps:
 
             Change request: "PayPal is raising its fees. Switch Boba Run to Stripe."
 
-            List every file of ours that someone would have to edit to make that change.
+            List every existing file of ours that someone would have to edit to make that change.
+            - A brand-new file, such as stripe_gateway.py, does not count: it is written, not edited.
             - paypal_sdk.py is PayPal's code, not ours, so it never goes on a list.
             - Test files count: a test that must be rewritten is part of the cost.
             """
 
             # Your analysis of the starting design, for example ["order.py"].
-            BEFORE = ["payments.py", "order_service.py", "refund_service.py", "wallet_service.py"]
+            BEFORE = ["order_service.py", "refund_service.py", "wallet_service.py"]
 
             # Fill this in after your refactoring passes the tests.
-            AFTER = ["payments.py"]
+            AFTER = ["gateway_choice.py"]
       explanation: |
-        In each service, the lines from `token = …` through the line that produces a plain value moved to `Payments` as `charge`, `refund`, and `save_card`: through the `was_successful()` call in the order and refund services, and through the `vault` call in the wallet. Those are exactly the lines that only make sense if you know PayPal, and they end in a plain `True`/`False` or card id, so no PayPal object reaches a caller. The published `payments.py` is exactly what Extract, Move Method, and Rename Symbol produce; the forwarding methods that Move Method left in the services were deleted, though keeping them passes every check too. `test_shop.py` was not edited: its four behavior tests pass before and after, which is the evidence that the refactoring kept the shop's behavior.
+        In each service, the lines from `token = …` through the line that produces a plain value moved to `PayPalGateway` as `charge`, `refund`, and `save_card`: through the `was_successful()` call in the order and refund services, and through the `vault` call in the wallet. Those are exactly the lines that only make sense if you know PayPal, and they end in a plain `True`/`False` or card id, so no PayPal object reaches a caller. Extract, Move Method, and Rename Symbol produced the body of `paypal_gateway.py`; the rest were hand edits: `PayPalGateway` now names `PaymentGateway` as its base class, the services import and annotate `PaymentGateway` instead of `PayPalGateway`, and `current_gateway()` promises a `PaymentGateway`. The forwarding methods that Move Method left in the services were deleted, though keeping them passes every check if they too name only `PaymentGateway`. `test_shop.py` was not edited: its four behavior tests pass before and after, which is the evidence that the refactoring kept the shop's behavior. A switch to Stripe now edits only `gateway_choice.py`.
 
   # =========================================================================
   # STEP 2 — Private Is Not Hidden

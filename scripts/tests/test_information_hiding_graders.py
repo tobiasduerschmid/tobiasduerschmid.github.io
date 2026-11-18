@@ -118,13 +118,16 @@ def set_impact(files, before, after):
 
 
 # --------------------------------------------------------------------------- 1
-PAYMENT_FILES = ["payments.py", "order_service.py", "refund_service.py", "wallet_service.py"]
+SERVICE_FILES = ["order_service.py", "refund_service.py", "wallet_service.py"]
+# The services must be listed; the two gateway files are defensible either way.
+STARTER_IMPACT = ["paypal_gateway.py"] + SERVICE_FILES
 
-HAND_WRITTEN_PAYMENTS = '''from paypal_sdk import PayPalClient
+HAND_WRITTEN_GATEWAY = '''from paypal_sdk import PayPalClient
+from payment_gateway import PaymentGateway
 
 
-class Payments:
-    """Boba Run's payments module. The only code that knows we use PayPal."""
+class PayPalGateway(PaymentGateway):
+    """The only code that knows Boba Run pays with PayPal."""
 
     def __init__(self) -> None:
         self._client = PayPalClient("boba-run")
@@ -143,96 +146,126 @@ class Payments:
 '''
 
 HAND_WRITTEN_ORDER_SERVICE = '''from order import Order
-from payments import Payments
+from payment_gateway import PaymentGateway
 
 
 class OrderService:
-    def checkout(self, payments: Payments, order: Order) -> bool:
-        if not payments.charge(order.total_cents):
+    def checkout(self, gateway: PaymentGateway, order: Order) -> bool:
+        if not gateway.charge(order.total_cents):
             return False
         order.status = "paid"
         return True
 '''
 
 HAND_WRITTEN_REFUND_SERVICE = '''from order import Order
-from payments import Payments
+from payment_gateway import PaymentGateway
 
 
 class RefundService:
-    def refund_order(self, payments: Payments, order: Order) -> bool:
-        refunded = payments.refund(order.total_cents)
+    def refund_order(self, gateway: PaymentGateway, order: Order) -> bool:
+        refunded = gateway.refund(order.total_cents)
         if refunded:
             order.status = "refunded"
         return refunded
 '''
 
-HAND_WRITTEN_WALLET_SERVICE = '''from payments import Payments
+HAND_WRITTEN_WALLET_SERVICE = '''from payment_gateway import PaymentGateway
 
 
 class WalletService:
     def __init__(self) -> None:
         self.saved_cards: dict[str, str] = {}
 
-    def add_payment_method(self, payments: Payments, customer: str) -> str:
-        self.saved_cards[customer] = payments.save_card(customer)
+    def add_payment_method(self, gateway: PaymentGateway, customer: str) -> str:
+        self.saved_cards[customer] = gateway.save_card(customer)
         return self.saved_cards[customer]
 '''
+
+
+def without_base_class(files):
+    """PayPalGateway as the tools leave it: every operation, but no promise."""
+    files = patch(files, "paypal_gateway.py", "from payment_gateway import PaymentGateway\n", "")
+    return patch(files, "paypal_gateway.py", "class PayPalGateway(PaymentGateway):", "class PayPalGateway:")
 
 
 class PaymentsLesson(GraderCase):
     key = "payments"
 
     def test_starter_and_model_solution(self):
-        self.assert_outcomes("starter", starter(self.key), "FFFFFPFF")
-        self.assert_outcomes("model solution", solution(self.key), "PPPPPPPP")
+        self.assert_outcomes("starter", starter(self.key), "FFFFFPFFFF")
+        self.assert_outcomes("model solution", solution(self.key), "PPPPPPPPPP")
 
     def test_other_correct_submissions(self):
-        by_hand = starter(self.key)
+        by_hand = solution(self.key)
         by_hand.update({
-            "payments.py": HAND_WRITTEN_PAYMENTS,
+            "paypal_gateway.py": HAND_WRITTEN_GATEWAY,
             "order_service.py": HAND_WRITTEN_ORDER_SERVICE,
             "refund_service.py": HAND_WRITTEN_REFUND_SERVICE,
             "wallet_service.py": HAND_WRITTEN_WALLET_SERVICE,
         })
-        by_hand = set_impact(by_hand, list(reversed(PAYMENT_FILES)), ["payments.py"])
-        self.assert_outcomes("refactored by hand, different shape", by_hand, "PPPPPPPP")
+        by_hand = set_impact(by_hand, list(reversed(SERVICE_FILES)) + ["gateway_choice.py"],
+                             ["gateway_choice.py"])
+        self.assert_outcomes("refactored by hand, different shape", by_hand, "PPPPPPPPPP")
 
-        # Move Method leaves a forwarding method in the source class. Keeping it is fine.
+        # Move Method leaves a forwarding method in the source class. Keeping it
+        # is fine once it, too, names only the interface.
         kept = patch(solution(self.key), "order_service.py", "        return paid\n",
-                     "        return paid\n\n    def charge(self, payments: Payments, cents):\n"
-                     "        return payments.charge(cents)\n")
-        self.assert_outcomes("forwarding method left behind", kept, "PPPPPPPP")
+                     "        return paid\n\n    def charge(self, gateway: PaymentGateway, cents):\n"
+                     "        return gateway.charge(cents)\n")
+        self.assert_outcomes("forwarding method left behind", kept, "PPPPPPPPPP")
 
     def test_mistakes(self):
         # Extracting only the first two PayPal lines hands PayPal's result object back.
         partial = patch(solution(self.key), "order_service.py",
-                        "        paid = payments.charge(cents)\n",
-                        "        result = payments.charge(cents)\n        paid = result.was_successful()\n")
-        partial = patch(partial, "payments.py",
+                        "        paid = gateway.charge(cents)\n",
+                        "        result = gateway.charge(cents)\n        paid = result.was_successful()\n")
+        partial = patch(partial, "paypal_gateway.py",
                         "        paid = result.was_successful()\n        return paid\n",
                         "        return result\n")
-        self.assert_outcomes("moved too few lines", partial, "PPFPPPPP")
+        self.assert_outcomes("moved too few lines", partial, "PPFPPPPPPP")
 
         renamed = starter(self.key)
-        renamed = patch(renamed, "payments.py", "self.paypal", "self._paypal")
-        for name in ("order_service.py", "refund_service.py", "wallet_service.py"):
-            renamed = patch(renamed, name, "payments.paypal", "payments._paypal", count=2)
-        renamed = set_impact(renamed, PAYMENT_FILES, ["payments.py"])
-        self.assert_outcomes("only renamed the attribute", renamed, "PPFFFPPP")
+        renamed = patch(renamed, "paypal_gateway.py", "self.paypal", "self._paypal")
+        for name in SERVICE_FILES:
+            renamed = patch(renamed, name, "gateway.paypal", "gateway._paypal", count=2)
+        renamed = set_impact(renamed, STARTER_IMPACT, ["gateway_choice.py"])
+        self.assert_outcomes("only renamed the attribute", renamed, "PPFFFPPFFP")
 
         # Making the client private before the services stop using it breaks the shop.
-        too_early = patch(set_impact(starter(self.key), PAYMENT_FILES, []),
-                          "payments.py", "self.paypal", "self.__paypal")
-        self.assert_outcomes("renamed before moving", too_early, "PPFFFFPF")
+        too_early = patch(set_impact(starter(self.key), STARTER_IMPACT, []),
+                          "paypal_gateway.py", "self.paypal", "self.__paypal")
+        self.assert_outcomes("renamed before moving", too_early, "PPFFFFPFFF")
+
+        # Promising the interface before the operations exist: Python refuses to
+        # create PayPalGateway. Every check must still fail by assertion.
+        promised_early = patch(starter(self.key), "paypal_gateway.py", "class PayPalGateway:",
+                               "class PayPalGateway(PaymentGateway):")
+        promised_early = patch(promised_early, "paypal_gateway.py", "from paypal_sdk",
+                               "from payment_gateway import PaymentGateway\nfrom paypal_sdk")
+        self.assert_outcomes("base class added before the moves", promised_early, "FFFFFFFFFF")
+
+        self.assert_outcomes("forgot the base class", without_base_class(solution(self.key)),
+                             "PPPPPPPFPP")
+
+        on_paypal = solution(self.key)
+        for name in SERVICE_FILES:
+            on_paypal = patch(on_paypal, name, "from payment_gateway import PaymentGateway",
+                              "from paypal_gateway import PayPalGateway")
+            on_paypal = patch(on_paypal, name, "gateway: PaymentGateway", "gateway: PayPalGateway")
+        self.assert_outcomes("services still annotate PayPalGateway", on_paypal, "PPPPPPPPFP")
 
         self.assert_outcomes(
             "analysis lists the test file",
-            set_impact(solution(self.key), PAYMENT_FILES + ["test_shop.py"], ["payments.py"]),
-            "PFPPPPPP")
+            set_impact(solution(self.key), SERVICE_FILES + ["test_shop.py"], ["gateway_choice.py"]),
+            "PFPPPPPPPP")
         self.assert_outcomes(
-            "analysis forgets payments.py",
-            set_impact(solution(self.key), PAYMENT_FILES[1:], ["payments.py"]),
-            "FPPPPPPP")
+            "analysis forgets a service",
+            set_impact(solution(self.key), SERVICE_FILES[:2], ["gateway_choice.py"]),
+            "FPPPPPPPPP")
+        self.assert_outcomes(
+            "analysis after still lists the PayPal gateway",
+            set_impact(solution(self.key), SERVICE_FILES, ["paypal_gateway.py", "gateway_choice.py"]),
+            "PPPPPPPPPF")
 
 
 # --------------------------------------------------------------------------- 2

@@ -22,7 +22,7 @@ Students **understand**, **apply**, and **evaluate** information hiding:
 4. Apply earlier testing skills: behavior tests as safety net, rewrite a test that depends on a hidden detail, stub and spy tests at the new interface.
 5. Evaluate a design with a change impact analysis before and after, and decide which likely change deserves a redesign.
 
-**Non-goals:** `typing.Protocol`, abstract base classes, dependency-injection frameworks, module guides, deep/shallow and coupling/cohesion beyond one sentence and quiz items, design docs.
+**Non-goals:** `typing.Protocol`, writing abstract base classes (lesson 1 hands students a finished `PaymentGateway` ABC, which they know from the UML class diagram tutorial), dependency-injection frameworks, module guides, deep/shallow and coupling/cohesion beyond one sentence and quiz items, design docs.
 
 **Anti-goals:** a reading-heavy tutorial; steps where typing dominates thinking; graders that accept only the tool-produced code; tasks that tell students which lines leak.
 
@@ -43,11 +43,13 @@ The term is **change impact analysis** everywhere. Do not write "change test".
 
 ## Lessons
 
-Exact starter code, model solutions, grader commands, and instruction text are in `docs/superpowers/specs/2026-11-17-information-hiding-tutorial-kit/skeleton.yml`. That file is authoritative; this table is the map.
+Exact starter code, model solutions, grader commands, and instruction text are in `docs/superpowers/specs/2026-11-17-information-hiding-tutorial-kit/skeleton.yml`. That file is authoritative for lessons 2–5; lesson 1 was later reworked to the lecture's gateway design, and its authoritative version is the tutorial YAML itself (prototype: `.superpowers/sdd/2026-11-17-information-hiding-tutorial/lesson1-gateway/`). This table is the map.
+
+Lesson 1 follows the lecture's design: the services depend on an interface `PaymentGateway` (given in `payment_gateway.py`, an ABC with `charge`, `refund`, `save_card`), `PayPalGateway` in `paypal_gateway.py` implements it and is the only class that knows PayPal, and `current_gateway()` in `gateway_choice.py` is the one place that picks the provider (the lecture's `getPaymentGateway()`). The tools move the protocol into `PayPalGateway`; the hand edits are the design decision: the base class, the services' imports and annotations, and the return type of `current_gateway()`. Adding the base class before all three operations exist makes `PayPalGateway()` fail to instantiate, and the instructions and hints use that error as feedback. Change impact analysis for "Switch to Stripe": `BEFORE` must list the three services and may list `paypal_gateway.py` and `gateway_choice.py`; `AFTER` is exactly `gateway_choice.py`, since Stripe gets a new class in a new file.
 
 | # | key | Title | Secret (kind) | Leak | Tool path | Testing skill | Lecture slides |
 |---|---|---|---|---|---|---|---|
-| 1 | `payments` | A Decision Three Classes Know | payment provider (technology) | three services run PayPal's protocol through `payments.paypal` | Extract + Move ×3 (first guided), Rename `paypal` → `__paypal` | safety net: green before and after | 8–13, 21, 22, 24 |
+| 1 | `payments` | A Decision Three Classes Know | payment provider (technology) | three services run PayPal's protocol through `gateway.paypal` and depend on `PayPalGateway`, not on the `PaymentGateway` interface | Extract + Move ×3 into `PayPalGateway` (first guided), Rename `paypal` → `__paypal`; by hand: `PayPalGateway(PaymentGateway)`, services and `current_gateway()` name only `PaymentGateway` | safety net: green before and after | 8–13, 21, 22, 24 |
 | 2 | `menu` | Private Is Not Hidden | supplier file layout (data format) | private `__lines`, public `rows()` returns raw rows; kiosk and a test split them | Extract + Move ×2, Rename `rows` → `__rows` from the `def` line | rewrite the test that knew the layout (behavior, not implementation) | 14, 15, 23; L9 slide 15 |
 | 3 | `wait-times` | The Algorithm Is a Secret Too | wait estimate (algorithm) | two callers compute it from `WaitTimes`' attributes | Extract + Move once; second caller calls the new operation by hand | hand-rolled stub; both sides of a boundary | 16, 17 |
 | 4 | `rewards` | The Secret Nobody Imported | points rule (copied rule) | `Receipt` recomputes it; no import, no arrow | none (one-line change) | TDD red→green; stub value the copy cannot produce | 26, 27 |
@@ -67,8 +69,8 @@ Verified against `js/tutorial-refactorings.js`:
 
 ### UML
 
-- Live class diagram pane is on (`uml_diagram: true`, layout copied from `code-smells-refactoring.yml`). It shows the "before" in lessons 2–5, shows `Payments` gaining operations in lesson 1, and gains a `Receipt ..> Rewards` arrow in lesson 4.
-- Four authored diagrams (in the skeleton's instruction text): lesson 1 today and target (the live pane cannot show that services reach `PayPalClient`), lesson 2 target, lesson 3 target. All four parse with `js/uml-describe-cli.js`.
+- Live class diagram pane is on (`uml_diagram: true`, layout copied from `code-smells-refactoring.yml`). It shows the "before" in lessons 2–5, shows `PayPalGateway` gaining operations and implementing `PaymentGateway` in lesson 1, and gains a `Receipt ..> Rewards` arrow in lesson 4.
+- Four authored diagrams (in the skeleton's instruction text): lesson 1 today and target (the live pane cannot show that services reach `PayPalClient`; the target shows the services depending on the `PaymentGateway` interface, which `PayPalGateway` realizes), lesson 2 target, lesson 3 target. All four parse with `js/uml-describe-cli.js`.
 
 ### Tool reference footer
 
@@ -95,14 +97,16 @@ Each check gets three hints, least revealing first, titled by content. Share lad
 | "keeps its client to itself" / "no longer hands out rows" | Which public name still gives a caller the client or the raw rows? | Rename it so it starts with two underscores. | Start the rename on the line where the name is defined, not where it is used. |
 | "Your tests pass / still pass when … changes" | Run Test and read the failure. | A test that fails after a correct refactoring was checking how, not what. What did it want to guarantee? | Lessons 3–5: give the caller a stand-in with the one method it calls; choose the return value yourself. |
 | "Your tests catch …" | Which input would make the correct code and the changed code disagree? | Boundary: test the last value on each side. Spy: check the recorded calls, all of them. | Assert the whole result (`==`), not that something is present. |
-| After lists | Redo the Think question on the new code. | Only files that still contain the secret belong. | If more than one file is left, a caller still knows it. |
+| "implements the interface" (lesson 1) | Does the `class` line say that `PayPalGateway` implements `PaymentGateway`? | Python refuses to create it until it has every operation the interface lists. | Read the "Can't instantiate abstract class" message: it names the missing operation. Not moved yet, or moved under another name? |
+| "depend only on the interface" (lesson 1) | Annotations name what a parameter may be. Which name lets any provider in? | Imports and annotations are knowledge too, including a leftover forwarding method. | `gateway_choice.py` is the only place allowed to name `PayPalGateway`. |
+| After lists | Redo the Think question on the new code. | Only files that still contain the secret belong; a brand-new file (lesson 1: Stripe's gateway) is not an edit. | If more than one file is left, a caller still knows it. Lesson 1: something still has to choose the provider. |
 | `FIX_FIRST` (lesson 5) | Two things matter for each change. | How likely is it, and how many files does it touch today? | Pick the change that is high on both. |
 
 ### Knowledge checks
 
 Each quiz is titled `Step N — Knowledge Check`, `min_score: 0.8`, 4 questions (5 in lesson 5), `single` type unless noted, at least 4 options, feedback on every tempting wrong option. Stems ≤ 45 words, snippets ≤ 8 lines. Follow the quiz-format skill; never say "misconception"; never tell the student to run a snippet.
 
-**Lesson 1.** (a) Understand: what was the secret → the decision to use PayPal and its protocol; distractors: the card data, the `paypal` attribute's value, the order total. (b) Apply: a `TipService` snippet with `authenticate`, `capture`, `was_successful`, then business logic; which lines to extract and move → all three vendor lines; distractors: only the `capture` line (hands back PayPal's result object), the whole method, none. (c) Evaluate: skip the refactoring and only rename `paypal` to `__paypal`; files touched by a switch to Stripe → still four. (d) Testing: why the four tests stayed green → they check behavior through the services.
+**Lesson 1.** (a) Understand: what was the secret → the decision to use PayPal and its protocol; distractors: the card data, the `paypal` attribute's value, the order total. (b) Apply: a `TipService` snippet with `authenticate`, `capture`, `was_successful`, then business logic; which lines to extract and move → all three vendor lines; distractors: only the `capture` line (hands back PayPal's result object), the whole method, none. (c) Evaluate: what depending on `PaymentGateway` instead of `PayPalGateway` buys in a switch to Stripe → no service file changes; distractors: Stripe inherits PayPal's token handling from the interface, each service picks the provider with an `if`, nothing because Python ignores annotations at run time. (d) Testing: why the four tests stayed green → they check behavior through the services.
 
 **Lesson 2.** (a) Understand: what leaked the layout → the public `rows()` returning raw rows, not the attribute. (b) Analyze: `Roster` with private `__players` and public `export()` returning `name;number;position` lines that callers split → the return value puts the format in the interface. (c) Evaluate/testing (lecture L9 slide 15): `assert c._items == ["pen"]` vs `assert c.count("pen") == 1` after list→dict → the second survives; a good test passes for any correct implementation. (d) Visible contract or hidden detail: which is something `Menu` must promise → "a drink has a price in cents"; hidden: column order, comma separator, prices stored as text.
 
@@ -114,7 +118,7 @@ Each quiz is titled `Step N — Knowledge Check`, `min_score: 0.8`, 4 questions 
 
 ### Solution explanations
 
-Two to four sentences per lesson for instructor mode: which lines moved and why those; what the leftover forwarding methods are; what the rewritten or added test proves. Lesson 1 adds: the published `payments.py` is exactly what the tools produce.
+Two to four sentences per lesson for instructor mode: which lines moved and why those; what the leftover forwarding methods are; what the rewritten or added test proves. Lesson 1 adds: the body of the published `paypal_gateway.py` is exactly what the tools produce; the base class, the services' imports and annotations, and `current_gateway()`'s return type are hand edits.
 
 ## Replacement mechanics
 
@@ -129,14 +133,14 @@ Reviewed with `pedagogical-advisor` (quality gates, cognitive load), `cs-tutoria
 
 | Lesson | Understand | Apply | Evaluate | Minutes |
 |---|---|---|---|---|
-| 1 | secret = decision; who knows it | tools, guided then repeated | impact 4 files → 1 | 14 |
+| 1 | secret = decision; who knows it; depend on the interface | tools, guided then repeated; hand edits to the interface | impact 3–5 files → 1 line of wiring | 16 |
 | 2 | private ≠ hidden; interface = promises | tools, student picks lines | impact includes a test | 13 |
 | 3 | callers must not run the algorithm | tools + reuse | impact 4 → 1 | 13 |
 | 4 | semantic vs. syntactic dependency | test first, one-line fix | the arrow trap | 10 |
 | 5 | (explained in quiz) | tools, unguided | roadmap, fix-first, defer C | 16 |
 
-- **Time:** about 66 minutes of tasks plus about 10 of quizzes.
-- **Reading:** 385 / 334 / 316 / 314 / 302 words, 1,651 total, against 5,416 in the tutorial it replaces. Budgets are enforced by a test.
+- **Time:** about 68 minutes of tasks plus about 10 of quizzes.
+- **Reading:** 419 / 334 / 316 / 314 / 302 words, 1,685 total, against 5,416 in the tutorial it replaces. Budgets are enforced by a test.
 - **Scaffolding:** worked example → completion → faded → independent → transfer. Tool mechanics are pretrained on the lecture's own example, where the concept is already familiar. One two-move pattern (Extract, then Move) carries lessons 1, 2, 3, and 5.
 - **Good use of time:** every graded action is a design judgment (which files, which lines, which test) or a 30-second tool action. Nothing is typed that a tool can write. Each testing task also teaches something about hiding: tests are callers, and a new interface is where doubles go.
 - **Misconceptions with a prediction that exposes them:** private = hidden (lesson 2 `BEFORE`); no arrow = no dependency (lesson 4 `BEFORE`); fix the biggest change first (lesson 5 `FIX_FIRST`); a passing test proves the design (lesson 4 stub).
