@@ -29,9 +29,21 @@ const steps = config.steps;
 
 // Authored values from the task brief. They duplicate the YAML on purpose: a
 // lesson that silently loses a check or a quiz question must fail here.
-const EXPECTED_TEST_COUNTS = [8, 10, 11, 8, 12];
+const EXPECTED_TEST_COUNTS = [10, 10, 11, 8, 12];
 const EXPECTED_QUIZ_SIZES = [4, 4, 4, 4, 5];
-const EXPECTED_AUTHORED_DIAGRAMS = [2, 1, 1];
+// Class names in each lesson's authored diagrams, one list per diagram in
+// page order: lesson 1 has two diagrams, lessons 2 and 3 one each.
+const LESSON_1_SERVICES = ['OrderService', 'RefundService', 'WalletService'];
+const AUTHORED_DIAGRAM_CLASSES = [
+  [
+    [...LESSON_1_SERVICES, 'PayPalGateway', 'PayPalClient'],
+    [...LESSON_1_SERVICES, 'PaymentGateway', 'PayPalGateway', 'PayPalClient'],
+  ],
+  [['Kiosk', 'Menu']],
+  [['PickupScreen', 'TextMessage', 'WaitTimes']],
+];
+// A diagram label may be a little smaller than paragraph text, not much.
+const READABLE_LABEL_RATIO = 0.85;
 
 function testMyWork(page) {
   return page.getByRole('button', { name: /test my work/i });
@@ -61,6 +73,24 @@ async function expectAuthoredDiagrams(page, count) {
   }
 }
 
+// On-screen size of one SVG label, and of the paragraph text around the
+// diagram. The SVG's font size is in viewBox units, so it is multiplied by the
+// scale the pane renders the drawing at.
+async function renderedLabelSize(diagram, labelText) {
+  return diagram.evaluate((el, wanted) => {
+    const paragraph = el.closest('.tvm-step-content').querySelector('p');
+    const svg = el.querySelector('svg');
+    const label = [...svg.querySelectorAll('text')]
+      .find((text) => text.textContent.trim() === wanted);
+    if (!label) throw new Error(`no label "${wanted}" in the diagram`);
+    const scale = svg.getBoundingClientRect().width / svg.viewBox.baseVal.width;
+    return {
+      paragraph: parseFloat(getComputedStyle(paragraph).fontSize),
+      label: parseFloat(getComputedStyle(label).fontSize) * scale,
+    };
+  }, labelText);
+}
+
 // One serial journey on one page: Pyodide and pytest boot once, and each
 // lesson is only reachable by passing the one before it.
 test.describe.serial('Information Hiding tutorial journey', () => {
@@ -87,16 +117,10 @@ test.describe.serial('Information Hiding tutorial journey', () => {
   });
 
   test('the live class diagram shows the lesson\'s classes', async () => {
-    // Known product defect (reported, owned by a later task): on a fresh visit
-    // loadStep() sets _suppressAutoSave = true, then calls
-    // _refreshUMLDiagram(), which returns early while that flag is set. The
-    // flag is cleared only after the step's ready promise settles, and nothing
-    // schedules another refresh, so the pane stays empty until a watched file
-    // changes or the learner presses Refresh. Must run before applySolution(),
-    // which edits watched files and therefore refreshes the diagram.
-    test.fail();
+    // Must run before applySolution(), which edits watched files and would
+    // refresh the diagram on its own: this checks the first-visit render.
     const viewer = page.getByRole('region', { name: 'Interactive UML diagram viewer' });
-    await expect(viewer).toContainText('Payments', { timeout: UML_ANALYSIS_TIMEOUT });
+    await expect(viewer).toContainText('PayPalGateway', { timeout: UML_ANALYSIS_TIMEOUT });
     await expect(viewer).toContainText('OrderService');
   });
 
@@ -114,34 +138,24 @@ test.describe.serial('Information Hiding tutorial journey', () => {
     const lesson = i + 1;
     const isLast = i === steps.length - 1;
 
-    if (i < EXPECTED_AUTHORED_DIAGRAMS.length) {
+    if (i < AUTHORED_DIAGRAM_CLASSES.length) {
       test(`lesson ${lesson} shows its authored diagrams`, async () => {
-        await expectAuthoredDiagrams(page, EXPECTED_AUTHORED_DIAGRAMS[i]);
+        await expectAuthoredDiagrams(page, AUTHORED_DIAGRAM_CLASSES[i].length);
       });
-    }
 
-    if (i === 0) {
-      test('the authored diagrams render class names at a readable size', async () => {
-        // Known product defect (reported, owned by a later task): the
-        // reference-design diagrams are fitted to the ~420 px instructions
-        // pane. At 1440×900 lesson 1's 1100+ px wide SVGs scale to about
-        // 0.38, so 16 px class names render at about 6 px.
-        test.fail();
+      test(`lesson ${lesson} diagrams render class names at a readable size`, async () => {
+        // The instructions pane fits a wide diagram to its width, which can
+        // shrink the labels far below the surrounding text.
         const diagrams = authoredDiagrams(page);
-        for (let d = 0; d < EXPECTED_AUTHORED_DIAGRAMS[0]; d++) {
-          const sizes = await diagrams.nth(d).evaluate((el) => {
-            const paragraph = el.closest('.tvm-step-content').querySelector('p');
-            const svg = el.querySelector('svg');
-            const label = [...svg.querySelectorAll('text')]
-              .find((text) => text.textContent.trim() === 'Payments');
-            const scale = svg.getBoundingClientRect().width / svg.viewBox.baseVal.width;
-            return {
-              paragraph: parseFloat(getComputedStyle(paragraph).fontSize),
-              label: parseFloat(getComputedStyle(label).fontSize) * scale,
-            };
-          });
-          expect(sizes.label, `diagram ${d + 1} class-name size vs paragraph text`)
-            .toBeGreaterThanOrEqual(0.85 * sizes.paragraph);
+        for (let d = 0; d < AUTHORED_DIAGRAM_CLASSES[i].length; d++) {
+          for (const className of AUTHORED_DIAGRAM_CLASSES[i][d]) {
+            // Polled: the pane fits the drawing after it renders.
+            await expect.poll(async () => {
+              const sizes = await renderedLabelSize(diagrams.nth(d), className);
+              return sizes.label / sizes.paragraph;
+            }, { message: `diagram ${d + 1}: "${className}" size relative to paragraph text` })
+              .toBeGreaterThanOrEqual(READABLE_LABEL_RATIO);
+          }
         }
       });
     }
