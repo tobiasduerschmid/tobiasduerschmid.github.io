@@ -115,67 +115,45 @@ steps:
       This is the payment example from lecture, in a boba shop: three services each run PayPal's protocol themselves, through the `paypal` client of `PayPalGateway`. The interface `PaymentGateway` lists what the shop needs from any provider, but nothing uses it yet.
 
       <div class="uml-class-diagram-container" data-uml-type="class" data-uml-role="reference-design" data-uml-caption="Today: count the arrows that reach PayPalClient. Every service has one." data-uml-spec='@startuml
-      layout horizontal
-      class OrderService {
-        + checkout(gateway, order): bool
-      }
-      class RefundService {
-        + refund_order(gateway, order): bool
-      }
-      class WalletService {
-        + add_payment_method(gateway, customer): str
-      }
-      class PayPalGateway {
+      layout compact
+      class OrderService @pos(0, 0)
+      class RefundService @pos(144, 0)
+      class WalletService @pos(300, 0)
+      class PayPalGateway @pos(60, 110) {
         + paypal: PayPalClient
       }
-      class PayPalClient <<PayPal SDK>> {
-        + authenticate(): str
-        + capture(token, cents): PayPalCharge
-        + reverse(token, cents): PayPalCharge
-        + vault(token, customer): str
-      }
+      class PayPalClient <<PayPal SDK>> @pos(136, 230)
+      PayPalGateway --> PayPalClient
+      OrderService ..> PayPalClient
+      RefundService ..> PayPalClient
+      WalletService ..> PayPalClient
       OrderService ..> PayPalGateway
       RefundService ..> PayPalGateway
       WalletService ..> PayPalGateway
-      OrderService ..> PayPalClient : runs the protocol
-      RefundService ..> PayPalClient : runs the protocol
-      WalletService ..> PayPalClient : runs the protocol
-      PayPalGateway --> PayPalClient
       @enduml'></div>
 
       <div class="uml-class-diagram-container" data-uml-type="class" data-uml-role="reference-design" data-uml-caption="Target: the services know only the PaymentGateway interface, and only PayPalGateway reaches PayPalClient. Give your extracted methods the names shown on PaymentGateway." data-uml-spec='@startuml
-      layout horizontal
-      class OrderService {
-        + checkout(gateway, order): bool
-      }
-      class RefundService {
-        + refund_order(gateway, order): bool
-      }
-      class WalletService {
-        + add_payment_method(gateway, customer): str
-      }
-      interface PaymentGateway {
+      layout compact
+      class OrderService @pos(0, 0)
+      class RefundService @pos(144, 0)
+      class WalletService @pos(300, 0)
+      interface PaymentGateway @pos(100, 70) {
         + charge(cents): bool
         + refund(cents): bool
         + save_card(customer): str
       }
-      class PayPalGateway {
+      class PayPalGateway @pos(110, 220) {
         - __paypal: PayPalClient
         + charge(cents): bool
         + refund(cents): bool
         + save_card(customer): str
       }
-      class PayPalClient <<PayPal SDK>> {
-        + authenticate(): str
-        + capture(token, cents): PayPalCharge
-        + reverse(token, cents): PayPalCharge
-        + vault(token, customer): str
-      }
-      OrderService ..> PaymentGateway : charge
-      RefundService ..> PaymentGateway : refund
-      WalletService ..> PaymentGateway : save_card
+      class PayPalClient <<PayPal SDK>> @pos(136, 395)
       PayPalGateway ..|> PaymentGateway
       PayPalGateway --> PayPalClient
+      OrderService ..> PaymentGateway
+      RefundService ..> PaymentGateway
+      WalletService ..> PaymentGateway
       @enduml'></div>
 
       ### Your tasks
@@ -915,7 +893,7 @@ steps:
       5. **Reason.** Fill in `AFTER`.
 
       <div class="uml-class-diagram-container" data-uml-type="class" data-uml-role="reference-design" data-uml-caption="Target: Menu promises names, prices, and sizes. The layout of a row is no longer part of any promise." data-uml-spec='@startuml
-      layout horizontal
+      layout vertical
       class Kiosk {
         + total_cents(menu, drinks): int
         + offers_size(menu, drink, size): bool
@@ -1508,18 +1486,14 @@ steps:
       5. **Reason.** Fill in `AFTER`.
 
       <div class="uml-class-diagram-container" data-uml-type="class" data-uml-role="reference-design" data-uml-caption="Target: both callers ask WaitTimes for the result. Neither knows how it is calculated." data-uml-spec='@startuml
-      layout horizontal
-      class PickupScreen {
-        + message(wait_times, order_id): str
-      }
-      class TextMessage {
-        + body(wait_times, order_id): str
-      }
+      layout vertical
+      class PickupScreen
+      class TextMessage
       class WaitTimes {
         + minutes_until_ready(order_id): int
       }
-      PickupScreen ..> WaitTimes : minutes_until_ready
-      TextMessage ..> WaitTimes : minutes_until_ready
+      PickupScreen ..> WaitTimes
+      TextMessage ..> WaitTimes
       @enduml'></div>
 
       <details markdown="1">
