@@ -926,6 +926,7 @@
     this._umlRefreshTimer = null;
     this._umlActiveType = options.uml_default_type === 'sequence' ? 'sequence' : 'class'; // 'class' or 'sequence'
     this._umlWatchedFiles = [];         // Set per-step from YAML uml_files
+    this._umlRefreshPending = false;    // A refresh was requested while files were loading
     this._umlLanguage = 'python';      // Auto-detected from watched source-file extensions.
     this._umlClassLayoutPreference = options.uml_class_layout || 'portrait';
     this._umlClassLayoutDefault = this._umlClassLayoutPreference; // global fallback for per-step overrides
@@ -9696,9 +9697,14 @@
    */
   TutorialCode.prototype._refreshUMLDiagram = function () {
     if (!this._umlDiagramEnabled) return;
-    // Skip while files are being loaded/restored — _applySavedFiles resets this flag
-    // and calls _scheduleUMLRefresh(true) itself once all files are in place.
-    if (this._suppressAutoSave) return;
+    // Defer while files are being loaded/restored. A step load replays the
+    // deferred refresh once the step is ready (_flushPendingUMLRefresh), and
+    // _applySavedFiles refreshes after restoring saved files.
+    if (this._suppressAutoSave) {
+      this._umlRefreshPending = true;
+      return;
+    }
+    this._umlRefreshPending = false;
     var self = this;
     var lang = this._detectUMLLanguage();
 
@@ -10046,6 +10052,17 @@
       try { this._umlFullscreenPrevFocus.focus(); } catch (e) { /* ignore */ }
     }
     this._umlFullscreenPrevFocus = null;
+  };
+
+  /** Run a UML refresh that was requested while files were still loading. */
+  TutorialCode.prototype._flushPendingUMLRefresh = function () {
+    if (!this._umlRefreshPending || this._suppressAutoSave) return;
+    if (this._umlViewActive) {
+      this._refreshUMLDiagram();
+    } else {
+      // Opening the diagram view refreshes it, so nothing is lost.
+      this._umlRefreshPending = false;
+    }
   };
 
   /**
@@ -12438,6 +12455,7 @@
       self._stepsVisited.add(index);
       self._updateStepHash(index);
       self._suppressAutoSave = autoSaveSuppressedBeforeStepLoad;
+      self._flushPendingUMLRefresh();
       if (self.autoSaveEnabled && !self._suppressAutoSave) self._autoSaveProgress();
       self._startTimedPractice(index);
       if (self.llmAddon) self.llmAddon.setStep();
