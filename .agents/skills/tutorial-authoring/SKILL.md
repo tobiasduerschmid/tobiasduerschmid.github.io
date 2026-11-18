@@ -2700,6 +2700,14 @@ channel.
   render the runtime's visible error state and reject this promise; layout
   entry points that intentionally start in place must catch that rejection
   after letting the runtime own its user-facing error message.
+  The live UML pane (`uml_diagram: true`) cannot analyze while
+  `_suppressAutoSave` is set, which `loadStep()` holds until the step is
+  ready. A `_refreshUMLDiagram()` call in that window records
+  `_umlRefreshPending`; the step-ready callback runs it through
+  `_flushPendingUMLRefresh()` once suppression is lifted, and a saved-work
+  restore refreshes from `_applySavedFiles` instead. The first visit, every
+  step change, and a reload must show the diagram without Refresh; this is
+  pinned by `tests/tutorial-uml-initial-render.spec.js`.
   Run is likewise one atomic transaction acquired before backend initialization or
   file sync; the inline `test_file` action, Run button, popout, and
   Ctrl/Cmd+Enter requests share that guard and both execution buttons remain
