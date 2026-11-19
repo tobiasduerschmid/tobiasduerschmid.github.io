@@ -775,7 +775,6 @@ html.dark-mode .tvm-eq-search .is-matched code { border-color: #8ee0b0; backgrou
   text-transform: uppercase;
   letter-spacing: 0.6px;
   line-height: 1.5;
-  transition: background-color 120ms;
 }
 .tvm-dbg-section-head:hover { background: rgba(255, 209, 0, 0.30); }
 /* WCAG 1.4.3: #7a5800 on #f1f1f1 = ~4.26:1, fails the 4.5:1 minimum. Darken
@@ -827,7 +826,6 @@ html.dark-mode .tvm-eq-search .is-matched code { border-color: #8ee0b0; backgrou
   color: #2c3e50;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  transition: background-color 120ms;
 }
 .tvm-debug-subsection-head:hover { background: rgba(255, 209, 0, 0.22); }
 .tvm-debug-subsection-chevron {
@@ -1717,7 +1715,7 @@ html.dark-mode .tvm-debug-return {
 html.dark-mode .tvm-debug-var-row:hover { background: rgba(255, 209, 0, 0.14); }
 html.dark-mode .tvm-debug-expander { color: #FFE066; }
 html.dark-mode .tvm-debug-var-name { color: #f1f5f9; }
-html.dark-mode .tvm-debug-var-type { color: #94a3b8; }
+html.dark-mode .tvm-debug-var-type { color: #b5c4d8; }
 html.dark-mode .tvm-debug-var-value { color: #fbbf24; }
 html.dark-mode .tvm-debug-var-editable:hover {
   border-bottom-color: rgba(255, 224, 102, 0.8);

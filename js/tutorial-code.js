@@ -549,7 +549,7 @@
     v86: true,
   };
 
-  var WORKER_BACKENDS = { pyodide: true, cpp: true, java: true, prolog: true, sql: true, haskell: true };
+  var WORKER_BACKENDS = { pyodide: true, cpp: true, prolog: true, sql: true, haskell: true };
 
   function normalizeBackendName(name) {
     return String(name || 'v86').trim().toLowerCase();
@@ -631,7 +631,6 @@
       workerPath: options.workerPath || '/js/pyodide-worker.js',
       sqlWorkerPath: options.sqlWorkerPath || '/js/sql-worker.js',
       prologWorkerPath: options.prologWorkerPath || '/js/prolog-worker.js',
-      javaWorkerPath: options.javaWorkerPath || '/js/java-worker.js',
       cppWorkerPath: options.cppWorkerPath || '/js/cpp-worker.js',
       haskellFramePath: options.haskellFramePath || '/haskell-runtime-frame.html',
       // Derived flags
@@ -979,7 +978,7 @@
     // constructed.
     this.debuggerEnabled = !!options.debugger && (
       backend === 'pyodide' || backend === 'webcontainer' || backend === 'browser' ||
-      backend === 'prolog' || backend === 'haskell'
+      backend === 'prolog' || backend === 'haskell' || backend === 'java'
     );
     this.debuggerOptions = options.debuggerOptions || {};
   }
@@ -1527,6 +1526,7 @@
     this._cancelPlaywrightRun();
     clearTimeout(this._umlRefreshTimer);
     if (this._umlClient) this._umlClient.dispose();
+    if (this._javaSession) this._javaSession.destroy();
     if (this._compilerAdapter) this._compilerAdapter.destroy();
     if (this._tlaController) this._tlaController.destroy();
     if (this._aadlController) this._aadlController.destroy();
@@ -5086,7 +5086,7 @@
     });
   };
 
-  // SQL, Prolog, and Java share the ready/setup/message worker protocol.
+  // SQL and Prolog share the ready/setup/message worker protocol.
   // Keep ownership and deadline handling together so obsolete events cannot
   // settle a newer boot transaction or send its setup to the wrong worker.
   TutorialCode.prototype._initRuntimeWorker = function (options) {
@@ -5176,11 +5176,14 @@
     });
   };
 
-  // ---- Java backend (Java-to-JS transpiler via Web Worker) ------------------
-  TutorialCode.prototype._initJava = function () {
-    return this._initRuntimeWorker({
-      backend: 'java', label: 'Java', workerPath: this.config.javaWorkerPath,
-    });
+  // The editor is ready before the browser JVM starts. The first settled
+  // lesson snapshot warms compiler analysis in the background.
+  TutorialCode.prototype._initJava = async function () {
+    const { JavaTutorialSession } = await import('./java/tutorial.mjs');
+    if (this._destroyed) return;
+    this._javaSession = new JavaTutorialSession(this);
+    this._javaWorkspace = this._javaSession.workspace;
+    this.booted = true;
   };
 
   // ---- C++ backend (Clang/WASI in a disposable module worker) ---------------
@@ -5364,7 +5367,7 @@
 
   TutorialCode.prototype._isRestartableWorkerBackend = function (backend) {
     return backend === 'pyodide' || backend === 'cpp' || backend === 'sql' ||
-      backend === 'prolog' || backend === 'java';
+      backend === 'prolog';
   };
 
   TutorialCode.prototype._setWorkerExecutionControls = function (state) {
@@ -5843,7 +5846,12 @@
     if (!commands || commands.length === 0) return Promise.resolve();
 
     var message;
-    if (this.config.backend === 'pyodide' || this.config.backend === 'java') {
+    if (this.config.backend === 'java') {
+      return this._javaWorkspace.test({ files: this._javaSession.files(), code: commands.join('\n') }).then(function (result) {
+        if (result.exitCode !== 0) throw new Error(result.stderr || 'Java step setup failed.');
+      });
+    }
+    if (this.config.backend === 'pyodide') {
       message = { type: 'runCode', code: commands.join('\n'), silent: true };
     } else if (this.config.backend === 'prolog') {
       message = { type: 'runProlog', code: commands.join('\n'), silent: true };
@@ -6065,6 +6073,10 @@
       testRunBtn.textContent = '\u2713 Test';
     }
     if (stopBtn) stopBtn.style.display = 'none';
+    if (this._javaRestoreRunFocus && runBtn && !runBtn.disabled) {
+      this._javaRestoreRunFocus = false;
+      runBtn.focus();
+    }
     if (this._compilerRestoreRunFocus && runBtn && !runBtn.disabled) {
       this._compilerRestoreRunFocus = false;
       runBtn.focus();
@@ -6085,7 +6097,7 @@
 
   TutorialCode.prototype._handleRunTransactionFailure = function (run, error) {
     var reason = error && error.reason;
-    if (reason !== 'terminated' && !(error && error.runMessageShown)) {
+    if (reason !== 'terminated' && error?.name !== 'AbortError' && !(error && error.runMessageShown)) {
       var fallback = {
         sql: 'SQL execution failed',
         prolog: 'Prolog execution failed',
@@ -6105,7 +6117,7 @@
     if (this._activeRunTransaction !== run) return;
     this._activeRunTransaction = null;
     var workerBacked = run.backend === 'pyodide' || run.backend === 'sql' ||
-      run.backend === 'prolog' || run.backend === 'java' || run.backend === 'cpp' || run.backend === 'haskell';
+      run.backend === 'prolog' || run.backend === 'cpp' || run.backend === 'haskell';
     this._setRunTransactionControls(workerBacked && !this.booted ? 'unavailable' : 'idle');
   };
 
@@ -6139,8 +6151,9 @@
 
   TutorialCode.prototype._runCurrentFile = function (options) {
     if (this._activeRunTransaction) return this._activeRunTransaction.promise;
-    if ((this.config.backend === 'cpp' || this.config.backend === 'haskell' || this.config.backend === 'prolog' || this.config.backend === 'smalltalk' || this.config.backend === 'compiler' || this.config.backend === 'tla' || this.config.backend === 'aadl' || this.config.backend === 'shell-pipeline') && this._testRunInFlight) return Promise.resolve(false);
-    if ((this.config.backend === 'compiler' || this.config.backend === 'tla' || this.config.backend === 'aadl' || this.config.backend === 'shell-pipeline') && this._activeStepLoadRequest) return Promise.resolve(false);
+    if ((this.config.backend === 'java' || this.config.backend === 'cpp' || this.config.backend === 'haskell' || this.config.backend === 'prolog' || this.config.backend === 'smalltalk' || this.config.backend === 'compiler' || this.config.backend === 'tla' || this.config.backend === 'aadl' || this.config.backend === 'shell-pipeline') && this._testRunInFlight) return Promise.resolve(false);
+    if ((this.config.backend === 'java' || this.config.backend === 'compiler' || this.config.backend === 'tla' || this.config.backend === 'aadl' || this.config.backend === 'shell-pipeline') && this._activeStepLoadRequest) return Promise.resolve(false);
+    if (this._javaSession && this._debuggerCtl?.session) return Promise.resolve(false);
     if (this._haskellInterpreter) this._haskellInterpreter.showOutput();
     if (this._prologInterpreter) {
       if (this._activeStepLoadRequest || this._workerRestartPromise || (this._debuggerCtl && this._debuggerCtl.session)) return Promise.resolve(false);
@@ -6188,6 +6201,7 @@
     var runFiles = run.runFiles;
     var filename = run.filename;
 
+    if (backend === 'java') return this._javaSession.run(run);
     if (backend === 'smalltalk') return this._runSmalltalk(run);
     if (backend === 'compiler') return this._runCompiler(run);
     if (backend === 'tla') return this._runTLA(run);
@@ -6264,9 +6278,9 @@
       });
     }
 
-    if (backend === 'java' || backend === 'cpp') {
+    if (backend === 'cpp') {
       var compiledPath = '/tutorial/' + filename;
-      // Both compilers may read other source files from the workspace.
+      // Include headers and other translation units from the workspace.
       var allFiles = Object.keys(self.editorModels);
       var syncChain = Promise.resolve();
       allFiles.forEach(function (f) {
@@ -6395,16 +6409,15 @@
   };
 
   // Inline Test button — runs `step.test_file` and streams output to the
-  // same output panel as the Run button. Only the webcontainer backend wires
-  // this up today, because that's the only backend that has a real Node
-  // process and a sensible spawn-a-different-file mental model.
+  // same output panel as Run. Learner-authored test files do not award lesson credit.
   TutorialCode.prototype._runTestFile = function () {
     if (this._activeRunTransaction) return this._activeRunTransaction.promise;
     var stepIndex = this.currentStep >= 0 ? this.currentStep : 0;
     var step = this.steps[stepIndex];
     var testFile = step && step.test_file;
     var backend = this.config.backend;
-    if (!testFile || (backend !== 'webcontainer' && backend !== 'browser')) {
+    if (!testFile || !['webcontainer', 'browser', 'java'].includes(backend) ||
+        (backend === 'java' && (this._testRunInFlight || this._activeStepLoadRequest || this._debuggerCtl?.session))) {
       return Promise.resolve(false);
     }
 
@@ -6424,6 +6437,7 @@
   };
 
   TutorialCode.prototype._executeTestFileRun = function (transaction) {
+    if (transaction.backend === 'java') return this._javaSession.run(transaction);
     var self = this;
     var testFile = transaction.filename;
     self._clearOutput();
@@ -7224,6 +7238,12 @@
    * host-owned deadline can terminate even a Worker blocked in a tight loop.
    */
   TutorialCode.prototype._stopExecution = function () {
+    if (this._javaSession) {
+      this._javaRestoreRunFocus = document.activeElement === this.root.querySelector('.tvm-stop-btn');
+      this._javaSession.stop();
+      if (!this._activeTestRun) this._appendOutput('Execution stopped.\n', 'info');
+      return;
+    }
     if (this._aadlController) {
       this._aadlRestoreRunFocus = document.activeElement === this.root.querySelector('.tvm-stop-btn');
       this._aadlController.stop();
@@ -7838,7 +7858,7 @@
     var self = this;
     var needsNodeChannel = false;
     var needsBrowserChannel = self.config.backend === 'browser' || self.config.backend === 'webcontainer';
-    var needsLanguageChannel = self.config.backend === 'prolog' || self.config.backend === 'haskell';
+    var needsLanguageChannel = self.config.backend === 'prolog' || self.config.backend === 'haskell' || self.config.backend === 'java';
     return new Promise(function (resolve, reject) {
       var dbgAssetVersion = String(Date.now());
       function ensureCss() {
@@ -8039,6 +8059,14 @@
         this._refreshOutputDetachedState();
       }
       model.onDidChangeContent(function () {
+        if (self._javaSession) {
+          self._javaSession.changed();
+          if (!self._suppressAutoSave && self._umlWatchedFiles.includes(filename)) {
+            ++self._umlAnalysisRequestId;
+            ++self._umlRenderRequestId;
+            self._scheduleUMLRefresh();
+          }
+        }
         if (self._haskellCycles) self._haskellCycles.schedule();
         // Lint + gutter reflect CURRENT content, regardless of who changed
         // it — so they run even during programmatic edits (step transitions,
@@ -8094,10 +8122,11 @@
             );
           });
         }, 800);
-        // UML refresh is deferred to explicit save (_saveCurrentFile) — not on every keystroke.
+        // Other tutorial UML backends refresh on explicit Save.
         // React preview is also save-only — popups send a request-save via Ctrl+S.
       });
-      // Initial lint pass when the file first opens.
+      // Initial diagnostics include newly added Java files.
+      if (this._javaSession && !this._suppressAutoSave) this._javaSession.changed();
       if (this._haskellCycles) this._haskellCycles.schedule();
       if (this.config.enableLinter && this._isPythonFile(filename)) {
         var initSelf = self;
@@ -8531,6 +8560,7 @@
     if (!entry) return;
     entry.model.dispose();
     delete this.editorModels[filename];
+    if (this._javaSession && !this._suppressAutoSave) this._javaSession.changed();
     if (this._haskellCycles) this._haskellCycles.schedule();
     if (this._leftActiveFile === filename) this._leftActiveFile = null;
     if (this._rightActiveFile === filename) this._rightActiveFile = null;
@@ -9727,7 +9757,7 @@
         sources[filename] = entry.model.getValue();
         pending--;
         if (pending === 0) onSourcesReady();
-      } else if ((lang === 'python' || lang === 'java' || lang === 'cpp') && self._worker) {
+      } else if ((lang === 'python' || lang === 'cpp') && self._worker) {
         // Compiled/Python source files: fallback to the backend worker FS.
         self._postWorker({ type: 'read', path: '/tutorial/' + filename }, function (msg) {
           if (msg.type === 'read_ok') {
@@ -9755,6 +9785,7 @@
     function isCurrent() {
       return !self._destroyed && requestId === self._umlAnalysisRequestId;
     }
+    if (lang === 'java' && this._javaSession?.bindings) options.javaBindings = this._javaSession.bindings;
     this._getUMLClient().analyze({ language: lang, sources: sources, options: options })
       .then(function (result) {
         if (!isCurrent()) return;
@@ -10079,7 +10110,7 @@
     } else {
       this._umlRefreshTimer = setTimeout(function () {
         self._refreshUMLDiagram();
-      }, 1500);
+      }, this.config.backend === 'java' ? 150 : 1500);
     }
   };
 
@@ -10581,7 +10612,7 @@
     if (backend === 'v86') {
       writePromise = this._syncFileToV86(filename, content);
     } else if (backend === 'pyodide' || backend === 'sql' ||
-               backend === 'prolog' || backend === 'java' || backend === 'cpp' ||
+               backend === 'prolog' || backend === 'cpp' ||
                backend === 'haskell') {
       writePromise = this._writeFileToWorker(filename, content, backend);
     } else if (backend === 'webcontainer' && this._webcontainer) {
@@ -10788,7 +10819,13 @@
             }, resolve);
           });
         });
-      } else if (this.config.backend === 'prolog' || this.config.backend === 'sql' || this.config.backend === 'java') {
+      } else if (this.config.backend === 'java') {
+        p = p.then(function () {
+          return self._javaWorkspace.test({ files: self._javaSession.files(), code: solution.commands.join('\n') });
+        }).then(function (result) {
+          if (result.exitCode !== 0) throw new Error(result.stderr || 'Java solution commands failed.');
+        });
+      } else if (this.config.backend === 'prolog' || this.config.backend === 'sql') {
         p = p.then(function () {
           return new Promise(function (resolve) {
             self._postWorker({
@@ -12108,6 +12145,12 @@
     if (!this.instructorMode && !this._stepsUnlocked.has(index)) return Promise.resolve();
 
     if (window.TutorChat) { window.TutorChat.onStepChange(); }
+    if (this._javaSession) {
+      clearTimeout(this._testAnnouncementTimer);
+      if (this._testAnnouncer) this._testAnnouncer.textContent = '';
+      if (this._javaSession.busy) this._javaSession.stop();
+      this._javaSession.changed();
+    }
     // Time-travel debugger: clear history + close any active debug session.
     // Breakpoints persist across steps (matches VS Code), but per-run state
     // does not. No-op when debugger is not loaded.
@@ -12455,6 +12498,7 @@
       self._stepsVisited.add(index);
       self._updateStepHash(index);
       self._suppressAutoSave = autoSaveSuppressedBeforeStepLoad;
+      if (self._javaSession) self._javaSession.changed();
       self._flushPendingUMLRefresh();
       if (self.autoSaveEnabled && !self._suppressAutoSave) self._autoSaveProgress();
       self._startTimedPractice(index);
@@ -13166,9 +13210,10 @@
     // results return. Without this guard, the second run can replace the
     // pending test buffer/state and produce ghost results in the panel.
     if (this._testRunInFlight || this._llmChecksInFlight || this._studentPlaywrightRun || this._destroyed) return;
-    if ((this.config.backend === 'cpp' || this.config.backend === 'haskell' || this.config.backend === 'prolog' || this.config.backend === 'smalltalk' || this.config.backend === 'compiler' || this.config.backend === 'tla' || this.config.backend === 'aadl' || this.config.backend === 'shell-pipeline') && this._activeRunTransaction) return;
-    if ((this.config.backend === 'compiler' || this.config.backend === 'tla' || this.config.backend === 'aadl' || this.config.backend === 'shell-pipeline') && this._activeStepLoadRequest) return;
+    if ((this.config.backend === 'java' || this.config.backend === 'cpp' || this.config.backend === 'haskell' || this.config.backend === 'prolog' || this.config.backend === 'smalltalk' || this.config.backend === 'compiler' || this.config.backend === 'tla' || this.config.backend === 'aadl' || this.config.backend === 'shell-pipeline') && this._activeRunTransaction) return;
+    if ((this.config.backend === 'java' || this.config.backend === 'compiler' || this.config.backend === 'tla' || this.config.backend === 'aadl' || this.config.backend === 'shell-pipeline') && this._activeStepLoadRequest) return;
     if (this.config.backend === 'prolog' && (this._activeStepLoadRequest || this._workerRestartPromise || (this._debuggerCtl && this._debuggerCtl.session))) return;
+    if (this._javaSession && this._debuggerCtl?.session) return;
     var stepIndex = this.currentStep;
     var step = this.steps[stepIndex];
     if (!step || !this._stepHasTests(step)) return;
@@ -13206,7 +13251,7 @@
     else if (backend === 'browser') this._runTestsBrowser(run);
     else if (backend === 'sql') this._runTestsSQL(run);
     else if (backend === 'prolog') this._runTestsProlog(run);
-    else if (backend === 'java') this._runTestsJava(run);
+    else if (backend === 'java') return this._javaSession.grade(run);
     else if (backend === 'cpp') this._runTestsCPP(run);
     else if (backend === 'haskell') this._runTestsHaskell(run);
     else if (backend === 'smalltalk') this._runTestsSmalltalk(run);
@@ -13320,75 +13365,6 @@
         runNext(i + 1);
       }).catch(function (error) {
         console.warn('SQL test execution stopped:', error && error.message || error);
-        self._renderTestResults(tests, new Array(tests.length).fill(null), run);
-      });
-    }
-    runNext(0);
-  };
-
-  // Java — each test.command is run as Java code; exit 0 if no exception
-  TutorialCode.prototype._runTestsJava = function (run) {
-    var self = this;
-    var step = this.steps[run.stepIndex];
-    var tests = step && step.tests;
-    if (!tests || !tests.length) return;
-    this._showTestPanel('<div class="tvm-test-running"><div class="tvm-test-spinner"></div>Running tests\u2026</div>');
-    var results = [];
-
-    // Gather all editor source code for source_must_contain / source_must_not_contain checks
-    var editorCode = '';
-    var models = self.editorModels;
-    for (var fname in models) {
-      if (models.hasOwnProperty(fname)) {
-        editorCode += models[fname].model.getValue() + '\n';
-      }
-    }
-
-    function checkSource(test) {
-      var mc = test.source_must_contain;
-      if (mc) {
-        var patterns = Array.isArray(mc) ? mc : [mc];
-        for (var p = 0; p < patterns.length; p++) {
-          if (editorCode.indexOf(patterns[p]) === -1) return false;
-        }
-      }
-      var mnc = test.source_must_not_contain;
-      if (mnc) {
-        var patterns = Array.isArray(mnc) ? mnc : [mnc];
-        for (var p = 0; p < patterns.length; p++) {
-          if (editorCode.indexOf(patterns[p]) !== -1) return false;
-        }
-      }
-      return true;
-    }
-
-    function runNext(i) {
-      if (i >= tests.length) { self._renderTestResults(tests, results, run); return; }
-
-      var test = tests[i];
-
-      // Source-code assertions: fail immediately if patterns don't match
-      if ((test.source_must_contain || test.source_must_not_contain) && !checkSource(test)) {
-        results[i] = false;
-        runNext(i + 1);
-        return;
-      }
-
-      // No runtime command — pass on source check alone
-      if (!test.command) {
-        results[i] = true;
-        runNext(i + 1);
-        return;
-      }
-
-      self._requestWorker(
-        { type: 'runCode', code: test.command, silent: true },
-        { timeoutMs: WORKER_EXECUTION_TIMEOUT_MS, restartOnTimeout: true }
-      ).then(function (msg) {
-        results[i] = (msg.exitCode === 0);
-        runNext(i + 1);
-      }).catch(function (error) {
-        console.warn('Java test execution stopped:', error && error.message || error);
         self._renderTestResults(tests, new Array(tests.length).fill(null), run);
       });
     }
@@ -14233,7 +14209,8 @@
     // announced (some screen readers suppress unchanged live-region text).
     announcer.textContent = '';
     var self = this;
-    setTimeout(function () { if (self._testAnnouncer) self._testAnnouncer.textContent = msg; }, 50);
+    clearTimeout(this._testAnnouncementTimer);
+    this._testAnnouncementTimer = setTimeout(function () { if (!self._destroyed && self._testAnnouncer) self._testAnnouncer.textContent = msg; }, 50);
   };
 
   TutorialCode.prototype._buildTestResultsHTML = function (tests, results, details) {
@@ -14283,6 +14260,18 @@
     if (!isActiveRun || this.currentStep !== run.stepIndex || this._destroyed) {
       return;
     }
+    if (run.javaLoad !== undefined) {
+      if (this._stepLoadSequence !== run.javaLoad) return;
+      if (run.javaFailure) {
+        if (!run.silent) {
+          var interrupted = '<p>' + this._escapeHtml(run.javaFailure) + '</p>';
+          this._showTestPanel(interrupted);
+          this._ensureTestAnnouncer().textContent = run.javaFailure;
+          if (this._popoutManager) this._popoutManager.broadcastTestResult({ resultsHTML: interrupted, results: [], allPassed: false, stepIndex: run.stepIndex });
+        }
+        return;
+      }
+    }
     if (run.cancelled) {
       if (!run.silent && run.reactLoadSequence === this._stepLoadSequence) {
         this._showTestPanel('<p>Checks cancelled. Run Test My Work again when the preview is ready.</p>');
@@ -14328,7 +14317,7 @@
     var stepIndex = run.stepIndex;
 
     var details = run.reactFailure ? tests.map(function () { return run.reactFailure; })
-      : run.smalltalkResults ? this._smalltalkCheckDetails(run.smalltalkResults) : run.aadlDetails || run.tlaDetails;
+      : run.smalltalkResults ? this._smalltalkCheckDetails(run.smalltalkResults) : run.aadlDetails || run.tlaDetails || run.javaDetails;
     var html = this._buildTestResultsHTML(tests, results, details);
     if (run.smalltalkProgram) html = this._smalltalkCheckPanel(run, html);
     if (!silent) {

@@ -20,7 +20,7 @@ const A11Y_FEATURE = 'java-tutorial';
 /**
  * Tests: Java for C++ and Python Developers (Java backend)
  *
- * Two serial describe blocks share one page each — the Java worker loads only
+ * Two serial describe blocks share one page each — the Java workspace initializes only
  * twice per run.
  *
  * Block 1 – Structure, navigation, run, editor.
@@ -191,6 +191,16 @@ test.describe.serial('Java Tutorial — step-by-step', () => {
     const step   = steps[i];
     const isLast = i === steps.length - 1;
 
+    if (step.test_file) {
+      test('editable Java test file reports its own assertion before the repair', async () => {
+        await showOutputPane(page);
+        await page.getByRole('button', { name: /^✓ Test$/ }).click();
+        await expect(page.getByRole('region', { name: 'Program output' }))
+          .toContainText('A withdrawal above the balance must fail', { timeout: TEST_RUN_TIMEOUT });
+        await expect(page.getByRole('status').filter({ hasText: /^All \d+ tests? passed\./ })).toHaveCount(0);
+      });
+    }
+
     if (step.tests?.length > 0) {
       test(`step ${i + 1} "${step.title}": solution passes all ${step.tests.length} tests`, async () => {
         if (!step.solution) {
@@ -198,6 +208,12 @@ test.describe.serial('Java Tutorial — step-by-step', () => {
         }
         await passCurrentStepTests(page, TEST_RUN_TIMEOUT);
         await expectRenderedStepTests(page, step);
+        if (step.test_file) {
+          await showOutputPane(page);
+          await page.getByRole('button', { name: /^✓ Test$/ }).click();
+          await expect(page.getByRole('region', { name: 'Program output' }))
+            .toContainText('BankAccount checks passed', { timeout: TEST_RUN_TIMEOUT });
+        }
         await a11yCheckpoint(page, `java tutorial — step ${i + 1} all tests passing`, { feature: A11Y_FEATURE, darkMode: true });
       });
     }

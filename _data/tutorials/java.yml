@@ -11,6 +11,7 @@ learning_objectives:
   - "Evaluate inheritance vs. composition trade-offs in Java's OO model."
 
 backend: java
+debugger: true
 
 require_tests: true
 autosave_type: files
@@ -35,6 +36,8 @@ steps:
       ### Why this matters
 
       **Which diagram view should I use?** Use **Implementation details** when matching your code to a target diagram or checking an exercise. **Design focus** is for reference only: it simplifies types, names, and expressions to emphasize the design. Target diagrams use the same Java names and types as **Implementation details**. Switching views does not change your code or verify correctness; use **Test My Work** to check the exercise.
+
+      To follow a method call, place the cursor on its name and choose **Go to Definition** from the editor menu. To watch the call execute, open **Output**, choose **Debug**, and step into the method.
 
       You already know how to program. This tutorial won't re-teach loops or variables — instead, it focuses on **what's different** about Java and **why** Java made those choices. Starting with a clear map between languages keeps your prior knowledge useful and prevents silent transfer errors later.
 
@@ -817,6 +820,10 @@ steps:
       4. Add `toString()` returning `"BankAccount[owner=Alice, balance=1000.0]"`
       5. Update `main` to use getters instead of direct field access
 
+      In the Output pane, **Test** runs the editable `BankAccountTest.java`. Try its overdraft
+      check before and after your repair, then add a check for withdrawing exactly the balance.
+      **Test My Work** runs the lesson checks.
+
     files:
       - path: "BankAccount.java"
         content: |
@@ -856,7 +863,20 @@ steps:
           }
         language: "java"
 
+      - path: "BankAccountTest.java"
+        language: java
+        content: |
+          public class BankAccountTest {
+              public static void main(String[] args) {
+                  BankAccount account = new BankAccount("Alice", 10.0);
+                  assert !account.withdraw(11.0) : "A withdrawal above the balance must fail";
+                  System.out.println("BankAccount checks passed");
+              }
+          }
+
     open_file: "BankAccount.java"
+    run_file: "BankAccount.java"
+    test_file: "BankAccountTest.java"
 
     solution:
       files:
@@ -1479,6 +1499,7 @@ steps:
         language: "java"
 
     open_file: "Shape.java"
+    run_file: "ShapeDemo.java"
 
     solution:
       files:
@@ -3159,6 +3180,7 @@ steps:
         language: "java"
 
     open_file: "Course.java"
+    run_file: "EnrollmentDemo.java"
 
     solution:
       files:

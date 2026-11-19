@@ -212,6 +212,7 @@
   function createClient(settings = {}) {
     const queue = createWorkerQueue();
     const measurer = createTextMeasurer();
+    let javaSyntax = null;
     let disposed = false;
 
     async function analyzeOnMainThread({ language, sources, options }) {
@@ -228,6 +229,15 @@
       ]);
       if (!global[analyzer.name]) await loadScript(settings[language + 'AnalyzerPath'] || assetURL(analyzer.file));
       if (disposed) throw supersededError();
+      if (language === 'java') {
+        if (!javaSyntax) javaSyntax = import(assetURL('uml-java-syntax.mjs')).then(module => module.createJavaSyntaxWorkspace())
+          .catch(error => { javaSyntax = null; throw error; });
+        let workspace;
+        try { workspace = await javaSyntax; }
+        catch { /* A browser without WebAssembly can still diagram the basic Java subset. */ }
+        if (disposed) throw supersededError();
+        return global[analyzer.name](sources, options || {}, workspace?.parse(sources));
+      }
       return global[analyzer.name](sources, language === 'js' ? global.ts : options || {});
     }
 
@@ -297,7 +307,13 @@
 
     return {
       analyze, project, render,
-      dispose() { disposed = true; queue.dispose(); measurer.dispose(); }
+      dispose() {
+        if (disposed) return;
+        disposed = true;
+        queue.dispose();
+        measurer.dispose();
+        javaSyntax?.then(workspace => workspace.dispose(), () => {});
+      }
     };
   }
 

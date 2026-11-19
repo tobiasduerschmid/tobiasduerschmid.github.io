@@ -155,6 +155,7 @@ self.cancelAnimationFrame = self.cancelAnimationFrame || function (id) { clearTi
 // ─── Lazy loaders ──────────────────────────────────────────────────────
 var loaded = { python: false, java: false, cpp: false, jsts: false, bundle: false };
 let pythonTypes = null;
+let javaSyntax = null;
 
 function ensureAnalyzer(lang) {
   if (!self.UMLSequenceDiagnostics) importScripts(resolve('uml-sequence-diagnostics.js'));
@@ -212,7 +213,11 @@ async function handleAnalyze(msg) {
       const inferredTypes = await pythonTypes.infer(sources);
       result = self.analyzePythonSources(sources, { ...options, inferredTypes });
     }
-    else if (lang === 'java')   result = self.analyzeJavaSources(sources);
+    else if (lang === 'java') {
+      if (!javaSyntax) javaSyntax = import(resolve('uml-java-syntax.mjs')).then(module => module.createJavaSyntaxWorkspace())
+        .catch(error => { javaSyntax = null; throw error; });
+      result = self.analyzeJavaSources(sources, options, (await javaSyntax).parse(sources));
+    }
     else if (lang === 'cpp')    result = self.analyzeCppSources(sources, options);
     else if (lang === 'js')     result = self.analyzeJSSources(sources, self.ts);
     else throw new Error('Unknown UML language: ' + lang);

@@ -376,7 +376,7 @@
   {% assign tutorial_requires_coi = false %}
   {% if tutorial_uses_webcontainer or tutorial_llm_enabled %}
     {% assign tutorial_requires_coi = true %}
-  {% elsif tutorial_data.debugger and tutorial_data.backend != 'prolog' and tutorial_data.backend != 'haskell' %}
+  {% elsif tutorial_data.debugger and tutorial_data.backend != 'prolog' and tutorial_data.backend != 'haskell' and tutorial_data.backend != 'java' %}
     {% assign tutorial_requires_coi = true %}
   {% endif %}
   {% if tutorial_requires_coi or tutorial_uses_v86 %}
@@ -472,7 +472,6 @@
         workerPath:    '{{ "/js/pyodide-worker.js" | relative_url }}',
         sqlWorkerPath: '{{ "/js/sql-worker.js"    | relative_url }}',
         prologWorkerPath: '{{ "/js/prolog-worker.js" | relative_url }}',
-        javaWorkerPath:   '{{ "/js/java-worker.js"   | relative_url }}',
         cppWorkerPath:    '{{ "/js/cpp-worker.js"    | relative_url }}',
         haskellFramePath: '{{ "/haskell-runtime-frame.html" | relative_url }}',
         gitGraphPath: config.git_graph || null,

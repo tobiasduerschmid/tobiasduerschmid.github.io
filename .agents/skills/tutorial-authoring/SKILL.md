@@ -1,6 +1,6 @@
 ---
 name: tutorial-authoring
-description: Authoring guide and architecture reference for the SEBook in-browser tutorial system. Use this skill EVERY TIME you create, edit, review, restructure, or extend anything that touches `_data/tutorials/*.yml`, the `_layouts/tutorial.html` / `_layouts/print-tutorial.html` layouts, the `tutorial-*-popup.html` popout windows at the repo root, the `js/tutorial-*.js` runtime (`tutorial-code.js`, `tutorial-quiz.js`, `tutorial-popout-manager.js`, `tutorial-popout-client.js`, `tutorial-refactorings.js`), backend workers (`cpp-worker.js`, `pyodide-worker.js`, `sql-worker.js`, `java-worker.js`, `prolog-worker.js`, `haskell-worker.js`, `playwright-compat/*`), the time-travel debugger under `js/debugger/`, the autosave / progress / reset machinery, the in-tutorial quiz / hint / test schemas, the print view, the SE Gym tutorial-progress import/export flows, the `SEBook/<section>/<slug>-tutorial.md` + `SEBook/<section>/<slug>-tutorial/print.md` page-pair convention, the `/SEBook/tutorials` auto-generated index, or any new feature added to the tutorial runtime. Also trigger on requests like "add a new tutorial on X", "add a step to <tutorial>", "convert this lecture into a tutorial", "design a quiz / hint / test for step N", "set up a print view for this tutorial", "add a new tutorial backend", "wire up a new popout window", "add a new YAML field to the tutorial schema", "review this tutorial draft", "audit tutorials for PRIMM / spaced practice / Bloom coverage", or any task that involves the tutorial runtime, schema, or content. **You MUST update this SKILL.md whenever you add, rename, remove, or change the semantics of a tutorial-runtime feature** — new YAML fields, new backends, new popout windows, new test runners, new quiz / hint mechanics, new autosave / reset modes, new debugger capabilities, changed permalink conventions, or any architectural change that an author or future agent needs to know to build or modify a tutorial correctly. Out-of-date schema or architecture notes here cause real downstream bugs (broken tutorials, missing print views, mis-shaped quizzes, lost progress).
+description: Authoring guide and architecture reference for the SEBook in-browser tutorial system. Use this skill EVERY TIME you create, edit, review, restructure, or extend anything that touches `_data/tutorials/*.yml`, the `_layouts/tutorial.html` / `_layouts/print-tutorial.html` layouts, the `tutorial-*-popup.html` popout windows at the repo root, the `js/tutorial-*.js` runtime (`tutorial-code.js`, `tutorial-quiz.js`, `tutorial-popout-manager.js`, `tutorial-popout-client.js`, `tutorial-refactorings.js`), backend workers (`cpp-worker.js`, `pyodide-worker.js`, `sql-worker.js`, `js/java/workspace.mjs`, `prolog-worker.js`, `haskell-worker.js`, `playwright-compat/*`), the time-travel debugger under `js/debugger/`, the autosave / progress / reset machinery, the in-tutorial quiz / hint / test schemas, the print view, the SE Gym tutorial-progress import/export flows, the `SEBook/<section>/<slug>-tutorial.md` + `SEBook/<section>/<slug>-tutorial/print.md` page-pair convention, the `/SEBook/tutorials` auto-generated index, or any new feature added to the tutorial runtime. Also trigger on requests like "add a new tutorial on X", "add a step to <tutorial>", "convert this lecture into a tutorial", "design a quiz / hint / test for step N", "set up a print view for this tutorial", "add a new tutorial backend", "wire up a new popout window", "add a new YAML field to the tutorial schema", "review this tutorial draft", "audit tutorials for PRIMM / spaced practice / Bloom coverage", or any task that involves the tutorial runtime, schema, or content. **You MUST update this SKILL.md whenever you add, rename, remove, or change the semantics of a tutorial-runtime feature** — new YAML fields, new backends, new popout windows, new test runners, new quiz / hint mechanics, new autosave / reset modes, new debugger capabilities, changed permalink conventions, or any architectural change that an author or future agent needs to know to build or modify a tutorial correctly. Out-of-date schema or architecture notes here cause real downstream bugs (broken tutorials, missing print views, mis-shaped quizzes, lost progress).
 ---
 
 # SEBook tutorial authoring & architecture
@@ -887,6 +887,8 @@ backend: v86 | cpp | pyodide | webcontainer | react | prolog | haskell | smallta
 #                 cross-origin isolation is required. Supports mixed cpp /
 #                 pyodide tutorials. See §4.6 for limits and §4.8 for checks.
 # pyodide       — Python in-browser, no shell; supports `debugger: true`.
+# java          — Java 8 in a terminable browser JVM. Supports UML, grading,
+#                 an editable test_file and debugger: true. See §4.6.
 # shell-pipeline — Single-backend just-bash browser interpreter in a terminable
 #                 Worker, with an in-memory filesystem. Run executes the step's
 #                 separate command textarea against fresh current editor files.
@@ -2518,7 +2520,9 @@ channel.
   unsupported constructs supply no summary evidence. C++ requires borrowed
   pointer/reference returns and borrowed parameters for parameter aliases;
   value copies are not assumed to alias their source.
-  Java may select a unique fixed-arity match; same-arity and varargs ambiguity remain.
+  Java syntax preview can select a unique fixed-arity match. In a Java tutorial,
+  matching compiler bindings resolve overloads and varargs for that revision.
+  The receiver still needs sufficient evidence to identify a runtime implementation.
   Python/TypeScript class classification retains inherited behavioral methods.
   `js/uml-return-summaries.js` owns the shared bounded origin analysis; adapters
   own syntax/scoping and call resolution. Return identity does not prove purity.
@@ -2785,7 +2789,7 @@ channel.
   six-step query core is about 35 minutes; two data-change extensions remain in
   the same tutorial after the core. Its versioned keys deliberately recheck
   legacy completions while preserving drafts from the old, weaker graders.
-  C++, Pyodide, SQL, Prolog, and Java worker messages are bounded RPCs: every
+  C++, Pyodide, SQL, and Prolog worker messages are bounded RPCs: every
   callback is released by a response, timeout, termination, or `destroy()`.
   Global and per-step setup reject readiness when their command exits nonzero,
   and worker file sync resolves only after the worker acknowledges the write;
@@ -2801,11 +2805,11 @@ channel.
   error remains a failure even if its traceback mentions `SystemExit`; never
   infer success from exception-message text. This applies to both learner runs
   and silent instructor checks, including nested pytest failure reports.
-  C++, Python, SQL, Prolog, Java, and Haskell initialization belongs to its specific worker: cancelling
+  C++, Python, SQL, Prolog, and Haskell initialization belongs to its specific worker: cancelling
   that worker immediately settles its boot promise and clears the boot timer.
   Late events and superseded restart stages cannot change the newly selected
   language, replay files into it, or leave its Run control disabled.
-  SQL/Prolog/Java share the tracked initializer, including setup completion and
+  SQL and Prolog share the tracked initializer, including setup completion and
   fatal-worker recovery. Python Git setup checks ownership before each request
   and continuation. Request timeout recovery must check that its original worker
   is still active after notifying the caller, because that callback may replace
@@ -3171,7 +3175,7 @@ channel.
 - **Backend runtime adapters** — `js/pyodide-worker.js` (Python),
   `js/cpp-worker.js` (C++17 module worker using pinned local YoWASP Clang
   and the browser WASI shim; its `check` message runs `-fsyntax-only` for
-  `js/source-check.js` without linking or running), `js/sql-worker.js`, `js/java-worker.js`, `js/prolog-worker.js`,
+  `js/source-check.js` without linking or running), `js/sql-worker.js`, `js/java/workspace.mjs` (Eclipse compiler and browser JVM), `js/prolog-worker.js`,
   `haskell-runtime-frame.html` + `js/haskell-worker.js` (a sandboxed Haskell
   frame through `js/vendor/microhs/mhs-embed.js`, the local, pinned MicroHs
   WebAssembly runtime),
@@ -3354,31 +3358,63 @@ snapshot-input, or checksum drift.
 
 ### 4.6 Backends — what each supports
 
-| Feature                | v86 | cpp | pyodide | webcontainer | browser | react | prolog | haskell | uml-editor | compiler | shell-pipeline | tla | aadl |
-|------------------------|-----|-----|---------|--------------|---------|-------|--------|---------|------------|----------|----------------|-----|------|
-| Shell terminal         | ✅  | ❌  | ❌      | ✅           | ❌      | ❌    | ❌     | ❌      | ❌         | ❌ | ❌ | ❌ | ❌ |
-| Compiled languages     | C   | C++17 | ❌    | (npm only)   | ❌      | ❌    | ❌     | ✅      | ❌         | ❌ | ❌ | ❌ | ❌ |
-| `git`                  | ✅  | ❌  | mocked  | ✅           | ❌      | ❌    | ❌     | ❌      | ❌         | ❌ | ❌ | ❌ | ❌ |
-| Debugger / recorded history | ❌ | ❌ | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ | State traces | ❌ |
-| Live preview iframe    | ❌  | ❌  | ❌      | ✅           | ❌      | ✅    | ❌     | ❌      | ❌         | ❌ | ❌ | ❌ | ❌ |
-| Playwright tests       | ❌  | ❌  | ❌      | ❌           | ❌      | ✅    | ❌     | ❌      | ❌         | ❌ | ❌ | ❌ | ❌ |
-| UML assertion tests    | ❌  | ❌  | ❌      | ❌           | ❌      | ❌    | ❌     | ❌      | ✅         | ❌ | ❌ | ❌ | ❌ |
-| `pytest`               | ❌  | ❌  | ✅      | ❌           | ❌      | ❌    | ❌     | ❌      | ❌         | ❌ | ❌ | ❌ | ❌ |
-| Linter                 | ✅  | ❌  | ✅      | ✅           | ✅      | ✅    | ❌     | ❌      | ❌         | ❌ | ❌ | ❌ | OSATE validation |
-| Regex / EBNF / AST checks | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ |
-| Separate Bash command box / fixture checks | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ |
-| TLA+ model checking / behavior exploration | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ |
-| Resolved architecture / flow-latency analysis | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Feature                | v86 | cpp | pyodide | webcontainer | browser | react | prolog | haskell | uml-editor | compiler | shell-pipeline | tla | aadl | java |
+|------------------------|-----|-----|---------|--------------|---------|-------|--------|---------|------------|----------|----------------|-----|------| ------ |
+| Shell terminal         | ✅  | ❌  | ❌      | ✅           | ❌      | ❌    | ❌     | ❌      | ❌         | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Compiled languages     | C   | C++17 | ❌    | (npm only)   | ❌      | ❌    | ❌     | ✅      | ❌         | ❌ | ❌ | ❌ | ❌ | Java 8 |
+| `git`                  | ✅  | ❌  | mocked  | ✅           | ❌      | ❌    | ❌     | ❌      | ❌         | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Debugger / recorded history | ❌ | ❌ | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ | State traces | ❌ | ✅ |
+| Live preview iframe    | ❌  | ❌  | ❌      | ✅           | ❌      | ✅    | ❌     | ❌      | ❌         | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Playwright tests       | ❌  | ❌  | ❌      | ❌           | ❌      | ✅    | ❌     | ❌      | ❌         | ❌ | ❌ | ❌ | ❌ | ❌ |
+| UML assertion tests    | ❌  | ❌  | ❌      | ❌           | ❌      | ❌    | ❌     | ❌      | ✅         | ❌ | ❌ | ❌ | ❌ | ❌ |
+| `pytest`               | ❌  | ❌  | ✅      | ❌           | ❌      | ❌    | ❌     | ❌      | ❌         | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Linter                 | ✅  | ❌  | ✅      | ✅           | ✅      | ✅    | ❌     | ❌      | ❌         | ❌ | ❌ | ❌ | OSATE validation | Eclipse compiler diagnostics |
+| Regex / EBNF / AST checks | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ |
+| Separate Bash command box / fixture checks | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ |
+| TLA+ model checking / behavior exploration | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ |
+| Resolved architecture / flow-latency analysis | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ |
 
 Mixed-backend tutorials support `v86`, `cpp`, `pyodide`, `react`, `webcontainer`,
 and `browser`. They are for author-controlled backend switches between steps,
 not for debugger flows or terminal-first Node labs.
 
+#### Java programming tutorials
+
+Set `backend: java` and provide the active lesson's Java source files in `files`.
+Set `run_file` to the source containing the entry point when `open_file` opens a
+different type. Run, compiler diagnostics, and Test My Work read the current Monaco
+drafts, including edits made since the last Save. The Eclipse compiler targets
+Java 8. A source construct can appear in a syntax preview even when the compiler
+rejects it at that language level.
+
+The tutorial opens before the JVM finishes warming. The UML worker updates a
+local Tree-sitter preview on edits to watched files. After editing pauses, compiler
+bindings refine call targets for the same source revision. Open tabs, diagnostics,
+symbol navigation, and rename use the current lesson's workspace. `debugger: true`
+enables the Java debugger. Ordinary Run and Test use uninstrumented classes.
+The main and split editors offer definition, references, hover, completion and
+compiler-checked rename. The workspace keeps authored filenames fixed. Type and
+constructor rename are unavailable. Breakpoints, step into/over/out and
+exception stops run against instrumented bytecode. Watches inspect variables,
+fields and array elements. Recorded history is read-only and bounded.
+Stop terminates the execution worker. A later Run opens a fresh workspace with
+the current editor contents.
+
+Set `test_file` to a learner-editable source with its own main method to enable
+the Output pane's Test button. It runs that file with Java assertions enabled.
+Test My Work separately runs the authored checks and owns lesson credit.
+
+Each `tests[].command` may supply a complete Java harness with a
+`public static void main(String[] args)` in `__Test`. Existing source constraints
+`source_must_contain` and `source_must_not_contain` still apply. Project classes
+are compiled once per source snapshot and checks run with isolated application
+classes. Navigation, Stop, and edits during a check prevent stale credit. See
+`js/java/tutorial.mjs`, `js/java/workspace.mjs`, and `tools/java-workspace/`.
+
 #### AADL architecture modeling
 
 `aadl` is a single-backend workspace using the pinned official OSATE Java
-libraries (Java 21 bytecode) through CheerpJ 5 / Java 25 in the browser. It does not use the
-Java-subset tutorial worker or an independently written AADL parser. The runtime
+libraries (Java 21 bytecode) through CheerpJ 5 / Java 25 in the browser. The runtime
 bundle and supported analyses are documented in `docs/aadl/`; official core
 validation does not imply that every desktop annex or analysis plug-in is present.
 
@@ -3464,10 +3500,7 @@ to validate the browser transport, model isolation, and current source revisions
 #### TLA+ and PlusCal
 
 `tla` is single-backend and uses the official SANY parser, PlusCal translator,
-and TLC checker through Java 11 in CheerpJ. It does not use `java-worker.js`,
-whose Java subset transpiler cannot execute the tools JAR. This is a real
-model-checking engine, not a hand-written interpretation of selected TLA+
-syntax. TLC still has its own executable-specification and finite-state
+and TLC checker through a dedicated Java 11 runtime in CheerpJ. TLC still has its own executable-specification and finite-state
 requirements; browser memory and time are bounded. Do not promise theorem
 proving, unbounded verification, arbitrary Java module overrides, or a desktop
 TLC debugger session. See `docs/tla-backend.md` for the deployment contract.

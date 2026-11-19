@@ -1,10 +1,9 @@
 /**
  * Java UML Analyzer — extracts class diagrams and sequence diagrams from
- * Java source code using a lightweight recursive-descent parser.
+ * Java source code using Tree-sitter declarations and optional compiler bindings.
  *
  * Parallel to uml-analyzer-js.js (JS/TS) and uml-analyzer-python.js (Python).
- * No external dependencies — runs synchronously in the browser main thread
- * for sub-10ms latency on tutorial-scale files.
+ * Synchronous callers can omit syntax trees and use the built-in parser.
  *
  * Produces the same @startuml/@enduml syntax consumed by the SVG renderers
  * in uml-bundle.js.
@@ -29,31 +28,56 @@
    * Main entry point
    * =================================================================== */
 
-  function analyzeJavaSources(sources) {
+  // The resolver rewrites identifiers in its private model. Copy declarations
+  // from the cached syntax snapshot, slicing body tokens by UTF-16 offset.
+  function materialize(decl, tokens) {
+    const indexAt = offset => {
+      let low = 0, high = tokens.length;
+      while (low < high) {
+        const mid = (low + high) >>> 1;
+        if (tokens[mid].start < offset) low = mid + 1;
+        else high = mid;
+      }
+      return low;
+    };
+    const copy = {...decl};
+    if (decl.members) copy.members = decl.members.map(member => materialize(member, tokens));
+    if (decl.params) copy.params = decl.params.map(param => ({...param}));
+    if (decl.kind === 'method' || decl.kind === 'constructor') {
+      if (decl.nameStart !== undefined) copy.compilerDeclaration = tokens[indexAt(decl.nameStart)]?.compilerMethod;
+      copy.body = decl.bodyRange ? tokens.slice(indexAt(decl.bodyRange[0]), indexAt(decl.bodyRange[1])) : [];
+    }
+    return copy;
+  }
+
+  function analyzeJavaSources(sources, options = {}, syntaxFiles) {
     var errors = [];
     var allTypeNames = new Set();
     var parsedFiles = Object.create(null);
-
-    // Parse all source files
-    for (var filename in sources) {
-      if (!Object.hasOwn(sources, filename)) continue;
+    const methodsByFile = new Map();
+    for (const binding of options.javaBindings || []) {
+      if (binding.kind !== 'method') continue;
+      let methods = methodsByFile.get(binding.file);
+      if (!methods) methodsByFile.set(binding.file, methods = new Map());
+      methods.set(binding.start, binding);
+    }
+    for (const [filename, source] of Object.entries(sources)) {
       try {
-        var tokens = tokenize(sources[filename]);
-        var ast = parseJava(tokens, errors);
-        parsedFiles[filename] = { ast: ast, source: sources[filename] };
-        // Collect type names
-        for (var i = 0; i < ast.length; i++) {
-          var decl = ast[i];
-          if (decl.kind === 'class' || decl.kind === 'interface' || decl.kind === 'enum') {
-            allTypeNames.add(decl.name);
-          }
+        const tokens = tokenize(source);
+        const calls = methodsByFile.get(filename);
+        if (calls) for (const token of tokens) {
+          const method = calls.get(token.start);
+          if (method && method.name === token.value) token.compilerMethod = method;
         }
+        const ast = syntaxFiles?.has(filename) ? syntaxFiles.get(filename).map(decl => materialize(decl, tokens))
+          : parseJava(tokens, errors);
+        parsedFiles[filename] = { ast, tokens };
       } catch (e) {
         errors.push(filename + ': Parse error: ' + e.message);
       }
     }
 
-    _resolveJavaSymbols(parsedFiles, allTypeNames);
+    const qualifiedTypeIds = _resolveJavaSymbols(parsedFiles, allTypeNames);
 
     // Extract class diagram
     var extractor = new JavaClassExtractor(parsedFiles, allTypeNames, errors);
@@ -61,7 +85,7 @@
     var classDiagram = extractor.generatePlantUML();
 
     // Extract sequence diagram
-    var seqGen = new JavaSequenceDiagramGenerator(parsedFiles, extractor, allTypeNames, errors);
+    var seqGen = new JavaSequenceDiagramGenerator(parsedFiles, extractor, allTypeNames, errors, qualifiedTypeIds);
     var sequenceDiagram = '';
     let sequenceFailed = false;
     try {
@@ -82,12 +106,27 @@
     };
   }
 
+  function addRecordMembers(decl) {
+    const components = decl.recordComponents;
+    const fields = components.map(p => ({kind: 'field', ...p, modifiers: ['private', 'final']}));
+    decl.members = fields.concat(decl.members);
+    for (const p of components) {
+      if (!decl.members.some(m => m.kind === 'method' && m.name === p.name && !m.params.length)) {
+        decl.members.push({kind: 'method', name: p.name, returnType: p.type, params: [], modifiers: ['public'], body: []});
+      }
+    }
+    if (!decl.members.some(m => m.kind === 'constructor' && m.params.length === components.length &&
+      m.params.every((p, i) => p.type === components[i].type))) {
+      decl.members.push({kind: 'constructor', name: decl.name, params: components.map(p => ({...p})), modifiers: decl.modifiers, body: []});
+    }
+  }
+
   function _resolveJavaSymbols(parsedFiles, allTypeNames) {
     const declarations = [];
     const qualified = new Map();
     const counts = new Map();
     for (const file of Object.values(parsedFiles)) {
-      const tokens = tokenize(file.source);
+      const tokens = file.tokens;
       const context = { packageName: '', imports: [], wildcardImports: [] };
       for (let index = 0; index < tokens.length && ['package', 'import'].includes(tokens[index].value); index++) {
         const kind = tokens[index].value;
@@ -99,6 +138,7 @@
         else context.imports.push(path);
       }
       const collect = (decl, enclosing) => {
+        if (decl.recordComponents) addRecordMembers(decl);
         const name = [...enclosing, decl.name].filter(Boolean).join('.');
         const record = { decl: decl, name: name, context: context, enclosing: enclosing };
         declarations.push(record);
@@ -191,6 +231,7 @@
       for (const member of decl.members || []) if (!['class', 'interface', 'enum'].includes(member.kind)) rewriteMember(member);
     }
     for (const record of declarations) record.decl.name = record.id;
+    return new Map(declarations.filter(record => exact(record.name)).map(record => [record.name, record.id]));
   }
 
   /* ===================================================================
@@ -245,7 +286,7 @@
           i++;
         }
         i++; // closing quote
-        tokens.push({ type: 'string', value: source.substring(start, i) });
+        tokens.push({ start, type: 'string', value: source.substring(start, i) });
         continue;
       }
 
@@ -258,7 +299,7 @@
           i++;
         }
         i++;
-        tokens.push({ type: 'char', value: source.substring(start, i) });
+        tokens.push({ start, type: 'char', value: source.substring(start, i) });
         continue;
       }
 
@@ -266,7 +307,7 @@
       if (ch >= '0' && ch <= '9') {
         var start = i;
         while (i < len && /[0-9a-fA-FxXlLfFdD._]/.test(source[i])) i++;
-        tokens.push({ type: 'number', value: source.substring(start, i) });
+        tokens.push({ start, type: 'number', value: source.substring(start, i) });
         continue;
       }
 
@@ -276,7 +317,7 @@
         while (i < len && /[\w$]/.test(source[i])) i++;
         var word = source.substring(start, i);
         var type = JAVA_KEYWORDS.has(word) ? 'keyword' : 'ident';
-        tokens.push({ type: type, value: word });
+        tokens.push({ start, type: type, value: word });
         continue;
       }
 
@@ -296,12 +337,12 @@
             i++;
           }
         }
-        tokens.push({ type: 'annotation', value: '@' + name });
+        tokens.push({ start: start - 1, type: 'annotation', value: '@' + name });
         continue;
       }
 
       // Operators and punctuation
-      tokens.push({ type: 'punct', value: ch });
+      tokens.push({ start: i, type: 'punct', value: ch });
       i++;
     }
 
@@ -556,7 +597,7 @@
 
       // Nested class/interface/enum
       var mods = parseModifiers();
-      if (at('keyword', 'class') || at('keyword', 'interface') || at('keyword', 'enum')) {
+      if (at('keyword', 'class') || at('keyword', 'interface') || at('keyword', 'enum') || at('keyword', 'record')) {
         var nested = parseTypeDeclaration(mods);
         if (nested) return nested;
         return null;
@@ -571,12 +612,13 @@
       // Constructor: ClassName(...)
       if (peek() && peek().type === 'ident' && peek().value === className &&
           peek(1) && peek(1).value === '(') {
-        var name = advance().value;
+        var nameToken = advance();
+        var name = nameToken.value;
         var params = parseParams();
         // throws clause
         var throwsTypes = parseThrowsClause();
         var body = at('punct', '{') ? parseBlock() : [];
-        return { kind: 'constructor', name: name, params: params, modifiers: mods, body: body, throwsTypes: throwsTypes };
+        return { kind: 'constructor', name: name, compilerDeclaration: nameToken.compilerMethod, params: params, modifiers: mods, body: body, throwsTypes: throwsTypes };
       }
 
       // Method or field: Type name(...) or Type name;
@@ -604,7 +646,8 @@
         else if (at('punct', '{')) parseBlock();
         return null;
       }
-      var memberName = advance().value;
+      var nameToken = advance();
+      var memberName = nameToken.value;
 
       if (at('punct', '(')) {
         // Method
@@ -618,7 +661,7 @@
           consume('punct', ';'); // abstract or interface method
         }
         return {
-          kind: 'method', name: memberName, returnType: type,
+          kind: 'method', name: memberName, compilerDeclaration: nameToken.compilerMethod, returnType: type,
           params: params, modifiers: mods, body: body, throwsTypes: throwsTypes
         };
       } else {
@@ -685,8 +728,8 @@
 
     // Parse a type declaration (class/interface/enum)
     function parseTypeDeclaration(mods) {
-      if (at('keyword', 'class')) {
-        advance();
+      if (at('keyword', 'class') || at('keyword', 'record')) {
+        var isRecord = advance().value === 'record';
         if (!peek() || peek().type !== 'ident') return null;
         var name = advance().value;
         // Skip type parameters
@@ -698,6 +741,7 @@
             advance();
           }
         }
+        var components = isRecord ? parseParams() : [];
         var ext = '';
         if (consume('keyword', 'extends')) { ext = parseType(); }
         var impls = [];
@@ -713,7 +757,7 @@
         }
         var members = parseMembers(name, false);
         return {
-          kind: 'class', name: name, modifiers: mods,
+          kind: 'class', name: name, modifiers: mods, recordComponents: isRecord ? components : null,
           extends: ext, implements: impls, members: members
         };
       }
@@ -778,7 +822,7 @@
       try {
         var mods = parseModifiers();
         if (pos >= tokens.length) break;
-        if (at('keyword', 'class') || at('keyword', 'interface') || at('keyword', 'enum')) {
+        if (at('keyword', 'class') || at('keyword', 'interface') || at('keyword', 'enum') || at('keyword', 'record')) {
           var decl = parseTypeDeclaration(mods);
           if (decl) declarations.push(decl);
         } else {
@@ -1029,7 +1073,7 @@
       name: info.name, params: params.map(function (p) {
         return { name: p.name, type: _simpleTypeName(p.type) };
       }),
-      returnType: '', visibility: vis, isConstructor: true, sourceBody: member.body, sourceParams: params,
+      returnType: '', visibility: vis, isConstructor: true, sourceBody: member.body, sourceParams: params, compilerDeclaration: member.compilerDeclaration,
       isDefault: params.length === 0 && Array.isArray(member.body) && member.body.length === 0
     });
 
@@ -1120,7 +1164,7 @@
         return { name: p.name, type: _simpleTypeName(p.type) };
       }),
       returnType: _simpleTypeName(member.returnType),
-      sourceBody: member.body, sourceParams: params,
+      sourceBody: member.body, sourceParams: params, compilerDeclaration: member.compilerDeclaration,
       visibility: vis, isStatic: isStatic, isAbstract: isAbstract,
       throwsTypes: (member.throwsTypes || []).map(_simpleTypeName)
     });
@@ -1175,8 +1219,10 @@
             return { name: p.name, type: _simpleTypeName(p.type) };
           }),
           returnType: _simpleTypeName(member.returnType),
-          sourceBody: member.body, sourceParams: params,
-          visibility: '+'
+          sourceBody: member.body, sourceParams: params, compilerDeclaration: member.compilerDeclaration,
+          isStatic: member.modifiers.includes('static'),
+          isAbstract: !member.modifiers.some(m => ['default', 'static', 'private'].includes(m)),
+          visibility: member.modifiers.includes('private') ? '-' : '+'
         });
         methods[member.name] = member.body;
         mParamsMap[member.name] = params;
@@ -1386,7 +1432,8 @@
     }
   }
 
-  function JavaSequenceDiagramGenerator(parsedFiles, extractor, allTypeNames, errors) {
+  function JavaSequenceDiagramGenerator(parsedFiles, extractor, allTypeNames, errors, qualifiedTypeIds) {
+    this.qualifiedTypeIds = qualifiedTypeIds;
     this.diagnostics = new SequenceDiagnostics();
     this.loopConstants = new ConstantValues.LoopFacts();
     this._constants = new Map();
@@ -1395,6 +1442,7 @@
     this._callArguments = new WeakMap();
     this._returnSummaries = new WeakMap();
     this._methodSelections = new Map();
+    this._compilerMethods = new Map();
     this.parsedFiles  = parsedFiles;
     this.classMethods = extractor.classMethods;
     this.attrTypes    = extractor.attrTypes;
@@ -1407,6 +1455,10 @@
     this.classBases = Object.create(null);
     var self = this;
     extractor.classMap.forEach(function (info, name) {
+      for (const method of info.methods) {
+        const symbol = method.compilerDeclaration;
+        if (symbol) self._compilerMethods.set(symbol.key, {owner: name, method});
+      }
       self.classBases[name] = info.bases.filter(function (b) { return allTypeNames.has(b); });
     });
 
@@ -1417,7 +1469,7 @@
     this._syntheticReceiverIds = new Map();
     this._reservedParticipantIds = new Set(['Main', ...allTypeNames]);
     for (const file of Object.values(parsedFiles)) {
-      for (const token of tokenize(file.source)) {
+      for (const token of file.tokens) {
         if (token.type === 'ident') this._reservedParticipantIds.add(token.value);
       }
     }
@@ -1449,11 +1501,12 @@
   JavaSequenceDiagramGenerator.prototype.generate = function () {
     this._statementVisits = 0;
     var mainBody = this._findMain();
-    if (!mainBody || mainBody.length === 0) return;
+    if (!mainBody || mainBody.body.length === 0) return;
 
-    this._ensureParticipant('Main', 'Main');
+    this._callerClass.Main = mainBody.owner;
+    this._ensureParticipant('Main', mainBody.owner);
     var lineStart = this.lines.length;
-    this._processTokenBlock(mainBody, 'Main', 0);
+    this._processTokenBlock(mainBody.body, 'Main', 0);
     if (this.lines.length > lineStart) {
       this.lines.splice(lineStart, 0, 'activate Main');
       this.lines.push('deactivate Main');
@@ -1465,8 +1518,8 @@
     var out = ['@startuml', 'layout landscape', 'layout compact'];
     for (var i = 0; i < this.participants.length; i++) {
       var p = this.participants[i];
-      if (p.id === 'Main' && p.label === 'Main') {
-        out.push('participant Main as : Main');
+      if (p.id === 'Main') {
+        out.push('participant Main as : ' + p.label);
       } else {
         out.push('participant ' + p.id + ': ' + p.label);
       }
@@ -1480,10 +1533,12 @@
   /* ── Find main method ──────────────────────────────────────── */
 
   JavaSequenceDiagramGenerator.prototype._findMain = function () {
-    for (var cn in this.classMethods) {
-      if (this.classMethods[cn]['main']) return this.classMethods[cn]['main'];
+    for (const [owner, info] of this.classMap) {
+      const entry = info.methods.find(method => method.name === 'main' && method.isStatic &&
+        method.returnType === 'void' && method.params.length === 1 &&
+        /^(?:java\.lang\.)?String(?:\[\]|\.\.\.)$/.test(method.params[0].type));
+      if (entry) return {owner, body: entry.sourceBody};
     }
-    // Fallback: look for any static method as entry point
     return null;
   };
 
@@ -1660,6 +1715,7 @@
         i++;
         if (i < tokens.length && tokens[i].type === 'ident') {
           var clsName = tokens[i].value;
+          const constructorBinding = tokens[i].compilerMethod;
           const isArrayAllocation = tokens[i + 1] && tokens[i + 1].value === '[';
           if (isArrayAllocation) delete this.varTypes[varName];
           if (this.allTypeNames.has(clsName) && !isArrayAllocation) {
@@ -1689,8 +1745,9 @@
               this.lines.push('create ' + instance);
               this.lines.push(caller + ' --> ' + instance + ': <<create>>');
               this.lines.push('activate ' + instance);
-              this._maybeFollow(clsName, JAVA_CONSTRUCTOR, instance, depth,
-                this._callArguments.get(tokens[argumentOpen]) || this._argumentBindings(argTokens?.tokens || []));
+              const bindings = this._callArguments.get(tokens[argumentOpen]) || [];
+              const selected = this._selectInvocation(clsName, JAVA_CONSTRUCTOR, argTokens?.tokens || [], constructorBinding);
+              this._maybeFollow(clsName, JAVA_CONSTRUCTOR, instance, depth, bindings, selected);
               this.lines.push('deactivate ' + instance);
             }
             return this._skipToSemicolon(tokens, i);
@@ -2121,10 +2178,13 @@
         var callEnd = this._scanCallArguments(tokens, i + 1, caller, depth);
         var bareMethod = tokens[i].value;
         var callerClass = this._classOf(caller);
-        var methodClass = callerClass ? this._findMethodInHierarchy(callerClass, bareMethod) : null;
+        const bound = this._compilerMethods.get(tokens[i].compilerMethod?.key);
+        const local = this._findMethodInHierarchy(callerClass, bareMethod);
+        const methodClass = local || bound?.owner;
         var returned = null;
         if (methodClass && !this._dataClasses.has(methodClass)) {
-          returned = this._emitCall(caller, methodClass, bareMethod, tokens, i + 1, depth, caller);
+          const target = !local && bound?.method.isStatic ? methodClass : caller;
+          returned = this._emitCall(caller, local ? callerClass : methodClass, bareMethod, tokens, i + 1, depth, target);
         } else { this.diagnostics.add('unresolved', bareMethod); }
         i = this._scanCallChain(tokens, i, callEnd, returned, caller, depth) - 1;
         continue;
@@ -2155,8 +2215,8 @@
           this.lines.push('create ' + calleeId);
           this.lines.push(caller + ' --> ' + calleeId + ': <<create>>');
           this.lines.push('activate ' + calleeId);
-          this._maybeFollow(clsName, JAVA_CONSTRUCTOR, calleeId, depth,
-            this._callArguments.get(tokens[j]) || this._argumentBindings(this._extractParenContents(tokens, j).tokens));
+          const selected = this._selectInvocation(clsName, JAVA_CONSTRUCTOR, this._extractParenContents(tokens, j).tokens, tokens[i + 1].compilerMethod);
+          this._maybeFollow(clsName, JAVA_CONSTRUCTOR, calleeId, depth, this._callArguments.get(tokens[j]), selected);
           this.lines.push('deactivate ' + calleeId);
           i = callEnd - 1;
         }
@@ -2219,18 +2279,16 @@
         clsName = this.attrTypes[cc][receiver];
       }
     }
+    const bound = this._compilerMethods.get(tokens[parenIdx - 1]?.compilerMethod?.key);
+    if (!clsName && bound) clsName = bound.owner;
     if (!clsName) {
       if (!['print', 'println', 'printf'].includes(method)) this.diagnostics.add('unresolved', receiver + '.' + method);
       return;
     }
-    if (this._dataClasses.has(clsName)) return;
-
-    // Verify the method exists on the class
-    if (!this.classMethods[clsName] || !this.classMethods[clsName][method]) {
-      // Check parent classes
-      var parentCls = this._findMethodInHierarchy(clsName, method);
-      if (!parentCls) { this.diagnostics.add('unresolved', clsName + '.' + method); return; }
-      clsName = parentCls;
+    if (!bound && this._dataClasses.has(clsName)) return;
+    if (!bound && !this._findMethodInHierarchy(clsName, method)) {
+      this.diagnostics.add('unresolved', clsName + '.' + method);
+      return;
     }
 
     return this._emitCall(caller, clsName, method, tokens, parenIdx, depth, binding?.id || this._receiverIds[receiver] || this._syntheticReceiverId(clsName, caller, receiver, this.varTypes[receiver] ? 'variable' : 'field'));
@@ -2248,7 +2306,10 @@
     }
     label += ')';
     const bindings = this._callArguments.get(tokens[parenIdx]) || this._argumentBindings(argResult?.tokens || []);
-    const selected = this._selectMethod(clsName, method, bindings.length);
+    const compilerMethod = tokens[parenIdx - 1]?.compilerMethod;
+    const selected = this._selectInvocation(clsName, method, argResult?.tokens || [], compilerMethod);
+    const returnType = this.qualifiedTypeIds.get(compilerMethod?.type) || (compilerMethod?.type && _simpleTypeName(compilerMethod.type))
+      || selected?.method.returnType || this._getReturnType(clsName, method);
 
     if (calleeId === caller) {
       // Self-call — nested activation on same lifeline (UML spec: stacked rectangles)
@@ -2263,12 +2324,9 @@
       // Activation bar (JIVE: Jayaraman et al. 2016, CPP2XMI: Korshunova et al. 2006)
       this.lines.push('activate ' + calleeId);
       this._maybeFollow(clsName, method, calleeId, depth, bindings, selected);
-      var retType = selected ? selected.method.returnType : this._getReturnType(clsName, method);
-      if (retType === 'void') retType = null;
-      if (retType) this.lines.push(calleeId + ' --> ' + caller + ': ' + retType);
+      if (returnType && returnType !== 'void') this.lines.push(calleeId + ' --> ' + caller + ': ' + returnType);
       this.lines.push('deactivate ' + calleeId);
     }
-    const returnType = selected ? selected.method.returnType : this._getReturnType(clsName, method);
     if (!this.allTypeNames.has(returnType)) return null;
     const summary = selected && this._returnSummary(selected.method);
     if (summary?.kind === 'receiver') return { type: this._callerClass[calleeId] || clsName, id: calleeId };
@@ -2278,8 +2336,29 @@
 
   /* ── Method following ──────────────────────────────────────── */
 
-  JavaSequenceDiagramGenerator.prototype._selectMethod = function (clsName, methodName, count) {
-    const key = clsName + '::' + methodName + '/' + count;
+  // A literal can settle an exact overload locally. Receiver identity is a
+  // runtime fact and must never substitute for an argument's declared type.
+  function literalType(tokens) {
+    if (tokens.length !== 1) return null;
+    const {type, value} = tokens[0];
+    if (type === 'string') return 'String';
+    if (type === 'char') return 'char';
+    if (value === 'true' || value === 'false') return 'boolean';
+    if (type !== 'number') return null;
+    if (/l$/i.test(value)) return 'long';
+    if (/^0x[0-9a-f_]+$/i.test(value)) return 'int';
+    if (/f$/i.test(value)) return 'float';
+    return /[.de]/i.test(value) ? 'double' : 'int';
+  }
+
+  JavaSequenceDiagramGenerator.prototype._selectInvocation = function (clsName, method, tokens, symbol) {
+    const args = tokens.length ? splitSequenceTokens(tokens, ',') : [];
+    const types = symbol?.parameters || args.map(literalType);
+    return this._selectMethod(clsName, method, args.length, types, symbol?.key);
+  };
+
+  JavaSequenceDiagramGenerator.prototype._selectMethod = function (clsName, methodName, count, types = [], compilerKey) {
+    const key = JSON.stringify([clsName, methodName, count, types, compilerKey]);
     if (this._methodSelections.has(key)) return this._methodSelections.get(key);
     const seen = new Set(), signatures = new Set(), candidates = [];
     let variableArity = false, current = clsName;
@@ -2292,11 +2371,32 @@
         const signature = parameters.map(param => param.type).join(',');
         if (signatures.has(signature)) continue;
         signatures.add(signature);
-        if (parameters.length === count) candidates.push({ owner: current, method });
+        const symbol = method.compilerDeclaration;
+        if (compilerKey && symbol && (symbol.key === compilerKey || symbol.overrides?.includes(compilerKey))) {
+          const target = {owner: current, method};
+          this._methodSelections.set(key, target);
+          return target;
+        }
+        if (parameters.length === count || compilerKey && parameters.length === types.length) candidates.push({ owner: current, method });
       }
       current = methodName === JAVA_CONSTRUCTOR ? null : this._findParent(current);
     }
-    const selected = !variableArity && candidates.length === 1 ? candidates[0] : null;
+    if (this._compilerMethods.has(compilerKey)) {
+      const target = this._compilerMethods.get(compilerKey);
+      this._methodSelections.set(key, target);
+      return target;
+    }
+    const normalize = type => type.replace(/^java\.lang\./, '').replace(/\.\.\.$/, '[]');
+    const exact = types.length && types.every(type => typeof type === 'string') ? candidates.filter(({method}) =>
+      method.sourceParams.every((param, index) => {
+        const type = normalize(types[index] || '');
+        const formal = normalize(param.type);
+        return type === formal || type.replace(/\./g, '_') === formal ||
+          type.slice(type.lastIndexOf('.') + 1) === formal;
+      })) : [];
+    let selected = exact.length === 1 ? exact[0] : null;
+    if (!selected && !variableArity && !compilerKey && candidates.length === 1) selected = candidates[0];
+    if (!selected && compilerKey && candidates.length === 1 && count === 0) selected = candidates[0];
     this._methodSelections.set(key, selected);
     return selected;
   };
@@ -2360,13 +2460,16 @@
 
   JavaSequenceDiagramGenerator.prototype._maybeFollow = function (clsName, methodName, calleeId, depth, bindings = [], selected) {
 
-    selected = selected || this._selectMethod(clsName, methodName, bindings.length);
+    if (selected === undefined) selected = this._selectMethod(clsName, methodName, bindings.length);
     var key = clsName + '::' + methodName + (selected ? '(' + selected.method.params.map(param => param.type).join(',') + ')' : '');
     const methodLabel = methodName === JAVA_CONSTRUCTOR ? 'constructor' : methodName;
 
     const overloads = (this.classMap.get(clsName)?.methods || []).filter(method =>
       methodName === JAVA_CONSTRUCTOR ? method.isConstructor : method.name === methodName);
-    if (!selected && overloads.length) this.diagnostics.add('dispatch', clsName + '.' + methodLabel);
+    if (!selected && (overloads.length || this._findMethodInHierarchy(clsName, methodName))) {
+      this.diagnostics.add('dispatch', clsName + '.' + methodLabel);
+      return;
+    }
 
     var bodyTokens = selected?.method.sourceBody || this._findMethodBody(clsName, methodName);
     if (selected && Array.isArray(selected.method.sourceBody) && !selected.method.sourceBody.length && !selected.method.isAbstract) return;
@@ -2481,15 +2584,15 @@
   };
 
   JavaSequenceDiagramGenerator.prototype._getReturnType = function (clsName, methodName) {
-    var info = this.classMap.get(clsName);
-    if (!info) return null;
-    for (var i = 0; i < info.methods.length; i++) {
-      if (info.methods[i].name === methodName) {
-        var ret = info.methods[i].returnType;
-        if (ret && ret !== 'void') return ret;
+    const types = new Set(), seen = new Set();
+    while (clsName && !seen.has(clsName)) {
+      seen.add(clsName);
+      for (const method of this.classMap.get(clsName)?.methods || []) {
+        if (method.name === methodName && !method.isConstructor) types.add(method.returnType);
       }
+      clsName = this._findParent(clsName);
     }
-    return null;
+    return types.size === 1 ? types.values().next().value : null;
   };
 
   /* ── Enhanced for-each type inference ──────────────────────── */

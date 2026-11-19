@@ -177,7 +177,7 @@ test('an obsolete WebContainer failure cannot switch a replacement to browser fa
   await tutorial._disposeWebContainerRuntime();
 });
 
-for (const backend of ['sql', 'prolog', 'java']) {
+for (const backend of ['sql', 'prolog']) {
   test(`${backend}: cancelling boot rejects immediately and cannot expire a replacement`, async () => {
     const runtime = createRuntime(backend);
     const { tutorial, workers } = runtime;
@@ -276,7 +276,7 @@ for (const backend of ['sql', 'prolog']) {
 }
 
 test('a request timeout cannot restart a replacement created by its callback', async () => {
-  const runtime = createRuntime('java');
+  const runtime = createRuntime('sql');
   const { tutorial, workers } = runtime;
   const boot = tutorial._initBackend();
   workers[0].emit({ type: 'ready' });
@@ -297,7 +297,7 @@ test('a request timeout cannot restart a replacement created by its callback', a
   tutorial._terminateWorker();
 });
 
-for (const backend of ['sql', 'prolog', 'java']) {
+for (const backend of ['sql', 'prolog']) {
   for (const failure of ['crash', 'timeout']) {
     test(`${backend}: ${failure} settles pending commands and permits requests after recovery`, async () => {
       const runtime = createRuntime(backend);
@@ -354,12 +354,13 @@ test('Python setup cannot send Git initialization to a replacement backend', asy
   const oldBoot = observe(tutorial._initBackend());
   workers[0].emit({ type: 'ready' });
   workers[0].emit({ type: 'done', id: workers[0].messages[0].id, exitCode: 0 });
-  tutorial._terminateWorker('Switched to Java');
-  tutorial.config.backend = 'java';
+  tutorial._terminateWorker('Switched to SQL');
+  tutorial.config.backend = 'sql';
+  tutorial.setupCommands = [];
   const replacement = tutorial._initBackend();
   await flush();
   assert.equal(oldBoot.status, 'rejected');
-  assert.deepEqual(workers[1].messages, [], 'an obsolete Python boot must not configure a Java worker');
+  assert.deepEqual(workers[1].messages, [], 'an obsolete Python boot must not configure a SQL worker');
   workers[1].emit({ type: 'ready' });
   await replacement;
   tutorial._terminateWorker();
@@ -420,8 +421,9 @@ for (const completedPhase of ['gitInit', 'gitRun']) {
       assert.equal(firstCommand.type, 'gitRun');
       workers[0].emit({ type: 'git_run_done', id: firstCommand.id, exitCode: 0 });
     }
-    tutorial._terminateWorker('Switched to Java');
-    tutorial.config.backend = 'java';
+    tutorial._terminateWorker('Switched to SQL');
+    tutorial.config.backend = 'sql';
+    tutorial.setupCommands = [];
     const replacement = tutorial._initBackend();
     await flush();
     assert.equal(oldBoot.status, 'rejected');
