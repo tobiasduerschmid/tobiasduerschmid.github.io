@@ -34,11 +34,11 @@ decks:
   - makefile_examples
   - makefile_examples_2
   - dev_practice_genai
+  - design_with_reuse
 
 other:
   - design_pattern_observer
   - design_principle_information_hiding
-  - design_with_reuse
   - uml_class_diagram_examples
   - uml_sequence_diagram_examples
   - process_people_tailoring

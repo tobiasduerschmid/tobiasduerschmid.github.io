@@ -32,9 +32,9 @@ decks:
   - c
   - makefile
   - dev_practice_genai
+  - design_with_reuse
 
 other:
   - design_pattern_observer
   - design_principle_information_hiding
-  - design_with_reuse
   - process_people_tailoring
