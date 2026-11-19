@@ -1,23 +1,24 @@
-# Information Hiding in Python.
+# Information Hiding: Who Knows the Secret?
 #
-# The code blocks were GENERATED from a prototype that was run against the real
-# refactoring engine (js/tutorial-refactorings.js) and against every grader
-# below. Do not retype them. The design is in
+# Every taught tool path is replayed through the real refactoring engine
+# (js/tutorial-refactorings.js) by scripts/tests/information-hiding-tool-paths.test.js,
+# and every grader by scripts/tests/test_information_hiding_graders.py. Rerun
+# both after editing any code block. The design is in
 # docs/superpowers/specs/2026-11-17-information-hiding-tutorial-design.md.
 #
 # The starter files are shaped for the editor's refactoring tools. Three limits
 # of those tools are load-bearing, so keep these properties when editing code:
-#   1. Extract Function/Method refuses a helper name that already appears in the
-#      enclosing function (even as another object's attribute). That is why the
-#      vendor SDKs say capture / reverse / vault / push and our modules say
-#      charge / refund / save_card / send.
+#   1. Extract Function/Method refuses a method name that its class already
+#      uses (a sibling method or a self attribute). That is why lesson 1's
+#      refund service method is refund_order, not the lecture's refund.
+#      Another object's attribute, such as PayPal's client.charge, is no clash.
 #   2. Move Method does not add imports to the target file. Every extracted
 #      helper therefore takes only unannotated locals or built-in types.
 #   3. Rename Symbol only rewrites the active file. Renaming a method must start
 #      from its `def` line, never from a call.
 
-title: "Information Hiding in Python: Who Knows the Secret?"
-description: "Five small designs where a decision has leaked. For each one you work out which files a change would touch, move the knowledge into one module with the editor's refactoring tools, and let tests confirm that nothing broke. About 75 minutes. Builds on the Managing Complexity lecture and on the Python, testing, and UML class diagram tutorials."
+title: "Information Hiding: Who Knows the Secret?"
+description: "Five small designs where a decision has leaked. For each one you work out which files a change would touch, move the knowledge into one module with the editor's refactoring tools, and let tests confirm that nothing broke. About 85 minutes. Builds on the Managing Complexity lecture and on the Python, testing, and UML class diagram tutorials."
 instructions_footer_include: refactoring-tools-reference.html
 
 # Authoring-time Bloom-verb objectives. Not yet rendered to students.
@@ -97,12 +98,17 @@ steps:
   # STEP 1 — A Decision Three Classes Know
   # =========================================================================
   # Pedagogy: worked example with fading (guided, then repeat, then on your own); tool pretraining on the lecture's own example; PRIMM (the BEFORE list is the prediction)
+  # The services mirror the lecture's Java (L15 slides 8 and 10) in Python. Two
+  # differences are forced by the refactoring tools: each service receives the
+  # gateway as a parameter, because Move Method needs a parameter typed as the
+  # target class, and the refund service's method is refund_order, because an
+  # extracted `refund` would collide with a service method of the same name.
   - title: "A Decision Three Classes Know"
     key: payments
     instructions: |
       ### Why this matters
 
-      A design decision that several modules know is expensive to change: every one of them has to be edited, and every edit can break something. Information hiding gives a decision one owner, so that changing it later touches one file.
+      A design decision that several modules know is expensive to change: each one must be edited, and each edit can break something. Information hiding gives the decision one owner, so changing it later touches one file.
 
       ### 🎯 You will learn to
 
@@ -112,7 +118,9 @@ steps:
 
       ### The design
 
-      This is the payment example from lecture, in a boba shop: three services each run PayPal's protocol themselves, through the `paypal` client of `PayPalGateway`. The interface `PaymentGateway` lists what the shop needs from any provider, but nothing uses it yet.
+      The lecture's payment code, in Python: three boba-shop services each run PayPal's protocol themselves, through the `paypal` client of `PayPalGateway`.
+
+      `PaymentGateway`, unused so far, lists what the shop needs from any provider. It is an **abstract base class (ABC)**, Python's version of the lecture's interface: it inherits from `ABC` and marks operations `@abstractmethod`. Python cannot create an object of a class with an abstract method left, so a subclass must implement them all.
 
       <div class="uml-class-diagram-container" data-uml-type="class" data-uml-role="reference-design" data-uml-caption="Today: count the arrows that reach PayPalClient. Every service has one." data-uml-spec='@startuml
       layout compact
@@ -132,21 +140,21 @@ steps:
       WalletService ..> PayPalGateway
       @enduml'></div>
 
-      <div class="uml-class-diagram-container" data-uml-type="class" data-uml-role="reference-design" data-uml-caption="Target: the services know only the PaymentGateway interface, and only PayPalGateway reaches PayPalClient. Give your extracted methods the names shown on PaymentGateway." data-uml-spec='@startuml
+      <div class="uml-class-diagram-container" data-uml-type="class" data-uml-role="reference-design" data-uml-caption="Target: the services know only the abstract class PaymentGateway, and only its subclass PayPalGateway reaches PayPalClient. Give your extracted methods the names shown on PaymentGateway." data-uml-spec='@startuml
       layout compact
       class OrderService @pos(0, 0)
       class RefundService @pos(144, 0)
       class WalletService @pos(300, 0)
-      interface PaymentGateway @pos(100, 70) {
-        + charge(cents): bool
-        + refund(cents): bool
-        + save_card(customer): str
+      abstract class PaymentGateway @pos(80, 70) {
+        + {abstract} charge(amount): bool
+        + {abstract} refund(amount): bool
+        + {abstract} create_payment_method(customer): str
       }
-      class PayPalGateway @pos(120, 220) {
+      class PayPalGateway @pos(120, 240) {
         - __paypal: PayPalClient
       }
-      class PayPalClient <<PayPal SDK>> @pos(155, 317)
-      PayPalGateway ..|> PaymentGateway
+      class PayPalClient <<PayPal SDK>> @pos(155, 337)
+      PayPalGateway --|> PaymentGateway
       PayPalGateway --> PayPalClient
       OrderService ..> PaymentGateway
       RefundService ..> PaymentGateway
@@ -155,16 +163,16 @@ steps:
 
       ### Your tasks
 
-      1. **Think.** The change request: *"PayPal is raising its fees. Switch to Stripe."* Open `change_impact.py` and list in `BEFORE` every file of ours that would need an edit.
-      2. **Test.** Press **Test**. All four tests pass. They check what the shop does, not how it pays, so they must stay green.
+      1. **Think.** Change request: *"PayPal is raising its fees. Switch to Stripe."* In `change_impact.py`, list in `BEFORE` every file of ours that would need an edit, and why.
+      2. **Test.** Press **Test**: all five tests pass. They check what the shop does, not how it pays, so they must stay green.
       3. **Refactor `order_service.py`.**
          - Select the three lines that only make sense if you know PayPal: from `token = …` through `paid = …`.
          - Right-click, choose **Refactor: Extract Function/Method…**, and name the method `charge`.
          - Click inside the new `charge` method. Right-click, choose **Refactor: Move Method…**, and pick `PayPalGateway`.
          - Press **Test**.
-      4. **Refactor the other two services** the same way. This time you pick the lines. Name the methods `refund` and `save_card`.
-      5. **Lock it.** Only `PayPalGateway` needs the client now. In `paypal_gateway.py`, click on `paypal` in the line `self.paypal = …`, choose **Refactor: Rename Symbol…**, and rename it to `__paypal`. Press **Test**.
-      6. **Depend on the interface.** Make `PayPalGateway` implement `PaymentGateway`. Then only `gateway_choice.py` may name `PayPalGateway`. Press **Test**: if Python cannot instantiate `PayPalGateway`, the error names a missing operation.
+      4. **Refactor the other two services** the same way. This time you pick the lines. Name the methods `refund` and `create_payment_method`.
+      5. **Lock it.** In `paypal_gateway.py`, click `paypal` in `self.paypal = …`, choose **Refactor: Rename Symbol…**, and rename it to `__paypal`. Press **Test**.
+      6. **Depend on the ABC.** Make `PayPalGateway` a subclass of `PaymentGateway`. Then only `gateway_choice.py` may name `PayPalGateway`. A "Can't instantiate" error names a missing operation.
       7. **Reason.** Fill in `AFTER`: which files would the switch to Stripe touch now?
 
       Move Method leaves a forwarding method in each service. Delete it: it still names `PayPalGateway`.
@@ -172,7 +180,7 @@ steps:
       <details markdown="1">
       <summary>What you just did</summary>
 
-      The services now know only the interface `PaymentGateway`. In the lecture's words: the decision to use PayPal is hidden in one module, and other services don't know PayPal exists. That decision is the **secret** of `PayPalGateway`. Switching to Stripe takes one new class plus one line in the one place where the provider is chosen.
+      The services now know only `PaymentGateway`. In the lecture's words, they don't know PayPal exists: that decision is hidden in `PayPalGateway`, as its **secret**. Switching to Stripe takes one new subclass plus one line in `get_payment_gateway()`.
 
       `PayPalGateway` is no longer a **shallow module**: three small operations hide a whole protocol.
 
@@ -185,15 +193,27 @@ steps:
           from order import Order
           from paypal_gateway import PayPalGateway
 
+          SALES_TAX_PERCENT = 10
+
 
           class OrderService:
-              def checkout(self, gateway: PayPalGateway, order: Order) -> bool:
-                  cents = order.total_cents
+              def __init__(self) -> None:
+                  self.kitchen_queue: list[Order] = []
+
+              def checkout(self, order: Order, gateway: PayPalGateway) -> bool:
+                  if not order.drinks:
+                      raise ValueError("Cannot check out an empty order.")
+                  subtotal = order.subtotal_cents()
+                  amount = subtotal + subtotal * SALES_TAX_PERCENT // 100
                   token = gateway.paypal.authenticate()
-                  result = gateway.paypal.capture(token, cents)
-                  paid = result.was_successful()
+                  charge = gateway.paypal.charge(token, amount)
+                  paid = charge.was_successful()
                   if paid:
                       order.status = "paid"
+                      order.paid_cents = amount
+                      self.kitchen_queue.append(order)
+                  else:
+                      order.status = "declined"
                   return paid
       - path: refund_service.py
         language: python
@@ -204,13 +224,16 @@ steps:
 
 
           class RefundService:
-              def refund_order(self, gateway: PayPalGateway, order: Order) -> bool:
-                  cents = order.total_cents
+              def refund_order(self, order: Order, gateway: PayPalGateway) -> bool:
+                  if order.status != "paid":
+                      raise ValueError(f"Only paid orders can be refunded; this one is {order.status}.")
+                  amount = order.paid_cents
                   token = gateway.paypal.authenticate()
-                  result = gateway.paypal.reverse(token, cents)
-                  refunded = result.was_successful()
+                  refund = gateway.paypal.refund(token, amount)
+                  refunded = refund.was_successful()
                   if refunded:
                       order.status = "refunded"
+                      order.paid_cents = 0
                   return refunded
       - path: wallet_service.py
         language: python
@@ -221,13 +244,18 @@ steps:
 
           class WalletService:
               def __init__(self) -> None:
-                  self.saved_cards: dict[str, str] = {}
+                  self.saved_methods: dict[str, list[str]] = {}
+                  self.default_method: dict[str, str] = {}
 
-              def add_payment_method(self, gateway: PayPalGateway, customer: str) -> str:
+              def add_payment_method(self, customer: str, gateway: PayPalGateway) -> str:
                   token = gateway.paypal.authenticate()
-                  card_id = gateway.paypal.vault(token, customer)
-                  self.saved_cards[customer] = card_id
-                  return card_id
+                  payment = gateway.paypal.create_payment_method(token, customer)
+                  method_id = payment.method_id
+                  if customer not in self.saved_methods:
+                      self.saved_methods[customer] = []
+                      self.default_method[customer] = method_id
+                  self.saved_methods[customer].append(method_id)
+                  return method_id
       - path: paypal_gateway.py
         language: python
         reseed: true
@@ -248,19 +276,19 @@ steps:
 
 
           class PaymentGateway(ABC):
-              """What Boba Run needs from any payment provider."""
+              """What Boba Run needs from any payment provider. Amounts are in cents."""
 
               @abstractmethod
-              def charge(self, cents: int) -> bool:
+              def charge(self, amount: int) -> bool:
                   """Charge the customer; True if the payment went through."""
 
               @abstractmethod
-              def refund(self, cents: int) -> bool:
+              def refund(self, amount: int) -> bool:
                   """Give money back; True if the refund went through."""
 
               @abstractmethod
-              def save_card(self, customer: str) -> str:
-                  """Store the customer's card; return an id for it."""
+              def create_payment_method(self, customer: str) -> str:
+                  """Save a payment method for the customer; return its id."""
       - path: gateway_choice.py
         language: python
         reseed: true
@@ -268,7 +296,7 @@ steps:
           from paypal_gateway import PayPalGateway
 
 
-          def current_gateway() -> PayPalGateway:
+          def get_payment_gateway() -> PayPalGateway:
               """The payment provider Boba Run uses today."""
               return PayPalGateway()
       - path: order.py
@@ -276,55 +304,70 @@ steps:
         reseed: true
         content: |
           class Order:
-              def __init__(self, drink: str, total_cents: int) -> None:
-                  self.drink = drink
-                  self.total_cents = total_cents
+              """A customer's order: (drink, price in cents) pairs."""
+
+              def __init__(self, customer: str, drinks: list[tuple[str, int]]) -> None:
+                  self.customer = customer
+                  self.drinks = drinks
                   self.status = "new"
+                  self.paid_cents = 0
+
+              def subtotal_cents(self) -> int:
+                  return sum(price for _drink, price in self.drinks)
       - path: paypal_sdk.py
         language: python
         reseed: true
         content: |
           """PayPal's SDK. Vendor code: imagine it came from `pip install paypal`.
 
-          You cannot edit this file. It is a small offline sandbox, so no real money
-          moves, but its calls have the same shape as a real payment SDK.
+          You cannot edit this file, and you only need the four calls the services make:
+          authenticate, charge, refund, and create_payment_method. It is a small offline
+          sandbox, so no real money moves.
           """
 
 
           class PayPalCharge:
-              def __init__(self, transaction_id: str, succeeded: bool, fee_cents: int) -> None:
-                  self.transaction_id = transaction_id
+              def __init__(self, succeeded: bool) -> None:
                   self.succeeded = succeeded
-                  self.fee_cents = fee_cents
 
               def was_successful(self) -> bool:
                   return self.succeeded
 
 
+          class PayPalRefund:
+              def __init__(self, succeeded: bool) -> None:
+                  self.succeeded = succeeded
+
+              def was_successful(self) -> bool:
+                  return self.succeeded
+
+
+          class PayPalPaymentMethod:
+              def __init__(self, method_id: str) -> None:
+                  self.method_id = method_id
+
+
           class PayPalClient:
               """PayPal's protocol: authenticate first, then pass the token to every call."""
 
-              CARD_LIMIT_CENTS = 10_000
+              CHARGE_LIMIT_CENTS = 10_000
 
               def __init__(self, merchant_id: str) -> None:
                   self.merchant_id = merchant_id
-                  self.transactions = 0
+                  self.methods_created = 0
 
               def authenticate(self) -> str:
                   return "token-" + self.merchant_id
 
-              def capture(self, token: str, cents: int) -> PayPalCharge:
-                  self.transactions += 1
-                  succeeded = token.startswith("token-") and 0 < cents <= self.CARD_LIMIT_CENTS
-                  return PayPalCharge(f"{self.transactions:04d}", succeeded, cents * 3 // 100)
+              def charge(self, token: str, cents: int) -> PayPalCharge:
+                  return PayPalCharge(token.startswith("token-") and 0 < cents <= self.CHARGE_LIMIT_CENTS)
 
-              def reverse(self, token: str, cents: int) -> PayPalCharge:
-                  self.transactions += 1
-                  succeeded = token.startswith("token-") and cents > 0
-                  return PayPalCharge(f"{self.transactions:04d}", succeeded, 0)
+              def refund(self, token: str, cents: int) -> PayPalRefund:
+                  return PayPalRefund(token.startswith("token-") and cents > 0)
 
-              def vault(self, token: str, customer: str) -> str:
-                  return "vault-" + customer
+              def create_payment_method(self, token: str, payer: str) -> PayPalPaymentMethod:
+                  self.methods_created += 1
+                  return PayPalPaymentMethod(f"PP-{payer}-{self.methods_created:04d}")
       - path: change_impact.py
         language: python
         reseed: true
@@ -339,8 +382,9 @@ steps:
           - Test files count: a test that must be rewritten is part of the cost.
           """
 
-          # Your analysis of the starting design, for example ["order.py"].
-          BEFORE = []
+          # Your analysis of the starting design: each file that would need an edit,
+          # with what in it would change, for example {"order.py": "what would change"}.
+          BEFORE = {}
 
           # Fill this in after your refactoring passes the tests.
           AFTER = []
@@ -348,35 +392,52 @@ steps:
         language: python
         reseed: true
         content: |
-          from gateway_choice import current_gateway
+          import pytest
+
+          from gateway_choice import get_payment_gateway
           from order import Order
           from order_service import OrderService
           from refund_service import RefundService
           from wallet_service import WalletService
 
 
-          def test_checkout_marks_the_order_paid():
-              order = Order("Taro Milk Tea", 550)
-              assert OrderService().checkout(current_gateway(), order) is True
+          def test_checkout_charges_the_total_with_tax_and_queues_the_order():
+              shop = OrderService()
+              order = Order("ana", [("Taro Milk Tea", 550), ("Thai Tea", 500)])
+              assert shop.checkout(order, get_payment_gateway()) is True
               assert order.status == "paid"
+              assert order.paid_cents == 1155
+              assert shop.kitchen_queue == [order]
 
 
-          def test_a_declined_payment_leaves_the_order_new():
-              order = Order("Boba for the whole lecture hall", 250_000)
-              assert OrderService().checkout(current_gateway(), order) is False
-              assert order.status == "new"
+          def test_a_declined_payment_keeps_the_order_out_of_the_kitchen():
+              shop = OrderService()
+              order = Order("ben", [("Boba for the whole lecture hall", 250_000)])
+              assert shop.checkout(order, get_payment_gateway()) is False
+              assert order.status == "declined"
+              assert shop.kitchen_queue == []
 
 
-          def test_refund_marks_the_order_refunded():
-              order = Order("Thai Tea", 500)
-              assert RefundService().refund_order(current_gateway(), order) is True
+          def test_refund_gives_back_what_a_paid_order_cost():
+              order = Order("ana", [("Thai Tea", 500)])
+              OrderService().checkout(order, get_payment_gateway())
+              assert RefundService().refund_order(order, get_payment_gateway()) is True
               assert order.status == "refunded"
+              assert order.paid_cents == 0
 
 
-          def test_saving_a_card_remembers_it_for_the_customer():
+          def test_only_paid_orders_can_be_refunded():
+              with pytest.raises(ValueError):
+                  RefundService().refund_order(Order("cam", [("Thai Tea", 500)]), get_payment_gateway())
+
+
+          def test_the_first_saved_payment_method_becomes_the_default():
+              gateway = get_payment_gateway()
               wallet = WalletService()
-              card_id = wallet.add_payment_method(current_gateway(), "ana")
-              assert wallet.saved_cards["ana"] == card_id
+              first = wallet.add_payment_method("ana", gateway)
+              second = wallet.add_payment_method("ana", gateway)
+              assert wallet.saved_methods["ana"] == [first, second]
+              assert wallet.default_method["ana"] == first
     open_file: order_service.py
     run_file: test_shop.py
     uml_files:
@@ -392,7 +453,7 @@ steps:
           _ns = {}
           exec(open("/tutorial/change_impact.py").read(), _ns)
           def _files(value):
-              assert isinstance(value, (list, tuple, set)), "Keep each analysis as a list of file names."
+              assert isinstance(value, (dict, list, tuple, set)), "Keep each analysis as a dictionary or a list of file names."
               return {str(name).strip() for name in value}
 
           _required = {"order_service.py", "refund_service.py", "wallet_service.py"}
@@ -402,7 +463,7 @@ steps:
           - title: "Would this file survive the switch?"
             text: "Go through the files one at a time and ask: if Boba Run switched from PayPal to Stripe, would this file still be correct exactly as written? If not, it belongs on the list."
           - title: "Search for PayPal's own words"
-            text: "Search for PayPal's own words, such as the names of its calls, not for imports. A file can run PayPal's protocol without importing anything from PayPal."
+            text: "Search for PayPal's own words, such as its client and the result objects it returns, not for imports. A file can run PayPal's protocol without importing anything from PayPal."
           - title: "Tests, vendor code, and new files"
             text: "Tests are files too: does any test repeat a PayPal detail? PayPal's SDK is PayPal's code, not ours, and a file nobody has written yet is not an edit, so neither goes on the list."
       - description: "Before: the analysis lists no file that could stay as it is"
@@ -410,7 +471,7 @@ steps:
           _ns = {}
           exec(open("/tutorial/change_impact.py").read(), _ns)
           def _files(value):
-              assert isinstance(value, (list, tuple, set)), "Keep each analysis as a list of file names."
+              assert isinstance(value, (dict, list, tuple, set)), "Keep each analysis as a dictionary or a list of file names."
               return {str(name).strip() for name in value}
 
           # The two gateway files are defensible either way in the starting design.
@@ -421,6 +482,21 @@ steps:
           _extra = _before - _allowed
           assert not _extra, f"BEFORE lists {len(_extra)} file(s) that would not need an edit."
         hints: *l1_before
+      - description: "Before: each file on the list says why it would need an edit"
+        command: |
+          _ns = {}
+          exec(open("/tutorial/change_impact.py").read(), _ns)
+          _before = _ns.get("BEFORE", {})
+          assert isinstance(_before, dict) and _before, "Write BEFORE as a dictionary from each file to the reason it needs an edit."
+          for _file, _reason in _before.items():
+              assert isinstance(_reason, str) and len(_reason.split()) >= 2, f"Say in a few words why {_file} would need an edit."
+        hints: &before_reasons
+          - title: "A reason for every file"
+            text: "Next to each file in `BEFORE`, write in a few words what in it would have to change. That reason is your prediction: after the refactoring, you can check whether it held."
+          - title: "Name the detail, not the file"
+            text: "A good reason names the detail that changes, such as a call, a separator, or a number that comes from a rule. \"It uses it\" does not say what you would edit."
+          - title: "The shape of the answer"
+            text: "Write `BEFORE` as a dictionary: each key is a file name and each value is a short phrase, as the comment above `BEFORE` shows."
       - description: "Checkout works with a gateway from another provider"
         command: |
           import sys
@@ -434,28 +510,31 @@ steps:
               """A gateway from another provider. It has never heard of PayPal."""
               def __init__(self):
                   self.calls = []
-              def charge(self, cents):
-                  self.calls.append(("charge", cents))
-                  return cents <= 2000
-              def refund(self, cents):
-                  self.calls.append(("refund", cents))
-                  return cents != 777
-              def save_card(self, customer):
-                  self.calls.append(("save_card", customer))
-                  return "card-of-" + customer
+              def charge(self, amount):
+                  self.calls.append(("charge", amount))
+                  return amount <= 2000
+              def refund(self, amount):
+                  self.calls.append(("refund", amount))
+                  return amount != 777
+              def create_payment_method(self, customer):
+                  self.calls.append(("create_payment_method", customer))
+                  return "method-of-" + customer
 
           from order import Order
           from order_service import OrderService
           _gateway = OtherProvider()
-          _order = Order("Taro Milk Tea", 550)
+          _shop = OrderService()
+          _order = Order("ana", [("Taro Milk Tea", 550)])
           try:
-              _result = OrderService().checkout(_gateway, _order)
-          except AttributeError as _error:
+              _result = _shop.checkout(_order, _gateway)
+          except (AttributeError, TypeError) as _error:
               raise AssertionError(f"checkout still needs something only PayPal has: {_error}")
           assert _result is True and _order.status == "paid", "An accepted payment should mark the order paid and return True."
-          assert _gateway.calls == [("charge", 550)], "checkout should ask the gateway to charge the order total once."
-          _big = Order("Boba for the whole lecture hall", 5000)
-          assert OrderService().checkout(_gateway, _big) is False and _big.status == "new", "A declined payment should leave the order new and return False."
+          assert _gateway.calls == [("charge", 605)], "checkout should ask the gateway once to charge the total with tax."
+          assert _order.paid_cents == 605 and _shop.kitchen_queue == [_order], "A paid order should record what it cost and go to the kitchen."
+          _big = Order("ben", [("Boba for the whole lecture hall", 5000)])
+          assert _shop.checkout(_big, _gateway) is False and _big.status == "declined", "A declined payment should mark the order declined and return False."
+          assert _shop.kitchen_queue == [_order], "A declined order should stay out of the kitchen."
         hints: &l1_provider
           - title: "What the stand-in offers"
             text: "The check hands your service a gateway from another provider. It offers only the operations of `PaymentGateway`, with those names. What does your service still ask the gateway for?"
@@ -476,30 +555,33 @@ steps:
               """A gateway from another provider. It has never heard of PayPal."""
               def __init__(self):
                   self.calls = []
-              def charge(self, cents):
-                  self.calls.append(("charge", cents))
-                  return cents <= 2000
-              def refund(self, cents):
-                  self.calls.append(("refund", cents))
-                  return cents != 777
-              def save_card(self, customer):
-                  self.calls.append(("save_card", customer))
-                  return "card-of-" + customer
+              def charge(self, amount):
+                  self.calls.append(("charge", amount))
+                  return amount <= 2000
+              def refund(self, amount):
+                  self.calls.append(("refund", amount))
+                  return amount != 777
+              def create_payment_method(self, customer):
+                  self.calls.append(("create_payment_method", customer))
+                  return "method-of-" + customer
 
           from order import Order
           from refund_service import RefundService
           _gateway = OtherProvider()
-          _order = Order("Thai Tea", 500)
+          _order = Order("ana", [("Thai Tea", 500)])
+          _order.status, _order.paid_cents = "paid", 550
           try:
-              _result = RefundService().refund_order(_gateway, _order)
-          except AttributeError as _error:
+              _result = RefundService().refund_order(_order, _gateway)
+          except (AttributeError, TypeError) as _error:
               raise AssertionError(f"refund_order still needs something only PayPal has: {_error}")
           assert _result is True and _order.status == "refunded", "A successful refund should mark the order refunded and return True."
-          assert _gateway.calls == [("refund", 500)], "refund_order should ask the gateway to refund the order total once."
-          _odd = Order("Mystery drink", 777)
-          assert RefundService().refund_order(_gateway, _odd) is False and _odd.status == "new", "A failed refund should leave the order unchanged and return False."
+          assert _gateway.calls == [("refund", 550)], "refund_order should ask the gateway once to refund what the customer paid."
+          assert _order.paid_cents == 0, "A refunded order should no longer count as paid for."
+          _odd = Order("ben", [("Mystery drink", 700)])
+          _odd.status, _odd.paid_cents = "paid", 777
+          assert RefundService().refund_order(_odd, _gateway) is False and _odd.status == "paid", "A failed refund should leave the order paid and return False."
         hints: *l1_provider
-      - description: "Saving a card works with a gateway from another provider"
+      - description: "Saving a payment method works with a gateway from another provider"
         command: |
           import sys
           for _name in list(sys.modules):
@@ -512,25 +594,26 @@ steps:
               """A gateway from another provider. It has never heard of PayPal."""
               def __init__(self):
                   self.calls = []
-              def charge(self, cents):
-                  self.calls.append(("charge", cents))
-                  return cents <= 2000
-              def refund(self, cents):
-                  self.calls.append(("refund", cents))
-                  return cents != 777
-              def save_card(self, customer):
-                  self.calls.append(("save_card", customer))
-                  return "card-of-" + customer
+              def charge(self, amount):
+                  self.calls.append(("charge", amount))
+                  return amount <= 2000
+              def refund(self, amount):
+                  self.calls.append(("refund", amount))
+                  return amount != 777
+              def create_payment_method(self, customer):
+                  self.calls.append(("create_payment_method", customer))
+                  return "method-of-" + customer
 
           from wallet_service import WalletService
           _gateway = OtherProvider()
           _wallet = WalletService()
           try:
-              _card = _wallet.add_payment_method(_gateway, "ana")
-          except AttributeError as _error:
+              _method = _wallet.add_payment_method("ana", _gateway)
+          except (AttributeError, TypeError) as _error:
               raise AssertionError(f"add_payment_method still needs something only PayPal has: {_error}")
-          assert _card == "card-of-ana" and _wallet.saved_cards == {"ana": "card-of-ana"}, "The wallet should remember the card id that the gateway returns."
-          assert _gateway.calls == [("save_card", "ana")], "add_payment_method should ask the gateway to save the card once."
+          assert _method == "method-of-ana" and _wallet.saved_methods == {"ana": ["method-of-ana"]}, "The wallet should remember the payment method id that the gateway returns."
+          assert _wallet.default_method == {"ana": "method-of-ana"}, "A customer's first payment method should become the default."
+          assert _gateway.calls == [("create_payment_method", "ana")], "add_payment_method should ask the gateway once to create the payment method."
         hints: *l1_provider
       - description: "The shop still behaves the same with PayPal"
         command: |
@@ -539,21 +622,25 @@ steps:
               if (getattr(sys.modules[_name], "__file__", "") or "").startswith("/tutorial/"):
                   del sys.modules[_name]
 
-          from gateway_choice import current_gateway
+          from gateway_choice import get_payment_gateway
           from order import Order
           from order_service import OrderService
           from refund_service import RefundService
           from wallet_service import WalletService
           try:
-              _order = Order("Taro Milk Tea", 550)
-              assert OrderService().checkout(current_gateway(), _order) is True and _order.status == "paid"
-              _big = Order("Boba for the whole lecture hall", 250_000)
-              assert OrderService().checkout(current_gateway(), _big) is False and _big.status == "new"
-              _back = Order("Thai Tea", 500)
-              assert RefundService().refund_order(current_gateway(), _back) is True and _back.status == "refunded"
+              _shop = OrderService()
+              _order = Order("ana", [("Taro Milk Tea", 550), ("Thai Tea", 500)])
+              assert _shop.checkout(_order, get_payment_gateway()) is True and _order.paid_cents == 1155
+              _big = Order("ben", [("Boba for the whole lecture hall", 250_000)])
+              assert _shop.checkout(_big, get_payment_gateway()) is False and _big.status == "declined"
+              assert _shop.kitchen_queue == [_order]
+              assert RefundService().refund_order(_order, get_payment_gateway()) is True and _order.status == "refunded"
+              _gateway = get_payment_gateway()
               _wallet = WalletService()
-              _card = _wallet.add_payment_method(current_gateway(), "ana")
-              assert _card and _wallet.saved_cards == {"ana": _card}
+              _first = _wallet.add_payment_method("ana", _gateway)
+              _second = _wallet.add_payment_method("ana", _gateway)
+              assert _first and _second and _wallet.saved_methods == {"ana": [_first, _second]}
+              assert _wallet.default_method == {"ana": _first}
           except (AttributeError, TypeError, NameError) as _error:
               raise AssertionError(f"The shop no longer runs with PayPal: {_error}")
         hints: &l1_same
@@ -573,7 +660,7 @@ steps:
             text: "If that is the error you see, undo the rename, finish moving the PayPal lines out of every service, then rename again. **Reset Current Step** brings back the starting code if undo gets confusing."
           - title: "A class Python cannot create"
             condition: "code_contains: PayPalGateway(PaymentGateway"
-            text: "A `TypeError` saying Python \"Can't instantiate abstract class PayPalGateway\" means it promises `PaymentGateway` but still lacks an operation. The message names the missing one."
+            text: "A `TypeError` saying Python \"Can't instantiate abstract class PayPalGateway\" means it subclasses the ABC `PaymentGateway` but still lacks one of its abstract methods. The message names the missing one."
       - description: "PayPalGateway keeps its PayPal client to itself"
         command: |
           import sys
@@ -596,7 +683,7 @@ steps:
             text: "Rename that attribute so its name starts with two underscores. Code outside the class can then no longer reach it by that name."
           - title: "Start where the name is defined"
             text: "Start **Refactor: Rename Symbol…** on the line where the attribute is defined, not on a line that uses it. The tool only rewrites the file you have open."
-      - description: "PayPalGateway implements the PaymentGateway interface"
+      - description: "PayPalGateway subclasses PaymentGateway and implements its abstract methods"
         command: |
           import sys
           for _name in list(sys.modules):
@@ -605,29 +692,29 @@ steps:
 
           from payment_gateway import PaymentGateway
           from paypal_gateway import PayPalGateway
-          assert issubclass(PayPalGateway, PaymentGateway), "PayPalGateway does not say that it implements PaymentGateway."
+          assert issubclass(PayPalGateway, PaymentGateway), "PayPalGateway does not say that it is a PaymentGateway."
           try:
               PayPalGateway()
           except TypeError as _error:
-              raise AssertionError(f"PayPalGateway cannot be created: an operation of PaymentGateway is still missing. {_error}")
+              raise AssertionError(f"PayPalGateway cannot be created: an abstract method of PaymentGateway is still missing. {_error}")
         hints:
           - title: "What every provider must offer"
-            text: "`payment_gateway.py` lists the operations that any payment provider has to offer. Put that list next to `PayPalGateway`: what does the class say about itself, and which operations does it have?"
+            text: "`payment_gateway.py` lists the abstract methods that any payment provider has to implement. Put that list next to `PayPalGateway`: what does the class say about itself, and which methods does it have?"
           - title: "Does the class say what it promises?"
             condition: "code_missing: PayPalGateway(PaymentGateway"
-            text: "`PaymentGateway` is the interface and `PayPalGateway` should be one implementation of it. Read the `class` line of `PayPalGateway`: does it say so? The UML class diagram tutorial showed how a Python class names the abstract class it implements."
+            text: "`PaymentGateway` is an abstract base class and `PayPalGateway` should be one concrete subclass of it. Read the `class` line of `PayPalGateway`: does it name a base class? Compare it with the `class` line of `PaymentGateway`, which names its own base class."
           - title: "Python holds it to the promise"
             condition: "code_missing: PayPalGateway(PaymentGateway"
-            text: "Once `PayPalGateway` promises `PaymentGateway`, Python refuses to create it until it has every operation the interface lists. Which of those operations does it have so far?"
+            text: "Once `PayPalGateway` subclasses `PaymentGateway`, Python refuses to create it until it implements every abstract method. Which of those methods does it have so far?"
           - title: "Read the \"Can't instantiate\" message"
             condition: "code_contains: PayPalGateway(PaymentGateway"
-            text: "Press **Test**. If the output says Python \"Can't instantiate abstract class PayPalGateway\", the message names the operations that are still missing."
-          - title: "Where is the missing operation?"
+            text: "Press **Test**. If the output says Python \"Can't instantiate abstract class PayPalGateway\", the message names the abstract methods that are still missing."
+          - title: "Where is the missing method?"
             condition: "code_contains: PayPalGateway(PaymentGateway"
-            text: "A missing operation either still sits in a service, so its PayPal lines were not moved yet, or it was moved under a different name than the interface uses. Which is it for the name in the message?"
-      - description: "The services depend only on the interface"
+            text: "A missing method either still sits in a service, so its PayPal lines were not moved yet, or it was moved under a different name than `PaymentGateway` uses. Which is it for the name in the message?"
+      - description: "The services depend only on PaymentGateway"
         command: |
-          import ast, inspect, sys, typing
+          import ast, sys, typing
           for _name in list(sys.modules):
               if (getattr(sys.modules[_name], "__file__", "") or "").startswith("/tutorial/"):
                   del sys.modules[_name]
@@ -645,9 +732,7 @@ steps:
                   _types = typing.get_type_hints(_function)
               except Exception:
                   _types = getattr(_function, "__annotations__", {})
-              _parameters = list(inspect.signature(_function).parameters)
-              assert len(_parameters) >= 2, f"{_method} no longer takes a gateway."
-              assert _types.get(_parameters[1]) is PaymentGateway, (
+              assert any(_type is PaymentGateway or _type == "PaymentGateway" for _type in _types.values()), (
                   f"{_method} should accept any PaymentGateway, not one provider's class.")
               _tree = ast.parse(open("/tutorial/" + _file).read())
               _knows = set()
@@ -673,7 +758,7 @@ steps:
           _ns = {}
           exec(open("/tutorial/change_impact.py").read(), _ns)
           def _files(value):
-              assert isinstance(value, (list, tuple, set)), "Keep each analysis as a list of file names."
+              assert isinstance(value, (dict, list, tuple, set)), "Keep each analysis as a dictionary or a list of file names."
               return {str(name).strip() for name in value}
 
           _after = _files(_ns.get("AFTER", []))
@@ -682,8 +767,8 @@ steps:
         hints: &l1_after
           - title: "Ask the Think question again"
             text: "Redo the Think question on the new code: if Boba Run switched to Stripe, which existing files would still be wrong as written?"
-          - title: "A new class is not an edit"
-            text: "Stripe gets its own class that implements `PaymentGateway`, in a new file, and new files do not count. A file that calls `charge` does not need to know who carries it out. Would anything inside `PayPalGateway` have to change for Stripe to work?"
+          - title: "A new subclass is not an edit"
+            text: "Stripe gets its own subclass of `PaymentGateway`, in a new file, and new files do not count. A file that calls `charge` does not need to know who carries it out. Would anything inside `PayPalGateway` have to change for Stripe to work?"
           - title: "Something still has to choose"
             text: "The shop must start using the new class instead of `PayPalGateway`. Which file makes that choice? If a service is still on your list, it still knows the secret: finish that part of the refactoring first."
     quiz:
@@ -694,25 +779,25 @@ steps:
           type: single
           difficulty: basic
           options:
-            - "The card numbers that customers save in the wallet"
+            - "The payment methods that customers save in the wallet"
             - "The `PayPalClient` object stored in its attribute"
             - "The choice of PayPal and its protocol"
-            - "The total of each order, in cents"
+            - "The amount of each charge, in cents"
           correct_index: 2
           option_feedback:
-            0: "`PayPalGateway` never sees a card number: PayPal's `vault` hands back a card id. A secret is a design decision that is likely to change, not a piece of data the shop handles."
+            0: "The wallet keeps the saved payment methods, and `PayPalGateway` only hands back an id for each. A secret is a design decision that is likely to change, not a piece of data the shop handles."
             1: "The private attribute is how `PayPalGateway` keeps its secret, not the secret itself. What it protects is the decision behind that object: that Boba Run pays through PayPal, using PayPal's calls."
-            3: "Callers pass the total to `charge(cents)` openly, so the amount is part of the `PaymentGateway` interface. What callers no longer see is who carries out the charge and how."
-          explanation: "A module's secret is a design decision that is likely to change. Here it is the decision to pay through PayPal, together with PayPal's protocol: authenticate first, then pass the token to `capture`, `reverse`, or `vault`. Only `PayPalGateway` knows that now, so the services can stay as they are when Boba Run switches providers."
+            3: "Callers pass the amount to `charge(amount)` openly, so it is part of the `PaymentGateway` interface. What callers no longer see is who carries out the charge and how."
+          explanation: "A module's secret is a design decision that is likely to change. Here it is the decision to pay through PayPal, together with PayPal's protocol: authenticate first, pass the token to `charge`, `refund`, or `create_payment_method`, then read PayPal's result object. Only `PayPalGateway` knows that now, so the services can stay as they are when Boba Run switches providers."
         - question: |
             Boba Run adds a `TipService`, written the old way. To give the PayPal decision one owner, which lines of `add_tip` belong in `PayPalGateway`?
 
             ```python
             class TipService:
-                def add_tip(self, gateway, order, cents):
+                def add_tip(self, order, gateway, cents):
                     token = gateway.paypal.authenticate()
-                    result = gateway.paypal.capture(token, cents)
-                    ok = result.was_successful()
+                    charge = gateway.paypal.charge(token, cents)
+                    ok = charge.was_successful()
                     if ok:
                         order.tip_cents = cents
                     return ok
@@ -720,8 +805,8 @@ steps:
           type: single
           difficulty: intermediate
           options:
-            - "Only the line that calls `capture`"
-            - "The `authenticate`, `capture`, and `was_successful` lines"
+            - "Only the line that calls PayPal's `charge`"
+            - "The `authenticate`, `charge`, and `was_successful` lines"
             - "Every line in the body of `add_tip`"
             - "None, since it reaches PayPal through the public `paypal` attribute"
           correct_index: 1
@@ -740,11 +825,11 @@ steps:
             - "Nothing, since Python ignores annotations when the code runs"
           correct_index: 0
           option_feedback:
-            1: "`PaymentGateway` lists operations but implements none of them. Tokens are part of PayPal's protocol, so they live in `PayPalGateway`; Stripe's class carries out its own protocol behind the same three operations."
+            1: "`PaymentGateway` is an abstract base class: it lists abstract methods but implements none of them. Tokens are part of PayPal's protocol, so they live in `PayPalGateway`; Stripe's subclass carries out its own protocol behind the same three operations."
             2: "Then every service would know both providers, and a third one would touch all three again. The choice belongs in one place, `gateway_choice.py`, so that the services never learn it."
             3: "Python does not check annotations at run time, but the source still names the class. A service that imports and annotates `PayPalGateway` would need an edit in a switch, while one that names only `PaymentGateway` stays as it is."
-          explanation: "The services name only the interface, so any class that implements `PaymentGateway` fits. Switching to Stripe means writing `StripeGateway(PaymentGateway)` and changing the one line in `gateway_choice.py` that picks the provider. No service, and no test, is edited."
-        - question: "The four tests in `test_shop.py` stayed green through every extract, move, and rename. Why?"
+          explanation: "The services name only the ABC, so any subclass that implements `PaymentGateway` fits. Switching to Stripe means writing `StripeGateway(PaymentGateway)` and changing the one line in `gateway_choice.py` that picks the provider. No service, and no test, is edited."
+        - question: "The five tests in `test_shop.py` stayed green through every extract, move, and rename. Why?"
           type: single
           difficulty: basic
           options:
@@ -755,9 +840,23 @@ steps:
           correct_index: 0
           option_feedback:
             1: "The tools changed only the services and `paypal_gateway.py`. `test_shop.py` was never edited, which is why its passing means something."
-            2: "The tests compare exact results, such as `order.status == \"paid\"` and a return value of `True` or `False`, so a broken refactoring would turn them red."
-            3: "They get the real `PayPalGateway` from `current_gateway()`. The stand-ins from another provider belong to the tutorial's checks, not to `test_shop.py`."
-          explanation: "The tests call the services and check their observable results: the return value, the order's status, and the saved card. None of that depends on where the PayPal calls live, so the tests act as a safety net while you move code around."
+            2: "The tests compare exact results, such as `order.status == \"paid\"`, the amount paid, and a return value of `True` or `False`, so a broken refactoring would turn them red."
+            3: "They get the real `PayPalGateway` from `get_payment_gateway()`. The stand-ins from another provider belong to the tutorial's checks, not to `test_shop.py`."
+          explanation: "The tests call the services and check their observable results: the return value, the order's status and amount paid, the kitchen queue, and the saved payment methods. None of that depends on where the PayPal calls live, so the tests act as a safety net while you move code around."
+        - question: "Before your refactoring, someone reading `checkout` met five PayPal names: `PayPalGateway`, `paypal`, `authenticate`, PayPal's `charge`, and `was_successful`. How many PayPal names does that reader meet now, and what does it buy?"
+          type: single
+          difficulty: advanced
+          options:
+            - "None: `checkout` can be read and changed without knowing how PayPal works"
+            - "Five: they moved, but the reader still follows them into `PayPalGateway`"
+            - "One: `charge`, since PayPal's call and the gateway's share a name"
+            - "Three: only the client and its token were hidden"
+          correct_index: 0
+          option_feedback:
+            1: "To read `checkout`, it is enough to know what `PaymentGateway` promises: `charge` returns whether the payment went through. How `PayPalGateway` keeps that promise only matters to someone working on `PayPalGateway`."
+            2: "Same spelling, different promise. `gateway.charge(amount)` is the operation of `PaymentGateway`, which any provider offers; nothing in `checkout` says PayPal, a token, or a result object."
+            3: "`authenticate` and `was_successful` left `checkout` too. Every line that only made sense if you knew PayPal moved to `PayPalGateway`."
+          explanation: "`checkout` now names only `PaymentGateway` and its `charge` operation, so a reader can understand it without knowing PayPal: information hiding lowers what you must keep in your head to read a module. `PayPalGateway` became a deep module: three small operations hide a whole protocol."
     solution:
       files:
         - path: order_service.py
@@ -766,13 +865,25 @@ steps:
             from order import Order
             from payment_gateway import PaymentGateway
 
+            SALES_TAX_PERCENT = 10
+
 
             class OrderService:
-                def checkout(self, gateway: PaymentGateway, order: Order) -> bool:
-                    cents = order.total_cents
-                    paid = gateway.charge(cents)
+                def __init__(self) -> None:
+                    self.kitchen_queue: list[Order] = []
+
+                def checkout(self, order: Order, gateway: PaymentGateway) -> bool:
+                    if not order.drinks:
+                        raise ValueError("Cannot check out an empty order.")
+                    subtotal = order.subtotal_cents()
+                    amount = subtotal + subtotal * SALES_TAX_PERCENT // 100
+                    paid = gateway.charge(amount)
                     if paid:
                         order.status = "paid"
+                        order.paid_cents = amount
+                        self.kitchen_queue.append(order)
+                    else:
+                        order.status = "declined"
                     return paid
         - path: refund_service.py
           language: python
@@ -782,11 +893,14 @@ steps:
 
 
             class RefundService:
-                def refund_order(self, gateway: PaymentGateway, order: Order) -> bool:
-                    cents = order.total_cents
-                    refunded = gateway.refund(cents)
+                def refund_order(self, order: Order, gateway: PaymentGateway) -> bool:
+                    if order.status != "paid":
+                        raise ValueError(f"Only paid orders can be refunded; this one is {order.status}.")
+                    amount = order.paid_cents
+                    refunded = gateway.refund(amount)
                     if refunded:
                         order.status = "refunded"
+                        order.paid_cents = 0
                     return refunded
         - path: wallet_service.py
           language: python
@@ -796,12 +910,16 @@ steps:
 
             class WalletService:
                 def __init__(self) -> None:
-                    self.saved_cards: dict[str, str] = {}
+                    self.saved_methods: dict[str, list[str]] = {}
+                    self.default_method: dict[str, str] = {}
 
-                def add_payment_method(self, gateway: PaymentGateway, customer: str) -> str:
-                    card_id = gateway.save_card(customer)
-                    self.saved_cards[customer] = card_id
-                    return card_id
+                def add_payment_method(self, customer: str, gateway: PaymentGateway) -> str:
+                    method_id = gateway.create_payment_method(customer)
+                    if customer not in self.saved_methods:
+                        self.saved_methods[customer] = []
+                        self.default_method[customer] = method_id
+                    self.saved_methods[customer].append(method_id)
+                    return method_id
         - path: paypal_gateway.py
           language: python
           content: |
@@ -815,22 +933,23 @@ steps:
                 def __init__(self) -> None:
                     self.__paypal = PayPalClient("boba-run")
 
-                def charge(self, cents):
+                def charge(self, amount):
                     token = self.__paypal.authenticate()
-                    result = self.__paypal.capture(token, cents)
-                    paid = result.was_successful()
+                    charge = self.__paypal.charge(token, amount)
+                    paid = charge.was_successful()
                     return paid
 
-                def refund(self, cents):
+                def refund(self, amount):
                     token = self.__paypal.authenticate()
-                    result = self.__paypal.reverse(token, cents)
-                    refunded = result.was_successful()
+                    refund = self.__paypal.refund(token, amount)
+                    refunded = refund.was_successful()
                     return refunded
 
-                def save_card(self, customer: str):
+                def create_payment_method(self, customer: str):
                     token = self.__paypal.authenticate()
-                    card_id = self.__paypal.vault(token, customer)
-                    return card_id
+                    payment = self.__paypal.create_payment_method(token, customer)
+                    method_id = payment.method_id
+                    return method_id
         - path: gateway_choice.py
           language: python
           content: |
@@ -838,7 +957,7 @@ steps:
             from paypal_gateway import PayPalGateway
 
 
-            def current_gateway() -> PaymentGateway:
+            def get_payment_gateway() -> PaymentGateway:
                 """The payment provider Boba Run uses today."""
                 return PayPalGateway()
         - path: change_impact.py
@@ -854,18 +973,26 @@ steps:
             - Test files count: a test that must be rewritten is part of the cost.
             """
 
-            # Your analysis of the starting design, for example ["order.py"].
-            BEFORE = ["order_service.py", "refund_service.py", "wallet_service.py"]
+            # Your analysis of the starting design: each file that would need an edit,
+            # with what in it would change, for example {"order.py": "what would change"}.
+            BEFORE = {
+                "order_service.py": "runs PayPal's charge protocol",
+                "refund_service.py": "runs PayPal's refund protocol",
+                "wallet_service.py": "asks PayPal to create a payment method",
+            }
 
             # Fill this in after your refactoring passes the tests.
             AFTER = ["gateway_choice.py"]
       explanation: |
-        In each service, the lines from `token = …` through the line that produces a plain value moved to `PayPalGateway` as `charge`, `refund`, and `save_card`: through the `was_successful()` call in the order and refund services, and through the `vault` call in the wallet. Those are exactly the lines that only make sense if you know PayPal, and they end in a plain `True`/`False` or card id, so no PayPal object reaches a caller. Extract, Move Method, and Rename Symbol produced the body of `paypal_gateway.py`; the rest were hand edits: `PayPalGateway` now names `PaymentGateway` as its base class, the services import and annotate `PaymentGateway` instead of `PayPalGateway`, and `current_gateway()` promises a `PaymentGateway`. The forwarding methods that Move Method left in the services were deleted, though keeping them passes every check if they too name only `PaymentGateway`. `test_shop.py` was not edited: its four behavior tests pass before and after, which is the evidence that the refactoring kept the shop's behavior. A switch to Stripe now edits only `gateway_choice.py`.
+        In each service, the lines from `token = …` through the line that produces a plain value moved to `PayPalGateway` as `charge`, `refund`, and `create_payment_method`: through the `was_successful()` call in the order and refund services, and through the `method_id` line in the wallet. Those are exactly the lines that only make sense if you know PayPal, and they end in a plain `True`/`False` or payment method id, so no PayPal object reaches a caller; the tax, the kitchen queue, the refund rule, and the default payment method stay with the services. Extract, Move Method, and Rename Symbol produced the body of `paypal_gateway.py`; the rest were hand edits: `PayPalGateway` now names the ABC `PaymentGateway` as its base class, the services import and annotate `PaymentGateway` instead of `PayPalGateway`, and `get_payment_gateway()` promises a `PaymentGateway`. The forwarding methods that Move Method left in the services were deleted, though keeping them passes every check if they too name only `PaymentGateway`. `test_shop.py` was not edited: its five behavior tests pass before and after, which is the evidence that the refactoring kept the shop's behavior. A switch to Stripe now edits only `gateway_choice.py`.
 
   # =========================================================================
   # STEP 2 — Private Is Not Hidden
   # =========================================================================
   # Pedagogy: misconception repair by prediction (private = hidden); completion problem (the learner chooses the lines); testing: behavior, not implementation
+  # The CSV lines move to a parser module, menu_parser.py, whose secret is the
+  # supplier's file layout. Its class is what the kiosk receives, because Move
+  # Method can only target a class that the extracted method takes as a parameter.
   - title: "Private Is Not Hidden"
     key: menu
     instructions: |
@@ -881,30 +1008,30 @@ steps:
 
       ### The design
 
-      `Menu` loads the price list that our supplier sends. Look at its box in the class diagram: the attribute `__lines` is private.
+      The parser module `menu_parser.py` reads our supplier's price list. In the class diagram, its class `MenuParser` keeps the attribute `__lines` private.
 
       ### Your tasks
 
-      1. **Think.** The change request: *"Our supplier is replacing the CSV export with JSON."* `__lines` is private, so is `menu.py` the only file that changes? Decide first. Then read `kiosk.py` and `test_kiosk.py`, and fill in `BEFORE` in `change_impact.py`.
-      2. **Refactor.** In `kiosk.py`, find the lines that would break if a row stopped looking like `Taro Milk Tea,550,M|L`. Extract them into two methods named `price_cents` and `sizes`, and move each one to `Menu`.
-      3. **Lock it.** `rows()` is the operation that handed the secret out. In `menu.py`, click on `rows` in the line `def rows(self)` and rename it to `__rows`.
-      4. **Test.** Press **Test**. One test fails. It checked how the menu stores drinks, not what the menu does. Rewrite it so that it checks something the menu promises. Keep three tests.
+      1. **Think.** The change request: *"Our supplier is replacing the CSV export with JSON."* `__lines` is private, so is `menu_parser.py` the only file that changes? Decide first. Then read `kiosk.py` and `test_kiosk.py`, and fill in `BEFORE` in `change_impact.py`, with a reason for each file.
+      2. **Refactor.** In `kiosk.py`, find the lines that would break if a row stopped looking like `Taro Milk Tea,550,M|L`. Extract them into two methods named `price_cents` and `sizes`, and move each one to `MenuParser` in the parser module.
+      3. **Lock it.** `rows()` is the operation that handed the secret out. In `menu_parser.py`, click on `rows` in the line `def rows(self)` and rename it to `__rows`.
+      4. **Test.** Press **Test**. One test fails. It checked how the parser stores rows, not what it promises. Rewrite it so that it checks a promise. Keep three tests.
       5. **Reason.** Fill in `AFTER`.
 
-      <div class="uml-class-diagram-container" data-uml-type="class" data-uml-role="reference-design" data-uml-caption="Target: Menu promises names, prices, and sizes. The layout of a row is no longer part of any promise." data-uml-spec='@startuml
+      <div class="uml-class-diagram-container" data-uml-type="class" data-uml-role="reference-design" data-uml-caption="Target: MenuParser promises names, prices, and sizes. The layout of a row is no longer part of any promise." data-uml-spec='@startuml
       layout vertical
       class Kiosk {
         + total_cents(menu, drinks): int
         + offers_size(menu, drink, size): bool
       }
-      class Menu {
+      class MenuParser {
         - __lines: list[str]
         - __rows(): list[str]
         + drink_names(): list[str]
         + price_cents(drink): int
         + sizes(drink): list[str]
       }
-      Kiosk ..> Menu : price_cents, sizes
+      Kiosk ..> MenuParser : price_cents, sizes
       @enduml'></div>
 
       <details markdown="1">
@@ -912,7 +1039,7 @@ steps:
 
       `__lines` was private the whole time. The layout leaked anyway, through `rows()`: a public operation that returned the raw rows. Callers split those rows on commas, so they knew the layout too.
 
-      **Information hiding is not about hiding data. It is about hiding design decisions.** An interface is a list of promises. `rows()` promised the file layout. Now `Menu` promises only what callers need: names, prices, and sizes.
+      **Information hiding is not about hiding data. It is about hiding design decisions.** An interface is a list of promises. `rows()` promised the file layout. Now the parser module is the only code that knows it, and `MenuParser` promises only what callers need: names, prices, and sizes.
 
       The failing test was a caller too. A good test passes for any correct implementation.
 
@@ -922,11 +1049,11 @@ steps:
         language: python
         reseed: true
         content: |
-          from menu import Menu
+          from menu_parser import MenuParser
 
 
           class Kiosk:
-              def total_cents(self, menu: Menu, drinks: list[str]) -> int:
+              def total_cents(self, menu: MenuParser, drinks: list[str]) -> int:
                   total = 0
                   for drink in drinks:
                       price = 0
@@ -937,14 +1064,14 @@ steps:
                       total += price
                   return total
 
-              def offers_size(self, menu: Menu, drink: str, size: str) -> bool:
+              def offers_size(self, menu: MenuParser, drink: str, size: str) -> bool:
                   available = []
                   for row in menu.rows():
                       fields = row.split(",")
                       if fields[0] == drink:
                           available = fields[2].split("|")
                   return size in available
-      - path: menu.py
+      - path: menu_parser.py
         language: python
         reseed: true
         content: |
@@ -955,8 +1082,8 @@ steps:
           """
 
 
-          class Menu:
-              """The drinks Boba Run sells, loaded from the supplier's CSV export.
+          class MenuParser:
+              """Reads the drinks Boba Run sells from the supplier's CSV export.
 
               Each row looks like:  Taro Milk Tea,550,M|L
               """
@@ -971,8 +1098,8 @@ steps:
                   return [line.split(",")[0] for line in self.__lines]
 
 
-          def load_menu() -> Menu:
-              return Menu(SUPPLIER_EXPORT)
+          def load_menu() -> MenuParser:
+              return MenuParser(SUPPLIER_EXPORT)
       - path: change_impact.py
         language: python
         reseed: true
@@ -985,8 +1112,15 @@ steps:
           Test files count: a test that must be rewritten is part of the cost.
           """
 
-          # Your analysis of the starting design.
-          BEFORE = []
+          # The files in this lesson. Build your lists from these names.
+          KIOSK = "kiosk.py"
+          MENU_PARSER = "menu_parser.py"
+          TEST_KIOSK = "test_kiosk.py"
+          CHANGE_IMPACT = "change_impact.py"
+
+          # Your analysis of the starting design: a dictionary from each name above
+          # that would need an edit to what in that file would change.
+          BEFORE = {}
 
           # Fill this in after your refactoring passes the tests.
           AFTER = []
@@ -995,7 +1129,7 @@ steps:
         reseed: true
         content: |
           from kiosk import Kiosk
-          from menu import load_menu
+          from menu_parser import load_menu
 
 
           def test_total_adds_the_price_of_each_drink():
@@ -1008,12 +1142,12 @@ steps:
               assert kiosk.offers_size(load_menu(), "Thai Tea", "L") is False
 
 
-          def test_menu_keeps_the_supplier_rows():
+          def test_parser_keeps_the_supplier_rows():
               assert load_menu().rows()[0] == "Taro Milk Tea,550,M|L"
     open_file: kiosk.py
     run_file: test_kiosk.py
     uml_files:
-      - menu.py
+      - menu_parser.py
       - kiosk.py
     tests:
       - description: "Before: the analysis lists every file that would need an edit"
@@ -1021,10 +1155,10 @@ steps:
           _ns = {}
           exec(open("/tutorial/change_impact.py").read(), _ns)
           def _files(value):
-              assert isinstance(value, (list, tuple, set)), "Keep each analysis as a list of file names."
+              assert isinstance(value, (dict, list, tuple, set)), "Keep each analysis as a dictionary or a list of file names."
               return {str(name).strip() for name in value}
 
-          _truth = {"menu.py", "kiosk.py", "test_kiosk.py"}
+          _truth = {"menu_parser.py", "kiosk.py", "test_kiosk.py"}
           _missing = _truth - _files(_ns.get("BEFORE", []))
           assert not _missing, f"BEFORE is missing {len(_missing)} file(s) that depend on the layout of a CSV row."
         hints: &l2_before
@@ -1039,15 +1173,24 @@ steps:
           _ns = {}
           exec(open("/tutorial/change_impact.py").read(), _ns)
           def _files(value):
-              assert isinstance(value, (list, tuple, set)), "Keep each analysis as a list of file names."
+              assert isinstance(value, (dict, list, tuple, set)), "Keep each analysis as a dictionary or a list of file names."
               return {str(name).strip() for name in value}
 
-          _truth = {"menu.py", "kiosk.py", "test_kiosk.py"}
+          _truth = {"menu_parser.py", "kiosk.py", "test_kiosk.py"}
           _before = _files(_ns.get("BEFORE", []))
           assert _before, "BEFORE is still empty."
           _extra = _before - _truth
           assert not _extra, f"BEFORE lists {len(_extra)} file(s) that would not need an edit."
         hints: *l2_before
+      - description: "Before: each file on the list says why it would need an edit"
+        command: |
+          _ns = {}
+          exec(open("/tutorial/change_impact.py").read(), _ns)
+          _before = _ns.get("BEFORE", {})
+          assert isinstance(_before, dict) and _before, "Write BEFORE as a dictionary from each file to the reason it needs an edit."
+          for _file, _reason in _before.items():
+              assert isinstance(_reason, str) and len(_reason.split()) >= 2, f"Say in a few words why {_file} would need an edit."
+        hints: *before_reasons
       - description: "The kiosk totals an order with a menu that is stored differently"
         command: |
           import sys
@@ -1069,16 +1212,16 @@ steps:
           try:
               _total = Kiosk().total_cents(OtherMenu(), ["Taro Milk Tea", "Yuzu Soda", "Taro Milk Tea"])
           except AttributeError as _error:
-              raise AssertionError(f"total_cents still needs something only the CSV menu has: {_error}")
+              raise AssertionError(f"total_cents still needs something only the CSV parser has: {_error}")
           assert _total == 1575, "The total should be the sum of the menu's prices for the drinks ordered."
           assert Kiosk().total_cents(OtherMenu(), []) == 0, "An empty order should total 0."
         hints: &l2_provider
           - title: "What the stand-in offers"
-            text: "The check hands the kiosk a menu that stores its drinks differently. It offers only the operations shown on `Menu` in the target diagram, with those names. What does the kiosk still ask `Menu` for?"
+            text: "The check hands the kiosk a menu that stores its drinks differently. It offers only the operations shown on `MenuParser` in the target diagram, with those names. What does the kiosk still ask `MenuParser` for?"
           - title: "The last line that knows the layout"
-            text: "In the kiosk method, find the last line that only makes sense if you know what a supplier row looks like. Is that line inside the method you moved to `Menu`?"
+            text: "In the kiosk method, find the last line that only makes sense if you know what a supplier row looks like. Is that line inside the method you moved to `MenuParser`?"
           - title: "Moved too few lines"
-            text: "If the kiosk still splits or indexes what `Menu` returned, you moved too few lines. Undo the move and the extract, then extract through the line that produces a plain value: a price, or a list of sizes."
+            text: "If the kiosk still splits or indexes what `MenuParser` returned, you moved too few lines. Undo the move and the extract, then extract through the line that produces a plain value: a price, or a list of sizes."
       - description: "The kiosk checks sizes with a menu that is stored differently"
         command: |
           import sys
@@ -1100,7 +1243,7 @@ steps:
           try:
               _large = Kiosk().offers_size(OtherMenu(), "Taro Milk Tea", "L")
           except AttributeError as _error:
-              raise AssertionError(f"offers_size still needs something only the CSV menu has: {_error}")
+              raise AssertionError(f"offers_size still needs something only the CSV parser has: {_error}")
           assert _large is True, "Taro Milk Tea comes in L."
           assert Kiosk().offers_size(OtherMenu(), "Thai Tea", "L") is False, "Thai Tea does not come in L."
           assert Kiosk().offers_size(OtherMenu(), "Yuzu Soda", "M") is False, "Yuzu Soda does not come in M."
@@ -1113,7 +1256,7 @@ steps:
                   del sys.modules[_name]
 
           from kiosk import Kiosk
-          from menu import load_menu
+          from menu_parser import load_menu
           try:
               assert Kiosk().total_cents(load_menu(), ["Taro Milk Tea", "Thai Tea"]) == 1050
               assert Kiosk().total_cents(load_menu(), ["Matcha Latte"]) == 625
@@ -1127,13 +1270,13 @@ steps:
             text: "Press **Test** and read the first failing line in the output. It tells you which file and which line broke."
           - title: "A call that does not match"
             condition: "code_missing: __rows"
-            text: "An `AttributeError` or a `TypeError` after an extract or a move means the kiosk asks `Menu` for an operation it does not offer, or passes different arguments than the operation takes. Compare the call with the method's `def` line in `menu.py`."
+            text: "An `AttributeError` or a `TypeError` after an extract or a move means the kiosk asks `MenuParser` for an operation it does not offer, or passes different arguments than the operation takes. Compare the call with the method's `def` line in `menu_parser.py`."
           - title: "Back out the last refactoring"
             condition: "code_missing: __rows"
             text: "You have not renamed `rows` yet, so the failure comes from an extract or a move. Undo it in every file it changed, then try again with whole statements selected. Read the preview before you accept it."
           - title: "An attribute that went missing"
             condition: "code_contains: __rows"
-            text: "An `AttributeError` saying that `Menu` has no attribute `rows` means `rows()` was made private while code outside `Menu` still uses it."
+            text: "An `AttributeError` saying that `MenuParser` has no attribute `rows` means `rows()` was made private while code outside `MenuParser` still uses it."
           - title: "Move first, then rename"
             condition: "code_contains: __rows"
             text: "If that is the error you see, undo the rename, finish moving the row handling out of both kiosk methods, then rename again. **Reset Current Step** brings back the starting code if undo gets confusing."
@@ -1145,7 +1288,7 @@ steps:
                   del sys.modules[_name]
 
           import inspect
-          import menu as _menu_module
+          import menu_parser as _menu_module
           _menu = _menu_module.load_menu()
           _raw = [line for line in _menu_module.SUPPLIER_EXPORT.splitlines() if line]
           def _leaks(value):
@@ -1169,10 +1312,10 @@ steps:
                       continue
               if _leaks(_value):
                   _leaky.append(_name)
-          assert not _leaky, "A public part of Menu still returns the supplier's raw rows."
+          assert not _leaky, "A public part of MenuParser still returns the supplier's raw rows."
         hints: &l2_private
           - title: "Who can still reach it?"
-            text: "Which public operation on `Menu` still gives a caller the supplier's raw rows?"
+            text: "Which public operation on `MenuParser` still gives a caller the supplier's raw rows?"
           - title: "Two underscores make it private"
             text: "Rename that operation so its name starts with two underscores. Code outside the class can then no longer reach it by that name."
           - title: "Start where the name is defined"
@@ -1180,14 +1323,14 @@ steps:
       - description: "Your tests pass on your code"
         command: |
           from tutorial_test_grading import check_suite
-          check_suite("/tutorial/test_kiosk.py", "menu", min_tests=3)
+          check_suite("/tutorial/test_kiosk.py", "menu_parser", min_tests=3)
         hints: &l2_pass
           - title: "Read which test fails"
             text: "Press **Test** and read which test fails, and on which line."
           - title: "How, not what"
-            text: "A test that fails after a correct refactoring was checking how `Menu` stores its drinks, not what it does. What did that test want to guarantee?"
+            text: "A test that fails after a correct refactoring was checking how `MenuParser` stores the supplier's rows, not what it promises. What did that test want to guarantee?"
           - title: "Test a promise of the menu"
-            text: "Rewrite that test so it asks `Menu` through an operation in the target diagram and checks the answer. Keep at least three tests."
+            text: "Rewrite that test so it asks `MenuParser` through an operation in the target diagram and checks the answer. Keep at least three tests."
       - description: "Your tests still pass when the menu is loaded from JSON"
         command: |
           from tutorial_test_grading import check_suite
@@ -1200,7 +1343,7 @@ steps:
           ]"""
 
 
-          class Menu:
+          class MenuParser:
               def __init__(self, json_text):
                   self._drinks = {item["drink"]: item for item in json.loads(json_text)}
 
@@ -1215,9 +1358,9 @@ steps:
 
 
           def load_menu():
-              return Menu(SUPPLIER_EXPORT)
+              return MenuParser(SUPPLIER_EXPORT)
           '''
-          check_suite("/tutorial/test_kiosk.py", "menu", replacement_source=_CHANGED, min_tests=3)
+          check_suite("/tutorial/test_kiosk.py", "menu_parser", replacement_source=_CHANGED, min_tests=3)
         hints: *l2_pass
       - description: "Your tests still catch a wrong price"
         command: |
@@ -1231,7 +1374,7 @@ steps:
           ]"""
 
 
-          class Menu:
+          class MenuParser:
               def __init__(self, json_text):
                   self._drinks = {item["drink"]: item for item in json.loads(json_text)}
 
@@ -1246,9 +1389,9 @@ steps:
 
 
           def load_menu():
-              return Menu(SUPPLIER_EXPORT)
+              return MenuParser(SUPPLIER_EXPORT)
           '''
-          check_suite("/tutorial/test_kiosk.py", "menu", replacement_source=_CHANGED, expect_failure=True)
+          check_suite("/tutorial/test_kiosk.py", "menu_parser", replacement_source=_CHANGED, expect_failure=True)
         hints: &l2_catch
           - title: "Which input tells them apart?"
             text: "A wrong menu adds a few cents to every price. Which of your tests would give a different answer for it than for the correct menu?"
@@ -1256,17 +1399,17 @@ steps:
             text: "A test catches a wrong price only if it checks an exact number of cents, either directly or through a total."
           - title: "Assert the whole result"
             text: "Compare the whole result with `==`. A check that a price exists, or is above zero, passes for a wrong price too."
-      - description: "After: only the menu module would need an edit"
+      - description: "After: only the parser module would need an edit"
         command: |
           _ns = {}
           exec(open("/tutorial/change_impact.py").read(), _ns)
           def _files(value):
-              assert isinstance(value, (list, tuple, set)), "Keep each analysis as a list of file names."
+              assert isinstance(value, (dict, list, tuple, set)), "Keep each analysis as a dictionary or a list of file names."
               return {str(name).strip() for name in value}
 
           _after = _files(_ns.get("AFTER", []))
           assert _after, "AFTER is still empty."
-          assert _after == {"menu.py"}, "AFTER should list exactly the files that still depend on the layout of a CSV row."
+          assert _after == {"menu_parser.py"}, "AFTER should list exactly the files that still depend on the layout of a CSV row."
         hints: &l2_after
           - title: "Ask the Think question again"
             text: "Redo the Think question on the new code: if the supplier sent JSON, which files would still be wrong as written?"
@@ -1278,19 +1421,19 @@ steps:
       title: "Step 2 — Knowledge Check"
       min_score: 0.8
       questions:
-        - question: "In the starting design, `Menu.__lines` was private, yet `kiosk.py` still depended on the layout of a CSV row. What let the layout leak?"
+        - question: "In the starting design, `MenuParser.__lines` was private, yet `kiosk.py` still depended on the layout of a CSV row. What let the layout leak?"
           type: single
           difficulty: basic
           options:
             - "The public `rows()` returned the raw supplier rows"
             - "Python ignored the two underscores, so the kiosk read `__lines`"
             - "`drink_names()` splits each line on commas"
-            - "The kiosk imported `SUPPLIER_EXPORT` from `menu.py`"
+            - "The kiosk imported `SUPPLIER_EXPORT` from `menu_parser.py`"
           correct_index: 0
           option_feedback:
             1: "The kiosk never mentions `__lines`; look at its code. It took the public route: `rows()` handed out the same strings, so the attribute's name did not matter."
-            2: "That split happens inside `Menu`, and callers only get the names back. A detail that stays inside the owner is hidden, not leaked."
-            3: "`kiosk.py` imports only `Menu`. The layout reached it through what a public operation returned, not through an import."
+            2: "That split happens inside `MenuParser`, and callers only get the names back. A detail that stays inside the owner is hidden, not leaked."
+            3: "`kiosk.py` imports only `MenuParser`. The layout reached it through what a public operation returned, not through an import."
           explanation: "What other code can depend on is the whole interface: every public operation and what it returns. `rows()` returned rows like `Taro Milk Tea,550,M|L`, so every caller that split them learned the CSV layout. A private attribute cannot hide a decision that a public operation hands out."
         - question: |
             Callers of this Python `Roster` loop over `export()` and do `name, number, position = line.split(";")` on each line. Where does the line format leak?
@@ -1315,7 +1458,7 @@ steps:
             0: "Storing the format inside `Roster` is fine: that is where the decision should live. It leaks only when something outside can see it."
             1: "Privacy of the attribute does not help when a public operation returns the same strings. Callers now split on `;`, so a new format would break all of them."
             2: "The callers split only because `export()` gave them raw strings. The fix belongs in `Roster`'s interface: operations that return names, numbers, and positions."
-          explanation: "The return value of a public operation is part of the interface. `export()` returns `Ana;7;forward`-style strings, so the separator and the field order became promises that every caller relies on, just like `rows()` in `Menu`."
+          explanation: "The return value of a public operation is part of the interface. `export()` returns `Ana;7;forward`-style strings, so the separator and the field order became promises that every caller relies on, just like `rows()` in `MenuParser`."
         - question: |
             A Python `Cart` with `add` and `count` operations keeps its items in a list called `_items`. It is changed to keep a dictionary of counts instead. Which of these tests still pass?
 
@@ -1341,7 +1484,7 @@ steps:
             1: "`test_a` is the one tied to storage: it reads `_items` and expects a list. `test_b` asks through `count`, which works the same for a list or a dictionary."
             3: "Only tests that read the storage need a rewrite. `test_b` asks through an operation the cart promises, so it passes for any correct storage."
           explanation: "`test_b` checks what the cart promises; `test_a` checks how it stores things. A good test passes for any correct implementation, so a change of storage is no reason to rewrite it. In this lesson, the test that read `rows()` was a `test_a`."
-        - question: "After your refactoring, which of these is something `Menu` promises to its callers, rather than a detail it hides?"
+        - question: "After your refactoring, which of these is something `MenuParser` promises to its callers, rather than a detail it hides?"
           type: single
           difficulty: intermediate
           options:
@@ -1352,29 +1495,29 @@ steps:
           correct_index: 2
           option_feedback:
             0: "Column order is part of the supplier's CSV layout. A JSON export has no column order at all, and no caller depends on it any more."
-            1: "The comma separator belongs to the CSV export. After the refactoring, only `Menu` splits on it."
-            3: "The CSV file does hold prices as text, but `price_cents` returns an `int`. Turning the text into a number is now `Menu`'s job, hidden from callers."
-          explanation: "`price_cents(drink)` promises a price in cents, whatever the supplier sends. The layout of a row, its separator, and how prices are written in the file are hidden details: `Menu` can switch to JSON without breaking that promise."
+            1: "The comma separator belongs to the CSV export. After the refactoring, only `MenuParser` splits on it."
+            3: "The CSV file does hold prices as text, but `price_cents` returns an `int`. Turning the text into a number is now `MenuParser`'s job, hidden from callers."
+          explanation: "`price_cents(drink)` promises a price in cents, whatever the supplier sends. The layout of a row, its separator, and how prices are written in the file are hidden details: `MenuParser` can switch to JSON without breaking that promise."
     solution:
       files:
         - path: kiosk.py
           language: python
           content: |
-            from menu import Menu
+            from menu_parser import MenuParser
 
 
             class Kiosk:
-                def total_cents(self, menu: Menu, drinks: list[str]) -> int:
+                def total_cents(self, menu: MenuParser, drinks: list[str]) -> int:
                     total = 0
                     for drink in drinks:
                         price = menu.price_cents(drink)
                         total += price
                     return total
 
-                def offers_size(self, menu: Menu, drink: str, size: str) -> bool:
+                def offers_size(self, menu: MenuParser, drink: str, size: str) -> bool:
                     available = menu.sizes(drink)
                     return size in available
-        - path: menu.py
+        - path: menu_parser.py
           language: python
           content: |
             SUPPLIER_EXPORT = """\
@@ -1384,8 +1527,8 @@ steps:
             """
 
 
-            class Menu:
-                """The drinks Boba Run sells, loaded from the supplier's CSV export.
+            class MenuParser:
+                """Reads the drinks Boba Run sells from the supplier's CSV export.
 
                 Each row looks like:  Taro Milk Tea,550,M|L
                 """
@@ -1416,8 +1559,8 @@ steps:
                     return available
 
 
-            def load_menu() -> Menu:
-                return Menu(SUPPLIER_EXPORT)
+            def load_menu() -> MenuParser:
+                return MenuParser(SUPPLIER_EXPORT)
         - path: change_impact.py
           language: python
           content: |
@@ -1429,16 +1572,27 @@ steps:
             Test files count: a test that must be rewritten is part of the cost.
             """
 
-            # Your analysis of the starting design.
-            BEFORE = ["menu.py", "kiosk.py", "test_kiosk.py"]
+            # The files in this lesson. Build your lists from these names.
+            KIOSK = "kiosk.py"
+            MENU_PARSER = "menu_parser.py"
+            TEST_KIOSK = "test_kiosk.py"
+            CHANGE_IMPACT = "change_impact.py"
+
+            # Your analysis of the starting design: a dictionary from each name above
+            # that would need an edit to what in that file would change.
+            BEFORE = {
+                MENU_PARSER: "reads the CSV rows",
+                KIOSK: "splits rows on commas and bars",
+                TEST_KIOSK: "checks a raw CSV row",
+            }
 
             # Fill this in after your refactoring passes the tests.
-            AFTER = ["menu.py"]
+            AFTER = [MENU_PARSER]
         - path: test_kiosk.py
           language: python
           content: |
             from kiosk import Kiosk
-            from menu import load_menu
+            from menu_parser import load_menu
 
 
             def test_total_adds_the_price_of_each_drink():
@@ -1451,10 +1605,10 @@ steps:
                 assert kiosk.offers_size(load_menu(), "Thai Tea", "L") is False
 
 
-            def test_menu_knows_the_price_of_a_drink():
+            def test_parser_knows_the_price_of_a_drink():
                 assert load_menu().price_cents("Taro Milk Tea") == 550
       explanation: |
-        In each kiosk method, the lines from `price = 0` (or `available = []`) through the end of the loop over `menu.rows()` moved to `Menu` as `price_cents` and `sizes`. Those lines are the ones that split and index a CSV row, and they end in a plain value, a price or a list of sizes, so the kiosk no longer sees a row. The forwarding methods that Move Method left in `Kiosk` were deleted, and renaming `rows` to `__rows` from its `def` line took the raw rows out of the interface. The test that read `rows()[0]` checked how `Menu` stores drinks; its replacement asks `price_cents("Taro Milk Tea")`, a promise that holds for the CSV menu and for a JSON one.
+        In each kiosk method, the lines from `price = 0` (or `available = []`) through the end of the loop over `menu.rows()` moved to `MenuParser` as `price_cents` and `sizes`. Those lines are the ones that split and index a CSV row, and they end in a plain value, a price or a list of sizes, so the kiosk no longer sees a row. The forwarding methods that Move Method left in `Kiosk` were deleted, and renaming `rows` to `__rows` from its `def` line took the raw rows out of the interface. The test that read `rows()[0]` checked how `MenuParser` stores rows; its replacement asks `price_cents("Taro Milk Tea")`, a promise that holds for a CSV parser and for a JSON one.
 
   # =========================================================================
   # STEP 3 — The Algorithm Is a Secret Too
@@ -1479,7 +1633,7 @@ steps:
 
       ### Your tasks
 
-      1. **Think.** The change request: *"Blended drinks take longer. Estimate the wait from the drinks in the queue, not a flat 3 minutes per order."* Fill in `BEFORE` in `change_impact.py`.
+      1. **Think.** The change request: *"Blended drinks take longer. Estimate the wait from the drinks in the queue, not a flat 3 minutes per order."* Fill in `BEFORE` in `change_impact.py`, with a reason for each file.
       2. **Refactor.** In `pickup_screen.py`, extract the lines that calculate the estimate into a method named `minutes_until_ready`, and move it to `WaitTimes`.
       3. **Reuse.** `text_message.py` has the same two lines. The estimate has an owner now, so don't move them again: replace them with a call to `wait_times.minutes_until_ready(order_id)`.
       4. **Test.** The tests expect 9 minutes because they repeat the 3-minute rule. Free them from it: in `test_pickup.py`, replace `WaitTimes` with a **stub**, a small stand-in class whose `minutes_until_ready` returns whatever number the test chooses. Test the screen once, and test both sides of the text message's boundary: 3 minutes and 4 minutes.
@@ -1504,7 +1658,7 @@ steps:
       | Kind of secret | Example | Owner |
       |---|---|---|
       | Library or technology | which payment provider we use | `PayPalGateway` |
-      | Data format | the layout of the supplier's file | `Menu` |
+      | Data format | the layout of the supplier's file | `MenuParser` |
       | Algorithm | how the wait is estimated | `WaitTimes` |
 
       With a stub, the test chooses the estimate directly. That is why hitting the boundary took one line instead of arranging a queue.
@@ -1579,8 +1733,9 @@ steps:
           Test files count: a test that must be rewritten is part of the cost.
           """
 
-          # Your analysis of the starting design.
-          BEFORE = []
+          # Your analysis of the starting design: each file that would need an edit,
+          # with what in it would change, for example {"club.py": "what would change"}.
+          BEFORE = {}
 
           # Fill this in after your refactoring passes the tests.
           AFTER = []
@@ -1621,7 +1776,7 @@ steps:
           _ns = {}
           exec(open("/tutorial/change_impact.py").read(), _ns)
           def _files(value):
-              assert isinstance(value, (list, tuple, set)), "Keep each analysis as a list of file names."
+              assert isinstance(value, (dict, list, tuple, set)), "Keep each analysis as a dictionary or a list of file names."
               return {str(name).strip() for name in value}
 
           _truth = {"wait_times.py", "pickup_screen.py", "text_message.py", "test_pickup.py"}
@@ -1639,7 +1794,7 @@ steps:
           _ns = {}
           exec(open("/tutorial/change_impact.py").read(), _ns)
           def _files(value):
-              assert isinstance(value, (list, tuple, set)), "Keep each analysis as a list of file names."
+              assert isinstance(value, (dict, list, tuple, set)), "Keep each analysis as a dictionary or a list of file names."
               return {str(name).strip() for name in value}
 
           _truth = {"wait_times.py", "pickup_screen.py", "text_message.py", "test_pickup.py"}
@@ -1648,6 +1803,15 @@ steps:
           _extra = _before - _truth
           assert not _extra, f"BEFORE lists {len(_extra)} file(s) that would not need an edit."
         hints: *l3_before
+      - description: "Before: each file on the list says why it would need an edit"
+        command: |
+          _ns = {}
+          exec(open("/tutorial/change_impact.py").read(), _ns)
+          _before = _ns.get("BEFORE", {})
+          assert isinstance(_before, dict) and _before, "Write BEFORE as a dictionary from each file to the reason it needs an edit."
+          for _file, _reason in _before.items():
+              assert isinstance(_reason, str) and len(_reason.split()) >= 2, f"Say in a few words why {_file} would need an edit."
+        hints: *before_reasons
       - description: "The pickup screen shows whatever estimate it is given"
         command: |
           import sys
@@ -1808,7 +1972,7 @@ steps:
           _ns = {}
           exec(open("/tutorial/change_impact.py").read(), _ns)
           def _files(value):
-              assert isinstance(value, (list, tuple, set)), "Keep each analysis as a list of file names."
+              assert isinstance(value, (dict, list, tuple, set)), "Keep each analysis as a dictionary or a list of file names."
               return {str(name).strip() for name in value}
 
           _after = _files(_ns.get("AFTER", []))
@@ -1866,7 +2030,7 @@ steps:
             0: "The callers do not calculate anything the report should calculate. They decode the layout of its rows, which is a format."
             2: "No vendor or library is involved. The decision the callers depend on is how a row is written: the separator and the order of the fields."
             3: "Returning strings is fine; returning strings that callers must take apart is the leak. Switch the separator to a comma and all three callers break."
-          explanation: "This is the `rows()` problem from `Menu` again: a public operation returns raw rows, so the row layout becomes part of the interface. The fix is the same too: operations that return plain values, so only `SalesReport` knows the format."
+          explanation: "This is the `rows()` problem from `MenuParser` again: a public operation returns raw rows, so the row layout becomes part of the interface. The fix is the same too: operations that return plain values, so only `SalesReport` knows the format."
         - question: "The estimate will soon depend on which drinks are in the queue. Which operation on `WaitTimes` keeps that change inside `WaitTimes`?"
           type: single
           difficulty: advanced
@@ -1934,8 +2098,14 @@ steps:
             Test files count: a test that must be rewritten is part of the cost.
             """
 
-            # Your analysis of the starting design.
-            BEFORE = ["wait_times.py", "pickup_screen.py", "text_message.py", "test_pickup.py"]
+            # Your analysis of the starting design: each file that would need an edit,
+            # with what in it would change, for example {"club.py": "what would change"}.
+            BEFORE = {
+                "wait_times.py": "stores the flat minutes per drink",
+                "pickup_screen.py": "multiplies the queue position by the minutes",
+                "text_message.py": "multiplies the queue position by the minutes",
+                "test_pickup.py": "expects numbers from the 3-minute rule",
+            }
 
             # Fill this in after your refactoring passes the tests.
             AFTER = ["wait_times.py"]
@@ -1992,7 +2162,7 @@ steps:
 
       ### Your tasks
 
-      1. **Think.** The change request: *"Loyalty relaunch: customers earn 2 points per dollar."* Fill in `BEFORE` in `change_impact.py`.
+      1. **Think.** The change request: *"Loyalty relaunch: customers earn 2 points per dollar."* Fill in `BEFORE` in `change_impact.py`, with a reason for each file.
       2. **Test first.** In `test_receipt.py`, hand `Receipt.lines` a second argument: a stub whose `points_for` returns a number that today's rule could never produce, like 99. Expect the receipt to show that number. Press **Test**. It fails.
       3. **Fix.** Change `Receipt.lines` to take `(order, rewards)` and to ask `rewards.points_for(...)` instead of dividing. Press **Test**. It passes. This is a one-line change, so you do not need a refactoring tool.
       4. **Reason.** Fill in `AFTER`, then look at the class diagram again.
@@ -2061,8 +2231,9 @@ steps:
           Test files count: a test that must be rewritten is part of the cost.
           """
 
-          # Your analysis of the starting design.
-          BEFORE = []
+          # Your analysis of the starting design: each file that would need an edit,
+          # with what in it would change, for example {"club.py": "what would change"}.
+          BEFORE = {}
 
           # Fill this in after your change passes the tests.
           AFTER = []
@@ -2088,7 +2259,7 @@ steps:
           _ns = {}
           exec(open("/tutorial/change_impact.py").read(), _ns)
           def _files(value):
-              assert isinstance(value, (list, tuple, set)), "Keep each analysis as a list of file names."
+              assert isinstance(value, (dict, list, tuple, set)), "Keep each analysis as a dictionary or a list of file names."
               return {str(name).strip() for name in value}
 
           _truth = {"rewards.py", "receipt.py", "test_receipt.py"}
@@ -2106,7 +2277,7 @@ steps:
           _ns = {}
           exec(open("/tutorial/change_impact.py").read(), _ns)
           def _files(value):
-              assert isinstance(value, (list, tuple, set)), "Keep each analysis as a list of file names."
+              assert isinstance(value, (dict, list, tuple, set)), "Keep each analysis as a dictionary or a list of file names."
               return {str(name).strip() for name in value}
 
           _truth = {"rewards.py", "receipt.py", "test_receipt.py"}
@@ -2115,6 +2286,15 @@ steps:
           _extra = _before - _truth
           assert not _extra, f"BEFORE lists {len(_extra)} file(s) that would not need an edit."
         hints: *l4_before
+      - description: "Before: each file on the list says why it would need an edit"
+        command: |
+          _ns = {}
+          exec(open("/tutorial/change_impact.py").read(), _ns)
+          _before = _ns.get("BEFORE", {})
+          assert isinstance(_before, dict) and _before, "Write BEFORE as a dictionary from each file to the reason it needs an edit."
+          for _file, _reason in _before.items():
+              assert isinstance(_reason, str) and len(_reason.split()) >= 2, f"Say in a few words why {_file} would need an edit."
+        hints: *before_reasons
       - description: "The receipt shows the points that the rewards module awards"
         command: |
           import sys
@@ -2222,7 +2402,7 @@ steps:
           _ns = {}
           exec(open("/tutorial/change_impact.py").read(), _ns)
           def _files(value):
-              assert isinstance(value, (list, tuple, set)), "Keep each analysis as a list of file names."
+              assert isinstance(value, (dict, list, tuple, set)), "Keep each analysis as a dictionary or a list of file names."
               return {str(name).strip() for name in value}
 
           _after = _files(_ns.get("AFTER", []))
@@ -2329,8 +2509,13 @@ steps:
             Test files count: a test that must be rewritten is part of the cost.
             """
 
-            # Your analysis of the starting design.
-            BEFORE = ["rewards.py", "receipt.py", "test_receipt.py"]
+            # Your analysis of the starting design: each file that would need an edit,
+            # with what in it would change, for example {"club.py": "what would change"}.
+            BEFORE = {
+                "rewards.py": "owns the points rule",
+                "receipt.py": "copies the points rule",
+                "test_receipt.py": "expects points from today's rule",
+            }
 
             # Fill this in after your change passes the tests.
             AFTER = ["rewards.py"]
@@ -2377,8 +2562,8 @@ steps:
 
       ### Your tasks
 
-      1. **Think.** Fill in `BEFORE` for changes A and B, then set `FIX_FIRST`.
-      2. **Refactor A.** Give the texting decision one owner: `Notifier` gets an operation `send(phone, text)` that returns whether the text was delivered. Use the tools in `rsvp_service.py`, reuse the operation in `reminder_service.py`, then make the client private.
+      1. **Think.** Fill in `BEFORE` for changes A and B, with a reason for each file. Set `FIX_FIRST`, pick `SEND_INTERFACE`, and add your own `CHANGE_D`.
+      2. **Refactor A.** Give the texting decision one owner: `Notifier` gets the `send` operation you picked. Use the tools in `rsvp_service.py`, reuse the operation in `reminder_service.py`, then make the client private.
       3. **Fix B.** The rule for a full event already has an owner. Make `rsvp_service.py` ask it.
       4. **Test.** Add a test with a **spy**: a stand-in notifier that records every `send`. Check that an RSVP texts the right phone, with the right words, exactly once.
       5. **Reason.** Fill in `AFTER`.
@@ -2386,7 +2571,11 @@ steps:
       <details markdown="1">
       <summary>What you just did</summary>
 
-      That was the whole method from lecture: list the changes, weigh how likely they are, count what they touch, and redesign where a likely change is expensive.
+      That was the whole method from lecture, including its first step: on your own project, nobody hands you the roadmap. Changes you could have named for `CHANGE_D` include:
+
+      - **The wording of the texts**, such as adding Spanish: `rsvp_service.py`, `reminder_service.py`, and any test that checks the words.
+      - **When reminders go out**, such as two days ahead: `reminder_service.py`.
+      - **Email instead of phone numbers**: nearly every file.
 
       Change C touches four files, and you left it alone. Nobody is asking for it yet. Write it down and move on: hiding a decision costs effort too.
 
@@ -2409,18 +2598,33 @@ steps:
             C. "Store each event's guests in a database instead of a Python list."
                Someday. Nobody is asking for it yet. (We counted for you: 4 files.)
 
-          For A and B, list every file of ours that someone would have to edit.
+          For A and B, list every file of ours that someone would have to edit, and
+          say in a few words why, for example {"club.py": "what would change"}.
           textly_sdk.py is Textly's code, not ours. Test files count.
           """
 
           # Your analysis of the starting design.
           BEFORE = {
-              "A": [],
-              "B": [],
+              "A": {},
+              "B": {},
           }
 
           # Which change should the team design for first: "A", "B", or "C"?
           FIX_FIRST = ""
+
+          # Change A needs an operation on Notifier for the services to call instead
+          # of Textly. Which interface keeps Textly hidden: "a", "b", or "c"?
+          #   a. send(phone, text) -> bool           True if the text was delivered
+          #   b. send(session, phone, text) -> bool  the session comes from open_session()
+          #   c. send(phone, text) -> TextlyReceipt  callers read receipt.delivered
+          SEND_INTERFACE = ""
+
+          # Your turn: one more decision in ClubHub that you expect to change,
+          # and the files of ours it would touch today.
+          CHANGE_D = {
+              "change": "",
+              "files": [],
+          }
 
           # Fill this in after your refactoring passes the tests.
           AFTER = {
@@ -2554,7 +2758,7 @@ steps:
           _ns = {}
           exec(open("/tutorial/change_impact.py").read(), _ns)
           def _files(value):
-              assert isinstance(value, (list, tuple, set)), "Keep each analysis as a list of file names."
+              assert isinstance(value, (dict, list, tuple, set)), "Keep each analysis as a dictionary or a list of file names."
               return {str(name).strip() for name in value}
 
           _before = _ns.get("BEFORE", {})
@@ -2574,7 +2778,7 @@ steps:
           _ns = {}
           exec(open("/tutorial/change_impact.py").read(), _ns)
           def _files(value):
-              assert isinstance(value, (list, tuple, set)), "Keep each analysis as a list of file names."
+              assert isinstance(value, (dict, list, tuple, set)), "Keep each analysis as a dictionary or a list of file names."
               return {str(name).strip() for name in value}
 
           _before = _ns.get("BEFORE", {})
@@ -2583,12 +2787,24 @@ steps:
           assert _b, "BEFORE for change B is still empty."
           assert _b == {"event.py", "rsvp_service.py", "test_clubhub.py"}, "Change B touches exactly the files that decide or test when an event is full."
         hints: *l5_before
+      - description: "Before: each file on the lists says why it would need an edit"
+        command: |
+          _ns = {}
+          exec(open("/tutorial/change_impact.py").read(), _ns)
+          _before = _ns.get("BEFORE", {})
+          assert isinstance(_before, dict) and "A" in _before and "B" in _before, "Keep BEFORE as a dictionary with the keys A and B."
+          for _change in ("A", "B"):
+              _listed = _before[_change]
+              assert isinstance(_listed, dict) and _listed, f"Write BEFORE[{_change!r}] as a dictionary from each file to the reason it needs an edit."
+              for _file, _reason in _listed.items():
+                  assert isinstance(_reason, str) and len(_reason.split()) >= 2, f"Say in a few words why {_file} would need an edit for change {_change}."
+        hints: *before_reasons
       - description: "The team designs first for the change that is both certain and expensive"
         command: |
           _ns = {}
           exec(open("/tutorial/change_impact.py").read(), _ns)
           def _files(value):
-              assert isinstance(value, (list, tuple, set)), "Keep each analysis as a list of file names."
+              assert isinstance(value, (dict, list, tuple, set)), "Keep each analysis as a dictionary or a list of file names."
               return {str(name).strip() for name in value}
 
           _choice = str(_ns.get("FIX_FIRST", "")).strip().upper()
@@ -2601,6 +2817,40 @@ steps:
             text: "For each change, ask: how likely is it, and how many files does it touch today?"
           - title: "High on both"
             text: "Pick the change that is high on both."
+      - description: "The interface you chose for Notifier keeps Textly hidden"
+        command: |
+          _ns = {}
+          exec(open("/tutorial/change_impact.py").read(), _ns)
+          _choice = str(_ns.get("SEND_INTERFACE", "")).strip().lower()
+          assert _choice in {"a", "b", "c"}, "Set SEND_INTERFACE to a, b, or c."
+          assert _choice == "a", "Pick the interface that a notifier for another provider could offer unchanged."
+        hints:
+          - title: "Could another provider offer it?"
+            text: "Ask of each interface: could a notifier for a different texting provider offer exactly this, unchanged?"
+          - title: "Read what goes in and what comes out"
+            text: "Look at what each interface asks callers to pass in and what it hands back. Does any of it only make sense with Textly?"
+          - title: "Sessions and receipts"
+            text: "Opening a session and reading a receipt are steps of Textly's protocol. The interface that hides Textly lets neither of them reach a caller."
+      - description: "Change D names another decision likely to change, and the files it would touch"
+        command: |
+          _ns = {}
+          exec(open("/tutorial/change_impact.py").read(), _ns)
+          _d = _ns.get("CHANGE_D", {})
+          assert isinstance(_d, dict), "Keep CHANGE_D as a dictionary with the keys change and files."
+          _change = _d.get("change", "")
+          assert isinstance(_change, str) and len(_change.split()) >= 3, "Describe change D in a few words."
+          _listed = _d.get("files", [])
+          assert isinstance(_listed, (list, tuple, set)) and _listed, "List the files that change D would touch."
+          _ours = {"rsvp_service.py", "reminder_service.py", "notifier.py", "event.py", "test_clubhub.py"}
+          _unknown = {str(name).strip() for name in _listed} - _ours
+          assert not _unknown, "List only ClubHub's own files: textly_sdk.py is Textly's code, and change_impact.py is the analysis."
+        hints:
+          - title: "What could change next?"
+            text: "Every decision the code makes could change one day. Read the two services and ask: which choice in here would a member or a club officer most likely want done differently?"
+          - title: "One decision, then its files"
+            text: "Pick one decision and find every file that would need an edit if it changed, the same way you did for A and B."
+          - title: "The shape of the answer"
+            text: "Fill in both keys of `CHANGE_D`: `\"change\"` is a short sentence, and `\"files\"` is a list of ClubHub's own file names."
       - description: "RSVPs work with a notifier from another provider"
         command: |
           import sys
@@ -2630,7 +2880,7 @@ steps:
           assert RsvpService().rsvp(OtherNotifier(reachable=False), Event("Game Night", 3), "310-0101") is False, "rsvp should return False when the text could not be delivered."
         hints: &l5_provider
           - title: "What the stand-in offers"
-            text: "The check hands your service a notifier from another provider. It offers only `send(phone, text)`, which returns whether the text was delivered. What does your service still ask `Notifier` for?"
+            text: "The check hands your service a notifier from another provider. It offers only one operation, `send`, the one you chose in `SEND_INTERFACE`. What does your service still ask `Notifier` for?"
           - title: "The last line that knows Textly"
             text: "In the service, find the last line that only makes sense if you know Textly. Is that line inside the method you moved to `Notifier`?"
           - title: "Moved too few lines"
@@ -2800,7 +3050,7 @@ steps:
           _ns = {}
           exec(open("/tutorial/change_impact.py").read(), _ns)
           def _files(value):
-              assert isinstance(value, (list, tuple, set)), "Keep each analysis as a list of file names."
+              assert isinstance(value, (dict, list, tuple, set)), "Keep each analysis as a dictionary or a list of file names."
               return {str(name).strip() for name in value}
 
           _after = _ns.get("AFTER", {})
@@ -2904,18 +3154,41 @@ steps:
               C. "Store each event's guests in a database instead of a Python list."
                  Someday. Nobody is asking for it yet. (We counted for you: 4 files.)
 
-            For A and B, list every file of ours that someone would have to edit.
+            For A and B, list every file of ours that someone would have to edit, and
+            say in a few words why, for example {"club.py": "what would change"}.
             textly_sdk.py is Textly's code, not ours. Test files count.
             """
 
             # Your analysis of the starting design.
             BEFORE = {
-                "A": ["notifier.py", "rsvp_service.py", "reminder_service.py"],
-                "B": ["event.py", "rsvp_service.py", "test_clubhub.py"],
+                "A": {
+                    "notifier.py": "creates the Textly client",
+                    "rsvp_service.py": "opens a Textly session and pushes the text",
+                    "reminder_service.py": "opens a Textly session and pushes the text",
+                },
+                "B": {
+                    "event.py": "decides when an event is full",
+                    "rsvp_service.py": "copies the full-event comparison",
+                    "test_clubhub.py": "tests the full-event rule",
+                },
             }
 
             # Which change should the team design for first: "A", "B", or "C"?
             FIX_FIRST = "A"
+
+            # Change A needs an operation on Notifier for the services to call instead
+            # of Textly. Which interface keeps Textly hidden: "a", "b", or "c"?
+            #   a. send(phone, text) -> bool           True if the text was delivered
+            #   b. send(session, phone, text) -> bool  the session comes from open_session()
+            #   c. send(phone, text) -> TextlyReceipt  callers read receipt.delivered
+            SEND_INTERFACE = "a"
+
+            # Your turn: one more decision in ClubHub that you expect to change,
+            # and the files of ours it would touch today.
+            CHANGE_D = {
+                "change": "Confirmations and reminders are also sent in Spanish",
+                "files": ["rsvp_service.py", "reminder_service.py"],
+            }
 
             # Fill this in after your refactoring passes the tests.
             AFTER = {

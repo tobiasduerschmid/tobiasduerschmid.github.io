@@ -146,22 +146,24 @@ test('payments: three Extract + Move rounds and one Rename give PayPalGateway th
   let files = starterFiles(key);
   assertAllPass(key, files);
 
-  files = extract(files, 'order_service.py', speaksPayPal, 'paid = result.was_successful()', 'charge');
+  // PayPal's SDK calls share their names with PaymentGateway's operations, as
+  // in the lecture; extracting `charge` next to `gateway.paypal.charge` must work.
+  files = extract(files, 'order_service.py', speaksPayPal, 'paid = charge.was_successful()', 'charge');
   files = move(files, 'order_service.py', speaksPayPal, 'PayPalGateway');
   assertAllPass(key, files);
 
-  files = extract(files, 'refund_service.py', speaksPayPal, 'refunded = result.was_successful()', 'refund');
+  files = extract(files, 'refund_service.py', speaksPayPal, 'refunded = refund.was_successful()', 'refund');
   files = move(files, 'refund_service.py', speaksPayPal, 'PayPalGateway');
-  files = extract(files, 'wallet_service.py', speaksPayPal, 'card_id = gateway.paypal.vault(token, customer)', 'save_card');
+  files = extract(files, 'wallet_service.py', speaksPayPal, 'method_id = payment.method_id', 'create_payment_method');
   files = move(files, 'wallet_service.py', speaksPayPal, 'PayPalGateway');
   files = rename(files, 'paypal_gateway.py', 'self.paypal = PayPalClient', 'paypal', '__paypal');
   assertAllPass(key, files);
 
   for (const service of ['order_service.py', 'refund_service.py', 'wallet_service.py']) {
-    assert.doesNotMatch(files[service], /\.paypal\b|authenticate|capture|reverse|vault/,
-      `${service} should no longer mention PayPal's calls`);
+    assert.doesNotMatch(files[service], /\.paypal\b|authenticate|was_successful|payment\.method_id/,
+      `${service} should no longer run PayPal's protocol`);
   }
-  for (const operation of ['charge', 'refund', 'save_card']) {
+  for (const operation of ['charge', 'refund', 'create_payment_method']) {
     assert.match(files['paypal_gateway.py'], new RegExp(`^    def ${operation}\\(`, 'm'),
       `the tools should give PayPalGateway the ${operation} operation`);
   }
@@ -181,24 +183,24 @@ test('payments: three Extract + Move rounds and one Rename give PayPalGateway th
     'gateway_choice.py': solution['gateway_choice.py'] });
 });
 
-test('menu: Extract + Move twice, then Rename from the def line; only the test that knew the layout fails', () => {
+test('menu: Extract + Move twice into the parser module, then Rename from the def line; only the test that knew the layout fails', () => {
   const key = 'menu';
   let files = starterFiles(key);
   assertAllPass(key, files);
 
   files = extract(files, 'kiosk.py', 'price = 0', 'price = int(fields[1])', 'price_cents');
-  files = move(files, 'kiosk.py', 'price = int(fields[1])', 'Menu');
+  files = move(files, 'kiosk.py', 'price = int(fields[1])', 'MenuParser');
   files = extract(files, 'kiosk.py', 'available = []', 'available = fields[2].split("|")', 'sizes');
-  files = move(files, 'kiosk.py', 'available = fields[2].split("|")', 'Menu');
+  files = move(files, 'kiosk.py', 'available = fields[2].split("|")', 'MenuParser');
   assertAllPass(key, files);
 
-  files = rename(files, 'menu.py', 'def rows(self)', 'rows', '__rows');
+  files = rename(files, 'menu_parser.py', 'def rows(self)', 'rows', '__rows');
   assert.doesNotMatch(files['kiosk.py'], /rows|split/, 'the kiosk should no longer parse rows');
-  assert.equal(files['menu.py'], solutionFiles(key)['menu.py'],
+  assert.equal(files['menu_parser.py'], solutionFiles(key)['menu_parser.py'],
     'the published solution should be exactly what the tools produce');
 
   const failing = Object.entries(runTests(key, files)).filter(([, outcome]) => outcome !== 'PASSED');
-  assert.deepEqual(failing, [['test_menu_keeps_the_supplier_rows', 'FAILED']],
+  assert.deepEqual(failing, [['test_parser_keeps_the_supplier_rows', 'FAILED']],
     'only the test that depended on rows() should fail; the lesson asks the learner to rewrite it');
   assertAllPass(key, { ...files, 'test_kiosk.py': solutionFiles(key)['test_kiosk.py'] });
 });

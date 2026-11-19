@@ -713,14 +713,14 @@
       if (functionContainer && functionContainer.async) {
         return { error: 'Async function extraction is not supported yet.' };
       }
-      if (helperNameConflicts(analysis, activeFile, functionContainer, name)) {
-        return { error: 'A symbol named ' + name + ' already exists in this scope.' };
-      }
       var isMethod = !!(functionContainer && functionContainer.className);
       var firstParam = functionContainer && functionContainer.params && functionContainer.params[0];
       var receiverName = isMethod && firstParam && (firstParam.name === 'self' || firstParam.name === 'cls')
         ? firstParam.name
         : null;
+      if (helperNameConflicts(analysis, activeFile, functionContainer, name, lines, receiverName)) {
+        return { error: 'A symbol named ' + name + ' already exists in this scope.' };
+      }
       var declaredBefore = collectDeclaredBeforeFromAnalysis(analysis, activeFile, functionContainer, start);
       var selectedIds = collectSymbolsInRange(analysis, activeFile, start, end, 'load', functionContainer);
       var assignedInside = collectSymbolsInRange(analysis, activeFile, start, end, 'store', functionContainer);
@@ -1769,14 +1769,23 @@
     });
   }
 
-  function helperNameConflicts(analysis, filename, fn, name) {
+  // Would a new helper named `name` clash with an existing name? An extracted
+  // method is called through its receiver (`self.name(...)`), so only the
+  // receiver's own members can clash with it; a local variable, or another
+  // object's attribute such as `client.charge`, cannot. An extracted free
+  // function is called by its bare name, so locals and module names can.
+  function helperNameConflicts(analysis, filename, fn, name, lines, receiverName) {
     var file = analysisFile(analysis, filename);
     if (!file) return false;
     return (file.symbols || []).some(function (symbol) {
       if (symbol.name !== name || !symbol.range) return false;
+      if (symbol.kind === 'attribute') {
+        // `self.name` anywhere in the class: an instance attribute of that name.
+        return !!receiverName && symbol.className === fn.className && isReceiverAttribute(lines, symbol);
+      }
       if (!fn) return symbol.scope === null;
-      // local conflict inside the function we are extracting from
-      if (symbol.scope === fn.name && (symbol.className || null) === (fn.className || null)) return true;
+      // a local of the function we are extracting from shadows a bare call only
+      if (symbol.scope === fn.name && (symbol.className || null) === (fn.className || null)) return !receiverName;
       // module-level conflict only when extracting from a free function
       if (symbol.scope === null && !fn.className) return true;
       // sibling-method (or class-body assignment) conflict on the same class
@@ -1784,6 +1793,12 @@
           && (symbol.kind === 'function' || (symbol.kind === 'name' && symbol.ctx === 'store'))) return true;
       return false;
     });
+  }
+
+  // Is this attribute symbol read or written through `self.` or `cls.`?
+  function isReceiverAttribute(lines, symbol) {
+    var text = lines[symbol.range.startLine - 1] || '';
+    return /(^|[^\w.])(self|cls)\s*\.\s*$/.test(text.slice(0, symbol.range.startCol));
   }
 
   function hasVarArgsOrKwargs(fn) {

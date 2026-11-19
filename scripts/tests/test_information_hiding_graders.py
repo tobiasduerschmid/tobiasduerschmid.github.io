@@ -11,6 +11,7 @@ browser's Python worker runs them.
 
 import json
 import os
+import re
 from pathlib import Path
 import subprocess
 import sys
@@ -109,10 +110,12 @@ class GraderCase(unittest.TestCase):
             self.assertEqual(actual, expected, f"{name}\n{detail}")
 
 
-def set_impact(files, before, after):
+def set_impact(files, before, after, reasons=True):
+    """Replace the analysis. BEFORE gives each file a reason unless reasons=False."""
     text = files["change_impact.py"]
-    start = text.index("BEFORE = ")
-    head = text[:start]
+    head = text[:re.search(r"^BEFORE = ", text, re.M).start()]
+    if reasons:
+        before = {name: "it repeats the detail that changes" for name in before}
     return with_file(files, "change_impact.py",
                      head + f"BEFORE = {before!r}\n\nAFTER = {after!r}\n")
 
@@ -135,25 +138,36 @@ class PayPalGateway(PaymentGateway):
     def _token(self) -> str:
         return self._client.authenticate()
 
-    def charge(self, cents: int) -> bool:
-        return self._client.capture(self._token(), cents).was_successful()
+    def charge(self, amount: int) -> bool:
+        return self._client.charge(self._token(), amount).was_successful()
 
-    def refund(self, cents: int) -> bool:
-        return self._client.reverse(self._token(), cents).was_successful()
+    def refund(self, amount: int) -> bool:
+        return self._client.refund(self._token(), amount).was_successful()
 
-    def save_card(self, customer: str) -> str:
-        return self._client.vault(self._token(), customer)
+    def create_payment_method(self, customer: str) -> str:
+        return self._client.create_payment_method(self._token(), customer).method_id
 '''
 
 HAND_WRITTEN_ORDER_SERVICE = '''from order import Order
 from payment_gateway import PaymentGateway
 
+SALES_TAX_PERCENT = 10
+
 
 class OrderService:
-    def checkout(self, gateway: PaymentGateway, order: Order) -> bool:
-        if not gateway.charge(order.total_cents):
+    def __init__(self) -> None:
+        self.kitchen_queue: list[Order] = []
+
+    def checkout(self, order: Order, gateway: PaymentGateway) -> bool:
+        if not order.drinks:
+            raise ValueError("Cannot check out an empty order.")
+        amount = order.subtotal_cents() * (100 + SALES_TAX_PERCENT) // 100
+        if not gateway.charge(amount):
+            order.status = "declined"
             return False
         order.status = "paid"
+        order.paid_cents = amount
+        self.kitchen_queue.append(order)
         return True
 '''
 
@@ -162,11 +176,14 @@ from payment_gateway import PaymentGateway
 
 
 class RefundService:
-    def refund_order(self, gateway: PaymentGateway, order: Order) -> bool:
-        refunded = gateway.refund(order.total_cents)
-        if refunded:
-            order.status = "refunded"
-        return refunded
+    def refund_order(self, order: Order, gateway: PaymentGateway) -> bool:
+        if order.status != "paid":
+            raise ValueError("Only paid orders can be refunded.")
+        if not gateway.refund(order.paid_cents):
+            return False
+        order.status = "refunded"
+        order.paid_cents = 0
+        return True
 '''
 
 HAND_WRITTEN_WALLET_SERVICE = '''from payment_gateway import PaymentGateway
@@ -174,11 +191,14 @@ HAND_WRITTEN_WALLET_SERVICE = '''from payment_gateway import PaymentGateway
 
 class WalletService:
     def __init__(self) -> None:
-        self.saved_cards: dict[str, str] = {}
+        self.saved_methods: dict[str, list[str]] = {}
+        self.default_method: dict[str, str] = {}
 
-    def add_payment_method(self, gateway: PaymentGateway, customer: str) -> str:
-        self.saved_cards[customer] = gateway.save_card(customer)
-        return self.saved_cards[customer]
+    def add_payment_method(self, customer: str, gateway: PaymentGateway) -> str:
+        method_id = gateway.create_payment_method(customer)
+        self.saved_methods.setdefault(customer, []).append(method_id)
+        self.default_method.setdefault(customer, method_id)
+        return method_id
 '''
 
 
@@ -192,8 +212,8 @@ class PaymentsLesson(GraderCase):
     key = "payments"
 
     def test_starter_and_model_solution(self):
-        self.assert_outcomes("starter", starter(self.key), "FFFFFPFFFF")
-        self.assert_outcomes("model solution", solution(self.key), "PPPPPPPPPP")
+        self.assert_outcomes("starter", starter(self.key), "FFFFFFPFFFF")
+        self.assert_outcomes("model solution", solution(self.key), "PPPPPPPPPPP")
 
     def test_other_correct_submissions(self):
         by_hand = solution(self.key)
@@ -205,36 +225,36 @@ class PaymentsLesson(GraderCase):
         })
         by_hand = set_impact(by_hand, list(reversed(SERVICE_FILES)) + ["gateway_choice.py"],
                              ["gateway_choice.py"])
-        self.assert_outcomes("refactored by hand, different shape", by_hand, "PPPPPPPPPP")
+        self.assert_outcomes("refactored by hand, different shape", by_hand, "PPPPPPPPPPP")
 
         # Move Method leaves a forwarding method in the source class. Keeping it
         # is fine once it, too, names only the interface.
         kept = patch(solution(self.key), "order_service.py", "        return paid\n",
-                     "        return paid\n\n    def charge(self, gateway: PaymentGateway, cents):\n"
-                     "        return gateway.charge(cents)\n")
-        self.assert_outcomes("forwarding method left behind", kept, "PPPPPPPPPP")
+                     "        return paid\n\n    def charge(self, gateway: PaymentGateway, amount):\n"
+                     "        return gateway.charge(amount)\n")
+        self.assert_outcomes("forwarding method left behind", kept, "PPPPPPPPPPP")
 
     def test_mistakes(self):
         # Extracting only the first two PayPal lines hands PayPal's result object back.
         partial = patch(solution(self.key), "order_service.py",
-                        "        paid = gateway.charge(cents)\n",
-                        "        result = gateway.charge(cents)\n        paid = result.was_successful()\n")
+                        "        paid = gateway.charge(amount)\n",
+                        "        result = gateway.charge(amount)\n        paid = result.was_successful()\n")
         partial = patch(partial, "paypal_gateway.py",
-                        "        paid = result.was_successful()\n        return paid\n",
-                        "        return result\n")
-        self.assert_outcomes("moved too few lines", partial, "PPFPPPPPPP")
+                        "        paid = charge.was_successful()\n        return paid\n",
+                        "        return charge\n")
+        self.assert_outcomes("moved too few lines", partial, "PPPFPPPPPPP")
 
         renamed = starter(self.key)
         renamed = patch(renamed, "paypal_gateway.py", "self.paypal", "self._paypal")
         for name in SERVICE_FILES:
             renamed = patch(renamed, name, "gateway.paypal", "gateway._paypal", count=2)
         renamed = set_impact(renamed, STARTER_IMPACT, ["gateway_choice.py"])
-        self.assert_outcomes("only renamed the attribute", renamed, "PPFFFPPFFP")
+        self.assert_outcomes("only renamed the attribute", renamed, "PPPFFFPPFFP")
 
         # Making the client private before the services stop using it breaks the shop.
         too_early = patch(set_impact(starter(self.key), STARTER_IMPACT, []),
                           "paypal_gateway.py", "self.paypal", "self.__paypal")
-        self.assert_outcomes("renamed before moving", too_early, "PPFFFFPFFF")
+        self.assert_outcomes("renamed before moving", too_early, "PPPFFFFPFFF")
 
         # Promising the interface before the operations exist: Python refuses to
         # create PayPalGateway. Every check must still fail by assertion.
@@ -242,44 +262,44 @@ class PaymentsLesson(GraderCase):
                                "class PayPalGateway(PaymentGateway):")
         promised_early = patch(promised_early, "paypal_gateway.py", "from paypal_sdk",
                                "from payment_gateway import PaymentGateway\nfrom paypal_sdk")
-        self.assert_outcomes("base class added before the moves", promised_early, "FFFFFFFFFF")
+        self.assert_outcomes("base class added before the moves", promised_early, "FFFFFFFFFFF")
 
         self.assert_outcomes("forgot the base class", without_base_class(solution(self.key)),
-                             "PPPPPPPFPP")
+                             "PPPPPPPPFPP")
 
         on_paypal = solution(self.key)
         for name in SERVICE_FILES:
             on_paypal = patch(on_paypal, name, "from payment_gateway import PaymentGateway",
                               "from paypal_gateway import PayPalGateway")
             on_paypal = patch(on_paypal, name, "gateway: PaymentGateway", "gateway: PayPalGateway")
-        self.assert_outcomes("services still annotate PayPalGateway", on_paypal, "PPPPPPPPFP")
+        self.assert_outcomes("services still annotate PayPalGateway", on_paypal, "PPPPPPPPPFP")
 
         self.assert_outcomes(
             "analysis lists the test file",
             set_impact(solution(self.key), SERVICE_FILES + ["test_shop.py"], ["gateway_choice.py"]),
-            "PFPPPPPPPP")
+            "PFPPPPPPPPP")
         self.assert_outcomes(
             "analysis forgets a service",
             set_impact(solution(self.key), SERVICE_FILES[:2], ["gateway_choice.py"]),
-            "FPPPPPPPPP")
+            "FPPPPPPPPPP")
         self.assert_outcomes(
             "analysis after still lists the PayPal gateway",
             set_impact(solution(self.key), SERVICE_FILES, ["paypal_gateway.py", "gateway_choice.py"]),
-            "PPPPPPPPPF")
+            "PPPPPPPPPPF")
 
 
 # --------------------------------------------------------------------------- 2
-MENU_FILES = ["menu.py", "kiosk.py", "test_kiosk.py"]
+MENU_FILES = ["menu_parser.py", "kiosk.py", "test_kiosk.py"]
 
-HAND_WRITTEN_MENU = '''SUPPLIER_EXPORT = """\\
+HAND_WRITTEN_PARSER = '''SUPPLIER_EXPORT = """\\
 Taro Milk Tea,550,M|L
 Thai Tea,500,M
 Matcha Latte,625,M|L
 """
 
 
-class Menu:
-    """The drinks Boba Run sells. Only this class knows the supplier's layout."""
+class MenuParser:
+    """Reads the drinks Boba Run sells. Only this class knows the supplier's layout."""
 
     def __init__(self, csv_text: str) -> None:
         self._prices: dict[str, int] = {}
@@ -300,22 +320,22 @@ class Menu:
         return list(self._sizes.get(drink, []))
 
 
-def load_menu() -> Menu:
-    return Menu(SUPPLIER_EXPORT)
+def load_menu() -> MenuParser:
+    return MenuParser(SUPPLIER_EXPORT)
 '''
 
-HAND_WRITTEN_KIOSK = '''from menu import Menu
+HAND_WRITTEN_KIOSK = '''from menu_parser import MenuParser
 
 
 class Kiosk:
-    def total_cents(self, menu: Menu, drinks: list[str]) -> int:
+    def total_cents(self, menu: MenuParser, drinks: list[str]) -> int:
         return sum(menu.price_cents(drink) for drink in drinks)
 
-    def offers_size(self, menu: Menu, drink: str, size: str) -> bool:
+    def offers_size(self, menu: MenuParser, drink: str, size: str) -> bool:
         return size in menu.sizes(drink)
 '''
 
-ROWS_TEST = '''def test_menu_keeps_the_supplier_rows():
+ROWS_TEST = '''def test_parser_keeps_the_supplier_rows():
     assert load_menu().rows()[0] == "Taro Milk Tea,550,M|L"
 '''
 
@@ -330,25 +350,31 @@ class MenuLesson(GraderCase):
 
     def test_starter_and_model_solution(self):
         self.assertIn(ROWS_TEST, starter(self.key)["test_kiosk.py"])
-        self.assert_outcomes("starter", starter(self.key), "FFFFPFPFFF")
-        self.assert_outcomes("model solution", solution(self.key), "PPPPPPPPPP")
+        self.assert_outcomes("starter", starter(self.key), "FFFFFPFPFFF")
+        self.assert_outcomes("model solution", solution(self.key), "PPPPPPPPPPP")
 
     def test_other_correct_submissions(self):
         by_hand = starter(self.key)
-        by_hand.update({"menu.py": HAND_WRITTEN_MENU, "kiosk.py": HAND_WRITTEN_KIOSK})
+        by_hand.update({"menu_parser.py": HAND_WRITTEN_PARSER, "kiosk.py": HAND_WRITTEN_KIOSK})
         by_hand = patch(by_hand, "test_kiosk.py", ROWS_TEST,
                         "def test_menu_lists_its_drinks_in_order():\n"
                         "    assert load_menu().drink_names()[0] == \"Taro Milk Tea\"\n")
-        by_hand = set_impact(by_hand, MENU_FILES, ["menu.py"])
-        self.assert_outcomes("parsed once in __init__, by hand", by_hand, "PPPPPPPPPP")
+        by_hand = set_impact(by_hand, MENU_FILES, ["menu_parser.py"])
+        self.assert_outcomes("parsed once in __init__, by hand", by_hand, "PPPPPPPPPPP")
 
     def test_mistakes(self):
-        public_rows = patch(solution(self.key), "menu.py", "__rows", "rows", count=3)
+        public_rows = patch(solution(self.key), "menu_parser.py", "__rows", "rows", count=3)
         public_rows = patch(public_rows, "test_kiosk.py", self.rewritten_test(), ROWS_TEST)
-        self.assert_outcomes("rows() still public and still tested", public_rows, "PPPPPFPFFP")
+        self.assert_outcomes("rows() still public and still tested", public_rows, "PPPPPPFPFFP")
 
         fewer = patch(solution(self.key), "test_kiosk.py", self.rewritten_test(), "")
-        self.assert_outcomes("deleted the failing test instead of rewriting it", fewer, "PPPPPPFFPP")
+        self.assert_outcomes("deleted the failing test instead of rewriting it", fewer, "PPPPPPPFFPP")
+
+        # The file-name constants make a bare list easy to write; the files are
+        # right, but the prediction gives no reason for any of them.
+        self.assert_outcomes("analysis lists the right files without reasons",
+                             set_impact(solution(self.key), MENU_FILES, ["menu_parser.py"], reasons=False),
+                             "PPFPPPPPPPP")
 
 
 # --------------------------------------------------------------------------- 3
@@ -387,29 +413,29 @@ class WaitTimesLesson(GraderCase):
     key = "wait-times"
 
     def test_starter_and_model_solution(self):
-        self.assert_outcomes("starter", starter(self.key), "FFFFFPFFFFF")
-        self.assert_outcomes("model solution", solution(self.key), "PPPPPPPPPPP")
+        self.assert_outcomes("starter", starter(self.key), "FFFFFFPFFFFF")
+        self.assert_outcomes("model solution", solution(self.key), "PPPPPPPPPPPP")
 
     def test_other_correct_submissions(self):
         self.assert_outcomes("stubs built with unittest.mock",
                              with_file(solution(self.key), "test_pickup.py", MOCK_TESTS),
-                             "PPPPPPPPPPP")
+                             "PPPPPPPPPPPP")
         # Running Extract + Move on the second client adds an identical second method.
         twice = solution(self.key)
         twice = with_file(twice, "wait_times.py", twice["wait_times.py"].rstrip("\n") + "\n" + SECOND_COPY)
-        self.assert_outcomes("moved the same lines twice", twice, "PPPPPPPPPPP")
+        self.assert_outcomes("moved the same lines twice", twice, "PPPPPPPPPPPP")
 
     def test_mistakes(self):
         tests = solution(self.key)["test_pickup.py"]
         self.assertIn("(4)", tests, "the model solution should test just above the boundary")
         one_sided = with_file(solution(self.key), "test_pickup.py",
                               tests.replace("(4)", "(9)").replace("About 4 min", "About 9 min"))
-        self.assert_outcomes("no test just above the boundary", one_sided, "PPPPPPPPPFP")
+        self.assert_outcomes("no test just above the boundary", one_sided, "PPPPPPPPPPFP")
 
         self.assert_outcomes(
             "tests still repeat the 3-minute rule",
             with_file(solution(self.key), "test_pickup.py", starter(self.key)["test_pickup.py"]),
-            "PPPPPPFPPFP")
+            "PPPPPPPFPPFP")
 
 
 # --------------------------------------------------------------------------- 4
@@ -430,19 +456,19 @@ class RewardsLesson(GraderCase):
     key = "rewards"
 
     def test_starter_and_model_solution(self):
-        self.assert_outcomes("starter", starter(self.key), "FFFFPFPF")
-        self.assert_outcomes("model solution", solution(self.key), "PPPPPPPP")
+        self.assert_outcomes("starter", starter(self.key), "FFFFFPFPF")
+        self.assert_outcomes("model solution", solution(self.key), "PPPPPPPPP")
 
     def test_mistakes(self):
         # The real Rewards and the copied rule both answer 5, so this test proves nothing.
         self.assert_outcomes(
             "test passes the real Rewards",
             with_file(solution(self.key), "test_receipt.py", REAL_REWARDS_TEST),
-            "PPPPPFFP")
+            "PPPPPPFFP")
         self.assert_outcomes(
             "analysis trusts the missing arrow",
             set_impact(solution(self.key), ["rewards.py"], ["rewards.py"]),
-            "FPPPPPPP")
+            "FPPPPPPPP")
 
 
 # --------------------------------------------------------------------------- 5
@@ -457,44 +483,59 @@ class ClubHubLesson(GraderCase):
         return added[len(original):]
 
     def test_starter_and_model_solution(self):
-        self.assert_outcomes("starter", starter(self.key), "FFFFFFPFFFFF")
-        self.assert_outcomes("model solution", solution(self.key), "PPPPPPPPPPPP")
+        self.assert_outcomes("starter", starter(self.key), "FFFFFFFFFPFFFFF")
+        self.assert_outcomes("model solution", solution(self.key), "PPPPPPPPPPPPPPP")
 
     def test_mistakes(self):
         model = solution(self.key)
         self.assert_outcomes(
             "no spy test",
             with_file(model, "test_clubhub.py", starter(self.key)["test_clubhub.py"]),
-            "PPPPPPPPFFFP")
+            "PPPPPPPPPPPFFFP")
 
         spy = self.spy_test()
         assertion = [line for line in spy.splitlines() if line.strip().startswith("assert ")][-1]
         self.assert_outcomes(
             "spy test only checks that something was sent",
             patch(model, "test_clubhub.py", assertion, "    assert len(spy.sent) >= 1"),
-            "PPPPPPPPPFFP")
+            "PPPPPPPPPPPPFFP")
 
         # Half-way state: rsvp is refactored, reminders are not, the client is still public.
         half_way = with_file(model, "reminder_service.py", starter(self.key)["reminder_service.py"])
         half_way = patch(half_way, "notifier.py", "__textly", "textly", count=3)
-        self.assert_outcomes("reminders still speak Textly", half_way, "PPPPFPPFPPPP")
+        self.assert_outcomes("reminders still speak Textly", half_way, "PPPPPPPFPPFPPPP")
         self.assert_outcomes(
             "the full-event rule still has two copies",
             patch(model, "rsvp_service.py", "if event.is_full():",
                   "if len(event.guests) >= event.capacity:"),
-            "PPPPPFPPPPPP")
+            "PPPPPPPPFPPPPPP")
         # The starter's full-event test checks the rule itself, so under the
         # waitlist rule it has to be rewritten: it is part of change B's cost.
         self.assert_outcomes(
             "analysis of change B leaves out the test of the rule",
             patch(model, "change_impact.py",
-                  '"B": ["event.py", "rsvp_service.py", "test_clubhub.py"]',
-                  '"B": ["event.py", "rsvp_service.py"]'),
-            "PFPPPPPPPPPP")
+                  '        "test_clubhub.py": "tests the full-event rule",\n', ""),
+            "PFPPPPPPPPPPPPP")
         self.assert_outcomes(
             "designs first for the change nobody asked for",
             patch(model, "change_impact.py", 'FIX_FIRST = "A"', 'FIX_FIRST = "C"'),
-            "PPFPPPPPPPPP")
+            "PPPFPPPPPPPPPPP")
+        self.assert_outcomes(
+            "picks the interface that hands out Textly's receipt",
+            patch(model, "change_impact.py", 'SEND_INTERFACE = "a"', 'SEND_INTERFACE = "c"'),
+            "PPPPFPPPPPPPPPP")
+        self.assert_outcomes(
+            "lists change A without saying why",
+            patch(model, "change_impact.py", '"notifier.py": "creates the Textly client"', '"notifier.py": ""'),
+            "PPFPPPPPPPPPPPP")
+        no_change_d = patch(model, "change_impact.py",
+                            '"change": "Confirmations and reminders are also sent in Spanish"', '"change": ""')
+        self.assert_outcomes("leaves change D empty", no_change_d, "PPPPPFPPPPPPPPP")
+        self.assert_outcomes(
+            "change D lists the vendor's file",
+            patch(model, "change_impact.py", '"files": ["rsvp_service.py", "reminder_service.py"]',
+                  '"files": ["rsvp_service.py", "textly_sdk.py"]'),
+            "PPPPPFPPPPPPPPP")
 
 
 del GraderCase  # the base class has no tests of its own

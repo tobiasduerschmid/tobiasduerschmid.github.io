@@ -2903,9 +2903,12 @@ channel.
   **Designing steps for the refactoring tools.** When a step asks learners
   to make a change with these tools, shape the starter code to fit their
   limits:
-  1. Extract refuses a helper name already used in the enclosing function,
-     even as another object's attribute (`payments.capture` blocks a helper
-     named `capture`). Give vendor APIs and our own modules different verbs.
+  1. An extracted method is called through `self`, so Extract refuses only
+     names its class already uses: a sibling method (including the method
+     being extracted from) or a `self.` attribute. Locals and other objects'
+     attributes (`client.charge`) do not block a helper named `charge`, so a
+     vendor SDK may share verbs with our interface. An extracted free
+     function is called by bare name, so locals and module names block it.
   2. Move Method needs a parameter typed as the target class and does not add
      imports to the target file. Extracted helpers should take only
      unannotated locals or built-in types.

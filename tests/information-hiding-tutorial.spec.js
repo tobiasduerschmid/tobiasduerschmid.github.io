@@ -29,8 +29,8 @@ const steps = config.steps;
 
 // Authored values from the task brief. They duplicate the YAML on purpose: a
 // lesson that silently loses a check or a quiz question must fail here.
-const EXPECTED_TEST_COUNTS = [10, 10, 11, 8, 12];
-const EXPECTED_QUIZ_SIZES = [4, 4, 4, 4, 5];
+const EXPECTED_TEST_COUNTS = [11, 11, 12, 9, 15];
+const EXPECTED_QUIZ_SIZES = [5, 4, 4, 4, 5];
 // Labels in each lesson's authored diagrams, one list per diagram in page
 // order: lesson 1 has two diagrams, lessons 2 and 3 one each. Mostly class
 // names; the lesson 1 target also lists one operation, which learners must
@@ -39,9 +39,9 @@ const LESSON_1_SERVICES = ['OrderService', 'RefundService', 'WalletService'];
 const AUTHORED_DIAGRAM_LABELS = [
   [
     [...LESSON_1_SERVICES, 'PayPalGateway', 'PayPalClient'],
-    [...LESSON_1_SERVICES, 'PaymentGateway', '+save_card(customer): str', 'PayPalGateway', 'PayPalClient'],
+    [...LESSON_1_SERVICES, 'PaymentGateway', '+create_payment_method(customer): str', 'PayPalGateway', 'PayPalClient'],
   ],
-  [['Kiosk', 'Menu']],
+  [['Kiosk', 'MenuParser']],
   [['PickupScreen', 'TextMessage', 'WaitTimes']],
 ];
 // A diagram label may be a little smaller than paragraph text: at least

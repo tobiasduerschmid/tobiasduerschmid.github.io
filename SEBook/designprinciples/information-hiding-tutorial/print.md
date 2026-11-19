@@ -1,6 +1,6 @@
 ---
 layout: print-tutorial
-title: "Information Hiding in Python Tutorial — Print View"
+title: "Information Hiding: Who Knows the Secret? — Print View"
 tutorial: information-hiding
 permalink: /SEBook/designprinciples/information-hiding-tutorial/print
 ---
