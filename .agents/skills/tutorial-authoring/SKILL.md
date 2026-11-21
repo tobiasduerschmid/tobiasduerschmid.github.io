@@ -3050,6 +3050,23 @@ channel.
   system Properties expose membership checkboxes while preserving the member
   elements and their relationships when membership is removed. Composite-state
   edits preserve nested declarations, pseudostate kinds, and state actions.
+  A state's Properties set its **Kind** (`<<choice>>`, `<<junction>>`,
+  `<<history>>`, `<<deepHistory>>`, `<<fork>>`, `<<join>>`, `<<terminate>>`;
+  any other `<<name>>` is a stereotype drawn above the name), its entry / do /
+  exit actions, and its internal transitions (`trigger [guard] / effect`). The
+  panel writes a declared state's behaviour inside its block and an undeclared
+  one's as named rows (`Idle : entry / start()`), so a state mentioned only by
+  transitions stays in its region. A composite's Sub-states list adds the
+  region's own `[*] --> First` and `Last --> [*]`.
+  The textarea is rendered line for line and a sequence source is framed with
+  `@startuml` as it is typed, because ids such as `rel:N`, `seqmsg:N` and
+  `frag:N` are source line numbers: never trim or reflow the text between the
+  textarea and the renderer. Edits that remove or move lines go through
+  `rewriteSourceLines`, which carries line-keyed layout to the surviving lines;
+  resolve every line-based id before the first removal. Fragments and
+  activation bars are selected as kinds `fragment` and `activation`, whatever
+  hitbox was used. Run a visual edit that may turn out to be refused inside
+  `runAsOneUndoStep` so it records one undo step only when the source changed.
   Property and advanced-sequence field commits preserve the native Tab/click
   destination. Retained controls must refresh their models and committed-value
   baselines after renames, endpoint edits, or source-line shifts; container

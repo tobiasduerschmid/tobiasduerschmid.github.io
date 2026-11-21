@@ -641,6 +641,12 @@ Supported options:
       { id: 'state',     label: 'State',          glyph: '▢', base: 'State',  keyword: 'state', supports: { stereotype: true, highlight: true, texture: true, subStates: true } },
       { id: 'composite', label: 'Composite',      glyph: '⊞', base: 'Group',  keyword: 'state', supports: { stereotype: true, highlight: true, texture: true, subStates: true }, isComposite: true },
       { id: 'choice',    label: 'Choice <>',      glyph: '⬢', base: 'Choice', keyword: 'state', supports: {}, fixedStereotype: '<<choice>>' },
+      { id: 'junction',    label: 'Junction',          glyph: '●', base: 'Junction',    keyword: 'state', supports: {}, fixedStereotype: '<<junction>>' },
+      { id: 'history',     label: 'History (H)',       glyph: 'Ⓗ', base: 'History',     keyword: 'state', supports: {}, fixedStereotype: '<<history>>' },
+      { id: 'deepHistory', label: 'Deep history (H*)', glyph: 'Ⓗ', base: 'DeepHistory', keyword: 'state', supports: {}, fixedStereotype: '<<deepHistory>>' },
+      { id: 'fork',        label: 'Fork',              glyph: '━', base: 'Fork',        keyword: 'state', supports: {}, fixedStereotype: '<<fork>>' },
+      { id: 'join',        label: 'Join',              glyph: '━', base: 'Join',        keyword: 'state', supports: {}, fixedStereotype: '<<join>>' },
+      { id: 'terminate',   label: 'Terminate ✕',       glyph: '✕', base: 'Terminate',   keyword: 'state', supports: {}, fixedStereotype: '<<terminate>>' },
       { id: 'initial', label: 'Initial ●', glyph: '●', base: '__init', keyword: '',     supports: {}, pseudo: 'initial' },
       { id: 'final',   label: 'Final ◉',   glyph: '◉', base: '__final',keyword: '',     supports: {}, pseudo: 'final' },
       NOTE_SCHEMA
@@ -656,7 +662,7 @@ Supported options:
     deployment: [
       { id: 'node',      label: 'Node',      glyph: '□', base: 'Node',     keyword: 'node',      supports: { displayLabel: true, stereotype: true, highlight: true, texture: true } },
       { id: 'component', label: 'Component', glyph: '▢', base: 'Component',keyword: 'component', supports: { displayLabel: true, stereotype: true, highlight: true, texture: true } },
-      { id: 'artifact',  label: 'Artifact',  glyph: '⧉', base: 'Artifact', keyword: 'artifact',  supports: { displayLabel: true, highlight: true, texture: true } },
+      { id: 'artifact',  label: 'Artifact',  glyph: '⧉', base: 'Artifact', keyword: 'artifact',  supports: { displayLabel: true, stereotype: true, highlight: true, texture: true } },
       NOTE_SCHEMA
     ],
     usecase: [
@@ -721,6 +727,7 @@ Supported options:
       { id: 'sync',   label: 'Synchronous',  glyph: '─→', op: '->',  supports: { label: true }, defaultLabel: 'message()' },
       { id: 'async',  label: 'Asynchronous', glyph: '↠', op: '->>', supports: { label: true }, defaultLabel: 'event()' },
       { id: 'return', label: 'Return',       glyph: '··→', op: '-->', supports: { label: true }, defaultLabel: 'response' },
+      { id: 'asyncReply', label: 'Async reply', glyph: '··↠', op: '-->>', supports: { label: true }, defaultLabel: 'reply' },
       { id: 'create', label: 'Create',       glyph: '⊕', op: '-->', supports: { label: true }, defaultLabel: '<<create>>', sequenceCreate: true },
       { id: 'lost',   label: 'Lost',         glyph: '→●', op: '->o', supports: { label: true }, defaultLabel: 'lost', sequenceSingle: 'lost' },
       { id: 'found',  label: 'Found',        glyph: '●→', op: 'o->', supports: { label: true }, defaultLabel: 'found', sequenceSingle: 'found' }
@@ -761,6 +768,27 @@ Supported options:
       { id: 'total', label: 'Total Particip.', glyph: '═', op: '==', supports: { erCardinality: true } }
     ]
   };
+
+  // What a state's `<<kind>>` makes it. '' is an ordinary state, which may
+  // carry any other stereotype. Aliases are the spellings the renderer accepts.
+  var STATE_KINDS = [
+    { value: '', label: 'State' },
+    { value: 'choice', label: 'Choice' },
+    { value: 'junction', label: 'Junction' },
+    { value: 'history', label: 'Shallow history (H)', aliases: ['shallowhistory'] },
+    { value: 'deepHistory', label: 'Deep history (H*)', aliases: ['history*'] },
+    { value: 'fork', label: 'Fork' },
+    { value: 'join', label: 'Join' },
+    { value: 'terminate', label: 'Terminate' }
+  ];
+
+  function stateKindForStereotype(stereotype) {
+    var name = String(stereotype || '').replace(/^<<\s*|\s*>>$/g, '').toLowerCase();
+    var kind = STATE_KINDS.find(function (candidate) {
+      return candidate.value && (candidate.value.toLowerCase() === name || (candidate.aliases || []).indexOf(name) !== -1);
+    });
+    return kind ? kind.value : '';
+  }
 
   function diagramSupportsCreation(type) {
     return Object.prototype.hasOwnProperty.call(ELEMENT_SCHEMAS, type);
@@ -1118,14 +1146,14 @@ Supported options:
         }
 
         if (type === 'class') {
-          m = line.match(/^(?:abstract\s+class|class|interface|enum)\s+("[^"]+"|\S+)(?:\s+as\s+(\S+))?/i);
+          m = line.match(/^(?:abstract\s+class|class|interface|enum)\s+("[^"]+"|[^\s{]+)(?:\s+as\s+([^\s{]+))?/i);
           if (m) addElement(elements, seen, m[2] || m[1], m[1]);
         } else if (type === 'sequence') {
           // Participants already come from the renderer's model; note prose
           // and declaration order must not invent different editable heads.
           continue;
         } else if (type === 'state') {
-          m = line.match(/^state\s+("[^"]+"|\S+)/i);
+          m = line.match(/^state\s+("[^"]+"|[^\s{]+)/i);
           if (m) addElement(elements, seen, m[1], m[1]);
           var stateRel = parseRelationLine(line);
           if (stateRel && stateRel.source && stateRel.target && /->/.test(stateRel.op || '')) {
@@ -1207,7 +1235,7 @@ Supported options:
     }
 
     function cloneRoutes(routes) {
-      var copy = {};
+      var copy = Object.create(null);
       Object.keys(routes || {}).forEach(function (id) {
         var route = routes[id];
         if (!route || !route.points || route.points.length < 2) return;
@@ -1219,7 +1247,7 @@ Supported options:
     }
 
     function clonePositions(positions) {
-      var copy = {};
+      var copy = Object.create(null);
       Object.keys(positions || {}).forEach(function (id) {
         var pos = positions[id];
         if (!pos || pos.x === undefined || pos.y === undefined) return;
@@ -1292,7 +1320,8 @@ Supported options:
         var tokens = tokenizeRelationParts(clean);
         if (isRelationOperatorToken(tokens[1]) ||
             (relationTokenLooksLikeMultiplicity(tokens[1]) && isRelationOperatorToken(tokens[2]))) return null;
-        m = clean.match(/^(?:abstract\s+class|class|interface|enum)\s+("[^"]+"|\S+)(?:\s+as\s+(\S+))?/i);
+        // The name ends at whitespace or at the body's brace: `class Foo{`.
+        m = clean.match(/^(?:abstract\s+class|class|interface|enum)\s+("[^"]+"|[^\s{]+)(?:\s+as\s+([^\s{]+))?/i);
         return m ? unquoteId(m[2] || m[1]) : null;
       }
       if (type === 'sequence') {
@@ -1301,7 +1330,7 @@ Supported options:
         return participant ? unquoteId(participant.id) : null;
       }
       if (type === 'state') {
-        m = clean.match(/^(?:state|choice)\s+("[^"]+"|\S+)/i);
+        m = clean.match(/^(?:state|choice)\s+("[^"]+"|[^\s{]+)/i);
         return m ? unquoteId(m[1]) : null;
       }
       if (type === 'component') {
@@ -1352,7 +1381,7 @@ Supported options:
     function writePositionsIntoSource(text, type, positions, routeOverrides) {
       var routes = routeOverrides || readLayoutRoutes(text);
       var lines = stripLayoutMetadata(text).split('\n');
-      var remaining = {};
+      var remaining = Object.create(null);
       Object.keys(positions || {}).forEach(function (id) { remaining[id] = positions[id]; });
       var out = [];
 
@@ -1984,9 +2013,18 @@ Supported options:
      * @param {boolean} [opts.extend]  Toggle id in the selection instead of
      *                                 replacing — used by Cmd/Ctrl/Shift+click.
      */
+    // Fragments and activation bars have hitboxes like elements do, but they
+    // are selected, edited and deleted as what they are. Their ids say so.
+    function selectionKindForId(id, kind) {
+      if (kind && kind !== 'node') return kind;
+      if (/^frag:/.test(String(id))) return 'fragment';
+      if (/^actbar:/.test(String(id))) return 'activation';
+      return 'node';
+    }
+
     function setSelectedLayoutId(id, kind, opts) {
       opts = opts || {};
-      var k = kind || 'node';
+      var k = selectionKindForId(id, kind);
       if (!id) {
         clearSelectionSet();
         selectedLayoutId = null;
@@ -2404,6 +2442,22 @@ Supported options:
       redoStack.length = 0;
       refreshUndoButtons();
     }
+    /**
+     * Run an edit as one undo step, recorded only when it changed the source.
+     * The edit's own snapshots are held back, so an edit that turns out to be
+     * refused (a duplicate name, say) leaves undo and redo untouched.
+     */
+    function runAsOneUndoStep(edit) {
+      var before = textarea.value;
+      var wasSuspended = suspendUndo;
+      suspendUndo = true;
+      try {
+        edit();
+      } finally {
+        suspendUndo = wasSuspended;
+      }
+      if (textarea.value !== before) snapshotForUndo(null, before);
+    }
     function refreshUndoButtons() {
       if (undoBtn) undoBtn.disabled = !undoStack.length;
       if (redoBtn) redoBtn.disabled = !redoStack.length;
@@ -2498,7 +2552,7 @@ Supported options:
     }
 
     function existingIds(text, type) {
-      var seen = {};
+      var seen = Object.create(null);
       collectModelElements(text, type).forEach(function (e) {
         var id = String(e.id || '');
         if (id) seen[id] = true;
@@ -2594,7 +2648,8 @@ Supported options:
         line = 'box' + (spec.freeformShape && spec.freeformShape !== 'rect' ? ' ' + spec.freeformShape : '') +
           ' "' + escapeQuoted(label).replace(/\n/g, '\\n') + '" as ' + id;
       } else if (spec.keyword === 'usecase') {
-        line = 'usecase "' + escapeQuoted(label) + '" as ' + id;
+        // A name with spaces cannot be an alias: the quoted name is the identity.
+        line = 'usecase "' + escapeQuoted(label) + '"' + (/\s/.test(id) ? '' : ' as ' + id);
       } else if (spec.keyword === 'rectangle') {
         line = 'rectangle "' + escapeQuoted(label) + '"' + (label !== id ? ' as ' + formatRelationEndpointId(id) : '') + ' { }';
       } else if (spec.keyword === 'artifact') {
@@ -2612,10 +2667,10 @@ Supported options:
       } else if (spec.keyword === 'actor' && (typeSelect.value === 'sequence' || typeSelect.value === 'usecase')) {
         if (typeSelect.value === 'sequence') {
           line = 'actor ' + id + ': ' + label;
-        } else if (id !== label) {
+        } else if (id !== label && !/\s/.test(id)) {
           line = 'actor "' + escapeQuoted(label) + '" as ' + id;
         } else {
-          line = 'actor ' + id;
+          line = 'actor ' + formatRelationEndpointId(id);
         }
       } else if (spec.keyword === 'participant') {
         line = 'participant ' + id + ': ' + label;
@@ -2626,7 +2681,7 @@ Supported options:
       } else if ((spec.keyword === 'component' || spec.keyword === 'node') && label !== id) {
         line = spec.keyword + ' "' + escapeQuoted(label) + '" as ' + formatRelationEndpointId(id);
       } else if (spec.keyword) {
-        line = spec.keyword + ' ' + id;
+        line = spec.keyword + ' ' + formatRelationEndpointId(id);
       } else {
         line = id;
       }
@@ -2679,7 +2734,9 @@ Supported options:
     function buildRelationLine(spec, sourceId, targetId, opts) {
       opts = opts || {};
       var op = spec.op;
-      var label = opts.label || (spec.defaultLabel || '');
+      // A new relation starts with its default label. An existing one states
+      // its label, and an empty one stays empty.
+      var label = opts.label != null ? opts.label : (spec.defaultLabel || '');
       if (typeSelect.value === 'sequence' && spec.sequenceSingle === 'lost') {
         return formatRelationEndpointId(sourceId) + ' ->o' + (label ? ' : ' + label : '');
       }
@@ -2707,6 +2764,10 @@ Supported options:
           op = diamond + sourceMark + '--' + targetMark;
         }
       }
+
+      // Freeform has more line styles than palette entries (`<..>`, `==`).
+      // An edit that keeps the relation's kind keeps the style it was drawn in.
+      if (typeSelect.value === 'freeform' && opts.op && freeformRelationKind(opts.op) === spec.id) op = opts.op;
 
       if (typeSelect.value === 'activity') {
         var actHead = opts.implicitSource ? op : formatActivityEndpointId(sourceId) + ' ' + op;
@@ -2752,6 +2813,12 @@ Supported options:
       var value = String(id || '').trim();
       if (!value) return value;
       if (/^"((?:[^"\\]|\\.)*)"$/.test(value)) return value;
+      // A component connector names a component with spaces in brackets;
+      // the component grammar reads a quoted endpoint as nothing at all.
+      if (typeSelect.value === 'component') {
+        if (/^\[[^\]]+\]$/.test(value)) return value;
+        if (/\s/.test(value) && !/[\[\]"]/.test(value)) return '[' + value + ']';
+      }
       return /\s|"/.test(value) ? '"' + escapeQuoted(value) + '"' : value;
     }
 
@@ -2970,8 +3037,9 @@ Supported options:
       var lines = sourceLinesWithoutNotes(text);
       var stack = [];
       var ranges = [];
-      var openRe = /^\s*(alt|opt|loop|par|break|critical|ref|neg)\b\s*(?:\[(.*?)\])?\s*$/i;
-      var elseRe = /^\s*else\b\s*(?:\[(.*?)\])?\s*$/i;
+      // A condition may be bracketed (`alt [ok]`) or bare (`loop each item`).
+      var openRe = /^\s*(alt|opt|loop|par|break|critical|ref|neg)\b\s*(?:\[(.*?)\]|(\S.*?))?\s*$/i;
+      var elseRe = /^\s*else\b\s*(?:\[(.*?)\]|(\S.*?))?\s*$/i;
       var endRe  = /^\s*end\s*$/i;
       for (var i = 0; i < lines.length; i++) {
         var raw = lines[i];
@@ -2981,7 +3049,7 @@ Supported options:
             id: 'frag:' + i,
             startIdx: i,
             kind: openMatch[1].toLowerCase(),
-            condition: (openMatch[2] || '').trim(),
+            condition: (openMatch[2] || openMatch[3] || '').trim(),
             branches: [],
             endIdx: -1
           });
@@ -2991,7 +3059,7 @@ Supported options:
         if (elseMatch && stack.length) {
           stack[stack.length - 1].branches.push({
             lineIdx: i,
-            condition: (elseMatch[1] || '').trim()
+            condition: (elseMatch[1] || elseMatch[2] || '').trim()
           });
           continue;
         }
@@ -3052,6 +3120,8 @@ Supported options:
       var info = fragmentInfoForId(fragId);
       if (!info) return;
       var trimmed = String(newCondition || '').trim();
+      var branch = info.branches.find(function (candidate) { return candidate.lineIdx === branchLineIdx; });
+      if (!branch || branch.condition === trimmed) return;
       snapshotForUndo('frag-branch:' + fragId + ':' + branchLineIdx);
       var positions = readLayoutPositions(textarea.value);
       var routes = readLayoutRoutes(textarea.value);
@@ -3088,31 +3158,23 @@ Supported options:
       var info = fragmentInfoForId(fragId);
       if (!info || info.endIdx === -1) return;
       snapshotForUndo('frag-unwrap:' + fragId);
-      var positions = readLayoutPositions(textarea.value);
-      var routes = readLayoutRoutes(textarea.value);
       var lines = stripLayoutMetadata(textarea.value).split('\n');
       var openIndent = (lines[info.startIdx].match(/^\s*/) || [''])[0];
       var dedent = '  '; // fragments always indent by 2
-      var dropLines = {};
-      dropLines[info.startIdx] = true;
-      dropLines[info.endIdx] = true;
-      info.branches.forEach(function (b) { dropLines[b.lineIdx] = true; });
-      var out = [];
-      for (var i = 0; i < lines.length; i++) {
-        if (dropLines[i]) continue;
-        if (i > info.startIdx && i < info.endIdx) {
-          var cur = lines[i];
-          if (cur.indexOf(openIndent + dedent) === 0) {
-            cur = openIndent + cur.substring((openIndent + dedent).length);
-          } else if (cur.indexOf(dedent) === 0) {
-            cur = cur.substring(dedent.length);
-          }
-          out.push(cur);
-        } else {
-          out.push(lines[i]);
+      var wrapperLines = [info.startIdx, info.endIdx].concat(info.branches.map(function (b) { return b.lineIdx; }));
+      var edits = [];
+      for (var i = info.startIdx; i <= info.endIdx; i++) {
+        if (wrapperLines.indexOf(i) !== -1) {
+          edits.push({ start: i, end: i, replacement: null });
+          continue;
         }
+        var cur = lines[i];
+        if (cur.indexOf(openIndent + dedent) === 0) cur = openIndent + cur.substring((openIndent + dedent).length);
+        else if (cur.indexOf(dedent) === 0) cur = cur.substring(dedent.length);
+        edits.push({ start: i, end: i, replacement: cur });
       }
-      textarea.value = writePositionsIntoSource(out.join('\n'), 'sequence', positions, routes);
+      // Layout keyed by message line follows each message to its new line.
+      textarea.value = rewriteSourceLines(textarea.value, 'sequence', edits);
       setSelectedLayoutId(null);
       renderDiagram();
       announce('Removed fragment wrapper, kept inner messages.', false);
@@ -3220,42 +3282,34 @@ Supported options:
 
       if (delta < 0) {
         var prevIdx = nextNonBlank(blockStart, -1);
-        if (prevIdx < 0) {
+        var previous = prevIdx >= 0 ? lines[prevIdx] : '';
+        // Nothing to move past: the diagram start, or the declarations that
+        // fix the order of the lifelines.
+        if (prevIdx < 0 || /^\s*(?:@startuml|participant\b|actor\b|box\b|end\s+box\b|layout\b|title\b)/i.test(previous)) {
           announce('Fragment is already first.', false);
           return false;
         }
-        // If the previous line is the END of an outer fragment, refuse — can't
-        // hop out of the parent fragment via reorder.
-        if (/^\s*end\s*$/i.test(lines[prevIdx])) {
+        // A fragment before this one would end in `end`. An opener or `else`
+        // directly above is this fragment's own parent or branch.
+        if (/^\s*(?:alt|opt|loop|par|break|critical|ref|neg|else)\b/i.test(previous)) {
           announce('Fragment is already first inside its parent.', false);
           return false;
         }
-        // Prev line might be a fragment_end of a sibling fragment — find the
-        // matching opener and move the entire sibling block.
-        var prevBlockStart = prevIdx, prevBlockEnd = prevIdx;
-        if (/^\s*end\s*$/i.test(lines[prevIdx])) {
-          // (handled above)
-        } else if (/^\s*(alt|opt|loop|par|break|critical|ref|neg)\b/i.test(lines[prevIdx])) {
-          // We landed on the sibling opener — keep as start, find its end.
-          var depth = 0;
-          for (var i = prevIdx; i < lines.length; i++) {
-            if (/^\s*(alt|opt|loop|par|break|critical|ref|neg)\b/i.test(lines[i])) depth++;
-            if (/^\s*end\s*$/i.test(lines[i])) { depth--; if (!depth) { prevBlockEnd = i; break; } }
+        var prevBlockStart = prevIdx;
+        if (/^\s*end\s*$/i.test(previous)) {
+          var fragmentBefore = sequenceFragmentRanges(textarea.value).find(function (range) { return range.endIdx === prevIdx; });
+          if (!fragmentBefore) {
+            announce('Could not locate the fragment before this one.', false);
+            return false;
           }
-        } else {
-          // Plain line — back up one since it's the END of the previous block.
-          // For most cases, the prev line is a single line (message/note/lifeline-event).
-          // For multi-line notes, walk back to find the `note ...` opener.
-          if (/^\s*end\s*note$/i.test(lines[prevIdx])) {
-            for (var nj = prevIdx - 1; nj >= 0; nj--) {
-              if (/^\s*note\s+(left|right|over)\b/i.test(lines[nj])) { prevBlockStart = nj; break; }
-            }
-          } else {
-            prevBlockStart = prevIdx;
-            prevBlockEnd = prevIdx;
+          prevBlockStart = fragmentBefore.startIdx;
+        } else if (/^\s*end\s*note$/i.test(previous)) {
+          for (var nj = prevIdx - 1; nj >= 0; nj--) {
+            if (/^\s*note\s+(left|right|over)\b/i.test(lines[nj])) { prevBlockStart = nj; break; }
           }
         }
         snapshotForUndo('frag-move-up:' + fragId);
+        clearSequenceMessageLayoutMetadata(positions, routes);
         var fragChunk = lines.splice(blockStart, blockEnd - blockStart + 1);
         lines.splice.apply(lines, [prevBlockStart, 0].concat(fragChunk));
         textarea.value = writePositionsIntoSource(lines.join('\n'), 'sequence', positions, routes);
@@ -3286,6 +3340,7 @@ Supported options:
           }
         }
         snapshotForUndo('frag-move-down:' + fragId);
+        clearSequenceMessageLayoutMetadata(positions, routes);
         var nextChunk = lines.splice(nextBlockStart, nextBlockEnd - nextBlockStart + 1);
         // After splicing the next chunk out, `blockStart` / `blockEnd` are unchanged
         // because the removed chunk is AFTER the fragment block. Insert the
@@ -4241,6 +4296,8 @@ Supported options:
           cleanupDragListeners(ev);
           btn.style.opacity = '';
           paletteDragState = null;
+          // No click follows a cancelled pointer, so nothing is left to suppress.
+          suppressPaletteClick = false;
         }
         document.addEventListener('pointermove', onMove, true);
         document.addEventListener('mousemove', onMove, true);
@@ -4351,6 +4408,20 @@ Supported options:
       if (!raw.trim()) return '@startuml\n@enduml';
       if (raw.indexOf('@startuml') === -1) return '@startuml\n' + raw.trim() + '\n@enduml';
       return raw;
+    }
+
+    // Sequence edits address messages by line and insert into a framed
+    // source. Frame an unframed one where it is typed, caret in place, so
+    // every later line number means the same line in both.
+    function frameSequenceSource() {
+      var raw = textarea.value;
+      if (!raw.trim() || raw.indexOf('@startuml') !== -1) return;
+      var framed = sequenceSourceWithScaffold(raw);
+      var body = normalizeLineEndings(raw).trim();
+      var shift = framed.indexOf(body) - normalizeLineEndings(raw).indexOf(body);
+      var caret = [textarea.selectionStart, textarea.selectionEnd];
+      textarea.value = framed;
+      if (document.activeElement === textarea) textarea.setSelectionRange(caret[0] + shift, caret[1] + shift);
     }
 
     function sourceWithScaffold(text) {
@@ -4606,9 +4677,10 @@ Supported options:
       if (/^end$/i.test(t)) return 'Fragment end';
       if (/^o->\s+\S+/i.test(t)) return 'Found message';
       if (/^\S+\s+->o\b/i.test(t)) return 'Lost message';
-      if (/^\S+\s+->>\s+\S+/i.test(t)) return 'Async message';
-      if (/^\S+\s+-->\s+\S+/i.test(t)) return 'Return message';
-      if (/^\S+\s+->\s+\S+/i.test(t)) return 'Sync message';
+      // Mirror the renderer's arrows, including the right-to-left spellings.
+      if (/^\S+\s+(?:--?>>|<<--?)\s+\S+/.test(t)) return 'Async message';
+      if (/^\S+\s+(?:-->|<--)\s+\S+/.test(t)) return 'Return message';
+      if (/^\S+\s+(?:->x|->\s*\*|->|<-)\s+\S+/.test(t)) return 'Sync message';
       return '';
     }
 
@@ -5557,6 +5629,15 @@ Supported options:
       relationChooserReturnFocus = null;
     }
 
+    // Choosing a menu item removes the item that held focus. Put focus back on
+    // the selection (or the canvas) so Delete, undo and Esc keep working.
+    function keepFocusInEditor() {
+      var focused = document.activeElement;
+      if (focused && focused !== document.body && wrap.contains(focused)) return;
+      focusLayoutTarget(selectedLayoutId);
+      if (!wrap.contains(document.activeElement) || document.activeElement === document.body) previewPane.focus();
+    }
+
     // ─── Right-click context menu ───
     var contextMenu = null;
     var contextMenuReturnFocus = null;
@@ -5576,7 +5657,8 @@ Supported options:
     }
     function dismissContextMenuOnEsc(ev) {
       if (!contextMenu) return closeContextMenu();
-      if (ev.key === 'Escape') { ev.preventDefault(); closeContextMenu(true); }
+      // Tab leaves a menu: close it rather than strand it open behind the focus.
+      if (ev.key === 'Escape' || ev.key === 'Tab') { ev.preventDefault(); closeContextMenu(true); }
       else if (ev.key === 'ArrowDown' || ev.key === 'ArrowUp') {
         ev.preventDefault();
         var btns = Array.prototype.slice.call(contextMenu.querySelectorAll('button'));
@@ -5615,6 +5697,7 @@ Supported options:
         btn.addEventListener('click', function () {
           closeContextMenu();
           item.onClick();
+          keepFocusInEditor();
         });
         box.appendChild(btn);
       });
@@ -5763,6 +5846,7 @@ Supported options:
           closeRelationChooser();
           cleanupChooserListeners();
           onPick(spec);
+          keepFocusInEditor();
         });
         box.appendChild(btn);
       });
@@ -5807,12 +5891,16 @@ Supported options:
         btn.appendChild(glyph);
         btn.appendChild(document.createTextNode(spec.label));
         btn.addEventListener('click', function () {
-          textarea.value = addRelationToSource(textarea.value, type, spec, sourceId, targetId);
+          runAsOneUndoStep(function () {
+            textarea.value = addRelationToSource(textarea.value, type, spec, sourceId, targetId);
+          });
           closeRelationChooser();
+          cleanupChooserListeners();
           setActiveTool(null);
           selectNewestRelationAfterRender(type);
           announce('Added ' + spec.label + ' from "' + sourceId + '" to "' + targetId + '".', false);
           renderDiagram();
+          keepFocusInEditor();
         });
         box.appendChild(btn);
       });
@@ -5874,7 +5962,7 @@ Supported options:
 
     function dismissOnEsc(ev) {
       if (!relationChooser) return cleanupChooserListeners();
-      if (ev.key === 'Escape') {
+      if (ev.key === 'Escape' || ev.key === 'Tab') {
         ev.preventDefault();
         closeRelationChooser(true);
         cleanupChooserListeners();
@@ -5927,6 +6015,7 @@ Supported options:
       circle.addEventListener('focus', show);
       circle.addEventListener('blur', hide);
       circle.addEventListener('pointerdown', function (ev) {
+        if (ev.button !== 0) return;
         ev.preventDefault();
         ev.stopPropagation();
         circle.setPointerCapture(ev.pointerId);
@@ -5938,12 +6027,14 @@ Supported options:
         line.setAttribute('x2', startPt.x);
         line.setAttribute('y2', startPt.y);
         layer.appendChild(line);
-        extendDragState = { svg: svg, layer: layer, line: line, sourceItem: item, sourceHitbox: hitbox, originX: hx, originY: hy };
+        extendDragState = { svg: svg, layer: layer, line: line, sourceItem: item, sourceHitbox: hitbox, originX: hx, originY: hy,
+          startClientX: ev.clientX, startClientY: ev.clientY, moved: false };
         var spec = selectedRelationToolSpec();
         announce(spec
           ? 'Drag onto a target element to add ' + spec.label + '. Esc to cancel.'
           : 'Drag onto a target element. Release to choose a relation. Esc to cancel.', true);
       });
+      circle.addEventListener('pointercancel', cancelExtendDrag);
       // Keyboard activation on the handle: pressing Enter/Space starts a connect-mode
       // fallback (asks user to click target).
       circle.addEventListener('keydown', function (ev) {
@@ -5963,13 +6054,28 @@ Supported options:
       layer.appendChild(g);
     }
 
+    function cancelExtendDrag() {
+      if (!extendDragState) return;
+      if (extendDragState.line.parentNode) extendDragState.line.parentNode.removeChild(extendDragState.line);
+      extendDragState = null;
+    }
+
+    // Labels, activation bars, anchored notes, messages and fragments have
+    // layout ids so they can be moved, but they are not model elements:
+    // nothing connects to them.
+    function isRelationEndpointId(id) {
+      return !!id && !/^(?:actbar|note|label|seqmsg|frag):/.test(String(id));
+    }
+
+    // The model element under a point: where a relation being drawn can end.
     function findItemAtPoint(svg, clientX, clientY) {
       var els = document.elementsFromPoint(clientX, clientY);
       for (var i = 0; i < els.length; i++) {
         var el = els[i];
         if (el.classList &&
             (el.classList.contains('uml-pg-edit-hitbox') ||
-             el.classList.contains('uml-pg-edit-a11y-target'))) {
+             el.classList.contains('uml-pg-edit-a11y-target')) &&
+            isRelationEndpointId(el.getAttribute('data-layout-id'))) {
           return { id: el.getAttribute('data-layout-id'), hitbox: el };
         }
       }
@@ -5977,7 +6083,7 @@ Supported options:
       var editables = findEditableElements(svg);
       for (var j = editables.length - 1; j >= 0; j--) {
         var item = editables[j];
-        if (!item || !item.box) continue;
+        if (!item || !item.box || !isRelationEndpointId(item.id)) continue;
         if (pt.x >= item.box.x && pt.x <= item.box.x + item.box.width &&
             pt.y >= item.box.y && pt.y <= item.box.y + item.box.height) {
           return { id: item.id, hitbox: null };
@@ -6536,9 +6642,15 @@ Supported options:
       var pt = editorCanvasPoint(extendDragState.svg, ev.clientX, ev.clientY);
       extendDragState.line.setAttribute('x2', pt.x);
       extendDragState.line.setAttribute('y2', pt.y);
+      if (Math.abs(ev.clientX - extendDragState.startClientX) > 5 || Math.abs(ev.clientY - extendDragState.startClientY) > 5) {
+        extendDragState.moved = true;
+      }
       if (finish) {
-        var hit = findItemAtPoint(extendDragState.svg, ev.clientX, ev.clientY);
-        if (!hit && typeSelect.value === 'sequence') {
+        // A click on "+" without a drag names no target: it offers a new
+        // element to connect to, the same as dropping on empty canvas.
+        var dragged = extendDragState.moved;
+        var hit = dragged ? findItemAtPoint(extendDragState.svg, ev.clientX, ev.clientY) : null;
+        if (dragged && !hit && typeSelect.value === 'sequence') {
           var sequenceTarget = findSequenceMessageDropTarget(extendDragState, ev.clientX, ev.clientY);
           if (sequenceTarget) hit = { id: sequenceTarget.id, hitbox: null };
         }
@@ -6619,6 +6731,7 @@ Supported options:
 
     function handleHitboxClickForSequenceElementTool(item) {
       if (!activeTool || activeTool.kind !== 'element' || typeSelect.value !== 'sequence') return false;
+      if (!isRelationEndpointId(item.id)) return false;
       var spec = activeTool.spec || {};
       if (!spec.sequenceControl && !spec.sequenceNote) return false;
       // Activate tool on a lifeline head: drop a real, adjustable bar starting
@@ -6692,6 +6805,10 @@ Supported options:
 
     function handleHitboxClickForRelation(item, hitbox) {
       if (!activeTool || activeTool.kind !== 'relation') return false;
+      if (!isRelationEndpointId(item.id)) {
+        announce('A ' + activeTool.spec.label + ' connects elements. Pick an element, or press Esc to cancel.', true);
+        return true;
+      }
       if (typeSelect.value === 'sequence' && activeTool.spec && activeTool.spec.sequenceSingle) {
         return addSequenceSingleMessage(activeTool.spec, item.id);
       }
@@ -6926,7 +7043,7 @@ Supported options:
       else if (info.kind === 'enum') keyword = 'enum';
       else keyword = 'class';
       const declarationName = info.declarationLabel == null ? info.name : info.declarationLabel;
-      var line = keyword + ' ' + (/[\s"<>]/.test(declarationName) ? '"' + escapeQuoted(declarationName) + '"' : declarationName);
+      var line = keyword + ' ' + (/[\s"]/.test(declarationName) ? '"' + escapeQuoted(declarationName) + '"' : declarationName);
       if (info.declarationLabel != null) line += ' as ' + formatRelationEndpointId(info.name);
       if (info.stereotype) line += ' ' + info.stereotype;
       if (info.highlight) line += ' #' + String(info.highlight).replace(/^#/, '');
@@ -6974,7 +7091,11 @@ Supported options:
       propsPane.hidden = false;
       propsPane.classList.remove('is-empty');
       var splitPropsEl = document.getElementById('uml-pg-split-props');
-      if (splitPropsEl) splitPropsEl.hidden = false;
+      if (splitPropsEl && splitPropsEl.hidden) {
+        splitPropsEl.hidden = false;
+        // The pane has a size again: report it on its separator.
+        describeSplitter('props', paneSize(propsPane));
+      }
       if (propsDelete) propsDelete.hidden = false;
       if (selectionSize() > 1) {
         buildGroupProps();
@@ -7421,7 +7542,7 @@ Supported options:
       replaceCrcCard(id, card);
     }
 
-    function crcListInput(items, onChange) {
+    function lineListInput(items, onChange) {
       var input = document.createElement('textarea');
       input.rows = Math.max(3, Math.min(8, items.length + 1));
       input.value = items.join('\n');
@@ -7439,10 +7560,10 @@ Supported options:
         if (!value.trim()) return;
         changeCrcCardProperty(id, 'name', value.trim());
       })));
-      propsContent.appendChild(field('Responsibilities (one per line)', crcListInput(card.responsibilities, function (items) {
+      propsContent.appendChild(field('Responsibilities (one per line)', lineListInput(card.responsibilities, function (items) {
         changeCrcCardProperty(id, 'responsibilities', items);
       })));
-      propsContent.appendChild(field('Collaborators (one per line)', crcListInput(card.collaborators, function (items) {
+      propsContent.appendChild(field('Collaborators (one per line)', lineListInput(card.collaborators, function (items) {
         changeCrcCardProperty(id, 'collaborators', items);
       })));
       var hint = document.createElement('p');
@@ -7765,14 +7886,24 @@ Supported options:
       if (type === 'usecase' && schema && schema.supports.system) {
         buildSystemMembershipProps(function () { return id; });
       }
-      if (schema && schema.supports && schema.supports.stereotype) {
-        propsContent.appendChild(field('Stereotype (e.g. <<choice>>)', textInput(current.stereotype || '', function (v) {
+      var stateKind = type === 'state' ? stateKindForStereotype(current.stereotype) : '';
+      if (type === 'state' && line) {
+        var stateKindControl = selectInput(STATE_KINDS, stateKind, function (kind) {
+          current.stereotype = kind ? '<<' + kind + '>>' : '';
+          replaceGenericElement(id, schema, current);
+          rebuildPropsAfterStructuralChange(stateKindControl, '[data-state-kind]');
+        });
+        stateKindControl.setAttribute('data-state-kind', '');
+        propsContent.appendChild(field('Kind', stateKindControl));
+      }
+      if (schema && schema.supports && schema.supports.stereotype && !stateKind) {
+        propsContent.appendChild(field('Stereotype (e.g. <<service>>)', textInput(current.stereotype || '', function (v) {
           current.stereotype = v.trim() ? (/^<</.test(v.trim()) ? v.trim() : '<<' + v.trim().replace(/<<|>>/g, '') + '>>') : '';
           replaceGenericElement(id, schema, current);
         })));
       }
       if (schema && schema.supports && schema.supports.dashed) {
-        propsContent.appendChild(checkbox('Dashed outline', /\bdashed\b/i.test(line || ''), function (b) {
+        propsContent.appendChild(checkbox('Dashed outline', !!current.dashed, function (b) {
           current.dashed = b;
           replaceGenericElement(id, schema, current);
         }));
@@ -7800,8 +7931,34 @@ Supported options:
           }
         )));
       }
+      var stateBehaviour = type === 'state' ? stateBehaviourForId(id) : null;
+      if (stateBehaviour) {
+        var behaviourFs = document.createElement('fieldset');
+        behaviourFs.className = 'uml-pg-prop-fieldset';
+        var behaviourLegend = document.createElement('legend');
+        behaviourLegend.textContent = 'Behaviour';
+        behaviourFs.appendChild(behaviourLegend);
+        [['entry', 'Entry action'], ['doActivity', 'Do activity'], ['exit', 'Exit action']].forEach(function (action) {
+          behaviourFs.appendChild(field(action[1], textInput(stateBehaviour[action[0]], function (value) {
+            stateBehaviour[action[0]] = value.trim();
+            setStateBehaviour(id, stateBehaviour);
+          })));
+        });
+        behaviourFs.appendChild(field('Internal transitions (one per line: trigger [guard] / effect)',
+          lineListInput(stateBehaviour.internal, function (rows) {
+            var invalid = rows.filter(function (row) { return !isStateInternalTransitionRow(row); });
+            if (invalid.length) {
+              announce('An internal transition needs an effect after a slash, as in "tick [armed] / count()". Check: ' + invalid[0], true);
+              return;
+            }
+            stateBehaviour.internal = rows;
+            setStateBehaviour(id, stateBehaviour);
+          })));
+        propsContent.appendChild(behaviourFs);
+      }
+
       // ─── Container children editors (composite state / component ports / ER attrs) ───
-      if (type === 'state' && line) {
+      if (type === 'state' && line && !stateKind) {
         var body = parseBraceBody(line);
         if (body || (schema && schema.supports && schema.supports.subStates)) {
           var parsed = parseStateBody(body);
@@ -7868,6 +8025,29 @@ Supported options:
             commitState();
           });
           fs.appendChild(add);
+          // A region's own initial and final pseudostates are transitions
+          // written inside its block: `[*] --> First`, `Last --> [*]`.
+          [['+ Initial state', function (child) { return '[*] --> ' + child; }, 0],
+           ['+ Final state', function (child) { return child + ' --> [*]'; }, -1]].forEach(function (action) {
+            var regionButton = document.createElement('button');
+            regionButton.type = 'button';
+            regionButton.className = 'uml-pg-add-member';
+            regionButton.textContent = action[0];
+            regionButton.disabled = !parsed.children.length;
+            regionButton.addEventListener('click', function () {
+              parsed = parseStateBody(parseBraceBody(getDeclarationLine(textarea.value, type, id)));
+              var child = parsed.children[action[2] < 0 ? parsed.children.length - 1 : 0];
+              if (!child) return;
+              var transition = action[1](formatRelationEndpointId(child.name));
+              if (parsed.raw.indexOf(transition) !== -1) {
+                announce('This region already has that transition.', false);
+                return;
+              }
+              parsed.raw.push(transition);
+              commitState();
+            });
+            fs.appendChild(regionButton);
+          });
           propsContent.appendChild(fs);
         }
       }
@@ -8188,6 +8368,75 @@ Supported options:
       if (!body || !body.trim()) return stripped;
       if (multiline || /\n/.test(line)) return stripped + ' {\n' + body.trim() + '\n}';
       return stripped + ' { ' + body.trim() + ' }';
+    }
+
+    // ─── State behaviour: entry / do / exit actions and internal transitions ───
+    // The renderer reads these inside a state's block (`entry / start()`) or
+    // on a named row (`Idle : entry / start()`). The panel shows what the
+    // renderer shows; it writes the block form for a declared state and
+    // named rows for one that only transitions mention.
+    var STATE_ACTION_ROW = /^(entry|exit|do)\s*\/\s*(.+)$/i;
+
+    // `trigger [guard] / effect`: the effect slash is what tells it apart
+    // from a description row or a nested declaration.
+    function isStateInternalTransitionRow(row) {
+      return /^[^\s:{}][^:{}]*\/.*$/.test(row) && !/-->/.test(row) &&
+        !/^(?:state|note|callout|entry|exit|do)\b/i.test(row);
+    }
+
+    function stateBehaviourForId(id) {
+      var state = window.UMLStateDiagram.parse(stripLayoutMetadata(textarea.value)).states.find(function (candidate) {
+        return candidate.name === id;
+      });
+      if (!state || state.type !== 'state') return null;
+      return {
+        entry: state.entryAction || '',
+        doActivity: state.doActivity || '',
+        exit: state.exitAction || '',
+        internal: (state.internalTransitions || []).slice()
+      };
+    }
+
+    function stateBehaviourRows(behaviour) {
+      var rows = [];
+      if (behaviour.entry) rows.push('entry / ' + behaviour.entry);
+      if (behaviour.doActivity) rows.push('do / ' + behaviour.doActivity);
+      if (behaviour.exit) rows.push('exit / ' + behaviour.exit);
+      return rows.concat(behaviour.internal);
+    }
+
+    function setStateBehaviour(id, behaviour) {
+      runAsOneUndoStep(function () {
+        var text = textarea.value;
+        var rows = stateBehaviourRows(behaviour);
+        // Drop the named rows first: they repeat the block's rows from outside it.
+        var namedRows = [];
+        sourceLinesWithoutNotes(text).forEach(function (line, index) {
+          var named = line.trim().match(/^(\S+)\s*:\s*(.+)$/);
+          if (named && named[1] === id && !/-->/.test(line) && /\//.test(named[2])) namedRows.push({ start: index, end: index });
+        });
+        if (namedRows.length) text = rewriteSourceLines(text, 'state', namedRows);
+        var declaration = getDeclarationLine(text, 'state', id);
+        if (declaration == null) {
+          // No declaration to hold a block, and adding one could lift the
+          // state out of its region: say it in named rows instead.
+          if (rows.length) {
+            var insertAt = findInsertPointForDeclaration(stripLayoutMetadata(text).split('\n'));
+            text = rewriteSourceLines(text, 'state', [{ start: insertAt, end: insertAt - 1,
+              replacement: rows.map(function (row) { return id + ' : ' + row; }).join('\n') }]);
+          }
+        } else {
+          var body = parseStateBody(parseBraceBody(declaration));
+          body.raw = rows.concat(body.raw.filter(function (row) {
+            return !STATE_ACTION_ROW.test(row) && !isStateInternalTransitionRow(row);
+          }));
+          text = replaceBlockByMatch(text, 'state', function (line) { return declarationIdForLine(line, 'state') === id; },
+            setBraceBody(declaration, buildStateBody(body), true));
+        }
+        textarea.value = text;
+      });
+      selectAfterRender(id, 'node');
+      renderDiagram();
     }
 
     function parseStateBody(body) {
@@ -8684,7 +8933,11 @@ Supported options:
       const aliasIndex = tokens.findIndex(function (token) { return token.text === 'as'; });
       const token = aliasIndex >= 0 ? tokens[aliasIndex + 1] : tokens.find(function (candidate, index) { return index > 0 && unquoteId(candidate.text) === oldId; });
       if (!token) return declaration;
-      return declaration.slice(0, token.start) + formatRelationEndpointId(newId) + declaration.slice(token.end);
+      // A use case without an alias is declared by its quoted name alone:
+      // `usecase "Log In"`. An alias (`... as UC1`) is never quoted.
+      const quotedByGrammar = aliasIndex < 0 && type === 'usecase' && /^\s*usecase\b/i.test(header);
+      const renamed = quotedByGrammar ? '"' + escapeQuoted(newId) + '"' : formatRelationEndpointId(newId);
+      return declaration.slice(0, token.start) + renamed + declaration.slice(token.end);
     }
 
     function declarationStatementRanges(declaration, type) {
@@ -9066,6 +9319,8 @@ Supported options:
         rels.map(function (r) { return { value: r.id, label: r.label }; }),
         info.kind, function (v) {
           info.kind = v;
+          var chosen = rels.find(function (relation) { return relation.id === v; });
+          if (!(chosen && chosen.supports && chosen.supports.stereotype)) info.stereotype = '';
           // These choices explicitly choose association direction. Whole-part
           // choices change the diamond while retaining the user's end marks.
           if (type === 'class' && /^(plain|assoc|biassoc)$/.test(v)) {
@@ -9210,7 +9465,9 @@ Supported options:
 
     function tokenizeRelationParts(text) {
       var tokens = [];
-      var re = /"((?:[^"\\]|\\.)*)"|'((?:[^'\\]|\\.)*)'|(\S+)/g;
+      // A bracketed group is one token even with spaces inside: an activity
+      // guard `[is valid]`, a component `[Web App]`.
+      var re = /"((?:[^"\\]|\\.)*)"|'((?:[^'\\]|\\.)*)'|(\[[^\]\s][^\]]*\]|\S+)/g;
       var m;
       while ((m = re.exec(String(text || '')))) {
         if (m[1] != null) {
@@ -9359,6 +9616,7 @@ Supported options:
       if (tokenized) {
         tokenized.label = info.label;
         tokenized.stereotype = info.stereotype;
+        tokenized.dashed = info.dashed;
         return finalizeParsedRelationInfo(tokenized);
       }
       var quotedBoth = t.match(/^"((?:[^"\\]|\\.)*)"\s+([-.\|<>=*ox]+)\s+"((?:[^"\\]|\\.)*)"$/);
@@ -9469,12 +9727,7 @@ Supported options:
       if ((type === 'component' || type === 'deployment') && info.kind === 'assoc') info.kind = 'arrow';
       if (type === 'sequence' && op === '-->' && info.kind === 'assoc') info.kind = 'return';
       if (type === 'freeform') {
-        if (op === '<--' || op === '<..' || op === '<==') info.kind = 'back';
-        else if (op === '<->' || op === '<..>' || op === '<==>') info.kind = 'both';
-        else if (op === '--') info.kind = 'plain';
-        else if (op === '..>' || op === '..') info.kind = 'dash';
-        else if (op === '==>' || op === '==') info.kind = 'thick';
-        else if (op === '-->' || info.kind === 'assoc') info.kind = 'arrow';
+        info.kind = freeformRelationKind(op) || (info.kind === 'assoc' ? 'arrow' : info.kind);
       }
       if (type === 'usecase') {
         if (/^<<\s*include\s*>>$/i.test(info.stereotype || '')) info.kind = 'include';
@@ -9482,6 +9735,17 @@ Supported options:
         else if (op === '-->' || info.kind === 'assoc') info.kind = 'arrow';
       }
       return info;
+    }
+
+    // The palette kind that a freeform operator is a style of.
+    function freeformRelationKind(op) {
+      if (op === '<--' || op === '<..' || op === '<==') return 'back';
+      if (op === '<->' || op === '<..>' || op === '<==>') return 'both';
+      if (op === '--') return 'plain';
+      if (op === '..>' || op === '..') return 'dash';
+      if (op === '==>' || op === '==') return 'thick';
+      if (op === '-->') return 'arrow';
+      return '';
     }
 
     function guessRelationKind(op) {
@@ -9498,6 +9762,7 @@ Supported options:
       if (t === '==') return 'total';
       if (t === '->') return 'sync';
       if (t === '->>') return 'async';
+      if (t === '-->>') return 'asyncReply';
       if (t === '->o') return 'lost';
       if (t === 'o->') return 'found';
       return '';
@@ -9509,7 +9774,7 @@ Supported options:
         label: info.label, sourceMult: info.sourceMult, targetMult: info.targetMult,
         navigability: info.navigability, sourceNavigability: info.sourceNavigability,
         targetNavigability: info.targetNavigability, stereotype: info.stereotype, dashed: info.dashed,
-        guard: info.guard, labelIsGuard: info.labelIsGuard, implicitSource: info.implicitSource
+        guard: info.guard, labelIsGuard: info.labelIsGuard, implicitSource: info.implicitSource, op: info.op
       };
     }
 
@@ -9740,71 +10005,38 @@ Supported options:
       var entries = Object.keys(selectedLayoutIds).map(function (id) {
         return { id: id, kind: selectedLayoutIds[id] };
       });
-      // Drop selected activation bars first — each is a plain `activate` +
-      // `deactivate` line pair. Doing this before route indices are computed
-      // keeps those indices valid (removing the directive lines shifts them).
-      var activationLineIdxs = [];
-      entries.forEach(function (e) {
-        if (e.kind !== 'activation') return;
-        var info = activationBarIndex[e.id];
-        if (!info) return;
-        if (info.startLine != null) activationLineIdxs.push(info.startLine);
-        if (info.endLine != null) activationLineIdxs.push(info.endLine);
-      });
-      if (activationLineIdxs.length) {
-        var actPositions = readLayoutPositions(textarea.value);
-        var actRoutes = readLayoutRoutes(textarea.value);
-        clearSequenceMessageLayoutMetadata(actPositions, actRoutes);
-        var actLines = stripLayoutMetadata(sequenceSourceWithScaffold(textarea.value)).split('\n');
-        activationLineIdxs.sort(function (a, b) { return b - a; }).forEach(function (idx) {
-          if (idx >= 0 && idx < actLines.length && /^\s*(de)?activate\b/i.test(actLines[idx])) actLines.splice(idx, 1);
-        });
-        textarea.value = writePositionsIntoSource(actLines.join('\n'), 'sequence', actPositions, actRoutes);
-      }
-      // Compute relation line indices once before any mutations so ordinal
-      // matching stays consistent if multiple routes are selected.
+      // Activation bars, relations and fragments are all identified by source
+      // line. Resolve every one against the same lines before removing any,
+      // so no id is read against lines an earlier removal has shifted.
+      var lines = stripLayoutMetadata(textarea.value).split('\n');
       var rIndices = relationLineIndices(textarea.value, typeSelect.value);
-      // Collect line indices to drop for routes (so we can drop higher-index
-      // first and avoid shifting issues), and id list for elements.
-      var routeIdxs = [];
+      var doomedLines = Object.create(null);
       var elementIds = [];
-      var fragmentIds = [];
       var keptRoutes = 0;
       entries.forEach(function (e) {
-        if (e.kind === 'route') {
-          var id = String(e.id);
-          var lines = stripLayoutMetadata(textarea.value).split('\n');
-          var idx = relationLineMatchForRouteId(id, typeSelect.value, lines, rIndices).lineIdx;
-          if (idx !== -1) routeIdxs.push(idx);
+        if (e.kind === 'activation') {
+          var bar = activationBarIndex[e.id];
+          [bar && bar.startLine, bar && bar.endLine].forEach(function (idx) {
+            if (idx != null && /^\s*(de)?activate\b/i.test(lines[idx] || '')) doomedLines[idx] = true;
+          });
+        } else if (e.kind === 'route') {
+          var idx = relationLineMatchForRouteId(String(e.id), typeSelect.value, lines, rIndices).lineIdx;
+          if (idx !== -1) doomedLines[idx] = true;
           else keptRoutes++;
         } else if (e.kind === 'fragment') {
-          fragmentIds.push(String(e.id));
-        } else if (e.kind === 'activation') {
-          // Already handled above.
+          // The whole block goes: opener, branches, nested content and `end`.
+          var fragment = fragmentInfoForId(String(e.id));
+          if (fragment && fragment.endIdx !== -1) {
+            for (var line = fragment.startIdx; line <= fragment.endIdx; line++) doomedLines[line] = true;
+          }
         } else {
           elementIds.push(e.id);
         }
       });
-      // Drop highest-numbered route lines first.
-      routeIdxs.sort(function (a, b) { return b - a; });
-      routeIdxs.forEach(function (idx) {
-        textarea.value = removeRelationLine(textarea.value, typeSelect.value, idx);
-      });
-      // Drop fragments wholesale (opener + branches + end + nested content).
-      // Sort by source-line descending so earlier indices remain valid.
-      if (fragmentIds.length) {
-        var fragInfos = fragmentIds.map(function (fid) {
-          return fragmentInfoForId(fid);
-        }).filter(Boolean);
-        fragInfos.sort(function (a, b) { return b.startIdx - a.startIdx; });
-        fragInfos.forEach(function (info) {
-          var positions = readLayoutPositions(textarea.value);
-          var routes = readLayoutRoutes(textarea.value);
-          var lines = stripLayoutMetadata(textarea.value).split('\n');
-          if (info.endIdx === -1) return;
-          lines.splice(info.startIdx, info.endIdx - info.startIdx + 1);
-          textarea.value = writePositionsIntoSource(lines.join('\n'), 'sequence', positions, routes);
-        });
+      var doomed = Object.keys(doomedLines).map(Number);
+      if (doomed.length) {
+        textarea.value = rewriteSourceLines(textarea.value, typeSelect.value,
+          doomed.map(function (idx) { return { start: idx, end: idx }; }));
       }
       // Then drop elements (each call also strips relations referencing the id).
       elementIds.forEach(function (id) {
@@ -10008,8 +10240,7 @@ Supported options:
       svg.addEventListener('wheel', function (ev) {
         if (!ev.ctrlKey && !ev.metaKey) return;
         ev.preventDefault();
-        var factor = ev.deltaY < 0 ? 1.12 : 1 / 1.12;
-        zoomAt(factor, ev.clientX, ev.clientY);
+        zoomByWheel(ev);
       }, { passive: false });
 
       // SVG-level pointerdown handles three things:
@@ -10434,6 +10665,13 @@ Supported options:
         var ps2 = pendingSelect; pendingSelect = null;
         setSelectedLayoutId(ps2.sourceLine == null ? ps2.id : routeIdForSourceLine(svg, ps2.sourceLine), ps2.kind);
       }
+      if (pendingRelation) {
+        // The diagram was redrawn mid-gesture: keep the chosen source marked,
+        // or forget it if an undo or a text edit removed that element.
+        var pendingSource = svg.querySelector('.uml-pg-edit-hitbox[data-layout-id="' + cssAttrEscape(pendingRelation.sourceId) + '"]');
+        if (pendingSource) pendingSource.classList.add('is-relation-source');
+        else pendingRelation = null;
+      }
       revealSelectedLayoutTarget();
       if (initialCanvasRevealPending) {
         var firstTarget = output.querySelector('.uml-pg-edit-a11y-target');
@@ -10484,8 +10722,7 @@ Supported options:
         if (labelTextNode && originalText !== null) labelTextNode.textContent = originalText;
         cleanup();
         if (!newLabel || newLabel === item.label) return;
-        snapshotForUndo();
-        setElementLabel(item.id, newLabel);
+        runAsOneUndoStep(function () { setElementLabel(item.id, newLabel); });
       }
       function cancel() {
         if (labelTextNode && originalText !== null) labelTextNode.textContent = originalText;
@@ -10565,7 +10802,7 @@ Supported options:
       const hasAlias = declaration && /^\s*(?:abstract\s+class|class|interface|enum|node|component|artifact)\s+(?:"(?:[^"\\]|\\.)*"|\S+)\s+as\s+/i.test(declaration);
       if ((type === 'class' && !hasAlias) || type === 'state') {
         var nextId = identifierFromInlineLabel(newLabel);
-        if (!nextId) return;
+        if (!nextId) { announceUnusableName(newLabel); return; }
         renameElement(id, nextId);
         return;
       }
@@ -10573,9 +10810,18 @@ Supported options:
         renameActivityElement(id, newLabel);
         return;
       }
+      // A use case or actor whose name has spaces and no alias is known by
+      // that name alone, and an alias cannot contain spaces. Its new name is
+      // its new identity, carried into every relation that names it.
+      if (type === 'usecase' && declaration && /\s/.test(id) &&
+          !/^\s*(?:usecase|actor)\s+(?:"(?:[^"\\]|\\.)*"|\S+)\s+as\s+/i.test(declaration) &&
+          /^\s*(?:usecase|actor)\b/i.test(declaration)) {
+        renameElement(id, newLabel);
+        return;
+      }
       if ((type === 'deployment' && !hasAlias) || type === 'er') {
         var nextModelId = identifierFromInlineLabel(newLabel);
-        if (!nextModelId) return;
+        if (!nextModelId) { announceUnusableName(newLabel); return; }
         renameElement(id, nextModelId);
         return;
       }
@@ -10653,10 +10899,16 @@ Supported options:
     function identifierFromInlineLabel(label) {
       var raw = String(label || '').trim();
       if (!raw) return '';
-      var cleaned = raw.replace(/[^A-Za-z0-9_]/g, '_').replace(/^_+|_+$/g, '');
+      // Letters and digits of any script are identifier characters: `Zähler`
+      // stays `Zähler`. Everything else becomes an underscore.
+      var cleaned = raw.replace(/[^\p{L}\p{N}_]/gu, '_').replace(/^_+|_+$/g, '');
       if (!cleaned) return '';
-      if (!/^[A-Za-z_]/.test(cleaned)) cleaned = '_' + cleaned;
+      if (!/^[\p{L}_]/u.test(cleaned)) cleaned = '_' + cleaned;
       return cleaned;
+    }
+
+    function announceUnusableName(label) {
+      announce('"' + label + '" has no letters or digits to name this element. Use at least one.', true);
     }
 
     function virtualNoteLineRange(id, text) {
@@ -10729,14 +10981,13 @@ Supported options:
       if (type === 'usecase') {
         var mu = t.match(/^(usecase|actor|rectangle)\s+/i);
         if (mu) {
-          // Strip current Label/id forms then re-emit
+          // Re-emit as `keyword "Label" as id`, keeping whatever followed the
+          // identity (a highlight colour, a texture). Only a system boundary
+          // may quote its alias; setElementLabel renames the rest by identity.
           var kw = mu[1].toLowerCase();
-          if (kw === 'actor' && t.match(/^actor\s+\S+\s*$/i) && !/\sas\s+/i.test(t)) {
-            // Plain `actor X` — rewrite as `actor "Label" as X`.
-            return 'actor ' + quotedLbl + ' as ' + id;
-          }
-          if (kw === 'rectangle') return 'rectangle ' + quotedLbl + ' as ' + quotedId;
-          return kw + ' ' + quotedLbl + ' as ' + id;
+          var identity = t.slice(mu[0].length).match(/^(?:"(?:[^"\\]|\\.)*"|\S+)(?:\s+as\s+(?:"(?:[^"\\]|\\.)*"|\S+))?/i);
+          var styleSuffix = identity ? t.slice(mu[0].length + identity[0].length).trim() : '';
+          return kw + ' ' + quotedLbl + ' as ' + (kw === 'rectangle' ? quotedId : id) + (styleSuffix ? ' ' + styleSuffix : '');
         }
       }
       // Deployment artifact: `artifact "Label" as id`
@@ -11220,6 +11471,19 @@ Supported options:
       zoom = newZoom;
       applyViewTransform(svg);
     }
+    // A mouse wheel reports one large step per notch; a trackpad pinch reports
+    // many small ones. Scaling by the distance scrolled makes both feel alike,
+    // and the clamp keeps one notch to a single clear step.
+    var WHEEL_ZOOM_PER_PIXEL = 0.0025;
+    var WHEEL_ZOOM_MAX_STEP = 1.25;
+    var WHEEL_LINE_HEIGHT_PX = 16;
+    function zoomByWheel(ev) {
+      var pixels = ev.deltaMode === 1 ? ev.deltaY * WHEEL_LINE_HEIGHT_PX : ev.deltaY;
+      if (!pixels) return;
+      var factor = Math.exp(-pixels * WHEEL_ZOOM_PER_PIXEL);
+      factor = Math.max(1 / WHEEL_ZOOM_MAX_STEP, Math.min(WHEEL_ZOOM_MAX_STEP, factor));
+      zoomAt(factor, ev.clientX, ev.clientY);
+    }
     function zoomIn(clientX, clientY) { zoomAt(1.2, clientX, clientY); }
     function zoomOut(clientX, clientY) { zoomAt(1 / 1.2, clientX, clientY); }
     function zoomToFit() {
@@ -11243,7 +11507,7 @@ Supported options:
       clearSelectionSet();
       Array.prototype.slice.call(layer.querySelectorAll('.uml-pg-edit-hitbox')).forEach(function (rect) {
         var id = rect.getAttribute('data-layout-id');
-        if (id) selectedLayoutIds[id] = 'node';
+        if (id) selectedLayoutIds[id] = selectionKindForId(id);
       });
       Array.prototype.slice.call(layer.querySelectorAll('.uml-pg-edge-hitbox')).forEach(function (line) {
         var id = line.getAttribute('data-layout-id');
@@ -11690,6 +11954,10 @@ Supported options:
     // Defined here, before the first loadAutosaved() call, so the closure has
     // a real value and not a hoisted `undefined`.
     var autosaveScope = String(EDITOR_CONFIG.storageKey || '').trim();
+    // The draft this tab last read from or wrote to storage, per diagram type.
+    // A tab only writes a draft it has changed: one left open and untouched
+    // must not put its old copy over newer work saved from another tab.
+    var draftInStorage = Object.create(null);
     function autosaveKey(t) {
       var type = t || typeSelect.value;
       return autosaveScope
@@ -11773,9 +12041,12 @@ Supported options:
       rememberCurrentSource(currentType);
       renderGeneration++;
       cancelVisualEditorInstall();
-      var text = textarea.value.trim();
       var type = typeSelect.value;
-      updateDraftDiagnostics(text, type);
+      if (type === 'sequence') frameSequenceSource();
+      // Rendered ids carry source line numbers (`rel:4`, `seqmsg:5`) that the
+      // editor reads back against the textarea, so render it line for line.
+      var text = normalizeLineEndings(textarea.value);
+      updateDraftDiagnostics(text.trim(), type);
       // is-hidden has display:none !important — toggling the class is the
       // only reliable way to actually hide/show the error box. Setting
       // style.display alone is ignored.
@@ -11783,7 +12054,7 @@ Supported options:
       errorBox.style.display = '';
       output.innerHTML = '';
 
-      if (!text) {
+      if (!text.trim()) {
         calloutEditor.refresh(null, type);
         if (supportsEmptyEditor(type)) {
           textarea.value = type === 'sequence' ? sequenceSourceWithScaffold(textarea.value) : sourceWithScaffold(textarea.value);
@@ -11925,9 +12196,7 @@ Supported options:
       rememberCurrentSource(prev);
       // Persist whatever's in the editor under the *previous* type before loading
       // the new type's content, so each type keeps its own draft.
-      if (persistenceEnabled) {
-        try { localStorage.setItem(autosaveKey(prev), textarea.value); } catch (e) {}
-      }
+      try { writeAutosave(prev, textarea.value); } catch (e) {}
       var saved = storedSourceForType(nextType);
       currentType = nextType;
       if (saved && saved.trim()) {
@@ -11942,6 +12211,7 @@ Supported options:
       setActiveTool(null);
       pendingSelect = null;
       setSelectedLayoutId(null);
+      resetView();
       initialCanvasRevealPending = true;
       rebuildPalette();
       renderDiagram();
@@ -12110,6 +12380,7 @@ Supported options:
           cancelSequenceMessageDrag();
           cancelFragmentDrag();
           cancelActivationBarDrag();
+          cancelExtendDrag();
           setSelectedLayoutId(null);
           setActiveTool(null);
           clearEditLayer();
@@ -12166,7 +12437,7 @@ Supported options:
       rememberCurrentSource(currentType);
       if (!persistenceEnabled) return;
       try {
-        localStorage.setItem(autosaveKey(currentType), textarea.value);
+        if (!writeAutosave(currentType, textarea.value)) return;
         if (autosaveFailed) {
           autosaveFailed = false;
           announce('Autosave recovered.', false);
@@ -12222,11 +12493,23 @@ Supported options:
     }
     function loadAutosaved(type) {
       if (!persistenceEnabled) return null;
-      try { return localStorage.getItem(autosaveKey(type)); }
+      try {
+        var saved = localStorage.getItem(autosaveKey(type));
+        draftInStorage[type] = saved;
+        return saved;
+      }
       catch (e) { return null; }
+    }
+    // Returns whether the draft was written. Storage errors reach the caller.
+    function writeAutosave(type, value) {
+      if (!persistenceEnabled || draftInStorage[type] === value) return false;
+      localStorage.setItem(autosaveKey(type), value);
+      draftInStorage[type] = value;
+      return true;
     }
     function clearAutosaved(type) {
       if (!persistenceEnabled) return;
+      delete draftInStorage[type];
       try { localStorage.removeItem(autosaveKey(type)); } catch (e) {}
     }
     function hasSourceDraft(type) {
@@ -12281,105 +12564,123 @@ Supported options:
     var splitProps = document.getElementById('uml-pg-split-props');
     var editorPane = document.getElementById('uml-pg-editor-pane');
 
+    // Below this width the panes stack and the splitters lie flat, so a pane
+    // size is a height. Stacked heights last for the visit; only side-by-side
+    // widths are stored, so a desktop width never becomes a phone height.
+    var stackedPanes = window.matchMedia('(max-width: 700px)');
+    var paneSplitters = { editor: splitEditor, props: splitProps };
+
+    function paneSize(paneEl) {
+      var rect = paneEl.getBoundingClientRect();
+      return stackedPanes.matches ? rect.height : rect.width;
+    }
+
+    function paneSizeLimits(kind) {
+      if (stackedPanes.matches) return { min: 120, max: Math.max(200, Math.round(window.innerHeight * 0.7)) };
+      // #uml-playground-body ships alongside the splitters, but this include
+      // can be embedded in customized markup — fall back to the pane's parent.
+      var bodyEl = document.getElementById('uml-playground-body') || editorPane.parentNode;
+      var bodyWidth = (bodyEl && bodyEl.getBoundingClientRect().width) || 1000;
+      return kind === 'editor'
+        ? { min: 180, max: Math.max(240, bodyWidth - 280) }
+        : { min: 200, max: Math.min(600, bodyWidth * 0.6) };
+    }
+
+    // Tell assistive technology where the separator sits and how far it moves.
+    function describeSplitter(kind, size) {
+      var splitter = paneSplitters[kind];
+      if (!splitter) return;
+      var limits = paneSizeLimits(kind);
+      splitter.setAttribute('aria-orientation', stackedPanes.matches ? 'horizontal' : 'vertical');
+      splitter.setAttribute('aria-valuemin', String(Math.round(limits.min)));
+      splitter.setAttribute('aria-valuemax', String(Math.round(limits.max)));
+      splitter.setAttribute('aria-valuenow', String(Math.round(size)));
+      splitter.setAttribute('aria-valuetext', Math.round(size) + ' pixels');
+    }
+
+    function applyPaneSize(paneEl, kind, newSize) {
+      var limits = paneSizeLimits(kind);
+      var size = Math.max(limits.min, Math.min(limits.max, newSize));
+      paneEl.style.flex = '0 0 ' + size + 'px';
+      describeSplitter(kind, size);
+    }
+
+    function storePaneSize(paneEl, kind) {
+      if (!persistenceEnabled || stackedPanes.matches) return;
+      try {
+        localStorage.setItem('uml-pg-' + kind + '-size', String(Math.round(paneSize(paneEl))));
+      } catch (e) {}
+    }
+
     function bindSplitter(splitter, paneEl, kind) {
       if (!splitter || !paneEl) return;
       var dragging = null;
-      // #uml-playground-body ships alongside the splitters, but this include
-      // can be embedded in customized markup — fall back to the pane's parent
-      // so a missing wrapper degrades to a working drag instead of a TypeError.
-      function playgroundBodyWidth() {
-        var bodyEl = document.getElementById('uml-playground-body') || paneEl.parentNode;
-        return bodyEl ? bodyEl.getBoundingClientRect().width : 0;
+      function endDrag(ev) {
+        if (!dragging) return;
+        dragging = null;
+        splitter.classList.remove('is-dragging');
+        try { splitter.releasePointerCapture(ev.pointerId); } catch (e) {}
+        storePaneSize(paneEl, kind);
+        // Re-render so canvas reflows.
+        setTimeout(renderDiagram, 30);
       }
       function onPointerDown(ev) {
         if (ev.button !== 0) return;
         ev.preventDefault();
         splitter.setPointerCapture(ev.pointerId);
         splitter.classList.add('is-dragging');
-        var paneRect = paneEl.getBoundingClientRect();
-        dragging = {
-          startX: ev.clientX,
-          startY: ev.clientY,
-          startWidth: paneRect.width,
-          bodyWidth: playgroundBodyWidth(),
-          horizontal: window.matchMedia('(max-width: 700px)').matches
-        };
+        dragging = { startX: ev.clientX, startY: ev.clientY, startSize: paneSize(paneEl) };
       }
       function onPointerMove(ev) {
         if (!dragging) return;
-        var newSize;
-        if (dragging.horizontal) {
-          newSize = dragging.startWidth + (ev.clientY - dragging.startY);
-        } else if (kind === 'editor') {
-          newSize = dragging.startWidth + (ev.clientX - dragging.startX);
-        } else { // props pane on the right — drag left to grow
-          newSize = dragging.startWidth - (ev.clientX - dragging.startX);
-        }
-        applyPaneSize(paneEl, kind, newSize, dragging.bodyWidth);
-      }
-      function onPointerUp(ev) {
-        dragging = null;
-        splitter.classList.remove('is-dragging');
-        try { splitter.releasePointerCapture(ev.pointerId); } catch (e) {}
-        if (persistenceEnabled) {
-          try {
-            var sz = paneEl.getBoundingClientRect().width;
-            localStorage.setItem('uml-pg-' + kind + '-size', String(Math.round(sz)));
-          } catch (e) {}
-        }
-        // Re-render so canvas reflows.
-        setTimeout(renderDiagram, 30);
+        var travel = stackedPanes.matches ? ev.clientY - dragging.startY : ev.clientX - dragging.startX;
+        // The properties pane sits after its splitter: dragging back grows it.
+        applyPaneSize(paneEl, kind, dragging.startSize + (kind === 'editor' ? travel : -travel));
       }
       function onKey(ev) {
         var step = ev.shiftKey ? 40 : 10;
-        var delta = 0;
-        if (ev.key === 'ArrowLeft') delta = kind === 'editor' ? -step : step;
-        else if (ev.key === 'ArrowRight') delta = kind === 'editor' ? step : -step;
-        else return;
+        var backKey = stackedPanes.matches ? 'ArrowUp' : 'ArrowLeft';
+        var forwardKey = stackedPanes.matches ? 'ArrowDown' : 'ArrowRight';
+        if (ev.key !== backKey && ev.key !== forwardKey) return;
+        var travel = ev.key === forwardKey ? step : -step;
         ev.preventDefault();
-        var rect = paneEl.getBoundingClientRect();
-        applyPaneSize(paneEl, kind, rect.width + delta, playgroundBodyWidth());
-        if (persistenceEnabled) {
-          try {
-            localStorage.setItem('uml-pg-' + kind + '-size', String(Math.round(paneEl.getBoundingClientRect().width)));
-          } catch (e) {}
-        }
+        applyPaneSize(paneEl, kind, paneSize(paneEl) + (kind === 'editor' ? travel : -travel));
+        storePaneSize(paneEl, kind);
         setTimeout(renderDiagram, 30);
       }
       splitter.addEventListener('pointerdown', onPointerDown);
       splitter.addEventListener('pointermove', onPointerMove);
-      splitter.addEventListener('pointerup', onPointerUp);
+      splitter.addEventListener('pointerup', endDrag);
+      splitter.addEventListener('pointercancel', endDrag);
       splitter.addEventListener('keydown', onKey);
-    }
-
-    function applyPaneSize(paneEl, kind, newSize, bodyWidth) {
-      var min = kind === 'editor' ? 180 : 200;
-      var max = kind === 'editor' ? Math.max(240, (bodyWidth || 1000) - 280) : Math.min(600, (bodyWidth || 1000) * 0.6);
-      var size = Math.max(min, Math.min(max, newSize));
-      paneEl.style.flex = '0 0 ' + size + 'px';
     }
 
     bindSplitter(splitEditor, editorPane, 'editor');
     bindSplitter(splitProps, propsPane, 'props');
 
-    function applyConfiguredPaneSizes() {
-      if (EDITOR_CONFIG.defaultEditorSize && editorPane) {
-        editorPane.style.flex = '0 0 ' + Number(EDITOR_CONFIG.defaultEditorSize) + 'px';
-      }
-      if (EDITOR_CONFIG.defaultPropsSize && propsPane) {
-        propsPane.style.flex = '0 0 ' + Number(EDITOR_CONFIG.defaultPropsSize) + 'px';
-      }
+    function storedPaneSize(kind) {
+      if (!persistenceEnabled) return 0;
+      try { return Number(localStorage.getItem('uml-pg-' + kind + '-size')) || 0; } catch (e) { return 0; }
     }
 
-    applyConfiguredPaneSizes();
-    if (persistenceEnabled) {
-      try {
-        var ed = localStorage.getItem('uml-pg-editor-size');
-        if (ed) editorPane.style.flex = '0 0 ' + Number(ed) + 'px';
-        var pp = localStorage.getItem('uml-pg-props-size');
-        if (pp && propsPane) propsPane.style.flex = '0 0 ' + Number(pp) + 'px';
-      } catch (e) {}
+    // Side by side: the author's configured widths, then the reader's stored
+    // ones. Stacked: the stylesheet's own heights.
+    function restorePaneSizes() {
+      [['editor', editorPane, EDITOR_CONFIG.defaultEditorSize], ['props', propsPane, EDITOR_CONFIG.defaultPropsSize]].forEach(function (pane) {
+        var kind = pane[0], paneEl = pane[1], configured = Number(pane[2]) || 0;
+        if (!paneEl) return;
+        paneEl.style.flex = '';
+        if (!stackedPanes.matches) {
+          if (configured) paneEl.style.flex = '0 0 ' + configured + 'px';
+          var stored = storedPaneSize(kind);
+          if (stored) applyPaneSize(paneEl, kind, stored);
+        }
+        describeSplitter(kind, paneSize(paneEl));
+      });
     }
+
+    restorePaneSizes();
+    stackedPanes.addEventListener('change', restorePaneSizes);
     var fullscreenPending = false;
     var fullscreenReturnFocus = null;
 
@@ -12510,6 +12811,13 @@ Supported options:
       if (mod && (key === '0' || event.code === 'Digit0') && inWrap) {
         event.preventDefault();
         zoomToFit();
+        return;
+      }
+      // A "+" drag holds the pointer, not the focus: cancel it wherever focus is.
+      if (key === 'Escape' && extendDragState) {
+        event.preventDefault();
+        cancelExtendDrag();
+        announce('Cancelled.', false);
         return;
       }
       if (key === 'Escape' && inWrap) {
