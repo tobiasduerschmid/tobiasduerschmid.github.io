@@ -234,6 +234,7 @@ async function handleAnalyze(msg) {
 function handleRender(msg) {
   var id = msg.id;
   var origTextWidth = null;
+  var origFingerprint = null;
   try {
     ensureBundle();
     renderCtx.cssVars = msg.cssVars || {};
@@ -254,6 +255,13 @@ function handleRender(msg) {
         var key = (bold ? 'B' : 'R') + '|' + fs + '|' + (ff || '') + '|' + (text || '');
         if (measurements[key] !== undefined) return measurements[key];
         return origTextWidth.call(this, text, bold, fontSize, fontFamily);
+      };
+      // ArchUML remembers compact drawings by their inputs, text measurement
+      // included: the page's widths are part of it while this table is in use.
+      origFingerprint = self.UMLShared.textMeasurementFingerprint;
+      var tableFingerprint = JSON.stringify(measurements);
+      self.UMLShared.textMeasurementFingerprint = function () {
+        return origFingerprint() + '|' + tableFingerprint;
       };
     }
 
@@ -277,5 +285,6 @@ function handleRender(msg) {
     self.postMessage({ type: 'renderResult', id: id, ok: false, error: (err && err.message) || String(err) });
   } finally {
     if (origTextWidth && self.UMLShared) self.UMLShared.textWidth = origTextWidth;
+    if (origFingerprint && self.UMLShared) self.UMLShared.textMeasurementFingerprint = origFingerprint;
   }
 }

@@ -1069,7 +1069,7 @@
 
   SequenceDiagramGenerator.prototype.generatePlantUML = function () {
     if (this.lines.length === 0) return '';
-    var out = ['@startuml', 'layout landscape'];
+    var out = ['@startuml', 'layout landscape', 'layout compact'];
     for (var i = 0; i < this.participants.length; i++) {
       var p = this.participants[i];
       if (p.id === 'Main' && p.label === 'Main') {

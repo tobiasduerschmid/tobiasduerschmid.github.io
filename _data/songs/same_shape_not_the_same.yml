@@ -45,6 +45,7 @@ extras:   # the song's own art and styles, loaded before its choreography
     - /js/song-video/figure-geometry.js
     - /js/song-video/opera-cast.js
     - /js/ArchUML/uml-bundle.js
+    - /js/archuml-compact-pane.js
     - /js/song-video/model-kit.js
     - /js/song-video/pattern-kit.js
 # ArchUML views the choreography draws: each pattern's structure and the

@@ -124,7 +124,9 @@ the page behind it inert until the button or Escape returns it. Style full
 screen on `.is-fullscreen`, which both modes set, not on `:fullscreen`. Diagrams need no refit: their readable
 width is set in `em`, and in the player and reader they scale down to the column by default
 (`max-width: 100%`), so a wide diagram is never clipped in either layout. Keep lesson
-diagrams narrow, so that scaling stays small and labels stay legible. A diagram with
+diagrams narrow, so that scaling stays small and labels stay legible. The build draws
+them in a wide headless page, so the include sizes a bare `layout compact` for the
+lesson column (`layout compact 600x700`); a compact line that names its own size is kept. A diagram with
 teaching callouts inverts only its model layer in dark mode, as everywhere on the site.
 
 ## Checks

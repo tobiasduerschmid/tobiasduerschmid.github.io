@@ -1070,7 +1070,10 @@ debugger_options: { ... }              # Per-tutorial debugger config
                                        # (snapshot caps, breakpoint behavior).
 uml_diagram: boolean                   # Live UML class+sequence diagram pane.
 uml_position: left | right | below | bottom-left | bottom-right
-uml_class_layout: portrait | landscape
+uml_class_layout: compact | portrait | landscape  # Default compact: inferred class
+                                       # diagrams are laid out for the UML
+                                       # pane's size. Inferred sequence
+                                       # diagrams are always compact.
 uml_default_view: boolean              # Show UML by default (vs. editor).
 uml_default_type: class | sequence
 git_graph: /path/to/repo               # Path enabling visual commit graph.
@@ -2427,7 +2430,17 @@ channel.
   measurement, atomic SVG replacement and accessible descriptions; dispose it when the
   tutorial is destroyed. The tutorial supplies source snapshots, hide flags,
   layout preference and stale-result guards, then applies its own colors and
-  zoom. Chapter controls in `uml-code-lab.js` expose Python/Java/C++/TypeScript.
+  zoom. Rendering uses an off-screen staging copy, so `render()` sizes a bare
+  `layout compact` for the target's content box (its max-height when it has one)
+  through the lazily loaded `js/archuml-compact-pane.js`; the staging geometry
+  sent to the worker is unchanged for every other layout.
+  ArchUML remembers finished compact drawings in memory (`UMLCompactMemo`, 32
+  entries, keyed by the parsed diagram, colors, pane and a text-measurement
+  fingerprint), so a repeated compact render does not search again.
+  `uml-worker.js` swaps in the page's measured text widths for each render and
+  must extend `UMLShared.textMeasurementFingerprint` with that table for the
+  same span; otherwise the worker serves drawings sized for other widths.
+  Chapter controls in `uml-code-lab.js` expose Python/Java/C++/TypeScript.
   Load `js/uml-view-controls.js` with `css/uml-view-controls.css` on every
   inference host. Native **Design focus** / **Implementation details** buttons
   select a projection of the current raw analysis through synchronous

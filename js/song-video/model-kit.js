@@ -28,6 +28,8 @@
 
   const { tween, fx, onFrame, EASE, progress, easeInOutCubic } = window.Timeline;
   const kit = window.SongKit;
+  const compactPane = window.ArchUMLCompactPane;
+  if (!compactPane) throw new Error('model-kit.js needs /js/archuml-compact-pane.js loaded before it.');
   const { el, svg, place } = kit;
 
   const RENDERERS = {
@@ -282,13 +284,17 @@
   /**
    * An ArchUML diagram on a sheet. `scale` is stage pixels per diagram unit
    * (1 keeps ArchUML's own text size). `fit: { w, h }` instead scales the
-   * drawing down (never up past `scale`) to fit that box. `w` fixes the
-   * sheet's width and centers the drawing on it.
+   * drawing down (never up past `scale`) to fit that box, and a bare
+   * `layout compact` in the spec is laid out for it (`layout compact WxH`).
+   * A storyboard view drawn that way has no build copy unless its spec
+   * already names the size. `w` fixes the sheet's width and centers the
+   * drawing on it.
    */
   const SHEET_TITLE_HEIGHT = 22;
 
   function diagram(parent, { kind, spec, x, y, scale: maxScale = 1, fit, w, title, at, until, tone, tilt }) {
-    const { root, items, view } = render(kind, spec);
+    const drawnSpec = fit ? compactPane.withCompactPane(spec, { width: fit.w, height: fit.h }) : spec;
+    const { root, items, view } = render(kind, drawnSpec);
     const scale = fit ? Math.min(maxScale, fit.w / view.w, fit.h / view.h) : maxScale;
     const paper = sheet(parent, { x, y, w, title, at, until, tone, tilt });
     root.classList.add('mk-diagram');
