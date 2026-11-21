@@ -53,6 +53,185 @@
     return text;
   }
 
+  // Manual positions (`@layout` blocks, inline `@pos(x, y)`) say where
+  // elements are drawn, not what the model contains.
+  function stripLayoutAnnotations(text) {
+    return String(text || '')
+      .replace(/^\s*@layout\b[^\n]*\n[\s\S]*?^\s*@endlayout[^\n]*$/gim, '')
+      .replace(/\s+@pos\([^)]*\)/g, '');
+  }
+
+  // ---------- stereotypes ----------
+  //
+  // `<<A, B>>` and `<<A>> <<B>>` both apply stereotypes A and B; the
+  // renderers show them as one «A, B» pair, spelled as written.
+
+  function addStereotypeNames(names, list) {
+    String(list || '').split(',').forEach(function (part) {
+      var name = part.trim();
+      var lower = name.toLowerCase();
+      if (name && !names.some(function (known) { return known.toLowerCase() === lower; })) names.push(name);
+    });
+  }
+
+  // The stereotypes outside quoted text, and the text without them.
+  function extractStereotypes(text) {
+    var names = [];
+    var stripped = String(text || '').replace(/("(?:[^"\\]|\\.)*")|\s*<<([^<>]*)>>/g, function (match, quoted, list) {
+      if (quoted) return quoted;
+      addStereotypeNames(names, list);
+      return '';
+    });
+    return { names: names, stripped: stripped };
+  }
+
+  function indefiniteArticle(word) {
+    var lower = String(word || '').toLowerCase();
+    if (/^u[^aeiou][aeiouy]/.test(lower)) return 'a'; // user, unit, utility
+    return /^[aeiou]/.test(lower) ? 'an' : 'a';
+  }
+
+  // ", a service" or ", with stereotypes Service and External".
+  function stereotypePhrase(names) {
+    if (!names || !names.length) return '';
+    if (names.length === 1) return ', ' + indefiniteArticle(names[0]) + ' ' + names[0];
+    var list = names.length === 2
+      ? names[0] + ' and ' + names[1]
+      : names.slice(0, -1).join(', ') + ', and ' + names[names.length - 1];
+    return ', with stereotypes ' + list;
+  }
+
+  // Free text such as a connector label shows `<<x>>` as the renderers
+  // draw it: adjacent groups merge into one «…» pair.
+  function formatStereotypeLabels(text) {
+    return String(text || '').replace(/<<[^<>]*>>(?:\s*<<[^<>]*>>)*/g, function (run) {
+      var names = [];
+      run.replace(/<<([^<>]*)>>/g, function (_, list) { addStereotypeNames(names, list); return ''; });
+      return names.length ? '\u00AB' + names.join(', ') + '\u00BB' : '';
+    });
+  }
+
+  // A trailing `#color [texture]` or texture, optionally before a block's
+  // `{`, as the renderers strip it (UMLShared.parseHighlightColor).
+  var STYLE_COLOR_SUFFIX = /\s(#(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{4}|[0-9a-fA-F]{3}|[A-Za-z][A-Za-z0-9]*))(?:\s+(?:hatched|crosshatch|dotted|grid|striped))?(\s*\{?\s*)$/i;
+  var STYLE_TEXTURE_SUFFIX = /\s(?:hatched|crosshatch|dotted|grid|striped)(\s*\{?\s*)$/i;
+
+  function stripStyleSuffix(text) {
+    var m = text.match(STYLE_COLOR_SUFFIX);
+    var tail = m ? m[2] : null;
+    if (!m) {
+      m = text.match(STYLE_TEXTURE_SUFFIX);
+      tail = m ? m[1] : null;
+    }
+    if (!m) return { text: text, styled: false };
+    var head = text.slice(0, text.length - m[0].length);
+    return { text: (tail.indexOf('{') !== -1 ? head + ' {' : head).trim(), styled: true };
+  }
+
+  // ---------- UML packages ----------
+
+  // Split the text after a block's `{` at top-level `;`, stopping at the
+  // brace that closes the block (as the renderers read one-line blocks).
+  function splitInlineBlockBody(text) {
+    var statements = [], start = 0, depth = 0, quoted = false;
+    for (var i = 0; i < text.length; i++) {
+      var ch = text.charAt(i);
+      if (ch === '"' && text.charAt(i - 1) !== '\\') quoted = !quoted;
+      if (quoted) continue;
+      if (ch === '{') depth++;
+      else if (ch === '}' && depth > 0) depth--;
+      else if (ch === '}' || (ch === ';' && depth === 0)) {
+        statements.push(text.slice(start, i).trim());
+        if (ch === '}') return statements.filter(Boolean).concat(['}'], text.slice(i + 1).trim() ? [text.slice(i + 1).trim()] : []);
+        start = i + 1;
+      }
+    }
+    statements.push(text.slice(start).trim());
+    return statements.filter(Boolean);
+  }
+
+  // `package Name {` or `package "Display Name" as Id <<Stereotype>> {`,
+  // possibly with the block's statements on the same line.
+  function parsePackageLine(line) {
+    var m = line.match(/^package\s+(?:"((?:[^"\\]|\\.)*)"|([^\s{"]+))(?:\s+as\s+([^\s{"]+))?([^{]*)\{(.*)$/i);
+    if (!m) return null;
+    var label = m[1] !== undefined ? m[1].replace(/\\(["\\])/g, '$1') : m[2];
+    return { id: m[3] || label, label: label, stereotypes: extractStereotypes(m[4]).names, inlineLines: splitInlineBlockBody(m[5]) };
+  }
+
+  function braceBalance(line) {
+    var balance = 0, quoted = false;
+    for (var i = 0; i < line.length; i++) {
+      var ch = line.charAt(i);
+      if (ch === '"' && line.charAt(i - 1) !== '\\') quoted = !quoted;
+      else if (!quoted && ch === '{') balance++;
+      else if (!quoted && ch === '}') balance--;
+    }
+    return balance;
+  }
+
+  // Read `package` blocks out of a source. Returns each package (id, label,
+  // stereotypes, parent, and the elements declared directly inside it; the
+  // first package an element is declared in wins) and the source without
+  // its package lines, so other readers see the contents as top-level
+  // statements. `declaredId(line)` names the element a line declares.
+  function readPackages(source, declaredId) {
+    var packages = [], byId = Object.create(null), memberOf = Object.create(null);
+    var stack = [], out = [];
+    var lines = String(source || '').split('\n');
+    function innermostPackage() {
+      for (var s = stack.length - 1; s >= 0; s--) if (stack[s]) return stack[s];
+      return null;
+    }
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i].trim();
+      var opener = parsePackageLine(line);
+      if (opener) {
+        var pkg = byId[opener.id];
+        if (!pkg) {
+          var parent = innermostPackage();
+          pkg = { id: opener.id, label: opener.label, stereotypes: opener.stereotypes, parent: parent ? parent.id : null, members: [] };
+          byId[pkg.id] = pkg;
+          packages.push(pkg);
+        }
+        stack.push(pkg);
+        Array.prototype.splice.apply(lines, [i + 1, 0].concat(opener.inlineLines));
+        continue;
+      }
+      if (line === '}' && stack.length && stack.pop()) continue;
+      var top = stack.length ? stack[stack.length - 1] : null;
+      var id = top ? declaredId(line) : null;
+      if (id && !memberOf[id]) {
+        memberOf[id] = top.id;
+        top.members.push(id);
+      }
+      if (line !== '}') {
+        var balance = braceBalance(line);
+        for (; balance > 0; balance--) stack.push(null);
+        // A body may close at the end of its last line (`+x: int }`).
+        for (; balance < 0 && stack.length && !stack[stack.length - 1]; balance++) stack.pop();
+      }
+      out.push(lines[i]);
+    }
+    return { source: out.join('\n'), packages: packages, byId: byId };
+  }
+
+  function packageTitle(pkg, byId) {
+    var parent = pkg.parent && byId[pkg.parent];
+    return pkg.label + stereotypePhrase(pkg.stereotypes) + (parent ? ' (in package ' + parent.label + ')' : '');
+  }
+
+  // Packages with members, as "Name: A, B" (members named by `labelOf`).
+  function packageItems(read, labelOf) {
+    return read.packages.filter(function (pkg) { return pkg.members.length; }).map(function (pkg) {
+      return packageTitle(pkg, read.byId) + ': ' + pkg.members.map(labelOf).join(', ');
+    });
+  }
+
+  function packageSentences(read, labelOf) {
+    return packageItems(read, labelOf).map(function (item) { return 'In package ' + item + '.'; });
+  }
+
   function fallbackCaption(type) {
     var map = {
       'class': 'UML class diagram',
@@ -123,8 +302,37 @@
     return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   }
 
+  var CLASS_DECLARATION = /^(?:abstract\s+class|class|interface|enum)\s+(?:"((?:[^"\\]|\\.)*)"|([^\s{"<]+))(?:\s+as\s+([^\s{"<]+))?/;
+
+  function classDeclarationId(line) {
+    var m = line.match(CLASS_DECLARATION);
+    return m ? (m[3] || m[1] || m[2]) : null;
+  }
+
+  var CLASS_START = /^(?:abstract\s+class|class|interface|enum)\s+\S/;
+
+  // A declaration line without its stereotypes and `#color [texture]`
+  // suffix, which may come before or after them, as the renderer reads it.
+  function cleanClassDeclaration(line) {
+    var brace = line.indexOf('{');
+    var head = brace === -1 ? line : line.slice(0, brace).trim();
+    var body = brace === -1 ? '' : ' ' + line.slice(brace);
+    // `class dotted` names a class; it is not a texture.
+    var style = stripStyleSuffix(head);
+    if (style.styled && CLASS_START.test(style.text)) head = style.text;
+    else style.styled = false;
+    var stereotypes = extractStereotypes(head);
+    head = stereotypes.stripped.trim();
+    if (!style.styled) {
+      var afterStereotypes = stripStyleSuffix(head);
+      if (CLASS_START.test(afterStereotypes.text)) head = afterStereotypes.text;
+    }
+    return { line: head + body, stereotypes: stereotypes.names };
+  }
+
   function describeClassDiagram(spec) {
-    var bodyStripped = spec.replace(/\{[^{}]*\}/gm, ''); // drop class bodies
+    var read = readPackages(stripLayoutAnnotations(spec), classDeclarationId);
+    var bodyStripped = read.source.replace(/\{[^{}]*\}/gm, ''); // drop class bodies
 
     var classes = [], abstracts = [], interfaces = [];
     var relationships = [];
@@ -161,6 +369,8 @@
     if (abstracts.length) items.push(pluralize(abstracts.length, 'abstract class', 'abstract classes') + ' (' + abstracts.join(', ') + ')');
     if (interfaces.length) items.push(pluralize(interfaces.length, 'interface', 'interfaces') + ' (' + interfaces.join(', ') + ')');
     var head = items.length ? 'UML class diagram with ' + items.join(', ') + '.' : 'UML class diagram.';
+    var packageLines = packageSentences(read, String);
+    if (packageLines.length) head += ' ' + packageLines.join(' ');
 
     var rels = relationships.map(describeClassRel).filter(Boolean);
     return rels.length ? head + ' ' + rels.join('. ') + '.' : head;
@@ -432,72 +642,171 @@
 
   // ---------- component diagrams ----------
 
-  function describeComponentDiagram(spec) {
-    var components = [];
-    var info = Object.create(null);
-    var portOwner = Object.create(null);
+  // Component diagrams, read the way the renderer reads them: declarations
+  // with display names, stereotypes, and style suffixes; ports in block or
+  // one-line bodies; connectors between components, ports (`alias`,
+  // `Comp.port`), or bracketed names; and UML packages.
+  var COMPONENT_START = /^(?:component\s+\S|\[[^\]]+\])/i;
+  var PORT_STATEMENT = /^(portin|portout|port|provide|require)\s+(?:"([^"]+)"|([^\s"]+?))(?:\s+as\s+(\S+?))?(?:\s+dashed)?$/;
+  var INLINE_PORT = /(portin|portout|port|provide|require)\s+(?:"([^"]+)"|(\w+))(?:\s+as\s+(\w+))?/g;
+  var COMPONENT_CONNECTION = /^(?:\[([^\]]+)\]|(\S+))\s+(-->|\.\.>|--)\s+(?:\[([^\]]+)\]|(\S+))(?:\s+(dashed))?\s*(?::\s*(.*))?$/;
+  var PORT_GROUPS = { portin: 'in', portout: 'out', port: 'ports', provide: 'provides', require: 'requires' };
+
+  // A component declaration as the renderer reads it: a final `dashed`, a
+  // `#color [texture]` before or after the stereotypes, then the name, its
+  // optional alias, and the `{` of a port block. Returns null otherwise.
+  function parseComponentDeclaration(line) {
+    var text = line;
+    var dashed = text.match(/\s+dashed(\s*\{?\s*)$/i);
+    if (dashed) {
+      var beforeDashed = text.slice(0, text.length - dashed[0].length);
+      // `component dashed` is a component named dashed.
+      if (!/^(?:component|portin|portout|port|provide|require)$/i.test(beforeDashed.trim())) {
+        text = (dashed[1].indexOf('{') !== -1 ? beforeDashed + ' {' : beforeDashed).trim();
+      }
+    }
+    var style = stripStyleSuffix(text);
+    if (!COMPONENT_START.test(style.text)) return null;
+    text = style.text;
+    var brace = text.indexOf('{');
+    var stereotypes = extractStereotypes(brace === -1 ? text : text.slice(0, brace));
+    if (stereotypes.names.length) {
+      text = (stereotypes.stripped.trim() + (brace === -1 ? '' : ' ' + text.slice(brace))).trim();
+      var beforeStereotypes = style.styled ? null : stripStyleSuffix(text);
+      if (beforeStereotypes && COMPONENT_START.test(beforeStereotypes.text)) text = beforeStereotypes.text;
+    }
+    var m = text.match(/^component\s+(?:\[([^\]]+)\]|"([^"]+)"|(\S+))(?:\s+as\s+(\S+))?\s*(\{)?\s*$/) ||
+      text.match(/^component\s+(?:\[([^\]]+)\]|"([^"]+)"|(\S+))(?:\s+as\s+(\S+))?\s*(\{)/);
+    if (m) {
+      var label = m[1] || m[2] || m[3];
+      var id = (m[4] || label).replace(/^\[(.*)\]$/, '$1');
+      var open = line.indexOf('{');
+      return { id: id, label: label, stereotypes: stereotypes.names, body: open === -1 ? null : line.slice(open + 1) };
+    }
+    // `[Name]` declares a component only as a whole line: `[A] --> [B]`
+    // connects two.
+    var bracket = text.match(/^\[([^\]]+)\](?:\s+as\s+(\S+))?\s*$/);
+    if (!bracket) return null;
+    return { id: bracket[2] || bracket[1].trim(), label: bracket[1].trim(), stereotypes: stereotypes.names, body: null };
+  }
+
+  function componentDeclarationId(line) {
+    var declaration = parseComponentDeclaration(line);
+    return declaration ? declaration.id : null;
+  }
+
+  function parseComponentDescription(spec) {
+    var read = readPackages(stripLayoutAnnotations(stripDecorations(spec)), componentDeclarationId);
+    var components = [], byId = Object.create(null);
+    var ports = Object.create(null); // component id -> port names by kind, in first-port order
+    var portOwner = Object.create(null), standalonePorts = Object.create(null);
     var connections = [];
     var current = null;
 
-    function ensure(name) {
-      if (!info[name]) info[name] = { in: [], out: [], provides: [], requires: [] };
-      return info[name];
+    function addPort(owner, keyword, name, alias) {
+      if (!ports[owner]) ports[owner] = { in: [], out: [], ports: [], provides: [], requires: [] };
+      ports[owner][PORT_GROUPS[keyword]].push(name);
+      portOwner[alias || name] = owner;
     }
 
-    spec.split('\n').forEach(function (raw) {
+    function labelOf(token) {
+      var id = String(token || '');
+      if (portOwner[id]) id = portOwner[id];
+      else if (standalonePorts[id] !== undefined) return standalonePorts[id];
+      else if (!byId[id] && id.indexOf('.') > 0 && byId[id.slice(0, id.indexOf('.'))]) id = id.slice(0, id.indexOf('.'));
+      return byId[id] ? byId[id].label : id;
+    }
+
+    read.source.split('\n').forEach(function (raw) {
       var line = raw.trim();
       if (!line) return;
       var m;
-      if ((m = line.match(/^component\s+"?(\w+)"?\s*(\{?)/))) {
-        if (components.indexOf(m[1]) < 0) components.push(m[1]);
-        current = m[2] === '{' ? m[1] : null;
-      } else if (line === '}') {
-        current = null;
-      } else if (current && (m = line.match(/^(portin|portout|provide|require)\s+"([^"]+)"\s+as\s+(\w+)/i))) {
-        var key = { portin: 'in', portout: 'out', provide: 'provides', require: 'requires' }[m[1].toLowerCase()];
-        ensure(current)[key].push(m[2]);
-        portOwner[m[3]] = current;
-      } else if (current && (m = line.match(/^(portin|portout|provide|require)\s+"([^"]+)"/i))) {
-        var key2 = { portin: 'in', portout: 'out', provide: 'provides', require: 'requires' }[m[1].toLowerCase()];
-        ensure(current)[key2].push(m[2]);
-      } else if ((m = line.match(/^(\w+)\s+(-->|--|\.\.>)\s+(\w+)\s*(?::\s*(.+))?$/))) {
-        var from = portOwner[m[1]] || m[1];
-        var to   = portOwner[m[3]] || m[3];
-        connections.push({ from: from, arrow: m[2], to: to, label: m[4] && m[4].trim() });
+      if (current) {
+        if (line === '}') current = null;
+        else if ((m = line.match(PORT_STATEMENT))) addPort(current, m[1], m[2] || m[3], m[4]);
+        return;
+      }
+      var declaration = parseComponentDeclaration(line);
+      if (declaration) {
+        var id = declaration.id;
+        if (!byId[id]) {
+          byId[id] = { id: id, label: declaration.label, stereotypes: declaration.stereotypes };
+          components.push(byId[id]);
+        } else if (declaration.stereotypes.length) {
+          byId[id].stereotypes = declaration.stereotypes;
+        }
+        var body = declaration.body;
+        if (body !== null && body.indexOf('}') !== -1) {
+          while ((m = INLINE_PORT.exec(body.slice(0, body.indexOf('}'))))) addPort(id, m[1], m[2] || m[3], m[4]);
+          INLINE_PORT.lastIndex = 0;
+        } else if (body !== null) {
+          current = id;
+        }
+        return;
+      }
+      if ((m = line.match(PORT_STATEMENT))) {
+        standalonePorts[m[4] || m[2] || m[3]] = m[2] || m[3];
+        return;
+      }
+      if ((m = line.match(COMPONENT_CONNECTION))) {
+        connections.push({
+          from: m[1] || m[2], arrow: m[3], to: m[4] || m[5], dashed: !!m[6],
+          label: m[7] && formatStereotypeLabels(m[7].trim())
+        });
       }
     });
 
-    if (!components.length && !connections.length) return 'UML component diagram.';
+    connections.forEach(function (c) { c.from = labelOf(c.from); c.to = labelOf(c.to); });
+    return {
+      components: components, ports: ports, connections: connections,
+      packages: read, labelOf: function (id) { return byId[id] ? byId[id].label : id; }
+    };
+  }
 
+  function componentPortPhrases(groups) {
+    var parts = [];
+    if (!groups) return parts;
+    if (groups.provides.length) parts.push('provides ' + groups.provides.join(', '));
+    if (groups.requires.length) parts.push('requires ' + groups.requires.join(', '));
+    if (groups.in.length)       parts.push('incoming ports ' + groups.in.join(', '));
+    if (groups.out.length)      parts.push('outgoing ports ' + groups.out.join(', '));
+    if (groups.ports.length)    parts.push('ports ' + groups.ports.join(', '));
+    return parts;
+  }
+
+  function componentConnectionSentence(c) {
+    var verb;
+    switch (c.arrow) {
+      case '..>': verb = 'depends on'; break;
+      case '-->': verb = 'connects to'; break;
+      default:    verb = 'is associated with';
+    }
+    var label = c.label ? ' labeled "' + c.label + '"' : '';
+    return c.from + ' ' + verb + ' ' + c.to + (c.dashed ? ' (dashed)' : '') + label;
+  }
+
+  function describeComponentDiagram(spec) {
+    var model = parseComponentDescription(spec);
+    var components = model.components;
+    if (!components.length && !model.connections.length) return 'UML component diagram.';
+
+    var stereotyped = components.some(function (c) { return c.stereotypes.length; });
+    var names = components.map(function (c) { return c.label + stereotypePhrase(c.stereotypes); });
     var head = components.length
-      ? 'UML component diagram with ' + pluralize(components.length, 'component', 'components') + ' (' + components.join(', ') + ')'
+      ? 'UML component diagram with ' + pluralize(components.length, 'component', 'components') + ' (' + names.join(stereotyped ? '; ' : ', ') + ')'
       : 'UML component diagram';
 
     var portLines = [];
-    Object.keys(info).forEach(function (comp) {
-      var h = info[comp];
-      var parts = [];
-      if (h.provides.length) parts.push('provides ' + h.provides.join(', '));
-      if (h.requires.length) parts.push('requires ' + h.requires.join(', '));
-      if (h.in.length)       parts.push('incoming ports ' + h.in.join(', '));
-      if (h.out.length)      parts.push('outgoing ports ' + h.out.join(', '));
-      if (parts.length) portLines.push(comp + ' ' + parts.join(', '));
-    });
-
-    var connLines = connections.map(function (c) {
-      var verb;
-      switch (c.arrow) {
-        case '..>': verb = 'depends on'; break;
-        case '-->': verb = 'connects to'; break;
-        default:    verb = 'is associated with';
-      }
-      var label = c.label ? ' labeled "' + c.label + '"' : '';
-      return c.from + ' ' + verb + ' ' + c.to + label;
+    Object.keys(model.ports).forEach(function (id) {
+      var parts = componentPortPhrases(model.ports[id]);
+      if (parts.length) portLines.push(model.labelOf(id) + ' ' + parts.join(', '));
     });
 
     var out = head + '.';
+    var packageLines = packageSentences(model.packages, model.labelOf);
+    if (packageLines.length) out += ' ' + packageLines.join(' ');
     if (portLines.length) out += ' ' + portLines.join('. ') + '.';
-    if (connLines.length) out += ' Connections: ' + connLines.join('; ') + '.';
+    if (model.connections.length) out += ' Connections: ' + model.connections.map(componentConnectionSentence).join('; ') + '.';
     return out;
   }
 
@@ -733,8 +1042,10 @@
   // shape: { summary: string, sections: [{ heading, items: [string] }] }.
 
   function describeClassDiagramVerbose(spec) {
+    var read = readPackages(stripLayoutAnnotations(spec), classDeclarationId);
     var classes = [], abstracts = [], interfaces = [];
     var members = Object.create(null); // name -> { attributes: [], operations: [] }
+    var stereotypes = Object.create(null); // name -> applied stereotypes
     var relationships = [];
 
     function memberSlot(name) {
@@ -753,16 +1064,18 @@
     var depth = 0;
     var currentClass = null;
     var currentBody = [];
-    spec.split('\n').forEach(function (raw) {
+    read.source.split('\n').forEach(function (raw) {
       var line = raw.trim();
       if (!line) return;
 
       if (depth === 0) {
         var m;
-        var declMatch = line.match(/^(abstract\s+class|class|interface)\s+(\w+)\s*(\{?)\s*$/);
+        var declaration = cleanClassDeclaration(line);
+        var declMatch = declaration.line.match(/^(abstract\s+class|class|interface)\s+(\w+)\s*(\{?)\s*$/);
         if (declMatch) {
           var kind = declMatch[1].toLowerCase();
           var name = declMatch[2];
+          if (declaration.stereotypes.length) stereotypes[name] = declaration.stereotypes;
           if (kind === 'abstract class' && abstracts.indexOf(name) < 0) abstracts.push(name);
           else if (kind === 'class' && classes.indexOf(name) < 0) classes.push(name);
           else if (kind === 'interface' && interfaces.indexOf(name) < 0) interfaces.push(name);
@@ -810,7 +1123,7 @@
       if (!names.length) return;
       var items = names.map(function (n) {
         var slot = members[n] || { attributes: [], operations: [] };
-        var lines = [n];
+        var lines = [n + stereotypePhrase(stereotypes[n])];
         if (slot.attributes.length) {
           lines.push('Attributes: ' + slot.attributes.join('; '));
         } else {
@@ -829,6 +1142,8 @@
     sectionForType('Classes', classes);
     sectionForType('Abstract classes', abstracts);
     sectionForType('Interfaces', interfaces);
+    var packages = packageItems(read, String);
+    if (packages.length) sections.push({ heading: 'Packages', items: packages });
 
     if (relationships.length) {
       var relItems = relationships.map(describeClassRel).filter(Boolean);
@@ -946,69 +1261,20 @@
   }
 
   function describeComponentDiagramVerbose(spec) {
-    var components = [];
-    var info = Object.create(null);
-    var portOwner = Object.create(null);
-    var connections = [];
-    var current = null;
-
-    function ensure(name) {
-      if (!info[name]) info[name] = { in: [], out: [], provides: [], requires: [] };
-      return info[name];
-    }
-
-    spec.split('\n').forEach(function (raw) {
-      var line = raw.trim();
-      if (!line) return;
-      var m;
-      if ((m = line.match(/^component\s+"?(\w+)"?\s*(\{?)/))) {
-        if (components.indexOf(m[1]) < 0) components.push(m[1]);
-        ensure(m[1]);
-        current = m[2] === '{' ? m[1] : null;
-      } else if (line === '}') {
-        current = null;
-      } else if (current && (m = line.match(/^(portin|portout|provide|require)\s+"([^"]+)"\s+as\s+(\w+)/i))) {
-        var key = { portin: 'in', portout: 'out', provide: 'provides', require: 'requires' }[m[1].toLowerCase()];
-        ensure(current)[key].push(m[2]);
-        portOwner[m[3]] = current;
-      } else if (current && (m = line.match(/^(portin|portout|provide|require)\s+"([^"]+)"/i))) {
-        var key2 = { portin: 'in', portout: 'out', provide: 'provides', require: 'requires' }[m[1].toLowerCase()];
-        ensure(current)[key2].push(m[2]);
-      } else if ((m = line.match(/^(\w+)\s+(-->|--|\.\.>)\s+(\w+)\s*(?::\s*(.+))?$/))) {
-        var from = portOwner[m[1]] || m[1];
-        var to   = portOwner[m[3]] || m[3];
-        connections.push({ from: from, arrow: m[2], to: to, label: m[4] && m[4].trim() });
-      }
-    });
-
+    var model = parseComponentDescription(spec);
     var summary = describeComponentDiagram(stripDecorations(spec));
     var sections = [];
 
-    if (components.length) {
-      var compItems = components.map(function (c) {
-        var h = info[c] || { provides: [], requires: [], in: [], out: [] };
-        var bits = [];
-        if (h.provides.length) bits.push('provides ' + h.provides.join(', '));
-        if (h.requires.length) bits.push('requires ' + h.requires.join(', '));
-        if (h.in.length)       bits.push('incoming ports ' + h.in.join(', '));
-        if (h.out.length)      bits.push('outgoing ports ' + h.out.join(', '));
-        return bits.length ? c + ' — ' + bits.join('; ') : c;
-      });
-      sections.push({ heading: 'Components', items: compItems });
+    if (model.components.length) {
+      sections.push({ heading: 'Components', items: model.components.map(function (c) {
+        var bits = componentPortPhrases(model.ports[c.id]);
+        return c.label + stereotypePhrase(c.stereotypes) + (bits.length ? ' — ' + bits.join('; ') : '');
+      }) });
     }
-
-    if (connections.length) {
-      var connItems = connections.map(function (c) {
-        var verb;
-        switch (c.arrow) {
-          case '..>': verb = 'depends on'; break;
-          case '-->': verb = 'connects to'; break;
-          default:    verb = 'is associated with';
-        }
-        var label = c.label ? ' labeled "' + c.label + '"' : '';
-        return c.from + ' ' + verb + ' ' + c.to + label;
-      });
-      sections.push({ heading: 'Connections', items: connItems });
+    var packages = packageItems(model.packages, model.labelOf);
+    if (packages.length) sections.push({ heading: 'Packages', items: packages });
+    if (model.connections.length) {
+      sections.push({ heading: 'Connections', items: model.connections.map(componentConnectionSentence) });
     }
 
     return { summary: summary, sections: sections };
