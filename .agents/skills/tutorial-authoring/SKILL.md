@@ -1274,6 +1274,11 @@ steps:
                                              # in the visible heading for code
                                              # spans/emphasis; keep the plain
                                              # text descriptive for nav labels.
+    estimated_minutes: 12                    # Optional. The step bar shows
+                                             # "<title> · about 12 minutes"
+                                             # under the step buttons. Count
+                                             # the whole step: reading, work,
+                                             # and its checks.
     backend: v86 | cpp | pyodide | react | webcontainer | browser
                                              # Optional per-step backend
                                              # override. Inherits the
@@ -1355,14 +1360,19 @@ steps:
       questions:                             # Quiz subset: single | multiple only
         - id: receivers                      # (no Parsons). `id` is required and
           type: multiple                     # unique across the whole challenge.
+          diagram: events                    # Optional: the reply diagram that
+                                             # answers it. Part B shows "Open its
+                                             # view: Q1 · <label>" and the pane
+                                             # labels that diagram "Q1 · …".
           question: "Markdown"
           options: ["Markdown", "..."]       # Authored order; never shuffled.
           correct_indices: [2, 3]            # single: correct_index
           option_feedback: {0: "..."}        # Sparse, as in quizzes (quiz-format).
           explanation: "..."
       plan:                                  # plan-first only, one per question:
-        - for: receivers                     #   the question id it plans for
-          question: "..."                    #   optional; defaults to its stem
+        - for: receivers                     #   the question id it plans for; the
+                                             #   card shows that question's whole
+                                             #   stem and asks which view to request
           options: ["A component diagram of ...", "No diagram: read ..."]
           correct_index: 0
       reply:
@@ -1794,7 +1804,30 @@ A `reply.contrast` question comes first in the locked state; its one check
 reveals the main reply. **Finish the challenge** grades the mechanism
 question and passes the step once the consolidation sentence is written and
 the score reaches `min_score`. Every graded part can be checked again until
-then; a pass is permanent. Rules, grading, timing, and the record live in
+then; a pass is permanent. A stage is left only after each of its groups
+was checked with at least one answer right (`canAdvance`): with every answer
+right the button is the primary **Continue to …** / **Show the comparison**;
+otherwise a secondary **Skip to …**, and at nothing right no button at all.
+A wrong answer gets "Not correct yet" and a pointer to the diagram and the
+evidence notes (the code, in the evidence check); the "You can change an
+answer and check again" line hides at full marks. The follow-up's heading,
+hint, and buttons are plural for several new questions.
+
+- **Orientation.** A stepper (`<ol aria-label="Challenge progress">`) at the
+  top names the phases (From the code / Plan, With the diagram, New
+  question(s) or Evidence check, Compare): the current one has
+  `aria-current="step"`, finished ones a check mark and ", done". After
+  lock-in **Part A folds** into a closed `<details>` under its heading
+  ("Your locked answer: 2 lines pinned, Fairly sure"), and the reply's
+  **Evidence (n)** and **Files read (n)** lists are closed `<details>`.
+  When the step is ready (`tvm:stepchange`), a challenge past lock-in (a
+  reload, a return to the step) opens its diagram maximized and scrolls its
+  live part's heading to the top of the column.
+- **Pins.** "Evidence you pinned (1 of 2)" counts toward `evidence_pins`;
+  each pin shows its line's text and a dot in the editor margin
+  (`setEditorLineMarks`). Besides **Pin this line**, the editor's context
+  menu (**Pin line as evidence**) and Ctrl/Cmd+Alt+P pin the cursor line
+  while Part A is open (`addEditorLineAction`; listed on `/shortcuts/`). Rules, grading, timing, and the record live in
 `js/tutorial-diagram-challenge-core.js` (`DiagramChallengeCore`, unit tested
 by `scripts/tests/diagram-challenge-core.test.js`); the DOM lives in
 `js/tutorial-diagram-challenge.js` (`DiagramChallenge`). Spec: §9.1 and §16
@@ -1828,17 +1861,20 @@ of `docs/superpowers/specs/2026-11-20-uml-design-questions-tutorial-design.md`.
   the pane (the widget's `destroy`). The reply opens it with
   `showAuthoredDiagrams(diagrams, {layout: 'maximized'})`: the diagram gets
   the whole workspace, Files steps aside, and OUTPUT shrinks to its Run bar.
-  A large diagram opens fitted (whole, small); a click shows the clicked part
-  at reading size (see `js/tutorial-diagram-pane.js` in §4.5).
+  A diagram opens whole (Fit) when its labels are legible there, else at
+  the widest zoom step at which they are at least 12 px, scrolled to its
+  top-left corner (see `js/tutorial-diagram-pane.js` in §4.5).
   Opening a file (tree, search, an evidence note), Run, or project search
   returns to split view, where Files is a closed drawer; the Editor view
-  restores everything. After a reload the diagrams are loaded but not opened
-  (`open: false`).
+  restores everything. After a reload the diagrams load with `open: false`
+  and open maximized once the step is ready (see **Orientation**).
 - **Locked answers** stay visible: browsers draw a disabled, checked control
   faintly, so after lock-in each chosen option's row (answers, confidence,
-  view, plan; also the popout and instructor keys) gets a frame, a check
-  mark with an empty text alternative, and bold text. The native controls
-  keep their checked and disabled states.
+  view, plan; also the popout) gets a frame, bold text, and a neutral
+  **Your answer** tag with an empty text alternative (not a check mark,
+  which reads as "correct"). Instructor keys (`--key` fieldsets) get the
+  frame without the tag. The native controls keep their checked and
+  disabled states.
 - **Instructor mode** runs the student flow (type, tick, lock in), never
   locks and saves nothing. The toolbar's **Solution** button calls
   `applySolution()`, which calls
@@ -3115,9 +3151,18 @@ channel.
   keywords, or aliases), and its results carry `kind`, `diagramId`, `label`.
   `textMatches(text, query, options)` applies the same rules to one string.
   `mount(host, {getFiles, onOpen, onOpenDiagram, onReset})` returns
-  `{open, close, destroy}` and owns the Search button, labelled field, option
-  checkboxes, polite status count ("N results in M files and K diagrams."),
-  and Escape-to-opener. Results group by file, then under a "Diagram:
+  `{open, close, isOpen, destroy}` and owns a head (the Search files button
+  and one search row: the labelled field with its option toggles inside it,
+  native checkboxes named Match case, Whole word and Regular expression drawn
+  as `Aa`, `ab`, `.*`, and a close button), then the "Project search" region
+  with a polite status count ("N results in M files and K diagrams.") and the
+  results, and Escape-to-opener. On wide screens the head is sticky at the
+  top of the Files sidebar, and the open sidebar widens to
+  `clamp(11em, 42%, 22.5em)` while search is open (host class
+  `tutorial-project-search-host--open`). While search is open,
+  `revealSource` expands the tree without scrolling the sidebar
+  (`revealPath(path, {scroll: false})`), so the results and the button stay
+  in view. Results group by file, then under a "Diagram:
   <label>" heading per diagram (`onOpenDiagram(diagramId, query, options)`);
   `onReset()` runs when the query or options change or the panel closes.
   `_projectSearchFiles()` returns the step files followed by the pane's
@@ -3163,20 +3208,35 @@ channel.
   `setDiagramPaneAvailable(false, reason)` keeps the Diagram button with
   `aria-disabled` and a visible reason that is its accessible description.
   The pane is created on first use as a third `.tvm-editor-body` child after a
-  `_makeDraggable` divider (`.tutorial-diagram-pane-divider`, styled with the
-  editor-pane divider), stacks below the editor at <=900px, and offers zoom
-  buttons, ArchUML's Fit/Restore control, and a pane-level Full screen
-  button. Every diagram it draws (a new `showAuthoredDiagrams` call or another
-  tab) starts from Fit when it overflows the pane: the pane detaches
-  ArchUML's previous control so no zoom carries over. While fitted, a hint
-  floats over the pane's lower edge and a click on the drawing shows the
-  clicked part at reading size (100%, the readable width at which the
-  smallest text has the paragraph size), centered as far as scrolling allows,
-  with focus on the drawing so the arrow keys scroll it. The zoom buttons step
-  through 50, 75, 100, 125, 150, 200, 250 and 300% from the drawing's current
-  size (Zoom in from Fit goes to the first step above the fitted size), keep
-  the middle of the view in place, and Zoom out goes back into Fit instead of
-  below it; in Fit, Zoom out is `aria-disabled`. The scrollable drawing is a
+  divider (`.tutorial-diagram-pane-divider`, styled with the editor-pane
+  divider; the pane wires it itself because its orientation follows the
+  layout), stacks below the editor at <=900px (where the divider is hidden),
+  and has a one-row toolbar: `−  75%  +  Fit  100%`, then **Code links**,
+  **Code beside diagram** and **Full screen** as icons with their names
+  beside them (the names are visually hidden, with a tooltip, when the pane
+  is narrower than 58em; a container query). The pane owns the drawing's
+  size: the canvas has `data-uml-fit="off"`, so ArchUML adds no Fit
+  control, and `--tutorial-diagram-zoom` multiplies the readable width (100%,
+  where the smallest text has the paragraph size). Every diagram it draws (a
+  new `showAuthoredDiagrams` call or another tab) opens in its opening view:
+  Fit when the whole drawing's smallest label is at least 12 px on screen,
+  else the widest zoom step at which it is, scrolled to the top-left. Fit
+  shows the whole drawing (never above 100%; class
+  `tutorial-diagram-pane__canvas--fitted`, which stops the canvas scrolling)
+  and follows the pane's size; 100% shows reading size; each is
+  `aria-disabled` while it is the current view. The shown zoom (`75%`) is the
+  accessible description of Zoom in and Zoom out. While fitted, a hint floats
+  over the pane's lower edge (maximized only, on wide screens) and a click on
+  the drawing shows the clicked part at reading size, centered as far as
+  scrolling allows, with focus on the drawing so the arrow keys scroll it. The
+  zoom buttons step through 50, 75, 100, 125, 150, 200, 250 and 300% from the
+  drawing's current size (Zoom in from Fit goes to the first step above the
+  fitted size), keep the middle of the view in place, and Zoom out goes back
+  into Fit instead of below it; in Fit, Zoom out is `aria-disabled`. A mouse
+  or pen drag on a drawing larger than the pane pans it (cursor `grab`,
+  `grabbing` while dragging; class `--pannable` / `--panning`); a press that
+  moves more than 4 px is a drag and its click is swallowed, so it never
+  zooms or opens a code link. Touch keeps native scrolling. The scrollable drawing is a
   focusable region named by `UMLAutoDescribe.describe`; the SVG is hidden
   from assistive technology. It never reuses the live UML viewer's
   `.tvm-diagram-*` classes.
@@ -3194,9 +3254,17 @@ channel.
   split when the learner opens a file, presses Run, or opens project search.
   While the Diagram view is shown, in either layout, Files is a drawer
   (`_setFileNavigatorDrawer(true)`), closed by default, so in split view the
-  code and the diagram share the width; the Editor view ends the drawer and
-  shows Files and OUTPUT as the tutorial built them. The pane's
-  **Code beside diagram** button (`aria-pressed`) toggles the layout.
+  code and the diagram share the space; the Editor view ends the drawer and
+  shows Files and OUTPUT as the tutorial built them. In split view a
+  workspace narrower than 64em (1280 px with the instructions open; the
+  editor split inactive) is stacked (class
+  `tutorial-diagram-workspace--stacked`, a grid on wide screens): the code
+  above, the diagram below, both at the workspace's width, Files a column on
+  the left; the horizontal divider's drag or Up/Down keys set
+  `--tutorial-diagram-code-size`. A wider workspace keeps them side by side
+  (Left/Right on the divider). A `ResizeObserver` re-decides as the
+  workspace resizes. The pane's **Code beside diagram** button
+  (`aria-pressed`) toggles between split and maximized.
   `open: false` loads the diagrams and enables the view without switching
   to it; drawing waits until the view is first shown.
   **Code links:** a diagram's optional `links: [{text, path, line}]` mark
@@ -3207,8 +3275,10 @@ channel.
   `revealSource(path, line)`, which returns a maximized diagram to split,
   instead of the Fit-view click-to-zoom that a click elsewhere on the
   drawing does. There is no double-click action. The SVG is `aria-hidden`,
-  so a "Code links" `<details>` under the drawing lists one button per link
-  (citations deduplicated). The fit hint mentions the underlined names only
+  so a "Code links" `<details>` in the toolbar opens a list over the drawing
+  (absolutely positioned under the bar, so it never takes the drawing's
+  height) with one button per link (citations deduplicated); Escape closes
+  it and returns focus to its summary, and a press outside closes it. The fit hint mentions the underlined names only
   when the drawing has links.
   **Search hits:** `revealDiagramText(diagramId, query, options)` shows the
   Diagram view in its current layout (keeping the Files drawer open when
@@ -3229,9 +3299,8 @@ channel.
   pinch, Ctrl/Cmd+wheel; listener `{passive: false}`) zoom continuously by
   `exp(-deltaY * 0.01)` (one event capped at 50 px), between Fit and 300%,
   holding the drawing point that was under the pointer when the gesture
-  began (re-anchored a frame later, since ArchUML can shift the layout when
-  the drawing starts to overflow); zooming down to the fitted size enters
-  Fit through ArchUML's control. Wheel events without `ctrlKey` scroll.
+  began; zooming down to the fitted size enters Fit. Wheel events without
+  `ctrlKey` scroll.
   In the UML design questions tutorial, each diagram's links live in a
   sidecar `tutorial_sources/uml-design-questions/diagrams/<name>.links.yml`;
   `build_yaml.py` emits them under `x-diagram-links` as `&l_<name>`, used as
@@ -3260,8 +3329,15 @@ channel.
   (`ActiveTimer`), `serialize(now)`, and record sanitizing;
   `isPassed(record)` and `summarize(spec, record)` serve the runtime and the
   results card. The runtime adds `currentEditorLocation()` (`{path, line}`
-  of the shown file, for **Pin this line**) and
-  `currentStepHasDiagramChallenge()` (the Reset confirmation text).
+  of the shown file, for **Pin this line**),
+  `addEditorLineAction({id, label, keys, run})` (a context-menu item and key
+  binding on the code editors that runs with the cursor's `{path, line}`;
+  returns a remover), `setEditorLineMarks(owner, [{path, line}])` (margin
+  dots on the files' models, class `tvm-editor-line-mark`),
+  `projectLineText(path, line)`, and
+  `currentStepHasDiagramChallenge()` (the Reset confirmation text). To show
+  one diagram's tab the widget calls the pane's `revealDiagramText(id, '')`
+  and then `clearDiagramTextHighlights()`.
 - **`js/tutorial-quiz.js`** — shared quiz renderer (used by main page and
   the instructions popup). `single` / `multiple` / `parsons` types,
   `min_score` gating, `option_feedback` rendering. The tutorial layout uses
@@ -4953,6 +5029,18 @@ without `tests:` (a step with both needs both), marks timed practice
 complete, and re-renders Next. `_timedPracticeStepSolved` asks for the same
 evidence whatever `require_tests` says. Unit tests:
 `scripts/tests/tutorial-diagram-challenge-gate.test.js`.
+
+**Step bar.** `_renderStepNav` marks a step button `done` (a green ring and
+a check badge; " (completed)" in its `aria-label`) when
+`_timedPracticeStepSolved` holds: its tests, challenge, and knowledge check
+are passed. A step with nothing to pass is never marked. Under the buttons,
+`.tvm-step-nav-current` shows the current title and `estimated_minutes`.
+`_renderStepControls` puts the lock reason (`_nextLockedLabel`) as text in
+`.tvm-next-group` beside Next; CSS shows it only while Next is `disabled`,
+so code that toggles `next.disabled` later stays in sync (a disabled button
+shows no tooltip). The instructions popout and the UML editor backend draw
+their own step bars and do not show these yet. Spec:
+`tests/tutorial-step-nav.spec.js`.
 
 ---
 

@@ -4,7 +4,8 @@
  *   DiagramChallenge.initFrom(root, options) -> Promise
  *     Mounts every challenge host ([data-diagram-challenge]) inside root.
  *     options.runtime        TutorialCode (diagram pane, revealSource,
- *                            currentEditorLocation); optional
+ *                            currentEditorLocation, addEditorLineAction,
+ *                            setEditorLineMarks, projectLineText); optional
  *     options.records        {"key:<step key>": record} saved challenge records
  *     options.onRecord(key, record)  called whenever the record changes
  *     options.instructorMode the student flow, never locked and never
@@ -22,6 +23,12 @@
  *   DiagramChallenge.renderResults(root, {records})
  *     Fills results-card hosts ([data-diagram-challenge-results-host]) from
  *     saved records; the print view uses it.
+ *
+ * Finished parts fold away: after lock-in, Part A becomes a closed
+ * <details> with a one-line summary of what was locked, and the reply's
+ * evidence list and files read are closed too. Once the step is ready
+ * (tvm:stepchange), a challenge past lock-in shows its diagram again and
+ * scrolls to its live part.
  *
  * The host is server-rendered by _includes/tutorial-diagram-challenge.html:
  * the step's challenge as JSON and every Markdown field rendered into inert
@@ -64,11 +71,14 @@
     plan: 'Plan your requests',
     hypothesisLabel: 'Your hypothesis, in one sentence',
     hypothesisHint: 'Write it before you see the answer choices.',
-    pinsLabel: 'Evidence you pinned',
-    pinsHint: function (count) {
-      return 'Put the cursor on a line in the editor, then choose Pin this line. Pin at least ' +
-        plural(count, 'line', 'lines') + '.';
+    pinsLabel: function (count, needed) {
+      return 'Evidence you pinned (' + (count <= needed ? count + ' of ' + needed : count + '; ' + needed + ' needed') + ')';
     },
+    pinsHint: function (count) {
+      return 'Put the cursor on a line in the editor, then choose Pin this line, right-click the line, or press ' +
+        'Ctrl+Alt+P (Cmd+Option+P on a Mac). Pin at least ' + plural(count, 'line', 'lines') + '.';
+    },
+    pinLineAction: 'Pin line as evidence',
     pinsEmpty: 'No lines pinned yet.',
     pinButton: 'Pin this line',
     pinNoLocation: 'Open a file and put the cursor on the line you want to pin.',
@@ -102,6 +112,9 @@
     lockMessage: 'You will see the agent’s diagram next, and this answer cannot change afterwards.',
     lockConfirm: 'Lock in',
     lockedIn: 'Locked in. The agent’s reply is below; its diagram is open in the workspace.',
+    lockedAnswer: function (parts) { return 'Your locked answer: ' + parts.join(', '); },
+    lockedPlan: function (count) { return 'Your locked plan: ' + plural(count, 'view chosen', 'views chosen'); },
+    pinnedCount: function (count) { return plural(count, 'line pinned', 'lines pinned'); },
     budget: function (minutes) {
       return 'You have worked on this for about ' + plural(minutes, 'minute', 'minutes') +
         '. When you are ready, lock in your best answer; the diagram comes next. There is no time limit.';
@@ -116,9 +129,9 @@
     showDiagram: 'Show the diagram',
     showDiagrams: 'Show the diagrams',
     showThisDiagram: 'Show this diagram',
-    evidence: 'Evidence',
+    evidence: function (count) { return 'Evidence (' + count + ')'; },
     evidenceHint: 'Each note opens the file at its line.',
-    filesRead: 'Files read',
+    filesRead: function (count) { return 'Files read (' + count + ')'; },
     notInStep: function (path) { return path + ' is not part of this step.'; },
     contrastChecked: 'The agent’s second reply is below.',
     partB: 'Answer with the diagram',
@@ -129,16 +142,30 @@
     answerAll: 'Answer every question first.',
     results: function (correct, total) { return correct + ' of ' + total + ' correct'; },
     retryHint: 'You can change an answer and check again.',
+    retryPointer: 'Look for it in the diagram, then check it in the code through the evidence notes in the agent’s reply.',
+    retryPointerCode: 'Open the code that the claim rests on and read it again.',
     correct: 'Correct',
     notCorrect: 'Not correct',
     notYet: 'Not correct yet',
     changed: 'Changed since your last check',
     checkedWith: function (label, correct, total) { return label + ': ' + correct + ' of ' + total + ' correct.'; },
-    continueFollowUp: 'Continue to the new question',
+    continueFollowUp: function (count) { return count > 1 ? 'Continue to the new questions' : 'Continue to the new question'; },
     continueEvidence: 'Continue to the evidence check',
     continueDone: 'Show the comparison',
-    followUp: 'A new question',
-    followUpHint: 'Answer it with the diagram.',
+    skipFollowUp: function (count) { return count > 1 ? 'Skip to the new questions' : 'Skip to the new question'; },
+    skipEvidence: 'Skip to the evidence check',
+    skipDone: 'Skip to the comparison',
+    followUp: function (count) { return count > 1 ? 'New questions' : 'A new question'; },
+    followUpHint: function (count) { return count > 1 ? 'Answer them with the diagram.' : 'Answer it with the diagram.'; },
+    openView: function (label) { return 'Open its view: ' + label; },
+    showingView: function (label) { return 'Showing ' + label + '.'; },
+    phasesLabel: 'Challenge progress',
+    phases: {
+      plan: 'Plan', fromCode: 'From the code', withDiagram: 'With the diagram',
+      newQuestion: function (count) { return count > 1 ? 'New questions' : 'New question'; },
+      evidence: 'Evidence check', compare: 'Compare',
+    },
+    phaseDone: ', done',
     evidenceCheck: 'Check the diagram against the code',
     done: 'Compare your answers',
     fromCode: 'From the code',
@@ -304,7 +331,10 @@
 
   /**
    * options: idBase, label ("Question 1"), mdPrefix ('q' or 'p'),
-   * optionLabels (plain strings instead of Markdown), hint, onChange(value).
+   * stemKey and stemFallback (the stem's Markdown key and plain text; by
+   * default the question's own), optionLabels (plain strings instead of
+   * Markdown), hint, extra (a node after the hint, such as a button),
+   * onChange(value).
    */
   function QuestionField(widget, question, options) {
     var self = this;
@@ -312,8 +342,10 @@
     var md = widget.md;
     var idBase = options.idBase;
     var prefix = questionKey(options.mdPrefix || 'q', question);
+    var stemKey = options.stemKey || prefix + ':stem';
+    var stemFallback = options.stemFallback !== undefined ? options.stemFallback : question.question;
     var multiple = question.type === 'multiple';
-    var stem = options.stem !== undefined ? options.stem : (options.optionLabels ? null : md.inline(prefix + ':stem'));
+    var stem = options.stem !== undefined ? options.stem : (options.optionLabels ? null : md.inline(stemKey));
     var legend = h('legend', { className: C + 'legend' });
     var describedBy = [];
     var blockStem = null;
@@ -321,8 +353,8 @@
     if (stem) {
       if (options.label) append(legend, ' ');
       append(legend, h('span', { className: C + 'stem' }, stem));
-    } else if (!options.optionLabels && (md.has(prefix + ':stem') || question.question)) {
-      blockStem = h('div', { className: C + 'stem-block', id: idBase + '-stem' }, md.block(prefix + ':stem', question.question));
+    } else if (!options.optionLabels && (md.has(stemKey) || stemFallback)) {
+      blockStem = h('div', { className: C + 'stem-block', id: idBase + '-stem' }, md.block(stemKey, stemFallback));
       describedBy.push(idBase + '-stem');
     }
     var hintText = options.hint || (multiple ? COPY.multipleHint : '');
@@ -345,10 +377,11 @@
       }
     });
     this.result = h('p', { className: C + 'result', hidden: true });
+    this.pointer = h('p', { className: C + 'hint ' + C + 'pointer', hidden: true });
     this.fieldset = h('fieldset', {
       className: C + 'question',
       'aria-describedby': describedBy.length ? describedBy.join(' ') : null,
-    }, [legend, blockStem, hint, list, this.result]);
+    }, [legend, blockStem, hint, options.extra || null, list, this.result, this.pointer]);
   }
 
   QuestionField.prototype.value = function () {
@@ -367,14 +400,19 @@
     this.inputs.forEach(function (input) { input.disabled = disabled; });
   };
 
-  /** Show a check result: correct, not yet, or changed since the check. */
-  QuestionField.prototype.showResult = function (result, changed) {
-    if (!result) {
+  /**
+   * Show a check result: correct, not yet, or changed since the check.
+   * `pointer`, when given, says where to look after a wrong answer.
+   */
+  QuestionField.prototype.showResult = function (result, changed, pointer) {
+    var kind = !result ? null : changed ? 'changed' : result.correct ? 'correct' : 'incorrect';
+    this.pointer.textContent = kind === 'incorrect' && pointer ? pointer : '';
+    this.pointer.hidden = !this.pointer.textContent;
+    if (!kind) {
       this.result.hidden = true;
       this.result.replaceChildren();
       return;
     }
-    var kind = changed ? 'changed' : result.correct ? 'correct' : 'incorrect';
     var icon = { correct: '✓', incorrect: '✗', changed: '•' }[kind];
     var text = { correct: COPY.correct, incorrect: COPY.notYet, changed: COPY.changed }[kind];
     this.result.className = C + 'result ' + C + 'result--' + kind;
@@ -388,6 +426,8 @@
     var self = this;
     this.setValue(question.type === 'multiple' ? question.correct : question.correct[0]);
     this.setDisabled(true);
+    // Keys, not the learner's answers: no "Your answer" tag (see the CSS).
+    this.fieldset.classList.add(C + 'question--key');
     question.options.forEach(function (option, index) {
       var row = self.labels[index].parentNode;
       if (question.correct.indexOf(index) !== -1) {
@@ -426,6 +466,8 @@
     this.keysShown = false;
     this._textTimer = null;
     this._budgetTimer = null;
+    this._removePinAction = null;
+    this._lineMarksOwner = 'diagram-challenge:' + this.id;
   }
 
   Widget.prototype.mount = function () {
@@ -451,6 +493,7 @@
     clearTimeout(this._textTimer);
     clearTimeout(this._budgetTimer);
     this.events.abort();
+    this._releaseEditor();
     if (this.runtime && !this.options.readOnly && typeof this.runtime.hideAuthoredDiagrams === 'function') {
       this.runtime.hideAuthoredDiagrams();
     }
@@ -517,21 +560,22 @@
     return h('div', { className: C + 'labeled' }, [h('p', {}, h('strong', { text: label })), this.md.block(key, fallback)]);
   };
 
-  /** A plan entry's legend: its own `question`, else the planned question's stem. */
-  Widget.prototype._planStem = function (entry) {
-    var own = this.md.inline('p:' + entry.id + ':stem');
-    if (own) return own;
-    var planned = this.challenge.questions.filter(function (question) { return question.id === entry.id; })[0];
-    return this.md.inline('q:' + entry.id + ':stem') || document.createTextNode(planned ? planned.question : '');
-  };
+  function findById(items, id) {
+    return items.filter(function (item) { return item.id === id; })[0] || null;
+  }
 
-  /** Plan-first field: which view to request for one question. */
+  /**
+   * Plan-first field: which view to request for one question. It shows the
+   * planned question's whole stem, then one prompt: which view.
+   */
   Widget.prototype._planField = function (entry, index, onChange) {
+    var planned = findById(this.challenge.questions, entry.id);
     return new QuestionField(this, entry, {
       idBase: this.id + '-plan-' + slug(entry.id),
       label: COPY.question(index + 1),
       mdPrefix: 'p',
-      stem: this._planStem(entry),
+      stemKey: 'q:' + entry.id + ':stem',
+      stemFallback: planned ? planned.question : '',
       hint: COPY.planHint,
       onChange: onChange,
     });
@@ -552,12 +596,82 @@
   // ----- Interactive view -----------------------------------------------------
 
   Widget.prototype._renderInteractive = function () {
+    this._buildStepper();
     this._buildPartA();
     this._wireClock();
     this._sync();
-    // A reload after lock-in makes the diagram available without opening it.
+    // The pane draws once the step is shown (see _onStepReady).
     if (this.session.state === 'exploring') this._paneUnavailable();
     else this._showDiagrams(false);
+    this._wireStepReady();
+  };
+
+  /**
+   * The step's files open after the widget mounts; the runtime announces
+   * the finished step with tvm:stepchange. Then pins get their line text
+   * and editor marks, and a challenge past lock-in (a reload, a return to
+   * the step) shows its diagram again and scrolls to the live part.
+   */
+  Widget.prototype._wireStepReady = function () {
+    var self = this;
+    if (!this.runtime) return;
+    document.addEventListener('tvm:stepchange', function onReady() {
+      document.removeEventListener('tvm:stepchange', onReady);
+      if (!self.destroyed) self._onStepReady();
+    }, { signal: this.signal });
+  };
+
+  Widget.prototype._onStepReady = function () {
+    if (this.pinList) this._renderPins();
+    if (this.session.state === 'exploring') return;
+    this._showDiagrams(true);
+    var live = this._livePart();
+    if (live) live.heading.scrollIntoView({ block: 'start', behavior: 'auto' });
+  };
+
+  /** The part the learner works on now. */
+  Widget.prototype._livePart = function () {
+    switch (this.session.state) {
+      case 'locked': return this.session.contrastPending() ? this.reply : this.partB;
+      case 'follow-up': return this.followUpPart;
+      case 'done': return this.donePart;
+      default: return this.partA;
+    }
+  };
+
+  // ----- Stepper ----------------------------------------------------------------
+
+  /** The challenge's phases, in order; the current one follows the state. */
+  Widget.prototype._phases = function () {
+    var challenge = this.challenge;
+    var phases = [challenge.mode === 'plan-first' ? COPY.phases.plan : COPY.phases.fromCode, COPY.phases.withDiagram];
+    if (challenge.followUp.length) phases.push(COPY.phases.newQuestion(challenge.followUp.length));
+    else if (challenge.evidenceQuestions.length) phases.push(COPY.phases.evidence);
+    phases.push(COPY.phases.compare);
+    return phases;
+  };
+
+  Widget.prototype._buildStepper = function () {
+    this.stepper = h('ol', { className: C + 'stepper', 'aria-label': COPY.phasesLabel });
+    this.body.appendChild(this.stepper);
+  };
+
+  Widget.prototype._syncStepper = function () {
+    var phases = this._phases();
+    var state = this.session.state;
+    var current = state === 'done' ? phases.length - 1 : ['exploring', 'locked', 'follow-up'].indexOf(state);
+    var passed = this.session.passed;
+    this.stepper.replaceChildren.apply(this.stepper, phases.map(function (name, index) {
+      var done = index < current || (passed && index === current);
+      var item = h('li', {
+        className: C + 'phase' + (done ? ' ' + C + 'phase--done' : '') + (index === current && !done ? ' ' + C + 'phase--current' : ''),
+        'aria-current': index === current && !done ? 'step' : null,
+      });
+      if (done) append(item, h('span', { className: C + 'phase-mark', 'aria-hidden': 'true', text: '✓' }));
+      append(item, name);
+      if (done) append(item, h('span', { className: C + 'sr-only', text: COPY.phaseDone }));
+      return item;
+    }));
   };
 
   Widget.prototype._buildPartA = function () {
@@ -658,18 +772,44 @@
     var titleId = this.id + '-pins-title';
     this.pinEmpty = h('p', { className: C + 'empty', text: COPY.pinsEmpty });
     this.pinList = h('ul', { className: C + 'pins' });
+    this.pinTitle = h('p', { className: C + 'label', id: titleId });
     this.pinButton = button('button', COPY.pinButton);
     this.pinButton.addEventListener('click', function () { self._pinCurrentLine(); }, { signal: this.signal });
     container.appendChild(h('div', { className: C + 'field', role: 'group', 'aria-labelledby': titleId }, [
-      h('p', { className: C + 'label', id: titleId, text: COPY.pinsLabel }),
+      this.pinTitle,
       h('p', { className: C + 'hint', text: COPY.pinsHint(this.challenge.attempt.evidencePins) }),
       this.pinEmpty, this.pinList, this.pinButton,
     ]));
+    // The same action from the code: the editor's context menu and a key.
+    if (this.session.state === 'exploring' && this.runtime && typeof this.runtime.addEditorLineAction === 'function') {
+      this._removePinAction = this.runtime.addEditorLineAction({
+        id: 'tutorial.diagramChallenge.pinLine',
+        label: COPY.pinLineAction,
+        keys: { ctrlCmd: true, alt: true, key: 'P' },
+        run: function (location) { if (!self.destroyed) self._pinLocation(location); },
+      });
+    }
+  };
+
+  Widget.prototype._stopPinAction = function () {
+    if (this._removePinAction) this._removePinAction();
+    this._removePinAction = null;
+  };
+
+  /** Give the code editors back: no pin action and no pin marks. */
+  Widget.prototype._releaseEditor = function () {
+    this._stopPinAction();
+    if (this.runtime && typeof this.runtime.setEditorLineMarks === 'function') {
+      this.runtime.setEditorLineMarks(this._lineMarksOwner, []);
+    }
   };
 
   Widget.prototype._pinCurrentLine = function () {
     var runtime = this.runtime;
-    var location = runtime && typeof runtime.currentEditorLocation === 'function' ? runtime.currentEditorLocation() : null;
+    this._pinLocation(runtime && typeof runtime.currentEditorLocation === 'function' ? runtime.currentEditorLocation() : null);
+  };
+
+  Widget.prototype._pinLocation = function (location) {
     if (!location) {
       this.announce(COPY.pinNoLocation);
       return;
@@ -685,10 +825,16 @@
     this.announce(COPY.pinned(ref));
   };
 
+  /** The pin list, each with its line's text, and the marks in the editor. */
   Widget.prototype._renderPins = function () {
     var self = this;
+    var runtime = this.runtime;
     var pins = this.session.snapshot().a.evidence;
     var editable = this.session.state === 'exploring';
+    var lineText = function (pin) {
+      return runtime && typeof runtime.projectLineText === 'function' ? runtime.projectLineText(pin.path, pin.line) : null;
+    };
+    this.pinTitle.textContent = COPY.pinsLabel(pins.length, this.challenge.attempt.evidencePins);
     this.pinEmpty.hidden = pins.length > 0;
     this.pinList.hidden = pins.length === 0;
     this.pinList.replaceChildren.apply(this.pinList, pins.map(function (pin, index) {
@@ -701,8 +847,11 @@
         remove.addEventListener('click', function () { self._removePin(index, ref); }, { signal: self.signal });
         append(row, [' ', remove]);
       }
+      var text = lineText(pin);
+      if (text) append(row, h('div', { className: C + 'pin-text' }, h('code', { text: text })));
       return row;
     }));
+    if (runtime && typeof runtime.setEditorLineMarks === 'function') runtime.setEditorLineMarks(this._lineMarksOwner, pins);
   };
 
   Widget.prototype._removePin = function (index, ref) {
@@ -740,9 +889,34 @@
     if (exploring) {
       this.todo.textContent = this._todoText();
       this.lockButton.disabled = !session.canLock();
-    } else if (this.pinList && this.pinList.querySelector('.' + C + 'button--small')) {
-      this._renderPins();
+      return;
     }
+    this._stopPinAction();
+    if (this.pinList && this.pinList.querySelector('.' + C + 'button--small')) this._renderPins();
+    this._foldPartA();
+  };
+
+  /** "Your locked answer: 2 lines pinned, Fairly sure" */
+  Widget.prototype._lockedSummary = function () {
+    var a = this.session.snapshot().a;
+    if (this.challenge.mode === 'plan-first') return COPY.lockedPlan(Object.keys(a.plan).length);
+    var parts = [];
+    if (this.challenge.attempt.evidencePins) parts.push(COPY.pinnedCount(a.evidence.length));
+    if (a.confidence) parts.push(CONFIDENCE_LABELS[a.confidence]);
+    return COPY.lockedAnswer(parts);
+  };
+
+  /**
+   * After lock-in Part A is finished: it folds into a closed <details>
+   * under its heading, so the column leads with the part in progress.
+   */
+  Widget.prototype._foldPartA = function () {
+    if (this.partAFold) return;
+    var heading = this.partA.heading;
+    var fold = h('details', { className: C + 'fold' }, h('summary', { className: C + 'fold-summary', text: this._lockedSummary() }));
+    while (heading.nextSibling) fold.appendChild(heading.nextSibling);
+    this.partA.section.appendChild(fold);
+    this.partAFold = fold;
   };
 
   Widget.prototype._onLock = function () {
@@ -818,9 +992,23 @@
     }
   };
 
+  /** A diagram as the pane takes it, under the label it shows. */
   function paneDiagram(diagram, label) {
-    return { id: diagram.id, label: diagram.label || label, type: diagram.type, source: diagram.source, links: diagram.links };
+    return { id: diagram.id, label: label, type: diagram.type, source: diagram.source, links: diagram.links };
   }
+
+  /**
+   * A reply diagram's label in the pane: "Q1 · Website connections" when
+   * questions name it as their view (a question's `diagram`).
+   */
+  Widget.prototype._diagramLabel = function (diagram) {
+    var label = diagram.label || VIEW_LABELS[diagram.type] || 'Diagram';
+    var numbers = [];
+    this.challenge.questions.forEach(function (question, index) {
+      if (question.diagram === diagram.id) numbers.push('Q' + (index + 1));
+    });
+    return numbers.length ? numbers.join(', ') + ' · ' + label : label;
+  };
 
   /**
    * The diagrams the learner may see now: the contrast view alone until its
@@ -829,10 +1017,11 @@
   Widget.prototype._paneDiagrams = function (all) {
     var challenge = this.challenge;
     var contrast = challenge.contrast && challenge.contrast.diagram;
-    var contrastLabel = contrast ? (VIEW_LABELS[contrast.type] || 'Diagram') + ' (' + COPY.firstReply.toLowerCase() + ')' : '';
+    var contrastLabel = contrast ? contrast.label || (VIEW_LABELS[contrast.type] || 'Diagram') + ' (' + COPY.firstReply.toLowerCase() + ')' : '';
     if (!all && this.session.contrastPending()) return contrast ? [paneDiagram(contrast, contrastLabel)] : [];
+    var self = this;
     var diagrams = challenge.diagrams.map(function (diagram) {
-      return paneDiagram(diagram, VIEW_LABELS[diagram.type] || 'Diagram');
+      return paneDiagram(diagram, self._diagramLabel(diagram));
     });
     if (contrast) diagrams.push(paneDiagram(contrast, contrastLabel));
     return diagrams;
@@ -847,6 +1036,22 @@
       return;
     }
     runtime.showAuthoredDiagrams(diagrams, { layout: 'maximized', open: open });
+  };
+
+  /**
+   * Show one reply diagram in the Diagram pane. The pane selects a tab only
+   * through revealDiagramText; an empty query marks no label, and the note
+   * that says so is cleared at once.
+   */
+  Widget.prototype._openDiagram = function (diagram) {
+    var runtime = this.runtime;
+    var label = this._diagramLabel(diagram);
+    if (runtime && typeof runtime.revealDiagramText === 'function' && runtime.revealDiagramText(diagram.id, '')) {
+      if (typeof runtime.clearDiagramTextHighlights === 'function') runtime.clearDiagramTextHighlights();
+    } else {
+      this._showDiagrams(true, true);
+    }
+    this.announce(COPY.showingView(label));
   };
 
   Widget.prototype._revealSource = function (path, line, column) {
@@ -892,10 +1097,11 @@
       show.addEventListener('click', function () { self._showDiagrams(true, true); }, { signal: this.signal });
       append(container, h('p', { className: C + 'row' }, show));
     }
+    // Reference lists stay closed until wanted, so the questions stay near.
     if (challenge.evidence.length) {
       var evidenceId = this.id + '-evidence-hint';
-      append(container, [
-        h('h5', { className: C + 'subtitle', text: COPY.evidence }),
+      append(container, h('details', { className: C + 'fold' }, [
+        h('summary', { className: C + 'fold-summary', text: COPY.evidence(challenge.evidence.length) }),
         h('p', { className: C + 'hint', id: evidenceId, text: COPY.evidenceHint }),
         h('ul', { className: C + 'evidence' }, challenge.evidence.map(function (item, index) {
           var note = h('button', { type: 'button', className: C + 'link ' + C + 'evidence-link', 'aria-describedby': evidenceId }, [
@@ -904,14 +1110,14 @@
           note.addEventListener('click', function () { self._revealSource(item.path, item.line); }, { signal: self.signal });
           return h('li', {}, note);
         })),
-      ]);
+      ]));
     }
     var filesRead = Array.isArray(this.spec.reply && this.spec.reply.files_read) ? this.spec.reply.files_read : [];
     if (filesRead.length) {
-      append(container, [
-        h('h5', { className: C + 'subtitle', text: COPY.filesRead }),
+      append(container, h('details', { className: C + 'fold' }, [
+        h('summary', { className: C + 'fold-summary', text: COPY.filesRead(filesRead.length) }),
         h('ul', { className: C + 'files' }, filesRead.map(function (path) { return h('li', {}, h('code', { text: String(path) })); })),
-      ]);
+      ]));
     }
     append(container, this._labeledText(COPY.leftOut, 'reply:left_out'));
     if (this.md.has('reply:label')) append(container, h('div', { className: C + 'provenance' }, this.md.block('reply:label')));
@@ -1003,31 +1209,67 @@
 
   // ----- Part B, follow-up, evidence check --------------------------------------
 
-  /** A checkable group of questions with a result summary. */
+  /**
+   * A checkable group of questions with a result summary. options.pointer
+   * says where to look after a wrong answer; options.extra(question) may
+   * add a node under a question's stem.
+   */
   Widget.prototype._checkGroup = function (container, group, questions, options) {
     var self = this;
-    var fields = this._questionFields(group, questions, 'q', options.onChange);
+    var fields = questions.map(function (question, index) {
+      return new QuestionField(self, question, {
+        idBase: self.id + '-' + group + '-' + slug(question.id),
+        label: questions.length > 1 || group === 'b' ? COPY.question(index + 1) : null,
+        mdPrefix: 'q',
+        extra: options.extra ? options.extra(question) : null,
+        onChange: function (value) { options.onChange(question, value); },
+      });
+    });
     var check = button('primary', questions.length > 1 ? COPY.check : COPY.checkOne);
     check.addEventListener('click', function () { options.onCheck(); }, { signal: this.signal });
     var heading = h('h5', { className: C + 'subtitle', tabindex: '-1' });
-    var summary = h('div', { className: C + 'summary', hidden: true }, [heading, h('p', { className: C + 'hint', text: COPY.retryHint })]);
+    var retry = h('p', { className: C + 'hint', text: COPY.retryHint });
+    var summary = h('div', { className: C + 'summary', hidden: true }, [heading, retry]);
     fields.forEach(function (field) { container.appendChild(field.fieldset); });
     append(container, [h('p', { className: C + 'row' }, check), summary]);
-    return { fields: fields, check: check, summary: summary, heading: heading };
+    return { fields: fields, check: check, summary: summary, heading: heading, retry: retry, pointer: options.pointer };
   };
+
+  function allCorrect(results) {
+    return !!results && results.every(function (result) { return result.correct; });
+  }
 
   Widget.prototype._syncGroup = function (group, answers, checked, results, canCheck) {
     group.fields.forEach(function (field, index) {
       var id = field.question.id;
       field.setValue(answers[id]);
-      field.showResult(results && results[index], !!checked && !sameAnswer(answers[id], checked[id]));
+      field.showResult(results && results[index], !!checked && !sameAnswer(answers[id], checked[id]), group.pointer);
     });
     group.check.disabled = !canCheck;
     group.summary.hidden = !results;
     if (results) {
       var correct = results.filter(function (result) { return result.correct; }).length;
       group.heading.textContent = COPY.results(correct, results.length);
+      group.retry.hidden = correct === results.length;
     }
+  };
+
+  /**
+   * The button that leaves a stage: shown once the stage may be left. With
+   * every answer right it is the primary "Continue"; otherwise a secondary
+   * "Skip to …", since answers can still be fixed.
+   */
+  Widget.prototype._syncAdvanceButton = function (control, stage, allRight) {
+    var session = this.session;
+    control.hidden = session.state !== stage || !session.canAdvance();
+    if (control.hidden) return;
+    var next = session.nextState();
+    var count = this.challenge.followUp.length;
+    var label = next === 'done' ? (allRight ? COPY.continueDone : COPY.skipDone)
+      : count ? (allRight ? COPY.continueFollowUp(count) : COPY.skipFollowUp(count))
+        : (allRight ? COPY.continueEvidence : COPY.skipEvidence);
+    control.textContent = label;
+    control.className = C + (allRight ? 'primary' : 'button');
   };
 
   Widget.prototype._afterCheck = function (group, results, label) {
@@ -1042,12 +1284,6 @@
     this._focus(group.heading);
   };
 
-  Widget.prototype._continueLabel = function () {
-    var next = this.session.nextState();
-    if (next === 'follow-up') return this.challenge.followUp.length ? COPY.continueFollowUp : COPY.continueEvidence;
-    return COPY.continueDone;
-  };
-
   Widget.prototype._ensurePartB = function () {
     if (this.partB) return;
     var self = this;
@@ -1056,6 +1292,8 @@
     this.partB = part;
     part.section.appendChild(h('p', { className: C + 'hint', text: this.challenge.mode === 'plan-first' ? COPY.partBHintPlan : COPY.partBHint }));
     this.bGroup = this._checkGroup(part.section, 'b', this.challenge.questions, {
+      pointer: COPY.retryPointer,
+      extra: function (question) { return self._viewControl(question); },
       onChange: function (question, value) {
         session.answer(question.id, value);
         self._emit();
@@ -1063,16 +1301,35 @@
       },
       onCheck: function () { self._afterCheck(self.bGroup, session.checkMain(self.now()), COPY.withDiagram); },
     });
-    this.bContinue = button('primary', this._continueLabel());
+    this.bContinue = button('primary', '');
     this.bContinue.addEventListener('click', function () { self._onAdvance(); }, { signal: this.signal });
     part.section.appendChild(h('p', { className: C + 'row' }, this.bContinue));
+  };
+
+  /**
+   * Under a Part B question: a button that shows the view answering it (a
+   * question's `diagram`), or, in plan-first, the expert's choice when that
+   * was no view.
+   */
+  Widget.prototype._viewControl = function (question) {
+    var self = this;
+    var diagram = question.diagram ? findById(this.challenge.diagrams, question.diagram) : null;
+    if (diagram) {
+      var open = button('button', COPY.openView(this._diagramLabel(diagram)));
+      open.addEventListener('click', function () { self._openDiagram(diagram); }, { signal: this.signal });
+      return h('p', { className: C + 'row' }, open);
+    }
+    var entry = this.challenge.mode === 'plan-first' ? findById(this.challenge.plan, question.id) : null;
+    if (!entry) return null;
+    return h('p', { className: C + 'expert-choice' }, [COPY.expertChoice + ': ', this._keyPhrase(entry, 'p')]);
   };
 
   Widget.prototype._syncPartB = function () {
     var session = this.session;
     var b = session.snapshot().b;
-    this._syncGroup(this.bGroup, b.answers, b.checked, session.lastResults('main'), session.canCheckMain());
-    this.bContinue.hidden = session.state !== 'locked' || !session.canAdvance();
+    var results = session.lastResults('main');
+    this._syncGroup(this.bGroup, b.answers, b.checked, results, session.canCheckMain());
+    this._syncAdvanceButton(this.bContinue, 'locked', allCorrect(results));
   };
 
   Widget.prototype._ensureFollowUp = function () {
@@ -1080,18 +1337,19 @@
     var self = this;
     var session = this.session;
     var challenge = this.challenge;
-    var hasFollowUp = challenge.followUp.length > 0;
-    var part = this._section('f', hasFollowUp ? COPY.followUp : COPY.evidenceCheck);
+    var count = challenge.followUp.length;
+    var part = this._section('f', count ? COPY.followUp(count) : COPY.evidenceCheck);
     this.followUpPart = part;
-    if (hasFollowUp) {
-      part.section.appendChild(h('p', { className: C + 'hint', text: COPY.followUpHint }));
+    if (count) {
+      part.section.appendChild(h('p', { className: C + 'hint', text: COPY.followUpHint(count) }));
       this.fGroup = this._checkGroup(part.section, 'f', challenge.followUp, {
+        pointer: COPY.retryPointer,
         onChange: function (question, value) {
           session.answerFollowUp(question.id, value);
           self._emit();
           self._syncFollowUp();
         },
-        onCheck: function () { self._afterCheck(self.fGroup, session.checkFollowUp(self.now()), COPY.followUp); },
+        onCheck: function () { self._afterCheck(self.fGroup, session.checkFollowUp(self.now()), COPY.followUp(count)); },
       });
     }
     if (challenge.evidenceQuestions.length) {
@@ -1100,11 +1358,12 @@
       var evidenceTitleId = this.id + '-evidence-check-title';
       this.evidenceBlock = h('div', {
         className: C + 'evidence-check', hidden: true,
-        role: hasFollowUp ? 'group' : null, 'aria-labelledby': hasFollowUp ? evidenceTitleId : null,
+        role: count ? 'group' : null, 'aria-labelledby': count ? evidenceTitleId : null,
       });
-      if (hasFollowUp) this.evidenceBlock.appendChild(h('h5', { className: C + 'subtitle', id: evidenceTitleId, text: COPY.evidenceCheck }));
+      if (count) this.evidenceBlock.appendChild(h('h5', { className: C + 'subtitle', id: evidenceTitleId, text: COPY.evidenceCheck }));
       if (this.md.has('evidence:prompt')) this.evidenceBlock.appendChild(h('div', { className: C + 'prompt' }, this.md.block('evidence:prompt')));
       this.eGroup = this._checkGroup(this.evidenceBlock, 'e', challenge.evidenceQuestions, {
+        pointer: COPY.retryPointerCode,
         onChange: function (question, value) {
           session.answerEvidenceCheck(question.id, value);
           self._emit();
@@ -1117,6 +1376,7 @@
       part.section.appendChild(this.evidenceBlock);
     }
     this.fContinue = button('primary', COPY.continueDone);
+    this.fContinue.hidden = true;
     this.fContinue.addEventListener('click', function () { self._onAdvance(); }, { signal: this.signal });
     part.section.appendChild(h('p', { className: C + 'row' }, this.fContinue));
   };
@@ -1124,12 +1384,13 @@
   Widget.prototype._syncFollowUp = function () {
     var session = this.session;
     var snapshot = session.snapshot();
+    var followUpResults = session.lastResults('follow-up');
     if (this.fGroup) {
-      this._syncGroup(this.fGroup, snapshot.f.answers, snapshot.f.checked, session.lastResults('follow-up'), session.canCheckFollowUp());
+      this._syncGroup(this.fGroup, snapshot.f.answers, snapshot.f.checked, followUpResults, session.canCheckFollowUp());
     }
+    var results = session.lastResults('evidence');
     if (this.eGroup) {
       this.evidenceBlock.hidden = !session.evidenceVisible();
-      var results = session.lastResults('evidence');
       this._syncGroup(this.eGroup, snapshot.e.answers, snapshot.e.checked, results, session.canCheckEvidence());
       if (results) {
         var self = this;
@@ -1142,7 +1403,8 @@
         this.evidenceFeedback.hidden = !this.evidenceFeedback.childNodes.length;
       }
     }
-    this.fContinue.hidden = session.state !== 'follow-up' || !session.canAdvance();
+    this._syncAdvanceButton(this.fContinue, 'follow-up',
+      (!this.fGroup || allCorrect(followUpResults)) && (!this.eGroup || allCorrect(results)));
   };
 
   Widget.prototype._onAdvance = function () {
@@ -1416,6 +1678,7 @@
   Widget.prototype._sync = function () {
     var session = this.session;
     var state = session.state;
+    this._syncStepper();
     this._syncPartA();
     if (state !== 'exploring') {
       this._ensureReply();
@@ -1454,6 +1717,7 @@
     this.session.pause(this.now());
     clearTimeout(this._textTimer);
     clearTimeout(this._budgetTimer);
+    this._releaseEditor();
     this.events.abort();
     this.events = new AbortController();
     this.signal = this.events.signal;
@@ -1499,7 +1763,7 @@
     if (challenge.contrast) main.appendChild(h('h5', { className: C + 'subtitle', text: COPY.secondReply }));
     this._buildReplyCard(main, false);
     reply.appendChild(main);
-    if (challenge.followUp.length) this._keyFields(this._section('f', COPY.followUp).section, challenge.followUp, 'q', 'f');
+    if (challenge.followUp.length) this._keyFields(this._section('f', COPY.followUp(challenge.followUp.length)).section, challenge.followUp, 'q', 'f');
     if (challenge.evidenceQuestions.length) {
       var evidence = this._section('e', COPY.evidenceCheck).section;
       if (this.md.has('evidence:prompt')) evidence.appendChild(h('div', { className: C + 'prompt' }, this.md.block('evidence:prompt')));

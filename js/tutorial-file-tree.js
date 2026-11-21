@@ -108,7 +108,7 @@
    * @param {{paths?: string[], activePath?: string, label?: string,
    *          onOpen?: function(string): void}} options
    * @returns {{setPaths: function(string[]): void, setActive: function(string): void,
-   *            revealPath: function(string): boolean, destroy: function(): void}}
+   *            revealPath: function(string, {scroll?: boolean}=): boolean, destroy: function(): void}}
    */
   function mount(host, options) {
     options = options || {};
@@ -296,12 +296,17 @@
       if (!tree.contains(document.activeElement)) makeRoving(item);
     }
 
-    /** Expand the folders containing path and scroll its row into view. */
-    function revealPath(path) {
+    /**
+     * Expand the folders containing path and scroll its row into view, unless
+     * options.scroll is false (the caller keeps something else in view).
+     * @param {string} path
+     * @param {{scroll?: boolean}} [options]
+     */
+    function revealPath(path, options) {
       var item = fileItem(path);
       if (!item) return false;
       expandAncestors(item);
-      scrollRowIntoContainer(item);
+      if (!options || options.scroll !== false) scrollRowIntoContainer(item);
       return true;
     }
 

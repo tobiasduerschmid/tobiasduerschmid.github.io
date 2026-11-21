@@ -5264,6 +5264,7 @@ steps:
   # difficulty later comes from the system's structure, never from the editor.
   - key: headliner
     title: "The Headliner Codebase"
+    estimated_minutes: 10
     open_file: README.md
     instructions: |
       ### Why this matters
@@ -5358,6 +5359,7 @@ steps:
   # its evidence opens the handlers that show what each receiver reads.
   - key: event-consumers
     title: "Event Consumers and Change Impact"
+    estimated_minutes: 14
     open_file: services/opc/events.py
     instructions: |
       ### Why this matters
@@ -5541,6 +5543,7 @@ steps:
   # tracing the workflow (two pinned lines) is the step toward them.
   - key: failed-trips
     title: "Failure Paths in an Order Workflow"
+    estimated_minutes: 14
     open_file: scenarios/failed_trip.py
     instructions: |
       ### Why this matters
@@ -5776,6 +5779,7 @@ steps:
   # a view of one package cannot say about its cost (the capstone picks it up).
   - key: data-model
     title: "What the Data Model Allows"
+    estimated_minutes: 12
     open_file: services/opc/model/orders.py
     instructions: |
       ### Why this matters
@@ -5905,6 +5909,7 @@ steps:
   # that nobody asked about.
   - key: outages
     title: "Outages and Synchronous Dependencies"
+    estimated_minutes: 14
     open_file: services/website/app.py
     instructions: |
       ### Why this matters
@@ -6108,6 +6113,7 @@ steps:
   # trade-off point, where the faster alternative reopens step 3's failure.
   - key: checkout-latency
     title: "Latency on the Checkout Path"
+    estimated_minutes: 14
     open_file: scenarios/slow_group_checkout.py
     instructions: |
       ### Why this matters
@@ -6338,6 +6344,7 @@ steps:
   # step ends by choosing a view and a check for a system not seen before.
   - key: choose-the-view
     title: "The Right View for the Question"
+    estimated_minutes: 15
     open_file: README.md
     instructions: |
       ### Why this matters
@@ -6363,6 +6370,7 @@ steps:
       questions:
         - id: rule
           type: single
+          diagram: website-connections
           question: "Split payments will change how the Order DB stores a `payment`. Headliner's rule says the Trip Website reads order data only through the OPC's `OrderTrackingService`, so only the OPC should have to change. Does the running system keep the rule?"
           options:
             - "Yes: every read of order data goes through `OrderTrackingService`"
@@ -6375,6 +6383,7 @@ steps:
           explanation: "`OrderHistoryPage` opens `ORDER_HISTORY_DSN`, the Order DB replica set in `deploy/website.toml`, and reads the amount out of each stored order's `payment` (`services/website/order_history.py:21`). The rule is broken, so the split payment is not a change to the OPC alone: the My trips page breaks with it. The agent's diagram left that connection out."
         - id: rideshare
           type: single
+          diagram: trip-items
           question: "Product adds `RidesharePickup`, a new kind of transport that extends `TransportItem`. A contractor quotes three operations to write, the three that `TripItem` declares. Which operations does the new class really have to define?"
           options:
             - "`price()`, `supplier_kind()`, and `cancellation_deadline()`"
@@ -6389,6 +6398,7 @@ steps:
           explanation: "`TripItem` declares `price()`, `supplier_kind()`, and `cancellation_deadline()` abstract. `TransportItem` defines `cancellation_deadline()` from the departure time, so a new transport item must define the other two. The class view shows what the class owes. It does not show the two places that list item types by name, `ITEM_TYPES` in `services/opc/payloads.py` and `_item` in the website's checkout, which the estimate also needs."
         - id: cancellation
           type: single
+          diagram: cancellation
           question: "A fan cancels a GlampingCo trip 2 days before check-in. Where do the money and the tent end up?"
           options:
             - "Refunded; the tent is cancelled on the job's next run"
@@ -6417,6 +6427,7 @@ steps:
         # cancel(), the two overrides that break it, and the retry they cause.
         - id: gateways
           type: single
+          diagram: gateways
           question: "Two more partners that cancel only by phone sign next month. Today such cancellations stay in Cancelling for good. Where should the knowledge that a supplier needs a manual cancellation live?"
           options:
             - "In each partner's `cancel()`, raising its own exception as today"
@@ -6431,7 +6442,6 @@ steps:
           explanation: "The gateway knows its supplier's rules, so the knowledge belongs there; what is missing is a way to say it that the contract permits. If `cancel()` can report that a person must do this, every gateway states its answer, every caller must handle it, and `CancellationTask` can hand such orders to support instead of retrying. Two classes break the contract today: `GlampingCoGateway` (within 72 hours of check-in) and `MeetAndGreetGateway` (always)."
       plan:
         - for: rule
-          question: "What would you ask for to check the rule about order data?"
           options:
             - "A class diagram of the website's classes and their imports"
             - "A sequence diagram of one checkout"
@@ -6443,7 +6453,6 @@ steps:
             1: "One checkout's trace shows that scenario's calls; the rule is about every connection the website makes."
             3: "`clients.py` holds the clients the checkout uses, which is not necessarily every connection the website makes."
         - for: rideshare
-          question: "What would you ask for to check the contractor's estimate?"
           options:
             - "A class diagram of the `TripItem` hierarchy"
             - "A component diagram of the OPC and its suppliers"
@@ -6455,7 +6464,6 @@ steps:
             2: "A pricing trace shows the calls of one scenario, not which operations each class defines."
             3: "`payloads.py` maps item types to and from JSON; it shows no operations."
         - for: cancellation
-          question: "What would you ask for to see where the money and the tent end up?"
           options:
             - "A class diagram of the `SupplierGateway` hierarchy"
             - "A component diagram of the OPC's runtime connections"
@@ -6467,7 +6475,6 @@ steps:
             1: "Components show who talks to whom, not the order of the refund and the cancellations."
             2: "`glamping_co.py` shows the 72-hour rule, but not when the refund happens or what follows a failed cancellation."
         - for: fee
-          question: "What would you ask for to see what a fee for one festival takes?"
           options:
             - "A sequence diagram of one checkout"
             - "No diagram: read `services/website/pricing.py`"
@@ -6479,7 +6486,6 @@ steps:
             2: "A class diagram would show `TripPricer`, but the fee is a module constant on one line of one file."
             3: "A setting inside the website's code is not a connection between components."
         - for: gateways
-          question: "What would you ask for to decide where the manual-cancellation knowledge should live?"
           options:
             - "A class diagram of the gateway hierarchy across packages"
             - "A sequence diagram of a trip cancellation"

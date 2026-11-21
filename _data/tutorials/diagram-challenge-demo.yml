@@ -189,6 +189,7 @@ steps:
   # from an agent's diagram.
   - key: explore
     title: "Explore the Project"
+    estimated_minutes: 10
     open_file: scenario.py
     run_file: scenario.py
     instructions: |
@@ -334,6 +335,7 @@ steps:
   # (the classes) before the component view, then checks an absence.
   - key: review
     title: "Review Without Editing"
+    estimated_minutes: 8
     readonly: true
     open_file: deploy/broker.toml
     run_file: scenario.py
@@ -476,6 +478,7 @@ steps:
   # the first question is answered faster by reading one file.
   - key: choose-view
     title: "Choose the View"
+    estimated_minutes: 6
     open_file: services/trip_site/checkout.py
     run_file: scenario.py
     instructions: |
@@ -509,6 +512,9 @@ steps:
             2: "`receivers()` belongs to `Bus`; `OrderService.place()` calls it after the checkout calls `place()`."
         - id: every-event
           type: single
+          # The reply diagram that answers it: Part B offers "Open its view",
+          # and the pane labels that diagram "Q2 · …".
+          diagram: events
           question: "Which queue receives every order event, whatever its key?"
           options:
             - "`warehouse-etl`"

@@ -800,6 +800,17 @@ html:not(.dark-mode) .tvm-left-tab.active {
 .monaco-editor .tvm-source-reveal-line { background: rgba(255, 209, 0, 0.22); }
 .monaco-editor .tvm-source-reveal-gutter { background: #ffd100; width: 4px !important; margin-left: 2px; }
 
+/* A line pinned as evidence in a diagram challenge: a dot in the margin
+   that stays (setEditorLineMarks). The pin list names the line in text. */
+.monaco-editor .tvm-editor-line-mark {
+  width: 9px !important;
+  margin-left: 1px;
+  background: radial-gradient(circle, #79c0ff 0 3.5px, transparent 4px);
+}
+html:not(.dark-mode) .monaco-editor .tvm-editor-line-mark {
+  background: radial-gradient(circle, #0a5ca8 0 3.5px, transparent 4px);
+}
+
 .tvm-tab.detached {
   font-style: italic;
   color: #a0a0a0;
@@ -3857,6 +3868,58 @@ html:not(.dark-mode) .tvm-step-timer.is-locked {
   box-shadow: 0 0 8px rgba(0, 120, 212, 0.35);
 }
 
+/* A completed step: a green ring and a check badge, so shape tells it too;
+   its name says "(completed)". The active and hover looks still win. */
+.tvm-step-btn.done {
+  position: relative;
+}
+.tvm-step-btn.done:not(.active):not(:hover) {
+  border-color: #3fb950;
+  color: #7ee787;
+}
+.tvm-step-btn.done::after {
+  content: "\2713";
+  content: "\2713" / "";
+  position: absolute;
+  top: -0.5em;
+  right: -0.45em;
+  width: 1.25em;
+  height: 1.25em;
+  border-radius: 50%;
+  background: #3fb950;
+  color: #0d1117;
+  font-size: 0.85em;
+  font-weight: 700;
+  line-height: 1.25em;
+  text-align: center;
+}
+html:not(.dark-mode) .tvm-step-btn.done:not(.active):not(:hover) {
+  border-color: #1a7f37;
+  color: #116329;
+}
+html:not(.dark-mode) .tvm-step-btn.done::after {
+  background: #1a7f37;
+  color: #ffffff;
+}
+
+/* The current step's title and time estimate, on its own row under the
+   step buttons (order keeps it after the bar's other controls). */
+.tvm-step-nav-current {
+  order: 1;
+  flex-basis: 100%;
+  margin: 0;
+  color: #c9d2dc;
+  font-weight: 600;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.tvm-step-nav-current[hidden] {
+  display: none;
+}
+html:not(.dark-mode) .tvm-step-nav-current {
+  color: #2c3138;
+}
+
 /* ───────────────────────────────────────────
    Previous / Next — pinned footer bar
 ─────────────────────────────────────────── */
@@ -3920,6 +3983,26 @@ html:not(.dark-mode) .tvm-step-timer.is-locked {
 .tvm-btn-next:disabled::after {
   content: " \1F512";
   font-size: 0.85em;
+}
+
+/* Why Next is locked, as text beside it (a disabled button shows no
+   tooltip). Shown only while Next is disabled, whoever disables it. */
+.tvm-next-group {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px 10px;
+}
+.tvm-next-lock-reason {
+  color: #c9d2dc;
+  font-weight: 600;
+}
+html:not(.dark-mode) .tvm-next-lock-reason {
+  color: #2c3138;
+}
+.tvm-next-group:not(:has(.tvm-btn-next:disabled)) .tvm-next-lock-reason {
+  display: none;
 }
 
 /* ───────────────────────────────────────────

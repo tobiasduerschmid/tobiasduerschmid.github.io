@@ -15,8 +15,11 @@
  * Workspace arrangement while the Diagram view is shown:
  *   maximized  the editor is hidden, the Files sidebar too (wide screens),
  *              and OUTPUT collapses to its bar, so Run stays in view;
- *   split      code beside the diagram; Files becomes a drawer, closed, so
- *              the two share the width.
+ *   split      code with the diagram; Files becomes a drawer, closed, so the
+ *              two share the space. A workspace narrower than STACK_BELOW_EM
+ *              (1280 px with the instructions open) puts the code above the
+ *              diagram, both at the workspace's width; a wider one puts them
+ *              side by side. The divider between them follows the layout.
  * The Editor view restores the workspace as the tutorial built it.
  *   hideAuthoredDiagrams()                             hide, clear, remove view
  *   setDiagramPaneAvailable(available, reason?)        enable or explain why not
@@ -25,13 +28,31 @@
  *   revealDiagramText(diagramId, query, options)       show a search hit
  *   clearDiagramTextHighlights()                       remove the hit marks
  *
+ * Zoom: the pane owns the drawing's size (ArchUML's own Fit control is off on
+ * the canvas). Zoom levels are shares of the drawing's readable width, where
+ * its smallest label has the paragraph size (100%, reading size). A drawing
+ * opens at Fit (whole) when its labels are legible there, at least
+ * MIN_LABEL_PX on screen; otherwise at the widest ZOOM_LEVELS step at which
+ * they are, scrolled to its top-left corner. The toolbar reads
+ * "−  75%  +  Fit  100%": the zoom buttons step through ZOOM_LEVELS from the
+ * current size and keep the middle of the view in place, Zoom out goes into
+ * Fit rather than below it, Fit shows the whole drawing (never above 100%),
+ * and 100% shows reading size. The button for the current view is
+ * aria-disabled. A Fit view follows the pane's size. While fitted, a hint
+ * says that a click shows the clicked part at reading size.
+ *
+ * Panning: dragging the drawing with a mouse or pen moves it (grab cursor);
+ * a drag never counts as a click. Touch scrolls natively, and with focus on
+ * the drawing the arrow keys scroll it.
+ *
  * Code links: a diagram's optional links [{text, path, line}] turn every
  * label whose text equals a link's text into a linked label (underlined,
  * pointer cursor). A click on it calls revealSource(path, line), which
  * returns a maximized diagram to split view beside the code, instead of
  * zooming the drawing. The drawing is hidden from assistive technology, so a
- * "Code links" disclosure under it offers one button per link that does the
- * same.
+ * "Code links" disclosure in the toolbar opens a list over the drawing (it
+ * never takes the drawing's height) with one button per link that does the
+ * same; Escape or a click elsewhere closes it.
  *
  * Find in diagram: Ctrl/Cmd+F with focus in the pane (or in the workspace
  * outside the code editor and text fields while the Diagram view is shown)
@@ -49,16 +70,11 @@
  * behind the text), and shows the first at reading size. The marks go when
  * the search changes or closes, or another diagram is drawn.
  *
- * One pane element is created on first use as a third flex child of
+ * One pane element is created on first use as a third child of
  * .tvm-editor-body, after a keyboard-resizable divider. Several diagrams show
- * as tabs. ArchUML first fits a drawing that overflows the pane and offers
- * its own Fit/Restore control; while it is fitted, a hint says that a click
- * shows the clicked part at reading size (100%, where the smallest text has
- * the paragraph size). The zoom buttons step through ZOOM_LEVELS from the
- * drawing's current size, keep the middle of the view in place, and zoom out
- * into Fit rather than below it. The scrollable drawing is a
- * focusable region named by the diagram's auto-generated description.
- * Class names are this component's own: the live UML viewer owns .tvm-diagram-*.
+ * as tabs. The scrollable drawing is a focusable region named by the
+ * diagram's auto-generated description. Class names are this component's
+ * own: the live UML viewer owns .tvm-diagram-*.
  */
 (function () {
   'use strict';
@@ -78,6 +94,10 @@
   };
   var DEFAULT_UNAVAILABLE_REASON = 'The diagram appears after you lock in your answer.';
   var MAXIMIZED_CLASS = 'tutorial-diagram-workspace--maximized';
+  var STACKED_CLASS = 'tutorial-diagram-workspace--stacked';
+  var FITTED_CLASS = 'tutorial-diagram-pane__canvas--fitted';
+  var PANNABLE_CLASS = 'tutorial-diagram-pane__canvas--pannable';
+  var PANNING_CLASS = 'tutorial-diagram-pane__canvas--panning';
   var RENDERERS = {
     class: 'UMLClassDiagram',
     sequence: 'UMLSequenceDiagram',
@@ -91,6 +111,14 @@
   // text has the paragraph size (ArchUML's --uml-readable-width).
   var ZOOM_LEVELS = [0.5, 0.75, 1, 1.25, 1.5, 2, 2.5, 3];
   var READING_ZOOM = 1;
+  // The smallest label size, on screen, at which a drawing opens.
+  var MIN_LABEL_PX = 12;
+  // Below this workspace width (in the workspace's em), code goes above the
+  // diagram instead of beside it: about 1024 px at the usual 16 px.
+  var STACK_BELOW_EM = 64;
+  var NARROW_LAYOUT_QUERY = '(max-width: 900px)';
+  // Neither the code nor the diagram gets smaller than this from the divider.
+  var MIN_PANE_PX = 80;
   var FIT_HINT = 'Click a part of the drawing to read it at full size, or use the + button.';
   var FIT_HINT_WITH_LINKS = 'Click a part of the drawing to read it at full size, or click an underlined name to open its code.';
   var LINK_CLASS = 'tutorial-diagram-pane__link';
@@ -101,17 +129,51 @@
   var SVG_NS = 'http://www.w3.org/2000/svg';
   var paneCount = 0;
 
+  function icon(paths) {
+    return '<svg class="tutorial-diagram-pane__tool-icon" viewBox="0 0 16 16" width="16" height="16" fill="none" ' +
+      'stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ' +
+      'focusable="false">' + paths + '</svg>';
+  }
+
+  var LINKS_ICON = icon('<path d="M6.5 9.5l3-3"/><path d="M7.5 4.5l1-1a2.5 2.5 0 0 1 3.5 3.5l-1 1"/>' +
+    '<path d="M8.5 11.5l-1 1a2.5 2.5 0 0 1-3.5-3.5l1-1"/>');
+  var LAYOUT_ICON = icon('<rect x="1.75" y="2.25" width="12.5" height="11.5" rx="1"/><path d="M1.75 8h12.5"/>' +
+    '<path d="M4 4.75h5M4 6h3"/>');
+  var FULLSCREEN_ICON = icon('<path d="M2 6V2h4M10 2h4v4M14 10v4h-4M6 14H2v-4"/>');
+
+  /**
+   * A toolbar button that is an icon with a text label. The text names the
+   * button; the stylesheet hides it visually when the pane is narrow, and
+   * the tooltip repeats it there.
+   */
+  function iconTool(attributes, svg, text) {
+    return '<button type="button" class="tutorial-diagram-pane__tool tutorial-diagram-pane__tool--labelled" ' +
+      attributes + ' data-original-title="' + text + '">' + svg +
+      '<span class="tutorial-diagram-pane__tool-text">' + text + '</span></button>';
+  }
+
   function paneMarkup(id) {
+    var zoomId = id + '-zoom';
     return '<div class="tutorial-diagram-pane__bar">' +
         '<p class="tutorial-diagram-pane__title"></p>' +
         '<div class="tutorial-diagram-pane__tabs" role="tablist" aria-label="Diagrams" hidden></div>' +
         '<div class="tutorial-diagram-pane__tools" role="group" aria-label="Diagram view controls">' +
-          '<button type="button" class="tutorial-diagram-pane__tool" data-diagram-zoom="out" aria-label="Zoom out"><span aria-hidden="true">−</span></button>' +
-          '<span class="tutorial-diagram-pane__zoom">100%</span>' +
-          '<button type="button" class="tutorial-diagram-pane__tool" data-diagram-zoom="in" aria-label="Zoom in"><span aria-hidden="true">+</span></button>' +
-          '<button type="button" class="tutorial-diagram-pane__tool" data-diagram-zoom="reset">Reset zoom</button>' +
-          '<button type="button" class="tutorial-diagram-pane__tool" data-diagram-layout aria-pressed="true">Code beside diagram</button>' +
-          '<button type="button" class="tutorial-diagram-pane__tool" data-diagram-fullscreen aria-pressed="false">Full screen</button>' +
+          // The shown zoom describes the zoom buttons, so it is read with them.
+          '<button type="button" class="tutorial-diagram-pane__tool" data-diagram-zoom="out" aria-label="Zoom out" aria-describedby="' + zoomId + '"><span aria-hidden="true">−</span></button>' +
+          '<span class="tutorial-diagram-pane__zoom" id="' + zoomId + '">100%</span>' +
+          '<button type="button" class="tutorial-diagram-pane__tool" data-diagram-zoom="in" aria-label="Zoom in" aria-describedby="' + zoomId + '"><span aria-hidden="true">+</span></button>' +
+          '<button type="button" class="tutorial-diagram-pane__tool tutorial-diagram-pane__tool--start" data-diagram-zoom="fit">Fit<span class="sr-only"> whole drawing</span></button>' +
+          '<button type="button" class="tutorial-diagram-pane__tool" data-diagram-zoom="reading"><span class="sr-only">Zoom to </span>100%</button>' +
+          '<details class="tutorial-diagram-pane__links tutorial-diagram-pane__tool--start" hidden>' +
+            '<summary class="tutorial-diagram-pane__tool tutorial-diagram-pane__tool--labelled tutorial-diagram-pane__links-summary" data-original-title="Code links">' +
+              LINKS_ICON + '<span class="tutorial-diagram-pane__tool-text">Code links</span></summary>' +
+            '<div class="tutorial-diagram-pane__links-panel">' +
+              '<p class="tutorial-diagram-pane__links-hint">Each button opens the code behind a name in the drawing, as a click on the underlined name does.</p>' +
+              '<ul class="tutorial-diagram-pane__links-list"></ul>' +
+            '</div>' +
+          '</details>' +
+          iconTool('data-diagram-layout aria-pressed="true"', LAYOUT_ICON, 'Code beside diagram') +
+          iconTool('data-diagram-fullscreen aria-pressed="false"', FULLSCREEN_ICON, 'Full screen') +
         '</div>' +
       '</div>' +
       '<div class="tutorial-diagram-pane__find" role="search" aria-label="Find in diagram" hidden>' +
@@ -125,16 +187,12 @@
       '</div>' +
       '<p class="tutorial-diagram-pane__status" role="status"></p>' +
       '<div class="tutorial-diagram-pane__panel" id="' + id + '-panel">' +
-        // The hint floats over the drawing's lower edge, above the Code links.
+        // The hint floats over the drawing's lower edge.
         '<div class="tutorial-diagram-pane__stage">' +
-          '<div class="tutorial-diagram-pane__canvas" tabindex="0" role="region" aria-label="No diagram yet" aria-keyshortcuts="Control+F Meta+F"></div>' +
+          // ArchUML's Fit control stays off: the pane's toolbar sizes the drawing.
+          '<div class="tutorial-diagram-pane__canvas" data-uml-fit="off" tabindex="0" role="region" aria-label="No diagram yet" aria-keyshortcuts="Control+F Meta+F"></div>' +
           '<p class="tutorial-diagram-pane__hint">' + FIT_HINT + '</p>' +
         '</div>' +
-        '<details class="tutorial-diagram-pane__links" hidden>' +
-          '<summary class="tutorial-diagram-pane__links-summary">Code links</summary>' +
-          '<p class="tutorial-diagram-pane__links-hint">Each button opens the code behind a name in the drawing, as a click on the underlined name does.</p>' +
-          '<ul class="tutorial-diagram-pane__links-list"></ul>' +
-        '</details>' +
       '</div>';
   }
 
@@ -185,10 +243,6 @@
     return pre;
   }
 
-  function isFitted(state) {
-    return state.canvas.classList.contains('uml-fit-fitted');
-  }
-
   function drawingOf(state) {
     return state.canvas.querySelector(':scope > svg');
   }
@@ -210,36 +264,64 @@
     return readable > 0 ? svg.getBoundingClientRect().width / readable : 1;
   }
 
-  // ArchUML shows its Fit/Restore control while the drawing overflows the
-  // pane or is fitted to it.
-  function fitControl(state) {
-    var host = state.pane.querySelector('.uml-fit-controls');
-    return host && !host.hidden ? host.querySelector('.uml-fit-button') : null;
+  function contentBox(canvas) {
+    var style = getComputedStyle(canvas);
+    return {
+      width: canvas.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight),
+      height: canvas.clientHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom),
+    };
   }
 
-  /** The share of the readable width at which the whole drawing fits the canvas. */
-  function fitScale(state, svg) {
-    if (isFitted(state)) return drawingScale(svg);
-    var canvas = state.canvas;
-    var style = getComputedStyle(canvas);
-    var width = canvas.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
-    var height = canvas.clientHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom);
+  /**
+   * The share of the readable width at which the whole drawing fits the
+   * canvas, never above reading size. One pixel of slack keeps rounding from
+   * making the fitted drawing overflow.
+   */
+  function fitLevel(state, svg) {
     var box = svg.viewBox.baseVal;
     var readable = readableWidth(svg);
-    return Math.min(width / readable, height * box.width / (readable * box.height));
+    var space = contentBox(state.canvas);
+    if (!(readable > 0) || !box.width || !box.height || space.width <= 1 || space.height <= 1) return READING_ZOOM;
+    return Math.min(READING_ZOOM, (space.width - 1) / readable,
+      (space.height - 1) * box.width / (readable * box.height));
   }
 
-  function zoomInLevel(svg) {
+  /** The smallest label of the drawing, in CSS pixels, at reading size. */
+  function smallestLabelAtReadingSize(svg) {
+    var smallest = Infinity;
+    Array.prototype.forEach.call(svg.querySelectorAll('text'), function (label) {
+      if (!label.textContent.trim()) return;
+      var matrix = label.getScreenCTM();
+      var size = parseFloat(getComputedStyle(label).fontSize) * (matrix ? Math.hypot(matrix.c, matrix.d) : 1);
+      if (isFinite(size) && size > 0) smallest = Math.min(smallest, size);
+    });
     var scale = drawingScale(svg);
-    var larger = ZOOM_LEVELS.filter(function (level) { return level > scale * 1.01; });
+    return isFinite(smallest) && scale > 0 ? smallest / scale : null;
+  }
+
+  /**
+   * Where a drawing opens: Fit when the whole drawing is legible (its
+   * smallest label at least MIN_LABEL_PX on screen), else the widest zoom step
+   * that is legible. A step, not an exact size, so the zoom buttons can come
+   * back to it.
+   */
+  function openingView(state, svg) {
+    var smallest = smallestLabelAtReadingSize(svg);
+    var needed = smallest ? MIN_LABEL_PX / smallest : READING_ZOOM;
+    if (fitLevel(state, svg) >= needed - 0.001) return { fit: true };
+    var legible = ZOOM_LEVELS.filter(function (level) { return level >= needed - 0.001; });
+    return { fit: false, level: legible.length ? legible[0] : ZOOM_LEVELS[ZOOM_LEVELS.length - 1] };
+  }
+
+  function zoomInLevel(state) {
+    var larger = ZOOM_LEVELS.filter(function (level) { return level > state.zoom * 1.01; });
     return larger.length ? larger[0] : null;
   }
 
   // Zooming out stops above the fitted size: below it, Fit shows more.
   function zoomOutLevel(state, svg) {
-    var scale = drawingScale(svg);
-    var floor = fitControl(state) ? fitScale(state, svg) * 1.01 : 0;
-    var smaller = ZOOM_LEVELS.filter(function (level) { return level < scale * 0.99 && level > floor; });
+    var floor = fitLevel(state, svg) * 1.01;
+    var smaller = ZOOM_LEVELS.filter(function (level) { return level < state.zoom * 0.99 && level > floor; });
     return smaller.length ? smaller[smaller.length - 1] : null;
   }
 
@@ -248,13 +330,20 @@
     else button.setAttribute('aria-disabled', 'true');
   }
 
+  function isAvailable(button) {
+    return button.getAttribute('aria-disabled') !== 'true';
+  }
+
   function updateZoomControls(state) {
     var svg = drawingOf(state);
-    var fitted = !!svg && isFitted(state);
-    state.zoomLabel.textContent = fitted ? 'Fit' : Math.round(state.zoom * 100) + '%';
-    setAvailable(state.zoomInButton, !!svg && zoomInLevel(svg) !== null);
-    setAvailable(state.zoomOutButton, !!svg && !fitted &&
-      (zoomOutLevel(state, svg) !== null || !!fitControl(state)));
+    var canvas = state.canvas;
+    state.zoomLabel.textContent = Math.round(state.zoom * 100) + '%';
+    setAvailable(state.zoomInButton, !!svg && zoomInLevel(state) !== null);
+    setAvailable(state.zoomOutButton, !!svg && !state.fitted && state.zoom > fitLevel(state, svg) * 1.001);
+    setAvailable(state.fitButton, !!svg && !state.fitted);
+    setAvailable(state.readingButton, !!svg && Math.abs(state.zoom - READING_ZOOM) > 0.005);
+    canvas.classList.toggle(PANNABLE_CLASS, !!svg && !state.fitted &&
+      (canvas.scrollWidth > canvas.clientWidth + 1 || canvas.scrollHeight > canvas.clientHeight + 1));
   }
 
   function clampShare(value) {
@@ -263,7 +352,7 @@
 
   /** The drawing point in the middle of the visible canvas, as shares of the drawing's size. */
   function visibleCenter(state, svg) {
-    if (isFitted(state)) return { x: 0.5, y: 0.5 };
+    if (state.fitted) return { x: 0.5, y: 0.5 };
     var view = state.canvas.getBoundingClientRect();
     var box = svg.getBoundingClientRect();
     return {
@@ -284,32 +373,55 @@
     });
   }
 
-  // ArchUML's Fit view sets the drawing's width itself, so the pane enters
-  // and leaves it through ArchUML's control, then puts focus back.
-  function toggleFitView(state, focusAfter) {
-    var control = fitControl(state);
-    if (!control) return;
-    control.click();
-    if (focusAfter) focusAfter.focus({ preventScroll: true });
-  }
-
-  /** Leave Fit if needed and size the drawing at a zoom level. */
-  function setZoom(state, level, focusAfter) {
-    if (isFitted(state)) toggleFitView(state, focusAfter);
+  /** Size the drawing at a share of its readable width. */
+  function sizeDrawing(state, level) {
     state.zoom = level;
     state.canvas.style.setProperty('--tutorial-diagram-zoom', String(level));
+  }
+
+  /** Leave Fit and size the drawing at a zoom level. */
+  function setZoom(state, level) {
+    state.fitted = false;
+    state.canvas.classList.remove(FITTED_CLASS);
+    sizeDrawing(state, level);
+  }
+
+  /** Show the whole drawing; it stays whole while the pane changes size. */
+  function enterFit(state) {
+    var svg = drawingOf(state);
+    if (!svg) return;
+    state.fitted = true;
+    // The fitted canvas does not scroll, so its size is the space to fill.
+    state.canvas.classList.add(FITTED_CLASS);
+    sizeDrawing(state, fitLevel(state, svg));
+    state.canvas.scrollTo({ left: 0, top: 0, behavior: 'instant' });
+    updateZoomControls(state);
   }
 
   /**
    * Show the drawing at a zoom level with a point (shares of its size; by
    * default the middle of the current view) in the middle of the canvas.
    */
-  function applyZoom(state, level, point, focusAfter) {
+  function applyZoom(state, level, point) {
     var svg = drawingOf(state);
     if (!svg) return;
     var center = point || visibleCenter(state, svg);
-    setZoom(state, level, focusAfter);
+    setZoom(state, level);
     centerOn(state, svg, center);
+    updateZoomControls(state);
+  }
+
+  /** The view a drawing opens in (see openingView), at its top-left corner. */
+  function showOpeningView(state) {
+    var svg = drawingOf(state);
+    if (!svg) return;
+    var view = openingView(state, svg);
+    if (view.fit) {
+      enterFit(state);
+      return;
+    }
+    setZoom(state, view.level);
+    state.canvas.scrollTo({ left: 0, top: 0, behavior: 'instant' });
     updateZoomControls(state);
   }
 
@@ -330,27 +442,19 @@
     event.preventDefault();
     var delta = event.deltaY * (event.deltaMode === 1 ? WHEEL_LINE_PX : 1);
     delta = Math.max(-PINCH_MAX_DELTA, Math.min(PINCH_MAX_DELTA, delta));
-    var fitted = isFitted(state);
-    var scale = fitted ? drawingScale(svg) : state.zoom;
-    var hasFit = !!fitControl(state);
-    var floor = hasFit ? fitScale(state, svg) : ZOOM_LEVELS[0];
+    var floor = fitLevel(state, svg);
     var ceiling = ZOOM_LEVELS[ZOOM_LEVELS.length - 1];
-    var level = Math.min(ceiling, Math.max(floor, scale * Math.exp(-delta * PINCH_RATE)));
-    if (hasFit && level <= floor * 1.001) {
+    var level = Math.min(ceiling, Math.max(floor, state.zoom * Math.exp(-delta * PINCH_RATE)));
+    if (level <= floor * 1.001) {
       // Zooming out ends in Fit, as the Zoom out button does.
-      if (!fitted) toggleFitView(state, state.canvas);
-      updateZoomControls(state);
+      if (!state.fitted) enterFit(state);
       return;
     }
-    if (level === scale && !fitted) return;
+    if (level === state.zoom) return;
     var anchor = pinchAnchor(state, svg, event);
-    setZoom(state, level, state.canvas);
+    setZoom(state, level);
     keepAnchor(state, svg, anchor);
     updateZoomControls(state);
-    // ArchUML may adjust the layout once the drawing starts to overflow
-    // (its Fit control appears); put the point back after that settles.
-    cancelAnimationFrame(state.pinchFrame);
-    state.pinchFrame = requestAnimationFrame(function () { keepAnchor(state, svg, anchor); });
   }
 
   var PINCH_GESTURE_MS = 400;
@@ -391,17 +495,82 @@
     });
   }
 
-  function zoom(state, command, button) {
+  /** A toolbar zoom command: 'in', 'out', 'fit', or 'reading' (100%). */
+  function zoom(state, command) {
     var svg = drawingOf(state);
     if (!svg) return;
-    if (command === 'reset') {
-      applyZoom(state, READING_ZOOM, null, button);
-      return;
+    if (command === 'fit') enterFit(state);
+    else if (command === 'reading') applyZoom(state, READING_ZOOM, null);
+    else if (command === 'in') {
+      var larger = zoomInLevel(state);
+      if (larger !== null) applyZoom(state, larger, null);
+    } else {
+      var smaller = zoomOutLevel(state, svg);
+      if (smaller !== null) applyZoom(state, smaller, null);
+      else enterFit(state);
     }
-    var level = command === 'in' ? zoomInLevel(svg) : zoomOutLevel(state, svg);
-    if (level !== null) applyZoom(state, level, null, button);
-    else if (command === 'out' && !isFitted(state)) toggleFitView(state, button);
   }
+
+  // ----- Panning -------------------------------------------------------------
+
+  // A press that moves farther than this is a drag, not a click.
+  var PAN_SLOP_PX = 4;
+
+  /** Whether a press is on the canvas's own scrollbar, which drags natively. */
+  function onScrollbar(canvas, event) {
+    var box = canvas.getBoundingClientRect();
+    return event.clientX - box.left - canvas.clientLeft >= canvas.clientWidth ||
+      event.clientY - box.top - canvas.clientTop >= canvas.clientHeight;
+  }
+
+  /**
+   * Drag to pan: a mouse or pen press on the drawing that moves farther than
+   * PAN_SLOP_PX scrolls the canvas with the pointer, and the click that ends
+   * it is swallowed, so a drag never zooms or opens a code link. Touch keeps
+   * the browser's own scrolling.
+   */
+  function wirePan(state) {
+    var canvas = state.canvas;
+    var drag = null;
+    canvas.addEventListener('pointerdown', function (event) {
+      state.suppressClick = false;
+      if (event.button !== 0 || event.pointerType === 'touch' || !drawingOf(state) || onScrollbar(canvas, event)) return;
+      drag = {
+        id: event.pointerId,
+        x: event.clientX,
+        y: event.clientY,
+        left: canvas.scrollLeft,
+        top: canvas.scrollTop,
+        moved: false,
+      };
+    });
+    canvas.addEventListener('pointermove', function (event) {
+      if (!drag || event.pointerId !== drag.id) return;
+      var dx = event.clientX - drag.x;
+      var dy = event.clientY - drag.y;
+      if (!drag.moved) {
+        if (Math.hypot(dx, dy) < PAN_SLOP_PX) return;
+        drag.moved = true;
+        canvas.setPointerCapture(event.pointerId);
+        canvas.classList.add(PANNING_CLASS);
+        // A drag that began on a label would otherwise select its text.
+        var selection = window.getSelection && window.getSelection();
+        if (selection) selection.removeAllRanges();
+      }
+      event.preventDefault();
+      canvas.scrollTo({ left: drag.left - dx, top: drag.top - dy, behavior: 'instant' });
+    });
+    function endDrag(event) {
+      if (!drag || event.pointerId !== drag.id) return;
+      state.suppressClick = drag.moved;
+      drag = null;
+      canvas.classList.remove(PANNING_CLASS);
+    }
+    canvas.addEventListener('pointerup', endDrag);
+    canvas.addEventListener('pointercancel', endDrag);
+  }
+
+  // ----- Code links ----------------------------------------------------------
 
   /** A drawing label's text as matched against links and searches. */
   function labelText(node) {
@@ -415,18 +584,24 @@
   /** A click on a fitted drawing shows the clicked part at reading size. */
   function zoomToClick(state, event) {
     var svg = drawingOf(state);
-    if (!svg || !isFitted(state) || !svg.contains(event.target)) return;
+    if (!svg || !state.fitted || !svg.contains(event.target)) return;
     var box = svg.getBoundingClientRect();
     applyZoom(state, READING_ZOOM, {
       x: clampShare((event.clientX - box.left) / box.width),
       y: clampShare((event.clientY - box.top) / box.height),
-    }, state.canvas);
+    });
+    state.canvas.focus({ preventScroll: true });
+  }
+
+  function setToolText(button, text) {
+    button.querySelector('.tutorial-diagram-pane__tool-text').textContent = text;
+    button.setAttribute('data-original-title', text);
   }
 
   function syncFullscreen(state) {
     var active = document.fullscreenElement === state.pane;
     state.fullscreenButton.setAttribute('aria-pressed', active ? 'true' : 'false');
-    state.fullscreenButton.textContent = active ? 'Exit full screen' : 'Full screen';
+    setToolText(state.fullscreenButton, active ? 'Exit full screen' : 'Full screen');
   }
 
   function toggleFullscreen(state) {
@@ -447,16 +622,6 @@
 
   function exitPaneFullscreen(state) {
     if (document.fullscreenElement === state.pane) document.exitFullscreen().catch(function () {});
-  }
-
-  // ArchUML keeps one Fit/Restore state per container and forgets it once
-  // that container's control is detached. Each diagram drawn here (a new
-  // step, another tab) starts again from Fit, at zoom 100%.
-  function resetView(state) {
-    var host = state.panel.querySelector('.uml-fit-controls');
-    if (host) host.remove();
-    state.zoom = 1;
-    state.canvas.style.setProperty('--tutorial-diagram-zoom', '1');
   }
 
   /** The text nodes of the drawing's labels, in document order. */
@@ -540,7 +705,7 @@
 
   /**
    * Mark each label that a link names and each `path:line` citation of a
-   * project file, and list them all under the drawing (state.shownLinks).
+   * project file, and list them all in the Code links list (state.shownLinks).
    */
   function renderLinks(state, diagram, svg) {
     var authored = diagram && svg ? diagram.links : [];
@@ -558,6 +723,7 @@
     var links = svg ? authored.concat(linkSourceReferences(state, svg, authored.length)) : [];
     state.shownLinks = links;
     state.links.hidden = !links.length;
+    if (!links.length) state.links.open = false;
     state.hint.textContent = links.length ? FIT_HINT_WITH_LINKS : FIT_HINT;
     links.forEach(function (link, index) {
       var item = document.createElement('li');
@@ -573,6 +739,32 @@
     if (typeof tutorial.revealSource !== 'function' || !tutorial.revealSource(link.path, link.line, link.column)) {
       state.status.textContent = link.path + ' is not part of this step.';
     }
+  }
+
+  function closeLinks(state, returnFocus) {
+    if (!state.links.open) return;
+    state.links.open = false;
+    if (returnFocus) state.links.querySelector('summary').focus();
+  }
+
+  /**
+   * The Code links list opens over the drawing: Escape closes it and returns
+   * focus to its summary, and a press outside it closes it.
+   */
+  function wireLinks(tutorial, state, signal) {
+    state.linksList.addEventListener('click', function (event) {
+      var button = event.target.closest('button[data-diagram-link]');
+      if (button) openLink(tutorial, state, Number(button.getAttribute('data-diagram-link')));
+    });
+    state.links.addEventListener('keydown', function (event) {
+      if (event.key !== 'Escape' || !state.links.open) return;
+      event.preventDefault();
+      event.stopPropagation();
+      closeLinks(state, true);
+    });
+    document.addEventListener('pointerdown', function (event) {
+      if (state.links.open && !state.links.contains(event.target)) closeLinks(state, false);
+    }, { signal: signal });
   }
 
   /** The labels of the shown drawing that match a query, in document order. */
@@ -592,9 +784,9 @@
   }
 
   /** Show a label at reading size in the middle of the canvas. */
-  function zoomToLabel(state, node, focusAfter) {
+  function zoomToLabel(state, node) {
     var svg = drawingOf(state);
-    if (svg) applyZoom(state, READING_ZOOM, pointOf(svg, node), focusAfter);
+    if (svg) applyZoom(state, READING_ZOOM, pointOf(svg, node));
   }
 
   function clearHits(state) {
@@ -629,10 +821,14 @@
     };
   }
 
+  /**
+   * Draw the active diagram. ArchUML lays it out for the canvas at reading
+   * size; then it opens in its opening view (see openingView).
+   */
   function renderActiveDiagram(state) {
     var diagram = state.diagrams[state.active];
     var canvas = state.canvas;
-    resetView(state);
+    setZoom(state, READING_ZOOM);
     canvas.replaceChildren();
     state.status.textContent = '';
     if (!diagram) {
@@ -665,7 +861,8 @@
       canvas.setAttribute('aria-label', 'Diagram source: ' + diagram.label);
     }
     renderLinks(state, diagram, svg);
-    updateZoomControls(state);
+    if (svg) showOpeningView(state);
+    else updateZoomControls(state);
     if (state.find && !state.find.bar.hidden) refreshFind(state, false);
   }
 
@@ -699,7 +896,7 @@
     var node = find.matches[find.current];
     node.previousElementSibling.classList.add(CURRENT_HIT_CLASS);
     find.status.textContent = (find.current + 1) + ' of ' + find.matches.length;
-    if (zoomToCurrent) zoomToLabel(state, node, find.input);
+    if (zoomToCurrent) zoomToLabel(state, node);
   }
 
   function stepFind(state, step) {
@@ -837,20 +1034,149 @@
     if (moveFocus) state.tabs.children[index].focus();
   }
 
+  // ----- Workspace layout and the code/diagram divider ----------------------
+
+  function isNarrowLayout() {
+    return !!(window.matchMedia && window.matchMedia(NARROW_LAYOUT_QUERY).matches);
+  }
+
+  /** Whether code and diagram, shown together, go one above the other. */
+  function shouldStack(tutorial, state) {
+    if (tutorial._splitActive) return false;
+    var width = state.body.clientWidth;
+    return width > 0 && width < STACK_BELOW_EM * parseFloat(getComputedStyle(state.body).fontSize);
+  }
+
+  function isStacked(state) {
+    return state.workspace.classList.contains(STACKED_CLASS) && !isNarrowLayout();
+  }
+
+  /** Forget the divider's size, which belongs to one layout. */
+  function clearCodeSize(state) {
+    state.editorPane.style.flex = '';
+    state.pane.style.flex = '';
+    state.body.style.removeProperty('--tutorial-diagram-code-size');
+  }
+
+  function codeAndDiagramSizes(state) {
+    var code = state.editorPane.getBoundingClientRect();
+    var diagram = state.pane.getBoundingClientRect();
+    return isStacked(state)
+      ? { code: code.height, total: code.height + diagram.height }
+      : { code: code.width, total: code.width + diagram.width };
+  }
+
+  function syncDividerValue(state) {
+    var sizes = codeAndDiagramSizes(state);
+    if (sizes.total > 0) state.divider.setAttribute('aria-valuenow', String(Math.round((sizes.code / sizes.total) * 100)));
+  }
+
+  /** Give the code `size` px (its height when stacked, else its width); the diagram takes the rest. */
+  function resizeCode(tutorial, state, size) {
+    var total = codeAndDiagramSizes(state).total;
+    var clamped = Math.round(Math.min(total - MIN_PANE_PX, Math.max(MIN_PANE_PX, size)));
+    if (isStacked(state)) {
+      state.body.style.setProperty('--tutorial-diagram-code-size', clamped + 'px');
+    } else {
+      state.editorPane.style.flex = '0 0 ' + clamped + 'px';
+      state.pane.style.flex = '1 1 0';
+    }
+    syncDividerValue(state);
+    if (tutorial.editor) tutorial.editor.layout();
+  }
+
+  /**
+   * The divider between code and diagram: a separator whose orientation
+   * follows the layout (vertical side by side, horizontal when stacked). A
+   * pointer drags it; the arrow keys along its axis move it by 20 px (50 px
+   * with Shift); Home and End move it to either end.
+   */
+  function wireDivider(tutorial, state) {
+    var divider = state.divider;
+    divider.setAttribute('role', 'separator');
+    divider.setAttribute('tabindex', '0');
+    divider.setAttribute('aria-label', 'Resize code and diagram panes');
+    divider.setAttribute('aria-valuemin', '0');
+    divider.setAttribute('aria-valuemax', '100');
+    var drag = null;
+    var axis = function (event) { return isStacked(state) ? event.clientY : event.clientX; };
+    divider.addEventListener('pointerdown', function (event) {
+      if (event.button !== 0) return;
+      event.preventDefault();
+      divider.setPointerCapture(event.pointerId);
+      drag = { id: event.pointerId, start: axis(event), size: codeAndDiagramSizes(state).code };
+      divider.classList.add('active');
+    });
+    divider.addEventListener('pointermove', function (event) {
+      if (drag && event.pointerId === drag.id) resizeCode(tutorial, state, drag.size + axis(event) - drag.start);
+    });
+    function endDrag(event) {
+      if (!drag || event.pointerId !== drag.id) return;
+      drag = null;
+      divider.classList.remove('active');
+    }
+    divider.addEventListener('pointerup', endDrag);
+    divider.addEventListener('pointercancel', endDrag);
+    divider.addEventListener('keydown', function (event) {
+      var stacked = isStacked(state);
+      var smaller = stacked ? 'ArrowUp' : 'ArrowLeft';
+      var larger = stacked ? 'ArrowDown' : 'ArrowRight';
+      var step = event.shiftKey ? 50 : 20;
+      var current = codeAndDiagramSizes(state).code;
+      if (event.key === smaller) resizeCode(tutorial, state, current - step);
+      else if (event.key === larger) resizeCode(tutorial, state, current + step);
+      else if (event.key === 'Home') resizeCode(tutorial, state, 0);
+      else if (event.key === 'End') resizeCode(tutorial, state, Infinity);
+      else return;
+      event.preventDefault();
+    });
+  }
+
   /** Arrange the workspace for the current view and layout (see the header). */
   function syncWorkspaceLayout(tutorial, state) {
     var shown = tutorial._currentView === 'diagram';
-    state.workspace.classList.toggle(MAXIMIZED_CLASS, shown && state.layout === 'maximized');
+    var maximized = shown && state.layout === 'maximized';
+    var stacked = shown && !maximized && shouldStack(tutorial, state);
+    state.workspace.classList.toggle(MAXIMIZED_CLASS, maximized);
+    if (stacked !== state.workspace.classList.contains(STACKED_CLASS)) {
+      state.workspace.classList.toggle(STACKED_CLASS, stacked);
+      clearCodeSize(state);
+    }
+    state.divider.setAttribute('aria-orientation', isStacked(state) ? 'horizontal' : 'vertical');
     tutorial._setFileNavigatorDrawer(shown);
     var editor = tutorial.editor;
-    if (editor) requestAnimationFrame(function () { editor.layout(); });
+    requestAnimationFrame(function () {
+      if (editor) editor.layout();
+      if (shown) syncDividerValue(state);
+    });
+  }
+
+  /**
+   * Keep the arrangement in step with the space: a fitted drawing stays whole
+   * as the pane changes size, and the workspace switches between stacked and
+   * side by side as it narrows or widens.
+   */
+  function observeSizes(tutorial, state, signal) {
+    if (typeof ResizeObserver !== 'function') return;
+    var observer = new ResizeObserver(function () {
+      if (state.pane.hidden) return;
+      var stacked = state.layout === 'split' && shouldStack(tutorial, state);
+      if (stacked !== state.workspace.classList.contains(STACKED_CLASS)) syncWorkspaceLayout(tutorial, state);
+      var svg = drawingOf(state);
+      if (state.fitted && svg && state.canvas.clientWidth) sizeDrawing(state, fitLevel(state, svg));
+      updateZoomControls(state);
+    });
+    observer.observe(state.canvas);
+    observer.observe(state.body);
+    signal.addEventListener('abort', function () { observer.disconnect(); });
   }
 
   function wirePane(tutorial, state, signal) {
     state.pane.addEventListener('click', function (event) {
       var zoomButton = event.target.closest('[data-diagram-zoom]');
-      if (zoomButton) zoom(state, zoomButton.getAttribute('data-diagram-zoom'), zoomButton);
-      else if (event.target.closest('[data-diagram-fullscreen]')) toggleFullscreen(state);
+      if (zoomButton) {
+        if (isAvailable(zoomButton)) zoom(state, zoomButton.getAttribute('data-diagram-zoom'));
+      } else if (event.target.closest('[data-diagram-fullscreen]')) toggleFullscreen(state);
       else if (event.target.closest('[data-diagram-layout]')) {
         tutorial._setAuthoredDiagramLayout(state.layout === 'split' ? 'maximized' : 'split');
       }
@@ -873,25 +1199,23 @@
     });
     document.addEventListener('fullscreenchange', function () { syncFullscreen(state); }, { signal: signal });
     // A click on a linked label opens its code; anywhere else on a fitted
-    // drawing it zooms to the clicked part.
+    // drawing it zooms to the clicked part. A drag is neither.
     state.canvas.addEventListener('click', function (event) {
+      if (state.suppressClick) {
+        state.suppressClick = false;
+        return;
+      }
       var label = linkedLabel(event.target);
       if (label) openLink(tutorial, state, Number(label.getAttribute('data-diagram-link')));
       else zoomToClick(state, event);
     });
     state.canvas.addEventListener('wheel', function (event) { pinchZoom(state, event); }, { passive: false });
+    wirePan(state);
     wireFind(tutorial, state, signal);
-    state.linksList.addEventListener('click', function (event) {
-      var button = event.target.closest('button[data-diagram-link]');
-      if (button) openLink(tutorial, state, Number(button.getAttribute('data-diagram-link')));
-    });
-    // ArchUML toggles Fit on the drawing's container; mirror it in the controls.
-    var observer = new MutationObserver(function () { updateZoomControls(state); });
-    observer.observe(state.canvas, { attributes: true, attributeFilter: ['class'] });
-    signal.addEventListener('abort', function () {
-      observer.disconnect();
-      exitPaneFullscreen(state);
-    });
+    wireLinks(tutorial, state, signal);
+    wireDivider(tutorial, state);
+    observeSizes(tutorial, state, signal);
+    signal.addEventListener('abort', function () { exitPaneFullscreen(state); });
   }
 
   /** Create the pane, its divider, and the Diagram view button once. */
@@ -911,8 +1235,6 @@
     pane.setAttribute('aria-label', 'Diagram');
     pane.innerHTML = paneMarkup(id);
     body.append(divider, pane);
-    this._makeDraggable(divider, 'vertical', editorPane, pane);
-    divider.setAttribute('aria-label', 'Resize code and diagram panes');
     var button = this._ensureWorkspaceViewButton(DIAGRAM_VIEW);
     var note = document.createElement('span');
     note.className = 'tvm-view-toggle-note';
@@ -924,6 +1246,7 @@
       tutorial: this,
       pane: pane,
       divider: divider,
+      body: body,
       editorPane: editorPane,
       button: button,
       note: note,
@@ -932,6 +1255,8 @@
       zoomLabel: pane.querySelector('.tutorial-diagram-pane__zoom'),
       zoomInButton: pane.querySelector('[data-diagram-zoom="in"]'),
       zoomOutButton: pane.querySelector('[data-diagram-zoom="out"]'),
+      fitButton: pane.querySelector('[data-diagram-zoom="fit"]'),
+      readingButton: pane.querySelector('[data-diagram-zoom="reading"]'),
       fullscreenButton: pane.querySelector('[data-diagram-fullscreen]'),
       layoutButton: pane.querySelector('[data-diagram-layout]'),
       workspace: workspace,
@@ -945,7 +1270,9 @@
       linksList: pane.querySelector('.tutorial-diagram-pane__links-list'),
       diagrams: [],
       active: 0,
-      zoom: 1,
+      zoom: READING_ZOOM,
+      fitted: false,
+      suppressClick: false,
     };
     this._authoredDiagram = state;
     wirePane(this, state, this._lifecycleEvents.signal);
@@ -988,8 +1315,6 @@
     options = options || {};
     state.diagrams = normalizeDiagrams(diagrams);
     state.active = 0;
-    state.zoom = 1;
-    state.canvas.style.setProperty('--tutorial-diagram-zoom', '1');
     this.setDiagramPaneAvailable(true);
     renderTabs(state);
     this._setAuthoredDiagramLayout(options.layout === 'maximized' ? 'maximized' : 'split');
@@ -1006,7 +1331,7 @@
 
   /**
    * 'maximized' gives the Diagram view the whole workspace; 'split' shows
-   * the editor beside (or, at 900px and below, above) the pane.
+   * the editor beside (or, in a narrow workspace, above) the pane.
    */
   proto._setAuthoredDiagramLayout = function (layout) {
     var state = this._authoredDiagram;
@@ -1101,7 +1426,7 @@
     state.status.textContent = hits.length
       ? (hits.length === 1 ? '1 label' : hits.length + ' labels') + ' marked in ' + label + '.'
       : 'No label in ' + label + ' matches; the text is in a part the drawing does not show.';
-    if (hits.length) zoomToLabel(state, hits[0], state.canvas);
+    if (hits.length) zoomToLabel(state, hits[0]);
     // Focus on the drawing lets the arrow keys scroll around the hit.
     state.canvas.focus({ preventScroll: true });
     return true;
@@ -1137,10 +1462,10 @@
       clearHits(state);
     }
     if (!shown) {
-      // Divider drags size the editor for the split; without the pane the
+      // Divider drags size the code for the split; without the pane the
       // editor fills the row again.
-      state.editorPane.style.flex = '';
-      state.pane.style.flex = '';
+      clearCodeSize(state);
+      closeLinks(state, false);
       exitPaneFullscreen(state);
     }
   };

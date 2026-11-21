@@ -233,6 +233,21 @@ async function lockIn(page, label) {
   await expect(stage(page, 'The agent’s reply').getByRole('heading', { name: 'The agent’s reply' })).toBeFocused();
 }
 
+/** After lock-in Part A folds into a closed summary; open it to read the locked answer. */
+async function openLockedAnswer(page) {
+  const summary = stage(page, 'Answer from the code').locator('summary', { hasText: /^Your locked answer/ });
+  if (await summary.locator('..').getAttribute('open') === null) await summary.click();
+}
+
+/** The new-question stage: its name, and its Continue button, follow the count. */
+function followUpName(challengeSpec) {
+  return challengeSpec.follow_up.length > 1 ? 'New questions' : 'A new question';
+}
+
+function continueToFollowUp(challengeSpec) {
+  return challengeSpec.follow_up.length > 1 ? 'Continue to the new questions' : 'Continue to the new question';
+}
+
 function diagramRegion(page, type) {
   return page.getByRole('region', { name: new RegExp('^UML ' + type + ' diagram', 'i') });
 }
@@ -241,7 +256,11 @@ function diagramRegion(page, type) {
 async function openEvidence(page, challengeSpec) {
   const ref = challengeSpec.reply.evidence[0].ref;
   const { path: filePath, line } = parseRef(ref);
-  await stage(page, 'The agent’s reply').getByRole('button', { name: new RegExp(escapeRegExp(ref) + '$') }).click();
+  const reply = stage(page, 'The agent’s reply');
+  // The evidence list is a closed disclosure until wanted.
+  const evidence = reply.locator('summary', { hasText: `Evidence (${challengeSpec.reply.evidence.length})` });
+  if (await evidence.locator('..').getAttribute('open') === null) await evidence.click();
+  await reply.getByRole('button', { name: new RegExp(escapeRegExp(ref) + '$') }).click();
   await expect(fileTab(page, filePath)).toHaveAttribute('aria-current', 'true');
   await expect.poll(() => editorLocation(page)).toEqual({ path: filePath, line });
   await expect(codeEditor(page)).toBeVisible();
@@ -278,13 +297,14 @@ async function answerWithDiagram(page, challengeSpec, { firstWrong = false } = {
   }
   await check.click();
   await expect(withDiagram.getByRole('heading', { name: `${questions.length} of ${questions.length} correct` })).toBeFocused();
-  await withDiagram.getByRole('button', { name: 'Continue to the new question' }).click();
-  await expect(stage(page, 'A new question').getByRole('heading', { name: 'A new question' })).toBeFocused();
+  await withDiagram.getByRole('button', { name: continueToFollowUp(challengeSpec), exact: true }).click();
+  const name = followUpName(challengeSpec);
+  await expect(stage(page, name).getByRole('heading', { name })).toBeFocused();
 }
 
 /** The new questions, then (when there is one) the evidence check. */
 async function answerFollowUpAndEvidence(page, challengeSpec) {
-  const followUp = stage(page, 'A new question');
+  const followUp = stage(page, followUpName(challengeSpec));
   // Several new questions are numbered; a lone one is named by its stem.
   for (const [index, question] of challengeSpec.follow_up.entries()) {
     const field = challengeSpec.follow_up.length > 1 ? numberedGroup(followUp, index + 1) : stemGroup(followUp, question);
@@ -447,6 +467,9 @@ test.describe('the whole tutorial, as a student', () => {
     await reload();
     await expect(stage(page, 'The agent’s reply')).toBeVisible();
     await expect(fromCode().getByRole('button', { name: 'Lock in my answer' })).toBeHidden();
+    // The reload returns to the diagram; Part A is a closed summary.
+    await expect(diagramRegion(page, 'component')).toBeVisible();
+    await openLockedAnswer(page);
     await expectChosen(numberedGroup(fromCode(), 1), firstQuestion, keyIndices(firstQuestion));
     await expect(optionsOf(numberedGroup(fromCode(), 1), firstQuestion).first()).toBeDisabled();
     await expect(page.getByRole('button', { name: 'Diagram', exact: true })).not.toHaveAttribute('aria-disabled', 'true');
@@ -458,7 +481,7 @@ test.describe('the whole tutorial, as a student', () => {
     // Follow-up.
     await answerWithDiagram(page, challengeSpec, { firstWrong: true });
     await reload();
-    await expect(stage(page, 'A new question')).toBeVisible();
+    await expect(stage(page, followUpName(challengeSpec))).toBeVisible();
     await expect(numberedGroup(stage(page, 'Answer with the diagram'), 1).getByText('Correct', { exact: true })).toBeVisible();
 
     // Done.
@@ -479,6 +502,7 @@ test.describe('the whole tutorial, as a student', () => {
     await answerFromCode(page, step);
     await expect(nextButton(page)).toBeDisabled();
     await lockIn(page, 'Lock in my answer');
+    await openLockedAnswer(page);
     await expect(optionsOf(numberedGroup(stage(page, 'Answer from the code'), 1), challengeSpec.questions[0]).first()).toBeDisabled();
     if (challengeSpec.reply.contrast) {
       await expect(diagramRegion(page, challengeSpec.reply.contrast.diagram.type)).toBeVisible();
@@ -534,9 +558,26 @@ test.describe('the whole tutorial, as a student', () => {
       await choose(numberedGroup(plan, index + 1), question, keyIndices(question));
     }
     await lockIn(page, 'Lock in my plan');
+    // Each tab names the questions it answers: "Q1 · Website connections".
     const tabs = page.getByRole('tablist', { name: 'Diagrams' });
-    await expect(tabs.getByRole('tab')).toHaveText(challengeSpec.reply.diagrams.map(diagram => diagram.label));
+    const tabLabel = diagram => challengeSpec.questions
+      .map((question, index) => (question.diagram === diagram.id ? `Q${index + 1}` : null))
+      .filter(Boolean).join(', ') + ' · ' + diagram.label;
+    await expect(tabs.getByRole('tab')).toHaveText(challengeSpec.reply.diagrams.map(tabLabel));
     await openEvidence(page, challengeSpec);
+    // Each question with a view opens it; a question without one names the expert's choice.
+    const withDiagram = stage(page, 'Answer with the diagram');
+    for (const [index, question] of challengeSpec.questions.entries()) {
+      const group = numberedGroup(withDiagram, index + 1);
+      const diagram = challengeSpec.reply.diagrams.find(candidate => candidate.id === question.diagram);
+      if (!diagram) {
+        await expect(group.getByText(/^Expert’s choice: No diagram: read /)).toBeVisible();
+        continue;
+      }
+      await group.getByRole('button', { name: `Open its view: ${tabLabel(diagram)}`, exact: true }).click();
+      await expect(tabs.getByRole('tab', { name: tabLabel(diagram), exact: true })).toHaveAttribute('aria-selected', 'true');
+      await expect(diagramRegion(page, diagram.type)).toBeVisible();
+    }
     await answerWithDiagram(page, challengeSpec);
     await answerFollowUpAndEvidence(page, challengeSpec);
 
@@ -765,8 +806,13 @@ test.describe('keyboard only', () => {
     await expect(reply.getByRole('heading', { name: 'The agent’s reply' })).toBeFocused();
     await expectVisibleFocus(page);
 
-    // An evidence note opens its line; Escape leaves the editor.
+    // The evidence list opens from its summary; a note opens its line; Escape leaves the editor.
     const evidence = parseRef(challengeSpec.reply.evidence[0].ref);
+    const evidenceSummary = reply.locator('summary', { hasText: `Evidence (${challengeSpec.reply.evidence.length})` });
+    await tabTo(page, evidenceSummary);
+    await expectVisibleFocus(page);
+    await page.keyboard.press('Enter');
+    await expect(evidenceSummary.locator('..')).toHaveAttribute('open', '');
     await tabTo(page, reply.getByRole('button', { name: new RegExp(escapeRegExp(challengeSpec.reply.evidence[0].ref) + '$') }));
     await expectVisibleFocus(page);
     await page.keyboard.press('Enter');
@@ -932,6 +978,43 @@ test.describe('workspace options at 1440 px', () => {
     await divider.focus();
     for (let presses = 0; presses < 5; presses++) await page.keyboard.press('ArrowRight');
     expect(await instructionsShare(page)).toBeGreaterThan(before + 0.05);
+  });
+});
+
+// Search is the main tool of Part A: stepping through hits must not lose
+// the results or the Search files button.
+test.describe('Search files at 1440 px', () => {
+  test.use({ viewport: { width: 1440, height: 900 } });
+
+  async function searchFromButton(page, text) {
+    await page.getByRole('button', { name: 'Search files', exact: true }).click();
+    await page.getByLabel('Search all files', { exact: true }).fill(text);
+  }
+
+  test('choosing a result keeps the results and the Search files button in view', async ({ page }) => {
+    await openEventConsumers(page);
+    await searchFromButton(page, 'trip.confirmed');
+    const result = searchResult(page, 'services/notifications/consumers.py', 25);
+
+    await result.click();
+
+    await expect(fileTab(page, 'services/notifications/consumers.py')).toHaveAttribute('aria-current', 'true');
+    await expect(result).toBeInViewport({ ratio: 1 });
+    await expect(page.getByRole('button', { name: 'Search files', exact: true })).toBeInViewport({ ratio: 1 });
+  });
+
+  test('the file names over the results fit on one line', async ({ page }) => {
+    await openEventConsumers(page);
+    await searchFromButton(page, 'trip.confirmed');
+    const name = page.getByRole('list', { name: 'Search results' })
+      .getByText('services/notifications/consumers.py', { exact: true });
+
+    const lines = await name.evaluate(element => {
+      const range = document.createRange();
+      range.selectNodeContents(element);
+      return new Set([...range.getClientRects()].map(rect => Math.round(rect.top))).size;
+    });
+    expect(lines).toBe(1);
   });
 });
 

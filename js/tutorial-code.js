@@ -1895,6 +1895,7 @@
       '<div class="tvm-steps-view">' +
       '<div class="tvm-step-nav-bar">' +
       '<div class="tvm-step-nav"></div>' +
+      '<p class="tvm-step-nav-current"></p>' +
       '<div class="tvm-step-timer" role="timer" aria-label="Step timer" hidden></div>' +
       '<div class="tvm-step-timer-controls" hidden>' +
       '<button class="tvm-step-timer-control-btn tvm-step-timer-extend-btn" type="button" data-original-title="Add 5 minutes to this timed step">+5 min</button>' +
@@ -2128,6 +2129,7 @@
     this.loadingEl = this.root.querySelector('.tvm-loading');
     this.containerEl = this.root.querySelector('.tvm-container');
     this.stepNavEl = this.root.querySelector('.tvm-step-nav');
+    this.stepNavCurrentEl = this.root.querySelector('.tvm-step-nav-current');
     this.stepTimerEl = this.root.querySelector('.tvm-step-timer');
     this.stepTimerControlsEl = this.root.querySelector('.tvm-step-timer-controls');
     this.stepTimerExtendBtn = this.root.querySelector('.tvm-step-timer-extend-btn');
@@ -8780,6 +8782,85 @@
    * "Pin this line"; null when no tutorial file is shown.
    * @returns {{path: string, line: number} | null}
    */
+  /** The tutorial file shown in `editor` and its cursor's line, or null. */
+  TutorialCode.prototype._editorLocation = function (editor) {
+    var model = editor && editor.getModel();
+    var position = editor && editor.getPosition();
+    if (!model || !position) return null;
+    var models = this.editorModels;
+    var path = Object.keys(models).filter(function (candidate) { return models[candidate].model === model; })[0];
+    return path ? { path: path, line: position.lineNumber } : null;
+  };
+
+  /**
+   * Add an action for the cursor's line to the code editors: an item in
+   * their context menu and, with `keys`, a key binding while an editor has
+   * focus. run() gets the editor's {path, line}, or null outside a tutorial
+   * file. Diagram challenges use it for "Pin line as evidence".
+   * @param {{id: string, label: string, run: function(?{path: string, line: number}): void,
+   *          keys?: {ctrlCmd?: boolean, alt?: boolean, shift?: boolean, key: string}}} action
+   * @returns {function(): void} removes the action
+   */
+  TutorialCode.prototype.addEditorLineAction = function (action) {
+    var self = this;
+    var editors = [this.editor, this.editor2].filter(function (editor) {
+      return editor && typeof editor.addAction === 'function';
+    });
+    var keybindings = [];
+    var keys = action.keys;
+    var keyCode = keys && window.monaco ? monaco.KeyCode['Key' + String(keys.key).toUpperCase()] : undefined;
+    if (keyCode !== undefined) {
+      keybindings.push((keys.ctrlCmd ? monaco.KeyMod.CtrlCmd : 0) | (keys.alt ? monaco.KeyMod.Alt : 0) |
+        (keys.shift ? monaco.KeyMod.Shift : 0) | keyCode);
+    }
+    var handles = editors.map(function (editor) {
+      return editor.addAction({
+        id: action.id,
+        label: action.label,
+        keybindings: keybindings,
+        contextMenuGroupId: 'navigation',
+        contextMenuOrder: 0,
+        run: function (target) { action.run(self._editorLocation(target)); },
+      });
+    });
+    return function () { handles.forEach(function (handle) { handle.dispose(); }); };
+  };
+
+  /**
+   * Mark lines in the code editors' margin: one mark per {path, line} of
+   * `marks`, kept under `owner` (an empty list removes that owner's marks).
+   * The marks live on each file's model, so they stay while the learner
+   * switches files. Files without a model yet are skipped; call again once
+   * the step's files are open.
+   */
+  TutorialCode.prototype.setEditorLineMarks = function (owner, marks) {
+    if (!window.monaco) return;
+    var all = this._editorLineMarks || (this._editorLineMarks = {});
+    var previous = all[owner] || {};
+    var lines = {};
+    (marks || []).forEach(function (mark) { (lines[mark.path] = lines[mark.path] || []).push(mark.line); });
+    var next = {};
+    var models = this.editorModels;
+    Object.keys(previous).concat(Object.keys(lines)).forEach(function (path) {
+      var entry = models[path];
+      if (!entry || next[path]) return;
+      next[path] = entry.model.deltaDecorations(previous[path] || [], (lines[path] || []).map(function (line) {
+        return {
+          range: new monaco.Range(line, 1, line, 1),
+          options: { isWholeLine: true, linesDecorationsClassName: 'tvm-editor-line-mark' },
+        };
+      }));
+    });
+    all[owner] = next;
+  };
+
+  /** The trimmed text of a project file's line, or null when there is none. */
+  TutorialCode.prototype.projectLineText = function (path, line) {
+    var entry = this.editorModels[path];
+    if (!entry || !(line >= 1 && line <= entry.model.getLineCount())) return null;
+    return entry.model.getLineContent(line).trim();
+  };
+
   TutorialCode.prototype.currentEditorLocation = function () {
     var path = this.activeFileName;
     var entry = path && this.editorModels[path];
@@ -8905,7 +8986,9 @@
     var entry = this.editorModels[path];
     if (!entry || !this.editor) return false;
     this._openFileTab(path);
-    if (this._fileTree) this._fileTree.revealPath(path);
+    // While search is open the sidebar stays put, so its results stay in view.
+    var searching = !!(this._projectSearch && this._projectSearch.isOpen());
+    if (this._fileTree) this._fileTree.revealPath(path, { scroll: !searching });
     var editor = this._splitActive && this.editor2 && this._paneForFile(path) === 'right' ? this.editor2 : this.editor;
     var lineNumber = Math.min(Math.max(1, Math.floor(Number(line)) || 1), entry.model.getLineCount());
     var columnNumber = Math.max(1, Math.floor(Number(column === undefined ? 1 : column)) || 1);
@@ -13109,10 +13192,12 @@
     this.steps.forEach(function (step, i) {
       var btn = document.createElement('button');
       var unlocked = self.instructorMode || self._stepsUnlocked.has(i);
-      btn.className = 'tvm-step-btn' + (i === self.currentStep ? ' active' : '') + (unlocked ? '' : ' locked');
+      var completed = self._timedPracticeStepSolved(i);
+      btn.className = 'tvm-step-btn' + (i === self.currentStep ? ' active' : '') + (unlocked ? '' : ' locked') +
+        (completed ? ' done' : '');
       btn.textContent = i + 1;
       var srLabel = unlocked
-        ? 'Step ' + (i + 1) + ': ' + step.title
+        ? 'Step ' + (i + 1) + ': ' + step.title + (completed ? ' (completed)' : '')
         : 'Step ' + (i + 1) + ': ' + step.title + ' (locked, complete the previous step to unlock)';
       btn.setAttribute('data-original-title', unlocked ? step.title : step.title + ' (locked)');
       btn.removeAttribute('title');
@@ -13125,6 +13210,21 @@
       }
       self.stepNavEl.appendChild(btn);
     });
+    this._renderCurrentStepTitle();
+  };
+
+  /** "Event Consumers · about 12 minutes" beside the step buttons. */
+  TutorialCode.prototype._renderCurrentStepTitle = function () {
+    var el = this.stepNavCurrentEl;
+    var step = this.steps[this.currentStep];
+    if (!el) return;
+    el.hidden = !step;
+    if (!step) return;
+    el.innerHTML = this._renderInlineMarkdown(step.title || '');
+    var minutes = Math.round(Number(step.estimated_minutes));
+    if (minutes > 0) {
+      el.appendChild(document.createTextNode(' \u00b7 about ' + minutes + (minutes === 1 ? ' minute' : ' minutes')));
+    }
   };
 
   // ---------------------------------------------------------------------------
@@ -13145,8 +13245,11 @@
     var hasQuiz = this._stepHasQuiz(step);
     var hasNextStep = index < this.steps.length - 1;
     var showNext = hasNextStep || hasQuiz;
+    // The reason shows only while Next is disabled (CSS), so callers that
+    // toggle next.disabled later keep it in sync.
     html += showNext
-      ? '<button class="tvm-btn tvm-btn-next"' + (nextLocked ? ' disabled data-original-title="' + this._nextLockedLabel(index) + '"' : ' data-original-title="Next step"') + '>Next \u2192</button>'
+      ? '<span class="tvm-next-group"><span class="tvm-next-lock-reason">' + this._nextLockedLabel(index) + '</span>' +
+        '<button class="tvm-btn tvm-btn-next"' + (nextLocked ? ' disabled data-original-title="' + this._nextLockedLabel(index) + '"' : ' data-original-title="Next step"') + '>Next \u2192</button></span>'
       : '<span></span>';
 
     this.stepControlsEl.innerHTML = html;

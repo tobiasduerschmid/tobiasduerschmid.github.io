@@ -183,10 +183,12 @@ html:not(.dark-mode) .tutorial-diagram-challenge .tutorial-diagram-challenge__la
 }
 
 /* A locked answer stays easy to find. Browsers draw a disabled, checked
-   control faintly, so the chosen row adds a frame, a check mark, and bold
-   text: shape and weight, not color alone. The native control keeps its
-   checked and disabled states; the mark has an empty text alternative, so
-   assistive technology reads that state, not "check mark". */
+   control faintly, so the chosen row adds a frame, bold text, and a
+   neutral "Your answer" tag (not a check mark, which would read as
+   "correct"): shape, weight, and words, not color alone. The native
+   control keeps its checked and disabled states; the tag has an empty
+   text alternative, so assistive technology reads that state instead.
+   Answer keys (instructor view) get the frame without the tag. */
 .tutorial-diagram-challenge__option:has(> .tutorial-diagram-challenge__input:disabled:checked) {
   outline: 2px solid var(--tdc-chosen);
   outline-offset: 0;
@@ -197,11 +199,21 @@ html:not(.dark-mode) .tutorial-diagram-challenge .tutorial-diagram-challenge__la
   font-weight: 700;
 }
 
-.tutorial-diagram-challenge__input:disabled:checked + .tutorial-diagram-challenge__option-label::before {
-  content: "\2714\FE0E";
-  content: "\2714\FE0E" / "";
-  margin-right: 0.35em;
-  color: var(--tdc-chosen);
+.tutorial-diagram-challenge__question:not(.tutorial-diagram-challenge__question--key)
+  .tutorial-diagram-challenge__input:disabled:checked + .tutorial-diagram-challenge__option-label::after {
+  content: "Your answer";
+  content: "Your answer" / "";
+  display: inline-block;
+  margin-left: 0.5em;
+  padding: 0 0.5em;
+  border: 1px solid var(--tdc-border);
+  border-radius: 999px;
+  background: var(--tdc-field);
+  color: var(--tdc-text);
+  font-size: 0.85em;
+  font-weight: 600;
+  line-height: 1.5;
+  white-space: nowrap;
 }
 
 .tutorial-diagram-challenge__input {
@@ -365,6 +377,99 @@ html:not(.dark-mode) .tutorial-diagram-challenge .tutorial-diagram-challenge__re
   outline-offset: 2px;
 }
 
+/* ----- Stepper: the challenge's phases --------------------------------------- */
+
+.tutorial-diagram-challenge .tutorial-diagram-challenge__stepper {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35em 0.5em;
+  margin: 0 0 0.8em;
+  padding: 0;
+  list-style: none;
+}
+
+/* List items: see the note at the top of this file. */
+.tutorial-diagram-challenge .tutorial-diagram-challenge__phase,
+html:not(.dark-mode) .tutorial-diagram-challenge .tutorial-diagram-challenge__phase {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3em;
+  margin: 0;
+  padding: 0.1em 0.7em;
+  border: 1px solid var(--tdc-border-soft);
+  border-radius: 999px;
+  font-size: 0.9em;
+  line-height: 1.6;
+  color: var(--tdc-muted);
+}
+
+.tutorial-diagram-challenge .tutorial-diagram-challenge__phase--current,
+html:not(.dark-mode) .tutorial-diagram-challenge .tutorial-diagram-challenge__phase--current {
+  border: 2px solid var(--tdc-accent);
+  font-weight: 700;
+  color: var(--tdc-text);
+}
+
+.tutorial-diagram-challenge .tutorial-diagram-challenge__phase--done,
+html:not(.dark-mode) .tutorial-diagram-challenge .tutorial-diagram-challenge__phase--done {
+  color: var(--tdc-text);
+}
+
+.tutorial-diagram-challenge__phase-mark {
+  font-weight: 700;
+  color: var(--tdc-correct);
+}
+
+/* ----- Folded parts: a finished Part A, the evidence, the files read ---------- */
+
+.tutorial-diagram-challenge__fold {
+  margin: 0.6em 0;
+}
+
+.tutorial-diagram-challenge__fold-summary {
+  min-height: 2em;
+  list-style: none;
+  padding: 0.25em 0.4em;
+  border-radius: 4px;
+  font-weight: 600;
+  color: var(--tdc-text);
+  cursor: pointer;
+}
+
+/* The site hides native disclosure markers; draw one so the summary reads
+   as something that opens. The text alternative is empty: the summary
+   already exposes its expanded state. */
+.tutorial-diagram-challenge__fold-summary::-webkit-details-marker {
+  display: none;
+}
+
+.tutorial-diagram-challenge__fold-summary::before {
+  content: "\25B6";
+  content: "\25B6" / "";
+  display: inline-block;
+  width: 1.4em;
+  font-size: 0.85em;
+}
+
+.tutorial-diagram-challenge__fold[open] > .tutorial-diagram-challenge__fold-summary::before {
+  content: "\25BC";
+  content: "\25BC" / "";
+}
+
+.tutorial-diagram-challenge__fold-summary:hover {
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
+.tutorial-diagram-challenge__fold-summary:focus-visible {
+  outline: 3px solid var(--tdc-focus);
+  outline-offset: 2px;
+}
+
+.tutorial-diagram-challenge__fold[open] > .tutorial-diagram-challenge__fold-summary {
+  margin-bottom: 0.3em;
+}
+
 /* ----- Attempt, reply, comparison ------------------------------------------- */
 
 .tutorial-diagram-challenge__pins,
@@ -378,6 +483,27 @@ html:not(.dark-mode) .tutorial-diagram-challenge .tutorial-diagram-challenge__re
   flex-wrap: wrap;
   align-items: center;
   gap: 0.3em 0.6em;
+}
+
+/* The pinned line's own text, on its own line under the reference. */
+.tutorial-diagram-challenge__pin-text {
+  flex-basis: 100%;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+/* Where to look after a wrong answer: body text, not a muted hint. */
+.tutorial-diagram-challenge .tutorial-diagram-challenge__pointer,
+html:not(.dark-mode) .tutorial-diagram-challenge .tutorial-diagram-challenge__pointer {
+  margin: 0.2em 0 0;
+  color: var(--tdc-text);
+}
+
+.tutorial-diagram-challenge .tutorial-diagram-challenge__expert-choice,
+html:not(.dark-mode) .tutorial-diagram-challenge .tutorial-diagram-challenge__expert-choice {
+  margin: 0.3em 0 0.4em;
+  color: var(--tdc-text);
 }
 
 .tutorial-diagram-challenge .tutorial-diagram-challenge__todo,
@@ -496,6 +622,7 @@ html:not(.dark-mode) .tutorial-diagram-challenge .tutorial-diagram-challenge__bu
 }
 
 /* Announcements only; the visible text lives beside each control. */
+.tutorial-diagram-challenge__sr-only,
 .tutorial-diagram-challenge__live {
   position: absolute;
   width: 1px;

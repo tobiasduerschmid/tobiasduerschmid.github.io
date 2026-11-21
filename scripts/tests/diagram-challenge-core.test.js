@@ -195,28 +195,64 @@ test('comparison uses the first part B attempt after a retry', () => {
 });
 
 test('score includes evidence check and mechanism question', () => {
-  const session = followUpSession();
-  // Part B: receivers right (latest), source right; follow-up wrong.
+  const session = doneSession();
+  // Part B right; the follow-up and evidence check answered again, wrongly
+  // (checks stay open in the comparison), and the mechanism wrong.
   session.answerFollowUp('cancelled', [0]);
-  session.checkFollowUp(200_000);
+  session.checkFollowUp(245_000);
   session.answerEvidenceCheck('verified', 1);
-  session.checkEvidence(220_000);
-  session.advance(230_000);
+  session.checkEvidence(246_000);
   session.answerMechanism('mechanism', 1);
   session.setConsolidation('The bindings sat next to every consumer.');
 
-  let outcome = session.finish(240_000);
+  let outcome = session.finish(250_000);
   assert.equal(outcome.passed, false);
   assert.equal(session.score(), 2 / 5, 'two part B questions right; follow-up, evidence, mechanism wrong');
 
   session.answerFollowUp('cancelled', [1, 2]);
-  session.checkFollowUp(250_000);
+  session.checkFollowUp(255_000);
   session.answerEvidenceCheck('verified', 0);
-  session.checkEvidence(255_000);
+  session.checkEvidence(256_000);
   session.answerMechanism('mechanism', 0);
   outcome = session.finish(260_000);
   assert.equal(session.score(), 1);
   assert.equal(outcome.passed, true);
+});
+
+test('moving on needs at least one correct answer in each latest check', () => {
+  const session = lockedSession();
+  session.answer('receivers', [3]);
+  session.answer('source', 1);
+  session.checkMain(160_000);
+  assert.equal(session.canAdvance(), false, 'nothing right yet: no moving on');
+  assert.equal(session.advance(165_000), false);
+
+  session.answer('source', 0);
+  session.checkMain(170_000);
+  assert.equal(session.canAdvance(), true, 'one of two right: the learner may move on');
+  assert.equal(session.advance(175_000), true);
+
+  session.answerFollowUp('cancelled', [0]);
+  session.checkFollowUp(180_000);
+  session.answerEvidenceCheck('verified', 1);
+  session.checkEvidence(185_000);
+  assert.equal(session.canAdvance(), false, 'the follow-up and the evidence check have nothing right');
+  session.answerFollowUp('cancelled', [1, 2]);
+  session.checkFollowUp(190_000);
+  assert.equal(session.canAdvance(), false, 'the evidence check still has nothing right');
+  session.answerEvidenceCheck('verified', 0);
+  session.checkEvidence(195_000);
+  assert.equal(session.canAdvance(), true);
+});
+
+test('a question names the reply diagram that answers it, when that diagram exists', () => {
+  const challenge = Core.normalizeSpec(spec({
+    questions: [Object.assign({ diagram: 'events' }, RECEIVERS), Object.assign({ diagram: 'imports' }, SOURCE)],
+  }));
+
+  assert.equal(challenge.questions[0].diagram, 'events');
+  assert.equal(challenge.questions[1].diagram, null, 'a diagram the reply does not have');
+  assert.equal(Core.normalizeSpec(spec()).questions[0].diagram, null);
 });
 
 test('passing needs the consolidation sentence and the minimum score, and stays passed', () => {

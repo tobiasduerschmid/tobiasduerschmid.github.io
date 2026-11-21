@@ -10,14 +10,20 @@
  * only in the text its drawing shows (diagramText). textMatches applies the
  * same rules to one string, such as an SVG label.
  *
- * mount(host, options) renders the Search button and panel: a labelled query
- * field, native option checkboxes, a polite status region with the result
- * count, and results grouped by file, then by diagram. A file result calls
+ * mount(host, options) renders the Search button and, under it, one compact
+ * search row (a labelled query field with three option toggles inside it:
+ * native checkboxes named Match case, Whole word, and Regular expression,
+ * drawn as Aa, ab, and .*), then a "Project search" region with a polite
+ * status (the result count) and the results grouped by file, then by
+ * diagram. The button and the row form a head that the stylesheet keeps at
+ * the top of the scrolling Files sidebar. A file result calls
  * options.onOpen(path, line, column); a diagram result calls
  * options.onOpenDiagram(diagramId, query, searchOptions). options.onReset()
  * runs whenever the query or its options change or the panel closes, so
  * whatever an earlier result showed can be cleared. Escape closes the panel
- * and returns focus to the control that opened it.
+ * and returns focus to the control that opened it. isOpen() tells callers
+ * (revealSource) to leave the sidebar's scroll position alone, so the
+ * results stay in view while the learner steps through them.
  *
  * Loaded as a classic script (window.TutorialProjectSearch) and by Node tests
  * (module.exports).
@@ -239,15 +245,6 @@
   var instanceCount = 0;
 
   /**
-   * @param {HTMLElement} host
-   * @param {{getFiles: function(): {path: string, content: string, kind?: 'diagram',
-   *            diagramId?: string, label?: string}[],
-   *          onOpen: function(string, number, number): void,
-   *          onOpenDiagram?: function(string, string, {matchCase: boolean, wholeWord: boolean, regex: boolean}): void,
-   *          onReset?: function(): void}} options
-   * @returns {{open: function(): void, close: function(): void, destroy: function(): void}}
-   */
-  /**
    * The search button's tooltip. In full screen, Chrome on macOS keeps
    * Cmd+Shift+F for its own menu, so Mac users learn Control+Shift+F too.
    */
@@ -259,6 +256,16 @@
       : 'Search all files (Ctrl+Shift+F)';
   }
 
+  /**
+   * @param {HTMLElement} host
+   * @param {{getFiles: function(): {path: string, content: string, kind?: 'diagram',
+   *            diagramId?: string, label?: string}[],
+   *          onOpen: function(string, number, number): void,
+   *          onOpenDiagram?: function(string, string, {matchCase: boolean, wholeWord: boolean, regex: boolean}): void,
+   *          onReset?: function(): void}} options
+   * @returns {{open: function(): void, close: function(): void, isOpen: function(): boolean,
+   *            destroy: function(): void}}
+   */
   function mount(host, options) {
     options = options || {};
     var getFiles = typeof options.getFiles === 'function' ? options.getFiles : function () { return []; };
@@ -274,20 +281,21 @@
     var toggle = element('button', 'tutorial-project-search__toggle', 'Search files');
     toggle.type = 'button';
     toggle.setAttribute('aria-expanded', 'false');
-    toggle.setAttribute('aria-controls', id);
+    toggle.setAttribute('aria-controls', id + '-form ' + id);
     toggle.setAttribute('aria-keyshortcuts', 'Control+Shift+F Meta+Shift+F');
     toggle.setAttribute('data-original-title', shortcutHint());
 
-    var panel = element('section', 'tutorial-project-search');
-    panel.id = id;
-    panel.hidden = true;
-    panel.setAttribute('aria-label', 'Project search');
-
+    // The head (the button and the search row) stays at the top of the Files
+    // sidebar while the results and the tree scroll under it.
+    var head = element('div', 'tutorial-project-search__head');
     var form = element('form', 'tutorial-project-search__form');
+    form.id = id + '-form';
     form.setAttribute('role', 'search');
+    form.hidden = true;
     form.noValidate = true;
     var label = element('label', 'tutorial-project-search__label', 'Search all files');
     label.htmlFor = id + '-query';
+    var field = element('div', 'tutorial-project-search__field');
     var input = element('input', 'tutorial-project-search__input');
     input.type = 'search';
     input.id = id + '-query';
@@ -296,33 +304,50 @@
     input.setAttribute('autocapitalize', 'off');
     input.setAttribute('enterkeyhint', 'search');
 
+    // The options are native checkboxes drawn as toggles inside the field;
+    // each is named in words, and its glyph is the visible icon.
     var choices = element('fieldset', 'tutorial-project-search__options');
     choices.appendChild(element('legend', 'sr-only', 'Search options'));
-    function checkbox(name, text) {
-      var wrapper = element('label', 'tutorial-project-search__option');
-      var box = element('input');
+    function option(name, text, glyph) {
+      var wrapper = element('label', 'tutorial-project-search__option tutorial-project-search__option--' + name);
+      wrapper.setAttribute('data-original-title', text);
+      var box = element('input', 'tutorial-project-search__option-box');
       box.type = 'checkbox';
       box.name = name;
-      wrapper.append(box, document.createTextNode(' ' + text));
+      box.setAttribute('aria-label', text);
+      var icon = element('span', 'tutorial-project-search__option-glyph', glyph);
+      icon.setAttribute('aria-hidden', 'true');
+      wrapper.append(box, icon);
       choices.appendChild(wrapper);
       return box;
     }
-    var matchCase = checkbox('matchCase', 'Match case');
-    var wholeWord = checkbox('wholeWord', 'Whole word');
-    var regex = checkbox('regex', 'Regular expression');
+    var matchCase = option('matchCase', 'Match case', 'Aa');
+    var wholeWord = option('wholeWord', 'Whole word', 'ab');
+    var regex = option('regex', 'Regular expression', '.*');
+    field.append(input, choices);
 
-    var closeButton = element('button', 'tutorial-project-search__close', 'Close search');
+    var closeButton = element('button', 'tutorial-project-search__close');
     closeButton.type = 'button';
-    form.append(label, input, choices, closeButton);
+    closeButton.setAttribute('aria-label', 'Close search');
+    closeButton.setAttribute('data-original-title', 'Close search (Esc)');
+    var closeIcon = element('span', null, '\u00d7');
+    closeIcon.setAttribute('aria-hidden', 'true');
+    closeButton.appendChild(closeIcon);
+    form.append(label, field, closeButton);
+    head.append(toggle, form);
 
+    var panel = element('section', 'tutorial-project-search');
+    panel.id = id;
+    panel.hidden = true;
+    panel.setAttribute('aria-label', 'Project search');
     var status = element('p', 'tutorial-project-search__status');
     status.id = id + '-status';
     status.setAttribute('role', 'status');
     var results = element('ul', 'tutorial-project-search__results');
     results.setAttribute('aria-label', 'Search results');
     results.hidden = true;
-    panel.append(form, status, results);
-    host.append(toggle, panel);
+    panel.append(status, results);
+    host.append(head, panel);
 
     function resultButton(result) {
       var isDiagram = result.kind === 'diagram';
@@ -417,12 +442,22 @@
       render(search(getFiles(), query, lastSearch.options), query);
     }
 
+    function isOpen() {
+      return !panel.hidden;
+    }
+
+    function setOpen(shown) {
+      form.hidden = !shown;
+      panel.hidden = !shown;
+      host.classList.toggle('tutorial-project-search-host--open', shown);
+      toggle.setAttribute('aria-expanded', shown ? 'true' : 'false');
+    }
+
     function open() {
-      if (panel.hidden) {
+      if (!isOpen()) {
         var active = document.activeElement;
-        opener = active && active !== document.body && !panel.contains(active) ? active : toggle;
-        panel.hidden = false;
-        toggle.setAttribute('aria-expanded', 'true');
+        opener = active && active !== document.body && !host.contains(active) ? active : toggle;
+        setOpen(true);
         // Current editor contents, drafts included, may have changed.
         if (input.value) runSearch();
       }
@@ -431,17 +466,16 @@
     }
 
     function close() {
-      if (panel.hidden) return;
+      if (!isOpen()) return;
       clearTimeout(timer);
       onReset();
-      panel.hidden = true;
-      toggle.setAttribute('aria-expanded', 'false');
+      setOpen(false);
       var target = opener && opener.isConnected ? opener : toggle;
       opener = null;
       target.focus();
     }
 
-    function onToggleClick() { if (panel.hidden) open(); else close(); }
+    function onToggleClick() { if (isOpen()) close(); else open(); }
     function onInput() {
       clearTimeout(timer);
       timer = setTimeout(runSearch, SEARCH_DELAY_MS);
@@ -451,7 +485,7 @@
       runSearch();
     }
     function onKeyDown(event) {
-      if (event.key !== 'Escape') return;
+      if (event.key !== 'Escape' || !isOpen()) return;
       // Also keeps the search field's native Escape from clearing the query.
       event.preventDefault();
       event.stopPropagation();
@@ -462,16 +496,17 @@
     closeButton.addEventListener('click', close);
     input.addEventListener('input', onInput);
     form.addEventListener('submit', onSubmit);
-    panel.addEventListener('keydown', onKeyDown);
+    host.addEventListener('keydown', onKeyDown);
     [matchCase, wholeWord, regex].forEach(function (box) { box.addEventListener('change', runSearch); });
 
     function destroy() {
       clearTimeout(timer);
-      toggle.remove();
+      head.remove();
       panel.remove();
+      host.classList.remove('tutorial-project-search-host--open');
     }
 
-    return { open: open, close: close, destroy: destroy };
+    return { open: open, close: close, isOpen: isOpen, destroy: destroy };
   }
 
   return {

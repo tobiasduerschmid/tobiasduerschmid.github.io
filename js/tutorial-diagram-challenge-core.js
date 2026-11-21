@@ -10,9 +10,12 @@
  *   locked     Part B. An optional contrast question comes first; then the
  *              reply's diagrams and the questions again, prefilled from
  *              Part A. Part B may be checked again; its first attempt feeds
- *              the comparison and its latest attempt the score.
+ *              the comparison and its latest attempt the score. A question's
+ *              optional `diagram` names the reply diagram that answers it.
  *   follow-up  New questions answered with the diagram, then the optional
  *              evidence check (absence in a diagram is a hypothesis).
+ *              advance() leaves a stage once each of its groups has been
+ *              checked with at least one answer right.
  *   done       Comparison and debrief. finish() passes the challenge when
  *              the consolidation sentence is written and score() reaches
  *              min_score. Passing is permanent; later checks are practice.
@@ -97,7 +100,17 @@
       optional: multiple ? indexList(raw.optional_indices, options.length) : [],
       optionFeedback: isObject(raw.option_feedback) ? raw.option_feedback : {},
       explanation: typeof raw.explanation === 'string' ? raw.explanation : '',
+      diagram: hasText(raw.diagram) ? String(raw.diagram).trim() : null,
     };
+  }
+
+  /** Keep a question's `diagram` only when the reply has that diagram. */
+  function linkDiagrams(questions, diagrams) {
+    var ids = diagrams.map(function (diagram) { return diagram.id; });
+    questions.forEach(function (question) {
+      if (question.diagram && ids.indexOf(question.diagram) === -1) question.diagram = null;
+    });
+    return questions;
   }
 
   function normalizeDiagram(raw, index) {
@@ -150,8 +163,8 @@
     var contrast = isObject(reply.contrast) ? reply.contrast : null;
     var evidenceCheck = isObject(raw.evidence_check) ? raw.evidence_check : {};
     var debrief = isObject(raw.debrief) ? raw.debrief : {};
-    var questions = list(raw.questions).map(normalizeQuestion).filter(Boolean);
     var diagrams = list(reply.diagrams).map(normalizeDiagram).filter(Boolean);
+    var questions = linkDiagrams(list(raw.questions).map(normalizeQuestion).filter(Boolean), diagrams);
     var minScore = Number(raw.min_score);
     var budget = Number(raw.budget_minutes);
     var pins = Math.floor(Number(attempt.evidence_pins));
@@ -636,13 +649,18 @@
     return state === 'follow-up' ? 'done' : null;
   };
 
+  /**
+   * A stage may be left once each of its groups has a check with at least
+   * one answer right: a learner with nothing right yet looks again first.
+   */
   Session.prototype.canAdvance = function () {
-    var s = this._s;
     var challenge = this.challenge;
-    if (s.state === 'locked') return this.mainVisible() && s.b.attempts > 0;
+    var s = this._s;
+    var hasRightAnswer = function (questions, checked) { return countCorrect(questions, checked) > 0; };
+    if (s.state === 'locked') return this.mainVisible() && hasRightAnswer(challenge.questions, s.b.checked);
     if (s.state === 'follow-up') {
-      return (challenge.followUp.length === 0 || s.f.attempts > 0) &&
-        (challenge.evidenceQuestions.length === 0 || s.e.attempts > 0);
+      return (challenge.followUp.length === 0 || hasRightAnswer(challenge.followUp, s.f.checked)) &&
+        (challenge.evidenceQuestions.length === 0 || hasRightAnswer(challenge.evidenceQuestions, s.e.checked));
     }
     return false;
   };
