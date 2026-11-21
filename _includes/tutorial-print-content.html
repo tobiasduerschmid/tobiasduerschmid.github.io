@@ -18,13 +18,21 @@
 </div>
 {% endif %}
 
+{% comment %}The step that printed `shared_files`; with print_unchanged_files: false, later steps that show them print one note instead. Reset per tutorial, since a course page prints several.{% endcomment %}
+{% assign shared_files_step = nil %}
 {% for step in tutorial_data.steps %}
 {% assign compiler_tokens_path = step.compiler_files.tokens | default: 'tokens.json' %}
 {% assign step_number = forloop.index %}
+{% comment %}A step without a `files` key shows the tutorial's `shared_files`, as in the live view.{% endcomment %}
+{% assign step_files = step.files %}
+{% assign step_uses_shared_files = false %}
+{% if step.files == nil %}{% assign step_files = tutorial_data.shared_files %}{% assign step_uses_shared_files = true %}{% endif %}
 {% assign previous_step_files = nil %}
 {% if tutorial_data.print_unchanged_files == false and forloop.index0 > 0 %}
   {% assign previous_step_index = forloop.index0 | minus: 1 %}
-  {% assign previous_step_files = tutorial_data.steps[previous_step_index].files %}
+  {% assign previous_step = tutorial_data.steps[previous_step_index] %}
+  {% assign previous_step_files = previous_step.files %}
+  {% if previous_step.files == nil %}{% assign previous_step_files = tutorial_data.shared_files %}{% endif %}
 {% endif %}
 <div class="step">
   <div class="step-header">
@@ -33,7 +41,7 @@
   </div>
 
   <div class="step-instructions">
-    {% capture rendered_step_instructions %}{% include tutorial-step-instructions.html tutorial=tutorial_data step=step %}{% endcapture %}
+    {% capture rendered_step_instructions %}{% include tutorial-step-instructions.html tutorial=tutorial_data step=step challenge=false %}{% endcapture %}
     {{ rendered_step_instructions | replace: ' id="', ' data-print-id="' }}
   </div>
 
@@ -46,10 +54,13 @@
   </div>
   {% endif %}
 
-  {% if step.files %}
+  {% if step_files %}
   <div class="starter-files">
     <div class="starter-files-label">Starter files</div>
-    {% for file in step.files %}
+    {% if step_uses_shared_files and shared_files_step and tutorial_data.print_unchanged_files == false %}
+    <p class="starter-file-unchanged">{% if step_files.size == 1 %}The starter file is{% else %}All {{ step_files.size }} starter files are{% endif %} unchanged from step {{ shared_files_step }}.</p>
+    {% else %}
+    {% for file in step_files %}
     {% assign previous_file = nil %}
     {% if previous_step_files %}
       {% assign previous_file = previous_step_files | where: "path", file.path | first %}
@@ -73,6 +84,8 @@
       {% endif %}
     </div>
     {% endfor %}
+    {% if step_uses_shared_files and shared_files_step == nil %}{% assign shared_files_step = step_number %}{% endif %}
+    {% endif %}
   </div>
   {% endif %}
 
@@ -81,6 +94,10 @@
     <div class="starter-file-name">Shell command</div>
     <pre><code class="language-bash">{{ step.shell_command | escape }}</code></pre>
   </div>
+  {% endif %}
+
+  {% if step.diagram_challenge %}
+  {% include tutorial-diagram-challenge-print.html tutorial=tutorial_data tutorial_key=tutorial_key step=step index=forloop.index0 instructor_mode=instructor_mode %}
   {% endif %}
 
   {% if step.solution %}

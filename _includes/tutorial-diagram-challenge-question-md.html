@@ -1,0 +1,14 @@
+{%- comment -%}
+  Rendered Markdown of one challenge question for js/tutorial-diagram-challenge.js.
+  Params: question (quiz-schema single/multiple), prefix ("q" for questions,
+  "p" for plan-first view choices; the default is "q"), id (overrides
+  question.id; a plan entry is keyed by the question it plans).
+  Keys: <prefix>:<id>:stem, :o:<index>, :f:<index> (option feedback), :x (explanation).
+{%- endcomment -%}
+{%- assign tdcq = include.question -%}
+{%- assign tdcq_id = include.id | default: tdcq.id -%}
+{%- assign tdcq_key = include.prefix | default: 'q' | append: ':' | append: tdcq_id | escape -%}
+{%- if tdcq.question -%}<template data-diagram-challenge-md="{{ tdcq_key }}:stem">{{ tdcq.question | markdownify }}</template>{%- endif -%}
+{%- for tdcq_option in tdcq.options -%}<template data-diagram-challenge-md="{{ tdcq_key }}:o:{{ forloop.index0 }}">{{ tdcq_option | markdownify }}</template>{%- endfor -%}
+{%- for tdcq_feedback in tdcq.option_feedback -%}<template data-diagram-challenge-md="{{ tdcq_key }}:f:{{ tdcq_feedback[0] }}">{{ tdcq_feedback[1] | markdownify }}</template>{%- endfor -%}
+{%- if tdcq.explanation -%}<template data-diagram-challenge-md="{{ tdcq_key }}:x">{{ tdcq.explanation | markdownify }}</template>{%- endif -%}

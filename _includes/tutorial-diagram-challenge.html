@@ -1,0 +1,56 @@
+{%- comment -%}
+  Server-rendered host of a step's diagram challenge (`diagram_challenge`),
+  mounted by js/tutorial-diagram-challenge.js in the live tutorial and, read
+  only, in the instructions popout. Params: tutorial, step, index (zero-based).
+
+  The challenge travels as JSON; `<`, `>`, and `&` are escaped so the
+  instruction pipeline (auto-abbreviations, popouts) leaves it intact. Every
+  Markdown field is rendered here with markdownify into an inert template,
+  keyed by field (see tutorial-diagram-challenge-question-md.html). The
+  record key matches TutorialCode._draftStepKey: key:<step.key> or
+  index:<n>. A plan-first step also carries the results-card rows of the
+  tutorial's code-first challenges.
+{%- endcomment -%}
+{%- assign tdc = include.step.diagram_challenge -%}
+{%- assign tdc_index = include.index | default: 0 -%}
+{%- if include.step.key -%}{%- assign tdc_key = 'key:' | append: include.step.key -%}{%- else -%}{%- assign tdc_key = 'index:' | append: tdc_index -%}{%- endif -%}
+{%- assign tdc_title_id = 'diagram-challenge-' | append: tdc_index | append: '-title' -%}
+<section class="tutorial-diagram-challenge" data-diagram-challenge data-diagram-challenge-key="{{ tdc_key | escape }}" aria-labelledby="{{ tdc_title_id }}">
+<h3 class="tutorial-diagram-challenge__title" id="{{ tdc_title_id }}">Diagram challenge</h3>
+{%- if tdc.mode == 'plan-first' %}
+<p class="tutorial-diagram-challenge__intro">For each question, plan which view you would ask an AI coding agent for. When you lock in your plan, the expert's views arrive and you answer with them.</p>
+{%- else %}
+<p class="tutorial-diagram-challenge__intro">Answer from the code first. When you lock in, an AI coding agent's diagram arrives and you answer again with it.</p>
+{%- endif %}
+{%- capture tdc_json -%}{{ tdc | jsonify }}{%- endcapture %}
+<script type="application/json" data-diagram-challenge-spec>{{ tdc_json | replace: '&', '\u0026' | replace: '<', '\u003c' | replace: '>', '\u003e' }}</script>
+{%- for tdc_question in tdc.questions -%}{% include tutorial-diagram-challenge-question-md.html question=tdc_question %}{%- endfor -%}
+{%- for tdc_entry in tdc.plan -%}
+  {%- assign tdc_plan_id = tdc_entry['for'] | default: tdc.questions[forloop.index0].id -%}
+  {%- include tutorial-diagram-challenge-question-md.html question=tdc_entry id=tdc_plan_id prefix='p' -%}
+{%- endfor -%}
+{%- assign tdc_reply = tdc.reply -%}
+{%- if tdc_reply.request -%}<template data-diagram-challenge-md="reply:request">{{ tdc_reply.request | markdownify }}</template>{%- endif -%}
+{%- if tdc_reply.summary -%}<template data-diagram-challenge-md="reply:summary">{{ tdc_reply.summary | markdownify }}</template>{%- endif -%}
+{%- if tdc_reply.left_out -%}<template data-diagram-challenge-md="reply:left_out">{{ tdc_reply.left_out | markdownify }}</template>{%- endif -%}
+{%- if tdc_reply.label -%}<template data-diagram-challenge-md="reply:label">{{ tdc_reply.label | markdownify }}</template>{%- endif -%}
+{%- for tdc_item in tdc_reply.evidence -%}<template data-diagram-challenge-md="reply:evidence:{{ forloop.index0 }}">{{ tdc_item.text | markdownify }}</template>{%- endfor -%}
+{%- if tdc_reply.contrast -%}
+  {%- if tdc_reply.contrast.request -%}<template data-diagram-challenge-md="contrast:request">{{ tdc_reply.contrast.request | markdownify }}</template>{%- endif -%}
+  {%- if tdc_reply.contrast.question -%}{% include tutorial-diagram-challenge-question-md.html question=tdc_reply.contrast.question %}{%- endif -%}
+{%- endif -%}
+{%- for tdc_question in tdc.follow_up -%}{% include tutorial-diagram-challenge-question-md.html question=tdc_question %}{%- endfor -%}
+{%- if tdc.evidence_check -%}
+  {%- if tdc.evidence_check.prompt -%}<template data-diagram-challenge-md="evidence:prompt">{{ tdc.evidence_check.prompt | markdownify }}</template>{%- endif -%}
+  {%- if tdc.evidence_check.claim_question -%}{% include tutorial-diagram-challenge-question-md.html question=tdc.evidence_check.claim_question %}{%- endif -%}
+  {%- if tdc.evidence_check.question -%}{% include tutorial-diagram-challenge-question-md.html question=tdc.evidence_check.question %}{%- endif -%}
+{%- endif -%}
+{%- assign tdc_debrief = tdc.debrief -%}
+{%- if tdc_debrief.hidden_by -%}<template data-diagram-challenge-md="debrief:hidden_by">{{ tdc_debrief.hidden_by | markdownify }}</template>{%- endif -%}
+{%- if tdc_debrief.find_in_code -%}<template data-diagram-challenge-md="debrief:find_in_code">{{ tdc_debrief.find_in_code | markdownify }}</template>{%- endif -%}
+{%- if tdc_debrief.view_shows -%}<template data-diagram-challenge-md="debrief:view_shows">{{ tdc_debrief.view_shows | markdownify }}</template>{%- endif -%}
+{%- if tdc_debrief.consolidation_prompt -%}<template data-diagram-challenge-md="debrief:consolidation_prompt">{{ tdc_debrief.consolidation_prompt | markdownify }}</template>{%- endif -%}
+{%- if tdc_debrief.mechanism_question -%}{% include tutorial-diagram-challenge-question-md.html question=tdc_debrief.mechanism_question %}{%- endif -%}
+{%- if tdc.mode == 'plan-first' -%}{% include tutorial-diagram-challenge-results-data.html tutorial=include.tutorial %}{%- endif %}
+<div class="tutorial-diagram-challenge__body" data-diagram-challenge-body></div>
+</section>

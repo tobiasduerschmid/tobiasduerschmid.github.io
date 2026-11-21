@@ -1,0 +1,254 @@
+/* ============================================================
+   Files sidebar and folder-tree navigator (`file_tree: true`)
+   Markup: TutorialCode._fileSidebarHtml + js/tutorial-file-tree.js.
+   Desktop: a column left of the editor; beside a diagram, a drawer
+   (TutorialCode._setFileNavigatorDrawer). At 900px and below: a
+   native disclosure above the editor. Print hides the navigator.
+   Text inherits the paragraph size of the tutorial page.
+   ============================================================ */
+
+/* 36% of a 1440px window's workspace (about 258px) fits a two-level
+   name such as scenarios/slow_group_checkout.py on one line, with room
+   for a classic scrollbar. Longer names wrap after an underscore. */
+.tvm-file-sidebar {
+  flex: 0 0 clamp(11em, 36%, 18em);
+  min-width: 0;
+  overflow: auto;
+  scrollbar-gutter: stable;
+  background: #f6f7f9;
+  color: #1f2328;
+  border-right: 1px solid #c8ccd2;
+  font: inherit;
+  line-height: 1.4;
+}
+
+html.dark-mode .tvm-file-sidebar {
+  background: #18181b;
+  color: #e6edf3;
+  border-right-color: #3a3a42;
+}
+
+/* The disclosure summary is only the narrow-layout control. */
+.tvm-file-sidebar-summary {
+  display: none;
+}
+
+.tutorial-file-tree__label {
+  margin: 0;
+  padding: 0.5em 0.75em 0.25em;
+  font-weight: 600;
+}
+
+.tutorial-file-tree,
+.tutorial-file-tree__group {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.tutorial-file-tree {
+  padding-bottom: 0.75em;
+}
+
+.tutorial-file-tree__group {
+  padding-inline-start: 1em;
+}
+
+.tutorial-file-tree__group[hidden] {
+  display: none;
+}
+
+.tutorial-file-tree__item {
+  margin: 0;
+}
+
+.tutorial-file-tree__item:focus {
+  outline: none;
+}
+
+.tutorial-file-tree__row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.35em;
+  min-height: 1.75em;
+  padding: 0.15em 0.75em 0.15em 0.4em;
+  border-left: 3px solid transparent;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+
+.tutorial-file-tree__row:hover {
+  background: #e6eaef;
+}
+
+/* A file or closed folder is only its row, so it carries the ring itself.
+   An open folder also contains its subtree: ring just its own row. */
+.tutorial-file-tree__item--file:focus-visible,
+.tutorial-file-tree__item--folder[aria-expanded="false"]:focus-visible,
+.tutorial-file-tree__item--folder[aria-expanded="true"]:focus-visible > .tutorial-file-tree__row {
+  outline: 2px solid #005587;
+  outline-offset: -2px;
+}
+
+/* The open file: background, bar, and weight, so color is not the only cue. */
+.tutorial-file-tree__item.is-active > .tutorial-file-tree__row {
+  background: #d8e6f5;
+  border-left-color: #0060a8;
+  font-weight: 600;
+}
+
+.tutorial-file-tree__marker {
+  flex: 0 0 1em;
+  text-align: center;
+}
+
+.tutorial-file-tree__item--folder > .tutorial-file-tree__row > .tutorial-file-tree__marker::before {
+  content: "\25B8";
+}
+
+.tutorial-file-tree__item--folder[aria-expanded="true"] > .tutorial-file-tree__row > .tutorial-file-tree__marker::before {
+  content: "\25BE";
+}
+
+html.dark-mode .tutorial-file-tree__row:hover {
+  background: #26262d;
+}
+
+html.dark-mode .tutorial-file-tree__item--file:focus-visible,
+html.dark-mode .tutorial-file-tree__item--folder[aria-expanded="false"]:focus-visible,
+html.dark-mode .tutorial-file-tree__item--folder[aria-expanded="true"]:focus-visible > .tutorial-file-tree__row {
+  outline-color: #ffd100;
+}
+
+html.dark-mode .tutorial-file-tree__item.is-active > .tutorial-file-tree__row {
+  background: #1f3a5c;
+  border-left-color: #6cb2ff;
+  color: #ffffff;
+}
+
+/* Drawer: beside a diagram the code and the diagram need the width, so
+   the sidebar starts closed as a narrow handle (its summary, set
+   vertically) and opens into the usual column under a "Files" header. */
+@media screen and (min-width: 901px) {
+  .tvm-file-sidebar--drawer:not([open]) {
+    flex: 0 0 auto;
+    overflow: hidden;
+    scrollbar-gutter: auto;
+  }
+
+  /* Above the instructions splitter's grab area, which overlaps this edge. */
+  .tvm-file-sidebar--drawer > .tvm-file-sidebar-summary {
+    display: list-item;
+    position: relative;
+    z-index: var(--tvm-splitter-control-z);
+    min-height: 24px;
+    padding: 0.5em 0.75em;
+    color: #005587;
+    font-weight: 600;
+    cursor: pointer;
+    border-bottom: 1px solid #c8ccd2;
+  }
+
+  /* Closed: a vertical handle whose marker points where the drawer opens. */
+  .tvm-file-sidebar--drawer:not([open]) > .tvm-file-sidebar-summary {
+    display: block;
+    writing-mode: vertical-rl;
+    padding: 0.75em 0.5em;
+    border-bottom: 0;
+  }
+
+  .tvm-file-sidebar--drawer:not([open]) > .tvm-file-sidebar-summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .tvm-file-sidebar--drawer:not([open]) > .tvm-file-sidebar-summary::before {
+    content: "\25B8";
+    content: "\25B8" / "";
+    margin-inline-end: 0.35em;
+  }
+
+  .tvm-file-sidebar--drawer > .tvm-file-sidebar-summary:hover {
+    background: #e6eaef;
+  }
+
+  .tvm-file-sidebar--drawer > .tvm-file-sidebar-summary:focus-visible {
+    outline: 2px solid #005587;
+    outline-offset: -2px;
+  }
+
+  html.dark-mode .tvm-file-sidebar--drawer > .tvm-file-sidebar-summary {
+    color: #79c0ff;
+    border-bottom-color: #3a3a42;
+  }
+
+  html.dark-mode .tvm-file-sidebar--drawer > .tvm-file-sidebar-summary:hover {
+    background: #26262d;
+  }
+
+  html.dark-mode .tvm-file-sidebar--drawer > .tvm-file-sidebar-summary:focus-visible {
+    outline-color: #ffd100;
+  }
+
+  /* The summary already names the drawer. */
+  .tvm-file-sidebar--drawer .tutorial-file-tree__label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+}
+
+@media screen and (max-width: 900px) {
+  .tvm-file-sidebar {
+    flex: 0 0 auto !important;
+    width: auto;
+    overflow: visible;
+    border-right: 0;
+    border-bottom: 1px solid #c8ccd2;
+  }
+
+  html.dark-mode .tvm-file-sidebar {
+    border-bottom-color: #3a3a42;
+  }
+
+  .tvm-file-sidebar-summary {
+    display: list-item;
+    min-height: 24px;
+    padding: 0.5em 1em;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .tvm-file-sidebar-summary:focus-visible {
+    outline: 2px solid #005587;
+    outline-offset: -2px;
+  }
+
+  html.dark-mode .tvm-file-sidebar-summary:focus-visible {
+    outline-color: #ffd100;
+  }
+
+  /* The summary already names the disclosure. */
+  .tvm-file-sidebar .tutorial-file-tree__label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  /* Keep the editor reachable below a long tree. */
+  .tvm-file-sidebar .tutorial-file-tree {
+    max-height: 50vh;
+    overflow: auto;
+  }
+}
+
+@media print {
+  .tvm-file-sidebar {
+    display: none !important;
+  }
+}

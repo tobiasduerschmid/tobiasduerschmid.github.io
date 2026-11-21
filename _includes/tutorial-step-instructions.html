@@ -4,6 +4,10 @@
   {%- assign rendered_instruction_text = include.step.instructions -%}
 {%- endif -%}
 {{ rendered_instruction_text | markdownify }}
+{%- comment -%}The print view renders its own challenge block (challenge=false).{%- endcomment -%}
+{%- if include.step.diagram_challenge and include.challenge != false -%}
+  {% include tutorial-diagram-challenge.html tutorial=include.tutorial step=include.step index=include.index %}
+{%- endif -%}
 {%- if include.tutorial.instructions_footer_include -%}
   {% include {{ include.tutorial.instructions_footer_include }} %}
 {%- endif -%}

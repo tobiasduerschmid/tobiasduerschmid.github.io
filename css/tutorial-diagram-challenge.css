@@ -1,0 +1,660 @@
+/* ============================================================
+   Diagram challenge (js/tutorial-diagram-challenge.js) inside a
+   tutorial step's instructions, plus its print-view block
+   (_includes/tutorial-diagram-challenge-print.html).
+
+   Colors are tokens on the widget root with an html.dark-mode
+   override; print is always the light palette. Text inherits the
+   instruction pane's paragraph size; hints are 0.9em. The pane's
+   paragraph rules (.tvm-step-instructions p, li) carry higher
+   specificity, so rules that recolor a paragraph list both a
+   dark-mode and an html:not(.dark-mode) selector.
+   ============================================================ */
+
+.tutorial-diagram-challenge {
+  --tdc-text: #1f2328;
+  --tdc-muted: #4b535d;
+  --tdc-heading: #0060a8;
+  --tdc-border: #6e7781;
+  --tdc-border-soft: #c8ccd2;
+  --tdc-surface: #f6f8fa;
+  --tdc-field: #ffffff;
+  --tdc-field-readonly: #eef1f4;
+  --tdc-accent: #005587;
+  --tdc-primary-bg: #005587;
+  --tdc-primary-hover: #003b5c;
+  --tdc-primary-text: #ffffff;
+  --tdc-correct: #116329;
+  --tdc-incorrect: #a40e26;
+  --tdc-changed: #6e5600;
+  --tdc-key: #116329;
+  --tdc-focus: #005587;
+  --tdc-chosen: #005587;
+  --tdc-chosen-bg: #e6eff6;
+  container: tutorial-diagram-challenge / inline-size;
+  margin: 1.6em 0 1em;
+  padding-top: 0.8em;
+  border-top: 2px solid var(--tdc-border-soft);
+  color: var(--tdc-text);
+  font: inherit;
+}
+
+/* Dark-mode headings take the site's heading color (portfolio.css), like the
+   step's own headings, so --tdc-heading is light-mode only. */
+html.dark-mode .tutorial-diagram-challenge {
+  --tdc-text: #e6edf3;
+  --tdc-muted: #b1bac4;
+  --tdc-border: #8b949e;
+  --tdc-border-soft: #3a3a42;
+  --tdc-surface: #22232a;
+  --tdc-field: #17181c;
+  --tdc-field-readonly: #2a2b33;
+  --tdc-accent: #79c0ff;
+  --tdc-primary-bg: #79c0ff;
+  --tdc-primary-hover: #a5d6ff;
+  --tdc-primary-text: #0d1117;
+  --tdc-correct: #56d364;
+  --tdc-incorrect: #ff7b72;
+  --tdc-changed: #e3b341;
+  --tdc-key: #56d364;
+  --tdc-focus: #ffd100;
+  --tdc-chosen: #79c0ff;
+  --tdc-chosen-bg: #1c2b3a;
+}
+
+.tutorial-diagram-challenge .tutorial-diagram-challenge__title {
+  font-size: 1.2em;
+  margin: 0 0 0.4em;
+}
+
+.tutorial-diagram-challenge__part {
+  margin-top: 1.4em;
+}
+
+.tutorial-diagram-challenge__section-title {
+  margin: 0 0 0.5em;
+  font-size: 1.1em;
+  font-weight: 700;
+  color: var(--tdc-heading);
+}
+
+.tutorial-diagram-challenge__subtitle {
+  margin: 1em 0 0.4em;
+  font-size: 1em;
+  font-weight: 700;
+  color: var(--tdc-text);
+}
+
+.tutorial-diagram-challenge__section-title:focus-visible,
+.tutorial-diagram-challenge__subtitle:focus-visible {
+  outline: 3px solid var(--tdc-focus);
+  outline-offset: 3px;
+}
+
+/* Recolored paragraphs: see the note at the top of this file. */
+.tutorial-diagram-challenge .tutorial-diagram-challenge__hint,
+html:not(.dark-mode) .tutorial-diagram-challenge .tutorial-diagram-challenge__hint,
+.tutorial-diagram-challenge .tutorial-diagram-challenge__times,
+html:not(.dark-mode) .tutorial-diagram-challenge .tutorial-diagram-challenge__times,
+.tutorial-diagram-challenge .tutorial-diagram-challenge__empty,
+html:not(.dark-mode) .tutorial-diagram-challenge .tutorial-diagram-challenge__empty {
+  margin: 0.25em 0 0.5em;
+  font-size: 0.9em;
+  color: var(--tdc-muted);
+}
+
+.tutorial-diagram-challenge .tutorial-diagram-challenge__label,
+html:not(.dark-mode) .tutorial-diagram-challenge .tutorial-diagram-challenge__label {
+  display: block;
+  margin: 0 0 0.2em;
+  font-weight: 600;
+  color: var(--tdc-text);
+}
+
+.tutorial-diagram-challenge__field {
+  margin: 0.9em 0;
+}
+
+.tutorial-diagram-challenge__textarea {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 4.2em;
+  padding: 0.4em 0.6em;
+  border: 1px solid var(--tdc-border);
+  border-radius: 4px;
+  background: var(--tdc-field);
+  color: var(--tdc-text);
+  font: inherit;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.tutorial-diagram-challenge__textarea:read-only {
+  background: var(--tdc-field-readonly);
+}
+
+/* ----- Questions ---------------------------------------------------------- */
+
+.tutorial-diagram-challenge__question {
+  min-width: 0;
+  margin: 0.9em 0;
+  padding: 0.5em 0.9em 0.7em;
+  border: 1px solid var(--tdc-border-soft);
+  border-radius: 6px;
+}
+
+/* A question label, not Bootstrap's large legend (bootstrap.ucla.css) or
+   the site's dark-mode legend color (portfolio.css). */
+.tutorial-diagram-challenge .tutorial-diagram-challenge__legend {
+  width: auto;
+  max-width: 100%;
+  margin: 0 0 0.2em;
+  padding: 0 0.3em;
+  border: 0;
+  font-size: inherit;
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--tdc-text);
+  overflow-wrap: anywhere;
+}
+
+.tutorial-diagram-challenge__stem-block {
+  margin: 0.2em 0 0.4em;
+  overflow-wrap: anywhere;
+}
+
+.tutorial-diagram-challenge__options {
+  display: grid;
+  gap: 0.25em;
+  margin-top: 0.3em;
+}
+
+/* Rows of at least 2em keep the 24px target spacing around native inputs.
+   The inline padding gives a chosen row's frame room around its control. */
+.tutorial-diagram-challenge__option {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0.2em 0.55em;
+  min-height: 2em;
+  padding: 0.15em 0.45em;
+  border-radius: 4px;
+}
+
+/* A locked answer stays easy to find. Browsers draw a disabled, checked
+   control faintly, so the chosen row adds a frame, a check mark, and bold
+   text: shape and weight, not color alone. The native control keeps its
+   checked and disabled states; the mark has an empty text alternative, so
+   assistive technology reads that state, not "check mark". */
+.tutorial-diagram-challenge__option:has(> .tutorial-diagram-challenge__input:disabled:checked) {
+  outline: 2px solid var(--tdc-chosen);
+  outline-offset: 0;
+  background: var(--tdc-chosen-bg);
+}
+
+.tutorial-diagram-challenge__input:disabled:checked + .tutorial-diagram-challenge__option-label {
+  font-weight: 700;
+}
+
+.tutorial-diagram-challenge__input:disabled:checked + .tutorial-diagram-challenge__option-label::before {
+  content: "\2714\FE0E";
+  content: "\2714\FE0E" / "";
+  margin-right: 0.35em;
+  color: var(--tdc-chosen);
+}
+
+.tutorial-diagram-challenge__input {
+  flex: 0 0 auto;
+  margin: 0.35em 0 0;
+  accent-color: var(--tdc-accent);
+}
+
+.tutorial-diagram-challenge__option-label {
+  flex: 1 1 12em;
+  min-width: 0;
+  padding: 0.1em 0;
+  color: var(--tdc-text);
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+
+.tutorial-diagram-challenge__input:disabled + .tutorial-diagram-challenge__option-label {
+  cursor: default;
+}
+
+.tutorial-diagram-challenge__input:focus-visible,
+.tutorial-diagram-challenge__textarea:focus-visible {
+  outline: 3px solid var(--tdc-focus);
+  outline-offset: 2px;
+}
+
+.tutorial-diagram-challenge__key-mark {
+  font-weight: 700;
+  color: var(--tdc-key);
+}
+
+.tutorial-diagram-challenge .tutorial-diagram-challenge__result,
+html:not(.dark-mode) .tutorial-diagram-challenge .tutorial-diagram-challenge__result {
+  margin: 0.4em 0 0;
+  font-weight: 600;
+  color: var(--tdc-text);
+}
+
+.tutorial-diagram-challenge .tutorial-diagram-challenge__result--correct,
+html:not(.dark-mode) .tutorial-diagram-challenge .tutorial-diagram-challenge__result--correct {
+  color: var(--tdc-correct);
+}
+
+.tutorial-diagram-challenge .tutorial-diagram-challenge__result--incorrect,
+html:not(.dark-mode) .tutorial-diagram-challenge .tutorial-diagram-challenge__result--incorrect {
+  color: var(--tdc-incorrect);
+}
+
+.tutorial-diagram-challenge .tutorial-diagram-challenge__result--changed,
+html:not(.dark-mode) .tutorial-diagram-challenge .tutorial-diagram-challenge__result--changed {
+  color: var(--tdc-changed);
+}
+
+.tutorial-diagram-challenge__feedback,
+.tutorial-diagram-challenge__explanation {
+  margin: 0.3em 0 0.4em;
+  padding: 0.3em 0.7em;
+  border-left: 3px solid var(--tdc-border);
+}
+
+.tutorial-diagram-challenge__feedback {
+  flex-basis: 100%;
+}
+
+.tutorial-diagram-challenge__feedback > :first-child,
+.tutorial-diagram-challenge__explanation > :first-child {
+  margin-top: 0;
+}
+
+.tutorial-diagram-challenge__feedback > :last-child,
+.tutorial-diagram-challenge__explanation > :last-child {
+  margin-bottom: 0;
+}
+
+/* ----- Buttons ------------------------------------------------------------ */
+
+.tutorial-diagram-challenge__row {
+  margin: 0.7em 0;
+}
+
+.tutorial-diagram-challenge__actions {
+  margin: 1em 0 0.5em;
+}
+
+.tutorial-diagram-challenge__button,
+.tutorial-diagram-challenge__primary {
+  min-height: 2em;
+  min-width: 2em;
+  padding: 0.25em 0.85em;
+  border-radius: 4px;
+  font: inherit;
+  line-height: 1.4;
+  cursor: pointer;
+}
+
+.tutorial-diagram-challenge__button {
+  border: 1px solid var(--tdc-border);
+  background: var(--tdc-field);
+  color: var(--tdc-text);
+}
+
+.tutorial-diagram-challenge__button:hover {
+  background: var(--tdc-surface);
+}
+
+.tutorial-diagram-challenge__button--small {
+  min-height: 1.8em;
+  padding: 0.05em 0.6em;
+}
+
+.tutorial-diagram-challenge__button[aria-pressed="true"] {
+  border-width: 2px;
+  font-weight: 700;
+}
+
+.tutorial-diagram-challenge__primary {
+  border: 1px solid var(--tdc-primary-bg);
+  background: var(--tdc-primary-bg);
+  color: var(--tdc-primary-text);
+  font-weight: 600;
+}
+
+.tutorial-diagram-challenge__primary:hover:not(:disabled) {
+  border-color: var(--tdc-primary-hover);
+  background: var(--tdc-primary-hover);
+}
+
+/* Unavailable until the attempt is complete; the "Still to do" line says why. */
+.tutorial-diagram-challenge__primary:disabled {
+  border-style: dashed;
+  border-color: var(--tdc-border);
+  background: var(--tdc-surface);
+  color: var(--tdc-muted);
+  cursor: not-allowed;
+}
+
+/* Buttons that open a file or a pin read as links inside lists. */
+.tutorial-diagram-challenge__link {
+  min-height: 1.8em;
+  padding: 0.1em 0;
+  border: 0;
+  background: none;
+  color: var(--tdc-accent);
+  font: inherit;
+  text-align: left;
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+
+.tutorial-diagram-challenge__link:hover {
+  text-decoration-thickness: 2px;
+}
+
+.tutorial-diagram-challenge__button:focus-visible,
+.tutorial-diagram-challenge__primary:focus-visible,
+.tutorial-diagram-challenge__link:focus-visible {
+  outline: 3px solid var(--tdc-focus);
+  outline-offset: 2px;
+}
+
+/* ----- Attempt, reply, comparison ------------------------------------------- */
+
+.tutorial-diagram-challenge__pins,
+.tutorial-diagram-challenge__evidence,
+.tutorial-diagram-challenge__files {
+  margin: 0.3em 0 0.6em;
+}
+
+.tutorial-diagram-challenge__pin {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3em 0.6em;
+}
+
+.tutorial-diagram-challenge .tutorial-diagram-challenge__todo,
+html:not(.dark-mode) .tutorial-diagram-challenge .tutorial-diagram-challenge__todo,
+.tutorial-diagram-challenge .tutorial-diagram-challenge__budget,
+html:not(.dark-mode) .tutorial-diagram-challenge .tutorial-diagram-challenge__budget {
+  margin: 0.4em 0;
+  color: var(--tdc-text);
+}
+
+.tutorial-diagram-challenge__budget {
+  padding: 0.4em 0.7em;
+  border-left: 3px solid var(--tdc-accent);
+  background: var(--tdc-surface);
+}
+
+.tutorial-diagram-challenge__card,
+.tutorial-diagram-challenge__notice,
+.tutorial-diagram-challenge__compare {
+  margin: 0.8em 0;
+  padding: 0.6em 0.9em;
+  border: 1px solid var(--tdc-border-soft);
+  border-radius: 6px;
+  background: var(--tdc-surface);
+  overflow-wrap: anywhere;
+}
+
+.tutorial-diagram-challenge__card > :first-child,
+.tutorial-diagram-challenge__compare > :first-child,
+.tutorial-diagram-challenge__notice > :first-child {
+  margin-top: 0;
+}
+
+.tutorial-diagram-challenge__provenance {
+  margin-top: 0.8em;
+  padding-top: 0.5em;
+  border-top: 1px solid var(--tdc-border-soft);
+  font-style: italic;
+}
+
+.tutorial-diagram-challenge__compare-list {
+  display: grid;
+  grid-template-columns: minmax(8em, max-content) minmax(0, 1fr);
+  gap: 0.3em 0.9em;
+  margin: 0.5em 0;
+}
+
+.tutorial-diagram-challenge__compare-list dt {
+  font-weight: 600;
+  color: var(--tdc-text);
+}
+
+.tutorial-diagram-challenge__compare-list dd {
+  margin: 0;
+  min-width: 0;
+}
+
+.tutorial-diagram-challenge__times-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4em 0.9em;
+  margin: 0.8em 0;
+}
+
+.tutorial-diagram-challenge__times-row .tutorial-diagram-challenge__times {
+  flex: 1 1 16em;
+  margin: 0;
+}
+
+.tutorial-diagram-challenge__debrief > :first-child,
+.tutorial-diagram-challenge__prompt > :first-child {
+  margin-top: 0;
+}
+
+/* ----- Results card ----------------------------------------------------------- */
+
+.tutorial-diagram-challenge table.tutorial-diagram-challenge__results-table,
+.tutorial-diagram-challenge-print table.tutorial-diagram-challenge__results-table {
+  display: table;
+  width: 100%;
+  margin: 0.6em 0;
+  border-collapse: collapse;
+  table-layout: fixed;
+  overflow: visible;
+}
+
+.tutorial-diagram-challenge__results-table caption {
+  margin-bottom: 0.3em;
+  font-weight: 600;
+  text-align: left;
+  color: var(--tdc-text);
+}
+
+.tutorial-diagram-challenge__results-table th,
+.tutorial-diagram-challenge__results-table td {
+  padding: 0.35em 0.5em;
+  border: 1px solid var(--tdc-border-soft);
+  text-align: left;
+  vertical-align: top;
+  overflow-wrap: anywhere;
+}
+
+.tutorial-diagram-challenge__cell-main,
+.tutorial-diagram-challenge__cell-time {
+  display: block;
+}
+
+.tutorial-diagram-challenge__cell-time {
+  font-size: 0.9em;
+  color: var(--tdc-muted);
+}
+
+.tutorial-diagram-challenge__times-hidden .tutorial-diagram-challenge__cell-time {
+  display: none;
+}
+
+/* Announcements only; the visible text lives beside each control. */
+.tutorial-diagram-challenge__live {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@container tutorial-diagram-challenge (max-width: 26em) {
+  .tutorial-diagram-challenge__compare-list {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .tutorial-diagram-challenge__compare-list dd {
+    margin-bottom: 0.4em;
+  }
+}
+
+/* ============================================================
+   Print view block. The print page is light by design; these
+   rules also show it on screen. Keys sit in the instructor-only
+   .step-solution container of css/tutorial-print.css.
+   ============================================================ */
+
+.tutorial-diagram-challenge-print {
+  --tdc-text: #1f2328;
+  --tdc-muted: #4b535d;
+  --tdc-border-soft: #8c959f;
+  margin: 18px 0;
+  color: #1f2328;
+}
+
+.tutorial-diagram-challenge-print__title {
+  margin: 0 0 8px;
+  font-size: 1.15em;
+  color: #003b5c;
+}
+
+.tutorial-diagram-challenge-print__heading {
+  margin: 14px 0 6px;
+  font-size: 1.05em;
+  color: #003b5c;
+}
+
+.tutorial-diagram-challenge-print__question {
+  margin: 10px 0;
+  break-inside: avoid;
+}
+
+.tutorial-diagram-challenge-print__stem {
+  font-weight: 600;
+}
+
+.tutorial-diagram-challenge-print__stem p {
+  margin: 0;
+}
+
+.tutorial-diagram-challenge-print__options {
+  margin: 4px 0 0;
+  padding-left: 1.6em;
+  list-style: none;
+}
+
+.tutorial-diagram-challenge-print__options > li {
+  position: relative;
+  margin: 3px 0;
+}
+
+/* A drawn box or circle to tick on paper. */
+.tutorial-diagram-challenge-print__options > li::before {
+  content: '';
+  position: absolute;
+  left: -1.4em;
+  top: 0.25em;
+  width: 0.8em;
+  height: 0.8em;
+  border: 1.5px solid #4b535d;
+  border-radius: 50%;
+}
+
+.tutorial-diagram-challenge-print__options--multiple > li::before {
+  border-radius: 2px;
+}
+
+.tutorial-diagram-challenge-print__options p {
+  display: inline;
+  margin: 0;
+}
+
+.tutorial-diagram-challenge-print__writing {
+  min-height: 3.2em;
+  margin: 4px 0 10px;
+  border-bottom: 1px solid #8c959f;
+}
+
+.tutorial-diagram-challenge-print__reply {
+  margin: 14px 0;
+  padding: 10px 14px;
+  border: 1px solid #c8ccd2;
+  border-radius: 6px;
+}
+
+.tutorial-diagram-challenge-print__reply > :first-child {
+  margin-top: 0;
+}
+
+.tutorial-diagram-challenge-print__evidence code,
+.tutorial-diagram-challenge-print__files code {
+  overflow-wrap: anywhere;
+}
+
+.tutorial-diagram-challenge-print__key-body {
+  padding: 10px 16px;
+}
+
+.tutorial-diagram-challenge-print__key-body p {
+  margin: 4px 0;
+}
+
+/* The combined course pages (sebook-combined) show this block on screen
+   in the reader's theme. Screen only: paper keeps the light palette. */
+@media screen {
+  html.dark-mode .tutorial-diagram-challenge-print {
+    --tdc-text: #e6edf3;
+    --tdc-muted: #b1bac4;
+    --tdc-border-soft: #8b949e;
+    color: var(--tdc-text);
+  }
+
+  html.dark-mode .tutorial-diagram-challenge-print__title,
+  html.dark-mode .tutorial-diagram-challenge-print__heading {
+    color: #79c0ff;
+  }
+
+  html.dark-mode .tutorial-diagram-challenge-print__options > li::before {
+    border-color: #b1bac4;
+  }
+
+  html.dark-mode .tutorial-diagram-challenge-print__writing {
+    border-bottom-color: #8b949e;
+  }
+
+  html.dark-mode .tutorial-diagram-challenge-print__reply {
+    border-color: #6e7681;
+  }
+}
+
+@media print {
+  .tutorial-diagram-challenge button,
+  .tutorial-diagram-challenge__live {
+    display: none !important;
+  }
+
+  .tutorial-diagram-challenge-print__reply,
+  .tutorial-diagram-challenge-print__question {
+    break-inside: avoid;
+  }
+}

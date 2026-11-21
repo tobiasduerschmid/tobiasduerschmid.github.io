@@ -750,6 +750,37 @@ html:not(.dark-mode) .tvm-left-tab.active {
   border-radius: 2px;
 }
 
+/* Close button on opened tabs when the Files tree is on (`file_tree`). It
+   stays visible: closing must not depend on hovering the tab. */
+.tvm-tab-close {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  min-height: 24px;
+  margin: 0 -6px 0 0;
+  padding: 0;
+  border: 0;
+  border-radius: 3px;
+  background: transparent;
+  color: #b9c5d8;
+  font: inherit;
+  font-size: 1.25em;
+  line-height: 1;
+  cursor: pointer;
+}
+.tvm-tab-close:hover { color: #e0e0f0; background: #383848; }
+.tvm-tab-close:focus-visible {
+  outline: 3px solid #FFD100;
+  outline-offset: 1px;
+  color: #e0e0f0;
+}
+
+/* Line briefly highlighted after a search result or evidence link opens it. */
+.monaco-editor .tvm-source-reveal-line { background: rgba(255, 209, 0, 0.22); }
+.monaco-editor .tvm-source-reveal-gutter { background: #ffd100; width: 4px !important; margin-left: 2px; }
+
 .tvm-tab.detached {
   font-style: italic;
   color: #a0a0a0;
@@ -1314,7 +1345,8 @@ html:not(.dark-mode) .tvm-pane-detached-indicator .tvm-tab-reattach:hover {
   flex: 1 1 50%;
 }
 
-.tvm-editor-pane-divider {
+.tvm-editor-pane-divider,
+.tutorial-diagram-pane-divider {
   flex: 0 0 var(--tvm-splitter-hit-size);
   flex-shrink: 0;
   margin-inline: var(--tvm-splitter-overhang);
@@ -1328,12 +1360,16 @@ html:not(.dark-mode) .tvm-pane-detached-indicator .tvm-tab-reattach:hover {
 
 .tvm-editor-pane-divider:hover,
 .tvm-editor-pane-divider.active,
-.tvm-editor-pane-divider:focus-visible {
+.tvm-editor-pane-divider:focus-visible,
+.tutorial-diagram-pane-divider:hover,
+.tutorial-diagram-pane-divider.active,
+.tutorial-diagram-pane-divider:focus-visible {
   background: transparent;
   outline: none;
   box-shadow: none;
 }
-.tvm-editor-pane-divider::before {
+.tvm-editor-pane-divider::before,
+.tutorial-diagram-pane-divider::before {
   content: "";
   position: absolute;
   top: 0;
@@ -1353,7 +1389,10 @@ html:not(.dark-mode) .tvm-pane-detached-indicator .tvm-tab-reattach:hover {
 }
 .tvm-editor-pane-divider:hover::before,
 .tvm-editor-pane-divider.active::before,
-.tvm-editor-pane-divider:focus-visible::before {
+.tvm-editor-pane-divider:focus-visible::before,
+.tutorial-diagram-pane-divider:hover::before,
+.tutorial-diagram-pane-divider.active::before,
+.tutorial-diagram-pane-divider:focus-visible::before {
   background: linear-gradient(
     var(--tvm-splitter-rail-direction),
     var(--tvm-splitter-rail-hover-highlight) 0 25%,
@@ -1361,7 +1400,8 @@ html:not(.dark-mode) .tvm-pane-detached-indicator .tvm-tab-reattach:hover {
     var(--tvm-splitter-rail-hover-shadow) 75% 100%
   );
 }
-.tvm-editor-pane-divider::after {
+.tvm-editor-pane-divider::after,
+.tutorial-diagram-pane-divider::after {
   content: "";
   position: absolute;
   left: 50%;
@@ -1375,14 +1415,17 @@ html:not(.dark-mode) .tvm-pane-detached-indicator .tvm-tab-reattach:hover {
   pointer-events: none;
   transition: opacity 0.15s;
 }
-.tvm-editor-pane-divider:focus-visible {
+.tvm-editor-pane-divider:focus-visible,
+.tutorial-diagram-pane-divider:focus-visible {
   outline: 2px solid rgba(95, 102, 112, 0.01) !important;
   box-shadow: none;
 }
-.tvm-editor-pane-divider:focus-visible::before {
+.tvm-editor-pane-divider:focus-visible::before,
+.tutorial-diagram-pane-divider:focus-visible::before {
   box-shadow: none;
 }
-.tvm-editor-pane-divider:focus-visible::after {
+.tvm-editor-pane-divider:focus-visible::after,
+.tutorial-diagram-pane-divider:focus-visible::after {
   opacity: 1;
 }
 
@@ -1443,13 +1486,17 @@ html:not(.dark-mode) .tvm-editor-mode-btn.active {
   background: #0078d4;
 }
 
-html:not(.dark-mode) .tvm-editor-pane-divider {
+html:not(.dark-mode) .tvm-editor-pane-divider,
+html:not(.dark-mode) .tutorial-diagram-pane-divider {
   background: transparent;
 }
 
 html:not(.dark-mode) .tvm-editor-pane-divider:hover,
 html:not(.dark-mode) .tvm-editor-pane-divider.active,
-html:not(.dark-mode) .tvm-editor-pane-divider:focus-visible {
+html:not(.dark-mode) .tvm-editor-pane-divider:focus-visible,
+html:not(.dark-mode) .tutorial-diagram-pane-divider:hover,
+html:not(.dark-mode) .tutorial-diagram-pane-divider.active,
+html:not(.dark-mode) .tutorial-diagram-pane-divider:focus-visible {
   background: transparent;
   outline: none;
 }
@@ -4116,7 +4163,7 @@ body.tutorial-layout #navnav .navbar-right > #tts-read-btn.is-reading {
   }
 
   /* These dividers resize viewport fractions; natural document flow has none. */
-  body.tutorial-layout :is(.tvm-hsplitter, .tvm-vsplitter, .tvm-editor-pane-divider) {
+  body.tutorial-layout :is(.tvm-hsplitter, .tvm-vsplitter, .tvm-editor-pane-divider, .tutorial-diagram-pane-divider) {
     display: none !important;
   }
 }
@@ -4321,6 +4368,11 @@ html:not(.dark-mode) .tvm-tab-reattach:focus-visible {
 html:not(.dark-mode) .tvm-tab-label:focus-visible {
   outline-color: #005587;
 }
+html:not(.dark-mode) .tvm-tab-close { color: #5a6573; }
+html:not(.dark-mode) .tvm-tab-close:hover { background: #e0e0e0; color: #1f2530; }
+html:not(.dark-mode) .tvm-tab-close:focus-visible { outline-color: #005587; color: #1f2530; }
+html:not(.dark-mode) .monaco-editor .tvm-source-reveal-line { background: rgba(255, 209, 0, 0.35); }
+html:not(.dark-mode) .monaco-editor .tvm-source-reveal-gutter { background: #946200; }
 html:not(.dark-mode) .tvm-tab.detached {
   color: #888;
   background: repeating-linear-gradient(

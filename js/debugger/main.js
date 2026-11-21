@@ -431,6 +431,7 @@
       monaco: window.monaco,
       basename: function (p) { return self.basename(p); },
       normalizePath: function (f) { return self.normalizeBreakpointPath(f); },
+      isReadOnlyFile: function (path) { return self._isTutorialReadOnlyFile(path); },
     };
     if (this.t.editor) {
       this._editorAttach1 = window.SEBookDebuggerEditor.attach(this.t.editor, this.sync, Object.assign({}, helpers, {
@@ -445,6 +446,17 @@
     window.SEBookDebuggerEditor.registerHoverProvider(window.monaco, this.sync, { languages: ['python', 'javascript', 'typescript', 'haskell', 'java'] });
     // Repaint when the tutorial's active file changes (Monaco's onDidChangeModel
     // already covers per-editor file swaps; this covers other state changes).
+  };
+
+  // Tutorials may mark files `readonly`; the debugger's session lock must end
+  // on the shown file's own state, not on the state of the file it started in.
+  DebuggerController.prototype._isTutorialReadOnlyFile = function (path) {
+    return typeof this.t._isReadOnlyFile === 'function' && !!this.t._isReadOnlyFile(path);
+  };
+
+  DebuggerController.prototype._restingReadOnly = function (editor, savedReadOnly) {
+    if (typeof this.t._isReadOnlyFile !== 'function') return savedReadOnly;
+    return this._isTutorialReadOnlyFile(this._activeFileForEditor(editor));
   };
 
   // Helper for editor-attach `getActiveFile`: returns the filename whose model
@@ -3553,8 +3565,8 @@
     var focusLaunch = this.stepToolbar && this.stepToolbar.contains(document.activeElement);
     // Restore editor + UI state
     if (!this.sync) {
-      if (this.t.editor) this.t.editor.updateOptions({ readOnly: this._editorWasReadOnly });
-      if (this.t.editor2) this.t.editor2.updateOptions({ readOnly: this._editor2WasReadOnly });
+      if (this.t.editor) this.t.editor.updateOptions({ readOnly: this._restingReadOnly(this.t.editor, this._editorWasReadOnly) });
+      if (this.t.editor2) this.t.editor2.updateOptions({ readOnly: this._restingReadOnly(this.t.editor2, this._editor2WasReadOnly) });
     }
     var runBtn = this.t.root.querySelector('.tvm-run-btn');
     if (runBtn) {

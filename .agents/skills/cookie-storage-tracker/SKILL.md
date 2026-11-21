@@ -136,7 +136,7 @@ This is a snapshot to help you spot duplicates and pick the right category — *
 - `regex-tutorial-progress`, `regex-tutorial-advanced-progress`
 
 **localStorage — dynamic prefixes** (one entry per tutorial, lesson, or page path):
-- `tutorial-progress-<id>` — saved code, current step, completion records, and optional progress version / ordered lesson keys for matching progress after tutorial updates
+- `tutorial-progress-<id>` — saved code, current step, completion records, diagram challenge answers and active times (`diagramChallenges`), and optional progress version / ordered lesson keys for matching progress after tutorial updates
 - `tutorial-editor-split-<id>` — split-pane preference
 - `tutorial-cooldown-<id>` — per-step "Test My Work" cooldown end times
 - `tutorial-time-practice-<id>` — timed-practice deadlines and lockout windows

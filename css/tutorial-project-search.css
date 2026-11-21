@@ -1,0 +1,237 @@
+/* ============================================================
+   Project-wide search (`project_search: true`)
+   Markup: js/tutorial-project-search.js, mounted in the Files
+   sidebar (css/tutorial-file-tree.css). Controls inherit the
+   paragraph font; results show line numbers and marked matches.
+   Print hides the search UI with the sidebar.
+   ============================================================ */
+
+.tutorial-project-search__toggle,
+.tutorial-project-search__close {
+  font: inherit;
+  min-height: 2em;
+  padding: 0.2em 0.75em;
+  border: 1px solid #6a737d;
+  border-radius: 4px;
+  background: #ffffff;
+  color: #1f2328;
+  cursor: pointer;
+}
+
+.tutorial-project-search__toggle {
+  display: block;
+  width: calc(100% - 1.5em);
+  margin: 0.6em 0.75em 0.25em;
+  text-align: left;
+}
+
+.tutorial-project-search__toggle[aria-expanded="true"] {
+  border-width: 2px;
+  font-weight: 600;
+}
+
+.tutorial-project-search__toggle:hover,
+.tutorial-project-search__close:hover {
+  background: #e6eaef;
+}
+
+.tutorial-project-search__toggle:focus-visible,
+.tutorial-project-search__close:focus-visible,
+.tutorial-project-search__input:focus-visible,
+.tutorial-project-search__option input:focus-visible,
+.tutorial-project-search__match:focus-visible {
+  outline: 2px solid #005587;
+  outline-offset: 2px;
+}
+
+.tutorial-project-search {
+  padding: 0.25em 0.75em 0.75em;
+  border-bottom: 1px solid #c8ccd2;
+}
+
+.tutorial-project-search[hidden] {
+  display: none;
+}
+
+.tutorial-project-search__form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4em;
+  margin: 0;
+}
+
+.tutorial-project-search__label {
+  margin: 0;
+  font-weight: 600;
+}
+
+.tutorial-project-search__input {
+  font: inherit;
+  width: 100%;
+  min-height: 2em;
+  box-sizing: border-box;
+  padding: 0.2em 0.4em;
+  border: 1px solid #6a737d;
+  border-radius: 4px;
+  background: #ffffff;
+  color: #1f2328;
+}
+
+.tutorial-project-search__input[aria-invalid="true"] {
+  border: 2px solid #b3261e;
+}
+
+.tutorial-project-search__options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15em;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.tutorial-project-search__option {
+  display: flex;
+  align-items: center;
+  gap: 0.35em;
+  min-height: 24px;
+  margin: 0;
+  font: inherit;
+  font-weight: normal;
+}
+
+.tutorial-project-search__option input {
+  width: 1.1em;
+  height: 1.1em;
+  margin: 0;
+}
+
+.tutorial-project-search__close {
+  align-self: flex-start;
+}
+
+.tutorial-project-search__status {
+  margin: 0.5em 0 0.25em;
+}
+
+.tutorial-project-search__status:empty {
+  margin: 0;
+}
+
+.tutorial-project-search__results,
+.tutorial-project-search__matches {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.tutorial-project-search__file {
+  margin: 0.5em 0 0;
+}
+
+.tutorial-project-search__file-name {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 0.5em;
+  margin: 0 0 0.2em;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.tutorial-project-search__count {
+  font-weight: normal;
+  color: #4b535d;
+}
+
+.tutorial-project-search__match {
+  display: flex;
+  gap: 0.5em;
+  width: 100%;
+  min-height: 24px;
+  margin: 0;
+  padding: 0.15em 0.4em;
+  border: 0;
+  border-radius: 3px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.tutorial-project-search__match:hover {
+  background: #e6eaef;
+}
+
+.tutorial-project-search__line {
+  flex: 0 0 auto;
+  min-width: 2.2em;
+  color: #4b535d;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.tutorial-project-search__preview {
+  min-width: 0;
+  font-family: 'Fira Code', 'Cascadia Code', Menlo, monospace;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* Bold and underlined as well as tinted, so matches never rely on color. */
+.tutorial-project-search__hit {
+  padding: 0;
+  background: #fff1a8;
+  color: #1f2328;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
+html.dark-mode .tutorial-project-search__toggle,
+html.dark-mode .tutorial-project-search__close,
+html.dark-mode .tutorial-project-search__input {
+  background: #22232a;
+  color: #e6edf3;
+  border-color: #8b949e;
+}
+
+html.dark-mode .tutorial-project-search__toggle:hover,
+html.dark-mode .tutorial-project-search__close:hover,
+html.dark-mode .tutorial-project-search__match:hover {
+  background: #2d2e36;
+}
+
+html.dark-mode .tutorial-project-search__toggle:focus-visible,
+html.dark-mode .tutorial-project-search__close:focus-visible,
+html.dark-mode .tutorial-project-search__input:focus-visible,
+html.dark-mode .tutorial-project-search__option input:focus-visible,
+html.dark-mode .tutorial-project-search__match:focus-visible {
+  outline-color: #ffd100;
+}
+
+html.dark-mode .tutorial-project-search {
+  border-bottom-color: #3a3a42;
+}
+
+html.dark-mode .tutorial-project-search__input[aria-invalid="true"] {
+  border-color: #ff8a80;
+}
+
+html.dark-mode .tutorial-project-search__count,
+html.dark-mode .tutorial-project-search__line {
+  color: #b1bac4;
+}
+
+html.dark-mode .tutorial-project-search__hit {
+  background: #6b5600;
+  color: #ffffff;
+}
+
+@media print {
+  .tutorial-project-search__toggle,
+  .tutorial-project-search {
+    display: none !important;
+  }
+}

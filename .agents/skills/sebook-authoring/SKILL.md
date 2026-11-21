@@ -292,6 +292,7 @@ Markdown allows raw HTML, so it is technically possible to paste a `<style>` blo
 - H1 count and length **do not affect nav bloat.**
 - To change what appears in the top nav, edit `_data/CS130_nav.yml` or `_data/CS35L_nav.yml`, not the page.
 - The H1-budget guidance above still applies for *readability*, but the "demote `#` → `##` to declutter the nav" trick has no effect.
+- Each entry's page decides which assets the course page loads at its end: `mermaid: true` loads Mermaid, `uml_code_labs: true` loads ArchUML, and a tutorial with diagram challenges loads their stylesheet and scripts (`sebook-combined-entry.html` sets the `combined_has_*` flags).
 
 Most chapters use `layout: sebook`. The `sebook-combined` variant is a small set of aggregator pages.
 

@@ -1128,6 +1128,45 @@ output_position: bottom-left           # Move output below instructions.
 run_label: string                      # Override Run button label
                                        # (e.g. "Test" for Playwright).
 
+# === Multi-folder projects (TutorialCode backends) ===
+shared_files: [file specs]             # Same objects as steps[].files. Every
+                                       # step WITHOUT a `files` key uses this
+                                       # one array (the page JSON holds the
+                                       # codebase once); `files: []` still
+                                       # means no files. The print view uses
+                                       # it too; pair with
+                                       # print_unchanged_files: false so the
+                                       # codebase prints once, in the first
+                                       # step that shows it, and each later
+                                       # such step prints one line ("All N
+                                       # starter files are unchanged from
+                                       # step K.").
+file_tree: boolean                     # Default false. Files sidebar left of
+                                       # the editor (a native disclosure above
+                                       # it at <=900px) with a WAI-ARIA tree of
+                                       # the step's files. Top-level folders
+                                       # start expanded; the active file's
+                                       # folders expand. The tab strip then
+                                       # lists only opened files (+ open_file)
+                                       # with close buttons; every step file
+                                       # keeps its Monaco model and draft.
+                                       # Expansion state is page-session only.
+                                       # Default width clamp(11em, 36%, 18em):
+                                       # two-level names such as
+                                       # scenarios/slow_group_checkout.py fit
+                                       # at 1440px; longer ones wrap after an
+                                       # underscore (<wbr>), not mid-word.
+project_search: boolean                # Default false. "Search files" panel in
+                                       # the same sidebar and Ctrl/Cmd+Shift+F
+                                       # inside the tutorial: match case, whole
+                                       # word, regex; searches current editor
+                                       # contents of every step file (TOML,
+                                       # Markdown included); at most 500
+                                       # results; results open the file at the
+                                       # line through revealSource().
+# Monaco 0.44 has no TOML grammar: give .toml files `language: ini` and
+# `print_language: toml`.
+
 # === Setup / lifecycle hooks ===
 setup_commands: [string]               # Run once at tutorial load for
                                        # single-backend tutorials only.
@@ -1187,6 +1226,10 @@ print_unchanged_files: boolean         # Default true. false prints a one-line
                                        # content equals the previous step's
                                        # file at the same path. Use it when
                                        # every lesson reseeds a whole repository.
+                                       # Steps on `shared_files` get one note
+                                       # for the whole codebase, not one per
+                                       # file (scripts/tests/
+                                       # tutorial-print-shared-files.test.js).
 ```
 
 ### 3.2 Step fields (`steps:` is a list)
@@ -1265,6 +1308,70 @@ steps:
                                              # (e.g. an evolving TDD program).
                                              # Reset Step explicitly restores
                                              # the current step's starter.
+        readonly: true                       # Monaco read-only (also in popouts)
+                                             # with "This file is read-only in
+                                             # this tutorial." Run and tests still
+                                             # use the file; popout edits and any
+                                             # refactoring that would touch it are
+                                             # refused. Keeps evidence line
+                                             # numbers stable.
+    readonly: true                           # Step level: every file of this step
+                                             # is read-only. Derived per step by
+                                             # TutorialCode._isReadOnlyFile(path).
+
+    diagram_challenge:                       # Optional design question answered
+                                             # from the code, then with an authored
+                                             # agent diagram. See "Diagram
+                                             # challenges" below this block.
+      mode: code-first                       # code-first (default) | plan-first
+      budget_minutes: 7                      # Soft nudge in Part A; never a limit.
+      min_score: 0.8                         # Default 0.8; see §4.8.
+      predict_view: false                    # code-first: Part A also asks which
+                                             # view to request (class, component,
+                                             # sequence); the expert's view is the
+                                             # first reply diagram's `type`.
+      attempt:                               # Part A requirements, each optional:
+        hypothesis: true                     #   a sentence before choices appear
+        evidence_pins: 1                     #   "Pin this line" locations needed
+        view_wish: true                      #   a sentence: what should a view show?
+      questions:                             # Quiz subset: single | multiple only
+        - id: receivers                      # (no Parsons). `id` is required and
+          type: multiple                     # unique across the whole challenge.
+          question: "Markdown"
+          options: ["Markdown", "..."]       # Authored order; never shuffled.
+          correct_indices: [2, 3]            # single: correct_index
+          option_feedback: {0: "..."}        # Sparse, as in quizzes (quiz-format).
+          explanation: "..."
+      plan:                                  # plan-first only, one per question:
+        - for: receivers                     #   the question id it plans for
+          question: "..."                    #   optional; defaults to its stem
+          options: ["A component diagram of ...", "No diagram: read ..."]
+          correct_index: 0
+      reply:
+        contrast:                            # Optional poorly fitting view, shown
+          request: "..."                     # and answered (one final check)
+          diagram: {id, type, label, source} # before the main reply appears.
+          question: {id, type: single, question, options, correct_index}
+        request: "..."                       # "You asked:" (Markdown)
+        summary: "..."
+        diagrams:                            # ArchUML sources; tabs when several.
+          - {id: events, type: component, label: "Order events", source: "..."}
+        evidence:                            # Buttons opening the file at the line.
+          - {text: "Markdown", ref: "deploy/broker.toml:31"}
+        files_read: [deploy/broker.toml]
+        left_out: "..."
+        label: "Prepared in advance by an AI coding agent ..."
+      follow_up: [questions]                 # New questions, timed separately.
+      evidence_check:                        # Optional, graded, after follow_up:
+        claim_question: {...}                #   capstone only
+        prompt: "..."                        #   what to check in the code
+        question: {...}
+      debrief:
+        hidden_by: "..."                     # Also the results card's last column.
+        find_in_code: "..."
+        view_shows: "..."
+        consolidation_prompt: "..."          # A required sentence before Finish.
+        mechanism_question: {...}            # Graded single choice.
 
     # Smalltalk uses api.normalizeProgram in js/smalltalk/fresh-runner.js.
     # Ordered files load with run_file last once when a live/fresh image starts;
@@ -1651,6 +1758,76 @@ steps:
       explanation: |                         # Markdown — *why* this works.
         Walk-through of the solution and the trade-offs.
 ```
+
+#### Diagram challenges
+
+`diagram_challenge` steps run in four states, all reached through the
+widget in the step's instructions: **exploring** (Part A from the code, or
+the plan in `plan-first`) → **locked** (the confirmed lock-in shows the reply
+card and opens its diagram maximized in the Diagram pane; Part B repeats the
+questions, prefilled from Part A in code-first) → **follow-up** (new
+questions, then the evidence check) → **done** (comparison and debrief).
+A `reply.contrast` question comes first in the locked state; its one check
+reveals the main reply. **Finish the challenge** grades the mechanism
+question and passes the step once the consolidation sentence is written and
+the score reaches `min_score`. Every graded part can be checked again until
+then; a pass is permanent. Rules, grading, timing, and the record live in
+`js/tutorial-diagram-challenge-core.js` (`DiagramChallengeCore`, unit tested
+by `scripts/tests/diagram-challenge-core.test.js`); the DOM lives in
+`js/tutorial-diagram-challenge.js` (`DiagramChallenge`). Spec: §9.1 and §16
+of `docs/superpowers/specs/2026-11-20-uml-design-questions-tutorial-design.md`.
+
+- **Markdown.** `_includes/tutorial-diagram-challenge.html` (called by
+  `tutorial-step-instructions.html` after the step's Markdown) renders every
+  Markdown field with `markdownify` into inert
+  `<template data-diagram-challenge-md="…">` elements keyed by field
+  (`q:<id>:stem`, `q:<id>:o:<i>`, `:f:<i>`, `:x`, `p:<id>:…` for plan
+  entries, `reply:request`, `reply:evidence:<i>`, `contrast:request`,
+  `evidence:prompt`, `debrief:<field>`), plus the challenge as JSON with
+  `<`, `>`, and `&` escaped. The live page, the instructions popout, and the
+  widget all use that one server-rendered host; nothing is rendered with
+  `marked`. Options render inline in labels, so keep them one paragraph.
+- **Timing.** Active time only: the step must be shown and the document
+  visible (`visibilitychange`, `pagehide`). Part A's clock runs until
+  lock-in; Part B's and the follow-up's until their first check. Times are
+  stored to a tenth of a second and appear only on the comparison panel, as
+  a secondary line labelled "your experience, not an experiment", with a
+  **Hide times** toggle; there is no running clock and no ratio.
+- **Comparison.** Part A versus Part B's first attempt versus the key per
+  question (found, missed, extra), option feedback for every wrongly
+  answered option, confidence calibration, the view prediction or plan
+  versus the expert's choice, and the debrief. A plan-first step ends with
+  the **results card**: one table row per code-first challenge of the
+  tutorial, from its saved record, with "What hid the answer" from
+  `debrief.hidden_by`.
+- **Diagram pane.** Before lock-in the Diagram view is disabled with
+  "Lock in your answer to see the agent's diagram."; every step change hides
+  the pane (the widget's `destroy`). The reply opens it with
+  `showAuthoredDiagrams(diagrams, {layout: 'maximized'})`: the diagram gets
+  the whole workspace, Files steps aside, and OUTPUT shrinks to its Run bar.
+  A large diagram opens fitted (whole, small); a click shows the clicked part
+  at reading size (see `js/tutorial-diagram-pane.js` in §4.5).
+  Opening a file (tree, search, an evidence note), Run, or project search
+  returns to split view, where Files is a closed drawer; the Editor view
+  restores everything. After a reload the diagrams are loaded but not opened
+  (`open: false`).
+- **Locked answers** stay visible: browsers draw a disabled, checked control
+  faintly, so after lock-in each chosen option's row (answers, confidence,
+  view, plan; also the popout and instructor keys) gets a frame, a check
+  mark with an empty text alternative, and bold text. The native controls
+  keep their checked and disabled states.
+- **Instructor mode** shows every panel with keys and never locks. The print
+  view prints the challenge between the step's files and its solution
+  (`_includes/tutorial-diagram-challenge-print.html`): the questions, then
+  the reply card titled "Shown after you lock in" with each diagram as a
+  `language-uml-<type>` code block and the evidence list; keys and debriefs
+  sit in an instructor-only `.step-solution` block. The results card prints
+  from this browser's saved progress when a record exists.
+- **Authoring.** Use stable step `key`s (records are keyed by
+  `_draftStepKey`); `progress_version` keeps reloads with a step hash
+  restoring progress. Follow `quiz-format` for every question (sparse
+  `option_feedback`, no position references, no telegraphed keys).
+  `_data/tutorials/diagram-challenge-demo.yml` exercises every field.
 
 ### 3.3 Hint conditions
 
@@ -2329,6 +2506,14 @@ synchronizes with the main tutorial via `BroadcastChannel` (see
   on every visit, including a previously passed final quiz. Saved `quizPassed`
   records remain completion evidence for unlocks and timed practice; they do
   not suppress quiz entry in either window.
+  A step's diagram challenge appears there read-only (version 1): the
+  questions with the main window's current answers, disabled, under
+  "Answer this diagram challenge in the main tutorial window." and a button
+  that closes the popout. Instructions snapshots, `step-change`, and
+  `nav-state` carry `challengeRecords` (the records map of §4.7) and
+  `nextLockedLabel`; the popout re-renders the challenge when the records
+  change. Next in the popout runs the same `_requestNextStep` as the main
+  window.
 - `tutorial-output-popup.html` — stdout / stderr / preview iframe. Prolog's
   Run output remains detachable; its separate Terminal view and query
   history stay usable in the main tutorial. The main Output mode then shows
@@ -2868,6 +3053,106 @@ channel.
   the panel width. A temporary `ResizeObserver` keeps the active celebration
   visible when the panel or its scroll frame resizes; removing/replacing the
   celebration disconnects it.
+- **Multi-folder navigation (`file_tree`, `project_search`)** — the layout
+  loads `js/tutorial-file-tree.js` and `js/tutorial-project-search.js` (both
+  also `module.exports` for `node --test`) before `tutorial-code.js`, with
+  `css/tutorial-file-tree.css` and `css/tutorial-project-search.css`, only when
+  either flag is set. `TutorialFileTree.buildTree(paths)` is pure (folders
+  before files, alphabetical); `mount(host, {paths, activePath, label, onOpen})`
+  returns `{setPaths, setActive, revealPath, destroy}` and implements the
+  WAI-ARIA treeview keys (roving tabindex, arrows, Home/End, Enter/Space,
+  type-ahead). `TutorialProjectSearch.search(files, query, {matchCase,
+  wholeWord, regex})` returns `{results: [{path, line, column, preview,
+  matchStart, matchLength}], truncated, error}` (500-result cap, regex errors
+  are messages, never exceptions); `mount(host, {getFiles, onOpen})` returns
+  `{open, close, destroy}` and owns the Search button, labelled field, option
+  checkboxes, polite status count, and Escape-to-opener. In TutorialCode,
+  `_openTabs` holds the opened tabs (`_tabPaths`, `_openFileTab`, `_closeTab`);
+  a file shown only by a programmatic switch is a transient tab until the
+  learner switches away. `revealSource(path, line, column = 1)` opens the tab,
+  expands the tree, places the cursor, highlights the line for two seconds
+  (`.tvm-source-reveal-line`), and focuses the editor. Ctrl/Cmd+Shift+F is a
+  capture-phase listener on the tutorial root. Listeners of these optional
+  components use `_lifecycleEvents`, aborted by `destroy()`.
+  `_setFileNavigatorDrawer(asDrawer)` turns the sidebar into a drawer
+  (class `tvm-file-sidebar--drawer`; styles in `css/tutorial-file-tree.css`):
+  on wide screens it starts closed as a narrow vertical **Files** handle (the
+  `<summary>`, raised above the instructions splitter's grab area) and opens
+  into the usual column; leaving drawer mode opens the column again. Narrow
+  screens keep the disclosure as the learner left it. `_openFileTab`,
+  `_runCurrentFile`, and `_openProjectSearch` call
+  `_notifyCodeRequested(reason)` (`'open-file'`, `'run'`, `'search'`), which
+  forwards to an optional `_onCodeRequested(reason)` hook.
+- **`js/tutorial-diagram-pane.js`** — prototype mixin loaded after
+  `tutorial-code.js` on every tutorial page (with
+  `css/tutorial-diagram-pane.css`). `showAuthoredDiagrams([{id, label, type,
+  source}])` renders authored ArchUML sources (class, sequence, state,
+  component, deployment, usecase, activity) in one persistent pane beside the
+  editor, which stays visible; several diagrams become a tablist.
+  `hideAuthoredDiagrams()` hides and clears it and removes the Diagram view;
+  `setDiagramPaneAvailable(false, reason)` keeps the Diagram button with
+  `aria-disabled` and a visible reason that is its accessible description.
+  The pane is created on first use as a third `.tvm-editor-body` child after a
+  `_makeDraggable` divider (`.tutorial-diagram-pane-divider`, styled with the
+  editor-pane divider), stacks below the editor at <=900px, and offers zoom
+  buttons, ArchUML's Fit/Restore control, and a pane-level Full screen
+  button. Every diagram it draws (a new `showAuthoredDiagrams` call or another
+  tab) starts from Fit when it overflows the pane: the pane detaches
+  ArchUML's previous control so no zoom carries over. While fitted, a hint
+  floats over the pane's lower edge and a click on the drawing shows the
+  clicked part at reading size (100%, the readable width at which the
+  smallest text has the paragraph size), centered as far as scrolling allows,
+  with focus on the drawing so the arrow keys scroll it. The zoom buttons step
+  through 50, 75, 100, 125, 150, 200, 250 and 300% from the drawing's current
+  size (Zoom in from Fit goes to the first step above the fitted size), keep
+  the middle of the view in place, and Zoom out goes back into Fit instead of
+  below it; in Fit, Zoom out is `aria-disabled`. The scrollable drawing is a
+  focusable region named by `UMLAutoDescribe.describe`; the SVG is hidden
+  from assistive technology. It never reuses the live UML viewer's
+  `.tvm-diagram-*` classes.
+  The workspace view toggle is built from `_workspaceViews()` and
+  `_ensureWorkspaceViewButton(view)`; `_setView` sets `aria-pressed`, ignores
+  `aria-disabled` views, and calls `_onWorkspaceViewChanged(view)`.
+  Diagram-challenge steps decide when to call these (no YAML key of its own).
+  `showAuthoredDiagrams(diagrams, {layout, open})`: `layout: 'maximized'`
+  gives the Diagram view the whole workspace (class
+  `tutorial-diagram-workspace--maximized` on `.tvm-workspace`): the editor
+  is hidden, so is the Files sidebar on wide screens (narrow screens keep its
+  disclosure above the stacked pane), and a standard OUTPUT panel collapses
+  to its bar so Run stays visible (tabbed or terminal panels keep their
+  size). The pane's `_onCodeRequested` hook returns a maximized diagram to
+  split when the learner opens a file, presses Run, or opens project search.
+  While the Diagram view is shown, in either layout, Files is a drawer
+  (`_setFileNavigatorDrawer(true)`), closed by default, so in split view the
+  code and the diagram share the width; the Editor view ends the drawer and
+  shows Files and OUTPUT as the tutorial built them. The pane's
+  **Code beside diagram** button (`aria-pressed`) toggles the layout.
+  `open: false` loads the diagrams and enables the view without switching
+  to it; drawing waits until the view is first shown.
+- **`js/tutorial-diagram-challenge-core.js`** and
+  **`js/tutorial-diagram-challenge.js`** — the diagram challenge (§3.2).
+  The layout loads both, and `css/tutorial-diagram-challenge.css` before
+  `print-light.css`, only when a step has `diagram_challenge`; the print
+  layout and the instructions popout load them too. A combined course page
+  (`sebook-combined`) that embeds such a tutorial loads them through
+  `_includes/tutorial-diagram-challenge-embedded-assets.html` (set by
+  `sebook-combined-entry.html` as `combined_has_diagram_challenges`), with
+  a screen-only dark palette for the print block and each results card
+  read from its own tutorial's record (`data-diagram-challenge-tutorial`).
+  Its page needs `uml_code_labs: true` so the course page loads ArchUML.
+  `DiagramChallenge.initFrom(root, {runtime, records, onRecord(key, record),
+  instructorMode, readOnly, onReturn})` returns a Promise that joins the
+  step readiness barrier; `destroyWithin(root)` runs before the step's
+  `innerHTML` is replaced (step load, timed-practice lockout, `destroy()`),
+  pauses the clock, emits the final record, and hides the Diagram pane.
+  `renderResults(root, {records})` fills print results cards.
+  `DiagramChallengeCore.createSession(spec, record)` owns the state machine,
+  grading (`{id, correct, found, missed, extra}`), `score()`, the timers
+  (`ActiveTimer`), `serialize(now)`, and record sanitizing;
+  `isPassed(record)` and `summarize(spec, record)` serve the runtime and the
+  results card. The runtime adds `currentEditorLocation()` (`{path, line}`
+  of the shown file, for **Pin this line**) and
+  `currentStepHasDiagramChallenge()` (the Reset confirmation text).
 - **`js/tutorial-quiz.js`** — shared quiz renderer (used by main page and
   the instructions popup). `single` / `multiple` / `parsons` types,
   `min_score` gating, `option_feedback` rendering. The tutorial layout uses
@@ -4129,6 +4414,36 @@ lesson, so the fallback lesson never opens with another exercise's code. Reset s
 its setup completes, preserving other drafts. Delete clears remembered drafts too.
 Smalltalk continues using its native accepted-source/draft owner.
 
+Diagram challenge records live in `diagramChallenges` within this same
+progress record, keyed by `key:<step.key>` (or `index:<n>`); the field is
+omitted while no record exists. No new storage key is introduced:
+
+```json
+"diagramChallenges": {
+  "key:explore": {
+    "v": 1, "state": "done", "passed": true, "hideTimes": true,
+    "a": { "answers": {"receivers": [0]}, "confidence": "fairly-sure", "view": null,
+           "plan": {}, "hypothesis": "...", "evidence": [{"path": "deploy/broker.toml", "line": 13}],
+           "viewWish": "...", "seconds": 372.4 },
+    "c": { "answers": {"fits": 0}, "checked": {"fits": 0} },
+    "b": { "answers": {...}, "checked": {...}, "first": {...}, "attempts": 2, "seconds": 65, "score": 1 },
+    "f": { "answers": {...}, "checked": {...}, "first": {...}, "attempts": 1, "seconds": 40, "score": 1 },
+    "e": { "answers": {...}, "checked": {...}, "attempts": 1 },
+    "d": { "consolidation": "...", "answers": {"mechanism": 0}, "checked": {...}, "attempts": 1 }
+  }
+}
+```
+
+`a` is Part A, `c` the contrast, `b` Part B (`first` feeds the comparison,
+`checked` the score), `f` the follow-up, `e` the evidence check, `d` the
+debrief. `score` is the latest checked fraction (derived). Restored records
+are sanitized against the current challenge; another version starts afresh.
+Records are restored in `start()` before the saved step mounts and kept in
+memory without Auto-save. Reset Current Step clears only the current step's
+record, after its confirmation (which then mentions the challenge's answers
+and times); deleting saved progress clears every record. SE Gym's
+whole-record import/export carries them unchanged.
+
 Shell pipeline command drafts live in `shellCommands` within this same progress
 record, keyed by `key:<step.key>` (or `index:<n>` without a key). No new storage
 key is introduced. Navigation and explicit/automatic saves preserve separate
@@ -4490,6 +4805,24 @@ Code-test success records `stepsPassed` independently from navigation access.
 required quiz remains. Required quizzes unlock it through `_completeQuiz` and
 `_advanceAfterQuiz`; popout navigation uses the same host state. Existing saved
 visits and explicit step deep links retain their established access behavior.
+
+`_stepGateSatisfied(index, {quiz})` is the one completion gate: under
+`require_tests` a step's tests must pass and its diagram challenge must be
+passed; under `require_quiz` its knowledge check must be passed unless
+`quiz: false` (Next itself opens that check). Steps without tests or a
+challenge have nothing to pass, and instructor mode never locks.
+`_isNextStepLocked` is `!_stepGateSatisfied(i, {quiz: false})`; the Next
+button and the popout's Next share `_requestNextStep`; `_renderTestResults`
+and a newly passed challenge unlock the following step only when the full
+gate holds. **Challenge completion** is the record's permanent `passed` flag
+(`DiagramChallengeCore.isPassed`): `finish()` sets it when the consolidation
+sentence is written and the score of Part B's latest attempt, the
+follow-up, the evidence check, and the mechanism question reaches
+`min_score`. A newly passed challenge records `stepsPassed` for a step
+without `tests:` (a step with both needs both), marks timed practice
+complete, and re-renders Next. `_timedPracticeStepSolved` asks for the same
+evidence whatever `require_tests` says. Unit tests:
+`scripts/tests/tutorial-diagram-challenge-gate.test.js`.
 
 ---
 

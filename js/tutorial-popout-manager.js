@@ -222,6 +222,7 @@
         content: f.content || '',
         language: f.language || '',
         version: v,
+        readOnly: !!f.readOnly,
       };
     });
     this._post('pane-snapshot', {
@@ -686,6 +687,7 @@
       language: meta.language || '',
       version: v,
       darkMode: !!meta.darkMode,
+      readOnly: !!meta.readOnly,
     });
     this._writeStateMirror();
   };

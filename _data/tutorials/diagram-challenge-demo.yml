@@ -1,0 +1,592 @@
+title: "Diagram Challenge Runtime Demo"
+description: "A small multi-folder Python project that exercises the tutorial runtime's shared and read-only files, folder-tree file navigator, project-wide search, authored-diagram pane, and diagram challenges."
+
+# Runtime demo for browser tests — not a student-facing tutorial. Hides it
+# from the auto-generated /SEBook/tutorials index.
+exclude_from_index: true
+
+backend: pyodide
+require_tests: true
+file_tree: true
+project_search: true
+# Every step shows the same codebase, so the print view shows it once.
+print_unchanged_files: false
+# Stable step keys identify saved diagram challenge records and deep links.
+progress_version: 1
+
+# Pyodide writes editor files under /tutorial/ and runs there; the packages
+# below import each other from that root.
+setup_commands:
+  - "import sys; sys.path.insert(0, '/tutorial')"
+
+# Steps without `files` use this list, so the codebase appears once in the
+# page data. `readonly: true` keeps evidence line numbers stable.
+shared_files:
+  - path: README.md
+    language: markdown
+    readonly: true
+    content: |
+      # Headliner (demo slice)
+
+      Headliner sells festival trips. This slice keeps four parts:
+
+      - `services/trip_site/` is the Trip Website checkout.
+      - `services/opc/` is the order processing center (OPC).
+      - `services/opc/partners/` holds partner gateways.
+      - `deploy/broker.toml` binds each consumer queue to order events.
+
+      Run `scenario.py` to see which queues receive an order event.
+  - path: deploy/broker.toml
+    language: ini
+    print_language: toml
+    readonly: true
+    content: |
+      # One topic exchange; each consumer queue binds a routing key.
+      [exchange.orders]
+      type = "topic"
+
+      [[binding]]
+      queue = "partner-gateway"
+      exchange = "orders"
+      key = "order.placed"
+
+      [[binding]]
+      queue = "trip-site-notifications"
+      exchange = "orders"
+      key = "order.*"
+
+      [[binding]]
+      queue = "warehouse-etl"
+      exchange = "orders"
+      key = "#"
+  - path: infra/__init__.py
+    language: python
+    readonly: true
+    content: |
+      """Shared infrastructure for Headliner services."""
+  - path: infra/bus.py
+    language: python
+    readonly: true
+    content: |
+      """In-memory topic exchange with AMQP-style wildcard bindings."""
+
+
+      def topic_matches(pattern, topic):
+          """Return True when a binding pattern matches a dotted topic."""
+          return _match(pattern.split("."), topic.split("."))
+
+
+      def _match(pattern, topic):
+          if not pattern:
+              return not topic
+          head, rest = pattern[0], pattern[1:]
+          if head == "#":
+              return any(_match(rest, topic[i:]) for i in range(len(topic) + 1))
+          if not topic:
+              return False
+          return head in ("*", topic[0]) and _match(rest, topic[1:])
+
+
+      class Bus:
+          def __init__(self):
+              self._bindings = []
+
+          def bind(self, queue, key):
+              self._bindings.append((queue, key))
+
+          def receivers(self, topic):
+              return [queue for queue, key in self._bindings if topic_matches(key, topic)]
+  - path: services/__init__.py
+    language: python
+    readonly: true
+    content: |
+      """Headliner services."""
+  - path: services/opc/__init__.py
+    language: python
+    readonly: true
+    content: |
+      """Order processing center (OPC)."""
+  - path: services/opc/orders.py
+    language: python
+    readonly: true
+    content: |
+      """Order processing: publishes an event whenever an order changes state."""
+
+
+      class OrderService:
+          def __init__(self, bus):
+              self._bus = bus
+
+          def place(self, order_id):
+              return self._bus.receivers("order.placed")
+
+          def cancel(self, order_id):
+              return self._bus.receivers("order.cancelled")
+  - path: services/opc/partners/__init__.py
+    language: python
+    readonly: true
+    content: |
+      """Partner gateways used by the OPC."""
+  - path: services/opc/partners/glamping_co.py
+    language: python
+    readonly: true
+    content: |
+      """Gateway to the Glamping Co. partner API (stubbed for this demo)."""
+
+
+      class GlampingCoGateway:
+          name = "glamping_co"
+
+          def reserve(self, order_id):
+              return f"{self.name} reserved a tent for order {order_id}"
+  - path: services/trip_site/__init__.py
+    language: python
+    readonly: true
+    content: |
+      """Trip Website."""
+  - path: services/trip_site/checkout.py
+    language: python
+    readonly: true
+    content: |
+      """Trip Website checkout: places an order through the order service."""
+
+
+      def checkout(orders, order_id):
+          receivers = orders.place(order_id)
+          return f"Order {order_id} sent to: {', '.join(receivers)}"
+  - path: scenario.py
+    language: python
+    readonly: true
+    content: |
+      """Wire the broker from deploy/broker.toml and run one checkout."""
+      import tomllib
+
+      from infra.bus import Bus
+      from services.opc.orders import OrderService
+      from services.trip_site.checkout import checkout
+
+      with open("deploy/broker.toml", "rb") as config_file:
+          config = tomllib.load(config_file)
+
+      bus = Bus()
+      for binding in config["binding"]:
+          bus.bind(binding["queue"], binding["key"])
+
+      orders = OrderService(bus)
+      print(checkout(orders, "A-100"))
+      print("order.cancelled reaches:", ", ".join(orders.cancel("A-100")))
+  - path: notes.md
+    language: markdown
+    content: |
+      # My notes
+
+      Write down which files answered each question.
+
+steps:
+  # Pedagogy: orientation in a codebase larger than one screen — the tree,
+  # search, and read-only evidence files are the objects of this demo. The
+  # code-first challenge contrasts answering from the code with answering
+  # from an agent's diagram.
+  - key: explore
+    title: "Explore the Project"
+    open_file: scenario.py
+    run_file: scenario.py
+    instructions: |
+      ### Why this matters
+
+      Real systems spread one behavior across many files. Navigating by
+      folder and searching the whole project are how developers find the
+      code that answers a question.
+
+      ### 🎯 You will learn to
+
+      - Navigate a nested project with the **Files** tree and the keyboard
+      - Search every file, including configuration, for a routing key
+
+      ### What to try
+
+      1. Open `services/opc/partners/glamping_co.py` from the **Files** tree.
+      2. Search the project for `order.placed`. Which configuration line
+         sends that event to a queue?
+      3. Run `scenario.py`. Every project file except `notes.md` is
+         read-only, so line numbers stay the same; record your findings in
+         `notes.md`.
+      4. Answer the diagram challenge below: first from the code, then with
+         the agent's diagram.
+    diagram_challenge:
+      mode: code-first
+      budget_minutes: 7
+      min_score: 0.8
+      attempt:
+        hypothesis: true
+        evidence_pins: 1
+        view_wish: true
+      questions:
+        - id: receivers
+          type: multiple
+          question: "Which queues receive an `order.placed` event?"
+          options:
+            - "`partner-gateway`"
+            - "`trip-site-notifications`"
+            - "`warehouse-etl`"
+            - "`checkout`"
+          correct_indices: [0, 1, 2]
+          option_feedback:
+            1: "Its binding `order.*` matches `order.placed`: `*` stands for exactly one word."
+            2: "Its binding `#` matches every key, so it receives every order event."
+            3: "`checkout` places the order through `OrderService`; it is a function of the Trip Website, not a queue."
+        - id: bindings
+          type: single
+          question: "Which file decides who receives an order event?"
+          options:
+            - "`deploy/broker.toml`"
+            - "`services/opc/orders.py`"
+            - "`services/trip_site/checkout.py`"
+          correct_index: 0
+          option_feedback:
+            1: "`OrderService` names the event, but the queues that receive it are chosen by the bindings in `deploy/broker.toml`."
+            2: "The checkout places the order and never names a queue."
+      reply:
+        request: "Draw a UML component diagram of who publishes to and consumes from the `orders` exchange, with each binding key."
+        summary: "The view shows the publisher, the exchange, and every consumer queue with the binding key it declares."
+        diagrams:
+          - id: events
+            type: component
+            label: "Order events"
+            source: |
+              @startuml
+              component OPC {
+                portout "order events" as opc_pub
+              }
+              component orders {
+                portin "publish" as ex_in
+                portout "deliver" as ex_out
+              }
+              component PartnerGateway {
+                portin "events" as pg_in
+              }
+              component TripSiteNotifications {
+                portin "events" as tn_in
+              }
+              component WarehouseETL {
+                portin "events" as we_in
+              }
+              opc_pub -- ex_in : publish
+              ex_out -- pg_in : binding order.placed
+              ex_out -- tn_in : binding order.*
+              ex_out -- we_in : binding any key
+              @enduml
+        evidence:
+          - text: "`partner-gateway` binds `order.placed`"
+            ref: deploy/broker.toml:8
+          - text: "`trip-site-notifications` binds `order.*`"
+            ref: deploy/broker.toml:13
+          - text: "`warehouse-etl` binds `#`, which is drawn as *any key*"
+            ref: deploy/broker.toml:18
+          - text: "`#` matches any number of words"
+            ref: infra/bus.py:13
+          - text: "`*` matches exactly one word"
+            ref: infra/bus.py:17
+        files_read: [deploy/broker.toml, infra/bus.py, services/opc/orders.py, scenario.py]
+        left_out: "The partner gateway behind each queue and the checkout code."
+        label: "Prepared in advance by an AI coding agent from this repository's code and verified against the code."
+      follow_up:
+        - id: cancelled
+          type: multiple
+          question: "Which queues receive an `order.cancelled` event?"
+          options:
+            - "`partner-gateway`"
+            - "`trip-site-notifications`"
+            - "`warehouse-etl`"
+          correct_indices: [1, 2]
+          option_feedback:
+            0: "`partner-gateway` binds exactly `order.placed`, so `order.cancelled` does not match it."
+      debrief:
+        hidden_by: "The bindings live in `deploy/broker.toml`, not in the Python code, and two of them use wildcards that a search for `order.placed` does not find."
+        find_in_code: "List every binding, then match each key pattern against the event name."
+        view_shows: "Every consumer of one exchange, each with its binding, in one place."
+        consolidation_prompt: "What did the diagram put side by side that you had to search for?"
+        mechanism_question:
+          id: mechanism
+          type: single
+          question: "Which mechanism hid the answer in the code?"
+          options:
+            - "Bindings in a configuration file, with wildcard keys"
+            - "A remote call inside a loop"
+            - "An exception that the interface does not allow"
+          correct_index: 0
+          option_feedback:
+            1: "No call here repeats per item; the receivers come from bindings that `scenario.py` loads from `deploy/broker.toml`."
+            2: "No method raises here; the code never names the receiving queues at all."
+
+  # Step-level `readonly: true` locks every file of this step, notes included.
+  # Its challenge asks for the view first and shows a poorly fitting view
+  # (the classes) before the component view, then checks an absence.
+  - key: review
+    title: "Review Without Editing"
+    readonly: true
+    open_file: deploy/broker.toml
+    run_file: scenario.py
+    instructions: |
+      ### Why this matters
+
+      Reviewing evidence is different from changing it. In this step every
+      file is read-only, so a citation such as `infra/bus.py:4` always
+      points at the same line.
+
+      ### 🎯 You will learn to
+
+      - Trace an event from its publisher to every queue that receives it
+
+      ### What to try
+
+      Find the binding that sends `order.cancelled` events to the Trip
+      Website, then run `scenario.py` to check your answer.
+    diagram_challenge:
+      budget_minutes: 7
+      min_score: 0.8
+      predict_view: true
+      questions:
+        - id: cancel-route
+          type: single
+          question: "Which binding sends `order.cancelled` events to the Trip Website's queue?"
+          options:
+            - "`order.*` on `trip-site-notifications`"
+            - "`order.placed` on `partner-gateway`"
+            - "`#` on `warehouse-etl`"
+          correct_index: 0
+          option_feedback:
+            1: "`order.placed` matches only that one key, and `partner-gateway` is the partners' queue."
+            2: "`#` does match `order.cancelled`, but `warehouse-etl` feeds the data warehouse, not the Trip Website."
+      reply:
+        contrast:
+          request: "Draw a UML class diagram of the classes in `services/` and `infra/`."
+          diagram:
+            id: classes
+            type: class
+            label: "Classes"
+            source: |
+              @startuml
+              class OrderService {
+                +place(order_id)
+                +cancel(order_id)
+              }
+              class Bus {
+                +bind(queue, key)
+                +receivers(topic)
+              }
+              class GlampingCoGateway {
+                +reserve(order_id)
+              }
+              OrderService --> Bus
+              @enduml
+          question:
+            id: fits
+            type: single
+            question: "Can this class diagram show which queue receives `order.cancelled`?"
+            options:
+              - "No: the bindings come from `deploy/broker.toml`"
+              - "Yes: the `Bus` class lists every binding"
+            correct_index: 0
+            option_feedback:
+              1: "`Bus` keeps its bindings in a list at run time; a class diagram shows its operations, not the values `scenario.py` reads from `deploy/broker.toml`."
+        request: "Draw a UML component diagram of the order events: the publisher, the exchange, and each consumer with its binding key."
+        summary: "The view shows every consumer of the `orders` exchange with the binding key it declares."
+        diagrams:
+          - id: events
+            type: component
+            label: "Order events"
+            source: |
+              @startuml
+              component OPC {
+                portout "order events" as opc_pub
+              }
+              component orders {
+                portin "publish" as ex_in
+                portout "deliver" as ex_out
+              }
+              component PartnerGateway {
+                portin "events" as pg_in
+              }
+              component TripSiteNotifications {
+                portin "events" as tn_in
+              }
+              component WarehouseETL {
+                portin "events" as we_in
+              }
+              opc_pub -- ex_in : publish
+              ex_out -- pg_in : binding order.placed
+              ex_out -- tn_in : binding order.*
+              ex_out -- we_in : binding any key
+              @enduml
+        evidence:
+          - text: "`partner-gateway` binds `order.placed`"
+            ref: deploy/broker.toml:8
+          - text: "`trip-site-notifications` binds `order.*`"
+            ref: deploy/broker.toml:13
+          - text: "`warehouse-etl` binds `#`, which is drawn as *any key*"
+            ref: deploy/broker.toml:18
+          - text: "`#` matches any number of words"
+            ref: infra/bus.py:13
+          - text: "`*` matches exactly one word"
+            ref: infra/bus.py:17
+        label: "Prepared in advance by an AI coding agent from this repository's code and verified against the code."
+      evidence_check:
+        prompt: "The diagram shows no `order.cancelled` binding for `partner-gateway`. An absence in a diagram is a hypothesis: open `deploy/broker.toml` and confirm it."
+        question:
+          id: verified
+          type: single
+          question: "Does `deploy/broker.toml` agree that `partner-gateway` does not receive `order.cancelled`?"
+          options:
+            - "Yes: its binding key is exactly `order.placed`"
+            - "No: `partner-gateway` also binds `order.*`"
+          correct_index: 0
+          option_feedback:
+            1: "`partner-gateway` has one binding, `order.placed`; `order.*` belongs to `trip-site-notifications`."
+      debrief:
+        hidden_by: "Imports and classes show which code calls which, but the routing lives in configuration that `scenario.py` loads at run time."
+        find_in_code: "Start from the configuration that wires the broker, not from the classes."
+        view_shows: "Each consumer of the exchange with its binding, which the class diagram cannot show."
+        consolidation_prompt: "What did the component diagram show that the class diagram could not?"
+        mechanism_question:
+          id: mechanism
+          type: single
+          question: "Which mechanism hid the answer in the code?"
+          options:
+            - "Bindings in a configuration file, with wildcard keys"
+            - "A remote call inside a loop"
+            - "An exception that the interface does not allow"
+          correct_index: 0
+          option_feedback:
+            1: "No call here repeats per item; the receivers come from bindings that `scenario.py` loads from `deploy/broker.toml`."
+            2: "No method raises here; the code never names the receiving queues at all."
+
+  # Plan-first: choose the view (or no view) per question before asking;
+  # the first question is answered faster by reading one file.
+  - key: choose-view
+    title: "Choose the View"
+    open_file: services/trip_site/checkout.py
+    run_file: scenario.py
+    instructions: |
+      ### Why this matters
+
+      A diagram answers some questions at a glance and others not at all.
+      Choosing the view before asking is what makes a request to an agent
+      useful.
+
+      ### 🎯 You will learn to
+
+      - Choose the view, or no view, that answers a design question
+
+      ### What to try
+
+      Plan which view you would ask for to answer each question, lock in
+      your plan, then answer with the expert's views.
+    diagram_challenge:
+      mode: plan-first
+      min_score: 0.8
+      questions:
+        - id: placing-call
+          type: single
+          question: "Which `OrderService` method does the Trip Website's checkout call?"
+          options:
+            - "`place()`"
+            - "`cancel()`"
+            - "`receivers()`"
+          correct_index: 0
+          option_feedback:
+            2: "`receivers()` belongs to `Bus`; `OrderService.place()` calls it after the checkout calls `place()`."
+        - id: every-event
+          type: single
+          question: "Which queue receives every order event, whatever its key?"
+          options:
+            - "`warehouse-etl`"
+            - "`trip-site-notifications`"
+            - "`partner-gateway`"
+          correct_index: 0
+          option_feedback:
+            1: "`order.*` matches one more word after `order.`, so a longer key such as `order.item.added` would not reach it."
+      plan:
+        - for: placing-call
+          options:
+            - "A component diagram of the order events"
+            - "A sequence diagram of one checkout"
+            - "No diagram: read `services/trip_site/checkout.py`"
+          correct_index: 2
+          option_feedback:
+            1: "A sequence diagram would show the call, but one short function answers it faster."
+        - for: every-event
+          options:
+            - "A class diagram of the services"
+            - "A component diagram of the order events"
+            - "No diagram: read `services/opc/orders.py`"
+          correct_index: 1
+          option_feedback:
+            0: "Classes do not show the broker's bindings; those come from configuration."
+            2: "`orders.py` names the events it publishes, not the queues that receive them."
+      reply:
+        request: "The expert asks for no diagram for the first question and for a UML component diagram of the order events for the second."
+        summary: "The checkout is one short function; the component view shows every consumer with its binding."
+        diagrams:
+          - id: events
+            type: component
+            label: "Order events"
+            source: |
+              @startuml
+              component OPC {
+                portout "order events" as opc_pub
+              }
+              component orders {
+                portin "publish" as ex_in
+                portout "deliver" as ex_out
+              }
+              component PartnerGateway {
+                portin "events" as pg_in
+              }
+              component TripSiteNotifications {
+                portin "events" as tn_in
+              }
+              component WarehouseETL {
+                portin "events" as we_in
+              }
+              opc_pub -- ex_in : publish
+              ex_out -- pg_in : binding order.placed
+              ex_out -- tn_in : binding order.*
+              ex_out -- we_in : binding any key
+              @enduml
+        evidence:
+          - text: "`partner-gateway` binds `order.placed`"
+            ref: deploy/broker.toml:8
+          - text: "`trip-site-notifications` binds `order.*`"
+            ref: deploy/broker.toml:13
+          - text: "`warehouse-etl` binds `#`, which is drawn as *any key*"
+            ref: deploy/broker.toml:18
+          - text: "`#` matches any number of words"
+            ref: infra/bus.py:13
+          - text: "`*` matches exactly one word"
+            ref: infra/bus.py:17
+        label: "Prepared in advance by an AI coding agent from this repository's code and verified against the code."
+      evidence_check:
+        claim_question:
+          id: claim
+          type: single
+          question: "Which claim does your second answer depend on that this diagram cannot prove?"
+          options:
+            - "That the diagram shows every binding in `deploy/broker.toml`"
+            - "That `OrderService` publishes the order events"
+          correct_index: 0
+          option_feedback:
+            1: "The diagram shows the order service publishing, and the code agrees; the claim it cannot prove is that no binding is missing."
+        prompt: "Check that claim in the code."
+        question:
+          id: complete
+          type: single
+          question: "Does `deploy/broker.toml` contain a binding that the diagram leaves out?"
+          options:
+            - "No: the diagram shows all three bindings"
+            - "Yes: a fourth binding is missing from the diagram"
+          correct_index: 0
+      debrief:
+        hidden_by: "Nothing hid the first answer: one short function holds it. The second answer lives in configuration."
+        view_shows: "Every consumer of the exchange at once; for one function call, the file itself is the better view."
+        consolidation_prompt: "When was reading one file faster than asking for a diagram?"

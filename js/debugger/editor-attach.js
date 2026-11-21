@@ -182,6 +182,10 @@
       return { dispose: function () {} };
     }
     var getActiveFile = opts.getActiveFile || function () { return null; };
+    // Optional host policy: when supplied, ending a session restores the
+    // active file's own read-only state instead of the state saved at start
+    // (the learner may have stepped into a file with a different flag).
+    var isReadOnlyFile = typeof opts.isReadOnlyFile === 'function' ? opts.isReadOnlyFile : null;
     var basename = opts.basename || function (p) {
       if (!p) return '';
       var i = String(p).lastIndexOf('/');
@@ -400,7 +404,9 @@
         editor.updateOptions({ readOnly: true });
       } else {
         if (savedReadOnly != null) {
-          editor.updateOptions({ readOnly: savedReadOnly });
+          editor.updateOptions({
+            readOnly: isReadOnlyFile ? !!isReadOnlyFile(getActiveFile()) : savedReadOnly,
+          });
           savedReadOnly = null;
         }
       }

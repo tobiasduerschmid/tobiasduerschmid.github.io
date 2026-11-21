@@ -302,6 +302,15 @@
   {% include tutorial-llm.html %}
   <link rel="stylesheet" href="{{ '/css/tutorial-llm.css' | relative_url }}">
   {% endif %}
+  {% if tutorial_data.file_tree or tutorial_data.project_search %}
+  <link rel="stylesheet" href="{{ '/css/tutorial-file-tree.css' | relative_url }}">
+  <link rel="stylesheet" href="{{ '/css/tutorial-project-search.css' | relative_url }}">
+  {% endif %}
+  <link rel="stylesheet" href="{{ '/css/tutorial-diagram-pane.css' | relative_url }}">
+  {% assign tutorial_challenge_steps = tutorial_data.steps | where_exp: "step", "step.diagram_challenge" %}
+  {% if tutorial_challenge_steps.size > 0 %}
+  <link rel="stylesheet" href="{{ '/css/tutorial-diagram-challenge.css' | relative_url }}">
+  {% endif %}
   <link rel="stylesheet" href="{{ '/css/print-light.css' | relative_url }}">
 
   <!-- Tutorial engine — unified (v86 / pyodide / webcontainer) -->
@@ -329,7 +338,16 @@
   <script src="{{ '/js/vendor/dompurify/3.4.17/purify.min.js' | relative_url }}"></script>
   {% endif %}
   <script src="{{ '/js/monaco-loader.js' | relative_url }}"></script>
+  {% if tutorial_data.file_tree or tutorial_data.project_search %}
+  <script src="{{ '/js/tutorial-file-tree.js' | relative_url }}"></script>
+  <script src="{{ '/js/tutorial-project-search.js' | relative_url }}"></script>
+  {% endif %}
   <script src="{{ '/js/tutorial-code.js' | relative_url }}"></script>
+  <script src="{{ '/js/tutorial-diagram-pane.js' | relative_url }}"></script>
+  {% if tutorial_challenge_steps.size > 0 %}
+  <script src="{{ '/js/tutorial-diagram-challenge-core.js' | relative_url }}"></script>
+  <script src="{{ '/js/tutorial-diagram-challenge.js' | relative_url }}"></script>
+  {% endif %}
   {% if tutorial_llm_enabled %}
   <script src="{{ '/js/tutorial-llm.js' | relative_url }}"></script>
   {% endif %}
@@ -408,7 +426,7 @@
       // on each jsonified string converts literal closing-script-tags inside embedded
       // GitCommandLab specs to the safe <\/script form so the outer script block cannot
       // be terminated prematurely by the HTML parser.
-      var instructionHTML = [{% for step in tutorial_data.steps %}{% capture rendered_step_instructions %}{% include tutorial-step-instructions.html tutorial=tutorial_data step=step %}{% endcapture %}{{ rendered_step_instructions | jsonify | replace: "</script", "<\/script" }}{% unless forloop.last %},{% endunless %}{% endfor %}];
+      var instructionHTML = [{% for step in tutorial_data.steps %}{% capture rendered_step_instructions %}{% include tutorial-step-instructions.html tutorial=tutorial_data step=step index=forloop.index0 %}{% endcapture %}{{ rendered_step_instructions | jsonify | replace: "</script", "<\/script" }}{% unless forloop.last %},{% endunless %}{% endfor %}];
       config.steps.forEach(function (step, i) { step.instructionsHTML = instructionHTML[i]; });
 
       // Pre-render solution explanation markdown (same Rouge highlighting)
@@ -451,6 +469,11 @@
         {% if tutorial_backend == 'shell-pipeline' %}shellManuals: {{ site.data.shell_command_manuals | jsonify | replace: '</script', '<\/script' }},{% endif %}
         tutorialId:   '{{ page.tutorial }}',
         steps:        config.steps,
+        // Multi-folder projects: steps without `files` use `shared_files`;
+        // `file_tree` and `project_search` add the Files tree and Search.
+        sharedFiles:   config.shared_files || null,
+        fileTree:      config.file_tree === true,
+        projectSearch: config.project_search === true,
         ai_tutor:     config.ai_tutor === true,
         ai_tutor_mode: config.ai_tutor_mode,
         progressVersion: config.progress_version || null,
@@ -551,7 +574,9 @@
           e.preventDefault();
           window.SebookConfirmation.confirm({
             title: 'Reset the current step?',
-            message: 'This will discard your edits in this step and restore the starter files.',
+            message: tutorial.currentStepHasDiagramChallenge && tutorial.currentStepHasDiagramChallenge()
+              ? 'This will discard your edits and your diagram challenge answers and times in this step, and restore the starter files.'
+              : 'This will discard your edits in this step and restore the starter files.',
             confirmLabel: 'Reset step',
             trigger: resetBtn
           }).then(function (confirmed) {
