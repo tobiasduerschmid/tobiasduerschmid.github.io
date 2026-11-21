@@ -204,6 +204,16 @@ html, body {
   flex: 0 0 33.333%;
 }
 
+/* `instructions_width: narrow`: about a third of the width, never so narrow
+   that questions and their options get cramped. Side by side only: stacked
+   panels (900px and below) keep their own height. A dragged width is an
+   inline flex value and still wins. */
+@media screen and (min-width: 901px) {
+  .tvm-instructions-panel--narrow {
+    flex-basis: max(32%, 26em);
+  }
+}
+
 /* Left-panel tab switcher (Steps / UML Diagram) */
 .tvm-left-tab-bar {
   display: flex;
@@ -663,6 +673,15 @@ html:not(.dark-mode) .tvm-left-tab.active {
   background: #1e1e1e;
   border-bottom: 1px solid #2a2a2e;
 }
+/* No bottom panel (`run: false`, or Output moved to the left column): the
+   editor takes the workspace's height, and there is nothing to resize. */
+.tvm-workspace--editor-only > .tvm-editor-panel {
+  flex: 1 1 auto;
+  border-bottom: 0;
+}
+.tvm-workspace--editor-only > .tvm-vsplitter {
+  display: none;
+}
 
 .tvm-editor-tabs {
   display: flex;
@@ -828,72 +847,171 @@ html:not(.dark-mode) .tvm-left-tab.active {
   gap: 8px;
 }
 
-.tvm-instructions-detached-placeholder {
+/* "Hide instructions" in the step nav bar (js/tutorial-instructions-rail.js).
+   Text inherits the paragraph size. */
+.tvm-instructions-hide-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+  min-height: 2em;
+  padding: 0.15em 0.6em;
+  border: 1px solid #8a8aa8;
+  border-radius: 4px;
+  background: #252538;
+  color: #e0e8f0;
+  font: inherit;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+  cursor: pointer;
+}
+/* Right-aligned; beside a shown popout button, which takes the spare room. */
+.tvm-instructions-hide-btn {
+  margin-left: auto;
+}
+.tvm-instructions-popout-btn:not([hidden]) + .tvm-instructions-hide-btn {
+  margin-left: 0;
+}
+.tvm-instructions-hide-btn:hover {
+  background: #35354e;
+  color: #ffffff;
+}
+
+/* Lecture mode shows no step numbers; the bar keeps "Hide instructions". */
+.tvm-step-nav-bar--lecture > :not(.tvm-instructions-hide-btn) {
+  display: none !important;
+}
+.tvm-step-nav-bar--lecture > .tvm-instructions-popout-btn + .tvm-instructions-hide-btn {
+  margin-left: auto;
+}
+
+/* The rail: the instructions are hidden or popped out. Its one button shows
+   them again or brings them back from the popout. */
+.tvm-instructions-rail {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  padding: 8px 6px;
-  color: #888;
+  gap: 0.6em;
+  padding: 0.5em 0.4em;
+  color: #c8d4e4;
   text-align: center;
   background: rgba(255, 255, 255, 0.02);
   flex-shrink: 0;
 }
-.tvm-instructions-detached-placeholder .tvm-btn-reattach {
-  padding: 3px 8px;
-  border: 1px solid #5a5a78;
+.tvm-instructions-rail[hidden] { display: none; }
+.tvm-instructions-rail-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4em;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0.4em 0.7em;
+  border: 1px solid #8a8aa8;
   border-radius: 4px;
   background: #252538;
-  color: #c8d4e4;
+  color: #e0e8f0;
   font: inherit;
   font-weight: 600;
+  line-height: 1.2;
   cursor: pointer;
-  line-height: 1;
-  transition: background 0.1s, color 0.1s;
 }
-.tvm-instructions-detached-placeholder .tvm-btn-reattach:hover {
-  background: #35354e; border-color: #5a5a78;
+.tvm-instructions-rail-btn:hover {
+  background: #35354e;
+  color: #ffffff;
 }
-.tvm-instructions-panel.tvm-instructions-detached .tvm-steps-view { display: none; }
+.tvm-instructions-hide-btn:focus-visible,
+.tvm-instructions-rail-btn:focus-visible {
+  outline: 3px solid #8bb8e8;
+  outline-offset: 2px;
+}
+.tvm-instructions-rail-msg {
+  margin: 0;
+  color: #c8d4e4;
+}
+.tvm-instructions-panel.tvm-instructions-railed .tvm-steps-view { display: none; }
 
-/* Width-shrink (default): collapse the whole panel to a thin vertical strip. */
-.tvm-instructions-panel.tvm-instructions-detached.tvm-instructions-detached-horizontal {
-  flex: 0 0 56px !important;
-  min-width: 56px !important;
-  max-width: 56px !important;
-  overflow: hidden;
+/* Horizontal (default): the whole panel becomes a rail beside the workspace,
+   and its divider goes, since there is nothing to resize. Inline sizes from a
+   divider drag return when the instructions do. Screen only: print shows the
+   instructions. */
+@media screen {
+  .tvm-instructions-panel.tvm-instructions-rail-horizontal {
+    flex: 0 0 3.5em !important;
+    min-width: 3.5em !important;
+    max-width: 3.5em !important;
+    overflow: hidden;
+  }
+  .tvm-instructions-panel.tvm-instructions-rail-horizontal > :not(.tvm-instructions-rail),
+  .tvm-instructions-panel.tvm-instructions-rail-horizontal + .tvm-hsplitter {
+    display: none;
+  }
 }
-.tvm-instructions-panel.tvm-instructions-detached-horizontal .tvm-instructions-detached-placeholder {
+.tvm-instructions-panel.tvm-instructions-rail-horizontal .tvm-instructions-rail {
   flex-direction: column;
+  justify-content: flex-start;
   height: 100%;
-  padding: 14px 4px;
-  gap: 10px;
-  writing-mode: horizontal-tb;
+  padding: 0.75em 0.25em;
 }
-.tvm-instructions-panel.tvm-instructions-detached-horizontal .tvm-detached-msg {
+.tvm-instructions-panel.tvm-instructions-rail-horizontal .tvm-instructions-rail-btn {
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+  padding: 0.6em 0;
+}
+/* The labels read from the bottom up, like a book spine. */
+.tvm-instructions-panel.tvm-instructions-rail-horizontal :is(.tvm-instructions-rail-btn-label, .tvm-instructions-rail-msg) {
   writing-mode: vertical-rl;
   transform: rotate(180deg);
   white-space: nowrap;
-  letter-spacing: 0.04em;
-  color: #777;
-}
-.tvm-instructions-panel.tvm-instructions-detached-horizontal .tvm-instructions-popout-btn {
-  display: none;
 }
 
-/* Height-shrink (UML below variants): keep panel width, collapse the
-   instructions strip so the UML region below expands to fill the column. */
-.tvm-instructions-panel.tvm-instructions-detached-vertical .tvm-instructions-detached-placeholder {
+/* Vertical (UML below the instructions): keep the column's width and shrink
+   the instructions to a bar, so the UML view below fills the column. */
+.tvm-instructions-panel.tvm-instructions-rail-vertical .tvm-instructions-rail {
   flex-direction: row;
-  padding: 6px 12px;
+  justify-content: flex-start;
+  padding: 0.4em 0.75em;
   border-bottom: 1px solid #2a2a2e;
 }
-.tvm-instructions-panel.tvm-instructions-detached-vertical .tvm-uml-below-view,
-.tvm-instructions-panel.tvm-instructions-detached-vertical .tvm-uml-bottom-left-view {
+.tvm-instructions-panel.tvm-instructions-rail-vertical .tvm-uml-below-view,
+.tvm-instructions-panel.tvm-instructions-rail-vertical .tvm-uml-bottom-left-view {
   flex: 1 1 auto;
 }
-.tvm-instructions-panel.tvm-instructions-detached-vertical .tvm-instructions-popout-btn {
-  display: none;
+
+/* Where the panels stack, the horizontal rail is a bar above the workspace. */
+@media screen and (max-width: 900px) {
+  .tvm-instructions-panel.tvm-instructions-rail-horizontal {
+    flex: 0 0 auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+  }
+  .tvm-instructions-panel.tvm-instructions-rail-horizontal .tvm-instructions-rail {
+    flex-direction: row;
+    justify-content: flex-start;
+    height: auto;
+    padding: 0.4em 0.75em;
+  }
+  .tvm-instructions-panel.tvm-instructions-rail-horizontal .tvm-instructions-rail-btn {
+    flex-direction: row;
+    width: auto;
+    padding: 0.4em 0.7em;
+  }
+  .tvm-instructions-panel.tvm-instructions-rail-horizontal :is(.tvm-instructions-rail-btn-label, .tvm-instructions-rail-msg) {
+    writing-mode: horizontal-tb;
+    transform: none;
+  }
+}
+
+/* Print shows the instructions, hidden or not, without the rail. */
+@media print {
+  .tvm-instructions-rail,
+  .tvm-instructions-hide-btn {
+    display: none !important;
+  }
+  .tvm-instructions-panel.tvm-instructions-railed .tvm-steps-view {
+    display: flex !important;
+  }
 }
 
 .tvm-popup-blocked-toast {
@@ -4401,20 +4519,26 @@ html:not(.dark-mode) .tvm-instructions-popout-btn:hover {
   color: #333;
   border-color: #999;
 }
-html:not(.dark-mode) .tvm-instructions-detached-placeholder {
-  color: #555;
+html:not(.dark-mode) :is(.tvm-instructions-hide-btn, .tvm-instructions-rail-btn) {
+  background: #f3f3f6;
+  border-color: #6b6b80;
+  color: #1f2530;
+}
+html:not(.dark-mode) :is(.tvm-instructions-hide-btn, .tvm-instructions-rail-btn):hover {
+  background: #e4e6ee;
+  color: #111111;
+}
+html:not(.dark-mode) :is(.tvm-instructions-hide-btn, .tvm-instructions-rail-btn):focus-visible {
+  outline-color: #005587;
+}
+html:not(.dark-mode) .tvm-instructions-rail {
+  color: #3a3f4a;
   background: rgba(0, 0, 0, 0.02);
 }
-html:not(.dark-mode) .tvm-instructions-detached-placeholder .tvm-btn-reattach {
-  background: #f3f3f3; border-color: #ccc; color: #333;
+html:not(.dark-mode) .tvm-instructions-rail-msg {
+  color: #3a3f4a;
 }
-html:not(.dark-mode) .tvm-instructions-detached-placeholder .tvm-btn-reattach:hover {
-  background: #e8e8e8; border-color: #999;
-}
-html:not(.dark-mode) .tvm-instructions-panel.tvm-instructions-detached-horizontal .tvm-detached-msg {
-  color: #666;
-}
-html:not(.dark-mode) .tvm-instructions-panel.tvm-instructions-detached-vertical .tvm-instructions-detached-placeholder {
+html:not(.dark-mode) .tvm-instructions-panel.tvm-instructions-rail-vertical .tvm-instructions-rail {
   border-bottom-color: #d4d4d4;
 }
 html:not(.dark-mode) .tvm-popup-blocked-toast {

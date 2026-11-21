@@ -247,6 +247,18 @@
    *          onReset?: function(): void}} options
    * @returns {{open: function(): void, close: function(): void, destroy: function(): void}}
    */
+  /**
+   * The search button's tooltip. In full screen, Chrome on macOS keeps
+   * Cmd+Shift+F for its own menu, so Mac users learn Control+Shift+F too.
+   */
+  function shortcutHint() {
+    var platform = navigator.userAgentData && navigator.userAgentData.platform
+      ? navigator.userAgentData.platform : navigator.platform || '';
+    return /Mac|iPhone|iPad|iPod/i.test(platform)
+      ? 'Search all files (\u2318\u21e7F, or \u2303\u21e7F in full screen)'
+      : 'Search all files (Ctrl+Shift+F)';
+  }
+
   function mount(host, options) {
     options = options || {};
     var getFiles = typeof options.getFiles === 'function' ? options.getFiles : function () { return []; };
@@ -264,6 +276,7 @@
     toggle.setAttribute('aria-expanded', 'false');
     toggle.setAttribute('aria-controls', id);
     toggle.setAttribute('aria-keyshortcuts', 'Control+Shift+F Meta+Shift+F');
+    toggle.setAttribute('data-original-title', shortcutHint());
 
     var panel = element('section', 'tutorial-project-search');
     panel.id = id;

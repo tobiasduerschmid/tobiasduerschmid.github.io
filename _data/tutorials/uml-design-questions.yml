@@ -14,6 +14,12 @@ learning_objectives:
   - "Select the view that best answers a question (class, component, sequence, or none), including for a system you have not seen."
 
 backend: pyodide
+# Students read the code; nothing runs (a TOML file or a module run as a
+# script only fails). No Run button and no OUTPUT panel: the editor and the
+# diagram get the height. The repro steps show what their scripts print.
+run: false
+# A narrower instructions column leaves the code and the diagram more room.
+instructions_width: narrow
 # A passed diagram challenge (or knowledge check) unlocks the next step.
 require_tests: true
 # Stable step keys identify saved challenge records and deep links.
@@ -22,11 +28,6 @@ file_tree: true
 project_search: true
 # Every step shows the same read-only codebase, so the print view shows it once.
 print_unchanged_files: false
-
-# Pyodide writes the files under /tutorial/ and runs there; Headliner's
-# packages import each other from that root, as `python3 -m` does locally.
-setup_commands:
-  - "import sys; sys.path.insert(0, '/tutorial')"
 
 # BEGIN GENERATED
 # Written by scripts/uml_design_questions/build_yaml.py from
@@ -5529,7 +5530,7 @@ steps:
   # ===========================================================================
   # STEP 3: Failure Paths in an Order Workflow (sequence, trace)
   # ===========================================================================
-  # Pedagogy: PRIMM. Run the repro script, Predict the cause from the code,
+  # Pedagogy: PRIMM. Read the repro script and its output, Predict the cause from the code,
   # Investigate with the trace, then Modify (what the rejection path must
   # add). The evidence check is the first of three and the most scaffolded:
   # it names what to check, because an absence in a diagram is a hypothesis
@@ -5541,7 +5542,6 @@ steps:
   - key: failed-trips
     title: "Failure Paths in an Order Workflow"
     open_file: scenarios/failed_trip.py
-    run_file: scenarios/failed_trip.py
     instructions: |
       ### Why this matters
 
@@ -5558,7 +5558,16 @@ steps:
 
       ### Your task
 
-      1. **Run** `scenarios/failed_trip.py` (it is open) to reproduce one of these trips. It prints the symptoms, not the cause.
+      1. **Read the repro.** `scenarios/failed_trip.py` (it is open) reproduces one of these trips; the script itself is evidence of what the trip contained. On the devstack it prints the symptoms, not the cause:
+
+         ```text
+         Trip HL-1001 for Neon Nights: failed
+         Charged to the fan's card: $1,136.80
+         Bookings at the suppliers:
+           HL-1001-box-office: confirmed
+           HL-1001-glampingco: confirmed
+           HL-1001-shuttle: rejected
+         ```
       2. **Trace.** Follow the trip order from the moment the OPC receives it to the supplier's rejection. Pin the line where the card is charged and the line that handles a rejection.
       3. **Decide** what happens to the money and which fix to ask for, then lock in.
       4. **Compare.** Answer again with the agent's diagram. A short knowledge check follows.
@@ -6090,7 +6099,7 @@ steps:
   # ===========================================================================
   # STEP 6: Latency on the Checkout Path (sequence, performance)
   # ===========================================================================
-  # Pedagogy: PRIMM. Run the repro script, Investigate the request's calls,
+  # Pedagogy: PRIMM. Read the repro script and its output, Investigate the request's calls,
   # then Modify: choose the change that meets the target from the per-call
   # durations in the notes. The knowledge check is spaced practice: one
   # question per earlier task's view, each in a new context.
@@ -6100,7 +6109,6 @@ steps:
   - key: checkout-latency
     title: "Latency on the Checkout Path"
     open_file: scenarios/slow_group_checkout.py
-    run_file: scenarios/slow_group_checkout.py
     instructions: |
       ### Why this matters
 
@@ -6117,7 +6125,12 @@ steps:
 
       ### Your task
 
-      1. **Run** `scenarios/slow_group_checkout.py` (it is open) to time the checkout on the devstack's clock.
+      1. **Read the repro.** `scenarios/slow_group_checkout.py` (it is open) times this checkout on the devstack's clock; the script itself is evidence of what the group ordered. It prints:
+
+         ```text
+         5 attendees, 3 experiences: Order received
+         Time until the fan saw it: 8.4 s (target: 2.0 s)
+         ```
       2. **Trace** the request from **Book now** to **Order received**, and find how long each kind of call takes. Pin two lines where a call to another system sits inside a loop.
       3. **Decide, then compare.** Answer from the code, choose your view, lock in, and answer again with the expert's view. A short knowledge check follows.
     diagram_challenge:

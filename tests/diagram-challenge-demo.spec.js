@@ -426,6 +426,23 @@ test.describe('authored-diagram pane', () => {
     await expect(hint).toBeHidden();
   });
 
+  test('the fit hint never covers the Code links summary under a drawing with links', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await openDemo(page);
+    await answerExploreFromCode(page);
+    await lockIn(page);
+    const pane = diagramPane(page);
+    const hint = pane.getByText('Click a part of the drawing to read it at full size, or click an underlined name to open its code.', { exact: true });
+    const summary = pane.locator('summary', { hasText: /^Code links$/ });
+    await expect(hint).toBeVisible();
+    await expect(summary).toBeVisible();
+
+    const [hintBox, summaryBox] = [await hint.boundingBox(), await summary.boundingBox()];
+    const overlaps = hintBox.x < summaryBox.x + summaryBox.width && summaryBox.x < hintBox.x + hintBox.width &&
+      hintBox.y < summaryBox.y + summaryBox.height && summaryBox.y < hintBox.y + hintBox.height;
+    expect(overlaps, `hint ${JSON.stringify(hintBox)} covers summary ${JSON.stringify(summaryBox)}`).toBe(false);
+  });
+
   test('the pane enters and leaves full screen from its own button', async ({ page }) => {
     await openDemo(page);
     await showDiagrams(page, [ORDER_EVENTS]);
@@ -1200,12 +1217,12 @@ test.describe('diagram search and code links', () => {
     await expect(pane.locator('rect.tutorial-diagram-pane__hit-box')).toHaveCount(0);
   });
 
-  test('double-clicking a linked label opens its code beside the diagram', async ({ page }) => {
+  test('clicking a linked label opens its code beside the diagram', async ({ page }) => {
     await openDemo(page);
     await answerExploreFromCode(page);
     await lockIn(page);
     const link = linkFor('WarehouseETL');
-    await drawingLabel(page, link.text).dblclick();
+    await drawingLabel(page, link.text).click();
 
     await expect(fileTabs(page).getByRole('button', { name: link.path, exact: true })).toHaveAttribute('aria-current', 'true');
     await expect.poll(() => page.evaluate(() => window._tutorial.currentEditorLocation())).toEqual({ path: link.path, line: link.line });
@@ -1213,19 +1230,20 @@ test.describe('diagram search and code links', () => {
     await expect(page.getByRole('button', { name: 'Code beside diagram' })).toHaveAttribute('aria-pressed', 'true');
   });
 
-  test('a single click on a linked label in Fit view does not zoom, and the hint says to double-click', async ({ page }) => {
+  test('a click on a linked label in Fit view opens its code instead of zooming, as the hint says', async ({ page }) => {
     await openDemo(page);
     await answerExploreFromCode(page);
     await lockIn(page);
     const pane = diagramPane(page);
+    const link = linkFor('OPC');
     await expect(pane.getByText('Fit', { exact: true })).toBeVisible();
-    await expect(pane.getByText('Click a part of the drawing to read it at full size; double-click an underlined name to open its code.', { exact: true }))
+    await expect(pane.getByText('Click a part of the drawing to read it at full size, or click an underlined name to open its code.', { exact: true }))
       .toBeVisible();
 
-    await drawingLabel(page, 'OPC').click();
+    await drawingLabel(page, link.text).click();
 
+    await expect.poll(() => page.evaluate(() => window._tutorial.currentEditorLocation())).toEqual({ path: link.path, line: link.line });
     await expect(pane.getByText('Fit', { exact: true })).toBeVisible();
-    expect(await page.evaluate(() => window._tutorial.currentEditorLocation())).not.toEqual({ path: linkFor('OPC').path, line: linkFor('OPC').line });
   });
 
   test('each code link is a button that opens its code from the keyboard', async ({ page }) => {
@@ -1256,14 +1274,14 @@ test.describe('diagram search and code links', () => {
       'note bottom of Broker\nBindings: deploy/broker.toml:13 and\ndeploy/broker.toml:13 again; not foo.py:3\nend note\n@enduml',
   };
 
-  test('a path:line in a diagram note opens its file by double-click and from the list', async ({ page }) => {
+  test('a path:line in a diagram note opens its file by click and from the list', async ({ page }) => {
     await openDemo(page);
     await showDiagrams(page, [CITING_NOTE], { layout: 'split' });
     const citations = diagramPane(page).locator('svg .tutorial-diagram-pane__link');
     await expect(citations).toHaveText(['deploy/broker.toml:13', 'deploy/broker.toml:13']);
     expect(await citations.first().evaluate(node => getComputedStyle(node).textDecorationLine)).toContain('underline');
 
-    await citations.first().dblclick();
+    await citations.first().click();
     await expect(fileTabs(page).getByRole('button', { name: 'deploy/broker.toml', exact: true })).toHaveAttribute('aria-current', 'true');
     await expect.poll(() => page.evaluate(() => window._tutorial.currentEditorLocation())).toEqual({ path: 'deploy/broker.toml', line: 13 });
 

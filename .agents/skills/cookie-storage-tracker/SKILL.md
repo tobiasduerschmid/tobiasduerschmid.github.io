@@ -123,7 +123,7 @@ This is a snapshot to help you spot duplicates and pick the right category — *
 - `se-gym-workout-fullscreen` — optional fullscreen for workout launches; off by default
 - `se-gym`, `se-gym-active`, `se-gym-timed-practice`, `se-gym-timer-mode`, `se-gym-timer-total-minutes`, `se-gym-timer-seconds-per-question`, `analyze-performance`, `se-gym-show-difficulty`, `se-gym-show-workout-hero`, `se-gym-active-difficulties`
 
-**localStorage — static (12):**
+**localStorage — static (13):**
 - `prefersReducedMotion`
 - `abbr-underlines`
 - `cap_volume`, `cap_speed`
@@ -132,6 +132,7 @@ This is a snapshot to help you spot duplicates and pick the right category — *
 - `se-gym-skipped-questions` — question IDs grouped by deck, saved by Always skip and excluded from future practice; restored individually on the statistics page or all at once in My Settings or the storage inventory
 - `se-gym-workout-progress` — active workout checkpoint including card order, optional selected deck IDs that preserve skip scope on resume, position, score, missed cards, and difficulty tally
 - `tutorial-autosave`
+- `tutorial-instructions-hidden` — `1` while the learner keeps tutorial instructions hidden to a rail (all tutorials); removed on Show
 - `sebook-code-language` — shared language for SEBook code tabs, UML labs, and Observer lesson views; written on explicit selection, default Python
 - `regex-tutorial-progress`, `regex-tutorial-advanced-progress`
 
@@ -168,6 +169,7 @@ This is a snapshot to help you spot duplicates and pick the right category — *
 - Read-aloud controls and voice: `read-aloud`, `tts-voice-name`
 - Audio defaults: `cap_volume`, `cap_speed`
 - Tutorial autosave: `tutorial-autosave`
+- Tutorial instructions hidden by default: `tutorial-instructions-hidden`
 - SE Book code language: `sebook-code-language` (Python, Java, C++, TypeScript)
 - UML accent color: `uml-accent-color`
 - SEBook bookmarks enabled: `se-bookmarks-active`

@@ -11,7 +11,7 @@ as its author wrote it:
 - x-diagram-links: each diagram's code links, from the sidecar next to its source
   (event-consumers.links.yml beside event-consumers.component.uml), under an anchor
   such as &l_event_consumers, which the step reuses as `links: *l_event_consumers`.
-  A link is {text, path, line}: double-clicking the label `text` in the drawing
+  A link is {text, path, line}: clicking the label `text` in the drawing
   opens the shared file `path` at `line`.
 
     python3 scripts/uml_design_questions/build_yaml.py --write   # update the YAML

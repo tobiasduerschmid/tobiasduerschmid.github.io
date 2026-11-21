@@ -18,6 +18,8 @@ import importlib.util
 import json
 import os
 import re
+import subprocess
+import sys
 from collections import Counter
 from pathlib import Path
 
@@ -266,9 +268,35 @@ def test_every_step_shows_the_shared_read_only_codebase():
             assert candidate["run_file"] in SHARED, candidate["key"]
 
 
-def test_the_bug_steps_run_their_repro_scripts():
-    assert step("failed-trips").get("run_file") == "scenarios/failed_trip.py"
-    assert step("checkout-latency").get("run_file") == "scenarios/slow_group_checkout.py"
+def test_nothing_runs_in_the_browser():
+    # Every file is read, not run: TOML or a module run as a script only fails.
+    assert TUTORIAL.get("run") is False
+    for candidate in STEPS:
+        assert "run_file" not in candidate, candidate["key"]
+        assert "**Run**" not in candidate["instructions"], candidate["key"]
+
+
+def repro_output(module):
+    """What a repro script prints when run from Headliner's root."""
+    headliner = ROOT / "tutorial_sources/uml-design-questions/headliner"
+    result = subprocess.run(
+        [sys.executable, "-m", module], cwd=headliner, capture_output=True, text=True, check=True)
+    return result.stdout.rstrip("\n")
+
+
+def test_the_bug_steps_show_their_repro_scripts_output():
+    for key, script, module in (
+        ("failed-trips", "scenarios/failed_trip.py", "scenarios.failed_trip"),
+        ("checkout-latency", "scenarios/slow_group_checkout.py", "scenarios.slow_group_checkout"),
+    ):
+        candidate = step(key)
+        assert candidate.get("open_file") == script, key
+        # The script stays open as evidence; its output is shown as text.
+        assert f"`{script}`" in candidate["instructions"], key
+        blocks = re.findall(r"```text\n(.*?)\n *```", candidate["instructions"], re.S)
+        shown = ["\n".join(line.strip() for line in block.splitlines()) for block in blocks]
+        expected = "\n".join(line.strip() for line in repro_output(module).splitlines())
+        assert expected in shown, key
 
 
 # --- Instructions ------------------------------------------------------------------------

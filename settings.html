@@ -321,6 +321,29 @@ info_nav_title: "My Settings"
 
         <div class="setting-row">
           <div>
+            <p class="setting-name">Hide tutorial instructions</p>
+            <p class="setting-description">
+              When this is on, tutorials open with their instructions hidden
+              to a narrow rail, so the code and the diagrams get the width.
+              The <strong>Hide instructions</strong> and
+              <strong>Show instructions</strong> buttons in a tutorial change
+              it too. Stored as <code>tutorial-instructions-hidden</code>.
+            </p>
+          </div>
+          <div class="setting-control">
+            <div class="setting-toggle-row">
+              <label class="switch">
+                <span class="sr-only">Hide tutorial instructions</span>
+                <input type="checkbox" id="setting-tutorial-instructions-hidden" data-setting="tutorialInstructionsHidden" data-status-target="setting-tutorial-instructions-hidden-status" aria-label="Hide tutorial instructions">
+                <span class="slider round"></span>
+              </label>
+              <span class="setting-toggle-status" id="setting-tutorial-instructions-hidden-status" aria-hidden="true"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="setting-row">
+          <div>
             <p class="setting-name">UML diagram color</p>
             <p class="setting-description">
               The interactive UML diagrams across the site (class, sequence,
@@ -1038,6 +1061,7 @@ info_nav_title: "My Settings"
     document.getElementById('setting-song-speed').value = String(window.SongPreferences.speed());
 
     setCheckbox('setting-tutorial-autosave', readLS('tutorial-autosave') !== 'false');
+    setCheckbox('setting-tutorial-instructions-hidden', readLS('tutorial-instructions-hidden') === '1');
 
     var color = document.getElementById('setting-uml-color');
     if (color) color.value = normalizeColor(readCookie('uml-accent-color'));
@@ -1152,6 +1176,10 @@ info_nav_title: "My Settings"
     } else if (setting === 'tutorialAutosave') {
       writeLS('tutorial-autosave', target.checked ? 'true' : 'false');
       announce('Tutorial autosave setting saved.');
+    } else if (setting === 'tutorialInstructionsHidden') {
+      if (target.checked) writeLS('tutorial-instructions-hidden', '1');
+      else clearLS('tutorial-instructions-hidden');
+      announce(target.checked ? 'Tutorials will open with their instructions hidden.' : 'Tutorials will open with their instructions shown.');
     } else if (setting === 'umlColor') {
       writeCookie('uml-accent-color', normalizeColor(target.value));
       announce('UML accent color saved.');

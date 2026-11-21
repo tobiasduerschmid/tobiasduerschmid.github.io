@@ -59,9 +59,9 @@ function parseRef(ref) {
 // Page helpers
 // ---------------------------------------------------------------------------
 
-/** The workspace stays hidden while it boots, so Run appears once it is ready. */
+/** The workspace stays hidden while it boots, so the step nav appears once it is ready. */
 async function waitForBoot(page) {
-  await expect(runButton(page)).toBeEnabled({ timeout: BOOT_TIMEOUT });
+  await expect(page.getByRole('button', { name: /^Step 1:/ })).toBeVisible({ timeout: BOOT_TIMEOUT });
 }
 
 function runButton(page) {
@@ -245,7 +245,6 @@ async function openEvidence(page, challengeSpec) {
   await expect(fileTab(page, filePath)).toHaveAttribute('aria-current', 'true');
   await expect.poll(() => editorLocation(page)).toEqual({ path: filePath, line });
   await expect(codeEditor(page)).toBeVisible();
-  await expect(programOutput(page)).toBeVisible();
   await expect(diagramRegion(page, challengeSpec.reply.diagrams[0].type)).toBeVisible();
   await expect(page.getByRole('button', { name: 'Code beside diagram' })).toHaveAttribute('aria-pressed', 'true');
 }
@@ -444,7 +443,6 @@ test.describe('the whole tutorial, as a student', () => {
     await lockIn(page, 'Lock in my answer');
     await expect(diagramRegion(page, 'component')).toBeVisible();
     await expect(fileTree(page)).toBeHidden();
-    await expect(programOutput(page)).toBeHidden();
     await audit('locked, maximized diagram');
     await reload();
     await expect(stage(page, 'The agent’s reply')).toBeVisible();
@@ -473,11 +471,10 @@ test.describe('the whole tutorial, as a student', () => {
   });
 
   /** One code-first challenge from the code to the comparison. */
-  async function completeCodeFirst(key, { runFirst } = {}) {
+  async function completeCodeFirst(key) {
     const step = stepByKey(key);
     const challengeSpec = step.diagram_challenge;
     await expect(stepHeading(page, step)).toBeVisible();
-    if (runFirst) await runFirst();
     await writeAttempt(page, step);
     await answerFromCode(page, step);
     await expect(nextButton(page)).toBeDisabled();
@@ -496,18 +493,15 @@ test.describe('the whole tutorial, as a student', () => {
     await continueToNextStep(page, step);
   }
 
-  test('Failure Paths: the repro script, the trace, and the evidence check', async () => {
+  test('Failure Paths: the repro output, the trace, and the evidence check', async () => {
     test.setTimeout(180_000);
-    await completeCodeFirst('failed-trips', {
-      runFirst: async () => {
-        await runButton(page).click();
-        // The repro runs to the end and prints symptoms only: the trip's
-        // status, `failed`, and never the cause (no refund).
-        await expect(programOutput(page)).toContainText('✓ Done', { timeout: BOOT_TIMEOUT });
-        await expect(programOutput(page)).toContainText(': failed');
-        await expect(programOutput(page)).not.toContainText(/refund/i);
-      },
-    });
+    // The task shows what the repro prints: symptoms only, the trip's
+    // status and the charge, never the cause (no refund).
+    const repro = page.getByRole('code').filter({ hasText: 'Charged to the fan' });
+    await expect(repro).toContainText(': failed');
+    await expect(repro).toContainText('$1,136.80');
+    await expect(repro).not.toContainText(/refund/i);
+    await completeCodeFirst('failed-trips');
   });
 
   test('What the Data Model Allows: a predicted view and a class diagram', async () => {
@@ -520,16 +514,12 @@ test.describe('the whole tutorial, as a student', () => {
     await completeCodeFirst('outages');
   });
 
-  test('Latency on the Checkout Path: the repro times the checkout', async () => {
+  test('Latency on the Checkout Path: the repro output times the checkout', async () => {
     test.setTimeout(180_000);
-    await completeCodeFirst('checkout-latency', {
-      runFirst: async () => {
-        await runButton(page).click();
-        // The repro prints the total with one decimal, as facts.json measured it.
-        await expect(programOutput(page)).toContainText('✓ Done', { timeout: BOOT_TIMEOUT });
-        await expect(programOutput(page)).toContainText(`${facts.checkout_latency.elapsed_seconds.toFixed(1)} s`);
-      },
-    });
+    // The task shows the total the repro prints, with one decimal, as facts.json measured it.
+    await expect(page.getByRole('code').filter({ hasText: 'Time until the fan saw it' }))
+      .toContainText(`${facts.checkout_latency.elapsed_seconds.toFixed(1)} s`);
+    await completeCodeFirst('checkout-latency');
   });
 
   test('The Right View: the plan, four diagrams, and the results card', async () => {
@@ -646,7 +636,7 @@ test.describe('timing', () => {
 test.describe('code links', () => {
   test.use({ viewport: { width: 1440, height: 900 } });
 
-  test('double-clicking a linked label in the reply diagram opens its code', async ({ page }) => {
+  test('clicking a linked label in the reply diagram opens its code', async ({ page }) => {
     test.setTimeout(180_000);
     await openEventConsumers(page);
     await writeAttempt(page, EVENT_CONSUMERS);
@@ -656,7 +646,7 @@ test.describe('code links', () => {
     const link = diagram.links.find(item => item.text === 'Notifications');
     const label = diagramRegion(page, diagram.type).locator('svg text').filter({ hasText: /^\s*Notifications\s*$/ });
 
-    await label.dblclick();
+    await label.click();
 
     await expect(fileTab(page, link.path)).toHaveAttribute('aria-current', 'true');
     await expect.poll(() => editorLocation(page)).toEqual({ path: link.path, line: link.line });
@@ -664,7 +654,7 @@ test.describe('code links', () => {
     await expect(diagramRegion(page, diagram.type)).toBeVisible();
 
     // A note's citation of a project file is a link too.
-    await diagramRegion(page, diagram.type).locator('svg tspan', { hasText: /^deploy\/broker\.toml:16$/ }).dblclick();
+    await diagramRegion(page, diagram.type).locator('svg tspan', { hasText: /^deploy\/broker\.toml:16$/ }).click();
     await expect.poll(() => editorLocation(page)).toEqual({ path: 'deploy/broker.toml', line: 16 });
   });
 });
@@ -857,5 +847,112 @@ test.describe('Files sidebar at 1440 px', () => {
       const name = await item.getAttribute('aria-label');
       expect((await item.boundingBox()).height, `${name} wraps`).toBeLessThanOrEqual(lineHeight + 1);
     }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Workspace: no Run, a narrow instructions column, and search on a Mac
+// ---------------------------------------------------------------------------
+
+const PYTHON_TUTORIAL = '/SEBook/tools/python-tutorial';
+
+/** The instructions column's share of the tutorial's width. */
+async function instructionsShare(page) {
+  return page.evaluate(() => {
+    const panel = document.querySelector('.tvm-instructions-panel').getBoundingClientRect();
+    const container = document.querySelector('.tvm-container').getBoundingClientRect();
+    return panel.width / container.width;
+  });
+}
+
+test.describe('workspace options at 1440 px', () => {
+  test.use({ viewport: { width: 1440, height: 900 } });
+
+  test('the tutorial has no Run button, no OUTPUT panel, and no Run shortcut', async ({ page }) => {
+    await page.goto(PAGE + '?autosave=false#failed-trips');
+    await waitForBoot(page);
+    await expect(stepHeading(page, stepByKey('failed-trips'))).toBeVisible();
+    await expect(codeEditor(page)).toBeVisible();
+    await expect(runButton(page)).toHaveCount(0);
+    await expect(page.getByRole('button', { name: /Debug/ })).toHaveCount(0);
+    await expect(programOutput(page)).toHaveCount(0);
+    await expect(page.getByText('Output', { exact: true })).toHaveCount(0);
+
+    // Ctrl/Cmd+Enter in the editor runs nothing.
+    await codeEditor(page).focus();
+    await page.keyboard.press('ControlOrMeta+Enter');
+    await expect(programOutput(page)).toHaveCount(0);
+  });
+
+  test('without OUTPUT, the code editor fills the workspace height', async ({ page }) => {
+    await page.goto(PAGE + '?autosave=false#event-consumers');
+    await waitForBoot(page);
+    // The editor runs from below the view buttons to the workspace's bottom edge.
+    const bottoms = await page.evaluate(() => ({
+      workspace: document.querySelector('.tvm-workspace').getBoundingClientRect().bottom,
+      editor: document.querySelector('.tvm-editor-panel').getBoundingClientRect().bottom,
+    }));
+    expect(Math.abs(bottoms.workspace - bottoms.editor)).toBeLessThanOrEqual(3);
+  });
+
+  test('another tutorial still has Run and its output', async ({ page }) => {
+    await page.goto(PYTHON_TUTORIAL + '?autosave=false');
+    await expect(runButton(page)).toBeEnabled({ timeout: BOOT_TIMEOUT });
+    await expect(programOutput(page)).toBeVisible();
+  });
+
+  test('no step asks for Run, and every step can be finished without it', () => {
+    for (const step of steps) {
+      expect(step.run_file, `${step.key} runs a file`).toBeUndefined();
+      expect(step.instructions, `${step.key} asks for Run`).not.toMatch(/\*\*Run\*\*/);
+      // A step gates on a diagram challenge or a knowledge check, never on tests.
+      expect(step.tests, `${step.key} has tests`).toBeUndefined();
+      expect(Boolean(step.diagram_challenge || step.quiz), `${step.key} has nothing to finish`).toBe(true);
+    }
+  });
+
+  test('the instructions column starts narrower than in a normal tutorial', async ({ page }) => {
+    await page.goto(PAGE + '?autosave=false');
+    await waitForBoot(page);
+    const share = await instructionsShare(page);
+    expect(share).toBeGreaterThan(0.28);
+    expect(share).toBeLessThan(0.36);
+
+    await page.goto(PYTHON_TUTORIAL + '?autosave=false');
+    await expect(runButton(page)).toBeEnabled({ timeout: BOOT_TIMEOUT });
+    expect(await instructionsShare(page)).toBeCloseTo(0.5, 1);
+  });
+
+  test('a width the student dragged to is kept', async ({ page }) => {
+    await page.goto(PAGE + '?autosave=false');
+    await waitForBoot(page);
+    // The divider between the instructions and the workspace.
+    const divider = page.locator('.tvm-hsplitter');
+    const before = await instructionsShare(page);
+    await divider.focus();
+    for (let presses = 0; presses < 5; presses++) await page.keyboard.press('ArrowRight');
+    expect(await instructionsShare(page)).toBeGreaterThan(before + 0.05);
+  });
+});
+
+test.describe('project search on macOS', () => {
+  test.use({ viewport: { width: 1440, height: 900 } });
+
+  test('Control+Shift+F opens Search files, and the button says so', async ({ page }) => {
+    // Chrome on macOS keeps Cmd+Shift+F in full screen, so Control works too.
+    await page.addInitScript(() => {
+      Object.defineProperty(Navigator.prototype, 'platform', { get: () => 'MacIntel' });
+      Object.defineProperty(Navigator.prototype, 'userAgentData', { get: () => undefined });
+    });
+    await page.goto(PAGE + '?autosave=false');
+    await waitForBoot(page);
+    const toggle = page.getByRole('button', { name: 'Search files', exact: true });
+    await expect(toggle).toHaveAttribute('aria-keyshortcuts', 'Control+Shift+F Meta+Shift+F');
+    await toggle.hover();
+    await expect(page.getByRole('tooltip')).toHaveText('Search all files (⌘⇧F, or ⌃⇧F in full screen)');
+
+    await codeEditor(page).focus();
+    await page.keyboard.press('Control+Shift+F');
+    await expect(page.getByLabel('Search all files', { exact: true })).toBeFocused();
   });
 });

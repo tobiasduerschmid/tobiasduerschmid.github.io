@@ -123,8 +123,9 @@
 }
 
 /* While ArchUML fits the drawing, a click shows the clicked part at reading
-   size (js/tutorial-diagram-pane.js). The hint floats over the pane's lower
-   edge, so showing it never resizes the drawing's scroll area. */
+   size (js/tutorial-diagram-pane.js). The hint floats over the lower edge of
+   the drawing's stage, so showing it never resizes the drawing's scroll area
+   and never covers the Code links under the stage. */
 .tutorial-diagram-pane .tutorial-diagram-pane__canvas.uml-fit-fitted > svg {
   cursor: zoom-in;
 }
@@ -171,6 +172,14 @@
   overflow: hidden;
 }
 
+.tutorial-diagram-pane__stage {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
 .tutorial-diagram-pane .tutorial-diagram-pane__canvas {
   flex: 1 1 auto;
   min-height: 0;
@@ -201,8 +210,8 @@
 
 /* Code links (js/tutorial-diagram-pane.js): a label that a link names, and
    each `path:line` citation of a project file in a note, takes the link
-   color, a thick underline set below the text, and a pointer;
-   double-clicking opens the code. UML underlines instance names in a thin
+   color, a thick underline set below the text, and a pointer; a click
+   opens the code. UML underlines instance names in a thin
    line of the text color (lifelines), so the link underline differs in
    weight and position as well as color, and an unlinked instance name
    keeps its plain UML underline. #0b5cad on white is 6.6:1. ArchUML draws

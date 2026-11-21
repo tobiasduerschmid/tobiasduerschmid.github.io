@@ -936,6 +936,13 @@
     this._outputPositionBottomLeft = options.output_position === 'bottom-left';
     // Optional override of the Run button label (e.g. "Test" for pytest-driven tutorials).
     this._runLabel = options.run_label || 'Run';
+    // `run: false` (tutorials whose files are read, never run): no Run button,
+    // no OUTPUT panel, and no Ctrl/Cmd+Enter. Only the standard Output panel
+    // is removed; terminal, preview, and tabbed bottom panels ignore it.
+    this.runEnabled = options.run !== false;
+    // `instructions_width: narrow` starts the instructions column narrower
+    // (css/tutorial.css); a width the learner drags to still wins.
+    this._instructionsWidth = options.instructions_width === 'narrow' ? 'narrow' : null;
     // Auto-pytest mode: when true and backend is pyodide, clicking Run on
     // pytest-named file(s) invokes `pytest.main([path, ...paths, "-v"])`
     // instead of exec'ing a file as a script. A step can set `run_files` to
@@ -1856,8 +1863,11 @@
           '<div class="tvm-git-terminal-container"></div>' +
           '</div>' +
           '</div>';
-      } else {
+      } else if (this.runEnabled) {
         terminalHtml = '<div class="tvm-output-panel">' + outputBody + '</div>';
+      } else {
+        // Editor-only workspace: _initSplitters hides the unused vsplitter.
+        terminalHtml = '';
       }
     }
 
@@ -1875,7 +1885,7 @@
       '<div class="tvm-loading-text">Loading\u2026</div>' +
       '</div>' +
       '<div class="tvm-container" style="visibility:hidden">' +
-      '<div class="tvm-instructions-panel">' +
+      '<div class="tvm-instructions-panel' + (this._instructionsWidth ? ' tvm-instructions-panel--' + this._instructionsWidth : '') + '">' +
       (useLeftUml
         ? '<div class="tvm-left-tab-bar">' +
           '<button class="tvm-left-tab active" data-panel="steps"><i class="fa fa-book-open"></i> Steps</button>' +
@@ -2166,10 +2176,11 @@
       });
     }
 
-    // Lecture mode: hide step number nav bar and step controls bar entirely
+    // Lecture mode: hide the step numbers (the nav bar keeps only "Hide
+    // instructions", css/tutorial.css) and the step controls bar entirely
     if (this.lectureMode) {
       var stepNavBar = this.root.querySelector('.tvm-step-nav-bar');
-      if (stepNavBar) stepNavBar.style.display = 'none';
+      if (stepNavBar) stepNavBar.classList.add('tvm-step-nav-bar--lecture');
       var stepControlsBar = this.root.querySelector('.tvm-step-controls-bar');
       if (stepControlsBar) stepControlsBar.style.display = 'none';
     }
@@ -2739,11 +2750,12 @@
     }
     if (vsplitter && editorPanel && workspaceBottom) {
       this._makeDraggable(vsplitter, this.config.backend === 'compiler' ? 'vertical' : 'horizontal', editorPanel, workspaceBottom);
-    } else if (vsplitter) {
+    } else if (workspaceEl) {
       // No bottom panel exists (workspace is editor-only because Output was
-      // hoisted away and no UML pane took its place) — hide the vsplitter so
-      // it can't be dragged into a broken state.
-      vsplitter.style.display = 'none';
+      // hoisted away or `run: false` removed it, and no UML pane took its
+      // place): the editor fills the height, and the vsplitter is hidden so
+      // it can't be dragged into a broken state (css/tutorial.css).
+      workspaceEl.classList.add('tvm-workspace--editor-only');
     }
 
     // Bottom-left splitter — sits in the left column between the steps view
@@ -2783,6 +2795,7 @@
 
     this._initUMLBroadcastChannel();
     this._initPopoutManager();
+    this._mountInstructionsRail();
     this._wireInstructionsPopoutButton();
     this._wirePanePopoutButtons();
     this._wireOutputPopoutButton();
@@ -6148,6 +6161,7 @@
   };
 
   TutorialCode.prototype._runCurrentFile = function (options) {
+    if (!this.runEnabled) return Promise.resolve(false);
     // The output (and the code it comes from) must be in view.
     this._notifyCodeRequested('run');
     if (this._activeRunTransaction) return this._activeRunTransaction.promise;
@@ -7978,7 +7992,7 @@
       monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS,
       function () { self._saveCurrentFile(); }
     );
-    if (this._mixedBackendMode || this.config.backend === 'pyodide' || this.config.backend === 'browser' || this.config.backend === 'java' || this.config.backend === 'cpp' || this.config.backend === 'haskell' || this.config.backend === 'tla' || this.config.backend === 'aadl' || this.config.backend === 'shell-pipeline') {
+    if (this.runEnabled && (this._mixedBackendMode || this.config.backend === 'pyodide' || this.config.backend === 'browser' || this.config.backend === 'java' || this.config.backend === 'cpp' || this.config.backend === 'haskell' || this.config.backend === 'tla' || this.config.backend === 'aadl' || this.config.backend === 'shell-pipeline')) {
       editor.addCommand(
         monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
         function () { self._runCurrentFile(); }
@@ -9765,65 +9779,47 @@
     });
   };
 
-  TutorialCode.prototype._refreshInstructionsDetachedState = function () {
-    var detached = this._popoutManager && this._popoutManager.isDetached('instructions');
+  /**
+   * The instructions rail (js/tutorial-instructions-rail.js): "Hide
+   * instructions" in the step nav bar, and the rail that replaces the panel
+   * while the instructions are hidden or popped out.
+   */
+  TutorialCode.prototype._mountInstructionsRail = function () {
     var panel = this.root && this.root.querySelector('.tvm-instructions-panel');
-    if (!panel) return;
-    // When a UML view is stacked below instructions, the panel's outer dimension
-    // is still width but the steps-view shares that column with UML. Shrink the
-    // steps-view height instead, so UML below expands. Otherwise shrink the
-    // whole panel's width to a thin strip.
-    var verticalShrink = !!(this._umlPositionBelow || this._umlPositionBottomLeft);
-    // Debugger-mode: when the time-travel debugger is enabled, popping out the
-    // instructions should NOT collapse the left panel — there's still useful
-    // content to show there (Watch / Call Stack / Variables / History). Keep
-    // the panel full-width and just hide the Steps view + auto-switch to the
-    // Debug tab. A compact "instructions popped out" pill replaces the Steps
-    // tab so the user can re-attach with one click.
-    var debuggerMode = !!this.debuggerEnabled;
-    if (detached) {
-      if (!panel.querySelector('.tvm-instructions-detached-placeholder')) {
-        var placeholder = document.createElement('div');
-        placeholder.className = 'tvm-instructions-detached-placeholder';
-        placeholder.innerHTML = '<button class="tvm-btn tvm-btn-reattach" data-original-title="Bring instructions back to this window">↩</button>'
-          + '<div class="tvm-detached-msg">Instructions popped out</div>';
-        // Insert before the steps-view so the placeholder stays visible while
-        // steps-view is hidden by CSS in the detached state.
-        var stepsView = panel.querySelector('.tvm-steps-view');
-        if (stepsView) panel.insertBefore(placeholder, stepsView);
-        else panel.appendChild(placeholder);
-        var self = this;
-        placeholder.querySelector('.tvm-btn-reattach').addEventListener('click', function () {
-          self._popoutManager.requestPopupClose('instructions');
-        });
+    if (!panel || !window.TutorialInstructionsRail || this._instructionsRail) return;
+    var self = this;
+    this._instructionsRail = window.TutorialInstructionsRail.attach(panel, {
+      // A UML view or the Output panel below the instructions keeps the column, so the
+      // instructions shrink in height. While the instructions are popped out
+      // of a debugger tutorial, the column keeps its width for Watch / Call
+      // Stack / Variables / History. Otherwise (including Hide, which asks
+      // for the width) the whole panel becomes a rail beside the workspace.
+      variant: function (state) {
+        if (self.debuggerEnabled && state === 'detached') return 'debugger';
+        return self._umlPositionBelow || self._umlPositionBottomLeft || self._outputPositionBottomLeft ? 'vertical' : 'horizontal';
+      },
+      onReattach: function () { self._popoutManager.requestPopupClose('instructions'); },
+      onChange: function (state) { self._onInstructionsRailChange(state); },
+    });
+  };
+
+  TutorialCode.prototype._onInstructionsRailChange = function (state) {
+    // With the Steps view popped out, the debugger shows its own tab.
+    if (state === 'detached' && this.debuggerEnabled && this._debuggerCtl) {
+      var activeTab = this.root.querySelector('.tvm-left-tab.active');
+      if (activeTab && activeTab.getAttribute('data-panel') === 'steps') {
+        this._debuggerCtl.activateTab('dbg-combined');
       }
-      panel.classList.add('tvm-instructions-detached');
-      // In debugger mode, override the layout-shrink classes — keep full size
-      // and just toggle which inner views are visible (handled by CSS keyed
-      // on tvm-instructions-detached-debugger).
-      panel.classList.toggle('tvm-instructions-detached-debugger', debuggerMode);
-      panel.classList.toggle('tvm-instructions-detached-vertical', !debuggerMode && verticalShrink);
-      panel.classList.toggle('tvm-instructions-detached-horizontal', !debuggerMode && !verticalShrink);
-      // If the user was viewing Steps when they popped out, send them to the
-      // Debug tab so they have something to look at.
-      if (debuggerMode && this._debuggerCtl) {
-        var activeTab = panel.querySelector('.tvm-left-tab.active');
-        if (activeTab && activeTab.getAttribute('data-panel') === 'steps') {
-          this._debuggerCtl.activateTab('dbg-combined');
-        }
-      }
-    } else {
-      panel.classList.remove('tvm-instructions-detached');
-      panel.classList.remove('tvm-instructions-detached-debugger');
-      panel.classList.remove('tvm-instructions-detached-vertical');
-      panel.classList.remove('tvm-instructions-detached-horizontal');
-      var ph = panel.querySelector('.tvm-instructions-detached-placeholder');
-      if (ph) ph.parentNode.removeChild(ph);
     }
     // Re-fit Monaco / xterm after a size change
     if (this.editor && this.editor.layout) try { this.editor.layout(); } catch (e) { /* ignore */ }
     if (this.editor2 && this.editor2.layout) try { this.editor2.layout(); } catch (e) { /* ignore */ }
     if (this.fitAddon && this.fitAddon.fit) try { this.fitAddon.fit(); } catch (e) { /* ignore */ }
+  };
+
+  TutorialCode.prototype._refreshInstructionsDetachedState = function () {
+    if (!this._instructionsRail) return;
+    this._instructionsRail.setDetached(!!(this._popoutManager && this._popoutManager.isDetached('instructions')));
   };
 
   TutorialCode.prototype._applyFileEditFromPopup = function (filename, content, version) {

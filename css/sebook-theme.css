@@ -1138,8 +1138,7 @@ html.dark-mode body.sebook-layout #tts-read-btn.is-reading {
 .tvm-btn,
 .sbr-btn,
 .tvm-debug-watch-add-btn,
-.tvm-debug-watchpoint-add-btn,
-.tvm-instructions-detached-placeholder .tvm-btn-reattach {
+.tvm-debug-watchpoint-add-btn {
   display: inline-flex;
   align-items: center !important;
   justify-content: center !important;
@@ -1177,8 +1176,7 @@ html.dark-mode body.sebook-layout #tts-read-btn.is-reading {
 .parsons-reset-btn:hover:not(:disabled),
 .spec-card-btn:hover:not(:disabled),
 .tvm-btn:hover:not(:disabled),
-.sbr-btn:hover:not(:disabled),
-.tvm-instructions-detached-placeholder .tvm-btn-reattach:hover {
+.sbr-btn:hover:not(:disabled) {
   background: var(--sebook-button-bg-hover, #eef7ff) !important;
   border-color: var(--sebook-blue-dark, #1e5c8a) !important;
   color: var(--sebook-button-text, #003B5C) !important;
@@ -1642,8 +1640,7 @@ html.dark-mode .spec-card-btn,
 html.dark-mode .tvm-btn,
 html.dark-mode .sbr-btn,
 html.dark-mode .tvm-debug-watch-add-btn,
-html.dark-mode .tvm-debug-watchpoint-add-btn,
-html.dark-mode .tvm-instructions-detached-placeholder .tvm-btn-reattach {
+html.dark-mode .tvm-debug-watchpoint-add-btn {
   background: var(--sebook-button-bg, #101b28) !important;
   border-color: var(--sebook-button-border, #8BB8E8) !important;
   color: var(--sebook-button-text, #e6f4ff) !important;
@@ -1665,8 +1662,7 @@ html.dark-mode .gym-btn.secondary:hover:not(:disabled),
 html.dark-mode .parsons-reset-btn:hover:not(:disabled),
 html.dark-mode .spec-card-btn:hover:not(:disabled),
 html.dark-mode .tvm-btn:hover:not(:disabled),
-html.dark-mode .sbr-btn:hover:not(:disabled),
-html.dark-mode .tvm-instructions-detached-placeholder .tvm-btn-reattach:hover {
+html.dark-mode .sbr-btn:hover:not(:disabled) {
   background: var(--sebook-button-bg-hover, #17324d) !important;
   border-color: var(--sebook-gold, #FFD100) !important;
   color: #ffffff !important;

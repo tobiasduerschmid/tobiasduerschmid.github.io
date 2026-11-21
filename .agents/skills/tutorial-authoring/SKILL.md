@@ -1125,6 +1125,24 @@ make_dag_options: { ... }              # Reserved for future per-tutorial
 editor_split: boolean                  # Two-pane: tests left, code right.
 output_height: "40%" | "320px"         # Override output panel height.
 output_position: bottom-left           # Move output below instructions.
+run: false                             # Default true. Read-only code tutorials
+                                       # (e.g. uml-design-questions): no Run
+                                       # button, no OUTPUT panel (the editor and
+                                       # any Diagram pane get the height), and
+                                       # no Ctrl/Cmd+Enter; _runCurrentFile is a
+                                       # no-op. Only the standard Output panel
+                                       # goes; terminal, preview, tabbed, and
+                                       # git-terminal panels ignore it. Steps
+                                       # must not set run_file or ask for Run:
+                                       # show a script's output in the step
+                                       # text instead. Steps gate on diagram
+                                       # challenges or quizzes, not tests.
+instructions_width: narrow             # Optional. Start the instructions column
+                                       # at max(32%, 26em) instead of 50%
+                                       # (.tvm-instructions-panel--narrow in
+                                       # css/tutorial.css), side by side only;
+                                       # stacked panels (<= 900px) ignore it.
+                                       # A width the learner drags to wins.
 run_label: string                      # Override Run button label
                                        # (e.g. "Test" for Playwright).
 
@@ -1358,7 +1376,7 @@ steps:
           - {id: events, type: component, label: "Order events", source: "...",
              links: [{text: "Notifications", path: services/notifications/consumers.py, line: 25}]}
                                              # Optional code links: a label whose text
-                                             # equals `text` is underlined; double-click
+                                             # equals `text` is underlined; a click
                                              # (or its button in "Code links") opens
                                              # path:line. Also on contrast.diagram.
         evidence:                            # Buttons opening the file at the line.
@@ -2495,6 +2513,8 @@ synchronizes with the main tutorial via `BroadcastChannel` (see
 `js/tutorial-popout-client.js` and `js/tutorial-popout-manager.js`):
 
 - `tutorial-instructions-popup.html` — step instructions + quiz.
+  While it is open, the main window's instructions panel shows the
+  instructions rail (below) with **Bring instructions back**.
   Optional quizzes carry `allowSkip` in `quiz-show`; `quiz-skipped` requests
   navigation from the main runtime without recording a passed quiz. The main
   runtime accepts skip requests only for the current step when
@@ -3183,12 +3203,13 @@ channel.
   every SVG `<text>` whose whitespace-collapsed content equals `text`
   (class `tutorial-diagram-pane__link`: underline, pointer). Each `path:line`
   of a project file inside a label (a note's citation) becomes a linked
-  `<tspan>` too. Double-click calls `revealSource(path, line)`, which returns
-  a maximized diagram to split; a single click on a linked label never
-  triggers Fit-view click-to-zoom. The SVG is `aria-hidden`, so a "Code
-  links" `<details>` under the drawing lists one button per link
-  (citations deduplicated). The fit hint mentions double-click only when
-  the drawing has links.
+  `<tspan>` too. A single click on a linked label calls
+  `revealSource(path, line)`, which returns a maximized diagram to split,
+  instead of the Fit-view click-to-zoom that a click elsewhere on the
+  drawing does. There is no double-click action. The SVG is `aria-hidden`,
+  so a "Code links" `<details>` under the drawing lists one button per link
+  (citations deduplicated). The fit hint mentions the underlined names only
+  when the drawing has links.
   **Search hits:** `revealDiagramText(diagramId, query, options)` shows the
   Diagram view in its current layout (keeping the Files drawer open when
   search was open), selects the tab, frames every matching label (a
@@ -4425,6 +4446,27 @@ so removing a guard cannot execute that cycle in a browser. No vendored runtime
 bytes or storage keys change.
 
 If you add a backend, update this table.
+
+### Instructions rail (hide / show instructions)
+
+`js/tutorial-instructions-rail.js` (loaded by `_layouts/tutorial.html` for
+every backend) adds **Hide instructions** to the step nav bar of both
+`TutorialCode` (`_mountInstructionsRail`) and `UMLTutorialEditor`. Hiding
+collapses the panel to a rail with **Show instructions**; focus moves to the
+rail's button, and Show moves it back to Hide. The choice is global for this
+browser: localStorage `tutorial-instructions-hidden` = `1` (removed on Show),
+listed on `/cookies/` and toggled on `/settings/`. The same rail replaces the
+panel while the instructions popout is open (`setDetached`, from
+`_refreshInstructionsDetachedState`), with **Bring instructions back**.
+Panel classes: `tvm-instructions-railed` plus one variant,
+`tvm-instructions-rail-horizontal` (a 3.5em rail; the `.tvm-hsplitter` is
+hidden; a bar above the workspace at <= 900px), `-vertical` (UML below the
+instructions: a bar above the UML view), or `-debugger` (popped out of a
+debugger tutorial only: the debugger keeps the column under a compact bar,
+`js/debugger/debugger.css`; Hide collapses a debugger tutorial's column, debug
+views included, to the horizontal rail). Lecture mode keeps the
+nav bar with only Hide (`tvm-step-nav-bar--lecture`). Print shows the
+instructions regardless. Tests: `tests/tutorial-instructions-toggle.spec.js`.
 
 ### 4.7 Autosave / progress storage
 

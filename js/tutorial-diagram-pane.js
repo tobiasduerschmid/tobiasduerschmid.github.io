@@ -27,9 +27,9 @@
  *
  * Code links: a diagram's optional links [{text, path, line}] turn every
  * label whose text equals a link's text into a linked label (underlined,
- * pointer cursor). Double-clicking it calls revealSource(path, line), which
- * returns a maximized diagram to split view beside the code; a single click
- * on it never zooms. The drawing is hidden from assistive technology, so a
+ * pointer cursor). A click on it calls revealSource(path, line), which
+ * returns a maximized diagram to split view beside the code, instead of
+ * zooming the drawing. The drawing is hidden from assistive technology, so a
  * "Code links" disclosure under it offers one button per link that does the
  * same.
  *
@@ -92,7 +92,7 @@
   var ZOOM_LEVELS = [0.5, 0.75, 1, 1.25, 1.5, 2, 2.5, 3];
   var READING_ZOOM = 1;
   var FIT_HINT = 'Click a part of the drawing to read it at full size, or use the + button.';
-  var FIT_HINT_WITH_LINKS = 'Click a part of the drawing to read it at full size; double-click an underlined name to open its code.';
+  var FIT_HINT_WITH_LINKS = 'Click a part of the drawing to read it at full size, or click an underlined name to open its code.';
   var LINK_CLASS = 'tutorial-diagram-pane__link';
   var HIT_CLASS = 'tutorial-diagram-pane__text-hit';
   var HIT_BOX_CLASS = 'tutorial-diagram-pane__hit-box';
@@ -123,13 +123,16 @@
         '<button type="button" class="tutorial-diagram-pane__tool" data-diagram-find="close">Close find</button>' +
         '<p class="tutorial-diagram-pane__find-status" role="status"></p>' +
       '</div>' +
-      '<p class="tutorial-diagram-pane__hint">' + FIT_HINT + '</p>' +
       '<p class="tutorial-diagram-pane__status" role="status"></p>' +
       '<div class="tutorial-diagram-pane__panel" id="' + id + '-panel">' +
-        '<div class="tutorial-diagram-pane__canvas" tabindex="0" role="region" aria-label="No diagram yet" aria-keyshortcuts="Control+F Meta+F"></div>' +
+        // The hint floats over the drawing's lower edge, above the Code links.
+        '<div class="tutorial-diagram-pane__stage">' +
+          '<div class="tutorial-diagram-pane__canvas" tabindex="0" role="region" aria-label="No diagram yet" aria-keyshortcuts="Control+F Meta+F"></div>' +
+          '<p class="tutorial-diagram-pane__hint">' + FIT_HINT + '</p>' +
+        '</div>' +
         '<details class="tutorial-diagram-pane__links" hidden>' +
           '<summary class="tutorial-diagram-pane__links-summary">Code links</summary>' +
-          '<p class="tutorial-diagram-pane__links-hint">Each button opens the code behind a name in the drawing, as a double-click on the underlined name does.</p>' +
+          '<p class="tutorial-diagram-pane__links-hint">Each button opens the code behind a name in the drawing, as a click on the underlined name does.</p>' +
           '<ul class="tutorial-diagram-pane__links-list"></ul>' +
         '</details>' +
       '</div>';
@@ -409,14 +412,10 @@
     return target && target.closest ? target.closest('.' + LINK_CLASS) : null;
   }
 
-  /**
-   * A click on a fitted drawing shows the clicked part at reading size. A
-   * click on a linked label is the first half of its double-click, so it
-   * does not zoom.
-   */
+  /** A click on a fitted drawing shows the clicked part at reading size. */
   function zoomToClick(state, event) {
     var svg = drawingOf(state);
-    if (!svg || !isFitted(state) || !svg.contains(event.target) || linkedLabel(event.target)) return;
+    if (!svg || !isFitted(state) || !svg.contains(event.target)) return;
     var box = svg.getBoundingClientRect();
     applyZoom(state, READING_ZOOM, {
       x: clampShare((event.clientX - box.left) / box.width),
@@ -873,15 +872,15 @@
       selectTab(state, next, true);
     });
     document.addEventListener('fullscreenchange', function () { syncFullscreen(state); }, { signal: signal });
-    state.canvas.addEventListener('click', function (event) { zoomToClick(state, event); });
+    // A click on a linked label opens its code; anywhere else on a fitted
+    // drawing it zooms to the clicked part.
+    state.canvas.addEventListener('click', function (event) {
+      var label = linkedLabel(event.target);
+      if (label) openLink(tutorial, state, Number(label.getAttribute('data-diagram-link')));
+      else zoomToClick(state, event);
+    });
     state.canvas.addEventListener('wheel', function (event) { pinchZoom(state, event); }, { passive: false });
     wireFind(tutorial, state, signal);
-    state.canvas.addEventListener('dblclick', function (event) {
-      var label = linkedLabel(event.target);
-      if (!label) return;
-      event.preventDefault();
-      openLink(tutorial, state, Number(label.getAttribute('data-diagram-link')));
-    });
     state.linksList.addEventListener('click', function (event) {
       var button = event.target.closest('button[data-diagram-link]');
       if (button) openLink(tutorial, state, Number(button.getAttribute('data-diagram-link')));

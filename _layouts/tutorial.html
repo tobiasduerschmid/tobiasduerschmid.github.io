@@ -330,6 +330,7 @@
   <script src="{{ '/js/python-ast-service.js' | relative_url }}"></script>
   <script src="{{ '/js/tutorial-refactorings.js' | relative_url }}"></script>
   <script src="{{ '/js/tutorial-popout-manager.js' | relative_url }}"></script>
+  <script src="{{ '/js/tutorial-instructions-rail.js' | relative_url }}"></script>
   <script src="{{ '/js/parsons-grading.js' | relative_url }}"></script>
   <script src="{{ '/js/tutorial-quiz.js' | relative_url }}"></script>
   <script src="{{ '/js/tutorial-inline-markdown.js' | relative_url }}"></script>
@@ -541,6 +542,10 @@
         // UML-bottom-right / Output-bottom-left swap.
         output_position: config.output_position || null,
         run_label: config.run_label || 'Run',
+        // `run: false` — no Run button, OUTPUT panel, or Run shortcut.
+        run: config.run !== false,
+        // `instructions_width: narrow` — a narrower instructions column by default.
+        instructions_width: config.instructions_width || null,
         // `pytest: true` — run test_*.py files via `pytest.main([path, "-v"])`
         // when the Run button is clicked, and rename the button to "Test"
         // automatically when a test file is the active file. Steps may set
