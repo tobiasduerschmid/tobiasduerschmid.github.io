@@ -13,6 +13,8 @@
     ? require('./uml-constant-values.js') : global.UMLConstantValues;
   const ReturnSummaries = typeof module !== 'undefined' && module.exports
     ? require('./uml-return-summaries.js') : global.UMLReturnSummaries;
+  const SourceMap = typeof module !== 'undefined' && module.exports
+    ? require('./uml-source-map.js') : global.UMLSourceMap;
 
   const identifier = value => /^[A-Za-z_]\w*$/.test(value || '');
   const access = new Set(['public', 'protected', 'private']);
@@ -30,6 +32,25 @@
     while (allocated.has(id)) id = base + '_' + suffix++;
     allocated.add(id);
     return id;
+  }
+
+  /**
+   * Token strings that remember where they came from: lines[i] is the 1-based
+   * source line of token i. Slices keep their lines; tokens built by other
+   * array operations have no position, and their diagram lines no source.
+   */
+  class Tokens extends Array {
+    slice(start, end) {
+      const part = super.slice(start, end);
+      part.file = this.file;
+      part.lines = this.lines && this.lines.slice(start, end);
+      return part;
+    }
+  }
+
+  /** The source range from token first to token last of tokens, or null. */
+  function span(tokens, first, last = first) {
+    return tokens.lines ? SourceMap.range(tokens.file, tokens.lines[first], tokens.lines[last]) : null;
   }
 
   function tokensToText(tokens) {
@@ -60,8 +81,10 @@
     return parts;
   }
 
-  function tokenize(source) {
-    const tokens = [];
+  function tokenize(source, file) {
+    const tokens = new Tokens(), lineOf = SourceMap.lineLocator(source);
+    tokens.file = file; tokens.lines = [];
+    const push = (token, at) => { tokens.push(token); tokens.lines.push(lineOf(at)); };
     let i = 0;
     while (i < source.length) {
       const rest = source.slice(i);
@@ -86,7 +109,7 @@
       if (raw) {
         const ending = ')' + raw[1] + '"', end = source.indexOf(ending, i + raw[0].length);
         if (end < 0) throw new Error('Unclosed raw string');
-        tokens.push(source.slice(i, end + ending.length)); i = end + ending.length; continue;
+        push(source.slice(i, end + ending.length), i); i = end + ending.length; continue;
       }
       const literal = rest.match(/^(?:u8|u|U|L)?(["'])/);
       if (literal) {
@@ -94,11 +117,11 @@
         i += literal[0].length;
         while (i < source.length && source[i] !== quote) { if (source[i] === '\\') i++; i++; }
         if (i >= source.length) throw new Error('Unclosed string or character literal');
-        tokens.push(source.slice(start, ++i)); continue;
+        push(source.slice(start, ++i), start); continue;
       }
       const word = rest.match(/^[A-Za-z_]\w*|^(?:0[xX][\da-fA-F']+|\d[\d']*(?:\.\d*)?(?:[eE][+-]?\d+)?)[uUlLfF]*|^(?:::|->\*|->|&&|\|\||==|!=|<=|>=|\+\+|--|\+=|-=|\*=|\/=|\.\.\.)/);
       const token = word ? word[0] : source[i];
-      tokens.push(token); i += token.length;
+      push(token, i); i += token.length;
     }
     const stack = [];
     for (const token of tokens) {
@@ -147,7 +170,7 @@
     const declarations = split(tokens);
     const end = typeEnd(declarations[0]);
     const firstType = declarations[0].slice(0, end);
-    const base = firstType.slice();
+    const base = firstType.slice(), source = span(tokens, 0, tokens.length - 1);
     while (['*', '&', '&&', 'const'].includes(base[base.length - 1])) base.pop();
     return declarations.flatMap((part, index) => {
       let nameAt = index === 0 ? end : 0;
@@ -155,7 +178,7 @@
       if (!identifier(part[nameAt])) return [];
       const type = index === 0 ? firstType : base.concat(part.slice(0, nameAt));
       if (part[nameAt + 1] === '[') type.push(...part.slice(nameAt + 1, closing(part, nameAt + 1) + 1));
-      return [{ name: part[nameAt], type, visibility, static: tokens.includes('static') }];
+      return [{ name: part[nameAt], type, visibility, static: tokens.includes('static'), source }];
     });
   }
 
@@ -164,11 +187,15 @@
 
     parse(tokens, scope = '', owner = null) {
       let i = 0, visibility = owner && owner.kind === 'class' ? '-' : '+';
+      let templateAt = null;
       while (i < tokens.length) {
         const start = i;
+        // A definition's source range includes its template header.
+        const sourceAt = templateAt === null ? start : templateAt;
+        templateAt = null;
         if (access.has(tokens[i]) && tokens[i + 1] === ':') {
           visibility = { public: '+', protected: '#', private: '-' }[tokens[i]]; i += 2;
-        } else if (tokens[i] === 'template' && tokens[i + 1] === '<') i = closing(tokens, i + 1) + 1;
+        } else if (tokens[i] === 'template' && tokens[i + 1] === '<') { templateAt = sourceAt; i = closing(tokens, i + 1) + 1; }
         else if (tokens[i] === ';') i++;
         else if (tokens[i] === 'namespace' || (tokens[i] === 'inline' && tokens[i + 1] === 'namespace')) {
           const nameAt = tokens[i] === 'inline' ? i + 2 : i + 1;
@@ -180,10 +207,10 @@
             i = close + 1;
           } else i = this.semicolon(tokens, end) + 1;
         } else if (['class', 'struct', 'enum'].includes(tokens[i])) {
-          i = this.typeDeclaration(tokens, i, scope);
+          i = this.typeDeclaration(tokens, i, scope, sourceAt);
         } else if (tokens[i] === 'using' || tokens[i] === 'typedef') {
           i = this.alias(tokens, i, scope);
-        } else i = this.declaration(tokens, i, scope, owner, visibility);
+        } else i = this.declaration(tokens, i, scope, owner, visibility, sourceAt);
         if (i <= start) i = start + 1;
       }
     }
@@ -204,7 +231,7 @@
       return end + 1;
     }
 
-    typeDeclaration(tokens, start, scope) {
+    typeDeclaration(tokens, start, scope, sourceAt = start) {
       const kind = tokens[start];
       let nameAt = start + 1;
       if (kind === 'enum' && ['class', 'struct'].includes(tokens[nameAt])) nameAt++;
@@ -218,7 +245,8 @@
         return body + 1;
       }
       const end = closing(tokens, body);
-      const node = { name, scope, kind, fields: [], methods: [], bases: [], constants: [] };
+      const node = { name, scope, kind, fields: [], methods: [], bases: [], constants: [],
+        source: span(tokens, sourceAt, end), header: span(tokens, nameAt) };
       if (kind === 'enum') node.constants = split(tokens.slice(body + 1, end)).map(part => part[0]).filter(identifier);
       else {
         const colon = tokens.slice(nameAt + 1, body).indexOf(':');
@@ -229,14 +257,14 @@
       return end + 1;
     }
 
-    declaration(tokens, start, scope, owner, visibility) {
+    declaration(tokens, start, scope, owner, visibility, sourceAt = start) {
       let i = start;
       while (i < tokens.length && tokens[i] !== ';') {
         if (tokens[i] === '<' && tokens[i - 1] !== 'operator') { i = closing(tokens, i) + 1; continue; }
         if (tokens[i] === '=' || tokens[i] === '{') break;
         if (tokens[i] === '(') {
           if (identifier(tokens[i - 1]) && !['decltype', 'alignas', 'noexcept'].includes(tokens[i - 1])) {
-            return this.method(tokens, start, i, scope, owner, visibility);
+            return this.method(tokens, start, i, scope, owner, visibility, sourceAt);
           }
           i = closing(tokens, i);
         }
@@ -247,7 +275,7 @@
       return end + 1;
     }
 
-    method(tokens, start, open, scope, owner, visibility) {
+    method(tokens, start, open, scope, owner, visibility, sourceAt = start) {
       let nameAt = open - 1;
       if (tokens[nameAt - 1] === '~') nameAt--;
       while (nameAt >= start + 2 && tokens[nameAt - 1] === '::' && identifier(tokens[nameAt - 2])) nameAt -= 2;
@@ -259,6 +287,7 @@
         params: parameters(tokens.slice(open + 1, close)), body: null, initializers: [],
         returnType: tokens.slice(start, nameAt).filter(token => !modifiers.has(token)),
         static: tokens.slice(start, nameAt).includes('static'), abstract: false };
+      node.header = span(tokens, nameAt);
       node.constructor = !!ownerName && name === shortName(ownerName);
       node.destructor = !!ownerName && name === '~' + shortName(ownerName);
       let i = close + 1;
@@ -285,6 +314,7 @@
       }
       if (tokens[i] === '{') { const end = closing(tokens, i); node.body = tokens.slice(i + 1, end); i = end + 1; }
       else if (tokens[i] === ';') i++;
+      node.source = span(tokens, sourceAt, Math.min(i, tokens.length) - 1);
       if (owner) owner.methods.push(node);
       else this.functions.push(node);
       return i;
@@ -324,6 +354,9 @@
       if (definition.body) {
         declaration.body = definition.body;
         declaration.initializers = definition.initializers;
+        // An out-of-class body is the definition a reader looks for.
+        declaration.source = definition.source;
+        declaration.header = definition.header;
       }
     }
 
@@ -410,16 +443,20 @@
 
   function classDiagramResult(model, options) {
     const constructionMethods = [];
-    if (!model.classes.size) return { classDiagram: '', constructionMethods };
-    const lines = ['@startuml', 'layout landscape', 'layout compact'], relationships = new Set();
+    if (!model.classes.size) return { classDiagram: '', classDiagramSources: [], constructionMethods };
+    const sourceMap = SourceMap.createSourceMap();
+    const lines = ['@startuml', 'layout landscape', 'layout compact'];
+    // Relationship line -> the source of its first occurrence.
+    const relationships = new Map();
+    const relate = (line, source) => { if (!relationships.has(line)) relationships.set(line, source); };
     for (const node of model.classes.values()) {
       const kind = node.kind === 'enum' ? 'enum' : node.methods.some(method => method.abstract) ? 'abstract class' : 'class';
-      lines.push(kind + ' ' + node.id + ' {');
+      lines.push(sourceMap.tag(kind + ' ' + node.id + ' {', node.source));
       for (const constant of node.constants) lines.push('  ' + constant);
       const structural = new Set();
       for (const base of node.bases) {
         const parent = model.type(base, node.scope).node;
-        if (parent) { relationships.add(node.id + ' --|> ' + parent.id); structural.add(parent.name); }
+        if (parent) { relate(node.id + ' --|> ' + parent.id, node.header); structural.add(parent.name); }
       }
       const fields = node.fields.map(field => ({ field, type: model.type(field.type, node.name) }));
       const targetRoles = new Map();
@@ -431,9 +468,9 @@
           // This field constrains its target end, not all instances' inverse ownership.
           const multiplicity = options.hideMultiplicity ? ' ' + type.arrow + ' ' : ' ' + type.arrow + ' "' + type.multiplicity + '" ';
           const role = targetRoles.get(type.node.name) > 1 ? ' : ' + field.name : '';
-          relationships.add(node.id + multiplicity + type.node.id + role); structural.add(type.node.name);
+          relate(node.id + multiplicity + type.node.id + role, field.source); structural.add(type.node.name);
         }
-        if (!type.node || type.collection) lines.push('  ' + (field.static ? '{static} ' : '') + (options.hideVisibility ? '' : field.visibility) + field.name + ': ' + tokensToText(field.type.filter(token => !modifiers.has(token))));
+        if (!type.node || type.collection) lines.push(sourceMap.tag('  ' + (field.static ? '{static} ' : '') + (options.hideVisibility ? '' : field.visibility) + field.name + ': ' + tokensToText(field.type.filter(token => !modifiers.has(token))), field.source));
       }
       for (const method of node.methods) {
         const params = method.params.map(param => param.name + ': ' + tokensToText(param.type)).join(', ');
@@ -442,15 +479,17 @@
           constructionMethods.push({ owner: node.id, name: method.name, lineIndex: lines.length,
             isDefault: method.params.length === 0 && Array.isArray(method.body) && method.body.length === 0 && method.initializers.length === 0 });
         }
-        lines.push('  ' + (method.static ? '{static} ' : '') + (method.abstract ? '{abstract} ' : '') + (options.hideVisibility ? '' : method.visibility) + method.name + '(' + params + ')' + (returns && returns !== 'void' ? ': ' + returns : ''));
+        lines.push(sourceMap.tag('  ' + (method.static ? '{static} ' : '') + (method.abstract ? '{abstract} ' : '') + (options.hideVisibility ? '' : method.visibility) + method.name + '(' + params + ')' + (returns && returns !== 'void' ? ': ' + returns : ''), method.source));
         for (const typeTokens of [method.returnType, ...method.params.map(param => param.type)]) {
           const target = model.type(typeTokens, node.name).node;
-          if (target && target !== node && !structural.has(target.name)) relationships.add(node.id + ' ..> ' + target.id);
+          if (target && target !== node && !structural.has(target.name)) relate(node.id + ' ..> ' + target.id, method.header);
         }
       }
       lines.push('}');
     }
-    return { classDiagram: lines.concat([...relationships], '@enduml').join('\n'), constructionMethods };
+    const relationLines = [...relationships].map(([line, source]) => sourceMap.tag(line, source));
+    const resolved = sourceMap.resolve(lines.concat(relationLines, '@enduml').join('\n'));
+    return { classDiagram: resolved.text, classDiagramSources: resolved.sources, constructionMethods };
   }
 
   function statement(tokens, start) {
@@ -499,6 +538,7 @@
       this.diagnostics = new SequenceDiagnostics();
       this.loopConstants = new ConstantValues.LoopFacts();
       this.model = model; this.lines = []; this.participants = new Map();
+      this.sourceMap = SourceMap.createSourceMap(); this.diagramSources = [];
       this.identities = new Set(['Main']); this.activeCalls = new Set(); this.steps = 0;
       this.entities = new Set();
       this.returnSummaries = new WeakMap();
@@ -511,9 +551,12 @@
       const receiver = { id: 'Main', node: null, fields: new Map() };
       this.walk(main.body, { receiver, scope: main.scope, vars: new Map(), constants: new Map(), depth: 0 });
       if (!this.lines.length) return '';
-      return ['@startuml', 'layout landscape', 'layout compact', 'participant Main as : Main',
-        ...[...this.participants].map(([id, node]) => 'participant ' + id + ': ' + node.id),
-        'activate Main', ...this.lines, 'deactivate Main', '@enduml'].join('\n');
+      const resolved = this.sourceMap.resolve(['@startuml', 'layout landscape', 'layout compact',
+        this.sourceMap.tag('participant Main as : Main', main.source),
+        ...[...this.participants].map(([id, node]) => this.sourceMap.tag('participant ' + id + ': ' + node.id, node.source)),
+        'activate Main', ...this.lines, 'deactivate Main', '@enduml'].join('\n'));
+      this.diagramSources = resolved.sources;
+      return resolved.text;
     }
 
     entity(name, node) {
@@ -560,7 +603,8 @@
       return values;
     }
 
-    invoke(receiver, method, args, argumentTokens, context) {
+    /** source is the range of the call's name token. */
+    invoke(receiver, method, args, argumentTokens, context, source) {
       if (++this.steps > 5000) throw new SequenceLimitError();
       if (!method) { context.constants.clear(); this.diagnostics.add('unresolved'); return null; }
       if (this.usesRangeReference(argumentTokens, context)) {
@@ -577,11 +621,12 @@
       if (method.ambiguous) this.diagnostics.add('dispatch', method.name);
       else if (!method.body) this.diagnostics.add('unresolved', method.name);
       this.ensure(receiver);
-      this.lines.push(context.receiver.id + ' -> ' + receiver.id + ': ' + method.name + '(' + tokensToText(argumentTokens) + ')');
+      const message = line => this.sourceMap.tag(line, source);
+      this.lines.push(message(context.receiver.id + ' -> ' + receiver.id + ': ' + method.name + '(' + tokensToText(argumentTokens) + ')'));
       this.lines.push('activate ' + receiver.id);
       const result = this.follow(receiver, method, args, context.depth);
       const returnType = tokensToText(method.returnType);
-      if (returnType && returnType !== 'void') this.lines.push(receiver.id + ' --> ' + context.receiver.id + ': ' + returnType);
+      if (returnType && returnType !== 'void') this.lines.push(message(receiver.id + ' --> ' + context.receiver.id + ': ' + returnType));
       this.lines.push('deactivate ' + receiver.id);
       const type = this.model.type(method.returnType, method.owner || method.scope);
       const borrowed = type.reference || method.returnType.includes('*');
@@ -721,6 +766,7 @@
           const end = closing(tokens, i);
           result = this.expression(tokens.slice(i + 1, end), context); i = end + 1;
         } else if (identifier(tokens[i]) && !['return', 'new', 'delete'].includes(tokens[i])) {
+          const source = span(tokens, i);
           let name = tokens[i++];
           while (tokens[i] === '::' && identifier(tokens[i + 1])) { name += '::' + tokens[i + 1]; i += 2; }
           if (tokens[i] === '(') {
@@ -730,24 +776,24 @@
             let receiver = context.receiver;
             if (node) {
               receiver = this.staticReceiver(node);
-              result = this.invoke(receiver, this.model.method(node, shortName(name), args.length), args, argTokens, context);
+              result = this.invoke(receiver, this.model.method(node, shortName(name), args.length), args, argTokens, context, source);
             } else if (['std::move', 'std::ref', 'std::cref'].includes(name)) result = args[0];
             else {
               const method = this.model.method(receiver.node, name, args.length) || this.freeFunction(name, context.scope, args.length);
-              result = this.invoke(receiver, method, args, argTokens, context);
+              result = this.invoke(receiver, method, args, argTokens, context, source);
             }
             i = end + 1;
           } else result = this.variable(name, context);
         } else { i++; continue; }
         while (['.', '->'].includes(tokens[i]) && identifier(tokens[i + 1])) {
-          const name = tokens[i + 1]; i += 2;
+          const name = tokens[i + 1], source = span(tokens, i + 1); i += 2;
           if (tokens[i] === '(') {
             const end = closing(tokens, i), argTokens = tokens.slice(i + 1, end), args = this.arguments(argTokens, context);
             if (!result) {
               this.diagnostics.add('unresolved', name);
               if (this.usesRangeReference(tokens, context)) context.constants.clear();
             }
-            result = result ? this.invoke(result, this.model.method(result.node, name, args.length), args, argTokens, context) : null;
+            result = result ? this.invoke(result, this.model.method(result.node, name, args.length), args, argTokens, context, source) : null;
             i = end + 1;
           } else result = result ? this.field(result, name) : null;
         }
@@ -827,7 +873,10 @@
       if (construct) {
         const args = this.arguments(construct.args, context);
         value = this.entity(name, construct.node); this.ensure(value);
-        this.lines.push('create ' + value.id, context.receiver.id + ' --> ' + value.id + ': <<create>>');
+        // A create names its new expression, or the declaration that constructs.
+        const allocation = initializer.indexOf('new');
+        const source = allocation >= 0 ? span(initializer, allocation) : span(tokens, end);
+        this.lines.push('create ' + value.id, this.sourceMap.tag(context.receiver.id + ' --> ' + value.id + ': <<create>>', source));
         const constructor = this.model.method(value.node, shortName(value.node.name), args.length);
         if (constructor) {
           this.lines.push('activate ' + value.id);
@@ -1089,7 +1138,7 @@
   function analyzeCppSources(sources, options = {}) {
     const parser = new CppParser(), errors = [];
     for (const [filename, source] of Object.entries(sources)) {
-      try { parser.parse(tokenize(source)); }
+      try { parser.parse(tokenize(source, filename)); }
       catch (error) { errors.push(filename + ': ' + error.message); }
     }
     const model = new CppModel(parser);
@@ -1102,7 +1151,8 @@
       sequenceFailed = true;
       errors.push(error.message);
     }
-    return { ...classDiagramResult(model, options), ...sequence.diagnostics.result(sequenceDiagram, { failed: sequenceFailed }),
+    return { ...classDiagramResult(model, options),
+      ...sequence.diagnostics.result(sequenceDiagram, { failed: sequenceFailed, sources: sequenceFailed ? [] : sequence.diagramSources }),
       sequenceLoopConstants: sequenceFailed ? [] : sequence.loopConstants.toJSON(), errors };
   }
 

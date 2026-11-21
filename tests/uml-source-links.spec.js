@@ -126,20 +126,23 @@ test.describe('UML code labs', () => {
     await expect.poll(() => markedLines(lab)).toEqual([[5, 6]]);
   });
 
-  test('without known source lines a diagram shows no link affordance and no list', async ({ page }) => {
-    // C++ inference does not yet report source lines.
+  test('a C++ class lab marks a class and a method; the keyboard list does the same', async ({ page }) => {
     await page.goto(classChapter);
     const lab = labByTitle(page, 'Member visibility');
     await lab.getByRole('tab', { name: 'C++', exact: true }).click();
     const preview = lab.locator('[data-uml-preview]');
+    await expect(lab.getByRole('img')).toHaveAccessibleName(/Student/);
+
     const name = diagramText(preview, 'Student');
-    await expect(name).toBeVisible();
-    await expect(name).not.toHaveCSS('cursor', 'pointer');
-    await name.hover();
-    await expect(preview.locator('.uml-source-link-outline')).toHaveCount(0);
+    await expect(name).toHaveCSS('cursor', 'pointer');
     await name.click();
-    await expect.poll(() => markedLines(lab)).toEqual([]);
-    await expect(lab.getByText(/^Code locations/)).toBeHidden();
+    await expect.poll(() => markedLines(lab)).toEqual([[3, 11]]);
+
+    await diagramText(preview, '+displayName(): std::string').click();
+    await expect.poll(() => markedLines(lab)).toEqual([[8, 10]]);
+
+    await activateLocation(page, lab, /^Student member -name: std::string — .*, line 4$/);
+    await expect.poll(() => markedLines(lab)).toEqual([[4, 4]]);
   });
 
   test('linked elements show a pointer and an outline under the pointer', async ({ page }) => {

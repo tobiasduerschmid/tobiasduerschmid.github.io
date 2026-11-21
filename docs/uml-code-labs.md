@@ -310,8 +310,10 @@ branches and reorders lines, so provenance cannot drift. What each line names:
 | `participant` | the class of the lifeline; `Main` names the entry-point block |
 | message / reply / `<<create>>` | the statement (Python) or call expression (TypeScript, Java: its name token) |
 
-Python, Java and TypeScript provide ranges. C++ does not yet: its tokenizer
-keeps no positions, so its diagrams render without links. TypeScript ranges
+Python, Java, TypeScript and C++ provide ranges. C++ tokens keep their lines
+through slicing; a class range includes its `template` header, a method merged
+with an out-of-class `A::f` body names that body, and a call names its name
+token (`new` for a `<<create>>`). TypeScript ranges
 are mapped back through the symbol-resolution rewrite to the learner's file.
 `UMLDiagramViews.project` keeps `classDiagramSources` aligned when the design
 view drops a line; the warning note of a partial sequence has no source.

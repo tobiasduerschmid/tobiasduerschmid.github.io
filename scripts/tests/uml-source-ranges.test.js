@@ -277,3 +277,79 @@ test('The design view keeps class sources aligned when it drops a default constr
   assert.equal(design.classDiagramSources.length, design.classDiagram.split('\n').length);
   assert.deepEqual(sourceOf(design, 'class', /tick\(\)/), range('Counter.java', 5, 6));
 });
+
+const { analyzeCppSources } = require('../../js/uml-analyzer-cpp.js');
+
+const cpp = `class Engine {
+public:
+    void start() {
+    }
+};
+
+class Car {
+    Engine* engine;
+    int speed;
+public:
+    Car(Engine* engine) : engine(engine), speed(0) {
+    }
+
+    int drive();
+};
+
+int Car::drive() {
+    engine->start();
+    return speed;
+}
+
+int main() {
+    Car* car = new Car(new Engine());
+    int speed = car->drive();
+    return 0;
+}
+`;
+
+test('C++ class, member, association and call lines map to their declarations', () => {
+  const result = analyzeCppSources({ 'main.cpp': cpp });
+  assert.deepEqual(result.errors, []);
+  assert.equal(result.classDiagramSources.length, result.classDiagram.split('\n').length);
+  assert.equal(result.sequenceDiagramSources.length, result.sequenceDiagram.split('\n').length);
+  assert.deepEqual(sourceOf(result, 'class', /^class Car \{/), range('main.cpp', 7, 15));
+  assert.deepEqual(sourceOf(result, 'class', /drive\(\)/), range('main.cpp', 17, 20), 'an out-of-class body is the definition');
+  assert.deepEqual(sourceOf(result, 'class', /Car\(engine/), range('main.cpp', 11, 12));
+  assert.deepEqual(sourceOf(result, 'class', /-speed: int/), range('main.cpp', 9));
+  assert.deepEqual(sourceOf(result, 'class', /^Car --> .*Engine/), range('main.cpp', 8));
+  assert.deepEqual(sourceOf(result, 'sequence', /-> \w+: start\(\)/), range('main.cpp', 18));
+  assert.deepEqual(sourceOf(result, 'sequence', /^Main -> car: drive\(\)/), range('main.cpp', 24));
+  assert.deepEqual(sourceOf(result, 'sequence', /^car --> Main: int/), range('main.cpp', 24), 'a reply links to the call it answers');
+  assert.deepEqual(sourceOf(result, 'sequence', /^Main --> car: <<create>>/), range('main.cpp', 23));
+  assert.deepEqual(sourceOf(result, 'sequence', /^participant car: Car/), range('main.cpp', 7, 15), 'a lifeline links to its class');
+  assert.deepEqual(sourceOf(result, 'sequence', /^participant Main /), range('main.cpp', 22, 26), 'Main links to main()');
+});
+
+test('C++ inheritance and dependency lines name the class head and the method', () => {
+  const header = `struct Receipt {
+};
+
+class Shape {
+public:
+    virtual double area() = 0;
+};
+`;
+  const source = `template <typename T>
+class Square
+    : public Shape {
+public:
+    double area() override { return 1.0; }
+
+    void print(Receipt receipt) {
+    }
+};
+`;
+  const result = analyzeCppSources({ 'shape.h': header, 'square.cpp': source });
+  assert.deepEqual(result.errors, []);
+  assert.deepEqual(sourceOf(result, 'class', /^class Square \{/), range('square.cpp', 1, 9), 'a class range includes its template header');
+  assert.deepEqual(sourceOf(result, 'class', /^abstract class Shape \{/), range('shape.h', 4, 7));
+  assert.deepEqual(sourceOf(result, 'class', /\{abstract\} \+area\(\)/), range('shape.h', 6));
+  assert.deepEqual(sourceOf(result, 'class', /^Square --\|> Shape$/), range('square.cpp', 2));
+  assert.deepEqual(sourceOf(result, 'class', /^Square \.\.> Receipt$/), range('square.cpp', 7));
+});
