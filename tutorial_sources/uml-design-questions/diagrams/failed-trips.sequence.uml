@@ -69,5 +69,8 @@ is sent again every 60 s
 An answer changes the trip order only
 while it is processing
 (services/opc/invoice_task.py:33).
+Each answer is recorded on its
+supplier order
+(services/opc/invoice_task.py:27).
 end note
 @enduml

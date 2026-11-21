@@ -382,8 +382,6 @@ test.describe('authored-diagram pane', () => {
     await showDiagrams(page, [ORDER_FAN_OUT]);
     const pane = diagramPane(page);
     const drawing = componentDrawing(page);
-    const hint = pane.getByText(FIT_HINT, { exact: true });
-    await expect(hint).toBeVisible();
     await pane.getByRole('button', { name: 'Reset zoom' }).click();
     const readableWidth = await drawingWidth(drawing);
     await pane.getByRole('button', { name: 'Fit diagram to screen', exact: true }).click();
@@ -394,7 +392,6 @@ test.describe('authored-diagram pane', () => {
 
     await expect(pane.getByText('100%', { exact: true })).toBeVisible();
     await expect(drawing).toBeFocused();
-    await expect(hint).toBeHidden();
     expect(await drawingWidth(drawing)).toBeCloseTo(readableWidth, 0);
     expect(await middleAsFarAsScrollAllows(drawing, clicked)).toEqual({ x: true, y: true });
   });
@@ -409,7 +406,24 @@ test.describe('authored-diagram pane', () => {
     await showDiagrams(page, [ORDER_FAN_OUT]);
 
     await expect(pane.getByText('Fit', { exact: true })).toBeVisible();
-    await expect(pane.getByText(FIT_HINT, { exact: true })).toBeVisible();
+  });
+
+  test('the fit hint floats over a maximized drawing, and stays out of the way beside the code', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await openDemo(page);
+    await showDiagrams(page, [ORDER_FAN_OUT], { layout: 'maximized' });
+    const pane = diagramPane(page);
+    const hint = pane.getByText(FIT_HINT, { exact: true });
+    await expect(pane.getByText('Fit', { exact: true })).toBeVisible();
+    await expect(hint).toBeVisible();
+
+    await pane.getByRole('button', { name: 'Code beside diagram' }).click();
+    await expect(hint).toBeHidden();
+
+    await pane.getByRole('button', { name: 'Code beside diagram' }).click();
+    await expect(hint).toBeVisible();
+    await pane.getByRole('button', { name: 'Zoom in' }).click();
+    await expect(hint).toBeHidden();
   });
 
   test('the pane enters and leaves full screen from its own button', async ({ page }) => {
@@ -445,6 +459,212 @@ test.describe('authored-diagram pane', () => {
     const paneBox = await diagramPane(page).boundingBox();
     expect(paneBox.y).toBeGreaterThanOrEqual(editorBox.y + editorBox.height - 1);
     expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBeLessThanOrEqual(0);
+  });
+});
+
+// Ctrl/Cmd+F belongs to the browser and to Monaco, except while focus is in
+// the Diagram pane (or the Diagram view is shown and focus is elsewhere in the
+// workspace outside the code editor), where it opens a find bar for the shown
+// drawing. Ctrl/Cmd+Shift+F stays project search. Pinch zoom (wheel events
+// with ctrlKey) zooms the drawing around the pointer instead of the page.
+test.describe('diagram pane: find and pinch zoom', () => {
+  test.use({ viewport: { width: 1440, height: 900 } });
+
+  function findBar(page) {
+    return diagramPane(page).getByRole('search', { name: 'Find in diagram' });
+  }
+
+  function findField(page) {
+    return findBar(page).getByLabel('Find in diagram', { exact: true });
+  }
+
+  /** The drawing labels framed as matches, and the one marked current. */
+  function marks(page) {
+    return diagramPane(page).evaluate(pane => {
+      const label = box => box.nextElementSibling.textContent.replace(/\s+/g, ' ').trim();
+      const boxes = [...pane.querySelectorAll('rect.tutorial-diagram-pane__hit-box')];
+      const current = boxes.filter(box => box.classList.contains('tutorial-diagram-pane__hit-box--current'));
+      return {
+        labels: boxes.map(label),
+        current: current.map(label),
+        currentStroke: current.length ? parseFloat(getComputedStyle(current[0]).strokeWidth) : 0,
+        otherStroke: boxes.length > current.length
+          ? parseFloat(getComputedStyle(boxes.find(box => !current.includes(box))).strokeWidth) : 0,
+      };
+    });
+  }
+
+  test('Ctrl/Cmd+F in the Diagram pane opens its find bar, not project search', async ({ page }) => {
+    await openDemo(page);
+    await showDiagrams(page, [ORDER_FAN_OUT], { layout: 'maximized' });
+    await componentDrawing(page).focus();
+
+    await page.keyboard.press('ControlOrMeta+F');
+
+    await expect(findField(page)).toBeFocused();
+    await expect(page.getByRole('region', { name: 'Project search' })).toBeHidden();
+  });
+
+  test('typing a label frames every match and reports the first of them', async ({ page }) => {
+    await openDemo(page);
+    await showDiagrams(page, [ORDER_FAN_OUT], { layout: 'maximized' });
+    await componentDrawing(page).focus();
+    await page.keyboard.press('ControlOrMeta+F');
+
+    await findField(page).fill('trip.');
+
+    await expect(findBar(page).getByRole('status')).toHaveText('1 of 4');
+    const shown = await marks(page);
+    expect([...shown.labels].sort()).toEqual(['trip.*', 'trip.*', 'trip.cancelled', 'trip.confirmed']);
+    expect(shown.current).toHaveLength(1);
+    expect(shown.currentStroke).toBeGreaterThan(shown.otherStroke);
+    await findField(page).fill('no such label');
+    await expect(findBar(page).getByRole('status')).toHaveText('No matches');
+    await a11yCheckpoint(page, 'diagram-challenge-demo: diagram find bar');
+  });
+
+  test('Enter moves to the next match at reading size, Shift+Enter back', async ({ page }) => {
+    await openDemo(page);
+    await showDiagrams(page, [ORDER_FAN_OUT], { layout: 'maximized' });
+    const pane = diagramPane(page);
+    await componentDrawing(page).focus();
+    await page.keyboard.press('ControlOrMeta+F');
+    await findField(page).fill('trip.');
+    await expect(findBar(page).getByRole('status')).toHaveText('1 of 4');
+
+    await page.keyboard.press('Enter');
+
+    await expect(findBar(page).getByRole('status')).toHaveText('2 of 4');
+    await expect(findField(page)).toBeFocused();
+    await expect(pane.getByText('100%', { exact: true })).toBeVisible();
+    const current = pane.locator('rect.tutorial-diagram-pane__hit-box--current + text');
+    const point = await current.evaluate(node => {
+      const svg = node.ownerSVGElement.getBoundingClientRect();
+      const box = node.getBoundingClientRect();
+      return { x: (box.left + box.width / 2 - svg.left) / svg.width, y: (box.top + box.height / 2 - svg.top) / svg.height };
+    });
+    expect(await middleAsFarAsScrollAllows(componentDrawing(page), point)).toEqual({ x: true, y: true });
+    await page.keyboard.press('Shift+Enter');
+    await expect(findBar(page).getByRole('status')).toHaveText('1 of 4');
+    await findBar(page).getByRole('button', { name: 'Previous match' }).click();
+    await expect(findBar(page).getByRole('status')).toHaveText('4 of 4');
+  });
+
+  test('Escape closes the find bar, clears the marks, and returns focus', async ({ page }) => {
+    await openDemo(page);
+    await showDiagrams(page, [ORDER_FAN_OUT], { layout: 'maximized' });
+    const drawing = componentDrawing(page);
+    await drawing.focus();
+    await page.keyboard.press('ControlOrMeta+F');
+    await findField(page).fill('Broker');
+
+    await page.keyboard.press('Escape');
+
+    await expect(findBar(page)).toBeHidden();
+    await expect(drawing).toBeFocused();
+    expect((await marks(page)).labels).toEqual([]);
+  });
+
+  test('Ctrl+F in the code editor still opens the editor’s own find', async ({ page }) => {
+    // Playwright's Cmd+F on macOS does not reach Monaco's key bindings, so
+    // the page runs as on Linux, where the editor's find is Ctrl+F.
+    await page.addInitScript(() => {
+      Object.defineProperty(navigator, 'platform', { get: () => 'Linux x86_64' });
+      Object.defineProperty(navigator, 'userAgent', {
+        get: () => 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36',
+      });
+    });
+    await openDemo(page);
+    await showDiagrams(page, [ORDER_EVENTS], { layout: 'split' });
+    await page.locator('.monaco-editor .view-lines').first().click();
+
+    await page.keyboard.press('Control+F');
+
+    await expect(page.getByRole('textbox', { name: 'Find', exact: true })).toBeFocused();
+    await expect(findBar(page)).toBeHidden();
+    await expect(page.getByRole('region', { name: 'Project search' })).toBeHidden();
+  });
+
+  /** Dispatch one wheel event over the drawing; returns whether the page's default was prevented. */
+  function wheel(drawing, { x, y, deltaY, ctrlKey = true }) {
+    return drawing.evaluate((region, init) => {
+      const target = document.elementFromPoint(init.x, init.y) || region;
+      const event = new WheelEvent('wheel', {
+        bubbles: true, cancelable: true, clientX: init.x, clientY: init.y, deltaY: init.deltaY, ctrlKey: init.ctrlKey,
+      });
+      return !target.dispatchEvent(event);
+    }, { x, y, deltaY, ctrlKey });
+  }
+
+  /** Where a drawing point (shares of its size) is on screen. */
+  function screenPoint(drawing, share) {
+    return drawing.evaluate((region, { x, y }) => {
+      const box = region.querySelector(':scope > svg').getBoundingClientRect();
+      return { x: box.left + x * box.width, y: box.top + y * box.height };
+    }, share);
+  }
+
+  test('pinch zoom over the drawing zooms around the pointer, not the page', async ({ page }) => {
+    await openDemo(page);
+    await showDiagrams(page, [ORDER_FAN_OUT], { layout: 'maximized' });
+    const pane = diagramPane(page);
+    const drawing = componentDrawing(page);
+    // At reading size this drawing is wider than the pane, so scrolling can
+    // keep a point under the pointer while it grows; on an axis where the
+    // drawing still fits, it stays as near as scrolling allows.
+    await pane.getByRole('button', { name: 'Reset zoom' }).click();
+    await expect(pane.getByText('100%', { exact: true })).toBeVisible();
+    const before = await drawing.locator('svg').boundingBox();
+    const view = await drawing.boundingBox();
+    const pointer = { x: view.x + view.width * 0.4, y: view.y + view.height * 0.55 };
+    const share = { x: (pointer.x - before.x) / before.width, y: (pointer.y - before.y) / before.height };
+
+    for (let step = 0; step < 6; step++) {
+      expect(await wheel(drawing, { ...pointer, deltaY: -8 }), 'the page does not zoom').toBe(true);
+    }
+
+    await expect(pane.getByText('100%', { exact: true })).toBeHidden();
+    await expect(pane.getByText(/^\d+%$/)).toHaveText(/^1[5-7]\d%$/);
+    await expect.poll(async () => Math.abs((await screenPoint(drawing, share)).x - pointer.x),
+      { message: 'the point under the pointer stays put' }).toBeLessThanOrEqual(2);
+    await expect.poll(async () => {
+      const dy = (await screenPoint(drawing, share)).y - pointer.y;
+      return drawing.evaluate((region, offset) => {
+        const max = region.scrollHeight - region.clientHeight;
+        return Math.abs(offset) <= 2 || (offset > 0 ? region.scrollTop >= max - 1 : region.scrollTop <= 1);
+      }, dy);
+    }, { message: 'vertically, as near as scrolling allows' }).toBe(true);
+    expect(await page.evaluate(() => window.visualViewport.scale)).toBe(1);
+    await expect(pane.getByRole('button', { name: 'Zoom out' })).not.toHaveAttribute('aria-disabled', 'true');
+  });
+
+  test('pinching out stops at Fit and pinching in stops at the largest zoom step', async ({ page }) => {
+    await openDemo(page);
+    await showDiagrams(page, [ORDER_FAN_OUT], { layout: 'maximized' });
+    const pane = diagramPane(page);
+    const drawing = componentDrawing(page);
+    const box = await drawing.boundingBox();
+    const pointer = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+
+    for (let step = 0; step < 40; step++) await wheel(drawing, { ...pointer, deltaY: -50 });
+    await expect(pane.getByText(`${ZOOM_STEPS[ZOOM_STEPS.length - 1] * 100}%`, { exact: true })).toBeVisible();
+    await expect(pane.getByRole('button', { name: 'Zoom in' })).toHaveAttribute('aria-disabled', 'true');
+
+    for (let step = 0; step < 60; step++) await wheel(drawing, { ...pointer, deltaY: 50 });
+    await expect(pane.getByText('Fit', { exact: true })).toBeVisible();
+  });
+
+  test('two-finger scrolling without a pinch still scrolls the drawing', async ({ page }) => {
+    await openDemo(page);
+    await showDiagrams(page, [ORDER_FAN_OUT], { layout: 'maximized' });
+    const pane = diagramPane(page);
+    const drawing = componentDrawing(page);
+    await pane.getByRole('button', { name: 'Reset zoom' }).click();
+    const box = await drawing.boundingBox();
+
+    expect(await wheel(drawing, { x: box.x + box.width / 2, y: box.y + box.height / 2, deltaY: 40, ctrlKey: false }))
+      .toBe(false);
+    await expect(pane.getByText('100%', { exact: true })).toBeVisible();
   });
 });
 
@@ -792,6 +1012,326 @@ test.describe('diagram challenge: answering from the code', () => {
   });
 });
 
+// ---------------------------------------------------------------------------
+// Diagram search and code links
+// ---------------------------------------------------------------------------
+
+// Labels that only the step's "Order events" diagram shows: the code spells
+// the queue `trip-site-notifications`.
+const DIAGRAM_ONLY_LABEL = 'TripSiteNotifications';
+const EVENT_LINKS = config.steps[0].diagram_challenge.reply.diagrams[0].links;
+const linkFor = text => EVENT_LINKS.find(link => link.text === text);
+
+function searchField(page) {
+  return page.getByLabel('Search all files', { exact: true });
+}
+
+/** Ctrl/Cmd+Shift+F, which works wherever focus is in the tutorial, also over a maximized diagram. */
+async function searchProject(page, text) {
+  await page.keyboard.press('ControlOrMeta+Shift+F');
+  await expect(searchField(page)).toBeFocused();
+  await searchField(page).fill(text);
+}
+
+function searchStatus(page) {
+  return page.getByRole('region', { name: 'Project search' }).getByRole('status');
+}
+
+/** The result list of one diagram, named by its "Diagram: <label>" heading. */
+function diagramResults(page, label) {
+  return page.getByRole('list', { name: 'Search results' })
+    .getByRole('list', { name: new RegExp('^Diagram: ' + label + ' \\d+ results?$') });
+}
+
+/** A label of the shown drawing, by its exact text. */
+function drawingLabel(page, text) {
+  return diagramPane(page).locator('svg text').filter({ hasText: new RegExp('^\\s*' + text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*$') });
+}
+
+/**
+ * How a drawing label is marked, as a reader sees it: weight, underline, and
+ * any frame drawn behind it, with the contrasts that make each legible. In
+ * dark mode the site shows the SVG through `invert(1) hue-rotate(180deg)`, so
+ * colors inside the drawing are compared as that filter paints them, against
+ * the pane surface behind the drawing.
+ */
+function labelLook(label) {
+  return label.evaluate(node => {
+    const rgb = value => (String(value).match(/[\d.]+/g) || []).map(Number).slice(0, 3).map(c => c / 255);
+    // CSS filter functions as color matrices (Filter Effects 1, §13).
+    const FILTERS = {
+      'invert(1)': ([r, g, b]) => [1 - r, 1 - g, 1 - b],
+      'hue-rotate(180deg)': ([r, g, b]) => [
+        -0.574 * r + 1.430 * g + 0.144 * b,
+        0.426 * r + 0.430 * g + 0.144 * b,
+        0.426 * r + 1.430 * g - 0.856 * b,
+      ].map(c => Math.min(1, Math.max(0, c))),
+    };
+    const svg = node.ownerSVGElement;
+    const filter = getComputedStyle(svg).filter;
+    const steps = filter && filter !== 'none' ? filter.split(/\s+(?=[a-z-]+\()/) : [];
+    const painted = value => steps.reduce((color, step) => {
+      if (!FILTERS[step]) throw new Error('unknown filter ' + step);
+      return FILTERS[step](color);
+    }, rgb(value));
+    const luminance = ([r, g, b]) => {
+      const lin = c => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
+      return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+    };
+    const contrast = (a, b) => {
+      const [lighter, darker] = [luminance(a), luminance(b)].sort((x, y) => y - x);
+      return (lighter + 0.05) / (darker + 0.05);
+    };
+    let surface = svg.parentElement;
+    const opaque = value => value !== 'transparent' && !/rgba\([^)]*,\s*0\)$/.test(value);
+    while (surface && !opaque(getComputedStyle(surface).backgroundColor)) surface = surface.parentElement;
+    const behind = rgb(surface ? getComputedStyle(surface).backgroundColor : 'rgb(255, 255, 255)');
+    const style = getComputedStyle(node);
+    const frame = node.previousElementSibling;
+    const framed = !!frame && frame.tagName === 'rect' && frame.classList.contains('tutorial-diagram-pane__hit-box');
+    const look = {
+      weight: Number(style.fontWeight),
+      underlined: style.textDecorationLine.includes('underline'),
+      cursor: style.cursor,
+      textContrast: contrast(painted(style.fill), behind),
+      framed,
+    };
+    if (framed) {
+      const box = getComputedStyle(frame);
+      const frameBox = frame.getBoundingClientRect();
+      const labelBox = node.getBoundingClientRect();
+      Object.assign(look, {
+        frameWidth: parseFloat(box.strokeWidth),
+        frameContrast: contrast(painted(box.stroke), behind),
+        frameAroundLabel: frameBox.left <= labelBox.left && frameBox.right >= labelBox.right &&
+          frameBox.top <= labelBox.top && frameBox.bottom >= labelBox.bottom,
+        textOnFillContrast: contrast(painted(style.fill), painted(box.fill)),
+      });
+    }
+    return look;
+  });
+}
+
+/** Text contrast of a control against the first opaque surface behind it. */
+function controlContrast(control) {
+  return control.evaluate(node => {
+    const rgb = value => (String(value).match(/[\d.]+/g) || []).map(Number);
+    const opaque = value => value !== 'transparent' && (rgb(value)[3] === undefined || rgb(value)[3] > 0);
+    const luminance = value => {
+      const [r, g, b] = rgb(value).map(channel => {
+        const c = channel / 255;
+        return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+      });
+      return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    };
+    let surface = node;
+    while (surface && !opaque(getComputedStyle(surface).backgroundColor)) surface = surface.parentElement;
+    const behind = surface ? getComputedStyle(surface).backgroundColor : 'rgb(255, 255, 255)';
+    const [lighter, darker] = [luminance(getComputedStyle(node).color), luminance(behind)].sort((a, b) => b - a);
+    return (lighter + 0.05) / (darker + 0.05);
+  });
+}
+
+test.describe('diagram search and code links', () => {
+  test.use({ viewport: { width: 1440, height: 900 } });
+
+  test('search finds diagram text only after lock-in, under a diagram heading', async ({ page }) => {
+    await openDemo(page);
+    await codeEditor(page).focus();
+    await searchProject(page, DIAGRAM_ONLY_LABEL);
+    await expect(searchStatus(page)).toHaveText(`No results for “${DIAGRAM_ONLY_LABEL}”.`);
+    await page.keyboard.press('Escape');
+
+    await answerExploreFromCode(page);
+    await lockIn(page);
+    await searchProject(page, DIAGRAM_ONLY_LABEL);
+
+    await expect(searchStatus(page)).toHaveText('1 result in 1 diagram.');
+    await expect(diagramResults(page, 'Order events').getByRole('button', { name: DIAGRAM_ONLY_LABEL, exact: true })).toBeVisible();
+    await searchField(page).fill('order.placed');
+    await expect(searchStatus(page)).toHaveText('3 results in 2 files and 1 diagram.');
+    await a11yCheckpoint(page, 'diagram-challenge-demo: diagram search results');
+  });
+
+  test('while the contrast view is pending, search does not reach the main reply diagram', async ({ page }) => {
+    await openDemo(page, '#review');
+    const fromCode = stage(page, 'Answer from the code');
+    await question(fromCode, 1).getByLabel('order.* on trip-site-notifications').check();
+    await fromCode.getByLabel('Sure', { exact: true }).check();
+    await fromCode.getByRole('group', { name: 'Which view would you ask the agent for?' }).getByLabel('Class diagram').check();
+    await lockIn(page);
+    await searchProject(page, DIAGRAM_ONLY_LABEL);
+
+    await expect(searchStatus(page)).toHaveText(`No results for “${DIAGRAM_ONLY_LABEL}”.`);
+    await searchField(page).fill('GlampingCoGateway');
+    await expect(searchStatus(page)).toHaveText('2 results in 1 file and 1 diagram.');
+  });
+
+  test('a diagram result shows its tab with every hit framed and the first at reading size', async ({ page }) => {
+    await openDemo(page);
+    await showDiagrams(page, [ORDER_CLASSES, ORDER_FAN_OUT], { layout: 'split' });
+    await page.getByRole('button', { name: 'Editor', exact: true }).click();
+    await codeEditor(page).focus();
+    await searchProject(page, 'SupportConsole');
+    await diagramResults(page, 'Order fan-out').getByRole('button', { name: 'SupportConsole', exact: true }).click();
+
+    const pane = diagramPane(page);
+    await expect(page.getByRole('button', { name: 'Diagram', exact: true })).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.getByRole('button', { name: 'Code beside diagram' })).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.getByRole('tab', { name: 'Order fan-out' })).toHaveAttribute('aria-selected', 'true');
+    await expect(pane.getByText('100%', { exact: true })).toBeVisible();
+    await expect(pane.getByRole('status')).toHaveText('1 label marked in Order fan-out.');
+    const hit = drawingLabel(page, 'SupportConsole');
+    const look = await labelLook(hit);
+    expect(look.weight).toBeGreaterThanOrEqual(700);
+    expect(look).toMatchObject({ framed: true, frameAroundLabel: true });
+    expect(look.frameWidth).toBeGreaterThanOrEqual(2);
+    const drawing = componentDrawing(page);
+    const point = await hit.evaluate(node => {
+      const svg = node.ownerSVGElement.getBoundingClientRect();
+      const box = node.getBoundingClientRect();
+      return { x: (box.left + box.width / 2 - svg.left) / svg.width, y: (box.top + box.height / 2 - svg.top) / svg.height };
+    });
+    expect(await middleAsFarAsScrollAllows(drawing, point)).toEqual({ x: true, y: true });
+    expect((await labelLook(drawingLabel(page, 'Broker'))).framed).toBe(false);
+
+    // A new query clears the marks.
+    await searchField(page).fill('Loyalty');
+    await expect(pane.locator('rect.tutorial-diagram-pane__hit-box')).toHaveCount(0);
+  });
+
+  test('double-clicking a linked label opens its code beside the diagram', async ({ page }) => {
+    await openDemo(page);
+    await answerExploreFromCode(page);
+    await lockIn(page);
+    const link = linkFor('WarehouseETL');
+    await drawingLabel(page, link.text).dblclick();
+
+    await expect(fileTabs(page).getByRole('button', { name: link.path, exact: true })).toHaveAttribute('aria-current', 'true');
+    await expect.poll(() => page.evaluate(() => window._tutorial.currentEditorLocation())).toEqual({ path: link.path, line: link.line });
+    await expect(codeEditor(page)).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Code beside diagram' })).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  test('a single click on a linked label in Fit view does not zoom, and the hint says to double-click', async ({ page }) => {
+    await openDemo(page);
+    await answerExploreFromCode(page);
+    await lockIn(page);
+    const pane = diagramPane(page);
+    await expect(pane.getByText('Fit', { exact: true })).toBeVisible();
+    await expect(pane.getByText('Click a part of the drawing to read it at full size; double-click an underlined name to open its code.', { exact: true }))
+      .toBeVisible();
+
+    await drawingLabel(page, 'OPC').click();
+
+    await expect(pane.getByText('Fit', { exact: true })).toBeVisible();
+    expect(await page.evaluate(() => window._tutorial.currentEditorLocation())).not.toEqual({ path: linkFor('OPC').path, line: linkFor('OPC').line });
+  });
+
+  test('each code link is a button that opens its code from the keyboard', async ({ page }) => {
+    await openDemo(page);
+    await answerExploreFromCode(page);
+    await lockIn(page);
+    const link = linkFor('TripSiteNotifications');
+    const summary = diagramPane(page).locator('summary', { hasText: /^Code links$/ });
+    await summary.focus();
+    await page.keyboard.press('Enter');
+    const button = diagramPane(page).getByRole('button', { name: `${link.text}, opens ${link.path}:${link.line}`, exact: true });
+    await expect(button).toBeVisible();
+    await button.focus();
+    await page.keyboard.press('Enter');
+
+    await expect(fileTabs(page).getByRole('button', { name: link.path, exact: true })).toHaveAttribute('aria-current', 'true');
+    await expect.poll(() => page.evaluate(() => window._tutorial.currentEditorLocation())).toEqual({ path: link.path, line: link.line });
+    await a11yCheckpoint(page, 'diagram-challenge-demo: code links');
+  });
+
+  // A note cites project files as path:line; each citation of a project
+  // file is a link, and a path outside the project stays plain text.
+  const CITING_NOTE = {
+    id: 'cited',
+    label: 'Cited bindings',
+    type: 'component',
+    source: '@startuml\ncomponent OPC\ncomponent Broker\nOPC --> Broker : order.placed\n' +
+      'note bottom of Broker\nBindings: deploy/broker.toml:13 and\ndeploy/broker.toml:13 again; not foo.py:3\nend note\n@enduml',
+  };
+
+  test('a path:line in a diagram note opens its file by double-click and from the list', async ({ page }) => {
+    await openDemo(page);
+    await showDiagrams(page, [CITING_NOTE], { layout: 'split' });
+    const citations = diagramPane(page).locator('svg .tutorial-diagram-pane__link');
+    await expect(citations).toHaveText(['deploy/broker.toml:13', 'deploy/broker.toml:13']);
+    expect(await citations.first().evaluate(node => getComputedStyle(node).textDecorationLine)).toContain('underline');
+
+    await citations.first().dblclick();
+    await expect(fileTabs(page).getByRole('button', { name: 'deploy/broker.toml', exact: true })).toHaveAttribute('aria-current', 'true');
+    await expect.poll(() => page.evaluate(() => window._tutorial.currentEditorLocation())).toEqual({ path: 'deploy/broker.toml', line: 13 });
+
+    await page.evaluate(() => window._tutorial.revealSource('scenario.py', 1));
+    await diagramPane(page).locator('summary', { hasText: /^Code links$/ }).click();
+    const listed = diagramPane(page).getByRole('button', { name: 'Open deploy/broker.toml at line 13', exact: true });
+    await expect(listed).toHaveCount(1);
+    await listed.focus();
+    await page.keyboard.press('Enter');
+    await expect.poll(() => page.evaluate(() => window._tutorial.currentEditorLocation())).toEqual({ path: 'deploy/broker.toml', line: 13 });
+  });
+
+  test('a path:line code span in an explanation opens its file by click and by keyboard', async ({ page }) => {
+    await openDemo(page);
+    await answerExploreFromCode(page);
+    await lockIn(page);
+    // The comparison shows each question's explanation.
+    const withDiagram = stage(page, 'Answer with the diagram');
+    await withDiagram.getByRole('button', { name: 'Check my answers' }).click();
+    await withDiagram.getByRole('button', { name: 'Continue to the new question' }).click();
+    const followUp = stage(page, 'A new question');
+    await followUp.getByLabel('warehouse-etl', { exact: true }).check();
+    await followUp.getByRole('button', { name: 'Check my answer' }).click();
+    await followUp.getByRole('button', { name: 'Show the comparison' }).click();
+    const reference = stage(page, 'Compare your answers')
+      .getByRole('button', { name: 'Open deploy/broker.toml at line 13', exact: true });
+    await expect(reference).toBeVisible();
+    await expect(reference.locator('code')).toHaveText('deploy/broker.toml:13');
+
+    await reference.click();
+    await expect(fileTabs(page).getByRole('button', { name: 'deploy/broker.toml', exact: true })).toHaveAttribute('aria-current', 'true');
+    await expect.poll(() => page.evaluate(() => window._tutorial.currentEditorLocation())).toEqual({ path: 'deploy/broker.toml', line: 13 });
+
+    await page.evaluate(() => window._tutorial.revealSource('scenario.py', 1));
+    await reference.focus();
+    await page.keyboard.press('Enter');
+    await expect.poll(() => page.evaluate(() => window._tutorial.currentEditorLocation())).toEqual({ path: 'deploy/broker.toml', line: 13 });
+  });
+
+  test('search marks and linked labels stay legible, not by color alone, in light and dark mode', async ({ page }) => {
+    await openDemo(page);
+    await answerExploreFromCode(page);
+    await lockIn(page);
+    await diagramPane(page).locator('summary', { hasText: /^Code links$/ }).click();
+    await searchProject(page, 'orders');
+    await diagramResults(page, 'Order events').getByRole('button', { name: 'orders', exact: true }).click();
+    const hit = drawingLabel(page, 'orders');
+    const linked = drawingLabel(page, 'WarehouseETL');
+    const codeLink = diagramPane(page).getByRole('button', { name: /^WarehouseETL, opens / });
+
+    for (const theme of ['light', 'dark']) {
+      if (theme === 'dark') await setDarkMode(page);
+      // The theme switch fades colors; wait until the button has settled.
+      await expect.poll(() => controlContrast(codeLink), { message: `${theme}: code link text (WCAG 1.4.3)` })
+        .toBeGreaterThanOrEqual(4.5);
+      const hitLook = await labelLook(hit);
+      expect(hitLook.frameWidth, `${theme}: the hit is framed`).toBeGreaterThanOrEqual(2);
+      expect(hitLook.frameContrast, `${theme}: the frame stands out (WCAG 1.4.11)`).toBeGreaterThanOrEqual(3);
+      expect(hitLook.textOnFillContrast, `${theme}: the hit's text on its fill (WCAG 1.4.3)`).toBeGreaterThanOrEqual(4.5);
+      expect(hitLook.weight, `${theme}: the hit is bold`).toBeGreaterThanOrEqual(700);
+      const linkLook = await labelLook(linked);
+      expect(linkLook.underlined, `${theme}: a linked label is underlined`).toBe(true);
+      expect(linkLook.cursor).toBe('pointer');
+      expect(linkLook.textContrast, `${theme}: a linked label's text (WCAG 1.4.3)`).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+});
+
 test.describe('diagram challenge: contrast view and view prediction', () => {
   test('the contrast question comes before the main reply', async ({ page }) => {
     await openDemo(page, '#review');
@@ -934,16 +1474,26 @@ test.describe('diagram challenge: gating, persistence, reset, instructor mode', 
     await expect(page.getByRole('button', { name: 'Diagram', exact: true })).toHaveAttribute('aria-disabled', 'true');
   });
 
-  test('instructor mode shows keys and never locks', async ({ page }) => {
+  test('instructor mode works like the student view, never locks, and shows keys only after Solution', async ({ page }) => {
     await page.goto(URL + '&instructor-mode=true');
     await waitForBoot(page);
+    const fromCode = stage(page, 'Answer from the code');
 
-    await expect(challenge(page).getByText('Instructor mode: answer keys and every panel are shown, and this step never locks.'))
+    await expect(challenge(page).getByText('Instructor mode: work through this step as a student would. It never locks, and nothing you enter is saved. Press Solution to show the answer keys.'))
       .toBeVisible();
-    await expect(question(stage(page, 'Answer from the code'), 1).getByLabel('partner-gateway (answer key)')).toBeChecked();
-    await expect(stage(page, 'Answer from the code').getByText(/^Its binding # matches every key/)).toBeVisible();
+    await expect(challenge(page).getByText('(answer key)')).toHaveCount(0);
+    await fromCode.getByLabel(HYPOTHESIS).fill('The bindings decide.');
+    await question(fromCode, 1).getByLabel('warehouse-etl', { exact: true }).check();
+    await expect(question(fromCode, 1).getByLabel('warehouse-etl', { exact: true })).toBeChecked();
+    await expect(stage(page, 'The agent’s reply')).toHaveCount(0);
+    await expect(nextButton(page)).toBeEnabled();
+
+    await page.getByRole('link', { name: 'Solution' }).click();
+
+    await expect(question(fromCode, 1).getByLabel('partner-gateway (answer key)')).toBeChecked();
+    await expect(fromCode.getByText(/^Its binding # matches every key/)).toBeVisible();
     await expect(stage(page, 'The agent’s reply').getByRole('button', { name: 'Show the diagram' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Diagram', exact: true })).not.toHaveAttribute('aria-disabled', 'true');
+    await expect(challenge(page).getByRole('status').filter({ hasText: 'Answer keys shown.' })).toHaveCount(1);
     await expect(nextButton(page)).toBeEnabled();
     await a11yCheckpoint(page, 'diagram-challenge-demo: instructor answer key', { feature: 'diagram-challenge' });
   });

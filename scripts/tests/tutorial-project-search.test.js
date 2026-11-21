@@ -92,3 +92,73 @@ test('the preview marks the match within long lines', () => {
   assert.ok(result.preview.length < long.length, 'long lines are shortened around the match');
   assert.equal(result.preview.slice(result.matchStart, result.matchStart + result.matchLength), 'needle');
 });
+
+// --- Diagrams --------------------------------------------------------------
+// The Diagram pane's loaded diagrams join the search as entries with
+// kind 'diagram'. Only what the drawing shows is searched: labels, member
+// and message texts, guards, and notes; never the @startuml/@enduml
+// markers, the @layout block, element keywords, or aliases.
+
+const { diagramText, textMatches } = require('../../js/tutorial-project-search.js');
+
+const EVENTS = [
+  '@startuml',
+  'component OPC <<BackendService>> {',
+  '  portout "order events" as opc_pub',
+  '}',
+  'participant web: TripWebsite',
+  'opc_pub -- ex_in : binding order.placed',
+  'note top of OPC',
+  'Publishes every order event',
+  'end note',
+  '@layout',
+  'OPC @pos(0, 470)',
+  '@endlayout',
+  '@enduml',
+].join('\n');
+const diagram = { path: 'diagram:events', content: EVENTS, kind: 'diagram', diagramId: 'events', label: 'Order events' };
+
+test('a diagram result names its diagram instead of a file line', () => {
+  const { results } = search([diagram], 'order events', {});
+  assert.equal(results.length, 1);
+  assert.equal(results[0].kind, 'diagram');
+  assert.equal(results[0].diagramId, 'events');
+  assert.equal(results[0].label, 'Order events');
+  assert.equal(results[0].preview, 'order events', 'the preview shows the label, not the port syntax');
+});
+
+test('diagram search leaves out markers, the layout block, keywords, and aliases', () => {
+  for (const syntax of ['@startuml', '@enduml', '@pos', '@layout', 'portout', 'component', 'opc_pub', 'ex_in', 'participant']) {
+    assert.deepEqual(search([diagram], syntax, {}).results, [], syntax);
+  }
+});
+
+test('diagram search reads names, message labels, lifelines, and notes', () => {
+  assert.deepEqual(search([diagram], 'OPC', { matchCase: true }).results.map(result => result.preview), ['OPC «BackendService»']);
+  assert.deepEqual(search([diagram], 'order.placed', {}).results.map(result => result.preview), ['binding order.placed']);
+  assert.deepEqual(search([diagram], 'TripWebsite', {}).results.map(result => result.preview), ['web: TripWebsite']);
+  assert.equal(search([diagram], 'Publishes every', {}).results.length, 1);
+});
+
+test('files and diagrams are searched together, files keep their results', () => {
+  const { results } = search([...files, diagram], 'order.placed', {});
+  assert.deepEqual(results.map(result => result.kind || 'file'), ['file', 'file', 'diagram']);
+});
+
+test('diagramText keeps one line per source line', () => {
+  assert.equal(diagramText(EVENTS).split('\n').length, EVENTS.split('\n').length);
+});
+
+test('textMatches applies the same options as search', () => {
+  assert.equal(textMatches('PartnerGateway', 'gateway', {}), true);
+  assert.equal(textMatches('PartnerGateway', 'gateway', { matchCase: true }), false);
+  assert.equal(textMatches('PartnerGateway', 'gateway', { wholeWord: true }), false);
+  assert.equal(textMatches('place(order_id)', 'place\\(\\w+\\)', { regex: true }), true);
+  assert.equal(textMatches('anything', '(', { regex: true }), false, 'an invalid pattern matches nothing');
+  assert.equal(textMatches('anything', '', {}), false);
+});
+
+test('an association shows its multiplicities and role, not its ends or arrow', () => {
+  const source = '@startuml\nclass TripOrder\nclass Fan\nTripOrder "0..*" --> "1" Fan : buyer\n@enduml';
+  assert.equal(diagramText(source).split('\n')[3], '0..* 1 buyer');
+});

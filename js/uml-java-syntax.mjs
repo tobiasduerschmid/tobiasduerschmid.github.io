@@ -50,7 +50,7 @@ function declaration(node) {
         const value = child(variable, 'value');
         const constructed = value?.type === 'object_creation_expression';
         members.push({
-          kind: 'field', name: text(variable, 'name'),
+          kind: 'field', name: text(variable, 'name'), range: [member.startIndex, member.endIndex],
           type: type + typeText(child(variable, 'dimensions')), modifiers: modifiers(member),
           initHasNew: constructed, initNewType: constructed ? typeText(child(value, 'type')) : ''
         });
@@ -61,6 +61,7 @@ function declaration(node) {
       const method = {
         kind: member.type === 'method_declaration' ? 'method' : 'constructor',
         name: text(member, 'name'), nameStart: child(member, 'name')?.startIndex,
+        range: [member.startIndex, member.endIndex],
         returnType: typeText(child(member, 'type')) + typeText(child(member, 'dimensions')),
         modifiers: modifiers(member), params: parameterList ? parameters(parameterList) : components,
         throwsTypes: named(member, 'throws')[0]?.namedChildren.map(typeText) || []
@@ -76,7 +77,8 @@ function declaration(node) {
   const interfaces = container => named(container, 'type_list')[0]?.namedChildren.map(typeText) || [];
   const superclass = child(node, 'superclass')?.firstNamedChild;
   return {
-    kind, name, members, modifiers: modifiers(node), constants,
+    kind, name, nameStart: child(node, 'name')?.startIndex, members, modifiers: modifiers(node), constants,
+    range: [node.startIndex, node.endIndex],
     recordComponents: node.type === 'record_declaration' ? components : null,
     extends: kind === 'interface' ? interfaces(named(node, 'extends_interfaces')[0]) : typeText(superclass),
     implements: interfaces(child(node, 'interfaces'))

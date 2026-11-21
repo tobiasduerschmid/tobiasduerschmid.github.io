@@ -7,17 +7,17 @@ exclude_from_index: true
 
 # Spec §3. Authoring metadata; the runtime ignores it.
 learning_objectives:
-  - "Analyze a multi-service codebase to answer a design question (change impact, failure behavior, extension point, interaction order, latency) and rate your confidence."
-  - "Use a class, component, or sequence diagram to answer the same kind of question, and check one claim your answer depends on against the code."
+  - "Analyze a multi-service codebase to judge a proposed change, a failure, or a quality target, and rate your confidence."
+  - "Use a class, component, or sequence diagram to make and justify that decision, and check the one claim it rests on against the code."
   - "Explain which code mechanism hid an answer (event bindings outside the code, inheritance across packages, asynchronous work queues, configuration-resolved connections, decorators, or multiplicities spread across files) and why a view brings these pieces together."
-  - "Identify design defects that a view makes visible: a subclass that breaks its interface contract, a missing compensation step, a synchronous dependency on the request path, a remote call inside a loop, and an architecture-rule violation."
-  - "Select the view that best answers a question (class, component, sequence, or none) and justify the choice."
+  - "Evaluate design alternatives that a view makes comparable: rollout plans for a shared event, compensating steps and their order, availability and latency tactics, and where a responsibility lives."
+  - "Select the view that best answers a question (class, component, sequence, or none), including for a system you have not seen."
 
 backend: pyodide
 # A passed diagram challenge (or knowledge check) unlocks the next step.
 require_tests: true
 # Stable step keys identify saved challenge records and deep links.
-progress_version: 1
+progress_version: 2
 file_tree: true
 project_search: true
 # Every step shows the same read-only codebase, so the print view shows it once.
@@ -4684,6 +4684,9 @@ x-diagrams:
     An answer changes the trip order only
     while it is processing
     (services/opc/invoice_task.py:33).
+    Each answer is recorded on its
+    supplier order
+    (services/opc/invoice_task.py:27).
     end note
     @enduml
   outages_imports: &d_outages_imports |-
@@ -4915,6 +4918,338 @@ x-diagrams:
     note:94 @pos(0, 310)
     @endlayout
     @enduml
+x-diagram-links:
+  capstone_cancellation: &l_capstone_cancellation
+    - text: "po: PurchaseOrderService"
+      path: "services/opc/api.py"
+      line: 12
+    - text: "cancellations: CancellationTask"
+      path: "services/opc/cancellation_task.py"
+      line: 17
+    - text: "order: TripOrder"
+      path: "services/opc/model/orders.py"
+      line: 43
+    - text: "gateway[i]: SupplierGateway"
+      path: "services/opc/gateways/base.py"
+      line: 14
+    - text: "refund(captureId, amount)"
+      path: "services/opc/payment_task.py"
+      line: 28
+    - text: "refundId"
+      path: "stubs/bank.py"
+      line: 41
+    - text: "mark_cancelling()"
+      path: "services/opc/cancellation_task.py"
+      line: 40
+    - text: "cancelling"
+      path: "services/opc/api.py"
+      line: 24
+    - text: "cancel_supplier_orders()"
+      path: "services/opc/cancellation_task.py"
+      line: 47
+    - text: "cancel(supplierOrder)"
+      path: "services/opc/cancellation_task.py"
+      line: 51
+    - text: "cancel(reference)"
+      path: "services/opc/gateways/lodging.py"
+      line: 23
+    - text: "mark_cancelled()"
+      path: "services/opc/cancellation_task.py"
+      line: 65
+  capstone_gateways: &l_capstone_gateways
+    - text: "SupplierGateway"
+      path: "services/opc/gateways/base.py"
+      line: 14
+    - text: "SupplierUnavailable"
+      path: "services/opc/gateways/base.py"
+      line: 10
+    - text: "BoxOfficeGateway"
+      path: "services/opc/gateways/box_office.py"
+      line: 7
+    - text: "LodgingGateway"
+      path: "services/opc/gateways/lodging.py"
+      line: 9
+    - text: "ShuttleGateway"
+      path: "services/opc/gateways/shuttle.py"
+      line: 7
+    - text: "ExperienceGateway"
+      path: "services/opc/gateways/experiences.py"
+      line: 7
+    - text: "GlampingCoGateway"
+      path: "services/opc/partners/glamping_co.py"
+      line: 12
+    - text: "VipShuttleGateway"
+      path: "services/opc/partners/vip_shuttle.py"
+      line: 7
+    - text: "MeetAndGreetGateway"
+      path: "services/opc/partners/meet_and_greet.py"
+      line: 8
+    - text: "ManualCancellationRequired"
+      path: "services/opc/partners/errors.py"
+      line: 4
+  capstone_trip_items: &l_capstone_trip_items
+    - text: "TripItem"
+      path: "services/opc/model/items.py"
+      line: 17
+    - text: "FestivalPass"
+      path: "services/opc/model/items.py"
+      line: 41
+    - text: "LodgingStay"
+      path: "services/opc/model/items.py"
+      line: 56
+    - text: "Experience"
+      path: "services/opc/model/items.py"
+      line: 75
+    - text: "TransportItem"
+      path: "services/opc/model/items.py"
+      line: 92
+    - text: "ShuttleRide"
+      path: "services/opc/model/items.py"
+      line: 102
+  capstone_website_connections: &l_capstone_website_connections
+    - text: "OPC"
+      path: "services/opc/service.py"
+      line: 36
+    - text: "CatalogDB"
+      path: "devstack.py"
+      line: 112
+    - text: "Bank"
+      path: "stubs/bank.py"
+      line: 9
+    - text: "BoxOffice"
+      path: "stubs/box_office.py"
+      line: 19
+    - text: "ExperienceProvider"
+      path: "stubs/experiences.py"
+      line: 24
+    - text: "CardService"
+      path: "stubs/bank.py"
+      line: 1
+    - text: "Quotes"
+      path: "services/website/clients.py"
+      line: 43
+    - text: "Capacity"
+      path: "services/website/clients.py"
+      line: 50
+    - text: "PurchaseOrderService"
+      path: "services/opc/api.py"
+      line: 12
+    - text: "OrderTrackingService"
+      path: "services/opc/api.py"
+      line: 27
+  checkout_latency: &l_checkout_latency
+    - text: "submit(fan, cart, cardToken)"
+      path: "services/website/checkout.py"
+      line: 45
+    - text: "validate(cardToken, 0)"
+      path: "services/website/payments.py"
+      line: 18
+    - text: "price(cart)"
+      path: "services/website/checkout.py"
+      line: 49
+    - text: "quote(festivalId, ageGroup)"
+      path: "services/website/pricing.py"
+      line: 51
+    - text: "check(cart)"
+      path: "services/website/checkout.py"
+      line: 50
+    - text: "capacity(experienceId, count)"
+      path: "services/website/availability.py"
+      line: 17
+    - text: "submit(tripOrder)"
+      path: "services/website/checkout.py"
+      line: 51
+    - text: "checkout: CheckoutController"
+      path: "services/website/checkout.py"
+      line: 27
+    - text: "pricer: TripPricer"
+      path: "services/website/pricing.py"
+      line: 36
+    - text: "guard: AvailabilityGuard"
+      path: "services/website/availability.py"
+      line: 8
+    - text: "boxOffice: BoxOffice"
+      path: "stubs/box_office.py"
+      line: 19
+    - text: "experiences: ExperienceProvider"
+      path: "stubs/experiences.py"
+      line: 24
+  data_model: &l_data_model
+    - text: "Fan"
+      path: "services/opc/model/orders.py"
+      line: 17
+    - text: "TripOrder"
+      path: "services/opc/model/orders.py"
+      line: 43
+    - text: "Payment"
+      path: "services/opc/model/orders.py"
+      line: 34
+    - text: "Attendee"
+      path: "services/opc/model/orders.py"
+      line: 26
+    - text: "SupplierOrder"
+      path: "services/opc/model/suppliers.py"
+      line: 17
+    - text: "TripItem"
+      path: "services/opc/model/items.py"
+      line: 17
+    - text: "FestivalPass"
+      path: "services/opc/model/items.py"
+      line: 41
+    - text: "LodgingStay"
+      path: "services/opc/model/items.py"
+      line: 56
+    - text: "Experience"
+      path: "services/opc/model/items.py"
+      line: 75
+    - text: "TransportItem"
+      path: "services/opc/model/items.py"
+      line: 92
+    - text: "ShuttleRide"
+      path: "services/opc/model/items.py"
+      line: 102
+  event_consumers: &l_event_consumers
+    - text: "OPC"
+      path: "services/opc/service.py"
+      line: 36
+    - text: "trips"
+      path: "deploy/broker.toml"
+      line: 4
+    - text: "Notifications"
+      path: "services/notifications/consumers.py"
+      line: 19
+    - text: "Loyalty"
+      path: "services/loyalty/points.py"
+      line: 8
+    - text: "loyalty.trips"
+      path: "deploy/broker.toml"
+      line: 14
+    - text: "WarehouseETL"
+      path: "services/reporting/warehouse_etl.py"
+      line: 6
+    - text: "warehouse.all"
+      path: "deploy/broker.toml"
+      line: 19
+    - text: "AffiliateRelay"
+      path: "services/affiliates/relay.py"
+      line: 7
+    - text: "SupportConsole"
+      path: "services/support_console/app.py"
+      line: 7
+    - text: "ShuttlePlanner"
+      path: "services/shuttle_planner/planner.py"
+      line: 8
+    - text: "shuttle.planning"
+      path: "deploy/broker.toml"
+      line: 34
+    - text: "MailRelay"
+      path: "stubs/mail_relay.py"
+      line: 8
+  failed_trips: &l_failed_trips
+    - text: "wf: WorkflowManager"
+      path: "services/opc/workflow.py"
+      line: 10
+    - text: "cb: SupplierCallbackService"
+      path: "services/opc/api.py"
+      line: 48
+    - text: "order: TripOrder"
+      path: "services/opc/model/orders.py"
+      line: 43
+    - text: "submit(tripOrder)"
+      path: "services/website/clients.py"
+      line: 62
+    - text: "orders.received"
+      path: "deploy/broker.toml"
+      line: 8
+    - text: "capture(cardToken, amount)"
+      path: "services/opc/payment_task.py"
+      line: 18
+    - text: "place(supplierOrder)"
+      path: "services/opc/supplier_task.py"
+      line: 37
+    - text: "mark_processing()"
+      path: "services/opc/supplier_task.py"
+      line: 26
+    - text: "answer(supplierOrderId, decision)"
+      path: "stubs/supplier.py"
+      line: 57
+    - text: "supplier.answered"
+      path: "deploy/broker.toml"
+      line: 11
+    - text: "mark_failed()"
+      path: "services/opc/invoice_task.py"
+      line: 36
+    - text: "trip.failed"
+      path: "services/opc/events.py"
+      line: 21
+  outages_imports: &l_outages_imports
+    - text: "Intake"
+      path: "services/opc/intake.py"
+      line: 10
+    - text: "TripEvents"
+      path: "services/opc/events.py"
+      line: 11
+    - text: "SupplierGateway"
+      path: "services/opc/gateways/base.py"
+      line: 14
+    - text: "BankClient"
+      path: "services/website/clients.py"
+      line: 22
+    - text: "OpcClient"
+      path: "services/website/clients.py"
+      line: 55
+    - text: "Mailer"
+      path: "services/notifications/mailer.py"
+      line: 8
+    - text: "TripNotifications"
+      path: "services/notifications/consumers.py"
+      line: 19
+    - text: "Broker"
+      path: "infra/broker.py"
+      line: 64
+    - text: "ServiceClient"
+      path: "infra/http.py"
+      line: 86
+    - text: "Message"
+      path: "infra/broker.py"
+      line: 22
+  outages: &l_outages
+    - text: "OPC"
+      path: "services/opc/service.py"
+      line: 36
+    - text: "OrderDB"
+      path: "devstack.py"
+      line: 109
+    - text: "CatalogDB"
+      path: "devstack.py"
+      line: 112
+    - text: "Notifications"
+      path: "services/notifications/consumers.py"
+      line: 19
+    - text: "Bank"
+      path: "stubs/bank.py"
+      line: 9
+    - text: "BoxOffice"
+      path: "stubs/box_office.py"
+      line: 19
+    - text: "ExperienceProvider"
+      path: "stubs/experiences.py"
+      line: 24
+    - text: "LodgingProvider"
+      path: "stubs/lodging.py"
+      line: 10
+    - text: "ShuttleProvider"
+      path: "stubs/shuttle.py"
+      line: 10
+    - text: "MailRelay"
+      path: "stubs/mail_relay.py"
+      line: 8
+    - text: "PurchaseOrderService"
+      path: "services/opc/api.py"
+      line: 12
+    - text: "Publish"
+      path: "infra/broker.py"
+      line: 124
 # END GENERATED
 
 steps:
@@ -4960,25 +5295,25 @@ steps:
 
       ### Warm up with the tools
 
-      Expand a folder in **Files**, then open **Search files** (<kbd><abbr data-platform-modifier title="Control" data-no-tooltip="true">Ctrl</abbr>+Shift+F</kbd>). Choose **Next** for a short knowledge check that you answer with them.
+      Expand a folder in **Files**, open **Search files** (<kbd><abbr data-platform-modifier title="Control" data-no-tooltip="true">Ctrl</abbr>+Shift+F</kbd>), then choose **Next** for a short knowledge check. It only practices these tools; from step 2 on, finding a line serves a decision.
     quiz:
       title: "Step 1 — Knowledge Check"
       min_score: 0.8
       questions:
         - type: single
           difficulty: basic
-          question: "Use **Files**: in which folder do Headliner's automated tests live?"
+          question: "Use **Files** and `README.md`: which command reproduces support ticket `SUP-2291`?"
           options:
-            - "`tests/`"
-            - "`scenarios/`"
-            - "`stubs/`"
-            - "`fixtures/`"
+            - "`python3 -m scenarios.failed_trip`"
+            - "`python3 -m scenarios.slow_group_checkout`"
+            - "`python3 -m pytest`"
+            - "`python3 devstack.py`"
           correct_index: 0
           option_feedback:
-            1: "`scenarios/` holds repro scripts that print a support ticket's symptoms; they check nothing."
-            2: "`stubs/` holds the stand-ins for other organizations' systems, which the tests run against."
-            3: "`fixtures/` holds the catalog data that the devstack starts with."
-          explanation: "`tests/` holds the pytest suite: one `test_*.py` file per part of Headliner, run with `python3 -m pytest` from the project folder."
+            1: "That script reproduces ticket `PERF-118`, the slow group checkout."
+            2: "The tests check Headliner's behavior; they do not replay a support ticket."
+            3: "`devstack.py` defines `build_stack()`; the repro scripts call it, and it prints nothing itself."
+          explanation: "`README.md` lists both repro scripts under **Running Headliner**. A repro script prints a ticket's symptoms, not its cause."
         - type: single
           difficulty: basic
           question: "Use **Search files**: which function starts every Headliner service and every stand-in on the devstack?"
@@ -5016,41 +5351,46 @@ steps:
   # the options; then the agent's view, the same questions again, and one new
   # question that the view answers at a glance. Round 1: the request is given
   # in the reply card, with no view to predict.
+  # Redesign (2026-11-21, redesign spec §3.1): the question is a decision, can
+  # Jordan's patch ship and how should it roll out. Finding the receivers is
+  # the step toward it (two pinned lines); the view gives the complete set, and
+  # its evidence opens the handlers that show what each receiver reads.
   - key: event-consumers
     title: "Event Consumers and Change Impact"
     open_file: services/opc/events.py
     instructions: |
       ### Why this matters
 
-      An event that several services consume is a contract. Before you change its fields, you need every consumer, including any that passes the data on to another company.
+      An event that several services consume is a contract. Before you change its fields, you need every consumer and what each one does with them, including any that passes the data on to another company.
 
       ### 🎯 You will learn to
 
-      - **Analyze** a publish-subscribe system to find every consumer of an event
-      - **Use** a component diagram's bindings to judge the impact of a change
+      - **Analyze** a publish-subscribe system to find what a change to an event breaks
+      - **Evaluate** rollout plans for a contract that several services share
 
       ### The message
 
-      > **Jordan, OPC team:** Fans keep asking us to print their names in the right order, so I'm splitting `fan_name` into `given_name` and `family_name` in the `trip.confirmed` event. Before I ship it: who consumes this event?
+      > **Jordan, OPC team:** Fans keep asking us to print their names in the right order. My patch is two lines in `TripEvents._trip`: it replaces `fan_name` with `given_name` and `family_name`. Can I ship it on Friday, and if not, how should I roll it out?
 
       ### Your task
 
-      1. **Investigate.** `services/opc/events.py` publishes the event. Use **Files** and **Search files** to find every component that receives it.
-      2. **Commit.** Answer the challenge below from the code alone, then lock in.
-      3. **Compare.** Answer again with the agent's diagram, then answer its new question.
+      1. **Scope.** `services/opc/events.py` is open. Use **Files** and **Search files** to find every component that receives an event built by `_trip`. Pin the line that proves your least obvious receiver.
+      2. **Consequence.** Open each receiver's handler, note what it does with the event's body, and pin one line that reads the name.
+      3. **Decide.** Answer the challenge below from the code alone, then lock in.
+      4. **Compare.** Answer again with the agent's diagram, then answer its two new questions.
     diagram_challenge:
       mode: code-first
       budget_minutes: 7
       min_score: 0.8
       attempt:
         hypothesis: true
-        evidence_pins: 1
+        evidence_pins: 2
         view_wish: true
       questions:
-        - id: receivers
+        - id: breaks
           type: multiple
-          question: "Which components receive `trip.confirmed` events?"
-          options: &t1_components
+          question: "Jordan ships the patch as written. Which components raise an error on a trip event they receive afterwards?"
+          options:
             - "Trip Website"
             - "OPC"
             - "Notifications"
@@ -5059,31 +5399,33 @@ steps:
             - "Affiliate Relay"
             - "Support Console"
             - "Shuttle Planner"
-            - "Catalog DB"
-            - "Bank"
-          correct_indices: [2, 3, 4, 5]
+          correct_indices: [2, 5, 6]
           option_feedback:
             0: "The Trip Website submits orders to the OPC and asks it for their status; it consumes no events."
-            1: "The OPC publishes `trip.confirmed` (`TripEvents.confirmed`); it consumes only its own work queues."
-            2: "Notifications declares its binding in its own code, with `@consumes(...)` in `services/notifications/consumers.py`, so `deploy/broker.toml` does not list it."
-            3: "Loyalty's queue `loyalty.trips` binds exactly `trip.confirmed`."
-            4: "Warehouse ETL's queue binds `#`, which matches every routing key, so it receives every event on `trips`."
-            5: "Affiliate Relay's queue binds `trip.*`, and `*` matches exactly one word, such as `confirmed`."
-            6: "Support Console's queue binds only `trip.cancelled`."
-            7: "Shuttle Planner binds `supplier.shuttle.*`: it hears about shuttle supplier orders, not about trips."
-          explanation: "Five bindings are configured in `deploy/broker.toml`, and Notifications declares its own with `@consumes`. `trip.confirmed` matches Loyalty's `trip.confirmed`, Warehouse ETL's `#`, Affiliate Relay's `trip.*`, and the list in Notifications' code."
-        - id: forwarder
+            1: "The OPC publishes these events; its own queues, `orders.received` and `supplier.answered`, carry other messages."
+            2: "Notifications builds each e-mail's greeting from `trip['fan_name']`, for all three trip events (`services/notifications/consumers.py:31`)."
+            3: "Loyalty receives `trip.confirmed` but reads only `fan_id` and `total`, so the patch does not touch it."
+            4: "Warehouse ETL receives every event and copies each field without naming any, so it keeps running. Its rows silently change columns, which is a different problem."
+            5: "Affiliate Relay's binding `trip.*` never spells an event's name, and its webhook request copies `fan_name` (`services/affiliates/relay.py:16`)."
+            6: "`_trip` builds the body of `trip.cancelled` too, and the Support Console keeps `fan_name` for its follow-up list (`services/support_console/app.py:16`)."
+            7: "Shuttle Planner binds `supplier.shuttle.*`; those events have their own body, without a fan's name."
+          explanation: "`_trip` builds the body of all three trip events (`services/opc/events.py:36`), and three of their consumers read `fan_name` by key. A handler that raises leaves its event at the head of its queue (`infra/broker.py:162`). So fans get no e-mails, partners get no commission reports, and support gets no follow-ups until someone fixes each handler."
+        - id: rollout
           type: single
-          question: "Which component sends another organization's system a request with a `fan_name` field?"
-          options: *t1_components
-          correct_index: 5
+          question: "Which rollout changes the names without breaking a consumer?"
+          options:
+            - "Ship the patch; each team fixes its handler when errors appear"
+            - "Add the two fields, and keep `fan_name` until every reader has moved"
+            - "Split the name in `trip.confirmed` only, since Loyalty alone binds that key"
+            - "Update Notifications and Loyalty first: a search for the event finds only them"
+          correct_index: 1
           option_feedback:
-            1: "The OPC publishes the event to Headliner's own message broker, not to another organization."
-            2: "Notifications greets the fan by name inside the e-mail body it writes; its request to the Mail Relay has only `from`, `to`, `subject`, and `body` fields."
-            3: "Loyalty reads only `fan_id` and `total`, and sends nothing on."
-            4: "Warehouse ETL copies every field into Headliner's own reporting warehouse, which no other organization runs."
-            6: "Support Console keeps the fan's name for its follow-up list and calls only the OPC, another Headliner service."
-          explanation: "Affiliate Relay's webhook request copies `order_id`, `fan_name`, `festival_id`, and `total` from the event, so the influencer partners receive a `fan_name` field. Renaming it changes a contract with another organization, unless the relay keeps sending `fan_name`."
+            0: "Three handlers raise on their first event, and each failed event stays at the head of its queue, so fans get no e-mails in the meantime."
+            2: "Four queues receive `trip.confirmed`: `#` and `trip.*` match it, and Notifications lists it in its own code."
+            3: "Affiliate Relay and Support Console read `fan_name` too. The relay passes it to another company, which needs notice before the field goes away."
+          # Judgment key (redesign spec §5.1): the additive half is a fact
+          # (no consumer raises); removing fan_name later is the design choice.
+          explanation: "Adding fields breaks no reader here, because every consumer picks fields by name. Removing `fan_name` is a second, later change, made once each consumer has moved and the affiliate partners have agreed to a new webhook body: expand first, contract later."
       reply:
         request: "Draw a UML component diagram of who publishes to and consumes from the `trips` exchange, with each binding key."
         summary: "The view shows the OPC publishing to the `trips` topic exchange and every queue bound to it, each labeled with its binding, plus the external systems that the consumers call."
@@ -5092,6 +5434,7 @@ steps:
             type: component
             label: "Trip events"
             source: *d_event_consumers
+            links: *l_event_consumers
         evidence:
           - text: "Notifications binds its queue in code with `@consumes`"
             ref: services/notifications/consumers.py:25
@@ -5111,6 +5454,14 @@ steps:
             ref: services/affiliates/relay.py:13
           - text: "`Mailer` calls the Mail Relay's `send`"
             ref: services/notifications/mailer.py:14
+          - text: "`_trip` builds the body of every trip event"
+            ref: services/opc/events.py:36
+          - text: "Notifications handles the three trip events in `on_trip_event`"
+            ref: services/notifications/consumers.py:26
+          - text: "Affiliate Relay builds its webhook request in `on_trip_event`"
+            ref: services/affiliates/relay.py:11
+          - text: "Support Console handles the event it receives in `on_trip_cancelled`"
+            ref: services/support_console/app.py:12
         files_read:
           - deploy/broker.toml
           - infra/broker.py
@@ -5124,27 +5475,42 @@ steps:
           - services/affiliates/relay.py
           - services/support_console/app.py
           - services/shuttle_planner/planner.py
-        left_out: "The OPC's work queues `orders.received` and `supplier.answered`, which no exchange feeds, and what each consumer does with an event."
+        left_out: "The OPC's work queues `orders.received` and `supplier.answered`, which no exchange feeds, and what each consumer does with an event's fields."
         label: "Prepared in advance by an AI coding agent from this repository's code and verified against the code."
       follow_up:
-        - id: cancelled
-          type: multiple
-          question: "Which components receive `trip.cancelled` events?"
-          options: *t1_components
-          correct_indices: [2, 4, 5, 6]
+        - id: versioned-key
+          type: single
+          question: "Jordan's other idea: leave `trip.confirmed` alone and publish the new body under a new routing key, `trip.confirmed.v2`, until everyone has moved. Which components receive `trip.confirmed.v2` today?"
+          options:
+            - "Every consumer of `trip.confirmed`"
+            - "Affiliate Relay and Warehouse ETL"
+            - "Warehouse ETL only"
+            - "None of the six consumers"
+          correct_index: 2
           option_feedback:
-            2: "Notifications' `@consumes` list includes `trip.cancelled`."
-            3: "Loyalty binds exactly `trip.confirmed`, so `trip.cancelled` does not match."
-            4: "`#` matches every routing key, `trip.cancelled` included."
-            5: "`trip.*` matches `trip.cancelled`: `*` stands for the one word `cancelled`."
-            6: "Support Console's queue binds exactly `trip.cancelled`."
-            7: "`supplier.shuttle.*` needs `supplier` as the first word."
-          explanation: "`trip.cancelled` matches the list in Notifications' code, Warehouse ETL's `#`, Affiliate Relay's `trip.*`, and Support Console's `trip.cancelled`."
+            0: "A binding matches whole words, not a prefix: `trip.confirmed` is a different key from `trip.confirmed.v2`."
+            1: "`*` stands for exactly one word, and `confirmed.v2` is two, so `trip.*` does not match."
+            3: "`#` matches any number of words, so Warehouse ETL's queue receives the new key."
+          explanation: "Only `#` matches a three-word key. A versioned key is a workable migration path, but each consumer needs a new binding before it sees the new events, and the diagram lets you check that connector by connector."
+        - id: privacy
+          type: single
+          question: "Privacy review: a fan's name may leave Headliner only inside that fan's own e-mail or booking. Which component breaks this rule?"
+          options:
+            - "Notifications"
+            - "Affiliate Relay"
+            - "Warehouse ETL"
+            - "Support Console"
+          correct_index: 1
+          option_feedback:
+            0: "Notifications sends the name to the Mail Relay only inside the body of the fan's own e-mail."
+            2: "Warehouse ETL keeps the name, but in Headliner's own reporting warehouse; the diagram shows it calling no other organization."
+            3: "Support Console keeps the name for its follow-up list and calls only the OPC."
+          explanation: "Two connectors cross the `Headliner` package: Notifications to the Mail Relay, and Affiliate Relay to the Affiliate Partners. The relay's webhook request carries `fan_name` next to the order total (`services/affiliates/relay.py:16`), although a commission report needs no name."
       debrief:
         hidden_by: "Bindings live in `deploy/broker.toml` and in Notifications' own code, and two of them use wildcards, so a search for `trip.confirmed` misses Warehouse ETL and Affiliate Relay."
         find_in_code: "List every binding, the `[[bindings]]` in the configuration and every `consumes(` in the code, then match each pattern against the event's routing key."
-        view_shows: "Every consumer of the `trips` exchange with its binding, in one place. A view also has an edge over asking the agent your question directly: you can reuse it (the new question took one look), inspect it, and check it one connection at a time."
-        consolidation_prompt: "What did the diagram put side by side that you had to search for?"
+        view_shows: "Every consumer of the `trips` exchange with its binding, in one place, so the question of who is affected has a complete answer. The view did not say which fields a consumer reads; its evidence took you to the handlers that do. A view scopes the search, and the code confirms. A view also has an edge over asking the agent your question directly: you can reuse it (both new questions took one look), inspect it, and check it one connection at a time."
+        consolidation_prompt: "Which receiver would you have missed without the diagram, and what would shipping the patch have cost?"
         mechanism_question:
           id: mechanism
           type: single
@@ -5169,6 +5535,9 @@ steps:
   # it names what to check, because an absence in a diagram is a hypothesis
   # (spec §16, review C3). The knowledge check interleaves view choice with
   # retrieval of steps 2 and 3.
+  # Redesign (2026-11-21, redesign spec §3.2): the questions are what happens
+  # to the fan's money and which fix holds in every order of supplier answers;
+  # tracing the workflow (two pinned lines) is the step toward them.
   - key: failed-trips
     title: "Failure Paths in an Order Workflow"
     open_file: scenarios/failed_trip.py
@@ -5176,60 +5545,60 @@ steps:
     instructions: |
       ### Why this matters
 
-      Workflows that span queues and services fail in pieces. Tracing one scenario in time order shows what each failure leaves behind.
+      Workflows that span queues and services fail in pieces. Tracing one scenario in time order shows what each failure leaves behind, and what a fix has to undo.
 
       ### 🎯 You will learn to
 
       - **Trace** an asynchronous workflow through work queues and tasks
-      - **Evaluate** what a workflow's failure path does, and what it should do
+      - **Evaluate** which fix leaves the money and the bookings consistent
 
       ### The escalation
 
-      > **Support team:** Three fans were charged for Neon Nights trips that ended up Failed. One says their glamping tent is still booked.
+      > **Support team:** Three fans were charged for Neon Nights trips that ended up Failed. One says their glamping tent is still booked. What happens to their money, and what do we ask engineering to fix?
 
       ### Your task
 
       1. **Run** `scenarios/failed_trip.py` (it is open) to reproduce one of these trips. It prints the symptoms, not the cause.
-      2. **Investigate.** Follow the trip order from the moment the OPC receives it.
-      3. **Commit, then compare.** Answer from the code, lock in, and answer again with the agent's diagram. A short knowledge check follows.
+      2. **Trace.** Follow the trip order from the moment the OPC receives it to the supplier's rejection. Pin the line where the card is charged and the line that handles a rejection.
+      3. **Decide** what happens to the money and which fix to ask for, then lock in.
+      4. **Compare.** Answer again with the agent's diagram. A short knowledge check follows.
     diagram_challenge:
       mode: code-first
       budget_minutes: 7
       min_score: 0.8
       attempt:
         hypothesis: true
-        evidence_pins: 1
+        evidence_pins: 2
         view_wish: true
       questions:
-        - id: cause
+        - id: money
           type: single
-          question: "Why are these fans charged for a Failed trip while a booking stays open?"
+          question: "The trip is Failed and Priya's card was charged $1,136.80. What happens to that money?"
           options:
-            - "The bank captures the payment twice when the OPC retries a capture that timed out"
-            - "The website charges the card a second time when the fan reloads the confirmation page"
-            - "The OPC charges the card before any supplier answers, and a rejection only marks the order Failed"
-            - "A confirmation that arrives after the order failed is ignored, so nothing cancels its booking"
-          correct_index: 2
+            - "The OPC refunds it as soon as the trip is marked Failed"
+            - "It stays captured until Priya cancels the trip under My trips"
+            - "It was only reserved: the website validates the card, and nothing captures it"
+            - "It stays captured: nothing refunds a Failed trip, and it cannot be cancelled"
+          correct_index: 3
           option_feedback:
-            0: "`PaymentTask.capture` returns early when the payment already has a `capture_id`, so an order that arrives twice is charged once."
-            1: "The website only validates the card, for an amount of 0; the OPC's workflow is the only part that captures payments."
-            3: "A late answer is still recorded on its supplier order; only the trip order stops changing once it is Failed. Here the glamping supplier even confirmed before the shuttle rejected, and nothing on the rejection path cancels a confirmed booking."
-          explanation: "`WorkflowManager.on_order_received` captures the payment, then places the supplier orders; their answers arrive later through `supplier.answered`. When one supplier rejects, `InvoiceTask._settle` marks the trip order Failed and publishes `trip.failed`, and that is all."
-        - id: undo
-          type: multiple
-          question: "What must the rejection path add so these fans are not left charged with bookings open?"
+            0: "The rejection path marks the order Failed and publishes `trip.failed`; it calls nothing at the bank."
+            1: "`CancellationTask.cancel` refuses any order that is not processing or confirmed, so a Failed trip cannot be cancelled (`services/opc/cancellation_task.py:35`)."
+            2: "The website's check is for an amount of 0. The OPC's workflow captures the full amount right after it takes the order from `orders.received`."
+          explanation: "`WorkflowManager.on_order_received` captures the payment, then places the supplier orders (`services/opc/workflow.py:25`). A rejection reaches `InvoiceTask._settle`, which only marks the order Failed and publishes `trip.failed` (`services/opc/invoice_task.py:35`). The only caller of `PaymentTask.refund` is a fan's cancellation, and a Failed order is refused one. Only a person at Headliner can return this money."
+        - id: fix
+          type: single
+          question: "Which fix leaves no fan charged for a Failed trip and no booking open, in whatever order the suppliers answer?"
           options:
-            - "Send the rejected supplier order to another supplier"
-            - "Refund the captured payment"
-            - "E-mail the fan that the trip could not be booked"
-            - "Cancel the supplier orders that already confirmed"
-          correct_indices: [1, 3]
+            - "Refund the capture when a supplier rejects"
+            - "Refund, and cancel every supplier order not yet rejected"
+            - "Refund, and cancel the supplier orders confirmed so far"
+            - "Capture the payment only after the last supplier confirms"
+          correct_index: 1
           option_feedback:
-            0: "Rerouting undoes nothing: until it succeeds, the fan stays charged and the confirmed bookings stay open."
-            1: "Without a refund, the captured payment stays with Headliner for a trip that will not happen."
-            2: "Notifications already e-mails the fan: it consumes `trip.failed`, which the rejection path publishes."
-            3: "The suppliers that confirmed, like the glamping company, keep their bookings until someone cancels them."
-          explanation: "A workflow that fails partway needs a compensating step for each step that succeeded: refund the capture, and cancel each supplier order that confirmed."
+            0: "The money comes back, but the suppliers that confirmed keep their bookings, like the glamping tent."
+            2: "A supplier that answers after the rejection still confirms and keeps its booking: the loop over the answers goes on after the trip has failed."
+            3: "No fan is charged for a Failed trip then, but the suppliers that confirmed before the rejection still hold their bookings."
+          explanation: "A workflow that fails partway needs one compensating step for each step that may have succeeded, including steps whose outcome is still unknown. When the box office rejects first, the lodging and shuttle confirmations arrive after `trip.failed` and are still recorded (`services/opc/invoice_task.py:27`). `CancellationTask.cancel` already treats `placed` and `confirmed` supplier orders alike (`services/opc/cancellation_task.py:43`); the rejection path needs the same."
       reply:
         request: "Draw a UML sequence diagram of a trip order from submission until every supplier has answered, including the rejection path."
         summary: "The view traces one trip order from submission to the suppliers' answers: the calls each sender waits for, the messages that go through work queues, and both outcomes of a supplier's decision."
@@ -5238,6 +5607,7 @@ steps:
             type: sequence
             label: "One trip order"
             source: *d_failed_trips
+            links: *l_failed_trips
         evidence:
           - text: "`on_order_received` handles `orders.received`"
             ref: services/opc/workflow.py:23
@@ -5255,6 +5625,10 @@ steps:
             ref: services/opc/supplier_task.py:10
           - text: "An answer changes the trip order only while it is `processing`"
             ref: services/opc/invoice_task.py:33
+          - text: "Each answer is saved on its supplier order with `save_supplier_order`"
+            ref: services/opc/invoice_task.py:27
+          - text: "The website's card check asks the bank about `amount=0`"
+            ref: services/website/payments.py:18
         files_read:
           - services/opc/api.py
           - services/opc/intake.py
@@ -5265,26 +5639,29 @@ steps:
           - services/opc/invoice_task.py
           - services/opc/events.py
           - stubs/supplier.py
+          - services/website/payments.py
           - deploy/broker.toml
         left_out: "The Trip Website's checks before it submits, the supplier orders' invoices, and the e-mail that Notifications sends."
         label: "Prepared in advance by an AI coding agent from this repository's code and verified against the code."
       follow_up:
-        - id: charged
+        # Judgment key (redesign spec §5.1): the bank's stand-in never declines
+        # a capture, so this failure is reasoned from the amount-0 card check.
+        - id: capture-last
           type: single
-          question: "When does the OPC charge the fan's card, compared with the first supplier confirmation?"
+          question: "Mina, from the product team, prefers the other order: move `capture` below the last confirmation, so that a rejected trip is never charged. Which new failure does that order of steps allow?"
           options:
-            - "While the fan waits for the submit response"
-            - "Before any supplier confirms"
-            - "After the first supplier confirms"
-            - "After every supplier confirms"
-          correct_index: 1
+            - "Every supplier confirms, then the capture is declined: bookings nobody paid for"
+            - "The fan waits for every supplier's answer before getting an order id"
+            - "The card is charged twice when two suppliers confirm in the same pass"
+            - "The suppliers are asked before the trip order is stored"
+          correct_index: 0
           option_feedback:
-            0: "Submit only stores and queues the order; the workflow captures the payment after the fan already has an order id."
-            2: "The workflow captures the payment before it places a single supplier order, so no supplier has answered yet."
-            3: "When every supplier has confirmed, the trip order is marked confirmed; the capture happened long before."
-          explanation: "In the diagram, `capture` comes right after the workflow takes the order from `orders.received`, before the loop that places the supplier orders."
+            1: "The reply with the order id goes back before the workflow starts; moving `capture` does not change what the fan waits for."
+            2: "`PaymentTask.capture` returns early once the payment has a `capture_id`, so a second call charges nothing."
+            3: "`Intake.accept` stores the order before it queues it, whatever the workflow does afterwards."
+          explanation: "The checkout only asks the bank whether the card is open (an amount of 0), so a capture can still be declined. Charging first needs a refund when a booking fails; charging last needs cancellations when the charge fails. Either order works only with its compensating steps, and the diagram lets you slide one message down and read off what now comes before it."
       evidence_check:
-        prompt: "The diagram shows no refund and no cancellation on the reject path. An absence in a diagram is a hypothesis: open the reject branch in `services/opc/invoice_task.py` and check what it does."
+        prompt: "Before you ask for the fix: the diagram shows no refund and no cancellation on the reject path. An absence in a diagram is a hypothesis. Open the reject branch in `services/opc/invoice_task.py` and check what it does."
         question:
           id: reject-branch
           type: single
@@ -5301,7 +5678,7 @@ steps:
       debrief:
         hidden_by: "The workflow is spread over work queues and tasks, and the defect is a missing step, which a search cannot find."
         find_in_code: "Follow each queue name from the code that sends to it to the code that consumes it, then read each branch for what it undoes."
-        view_shows: "One scenario in time order across every lifeline: you see the capture near the start of the trace, and you can look in the reject branch for the message that undoes it."
+        view_shows: "One scenario in time order across every lifeline: you see the capture near the start of the trace, and you can look in the reject branch for the message that undoes it. The loop frame around the answers shows that a fix must also cover answers that arrive after the failure."
         consolidation_prompt: "What did the diagram put side by side that you had to search for?"
         mechanism_question:
           id: mechanism
@@ -5385,6 +5762,9 @@ steps:
   # for before the reply arrives; the reply is the data model view of DSA
   # Table 2.6, which gathers multiplicities spread over four files. The
   # follow-up is a Modify move: the one multiplicity a feature would change.
+  # Redesign (2026-11-21, redesign spec §3.3): the yes-or-no list stays; the
+  # follow-up now asks what kind of change the refused favorite is, and what
+  # a view of one package cannot say about its cost (the capstone picks it up).
   - key: data-model
     title: "What the Data Model Allows"
     open_file: services/opc/model/orders.py
@@ -5400,7 +5780,7 @@ steps:
 
       ### The message
 
-      > **Mina, product team:** Big festival weekend coming up. Before we put anything on the landing page: which of these can we sell without changing the data model?
+      > **Mina, product team:** Big festival weekend coming up. Before we put anything on the landing page: which of these can we sell without changing the data model? And for whichever one we can't sell: how big a change is it?
 
       ### Your task
 
@@ -5444,6 +5824,7 @@ steps:
             type: class
             label: "Trip-order data model"
             source: *d_data_model
+            links: *l_data_model
         evidence:
           - text: "`payment: Payment`"
             ref: services/opc/model/orders.py:50
@@ -5467,24 +5848,24 @@ steps:
         left_out: "`Invoice`, the classes' operations, and how the Order DB stores an order."
         label: "Prepared in advance by an AI coding agent from this repository's code and verified against the code."
       follow_up:
-        - id: split-payment
+        - id: split-scope
           type: single
-          question: "To let each attendee pay their own share, which multiplicity must change?"
+          question: "Mina's favorite is the split payment. Going by this view, what kind of change is it?"
           options:
-            - "`TripOrder`–`Attendee`: from 1..8 to 1..*"
-            - "`Fan`–`TripOrder`: from 0..* to 1"
-            - "`TripItem`–`Attendee`: from 1..* to 1"
-            - "`TripOrder`–`Payment`: from 1 to 1..*"
-          correct_index: 3
+            - "A limit to raise, like the cap of 8 attendees"
+            - "A rule to drop from the model's constraints"
+            - "One association from 1 to 1..*, plus readers this view omits"
+            - "No model change: one `Payment` can hold two cards"
+          correct_index: 2
           option_feedback:
-            0: "That would allow more attendees, not more payments; each order would still hold one `Payment`."
-            1: "That multiplicity counts the orders a fan buys; paying a share is about payments per order."
-            2: "That would limit each item to one attendee; it says nothing about payments."
-          explanation: "`TripOrder.payment` holds exactly one `Payment`. Letting each attendee pay a share needs one-to-many: the field becomes a list, and the multiplicity at the `Payment` end changes from 1 to 1..*."
+            0: "The association ends in exactly one `Payment` object; no number in a validator stands between the model and a second payment."
+            1: "Neither constraint mentions payments; what stops a second card is the multiplicity 1 at the `Payment` end."
+            3: "`Payment` has one `card_token` and one `capture_id` (`services/opc/model/orders.py:37`)."
+          explanation: "`TripOrder.payment` becomes a list, and everything that reads `order.payment` follows: the capture and the refund, the JSON form that the Order DB keeps, and the `total` in every trip event. This view covers `services/opc/model` only, so it cannot show who else reads a stored payment. The last step picks that question up."
       debrief:
         hidden_by: "The multiplicities are spread over type hints, `__post_init__` validators, and the rules in `rules.py`, across four files."
         find_in_code: "As you read the model files, write down each field's multiplicity and each validator's rule."
-        view_shows: "Every class of the data model with each association's multiplicity and the rules the code enforces, so each idea becomes a check against one line or one constraint."
+        view_shows: "Every class of the data model with each association's multiplicity and the rules the code enforces, so each idea becomes a check against one line or one constraint. A class view of one package shows what the model allows; it does not show who depends on the model from outside."
         consolidation_prompt: "What did the diagram put side by side that you had to search for?"
         mechanism_question:
           id: mechanism
@@ -5509,6 +5890,10 @@ steps:
   # answer a runtime question (DSA §1.3), then the component view. The
   # evidence check fades: it names the claim, and students find the file.
   # The follow-up is a Modify move toward an availability tactic.
+  # Redesign (2026-11-21, redesign spec §3.4): four yes-or-no questions became
+  # the scheduling decision (which windows to move) and what happens to an
+  # order and a card during another window; a follow-up finds a dependency
+  # that nobody asked about.
   - key: outages
     title: "Outages and Synchronous Dependencies"
     open_file: services/website/app.py
@@ -5524,12 +5909,12 @@ steps:
 
       ### The message
 
-      > **Alex, operations:** Maintenance windows on Friday, one at a time: the Bank, the Lodging Provider, the message broker, and the Mail Relay. The Sunset Sessions presale opens at noon. For each window, can fans still submit trip orders?
+      > **Alex, operations:** Maintenance windows on Friday, one at a time: the Bank, the Lodging Provider, the message broker, and the Mail Relay. The Sunset Sessions presale opens at noon. Which windows do I have to move away from the presale, and what happens to orders placed during the others?
 
       ### Your task
 
-      1. **Investigate** what the Trip Website does when a fan presses **Book now**, and what each of its calls depends on.
-      2. **Commit.** Answer the four questions from the code, choose the view you would ask for, and lock in.
+      1. **Trace** what the Trip Website does when a fan presses **Book now**, and follow the order into the OPC until the request returns. Pin two lines where the request waits for another system.
+      2. **Decide.** Answer from the code, choose the view you would ask for, and lock in.
       3. **Compare.** The agent replies twice. Judge whether its first view fits the question, then answer with the second.
     diagram_challenge:
       mode: code-first
@@ -5538,48 +5923,38 @@ steps:
       predict_view: true
       attempt:
         hypothesis: true
-        evidence_pins: 1
+        evidence_pins: 2
         view_wish: true
       questions:
-        - id: bank
-          type: single
-          question: "The **Bank** is down. Can fans submit trip orders?"
-          options: &outage_outcomes
-            - "No: fans cannot submit trip orders"
-            - "Yes, and the OPC finishes the orders after the window"
-            - "Yes, and the orders complete; only their e-mails wait"
-          correct_index: 0
+        - id: windows
+          type: multiple
+          question: "Which of the four windows must Alex move away from the presale, because fans cannot submit trip orders during them?"
+          options:
+            - "Bank"
+            - "Lodging Provider"
+            - "Message broker"
+            - "Mail Relay"
+          correct_indices: [0, 2]
           option_feedback:
-            1: "The website asks the bank to validate the card before it submits anything: `@requires_valid_card` wraps `CheckoutController.submit`."
-            2: "The card check comes first, during the fan's request, so the order never reaches the OPC."
-          explanation: "`@requires_valid_card` calls the bank's `validate` before `submit` runs. While the bank is down, the website shows its try-again message and never submits the order."
-        - id: lodging
+            0: "`@requires_valid_card` asks the bank to validate the card before `submit` runs, so the checkout stops there (`services/website/checkout.py:44`)."
+            1: "The website never calls the Lodging Provider; the OPC orders the stay after the fan's request has returned."
+            2: "`Intake.accept` sends the order to `orders.received` inside the submit request, and that call fails while the broker is down (`services/opc/intake.py:21`)."
+            3: "Only Notifications calls the Mail Relay, after the OPC has finished; an e-mail that cannot be sent waits in its queue."
+          explanation: "A fan's request waits for the bank (the card check in a decorator) and, inside the OPC's `submit`, for the broker. While either is down, the website shows its try-again message. The other two systems are reached only by queued work."
+        - id: lodging-order
           type: single
-          question: "The **Lodging Provider** is down. Can fans submit trip orders?"
-          options: *outage_outcomes
-          correct_index: 1
+          question: "A fan books during the Lodging Provider's window. What happens to the order and the fan's card?"
+          options:
+            - "The checkout refuses the order with a try-again message"
+            - "Accepted and charged; the trip is marked Failed when the stay cannot be placed"
+            - "Accepted; the card is charged only once the provider is back"
+            - "Accepted and charged now; the stay is ordered once the provider is back"
+          correct_index: 3
           option_feedback:
-            0: "The website never calls the lodging provider; the OPC places supplier orders after the order is queued."
-            2: "The trip cannot be confirmed until the lodging provider confirms the stay, so the order itself waits."
-          explanation: "The OPC places supplier orders from its workflow, after the fan's request has returned, and `SupplierOrderTask` sends each order that a supplier could not take again every 60 seconds. The order completes once the window ends."
-        - id: broker
-          type: single
-          question: "The **message broker** is down. Can fans submit trip orders?"
-          options: *outage_outcomes
-          correct_index: 0
-          option_feedback:
-            1: "`Intake.accept` sends the order to `orders.received` during the submit request, and that call fails while the broker is down."
-            2: "E-mails do wait, but the order itself goes through the broker first, inside the fan's submit request."
-          explanation: "`PurchaseOrderService.submit` calls `Intake.accept`, which stores the order and sends it to the broker's `orders.received` queue before returning. While the broker is down that call fails, and the website shows its try-again message."
-        - id: mail-relay
-          type: single
-          question: "The **Mail Relay** is down. Can fans submit trip orders?"
-          options: *outage_outcomes
-          correct_index: 2
-          option_feedback:
-            0: "No part of the checkout calls the Mail Relay; Notifications e-mails the fan later, when it consumes a trip event."
-            1: "The OPC needs no e-mail to finish an order; only Notifications calls the Mail Relay."
-          explanation: "Only Notifications calls the Mail Relay, when it consumes a trip event after the OPC has done its work. A message whose consumer cannot reach a service stays in its queue, and a later delivery sends the e-mail."
+            0: "No part of the checkout calls the Lodging Provider, so the fan's request never notices the outage."
+            1: "Unreachable is not a rejection: `SupplierOrderTask` keeps the order unsent and sends it again every 60 seconds (`services/opc/supplier_task.py:38`)."
+            2: "The workflow captures the payment before it places any supplier order, reachable or not."
+          explanation: "The fan's request ends when the order is stored and queued. The workflow then captures the payment and tries each supplier; an order a supplier could not take is sent again every 60 seconds, so the trip completes after the window. Until then, the fan's card is charged for a trip that is not yet confirmed."
       reply:
         contrast:
           request: "Draw a UML class diagram of the dependencies between Headliner's Python packages."
@@ -5588,6 +5963,7 @@ steps:
             type: class
             label: "Package dependencies"
             source: *d_outages_imports
+            links: *l_outages_imports
           question:
             id: fits
             type: single
@@ -5608,6 +5984,7 @@ steps:
             type: component
             label: "Trip order path"
             source: *d_outages
+            links: *l_outages
         evidence:
           - text: "`@requires_valid_card` wraps the checkout's `submit`"
             ref: services/website/checkout.py:44
@@ -5647,6 +6024,20 @@ steps:
         left_out: "The other consumers of trip events: Loyalty, Warehouse ETL, Affiliate Relay with the affiliate partners, Shuttle Planner, and Support Console."
         label: "Prepared in advance by an AI coding agent from this repository's code and verified against the code."
       follow_up:
+        - id: unlisted
+          type: single
+          question: "The presale carts hold passes, a stay, and a shuttle ride. Which system that is missing from Alex's list would also stop these fans from submitting?"
+          options:
+            - "Shuttle Provider"
+            - "Box Office"
+            - "Experience Provider"
+            - "None: the four windows cover every call a fan waits for"
+          correct_index: 1
+          option_feedback:
+            0: "Only the OPC calls the Shuttle Provider, to book the ride, after the fan's request has returned."
+            2: "The website checks capacity only for experiences in the cart, and these carts hold none."
+            3: "The website has five sockets, and Alex's list names the owner of only one of them."
+          explanation: "Every checkout prices its passes with a `Quotes` call to the Box Office before it submits. Alex asked about four systems; the view shows every system on the path, including the ones nobody thought to ask about."
         - id: outbox
           type: single
           question: "Which single change keeps fans ordering while the broker is down?"
@@ -5660,7 +6051,7 @@ steps:
             0: "Retrying inside the request keeps the fan waiting through the whole window, and the request still fails when it times out."
             1: "A broker on the OPC's machine still goes down for maintenance; moving it changes where it runs, not whether submit waits for it."
             2: "Then the website waits for the broker instead of the OPC: the dependency is still on the fan's path."
-          explanation: "This is a transactional outbox: the Order DB stores the order and its message in one transaction, and a separate job sends stored messages when the broker is available. The submit request then waits only for the database."
+          explanation: "This is a transactional outbox: the Order DB stores the order and its message in one transaction, and a separate job sends stored messages when the broker is available. The submit request then waits only for the database. The price is a second delivery path: a job that sends stored messages and may send one twice, so the workflow must stay safe to repeat, as `PaymentTask.capture` already is."
       evidence_check:
         prompt: "Your broker answer rests on one claim: the OPC hands a new order to the broker while the fan's submit request is still waiting. A diagram can be wrong; find the code that hands the order over and check."
         question:
@@ -5703,6 +6094,9 @@ steps:
   # then Modify: choose the change that meets the target from the per-call
   # durations in the notes. The knowledge check is spaced practice: one
   # question per earlier task's view, each in a new context.
+  # Redesign (2026-11-21, redesign spec §3.5): counting calls became a step
+  # (pinned lines) toward a time budget and the fix; the follow-up is a
+  # trade-off point, where the faster alternative reopens step 3's failure.
   - key: checkout-latency
     title: "Latency on the Checkout Path"
     open_file: scenarios/slow_group_checkout.py
@@ -5719,13 +6113,13 @@ steps:
 
       ### The message
 
-      > **Mina, product team:** Checkouts for a group of 5 attendees with 3 experiences at Lakeside Fest take over 8 seconds. Our target is 2 seconds.
+      > **Mina, product team:** Checkouts for a group of 5 attendees with 3 experiences at Lakeside Fest take over 8 seconds. Our target is 2 seconds. Which change gets us there?
 
       ### Your task
 
       1. **Run** `scenarios/slow_group_checkout.py` (it is open) to time the checkout on the devstack's clock.
-      2. **Investigate** what happens between **Book now** and **Order received**.
-      3. **Commit, then compare.** Answer from the code, choose your view, lock in, and answer again with the expert's view. A short knowledge check follows.
+      2. **Trace** the request from **Book now** to **Order received**, and find how long each kind of call takes. Pin two lines where a call to another system sits inside a loop.
+      3. **Decide, then compare.** Answer from the code, choose your view, lock in, and answer again with the expert's view. A short knowledge check follows.
     diagram_challenge:
       mode: code-first
       budget_minutes: 7
@@ -5733,23 +6127,37 @@ steps:
       predict_view: true
       attempt:
         hypothesis: true
-        evidence_pins: 1
+        evidence_pins: 2
         view_wish: true
       questions:
-        - id: remote-calls
+        - id: budget
           type: single
-          question: "How many calls to other organizations' systems (the bank and the providers) happen before the fan sees **Order received**?"
+          question: "Where do most of the 8.4 seconds go?"
           options:
-            - "3"
-            - "8"
-            - "9"
-            - "10"
+            - "In the OPC's submit, which captures the card and places the supplier orders"
+            - "In nine calls of about equal length, spread over the checkout"
+            - "In pass quotes, one per attendee, then capacity checks, one per experience"
+            - "In the bank's card check, which runs once for each attendee"
           correct_index: 2
           option_feedback:
-            0: "That counts each kind of call once; the pass quotes and the capacity checks sit inside loops, one call per attendee and one per experience."
-            1: "The card check counts too: `@requires_valid_card` calls the bank before `submit` runs."
-            3: "The submit call goes to the OPC, which Headliner runs itself."
-          explanation: "One card validation (the `@requires_valid_card` decorator), five pass quotes (one per attendee, in `TripPricer`), and three capacity checks (one per experience, in `AvailabilityGuard`). The OPC and the Catalog DB are Headliner's own."
+            0: "Submit only stores and queues the order, in 200 milliseconds; the capture and the supplier orders come after the fan has the order id."
+            1: "The nine calls differ: one pass quote takes 1,100 milliseconds, and the card check takes 300."
+            3: "`@requires_valid_card` validates the card once per checkout."
+          explanation: "Five pass quotes take 5.5 seconds and three capacity checks take 2.25 seconds: 7.75 of the 8.37. The card check (0.3 seconds), the submit (0.2), and six catalog queries (0.12) share the rest."
+        - id: fix
+          type: single
+          question: "Which change brings this checkout under 2 seconds?"
+          options:
+            - "One bulk pass quote, and a cached card check"
+            - "One bulk pass quote, and capacity checks in parallel"
+            - "Capacity checks in parallel, and a second OPC worker"
+            - "Pricing moved into the OPC's submit request"
+          correct_index: 1
+          option_feedback:
+            0: "The bulk quote saves 5.1 seconds, but the three capacity checks still run one after another: about 3 seconds in all."
+            2: "Parallel checks save 1.35 seconds, but the five pass quotes still take 5.5 seconds, and the OPC already answers submit in 200 milliseconds."
+            3: "The five pass quotes stay remote calls, now made while the website waits for submit, so the checkout still takes about 8 seconds."
+          explanation: "The loops cost the most. One bulk quote (400 milliseconds instead of 5.5 seconds) and parallel capacity checks (the slowest, 900 milliseconds, instead of 2.25 seconds) bring the checkout to about 1.9 seconds, with the card check, the submit, and the catalog queries."
       reply:
         request: "Draw a UML sequence diagram of a group checkout on the Trip Website, from Book now until the fan sees Order received, including calls to external systems and loops. Mark the 2-second response target."
         summary: "The view traces one group checkout from **Book now** to **Order received**: each call to another organization's system, the loops around them, and each call's duration."
@@ -5758,6 +6166,7 @@ steps:
             type: sequence
             label: "Group checkout"
             source: *d_checkout_latency
+            links: *l_checkout_latency
         evidence:
           - text: "`@requires_valid_card` wraps the checkout's `submit`"
             ref: services/website/checkout.py:44
@@ -5793,24 +6202,24 @@ steps:
         left_out: "The Catalog DB queries, which the notes time, and the OPC's work after it answers."
         label: "Prepared in advance by an AI coding agent from this repository's code and verified against the code."
       follow_up:
-        - id: fix
+        - id: trade-off
           type: single
-          question: "Which change gets this checkout under 2 seconds?"
+          question: "Mina counters: keep the bulk quote, and drop the capacity checks from checkout altogether, since the provider answers every booking anyway. That checkout takes about 1 second. What does it give up?"
           options:
-            - "One bulk quote for all passes, and a cached card check"
-            - "Parallel capacity checks, and a second OPC worker"
-            - "A cached card check, and pricing moved into the OPC"
-            - "One bulk quote for all passes, and parallel capacity checks"
-          correct_index: 3
+            - "A sold-out experience then shows up after the capture, as a Failed trip"
+            - "Nothing: the OPC checks capacity again before it captures the card"
+            - "Correct prices: the quote depends on each experience's capacity"
+            - "The 2-second target: the OPC's submit would wait for the provider's answer"
+          correct_index: 0
           option_feedback:
-            0: "The bulk quote saves about 5 seconds, but the three capacity checks still run one after another: about 3 seconds in all."
-            1: "Parallel checks save 1.35 seconds, but the five pass quotes still take 5.5 seconds, and the OPC already answers submit in 200 milliseconds."
-            2: "The five pass quotes stay remote calls, now made by the OPC while the website waits, so the checkout still takes about 8 seconds."
-          explanation: "The loops cost the most. One bulk quote (400 milliseconds instead of 5.5 seconds) and parallel capacity checks (the slowest, 900 milliseconds, instead of 2.25 seconds) bring the checkout to about 1.9 seconds, with the card check, the submit, and the catalog queries."
+            1: "The OPC never asks for capacity; its workflow captures the payment and then places the supplier orders."
+            2: "Prices come from the Box Office and the catalog; the capacity check only stops a checkout."
+            3: "Submit stores and queues the order; the provider answers later, through the callback service."
+          explanation: "`AvailabilityGuard` is the only check that keeps a full experience out of a paid order (`services/website/availability.py:14`). Without it, the provider's rejection arrives after the card has been charged, and step 3 showed what a rejection leaves behind. Running the checks in parallel keeps the protection for 0.9 seconds; dropping them buys those 0.9 seconds with more Failed trips."
       debrief:
         hidden_by: "Remote calls look like local ones, sit in loops in two classes, and the card check hides in a decorator."
         find_in_code: "From the checkout's entry point, follow every call into a client, decorators included, and mark the ones inside a loop."
-        view_shows: "Every remote call between **Book now** and **Order received**, with the loop frames on the external lifelines and the durations in notes, so the cost of each loop sits next to the 2-second target."
+        view_shows: "Every remote call between **Book now** and **Order received**, with the loop frames on the external lifelines and the durations in notes, so the cost of each loop sits next to the 2-second target. Two traces met at one design decision here: the capacity check costs time in this view and prevents the failure of step 3's view."
         consolidation_prompt: "What did the diagram put side by side that you had to search for?"
         mechanism_question:
           id: mechanism
@@ -5830,20 +6239,20 @@ steps:
       title: "Step 6 — Knowledge Check"
       min_score: 0.8
       questions:
-        - type: multiple
+        - type: single
           difficulty: intermediate
-          question: "A message queue's binding pattern on a topic exchange is `order.*`. Which routing keys does the queue receive?"
+          question: "A team versions an event by publishing it with the routing key `order.placed.v2`. On the topic exchange, a reporting queue is bound with the pattern `order.*` and an audit queue with `#`. Which queues receive `order.placed.v2`?"
           options:
-            - "`order.placed`"
-            - "`order.shipped`"
-            - "`order.item.added`"
-            - "`order`"
-          correct_indices: [0, 1]
+            - "The audit queue only"
+            - "Both queues"
+            - "The reporting queue only"
+            - "Neither queue"
+          correct_index: 0
           option_feedback:
-            1: "`*` matches any one word, `shipped` included."
-            2: "`*` matches exactly one word, and `order.item.added` has two words after `order`."
-            3: "`*` needs exactly one word after `order`; a key with no second word does not match."
-          explanation: "In a topic binding, `*` stands for exactly one word and `#` for zero or more words."
+            1: "`*` stands for exactly one word, and `placed.v2` is two, so `order.*` does not match."
+            2: "`#` matches any number of words, and `order.*` needs exactly one word after `order`."
+            3: "`#` matches every routing key, this one included."
+          explanation: "In a topic binding, `*` stands for exactly one word and `#` for zero or more words, so a new, longer routing key reaches only the queues whose pattern allows the extra word."
         - type: single
           difficulty: intermediate
           question: "In a UML sequence diagram, `uploads` replies `trackId` to `app`, and after that reply an asynchronous message `transcode` goes from `uploads` to `worker`. What does `app` know when it receives `trackId`?"
@@ -5910,6 +6319,10 @@ steps:
   # (spec §14, decision 1), so checking a diagram against the code can change
   # an answer; the evidence check names no file (spec §16, review M7). The
   # results card supports calibration across the whole tutorial.
+  # Redesign (2026-11-21, redesign spec §3.6): each question is a
+  # stakeholder's decision. The rule now has a price (step 4's split payment),
+  # the gateway question asks where a responsibility should live, and the
+  # step ends by choosing a view and a check for a system not seen before.
   - key: choose-the-view
     title: "The Right View for the Question"
     open_file: README.md
@@ -5925,7 +6338,7 @@ steps:
 
       ### Your task
 
-      Five questions about Headliner arrive in the challenge below.
+      Five questions from Headliner's teams arrive in the challenge below. Each one needs a decision.
 
       1. **Plan.** For each question, choose what you would ask the agent for: a class, component, or sequence diagram, or no diagram and one file to read. Then lock in your plan.
       2. **Answer** each question with the expert's views. They open as tabs in the **Diagram** pane.
@@ -5937,19 +6350,19 @@ steps:
       questions:
         - id: rule
           type: single
-          question: "Headliner's rule: the Trip Website reads order data only through the OPC's `OrderTrackingService`. Does the running system follow it?"
+          question: "Split payments will change how the Order DB stores a `payment`. Headliner's rule says the Trip Website reads order data only through the OPC's `OrderTrackingService`, so only the OPC should have to change. Does the running system keep the rule?"
           options:
             - "Yes: every read of order data goes through `OrderTrackingService`"
-            - "No: one website page reads order data from a database directly"
+            - "No: one website page reads stored orders from a database directly"
             - "No: the website reads order events from the message broker"
           correct_index: 1
           option_feedback:
             0: "The My trips page, `OrderHistoryPage`, connects to `ORDER_HISTORY_DSN`, the Order DB replica, without the OPC."
             2: "The website consumes no broker queues; the order data it reads without the OPC comes from the Order DB replica."
-          explanation: "`OrderHistoryPage` opens `ORDER_HISTORY_DSN`, the Order DB replica set in `deploy/website.toml`, and reads the orders table without the OPC. The rule is broken, and the agent's diagram left that connection out."
+          explanation: "`OrderHistoryPage` opens `ORDER_HISTORY_DSN`, the Order DB replica set in `deploy/website.toml`, and reads the amount out of each stored order's `payment` (`services/website/order_history.py:21`). The rule is broken, so the split payment is not a change to the OPC alone: the My trips page breaks with it. The agent's diagram left that connection out."
         - id: rideshare
           type: single
-          question: "A new `RidesharePickup` class extends `TransportItem`. Which operations must it implement?"
+          question: "Product adds `RidesharePickup`, a new kind of transport that extends `TransportItem`. A contractor quotes three operations to write, the three that `TripItem` declares. Which operations does the new class really have to define?"
           options:
             - "`price()`, `supplier_kind()`, and `cancellation_deadline()`"
             - "`price()` and `supplier_kind()`"
@@ -5960,54 +6373,52 @@ steps:
             0: "`TransportItem` already defines `cancellation_deadline()`, from the ride's departure."
             2: "`supplier_kind()` is abstract in `TripItem`, and `TransportItem` does not define it."
             3: "`TransportItem` defines only `cancellation_deadline()`; it is abstract, like `TripItem`."
-          explanation: "`TripItem` declares `price()`, `supplier_kind()`, and `cancellation_deadline()` abstract. `TransportItem` defines `cancellation_deadline()` from the departure time, so a new transport item must define the other two."
+          explanation: "`TripItem` declares `price()`, `supplier_kind()`, and `cancellation_deadline()` abstract. `TransportItem` defines `cancellation_deadline()` from the departure time, so a new transport item must define the other two. The class view shows what the class owes. It does not show the two places that list item types by name, `ITEM_TYPES` in `services/opc/payloads.py` and `_item` in the website's checkout, which the estimate also needs."
         - id: cancellation
           type: single
-          question: "A fan cancels a GlampingCo trip 2 days before check-in. Does the refund come before or after the supplier cancellations, and can the tent stay booked?"
+          question: "A fan cancels a GlampingCo trip 2 days before check-in. Where do the money and the tent end up?"
           options:
-            - "Supplier cancellations first, then the refund; no, the tent is always cancelled"
-            - "Refund first, then scheduled cancellations; no, the tent is always cancelled"
-            - "Supplier cancellations first, then the refund; yes, the tent can stay booked"
-            - "Refund first, then scheduled cancellations; yes, the tent can stay booked"
+            - "Refunded; the tent is cancelled on the job's next run"
+            - "Not refunded until GlampingCo confirms; the tent stays booked"
+            - "The cancellation is refused: check-in is under 72 hours away"
+            - "Refunded at once; the tent stays booked, and the job retries without end"
           correct_index: 3
           option_feedback:
-            0: "The refund happens during the fan's request, before any supplier is asked; and within 72 hours of check-in, GlampingCo's cancellation fails."
-            1: "Within 72 hours of check-in, `GlampingCoGateway.cancel` raises `ManualCancellationRequired`; the job logs it and tries again on every run, so the tent stays booked."
-            2: "`CancellationTask.cancel` refunds the card during the fan's request; the supplier orders are only marked cancelling then, and a job cancels them later."
-          explanation: "`CancellationTask.cancel` refunds the card within the fan's request, then marks the supplier orders cancelling; a scheduled job cancels them every 60 seconds. Two days before check-in, `GlampingCoGateway.cancel` raises `ManualCancellationRequired`, the job logs it and tries again on its next run, and the tent stays booked."
+            0: "Within 72 hours of check-in, `GlampingCoGateway.cancel` raises `ManualCancellationRequired` on every run of the job."
+            1: "`CancellationTask.cancel` refunds the card inside the fan's request, before any supplier is asked."
+            2: "The fan's deadline is one day before check-in; the 72-hour rule is GlampingCo's own, inside its gateway."
+          explanation: "`CancellationTask.cancel` refunds the card within the fan's request, then marks the supplier orders cancelling; a scheduled job cancels them every 60 seconds. Two days before check-in, `GlampingCoGateway.cancel` raises `ManualCancellationRequired`; the job logs it and tries again on every run (`services/opc/cancellation_task.py:54`). The fan has the money, and GlampingCo still holds the tent. Because the trip never reaches Cancelled, no `trip.cancelled` event tells the Support Console that someone must pick up the phone."
         - id: fee
           type: single
-          question: "Is Headliner's service fee configured per festival or for the whole site?"
+          question: "Marketing wants a lower service fee for Desert Bloom only. What does that take today?"
           options:
-            - "Per festival: a rate in each festival's catalog row"
-            - "For the whole site: one rate in the website's pricing code"
-            - "Per festival: a rate that the box office quotes with each pass"
+            - "A catalog edit: each festival's row holds its rate"
+            - "A code change: one rate constant applies to every cart"
+            - "A Box Office request: the fee arrives with each pass quote"
           correct_index: 1
           option_feedback:
             0: "The catalog's festival rows hold an id, a name, a start, and a sales date, but no fee."
-            2: "The box office quotes pass prices; `TripPricer` adds Headliner's fee on top of them."
-          explanation: "`SERVICE_FEE_RATE = 0.12` is one constant in `services/website/pricing.py`, which `TripPricer` applies to every cart, whatever the festival."
+            2: "The Box Office quotes pass prices; `TripPricer` adds Headliner's fee on top of them."
+          explanation: "`SERVICE_FEE_RATE = 0.12` is one constant in `services/website/pricing.py`, which `TripPricer` applies to every cart, whatever the festival. A fee per festival needs a new catalog column and a code change."
+        # Judgment key (redesign spec §5.1): the facts are the contract of
+        # cancel(), the two overrides that break it, and the retry they cause.
         - id: gateways
-          type: multiple
-          question: "Fans who cancel trips with some partners get stuck in Cancelling while the partner is online. Which gateway classes can fail `cancel()` this way?"
+          type: single
+          question: "Two more partners that cancel only by phone sign next month. Today such cancellations stay in Cancelling for good. Where should the knowledge that a supplier needs a manual cancellation live?"
           options:
-            - "`BoxOfficeGateway`"
-            - "`LodgingGateway`"
-            - "`GlampingCoGateway`"
-            - "`ShuttleGateway`"
-            - "`VipShuttleGateway`"
-            - "`ExperienceGateway`"
-            - "`MeetAndGreetGateway`"
-          correct_indices: [2, 6]
+            - "In each partner's `cancel()`, raising its own exception as today"
+            - "In `CancellationTask`, as a list of phone-only supplier ids"
+            - "In the `SupplierGateway` contract, as an outcome every caller handles"
+            - "In the registry, by mapping those partners to the base gateways"
+          correct_index: 2
           option_feedback:
-            1: "`LodgingGateway.cancel()` raises only `SupplierUnavailable`, while the supplier is unreachable; the override that raises otherwise is in its subclass `GlampingCoGateway`."
-            2: "Within 72 hours of check-in, its `cancel()` raises `ManualCancellationRequired`, which the contract does not allow."
-            4: "`VipShuttleGateway` overrides only `place()`, so it inherits `ShuttleGateway.cancel()`."
-            5: "`ExperienceGateway.cancel()` keeps the contract; the override that always raises is in its subclass `MeetAndGreetGateway`."
-            6: "Its `cancel()` always raises `ManualCancellationRequired`."
-          explanation: "`SupplierGateway.cancel()` promises to raise only `SupplierUnavailable`, which `CancellationTask` retries. `GlampingCoGateway` (within 72 hours of check-in) and `MeetAndGreetGateway` (always) raise `ManualCancellationRequired` instead, so their supplier orders stay cancelling."
+            0: "The contract of `cancel()` allows only `SupplierUnavailable`. A caller written against that contract cannot tell a partner that wants a phone call from a crash, so it retries forever."
+            1: "Then every new partner means editing the task, and a supplier's own rule, like GlampingCo's 72 hours, moves out of its gateway."
+            3: "The base gateways cancel through the supplier's interface, so the OPC would record a cancellation that the partner has not agreed to make."
+          explanation: "The gateway knows its supplier's rules, so the knowledge belongs there; what is missing is a way to say it that the contract permits. If `cancel()` can report that a person must do this, every gateway states its answer, every caller must handle it, and `CancellationTask` can hand such orders to support instead of retrying. Two classes break the contract today: `GlampingCoGateway` (within 72 hours of check-in) and `MeetAndGreetGateway` (always)."
       plan:
         - for: rule
+          question: "What would you ask for to check the rule about order data?"
           options:
             - "A class diagram of the website's classes and their imports"
             - "A sequence diagram of one checkout"
@@ -6019,6 +6430,7 @@ steps:
             1: "One checkout's trace shows that scenario's calls; the rule is about every connection the website makes."
             3: "`clients.py` holds the clients the checkout uses, which is not necessarily every connection the website makes."
         - for: rideshare
+          question: "What would you ask for to check the contractor's estimate?"
           options:
             - "A class diagram of the `TripItem` hierarchy"
             - "A component diagram of the OPC and its suppliers"
@@ -6030,6 +6442,7 @@ steps:
             2: "A pricing trace shows the calls of one scenario, not which operations each class defines."
             3: "`payloads.py` maps item types to and from JSON; it shows no operations."
         - for: cancellation
+          question: "What would you ask for to see where the money and the tent end up?"
           options:
             - "A class diagram of the `SupplierGateway` hierarchy"
             - "A component diagram of the OPC's runtime connections"
@@ -6037,10 +6450,11 @@ steps:
             - "A sequence diagram of a trip cancellation"
           correct_index: 3
           option_feedback:
-            0: "The hierarchy shows which gateway raises, but not when the refund happens compared with the supplier cancellations."
+            0: "The hierarchy shows which gateway raises, but not when the refund happens or what the job does afterwards."
             1: "Components show who talks to whom, not the order of the refund and the cancellations."
-            2: "`glamping_co.py` shows the 72-hour rule, but not when the refund happens."
+            2: "`glamping_co.py` shows the 72-hour rule, but not when the refund happens or what follows a failed cancellation."
         - for: fee
+          question: "What would you ask for to see what a fee for one festival takes?"
           options:
             - "A sequence diagram of one checkout"
             - "No diagram: read `services/website/pricing.py`"
@@ -6052,6 +6466,7 @@ steps:
             2: "A class diagram would show `TripPricer`, but the fee is a module constant on one line of one file."
             3: "A setting inside the website's code is not a connection between components."
         - for: gateways
+          question: "What would you ask for to decide where the manual-cancellation knowledge should live?"
           options:
             - "A class diagram of the gateway hierarchy across packages"
             - "A sequence diagram of a trip cancellation"
@@ -6059,9 +6474,9 @@ steps:
             - "No diagram: read `services/opc/gateways/base.py`"
           correct_index: 0
           option_feedback:
-            1: "One cancellation trace shows the gateways of one order, not every class that overrides `cancel()`."
-            2: "Components show the suppliers, not the gateway classes or their overrides."
-            3: "`base.py` holds the contract, but the overrides that break it live in other packages."
+            1: "One cancellation trace shows the gateways of one order, not the contract or every class that overrides `cancel()`."
+            2: "Components show the suppliers, not the gateway classes, their contract, or their overrides."
+            3: "`base.py` holds the contract, but the overrides that break it live in another package."
       reply:
         request: "For each question that needs a view, the expert asked for one: a UML component diagram of the Trip Website's runtime connections (question 1), a UML class diagram of the `TripItem` hierarchy (question 2), a UML sequence diagram of a trip cancellation (question 3), and a UML class diagram of the `SupplierGateway` hierarchy across packages (question 5). For question 4, the expert read `services/website/pricing.py`."
         summary: "Four views, which open as tabs in the Diagram pane: the website's connections, the trip items, a cancellation, and the supplier gateways."
@@ -6070,18 +6485,22 @@ steps:
             type: component
             label: "Website connections"
             source: *d_capstone_website_connections
+            links: *l_capstone_website_connections
           - id: trip-items
             type: class
             label: "Trip items"
             source: *d_capstone_trip_items
+            links: *l_capstone_trip_items
           - id: cancellation
             type: sequence
             label: "Trip cancellation"
             source: *d_capstone_cancellation
+            links: *l_capstone_cancellation
           - id: gateways
             type: class
             label: "Supplier gateways"
             source: *d_capstone_gateways
+            links: *l_capstone_gateways
         evidence:
           - text: "`CatalogClient` reads the Catalog DB"
             ref: services/website/clients.py:9
@@ -6129,21 +6548,22 @@ steps:
         left_out: "In the website view, the OPC's own connections; in the class views, attributes and helper methods."
         label: "Prepared in advance by an AI coding agent from this repository's code."
       follow_up:
-        - id: batching
-          type: multiple
-          question: "If `ExperienceGateway.place()` started sending bookings in batches, which classes would change their behavior?"
+        # Judgment key (redesign spec §5.1): transfer of step 5's result to a
+        # system the student has not seen.
+        - id: transfer
+          type: single
+          question: "Your team inherits a food-delivery backend. The product manager asks whether customers can still place orders while the payment provider is down for ten minutes. What do you ask the agent for, and what do you do with its reply?"
           options:
-            - "`SupplierGateway`"
-            - "`ExperienceGateway`"
-            - "`MeetAndGreetGateway`"
-            - "`ShuttleGateway`"
-            - "`VipShuttleGateway`"
-          correct_indices: [1, 2]
+            - "A component diagram of the order path; then check its one decisive connector in the code"
+            - "A class diagram of the payment classes; read which ones import the provider's client"
+            - "A sequence diagram of one successful order; if the provider appears, orders stop"
+            - "No diagram: search the code for the payment provider's name"
+          correct_index: 0
           option_feedback:
-            0: "`SupplierGateway.place()` is abstract; a change in a subclass does not reach it."
-            2: "`MeetAndGreetGateway` overrides only `cancel()`, so it inherits the new `place()`."
-            4: "`VipShuttleGateway` extends `ShuttleGateway`, and it overrides `place()` itself."
-          explanation: "A change to `ExperienceGateway.place()` reaches every subclass that does not override `place()`: here, `MeetAndGreetGateway`."
+            1: "Imports show which code uses which, not whether placing an order waits for the provider at run time."
+            2: "One successful trace shows the call, but not what the caller does when the call fails."
+            3: "A search finds the client, but not whether the order request waits for it, or whether a queue sits in between."
+          explanation: "Whether an outage stops a request depends on which connectors lie on its path and whether the caller waits. A component view of the path shows that, as it did for Headliner's broker. The answer then rests on one connector, and a diagram can be wrong about one connector, so you open the code behind it."
       evidence_check:
         claim_question:
           id: claim
@@ -6171,11 +6591,11 @@ steps:
           option_feedback:
             0: "`OrderHistoryPage`, the My trips page, calls `connect(settings[\"ORDER_HISTORY_DSN\"])`, the Order DB replica from `deploy/website.toml`, without `OpcClient`."
             1: "True, but imports show no connections: the website reaches the OPC by service name, and the My trips page reaches the Order DB replica through a setting."
-          explanation: "`services/website/order_history.py` opens `ORDER_HISTORY_DSN`, so the agent's diagram missed a connection and the rule is broken. You can change your answer to question 1 and check it again."
+          explanation: "`services/website/order_history.py` opens `ORDER_HISTORY_DSN`, so the agent's diagram missed a connection and the rule is broken. An estimate for the split payment must therefore include the My trips page. You can change your answer to question 1 and check it again."
       debrief:
         hidden_by: "A connection made from a setting, `ORDER_HISTORY_DSN` in `deploy/website.toml`, outside the website's client classes; the agent's diagram left it out."
         find_in_code: "For a rule about connections, search the settings and the code for every way a service connects, such as `connect(` and `_DSN`, not only its client classes."
-        view_shows: "Your plan for question 1 still counts: the component view was the right request, and its reply was incomplete. Agents recover classes more reliably than relationships, so before you rely on a diagram, open the evidence for the one connection your answer depends on. Absent from a diagram does not mean absent from the code. And for the service fee, one file was faster than any view."
+        view_shows: "Your plan for question 1 still counts: the component view was the right request, and its reply was incomplete. Agents recover classes more reliably than relationships, so before you rely on a diagram, open the evidence for the one connection your answer depends on. Absent from a diagram does not mean absent from the code. And for the service fee, one file was faster than any view. Across the tutorial, the views did not answer the teams' questions for you; they made each decision checkable: a complete set of consumers, an ordering with a missing step, a path with its waits, a hierarchy with its contract."
         consolidation_prompt: "When was reading one file faster than asking for a diagram, and why?"
         mechanism_question:
           id: mechanism

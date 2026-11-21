@@ -20,6 +20,7 @@ SPEC_KEYS = {
     "failed_trips",
     "data_model",
     "outages",
+    "presale_path",
     "checkout_latency",
     "capstone",
     "diagrams",  # what each diagram must show (diagram_facts.py)
@@ -35,6 +36,8 @@ def test_facts_match_spec_keys():
         "refund_before_cancel",
         "glampingco_48h_stays_booked",
         "service_fee",
+        "my_trips_reads_stored_payment",
+        "stuck_cancellation",
     }
 
 
@@ -53,6 +56,12 @@ def test_event_consumers():
             "WarehouseETL",
         ],
         "external_forwarders": ["AffiliateRelay"],
+        # A body with fan_name replaced by given_name and family_name: the
+        # consumers whose handler raises on a trip event; with the two fields
+        # added instead, none does.
+        "rename_breaks": ["AffiliateRelay", "Notifications", "SupportConsole"],
+        "additive_breaks": [],
+        "trip.confirmed.v2": ["WarehouseETL"],
     }
 
 
@@ -88,6 +97,14 @@ def test_failed_trips():
         "capture_before_first_answer": True,
         "reject_branch_calls": ["mark_failed()", "publish trip.failed"],
         "missing": ["refund", "cancel confirmed suppliers"],
+        "refunds": 0,
+        "fan_can_cancel": False,
+        # When the box office rejects first, the others still confirm afterwards.
+        "confirmed_after_failure": [
+            "supplier.lodging.confirmed",
+            "supplier.shuttle.confirmed",
+        ],
+        "card_check_amount": 0,
     }
 
 
@@ -107,6 +124,31 @@ def test_outages():
     }
 
 
+def test_presale_path():
+    # A cart of passes, a stay, and a shuttle ride, booked during each outage.
+    assert FACTS["presale_path"] == {
+        "box_office": "cannot_submit",
+        "shuttle": "finish_afterwards",
+        "experiences": "unaffected",
+        "lodging_charged_while_waiting": True,
+    }
+
+
+def test_checkout_latency_variants():
+    latency = FACTS["checkout_latency"]
+
+    assert latency["quote_seconds"] == 5.5
+    assert latency["check_seconds"] == 2.25
+    assert latency["variants"] == {
+        "bulk_cached_card": 2.97,
+        "bulk_parallel": 1.92,
+        "parallel_only": 7.02,
+        "bulk_no_checks": 1.02,
+    }
+    assert latency["variants"]["bulk_parallel"] == latency["keyed_fix_seconds"]
+    assert latency["rejected_experience_is_charged_and_failed"] is True
+
+
 def test_checkout_latency():
     latency = FACTS["checkout_latency"]
 
@@ -122,6 +164,13 @@ def test_capstone():
         "refund_before_cancel": True,
         "glampingco_48h_stays_booked": True,
         "service_fee": 0.12,
+        "my_trips_reads_stored_payment": True,
+        "stuck_cancellation": {
+            "refunds": 1,
+            "tent": "confirmed",
+            "trip_cancelled_published": False,
+            "support_follow_ups": 0,
+        },
     }
 
 

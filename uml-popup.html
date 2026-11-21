@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="{{ '/css/uml-diagram.css' | relative_url }}">
   <link rel="stylesheet" href="{{ '/css/uml-view-controls.css' | relative_url }}">
   <link rel="stylesheet" href="{{ '/css/tutorial-popouts.css' | relative_url }}">
+  <link rel="stylesheet" href="{{ '/css/uml-source-links.css' | relative_url }}">
   <link rel="stylesheet" href="{{ '/css/print-light.css' | relative_url }}">
 </head>
 <body>
@@ -45,6 +46,7 @@
   <script src="{{ '/js/uml-live.js' | relative_url }}"></script>
   <script src="{{ '/js/uml-expression-views.js' | relative_url }}"></script>
   <script src="{{ '/js/uml-diagram-views.js' | relative_url }}"></script>
+  <script src="{{ '/js/uml-source-links.js' | relative_url }}"></script>
   <script src="{{ '/js/uml-view-controls.js' | relative_url }}"></script>
   <script>
   (function () {
@@ -53,6 +55,7 @@
     var channel   = new BroadcastChannel(chName);
 
     var contentEl = document.getElementById('diagramContent');
+    var mainEl    = document.querySelector('main');
     var statusEl  = document.getElementById('popupStatus');
     var state     = null;
     var activeType = 'class';
@@ -142,6 +145,8 @@
         spec = UMLLive.withClassLayout(spec, state.classLayout);
       }
       if (!spec) {
+        UMLSourceLinks.unlink(contentEl);
+        UMLSourceLinks.clearList(mainEl);
         contentEl.classList.add('is-hidden');
         contentEl.style.display = 'none';
         statusEl.textContent = activeType === 'sequence'
@@ -163,6 +168,13 @@
       if (window.UMLShared && typeof UMLShared.applySvgAccessibility === 'function') {
         UMLShared.applySvgAccessibility(contentEl, activeType, spec);
       }
+      // A clicked element's code is highlighted in the tutorial window.
+      UMLSourceLinks.link(contentEl, {
+        type: activeType, syntax: spec, sourceSyntax: diagrams[activeType + 'Diagram'],
+        sources: diagrams[activeType + 'DiagramSources'], listHost: mainEl,
+        canReveal: function (source) { return !state.revealableFiles || state.revealableFiles.indexOf(source.file) !== -1; },
+        onReveal: function (source) { channel.postMessage({ type: 'uml-source-reveal', source: source }); }
+      });
       applyTransform();
     }
 

@@ -20,6 +20,7 @@ const vm = require('node:vm');
 const { after, before, describe, test } = require('node:test');
 const { chromium } = require('playwright');
 const { chromiumLaunchOptions } = require('../chromium-launch-options');
+const yaml = require('js-yaml');
 
 const ROOT = path.resolve(__dirname, '../..');
 const SOURCES = path.join(ROOT, 'tutorial_sources/uml-design-questions');
@@ -170,8 +171,11 @@ function notes(file) {
 
 // --- Content -------------------------------------------------------------------
 
-test('the diagram folder holds exactly the requested diagrams', () => {
-  assert.deepEqual(sorted(fs.readdirSync(DIAGRAM_DIR)), FILES);
+test('the diagram folder holds exactly the requested diagrams, each with its code links', () => {
+  const entries = fs.readdirSync(DIAGRAM_DIR);
+  assert.deepEqual(sorted(entries.filter((name) => name.endsWith('.uml'))), FILES);
+  assert.deepEqual(sorted(entries.filter((name) => !name.endsWith('.uml'))),
+    sorted(FILES.map((file) => file.split('.')[0] + '.links.yml')));
 });
 
 describe('component diagrams contain exactly the components, interfaces, and subscribe bindings in facts.json', () => {
@@ -478,6 +482,20 @@ describe('rendered diagrams', () => {
   test('notes lie inside or outside each package frame, never across it', () => {
     for (const [file, drawing] of drawings) assert.deepEqual(drawing.notesOnFrames, [], file);
   });
+
+  // The Diagram pane links a label whose text equals a link's text
+  // (whitespace collapsed); a text that matches no label, or several, would
+  // be a dead or an ambiguous link.
+  test('every code link names exactly one label of its drawing', () => {
+    for (const [file, drawing] of drawings) {
+      const sidecar = path.join(DIAGRAM_DIR, file.split('.')[0] + '.links.yml');
+      const links = yaml.load(fs.readFileSync(sidecar, 'utf8'));
+      for (const link of links) {
+        const count = drawing.labels.filter((label) => label === link.text).length;
+        assert.equal(count, 1, `${file}: ${JSON.stringify(link.text)} labels ${count} texts`);
+      }
+    }
+  });
 });
 
 // Runs in the page: render one diagram and measure what a reader would see.
@@ -545,5 +563,6 @@ function measure({ renderer, source }) {
       .map((frame) => `"${first ? first.textContent.trim() : 'a note'}" crosses ${frame.name}`);
   });
 
-  return { overlappingText, packageOverlaps, strayLabels, hiddenNames, notesOnFrames };
+  const labels = texts.map((t) => t.textContent.replace(/\s+/g, ' ').trim());
+  return { overlappingText, packageOverlaps, strayLabels, hiddenNames, notesOnFrames, labels };
 }

@@ -107,7 +107,16 @@
       type: String(raw.type || 'class').trim().toLowerCase(),
       label: typeof raw.label === 'string' ? raw.label : '',
       source: raw.source,
+      links: list(raw.links).map(normalizeLink).filter(Boolean),
     };
+  }
+
+  /** A code link `{text, path, line}`: double-clicking the label `text` opens path:line. */
+  function normalizeLink(raw) {
+    if (!isObject(raw) || !hasText(raw.text) || !hasText(raw.path)) return null;
+    var line = Math.floor(Number(raw.line));
+    if (!isFinite(line) || line < 1) return null;
+    return { text: String(raw.text).trim(), path: String(raw.path).trim(), line: line };
   }
 
   /** `ref: path/to/file.py:31` → {path, line}; a ref without a line opens line 1. */

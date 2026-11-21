@@ -81,8 +81,8 @@ CAPSTONE_VIEWS = {
 }
 # Spec §7.4: knowledge checks on steps 1, 3, and 6, with these many questions.
 QUIZ_SIZES = {"headliner": 3, "failed-trips": 4, "checkout-latency": 5}
-# Spec §3, in order.
-OBJECTIVE_VERBS = ["Analyze", "Use", "Explain", "Identify", "Select"]
+# Redesign spec §4.1, in order.
+OBJECTIVE_VERBS = ["Analyze", "Use", "Explain", "Evaluate", "Select"]
 READING_BUDGET = 300  # words of instructions before the challenge (spec §10)
 LABEL_PREFIX = "Prepared in advance by an AI coding agent from this repository's code"
 VERIFIED = "verified against the code"
@@ -222,8 +222,8 @@ def all_challenge_questions():
 
 def test_step_keys_are_stable_and_unique():
     assert [candidate.get("key") for candidate in STEPS] == STEP_KEYS
-    assert TUTORIAL.get("progress_version") == 1, (
-        "versioned progress keeps saved challenge records with their step keys")
+    assert TUTORIAL.get("progress_version") == 2, (
+        "the redesign changed question ids, so records saved under version 1 are dropped")
 
 
 def test_top_level_settings_follow_the_plan():
@@ -437,37 +437,55 @@ def test_the_capstone_plans_one_view_per_question():
 # --- Answer keys come from the facts -------------------------------------------------------
 
 
-def test_event_consumer_keys_match_the_bindings():
+# Judgment keys (redesign spec §5.1) choose among design alternatives. Their
+# tests pin the facts each choice rests on, never the choice itself.
+
+
+def test_event_consumer_keys_match_what_the_rename_breaks():
     spec = challenge("event-consumers")
     consumers = FACTS["event_consumers"]
-    receivers = question(spec, "receivers")
+    breaks = question(spec, "breaks")
 
-    assert {component(option) for option in correct_options(receivers)} == set(consumers["trip.confirmed"])
-    assert {component(option) for option in correct_options(question(spec, "forwarder"))} == set(
+    assert {component(option) for option in correct_options(breaks)} == set(consumers["rename_breaks"])
+    offered = {component(option) for option in breaks["options"]}
+    assert set(consumers["trip.confirmed"]) | set(consumers["trip.cancelled"]) <= offered, (
+        "every receiver of a trip event is a choice")
+    # Judgment key: adding the fields breaks no consumer; removing fan_name comes later.
+    [rollout] = correct_options(question(spec, "rollout"))
+    assert consumers["additive_breaks"] == [] and "keep `fan_name`" in rollout
+    assert not any("keep" in option for option in wrong_options(question(spec, "rollout")))
+    versioned = question(spec, "versioned-key")
+    assert "trip.confirmed.v2" in versioned["question"]
+    assert [component(option.removesuffix(" only")) for option in correct_options(versioned)] == (
+        consumers["trip.confirmed.v2"])
+    assert {component(option) for option in correct_options(question(spec, "privacy"))} == set(
         consumers["external_forwarders"])
-    assert {component(option) for option in correct_options(question(spec, "cancelled"))} == set(
-        consumers["trip.cancelled"])
-    offered = {component(option) for option in receivers["options"]}
-    assert set(consumers["trip.cancelled"]) <= offered
 
 
 def test_failed_trip_keys_match_the_traced_rejection():
     spec = challenge("failed-trips")
     facts = FACTS["failed_trips"]
-    # Each step the rejection path lacks, by its verb ("refund", "cancel").
-    verbs = [missing.split()[0] for missing in facts["missing"]]
-    undo = question(spec, "undo")
 
-    for verb in verbs:
-        assert sum(verb in option.lower() for option in correct_options(undo)) == 1, verb
-        assert not any(verb in option.lower() for option in wrong_options(undo)), verb
-    assert len(correct(undo)) == len(verbs)
-    [cause] = correct_options(question(spec, "cause"))
-    assert ("before" in cause) == facts["capture_before_first_answer"]
-    [when] = correct_options(question(spec, "charged"))
-    assert when.startswith("Before") == facts["capture_before_first_answer"]
+    [money] = correct_options(question(spec, "money"))
+    assert ("stays captured" in money) == (facts["refunds"] == 0)
+    assert ("cannot be cancelled" in money) == (not facts["fan_can_cancel"])
+    assert not any("cannot be cancelled" in option for option in wrong_options(question(spec, "money")))
+    # The rejection path lacks a refund and a cancellation, and suppliers still
+    # confirm after the trip failed, so a fix must cover orders not yet answered.
+    assert [missing.split()[0] for missing in facts["missing"]] == ["refund", "cancel"]
+    assert facts["confirmed_after_failure"], "the premise that rules out 'confirmed so far'"
+    fix = question(spec, "fix")
+    [key] = correct_options(fix)
+    assert "Refund" in key and "not yet rejected" in key
+    assert sum("so far" in option for option in wrong_options(fix)) == 1
+    # Judgment key: capturing last can meet a declined capture, because the
+    # checkout asks the bank only whether the card is open.
+    assert facts["card_check_amount"] == 0 and facts["capture_before_first_answer"]
+    [capture_last] = correct_options(question(spec, "capture-last"))
+    assert "declined" in capture_last
     [checked] = correct_options(spec["evidence_check"]["question"])
-    assert not any(verb in checked.lower() for verb in verbs), "the code's reject branch lacks them"
+    assert not any(verb in checked.lower() for verb in ("refund", "cancel")), (
+        "the code's reject branch lacks them")
 
 
 def test_data_model_keys_match_the_model():
@@ -477,69 +495,108 @@ def test_data_model_keys_match_the_model():
     # which facts.py numbers 1 to 6.
     assert len(ideas["options"]) == 6
     assert sorted(ideas["correct_indices"]) == [number - 1 for number in FACTS["data_model"]["allowed"]]
-    pair = FACTS["data_model"]["split_payment_multiplicity"]
-    split = question(spec, "split-payment")
-    assert [pair in plain(option) for option in split["options"]].count(True) == 1
-    assert pair in plain(correct_options(split)[0])
+    # One association changes, and a reader outside the model exists (My trips).
+    assert FACTS["data_model"]["split_payment_multiplicity"] == "TripOrder-Payment"
+    assert FACTS["capstone"]["my_trips_reads_stored_payment"]
+    scope = question(spec, "split-scope")
+    assert [("1..*" in option, "omits" in option) for option in scope["options"]].count((True, True)) == 1
+    [key] = correct_options(scope)
+    assert "1..*" in key and "omits" in key
 
 
-# Each outage outcome in facts.json, by the phrase of the one option that says it.
-OUTCOME_PHRASES = {
-    "cannot_submit": "cannot submit",
-    "finish_afterwards": "after the window",
-    "emails_wait": "e-mails wait",
-}
-OUTAGE_QUESTIONS = {"bank": "bank", "lodging": "lodging", "broker": "broker", "mail-relay": "mail_relay"}
+# The four maintenance windows of the outage task, as facts.json names them.
+WINDOWS = {"Bank": "bank", "Lodging Provider": "lodging", "Message broker": "broker", "Mail Relay": "mail_relay"}
+UNLISTED = {"Box Office": "box_office", "Shuttle Provider": "shuttle", "Experience Provider": "experiences"}
 
 
 def test_outage_keys_match_the_outage_runs():
     spec = challenge("outages")
-    assert [q["id"] for q in spec["questions"]] == list(OUTAGE_QUESTIONS)
-    for question_id, outage in OUTAGE_QUESTIONS.items():
-        q = question(spec, question_id)
-        for phrase in OUTCOME_PHRASES.values():
-            assert sum(phrase in option for option in q["options"]) == 1, (question_id, phrase)
-        [key] = correct_options(q)
-        assert OUTCOME_PHRASES[FACTS["outages"][outage]] in key, question_id
+    outages = FACTS["outages"]
+    presale = FACTS["presale_path"]
+
+    windows = question(spec, "windows")
+    assert windows["options"] == list(WINDOWS)
+    assert set(correct_options(windows)) == {
+        name for name, service in WINDOWS.items() if outages[service] == "cannot_submit"}
+    # An order placed during the lodging window: taken, charged, finished afterwards.
+    assert outages["lodging"] == "finish_afterwards" and presale["lodging_charged_while_waiting"]
+    lodging = question(spec, "lodging-order")
+    [key] = correct_options(lodging)
+    assert "charged now" in key and "once the provider is back" in key
+    assert not any("charged now" in option for option in wrong_options(lodging))
+    unlisted = question(spec, "unlisted")
+    for name, service in UNLISTED.items():
+        assert name in unlisted["options"], name
+        assert (name in correct_options(unlisted)) == (presale[service] == "cannot_submit"), name
+    assert len(correct_options(unlisted)) == 1
     # The submit request waits for the broker exactly when a broker outage stops orders.
     [checked] = correct_options(spec["evidence_check"]["question"])
-    assert checked.startswith("Yes") == (FACTS["outages"]["broker"] == "cannot_submit")
+    assert checked.startswith("Yes") == (outages["broker"] == "cannot_submit")
     [fits] = correct_options(spec["reply"]["contrast"]["question"])
     assert fits.startswith("No"), "imports cannot show the calls a request waits for"
+
+
+def checkout_seconds(option):
+    """How long the group checkout takes under the change an option names."""
+    latency = FACTS["checkout_latency"]
+    bulk, parallel = "bulk" in option, "parallel" in option
+    if bulk and parallel:
+        return latency["variants"]["bulk_parallel"]
+    if bulk and "cached" in option:
+        return latency["variants"]["bulk_cached_card"]
+    if parallel:
+        return latency["variants"]["parallel_only"]
+    assert not bulk and "OPC" in option, f"no timed variant for {option!r}"
+    return latency["elapsed_seconds"]  # the same calls, made from another place
 
 
 def test_checkout_latency_keys_match_the_call_log():
     spec = challenge("checkout-latency")
     latency = FACTS["checkout_latency"]
+    target = 2.0
 
-    assert correct_options(question(spec, "remote-calls")) == [str(latency["external_calls"])]
-    assert latency["keyed_fix_seconds"] < 2.0 <= latency["elapsed_seconds"]
+    # Most of the time goes to the two loops.
+    assert latency["quote_seconds"] + latency["check_seconds"] > 0.9 * latency["elapsed_seconds"]
+    [budget] = correct_options(question(spec, "budget"))
+    assert "pass quotes" in budget and "capacity checks" in budget
     fix = question(spec, "fix")
-    [key] = correct_options(fix)
-    assert "bulk" in key and "parallel" in key, "the keyed fix: one bulk quote, parallel checks"
-    assert not any("bulk" in option and "parallel" in option for option in wrong_options(fix))
+    for index, option in enumerate(fix["options"]):
+        assert (checkout_seconds(option) < target) == (index == fix["correct_index"]), option
+    # Dropping the checks meets the target too; a rejection then follows the capture.
+    assert latency["variants"]["bulk_no_checks"] < target
+    assert latency["rejected_experience_is_charged_and_failed"]
+    [trade_off] = correct_options(question(spec, "trade-off"))
+    assert "after the capture" in trade_off and "Failed" in trade_off
 
 
 def test_capstone_keys_match_the_code():
     spec = challenge("choose-the-view")
     capstone = FACTS["capstone"]
     contracts = FACTS["gateway_contracts"]
+    stuck = capstone["stuck_cancellation"]
 
     [rule] = correct_options(question(spec, "rule"))
     assert rule.startswith("No") == capstone["website_reads_order_db"]
     [rideshare] = correct_options(question(spec, "rideshare"))
     assert set(re.findall(r"`(\w+)\(\)`", rideshare)) == set(capstone["rideshare_must_implement"])
-    [cancellation] = correct_options(question(spec, "cancellation"))
-    assert cancellation.startswith("Refund first") == capstone["refund_before_cancel"]
-    assert bool(re.search(r"\byes\b", cancellation, re.I)) == capstone["glampingco_48h_stays_booked"]
+    cancellation = question(spec, "cancellation")
+    [key] = correct_options(cancellation)
+    assert key.startswith("Refunded") == (stuck["refunds"] == 1 and capstone["refund_before_cancel"])
+    assert ("stays booked" in key) == (stuck["tent"] == "confirmed")
     # One module constant, not a per-festival setting.
     [fee] = correct_options(question(spec, "fee"))
-    assert "whole site" in fee
+    assert "one rate constant" in fee
     assert f'SERVICE_FEE_RATE = {capstone["service_fee"]}' in SHARED["services/website/pricing.py"]
+    # Judgment key: two gateways break the contract of cancel(), so the rule
+    # belongs in the contract. Its explanation names the two.
     gateways = question(spec, "gateways")
-    assert {plain(option) for option in correct_options(gateways)} == set(contracts["fails_cancel_when_online"])
-    batching = question(spec, "batching")
-    assert {plain(option) for option in correct_options(batching)} == set(contracts["experience_place_inheritors"])
+    assert gateways["type"] == "single"
+    [placed] = correct_options(gateways)
+    assert "`SupplierGateway` contract" in placed
+    assert names_all(gateways["explanation"], contracts["fails_cancel_when_online"])
+    # Judgment key: the view for an outage question about an unfamiliar system.
+    [transfer] = correct_options(question(spec, "transfer"))
+    assert transfer.startswith("A component diagram") and "code" in transfer
     check = spec["evidence_check"]
     [checked] = correct_options(check["question"])
     assert checked.startswith("No") == capstone["website_reads_order_db"]
@@ -564,6 +621,7 @@ def leaks(key):
         "event-consumers": [
             lambda text: names_all(text, consumers["trip.confirmed"]),
             lambda text: names_all(text, consumers["trip.cancelled"]),
+            lambda text: names_all(text, consumers["rename_breaks"]),
             lambda text: any(mentions(text, name) for name in consumers["external_forwarders"])
             and "fan_name" in text,
         ],

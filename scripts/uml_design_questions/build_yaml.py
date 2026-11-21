@@ -7,17 +7,25 @@ as its author wrote it:
 
 - shared_files: every Headliner file, read-only so that evidence line numbers hold;
 - x-diagrams: each diagram's source under a YAML anchor, such as &d_event_consumers,
-  which a challenge step reuses as `source: *d_event_consumers`.
+  which a challenge step reuses as `source: *d_event_consumers`;
+- x-diagram-links: each diagram's code links, from the sidecar next to its source
+  (event-consumers.links.yml beside event-consumers.component.uml), under an anchor
+  such as &l_event_consumers, which the step reuses as `links: *l_event_consumers`.
+  A link is {text, path, line}: double-clicking the label `text` in the drawing
+  opens the shared file `path` at `line`.
 
     python3 scripts/uml_design_questions/build_yaml.py --write   # update the YAML
     python3 scripts/uml_design_questions/build_yaml.py --check   # exit 1 if out of date
 """
 
 import argparse
+import json
 import re
 import sys
 from collections.abc import Sequence
 from pathlib import Path
+
+import yaml
 
 ROOT = Path(__file__).resolve().parents[2]
 SOURCES = ROOT / "tutorial_sources/uml-design-questions"
@@ -72,14 +80,62 @@ def shared_file(relative: str, text: str) -> list[str]:
     return lines + literal_block(f"{keys}content:", text, FILE_INDENT)
 
 
-def diagram_anchor(path: Path) -> list[str]:
-    """A diagram's source under a YAML anchor named after its file."""
+def anchor_name(path: Path) -> str:
+    """The YAML anchor suffix for a diagram file: event-consumers.* -> event_consumers."""
     name = path.name.split(".")[0].replace("-", "_")
     if not re.fullmatch(r"[a-z][a-z0-9_]*", name):
         raise ValueError(f"{path.name}: cannot name a YAML anchor after this file")
+    return name
+
+
+def diagram_anchor(path: Path) -> list[str]:
+    """A diagram's source under a YAML anchor named after its file."""
+    name = anchor_name(path)
     text = path.read_text(encoding="utf-8").rstrip("\n")
     key = f"{' ' * DIAGRAM_INDENT}{name}: &d_{name}"
     return literal_block(key, text, DIAGRAM_INDENT)
+
+
+def links_file(path: Path) -> Path:
+    """The code-link sidecar of a diagram: <name>.links.yml beside <name>.<type>.uml."""
+    return path.with_name(path.name.split(".")[0] + ".links.yml")
+
+
+def read_links(sidecar: Path) -> list[dict]:
+    """A sidecar's links, each exactly {text, path, line}, in the authored order."""
+    links = yaml.safe_load(sidecar.read_text(encoding="utf-8"))
+    if not isinstance(links, list):
+        raise ValueError(f"{sidecar.name}: expected a list of links")
+    for link in links:
+        valid = (
+            isinstance(link, dict)
+            and set(link) == {"text", "path", "line"}
+            and isinstance(link["text"], str) and link["text"].strip()
+            and isinstance(link["path"], str) and link["path"].strip()
+            and isinstance(link["line"], int) and not isinstance(link["line"], bool)
+            and link["line"] >= 1
+        )
+        if not valid:
+            raise ValueError(f"{sidecar.name}: each link needs text, path, and a line from 1: {link!r}")
+    return links
+
+
+def links_anchor(path: Path) -> list[str]:
+    """A diagram's code links under a YAML anchor, or nothing without a sidecar."""
+    sidecar = links_file(path)
+    if not sidecar.exists():
+        return []
+    name = anchor_name(path)
+    item = " " * (DIAGRAM_INDENT + 2)
+    lines = [f"{' ' * DIAGRAM_INDENT}{name}: &l_{name}"]
+    # JSON strings are YAML double-quoted scalars, so any label reads back unchanged.
+    for link in read_links(sidecar):
+        lines += [
+            f"{item}- text: {json.dumps(link['text'], ensure_ascii=False)}",
+            f"{item}  path: {json.dumps(link['path'], ensure_ascii=False)}",
+            f"{item}  line: {link['line']}",
+        ]
+    return lines
 
 
 def literal_block(key: str, text: str, key_indent: int) -> list[str]:
@@ -108,6 +164,9 @@ def generated_block(headliner: Path, diagrams: Path) -> str:
     lines.append("x-diagrams:")
     for path in sorted(diagrams.glob("*.uml")):
         lines += diagram_anchor(path)
+    link_lines = [line for path in sorted(diagrams.glob("*.uml")) for line in links_anchor(path)]
+    if link_lines:
+        lines += ["x-diagram-links:", *link_lines]
     lines.append(END)
     return "\n".join(lines) + "\n"
 

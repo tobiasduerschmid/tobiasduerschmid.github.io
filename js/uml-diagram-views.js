@@ -265,6 +265,7 @@
     return localNames ? { ...context, pythonNames: new Map([...context.pythonNames, ...localNames]) } : context;
   }
 
+  /** Returns the projected lines; a dropped line is null, so indices stay aligned. */
   function projectClass(syntax, context, retainConstruction) {
     let owner = null;
     let names = new Map();
@@ -282,7 +283,7 @@
       if (!owner) return line;
       const member = projectMember(line, owner, { ...pythonScope(context, owner), lineIndex }, retainConstruction);
       return member !== null && context.language === 'python' ? renamePythonMember(member, names) : member;
-    }).filter(line => line !== null).join('\n');
+    });
   }
 
   function projectSequence(syntax, context) {
@@ -332,8 +333,13 @@
       defaultConstructionLines: new Set((result.constructionMethods || []).filter(method => method.isDefault).map(method => method.lineIndex)),
       pythonNames: pythonNames((result.classDiagram || '').split('\n')),
       pythonNamesByType: pythonClassNames(result.classDiagram || '') };
+    // Source links follow their lines: sequence lines map one-to-one, while a
+    // class line the projection drops takes its source with it.
+    const classLines = projectClass(result.classDiagram || '', context, retainConstruction);
+    const classSources = result.classDiagramSources || [];
     return { ...result,
-      classDiagram: projectClass(result.classDiagram || '', context, retainConstruction),
+      classDiagram: classLines.filter(line => line !== null).join('\n'),
+      classDiagramSources: classSources.length ? classLines.flatMap((line, index) => line === null ? [] : [classSources[index] || null]) : classSources,
       sequenceDiagram: projectSequence(result.sequenceDiagram || '', context) };
   }
 

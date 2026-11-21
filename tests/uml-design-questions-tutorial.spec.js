@@ -283,10 +283,14 @@ async function answerWithDiagram(page, challengeSpec, { firstWrong = false } = {
   await expect(stage(page, 'A new question').getByRole('heading', { name: 'A new question' })).toBeFocused();
 }
 
-/** The new question, then (when there is one) the evidence check. */
+/** The new questions, then (when there is one) the evidence check. */
 async function answerFollowUpAndEvidence(page, challengeSpec) {
   const followUp = stage(page, 'A new question');
-  for (const question of challengeSpec.follow_up) await choose(stemGroup(followUp, question), question, keyIndices(question));
+  // Several new questions are numbered; a lone one is named by its stem.
+  for (const [index, question] of challengeSpec.follow_up.entries()) {
+    const field = challengeSpec.follow_up.length > 1 ? numberedGroup(followUp, index + 1) : stemGroup(followUp, question);
+    await choose(field, question, keyIndices(question));
+  }
   await followUp.getByRole('button', { name: checkLabel(challengeSpec.follow_up), exact: true }).click();
   await expect(followUp.getByText(`${challengeSpec.follow_up.length} of ${challengeSpec.follow_up.length} correct`)).toBeVisible();
   const evidenceCheck = challengeSpec.evidence_check;
@@ -639,6 +643,32 @@ test.describe('timing', () => {
 });
 
 /** Tab (or Shift+Tab) until `target` has focus; fails if it is unreachable. */
+test.describe('code links', () => {
+  test.use({ viewport: { width: 1440, height: 900 } });
+
+  test('double-clicking a linked label in the reply diagram opens its code', async ({ page }) => {
+    test.setTimeout(180_000);
+    await openEventConsumers(page);
+    await writeAttempt(page, EVENT_CONSUMERS);
+    await answerFromCode(page, EVENT_CONSUMERS);
+    await lockIn(page, 'Lock in my answer');
+    const [diagram] = EVENT_CONSUMERS.diagram_challenge.reply.diagrams;
+    const link = diagram.links.find(item => item.text === 'Notifications');
+    const label = diagramRegion(page, diagram.type).locator('svg text').filter({ hasText: /^\s*Notifications\s*$/ });
+
+    await label.dblclick();
+
+    await expect(fileTab(page, link.path)).toHaveAttribute('aria-current', 'true');
+    await expect.poll(() => editorLocation(page)).toEqual({ path: link.path, line: link.line });
+    await expect(codeEditor(page)).toBeVisible();
+    await expect(diagramRegion(page, diagram.type)).toBeVisible();
+
+    // A note's citation of a project file is a link too.
+    await diagramRegion(page, diagram.type).locator('svg tspan', { hasText: /^deploy\/broker\.toml:16$/ }).dblclick();
+    await expect.poll(() => editorLocation(page)).toEqual({ path: 'deploy/broker.toml', line: 16 });
+  });
+});
+
 async function tabTo(page, target, { backward = false, max = 200 } = {}) {
   for (let presses = 0; presses < max; presses++) {
     if (await target.evaluate(element => element === document.activeElement)) return;
@@ -702,6 +732,15 @@ test.describe('keyboard only', () => {
     await expectVisibleFocus(page);
     await page.keyboard.press('Enter');
     await expect(fromCode.getByRole('button', { name: `${searchRef.path}:${searchRef.line}`, exact: true })).toBeVisible();
+    // Each further line the step asks for: back to the editor, one line down, pin it.
+    for (let pinned = 1; pinned < challengeSpec.attempt.evidence_pins; pinned++) {
+      await tabTo(page, codeEditor(page));
+      await page.keyboard.press('ArrowDown');
+      await page.keyboard.press('Escape');
+      await tabTo(page, fromCode.getByRole('button', { name: 'Pin this line' }), { backward: true });
+      await page.keyboard.press('Enter');
+      await expect(fromCode.getByRole('button', { name: `${searchRef.path}:${searchRef.line + pinned}`, exact: true })).toBeVisible();
+    }
     await tabTo(page, fromCode.getByLabel('What would you want a diagram of this code to show?'));
     await page.keyboard.type('Each consumer with its binding key.');
     for (const [index, question] of challengeSpec.questions.entries()) {
@@ -780,10 +819,12 @@ for (const { name, viewport, deviceScaleFactor } of [
       await expectNoHorizontalScroll(page);
 
       const fromCode = stage(page, 'Answer from the code');
-      const { searchRef } = pinRefs(EVENT_CONSUMERS.diagram_challenge);
+      const { searchRef, treeRef } = pinRefs(EVENT_CONSUMERS.diagram_challenge);
       await fromCode.getByLabel('Your hypothesis, in one sentence').fill('Every bound queue receives it.');
       await fromCode.getByLabel('Your hypothesis, in one sentence').focus();
+      // Files is a closed disclosure at this width, so both lines come from search.
       await pinThroughSearch(page, fromCode, searchRef);
+      await pinThroughSearch(page, fromCode, treeRef);
       await fromCode.getByLabel('What would you want a diagram of this code to show?').fill('Each consumer and its binding.');
       await answerFromCode(page, EVENT_CONSUMERS);
       await lockIn(page, 'Lock in my answer');

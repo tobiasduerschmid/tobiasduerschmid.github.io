@@ -189,6 +189,30 @@
   text-underline-offset: 0.15em;
 }
 
+/* Diagram groups (results in the Diagram pane's drawings) follow the files.
+   The visible "Diagram:" chip names the kind in text; the side rule and the
+   chip's frame repeat it without relying on color. */
+.tutorial-project-search__file--diagram {
+  padding-left: 0.5em;
+  border-left: 3px solid #6a737d;
+}
+
+.tutorial-project-search__kind {
+  padding: 0 0.35em;
+  border: 1px solid #6a737d;
+  border-radius: 3px;
+  font-weight: 700;
+}
+
+.tutorial-project-search__file--diagram .tutorial-project-search__path {
+  font-style: italic;
+}
+
+html.dark-mode .tutorial-project-search__file--diagram,
+html.dark-mode .tutorial-project-search__kind {
+  border-color: #8b949e;
+}
+
 html.dark-mode .tutorial-project-search__toggle,
 html.dark-mode .tutorial-project-search__close,
 html.dark-mode .tutorial-project-search__input {

@@ -1355,7 +1355,12 @@ steps:
         request: "..."                       # "You asked:" (Markdown)
         summary: "..."
         diagrams:                            # ArchUML sources; tabs when several.
-          - {id: events, type: component, label: "Order events", source: "..."}
+          - {id: events, type: component, label: "Order events", source: "...",
+             links: [{text: "Notifications", path: services/notifications/consumers.py, line: 25}]}
+                                             # Optional code links: a label whose text
+                                             # equals `text` is underlined; double-click
+                                             # (or its button in "Code links") opens
+                                             # path:line. Also on contrast.diagram.
         evidence:                            # Buttons opening the file at the line.
           - {text: "Markdown", ref: "deploy/broker.toml:31"}
         files_read: [deploy/broker.toml]
@@ -1816,7 +1821,12 @@ of `docs/superpowers/specs/2026-11-20-uml-design-questions-tutorial-design.md`.
   view, plan; also the popout and instructor keys) gets a frame, a check
   mark with an empty text alternative, and bold text. The native controls
   keep their checked and disabled states.
-- **Instructor mode** shows every panel with keys and never locks. The print
+- **Instructor mode** runs the student flow (type, tick, lock in), never
+  locks and saves nothing. The toolbar's **Solution** button calls
+  `applySolution()`, which calls
+  `DiagramChallenge.showAnswerKeysWithin(stepContentEl)`: the step's
+  challenges switch to the answer-key view (every panel, keys, expert view,
+  debrief) and announce "Answer keys shown." The print
   view prints the challenge between the step's files and its solution
   (`_includes/tutorial-diagram-challenge-print.html`): the questions, then
   the reply card titled "Shown after you lock in" with each diagram as a
@@ -2675,6 +2685,19 @@ channel.
   `classLayout` on the existing `uml-sync-*` channel; `uml-view-change` synchronizes
   selection back to the host. The generated Python workspace uses these same
   controls. No new persistence key, completion rule, or YAML option is added.
+  **Source links.** Inferred diagram elements link back to their code
+  (`js/uml-source-links.js`; contract in `docs/uml-code-labs.md` "Source
+  links"). The analyzers return `classDiagramSources` / `sequenceDiagramSources`
+  (per-line `{ file, startLine, endLine }`) beside the syntax. Clicking a class,
+  member, relationship, lifeline or message in the pane, the fullscreen viewer
+  (which closes first) or `uml-popup.html` (which posts `uml-source-reveal`)
+  runs `_revealUMLSource`: it opens the file's tab and marks the lines with a
+  gutter bar and a frame until the next highlight or edit, without moving
+  focus. Only files open in the step's editor link (`revealableFiles` travels
+  in `uml-update`). A collapsed "Code locations" list below each diagram gives
+  the same links as buttons for keyboard users. Python, Java and
+  JavaScript/TypeScript provide ranges; C++ diagrams do not link yet. No YAML
+  option is needed.
   TypeScript uses the compiler AST, supplied-file symbols and type checker in
   `uml-analyzer-js.js`. Both worker and main-thread fallback load the pinned
   local compiler and ES2022 declaration map `lib-map.js` from
@@ -3061,12 +3084,39 @@ channel.
   before files, alphabetical); `mount(host, {paths, activePath, label, onOpen})`
   returns `{setPaths, setActive, revealPath, destroy}` and implements the
   WAI-ARIA treeview keys (roving tabindex, arrows, Home/End, Enter/Space,
-  type-ahead). `TutorialProjectSearch.search(files, query, {matchCase,
+  type-ahead). `TutorialProjectSearch.search(entries, query, {matchCase,
   wholeWord, regex})` returns `{results: [{path, line, column, preview,
   matchStart, matchLength}], truncated, error}` (500-result cap, regex errors
-  are messages, never exceptions); `mount(host, {getFiles, onOpen})` returns
+  are messages, never exceptions). An entry is a file `{path, content}` or a
+  diagram `{path, content: <ArchUML source>, kind: 'diagram', diagramId,
+  label}`; a diagram is searched only in what its drawing shows
+  (`diagramText(source)`: names, stereotypes, members, message and connector
+  labels, guards, notes; not `@startuml`/`@enduml`, the `@layout` block,
+  keywords, or aliases), and its results carry `kind`, `diagramId`, `label`.
+  `textMatches(text, query, options)` applies the same rules to one string.
+  `mount(host, {getFiles, onOpen, onOpenDiagram, onReset})` returns
   `{open, close, destroy}` and owns the Search button, labelled field, option
-  checkboxes, polite status count, and Escape-to-opener. In TutorialCode,
+  checkboxes, polite status count ("N results in M files and K diagrams."),
+  and Escape-to-opener. Results group by file, then under a "Diagram:
+  <label>" heading per diagram (`onOpenDiagram(diagramId, query, options)`);
+  `onReset()` runs when the query or options change or the panel closes.
+  `_projectSearchFiles()` returns the step files followed by the pane's
+  `authoredDiagramSearchEntries()`, which is empty until a diagram is loaded,
+  so search never reveals a diagram before a challenge's lock-in (or the
+  main reply while a contrast question is pending).
+  `TutorialCode.hasProjectFile(path)` says whether a path is a file of the
+  current step (an open model or a declared step file).
+  **`js/tutorial-source-links.js`** (`TutorialSourceLinks`, loaded on every
+  tutorial page with `css/tutorial-source-links.css`): `findSourceReferences(
+  text, isProjectFile)` and `parseSourceReference` are pure (unit tested by
+  `scripts/tests/tutorial-source-links.test.js`); `linkSourceReferences(root,
+  isProjectFile, onOpen)` turns each code span that is exactly `path:line` or
+  `path:line:column` of a project file into a button named "Open <path> at
+  line <n>" (code styling kept, underlined). The diagram challenge applies it
+  to every Markdown block and labeled paragraph it shows (never inside labels
+  or legends); step instructions do not use it yet, because a step's files
+  load after its instructions render and the instructions popout mirrors
+  them without a runtime. In TutorialCode,
   `_openTabs` holds the opened tabs (`_tabPaths`, `_openFileTab`, `_closeTab`);
   a file shown only by a programmatic switch is a transient tab until the
   learner switches away. `revealSource(path, line, column = 1)` opens the tab,
@@ -3129,6 +3179,44 @@ channel.
   **Code beside diagram** button (`aria-pressed`) toggles the layout.
   `open: false` loads the diagrams and enables the view without switching
   to it; drawing waits until the view is first shown.
+  **Code links:** a diagram's optional `links: [{text, path, line}]` mark
+  every SVG `<text>` whose whitespace-collapsed content equals `text`
+  (class `tutorial-diagram-pane__link`: underline, pointer). Each `path:line`
+  of a project file inside a label (a note's citation) becomes a linked
+  `<tspan>` too. Double-click calls `revealSource(path, line)`, which returns
+  a maximized diagram to split; a single click on a linked label never
+  triggers Fit-view click-to-zoom. The SVG is `aria-hidden`, so a "Code
+  links" `<details>` under the drawing lists one button per link
+  (citations deduplicated). The fit hint mentions double-click only when
+  the drawing has links.
+  **Search hits:** `revealDiagramText(diagramId, query, options)` shows the
+  Diagram view in its current layout (keeping the Files drawer open when
+  search was open), selects the tab, frames every matching label (a
+  `rect.tutorial-diagram-pane__hit-box` with a 2px outline behind it, the
+  text bold), zooms to the first at reading size, and announces "N labels
+  marked in <label>."; `clearDiagramTextHighlights()` removes the marks,
+  which also go when another diagram is drawn.
+  **Find in diagram:** Ctrl/Cmd+F while focus is in the pane, or in the
+  workspace outside the code editor and text fields while the Diagram view
+  is shown, opens a find bar (`role="search"`) for the shown drawing:
+  every match framed, the current one with a 4px outline, a polite
+  "N of M" / "No matches" status, Enter / Shift+Enter and Next / Previous
+  match buttons that zoom to the current match, an optional Match case, and
+  Escape (or Close find) that clears the marks and returns focus. Monaco
+  keeps its own Ctrl/Cmd+F; Ctrl/Cmd+Shift+F stays project search.
+  **Pinch zoom:** `wheel` events with `ctrlKey` over the canvas (trackpad
+  pinch, Ctrl/Cmd+wheel; listener `{passive: false}`) zoom continuously by
+  `exp(-deltaY * 0.01)` (one event capped at 50 px), between Fit and 300%,
+  holding the drawing point that was under the pointer when the gesture
+  began (re-anchored a frame later, since ArchUML can shift the layout when
+  the drawing starts to overflow); zooming down to the fitted size enters
+  Fit through ArchUML's control. Wheel events without `ctrlKey` scroll.
+  In the UML design questions tutorial, each diagram's links live in a
+  sidecar `tutorial_sources/uml-design-questions/diagrams/<name>.links.yml`;
+  `build_yaml.py` emits them under `x-diagram-links` as `&l_<name>`, used as
+  `links: *l_<name>` next to `source: *d_<name>`
+  (`scripts/tests/test_uml_design_questions_links.py` holds each link to its
+  drawing and to the code).
 - **`js/tutorial-diagram-challenge-core.js`** and
   **`js/tutorial-diagram-challenge.js`** — the diagram challenge (§3.2).
   The layout loads both, and `css/tutorial-diagram-challenge.css` before

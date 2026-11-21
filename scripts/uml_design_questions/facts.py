@@ -70,6 +70,7 @@ def extract() -> dict:
         "failed_trips": failed_trips(),
         "data_model": data_model(),
         "outages": {service: outage_outcome(service) for service in OUTAGES},
+        "presale_path": presale_path(),
         "checkout_latency": checkout_latency(),
         "capstone": capstone(),
         **diagram_facts.extract(),  # "diagrams", and "evidence": path:line per note
@@ -111,6 +112,19 @@ def group_cart() -> Cart:
             CartLine("stay", "lf-lakeview-lodge", GROUP),
             CartLine("ride", "lf-station-shuttle", GROUP),
             *lines,
+        ],
+    )
+
+
+def presale_cart() -> Cart:
+    """Passes, a stay, and a shuttle ride, with no experience."""
+    pair = GROUP[:2]
+    return Cart(
+        "lakeside-fest",
+        [Guest(name) for name in pair],
+        [
+            CartLine("stay", "lf-lakeshore-campsite", pair),
+            CartLine("ride", "lf-station-shuttle", pair),
         ],
     )
 
@@ -203,7 +217,35 @@ def event_consumers() -> dict:
         "trip.confirmed": receivers("trip.confirmed"),
         "trip.cancelled": receivers("trip.cancelled"),
         "external_forwarders": external_forwarders("trip.confirmed"),
+        "rename_breaks": consumers_that_raise(renamed),
+        "additive_breaks": consumers_that_raise(lambda body: body | renamed(body)),
+        "trip.confirmed.v2": receivers("trip.confirmed.v2"),
     }
+
+
+def renamed(body: dict) -> dict:
+    """A trip event's body with fan_name replaced by given_name and family_name."""
+    rest = {name: value for name, value in body.items() if name != "fan_name"}
+    given, _, family = body["fan_name"].partition(" ")
+    return rest | {"given_name": given, "family_name": family}
+
+
+def consumers_that_raise(change) -> list[str]:
+    """Consumers whose handler raises on a trip event whose body went through change.
+
+    Every trip event has the body that trip.confirmed has, so one observed
+    body serves all three. Each consumer gets the event on a fresh stack.
+    """
+    body = change(observed_event("trip.confirmed"))
+    raising = set()
+    for routing_key in ("trip.confirmed", "trip.cancelled", "trip.failed"):
+        for queue in sorted(receiving_queues(build_stack(), routing_key)):
+            stack = build_stack()
+            try:
+                stack.deliver(queue, Message(routing_key, dict(body)))
+            except Exception:  # any error: the consumer cannot handle the event
+                raising.add(stack.component_of(queue))
+    return sorted(raising)
 
 
 def receiving_queues(stack, routing_key: str) -> set[str]:
@@ -323,7 +365,31 @@ def failed_trips() -> dict:
         < requests.index("opc.SupplierCallbackService.answer"),
         "reject_branch_calls": branch,
         "missing": missing,
+        "refunds": len(stack.stubs.bank.refunds),
+        "fan_can_cancel": fan_can_cancel(stack),
+        "confirmed_after_failure": confirmed_after_failure("box-office"),
+        "card_check_amount": next(
+            effect.payload["amount"] for effect in log if effect.name == "bank.validate"
+        ),
     }
+
+
+def fan_can_cancel(stack) -> bool:
+    """Whether the website's cancel action takes the fan's one (failed) trip."""
+    [trip] = stack.website.my_trips(FAN.fan_id)
+    stack.website.cancel(trip["order_id"])
+    return stack.website.track(trip["order_id"])["status"] != trip["status"]
+
+
+def confirmed_after_failure(rejecting_supplier: str) -> list[str]:
+    """Supplier confirmations published after trip.failed, when one supplier rejects."""
+    stack = build_stack(supplier_decisions={rejecting_supplier: "reject"})
+    with recorded_trip_effects() as log:
+        book(stack, glamping_cart())
+        stack.run_until_idle()
+    published = [effect.name for effect in log if effect.kind == "publish"]
+    after = published[published.index("trip.failed") + 1:]
+    return sorted(key for key in after if key.endswith(".confirmed"))
 
 
 # --- T4: what the data model allows ------------------------------------------------
@@ -388,10 +454,25 @@ def accepts(build) -> bool:
 # --- T5: outages -------------------------------------------------------------------
 
 
-def outage_outcome(service: str) -> str:
-    """What happens to a camping trip booked while service is down."""
+def presale_path() -> dict:
+    """Outages outside the operations team's list, for a cart without experiences."""
+    stack = build_stack(down=("lodging",))
+    order_id = book(stack, presale_cart())["order_id"]
+    stack.run_until_idle()
+    waiting = stack.website.track(order_id)["suppliers"]["lodging"] == "placed"
+    return {
+        "box_office": outage_outcome("box_office", presale_cart()),
+        "shuttle": outage_outcome("shuttle", presale_cart()),
+        "experiences": outage_outcome("experiences", presale_cart()),
+        "lodging_charged_while_waiting": waiting
+        and stack.stubs.bank.captured_for(order_id) > 0,
+    }
+
+
+def outage_outcome(service: str, cart: Cart | None = None) -> str:
+    """What happens to a trip (a camping trip by default) booked while service is down."""
     stack = build_stack(down=(service,))
-    response = book(stack, camping_cart())
+    response = book(stack, cart or camping_cart())
     if "order_id" not in response:
         return "cannot_submit"
     stack.run_until_idle()
@@ -424,16 +505,38 @@ def checkout_latency() -> dict:
     checks = [call.seconds for call in calls if call.name == "experiences.capacity"]
     # The keyed fix: one bulk quote instead of a quote per attendee, and the
     # capacity checks in parallel, so they take as long as the slowest one.
-    keyed_fix = (
-        elapsed - sum(quotes) + bulk_quote_seconds(stack) - sum(checks) + max(checks)
-    )
+    bulk = elapsed - sum(quotes) + bulk_quote_seconds(stack)
+    keyed_fix = bulk - sum(checks) + max(checks)
+    [card_check] = [call.seconds for call in calls if call.name == "bank.validate"]
     external = external_services()
     return {
         "external_calls": sum(call.service in external for call in calls),
         "elapsed_seconds": round(elapsed, 2),
         "keyed_fix_seconds": round(keyed_fix, 2),
         "call_ms": [[call.name, round(call.seconds * 1000)] for call in calls],
+        "quote_seconds": round(sum(quotes), 2),
+        "check_seconds": round(sum(checks), 2),
+        # The checkout's time under each change that a question offers.
+        "variants": {
+            "bulk_cached_card": round(bulk - card_check, 2),
+            "bulk_parallel": round(keyed_fix, 2),
+            "parallel_only": round(elapsed - sum(checks) + max(checks), 2),
+            "bulk_no_checks": round(bulk - sum(checks), 2),
+        },
+        "rejected_experience_is_charged_and_failed": rejected_experience_outcome(),
     }
+
+
+def rejected_experience_outcome() -> bool:
+    """A group trip whose experience provider rejects ends charged and failed."""
+    stack = build_stack(supplier_decisions={"experiences": "reject"})
+    order_id = book(stack, group_cart())["order_id"]
+    stack.run_until_idle()
+    return (
+        stack.website.track(order_id)["status"] == "failed"
+        and stack.stubs.bank.captured_for(order_id) > 0
+        and not stack.stubs.bank.refunds
+    )
 
 
 def bulk_quote_seconds(stack) -> float:
@@ -456,7 +559,51 @@ def capstone() -> dict:
         "refund_before_cancel": refund_before_cancel(),
         "glampingco_48h_stays_booked": glampingco_48h_stays_booked(),
         "service_fee": service_fee(),
+        "my_trips_reads_stored_payment": my_trips_reads_stored_payment(),
+        "stuck_cancellation": stuck_cancellation(),
     }
+
+
+def my_trips_reads_stored_payment() -> bool:
+    """Storing a list of payments breaks My trips, but not OrderTrackingService."""
+    stack = build_stack()
+    order_id = book(stack, camping_cart())["order_id"]
+    stack.run_until_idle()
+    with open(HEADLINER / "deploy/services.toml", "rb") as file:
+        order_db = connect(tomllib.load(file)["internal"]["order-db"])
+    stored = order_db.get("orders", order_id)["order"]
+    order_db.update("orders", order_id, order=stored | {"payment": [stored["payment"]]})
+    tracked = stack.consumers.support_console.orders_of(FAN.fan_id)
+    try:
+        stack.website.my_trips(FAN.fan_id)
+    except (TypeError, KeyError):
+        return [order["order_id"] for order in tracked] == [order_id]
+    return False
+
+
+def stuck_cancellation() -> dict:
+    """Where a GlampingCo trip ends up when it is cancelled 2 days before check-in."""
+    stack = build_stack()
+    order_id = confirmed_glamping_trip(stack)
+    advance_to_two_days_before_check_in(stack, order_id)
+    with recorded_trip_effects() as log:
+        stack.website.cancel(order_id)
+        stack.run_until_idle()
+    return {
+        "refunds": len(stack.stubs.bank.refunds),
+        "tent": stack.stubs.lodging.bookings[f"{order_id}-glampingco"],
+        "trip_cancelled_published": any(
+            (effect.kind, effect.name) == ("publish", "trip.cancelled") for effect in log
+        ),
+        "support_follow_ups": len(stack.consumers.support_console.follow_ups),
+    }
+
+
+def advance_to_two_days_before_check_in(stack, order_id: str) -> None:
+    order = stack.opc.orders.get(order_id)
+    stay = next(item for item in order.items if isinstance(item, LodgingStay))
+    two_days_before = stay.check_in - timedelta(hours=48)
+    stack.clock.advance((two_days_before - stack.clock.now()).total_seconds())
 
 
 def website_reads_order_db() -> bool:
@@ -492,10 +639,7 @@ def glampingco_48h_stays_booked() -> bool:
     """A cancellation two days before GlampingCo check-in leaves the tent booked."""
     stack = build_stack()
     order_id = confirmed_glamping_trip(stack)
-    order = stack.opc.orders.get(order_id)
-    stay = next(item for item in order.items if isinstance(item, LodgingStay))
-    two_days_before = stay.check_in - timedelta(hours=48)
-    stack.clock.advance((two_days_before - stack.clock.now()).total_seconds())
+    advance_to_two_days_before_check_in(stack, order_id)
     stack.website.cancel(order_id)
     stack.run_until_idle()
     return stack.stubs.lodging.bookings[f"{order_id}-glampingco"] == "confirmed"

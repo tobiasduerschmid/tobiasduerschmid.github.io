@@ -1,0 +1,32 @@
+# Code links for capstone-website-connections.component.uml: double-clicking a label in the
+# drawing opens its line. text is the label exactly as the drawing shows it.
+- text: OPC
+  path: services/opc/service.py
+  line: 36
+- text: CatalogDB
+  path: devstack.py
+  line: 112
+- text: Bank
+  path: stubs/bank.py
+  line: 9
+- text: BoxOffice
+  path: stubs/box_office.py
+  line: 19
+- text: ExperienceProvider
+  path: stubs/experiences.py
+  line: 24
+- text: CardService
+  path: stubs/bank.py
+  line: 1
+- text: Quotes
+  path: services/website/clients.py
+  line: 43
+- text: Capacity
+  path: services/website/clients.py
+  line: 50
+- text: PurchaseOrderService
+  path: services/opc/api.py
+  line: 12
+- text: OrderTrackingService
+  path: services/opc/api.py
+  line: 27

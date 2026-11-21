@@ -1,0 +1,35 @@
+# Code links for data-model.class.uml: double-clicking a label in the
+# drawing opens its line. text is the label exactly as the drawing shows it.
+- text: Fan
+  path: services/opc/model/orders.py
+  line: 17
+- text: TripOrder
+  path: services/opc/model/orders.py
+  line: 43
+- text: Payment
+  path: services/opc/model/orders.py
+  line: 34
+- text: Attendee
+  path: services/opc/model/orders.py
+  line: 26
+- text: SupplierOrder
+  path: services/opc/model/suppliers.py
+  line: 17
+- text: TripItem
+  path: services/opc/model/items.py
+  line: 17
+- text: FestivalPass
+  path: services/opc/model/items.py
+  line: 41
+- text: LodgingStay
+  path: services/opc/model/items.py
+  line: 56
+- text: Experience
+  path: services/opc/model/items.py
+  line: 75
+- text: TransportItem
+  path: services/opc/model/items.py
+  line: 92
+- text: ShuttleRide
+  path: services/opc/model/items.py
+  line: 102

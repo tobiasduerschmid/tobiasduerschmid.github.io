@@ -8827,6 +8827,13 @@
     var search = window.TutorialProjectSearch.mount(host, {
       getFiles: function () { return self._projectSearchFiles(); },
       onOpen: function (path, line, column) { self.revealSource(path, line, column); },
+      // The Diagram pane (js/tutorial-diagram-pane.js) owns diagram hits.
+      onOpenDiagram: function (diagramId, query, options) {
+        if (typeof self.revealDiagramText === 'function') self.revealDiagramText(diagramId, query, options);
+      },
+      onReset: function () {
+        if (typeof self.clearDiagramTextHighlights === 'function') self.clearDiagramTextHighlights();
+      },
     });
     this._projectSearch = search;
     signal.addEventListener('abort', function () { search.destroy(); });
@@ -8849,11 +8856,30 @@
     return true;
   };
 
-  /** Current editor contents of every step file, drafts included. */
+  /**
+   * Current editor contents of every step file, drafts included, then the
+   * diagrams loaded in the Diagram pane (none before a challenge's lock-in).
+   */
   TutorialCode.prototype._projectSearchFiles = function () {
-    return this._buildRefactoringWorkspace({}).files.map(function (file) {
+    var files = this._buildRefactoringWorkspace({}).files.map(function (file) {
       return { path: file.filename, content: file.content };
     });
+    var diagrams = typeof this.authoredDiagramSearchEntries === 'function' ? this.authoredDiagramSearchEntries() : [];
+    return files.concat(diagrams);
+  };
+
+  /**
+   * Whether `path` is a file of the current step's project: an open model
+   * (what project search and revealSource read) or a file the step declares
+   * and is still loading. `path:line` references link only to these.
+   * @param {string} path
+   */
+  TutorialCode.prototype.hasProjectFile = function (path) {
+    if (this.editorModels[path]) return true;
+    var step = this.steps && this.steps[this.currentStep];
+    return !!(step && Array.isArray(step.files) && step.files.some(function (file) {
+      return file && file.path === path;
+    }));
   };
 
   /**
@@ -8941,6 +8967,7 @@
     this._umlChannel = new BroadcastChannel('uml-sync-' + window.location.pathname);
     this._umlChannel.addEventListener('message', function (e) {
       if (e.data.type === 'uml-ready') self._broadcastUMLState();
+      if (e.data.type === 'uml-source-reveal') self._revealUMLSource(e.data.source);
       if (e.data.type === 'uml-view-change' && ['design', 'implementation'].indexOf(e.data.view) !== -1) {
         self._setUMLDiagramView(e.data.view);
       }
@@ -8959,6 +8986,7 @@
       language: this._umlAnalysisLanguage,
       diagramView: this._umlDiagramView,
       classLayout: this._umlClassLayoutPreference,
+      revealableFiles: Object.keys(this.editorModels),
       activeType: this._umlActiveType,
       color: this._umlCustomColor,
       darkMode: document.documentElement.classList.contains('dark-mode')
@@ -10314,9 +10342,44 @@
         if (!rendered || !isCurrent()) return;
         var zoomLabel = self._umlContainer ? self._umlContainer.querySelector('.tvm-diagram-zoom-label') : null;
         self._applyUMLZoom(el, self._umlZoom, zoomLabel);
+        self._linkUMLSources(el, diagramType, syntax, self._umlContainer, false);
       }).catch(function (error) {
         if (isCurrent()) self._showUMLError('Render failed: ' + error.message);
       });
+  };
+
+  /**
+   * Inferred diagram elements reveal the code they came from (see
+   * js/uml-source-links.js). Only files open in this step's editor link.
+   * The fullscreen viewer closes first, so the highlighted code is visible.
+   */
+  TutorialCode.prototype._linkUMLSources = function (target, diagramType, syntax, listHost, closesFullscreen) {
+    if (!window.UMLSourceLinks || !this._umlLastDiagrams) return;
+    var self = this;
+    var diagrams = this._getUMLDisplayDiagrams();
+    window.UMLSourceLinks.link(target, {
+      type: diagramType,
+      syntax: syntax,
+      sourceSyntax: diagrams[diagramType + 'Diagram'],
+      sources: diagrams[diagramType + 'DiagramSources'],
+      listHost: listHost,
+      canReveal: function (source) { return !!self.editorModels[source.file]; },
+      onReveal: function (source) {
+        if (closesFullscreen) self._closeUMLFullscreen();
+        return self._revealUMLSource(source);
+      }
+    });
+  };
+
+  /** Open source's file as a tab and mark its lines, without moving focus. */
+  TutorialCode.prototype._revealUMLSource = function (source) {
+    var entry = source && this.editorModels[source.file];
+    if (!entry || !this.editor || !window.UMLSourceLinks) return false;
+    this._openFileTab(source.file);
+    if (this._fileTree) this._fileTree.revealPath(source.file);
+    var editor = this._splitActive && this.editor2 && this._paneForFile(source.file) === 'right' ? this.editor2 : this.editor;
+    window.UMLSourceLinks.highlightEditor(editor, monaco, source);
+    return true;
   };
 
   /** Render Mermaid syntax into SVG in the diagram content area */
@@ -10357,6 +10420,10 @@
   /** Render learner-influenced diagram status without interpreting it as HTML. */
   TutorialCode.prototype._renderUMLMessage = function (container, msg, isError) {
     if (!container) return;
+    if (window.UMLSourceLinks) {
+      window.UMLSourceLinks.unlink(container);
+      window.UMLSourceLinks.clearList(container.parentElement);
+    }
     var message = document.createElement('div');
     message.className = 'tvm-diagram-empty';
     message.textContent = String(msg == null ? '' : msg);
@@ -10468,6 +10535,7 @@
           if (window.UMLShared && typeof UMLShared.applySvgAccessibility === 'function') {
             UMLShared.applySvgAccessibility(this._umlFsContentEl, 'sequence', seqSyntax);
           }
+          this._linkUMLSources(this._umlFsContentEl, 'sequence', seqSyntax, this._umlFullscreenEl, true);
         } else {
           this._renderUMLMessage(this._umlFsContentEl, 'No sequence diagram available.', false);
         }
@@ -10479,6 +10547,7 @@
           if (window.UMLShared && typeof UMLShared.applySvgAccessibility === 'function') {
             UMLShared.applySvgAccessibility(this._umlFsContentEl, 'class', laidOutClassSyntax);
           }
+          this._linkUMLSources(this._umlFsContentEl, 'class', laidOutClassSyntax, this._umlFullscreenEl, true);
         } else {
           this._renderUMLMessage(this._umlFsContentEl, 'No class diagram available.', false);
         }
@@ -11169,6 +11238,8 @@
    */
   TutorialCode.prototype.applySolution = function () {
     var step = this.steps[this.currentStep];
+    // Diagram challenges show their answer keys only from here in instructor mode.
+    if (window.DiagramChallenge && this.stepContentEl) window.DiagramChallenge.showAnswerKeysWithin(this.stepContentEl);
     if (!step || !step.solution) return;
     if (this.config.backend === 'tla') this._invalidateTLA();
     if (this.config.backend === 'aadl') {

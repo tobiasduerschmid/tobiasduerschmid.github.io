@@ -1,0 +1,38 @@
+# Code links for failed-trips.sequence.uml: double-clicking a label in the
+# drawing opens its line. text is the label exactly as the drawing shows it.
+- text: "wf: WorkflowManager"
+  path: services/opc/workflow.py
+  line: 10
+- text: "cb: SupplierCallbackService"
+  path: services/opc/api.py
+  line: 48
+- text: "order: TripOrder"
+  path: services/opc/model/orders.py
+  line: 43
+- text: submit(tripOrder)
+  path: services/website/clients.py
+  line: 62
+- text: orders.received
+  path: deploy/broker.toml
+  line: 8
+- text: "capture(cardToken, amount)"
+  path: services/opc/payment_task.py
+  line: 18
+- text: place(supplierOrder)
+  path: services/opc/supplier_task.py
+  line: 37
+- text: mark_processing()
+  path: services/opc/supplier_task.py
+  line: 26
+- text: "answer(supplierOrderId, decision)"
+  path: stubs/supplier.py
+  line: 57
+- text: supplier.answered
+  path: deploy/broker.toml
+  line: 11
+- text: mark_failed()
+  path: services/opc/invoice_task.py
+  line: 36
+- text: trip.failed
+  path: services/opc/events.py
+  line: 21

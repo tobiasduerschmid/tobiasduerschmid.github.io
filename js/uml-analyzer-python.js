@@ -31,6 +31,9 @@
     ? require('./uml-constant-values.js') : global.UMLConstantValues;
   const ReturnSummaries = typeof module !== 'undefined' && module.exports
     ? require('./uml-return-summaries.js') : global.UMLReturnSummaries;
+  // Hosts that predate source links still get diagrams, without provenance.
+  const SourceMap = (typeof module !== 'undefined' && module.exports ? require('./uml-source-map.js') : global.UMLSourceMap)
+    || { createSourceMap: () => ({ tag: line => line, resolve: text => ({ text, sources: [] }) }), range: () => null };
 
   /* ===================================================================
    * Main entry point
@@ -45,7 +48,7 @@
     for (var filename in sources) {
       if (!Object.hasOwn(sources, filename)) continue;
       try {
-        var ast = parsePythonSource(sources[filename]);
+        var ast = parsePythonSource(sources[filename], filename);
         parsedFiles[filename] = ast;
       } catch (e) {
         errors.push(filename + ': Parse error: ' + e.message);
@@ -79,9 +82,10 @@
 
     return {
       classDiagram: classDiagram,
+      classDiagramSources: extractor.diagramSources,
       constructionMethods: extractor.constructionMethods,
       sequenceLoopConstants: seqGen.loopConstants.toJSON(),
-      ...seqGen.diagnostics.result(sequenceDiagram, { failed: sequenceFailed }),
+      ...seqGen.diagnostics.result(sequenceDiagram, { failed: sequenceFailed, sources: seqGen.diagramSources }),
       errors: errors
     };
   }
@@ -558,7 +562,7 @@
         depth += _netBrackets(stripped);
         if (depth <= 0) {
           depth = 0;
-          result.push({ text: pending, indent: pendingIndent, lineNo: pendingLineNo });
+          result.push({ text: pending, indent: pendingIndent, lineNo: pendingLineNo, endLineNo: i });
           pending = '';
         }
         continue;
@@ -582,12 +586,12 @@
         continue;
       }
 
-      result.push({ text: stripped, indent: indent, lineNo: i });
+      result.push({ text: stripped, indent: indent, lineNo: i, endLineNo: i });
       depth = 0;
     }
 
     if (pending) {
-      result.push({ text: pending, indent: pendingIndent, lineNo: pendingLineNo });
+      result.push({ text: pending, indent: pendingIndent, lineNo: pendingLineNo, endLineNo: rawLines.length - 1 });
     }
     return result;
   }
@@ -621,10 +625,13 @@
     return d;
   }
 
-  /** Parse Python source into a Module AST node. */
-  function parsePythonSource(source) {
+  /**
+   * Parse Python source into a Module AST node. Statements carry file, line
+   * and endLine: their 1-based physical source range.
+   */
+  function parsePythonSource(source, filename) {
     var logLines = collectLogicalLines(source);
-    var ctx = { lines: logLines, pos: 0 };
+    var ctx = { lines: logLines, pos: 0, filename: filename || '' };
     return { type: 'Module', body: parseBody(ctx, -1) };
   }
 
@@ -635,14 +642,21 @@
       if (line.indent <= parentIndent) break;
       var stmt = parseStatement(ctx, line.indent);
       if (stmt) {
-        if (Array.isArray(stmt)) {
-          for (var i = 0; i < stmt.length; i++) stmts.push(stmt[i]);
-        } else {
-          stmts.push(stmt);
+        var parsed = Array.isArray(stmt) ? stmt : [stmt];
+        var endLine = ctx.lines[ctx.pos - 1].endLineNo + 1;
+        for (var i = 0; i < parsed.length; i++) {
+          parsed[i].file = ctx.filename;
+          parsed[i].line = line.lineNo + 1;
+          parsed[i].endLine = endLine;
+          stmts.push(parsed[i]);
         }
       }
     }
     return stmts;
+  }
+
+  function sourceRange(node) {
+    return node ? SourceMap.range(node.file, node.line, node.endLine) : null;
   }
 
   function parseStatement(ctx, blockIndent) {
@@ -716,6 +730,7 @@
 
   function parseClassDef(ctx, blockIndent, decorators) {
     var text = ctx.lines[ctx.pos].text;
+    var headerLine = ctx.lines[ctx.pos].lineNo + 1;
     ctx.pos++;
 
     var match = text.match(/^class\s+(\w+)/);
@@ -746,6 +761,7 @@
 
     return {
       type: 'ClassDef',
+      headerLine: headerLine,
       name: name,
       bases: bases,
       decorators: decorators || [],
@@ -755,6 +771,7 @@
 
   function parseFuncDef(ctx, blockIndent, decorators) {
     var text = ctx.lines[ctx.pos].text;
+    var headerLine = ctx.lines[ctx.pos].lineNo + 1;
     ctx.pos++;
 
     var isAsync = text.startsWith('async ');
@@ -781,6 +798,7 @@
 
     return {
       type: 'FunctionDef',
+      headerLine: headerLine,
       name: name,
       args: { args: args },
       simpleParameters: !_splitCommaTopLevel(paramsStr).some(part => /^[*]/.test(part.trim())),
@@ -1574,8 +1592,16 @@
     this.attributes = [];    // [{name, typeHint}]
     this.dependencies = [];  // [className]
     this._relAttrs = Object.create(null);     // attribute names promoted to relationship arrows
-    this.relationships = []; // Stored references: [{target, attrName, multiplicity}]
+    this.relationships = []; // Stored references: [{target, attrName, multiplicity, source}]
     this.decorators = [];    // decorator names on the class
+    this.source = null;      // range of the class statement, decorators included
+    this.header = null;      // range of its `class` line
+    this.dependencySources = Object.create(null); // dependency target → first range that needs it
+  }
+
+  /** The `class` or `def` line itself, after any decorators. */
+  function headerRange(node) {
+    return node ? SourceMap.range(node.file, node.headerLine || node.line, node.headerLine || node.line) : null;
   }
 
   PythonClassExtractor.prototype.analyze = function () {
@@ -1623,6 +1649,8 @@
   PythonClassExtractor.prototype._extractClass = function (node, filename) {
     var info = new ClassInfo(node.name, node.bases || [], filename);
     info.decorators = node.decorators || [];
+    info.source = sourceRange(node);
+    info.header = headerRange(node);
     this.classes.push(info);
     this.classMap[node.name] = info;
 
@@ -1676,6 +1704,7 @@
       isClassMethod: isClassMethod,
       isProperty: isProperty,
       returnType: returnType,
+      source: sourceRange(node),
       // Pyright may preserve a signature when an untyped decorator obscures
       // the effective callable. Do not display that heuristic as a known type.
       canInferReturn: (node.decorators || []).every(decorator =>
@@ -1722,20 +1751,22 @@
     }
   }
 
-  PythonClassExtractor.prototype._recordRelationship = function (info, target, attrName, multiplicity) {
+  /** source is the range of the statement that first retains the reference. */
+  PythonClassExtractor.prototype._recordRelationship = function (info, target, attrName, multiplicity, source) {
     // Retaining an object proves a reference, not its ownership or lifecycle.
     const existing = info.relationships.find(relation => relation.target === target && relation.attrName === attrName);
     if (existing) {
       if (multiplicity === '*' || !existing.multiplicity) existing.multiplicity = multiplicity;
+      if (!existing.source) existing.source = source || null;
     } else {
-      info.relationships.push({ target, attrName, multiplicity });
+      info.relationships.push({ target, attrName, multiplicity, source: source || null });
     }
     info._relAttrs[attrName] = true;
   };
 
-  PythonClassExtractor.prototype._annotationRelationships = function (info, annotation, attrName, multiplicity) {
+  PythonClassExtractor.prototype._annotationRelationships = function (info, annotation, attrName, multiplicity, source) {
     for (const target of extractClassesFromAnnotation(annotation, this.allTypeNames)) {
-      this._recordRelationship(info, target, attrName, multiplicity || inferMultiplicity(annotation, target));
+      this._recordRelationship(info, target, attrName, multiplicity || inferMultiplicity(annotation, target), source);
     }
   };
 
@@ -1745,24 +1776,26 @@
     const existing = classInfo.attributes.find(attribute => attribute.name === attrName);
     if (existing && node.annotation) {
       existing.typeHint = annotationStr(node.annotation);
+      existing.source = sourceRange(node);
     } else if (!existing) {
-      classInfo.attributes.push({ name: attrName, typeHint: node.annotation ? annotationStr(node.annotation) : null });
+      classInfo.attributes.push({ name: attrName, typeHint: node.annotation ? annotationStr(node.annotation) : null, source: sourceRange(node) });
     }
-    this._annotationRelationships(classInfo, node.annotation, attrName);
+    this._annotationRelationships(classInfo, node.annotation, attrName, undefined, sourceRange(node));
   };
 
   PythonClassExtractor.prototype._checkAttribute = function (node, classInfo) {
     if (node.type === 'Assign') {
       var targets = node.targets || [];
       for (var i = 0; i < targets.length; i++) {
-        this._extractSelfAttr(targets[i], node.value, null, classInfo);
+        this._extractSelfAttr(targets[i], node.value, null, classInfo, sourceRange(node));
       }
     } else if (node.type === 'AnnAssign' && node.target) {
-      this._extractSelfAttr(node.target, node.value, node.annotation, classInfo);
+      this._extractSelfAttr(node.target, node.value, node.annotation, classInfo, sourceRange(node));
     }
   };
 
-  PythonClassExtractor.prototype._extractSelfAttr = function (target, value, annotation, classInfo) {
+  /** source is the assigning statement; the first one names the attribute. */
+  PythonClassExtractor.prototype._extractSelfAttr = function (target, value, annotation, classInfo, source) {
     if (!isSelfAttr(target)) return;
     var attrName = target.attr;
     var typeHint = annotation ? annotationStr(annotation) : null;
@@ -1774,37 +1807,38 @@
         return;
       }
     }
-    classInfo.attributes.push({ name: attrName, typeHint: typeHint });
+    classInfo.attributes.push({ name: attrName, typeHint: typeHint, source: source || null });
   };
 
   PythonClassExtractor.prototype._checkFieldRelationship = function (node, info, parameterAnnotations, localCreations) {
+    const source = sourceRange(node);
     if (node.type === 'Assign' || node.type === 'AnnAssign') {
       for (const target of node.targets || [node.target]) {
         if (!isSelfAttr(target)) continue;
         const annotation = node.annotation;
         const value = node.value;
         const attrName = target.attr;
-        if (annotation) this._annotationRelationships(info, annotation, attrName);
+        if (annotation) this._annotationRelationships(info, annotation, attrName, undefined, source);
         if (!value) continue;
         if (value.type === 'Call') {
           const created = callName(value);
           if (created && this.allTypeNames.has(created)) {
-            this._recordRelationship(info, created, attrName, annotation ? inferMultiplicity(annotation, created) : null);
+            this._recordRelationship(info, created, attrName, annotation ? inferMultiplicity(annotation, created) : null, source);
           }
         } else if (value.type === 'Name') {
           if (!annotation && parameterAnnotations[value.id]) {
             const parameterAnnotation = parameterAnnotations[value.id];
             for (const related of extractClassesFromAnnotation(parameterAnnotation, this.allTypeNames)) {
               const multiplicity = inferMultiplicity(parameterAnnotation, related);
-              this._recordRelationship(info, related, attrName, multiplicity);
+              this._recordRelationship(info, related, attrName, multiplicity, source);
             }
           } else if (localCreations[value.id]) {
-            this._recordRelationship(info, localCreations[value.id], attrName, annotation ? inferMultiplicity(annotation, localCreations[value.id]) : null);
+            this._recordRelationship(info, localCreations[value.id], attrName, annotation ? inferMultiplicity(annotation, localCreations[value.id]) : null, source);
           }
         } else if (value.type === 'List') {
           for (const element of value.elts || []) {
             const created = element.type === 'Call' ? callName(element) : localCreations[element.id];
-            if (created && this.allTypeNames.has(created)) this._recordRelationship(info, created, attrName, '*');
+            if (created && this.allTypeNames.has(created)) this._recordRelationship(info, created, attrName, '*', source);
           }
         }
       }
@@ -1817,9 +1851,9 @@
     const value = call.args[0];
     const created = value.type === 'Call' ? callName(value) : localCreations[value.id];
     if (created && this.allTypeNames.has(created)) {
-      this._recordRelationship(info, created, func.value.attr, '*');
+      this._recordRelationship(info, created, func.value.attr, '*', source);
     } else if (value.type === 'Name' && parameterAnnotations[value.id]) {
-      this._annotationRelationships(info, parameterAnnotations[value.id], func.value.attr, '*');
+      this._annotationRelationships(info, parameterAnnotations[value.id], func.value.attr, '*', source);
     }
   };
 
@@ -1829,6 +1863,10 @@
     for (var i = 0; i < arr.length; i++) structural[arr[i]] = true;
 
     var self = this;
+    function depend(target, source) {
+      _addUnique(classInfo.dependencies, target);
+      if (!classInfo.dependencySources[target]) classInfo.dependencySources[target] = source;
+    }
     for (var i = 0; i < classNode.body.length; i++) {
       var item = classNode.body[i];
       if (item.type !== 'FunctionDef') continue;
@@ -1841,7 +1879,7 @@
         if (a.annotation) {
           for (const paramCls of extractClassesFromAnnotation(a.annotation, self.allTypeNames)) {
             if (structural[paramCls]) continue;
-            _addUnique(classInfo.dependencies, paramCls);
+            depend(paramCls, headerRange(item));
           }
         }
       }
@@ -1849,7 +1887,7 @@
       // Return type → dependency
       if (item.returns) {
         for (const retCls of extractClassesFromAnnotation(item.returns, self.allTypeNames)) {
-          if (!structural[retCls]) _addUnique(classInfo.dependencies, retCls);
+          if (!structural[retCls]) depend(retCls, headerRange(item));
         }
       }
 
@@ -1862,7 +1900,7 @@
               if (targets[k].type === 'Name' && child.value && child.value.type === 'Call') {
                 var callee = callName(child.value);
                 if (callee && self.allTypeNames.has(callee) && !structural[callee]) {
-                  _addUnique(classInfo.dependencies, callee);
+                  depend(callee, sourceRange(child));
                 }
               }
             }
@@ -1879,7 +1917,7 @@
             // raise ClassName (no call, bare name)
             if (excNode.type === 'Name') excClass = excNode.id;
             if (excClass && self.allTypeNames.has(excClass) && !structural[excClass]) {
-              _addUnique(classInfo.dependencies, excClass);
+              depend(excClass, sourceRange(child));
             }
           }
         });
@@ -1895,7 +1933,7 @@
             }
             if (excNode.type === 'Name') excClass = excNode.id;
             if (excClass && self.allTypeNames.has(excClass) && !structural[excClass]) {
-              _addUnique(classInfo.dependencies, excClass);
+              depend(excClass, sourceRange(child));
             }
           }
         });
@@ -1905,7 +1943,9 @@
 
   PythonClassExtractor.prototype.generatePlantUML = function (options) {
     this.constructionMethods = [];
+    this.diagramSources = [];
     if (this.classes.length === 0) return '';
+    const sourceMap = SourceMap.createSourceMap();
     var hideVis = options && options.hideVisibility;
     var hideMult = options && options.hideMultiplicity;
     var lines = ['@startuml', 'layout landscape', 'layout compact'];
@@ -1924,7 +1964,7 @@
       } else {
         decl = 'class ' + cls.name;
       }
-      lines.push(decl + ' {');
+      lines.push(sourceMap.tag(decl + ' {', cls.source));
 
       // Scalar references are represented by arrows. Collection fields stay
       // visible as well, preserving the tutorial's container representation.
@@ -1945,7 +1985,7 @@
         }
         var line = '  ' + prefix + attr.name;
         if (attr.typeHint) line += ': ' + attr.typeHint;
-        lines.push(line);
+        lines.push(sourceMap.tag(line, attr.source));
       }
 
       // @property methods shown as attributes
@@ -1955,7 +1995,7 @@
           var prefix = hideVis ? '' : (m.isPrivate ? '#' : '+');
           var line = '  ' + prefix + m.name;
           if (m.returnType) line += ': ' + m.returnType;
-          lines.push(line);
+          lines.push(sourceMap.tag(line, m.source));
         }
       }
 
@@ -1977,7 +2017,7 @@
         if (m.isConstructor) {
           this.constructionMethods.push({ owner: cls.name, name: m.name, lineIndex: lines.length, isDefault: m.isDefault });
         }
-        lines.push(methodLine);
+        lines.push(sourceMap.tag(methodLine, m.source));
       }
 
       lines.push('}');
@@ -2000,7 +2040,7 @@
         if (base === 'ABC' || base === 'ABCMeta' || base === 'object') continue;
         var baseInfo = this.classMap[base];
         var arrow = baseInfo && _isInterface(baseInfo, this.allTypeNames) ? ' ..|> ' : ' --|> ';
-        lines.push(cls.name + arrow + base);
+        lines.push(sourceMap.tag(cls.name + arrow + base, cls.header));
       }
 
       // Distinct fields keep their own arrows. Collapse reciprocal references
@@ -2016,22 +2056,24 @@
           emittedBidir.add(key);
           const left = !hideMult && reverse[0].multiplicity ? ' "' + reverse[0].multiplicity + '"' : '';
           const right = !hideMult && relation.multiplicity ? '"' + relation.multiplicity + '" ' : '';
-          lines.push(cls.name + left + ' -- ' + right + relation.target);
+          lines.push(sourceMap.tag(cls.name + left + ' -- ' + right + relation.target, relation.source));
           continue;
         }
         const multiplicity = !hideMult && relation.multiplicity ? '"' + relation.multiplicity + '" ' : '';
         const role = sameTarget.length > 1 ? ' : ' + relation.attrName : '';
-        lines.push(cls.name + ' --> ' + multiplicity + relation.target + role);
+        lines.push(sourceMap.tag(cls.name + ' --> ' + multiplicity + relation.target + role, relation.source));
       }
 
       // Dependency
       for (var j = 0; j < cls.dependencies.length; j++) {
-        lines.push(cls.name + ' ..> ' + cls.dependencies[j]);
+        lines.push(sourceMap.tag(cls.name + ' ..> ' + cls.dependencies[j], cls.dependencySources[cls.dependencies[j]]));
       }
     }
 
     lines.push('@enduml');
-    return lines.join('\n');
+    const resolved = sourceMap.resolve(lines.join('\n'));
+    this.diagramSources = resolved.sources;
+    return resolved.text;
   };
 
   PythonClassExtractor.prototype._externalBaseClassNames = function (classes) {
@@ -2082,6 +2124,11 @@
     this._participantIds = new Set(['Main']);
     this._symbolicParticipantIds = new Map();
     this.lines = [];
+    // Message lines are tagged with the statement that makes the call.
+    this.sourceMap = SourceMap.createSourceMap();
+    this.diagramSources = [];
+    this._statementSource = null;
+    this._entrySource = null;
 
     // Scope tracking
     this.varTypes = Object.create(null);
@@ -2381,6 +2428,8 @@
   PythonSequenceDiagramGenerator.prototype.generate = function () {
     var entry = this._collectEntryStmts();
     if (!entry || entry.length === 0) return;
+    var last = entry[entry.length - 1];
+    this._entrySource = SourceMap.range(entry[0].file, entry[0].line, last.file === entry[0].file ? last.endLine : entry[0].endLine);
     this._ensureParticipant('Main', 'Main');
     this._referencedVars = collectNameLoads(entry);
     var lineStart = this.lines.length;
@@ -2394,6 +2443,8 @@
   PythonSequenceDiagramGenerator.prototype.generatePlantUML = function () {
     if (this.lines.length === 0) return '';
     var out = ['@startuml', 'layout landscape'];
+    var sourceMap = this.sourceMap;
+    var classSource = label => this.extractor.classMap[label] ? this.extractor.classMap[label].source : null;
     for (var i = 0; i < this.participants.length; i++) {
       var p = this.participants[i];
       // The synthetic "Main" participant represents the module-level entry
@@ -2402,15 +2453,17 @@
       // instance (": Main") using the `as` form that the renderer treats as
       // a label-starting-with-colon.
       if (p.id === 'Main' && p.label === 'Main') {
-        out.push('participant Main as : Main');
+        out.push(sourceMap.tag('participant Main as : Main', this._entrySource));
       } else {
-        out.push('participant ' + p.id + ': ' + p.label);
+        out.push(sourceMap.tag('participant ' + p.id + ': ' + p.label, classSource(p.label)));
       }
     }
     out.push('');
     for (var i = 0; i < this.lines.length; i++) out.push(this.lines[i]);
     out.push('@enduml');
-    return out.join('\n');
+    var resolved = sourceMap.resolve(out.join('\n'));
+    this.diagramSources = resolved.sources;
+    return resolved.text;
   };
 
   PythonSequenceDiagramGenerator.prototype._collectEntryStmts = function () {
@@ -2658,7 +2711,7 @@
           this._callerClass[id] = clsName;
           if (!this._dataClasses[clsName]) {
             this._ensureParticipant(id, clsName);
-            this.lines.push('create ' + id, caller + ' --> ' + id + ': <<create>>', 'activate ' + id);
+            this.lines.push('create ' + id, this.sourceMap.tag(caller + ' --> ' + id + ': <<create>>', this._statementSource), 'activate ' + id);
             this._maybeFollow(clsName, '__init__', id, depth, inputs);
             this.lines.push('deactivate ' + id);
           }
@@ -2804,7 +2857,11 @@
       // paths or fabricating a merged receiver for their finalizers.
       if (++this._sequenceVisits > 2000) throw new PythonSequenceLimitError();
       const start = this.lines.length;
-      let flow = this._processStmt(stmts[index], caller, depth, preservePaths);
+      const enclosingSource = this._statementSource;
+      this._statementSource = sourceRange(stmts[index]) || enclosingSource;
+      let flow;
+      try { flow = this._processStmt(stmts[index], caller, depth, preservePaths); }
+      finally { this._statementSource = enclosingSource; }
       const lines = this.lines.splice(start);
       if (!flow) { prefix.push(...lines); continue; }
       flow = { ...flow, lines: lines.concat(flow.lines) };
@@ -2973,6 +3030,9 @@
   PythonSequenceDiagramGenerator.prototype._processCall = function (call, caller, depth, returnCaptured, returnBinding) {
     this._returnedObjects.delete(call);
     if (call.inferenceIncomplete) this.diagnostics.add('unsupported', 'Expression is only partly parsed');
+    // Following the callee changes the statement source; this call keeps its own.
+    const source = this._statementSource;
+    const message = line => this.sourceMap.tag(line, source);
     const inputs = this._scanCallInputs(call, caller, depth);
 
     var resolved = inputs.resolved;
@@ -3016,7 +3076,7 @@
       this._ensureParticipant(calleeId, clsName);
       this._callerClass[calleeId] = clsName;
       this.lines.push('create ' + calleeId);
-      this.lines.push(caller + ' --> ' + calleeId + ': <<create>>');
+      this.lines.push(message(caller + ' --> ' + calleeId + ': <<create>>'));
       this.lines.push('activate ' + calleeId);
       this._maybeFollow(clsName, '__init__', calleeId, depth, inputs);
       this.lines.push('deactivate ' + calleeId);
@@ -3026,20 +3086,20 @@
     } else if (method === '__init__' && isSuper) {
       this._ensureParticipant(calleeId, clsName);
       this._callerClass[calleeId] = clsName;
-      this.lines.push(caller + ' -> ' + calleeId + ': ' + label);
+      this.lines.push(message(caller + ' -> ' + calleeId + ': ' + label));
       this.lines.push('activate ' + calleeId);
       this._maybeFollow(clsName, method, calleeId, depth, inputs);
       this.lines.push('deactivate ' + calleeId);
     } else if (calleeId === caller) {
       // Self-call — nested activation bar on same lifeline (UML spec: stacked rectangles)
-      this.lines.push(caller + ' -> ' + caller + ': ' + label);
+      this.lines.push(message(caller + ' -> ' + caller + ': ' + label));
       this.lines.push('activate ' + caller);
       this._maybeFollow(clsName, method, calleeId, depth, inputs);
       this.lines.push('deactivate ' + caller);
     } else {
       this._ensureParticipant(calleeId, clsName);
       this._callerClass[calleeId] = clsName;
-      this.lines.push(caller + ' -> ' + calleeId + ': ' + label);
+      this.lines.push(message(caller + ' -> ' + calleeId + ': ' + label));
       this.lines.push('activate ' + calleeId);
       this._maybeFollow(clsName, method, calleeId, depth, inputs);
       // Return/reply message — only when return value is captured AND method has
@@ -3049,7 +3109,7 @@
         var retType = this._getReturnType(clsName, method);
         if (retType) {
           var reply = returnBinding ? (returnBinding + ': ' + retType) : retType;
-          this.lines.push(calleeId + ' --> ' + caller + ': ' + reply);
+          this.lines.push(message(calleeId + ' --> ' + caller + ': ' + reply));
         }
       }
       this.lines.push('deactivate ' + calleeId);

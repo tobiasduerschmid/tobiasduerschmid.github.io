@@ -7,11 +7,16 @@
  *                            currentEditorLocation); optional
  *     options.records        {"key:<step key>": record} saved challenge records
  *     options.onRecord(key, record)  called whenever the record changes
- *     options.instructorMode answer keys and every panel, never locked
+ *     options.instructorMode the student flow, never locked and never
+ *                            saved; showAnswerKeysWithin switches to the
+ *                            answer keys with every panel
  *     options.readOnly       the questions only, with a pointer to the main
  *                            window (instructions popout); options.onReturn
  *                            adds a button that returns there
  *     options.now()          clock in ms (default Date.now)
+ *   DiagramChallenge.showAnswerKeysWithin(root) -> number
+ *     Instructor mode: shows the answer keys of the challenges inside root
+ *     (the toolbar's Solution button); returns how many it revealed.
  *   DiagramChallenge.destroyWithin(root)
  *     Pauses timers, emits the final record, hides the diagram pane.
  *   DiagramChallenge.renderResults(root, {records})
@@ -169,7 +174,9 @@
     notReached: 'Not reached yet',
     noneAsked: 'None',
     resultsEmpty: 'No saved challenge results in this browser yet.',
-    instructorNote: 'Instructor mode: answer keys and every panel are shown, and this step never locks.',
+    instructorNote: 'Instructor mode: work through this step as a student would. It never locks, and nothing you enter is saved. Press Solution to show the answer keys.',
+    instructorKeysNote: 'Instructor mode: answer keys and every panel are shown, and this step never locks.',
+    instructorKeysShown: 'Answer keys shown.',
     keyMark: '(answer key)',
     expertView: 'Expert’s view: ',
     expertChoice: 'Expert’s choice',
@@ -231,14 +238,26 @@
     }
   }
 
-  /** Rendered Markdown from the host's templates, keyed by field. */
-  function MarkdownLookup(host) {
+  /**
+   * Rendered Markdown from the host's templates, keyed by field. `link`, when
+   * given, runs on every block and labeled paragraph before it is shown (it
+   * turns `path:line` code spans into buttons); legends and labels never get
+   * it, since a control cannot sit inside them.
+   */
+  function MarkdownLookup(host, link) {
     var templates = {};
     host.querySelectorAll('template[data-diagram-challenge-md]').forEach(function (template) {
       templates[template.getAttribute('data-diagram-challenge-md')] = template;
     });
     this._templates = templates;
+    this._link = typeof link === 'function' ? link : function () {};
   }
+
+  /** Apply the link step to rendered content and return it. */
+  MarkdownLookup.prototype.linked = function (content) {
+    if (content) this._link(content);
+    return content;
+  };
 
   MarkdownLookup.prototype.has = function (key) {
     return !!this._templates[key];
@@ -247,7 +266,7 @@
   /** Block content; a plain paragraph of `fallback` text when there is no template. */
   MarkdownLookup.prototype.block = function (key, fallback) {
     var template = this._templates[key];
-    if (template) return template.content.cloneNode(true);
+    if (template) return this.linked(template.content.cloneNode(true));
     var fragment = document.createDocumentFragment();
     if (fallback) fragment.appendChild(h('p', { text: fallback }));
     return fragment;
@@ -396,7 +415,7 @@
     this.runtime = options.runtime || null;
     this.now = typeof options.now === 'function' ? options.now : function () { return Date.now(); };
     this.records = options.records || {};
-    this.md = new MarkdownLookup(host);
+    this.md = new MarkdownLookup(host, this._sourceLinker());
     this.id = 'tdc' + (++sequence);
     this.events = new AbortController();
     this.signal = this.events.signal;
@@ -404,6 +423,7 @@
     this.session = Core.createSession(this.spec, options.instructorMode ? null : this.records[this.key]);
     this.challenge = this.session.challenge;
     this.destroyed = false;
+    this.keysShown = false;
     this._textTimer = null;
     this._budgetTimer = null;
   }
@@ -412,14 +432,17 @@
     this.body.replaceChildren();
     this.live = h('p', { className: C + 'live', role: 'status', 'aria-live': 'polite', 'aria-atomic': 'true' });
     this.body.appendChild(this.live);
-    if (this.options.instructorMode) this._renderAnswerKey();
+    if (this.options.instructorMode && this.keysShown) this._renderAnswerKey();
     else if (this.options.readOnly) this._renderReadOnly();
-    else this._renderInteractive();
+    else {
+      if (this.options.instructorMode) this.body.appendChild(h('p', { className: C + 'notice', text: COPY.instructorNote }));
+      this._renderInteractive();
+    }
   };
 
   Widget.prototype.destroy = function () {
     if (this.destroyed) return;
-    var interactive = !this.options.instructorMode && !this.options.readOnly;
+    var interactive = !this.options.readOnly && !this.keysShown;
     if (interactive) {
       this.session.pause(this.now());
       this._emit();
@@ -490,7 +513,7 @@
   Widget.prototype._labeledText = function (label, key, fallback) {
     if (!this.md.has(key) && !fallback) return null;
     var inline = this.md.inline(key);
-    if (inline) return h('p', { className: C + 'labeled' }, [h('strong', { text: label }), ' ', inline]);
+    if (inline) return h('p', { className: C + 'labeled' }, [h('strong', { text: label }), ' ', this.md.linked(inline)]);
     return h('div', { className: C + 'labeled' }, [h('p', {}, h('strong', { text: label })), this.md.block(key, fallback)]);
   };
 
@@ -796,7 +819,7 @@
   };
 
   function paneDiagram(diagram, label) {
-    return { id: diagram.id, label: diagram.label || label, type: diagram.type, source: diagram.source };
+    return { id: diagram.id, label: diagram.label || label, type: diagram.type, source: diagram.source, links: diagram.links };
   }
 
   /**
@@ -826,10 +849,26 @@
     runtime.showAuthoredDiagrams(diagrams, { layout: 'maximized', open: open });
   };
 
-  Widget.prototype._revealSource = function (path, line) {
+  Widget.prototype._revealSource = function (path, line, column) {
     var runtime = this.runtime;
-    if (runtime && typeof runtime.revealSource === 'function' && runtime.revealSource(path, line)) return;
+    if (runtime && typeof runtime.revealSource === 'function' && runtime.revealSource(path, line, column)) return;
     this.announce(COPY.notInStep(path));
+  };
+
+  /**
+   * The link step for rendered Markdown: a code span that is exactly
+   * `path:line` of a project file becomes a button opening it there. Only
+   * with a runtime that can open files (not in print or a read-only popout).
+   */
+  Widget.prototype._sourceLinker = function () {
+    var self = this;
+    var links = window.TutorialSourceLinks;
+    var runtime = this.runtime;
+    if (!links || this.options.readOnly || !runtime || typeof runtime.hasProjectFile !== 'function') return null;
+    return function (content) {
+      links.linkSourceReferences(content, function (path) { return runtime.hasProjectFile(path); },
+        function (path, line, column) { self._revealSource(path, line, column); });
+    };
   };
 
   // ----- Reply card -----------------------------------------------------------
@@ -1408,10 +1447,26 @@
     });
   };
 
+  /** Instructor mode: redraw the challenge with its answer keys. */
+  Widget.prototype.showAnswerKey = function () {
+    if (!this.options.instructorMode || this.keysShown || this.destroyed) return false;
+    // Leave the student flow: stop its clock and listeners, then redraw.
+    this.session.pause(this.now());
+    clearTimeout(this._textTimer);
+    clearTimeout(this._budgetTimer);
+    this.events.abort();
+    this.events = new AbortController();
+    this.signal = this.events.signal;
+    this.keysShown = true;
+    this.mount();
+    this.live.textContent = COPY.instructorKeysShown;
+    return true;
+  };
+
   Widget.prototype._renderAnswerKey = function () {
     var self = this;
     var challenge = this.challenge;
-    this.body.appendChild(h('p', { className: C + 'notice', text: COPY.instructorNote }));
+    this.body.appendChild(h('p', { className: C + 'notice', text: COPY.instructorKeysNote }));
     var partA = this._section('a', challenge.mode === 'plan-first' ? COPY.plan : COPY.partA).section;
     var attempt = challenge.attempt;
     var requires = [];
@@ -1534,6 +1589,15 @@
     return Promise.resolve();
   }
 
+  function showAnswerKeysWithin(root) {
+    var shown = 0;
+    hostsWithin(root).forEach(function (host) {
+      var widget = widgets.get(host);
+      if (widget && widget.showAnswerKey()) shown += 1;
+    });
+    return shown;
+  }
+
   function destroyWithin(root) {
     hostsWithin(root).forEach(function (host) {
       var widget = widgets.get(host);
@@ -1562,6 +1626,7 @@
   window.DiagramChallenge = {
     initFrom: initFrom,
     destroyWithin: destroyWithin,
+    showAnswerKeysWithin: showAnswerKeysWithin,
     renderResults: renderResults,
   };
 })();

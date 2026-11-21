@@ -398,3 +398,24 @@ test('durations read in minutes and seconds', () => {
   assert.equal(Core.formatDuration(59.6), '1 min 0 s');
   assert.equal(Core.formatDuration(3725), '1 h 2 min');
 });
+
+test('a reply diagram keeps its valid code links and drops malformed ones', () => {
+  const links = [
+    { text: 'Notifications', path: 'services/notifications/consumers.py', line: 25 },
+    { text: 'no line', path: 'a.py' },
+    { text: '', path: 'a.py', line: 3 },
+    { text: 'zero', path: 'a.py', line: 0 },
+    'not a link',
+  ];
+  const challenge = Core.normalizeSpec(spec({
+    reply: { request: 'r', diagrams: [{ id: 'events', type: 'component', source: '@startuml\n@enduml', links }] },
+  }));
+
+  assert.deepEqual(challenge.diagrams[0].links,
+    [{ text: 'Notifications', path: 'services/notifications/consumers.py', line: 25 }]);
+});
+
+test('a diagram without links has an empty list', () => {
+  const challenge = Core.normalizeSpec(spec());
+  assert.deepEqual(challenge.diagrams[0].links, []);
+});

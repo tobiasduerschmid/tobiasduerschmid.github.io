@@ -140,6 +140,7 @@ EVIDENCE = (
     ("services/opc/workflow.py", "self._invoices.on_answer(message.body)"),
     ("services/opc/supplier_task.py", "RETRY_INTERVAL_S = 60"),
     ("services/opc/invoice_task.py", 'if order.status != "processing":'),
+    ("services/opc/invoice_task.py", "self._orders.save_supplier_order(supplier_order)"),
     # data-model.class.uml
     ("services/opc/model/orders.py", "payment: Payment"),
     ("services/opc/model/orders.py", "1 <= len(self.attendees) <= MAX_ATTENDEES"),

@@ -1,0 +1,38 @@
+# Code links for capstone-cancellation.sequence.uml: double-clicking a label in the
+# drawing opens its line. text is the label exactly as the drawing shows it.
+- text: "po: PurchaseOrderService"
+  path: services/opc/api.py
+  line: 12
+- text: "cancellations: CancellationTask"
+  path: services/opc/cancellation_task.py
+  line: 17
+- text: "order: TripOrder"
+  path: services/opc/model/orders.py
+  line: 43
+- text: "gateway[i]: SupplierGateway"
+  path: services/opc/gateways/base.py
+  line: 14
+- text: "refund(captureId, amount)"
+  path: services/opc/payment_task.py
+  line: 28
+- text: refundId
+  path: stubs/bank.py
+  line: 41
+- text: mark_cancelling()
+  path: services/opc/cancellation_task.py
+  line: 40
+- text: cancelling
+  path: services/opc/api.py
+  line: 24
+- text: cancel_supplier_orders()
+  path: services/opc/cancellation_task.py
+  line: 47
+- text: cancel(supplierOrder)
+  path: services/opc/cancellation_task.py
+  line: 51
+- text: cancel(reference)
+  path: services/opc/gateways/lodging.py
+  line: 23
+- text: mark_cancelled()
+  path: services/opc/cancellation_task.py
+  line: 65

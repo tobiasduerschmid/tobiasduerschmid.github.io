@@ -235,6 +235,7 @@ steps:
             1: "Its binding `order.*` matches `order.placed`: `*` stands for exactly one word."
             2: "Its binding `#` matches every key, so it receives every order event."
             3: "`checkout` places the order through `OrderService`; it is a function of the Trip Website, not a queue."
+          explanation: "Three bindings match `order.placed`: `partner-gateway` binds it exactly, `trip-site-notifications` binds `order.*` (`deploy/broker.toml:13`), and `warehouse-etl` binds `#`."
         - id: bindings
           type: single
           question: "Which file decides who receives an order event?"
@@ -276,6 +277,15 @@ steps:
               ex_out -- tn_in : binding order.*
               ex_out -- we_in : binding any key
               @enduml
+            # Code links: double-clicking a label opens the line behind it
+            # (the Code links list under the drawing does the same).
+            links: &demo_event_links
+              - {text: OPC, path: services/opc/orders.py, line: 4}
+              - {text: orders, path: deploy/broker.toml, line: 2}
+              - {text: PartnerGateway, path: deploy/broker.toml, line: 6}
+              - {text: TripSiteNotifications, path: deploy/broker.toml, line: 11}
+              - {text: WarehouseETL, path: deploy/broker.toml, line: 16}
+              - {text: "binding order.*", path: deploy/broker.toml, line: 13}
         evidence:
           - text: "`partner-gateway` binds `order.placed`"
             ref: deploy/broker.toml:8
@@ -419,6 +429,7 @@ steps:
               ex_out -- tn_in : binding order.*
               ex_out -- we_in : binding any key
               @enduml
+            links: *demo_event_links
         evidence:
           - text: "`partner-gateway` binds `order.placed`"
             ref: deploy/broker.toml:8
@@ -554,6 +565,7 @@ steps:
               ex_out -- tn_in : binding order.*
               ex_out -- we_in : binding any key
               @enduml
+            links: *demo_event_links
         evidence:
           - text: "`partner-gateway` binds `order.placed`"
             ref: deploy/broker.toml:8

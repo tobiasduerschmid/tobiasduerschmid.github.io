@@ -30,11 +30,13 @@
       return !recursive && depth < maximum;
     }
 
-    result(syntax, { failed = false } = {}) {
+    /** sources is the per-line provenance of syntax; inserted note lines have none. */
+    result(syntax, { failed = false, sources = [] } = {}) {
       const sequenceWarnings = [...this.items.values()];
-      if (failed) return { sequenceDiagram: '', sequenceWarnings };
+      if (failed) return { sequenceDiagram: '', sequenceDiagramSources: [], sequenceWarnings };
+      let sequenceDiagramSources = syntax ? sources.slice() : [];
       if (sequenceWarnings.length) {
-        if (!syntax) syntax = '@startuml\nparticipant Main as : Main\n@enduml';
+        if (!syntax) { syntax = '@startuml\nparticipant Main as : Main\n@enduml'; sequenceDiagramSources = []; }
         // A note travels with the diagram into tutorials, popouts, and SVG
         // exports. Wrap real lines; the renderer does not interpret \n escapes.
         const text = ['Warning: partial sequence inference.', ...sequenceWarnings.map(item => item.message)].join('\n');
@@ -42,9 +44,11 @@
         const source = syntax.split('\n');
         const index = source.findLastIndex(line => /^participant /.test(line)) + 1;
         source.splice(index, 0, 'note over Main', ...lines, 'end note');
+        while (sequenceDiagramSources.length < index) sequenceDiagramSources.push(null);
+        sequenceDiagramSources.splice(index, 0, ...new Array(lines.length + 2).fill(null));
         syntax = source.join('\n');
       }
-      return { sequenceDiagram: syntax, sequenceWarnings };
+      return { sequenceDiagram: syntax, sequenceDiagramSources, sequenceWarnings };
     }
   }
 

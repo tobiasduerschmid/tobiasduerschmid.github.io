@@ -21,6 +21,9 @@
     ? require('./uml-constant-values.js') : global.UMLConstantValues;
   const ReturnSummaries = typeof module !== 'undefined' && module.exports
     ? require('./uml-return-summaries.js') : global.UMLReturnSummaries;
+  // Hosts that predate source links still get diagrams, without provenance.
+  const SourceMap = (typeof module !== 'undefined' && module.exports ? require('./uml-source-map.js') : global.UMLSourceMap)
+    || { createSourceMap: () => ({ tag: line => line, resolve: text => ({ text, sources: [] }) }), lineLocator: () => () => 0, range: () => null };
   // Constructors need a key that cannot collide with a legal Java method name.
   const JAVA_CONSTRUCTOR = '<init>';
 
@@ -71,6 +74,9 @@
         }
         const ast = syntaxFiles?.has(filename) ? syntaxFiles.get(filename).map(decl => materialize(decl, tokens))
           : parseJava(tokens, errors);
+        const lineOf = SourceMap.lineLocator(source);
+        for (const token of tokens) { token.file = filename; token.line = lineOf(token.start); }
+        annotateDeclarationSources(ast, filename, lineOf);
         parsedFiles[filename] = { ast, tokens };
       } catch (e) {
         errors.push(filename + ': Parse error: ' + e.message);
@@ -99,11 +105,27 @@
 
     return {
       classDiagram: classDiagram,
+      classDiagramSources: extractor.diagramSources,
       constructionMethods: extractor.constructionMethods,
-      ...seqGen.diagnostics.result(sequenceDiagram, { failed: sequenceFailed }),
+      ...seqGen.diagnostics.result(sequenceDiagram, { failed: sequenceFailed, sources: seqGen.diagramSources }),
       sequenceLoopConstants: sequenceFailed ? [] : seqGen.loopConstants.toJSON(),
       errors: errors
     };
+  }
+
+  /** Both parsers give declarations a [start, end) offset range; add its line range. */
+  function annotateDeclarationSources(declarations, filename, lineOf) {
+    for (const decl of declarations || []) {
+      if (decl.range) decl.source = SourceMap.range(filename, lineOf(decl.range[0]), lineOf(Math.max(decl.range[0], decl.range[1] - 1)));
+      // The line that names the declaration, below any annotations.
+      if (decl.nameStart !== undefined) decl.header = SourceMap.range(filename, lineOf(decl.nameStart), lineOf(decl.nameStart));
+      annotateDeclarationSources(decl.members, filename, lineOf);
+      annotateDeclarationSources(decl.fields, filename, lineOf);
+    }
+  }
+
+  function tokenSource(token) {
+    return token && token.file ? SourceMap.range(token.file, token.line, token.line) : null;
   }
 
   function addRecordMembers(decl) {
@@ -574,6 +596,15 @@
       return constants;
     }
 
+    // The [start, end) offsets of the tokens consumed since `first`.
+    function withRange(node, first) {
+      var last = tokens[pos - 1];
+      if (!node || !first || !last) return node;
+      node.range = [first.start, last.start + last.value.length];
+      for (var f = 0; f < (node.fields || []).length; f++) node.fields[f].range = node.range;
+      return node;
+    }
+
     // Parse class/interface/enum members
     function parseMembers(className, isInterface) {
       var members = [];
@@ -581,7 +612,8 @@
 
       while (pos < tokens.length && !at('punct', '}')) {
         try {
-          var member = parseMember(className, isInterface);
+          var first = peek();
+          var member = withRange(parseMember(className, isInterface), first);
           if (member) members.push(member);
         } catch (e) {
           skipToSync();
@@ -618,7 +650,7 @@
         // throws clause
         var throwsTypes = parseThrowsClause();
         var body = at('punct', '{') ? parseBlock() : [];
-        return { kind: 'constructor', name: name, compilerDeclaration: nameToken.compilerMethod, params: params, modifiers: mods, body: body, throwsTypes: throwsTypes };
+        return { kind: 'constructor', name: name, nameStart: nameToken.start, compilerDeclaration: nameToken.compilerMethod, params: params, modifiers: mods, body: body, throwsTypes: throwsTypes };
       }
 
       // Method or field: Type name(...) or Type name;
@@ -661,7 +693,7 @@
           consume('punct', ';'); // abstract or interface method
         }
         return {
-          kind: 'method', name: memberName, compilerDeclaration: nameToken.compilerMethod, returnType: type,
+          kind: 'method', name: memberName, nameStart: nameToken.start, compilerDeclaration: nameToken.compilerMethod, returnType: type,
           params: params, modifiers: mods, body: body, throwsTypes: throwsTypes
         };
       } else {
@@ -731,6 +763,7 @@
       if (at('keyword', 'class') || at('keyword', 'record')) {
         var isRecord = advance().value === 'record';
         if (!peek() || peek().type !== 'ident') return null;
+        var nameStart = peek().start;
         var name = advance().value;
         // Skip type parameters
         if (at('punct', '<')) {
@@ -757,7 +790,7 @@
         }
         var members = parseMembers(name, false);
         return {
-          kind: 'class', name: name, modifiers: mods, recordComponents: isRecord ? components : null,
+          kind: 'class', name: name, nameStart: nameStart, modifiers: mods, recordComponents: isRecord ? components : null,
           extends: ext, implements: impls, members: members
         };
       }
@@ -765,6 +798,7 @@
       if (at('keyword', 'interface')) {
         advance();
         if (!peek() || peek().type !== 'ident') return null;
+        var nameStart = peek().start;
         var name = advance().value;
         // Skip type parameters
         if (at('punct', '<')) {
@@ -782,7 +816,7 @@
         }
         var members = parseMembers(name, true);
         return {
-          kind: 'interface', name: name, modifiers: mods,
+          kind: 'interface', name: name, nameStart: nameStart, modifiers: mods,
           extends: ext, members: members
         };
       }
@@ -790,6 +824,7 @@
       if (at('keyword', 'enum')) {
         advance();
         if (!peek() || peek().type !== 'ident') return null;
+        var nameStart = peek().start;
         var name = advance().value;
         var impls = [];
         if (consume('keyword', 'implements')) {
@@ -802,13 +837,14 @@
         var members = [];
         while (pos < tokens.length && !at('punct', '}')) {
           try {
-            var member = parseMember(name, false);
+            var first = peek();
+            var member = withRange(parseMember(name, false), first);
             if (member) members.push(member);
           } catch (e) { skipToSync(); }
         }
         consume('punct', '}');
         return {
-          kind: 'enum', name: name, modifiers: mods,
+          kind: 'enum', name: name, nameStart: nameStart, modifiers: mods,
           implements: impls, constants: constants, members: members
         };
       }
@@ -820,10 +856,11 @@
     skipPreamble();
     while (pos < tokens.length) {
       try {
+        var first = peek();
         var mods = parseModifiers();
         if (pos >= tokens.length) break;
         if (at('keyword', 'class') || at('keyword', 'interface') || at('keyword', 'enum') || at('keyword', 'record')) {
-          var decl = parseTypeDeclaration(mods);
+          var decl = withRange(parseTypeDeclaration(mods), first);
           if (decl) declarations.push(decl);
         } else {
           // Skip unexpected token
@@ -934,10 +971,11 @@
     if (arr.indexOf(item) === -1) arr.push(item);
   }
 
-  function _recordRelationship(info, role, target) {
+  /** source is the range of the code that first retains the reference. */
+  function _recordRelationship(info, role, target, source) {
     // Storage and allocation establish a reference, not UML whole-part semantics.
     if (!info.relationships.some(edge => edge.role === role && edge.target === target)) {
-      info.relationships.push({ role: role, target: target, multiplicity: '0..1' });
+      info.relationships.push({ role: role, target: target, multiplicity: '0..1', source: source || null });
     }
     info._relAttrs.add(role);
   }
@@ -958,6 +996,9 @@
     this.dependencies = [];   // [className]
     this.relationships = []; // Distinct stored roles must not share multiplicity metadata.
     this._relAttrs    = new Set();
+    this.source       = opts.source || null; // range of the type declaration, annotations included
+    this.header       = opts.header || null; // the line that names it
+    this.dependencySources = new Map();      // dependency target → declaring method's name line
   }
 
   /* ===================================================================
@@ -1004,7 +1045,7 @@
     var bases = decl.extends ? [_simpleTypeName(decl.extends)] : [];
     var impls = (decl.implements || []).map(_simpleTypeName);
 
-    var info = new ClassInfo(name, { isAbstract: isAbstract, bases: bases, implements: impls });
+    var info = new ClassInfo(name, { isAbstract: isAbstract, bases: bases, implements: impls, source: decl.source, header: decl.header });
     var methods = Object.create(null), aTypes = Object.create(null), pTypes = Object.create(null), mParams = Object.create(null);
 
     for (var i = 0; i < decl.members.length; i++) {
@@ -1041,12 +1082,12 @@
 
     info.attributes.push({
       name: field.name, type: _simpleTypeName(field.type), visibility: vis,
-      isStatic: isStatic, isFinal: isFinal, isAbstract: isAbstract
+      isStatic: isStatic, isFinal: isFinal, isAbstract: isAbstract, source: field.source || null
     });
 
     // Field initializer: x = new ClassName() → stored reference
     if (field.initHasNew && field.initNewType && this.allTypeNames.has(field.initNewType)) {
-      _recordRelationship(info, field.name, field.initNewType);
+      _recordRelationship(info, field.name, field.initNewType, field.source);
       aTypes[field.name] = field.initNewType;
       return;
     }
@@ -1073,7 +1114,7 @@
       name: info.name, params: params.map(function (p) {
         return { name: p.name, type: _simpleTypeName(p.type) };
       }),
-      returnType: '', visibility: vis, isConstructor: true, sourceBody: member.body, sourceParams: params, compilerDeclaration: member.compilerDeclaration,
+      returnType: '', visibility: vis, isConstructor: true, source: member.source || null, header: member.header || null, sourceBody: member.body, sourceParams: params, compilerDeclaration: member.compilerDeclaration,
       isDefault: params.length === 0 && Array.isArray(member.body) && member.body.length === 0
     });
 
@@ -1102,7 +1143,7 @@
               bodyTokens[rhsStart + 2] && bodyTokens[rhsStart + 2].value !== '[') {
             var typeName = bodyTokens[rhsStart + 1].value;
             if (this.allTypeNames.has(typeName)) {
-              _recordRelationship(info, fieldName, typeName);
+              _recordRelationship(info, fieldName, typeName, tokenSource(bodyTokens[i]));
               aTypes[fieldName] = typeName;
             }
             // this.x = new ArrayList<>() — container created internally
@@ -1113,7 +1154,7 @@
           else if (bodyTokens[rhsStart].type === 'ident') {
             var paramCls = paramTypeMap[bodyTokens[rhsStart].value];
             if (paramCls) {
-              _recordRelationship(info, fieldName, paramCls);
+              _recordRelationship(info, fieldName, paramCls, tokenSource(bodyTokens[i]));
               aTypes[fieldName] = paramCls;
             }
           }
@@ -1134,7 +1175,7 @@
           if (bodyTokens[j].value === 'new' && j + 1 < bodyTokens.length &&
               bodyTokens[j + 1].type === 'ident' && this.allTypeNames.has(bodyTokens[j + 1].value) &&
               bodyTokens[j + 2] && bodyTokens[j + 2].value !== '[') {
-            _recordRelationship(info, bodyTokens[i + 2].value, bodyTokens[j + 1].value);
+            _recordRelationship(info, bodyTokens[i + 2].value, bodyTokens[j + 1].value, tokenSource(bodyTokens[i]));
             break;
           }
         }
@@ -1163,7 +1204,7 @@
       params: params.map(function (p) {
         return { name: p.name, type: _simpleTypeName(p.type) };
       }),
-      returnType: _simpleTypeName(member.returnType),
+      returnType: _simpleTypeName(member.returnType), source: member.source || null, header: member.header || null,
       sourceBody: member.body, sourceParams: params, compilerDeclaration: member.compilerDeclaration,
       visibility: vis, isStatic: isStatic, isAbstract: isAbstract,
       throwsTypes: (member.throwsTypes || []).map(_simpleTypeName)
@@ -1191,7 +1232,7 @@
           if (bodyTokens[j].value === 'new' && j + 1 < bodyTokens.length &&
               bodyTokens[j + 1].type === 'ident' && this.allTypeNames.has(bodyTokens[j + 1].value) &&
               bodyTokens[j + 2] && bodyTokens[j + 2].value !== '[') {
-            _recordRelationship(info, bodyTokens[i + 2].value, bodyTokens[j + 1].value);
+            _recordRelationship(info, bodyTokens[i + 2].value, bodyTokens[j + 1].value, tokenSource(bodyTokens[i]));
             break;
           }
         }
@@ -1205,7 +1246,7 @@
     var name = decl.name;
     var ext = (decl.extends || []).map(_simpleTypeName);
 
-    var info = new ClassInfo(name, { isInterface: true, implements: ext });
+    var info = new ClassInfo(name, { isInterface: true, implements: ext, source: decl.source, header: decl.header });
     var methods = Object.create(null), pTypes = Object.create(null), mParamsMap = Object.create(null);
 
     for (var i = 0; i < decl.members.length; i++) {
@@ -1218,7 +1259,7 @@
           params: params.map(function (p) {
             return { name: p.name, type: _simpleTypeName(p.type) };
           }),
-          returnType: _simpleTypeName(member.returnType),
+          returnType: _simpleTypeName(member.returnType), source: member.source || null, header: member.header || null,
           sourceBody: member.body, sourceParams: params, compilerDeclaration: member.compilerDeclaration,
           isStatic: member.modifiers.includes('static'),
           isAbstract: !member.modifiers.some(m => ['default', 'static', 'private'].includes(m)),
@@ -1229,7 +1270,7 @@
       } else if (member.kind === 'field') {
         info.attributes.push({
           name: member.name, type: _simpleTypeName(member.type),
-          visibility: '+', isStatic: true, isFinal: true
+          visibility: '+', isStatic: true, isFinal: true, source: member.source || null
         });
       }
     }
@@ -1246,7 +1287,7 @@
   JavaClassExtractor.prototype._visitEnum = function (decl) {
     var name = decl.name;
     var impls = (decl.implements || []).map(_simpleTypeName);
-    var info = new ClassInfo(name, { isEnum: true, implements: impls });
+    var info = new ClassInfo(name, { isEnum: true, implements: impls, source: decl.source, header: decl.header });
 
     for (var i = 0; i < (decl.constants || []).length; i++) {
       info.attributes.push({ name: decl.constants[i], type: '', visibility: '+' });
@@ -1282,7 +1323,7 @@
       if (existing.length) {
         for (const edge of existing) edge.multiplicity = _inferMultiplicity(attr.type, this.allTypeNames);
       } else if (target) {
-        _recordRelationship(info, attr.name, target);
+        _recordRelationship(info, attr.name, target, attr.source);
         info.relationships[info.relationships.length - 1].multiplicity = _inferMultiplicity(attr.type, this.allTypeNames);
       }
     }
@@ -1294,12 +1335,14 @@
       var retResolved = _extractBaseTypeName(method.returnType, this.allTypeNames);
       if (retResolved && retResolved !== info.name && !structural.has(retResolved)) {
         _addUnique(info.dependencies, retResolved);
+        if (!info.dependencySources.has(retResolved)) info.dependencySources.set(retResolved, method.header);
         structural.add(retResolved);
       }
       for (var p = 0; p < method.params.length; p++) {
         var paramResolved = _extractBaseTypeName(method.params[p].type, this.allTypeNames);
         if (paramResolved && paramResolved !== info.name && !structural.has(paramResolved)) {
           _addUnique(info.dependencies, paramResolved);
+        if (!info.dependencySources.has(paramResolved)) info.dependencySources.set(paramResolved, method.header);
           structural.add(paramResolved);
         }
       }
@@ -1309,6 +1352,7 @@
         var throwsResolved = _extractBaseTypeName(throwsList[t], this.allTypeNames);
         if (throwsResolved && throwsResolved !== info.name && !structural.has(throwsResolved)) {
           _addUnique(info.dependencies, throwsResolved);
+        if (!info.dependencySources.has(throwsResolved)) info.dependencySources.set(throwsResolved, method.header);
           structural.add(throwsResolved);
         }
       }
@@ -1321,7 +1365,9 @@
 
   JavaClassExtractor.prototype.generatePlantUML = function () {
     this.constructionMethods = [];
+    this.diagramSources = [];
     if (this.classMap.size === 0) return '';
+    const sourceMap = SourceMap.createSourceMap();
 
     var lines = ['@startuml', 'layout landscape', 'layout compact'];
     var sorted = this._topologicalSort();
@@ -1334,7 +1380,7 @@
       else if (info.isInterface) keyword = 'interface';
       else if (info.isAbstract)  keyword = 'abstract class';
 
-      lines.push(keyword + ' ' + info.name + ' {');
+      lines.push(sourceMap.tag(keyword + ' ' + info.name + ' {', info.source));
 
       // Attributes (filter out those promoted to relationship arrows,
       // but keep collection-typed fields since their generic type is informative)
@@ -1346,7 +1392,7 @@
         if (attr.isAbstract) aPrefix += '{abstract} ';
         aPrefix += attr.visibility || '+';
         var typeStr = attr.type ? ': ' + attr.type : '';
-        lines.push('  ' + aPrefix + attr.name + typeStr);
+        lines.push(sourceMap.tag('  ' + aPrefix + attr.name + typeStr, attr.source));
       }
 
       // Methods
@@ -1364,7 +1410,7 @@
         if (method.isConstructor) {
           this.constructionMethods.push({ owner: info.name, name: method.name, lineIndex: lines.length, isDefault: method.isDefault });
         }
-        lines.push('  ' + mPrefix + method.name + '(' + paramStr + ')' + retStr);
+        lines.push(sourceMap.tag('  ' + mPrefix + method.name + '(' + paramStr + ')' + retStr, method.source));
       }
 
       lines.push('}');
@@ -1375,27 +1421,29 @@
       var cls = sorted[r];
       for (var b = 0; b < cls.bases.length; b++) {
         if (this.allTypeNames.has(cls.bases[b])) {
-          lines.push(cls.name + ' --|> ' + cls.bases[b]);
+          lines.push(sourceMap.tag(cls.name + ' --|> ' + cls.bases[b], cls.header));
         }
       }
       for (var ii = 0; ii < cls.implements.length; ii++) {
         if (this.allTypeNames.has(cls.implements[ii])) {
           var arrow = cls.isInterface ? '--|>' : '..|>';
-          lines.push(cls.name + ' ' + arrow + ' ' + cls.implements[ii]);
+          lines.push(sourceMap.tag(cls.name + ' ' + arrow + ' ' + cls.implements[ii], cls.header));
         }
       }
       for (const edge of cls.relationships) {
         const repeated = cls.relationships.filter(other => other.target === edge.target).length > 1;
-        lines.push(cls.name + ' --> "' + edge.multiplicity + '" ' +
-          edge.target + (repeated ? ' : ' + edge.role : ''));
+        lines.push(sourceMap.tag(cls.name + ' --> "' + edge.multiplicity + '" ' +
+          edge.target + (repeated ? ' : ' + edge.role : ''), edge.source));
       }
       for (var d = 0; d < cls.dependencies.length; d++) {
-        lines.push(cls.name + ' ..> ' + cls.dependencies[d]);
+        lines.push(sourceMap.tag(cls.name + ' ..> ' + cls.dependencies[d], cls.dependencySources.get(cls.dependencies[d])));
       }
     }
 
     lines.push('@enduml');
-    return lines.join('\n');
+    const resolved = sourceMap.resolve(lines.join('\n'));
+    this.diagramSources = resolved.sources;
+    return resolved.text;
   };
 
   JavaClassExtractor.prototype._topologicalSort = function () {
@@ -1474,6 +1522,10 @@
       }
     }
     this.lines           = [];
+    // Message lines are tagged with the line of the call's name or `new` token.
+    this.sourceMap       = SourceMap.createSourceMap();
+    this.diagramSources  = [];
+    this._mainSource     = null;
     this.varTypes        = Object.create(null);
     this._receiverIds     = Object.create(null);
     this._callerClass    = Object.create(null);
@@ -1504,6 +1556,7 @@
     if (!mainBody || mainBody.body.length === 0) return;
 
     this._callerClass.Main = mainBody.owner;
+    this._mainSource = mainBody.source;
     this._ensureParticipant('Main', mainBody.owner);
     var lineStart = this.lines.length;
     this._processTokenBlock(mainBody.body, 'Main', 0);
@@ -1519,15 +1572,18 @@
     for (var i = 0; i < this.participants.length; i++) {
       var p = this.participants[i];
       if (p.id === 'Main') {
-        out.push('participant Main as : ' + p.label);
+        out.push(this.sourceMap.tag('participant Main as : ' + p.label, this._mainSource));
       } else {
-        out.push('participant ' + p.id + ': ' + p.label);
+        const type = this.classMap.get(p.label);
+        out.push(this.sourceMap.tag('participant ' + p.id + ': ' + p.label, type && type.source));
       }
     }
     out.push('');
     out.push.apply(out, this.lines);
     out.push('@enduml');
-    return out.join('\n');
+    const resolved = this.sourceMap.resolve(out.join('\n'));
+    this.diagramSources = resolved.sources;
+    return resolved.text;
   };
 
   /* ── Find main method ──────────────────────────────────────── */
@@ -1537,7 +1593,7 @@
       const entry = info.methods.find(method => method.name === 'main' && method.isStatic &&
         method.returnType === 'void' && method.params.length === 1 &&
         /^(?:java\.lang\.)?String(?:\[\]|\.\.\.)$/.test(method.params[0].type));
-      if (entry) return {owner, body: entry.sourceBody};
+      if (entry) return {owner, body: entry.sourceBody, source: entry.source};
     }
     return null;
   };
@@ -1712,6 +1768,7 @@
       i++;
       // new ClassName(...)
       if (i < tokens.length && tokens[i].value === 'new') {
+        const allocation = tokens[i];
         i++;
         if (i < tokens.length && tokens[i].type === 'ident') {
           var clsName = tokens[i].value;
@@ -1743,7 +1800,7 @@
               this._callerClass[instance] = clsName;
               this._receiverIds[varName] = instance;
               this.lines.push('create ' + instance);
-              this.lines.push(caller + ' --> ' + instance + ': <<create>>');
+              this.lines.push(this.sourceMap.tag(caller + ' --> ' + instance + ': <<create>>', tokenSource(allocation)));
               this.lines.push('activate ' + instance);
               const bindings = this._callArguments.get(tokens[argumentOpen]) || [];
               const selected = this._selectInvocation(clsName, JAVA_CONSTRUCTOR, argTokens?.tokens || [], constructorBinding);
@@ -2213,7 +2270,7 @@
           this._callerClass[calleeId] = clsName;
           this._constructedObjects.set(tokens[i], { type: clsName, id: calleeId });
           this.lines.push('create ' + calleeId);
-          this.lines.push(caller + ' --> ' + calleeId + ': <<create>>');
+          this.lines.push(this.sourceMap.tag(caller + ' --> ' + calleeId + ': <<create>>', tokenSource(tokens[i])));
           this.lines.push('activate ' + calleeId);
           const selected = this._selectInvocation(clsName, JAVA_CONSTRUCTOR, this._extractParenContents(tokens, j).tokens, tokens[i + 1].compilerMethod);
           this._maybeFollow(clsName, JAVA_CONSTRUCTOR, calleeId, depth, this._callArguments.get(tokens[j]), selected);
@@ -2310,21 +2367,23 @@
     const selected = this._selectInvocation(clsName, method, argResult?.tokens || [], compilerMethod);
     const returnType = this.qualifiedTypeIds.get(compilerMethod?.type) || (compilerMethod?.type && _simpleTypeName(compilerMethod.type))
       || selected?.method.returnType || this._getReturnType(clsName, method);
+    const source = tokenSource(tokens[parenIdx - 1] || tokens[parenIdx]);
+    const message = line => this.sourceMap.tag(line, source);
 
     if (calleeId === caller) {
       // Self-call — nested activation on same lifeline (UML spec: stacked rectangles)
-      this.lines.push(caller + ' -> ' + caller + ': ' + label);
+      this.lines.push(message(caller + ' -> ' + caller + ': ' + label));
       this.lines.push('activate ' + caller);
       this._maybeFollow(clsName, method, calleeId, depth, bindings, selected);
       this.lines.push('deactivate ' + caller);
     } else {
       this._ensureParticipant(calleeId, clsName);
       this._callerClass[calleeId] = clsName;
-      this.lines.push(caller + ' -> ' + calleeId + ': ' + label);
+      this.lines.push(message(caller + ' -> ' + calleeId + ': ' + label));
       // Activation bar (JIVE: Jayaraman et al. 2016, CPP2XMI: Korshunova et al. 2006)
       this.lines.push('activate ' + calleeId);
       this._maybeFollow(clsName, method, calleeId, depth, bindings, selected);
-      if (returnType && returnType !== 'void') this.lines.push(calleeId + ' --> ' + caller + ': ' + returnType);
+      if (returnType && returnType !== 'void') this.lines.push(message(calleeId + ' --> ' + caller + ': ' + returnType));
       this.lines.push('deactivate ' + calleeId);
     }
     if (!this.allTypeNames.has(returnType)) return null;

@@ -29,6 +29,7 @@ steps:
           - id: events
             type: component
             source: *d_event_consumers
+            links: *l_event_consumers
 """
 SOURCES = {
     "README.md": "# Headliner\n\nFestival trips.\n",
@@ -45,6 +46,12 @@ CACHES = {
     ".pytest_cache/README.md": "cache",
 }
 DIAGRAM = "@startuml\ncomponent OPC <<BackendService>>\n@enduml\n"
+# Labels a careless emitter would mangle: YAML punctuation, a quote, a colon.
+LINKS = [
+    {"text": "OPC", "path": "services/opc/intake.py", "line": 1},
+    {"text": "+place(order)", "path": "services/opc/intake.py", "line": 2},
+    {"text": 'po: Say "hi" #1', "path": "deploy/broker.toml", "line": 3},
+]
 
 
 @pytest.fixture
@@ -56,6 +63,7 @@ def project(tmp_path):
     diagrams = tmp_path / "diagrams"
     diagrams.mkdir()
     (diagrams / "event-consumers.component.uml").write_text(DIAGRAM)
+    (diagrams / "event-consumers.links.yml").write_text(yaml.safe_dump(LINKS, sort_keys=False))
     tutorial = tmp_path / "tutorial.yml"
     tutorial.write_text(HEAD + "# BEGIN GENERATED\n# END GENERATED\n" + TAIL)
     return {"tutorial": tutorial, "headliner": headliner, "diagrams": diagrams}
@@ -112,6 +120,46 @@ def test_each_diagram_is_an_anchor_that_challenge_blocks_reference(project):
 
     assert data["x-diagrams"] == {"event_consumers": DIAGRAM.rstrip("\n")}
     assert diagram["source"] == DIAGRAM.rstrip("\n")
+
+
+def test_each_diagram_s_code_links_are_an_anchor_that_challenge_blocks_reference(project):
+    run(project, "--write")
+
+    data = written(project)
+    [diagram] = data["steps"][0]["diagram_challenge"]["reply"]["diagrams"]
+
+    assert data["x-diagram-links"] == {"event_consumers": LINKS}
+    assert diagram["links"] == LINKS
+
+
+def test_a_diagram_without_a_links_sidecar_gets_no_links_anchor(project):
+    (project["diagrams"] / "outages.component.uml").write_text(DIAGRAM)
+
+    run(project, "--write")
+
+    assert set(written(project)["x-diagram-links"]) == {"event_consumers"}
+
+
+def test_check_mode_fails_after_a_links_edit(project):
+    run(project, "--write")
+    edited = [dict(LINKS[0], line=2)] + LINKS[1:]
+    (project["diagrams"] / "event-consumers.links.yml").write_text(yaml.safe_dump(edited))
+
+    assert run(project, "--check") == 1
+
+
+@pytest.mark.parametrize("bad", [
+    {"text": "OPC", "path": "services/opc/intake.py"},
+    {"text": "OPC", "path": "services/opc/intake.py", "line": "2"},
+    {"text": "OPC", "path": "services/opc/intake.py", "line": 0},
+    {"text": "", "path": "services/opc/intake.py", "line": 1},
+    {"text": "OPC", "path": "services/opc/intake.py", "line": 1, "column": 4},
+])
+def test_a_malformed_link_is_refused_with_its_file_name(project, bad):
+    (project["diagrams"] / "event-consumers.links.yml").write_text(yaml.safe_dump([bad]))
+
+    with pytest.raises(ValueError, match="event-consumers.links.yml"):
+        run(project, "--write")
 
 
 def test_hand_written_yaml_outside_the_markers_is_untouched(project):

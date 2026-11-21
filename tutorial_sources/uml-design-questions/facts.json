@@ -14,6 +14,15 @@
     ],
     "external_forwarders": [
       "AffiliateRelay"
+    ],
+    "rename_breaks": [
+      "AffiliateRelay",
+      "Notifications",
+      "SupportConsole"
+    ],
+    "additive_breaks": [],
+    "trip.confirmed.v2": [
+      "WarehouseETL"
     ]
   },
   "gateway_contracts": {
@@ -66,7 +75,14 @@
     "missing": [
       "refund",
       "cancel confirmed suppliers"
-    ]
+    ],
+    "refunds": 0,
+    "fan_can_cancel": false,
+    "confirmed_after_failure": [
+      "supplier.lodging.confirmed",
+      "supplier.shuttle.confirmed"
+    ],
+    "card_check_amount": 0
   },
   "data_model": {
     "allowed": [
@@ -80,6 +96,12 @@
     "lodging": "finish_afterwards",
     "broker": "cannot_submit",
     "mail_relay": "emails_wait"
+  },
+  "presale_path": {
+    "box_office": "cannot_submit",
+    "shuttle": "finish_afterwards",
+    "experiences": "unaffected",
+    "lodging_charged_while_waiting": true
   },
   "checkout_latency": {
     "external_calls": 9,
@@ -126,7 +148,16 @@
         "opc.PurchaseOrderService.submit",
         200
       ]
-    ]
+    ],
+    "quote_seconds": 5.5,
+    "check_seconds": 2.25,
+    "variants": {
+      "bulk_cached_card": 2.97,
+      "bulk_parallel": 1.92,
+      "parallel_only": 7.02,
+      "bulk_no_checks": 1.02
+    },
+    "rejected_experience_is_charged_and_failed": true
   },
   "capstone": {
     "website_reads_order_db": true,
@@ -136,7 +167,14 @@
     ],
     "refund_before_cancel": true,
     "glampingco_48h_stays_booked": true,
-    "service_fee": 0.12
+    "service_fee": 0.12,
+    "my_trips_reads_stored_payment": true,
+    "stuck_cancellation": {
+      "refunds": 1,
+      "tent": "confirmed",
+      "trip_cancelled_published": false,
+      "support_follow_ups": 0
+    }
   },
   "diagrams": {
     "event_consumers": {
@@ -872,6 +910,7 @@
     "self._invoices.on_answer(message.body)": "services/opc/workflow.py:29",
     "RETRY_INTERVAL_S = 60": "services/opc/supplier_task.py:10",
     "if order.status != \"processing\":": "services/opc/invoice_task.py:33",
+    "self._orders.save_supplier_order(supplier_order)": "services/opc/invoice_task.py:27",
     "payment: Payment": "services/opc/model/orders.py:50",
     "1 <= len(self.attendees) <= MAX_ATTENDEES": "services/opc/model/orders.py:57",
     "if not self.items:": "services/opc/model/orders.py:59",

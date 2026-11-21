@@ -225,7 +225,8 @@
         language !== 'js' || global.UMLTypeScriptLibs || loadScript(assetURL('vendor/typescript/5.9.3/lib-map.js')),
         global.UMLSequenceDiagnostics || loadScript(assetURL('uml-sequence-diagnostics.js')),
         global.UMLConstantValues || loadScript(assetURL('uml-constant-values.js')),
-        global.UMLReturnSummaries || loadScript(assetURL('uml-return-summaries.js'))
+        global.UMLReturnSummaries || loadScript(assetURL('uml-return-summaries.js')),
+        global.UMLSourceMap || loadScript(assetURL('uml-source-map.js'))
       ]);
       if (!global[analyzer.name]) await loadScript(settings[language + 'AnalyzerPath'] || assetURL(analyzer.file));
       if (disposed) throw supersededError();

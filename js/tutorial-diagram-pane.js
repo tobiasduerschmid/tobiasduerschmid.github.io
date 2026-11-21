@@ -5,7 +5,7 @@
  * Adds a Diagram view that shows authored ArchUML diagrams beside the code
  * editor, which stays visible:
  *
- *   showAuthoredDiagrams([{id, label, type, source}], {layout, open})
+ *   showAuthoredDiagrams([{id, label, type, source, links}], {layout, open})
  *       render and switch to the Diagram view. layout 'split' (default) keeps
  *       the editor beside the pane; 'maximized' gives the pane the whole
  *       workspace until the learner needs code again (a file opens, Run,
@@ -20,6 +20,34 @@
  * The Editor view restores the workspace as the tutorial built it.
  *   hideAuthoredDiagrams()                             hide, clear, remove view
  *   setDiagramPaneAvailable(available, reason?)        enable or explain why not
+ *   authoredDiagramSearchEntries()                     the loaded diagrams, for
+ *                                                      project search
+ *   revealDiagramText(diagramId, query, options)       show a search hit
+ *   clearDiagramTextHighlights()                       remove the hit marks
+ *
+ * Code links: a diagram's optional links [{text, path, line}] turn every
+ * label whose text equals a link's text into a linked label (underlined,
+ * pointer cursor). Double-clicking it calls revealSource(path, line), which
+ * returns a maximized diagram to split view beside the code; a single click
+ * on it never zooms. The drawing is hidden from assistive technology, so a
+ * "Code links" disclosure under it offers one button per link that does the
+ * same.
+ *
+ * Find in diagram: Ctrl/Cmd+F with focus in the pane (or in the workspace
+ * outside the code editor and text fields while the Diagram view is shown)
+ * opens a find bar for the shown drawing. Every matching label is framed,
+ * the current one more strongly; Enter and Shift+Enter (or Next/Previous
+ * match) move between them at reading size, and Escape closes the bar and
+ * returns focus. Ctrl/Cmd+Shift+F stays project search.
+ *
+ * Pinch zoom: wheel events with ctrlKey over the drawing (trackpad pinches,
+ * Ctrl/Cmd+wheel) zoom continuously around the pointer, between Fit and the
+ * largest zoom step, instead of zooming the page.
+ *
+ * Search hits: revealDiagramText shows the Diagram view on that diagram's
+ * tab, frames every label that matches the query (an outline and a fill
+ * behind the text), and shows the first at reading size. The marks go when
+ * the search changes or closes, or another diagram is drawn.
  *
  * One pane element is created on first use as a third flex child of
  * .tvm-editor-body, after a keyboard-resizable divider. Several diagrams show
@@ -64,6 +92,13 @@
   var ZOOM_LEVELS = [0.5, 0.75, 1, 1.25, 1.5, 2, 2.5, 3];
   var READING_ZOOM = 1;
   var FIT_HINT = 'Click a part of the drawing to read it at full size, or use the + button.';
+  var FIT_HINT_WITH_LINKS = 'Click a part of the drawing to read it at full size; double-click an underlined name to open its code.';
+  var LINK_CLASS = 'tutorial-diagram-pane__link';
+  var HIT_CLASS = 'tutorial-diagram-pane__text-hit';
+  var HIT_BOX_CLASS = 'tutorial-diagram-pane__hit-box';
+  var HIT_BOX_PADDING = 3;
+  var CURRENT_HIT_CLASS = 'tutorial-diagram-pane__hit-box--current';
+  var SVG_NS = 'http://www.w3.org/2000/svg';
   var paneCount = 0;
 
   function paneMarkup(id) {
@@ -79,11 +114,35 @@
           '<button type="button" class="tutorial-diagram-pane__tool" data-diagram-fullscreen aria-pressed="false">Full screen</button>' +
         '</div>' +
       '</div>' +
+      '<div class="tutorial-diagram-pane__find" role="search" aria-label="Find in diagram" hidden>' +
+        '<label class="tutorial-diagram-pane__find-label" for="' + id + '-find">Find in diagram</label>' +
+        '<input class="tutorial-diagram-pane__find-input" type="search" id="' + id + '-find" autocomplete="off" spellcheck="false" enterkeyhint="search">' +
+        '<label class="tutorial-diagram-pane__find-option"><input type="checkbox" data-diagram-find-case> Match case</label>' +
+        '<button type="button" class="tutorial-diagram-pane__tool" data-diagram-find="previous">Previous match</button>' +
+        '<button type="button" class="tutorial-diagram-pane__tool" data-diagram-find="next">Next match</button>' +
+        '<button type="button" class="tutorial-diagram-pane__tool" data-diagram-find="close">Close find</button>' +
+        '<p class="tutorial-diagram-pane__find-status" role="status"></p>' +
+      '</div>' +
       '<p class="tutorial-diagram-pane__hint">' + FIT_HINT + '</p>' +
       '<p class="tutorial-diagram-pane__status" role="status"></p>' +
       '<div class="tutorial-diagram-pane__panel" id="' + id + '-panel">' +
-        '<div class="tutorial-diagram-pane__canvas" tabindex="0" role="region" aria-label="No diagram yet"></div>' +
+        '<div class="tutorial-diagram-pane__canvas" tabindex="0" role="region" aria-label="No diagram yet" aria-keyshortcuts="Control+F Meta+F"></div>' +
+        '<details class="tutorial-diagram-pane__links" hidden>' +
+          '<summary class="tutorial-diagram-pane__links-summary">Code links</summary>' +
+          '<p class="tutorial-diagram-pane__links-hint">Each button opens the code behind a name in the drawing, as a double-click on the underlined name does.</p>' +
+          '<ul class="tutorial-diagram-pane__links-list"></ul>' +
+        '</details>' +
       '</div>';
+  }
+
+  /** Valid code links of a diagram: {text, path, line} with a 1-based line. */
+  function normalizeLinks(links) {
+    return (Array.isArray(links) ? links : []).filter(function (link) {
+      return link && typeof link.text === 'string' && link.text.trim() &&
+        typeof link.path === 'string' && link.path && Number(link.line) >= 1;
+    }).map(function (link) {
+      return { text: link.text.trim(), path: link.path, line: Math.floor(Number(link.line)) };
+    });
   }
 
   function normalizeDiagrams(diagrams) {
@@ -95,6 +154,7 @@
         label: diagram.label || 'Diagram ' + (index + 1),
         type: String(diagram.type || 'class').trim().toLowerCase(),
         source: diagram.source,
+        links: normalizeLinks(diagram.links),
       };
     });
   }
@@ -230,6 +290,13 @@
     if (focusAfter) focusAfter.focus({ preventScroll: true });
   }
 
+  /** Leave Fit if needed and size the drawing at a zoom level. */
+  function setZoom(state, level, focusAfter) {
+    if (isFitted(state)) toggleFitView(state, focusAfter);
+    state.zoom = level;
+    state.canvas.style.setProperty('--tutorial-diagram-zoom', String(level));
+  }
+
   /**
    * Show the drawing at a zoom level with a point (shares of its size; by
    * default the middle of the current view) in the middle of the canvas.
@@ -238,11 +305,87 @@
     var svg = drawingOf(state);
     if (!svg) return;
     var center = point || visibleCenter(state, svg);
-    if (isFitted(state)) toggleFitView(state, focusAfter);
-    state.zoom = level;
-    state.canvas.style.setProperty('--tutorial-diagram-zoom', String(level));
+    setZoom(state, level, focusAfter);
     centerOn(state, svg, center);
     updateZoomControls(state);
+  }
+
+  // A pinch (or Ctrl/Cmd+wheel) step scales by exp(-deltaY * PINCH_RATE);
+  // one mouse-wheel notch is capped so it zooms by at most about 1.6×.
+  var PINCH_RATE = 0.01;
+  var PINCH_MAX_DELTA = 50;
+  var WHEEL_LINE_PX = 16;
+
+  /**
+   * Pinch zoom: wheel events with ctrlKey (trackpad pinches, Ctrl/Cmd+wheel)
+   * zoom continuously around the pointer, between Fit and the largest zoom
+   * step; the point under the pointer stays put. Other wheel events scroll.
+   */
+  function pinchZoom(state, event) {
+    var svg = drawingOf(state);
+    if (!event.ctrlKey || !svg) return;
+    event.preventDefault();
+    var delta = event.deltaY * (event.deltaMode === 1 ? WHEEL_LINE_PX : 1);
+    delta = Math.max(-PINCH_MAX_DELTA, Math.min(PINCH_MAX_DELTA, delta));
+    var fitted = isFitted(state);
+    var scale = fitted ? drawingScale(svg) : state.zoom;
+    var hasFit = !!fitControl(state);
+    var floor = hasFit ? fitScale(state, svg) : ZOOM_LEVELS[0];
+    var ceiling = ZOOM_LEVELS[ZOOM_LEVELS.length - 1];
+    var level = Math.min(ceiling, Math.max(floor, scale * Math.exp(-delta * PINCH_RATE)));
+    if (hasFit && level <= floor * 1.001) {
+      // Zooming out ends in Fit, as the Zoom out button does.
+      if (!fitted) toggleFitView(state, state.canvas);
+      updateZoomControls(state);
+      return;
+    }
+    if (level === scale && !fitted) return;
+    var anchor = pinchAnchor(state, svg, event);
+    setZoom(state, level, state.canvas);
+    keepAnchor(state, svg, anchor);
+    updateZoomControls(state);
+    // ArchUML may adjust the layout once the drawing starts to overflow
+    // (its Fit control appears); put the point back after that settles.
+    cancelAnimationFrame(state.pinchFrame);
+    state.pinchFrame = requestAnimationFrame(function () { keepAnchor(state, svg, anchor); });
+  }
+
+  var PINCH_GESTURE_MS = 400;
+  var PINCH_POINTER_SLOP_PX = 4;
+
+  /**
+   * The drawing point a pinch holds under the pointer: the point under it when
+   * the gesture began, so that steps where scrolling could not keep it (the
+   * drawing still smaller than the pane) are made up once it can.
+   */
+  function pinchAnchor(state, svg, event) {
+    var previous = state.pinch;
+    var now = Date.now();
+    if (previous && now - previous.time < PINCH_GESTURE_MS &&
+        Math.abs(previous.clientX - event.clientX) <= PINCH_POINTER_SLOP_PX &&
+        Math.abs(previous.clientY - event.clientY) <= PINCH_POINTER_SLOP_PX) {
+      previous.time = now;
+      return previous;
+    }
+    var box = svg.getBoundingClientRect();
+    state.pinch = {
+      time: now,
+      clientX: event.clientX,
+      clientY: event.clientY,
+      x: clampShare((event.clientX - box.left) / box.width),
+      y: clampShare((event.clientY - box.top) / box.height),
+    };
+    return state.pinch;
+  }
+
+  /** Scroll so the anchor's drawing point is under its pointer position, as far as scrolling allows. */
+  function keepAnchor(state, svg, anchor) {
+    var box = svg.getBoundingClientRect();
+    state.canvas.scrollBy({
+      left: box.left + anchor.x * box.width - anchor.clientX,
+      top: box.top + anchor.y * box.height - anchor.clientY,
+      behavior: 'instant',
+    });
   }
 
   function zoom(state, command, button) {
@@ -257,10 +400,23 @@
     else if (command === 'out' && !isFitted(state)) toggleFitView(state, button);
   }
 
-  /** A click on a fitted drawing shows the clicked part at reading size. */
+  /** A drawing label's text as matched against links and searches. */
+  function labelText(node) {
+    return node.textContent.replace(/\s+/g, ' ').trim();
+  }
+
+  function linkedLabel(target) {
+    return target && target.closest ? target.closest('.' + LINK_CLASS) : null;
+  }
+
+  /**
+   * A click on a fitted drawing shows the clicked part at reading size. A
+   * click on a linked label is the first half of its double-click, so it
+   * does not zoom.
+   */
   function zoomToClick(state, event) {
     var svg = drawingOf(state);
-    if (!svg || !isFitted(state) || !svg.contains(event.target)) return;
+    if (!svg || !isFitted(state) || !svg.contains(event.target) || linkedLabel(event.target)) return;
     var box = svg.getBoundingClientRect();
     applyZoom(state, READING_ZOOM, {
       x: clampShare((event.clientX - box.left) / box.width),
@@ -304,14 +460,186 @@
     state.canvas.style.setProperty('--tutorial-diagram-zoom', '1');
   }
 
+  /** The text nodes of the drawing's labels, in document order. */
+  function labelTextNodes(svg) {
+    var nodes = [];
+    Array.prototype.forEach.call(svg.querySelectorAll('text'), function (label) {
+      var walker = document.createTreeWalker(label, NodeFilter.SHOW_TEXT);
+      while (walker.nextNode()) nodes.push(walker.currentNode);
+    });
+    return nodes;
+  }
+
+  /**
+   * Make each `path:line` of a project file inside a label (a diagram note's
+   * citation) a linked tspan of its own, and return the references as links,
+   * one per distinct target, after the authored ones (from index `first`).
+   */
+  function linkSourceReferences(state, svg, first) {
+    var api = window.TutorialSourceLinks;
+    var tutorial = state.tutorial;
+    if (!api || !tutorial || typeof tutorial.hasProjectFile !== 'function') return [];
+    var isProjectFile = function (path) { return tutorial.hasProjectFile(path); };
+    var found = [];
+    var byTarget = new Map();
+    labelTextNodes(svg).forEach(function (node) {
+      var refs = api.findSourceReferences(node.nodeValue, isProjectFile);
+      if (!refs.length) return;
+      refs.forEach(function (ref) {
+        var key = ref.path + ':' + ref.line + ':' + ref.column;
+        if (!byTarget.has(key)) {
+          byTarget.set(key, first + found.length);
+          found.push({ text: ref.text, path: ref.path, line: ref.line, column: ref.column, reference: true });
+        }
+        ref.index = byTarget.get(key);
+      });
+      splitReferences(node, refs);
+    });
+    return found;
+  }
+
+  /** Wrap each reference of a text node in a linked tspan, last first so offsets hold. */
+  function splitReferences(node, refs) {
+    for (var i = refs.length - 1; i >= 0; i--) {
+      var ref = refs[i];
+      var part = node.splitText(ref.start);
+      part.splitText(ref.end - ref.start);
+      var span = document.createElementNS(SVG_NS, 'tspan');
+      span.setAttribute('class', LINK_CLASS);
+      span.setAttribute('data-diagram-link', String(ref.index));
+      part.parentNode.replaceChild(span, part);
+      span.appendChild(part);
+    }
+  }
+
+  function linkButton(link, index) {
+    var button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'tutorial-diagram-pane__link-button';
+    button.setAttribute('data-diagram-link', String(index));
+    var target = document.createElement('code');
+    target.className = 'tutorial-diagram-pane__link-target';
+    target.textContent = link.reference ? link.text : link.path + ':' + link.line;
+    if (link.reference) {
+      // A citation from a note: its own text says where it goes.
+      button.setAttribute('aria-label', 'Open ' + link.path + ' at line ' + link.line);
+      button.appendChild(target);
+      return button;
+    }
+    var name = document.createElement('span');
+    name.className = 'tutorial-diagram-pane__link-name';
+    name.textContent = link.text;
+    var arrow = document.createElement('span');
+    arrow.className = 'tutorial-diagram-pane__link-arrow';
+    arrow.setAttribute('aria-hidden', 'true');
+    arrow.textContent = '→';
+    // The arrow is decorative; the name reads "Notifications, opens services/…:25".
+    button.setAttribute('aria-label', link.text + ', opens ' + link.path + ':' + link.line);
+    button.append(name, arrow, target);
+    return button;
+  }
+
+  /**
+   * Mark each label that a link names and each `path:line` citation of a
+   * project file, and list them all under the drawing (state.shownLinks).
+   */
+  function renderLinks(state, diagram, svg) {
+    var authored = diagram && svg ? diagram.links : [];
+    state.linksList.replaceChildren();
+    var byText = new Map();
+    authored.forEach(function (link, index) { if (!byText.has(link.text)) byText.set(link.text, index); });
+    if (svg) {
+      Array.prototype.forEach.call(svg.querySelectorAll('text'), function (node) {
+        var index = byText.get(labelText(node));
+        if (index === undefined) return;
+        node.classList.add(LINK_CLASS);
+        node.setAttribute('data-diagram-link', String(index));
+      });
+    }
+    var links = svg ? authored.concat(linkSourceReferences(state, svg, authored.length)) : [];
+    state.shownLinks = links;
+    state.links.hidden = !links.length;
+    state.hint.textContent = links.length ? FIT_HINT_WITH_LINKS : FIT_HINT;
+    links.forEach(function (link, index) {
+      var item = document.createElement('li');
+      item.appendChild(linkButton(link, index));
+      state.linksList.appendChild(item);
+    });
+  }
+
+  function openLink(tutorial, state, index) {
+    var link = (state.shownLinks || [])[index];
+    if (!link) return;
+    state.status.textContent = '';
+    if (typeof tutorial.revealSource !== 'function' || !tutorial.revealSource(link.path, link.line, link.column)) {
+      state.status.textContent = link.path + ' is not part of this step.';
+    }
+  }
+
+  /** The labels of the shown drawing that match a query, in document order. */
+  function matchingLabels(state, query, options) {
+    var svg = drawingOf(state);
+    if (!svg) return [];
+    var search = window.TutorialProjectSearch;
+    // Without project search on the page, a plain substring match.
+    var matches = search ? search.textMatches : function (text, wanted, settings) {
+      if (!wanted) return false;
+      return settings && settings.matchCase ? text.indexOf(wanted) !== -1
+        : text.toLowerCase().indexOf(wanted.toLowerCase()) !== -1;
+    };
+    return Array.prototype.filter.call(svg.querySelectorAll('text'), function (node) {
+      return matches(labelText(node), query, options);
+    });
+  }
+
+  /** Show a label at reading size in the middle of the canvas. */
+  function zoomToLabel(state, node, focusAfter) {
+    var svg = drawingOf(state);
+    if (svg) applyZoom(state, READING_ZOOM, pointOf(svg, node), focusAfter);
+  }
+
+  function clearHits(state) {
+    Array.prototype.forEach.call(state.canvas.querySelectorAll('.' + HIT_BOX_CLASS), function (box) { box.remove(); });
+    Array.prototype.forEach.call(state.canvas.querySelectorAll('.' + HIT_CLASS), function (node) { node.classList.remove(HIT_CLASS); });
+  }
+
+  /** Frame a label: a rectangle behind it, in the label's own coordinates. */
+  function markHit(node) {
+    // Bold first: the frame must fit the label as it is shown.
+    node.classList.add(HIT_CLASS);
+    var box = node.getBBox();
+    var frame = document.createElementNS(SVG_NS, 'rect');
+    frame.setAttribute('class', HIT_BOX_CLASS);
+    frame.setAttribute('x', String(box.x - HIT_BOX_PADDING));
+    frame.setAttribute('y', String(box.y - HIT_BOX_PADDING));
+    frame.setAttribute('width', String(box.width + 2 * HIT_BOX_PADDING));
+    frame.setAttribute('height', String(box.height + 2 * HIT_BOX_PADDING));
+    frame.setAttribute('rx', '2');
+    var transform = node.getAttribute('transform');
+    if (transform) frame.setAttribute('transform', transform);
+    node.parentNode.insertBefore(frame, node);
+  }
+
+  /** The middle of a label, as shares of the drawing's size. */
+  function pointOf(svg, node) {
+    var box = svg.getBoundingClientRect();
+    var label = node.getBoundingClientRect();
+    return {
+      x: clampShare((label.left + label.width / 2 - box.left) / box.width),
+      y: clampShare((label.top + label.height / 2 - box.top) / box.height),
+    };
+  }
+
   function renderActiveDiagram(state) {
     var diagram = state.diagrams[state.active];
     var canvas = state.canvas;
     resetView(state);
     canvas.replaceChildren();
+    state.status.textContent = '';
     if (!diagram) {
       canvas.setAttribute('aria-label', 'No diagram yet');
       canvas.appendChild(paragraph('tutorial-diagram-pane__message', 'No diagram to show yet.'));
+      renderLinks(state, null, null);
       updateZoomControls(state);
       return;
     }
@@ -337,7 +665,136 @@
       );
       canvas.setAttribute('aria-label', 'Diagram source: ' + diagram.label);
     }
+    renderLinks(state, diagram, svg);
     updateZoomControls(state);
+    if (state.find && !state.find.bar.hidden) refreshFind(state, false);
+  }
+
+  // ----- Find in diagram (Ctrl/Cmd+F) -----------------------------------------
+
+  /** Mark every match of the find query, the current one more strongly. */
+  function refreshFind(state, zoomToCurrent) {
+    var find = state.find;
+    clearHits(state);
+    state.status.textContent = '';
+    var query = find.input.value;
+    find.matches = query ? matchingLabels(state, query, { matchCase: find.matchCase.checked }) : [];
+    if (find.current >= find.matches.length) find.current = 0;
+    find.matches.forEach(markHit);
+    showCurrentMatch(state, zoomToCurrent);
+  }
+
+  function showCurrentMatch(state, zoomToCurrent) {
+    var find = state.find;
+    Array.prototype.forEach.call(state.canvas.querySelectorAll('.' + CURRENT_HIT_CLASS), function (box) {
+      box.classList.remove(CURRENT_HIT_CLASS);
+    });
+    if (!find.input.value) {
+      find.status.textContent = '';
+      return;
+    }
+    if (!find.matches.length) {
+      find.status.textContent = 'No matches';
+      return;
+    }
+    var node = find.matches[find.current];
+    node.previousElementSibling.classList.add(CURRENT_HIT_CLASS);
+    find.status.textContent = (find.current + 1) + ' of ' + find.matches.length;
+    if (zoomToCurrent) zoomToLabel(state, node, find.input);
+  }
+
+  function stepFind(state, step) {
+    var find = state.find;
+    if (!find.matches.length) return;
+    find.current = (find.current + step + find.matches.length) % find.matches.length;
+    showCurrentMatch(state, true);
+  }
+
+  function openFind(state) {
+    var find = state.find;
+    if (find.bar.hidden) {
+      var active = document.activeElement;
+      find.opener = active && active !== document.body && !find.bar.contains(active) ? active : null;
+      find.bar.hidden = false;
+      if (find.input.value) refreshFind(state, true);
+    }
+    find.input.focus();
+    find.input.select();
+  }
+
+  function closeFind(state) {
+    var find = state.find;
+    if (find.bar.hidden) return;
+    find.bar.hidden = true;
+    find.matches = [];
+    find.status.textContent = '';
+    clearHits(state);
+    var target = find.opener && find.opener.isConnected ? find.opener : state.canvas;
+    find.opener = null;
+    target.focus({ preventScroll: true });
+  }
+
+  function isFindShortcut(event) {
+    return (event.ctrlKey || event.metaKey) && !event.shiftKey && !event.altKey &&
+      (event.code === 'KeyF' || String(event.key).toLowerCase() === 'f');
+  }
+
+  /**
+   * Whether Ctrl/Cmd+F belongs to the diagram find bar: focus in the pane,
+   * or the Diagram view shown with focus elsewhere in the workspace. The code
+   * editor keeps its own find, a text field outside the pane and the rest of
+   * the page keep the browser's.
+   */
+  function ownsFindShortcut(tutorial, state, target) {
+    if (!target || !target.closest) return false;
+    if (state.pane.contains(target)) return true;
+    if (tutorial._currentView !== 'diagram' || !target.closest('.tvm-workspace')) return false;
+    return !target.closest('.monaco-editor, input, textarea, select, [contenteditable="true"], dialog[open]');
+  }
+
+  function wireFind(tutorial, state, signal) {
+    var bar = state.pane.querySelector('.tutorial-diagram-pane__find');
+    var find = state.find = {
+      bar: bar,
+      input: bar.querySelector('.tutorial-diagram-pane__find-input'),
+      matchCase: bar.querySelector('[data-diagram-find-case]'),
+      status: bar.querySelector('.tutorial-diagram-pane__find-status'),
+      matches: [],
+      current: 0,
+      opener: null,
+    };
+    tutorial.root.addEventListener('keydown', function (event) {
+      if (!isFindShortcut(event) || state.pane.hidden || !ownsFindShortcut(tutorial, state, event.target)) return;
+      event.preventDefault();
+      event.stopPropagation();
+      openFind(state);
+    }, { signal: signal });
+    find.input.addEventListener('input', function () {
+      find.current = 0;
+      refreshFind(state, true);
+    });
+    find.matchCase.addEventListener('change', function () {
+      find.current = 0;
+      refreshFind(state, true);
+    });
+    bar.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape') {
+        // Also keeps the search field's native Escape from clearing the query.
+        event.preventDefault();
+        event.stopPropagation();
+        closeFind(state);
+      } else if (event.key === 'Enter' && event.target === find.input) {
+        event.preventDefault();
+        stepFind(state, event.shiftKey ? -1 : 1);
+      }
+    });
+    bar.addEventListener('click', function (event) {
+      var control = event.target.closest('[data-diagram-find]');
+      if (!control) return;
+      var command = control.getAttribute('data-diagram-find');
+      if (command === 'close') closeFind(state);
+      else stepFind(state, command === 'next' ? 1 : -1);
+    });
   }
 
   function syncTabs(state) {
@@ -417,6 +874,18 @@
     });
     document.addEventListener('fullscreenchange', function () { syncFullscreen(state); }, { signal: signal });
     state.canvas.addEventListener('click', function (event) { zoomToClick(state, event); });
+    state.canvas.addEventListener('wheel', function (event) { pinchZoom(state, event); }, { passive: false });
+    wireFind(tutorial, state, signal);
+    state.canvas.addEventListener('dblclick', function (event) {
+      var label = linkedLabel(event.target);
+      if (!label) return;
+      event.preventDefault();
+      openLink(tutorial, state, Number(label.getAttribute('data-diagram-link')));
+    });
+    state.linksList.addEventListener('click', function (event) {
+      var button = event.target.closest('button[data-diagram-link]');
+      if (button) openLink(tutorial, state, Number(button.getAttribute('data-diagram-link')));
+    });
     // ArchUML toggles Fit on the drawing's container; mirror it in the controls.
     var observer = new MutationObserver(function () { updateZoomControls(state); });
     observer.observe(state.canvas, { attributes: true, attributeFilter: ['class'] });
@@ -453,6 +922,7 @@
     if (button) button.after(note);
     var state = {
       id: id,
+      tutorial: this,
       pane: pane,
       divider: divider,
       editorPane: editorPane,
@@ -471,6 +941,9 @@
       status: pane.querySelector('.tutorial-diagram-pane__status'),
       panel: pane.querySelector('.tutorial-diagram-pane__panel'),
       canvas: pane.querySelector('.tutorial-diagram-pane__canvas'),
+      hint: pane.querySelector('.tutorial-diagram-pane__hint'),
+      links: pane.querySelector('.tutorial-diagram-pane__links'),
+      linksList: pane.querySelector('.tutorial-diagram-pane__links-list'),
       diagrams: [],
       active: 0,
       zoom: 1,
@@ -575,6 +1048,78 @@
     this._refreshViewToggle();
   };
 
+  /**
+   * The diagrams the learner can see in the Diagram pane, as project-search
+   * entries. Empty until a diagram is loaded (for a challenge, after
+   * lock-in), so search never reveals a locked diagram.
+   * @returns {{path: string, content: string, kind: 'diagram', diagramId: string, label: string}[]}
+   */
+  proto.authoredDiagramSearchEntries = function () {
+    var state = this._authoredDiagram;
+    if (!state) return [];
+    return state.diagrams.map(function (diagram) {
+      return { path: 'diagram:' + diagram.id, content: diagram.source, kind: 'diagram', diagramId: diagram.id, label: diagram.label };
+    });
+  };
+
+  /**
+   * Show a project-search hit: the Diagram view (in its current layout) on
+   * the diagram's tab, every label that matches the query framed, and the
+   * first at reading size. Returns false when no loaded diagram has the id.
+   * @param {string} diagramId
+   * @param {string} query
+   * @param {{matchCase?: boolean, wholeWord?: boolean, regex?: boolean}} [options]
+   */
+  proto.revealDiagramText = function (diagramId, query, options) {
+    var state = this._authoredDiagram;
+    var index = state ? state.diagrams.findIndex(function (diagram) { return diagram.id === diagramId; }) : -1;
+    if (index === -1) return false;
+    // Search lives in the Files sidebar, which the Diagram view folds into a
+    // closed drawer; keep it open so the learner can go on to the next result.
+    var sidebar = this._fileSidebarEl;
+    var filesOpen = !!(sidebar && sidebar.open);
+    if (this._currentView !== 'diagram') {
+      if (index !== state.active) {
+        state.active = index;
+        syncTabs(state);
+        state.needsRender = true;
+      }
+      this._setView('diagram');
+    } else if (index !== state.active) {
+      selectTab(state, index, false);
+    }
+    if (filesOpen) sidebar.open = true;
+    // Project search takes over the marks from an open find bar.
+    if (!state.find.bar.hidden) {
+      state.find.bar.hidden = true;
+      state.find.status.textContent = '';
+    }
+    clearHits(state);
+    if (!drawingOf(state)) return true;
+    var hits = matchingLabels(state, query, options);
+    hits.forEach(markHit);
+    var label = state.diagrams[index].label;
+    state.status.textContent = hits.length
+      ? (hits.length === 1 ? '1 label' : hits.length + ' labels') + ' marked in ' + label + '.'
+      : 'No label in ' + label + ' matches; the text is in a part the drawing does not show.';
+    if (hits.length) zoomToLabel(state, hits[0], state.canvas);
+    // Focus on the drawing lets the arrow keys scroll around the hit.
+    state.canvas.focus({ preventScroll: true });
+    return true;
+  };
+
+  /**
+   * Remove the marks of an earlier search hit and the note that announced
+   * them. Marks of an open find bar are the bar's own and stay.
+   */
+  proto.clearDiagramTextHighlights = function () {
+    var state = this._authoredDiagram;
+    if (!state) return;
+    state.status.textContent = '';
+    if (!state.find.bar.hidden) return;
+    clearHits(state);
+  };
+
   /** Called by _setView after every view change. */
   proto._onWorkspaceViewChanged = function (view) {
     var state = this._authoredDiagram;
@@ -586,6 +1131,11 @@
     if (shown && state.needsRender) {
       state.needsRender = false;
       renderActiveDiagram(state);
+    }
+    if (!shown && state.find && !state.find.bar.hidden) {
+      state.find.bar.hidden = true;
+      state.find.status.textContent = '';
+      clearHits(state);
     }
     if (!shown) {
       // Divider drags size the editor for the split; without the pane the

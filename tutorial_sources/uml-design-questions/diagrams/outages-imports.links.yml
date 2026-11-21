@@ -1,0 +1,32 @@
+# Code links for outages-imports.class.uml: double-clicking a label in the
+# drawing opens its line. text is the label exactly as the drawing shows it.
+- text: Intake
+  path: services/opc/intake.py
+  line: 10
+- text: TripEvents
+  path: services/opc/events.py
+  line: 11
+- text: SupplierGateway
+  path: services/opc/gateways/base.py
+  line: 14
+- text: BankClient
+  path: services/website/clients.py
+  line: 22
+- text: OpcClient
+  path: services/website/clients.py
+  line: 55
+- text: Mailer
+  path: services/notifications/mailer.py
+  line: 8
+- text: TripNotifications
+  path: services/notifications/consumers.py
+  line: 19
+- text: Broker
+  path: infra/broker.py
+  line: 64
+- text: ServiceClient
+  path: infra/http.py
+  line: 86
+- text: Message
+  path: infra/broker.py
+  line: 22

@@ -9,8 +9,11 @@
    inherits the paragraph size.
    ============================================================ */
 
+/* The pane is a <section>; the site's section spacing (portfolio.css)
+   must not push it below the view toggle. */
 .tutorial-diagram-pane {
   position: relative;
+  margin: 0;
   flex: 1 1 50%;
   min-width: 0;
   min-height: 0;
@@ -147,6 +150,14 @@
   display: block;
 }
 
+/* Beside the code on a wide screen the pane is too narrow for the hint to
+   float over the drawing without hiding most of it. */
+@media screen and (min-width: 901px) {
+  .tvm-workspace:not(.tutorial-diagram-workspace--maximized) .tutorial-diagram-pane:has(.tutorial-diagram-pane__canvas.uml-fit-fitted > svg) .tutorial-diagram-pane__hint {
+    display: none;
+  }
+}
+
 .tutorial-diagram-pane__status {
   margin: 0;
   padding: 0 0.6em;
@@ -186,6 +197,174 @@
   background: #f6f8fa;
   color: #1f2328;
   border: 1px solid #c8ccd2;
+}
+
+/* Code links (js/tutorial-diagram-pane.js): a label that a link names, and
+   each `path:line` citation of a project file in a note, takes the link
+   color, a thick underline set below the text, and a pointer;
+   double-clicking opens the code. UML underlines instance names in a thin
+   line of the text color (lifelines), so the link underline differs in
+   weight and position as well as color, and an unlinked instance name
+   keeps its plain UML underline. #0b5cad on white is 6.6:1. ArchUML draws
+   its SVG in its own light palette and dark mode inverts the whole drawing,
+   which turns this blue light, so no dark-mode variant is needed here. */
+.tutorial-diagram-pane__canvas .tutorial-diagram-pane__link {
+  cursor: pointer;
+  fill: #0b5cad;
+  text-decoration: underline;
+  text-decoration-color: #0b5cad;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 4px;
+}
+
+.tutorial-diagram-pane__canvas .tutorial-diagram-pane__link:hover {
+  text-decoration-thickness: 3px;
+}
+
+/* A project-search hit: a 2px outline and a fill behind the label, and the
+   label in bold, so the mark never relies on color alone. */
+.tutorial-diagram-pane__canvas rect.tutorial-diagram-pane__hit-box {
+  fill: #fff1a8;
+  stroke: #7a4d00;
+  stroke-width: 2px;
+  pointer-events: none;
+}
+
+.tutorial-diagram-pane__canvas text.tutorial-diagram-pane__text-hit {
+  font-weight: 700;
+  fill: #1f2328;
+}
+
+/* The current match of the find bar: a heavier outline than the others. */
+.tutorial-diagram-pane__canvas rect.tutorial-diagram-pane__hit-box--current {
+  stroke-width: 4px;
+  fill: #ffd84d;
+}
+
+/* Find in diagram (Ctrl/Cmd+F): a bar under the toolbar. */
+.tutorial-diagram-pane__find {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4em 0.6em;
+  padding: 0.4em 0.6em;
+  background: #f6f7f9;
+  border-bottom: 1px solid #c8ccd2;
+}
+
+.tutorial-diagram-pane__find[hidden] {
+  display: none;
+}
+
+.tutorial-diagram-pane__find-label {
+  font-weight: 600;
+}
+
+.tutorial-diagram-pane__find-input {
+  font: inherit;
+  flex: 1 1 12em;
+  min-width: 8em;
+  min-height: 2em;
+  padding: 0.1em 0.4em;
+  border: 1px solid #6a737d;
+  border-radius: 4px;
+  background: #ffffff;
+  color: #1f2328;
+}
+
+.tutorial-diagram-pane__find-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3em;
+}
+
+.tutorial-diagram-pane__find-option input {
+  width: 1.1em;
+  height: 1.1em;
+}
+
+.tutorial-diagram-pane__find-status {
+  margin: 0;
+  min-width: 6em;
+  font-variant-numeric: tabular-nums;
+}
+
+.tutorial-diagram-pane__find-input:focus-visible,
+.tutorial-diagram-pane__find-option input:focus-visible {
+  outline: 3px solid #005587;
+  outline-offset: 2px;
+}
+
+/* The drawing is hidden from assistive technology; the Code links list
+   under it offers each link as a button. */
+.tutorial-diagram-pane__links {
+  flex: 0 0 auto;
+  max-height: 40%;
+  overflow: auto;
+  padding: 0.3em 0.75em 0.5em;
+  border-top: 1px solid #c8ccd2;
+  background: #f6f7f9;
+}
+
+.tutorial-diagram-pane__links[hidden] {
+  display: none;
+}
+
+.tutorial-diagram-pane__links-summary {
+  display: list-item;
+  min-height: 24px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.tutorial-diagram-pane__links-hint {
+  margin: 0.3em 0;
+  font-size: 0.9em;
+  color: #4b535d;
+}
+
+.tutorial-diagram-pane__links-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3em 0.6em;
+}
+
+.tutorial-diagram-pane__link-button {
+  font: inherit;
+  min-height: 24px;
+  padding: 0.1em 0.4em;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  color: #0b4f8a;
+  text-align: left;
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+
+.tutorial-diagram-pane__link-button:hover {
+  border-color: #6a737d;
+  background: #e6eaef;
+}
+
+.tutorial-diagram-pane__link-arrow {
+  margin: 0 0.35em;
+}
+
+.tutorial-diagram-pane__link-target {
+  font-family: 'Fira Code', 'Cascadia Code', Menlo, monospace;
+  font-size: 0.9em;
+}
+
+.tutorial-diagram-pane__links-summary:focus-visible,
+.tutorial-diagram-pane__link-button:focus-visible {
+  outline: 3px solid #005587;
+  outline-offset: 2px;
 }
 
 /* Maximized layout: the diagram has the workspace to itself until the
@@ -305,6 +484,45 @@ html.dark-mode .tvm-view-toggle-note {
   color: #b1bac4;
 }
 
+html.dark-mode .tutorial-diagram-pane__find {
+  background: #1f2026;
+  border-bottom-color: #3a3a42;
+}
+
+html.dark-mode .tutorial-diagram-pane__find-input {
+  background: #22232a;
+  color: #e6edf3;
+  border-color: #8b949e;
+}
+
+html.dark-mode .tutorial-diagram-pane__find-input:focus-visible,
+html.dark-mode .tutorial-diagram-pane__find-option input:focus-visible {
+  outline-color: #ffd100;
+}
+
+html.dark-mode .tutorial-diagram-pane__links {
+  background: #1f2026;
+  border-top-color: #3a3a42;
+}
+
+html.dark-mode .tutorial-diagram-pane__links-hint {
+  color: #b1bac4;
+}
+
+html.dark-mode .tutorial-diagram-pane__link-button {
+  color: #8ecfff;
+}
+
+html.dark-mode .tutorial-diagram-pane__link-button:hover {
+  border-color: #8b949e;
+  background: #2d2e36;
+}
+
+html.dark-mode .tutorial-diagram-pane__links-summary:focus-visible,
+html.dark-mode .tutorial-diagram-pane__link-button:focus-visible {
+  outline-color: #ffd100;
+}
+
 html.dark-mode .tutorial-diagram-pane__hint {
   background: #22232a;
   color: #e6edf3;
@@ -337,5 +555,15 @@ html.dark-mode .tutorial-diagram-pane__hint {
 
   .tutorial-diagram-pane {
     border: 0;
+  }
+
+  /* Interactive aids print plain: no list of buttons, no search marks. */
+  .tutorial-diagram-pane__find,
+  .tutorial-diagram-pane__links {
+    display: none !important;
+  }
+
+  .tutorial-diagram-pane__canvas rect.tutorial-diagram-pane__hit-box {
+    display: none;
   }
 }

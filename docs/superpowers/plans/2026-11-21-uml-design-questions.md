@@ -10,6 +10,8 @@
 
 **Spec:** `docs/superpowers/specs/2026-11-20-uml-design-questions-tutorial-design.md`
 
+**Superseded in part (2026-11-21):** the questions, the learning objectives, `progress_version` (now 2), and the facts the answer keys come from follow `docs/superpowers/specs/2026-11-21-uml-design-questions-redesign.md`. Tasks C6 and C9 below describe the first question set (receivers, the four outage questions, the call count), which the redesign replaced.
+
 ## Global Constraints
 
 - Work in the main checkout (`/Users/tobiasduerschmid/Projects/tobiasduerschmid.github.io`); never touch the user's unrelated modified files (`.claude/launch.json`, `css/song-video-frontier.css`, `css/tutorial-print.css`, `js/song-video/**`, untracked song/blog/audit files).
