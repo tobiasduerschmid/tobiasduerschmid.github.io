@@ -12175,6 +12175,9 @@
     var step = this.steps[index];
 
     if (this.quizPanelEl) this.quizPanelEl.style.display = 'none';
+    // A detached instructions window closes its mirrored knowledge check only
+    // on quiz-hide; the step-change broadcast below leaves it open.
+    if (this._popoutManager) this._popoutManager._post('quiz-hide');
     if (this.stepContentWrapEl) this.stepContentWrapEl.style.display = '';
 
     this._renderStepNav();
@@ -12503,6 +12506,9 @@
       if (self.autoSaveEnabled && !self._suppressAutoSave) self._autoSaveProgress();
       self._startTimedPractice(index);
       if (self.llmAddon) self.llmAddon.setStep();
+      // Page scripts such as Read Aloud observe navigation through the event
+      // the UML tutorial editor also dispatches.
+      document.dispatchEvent(new CustomEvent('tvm:stepchange', { detail: { stepIndex: index } }));
       return true;
     }, function (error) {
       self._suppressAutoSave = autoSaveSuppressedBeforeStepLoad;

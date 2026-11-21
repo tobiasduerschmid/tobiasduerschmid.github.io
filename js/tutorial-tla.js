@@ -45,7 +45,8 @@
       }
       const file = location.file || (location.module && location.module + '.tla');
       if (!file || !this.editorModels[file] || !Number.isInteger(location.line)) return;
-      this._activateFile(file);
+      this._setActiveFile(file);
+      this._renderTabs();
       const editor = this.editor;
       if (!editor) return;
       const line = Math.max(1, Math.min(location.line, editor.getModel().getLineCount()));

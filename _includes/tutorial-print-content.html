@@ -69,7 +69,7 @@
 {{ file.content }}~~~{% endcapture %}
         <div class="starter-file-content">{{ fenced_content | markdownify | replace: ' id="', ' data-print-id="' }}</div>
       {% else %}
-      <pre>{{ file.content }}</pre>
+      <pre>{{ file.content | escape }}</pre>
       {% endif %}
     </div>
     {% endfor %}

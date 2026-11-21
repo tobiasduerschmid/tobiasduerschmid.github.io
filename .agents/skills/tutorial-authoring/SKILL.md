@@ -2155,7 +2155,11 @@ other platforms retain `Ctrl`. This changes labels only, not key bindings.
   Wires `TutorialCode` (from `js/tutorial-code.js`), injects the parsed YAML
   config as JSON, sets up the navbar (Reset, Solution in instructor mode,
   Print, Read Aloud, Dark mode toggle), and instantiates the Monaco editor
-  + chosen backend.
+  + chosen backend. Read Aloud stops when `document` receives
+  `tvm:stepchange` (`detail: { stepIndex }`). `TutorialCode` dispatches it
+  once per committed step load, after the readiness barrier; superseded and
+  failed loads do not dispatch. `UMLTutorialEditor.loadStep` dispatches the
+  same event. Page scripts that react to navigation listen for this event.
 - **Confirmation dialogs** — `_includes/confirmation-dialog.html` loads the
   shared `js/confirmation-dialog.js` and `css/confirmation-dialog.css` once per
   page, including when the UML editor also uses it. Tutorial Reset, UML
@@ -2174,7 +2178,11 @@ other platforms retain `Ctrl`. This changes labels only, not key bindings.
 - **`_layouts/print-tutorial.html`** — the static, printable
   view. Renders every step's instructions, files (Rouge-highlighted),
   quizzes (with correct answers visibly marked), and solutions (hidden
-  unless `?instructor-mode=true` is in the URL). The Print button on the
+  unless `?instructor-mode=true` is in the URL). Starter and solution files
+  without `language` (or `print_language`) print as escaped `<pre>` text, so
+  file text such as `List<String>` or `<script>` appears literally; keep
+  escaping any raw `file.content` that `_includes/tutorial-print-content.html`
+  emits (`scripts/tests/tutorial-print-content.test.js`). The Print button on the
   live tutorial redirects to `<live-permalink>/print?autoprint=1` (preserving
   `?instructor-mode=true` if set).
   On narrow screens, authored UML figures retain their measured readable width
@@ -2296,8 +2304,11 @@ synchronizes with the main tutorial via `BroadcastChannel` (see
   runtime accepts skip requests only for the current step when
   `require_quiz: false`. The final optional check offers Finish Review;
   `quiz-review-finished` mirrors the acknowledgment to the popout without
-  claiming all tests or knowledge checks passed. Instructions snapshots and
-  navigation messages include `hasQuiz` so Next opens the knowledge check
+  claiming all tests or knowledge checks passed. Every step load in the main
+  runtime posts `quiz-hide` before its `step-change`, because the popout's
+  `step-change` handling never closes a mirrored knowledge check; choosing a
+  step while a quiz is open therefore shows that step in both windows.
+  Instructions snapshots and navigation messages include `hasQuiz` so Next opens the knowledge check
   on every visit, including a previously passed final quiz. Saved `quizPassed`
   records remain completion evidence for unlocks and timed practice; they do
   not suppress quiz entry in either window.
@@ -3455,7 +3466,13 @@ connection, and binding tables. Feature-group drawing currently reports an
 explicit unsupported-view state; scopes above seven nodes keep complete tables
 and ask for a smaller visual scope. Diagram limits do not redefine AADL validity.
 There is no text-output popout for this pane. Source buttons use official source
-locations and are disabled on stale models. Direct workspace printing uses
+locations and are disabled on stale models. Activating one opens the reported
+file through the host's `_setActiveFile` and `_renderTabs`, selects the reported
+range (engine end columns are inclusive), and focuses the editor. Adapters reuse
+that host API rather than defining their own file activation.
+`tests/tutorial-source-locations.spec.js` serves a fixed engine result through
+the client adapter so this path runs without the hosted Java runtime.
+Direct workspace printing uses
 light-palette tables for the selected scope; ordinary tutorial print pages retain
 the authored instructions and files.
 
@@ -3526,6 +3543,9 @@ Operator watches require a live exploration session; completed counterexamples
 retain values for inspection after their checking JVM is released.
 An interrupted or incomplete check does not establish a pass. Results from
 older editor text are stale and must be checked again.
+**Show source for this message** and **Show this step in the source** reveal
+locations exactly as the AADL source buttons do, switching to the reported
+file when another one is open.
 
 Optional declarative checks use `tests[].tla: {status: complete}` or
 `{status: counterexample, reason: invariant}`. Reasons currently include
