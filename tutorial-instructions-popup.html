@@ -138,7 +138,8 @@
 
     function renderControls(snap) {
       var hasPrev = snap.currentStep > 0;
-      var hasNext = snap.currentStep < (snap.steps || []).length - 1 || snap.hasQuiz;
+      // A locked timed step offers only a way back, as in the main window.
+      var hasNext = !snap.lockedOut && (snap.currentStep < (snap.steps || []).length - 1 || snap.hasQuiz);
       var html = '';
       html += hasPrev ? '<button class="tvm-btn tvm-btn-prev">← Previous</button>' : '<span></span>';
       html += snap.hasTests ? buildTestButtonHTML(snap) : '<span></span>';
@@ -237,6 +238,7 @@
       // now-stale Next button that main then silently no-ops.
       if (typeof msg.hasTests === 'boolean') snapshot.hasTests = msg.hasTests;
       if (typeof msg.hasQuiz === 'boolean') snapshot.hasQuiz = msg.hasQuiz;
+      if (typeof msg.lockedOut === 'boolean') snapshot.lockedOut = msg.lockedOut;
       if (typeof msg.nextLocked === 'boolean') snapshot.nextLocked = msg.nextLocked;
       if (typeof msg.cooldownSeconds === 'number') snapshot.cooldownSeconds = msg.cooldownSeconds;
       if (typeof msg.cooldownRemaining === 'number') snapshot.cooldownRemaining = msg.cooldownRemaining;
@@ -314,7 +316,11 @@
         + '<span class="tvm-quiz-status" role="status" aria-live="polite" aria-atomic="true">Loading…</span>'
         + '<span></span>';
       var back = els.stepControls.querySelector('.tvm-quiz-back');
-      if (back) back.addEventListener('click', hideQuiz);
+      if (back) back.addEventListener('click', function () {
+        hideQuiz();
+        // Leave it in the main window too, which shows it again on reattach.
+        client.post('request-back-to-step');
+      });
       window.SebookQuiz.mount({
         hostEl: els.quizPanel,
         controlsEl: els.stepControls,

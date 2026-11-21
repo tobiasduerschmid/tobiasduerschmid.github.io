@@ -2317,6 +2317,14 @@ synchronizes with the main tutorial via `BroadcastChannel` (see
   runtime posts `quiz-hide` before its `step-change`, because the popout's
   `step-change` handling never closes a mirrored knowledge check; choosing a
   step while a quiz is open therefore shows that step in both windows.
+  The popout's **← Back to Step** posts `request-back-to-step`, and the main
+  runtime then leaves its own knowledge check (`_hideStepQuiz`), so a
+  reattached instructions panel shows the step. While a timed-practice step
+  is locked, `_renderTimedPracticeLockout` posts `quiz-hide` and a
+  `step-change` whose `stepData` is the practice break (without the countdown
+  that only the main window updates), with `lockedOut: true`. Instructions
+  snapshots carry the same view, so a popout opened during the break shows it.
+  The popout then offers only Previous. The next ordinary step load clears it.
   Instructions snapshots and navigation messages include `hasQuiz` so Next opens the knowledge check
   on every visit, including a previously passed final quiz. Saved `quizPassed`
   records remain completion evidence for unlocks and timed practice; they do

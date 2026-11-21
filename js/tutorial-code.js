@@ -801,6 +801,8 @@
     this._timedPracticeStorageKey = 'tutorial-time-practice-' + this.tutorialId;
     this._timedPracticeTimer = null;
     this._timedPracticeCurrentStep = null;
+    // The practice break the instructions view shows while a step is locked.
+    this._timedPracticeLockoutView = null;
 
     // Worker/executor state for browser-native backends. The Haskell backend
     // uses a sandboxed iframe behind the same postMessage-shaped interface
@@ -9207,24 +9209,33 @@
     panel.innerHTML = '';
   };
 
+  // What the instructions view shows for a step: its instructions, or the
+  // practice break while the current timed step is locked.
+  TutorialCode.prototype._instructionsStepView = function (index) {
+    if (index === this.currentStep && this._timedPracticeLockoutView) return this._timedPracticeLockoutView;
+    var step = this.steps[index];
+    return {
+      title: step.title || '',
+      titleHTML: this._renderInlineMarkdown(step.title || ''),
+      instructionsHTML: this._stepInstructionsHTML(step),
+    };
+  };
+
   TutorialCode.prototype._buildInstructionsSnapshot = function () {
     var self = this;
+    // A locked timed step offers no tests, knowledge check, or Next.
+    var lockedOut = !!this._timedPracticeLockoutView;
     return {
       currentStep: this.currentStep,
       darkMode: document.documentElement.classList.contains('dark-mode'),
       stepsUnlocked: Array.from(this._stepsUnlocked || []),
-      hasTests: this._stepHasTests(this.steps[this.currentStep]),
-      hasQuiz: this._stepHasQuiz(this.steps[this.currentStep]),
+      hasTests: !lockedOut && this._stepHasTests(this.steps[this.currentStep]),
+      hasQuiz: !lockedOut && this._stepHasQuiz(this.steps[this.currentStep]),
+      lockedOut: lockedOut,
       nextLocked: this._isNextStepLocked(),
       cooldownSeconds: this._testCooldownSeconds || 0,
       cooldownRemaining: this._cooldownRemaining(this.currentStep),
-      steps: this.steps.map(function (step) {
-        return {
-          title: step.title || '',
-          titleHTML: self._renderInlineMarkdown(step.title || ''),
-          instructionsHTML: self._stepInstructionsHTML(step),
-        };
-      }),
+      steps: this.steps.map(function (_, index) { return self._instructionsStepView(index); }),
     };
   };
 
@@ -9249,17 +9260,15 @@
     if (!this._popoutManager) return;
     var step = this.steps[this.currentStep];
     if (!step) return;
+    var lockedOut = !!this._timedPracticeLockoutView;
     var fileList = (step.files || []).map(function (f) { return f.path; });
     this._popoutManager.broadcastStepChange({
       stepIndex: this.currentStep,
-      stepData: {
-        title: step.title || '',
-        titleHTML: this._renderInlineMarkdown(step.title || ''),
-        instructionsHTML: this._stepInstructionsHTML(step),
-      },
+      stepData: this._instructionsStepView(this.currentStep),
       stepsUnlocked: Array.from(this._stepsUnlocked || []),
-      hasTests: this._stepHasTests(step),
-      hasQuiz: this._stepHasQuiz(this.steps[this.currentStep]),
+      hasTests: !lockedOut && this._stepHasTests(step),
+      hasQuiz: !lockedOut && this._stepHasQuiz(step),
+      lockedOut: lockedOut,
       nextLocked: this._isNextStepLocked(),
       cooldownSeconds: this._testCooldownSeconds || 0,
       cooldownRemaining: this._cooldownRemaining(this.currentStep),
@@ -9500,6 +9509,10 @@
         },
         onQuizSkippedFromPopup: function (stepIndex) {
           if (typeof stepIndex === 'number') self._skipQuiz(stepIndex);
+        },
+        // The popout's "Back to Step" leaves the knowledge check here too.
+        onBackToStepRequest: function () {
+          if (self.quizPanelEl && self.quizPanelEl.style.display !== 'none') self._hideStepQuiz();
         },
         onSaveFileRequest: function (filename) {
           // Save the file the popup tells us about — temporarily make it the
@@ -11629,11 +11642,13 @@
     this._updateStepHash(index);
 
     if (window.ObjectReferenceLab) window.ObjectReferenceLab.destroyWithin(this.stepContentEl);
+    var titleHTML = this._renderInlineMarkdown(step.title || '');
+    var breakHTML = '<h3>Practice break</h3>' +
+      '<p>This timed practice attempt has ended. You can return to earlier steps while this one cools down.</p>';
     this.stepContentEl.innerHTML =
-      '<h2>' + this._renderInlineMarkdown(step.title || '') + '</h2>' +
+      '<h2>' + titleHTML + '</h2>' +
       '<div class="tvm-timed-practice-lockout" role="status" aria-live="polite" aria-atomic="true">' +
-      '<h3>Practice break</h3>' +
-      '<p>This timed practice attempt has ended. You can return to earlier steps while this one cools down.</p>' +
+      breakHTML +
       '<p class="tvm-timed-practice-lockout-remaining"></p>' +
       '</div>';
     if (this.stepContentWrapEl) this.stepContentWrapEl.scrollTop = 0;
@@ -11642,6 +11657,16 @@
       : '<span></span><span></span><span></span>';
     var prev = this.stepControlsEl.querySelector('.tvm-btn-prev');
     if (prev) prev.addEventListener('click', function () { self.loadStep(index - 1); });
+
+    // A detached instructions window shows the same break, without the
+    // countdown that only this window updates, until a step load ends it.
+    this._timedPracticeLockoutView = {
+      title: step.title || '',
+      titleHTML: titleHTML,
+      instructionsHTML: '<div class="tvm-timed-practice-lockout">' + breakHTML + '</div>',
+    };
+    if (this._popoutManager) this._popoutManager._post('quiz-hide');
+    this._broadcastStepState();
 
     function tick() {
       var status = self._timedPracticeStatus(index);
@@ -12174,6 +12199,7 @@
     this.currentStep = index;
     var step = this.steps[index];
 
+    this._timedPracticeLockoutView = null;
     if (this.quizPanelEl) this.quizPanelEl.style.display = 'none';
     // A detached instructions window closes its mirrored knowledge check only
     // on quiz-hide; the step-change broadcast below leaves it open.
