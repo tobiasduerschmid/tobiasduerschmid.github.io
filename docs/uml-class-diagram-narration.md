@@ -112,7 +112,9 @@ that draw on one show it in their `source` field.
 - Diagrams beside code stay within about 460 px of natural width, so the player's
   column (about 600 px at 1500 px) shows them near readable size: vertical layouts
   for the association, composition, and dependency scenes, interface boxes that list
-  only what that scene discusses, and callouts above or below. The player scales any
+  only what that scene discusses, and callouts above or below. A diagram with a bare
+  `layout compact` is also laid out for that column (600×700) by
+  `_includes/narrated-pattern-diagram.html`. The player scales any
   wider diagram down to its column. All variants of one scene keep similar widths, so
   a cue change moves emphasis without resizing the boxes.
 - Every cue in a scene with code marks the lines it discusses and names them in its

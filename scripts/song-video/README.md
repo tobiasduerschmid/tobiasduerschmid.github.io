@@ -296,8 +296,11 @@ operations.
 "Draw It Out While It's Cheap to Change", the UML song on `SEBook/uml.md`,
 uses the `drafting-room` theme (`js/song-video/drafting-room.js`) and draws its notation with the SE
 Book's own ArchUML renderer: the storyboard's `extras` load
-`js/ArchUML/uml-bundle.js` and `js/song-video/model-kit.js` (styles in
-`css/song-video-model-kit.css`). `ModelKit.diagram()` renders a class,
+`js/ArchUML/uml-bundle.js`, `js/archuml-compact-pane.js` and
+`js/song-video/model-kit.js` (styles in `css/song-video-model-kit.css`).
+A sheet given a `fit` box lays out a bare `layout compact` spec for that
+box (`layout compact WxH`); the build only prebuilds a storyboard view whose
+spec already names its size. `ModelKit.diagram()` renders a class,
 sequence, state, or component spec in an off-screen host, so ArchUML can lay
 it out while the player keeps the stage hidden, records the bounds of every
 drawn element (boxes, message and transition routes, characters of labels),

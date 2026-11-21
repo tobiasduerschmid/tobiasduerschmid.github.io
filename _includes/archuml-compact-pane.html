@@ -1,0 +1,20 @@
+{%- comment -%}
+  Prints include.source with a bare `layout compact` line sized for the pane
+  the drawing will be shown in: `layout compact <include.pane>` (for example
+  600x700, in CSS pixels). The build renders static diagrams in a wide
+  headless page, so a page that copies that SVG into a narrower box names
+  the box here. A compact line that already has a size, and a spec without
+  one, print unchanged. Liquid has no regular expressions, so this matches
+  the conventional lowercase, unindented line; js/archuml-compact-pane.js
+  applies the same rule, more leniently, in the browser.
+  Params: source, pane. Use inside a capture.
+{%- endcomment -%}
+{%- capture cp_newline %}
+{% endcapture -%}
+{%- capture cp_bare %}{{ cp_newline }}layout compact{{ cp_newline }}{% endcapture -%}
+{%- capture cp_sized %}{{ cp_newline }}layout compact {{ include.pane }}{{ cp_newline }}{% endcapture -%}
+{%- comment -%} Pad with newlines so first and last lines match too, then drop the padding. {%- endcomment -%}
+{%- capture cp_padded %}{{ cp_newline }}{{ include.source }}{{ cp_newline }}{% endcapture -%}
+{%- assign cp_sized_source = cp_padded | replace: cp_bare, cp_sized -%}
+{%- assign cp_length = cp_sized_source.size | minus: 2 -%}
+{{- cp_sized_source | slice: 1, cp_length -}}
