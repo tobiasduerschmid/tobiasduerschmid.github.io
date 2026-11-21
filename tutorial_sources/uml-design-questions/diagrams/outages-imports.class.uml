@@ -1,0 +1,59 @@
+@startuml
+package services::opc {
+  class Intake
+  class TripEvents
+  abstract class SupplierGateway
+}
+package services::website {
+  class BankClient
+  class OpcClient
+}
+package services::notifications {
+  class Mailer
+  class TripNotifications
+}
+package infra {
+  class Broker
+  class ServiceClient
+  class Message
+}
+Intake ..> Broker : «use»
+TripEvents ..> Broker : «use»
+SupplierGateway ..> ServiceClient : «use»
+BankClient ..> ServiceClient : «use»
+OpcClient ..> ServiceClient : «use»
+Mailer ..> ServiceClient : «use»
+TripNotifications ..> Message : «use»
+note bottom of Broker
+Key: UML 2.5.1 class diagram.
+Folder: one Python package with its
+subpackages (services::opc is services/opc/).
+Italic: abstract class.
+Dashed arrow «use»: the class uses a class
+that its module imports from another package.
+end note
+note bottom of ServiceClient
+Each «use» is the type of a parameter:
+BankClient: services/website/clients.py:23
+OpcClient: services/website/clients.py:58
+SupplierGateway: services/opc/gateways/base.py:21
+Intake: services/opc/intake.py:13
+TripEvents: services/opc/events.py:14
+Mailer: services/notifications/mailer.py:9
+TripNotifications: services/notifications/consumers.py:26
+end note
+@layout
+Intake @pos(0, 0)
+TripEvents @pos(150, 0)
+SupplierGateway @pos(330, 0)
+BankClient @pos(600, 0)
+OpcClient @pos(780, 0)
+Mailer @pos(1010, 0)
+TripNotifications @pos(1160, 0)
+Broker @pos(150, 420)
+ServiceClient @pos(640, 420)
+Message @pos(1180, 420)
+note:26 @pos(132, 556)
+note:34 @pos(640, 556)
+@endlayout
+@enduml

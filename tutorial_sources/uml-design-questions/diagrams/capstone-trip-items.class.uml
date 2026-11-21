@@ -1,0 +1,58 @@
+@startuml
+package services::opc::model {
+  abstract class TripItem {
+    + {abstract} price()
+    + {abstract} supplier_kind()
+    + {abstract} cancellation_deadline(festival_start)
+  }
+  class FestivalPass {
+    + price()
+    + supplier_kind()
+    + cancellation_deadline(festival_start)
+  }
+  class LodgingStay {
+    + price()
+    + supplier_kind()
+    + cancellation_deadline(festival_start)
+  }
+  class Experience {
+    + price()
+    + supplier_kind()
+    + cancellation_deadline(festival_start)
+  }
+  abstract class TransportItem {
+    + cancellation_deadline(festival_start)
+  }
+  class ShuttleRide {
+    + price()
+    + supplier_kind()
+  }
+}
+FestivalPass --|> TripItem
+LodgingStay --|> TripItem
+Experience --|> TripItem
+TransportItem --|> TripItem
+ShuttleRide --|> TransportItem
+note right of TripItem
+TripItem declares its three operations
+abstract (services/opc/model/items.py:17).
+TransportItem defines only
+cancellation_deadline
+(services/opc/model/items.py:92).
+end note
+note left of TripItem
+Key: UML 2.5.1 class diagram.
+Hollow triangle: generalization.
+Italic: abstract class or operation.
+Each class lists the operations it
+defines itself.
+end note
+@layout
+TripItem @pos(519, 0)
+FestivalPass @pos(0, 260)
+LodgingStay @pos(346, 260)
+Experience @pos(692, 260)
+TransportItem @pos(1038, 260)
+ShuttleRide @pos(1115, 460)
+@endlayout
+@enduml

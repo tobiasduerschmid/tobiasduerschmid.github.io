@@ -1,0 +1,25 @@
+# Where each service listens, by the name other services call it.
+# Headliner runs the [internal] services; other organizations run the [external] ones.
+
+[internal]
+website = "https://headliner.example"
+opc = "https://opc.internal"
+notifications = "https://notifications.internal"
+loyalty = "https://loyalty.internal"
+reporting = "https://reporting.internal"
+affiliates = "https://affiliates.internal"
+support_console = "https://support-console.internal"
+shuttle_planner = "https://shuttle-planner.internal"
+order-db = "postgres://order-db.internal/orders"
+order-db-replica = "postgres://order-db-replica.internal/orders"
+catalog-db = "postgres://catalog-db.internal/catalog"
+broker = "amqp://broker.internal"
+
+[external]
+bank = "https://api.bank.example/card-service/v2"
+box_office = "https://api.box-office.example/v1"
+lodging = "https://api.lodging.example/v1"
+shuttle = "https://api.shuttle.example/v1"
+experiences = "https://api.experiences.example/v1"
+mail_relay = "smtp://relay.mail.example"
+affiliate_partners = "https://hooks.affiliate-partners.example/headliner"

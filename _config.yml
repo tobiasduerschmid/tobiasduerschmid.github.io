@@ -133,6 +133,9 @@ exclude:
   - scripts/song-video
   - scripts/video-tools
   - chrome-extension
+  # Sources that scripts/uml_design_questions/build_yaml.py copies into
+  # _data/tutorials/uml-design-questions.yml; the tutorial page shows them.
+  - tutorial_sources
 
 # Build settings
 strongdown: kramdown

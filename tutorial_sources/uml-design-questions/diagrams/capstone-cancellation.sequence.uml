@@ -1,0 +1,83 @@
+@startuml
+actor fan: Fan
+participant web: TripWebsite
+box "Order Processing Center"
+participant po: PurchaseOrderService
+participant cancellations: CancellationTask
+participant order: TripOrder
+participant gateway[i]: SupplierGateway
+end box
+box "Other organizations" <<external>>
+participant bank: Bank
+participant supplier[i]: SupplierProvider
+end box
+fan -> web: cancel(orderId)
+activate web
+web -> po: cancel(orderId)
+activate po
+po -> cancellations: cancel(orderId)
+activate cancellations
+cancellations -> bank: refund(captureId, amount)
+activate bank
+bank --> cancellations: refundId
+deactivate bank
+cancellations -> order: mark_cancelling()
+note right of cancellations
+cancel() refunds the payment, then marks
+the trip order and each placed or confirmed
+supplier order cancelling
+(services/opc/cancellation_task.py:39,
+services/opc/cancellation_task.py:44).
+end note
+cancellations --> po
+deactivate cancellations
+po --> web: cancelling
+deactivate po
+web --> fan: Your trip is being cancelled
+deactivate web
+o-> cancellations: cancel_supplier_orders()
+activate cancellations
+note right of cancellations
+The scheduler runs this job every 60 s
+(services/opc/cancellation_task.py:12,
+services/opc/service.py:60).
+end note
+loop [for each supplier order marked cancelling]
+cancellations -> gateway[i]: cancel(supplierOrder)
+activate gateway[i]
+alt [the gateway cancels through the supplier's API]
+gateway[i] -> supplier[i]: cancel(reference)
+activate supplier[i]
+supplier[i] --> gateway[i]: cancelled
+deactivate supplier[i]
+gateway[i] --> cancellations
+else [the gateway raises an exception]
+gateway[i] --> cancellations: exception
+end
+deactivate gateway[i]
+end
+note right of cancellations
+After an exception, the supplier order stays
+cancelling and the next run tries it again
+(services/opc/cancellation_task.py:52,
+services/opc/cancellation_task.py:54).
+Otherwise it is marked cancelled
+(services/opc/cancellation_task.py:57).
+GlampingCoGateway.cancel raises
+ManualCancellationRequired when check-in is
+72 hours away or less
+(services/opc/partners/glamping_co.py:9,
+services/opc/partners/glamping_co.py:17).
+end note
+opt [every supplier order cancelled or rejected]
+cancellations -> order: mark_cancelled()
+end
+deactivate cancellations
+note right of fan
+Key: UML 2.5.1 sequence diagram.
+Filled arrowhead: synchronous call.
+Dashed arrow: reply.
+Arrow from a dot: a call from outside
+the diagram (the scheduler).
+end note
+@enduml

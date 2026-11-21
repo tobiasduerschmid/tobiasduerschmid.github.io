@@ -1,0 +1,103 @@
+@startuml
+package Headliner {
+  component OPC <<BackendService>> {
+    require "Publish" as opc_publish
+  }
+  component trips <<TopicExchange>> {
+    provide "Publish" as trips_publish
+  }
+  component Notifications <<BackendService>> {
+    portin "notifications.trips" as notifications_queue
+    require "SMTP" as notifications_smtp
+  }
+  component Loyalty <<BackendService>> {
+    portin "loyalty.trips" as loyalty_queue
+  }
+  component WarehouseETL <<BackendService>> {
+    portin "warehouse.all" as warehouse_queue
+  }
+  component AffiliateRelay <<BackendService>> {
+    portin "affiliates.trips" as affiliates_queue
+    require "Webhook" as affiliates_webhook
+  }
+  component SupportConsole <<WebApplication>> {
+    portin "support.cancellations" as support_queue
+  }
+  component ShuttlePlanner <<BackendService>> {
+    portin "shuttle.planning" as shuttle_queue
+  }
+}
+component MailRelay <<ExternalSystem>> {
+  provide "SMTP" as mail_smtp
+}
+component AffiliatePartners <<ExternalSystem>> {
+  provide "Webhook" as partners_webhook
+}
+trips_publish --> opc_publish
+notifications_queue -- trips : <<subscribe>> {binding = "trip.confirmed, trip.cancelled, trip.failed"}
+loyalty_queue -- trips : <<subscribe>> {binding = "trip.confirmed"}
+warehouse_queue -- trips : <<subscribe>> {binding = "#"}
+affiliates_queue -- trips : <<subscribe>> {binding = "trip.*"}
+support_queue -- trips : <<subscribe>> {binding = "trip.cancelled"}
+shuttle_queue -- trips : <<subscribe>> {binding = "supplier.shuttle.*"}
+mail_smtp --> notifications_smtp
+partners_webhook --> affiliates_webhook
+note top of trips
+trips is a topic exchange
+(deploy/broker.toml:4) in the message
+broker, which services reach over AMQP
+(deploy/services.toml:16).
+The OPC publishes trip.<status> and
+supplier.<kind>.<status> events
+(services/opc/events.py:12).
+In a binding key, * matches exactly one
+word and # matches zero or more words
+(infra/broker.py:48).
+Bindings:
+deploy/broker.toml:16 loyalty.trips
+deploy/broker.toml:21 warehouse.all
+deploy/broker.toml:26 affiliates.trips
+deploy/broker.toml:31 support.cancellations
+deploy/broker.toml:36 shuttle.planning
+services/notifications/consumers.py:25
+notifications.trips
+end note
+note bottom of OPC
+Key: UML 2.5.1 component diagram.
+Stereotypes from the Headliner
+architecture profile: «BackendService»,
+«WebApplication», «TopicExchange»,
+«ExternalSystem».
+Ball and socket: a synchronous call;
+the socket side calls and waits.
+«subscribe» {binding}: the exchange
+copies each event whose routing key
+matches the binding into the
+consumer's queue, named on its port.
+end note
+@layout
+OPC @pos(0, 470)
+trips @pos(330, 470)
+note:44 @pos(0, 106)
+Notifications @pos(1000, 0)
+Loyalty @pos(1000, 185)
+WarehouseETL @pos(1000, 370)
+AffiliateRelay @pos(1000, 555)
+SupportConsole @pos(1000, 740)
+ShuttlePlanner @pos(1000, 925)
+MailRelay @pos(1430, 0)
+AffiliatePartners @pos(1430, 555)
+OPC.opc_publish @pos(220, 530)
+trips.trips_publish @pos(330, 530)
+Notifications.notifications_queue @pos(1000, 70)
+Notifications.notifications_smtp @pos(1220, 50)
+MailRelay.mail_smtp @pos(1430, 50)
+Loyalty.loyalty_queue @pos(1000, 255)
+WarehouseETL.warehouse_queue @pos(1000, 440)
+AffiliateRelay.affiliates_queue @pos(1000, 625)
+AffiliateRelay.affiliates_webhook @pos(1220, 605)
+AffiliatePartners.partners_webhook @pos(1430, 605)
+SupportConsole.support_queue @pos(1000, 810)
+ShuttlePlanner.shuttle_queue @pos(1000, 995)
+@endlayout
+@enduml

@@ -1,0 +1,87 @@
+@startuml
+actor fan: Fan
+box "Trip Website"
+participant checkout: CheckoutController
+participant pricer: TripPricer
+participant guard: AvailabilityGuard
+end box
+box "Order Processing Center"
+participant po: PurchaseOrderService
+end box
+box "Other organizations" <<external>>
+participant bank: Bank
+participant boxOffice: BoxOffice
+participant experiences: ExperienceProvider
+end box
+note right of fan
+{Book now to Order received ≤ 2 s}
+end note
+fan -> checkout: submit(fan, cart, cardToken)
+activate checkout
+checkout -> bank: validate(cardToken, 0)
+activate bank
+bank --> checkout: valid
+deactivate bank
+note right of bank
+validate: 300 ms (stubs/bank.py:5).
+requires_valid_card makes this call
+before submit runs
+(services/website/payments.py:9,
+services/website/checkout.py:44).
+end note
+checkout -> pricer: price(cart)
+activate pricer
+loop [for each attendee]
+pricer -> boxOffice: quote(festivalId, ageGroup)
+activate boxOffice
+boxOffice --> pricer: price
+deactivate boxOffice
+end
+note right of boxOffice
+quote: 1,100 ms per call
+(stubs/box_office.py:9).
+The box office also quotes several
+passes in one call, quotes(festivalId,
+ageGroups): 400 ms
+(stubs/box_office.py:10,
+services/website/clients.py:40).
+end note
+pricer --> checkout: quote
+deactivate pricer
+checkout -> guard: check(cart)
+activate guard
+loop [for each experience]
+guard -> experiences: capacity(experienceId, count)
+activate experiences
+experiences --> guard: available
+deactivate experiences
+end
+note left of experiences
+capacity: 600 ms, 750 ms, and 900 ms
+for the three Lakeside Fest experiences
+(stubs/experiences.py:18,
+stubs/experiences.py:19,
+stubs/experiences.py:20).
+end note
+guard --> checkout
+deactivate guard
+checkout -> po: submit(tripOrder)
+activate po
+po --> checkout: orderId
+deactivate po
+note right of po
+submit: 200 ms
+(services/opc/service.py:27).
+Catalog DB queries, not drawn: 20 ms
+each, for the festival and each cart
+line (devstack.py:36).
+end note
+checkout --> fan: Order received
+deactivate checkout
+note right of fan
+Key: UML 2.5.1 sequence diagram.
+Filled arrowhead: synchronous call.
+Dashed arrow: reply.
+{…} in a note: a duration constraint.
+end note
+@enduml

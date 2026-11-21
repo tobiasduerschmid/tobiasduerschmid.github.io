@@ -39,6 +39,11 @@
   description: Software techniques that make systems perform tasks associated with human intelligence, such as classification, planning, natural-language processing, or code generation.
   related: [LLM]
 
+- term: AMQP
+  definition: Advanced Message Queuing Protocol
+  description: An open protocol for message brokers. Producers publish messages to exchanges, which copy each message into the queues whose bindings match it, and consumers read the messages from those queues.
+  related: [TCP]
+
 - term: API
   definition: Application Programming Interface
   description: A contract that lets one piece of software call another. APIs hide implementation details and expose a stable surface — function names, parameter types, and return values — that callers can depend on.
@@ -136,6 +141,11 @@
   description: A plain-text tabular data format where each record is a line and fields are separated by commas. CSV is common for imports, exports, spreadsheets, and simple data pipelines.
   related: [JSON, XML]
 
+- term: DB
+  definition: Database
+  description: An organized store of persistent data that services query and update, usually through a database management system. Component names such as Order DB name one running database.
+  related: [DBMS, SQL]
+
 - term: DBMS
   definition: Database Management System
   description: Software that stores, queries, indexes, and protects persistent data. A DBMS handles concerns such as transactions, concurrency, durability, and query planning.
@@ -165,6 +175,11 @@
   description: The in-memory tree representation of an HTML or XML document that scripts manipulate. Browser DOM APIs let JavaScript add, remove, and modify nodes.
   related: [HTML, CSS]
 
+- term: DSN
+  definition: Data Source Name
+  description: A string that tells a program how to reach a database, such as postgres://host/name. Services usually read it from configuration, so the connection does not appear in the code that opens it.
+  related: [DB, SQL]
+
 - term: EAFP
   definition: Easier to Ask Forgiveness than Permission
   description: A programming style that attempts an operation and handles a specific expected exception if it fails. Keep the protected operation narrow so unrelated failures are not hidden.
@@ -188,6 +203,11 @@
   definition: ECMAScript
   description: The standardized language underlying JavaScript. ES modules use import and export to share code between files.
   related: [JS]
+
+- term: ETL
+  definition: Extract, Transform, Load
+  description: A data pipeline that extracts records from operational systems, transforms them, and loads them into a reporting store such as a data warehouse.
+  related: [DB]
 
 - term: FTP
   definition: File Transfer Protocol
@@ -423,6 +443,10 @@
   description: A programming paradigm built around objects — bundles of state and behaviour — interacting through method calls. Inheritance, encapsulation, and polymorphism are its three classical pillars.
   related: [GoF, UML, MVC]
 
+- term: OPC
+  definition: Order Processing Center
+  description: In the Adventure Builder example of Documenting Software Architectures, and in Headliner, the festival-trip system of the UML design questions tutorial, the service that coordinates each order. It charges the customer and orders every part of the trip from its supplier.
+
 - term: ORM
   definition: Object-Relational Mapping
   description: A technique that translates between objects in code and rows in a relational database. ORMs let developers manipulate persistent data using language-native types instead of writing SQL by hand.
@@ -632,6 +656,11 @@
   description: A cryptographic protocol that provides authenticated, encrypted communication between two parties over a network. HTTPS is HTTP carried over TLS.
   related: [HTTP, HTTPS, SSH]
 
+- term: TOML
+  definition: Tom's Obvious, Minimal Language
+  description: A configuration file format of key-value pairs grouped into tables. Python 3.11 and later read it with the standard tomllib module.
+  related: [YAML, JSON]
+
 - term: TTL
   definition: Time To Live
   description: A limit on how long data should be considered valid or how far a network packet may travel. In DNS, TTL controls how long resolvers can cache an answer.
@@ -675,6 +704,10 @@
   definition: V8 JavaScript engine
   description: Google's JavaScript engine used by Chrome and Node.js. It compiles and runs JavaScript, including just-in-time optimization.
   related: [JS, JIT]
+
+- term: VIP
+  definition: Very Important Person
+  description: A premium tier of a service, such as a VIP shuttle that includes lounge access.
 
 - term: VM
   definition: Virtual Machine

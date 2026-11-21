@@ -1,0 +1,88 @@
+@startuml
+package services::opc::gateways {
+  abstract class SupplierGateway {
+    + {abstract} place(order)
+    + {abstract} cancel(order)
+    + {abstract} parse_invoice(payload)
+  }
+  class SupplierUnavailable
+  class BoxOfficeGateway {
+    + place(order)
+    + cancel(order)
+    + parse_invoice(payload)
+  }
+  class LodgingGateway {
+    + place(order)
+    + cancel(order)
+    + parse_invoice(payload)
+  }
+  class ShuttleGateway {
+    + place(order)
+    + cancel(order)
+    + parse_invoice(payload)
+  }
+  class ExperienceGateway {
+    + place(order)
+    + cancel(order)
+    + parse_invoice(payload)
+  }
+}
+package services::opc::partners {
+  class GlampingCoGateway {
+    + cancel(order)
+  }
+  class VipShuttleGateway {
+    + place(order)
+  }
+  class MeetAndGreetGateway {
+    + cancel(order)
+  }
+  class ManualCancellationRequired
+}
+BoxOfficeGateway --|> SupplierGateway
+LodgingGateway --|> SupplierGateway
+ShuttleGateway --|> SupplierGateway
+ExperienceGateway --|> SupplierGateway
+GlampingCoGateway --|> LodgingGateway
+VipShuttleGateway --|> ShuttleGateway
+MeetAndGreetGateway --|> ExperienceGateway
+SupplierGateway ..> SupplierUnavailable : raises
+GlampingCoGateway ..> ManualCancellationRequired : raises
+MeetAndGreetGateway ..> ManualCancellationRequired : raises
+note left of SupplierGateway.cancel
+"Raises SupplierUnavailable if
+the supplier cannot be reached, so
+the caller can try again later.
+Raises no other exception."
+(services/opc/gateways/base.py:37)
+end note
+note right of SupplierUnavailable
+Both exceptions extend Python's
+Exception
+(services/opc/gateways/base.py:10,
+services/opc/partners/errors.py:4).
+end note
+note right of ExperienceGateway
+Key: UML 2.5.1 class diagram.
+Hollow triangle: generalization.
+Italic: abstract class or operation.
+Each class lists the operations it
+defines itself.
+Dashed arrow named raises: the class
+raises that exception.
+end note
+@layout
+SupplierGateway @pos(390, 0)
+SupplierUnavailable @pos(720, 55)
+BoxOfficeGateway @pos(0, 250)
+LodgingGateway @pos(260, 250)
+ShuttleGateway @pos(520, 250)
+ExperienceGateway @pos(780, 250)
+GlampingCoGateway @pos(264, 520)
+VipShuttleGateway @pos(531, 520)
+MeetAndGreetGateway @pos(774, 520)
+ManualCancellationRequired @pos(120, 680)
+note:58 @pos(1040, 30)
+note:64 @pos(1040, 200)
+@endlayout
+@enduml
