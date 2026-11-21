@@ -35,7 +35,7 @@ The primary interactions should be between the Context and its current State obj
 ## UML Role Diagram
 
 <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
-layout landscape
+layout compact 1110x876
 class Context {
 	- state: State
 	+ request()

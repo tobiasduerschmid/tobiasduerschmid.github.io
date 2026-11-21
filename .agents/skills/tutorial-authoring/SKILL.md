@@ -609,6 +609,13 @@ Tutorial-specific diagram opportunities:
 
 NEVER use ASCII art. (See `diagrams` skill.)
 
+Static diagrams in `instructions:` render in the browser into the instruction
+pane, so a bare `layout compact` (right after `@startuml`, replacing any
+`layout landscape` line) is laid out for the pane's actual width, also in the
+instructions popout. Do not give it a size here. Use it when the drawing would
+otherwise be scaled down noticeably in the pane, and check the before/after
+pictures as described in `sebook-authoring` ("Compact layout in chapters").
+
 ### Length, pacing, and step granularity
 
 - **Each step ≈ 5–15 minutes** of student time. If a step grows beyond

@@ -9,6 +9,7 @@ For decades, software development was dominated by the Waterfall model, a sequen
 In Waterfall, feedback from the customer only appears at the very end — after months or years of work:
 
 <div class="uml-class-diagram-container" data-uml-type="state" data-uml-spec='@startuml
+layout compact 1110x876
 [*] --> Requirements
 Requirements --> Design : sign-off
 Design --> Implementation : sign-off
