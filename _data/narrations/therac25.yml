@@ -20,8 +20,8 @@ lesson:
   chapter: /SEBook/development_practices/therac-25.html
   name: "Therac-25: follow the evidence"
 speech:
-  voice: af_heart
-  speed: 0.95
+  voice: Fish Audio Drama 3 (cloned voice female6)
+  speed: 1.0
   pronunciations:
     Therac-25: Therack twenty five
     Class3: class three

@@ -28,8 +28,8 @@ lesson:
     BirthdaySplit hold one expense's choices. Both designs give identical labels and shares for
     every case.
 speech:
-  voice: af_heart
-  speed: 0.95
+  voice: Fish Audio Drama 3 (cloned voice female6)
+  speed: 1.0
   pronunciations:
     UML: U M L
     C++: C plus plus
@@ -40,6 +40,7 @@ speech:
     BirthdaySplit: birthday split
     ItemizedSplit: itemized split
     setStrategy: set strategy
+    "Consequences: interchangeable": "And the consequences: interchangeable"
 media:
   audio: /assets/audio/strategy-pattern.mp3
   captions: /assets/narration/strategy-pattern.vtt
