@@ -2,8 +2,8 @@
 
 The React reference page embeds a ten-minute, nine-scene lesson with 26 timed
 cues. It follows the Node.js introduction's dark stage, gold chapter stickers,
-outlined objects, readable code, and concrete execution traces. Kokoro provides
-synthetic narration without music; the published audio is a 24 kHz mono, 48 kbps
+outlined objects, readable code, and concrete execution traces. Fish Audio Drama 3
+provides synthetic narration without music; the published audio is a 24 kHz mono, 48 kbps
 MP3 (about 3.6 MB). No model or uncompressed audio is delivered to the browser.
 
 ## Teaching design
@@ -72,16 +72,15 @@ is dark in both themes; transcript and print follow the page's theme policy.
 
 ## Regeneration
 
-Use the same optional offline Kokoro environment as the Node.js lesson:
+Render with a Drama 3 server, as described in
+[Speech engines](narration-format.md#speech-engines):
 
 ```sh
-python scripts/render-explainer-narration.py --topic react \
-  --model /path/to/kokoro-v1.0.onnx \
-  --voices /path/to/voices-v1.0.bin
+python scripts/render-explainer-narration.py --topic react
 bundle exec jekyll build --incremental
 ```
 
-The renderer caches speech by text, voice and speed in `/tmp/react-kokoro-render`.
+The renderer caches each cue's speech in `~/.cache/sebook-narration/react`.
 Speech-only substitutions split camel-case identifiers into words and use
 `Javascript` and `Node JS`; JSX is left as one initialism to avoid separate
 heavy stress on every letter. Captions and code retain normal spelling.

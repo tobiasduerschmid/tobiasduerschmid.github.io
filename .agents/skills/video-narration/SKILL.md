@@ -26,7 +26,7 @@ Speech and teaching text belong in `_data/narrations/<topic>.yml`; animation
 configuration and state belong in `_data/narration_visuals/<topic>.json` and
 its referenced choreography assets. Use `kind: video`.
 
-A video narration is a 12 to 15 minute, Kokoro-voiced lesson that plays like a
+A video narration is a 12 to 15 minute, synthetically voiced lesson that plays like a
 video, with a knowledge check after each section. It shares its transport,
 checks, and reading and print views with the design-pattern lessons. Read
 [`docs/video-narration.md`](../../../docs/video-narration.md) for the
@@ -353,14 +353,15 @@ order, and do not report a tags test as complete PDF or full-site conformance.
 
 ## 7. Render, wire, verify
 
-Render with `scripts/render-explainer-narration.py --topic <topic>` (setup and
-the espeak-ng path workaround: the `design-pattern-narration` skill).
-Listen for abbreviations and symbols, and check doubtful words by their
-phonemes ("p.m." needs the spoken form `PM.`; see that skill’s section 7).
+Render with `scripts/render-explainer-narration.py --topic <topic>` and a
+running Drama 3 server (setup and review: `docs/narration-format.md#speech-engines`).
+Listen to every cue the renderer lists for review, and to abbreviations,
+symbols, and identifiers, which Whisper cannot check (see the
+`design-pattern-narration` skill's section 7).
 Run `node scripts/narration.js check <topic>`. Regenerate audio after changing
 `say`, pauses, voice, speed, pronunciation rules, or scene/cue order or IDs.
 The speech fingerprint excludes visual descriptions, navigation, and artwork;
-those edits need no audio generation. Unchanged spoken cues reuse the WAV cache. Follow "Adding a video narration" in
+those edits need no audio generation. Unchanged spoken cues reuse the per-cue cache. Follow "Adding a video narration" in
 `docs/video-narration.md`. Follow the Scrum timing and playback tests for every
 quiz boundary: at normal speed, at least two seconds pass after `speech_end`
 with the completed picture visible before the quiz opens, and playback stops

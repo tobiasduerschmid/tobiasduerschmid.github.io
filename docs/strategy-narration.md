@@ -74,13 +74,15 @@ Solution, Consequences):
 
 ## Regeneration and checks
 
-Render with the Kokoro setup from `docs/nodejs-animation.md`, including the
-espeak-ng short-path workaround in `docs/state-narration.md`:
+Render with a Drama 3 server, as described in
+[Speech engines](narration-format.md#speech-engines):
 
 ```sh
-python scripts/render-explainer-narration.py --topic strategy \
-  --model /path/to/kokoro-v1.0.onnx --voices /path/to/voices-v1.0.bin
+python scripts/render-explainer-narration.py --topic strategy
 ```
+
+Drama 3 dropped the "Consequences:" label of the summary in every take, so a
+speech-only pronunciation entry reads it as "And the consequences:".
 
 `node --test scripts/tests/strategy-narration.test.js` checks the storyboard,
 marks, timing, and quizzes, and runs both designs in every language against the

@@ -233,8 +233,9 @@ presence of tags alone is not proof of PDF or full-site conformance.
    `_data/narration_visuals/<topic>.json`, and optional quizzes. Follow
    `docs/narration-format.md`; discovery and registration are automatic.
 2. Validate with `python3 scripts/render-explainer-narration.py --topic <topic> --check`,
-   then render with `--model` and `--voices` pointing to the Kokoro installation.
-   Run `node scripts/narration.js check <topic>` after rendering.
+   then render with a running Drama 3 server (`docs/narration-format.md#speech-engines`)
+   and review the cues the renderer lists. Run `node scripts/narration.js check <topic>`
+   after rendering.
 3. For animation, add `assets/video-narration/<topic>.html` (front matter
    `layout: video-narration-stage`, `topic`, `sitemap: false`), the choreography,
    its kit, and its stage CSS, and list them under `presentation.animation`

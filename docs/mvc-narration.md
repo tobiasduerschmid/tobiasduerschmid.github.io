@@ -97,12 +97,11 @@ live separately in `_data/narration_visuals/mvc.json`.
 
 ## Regeneration and checks
 
-Render with the Kokoro setup from `docs/nodejs-animation.md`, and see
-`docs/state-narration.md` for the espeak-ng long-path workaround:
+Render with a Drama 3 server, as described in
+[Speech engines](narration-format.md#speech-engines):
 
 ```sh
-python scripts/render-explainer-narration.py --topic mvc \
-  --model /path/to/kokoro-v1.0.onnx --voices /path/to/voices-v1.0.bin
+python scripts/render-explainer-narration.py --topic mvc
 ```
 
 `node --test scripts/tests/mvc-narration.test.js` checks the storyboard,

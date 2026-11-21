@@ -128,7 +128,7 @@ that draw on one show it in their `source` field.
 
 `speech.pronunciations` spells out `UML`, `C++`, the class names `TextChannel` and
 `VoiceChannel`, the multiplicities `0..1` and `1..*`, and the noun `invite`, which
-Kokoro otherwise stresses like the verb. Every section ends with at least 2.5 s of
+the earlier Kokoro voice stressed like the verb. Every section ends with at least 2.5 s of
 silence before its check. Regenerate the audio after any change to `say`, pauses,
 pronunciations, or the order or IDs of scenes and cues; diagrams, notes, quizzes,
 and visual descriptions need no new audio.
