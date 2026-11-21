@@ -28,7 +28,7 @@ lesson:
     registrations stable during notification, and do not recursively edit from update. Exceptions
     stop notification. The simple example text keeps counts consistent across languages.
 speech:
-  voice: Fish Audio Drama 3 (cloned voice female6)
+  voice: drama3-female6
   speed: 1.0
   pronunciations:
     UML: U M L

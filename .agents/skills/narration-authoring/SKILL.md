@@ -189,11 +189,21 @@ representative saved PDFs and keep verification artifacts outside the repo.
    2.5 seconds of viewing silence before section checks, including the summary.
 2. Run `node scripts/narration.js compile <id>` and
    `python3 scripts/render-explainer-narration.py --topic <id> --check`.
-   These validate without loading Kokoro or writing media.
-3. To render, omit `--check` and provide `--model /path/kokoro.onnx` and
-   `--voices /path/voices.bin`. Use the existing installation and cache. Topic
-   discovery is automatic. Regenerate audio, captions, script, and timing together.
-4. Run `node scripts/narration.js check <id>`; omit the ID to validate all lessons.
+   These validate without loading a speech engine or writing media.
+3. To render, omit `--check`. `speech.voice` picks the engine through
+   `scripts/narration_speech/voices.py`: every lesson uses the registered Fish
+   Audio Drama 3 voice `drama3-female6` (speed must be 1), which needs a running
+   Drama 3 server and Whisper on Apple silicon; an unregistered ID is a Kokoro
+   voice needing `--model` and `--voices`. Setup and review are in
+   `docs/narration-format.md#speech-engines`. Topic discovery is automatic.
+   Regenerate audio, captions, script, and timing together; the per-cue cache in
+   `~/.cache/sebook-narration/<id>` keeps unchanged cues as published.
+4. Listen to every cue the renderer lists for review. Re-render a dropped or
+   repeated word with `--retake <scene>/<cue>`, or reword it for speech only
+   with a pronunciation entry when every take drops it. Whisper cannot hear a
+   mispronunciation, so also listen to identifiers, acronyms, and heteronyms.
+5. Run `node scripts/narration.js check <id>`; omit the ID to validate all lessons.
+   Changes to `scripts/narration_speech/` run `scripts/tests/test_narration_speech.py`.
 
 The fingerprint includes ordered scene/cue IDs, written speech, pauses, voice,
 speed, and pronunciation rules. Those changes require regeneration. Visual

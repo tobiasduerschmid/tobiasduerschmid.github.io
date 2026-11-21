@@ -1,0 +1,7 @@
+{
+  "engine": "drama3",
+  "name": "Fish Audio Drama 3, cloned voice female6",
+  "reference_audio": "reference.flac",
+  "reference_text": "One way to build it: plan the whole app up front, build for months, then launch. By then, students might want something else, and it's too late to change course. Scrum takes the other path: deliver a small, working piece every few weeks, learn from real users, and adjust.",
+  "direction": "[warm, enthusiastic, welcoming]"
+}

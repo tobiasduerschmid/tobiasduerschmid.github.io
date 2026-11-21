@@ -103,8 +103,8 @@ Citations appear in each cue's `source` field and are never spoken.
 
 `2:13` is spoken as "two thirteen", and the component and interface names are
 split into words. "Maya opens" picked up an intrusive *r*, so the trace says
-"Maya uses StudentWeb". Check new phrases with Kokoro's tokenizer as described
-in the `design-pattern-narration` skill.
+"Maya uses StudentWeb" (a choice made for the earlier Kokoro voice). Check new
+phrases by listening to the rendered cue and reading the renderer's review list.
 
 ## Checks
 

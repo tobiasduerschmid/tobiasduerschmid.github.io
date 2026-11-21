@@ -33,8 +33,8 @@ description: What the learner will investigate.
 audio: /assets/audio/example.mp3
 captions: /assets/narration/example.vtt
 script: /assets/narration/example.txt
-voice: af_heart
-speed: 0.95
+voice: drama3-female6
+speed: 1
 pronunciations: {}
 diagrams:
   first_evidence:

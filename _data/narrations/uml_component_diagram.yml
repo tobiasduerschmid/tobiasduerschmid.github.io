@@ -26,7 +26,7 @@ lesson:
     when_to_use: Choose the diagram
     mistakes: Common mistakes
 speech:
-  voice: Fish Audio Drama 3 (cloned voice female6)
+  voice: drama3-female6
   speed: 1.0
   pronunciations:
     "2:13": two thirteen
