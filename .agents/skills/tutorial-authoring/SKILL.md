@@ -2160,6 +2160,15 @@ other platforms retain `Ctrl`. This changes labels only, not key bindings.
   once per committed step load, after the readiness barrier; superseded and
   failed loads do not dispatch. `UMLTutorialEditor.loadStep` dispatches the
   same event. Page scripts that react to navigation listen for this event.
+  The Read Aloud button follows the player state: `updateBar()`, which runs
+  on every player change, renders it as **Stop** (`.is-reading`) while
+  speech plays or is paused and as **Read Aloud** otherwise. Its `aria-label`
+  starts with the visible label (WCAG 2.5.3), and its tooltip changes with
+  it. Speech starts asynchronously, so a click handler must not set the
+  label itself. The reading-state colors live in `css/tutorial.css`;
+  `_layouts/sebook.html` follows the same pattern ("Stop Reading", styled in
+  `css/sebook-theme.css` for both themes). `tests/read-aloud-button.spec.js`
+  covers both layouts.
 - **Confirmation dialogs** — `_includes/confirmation-dialog.html` loads the
   shared `js/confirmation-dialog.js` and `css/confirmation-dialog.css` once per
   page, including when the UML editor also uses it. Tutorial Reset, UML

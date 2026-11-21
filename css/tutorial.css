@@ -3989,6 +3989,12 @@ body.tutorial-layout #navnav .navbar-right > #tts-read-btn {
   border-radius: var(--radius-md, 8px) !important;
 }
 
+/* While Read Aloud reads, a red tint marks the button that stops it. The
+   navbar is dark in both themes, and print hides it. */
+body.tutorial-layout #navnav .navbar-right > #tts-read-btn.is-reading {
+  background: rgba(200, 50, 50, 0.3);
+}
+
 /* ───────────────────────────────────────────
    Responsive
 ─────────────────────────────────────────── */

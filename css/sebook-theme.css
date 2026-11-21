@@ -884,6 +884,18 @@ body.sebook-layout #tts-read-btn {
   white-space: nowrap;
 }
 
+/* While reading, the button says "Stop Reading" in red. Print hides it. */
+body.sebook-layout #tts-read-btn.is-reading {
+  border-color: #c0392b;
+  color: #c0392b;
+}
+
+/* Out-ranks the dark-mode blue that portfolio.css forces on this button. */
+html.dark-mode body.sebook-layout #tts-read-btn.is-reading {
+  border-color: #ff8a85 !important;
+  color: #ff8a85 !important;
+}
+
 .tutorial-navbar-header,
 .tutorial-back-link,
 .tutorial-navbar-title,

@@ -724,6 +724,20 @@
           });
         });
 
+        // The button names what it does now. Speech-input users say its
+        // visible label, so the accessible name starts with that label.
+        var readButtonShowsStop = false;
+        function renderReadButton(reading) {
+          if (reading === readButtonShowsStop) return;
+          readButtonShowsStop = reading;
+          readBtn.innerHTML = reading
+            ? '<i class="fa fa-stop" aria-hidden="true"></i> Stop'
+            : '<i class="fa fa-volume-up" aria-hidden="true"></i> Read Aloud';
+          readBtn.setAttribute('aria-label', reading ? 'Stop reading the current step aloud' : 'Read Aloud: read current step aloud');
+          readBtn.setAttribute('data-original-title', reading ? 'Stop reading aloud' : 'Read current step aloud');
+          readBtn.classList.toggle('is-reading', reading);
+        }
+
         function updateBar() {
           var speaking = TTSPlayer.isSpeaking();
           var paused   = TTSPlayer.isPaused();
@@ -741,11 +755,7 @@
             playPauseBtn.setAttribute('aria-pressed', paused ? 'false' : 'true');
           }
           if (rateDisplay) rateDisplay.textContent = TTSPlayer.rateLabel();
-          if (!speaking && !paused) {
-            readBtn.innerHTML = '<i class="fa fa-volume-up" aria-hidden="true"></i> Read Aloud';
-            readBtn.style.background = 'none';
-            readBtn.style.color = '';
-          }
+          renderReadButton(speaking || paused);
         }
 
         readBtn.addEventListener('click', function () {
@@ -760,9 +770,6 @@
             : TTSPlayer.extractText(document.querySelector('.tutorial-page'));
           if (!text) return;
 
-          readBtn.innerHTML = '<i class="fa fa-stop" aria-hidden="true"></i> Stop';
-          readBtn.style.background = 'rgba(200,50,50,0.3)';
-          readBtn.style.color = '#f99';
           TTSPlayer.speak(text, { onUpdate: updateBar, onEnd: updateBar });
           updateBar();
         });

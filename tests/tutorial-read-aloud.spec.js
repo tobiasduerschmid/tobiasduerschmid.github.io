@@ -1,33 +1,10 @@
 // @ts-check
 const { test, expect } = require('@playwright/test');
 const { loadTutorialConfig, expectActiveStep, clickStep } = require('./tutorial-helpers');
+const { installSpeechEngine } = require('./speech-synthesis-fake');
 
 const URL = '/SEBook/verification/tla-tutorial';
 const tutorial = loadTutorialConfig('tla');
-
-// Headless browsers have no dependable voices. This engine keeps reading the
-// queued step text until it is cancelled, like a long lesson read aloud.
-async function installSpeechEngine(page) {
-  await page.addInitScript(() => {
-    const queue = [];
-    const engine = {
-      get speaking() { return queue.length > 0; },
-      pending: false,
-      paused: false,
-      getVoices: () => [],
-      addEventListener() {},
-      removeEventListener() {},
-      speak(utterance) {
-        queue.push(utterance);
-        if (queue.length === 1) setTimeout(() => utterance.onstart && utterance.onstart());
-      },
-      cancel() { queue.length = 0; },
-      pause() { this.paused = true; },
-      resume() { this.paused = false; },
-    };
-    Object.defineProperty(window, 'speechSynthesis', { configurable: true, get: () => engine });
-  });
-}
 
 test('read-aloud stops when the learner moves to another step', async ({ page }) => {
   await installSpeechEngine(page);
