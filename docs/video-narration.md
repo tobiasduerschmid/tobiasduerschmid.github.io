@@ -75,6 +75,15 @@ keys, 0 to 9, C, and F). They find the video, control bar, and settings
 through the song player's class hooks, which the shared includes add beside
 their own classes. Keys typed in a knowledge check stay with the quiz.
 
+The final quiz retains its feedback and results until **Continue to song**
+replaces the narration surface with the chapter's explicitly paired song
+inside the same player frame. **Previous song** restores the completed
+narration with playback paused. Both directions keep fullscreen active, as
+in the playlist; inline transitions replace the frame contents without
+scrolling to another player. Scrum pairs its song include
+with `narration="scrum-video"`; the shared lifecycle and fullscreen transitions
+are documented in `docs/narration-format.md`.
+
 Full screen keeps a horizontal, two-level roadmap across the top on laptops
 and phones. Each level scrolls sideways when its labels do not fit; it never
 becomes a sidebar or shrinks the text. The inline scene title and task remain

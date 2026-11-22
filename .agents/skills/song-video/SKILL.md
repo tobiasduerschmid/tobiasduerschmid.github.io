@@ -26,6 +26,18 @@ thumbnail its card shows an empty grey box, so before a song ships:
 4. Commit the WebP with the song. Re-export it whenever the scene's art
    changes.
 
+## Songs paired with a narration
+
+On a chapter page containing both a narration and its corresponding song,
+the song video is the destination after the narration's final knowledge-check
+quiz is completed (for example, Scrum → *Inspect and Adapt*). Preserve this
+handoff when changing song embeds or players. Follow the shared
+[narration completion rule](../narration-authoring/SKILL.md#transition-from-narration-to-the-chapter-song)
+for feedback, explicit player pairing, playback, and keyboard focus. After
+this handoff, **Previous song** restores the completed narration inside the
+same frame, with song playback stopped. Both transitions retain fullscreen;
+inline transitions replace the frame contents without scrolling elsewhere.
+
 ## Character anatomy and object handling
 
 When changing character art or motion, follow the required

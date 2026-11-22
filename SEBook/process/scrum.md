@@ -68,7 +68,7 @@ The retrospective's arrow back to planning is the engine of empiricism: each cyc
 
 Before you press play, write one sentence: who is the boss of a Scrum Team? Keep it, and correct it afterwards.
 
-{% include song-video.html song=site.data.songs.inspect_and_adapt id="scrum-song" %}
+{% include song-video.html song=site.data.songs.inspect_and_adapt id="scrum-song" narration="scrum-video" %}
 
 # Scaling Scrum with SAFe
 When a product is too massive for a single Scrum Team (typically 10 or fewer people, per the 2020 Scrum Guide), organizations often use the Scaled Agile Framework (SAFe). SAFe introduces the Agile Release Train (ART)—a "team of teams" that synchronizes their sprints. It operates on Program Increments (PI), typically lasting 8–12 weeks, which align multiple teams toward quarterly goals. While SAFe provides predictability for Fortune 500 companies, critics sometimes call it "Scrum-but-for-managers" because it can reduce individual team autonomy through heavy planning requirements.

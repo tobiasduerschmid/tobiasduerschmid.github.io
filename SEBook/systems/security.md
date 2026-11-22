@@ -477,7 +477,7 @@ The proposed trust boundaries are teaching designs derived from the attack path,
 
 Before you press play, write one sentence: a login form passes the password straight into its SQL query. Which CIA property is at risk, and why isn't hiding the source code a fix?
 
-{% include song-video.html song=site.data.songs.design_it_in id="security-song" %}
+{% include song-video.html song=site.data.songs.design_it_in id="security-song" narration="huggingface2026-case-study" %}
 
 * The **CIA triad** classifies security goals into three properties: **Confidentiality** (only authorized users can read), **Integrity** (only authorized users can modify), and **Availability** (the system serves legitimate clients when needed). Every breach is a violation of one or more of these.
 * **SQL injection (SQLi)** treats user-supplied strings as SQL code by string-concatenating them into queries. The fix is **prepared statements / parameterized queries**, which let the database parse the SQL once and bind values separately. Don't roll your own escaping.

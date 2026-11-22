@@ -192,6 +192,12 @@
       fitScene();
       return;
     }
+    if (event.data?.type === 'song-player:continue') {
+      playlistControls.update({ previous: true, next: false });
+      player.querySelector('.song-player-play').focus({ preventScroll: true });
+      void controls.play();
+      return;
+    }
     if (event.data?.type === 'song-player:pause') {
       tracks.pause();
       return;
