@@ -1,0 +1,98 @@
+{%- comment -%}
+  The C4 editor embed (spec §10). js/c4-editor-site.js mounts ArchUMLC4Editor on every [data-c4-editor] element and
+  reads its JSON configuration; without JavaScript the reader keeps the fallback: the model as a figure and as YAML.
+
+  Parameters:
+    model       file name in _includes/c4-models/ without .yml, or "blank" (default: course-registration)
+    view        view selector to open first (optional; the model's default view otherwise)
+    profile     "novice" (default) or "expert"
+    task        what the reader should do, shown above the editor (optional)
+    size        "compact", "regular" (default), or "tall"
+    standalone  "true" only on /SEBook/tools/c4-editor: the browser draft (c4-editor-draft), the "Open in the C4 editor"
+                fragment handoff, the example chooser (course registration, campus-booking starter, blank), and the
+                profile switch. Chapter embeds keep their edits in memory only, and so does this page where the combined
+                book (layout sebook-combined) renders it.
+
+  The page loads the scripts with front matter `c4: true` and `c4_editor: true`. The JSON is written with every `<`
+  as \u003c, so model text cannot close the script element.
+{%- endcomment -%}
+{%- assign c4_editor_count = c4_editor_count | plus: 1 -%}
+{%- assign c4e_id = 'c4-editor-embed-' | append: c4_editor_count -%}
+{%- assign c4e_model = include.model | default: 'course-registration' -%}
+{%- assign c4e_profile = include.profile | default: 'novice' -%}
+{%- assign c4e_size = include.size | default: 'regular' -%}
+{%- assign c4e_standalone = false -%}
+{%- comment -%}The combined book (/SEBook/all.html) renders the editor page inside itself: there it is an in-memory embed.{%- endcomment -%}
+{%- if include.standalone == true or include.standalone == 'true' -%}{%- unless page.layout == 'sebook-combined' -%}{%- assign c4e_standalone = true -%}{%- endunless -%}{%- endif -%}
+{%- capture c4e_blank -%}schema: c4-design/1
+name: My design
+{% endcapture -%}
+{%- if c4e_model == 'blank' -%}
+  {%- assign c4e_text = c4e_blank -%}
+{%- else -%}
+  {%- capture c4e_text -%}{% include c4-models/{{ c4e_model }}.yml %}{%- endcapture -%}
+{%- endif -%}
+{%- capture c4e_figure_spec -%}{% if include.view %}view: {{ include.view }}
+{% endif %}{{ c4e_text }}{%- endcapture -%}
+<div class="c4-editor-embed c4-editor-embed--{{ c4e_size }}{% if c4e_standalone %} c4-editor-embed--standalone{% endif %}" id="{{ c4e_id }}" data-c4-editor>
+<script type="application/json" data-c4-editor-config>
+{
+  "text": {{ c4e_text | jsonify | replace: '<', '\u003c' }},
+  "view": {{ include.view | jsonify | replace: '<', '\u003c' }},
+  "profile": {{ c4e_profile | jsonify }},
+  "size": {{ c4e_size | jsonify }},
+  "standalone": {{ c4e_standalone | jsonify }}{% if c4e_standalone %},
+  "examples": [
+{%- assign c4e_examples = 'course-registration|Course registration (worked example),campus-booking-starter|Campus room booking (starter),blank|Blank model' | split: ',' -%}
+{%- for c4e_example in c4e_examples -%}
+  {%- assign c4e_example_parts = c4e_example | split: '|' -%}
+  {%- assign c4e_example_id = c4e_example_parts[0] -%}
+  {%- if c4e_example_id == 'blank' -%}
+    {%- assign c4e_example_text = c4e_blank -%}
+  {%- else -%}
+    {%- capture c4e_example_text -%}{% include c4-models/{{ c4e_example_id }}.yml %}{%- endcapture -%}
+  {%- endif %}
+    {"id": {{ c4e_example_id | jsonify }}, "label": {{ c4e_example_parts[1] | jsonify }}, "text": {{ c4e_example_text | jsonify | replace: '<', '\u003c' }}}{% unless forloop.last %},{% endunless %}
+{%- endfor %}
+  ]{% endif %}
+}
+</script>
+{%- if include.task %}
+<p class="c4-editor-embed__task"><strong>Task:</strong> {{ include.task | escape }}</p>
+{%- endif %}
+{%- if c4e_standalone %}
+<div class="c4-editor-embed__controls" data-c4-editor-controls hidden>
+  <div class="c4-editor-embed__control">
+    <label for="{{ c4e_id }}-example">Example</label>
+    <select id="{{ c4e_id }}-example" data-c4-editor-example></select>
+    <button type="button" class="c4-editor-embed__button" data-c4-editor-load-example>Load example</button>
+  </div>
+  <div class="c4-editor-embed__control">
+    <label for="{{ c4e_id }}-profile">Profile</label>
+    <select id="{{ c4e_id }}-profile" data-c4-editor-profile aria-describedby="{{ c4e_id }}-profile-hint">
+      <option value="novice">Novice: definitions, sentence frames, and a guided start</option>
+      <option value="expert">Expert: every element type and every check</option>
+    </select>
+    <p class="c4-editor-embed__hint" id="{{ c4e_id }}-profile-hint">Switching keeps your model; undo history starts again.</p>
+  </div>
+</div>
+<div class="c4-editor-embed__notice" data-c4-editor-notice role="status"></div>
+<section class="c4-editor-embed__prompt" data-c4-editor-handoff aria-labelledby="{{ c4e_id }}-handoff-title" hidden>
+  <h2 class="c4-editor-embed__prompt-title" id="{{ c4e_id }}-handoff-title">You also have a saved draft</h2>
+  <p data-c4-editor-handoff-message>The editor shows the model from the link you followed. This browser also keeps a draft from an earlier visit. Your edits are not saved until you choose what happens to that draft.</p>
+  <div class="c4-editor-embed__prompt-actions">
+    <button type="button" class="c4-editor-embed__button" data-c4-editor-handoff-choice="replace">Replace draft</button>
+    <button type="button" class="c4-editor-embed__button" data-c4-editor-handoff-choice="keep">Keep draft</button>
+    <button type="button" class="c4-editor-embed__button" data-c4-editor-handoff-choice="download">Download draft first</button>
+  </div>
+</section>
+{%- endif %}
+<div class="c4-editor-embed__fallback" data-c4-editor-fallback>
+  <p>The interactive editor needs JavaScript. Here is the model as a figure and as YAML source.</p>
+  <div data-uml-type="c4" data-uml-spec="{{ c4e_figure_spec | escape }}"></div>
+  <details class="c4-editor-embed__source">
+    <summary>YAML source</summary>
+    <pre><code>{{ c4e_text | escape }}</code></pre>
+  </details>
+</div>
+</div>

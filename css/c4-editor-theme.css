@@ -1,0 +1,268 @@
+/*
+ * The site's theme for the C4 editor (spec §3.4 Theming, §9.4) and the SEBook embed around it.
+ *
+ * js/ArchUML/css/c4-editor.css owns the editor's layout and its --c4-ui-* defaults; this file maps the SEBook
+ * palette onto those tokens, styles what the site adds (the embed's task, the standalone page's controls, notices
+ * and draft choice, and the YAML source editor), and keeps print
+ * light. Loaded after c4-editor.css and before print-light.css (_includes/head.html, page flag c4_editor).
+ * Sizes are em or inherited, never rem: on this site 1rem is 10 px.
+ */
+
+/* ---- Tokens: the SEBook palette on the editor --------------------------------------------------------------- */
+
+.c4-editor {
+  --c4-ui-surface: var(--sebook-surface-soft, #f7fbff);
+  --c4-ui-control-hover-bg: var(--sebook-button-bg-hover, #eef7ff);
+  /* #1e5c8a on white: 6.9:1, on the soft surface 6.6:1. */
+  --c4-ui-accent: var(--sebook-blue-dark, #1e5c8a);
+  --c4-ui-link: var(--sebook-blue-dark, #1e5c8a);
+  --c4-ui-focus: var(--sebook-blue, #2774ae);
+}
+
+html.dark-mode .c4-editor {
+  --c4-ui-bg: var(--sebook-surface-soft, #0f1722);
+  --c4-ui-surface: var(--sebook-surface, #111827);
+  --c4-ui-control-bg: var(--sebook-button-bg, #101b28);
+  --c4-ui-control-hover-bg: var(--sebook-button-bg-hover, #17324d);
+  /* #8bb8e8 on #111827: 8.6:1; the text on it (--c4-ui-on-accent, #0a0a14) reaches 8.9:1. */
+  --c4-ui-accent: var(--sebook-blue, #8bb8e8);
+  --c4-ui-link: var(--sebook-blue, #8bb8e8);
+  --c4-ui-focus: var(--sebook-gold, #ffd100);
+}
+
+/* Relationship labels on the canvas sit on the canvas colour: the dark theme draws the drawing through
+   invert(1) hue-rotate(180deg) (css/uml-diagram.css), and #ededed is the colour that filter turns into the dark
+   canvas, --c4-ui-canvas-bg #121212. Screen only: print draws on white without the filter. */
+@media screen {
+  html.dark-mode .c4-editor .c4-editor__diagram {
+    --c4-label-backdrop: #ededed;
+  }
+}
+
+/* The diagram editor's in-place editors over an edited UML view (UML-view editing spec §7.8): HTML outside the drawing,
+   so the invert filter never reaches them, and they take the editor's tokens of each theme. The tokens switch with
+   html.dark-mode, so one mapping serves both themes; print hides the hit layer, the marks, and the in-place editors
+   (the print rules below and js/ArchUML/css/diagram-editor.css). */
+.c4-editor {
+  --uml-edit-inline-bg: var(--c4-ui-field, #ffffff);
+  --uml-edit-inline-text: var(--c4-ui-field-text, #1f2328);
+  --uml-edit-inline-border: var(--c4-ui-focus, #2774ae);
+}
+
+/* The site's Bootstrap styles every <output> (black, 15 px, padded); the editor's readouts take its own text. */
+.c4-editor output {
+  padding-top: 0;
+  font-size: inherit;
+  line-height: inherit;
+  color: inherit;
+}
+
+/* ---- The embed --------------------------------------------------------------------------------------------- */
+
+.c4-editor-embed {
+  --c4-embed-text: #1f2328;
+  --c4-embed-muted: #4b5563;
+  --c4-embed-border: #6b7280;
+  --c4-embed-surface: #f7fbff;
+  --c4-embed-field-bg: #ffffff;
+  --c4-embed-accent: #1e5c8a;
+  --c4-embed-focus: #2774ae;
+  margin-block: 1.5em;
+}
+
+html.dark-mode .c4-editor-embed {
+  --c4-embed-text: #e6edf3;
+  --c4-embed-muted: #b0b8c4;
+  --c4-embed-border: #8b949e;
+  --c4-embed-surface: #111827;
+  --c4-embed-field-bg: #0f1722;
+  --c4-embed-accent: #8bb8e8;
+  --c4-embed-focus: #ffd100;
+}
+
+.c4-editor-embed__task {
+  border-inline-start: 0.25em solid var(--c4-embed-accent);
+  padding-inline-start: 0.75em;
+}
+
+.c4-editor-embed__controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0.75em 2em;
+  margin-block-end: 0.75em;
+}
+
+.c4-editor-embed__controls[hidden] {
+  display: none;
+}
+
+.c4-editor-embed__control {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5em;
+  max-inline-size: 100%;
+}
+
+.c4-editor-embed__control label {
+  font-weight: 600;
+}
+
+.c4-editor-embed__control select,
+.c4-editor-embed__button {
+  font: inherit;
+  min-block-size: 2.25em;
+  max-inline-size: 100%;
+  color: var(--c4-embed-text);
+  background: var(--c4-embed-field-bg);
+  border: 1px solid var(--c4-embed-border);
+  border-radius: 0.25em;
+  scroll-margin-block: 96px 5em;
+}
+
+.c4-editor-embed__button {
+  padding: 0.25em 0.75em;
+  cursor: pointer;
+}
+
+.c4-editor-embed__button:hover {
+  background: var(--c4-embed-surface);
+  border-color: var(--c4-embed-accent);
+}
+
+.c4-editor-embed__control select:focus-visible,
+.c4-editor-embed__button:focus-visible {
+  outline: 3px solid var(--c4-embed-focus);
+  outline-offset: 2px;
+}
+
+.c4-editor-embed__hint {
+  flex-basis: 100%;
+  margin: 0;
+  font-size: 0.9em;
+  color: var(--c4-embed-muted);
+}
+
+.c4-editor-embed__notice:not(:empty),
+.c4-editor-embed__prompt {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5em 1em;
+  margin-block-end: 0.75em;
+  padding: 0.75em 1em;
+  color: var(--c4-embed-text);
+  background: var(--c4-embed-surface);
+  border: 1px solid var(--c4-embed-border);
+  border-inline-start: 0.3em solid var(--c4-embed-accent);
+  border-radius: 0.25em;
+}
+
+.c4-editor-embed__prompt[hidden] {
+  display: none;
+}
+
+.c4-editor-embed__notice-text,
+.c4-editor-embed__prompt > p {
+  flex: 1 1 20em;
+  margin: 0;
+}
+
+.c4-editor-embed__prompt-title {
+  flex-basis: 100%;
+  margin: 0;
+}
+
+.c4-editor-embed__prompt-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5em;
+}
+
+.c4-editor-embed__error {
+  font-weight: 600;
+}
+
+.c4-editor-embed__source pre {
+  max-block-size: 30em;
+  overflow: auto;
+}
+
+/* ---- The YAML source editor (a textarea until Monaco replaces it) ------------------------------------------- */
+
+/* A <label> while the textarea shows, then a <p> caption above Monaco: the same look either way. */
+.c4-editor-site-source__label {
+  display: block;
+  margin-block: 0 0.25em;
+  font-weight: 600;
+}
+
+.c4-editor-site-source__text {
+  display: block;
+  inline-size: 100%;
+  min-block-size: 20em;
+  padding: 0.5em;
+  font-family: var(--font-family-mono, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace);
+  font-size: inherit;
+  line-height: 1.5;
+  tab-size: 2;
+  color: var(--c4-ui-text, #1f2328);
+  background: var(--c4-ui-control-bg, #ffffff);
+  border: 1px solid var(--c4-ui-border, #6b7280);
+  border-radius: 0.25em;
+  scroll-margin-block: 96px 5em;
+}
+
+.c4-editor-site-source__text:focus-visible {
+  outline: var(--c4-ui-focus-width, 3px) solid var(--c4-ui-focus, #2774ae);
+  outline-offset: var(--c4-ui-focus-offset, 2px);
+}
+
+.c4-editor-site-source__text[hidden],
+.c4-editor-site-source__monaco[hidden],
+.c4-editor-site-source__problems[hidden] {
+  display: none;
+}
+
+.c4-editor-site-source__monaco {
+  block-size: 24em;
+  border: 1px solid var(--c4-ui-border, #6b7280);
+}
+
+.c4-editor-site-source__problems {
+  margin-block: 0.5em 0;
+  padding-inline-start: 1.25em;
+}
+
+/* ---- Print: always light, no controls (spec §9.4; print-light.css loads after this file) ------------------- */
+
+@media print {
+  .c4-editor-embed__controls,
+  .c4-editor-embed__notice,
+  .c4-editor-embed__prompt,
+  .c4-editor-site-source {
+    display: none !important;
+  }
+
+  /* The pointer's hit targets and the marks over an edited UML view are no part of the printed drawing. */
+  .c4-editor .uml-pg-edit-layer {
+    display: none !important;
+  }
+
+  html.dark-mode .c4-editor,
+  html.dark-mode .c4-editor-embed {
+    --c4-ui-bg: #ffffff;
+    --c4-ui-surface: #ffffff;
+    --c4-ui-text: #111111;
+    --c4-ui-text-muted: #333333;
+    --c4-ui-border: #6b7280;
+    --c4-ui-control-bg: #ffffff;
+    --c4-ui-canvas-bg: #ffffff;
+    --c4-embed-text: #111111;
+    --c4-embed-muted: #333333;
+    --c4-embed-surface: #ffffff;
+    --c4-embed-field-bg: #ffffff;
+    --c4-embed-accent: #1e5c8a;
+  }
+}
