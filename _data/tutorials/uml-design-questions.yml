@@ -4036,6 +4036,7 @@ shared_files:
 x-diagrams:
   capstone_cancellation: &d_capstone_cancellation |-
     @startuml
+    layout compact
     actor fan: Fan
     participant web: TripWebsite
     box "Order Processing Center"
@@ -4209,6 +4210,7 @@ x-diagrams:
     @enduml
   capstone_trip_items: &d_capstone_trip_items |-
     @startuml
+    layout compact
     package services::opc::model {
       abstract class TripItem {
         + {abstract} price()
@@ -4257,14 +4259,6 @@ x-diagrams:
     Each class lists the operations it
     defines itself.
     end note
-    @layout
-    TripItem @pos(519, 0)
-    FestivalPass @pos(0, 260)
-    LodgingStay @pos(346, 260)
-    Experience @pos(692, 260)
-    TransportItem @pos(1038, 260)
-    ShuttleRide @pos(1115, 460)
-    @endlayout
     @enduml
   capstone_website_connections: &d_capstone_website_connections |-
     @startuml
@@ -4346,6 +4340,7 @@ x-diagrams:
     @enduml
   checkout_latency: &d_checkout_latency |-
     @startuml
+    layout compact
     actor fan: Fan
     box "Trip Website"
     participant checkout: CheckoutController
@@ -4434,6 +4429,7 @@ x-diagrams:
     @enduml
   data_model: &d_data_model |-
     @startuml
+    layout compact
     package services::opc::model {
       class Fan
       class TripOrder
@@ -4494,20 +4490,6 @@ x-diagrams:
     {…} in a note: a constraint the
     code enforces.
     end note
-    @layout
-    Fan @pos(426, 0)
-    Attendee @pos(160, 220)
-    TripOrder @pos(420, 220)
-    Payment @pos(740, 220)
-    TripItem @pos(400, 470)
-    SupplierOrder @pos(760, 482)
-    FestivalPass @pos(40, 760)
-    LodgingStay @pos(280, 760)
-    Experience @pos(520, 760)
-    TransportItem @pos(800, 760)
-    ShuttleRide @pos(811, 970)
-    note:44 @pos(32, 528)
-    @endlayout
     @enduml
   event_consumers: &d_event_consumers |-
     @startuml
@@ -4615,6 +4597,7 @@ x-diagrams:
     @enduml
   failed_trips: &d_failed_trips |-
     @startuml
+    layout compact
     participant web: TripWebsite
     box "Order Processing Center"
     participant po: PurchaseOrderService
@@ -4692,6 +4675,7 @@ x-diagrams:
     @enduml
   outages_imports: &d_outages_imports |-
     @startuml
+    layout compact
     package services::opc {
       class Intake
       class TripEvents
@@ -4735,20 +4719,6 @@ x-diagrams:
     Mailer: services/notifications/mailer.py:9
     TripNotifications: services/notifications/consumers.py:26
     end note
-    @layout
-    Intake @pos(0, 0)
-    TripEvents @pos(150, 0)
-    SupplierGateway @pos(330, 0)
-    BankClient @pos(600, 0)
-    OpcClient @pos(780, 0)
-    Mailer @pos(1010, 0)
-    TripNotifications @pos(1160, 0)
-    Broker @pos(150, 420)
-    ServiceClient @pos(640, 420)
-    Message @pos(1180, 420)
-    note:26 @pos(132, 556)
-    note:34 @pos(640, 556)
-    @endlayout
     @enduml
   outages: &d_outages |-
     @startuml
