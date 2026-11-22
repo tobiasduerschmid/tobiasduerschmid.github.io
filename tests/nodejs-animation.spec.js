@@ -96,7 +96,8 @@ test('keyboard seeking reaches the last scene and replay returns to the start', 
   await seek.press('End');
   await expect(animation.getByRole('heading', { name: 'Predict the output' })).toBeVisible();
   await expect(animation.getByRole('region', { name: 'Narration' })).toContainText('A, C, B');
-  await animation.getByRole('button', { name: 'Restart narration' }).click();
+  // 0 jumps to the start, as in the music player.
+  await seek.press('0');
   await expect(seek).toHaveValue('0');
   await expect(animation.getByRole('heading', { name: 'JavaScript beyond the browser' })).toBeVisible();
 });

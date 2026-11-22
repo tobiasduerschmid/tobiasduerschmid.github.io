@@ -77,10 +77,11 @@ for (const { topic, url } of cases) {
     test('review navigation reconstructs each cue without requiring earlier decisions or audio', async ({ page }) => {
       await page.goto(url);
       const study = caseStudy(page);
-      await openPlayerSettings(study);
       // Reverse order catches state left behind by a later scene as well as forward navigation.
       for (let index = story.scenes.length - 1; index >= 0; index--) {
         const scene = story.scenes[index];
+        // Settings close once focus moves to another control, as in the music player.
+        await openPlayerSettings(study);
         await study.getByRole('combobox', { name: 'Review a scene' }).selectOption(String(index));
         await expect(study.getByRole('heading', { name: scene.title, exact: true })).toBeVisible();
         for (const [cueIndex, cue] of scene.cues.entries()) {

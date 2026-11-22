@@ -2,9 +2,7 @@
    tokens with the narration transport and code: the parts strip, diagrams,
    summary cards, and knowledge checks. Pattern topic illustrations live in
    css/<topic>-narration.css; the video screen lives in css/video-narration.css. */
-.narrated-lesson .np-language { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5em; margin: 0; font: inherit; }
-.narrated-lesson .np-language select { font: inherit; color: var(--nja-text); background: var(--nja-input); border: 2px solid var(--nja-line); border-radius: 4px; min-height: 2.4em; padding: 0.3em; }
-.narrated-lesson :is(.np-control-help, .sr-only) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.narrated-lesson .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 /* Where a scene sits in the pattern description: the current part is bold,
    filled, and outlined, not distinguished by color alone. */
 .narrated-lesson .np-parts { display: flex; flex-wrap: wrap; gap: 0.3em; margin: 0; padding: 0; list-style: none; }
@@ -77,7 +75,6 @@
   .narrated-lesson .nja-transcript-scene { break-inside: auto; }
 }
 
-.narrated-lesson .nja-controls .np-review-check { display: block; width: auto; height: auto; min-height: 2.4em; padding: 0.4em 0.7em; }
 .narrated-lesson .nja-art pre { max-height: 24em; overflow-y: auto; scrollbar-color: var(--nja-line) var(--nja-code-bg); }
 .narrated-lesson .nja-art pre:focus-visible { outline: 3px solid var(--nja-cyan); outline-offset: -3px; }
 @media print {

@@ -41,38 +41,38 @@
         <div class="song-player-toolbar">
           <div class="song-player-playback-controls">
             <button type="button" class="song-player-play" aria-label="Play song" aria-keyshortcuts="k">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path class="song-player-play-icon" d="M7 4 20 12 7 20Z"/><path class="song-player-pause-icon" d="M6 4H10V20H6ZM14 4H18V20H14Z"/></svg>
+              {% include player-icon.html name='play' %}
             </button>
             <button type="button" class="song-player-back song-player-skip-button" aria-label="Back 5 seconds" aria-keyshortcuts="ArrowLeft" disabled>
-              <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M4 4V12H12M4 12A12 12 0 1 1 8 25"/></svg><span aria-hidden="true">5</span>
+              {% include player-icon.html name='back' %}<span aria-hidden="true">5</span>
             </button>
             <button type="button" class="song-player-forward song-player-skip-button" aria-label="Forward 5 seconds" aria-keyshortcuts="ArrowRight" disabled>
-              <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M28 4V12H20M28 12A12 12 0 1 0 24 25"/></svg><span aria-hidden="true">5</span>
+              {% include player-icon.html name='forward' %}<span aria-hidden="true">5</span>
             </button>
             <button type="button" class="song-player-track-navigation" data-track-navigation="previous" aria-label="Previous song" title="Previous song" hidden disabled>
-              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 4H8V20H5ZM19 4V20L8 12Z"/></svg>
+              {% include player-icon.html name='previous' %}
             </button>
             <button type="button" class="song-player-track-navigation" data-track-navigation="next" aria-label="Next song" title="Next song" hidden disabled>
-              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M16 4H19V20H16ZM5 4L16 12 5 20Z"/></svg>
+              {% include player-icon.html name='next' %}
             </button>
             <span class="song-player-time" aria-hidden="true">0:00 / {{ song.duration | divided_by: 60 | floor }}:{{ song.duration | modulo: 60 | floor }}</span>
           </div>
           <div class="song-player-view-controls">
             <button type="button" class="song-player-mute" aria-label="Mute song">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9H7L12 5V19L7 15H3Z"/><path class="song-player-sound-icon" d="M16 8Q20 12 16 16M19 5Q25 12 19 19"/><path class="song-player-muted-icon" d="M16 9 22 15M22 9 16 15"/></svg>
+              {% include player-icon.html name='sound' %}
             </button>
             <input class="song-player-volume" type="range" min="0" max="100" step="1" value="100" aria-label="Volume">
             <button type="button" class="song-player-cc" aria-label="Closed captions (CC)" aria-pressed="true" aria-controls="song-captions" aria-keyshortcuts="c">CC</button>
             <button type="button" class="song-player-settings-toggle" aria-label="Player settings" aria-expanded="false" aria-controls="song-player-settings">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7H20M4 17H20"/><circle cx="9" cy="7" r="3"/><circle cx="15" cy="17" r="3"/></svg>
+              {% include player-icon.html name='settings' %}
             </button>
             <button type="button" class="song-player-fullscreen" aria-label="Enter full screen" aria-keyshortcuts="f" hidden>
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3H3V9M15 3H21V9M3 15V21H9M15 21H21V15"/></svg>
+              {% include player-icon.html name='fullscreen' %}
             </button>
           </div>
         </div>
         <section class="song-player-settings" id="song-player-settings" role="region" aria-label="Player settings" hidden>
-          <div class="song-player-settings-heading"><strong>Settings</strong><button type="button" class="song-player-settings-close" aria-label="Close settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6 18 18M18 6 6 18"/></svg></button></div>
+          <div class="song-player-settings-heading"><strong>Settings</strong><button type="button" class="song-player-settings-close" aria-label="Close settings">{% include player-icon.html name='close' %}</button></div>
           <label class="song-player-speed-label" for="song-playback-speed">Playback speed
             <select class="song-player-speed" id="song-playback-speed">{% include song-playback-speeds.html %}</select>
           </label>
@@ -147,6 +147,7 @@
   <script src="{{ '/js/song-video/gestures.js' | relative_url }}"></script>
   <script src="{{ '/js/song-video/keyboard.js' | relative_url }}"></script>
   <script src="{{ '/js/song-video/controls-visibility.js' | relative_url }}"></script>
+  <script src="{{ '/js/song-video/settings-panel.js' | relative_url }}"></script>
   <script src="{{ '/js/song-video/settings.js' | relative_url }}"></script>
   <script src="{{ '/js/song-video/controls.js' | relative_url }}"></script>
   <script src="{{ '/js/song-video/tracks.js' | relative_url }}"></script>

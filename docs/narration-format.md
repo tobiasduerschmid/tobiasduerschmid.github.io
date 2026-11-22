@@ -395,13 +395,18 @@ and verification screenshots outside the repository.
 - `_includes/narration-player-*.html`: the player chrome every kind shares.
   Every player wraps its stage, checkpoint, and captions in one video
   (`.vn-video` > `.vn-surface` > `.vn-frame`) and ends it with
-  `narration-player-controls.html`, the one thin control bar, modeled on the
-  song player: the position line; then play, back and forward 5 seconds,
-  previous and next scene, restart, and the clock on the left; mute, volume,
-  captions (CC), the settings toggle, and full screen on the right. Its
-  settings panel holds the scene select, speed, caption size, and landscape
-  in full screen; a player passes its own choices (motion, knowledge check,
-  code language) as `settings` and controls that lead the transport (a case
+  `narration-player-controls.html`, the one thin control bar, which is the
+  song player's: the same icons (`player-icon.html`, which
+  `_layouts/song-player.html` also renders) and layout. The position line;
+  then play, back and forward 5 seconds, previous and next scene, and the
+  clock (position and length) on the left; a lesson's code language, mute,
+  volume, captions (CC), the settings toggle, and full screen on the right.
+  Its settings panel floats over the player's lower right
+  (`js/song-video/settings-panel.js`, shared with the song player) and holds
+  the scene select, speed, caption size, and landscape in full screen. A
+  player passes choices that stay in the bar as `view` (the code language,
+  `narration-player-language.html`), its own settings (motion, knowledge
+  check) as `settings`, and controls that lead the transport (a case
   study's step buttons) as `lead`. A case study without rendered speech
   passes `text_only=true` and gets no position, transport, volume, captions
   toggle, or speed. `narration-player-tips.html` explains the pointer and

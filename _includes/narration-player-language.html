@@ -1,0 +1,13 @@
+{%- comment -%}
+  The code-language select of a lesson whose code comes in several languages.
+  Players place it in the control bar's view group (the `view` parameter of
+  narration-player-controls.html), so it is always on screen with the bar and
+  switches the code without opening settings or restarting the narration.
+  Its visible label is "Code"; the full name, "Code language", is its
+  accessible name. js/narrated-pattern-document.js keeps it in step with the
+  site's code-language preference.
+  Params: id (prefix of the help text's id), languages, default (the language
+  shown first), examples (the lesson's examples by language, for the labels).
+{%- endcomment -%}
+<label class="vn-language">Code<span class="vn-hidden-label"> language</span><select data-setting="language" aria-describedby="{{ include.id }}-language-help">{% for language in include.languages %}<option value="{{ language }}"{% if language == include.default %} selected{% endif %}>{{ include.examples[language].label }}</option>{% endfor %}</select></label>
+<span id="{{ include.id }}-language-help" class="vn-hidden-label">You can switch languages without restarting the narration.</span>

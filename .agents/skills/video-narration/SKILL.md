@@ -245,9 +245,13 @@ shares its modules. Rules that came from review:
 - While a knowledge check is open, the control bar steps aside so the quiz
   has the room; the quiz's own buttons continue the narration, and Esc still
   leaves full screen.
-- An icon button reads at a glance at its real size. Never overlay a digit on
-  an icon font's glyph, whose shapes sit off-center in their boxes: the skip
-  buttons show their arrow and "5" side by side.
+- An icon button reads at a glance at its real size. The bar draws the music
+  player's centered SVG icons (`_includes/player-icon.html`), so the skip
+  buttons hold their "5" inside the circular arrow, as the music player's do.
+  Never overlay a digit on an icon font's glyph, whose shapes sit off-center
+  in their boxes.
+- The code language, when a lesson has code, stays in the bar beside the view
+  controls; never move it back behind the settings toggle.
 - Space on any player button toggles playback, as in the music player; Enter
   activates the button.
 
