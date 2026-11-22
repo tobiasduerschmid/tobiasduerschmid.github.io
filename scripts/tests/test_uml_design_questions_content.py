@@ -4,7 +4,9 @@ The design spec (docs/superpowers/specs/2026-11-20-uml-design-questions-tutorial
 §3, §7, §8.3, §9.1, and the §16 revisions) fixes properties of the hand-written
 content that later edits could erode: the step order and keys, the reading
 budget, the attempt each challenge asks for, the answer keys, the knowledge
-checks, and the rule that a reply never states what its task asks.
+checks, and the rule that a reply never states what its task asks. The two
+redesigns (docs/superpowers/specs/2026-11-21-uml-design-questions-redesign.md)
+made every question a decision and turned step 1 into a first challenge.
 
 Answer keys come from tutorial_sources/uml-design-questions/facts.json, which
 scripts/uml_design_questions/facts.py derives by running Headliner. The tests
@@ -48,10 +50,15 @@ STEP_KEYS = [
     "checkout-latency",
     "choose-the-view",
 ]
+WARM_UP = STEP_KEYS[0]  # a small first challenge that also introduces the tools
 TASK_KEYS = STEP_KEYS[1:6]  # the code-first tasks; the last step is the capstone
+CODE_FIRST_KEYS = [WARM_UP] + TASK_KEYS
+BUDGET_MINUTES = {WARM_UP: 5}  # the nudge in Part A; 7 minutes elsewhere
 # The view each task's request asks for (spec §7.1); round two (§7.1: steps
-# 4 to 6) has students predict it before the reply arrives.
+# 4 to 6) has students predict it before the reply arrives. The warm-up's
+# package diagram is drawn by the class renderer.
 EXPERT_VIEW = {
+    "headliner": "class",
     "event-consumers": "component",
     "failed-trips": "sequence",
     "data-model": "class",
@@ -61,6 +68,7 @@ EXPERT_VIEW = {
 PREDICTS_VIEW = {"data-model", "outages", "checkout-latency"}
 # The generated diagram anchor (x-diagrams) each reply shows, in tab order.
 REPLY_DIAGRAMS = {
+    "headliner": ["shared_code"],
     "event-consumers": ["event_consumers"],
     "failed-trips": ["failed_trips"],
     "data-model": ["data_model"],
@@ -81,8 +89,9 @@ CAPSTONE_VIEWS = {
     "fee": None,
     "gateways": "class",
 }
-# Spec §7.4: knowledge checks on steps 1, 3, and 6, with these many questions.
-QUIZ_SIZES = {"headliner": 3, "failed-trips": 4, "checkout-latency": 5}
+# Spec §7.4: knowledge checks with these many questions. Step 1's check became
+# its challenge in the second redesign.
+QUIZ_SIZES = {"failed-trips": 4, "checkout-latency": 5}
 # Redesign spec §4.1, in order.
 OBJECTIVE_VERBS = ["Analyze", "Use", "Explain", "Evaluate", "Select"]
 READING_BUDGET = 300  # words of instructions before the challenge (spec §10)
@@ -224,8 +233,9 @@ def all_challenge_questions():
 
 def test_step_keys_are_stable_and_unique():
     assert [candidate.get("key") for candidate in STEPS] == STEP_KEYS
-    assert TUTORIAL.get("progress_version") == 2, (
-        "the redesign changed question ids, so records saved under version 1 are dropped")
+    assert TUTORIAL.get("progress_version") == 3, (
+        "step 1 became a challenge and a capstone question changed, so records "
+        "saved under versions 1 and 2 are dropped")
 
 
 def test_top_level_settings_follow_the_plan():
@@ -323,18 +333,17 @@ def test_instructions_stay_within_300_words_per_step_before_the_challenge():
 # --- Challenges --------------------------------------------------------------------------
 
 
-def test_only_the_task_and_capstone_steps_have_challenges():
-    assert "diagram_challenge" not in step("headliner")
-    for key in TASK_KEYS + ["choose-the-view"]:
+def test_every_step_has_a_challenge():
+    for key in STEP_KEYS:
         assert challenge(key)
 
 
 def test_code_first_challenges_ask_for_a_real_attempt():
     # Spec §16 (review C1): a hypothesis before the options, a pinned line, a view wish.
-    for key in TASK_KEYS:
+    for key in CODE_FIRST_KEYS:
         spec = challenge(key)
         assert spec.get("mode", "code-first") == "code-first", key
-        assert spec.get("budget_minutes") == 7, key
+        assert spec.get("budget_minutes") == BUDGET_MINUTES.get(key, 7), key
         assert spec.get("min_score") == 0.8, key
         attempt = spec.get("attempt") or {}
         assert attempt.get("hypothesis") is True, key
@@ -424,9 +433,33 @@ def test_the_mechanism_questions_interleave_the_same_mechanisms():
     # one is a discrimination, not a recall of the current step.
     keys = [plain(correct_options(challenge(key)["debrief"]["mechanism_question"])[0]) for key in TASK_KEYS]
     assert len(set(keys)) == len(keys), keys
+    offered_later = set()
     for key in TASK_KEYS:
         offered = {plain(option) for option in challenge(key)["debrief"]["mechanism_question"]["options"]}
         assert len(offered & set(keys)) >= 3, key
+        offered_later |= offered
+    # The warm-up's mechanism comes back as a choice in a later task. Its own
+    # question offers no later mechanism, which would name a later answer.
+    warm_up = challenge(WARM_UP)["debrief"]["mechanism_question"]
+    [warm_up_key] = [plain(option) for option in correct_options(warm_up)]
+    assert warm_up_key in offered_later and warm_up_key not in keys
+    assert not {plain(option) for option in wrong_options(warm_up)} & offered_later
+
+
+def message_sender(key):
+    """Who asks a step's question: "Rin" in `> **Rin, platform team:**`."""
+    return re.search(r"^> \*\*([^,:*]+)", step(key)["instructions"], flags=re.M).group(1)
+
+
+def test_code_first_debriefs_judge_a_claim_and_end_with_a_reply():
+    # Second redesign: each mechanism question quotes someone's reasoning to
+    # judge, and the closing sentence answers the person who asked.
+    stems = [challenge(key)["debrief"]["mechanism_question"]["question"] for key in CODE_FIRST_KEYS]
+    assert len(set(stems)) == len(stems), "each step judges its own claim"
+    for key, stem in zip(CODE_FIRST_KEYS, stems):
+        assert stem.rstrip().endswith("?") and "Which mechanism hid" not in stem, key
+        prompt = challenge(key)["debrief"]["consolidation_prompt"]
+        assert message_sender(key).lower() in prompt.lower(), f"{key}: reply to {message_sender(key)}"
 
 
 def test_evidence_checks_fade_from_naming_the_file_to_naming_nothing():
@@ -467,6 +500,36 @@ def test_the_capstone_plans_one_view_per_question():
 
 # Judgment keys (redesign spec §5.1) choose among design alternatives. Their
 # tests pin the facts each choice rests on, never the choice itself.
+
+
+def test_shared_code_keys_match_what_each_service_loads():
+    spec = challenge(WARM_UP)
+    shared = FACTS["shared_code"]
+    loads_http = {name for name, modules in shared["loads"].items() if "http" in modules}
+
+    redeploy = question(spec, "redeploy")
+    assert {component(option) for option in redeploy["options"]} == set(shared["loads"]), (
+        "every service is a choice")
+    assert {component(option) for option in correct_options(redeploy)} == loads_http
+    # What makes the question worth asking: a search for the module finds fewer.
+    assert set(shared["imports"]["http"]) < loads_http
+    assert set(shared["takes_only_message"]) == loads_http - set(shared["imports"]["http"])
+    # A change to the broker's module reaches every service but one.
+    spared = set(shared["loads"]) - {name for name, modules in shared["loads"].items() if "broker" in modules}
+    [release] = correct_options(question(spec, "broker-release"))
+    assert {component(release.removeprefix("The ").removesuffix(" only"))} == spared
+    # Judgment key: the three need one data class, which runs without the module's imports.
+    decouple = question(spec, "decouple")
+    assert names_all(decouple["question"], shared["takes_only_message"]) and "`Message`" in decouple["question"]
+    assert shared["message_stands_alone"]
+    [moved] = correct_options(decouple)
+    assert "`Message`" in moved and "imports no Headliner code" in moved
+    assert not any("`Message` into" in option for option in wrong_options(decouple))
+    # No service imports another service's code.
+    assert shared["service_to_service_imports"] == []
+    [alone] = correct_options(question(spec, "alone"))
+    assert alone.startswith("None")
+    assert sum(option.startswith("None") for option in question(spec, "alone")["options"]) == 1
 
 
 def test_event_consumer_keys_match_what_the_rename_breaks():
@@ -605,8 +668,17 @@ def test_capstone_keys_match_the_code():
 
     [rule] = correct_options(question(spec, "rule"))
     assert rule.startswith("No") == capstone["website_reads_order_db"]
-    [rideshare] = correct_options(question(spec, "rideshare"))
-    assert set(re.findall(r"`(\w+)\(\)`", rideshare)) == set(capstone["rideshare_must_implement"])
+    # A new kind of item is listed by name in two modules, in two services:
+    # an order that names an unlisted type cannot be read.
+    listed = FACTS["diagrams"]["trip_items"]["listed_by"]
+    assert set(listed) == {"services::opc::payloads", "services::website::checkout"}
+    assert listed["services::opc::payloads"] == listed["services::website::checkout"]
+    assert capstone["unlisted_item_type_is_refused"]
+    rideshare = question(spec, "rideshare")
+    [both] = correct_options(rideshare)
+    assert "`ITEM_TYPES`" in both and "`_item`" in both
+    assert [("`ITEM_TYPES`" in option, "`_item`" in option) for option in wrong_options(rideshare)].count(
+        (True, False)) == 1, "one choice stops at the OPC's list"
     cancellation = question(spec, "cancellation")
     [key] = correct_options(cancellation)
     assert key.startswith("Refunded") == (stuck["refunds"] == 1 and capstone["refund_before_cancel"])
@@ -645,7 +717,13 @@ def leaks(key):
     contracts = FACTS["gateway_contracts"]
     verbs = [missing.split()[0] for missing in FACTS["failed_trips"]["missing"]]
     calls = FACTS["checkout_latency"]["external_calls"]
+    shared = FACTS["shared_code"]
     return {
+        "headliner": [
+            lambda text: re.search(r"\b(all|every)\s+(eight\s+)?services?\b|\beight services\b", text, re.I),
+            lambda text: names_all(text, shared["takes_only_message"]) and "http" in text,
+            lambda text: re.search(r"Loyalty[^.]*infra/http|infra/http[^.]*Loyalty", text),
+        ],
         "event-consumers": [
             lambda text: names_all(text, consumers["trip.confirmed"]),
             lambda text: names_all(text, consumers["trip.cancelled"]),
@@ -695,7 +773,7 @@ def test_no_reply_summary_or_diagram_note_states_a_task_key():
 # --- Knowledge checks ----------------------------------------------------------------------
 
 
-def test_knowledge_checks_sit_on_steps_1_3_and_6():
+def test_knowledge_checks_sit_on_steps_3_and_6():
     for number, candidate in enumerate(STEPS, start=1):
         quiz = candidate.get("quiz")
         if candidate["key"] not in QUIZ_SIZES:
@@ -706,20 +784,28 @@ def test_knowledge_checks_sit_on_steps_1_3_and_6():
         assert len(quiz["questions"]) == QUIZ_SIZES[candidate["key"]], candidate["key"]
 
 
-def test_the_warm_up_practices_the_tools_on_neutral_targets():
-    # Spec §16: the step 1 check must not hand out a later task's answer, so it
-    # never points at the files that hide one (spec §5.2, §7.3).
+def test_the_first_challenge_names_no_place_that_hides_a_later_answer():
+    # Spec §16: step 1 must not hand out a later task's answer, so what a
+    # learner reads there never points at the places that hide one (spec
+    # §5.2, §7.3). The agent's list of files it read is not prose.
     hiding_places = [
         "broker.toml", "services.toml", "website.toml", "consumes", "binding",
-        "notifications/", "invoice_task", "supplier_task", "workflow", "intake",
+        "consumers.py", "invoice_task", "supplier_task", "workflow", "intake",
         "rules.py", "payments.py", "pricing.py", "availability.py", "order_history",
         "partners/", "cancellation",
     ]
-    for q in step("headliner")["quiz"]["questions"]:
-        prose = " ".join([q["question"], q.get("explanation", ""), *q["options"],
-                          *(q.get("option_feedback") or {}).values()])
+    spec = challenge(WARM_UP)
+    prose = [step(WARM_UP)["instructions"], *reply_texts(spec)]
+    prose += [value for value in spec["debrief"].values() if isinstance(value, str)]
+    for q in challenge_questions(spec):
+        prose += [q["question"], q.get("explanation", ""), *q["options"],
+                  *(q.get("option_feedback") or {}).values()]
+    for diagram in reply_diagrams(spec):
+        prose += diagram_notes(diagram["source"])
+        prose += [link["path"] for link in diagram.get("links") or []]
+    for text in prose:
         for place in hiding_places:
-            assert place not in prose, (place, q["question"])
+            assert place not in text, (place, text[:80])
 
 
 def check_quiz_format(where, q, quiz):

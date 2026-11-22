@@ -9,7 +9,7 @@ exclude_from_index: true
 learning_objectives:
   - "Analyze a multi-service codebase to judge a proposed change, a failure, or a quality target, and rate your confidence."
   - "Use a class, component, or sequence diagram to make and justify that decision, and check the one claim it rests on against the code."
-  - "Explain which code mechanism hid an answer (event bindings outside the code, inheritance across packages, asynchronous work queues, configuration-resolved connections, decorators, or multiplicities spread across files) and why a view brings these pieces together."
+  - "Explain which code mechanism hid an answer (chained imports, event bindings outside the code, inheritance across packages, asynchronous work queues, configuration-resolved connections, decorators, or multiplicities spread across files) and why a view brings these pieces together."
   - "Evaluate design alternatives that a view makes comparable: rollout plans for a shared event, compensating steps and their order, availability and latency tactics, and where a responsibility lives."
   - "Select the view that best answers a question (class, component, sequence, or none), including for a system you have not seen."
 
@@ -22,8 +22,9 @@ run: false
 instructions_width: narrow
 # A passed diagram challenge (or knowledge check) unlocks the next step.
 require_tests: true
-# Stable step keys identify saved challenge records and deep links.
-progress_version: 2
+# Stable step keys identify saved challenge records and deep links. Version 3:
+# step 1 became a challenge, and the last step's second question changed.
+progress_version: 3
 file_tree: true
 project_search: true
 # Every step shows the same read-only codebase, so the print view shows it once.
@@ -4243,6 +4244,10 @@ x-diagrams:
     Experience --|> TripItem
     TransportItem --|> TripItem
     ShuttleRide --|> TransportItem
+    package services::opc::payloads
+    package services::website::checkout
+    services::opc::payloads ..> services::opc::model : «import»
+    services::website::checkout ..> services::opc::payloads : «use»
     note right of TripItem
     TripItem declares its three operations
     abstract (services/opc/model/items.py:17).
@@ -4257,6 +4262,25 @@ x-diagrams:
     Each class lists the operations it
     defines itself.
     end note
+    note left of services::opc::payloads
+    Folder with its name inside: a Python
+    module, shown without its contents.
+    Dashed arrow «import»: the module
+    imports from the package at its head.
+    ITEM_TYPES lists the item classes
+    that an order may name: FestivalPass,
+    LodgingStay, ShuttleRide, Experience
+    (services/opc/payloads.py:15).
+    end note
+    note right of services::website::checkout
+    Dashed arrow «use»: the module depends
+    on the other without importing it.
+    _item writes each item's type as text,
+    such as "ShuttleRide"
+    (services/website/checkout.py:89),
+    for payloads to read. The website
+    imports nothing from the OPC.
+    end note
     @layout
     TripItem @pos(519, 0)
     FestivalPass @pos(0, 260)
@@ -4264,6 +4288,8 @@ x-diagrams:
     Experience @pos(692, 260)
     TransportItem @pos(1038, 260)
     ShuttleRide @pos(1115, 460)
+    services::opc::payloads @pos(430, 670)
+    services::website::checkout @pos(770, 670)
     @endlayout
     @enduml
   capstone_website_connections: &d_capstone_website_connections |-
@@ -4919,6 +4945,67 @@ x-diagrams:
     note:94 @pos(0, 310)
     @endlayout
     @enduml
+  shared_code: &d_shared_code |-
+    @startuml
+    package infra {
+      package broker
+      package http
+    }
+    package services::support_console
+    package services::loyalty
+    package services::affiliates
+    package services::reporting
+    package services::website
+    package services::shuttle_planner
+    package services::opc
+    package services::notifications
+    services::loyalty ..> broker
+    services::reporting ..> broker
+    services::shuttle_planner ..> broker
+    services::affiliates ..> broker
+    services::support_console ..> broker
+    services::notifications ..> broker
+    services::opc ..> broker
+    broker ..> http
+    services::affiliates ..> http
+    services::support_console ..> http
+    services::notifications ..> http
+    services::opc ..> http
+    services::website ..> http
+    note right of services::support_console
+    Key: UML 2.5.1 package diagram.
+    Folder: a Python package (a folder) or
+    module (a file). A folder inside a folder
+    is a package inside a package: http in
+    infra is infra::http, the file infra/http.py.
+    services::reporting is services/reporting/,
+    the Warehouse ETL.
+    Dashed arrow: the package at its tail
+    imports from the package at its head,
+    so it cannot load without it.
+    end note
+    note right of services::notifications
+    Each arrow stands for import lines.
+    services::loyalty to infra::broker:
+    services/loyalty/points.py:3
+    infra::broker to infra::http:
+    infra/broker.py:11
+    end note
+    @layout
+    services::support_console @pos(419, 0)
+    services::loyalty @pos(176, 100)
+    services::affiliates @pos(448, 92)
+    broker @pos(252, 222)
+    http @pos(544, 249)
+    services::reporting @pos(16, 277)
+    services::website @pos(792, 277)
+    services::shuttle_planner @pos(84, 438)
+    services::opc @pos(449, 438)
+    services::notifications @pos(421, 530)
+    note:26 @pos(796, 0)
+    note:38 @pos(720, 476)
+    @endlayout
+    @enduml
 x-diagram-links:
   capstone_cancellation: &l_capstone_cancellation
     - text: "po: PurchaseOrderService"
@@ -5007,6 +5094,12 @@ x-diagram-links:
     - text: "ShuttleRide"
       path: "services/opc/model/items.py"
       line: 102
+    - text: "services::opc::payloads"
+      path: "services/opc/payloads.py"
+      line: 15
+    - text: "services::website::checkout"
+      path: "services/website/checkout.py"
+      line: 76
   capstone_website_connections: &l_capstone_website_connections
     - text: "OPC"
       path: "services/opc/service.py"
@@ -5251,99 +5344,231 @@ x-diagram-links:
     - text: "Publish"
       path: "infra/broker.py"
       line: 124
+  shared_code: &l_shared_code
+    - text: "services::loyalty"
+      path: "services/loyalty/points.py"
+      line: 3
+    - text: "services::reporting"
+      path: "services/reporting/warehouse_etl.py"
+      line: 3
+    - text: "services::shuttle_planner"
+      path: "services/shuttle_planner/planner.py"
+      line: 5
+    - text: "services::affiliates"
+      path: "services/affiliates/relay.py"
+      line: 3
+    - text: "services::support_console"
+      path: "services/support_console/app.py"
+      line: 3
+    - text: "services::notifications"
+      path: "services/notifications/mailer.py"
+      line: 3
+    - text: "services::opc"
+      path: "services/opc/service.py"
+      line: 6
+    - text: "services::website"
+      path: "services/website/clients.py"
+      line: 4
+    - text: "broker"
+      path: "infra/broker.py"
+      line: 11
+    - text: "http"
+      path: "infra/http.py"
+      line: 1
 # END GENERATED
 
 steps:
   # ===========================================================================
-  # STEP 1: The Headliner Codebase (orientation and tool warm-up)
+  # STEP 1: What a Change to Shared Code Reaches (package diagram, module view)
   # ===========================================================================
-  # Pedagogy: orientation and instruction first. Element interactivity is high
-  # (Ashman et al. 2020), so the system, the loop of every later step, and the
-  # tools come before any struggle. The knowledge check is retrieval practice
-  # with the tree and search on neutral targets (spec §16), so that Part A
-  # difficulty later comes from the system's structure, never from the editor.
+  # Pedagogy: orientation through a first, small challenge instead of a tool
+  # drill (second redesign, 2026-11-21). The system, the tools, and the loop
+  # of every later step are met while answering a question that someone needs
+  # answered. Like every question of the tutorial, it passes three tests: its
+  # answer is spread over several modules, a view shows it at a glance, and it
+  # asks what the design causes. Element interactivity stays low (Ashman et
+  # al. 2020): one main question, one pinned line, and a view of ten packages
+  # whose arrows are all straight. The follow-ups reuse the view (variation
+  # and retrieval); the last one marks what a view of the imports cannot show,
+  # which step 2 picks up and step 5 turns into a contrasting case.
   - key: headliner
-    title: "The Headliner Codebase"
-    estimated_minutes: 10
+    title: "What a Change to Shared Code Reaches"
+    estimated_minutes: 12
     open_file: README.md
     instructions: |
       ### Why this matters
 
-      In a codebase too large to keep in your head, a folder tree and a project-wide search are how you find evidence quickly, and the right diagram can put scattered evidence side by side.
+      More and more of your code is written by someone else, or by an AI agent that writes faster than you can read. You cannot read it all, but you can ask a design question and pick the view that answers it.
 
       ### 🎯 You will learn to
 
       - **Navigate** a multi-service Python project with **Files** and **Search files**
-      - **Explain** how each diagram challenge in this tutorial works
+      - **Analyze** which services a change to shared code reaches
 
       ### Meet Headliner
 
-      Headliner sells festival weekends as trip packages: a festival pass, a place to sleep, shuttle rides, and add-on experiences. Headliner owns none of these. Suppliers provide them, a bank charges the fans, and Headliner's Order Processing Center (OPC) coordinates every order.
+      Headliner sells festival trips: a pass, a place to sleep, shuttle rides, and add-on experiences. Suppliers provide them; the Order Processing Center (OPC) coordinates each order.
 
-      - `services/` holds Headliner's own services.
-      - `stubs/` holds stand-ins for systems that other organizations run.
-      - `infra/` holds shared code for calls, messages, databases, and time.
+      - `services/` holds Headliner's eight services.
+      - `infra/` holds the code they share.
+      - `stubs/` stands in for other organizations' systems.
       - `deploy/` holds the deployment settings.
 
-      Start with `README.md`. Every file is read-only, so a line you cite stays the same line.
+      Files are read-only, so cited lines stay put.
 
-      ### How each challenge works
+      ### The message
 
-      Each of the next five steps brings one design question; the last step brings five.
+      > **Rin, platform team:** We fixed a security flaw in `infra/http.py`, the code our services use to call each other. In production each service runs with its own copy of every shared file it loads, so each affected service needs a redeploy tonight. The Loyalty team asks to be skipped: Loyalty never calls anyone. Which services do I redeploy?
 
-      1. **From the code.** Write a one-sentence hypothesis, pin a line that supports it, and say what you would want a diagram to show. Then answer, rate your confidence, and lock in. About 7 minutes is enough, and there is no time limit.
-      2. **With the diagram.** An AI coding agent's diagram of this code arrives in the **Diagram** pane. Answer again, then answer one new question with it.
-      3. **Compare.** See both answers side by side, and what hid the answer in the code.
+      ### Your task
 
-      ### Warm up with the tools
+      1. **Explore.** The open `README.md` lists the services' folders. Open `services/loyalty/points.py` in **Files**, then use **Search files** (<kbd><abbr data-platform-modifier title="Control" data-no-tooltip="true">Ctrl</abbr>+Shift+F</kbd>) to find what imports `infra/http.py`. Imports write it `infra.http`.
+      2. **Pin.** Put the cursor on the line that settles whether Loyalty is affected, then **Pin this line**.
+      3. **Decide.** Below, write a hypothesis, say what a diagram should show, answer, and lock in. Five minutes is enough; there is no time limit.
+      4. **Compare.** An AI coding agent's diagram opens in the **Diagram** pane. Answer again, then answer three new questions with it.
 
-      Expand a folder in **Files**, open **Search files** (<kbd><abbr data-platform-modifier title="Control" data-no-tooltip="true">Ctrl</abbr>+Shift+F</kbd>), then choose **Next** for a short knowledge check. It only practices these tools; from step 2 on, finding a line serves a decision.
-    quiz:
-      title: "Step 1 — Knowledge Check"
+      Every later step works this way.
+    diagram_challenge:
+      mode: code-first
+      budget_minutes: 5
       min_score: 0.8
+      attempt:
+        hypothesis: true
+        evidence_pins: 1
+        view_wish: true
       questions:
-        - type: single
-          difficulty: basic
-          question: "Use **Files** and `README.md`: which command reproduces support ticket `SUP-2291`?"
+        - id: redeploy
+          type: multiple
+          question: "Which services load `infra/http.py`, and so need a redeploy tonight?"
           options:
-            - "`python3 -m scenarios.failed_trip`"
-            - "`python3 -m scenarios.slow_group_checkout`"
-            - "`python3 -m pytest`"
-            - "`python3 devstack.py`"
-          correct_index: 0
+            - "Trip Website"
+            - "OPC"
+            - "Notifications"
+            - "Loyalty"
+            - "Warehouse ETL"
+            - "Affiliate Relay"
+            - "Support Console"
+            - "Shuttle Planner"
+          correct_indices: [0, 1, 2, 3, 4, 5, 6, 7]
           option_feedback:
-            1: "That script reproduces ticket `PERF-118`, the slow group checkout."
-            2: "The tests check Headliner's behavior; they do not replay a support ticket."
-            3: "`devstack.py` defines `build_stack()`; the repro scripts call it, and it prints nothing itself."
-          explanation: "`README.md` lists both repro scripts under **Running Headliner**. A repro script prints a ticket's symptoms, not its cause."
-        - type: single
-          difficulty: basic
-          question: "Use **Search files**: which function starts every Headliner service and every stand-in on the devstack?"
+            0: "Its clients for other systems hold a `ServiceClient`, which `services/website/clients.py:4` imports from `infra/http.py`."
+            1: "Its gateways and its payment task hold a `ServiceClient` (`services/opc/gateways/base.py:6`), and its imports of `infra/broker.py` lead to the same file."
+            2: "`Mailer` sends each e-mail through a `ServiceClient` (`services/notifications/mailer.py:3`)."
+            3: "Loyalty's one shared import is `Message` (`services/loyalty/points.py:3`). Python runs all of `infra/broker.py` to provide it, and line 11 of that file imports `infra/http.py`."
+            4: "From shared code it imports only `Message` (`services/reporting/warehouse_etl.py:3`), and with it the whole of `infra/broker.py` and that file's imports."
+            5: "It calls the partners' webhook through a `ServiceClient` (`services/affiliates/relay.py:4`)."
+            6: "It asks the OPC about orders through a `ServiceClient` (`services/support_console/app.py:4`)."
+            7: "Like Loyalty, it takes only `Message` from shared code (`services/shuttle_planner/planner.py:5`), which loads `infra/broker.py` and, through it, `infra/http.py`."
+          explanation: "A Python `import` runs the whole file it names, and that file's own imports with it. Five services import `infra/http.py` themselves. The other three import one data class, `Message`, as a type hint. It lives in `infra/broker.py`, and line 11 of that file imports `infra/http.py` (`infra/broker.py:11`). So all eight services run a copy of the file, and none can be skipped, Loyalty included."
+      reply:
+        request: "Draw a UML package diagram of Headliner's services and the shared modules `infra/broker.py` and `infra/http.py`, with every import between any two of them."
+        summary: "The view shows the services and the two shared modules as packages, with an arrow from a package to each package it imports from."
+        diagrams:
+          - id: shared-code
+            type: class
+            label: "Imports of shared code"
+            source: *d_shared_code
+            links: *l_shared_code
+        evidence:
+          - text: "Loyalty imports `Message` from `infra.broker`"
+            ref: services/loyalty/points.py:3
+          - text: "Warehouse ETL imports `Message`"
+            ref: services/reporting/warehouse_etl.py:3
+          - text: "Shuttle Planner imports `Message`"
+            ref: services/shuttle_planner/planner.py:5
+          - text: "`infra/broker.py` imports from `infra.http`"
+            ref: infra/broker.py:11
+          - text: "`Message` is a data class with two fields"
+            ref: infra/broker.py:22
+          - text: "Affiliate Relay imports `ServiceClient`"
+            ref: services/affiliates/relay.py:4
+          - text: "Support Console imports `ServiceClient`"
+            ref: services/support_console/app.py:4
+          - text: "The module of `Mailer` imports `ServiceClient`"
+            ref: services/notifications/mailer.py:3
+          - text: "The OPC's gateways import `ServiceClient`"
+            ref: services/opc/gateways/base.py:6
+          - text: "The Trip Website's clients import `ServiceClient`"
+            ref: services/website/clients.py:4
+        files_read:
+          - services/loyalty/points.py
+          - services/reporting/warehouse_etl.py
+          - services/shuttle_planner/planner.py
+          - services/affiliates/relay.py
+          - services/support_console/app.py
+          - services/notifications/consumers.py
+          - services/notifications/mailer.py
+          - services/opc/service.py
+          - services/opc/gateways/base.py
+          - services/website/app.py
+          - services/website/clients.py
+          - infra/broker.py
+          - infra/http.py
+          - infra/subscriptions.py
+        left_out: "The other four modules of `infra/` (`clock.py`, `db.py`, `scheduler.py`, and `subscriptions.py`), the imports inside each service, and which names an import brings in."
+        label: "Prepared in advance by an AI coding agent from this repository's code and verified against the code."
+      follow_up:
+        - id: broker-release
+          type: single
+          question: "Next month the platform team replaces the broker's client library, a change to `infra/broker.py` alone. Which services do not load that file, and so can skip the release?"
           options:
-            - "`build_stack()`"
-            - "`start_opc()`"
-            - "`start_stubs()`"
-            - "`create_app()`"
-          correct_index: 0
+            - "Loyalty, Warehouse ETL, and Shuttle Planner: they use only `Message`"
+            - "The Trip Website only"
+            - "The Trip Website and the OPC, which call each other directly"
+            - "None: every service loads `infra/broker.py`"
+          correct_index: 1
           option_feedback:
-            1: "`start_opc()` starts only the Order Processing Center; `build_stack()` calls it along with the rest."
-            2: "`start_stubs()` starts only the stand-ins for other organizations' systems."
-            3: "`create_app()` builds only the Trip Website."
-          explanation: "`build_stack()` in `devstack.py` reads the deployment settings and starts every service and stand-in. The repro scripts and several test modules call it."
-        - type: single
-          difficulty: intermediate
-          question: "Search for `2027`: which file sets the moment that the devstack's fake clock starts at?"
+            0: "`Message` is defined in `infra/broker.py`, so importing it loads that file, client code included. Each of the three has an arrow into `infra::broker`."
+            2: "The OPC publishes every trip event through the broker's client: `services::opc` has an arrow into `infra::broker`."
+            3: "`services::website` has one arrow, and it ends at `infra::http`. No path leads from it to `infra::broker`."
+          explanation: "Seven packages have an arrow into `infra::broker`. `services::website` has none, and its one arrow leads to a module that imports nothing in this view. The Trip Website reaches the OPC by calling it, and never loads the broker's code."
+        - id: decouple
+          type: single
+          question: "Loyalty, Warehouse ETL, and Shuttle Planner take one name from `infra/broker.py`: `Message`, a data class they use as a type hint. Which change takes these three out of reach of the next fix to `infra/http.py`?"
           options:
-            - "`devstack.py`"
-            - "`tests/test_infra.py`"
-            - "`infra/clock.py`"
-            - "`README.md`"
-          correct_index: 0
+            - "Give each of the three its own copy of `infra/broker.py`"
+            - "Split `infra/http.py` into a client module and a network module"
+            - "Move `Message` into a module that imports no Headliner code"
+            - "Have the three import `Message` from the OPC, which publishes the events"
+          correct_index: 2
           option_feedback:
-            1: "Its `START` names the same moment, but only the infra tests' own clocks use it; `build_stack()` uses the one in `devstack.py`."
-            2: "`FakeClock` takes its start time as an argument; it does not choose one."
-            3: "`README.md` describes the start time, but no code reads it."
-          explanation: "`START = datetime(2027, 6, 11, 9, 0, tzinfo=timezone.utc)` in `devstack.py` is the moment `build_stack()` passes to `FakeClock`. A search often finds several candidates; each one is a claim to check."
+            0: "A copy of `infra/broker.py` keeps its line 11, so each copy still imports `infra/http.py`. The arrow from `infra::broker` to `infra::http` is copied with it."
+            1: "`infra/broker.py` would import the halves it needs, and the three would load them with it. The arrow to cut is the one that leads into `infra::broker`."
+            3: "`services::opc` has arrows to both shared modules, so the three would still load `infra/http.py`, and one service would now depend on another service's code."
+          explanation: "The three need a data class and get the broker's client with it, because `Message` and `Broker` share a file, and that file imports the network code. In a module of its own, say `infra/messages.py`, `Message` brings no Headliner code along: the three packages would point at that module, and no path would lead from them to `infra::http`. `infra/broker.py` would import `Message` from there too. Which names share a module decides what every importer has to load."
+        - id: alone
+          type: single
+          question: "The Loyalty team plans to rewrite `services/loyalty/` from scratch. Going by this view, which other services load Loyalty's code and must be rebuilt with it?"
+          options:
+            - "The OPC, which publishes the events that Loyalty receives"
+            - "Every service with an arrow into `infra::broker`"
+            - "None: no arrow ends at `services::loyalty`"
+            - "The view cannot tell: it draws only the arrows into `infra`"
+          correct_index: 2
+          option_feedback:
+            0: "That link exists only while the system runs, as events through the broker. The OPC imports nothing from Loyalty: no arrow leads from `services::opc` to `services::loyalty`."
+            1: "They share `infra/broker.py` with Loyalty, but sharing a module is not importing each other: their arrows end at `infra::broker`, not at `services::loyalty`."
+            3: "The request covers every import between these ten packages. An import of Loyalty's code would be an arrow into `services::loyalty`, and the view has none."
+          explanation: "An arrow shows who depends on whom, and none ends at `services::loyalty` or at any other service. Headliner's services share code only through `infra/`, so each one's code can be rewritten and shipped on its own. You can confirm it with one search for `from services.`: inside `services/`, every hit imports from the file's own service. What the services say to each other while they run, such as who receives which event, is not an import and not in this view. Step 2 asks that question."
+      debrief:
+        hidden_by: "An import of one name loads a whole file and that file's imports, so three services run `infra/http.py` without ever naming it."
+        find_in_code: "Search for `infra.http`. For each shared file among the hits, such as `infra/broker.py`, search for its importers too (`infra.broker`), and repeat until no new file appears."
+        view_shows: "Each package that imports shared code, with one arrow for each pair, so the reach of a change is a matter of following arrows backwards from one box. No arrow joins two services: they share code only through `infra/`. The view says nothing about what the services say to each other while they run. That takes another view, and step 2 asks for it."
+        consolidation_prompt: "Reply to Rin in one or two sentences: which services to redeploy, and what to tell the Loyalty team."
+        mechanism_question:
+          id: mechanism
+          type: single
+          question: "A teammate reports: \"I searched for `infra.http`. Five services import it, so five services need the fix.\" What does that search miss?"
+          options:
+            - "Imports spelled another way, such as `from infra import http`"
+            - "Code that reaches a service inside the messages it receives"
+            - "Settings in `deploy/`, which a project search does not cover"
+            - &m_imports "Imports that chain: a file's import loads that file's imports too"
+          correct_index: 3
+          option_feedback:
+            0: "No file uses that spelling: every import of the file reads `from infra.http import`, and the search finds each one. What it cannot find is a file that never names `infra.http`."
+            1: "Messages carry data, such as a trip's total. The three services run the file because their own import brings it in."
+            2: "Search covers every file, the settings in `deploy/` included, and no setting loads code."
 
   # ===========================================================================
   # STEP 2: Event Consumers and Change Impact (component, publish-subscribe)
@@ -5513,11 +5738,11 @@ steps:
         hidden_by: "Bindings live in `deploy/broker.toml` and in Notifications' own code, and two of them use wildcards, so a search for `trip.confirmed` misses Warehouse ETL and Affiliate Relay."
         find_in_code: "List every binding, the `[[bindings]]` in the configuration and every `consumes(` in the code, then match each pattern against the event's routing key."
         view_shows: "Every consumer of the `trips` exchange with its binding, in one place, so the question of who is affected has a complete answer. The view did not say which fields a consumer reads; its evidence took you to the handlers that do. A view scopes the search, and the code confirms. A view also has an edge over asking the agent your question directly: you can reuse it (both new questions took one look), inspect it, and check it one connection at a time."
-        consolidation_prompt: "Which receiver would you have missed without the diagram, and what would shipping the patch have cost?"
+        consolidation_prompt: "Reply to Jordan in one or two sentences: can the patch ship on Friday, and which consumer would have surprised the team?"
         mechanism_question:
           id: mechanism
           type: single
-          question: "Which mechanism hid the answer in the code?"
+          question: "A coding agent reports: \"I searched for `trip.confirmed`. Notifications and Loyalty are its only consumers.\" What makes that search incomplete?"
           options:
             - &m_workflow "One workflow spread over work queues and tasks, with a step missing"
             - &m_names "Connections resolved by service name from configuration"
@@ -5691,11 +5916,11 @@ steps:
         hidden_by: "The workflow is spread over work queues and tasks, and the defect is a missing step, which a search cannot find."
         find_in_code: "Follow each queue name from the code that sends to it to the code that consumes it, then read each branch for what it undoes."
         view_shows: "One scenario in time order across every lifeline: you see the capture near the start of the trace, and you can look in the reject branch for the message that undoes it. The loop frame around the answers shows that a fix must also cover answers that arrive after the failure."
-        consolidation_prompt: "What did the diagram put side by side that you had to search for?"
+        consolidation_prompt: "Tell the support team in one or two sentences what happens to the fans' money, and what you are asking engineering to change."
         mechanism_question:
           id: mechanism
           type: single
-          question: "Which mechanism hid the answer in the code?"
+          question: "A reviewer reads `InvoiceTask`, `PaymentTask`, and `SupplierOrderTask` one at a time and finds each of them correct. Why did that review miss the bug?"
           options:
             - *m_workflow
             - *m_bindings
@@ -5879,11 +6104,11 @@ steps:
         hidden_by: "The multiplicities are spread over type hints, `__post_init__` validators, and the rules in `rules.py`, across four files."
         find_in_code: "As you read the model files, write down each field's multiplicity and each validator's rule."
         view_shows: "Every class of the data model with each association's multiplicity and the rules the code enforces, so each idea becomes a check against one line or one constraint. A class view of one package shows what the model allows; it does not show who depends on the model from outside."
-        consolidation_prompt: "What did the diagram put side by side that you had to search for?"
+        consolidation_prompt: "Reply to Mina in one or two sentences: which ideas can go on the landing page, and what the split payment would take."
         mechanism_question:
           id: mechanism
           type: single
-          question: "Which mechanism hid the answer in the code?"
+          question: "Mina reads `attendees: list[Attendee]` in `TripOrder` and concludes that ten friends can travel on one order. What did reading that one line miss?"
           options:
             - *m_bindings
             - &m_overrides "Subclass overrides in another package that break a contract"
@@ -6085,19 +6310,19 @@ steps:
         hidden_by: "Services call each other by name from `deploy/services.toml`, and the call to the broker during the submit request looks like any method call."
         find_in_code: "From the website's checkout, list every client call made before the response, and follow each one into the service it reaches."
         view_shows: "Which connections sit on the fan's path (ball and socket) and which work is queued for later («consume»), so each outage reads off one connector. A sequence diagram is defensible too, but you would need one trace per outage."
-        consolidation_prompt: "What did the diagram put side by side that you had to search for?"
+        consolidation_prompt: "Tell Alex in one or two sentences which windows to move, and name the one fact you checked in the code."
         mechanism_question:
           id: mechanism
           type: single
-          question: "Which mechanism hid the answer in the code?"
+          question: "A teammate argues: \"The website imports nothing from the lodging provider or the broker, so neither window can affect checkout.\" What does that argument overlook?"
           options:
-            - *m_bindings
+            - *m_imports
             - *m_workflow
             - *m_names
             - *m_loops
           correct_index: 2
           option_feedback:
-            0: "Bindings decide who consumes events, but the outage answers turned on which calls the fan's request makes."
+            0: "Imports decide which code a service loads, as in step 1. Whether a request waits for another system is decided while it runs, by calls made by service name."
             1: "The work queues explain why the lodging and Mail Relay outages only delay work, but the broker answer turned on a call made by name during the request."
             3: "Latency is not the question here: each outage stops or delays an order depending on whether the request waits for the call."
 
@@ -6239,11 +6464,11 @@ steps:
         hidden_by: "Remote calls look like local ones, sit in loops in two classes, and the card check hides in a decorator."
         find_in_code: "From the checkout's entry point, follow every call into a client, decorators included, and mark the ones inside a loop."
         view_shows: "Every remote call between **Book now** and **Order received**, with the loop frames on the external lifelines and the durations in notes, so the cost of each loop sits next to the 2-second target. Two traces met at one design decision here: the capacity check costs time in this view and prevents the failure of step 3's view."
-        consolidation_prompt: "What did the diagram put side by side that you had to search for?"
+        consolidation_prompt: "Reply to Mina in one or two sentences: which change you recommend, and what the faster alternative would give up."
         mechanism_question:
           id: mechanism
           type: single
-          question: "Which mechanism hid the answer in the code?"
+          question: "A reviewer says: \"`submit` in the checkout is six statements without a loop, so it cannot take 8 seconds.\" What does reading `submit` alone miss?"
           options:
             - *m_names
             - *m_workflow
@@ -6287,19 +6512,19 @@ steps:
             3: "Nothing in the diagram reports a failure; the reply means only that the upload step finished."
           explanation: "An asynchronous message drawn after a reply happens later: the caller already has its answer, so whatever that work does, failing included, reaches the caller another way or not at all."
         - type: single
-          difficulty: basic
-          question: "A UML class diagram shows an association from `Ticket` to `Seat` with multiplicity `0..1` at the `Seat` end. What does it allow?"
+          difficulty: intermediate
+          question: "A venue wants to sell standing-room tickets, which have no seat. Its class diagram shows an association from `Ticket` to `Seat` with multiplicity `1` at the `Seat` end. Can it sell them without changing the data model?"
           options:
-            - "A ticket with no seat, or with one seat"
-            - "A ticket with exactly one seat"
-            - "A ticket with any number of seats"
-            - "Each seat belongs to at most one ticket"
+            - "No: each ticket needs exactly one seat, until that end reads `0..1`"
+            - "Yes: `1` means at most one seat, so a ticket may have none"
+            - "Yes: the `Seat` end counts tickets per seat, not seats per ticket"
+            - "No: the association would have to become a composition first"
           correct_index: 0
           option_feedback:
-            1: "Exactly one would be `1`; `0..1` also allows none, such as a general admission ticket."
-            2: "Any number would be `0..*`; `0..1` caps it at one."
-            3: "The `0..1` sits at the `Seat` end, so it counts seats per ticket; tickets per seat are the other end's multiplicity."
-          explanation: "A multiplicity at one end counts how many objects at that end one object at the other end is linked to: here, zero or one seat per ticket."
+            1: "`1` means exactly one. At most one is written `0..1`, which also allows a ticket without a seat."
+            2: "The multiplicity at the `Seat` end counts seats for one ticket. Tickets per seat stand at the other end."
+            3: "A composition says which object owns which. Whether a ticket may lack a seat is a question of multiplicity."
+          explanation: "A multiplicity at one end counts how many objects at that end one object at the other end is linked to. `1` requires a seat for every ticket, so standing room needs `0..1` there. That is a change to the model, and to all code that assumes a ticket has a seat."
         - type: single
           difficulty: intermediate
           question: "In a UML component diagram, a checkout service's socket joins a fraud check's ball, on the path of every checkout request. What happens to checkouts while the fraud check is down?"
@@ -6384,18 +6609,18 @@ steps:
         - id: rideshare
           type: single
           diagram: trip-items
-          question: "Product adds `RidesharePickup`, a new kind of transport that extends `TransportItem`. A contractor quotes three operations to write, the three that `TripItem` declares. Which operations does the new class really have to define?"
+          question: "Product adds `RidesharePickup`, a new kind of ride that extends `TransportItem`. A contractor's estimate covers the new class and nothing else. Which other code lists the item types by name, and so must change before a fan can book one?"
           options:
-            - "`price()`, `supplier_kind()`, and `cancellation_deadline()`"
-            - "`price()` and `supplier_kind()`"
-            - "Only `price()`"
-            - "None: `TransportItem` implements all three"
-          correct_index: 1
+            - "None: the code that handles a `TransportItem` handles its new subclass too"
+            - "`ITEM_TYPES` in the OPC, which lists the classes an order may name"
+            - "`ITEM_TYPES` in the OPC, and `_item` in the Trip Website, which writes each type's name"
+            - "Every other subclass of `TripItem`, because each one names its siblings"
+          correct_index: 2
           option_feedback:
-            0: "`TransportItem` already defines `cancellation_deadline()`, from the ride's departure."
-            2: "`supplier_kind()` is abstract in `TripItem`, and `TransportItem` does not define it."
-            3: "`TransportItem` defines only `cancellation_deadline()`; it is abstract, like `TripItem`."
-          explanation: "`TripItem` declares `price()`, `supplier_kind()`, and `cancellation_deadline()` abstract. `TransportItem` defines `cancellation_deadline()` from the departure time, so a new transport item must define the other two. The class view shows what the class owes. It does not show the two places that list item types by name, `ITEM_TYPES` in `services/opc/payloads.py` and `_item` in the website's checkout, which the estimate also needs."
+            0: "`item_from_payload` looks each item's type up in `ITEM_TYPES` (`services/opc/payloads.py:58`), which lists four classes by name. An order that names a fifth cannot be read."
+            1: "The OPC would accept the new type then, but no order would carry it: the website's `_item` writes `ShuttleRide` for every ride (`services/website/checkout.py:89`)."
+            3: "The subclasses do not refer to each other. The lists of item types live outside the hierarchy, in two other modules."
+          explanation: "Two modules list the item types by name. The OPC builds every item through `ITEM_TYPES` (`services/opc/payloads.py:15`), and the Trip Website writes the type into each order as text (`services/website/checkout.py:76`). The website imports nothing from the OPC, so no import leads from one list to the other, and a new subclass is a change to two services. Until both read the types from one place, every new kind of item costs the same. A ride from a new supplier would also need a gateway in `SUPPLIERS` (`services/opc/gateways/registry.py:14`)."
         - id: cancellation
           type: single
           diagram: cancellation
@@ -6454,15 +6679,15 @@ steps:
             3: "`clients.py` holds the clients the checkout uses, which is not necessarily every connection the website makes."
         - for: rideshare
           options:
-            - "A class diagram of the `TripItem` hierarchy"
-            - "A component diagram of the OPC and its suppliers"
-            - "A sequence diagram of pricing a trip"
-            - "No diagram: read `services/opc/payloads.py`"
+            - "A class diagram of the `TripItem` hierarchy and the modules that name its classes"
+            - "A component diagram of the OPC, its suppliers, and the Trip Website's calls"
+            - "A sequence diagram of one checkout with a shuttle ride in the cart"
+            - "No diagram: read the item classes in `services/opc/model/items.py`"
           correct_index: 0
           option_feedback:
-            1: "Components show the running systems, not which operations a class inherits."
-            2: "A pricing trace shows the calls of one scenario, not which operations each class defines."
-            3: "`payloads.py` maps item types to and from JSON; it shows no operations."
+            1: "Components show the running systems and their calls, not which code lists the item classes."
+            2: "One checkout's trace shows the calls of that scenario, not where item types are listed."
+            3: "`items.py` holds the hierarchy itself. The lists of item types are in other modules, one of them in another service."
         - for: cancellation
           options:
             - "A class diagram of the `SupplierGateway` hierarchy"
@@ -6497,7 +6722,7 @@ steps:
             2: "Components show the suppliers, not the gateway classes, their contract, or their overrides."
             3: "`base.py` holds the contract, but the overrides that break it live in another package."
       reply:
-        request: "For each question that needs a view, the expert asked for one: a UML component diagram of the Trip Website's runtime connections (question 1), a UML class diagram of the `TripItem` hierarchy (question 2), a UML sequence diagram of a trip cancellation (question 3), and a UML class diagram of the `SupplierGateway` hierarchy across packages (question 5). For question 4, the expert read `services/website/pricing.py`."
+        request: "For each question that needs a view, the expert asked for one: a UML component diagram of the Trip Website's runtime connections (question 1), a UML class diagram of the `TripItem` hierarchy and the modules that name its classes (question 2), a UML sequence diagram of a trip cancellation (question 3), and a UML class diagram of the `SupplierGateway` hierarchy across packages (question 5). For question 4, the expert read `services/website/pricing.py`."
         summary: "Four views, which open as tabs in the Diagram pane: the website's connections, the trip items, a cancellation, and the supplier gateways."
         diagrams:
           - id: website-connections
@@ -6535,6 +6760,10 @@ steps:
             ref: services/opc/model/items.py:17
           - text: "`TransportItem` defines `cancellation_deadline`"
             ref: services/opc/model/items.py:92
+          - text: "`ITEM_TYPES` lists the item classes by name"
+            ref: services/opc/payloads.py:15
+          - text: "`_item` writes each item's type into the order"
+            ref: services/website/checkout.py:76
           - text: "`CancellationTask.cancel` calls `refund`"
             ref: services/opc/cancellation_task.py:39
           - text: "`except Exception` logs the failure and leaves the supplier order for the next run"
@@ -6552,6 +6781,7 @@ steps:
           - services/website/availability.py
           - deploy/services.toml
           - services/opc/model/items.py
+          - services/opc/payloads.py
           - services/opc/api.py
           - services/opc/cancellation_task.py
           - services/opc/service.py
@@ -6615,7 +6845,7 @@ steps:
         hidden_by: "A connection made from a setting, `ORDER_HISTORY_DSN` in `deploy/website.toml`, outside the website's client classes; the agent's diagram left it out."
         find_in_code: "For a rule about connections, search the settings and the code for every way a service connects, such as `connect(` and `_DSN`, not only its client classes."
         view_shows: "Your plan for question 1 still counts: the component view was the right request, and its reply was incomplete. Agents recover classes more reliably than relationships, so before you rely on a diagram, open the evidence for the one connection your answer depends on. Absent from a diagram does not mean absent from the code. And for the service fee, one file was faster than any view. Across the tutorial, the views did not answer the teams' questions for you; they made each decision checkable: a complete set of consumers, an ordering with a missing step, a path with its waits, a hierarchy with its contract."
-        consolidation_prompt: "When was reading one file faster than asking for a diagram, and why?"
+        consolidation_prompt: "Think of a project you work on. Write one question about it that a view would answer faster than its code, and name the view."
         mechanism_question:
           id: mechanism
           type: single

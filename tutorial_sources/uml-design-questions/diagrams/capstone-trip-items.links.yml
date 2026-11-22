@@ -18,3 +18,9 @@
 - text: ShuttleRide
   path: services/opc/model/items.py
   line: 102
+- text: "services::opc::payloads"
+  path: services/opc/payloads.py
+  line: 15
+- text: "services::website::checkout"
+  path: services/website/checkout.py
+  line: 76

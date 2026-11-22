@@ -1,0 +1,33 @@
+# Code links for shared-code.class.uml: clicking a label in the drawing opens
+# its line. text is the label exactly as the drawing shows it. A service's
+# label opens its first import of shared code, and a module's label its file.
+- text: "services::loyalty"
+  path: services/loyalty/points.py
+  line: 3
+- text: "services::reporting"
+  path: services/reporting/warehouse_etl.py
+  line: 3
+- text: "services::shuttle_planner"
+  path: services/shuttle_planner/planner.py
+  line: 5
+- text: "services::affiliates"
+  path: services/affiliates/relay.py
+  line: 3
+- text: "services::support_console"
+  path: services/support_console/app.py
+  line: 3
+- text: "services::notifications"
+  path: services/notifications/mailer.py
+  line: 3
+- text: "services::opc"
+  path: services/opc/service.py
+  line: 6
+- text: "services::website"
+  path: services/website/clients.py
+  line: 4
+- text: "broker"
+  path: infra/broker.py
+  line: 11
+- text: "http"
+  path: infra/http.py
+  line: 1

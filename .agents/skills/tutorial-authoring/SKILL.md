@@ -1399,6 +1399,11 @@ steps:
                                              # equals `text` is underlined; a click
                                              # (or its button in "Code links") opens
                                              # path:line. Also on contrast.diagram.
+                                             # `type` is class | component | sequence.
+                                             # A package diagram (a module view) is
+                                             # `type: class` with `package Name` nodes;
+                                             # its text alternative then begins "UML
+                                             # package diagram" (js/uml-auto-describe.js).
         evidence:                            # Buttons opening the file at the line.
           - {text: "Markdown", ref: "deploy/broker.toml:31"}
         files_read: [deploy/broker.toml]
@@ -1897,6 +1902,13 @@ of `docs/superpowers/specs/2026-11-20-uml-design-questions-tutorial-design.md`.
   `language-uml-<type>` code block and the evidence list; keys and debriefs
   sit in an instructor-only `.step-solution` block. The results card prints
   from this browser's saved progress when a record exists.
+- **Questions.** A question earns its place when its answer is spread over
+  several modules, a view shows it at a glance, and it asks what the design
+  causes or what to change in it (the three tests of
+  `docs/superpowers/specs/2026-11-21-uml-design-questions-redesign.md` §9.1).
+  Lookups in one file fail them. A first step can be a small challenge
+  instead of a tool drill: it introduces Files, Search files, and pinning
+  while a real question is answered.
 - **Authoring.** Use stable step `key`s (records are keyed by
   `_draftStepKey`); `progress_version` keeps reloads with a step hash
   restoring progress. Follow `quiz-format` for every question (sparse
@@ -5058,7 +5070,10 @@ are passed. A step with nothing to pass is never marked. Under the buttons,
 `_renderStepControls` puts the lock reason (`_nextLockedLabel`) as text in
 `.tvm-next-group` beside Next; CSS shows it only while Next is `disabled`,
 so code that toggles `next.disabled` later stays in sync (a disabled button
-shows no tooltip). The instructions popout and the UML editor backend draw
+shows no tooltip). In a narrow column the reason wraps beside Next and the
+group shrinks: the bar must not scroll sideways, because a locked first
+step has nothing in it that takes focus (WCAG 2.1.1). The instructions
+popout and the UML editor backend draw
 their own step bars and do not show these yet. Spec:
 `tests/tutorial-step-nav.spec.js`.
 

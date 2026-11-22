@@ -304,9 +304,35 @@
 
   var CLASS_DECLARATION = /^(?:abstract\s+class|class|interface|enum)\s+(?:"((?:[^"\\]|\\.)*)"|([^\s{"<]+))(?:\s+as\s+([^\s{"<]+))?/;
 
+  // `package Name` without braces is a package drawn without its members: a
+  // node of the class diagram, like a class. (With braces it is the frame
+  // around its members, which readPackages reads.)
+  var PACKAGE_NODE = /^package\s+(?:"((?:[^"\\]|\\.)*)"|([^\s{"<]+))(?:\s+as\s+([^\s{"<]+))?\s*$/;
+  // A name in a relationship, which may be qualified: services::loyalty.
+  var CLASS_REL_NAME = '\\w+(?:::\\w+)*';
+
+  function packageNodeOf(line) {
+    if (line.indexOf('{') !== -1) return null;
+    var stereotypes = extractStereotypes(line);
+    var head = stereotypes.stripped.trim();
+    var style = stripStyleSuffix(head);
+    if (style.styled && /^package\s+\S/.test(style.text)) head = style.text;
+    var m = head.match(PACKAGE_NODE);
+    if (!m) return null;
+    var label = m[1] !== undefined ? m[1].replace(/\\(["\\])/g, '$1') : m[2];
+    return { id: m[3] || label, label: label, stereotypes: stereotypes.names };
+  }
+
   function classDeclarationId(line) {
     var m = line.match(CLASS_DECLARATION);
-    return m ? (m[3] || m[1] || m[2]) : null;
+    if (m) return m[3] || m[1] || m[2];
+    var node = packageNodeOf(line);
+    return node ? node.id : null;
+  }
+
+  // "UML package diagram" when packages are all a class diagram draws.
+  function classDiagramTitle(packageCount, classifierCount) {
+    return packageCount && !classifierCount ? 'UML package diagram' : 'UML class diagram';
   }
 
   var CLASS_START = /^(?:abstract\s+class|class|interface|enum)\s+\S/;
@@ -334,19 +360,25 @@
     var read = readPackages(stripLayoutAnnotations(spec), classDeclarationId);
     var bodyStripped = read.source.replace(/\{[^{}]*\}/gm, ''); // drop class bodies
 
-    var classes = [], abstracts = [], interfaces = [];
+    var classes = [], abstracts = [], interfaces = [], packageNodes = [];
     var relationships = [];
+    var packageLabels = Object.create(null); // id -> the name a package node shows
+    function shownName(id) { return packageLabels[id] || String(id); }
 
     var arrowAlt = CLASS_ARROWS.map(escapeRegex).join('|');
     var relRe = new RegExp(
-      '^(\\w+)\\s*(?:["\']([^"\']*)["\']\\s+)?(' + arrowAlt + ')\\s+(?:["\']([^"\']*)["\']\\s+)?(\\w+)\\s*(?::\\s*(.+))?$'
+      '^(' + CLASS_REL_NAME + ')\\s*(?:["\']([^"\']*)["\']\\s+)?(' + arrowAlt + ')\\s+(?:["\']([^"\']*)["\']\\s+)?(' + CLASS_REL_NAME + ')\\s*(?::\\s*(.+))?$'
     );
 
     bodyStripped.split('\n').forEach(function (raw) {
       var line = raw.trim();
       if (!line) return;
       var m;
-      if ((m = line.match(/^abstract\s+class\s+(\w+)/))) {
+      var node = packageNodeOf(line);
+      if (node) {
+        if (!packageLabels[node.id]) packageNodes.push(node.label);
+        packageLabels[node.id] = node.label;
+      } else if ((m = line.match(/^abstract\s+class\s+(\w+)/))) {
         if (abstracts.indexOf(m[1]) < 0) abstracts.push(m[1]);
       } else if ((m = line.match(/^class\s+(\w+)/))) {
         if (classes.indexOf(m[1]) < 0) classes.push(m[1]);
@@ -360,7 +392,7 @@
       }
     });
 
-    if (!classes.length && !abstracts.length && !interfaces.length && !relationships.length) {
+    if (!classes.length && !abstracts.length && !interfaces.length && !packageNodes.length && !relationships.length) {
       return 'UML class diagram.';
     }
 
@@ -368,11 +400,16 @@
     if (classes.length) items.push(pluralize(classes.length, 'class', 'classes') + ' (' + classes.join(', ') + ')');
     if (abstracts.length) items.push(pluralize(abstracts.length, 'abstract class', 'abstract classes') + ' (' + abstracts.join(', ') + ')');
     if (interfaces.length) items.push(pluralize(interfaces.length, 'interface', 'interfaces') + ' (' + interfaces.join(', ') + ')');
-    var head = items.length ? 'UML class diagram with ' + items.join(', ') + '.' : 'UML class diagram.';
-    var packageLines = packageSentences(read, String);
+    if (packageNodes.length) items.push(pluralize(packageNodes.length, 'package', 'packages') + ' (' + packageNodes.join(', ') + ')');
+    var title = classDiagramTitle(packageNodes.length, classes.length + abstracts.length + interfaces.length);
+    var head = items.length ? title + ' with ' + items.join(', ') + '.' : title + '.';
+    var packageLines = packageSentences(read, shownName);
     if (packageLines.length) head += ' ' + packageLines.join(' ');
 
-    var rels = relationships.map(describeClassRel).filter(Boolean);
+    var rels = relationships.map(function (rel) {
+      return describeClassRel({ from: shownName(rel.from), fromMult: rel.fromMult, arrow: rel.arrow,
+        toMult: rel.toMult, to: shownName(rel.to), label: rel.label });
+    }).filter(Boolean);
     return rels.length ? head + ' ' + rels.join('. ') + '.' : head;
   }
 
@@ -1043,10 +1080,12 @@
 
   function describeClassDiagramVerbose(spec) {
     var read = readPackages(stripLayoutAnnotations(spec), classDeclarationId);
-    var classes = [], abstracts = [], interfaces = [];
+    var classes = [], abstracts = [], interfaces = [], packageNodes = [];
     var members = Object.create(null); // name -> { attributes: [], operations: [] }
     var stereotypes = Object.create(null); // name -> applied stereotypes
     var relationships = [];
+    var packageLabels = Object.create(null); // id -> the name a package node shows
+    function shownName(id) { return packageLabels[id] || String(id); }
 
     function memberSlot(name) {
       if (!members[name]) members[name] = { attributes: [], operations: [] };
@@ -1058,7 +1097,7 @@
     // matcher (a regex that uses `[^{}]*` for the body fails on those).
     var arrowAlt = CLASS_ARROWS.map(escapeRegex).join('|');
     var relRe = new RegExp(
-      '^(\\w+)\\s*(?:["\']([^"\']*)["\']\\s+)?(' + arrowAlt + ')\\s+(?:["\']([^"\']*)["\']\\s+)?(\\w+)\\s*(?::\\s*(.+))?$'
+      '^(' + CLASS_REL_NAME + ')\\s*(?:["\']([^"\']*)["\']\\s+)?(' + arrowAlt + ')\\s+(?:["\']([^"\']*)["\']\\s+)?(' + CLASS_REL_NAME + ')\\s*(?::\\s*(.+))?$'
     );
 
     var depth = 0;
@@ -1070,6 +1109,12 @@
 
       if (depth === 0) {
         var m;
+        var node = packageNodeOf(line);
+        if (node) {
+          if (!packageLabels[node.id]) packageNodes.push(node);
+          packageLabels[node.id] = node.label;
+          return;
+        }
         var declaration = cleanClassDeclaration(line);
         var declMatch = declaration.line.match(/^(abstract\s+class|class|interface)\s+(\w+)\s*(\{?)\s*$/);
         if (declMatch) {
@@ -1142,11 +1187,19 @@
     sectionForType('Classes', classes);
     sectionForType('Abstract classes', abstracts);
     sectionForType('Interfaces', interfaces);
-    var packages = packageItems(read, String);
+    // Packages drawn as nodes, each with the package that holds it, then the
+    // packages that show their members.
+    var packages = packageNodes.map(function (node) {
+      var holder = read.packages.filter(function (pkg) { return pkg.members.indexOf(node.id) !== -1; })[0];
+      return node.label + stereotypePhrase(node.stereotypes) + (holder ? ' (in package ' + holder.label + ')' : '');
+    }).concat(packageItems(read, shownName));
     if (packages.length) sections.push({ heading: 'Packages', items: packages });
 
     if (relationships.length) {
-      var relItems = relationships.map(describeClassRel).filter(Boolean);
+      var relItems = relationships.map(function (rel) {
+        return describeClassRel({ from: shownName(rel.from), fromMult: rel.fromMult, arrow: rel.arrow,
+          toMult: rel.toMult, to: shownName(rel.to), label: rel.label });
+      }).filter(Boolean);
       if (relItems.length) sections.push({ heading: 'Relationships', items: relItems });
     }
 

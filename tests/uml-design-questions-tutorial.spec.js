@@ -6,8 +6,9 @@ const { loadTutorialConfig } = require('./tutorial-helpers');
 const { a11yCheckpoint } = require('./a11y-helpers');
 
 // "Answering Design Questions with UML" (CS 130), as a student works through
-// it: the warm-up, five code-first diagram challenges on the Headliner
-// codebase, and the plan-first capstone with its results card, then the
+// it: six code-first diagram challenges on the Headliner codebase (the
+// first one also introduces the tools), and the plan-first capstone with its
+// results card, then the
 // print view. Answer keys, evidence lines, and labels come from the tutorial
 // YAML and facts.json at test time, so rewording a question or an option does
 // not break the test; only a change to what is correct does.
@@ -252,6 +253,12 @@ function diagramRegion(page, type) {
   return page.getByRole('region', { name: new RegExp('^UML ' + type + ' diagram', 'i') });
 }
 
+/** What a reply diagram is announced as: one that draws only packages is a package diagram. */
+function diagramKind(diagram) {
+  if (diagram.type !== 'class') return diagram.type;
+  return /^\s*(?:abstract\s+class|class|interface|enum)\s/m.test(diagram.source) ? 'class' : 'package';
+}
+
 /** An evidence note opens its file at its line, beside the diagram. */
 async function openEvidence(page, challengeSpec) {
   const ref = challengeSpec.reply.evidence[0].ref;
@@ -264,7 +271,7 @@ async function openEvidence(page, challengeSpec) {
   await expect(fileTab(page, filePath)).toHaveAttribute('aria-current', 'true');
   await expect.poll(() => editorLocation(page)).toEqual({ path: filePath, line });
   await expect(codeEditor(page)).toBeVisible();
-  await expect(diagramRegion(page, challengeSpec.reply.diagrams[0].type)).toBeVisible();
+  await expect(diagramRegion(page, diagramKind(challengeSpec.reply.diagrams[0]))).toBeVisible();
   await expect(page.getByRole('button', { name: 'Code beside diagram' })).toHaveAttribute('aria-pressed', 'true');
 }
 
@@ -432,11 +439,17 @@ test.describe('the whole tutorial, as a student', () => {
     await waitForBoot(page);
   }
 
-  test('the warm-up knowledge check opens the first challenge', async () => {
+
+  test('Shared Code: the tutorial opens with a challenge and a package diagram', async () => {
+    test.setTimeout(180_000);
     await page.goto(PAGE);
     await waitForBoot(page);
-    await expect(stepHeading(page, steps[0])).toBeVisible();
-    await continueToNextStep(page, steps[0]);
+    const step = steps[0];
+    await expect(stepHeading(page, step)).toBeVisible();
+    // The question arrives as a message, and its view stays shut until lock-in.
+    await expect(page.getByRole('blockquote').filter({ hasText: 'Which services do I redeploy?' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Diagram', exact: true })).toHaveAttribute('aria-disabled', 'true');
+    await completeCodeFirst(step.key);
   });
 
   test('Event Consumers: every challenge state survives a reload', async () => {
@@ -505,11 +518,11 @@ test.describe('the whole tutorial, as a student', () => {
     await openLockedAnswer(page);
     await expect(optionsOf(numberedGroup(stage(page, 'Answer from the code'), 1), challengeSpec.questions[0]).first()).toBeDisabled();
     if (challengeSpec.reply.contrast) {
-      await expect(diagramRegion(page, challengeSpec.reply.contrast.diagram.type)).toBeVisible();
+      await expect(diagramRegion(page, diagramKind(challengeSpec.reply.contrast.diagram))).toBeVisible();
       await expect(stage(page, 'Answer with the diagram')).toHaveCount(0);
       await answerContrast(page, challengeSpec);
     }
-    await expect(diagramRegion(page, challengeSpec.reply.diagrams[0].type)).toBeVisible();
+    await expect(diagramRegion(page, diagramKind(challengeSpec.reply.diagrams[0]))).toBeVisible();
     await openEvidence(page, challengeSpec);
     await answerWithDiagram(page, challengeSpec);
     await answerFollowUpAndEvidence(page, challengeSpec);
@@ -576,7 +589,7 @@ test.describe('the whole tutorial, as a student', () => {
       }
       await group.getByRole('button', { name: `Open its view: ${tabLabel(diagram)}`, exact: true }).click();
       await expect(tabs.getByRole('tab', { name: tabLabel(diagram), exact: true })).toHaveAttribute('aria-selected', 'true');
-      await expect(diagramRegion(page, diagram.type)).toBeVisible();
+      await expect(diagramRegion(page, diagramKind(diagram))).toBeVisible();
     }
     await answerWithDiagram(page, challengeSpec);
     await answerFollowUpAndEvidence(page, challengeSpec);
@@ -841,6 +854,20 @@ for (const { name, viewport, deviceScaleFactor } of [
 ]) {
   test.describe(`reflow at ${name}`, () => {
     test.use({ viewport, deviceScaleFactor });
+
+    // The first step opens locked, with no Previous button: its bar holds
+    // nothing a keyboard can focus, so it must never need scrolling
+    // (WCAG 2.1.1: a scrollable region has to be reachable by keyboard).
+    test('the locked first step shows why Next is locked without a scrolling bar', async ({ page }) => {
+      await page.goto(PAGE + '?autosave=false');
+      await waitForBoot(page);
+      await expect(nextButton(page)).toBeDisabled();
+      const reason = page.getByText('Finish the diagram challenge to continue', { exact: true });
+      await expect(reason).toBeVisible();
+      const overflow = await page.locator('.tvm-step-controls-bar').evaluate(bar => bar.scrollWidth - bar.clientWidth);
+      expect(overflow, 'the step controls wrap instead of scrolling sideways').toBeLessThanOrEqual(0);
+      await expectNoHorizontalScroll(page);
+    });
 
     test('Files is a disclosure above the editor and the diagram follows the form', async ({ page }) => {
       test.setTimeout(180_000);
