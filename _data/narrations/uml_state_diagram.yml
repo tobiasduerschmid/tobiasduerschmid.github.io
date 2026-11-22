@@ -29,7 +29,7 @@ lesson:
     the matching event method when the time is up, the battery runs low, or the robot reaches its
     base. Every language produces the same actions for the same events.
 speech:
-  voice: Fish Audio Drama 3 (cloned voice female6)
+  voice: drama3-female6
   speed: 1.0
   pronunciations:
     UML: U M L

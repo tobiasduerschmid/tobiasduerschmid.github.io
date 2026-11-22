@@ -119,25 +119,53 @@ html.dark-mode:not(.print-light-mode) .narrated-explainer .nja-syntax {
 .narrated-explainer .nja-narration p { color: var(--nja-text); font: inherit; line-height: 1.65; margin: 0; }
 .narrated-explainer .nja-audio { display: block; width: calc(100% - 2em); margin: 1em; }
 .narrated-explainer.is-enhanced .nja-audio { display: none; }
-.narrated-explainer .nja-controls { padding: 1em 1.4em; background: var(--nja-chrome); border-top: 1px solid var(--nja-line); }
-.narrated-explainer .nja-controls button { display: grid; place-items: center; font: inherit; width: 2.4em; height: 2.4em; min-width: 40px; min-height: 40px; padding: 0.3em; background: var(--nja-chrome); border: 2px solid var(--nja-line); border-radius: 4px; color: var(--nja-text); cursor: pointer; }
-.narrated-explainer .nja-controls button[data-action="play"] { background: var(--nja-accent-fill); border-color: var(--nja-accent); color: var(--nja-ink); }
-.narrated-explainer .nja-controls button:hover:not(:disabled) { background: var(--nja-hover); }
-.narrated-explainer .nja-controls button[data-action="play"]:hover:not(:disabled) { background: #ffdf55; }
-.narrated-explainer .nja-controls button:disabled,
-.narrated-explainer .nja-controls button[data-action="play"]:disabled {
-  color: var(--nja-muted); background: var(--nja-panel); border-color: var(--nja-line);
-  border-style: dashed; opacity: 1; cursor: default;
-}
-.narrated-explainer .nja-controls button:focus-visible, .narrated-explainer .nja-controls input:focus-visible, .narrated-explainer .nja-controls select:focus-visible { outline: 3px solid var(--nja-cyan); outline-offset: 3px; }
-.narrated-explainer .nja-time { color: var(--nja-text); font: inherit; font-variant-numeric: tabular-nums; margin-left: auto; padding: 0; }
-.narrated-explainer .nja-seek-label { display: block; margin: 0.9em 0; color: var(--nja-text); font: inherit; }
-.narrated-explainer .nja-seek { display: block; width: 100%; height: 1.8em; margin-top: 0.2em; accent-color: var(--nja-accent); cursor: pointer; }
-.narrated-explainer .nja-settings { display: flex; flex-wrap: wrap; gap: 0.7em 1em; align-items: end; }
-.narrated-explainer .nja-settings label { display: flex; flex-direction: column; gap: 0.3em; margin: 0; color: var(--nja-text); font: inherit; min-width: 0; }
-.narrated-explainer .nja-settings select { font: inherit; color: var(--nja-text); background: var(--nja-input); border: 2px solid var(--nja-line); border-radius: 4px; max-width: 100%; min-height: 2.4em; padding: 0.3em; }
-.narrated-explainer .nja-settings .nja-scene-select { flex: 1 1 12em; }
-.narrated-explainer .nja-settings .nja-motion { flex-direction: row; align-items: center; min-height: 2.4em; }
+/* The control bar draws the song player's controls (css/song-player.css) in
+   the narration's theme colors: borderless icon buttons that light up under
+   the pointer, a round gold play button, and accent-colored pressed states. */
+.narrated-explainer .nja-controls { padding: 0.4em 0.75em 0.75em; background: var(--nja-chrome); border-top: 1px solid var(--nja-line); }
+.narrated-explainer .nja-controls button { display: grid; place-items: center; flex: 0 0 auto; width: 2.75em; height: 2.75em; padding: 0.4em; font: inherit; color: var(--nja-text); background: transparent; border: 2px solid transparent; border-radius: 0.35em; cursor: pointer; }
+.narrated-explainer .nja-controls button:hover:not(:disabled) { background: var(--nja-hover); border-color: var(--nja-line); }
+.narrated-explainer .nja-controls button:disabled { opacity: 0.5; cursor: default; }
+.narrated-explainer .nja-controls .vn-play { width: 3em; height: 3em; border-radius: 50%; color: var(--nja-ink); background: var(--nja-accent-fill); border-color: var(--nja-text); }
+.narrated-explainer .nja-controls .vn-play:hover:not(:disabled) { color: var(--nja-ink); background: #ffdf55; border-color: var(--nja-text); }
+.narrated-explainer .nja-controls svg { width: 1.4em; height: 1.4em; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.narrated-explainer .nja-controls :is(.vn-play, .vn-track) svg { fill: currentColor; stroke: none; }
+/* The icons take the theme's colors, so the page's dark-mode inversion of
+   article SVGs (html.dark-mode .post-content svg) must not flip them back. */
+html.dark-mode .narrated-explainer .nja-controls svg { filter: none; }
+/* In dark mode the bar takes the music player's control background (css/song-player.css). */
+html.dark-mode:not(.print-light-mode) .narrated-explainer .nja-controls { background: #101827; }
+html.dark-mode:not(.print-light-mode) .narrated-explainer .nja-controls .vn-settings-toggle circle { fill: #101827; }
+/* The play button's outline sets the gold apart from the light bar; on the dark bar the gold stands out alone. */
+html.dark-mode:not(.print-light-mode) .narrated-explainer .nja-controls .vn-play,
+html.dark-mode:not(.print-light-mode) .narrated-explainer .nja-controls .vn-play:hover:not(:disabled) { border-color: transparent; }
+/* The settings icon's knobs cover their lines, as in the song player. */
+.narrated-explainer .nja-controls .vn-settings-toggle circle { fill: var(--nja-chrome); }
+.narrated-explainer .nja-controls .vn-settings-toggle:is(:hover, [aria-expanded="true"]) circle { fill: var(--nja-hover); }
+/* A skip button's seconds sit inside its circular arrow, as in the song player. */
+.narrated-explainer .nja-controls .vn-skip { position: relative; padding-inline: 0.2em; }
+.narrated-explainer .nja-controls .vn-skip svg { width: 2em; height: 2em; }
+.narrated-explainer .nja-controls .vn-skip span { position: absolute; top: 0.8em; line-height: 1; font-weight: 600; }
+/* A toggle shows the shape of its state (_includes/player-icon.html). */
+.narrated-explainer .nja-controls :is(.song-player-pause-icon, .song-player-muted-icon, .song-player-exit-fullscreen-icon),
+.narrated-explainer .nja-controls .is-playing .song-player-play-icon,
+.narrated-explainer .nja-controls .is-muted .song-player-sound-icon,
+.narrated-explainer .nja-controls .is-active .song-player-enter-fullscreen-icon { display: none; }
+.narrated-explainer .nja-controls .is-playing .song-player-pause-icon,
+.narrated-explainer .nja-controls .is-muted .song-player-muted-icon,
+.narrated-explainer .nja-controls .is-active .song-player-exit-fullscreen-icon { display: initial; }
+/* Captions on are marked by color and an underline, an open settings panel by its lit toggle. */
+.narrated-explainer .nja-controls button[aria-pressed="true"] { color: var(--nja-accent); border-bottom-color: currentColor; }
+.narrated-explainer .nja-controls button[aria-expanded="true"] { color: var(--nja-accent); background: var(--nja-hover); }
+.narrated-explainer .nja-controls :is(button, input, select):focus-visible { outline: 3px solid var(--nja-cyan); outline-offset: -3px; }
+/* Dark cyan would vanish on the gold play button, so its ring sits outside it. */
+.narrated-explainer .nja-controls .vn-play:focus-visible { outline-color: var(--nja-text); outline-offset: 3px; }
+.narrated-explainer .nja-time { margin-inline: 0.4em; padding: 0; font: inherit; font-variant-numeric: tabular-nums; color: var(--nja-text); white-space: nowrap; }
+.narrated-explainer .nja-seek-label { display: block; margin: 0; color: var(--nja-text); font: inherit; }
+.narrated-explainer .nja-seek { display: block; width: 100%; height: 1.75em; margin: 0; accent-color: var(--nja-accent); cursor: pointer; }
+.narrated-explainer .nja-settings label { display: grid; gap: 0.4em; margin: 0; color: var(--nja-text); font: inherit; min-width: 0; }
+.narrated-explainer .nja-settings select { width: 100%; min-width: 0; min-height: 2.75em; padding: 0.35em 0.5em; font: inherit; color: var(--nja-text); background: var(--nja-input); border: 1px solid var(--nja-line); border-radius: 0.4em; }
+.narrated-explainer .nja-settings .nja-motion { display: flex; align-items: center; gap: 0.4em; min-height: 2.5em; }
 .narrated-explainer .nja-motion input { width: 1.2em; height: 1.2em; margin: 0 0.2em 0 0; accent-color: var(--nja-accent); }
 .narrated-explainer .nja-status { padding: 0 1.4em; color: var(--nja-text); font-size: 1em; line-height: 1.5; }
 .narrated-explainer .nja-status:empty { display: none; }
@@ -153,6 +181,7 @@ html.dark-mode:not(.print-light-mode) .narrated-explainer .nja-syntax {
 html.dark-mode:not(.print-light-mode) .narrated-explainer a, html.dark-mode:not(.print-light-mode) .narrated-explainer a:visited { color: #83d4ff; }
 html.dark-mode:not(.print-light-mode) .narrated-explainer .nja-description { color: #d1dce7; border-color: #9bafc1; }
 html.dark-mode:not(.print-light-mode) .narrated-explainer .nja-transcript .nja-syntax { color: var(--nja-text); background: var(--nja-code-bg); }
+html.dark-mode:not(.print-light-mode) .narrated-explainer .vn-settings { box-shadow: 0 0.5em 2em rgba(0, 0, 0, 0.6); }
 
 /* The player of every narration kind, modeled on the song player
    (_layouts/song-player.html): a video frame with the picture (the stage),
@@ -171,40 +200,44 @@ html.dark-mode:not(.print-light-mode) .narrated-explainer .nja-transcript .nja-s
 .narrated-explainer .vn-captions:focus-visible { outline: 3px solid var(--nja-cyan); outline-offset: -3px; }
 .narrated-explainer .vn-video.are-captions-off .vn-captions { display: none; }
 /* The control bar: the position line, then playback on the left and the view on the right. */
-.narrated-explainer .vn-controls.nja-controls { padding: 0.4em 0.9em 0.6em; border-top: 1px solid var(--nja-line); border-bottom: 0; }
-.narrated-explainer .vn-seek-label.nja-seek-label { margin: 0; }
 .narrated-explainer .vn-hidden-label { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-.narrated-explainer .vn-toolbar { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.5em; margin-top: 0.2em; }
-.narrated-explainer .vn-toolbar-group { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4em; }
+.narrated-explainer .vn-toolbar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 0.5em 1em; padding-top: 0.25em; }
+.narrated-explainer .vn-toolbar-group { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35em; min-width: 0; }
 /* View controls stay at the right edge, also when the toolbar wraps. */
 .narrated-explainer .vn-view-controls { margin-inline-start: auto; }
-.narrated-explainer .vn-toolbar .nja-time { margin-left: 0.3em; }
-/* A skip button reads as its arrow and its seconds side by side, so the digit never sits on the arrow's stroke. */
-.narrated-explainer .nja-controls button[data-vn-skip] { display: inline-flex; align-items: center; justify-content: center; gap: 0.15em; width: auto; padding: 0.3em 0.55em; }
-.narrated-explainer [data-vn-skip] span { font-weight: 900; }
-.narrated-explainer [data-vn-skip] i { font-size: 1.05em; }
-.narrated-explainer .vn-volume { width: 6em; min-height: 2.4em; accent-color: var(--nja-accent); }
-.narrated-explainer .vn-volume:focus-visible { outline: 3px solid var(--nja-cyan); outline-offset: 3px; }
-.narrated-explainer .nja-controls .vn-cc { width: auto; padding: 0.3em 0.6em; font-weight: 900; }
-/* Captions off is shown by a strike, not color alone. */
-.narrated-explainer .vn-cc[aria-pressed="false"] { text-decoration: line-through; text-decoration-thickness: 0.15em; }
-/* An open settings panel marks its toggle with a bar under the icon, as a selected tab. */
-.narrated-explainer .nja-controls .vn-settings-toggle[aria-expanded="true"] { background: var(--nja-hover); box-shadow: inset 0 -3px 0 var(--nja-accent); }
+.narrated-explainer .vn-volume { width: 5em; min-width: 3em; height: 2.75em; margin: 0 0.35em 0 0; accent-color: var(--nja-accent); cursor: pointer; }
+.narrated-explainer .nja-controls .vn-cc { font-weight: 700; }
+/* A lesson's code language stays in the bar, labeled, beside the view controls. */
+.narrated-explainer .vn-language { display: inline-flex; align-items: center; gap: 0.4em; margin: 0 0.35em 0 0; color: var(--nja-text); font: inherit; white-space: nowrap; }
+.narrated-explainer .vn-language select { max-width: 11em; min-height: 2.5em; padding: 0.25em 0.4em; font: inherit; color: var(--nja-text); background: var(--nja-input); border: 1px solid var(--nja-line); border-radius: 0.35em; cursor: pointer; }
 /* While a checkpoint is open, the control bar steps aside so the checkpoint
    has the room; the checkpoint's own buttons continue the narration. The
    selector follows the checkpoint's hidden attribute at once, so a player
    can focus a bar control in the same step that closes the checkpoint. */
 .narrated-explainer .vn-video:has(:is(.np-quiz, .case-quiz):not([hidden])) .vn-controls { display: none; }
-.narrated-explainer .vn-settings { margin-top: 0.6em; padding: 0.8em; background: var(--nja-bg); border: 1px solid var(--nja-line); border-radius: 6px; }
-.narrated-explainer .vn-settings .nja-settings { align-items: end; }
-/* A narrow player keeps its toolbar to two rows: the transport, then the clock
-   beside the view controls. Phones set the volume with their own buttons (and
-   iOS ignores a page's volume), so the volume slider gives way; mute stays. */
+/* The settings panel floats over the picture at the lower right, as the song
+   player's does (js/song-video/settings-panel.js), but just above the bar, so
+   every control stays reachable while it is open; it scrolls on its own. */
+.narrated-explainer .nja-controls { position: relative; }
+.narrated-explainer .vn-settings { position: absolute; z-index: 6; right: 0.5em; bottom: calc(100% + 0.5em); box-sizing: border-box; width: min(24em, calc(100% - 1em)); max-height: min(30em, 70vh); overflow: auto; overscroll-behavior: contain; margin: 0; padding: 0.5em 1em 0.25em; color: var(--nja-text); background: var(--nja-bg); border: 1px solid var(--nja-line); border-radius: 0.75em; box-shadow: 0 0.5em 2em rgba(11, 15, 26, 0.25); }
+.narrated-explainer .vn-settings-heading { display: flex; justify-content: space-between; align-items: center; gap: 1em; }
+.narrated-explainer .vn-settings .nja-settings > label { padding-block: 0.75em; border-top: 1px solid var(--nja-line); }
+.narrated-explainer .vn-settings .nja-settings > .nja-motion { padding-block: 0.5em; }
+/* A settings action carries words, so it keeps a visible button outline. */
+.narrated-explainer .vn-settings .nja-settings button { display: block; width: auto; height: auto; min-height: 2.75em; margin-block: 0.75em; padding: 0.4em 0.8em; border-color: var(--nja-line); background: var(--nja-chrome); }
+/* A narrow player keeps the same controls at a compact size (targets of at
+   least 36px), flowing in their order: the transport, then the clock beside
+   the code language, then the view buttons. Phones set the volume with their
+   own buttons (and iOS ignores a page's volume), so the volume slider gives
+   way; mute stays. */
 @container (max-width: 520px) {
-  .narrated-explainer .vn-toolbar { justify-content: flex-start; gap: 0.35em; }
-  .narrated-explainer .vn-toolbar .nja-transport { display: contents; }
-  .narrated-explainer .vn-toolbar button { width: 2.25em; height: 2.25em; min-width: 36px; min-height: 36px; }
-  .narrated-explainer .nja-controls button[data-vn-skip] { padding-inline: 0.35em; }
+  .narrated-explainer .vn-toolbar { justify-content: flex-start; gap: 0.3em 0.25em; }
+  .narrated-explainer .vn-toolbar-group { display: contents; }
+  .narrated-explainer .vn-toolbar button { width: 2.2em; height: 2.2em; min-width: 36px; min-height: 36px; padding: 0.25em; }
+  .narrated-explainer .vn-toolbar .vn-play { width: 2.4em; height: 2.4em; }
+  .narrated-explainer .vn-toolbar .vn-skip svg { width: 1.65em; height: 1.65em; }
+  .narrated-explainer .vn-toolbar .vn-skip span { top: 0.62em; }
+  .narrated-explainer .vn-toolbar .nja-time { margin-inline: 0.3em; }
   .narrated-explainer .vn-volume { display: none; }
 }
 
@@ -241,16 +274,21 @@ html.has-viewport-fullscreen .narrated-explainer .vn-video.is-viewport-fullscree
 .narrated-explainer .vn-video.is-fullscreen .vn-check-exit:focus-visible { outline: 3px solid var(--nja-cyan); outline-offset: 2px; }
 .narrated-explainer .vn-video.is-fullscreen .vn-captions { grid-area: 2 / 1; z-index: 3; align-self: end; justify-self: center; width: min(60em, calc(100% - 1em)); min-height: 0; max-height: min(5em, 40%); overflow-y: auto; margin-bottom: 0.35em; padding: 0.3em 0.6em; background: var(--nja-bg); border: 1px solid var(--nja-line); border-radius: 5px; color: var(--nja-text); font-size: calc(1em * var(--vn-caption-scale, 1)); line-height: 1.4; text-align: center; }
 .narrated-explainer .vn-video.is-fullscreen .vn-captions p { margin: 0 auto; color: var(--nja-text); line-height: inherit; }
-.narrated-explainer .vn-video.is-fullscreen .vn-controls { grid-area: 3 / 1; z-index: 4; min-height: 0; max-height: calc(var(--vn-surface-height) * 0.45); padding: 0 0.6em 0.2em; overflow-y: auto; }
+.narrated-explainer .vn-video.is-fullscreen .vn-controls { grid-area: 3 / 1; z-index: 4; min-height: 0; padding: 0 0.6em 0.4em; overflow: visible; }
+/* Full screen keeps the bar thin: the same controls at a compact size, with
+   targets of at least 32px. The settings panel keeps its place over the
+   lower right, now of the whole screen, above the caption overlay. */
 .narrated-explainer .vn-video.is-fullscreen .nja-seek { height: 24px; margin: 0; }
-.narrated-explainer .vn-video.is-fullscreen .vn-toolbar { gap: 0.25em; margin-top: 0; }
+.narrated-explainer .vn-video.is-fullscreen .vn-toolbar { gap: 0.25em 0.5em; padding-top: 0; }
 .narrated-explainer .vn-video.is-fullscreen .vn-toolbar-group { gap: 0.15em; }
 .narrated-explainer .vn-video.is-fullscreen .vn-toolbar button { width: 2em; height: 2em; min-width: 32px; min-height: 32px; padding: 0.15em; }
-.narrated-explainer .vn-video.is-fullscreen .vn-toolbar :is(button[data-vn-skip], .vn-cc) { width: auto; padding-inline: 0.3em; }
-.narrated-explainer .vn-video.is-fullscreen .nja-time { flex-basis: auto; margin-left: 0.2em; white-space: nowrap; }
-.narrated-explainer .vn-video.is-fullscreen .vn-volume { width: 3em; min-height: 32px; }
-/* Settings scroll independently and remain above the caption overlay. */
-.narrated-explainer .vn-video.is-fullscreen .vn-settings { position: absolute; z-index: 6; inset: 0.5em 0.5em auto; max-height: calc(var(--vn-surface-height) * 0.7); overflow-y: auto; margin: 0; }
+.narrated-explainer .vn-video.is-fullscreen .vn-toolbar .vn-play { width: 2.2em; height: 2.2em; }
+.narrated-explainer .vn-video.is-fullscreen .vn-toolbar svg { width: 1.15em; height: 1.15em; }
+.narrated-explainer .vn-video.is-fullscreen .vn-toolbar .vn-skip svg { width: 1.6em; height: 1.6em; }
+.narrated-explainer .vn-video.is-fullscreen .vn-toolbar .vn-skip span { top: 0.54em; }
+.narrated-explainer .vn-video.is-fullscreen .nja-time { margin-inline: 0.3em; }
+.narrated-explainer .vn-video.is-fullscreen .vn-volume { width: 3em; height: 32px; }
+.narrated-explainer .vn-video.is-fullscreen .vn-language select { min-height: 32px; padding-block: 0.1em; }
 .narrated-explainer .vn-video.is-fullscreen .vn-controls { transition: opacity 180ms ease, visibility 0s; }
 .narrated-explainer .vn-video.is-fullscreen.are-controls-hidden .vn-controls { opacity: 0; visibility: hidden; pointer-events: none; transition-delay: 0s, 180ms; }
 .narrated-explainer .vn-video.is-fullscreen.are-controls-hidden { cursor: none; }
@@ -333,7 +371,8 @@ html.dark-mode:not(.print-light-mode) .narrated-explainer .narration-note-action
   .narrated-explainer .nja-explanation { grid-template-columns: 1fr; }
 }
 @media (max-width: 520px) {
-  .narrated-explainer .nja-stage, .narrated-explainer .nja-controls, .narrated-explainer .nja-narration { padding: 0.85em; }
+  .narrated-explainer .nja-stage, .narrated-explainer .nja-narration { padding: 0.85em; }
+  .narrated-explainer .nja-controls { padding-inline: 0.5em; }
   .narrated-explainer :is(.np-quiz, .case-quiz) { padding: 0.85em; }
   .narrated-explainer :is(.np-quiz, .case-quiz) .quiz-container { padding: 0.65em; }
   .narrated-explainer :is(.np-quiz, .case-quiz) .quiz-option { gap: 0.5em; padding: 0.55em 0.45em; }

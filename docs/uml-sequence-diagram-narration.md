@@ -174,8 +174,7 @@ check, and each prediction pauses for 5 to 6 seconds.
 ```sh
 node scripts/narration.js compile uml_sequence_diagram
 python3 scripts/render-explainer-narration.py --topic uml_sequence_diagram --check
-python3 scripts/render-explainer-narration.py --topic uml_sequence_diagram \
-  --model /absolute/path/kokoro-v1.0.onnx --voices /absolute/path/voices-v1.0.bin
+python3 scripts/render-explainer-narration.py --topic uml_sequence_diagram  # needs a Drama 3 server
 node scripts/narration.js check uml_sequence_diagram
 node --test scripts/tests/uml-sequence-diagram-narration.test.js
 ```

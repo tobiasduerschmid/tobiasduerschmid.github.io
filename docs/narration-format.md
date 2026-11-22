@@ -43,8 +43,8 @@ lesson:
   chapter: /SEBook/concepts/queues.html
   views: /SEBook/concepts/queues
 speech:
-  voice: af_heart
-  speed: 0.95
+  voice: drama3-female6
+  speed: 1
   pronunciations: {}
 media:
   audio: /assets/audio/queues.mp3
@@ -100,7 +100,8 @@ Cue fields are `id`, `say`, `visual`, `step`, `note`, `source`, `prediction`, an
 `pause_after`. `say` is the written speech and caption text. Pronunciations
 modify only TTS output. A missing pause means 0.55 seconds; zero is permitted.
 Keep the longer viewing pause before a quiz required by the narration skills.
-Speech currently uses Kokoro's English (`en-us`) renderer.
+`speech.voice` names the voice, and through it the speech engine; see
+[Speech engines](#speech-engines). Every lesson uses `drama3-female6`.
 
 ## The visual package
 
@@ -188,15 +189,16 @@ local, trusted author assets; they are not an untrusted upload format.
    ```
    These do not load the speech model or write audio. `compile` prints the
    resolved runtime JSON; omit the topic to compile all lessons.
-4. Generate audio with the existing Kokoro installation:
+4. Generate audio with a running Drama 3 server (see
+   [Speech engines](#speech-engines)), review the cues it lists, and check:
    ```sh
-   python3 scripts/render-explainer-narration.py --topic queues \
-     --model /absolute/path/kokoro.onnx --voices /absolute/path/voices.bin
+   python3 scripts/render-explainer-narration.py --topic queues
    node scripts/narration.js check queues
    ```
    There is no topic allowlist to update. The render command uses the same
-   compiler as Jekyll. Unchanged spoken cues reuse its existing WAV cache;
-   changed words render again, and all timestamps/captions are rebuilt.
+   compiler as Jekyll. Unchanged spoken cues reuse the cue cache in
+   `~/.cache/sebook-narration/<topic>`; changed words render again, and all
+   timestamps and captions are rebuilt.
 5. Build, inspect inline/fullscreen/reader/print views in both themes, and run
    the relevant narration and accessibility tests. `check` without a topic
    validates all scripts and speech fingerprints; deployment runs it too.
@@ -207,6 +209,86 @@ changes require regeneration. Layout, artwork, navigation, source citations,
 and visual-description edits do not. Existing audio was retained during the
 migration after comparing every old runtime field; only timing metadata gained
 cue IDs and the speech fingerprint.
+
+## Speech engines
+
+`scripts/render-explainer-narration.py` resolves `speech.voice` with
+`scripts/narration_speech/voices.py`. A folder
+`scripts/narration_speech/voices/<id>/` holding a `voice.json` registers a voice
+and names its engine; any other ID is a Kokoro voice. The renderer caches each
+cue's chosen clip under the speaker's identity and the spoken words, so an edit
+re-renders only the cues it changed, and every other cue keeps its published
+delivery. The site never contacts an engine; it serves the rendered files.
+
+### Fish Audio Drama 3
+
+`voices/drama3-female6/` defines the voice of every lesson: `voice.json` holds
+the delivery tag that opens every request (`[warm, enthusiastic, welcoming]`)
+and the transcript of `reference.flac`. That clip is a 16.5-second line in a
+voice Drama 3 invented during auditions, not a recording of a real person, and
+was time-compressed to about 178 words per minute. Drama 3 copies voice, tone
+and pace from it, so it has no speed setting: `speech.speed` must be `1`.
+Editing either file changes the speaker identity and renders every cue anew.
+The players credit "Built with Fish Audio", as the Fish Audio license requires
+(`_includes/narration-player-credit.html`).
+
+Drama 3 runs on an NVIDIA GPU. The lessons were rendered on a DGX Spark (GB10);
+the server takes about 56% of its memory. To set up a host:
+
+1. Create a Python 3.12 virtualenv and install
+   [sglang-omni](https://github.com/sgl-project/sglang-omni) from source, editable
+   (`pip install -e`). The lessons used commit `e698f755`, which brought torch
+   2.14.1+cu130, sglang 0.5.23 and flashinfer-python 0.7.2.
+2. Download the `fishaudio/drama-3` model from Hugging Face (the lessons used
+   snapshot `78e5ab79`).
+3. Start the server on that host and wait for "Drama 3 ready" (about five
+   minutes; the first start also compiles FlashInfer kernels):
+   ```sh
+   DRAMA3_VENV=~/drama3/venv DRAMA3_MODEL=/path/to/drama-3/snapshot \
+     scripts/narration_speech/drama3-serve.sh
+   ```
+   The script's header lists its settings; the defaults fit the GB10 with CUDA 13.
+4. On the machine that renders, forward the port (the maintainer keeps the SSH
+   target in the untracked `.env.local` as `NARRATION_TTS_SSH`):
+   ```sh
+   ssh -N -L 8000:127.0.0.1:8000 "$NARRATION_TTS_SSH"
+   ```
+5. When done, stop the server with `kill "$(cat ~/drama3/server.pid)"` (the
+   process ID sits next to `DRAMA3_LOG`).
+
+Render on Apple silicon, where Whisper checks each take (`mlx-whisper`):
+
+```sh
+uv run --no-project -p 3.12 --with numpy --with scipy --with soundfile \
+  --with pyloudnorm --with num2words --with mlx-whisper \
+  python scripts/render-explainer-narration.py --topic queues
+```
+
+Drama 3 takes no seed and sometimes drops or repeats a word, so each cue gets up
+to `--takes` takes (default 3). Rendering stops at the first take Whisper hears
+as written; otherwise the closest take is kept. A render takes roughly as long
+as the lesson plays. Clips are trimmed and matched to -23 LUFS.
+
+The renderer ends by listing the cues whose transcript still differs from the
+script. Differences in spacing, apostrophes, or a plural "s" ("hall hopper"
+heard as "hallhopper") are not listed. Listen to each listed cue: a misheard
+homophone ("whole" as "hole") is fine; a missing or repeated word is a slip.
+Re-render a slip with `--retake <scene>/<cue>`. When every take drops the same
+word, reword it for speech only with a pronunciation entry; the captions keep
+the written text. Drama 3 tends to drop a label that opens a sentence before a
+colon, so `"Predict: the battery": "Now predict: the battery"` keeps it.
+Keep pronunciation entries that spell out identifiers and acronyms
+(`setState: set state`, `UML: U M L`); Drama 3 needs no phonetic respellings.
+
+### Kokoro
+
+Any unregistered voice ID, such as `af_heart`, renders with
+[kokoro-onnx](https://github.com/thewh1teagle/kokoro-onnx) (`kokoro-onnx==0.6.1`,
+`soundfile`): pass `--model kokoro-v1.0.onnx --voices voices-v1.0.bin`. Kokoro
+renders one deterministic take per cue, used as is, with no transcript review.
+
+`scripts/tests/test_narration_speech.py` covers the transcript comparison, take
+choice, the Drama 3 request, and voice resolution without a GPU or Whisper.
 
 ## Editable lesson notes and PDF export
 
@@ -313,13 +395,18 @@ and verification screenshots outside the repository.
 - `_includes/narration-player-*.html`: the player chrome every kind shares.
   Every player wraps its stage, checkpoint, and captions in one video
   (`.vn-video` > `.vn-surface` > `.vn-frame`) and ends it with
-  `narration-player-controls.html`, the one thin control bar, modeled on the
-  song player: the position line; then play, back and forward 5 seconds,
-  previous and next scene, restart, and the clock on the left; mute, volume,
-  captions (CC), the settings toggle, and full screen on the right. Its
-  settings panel holds the scene select, speed, caption size, and landscape
-  in full screen; a player passes its own choices (motion, knowledge check,
-  code language) as `settings` and controls that lead the transport (a case
+  `narration-player-controls.html`, the one thin control bar, which is the
+  song player's: the same icons (`player-icon.html`, which
+  `_layouts/song-player.html` also renders) and layout. The position line;
+  then play, back and forward 5 seconds, previous and next scene, and the
+  clock (position and length) on the left; a lesson's code language, mute,
+  volume, captions (CC), the settings toggle, and full screen on the right.
+  Its settings panel floats over the player's lower right
+  (`js/song-video/settings-panel.js`, shared with the song player) and holds
+  the scene select, speed, caption size, and landscape in full screen. A
+  player passes choices that stay in the bar as `view` (the code language,
+  `narration-player-language.html`), its own settings (motion, knowledge
+  check) as `settings`, and controls that lead the transport (a case
   study's step buttons) as `lead`. A case study without rendered speech
   passes `text_only=true` and gets no position, transport, volume, captions
   toggle, or speed. `narration-player-tips.html` explains the pointer and

@@ -115,7 +115,8 @@ Every narration (Node.js, React, the pattern lessons, video narrations, and
 case studies) shares one thin control bar, its settings panel, its keyboard
 shortcuts, and its full screen (see the shared core in
 `docs/narration-format.md`). A pattern lesson passes its knowledge-check
-button and code-language select into the bar's settings. Full screen fills
+button into the bar's settings and keeps its code-language select in the
+bar itself, where it stays visible. Full screen fills
 the screen with the player's video: the scene or knowledge check scrolls
 inside it, and the captions and the bar overlay its lower edge. It uses
 the standard or Safari's prefixed API; where neither exists (Safari on

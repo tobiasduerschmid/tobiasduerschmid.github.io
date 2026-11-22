@@ -1,7 +1,7 @@
 # Node.js narrated introduction
 
 The Node.js reference page embeds a roughly nine-minute introduction with
-locally generated Kokoro speech and no music. Its typography, gold stickers,
+synthetic Fish Audio Drama 3 speech and no music. Its typography, gold stickers,
 outlined objects, and terminal graphics follow the song videos. The player now
 uses distinct light and dark palettes that follow the site's theme. Artwork
 uses responsive HTML and CSS so code remains readable at narrow widths.
@@ -33,7 +33,7 @@ live separately in `_data/narration_visuals/nodejs.json`.
 - `_data/narrations/nodejs.yml`: narration, purpose and prerequisite context for
   each snippet, visual descriptions, voice, pronunciations, and pauses.
 - `_data/explainers/nodejs_timing.json`: actual measured cue times and speech fingerprint.
-- `assets/audio/nodejs-basics.mp3`: Kokoro `af_heart`, speed `0.95`, 24 kHz mono,
+- `assets/audio/nodejs-basics.mp3`: Drama 3 voice `drama3-female6`, 24 kHz mono,
   48 kbps MP3. Only the compressed file is published, not the working WAVs.
 - `assets/narration/nodejs-basics.txt`: plain, pronunciation-adjusted TTS input.
 - `assets/narration/nodejs-basics.vtt`: captions with code names preserved.
@@ -63,26 +63,21 @@ Graphics distinguish file work, the JavaScript thread, and ready callbacks, and
 use labels and shapes in addition to color. Motion represents progress or transfer,
 not decoration. Reduced motion jumps directly to the complete teaching state.
 
-## Regenerating Kokoro speech
+## Regenerating speech
 
-The optional renderer uses [kokoro-onnx](https://github.com/thewh1teagle/kokoro-onnx)
-and its [v1.0 model and voice files](https://github.com/thewh1teagle/kokoro-onnx/releases/tag/model-files-v1.1).
-Generation is local; model files are not shipped to the browser. Install
-`kokoro-onnx==0.6.1` and `soundfile>=0.13` in an isolated Python
-environment. SoundFile's bundled libsndfile encodes the compressed MP3, so no
-separate system encoder is needed. Run:
+Set up a Drama 3 server and the rendering environment as described in
+[Speech engines](narration-format.md#speech-engines), then run:
 
 ```sh
-python scripts/render-explainer-narration.py --topic nodejs \
-  --model /path/to/kokoro-v1.0.onnx \
-  --voices /path/to/voices-v1.0.bin
+python scripts/render-explainer-narration.py --topic nodejs
 bundle exec jekyll build --incremental
 ```
 
-The renderer caches individual cues under `/tmp/nodejs-kokoro-render`. Editing one
-cue only synthesizes that cue again. It regenerates audio, captions, the plain
-script, and the timing manifest together. Review changed speech before publishing.
-The narration is synthetic, not a recording of a human speaker.
+The renderer caches individual cues under `~/.cache/sebook-narration/nodejs`.
+Editing one cue only synthesizes that cue again. It regenerates audio, captions,
+the plain script, and the timing manifest together. Listen to the cues it lists
+for review before publishing. The narration is synthetic, not a recording of a
+human speaker; no model is shipped to the browser.
 
 The required `--topic` argument discovers any ID under `_data/narrations/`;
 outputs follow its declared media paths, with `_data/explainers/<topic>_timing.json`.

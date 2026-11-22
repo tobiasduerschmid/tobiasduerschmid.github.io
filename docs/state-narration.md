@@ -52,14 +52,14 @@ live separately in `_data/narration_visuals/state.json`.
 
 ## Regeneration and checks
 
-Render with the Kokoro setup from `docs/nodejs-animation.md`:
+Render with a Drama 3 server, as described in
+[Speech engines](narration-format.md#speech-engines):
 
 ```sh
-python scripts/render-explainer-narration.py --topic state \
-  --model /path/to/kokoro-v1.0.onnx --voices /path/to/voices-v1.0.bin
+python scripts/render-explainer-narration.py --topic state
 ```
 
-espeak-ng 1.52 truncates data paths longer than 160 bytes and then reports a
+For a Kokoro render (an unregistered voice ID), note that espeak-ng 1.52 truncates data paths longer than 160 bytes and then reports a
 missing `phontab` under `/Users/runner/...`. If the environment lives under a
 long path, copy `espeakng_loader/espeak-ng-data` to a short directory and point
 `espeakng_loader.get_data_path` at it; phonemizer resolves symlinks, so a link

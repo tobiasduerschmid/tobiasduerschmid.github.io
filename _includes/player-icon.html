@@ -1,0 +1,35 @@
+{%- comment -%}
+  The control icons the song player and every narration player share, so both
+  bars draw the same shapes. Each icon is decorative: its button carries the
+  accessible name. Stroke icons inherit currentColor; the stylesheets fill the
+  play and track icons and show one of each toggle's alternatives (the
+  song-player-* classes on the paths).
+  Params:
+    name   play (with the pause shape), back, forward, previous, next,
+           sound (with the muted shape), settings, fullscreen, close
+    exit   for fullscreen: also draw the exit shape, shown while full screen is active
+{%- endcomment -%}
+{%- case include.name -%}
+{%- when 'play' -%}
+<svg viewBox="0 0 24 24" aria-hidden="true"><path class="song-player-play-icon" d="M7 4 20 12 7 20Z"/><path class="song-player-pause-icon" d="M6 4H10V20H6ZM14 4H18V20H14Z"/></svg>
+{%- when 'back' -%}
+<svg viewBox="0 0 32 32" aria-hidden="true"><path d="M4 4V12H12M4 12A12 12 0 1 1 8 25"/></svg>
+{%- when 'forward' -%}
+<svg viewBox="0 0 32 32" aria-hidden="true"><path d="M28 4V12H20M28 12A12 12 0 1 0 24 25"/></svg>
+{%- when 'previous' -%}
+<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 4H8V20H5ZM19 4V20L8 12Z"/></svg>
+{%- when 'next' -%}
+<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M16 4H19V20H16ZM5 4L16 12 5 20Z"/></svg>
+{%- when 'sound' -%}
+<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9H7L12 5V19L7 15H3Z"/><path class="song-player-sound-icon" d="M16 8Q20 12 16 16M19 5Q25 12 19 19"/><path class="song-player-muted-icon" d="M16 9 22 15M22 9 16 15"/></svg>
+{%- when 'settings' -%}
+<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7H20M4 17H20"/><circle cx="9" cy="7" r="3"/><circle cx="15" cy="17" r="3"/></svg>
+{%- when 'fullscreen' -%}
+{%- if include.exit -%}
+<svg viewBox="0 0 24 24" aria-hidden="true"><path class="song-player-enter-fullscreen-icon" d="M9 3H3V9M15 3H21V9M3 15V21H9M15 21H21V15"/><path class="song-player-exit-fullscreen-icon" d="M3 9H9V3M21 9H15V3M3 15H9V21M21 15H15V21"/></svg>
+{%- else -%}
+<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3H3V9M15 3H21V9M3 15V21H9M15 21H21V15"/></svg>
+{%- endif -%}
+{%- when 'close' -%}
+<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6 18 18M18 6 6 18"/></svg>
+{%- endcase -%}

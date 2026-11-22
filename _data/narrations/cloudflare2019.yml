@@ -10,7 +10,7 @@ lesson:
   chapter: /SEBook/development_practices/cloudflare-2019.html
   name: "Cloudflare 2019: restore the service, explain the failure"
 speech:
-  voice: Fish Audio Drama 3 (cloned voice female6)
+  voice: drama3-female6
   speed: 1.0
   pronunciations:
     "502": five oh two

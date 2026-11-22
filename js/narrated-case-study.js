@@ -79,8 +79,9 @@
         if (playNarration) player.play();
       } else {
         status.textContent = 'Case study complete. Revisit any scene to review your reasoning.';
-        // A text-only story has no restart button; its player settings hold scene review.
-        (root.querySelector('[data-action="restart"]') || root.querySelector('.vn-settings-toggle')).focus({ preventScroll: true });
+        // Playing from the end starts the narration over; a text-only story
+        // has no play button, and its player settings hold scene review.
+        (root.querySelector('[data-action="play"]') || root.querySelector('.vn-settings-toggle')).focus({ preventScroll: true });
       }
     }
 

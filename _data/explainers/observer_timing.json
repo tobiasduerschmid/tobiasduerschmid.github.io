@@ -1,8 +1,8 @@
 {
   "duration": 760.5880416666666,
-  "voice": "Fish Audio Drama 3 (cloned voice female6)",
-  "speed": 1.0,
-  "speech_sha256": "53bdcf6c11f7d899f17ac7b9d12c5831e6b85606c210f682c8874f0595dcfe7d",
+  "voice": "drama3-female6",
+  "speed": 1,
+  "speech_sha256": "857ad03c33a080992104032f3b256b1ebe90bcb51ec2b0ee1df17599c1ed7b01",
   "scenes": [
     {
       "id": "ui",

@@ -128,13 +128,11 @@ and retrieval; their effect on learning has not been measured with students.
 
 ## Regeneration and checks
 
-Use the same isolated Kokoro environment described in `docs/nodejs-animation.md`:
+Render with a Drama 3 server, as described in
+[Speech engines](narration-format.md#speech-engines):
 
 ```sh
-python scripts/render-explainer-narration.py --topic observer \
-  --model /path/to/kokoro-v1.0.onnx \
-  --voices /path/to/voices-v1.0.bin \
-  --work-dir /tmp/observer-kokoro-render
+python scripts/render-explainer-narration.py --topic observer
 bundle exec jekyll build
 node --test scripts/tests/observer-narration.test.js scripts/tests/nodejs-narration.test.js scripts/tests/code-highlight.test.js
 A11Y_INTERACTIVE_CHECKS=1 npx playwright test tests/observer-animation.spec.js tests/nodejs-animation.spec.js
