@@ -1,0 +1,203 @@
+# wrong-25-deleted-interface: WRONG BUT UNREACHABLE (deleted target: the Enrollment API deleted, so every reference to it fails to resolve): every locked_fields path under enrollment-api binds the YAML surface too (spec §11), so the runtime reverts this edit; kept as the deleted-target evidence spec §8 asks for (no test passes vacuously).
+# expect: T1 fail, T2 fail, T3 fail, T4 fail, T5 fail, T6 fail, T7 fail, T8 fail, T10 fail, T11 fail, T12 fail, T13 fail, T14 fail, T15 fail
+schema: c4-design/1
+name: Course Registration
+description: Students plan a term schedule and enroll in every section of it, or in none.
+status: proposed
+enterprise: UCLA
+
+requirements:
+  FR-07: A student who lacks a prerequisite or would exceed the unit cap is refused before any seat is held, and is told why.
+  FR-09: A student is enrolled in every section of a plan, or in none.
+  FR-11: Every completed enrollment is charged tuition, and a billing outage never delays an enrollment.
+
+vocabulary:
+  quarter unit: the UCLA credit unit; most courses are worth 4 quarter units
+
+people:
+  student:
+    name: Student
+    description: Plans and confirms one term schedule.
+    collaborators:
+      web: plans a schedule and enrolls using
+
+systems:
+  registration:
+    name: Course Registration
+    description: Plans term schedules and enrolls students in their sections.
+    responsibilities:
+      - decide: whether a student may enroll in a section
+        id: sys-eligibility
+        requirements: [FR-07]
+      - do: hold a seat in every section of a plan, or in none
+        id: sys-holds
+        requirements: [FR-09]
+      - do: request the tuition charge for every completed enrollment
+        id: sys-billing
+        requirements: [FR-11]
+    containers:
+      web:
+        name: Planner Web App
+        kind: browser_app
+        technology: TypeScript, React
+        description: Lets students compare draft schedules in the browser.
+        responsibilities:
+          - do: let students compare draft schedules
+        collaborators:
+          coordinator: {description: submits plans to, technology: JSON/HTTPS}
+      api:
+        name: Registration API
+        technology: Python, FastAPI
+        description: Decides eligibility and enrolls students atomically.
+        responsibilities:
+          - decide: whether a student may enroll in a section
+            id: api-eligibility
+            refines: sys-eligibility
+          - do: hold a seat in every section of a plan, or in none
+            id: api-holds
+            refines: sys-holds
+          - do: request the tuition charge for every completed enrollment
+            id: api-billing
+            refines: sys-billing
+        choices:
+          technology:
+            chosen: FastAPI 0.115 on Python 3.12
+            alternatives: [Django REST Framework, Flask]
+            because: typed request models and async database access
+          styles: [layers]
+        components:
+          coordinator:
+            name: Registration Coordinator
+            technology: Python module
+            stereotypes: [coordinator]
+            responsibilities:
+              - do: sequence one enrollment attempt
+              - decide: which step of the attempt runs next
+            collaborators:
+              policy: asks for an eligibility decision from
+              seats: reserves all seats or none through
+              billing-gateway: asks for tuition charges through
+            invariants: [never decides eligibility or writes seat state]
+            quality: [an enrollment outcome appears within 2 s for 95% of attempts]
+          policy:
+            name: Enrollment Policy
+            technology: Python module
+            stereotypes: [service_provider]
+            responsibilities:
+              - decide: whether prerequisites and unit caps allow enrollment
+                refines: api-eligibility
+            code:
+              EnrollmentPolicy:
+                kind: class
+                operations: ["+ decide(student, section): Decision"]
+                collaborators: {EnrollmentRule: delegates each eligibility check to}
+                choices: {patterns: [{pattern: Strategy, role: Context, instance: eligibility-rules}]}
+              EnrollmentRule:
+                kind: interface
+                operations: ["+ evaluate(student, section): RuleResult"]
+                choices: {patterns: [{pattern: Strategy, role: Strategy, instance: eligibility-rules}]}
+              PrerequisiteRule:
+                kind: class
+                implements: [EnrollmentRule]
+                operations: ["+ evaluate(student, section): RuleResult"]
+                choices: {patterns: [{pattern: Strategy, role: ConcreteStrategy, instance: eligibility-rules}]}
+              UnitCapRule:
+                kind: class
+                implements: [EnrollmentRule]
+                operations: ["+ evaluate(student, section): RuleResult"]
+                choices: {patterns: [{pattern: Strategy, role: ConcreteStrategy, instance: eligibility-rules}]}
+          seats:
+            name: Seat Gateway
+            technology: Python module
+            stereotypes: [interfacer]
+            owns: [seat holds]
+            responsibilities:
+              - know: which seats are held for each attempt
+              - do: hold every requested seat atomically, or none
+                refines: api-holds
+            collaborators:
+              db: {description: writes seat holds to, technology: SQL/TCP}
+          billing-gateway:
+            name: Billing Gateway
+            technology: Python module
+            stereotypes: [interfacer]
+            responsibilities:
+              - do: request tuition charges for a completed enrollment
+                refines: api-billing
+            collaborators:
+              billing:
+                description: requests tuition charges from
+                technology: AMQP
+                connector: message
+                uses: billing
+                choices:
+                  technology: {chosen: RabbitMQ, alternatives: [synchronous HTTPS call], because: a billing outage must not block enrollment}
+      db:
+        name: Registration Database
+        kind: database
+        technology: PostgreSQL 16
+        description: Durably stores plans, enrollment attempts, and seat holds.
+        responsibilities:
+          - do: durably store plans, enrollment attempts, and seat holds
+  billing:
+    name: Billing System
+    external: true
+    description: Charges tuition and fees for the university.
+    provides: ["send ChargeRequested to the queue billing.charges"]
+scenarios:
+  enroll:
+    title: Enroll in a planned schedule
+    steps:
+      - web -> coordinator: submits the plan to
+      - coordinator -> policy: asks for an eligibility decision from
+      - alt:
+          - when: eligible
+            steps:
+              - coordinator -> seats: reserves all seats or none through
+              - coordinator -> billing-gateway: asks for tuition charges through
+          - when: not eligible
+            steps:
+              - coordinator -> web: reports the refusal and its reason to
+
+deployment:
+  production:
+    name: Production
+    nodes:
+      laptop:
+        name: Student's computer
+        kind: device
+        nodes:
+          browser:
+            name: Web browser
+            kind: environment
+            technology: "Chrome, Firefox, or Safari"
+            hosts: [web]
+            collaborators:
+              ingress: sends HTTPS requests to
+      campus-cloud:
+        name: Campus cloud
+        kind: environment
+        technology: Kubernetes
+        nodes:
+          ingress:
+            name: Ingress load balancer
+            kind: infrastructure
+            technology: NGINX
+            collaborators:
+              api-pod: forwards HTTPS requests to
+          api-pod: {name: API pod, kind: environment, technology: Kubernetes pod, instances: 3, hosts: [api]}
+          postgres: {name: Managed database, kind: environment, technology: PostgreSQL 16, hosts: [db]}
+      data-centre:
+        name: University data center
+        kind: environment
+        hosts: [billing]
+
+decisions:
+  one-database:
+    title: Keep plans and seat holds in one relational database
+    status: accepted
+    context: Seat holds and enrollment must commit atomically.
+    decision: One PostgreSQL database with serializable transactions for seat holds.
+    alternatives: [a separate seat service with its own store]
+    consequences: The database is a single point of failure.
+    affects: [db, seats]

@@ -17,6 +17,8 @@
   <link rel="stylesheet" href="{{ '/css/tutorial-quiz-code.css' | relative_url }}">
   <link rel="stylesheet" href="{{ '/css/tutorial-popouts.css' | relative_url }}">
   <link rel="stylesheet" href="{{ '/css/object-reference-lab.css' | relative_url }}">
+  <link rel="stylesheet" href="{{ '/css/uml-diagram.css' | relative_url }}">
+  <link rel="stylesheet" href="{{ '/css/tutorial-c4.css' | relative_url }}">
   <link rel="stylesheet" href="{{ '/css/print-light.css' | relative_url }}">
 </head>
 <body>
@@ -45,6 +47,20 @@
           integrity="sha384-T/0lMUdJpd2S1ZHtRiofG3htU3xPCrFVeAQ1UUE2TJwlEJSV5NUwn30kP28n238E"
           crossorigin="anonymous"></script>
   <script src="{{ '/js/mermaid-theme.js' | relative_url }}"></script>
+  {%- comment -%}
+    ArchUML figures in the instructions load on demand (spec §11, §16): the bundle and its describer when a step has an
+    ArchUML block, and the C4 toolkit before them only in a C4 tutorial. The URLs come from the C4 manifest.
+  {%- endcomment -%}
+  {%- assign archuml_c4_scripts = '' | split: '' -%}
+  {%- for file in site.data.archuml_c4_manifest.core -%}
+    {%- assign archuml_url = '/js/ArchUML/' | append: file | relative_url -%}
+    {%- assign archuml_c4_scripts = archuml_c4_scripts | push: archuml_url -%}
+  {%- endfor -%}
+  {%- for file in site.data.archuml_c4_manifest.render -%}
+    {%- assign archuml_url = '/js/ArchUML/' | append: file | relative_url -%}
+    {%- assign archuml_c4_scripts = archuml_c4_scripts | push: archuml_url -%}
+  {%- endfor -%}
+  <script type="application/json" id="archuml-scripts">{"c4": {{ archuml_c4_scripts | jsonify }}, "diagrams": [{{ '/js/ArchUML/uml-bundle.js' | relative_url | jsonify }}, {{ '/js/uml-auto-describe.js' | relative_url | jsonify }}]}</script>
   <script src="{{ '/js/object-reference-graph.js' | relative_url }}"></script>
   <script src="{{ '/js/object-reference-code.js' | relative_url }}"></script>
   <script src="{{ '/js/object-reference-print.js' | relative_url }}"></script>
@@ -83,6 +99,65 @@
     });
 
     document.title = 'Instructions — ' + client.tutorialTitle;
+
+    // ── ArchUML figures, loaded on demand ────────────────────────────────
+    // The fences UMLShared.renderAll draws (its DIAGRAM_SELECTORS), and its data-uml-type blocks.
+    var ARCHUML_FENCES = ['pre > code[class*="language-uml-"]'].concat(
+      ['freeform', 'gitgraph', 'folder-tree', 'venn', 'er', 'crc', 'c4'].map(function (type) {
+        return 'pre > code.diagram-' + type + ', pre > code.language-' + type;
+      })).join(', ');
+    var ARCHUML_BLOCKS = ARCHUML_FENCES + ', [data-uml-type]:not([data-uml-rendered])';
+    var archumlScripts = JSON.parse(document.getElementById('archuml-scripts').textContent);
+    var archumlLoad = null;
+
+    function loadScript(src) {
+      return new Promise(function (resolve, reject) {
+        var script = document.createElement('script');
+        script.src = src;
+        script.onload = resolve;
+        script.onerror = function () { reject(new Error('Could not load ' + src)); };
+        document.head.appendChild(script);
+      });
+    }
+
+    // When it runs, the bundle draws every fence already in the page, before
+    // uml-auto-describe.js has wrapped its renderer, so those figures would miss
+    // their described text alternative. Fences wait without their class until
+    // the scripts have loaded; renderAll, which the describer wraps, draws them.
+    function holdFences(root) {
+      root.querySelectorAll(ARCHUML_FENCES).forEach(function (code) {
+        code.setAttribute('data-archuml-held', code.className);
+        code.removeAttribute('class');
+      });
+    }
+
+    function releaseFences() {
+      document.querySelectorAll('[data-archuml-held]').forEach(function (code) {
+        code.className = code.getAttribute('data-archuml-held');
+        code.removeAttribute('data-archuml-held');
+      });
+    }
+
+    // Draws the ArchUML figures of the step, loading the scripts the first
+    // time a step has one: the C4 toolkit first in a C4 tutorial (the bundle's
+    // c4 renderer uses it), then the bundle and its describer.
+    function renderArchUml(root) {
+      if (!archumlLoad && !root.querySelector(ARCHUML_BLOCKS)) return;
+      if (!archumlLoad) {
+        var c4 = snapshot && snapshot.backend === 'c4' ? archumlScripts.c4 : [];
+        archumlLoad = c4.concat(archumlScripts.diagrams).reduce(function (loaded, src) {
+          return loaded.then(function () { return loadScript(src); });
+        }, Promise.resolve());
+      }
+      holdFences(root);
+      archumlLoad.then(function () {
+        releaseFences();
+        window.UMLShared.renderAll();
+      }).catch(function (error) {
+        releaseFences();
+        console.error('The diagrams in these instructions could not be drawn.', error);
+      });
+    }
 
     // ── Rendering ────────────────────────────────────────────────────────
     function escapeHtml(str) {
@@ -123,7 +198,17 @@
       return m + ':' + (rem < 10 ? '0' : '') + rem;
     }
 
+    // A gated step (a C4 after-submit step) keeps Test My Work disabled, says
+    // why in visible text, and offers the action that opens it.
+    function buildTestGateHTML(gate) {
+      return '<span class="tvm-test-btn-group c4-review-controls">'
+        + '<button type="button" class="tvm-btn c4-submit-review" data-test-gate-action>' + escapeHtml(gate.actionLabel) + '</button>'
+        + '<button class="tvm-btn tvm-btn-test" disabled aria-describedby="tvm-test-gate-reason">✓ Test My Work</button>'
+        + '<span id="tvm-test-gate-reason" class="c4-test-gate-reason">' + escapeHtml(gate.reason) + '</span></span>';
+    }
+
     function buildTestButtonHTML(snap) {
+      if (snap.testGate) return buildTestGateHTML(snap.testGate);
       var remaining = snap.cooldownRemaining || 0;
       if (!snap.cooldownSeconds || remaining <= 0) {
         return '<button class="tvm-btn tvm-btn-test">✓ Test My Work</button>';
@@ -149,7 +234,8 @@
 
       var prev = els.stepControls.querySelector('.tvm-btn-prev');
       var next = els.stepControls.querySelector('.tvm-btn-next');
-      var test = els.stepControls.querySelector('.tvm-btn-test:not(.tvm-btn-test-cooldown)');
+      var test = els.stepControls.querySelector('.tvm-btn-test:not(.tvm-btn-test-cooldown):not([disabled])');
+      var gateAction = els.stepControls.querySelector('[data-test-gate-action]');
       var sure = els.stepControls.querySelector('.tvm-btn-test-sure');
       if (prev) prev.addEventListener('click', function () { client.post('request-prev-step'); });
       if (next) next.addEventListener('click', function () {
@@ -157,6 +243,7 @@
       });
       if (test) test.addEventListener('click', function () { client.post('request-run-tests'); });
       if (sure) sure.addEventListener('click', function () { client.post('request-run-tests', { silent: true }); });
+      if (gateAction) gateAction.addEventListener('click', function () { client.post('request-test-gate-action'); });
     }
 
     // Tick the cooldown countdown locally between authoritative ticks from
@@ -195,6 +282,7 @@
         renderedStepHTML = html;
         els.stepContent.scrollTop = 0;
         // Use the same diagram renderers as the main instructions panel.
+        renderArchUml(els.stepContent);
         if (window.SebookMermaid) window.SebookMermaid.render(els.stepContent);
         if (window.ObjectReferenceLab) void window.ObjectReferenceLab.initFrom(els.stepContent);
       }
@@ -240,6 +328,7 @@
       if (typeof msg.nextLocked === 'boolean') snapshot.nextLocked = msg.nextLocked;
       if (typeof msg.cooldownSeconds === 'number') snapshot.cooldownSeconds = msg.cooldownSeconds;
       if (typeof msg.cooldownRemaining === 'number') snapshot.cooldownRemaining = msg.cooldownRemaining;
+      if ('testGate' in msg) snapshot.testGate = msg.testGate || null;
       if (msg.stepData && Array.isArray(snapshot.steps)) {
         snapshot.steps[msg.stepIndex] = Object.assign({}, snapshot.steps[msg.stepIndex] || {}, msg.stepData);
       }
@@ -265,6 +354,7 @@
             if (typeof msg.hasQuiz === 'boolean') snapshot.hasQuiz = msg.hasQuiz;
             if (typeof msg.cooldownSeconds === 'number') snapshot.cooldownSeconds = msg.cooldownSeconds;
             if (typeof msg.cooldownRemaining === 'number') snapshot.cooldownRemaining = msg.cooldownRemaining;
+            if ('testGate' in msg) snapshot.testGate = msg.testGate || null;
             renderAll(snapshot);
             if (snapshot.cooldownRemaining > 0) startCooldownTicker();
           }

@@ -1,0 +1,207 @@
+# What each conditional hint of "Describe an interface" states about the learner's model: the hint-truth audit of
+# scripts/tests/c4-tutorial-content.test.js. A hint shows when its test fails and its condition holds; each claim
+# below must then be true of the model: its §8 predicate passes (holds) or fails (fails), evaluated as the tests are,
+# with the step's checks configuration and its authored starter as seedModel. `says` quotes or paraphrases the
+# statement the claim checks. A hint that asserts nothing about the model (advice, or a statement hedged by "if") has
+# `states_nothing` with the reason. Unconditional hints may be documented too; conditional ones must be.
+#
+# The §8 forms have no negation, so a statement that something is wrong is a `fails` claim on the predicate that would
+# hold if it were right.
+
+# ---- Step 2: The Semantic View --------------------------------------------------------------------------------------
+- step: 2
+  test: 1
+  hint: What another system can notice
+  claims:
+    - says: Your purpose says what the operation is for
+      holds: {exists: {operation: {of: enrollment-api, id: submit-plan, purpose: present}}}
+    - says: What can another system notice ... ? (no side effects are stated yet)
+      holds: {exists: {operation: {of: enrollment-api, id: submit-plan, side_effects: absent}}}
+- step: 2
+  test: 1
+  hint: One request a real client could send
+  claims:
+    - says: Write one request a real client could send (the operation has no example yet)
+      holds: {absent: {operation: {of: enrollment-api, id: submit-plan, examples_at_least: 1}}}
+- step: 2
+  test: 2
+  hint: Who may call, and how often
+  claims:
+    - says: Write each limit as a usage restriction (none is stated yet)
+      holds: {exists: {operation: {of: enrollment-api, id: submit-plan, restrictions: absent}}}
+- step: 2
+  test: 3
+  hint: A list needs a meaning too
+  claims:
+    - says: A list field needs a meaning for the list as a whole (section_ids has none)
+      holds: {exists: {operation: {of: enrollment-api, id: submit-plan, input_has_field: {name_any: [section_ids], meaning: absent}}}}
+- step: 2
+  test: 4
+  hint: Fields still without a meaning
+  claims:
+    - says: Some outcome fields still have no Meaning
+      holds: {exists: {operation: {of: enrollment-api, id: submit-plan, output_has_field: {meaning: absent}}}}
+- step: 2
+  test: 4
+  hint: A field with values
+  claims:
+    - says: status has allowed values
+      holds: {exists: {operation: {of: enrollment-api, id: submit-plan, output_has_field: {name_any: [status], values: present}}}}
+    - says: First say what the field as a whole tells the client (status has no meaning yet)
+      holds: {exists: {operation: {of: enrollment-api, id: submit-plan, output_has_field: {name_any: [status], meaning: absent}}}}
+- step: 2
+  test: 5
+  hint: One meaning per value
+  claims:
+    - says: Your Meaning describes status as a whole
+      holds: {exists: {operation: {of: enrollment-api, id: submit-plan, output_has_field: {name_any: [status], meaning: present}}}}
+    - says: Each allowed value needs a meaning of its own (not every value has one yet)
+      holds: {absent: {operation: {of: enrollment-api, id: submit-plan, output_has_field: {name_any: [status], values: meaningful}}}}
+- step: 2
+  test: 6
+  hint: Units belong in Unit
+  claims:
+    - says: put that in Unit as well (the number of units has a meaning but no Unit)
+      holds: {exists: {operation: {of: enrollment-api, id: submit-plan, output_has_field: {name_any: [units_enrolled], unit: absent, meaning: present}}}}
+- step: 2
+  test: 6
+  hint: Which kind of unit
+  claims:
+    - says: the number of units has a Unit
+      holds: {exists: {operation: {of: enrollment-api, id: submit-plan, output_has_field: {name_any: [units_enrolled], unit: present}}}}
+    - says: Which kind does this university use? (the Unit does not name it yet)
+      holds: {absent: {operation: {of: enrollment-api, id: submit-plan, output_has_field: {name_any: [units_enrolled], unit_any: [quarter]}}}}
+- step: 2
+  test: 7
+  hint: From meaning to format
+  claims:
+    - says: Your meaning says what a term is
+      holds: {exists: {operation: {of: enrollment-api, id: submit-plan, input_has_field: {name_any: [term], meaning: present}}}}
+    - says: Now say how it is written (no Format yet)
+      holds: {exists: {operation: {of: enrollment-api, id: submit-plan, input_has_field: {name_any: [term], format: absent}}}}
+- step: 2
+  test: 8
+  hint: Compare the links with the outcomes
+  claims:
+    - says: Compare your links (the operation has links)
+      holds: {exists: {operation: {of: enrollment-api, id: submit-plan, realizes_at_least: 1}}}
+- step: 2
+  test: 8
+  hint: Before a seat is held
+  claims:
+    - says: the link to holding seats is there
+      holds: {exists: {operation: {of: enrollment-api, id: submit-plan, realizes_any: [api-holds]}}}
+    - says: Which responsibility of the Registration API decides it? (the decision is not linked yet)
+      holds: {absent: {operation: {of: enrollment-api, id: submit-plan, realizes: api-eligibility}}}
+- step: 2
+  test: 8
+  hint: After the decision
+  claims:
+    - says: the link to the decision is there
+      holds: {exists: {operation: {of: enrollment-api, id: submit-plan, realizes_any: [api-eligibility]}}}
+    - says: Which responsibility promises that change? (holding seats is not linked yet)
+      holds: {absent: {operation: {of: enrollment-api, id: submit-plan, realizes: api-holds}}}
+- step: 2
+  test: 8
+  hint: A link to the inside
+  claims:
+    - says: One link names how the API divides its work inside
+      holds: {exists: {operation: {of: enrollment-api, id: submit-plan, realizes_any: [coordinator-do-1]}}}
+    - says: not something a client can notice (the link is reported as internal)
+      fails: {checks: {max_warnings: 0, rules: [interface/realizes-internal]}}
+- step: 2
+  test: 9
+  hint: Check the example against the types
+  states_nothing: Hedged ("If a warning is about your example"); it says how to compare an example with its types.
+- step: 2
+  test: 9
+  hint: A link a client cannot notice
+  claims:
+    - says: Every warning left is about a link
+      holds: {checks: {max_warnings: 0, rules: [interface/no-unit, interface/no-format, interface/no-purpose, interface/example-mismatch, interface/undefined-type]}}
+- step: 2
+  test: 10
+  hint: The whole interface or one operation
+  claims:
+    - says: Your relationship names the whole Enrollment API
+      holds: {exists: {relationship: {from: web, to: api, uses_interface: whole}}}
+- step: 2
+  test: 10
+  hint: Which interface it enters through
+  claims:
+    - says: Check what your Uses names (it names something)
+      holds: {exists: {relationship: {from: web, to: api, uses_interface: present}}}
+- step: 2
+  test: 12
+  hint: What a check changes
+  claims:
+    - says: the plan check has a purpose
+      holds: {exists: {operation: {of: enrollment-api, id: check-plan, purpose: present}}}
+    - says: What can another system notice after a check? (no side effects are stated yet)
+      holds: {exists: {operation: {of: enrollment-api, id: check-plan, side_effects: absent}}}
+- step: 2
+  test: 12
+  hint: The obligation a check fulfills
+  claims:
+    - says: Which obligation ... does a check fulfill (the decision is not linked yet)
+      holds: {absent: {operation: {of: enrollment-api, id: check-plan, realizes: api-eligibility}}}
+
+# ---- Step 3: A Message Interface From a Brief -----------------------------------------------------------------------
+- step: 3
+  test: 1
+  hint: Billing is gone
+  claims:
+    - says: The Billing System is no longer in the model
+      holds: {absent: {element: {name_any: [billing system]}}}
+- step: 3
+  test: 1
+  hint: The sender is not the provider
+  claims:
+    - says: Your interface sits on the Billing Gateway
+      holds: {exists: {interface: {of: billing-gateway}}}
+    - says: which sends the messages
+      holds: {exists: {relationship: {from: billing-gateway, to: billing}}}
+- step: 3
+  test: 1
+  hint: An operation with a purpose
+  claims:
+    - says: Billing offers an interface now
+      holds: {exists: {interface: {of: billing}}}
+- step: 3
+  test: 2
+  hint: A number without a unit
+  claims:
+    - says: A number in your message has no Unit
+      holds: {exists: {interface: {of: billing, has_operation: {input_has_field: {type_any: [integer, number, decimal], unit: absent}}}}}
+- step: 3
+  test: 2
+  hint: Quantities written as text
+  claims:
+    - says: No message on the Billing System’s own interface has a number field yet
+      holds: {absent: {interface: {of: billing, has_operation: {input_has_field: {type_any: [integer, number, decimal]}}}}}
+- step: 3
+  test: 3
+  hint: Two kinds of failure
+  states_nothing: Asks the learner to think of two kinds of failure and where each goes; nothing about the model.
+- step: 3
+  test: 4
+  hint: Billing is gone
+  claims:
+    - says: The Billing System is no longer in the model
+      holds: {absent: {element: {name_any: [billing system]}}}
+- step: 3
+  test: 4
+  hint: Name what it uses
+  claims:
+    - says: Billing’s interface has an id now
+      holds: {exists: {interface: {of: billing}}}
+- step: 3
+  test: 5
+  hint: Check the example against the types
+  states_nothing: Hedged ("If a warning is about your example"); it says how to compare an example with its fields.
+- step: 3
+  test: 6
+  hint: Billing is gone
+  claims:
+    - says: The Billing System is no longer in the model
+      holds: {absent: {element: {name_any: [billing system]}}}

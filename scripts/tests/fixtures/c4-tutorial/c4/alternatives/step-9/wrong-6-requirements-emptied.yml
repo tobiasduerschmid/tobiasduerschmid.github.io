@@ -1,0 +1,13 @@
+# WRONG BUT UNREACHABLE (requirements emptied, one untraced responsibility): passes T1 and T2; locked_fields: [requirements] binds the YAML surface too (spec §11), so the runtime reverts this edit.
+schema: c4-design/1
+name: Makerspace Equipment Loans
+description: Members borrow tools from the campus makerspace.
+
+requirements: {}
+
+systems:
+  loans:
+    name: Makerspace Loans
+    description: Lends tools to trained members and tracks who has each tool.
+    responsibilities:
+      - decide: whether a member may borrow a tool

@@ -1,0 +1,136 @@
+/*
+ * The C4 tutorial workspace (backend: c4; js/tutorial-c4.js). The C4 editor fills the editor panel; the surface
+ * switch shows either it ("Visual") or the design file's Monaco editor ("YAML"). The editor's own look comes from
+ * js/ArchUML/css/c4-editor.css and css/c4-editor-theme.css. The workspace panels are dark in both site themes
+ * (css/tutorial.css), so the switch bar keeps light text on the dark panel in both. Sizes are em or inherited:
+ * on this site 1rem is 10 px. Print uses the separate print view (_layouts/print-tutorial.html).
+ */
+
+/* The C4 workspace has no program output: the editor takes the whole workspace column. The splitter script may
+   leave a pixel basis on the panel from another layout, so the C4 basis wins. */
+.c4-tutorial .tvm-output-panel,
+.c4-tutorial .tvm-vsplitter {
+  display: none;
+}
+
+.c4-tutorial .tvm-editor-panel {
+  flex: 1 1 auto !important;
+}
+
+.c4-tutorial-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5em 1em;
+  padding: 0.4em 0.75em;
+  background: #161618;
+  border-bottom: 1px solid #2a2a2e;
+  color: #e8e8f0;
+  flex-shrink: 0;
+}
+
+.c4-tutorial-surfaces {
+  display: inline-flex;
+  gap: 0.25em;
+}
+
+.c4-tutorial-surface {
+  min-height: 2em;
+  min-width: 4.5em;
+  padding: 0.2em 0.9em;
+  font: inherit;
+  color: #e8e8f0;
+  background: #2a2a2e;
+  border: 1px solid #8b949e;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.c4-tutorial-surface:hover {
+  background: #3a3a40;
+}
+
+/* Selected: filled, bold, and underlined, so the state does not rest on colour alone. #0b5394 behind white: 7.6:1. */
+.c4-tutorial-surface[aria-pressed="true"] {
+  background: #0b5394;
+  border-color: #8bb8e8;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.c4-tutorial-surface:focus-visible {
+  outline: 2px solid #ffd100;
+  outline-offset: 2px;
+}
+
+/* Lock refusals and the review notice; #e8e8f0 on #161618 is 14.9:1. */
+.c4-tutorial-status {
+  margin: 0;
+  flex: 1 1 18em;
+  min-width: 0;
+}
+
+.c4-tutorial-status:empty {
+  display: none;
+}
+
+.c4-tutorial-editor {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+}
+
+.c4-tutorial:not(.c4-tutorial--yaml) .tvm-editor-body,
+.c4-tutorial--yaml .c4-tutorial-editor {
+  display: none;
+}
+
+/* Narrow screens use document flow (css/tutorial.css): the editor keeps a usable work area and grows with its
+   content, so it is no size container there and its canvas has the regular height (the 'fill' size needs a pane
+   that gives the editor its height). */
+@media (max-width: 900px) {
+  .c4-tutorial .c4-tutorial-editor {
+    min-height: 36em;
+  }
+
+  .c4-tutorial .c4-tutorial-editor.c4-editor--fill {
+    container-type: inline-size;
+    --c4-canvas-height: 28em;
+  }
+}
+
+/* Submit for review beside Test My Work, and the visible reason Test My Work waits (after-submit steps). */
+.c4-submit-review {
+  background: #0b5394;
+  color: #fff;
+}
+
+.c4-submit-review:hover {
+  background: #083f72;
+}
+
+html.dark-mode .c4-submit-review {
+  background: #2774ae;
+}
+
+html.dark-mode .c4-submit-review:hover {
+  background: #1e5c8a;
+}
+
+/* The group takes the room between Previous and Next and wraps, so the reason
+   gets its own line under the buttons instead of running past the bar (WCAG 1.4.10).
+   min-width: min-content keeps each button whole; the bar wraps Next below if needed. */
+.tvm-step-controls > .c4-review-controls {
+  flex: 1 1 0;
+  min-width: min-content;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.c4-test-gate-reason {
+  flex-basis: 100%;
+  text-align: center;
+  font-size: 0.9em;
+  color: inherit;
+}

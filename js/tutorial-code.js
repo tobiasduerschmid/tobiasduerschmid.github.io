@@ -566,6 +566,7 @@
     if (backend === 'compiler') return 'Compiler lab';
     if (backend === 'tla') return 'TLA+ / PlusCal';
     if (backend === 'aadl') return 'AADL';
+    if (backend === 'c4') return 'C4 model';
     if (backend === 'shell-pipeline') return 'Shell pipeline';
     if (backend === 'v86') return 'Linux VM';
     return backend;
@@ -601,6 +602,7 @@
     ));
     if (mixedBackendMode && declaredBackends.includes('tla')) throw new Error('TLA+ uses a single-backend tutorial workspace.');
     if (mixedBackendMode && declaredBackends.includes('aadl')) throw new Error('AADL uses a single-backend tutorial workspace.');
+    if (mixedBackendMode && declaredBackends.includes('c4')) throw new Error('C4 uses a single-backend tutorial workspace.');
     var hasReactStep = declaredBackends.indexOf('react') !== -1;
     var hasV86Step = declaredBackends.indexOf('v86') !== -1;
     var useTerminal = !mixedBackendMode &&
@@ -613,6 +615,7 @@
       shellManuals: options.shellManuals || {},
       tla: options.tla || {},
       aadl: options.aadl || {},
+      c4: options.c4 || {},
       defaultBackend: backend,
       v86Path: options.v86Path || '/assets/v86',
       vmPath: options.vmPath || '/vm/dist',
@@ -1529,6 +1532,7 @@
     if (this._compilerAdapter) this._compilerAdapter.destroy();
     if (this._tlaController) this._tlaController.destroy();
     if (this._aadlController) this._aadlController.destroy();
+    if (this._destroyC4) this._destroyC4();
     if (this.config.backend === 'shell-pipeline') this._stopShellPipeline({ silent: true });
     if (this._compilerRulesEditor) this._compilerRulesEditor.destroy();
     if (this._compilerSourceEditor) this._compilerSourceEditor.destroy();
@@ -1658,6 +1662,7 @@
       this.root.classList.add('tla-tutorial');
       outputContainerHtml = '<div class="tvm-output-container" tabindex="0" role="region" aria-label="Model results"><pre class="tvm-output-pre"></pre><div class="tla-tutorial-results"></div></div>';
     }
+    if (this.config.backend === 'c4') this.root.classList.add('c4-tutorial');
     if (this.config.backend === 'aadl') {
       this.root.classList.add('aadl-tutorial');
       outputContainerHtml = '<div class="tvm-output-container" tabindex="0" role="region" aria-label="Architecture results"><pre class="tvm-output-pre"></pre><div class="aadl-workspace"></div></div>';
@@ -1800,7 +1805,7 @@
         '<button class="tvm-test-run-btn" data-original-title="Run the test file" style="display:none;">&#10003; Test</button>' +
         '<button class="tvm-stop-btn" data-original-title="Stop execution" style="display:none;">&#9208; Stop</button>' +
         '<button class="tvm-clear-btn" data-original-title="Clear output">Clear</button>' +
-        (['compiler', 'tla', 'aadl'].includes(this.config.backend) ? '' : '<button class="tvm-output-popout-btn" data-original-title="Open output in separate window">⧉<span class="sr-only">Open output in separate window</span></button>') +
+        (['compiler', 'tla', 'aadl', 'c4'].includes(this.config.backend) ? '' : '<button class="tvm-output-popout-btn" data-original-title="Open output in separate window">⧉<span class="sr-only">Open output in separate window</span></button>') +
         '</div></div>' +
         outputContainerHtml;
 
@@ -3746,6 +3751,7 @@
     if (backend === 'compiler') return this._initCompiler();
     if (backend === 'tla') return this._initTLA();
     if (backend === 'aadl') return this._initAADL();
+    if (backend === 'c4') return this._initC4();
     if (backend === 'shell-pipeline') return this._initShellPipeline();
     return Promise.reject(new Error('Unknown backend: ' + backend));
   };
@@ -5848,7 +5854,7 @@
       message = { type: 'runProlog', code: commands.join('\n'), silent: true };
     } else if (this.config.backend === 'sql') {
       message = { type: 'runSQL', sql: commands.join('\n'), silent: true };
-    } else if (this.config.backend === 'haskell' || this.config.backend === 'cpp' || this.config.backend === 'compiler' || this.config.backend === 'tla' || this.config.backend === 'aadl') {
+    } else if (this.config.backend === 'haskell' || this.config.backend === 'cpp' || this.config.backend === 'compiler' || this.config.backend === 'tla' || this.config.backend === 'aadl' || this.config.backend === 'c4') {
       return Promise.reject(new Error(
         backendLabel(this.config.backend) + ' does not support setup_commands; provide step files instead.'
       ));
@@ -6138,8 +6144,8 @@
 
   TutorialCode.prototype._runCurrentFile = function (options) {
     if (this._activeRunTransaction) return this._activeRunTransaction.promise;
-    if ((this.config.backend === 'cpp' || this.config.backend === 'haskell' || this.config.backend === 'prolog' || this.config.backend === 'smalltalk' || this.config.backend === 'compiler' || this.config.backend === 'tla' || this.config.backend === 'aadl' || this.config.backend === 'shell-pipeline') && this._testRunInFlight) return Promise.resolve(false);
-    if ((this.config.backend === 'compiler' || this.config.backend === 'tla' || this.config.backend === 'aadl' || this.config.backend === 'shell-pipeline') && this._activeStepLoadRequest) return Promise.resolve(false);
+    if ((this.config.backend === 'cpp' || this.config.backend === 'haskell' || this.config.backend === 'prolog' || this.config.backend === 'smalltalk' || this.config.backend === 'compiler' || this.config.backend === 'tla' || this.config.backend === 'aadl' || this.config.backend === 'c4' || this.config.backend === 'shell-pipeline') && this._testRunInFlight) return Promise.resolve(false);
+    if ((this.config.backend === 'compiler' || this.config.backend === 'tla' || this.config.backend === 'aadl' || this.config.backend === 'c4' || this.config.backend === 'shell-pipeline') && this._activeStepLoadRequest) return Promise.resolve(false);
     if (this._haskellInterpreter) this._haskellInterpreter.showOutput();
     if (this._prologInterpreter) {
       if (this._activeStepLoadRequest || this._workerRestartPromise || (this._debuggerCtl && this._debuggerCtl.session)) return Promise.resolve(false);
@@ -6191,6 +6197,8 @@
     if (backend === 'compiler') return this._runCompiler(run);
     if (backend === 'tla') return this._runTLA(run);
     if (backend === 'aadl') return this._runAADL(run);
+    // The C4 workspace has no program to run: Ctrl/Cmd+Enter and Test My Work run the step's checks.
+    if (backend === 'c4') return Promise.resolve(false);
     if (backend === 'shell-pipeline') return this._runShellPipeline(run);
 
     if (backend === 'v86') {
@@ -7775,6 +7783,7 @@
     compiler: { id: 'plaintext', label: 'Compiler rules' },
     tla: { id: 'tlaplus', label: 'TLA+ / PlusCal' },
     aadl: { id: 'aadl', label: 'AADL' },
+    c4: { id: 'yaml', label: 'C4 design YAML' },
     smalltalk: { id: 'smalltalk', label: 'Smalltalk' },
     sql: { id: 'sql', label: 'SQL' },
     v86: { id: 'shell-sebook', label: 'Shell' },
@@ -7963,6 +7972,9 @@
         function () { self._runCurrentFile(); }
       );
     }
+    if (this.config.backend === 'c4') {
+      editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, function () { self._c4RequestTests(); });
+    }
   };
 
   TutorialCode.prototype._initRefactorings = function () {
@@ -8054,6 +8066,10 @@
         }
         if (self.config.backend === 'aadl') {
           self._aadlEditorChanged();
+          return;
+        }
+        if (self.config.backend === 'c4') {
+          self._c4EditorChanged(filename);
           return;
         }
         if (self.config.backend === 'tla') {
@@ -8158,6 +8174,7 @@
         typeof window.SEBookDebugger.refreshBreakpoints === 'function') {
       window.SEBookDebugger.refreshBreakpoints(this);
     }
+    if (this.config.backend === 'c4' && this._c4Session && filename !== this._c4Session.file) this._showC4Surface('yaml');
     this._refreshRunButtonLabel();
   };
 
@@ -8275,7 +8292,7 @@
           self._popoutManager.requestPopupClose('tab:' + filename);
         });
         tab.appendChild(reattachOnly);
-      } else if (!splitMode && !self._isCompilerRulesFile(filename)) {
+      } else if (!splitMode && !self._isCompilerRulesFile(filename) && self.config.backend !== 'c4') {
         // Pop-out button (mirrors UML's \u29c9 control)
         var pop = document.createElement('button');
         pop.type = 'button';
@@ -9180,6 +9197,8 @@
     var self = this;
     return {
       currentStep: this.currentStep,
+      // The popout loads the C4 toolkit only for a C4 tutorial (spec §3.2, §11).
+      backend: this.config.backend,
       darkMode: document.documentElement.classList.contains('dark-mode'),
       stepsUnlocked: Array.from(this._stepsUnlocked || []),
       hasTests: this._stepHasTests(this.steps[this.currentStep]),
@@ -9187,6 +9206,7 @@
       nextLocked: this._isNextStepLocked(),
       cooldownSeconds: this._testCooldownSeconds || 0,
       cooldownRemaining: this._cooldownRemaining(this.currentStep),
+      testGate: this._testGate(),
       steps: this.steps.map(function (step) {
         return {
           title: step.title || '',
@@ -9232,6 +9252,7 @@
       nextLocked: this._isNextStepLocked(),
       cooldownSeconds: this._testCooldownSeconds || 0,
       cooldownRemaining: this._cooldownRemaining(this.currentStep),
+      testGate: this._testGate(),
       fileList: fileList,
     });
     // Detached pane popups need a fresh file list / contents whenever the
@@ -9257,7 +9278,19 @@
       hasQuiz: this._stepHasQuiz(this.steps[this.currentStep]),
       cooldownSeconds: this._testCooldownSeconds || 0,
       cooldownRemaining: this._cooldownRemaining(this.currentStep),
+      testGate: this._testGate(),
     });
+  };
+
+  // A step whose Test My Work waits for a learner action (a C4 after-submit
+  // step waits for Submit for review). The popout shows the reason and the
+  // action from this, since it cannot reach the main window's controls.
+  TutorialCode.prototype._testGate = function () {
+    return this.config.backend === 'c4' ? this._c4TestGate() : null;
+  };
+
+  TutorialCode.prototype._openTestGate = function () {
+    if (this.config.backend === 'c4') this._submitC4ForReview({ keepFocus: true });
   };
 
   TutorialCode.prototype._refreshInstructionsDetachedState = function () {
@@ -9464,6 +9497,7 @@
           self.loadStep(self.currentStep + 1);
         },
         onRunTestsRequest: function (opts) { self._runTests(opts || {}); },
+        onTestGateActionRequest: function () { self._openTestGate(); },
         onQuizPassedFromPopup: function (stepIndex) {
           if (typeof stepIndex === 'number') self._completeQuiz(stepIndex);
         },
@@ -10677,6 +10711,7 @@
     var step = this.steps[this.currentStep];
     if (!step || !step.solution) return;
     if (this.config.backend === 'tla') this._invalidateTLA();
+    if (this.config.backend === 'c4') this._invalidateC4();
     if (this.config.backend === 'aadl') {
       this._aadlRootOverride = null;
       this._invalidateAADL();
@@ -10781,7 +10816,7 @@
             }, resolve);
           });
         });
-      } else if (this.config.backend === 'haskell' || this.config.backend === 'cpp' || this.config.backend === 'compiler' || this.config.backend === 'tla' || this.config.backend === 'aadl') {
+      } else if (this.config.backend === 'haskell' || this.config.backend === 'cpp' || this.config.backend === 'compiler' || this.config.backend === 'tla' || this.config.backend === 'aadl' || this.config.backend === 'c4') {
         p = p.then(function () {
           return Promise.reject(new Error(
             backendLabel(self.config.backend) + ' solutions support file replacements, not solution commands.'
@@ -11217,6 +11252,7 @@
       this._aadlRootOverride = null;
       this._invalidateAADL();
     }
+    if (this.config.backend === 'c4') this._invalidateC4();
     if (this.config.backend === 'smalltalk') return this._replaceSmalltalkFiles(step.files || []);
     var self = this;
     // A VM restore abandons pending serial listeners. Wait for preparation
@@ -12187,6 +12223,7 @@
       self._suppressAutoSave = autoSaveSuppressedBeforeFileLoad;
     }
     if (step.open_file && this.config.backend !== 'smalltalk') { self._setActiveFile(step.open_file); self._renderTabs(); }
+    if (this.config.backend === 'c4') this._loadC4Step(index);
     if (self._compilerSourceEditor) {
       const sourcePath = (step.compiler_files && step.compiler_files.source) || 'source.txt';
       const source = self.editorModels[sourcePath];
@@ -12353,7 +12390,7 @@
     }
 
     // Clear output panel between steps
-    if (this.config.backend === 'pyodide' || this.config.backend === 'browser' || this.config.backend === 'webcontainer' || this.config.backend === 'prolog' || this.config.backend === 'java' || this.config.backend === 'cpp' || this.config.backend === 'haskell' || this.config.backend === 'compiler' || this.config.backend === 'tla' || this.config.backend === 'aadl' || this.config.backend === 'shell-pipeline') this._clearOutput();
+    if (this.config.backend === 'pyodide' || this.config.backend === 'browser' || this.config.backend === 'webcontainer' || this.config.backend === 'prolog' || this.config.backend === 'java' || this.config.backend === 'cpp' || this.config.backend === 'haskell' || this.config.backend === 'compiler' || this.config.backend === 'tla' || this.config.backend === 'aadl' || this.config.backend === 'c4' || this.config.backend === 'shell-pipeline') this._clearOutput();
     // Rebuild React preview when a new step is loaded
     if (this.config.backend === 'react') {
       this._rebuildReactPreview();
@@ -12650,17 +12687,26 @@
     if (this._testRunInFlight || this._studentPlaywrightRun) {
       return '<button class="tvm-btn tvm-btn-test" disabled data-original-title="Wait for the current test run to finish">\u23f3 Running tests\u2026</button>';
     }
+    var controls = this._testControlsHTML(index);
+    // A C4 after-submit step puts Submit for review in front, and holds these back until it has run.
+    var c4Controls = this.config.backend === 'c4' ? this._c4TestControlsHTML(index, controls) : null;
+    if (c4Controls) return c4Controls;
+    return controls.length === 1 ? controls[0] : '<span class="tvm-test-btn-group">' + controls.join('') + '</span>';
+  };
+
+  // The Test My Work button, or during a cooldown the waiting button and the
+  // "I'm sure" button: one HTML string per button.
+  TutorialCode.prototype._testControlsHTML = function (index) {
     var remaining = this._cooldownRemaining(index);
     if (remaining <= 0) {
-      return '<button class="tvm-btn tvm-btn-test" data-original-title="Run the tests for this step">\u2713 Test My Work</button>';
+      return ['<button class="tvm-btn tvm-btn-test" data-original-title="Run the tests for this step">\u2713 Test My Work</button>'];
     }
     var label = '\u23f1 Test My Work (' + this._formatCooldown(remaining) + ')';
     var aria = 'Test My Work locked, ' + remaining + ' second' + (remaining === 1 ? '' : 's') + ' remaining';
-    var html = '<span class="tvm-test-btn-group">';
-    html += '<button class="tvm-btn tvm-btn-test tvm-btn-test-cooldown" disabled aria-label="' + aria + '">' + label + '</button>';
-    html += '<button class="tvm-btn tvm-btn-test-sure" data-original-title="Run tests now without seeing results \u2014 passes still unlock Next">I\u2019m sure</button>';
-    html += '</span>';
-    return html;
+    return [
+      '<button class="tvm-btn tvm-btn-test tvm-btn-test-cooldown" disabled aria-label="' + aria + '">' + label + '</button>',
+      '<button class="tvm-btn tvm-btn-test-sure" data-original-title="Run tests now without seeing results \u2014 passes still unlock Next">I\u2019m sure</button>',
+    ];
   };
 
   TutorialCode.prototype._wireTestButtons = function (containerEl) {
@@ -12674,6 +12720,7 @@
     if (sure) {
       sure.addEventListener('click', function () { self._runTests({ silent: true }); });
     }
+    if (this.config.backend === 'c4') this._wireC4Review(containerEl);
   };
 
   TutorialCode.prototype._refreshTestButton = function (index) {
@@ -13148,9 +13195,10 @@
     // results return. Without this guard, the second run can replace the
     // pending test buffer/state and produce ghost results in the panel.
     if (this._testRunInFlight || this._llmChecksInFlight || this._studentPlaywrightRun || this._destroyed) return;
-    if ((this.config.backend === 'cpp' || this.config.backend === 'haskell' || this.config.backend === 'prolog' || this.config.backend === 'smalltalk' || this.config.backend === 'compiler' || this.config.backend === 'tla' || this.config.backend === 'aadl' || this.config.backend === 'shell-pipeline') && this._activeRunTransaction) return;
-    if ((this.config.backend === 'compiler' || this.config.backend === 'tla' || this.config.backend === 'aadl' || this.config.backend === 'shell-pipeline') && this._activeStepLoadRequest) return;
+    if ((this.config.backend === 'cpp' || this.config.backend === 'haskell' || this.config.backend === 'prolog' || this.config.backend === 'smalltalk' || this.config.backend === 'compiler' || this.config.backend === 'tla' || this.config.backend === 'aadl' || this.config.backend === 'c4' || this.config.backend === 'shell-pipeline') && this._activeRunTransaction) return;
+    if ((this.config.backend === 'compiler' || this.config.backend === 'tla' || this.config.backend === 'aadl' || this.config.backend === 'c4' || this.config.backend === 'shell-pipeline') && this._activeStepLoadRequest) return;
     if (this.config.backend === 'prolog' && (this._activeStepLoadRequest || this._workerRestartPromise || (this._debuggerCtl && this._debuggerCtl.session))) return;
+    if (this.config.backend === 'c4' && this._c4RefuseGatedRun()) return;
     var stepIndex = this.currentStep;
     var step = this.steps[stepIndex];
     if (!step || !this._stepHasTests(step)) return;
@@ -13195,6 +13243,7 @@
     else if (backend === 'compiler') this._runTestsCompiler(run);
     else if (backend === 'tla') this._runTestsTLA(run);
     else if (backend === 'aadl') this._runTestsAADL(run);
+    else if (backend === 'c4') this._runTestsC4(run);
     else if (backend === 'shell-pipeline') this._runTestsShellPipeline(run);
     else {
       run.completed = true;
@@ -14232,7 +14281,7 @@
       var icon = p === true ? '\u2713' : (p === false ? '\u2717' : '?');
       html += '<li class="tvm-test-item ' + cls + '"><span class="tvm-test-icon">' + icon + '</span>' +
         '<span class="tvm-test-desc">' + self._escapeHtml(t.description) +
-        (details ? '<span class="tvm-test-detail">' + self._escapeHtml(details[i]) + '</span>' : '') + '</span></li>';
+        (details && details[i] ? '<span class="tvm-test-detail">' + self._escapeHtml(details[i]) + '</span>' : '') + '</span></li>';
     });
     html += '</ul></div>';
     return html;
@@ -14242,6 +14291,18 @@
     var html = this._buildTestResultsHTML(tests, results, details);
     this._showStudentTestPanel(html);
     this._announceTestResult(tests, results);
+  };
+
+  /**
+   * Hints are advice beside the results: a defect while choosing them is logged and must not stop the rest of
+   * the result handling (credit, the popout's results, the cooldown), or the popout would stay "Running tests".
+   */
+  TutorialCode.prototype._showFailureHints = function () {
+    try {
+      window.TutorChat.onTestFailure(this);
+    } catch (error) {
+      console.error('The hints for this test run could not be shown:', error);
+    }
   };
 
   TutorialCode.prototype._renderTestResults = function (tests, results, run) {
@@ -14287,6 +14348,7 @@
     if (run.shellPipelineLoad !== undefined && this._stepLoadSequence !== run.shellPipelineLoad) return;
     if (run.tlaLoad !== undefined && this._stepLoadSequence !== run.tlaLoad) return;
     if (run.aadlLoad !== undefined && this._stepLoadSequence !== run.aadlLoad) return;
+    if (run.c4Load !== undefined && this._discardStaleC4Run(run)) return;
     if (run.smalltalkLoad !== undefined && (this._smalltalkChecksStale(run) || run.smalltalkFailure)) {
       if (this._stepLoadSequence !== run.smalltalkLoad) return;
       var message = this._smalltalkChecksStale(run)
@@ -14310,13 +14372,13 @@
     var stepIndex = run.stepIndex;
 
     var details = run.reactFailure ? tests.map(function () { return run.reactFailure; })
-      : run.smalltalkResults ? this._smalltalkCheckDetails(run.smalltalkResults) : run.aadlDetails || run.tlaDetails;
+      : run.smalltalkResults ? this._smalltalkCheckDetails(run.smalltalkResults) : run.aadlDetails || run.tlaDetails || run.c4Details;
     var html = this._buildTestResultsHTML(tests, results, details);
     if (run.smalltalkProgram) html = this._smalltalkCheckPanel(run, html);
     if (!silent) {
       this._showTestPanel(html);
       this._announceTestResult(tests, results);
-      if (!allPass && window.TutorChat) { window.TutorChat.onTestFailure(this); }
+      if (!allPass && window.TutorChat) { this._showFailureHints(); }
       if (allPass && window.TutorChat) { window.TutorChat.onTestPass(); }
       if (allPass && window.SEGymHeroCelebration) {
         window.SEGymHeroCelebration.show({ hostEl: this.stepContentEl });

@@ -1,0 +1,201 @@
+# WRONG (the cap folded into the wording of the existing DECIDE, so it has no rule of its own): must fail T1, pass T2 and T3.
+schema: c4-design/1
+name: Course Registration
+description: Students plan a term schedule and enroll in every section of it, or in none.
+
+requirements:
+  FR-21: A student can enroll in a section only after passing the section's prerequisite courses.
+  FR-22: A student can see how many seats are still open in each section of a plan.
+  FR-23: If a section fills up while a student is enrolling in a plan, the student keeps no seat from that plan and learns which section was full.
+  FR-24: A student can rearrange a draft schedule without waiting for the server.
+
+people:
+  student:
+    name: Student
+    description: Plans and confirms one term schedule.
+    collaborators:
+      web: plans a schedule and enrolls using
+  adviser:
+    name: Academic Adviser
+    description: Reviews students' planned schedules before they enroll.
+    collaborators:
+      web: reviews a student's planned schedule using
+
+systems:
+  registration:
+    name: Course Registration
+    description: Plans term schedules and enrolls students in their sections.
+    responsibilities:
+      - decide: whether a student may enroll in a section
+        id: sys-eligibility
+        requirements: [FR-21]
+      - know: how many seats are still open in each section
+        id: sys-open-seats
+        requirements: [FR-22]
+      - do: hold a seat in every section of a plan, or in none
+        id: sys-holds
+        requirements: [FR-23]
+      - know: which section was full when an enrollment attempt fails
+        id: sys-full-section
+        requirements: [FR-23]
+      - do: let a student rearrange a draft schedule without waiting for the server
+        id: sys-drafts
+        requirements: [FR-24]
+    containers:
+      web:
+        name: Planner Web App
+        description: Lets students and advisers compare draft schedules, and flags missing prerequisites while a student plans.
+        kind: browser_app
+        technology: TypeScript, React
+        responsibilities:
+          - do: let students and advisers compare draft schedules
+          - do: let a student rearrange a draft schedule in the browser, with no server round trip
+            refines: sys-drafts
+          - do: show a student the API's answer about missing prerequisites while they plan
+        collaborators:
+          coordinator: {description: submits plans to, technology: JSON/HTTPS, uses: enrollment-api.submit-plan}
+      api:
+        name: Registration API
+        description: Checks each enrollment attempt and holds the seats it needs.
+        technology: Python, FastAPI
+        responsibilities:
+          - decide: whether a student may enroll in a section
+            id: api-eligibility
+            refines: sys-eligibility
+          - know: how many seats are still open in each section
+            id: api-open-seats
+            refines: sys-open-seats
+          - do: hold a seat in every section of a plan, or in none
+            id: api-holds
+            refines: sys-holds
+          - know: which section was full when an enrollment attempt fails
+            id: api-full-section
+            refines: sys-full-section
+        owns: [seat holds]
+        provides:
+          enrollment-api:
+            name: Enrollment API
+            description: Enrolls one student in every section of a planned schedule, or in none.
+            style: rest
+            technology: JSON/HTTPS
+            version: 1
+            restrictions:
+              - Only the Planner Web App may call it, acting for the signed-in student named in the request.
+            errors:
+              unauthorized:
+                code: 401
+                when: the caller is not signed in as the student named in the request; the client asks the student to sign in again
+            operations:
+              submit-plan:
+                syntax: POST /v1/enrollments
+                input: EnrollmentRequest
+                output: EnrollmentOutcome
+                purpose: When a client submits a student's plan for one term, the API decides whether the student may enroll and then holds a seat in every section of the plan, or in none.
+                side_effects:
+                  - An enrolled outcome holds a seat in every section of the plan.
+                  - An enrolled outcome also requests the tuition charges from the Billing System.
+                  - A refused or full outcome holds no new seat.
+                errors:
+                  unknown-section:
+                    code: 422
+                    when: a section id does not exist in the requested term; the client shows the section and lets the student remove it
+                examples:
+                  - input: {student_id: "905123456", term: 2027-winter, section_ids: ["187204", "187310"]}
+                    output: {status: enrolled}
+                    note: Two sections whose prerequisites the student has passed, both with open seats.
+                realizes: [api-eligibility, api-holds, api-full-section]
+            types:
+              EnrollmentRequest:
+                description: One student's plan for one term.
+                fields:
+                  student_id:
+                    type: string
+                    meaning: university id of the student who enrolls
+                    format: nine digits
+                  term:
+                    type: string
+                    meaning: the academic term of every section in the plan
+                    format: "<year>-<fall | winter | spring | summer>"
+                  section_ids:
+                    type: string[]
+                    meaning: the sections the student wants to take together
+                    format: six-digit section ids
+                    constraints: 1 to 8 items, no duplicates
+              EnrollmentOutcome:
+                description: The decision for the whole plan.
+                fields:
+                  status:
+                    type: string
+                    meaning: whether the plan was accepted
+                    values:
+                      enrolled: the student now holds a seat in every section of the plan
+                      refused: the student may not enroll; reason says why, and no new seat is held
+                      full: a section filled up during the attempt; full_section names it, and no new seat is held
+                  reason:
+                    type: string
+                    meaning: why the plan was refused, in words a student understands
+                    required: false
+                  full_section:
+                    type: string
+                    meaning: the six-digit id of the section that was full
+                    required: false
+        components:
+          coordinator:
+            name: Registration Coordinator
+            technology: Python module
+            stereotypes: [coordinator]
+            responsibilities:
+              - do: sequence one enrollment attempt
+              - decide: which step of the attempt runs next
+            collaborators:
+              policy: {description: asks for an eligibility decision from, responsibility: policy-eligibility}
+              seats: {description: reserves all seats or none through, responsibility: seats-hold-all}
+              billing-gateway: {description: asks for tuition charges through, responsibility: billing-request}
+            invariants: [never decides eligibility or writes seat state]
+          policy:
+            name: Enrollment Policy
+            technology: Python module
+            stereotypes: [service_provider]
+            responsibilities:
+              - decide: whether a student meets every enrollment rule for a section, including their major's unit cap
+                id: policy-eligibility
+                refines: api-eligibility
+              - know: which courses each section requires
+          seats:
+            name: Seat Gateway
+            technology: Python module
+            stereotypes: [interfacer]
+            responsibilities:
+              - do: hold every requested seat atomically, or none
+                id: seats-hold-all
+                refines: api-holds
+              - know: how many seats are still open in each section
+                refines: api-open-seats
+              - know: which section was full when a hold fails
+                refines: api-full-section
+            collaborators:
+              db: {description: reads and writes seat holds in, technology: SQL/TCP}
+            owns: [seat holds]
+          billing-gateway:
+            name: Billing Gateway
+            technology: Python module
+            stereotypes: [interfacer]
+            responsibilities:
+              - do: request tuition charges for a completed enrollment
+                id: billing-request
+            collaborators:
+              billing:
+                description: requests tuition charges from
+                technology: AMQP
+                connector: message
+      db:
+        name: Registration Database
+        description: Durably stores plans, enrollment attempts, and seat holds.
+        kind: database
+        technology: PostgreSQL 16
+        responsibilities:
+          - do: durably store plans, enrollment attempts, and seat holds
+  billing:
+    name: Billing System
+    description: Charges tuition and fees for the university.
+    external: true

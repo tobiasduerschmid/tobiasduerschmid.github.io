@@ -140,7 +140,9 @@ test.afterEach(async ({ page }) => {
 // Component fixture: serve owned assets directly from disk, without a Jekyll
 // build or a cached backend. Conditions react to source passed through the
 // public TutorChat failure event, just as they do after a learner retests.
-async function openHintsFixture(page, { backend = 'browser', tests, results,
+// `tutorialMembers` is JavaScript source for an object of extra tutorial members: a backend's hooks, such as the
+// C4 adapter's condition evaluator, replaced by a fixed answer at that boundary.
+async function openHintsFixture(page, { backend = 'browser', tests, results, tutorialMembers = '{}',
   records = [], source = 'phase_a', attempts = ['phase_a', 'phase_b', 'phase_c'] } = {}) {
   const authoredTests = tests || Array.from({ length: 5 }, (_, index) => ({
     description: `Criterion ${index + 1}`,
@@ -179,6 +181,7 @@ async function openHintsFixture(page, { backend = 'browser', tests, results,
         currentSource: () => source,
         _testResults: ${JSON.stringify(results || [false, false, false, false, true])},
         _testHintRecords: ${JSON.stringify(records)} };
+      Object.assign(tutorial, ${tutorialMembers});
       document.getElementById('retest').onclick = () => TutorChat.onTestFailure(tutorial);
       document.getElementById('advance').onclick = () => { source = attempts[++phase]; };
       document.getElementById('reset').onclick = () => { phase = 0; source = attempts[0]; };
@@ -417,4 +420,44 @@ test('UML checks without applicable guidance leave the hint panel absent', async
   await openHintsFixture(page, { backend: 'uml-editor', tests: [{ description: 'Diagram structure' }],
     results: [false], records: [] });
   await expect(page.getByRole('button', { name: 'Hints', exact: true })).toHaveCount(0);
+});
+
+// The C4 adapter evaluates `{c4: predicate}` conditions against its last test run (scripts/tests/c4-hint-conditions
+// .test.js runs the real one). Here it answers from a fixed table: the panel's side of that contract.
+const C4_HINT_ANSWERS = `{ _evaluateC4Hint: (predicate) => ({ policy: true, missingView: false })[predicate.exists.element.id] }`;
+
+test('C4: structured conditions show only the advice whose predicate holds, beside string conditions', async ({ page }) => {
+  await openHintsFixture(page, { backend: 'c4', tutorialMembers: C4_HINT_ANSWERS, results: [false], tests: [{
+    description: 'The saved view shows the deciding component', hints: [
+      { text: 'Ask which level answers the question.' },
+      { condition: { c4: { exists: { element: { id: 'policy' } } } }, text: 'Start from the policy.' },
+      { condition: { c4: { exists: { element: { id: 'missingView' } } } }, text: 'Name the view first.' },
+      { condition: 'code_contains: phase_a', text: 'Your current attempt is the first phase.' },
+    ] }] });
+  await openHints(page);
+  await expect(page.locator('.tvm-tutor-hint-body')).toHaveText([
+    'Ask which level answers the question.', 'Start from the policy.', 'Your current attempt is the first phase.']);
+  await a11yCheckpoint(page, 'C4 condition-matched hints', { feature: 'tutor-hints' });
+});
+
+test('C4: a structured condition on a page without the C4 adapter hides only its own advice', async ({ page }) => {
+  await openHintsFixture(page, { backend: 'c4', results: [false], tests: [{ description: 'A C4 check', hints: [
+    { text: 'Read the task again.' },
+    { condition: { c4: { exists: { element: { id: 'policy' } } } }, text: 'Start from the policy.' },
+  ] }] });
+  await openHints(page);
+  await expect(page.locator('.tvm-tutor-hint-body')).toHaveText(['Read the task again.']);
+});
+
+test('C4: unchecked results show the backend card once instead of their own advice', async ({ page }) => {
+  const card = `{ _hintForUncheckedTests: () => ({ title: 'Fix the YAML errors first', body: 'Repair the YAML, then test again.' }) }`;
+  await openHintsFixture(page, { backend: 'c4', tutorialMembers: card, results: [null, false, null], tests: [
+    { description: 'First check', hints: [{ text: 'Advice for the first check.' }] },
+    { description: 'Second check', hints: [{ text: 'Advice for the second check.' }] },
+    { description: 'Third check', hints: [{ text: 'Advice for the third check.' }] },
+  ] });
+  await openHints(page);
+  await expect(page.locator('.tvm-tutor-hint-body')).toHaveText(['Repair the YAML, then test again.', 'Advice for the second check.']);
+  await expect(page.getByText(/Fix the YAML errors first$/)).toHaveCount(1);
+  await a11yCheckpoint(page, 'C4 unchecked-results card', { feature: 'tutor-hints' });
 });
