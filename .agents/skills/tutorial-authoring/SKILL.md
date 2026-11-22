@@ -3324,7 +3324,10 @@ channel.
   is shown, opens a find bar (`role="search"`) for the shown drawing:
   every match framed, the current one with a 4px outline, a polite
   "N of M" / "No matches" status, Enter / Shift+Enter and Next / Previous
-  match buttons that zoom to the current match, an optional Match case, and
+  match buttons that zoom to the current match, optional Match case and
+  Regular expression checkboxes (patterns go through project search's
+  `textMatches`; an invalid one shows project search's
+  `patternError` message in the status and marks nothing), and
   Escape (or Close find) that clears the marks and returns focus. Monaco
   keeps its own Ctrl/Cmd+F; Ctrl/Cmd+Shift+F stays project search.
   **Pinch zoom:** `wheel` events with `ctrlKey` over the canvas (trackpad
