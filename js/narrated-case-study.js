@@ -78,6 +78,7 @@
         stage.querySelector('.nja-scene:not([hidden]) h3').focus({ preventScroll: true });
         if (playNarration) player.play();
       } else {
+        if (window.NarrationSong.continueToSong(root, player)) return;
         status.textContent = 'Case study complete. Revisit any scene to review your reasoning.';
         // Playing from the end starts the narration over; a text-only story
         // has no play button, and its player settings hold scene review.

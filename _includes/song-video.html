@@ -5,6 +5,8 @@
     {% include song-video.html song=site.data.songs.snapshots_and_pointers id="git-song" %}
 
   `id` (optional) is the figure's anchor, for links like [the song](#git-song).
+  `narration` (optional) is the paired narration's root DOM id. Its final quiz
+  continues to this song; Previous song returns to that completed narration.
   Everything here comes from the song's storyboard (_data/songs/<song>.yml),
   which also drives both rendered cuts and their captions
   (scripts/song-video/render.js). Styles: css/song-video.css.
@@ -27,7 +29,7 @@
 {%- assign song = include.song -%}
 {%- assign song_video = song.video | relative_url -%}
 {%- assign described_video = song.described_video | relative_url -%}
-<figure class="song-video mathjax_ignore"{% if include.id %} id="{{ include.id }}"{% endif %}>
+<figure{% if include.narration %} data-narration="{{ include.narration | escape }}"{% endif %} class="song-video mathjax_ignore"{% if include.id %} id="{{ include.id }}"{% endif %}>
   {% if song.player %}
   {% comment %}Load the controls before keyboard focus reaches this frame.
   An unloaded lazy iframe can receive focus without scrolling into view.
@@ -78,4 +80,4 @@
     {% include song-transcript.html song=song %}
   </details>
 </figure>
-{% if song.player %}<script src="{{ '/js/song-video/embed.js' | relative_url }}" defer></script>{% endif %}
+{% if song.player %}<script src="{{ '/js/song-video/embed.js' | relative_url }}?v={{ site.asset_version }}" defer></script>{% endif %}

@@ -9,6 +9,7 @@
     // host owns fullscreen so that navigation cannot tear down the presentation.
     const frame = window.frameElement;
     const host = frame?.closest('[data-song-fullscreen-host]');
+    const managedHost = host?.hasAttribute('data-narration-song-host');
     const fullscreenTarget = host || screen;
     const fullscreenDocument = fullscreenTarget.ownerDocument;
     const orientation = window.screen.orientation;
@@ -124,6 +125,10 @@
 
     async function exit() {
       if (!active) return true;
+      if (managedHost) {
+        window.parent.postMessage({ type: 'song-player:exit-host-fullscreen' }, window.location.origin);
+        return true;
+      }
       if (fallback) leavePresentation();
       else {
         try { await fullscreenDocument.exitFullscreen(); }
@@ -133,6 +138,10 @@
     }
 
     async function toggle() {
+      if (managedHost) {
+        window.parent.postMessage({ type: 'song-player:toggle-host-fullscreen' }, window.location.origin);
+        return;
+      }
       if (entering) return;
       if (active) {
         if (!(await exit())) onError('Use your browser’s full screen control to leave full screen.');
@@ -172,10 +181,15 @@
     button.hidden = false;
     listen(button, 'click', toggle);
     function adoptPresentation() {
+      if (managedHost) {
+        if (host.classList.contains('is-fullscreen')) enterPresentation(false);
+        return;
+      }
       if (fullscreenDocument.fullscreenElement === fullscreenTarget) enterPresentation(false);
       else if (host && frame.classList.contains('is-song-fullscreen')) enterPresentation(true);
     }
     listen(fullscreenDocument, 'fullscreenchange', () => {
+      if (managedHost) return; // The host also owns viewport fullscreen and focus restoration.
       if (fullscreenDocument.fullscreenElement === fullscreenTarget) enterPresentation(false);
       else if (active && !fallback) leavePresentation();
     });
@@ -187,6 +201,11 @@
     }
     if (orientation) listen(orientation, 'change', resize);
     listen(window, 'message', (event) => {
+      if (managedHost && event.origin === window.location.origin && event.source === window.parent
+        && event.data?.type === 'song-player:host-fullscreen') {
+        if (event.data.active) enterPresentation(false);
+        else leavePresentation(false, false);
+      }
       if (event.origin === window.location.origin && event.source === window.parent && event.data?.type === 'song-player:exit-fullscreen') void exit();
     });
     listen(window, 'pagehide', () => { pageActive = false; leavePresentation(false, !host); });

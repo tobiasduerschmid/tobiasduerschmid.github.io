@@ -235,6 +235,11 @@ html.dark-mode:not(.print-light-mode) .narrated-explainer .vn-settings { box-sha
    fills the video frame. css/video-narration.css adds a video narration's
    16:9 screen, roadmap, and panels. */
 .narrated-explainer .vn-video { position: relative; container-type: inline-size; }
+/* A paired song replaces the surface inside the same native/viewport fullscreen host.
+   The iframe carries the existing light/dark player theme; print hides .nja-player. */
+.narrated-explainer .vn-song-frame { display: block; width: 100%; height: 640px; border: 0; }
+.narrated-explainer .vn-video.is-fullscreen > .vn-song-frame { height: 100% !important; }
+.narrated-explainer.is-showing-song > .nja-player > :is(.nja-explanation, .nja-takeaway) { display: none; }
 .narrated-explainer .vn-video:focus-visible { outline: 3px solid var(--nja-cyan); outline-offset: 3px; }
 .narrated-explainer .vn-surface { display: flex; flex-direction: column; }
 .narrated-explainer .vn-frame { position: relative; display: flex; flex-direction: column; overflow: hidden; background: var(--nja-panel); }

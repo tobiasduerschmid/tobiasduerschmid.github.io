@@ -252,6 +252,12 @@ shares its modules. Rules that came from review:
   then Continue narration resumes directly, without results or review screens.
   Multi-question summaries retain results. Fullscreen chrome starts a fresh
   idle period on every entry path; a stationary pointer does not prevent hiding.
+- **After the final knowledge-check quiz, transition to the chapter's song
+  video when one is present.** Scrum hands off to *Inspect and Adapt: a Scrum
+  musical*. Follow the shared [narration-to-song completion rule](../narration-authoring/SKILL.md#transition-from-narration-to-the-chapter-song),
+  including final feedback, player pairing, focus, fullscreen verification,
+  and **Previous song** restoring the completed narration inside the same
+  frame. Preserve fullscreen throughout both transitions, as in a playlist.
 - An icon button reads at a glance at its real size. The bar draws the music
   player's centered SVG icons (`_includes/player-icon.html`), so the skip
   buttons hold their "5" inside the circular arrow, as the music player's do.

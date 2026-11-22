@@ -186,6 +186,12 @@ Page-furniture includes, used in this order at the end of most chapters:
 
 **Song videos** — `{% include song-video.html song=site.data.songs.<song> id="<anchor>" %}` embeds a rendered music video with its captions, an audio-described cut, and a lyrics transcript that describes what the video shows for every line; load `/css/song-video.css` on the page (see `SEBook/tools/git.md`). The storyboard `_data/songs/<song>.yml` drives the videos, captions, and transcript; `scripts/song-video/README.md` covers rendering and adding a song, and `tests/song-video.spec.js` lists the songs it checks. The include marks its figure `mathjax_ignore`, because chapter pages render `$…$` as TeX and lyrics quote shell notation like `$1`; keep that class if you restructure the include.
 
+For a chapter with a corresponding narration, add `narration="<narration-root-id>"`
+to the song include. The final knowledge check continues to that song, and
+**Previous song** returns to the narration inside the same player frame,
+preserving fullscreen. See the shared
+[completion rule](../narration-authoring/SKILL.md#transition-from-narration-to-the-chapter-song).
+
 **UML diagrams** — embed via the shared container; the bundled renderer ([`_layouts/sebook.html` lines 739–773](../../../_layouts/sebook.html)) picks them up and re-renders on dark-mode toggle:
 
 ```html

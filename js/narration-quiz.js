@@ -2,8 +2,10 @@
    answers still use SebookQuiz's grading, feedback, and keyboard handling. */
 (function () {
   'use strict';
-
+  if (window.NarrationQuiz) return;
   function mount({ continueLabel, onContinue, ...options }) {
+    const root = options.controlsEl.closest('.narrated-explainer');
+    if (options.isFinalQuiz && window.NarrationSong.hasSong(root)) continueLabel = 'Continue to song';
     window.SebookQuiz.mount({ ...options, onPass: onContinue, onSkip: onContinue });
     const host = options.hostEl;
     host.querySelector('.tvm-quiz-continue-btn').textContent = continueLabel;

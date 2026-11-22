@@ -132,6 +132,39 @@ marked accessibly, and preserve keyboard focus after a jump. Video fullscreen
 keeps navigation horizontal on phones and laptops, compact controls, and
 readable optional captions over the lower picture; see `video-narration`.
 
+## Transition from narration to the chapter song
+
+When a chapter contains both a narration and a corresponding song video,
+completing the narration's **final knowledge-check quiz** must transition to
+that song video. For example, the Scrum narration hands off to **Inspect and
+Adapt: a Scrum musical** on the same page.
+
+Keep final answer feedback and quiz results available until the learner takes
+the quiz's completion action; that action performs the handoff. Intermediate
+knowledge checks continue the narration. Target the corresponding song
+explicitly, stop narration playback, and replace the narration surface with the
+song inside the same player frame without overlapping audio. Never scroll to
+the separate chapter song or exit and re-enter fullscreen. A page without a corresponding
+song retains its normal narration completion behavior.
+
+Pair an interactive song explicitly with `narration="<narration-root-id>"`
+on its `song-video.html` include (Scrum uses `scrum-video`). The final action
+reads **Continue to song**. The shared `NarrationSong.continueToSong(root,
+player)` retains the narration DOM and clock while a song iframe replaces
+its surface. The existing host keeps native or viewport fullscreen active,
+as in playlist navigation. Both narration transports expose `toggleFullscreen()`
+and `exitFullscreen()` so the song can delegate fullscreen controls to its host.
+After this handoff, **Previous song** must pause the song and restore the
+completed narration inside the same frame with focus on its play control (or
+player settings for a text-only lesson). Preserve fullscreen and position;
+do not restart it. Inline transitions replace only the frame's contents.
+Validate message origin and the paired frame before accepting the return.
+
+When implementing or changing this handoff, verify final versus intermediate
+checks, pages with and without a song, and keyboard and fullscreen transitions
+in both directions, including entering/exiting fullscreen while the song is visible.
+Implement the handoff through shared narration completion handling.
+
 ## Editable notes and PDF handouts for every kind
 
 Every video, pattern, explainer, and case-study narration uses the shared

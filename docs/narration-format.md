@@ -418,7 +418,9 @@ and verification screenshots outside the repository.
   fullscreen, print lifecycle, and `readData` boundary for every adapter.
   `enhance` follows the audio clock; `step` shows the same cues without one
   for a text-only case study, sharing the scene display, fullscreen, and
-  transcript printing. Both bind the control bar to the player they create.
+  transcript printing. Both bind the control bar to the player they create
+  and expose `toggleFullscreen()` / `exitFullscreen()` for embedded media
+  that use the narration container as their fullscreen host.
 - `js/narration-player-controls.js`: the control bar's behavior, from the song
   player's own modules (`js/song-video/`): the same keys in every player (K or
   Space, the arrow keys, 0 to 9, C, F, and Escape, documented at
@@ -446,7 +448,21 @@ and verification screenshots outside the repository.
   keep answer feedback, then **Continue narration** returns directly to the
   lesson, including after an incorrect answer. The adapter captures the shared
   `.next-btn` action (also activated by Enter) before results navigation.
-  Multi-question summaries retain results; final actions finish the lesson.
+  Multi-question summaries retain results. When the chapter pairs a song with
+  `narration="<narration-root-id>"` on `song-video.html`, the final action is
+  **Continue to song**. Unpaired lessons finish normally; intermediate checks
+  continue the narration.
+- `js/narration-song.js` owns the paired media session. It pauses narration,
+  hides its surface without destroying its DOM or clock, and loads a song iframe
+  inside the same `[data-vn-video]` container. `SongPlayerEmbeds.register(frame)`
+  supplies sizing, theme propagation, and coordination with other song audio.
+  **Previous song** pauses the song and restores the narration and keyboard
+  focus without changing its completed position. Neither direction scrolls to
+  the separate chapter song or leaves fullscreen. The host retains native or
+  viewport fullscreen; `song-video/presentation.js` delegates fullscreen buttons
+  to it and receives `song-player:host-fullscreen` state. All messages validate
+  origin and source. A ready handshake starts playback only after the song's
+  controls have initialized. The retained song frame can be revisited.
 - `js/narration-timeline.js` paints proportional scene segments behind the
   native seek slider, with the current chapter beside the clock. Hover or
   keyboard seeking previews the scene and timestamp above the rail; Escape

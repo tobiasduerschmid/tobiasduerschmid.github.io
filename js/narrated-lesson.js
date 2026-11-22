@@ -81,6 +81,7 @@
         (player.isFullscreen() ? root.querySelector('[data-vn-video]') : playButton).focus({ preventScroll: true });
         player.play();
       } else {
+        if (window.NarrationSong.continueToSong(root, player)) return;
         status.textContent = 'Narration and final knowledge check finished. Revisit any section to review.';
         // Playing from the end starts the narration over.
         playButton.focus();

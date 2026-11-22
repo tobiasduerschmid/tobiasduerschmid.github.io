@@ -174,7 +174,12 @@
       if (event.key === 'Escape' && viewportFullscreen && !event.defaultPrevented) setViewportFullscreen(false);
     });
     updateButton(false);
-    return { isFullscreen };
+    async function exitFullscreen() {
+      if (viewportFullscreen) setViewportFullscreen(false);
+      else if (nativeFullscreen.element() === target) await nativeFullscreen.exit();
+    }
+
+    return { isFullscreen, exitFullscreen, toggleFullscreen: toggle };
   }
 
   // Full screen fills the player's video frame; markup from an older build
@@ -384,7 +389,7 @@
     const api = {
       refresh: () => render(position),
       seekTo,
-      isFullscreen: fullscreen.isFullscreen,
+      isFullscreen: fullscreen.isFullscreen, exitFullscreen: fullscreen.exitFullscreen, toggleFullscreen: fullscreen.toggleFullscreen,
       selectScene,
       play,
       currentScene: () => currentScene,
@@ -424,7 +429,7 @@
     root.classList.add('is-enhanced');
     root.querySelectorAll('.nja-controls').forEach((controls) => { controls.hidden = false; });
     showCue(0, 0);
-    const api = { showCue, selectScene, isFullscreen: fullscreen.isFullscreen, currentScene: () => currentScene };
+    const api = { showCue, selectScene, isFullscreen: fullscreen.isFullscreen, exitFullscreen: fullscreen.exitFullscreen, toggleFullscreen: fullscreen.toggleFullscreen, currentScene: () => currentScene };
     bindPlayerControls(root, api);
     return api;
   }

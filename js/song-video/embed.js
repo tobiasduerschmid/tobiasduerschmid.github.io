@@ -4,7 +4,7 @@
   if (window.songPlayerEmbeds) return;
   window.songPlayerEmbeds = true;
 
-  const frames = Array.from(document.querySelectorAll('iframe.song-video-frame'));
+  const frames = [];
 
   let fullscreenFrame = null;
   let restoreFullscreenPage = () => {};
@@ -69,7 +69,7 @@
   }
 
   function sendTheme(frame) {
-    const figure = frame.closest('figure');
+    const figure = frame.closest('figure') || frame.closest('.narrated-explainer');
     const fontSize = Math.max(16, parseFloat(getComputedStyle(figure).fontSize));
     frame.contentWindow.postMessage({
       type: 'song-player:theme',
@@ -99,7 +99,9 @@
     }
   }
 
-  frames.forEach((frame) => {
+  function register(frame) {
+    if (frames.includes(frame)) return;
+    frames.push(frame);
     frame.addEventListener('load', () => {
       const host = frame.closest('[data-song-fullscreen-host]');
       const continuing = host && frame.hasAttribute('src');
@@ -107,7 +109,10 @@
       if (host && !continuing && document.fullscreenElement === host) void document.exitFullscreen();
       sendTheme(frame);
     });
-  });
+    sendTheme(frame);
+  }
+  window.SongPlayerEmbeds = { register };
+  document.querySelectorAll('iframe.song-video-frame').forEach(register);
   window.addEventListener('message', receiveMessage);
   // A cached frame may finish before this deferred host script attaches.
   frames.forEach(sendTheme);

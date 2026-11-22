@@ -1,4 +1,4 @@
-/* Optional track navigation shared by every song; only the playlist enables it. */
+/* Optional track navigation for playlists and returns to a paired narration. */
 (function () {
   'use strict';
 
