@@ -67,7 +67,8 @@
       'folder-tree': 'Folder tree diagram',
       'venn': 'Venn diagram',
       'er': 'Entity-relationship diagram',
-      'crc': 'Class-responsibility-collaborator cards'
+      'crc': 'Class-responsibility-collaborator cards',
+      'c4': 'C4 model diagram'
     };
     return map[String(type || '').toLowerCase()] || 'ArchUML diagram';
   }
@@ -432,40 +433,123 @@
 
   // ---------- component diagrams ----------
 
-  function describeComponentDiagram(spec) {
-    var components = [];
-    var info = Object.create(null);
-    var portOwner = Object.create(null);
-    var connections = [];
-    var current = null;
+  // The bundle's declaration grammar: `component Name`, `"Display Name"` or
+  // `[Display Name]`, then an optional `as alias` and `<<keyword>>`, then an
+  // optional port block (`{` alone, or `{ … }` on the same line). Ports and
+  // connectors refer to a component by its alias; the box shows the display name.
+  // A keyword needs a space before `<<`: the bundle reads a bare name up to the
+  // next space, so `component Foo<<kw>>` draws a box named `Foo<<kw>>` with no
+  // keyword line, and the description names it the same way.
+  var COMPONENT_DECLARATION = /^component\s+(?:\[([^\]]+)\]|"([^"]+)"|([^\s{]+))(?:\s+as\s+([^\s{]+))?(?:\s+<<([^<>]*)>>)?\s*(\{.*)?$/;
+  // A port of an inline block (`{ provide "A" as a require b }`): several per
+  // line, found anywhere in the block, as the bundle reads them.
+  var COMPONENT_INLINE_PORT = /(portin|portout|provide|require)\s+(?:"([^"]+)"|(\w+))(?:\s+as\s+(\w+))?/g;
+  // A port line of a multi-line block: the whole line is one port, as the
+  // bundle's parsePortLine reads it, so other text that happens to contain
+  // `provide` or `require` is not a port. `port` declares a port with no
+  // direction.
+  var COMPONENT_PORT_LINE = /^(portin|portout|port|provide|require)\s+(?:"([^"]+)"|(\S+?))(?:\s+as\s+(\S+))?$/;
+  // The bundle's stripComponentDashedStyle: a trailing `dashed`, in any case, is
+  // the port's line style, unless it is the port's whole name (`port dashed`).
+  var TRAILING_DASHED = /\s+dashed\s*$/i;
+  var PORT_KEYWORD_ONLY = /^(?:portin|portout|port|provide|require)$/i;
+  var COMPONENT_PORT_KEYS = { portin: 'in', portout: 'out', port: 'ports', provide: 'provides', require: 'requires' };
 
-    function ensure(name) {
-      if (!info[name]) info[name] = { in: [], out: [], provides: [], requires: [] };
-      return info[name];
+  function matchPortLine(line) {
+    var style = line.match(TRAILING_DASHED);
+    var head = style ? line.slice(0, style.index) : line;
+    return (style && !PORT_KEYWORD_ONLY.test(head.trim()) ? head : line).match(COMPONENT_PORT_LINE);
+  }
+
+  function parseComponentSpec(spec) {
+    var components = [];
+    var byId = Object.create(null);
+    var portOwner = Object.create(null);
+    var links = [];
+    var openBlockOwner = null;
+
+    // A component exists from its first mention, a declaration or, as in the
+    // bundle, a connector end that names no declared component or port.
+    function component(id) {
+      if (!byId[id]) {
+        byId[id] = { id: id, name: id, keyword: null, in: [], out: [], ports: [], provides: [], requires: [] };
+        components.push(byId[id]);
+      }
+      return byId[id];
+    }
+
+    function declare(match) {
+      var name = match[1] || match[2] || match[3];
+      var declared = component(match[4] || name);
+      // The last display name given wins; `component id` keeps an earlier one.
+      if (name !== declared.id) declared.name = name;
+      if (match[5] && match[5].trim()) declared.keyword = match[5].trim();
+      return declared;
+    }
+
+    function addPort(owner, port) {
+      var name = port[2] || port[3];
+      owner[COMPONENT_PORT_KEYS[port[1]]].push(name);
+      portOwner[port[4] || name] = owner.id;
+    }
+
+    function addInlinePorts(owner, text) {
+      var port;
+      COMPONENT_INLINE_PORT.lastIndex = 0;
+      while ((port = COMPONENT_INLINE_PORT.exec(text))) addPort(owner, port);
     }
 
     spec.split('\n').forEach(function (raw) {
       var line = raw.trim();
       if (!line) return;
       var m;
-      if ((m = line.match(/^component\s+"?(\w+)"?\s*(\{?)/))) {
-        if (components.indexOf(m[1]) < 0) components.push(m[1]);
-        current = m[2] === '{' ? m[1] : null;
+      if ((m = line.match(COMPONENT_DECLARATION))) {
+        var declared = declare(m);
+        var block = m[6] || '';
+        var inlineEnd = block.indexOf('}');
+        if (inlineEnd >= 0) addInlinePorts(declared, block.slice(1, inlineEnd));
+        openBlockOwner = block && inlineEnd < 0 ? declared : null;
       } else if (line === '}') {
-        current = null;
-      } else if (current && (m = line.match(/^(portin|portout|provide|require)\s+"([^"]+)"\s+as\s+(\w+)/i))) {
-        var key = { portin: 'in', portout: 'out', provide: 'provides', require: 'requires' }[m[1].toLowerCase()];
-        ensure(current)[key].push(m[2]);
-        portOwner[m[3]] = current;
-      } else if (current && (m = line.match(/^(portin|portout|provide|require)\s+"([^"]+)"/i))) {
-        var key2 = { portin: 'in', portout: 'out', provide: 'provides', require: 'requires' }[m[1].toLowerCase()];
-        ensure(current)[key2].push(m[2]);
+        openBlockOwner = null;
+      } else if (openBlockOwner) {
+        if ((m = matchPortLine(line))) addPort(openBlockOwner, m);
       } else if ((m = line.match(/^(\w+)\s+(-->|--|\.\.>)\s+(\w+)\s*(?::\s*(.+))?$/))) {
-        var from = portOwner[m[1]] || m[1];
-        var to   = portOwner[m[3]] || m[3];
-        connections.push({ from: from, arrow: m[2], to: to, label: m[4] && m[4].trim() });
+        links.push({ from: component(portOwner[m[1]] || m[1]).id, arrow: m[2], to: component(portOwner[m[3]] || m[3]).id, label: m[4] && m[4].trim() });
       }
     });
+
+    function displayName(id) { return byId[id] ? byId[id].name : id; }
+    var connections = links.map(function (link) {
+      return { from: displayName(link.from), arrow: link.arrow, to: displayName(link.to), label: link.label };
+    });
+    return { components: components, connections: connections };
+  }
+
+  function componentPortPhrases(component) {
+    var parts = [];
+    if (component.provides.length) parts.push('provides ' + component.provides.join(', '));
+    if (component.requires.length) parts.push('requires ' + component.requires.join(', '));
+    if (component.in.length)       parts.push('incoming ports ' + component.in.join(', '));
+    if (component.out.length)      parts.push('outgoing ports ' + component.out.join(', '));
+    if (component.ports.length)    parts.push('ports ' + component.ports.join(', '));
+    return parts;
+  }
+
+  function componentConnectionSentence(c) {
+    var verb;
+    switch (c.arrow) {
+      case '..>': verb = 'depends on'; break;
+      case '-->': verb = 'connects to'; break;
+      default:    verb = 'is associated with';
+    }
+    var label = c.label ? ' labeled "' + c.label + '"' : '';
+    return c.from + ' ' + verb + ' ' + c.to + label;
+  }
+
+  function describeComponentDiagram(spec) {
+    var model = parseComponentSpec(spec);
+    var components = model.components.map(function (component) { return component.name; });
+    var connections = model.connections;
 
     if (!components.length && !connections.length) return 'UML component diagram.';
 
@@ -473,27 +557,12 @@
       ? 'UML component diagram with ' + pluralize(components.length, 'component', 'components') + ' (' + components.join(', ') + ')'
       : 'UML component diagram';
 
-    var portLines = [];
-    Object.keys(info).forEach(function (comp) {
-      var h = info[comp];
-      var parts = [];
-      if (h.provides.length) parts.push('provides ' + h.provides.join(', '));
-      if (h.requires.length) parts.push('requires ' + h.requires.join(', '));
-      if (h.in.length)       parts.push('incoming ports ' + h.in.join(', '));
-      if (h.out.length)      parts.push('outgoing ports ' + h.out.join(', '));
-      if (parts.length) portLines.push(comp + ' ' + parts.join(', '));
+    var portLines = model.components.filter(function (component) {
+      return componentPortPhrases(component).length;
+    }).map(function (component) {
+      return component.name + ' ' + componentPortPhrases(component).join(', ');
     });
-
-    var connLines = connections.map(function (c) {
-      var verb;
-      switch (c.arrow) {
-        case '..>': verb = 'depends on'; break;
-        case '-->': verb = 'connects to'; break;
-        default:    verb = 'is associated with';
-      }
-      var label = c.label ? ' labeled "' + c.label + '"' : '';
-      return c.from + ' ' + verb + ' ' + c.to + label;
-    });
+    var connLines = connections.map(componentConnectionSentence);
 
     var out = head + '.';
     if (portLines.length) out += ' ' + portLines.join('. ') + '.';
@@ -564,7 +633,10 @@
       .replace(/^\s*@layout\b[^\n]*\n[\s\S]*?^\s*@endlayout[^\n]*$/gim, '')
       .replace(/\s+@pos\([^)]*\)/g, '');
     var elements = [], links = [], byId = Object.create(null);
-    var parent = null, pendingParent = null, text = '', quoted = false, escaped = false;
+    // Every '{' pushes its owner (or the enclosing node for an anonymous
+    // block) so a '}' returns to the enclosing node, not the top level.
+    var parents = [], pendingParent = null, text = '', quoted = false, escaped = false;
+    function currentParent() { return parents.length ? parents[parents.length - 1] : null; }
     function unquote(value) { return String(value || '').replace(/^"|"$/g, '').replace(/\\(["\\])/g, '$1'); }
     function addStatement(statement) {
       var line = statement.trim();
@@ -572,7 +644,7 @@
       var match = line.match(/^(node|component|artifact)\s+("(?:\\.|[^"\\])*"|[^\s{}]+)(?:\s+as\s+("(?:\\.|[^"\\])*"|[^\s{}]+))?(?:\s+<<([^>]+)>>)?/i);
       if (match) {
         var id = unquote(match[3] || match[2]);
-        var element = { id: id, label: unquote(match[2]), kind: match[1].toLowerCase(), parentId: parent, stereotype: match[4] || '' };
+        var element = { id: id, label: unquote(match[2]), kind: match[1].toLowerCase(), parentId: currentParent(), stereotype: match[4] || '' };
         if (!byId[id]) { byId[id] = element; elements.push(element); }
         pendingParent = element.kind === 'node' ? id : null;
         return;
@@ -587,8 +659,8 @@
       if (ch === '"') { quoted = !quoted; text += ch; continue; }
       if (!quoted && /[{};\n]/.test(ch)) {
         addStatement(text); text = '';
-        if (ch === '{') { parent = pendingParent; pendingParent = null; }
-        else if (ch === '}') { parent = null; pendingParent = null; }
+        if (ch === '{') { parents.push(pendingParent || currentParent()); pendingParent = null; }
+        else if (ch === '}') { parents.pop(); pendingParent = null; }
       } else text += ch;
     }
     addStatement(text);
@@ -946,72 +1018,20 @@
   }
 
   function describeComponentDiagramVerbose(spec) {
-    var components = [];
-    var info = Object.create(null);
-    var portOwner = Object.create(null);
-    var connections = [];
-    var current = null;
-
-    function ensure(name) {
-      if (!info[name]) info[name] = { in: [], out: [], provides: [], requires: [] };
-      return info[name];
-    }
-
-    spec.split('\n').forEach(function (raw) {
-      var line = raw.trim();
-      if (!line) return;
-      var m;
-      if ((m = line.match(/^component\s+"?(\w+)"?\s*(\{?)/))) {
-        if (components.indexOf(m[1]) < 0) components.push(m[1]);
-        ensure(m[1]);
-        current = m[2] === '{' ? m[1] : null;
-      } else if (line === '}') {
-        current = null;
-      } else if (current && (m = line.match(/^(portin|portout|provide|require)\s+"([^"]+)"\s+as\s+(\w+)/i))) {
-        var key = { portin: 'in', portout: 'out', provide: 'provides', require: 'requires' }[m[1].toLowerCase()];
-        ensure(current)[key].push(m[2]);
-        portOwner[m[3]] = current;
-      } else if (current && (m = line.match(/^(portin|portout|provide|require)\s+"([^"]+)"/i))) {
-        var key2 = { portin: 'in', portout: 'out', provide: 'provides', require: 'requires' }[m[1].toLowerCase()];
-        ensure(current)[key2].push(m[2]);
-      } else if ((m = line.match(/^(\w+)\s+(-->|--|\.\.>)\s+(\w+)\s*(?::\s*(.+))?$/))) {
-        var from = portOwner[m[1]] || m[1];
-        var to   = portOwner[m[3]] || m[3];
-        connections.push({ from: from, arrow: m[2], to: to, label: m[4] && m[4].trim() });
-      }
-    });
-
-    var summary = describeComponentDiagram(stripDecorations(spec));
+    var stripped = stripDecorations(spec);
+    var model = parseComponentSpec(stripped);
     var sections = [];
-
-    if (components.length) {
-      var compItems = components.map(function (c) {
-        var h = info[c] || { provides: [], requires: [], in: [], out: [] };
-        var bits = [];
-        if (h.provides.length) bits.push('provides ' + h.provides.join(', '));
-        if (h.requires.length) bits.push('requires ' + h.requires.join(', '));
-        if (h.in.length)       bits.push('incoming ports ' + h.in.join(', '));
-        if (h.out.length)      bits.push('outgoing ports ' + h.out.join(', '));
-        return bits.length ? c + ' — ' + bits.join('; ') : c;
-      });
-      sections.push({ heading: 'Components', items: compItems });
+    if (model.components.length) {
+      sections.push({ heading: 'Components', items: model.components.map(function (component) {
+        var name = component.name + (component.keyword ? ' (' + component.keyword + ')' : '');
+        var parts = componentPortPhrases(component);
+        return parts.length ? name + ' — ' + parts.join('; ') : name;
+      }) });
     }
-
-    if (connections.length) {
-      var connItems = connections.map(function (c) {
-        var verb;
-        switch (c.arrow) {
-          case '..>': verb = 'depends on'; break;
-          case '-->': verb = 'connects to'; break;
-          default:    verb = 'is associated with';
-        }
-        var label = c.label ? ' labeled "' + c.label + '"' : '';
-        return c.from + ' ' + verb + ' ' + c.to + label;
-      });
-      sections.push({ heading: 'Connections', items: connItems });
+    if (model.connections.length) {
+      sections.push({ heading: 'Connections', items: model.connections.map(componentConnectionSentence) });
     }
-
-    return { summary: summary, sections: sections };
+    return { summary: describeComponentDiagram(stripped), sections: sections };
   }
 
   function describeUsecaseDiagramVerbose(spec) {
@@ -1080,7 +1100,13 @@
     ['node', 'artifact', 'component'].forEach(function(kind) {
       var items = parsed.elements.filter(function(element) { return element.kind === kind; }).map(function(element) {
         var description = element.label + (element.stereotype ? ' (' + element.stereotype + ')' : '');
-        if (element.parentId && parsed.byId[element.parentId]) description += ' inside ' + parsed.byId[element.parentId].label;
+        // Name every enclosing level, innermost first; a cycle cannot occur in
+        // parsed source, but a seen-set keeps a malformed model finite.
+        var seen = Object.create(null);
+        for (var parentId = element.parentId; parentId && parsed.byId[parentId] && !seen[parentId]; parentId = parsed.byId[parentId].parentId) {
+          seen[parentId] = true;
+          description += ' inside ' + parsed.byId[parentId].label;
+        }
         var children = parsed.elements.filter(function(child) { return child.parentId === element.id; });
         if (children.length) description += ' contains ' + children.map(function(child) { return child.kind + ' ' + child.label; }).join(' and ');
         return description;
@@ -1240,8 +1266,38 @@
     return { source, explanations };
   }
 
+  // C4 embeds are YAML that only the C4 core reads, so callout lines are not
+  // notation there and the text reaches the core untouched (spec §3.3).
+  function splitNotationExplanations(type, spec) {
+    if (String(type || '').toLowerCase() === 'c4') return { source: String(spec || ''), explanations: [] };
+    return extractNotationExplanations(spec);
+  }
+
+  // An embed's `# description: …` comment line (column 0, as the C4 renderer
+  // reads its directives) is the author's verbose text alternative, for
+  // example for a find-the-flaw figure whose generated text would give the
+  // answer away.
+  function authoredC4Description(spec) {
+    var match = /^#[ \t]*description[ \t]*:[ \t]*(.*?)[ \t]*$/im.exec(String(spec || ''));
+    return match && match[1] ? match[1] : null;
+  }
+
+  // The C4 core describes its own views (spec §6.5). Pages may load it lazily
+  // after this script, so it is looked up at call time. The brief label is
+  // always the core's; an authored description replaces only the verbose text.
+  function describeC4Verbose(spec) {
+    var core = window.ArchUMLC4;
+    if (!core) return { summary: fallbackCaption('c4') + '.', sections: [] };
+    var design = core.load(spec);
+    var selector = core.extractEmbed(spec).selector || core.defaultView(design);
+    var description = core.describe(core.project(design, selector));
+    var authored = authoredC4Description(spec);
+    var sections = authored ? [{ heading: 'Description', items: [authored] }] : description.sections;
+    return { summary: description.brief, sections: sections };
+  }
+
   function describe(type, spec) {
-    const annotations = extractNotationExplanations(spec);
+    const annotations = splitNotationExplanations(type, spec);
     const summary = describeModel(type, annotations.source);
     const warnings = inferenceWarnings(type, spec);
     return summary + (warnings.length ? ' ' + warnings.join(' ') : '') +
@@ -1270,6 +1326,7 @@
         case 'gitgraph':    return describeGitgraphDiagram(s);
         case 'folder-tree': return describeFolderTreeDiagram(s);
         case 'crc':         return describeCRCCardsVerbose(spec).summary;
+        case 'c4':          return describeC4Verbose(spec).summary;
         default:            return fallbackCaption(type) + '.';
       }
     } catch (e) {
@@ -1282,7 +1339,7 @@
   // Note: verbose describers do NOT pre-strip decorations because they want
   // to walk the raw spec themselves (class bodies in particular).
   function describeVerbose(type, spec) {
-    const annotations = extractNotationExplanations(spec);
+    const annotations = splitNotationExplanations(type, spec);
     const verbose = describeModelVerbose(type, annotations.source);
     const warnings = inferenceWarnings(type, spec);
     if (warnings.length) {
@@ -1308,6 +1365,7 @@
         case 'gitgraph':    return describeGitgraphDiagramVerbose(s);
         case 'folder-tree': return describeFolderTreeDiagramVerbose(s);
         case 'crc':         return describeCRCCardsVerbose(s);
+        case 'c4':          return describeC4Verbose(s);
         default:            return { summary: fallbackCaption(type) + '.', sections: [] };
       }
     } catch (e) {
@@ -1382,9 +1440,17 @@
     if (node) host.appendChild(node);
   }
 
+  // A C4 interface card is semantic HTML that is its own text (spec §6.6):
+  // it gets no image label and no detailed description repeating it.
+  var CARD_SELECTOR = '[data-c4-notation="interface-card"]';
+
+  function isInterfaceCard(el) {
+    return Boolean(el && el.matches && el.matches(CARD_SELECTOR));
+  }
+
   // Apply description to a container element (and any inner SVG it contains).
   function applyDescription(el, type, spec) {
-    if (!el) return;
+    if (!el || isInterfaceCard(el)) return;
     var desc = describe(type, spec);
     if (!desc) return;
     var svg = el.tagName && el.tagName.toLowerCase() === 'svg' ? el : (el.querySelector && el.querySelector('svg'));
@@ -1450,7 +1516,8 @@
     'folder-tree': 'pre > code.diagram-folder-tree, pre > code.language-folder-tree',
     'venn':        'pre > code.diagram-venn, pre > code.language-venn',
     'er':          'pre > code.diagram-er, pre > code.language-er',
-    'crc':         'pre > code.diagram-crc, pre > code.language-crc'
+    'crc':         'pre > code.diagram-crc, pre > code.language-crc',
+    'c4':          'pre > code.diagram-c4, pre > code.language-c4'
   };
 
   // Snapshot every diagram about to be rendered. Tracks parent + child index
@@ -1507,6 +1574,10 @@
       var s = snapshots[i];
       var slot = s.parent && s.parent.children && s.parent.children[s.idx];
       if (!slot || !slot.classList || !slot.classList.contains('sebook-figure')) continue;
+      // A C4 figure that is still loading or shows an error or empty state is
+      // labelled by that state; the stub describes it once it is drawn.
+      if (slot.querySelector('[data-c4-state]')) continue;
+      if (slot.querySelector(CARD_SELECTOR)) continue;
 
       var desc = describe(s.type, s.spec);
       if (!desc) continue;

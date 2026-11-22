@@ -2320,6 +2320,9 @@ A --> B : flows <
 
     await page.goto('/test-uml.html');
     await page.waitForSelector('div[class$="diagram-container"] > svg');
+    // The page does not preload the C4 scripts: its C4 blocks are drawn once the
+    // lazily loaded scripts arrive, which replaces each block with its figure.
+    await expect(page.locator('pre > code.language-c4')).toHaveCount(0);
 
     const stats = await page.evaluate(() => {
       // Only audit UML diagram sections — git-graph sections (G1/G2/G3) live
@@ -2336,6 +2339,9 @@ A --> B : flows <
         .map((heading) => {
           const container = heading.nextElementSibling;
           const svg = container && container.querySelector ? container.querySelector('svg') : null;
+          // A C4 interface description card is semantic HTML by design (C4
+          // spec §6.6), so its section renders an article, not an SVG.
+          const card = svg ? null : container.querySelector('.uml-c4-diagram-container > article.c4-interface');
           const viewBox = svg ? (svg.getAttribute('viewBox') || '') : '';
           const outer = svg ? svg.outerHTML : '';
           const shapeCount = svg
@@ -2345,6 +2351,7 @@ A --> B : flows <
           return {
             title: heading.textContent.trim(),
             hasSvg: !!svg,
+            hasCard: !!card && card.textContent.trim() !== '',
             viewBox,
             shapeCount,
             hasInvalidCoords: svg ? /NaN|undefined/.test(outer) : true,
@@ -2353,16 +2360,16 @@ A --> B : flows <
 
       return {
         umlHeadingCount: sections.length,
-        umlSvgCount: sections.filter((s) => s.hasSvg).length,
+        umlRenderedCount: sections.filter((s) => s.hasSvg || s.hasCard).length,
         sections,
       };
     });
 
     expect(pageErrors).toEqual([]);
     expect(consoleErrors).toEqual([]);
-    expect(stats.umlSvgCount).toBe(stats.umlHeadingCount);
+    expect(stats.umlRenderedCount).toBe(stats.umlHeadingCount);
 
-    const missing = stats.sections.filter((section) => !section.hasSvg).map((section) => section.title);
+    const missing = stats.sections.filter((section) => !section.hasSvg && !section.hasCard).map((section) => section.title);
     const invalid = stats.sections
       .filter((section) => {
         if (!section.hasSvg) return false;

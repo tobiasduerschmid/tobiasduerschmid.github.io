@@ -25,23 +25,32 @@ function measureReadability(elements) {
   });
 }
 
-for (const width of [1440, 320]) {
-  for (const dark of [false, true]) {
-    test(`expanded diagram text stays paragraph-sized at ${width}px in ${dark ? 'dark' : 'light'} mode`, async ({ page }) => {
-      await page.setViewportSize({ width, height: 1000 });
-      for (const url of ['/test-uml.html', '/SEBook/uml_component_diagram.html']) {
+const READABILITY_URLS = ['/test-uml.html', '/SEBook/uml_component_diagram.html', '/SEBook/tools/uml-reference.html#c4-model-diagrams',
+  '/SEBook/architecture/c4.html'];
+
+// One test per page: each page renders dozens of diagrams and re-renders them all when the theme changes.
+for (const url of READABILITY_URLS) {
+  for (const width of [1440, 320]) {
+    for (const dark of [false, true]) {
+      test(`expanded diagram text stays paragraph-sized at ${width}px in ${dark ? 'dark' : 'light'} mode on ${url}`, async ({ page }) => {
+        // The reading view takes one click per fitted diagram: 114 on /test-uml.html and 58 on the syntax
+        // reference at 320px. In dark mode those clicks share the main thread with the theme re-render, and
+        // /test-uml.html alone took 29s in Firefox on an idle machine.
+        test.slow();
+        await page.setViewportSize({ width, height: 1000 });
         await page.goto(url);
         await page.evaluate(async (enabled) => {
           await document.fonts.ready;
           document.documentElement.classList.toggle('dark-mode', enabled);
         }, dark);
+        // Every drawing, including a prerendered interfaces view; interface cards are HTML text, not images.
         const diagrams = page.getByRole('img').and(page.locator('.sebook-figure--archuml > [role="img"]'));
         await expect(diagrams.first()).toBeVisible();
         await expandDiagrams(page);
         expect(await diagrams.evaluateAll(measureReadability), `${url}: rendered label sizes`).toEqual([]);
         expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `${url}: page reflows`).toBe(true);
-      }
-    });
+      });
+    }
   }
 }
 

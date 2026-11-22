@@ -1,0 +1,15 @@
+@startuml
+layout vertical
+component "Planner Web App" as e1 <<Container: TypeScript, React>> {
+  require "Enrollment endpoint" as r1
+}
+component "Registration API" as e2 <<Container: Python, FastAPI>> {
+  provide "Enrollment endpoint" as p1
+  require "Tuition Charges" as r2
+}
+component "Billing System" as e3 <<Software System, external>> {
+  provide "Tuition Charges" as p2
+}
+p1 --> r1 : POST /v1/enrollments
+p2 --> r2 : send ChargeRequested to the queue billing.charges
+@enduml

@@ -1,0 +1,10 @@
+@startuml
+layout vertical
+component "Shipping Service" as e1 <<Container: Python>> {
+  require "Order events" as r1
+}
+component "Order Service" as e2 <<Container: Java, Spring Boot>> {
+  provide "Order events" as p1
+}
+p1 --> r1 : OrderPlaced on the topic orders.placed (through Order Topic)
+@enduml

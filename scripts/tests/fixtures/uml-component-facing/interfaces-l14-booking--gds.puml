@@ -1,0 +1,6 @@
+@startuml
+layout vertical
+component "Global Distribution System" as e1 <<Software System>> {
+  provide "Flight Booking API" as p1
+}
+@enduml

@@ -1,0 +1,10 @@
+@startuml
+layout vertical
+component "Course Registration" as e1 <<Software System>> {
+  require "Tuition Charges" as r1
+}
+component "Billing System" as e2 <<Software System, external>> {
+  provide "Tuition Charges" as p1
+}
+p1 --> r1 : send ChargeRequested to the queue billing.charges
+@enduml

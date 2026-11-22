@@ -1,0 +1,11 @@
+@startuml
+layout vertical
+component "Shop App" as e1 <<Container: Python, Flask>> {
+  provide "Shop App interface" as p1
+  require "Card Payments API" as r1
+}
+component "Payment Provider" as e2 <<Software System, external>> {
+  provide "Card Payments API" as p2
+}
+p2 --> r1 : POST /v3/charges
+@enduml

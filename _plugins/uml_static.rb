@@ -19,17 +19,24 @@ module Jekyll
       'folder-tree' => 'Folder tree diagram',
       'venn' => 'Venn diagram',
       'er' => 'Entity-relationship diagram',
-      'crc' => 'Class-responsibility-collaborator cards'
+      'crc' => 'Class-responsibility-collaborator cards',
+      'c4' => 'C4 model diagram'
     }.freeze
 
     UML_TYPES = %w[class sequence state component deployment usecase activity].freeze
-    DIAGRAM_TYPES = %w[freeform gitgraph folder-tree venn er crc].freeze
-    RENDERER_INPUT_PATHS = %w[
-      js/ArchUML/uml-bundle.js
-      js/ArchUML/uml_to_svg.js
-      js/git-graph.js
-      js/ArchUML/css/callouts.css
+    DIAGRAM_TYPES = %w[freeform gitgraph folder-tree venn er crc c4].freeze
+    DRIVER_PATH = 'js/ArchUML/uml_to_svg.js'
+    RENDERER_INPUT_PATHS = [
+      'js/ArchUML/uml-bundle.js',
+      DRIVER_PATH,
+      'js/git-graph.js',
+      'js/ArchUML/css/callouts.css'
     ].freeze
+    # The prerender page preloads the C4 scripts this manifest lists (paths
+    # relative to the ArchUML folder), so they are renderer inputs too.
+    ARCHUML_DIR = 'js/ArchUML'
+    C4_MANIFEST_PATH = 'js/ArchUML/c4/manifest.json'
+    C4_PRERENDERED_SCRIPT_LISTS = %w[core render].freeze
 
     # A malformed raw block must stop at the next pre/code boundary instead of
     # borrowing a closing tag from a later, unrelated block.
@@ -42,7 +49,15 @@ module Jekyll
     }mix.freeze
 
     SVG_ATTRIBUTE_PATTERN = /\b([A-Za-z_:][A-Za-z0-9_.:-]*)(\s*=\s*)(["'])(.*?)\3/m.freeze
-    SVG_ROOT_PATTERN = /\A(\s*<svg\b)([^>]*)>/mi.freeze
+    # An `<svg>` opening tag: the name, its attributes, and the closing `>` or
+    # `/>` of a self-closing tag, kept apart so attributes go before the slash.
+    SVG_OPENING_TAG_PATTERN = %r{(<svg\b)([^>]*?)(\s*/?>)}mi.freeze
+    SVG_ROOT_OPENING_TAG_PATTERN = %r{\A(\s*<svg\b)([^>]*?)(\s*/?>)}mi.freeze
+    # C4 views drawn as HTML (spec §6.6, Ruling 20): the interface card is
+    # text, so it is no image; a C4 figure body is an image whose drawings are
+    # presentational, like an SVG root.
+    C4_CARD_ROOT_PATTERN = /\A\s*<article\b[^>]*\bclass=(["'])c4-interface\1/mi.freeze
+    C4_FIGURE_BODY_ROOT_PATTERN = /\A\s*<div\b[^>]*\bclass=(["'])c4-figure-body\1/mi.freeze
     SVG_ROOT_A11Y_ATTRIBUTE_PATTERN = /\s+(?:role|aria-label|aria-labelledby|aria-describedby|aria-hidden|focusable)\s*=\s*(["'])(.*?)\1/mi.freeze
     LOCAL_FRAGMENT_ATTRIBUTES = %w[href xlink:href usemap].freeze
     LOCAL_IDREF_ATTRIBUTES = %w[
@@ -56,7 +71,7 @@ module Jekyll
       def setup
         @cache = {}
         @node_path = find_node
-        @script_path = File.join(Dir.pwd, RENDERER_INPUT_PATHS[1])
+        @script_path = File.join(Dir.pwd, DRIVER_PATH)
         @describe_script_path = File.join(Dir.pwd, 'js/uml-describe-cli.js')
         @cache_dir = File.join(Dir.pwd, '.uml_cache')
         @renderer_hash = renderer_fingerprint(Dir.pwd)
@@ -94,7 +109,7 @@ module Jekyll
         dependencies = regenerator.metadata.dig(source, 'deps')
         return if dependencies.nil?
 
-        RENDERER_INPUT_PATHS.each do |input|
+        renderer_input_paths(site.source).each do |input|
           dependency = site.in_source_dir(input)
           next if dependencies.include?(dependency) || !File.file?(dependency)
 
@@ -103,9 +118,24 @@ module Jekyll
         end
       end
 
+      # The fixed renderer inputs, then the C4 manifest and the scripts it
+      # lists for the prerender page, in load order.
+      def renderer_input_paths(root_path)
+        RENDERER_INPUT_PATHS + [C4_MANIFEST_PATH] + c4_prerendered_scripts(root_path)
+      end
+
+      def c4_prerendered_scripts(root_path)
+        manifest_path = File.join(root_path, C4_MANIFEST_PATH)
+        return [] unless File.file?(manifest_path)
+
+        manifest = JSON.parse(File.read(manifest_path))
+        C4_PRERENDERED_SCRIPT_LISTS.flat_map { |list| manifest.fetch(list) }
+                                   .map { |file| File.join(ARCHUML_DIR, file) }
+      end
+
       def renderer_fingerprint(root_path)
         digest = Digest::SHA256.new
-        RENDERER_INPUT_PATHS.each do |relative_path|
+        renderer_input_paths(root_path).each do |relative_path|
           absolute_path = File.join(root_path, relative_path)
           digest << relative_path << "\0"
           digest << (File.file?(absolute_path) ? File.binread(absolute_path) : '<missing>')
@@ -285,6 +315,16 @@ module Jekyll
         svg.to_s.lstrip.start_with?('<svg')
       end
 
+      def c4_card_markup?(markup)
+        markup.to_s.match?(C4_CARD_ROOT_PATTERN)
+      end
+
+      # What the renderer may hand back for a figure: an SVG root, or a C4
+      # HTML fragment root.
+      def figure_markup?(markup)
+        svg_markup?(markup) || c4_card_markup?(markup) || markup.to_s.match?(C4_FIGURE_BODY_ROOT_PATTERN)
+      end
+
       def render_missing_blocks(blocks)
         to_render = {}
         blocks.each_with_index do |block, idx|
@@ -314,7 +354,7 @@ module Jekyll
 
         JSON.parse(stdout).each do |idx_str, svg|
           idx = idx_str.to_i
-          unless svg_markup?(svg)
+          unless figure_markup?(svg)
             Jekyll.logger.warn 'UMLStatic:', "Skipping #{blocks[idx][:type]} diagram: #{svg.to_s[0, 160]}"
             next
           end
@@ -401,15 +441,57 @@ module Jekyll
         end
       end
 
+      # Every drawing inside a figure container whose role is `img` is
+      # presentational: an SVG root (drawings nested inside it are hidden with
+      # it and keep their markup), or every drawing of a C4 figure body.
       def hide_nested_svg_from_accessibility(svg)
-        svg.to_s.sub(SVG_ROOT_PATTERN) do
-          opening = Regexp.last_match(1)
-          attributes = Regexp.last_match(2).gsub(SVG_ROOT_A11Y_ATTRIBUTE_PATTERN, '')
-          %(#{opening}#{attributes} aria-hidden="true" focusable="false">)
+        markup = svg.to_s
+        pattern = markup.match?(C4_FIGURE_BODY_ROOT_PATTERN) ? SVG_OPENING_TAG_PATTERN : SVG_ROOT_OPENING_TAG_PATTERN
+        markup.gsub(pattern) do
+          opening, attributes, closing = Regexp.last_match.captures
+          kept = attributes.gsub(SVG_ROOT_A11Y_ATTRIBUTE_PATTERN, '')
+          %(#{opening}#{kept} aria-hidden="true" focusable="false"#{closing.strip})
         end
       end
 
+      # A C4 figure carries its source as an inert JSON string (spec §6.5).
+      # Writing `<` as the JSON escape \u003c keeps `</script>` or `<!--` in
+      # the text from ending the element early.
+      def c4_source_element(text)
+        json = JSON.generate(text).gsub('<') { '\u003c' }
+        %(<script type="application/json" data-c4-source>#{json}</script>)
+      end
+
+      def c4_panels_attribute(text)
+        panels = text.to_s[/^#[ \t]*panels[ \t]*:[ \t]*(.*?)[ \t]*$/i, 1]
+        panels.nil? || panels.empty? ? '' : %( data-c4-panels="#{CGI.escapeHTML(panels)}")
+      end
+
+      def figcaption_html(block)
+        return '' unless block[:caption]
+
+        %(<figcaption class="sebook-figure__caption">#{CGI.escapeHTML(block[:caption])}</figcaption>)
+      end
+
+      # An interface card is the figure's text (spec §6.6): its container has
+      # no image role, no label, and no detailed description, and it keeps
+      # its source like every C4 figure.
+      def wrap_c4_card(block, namespace_prefix)
+        card = namespace_svg_ids(block[:svg], namespace_prefix)
+
+        <<~HTML
+          <figure class="sebook-figure sebook-figure--archuml sebook-figure--archuml-c4">
+            <div class="uml-c4-diagram-container" data-uml-rendered="true" data-c4-notation="interface-card"#{c4_panels_attribute(block[:text])}>
+              #{card}#{c4_source_element(block[:text])}
+            </div>
+            #{figcaption_html(block)}
+          </figure>
+        HTML
+      end
+
       def wrap_svg(block, description_payload, namespace_prefix)
+        return wrap_c4_card(block, namespace_prefix) if c4_card_markup?(block[:svg])
+
         safe_type = type_class(block[:type])
         brief = description_payload.is_a?(Hash) ? description_payload['brief'] : nil
         verbose = description_payload.is_a?(Hash) ? description_payload['verbose'] : nil
@@ -417,22 +499,17 @@ module Jekyll
         desc = brief
         desc = "#{fallback_caption(block[:type])}." if desc.nil? || desc.empty?
 
-        figcaption = if block[:caption]
-                       %(<figcaption class="sebook-figure__caption">#{CGI.escapeHTML(block[:caption])}</figcaption>)
-                     else
-                       ''
-                     end
-
         verbose_html = render_verbose_description(verbose, safe_type)
         namespaced_svg = namespace_svg_ids(block[:svg], namespace_prefix)
         presentational_svg = hide_nested_svg_from_accessibility(namespaced_svg)
+        source_element = normalize_type(block[:type]) == 'c4' ? c4_source_element(block[:text]) : ''
 
         <<~HTML
           <figure class="sebook-figure sebook-figure--archuml sebook-figure--archuml-#{safe_type}">
             <div class="uml-#{safe_type}-diagram-container" data-uml-rendered="true" role="img" aria-label="#{CGI.escapeHTML(desc)}" tabindex="0" data-uml-scroll-tabindex="true">
-              #{presentational_svg}
+              #{presentational_svg}#{source_element}
             </div>
-            #{figcaption}
+            #{figcaption_html(block)}
             #{verbose_html}
           </figure>
         HTML

@@ -1,0 +1,10 @@
+@startuml
+layout vertical
+component "Campus Shop" as e1 <<Software System>> {
+  require "Card Payments API" as r1
+}
+component "Payment Provider" as e2 <<Software System, external>> {
+  provide "Card Payments API" as p1
+}
+p1 --> r1 : POST /v3/charges
+@enduml
