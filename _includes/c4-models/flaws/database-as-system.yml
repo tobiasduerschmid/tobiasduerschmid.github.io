@@ -1,0 +1,32 @@
+schema: c4-design/1
+name: Course Registration
+description: Students plan a term schedule and enroll in every section of it, or in none.
+status: proposed
+enterprise: UCLA
+
+people:
+  student:
+    name: Student
+    description: Plans and confirms one term schedule.
+    collaborators:
+      registration: plans a schedule and enrolls using
+
+systems:
+  registration:
+    name: Course Registration
+    description: Plans term schedules and enrolls students in their sections.
+    responsibilities:
+      - decide: whether a student may enroll in a section
+      - do: hold a seat in every section of a plan, or in none
+    collaborators:
+      registration-db: reads and writes plans and seat holds in
+      billing: requests tuition charges from
+  registration-db:
+    name: Registration Database
+    description: Stores plans, enrollment attempts, and seat holds for Course Registration.
+    responsibilities:
+      - do: durably store plans, enrollment attempts, and seat holds
+  billing:
+    name: Billing System
+    external: true
+    description: Charges tuition and fees for the university.

@@ -31,6 +31,7 @@ For example, if a client system sends a product price as a decimal value formatt
 An even more catastrophic example occurred with the Mars Climate Orbiter (1999), where a $327 M spacecraft was lost because one ground-software component computed thruster firing impulses in **pound-force-seconds (lbf·s)** — US customary units — while the receiving navigation software expected the same impulses in **newton-seconds (N·s)** — the Système International (SI) unit. The 4.45× discrepancy quietly accumulated across many tiny burns, leaving the orbiter on a trajectory that brought it ~57 km above the Martian surface instead of the planned ~226 km, where it disintegrated.
 
 To achieve true semantic interoperability, engineers must rigorously define the semantics of shared data. This is done by documenting the interface with a semantic view that details the purpose of the actions, expected coordinate systems, units of measurement, side-effects, and error-handling conditions. Furthermore, systems should rely on shared dictionaries and standardized terminologies.
+See [Interface Descriptions in the C4 model chapter](/SEBook/architecture/c4.html#interface-descriptions) for how to write such a description and read it as a card.
 
 
 # Architectural Tactics and Patterns
