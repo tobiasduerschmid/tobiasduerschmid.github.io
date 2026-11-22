@@ -57,7 +57,6 @@ for (const viewport of [{ width: 1280, height: 720 }, { width: 1440, height: 900
         await seek(page, cueMiddle(scene.id, cueIndex));
         for (const language of story.languages) {
           const where = `${language}/${scene.id}/${cue.id}`;
-          await openPlayerSettings(animation);
           await animation.getByRole('combobox', { name: 'Code language' }).selectOption(language);
           await expect(animation.getByRole('region', { name: 'Narration', exact: true })).toHaveText(cue.text);
           const code = animation.locator('.nja-stage pre:visible');
@@ -229,7 +228,6 @@ test('reading and print views include every step, diagram, and question without 
 
 test('reading view keeps the chosen language and theme and is accessible', async ({ page }) => {
   await page.goto(url);
-  await openPlayerSettings(player(page));
   await player(page).getByRole('combobox', { name: 'Code language' }).selectOption('cpp');
   await theme(page, true);
   await player(page).getByRole('link', { name: 'Read at my own pace', exact: true }).click();

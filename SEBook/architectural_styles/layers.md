@@ -31,6 +31,7 @@ The strict-vs-relaxed distinction is a trade-off, not a moral ranking. Strict la
 The diagram below contrasts the four topologies. Solid arrows are *allowed* uses; dashed arrows annotated "✗" are the violations that turn a clean stack into a ball of mud.
 
 <div class="uml-class-diagram-container" data-uml-type="component" data-uml-spec='@startuml
+layout compact 1110x876
 component Presentation
 component Domain
 component DataAccess

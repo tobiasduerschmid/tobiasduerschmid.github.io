@@ -1,0 +1,61 @@
+@startuml
+layout compact
+package infra {
+  package broker
+  package http
+}
+package services::support_console
+package services::loyalty
+package services::affiliates
+package services::reporting
+package services::website
+package services::shuttle_planner
+package services::opc
+package services::notifications
+services::loyalty ..> broker
+services::reporting ..> broker
+services::shuttle_planner ..> broker
+services::affiliates ..> broker
+services::support_console ..> broker
+services::notifications ..> broker
+services::opc ..> broker
+broker ..> http
+services::affiliates ..> http
+services::support_console ..> http
+services::notifications ..> http
+services::opc ..> http
+services::website ..> http
+note right of services::support_console
+Key: UML 2.5.1 package diagram.
+Folder: a Python package (a folder) or
+module (a file). A folder inside a folder
+is a package inside a package: http in
+infra is infra::http, the file infra/http.py.
+services::reporting is services/reporting/,
+the Warehouse ETL.
+Dashed arrow: the package at its tail
+imports from the package at its head,
+so it cannot load without it.
+end note
+note right of services::notifications
+Each arrow stands for import lines.
+services::loyalty to infra::broker:
+services/loyalty/points.py:3
+infra::broker to infra::http:
+infra/broker.py:11
+end note
+@layout
+services::support_console @pos(419, 0)
+services::loyalty @pos(176, 100)
+services::affiliates @pos(448, 92)
+broker @pos(252, 222)
+http @pos(544, 249)
+services::reporting @pos(16, 277)
+services::website @pos(792, 277)
+services::shuttle_planner @pos(84, 438)
+services::opc @pos(449, 438)
+services::notifications @pos(421, 530)
+note:27 @pos(796, 0)
+note:39 @pos(720, 476)
+@endlayout
+@enduml

@@ -54,7 +54,7 @@
     </div>
     </div>
     {% if case_story.audio %}
-    {% capture audio_label %}{{ case_story.title }} narration{% endcapture %}
+    {% capture audio_label %}{{ case_story.title }} narration by Fish Audio Drama 3{% endcapture %}
     {% include narration-player-audio.html story=case_story label=audio_label %}
     {% endif %}
     <p class="nja-status" role="status" aria-live="polite"></p>

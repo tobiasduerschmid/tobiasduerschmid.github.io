@@ -964,6 +964,7 @@ steps:
       A bot decides whether to welcome a new member — *only* if they are not already subscribed. If they are subscribed, nothing happens:
 
       <div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
+      layout compact
       participant Main as : Main
       participant bot: DiscordBot
       participant channel: Channel
@@ -984,6 +985,7 @@ steps:
       A spam filter: *if* spam, block; *otherwise*, forward. **Two compartments**, exactly one runs:
 
       <div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
+      layout compact
       participant Main as : Main
       participant bot: DiscordBot
       participant channel: Channel
@@ -1018,7 +1020,7 @@ steps:
       That's a two-way split — an `alt`.
 
       <div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec="@startuml
-      layout landscape
+      layout compact
       participant Main as : Main
       participant bot: DiscordBot
       participant channel: Channel
@@ -1290,6 +1292,7 @@ steps:
       Sending a welcome to every member — the message is sent once *per iteration*:
 
       <div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
+      layout compact
       participant Main as : Main
       participant bot: DiscordBot
       participant channel: Channel
@@ -1310,7 +1313,7 @@ steps:
       The bot has a `broadcast_all(channel, messages)` method that sends *each* message in the list to the channel.
 
       <div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec="@startuml
-      layout landscape
+      layout compact
       participant Main as : Main
       participant bot: DiscordBot
       participant channel: Channel

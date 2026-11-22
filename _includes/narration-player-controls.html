@@ -1,9 +1,11 @@
 {%- comment -%}
-  The control bar of every narration player, modeled on the song player
-  (_layouts/song-player.html): the position line, then playback on the left
-  and the view on the right, with the remaining choices behind the settings
-  toggle. Its song-player class hooks give every player the same keyboard
-  shortcuts and full-screen behavior (js/narration-player-controls.js).
+  The control bar of every narration player. It is the song player's bar
+  (_layouts/song-player.html) with the narration's choices: the same icons
+  (player-icon.html) and layout, with the position line above playback on the
+  left and the view on the right, and the same settings panel, which floats
+  over the player (js/song-video/settings-panel.js). Its song-player class
+  hooks give every player the song player's keyboard shortcuts and full-screen
+  behavior (js/narration-player-controls.js).
   Params:
     id           prefix of the ids this bar refers to (captions, settings)
     text_only    true for a story without rendered speech: no transport,
@@ -14,8 +16,12 @@
     scene_label  the scene select's label (default "Scene")
     speed_label, rates   see narration-player-speed.html
     lead         controls before the transport, such as a case study's steps
+    view         choices that stay in the bar, before the view controls,
+                 such as a lesson's code language
     settings     settings that only this kind of player offers
 {%- endcomment -%}
+{%- assign controls_duration = include.duration | default: 0 | floor -%}
+{%- assign controls_seconds = controls_duration | modulo: 60 -%}
 <div class="nja-controls nja-playback-controls vn-controls song-player-controls" hidden>
   {%- unless include.text_only %}
   <label class="nja-seek-label vn-seek-label"><span class="vn-hidden-label">{{ include.seek_label }}</span><input type="range" min="0" max="{{ include.duration | default: 1 }}" step="0.01" value="0" aria-valuetext="0:00" class="nja-seek" aria-keyshortcuts="ArrowLeft ArrowRight 0 1 2 3 4 5 6 7 8 9"></label>
@@ -24,26 +30,27 @@
     <div class="nja-transport vn-toolbar-group">
       {{- include.lead -}}
       {%- unless include.text_only %}
-      <button type="button" data-action="play" aria-label="Play narration" aria-keyshortcuts="k Space"><i class="fa fa-play" aria-hidden="true"></i></button>
-      <button type="button" data-vn-skip="-5" aria-label="Back 5 seconds" aria-keyshortcuts="ArrowLeft"><i class="fa fa-rotate-left" aria-hidden="true"></i><span aria-hidden="true">5</span></button>
-      <button type="button" data-vn-skip="5" aria-label="Forward 5 seconds" aria-keyshortcuts="ArrowRight"><i class="fa fa-rotate-right" aria-hidden="true"></i><span aria-hidden="true">5</span></button>
-      <button type="button" data-action="previous" aria-label="Previous scene"><i class="fa fa-step-backward" aria-hidden="true"></i></button>
-      <button type="button" data-action="next" aria-label="Next scene"><i class="fa fa-step-forward" aria-hidden="true"></i></button>
-      <button type="button" data-action="restart" aria-label="Restart narration"><i class="fa fa-fast-backward" aria-hidden="true"></i></button>
-      <output class="nja-time" aria-label="Playback time">0:00</output>
+      <button type="button" class="vn-play" data-action="play" aria-label="Play narration" aria-keyshortcuts="k Space">{% include player-icon.html name='play' %}</button>
+      <button type="button" class="vn-skip" data-vn-skip="-5" aria-label="Back 5 seconds" aria-keyshortcuts="ArrowLeft">{% include player-icon.html name='back' %}<span aria-hidden="true">5</span></button>
+      <button type="button" class="vn-skip" data-vn-skip="5" aria-label="Forward 5 seconds" aria-keyshortcuts="ArrowRight">{% include player-icon.html name='forward' %}<span aria-hidden="true">5</span></button>
+      <button type="button" class="vn-track" data-action="previous" aria-label="Previous scene" title="Previous scene">{% include player-icon.html name='previous' %}</button>
+      <button type="button" class="vn-track" data-action="next" aria-label="Next scene" title="Next scene">{% include player-icon.html name='next' %}</button>
+      <output class="nja-time" aria-label="Playback time">0:00 / {{ controls_duration | divided_by: 60 }}:{% if controls_seconds < 10 %}0{% endif %}{{ controls_seconds }}</output>
       {%- endunless %}
     </div>
     <div class="vn-toolbar-group vn-view-controls">
+      {{- include.view -}}
       {%- unless include.text_only %}
-      <button type="button" data-action="mute" aria-label="Mute narration" aria-pressed="false"><i class="fa fa-volume-up" aria-hidden="true"></i></button>
-      <input type="range" class="vn-volume" min="0" max="100" step="1" value="100" aria-label="Volume">
+      <button type="button" class="vn-mute" data-action="mute" aria-label="Mute narration">{% include player-icon.html name='sound' %}</button>
+      <input type="range" class="vn-volume" min="0" max="100" step="1" value="100" aria-label="Volume" aria-valuetext="100%">
       <button type="button" class="vn-cc" aria-label="Closed captions (CC)" aria-pressed="true" aria-controls="{{ include.id }}-captions" aria-keyshortcuts="c">CC</button>
       {%- endunless %}
-      <button type="button" class="vn-settings-toggle song-player-settings-toggle" aria-label="Player settings" aria-expanded="false" aria-controls="{{ include.id }}-settings"><i class="fa fa-cog" aria-hidden="true"></i></button>
-      <button type="button" data-action="fullscreen" aria-label="Enter full screen" aria-keyshortcuts="f" hidden><i class="fa fa-expand" aria-hidden="true"></i></button>
+      <button type="button" class="vn-settings-toggle song-player-settings-toggle" aria-label="Player settings" aria-expanded="false" aria-controls="{{ include.id }}-settings">{% include player-icon.html name='settings' %}</button>
+      <button type="button" class="vn-fullscreen" data-action="fullscreen" aria-label="Enter full screen" aria-keyshortcuts="f" hidden>{% include player-icon.html name='fullscreen' exit=true %}</button>
     </div>
   </div>
   <section class="vn-settings song-player-settings" id="{{ include.id }}-settings" role="region" aria-label="Player settings" hidden>
+    <div class="vn-settings-heading"><strong>Settings</strong><button type="button" class="vn-settings-close" aria-label="Close settings">{% include player-icon.html name='close' %}</button></div>
     <div class="nja-settings">
       {% include narration-player-scene-select.html scenes=include.scenes label=include.scene_label %}
       {%- unless include.text_only %}

@@ -81,14 +81,21 @@ Players compose shared chrome from `_includes/narration-player-*.html`; add
 or change a common control there, never in one player. Every player wraps its
 stage, checkpoint, and captions in one video (`.vn-video` > `.vn-surface` >
 `.vn-frame`) and ends it with `narration-player-controls.html`: one thin bar
-like the song player's, with the scene, speed, caption size, and landscape
-choices behind its settings toggle. Pass player-specific choices as
-`settings`, controls that lead the transport (case-study steps) as `lead`,
-and `text_only=true` for a story without rendered speech; add
+that is the song player's, with its icons (`player-icon.html`, shared with
+`_layouts/song-player.html`), its layout, and its floating settings panel
+(`js/song-video/settings-panel.js`), which holds the scene, speed, caption
+size, and landscape choices. Every narration shows the same controls in the
+same order; keep it that way. Pass choices that must stay on screen as
+`view` (a lesson's code language, `narration-player-language.html`, so it
+is never hidden in settings), player-specific settings as `settings`,
+controls that lead the transport (case-study steps) as `lead`, and
+`text_only=true` for a story without rendered speech; add
 `narration-player-tips.html` and load `narration-player-scripts.html` before
 the player's own scripts. `js/narration-player-controls.js` gives every
 player the song player's keys, auto-hiding full-screen controls, captions,
-settings, and landscape surface; a checkpoint replaces the picture and the
+mute and volume, settings, and landscape surface;
+`tests/narration-player-controls.spec.js` checks every lesson's bar against
+that order. A checkpoint replaces the picture and the
 bar steps aside until it is answered or skipped. Full screen fills the screen
 with the video: the stage (or checkpoint) scrolls inside, and captions and
 the bar overlay its lower edge. Mark scrolling panels

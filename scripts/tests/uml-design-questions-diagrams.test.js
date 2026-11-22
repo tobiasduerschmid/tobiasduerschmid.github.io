@@ -1,6 +1,6 @@
 'use strict';
 
-// The UML design questions tutorial shows ten diagrams that an AI coding agent
+// The UML design questions tutorial shows eleven diagrams that an AI coding agent
 // could draw from Headliner's code (tutorial_sources/uml-design-questions). These
 // tests hold them to that code and to the notation the design specifies:
 // - content: each diagram shows exactly what facts.json says its request covers.
@@ -11,8 +11,10 @@
 //   ball and socket for calls and plain connectors for messaging, a key on every
 //   diagram, and the design's size ceilings;
 // - rendering: no overlapping text, no package drawn around a non-member,
-//   connector labels on their own paths, joined interface names in view, and
-//   no note across a package frame.
+//   connector labels on their own paths, joined interface names in view, no
+//   note across a package frame, and no relationship through a class or
+//   package it does not connect. The shared-code view, which opens the
+//   tutorial, also has no crossing and no corner.
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
@@ -41,6 +43,7 @@ const FILES = [
   'failed-trips.sequence.uml',
   'outages-imports.class.uml',
   'outages.component.uml',
+  'shared-code.class.uml',
 ];
 const RENDERERS = { class: 'UMLClassDiagram', component: 'UMLComponentDiagram', sequence: 'UMLSequenceDiagram' };
 const CEILINGS = { class: 11, component: 14, sequence: 8 }; // design spec §8.2 and §16
@@ -149,17 +152,30 @@ const firstOccurrences = (events, kept) => [...new Set(events)].filter((e) => ke
 function classes(file) {
   const { model } = load(file);
   const relations = (type) => model.relationships.filter((r) => r.type === type);
+  // A package drawn without its members is a node of the diagram, not a class.
+  const drawn = model.classes.filter((c) => c.type !== 'package');
+  const nodes = model.classes.filter((c) => c.type === 'package');
+  const isPackage = new Set([...nodes.map((c) => c.name), ...model.packages.map((p) => p.id)]);
+  // A nested package's qualified name: http in infra is infra::http.
+  const qualified = (name) => {
+    const node = nodes.find((c) => c.name === name);
+    return node && node.package ? `${node.package}::${name}` : name;
+  };
   return {
     model,
-    names: sorted(model.classes.map((c) => c.name)),
-    abstract: sorted(model.classes.filter((c) => c.type === 'abstract').map((c) => c.name)),
+    names: sorted(drawn.map((c) => c.name)),
+    abstract: sorted(drawn.filter((c) => c.type === 'abstract').map((c) => c.name)),
     generalizations: relations('generalization').map((r) => [r.from, r.to]).sort(),
-    dependencies: relations('dependency'),
+    // Dependencies of classes; those between packages are packageDependencies.
+    dependencies: relations('dependency').filter((r) => !isPackage.has(r.from) && !isPackage.has(r.to)),
+    packageNodes: sorted(nodes.map((c) => qualified(c.name))),
+    packageDependencies: relations('dependency').filter((r) => isPackage.has(r.from) || isPackage.has(r.to))
+      .map((r) => [qualified(r.from), qualified(r.to)]).sort(),
     associations: model.relationships.filter((r) =>
       !['generalization', 'realization', 'dependency'].includes(r.type)),
-    operations: Object.fromEntries(model.classes.map((c) => [c.name, Object.fromEntries(
+    operations: Object.fromEntries(drawn.map((c) => [c.name, Object.fromEntries(
       c.methods.map((m) => [m.name, m.isAbstract ? 'abstract' : 'defined']).sort())])),
-    packages: Object.fromEntries(model.classes.map((c) => [c.name, c.package])),
+    packages: Object.fromEntries(drawn.map((c) => [c.name, c.package])),
   };
 }
 
@@ -320,6 +336,27 @@ describe('class diagrams match the hierarchy and multiplicities in facts.json', 
         !(name in view.operations.TransportItem)).map(([name]) => name)));
   });
 
+  test('trip items: the two modules that list the item types, and what each depends on', () => {
+    const view = VIEWS.trip_items;
+    const diagram = classes('capstone-trip-items.class.uml');
+    const [frame] = diagram.model.packages.map((p) => p.id);
+    const concrete = diagram.names.filter((name) => !diagram.abstract.includes(name));
+
+    assert.deepEqual(diagram.packageNodes, sorted(Object.keys(view.listed_by)));
+    // Both modules list exactly the concrete item classes that the view draws.
+    for (const listed of Object.values(view.listed_by)) assert.deepEqual(listed, sorted(concrete));
+    // The OPC's module imports the model; the website's writes what that module reads.
+    assert.deepEqual(diagram.packageDependencies, [
+      ['services::opc::payloads', frame],
+      ['services::website::checkout', 'services::opc::payloads'],
+    ]);
+    assert.equal(frame, 'services::opc::model');
+    // Each note names the types its module lists, or one of them as an example.
+    const text = notes('capstone-trip-items.class.uml').flat().join(' ');
+    for (const name of view.listed_by['services::opc::payloads']) assert.ok(text.includes(name), name);
+    assert.deepEqual(diagram.dependencies, []);
+  });
+
   test('gateways: packages, hierarchy, overridden operations, and raised exceptions', () => {
     const view = VIEWS.gateways;
     const diagram = classes('capstone-gateways.class.uml');
@@ -348,6 +385,24 @@ describe('class diagrams match the hierarchy and multiplicities in facts.json', 
       .map((d) => diagram.packages[d.from]))), view.broker_client_importers);
     assert.equal(view.website_imports_from_opc, false);
     assert.deepEqual(diagram.associations, []);
+  });
+
+  test('shared code: every service, the two shared modules, and exactly the imports between them', () => {
+    const view = VIEWS.shared_code;
+    const diagram = classes('shared-code.class.uml');
+    const shown = new Set(diagram.packageNodes);
+    const services = view.packages.filter((name) => name.startsWith('services::'));
+
+    assert.deepEqual(diagram.names, [], 'a package diagram: no classes');
+    assert.deepEqual(diagram.packageNodes, sorted([...services, 'infra::broker', 'infra::http']));
+    assert.deepEqual(diagram.packageDependencies,
+      view.imports.filter(([from, to]) => shown.has(from) && shown.has(to)).sort());
+    // The premise of the step's last question: no service imports another.
+    assert.deepEqual(view.imports.filter(([from, to]) => from.startsWith('services::') && to.startsWith('services::')), []);
+    // What the reply card lists as left out: the other modules of infra.
+    assert.deepEqual(sorted(view.packages.filter((name) => !shown.has(name))),
+      ['infra::clock', 'infra::db', 'infra::scheduler', 'infra::subscriptions']);
+    assert.deepEqual(diagram.generalizations.concat(diagram.associations), []);
   });
 });
 
@@ -483,6 +538,23 @@ describe('rendered diagrams', () => {
     for (const [file, drawing] of drawings) assert.deepEqual(drawing.notesOnFrames, [], file);
   });
 
+  // A line through a box reads as a connection to it.
+  test('no relationship of a class diagram runs through a class or package it does not connect', () => {
+    for (const [file, drawing] of drawings) {
+      if (file.split('.').at(-2) === 'class') assert.deepEqual(drawing.routesThroughBoxes, [], file);
+    }
+  });
+
+  // The diagram that opens the tutorial is laid out for tracing by eye:
+  // every import is one straight arrow, and no two arrows cross.
+  test('shared code: every arrow is straight, and none crosses another', () => {
+    const drawing = drawings.get('shared-code.class.uml');
+    assert.equal(drawing.routeCount, VIEWS.shared_code.imports.filter(([from, to]) =>
+      !/clock|db|scheduler|subscriptions/.test(from + to)).length);
+    assert.equal(drawing.corners, 0);
+    assert.equal(drawing.crossings, 0);
+  });
+
   // The Diagram pane links a label whose text equals a link's text
   // (whitespace collapsed); a text that matches no label, or several, would
   // be a dead or an ambiguous link.
@@ -563,6 +635,40 @@ function measure({ renderer, source }) {
       .map((frame) => `"${first ? first.textContent.trim() : 'a note'}" crosses ${frame.name}`);
   });
 
+  // Relationship lines against the boxes of elements at neither of their ends.
+  const elementBoxes = [...svg.querySelectorAll('rect[data-layout-bounds-id]')].map((rect) => ({
+    id: rect.getAttribute('data-layout-bounds-id'), box: box(rect),
+  }));
+  const relationRoutes = [...svg.querySelectorAll('polyline[data-layout-route-id]')].map((line) => {
+    const matrix = line.getScreenCTM();
+    return {
+      ends: [line.getAttribute('data-layout-source'), line.getAttribute('data-layout-target')],
+      points: [...line.points].map((p) => new DOMPoint(p.x, p.y).matrixTransform(matrix)),
+    };
+  });
+  const segmentsOf = (route) => route.points.slice(1).map((b, i) => [route.points[i], b]);
+  const segmentBox = ([a, b]) => ({ left: Math.min(a.x, b.x), right: Math.max(a.x, b.x), top: Math.min(a.y, b.y), bottom: Math.max(a.y, b.y) });
+  const routesThroughBoxes = relationRoutes.flatMap((route) => elementBoxes
+    .filter((element) => !route.ends.includes(element.id))
+    .filter((element) => segmentsOf(route).some((segment) => {
+      const s = segmentBox(segment);
+      return s.left < element.box.right && s.right > element.box.left && s.top < element.box.bottom && s.bottom > element.box.top;
+    }))
+    .map((element) => `${route.ends.join(' to ')} runs through ${element.id}`));
+  const cross = (first, second) => {
+    const [a, b] = [segmentBox(first), segmentBox(second)];
+    const [aHorizontal, bHorizontal] = [a.bottom - a.top < 0.5, b.bottom - b.top < 0.5];
+    if (aHorizontal === bHorizontal) return false;
+    const [h, v] = aHorizontal ? [a, b] : [b, a];
+    return v.left > h.left + 0.5 && v.left < h.right - 0.5 && h.top > v.top + 0.5 && h.top < v.bottom - 0.5;
+  };
+  let crossings = 0;
+  relationRoutes.forEach((route, index) => relationRoutes.slice(index + 1).forEach((other) => {
+    segmentsOf(route).forEach((a) => segmentsOf(other).forEach((b) => { if (cross(a, b)) crossings += 1; }));
+  }));
+  const corners = relationRoutes.reduce((count, route) => count + route.points.length - 2, 0);
+
   const labels = texts.map((t) => t.textContent.replace(/\s+/g, ' ').trim());
-  return { overlappingText, packageOverlaps, strayLabels, hiddenNames, notesOnFrames, labels };
+  return { overlappingText, packageOverlaps, strayLabels, hiddenNames, notesOnFrames, labels,
+    routesThroughBoxes, crossings, corners, routeCount: relationRoutes.length };
 }

@@ -67,7 +67,6 @@ test('language changes preserve the narration and highlight the corresponding co
     for (const [cueIndex, cue] of scene.cues.entries()) {
       const time = (timing.scenes[index].cues[cueIndex].start + timing.scenes[index].cues[cueIndex].end) / 2;
       await seek(page, time);
-      await openPlayerSettings(animation);
       for (const language of story.languages) {
         await animation.getByRole('combobox', { name: 'Code language' }).selectOption(language);
         await expect(animation.getByRole('region', { name: 'Narration', exact: true })).toHaveText(cue.text);
@@ -176,7 +175,6 @@ for (const dark of [false, true]) {
     await a11yCheckpoint(page, 'role diagram', { include: '#observer-animation', feature: 'observer-animation' });
     await animation.locator('.nja-player').screenshot({ path: testInfo.outputPath('roles.png') });
     await seek(page, timing.scenes[sceneIndex('views')].cues[2].start + 1);
-    await openPlayerSettings(animation);
     await animation.getByRole('combobox', { name: 'Code language' }).selectOption('typescript');
     const solution = animation.getByRole('region', { name: 'Observer solution dependencies' });
     for (const name of ['Subject', 'Observer', 'Document', 'Preview', 'CharacterCount', 'SaveButton']) await expect(solution.getByText(name, { exact: true })).toBeVisible();
@@ -247,12 +245,12 @@ for (const dark of [false, true]) {
 test('the edit trace supports reversible seeking and a quiz can be skipped without losing the language', async ({ page }) => {
   await page.goto(url);
   const animation = player(page);
-  await openPlayerSettings(animation);
   await animation.getByRole('combobox', { name: 'Code language' }).selectOption('java');
   await seek(page, timing.scenes[sceneIndex('trace')].cues[3].start + 1);
   await expect(animation.getByRole('img', { name: /document Hello, character count 5/ })).toBeVisible();
   await seek(page, timing.scenes[sceneIndex('trace')].cues[0].start + 1);
   await expect(animation.getByRole('img', { name: /document empty, character count 0, Save disabled/ })).toBeVisible();
+  await openPlayerSettings(animation);
   await animation.getByRole('button', { name: 'Knowledge check', exact: true }).click();
   await animation.getByRole('button', { name: 'Skip Knowledge Check' }).click();
   await expect(animation.getByRole('combobox', { name: 'Code language' })).toHaveValue('java');
@@ -263,16 +261,17 @@ test('the edit trace supports reversible seeking and a quiz can be skipped witho
 test('previous and next navigate directly past knowledge checks; an open check is skipped instead', async ({ page }) => {
   await page.goto(url);
   const animation = player(page);
-  await openPlayerSettings(animation);
   const selection = animation.getByRole('combobox', { name: 'Scene', exact: true });
   const quiz = animation.locator('.np-quiz');
   await animation.getByRole('combobox', { name: 'Code language' }).selectOption('java');
   await seek(page, timing.scenes[3].start + 1);
   await animation.getByRole('button', { name: 'Next scene', exact: true }).click();
+  await openPlayerSettings(animation);
   await expect(selection).toHaveValue('4');
   await expect(quiz).toBeHidden();
   await expect(animation.getByRole('heading', { name: story.scenes[4].title, exact: true })).toBeVisible();
   await animation.getByRole('button', { name: 'Previous scene', exact: true }).click();
+  await openPlayerSettings(animation);
   await expect(selection).toHaveValue('3');
   await expect(quiz).toBeHidden();
   await expect(animation.getByRole('heading', { name: story.scenes[3].title, exact: true })).toBeVisible();
@@ -280,10 +279,12 @@ test('previous and next navigate directly past knowledge checks; an open check i
   // Skipping during playback preserves playback; only reaching a section's end opens a check.
   await animation.getByRole('button', { name: 'Play narration' }).click();
   await animation.getByRole('button', { name: 'Next scene', exact: true }).click();
+  await openPlayerSettings(animation);
   await expect(selection).toHaveValue('4');
   await expect(quiz).toBeHidden();
   await expect(animation.getByRole('button', { name: 'Pause narration' })).toBeVisible();
   await animation.getByRole('button', { name: 'Previous scene', exact: true }).click();
+  await openPlayerSettings(animation);
   await expect(selection).toHaveValue('3');
   await expect(quiz).toBeHidden();
   await expect(animation.getByRole('button', { name: 'Pause narration' })).toBeVisible();
@@ -293,6 +294,7 @@ test('previous and next navigate directly past knowledge checks; an open check i
   await expect(animation.getByRole('button', { name: 'Next scene', exact: true })).toBeHidden();
   await quiz.getByRole('button', { name: 'Skip Knowledge Check' }).click();
   await expect(quiz).toBeHidden();
+  await openPlayerSettings(animation);
   await expect(selection).toHaveValue('4');
   await expect(animation.getByRole('button', { name: 'Pause narration' })).toBeVisible();
   await expect(animation.getByRole('combobox', { name: 'Code language' })).toHaveValue('java');
@@ -307,7 +309,6 @@ test('all languages and quiz explanations remain available without JavaScript; p
   await expect(player(noJS).getByText('Knowledge check:', { exact: true })).toHaveCount(singleChecks);
   await context.close();
   await page.goto(url);
-  await openPlayerSettings(player(page));
   await player(page).getByRole('combobox', { name: 'Code language' }).selectOption('cpp');
   await theme(page, true);
   await page.emulateMedia({ media: 'print' });
@@ -380,7 +381,6 @@ test('reading and print views preserve the selected language and print all diagr
   await page.setViewportSize({ width: 1600, height: 1000 });
   await page.goto(url);
   const animation = player(page);
-  await openPlayerSettings(animation);
   await animation.getByRole('combobox', { name: 'Code language' }).selectOption('cpp');
   await theme(page, true);
   await animation.getByRole('link', { name: 'Read at my own pace', exact: true }).click();
@@ -428,7 +428,6 @@ test('view links carry language and theme through a reading, print, and narratio
   const narratedLink = page.getByRole('link', { name: 'Back to narrated version', exact: true });
   await expect(narratedLink).toHaveAttribute('href', /language=typescript&theme=dark#observer-animation$/);
   await narratedLink.click();
-  await openPlayerSettings(player(page));
   await expect(player(page).getByRole('combobox', { name: 'Code language' })).toHaveValue('typescript');
   await expect(page.locator('html')).toHaveClass(/dark-mode/);
   await expect(page.getByRole('checkbox', { name: 'Toggle dark mode' })).toBeChecked();

@@ -82,7 +82,8 @@
         player.play();
       } else {
         status.textContent = 'Narration and final knowledge check finished. Revisit any section to review.';
-        root.querySelector('[data-action="restart"]').focus();
+        // Playing from the end starts the narration over.
+        playButton.focus();
       }
     }
 

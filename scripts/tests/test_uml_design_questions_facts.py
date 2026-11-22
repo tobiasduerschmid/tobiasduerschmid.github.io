@@ -23,6 +23,7 @@ SPEC_KEYS = {
     "presale_path",
     "checkout_latency",
     "capstone",
+    "shared_code",
     "diagrams",  # what each diagram must show (diagram_facts.py)
     "evidence",
 }
@@ -33,6 +34,7 @@ def test_facts_match_spec_keys():
     assert set(FACTS["capstone"]) == {
         "website_reads_order_db",
         "rideshare_must_implement",
+        "unlisted_item_type_is_refused",
         "refund_before_cancel",
         "glampingco_48h_stays_booked",
         "service_fee",
@@ -161,6 +163,8 @@ def test_capstone():
     assert FACTS["capstone"] == {
         "website_reads_order_db": True,
         "rideshare_must_implement": ["price", "supplier_kind"],
+        # An order that names a kind of item ITEM_TYPES does not list cannot be read.
+        "unlisted_item_type_is_refused": True,
         "refund_before_cancel": True,
         "glampingco_48h_stays_booked": True,
         "service_fee": 0.12,
@@ -172,6 +176,29 @@ def test_capstone():
             "support_follow_ups": 0,
         },
     }
+
+
+def test_shared_code():
+    # Found by importing each service in a fresh interpreter: every service
+    # loads infra/http.py, although only five of them import it themselves.
+    shared = FACTS["shared_code"]
+    assert {name: "http" in modules for name, modules in shared["loads"].items()} == dict.fromkeys(
+        ["AffiliateRelay", "Loyalty", "Notifications", "OPC", "ShuttlePlanner", "SupportConsole",
+         "TripWebsite", "WarehouseETL"], True)
+    assert shared["imports"]["http"] == [
+        "AffiliateRelay", "Notifications", "OPC", "SupportConsole", "TripWebsite"]
+    assert [name for name, modules in shared["loads"].items() if "broker" not in modules] == ["TripWebsite"]
+    assert shared["loads"]["Loyalty"] == ["broker", "clock", "http"]
+    # The three event-only services take one name from the broker's module.
+    assert shared["takes_only_message"] == ["Loyalty", "ShuttlePlanner", "WarehouseETL"]
+    assert shared["message_stands_alone"] is True
+    assert shared["service_to_service_imports"] == []
+
+
+def test_importing_a_service_leaves_no_cache_in_the_student_facing_tree():
+    facts_module.loaded_shared_modules("loyalty")
+
+    assert not list(facts_module.HEADLINER.rglob("__pycache__"))
 
 
 def test_facts_json_is_current():

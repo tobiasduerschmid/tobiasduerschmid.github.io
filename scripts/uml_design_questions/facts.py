@@ -9,9 +9,12 @@ which orders the data model accepts. Nothing here searches source text.
 """
 
 import argparse
+import inspect
 import json
 import logging
+import subprocess
 import sys
+import textwrap
 import tomllib
 from collections.abc import Iterator
 from contextlib import contextmanager
@@ -73,6 +76,7 @@ def extract() -> dict:
         "presale_path": presale_path(),
         "checkout_latency": checkout_latency(),
         "capstone": capstone(),
+        "shared_code": shared_code(),
         **diagram_facts.extract(),  # "diagrams", and "evidence": path:line per note
     }
 
@@ -556,12 +560,36 @@ def capstone() -> dict:
     return {
         "website_reads_order_db": website_reads_order_db(),
         "rideshare_must_implement": sorted(TransportItem.__abstractmethods__),
+        "unlisted_item_type_is_refused": unlisted_item_type_is_refused(),
         "refund_before_cancel": refund_before_cancel(),
         "glampingco_48h_stays_booked": glampingco_48h_stays_booked(),
         "service_fee": service_fee(),
         "my_trips_reads_stored_payment": my_trips_reads_stored_payment(),
         "stuck_cancellation": stuck_cancellation(),
     }
+
+
+def unlisted_item_type_is_refused() -> bool:
+    """An order that names a kind of ride the OPC does not list cannot be read,
+    although the same order with a listed type can."""
+    def ride_order(item_type: str):
+        ride = _item(item_type, "shuttle", ["Friend 1"], departure="2027-08-20T08:00Z",
+                     route="Union Station", fare=2500)
+        return order_from_payload("HL-9002", {
+            "buyer": {"fan_id": "fan-90", "name": "Friend 1", "email": FAN.email},
+            "attendees": friends(1),
+            "festival_id": "lakeside-fest",
+            "festival_start": "2027-08-20T12:00Z",
+            "items": [ride],
+            "payment": {"card_token": "tok_visa", "amount": 2500},
+        })
+
+    ride_order(ShuttleRide.__name__)
+    try:
+        ride_order("RidesharePickup")
+    except KeyError:
+        return True
+    return False
 
 
 def my_trips_reads_stored_payment() -> bool:
@@ -653,6 +681,57 @@ def service_fee() -> float:
     box_office = BoxOfficeClient(ServiceClient("box_office", stack.network, "website"))
     quote = TripPricer(catalog, box_office).price(group_cart())
     return round(quote.service_fee / quote.subtotal, 2)
+
+
+# --- Shared code (step 1) ----------------------------------------------------------------
+
+
+def shared_code() -> dict:
+    """What a change to a shared module reaches, by service."""
+    view = diagram_facts.shared_code_view()
+    folders = sorted(unit.split("::")[1] for unit in view["packages"] if unit.startswith("services::"))
+    service = {f"services::{folder}": diagram_facts.COMPONENTS[folder] for folder in folders}
+    loads = {service[f"services::{folder}"]: loaded_shared_modules(folder) for folder in folders}
+    taken: dict[str, set[str]] = {name: set() for name in service.values()}
+    for (importer, imported), names in ((key.split(" -> "), names) for key, names in view["names"].items()):
+        if importer in service and imported.startswith("infra::"):
+            taken[service[importer]].update(names)
+    return {
+        "loads": loads,
+        "imports": {
+            module: sorted(service[a] for a, b in view["imports"] if a in service and b == f"infra::{module}")
+            for module in ("broker", "http")
+        },
+        "service_to_service_imports": sorted(
+            [service[a], service[b]] for a, b in view["imports"] if a in service and b in service),
+        "takes_only_message": sorted(name for name, names in taken.items() if names == {Message.__name__}),
+        "message_stands_alone": message_stands_alone(),
+    }
+
+
+def loaded_shared_modules(folder: str) -> list[str]:
+    """The modules of infra/ in memory once every module of a service is imported,
+    in a fresh interpreter, so that nothing else has loaded them."""
+    modules = sorted(
+        ".".join(path.relative_to(HEADLINER).with_suffix("").parts)
+        for path in (HEADLINER / "services" / folder).rglob("*.py"))
+    script = textwrap.dedent("""\
+        import importlib, sys
+        for name in sys.argv[1:]:
+            importlib.import_module(name)
+        print(*sorted(name.split(".", 1)[1] for name in sys.modules if name.startswith("infra.")))
+    """)
+    result = subprocess.run([sys.executable, "-B", "-c", script, *modules], cwd=HEADLINER,
+                            capture_output=True, text=True, check=True)
+    return result.stdout.split()
+
+
+def message_stands_alone() -> bool:
+    """Message's definition runs in a module that imports nothing from Headliner."""
+    namespace: dict = {}
+    exec("from dataclasses import dataclass\n" + textwrap.dedent(inspect.getsource(Message)), namespace)
+    message = namespace["Message"]("trip.confirmed", {"total": 100})
+    return (message.routing_key, message.body) == ("trip.confirmed", {"total": 100})
 
 
 def main() -> None:

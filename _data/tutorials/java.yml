@@ -1379,6 +1379,7 @@ steps:
       In UML, interfaces are shown with `<<interface>>` above the name. A dashed line with an open triangle means "implements":
 
       <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+      layout compact
       interface Shape {
         + getArea(): double
         + getPerimeter(): double
@@ -1698,6 +1699,7 @@ steps:
       ### UML Class Hierarchy
 
       <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+      layout compact
       abstract class Vehicle {
         - make: String
         - year: int
@@ -2987,6 +2989,7 @@ steps:
       ### Full UML Class Diagram
 
       <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+      layout compact
       interface Enrollable {
         + enroll(student: Student)
         + drop(name: String): boolean

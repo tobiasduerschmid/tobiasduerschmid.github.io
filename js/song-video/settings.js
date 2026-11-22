@@ -1,46 +1,15 @@
-/* Session-local player adjustments and a dismissible, non-modal settings panel. */
+/* Session-local player adjustments in the shared settings panel (settings-panel.js). */
 (function () {
   'use strict';
 
   function bind({ player, audio, listen, onResize, onActivity, focusControl }) {
-    const panel = player.querySelector('.song-player-settings');
-    const toggle = player.querySelector('.song-player-settings-toggle');
-    const close = player.querySelector('.song-player-settings-close');
     const volume = player.querySelector('.song-player-volume');
     const subtitleSize = player.querySelector('.song-player-subtitle-size');
-
-    function dismiss(restoreFocus = false) {
-      if (panel.hidden) return;
-      panel.hidden = true;
-      toggle.setAttribute('aria-expanded', 'false');
-      if (restoreFocus) focusControl(toggle);
-      onActivity();
-    }
-
-    listen(toggle, 'click', () => {
-      if (!panel.hidden) return dismiss(true);
-      panel.hidden = false;
-      toggle.setAttribute('aria-expanded', 'true');
-      focusControl(close);
-      onActivity();
-    });
-    listen(close, 'click', () => dismiss(true));
-    listen(document, 'click', (event) => {
-      if (!panel.contains(event.target) && !toggle.contains(event.target)) {
-        dismiss(panel.contains(document.activeElement));
-      }
-    });
-    listen(document, 'focusin', (event) => {
-      if (!panel.contains(event.target) && event.target !== toggle) dismiss();
-    });
-    // Handle Escape before fullscreen handles it. Native selects retain their
-    // own Escape key so dismissing a picker does not also close its panel.
-    listen(player, 'keydown', (event) => {
-      if (panel.hidden || event.key !== 'Escape') return;
-      event.stopPropagation();
-      if (event.target.matches('select')) return;
-      event.preventDefault();
-      dismiss(true);
+    window.SongSettingsPanel.bind({
+      player, listen, onActivity, focusControl,
+      panel: player.querySelector('.song-player-settings'),
+      toggle: player.querySelector('.song-player-settings-toggle'),
+      close: player.querySelector('.song-player-settings-close'),
     });
 
     function syncVolume() {

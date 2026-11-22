@@ -3,7 +3,10 @@
   cue.diagram_steps groups (messages, or CRC cards); cue.diagram_focus is
   hatched. Class diagrams mark the declaration in place so interfaces keep
   their kind; state, sequence, and component diagrams accept a later
-  highlight declaration. CRC cards cannot be highlighted. Params: diagram, cue.
+  highlight declaration. CRC cards cannot be highlighted. The players copy
+  this build-time drawing into the lesson's diagram column, so a bare
+  `layout compact` is laid out for that column (600x700 CSS pixels).
+  Params: diagram, cue.
 {%- endcomment -%}
 {%- capture np_newline %}
 {% endcapture -%}
@@ -16,6 +19,7 @@
 {%- else -%}
 {%- assign np_source = np_diagram.source -%}
 {%- endif -%}
+{%- capture np_source %}{% include archuml-compact-pane.html source=np_source pane='600x700' %}{% endcapture -%}
 {%- assign np_marked = np_source -%}
 {%- if np_focus and np_type == 'class' -%}
 {%- assign np_keywords = "class,interface" | split: "," -%}

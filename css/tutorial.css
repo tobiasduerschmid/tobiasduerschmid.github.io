@@ -3994,7 +3994,17 @@ html:not(.dark-mode) .tvm-step-nav-current {
   justify-content: flex-end;
   gap: 4px 10px;
 }
+/* In a narrow column the reason wraps beside Next. Without this the group
+   keeps its one-line width and the bar scrolls sideways, which a keyboard
+   cannot reach on a first step: nothing in the bar takes focus there. */
+.tvm-step-controls > .tvm-next-group {
+  flex: 0 1 auto;
+  min-width: 0;
+}
 .tvm-next-lock-reason {
+  flex: 1 1 8em;
+  min-width: 0;
+  text-align: right;
   color: #c9d2dc;
   font-weight: 600;
 }

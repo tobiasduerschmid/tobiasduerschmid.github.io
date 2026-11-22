@@ -8,7 +8,8 @@ diagram uses as `links: *l_event_consumers` next to `source: *d_event_consumers`
 
 These tests hold every link to its drawing and to Headliner's code: its text is
 a label of the diagram, its path is a shared file, its line exists, and that
-line names what the label names. scripts/tests/uml-design-questions-diagrams.test.js
+line names what the label names. A package's label names a folder or a module,
+so its link opens a file of that package instead. scripts/tests/uml-design-questions-diagrams.test.js
 checks that each text is exactly one label of the rendered drawing.
 """
 
@@ -92,6 +93,33 @@ def labels(source):
     return found
 
 
+# --- Packages drawn as nodes -----------------------------------------------------------
+
+PACKAGE_FRAME = re.compile(r'^package\s+(?:"[^"]*"\s+as\s+)?([\w:]+)[^{]*\{\s*$')
+PACKAGE_NODE = re.compile(r'^package\s+([\w:]+)\s*$')
+
+
+def package_nodes(source):
+    """Each package drawn without its members, by label: its qualified name.
+
+    `package broker` inside `package infra {` is infra::broker; a name that
+    is written qualified, such as services::loyalty, stays as it is.
+    """
+    nodes, frames = {}, []
+    for line in drawn_lines(source):
+        frame, node = PACKAGE_FRAME.match(line), PACKAGE_NODE.match(line)
+        if frame:
+            frames.append(frame.group(1))
+        elif node:
+            nodes[node.group(1)] = "::".join([*frames, node.group(1)])
+        elif line == "}" and frames:
+            frames.pop()
+        elif line.endswith("{"):
+            frames.append(None)  # a class body, which closes with its own brace
+    return {label: "::".join(part for part in name.split("::") if part != "None")
+            for label, name in nodes.items()}
+
+
 # --- Identifiers on a code line ------------------------------------------------------
 
 def primary_identifier(text):
@@ -151,6 +179,13 @@ def test_each_link_opens_a_line_of_a_shared_file(diagram, link):
 
 @pytest.mark.parametrize("diagram, link", ALL_LINKS)
 def test_each_linked_line_names_what_the_label_names(diagram, link):
+    package = package_nodes(diagram.read_text(encoding="utf-8")).get(link["text"])
+    if package:
+        # services::loyalty opens a file under services/loyalty/; infra::http opens infra/http.py.
+        folder = package.replace("::", "/")
+        assert link["path"].startswith(folder + "/") or link["path"] == folder + ".py", (
+            f"{link['path']} is not a file of the package {package}")
+        return
     lines = (HEADLINER / link["path"]).read_text(encoding="utf-8").splitlines()
     line = lines[link["line"] - 1]
     name = primary_identifier(link["text"])
@@ -207,6 +242,27 @@ def test_labels_reads_names_members_messages_ports_and_guards_but_not_notes_or_l
             "capture(cardToken, amount)", "[for each supplier order]"} <= shown
     assert "Hidden note text" not in shown
     assert not any("@pos" in text for text in shown)
+
+
+def test_package_nodes_reads_qualified_names_from_the_frames_around_them():
+    source = "\n".join([
+        "@startuml",
+        "package infra {",
+        "  package broker",
+        "  package http",
+        "}",
+        "package services::loyalty",
+        "package services::opc::model {",
+        "  class TripItem {",
+        "    + price()",
+        "  }",
+        "}",
+        "services::loyalty ..> broker",
+        "@enduml",
+    ])
+
+    assert package_nodes(source) == {
+        "broker": "infra::broker", "http": "infra::http", "services::loyalty": "services::loyalty"}
 
 
 def test_primary_identifier_is_a_lifeline_type_or_the_first_name():

@@ -962,7 +962,7 @@
     this._umlWatchedFiles = [];         // Set per-step from YAML uml_files
     this._umlRefreshPending = false;    // A refresh was requested while files were loading
     this._umlLanguage = 'python';      // Auto-detected from watched source-file extensions.
-    this._umlClassLayoutPreference = options.uml_class_layout || 'portrait';
+    this._umlClassLayoutPreference = options.uml_class_layout || 'compact';
     this._umlClassLayoutDefault = this._umlClassLayoutPreference; // global fallback for per-step overrides
     this._umlHideFlags = [];             // Per-step hide flags: ['visibility'], ['multiplicity'], etc.
     this._umlLastDiagrams = null;       // {classDiagram, sequenceDiagram}

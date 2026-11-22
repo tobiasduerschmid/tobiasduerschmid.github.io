@@ -74,7 +74,8 @@ test('actual MP3 playback drives progress, pauses, and supports transport and sp
   await slider.focus();
   await slider.press('End');
   await expect(animation.getByRole('heading', { name: "Synchronize beyond React's UI" })).toBeVisible();
-  await animation.getByRole('button', { name: 'Restart narration' }).click();
+  // 0 jumps to the start, as in the music player.
+  await slider.press('0');
   await expect(slider).toHaveValue('0');
 });
 
@@ -172,6 +173,8 @@ for (const combinedPage of ['/SEBook/CS35L.html', '/SEBook/all.html']) {
     await expect(node.getByRole('combobox', { name: 'Scene', exact: true })).toHaveValue('0');
     await node.getByRole('combobox', { name: 'Scene', exact: true }).selectOption('2');
     await expect(node.getByRole('heading', { name: 'Blocking: the thread waits' })).toBeVisible();
+    // Opening one player's settings closes the other's, as focus leaves it.
+    await openPlayerSettings(react);
     await expect(react.getByRole('combobox', { name: 'Scene', exact: true })).toHaveValue('4');
     await expect(react.getByRole('img')).toHaveAttribute('aria-label', story.scenes[4].cues[0].visual);
     expect(errors).toEqual([]);
