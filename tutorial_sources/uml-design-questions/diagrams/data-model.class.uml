@@ -1,4 +1,5 @@
 @startuml
+layout compact
 package services::opc::model {
   class Fan
   class TripOrder
@@ -71,6 +72,6 @@ LodgingStay @pos(280, 760)
 Experience @pos(520, 760)
 TransportItem @pos(800, 760)
 ShuttleRide @pos(811, 970)
-note:44 @pos(32, 528)
+note:45 @pos(32, 528)
 @endlayout
 @enduml

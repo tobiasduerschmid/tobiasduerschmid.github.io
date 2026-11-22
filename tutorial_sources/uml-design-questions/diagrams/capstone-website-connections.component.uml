@@ -1,4 +1,5 @@
 @startuml
+layout compact
 package Headliner {
   component TripWebsite <<WebApplication>> {
     require "SQL" as web_catalog
@@ -72,6 +73,6 @@ TripWebsite.web_orders @pos(350, 312)
 TripWebsite.web_tracking @pos(520, 312)
 OPC.opc_orders @pos(350, 470)
 OPC.opc_tracking @pos(520, 470)
-note:41 @pos(0, 0)
+note:42 @pos(0, 0)
 @endlayout
 @enduml

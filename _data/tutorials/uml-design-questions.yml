@@ -4206,8 +4206,8 @@ x-diagrams:
     VipShuttleGateway @pos(531, 520)
     MeetAndGreetGateway @pos(774, 520)
     ManualCancellationRequired @pos(120, 680)
-    note:58 @pos(1040, 30)
-    note:64 @pos(1040, 200)
+    note:59 @pos(1040, 30)
+    note:65 @pos(1040, 200)
     @endlayout
     @enduml
   capstone_trip_items: &d_capstone_trip_items |-
@@ -4371,7 +4371,7 @@ x-diagrams:
     TripWebsite.web_tracking @pos(520, 312)
     OPC.opc_orders @pos(350, 470)
     OPC.opc_tracking @pos(520, 470)
-    note:41 @pos(0, 0)
+    note:42 @pos(0, 0)
     @endlayout
     @enduml
   checkout_latency: &d_checkout_latency |-
@@ -4538,7 +4538,7 @@ x-diagrams:
     Experience @pos(520, 760)
     TransportItem @pos(800, 760)
     ShuttleRide @pos(811, 970)
-    note:44 @pos(32, 528)
+    note:45 @pos(32, 528)
     @endlayout
     @enduml
   event_consumers: &d_event_consumers |-
@@ -4623,7 +4623,7 @@ x-diagrams:
     @layout
     OPC @pos(0, 470)
     trips @pos(330, 470)
-    note:44 @pos(0, 106)
+    note:45 @pos(0, 106)
     Notifications @pos(1000, 0)
     Loyalty @pos(1000, 185)
     WarehouseETL @pos(1000, 370)
@@ -4781,8 +4781,8 @@ x-diagrams:
     Broker @pos(150, 420)
     ServiceClient @pos(640, 420)
     Message @pos(1180, 420)
-    note:26 @pos(132, 556)
-    note:34 @pos(640, 556)
+    note:27 @pos(132, 556)
+    note:35 @pos(640, 556)
     @endlayout
     @enduml
   outages: &d_outages |-
@@ -4952,11 +4952,12 @@ x-diagrams:
     MessageBroker.broker_publish @pos(440, 1070)
     Notifications.notifications_smtp @pos(567, 1375)
     MailRelay.mail_smtp @pos(1100, 1375)
-    note:94 @pos(0, 310)
+    note:95 @pos(0, 310)
     @endlayout
     @enduml
   shared_code: &d_shared_code |-
     @startuml
+    layout compact
     package infra {
       package broker
       package http
@@ -5012,8 +5013,8 @@ x-diagrams:
     services::shuttle_planner @pos(84, 438)
     services::opc @pos(449, 438)
     services::notifications @pos(421, 530)
-    note:26 @pos(796, 0)
-    note:38 @pos(720, 476)
+    note:27 @pos(796, 0)
+    note:39 @pos(720, 476)
     @endlayout
     @enduml
 x-diagram-links:

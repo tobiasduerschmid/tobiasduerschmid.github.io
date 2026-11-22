@@ -1,4 +1,5 @@
 @startuml
+layout compact
 participant web: TripWebsite
 box "Order Processing Center"
 participant po: PurchaseOrderService

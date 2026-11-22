@@ -1,4 +1,5 @@
 @startuml
+layout compact
 package Headliner {
   component TripWebsite <<WebApplication>> {
     require "CardService" as web_card
@@ -163,6 +164,6 @@ OPC.opc_publish @pos(440, 912)
 MessageBroker.broker_publish @pos(440, 1070)
 Notifications.notifications_smtp @pos(567, 1375)
 MailRelay.mail_smtp @pos(1100, 1375)
-note:94 @pos(0, 310)
+note:95 @pos(0, 310)
 @endlayout
 @enduml

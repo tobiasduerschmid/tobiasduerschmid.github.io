@@ -1,4 +1,5 @@
 @startuml
+layout compact
 package Headliner {
   component OPC <<BackendService>> {
     require "Publish" as opc_publish
@@ -78,7 +79,7 @@ end note
 @layout
 OPC @pos(0, 470)
 trips @pos(330, 470)
-note:44 @pos(0, 106)
+note:45 @pos(0, 106)
 Notifications @pos(1000, 0)
 Loyalty @pos(1000, 185)
 WarehouseETL @pos(1000, 370)
