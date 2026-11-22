@@ -1,0 +1,10 @@
+{%- comment -%}
+  Preloads the C4 toolkit so figures on this page render synchronously. The ordered file lists come from
+  js/ArchUML/c4/manifest.json (via _data/archuml_c4_manifest.json); include this before uml-bundle.js.
+{%- endcomment -%}
+{%- for file in site.data.archuml_c4_manifest.core %}
+<script src="{{ '/js/ArchUML/' | append: file | relative_url }}" defer></script>
+{%- endfor %}
+{%- for file in site.data.archuml_c4_manifest.render %}
+<script src="{{ '/js/ArchUML/' | append: file | relative_url }}" defer></script>
+{%- endfor %}

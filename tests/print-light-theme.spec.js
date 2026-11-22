@@ -16,6 +16,7 @@ const PAGES = [
   { name: 'home page', path: '/' },
   { name: 'tutorial pop-out', path: '/tutorial-output-popup.html?dark=1', hasVisibleHeading: false },
   { name: 'narration reader', path: '/SEBook/designpatterns/observer/read/?theme=dark', restoresAfterPrintLoad: false },
+  { name: 'C4 editor page', path: '/SEBook/tools/c4-editor.html' },
 ];
 
 // WCAG 1.4.3: large text (a page heading) needs 3:1, body text 4.5:1.
@@ -83,3 +84,30 @@ for (const { name, path, hasVisibleHeading, restoresAfterPrintLoad = true } of P
     }
   });
 }
+
+// The standalone C4 editor prints its drawing and the Explain text of the open view, never its editing controls
+// (spec §9.4), in the light palette whatever theme the reader saved.
+test.describe('C4 editor page in print', () => {
+  test.beforeEach(async ({ context, baseURL }) => {
+    await context.addCookies([{ name: 'dark-mode', value: 'true', url: baseURL }]);
+  });
+
+  test('prints light, with the Explain text of the open view and without the toolbar or the inspector', async ({ page }) => {
+    await page.goto('/SEBook/tools/c4-editor.html');
+    const editor = page.locator('[data-c4-editor]');
+    const canvas = editor.getByRole('region', { name: /^Canvas: / });
+    await expect(canvas).toBeVisible();
+    // The view's title names it; the Explain panel opens with a sentence that names the same view.
+    const viewTitle = (await canvas.getAttribute('aria-label')).replace(/^Canvas: /, '');
+
+    await page.emulateMedia({ media: 'print' });
+
+    await expectReadableLightPage(page);
+    const explain = editor.getByRole('tabpanel', { name: 'Explain', includeHidden: true });
+    await expect(explain).toBeVisible();
+    await expect(explain.locator('p').first()).toContainText(viewTitle.replace(': ', ' of '));
+    await expect.poll(() => textContrast(explain.locator('p').first()), { message: 'Explain text contrast' }).toBeGreaterThanOrEqual(BODY_TEXT_CONTRAST);
+    await expect(editor.getByRole('group', { name: 'Toolbar', exact: true })).toBeHidden();
+    await expect(editor.getByRole('region', { name: 'Inspector', exact: true })).toBeHidden();
+  });
+});
