@@ -104,7 +104,7 @@ The remote-control example is useful because it demonstrates the pattern's full 
 ## UML Example Diagram
 
 <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
-layout landscape
+layout compact 1110x876
 class RemoteControl {
     - onCommand: Command
     - offCommand: Command

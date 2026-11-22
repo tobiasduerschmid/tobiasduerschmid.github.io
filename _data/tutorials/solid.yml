@@ -1026,6 +1026,7 @@ steps:
 
       ```uml-class
       @startuml
+      layout compact
       class RideData
       class DriverMatcher {
         + match()
@@ -3572,6 +3573,7 @@ steps:
 
       ```uml-class
       @startuml
+      layout compact
       abstract class MediaPlayer {
         + play()
         + stop()

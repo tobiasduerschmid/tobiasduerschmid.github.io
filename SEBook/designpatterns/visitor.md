@@ -31,6 +31,7 @@ The key participants are:
 ## UML Role Diagram
 
 <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+layout compact 1110x876
 interface Visitor {
     + visitConcreteElementA(ConcreteElementA)
     + visitConcreteElementB(ConcreteElementB)

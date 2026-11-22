@@ -73,7 +73,7 @@ callout top of text "Client" : Client: uses only abstract interfaces
 ## UML Example Diagram
 
 <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
-layout landscape
+layout compact 1110x876
 interface PizzaIngredientFactory {
 	+ createDough(): Dough
 	+ createSauce(): Sauce
