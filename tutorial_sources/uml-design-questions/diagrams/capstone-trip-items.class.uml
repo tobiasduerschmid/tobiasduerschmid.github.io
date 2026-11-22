@@ -73,12 +73,12 @@ imports nothing from the OPC.
 end note
 @layout
 TripItem @pos(519, 0)
-FestivalPass @pos(0, 260)
-LodgingStay @pos(346, 260)
-Experience @pos(692, 260)
-TransportItem @pos(1038, 260)
-ShuttleRide @pos(1115, 460)
-services::opc::payloads @pos(430, 670)
-services::website::checkout @pos(770, 670)
+FestivalPass @pos(0, 177)
+LodgingStay @pos(346, 177)
+Experience @pos(692, 177)
+TransportItem @pos(1038, 177)
+ShuttleRide @pos(1115, 329)
+services::opc::payloads @pos(430, 516)
+services::website::checkout @pos(770, 516)
 @endlayout
 @enduml

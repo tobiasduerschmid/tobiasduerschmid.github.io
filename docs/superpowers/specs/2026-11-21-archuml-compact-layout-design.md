@@ -238,6 +238,7 @@ Relevant elements and what counts as overlap (tolerance 0.5 units):
 - a route passing through a node that is neither its end nor an enclosing container of its end;
 - a route passing through a label, except a label kind drawn on its own line by design (an ER cardinality pill);
 - two routes of different bundles running on top of each other for more than 6 units.
+- a note lying across the outline of a container (a package frame), whatever it is attached to: a note lies wholly inside a frame or wholly outside it.
 
 A label must also stay with the thing it names. A label that is more than one line height away from its own edge, or nearer to another edge than to its own, is a violation of the same rank as an overlap. Today's compact already breaks this: in the Observer example of `test-uml.html` the gap between `Observer` and `Subject` is shrunk below the width of the label `notifies`, and the label ends up floating above both boxes.
 
@@ -274,6 +275,10 @@ Package-by-package placements give up the default drawing's arrangement, and wit
 
 Notes (component). The normal placement is widened where a note finds no clear spot beside its target, and a copy of it lets such a note move farther instead. That copy has the normal placement's estimate, so it ranks after every candidate that promises more, and the reference's repair gets only the passes the other candidates leave (`UMLCompactLayout.referenceRepairs`). Where a note placed beside its target among the boxes alone would already cover another component (so the reference needs widening) and the search spares no pass for that, the normal placement lets the note move farther itself and the copy is not proposed. Before, the five passes of the notes of `uml_component_diagram.json` in a 600×700 pane went to the invalid reference and four invalid wraps. Where a repair pass is left, as for component-019, widening stays first: it gives that diagram 18.1 px where the note moved farther gives 14.9 px.
 
+Flow placement (component). The layered engine ranks components by the direction connectors are written in. Authors write a ball-and-socket assembly from either end and a plain link (a «subscribe» or «consume» connector) from the consumer to the hub, so the engine set the consumers of a hub before it and the outside systems they call before them (the UML design questions tutorial's event-consumers view: consumers scattered over four ranks, MailRelay left of Notifications). The component adapter therefore also proposes the placement of the same spec with its connectors turned the way a reader follows them (`flowOrientedSpec`): an assembly from the component that requires the interface to the one that provides it, a plain link away from the end with more connectors; arrows the author drew keep their direction. It is placed in the authored direction (ports sit on the left and right sides), and each rank is lined up on its edge facing the ranks most of its connectors come from (`alignedRankPositions`), so a fan-out reaches an aligned column; a rank whose members would then overlap keeps its places. The squeeze keeps each such column aligned (`alignLeft` per rank). Where that placement would draw a package over what it does not hold, it is placed package by package, as the engine placements are. It is one more candidate: it wins only on the objective of 6.1, within the bounds of 6.8.
+
+Notes in packages (component). Compact places the notes before the package frames, and a package's frame encloses the notes of its members as it encloses their joined interfaces. Before, the frame was drawn from the members alone and the note beside a member at the frame's edge lay across the outline.
+
 ### 6.7 The squeeze
 
 The squeeze starts from a candidate realized with the renderer's normal gaps, where routes and labels had room to sit properly. It does not start from today's pre-shrunk compact gaps. Given that drawing and its scene:
@@ -291,6 +296,8 @@ If the unsqueezed drawing itself has an overlap, the same loop runs in the other
 ### 6.8 Work budget
 
 The cost is counted in routing passes, not milliseconds, so results do not depend on the machine: at most 8 passes for a diagram with up to 12 boxes and edges together, 5 up to 30, and 3 beyond that. One pass is always spent on the current placement.
+
+A renderer's placement rules can agree (the package-by-package placement of the normal placement and of the placement for the pane's shape, when the two are the same). The coordinator drops a candidate equal to an earlier one before ranking, so it spends no pass on a drawing already made and leaves the passes to the reference's repair.
 
 Teaching callouts cost more than routing in most diagrams that have them: their placement is a search of its own (`UMLCallouts.drawCompact`, a beam search). A pass therefore routes first and judges the bare drawing against what would reject it; a squeeze that is invalid or has more crossings or bends than its base is rejected without placing callouts, since callouts only add labels and never remove a crossing, bend or overlap. Every other drawing gets its callouts before it is judged, so every choice is made on the picture the reader gets. On the benchmark corpus every drawing stays byte-identical, and on the five slowest diagrams with callouts they are placed on 3 to 5 of 5 to 8 passes (the warm render of class-096 went from 624 to 131 ms).
 

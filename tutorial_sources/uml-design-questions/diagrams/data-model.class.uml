@@ -61,17 +61,17 @@ Italic name, {abstract}: abstract class.
 code enforces.
 end note
 @layout
-Fan @pos(426, 0)
-Attendee @pos(160, 220)
-TripOrder @pos(420, 220)
-Payment @pos(740, 220)
-TripItem @pos(400, 470)
-SupplierOrder @pos(760, 482)
-FestivalPass @pos(40, 760)
-LodgingStay @pos(280, 760)
-Experience @pos(520, 760)
-TransportItem @pos(800, 760)
-ShuttleRide @pos(811, 970)
-note:45 @pos(32, 528)
+Fan @pos(426, -2)
+Attendee @pos(160, 218)
+TripOrder @pos(420, 218)
+Payment @pos(740, 218)
+TripItem @pos(400, 423)
+SupplierOrder @pos(760, 435)
+FestivalPass @pos(40, 615)
+LodgingStay @pos(280, 615)
+Experience @pos(520, 615)
+TransportItem @pos(800, 615)
+ShuttleRide @pos(811, 780)
+note:45 @pos(32, 481)
 @endlayout
 @enduml

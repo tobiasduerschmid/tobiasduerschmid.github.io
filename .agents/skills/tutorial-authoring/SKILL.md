@@ -616,6 +616,23 @@ instructions popout. Do not give it a size here. Use it when the drawing would
 otherwise be scaled down noticeably in the pane, and check the before/after
 pictures as described in `sebook-authoring` ("Compact layout in chapters").
 
+Diagrams shown in the Diagram pane (diagram challenges, `x-diagrams` in the
+UML design questions tutorial) also take a bare `layout compact`, laid out
+for the pane. An `@layout … @endlayout` block of authored `@pos` positions
+switches compact off for that diagram (authored positions win), so add one
+only when compact cannot meet the bar: with the block removed, render the
+diagram at 1100×800 and 700×800 and in the real pane, and keep the block only
+if compact shows layout issues, smaller text than the authored drawing, or
+more crossings or bends than it. A hub component fanning out through ports
+to a column of consumers (event-consumers) now lays out well without one;
+component diagrams with several ball-and-socket assemblies between the same
+two components, and class diagrams whose look depends on subclasses sitting
+under their parents across packages or on a radial arrangement around shared
+modules, still need it. When you keep a block, leave no empty bands wider
+than the labels and lanes need. A `note:N @pos` line names the note that
+starts on source line N, so adding or removing lines above that note
+unpins it.
+
 ### Length, pacing, and step granularity
 
 - **Each step ≈ 5–15 minutes** of student time. If a step grows beyond
