@@ -1,0 +1,198 @@
+{
+  "id": "class-made-abstract-in-properties",
+  "family": "class",
+  "type": "class",
+  "page": "/SEBook/tools/uml-playground",
+  "platform": {
+    "os": "darwin-arm64",
+    "browser": "chromium 145.0.7632.6"
+  },
+  "start": "@startuml\nclass Order @pos(80, 80) { -id: int; +total(): float }\nclass Customer @pos(360, 80) { +name: str }\nclass Invoice @pos(80, 300)\n@enduml",
+  "steps": [
+    {
+      "do": "press",
+      "target": {
+        "role": "button",
+        "name": "Element Order — Enter to select, arrows to nudge, Delete to remove"
+      },
+      "key": "Enter"
+    },
+    {
+      "do": "select",
+      "target": {
+        "label": "Kind"
+      },
+      "value": "abstract"
+    }
+  ],
+  "after": {
+    "text": "@startuml\nabstract class Order @pos(80, 80) { - id: int; + total(): float }\nclass Customer @pos(360, 80) { +name: str }\nclass Invoice @pos(80, 300)\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": ""
+      },
+      "uml-pg-class-selection": {
+        "text": "Selected: Order"
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": "✓ Saved"
+      }
+    },
+    "properties": "- region \"Class — Order\":\n  - heading \"Class — Order\" [level=2]\n  - button \"✕ Delete\"\n  - text: Name (id)\n  - textbox \"Name (id)\": Order\n  - text: Kind\n  - combobox \"Kind\":\n    - option \"Class\"\n    - option \"Abstract Class\" [selected]\n    - option \"Interface\"\n    - option \"Enum\"\n  - text: Stereotype (e.g. <<service>>)\n  - textbox \"Stereotype (e.g. <<service>>)\"\n  - text: Highlight color (#hex or color name)\n  - textbox \"Highlight color (#hex or color name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Members\":\n    - text: Members\n    - combobox \"Visibility\":\n      - option \"Unspecified\"\n      - option \"+ public\"\n      - option \"- private\" [selected]\n      - option \"# protected\"\n      - option \"~ package\"\n    - textbox \"Member text (member 1)\":\n      - /placeholder: \"name: type   or   method(args): type\"\n      - text: \"id: int\"\n    - button \"Delete member 1\": ✕\n    - checkbox \"abstract\"\n    - text: abstract\n    - checkbox \"static\"\n    - text: static\n    - combobox \"Visibility\":\n      - option \"Unspecified\"\n      - option \"+ public\" [selected]\n      - option \"- private\"\n      - option \"# protected\"\n      - option \"~ package\"\n    - textbox \"Member text (member 2)\":\n      - /placeholder: \"name: type   or   method(args): type\"\n      - text: \"total(): float\"\n    - button \"Delete member 2\": ✕\n    - checkbox \"abstract\"\n    - text: abstract\n    - checkbox \"static\"\n    - text: static\n    - button \"+ Add Member\"\n  - button \"Add teaching callout\"",
+    "draft": "@startuml\nabstract class Order @pos(80, 80) { - id: int; + total(): float }\nclass Customer @pos(360, 80) { +name: str }\nclass Invoice @pos(80, 300)\n@enduml",
+    "selection": [
+      "Order"
+    ],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "afterUndo": {
+    "text": "@startuml\nclass Order @pos(80, 80) { -id: int; +total(): float }\nclass Customer @pos(360, 80) { +name: str }\nclass Invoice @pos(80, 300)\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Undone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Selected: Order"
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": "✓ Saved"
+      }
+    },
+    "properties": "- region \"Class — Order\":\n  - heading \"Class — Order\" [level=2]\n  - button \"✕ Delete\"\n  - text: Name (id)\n  - textbox \"Name (id)\": Order\n  - text: Kind\n  - combobox \"Kind\":\n    - option \"Class\" [selected]\n    - option \"Abstract Class\"\n    - option \"Interface\"\n    - option \"Enum\"\n  - text: Stereotype (e.g. <<service>>)\n  - textbox \"Stereotype (e.g. <<service>>)\"\n  - text: Highlight color (#hex or color name)\n  - textbox \"Highlight color (#hex or color name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Members\":\n    - text: Members\n    - combobox \"Visibility\":\n      - option \"Unspecified\"\n      - option \"+ public\"\n      - option \"- private\" [selected]\n      - option \"# protected\"\n      - option \"~ package\"\n    - textbox \"Member text (member 1)\":\n      - /placeholder: \"name: type   or   method(args): type\"\n      - text: \"id: int\"\n    - button \"Delete member 1\": ✕\n    - checkbox \"abstract\"\n    - text: abstract\n    - checkbox \"static\"\n    - text: static\n    - combobox \"Visibility\":\n      - option \"Unspecified\"\n      - option \"+ public\" [selected]\n      - option \"- private\"\n      - option \"# protected\"\n      - option \"~ package\"\n    - textbox \"Member text (member 2)\":\n      - /placeholder: \"name: type   or   method(args): type\"\n      - text: \"total(): float\"\n    - button \"Delete member 2\": ✕\n    - checkbox \"abstract\"\n    - text: abstract\n    - checkbox \"static\"\n    - text: static\n    - button \"+ Add Member\"\n  - button \"Add teaching callout\"",
+    "draft": "@startuml\nclass Order @pos(80, 80) { -id: int; +total(): float }\nclass Customer @pos(360, 80) { +name: str }\nclass Invoice @pos(80, 300)\n@enduml",
+    "selection": [
+      "Order"
+    ],
+    "focus": {
+      "tag": "rect",
+      "id": "",
+      "role": "button",
+      "name": "Element Order — Enter to select, arrows to nudge, Delete to remove",
+      "layoutId": "Order"
+    }
+  },
+  "afterRedo": {
+    "text": "@startuml\nabstract class Order @pos(80, 80) { - id: int; + total(): float }\nclass Customer @pos(360, 80) { +name: str }\nclass Invoice @pos(80, 300)\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Redone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Selected: Order"
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": "✓ Saved"
+      }
+    },
+    "properties": "- region \"Abstract — Order\":\n  - heading \"Abstract — Order\" [level=2]\n  - button \"✕ Delete\"\n  - text: Name (id)\n  - textbox \"Name (id)\": Order\n  - text: Kind\n  - combobox \"Kind\":\n    - option \"Class\"\n    - option \"Abstract Class\" [selected]\n    - option \"Interface\"\n    - option \"Enum\"\n  - text: Stereotype (e.g. <<service>>)\n  - textbox \"Stereotype (e.g. <<service>>)\"\n  - text: Highlight color (#hex or color name)\n  - textbox \"Highlight color (#hex or color name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Members\":\n    - text: Members\n    - combobox \"Visibility\":\n      - option \"Unspecified\"\n      - option \"+ public\"\n      - option \"- private\" [selected]\n      - option \"# protected\"\n      - option \"~ package\"\n    - textbox \"Member text (member 1)\":\n      - /placeholder: \"name: type   or   method(args): type\"\n      - text: \"id: int\"\n    - button \"Delete member 1\": ✕\n    - checkbox \"abstract\"\n    - text: abstract\n    - checkbox \"static\"\n    - text: static\n    - combobox \"Visibility\":\n      - option \"Unspecified\"\n      - option \"+ public\" [selected]\n      - option \"- private\"\n      - option \"# protected\"\n      - option \"~ package\"\n    - textbox \"Member text (member 2)\":\n      - /placeholder: \"name: type   or   method(args): type\"\n      - text: \"total(): float\"\n    - button \"Delete member 2\": ✕\n    - checkbox \"abstract\"\n    - text: abstract\n    - checkbox \"static\"\n    - text: static\n    - button \"+ Add Member\"\n  - button \"Add teaching callout\"",
+    "draft": "@startuml\nabstract class Order @pos(80, 80) { - id: int; + total(): float }\nclass Customer @pos(360, 80) { +name: str }\nclass Invoice @pos(80, 300)\n@enduml",
+    "selection": [
+      "Order"
+    ],
+    "focus": {
+      "tag": "rect",
+      "id": "",
+      "role": "button",
+      "name": "Element Order — Enter to select, arrows to nudge, Delete to remove",
+      "layoutId": "Order"
+    }
+  },
+  "operations": [
+    {
+      "type": "class",
+      "before": "@startuml\nclass Order @pos(80, 80) { -id: int; +total(): float }\nclass Customer @pos(360, 80) { +name: str }\nclass Invoice @pos(80, 300)\n@enduml",
+      "operation": {
+        "op": "element.update",
+        "revision": "r89762cab:144",
+        "ref": "Order",
+        "changes": {
+          "classDeclaration": {
+            "kind": "abstract",
+            "isAbstract": true,
+            "name": "Order",
+            "stereotype": "",
+            "highlight": "",
+            "texture": "",
+            "rawAfter": "",
+            "members": [
+              {
+                "visibility": "-",
+                "isAbstract": false,
+                "isStatic": false,
+                "text": "id: int"
+              },
+              {
+                "visibility": "+",
+                "isAbstract": false,
+                "isStatic": false,
+                "text": "total(): float"
+              }
+            ]
+          }
+        },
+        "facts": {},
+        "undo": {
+          "key": "edit:Order"
+        }
+      },
+      "after": "@startuml\nabstract class Order @pos(80, 80) { - id: int; + total(): float }\nclass Customer @pos(360, 80) { +name: str }\nclass Invoice @pos(80, 300)\n@enduml"
+    }
+  ]
+}

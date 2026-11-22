@@ -1,0 +1,187 @@
+{
+  "id": "class-renamed-by-double-clicking-its-header",
+  "family": "class",
+  "type": "class",
+  "page": "/SEBook/tools/uml-editor",
+  "platform": {
+    "os": "darwin-arm64",
+    "browser": "chromium 145.0.7632.6"
+  },
+  "start": "@startuml\nclass Order @pos(80, 80) { -id: int; +total(): float }\nclass Customer @pos(360, 80) { +name: str }\nclass Invoice @pos(80, 300)\n@enduml",
+  "steps": [
+    {
+      "do": "pointerDblclick",
+      "point": {
+        "target": {
+          "role": "button",
+          "name": "Element Order — Enter to select, arrows to nudge, Delete to remove"
+        },
+        "at": {
+          "x": 0.5,
+          "y": 0.15
+        }
+      }
+    },
+    {
+      "do": "fill",
+      "target": {
+        "role": "textbox",
+        "name": "Rename Order"
+      },
+      "value": "Purchase"
+    },
+    {
+      "do": "press",
+      "target": {
+        "role": "textbox",
+        "name": "Rename Order"
+      },
+      "key": "Enter"
+    }
+  ],
+  "after": {
+    "text": "@startuml\nclass Purchase @pos(80, 80) { -id: int; +total(): float }\nclass Customer @pos(360, 80) { +name: str }\nclass Invoice @pos(80, 300)\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": ""
+      },
+      "uml-pg-class-selection": {
+        "text": "Selected: Purchase"
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Class — Purchase\":\n  - heading \"Class — Purchase\" [level=2]\n  - button \"✕ Delete\"\n  - text: Name (id)\n  - textbox \"Name (id)\": Purchase\n  - text: Kind\n  - combobox \"Kind\":\n    - option \"Class\" [selected]\n    - option \"Abstract Class\"\n    - option \"Interface\"\n    - option \"Enum\"\n  - text: Stereotype (e.g. <<service>>)\n  - textbox \"Stereotype (e.g. <<service>>)\"\n  - text: Highlight color (#hex or color name)\n  - textbox \"Highlight color (#hex or color name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Members\":\n    - text: Members\n    - combobox \"Visibility\":\n      - option \"Unspecified\"\n      - option \"+ public\"\n      - option \"- private\" [selected]\n      - option \"# protected\"\n      - option \"~ package\"\n    - textbox \"Member text (member 1)\":\n      - /placeholder: \"name: type   or   method(args): type\"\n      - text: \"id: int\"\n    - button \"Delete member 1\": ✕\n    - checkbox \"abstract\"\n    - text: abstract\n    - checkbox \"static\"\n    - text: static\n    - combobox \"Visibility\":\n      - option \"Unspecified\"\n      - option \"+ public\" [selected]\n      - option \"- private\"\n      - option \"# protected\"\n      - option \"~ package\"\n    - textbox \"Member text (member 2)\":\n      - /placeholder: \"name: type   or   method(args): type\"\n      - text: \"total(): float\"\n    - button \"Delete member 2\": ✕\n    - checkbox \"abstract\"\n    - text: abstract\n    - checkbox \"static\"\n    - text: static\n    - button \"+ Add Member\"\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [
+      "Purchase"
+    ],
+    "focus": {
+      "tag": "rect",
+      "id": "",
+      "role": "button",
+      "name": "Element Purchase — Enter to select, arrows to nudge, Delete to remove",
+      "layoutId": "Purchase"
+    }
+  },
+  "afterUndo": {
+    "text": "@startuml\nclass Order @pos(80, 80) { -id: int; +total(): float }\nclass Customer @pos(360, 80) { +name: str }\nclass Invoice @pos(80, 300)\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Undone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Element — Purchase\":\n  - heading \"Element — Purchase\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": Purchase\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "afterRedo": {
+    "text": "@startuml\nclass Purchase @pos(80, 80) { -id: int; +total(): float }\nclass Customer @pos(360, 80) { +name: str }\nclass Invoice @pos(80, 300)\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Redone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Selected: Purchase"
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Class — Purchase\":\n  - heading \"Class — Purchase\" [level=2]\n  - button \"✕ Delete\"\n  - text: Name (id)\n  - textbox \"Name (id)\": Purchase\n  - text: Kind\n  - combobox \"Kind\":\n    - option \"Class\" [selected]\n    - option \"Abstract Class\"\n    - option \"Interface\"\n    - option \"Enum\"\n  - text: Stereotype (e.g. <<service>>)\n  - textbox \"Stereotype (e.g. <<service>>)\"\n  - text: Highlight color (#hex or color name)\n  - textbox \"Highlight color (#hex or color name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Members\":\n    - text: Members\n    - combobox \"Visibility\":\n      - option \"Unspecified\"\n      - option \"+ public\"\n      - option \"- private\" [selected]\n      - option \"# protected\"\n      - option \"~ package\"\n    - textbox \"Member text (member 1)\":\n      - /placeholder: \"name: type   or   method(args): type\"\n      - text: \"id: int\"\n    - button \"Delete member 1\": ✕\n    - checkbox \"abstract\"\n    - text: abstract\n    - checkbox \"static\"\n    - text: static\n    - combobox \"Visibility\":\n      - option \"Unspecified\"\n      - option \"+ public\" [selected]\n      - option \"- private\"\n      - option \"# protected\"\n      - option \"~ package\"\n    - textbox \"Member text (member 2)\":\n      - /placeholder: \"name: type   or   method(args): type\"\n      - text: \"total(): float\"\n    - button \"Delete member 2\": ✕\n    - checkbox \"abstract\"\n    - text: abstract\n    - checkbox \"static\"\n    - text: static\n    - button \"+ Add Member\"\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [
+      "Purchase"
+    ],
+    "focus": {
+      "tag": "rect",
+      "id": "",
+      "role": "button",
+      "name": "Element Purchase — Enter to select, arrows to nudge, Delete to remove",
+      "layoutId": "Purchase"
+    }
+  },
+  "operations": [
+    {
+      "type": "class",
+      "before": "@startuml\nclass Order @pos(80, 80) { -id: int; +total(): float }\nclass Customer @pos(360, 80) { +name: str }\nclass Invoice @pos(80, 300)\n@enduml",
+      "operation": {
+        "op": "element.rename",
+        "revision": "r89762cab:144",
+        "ref": "Order",
+        "text": "Purchase",
+        "part": "identifier",
+        "facts": {},
+        "undo": {
+          "key": null
+        }
+      },
+      "after": "@startuml\nclass Purchase @pos(80, 80) { -id: int; +total(): float }\nclass Customer @pos(360, 80) { +name: str }\nclass Invoice @pos(80, 300)\n@enduml"
+    }
+  ]
+}

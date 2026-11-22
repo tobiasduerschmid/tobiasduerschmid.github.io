@@ -5827,3 +5827,164 @@ user -> app: second()
     await expect(content).not.toContainText('Identifier');
   });
 });
+
+test.describe('nested deployment nodes in the visual editor', () => {
+  const NESTED_DEPLOYMENT = `@startuml
+node "Student laptop" as laptop <<device>> {
+  node "Web browser" as browser <<executionEnvironment>> {
+    component "Web app" as web
+  }
+}
+node "Campus cloud" as cloud <<executionEnvironment>> {
+  node "Kubernetes cluster" as k8s <<executionEnvironment>> {
+    node "API pod" as pod <<executionEnvironment>> {
+      component "Registration API" as api
+    }
+  }
+}
+web --> api : HTTPS
+@enduml`;
+  const NESTED_IDS = ['laptop', 'browser', 'web', 'cloud', 'k8s', 'pod', 'api'];
+
+  // Declarations and nesting, without the editor's saved coordinates.
+  async function deploymentStructure(page) {
+    return page.evaluate(() => {
+      const source = document.getElementById('uml-pg-input').value;
+      const text = window.UMLShared.extractLayoutMetadata(source).text.replace(/\s*@pos\([^)]*\)/g, '');
+      const model = window.UMLDeploymentDiagram.parse(text);
+      return {
+        text: text.trim(),
+        parents: Object.fromEntries(model.elements.map(element => [element.name, element.parentId]))
+      };
+    });
+  }
+
+  async function boxes(page) {
+    return page.evaluate((ids) => {
+      const svg = document.querySelector('#uml-pg-output svg');
+      return Object.fromEntries(ids.map(id => [id, window.UMLShared.renderedLayoutBox(svg, id)]));
+    }, NESTED_IDS);
+  }
+
+  // A container's centre is covered by the nodes nested in it, so grab its
+  // header, which only the container itself occupies.
+  async function dragNodeHeader(page, id, dx, dy) {
+    const hitbox = page.locator('.uml-pg-edit-hitbox[data-layout-id="' + id + '"]');
+    await hitbox.scrollIntoViewIfNeeded();
+    const grab = await hitbox.evaluate((el, delta) => {
+      const rect = el.getBoundingClientRect();
+      const matrix = el.getScreenCTM();
+      const point = { x: rect.left + rect.width / 2, y: rect.top + 12 };
+      const hit = document.elementFromPoint(point.x, point.y);
+      return { ...point, hitsTarget: hit === el, dx: matrix.a * delta.dx, dy: matrix.d * delta.dy };
+    }, { dx, dy });
+    expect(grab.hitsTarget, 'the header of ' + id + ' is its own drag handle').toBe(true);
+    await page.mouse.move(grab.x, grab.y);
+    await page.mouse.down();
+    await page.mouse.move(grab.x + grab.dx, grab.y + grab.dy, { steps: 6 });
+    await page.mouse.up();
+  }
+
+  async function openNestedDeployment(page) {
+    await openPlayground(page);
+    await selectDiagram(page, 'deployment');
+    await setUmlSource(page, NESTED_DEPLOYMENT);
+    await expect(page.locator('.uml-pg-edit-hitbox[data-layout-id="api"]')).toHaveCount(1);
+  }
+
+  test('the visual editor keeps nested node source intact after moving a top-level node', async ({ page }) => {
+    await openNestedDeployment(page);
+    const before = await deploymentStructure(page);
+    const start = await boxes(page);
+
+    await dragNodeHeader(page, 'cloud', 0, 120);
+    await expect(page.locator('#uml-pg-input')).toHaveValue(/@pos\(/);
+
+    expect(await deploymentStructure(page)).toEqual(before);
+    const moved = await boxes(page);
+    const dx = moved.cloud.x - start.cloud.x, dy = moved.cloud.y - start.cloud.y;
+    expect(Math.abs(dy), 'the top-level node moved').toBeGreaterThan(60);
+    for (const id of ['k8s', 'pod', 'api']) {
+      expect(moved[id].x - start[id].x, id + ' moves with its enclosing node').toBeCloseTo(dx, 0);
+      expect(moved[id].y - start[id].y, id + ' moves with its enclosing node').toBeCloseTo(dy, 0);
+    }
+    for (const id of ['laptop', 'browser', 'web']) {
+      expect(moved[id], id + ' stays where it was').toEqual(start[id]);
+    }
+  });
+
+  test('keyboard moves carry nested contents and stop at the border of a nested node', async ({ page }) => {
+    await openNestedDeployment(page);
+    const start = await boxes(page);
+
+    await page.locator('.uml-pg-edit-a11y-target[data-layout-id="cloud"]').focus();
+    await page.keyboard.press('ArrowRight');
+    await expect.poll(async () => (await boxes(page)).cloud.x).toBe(start.cloud.x + 10);
+    const moved = await boxes(page);
+    for (const id of ['k8s', 'pod', 'api']) expect(moved[id].x - start[id].x, id + ' moves with its node').toBe(10);
+
+    for (let step = 0; step < 6; step++) {
+      await page.locator('.uml-pg-edit-a11y-target[data-layout-id="api"]').focus();
+      await page.keyboard.press('ArrowDown');
+    }
+    await expect(page.locator('#uml-pg-tool-status')).toContainText(/nested node "API pod"/);
+    const after = await boxes(page);
+    expect(after.api.y + after.api.height, 'the component stays inside its nested node').toBeLessThanOrEqual(after.pod.y + after.pod.height);
+    expect((await deploymentStructure(page)).parents.api).toBe('pod');
+  });
+
+  test('adding node contents from the properties pane keeps nested node blocks where they were', async ({ page }) => {
+    await openNestedDeployment(page);
+    await page.locator('.uml-pg-edit-a11y-target[data-layout-id="k8s"]').focus();
+    await page.keyboard.press('Enter');
+    await page.locator('#uml-pg-props-content').getByRole('button', { name: '+ Component', exact: true }).click();
+    await expect(page.locator('#uml-pg-input')).toHaveValue([
+      '@startuml',
+      'node "Student laptop" as laptop <<device>> {',
+      '  node "Web browser" as browser <<executionEnvironment>> {',
+      '    component "Web app" as web',
+      '  }',
+      '}',
+      'node "Campus cloud" as cloud <<executionEnvironment>> {',
+      '  node "Kubernetes cluster" as k8s <<executionEnvironment>> {',
+      '    component Component',
+      '    node "API pod" as pod <<executionEnvironment>> {',
+      '      component "Registration API" as api',
+      '    }',
+      '  }',
+      '}',
+      'web --> api : HTTPS',
+      '@enduml'
+    ].join('\n'));
+  });
+
+  test('the visual editor refuses to drag an element out of or into a nested node and explains why', async ({ page }) => {
+    await openNestedDeployment(page);
+    const before = await page.locator('#uml-pg-input').inputValue();
+    const start = await boxes(page);
+
+    // Out of: the component leaves its nested pod.
+    await dragLocatorCenter(page, page.locator('.uml-pg-edit-hitbox[data-layout-id="api"]'), 0, 400, { svgUnits: true });
+    await expect(page.locator('#uml-pg-tool-status')).toContainText(/nested node/i);
+    await expect(page.locator('#uml-pg-tool-status')).toContainText(/source/i);
+    await expect(page.locator('#uml-pg-input')).toHaveValue(before);
+    expect((await boxes(page)).api).toEqual(start.api);
+
+    // Into: a top-level node dropped onto a nested node.
+    await page.locator('#uml-pg-tool-status').evaluate(el => { el.textContent = ''; });
+    const target = start.pod;
+    const laptop = start.laptop;
+    await dragNodeHeader(page, 'laptop',
+      target.x + target.width / 2 - (laptop.x + laptop.width / 2),
+      target.y + target.height / 2 - (laptop.y + laptop.height / 2));
+    await expect(page.locator('#uml-pg-tool-status')).toContainText(/nested node/i);
+    await expect(page.locator('#uml-pg-input')).toHaveValue(before);
+
+    // Moving a nested element within its own node is still allowed.
+    await dragLocatorCenter(page, page.locator('.uml-pg-edit-hitbox[data-layout-id="api"]'), 6, 0, { svgUnits: true });
+    await expect(page.locator('#uml-pg-input')).not.toHaveValue(before);
+    expect((await deploymentStructure(page)).parents).toEqual(
+      await page.evaluate((source) => Object.fromEntries(window.UMLDeploymentDiagram.parse(source).elements
+        .map(element => [element.name, element.parentId])), before));
+  });
+});

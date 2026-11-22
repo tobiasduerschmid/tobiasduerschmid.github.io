@@ -1,0 +1,174 @@
+{
+  "id": "sequence-fragment-end-row-deleted-leaves-an-unclosed-fragment",
+  "family": "sequence",
+  "type": "sequence",
+  "page": "/SEBook/tools/uml-editor",
+  "platform": {
+    "os": "darwin-arm64",
+    "browser": "chromium 145.0.7632.6"
+  },
+  "start": "@startuml\nactor user\nparticipant app\nuser -> app: login\nalt [valid]\n  app --> user: token\nelse [invalid]\n  app --> user: error\nend\nuser -> app: logout\n@enduml",
+  "steps": [
+    {
+      "do": "click",
+      "target": {
+        "text": "Advanced sequence rows",
+        "exact": false,
+        "within": {
+          "role": "region",
+          "name": "Diagram model editor"
+        }
+      }
+    },
+    {
+      "do": "click",
+      "target": {
+        "role": "button",
+        "name": "Delete fragment end 6"
+      }
+    }
+  ],
+  "after": {
+    "text": "@startuml\nactor user\nparticipant app\nuser -> app: login\nalt [valid]\n  app --> user: token\nelse [invalid]\n  app --> user: error\nuser -> app: logout\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Removed Fragment end."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "Draft diagnosticsYour draft is retained. These checks cover common notation problems, not every UML constraint.Line 5: alt is missing its closing end.",
+        "hidden": false
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": null,
+    "draft": null,
+    "selection": [],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "afterUndo": {
+    "text": "@startuml\nactor user\nparticipant app\nuser -> app: login\nalt [valid]\n  app --> user: token\nelse [invalid]\n  app --> user: error\nend\nuser -> app: logout\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Undone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": null,
+    "draft": null,
+    "selection": [],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "afterRedo": {
+    "text": "@startuml\nactor user\nparticipant app\nuser -> app: login\nalt [valid]\n  app --> user: token\nelse [invalid]\n  app --> user: error\nuser -> app: logout\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Redone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "Draft diagnosticsYour draft is retained. These checks cover common notation problems, not every UML constraint.Line 5: alt is missing its closing end.",
+        "hidden": false
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": null,
+    "draft": null,
+    "selection": [],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "operations": [
+    {
+      "type": "sequence",
+      "before": "@startuml\nactor user\nparticipant app\nuser -> app: login\nalt [valid]\n  app --> user: token\nelse [invalid]\n  app --> user: error\nend\nuser -> app: logout\n@enduml",
+      "operation": {
+        "op": "source.replaceLines",
+        "revision": "r4c34ab5a:158",
+        "range": {
+          "start": 8,
+          "end": 8
+        },
+        "lines": [],
+        "facts": {},
+        "undo": {
+          "key": null
+        }
+      },
+      "after": "@startuml\nactor user\nparticipant app\nuser -> app: login\nalt [valid]\n  app --> user: token\nelse [invalid]\n  app --> user: error\nuser -> app: logout\n@enduml"
+    }
+  ]
+}

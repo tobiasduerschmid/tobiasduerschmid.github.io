@@ -1,0 +1,524 @@
+{
+  "id": "class-nudge-burst-beyond-the-three-second-cap",
+  "family": "class",
+  "type": "class",
+  "page": "/SEBook/tools/uml-editor",
+  "platform": {
+    "os": "darwin-arm64",
+    "browser": "chromium 145.0.7632.6"
+  },
+  "start": "@startuml\nclass Order @pos(80, 80) { -id: int; +total(): float }\nclass Customer @pos(360, 80) { +name: str }\nclass Invoice @pos(80, 300)\n@enduml",
+  "steps": [
+    {
+      "do": "press",
+      "target": {
+        "role": "button",
+        "name": "Element Invoice — Enter to select, arrows to nudge, Delete to remove"
+      },
+      "key": "ArrowRight"
+    },
+    {
+      "do": "advance",
+      "ms": 500
+    },
+    {
+      "do": "press",
+      "target": {
+        "role": "button",
+        "name": "Element Invoice — Enter to select, arrows to nudge, Delete to remove"
+      },
+      "key": "ArrowRight"
+    },
+    {
+      "do": "advance",
+      "ms": 500
+    },
+    {
+      "do": "press",
+      "target": {
+        "role": "button",
+        "name": "Element Invoice — Enter to select, arrows to nudge, Delete to remove"
+      },
+      "key": "ArrowRight"
+    },
+    {
+      "do": "advance",
+      "ms": 500
+    },
+    {
+      "do": "press",
+      "target": {
+        "role": "button",
+        "name": "Element Invoice — Enter to select, arrows to nudge, Delete to remove"
+      },
+      "key": "ArrowRight"
+    },
+    {
+      "do": "advance",
+      "ms": 500
+    },
+    {
+      "do": "press",
+      "target": {
+        "role": "button",
+        "name": "Element Invoice — Enter to select, arrows to nudge, Delete to remove"
+      },
+      "key": "ArrowRight"
+    },
+    {
+      "do": "advance",
+      "ms": 500
+    },
+    {
+      "do": "press",
+      "target": {
+        "role": "button",
+        "name": "Element Invoice — Enter to select, arrows to nudge, Delete to remove"
+      },
+      "key": "ArrowRight"
+    },
+    {
+      "do": "advance",
+      "ms": 500
+    },
+    {
+      "do": "press",
+      "target": {
+        "role": "button",
+        "name": "Element Invoice — Enter to select, arrows to nudge, Delete to remove"
+      },
+      "key": "ArrowRight"
+    },
+    {
+      "do": "advance",
+      "ms": 500
+    },
+    {
+      "do": "press",
+      "target": {
+        "role": "button",
+        "name": "Element Invoice — Enter to select, arrows to nudge, Delete to remove"
+      },
+      "key": "ArrowRight"
+    }
+  ],
+  "after": {
+    "text": "@startuml\nclass Order @pos(30, 30) { -id: int; +total(): float }\nclass Customer @pos(310, 30) { +name: str }\nclass Invoice @pos(110, 250)\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": ""
+      },
+      "uml-pg-class-selection": {
+        "text": "Selected: Invoice"
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Class — Invoice\":\n  - heading \"Class — Invoice\" [level=2]\n  - button \"✕ Delete\"\n  - text: Name (id)\n  - textbox \"Name (id)\": Invoice\n  - text: Kind\n  - combobox \"Kind\":\n    - option \"Class\" [selected]\n    - option \"Abstract Class\"\n    - option \"Interface\"\n    - option \"Enum\"\n  - text: Stereotype (e.g. <<service>>)\n  - textbox \"Stereotype (e.g. <<service>>)\"\n  - text: Highlight color (#hex or color name)\n  - textbox \"Highlight color (#hex or color name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Members\":\n    - text: Members\n    - button \"+ Add Member\"\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [
+      "Invoice"
+    ],
+    "focus": {
+      "tag": "rect",
+      "id": "",
+      "role": "button",
+      "name": "Element Invoice — Enter to select, arrows to nudge, Delete to remove",
+      "layoutId": "Invoice"
+    }
+  },
+  "afterUndo": {
+    "text": "@startuml\nclass Order @pos(30, 30) { -id: int; +total(): float }\nclass Customer @pos(310, 30) { +name: str }\nclass Invoice @pos(90, 250)\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Undone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Selected: Invoice"
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Class — Invoice\":\n  - heading \"Class — Invoice\" [level=2]\n  - button \"✕ Delete\"\n  - text: Name (id)\n  - textbox \"Name (id)\": Invoice\n  - text: Kind\n  - combobox \"Kind\":\n    - option \"Class\" [selected]\n    - option \"Abstract Class\"\n    - option \"Interface\"\n    - option \"Enum\"\n  - text: Stereotype (e.g. <<service>>)\n  - textbox \"Stereotype (e.g. <<service>>)\"\n  - text: Highlight color (#hex or color name)\n  - textbox \"Highlight color (#hex or color name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Members\":\n    - text: Members\n    - button \"+ Add Member\"\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [
+      "Invoice"
+    ],
+    "focus": {
+      "tag": "rect",
+      "id": "",
+      "role": "button",
+      "name": "Element Invoice — Enter to select, arrows to nudge, Delete to remove",
+      "layoutId": "Invoice"
+    }
+  },
+  "afterRedo": {
+    "text": "@startuml\nclass Order @pos(30, 30) { -id: int; +total(): float }\nclass Customer @pos(310, 30) { +name: str }\nclass Invoice @pos(110, 250)\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Redone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Selected: Invoice"
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Class — Invoice\":\n  - heading \"Class — Invoice\" [level=2]\n  - button \"✕ Delete\"\n  - text: Name (id)\n  - textbox \"Name (id)\": Invoice\n  - text: Kind\n  - combobox \"Kind\":\n    - option \"Class\" [selected]\n    - option \"Abstract Class\"\n    - option \"Interface\"\n    - option \"Enum\"\n  - text: Stereotype (e.g. <<service>>)\n  - textbox \"Stereotype (e.g. <<service>>)\"\n  - text: Highlight color (#hex or color name)\n  - textbox \"Highlight color (#hex or color name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Members\":\n    - text: Members\n    - button \"+ Add Member\"\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [
+      "Invoice"
+    ],
+    "focus": {
+      "tag": "rect",
+      "id": "",
+      "role": "button",
+      "name": "Element Invoice — Enter to select, arrows to nudge, Delete to remove",
+      "layoutId": "Invoice"
+    }
+  },
+  "operations": [
+    {
+      "type": "class",
+      "before": "@startuml\nclass Order @pos(80, 80) { -id: int; +total(): float }\nclass Customer @pos(360, 80) { +name: str }\nclass Invoice @pos(80, 300)\n@enduml",
+      "operation": {
+        "op": "layout.set",
+        "revision": "r89762cab:144",
+        "positions": {
+          "Invoice": {
+            "x": 40.00000762939453,
+            "y": 250
+          }
+        },
+        "routes": [],
+        "facts": {
+          "positions": {
+            "Order": {
+              "x": 30.00000762939453,
+              "y": 30.000003814697266
+            },
+            "Customer": {
+              "x": 310,
+              "y": 30.000003814697266
+            },
+            "Invoice": {
+              "x": 30.00000762939453,
+              "y": 250
+            }
+          },
+          "shiftedRoutes": {}
+        },
+        "undo": {
+          "key": "nudge:Invoice"
+        }
+      },
+      "after": "@startuml\nclass Order @pos(30, 30) { -id: int; +total(): float }\nclass Customer @pos(310, 30) { +name: str }\nclass Invoice @pos(40, 250)\n@enduml"
+    },
+    {
+      "type": "class",
+      "before": "@startuml\nclass Order @pos(30, 30) { -id: int; +total(): float }\nclass Customer @pos(310, 30) { +name: str }\nclass Invoice @pos(40, 250)\n@enduml",
+      "operation": {
+        "op": "layout.set",
+        "revision": "r551d54e1:144",
+        "positions": {
+          "Invoice": {
+            "x": 50.000003814697266,
+            "y": 250
+          }
+        },
+        "routes": [],
+        "facts": {
+          "positions": {
+            "Order": {
+              "x": 30.00000762939453,
+              "y": 30.000003814697266
+            },
+            "Customer": {
+              "x": 310,
+              "y": 30.000003814697266
+            },
+            "Invoice": {
+              "x": 40.000003814697266,
+              "y": 250
+            }
+          },
+          "shiftedRoutes": {}
+        },
+        "undo": {
+          "key": "nudge:Invoice"
+        }
+      },
+      "after": "@startuml\nclass Order @pos(30, 30) { -id: int; +total(): float }\nclass Customer @pos(310, 30) { +name: str }\nclass Invoice @pos(50, 250)\n@enduml"
+    },
+    {
+      "type": "class",
+      "before": "@startuml\nclass Order @pos(30, 30) { -id: int; +total(): float }\nclass Customer @pos(310, 30) { +name: str }\nclass Invoice @pos(50, 250)\n@enduml",
+      "operation": {
+        "op": "layout.set",
+        "revision": "r06af7240:144",
+        "positions": {
+          "Invoice": {
+            "x": 60.000003814697266,
+            "y": 250
+          }
+        },
+        "routes": [],
+        "facts": {
+          "positions": {
+            "Order": {
+              "x": 30.00000762939453,
+              "y": 30.000003814697266
+            },
+            "Customer": {
+              "x": 310,
+              "y": 30.000003814697266
+            },
+            "Invoice": {
+              "x": 50.000003814697266,
+              "y": 250
+            }
+          },
+          "shiftedRoutes": {}
+        },
+        "undo": {
+          "key": "nudge:Invoice"
+        }
+      },
+      "after": "@startuml\nclass Order @pos(30, 30) { -id: int; +total(): float }\nclass Customer @pos(310, 30) { +name: str }\nclass Invoice @pos(60, 250)\n@enduml"
+    },
+    {
+      "type": "class",
+      "before": "@startuml\nclass Order @pos(30, 30) { -id: int; +total(): float }\nclass Customer @pos(310, 30) { +name: str }\nclass Invoice @pos(60, 250)\n@enduml",
+      "operation": {
+        "op": "layout.set",
+        "revision": "rd1f3acc7:144",
+        "positions": {
+          "Invoice": {
+            "x": 70.00000381469727,
+            "y": 250
+          }
+        },
+        "routes": [],
+        "facts": {
+          "positions": {
+            "Order": {
+              "x": 30.00000762939453,
+              "y": 30.000003814697266
+            },
+            "Customer": {
+              "x": 310,
+              "y": 30.000003814697266
+            },
+            "Invoice": {
+              "x": 60.000003814697266,
+              "y": 250
+            }
+          },
+          "shiftedRoutes": {}
+        },
+        "undo": {
+          "key": "nudge:Invoice"
+        }
+      },
+      "after": "@startuml\nclass Order @pos(30, 30) { -id: int; +total(): float }\nclass Customer @pos(310, 30) { +name: str }\nclass Invoice @pos(70, 250)\n@enduml"
+    },
+    {
+      "type": "class",
+      "before": "@startuml\nclass Order @pos(30, 30) { -id: int; +total(): float }\nclass Customer @pos(310, 30) { +name: str }\nclass Invoice @pos(70, 250)\n@enduml",
+      "operation": {
+        "op": "layout.set",
+        "revision": "rbbf04f6e:144",
+        "positions": {
+          "Invoice": {
+            "x": 80,
+            "y": 250
+          }
+        },
+        "routes": [],
+        "facts": {
+          "positions": {
+            "Order": {
+              "x": 30.00000762939453,
+              "y": 30.000003814697266
+            },
+            "Customer": {
+              "x": 310,
+              "y": 30.000003814697266
+            },
+            "Invoice": {
+              "x": 70,
+              "y": 250
+            }
+          },
+          "shiftedRoutes": {}
+        },
+        "undo": {
+          "key": "nudge:Invoice"
+        }
+      },
+      "after": "@startuml\nclass Order @pos(30, 30) { -id: int; +total(): float }\nclass Customer @pos(310, 30) { +name: str }\nclass Invoice @pos(80, 250)\n@enduml"
+    },
+    {
+      "type": "class",
+      "before": "@startuml\nclass Order @pos(30, 30) { -id: int; +total(): float }\nclass Customer @pos(310, 30) { +name: str }\nclass Invoice @pos(80, 250)\n@enduml",
+      "operation": {
+        "op": "layout.set",
+        "revision": "rcd846a5d:144",
+        "positions": {
+          "Invoice": {
+            "x": 90,
+            "y": 250
+          }
+        },
+        "routes": [],
+        "facts": {
+          "positions": {
+            "Order": {
+              "x": 30.00000762939453,
+              "y": 30.000003814697266
+            },
+            "Customer": {
+              "x": 310,
+              "y": 30.000003814697266
+            },
+            "Invoice": {
+              "x": 80,
+              "y": 250
+            }
+          },
+          "shiftedRoutes": {}
+        },
+        "undo": {
+          "key": "nudge:Invoice"
+        }
+      },
+      "after": "@startuml\nclass Order @pos(30, 30) { -id: int; +total(): float }\nclass Customer @pos(310, 30) { +name: str }\nclass Invoice @pos(90, 250)\n@enduml"
+    },
+    {
+      "type": "class",
+      "before": "@startuml\nclass Order @pos(30, 30) { -id: int; +total(): float }\nclass Customer @pos(310, 30) { +name: str }\nclass Invoice @pos(90, 250)\n@enduml",
+      "operation": {
+        "op": "layout.set",
+        "revision": "r9ce3a04c:144",
+        "positions": {
+          "Invoice": {
+            "x": 100,
+            "y": 250
+          }
+        },
+        "routes": [],
+        "facts": {
+          "positions": {
+            "Order": {
+              "x": 30.00000762939453,
+              "y": 30.000003814697266
+            },
+            "Customer": {
+              "x": 310,
+              "y": 30.000003814697266
+            },
+            "Invoice": {
+              "x": 90,
+              "y": 250
+            }
+          },
+          "shiftedRoutes": {}
+        },
+        "undo": {
+          "key": "nudge:Invoice"
+        }
+      },
+      "after": "@startuml\nclass Order @pos(30, 30) { -id: int; +total(): float }\nclass Customer @pos(310, 30) { +name: str }\nclass Invoice @pos(100, 250)\n@enduml"
+    },
+    {
+      "type": "class",
+      "before": "@startuml\nclass Order @pos(30, 30) { -id: int; +total(): float }\nclass Customer @pos(310, 30) { +name: str }\nclass Invoice @pos(100, 250)\n@enduml",
+      "operation": {
+        "op": "layout.set",
+        "revision": "r6dd2a46a:145",
+        "positions": {
+          "Invoice": {
+            "x": 109.99999237060547,
+            "y": 250
+          }
+        },
+        "routes": [],
+        "facts": {
+          "positions": {
+            "Order": {
+              "x": 30.00000762939453,
+              "y": 30.000003814697266
+            },
+            "Customer": {
+              "x": 310,
+              "y": 30.000003814697266
+            },
+            "Invoice": {
+              "x": 99.99999237060547,
+              "y": 250
+            }
+          },
+          "shiftedRoutes": {}
+        },
+        "undo": {
+          "key": "nudge:Invoice"
+        }
+      },
+      "after": "@startuml\nclass Order @pos(30, 30) { -id: int; +total(): float }\nclass Customer @pos(310, 30) { +name: str }\nclass Invoice @pos(110, 250)\n@enduml"
+    }
+  ]
+}

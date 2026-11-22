@@ -1,0 +1,178 @@
+{
+  "id": "deployment-press-outside-an-open-context-menu-closes-it",
+  "family": "structure",
+  "type": "deployment",
+  "page": "/SEBook/tools/uml-editor",
+  "platform": {
+    "os": "darwin-arm64",
+    "browser": "chromium 145.0.7632.6"
+  },
+  "start": "@startuml\nnode Cluster {\n  node WebServer {\n    component AppServer\n  }\n  node DBServer {\n    component PostgreSQL\n  }\n}\nnode Laptop {\n  component Browser\n  artifact app_ui\n}\nLaptop --> WebServer : HTTPS\nWebServer --> DBServer : JDBC\n@enduml",
+  "steps": [
+    {
+      "do": "pointerClick",
+      "point": {
+        "target": {
+          "css": ".uml-pg-edit-hitbox[data-layout-id=\"Laptop\"]"
+        },
+        "at": {
+          "x": 0.5,
+          "y": 0
+        },
+        "offset": {
+          "x": 0,
+          "y": 8
+        }
+      },
+      "button": "right"
+    },
+    {
+      "do": "advance",
+      "ms": 10
+    },
+    {
+      "do": "pointerClick",
+      "point": {
+        "target": {
+          "css": ".uml-pg-edit-hitbox[data-layout-id=\"Laptop\"]"
+        },
+        "at": {
+          "x": 0.1,
+          "y": 1
+        },
+        "offset": {
+          "x": 0,
+          "y": 25
+        }
+      }
+    },
+    {
+      "do": "press",
+      "key": "ArrowDown"
+    }
+  ],
+  "after": {
+    "text": "@startuml\nnode Cluster {\n  node WebServer {\n    component AppServer\n  }\n  node DBServer {\n    component PostgreSQL\n  }\n}\nnode Laptop {\n  component Browser\n  artifact app_ui\n}\nLaptop --> WebServer : HTTPS\nWebServer --> DBServer : JDBC\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": ""
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": null,
+    "draft": null,
+    "selection": [],
+    "focus": {
+      "tag": "div",
+      "id": "uml-pg-output",
+      "role": "region",
+      "name": "UML deployment diagram",
+      "layoutId": null
+    }
+  },
+  "afterUndo": {
+    "text": "@startuml\nnode Cluster {\n  node WebServer {\n    component AppServer\n  }\n  node DBServer {\n    component PostgreSQL\n  }\n}\nnode Laptop {\n  component Browser\n  artifact app_ui\n}\nLaptop --> WebServer : HTTPS\nWebServer --> DBServer : JDBC\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": ""
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": null,
+    "draft": null,
+    "selection": [],
+    "focus": {
+      "tag": "div",
+      "id": "uml-pg-output",
+      "role": "region",
+      "name": "UML deployment diagram",
+      "layoutId": null
+    }
+  },
+  "afterRedo": {
+    "text": "@startuml\nnode Cluster {\n  node WebServer {\n    component AppServer\n  }\n  node DBServer {\n    component PostgreSQL\n  }\n}\nnode Laptop {\n  component Browser\n  artifact app_ui\n}\nLaptop --> WebServer : HTTPS\nWebServer --> DBServer : JDBC\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": ""
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": null,
+    "draft": null,
+    "selection": [],
+    "focus": {
+      "tag": "div",
+      "id": "uml-pg-output",
+      "role": "region",
+      "name": "UML deployment diagram",
+      "layoutId": null
+    }
+  },
+  "operations": []
+}

@@ -1,0 +1,186 @@
+{
+  "id": "sub-state-renamed-in-the-composite-properties",
+  "family": "behaviour",
+  "type": "state",
+  "page": "/SEBook/tools/uml-editor",
+  "platform": {
+    "os": "darwin-arm64",
+    "browser": "chromium 145.0.7632.6"
+  },
+  "start": "@startuml\nstate Active {\n  state Waiting\n  state Working {\n    state Step1\n    state Step2\n    Step1 --> Step2 : next\n  }\n  [*] --> Waiting\n  Waiting --> Working : go\n}\n[*] --> Active\n@enduml",
+  "steps": [
+    {
+      "do": "press",
+      "target": {
+        "role": "button",
+        "name": "Element Active — Enter to select, arrows to nudge, Delete to remove"
+      },
+      "key": "Enter"
+    },
+    {
+      "do": "fill",
+      "target": {
+        "label": "Sub-state 1 name",
+        "within": {
+          "css": "#uml-pg-props-content"
+        }
+      },
+      "value": "Pending"
+    },
+    {
+      "do": "press",
+      "target": {
+        "label": "Sub-state 1 name",
+        "within": {
+          "css": "#uml-pg-props-content"
+        }
+      },
+      "key": "Enter"
+    }
+  ],
+  "after": {
+    "text": "@startuml\nstate Active {\n  state Pending\n  state Working {\n    state Step1\n    state Step2\n    Step1 --> Step2 : next\n  }\n  [*] --> Pending\n  Pending --> Working : go\n}\n[*] --> Active\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": ""
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"State — Pending\":\n  - heading \"State — Pending\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": Pending\n  - text: Stereotype (e.g. <<choice>>)\n  - textbox \"Stereotype (e.g. <<choice>>)\"\n  - text: Highlight color (#hex or name)\n  - textbox \"Highlight color (#hex or name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Sub-states\":\n    - text: Sub-states\n    - button \"+ Add sub-state\"\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [
+      "Pending"
+    ],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "afterUndo": {
+    "text": "@startuml\nstate Active {\n  state Waiting\n  state Working {\n    state Step1\n    state Step2\n    Step1 --> Step2 : next\n  }\n  [*] --> Waiting\n  Waiting --> Working : go\n}\n[*] --> Active\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Undone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Element — Pending\":\n  - heading \"Element — Pending\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": Pending\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "afterRedo": {
+    "text": "@startuml\nstate Active {\n  state Pending\n  state Working {\n    state Step1\n    state Step2\n    Step1 --> Step2 : next\n  }\n  [*] --> Pending\n  Pending --> Working : go\n}\n[*] --> Active\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Redone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"State — Pending\":\n  - heading \"State — Pending\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": Pending\n  - text: Stereotype (e.g. <<choice>>)\n  - textbox \"Stereotype (e.g. <<choice>>)\"\n  - text: Highlight color (#hex or name)\n  - textbox \"Highlight color (#hex or name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Sub-states\":\n    - text: Sub-states\n    - button \"+ Add sub-state\"\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [
+      "Pending"
+    ],
+    "focus": {
+      "tag": "rect",
+      "id": "",
+      "role": "button",
+      "name": "Element Pending — Enter to select, arrows to nudge, Delete to remove",
+      "layoutId": "Pending"
+    }
+  },
+  "operations": [
+    {
+      "type": "state",
+      "before": "@startuml\nstate Active {\n  state Waiting\n  state Working {\n    state Step1\n    state Step2\n    Step1 --> Step2 : next\n  }\n  [*] --> Waiting\n  Waiting --> Working : go\n}\n[*] --> Active\n@enduml",
+      "operation": {
+        "op": "element.rename",
+        "revision": "r7cfa9a9b:191",
+        "ref": "Waiting",
+        "text": "Pending",
+        "part": "identifier",
+        "facts": {},
+        "undo": {
+          "key": null
+        }
+      },
+      "after": "@startuml\nstate Active {\n  state Pending\n  state Working {\n    state Step1\n    state Step2\n    Step1 --> Step2 : next\n  }\n  [*] --> Pending\n  Pending --> Working : go\n}\n[*] --> Active\n@enduml"
+    }
+  ]
+}

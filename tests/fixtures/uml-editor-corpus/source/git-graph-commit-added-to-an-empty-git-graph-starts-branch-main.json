@@ -1,0 +1,175 @@
+{
+  "id": "git-graph-commit-added-to-an-empty-git-graph-starts-branch-main",
+  "family": "source",
+  "type": "gitgraph",
+  "page": "/SEBook/tools/uml-playground",
+  "platform": {
+    "os": "darwin-arm64",
+    "browser": "chromium 145.0.7632.6"
+  },
+  "start": "@startuml\n@enduml",
+  "steps": [
+    {
+      "do": "click",
+      "target": {
+        "text": "Git graph model (",
+        "exact": false
+      }
+    },
+    {
+      "do": "click",
+      "target": {
+        "role": "button",
+        "name": "+ Commit"
+      }
+    }
+  ],
+  "after": {
+    "text": "@startuml\nbranch main:\n  C \"Commit message\"\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Added commit \"C\" to main."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": "✓ Saved"
+      }
+    },
+    "properties": null,
+    "draft": "@startuml\nbranch main:\n  C \"Commit message\"\n@enduml",
+    "selection": [],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "afterUndo": {
+    "text": "@startuml\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "No diagram produced."
+      },
+      "uml-pg-tool-status": {
+        "text": "Undone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": null,
+    "draft": "@startuml\nbranch main:\n  C \"Commit message\"\n@enduml",
+    "selection": [],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "afterRedo": {
+    "text": "@startuml\nbranch main:\n  C \"Commit message\"\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Redone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": "✓ Saved"
+      }
+    },
+    "properties": "- region \"Element — C\":\n  - heading \"Element — C\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": C\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.",
+    "draft": "@startuml\nbranch main:\n  C \"Commit message\"\n@enduml",
+    "selection": [
+      "C"
+    ],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "operations": [
+    {
+      "type": "gitgraph",
+      "before": "@startuml\n@enduml",
+      "operation": {
+        "op": "source.insertLines",
+        "revision": "r4985792e:17",
+        "lines": [
+          "branch main:",
+          "  C \"Commit message\""
+        ],
+        "at": {
+          "beforeLine": 1
+        },
+        "frame": true,
+        "facts": {},
+        "undo": {
+          "key": "gitgraph-add-commit"
+        }
+      },
+      "after": "@startuml\nbranch main:\n  C \"Commit message\"\n@enduml"
+    }
+  ]
+}

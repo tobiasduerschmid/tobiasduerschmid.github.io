@@ -1,0 +1,187 @@
+{
+  "id": "system-boundary-that-declares-a-use-case-duplicated-from-its-context-menu",
+  "family": "behaviour",
+  "type": "usecase",
+  "page": "/SEBook/tools/uml-editor",
+  "platform": {
+    "os": "darwin-arm64",
+    "browser": "chromium 145.0.7632.6"
+  },
+  "start": "@startuml\nactor Customer\nusecase \"Place Order\" as UC1\nrectangle \"Online Shop\" {\n  usecase \"Pay\" as UC3\n  UC1\n}\nCustomer -- UC1\nUC1 ..> UC3 : <<include>>\n@enduml",
+  "steps": [
+    {
+      "do": "pointerClick",
+      "point": {
+        "target": {
+          "role": "button",
+          "name": "Element Online Shop — Enter to select, arrows to nudge, Delete to remove"
+        },
+        "at": {
+          "x": 0.05,
+          "y": 0.05
+        }
+      },
+      "button": "right"
+    },
+    {
+      "do": "click",
+      "target": {
+        "role": "menuitem",
+        "name": "Duplicate"
+      }
+    }
+  ],
+  "after": {
+    "text": "@startuml\nactor Customer\nusecase \"Place Order\" as UC1\nrectangle \"Online Shop\" {\n  usecase \"Pay\" as UC3\n  UC1\n}\nCustomer -- UC1\nUC1 ..> UC3 : <<include>>\nrectangle OnlineShop_copy {\n  usecase \"Pay\" as UC32\n  UC1\n}\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": ""
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"System Boundary — OnlineShop_copy\":\n  - heading \"System Boundary — OnlineShop_copy\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": OnlineShop_copy\n  - text: Display label\n  - textbox \"Display label\": OnlineShop_copy\n  - group \"Use cases in this system\":\n    - text: Use cases in this system\n    - checkbox \"Include Place Order\"\n    - text: Include Place Order\n    - checkbox \"Include Pay (UC3)\"\n    - text: Include Pay (UC3)\n    - checkbox \"Include Pay (UC32)\"\n    - text: Include Pay (UC32)\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "afterUndo": {
+    "text": "@startuml\nactor Customer\nusecase \"Place Order\" as UC1\nrectangle \"Online Shop\" {\n  usecase \"Pay\" as UC3\n  UC1\n}\nCustomer -- UC1\nUC1 ..> UC3 : <<include>>\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Undone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Element — OnlineShop_copy\":\n  - heading \"Element — OnlineShop_copy\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": OnlineShop_copy\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "afterRedo": {
+    "text": "@startuml\nactor Customer\nusecase \"Place Order\" as UC1\nrectangle \"Online Shop\" {\n  usecase \"Pay\" as UC3\n  UC1\n}\nCustomer -- UC1\nUC1 ..> UC3 : <<include>>\nrectangle OnlineShop_copy {\n  usecase \"Pay\" as UC32\n  UC1\n}\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Redone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"System Boundary — OnlineShop_copy\":\n  - heading \"System Boundary — OnlineShop_copy\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": OnlineShop_copy\n  - text: Display label\n  - textbox \"Display label\": OnlineShop_copy\n  - group \"Use cases in this system\":\n    - text: Use cases in this system\n    - checkbox \"Include Place Order\"\n    - text: Include Place Order\n    - checkbox \"Include Pay (UC3)\"\n    - text: Include Pay (UC3)\n    - checkbox \"Include Pay (UC32)\"\n    - text: Include Pay (UC32)\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "operations": [
+    {
+      "type": "usecase",
+      "before": "@startuml\nactor Customer\nusecase \"Place Order\" as UC1\nrectangle \"Online Shop\" {\n  usecase \"Pay\" as UC3\n  UC1\n}\nCustomer -- UC1\nUC1 ..> UC3 : <<include>>\n@enduml",
+      "operation": {
+        "op": "element.duplicate",
+        "revision": "r8e4c44b0:160",
+        "refs": [
+          "Online Shop"
+        ],
+        "offset": {
+          "x": 30,
+          "y": 30
+        },
+        "scope": "element",
+        "facts": {
+          "positions": {
+            "Online Shop": {
+              "x": 134,
+              "y": 60
+            }
+          }
+        },
+        "undo": {
+          "key": null
+        }
+      },
+      "after": "@startuml\nactor Customer\nusecase \"Place Order\" as UC1\nrectangle \"Online Shop\" {\n  usecase \"Pay\" as UC3\n  UC1\n}\nCustomer -- UC1\nUC1 ..> UC3 : <<include>>\nrectangle OnlineShop_copy {\n  usecase \"Pay\" as UC32\n  UC1\n}\n@enduml"
+    }
+  ]
+}

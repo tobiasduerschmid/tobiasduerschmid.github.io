@@ -1,0 +1,216 @@
+{
+  "id": "deployment-pinned-node-reset-to-its-automatic-position",
+  "family": "structure",
+  "type": "deployment",
+  "page": "/SEBook/tools/uml-editor",
+  "platform": {
+    "os": "darwin-arm64",
+    "browser": "chromium 145.0.7632.6"
+  },
+  "start": "@startuml\nnode Cluster {\n  node WebServer {\n    component AppServer\n  }\n  node DBServer {\n    component PostgreSQL\n  }\n}\nnode Laptop @pos(400, 40) {\n  component Browser @pos(420, 96)\n  artifact app_ui @pos(420, 158)\n}\nLaptop --> WebServer : HTTPS\nWebServer --> DBServer : JDBC\n@enduml",
+  "steps": [
+    {
+      "do": "pointerClick",
+      "point": {
+        "target": {
+          "css": ".uml-pg-edit-hitbox[data-layout-id=\"Laptop\"]"
+        },
+        "at": {
+          "x": 0.5,
+          "y": 0
+        },
+        "offset": {
+          "x": 0,
+          "y": 8
+        }
+      }
+    },
+    {
+      "do": "click",
+      "target": {
+        "role": "button",
+        "name": "Reset Selected"
+      }
+    }
+  ],
+  "after": {
+    "text": "@startuml\nnode Cluster @pos(-42, 271) {\n  node WebServer @pos(-6, 339) {\n    component AppServer @pos(14, 395)\n  }\n  node DBServer @pos(-6, 549) {\n    component PostgreSQL @pos(14, 605)\n  }\n}\nnode Laptop @pos(0, 0) {\n  component Browser @pos(420, 96)\n  artifact app_ui @pos(420, 158)\n}\nLaptop --> WebServer : HTTPS\nWebServer --> DBServer : JDBC\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": ""
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": null,
+    "draft": null,
+    "selection": [],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "afterUndo": {
+    "text": "@startuml\nnode Cluster {\n  node WebServer {\n    component AppServer\n  }\n  node DBServer {\n    component PostgreSQL\n  }\n}\nnode Laptop @pos(400, 40) {\n  component Browser @pos(420, 96)\n  artifact app_ui @pos(420, 158)\n}\nLaptop --> WebServer : HTTPS\nWebServer --> DBServer : JDBC\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Undone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": null,
+    "draft": null,
+    "selection": [],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "afterRedo": {
+    "text": "@startuml\nnode Cluster @pos(-42, 271) {\n  node WebServer @pos(-6, 339) {\n    component AppServer @pos(14, 395)\n  }\n  node DBServer @pos(-6, 549) {\n    component PostgreSQL @pos(14, 605)\n  }\n}\nnode Laptop @pos(0, 0) {\n  component Browser @pos(420, 96)\n  artifact app_ui @pos(420, 158)\n}\nLaptop --> WebServer : HTTPS\nWebServer --> DBServer : JDBC\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Redone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": null,
+    "draft": null,
+    "selection": [],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "operations": [
+    {
+      "type": "deployment",
+      "before": "@startuml\nnode Cluster {\n  node WebServer {\n    component AppServer\n  }\n  node DBServer {\n    component PostgreSQL\n  }\n}\nnode Laptop @pos(400, 40) {\n  component Browser @pos(420, 96)\n  artifact app_ui @pos(420, 158)\n}\nLaptop --> WebServer : HTTPS\nWebServer --> DBServer : JDBC\n@enduml",
+      "operation": {
+        "op": "layout.reset",
+        "revision": "rcf37f1a8:284",
+        "target": {
+          "element": "Laptop"
+        },
+        "facts": {
+          "positions": {
+            "Cluster": {
+              "x": -42,
+              "y": 271
+            },
+            "WebServer": {
+              "x": -6,
+              "y": 339
+            },
+            "AppServer": {
+              "x": 14,
+              "y": 395
+            },
+            "DBServer": {
+              "x": -6,
+              "y": 549
+            },
+            "PostgreSQL": {
+              "x": 14,
+              "y": 605
+            },
+            "Laptop": {
+              "x": 400,
+              "y": 40
+            },
+            "Browser": {
+              "x": 420,
+              "y": 96
+            },
+            "app_ui": {
+              "x": 420,
+              "y": 158
+            }
+          },
+          "automatic": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        "undo": {
+          "key": null
+        }
+      },
+      "after": "@startuml\nnode Cluster @pos(-42, 271) {\n  node WebServer @pos(-6, 339) {\n    component AppServer @pos(14, 395)\n  }\n  node DBServer @pos(-6, 549) {\n    component PostgreSQL @pos(14, 605)\n  }\n}\nnode Laptop @pos(0, 0) {\n  component Browser @pos(420, 96)\n  artifact app_ui @pos(420, 158)\n}\nLaptop --> WebServer : HTTPS\nWebServer --> DBServer : JDBC\n@enduml"
+    }
+  ]
+}

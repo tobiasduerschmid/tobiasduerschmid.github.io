@@ -1,0 +1,184 @@
+{
+  "id": "class-nudged-beside-an-inline-pos-and-a-layout-block",
+  "family": "class",
+  "type": "class",
+  "page": "/SEBook/tools/uml-editor",
+  "platform": {
+    "os": "darwin-arm64",
+    "browser": "chromium 145.0.7632.6"
+  },
+  "start": "@startuml\n@layout schema=1 renderer=\"archuml-visual-editor\"\nnode \"Customer\" x=360 y=80\n@endlayout\nclass Order @pos(80, 80)\nclass Customer\nOrder --> Customer\n@enduml",
+  "steps": [
+    {
+      "do": "press",
+      "target": {
+        "role": "button",
+        "name": "Element Order — Enter to select, arrows to nudge, Delete to remove"
+      },
+      "key": "ArrowDown"
+    }
+  ],
+  "after": {
+    "text": "@startuml\nclass Order @pos(30, 69)\nclass Customer @pos(310, 59)\nOrder --> Customer\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": ""
+      },
+      "uml-pg-class-selection": {
+        "text": "Selected: Order"
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Class — Order\":\n  - heading \"Class — Order\" [level=2]\n  - button \"✕ Delete\"\n  - text: Name (id)\n  - textbox \"Name (id)\": Order\n  - text: Kind\n  - combobox \"Kind\":\n    - option \"Class\" [selected]\n    - option \"Abstract Class\"\n    - option \"Interface\"\n    - option \"Enum\"\n  - text: Stereotype (e.g. <<service>>)\n  - textbox \"Stereotype (e.g. <<service>>)\"\n  - text: Highlight color (#hex or color name)\n  - textbox \"Highlight color (#hex or color name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Members\":\n    - text: Members\n    - button \"+ Add Member\"\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [
+      "Order"
+    ],
+    "focus": {
+      "tag": "rect",
+      "id": "",
+      "role": "button",
+      "name": "Element Order — Enter to select, arrows to nudge, Delete to remove",
+      "layoutId": "Order"
+    }
+  },
+  "afterUndo": {
+    "text": "@startuml\n@layout schema=1 renderer=\"archuml-visual-editor\"\nnode \"Customer\" x=360 y=80\n@endlayout\nclass Order @pos(80, 80)\nclass Customer\nOrder --> Customer\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Undone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Selected: Order"
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Class — Order\":\n  - heading \"Class — Order\" [level=2]\n  - button \"✕ Delete\"\n  - text: Name (id)\n  - textbox \"Name (id)\": Order\n  - text: Kind\n  - combobox \"Kind\":\n    - option \"Class\" [selected]\n    - option \"Abstract Class\"\n    - option \"Interface\"\n    - option \"Enum\"\n  - text: Stereotype (e.g. <<service>>)\n  - textbox \"Stereotype (e.g. <<service>>)\"\n  - text: Highlight color (#hex or color name)\n  - textbox \"Highlight color (#hex or color name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Members\":\n    - text: Members\n    - button \"+ Add Member\"\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [
+      "Order"
+    ],
+    "focus": {
+      "tag": "rect",
+      "id": "",
+      "role": "button",
+      "name": "Element Order — Enter to select, arrows to nudge, Delete to remove",
+      "layoutId": "Order"
+    }
+  },
+  "afterRedo": {
+    "text": "@startuml\nclass Order @pos(30, 69)\nclass Customer @pos(310, 59)\nOrder --> Customer\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Redone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Selected: Order"
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Class — Order\":\n  - heading \"Class — Order\" [level=2]\n  - button \"✕ Delete\"\n  - text: Name (id)\n  - textbox \"Name (id)\": Order\n  - text: Kind\n  - combobox \"Kind\":\n    - option \"Class\" [selected]\n    - option \"Abstract Class\"\n    - option \"Interface\"\n    - option \"Enum\"\n  - text: Stereotype (e.g. <<service>>)\n  - textbox \"Stereotype (e.g. <<service>>)\"\n  - text: Highlight color (#hex or color name)\n  - textbox \"Highlight color (#hex or color name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Members\":\n    - text: Members\n    - button \"+ Add Member\"\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [
+      "Order"
+    ],
+    "focus": {
+      "tag": "rect",
+      "id": "",
+      "role": "button",
+      "name": "Element Order — Enter to select, arrows to nudge, Delete to remove",
+      "layoutId": "Order"
+    }
+  },
+  "operations": [
+    {
+      "type": "class",
+      "before": "@startuml\n@layout schema=1 renderer=\"archuml-visual-editor\"\nnode \"Customer\" x=360 y=80\n@endlayout\nclass Order @pos(80, 80)\nclass Customer\nOrder --> Customer\n@enduml",
+      "operation": {
+        "op": "layout.set",
+        "revision": "rd893c248:164",
+        "positions": {
+          "Order": {
+            "x": 30.000019073486328,
+            "y": 69
+          }
+        },
+        "routes": [],
+        "facts": {
+          "positions": {
+            "Order": {
+              "x": 30.000019073486328,
+              "y": 59
+            },
+            "Customer": {
+              "x": 310,
+              "y": 59
+            }
+          },
+          "shiftedRoutes": {}
+        },
+        "undo": {
+          "key": "nudge:Order"
+        }
+      },
+      "after": "@startuml\nclass Order @pos(30, 69)\nclass Customer @pos(310, 59)\nOrder --> Customer\n@enduml"
+    }
+  ]
+}

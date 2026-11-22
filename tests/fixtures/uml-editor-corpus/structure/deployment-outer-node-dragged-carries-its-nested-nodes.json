@@ -1,0 +1,254 @@
+{
+  "id": "deployment-outer-node-dragged-carries-its-nested-nodes",
+  "family": "structure",
+  "type": "deployment",
+  "page": "/SEBook/tools/uml-editor",
+  "platform": {
+    "os": "darwin-arm64",
+    "browser": "chromium 145.0.7632.6"
+  },
+  "start": "@startuml\nnode Cluster {\n  node WebServer {\n    component AppServer\n  }\n  node DBServer {\n    component PostgreSQL\n  }\n}\nnode Laptop {\n  component Browser\n  artifact app_ui\n}\nLaptop --> WebServer : HTTPS\nWebServer --> DBServer : JDBC\n@enduml",
+  "steps": [
+    {
+      "do": "drag",
+      "from": {
+        "target": {
+          "css": ".uml-pg-edit-hitbox[data-layout-id=\"Cluster\"]"
+        },
+        "at": {
+          "x": 0.5,
+          "y": 0
+        },
+        "offset": {
+          "x": 0,
+          "y": 8
+        }
+      },
+      "to": {
+        "target": {
+          "css": ".uml-pg-edit-hitbox[data-layout-id=\"Cluster\"]"
+        },
+        "at": {
+          "x": 0.5,
+          "y": 0
+        },
+        "offset": {
+          "x": 50,
+          "y": 28
+        }
+      }
+    }
+  ],
+  "after": {
+    "text": "@startuml\nnode Cluster @pos(10, 290) {\n  node WebServer @pos(46, 358) {\n    component AppServer @pos(66, 414)\n  }\n  node DBServer @pos(46, 568) {\n    component PostgreSQL @pos(66, 624)\n  }\n}\nnode Laptop @pos(0, 0) {\n  component Browser @pos(20, 56)\n  artifact app_ui @pos(20, 118)\n}\nLaptop --> WebServer : HTTPS\nWebServer --> DBServer : JDBC\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": ""
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Node — Cluster\":\n  - heading \"Node — Cluster\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": Cluster\n  - text: Stereotype (e.g. <<choice>>)\n  - textbox \"Stereotype (e.g. <<choice>>)\"\n  - text: Highlight color (#hex or name)\n  - textbox \"Highlight color (#hex or name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Node contents\":\n    - text: Node contents\n    - button \"+ Component\"\n    - button \"+ Artifact\"\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [
+      "Cluster"
+    ],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "afterUndo": {
+    "text": "@startuml\nnode Cluster {\n  node WebServer {\n    component AppServer\n  }\n  node DBServer {\n    component PostgreSQL\n  }\n}\nnode Laptop {\n  component Browser\n  artifact app_ui\n}\nLaptop --> WebServer : HTTPS\nWebServer --> DBServer : JDBC\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Undone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Node — Cluster\":\n  - heading \"Node — Cluster\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": Cluster\n  - text: Stereotype (e.g. <<choice>>)\n  - textbox \"Stereotype (e.g. <<choice>>)\"\n  - text: Highlight color (#hex or name)\n  - textbox \"Highlight color (#hex or name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Node contents\":\n    - text: Node contents\n    - button \"+ Component\"\n    - button \"+ Artifact\"\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [
+      "Cluster"
+    ],
+    "focus": {
+      "tag": "rect",
+      "id": "",
+      "role": "button",
+      "name": "Element Cluster — Enter to select, arrows to nudge, Delete to remove",
+      "layoutId": "Cluster"
+    }
+  },
+  "afterRedo": {
+    "text": "@startuml\nnode Cluster @pos(10, 290) {\n  node WebServer @pos(46, 358) {\n    component AppServer @pos(66, 414)\n  }\n  node DBServer @pos(46, 568) {\n    component PostgreSQL @pos(66, 624)\n  }\n}\nnode Laptop @pos(0, 0) {\n  component Browser @pos(20, 56)\n  artifact app_ui @pos(20, 118)\n}\nLaptop --> WebServer : HTTPS\nWebServer --> DBServer : JDBC\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Redone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Node — Cluster\":\n  - heading \"Node — Cluster\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": Cluster\n  - text: Stereotype (e.g. <<choice>>)\n  - textbox \"Stereotype (e.g. <<choice>>)\"\n  - text: Highlight color (#hex or name)\n  - textbox \"Highlight color (#hex or name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Node contents\":\n    - text: Node contents\n    - button \"+ Component\"\n    - button \"+ Artifact\"\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [
+      "Cluster"
+    ],
+    "focus": {
+      "tag": "rect",
+      "id": "",
+      "role": "button",
+      "name": "Element Cluster — Enter to select, arrows to nudge, Delete to remove",
+      "layoutId": "Cluster"
+    }
+  },
+  "operations": [
+    {
+      "type": "deployment",
+      "before": "@startuml\nnode Cluster {\n  node WebServer {\n    component AppServer\n  }\n  node DBServer {\n    component PostgreSQL\n  }\n}\nnode Laptop {\n  component Browser\n  artifact app_ui\n}\nLaptop --> WebServer : HTTPS\nWebServer --> DBServer : JDBC\n@enduml",
+      "operation": {
+        "op": "layout.set",
+        "revision": "r31c27202:241",
+        "positions": {
+          "Cluster": {
+            "x": 10,
+            "y": 290
+          }
+        },
+        "routes": [],
+        "facts": {
+          "positions": {
+            "Cluster": {
+              "x": -42,
+              "y": 271
+            },
+            "WebServer": {
+              "x": -6,
+              "y": 339
+            },
+            "AppServer": {
+              "x": 14,
+              "y": 395
+            },
+            "DBServer": {
+              "x": -6,
+              "y": 549
+            },
+            "PostgreSQL": {
+              "x": 14,
+              "y": 605
+            },
+            "Laptop": {
+              "x": 0,
+              "y": 0
+            },
+            "Browser": {
+              "x": 20,
+              "y": 56
+            },
+            "app_ui": {
+              "x": 20,
+              "y": 118
+            }
+          },
+          "shiftedRoutes": {},
+          "nesting": [
+            {
+              "id": "Cluster",
+              "insideParent": null,
+              "nestedNodeAtCentre": null
+            }
+          ],
+          "carried": {
+            "WebServer": {
+              "x": 46,
+              "y": 358
+            },
+            "AppServer": {
+              "x": 66,
+              "y": 414
+            },
+            "DBServer": {
+              "x": 46,
+              "y": 568
+            },
+            "PostgreSQL": {
+              "x": 66,
+              "y": 624
+            }
+          }
+        },
+        "undo": {
+          "key": "drag:elt:Cluster"
+        }
+      },
+      "after": "@startuml\nnode Cluster @pos(10, 290) {\n  node WebServer @pos(46, 358) {\n    component AppServer @pos(66, 414)\n  }\n  node DBServer @pos(46, 568) {\n    component PostgreSQL @pos(66, 624)\n  }\n}\nnode Laptop @pos(0, 0) {\n  component Browser @pos(20, 56)\n  artifact app_ui @pos(20, 118)\n}\nLaptop --> WebServer : HTTPS\nWebServer --> DBServer : JDBC\n@enduml"
+    }
+  ]
+}

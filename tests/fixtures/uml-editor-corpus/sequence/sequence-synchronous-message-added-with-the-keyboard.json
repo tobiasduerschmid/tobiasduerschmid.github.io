@@ -1,0 +1,186 @@
+{
+  "id": "sequence-synchronous-message-added-with-the-keyboard",
+  "family": "sequence",
+  "type": "sequence",
+  "page": "/SEBook/tools/uml-editor",
+  "platform": {
+    "os": "darwin-arm64",
+    "browser": "chromium 145.0.7632.6"
+  },
+  "start": "@startuml\nactor user\nparticipant app\nparticipant db\nuser -> app: login\napp -> db: query\ndb --> app: rows\napp --> user: ok\n@enduml",
+  "steps": [
+    {
+      "do": "click",
+      "target": {
+        "role": "button",
+        "name": "Add relation: Synchronous"
+      }
+    },
+    {
+      "do": "press",
+      "target": {
+        "role": "button",
+        "name": "Element user —",
+        "exact": false
+      },
+      "key": "Enter"
+    },
+    {
+      "do": "press",
+      "target": {
+        "role": "button",
+        "name": "Element db —",
+        "exact": false
+      },
+      "key": "Enter"
+    }
+  ],
+  "after": {
+    "text": "@startuml\nactor user\nparticipant app\nparticipant db\nuser -> app: login\napp -> db: query\ndb --> app: rows\napp --> user: ok\nuser -> db : message()\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Connected \"user\" to \"db\". Edit the selected relation in Properties."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Relation — user → db\":\n  - heading \"Relation — user → db\" [level=2]\n  - button \"✕ Delete\"\n  - text: Type\n  - combobox \"Type\":\n    - option \"Synchronous\" [selected]\n    - option \"Asynchronous\"\n    - option \"Return\"\n    - option \"Create\"\n    - option \"Lost\"\n    - option \"Found\"\n  - text: Source endpoint\n  - combobox \"Source endpoint\":\n    - option \"user\" [selected]\n    - option \"app\"\n    - option \"db\"\n  - text: Target endpoint\n  - combobox \"Target endpoint\":\n    - option \"user\"\n    - option \"app\"\n    - option \"db\" [selected]\n  - text: Label\n  - textbox \"Label\": message()\n  - button \"Invert direction\"\n  - group \"Message order\":\n    - text: Message order\n    - button \"Move earlier\"\n    - button \"Move later\"\n  - paragraph: Drag a message line up or down to reorder it, or press Delete to remove it.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [
+      "seqmsg:8"
+    ],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "afterUndo": {
+    "text": "@startuml\nactor user\nparticipant app\nparticipant db\nuser -> app: login\napp -> db: query\ndb --> app: rows\napp --> user: ok\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Undone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Relation\":\n  - heading \"Relation\" [level=2]\n  - button \"✕ Delete\"\n  - text: Type\n  - combobox \"Type\":\n    - option \"Synchronous\" [selected]\n    - option \"Asynchronous\"\n    - option \"Return\"\n    - option \"Create\"\n    - option \"Lost\"\n    - option \"Found\"\n  - text: Source endpoint\n  - combobox \"Source endpoint\":\n    - option \"user\" [selected]\n    - option \"app\"\n    - option \"db\"\n  - text: Target endpoint\n  - combobox \"Target endpoint\":\n    - option \"user\" [selected]\n    - option \"app\"\n    - option \"db\"\n  - text: Label\n  - textbox \"Label\"\n  - group \"Message order\":\n    - text: Message order\n    - button \"Move earlier\"\n    - button \"Move later\"\n  - paragraph: Drag a message line up or down to reorder it, or press Delete to remove it.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "afterRedo": {
+    "text": "@startuml\nactor user\nparticipant app\nparticipant db\nuser -> app: login\napp -> db: query\ndb --> app: rows\napp --> user: ok\nuser -> db : message()\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Redone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Relation — user → db\":\n  - heading \"Relation — user → db\" [level=2]\n  - button \"✕ Delete\"\n  - text: Type\n  - combobox \"Type\":\n    - option \"Synchronous\" [selected]\n    - option \"Asynchronous\"\n    - option \"Return\"\n    - option \"Create\"\n    - option \"Lost\"\n    - option \"Found\"\n  - text: Source endpoint\n  - combobox \"Source endpoint\":\n    - option \"user\" [selected]\n    - option \"app\"\n    - option \"db\"\n  - text: Target endpoint\n  - combobox \"Target endpoint\":\n    - option \"user\"\n    - option \"app\"\n    - option \"db\" [selected]\n  - text: Label\n  - textbox \"Label\": message()\n  - button \"Invert direction\"\n  - group \"Message order\":\n    - text: Message order\n    - button \"Move earlier\"\n    - button \"Move later\"\n  - paragraph: Drag a message line up or down to reorder it, or press Delete to remove it.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [
+      "seqmsg:8"
+    ],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "operations": [
+    {
+      "type": "sequence",
+      "before": "@startuml\nactor user\nparticipant app\nparticipant db\nuser -> app: login\napp -> db: query\ndb --> app: rows\napp --> user: ok\n@enduml",
+      "operation": {
+        "op": "relation.add",
+        "revision": "r27f87255:129",
+        "tool": "sync",
+        "from": "user",
+        "to": "db",
+        "label": null,
+        "facts": {
+          "at": null
+        },
+        "undo": {
+          "key": null
+        }
+      },
+      "after": "@startuml\nactor user\nparticipant app\nparticipant db\nuser -> app: login\napp -> db: query\ndb --> app: rows\napp --> user: ok\nuser -> db : message()\n@enduml"
+    }
+  ]
+}

@@ -1,0 +1,180 @@
+{
+  "id": "component-callout-created-from-the-callouts-button",
+  "family": "source",
+  "type": "component",
+  "page": "/SEBook/tools/uml-playground",
+  "platform": {
+    "os": "darwin-arm64",
+    "browser": "chromium 145.0.7632.6"
+  },
+  "start": "@startuml\ncomponent Service\ncomponent Store\nService --> Store\n@enduml",
+  "steps": [
+    {
+      "do": "click",
+      "target": {
+        "role": "button",
+        "name": "Callouts"
+      }
+    },
+    {
+      "do": "select",
+      "target": {
+        "label": "Callout target"
+      },
+      "value": "element Service"
+    },
+    {
+      "do": "fill",
+      "target": {
+        "label": "Explanation"
+      },
+      "value": "Why Service matters"
+    },
+    {
+      "do": "click",
+      "target": {
+        "role": "button",
+        "name": "Add callout"
+      }
+    }
+  ],
+  "after": {
+    "text": "@startuml\ncomponent Service\ncomponent Store\nService --> Store\ncallout right of element Service : Why Service matters\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": ""
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": "Callout saved."
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": "✓ Saved"
+      }
+    },
+    "properties": null,
+    "draft": "@startuml\ncomponent Service\ncomponent Store\nService --> Store\ncallout right of element Service : Why Service matters\n@enduml",
+    "selection": [],
+    "focus": {
+      "tag": "button",
+      "id": "uml-pg-callout-submit",
+      "role": "button",
+      "name": "Save callout",
+      "layoutId": null
+    }
+  },
+  "afterUndo": {
+    "text": "@startuml\ncomponent Service\ncomponent Store\nService --> Store\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Undone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": "✓ Saved"
+      }
+    },
+    "properties": null,
+    "draft": "@startuml\ncomponent Service\ncomponent Store\nService --> Store\n@enduml",
+    "selection": [],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "afterRedo": {
+    "text": "@startuml\ncomponent Service\ncomponent Store\nService --> Store\ncallout right of element Service : Why Service matters\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Redone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": "✓ Saved"
+      }
+    },
+    "properties": null,
+    "draft": "@startuml\ncomponent Service\ncomponent Store\nService --> Store\ncallout right of element Service : Why Service matters\n@enduml",
+    "selection": [],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "operations": [
+    {
+      "type": "component",
+      "before": "@startuml\ncomponent Service\ncomponent Store\nService --> Store\n@enduml",
+      "operation": {
+        "op": "source.replace",
+        "revision": "r614c6f70:69",
+        "text": "@startuml\ncomponent Service\ncomponent Store\nService --> Store\ncallout right of element Service : Why Service matters\n@enduml",
+        "facts": {},
+        "undo": {
+          "key": null
+        }
+      },
+      "after": "@startuml\ncomponent Service\ncomponent Store\nService --> Store\ncallout right of element Service : Why Service matters\n@enduml"
+    }
+  ]
+}

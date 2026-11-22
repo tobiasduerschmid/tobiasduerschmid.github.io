@@ -1,0 +1,186 @@
+{
+  "id": "component-connector-added-between-two-ports-with-the-connector-tool",
+  "family": "structure",
+  "type": "component",
+  "page": "/SEBook/tools/uml-editor",
+  "platform": {
+    "os": "darwin-arm64",
+    "browser": "chromium 145.0.7632.6"
+  },
+  "start": "@startuml\ncomponent Frontend {\n  portout \"httpOut\" as f_out\n}\ncomponent Backend {\n  portin \"httpIn\" as b_in\n  portout \"dbOut\" as b_dbout\n}\ncomponent Database {\n  portin \"dbIn\" as db_in\n}\nf_out --> b_in : REST\nb_dbout --> db_in : SQL\n@enduml",
+  "steps": [
+    {
+      "do": "click",
+      "target": {
+        "role": "button",
+        "name": "Add relation: Connector"
+      }
+    },
+    {
+      "do": "press",
+      "target": {
+        "role": "button",
+        "name": "Port httpOut — Enter to select, arrows to nudge, Delete to remove"
+      },
+      "key": "Enter"
+    },
+    {
+      "do": "press",
+      "target": {
+        "role": "button",
+        "name": "Port dbIn — Enter to select, arrows to nudge, Delete to remove"
+      },
+      "key": "Enter"
+    }
+  ],
+  "after": {
+    "text": "@startuml\ncomponent Frontend {\n  portout \"httpOut\" as f_out\n}\ncomponent Backend {\n  portin \"httpIn\" as b_in\n  portout \"dbOut\" as b_dbout\n}\ncomponent Database {\n  portin \"dbIn\" as db_in\n}\nf_out --> b_in : REST\nb_dbout --> db_in : SQL\nFrontend.f_out --> Database.db_in\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Connected \"Frontend.f_out\" to \"Database.db_in\". Edit the selected relation in Properties."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Relation — Frontend.f_out → Database.db_in\":\n  - heading \"Relation — Frontend.f_out → Database.db_in\" [level=2]\n  - button \"✕ Delete\"\n  - text: Type\n  - combobox \"Type\":\n    - option \"Connector\" [selected]\n    - option \"Plain Line\"\n    - option \"Dependency\"\n  - text: Source endpoint\n  - combobox \"Source endpoint\":\n    - option \"Frontend\"\n    - option \"Frontend.f_out - httpOut\" [selected]\n    - option \"Backend\"\n    - option \"Backend.b_in - httpIn\"\n    - option \"Backend.b_dbout - dbOut\"\n    - option \"Database\"\n    - option \"Database.db_in - dbIn\"\n  - text: Target endpoint\n  - combobox \"Target endpoint\":\n    - option \"Frontend\"\n    - option \"Frontend.f_out - httpOut\"\n    - option \"Backend\"\n    - option \"Backend.b_in - httpIn\"\n    - option \"Backend.b_dbout - dbOut\"\n    - option \"Database\"\n    - option \"Database.db_in - dbIn\" [selected]\n  - text: Label\n  - textbox \"Label\"\n  - checkbox \"Dashed connector\"\n  - text: Dashed connector\n  - button \"Invert direction\"\n  - paragraph: Drag a line segment to reroute, or press Delete to remove this relation.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [
+      "edge-2",
+      "edge-2",
+      "edge-2"
+    ],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "afterUndo": {
+    "text": "@startuml\ncomponent Frontend {\n  portout \"httpOut\" as f_out\n}\ncomponent Backend {\n  portin \"httpIn\" as b_in\n  portout \"dbOut\" as b_dbout\n}\ncomponent Database {\n  portin \"dbIn\" as db_in\n}\nf_out --> b_in : REST\nb_dbout --> db_in : SQL\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Undone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Relation\":\n  - heading \"Relation\" [level=2]\n  - button \"✕ Delete\"\n  - paragraph: This connection could not be matched to one line of the source, so it cannot be edited here.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "afterRedo": {
+    "text": "@startuml\ncomponent Frontend {\n  portout \"httpOut\" as f_out\n}\ncomponent Backend {\n  portin \"httpIn\" as b_in\n  portout \"dbOut\" as b_dbout\n}\ncomponent Database {\n  portin \"dbIn\" as db_in\n}\nf_out --> b_in : REST\nb_dbout --> db_in : SQL\nFrontend.f_out --> Database.db_in\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Redone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Relation — Frontend.f_out → Database.db_in\":\n  - heading \"Relation — Frontend.f_out → Database.db_in\" [level=2]\n  - button \"✕ Delete\"\n  - text: Type\n  - combobox \"Type\":\n    - option \"Connector\" [selected]\n    - option \"Plain Line\"\n    - option \"Dependency\"\n  - text: Source endpoint\n  - combobox \"Source endpoint\":\n    - option \"Frontend\"\n    - option \"Frontend.f_out - httpOut\" [selected]\n    - option \"Backend\"\n    - option \"Backend.b_in - httpIn\"\n    - option \"Backend.b_dbout - dbOut\"\n    - option \"Database\"\n    - option \"Database.db_in - dbIn\"\n  - text: Target endpoint\n  - combobox \"Target endpoint\":\n    - option \"Frontend\"\n    - option \"Frontend.f_out - httpOut\"\n    - option \"Backend\"\n    - option \"Backend.b_in - httpIn\"\n    - option \"Backend.b_dbout - dbOut\"\n    - option \"Database\"\n    - option \"Database.db_in - dbIn\" [selected]\n  - text: Label\n  - textbox \"Label\"\n  - checkbox \"Dashed connector\"\n  - text: Dashed connector\n  - button \"Invert direction\"\n  - paragraph: Drag a line segment to reroute, or press Delete to remove this relation.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [
+      "edge-2",
+      "edge-2",
+      "edge-2"
+    ],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "operations": [
+    {
+      "type": "component",
+      "before": "@startuml\ncomponent Frontend {\n  portout \"httpOut\" as f_out\n}\ncomponent Backend {\n  portin \"httpIn\" as b_in\n  portout \"dbOut\" as b_dbout\n}\ncomponent Database {\n  portin \"dbIn\" as db_in\n}\nf_out --> b_in : REST\nb_dbout --> db_in : SQL\n@enduml",
+      "operation": {
+        "op": "relation.add",
+        "revision": "r6dc6b1f2:240",
+        "tool": "arrow",
+        "from": "Frontend.f_out",
+        "to": "Database.db_in",
+        "label": null,
+        "facts": {},
+        "undo": {
+          "key": null
+        }
+      },
+      "after": "@startuml\ncomponent Frontend {\n  portout \"httpOut\" as f_out\n}\ncomponent Backend {\n  portin \"httpIn\" as b_in\n  portout \"dbOut\" as b_dbout\n}\ncomponent Database {\n  portin \"dbIn\" as db_in\n}\nf_out --> b_in : REST\nb_dbout --> db_in : SQL\nFrontend.f_out --> Database.db_in\n@enduml"
+    }
+  ]
+}

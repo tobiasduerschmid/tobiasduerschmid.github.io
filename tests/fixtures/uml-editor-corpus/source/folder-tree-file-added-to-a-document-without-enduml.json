@@ -1,0 +1,170 @@
+{
+  "id": "folder-tree-file-added-to-a-document-without-enduml",
+  "family": "source",
+  "type": "folder-tree",
+  "page": "/SEBook/tools/uml-playground",
+  "platform": {
+    "os": "darwin-arm64",
+    "browser": "chromium 145.0.7632.6"
+  },
+  "start": "@startuml\nproject/\n  notes.txt",
+  "steps": [
+    {
+      "do": "click",
+      "target": {
+        "text": "Folder tree model (",
+        "exact": false
+      }
+    },
+    {
+      "do": "click",
+      "target": {
+        "role": "button",
+        "name": "+ File"
+      }
+    }
+  ],
+  "after": {
+    "text": "@startuml\nproject/\n  notes.txt\nfile.txt",
+    "regions": {
+      "uml-pg-status": {
+        "text": "No movable elements detected for this diagram yet."
+      },
+      "uml-pg-tool-status": {
+        "text": ""
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": "✓ Saved"
+      }
+    },
+    "properties": null,
+    "draft": "@startuml\nproject/\n  notes.txt\nfile.txt",
+    "selection": [],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "afterUndo": {
+    "text": "@startuml\nproject/\n  notes.txt",
+    "regions": {
+      "uml-pg-status": {
+        "text": "No movable elements detected for this diagram yet."
+      },
+      "uml-pg-tool-status": {
+        "text": "Undone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": "✓ Saved"
+      }
+    },
+    "properties": null,
+    "draft": "@startuml\nproject/\n  notes.txt",
+    "selection": [],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "afterRedo": {
+    "text": "@startuml\nproject/\n  notes.txt\nfile.txt",
+    "regions": {
+      "uml-pg-status": {
+        "text": "No movable elements detected for this diagram yet."
+      },
+      "uml-pg-tool-status": {
+        "text": "Redone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": "✓ Saved"
+      }
+    },
+    "properties": null,
+    "draft": "@startuml\nproject/\n  notes.txt\nfile.txt",
+    "selection": [],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "operations": [
+    {
+      "type": "folder-tree",
+      "before": "@startuml\nproject/\n  notes.txt",
+      "operation": {
+        "op": "source.insertLines",
+        "revision": "rba5b9cea:30",
+        "lines": [
+          "file.txt"
+        ],
+        "at": "end",
+        "frame": true,
+        "facts": {},
+        "undo": {
+          "key": "model-row-add"
+        }
+      },
+      "after": "@startuml\nproject/\n  notes.txt\nfile.txt"
+    }
+  ]
+}

@@ -1,0 +1,189 @@
+{
+  "id": "sequence-message-moved-into-an-empty-branch-in-properties",
+  "family": "sequence",
+  "type": "sequence",
+  "page": "/SEBook/tools/uml-editor",
+  "platform": {
+    "os": "darwin-arm64",
+    "browser": "chromium 145.0.7632.6"
+  },
+  "start": "@startuml\nactor user\nparticipant app\nuser -> app: pay\nalt [approved]\n  app --> user: receipt\nelse [declined]\nend\n@enduml",
+  "steps": [
+    {
+      "do": "pointerClick",
+      "point": {
+        "target": {
+          "role": "button",
+          "name": "Relation segment 1 of seqmsg:5 —",
+          "exact": false
+        },
+        "offset": {
+          "x": 0,
+          "y": 0
+        }
+      }
+    },
+    {
+      "do": "select",
+      "target": {
+        "label": "Branch",
+        "within": {
+          "css": "#uml-pg-props-pane"
+        }
+      },
+      "value": "1"
+    }
+  ],
+  "after": {
+    "text": "@startuml\nactor user\nparticipant app\nuser -> app: pay\nalt [approved]\nelse [declined]\n  app --> user: receipt\nend\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Moved message to branch 2."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Relation — app → user\":\n  - heading \"Relation — app → user\" [level=2]\n  - button \"✕ Delete\"\n  - text: Type\n  - combobox \"Type\":\n    - option \"Synchronous\"\n    - option \"Asynchronous\"\n    - option \"Return\" [selected]\n    - option \"Create\"\n    - option \"Lost\"\n    - option \"Found\"\n  - text: Source endpoint\n  - combobox \"Source endpoint\":\n    - option \"user\"\n    - option \"app\" [selected]\n  - text: Target endpoint\n  - combobox \"Target endpoint\":\n    - option \"user\" [selected]\n    - option \"app\"\n  - text: Label\n  - textbox \"Label\": receipt\n  - button \"Invert direction\"\n  - group \"Message order\":\n    - text: Message order\n    - button \"Move earlier\"\n    - button \"Move later\"\n  - text: Branch\n  - combobox \"Branch\":\n    - 'option \"1: alt [approved]\"'\n    - 'option \"2: else [declined]\" [selected]'\n  - paragraph: Drag a message line up or down to reorder it, or press Delete to remove it.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [
+      "seqmsg:6"
+    ],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "afterUndo": {
+    "text": "@startuml\nactor user\nparticipant app\nuser -> app: pay\nalt [approved]\n  app --> user: receipt\nelse [declined]\nend\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Undone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Relation\":\n  - heading \"Relation\" [level=2]\n  - button \"✕ Delete\"\n  - text: Type\n  - combobox \"Type\":\n    - option \"Synchronous\" [selected]\n    - option \"Asynchronous\"\n    - option \"Return\"\n    - option \"Create\"\n    - option \"Lost\"\n    - option \"Found\"\n  - text: Source endpoint\n  - combobox \"Source endpoint\":\n    - option \"user\" [selected]\n    - option \"app\"\n  - text: Target endpoint\n  - combobox \"Target endpoint\":\n    - option \"user\" [selected]\n    - option \"app\"\n  - text: Label\n  - textbox \"Label\"\n  - group \"Message order\":\n    - text: Message order\n    - button \"Move earlier\"\n    - button \"Move later\"\n  - text: Branch\n  - combobox \"Branch\":\n    - 'option \"1: alt [approved]\" [selected]'\n    - 'option \"2: else [declined]\"'\n  - paragraph: Drag a message line up or down to reorder it, or press Delete to remove it.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "afterRedo": {
+    "text": "@startuml\nactor user\nparticipant app\nuser -> app: pay\nalt [approved]\nelse [declined]\n  app --> user: receipt\nend\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Redone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Relation — app → user\":\n  - heading \"Relation — app → user\" [level=2]\n  - button \"✕ Delete\"\n  - text: Type\n  - combobox \"Type\":\n    - option \"Synchronous\"\n    - option \"Asynchronous\"\n    - option \"Return\" [selected]\n    - option \"Create\"\n    - option \"Lost\"\n    - option \"Found\"\n  - text: Source endpoint\n  - combobox \"Source endpoint\":\n    - option \"user\"\n    - option \"app\" [selected]\n  - text: Target endpoint\n  - combobox \"Target endpoint\":\n    - option \"user\" [selected]\n    - option \"app\"\n  - text: Label\n  - textbox \"Label\": receipt\n  - button \"Invert direction\"\n  - group \"Message order\":\n    - text: Message order\n    - button \"Move earlier\"\n    - button \"Move later\"\n  - text: Branch\n  - combobox \"Branch\":\n    - 'option \"1: alt [approved]\"'\n    - 'option \"2: else [declined]\" [selected]'\n  - paragraph: Drag a message line up or down to reorder it, or press Delete to remove it.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [
+      "seqmsg:6"
+    ],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "operations": [
+    {
+      "type": "sequence",
+      "before": "@startuml\nactor user\nparticipant app\nuser -> app: pay\nalt [approved]\n  app --> user: receipt\nelse [declined]\nend\n@enduml",
+      "operation": {
+        "op": "message.move",
+        "revision": "r05b24fa1:120",
+        "ref": {
+          "routeId": "seqmsg:5",
+          "line": 5,
+          "candidates": [
+            5
+          ]
+        },
+        "at": {
+          "beforeLine": 7
+        },
+        "facts": {},
+        "undo": {
+          "key": "seq-msg-to-branch:seqmsg:5:1"
+        }
+      },
+      "after": "@startuml\nactor user\nparticipant app\nuser -> app: pay\nalt [approved]\nelse [declined]\n  app --> user: receipt\nend\n@enduml"
+    }
+  ]
+}

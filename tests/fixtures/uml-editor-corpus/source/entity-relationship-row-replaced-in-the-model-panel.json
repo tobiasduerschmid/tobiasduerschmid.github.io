@@ -1,0 +1,199 @@
+{
+  "id": "entity-relationship-row-replaced-in-the-model-panel",
+  "family": "source",
+  "type": "er",
+  "page": "/SEBook/tools/uml-editor",
+  "platform": {
+    "os": "darwin-arm64",
+    "browser": "chromium 145.0.7632.6"
+  },
+  "start": "@startuml\ntitle Library\nentity Student\nentity Book\nrelationship Borrows\nStudent \"N\" -- Borrows\nBook \"M\" -- Borrows\n@enduml",
+  "steps": [
+    {
+      "do": "click",
+      "target": {
+        "text": "Advanced source rows (",
+        "exact": false
+      }
+    },
+    {
+      "do": "fill",
+      "target": {
+        "label": "Title row 1"
+      },
+      "value": "title Library loans"
+    },
+    {
+      "do": "press",
+      "target": {
+        "label": "Title row 1"
+      },
+      "key": "Enter"
+    }
+  ],
+  "after": {
+    "text": "@startuml\ntitle Library loans\nentity Student\nentity Book\nrelationship Borrows\nStudent \"N\" -- Borrows\nBook \"M\" -- Borrows\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": ""
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": "Add a diagram element first, or remove a callout whose target is missing."
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": null,
+    "draft": null,
+    "selection": [],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "afterUndo": {
+    "text": "@startuml\ntitle Library\nentity Student\nentity Book\nrelationship Borrows\nStudent \"N\" -- Borrows\nBook \"M\" -- Borrows\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Undone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": "Add a diagram element first, or remove a callout whose target is missing."
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": null,
+    "draft": null,
+    "selection": [],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "afterRedo": {
+    "text": "@startuml\ntitle Library loans\nentity Student\nentity Book\nrelationship Borrows\nStudent \"N\" -- Borrows\nBook \"M\" -- Borrows\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Redone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": "Add a diagram element first, or remove a callout whose target is missing."
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": null,
+    "draft": null,
+    "selection": [],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "operations": [
+    {
+      "type": "er",
+      "before": "@startuml\ntitle Library loans\nentity Student\nentity Book\nrelationship Borrows\nStudent \"N\" -- Borrows\nBook \"M\" -- Borrows\n@enduml",
+      "operation": {
+        "op": "source.replaceLines",
+        "revision": "ra69e9005:128",
+        "range": {
+          "start": 1,
+          "end": 1
+        },
+        "lines": [
+          "title Library loans"
+        ],
+        "facts": {},
+        "undo": {
+          "key": "model-row:1"
+        }
+      },
+      "after": "@startuml\ntitle Library loans\nentity Student\nentity Book\nrelationship Borrows\nStudent \"N\" -- Borrows\nBook \"M\" -- Borrows\n@enduml"
+    },
+    {
+      "type": "er",
+      "before": "@startuml\ntitle Library\nentity Student\nentity Book\nrelationship Borrows\nStudent \"N\" -- Borrows\nBook \"M\" -- Borrows\n@enduml",
+      "operation": {
+        "op": "source.replaceLines",
+        "revision": "r359b529c:122",
+        "range": {
+          "start": 1,
+          "end": 1
+        },
+        "lines": [
+          "title Library loans"
+        ],
+        "facts": {},
+        "undo": {
+          "key": "model-row:1"
+        }
+      },
+      "after": "@startuml\ntitle Library loans\nentity Student\nentity Book\nrelationship Borrows\nStudent \"N\" -- Borrows\nBook \"M\" -- Borrows\n@enduml"
+    }
+  ]
+}

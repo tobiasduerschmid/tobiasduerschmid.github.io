@@ -1,0 +1,204 @@
+{
+  "id": "use-case-reset-with-reset-selected",
+  "family": "behaviour",
+  "type": "usecase",
+  "page": "/SEBook/tools/uml-editor",
+  "platform": {
+    "os": "darwin-arm64",
+    "browser": "chromium 145.0.7632.6"
+  },
+  "start": "@startuml\nactor Customer @pos(23, 152)\nactor Member @pos(28, 269)\nusecase \"Place Order\" as UC1 @pos(179, 124)\nusecase \"Track Order\" as UC2 @pos(179, 320)\nusecase \"Pay\" as UC3 @pos(386, 124)\nusecase \"Cancel Order\" as UC4 @pos(174, 360)\nrectangle \"Online Shop\" @pos(139, 60) {\n  UC1\n  UC3\n}\nCustomer -- UC1\nUC1 ..> UC3 : <<include>>\n@enduml",
+  "steps": [
+    {
+      "do": "press",
+      "target": {
+        "role": "button",
+        "name": "Element Track Order — Enter to select, arrows to nudge, Delete to remove"
+      },
+      "key": "Enter"
+    },
+    {
+      "do": "click",
+      "target": {
+        "role": "button",
+        "name": "Reset Selected"
+      }
+    }
+  ],
+  "after": {
+    "text": "@startuml\nactor Customer @pos(23, 152)\nactor Member @pos(28, 269)\nusecase \"Place Order\" as UC1 @pos(179, 124)\nusecase \"Track Order\" as UC2 @pos(178, 242)\nusecase \"Pay\" as UC3 @pos(386, 124)\nusecase \"Cancel Order\" as UC4 @pos(174, 360)\nrectangle \"Online Shop\" @pos(139, 60) {\n  UC1\n  UC3\n}\nCustomer -- UC1\nUC1 ..> UC3 : <<include>>\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": ""
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": null,
+    "draft": null,
+    "selection": [],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "afterUndo": {
+    "text": "@startuml\nactor Customer @pos(23, 152)\nactor Member @pos(28, 269)\nusecase \"Place Order\" as UC1 @pos(179, 124)\nusecase \"Track Order\" as UC2 @pos(179, 320)\nusecase \"Pay\" as UC3 @pos(386, 124)\nusecase \"Cancel Order\" as UC4 @pos(174, 360)\nrectangle \"Online Shop\" @pos(139, 60) {\n  UC1\n  UC3\n}\nCustomer -- UC1\nUC1 ..> UC3 : <<include>>\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Undone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": null,
+    "draft": null,
+    "selection": [],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "afterRedo": {
+    "text": "@startuml\nactor Customer @pos(23, 152)\nactor Member @pos(28, 269)\nusecase \"Place Order\" as UC1 @pos(179, 124)\nusecase \"Track Order\" as UC2 @pos(178, 242)\nusecase \"Pay\" as UC3 @pos(386, 124)\nusecase \"Cancel Order\" as UC4 @pos(174, 360)\nrectangle \"Online Shop\" @pos(139, 60) {\n  UC1\n  UC3\n}\nCustomer -- UC1\nUC1 ..> UC3 : <<include>>\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Redone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": null,
+    "draft": null,
+    "selection": [],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "operations": [
+    {
+      "type": "usecase",
+      "before": "@startuml\nactor Customer @pos(23, 152)\nactor Member @pos(28, 269)\nusecase \"Place Order\" as UC1 @pos(179, 124)\nusecase \"Track Order\" as UC2 @pos(179, 320)\nusecase \"Pay\" as UC3 @pos(386, 124)\nusecase \"Cancel Order\" as UC4 @pos(174, 360)\nrectangle \"Online Shop\" @pos(139, 60) {\n  UC1\n  UC3\n}\nCustomer -- UC1\nUC1 ..> UC3 : <<include>>\n@enduml",
+      "operation": {
+        "op": "layout.reset",
+        "revision": "rbfa9c5f2:338",
+        "target": {
+          "element": "UC2"
+        },
+        "facts": {
+          "positions": {
+            "Customer": {
+              "x": 22.714614868164062,
+              "y": 152.32337951660156
+            },
+            "Member": {
+              "x": 27.726634979248047,
+              "y": 269.3233947753906
+            },
+            "UC1": {
+              "x": 178.5,
+              "y": 123.99996185302734
+            },
+            "UC2": {
+              "x": 178.5,
+              "y": 241.9999542236328
+            },
+            "UC3": {
+              "x": 385.5,
+              "y": 123.99996185302734
+            },
+            "UC4": {
+              "x": 174.00003051757812,
+              "y": 359.9999694824219
+            },
+            "Online Shop": {
+              "x": 138.50001525878906,
+              "y": 60.0000114440918
+            }
+          },
+          "automatic": {
+            "x": 178.499755859375,
+            "y": 242.00006103515625
+          }
+        },
+        "undo": {
+          "key": null
+        }
+      },
+      "after": "@startuml\nactor Customer @pos(23, 152)\nactor Member @pos(28, 269)\nusecase \"Place Order\" as UC1 @pos(179, 124)\nusecase \"Track Order\" as UC2 @pos(178, 242)\nusecase \"Pay\" as UC3 @pos(386, 124)\nusecase \"Cancel Order\" as UC4 @pos(174, 360)\nrectangle \"Online Shop\" @pos(139, 60) {\n  UC1\n  UC3\n}\nCustomer -- UC1\nUC1 ..> UC3 : <<include>>\n@enduml"
+    }
+  ]
+}

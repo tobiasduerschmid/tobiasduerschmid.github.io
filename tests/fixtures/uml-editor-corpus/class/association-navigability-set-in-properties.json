@@ -1,0 +1,193 @@
+{
+  "id": "association-navigability-set-in-properties",
+  "family": "class",
+  "type": "class",
+  "page": "/SEBook/tools/uml-editor",
+  "platform": {
+    "os": "darwin-arm64",
+    "browser": "chromium 145.0.7632.6"
+  },
+  "start": "@startuml\nclass Order @pos(80, 80) { -id: int; +total(): float }\nclass Customer @pos(360, 80) { +name: str }\nclass Invoice @pos(80, 300)\nOrder ..> Invoice : creates\nCustomer \"1\" -- \"*\" Order : places\n@enduml",
+  "steps": [
+    {
+      "do": "press",
+      "target": {
+        "role": "button",
+        "name": "Relation segment 1 of rel:5 — Enter to select, Delete to remove"
+      },
+      "key": "Enter"
+    },
+    {
+      "do": "select",
+      "target": {
+        "label": "Target navigability"
+      },
+      "value": "navigable"
+    }
+  ],
+  "after": {
+    "text": "@startuml\nclass Order @pos(80, 80) { -id: int; +total(): float }\nclass Customer @pos(360, 80) { +name: str }\nclass Invoice @pos(80, 300)\nOrder ..> Invoice : creates\nCustomer \"1\" --> \"*\" Order : places\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": ""
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Relation — Customer → Order\":\n  - heading \"Relation — Customer → Order\" [level=2]\n  - button \"✕ Delete\"\n  - text: Type\n  - combobox \"Type\":\n    - option \"Generalization\"\n    - option \"Realization\"\n    - option \"Composition\"\n    - option \"Aggregation\"\n    - option \"Association\" [selected]\n    - option \"Bidirectional\"\n    - option \"Plain Assoc.\"\n    - option \"Dependency\"\n  - text: Source endpoint\n  - combobox \"Source endpoint\":\n    - option \"Order\"\n    - option \"Customer\" [selected]\n    - option \"Invoice\"\n  - text: Target endpoint\n  - combobox \"Target endpoint\":\n    - option \"Order\" [selected]\n    - option \"Customer\"\n    - option \"Invoice\"\n  - text: Label\n  - textbox \"Label\": places\n  - text: Source multiplicity / cardinality\n  - textbox \"Source multiplicity / cardinality\": \"1\"\n  - text: Target multiplicity / cardinality\n  - textbox \"Target multiplicity / cardinality\": \"*\"\n  - text: Source navigability\n  - combobox \"Source navigability\":\n    - option \"Unspecified\" [selected]\n    - option \"Navigable\"\n    - option \"Non-navigable\"\n  - text: Target navigability\n  - combobox \"Target navigability\":\n    - option \"Unspecified\"\n    - option \"Navigable\" [selected]\n    - option \"Non-navigable\"\n  - button \"Invert direction\"\n  - paragraph: Drag a line segment to reroute, or press Delete to remove this relation.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [
+      "rel:5"
+    ],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "afterUndo": {
+    "text": "@startuml\nclass Order @pos(80, 80) { -id: int; +total(): float }\nclass Customer @pos(360, 80) { +name: str }\nclass Invoice @pos(80, 300)\nOrder ..> Invoice : creates\nCustomer \"1\" -- \"*\" Order : places\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Undone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Relation — Customer → Order\":\n  - heading \"Relation — Customer → Order\" [level=2]\n  - button \"✕ Delete\"\n  - text: Type\n  - combobox \"Type\":\n    - option \"Generalization\"\n    - option \"Realization\"\n    - option \"Composition\"\n    - option \"Aggregation\"\n    - option \"Association\"\n    - option \"Bidirectional\"\n    - option \"Plain Assoc.\" [selected]\n    - option \"Dependency\"\n  - text: Source endpoint\n  - combobox \"Source endpoint\":\n    - option \"Order\"\n    - option \"Customer\" [selected]\n    - option \"Invoice\"\n  - text: Target endpoint\n  - combobox \"Target endpoint\":\n    - option \"Order\" [selected]\n    - option \"Customer\"\n    - option \"Invoice\"\n  - text: Label\n  - textbox \"Label\": places\n  - text: Source multiplicity / cardinality\n  - textbox \"Source multiplicity / cardinality\": \"1\"\n  - text: Target multiplicity / cardinality\n  - textbox \"Target multiplicity / cardinality\": \"*\"\n  - text: Source navigability\n  - combobox \"Source navigability\":\n    - option \"Unspecified\" [selected]\n    - option \"Navigable\"\n    - option \"Non-navigable\"\n  - text: Target navigability\n  - combobox \"Target navigability\":\n    - option \"Unspecified\" [selected]\n    - option \"Navigable\"\n    - option \"Non-navigable\"\n  - button \"Invert direction\"\n  - paragraph: Drag a line segment to reroute, or press Delete to remove this relation.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [
+      "rel:5"
+    ],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "afterRedo": {
+    "text": "@startuml\nclass Order @pos(80, 80) { -id: int; +total(): float }\nclass Customer @pos(360, 80) { +name: str }\nclass Invoice @pos(80, 300)\nOrder ..> Invoice : creates\nCustomer \"1\" --> \"*\" Order : places\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Redone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Relation — Customer → Order\":\n  - heading \"Relation — Customer → Order\" [level=2]\n  - button \"✕ Delete\"\n  - text: Type\n  - combobox \"Type\":\n    - option \"Generalization\"\n    - option \"Realization\"\n    - option \"Composition\"\n    - option \"Aggregation\"\n    - option \"Association\" [selected]\n    - option \"Bidirectional\"\n    - option \"Plain Assoc.\"\n    - option \"Dependency\"\n  - text: Source endpoint\n  - combobox \"Source endpoint\":\n    - option \"Order\"\n    - option \"Customer\" [selected]\n    - option \"Invoice\"\n  - text: Target endpoint\n  - combobox \"Target endpoint\":\n    - option \"Order\" [selected]\n    - option \"Customer\"\n    - option \"Invoice\"\n  - text: Label\n  - textbox \"Label\": places\n  - text: Source multiplicity / cardinality\n  - textbox \"Source multiplicity / cardinality\": \"1\"\n  - text: Target multiplicity / cardinality\n  - textbox \"Target multiplicity / cardinality\": \"*\"\n  - text: Source navigability\n  - combobox \"Source navigability\":\n    - option \"Unspecified\" [selected]\n    - option \"Navigable\"\n    - option \"Non-navigable\"\n  - text: Target navigability\n  - combobox \"Target navigability\":\n    - option \"Unspecified\"\n    - option \"Navigable\" [selected]\n    - option \"Non-navigable\"\n  - button \"Invert direction\"\n  - paragraph: Drag a line segment to reroute, or press Delete to remove this relation.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [
+      "rel:5"
+    ],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "operations": [
+    {
+      "type": "class",
+      "before": "@startuml\nclass Order @pos(80, 80) { -id: int; +total(): float }\nclass Customer @pos(360, 80) { +name: str }\nclass Invoice @pos(80, 300)\nOrder ..> Invoice : creates\nCustomer \"1\" -- \"*\" Order : places\n@enduml",
+      "operation": {
+        "op": "relation.update",
+        "revision": "r23811a36:207",
+        "ref": {
+          "routeId": "rel:5",
+          "line": 5,
+          "candidates": [
+            5
+          ]
+        },
+        "changes": {
+          "relation": {
+            "kind": "plain",
+            "source": "Customer",
+            "target": "Order",
+            "label": "places",
+            "sourceMult": "1",
+            "targetMult": "*",
+            "navigability": "",
+            "sourceNavigability": "",
+            "targetNavigability": "navigable",
+            "stereotype": ""
+          }
+        },
+        "facts": {},
+        "undo": {
+          "key": "rel:5"
+        }
+      },
+      "after": "@startuml\nclass Order @pos(80, 80) { -id: int; +total(): float }\nclass Customer @pos(360, 80) { +name: str }\nclass Invoice @pos(80, 300)\nOrder ..> Invoice : creates\nCustomer \"1\" --> \"*\" Order : places\n@enduml"
+    }
+  ]
+}

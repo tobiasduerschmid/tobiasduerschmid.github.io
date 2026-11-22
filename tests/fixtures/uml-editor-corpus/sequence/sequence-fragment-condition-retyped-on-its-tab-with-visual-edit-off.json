@@ -1,0 +1,192 @@
+{
+  "id": "sequence-fragment-condition-retyped-on-its-tab-with-visual-edit-off",
+  "family": "sequence",
+  "type": "sequence",
+  "page": "/SEBook/tools/uml-editor",
+  "platform": {
+    "os": "darwin-arm64",
+    "browser": "chromium 145.0.7632.6"
+  },
+  "start": "@startuml\nactor user\nparticipant app\nuser -> app: login\nalt [valid]\n  app --> user: token\nelse [invalid]\n  app --> user: error\nend\nuser -> app: logout\n@enduml",
+  "steps": [
+    {
+      "do": "uncheck",
+      "target": {
+        "role": "checkbox",
+        "name": "Visual edit"
+      }
+    },
+    {
+      "do": "pointerDblclick",
+      "point": {
+        "target": {
+          "css": "#uml-pg-output svg text[data-layout-fragment-id=\"frag:4\"]:not([data-layout-fragment-role])"
+        },
+        "offset": {
+          "x": 0,
+          "y": 0
+        }
+      }
+    },
+    {
+      "do": "fill",
+      "target": {
+        "role": "textbox",
+        "name": "alt fragment condition"
+      },
+      "value": "password matches"
+    },
+    {
+      "do": "press",
+      "target": {
+        "role": "textbox",
+        "name": "alt fragment condition"
+      },
+      "key": "Enter"
+    }
+  ],
+  "after": {
+    "text": "@startuml\nactor user\nparticipant app\nuser -> app: login\nalt [password matches]\n  app --> user: token\nelse [invalid]\n  app --> user: error\nend\nuser -> app: logout\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": ""
+      },
+      "uml-pg-tool-status": {
+        "text": ""
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": null,
+    "draft": null,
+    "selection": [],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "afterUndo": {
+    "text": "@startuml\nactor user\nparticipant app\nuser -> app: login\nalt [valid]\n  app --> user: token\nelse [invalid]\n  app --> user: error\nend\nuser -> app: logout\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": ""
+      },
+      "uml-pg-tool-status": {
+        "text": "Undone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": null,
+    "draft": null,
+    "selection": [],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "afterRedo": {
+    "text": "@startuml\nactor user\nparticipant app\nuser -> app: login\nalt [password matches]\n  app --> user: token\nelse [invalid]\n  app --> user: error\nend\nuser -> app: logout\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": ""
+      },
+      "uml-pg-tool-status": {
+        "text": "Redone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": null,
+    "draft": null,
+    "selection": [],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "operations": [
+    {
+      "type": "sequence",
+      "before": "@startuml\nactor user\nparticipant app\nuser -> app: login\nalt [valid]\n  app --> user: token\nelse [invalid]\n  app --> user: error\nend\nuser -> app: logout\n@enduml",
+      "operation": {
+        "op": "fragment.update",
+        "revision": "r4c34ab5a:158",
+        "ref": "frag:4",
+        "operator": "alt",
+        "guard": {
+          "branch": null,
+          "text": "password matches"
+        },
+        "facts": {},
+        "undo": {
+          "key": null
+        }
+      },
+      "after": "@startuml\nactor user\nparticipant app\nuser -> app: login\nalt [password matches]\n  app --> user: token\nelse [invalid]\n  app --> user: error\nend\nuser -> app: logout\n@enduml"
+    }
+  ]
+}

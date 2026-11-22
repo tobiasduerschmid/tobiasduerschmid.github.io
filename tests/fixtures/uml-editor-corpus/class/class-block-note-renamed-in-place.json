@@ -1,0 +1,182 @@
+{
+  "id": "class-block-note-renamed-in-place",
+  "family": "class",
+  "type": "class",
+  "page": "/SEBook/tools/uml-editor",
+  "platform": {
+    "os": "darwin-arm64",
+    "browser": "chromium 145.0.7632.6"
+  },
+  "start": "@startuml\nclass Order @pos(80, 80)\nnote right of Order\n  first line\n  second line\nend note\n@enduml",
+  "steps": [
+    {
+      "do": "pointerDblclick",
+      "point": {
+        "target": {
+          "css": ".uml-pg-edit-hitbox[data-layout-id=\"note:2\"]"
+        }
+      }
+    },
+    {
+      "do": "fill",
+      "target": {
+        "css": "input.uml-pg-inline-input"
+      },
+      "value": "one line"
+    },
+    {
+      "do": "press",
+      "target": {
+        "css": "input.uml-pg-inline-input"
+      },
+      "key": "Enter"
+    }
+  ],
+  "after": {
+    "text": "@startuml\nclass Order @pos(80, 80)\nnote right of Order\n  one line\nend note\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": ""
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Note\":\n  - heading \"Note\" [level=2]\n  - button \"✕ Delete\"\n  - text: Text\n  - textbox \"Text\": first linesecond line\n  - paragraph: Double-click the note to edit it in place. Press Delete to remove it.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [
+      "note:2"
+    ],
+    "focus": {
+      "tag": "rect",
+      "id": "",
+      "role": "button",
+      "name": "Element one line — Enter to select, arrows to nudge, Delete to remove",
+      "layoutId": "note:2"
+    }
+  },
+  "afterUndo": {
+    "text": "@startuml\nclass Order @pos(80, 80)\nnote right of Order\n  first line\n  second line\nend note\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Undone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Note\":\n  - heading \"Note\" [level=2]\n  - button \"✕ Delete\"\n  - text: Text\n  - textbox \"Text\": first linesecond line\n  - paragraph: Double-click the note to edit it in place. Press Delete to remove it.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [
+      "note:2"
+    ],
+    "focus": {
+      "tag": "rect",
+      "id": "",
+      "role": "button",
+      "name": "Element first line — Enter to select, arrows to nudge, Delete to remove",
+      "layoutId": "note:2"
+    }
+  },
+  "afterRedo": {
+    "text": "@startuml\nclass Order @pos(80, 80)\nnote right of Order\n  one line\nend note\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Redone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Note\":\n  - heading \"Note\" [level=2]\n  - button \"✕ Delete\"\n  - text: Text\n  - textbox \"Text\": one line\n  - paragraph: Double-click the note to edit it in place. Press Delete to remove it.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [
+      "note:2"
+    ],
+    "focus": {
+      "tag": "rect",
+      "id": "",
+      "role": "button",
+      "name": "Element one line — Enter to select, arrows to nudge, Delete to remove",
+      "layoutId": "note:2"
+    }
+  },
+  "operations": [
+    {
+      "type": "class",
+      "before": "@startuml\nclass Order @pos(80, 80)\nnote right of Order\n  first line\n  second line\nend note\n@enduml",
+      "operation": {
+        "op": "element.rename",
+        "revision": "r2cdbed0d:98",
+        "ref": "note:2",
+        "text": "one line",
+        "part": "note",
+        "facts": {},
+        "undo": {
+          "key": "note:2"
+        }
+      },
+      "after": "@startuml\nclass Order @pos(80, 80)\nnote right of Order\n  one line\nend note\n@enduml"
+    }
+  ]
+}

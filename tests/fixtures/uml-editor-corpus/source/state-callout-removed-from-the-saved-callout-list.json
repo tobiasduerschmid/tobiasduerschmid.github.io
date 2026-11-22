@@ -1,0 +1,174 @@
+{
+  "id": "state-callout-removed-from-the-saved-callout-list",
+  "family": "source",
+  "type": "state",
+  "page": "/SEBook/tools/uml-playground",
+  "platform": {
+    "os": "darwin-arm64",
+    "browser": "chromium 145.0.7632.6"
+  },
+  "start": "@startuml\nstate Idle\nstate Running\nIdle --> Running : start\ncallout right of element Idle : Explains this notation\n@enduml",
+  "steps": [
+    {
+      "do": "click",
+      "target": {
+        "role": "button",
+        "name": "Callouts"
+      }
+    },
+    {
+      "do": "select",
+      "target": {
+        "label": "Saved callout"
+      },
+      "value": "0"
+    },
+    {
+      "do": "press",
+      "target": {
+        "role": "button",
+        "name": "Remove callout"
+      },
+      "key": "Enter"
+    }
+  ],
+  "after": {
+    "text": "@startuml\nstate Idle\nstate Running\nIdle --> Running : start\n\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": ""
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": "Callout removed."
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": "✓ Saved"
+      }
+    },
+    "properties": null,
+    "draft": "@startuml\nstate Idle\nstate Running\nIdle --> Running : start\n\n@enduml",
+    "selection": [],
+    "focus": {
+      "tag": "select",
+      "id": "uml-pg-callout-target",
+      "role": "combobox",
+      "name": "Callout target",
+      "layoutId": null
+    }
+  },
+  "afterUndo": {
+    "text": "@startuml\nstate Idle\nstate Running\nIdle --> Running : start\ncallout right of element Idle : Explains this notation\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Undone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": "✓ Saved"
+      }
+    },
+    "properties": null,
+    "draft": "@startuml\nstate Idle\nstate Running\nIdle --> Running : start\ncallout right of element Idle : Explains this notation\n@enduml",
+    "selection": [],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "afterRedo": {
+    "text": "@startuml\nstate Idle\nstate Running\nIdle --> Running : start\n\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Redone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": "✓ Saved"
+      }
+    },
+    "properties": null,
+    "draft": "@startuml\nstate Idle\nstate Running\nIdle --> Running : start\n\n@enduml",
+    "selection": [],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "operations": [
+    {
+      "type": "state",
+      "before": "@startuml\nstate Idle\nstate Running\nIdle --> Running : start\ncallout right of element Idle : Explains this notation\n@enduml",
+      "operation": {
+        "op": "source.replace",
+        "revision": "r6c276c0f:122",
+        "text": "@startuml\nstate Idle\nstate Running\nIdle --> Running : start\n\n@enduml",
+        "facts": {},
+        "undo": {
+          "key": null
+        }
+      },
+      "after": "@startuml\nstate Idle\nstate Running\nIdle --> Running : start\n\n@enduml"
+    }
+  ]
+}

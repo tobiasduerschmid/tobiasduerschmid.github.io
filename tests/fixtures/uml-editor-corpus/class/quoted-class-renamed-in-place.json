@@ -1,0 +1,187 @@
+{
+  "id": "quoted-class-renamed-in-place",
+  "family": "class",
+  "type": "class",
+  "page": "/SEBook/tools/uml-editor",
+  "platform": {
+    "os": "darwin-arm64",
+    "browser": "chromium 145.0.7632.6"
+  },
+  "start": "@startuml\nclass \"Line Item\" @pos(40, 60) { +quantity: int }\nclass shop::Order @pos(260, 60) { +lines: List<Line Item> }\n@enduml",
+  "steps": [
+    {
+      "do": "pointerDblclick",
+      "point": {
+        "target": {
+          "role": "button",
+          "name": "Element Line Item — Enter to select, arrows to nudge, Delete to remove"
+        },
+        "at": {
+          "x": 0.5,
+          "y": 0.2
+        }
+      }
+    },
+    {
+      "do": "fill",
+      "target": {
+        "role": "textbox",
+        "name": "Rename Line Item"
+      },
+      "value": "Order Line"
+    },
+    {
+      "do": "press",
+      "target": {
+        "role": "textbox",
+        "name": "Rename Line Item"
+      },
+      "key": "Enter"
+    }
+  ],
+  "after": {
+    "text": "@startuml\nclass Order_Line @pos(40, 60) { +quantity: int }\nclass shop::Order @pos(260, 60) { +lines: List<Line Item> }\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": ""
+      },
+      "uml-pg-class-selection": {
+        "text": "Selected: Order_Line"
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Class — Order_Line\":\n  - heading \"Class — Order_Line\" [level=2]\n  - button \"✕ Delete\"\n  - text: Name (id)\n  - textbox \"Name (id)\": Order_Line\n  - text: Kind\n  - combobox \"Kind\":\n    - option \"Class\" [selected]\n    - option \"Abstract Class\"\n    - option \"Interface\"\n    - option \"Enum\"\n  - text: Stereotype (e.g. <<service>>)\n  - textbox \"Stereotype (e.g. <<service>>)\"\n  - text: Highlight color (#hex or color name)\n  - textbox \"Highlight color (#hex or color name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Members\":\n    - text: Members\n    - combobox \"Visibility\":\n      - option \"Unspecified\"\n      - option \"+ public\" [selected]\n      - option \"- private\"\n      - option \"# protected\"\n      - option \"~ package\"\n    - textbox \"Member text (member 1)\":\n      - /placeholder: \"name: type   or   method(args): type\"\n      - text: \"quantity: int\"\n    - button \"Delete member 1\": ✕\n    - checkbox \"abstract\"\n    - text: abstract\n    - checkbox \"static\"\n    - text: static\n    - button \"+ Add Member\"\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [
+      "Order_Line"
+    ],
+    "focus": {
+      "tag": "rect",
+      "id": "",
+      "role": "button",
+      "name": "Element Order_Line — Enter to select, arrows to nudge, Delete to remove",
+      "layoutId": "Order_Line"
+    }
+  },
+  "afterUndo": {
+    "text": "@startuml\nclass \"Line Item\" @pos(40, 60) { +quantity: int }\nclass shop::Order @pos(260, 60) { +lines: List<Line Item> }\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Undone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Select one class to edit its name or members."
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Element — Order_Line\":\n  - heading \"Element — Order_Line\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": Order_Line\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [],
+    "focus": {
+      "tag": "body",
+      "id": "page-top",
+      "role": "generic",
+      "name": "",
+      "layoutId": null
+    }
+  },
+  "afterRedo": {
+    "text": "@startuml\nclass Order_Line @pos(40, 60) { +quantity: int }\nclass shop::Order @pos(260, 60) { +lines: List<Line Item> }\n@enduml",
+    "regions": {
+      "uml-pg-status": {
+        "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
+      },
+      "uml-pg-tool-status": {
+        "text": "Redone."
+      },
+      "uml-pg-class-selection": {
+        "text": "Selected: Order_Line"
+      },
+      "uml-pg-error": {
+        "text": ""
+      },
+      "uml-pg-member-error": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-callout-status": {
+        "text": ""
+      },
+      "uml-pg-diagnostics": {
+        "text": "",
+        "hidden": true
+      },
+      "uml-pg-autosave": {
+        "text": ""
+      }
+    },
+    "properties": "- region \"Class — Order_Line\":\n  - heading \"Class — Order_Line\" [level=2]\n  - button \"✕ Delete\"\n  - text: Name (id)\n  - textbox \"Name (id)\": Order_Line\n  - text: Kind\n  - combobox \"Kind\":\n    - option \"Class\" [selected]\n    - option \"Abstract Class\"\n    - option \"Interface\"\n    - option \"Enum\"\n  - text: Stereotype (e.g. <<service>>)\n  - textbox \"Stereotype (e.g. <<service>>)\"\n  - text: Highlight color (#hex or color name)\n  - textbox \"Highlight color (#hex or color name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Members\":\n    - text: Members\n    - combobox \"Visibility\":\n      - option \"Unspecified\"\n      - option \"+ public\" [selected]\n      - option \"- private\"\n      - option \"# protected\"\n      - option \"~ package\"\n    - textbox \"Member text (member 1)\":\n      - /placeholder: \"name: type   or   method(args): type\"\n      - text: \"quantity: int\"\n    - button \"Delete member 1\": ✕\n    - checkbox \"abstract\"\n    - text: abstract\n    - checkbox \"static\"\n    - text: static\n    - button \"+ Add Member\"\n  - button \"Add teaching callout\"",
+    "draft": null,
+    "selection": [
+      "Order_Line"
+    ],
+    "focus": {
+      "tag": "rect",
+      "id": "",
+      "role": "button",
+      "name": "Element Order_Line — Enter to select, arrows to nudge, Delete to remove",
+      "layoutId": "Order_Line"
+    }
+  },
+  "operations": [
+    {
+      "type": "class",
+      "before": "@startuml\nclass \"Line Item\" @pos(40, 60) { +quantity: int }\nclass shop::Order @pos(260, 60) { +lines: List<Line Item> }\n@enduml",
+      "operation": {
+        "op": "element.rename",
+        "revision": "r81338de1:127",
+        "ref": "Line Item",
+        "text": "Order_Line",
+        "part": "identifier",
+        "facts": {},
+        "undo": {
+          "key": null
+        }
+      },
+      "after": "@startuml\nclass Order_Line @pos(40, 60) { +quantity: int }\nclass shop::Order @pos(260, 60) { +lines: List<Line Item> }\n@enduml"
+    }
+  ]
+}
