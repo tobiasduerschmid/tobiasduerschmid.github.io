@@ -18,16 +18,17 @@
  * lit windows glow up and down, the daylight through the window dims a
  * little as clouds pass and creeps across the floor as the sun moves, dust
  * floats in its shaft, the plant sways, a few sticky notes stir in the air,
- * and the clock keeps the song's time. Every motion is slow and small and a
- * pure function of song time (animate()), so nothing flashes (WCAG 2.3.1);
- * under reduced motion the room holds still. Storyboards select it with
+ * and the clock shows the device's local time, even while playback is paused.
+ * Ambient motion is slow and small and follows song time (animate()); under
+ * reduced motion it holds still while the clock continues ticking once a second.
+ * Storyboards select it with
  * `theme: team-room`; css/song-video-team-room.css holds its look and
  * restyles the shared badge and stamps.
  */
 (function () {
   'use strict';
 
-  const { tween, fx, onFrame, EASE } = window.Timeline;
+  const { tween, fx, onFrame, onDispose, EASE } = window.Timeline;
   const { el, svg, place } = window.SongKit;
   const W = 960;
   const H = 540;
@@ -219,7 +220,7 @@
     });
   }
 
-  /** The team's task board on the right, three columns of sticky notes, and a clock above it that keeps the song's time. */
+  /** The team's task board, three columns of sticky notes, and a local-time wall clock. */
   function taskBoard(root, motion) {
     const b = { x: 846, y: 48, w: 104, h: 150 };
     const g = svg('g', { class: 'tr-board' }, root);
@@ -252,7 +253,7 @@
       for (const s of stirring) s.note.setAttribute('transform', `rotate(${f1(s.tilt + 1.4 * wave(t, s.period, s.phase))} ${s.pin[0]} ${s.pin[1]})`);
     });
 
-    // The clock over the board: 10:15 at the downbeat, then the song's time.
+    // The wall clock is independent of the audio timeline and reduced motion.
     const c = { x: b.x + b.w / 2, y: 26, r: 14 };
     const clock = svg('g', { class: 'tr-clock', transform: `translate(${c.x} ${c.y})` }, root);
     svg('circle', { class: 'tr-clock-shadow', cx: 1.5, cy: 2, r: c.r }, clock);
@@ -265,14 +266,25 @@
       ticks.push(`M${f1(Math.sin(a) * inner)} ${f1(-Math.cos(a) * inner)}L${f1(Math.sin(a) * (c.r - 3.4))} ${f1(-Math.cos(a) * (c.r - 3.4))}`);
     }
     svg('path', { class: 'tr-clock-ticks', d: ticks.join('') }, clock);
-    const hour = svg('path', { class: 'tr-clock-hand', d: 'M0 0 L0 -6.5' }, clock);
-    const minute = svg('path', { class: 'tr-clock-hand', d: 'M0 0 L0 -9.5' }, clock);
-    const second = svg('path', { class: 'tr-clock-second', d: 'M0 2.5 L0 -10.5' }, clock);
+    const hour = svg('path', { class: 'tr-clock-hand', 'data-testid': 'team-room-hour-hand', d: 'M0 0 L0 -6.5' }, clock);
+    const minute = svg('path', { class: 'tr-clock-hand', 'data-testid': 'team-room-minute-hand', d: 'M0 0 L0 -9.5' }, clock);
+    const second = svg('path', { class: 'tr-clock-second', 'data-testid': 'team-room-second-hand', d: 'M0 2.5 L0 -10.5' }, clock);
     svg('circle', { class: 'tr-clock-pin', r: 1.2 }, clock);
-    motion.push((t) => {
-      hour.setAttribute('transform', `rotate(${f1(307.5 + t / 120)})`);
-      minute.setAttribute('transform', `rotate(${f1(90 + t / 10)})`);
-      second.setAttribute('transform', `rotate(${f1((t * 6) % 360)})`);
+    let tick;
+    const updateClock = () => {
+      clearTimeout(tick);
+      const now = new Date();
+      const minutes = now.getMinutes() + now.getSeconds() / 60;
+      hour.setAttribute('transform', `rotate(${f1((now.getHours() % 12) * 30 + minutes / 2)})`);
+      minute.setAttribute('transform', `rotate(${f1(minutes * 6)})`);
+      second.setAttribute('transform', `rotate(${now.getSeconds() * 6})`);
+      tick = setTimeout(updateClock, 1000 - now.getMilliseconds());
+    };
+    updateClock();
+    document.addEventListener('visibilitychange', updateClock);
+    onDispose(() => {
+      clearTimeout(tick);
+      document.removeEventListener('visibilitychange', updateClock);
     });
   }
 
