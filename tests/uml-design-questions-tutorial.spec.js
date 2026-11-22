@@ -624,8 +624,17 @@ test.describe('the whole tutorial, as a student', () => {
       const reply = step.diagram_challenge.reply;
       const block = blocks.nth(index);
       await expect(block.getByRole('heading', { name: 'Shown after you lock in' })).toBeVisible();
-      await expect(block.getByRole('img', { name: /^UML \w+ diagram/i }))
-        .toHaveCount(reply.diagrams.length + (reply.contrast ? 1 : 0));
+      const printed = [reply.contrast && reply.contrast.diagram, ...reply.diagrams].filter(Boolean);
+      const images = block.getByRole('img', { name: /^UML \w+ diagram/i });
+      await expect(images).toHaveCount(printed.length);
+      // Each diagram is named by the description the live Diagram pane gives it,
+      // not by the bare fallback caption ("UML class diagram").
+      for (const [position, diagram] of printed.entries()) {
+        const type = (diagram.type || 'class').toLowerCase();
+        const description = await page.evaluate(([t, source]) => window.UMLAutoDescribe.describe(t, source), [type, diagram.source]);
+        expect(description, `${step.key}: ${diagram.id}`).not.toMatch(/^UML \w+ diagram\.?$/);
+        await expect(images.nth(position), `${step.key}: ${diagram.id}`).toHaveAccessibleName(description);
+      }
       await expect(block.getByRole('heading', { name: 'Diagram challenge key', includeHidden: true })).toBeHidden();
     }
     const results = page.getByRole('region', { name: 'Your results across the challenges' });

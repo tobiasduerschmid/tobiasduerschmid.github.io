@@ -1740,7 +1740,8 @@
     try { attachVerboseDescription(el, type, spec); } catch (_) { /* leave bundle's output */ }
   }
 
-  // The bundle has two render paths and they don't share an aria hook:
+  // Besides its own auto-init (see describeDrawnFigures), the bundle has two
+  // render paths and they don't share an aria hook:
   //   1. UMLShared.renderAll() — used by SEBook pages, popouts, SE Gym. It
   //      walks the DOM, calls a closure-scoped createArchUmlFigure() to wrap
   //      each match in <figure>, sets aria-label from the spec's `caption:`
@@ -1826,23 +1827,48 @@
       var s = snapshots[i];
       var slot = s.parent && s.parent.children && s.parent.children[s.idx];
       if (!slot || !slot.classList || !slot.classList.contains('sebook-figure')) continue;
+      describeFigure(slot, s.type, s.spec);
+    }
+  }
 
-      var desc = describe(s.type, s.spec);
-      if (!desc) continue;
+  var describedContainers = typeof WeakSet === 'function' ? new WeakSet() : null;
 
-      var container = slot.querySelector('[role="img"]');
-      if (container) container.setAttribute('aria-label', desc);
+  // Name one bundle-drawn <figure> by its description.
+  function describeFigure(figure, type, spec) {
+    var desc = describe(type, spec);
+    if (!desc) return;
 
-      // Drop the bundle's bare-type-label "UML class diagram" figcaption.
-      // CSS in css/uml-diagram.css also hides .sebook-figure__caption--auto
-      // as a backstop; removing the node here keeps screen readers /
-      // print-stylesheet pipelines from announcing it either.
-      var autoCap = slot.querySelector('.sebook-figure__caption--auto');
-      if (autoCap && autoCap.parentNode) autoCap.parentNode.removeChild(autoCap);
+    var container = figure.querySelector('[role="img"]');
+    if (container) {
+      container.setAttribute('aria-label', desc);
+      if (describedContainers) describedContainers.add(container);
+    }
 
-      // Screen-reader-only verbose description. Same markup the Ruby plugin
-      // emits for static diagrams, so live + static behave identically.
-      try { attachVerboseDescription(slot, s.type, s.spec); } catch (_) { /* leave bundle output */ }
+    // Drop the bundle's bare-type-label "UML class diagram" figcaption.
+    // CSS in css/uml-diagram.css also hides .sebook-figure__caption--auto
+    // as a backstop; removing the node here keeps screen readers /
+    // print-stylesheet pipelines from announcing it either.
+    var autoCap = figure.querySelector('.sebook-figure__caption--auto');
+    if (autoCap && autoCap.parentNode) autoCap.parentNode.removeChild(autoCap);
+
+    // Screen-reader-only verbose description. Same markup the Ruby plugin
+    // emits for static diagrams, so live + static behave identically.
+    try { attachVerboseDescription(figure, type, spec); } catch (_) { /* leave bundle output */ }
+  }
+
+  // The bundle's own auto-init draws every fenced block already in the page
+  // as soon as the bundle runs — for a deferred bundle, before this script
+  // has loaded — without calling renderAll or applySvgAccessibility. Those
+  // figures are described from the source the bundle recorded for them.
+  function describeDrawnFigures() {
+    if (!window.UMLShared || typeof window.UMLShared.figureSource !== 'function') return;
+    var containers = document.querySelectorAll('figure.sebook-figure--archuml [role="img"][data-uml-rendered]');
+    for (var i = 0; i < containers.length; i++) {
+      var container = containers[i];
+      if (describedContainers && describedContainers.has(container)) continue;
+      var source = window.UMLShared.figureSource(container);
+      var figure = container.closest('figure');
+      if (source && figure) describeFigure(figure, source.type, source.text);
     }
   }
 
@@ -1869,6 +1895,7 @@
       try { snapshots = collectSnapshots(); } catch (_) { snapshots = []; }
       var result = orig.apply(this, arguments);
       try { applySnapshots(snapshots); } catch (_) { /* leave bundle's labels */ }
+      try { describeDrawnFigures(); } catch (_) { /* leave bundle's labels */ }
       return result;
     };
     window.UMLShared.__umlAutoDescribeRenderAllPatched = true;
@@ -1878,6 +1905,15 @@
   function tryPatch() {
     var a = patchRenderAll();
     var b = patchApplySvgAccessibility();
+    if (a && b) {
+      try { describeDrawnFigures(); } catch (_) { /* leave bundle's labels */ }
+      // A bundle loaded while the page is still parsing draws on DOMContentLoaded.
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function () {
+          try { describeDrawnFigures(); } catch (_) { /* leave bundle's labels */ }
+        });
+      }
+    }
     return a && b;
   }
 

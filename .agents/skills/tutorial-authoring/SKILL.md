@@ -2461,6 +2461,16 @@ other platforms retain `Ctrl`. This changes labels only, not key bindings.
   in keyboard-scrollable containers; do not apply the generic responsive-image
   `max-width: 100%` rule to those SVGs. Paper printing still fits diagrams to the
   page. Print surfaces remain light even when the saved site theme is dark.
+  Each printed ArchUML diagram (instruction fences and diagram-challenge
+  replies alike) is named by `UMLAutoDescribe.describe(type, source)`, the
+  same text alternative the live Diagram pane uses. Production builds
+  pre-render them with that name (`_plugins/uml_static.rb`). In development
+  builds the deferred bundle's own auto-init draws every fenced block before
+  `js/uml-auto-describe.js` loads, bypassing its `renderAll` and
+  `applySvgAccessibility` wrappers; the describer then names those figures
+  from `UMLShared.figureSource(container)`, which the bundle records for each
+  figure it draws. `tests/uml-design-questions-tutorial.spec.js` checks every
+  printed name.
   Authored ArchUML wrappers can supply contextual captions with
   `data-uml-caption`; a nonblank attribute overrides a leading `caption:` in
   the diagram source. Check that these captions remain visible in live and
@@ -3016,6 +3026,8 @@ channel.
   ArchUML bundle. The hook must put `role="img"`, a usable accessible name,
   and an SVG `<title>` on each rendered SVG; `js/uml-auto-describe.js` wraps it
   to replace both the fallback name and title with a model-specific description.
+  Figures the bundle drew before the describer loaded (its auto-init of fenced
+  blocks) are described from `UMLShared.figureSource` instead (see §4.1).
   Step navigation is one serialized transaction with a single coalesced
   pending destination: the first idle `loadStep()` still updates its UI
   synchronously, rapid later requests discard intermediate destinations, and
