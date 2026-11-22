@@ -263,7 +263,7 @@ A candidate is a placement of the boxes. Compact mode considers:
 
 - the renderer's normal placement (always);
 - the other direction, where the spec does not lock it and the notation allows it;
-- independent groups (connected groups, class hierarchy families) packed into rows to match the pane's shape instead of the fixed 1.5;
+- independent groups (connected groups, class hierarchy families) packed into rows to match the pane's shape instead of the fixed 1.5. In class diagrams a group's extent includes the names set beside its vertical lines (`labelledBounds`), so a packing leaves them room and its estimate counts them. Where the direction is free, the groups as the other direction's engine placement draws them are packed too, and the best such packing is proposed when its estimate, labels counted, beats that of every other candidate (so diagrams it would not help keep their candidates and their passes): in a 600×700 pane the six labelled pairs of test-uml.html §4c go from two columns of stacked pairs (14.86 px) to one column of pairs side by side, each name along its line (17.96 px);
 - from phase 2, engine placements with a bounded row capacity derived from the pane's shape, and long chains wrapped into two or three columns.
 
 Candidates are ranked by a cheap estimate (boxes only) and the best few are realized, within the work budget (6.8).
