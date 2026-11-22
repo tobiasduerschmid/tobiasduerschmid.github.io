@@ -165,6 +165,7 @@
       "price",
       "supplier_kind"
     ],
+    "unlisted_item_type_is_refused": true,
     "refund_before_cancel": true,
     "glampingco_48h_stays_booked": true,
     "service_fee": 0.12,
@@ -175,6 +176,78 @@
       "trip_cancelled_published": false,
       "support_follow_ups": 0
     }
+  },
+  "shared_code": {
+    "loads": {
+      "AffiliateRelay": [
+        "broker",
+        "clock",
+        "http"
+      ],
+      "Loyalty": [
+        "broker",
+        "clock",
+        "http"
+      ],
+      "Notifications": [
+        "broker",
+        "clock",
+        "http",
+        "subscriptions"
+      ],
+      "OPC": [
+        "broker",
+        "clock",
+        "db",
+        "http",
+        "scheduler"
+      ],
+      "WarehouseETL": [
+        "broker",
+        "clock",
+        "http"
+      ],
+      "ShuttlePlanner": [
+        "broker",
+        "clock",
+        "http"
+      ],
+      "SupportConsole": [
+        "broker",
+        "clock",
+        "http"
+      ],
+      "TripWebsite": [
+        "clock",
+        "db",
+        "http"
+      ]
+    },
+    "imports": {
+      "broker": [
+        "AffiliateRelay",
+        "Loyalty",
+        "Notifications",
+        "OPC",
+        "ShuttlePlanner",
+        "SupportConsole",
+        "WarehouseETL"
+      ],
+      "http": [
+        "AffiliateRelay",
+        "Notifications",
+        "OPC",
+        "SupportConsole",
+        "TripWebsite"
+      ]
+    },
+    "service_to_service_imports": [],
+    "takes_only_message": [
+      "Loyalty",
+      "ShuttlePlanner",
+      "WarehouseETL"
+    ],
+    "message_stands_alone": true
   },
   "diagrams": {
     "event_consumers": {
@@ -619,6 +692,20 @@
           "price": "defined",
           "supplier_kind": "defined"
         }
+      },
+      "listed_by": {
+        "services::opc::payloads": [
+          "Experience",
+          "FestivalPass",
+          "LodgingStay",
+          "ShuttleRide"
+        ],
+        "services::website::checkout": [
+          "Experience",
+          "FestivalPass",
+          "LodgingStay",
+          "ShuttleRide"
+        ]
       }
     },
     "gateways": {
@@ -891,6 +978,199 @@
         "services::opc"
       ],
       "website_imports_from_opc": false
+    },
+    "shared_code": {
+      "packages": [
+        "infra::broker",
+        "infra::clock",
+        "infra::db",
+        "infra::http",
+        "infra::scheduler",
+        "infra::subscriptions",
+        "services::affiliates",
+        "services::loyalty",
+        "services::notifications",
+        "services::opc",
+        "services::reporting",
+        "services::shuttle_planner",
+        "services::support_console",
+        "services::website"
+      ],
+      "imports": [
+        [
+          "infra::broker",
+          "infra::http"
+        ],
+        [
+          "infra::db",
+          "infra::clock"
+        ],
+        [
+          "infra::http",
+          "infra::clock"
+        ],
+        [
+          "infra::scheduler",
+          "infra::clock"
+        ],
+        [
+          "infra::subscriptions",
+          "infra::broker"
+        ],
+        [
+          "services::affiliates",
+          "infra::broker"
+        ],
+        [
+          "services::affiliates",
+          "infra::http"
+        ],
+        [
+          "services::loyalty",
+          "infra::broker"
+        ],
+        [
+          "services::notifications",
+          "infra::broker"
+        ],
+        [
+          "services::notifications",
+          "infra::http"
+        ],
+        [
+          "services::notifications",
+          "infra::subscriptions"
+        ],
+        [
+          "services::opc",
+          "infra::broker"
+        ],
+        [
+          "services::opc",
+          "infra::clock"
+        ],
+        [
+          "services::opc",
+          "infra::db"
+        ],
+        [
+          "services::opc",
+          "infra::http"
+        ],
+        [
+          "services::opc",
+          "infra::scheduler"
+        ],
+        [
+          "services::reporting",
+          "infra::broker"
+        ],
+        [
+          "services::shuttle_planner",
+          "infra::broker"
+        ],
+        [
+          "services::support_console",
+          "infra::broker"
+        ],
+        [
+          "services::support_console",
+          "infra::http"
+        ],
+        [
+          "services::website",
+          "infra::clock"
+        ],
+        [
+          "services::website",
+          "infra::db"
+        ],
+        [
+          "services::website",
+          "infra::http"
+        ]
+      ],
+      "names": {
+        "infra::broker -> infra::http": [
+          "Network",
+          "ServiceClient",
+          "ServiceUnavailable"
+        ],
+        "infra::db -> infra::clock": [
+          "FakeClock"
+        ],
+        "infra::http -> infra::clock": [
+          "FakeClock"
+        ],
+        "infra::scheduler -> infra::clock": [
+          "Clock"
+        ],
+        "infra::subscriptions -> infra::broker": [
+          "Broker",
+          "MessageHandler"
+        ],
+        "services::affiliates -> infra::broker": [
+          "Message"
+        ],
+        "services::affiliates -> infra::http": [
+          "ServiceClient"
+        ],
+        "services::loyalty -> infra::broker": [
+          "Message"
+        ],
+        "services::notifications -> infra::broker": [
+          "Message"
+        ],
+        "services::notifications -> infra::http": [
+          "ServiceClient"
+        ],
+        "services::notifications -> infra::subscriptions": [
+          "consumes"
+        ],
+        "services::opc -> infra::broker": [
+          "Broker",
+          "Message"
+        ],
+        "services::opc -> infra::clock": [
+          "Clock"
+        ],
+        "services::opc -> infra::db": [
+          "Database"
+        ],
+        "services::opc -> infra::http": [
+          "Network",
+          "RequestHandler",
+          "ServiceClient",
+          "ServiceUnavailable"
+        ],
+        "services::opc -> infra::scheduler": [
+          "Scheduler"
+        ],
+        "services::reporting -> infra::broker": [
+          "Message"
+        ],
+        "services::shuttle_planner -> infra::broker": [
+          "Message"
+        ],
+        "services::support_console -> infra::broker": [
+          "Message"
+        ],
+        "services::support_console -> infra::http": [
+          "ServiceClient"
+        ],
+        "services::website -> infra::clock": [
+          "Clock"
+        ],
+        "services::website -> infra::db": [
+          "Database",
+          "connect"
+        ],
+        "services::website -> infra::http": [
+          "Network",
+          "ServiceClient",
+          "ServiceUnavailable"
+        ]
+      }
     }
   },
   "evidence": {
@@ -948,6 +1228,8 @@
     "class OpcClient:": "services/website/clients.py:55",
     "class TripItem(ABC):": "services/opc/model/items.py:17",
     "class TransportItem(TripItem):": "services/opc/model/items.py:92",
+    "ITEM_TYPES: dict[str, type[TripItem]] = {": "services/opc/payloads.py:15",
+    "item[\"type\"] = \"ShuttleRide\"": "services/website/checkout.py:89",
     "self._payments.refund(order)": "services/opc/cancellation_task.py:39",
     "supplier_order.mark_cancelling()": "services/opc/cancellation_task.py:44",
     "CANCEL_INTERVAL_S = 60": "services/opc/cancellation_task.py:12",
@@ -957,6 +1239,8 @@
     "supplier_order.mark_cancelled()": "services/opc/cancellation_task.py:57",
     "MANUAL_CANCELLATION_WINDOW = timedelta(hours=72)": "services/opc/partners/glamping_co.py:9",
     "<= MANUAL_CANCELLATION_WINDOW:": "services/opc/partners/glamping_co.py:17",
+    "from infra.broker import Message": "services/loyalty/points.py:3",
+    "from infra.http import": "infra/broker.py:11",
     "Raises no other exception.": "services/opc/gateways/base.py:37",
     "class SupplierUnavailable(Exception):": "services/opc/gateways/base.py:10",
     "class ManualCancellationRequired(Exception):": "services/opc/partners/errors.py:4"

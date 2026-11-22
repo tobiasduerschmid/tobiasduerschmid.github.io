@@ -158,6 +158,23 @@
   }
 
   /**
+   * Why query cannot be searched under the options, or null when it can. Only
+   * a regular expression can fail.
+   * @param {string} query
+   * @param {{matchCase?: boolean, wholeWord?: boolean, regex?: boolean}} [options]
+   * @returns {string|null}
+   */
+  function patternError(query, options) {
+    if (typeof query !== 'string' || query === '') return null;
+    try {
+      compile(query, options || {});
+      return null;
+    } catch (error) {
+      return regexErrorMessage(error);
+    }
+  }
+
+  /**
    * @param {{path: string, content: string, kind?: 'diagram', diagramId?: string, label?: string}[]} files
    * @param {string} query
    * @param {{matchCase?: boolean, wholeWord?: boolean, regex?: boolean}} [options]
@@ -513,6 +530,7 @@
     search: search,
     diagramText: diagramText,
     textMatches: textMatches,
+    patternError: patternError,
     mount: mount,
     MAX_RESULTS: MAX_RESULTS,
   };

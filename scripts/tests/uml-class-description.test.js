@@ -118,3 +118,64 @@ test('reverse references describe multiplicities in the direction of the referen
     assert.match(text, /Whole references Part with multiplicity one to zero or more labeled "items"/);
   }
 });
+
+// A package drawn without its members is a node of a class diagram: a
+// reader who cannot see the drawing needs the packages and their
+// dependencies, as a sighted reader gets them.
+const PACKAGE_DIAGRAM = [
+  'package infra {',
+  '  package broker',
+  '  package http',
+  '}',
+  'package services::loyalty',
+  'package "Trip Website" as website <<service>>',
+  'services::loyalty ..> broker',
+  'website ..> http : «use»',
+  'broker ..> http',
+  'note right of services::loyalty : the Loyalty service',
+  '@layout',
+  'broker @pos(0, 0)',
+  '@endlayout',
+].join('\n');
+
+test('a package diagram is described by its packages and the dependencies between them', () => {
+  const summary = descriptions.describe('class', PACKAGE_DIAGRAM);
+
+  assert.match(summary, /^UML package diagram with 4 packages \(broker, http, services::loyalty, Trip Website\)\./);
+  assert.match(summary, /In package infra: broker, http\./);
+  assert.match(summary, /services::loyalty depends on broker\./);
+  assert.match(summary, /Trip Website depends on http labeled "«use»"\./);
+  assert.match(summary, /broker depends on http\./);
+});
+
+test('the long description of a package diagram lists the packages and each dependency', () => {
+  const verbose = descriptions.describeVerbose('class', PACKAGE_DIAGRAM);
+  const section = (heading) => verbose.sections.find((entry) => entry.heading === heading);
+
+  assert.deepEqual([...section('Packages').items],
+    ['broker (in package infra)', 'http (in package infra)', 'services::loyalty', 'Trip Website, a service', 'infra: broker, http']);
+  assert.deepEqual([...section('Relationships').items],
+    ['services::loyalty depends on broker', 'Trip Website depends on http labeled "«use»"', 'broker depends on http']);
+});
+
+test('classes and packages in one diagram are both named, with a dependency on a package of classes', () => {
+  const source = [
+    'package services::opc::model {',
+    '  abstract class TripItem',
+    '  class FestivalPass',
+    '}',
+    'package services::opc::payloads',
+    'FestivalPass --|> TripItem',
+    'services::opc::payloads ..> services::opc::model',
+  ].join('\n');
+  const summary = descriptions.describe('class', source);
+
+  assert.match(summary, /^UML class diagram with 1 class \(FestivalPass\), 1 abstract class \(TripItem\), 1 package \(services::opc::payloads\)\./);
+  assert.match(summary, /In package services::opc::model: TripItem, FestivalPass\./);
+  assert.match(summary, /services::opc::payloads depends on services::opc::model\./);
+  // The parsers agree with the renderer on what is a package and what is a class.
+  const parsed = renderer.UMLClassDiagram.parse(source);
+  // Objects made in the renderer's context have that context's prototypes.
+  assert.deepEqual(JSON.parse(JSON.stringify(parsed.classes.map((c) => [c.name, c.type]))),
+    [['TripItem', 'abstract'], ['FestivalPass', 'class'], ['services::opc::payloads', 'package']]);
+});

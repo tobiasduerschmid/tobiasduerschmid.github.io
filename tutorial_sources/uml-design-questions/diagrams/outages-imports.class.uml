@@ -1,4 +1,5 @@
 @startuml
+layout compact
 package services::opc {
   class Intake
   class TripEvents
@@ -53,7 +54,7 @@ TripNotifications @pos(1160, 0)
 Broker @pos(150, 420)
 ServiceClient @pos(640, 420)
 Message @pos(1180, 420)
-note:26 @pos(132, 556)
-note:34 @pos(640, 556)
+note:27 @pos(132, 556)
+note:35 @pos(640, 556)
 @endlayout
 @enduml

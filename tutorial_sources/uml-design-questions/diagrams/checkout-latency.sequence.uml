@@ -1,4 +1,5 @@
 @startuml
+layout compact
 actor fan: Fan
 box "Trip Website"
 participant checkout: CheckoutController

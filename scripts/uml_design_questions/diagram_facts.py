@@ -9,6 +9,7 @@ scripts/tests/uml-design-questions-diagrams.test.js check them:
 - class views: classes, hierarchies, operations, and multiplicities, read from
   the classes and found by constructing objects that the validators accept;
 - the import view: which classes use which names from other Python packages;
+- the shared-code view: which service and which shared module imports which;
 - evidence: the line that each note's path:line citation names.
 
 facts.py adds these to facts.json under "diagrams" and "evidence".
@@ -49,6 +50,7 @@ from services.opc.model import suppliers as supplier_module  # noqa: E402
 from services.opc.model.items import FestivalPass, LodgingStay, TransportItem, TripItem  # noqa: E402
 from services.opc.model.orders import Attendee, Fan, Payment, TripOrder  # noqa: E402
 from services.opc.model.suppliers import SupplierOrder  # noqa: E402
+from services.opc.payloads import ITEM_TYPES  # noqa: E402
 from services.opc.supplier_task import split_by_supplier  # noqa: E402
 from services.website.cart import Cart, CartLine, Guest  # noqa: E402
 from services.website.checkout import FanAccount  # noqa: E402
@@ -184,6 +186,8 @@ EVIDENCE = (
     # capstone-trip-items.class.uml
     ("services/opc/model/items.py", "class TripItem(ABC):"),
     ("services/opc/model/items.py", "class TransportItem(TripItem):"),
+    ("services/opc/payloads.py", "ITEM_TYPES: dict[str, type[TripItem]] = {"),
+    ("services/website/checkout.py", 'item["type"] = "ShuttleRide"'),
     # capstone-cancellation.sequence.uml
     ("services/opc/cancellation_task.py", "self._payments.refund(order)"),
     ("services/opc/cancellation_task.py", "supplier_order.mark_cancelling()"),
@@ -194,6 +198,9 @@ EVIDENCE = (
     ("services/opc/cancellation_task.py", "supplier_order.mark_cancelled()"),
     ("services/opc/partners/glamping_co.py", "MANUAL_CANCELLATION_WINDOW = timedelta(hours=72)"),
     ("services/opc/partners/glamping_co.py", "<= MANUAL_CANCELLATION_WINDOW:"),
+    # shared-code.class.uml
+    ("services/loyalty/points.py", "from infra.broker import Message"),
+    ("infra/broker.py", "from infra.http import"),
     # capstone-gateways.class.uml
     ("services/opc/gateways/base.py", "Raises no other exception."),
     ("services/opc/gateways/base.py", "class SupplierUnavailable(Exception):"),
@@ -218,6 +225,7 @@ def views() -> dict:
         "trip_items": trip_items_view(),
         "gateways": gateways_view(),
         "imports": imports_view(),
+        "shared_code": shared_code_view(),
     }
 
 
@@ -680,6 +688,31 @@ def trip_items_view() -> dict:
         "classes": sorted(cls.__name__ for cls in classes),
         **hierarchy(classes),
         "operations": {cls.__name__: operations(cls, names) for cls in classes},
+        "listed_by": item_type_listings(),
+    }
+
+
+def item_type_listings() -> dict[str, list[str]]:
+    """The two modules that name the kinds of trip item, with the names each lists:
+    the types the OPC builds from an order's JSON, and the types the Trip Website
+    writes into the order it submits for a cart with every kind of offer."""
+    stack = build_stack()
+    written: set[str] = set()
+    send = stack.network.request
+
+    def request(caller, service, endpoint, payload):
+        if (service, endpoint) == ("opc", "PurchaseOrderService.submit"):
+            written.update(item["type"] for item in payload["order"]["items"])
+        return send(caller, service, endpoint, payload)
+
+    stack.network.request = request
+    try:
+        book(stack)
+    finally:
+        stack.network.request = send
+    return {
+        "services::opc::payloads": sorted(ITEM_TYPES),
+        "services::website::checkout": sorted(written),
     }
 
 
@@ -787,6 +820,48 @@ def headliner_package(parts) -> str:
     """infra, or services::<name> for a module anywhere under that service."""
     parts = list(parts)
     return "infra" if parts[0] == "infra" else f"services::{parts[1]}"
+
+
+# --- The shared-code view --------------------------------------------------------------
+
+
+def shared_code_view() -> dict:
+    """Which of Headliner's services and shared modules import which.
+
+    A package here is one service under services/ or one module of infra/, the
+    units that the view draws. Every import statement counts, wherever it
+    stands in a file. `names` lists what each service takes from each module.
+    """
+    packages: set[str] = set()
+    names: dict[tuple[str, str], set[str]] = defaultdict(set)
+    for path in sorted(HEADLINER.glob("services/**/*.py")) + sorted(HEADLINER.glob("infra/*.py")):
+        parts = path.relative_to(HEADLINER).with_suffix("").parts
+        if parts[-1] == "__init__":
+            continue
+        importer = code_unit(parts)
+        packages.add(importer)
+        for node in ast.walk(ast.parse(path.read_text(), str(path))):
+            if isinstance(node, ast.ImportFrom) and node.module and not node.level:
+                imported = {node.module: [alias.name for alias in node.names]}
+            elif isinstance(node, ast.Import):
+                imported = {alias.name: [] for alias in node.names}
+            else:
+                continue
+            for module, taken in imported.items():
+                module_parts = module.split(".")
+                if module_parts[0] in ("infra", "services") and len(module_parts) > 1:
+                    names[importer, code_unit(module_parts)].update(taken)
+    imports = sorted([a, b] for a, b in names if a != b)
+    return {
+        "packages": sorted(packages),
+        "imports": imports,
+        "names": {f"{a} -> {b}": sorted(names[a, b]) for a, b in imports},
+    }
+
+
+def code_unit(parts) -> str:
+    """services::<name> for a module of that service; infra::<module> for a shared module."""
+    return "::".join(list(parts)[:2])
 
 
 # --- Evidence ------------------------------------------------------------------------

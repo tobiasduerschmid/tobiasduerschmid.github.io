@@ -1399,6 +1399,11 @@ steps:
                                              # equals `text` is underlined; a click
                                              # (or its button in "Code links") opens
                                              # path:line. Also on contrast.diagram.
+                                             # `type` is class | component | sequence.
+                                             # A package diagram (a module view) is
+                                             # `type: class` with `package Name` nodes;
+                                             # its text alternative then begins "UML
+                                             # package diagram" (js/uml-auto-describe.js).
         evidence:                            # Buttons opening the file at the line.
           - {text: "Markdown", ref: "deploy/broker.toml:31"}
         files_read: [deploy/broker.toml]
@@ -1897,6 +1902,13 @@ of `docs/superpowers/specs/2026-11-20-uml-design-questions-tutorial-design.md`.
   `language-uml-<type>` code block and the evidence list; keys and debriefs
   sit in an instructor-only `.step-solution` block. The results card prints
   from this browser's saved progress when a record exists.
+- **Questions.** A question earns its place when its answer is spread over
+  several modules, a view shows it at a glance, and it asks what the design
+  causes or what to change in it (the three tests of
+  `docs/superpowers/specs/2026-11-21-uml-design-questions-redesign.md` §9.1).
+  Lookups in one file fail them. A first step can be a small challenge
+  instead of a tool drill: it introduces Files, Search files, and pinning
+  while a real question is answered.
 - **Authoring.** Use stable step `key`s (records are keyed by
   `_draftStepKey`); `progress_version` keeps reloads with a step hash
   restoring progress. Follow `quiz-format` for every question (sparse
@@ -2449,6 +2461,16 @@ other platforms retain `Ctrl`. This changes labels only, not key bindings.
   in keyboard-scrollable containers; do not apply the generic responsive-image
   `max-width: 100%` rule to those SVGs. Paper printing still fits diagrams to the
   page. Print surfaces remain light even when the saved site theme is dark.
+  Each printed ArchUML diagram (instruction fences and diagram-challenge
+  replies alike) is named by `UMLAutoDescribe.describe(type, source)`, the
+  same text alternative the live Diagram pane uses. Production builds
+  pre-render them with that name (`_plugins/uml_static.rb`). In development
+  builds the deferred bundle's own auto-init draws every fenced block before
+  `js/uml-auto-describe.js` loads, bypassing its `renderAll` and
+  `applySvgAccessibility` wrappers; the describer then names those figures
+  from `UMLShared.figureSource(container)`, which the bundle records for each
+  figure it draws. `tests/uml-design-questions-tutorial.spec.js` checks every
+  printed name.
   Authored ArchUML wrappers can supply contextual captions with
   `data-uml-caption`; a nonblank attribute overrides a leading `caption:` in
   the diagram source. Check that these captions remain visible in live and
@@ -3004,6 +3026,8 @@ channel.
   ArchUML bundle. The hook must put `role="img"`, a usable accessible name,
   and an SVG `<title>` on each rendered SVG; `js/uml-auto-describe.js` wraps it
   to replace both the fallback name and title with a model-specific description.
+  Figures the bundle drew before the describer loaded (its auto-init of fenced
+  blocks) are described from `UMLShared.figureSource` instead (see §4.1).
   Step navigation is one serialized transaction with a single coalesced
   pending destination: the first idle `loadStep()` still updates its UI
   synchronously, rapid later requests discard intermediate destinations, and
@@ -3312,7 +3336,10 @@ channel.
   is shown, opens a find bar (`role="search"`) for the shown drawing:
   every match framed, the current one with a 4px outline, a polite
   "N of M" / "No matches" status, Enter / Shift+Enter and Next / Previous
-  match buttons that zoom to the current match, an optional Match case, and
+  match buttons that zoom to the current match, optional Match case and
+  Regular expression checkboxes (patterns go through project search's
+  `textMatches`; an invalid one shows project search's
+  `patternError` message in the status and marks nothing), and
   Escape (or Close find) that clears the marks and returns focus. Monaco
   keeps its own Ctrl/Cmd+F; Ctrl/Cmd+Shift+F stays project search.
   **Pinch zoom:** `wheel` events with `ctrlKey` over the canvas (trackpad
@@ -5058,7 +5085,10 @@ are passed. A step with nothing to pass is never marked. Under the buttons,
 `_renderStepControls` puts the lock reason (`_nextLockedLabel`) as text in
 `.tvm-next-group` beside Next; CSS shows it only while Next is `disabled`,
 so code that toggles `next.disabled` later stays in sync (a disabled button
-shows no tooltip). The instructions popout and the UML editor backend draw
+shows no tooltip). In a narrow column the reason wraps beside Next and the
+group shrinks: the bar must not scroll sideways, because a locked first
+step has nothing in it that takes focus (WCAG 2.1.1). The instructions
+popout and the UML editor backend draw
 their own step bars and do not show these yet. Spec:
 `tests/tutorial-step-nav.spec.js`.
 

@@ -763,6 +763,25 @@ test.describe('diagram pane: find and pinch zoom', () => {
     await a11yCheckpoint(page, 'diagram-challenge-demo: diagram find bar');
   });
 
+  test('a regular expression finds labels by pattern, and an invalid one says why', async ({ page }) => {
+    await openDemo(page);
+    await showDiagrams(page, [ORDER_FAN_OUT], { layout: 'maximized' });
+    await componentDrawing(page).focus();
+    await page.keyboard.press('ControlOrMeta+F');
+    const status = findBar(page).getByRole('status');
+
+    // As plain text the pattern matches nothing; as a pattern it matches the specific topics.
+    await findField(page).fill('^trip\\.c');
+    await expect(status).toHaveText('No matches');
+    await findBar(page).getByLabel('Regular expression', { exact: true }).check();
+    await expect(status).toHaveText('1 of 2');
+    expect([...(await marks(page)).labels].sort()).toEqual(['trip.cancelled', 'trip.confirmed']);
+
+    await findField(page).fill('trip.(');
+    await expect(status).toHaveText(/^Invalid regular expression/);
+    expect((await marks(page)).labels).toEqual([]);
+  });
+
   test('Enter moves to the next match at reading size, Shift+Enter back', async ({ page }) => {
     await openDemo(page);
     await showDiagrams(page, [ORDER_FAN_OUT], { layout: 'maximized' });
@@ -1811,9 +1830,12 @@ test.describe('diagram search and code links', () => {
       // The theme switch fades colors; wait until the button has settled.
       await expect.poll(() => controlContrast(codeLink), { message: `${theme}: code link text (WCAG 1.4.3)` })
         .toBeGreaterThanOrEqual(4.5);
+      // The drawing's filter flips at once, but the pane surface behind it
+      // fades to its dark color, so the frame is compared once that settles.
+      await expect.poll(async () => (await labelLook(hit)).frameContrast,
+        { message: `${theme}: the frame stands out (WCAG 1.4.11)` }).toBeGreaterThanOrEqual(3);
       const hitLook = await labelLook(hit);
       expect(hitLook.frameWidth, `${theme}: the hit is framed`).toBeGreaterThanOrEqual(2);
-      expect(hitLook.frameContrast, `${theme}: the frame stands out (WCAG 1.4.11)`).toBeGreaterThanOrEqual(3);
       expect(hitLook.textOnFillContrast, `${theme}: the hit's text on its fill (WCAG 1.4.3)`).toBeGreaterThanOrEqual(4.5);
       expect(hitLook.weight, `${theme}: the hit is bold`).toBeGreaterThanOrEqual(700);
       const linkLook = await labelLook(linked);

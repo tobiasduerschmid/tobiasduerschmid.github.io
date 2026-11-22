@@ -180,6 +180,7 @@
         '<label class="tutorial-diagram-pane__find-label" for="' + id + '-find">Find in diagram</label>' +
         '<input class="tutorial-diagram-pane__find-input" type="search" id="' + id + '-find" autocomplete="off" spellcheck="false" enterkeyhint="search">' +
         '<label class="tutorial-diagram-pane__find-option"><input type="checkbox" data-diagram-find-case> Match case</label>' +
+        '<label class="tutorial-diagram-pane__find-option"><input type="checkbox" data-diagram-find-regex> Regular expression</label>' +
         '<button type="button" class="tutorial-diagram-pane__tool" data-diagram-find="previous">Previous match</button>' +
         '<button type="button" class="tutorial-diagram-pane__tool" data-diagram-find="next">Next match</button>' +
         '<button type="button" class="tutorial-diagram-pane__tool" data-diagram-find="close">Close find</button>' +
@@ -775,6 +776,13 @@
     // Without project search on the page, a plain substring match.
     var matches = search ? search.textMatches : function (text, wanted, settings) {
       if (!wanted) return false;
+      if (settings && settings.regex) {
+        try {
+          return new RegExp(wanted, settings.matchCase ? '' : 'i').test(text);
+        } catch (error) {
+          return false;
+        }
+      }
       return settings && settings.matchCase ? text.indexOf(wanted) !== -1
         : text.toLowerCase().indexOf(wanted.toLowerCase()) !== -1;
     };
@@ -874,7 +882,10 @@
     clearHits(state);
     state.status.textContent = '';
     var query = find.input.value;
-    find.matches = query ? matchingLabels(state, query, { matchCase: find.matchCase.checked }) : [];
+    var options = { matchCase: find.matchCase.checked, regex: find.regex.checked };
+    var search = window.TutorialProjectSearch;
+    find.error = search && search.patternError ? search.patternError(query, options) : null;
+    find.matches = query && !find.error ? matchingLabels(state, query, options) : [];
     if (find.current >= find.matches.length) find.current = 0;
     find.matches.forEach(markHit);
     showCurrentMatch(state, zoomToCurrent);
@@ -887,6 +898,10 @@
     });
     if (!find.input.value) {
       find.status.textContent = '';
+      return;
+    }
+    if (find.error) {
+      find.status.textContent = find.error;
       return;
     }
     if (!find.matches.length) {
@@ -954,6 +969,8 @@
       bar: bar,
       input: bar.querySelector('.tutorial-diagram-pane__find-input'),
       matchCase: bar.querySelector('[data-diagram-find-case]'),
+      regex: bar.querySelector('[data-diagram-find-regex]'),
+      error: null,
       status: bar.querySelector('.tutorial-diagram-pane__find-status'),
       matches: [],
       current: 0,
@@ -969,9 +986,11 @@
       find.current = 0;
       refreshFind(state, true);
     });
-    find.matchCase.addEventListener('change', function () {
-      find.current = 0;
-      refreshFind(state, true);
+    [find.matchCase, find.regex].forEach(function (option) {
+      option.addEventListener('change', function () {
+        find.current = 0;
+        refreshFind(state, true);
+      });
     });
     bar.addEventListener('keydown', function (event) {
       if (event.key === 'Escape') {

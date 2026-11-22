@@ -673,3 +673,46 @@ Research and reports, as listed with DOIs in §15 of the first spec: Larkin & Si
 † Cited from memory in this session, locators unverified: Parnas (1972), "On the criteria to be used in decomposing systems into modules", CACM 15(12); Liskov & Wing (1994), "A behavioral notion of subtyping", ACM TOPLAS 16(6); Meyer (1997), *Object-Oriented Software Construction*, 2nd ed.; Garcia-Molina & Salem (1987), "Sagas", SIGMOD; Murphy, Notkin & Sullivan (1995), "Software reflexion models", FSE. The "expand, then contract" and "transactional outbox" names are practitioner terms and are used descriptively; no student-facing text depends on a citation for them.
 
 Skills applied: `cs-tutorial-design` (Bloom targeting, component skills before integration, the Liar Assessment, tasks that preserve the assessed decision), `pedagogical-advisor` (target capability → cognitive work → observable evidence → feedback; calibrated evidence grades), `software-architecture` (design, evaluate, and document routes: six-part scenarios, view selection by stakeholder question, risks and trade-off points), `quiz-format` (sparse option feedback, shuffle-safe wording, answer-tell limits), `good-diagrams` (one takeaway per view; no diagram changed without a need), `c4-model` (facts versus proposals; "not drawn" is not "not implemented"), `responsibility-driven-design` (contracts, owners for recovery actions, explicit variation), `maintainable-code` (contract and substitutability arguments in the `gateways` key), `test-design` (fact tests pin the spec and no more; judgment keys assert premises only).
+
+---
+
+## 9. Second redesign: step 1 becomes a challenge (2026-11-21)
+
+The first redesign left step 1 as a tool drill: three lookups with Files and Search files. The instructor's review, against the L04 lecture ("judge the design instead of the code"), asked for questions that feel like questions about a system, in step 1 above all. This section records what changed. §3.0 above is superseded.
+
+### 9.1 Three tests for every question
+
+A question stays in the tutorial only if it passes all three:
+
+1. **Spread.** Its answer is spread over several modules, so no single file settles it.
+2. **View.** A view shows the answer at a glance, and the code does not.
+3. **Consequence.** It asks what the design causes, or what to change in the design. It does not ask for knowledge local to one implementation.
+
+Lookups ("which file sets the start time") fail the first test, and "which operations must the subclass define" fails the third. Both are gone.
+
+### 9.2 Step 1, "What a Change to Shared Code Reaches"
+
+- **Message.** Rin, platform team: a flaw in `infra/http.py` is fixed; each service runs with its own copy of the shared files it loads; the Loyalty team asks to be skipped because Loyalty never calls anyone.
+- **Main question** (`redeploy`, from the code and again with the view): which services load `infra/http.py`? All eight. Five import it; Loyalty, Warehouse ETL, and Shuttle Planner import only `Message` from `infra/broker.py`, whose line 11 imports `infra/http.py`. A search for `infra.http` finds five.
+- **View.** A UML package diagram: the eight services and `infra::broker`, `infra::http`, with one dependency per import. `infra` is drawn as a package around its two modules. Every arrow is straight and none crosses another; a test holds the drawing to that.
+- **New questions with the view.** `broker-release` (a change to `infra/broker.py` reaches every service but the Trip Website), `decouple` (move `Message` into a module that imports nothing), and `alone` (no service imports another, and the view cannot say what services exchange at run time, which leads into step 2).
+- **Mechanism.** "Imports that chain: a file's import loads that file's imports too." It returns as a choice in step 5, whose contrast view is also about imports. Step 1 offers no later mechanism, because naming one would give a later answer away.
+- **Budget.** 12 minutes, a 5-minute nudge for Part A, one pinned line, `min_score` 0.8 over five graded items.
+- The knowledge check of step 1 is removed. Checks remain on steps 3 and 6.
+
+### 9.3 Later steps
+
+- **Capstone, `rideshare`.** The question was which operations a new subclass must define. It now asks which other code must change before a fan can book a `RidesharePickup`: `ITEM_TYPES` in the OPC and `_item` in the Trip Website both list the item types by name, and the website imports nothing from the OPC. The trip-items view adds the two modules and their dependencies.
+- **Mechanism questions, steps 2 to 6.** Each stem is now a claim to judge, such as an agent's report of a search or a reviewer's reading of one method. Options and keys are unchanged.
+- **Consolidation prompts.** Steps 1 to 6 end with a reply to the person who asked. The capstone ends with a question about the student's own project.
+- **Step 6 knowledge check.** The multiplicity item is a product decision (standing-room tickets) instead of a reading of `0..1`.
+
+### 9.4 Renderer
+
+The step 1 view needed packages as nodes. ArchUML class diagrams gained: a `package` line without braces (a package drawn without its members), a default layout that keeps packages together at any depth of nesting (the package-by-package placement that compact layout uses), dependencies that start or end at a package frame, qualified names as note targets, and relationships that keep out of packages holding neither of their ends. `js/ArchUML/REFERENCE.md` documents them under "Package Diagrams".
+
+### 9.5 Evidence
+
+- Keys: `facts.py` imports each service in a fresh interpreter and lists the `infra` modules in memory (`shared_code.loads`), and reads which names each service takes from a module. `diagram_facts.py` reads every import statement for the view and records which type names the OPC lists and the website writes.
+- `progress_version` is 3: records saved under earlier versions are dropped.
+- Not yet checked with learners: whether Part A of step 1 takes about 5 minutes, and how many students find the chain through `infra/broker.py` without the view.

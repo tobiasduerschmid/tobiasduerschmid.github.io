@@ -1,4 +1,5 @@
 @startuml
+layout compact
 package services::opc::gateways {
   abstract class SupplierGateway {
     + {abstract} place(order)
@@ -82,7 +83,7 @@ GlampingCoGateway @pos(264, 520)
 VipShuttleGateway @pos(531, 520)
 MeetAndGreetGateway @pos(774, 520)
 ManualCancellationRequired @pos(120, 680)
-note:58 @pos(1040, 30)
-note:64 @pos(1040, 200)
+note:59 @pos(1040, 30)
+note:65 @pos(1040, 200)
 @endlayout
 @enduml
