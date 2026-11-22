@@ -88,15 +88,14 @@
     function mountQuiz(index) {
       const host = document.createElement('div');
       quizHost.appendChild(host);
-      window.SebookQuiz.mount({
+      window.NarrationQuiz.mount({
         hostEl: host, controlsEl: quizPanel, stepIndex: index,
         quiz: { min_score: 1, questions: [story.scenes[index].checkpoint] },
         allowSkip: true, isFinalQuiz: index === story.scenes.length - 1,
-        onPass: () => continueScene(index, resumeNarration),
-        onSkip: () => continueScene(index, resumeNarration),
+        onContinue: () => continueScene(index, resumeNarration),
+        continueLabel: index + 1 < story.scenes.length
+          ? (story.audio ? 'Continue narration' : 'Continue to next evidence') : 'Finish case study',
       });
-      host.querySelector('.tvm-quiz-continue-btn').textContent = index + 1 < story.scenes.length
-        ? 'Continue to next evidence' : 'Finish case study';
       host.querySelector('.tvm-quiz-skip-btn').textContent = index + 1 < story.scenes.length
         ? 'Skip decision and reveal next evidence' : 'Skip decision and finish';
       mountedQuizzes.set(index, host);
@@ -122,7 +121,7 @@
       stage.hidden = true;
       root.querySelector('.nja-narration').hidden = true;
       if (playButton) playButton.disabled = true;
-      quizPanel.querySelector('.tvm-quiz-status').textContent = 'Make a prediction before revealing the next evidence. You can retry or continue after feedback.';
+      quizPanel.querySelector('.tvm-quiz-status').textContent = 'Make a prediction before revealing the next evidence. Continue after reading the feedback.';
       const heading = quizPanel.querySelector('h3');
       heading.textContent = `${index + 1}. ${story.scenes[index].label} — Choose the next action`;
       quizPanel.hidden = false;
@@ -140,6 +139,7 @@
       const transport = window.NarratedExplainer.enhance(root, {
         storyboard: story, timing, render,
         onSectionEnd: index => finishScene(index, true),
+        checkScenes: story.scenes.map((scene, index) => scene.checkpoint ? index : -1).filter(index => index >= 0),
         onSeek: closeQuiz,
         canPlay: () => quizPanel.hidden,
       });

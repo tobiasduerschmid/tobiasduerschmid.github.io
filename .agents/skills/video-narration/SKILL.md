@@ -245,6 +245,13 @@ shares its modules. Rules that came from review:
 - While a knowledge check is open, the control bar steps aside so the quiz
   has the room; the quiz's own buttons continue the narration, and Esc still
   leaves full screen.
+- Inline controls sit above the picture. The timeline separates scenes by
+  duration, previews names and timestamps on hover and keyboard seeking, and
+  places clickable check dots at section ends. Nearby dots share a choice list
+  on narrow screens rather than overlapping touch targets. Single-question checks retain answer feedback
+  then Continue narration resumes directly, without results or review screens.
+  Multi-question summaries retain results. Fullscreen chrome starts a fresh
+  idle period on every entry path; a stationary pointer does not prevent hiding.
 - An icon button reads at a glance at its real size. The bar draws the music
   player's centered SVG icons (`_includes/player-icon.html`), so the skip
   buttons hold their "5" inside the circular arrow, as the music player's do.

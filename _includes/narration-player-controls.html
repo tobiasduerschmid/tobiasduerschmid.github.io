@@ -24,7 +24,18 @@
 {%- assign controls_seconds = controls_duration | modulo: 60 -%}
 <div class="nja-controls nja-playback-controls vn-controls song-player-controls" hidden>
   {%- unless include.text_only %}
+  <div class="vn-timeline" role="group" aria-label="Narration timeline">
+  <div class="vn-timeline-track">
+  <div class="vn-timeline-segments" aria-hidden="true"></div>
   <label class="nja-seek-label vn-seek-label"><span class="vn-hidden-label">{{ include.seek_label }}</span><input type="range" min="0" max="{{ include.duration | default: 1 }}" step="0.01" value="0" aria-valuetext="0:00" class="nja-seek" aria-keyshortcuts="ArrowLeft ArrowRight 0 1 2 3 4 5 6 7 8 9"></label>
+  </div>
+  <div class="vn-timeline-checks" role="group" aria-label="Jump to a knowledge check" hidden></div>
+  <span class="vn-timeline-tooltip" id="{{ include.id }}-timeline-tooltip" role="tooltip" hidden><strong class="vn-preview-title"></strong><span class="vn-preview-time"></span></span>
+  <section class="vn-check-menu" id="{{ include.id }}-check-menu" role="region" aria-label="Choose a knowledge check" hidden>
+    <div class="vn-check-menu-heading"><strong>Knowledge checks</strong><button type="button" class="vn-check-close" aria-label="Close knowledge checks">{% include player-icon.html name='close' %}</button></div>
+    <div class="vn-check-choices"></div>
+  </section>
+  </div>
   {%- endunless %}
   <div class="vn-toolbar">
     <div class="nja-transport vn-toolbar-group">
@@ -38,6 +49,7 @@
       <output class="nja-time" aria-label="Playback time">0:00 / {{ controls_duration | divided_by: 60 }}:{% if controls_seconds < 10 %}0{% endif %}{{ controls_seconds }}</output>
       {%- endunless %}
     </div>
+    {%- unless include.text_only %}<span class="vn-current-chapter" aria-hidden="true">{{ include.scenes.first.label }}</span>{%- endunless %}
     <div class="vn-toolbar-group vn-view-controls">
       {{- include.view -}}
       {%- unless include.text_only %}

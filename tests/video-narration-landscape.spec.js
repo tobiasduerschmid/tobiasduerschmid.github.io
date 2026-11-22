@@ -44,6 +44,12 @@ for (const { native, width, height } of [
 
 for (const dark of [false, true]) {
   test(`landscape fullscreen keeps long scenes, enlarged captions, settings and checks usable in ${dark ? 'dark' : 'light'} mode`, async ({ page }) => {
+    // Desktop Chromium cannot resize a native fullscreen window. Use the
+    // iPhone presentation path to simulate a physical orientation change.
+    await page.addInitScript(() => {
+      delete Element.prototype.requestFullscreen;
+      delete Element.prototype.webkitRequestFullscreen;
+    });
     await page.goto(url);
     await page.evaluate(dark => document.documentElement.classList.toggle('dark-mode', dark), dark);
     const player = lesson(page);
@@ -81,9 +87,10 @@ test('double taps skip in the correct direction on the rotated picture', async (
   await position.fill('15');
   const box = await player.getByRole('button', { name: 'Play video', exact: true }).boundingBox();
   // Clockwise rotation maps the picture's left/right halves to top/bottom.
+  // Use its upper area (right after rotation), clear of the caption overlay.
   const tapHalf = async fraction => {
-    await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height * fraction);
-    await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height * fraction);
+    await page.touchscreen.tap(box.x + box.width * 0.8, box.y + box.height * fraction);
+    await page.touchscreen.tap(box.x + box.width * 0.8, box.y + box.height * fraction);
   };
   await tapHalf(0.75);
   await expect(position).toHaveValue('20');

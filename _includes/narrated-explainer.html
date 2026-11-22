@@ -8,6 +8,8 @@
   <div class="nja-player">
     <div class="vn-video song-player-screen" data-vn-video tabindex="-1">
     <div class="vn-surface">
+    {% capture explainer_settings %}<label class="nja-motion"><input type="checkbox" data-setting="motion" checked> Animate visuals</label>{% endcapture %}
+    {% include narration-player-controls.html id=player_id duration=timing.duration seek_label="Animation position" scenes=explainer.scenes settings=explainer_settings %}
     <div class="vn-frame">
     <div class="nja-stage" role="region" aria-label="Scene" data-fullscreen-scroll>
       {% for scene in explainer.scenes %}
@@ -36,8 +38,6 @@
       {% endfor %}
     </div>
     <div class="nja-narration vn-captions" id="{{ player_id }}-captions" role="region" aria-label="Narration" tabindex="0"><p>{{ explainer.scenes.first.cues.first.text }}</p></div>
-    {% capture explainer_settings %}<label class="nja-motion"><input type="checkbox" data-setting="motion" checked> Animate visuals</label>{% endcapture %}
-    {% include narration-player-controls.html id=player_id duration=timing.duration seek_label="Animation position" scenes=explainer.scenes settings=explainer_settings %}
     </div>
     </div>
     </div>

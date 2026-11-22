@@ -458,7 +458,7 @@ for (const speed of [1, 2]) {
         await expect(quiz.getByText(question.explanation, { exact: true })).toBeVisible();
         if (question !== questions.at(-1)) await quiz.getByRole('button', { name: /^Next/ }).click();
       }
-      await quiz.getByRole('button', { name: 'See Results' }).click();
+      if (questions.length > 1) await quiz.getByRole('button', { name: 'See Results' }).click();
       await quiz.getByRole('button', { name: index + 1 < story.scenes.length ? 'Continue narration' : 'Finish review' }).click();
       await expect(quiz).toBeHidden();
       if (index + 1 < story.scenes.length) {
@@ -538,7 +538,9 @@ test('full screen fills the display with the video, hides idle controls, and kee
   const picture = await animation.locator('[data-vn-panel="animation"]').boundingBox();
   expect(picture.width / picture.height).toBeCloseTo(16 / 9, 1);
   const controls = animation.locator('.vn-controls');
-  expect((await controls.boundingBox()).height).toBeLessThanOrEqual(76);
+  // Segments and checkpoint targets share the overlay; the picture still
+  // dominates the presentation while the controls are visible.
+  expect((await controls.boundingBox()).height).toBeLessThan(box.height / 5);
   const navigation = await animation.getByRole('navigation', { name: 'Lesson sections' }).boundingBox();
   expect(navigation.y + navigation.height).toBeLessThanOrEqual(picture.y + 1);
   expect(picture.width).toBeGreaterThan(1280 * 0.85);

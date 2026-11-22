@@ -163,6 +163,51 @@ html.dark-mode:not(.print-light-mode) .narrated-explainer .nja-controls .vn-play
 .narrated-explainer .nja-time { margin-inline: 0.4em; padding: 0; font: inherit; font-variant-numeric: tabular-nums; color: var(--nja-text); white-space: nowrap; }
 .narrated-explainer .nja-seek-label { display: block; margin: 0; color: var(--nja-text); font: inherit; }
 .narrated-explainer .nja-seek { display: block; width: 100%; height: 1.75em; margin: 0; accent-color: var(--nja-accent); cursor: pointer; }
+
+/* Chapter progress uses a thin, continuous rail. Checkpoints occupy one quiet
+   lane below it so scrubbing and the 24px check targets never overlap. */
+.narrated-explainer .vn-timeline { position: relative; min-width: 0; }
+.narrated-explainer .vn-timeline-track { position: relative; display: flex; align-items: center; height: 28px; margin-inline: 12px; }
+.narrated-explainer .vn-timeline-track .nja-seek-label { width: 100%; }
+.narrated-explainer .vn-timeline-segments { position: absolute; inset: 50% 0 auto; display: flex; height: 4px; transform: translateY(-50%); pointer-events: none; }
+.narrated-explainer .vn-timeline-segments > span { flex-basis: 0; min-width: 0; background: linear-gradient(to right, var(--nja-accent) var(--segment-progress, 0%), var(--nja-line) var(--segment-progress, 0%)); transition: transform 120ms ease; }
+.narrated-explainer .vn-timeline-segments > .is-previewed { transform: scaleY(2); }
+.narrated-explainer .vn-timeline .nja-seek { position: relative; height: 28px; appearance: none; -webkit-appearance: none; background: transparent; }
+.narrated-explainer .vn-timeline .nja-seek::-webkit-slider-runnable-track { height: 4px; background: transparent; border: 0; }
+.narrated-explainer .vn-timeline .nja-seek::-moz-range-track { height: 4px; background: transparent; border: 0; }
+.narrated-explainer .vn-timeline .nja-seek::-moz-range-progress { background: transparent; }
+.narrated-explainer .vn-timeline .nja-seek::-webkit-slider-thumb { appearance: none; -webkit-appearance: none; width: 14px; height: 14px; margin-top: -5px; border: 2px solid var(--nja-chrome); border-radius: 50%; background: var(--nja-accent); }
+.narrated-explainer .vn-timeline .nja-seek::-moz-range-thumb { width: 10px; height: 10px; border: 2px solid var(--nja-chrome); border-radius: 50%; background: var(--nja-accent); }
+.narrated-explainer .vn-timeline-checks { position: relative; min-width: 0; height: 24px; margin: 0 12px; }
+.narrated-explainer .nja-controls .vn-timeline-check { position: absolute; top: 0; width: 24px; height: 24px; min-width: 24px; min-height: 24px; padding: 0; border: 0; border-radius: 50%; }
+.narrated-explainer .vn-timeline-check::before { content: ''; width: 10px; height: 10px; border: 2px solid var(--nja-muted); border-radius: 50%; background: var(--nja-chrome); transform: translateY(-6px); }
+.narrated-explainer .vn-timeline-check.is-grouped::before { box-shadow: 4px 0 0 -1px var(--nja-chrome), 5px 0 0 0 var(--nja-muted); transform: translate(-2px, -6px); }
+.narrated-explainer .vn-timeline-check:is(:hover, :focus-visible)::before { background: var(--nja-accent); border-color: var(--nja-accent); }
+.narrated-explainer .vn-timeline-tooltip { position: absolute; z-index: 8; bottom: 100%; display: grid; gap: 0.2em; width: max-content; max-width: min(24em, 100%); box-sizing: border-box; padding: 0.65em 0.85em; border: 1px solid var(--nja-line); border-radius: 8px; color: var(--nja-text); background: var(--nja-bg); box-shadow: 0 4px 18px rgb(0 0 0 / 18%); font: inherit; line-height: 1.4; overflow-wrap: anywhere; pointer-events: auto; }
+.narrated-explainer .vn-preview-time { color: var(--nja-muted); font-variant-numeric: tabular-nums; }
+.narrated-explainer .nja-player:has(.vn-timeline-tooltip:not([hidden])) { overflow: visible; }
+.narrated-explainer .vn-current-chapter { flex: 1; min-width: 6em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--nja-text); font-weight: 600; }
+.narrated-explainer .vn-current-chapter::before { content: '›'; margin-right: 0.6em; color: var(--nja-muted); }
+.narrated-explainer .vn-check-menu { position: absolute; z-index: 9; top: 100%; right: 0; width: min(28em, 100%); max-height: min(24em, 60vh); overflow: auto; overscroll-behavior: contain; padding: 0.6em; border: 1px solid var(--nja-line); border-radius: 10px; background: var(--nja-bg); color: var(--nja-text); box-shadow: 0 6px 24px rgb(0 0 0 / 20%); }
+.narrated-explainer .vn-check-menu-heading { display: flex; align-items: center; justify-content: space-between; gap: 1em; padding-left: 0.65em; }
+.narrated-explainer .vn-check-choices { display: grid; gap: 0.25em; }
+.narrated-explainer .nja-controls .vn-check-choice { display: flex; justify-content: space-between; gap: 1em; width: 100%; height: auto; padding: 0.65em; text-align: left; line-height: 1.4; border-radius: 6px; }
+.narrated-explainer .vn-check-time { flex-shrink: 0; color: var(--nja-muted); font-variant-numeric: tabular-nums; }
+.narrated-explainer .vn-video.is-fullscreen .vn-check-menu { top: auto; bottom: 100%; }
+.narrated-explainer :is(.vn-timeline-tooltip, .vn-timeline-checks, .vn-check-menu)[hidden] { display: none; }
+@container (max-width: 1100px) {
+  .narrated-explainer .vn-controls:has(.vn-language) .vn-current-chapter { display: none; }
+}
+@container (max-width: 700px) {
+  .narrated-explainer .vn-current-chapter { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .narrated-explainer .vn-timeline-segments > span { transition: none; }
+}
+@media (forced-colors: active) {
+  .narrated-explainer .vn-timeline-segments > span { background: CanvasText; }
+  .narrated-explainer .vn-timeline-check::before { border-color: ButtonText; }
+}
 .narrated-explainer .nja-settings label { display: grid; gap: 0.4em; margin: 0; color: var(--nja-text); font: inherit; min-width: 0; }
 .narrated-explainer .nja-settings select { width: 100%; min-width: 0; min-height: 2.75em; padding: 0.35em 0.5em; font: inherit; color: var(--nja-text); background: var(--nja-input); border: 1px solid var(--nja-line); border-radius: 0.4em; }
 .narrated-explainer .nja-settings .nja-motion { display: flex; align-items: center; gap: 0.4em; min-height: 2.5em; }
@@ -220,6 +265,8 @@ html.dark-mode:not(.print-light-mode) .narrated-explainer .vn-settings { box-sha
    every control stays reachable while it is open; it scrolls on its own. */
 .narrated-explainer .nja-controls { position: relative; }
 .narrated-explainer .vn-settings { position: absolute; z-index: 6; right: 0.5em; bottom: calc(100% + 0.5em); box-sizing: border-box; width: min(24em, calc(100% - 1em)); max-height: min(30em, 70vh); overflow: auto; overscroll-behavior: contain; margin: 0; padding: 0.5em 1em 0.25em; color: var(--nja-text); background: var(--nja-bg); border: 1px solid var(--nja-line); border-radius: 0.75em; box-shadow: 0 0.5em 2em rgba(11, 15, 26, 0.25); }
+.narrated-explainer .vn-video:not(.is-fullscreen) .vn-controls { z-index: 4; border-top: 0; border-bottom: 1px solid var(--nja-line); }
+.narrated-explainer .vn-video:not(.is-fullscreen) .vn-settings { top: calc(100% + 0.25em); bottom: auto; }
 .narrated-explainer .vn-settings-heading { display: flex; justify-content: space-between; align-items: center; gap: 1em; }
 .narrated-explainer .vn-settings .nja-settings > label { padding-block: 0.75em; border-top: 1px solid var(--nja-line); }
 .narrated-explainer .vn-settings .nja-settings > .nja-motion { padding-block: 0.5em; }

@@ -242,6 +242,7 @@
         storyboard.scenes[index].cues[cueIndex], progress, motion ? motion.checked : false, position);
       seek.value = String(position);
       seek.setAttribute('aria-valuetext', `${clockLabel(position)} of ${clockLabel(timing.duration)}`);
+      timeline.update(position);
       root.querySelector('.nja-time').textContent = `${clockLabel(position)} / ${clockLabel(timing.duration)}`;
     }
 
@@ -371,6 +372,14 @@
     printTranscript(root, () => audio.pause());
     root.classList.add('is-enhanced');
     root.querySelectorAll('.nja-controls').forEach((controls) => { controls.hidden = false; });
+    const timeline = window.NarrationTimeline.bind(root, {
+      story: storyboard, timing, checkScenes: options.checkScenes,
+      onCheck(index) {
+        audio.pause();
+        seekTo(timing.scenes[index].end - 0.002);
+        options.onSectionEnd(index);
+      },
+    });
     render(0);
     const api = {
       refresh: () => render(position),

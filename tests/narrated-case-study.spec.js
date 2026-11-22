@@ -39,7 +39,7 @@ for (const { topic, url } of cases) {
     const caseStudy = page => page.getByRole('region', { name: story.title, exact: true });
     const auditScope = { include: `#${topic}-case-study`, feature: 'narrated-case-study' };
 
-    test('silent investigation waits for a decision, gives specific feedback, and permits retry before continuing', async ({ page }) => {
+    test('silent investigation gives specific feedback and continues without a review screen', async ({ page }) => {
       test.setTimeout(120000);
       const errors = [];
       page.on('pageerror', error => errors.push(error.message));
@@ -63,12 +63,8 @@ for (const { topic, url } of cases) {
       await expect(decision.getByText(question.explanation, { exact: true })).toBeVisible();
       await expect(study.getByRole('heading', { name: followingScene.title, exact: true })).toBeHidden();
       await a11yCheckpoint(page, 'case study incorrect feedback', auditScope);
-      await decision.getByRole('button', { name: 'See Results' }).click();
-      await decision.getByRole('button', { name: 'Try Again' }).click();
-      await expect(decision.getByText(question.explanation, { exact: true })).toBeHidden();
-      await decision.getByRole('radio', { name: question.options[question.correct_index] }).click();
-      await decision.getByRole('button', { name: 'See Results' }).click();
-      await decision.getByRole('button', { name: 'Continue to next evidence' }).click();
+      await expect(decision.getByRole('button', { name: 'See Results' })).toHaveCount(0);
+      await decision.getByRole('button', { name: story.audio ? 'Continue narration' : 'Continue to next evidence' }).click();
       await expect(study.getByRole('heading', { name: followingScene.title, exact: true })).toBeVisible();
       await expectPlaybackAvailable(study, story);
       expect(errors, 'silent study must not raise browser errors').toEqual([]);

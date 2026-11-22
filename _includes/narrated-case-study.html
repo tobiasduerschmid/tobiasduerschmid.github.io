@@ -9,6 +9,13 @@
   <div class="nja-player">
     <div class="vn-video song-player-screen" data-vn-video tabindex="-1">
     <div class="vn-surface">
+    {% capture case_steps %}<span class="case-step-actions"><button type="button" data-case-action="previous-step">Previous step</button><button type="button" data-case-action="next-step">Next step</button><output data-case-progress aria-label="Current step"></output></span>{% endcapture %}
+    {%- comment -%} A text-only story has no media until its speech is rendered, so its bar offers no audio controls. {%- endcomment %}
+    {% if case_story.audio %}
+    {% include narration-player-controls.html id=case_id duration=case_timing.duration seek_label="Narration position" scenes=case_story.scenes scene_label="Review a scene" speed_label="Narration speed" lead=case_steps %}
+    {% else %}
+    {% include narration-player-controls.html id=case_id text_only=true scenes=case_story.scenes scene_label="Review a scene" lead=case_steps %}
+    {% endif %}
     <div class="vn-frame">
     <div class="nja-stage" role="region" aria-label="Scene" data-fullscreen-scroll>
       {% for scene in case_story.scenes %}
@@ -43,13 +50,6 @@
       <button type="button" data-case-action="review-evidence">Review this scene</button>
     </section>
     <div class="nja-narration vn-captions" id="{{ case_id }}-captions" role="region" aria-label="Narration" tabindex="0"><p>{{ case_story.scenes.first.cues.first.text | escape }}</p></div>
-    {% capture case_steps %}<span class="case-step-actions"><button type="button" data-case-action="previous-step">Previous step</button><button type="button" data-case-action="next-step">Next step</button><output data-case-progress aria-label="Current step"></output></span>{% endcapture %}
-    {%- comment -%} A text-only story has no media until its speech is rendered, so its bar offers no audio controls. {%- endcomment %}
-    {% if case_story.audio %}
-    {% include narration-player-controls.html id=case_id duration=case_timing.duration seek_label="Narration position" scenes=case_story.scenes scene_label="Review a scene" speed_label="Narration speed" lead=case_steps %}
-    {% else %}
-    {% include narration-player-controls.html id=case_id text_only=true scenes=case_story.scenes scene_label="Review a scene" lead=case_steps %}
-    {% endif %}
     </div>
     </div>
     </div>

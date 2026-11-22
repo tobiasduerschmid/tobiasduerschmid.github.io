@@ -2,7 +2,7 @@
 (function () {
   'use strict';
 
-  function bind({ player, audio, listen }) {
+  function bind({ player, audio, listen, hideWhileHovered = false }) {
     const screen = player.querySelector('.song-player-screen');
     const controls = player.querySelector('.song-player-controls');
     const idleDelay = 3000;
@@ -28,9 +28,11 @@
       // shortcuts can give pointer-focused buttons that state too. Only actual
       // keyboard navigation should pin the toolbar for the rest of playback.
       const usingControl = controls.contains(focused) && keyboardNavigation;
-      const settingsOpen = controls.querySelector('.song-player-settings-toggle[aria-expanded="true"]');
+      const settingsOpen = controls.querySelector('[aria-expanded="true"]');
+      const tooltipOpen = controls.querySelector('[role="tooltip"]:not([hidden])');
       return fullscreen && !audio.paused && !audio.ended && !audio.seeking
-        && !loading && !buffering && !hoveringControls && !usingControl && !settingsOpen && pointersDown.size === 0;
+        && !loading && !buffering && (!hoveringControls || hideWhileHovered)
+        && !usingControl && !settingsOpen && !tooltipOpen && pointersDown.size === 0;
     }
 
     function hide() {
@@ -72,12 +74,14 @@
     listen(controls, 'pointerenter', (event) => {
       if (event.pointerType === 'touch') return;
       hoveringControls = true;
-      reveal();
+      if (!hideWhileHovered) reveal();
     });
     listen(controls, 'pointerleave', (event) => {
       if (event.pointerType === 'touch') return;
       hoveringControls = false;
-      reveal();
+      // Hiding chrome can itself produce pointerleave under a still cursor.
+      // Narrations reveal on actual movement, not on layout-induced hover.
+      if (!hideWhileHovered) reveal();
     });
     listen(screen, 'pointerdown', (event) => {
       keyboardNavigation = false;
@@ -111,6 +115,10 @@
     });
     listen(controls, 'input', reveal);
     listen(controls, 'change', () => { pointerSelect = null; reveal(); });
+    // Hover/focus labels remain readable until dismissed or left. Restart the
+    // idle period when that interaction ends, including dismissal with Escape.
+    const tooltip = controls.querySelector('[role="tooltip"]');
+    if (tooltip) new MutationObserver(reveal).observe(tooltip, { attributes: true, attributeFilter: ['hidden'] });
     for (const type of ['play', 'pause', 'ended', 'seeking', 'seeked']) listen(audio, type, reveal);
     for (const type of ['waiting', 'playing', 'canplay', 'emptied']) listen(audio, type, () => {
       buffering = type === 'waiting';
@@ -131,10 +139,17 @@
         target.focus({ preventScroll: true });
       },
       setFullscreen(value) {
+        if (fullscreen === value) return;
         fullscreen = value;
         // Entering presentation starts a fresh idle period, including through F.
         // Subsequent Tab navigation keeps controls visible until pointer use.
         keyboardNavigation = false;
+        // A layout change can swallow pointerleave/pointerup. Presentation
+        // starts with fresh interaction state regardless of its entry path.
+        hoveringControls = false;
+        pointersDown.clear();
+        pointerSelect = null;
+        lastPointer = null;
         reveal();
       },
       setLoading(value) { loading = value; reveal(); },

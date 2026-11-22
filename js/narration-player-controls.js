@@ -53,6 +53,12 @@
   function bindCheckpoint(root, listen) {
     const checkpoint = root.querySelector('.np-quiz, .case-quiz');
     if (!checkpoint) return;
+    new MutationObserver(() => {
+      if (!checkpoint.hidden && !root.querySelector('.vn-settings').hidden) {
+        root.querySelector('.vn-settings-close').click();
+        checkpoint.querySelector('h3').focus({ preventScroll: true });
+      }
+    }).observe(checkpoint, { attributes: true, attributeFilter: ['hidden'] });
     // Keys typed in a checkpoint answer it; they never control playback.
     listen(checkpoint, 'keydown', event => event.stopPropagation());
     const exit = checkpoint.querySelector('.vn-check-exit');
@@ -117,7 +123,7 @@
     const cc = root.querySelector('.vn-cc');
     const feedback = root.querySelector('.vn-gesture-feedback');
     const listen = (target, type, handler, options) => target.addEventListener(type, handler, options);
-    const visibility = audio ? window.SongControlsVisibility.bind({ player: root, audio, listen }) : null;
+    const visibility = audio ? window.SongControlsVisibility.bind({ player: root, audio, listen, hideWhileHovered: true }) : null;
     let feedbackTimer = 0;
 
     const togglePlayback = () => root.querySelector('[data-action="play"]').click();

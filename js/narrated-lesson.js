@@ -78,7 +78,7 @@
       close();
       if (index + 1 < story.scenes.length) {
         player.selectScene(index + 1);
-        playButton.focus();
+        (player.isFullscreen() ? root.querySelector('[data-vn-video]') : playButton).focus({ preventScroll: true });
         player.play();
       } else {
         status.textContent = 'Narration and final knowledge check finished. Revisit any section to review.';
@@ -90,16 +90,14 @@
     function mount(index, questions) {
       const quizHost = document.createElement('div');
       host.appendChild(quizHost);
-      window.SebookQuiz.mount({
+      window.NarrationQuiz.mount({
         hostEl: quizHost, controlsEl: panel, stepIndex: index,
         // A summary follows the lesson's order; options still shuffle.
         quiz: { min_score: 0.8, questions, shuffle_questions: false },
         allowSkip: true, isFinalQuiz: index === story.scenes.length - 1,
-        onPass: () => continueAfter(index),
-        onSkip: () => continueAfter(index),
+        onContinue: () => continueAfter(index),
+        continueLabel: index + 1 < story.scenes.length ? 'Continue narration' : 'Finish review',
       });
-      // Adapt the tutorial transport label to this narrated surface.
-      quizHost.querySelector('.tvm-quiz-continue-btn').textContent = index + 1 < story.scenes.length ? 'Continue narration' : 'Finish review';
       mounted.set(index, quizHost);
     }
 
@@ -183,6 +181,7 @@
     const player = window.NarratedExplainer.enhance(root, {
       storyboard: story, timing, render,
       onSectionEnd: checks.sectionEnded, onSeek: checks.close, canPlay: checks.isClosed,
+      checkScenes: story.scenes.map((scene, index) => quizzes[scene.id] ? index : -1).filter(index => index >= 0),
     });
     checks.attach(player);
     linkNavigation(root, story, timing, player);

@@ -442,6 +442,25 @@ and verification screenshots outside the repository.
   language refresh, diagram focus, and code highlighting for pattern/video lessons.
 - In-player checkpoints (`.np-quiz` and a case study's `.case-quiz`) share one
   SebookQuiz style in `css/narrated-explainer.css`.
+- `js/narration-quiz.js` adapts SebookQuiz for narration: one-question checks
+  keep answer feedback, then **Continue narration** returns directly to the
+  lesson, including after an incorrect answer. The adapter captures the shared
+  `.next-btn` action (also activated by Enter) before results navigation.
+  Multi-question summaries retain results; final actions finish the lesson.
+- `js/narration-timeline.js` paints proportional scene segments behind the
+  native seek slider, with the current chapter beside the clock. Hover or
+  keyboard seeking previews the scene and timestamp above the rail; Escape
+  dismisses the label. Check dots are labeled buttons at section boundaries.
+  Close checks share a dot that opens their titled choices and timestamps,
+  preserving 24px targets and a single row on narrow screens. The adapter
+  supplies `checkScenes` to the transport; clicking a dot pauses, seeks to that
+  section's end, and opens its check through the existing section-end callback.
+- Inline players place controls first in document order, above the picture.
+  Fullscreen keeps the bottom overlay and begins a fresh idle period for every
+  entry path. A stationary pointer does not pin narration chrome; keyboard
+  navigation, visible timeline labels, open settings/pickers, dragging, paused playback, and buffering
+  keep it visible. Closing a check returns fullscreen focus to the video so
+  auto-hide can resume. Playlist controls retain their existing layout.
 - The four presentation adapters own cue rendering and their distinct learning
   interactions. They do not reimplement the clock or parse a second source format.
 

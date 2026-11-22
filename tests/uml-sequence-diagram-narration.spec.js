@@ -212,7 +212,7 @@ test('narration stops inside the silence before each check and resumes only when
       await expect(quiz.getByText(question.explanation, { exact: true })).toBeVisible();
       if (question !== questions.at(-1)) await quiz.getByRole('button', { name: /^Next/ }).click();
     }
-    await quiz.getByRole('button', { name: 'See Results' }).click();
+    if (questions.length > 1) await quiz.getByRole('button', { name: 'See Results' }).click();
     await quiz.getByRole('button', { name: index + 1 < story.scenes.length ? 'Continue narration' : 'Finish review' }).click();
     await expect(quiz).toBeHidden();
     if (index + 1 < story.scenes.length) {

@@ -288,6 +288,13 @@ position references), plus these lesson-specific rules:
   roles, collaboration, consequences, and applicability in that order. The player keeps their
   order (`shuffle_questions: false`); options still shuffle.
 
+Single-question checks show feedback then Continue narration, with no results
+screen even after an incorrect answer. Multi-question summaries retain results.
+This belongs to the shared `NarrationQuiz` adapter, not topic scripts. The shared
+timeline labels duration-proportional scenes and opens checks from accessible
+dots at section boundaries. Inline controls sit above the picture; fullscreen
+keeps its idle-hiding overlay regardless of how fullscreen was entered.
+
 ## 7. Render the speech
 
 `scripts/render-explainer-narration.py --topic <topic>` renders each cue in the lesson's

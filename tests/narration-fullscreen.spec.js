@@ -178,6 +178,12 @@ test('without element full screen (Safari on iPhone), the narration fills the vi
   expect(await focusEscapes(page, lesson, 30)).toEqual([]);
   await a11yCheckpoint(page, `${narration.id} viewport full screen`, { include: `#${narration.id} .nja-player`, feature: 'narration-fullscreen' });
 
+  // A focused timeline label is dismissed before the presentation itself.
+  if (await lesson.getByRole('tooltip').isVisible()) {
+    await page.keyboard.press('Escape');
+    await expect(lesson.getByRole('tooltip')).toBeHidden();
+    expect(await coversViewport(lesson)).toBe(true);
+  }
   await page.keyboard.press('Escape');
   await expect(lesson.getByRole('button', { name: 'Enter full screen' })).toBeVisible();
   expect(await coversViewport(lesson)).toBe(false);
