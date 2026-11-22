@@ -8,6 +8,7 @@ const { countInArtwork } = require('./song-player-helpers');
 const PLAYER_PATH = '/assets/song-player/snapshots-and-pointers.html';
 const storyboard = yaml.load(fs.readFileSync(path.join(__dirname, '..', '_data/songs/snapshots_and_pointers.yml'), 'utf8'));
 const infoHidingStoryboard = yaml.load(fs.readFileSync(path.join(__dirname, '..', '_data/songs/every_module_keeps_a_secret.yml'), 'utf8'));
+const userStoriesStoryboard = yaml.load(fs.readFileSync(path.join(__dirname, '..', '_data/songs/invest_in_your_stories.yml'), 'utf8'));
 const songPlayers = [
   { name: 'Git', path: PLAYER_PATH, storyboard, cameoTime: 12 },
   {
@@ -25,8 +26,9 @@ const songPlayers = [
     storyboard: infoHidingStoryboard,
   },
   {
-    name: 'User stories', path: '/assets/song-player/invest-in-your-stories.html', cameoTime: 5,
-    storyboard: yaml.load(fs.readFileSync(path.join(__dirname, '..', '_data/songs/invest_in_your_stories.yml'), 'utf8')),
+    name: 'User stories', path: '/assets/song-player/invest-in-your-stories.html',
+    cameoTime: userStoriesStoryboard.sections.find((section) => section.id === 'intro').lines[1].start + 0.5,
+    storyboard: userStoriesStoryboard,
   },
   {
     name: 'Test-driven development', path: '/assets/song-player/red-green-refactor.html', cameoTime: 317,
