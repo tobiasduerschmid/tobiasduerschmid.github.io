@@ -4037,6 +4037,7 @@ shared_files:
 x-diagrams:
   capstone_cancellation: &d_capstone_cancellation |-
     @startuml
+    layout compact
     actor fan: Fan
     participant web: TripWebsite
     box "Order Processing Center"
@@ -4121,6 +4122,7 @@ x-diagrams:
     @enduml
   capstone_gateways: &d_capstone_gateways |-
     @startuml
+    layout compact
     package services::opc::gateways {
       abstract class SupplierGateway {
         + {abstract} place(order)
@@ -4210,6 +4212,7 @@ x-diagrams:
     @enduml
   capstone_trip_items: &d_capstone_trip_items |-
     @startuml
+    layout compact
     package services::opc::model {
       abstract class TripItem {
         + {abstract} price()
@@ -4294,6 +4297,7 @@ x-diagrams:
     @enduml
   capstone_website_connections: &d_capstone_website_connections |-
     @startuml
+    layout compact
     package Headliner {
       component TripWebsite <<WebApplication>> {
         require "SQL" as web_catalog
@@ -4372,6 +4376,7 @@ x-diagrams:
     @enduml
   checkout_latency: &d_checkout_latency |-
     @startuml
+    layout compact
     actor fan: Fan
     box "Trip Website"
     participant checkout: CheckoutController
@@ -4460,6 +4465,7 @@ x-diagrams:
     @enduml
   data_model: &d_data_model |-
     @startuml
+    layout compact
     package services::opc::model {
       class Fan
       class TripOrder
@@ -4537,6 +4543,7 @@ x-diagrams:
     @enduml
   event_consumers: &d_event_consumers |-
     @startuml
+    layout compact
     package Headliner {
       component OPC <<BackendService>> {
         require "Publish" as opc_publish
@@ -4641,6 +4648,7 @@ x-diagrams:
     @enduml
   failed_trips: &d_failed_trips |-
     @startuml
+    layout compact
     participant web: TripWebsite
     box "Order Processing Center"
     participant po: PurchaseOrderService
@@ -4718,6 +4726,7 @@ x-diagrams:
     @enduml
   outages_imports: &d_outages_imports |-
     @startuml
+    layout compact
     package services::opc {
       class Intake
       class TripEvents
@@ -4778,6 +4787,7 @@ x-diagrams:
     @enduml
   outages: &d_outages |-
     @startuml
+    layout compact
     package Headliner {
       component TripWebsite <<WebApplication>> {
         require "CardService" as web_card
