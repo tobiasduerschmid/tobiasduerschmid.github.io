@@ -1,0 +1,286 @@
+/*
+ * The AI coding agent of "Meet Me One Level Up" (js/song-video/coding-agent.js):
+ * a small robot in a UCLA Blue hoodie with gold aglets, a pearl helmet with
+ * a gold antenna bulb, and a navy visor on which its face glows in cyan. It
+ * hovers on a pearl pod over a pool of cyan light.
+ * Lit from the upper left; outlines are a dark navy ink, never black, with
+ * finer lines for the hands and the props. Like stage.css this styles the
+ * 960×540 stage, which keeps its artwork in both page themes; the player's
+ * print styles hide it. The figure is decorative (aria-hidden): the
+ * transcript and the described cut say what it does.
+ */
+
+.ca-agent {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  --ca-ink: #13213f;
+  --ca-glow: #8ef0ff;
+  --ca-glow-soft: rgba(70, 205, 255, 0.3);
+  --ca-pearl: #f4f7fb;
+}
+
+.ca-art {
+  position: absolute;
+  display: block;
+  overflow: visible;
+}
+
+/* ---------------------------------------------------------------- */
+/* Shared ink                                                         */
+/* ---------------------------------------------------------------- */
+
+.ca-ink-fill {
+  stroke: var(--ca-ink);
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+
+/* Ink drawn at twice the line width beneath a fill: where a sleeve meets
+   the torso the two share one outline. */
+.ca-ink-under {
+  fill: none;
+  stroke: var(--ca-ink);
+  stroke-width: 4;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.ca-seam { fill: none; stroke: #aebdd2; stroke-width: 1.1; stroke-linecap: round; }
+.ca-seam-light { fill: none; stroke: #ffffff; stroke-width: 0.9; stroke-linecap: round; opacity: 0.8; }
+
+/* ---------------------------------------------------------------- */
+/* Gradients                                                          */
+/* ---------------------------------------------------------------- */
+
+.ca-hoodie-stop-0 { stop-color: #4f9edb; }
+.ca-hoodie-stop-1 { stop-color: #2774ae; }
+.ca-hoodie-stop-2 { stop-color: #1a5a8e; }
+.ca-hood-stop-0 { stop-color: #2b7cb7; }
+.ca-hood-stop-1 { stop-color: #195689; }
+.ca-pearl-stop-0 { stop-color: #ffffff; }
+.ca-pearl-stop-1 { stop-color: #f1f5fa; }
+.ca-pearl-stop-2 { stop-color: #d4deeb; }
+.ca-pearl-stop-3 { stop-color: #b5c4d8; }
+.ca-shine-stop-0 { stop-color: #ffffff; stop-opacity: 0.95; }
+.ca-shine-stop-1 { stop-color: #ffffff; stop-opacity: 0; }
+.ca-screen-stop-0 { stop-color: #1d2f5b; }
+.ca-screen-stop-1 { stop-color: #111f45; }
+.ca-screen-stop-2 { stop-color: #0a1431; }
+.ca-screen-glow-stop-0 { stop-color: #33bcff; stop-opacity: 0.18; }
+.ca-screen-glow-stop-1 { stop-color: #33bcff; stop-opacity: 0; }
+.ca-steel-stop-0 { stop-color: #677ca0; }
+.ca-steel-stop-1 { stop-color: #3c5076; }
+.ca-steel-stop-2 { stop-color: #1f2c49; }
+.ca-gold-stop-0 { stop-color: #fff5b8; }
+.ca-gold-stop-1 { stop-color: #ffd100; }
+.ca-gold-stop-2 { stop-color: #cf9500; }
+.ca-floor-stop-0 { stop-color: #5adcff; stop-opacity: 0.55; }
+.ca-floor-stop-1 { stop-color: #3cbcff; stop-opacity: 0.2; }
+.ca-floor-stop-2 { stop-color: #2aa0ff; stop-opacity: 0; }
+.ca-beam-stop-0 { stop-color: #8cecff; stop-opacity: 0.2; }
+.ca-beam-stop-1 { stop-color: #8cecff; stop-opacity: 0; }
+.ca-iris-stop-0 { stop-color: #f0fdff; }
+.ca-iris-stop-1 { stop-color: #9cf2ff; }
+.ca-iris-stop-2 { stop-color: #49cdf3; }
+.ca-halo-stop-0 { stop-color: #ffe25c; stop-opacity: 0.75; }
+.ca-halo-stop-1 { stop-color: #ffd100; stop-opacity: 0.28; }
+.ca-halo-stop-2 { stop-color: #ffd100; stop-opacity: 0; }
+
+/* ---------------------------------------------------------------- */
+/* Hover pod and floor glow                                           */
+/* ---------------------------------------------------------------- */
+
+.ca-pod-shell { stroke-width: 2; }
+.ca-pod-shine { fill: none; stroke: #ffffff; stroke-width: 2; stroke-linecap: round; opacity: 0.9; }
+.ca-thruster { fill: #a4f4ff; }
+.ca-thruster-halo { fill: rgba(90, 220, 255, 0.4); }
+.ca-pod-ring { fill: #c6d3e4; stroke-width: 1.4; }
+.ca-pod-ring-seam { fill: none; stroke: #8fa1bb; stroke-width: 0.8; }
+.ca-vent { fill: #8ff0ff; }
+.ca-spark { fill: #b9f6ff; }
+
+/* ---------------------------------------------------------------- */
+/* Hoodie                                                             */
+/* ---------------------------------------------------------------- */
+
+.ca-hood { stroke-width: 2; }
+.ca-hood-lining { fill: #123d66; }
+.ca-neck-steel { stroke: var(--ca-ink); stroke-width: 1.4; }
+.ca-neck-ring { fill: none; stroke: #8193b2; stroke-width: 1; }
+.ca-hoodie-shade { fill: none; stroke: #164c79; stroke-width: 4; stroke-linecap: round; opacity: 0.45; }
+.ca-hoodie-light { fill: none; stroke: #7dbcf0; stroke-width: 2; stroke-linecap: round; opacity: 0.55; }
+.ca-hem { fill: #1f629b; stroke-width: 1.6; }
+.ca-pocket { fill: #23689f; stroke-width: 1.6; }
+.ca-collar-shadow { fill: #164d7d; opacity: 0.5; }
+.ca-fold { fill: none; stroke: #174f80; stroke-width: 1; stroke-linecap: round; opacity: 0.75; }
+.ca-rib { fill: none; stroke: #3d86c4; stroke-width: 0.7; stroke-linecap: round; opacity: 0.6; }
+.ca-diploma-roll { fill: #f7eed6; }
+.ca-diploma-end { fill: #e9dbb6; stroke-width: 1; }
+.ca-diploma-curl { fill: none; stroke: #b39b68; stroke-width: 0.6; stroke-linecap: round; }
+.ca-ribbon { stroke: var(--ca-ink); stroke-width: 0.6; }
+.ca-pocket-slit { fill: none; stroke: #0f3456; stroke-width: 2.2; stroke-linecap: round; }
+.ca-stitch { fill: none; stroke: #63a6de; stroke-width: 0.8; stroke-dasharray: 2 1.6; opacity: 0.8; }
+.ca-hood-rim { stroke-width: 1.8; }
+.ca-chest-halo { fill: rgba(120, 230, 255, 0.35); }
+.ca-chest-light { fill: #f7fbff; stroke-width: 1.4; }
+.ca-chest-core { fill: #6fe3ff; }
+.ca-eyelet { fill: #e9eff7; stroke: var(--ca-ink); stroke-width: 0.9; }
+.ca-cord-ink { fill: none; stroke: var(--ca-ink); stroke-width: 3; stroke-linecap: round; }
+.ca-cord { fill: none; stroke: #eef3f9; stroke-width: 1.5; stroke-linecap: round; }
+.ca-aglet { stroke: var(--ca-ink); stroke-width: 1; }
+
+/* The new hire's lanyard and badge. The badge's lettering is 12 px at
+   scale 1, navy on white (contrast above 14:1). */
+.ca-strap-ink { fill: none; stroke: var(--ca-ink); stroke-width: 4.2; stroke-linecap: round; }
+.ca-strap { fill: none; stroke: #5fa9e6; stroke-width: 2.4; stroke-linecap: round; }
+.ca-badge-card { fill: #ffffff; stroke-width: 1.4; }
+.ca-badge-band { fill: #2774ae; }
+.ca-badge-slot { fill: #13213f; }
+.ca-badge-clip { stroke-width: 1.1; }
+.ca-badge-text {
+  fill: #13213f;
+  font-family: var(--font-display, 'Inter', 'Helvetica Neue', Arial, sans-serif);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-anchor: middle;
+}
+
+/* Sleeves: one cloth surface from shoulder to cuff, its contour inked in
+   front of the torso; light and shade bands model the tube. */
+.ca-sleeve { stroke: none; }
+.ca-sleeve-ink { fill: none; stroke: var(--ca-ink); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.ca-sleeve-light { fill: none; stroke: #63ade8; stroke-width: 2.6; stroke-linecap: round; opacity: 0.7; }
+.ca-sleeve-shade { fill: none; stroke: #154c7a; stroke-width: 3.4; stroke-linecap: round; opacity: 0.55; }
+.ca-sleeve-fold { fill: none; stroke: #123f66; stroke-width: 1.1; stroke-linecap: round; }
+.ca-cuff { fill: #1d5f96; stroke: var(--ca-ink); stroke-width: 1.6; stroke-linejoin: round; }
+.ca-cuff-rib { fill: none; stroke: #4389c6; stroke-width: 0.9; stroke-linecap: round; }
+
+/* ---------------------------------------------------------------- */
+/* Hands: pearl plates and jointed digits                             */
+/* ---------------------------------------------------------------- */
+
+.ca-wrist-joint { fill: none; stroke: #2c3e60; stroke-width: 6.2; stroke-linecap: round; }
+.ca-wrist-shine { fill: none; stroke: #60779c; stroke-width: 1.6; stroke-linecap: round; }
+.ca-palm-plate { fill: #eef3f9; stroke: var(--ca-ink); stroke-width: 1.3; stroke-linejoin: round; }
+.ca-palm-pad { fill: #d8e1ee; }
+.ca-hand-back-panel { fill: none; stroke: #b4c2d6; stroke-width: 0.6; }
+.ca-hand-back-light { fill: #6fe0ff; }
+.ca-knuckles { fill: none; stroke: #a9b8cd; stroke-width: 0.7; stroke-linecap: round; }
+.ca-digit-ink { fill: none; stroke: var(--ca-ink); stroke-linecap: round; stroke-linejoin: round; }
+.ca-digit-shade { fill: none; stroke: #c2cede; stroke-linecap: round; stroke-linejoin: round; }
+.ca-digit { fill: none; stroke: var(--ca-pearl); stroke-linecap: round; stroke-linejoin: round; }
+.ca-digit-shine { fill: none; stroke: #ffffff; stroke-linecap: round; stroke-linejoin: round; opacity: 0.85; }
+.ca-digit-seam { fill: none; stroke: #97a9c2; stroke-width: 0.55; stroke-linecap: round; }
+.ca-digit-joint { fill: #dfe6f0; stroke: #8ea1bc; stroke-width: 0.5; }
+
+/* ---------------------------------------------------------------- */
+/* Head                                                               */
+/* ---------------------------------------------------------------- */
+
+.ca-helmet { stroke-width: 2.2; }
+.ca-helmet-gloss { opacity: 0.9; }
+.ca-helmet-spark { fill: none; stroke: #ffffff; stroke-width: 2.6; stroke-linecap: round; opacity: 0.95; }
+.ca-helmet-bounce { fill: none; stroke: #a6dbf7; stroke-width: 1.8; stroke-linecap: round; opacity: 0.6; }
+.ca-helmet-glint { fill: #ffffff; opacity: 0.9; }
+.ca-rivet { stroke-width: 0.9; }
+.ca-rivet-shine { fill: #dbe5f2; }
+.ca-led-halo { fill: rgba(110, 230, 255, 0.28); }
+.ca-led { stroke: var(--ca-ink); stroke-width: 0.8; }
+.ca-led--0,
+.ca-led--1 { fill: #8ef0ff; }
+.ca-led--2 { fill: #ffd100; }
+.ca-ear-disc { stroke-width: 2; }
+.ca-ear-halo { fill: none; stroke: rgba(80, 210, 255, 0.35); stroke-width: 4.6; }
+.ca-ear-ring { fill: none; stroke: #82e7ff; stroke-width: 2.1; stroke-dasharray: 6.2 2.6; }
+.ca-ear-cap { stroke: var(--ca-ink); stroke-width: 1; }
+.ca-antenna-stem-ink { fill: none; stroke: var(--ca-ink); stroke-width: 4; stroke-linecap: round; }
+.ca-antenna-stem { fill: none; stroke: #93a6c3; stroke-width: 1.8; stroke-linecap: round; }
+.ca-antenna-base { stroke-width: 1.4; }
+.ca-bulb { stroke-width: 1.6; }
+.ca-bulb-shine { fill: #fffbe0; }
+/* The graduation mortarboard and its gold tassel. */
+.ca-cap-skull { fill: #24345c; stroke-width: 1.6; }
+.ca-cap-skull-light { fill: none; stroke: #4d6491; stroke-width: 1.4; stroke-linecap: round; }
+.ca-cap-edge { fill: #141f3a; stroke-width: 1.4; }
+.ca-cap-board { fill: #2c3e69; stroke-width: 1.6; }
+.ca-cap-shine { fill: none; stroke: #5d76a6; stroke-width: 1.4; stroke-linecap: round; }
+.ca-cap-button { stroke-width: 0.9; }
+.ca-tassel-cord-ink { fill: none; stroke: var(--ca-ink); stroke-width: 2.8; stroke-linecap: round; }
+.ca-tassel-cord { fill: none; stroke: #ffd100; stroke-width: 1.3; stroke-linecap: round; }
+.ca-tassel { stroke-width: 1.1; }
+.ca-tassel-knot { stroke-width: 0.9; }
+.ca-tassel-fringe { fill: none; stroke: #b88400; stroke-width: 0.6; stroke-linecap: round; }
+
+/* The "?" of a confused agent, glowing like its face. */
+.ca-question-halo { fill: none; stroke: var(--ca-glow-soft); stroke-width: 8; stroke-linecap: round; }
+.ca-question-ink { fill: none; stroke: var(--ca-ink); stroke-width: 5.6; stroke-linecap: round; stroke-linejoin: round; }
+.ca-question-mark { fill: none; stroke: var(--ca-glow); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.ca-question-dot { fill: var(--ca-glow); stroke: var(--ca-ink); stroke-width: 1.3; }
+
+/* Gags above the head: a light bulb, thinking gears, floating hearts. */
+.ca-idea-rays { fill: none; stroke: #ffe36b; stroke-width: 1.8; stroke-linecap: round; }
+.ca-idea-glass { fill: #fff3a8; stroke-width: 1.4; }
+.ca-idea-filament { fill: none; stroke: #e0a400; stroke-width: 1; stroke-linejoin: round; }
+.ca-idea-base { stroke-width: 1.1; }
+.ca-idea-shine { fill: none; stroke: #ffffff; stroke-width: 1.4; stroke-linecap: round; }
+.ca-gear { fill-rule: evenodd; stroke-width: 1.2; }
+.ca-love-heart { fill: #ff7eb6; stroke: var(--ca-ink); stroke-width: 1.6; stroke-linejoin: round; }
+
+.ca-sweat-drop { fill: #a6e6ff; stroke: var(--ca-ink); stroke-width: 1.2; stroke-linejoin: round; }
+.ca-sweat-shine { fill: none; stroke: #ffffff; stroke-width: 1; stroke-linecap: round; }
+
+/* The visor and the face that glows on it. */
+.ca-bezel { stroke-width: 2; }
+.ca-screen-sheen { fill: #ffffff; opacity: 0.07; }
+.ca-screen-glint { fill: none; stroke: #ffffff; stroke-width: 1.8; stroke-linecap: round; opacity: 0.35; }
+.ca-sweep path { fill: #ffffff; }
+.ca-scanline { fill: #bff6ff; }
+.ca-ting-halo { fill: rgba(170, 240, 255, 0.35); }
+.ca-ting-star { fill: #ffffff; }
+.ca-glow-halo { fill: none; stroke: var(--ca-glow-soft); stroke-width: 4.2; stroke-linejoin: round; stroke-linecap: round; }
+/* The eye's fill is its iris gradient (set on the element). */
+.ca-eye-shape { stroke: var(--ca-glow); stroke-width: 2; stroke-linejoin: round; }
+.ca-eye-spark { fill: #ffffff; }
+.ca-brow { fill: none; stroke: var(--ca-glow); stroke-width: 2.2; stroke-linecap: round; }
+.ca-mouth { fill: #0c3558; stroke: var(--ca-glow); stroke-width: 2.2; stroke-linejoin: round; stroke-linecap: round; }
+.ca-tongue { fill: #ff8fc8; }
+.ca-blush { fill: #ff8fc8; }
+
+/* ---------------------------------------------------------------- */
+/* Props                                                              */
+/* ---------------------------------------------------------------- */
+
+.ca-prop-ink-fill { stroke: var(--ca-ink); stroke-width: 1.5; stroke-linejoin: round; }
+.ca-prop-ink { fill: none; stroke: var(--ca-ink); stroke-linecap: round; }
+.ca-mug { fill: #f8fafd; }
+.ca-mug-band { fill: #2774ae; }
+.ca-mug-coffee { fill: #6b4126; stroke: var(--ca-ink); stroke-width: 1; }
+.ca-mug-handle { stroke-width: 4.6; }
+.ca-mug-handle-fill { fill: none; stroke: #f8fafd; stroke-width: 2.2; stroke-linecap: round; }
+.ca-mug-shine { fill: none; stroke: #ffffff; stroke-width: 1.6; stroke-linecap: round; }
+.ca-steam-wisp { fill: none; stroke: rgba(230, 240, 255, 0.8); stroke-width: 1.6; stroke-linecap: round; }
+.ca-book-cover { fill: #1f3c74; }
+.ca-book-pages { fill: #f6f0de; stroke: var(--ca-ink); stroke-width: 1; stroke-linejoin: round; }
+.ca-book-band { fill: #ffd100; }
+.ca-book-spine { fill: none; stroke: #102448; stroke-width: 1.2; }
+.ca-card { fill: #fdfdfb; }
+.ca-card-rule { fill: none; stroke: #2774ae; stroke-width: 1.2; }
+.ca-card-line { fill: none; stroke: #b3bfd0; stroke-width: 1; stroke-linecap: round; }
+.ca-pen { fill: #1f3c74; }
+.ca-pen-tip { fill: #ffd100; stroke: var(--ca-ink); stroke-width: 1; stroke-linejoin: round; }
+.ca-pen-clip { fill: none; stroke: #ffd100; stroke-width: 1.2; stroke-linecap: round; }
+.ca-pen-shine { fill: none; stroke: #6f8fc7; stroke-width: 0.9; stroke-linecap: round; }
+.ca-magnifier-handle { fill: #1f3c74; }
+.ca-gold-part { fill: #ffd100; }
+.ca-lens-ring { fill: #8a9bb8; }
+.ca-lens { fill: rgba(170, 230, 255, 0.45); stroke: #4d6286; stroke-width: 1; }
+.ca-lens-shine { fill: none; stroke: #ffffff; stroke-width: 1.6; stroke-linecap: round; }
+.ca-wand { fill: #f1f5fb; }
+.ca-wand-halo { fill: rgba(110, 230, 255, 0.35); }
+.ca-wand-tip { fill: #b6f6ff; stroke: #4cd6ff; stroke-width: 1; }
+.ca-wand-sparkle { fill: #ffffff; }
