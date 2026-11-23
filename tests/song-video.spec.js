@@ -32,6 +32,7 @@ const SONGS = [
   { id: 'design_it_in', page: '/SEBook/systems/security.html' },
   { id: 'always_code', page: '/SEBook/always-code.html' },
   { id: 'it_works_on_my_machine', page: '/assets/song-player/it-works-on-my-machine.html', standalone: true },
+  { id: 'meet_me_one_level_up', page: '/assets/song-player/meet-me-one-level-up.html', standalone: true },
   { id: 'same_shape_not_the_same', page: '/SEBook/designpatterns.html' },
   { id: 'inspect_and_adapt', page: '/SEBook/process/scrum.html' },
 ];
