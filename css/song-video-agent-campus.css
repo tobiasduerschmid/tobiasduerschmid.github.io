@@ -1,0 +1,276 @@
+/*
+ * The "agent-campus" theme (js/song-video/agent-campus.js) for "Meet Me One
+ * Level Up": a library on a late afternoon for the agent's training, then a
+ * modern office through to sunset for inference. Like stage.css this styles the 960×540 stage, which
+ * keeps one palette in both page themes; the player's print styles hide it.
+ * The rooms are scenery behind opaque teaching cards and the cast, so their
+ * contrast stays moderate and they contain no text. Colours that follow
+ * song time (the library's sunbeams and window, the office's sky, sun,
+ * clouds, city, and sunlight on the floor) are computed in the script and written as attributes; the rules here
+ * leave those elements' fills alone, and leave every transform and opacity
+ * the script poses.
+ */
+
+.theme-agent-campus {
+  background: #1a0c07;
+  overflow-wrap: normal;
+}
+
+.agc-room { overflow: hidden; }
+
+.agc-art {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+
+/* ------------------------------------------------------------------ */
+/* Library: woodwork                                                   */
+/* ------------------------------------------------------------------ */
+
+.agc-library-wall { fill: #1d0d07; }
+.agc-board { fill: #4f2416; }
+.agc-board-edge { fill: none; stroke: #a45a35; stroke-width: 1.2; opacity: 0.55; }
+.agc-upright-shadow { fill: #050201; opacity: 0.4; }
+.agc-upright-light { fill: none; stroke: #b0683e; stroke-width: 0.9; opacity: 0.35; }
+.agc-cupboard { fill: #3a1a0e; }
+.agc-cupboard-panel { fill: #4a2214; }
+.agc-cupboard-shade { fill: none; stroke: #140703; stroke-width: 1.6; opacity: 0.8; }
+.agc-cupboard-light { fill: none; stroke: #8d4b2a; stroke-width: 1.2; opacity: 0.7; }
+.agc-plinth { fill: #26110a; }
+.agc-cornice-shadow { fill: #050201; opacity: 0.35; }
+.agc-cornice-shade { fill: #0c0503; }
+.agc-cornice-base { fill: #2c130b; }
+.agc-egg { fill: #6e3721; }
+.agc-dart { fill: none; stroke: #2a120a; stroke-width: 0.8; }
+.agc-dentil-band { fill: #2a120a; }
+.agc-dentil { fill: #6a341f; }
+.agc-dentil-light { fill: #a86a42; opacity: 0.7; }
+.agc-gilt-bead { fill: #c49a48; opacity: 0.7; }
+.agc-frieze { fill: #2f150c; }
+.agc-frieze-line { fill: none; stroke: #7a3e24; stroke-width: 1; opacity: 0.7; }
+.agc-soffit { fill: #120704; }
+.agc-fascia-light { fill: #b46a40; opacity: 0.8; }
+.agc-baluster { fill: #4d2215; stroke: #1c0b05; stroke-width: 0.6; }
+.agc-baluster-light { fill: none; stroke: #a8603a; stroke-width: 1; stroke-linecap: round; opacity: 0.55; }
+.agc-post-panel { fill: #2e140b; opacity: 0.6; }
+.agc-bracket { fill: #4a2214; stroke: #1c0b05; stroke-width: 0.6; }
+
+/* The coffered ceiling: walnut ribs, recessed panels, gilt rosettes. */
+.agc-coffer-rib { fill: #2a130a; }
+.agc-coffer-recess { fill: #160a05; }
+.agc-coffer-step { fill: #3a1c10; }
+.agc-coffer-panel { fill: #4d2a1a; }
+.agc-coffer-gilt { fill: none; stroke: #a88140; stroke-width: 0.7; opacity: 0.55; }
+.agc-coffer-rosette { fill: #c49a48; opacity: 0.75; }
+
+/* Pilasters: fluted shafts, capitals with volutes. */
+.agc-flute { fill: none; stroke: #170904; stroke-width: 1; opacity: 0.6; }
+.agc-flute-light { fill: none; stroke: #a3603a; stroke-width: 0.7; opacity: 0.4; }
+.agc-capital { fill: #5e2c1a; stroke: #2a120a; stroke-width: 0.5; }
+.agc-volute { fill: #7a3c22; stroke: #2a120a; stroke-width: 0.6; }
+.agc-near-capital { fill: #2a120a; stroke: #4e2616; stroke-width: 0.8; }
+.agc-near-rim { fill: #ffc98a; opacity: 0.55; }
+.agc-skirting-shadow { fill: #050201; opacity: 0.5; }
+
+/* Books: muted spine colours under evening light, with gilt bands. */
+.agc-book--oxblood { fill: #6c1f1d; }
+.agc-book--forest { fill: #22462f; }
+.agc-book--navy { fill: #1f2b52; }
+.agc-book--ochre { fill: #93651f; }
+.agc-book--plum { fill: #4f2546; }
+.agc-book--tan { fill: #7b4e2b; }
+.agc-book--teal { fill: #1b4548; }
+.agc-book--umber { fill: #3d2416; }
+.agc-book--crimson { fill: #8a2a26; }
+.agc-book--olive { fill: #4d5326; }
+.agc-book-band { fill: none; stroke: #120703; stroke-width: 1; opacity: 0.55; }
+.agc-book-label { fill: #120703; opacity: 0.45; }
+.agc-book-light { fill: none; stroke: #ffe2b8; stroke-width: 1.1; opacity: 0.16; }
+.agc-book-dark { fill: none; stroke: #050201; stroke-width: 1.2; opacity: 0.45; }
+.agc-book-gilt { fill: none; stroke: #d4ac56; stroke-width: 0.9; opacity: 0.75; }
+.agc-book-top { fill: #c9b28a; opacity: 0.7; }
+.agc-page { fill: #dcc59c; }
+.agc-page-line { fill: none; stroke: #8a6b45; stroke-width: 0.5; opacity: 0.6; }
+.agc-page-edge { fill: none; stroke: #d9c49a; stroke-width: 1.1; opacity: 0.7; }
+
+/* ------------------------------------------------------------------ */
+/* Library: the window, sunbeams, dust                                 */
+/* ------------------------------------------------------------------ */
+
+.agc-window-surround { fill: #3c1b0f; }
+.agc-window-moulding { fill: #57281a; stroke: #8f4c2c; stroke-width: 1; }
+.agc-keystone { fill: #6e3420; stroke: #a35c36; stroke-width: 0.8; }
+.agc-window-reveal { fill: #160904; }
+.agc-lead { fill: none; stroke: #5a4232; stroke-width: 0.6; opacity: 0.22; }
+.agc-tracery { fill: #6a4a34; stroke: #2a170d; stroke-width: 0.8; }
+.agc-tracery-light { fill: none; stroke: #c8996a; stroke-width: 0.8; opacity: 0.6; }
+/* Dust in the sunbeams: its opacity comes from the script. */
+.agc-dust circle { fill: #fff0d4; }
+
+/* ------------------------------------------------------------------ */
+/* Library: spiral stair and ladder                                    */
+/* ------------------------------------------------------------------ */
+
+.agc-spiral-tread { fill: #6a3a20; stroke: #241008; stroke-width: 0.6; }
+.agc-spiral-tread--back { fill: #2e170c; }
+.agc-spiral-tread-light { fill: none; stroke: #d08a55; stroke-width: 0.9; opacity: 0.6; }
+.agc-spiral-baluster { fill: none; stroke: #2a1f18; stroke-width: 1.6; }
+.agc-spiral-baluster--back { stroke: #1a120d; stroke-width: 1.2; }
+.agc-spiral-rail { fill: none; stroke: #5e2a19; stroke-width: 3.4; stroke-linecap: round; }
+.agc-spiral-rail--back { stroke: #2a120a; stroke-width: 2.6; }
+.agc-spiral-rail-light { fill: none; stroke: #e0a06a; stroke-width: 0.9; opacity: 0.7; }
+.agc-spiral-finial { fill: #8a5a32; stroke: #2a120a; stroke-width: 0.6; }
+
+.agc-brass-dark { fill: #7a5a1c; }
+.agc-ladder-rail-shadow { fill: #050201; opacity: 0.45; }
+.agc-ladder-side { fill: #c39b45; stroke: #6d4f15; stroke-width: 0.7; }
+.agc-ladder-rung { fill: #a98436; stroke: #5d4212; stroke-width: 0.6; }
+.agc-ladder-hook { fill: none; stroke: #d8b65f; stroke-width: 1.8; stroke-linecap: round; }
+.agc-ladder-wheel { fill: #1e100a; stroke: #6d4f15; stroke-width: 1; }
+.agc-ladder-hub { fill: #d8b65f; }
+.agc-floor-shadow { fill: #050201; opacity: 0.45; }
+
+/* ------------------------------------------------------------------ */
+/* Library: floor, rug, table, lamps                                   */
+/* ------------------------------------------------------------------ */
+
+.agc-parquet-base { fill: #4b2a17; }
+.agc-parquet-a { fill: #5d351d; }
+.agc-parquet-b { fill: #47281a; }
+.agc-parquet-c { fill: #3b2013; }
+.agc-parquet-joint { fill: none; stroke: #1c0d06; stroke-width: 0.8; opacity: 0.6; }
+
+.agc-rug-border { fill: #19203d; }
+.agc-rug-gold { fill: #85682f; }
+.agc-rug-field { fill: #4a1718; }
+.agc-rug-motif { fill: #5a1f1d; }
+.agc-rug-motif-dot { fill: #85682f; opacity: 0.35; }
+.agc-rug-medallion { fill: #231c36; }
+.agc-rug-medallion-inner { fill: #561d1c; }
+.agc-rug-gold-line { fill: #6e5629; }
+.agc-rug-fringe { fill: none; stroke: #b49a6a; stroke-width: 0.8; opacity: 0.6; }
+
+
+.agc-table-leg { fill: #5c3018; stroke: #2a130a; stroke-width: 0.6; }
+.agc-table-leg--back { fill: #3a1d0e; }
+.agc-table-leg-light { fill: none; stroke: #b47a4a; stroke-width: 1.1; opacity: 0.45; }
+.agc-table-apron { fill: #4a2614; }
+.agc-table-edge-light { fill: none; stroke: #e0a46e; stroke-width: 1; opacity: 0.6; }
+.agc-ink { fill: #10151c; stroke: #3c4652; stroke-width: 0.6; }
+.agc-quill { fill: #efe6d4; }
+
+.agc-lamp-harp { fill: none; stroke: #b38b2e; stroke-width: 1.4; }
+.agc-shade-light { fill: none; stroke: #b8f0cd; stroke-width: 1.4; stroke-linecap: round; opacity: 0.7; }
+.agc-shade-rim { fill: #ffd98f; }
+.agc-pull-chain { fill: none; stroke: #c9a24d; stroke-width: 0.7; }
+
+/* ------------------------------------------------------------------ */
+/* Office: the view, the window wall                                   */
+/* ------------------------------------------------------------------ */
+
+/* The city's office windows: sky reflections by day (their opacity
+   comes from the script), warm rooms at dusk. */
+.agc-cloud { opacity: 0.95; }
+.agc-o-pane { fill: #eef5fc; }
+.agc-o-city-light { fill: #ffd98e; }
+.agc-o-antenna { fill: none; stroke-width: 1.4; stroke-linecap: round; }
+.agc-o-water-tower { stroke-width: 1; stroke-linejoin: round; }
+.agc-o-glass-sheen { fill: #ffffff; opacity: 0.05; }
+.agc-o-frame path { fill: #2c3138; }
+.agc-o-frame-light { fill: none; stroke: #5d6670; stroke-width: 1; }
+.agc-o-sill { fill: #2c3138; }
+.agc-o-ceiling { fill: #eeece7; }
+.agc-o-ceiling-line { fill: #c9c5bc; }
+
+/* ------------------------------------------------------------------ */
+/* Office: walls, mezzanine, stair                                     */
+/* ------------------------------------------------------------------ */
+
+.agc-o-slat-gap { fill: #6f4f2f; }
+.agc-o-slat { fill: #cfa877; }
+.agc-o-slat-shine { fill: #e8c99c; opacity: 0.7; }
+.agc-o-shadow-gap { fill: #2c2419; }
+.agc-o-white-wall { fill: #f1efea; }
+.agc-o-board-frame { fill: #b7bcc3; }
+.agc-o-board { fill: #f6f6f3; }
+.agc-o-board-tray { fill: #a3a9b1; }
+.agc-o-marker { fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; opacity: 0.28; }
+.agc-o-marker--blue { stroke: #2f5fa8; }
+.agc-o-marker--red { stroke: #b8453c; }
+.agc-o-marker--green { stroke: #2f8a57; }
+.agc-o-oak { fill: #d9b585; }
+.agc-o-oak-line { fill: none; stroke: #a47d50; stroke-width: 0.9; }
+.agc-o-handle { fill: none; stroke: #4a4f57; stroke-width: 1.4; stroke-linecap: round; }
+.agc-o-graphite { fill: #353a42; }
+.agc-o-books-up { fill: #4d6a8c; }
+.agc-o-pot-small { fill: #f4f1ea; stroke: #cfc8ba; stroke-width: 0.6; }
+.agc-o-leaf { fill: #4f8a4c; }
+.agc-o-chair { fill: #3d4047; }
+.agc-o-floor-lamp { fill: none; stroke: #3d4047; stroke-width: 1.6; stroke-linecap: round; }
+.agc-o-floor-lamp-shade { fill: #e9e3d6; }
+.agc-o-contact { fill: #4a3a28; opacity: 0.28; }
+
+.agc-o-soffit { fill: #d8d5ce; }
+.agc-o-downlight { fill: #fffdf3; }
+.agc-o-slab { fill: #f7f6f2; }
+.agc-o-slab-oak { fill: #c99f6c; }
+.agc-o-slab-shade { fill: #cfcbc2; }
+.agc-o-glass { fill: #cfe7ef; opacity: 0.26; }
+.agc-o-glass-edge { fill: none; stroke: #ffffff; stroke-width: 0.9; opacity: 0.7; }
+.agc-o-glass-glint { fill: #ffffff; opacity: 0.22; }
+.agc-o-clamp { fill: #8f979f; }
+
+.agc-o-tread-top { fill: #e2c497; }
+.agc-o-tread-under { fill: #a88358; }
+.agc-o-tread-end { fill: #bb9465; }
+.agc-o-tread-front { fill: #cfa672; }
+.agc-o-tread-shadow { fill: #3a2814; opacity: 0.18; }
+
+.agc-o-cord { fill: none; stroke: #2c3138; stroke-width: 1; }
+.agc-o-canopy { fill: #2c3138; }
+.agc-o-shade { fill: #2b2f36; }
+.agc-o-shade-inside { fill: #fff0d0; }
+.agc-o-bulb { fill: #fffaf0; }
+
+/* ------------------------------------------------------------------ */
+/* Office: floor, plant, desk                                          */
+/* ------------------------------------------------------------------ */
+
+.agc-o-plank-light { fill: #f2e0c4; opacity: 0.45; }
+.agc-o-plank-dark { fill: #c09a6b; opacity: 0.35; }
+.agc-o-plank-line { fill: none; stroke: #a1805a; stroke-width: 0.8; opacity: 0.45; }
+.agc-o-reflect-bar { fill: none; stroke: #2c3138; stroke-width: 4; opacity: 0.08; }
+
+.agc-o-trunk { fill: none; stroke: #6a5338; stroke-width: 2.6; stroke-linecap: round; }
+.agc-o-fig-leaf { stroke: #22492a; stroke-width: 0.8; }
+.agc-o-fig-vein { fill: none; stroke: #b9e0a0; stroke-width: 0.7; stroke-linecap: round; opacity: 0.55; }
+.agc-o-pot-rim { fill: #e7e1d6; }
+.agc-o-soil { fill: #4b3a2a; }
+
+.agc-o-desk-edge { fill: #b98d5a; }
+.agc-o-desk-light { fill: none; stroke: #fff4df; stroke-width: 1; opacity: 0.7; }
+.agc-o-monitor { fill: #23272e; }
+.agc-o-monitor-chin { fill: #2f343c; }
+.agc-o-monitor-neck { fill: #4a5059; }
+.agc-o-monitor-foot { fill: #3a4048; }
+.agc-o-keyboard { fill: #e6e6e2; stroke: #b8b8b2; stroke-width: 0.6; }
+.agc-o-keys { fill: none; stroke: #9a9a94; stroke-width: 0.8; }
+.agc-o-mouse { fill: #e6e6e2; stroke: #b8b8b2; stroke-width: 0.6; }
+.agc-o-mug { fill: #f6f3ec; stroke: #cfc8ba; stroke-width: 0.6; }
+.agc-o-mug-handle { fill: none; stroke: #e9e4d9; stroke-width: 2; }
+.agc-o-coffee { fill: #5a3a22; }
+.agc-o-steam { fill: none; stroke: #ffffff; stroke-width: 1.6; stroke-linecap: round; }
+
+/* Abstract code: coloured bars, never text. */
+.agc-o-code--keyword { fill: #c79bf2; }
+.agc-o-code--name { fill: #86b3ff; }
+.agc-o-code--string { fill: #a7dca0; }
+.agc-o-code--number { fill: #f6b86b; }
+.agc-o-code--plain { fill: #d9e2f0; }
+.agc-o-code--comment { fill: #6b7a99; }
+.agc-o-gutter { fill: #0a1120; opacity: 0.6; }
+
+/* Late light washes over the room; their opacity comes from the script. */
+.agc-o-golden { fill: #ffae5c; }
+.agc-o-dusk { fill: #1d2652; }

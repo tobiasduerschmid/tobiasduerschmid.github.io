@@ -4195,20 +4195,6 @@ x-diagrams:
     Dashed arrow named raises: the class
     raises that exception.
     end note
-    @layout
-    SupplierGateway @pos(390, 0)
-    SupplierUnavailable @pos(720, 55)
-    BoxOfficeGateway @pos(0, 233)
-    LodgingGateway @pos(260, 233)
-    ShuttleGateway @pos(520, 233)
-    ExperienceGateway @pos(780, 233)
-    GlampingCoGateway @pos(264, 429)
-    VipShuttleGateway @pos(531, 429)
-    MeetAndGreetGateway @pos(774, 429)
-    ManualCancellationRequired @pos(120, 589)
-    note:59 @pos(1040, 30)
-    note:65 @pos(1040, 185)
-    @endlayout
     @enduml
   capstone_trip_items: &d_capstone_trip_items |-
     @startuml
@@ -4284,16 +4270,6 @@ x-diagrams:
     for payloads to read. The website
     imports nothing from the OPC.
     end note
-    @layout
-    TripItem @pos(519, 0)
-    FestivalPass @pos(0, 177)
-    LodgingStay @pos(346, 177)
-    Experience @pos(692, 177)
-    TransportItem @pos(1038, 177)
-    ShuttleRide @pos(1115, 329)
-    services::opc::payloads @pos(430, 516)
-    services::website::checkout @pos(770, 516)
-    @endlayout
     @enduml
   capstone_website_connections: &d_capstone_website_connections |-
     @startuml

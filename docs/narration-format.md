@@ -418,7 +418,9 @@ and verification screenshots outside the repository.
   fullscreen, print lifecycle, and `readData` boundary for every adapter.
   `enhance` follows the audio clock; `step` shows the same cues without one
   for a text-only case study, sharing the scene display, fullscreen, and
-  transcript printing. Both bind the control bar to the player they create.
+  transcript printing. Both bind the control bar to the player they create
+  and expose `toggleFullscreen()` / `exitFullscreen()` for embedded media
+  that use the narration container as their fullscreen host.
 - `js/narration-player-controls.js`: the control bar's behavior, from the song
   player's own modules (`js/song-video/`): the same keys in every player (K or
   Space, the arrow keys, 0 to 9, C, F, and Escape, documented at
@@ -442,6 +444,21 @@ and verification screenshots outside the repository.
   language refresh, diagram focus, and code highlighting for pattern/video lessons.
 - In-player checkpoints (`.np-quiz` and a case study's `.case-quiz`) share one
   SebookQuiz style in `css/narrated-explainer.css`.
+- Final knowledge checks retain their feedback and results. When a chapter
+  pairs a song using `narration="<narration-root-id>"` on `song-video.html`,
+  the final completion action is **Continue to song**. Intermediate checks
+  and unpaired lessons keep their existing completion behavior.
+- `js/narration-song.js` owns the paired media session. It pauses narration,
+  hides its surface without destroying its DOM or clock, and loads a song iframe
+  inside the same `[data-vn-video]` container. `SongPlayerEmbeds.register(frame)`
+  supplies sizing, theme propagation, and coordination with other song audio.
+  **Previous song** pauses the song and restores the narration and keyboard
+  focus without changing its completed position. Neither direction scrolls to
+  the separate chapter song or leaves fullscreen. The host retains native or
+  viewport fullscreen; `song-video/presentation.js` delegates fullscreen buttons
+  to it and receives `song-player:host-fullscreen` state. All messages validate
+  origin and source. A ready handshake starts playback only after the song's
+  controls have initialized. The retained song frame can be revisited.
 - The four presentation adapters own cue rendering and their distinct learning
   interactions. They do not reimplement the clock or parse a second source format.
 

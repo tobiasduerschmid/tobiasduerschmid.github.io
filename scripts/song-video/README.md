@@ -812,6 +812,63 @@ Interrupted sheriff gestures start from the pose at the interruption. The
 robot bandits ease into and out of their surprised poses; reduced motion
 keeps those reactions still.
 
+"Meet Me One Level Up", the coding-agent song for CS 35L Lecture 14 (Agentic
+SWE), is only in the video library on `/SEBook/playlist.html`, so its player
+page prints the transcript. The singer is the AI coding agent itself, just
+out of training, telling the student how it was made and where the two of
+them understand each other best: one level above the code, in requirements,
+design, and tests. Its lyrics and learning design are in
+`docs/meet-me-one-level-up-song-lyrics.md`. The `agent-campus` theme
+(`js/song-video/agent-campus.js`, colours in `css/song-video-agent-campus.css`)
+has two rooms: an old library, where the agent trains (the intro through the
+first chorus), and a modern office with a glass mezzanine, where it works from
+verse 3, the inference phase (`AgentCampus.switchAt(song)` cross-dissolves
+them); `AgentCampus` also exports the floor line and the mezzanines.
+`js/song-video/coding-agent.js` (styles in `css/song-video-coding-agent.css`)
+draws the singer as a misplaced genius: a small chibi robot in a UCLA-blue
+hoodie with a graduation cap set askew and a NEW badge on a lanyard, hovering
+on a glowing pod, its face on a dark visor screen. `CodingAgent.agent()`
+glides it along a `route`, plays named `moves` (wave, point, present, tap,
+think, type, cheer, heart, shrug, nod, shake, tilt, scratch, beckon, bow,
+hop, read, write, look, offer, spin, lecture, lost) and `faces` (happy, joy,
+curious, thinking, worried, sheepish, surprised, wink, love, focused, smug,
+confused) on sung words, puts props in its `holds` (book, pen, magnifier,
+mug, card, wand), opens its mouth on the storyboard's word marks
+(`CodingAgent.wordsOf()`), and reports a hand's grip (`handPoint()`). Its
+gags fit the persona: a sparkle on the visor when it is smug or lectures
+(with a light bulb), an antenna that curls into a question mark and a double
+take when it is confused or lost, a sweat drop when it is sheepish or
+worried, the cap hopping off in surprise, gears turning while it thinks, and
+hearts on love. Hops and cheers squash and stretch, and the antenna and
+tassel follow through. Every gag is a function of song time, and reduced
+motion holds them still. The
+choreography builds one agent for the whole song, after every scene, so it
+stays in front of what it points at. `js/song-video/agent-kit.js` (styles in
+`css/song-video-agent-kit.css`) draws the teaching pictures in one language:
+cards (cream paper in the library, white in the office), dark code panels in
+the shared syntax colours, pills, check and cross marks, and bubbles; the
+lecture's phase strip (1 Pre-training, 2 Post-training, 3 Inference) lit for
+verses 1–3; the weights as a brass slider console that freezes at inference;
+the context whiteboard that rereads its items on every call and is wiped for
+a new session; the free-shipping receipt; the photo folder whose files
+overwrite each other; the abstraction ladder (assembly, source, design) with
+its review lens; sequence diagrams in UML notation with lost replies; test
+cards, the boundary number line, and padlocks; the bridge's accidental and
+essential complexity and the seedling that grows when you try it yourself;
+and `levels()`, the chorus picture used all four times: a code floor marked
+10,000 lines, and one level up, Requirements, Design, and Tests, where the
+student's and the agent's thoughts meet. Every example is told in full on
+screen (setup, what went wrong, the rule), so the video teaches without the
+slides. To keep the load down, the captions carry the sung words: a label
+adds what the line does not say (a value, a result, a name for the picture)
+and never repeats it, each label stays up long enough to read, and a scene
+drops a picture once the song has moved past it. A verse ending on its punch
+line keeps its picture through the next verse's first words (`HANDOFF` in
+the choreography). The viewer's SE Gym hero sits at a laptop as the "you" the
+agent sings to; on "meet me one level up" it rises with the agent, beside the
+chorus's upper floor and onto the office mezzanine in the outro. The take's
+three quiz questions are call and response on the shared quiz card.
+
 A section's `delivery` sets its captions: `sung` and `spoken` lines are one
 cue each, while `call` lines are quiz questions with an `answer` and
 `answer_at`, captioned as two cues. A question the recording never answers

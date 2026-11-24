@@ -29,7 +29,7 @@ same_shape_not_the_same:
   topic: Design patterns
   category: Design & modeling
 invest_in_your_stories:
-  thumbnail_time: 54.5
+  thumbnail_time: 55.5
   title: Invest in Your Stories
   topic: User stories & INVEST
   category: Teamwork
@@ -52,6 +52,11 @@ design_it_in:
   thumbnail_time: 21
   title: Design It In Before They Break In
   topic: Security
+  category: Tools & systems
+meet_me_one_level_up:
+  thumbnail_time: 79.5
+  title: Meet Me One Level Up
+  topic: Coding with AI agents
   category: Tools & systems
 draw_it_out:
   thumbnail_time: 170

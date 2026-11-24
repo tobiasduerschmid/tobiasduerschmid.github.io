@@ -1,0 +1,759 @@
+# Storyboard for "Meet Me One Level Up", the coding-agent song (CS 35L
+# Lecture 14, Agentic SWE; SEBook chapter SEBook/development_practices/genAI.md).
+#
+# This file is the single source of truth for the song's words and timing:
+#   - js/song-video/songs/meet_me_one_level_up.js choreographs the live vector
+#     player (/assets/song-player/meet-me-one-level-up.html) against each
+#     line's `start` and its `marks` (the times of the words the visuals hit),
+#     with the teaching pictures in js/song-video/agent-kit.js, the singer in
+#     js/song-video/coding-agent.js, and the rooms in js/song-video/agent-campus.js
+#     (an old library while the agent trains, an office once it works);
+#   - render.js writes the captions and the audio-described soundtrack from
+#     `text`, `answer`, and `narration` (`node scripts/song-video/render.js
+#     meet_me_one_level_up`). This song plays only in the live player;
+#   - the player page prints every line with its `visual` description as the
+#     transcript (WCAG 1.2.1 / 1.2.3);
+#   - each section's `narration` is spoken in the audio-described track, where
+#     the picture holds at the start of the section while the narrator
+#     describes what it shows (extended audio description, WCAG 1.2.5).
+# Editing text or descriptions here updates the transcript and the player on
+# the next Jekyll build, but the captions and described audio only after
+# re-running render.js.
+#
+# Times are seconds into the Suno take "Meet Me One Level Up" (2) (about
+# 112 BPM) of the lyric sheet in docs/meet-me-one-level-up-song-lyrics.md,
+# whose agent is a misplaced genius: it knows almost everything except your
+# project. Word marks come from local Whisper word timestamps (mlx
+# whisper-large-v3-turbo, on the Demucs vocal stem) aligned to the sheet;
+# Whisper skipped the first half of chorus 2, so an unprompted clip pass of
+# 150.5-162.5 s supplied those words, and words Whisper misheard take the times
+# of the words it heard in their place. The take sings "And one stayed" where
+# the sheet has "One stayed", so that caption follows the recording. Quiz
+# `answer_at` is the answer's first vocal onset, read from the vocal stem's
+# envelope, and `pause_at` sits in the quiet just before it. The take stays
+# centred (left-right balance within about 1 dB for 90% of the song), so the
+# soundtrack is the take's stereo, normalized to -16 LUFS with one linear gain
+# (peak -2.5 dBFS) and stored as AAC at 160 kb/s. Where the sheet splits a
+# sentence across short lines, the storyboard keeps it as one line; the sheet's
+# respellings for the singer (Pree-training, IN-fer-ence, ree-JEN-er-ate) are
+# captioned in normal spelling.
+
+title: "Meet Me One Level Up: a song about coding with AI agents"   # the player's accessible name
+credit: Lyrics written for this lecture; music and vocals generated with Suno.
+student:
+  laptop_logo: /assets/icons/uml-sheet/uml-sheet.svg   # diagrams on your laptop: you work one level up
+theme: agent-campus   # stage look: the library and the office of js/song-video/agent-campus.js
+extras:   # the song's own art and styles, loaded before its choreography
+  styles:
+    - /css/song-video-agent-campus.css
+    - /css/song-video-coding-agent.css
+    - /css/song-video-agent-kit.css
+  scripts:
+    - /js/song-video/agent-campus.js
+    - /js/song-video/figure-geometry.js
+    - /js/song-video/coding-agent.js
+    - /js/song-video/agent-kit.js
+player: /assets/song-player/meet-me-one-level-up.html
+captions: /assets/audio/meet-me-one-level-up.vtt
+described_captions: /assets/audio/meet-me-one-level-up-described.vtt
+soundtrack: assets/audio/meet-me-one-level-up.m4a   # repo path, played by the live player
+described_soundtrack: assets/audio/meet-me-one-level-up-described.m4a
+described_timeline: /assets/audio/meet-me-one-level-up-described.json
+narrator:
+  voice: Samantha   # macOS `say` voice for the audio-described track
+  rate: 205         # words per minute
+  pronounce:        # how the narrator says notation the captions keep as written
+    SE Gym: S E Gym
+    TDD: T D D
+    UCLA: U C L A
+width: 1920
+height: 1080
+fps: 30
+
+duration: 347.61
+beats:
+  bpm: 112.36   # median of the tracked beats (librosa on the mix)
+  first: 0.418
+  # Every beat, in seconds, tracked with librosa on the mix.
+  times: [
+    0.418, 0.952, 1.486, 1.997, 2.531, 3.042, 3.576, 4.11, 4.621, 5.155, 5.689, 6.223,
+    6.734, 7.245, 7.779, 8.313, 8.824, 9.358, 9.892, 10.426, 10.96, 11.494, 12.005, 12.539,
+    13.05, 13.584, 14.118, 14.629, 15.163, 15.697, 16.208, 16.718, 17.276, 17.786, 18.297, 18.831,
+    19.365, 19.9, 20.364, 20.944, 21.455, 21.92, 22.407, 23.057, 23.591, 24.102, 24.636, 25.101,
+    25.612, 26.215, 26.726, 27.237, 27.771, 28.235, 28.77, 29.35, 29.884, 30.418, 30.952, 31.486,
+    31.997, 32.508, 33.042, 33.553, 34.064, 34.667, 35.155, 35.689, 36.223, 36.734, 37.245, 37.779,
+    38.313, 38.847, 39.358, 39.892, 40.403, 40.937, 41.471, 42.005, 42.516, 43.05, 43.584, 44.095,
+    44.629, 45.163, 45.697, 46.208, 46.719, 47.183, 47.717, 48.298, 48.832, 49.366, 49.876, 50.387,
+    50.921, 51.479, 52.013, 52.524, 53.034, 53.568, 54.102, 54.637, 55.147, 55.681, 56.216, 56.75,
+    57.284, 57.794, 58.305, 58.839, 59.373, 59.907, 60.418, 60.952, 61.463, 61.997, 62.531, 63.042,
+    63.576, 64.157, 64.737, 65.318, 65.945, 66.479, 66.99, 67.524, 68.034, 68.569, 69.103, 69.637,
+    70.147, 70.682, 71.216, 71.726, 72.26, 72.795, 73.305, 73.839, 74.374, 74.884, 75.418, 76.045,
+    76.696, 77.253, 77.74, 78.298, 78.832, 79.366, 80.039, 80.666, 81.2, 81.734, 82.268, 82.779,
+    83.313, 83.824, 84.358, 84.892, 85.426, 85.937, 86.471, 86.982, 87.516, 88.05, 88.584, 89.095,
+    89.629, 90.14, 90.767, 91.371, 91.997, 92.532, 93.042, 93.576, 94.11, 94.598, 95.155, 95.62,
+    96.084, 96.618, 97.129, 97.593, 98.058, 98.569, 99.103, 99.66, 100.217, 100.682, 101.193, 101.796,
+    102.4, 103.05, 103.584, 104.095, 104.629, 105.163, 105.674, 106.324, 106.974, 107.532, 108.042, 108.577,
+    109.087, 109.621, 110.155, 110.69, 111.2, 111.734, 112.245, 112.779, 113.313, 113.824, 114.358, 114.892,
+    115.426, 115.937, 116.448, 116.982, 117.493, 118.05, 118.561, 119.072, 119.629, 120.21, 120.813, 121.371,
+    121.951, 122.508, 123.043, 123.577, 124.087, 124.621, 125.132, 125.666, 126.224, 126.735, 127.269, 127.779,
+    128.313, 128.848, 129.358, 129.892, 130.426, 130.937, 131.471, 131.982, 132.516, 133.05, 133.561, 134.095,
+    134.629, 135.163, 135.674, 136.208, 136.742, 137.23, 137.764, 138.298, 138.832, 139.343, 139.854, 140.388,
+    140.922, 141.456, 142.013, 142.524, 143.058, 143.592, 144.103, 144.614, 145.171, 145.682, 146.216, 146.727,
+    147.261, 147.795, 148.306, 148.84, 149.374, 149.885, 150.419, 150.953, 151.557, 152.184, 152.787, 153.321,
+    153.832, 154.366, 154.877, 155.411, 155.945, 156.456, 156.99, 157.524, 158.035, 158.569, 159.103, 159.637,
+    160.148, 160.682, 161.216, 161.727, 162.261, 162.772, 163.306, 163.84, 164.467, 165.117, 165.674, 166.162,
+    166.719, 167.253, 167.787, 168.298, 168.832, 169.366, 169.877, 170.411, 170.945, 171.456, 171.944, 172.501,
+    173.058, 173.569, 174.08, 174.568, 175.032, 175.636, 176.17, 176.704, 177.261, 177.772, 178.306, 178.817,
+    179.304, 179.885, 180.419, 180.93, 181.464, 181.998, 182.532, 183.066, 183.577, 184.111, 184.645, 185.179,
+    185.69, 186.201, 186.735, 187.246, 187.78, 188.314, 188.825, 189.359, 189.893, 190.404, 190.938, 191.449,
+    191.983, 192.517, 193.051, 193.562, 194.096, 194.63, 195.164, 195.675, 196.185, 196.719, 197.254, 197.788,
+    198.298, 198.856, 199.367, 199.901, 200.411, 200.922, 201.456, 201.99, 202.524, 203.035, 203.569, 204.103,
+    204.637, 205.172, 205.706, 206.24, 206.727, 207.261, 207.795, 208.306, 208.84, 209.351, 209.908, 210.512,
+    211.116, 211.72, 212.254, 212.788, 213.299, 213.833, 214.343, 214.877, 215.412, 215.922, 216.456, 216.99,
+    217.501, 218.035, 218.569, 219.103, 219.638, 220.148, 220.659, 221.193, 221.727, 222.261, 222.795, 223.306,
+    223.84, 224.351, 224.885, 225.419, 225.93, 226.464, 226.998, 227.532, 228.066, 228.647, 229.111, 229.622,
+    230.133, 230.644, 231.201, 231.712, 232.246, 232.919, 233.546, 234.08, 234.614, 235.148, 235.659, 236.193,
+    236.727, 237.238, 237.772, 238.306, 238.817, 239.351, 239.885, 240.419, 241.0, 241.58, 242.161, 242.672,
+    243.275, 243.81, 244.344, 244.878, 245.412, 245.946, 246.457, 246.991, 247.525, 248.059, 248.57, 249.104,
+    249.615, 250.149, 250.683, 251.193, 251.728, 252.262, 252.772, 253.306, 253.887, 254.467, 255.071, 255.628,
+    256.209, 256.789, 257.37, 257.858, 258.368, 258.902, 259.413, 259.924, 260.458, 261.016, 261.642, 262.246,
+    262.803, 263.338, 263.872, 264.406, 264.94, 265.451, 266.031, 266.588, 267.099, 267.587, 268.167, 268.725,
+    269.235, 269.793, 270.327, 270.814, 271.418, 271.952, 272.486, 273.043, 273.578, 274.112, 274.669, 275.203,
+    275.737, 276.294, 276.828, 277.362, 277.92, 278.477, 279.034, 279.615, 280.102, 280.613, 281.17, 281.704,
+    282.239, 282.773, 283.307, 283.841, 284.352, 284.816, 285.327, 285.838, 286.348, 286.859, 287.44, 287.997,
+    288.554, 289.088, 289.622, 290.157, 290.714, 291.248, 291.828, 292.339, 292.827, 293.314, 293.849, 294.383,
+    294.917, 295.451, 295.985, 296.519, 297.053, 297.587, 298.121, 298.655, 299.189, 299.723, 300.257, 300.791,
+    301.325, 301.813, 302.393, 302.928, 303.462, 303.996, 304.553, 305.087, 305.621, 306.155, 306.666, 307.223,
+    307.757, 308.291, 308.825, 309.359, 309.894, 310.428, 310.962, 311.496, 312.03, 312.564, 313.098, 313.632,
+    314.166, 314.7, 315.234, 315.791, 316.325, 316.836, 317.394, 317.928, 318.462, 319.019, 319.553, 320.064,
+    320.598, 321.132, 321.666, 322.2, 322.757, 323.291, 323.825, 324.36, 324.894, 325.404, 325.915, 326.449,
+    327.007, 327.564, 328.098, 328.632, 329.166, 329.7, 330.234, 330.768, 331.302, 331.836, 332.347, 332.881,
+    333.392, 333.949, 334.507, 335.041, 335.575, 336.109, 336.643, 337.177, 337.711, 338.268, 338.802, 339.336,
+    339.87, 340.428, 340.962, 341.496, 342.03, 342.564, 343.144, 343.655, 344.213, 344.747, 345.281, 345.815,
+    346.349
+  ]
+
+sections:
+  - id: intro
+    title: "Intro"
+    delivery: spoken
+    narration: "Audio-described version: before each section, the picture pauses while I describe it. The song is sung by an AI coding agent, a small, cute robot in a UCLA-blue hoodie: a misplaced genius, fresh out of training, with a graduation cap set a little askew and a badge that says NEW. Its face is a dark screen with two big glowing eyes and a mouth that moves as it sings, and it hovers on a soft blue glow. It starts in an grand old library in late-afternoon light: a coffered ceiling, a rose window, tall bookcases, a gallery one level up with a spiral stair, shafts of sunlight, and green lamps on a reading table. The agent waves and cheers as a card reads Training complete. A card lists what it knows, almost everything, from Python to Git, and then in red: your project, never seen it. Your own SE Gym hero appears at a laptop."
+    lines:
+      - id: intro-1
+        start: 1.74
+        end: 4.44
+        text: "Hi! I just finished training."
+        marks: {"hi": 1.74, "i": 2.72, "just": 3.26, "finished": 3.44, "training": 3.7}
+        visual: "A grand old library in late-afternoon light: a coffered walnut ceiling, carved cornices and pilasters, a rose window, tall bookcases, and a gallery on carved brackets one level up, reached by a spiral stair. Shafts of sunlight slant across the room with drifting dust, and green banker's lamps glow on a reading table. A title card reads \u201cMeet Me One Level Up: a song about coding with AI agents \u00b7 CS 35L Software Construction\u201d. The singer glides in: the agent, a small robot in a UCLA-blue hoodie with a glowing face screen, a graduation cap set a little askew, and a NEW badge on a lanyard: a misplaced genius who knows almost everything except your project. It waves on \u201cHi\u201d and cheers as a card fills its progress bar: \u201cTraining complete\u201d."
+      - id: intro-2
+        start: 4.44
+        end: 7.38
+        text: "I know almost everything. Except your project."
+        marks: {"i": 4.44, "know": 4.82, "almost": 4.96, "everything": 5.26, "except": 5.66, "your": 5.94, "project": 6.18}
+        visual: "A card, \u201cWhat I know: Almost everything\u201d, fills with green labels: Python \u2713, JavaScript \u2713, C++ \u2713, SQL \u2713, Git \u2713, while the agent raises a finger with a smug look. On \u201cexcept\u201d, a red line appears: \u201cYour project \u2717 never seen it\u201d, and the agent looks around, lost, with a question mark on its face."
+      - id: intro-3
+        start: 7.38
+        end: 12.26
+        text: "So let's see how we can do great things together."
+        marks: {"so": 7.38, "lets": 7.96, "see": 8.18, "how": 8.3, "we": 8.44, "can": 8.58, "do": 8.7, "great": 8.98, "things": 10.14, "together": 10.56}
+        visual: "Your hero appears at a laptop on the left. The agent holds out both hands to them, and its eyes turn to hearts."
+  - id: verse-1
+    title: "Verse 1: Pre-training"
+    delivery: sung
+    narration: "Verse 1, pre-training. A card on the library table shows code, def add a, b, return a plus, with the next token covered by a slip. The agent guesses b, the real file confirms b, and a brass console of sliders, the weights, shifts. A strip at the top names the lecture's three phases: pre-training, post-training, and inference. The agent shows off: it has read more code than anyone. Then a card from your project, send invoice with unknown arguments, which the agent fills with guesses."
+    lines:
+      - id: v1-1
+        start: 12.26
+        end: 16.66
+        text: "Pre-training hid the next token and asked me what was there;"
+        marks: {"pretraining": 12.26, "hid": 13.24, "the": 13.48, "next": 13.64, "token": 13.86, "and": 14.36, "asked": 14.92, "me": 15.3, "what": 15.46, "was": 15.68, "there": 15.96}
+        visual: "A strip at the top shows the lecture's three phases, \u201c1 Pre-training, 2 Post-training, 3 Inference\u201d; Pre-training lights up. On the library table, a cream card reads \u201cPre-training \u00b7 the training data: hide the next token, then guess it\u201d, with code: \u201cdef add(a, b): return a + \u2026\u201d. On \u201chid\u201d, the next token is covered by a purple slip labelled \u201cnext token\u201d; on \u201casked\u201d, it shows a question mark while the agent, reading a book, puts a hand to its chin."
+      - id: v1-2
+        start: 16.66
+        end: 20.88
+        text: "I guessed, they checked the real file, and tuned my weights with care."
+        marks: {"i": 16.66, "guessed": 17.02, "they": 17.26, "checked": 17.58, "the": 17.9, "real": 18.08, "file": 18.32, "and": 18.86, "tuned": 19.12, "my": 19.34, "weights": 19.72, "with": 20.04, "care": 20.22}
+        visual: "On \u201cguessed\u201d, the agent points: \u201cguess: b (90%)\u201d. On \u201cchecked\u201d, the slip lifts to show the real file's \u201cb\u201d, and a green label reads \u201creal file: b\u201d. On \u201ctuned\u201d, a brass console of sliders labelled \u201cWeights\u201d appears and its knobs shift a little: \u201cfavor b next time\u201d."
+      - id: v1-3
+        start: 20.88
+        end: 25.06
+        text: "I've read more code than anyone; the patterns all by heart;"
+        marks: {"ive": 20.88, "read": 21.34, "more": 21.56, "code": 21.8, "than": 22.22, "anyone": 22.48, "the": 23.1, "patterns": 23.34, "all": 23.94, "by": 24.1, "heart": 24.34}
+        visual: "With a smug look and one finger raised, the agent shows off, presenting the Weights console: the patterns it has read live there."
+      - id: v1-4
+        start: 25.06
+        end: 28.98
+        text: "But your project I've never seen, so I guess the missing part."
+        marks: {"but": 25.06, "your": 25.34, "project": 25.46, "ive": 26.02, "never": 26.6, "seen": 26.86, "so": 27.36, "i": 27.54, "guess": 27.68, "the": 27.88, "missing": 28.06, "part": 28.4}
+        visual: "A new card: \u201cYour project \u00b7 code I never saw: send_invoice(\u2026) has which arguments?\u201d. The agent looks around, lost. On \u201cguess\u201d, it fills in \u201ccustomer, total, \"USD\"\u201d in an orange dashed box, a red label reads \u201cguessed, never checked\u201d, and the agent scratches the back of its head, sheepish."
+  - id: verse-2
+    title: "Verse 2: Post-training"
+    delivery: sung
+    narration: "Verse 2, post-training. A chalkboard pairs tasks with expert answers. The agent aces them, then meets your real task, coupons in your checkout code, which no textbook has. Then reinforcement learning: three tries score 2, 4, and 6 out of 6 tests, and the winning code, is prime returns n mod 2 equals 1, passes all 6 but says 9 is prime. Then preference tuning: two answers for mean, one that hedges and one that sounds sure; people vote for the sure one, which crashes on an empty list."
+    lines:
+      - id: v2-1
+        start: 28.98
+        end: 33.4
+        text: "Post-training brought a teacher with answers, task by task:"
+        marks: {"posttraining": 28.98, "brought": 30.36, "a": 30.52, "teacher": 30.68, "with": 31.1, "answers": 31.8, "task": 32.28, "by": 32.66, "task_2": 32.86}
+        visual: "Phase 2, Post-training, lights up. A chalkboard on an easel: \u201cSupervised fine-tuning: tasks paired with expert answers\u201d. On \u201ctask\u201d, chalk writes \u201cTask: reverse a list \u2192 xs[::-1]\u201d; on the second \u201ctask\u201d, \u201cTask: add up a list \u2192 sum(xs)\u201d. The agent studies it with a pen."
+      - id: v2-2
+        start: 33.4
+        end: 37.9
+        text: "Textbook problems? Aced them all! But is that what you ask?"
+        marks: {"textbook": 33.4, "problems": 33.9, "aced": 34.76, "them": 34.92, "all": 35.08, "but": 35.72, "is": 36.02, "that": 36.16, "what": 36.42, "you": 36.68, "ask": 37.04}
+        visual: "On \u201caced\u201d, a green \u201cA+\u201d lands on the board, and the agent cheers, smug. On \u201call\u201d, a speech bubble with a question mark: \u201cYour task: coupons in checkout.py\u201d. The agent looks around, confused."
+      - id: v2-3
+        start: 37.9
+        end: 41.96
+        text: "In Reinforcement Learning, on tasks a test could score,"
+        marks: {"in": 37.9, "reinforcement": 38.14, "learning": 38.92, "on": 39.62, "tasks": 40.18, "a": 40.56, "test": 40.74, "could": 40.98, "score": 41.2}
+        visual: "A card: \u201cReinforcement learning: Reward = tests passed\u201d. Three tries fill score bars: Try 1, 2 / 6 tests; Try 2, 4 / 6 tests; Try 3, 6 / 6 tests. The agent cheers."
+      - id: v2-4
+        start: 41.96
+        end: 46.12
+        text: "I learned to pass whatever's checked, not what the test is for."
+        marks: {"i": 41.96, "learned": 41.98, "to": 42.16, "pass": 42.26, "whatevers": 42.66, "checked": 43.34, "not": 44.06, "what": 44.44, "the": 44.72, "test": 44.9, "is": 45.18, "for": 45.48}
+        visual: "Try 3 glows gold. On \u201cwhatever's\u201d, a code card appears: \u201cdef is_prime(n): return n % 2 == 1\u201d; on \u201cchecked\u201d, a green label: \u201cpasses 6 / 6 tests\u201d; and on \u201cnot\u201d, a red one: \u201cis_prime(9) \u2192 True\u201d. The agent's eyes go wide."
+      - id: v2-5
+        start: 46.12
+        end: 50.38
+        text: "Preference Tuning: where no test can check if it is true,"
+        marks: {"preference": 46.12, "tuning": 46.54, "where": 46.92, "no": 47.22, "test": 47.5, "can": 48.08, "check": 48.62, "if": 48.92, "it": 49.18, "is": 49.38, "true": 49.68}
+        visual: "\u201cPreference tuning: people pick.\u201d Two code cards: Answer A, \u201c\u2018Probably. Check empty lists.\u2019 def mean(xs): if not xs: return 0; return sum(xs)/len(xs)\u201d, and Answer B, \u201c\u2018Definitely! Works for every input.\u2019 def mean(xs): return sum(xs)/len(xs)\u201d."
+      - id: v2-6
+        start: 50.38
+        end: 54.4
+        text: "People picked the smoothest talker, so I sound sure to you."
+        marks: {"people": 50.38, "picked": 50.7, "the": 51.04, "smoothest": 51.26, "talker": 51.76, "so": 52.32, "i": 52.56, "sound": 52.84, "sure": 53.42, "to": 53.72, "you": 53.9}
+        visual: "Three gold \u201c+1\u201d votes land on B, the smooth one, and a green label reads \u201cPreferred\u201d. On \u201cso\u201d, a red label: \u201cmean([]) \u2192 ZeroDivisionError\u201d, while the agent lectures with a smug smile."
+  - id: pre-chorus
+    title: "Pre-chorus"
+    delivery: sung
+    narration: "Pre-chorus. A code file fills faster than you can read it, while the agent strikes a genius pose and then looks lost. A sticky note asks: Did I understand you? Assume I misunderstood. A green check follows once you have checked."
+    lines:
+      - id: pre-1
+        start: 54.4
+        end: 58.46
+        text: "I write faster than you read, a genius, new on site;"
+        marks: {"i": 54.4, "write": 54.72, "faster": 54.94, "than": 55.42, "you": 55.68, "read": 55.98, "a": 56.84, "genius": 57.06, "new": 57.6, "on": 57.88, "site": 58.14}
+        visual: "A dark code card, checkout.py, fills with seven lines faster than you can read them while the agent types. On \u201cgenius\u201d, the agent raises a finger, then looks around, lost."
+      - id: pre-2
+        start: 58.46
+        end: 63.44
+        text: "So assume I misunderstood until you've checked I'm right."
+        marks: {"so": 58.46, "assume": 58.9, "i": 59.38, "misunderstood": 59.74, "until": 60.7, "youve": 61.44, "checked": 61.94, "im": 62.12, "right": 62.44}
+        visual: "A yellow sticky note drops in: \u201cDid I understand you? Assume I misunderstood.\u201d The agent scratches its head, sheepish. On \u201cright\u201d, a green check appears beside the note."
+  - id: chorus-1
+    title: "Chorus"
+    delivery: sung
+    narration: "Chorus, the same picture every time. A two-storey cut-away: below, the Code floor, with ten thousand lines; above, a glass floor, one level up, with three cards: Requirements, Design, and Tests. The agent glides up there, and your hero rises with it on the left. A magnifying glass gives up on reading line by line. Thought bubbles labelled you and me meet over the cards. The Requirements card states the need, messages within 2 seconds, and crosses out how, poll every second; question marks pop away; a diagram draws itself on the Design card; and a pin lands on the Tests card, 50 dollars free, 49.99 pays 5.99."
+    lines:
+      - id: c1-1
+        start: 63.44
+        end: 65.36
+        text: "Meet me one level up,"
+        marks: {"meet": 63.44, "me": 63.7, "one": 64.2, "level": 64.48, "up": 64.84}
+        visual: "The chorus picture, the same every time: a two-storey cut-away. Below, the Code floor, a dark panel of code lines marked \u201c10,000 lines\u201d; above it, a glass floor labelled \u201cOne level up\u201d. Still in the library, the agent glides up to the upper floor and beckons, and your hero, at a laptop on the left, rises with it to the upper floor."
+      - id: c1-2
+        start: 65.36
+        end: 67.86
+        text: "Judge the design, not line by line;"
+        marks: {"judge": 65.36, "the": 65.56, "design": 65.88, "not": 66.38, "line": 66.58, "by": 66.86, "line_2": 67.04}
+        visual: "A magnifying glass crawls down the code lines below and gives up; a red tag reads \u201cline by line\u201d. The agent shakes its head, then points up at the Design card."
+      - id: c1-3
+        start: 67.86
+        end: 71.96
+        text: "Requirements, design, and tests: that's where your thoughts meet mine."
+        marks: {"requirements": 67.86, "design": 68.54, "and": 69.1, "tests": 69.24, "thats": 69.86, "where": 70.34, "your": 70.52, "thoughts": 70.74, "meet": 71.1, "mine": 71.32}
+        visual: "On the upper floor, three cards pop in on the sung words: Requirements, Design, Tests. Two thought bubbles, \u201cyou\u201d and \u201cme\u201d, float in from either side and meet over the cards: \u201cshared understanding\u201d. The agent puts its hands on its chest."
+      - id: c1-4
+        start: 71.96
+        end: 74.06
+        text: "Tell me the need, not the how,"
+        marks: {"tell": 71.96, "me": 72.12, "the": 72.38, "need": 72.7, "not": 73.0, "the_2": 73.16, "how": 73.32}
+        visual: "The Requirements card fills in: \u201cNeed: messages show within 2 s\u201d in green, and \u201cHow: poll every second\u201d, crossed out."
+      - id: c1-5
+        start: 74.06
+        end: 75.26
+        text: "Leave me nothing to guess,"
+        marks: {"leave": 74.06, "me": 74.22, "nothing": 74.44, "to": 74.74, "guess": 74.94}
+        visual: "Gold question marks around the Requirements card pop away; a green check takes their place."
+      - id: c1-6
+        start: 75.26
+        end: 77.66
+        text: "Ask for a diagram first,"
+        marks: {"ask": 75.26, "for": 75.7, "a": 75.94, "diagram": 76.16, "first": 76.8}
+        visual: "On the Design card, a small sequence diagram draws itself: two boxes, their lifelines, a message, and its reply."
+      - id: c1-7
+        start: 77.66
+        end: 79.99
+        text: "Pin each boundary with a test."
+        marks: {"pin": 77.66, "each": 77.84, "boundary": 78.06, "with": 78.58, "a": 78.92, "test": 79.08}
+        visual: "A gold pin lands on the Tests card: \u201c$50.00 \u2192 free\u201d and \u201c$49.99 \u2192 $5.99\u201d."
+  - id: verse-3
+    title: "Verse 3: Inference"
+    delivery: sung
+    narration: "Verse 3, inference. The library dissolves into a bright modern office with a big window over the city and a glass mezzanine. The weights console freezes over with a padlock: Frozen. A whiteboard labelled Context fills with numbered items, the prompt, tool calls to read a file and run tests, and their results, and a gold band rereads the list from item 1 on every call. Then a sponge wipes the board for a new session, while a saved memory and the files in the repo remain, and the agent offers your hero a pen."
+    lines:
+      - id: v3-1
+        start: 81.48
+        end: 86.24
+        text: "Inference: my weights stay frozen, whatever you may say;"
+        marks: {"inference": 81.48, "my": 82.12, "weights": 82.34, "stay": 82.74, "frozen": 83.22, "whatever": 84.16, "you": 84.66, "may": 85.08, "say": 85.34}
+        visual: "The library dissolves into a bright modern office with a big window over the city and a glass mezzanine one level up. Phase 3, Inference, lights up. The brass Weights console returns, frost and icicles cover it, and a padlock reads \u201cFrozen\u201d. Bubbles say \u201cRemember my style!\u201d and \u201cLearn this for next time!\u201d; a label: \u201ca prompt never changes the model\u201d."
+      - id: v3-2
+        start: 86.24
+        end: 89.8
+        text: "Your prompt adds only context to what I see today."
+        marks: {"your": 86.24, "prompt": 86.54, "adds": 86.92, "only": 87.16, "context": 87.48, "to": 88.24, "what": 88.64, "i": 88.9, "see": 89.14, "today": 89.44}
+        visual: "A whiteboard: \u201cContext: what I see in this session\u201d. Item 1 appears on \u201ccontext\u201d: \u201cFix the failing test\u201d. A label reads \u201cthis session only\u201d."
+      - id: v3-3
+        start: 89.8
+        end: 93.72
+        text: "I ask for tools: I read your files, I run your tests,"
+        marks: {"i": 89.8, "ask": 90.34, "for": 90.54, "tools": 90.68, "i_2": 91.24, "read": 91.38, "your": 91.54, "files": 91.7, "i_3": 92.32, "run": 92.38, "your_2": 92.62, "tests": 92.84}
+        visual: "On \u201cask\u201d, the agent points at the board. On \u201cread\u201d, items 2 and 3 appear, \u201cread_file(\"cart.py\")\u201d and \u201ccart.py: 120 lines\u201d; on \u201crun\u201d, items 4 and 5 appear, \u201crun_tests()\u201d and \u201c1 test failed\u201d."
+      - id: v3-4
+        start: 93.72
+        end: 98.48
+        text: "And then each call, I reread everything from the start again."
+        marks: {"and": 93.72, "then": 93.84, "each": 94.24, "call": 94.48, "i": 94.78, "reread": 95.02, "everything": 95.62, "from": 96.78, "the": 97.34, "start": 97.56, "again": 97.92}
+        visual: "On each word, \u201ccall\u201d, \u201ceverything\u201d, and \u201cstart\u201d, a gold band reads down the board from item 1 to the newest item: \u201ceach call: from item 1 again\u201d."
+      - id: v3-5
+        start: 98.48
+        end: 103.22
+        text: "New session: who are you again? My context is wiped clean;"
+        marks: {"new": 98.48, "session": 98.64, "who": 99.24, "are": 99.64, "you": 99.8, "again": 99.96, "my": 100.52, "context": 100.78, "is": 101.28, "wiped": 102.04, "clean": 102.32}
+        visual: "A label: \u201cnext day: a new session\u201d. The agent's bubble asks, \u201cWho are you again?\u201d, with a confused face. On \u201cwiped\u201d, a sponge wipes the whiteboard blank. The agent shrugs."
+      - id: v3-6
+        start: 103.22
+        end: 106.98
+        text: "Saved memories and files survive, so write down what you mean."
+        marks: {"saved": 103.22, "memories": 103.42, "and": 104.04, "files": 104.42, "survive": 104.76, "so": 105.4, "write": 105.48, "down": 105.78, "what": 106.08, "you": 106.32, "mean": 106.52}
+        visual: "A sticky note, \u201cSaved memory: When coding, use TDD.\u201d, and a card, \u201cFiles in your repo: spec.md, tests/, README.md\u201d, stay: \u201cthese survive the next session\u201d. Your hero appears at the laptop; the agent holds out a pen to them."
+  - id: verse-4
+    title: "Verse 4: Requirements"
+    delivery: sung
+    narration: "Verse 4, requirements. A sticky note says free shipping over 50 dollars; a teammate asks before or after the coupon, while the agent just guesses. A receipt shows 55 dollars of items and a 10-dollar coupon; two cards show the two readings. Week 1's code makes shipping free, the regenerated week 3 code charges 5.99, and only the written rule survives in the spec. Then a photo folder: every photo is from the same day, each is renamed to the same file name and overwrites the last, and only one of 212 remains, until a note, never overwrite a file, brings them all back."
+    lines:
+      - id: v4-1
+        start: 106.98
+        end: 111.1
+        text: "When you're vague, a teammate asks, but I guess and stride away;"
+        marks: {"when": 106.98, "youre": 107.34, "vague": 107.54, "a": 107.92, "teammate": 108.18, "asks": 108.46, "but": 109.22, "i": 109.54, "guess": 109.66, "and": 110.0, "stride": 110.28, "away": 110.64}
+        visual: "A sticky note: \u201cYou wrote: Free shipping over $50\u201d. A teammate's speech bubble asks, \u201cBefore or after the coupon?\u201d. On \u201cguess\u201d, the agent glides off a little with a smug finger raised."
+      - id: v4-2
+        start: 111.1
+        end: 115.74
+        text: "I'll do exactly what you wrote, not what you meant to say."
+        marks: {"ill": 111.1, "do": 111.38, "exactly": 111.56, "what": 112.2, "you": 112.58, "wrote": 112.76, "not": 113.5, "what_2": 113.96, "you_2": 114.2, "meant": 114.42, "to": 114.7, "say": 114.92}
+        visual: "On \u201cwrote\u201d, the note lights up, and a faint, dashed thought bubble below reads \u201cwhat you meant: only in your head\u201d."
+      - id: v4-3
+        start: 115.74
+        end: 119.94
+        text: "\u201cFree shipping over fifty\u201d: a coupon takes off ten;"
+        marks: {"free": 115.74, "shipping": 116.06, "over": 116.44, "fifty": 117.0, "a": 117.8, "coupon": 118.12, "takes": 118.5, "off": 118.96, "ten": 119.2}
+        visual: "A receipt, \u201cYour cart\u201d: Items $55.00; on \u201cten\u201d, Coupon \u2212$10.00; Shipping: \u201c?\u201d."
+      - id: v4-4
+        start: 119.94
+        end: 123.9
+        text: "Before or after the coupon? You never told me when."
+        marks: {"before": 119.94, "or": 120.56, "after": 120.92, "the": 121.08, "coupon": 121.3, "you": 122.12, "never": 122.32, "told": 122.7, "me": 123.12, "when": 123.38}
+        visual: "Two cards: \u201cBefore the coupon: $55 \u2265 $50 \u2192 free\u201d and \u201cAfter the coupon: $45 < $50 \u2192 $5.99\u201d. The agent looks worried."
+      - id: v4-5
+        start: 123.9
+        end: 128.58
+        text: "This week, I might guess \u201cbefore\u201d; next week, the other way around:"
+        marks: {"this": 123.9, "week": 124.22, "i": 124.64, "might": 124.82, "guess": 125.04, "before": 125.28, "next": 125.7, "week_2": 126.02, "the": 126.44, "other": 126.68, "way": 126.9, "around": 127.2}
+        visual: "On \u201cbefore\u201d, a label \u201cWeek 1: guessed \u2018before\u2019\u201d and the receipt's shipping turns green: FREE. On \u201cother\u201d, \u201cWeek 3, regenerated: \u2018after\u2019\u201d, and shipping turns red: $5.99."
+      - id: v4-6
+        start: 128.58
+        end: 132.32
+        text: "Regeneration keeps only the rules that you wrote down."
+        marks: {"regeneration": 128.58, "keeps": 129.6, "only": 129.86, "the": 130.32, "rules": 130.7, "that": 131.06, "you": 131.32, "wrote": 131.5, "down": 131.78}
+        visual: "A card, spec.md: \u201c\u2713 Free shipping over $50\u201d stays, while a dashed line \u201c? before or after the coupon\u201d fades away. The agent taps the card."
+      - id: v4-7
+        start: 132.32
+        end: 136.7
+        text: "\u201cRename my photos by their date\u201d: all were from one day,"
+        marks: {"rename": 132.32, "my": 132.66, "photos": 132.86, "by": 133.28, "their": 133.62, "date": 133.84, "all": 134.24, "were": 134.78, "from": 135.0, "one": 135.44, "day": 135.82}
+        visual: "A label: \u201cYou asked: \u2018Rename my photos by their date\u2019\u201d. A file list, ~/Pictures/trip, \u201c212 photos\u201d, shows IMG_0001.jpg to IMG_0005.jpg with little landscape thumbnails. On \u201cone day\u201d, each row shows the same date, and a label reads \u201call from one day: 2025-07-04\u201d."
+      - id: v4-8
+        start: 136.7
+        end: 140.26
+        text: "So each got the same new name, and one stayed. Technically okay."
+        marks: {"so": 136.7, "each": 136.78, "got": 137.06, "the": 137.36, "same": 137.54, "new": 137.8, "name": 138.02, "and": 138.56, "one": 138.66, "stayed": 138.9, "technically": 139.18, "okay": 139.7}
+        visual: "Row by row, each photo is renamed to the same name, 2025-07-04.jpg, and each one overwrites the one before, which fades out; the count drops from 212 to 1 photo, in red: \u201csame name: each one overwrote the last\u201d. On \u201ctechnically\u201d, the agent shrugs, smug: \u201c1 of 212 stayed: \u2018technically okay\u2019\u201d."
+      - id: v4-9
+        start: 140.26
+        end: 145.08
+        text: "I act on your real files, so say what must never be done:"
+        marks: {"i": 140.26, "act": 140.82, "on": 141.12, "your": 141.34, "real": 141.62, "files": 142.22, "so": 143.04, "say": 143.14, "what": 143.4, "must": 143.64, "never": 143.9, "be": 144.2, "done": 144.42}
+        visual: "A red label: \u201creal files: no undo\u201d. A sticky note appears beside the list: \u201cMust never happen\u201d."
+      - id: v4-10
+        start: 145.08
+        end: 151.42
+        text: "\u201cNever overwrite a file\u201d would have saved them, every one."
+        marks: {"never": 145.08, "overwrite": 145.38, "a": 146.26, "file": 146.54, "would": 147.24, "have": 147.36, "saved": 147.46, "them": 147.98, "every": 148.24, "one": 150.28}
+        visual: "On \u201cnever\u201d, the note fills in: \u201cNever overwrite a file\u201d. On \u201csaved\u201d, the photos come back as 2025-07-04_001.jpg, 2025-07-04_002.jpg, and so on: \u201call 212 photos kept\u201d. The agent puts its hands on its chest, relieved."
+  - id: chorus-2
+    title: "Chorus"
+    delivery: sung
+    narration: "Chorus, the same one-level-up picture as before, now in the office."
+    lines:
+      - id: c2-1
+        start: 151.42
+        end: 153.8
+        text: "Meet me one level up,"
+        marks: {"meet": 151.42, "me": 152.12, "one": 152.54, "level": 152.92, "up": 153.26}
+        visual: "The chorus picture, the same every time: a two-storey cut-away. Below, the Code floor, a dark panel of code lines marked \u201c10,000 lines\u201d; above it, a glass floor labelled \u201cOne level up\u201d. The agent glides up to the upper floor and beckons, and your hero, at a laptop on the left, rises with it to the upper floor."
+      - id: c2-2
+        start: 153.8
+        end: 156.34
+        text: "Judge the design, not line by line;"
+        marks: {"judge": 153.8, "the": 154.02, "design": 154.3, "not": 154.86, "line": 155.02, "by": 155.26, "line_2": 155.44}
+        visual: "A magnifying glass crawls down the code lines below and gives up; a red tag reads \u201cline by line\u201d. The agent shakes its head, then points up at the Design card."
+      - id: c2-3
+        start: 156.34
+        end: 160.36
+        text: "Requirements, design, and tests: that's where your thoughts meet mine."
+        marks: {"requirements": 156.34, "design": 156.96, "and": 157.52, "tests": 157.68, "thats": 158.32, "where": 158.74, "your": 158.96, "thoughts": 159.16, "meet": 159.5, "mine": 159.74}
+        visual: "On the upper floor, three cards pop in on the sung words: Requirements, Design, Tests. Two thought bubbles, \u201cyou\u201d and \u201cme\u201d, float in from either side and meet over the cards: \u201cshared understanding\u201d. The agent puts its hands on its chest."
+      - id: c2-4
+        start: 160.36
+        end: 162.2
+        text: "Tell me the need, not the how,"
+        marks: {"tell": 160.36, "me": 160.56, "the": 160.78, "need": 161.12, "not": 161.44, "the_2": 161.56, "how": 161.78}
+        visual: "The Requirements card fills in: \u201cNeed: messages show within 2 s\u201d in green, and \u201cHow: poll every second\u201d, crossed out."
+      - id: c2-5
+        start: 162.2
+        end: 163.86
+        text: "Leave me nothing to guess,"
+        marks: {"leave": 162.2, "me": 162.62, "nothing": 162.88, "to": 163.16, "guess": 163.38}
+        visual: "Gold question marks around the Requirements card pop away; a green check takes their place."
+      - id: c2-6
+        start: 163.86
+        end: 166.1
+        text: "Ask for a diagram first,"
+        marks: {"ask": 163.86, "for": 164.14, "a": 164.36, "diagram": 164.6, "first": 165.2}
+        visual: "On the Design card, a small sequence diagram draws itself: two boxes, their lifelines, a message, and its reply."
+      - id: c2-7
+        start: 166.1
+        end: 168.24
+        text: "Pin each boundary with a test."
+        marks: {"pin": 166.1, "each": 166.28, "boundary": 166.48, "with": 167.0, "a": 167.36, "test": 167.52}
+        visual: "A gold pin lands on the Tests card: \u201c$50.00 \u2192 free\u201d and \u201c$49.99 \u2192 $5.99\u201d."
+  - id: verse-5
+    title: "Verse 5: One level up"
+    delivery: sung
+    narration: "Verse 5, one level up. A one-sentence prompt becomes a card of generated code counting up to 10,000 lines, far too big to review line by line. Then three levels: assembly, source, and design. A compiler writes the assembly and a review lens sits on it; the lens moves up to the source, then to the new design level, which the agent writes code from."
+    lines:
+      - id: v5-1
+        start: 168.24
+        end: 172.38
+        text: "Your few sentences become ten thousand lines of code;"
+        marks: {"your": 168.24, "few": 168.38, "sentences": 168.62, "become": 169.3, "ten": 169.92, "thousand": 170.74, "lines": 171.28, "of": 171.6, "code": 171.82}
+        visual: "A sticky note: \u201cYour prompt: Let students save a draft schedule.\u201d On \u201cbecome\u201d, a dark card fills with lines of generated code while a counter runs up to \u201c10,000 lines\u201d."
+      - id: v5-2
+        start: 172.38
+        end: 176.5
+        text: "Be honest: will you read each line? Nope. Far too big a load."
+        marks: {"be": 172.38, "honest": 172.48, "will": 172.98, "you": 173.12, "read": 173.3, "each": 173.54, "line": 173.74, "nope": 174.36, "far": 175.08, "too": 175.24, "big": 175.46, "a": 175.72, "load": 175.96}
+        visual: "A magnifying glass label creeps down the code, \u201creading line 37 of 10,000\u2026\u201d; on \u201cnope\u201d, the agent shakes its head, then shrugs, worried."
+      - id: v5-3
+        start: 176.5
+        end: 180.66
+        text: "Compilers once wrote assembly, and people read it, too;"
+        marks: {"compilers": 176.5, "once": 177.1, "wrote": 177.36, "assembly": 177.86, "and": 178.48, "people": 179.16, "read": 179.64, "it": 179.98, "too": 180.16}
+        visual: "Three levels stacked like a ladder: Assembly (\u201cmovl 4(%rdi), %ecx\u201d) at the bottom, Source (\u201cavg = (a + b + c + d) / 4\u201d) above it, with an arrow \u201ccompiler writes\u201d between them. On \u201cpeople read it\u201d, a gold review lens sits on Assembly."
+      - id: v5-4
+        start: 180.66
+        end: 184.9
+        text: "Then they reviewed just the source; now design is what we review."
+        marks: {"then": 180.66, "they": 180.76, "reviewed": 181.04, "just": 181.54, "the": 182.12, "source": 182.3, "now": 183.04, "design": 183.16, "is": 183.54, "what": 183.78, "we": 183.94, "review": 184.16}
+        visual: "On \u201creviewed\u201d, the lens moves up to Source. On \u201cdesign\u201d, a top level appears, Design: \u201crequirements \u00b7 diagrams \u00b7 tests\u201d, with an arrow \u201cagent writes\u201d down to Source, and the lens moves up to it. The agent beckons upward."
+  - id: verse-6
+    title: "Verse 6: Design"
+    delivery: sung
+    narration: "Verse 6, design. A sequence diagram, design A: checkout charges payments and gets ok back. A card picks the sequence view to answer what happens if a step fails. A user story asks to be charged once per order. Checkout crashes, the reply is lost, the retry charges again: charged twice. Design B sends one key per order, so the retry is recognized: charged once. A spec card records the decision and why."
+    lines:
+      - id: v6-1
+        start: 184.9
+        end: 189.1
+        text: "So let's share an abstraction, a diagram we both read:"
+        marks: {"so": 184.9, "lets": 185.2, "share": 185.5, "an": 185.86, "abstraction": 186.3, "a": 187.22, "diagram": 187.42, "we": 187.9, "both": 188.28, "read": 188.6}
+        visual: "A sequence diagram card, Design A: lifelines :Checkout and :Payments; \u201ccharge($45)\u201d goes across and \u201cok\u201d comes back."
+      - id: v6-2
+        start: 189.1
+        end: 193.5
+        text: "Not every detail, just the views that answer what you need."
+        marks: {"not": 189.1, "every": 189.24, "detail": 189.68, "just": 190.28, "the": 190.54, "views": 190.7, "that": 191.16, "answer": 191.8, "what": 192.22, "you": 192.56, "need": 192.84}
+        visual: "A card: \u201cYour question: What if a step fails?\u201d lists three views: \u201cSequence view: order, failures\u201d in green, then \u201cClass view\u201d and \u201cComponent view\u201d, which fade."
+      - id: v6-3
+        start: 193.5
+        end: 197.58
+        text: "Hold it to the user story, then go past the happy path:"
+        marks: {"hold": 193.5, "it": 193.68, "to": 193.84, "the": 194.18, "user": 194.4, "story": 194.76, "then": 195.68, "go": 195.78, "past": 196.0, "the_2": 196.34, "happy": 196.52, "path": 196.88}
+        visual: "A sticky note: \u201cUser story: As a shopper, I want to be charged once per order. Happy path: charged once \u2713\u201d."
+      - id: v6-4
+        start: 197.58
+        end: 201.64
+        text: "Trace a crash, a lost message, and follow the aftermath."
+        marks: {"trace": 197.58, "a": 197.96, "crash": 198.08, "a_2": 198.7, "lost": 198.88, "message": 199.14, "and": 199.68, "follow": 199.96, "the": 200.42, "aftermath": 200.86}
+        visual: "On \u201ccrash\u201d, a red label: \u201ccrash: reply lost\u201d; on \u201clost\u201d, the reply ok turns red and a red \u2717 lands on it. On \u201caftermath\u201d, Checkout retries, \u201cretry: charge($45)\u201d, a second ok comes back in red, and the story note turns to \u201cLost reply: charged twice \u2717\u201d."
+      - id: v6-5
+        start: 201.64
+        end: 205.8
+        text: "Ask me for a second design, I've got a few; trace those through;"
+        marks: {"ask": 201.64, "me": 201.9, "for": 202.08, "a": 202.24, "second": 202.4, "design": 203.04, "ive": 203.58, "got": 204.02, "a_2": 204.18, "few": 204.36, "trace": 205.12, "those": 205.32, "through": 205.5}
+        visual: "On \u201csecond design\u201d, a second diagram slides in, Design B: \u201ccharge, key 17\u201d. On \u201cgot a few\u201d, the agent raises a finger, smug. The reply is lost; \u201cretry, same key 17\u201d and \u201calready paid: ok\u201d in green. A green label: \u201ccharged once\u201d."
+      - id: v6-6
+        start: 205.8
+        end: 210.04
+        text: "Write in the spec which one, and why, so my next draft keeps it, too."
+        marks: {"write": 205.8, "in": 206.08, "the": 206.3, "spec": 206.46, "which": 207.0, "one": 207.12, "and": 207.38, "why": 207.52, "so": 208.28, "my": 208.38, "next": 208.58, "draft": 208.9, "keeps": 209.22, "it": 209.5, "too": 209.72}
+        visual: "On \u201cwrite\u201d, Design A gives way to a card, spec.md \u00b7 decision: \u201cUse Design B. Why: same key \u2192 charged once.\u201d The agent writes with a pen."
+  - id: chorus-3
+    title: "Chorus"
+    delivery: sung
+    narration: "Chorus, the same one-level-up picture."
+    lines:
+      - id: c3-1
+        start: 210.04
+        end: 212.74
+        text: "Meet me one level up,"
+        marks: {"meet": 210.04, "me": 211.06, "one": 211.66, "level": 211.84, "up": 212.22}
+        visual: "The chorus picture, the same every time: a two-storey cut-away. Below, the Code floor, a dark panel of code lines marked \u201c10,000 lines\u201d; above it, a glass floor labelled \u201cOne level up\u201d. The agent glides up to the upper floor and beckons, and your hero, at a laptop on the left, rises with it to the upper floor."
+      - id: c3-2
+        start: 212.74
+        end: 215.22
+        text: "Judge the design, not line by line;"
+        marks: {"judge": 212.74, "the": 212.96, "design": 213.22, "not": 213.82, "line": 213.96, "by": 214.22, "line_2": 214.4}
+        visual: "A magnifying glass crawls down the code lines below and gives up; a red tag reads \u201cline by line\u201d. The agent shakes its head, then points up at the Design card."
+      - id: c3-3
+        start: 215.22
+        end: 219.32
+        text: "Requirements, design, and tests: that's where your thoughts meet mine."
+        marks: {"requirements": 215.22, "design": 215.9, "and": 216.22, "tests": 216.6, "thats": 217.2, "where": 217.68, "your": 217.88, "thoughts": 218.1, "meet": 218.46, "mine": 218.7}
+        visual: "On the upper floor, three cards pop in on the sung words: Requirements, Design, Tests. Two thought bubbles, \u201cyou\u201d and \u201cme\u201d, float in from either side and meet over the cards: \u201cshared understanding\u201d. The agent puts its hands on its chest."
+      - id: c3-4
+        start: 219.32
+        end: 221.5
+        text: "Tell me the need, not the how,"
+        marks: {"tell": 219.32, "me": 219.46, "the": 219.74, "need": 220.06, "not": 220.36, "the_2": 220.5, "how": 220.72}
+        visual: "The Requirements card fills in: \u201cNeed: messages show within 2 s\u201d in green, and \u201cHow: poll every second\u201d, crossed out."
+      - id: c3-5
+        start: 221.5
+        end: 222.76
+        text: "Leave me nothing to guess,"
+        marks: {"leave": 221.5, "me": 221.6, "nothing": 221.78, "to": 222.0, "guess": 222.22}
+        visual: "Gold question marks around the Requirements card pop away; a green check takes their place."
+      - id: c3-6
+        start: 222.76
+        end: 225.04
+        text: "Ask for a diagram first,"
+        marks: {"ask": 222.76, "for": 223.08, "a": 223.32, "diagram": 223.52, "first": 224.14}
+        visual: "On the Design card, a small sequence diagram draws itself: two boxes, their lifelines, a message, and its reply."
+      - id: c3-7
+        start: 225.04
+        end: 227.18
+        text: "Pin each boundary with a test."
+        marks: {"pin": 225.04, "each": 225.22, "boundary": 225.44, "with": 225.96, "a": 226.3, "test": 226.48}
+        visual: "A gold pin lands on the Tests card: \u201c$50.00 \u2192 free\u201d and \u201c$49.99 \u2192 $5.99\u201d."
+  - id: verse-7
+    title: "Verse 7: Tests"
+    delivery: sung
+    narration: "Verse 7, tests. Test cards for the shipping rule: one you wrote, two the agent drafted, and an added edge case at exactly 50 dollars. A number line of totals after coupons pins the boundary at 50: free, and 49.99 pays shipping. The code passes, the tests get padlocks, a constant makes the code clearer, and when a regenerated version checks before the coupon, a test turns red and catches it."
+    lines:
+      - id: v7-1
+        start: 227.18
+        end: 231.18
+        text: "Write a test before I code, or let me draft a few,"
+        marks: {"write": 227.18, "a": 227.34, "test": 227.54, "before": 227.86, "i": 228.24, "code": 228.54, "or": 229.32, "let": 229.68, "me": 229.96, "draft": 230.1, "a_2": 230.46, "few": 230.72}
+        visual: "Test cards stack up: on \u201ctest\u201d, your own test, free_over_50: $60.00 \u2192 free; on \u201cdraft\u201d and \u201cfew\u201d, two agent drafts: paid_under_50: $30.00 \u2192 $5.99, and coupon_first: $55 \u2212 $10 \u2192 $5.99."
+      - id: v7-2
+        start: 231.18
+        end: 235.58
+        text: "But check they say just what you need, with every edge case too."
+        marks: {"but": 231.18, "check": 231.3, "they": 231.54, "say": 231.74, "just": 232.06, "what": 232.34, "you": 232.58, "need": 232.76, "with": 233.32, "every": 233.92, "edge": 234.34, "case": 234.66, "too": 234.96}
+        visual: "With a magnifying glass, the agent checks them. On \u201cedge\u201d, a fourth card is added, at_50: $50.00 \u2192 free."
+      - id: v7-3
+        start: 235.58
+        end: 239.84
+        text: "Pin each boundary with a test, the input on the line:"
+        marks: {"pin": 235.58, "each": 235.74, "boundary": 235.94, "with": 236.44, "a": 236.78, "test": 236.94, "the": 237.84, "input": 238.08, "on": 238.58, "the_2": 238.96, "line": 239.12}
+        visual: "A number line of the total after coupons, from $45 to $55: red \u201cshipping $5.99\u201d below the line, green \u201cfree shipping\u201d from it. On \u201cline\u201d, a dashed boundary appears at $50."
+      - id: v7-4
+        start: 239.84
+        end: 243.44
+        text: "\u201cFifty after coupons: free; not forty-nine ninety-nine.\u201d"
+        marks: {"fifty": 239.84, "after": 240.12, "coupons": 240.56, "free": 241.44, "not": 241.82, "fortynine": 242.08, "ninetynine": 242.66}
+        visual: "Two pins land on either side of the boundary: a green one at $50, \u201cfree\u201d, and a red one just below. A new test card: just_below: $49.99 \u2192 $5.99."
+      - id: v7-5
+        start: 243.44
+        end: 248.08
+        text: "Then I'll write code to make them pass and leave your tests alone;"
+        marks: {"then": 243.44, "ill": 244.04, "write": 244.28, "code": 244.44, "to": 244.78, "make": 244.98, "them": 245.14, "pass": 245.44, "and": 246.22, "leave": 246.52, "your": 246.84, "tests": 247.04, "alone": 247.42}
+        visual: "A code card, shipping.py: \u201cdef shipping(total): if total >= 50: return 0; return 5.99\u201d. On \u201cpass\u201d, every test turns green and the number line leaves; on \u201calone\u201d, each test gets a gold padlock."
+      - id: v7-6
+        start: 248.08
+        end: 252.46
+        text: "Check I solved the general case, not just the cases shown."
+        marks: {"check": 248.08, "i": 248.36, "solved": 248.56, "the": 248.98, "general": 249.2, "case": 249.5, "not": 250.32, "just": 250.76, "the_2": 251.06, "cases": 251.22, "shown": 251.62}
+        visual: "A green label: \u201cnew input $72.10 \u2192 free\u201d."
+      - id: v7-7
+        start: 252.46
+        end: 256.42
+        text: "Then refactor what I wrote, and keep your tests in place:"
+        marks: {"then": 252.46, "refactor": 252.66, "what": 253.3, "i": 253.64, "wrote": 253.9, "and": 254.54, "keep": 254.96, "your": 255.28, "tests": 255.48, "in": 255.9, "place": 256.12}
+        visual: "On \u201crefactor\u201d, the code gets a named constant, FREE_AT = 50.00: \u201crefactored, tests still pass\u201d."
+      - id: v7-8
+        start: 256.42
+        end: 261.52
+        text: "Each time I regenerate, they catch the rules I misplace."
+        marks: {"each": 256.42, "time": 256.74, "i": 257.18, "regenerate": 257.5, "they": 258.72, "catch": 259.32, "the": 259.56, "rules": 259.74, "i_2": 260.3, "misplace": 260.62}
+        visual: "On \u201ceach time\u201d, a gold label: \u201cregenerated: before the coupon\u201d. On \u201ccatch\u201d, the coupon_first test turns red: \u201ccaught: coupon_first fails\u201d. The agent points at it."
+  - id: bridge
+    title: "Bridge"
+    delivery: sung
+    narration: "Bridge, in golden light. A card of accidental complexity, tiles like syntax and boilerplate, which the agent sweeps away. A gold card of essential complexity: what users need, how the parts fit, what must be checked. Requirements, design, and tests travel to your hero. A seedling labelled your skills droops, then grows when you ask why and try it yourself, and a paper bird takes wing."
+    lines:
+      - id: b-1
+        start: 264.4
+        end: 268.2
+        text: "Accidental complexity comes from the tools we choose,"
+        marks: {"accidental": 264.4, "complexity": 265.06, "comes": 266.38, "from": 266.38, "the": 266.64, "tools": 266.86, "we": 267.1, "choose": 267.38}
+        visual: "Golden afternoon light in the office. A card: \u201cAccidental complexity: from the tools\u201d, with tiles: import \u2026, { } ;, getters & setters, config.yaml, boilerplate, syntax."
+      - id: b-2
+        start: 268.2
+        end: 272.24
+        text: "Like syntax and boilerplate: that part, I'll help you lose."
+        marks: {"like": 268.2, "syntax": 268.54, "and": 269.08, "boilerplate": 269.62, "that": 270.6, "part": 270.68, "ill": 271.0, "help": 271.3, "you": 271.56, "lose": 271.72}
+        visual: "The agent sweeps its hand and the tiles fly away: \u201chandled by your agent\u201d."
+      - id: b-3
+        start: 272.24
+        end: 277.36
+        text: "Essential complexity comes with the problem, through and through:"
+        marks: {"essential": 272.24, "complexity": 272.58, "comes": 274.52, "with": 274.52, "the": 274.76, "problem": 274.94, "through": 275.5, "and": 275.8, "through_2": 276.0}
+        visual: "A gold card: \u201cEssential complexity: comes with the problem\u201d, listing \u201cwhat users need\u201d, \u201chow the parts fit\u201d, and \u201cwhat must be checked\u201d."
+      - id: b-4
+        start: 277.36
+        end: 282.2
+        text: "Requirements, design, and tests still belong to you."
+        marks: {"requirements": 277.36, "design": 278.16, "and": 278.78, "tests": 278.92, "still": 279.28, "belong": 279.74, "to": 280.22, "you": 280.7}
+        visual: "Your hero appears at the laptop. Three gold labels, Requirements, Design, and Tests, travel below the card to them: \u201cstill yours\u201d. The agent holds out its hands, hearts in its eyes."
+      - id: b-5
+        start: 282.2
+        end: 286.7
+        text: "If I do all your thinking, you'll barely learn a thing;"
+        marks: {"if": 282.2, "i": 282.86, "do": 283.16, "all": 283.52, "your": 283.76, "thinking": 283.92, "youll": 284.72, "barely": 285.2, "learn": 285.6, "a": 285.9, "thing": 286.12}
+        visual: "A small seedling in a pot labelled \u201cyour skills\u201d droops while the agent shakes its head, worried."
+      - id: b-6
+        start: 286.7
+        end: 291.5
+        text: "So ask me why, then try yourself, and watch your skills take wing."
+        marks: {"so": 286.7, "ask": 286.96, "me": 287.22, "why": 287.36, "then": 287.88, "try": 288.06, "yourself": 288.32, "and": 289.32, "watch": 289.84, "your": 290.1, "skills": 290.3, "take": 290.78, "wing": 291.12}
+        visual: "Your hero's bubble asks, \u201cWhy does this work?\u201d, then adds, \u201cNow let me try it myself!\u201d. The seedling grows big leaves and a gold bud, and on \u201cwing\u201d a paper bird takes off from it and flies up. The agent cheers."
+  - id: quiz
+    title: "Pop quiz"
+    delivery: call
+    narration: "The sun sets behind the city. Three quiz cards, numbered 1 to 3, each show their question while it is sung; when the answer is sung, it slams in below. 1: refunds within thirty days. 2: passwords of eight or more characters. 3: a course that requires React."
+    lines:
+      - id: quiz-1
+        start: 291.5
+        end: 301.84
+        text: "Pop quiz! No asking me: \u201cRefunds within thirty days\u201d: what would I have to guess?"
+        answer: "Thirty days from when? The order or delivery?"
+        answer_at: 297.24
+        pause_at: 297.14
+        marks: {"pop": 291.5, "quiz": 291.98, "no": 292.74, "asking": 292.76, "me": 293.12, "refunds": 293.48, "within": 294.14, "thirty": 294.32, "days": 294.76, "what": 295.42, "would": 295.5, "i": 295.66, "have": 295.8, "to": 296.04, "guess": 296.22, "thirty_2": 297.24, "days_2": 297.92, "from": 298.22, "when": 298.48, "the": 299.24, "order": 299.64, "or": 299.98, "delivery": 300.34}
+        visual: "Through the window, the sun sets behind the city skyline in a red and magenta sky. A gold label: \u201cPop quiz!\u201d, while the agent shakes its head and winks. A quiz card, Quiz 1 / 3, with a calendar icon: \u201c\u2018Refunds within thirty days\u2019: what would I have to guess?\u201d The agent thinks it over; the answer slams in: \u201cThirty days from when? The order or delivery?\u201d"
+      - id: quiz-2
+        start: 301.84
+        end: 309.6
+        text: "\u201cPasswords: eight or more\u201d: which inputs do you test?"
+        answer: "Seven and eight characters: both sides of the line."
+        answer_at: 305.29
+        pause_at: 305.19
+        marks: {"passwords": 301.84, "eight": 302.42, "or": 302.5, "more": 302.66, "which": 303.2, "inputs": 303.32, "do": 303.9, "you": 304.38, "test": 304.62, "seven": 305.7, "and": 306.38, "eight_2": 306.8, "characters": 306.96, "both": 308.02, "sides": 308.18, "of": 308.68, "the": 308.94, "line": 309.1}
+        visual: "Quiz 2 / 3, with a key icon: \u201c\u2018Passwords: eight or more\u2019: which inputs do you test?\u201d Answer: \u201cSeven and eight characters: both sides of the line.\u201d"
+      - id: quiz-3
+        start: 309.6
+        end: 318.96
+        text: "Your project requires React. Should you tell me the how?"
+        answer: "Yes, and say the reason: a project rule fixes the how."
+        answer_at: 313.61
+        pause_at: 313.51
+        marks: {"your": 309.6, "project": 309.7, "requires": 310.22, "react": 311.08, "should": 311.92, "you": 312.08, "tell": 312.3, "me": 312.68, "the": 313.06, "how": 313.32, "yes": 313.86, "and": 315.04, "say": 315.14, "the_2": 315.34, "reason": 315.5, "a": 316.04, "project_2": 316.24, "rule": 316.64, "fixes": 316.92, "the_3": 317.34, "how_2": 317.68}
+        visual: "Quiz 3 / 3, with a code icon: \u201cYour project requires React. Should you tell me the how?\u201d Answer: \u201cYes, and say the reason: a project rule fixes the how.\u201d"
+  - id: final-chorus
+    title: "Final chorus"
+    delivery: sung
+    narration: "Final chorus, the same one-level-up picture, ending in confetti while the agent cheers."
+    lines:
+      - id: fc-1
+        start: 318.96
+        end: 320.78
+        text: "Meet me one level up,"
+        marks: {"meet": 318.96, "me": 319.12, "one": 319.62, "level": 319.92, "up": 320.3}
+        visual: "The chorus picture, the same every time: a two-storey cut-away. Below, the Code floor, a dark panel of code lines marked \u201c10,000 lines\u201d; above it, a glass floor labelled \u201cOne level up\u201d. The agent glides up to the upper floor and beckons, and your hero, at a laptop on the left, rises with it to the upper floor."
+      - id: fc-2
+        start: 320.78
+        end: 323.34
+        text: "Judge the design, not line by line;"
+        marks: {"judge": 320.78, "the": 321.02, "design": 321.34, "not": 321.92, "line": 322.06, "by": 322.34, "line_2": 322.52}
+        visual: "A magnifying glass crawls down the code lines below and gives up; a red tag reads \u201cline by line\u201d. The agent shakes its head, then points up at the Design card."
+      - id: fc-3
+        start: 323.34
+        end: 327.48
+        text: "Requirements, design, and tests: that's where your thoughts meet mine."
+        marks: {"requirements": 323.34, "design": 324.12, "and": 324.62, "tests": 324.74, "thats": 325.46, "where": 325.86, "your": 326.06, "thoughts": 326.26, "meet": 326.6, "mine": 326.86}
+        visual: "On the upper floor, three cards pop in on the sung words: Requirements, Design, Tests. Two thought bubbles, \u201cyou\u201d and \u201cme\u201d, float in from either side and meet over the cards: \u201cshared understanding\u201d. The agent puts its hands on its chest."
+      - id: fc-4
+        start: 327.48
+        end: 329.66
+        text: "Tell me the need, not the how,"
+        marks: {"tell": 327.48, "me": 327.66, "the": 327.96, "need": 328.28, "not": 328.56, "the_2": 328.72, "how": 328.9}
+        visual: "The Requirements card fills in: \u201cNeed: messages show within 2 s\u201d in green, and \u201cHow: poll every second\u201d, crossed out."
+      - id: fc-5
+        start: 329.66
+        end: 331.08
+        text: "Leave me nothing to guess,"
+        marks: {"leave": 329.66, "me": 329.82, "nothing": 330.04, "to": 330.34, "guess": 330.54}
+        visual: "Gold question marks around the Requirements card pop away; a green check takes their place."
+      - id: fc-6
+        start: 331.08
+        end: 333.34
+        text: "Ask for a diagram first,"
+        marks: {"ask": 331.08, "for": 331.32, "a": 331.58, "diagram": 331.8, "first": 332.42}
+        visual: "On the Design card, a small sequence diagram draws itself: two boxes, their lifelines, a message, and its reply."
+      - id: fc-7
+        start: 333.34
+        end: 337.28
+        text: "Pin each boundary with a test."
+        marks: {"pin": 333.34, "each": 333.5, "boundary": 333.72, "with": 334.72, "a": 335.22, "test": 335.74}
+        visual: "A gold pin lands on the Tests card: \u201c$50.00 \u2192 free\u201d and \u201c$49.99 \u2192 $5.99\u201d. Confetti bursts and the agent cheers."
+  - id: outro
+    title: "Outro"
+    delivery: spoken
+    narration: "Outro. The agent types a code file, and your hero appears. Then both rise to the office mezzanine, where the agent beckons: meet me one level up."
+    lines:
+      - id: outro-1
+        start: 337.28
+        end: 339.5
+        text: "I know how to write the code."
+        marks: {"i": 337.28, "know": 337.88, "how": 338.02, "to": 338.14, "write": 338.24, "the": 338.42, "code": 338.56}
+        visual: "A code card, shipping.py, fills line by line while the agent types."
+      - id: outro-2
+        start: 339.5
+        end: 341.78
+        text: "You know what we should build."
+        marks: {"you": 339.5, "know": 340.08, "what": 340.18, "we": 340.32, "should": 340.44, "build": 340.62}
+        visual: "Your hero appears at the laptop."
+      - id: outro-3
+        start: 341.78
+        end: 345.31
+        text: "So\u2026 meet me one level up?"
+        marks: {"so": 341.78, "meet": 342.38, "me": 342.68, "one": 343.36, "level": 343.58, "up": 344.4}
+        visual: "The agent glides up to the office mezzanine, one level up, and your hero rises with it to sit beside it; the agent beckons with hearts in its eyes; a closing card reads \u201cRequirements \u00b7 Design \u00b7 Tests: Meet me one level up \u00b7 CS 35L Software Construction\u201d. The agent waves goodbye."

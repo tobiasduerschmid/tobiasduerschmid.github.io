@@ -1,12 +1,13 @@
 # Invest in Your Stories: rewritten lyrics
 
 New lyrics for the user stories and INVEST song on `SEBook/userstories.md`.
-**Status: recorded and integrated.** The Suno take of the sheet below (generated
-with the refined style prompt) is the song on the chapter page. From now on
-`_data/songs/invest_in_your_stories.yml` is the source of truth for the sung words.
-Its header lists where the recording differs from this sheet: for example, the
-pre-chorus drops the "who? / what? / why?" interjections, and the first roll call
-is "I! N! I! N! V! E! S! T!". All six chorus keywords are sung this time.
+**Status: replacement take integrated in November 2026.** The chapter now uses
+"Invest in Your Stories(2)", a 5:04 take at about 98 BPM, with pronunciation
+spellings and a more melodic alt-pop / pop-punk brief. The sheet and production
+notes below document the earlier recording. `_data/songs/invest_in_your_stories.yml`
+remains the source of truth for the current sung words and timings. Its header
+records take-specific differences. This corrected take restores the "S for Small"
+pickup in verse 3; both full choruses retain all six criterion names.
 
 What changed from the current take:
 

@@ -81,6 +81,7 @@
         playButton.focus();
         player.play();
       } else {
+        if (window.NarrationSong.continueToSong(root, player)) return;
         status.textContent = 'Narration and final knowledge check finished. Revisit any section to review.';
         // Playing from the end starts the narration over.
         playButton.focus();
@@ -99,7 +100,7 @@
         onSkip: () => continueAfter(index),
       });
       // Adapt the tutorial transport label to this narrated surface.
-      quizHost.querySelector('.tvm-quiz-continue-btn').textContent = index + 1 < story.scenes.length ? 'Continue narration' : 'Finish review';
+      quizHost.querySelector('.tvm-quiz-continue-btn').textContent = index + 1 < story.scenes.length ? 'Continue narration' : window.NarrationSong.hasSong(root) ? 'Continue to song' : 'Finish review';
       mounted.set(index, quizHost);
     }
 
