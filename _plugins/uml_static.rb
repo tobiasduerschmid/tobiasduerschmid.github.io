@@ -462,6 +462,14 @@ module Jekyll
         %(<script type="application/json" data-c4-source>#{json}</script>)
       end
 
+      # A C4 figure fits its pane only at a readable size and otherwise
+      # scrolls; the bundle's figure wrapper (createArchUmlFigure,
+      # READABLE_FIT_TYPES in js/ArchUML/uml-bundle.js) owns that policy, and
+      # a prerendered figure declares it the same way.
+      def fit_policy_attribute(type)
+        normalize_type(type) == 'c4' ? ' data-uml-fit="readable"' : ''
+      end
+
       def c4_panels_attribute(text)
         panels = text.to_s[/^#[ \t]*panels[ \t]*:[ \t]*(.*?)[ \t]*$/i, 1]
         panels.nil? || panels.empty? ? '' : %( data-c4-panels="#{CGI.escapeHTML(panels)}")
@@ -506,7 +514,7 @@ module Jekyll
 
         <<~HTML
           <figure class="sebook-figure sebook-figure--archuml sebook-figure--archuml-#{safe_type}">
-            <div class="uml-#{safe_type}-diagram-container" data-uml-rendered="true" role="img" aria-label="#{CGI.escapeHTML(desc)}" tabindex="0" data-uml-scroll-tabindex="true">
+            <div class="uml-#{safe_type}-diagram-container" data-uml-rendered="true"#{fit_policy_attribute(block[:type])} role="img" aria-label="#{CGI.escapeHTML(desc)}" tabindex="0" data-uml-scroll-tabindex="true">
               #{presentational_svg}#{source_element}
             </div>
             #{figcaption_html(block)}

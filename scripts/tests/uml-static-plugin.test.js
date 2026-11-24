@@ -411,6 +411,21 @@ test('a static C4 figure carries the source it was drawn from: the text without 
   assert.ok(container && container[1].includes('data-c4-source'), 'the source element sits inside the figure container');
 });
 
+// The bundle's figure wrapper (createArchUmlFigure in js/ArchUML/uml-bundle.js) gives a C4 figure the readable fit
+// policy; the static wrapper must give it the same, or a prerendered C4 figure would shrink its labels to fit.
+test('a static C4 figure fits only at a readable size, and figures of other types keep the shared fit', () => {
+  const svg = '<svg xmlns="http://www.w3.org/2000/svg"><text>Shop</text></svg>';
+  const c4 = runPlugin('process_cached_svg', {
+    content: `<main>${c4Fence(HOSTILE_C4)}</main>`, svg, page_identifier: '/SEBook/c4-fit.html',
+  }).html;
+  const uml = runPlugin('process_cached_svg', {
+    content: '<main><pre><code class="language-uml-class">class Shop</code></pre></main>', svg, page_identifier: '/SEBook/class-fit.html',
+  }).html;
+
+  assert.match(c4, /<div class="uml-c4-diagram-container"[^>]*\bdata-uml-fit="readable"/);
+  assert.doesNotMatch(uml, /data-uml-fit=/);
+});
+
 test('figures of other diagram types carry no C4 source element', () => {
   const html = runPlugin('process_cached_svg', {
     content: '<main><pre><code class="language-uml-class">class Shop</code></pre></main>',
