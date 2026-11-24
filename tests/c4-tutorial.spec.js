@@ -107,6 +107,27 @@ test.describe('C4 tutorial runtime', () => {
     await expect(treeItem(page, 'Backend')).toBeVisible();
   });
 
+  test('the toolbar Undo and Redo work on the Monaco history and say their keys', async ({ page }) => {
+    await openStep(page, 'context-repair');
+    const undo = editor(page).getByRole('button', { name: 'Undo', exact: true });
+    const redo = editor(page).getByRole('button', { name: 'Redo', exact: true });
+    await expect(undo).toHaveText('↶Undo');
+    await expect(undo).toHaveAttribute('aria-keyshortcuts', 'Control+Z Meta+Z');
+    await expect(undo).toHaveAttribute('aria-disabled', 'true');
+    await openOutline(page);
+    await renameInInspector(page, 'Backend', 'Registration API');
+    await expect.poll(() => designText(page)).toContain('name: Registration API');
+
+    // The tutorial's history is Monaco's, whose steps have no labels: the description names the keys only.
+    await expect(undo).toHaveAccessibleDescription('Undo the last change. Ctrl+Z (Cmd+Z on a Mac)');
+    await undo.click();
+    await expect.poll(() => designText(page)).toBe(await stepStarter(page));
+    await expect(redo).toHaveAttribute('aria-disabled', 'false');
+    await expect(redo).toHaveAccessibleDescription('Redo the last undone change. Ctrl+Y or Ctrl+Shift+Z (Cmd+Shift+Z on a Mac)');
+    await redo.click();
+    await expect.poll(() => designText(page)).toContain('name: Registration API');
+  });
+
   test('Reset and Show Solution replace the text and re-render without an echo', async ({ page }) => {
     await openStep(page, 'context-repair');
     const starter = await stepStarter(page);

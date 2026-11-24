@@ -75,7 +75,7 @@ The returned handle:
 
 ### Undo
 
-With `undo: 'editor'` the editor keeps text snapshots: at most 100 steps, and edits within 600 ms of the previous edit join its step. A `setText` that changes the text is a step of its own, so the learner can undo the host's change. Every Undo and Redo, from the toolbar, the keys, or the YAML tab, is announced with the label of the step it takes back or repeats ("Undone: Move Student."; a step the host made reads "a change made outside the editor"). With `undo: 'host'` the host owns the one undo stack, as VS Code and tutorials whose Monaco model is the persisted document do. The SEBook site keeps editor undo, and its Monaco YAML tab routes undo/redo to the editor.
+With `undo: 'editor'` the editor keeps text snapshots: at most 100 steps, and edits within 600 ms of the previous edit join its step. A `setText` that changes the text is a step of its own, so the learner can undo the host's change. Every Undo and Redo, from the toolbar, the keys, or the YAML tab, is announced with the label of the step it takes back or repeats ("Undone: Move Student."; a step the host made reads "a change made outside the editor"). With `undo: 'host'` the host owns the one undo stack, as VS Code and tutorials whose Monaco model is the persisted document do. The SEBook site keeps editor undo, and its Monaco YAML tab routes undo/redo to the editor. The toolbar's "↶ Undo" and "↷ Redo" name the step they would take back or repeat in their tooltip and accessible description ("Undo: Move Student. Ctrl+Z (Cmd+Z on a Mac)"; with `undo: 'host'`, "Undo the last change."), carry `aria-keyshortcuts`, and stay solid buttons with muted text when there is nothing to undo (ED-11).
 
 ### The echo rule (as implemented)
 

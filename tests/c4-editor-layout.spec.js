@@ -551,10 +551,12 @@ test.describe('C4 editor layout', () => {
     expect(copied.args[0]).toMatch(/^@startuml[\s\S]*Registration Coordinator/);
   });
 
-  test('only Add relationship, Full screen, and Help announce keyboard shortcuts', async ({ page }) => {
+  test('only Add relationship, Undo, Redo, Full screen, and Help announce keyboard shortcuts', async ({ page }) => {
     await openEditor(page, { parts: ['actions'] });
 
-    await expect(page.locator('#editor [aria-keyshortcuts]')).toHaveCount(3);
+    await expect(page.locator('#editor [aria-keyshortcuts]')).toHaveCount(5);
+    await expect(button(page, 'Undo')).toHaveAttribute('aria-keyshortcuts', 'Control+Z Meta+Z');
+    await expect(button(page, 'Redo')).toHaveAttribute('aria-keyshortcuts', 'Control+Y Control+Shift+Z Meta+Shift+Z Meta+Y');
     await expect(button(page, 'Add relationship')).toHaveAttribute('aria-keyshortcuts', 'C');
     await expect(button(page, 'Full screen')).toHaveAttribute('aria-keyshortcuts', 'F');
     await expect(button(page, 'Help')).toHaveAttribute('aria-keyshortcuts', 'Shift+?');

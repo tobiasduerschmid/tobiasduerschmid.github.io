@@ -658,6 +658,39 @@ test.describe('C4 editor canvas editing: rename, delete, and the context menu', 
     await expect(status(editor, 'Undone: Rename Registration API.')).toHaveCount(1);
   });
 
+  test('Undo and Redo show their glyphs, keys, and the step they would take back or repeat, and stay recognisable when unavailable', async ({ page }) => {
+    const editor = await openEditor(page);
+    const undo = button(editor, 'Undo');
+    const redo = button(editor, 'Redo');
+    await expect(undo).toHaveText('↶Undo');
+    await expect(redo).toHaveText('↷Redo');
+    await expect(undo).toHaveAttribute('aria-keyshortcuts', 'Control+Z Meta+Z');
+    await expect(redo).toHaveAttribute('aria-keyshortcuts', 'Control+Y Control+Shift+Z Meta+Shift+Z Meta+Y');
+    await expect(undo).toHaveAttribute('aria-disabled', 'true');
+    await expect(undo).toHaveAccessibleDescription('Nothing to undo. Ctrl+Z (Cmd+Z on a Mac)');
+    // Unavailable, they keep a button's solid outline and background, unlike the dashed commands a note explains.
+    const look = (control) => control.evaluate((node) => {
+      const style = getComputedStyle(node);
+      return { border: style.borderTopStyle, background: style.backgroundColor };
+    });
+    const enabledLook = await look(button(editor, 'Fit'));
+    expect(await look(undo)).toEqual(enabledLook);
+
+    await option(editor, 'Registration API').focus();
+    await page.keyboard.press('F2');
+    await renameField(editor, 'Registration API').fill('Enrollment API');
+    await page.keyboard.press('Enter');
+    await expect(undo).toHaveAttribute('aria-disabled', 'false');
+    await expect(undo).toHaveAccessibleDescription('Undo: Rename Registration API. Ctrl+Z (Cmd+Z on a Mac)');
+    await expect(undo).toHaveAttribute('title', 'Undo: Rename Registration API. Ctrl+Z (Cmd+Z on a Mac)');
+
+    await undo.click();
+    await expect.poll(async () => (await currentModel(page)).elements.get('api').name).toBe('Registration API');
+    await expect(redo).toHaveAccessibleDescription('Redo: Rename Registration API. Ctrl+Y or Ctrl+Shift+Z (Cmd+Shift+Z on a Mac)');
+    await redo.click();
+    await expect.poll(async () => (await currentModel(page)).elements.get('api').name).toBe('Enrollment API');
+  });
+
   test('an empty name stays in the field with its reason', async ({ page }) => {
     const editor = await openEditor(page);
     await option(editor, 'Registration API').focus();

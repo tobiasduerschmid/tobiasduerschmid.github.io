@@ -471,6 +471,15 @@ Paths under `js/ArchUML/` live in the ArchUML submodule, a separate repository. 
 - **If wrong:** Restore the `Landscape` entry of `LEVELS` in `c4-editor-toolbar.js` and drop the landscape branch of `resolveView`.
 - **Where:** `js/ArchUML/c4/editor/c4-editor-state.js` (`resolveView`, `breadcrumbs`), `c4-editor-toolbar.js` (`LEVELS`, `createBreadcrumbs`), `c4-editor-canvas.js` (`zoomOut`). Tests: `js/ArchUML/tests/c4/editor-state.test.js`, `tests/c4-editor-layout.spec.js`, `tests/c4-editor-canvas.spec.js`.
 
+### ED-11 Undo and Redo are easy to find
+
+- **Date:** 2026-11-24 *(user: Undo/Redo existed but went unnoticed)*
+- **Decision:** The toolbar's Undo and Redo carry the UML editor's glyphs (↶, ↷; hidden from assistive technology) before their words, a tooltip that is also their accessible description ("Undo: Rename Student. Ctrl+Z (Cmd+Z on a Mac)"; "Nothing to undo. …" when there is no step), and `aria-keyshortcuts` with exactly the keys the mount routes (`Control+Z Meta+Z`; `Control+Y Control+Shift+Z Meta+Shift+Z Meta+Y`). The step's name comes from the editor's history (`undoLabel`, `redoLabel`); a host-owned history (the C4 tutorial's Monaco stack) has no labels, so there the tooltip says "Undo the last change." Unavailable, they keep a button's solid outline and background and only mute the text: their disabled look belongs to the history group, not to the shared dashed `[aria-disabled]` style.
+- **Why:** The dashed, faint disabled style is right for commands that are unavailable for a reason the toolbar's note explains; Undo and Redo are always-present commands whose availability only follows the history, and the faint look hid them.
+- **Rejected:** Changing the shared disabled style (it would blur the "unavailable for a reason" cue of the other commands); icon-only buttons (the words stay).
+- **If wrong:** Remove `.c4-editor__history-button[aria-disabled="true"]`.
+- **Where:** `js/ArchUML/c4/editor/c4-editor-toolbar.js` (`HISTORY_COMMANDS`, `createHistory`), `c4-editor-state.js` (`undoLabel`, `redoLabel`), `js/ArchUML/css/c4-editor.css`, `shortcuts.html`. Tests: `js/ArchUML/tests/c4/editor-state.test.js`, `tests/c4-editor-editing.spec.js`, `tests/c4-editor-layout.spec.js`, `tests/c4-tutorial.spec.js`.
+
 ---
 
 ## UML-view editing
