@@ -1,0 +1,56 @@
+{%- comment -%}
+  Server-rendered host of a step's design review (`design_review`), mounted by
+  js/tutorial-design-review.js in the live tutorial and, read only, in the
+  instructions popout. Params: tutorial, step, index (zero-based).
+
+  The case the learner reviews (the request to the agent, the user story and
+  its acceptance criteria, the agent's reply, and the Given scenario) is plain
+  HTML. The expert review is rendered into inert templates that the widget
+  shows after the learner compares; the spec (diagrams, answer key, signals,
+  anchors, coaching) travels as JSON with `<`, `>`, and `&` escaped. The
+  record key matches TutorialCode._draftStepKey: key:<step.key> or index:<n>.
+{%- endcomment -%}
+{%- assign tdr = include.step.design_review -%}
+{%- assign tdr_index = include.index | default: 0 -%}
+{%- if include.step.key -%}{%- assign tdr_key = 'key:' | append: include.step.key -%}{%- else -%}{%- assign tdr_key = 'index:' | append: tdr_index -%}{%- endif -%}
+{%- assign tdr_id = 'design-review-' | append: tdr_index -%}
+<section class="tutorial-design-review" data-design-review data-design-review-key="{{ tdr_key | escape }}" aria-labelledby="{{ tdr_id }}-title">
+<h3 class="tutorial-design-review__title" id="{{ tdr_id }}-title">Design review</h3>
+<div class="tutorial-design-review__case">
+<section class="tutorial-design-review__card tutorial-design-review__card--request" aria-labelledby="{{ tdr_id }}-request">
+<h4 class="tutorial-design-review__card-title" id="{{ tdr_id }}-request">You asked the agent</h4>
+{{ tdr.request | markdownify }}
+</section>
+<section class="tutorial-design-review__card tutorial-design-review__card--story" aria-labelledby="{{ tdr_id }}-story">
+<h4 class="tutorial-design-review__card-title" id="{{ tdr_id }}-story">User story</h4>
+{{ tdr.story | markdownify }}
+{%- if tdr.acceptance_criteria %}
+<h5 class="tutorial-design-review__subtitle" id="{{ tdr_id }}-criteria">Acceptance criteria</h5>
+<ul class="tutorial-design-review__criteria" aria-labelledby="{{ tdr_id }}-criteria">
+{%- for tdr_criterion in tdr.acceptance_criteria %}
+<li>{{ tdr_criterion | markdownify | remove: '<p>' | remove: '</p>' | strip }}</li>
+{%- endfor %}
+</ul>
+{%- endif %}
+</section>
+<section class="tutorial-design-review__card tutorial-design-review__card--reply" aria-labelledby="{{ tdr_id }}-reply">
+<h4 class="tutorial-design-review__card-title" id="{{ tdr_id }}-reply">The agent's reply</h4>
+{{ tdr.reply | markdownify }}
+<p class="tutorial-design-review__hint">{% if tdr.diagrams.size > 1 %}Its {{ tdr.diagrams.size }} diagrams are tabs in the Diagram pane.{% else %}Its diagram is in the Diagram pane.{% endif %}</p>
+</section>
+<section class="tutorial-design-review__card tutorial-design-review__card--given" aria-labelledby="{{ tdr_id }}-given">
+<h4 class="tutorial-design-review__card-title" id="{{ tdr_id }}-given">Given</h4>
+{{ tdr.given | markdownify }}
+</section>
+</div>
+{%- capture tdr_json -%}{{ tdr | jsonify }}{%- endcapture %}
+<script type="application/json" data-design-review-spec>{{ tdr_json | replace: '&', '&' | replace: '<', '<' | replace: '>', '>' }}</script>
+{%- if tdr.task -%}<template data-design-review-md="task">{{ tdr.task | markdownify }}</template>{%- endif -%}
+{%- assign tdr_lesson = tdr.lesson -%}
+{%- if tdr_lesson.definition -%}<template data-design-review-md="lesson:definition">{{ tdr_lesson.definition | markdownify }}</template>{%- endif -%}
+{%- if tdr_lesson.ask -%}<template data-design-review-md="lesson:ask">{{ tdr_lesson.ask | markdownify }}</template>{%- endif -%}
+{%- if tdr_lesson.flaw -%}<template data-design-review-md="lesson:flaw">{{ tdr_lesson.flaw | markdownify }}</template>{%- endif -%}
+{%- if tdr_lesson.fix -%}<template data-design-review-md="lesson:fix">{{ tdr_lesson.fix | markdownify }}</template>{%- endif -%}
+{%- if tdr_lesson.more -%}<template data-design-review-md="lesson:more">{{ tdr_lesson.more | markdownify }}</template>{%- endif %}
+<div class="tutorial-design-review__body" data-design-review-body></div>
+</section>

@@ -228,6 +228,11 @@ chapter.
 - `tdd.yml` uses themed step-title prefixes
   `Cycle N — RED: <…>` / `Cycle N — GREEN: <…>` / `Cycle N — REFACTOR: <…>`.
   The RED/GREEN/REFACTOR rhythm is the pedagogy — keep as-is.
+- `agent-design-reviews.yml` titles name the reviewed system
+  (`Review N: <System>`), never the concept: in a design review the concept
+  is the answer, which the step's lesson reveals after the comparison. Its
+  "Why this matters" and 🎯 lines describe the review skill for the same
+  reason.
 
 **2. Pedagogy comment above the step.** Every step gets a
 `# Pedagogy:` YAML comment immediately above the `- title:` line naming
@@ -688,6 +693,11 @@ students are confused" reports.
 
 ### YAML & content
 
+- [ ] Design review steps (`design_review`) use `backend: none` (no files) and
+      optional `llm: true`. Each has one objective, concept-backed flaw with a
+      Given that breaks the story, a `key` within the length caps, `signals`,
+      `anchors`, three-rung `coach` ladders, a `lesson`, and render-checked
+      diagrams; run `scripts/tests/agent-design-reviews-content.test.js`.
 - [ ] Optional local specification assistants use top-level `llm: true` only with a single `backend: pyodide`. Each participating step has `llm.file`, public `llm.interface`, starting `llm.specification`, and conceptual `llm.checks`. Keep hidden commands out of ordinary `tests`, prompts, and printed content. Verify manual checking, generation/apply, cancellation, and model deletion; see `docs/browser-llm.md`.
 
 
@@ -922,7 +932,7 @@ exclude_from_index: boolean            # If true, /SEBook/tutorials hides
                                        # and any non-student-facing tutorial.
 
 # === Backend selection ===
-backend: v86 | cpp | pyodide | webcontainer | react | prolog | haskell | smalltalk | compiler | shell-pipeline | tla | aadl | c4 | uml-editor | multiple
+backend: v86 | cpp | pyodide | webcontainer | react | prolog | haskell | smalltalk | compiler | shell-pipeline | tla | aadl | c4 | uml-editor | none | multiple
                                        # default: v86
 
 # v86           — full Linux VM (shell, gcc, git, etc.). Most tutorials.
@@ -997,6 +1007,12 @@ backend: v86 | cpp | pyodide | webcontainer | react | prolog | haskell | smallta
 #                 includes a confirmed "Remove All Elements" action that clears
 #                 the active step's diagram draft while leaving other diagram
 #                 types saved.
+# none          — No runtime: nothing boots, there is no Run, OUTPUT, or
+#                 setup_commands (rejected). For steps that show authored
+#                 diagrams or read-only files, such as design reviews
+#                 (`design_review`). Single-backend only. `llm: true` mounts
+#                 the local model add-on here too (review checks; Python
+#                 specification exercises stay pyodide-only).
 #
 # multiple      — explicit marker for a mixed-backend tutorial. Every step
 #                 must set `steps[].backend`.
@@ -1473,6 +1489,50 @@ steps:
         view_shows: "..."
         consolidation_prompt: "..."          # A required sentence before Finish.
         mechanism_question: {...}            # Graded single choice.
+
+    design_review:                           # Optional review of an AI agent's
+                                             # design. See "Design reviews" below.
+      min_words: 25                          # Own words before Compare (default 20);
+                                             # a scaffold's words do not count.
+      request: "..."                         # Markdown: the prompt to the agent.
+      story: "..."                           # Markdown user story (L01 format).
+      acceptance_criteria: ["Given …, when …, then …"]
+      reply: "..."                           # Markdown: the agent's own summary.
+      given: "..."                           # Markdown: the scenario to trace.
+      task: "..."                            # Optional Markdown prompt above the
+                                             # comment box (default: find the flaw,
+                                             # trace the Given, propose a fix).
+      scaffold: "..."                        # Optional text prefilled into an empty
+                                             # comment (worked example with fading).
+      diagrams: [{id, type, label, source}]  # The agent's ArchUML diagrams; tabs.
+      key:                                   # Sent to the local model; plain text.
+        flaw: "..."                          # Each ≤ 320 characters.
+        consequence: "..."
+        fix: "..."
+        accept_fixes: ["..."]                # Optional lists, each joined with "; "
+        not_the_flaw: ["..."]                # ≤ 220 characters.
+        not_a_fix: ["..."]
+      signals:                               # Per criterion: case-insensitive JS
+        flaw: ["regex", ...]                 # regexes; a model YES without any of
+        consequence: [...]                   # them in the comment becomes PARTLY.
+        fix: [...]
+      anchors: [{label, pattern}]            # Diagram elements tied to the flaw;
+                                             # naming one is needed for "Convincing".
+      coach:                                 # Authored coaching per criterion, one
+        flaw: ["orient", "diagnose", "scaffold"]  # rung per check (last repeats).
+        consequence: [...]
+        fix: [...]
+      wrong_claims: [{patterns: [regex], note}]  # Shown while the flaw is unmet.
+      lesson:                                # Shown after Compare (Markdown).
+        principle: "..."                     # "Lesson learned: <principle>"
+        definition: "..."
+        ask: "**Ask:** ..."
+        flaw: "..."
+        fix: "..."
+        more: "..."                          # Optional.
+      annotated: {label, type, source}       # Optional diagram with callouts,
+      fixed: {label, type, source}           # and the corrected design; both
+                                             # become tabs after Compare.
 
     # Smalltalk uses api.normalizeProgram in js/smalltalk/fresh-runner.js.
     # Ordered files load with run_file last once when a live/fresh image starts;
@@ -1988,6 +2048,49 @@ of `docs/superpowers/specs/2026-11-20-uml-design-questions-tutorial-design.md`.
   restoring progress. Follow `quiz-format` for every question (sparse
   `option_feedback`, no position references, no telegraphed keys).
   `_data/tutorials/diagram-challenge-demo.yml` exercises every field.
+
+#### Design reviews
+
+A `design_review` step practices the L14 design review: the learner reads an
+AI agent's design (its diagrams open maximized in the Diagram pane; with no
+step files the pane is `codeless`, so there is no Editor view or "Code
+beside diagram"), writes a review comment, may **Check my review** with the
+local model, and **Compare with the expert review** once the comment has
+`min_words` words of its own. Comparing completes the step (the gate under
+`require_tests`, like a passed diagram challenge), reveals the lesson, adds
+the `annotated` and `fixed` diagrams as tabs, and offers a self-check. The
+model's ratings never gate.
+
+- **Files:** `_includes/tutorial-design-review.html` renders the case
+  (request, story, criteria, reply, Given) as HTML, the lesson into inert
+  templates, and the spec as escaped JSON; `js/tutorial-design-review.js`
+  (`DesignReview.initFrom/destroyWithin/showExpertReviewsWithin`) owns the DOM;
+  `js/tutorial-design-review-core.js` (`DesignReviewCore`) the rules (word
+  counts, records, coaching ladders, wrong-claim notes, rating labels);
+  `js/browser-llm/design-review-judge.mjs` the model reading;
+  `css/tutorial-design-review.css` both themes and print;
+  `_includes/tutorial-design-review-print.html` the print block (case,
+  diagrams, writing area; expert review and key in the instructor block).
+- **The model only classifies.** For the flaw, its consequence, and the fix
+  it answers `VERDICT: YES|PARTLY|NO` plus a quote. A verdict without a quote
+  found in the comment becomes NO; a YES whose comment matches none of the
+  criterion's `signals` becomes PARTLY. Correctness: correct (flaw and fix
+  YES), close, not yet. Convincingness: convincing (consequence YES and an
+  `anchors` element named), partly, not yet. All wording shown is authored
+  (`coach`, `wrong_claims`, rating labels); only verified quotes come from
+  the model. Each prompt fits the ONNX 768-token input limit (comment ≤ 900
+  characters).
+- **Model add-on:** `llm: true` on `backend: none` mounts the panel (titled
+  "Review assistant" on review steps). It dispatches `tvm:llm-state` on the
+  tutorial root (`reviewState()`: usable, busy, unavailable) and exposes
+  `reviewDesign({spec, review, onCriterion})`.
+- **Authoring:** one objective flaw per design, tied to a course concept and
+  a Given scenario that breaks a stated story or acceptance criterion; the
+  rest of the design is sound and realistic. Titles name the system, not
+  the concept. Coach rungs orient, diagnose, then scaffold, and must not add
+  up to the answer. Validate keys, signals, and anchors with
+  `scripts/tests/agent-design-reviews-content.test.js`; render-check every
+  diagram (straight arrows, no crossings).
 
 ### 3.3 Hint conditions
 
@@ -3441,6 +3544,23 @@ channel.
   `links: *l_<name>` next to `source: *d_<name>`
   (`scripts/tests/test_uml_design_questions_links.py` holds each link to its
   drawing and to the code).
+- **`js/tutorial-design-review.js`**, **`js/tutorial-design-review-core.js`**
+  and **`js/browser-llm/design-review-judge.mjs`** — the design review
+  (§3.2 "Design reviews"). The layout loads the first two, and
+  `css/tutorial-design-review.css` before `print-light.css`, only when a step
+  has `design_review`; the print layout loads the stylesheet, and the
+  instructions popout loads all three and mounts the review read-only
+  (`DesignReview.initFrom(root, {readOnly: true, records})`, re-rendered when
+  `reviewRecords` change). `TutorialCode` owns the records
+  (`_designReviewRecords`, `_storeDesignReviewRecord`, `_resetDesignReview`)
+  and mounts the widget with the step (`_mountDesignReviews`, part of the
+  readiness barrier); `destroyWithin` saves a pending draft and hides the
+  Diagram pane. The judge is pure and unit tested
+  (`scripts/tests/design-review-judge.test.js`); so are the rules
+  (`scripts/tests/design-review-core.test.js`) and the gate
+  (`scripts/tests/tutorial-design-review-gate.test.js`). The browser flow is
+  `tests/agent-design-reviews.spec.js`, with the model stubbed at
+  `runtime.generate`.
 - **`js/tutorial-diagram-challenge-core.js`** and
   **`js/tutorial-diagram-challenge.js`** — the diagram challenge (§3.2).
   The layout loads both, and `css/tutorial-diagram-challenge.css` before
@@ -4063,22 +4183,22 @@ snapshot-input, or checksum drift.
 
 ### 4.6 Backends — what each supports
 
-| Feature                | v86 | cpp | pyodide | webcontainer | browser | react | prolog | haskell | uml-editor | compiler | shell-pipeline | tla | aadl | c4 | java |
-|------------------------|-----|-----|---------|--------------|---------|-------|--------|---------|------------|----------|----------------|-----|------|----|------|
-| Shell terminal         | ✅  | ❌  | ❌      | ✅           | ❌      | ❌    | ❌     | ❌      | ❌         | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| Compiled languages     | C   | C++17 | ❌    | (npm only)   | ❌      | ❌    | ❌     | ✅      | ❌         | ❌ | ❌ | ❌ | ❌ | ❌ | Java 8 |
-| `git`                  | ✅  | ❌  | mocked  | ✅           | ❌      | ❌    | ❌     | ❌      | ❌         | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| Debugger / recorded history | ❌ | ❌ | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ | State traces | ❌ | ❌ | ✅ |
-| Live preview iframe    | ❌  | ❌  | ❌      | ✅           | ❌      | ✅    | ❌     | ❌      | ❌         | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| Playwright tests       | ❌  | ❌  | ❌      | ❌           | ❌      | ✅    | ❌     | ❌      | ❌         | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| UML assertion tests    | ❌  | ❌  | ❌      | ❌           | ❌      | ❌    | ❌     | ❌      | ✅         | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| C4 model predicates (`tests[].c4`) | ❌  | ❌  | ❌      | ❌           | ❌      | ❌    | ❌     | ❌      | ❌         | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ |
-| `pytest`               | ❌  | ❌  | ✅      | ❌           | ❌      | ❌    | ❌     | ❌      | ❌         | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| Linter                 | ✅  | ❌  | ✅      | ✅           | ✅      | ✅    | ❌     | ❌      | ❌         | ❌ | ❌ | ❌ | OSATE validation | C4 consistency checks (Problems panel) | Eclipse compiler diagnostics |
-| Regex / EBNF / AST checks | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| Separate Bash command box / fixture checks | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ |
-| TLA+ model checking / behavior exploration | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ |
-| Resolved architecture / flow-latency analysis | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ |
+| Feature                | v86 | cpp | pyodide | webcontainer | browser | react | prolog | haskell | uml-editor | compiler | shell-pipeline | tla | aadl | c4 | java | none |
+|------------------------|-----|-----|---------|--------------|---------|-------|--------|---------|------------|----------|----------------|-----|------|----|------|------|
+| Shell terminal         | ✅  | ❌  | ❌      | ✅           | ❌      | ❌    | ❌     | ❌      | ❌         | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Compiled languages     | C   | C++17 | ❌    | (npm only)   | ❌      | ❌    | ❌     | ✅      | ❌         | ❌ | ❌ | ❌ | ❌ | ❌ | Java 8 | ❌ |
+| `git`                  | ✅  | ❌  | mocked  | ✅           | ❌      | ❌    | ❌     | ❌      | ❌         | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Debugger / recorded history | ❌ | ❌ | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ | State traces | ❌ | ❌ | ✅ | ❌ |
+| Live preview iframe    | ❌  | ❌  | ❌      | ✅           | ❌      | ✅    | ❌     | ❌      | ❌         | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Playwright tests       | ❌  | ❌  | ❌      | ❌           | ❌      | ✅    | ❌     | ❌      | ❌         | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| UML assertion tests    | ❌  | ❌  | ❌      | ❌           | ❌      | ❌    | ❌     | ❌      | ✅         | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| C4 model predicates (`tests[].c4`) | ❌  | ❌  | ❌      | ❌           | ❌      | ❌    | ❌     | ❌      | ❌         | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ |
+| `pytest`               | ❌  | ❌  | ✅      | ❌           | ❌      | ❌    | ❌     | ❌      | ❌         | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Linter                 | ✅  | ❌  | ✅      | ✅           | ✅      | ✅    | ❌     | ❌      | ❌         | ❌ | ❌ | ❌ | OSATE validation | C4 consistency checks (Problems panel) | Eclipse compiler diagnostics | ❌ |
+| Regex / EBNF / AST checks | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Separate Bash command box / fixture checks | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| TLA+ model checking / behavior exploration | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ |
+| Resolved architecture / flow-latency analysis | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ |
 
 Mixed-backend tutorials support `v86`, `cpp`, `pyodide`, `react`, `webcontainer`,
 and `browser`. They are for author-controlled backend switches between steps,
@@ -5106,6 +5226,16 @@ lesson, so the fallback lesson never opens with another exercise's code. Reset s
 its setup completes, preserving other drafts. Delete clears remembered drafts too.
 Smalltalk continues using its native accepted-source/draft owner.
 
+Design review records live in `designReviews` within this same progress
+record, keyed like diagram challenge records (`key:<step.key>` or
+`index:<n>`), omitted while empty:
+`{v: 1, draft, checks: [{verdicts: {flaw, consequence, fix}, ratings:
+{correctness, convincingness}, anchors}], passed, revealedDraft,
+selfCheck: {flaw, consequence, fix}}`. At most the latest 12 checks are kept;
+no model text except the authored-anchor labels is stored. Reset Current
+Step (after its confirmation) and deleting saved progress clear them; they
+travel in instructions snapshots and nav-state as `reviewRecords`.
+
 Diagram challenge records live in `diagramChallenges` within this same
 progress record, keyed by `key:<step.key>` (or `index:<n>`); the field is
 omitted while no record exists. No new storage key is introduced:
@@ -5497,6 +5627,12 @@ Code-test success records `stepsPassed` independently from navigation access.
 required quiz remains. Required quizzes unlock it through `_completeQuiz` and
 `_advanceAfterQuiz`; popout navigation uses the same host state. Existing saved
 visits and explicit step deep links retain their established access behavior.
+
+A design review is a step exercise like a diagram challenge:
+`_stepExercisesPassed(index)` requires both kinds when a step has them, and
+`_recordExercisePass` records a passed review exactly as a passed challenge.
+The review's lock label is "Write your review and compare it with the expert
+review to continue".
 
 `_stepGateSatisfied(index, {quiz})` is the one completion gate: under
 `require_tests` a step's tests must pass and its diagram challenge must be

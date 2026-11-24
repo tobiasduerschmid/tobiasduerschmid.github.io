@@ -396,7 +396,7 @@ info_nav_title: "Browser storage"
   </table>
   <p class="cookies-prefix-note">
     <em>Prefixes:</em>
-    <code>tutorial-progress-&lt;id&gt;</code> &mdash; saved code (including separate lesson drafts for files that reuse a name and per-step shell pipeline commands), current step, completion records, and lesson identities used to match progress after tutorial updates. Diagram challenge steps add your answers there: what you chose from the code and with the diagram, your sentences and pinned file lines, your confidence, and how long each part took while the step was shown. Smalltalk includes accepted code and unaccepted drafts; live objects and terminal variables are not saved &middot;
+    <code>tutorial-progress-&lt;id&gt;</code> &mdash; saved code (including separate lesson drafts for files that reuse a name and per-step shell pipeline commands), current step, completion records, and lesson identities used to match progress after tutorial updates. Diagram challenge steps add your answers there: what you chose from the code and with the diagram, your sentences and pinned file lines, your confidence, and how long each part took while the step was shown. Design review steps add your review comment, the local model's ratings of each check, and your self-check after comparing with the expert review. Smalltalk includes accepted code and unaccepted drafts; live objects and terminal variables are not saved &middot;
     <code>tutorial-editor-split-&lt;id&gt;</code> &mdash; split-pane editor on/off &middot;
     <code>tutorial-cooldown-&lt;id&gt;</code> &mdash; per-step "Test My Work" cooldown end times &middot;
     <code>tutorial-time-practice-&lt;id&gt;</code> &mdash; timed-practice deadlines and lockout windows &middot;
@@ -624,7 +624,7 @@ info_nav_title: "Browser storage"
     </li>
     <li id="browser-model-storage">
       <strong>Downloaded local language model</strong> &mdash; optional Python specification
-      tutorials store Qwen2.5-Coder model data in the Cache API under
+      tutorials and design review tutorials store Qwen2.5-Coder model data in the Cache API under
       <code>sebook-llm-gguf-v1</code>, <code>sebook-llm-onnx-v1</code>, <code>webllm/model</code>, and
       <code>webllm/config</code>. The default 3B model uses about 1.74–2.38 GB per selected
       format. The optional 7B model uses about 4.29 GB in the WebLLM caches and requires
@@ -636,7 +636,9 @@ info_nav_title: "Browser storage"
       model caches. The legacy <code>webllm/wasm</code> model cache is also cleared if present.
       Model and engine choices, memory confirmation, specifications, and model replies
       stay in page memory; applied Python follows the
-      tutorial's existing save preference. No specification or Python code is sent to an
+      tutorial's existing save preference. A design review comment and the model's ratings
+      of it follow that save preference too (see <code>tutorial-progress-&lt;id&gt;</code>).
+      No specification, review comment, or Python code is sent to an
       inference server. Model files are fetched from Hugging Face after activation. Runtime libraries are fetched from pinned jsDelivr versions and an immutable GitHub commit, with integrity checks.
       Compatible tabs on this exact site origin share one in-memory model, taking
       turns to generate; each tab keeps its own chat. The
@@ -937,7 +939,7 @@ info_nav_title: "Browser storage"
 
   // -------- Render dynamic per-tutorial keys --------
   var DYNAMIC_PREFIXES = [
-    { prefix: 'tutorial-progress-',                       label: 'Saved tutorial work (code, command drafts, diagram challenge answers and times, current lesson, completion records &amp; lesson identities)' },
+    { prefix: 'tutorial-progress-',                       label: 'Saved tutorial work (code, command drafts, diagram challenge answers and times, design review comments, current lesson, completion records &amp; lesson identities)' },
     { prefix: 'tutorial-editor-split-',                   label: 'Tutorial split-pane editor preference' },
     { prefix: 'tutorial-cooldown-',                       label: '"Test My Work" cooldown end times (per step)' },
     { prefix: 'tutorial-time-practice-',                  label: 'Timed-practice deadlines and lockout windows' },

@@ -18,6 +18,8 @@
   {% if combined_page.layout == 'tutorial' and combined_page.tutorial %}
     {% assign combined_challenge_steps = site.data.tutorials[combined_page.tutorial].steps | where_exp: "step", "step.diagram_challenge" %}
     {% if combined_challenge_steps.size > 0 %}{% assign combined_has_diagram_challenges = true %}{% endif %}
+    {% assign combined_review_steps = site.data.tutorials[combined_page.tutorial].steps | where_exp: "step", "step.design_review" %}
+    {% if combined_review_steps.size > 0 %}{% assign combined_has_design_reviews = true %}{% endif %}
     {% include tutorial-print-content.html tutorial=combined_page.tutorial show_header=false instructor_mode=true %}
   {% elsif combined_page.path contains '.html' %}
     {{ combined_page.content | liquid }}

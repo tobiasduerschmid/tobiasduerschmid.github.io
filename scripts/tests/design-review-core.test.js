@@ -30,6 +30,14 @@ test('the expert review opens exactly at the minimum word count', () => {
   assert.equal(Core.canCompare({}, words(Core.DEFAULT_MIN_WORDS)), true);
 });
 
+test('words prefilled by a scaffold do not count toward the minimum, kept or deleted', () => {
+  const scaffolded = { min_words: 4, scaffold: 'Flaw: the interface leaks Stripe types.' };
+  assert.equal(Core.ownWordCount(scaffolded, scaffolded.scaffold), 0);
+  assert.equal(Core.canCompare(scaffolded, scaffolded.scaffold + ' PayPal needs new types'), true);
+  assert.equal(Core.canCompare(scaffolded, scaffolded.scaffold + ' PayPal needs types'), false);
+  assert.equal(Core.ownWordCount(scaffolded, 'Every caller changes for PayPal'), 5, 'a rewritten comment counts in full');
+});
+
 test('comparing too early is refused; comparing in time passes the step and keeps the compared comment', () => {
   assert.throws(() => Core.reveal(Core.newRecord(), spec, words(5)), /at least 12 words/);
   const record = Core.reveal(Core.newRecord(), spec, words(12));

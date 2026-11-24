@@ -20,6 +20,7 @@
   <link rel="stylesheet" href="{{ '/css/uml-diagram.css' | relative_url }}">
   <link rel="stylesheet" href="{{ '/css/tutorial-c4.css' | relative_url }}">
   <link rel="stylesheet" href="{{ '/css/tutorial-diagram-challenge.css' | relative_url }}">
+  <link rel="stylesheet" href="{{ '/css/tutorial-design-review.css' | relative_url }}">
   <link rel="stylesheet" href="{{ '/css/print-light.css' | relative_url }}">
 </head>
 <body>
@@ -68,6 +69,8 @@
   <script src="{{ '/js/object-reference-lab.js' | relative_url }}"></script>
   <script src="{{ '/js/tutorial-diagram-challenge-core.js' | relative_url }}"></script>
   <script src="{{ '/js/tutorial-diagram-challenge.js' | relative_url }}"></script>
+  <script src="{{ '/js/tutorial-design-review-core.js' | relative_url }}"></script>
+  <script src="{{ '/js/tutorial-design-review.js' | relative_url }}"></script>
   <script src="{{ '/js/tutorial-popout-client.js' | relative_url }}"></script>
   <script src="{{ '/js/parsons-grading.js' | relative_url }}"></script>
   <script src="{{ '/js/tutorial-quiz.js' | relative_url }}"></script>
@@ -93,6 +96,7 @@
     var renderedStepIndex = null;
     var renderedStepHTML = null;
     var renderedChallengeRecords = null;
+    var renderedReviewRecords = null;
 
     var client = SebookPopoutClient.connect({
       role: 'instructions',
@@ -283,10 +287,12 @@
       if (stepIndex !== renderedStepIndex || html !== renderedStepHTML) {
         if (window.ObjectReferenceLab) window.ObjectReferenceLab.destroyWithin(els.stepContent);
         if (window.DiagramChallenge) window.DiagramChallenge.destroyWithin(els.stepContent);
+        if (window.DesignReview) window.DesignReview.destroyWithin(els.stepContent);
         els.stepContent.innerHTML = html;
         renderedStepIndex = stepIndex;
         renderedStepHTML = html;
         renderedChallengeRecords = null;
+        renderedReviewRecords = null;
         els.stepContent.scrollTop = 0;
         // Use the same diagram renderers as the main instructions panel.
         renderArchUml(els.stepContent);
@@ -294,6 +300,7 @@
         if (window.ObjectReferenceLab) void window.ObjectReferenceLab.initFrom(els.stepContent);
       }
       renderChallenges();
+      renderReviews();
       // Re-attach last test result panel if one was broadcast on this step.
       if (stepData && snapshot && snapshot.lastTestResultHTML) showTestPanel(snapshot.lastTestResultHTML);
     }
@@ -313,6 +320,19 @@
         records: records,
         onReturn: function () { window.close(); },
       });
+    }
+
+    // A design review is written in the main window; the popout shows the
+    // case and the current comment read-only, and the expert review once the
+    // learner has compared.
+    function renderReviews() {
+      if (!window.DesignReview) return;
+      var records = (snapshot && snapshot.reviewRecords) || {};
+      var serialized = JSON.stringify(records);
+      if (serialized === renderedReviewRecords) return;
+      renderedReviewRecords = serialized;
+      window.DesignReview.destroyWithin(els.stepContent);
+      void window.DesignReview.initFrom(els.stepContent, { readOnly: true, records: records });
     }
 
     function showTestPanel(innerHtml) {
@@ -354,6 +374,7 @@
       if (typeof msg.nextLocked === 'boolean') snapshot.nextLocked = msg.nextLocked;
       if (typeof msg.nextLockedLabel === 'string') snapshot.nextLockedLabel = msg.nextLockedLabel;
       if (msg.challengeRecords && typeof msg.challengeRecords === 'object') snapshot.challengeRecords = msg.challengeRecords;
+      if (msg.reviewRecords && typeof msg.reviewRecords === 'object') snapshot.reviewRecords = msg.reviewRecords;
       if (typeof msg.cooldownSeconds === 'number') snapshot.cooldownSeconds = msg.cooldownSeconds;
       if (typeof msg.cooldownRemaining === 'number') snapshot.cooldownRemaining = msg.cooldownRemaining;
       if ('testGate' in msg) snapshot.testGate = msg.testGate || null;
@@ -381,6 +402,7 @@
             if (typeof msg.nextLocked === 'boolean') snapshot.nextLocked = msg.nextLocked;
             if (typeof msg.nextLockedLabel === 'string') snapshot.nextLockedLabel = msg.nextLockedLabel;
             if (msg.challengeRecords && typeof msg.challengeRecords === 'object') snapshot.challengeRecords = msg.challengeRecords;
+            if (msg.reviewRecords && typeof msg.reviewRecords === 'object') snapshot.reviewRecords = msg.reviewRecords;
             if (typeof msg.hasQuiz === 'boolean') snapshot.hasQuiz = msg.hasQuiz;
             if (typeof msg.cooldownSeconds === 'number') snapshot.cooldownSeconds = msg.cooldownSeconds;
             if (typeof msg.cooldownRemaining === 'number') snapshot.cooldownRemaining = msg.cooldownRemaining;

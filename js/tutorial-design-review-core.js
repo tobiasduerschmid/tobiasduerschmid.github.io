@@ -71,9 +71,35 @@
   }
 
   /** Words in a comment: whitespace-separated runs with a letter or digit. */
-  function wordCount(text) {
+  function words(text) {
     return String(text == null ? '' : text).split(/\s+/).filter(function (token) {
       return /[\p{L}\p{N}]/u.test(token);
+    });
+  }
+
+  function wordCount(text) {
+    return words(text).length;
+  }
+
+  /**
+   * Words the learner wrote. A worked example's `scaffold` prefills part of
+   * the comment; each scaffold word is discounted once, wherever it appears,
+   * so neither keeping nor deleting the scaffold changes what the learner
+   * must add.
+   */
+  function ownWordCount(spec, draft) {
+    var remaining = {};
+    words(spec && spec.scaffold).forEach(function (word) {
+      var key = word.toLowerCase();
+      remaining[key] = (remaining[key] || 0) + 1;
+    });
+    return words(draft).filter(function (word) {
+      var key = word.toLowerCase();
+      if (remaining[key] > 0) {
+        remaining[key] -= 1;
+        return false;
+      }
+      return true;
     }).length;
   }
 
@@ -84,7 +110,7 @@
 
   /** The expert review opens once the comment is a real attempt. */
   function canCompare(spec, draft) {
-    return wordCount(draft) >= minWords(spec);
+    return ownWordCount(spec, draft) >= minWords(spec);
   }
 
   function newRecord() {
@@ -209,6 +235,7 @@
     MAX_DRAFT_CHARS: MAX_DRAFT_CHARS,
     CRITERIA: CRITERIA,
     wordCount: wordCount,
+    ownWordCount: ownWordCount,
     minWords: minWords,
     canCompare: canCompare,
     newRecord: newRecord,

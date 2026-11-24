@@ -224,8 +224,10 @@
       {% endif %}
     {% endfor %}
     {% assign tutorial_llm_enabled = false %}
-    {% if tutorial_data.llm and tutorial_backend == 'pyodide' and tutorial_mixed_backend == false %}
-      {% assign tutorial_llm_enabled = true %}
+    {% if tutorial_data.llm and tutorial_mixed_backend == false %}
+      {% if tutorial_backend == 'pyodide' or tutorial_backend == 'none' %}
+        {% assign tutorial_llm_enabled = true %}
+      {% endif %}
     {% endif %}
     {% if tutorial_backend == 'uml-editor' %}
       <div id="tutorial-container" class="tvm-root tvm-uml-editor-tutorial">
@@ -319,6 +321,10 @@
   {% if tutorial_challenge_steps.size > 0 %}
   <link rel="stylesheet" href="{{ '/css/tutorial-diagram-challenge.css' | relative_url }}">
   {% endif %}
+  {% assign tutorial_review_steps = tutorial_data.steps | where_exp: "step", "step.design_review" %}
+  {% if tutorial_review_steps.size > 0 %}
+  <link rel="stylesheet" href="{{ '/css/tutorial-design-review.css' | relative_url }}">
+  {% endif %}
   <link rel="stylesheet" href="{{ '/css/print-light.css' | relative_url }}">
 
   <!-- Tutorial engine — unified (v86 / pyodide / webcontainer) -->
@@ -358,6 +364,10 @@
   {% if tutorial_challenge_steps.size > 0 %}
   <script src="{{ '/js/tutorial-diagram-challenge-core.js' | relative_url }}"></script>
   <script src="{{ '/js/tutorial-diagram-challenge.js' | relative_url }}"></script>
+  {% endif %}
+  {% if tutorial_review_steps.size > 0 %}
+  <script src="{{ '/js/tutorial-design-review-core.js' | relative_url }}"></script>
+  <script src="{{ '/js/tutorial-design-review.js' | relative_url }}"></script>
   {% endif %}
   {% if tutorial_llm_enabled %}
   <script src="{{ '/js/tutorial-llm.js' | relative_url }}"></script>
@@ -601,7 +611,9 @@
             title: 'Reset the current step?',
             message: tutorial.currentStepHasDiagramChallenge && tutorial.currentStepHasDiagramChallenge()
               ? 'This will discard your edits and your diagram challenge answers and times in this step, and restore the starter files.'
-              : 'This will discard your edits in this step and restore the starter files.',
+              : tutorial.currentStepHasDesignReview && tutorial.currentStepHasDesignReview()
+                ? 'This will discard your review comment, its checks, and your comparison with the expert review in this step.'
+                : 'This will discard your edits in this step and restore the starter files.',
             confirmLabel: 'Reset step',
             trigger: resetBtn
           }).then(function (confirmed) {

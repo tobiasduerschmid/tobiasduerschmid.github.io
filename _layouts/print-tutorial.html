@@ -17,6 +17,10 @@
   <link rel="stylesheet" href="{{ '/css/compiler-lab.css' | relative_url }}">
   {% endif %}
   {% assign print_challenge_steps = site.data.tutorials[page.tutorial].steps | where_exp: "step", "step.diagram_challenge" %}
+  {% assign print_review_steps = site.data.tutorials[page.tutorial].steps | where_exp: "step", "step.design_review" %}
+  {% if print_review_steps.size > 0 %}
+  <link rel="stylesheet" href="{{ '/css/tutorial-design-review.css' | relative_url }}">
+  {% endif %}
   {% if print_challenge_steps.size > 0 %}
   <link rel="stylesheet" href="{{ '/css/tutorial-diagram-challenge.css' | relative_url }}">
   {% endif %}
