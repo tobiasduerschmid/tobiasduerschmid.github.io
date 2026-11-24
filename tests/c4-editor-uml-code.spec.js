@@ -496,22 +496,79 @@ test.describe('adding a class on the canvas', () => {
 // ---- Members, lines, and their options (spec §5.2, §7.3, §7.4) ------------------------------------------------------
 
 test.describe('members and lines of the code view', () => {
+  /**
+   * The client centre of the `occurrence`th drawn text (outside the session's hit layer) that contains `needle`, in the
+   * box `alias`. The whole box is brought into view first: the first click of a double-click focuses the box's option,
+   * which would otherwise scroll it into view and move the text away from the second click.
+   */
+  const drawnTextCentre = (editor, alias, needle, occurrence = 0) => canvas(editor).evaluate((region, { box, wanted, nth }) => {
+    region.querySelector(`.uml-pg-edit-hitbox[data-layout-id="${box}"]`).scrollIntoView({ block: 'center', inline: 'center' });
+    const svg = region.querySelector('.c4-editor__diagram svg');
+    const text = [...svg.querySelectorAll('text')].filter((node) => !node.closest('.uml-pg-edit-layer') && node.textContent.includes(wanted))[nth];
+    const drawn = text.getBoundingClientRect();
+    return { x: drawn.x + drawn.width / 2, y: drawn.y + drawn.height / 2 };
+  }, { box: alias, wanted: needle, nth: occurrence });
+  const DECIDE = 'operations: ["+ decide(student, section): Decision"]';
+  /** The reference model with EnrollmentPolicy's operations `operations`. */
+  const withOperations = (operations) => {
+    expect(INTERFACES_REFERENCE, 'EnrollmentPolicy has one operation in the fixture').toContain(DECIDE);
+    return INTERFACES_REFERENCE.replace(DECIDE, `operations: ${JSON.stringify(operations)}`);
+  };
+
   test('a member line opens "Operation 1 of EnrollmentPolicy" with the model\'s text', async ({ page }) => {
     const editor = await openUmlEditor(page, { view: CODE_VIEW });
     const modelText = C4.load(INTERFACES_REFERENCE).model.elements.get('EnrollmentPolicy').code.operations[0];
-    const at = await canvas(editor).evaluate((region) => {
-      const svg = region.querySelector('.c4-editor__diagram svg');
-      const text = [...svg.querySelectorAll('text')].find((node) => node.textContent.includes('decide('));
-      text.scrollIntoView({ block: 'center', inline: 'center' });
-      const box = text.getBoundingClientRect();
-      return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
-    });
+    const at = await drawnTextCentre(editor, 'EnrollmentPolicy', 'decide(');
 
     await page.mouse.dblclick(at.x, at.y);
 
     const field = nameEditor(editor, 'Operation 1 of EnrollmentPolicy');
     await expect(field).toBeFocused();
     await expect(field).toHaveValue(modelText);
+  });
+
+  // Lines drawn otherwise than the model writes them: a modifier the renderer draws as an underline or italics, an arrow
+  // and quotes that drawing replaces by look-alikes, and a line without parentheses, which is drawn among the attributes.
+  const OPERATIONS = ['+ decide(student, section): Decision', '{static} + create(): EnrollmentPolicy', '{abstract} + area(): double',
+    '+ onDone: (Result) -> void', '+ label(): "policy"', '+ rules: Map<String, Rule>'];
+  for (const [index, needle] of [[1, 'create('], [2, 'area('], [3, 'onDone'], [4, 'label('], [5, 'rules']]) {
+    test(`a double-click on the drawn line of "${OPERATIONS[index]}" opens "Operation ${index + 1} of EnrollmentPolicy" with the model's text`, async ({ page }) => {
+      const editor = await openUmlEditor(page, { view: CODE_VIEW, text: withOperations(OPERATIONS) });
+      const at = await drawnTextCentre(editor, 'EnrollmentPolicy', needle);
+
+      await page.mouse.dblclick(at.x, at.y);
+
+      const field = nameEditor(editor, `Operation ${index + 1} of EnrollmentPolicy`);
+      await expect(field).toBeFocused();
+      await expect(field).toHaveValue(OPERATIONS[index]);
+    });
+  }
+
+  test('of two lines drawn alike, a double-click on the second opens the second operation', async ({ page }) => {
+    const twice = '+ evaluate(): Result';
+    const editor = await openUmlEditor(page, { view: CODE_VIEW, text: withOperations([twice, twice]) });
+    const at = await drawnTextCentre(editor, 'EnrollmentPolicy', 'evaluate():', 1);
+
+    await page.mouse.dblclick(at.x, at.y);
+
+    await expect(nameEditor(editor, 'Operation 2 of EnrollmentPolicy')).toHaveValue(twice);
+  });
+
+  test('a double-click on a function\'s drawn call opens "Operation 1 of scoreSection" with the call, and saving writes its first operation', async ({ page }) => {
+    const text = INTERFACES_REFERENCE.replace('              EnrollmentRule:\n                kind: interface',
+      '              scoreSection:\n                kind: function\n              EnrollmentRule:\n                kind: interface');
+    expect(text, 'the fixture declares EnrollmentRule').not.toBe(INTERFACES_REFERENCE);
+    const editor = await openUmlEditor(page, { view: CODE_VIEW, text, profile: 'expert' });
+    const at = await drawnTextCentre(editor, 'scoreSection', 'scoreSection(');
+
+    await page.mouse.dblclick(at.x, at.y);
+    const field = nameEditor(editor, 'Operation 1 of scoreSection');
+    await expect(field).toHaveValue('scoreSection()');
+    await field.fill('scoreSection(student): double');
+    await field.press('Enter');
+
+    await expect.poll(async () => (await hostLog(page)).texts.length, { message: 'one change' }).toBe(1);
+    expect(C4.load(await textOf(page)).model.elements.get('scoreSection').code.operations).toEqual(['scoreSection(student): double']);
   });
 
   test('the chooser that opens when a line is drawn between two classes lists Generalization, Realization, and Dependency, then Composition, Aggregation, and Association disabled with their short reasons', async ({ page }) => {
