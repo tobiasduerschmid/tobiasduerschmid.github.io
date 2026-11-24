@@ -803,6 +803,15 @@ The four UML-notation views of the C4 editor (code, dynamic, deployment, interfa
 - **If wrong:** Deep links to the old anchors break (none existed).
 - **Where:** `SEBook/architecture/c4.md`. Test: `tests/c4-chapter.spec.js`.
 
+### CP-7 The chapter teaches the system context view, not the system landscape
+
+- **Date:** 2026-11-24 *(user)*
+- **Decision:** The chapter has no System Landscape section, figure, or quick-check item. Its two remaining points moved: "Anatomy of a View" says that *external* (outside the system described) differs from being outside the enterprise, and the external-system flashcard contrasts the billing team's own model instead of a landscape. The renderer, the editor, and the UML reference still support `view: landscape`.
+- **Why:** The landscape introduced eight elements used nowhere else for one idea, drew 1328 px wide (it scrolled even at 1440 px), and its title lacked its scope, against the chapter's own Anatomy rule 1. The context view already answers who uses a system and what it depends on.
+- **Rejected:** Redrawing the landscape narrower; keeping it as reference material.
+- **If wrong:** Restore the section from git history (before this change) and the quick-check item 6.
+- **Where:** `SEBook/architecture/c4.md` (Anatomy of a View, Supplementary Views), `_data/flashcards/c4_model.yml`. Test: `tests/c4-display.spec.js` (chapter figure count).
+
 ---
 
 ## Accessibility and print
