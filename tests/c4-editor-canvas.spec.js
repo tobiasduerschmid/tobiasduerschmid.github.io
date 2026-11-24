@@ -1,8 +1,8 @@
 // @ts-check
 // The C4 editor's canvas (spec §9.1 Canvas, §9.2 Interactions, Focus, Announcements): the listbox of elements over the
 // drawing, keyboard focus that moves in reading order with selection following it, zooming into and out of
-// elements (Enter, double-click, the zoom badge, Alt+ArrowUp), panning and magnifying with the pointer, and the focus
-// and announcement rules that go with them.
+// elements (Enter, the zoom badge, Alt+ArrowUp; a double-click edits text instead, ED-12), panning and magnifying with
+// the pointer, and the focus and announcement rules that go with them.
 // The page is built with setContent and loads every part from the manifest, so the canvas works with the real
 // outline, inspector, panels, and actions. It has a 96 px sticky header, like the site's navbar, and the 62.5% root
 // font size of this site. The model's facts (names, children) come from the C4 core, the oracle for what the canvas
@@ -277,13 +277,14 @@ test.describe('C4 editor canvas: keyboard navigation', () => {
 });
 
 test.describe('C4 editor canvas: pointer navigation', () => {
-  test('double-clicking Registration API and clicking its zoom badge open the same view', async ({ page }) => {
+  test('clicking the zoom badge of Registration API opens its view; double-clicking the box edits its name instead', async ({ page }) => {
     const editor = await openEditor(page);
+    // A double-click edits text in place (ED-12): it opens the name field and never zooms.
     await option(editor, 'Registration API').dblclick();
-    await expect(canvas(editor)).toHaveAccessibleName('Canvas: Component view: Registration API');
-
-    await page.keyboard.press('Alt+ArrowUp');
+    await expect(canvas(editor).getByRole('textbox', { name: /of Registration API$/ })).toBeFocused();
     await expect(canvas(editor)).toHaveAccessibleName('Canvas: Container view: Course Registration');
+    await page.keyboard.press('Escape');
+
     // The badge is a pointer shortcut for Enter, hidden from assistive technology; data-c4-zoom is its documented hook.
     await canvas(editor).locator('[data-c4-zoom="api"]').click();
     await expect(canvas(editor)).toHaveAccessibleName('Canvas: Component view: Registration API');

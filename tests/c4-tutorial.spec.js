@@ -128,6 +128,26 @@ test.describe('C4 tutorial runtime', () => {
     await expect.poll(() => designText(page)).toContain('name: Registration API');
   });
 
+  test('a double-click edit of a locked part stays in its field with the lock\'s reason and changes nothing', async ({ page }) => {
+    await openStep(page, 'inside-the-api');
+    const starter = await stepStarter(page);
+    // The Billing Gateway is given by the task (locked); without a description its box shows its responsibility.
+    const line = canvas(page).locator('[data-layout-id="billing-gateway"] text[data-c4-text="responsibility"]').first();
+    await line.scrollIntoViewIfNeeded();
+    const box = await line.boundingBox();
+    await page.mouse.dblclick(box.x + box.width / 2, box.y + box.height / 2);
+
+    const field = canvas(page).getByRole('textbox', { name: 'Responsibility 1 of Billing Gateway', exact: true });
+    await expect(field).toHaveValue('request tuition charges for a completed enrollment');
+    await field.fill('request tuition charges');
+    await field.press('Enter');
+    await expect(field).toHaveAttribute('aria-invalid', 'true');
+    await expect(field).toHaveAccessibleDescription(/^Locked: /);
+    expect(await designText(page)).toBe(starter);
+    await field.press('Escape');
+    await expect(field).toHaveCount(0);
+  });
+
   test('Reset and Show Solution replace the text and re-render without an echo', async ({ page }) => {
     await openStep(page, 'context-repair');
     const starter = await stepStarter(page);

@@ -74,6 +74,19 @@ const option = (editor, name) => canvas(editor).getByRole('listbox', { name: 'El
 const palette = (editor) => editor.getByRole('group', { name: 'Add to the diagram' });
 const status = (editor, text) => editor.getByRole('status').filter({ hasText: text });
 const renameField = (editor, name) => canvas(editor).getByRole('textbox', { name: `Name of ${name}` });
+const textField = (editor, name) => canvas(editor).getByRole('textbox', { name, exact: true });
+
+/**
+ * Double-clicks the drawn text of element `elementId` (or, with `route`, of a relationship's label) that shows `part`:
+ * the renderer marks each line with `data-c4-text`, the hook the in-place editor reads (ED-12). `index` picks a
+ * responsibility line.
+ */
+async function dblclickText(page, editor, elementId, part, { index = null, route = false } = {}) {
+  const group = route ? `[data-layout-route-id="${elementId}"]` : `[data-layout-id="${elementId}"]`;
+  const line = canvas(editor).locator(`${group} text[data-c4-text="${part}"]${index === null ? '' : `[data-c4-index="${index}"]`}`).first();
+  const at = await centreOf(line);
+  await page.mouse.dblclick(at.x, at.y);
+}
 const button = (editor, name) => editor.getByRole('button', { name, exact: true });
 
 /**
@@ -618,7 +631,7 @@ test.describe('C4 editor canvas editing: relationships', () => {
 });
 
 test.describe('C4 editor canvas editing: rename, delete, and the context menu', () => {
-  test('F2 and clicking the selected name rename in place', async ({ page }) => {
+  test('F2 and a double-click on the name rename in place', async ({ page }) => {
     const editor = await openEditor(page);
     await option(editor, 'Registration API').focus();
 
@@ -630,15 +643,155 @@ test.describe('C4 editor canvas editing: rename, delete, and the context menu', 
     await expect.poll(async () => (await currentModel(page)).elements.get('api').name).toBe('Enrollment API');
     await expect(option(editor, 'Enrollment API')).toBeFocused();
 
-    // A click on the name of the selected element opens the same field; Escape keeps the name. The name lies under
-    // the element's (transparent) option, which is what a pointer presses.
-    const name = await centreOf(canvas(editor).locator('[data-layout-id="api"] text').first());
-    await page.mouse.click(name.x, name.y);
+    // A double-click on the name opens the same field; Escape keeps the name. The name lies under the element's
+    // (transparent) option, which is what a pointer presses.
+    await dblclickText(page, editor, 'api', 'name');
     await expect(renameField(editor, 'Enrollment API')).toBeFocused();
     await page.keyboard.press('Escape');
     await expect(renameField(editor, 'Enrollment API')).toHaveCount(0);
     await expect(option(editor, 'Enrollment API')).toBeFocused();
     expect((await hostTexts(page)).length, 'Escape changed nothing').toBe(1);
+  });
+
+  test('a double-click on a description edits it in place as one undo step, and Undo reverts it', async ({ page }) => {
+    const editor = await openEditor(page);
+    const before = (await currentModel(page)).elements.get('api').description;
+    await dblclickText(page, editor, 'api', 'description');
+
+    const field = textField(editor, 'Description of Registration API');
+    await expect(field).toBeFocused();
+    await expect(field).toHaveValue(before);
+    await expect(canvas(editor), 'a double-click no longer zooms').toHaveAccessibleName('Canvas: Container view: Course Registration');
+    expect(await field.evaluate((node) => node.tagName), 'a description wraps in a multi-line field').toBe('TEXTAREA');
+    // Paragraph-size text with a visible focus ring (the page's paragraph text is 20 px).
+    expect(await field.evaluate((node) => parseFloat(getComputedStyle(node).fontSize))).toBeGreaterThanOrEqual(16);
+    expect(await field.evaluate((node) => getComputedStyle(node).outlineStyle)).not.toBe('none');
+
+    await field.fill('Decides eligibility and enrolls students.');
+    await page.keyboard.press('Enter');
+    await expect(field).toHaveCount(0);
+    await expect.poll(async () => (await currentModel(page)).elements.get('api').description).toBe('Decides eligibility and enrolls students.');
+    expect((await hostTexts(page)).length, 'one change').toBe(1);
+    await expect(status(editor, 'Changed the description of Registration API.')).toHaveCount(1);
+    await expect(option(editor, 'Registration API')).toBeFocused();
+
+    await button(editor, 'Undo').click();
+    await expect.poll(async () => (await currentModel(page)).elements.get('api').description).toBe(before);
+    await expect(status(editor, 'Undone: Edit the description of Registration API.')).toHaveCount(1);
+  });
+
+  test('Escape cancels a text edited in place and changes nothing', async ({ page }) => {
+    const editor = await openEditor(page);
+    await dblclickText(page, editor, 'api', 'description');
+    await textField(editor, 'Description of Registration API').fill('Something else.');
+    await page.keyboard.press('Escape');
+
+    await expect(textField(editor, 'Description of Registration API')).toHaveCount(0);
+    await expect(status(editor, 'Kept the description of Registration API.')).toHaveCount(1);
+    await expect(option(editor, 'Registration API')).toBeFocused();
+    expect(await hostTexts(page)).toEqual([]);
+  });
+
+  test('a double-click on the type line edits the technology; a line with no editable text renames', async ({ page }) => {
+    const editor = await openEditor(page);
+    await dblclickText(page, editor, 'api', 'type');
+    const technology = textField(editor, 'Technology of Registration API');
+    await expect(technology).toHaveValue('Python, FastAPI');
+    await technology.fill('Go, Gin');
+    await page.keyboard.press('Enter');
+    await expect.poll(async () => (await currentModel(page)).elements.get('api').technology).toBe('Go, Gin');
+
+    // A person records no technology: its type line is no editable text, so the double-click renames it.
+    await dblclickText(page, editor, 'student', 'type');
+    await expect(renameField(editor, 'Student')).toBeFocused();
+    await page.keyboard.press('Escape');
+  });
+
+  test('a double-click on a responsibility line edits that responsibility', async ({ page }) => {
+    // Without a description the box shows the responsibilities.
+    const text = REFERENCE.replace('        description: Decides eligibility and enrolls students atomically.\n', '');
+    expect(text, 'precondition: the description was removed').not.toBe(REFERENCE);
+    const editor = await openEditor(page, { text });
+    const second = C4.load(text).model.elements.get('api').responsibilities[1].text;
+    await dblclickText(page, editor, 'api', 'responsibility', { index: 1 });
+
+    const field = textField(editor, 'Responsibility 2 of Registration API');
+    await expect(field).toHaveValue(second);
+    await field.fill('');
+    await page.keyboard.press('Enter');
+    await expect(field, 'an empty responsibility stays in the field with its reason').toHaveAttribute('aria-invalid', 'true');
+    await expect(field).toHaveAccessibleDescription(/^Error: A responsibility needs some text/);
+    expect(await hostTexts(page)).toEqual([]);
+
+    await field.fill('hold a seat in every section of a plan');
+    await page.keyboard.press('Enter');
+    await expect.poll(async () => (await currentModel(page)).elements.get('api').responsibilities[1].text)
+      .toBe('hold a seat in every section of a plan');
+    expect((await hostTexts(page)).length).toBe(1);
+  });
+
+  test('a double-click on a relationship label edits its description or technology', async ({ page }) => {
+    const editor = await openEditor(page);
+    await dblclickText(page, editor, 'student->web', 'description', { route: true });
+    const description = textField(editor, 'Description of the relationship from Student to Planner Web App');
+    await expect(description).toHaveValue('plans a schedule and enrolls using');
+    await description.fill('plans a schedule with');
+    await page.keyboard.press('Enter');
+    await expect.poll(async () => (await currentModel(page)).relationships.find((r) => r.id === 'student->web').description)
+      .toBe('plans a schedule with');
+
+    // The line from the web app to the API stands for one relationship, to a component inside the API: that one is edited.
+    await dblclickText(page, editor, 'web->api/sync', 'technology', { route: true });
+    const technology = textField(editor, 'Technology of the relationship from Planner Web App to Registration Coordinator');
+    await expect(technology).toHaveValue('JSON/HTTPS');
+    await technology.fill('JSON/HTTP/2');
+    await page.keyboard.press('Enter');
+    await expect.poll(async () => (await currentModel(page)).relationships.find((r) => r.id === 'web->coordinator').technology)
+      .toBe('JSON/HTTP/2');
+    expect((await hostTexts(page)).length, 'two edits, two changes').toBe(2);
+  });
+
+  test('a double-click on a box outside its text renames it and never zooms; Enter and the zoom badge still zoom', async ({ page }) => {
+    const editor = await openEditor(page);
+    // A point of the box that no text line covers: below its last line, where the box's own option is on top.
+    await option(editor, 'Registration API').scrollIntoViewIfNeeded();
+    const blank = await canvas(editor).evaluate((region) => {
+      const box = region.querySelector('[data-c4-option="api"]');
+      const rect = box.getBoundingClientRect();
+      const lastText = Math.max(...[...region.querySelectorAll('[data-layout-id="api"] text')].map((line) => line.getBoundingClientRect().bottom));
+      for (let y = Math.ceil(lastText) + 4; y < rect.bottom; y += 2) {
+        for (let x = rect.left + 4; x < rect.right; x += 6) {
+          if (document.elementFromPoint(x, y) === box) return { x, y };
+        }
+      }
+      return null;
+    });
+    expect(blank, 'the box has room below its text').not.toBeNull();
+    await page.mouse.dblclick(blank.x, blank.y);
+    await expect(renameField(editor, 'Registration API')).toBeFocused();
+    await expect(canvas(editor)).toHaveAccessibleName('Canvas: Container view: Course Registration');
+    await page.keyboard.press('Escape');
+
+    await option(editor, 'Registration API').focus();
+    await page.keyboard.press('Enter');
+    await expect(canvas(editor)).toHaveAccessibleName('Canvas: Component view: Registration API');
+    await page.keyboard.press('Alt+ArrowUp');
+    await canvas(editor).locator('[data-c4-zoom="api"]').click();
+    await expect(canvas(editor)).toHaveAccessibleName('Canvas: Component view: Registration API');
+  });
+
+  test('a text edit is refused in read-only mode with the reason in the field', async ({ page }) => {
+    const editor = await openEditor(page);
+    // YAML errors after the drawing was made: the editor keeps drawing the last model it could read, read-only.
+    await page.evaluate((broken) => window.editor.setText(broken), `${REFERENCE}\nextra: [unclosed\n`);
+    await expect(status(editor, 'Visual editing is paused until the YAML errors are fixed.')).toHaveCount(1);
+    await dblclickText(page, editor, 'api', 'description');
+    const field = textField(editor, 'Description of Registration API');
+    await field.fill('Something else.');
+    await page.keyboard.press('Enter');
+    await expect(field).toHaveAttribute('aria-invalid', 'true');
+    await expect(field).toHaveAccessibleDescription(/^Error: The YAML has errors/);
+    expect(await hostTexts(page)).toEqual([]);
   });
 
   test('Undo and Redo announce the step they take back or repeat, from the toolbar and the keys', async ({ page }) => {
@@ -851,6 +1004,11 @@ const HELP_PROBES = {
     await option(editor, 'Registration API').focus();
     await page.keyboard.press('c');
     await expect(status(editor, 'Adding a relationship from Registration API')).toHaveCount(1);
+    await page.keyboard.press('Escape');
+  },
+  'Double-click': async (page, editor) => {
+    await dblclickText(page, editor, 'api', 'description');
+    await expect(textField(editor, 'Description of Registration API')).toBeFocused();
     await page.keyboard.press('Escape');
   },
   'Shift+F10 or the Menu key': async (page, editor) => {

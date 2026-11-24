@@ -408,7 +408,9 @@ test.describe('C4 editor: building a context and container view from an empty mo
     await dragBetween(page, billing, { x: billing.x + 60, y: billing.y + 40 });
     await expect(editor.getByRole('status').filter({ hasText: /Moved Billing System/ })).toHaveCount(1);
 
-    await option(editor, 'Course Registration').dblclick();
+    // Enter shows the inside (a double-click edits text in place instead, ED-12; a box without children has no badge).
+    await option(editor, 'Course Registration').focus();
+    await page.keyboard.press('Enter');
     await expect(canvas(editor)).toHaveAccessibleName(/Container view/);
     for (const name of ['Planner Web App', 'Registration API', 'Payment Gateway']) {
       const spot = await emptySpotInCanvas(canvas(editor));
