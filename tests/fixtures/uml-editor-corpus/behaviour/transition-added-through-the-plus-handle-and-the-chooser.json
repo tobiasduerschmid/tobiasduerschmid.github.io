@@ -77,21 +77,21 @@
       "edge-4"
     ],
     "focus": {
-      "tag": "body",
-      "id": "page-top",
-      "role": "generic",
-      "name": "",
+      "tag": "div",
+      "id": "uml-pg-preview-pane",
+      "role": "region",
+      "name": "Diagram preview",
       "layoutId": null
     }
   },
   "afterUndo": {
-    "text": "@startuml\n[*] --> Idle\nIdle --> Busy : start\nBusy --> Done : finish\nDone --> [*]\nIdle --> Done\n@enduml",
+    "text": "@startuml\n[*] --> Idle\nIdle --> Busy : start\nBusy --> Done : finish\nDone --> [*]\n@enduml",
     "regions": {
       "uml-pg-status": {
         "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
       },
       "uml-pg-tool-status": {
-        "text": "Added Transition from \"Idle\" to \"Done\"."
+        "text": "Undone."
       },
       "uml-pg-class-selection": {
         "text": "Select one class to edit its name or members."
@@ -114,11 +114,9 @@
         "text": ""
       }
     },
-    "properties": "- region \"Relation — Idle → Done\":\n  - heading \"Relation — Idle → Done\" [level=2]\n  - button \"✕ Delete\"\n  - text: Type\n  - combobox \"Type\":\n    - option \"Transition\" [selected]\n  - text: Source endpoint\n  - combobox \"Source endpoint\":\n    - option \"__initial__0 - Initial pseudostate\"\n    - option \"Idle\" [selected]\n    - option \"Busy\"\n    - option \"Done\"\n    - option \"__final__0 - Final pseudostate\"\n  - text: Target endpoint\n  - combobox \"Target endpoint\":\n    - option \"__initial__0 - Initial pseudostate\"\n    - option \"Idle\"\n    - option \"Busy\"\n    - option \"Done\" [selected]\n    - option \"__final__0 - Final pseudostate\"\n  - text: Label\n  - textbox \"Label\"\n  - button \"Invert direction\"\n  - paragraph: Drag a line segment to reroute, or press Delete to remove this relation.\n  - button \"Add teaching callout\"",
+    "properties": "- region \"Relation\":\n  - heading \"Relation\" [level=2]\n  - button \"✕ Delete\"\n  - paragraph: This connection could not be matched to one line of the source, so it cannot be edited here.\n  - button \"Add teaching callout\"",
     "draft": null,
-    "selection": [
-      "edge-4"
-    ],
+    "selection": [],
     "focus": {
       "tag": "body",
       "id": "page-top",
@@ -134,7 +132,7 @@
         "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
       },
       "uml-pg-tool-status": {
-        "text": "Added Transition from \"Idle\" to \"Done\"."
+        "text": "Redone."
       },
       "uml-pg-class-selection": {
         "text": "Select one class to edit its name or members."
@@ -183,11 +181,14 @@
         "label": null,
         "facts": {},
         "undo": {
-          "key": null,
-          "joinsPrevious": true
+          "key": null
         }
       },
       "after": "@startuml\n[*] --> Idle\nIdle --> Busy : start\nBusy --> Done : finish\nDone --> [*]\nIdle --> Done\n@enduml"
     }
-  ]
+  ],
+  "rerecorded": {
+    "date": "2026-11-23",
+    "reason": "Merge of origin/master: a relation picked from the chooser is one undo step of its own (origin/master 71fbaeca); focus stays in the editor after a menu or chooser item (origin/master 71fbaeca); the Stereotype field hint <<service>> (origin/master 71fbaeca)."
+  }
 }

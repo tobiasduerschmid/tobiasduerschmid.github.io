@@ -186,7 +186,9 @@
           "navigability": "navigable",
           "sourceNavigability": "",
           "targetNavigability": "navigable",
-          "stereotype": ""
+          "stereotype": "",
+          "dashed": false,
+          "op": "-->"
         },
         "facts": {},
         "undo": {
@@ -195,5 +197,9 @@
       },
       "after": "@startuml\nnode Cluster {\n  node WebServer {\n    component AppServer\n  }\n  node DBServer {\n    component PostgreSQL\n  }\n}\nnode Laptop {\n  component Browser\n  artifact app_ui\n}\nLaptop --> WebServer : HTTPS\nLaptop --> DBServer : JDBC\n@enduml"
     }
-  ]
+  ],
+  "rerecorded": {
+    "date": "2026-11-23",
+    "reason": "Merge of origin/master: relation edits carry the line style and dashing they keep (origin/master 71fbaeca)."
+  }
 }

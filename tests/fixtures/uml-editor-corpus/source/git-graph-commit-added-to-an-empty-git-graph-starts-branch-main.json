@@ -133,7 +133,7 @@
         "hidden": true
       },
       "uml-pg-autosave": {
-        "text": "✓ Saved"
+        "text": ""
       }
     },
     "properties": "- region \"Element — C\":\n  - heading \"Element — C\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": C\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.",
@@ -171,5 +171,9 @@
       },
       "after": "@startuml\nbranch main:\n  C \"Commit message\"\n@enduml"
     }
-  ]
+  ],
+  "rerecorded": {
+    "date": "2026-11-23",
+    "reason": "Merge of origin/master: autosave writes only a draft that changed, so writing the same draft again shows no \"Saved\" (origin/master 71fbaeca)."
+  }
 }

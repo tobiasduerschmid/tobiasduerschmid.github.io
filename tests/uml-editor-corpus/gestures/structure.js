@@ -314,8 +314,8 @@ const DEPLOYMENT_GESTURES = [
   ], ['renameElement']),
   gesture('deployment-node-stereotype-set-in-properties', 'deployment', DEPLOYMENT_START, [
     { do: 'pointerClick', point: headerOf(hitbox('Laptop')) },
-    { do: 'fill', target: inProperties({ label: 'Stereotype (e.g. <<choice>>)' }), value: 'device' },
-    { do: 'press', target: inProperties({ label: 'Stereotype (e.g. <<choice>>)' }), key: 'Enter' },
+    { do: 'fill', target: inProperties({ label: 'Stereotype (e.g. <<service>>)' }), value: 'device' },
+    { do: 'press', target: inProperties({ label: 'Stereotype (e.g. <<service>>)' }), key: 'Enter' },
   ], ['replaceGenericElement']),
   gesture('deployment-node-duplicated-from-its-context-menu', 'deployment', DEPLOYMENT_START, [
     { do: 'pointerClick', point: headerOf(hitbox('Laptop')), button: 'right' },

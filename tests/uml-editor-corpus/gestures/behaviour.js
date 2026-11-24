@@ -248,7 +248,7 @@ module.exports = [
   state('sub-state-added-to-a-composite-that-holds-nested-declarations', EDITOR, COMPOSITE,
     [{ do: 'press', target: element('Active'), key: 'Enter' }, { do: 'click', target: inProperties(button('+ Add sub-state')) }], ['replaceLineForElementId']),
   state('composite-state-stereotype-set-and-its-body-kept', EDITOR, COMPOSITE,
-    [{ do: 'press', target: element('Active'), key: 'Enter' }, ...fillAndEnter(propertiesField('Stereotype (e.g. <<choice>>)'), 'busy')], ['replaceGenericElement']),
+    [{ do: 'press', target: element('Active'), key: 'Enter' }, ...fillAndEnter(propertiesField('Stereotype (e.g. <<service>>)'), 'busy')], ['replaceGenericElement']),
   state('sub-state-renamed-in-the-composite-properties', EDITOR, COMPOSITE,
     [{ do: 'press', target: element('Active'), key: 'Enter' }, ...fillAndEnter(propertiesField('Sub-state 1 name'), 'Pending')], ['renameElement']),
   state('sub-state-removed-in-the-composite-properties', EDITOR, COMPOSITE,

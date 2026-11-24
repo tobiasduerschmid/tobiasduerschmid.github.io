@@ -185,7 +185,7 @@
               "y": 359.9999694824219
             },
             "Online Shop": {
-              "x": 138.50001525878906,
+              "x": 139,
               "y": 60.0000114440918
             }
           },
@@ -200,5 +200,9 @@
       },
       "after": "@startuml\nactor Customer @pos(23, 152)\nactor Member @pos(28, 269)\nusecase \"Place Order\" as UC1 @pos(179, 124)\nusecase \"Track Order\" as UC2 @pos(178, 242)\nusecase \"Pay\" as UC3 @pos(386, 124)\nusecase \"Cancel Order\" as UC4 @pos(174, 360)\nrectangle \"Online Shop\" @pos(139, 60) {\n  UC1\n  UC3\n}\nCustomer -- UC1\nUC1 ..> UC3 : <<include>>\n@enduml"
     }
-  ]
+  ],
+  "rerecorded": {
+    "date": "2026-11-23",
+    "reason": "Merge of origin/master: positions read from the upstream renderer (ArchUML f9558001)."
+  }
 }

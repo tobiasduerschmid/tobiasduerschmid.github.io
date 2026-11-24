@@ -77,21 +77,21 @@
       "usecase:2"
     ],
     "focus": {
-      "tag": "body",
-      "id": "page-top",
-      "role": "generic",
-      "name": "",
+      "tag": "div",
+      "id": "uml-pg-preview-pane",
+      "role": "region",
+      "name": "Diagram preview",
       "layoutId": null
     }
   },
   "afterUndo": {
-    "text": "@startuml\nactor Customer\nactor Member\nusecase \"Place Order\" as UC1\nusecase \"Track Order\" as UC2\nusecase \"Pay\" as UC3\nusecase \"Cancel Order\" as UC4\nrectangle \"Online Shop\" {\n  UC1\n  UC3\n}\nCustomer -- UC1\nUC1 ..> UC3 : <<include>>\nUC4 ..> UC2 : <<extend>>\n@enduml",
+    "text": "@startuml\nactor Customer\nactor Member\nusecase \"Place Order\" as UC1\nusecase \"Track Order\" as UC2\nusecase \"Pay\" as UC3\nusecase \"Cancel Order\" as UC4\nrectangle \"Online Shop\" {\n  UC1\n  UC3\n}\nCustomer -- UC1\nUC1 ..> UC3 : <<include>>\n@enduml",
     "regions": {
       "uml-pg-status": {
         "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
       },
       "uml-pg-tool-status": {
-        "text": "Added extend from \"UC4\" to \"UC2\"."
+        "text": "Undone."
       },
       "uml-pg-class-selection": {
         "text": "Select one class to edit its name or members."
@@ -114,11 +114,9 @@
         "text": ""
       }
     },
-    "properties": "- region \"Relation — UC4 → UC2\":\n  - heading \"Relation — UC4 → UC2\" [level=2]\n  - button \"✕ Delete\"\n  - text: Type\n  - combobox \"Type\":\n    - option \"Association\"\n    - option \"Directed\"\n    - option \"include\"\n    - option \"extend\" [selected]\n    - option \"Generalize\"\n  - text: Source endpoint\n  - combobox \"Source endpoint\":\n    - option \"Customer\"\n    - option \"Member\"\n    - option \"UC1 - Place Order\"\n    - option \"UC2 - Track Order\"\n    - option \"UC3 - Pay\"\n    - option \"UC4 - Cancel Order\" [selected]\n    - option \"Online Shop\"\n  - text: Target endpoint\n  - combobox \"Target endpoint\":\n    - option \"Customer\"\n    - option \"Member\"\n    - option \"UC1 - Place Order\"\n    - option \"UC2 - Track Order\" [selected]\n    - option \"UC3 - Pay\"\n    - option \"UC4 - Cancel Order\"\n    - option \"Online Shop\"\n  - text: Label\n  - textbox \"Label\"\n  - text: Stereotype\n  - textbox \"Stereotype\": <<extend>>\n  - button \"Invert direction\"\n  - paragraph: Drag a line segment to reroute, or press Delete to remove this relation.\n  - button \"Add teaching callout\"",
+    "properties": "- region \"Relation\":\n  - heading \"Relation\" [level=2]\n  - button \"✕ Delete\"\n  - paragraph: This connection could not be matched to one line of the source, so it cannot be edited here.\n  - button \"Add teaching callout\"",
     "draft": null,
-    "selection": [
-      "usecase:2"
-    ],
+    "selection": [],
     "focus": {
       "tag": "body",
       "id": "page-top",
@@ -134,7 +132,7 @@
         "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
       },
       "uml-pg-tool-status": {
-        "text": "Added extend from \"UC4\" to \"UC2\"."
+        "text": "Redone."
       },
       "uml-pg-class-selection": {
         "text": "Select one class to edit its name or members."
@@ -183,11 +181,14 @@
         "label": null,
         "facts": {},
         "undo": {
-          "key": null,
-          "joinsPrevious": true
+          "key": null
         }
       },
       "after": "@startuml\nactor Customer\nactor Member\nusecase \"Place Order\" as UC1\nusecase \"Track Order\" as UC2\nusecase \"Pay\" as UC3\nusecase \"Cancel Order\" as UC4\nrectangle \"Online Shop\" {\n  UC1\n  UC3\n}\nCustomer -- UC1\nUC1 ..> UC3 : <<include>>\nUC4 ..> UC2 : <<extend>>\n@enduml"
     }
-  ]
+  ],
+  "rerecorded": {
+    "date": "2026-11-23",
+    "reason": "Merge of origin/master: a relation picked from the chooser is one undo step of its own (origin/master 71fbaeca); focus stays in the editor after a menu or chooser item (origin/master 71fbaeca); the Stereotype field hint <<service>> (origin/master 71fbaeca)."
+  }
 }

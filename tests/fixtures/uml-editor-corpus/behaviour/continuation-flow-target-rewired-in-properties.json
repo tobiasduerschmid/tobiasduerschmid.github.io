@@ -188,7 +188,8 @@
           "dashed": false,
           "guard": "yes",
           "labelIsGuard": true,
-          "implicitSource": true
+          "implicitSource": true,
+          "op": "-->"
         },
         "facts": {},
         "undo": {
@@ -197,5 +198,9 @@
       },
       "after": "@startuml\n(*) --> \"Receive Order\"\n\"Receive Order\" --> [paid] \"Check Stock\"\nif \"In stock?\" then\n  --> [yes] \"Back Order\"\nelse\n  --> [no] \"Back Order\"\nendif\n\"Ship Order\" --> (*)\n\"Back Order\" --> (*)\n@enduml"
     }
-  ]
+  ],
+  "rerecorded": {
+    "date": "2026-11-23",
+    "reason": "Merge of origin/master: relation edits carry the line style and dashing they keep (origin/master 71fbaeca)."
+  }
 }

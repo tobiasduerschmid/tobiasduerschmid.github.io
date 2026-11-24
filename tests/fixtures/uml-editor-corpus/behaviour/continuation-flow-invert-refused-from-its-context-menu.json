@@ -63,10 +63,10 @@
       "rel:4"
     ],
     "focus": {
-      "tag": "body",
-      "id": "page-top",
-      "role": "generic",
-      "name": "",
+      "tag": "div",
+      "id": "uml-pg-preview-pane",
+      "role": "region",
+      "name": "Diagram preview",
       "layoutId": null
     }
   },
@@ -106,10 +106,10 @@
       "rel:4"
     ],
     "focus": {
-      "tag": "body",
-      "id": "page-top",
-      "role": "generic",
-      "name": "",
+      "tag": "div",
+      "id": "uml-pg-preview-pane",
+      "role": "region",
+      "name": "Diagram preview",
       "layoutId": null
     }
   },
@@ -149,12 +149,16 @@
       "rel:4"
     ],
     "focus": {
-      "tag": "body",
-      "id": "page-top",
-      "role": "generic",
-      "name": "",
+      "tag": "div",
+      "id": "uml-pg-preview-pane",
+      "role": "region",
+      "name": "Diagram preview",
       "layoutId": null
     }
   },
-  "operations": []
+  "operations": [],
+  "rerecorded": {
+    "date": "2026-11-23",
+    "reason": "Merge of origin/master: focus stays in the editor after a menu or chooser item (origin/master 71fbaeca); the Stereotype field hint <<service>> (origin/master 71fbaeca)."
+  }
 }

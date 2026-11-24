@@ -63,10 +63,10 @@
       "edge-1"
     ],
     "focus": {
-      "tag": "body",
-      "id": "page-top",
-      "role": "generic",
-      "name": "",
+      "tag": "div",
+      "id": "uml-pg-preview-pane",
+      "role": "region",
+      "name": "Diagram preview",
       "layoutId": null
     }
   },
@@ -177,5 +177,9 @@
       },
       "after": "@startuml\ncomponent Frontend {\n  portout \"httpOut\" as f_out\n}\ncomponent Backend {\n  portin \"httpIn\" as b_in\n  portout \"dbOut\" as b_dbout\n}\ncomponent Database {\n  portin \"dbIn\" as db_in\n}\nb_in --> f_out : REST\nb_dbout --> db_in : SQL\n@enduml"
     }
-  ]
+  ],
+  "rerecorded": {
+    "date": "2026-11-23",
+    "reason": "Merge of origin/master: focus stays in the editor after a menu or chooser item (origin/master 71fbaeca); the Stereotype field hint <<service>> (origin/master 71fbaeca)."
+  }
 }

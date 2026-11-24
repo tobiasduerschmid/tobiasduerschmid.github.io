@@ -69,7 +69,7 @@
         "text": ""
       }
     },
-    "properties": "- region \"Relation — Receive Order → [paid in full]\":\n  - heading \"Relation — Receive Order → [paid in full]\" [level=2]\n  - button \"✕ Delete\"\n  - text: Type\n  - combobox \"Type\":\n    - option \"Flow\" [selected]\n  - text: Source endpoint\n  - combobox \"Source endpoint\":\n    - option \"__initial__ - Initial pseudostate\"\n    - option \"Receive Order\" [selected]\n    - option \"Check Stock\"\n    - option \"decision_1 - In stock?\"\n    - option \"Ship Order\"\n    - option \"Back Order\"\n    - option \"__final__1 - Final pseudostate\"\n    - option \"__final__2 - Final pseudostate\"\n  - text: Target endpoint\n  - combobox \"Target endpoint\":\n    - option \"__initial__ - Initial pseudostate\"\n    - option \"Receive Order\"\n    - option \"Check Stock\"\n    - option \"decision_1 - In stock?\"\n    - option \"Ship Order\"\n    - option \"Back Order\"\n    - option \"__final__1 - Final pseudostate\"\n    - option \"__final__2 - Final pseudostate\"\n  - text: Guard\n  - textbox \"Guard\": Check Stock\n  - button \"Invert direction\"\n  - paragraph: Drag a line segment to reroute, or press Delete to remove this relation.\n  - button \"Add teaching callout\"",
+    "properties": "- region \"Relation — Receive Order → Check Stock\":\n  - heading \"Relation — Receive Order → Check Stock\" [level=2]\n  - button \"✕ Delete\"\n  - text: Type\n  - combobox \"Type\":\n    - option \"Flow\" [selected]\n  - text: Source endpoint\n  - combobox \"Source endpoint\":\n    - option \"__initial__ - Initial pseudostate\"\n    - option \"Receive Order\" [selected]\n    - option \"Check Stock\"\n    - option \"decision_1 - In stock?\"\n    - option \"Ship Order\"\n    - option \"Back Order\"\n    - option \"__final__1 - Final pseudostate\"\n    - option \"__final__2 - Final pseudostate\"\n  - text: Target endpoint\n  - combobox \"Target endpoint\":\n    - option \"__initial__ - Initial pseudostate\"\n    - option \"Receive Order\"\n    - option \"Check Stock\" [selected]\n    - option \"decision_1 - In stock?\"\n    - option \"Ship Order\"\n    - option \"Back Order\"\n    - option \"__final__1 - Final pseudostate\"\n    - option \"__final__2 - Final pseudostate\"\n  - text: Guard\n  - textbox \"Guard\": paid in full\n  - button \"Invert direction\"\n  - paragraph: Drag a line segment to reroute, or press Delete to remove this relation.\n  - button \"Add teaching callout\"",
     "draft": null,
     "selection": [
       "rel:2"
@@ -155,7 +155,7 @@
         "text": ""
       }
     },
-    "properties": "- region \"Relation — Receive Order → [paid in full]\":\n  - heading \"Relation — Receive Order → [paid in full]\" [level=2]\n  - button \"✕ Delete\"\n  - text: Type\n  - combobox \"Type\":\n    - option \"Flow\" [selected]\n  - text: Source endpoint\n  - combobox \"Source endpoint\":\n    - option \"__initial__ - Initial pseudostate\"\n    - option \"Receive Order\" [selected]\n    - option \"Check Stock\"\n    - option \"decision_1 - In stock?\"\n    - option \"Ship Order\"\n    - option \"Back Order\"\n    - option \"__final__1 - Final pseudostate\"\n    - option \"__final__2 - Final pseudostate\"\n    - option \"[paid in full]\"\n  - text: Target endpoint\n  - combobox \"Target endpoint\":\n    - option \"__initial__ - Initial pseudostate\"\n    - option \"Receive Order\"\n    - option \"Check Stock\"\n    - option \"decision_1 - In stock?\"\n    - option \"Ship Order\"\n    - option \"Back Order\"\n    - option \"__final__1 - Final pseudostate\"\n    - option \"__final__2 - Final pseudostate\"\n    - option \"[paid in full]\" [selected]\n  - text: Guard\n  - textbox \"Guard\": Check Stock\n  - button \"Invert direction\"\n  - paragraph: Drag a line segment to reroute, or press Delete to remove this relation.\n  - button \"Add teaching callout\"",
+    "properties": "- region \"Relation — Receive Order → Check Stock\":\n  - heading \"Relation — Receive Order → Check Stock\" [level=2]\n  - button \"✕ Delete\"\n  - text: Type\n  - combobox \"Type\":\n    - option \"Flow\" [selected]\n  - text: Source endpoint\n  - combobox \"Source endpoint\":\n    - option \"__initial__ - Initial pseudostate\"\n    - option \"Receive Order\" [selected]\n    - option \"Check Stock\"\n    - option \"decision_1 - In stock?\"\n    - option \"Ship Order\"\n    - option \"Back Order\"\n    - option \"__final__1 - Final pseudostate\"\n    - option \"__final__2 - Final pseudostate\"\n  - text: Target endpoint\n  - combobox \"Target endpoint\":\n    - option \"__initial__ - Initial pseudostate\"\n    - option \"Receive Order\"\n    - option \"Check Stock\" [selected]\n    - option \"decision_1 - In stock?\"\n    - option \"Ship Order\"\n    - option \"Back Order\"\n    - option \"__final__1 - Final pseudostate\"\n    - option \"__final__2 - Final pseudostate\"\n  - text: Guard\n  - textbox \"Guard\": paid in full\n  - button \"Invert direction\"\n  - paragraph: Drag a line segment to reroute, or press Delete to remove this relation.\n  - button \"Add teaching callout\"",
     "draft": null,
     "selection": [
       "rel:2"
@@ -194,8 +194,10 @@
             "sourceNavigability": "",
             "targetNavigability": "navigable",
             "stereotype": "",
+            "dashed": false,
             "guard": "paid",
-            "labelIsGuard": true
+            "labelIsGuard": true,
+            "op": "-->"
           }
         },
         "facts": {},
@@ -205,5 +207,9 @@
       },
       "after": "@startuml\n(*) --> \"Receive Order\"\n\"Receive Order\" --> [paid in full] \"Check Stock\"\nif \"In stock?\" then\n  --> [yes] \"Ship Order\"\nelse\n  --> [no] \"Back Order\"\nendif\n\"Ship Order\" --> (*)\n\"Back Order\" --> (*)\n@enduml"
     }
-  ]
+  ],
+  "rerecorded": {
+    "date": "2026-11-23",
+    "reason": "Merge of origin/master: a bracketed multi-word guard is one token, so Properties reads the flow target and guard right (origin/master 71fbaeca); relation edits carry the line style and dashing they keep (origin/master 71fbaeca)."
+  }
 }

@@ -47,7 +47,7 @@
         "text": ""
       }
     },
-    "properties": "- region \"Class — Class\":\n  - heading \"Class — Class\" [level=2]\n  - button \"✕ Delete\"\n  - text: Name (id)\n  - textbox \"Name (id)\": Class\n  - text: Kind\n  - combobox \"Kind\":\n    - option \"Class\" [selected]\n    - option \"Abstract Class\"\n    - option \"Interface\"\n    - option \"Enum\"\n  - text: Stereotype (e.g. <<service>>)\n  - textbox \"Stereotype (e.g. <<service>>)\"\n  - text: Highlight color (#hex or color name)\n  - textbox \"Highlight color (#hex or color name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Members\":\n    - text: Members\n    - button \"+ Add Member\"\n  - button \"Add teaching callout\"",
+    "properties": "- region \"Class — Class\":\n  - heading \"Class — Class\" [level=2]\n  - button \"✕ Delete\"\n  - text: Name (id)\n  - textbox \"Name (id)\": Class\n  - text: Display label\n  - textbox \"Display label\": Class\n  - text: Kind\n  - combobox \"Kind\":\n    - option \"Class\" [selected]\n    - option \"Abstract Class\"\n    - option \"Interface\"\n    - option \"Enum\"\n  - text: Stereotype (e.g. <<service>>)\n  - textbox \"Stereotype (e.g. <<service>>)\"\n  - text: Highlight color (#hex or color name)\n  - textbox \"Highlight color (#hex or color name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Members\":\n    - text: Members\n    - button \"+ Add Member\"\n  - button \"Add teaching callout\"",
     "draft": null,
     "selection": [
       "Class"
@@ -90,7 +90,7 @@
         "text": ""
       }
     },
-    "properties": "- region \"Class — Class\":\n  - heading \"Class — Class\" [level=2]\n  - button \"✕ Delete\"\n  - text: Name (id)\n  - textbox \"Name (id)\": Class\n  - text: Kind\n  - combobox \"Kind\":\n    - option \"Class\" [selected]\n    - option \"Abstract Class\"\n    - option \"Interface\"\n    - option \"Enum\"\n  - text: Stereotype (e.g. <<service>>)\n  - textbox \"Stereotype (e.g. <<service>>)\"\n  - text: Highlight color (#hex or color name)\n  - textbox \"Highlight color (#hex or color name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Members\":\n    - text: Members\n    - button \"+ Add Member\"\n  - button \"Add teaching callout\"",
+    "properties": "- region \"Class — Class\":\n  - heading \"Class — Class\" [level=2]\n  - button \"✕ Delete\"\n  - text: Name (id)\n  - textbox \"Name (id)\": Class\n  - text: Display label\n  - textbox \"Display label\": Class\n  - text: Kind\n  - combobox \"Kind\":\n    - option \"Class\" [selected]\n    - option \"Abstract Class\"\n    - option \"Interface\"\n    - option \"Enum\"\n  - text: Stereotype (e.g. <<service>>)\n  - textbox \"Stereotype (e.g. <<service>>)\"\n  - text: Highlight color (#hex or color name)\n  - textbox \"Highlight color (#hex or color name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Members\":\n    - text: Members\n    - button \"+ Add Member\"\n  - button \"Add teaching callout\"",
     "draft": null,
     "selection": [],
     "focus": {
@@ -131,7 +131,7 @@
         "text": ""
       }
     },
-    "properties": "- region \"Class — Class\":\n  - heading \"Class — Class\" [level=2]\n  - button \"✕ Delete\"\n  - text: Name (id)\n  - textbox \"Name (id)\": Class\n  - text: Kind\n  - combobox \"Kind\":\n    - option \"Class\" [selected]\n    - option \"Abstract Class\"\n    - option \"Interface\"\n    - option \"Enum\"\n  - text: Stereotype (e.g. <<service>>)\n  - textbox \"Stereotype (e.g. <<service>>)\"\n  - text: Highlight color (#hex or color name)\n  - textbox \"Highlight color (#hex or color name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Members\":\n    - text: Members\n    - button \"+ Add Member\"\n  - button \"Add teaching callout\"",
+    "properties": "- region \"Class — Class\":\n  - heading \"Class — Class\" [level=2]\n  - button \"✕ Delete\"\n  - text: Name (id)\n  - textbox \"Name (id)\": Class\n  - text: Display label\n  - textbox \"Display label\": Class\n  - text: Kind\n  - combobox \"Kind\":\n    - option \"Class\" [selected]\n    - option \"Abstract Class\"\n    - option \"Interface\"\n    - option \"Enum\"\n  - text: Stereotype (e.g. <<service>>)\n  - textbox \"Stereotype (e.g. <<service>>)\"\n  - text: Highlight color (#hex or color name)\n  - textbox \"Highlight color (#hex or color name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Members\":\n    - text: Members\n    - button \"+ Add Member\"\n  - button \"Add teaching callout\"",
     "draft": null,
     "selection": [
       "Class"
@@ -166,5 +166,9 @@
       },
       "after": "@startuml\nclass Class @pos(90, 120)\ninterface IFace @pos(260, 80)\nClass ..|> IFace\n@enduml"
     }
-  ]
+  ],
+  "rerecorded": {
+    "date": "2026-11-23",
+    "reason": "Merge of origin/master: the Display label field in Properties (origin/master 5f9541e2)."
+  }
 }

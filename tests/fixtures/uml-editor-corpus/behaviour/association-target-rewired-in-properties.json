@@ -183,7 +183,9 @@
           "navigability": "",
           "sourceNavigability": "",
           "targetNavigability": "",
-          "stereotype": ""
+          "stereotype": "",
+          "dashed": false,
+          "op": "--"
         },
         "facts": {},
         "undo": {
@@ -192,5 +194,9 @@
       },
       "after": "@startuml\nactor Customer\nactor Member\nusecase \"Place Order\" as UC1\nusecase \"Track Order\" as UC2\nusecase \"Pay\" as UC3\nusecase \"Cancel Order\" as UC4\nrectangle \"Online Shop\" {\n  UC1\n  UC3\n}\nCustomer -- UC2\nUC1 ..> UC3 : <<include>>\n@enduml"
     }
-  ]
+  ],
+  "rerecorded": {
+    "date": "2026-11-23",
+    "reason": "Merge of origin/master: relation edits carry the line style and dashing they keep (origin/master 71fbaeca)."
+  }
 }

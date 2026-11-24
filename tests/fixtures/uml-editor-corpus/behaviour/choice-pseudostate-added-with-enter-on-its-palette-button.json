@@ -48,7 +48,7 @@
         "text": ""
       }
     },
-    "properties": "- region \"State — Choice\":\n  - heading \"State — Choice\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": Choice\n  - text: Stereotype (e.g. <<choice>>)\n  - textbox \"Stereotype (e.g. <<choice>>)\": <<choice>>\n  - text: Highlight color (#hex or name)\n  - textbox \"Highlight color (#hex or name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Sub-states\":\n    - text: Sub-states\n    - button \"+ Add sub-state\"\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
+    "properties": "- region \"State — Choice\":\n  - heading \"State — Choice\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": Choice\n  - text: Kind\n  - combobox \"Kind\":\n    - option \"State\"\n    - option \"Choice\" [selected]\n    - option \"Junction\"\n    - option \"Shallow history (H)\"\n    - option \"Deep history (H*)\"\n    - option \"Fork\"\n    - option \"Join\"\n    - option \"Terminate\"\n  - text: Highlight color (#hex or name)\n  - textbox \"Highlight color (#hex or name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
     "draft": null,
     "selection": [
       "Choice"
@@ -132,7 +132,7 @@
         "text": ""
       }
     },
-    "properties": "- region \"State — Choice\":\n  - heading \"State — Choice\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": Choice\n  - text: Stereotype (e.g. <<choice>>)\n  - textbox \"Stereotype (e.g. <<choice>>)\": <<choice>>\n  - text: Highlight color (#hex or name)\n  - textbox \"Highlight color (#hex or name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Sub-states\":\n    - text: Sub-states\n    - button \"+ Add sub-state\"\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
+    "properties": "- region \"State — Choice\":\n  - heading \"State — Choice\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": Choice\n  - text: Kind\n  - combobox \"Kind\":\n    - option \"State\"\n    - option \"Choice\" [selected]\n    - option \"Junction\"\n    - option \"Shallow history (H)\"\n    - option \"Deep history (H*)\"\n    - option \"Fork\"\n    - option \"Join\"\n    - option \"Terminate\"\n  - text: Highlight color (#hex or name)\n  - textbox \"Highlight color (#hex or name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
     "draft": null,
     "selection": [
       "Choice"
@@ -191,5 +191,9 @@
       },
       "after": "@startuml\n[*] --> Idle\nIdle --> Busy : start\nBusy --> Done : finish\nDone --> [*]\nstate Choice <<choice>> @pos(210, 80)\n@enduml"
     }
-  ]
+  ],
+  "rerecorded": {
+    "date": "2026-11-23",
+    "reason": "Merge of origin/master: a state's Kind field, which hides the sub-state list of a pseudostate (origin/master 71fbaeca); the Stereotype field hint <<service>> (origin/master 71fbaeca)."
+  }
 }

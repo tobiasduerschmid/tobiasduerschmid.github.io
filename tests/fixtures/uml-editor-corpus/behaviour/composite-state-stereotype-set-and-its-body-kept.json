@@ -20,7 +20,7 @@
     {
       "do": "fill",
       "target": {
-        "label": "Stereotype (e.g. <<choice>>)",
+        "label": "Stereotype (e.g. <<service>>)",
         "within": {
           "css": "#uml-pg-props-content"
         }
@@ -30,7 +30,7 @@
     {
       "do": "press",
       "target": {
-        "label": "Stereotype (e.g. <<choice>>)",
+        "label": "Stereotype (e.g. <<service>>)",
         "within": {
           "css": "#uml-pg-props-content"
         }
@@ -68,7 +68,7 @@
         "text": ""
       }
     },
-    "properties": "- region \"State — Active\":\n  - heading \"State — Active\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": Active\n  - text: Stereotype (e.g. <<choice>>)\n  - textbox \"Stereotype (e.g. <<choice>>)\": busy\n  - text: Highlight color (#hex or name)\n  - textbox \"Highlight color (#hex or name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Sub-states\":\n    - text: Sub-states\n    - textbox \"Sub-state 1 name\":\n      - /placeholder: Sub-state name\n      - text: Waiting\n    - button \"Remove sub-state 1\": ✕\n    - button \"+ Add sub-state\"\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
+    "properties": "- region \"State — Active\":\n  - heading \"State — Active\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": Active\n  - text: Kind\n  - combobox \"Kind\":\n    - option \"State\" [selected]\n    - option \"Choice\"\n    - option \"Junction\"\n    - option \"Shallow history (H)\"\n    - option \"Deep history (H*)\"\n    - option \"Fork\"\n    - option \"Join\"\n    - option \"Terminate\"\n  - text: Stereotype (e.g. <<service>>)\n  - textbox \"Stereotype (e.g. <<service>>)\": busy\n  - text: Highlight color (#hex or name)\n  - textbox \"Highlight color (#hex or name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Behaviour\":\n    - text: Behaviour Entry action\n    - textbox \"Entry action\"\n    - text: Do activity\n    - textbox \"Do activity\"\n    - text: Exit action\n    - textbox \"Exit action\"\n    - text: \"Internal transitions (one per line: trigger [guard] / effect)\"\n    - 'textbox \"Internal transitions (one per line: trigger [guard] / effect)\"'\n  - group \"Sub-states\":\n    - text: Sub-states\n    - textbox \"Sub-state 1 name\":\n      - /placeholder: Sub-state name\n      - text: Waiting\n    - button \"Remove sub-state 1\": ✕\n    - button \"+ Add sub-state\"\n    - button \"+ Initial state\"\n    - button \"+ Final state\"\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
     "draft": null,
     "selection": [
       "Active"
@@ -77,7 +77,7 @@
       "tag": "input",
       "id": "uml-pg-prop-<random>",
       "role": "textbox",
-      "name": "Stereotype (e.g. <<choice>>)",
+      "name": "Stereotype (e.g. <<service>>)",
       "layoutId": null
     }
   },
@@ -111,7 +111,7 @@
         "text": ""
       }
     },
-    "properties": "- region \"State — Active\":\n  - heading \"State — Active\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": Active\n  - text: Stereotype (e.g. <<choice>>)\n  - textbox \"Stereotype (e.g. <<choice>>)\"\n  - text: Highlight color (#hex or name)\n  - textbox \"Highlight color (#hex or name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Sub-states\":\n    - text: Sub-states\n    - textbox \"Sub-state 1 name\":\n      - /placeholder: Sub-state name\n      - text: Waiting\n    - button \"Remove sub-state 1\": ✕\n    - button \"+ Add sub-state\"\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
+    "properties": "- region \"State — Active\":\n  - heading \"State — Active\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": Active\n  - text: Kind\n  - combobox \"Kind\":\n    - option \"State\" [selected]\n    - option \"Choice\"\n    - option \"Junction\"\n    - option \"Shallow history (H)\"\n    - option \"Deep history (H*)\"\n    - option \"Fork\"\n    - option \"Join\"\n    - option \"Terminate\"\n  - text: Stereotype (e.g. <<service>>)\n  - textbox \"Stereotype (e.g. <<service>>)\"\n  - text: Highlight color (#hex or name)\n  - textbox \"Highlight color (#hex or name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Behaviour\":\n    - text: Behaviour Entry action\n    - textbox \"Entry action\"\n    - text: Do activity\n    - textbox \"Do activity\"\n    - text: Exit action\n    - textbox \"Exit action\"\n    - text: \"Internal transitions (one per line: trigger [guard] / effect)\"\n    - 'textbox \"Internal transitions (one per line: trigger [guard] / effect)\"'\n  - group \"Sub-states\":\n    - text: Sub-states\n    - textbox \"Sub-state 1 name\":\n      - /placeholder: Sub-state name\n      - text: Waiting\n    - button \"Remove sub-state 1\": ✕\n    - button \"+ Add sub-state\"\n    - button \"+ Initial state\"\n    - button \"+ Final state\"\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
     "draft": null,
     "selection": [
       "Active"
@@ -154,7 +154,7 @@
         "text": ""
       }
     },
-    "properties": "- region \"State — Active\":\n  - heading \"State — Active\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": Active\n  - text: Stereotype (e.g. <<choice>>)\n  - textbox \"Stereotype (e.g. <<choice>>)\": <<busy>>\n  - text: Highlight color (#hex or name)\n  - textbox \"Highlight color (#hex or name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Sub-states\":\n    - text: Sub-states\n    - textbox \"Sub-state 1 name\":\n      - /placeholder: Sub-state name\n      - text: Waiting\n    - button \"Remove sub-state 1\": ✕\n    - button \"+ Add sub-state\"\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
+    "properties": "- region \"State — Active\":\n  - heading \"State — Active\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": Active\n  - text: Kind\n  - combobox \"Kind\":\n    - option \"State\" [selected]\n    - option \"Choice\"\n    - option \"Junction\"\n    - option \"Shallow history (H)\"\n    - option \"Deep history (H*)\"\n    - option \"Fork\"\n    - option \"Join\"\n    - option \"Terminate\"\n  - text: Stereotype (e.g. <<service>>)\n  - textbox \"Stereotype (e.g. <<service>>)\": <<busy>>\n  - text: Highlight color (#hex or name)\n  - textbox \"Highlight color (#hex or name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Behaviour\":\n    - text: Behaviour Entry action\n    - textbox \"Entry action\"\n    - text: Do activity\n    - textbox \"Do activity\"\n    - text: Exit action\n    - textbox \"Exit action\"\n    - text: \"Internal transitions (one per line: trigger [guard] / effect)\"\n    - 'textbox \"Internal transitions (one per line: trigger [guard] / effect)\"'\n  - group \"Sub-states\":\n    - text: Sub-states\n    - textbox \"Sub-state 1 name\":\n      - /placeholder: Sub-state name\n      - text: Waiting\n    - button \"Remove sub-state 1\": ✕\n    - button \"+ Add sub-state\"\n    - button \"+ Initial state\"\n    - button \"+ Final state\"\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
     "draft": null,
     "selection": [
       "Active"
@@ -193,5 +193,9 @@
       },
       "after": "@startuml\nstate Active <<busy>> {\nstate Waiting\n  state Working {\n    state Step1\n    state Step2\n    Step1 --> Step2 : next\n  }\n  [*] --> Waiting\n  Waiting --> Working : go\n}\n[*] --> Active\n@enduml"
     }
-  ]
+  ],
+  "rerecorded": {
+    "date": "2026-11-23",
+    "reason": "Merge of origin/master: focus stays in the editor after a menu or chooser item (origin/master 71fbaeca); a state's Behaviour fields and its region's initial and final states (origin/master 71fbaeca); a state's Kind field, which hides the sub-state list of a pseudostate (origin/master 71fbaeca); the Stereotype field hint <<service>> (origin/master 71fbaeca)."
+  }
 }

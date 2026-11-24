@@ -63,7 +63,7 @@
         "text": ""
       }
     },
-    "properties": "- region \"Component — Component\":\n  - heading \"Component — Component\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": Component\n  - text: Stereotype (e.g. <<choice>>)\n  - textbox \"Stereotype (e.g. <<choice>>)\"\n  - text: Highlight color (#hex or name)\n  - textbox \"Highlight color (#hex or name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
+    "properties": "- region \"Component — Component\":\n  - heading \"Component — Component\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": Component\n  - text: Display label\n  - textbox \"Display label\": Component\n  - text: Stereotype (e.g. <<service>>)\n  - textbox \"Stereotype (e.g. <<service>>)\"\n  - text: Highlight color (#hex or name)\n  - textbox \"Highlight color (#hex or name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
     "draft": null,
     "selection": [
       "Component"
@@ -147,7 +147,7 @@
         "text": ""
       }
     },
-    "properties": "- region \"Component — Component\":\n  - heading \"Component — Component\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": Component\n  - text: Stereotype (e.g. <<choice>>)\n  - textbox \"Stereotype (e.g. <<choice>>)\"\n  - text: Highlight color (#hex or name)\n  - textbox \"Highlight color (#hex or name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
+    "properties": "- region \"Component — Component\":\n  - heading \"Component — Component\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": Component\n  - text: Display label\n  - textbox \"Display label\": Component\n  - text: Stereotype (e.g. <<service>>)\n  - textbox \"Stereotype (e.g. <<service>>)\"\n  - text: Highlight color (#hex or name)\n  - textbox \"Highlight color (#hex or name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
     "draft": null,
     "selection": [
       "Component"
@@ -218,5 +218,9 @@
       },
       "after": "@startuml\nnode Cluster {\n  node WebServer {\n    component AppServer\n  }\n  node DBServer {\n    component PostgreSQL\n  }\n}\nnode Laptop {\n  component Browser\n  artifact app_ui\n}\nLaptop --> WebServer : HTTPS\nWebServer --> DBServer : JDBC\ncomponent Component @pos(334, 108)\n@enduml"
     }
-  ]
+  ],
+  "rerecorded": {
+    "date": "2026-11-23",
+    "reason": "Merge of origin/master: the Display label field in Properties (origin/master 5f9541e2); the Stereotype field hint <<service>> (origin/master 71fbaeca)."
+  }
 }

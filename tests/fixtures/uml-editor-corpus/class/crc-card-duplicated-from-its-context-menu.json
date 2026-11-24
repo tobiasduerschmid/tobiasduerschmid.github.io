@@ -67,11 +67,11 @@
       "Catalog_copy"
     ],
     "focus": {
-      "tag": "body",
-      "id": "page-top",
-      "role": "generic",
-      "name": "",
-      "layoutId": null
+      "tag": "rect",
+      "id": "",
+      "role": "button",
+      "name": "Element Catalog_copy — Enter to select, arrows to nudge, Delete to remove",
+      "layoutId": "Catalog_copy"
     }
   },
   "afterUndo": {
@@ -187,5 +187,9 @@
       },
       "after": "@startuml\ncard Cart @pos(40, 40) {\n  responsibility: Know selected products\n  collaborator: Catalog\n}\ncard Catalog @pos(40, 300) {\n  responsibility: Provide current prices\n}\ncard Catalog_copy @pos(70, 330) {\n  responsibility: Provide current prices\n}\n@enduml"
     }
-  ]
+  ],
+  "rerecorded": {
+    "date": "2026-11-23",
+    "reason": "Merge of origin/master: focus stays in the editor after a menu or chooser item (origin/master 71fbaeca); the Stereotype field hint <<service>> (origin/master 71fbaeca)."
+  }
 }

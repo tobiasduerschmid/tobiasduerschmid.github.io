@@ -71,7 +71,7 @@
         "text": "✓ Saved"
       }
     },
-    "properties": "- region \"Node — Server\":\n  - heading \"Node — Server\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": Server\n  - text: Stereotype (e.g. <<choice>>)\n  - textbox \"Stereotype (e.g. <<choice>>)\"\n  - text: Highlight color (#hex or name)\n  - textbox \"Highlight color (#hex or name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Node contents\":\n    - text: Node contents\n    - button \"+ Component\"\n    - button \"+ Artifact\"\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
+    "properties": "- region \"Node — Server\":\n  - heading \"Node — Server\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": Server\n  - text: Display label\n  - textbox \"Display label\": Server\n  - text: Stereotype (e.g. <<service>>)\n  - textbox \"Stereotype (e.g. <<service>>)\"\n  - text: Highlight color (#hex or name)\n  - textbox \"Highlight color (#hex or name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Node contents\":\n    - text: Node contents\n    - button \"+ Component\"\n    - button \"+ Artifact\"\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
     "draft": "@startuml\nnode Server\nnode Database\nServer --> Database\ncallout right of element Server : Why Server matters\n@enduml",
     "selection": [
       "Server"
@@ -114,7 +114,7 @@
         "text": "✓ Saved"
       }
     },
-    "properties": "- region \"Node — Server\":\n  - heading \"Node — Server\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": Server\n  - text: Stereotype (e.g. <<choice>>)\n  - textbox \"Stereotype (e.g. <<choice>>)\"\n  - text: Highlight color (#hex or name)\n  - textbox \"Highlight color (#hex or name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Node contents\":\n    - text: Node contents\n    - button \"+ Component\"\n    - button \"+ Artifact\"\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
+    "properties": "- region \"Node — Server\":\n  - heading \"Node — Server\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": Server\n  - text: Display label\n  - textbox \"Display label\": Server\n  - text: Stereotype (e.g. <<service>>)\n  - textbox \"Stereotype (e.g. <<service>>)\"\n  - text: Highlight color (#hex or name)\n  - textbox \"Highlight color (#hex or name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Node contents\":\n    - text: Node contents\n    - button \"+ Component\"\n    - button \"+ Artifact\"\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
     "draft": "@startuml\nnode Server\nnode Database\nServer --> Database\n@enduml",
     "selection": [
       "Server"
@@ -157,7 +157,7 @@
         "text": "✓ Saved"
       }
     },
-    "properties": "- region \"Node — Server\":\n  - heading \"Node — Server\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": Server\n  - text: Stereotype (e.g. <<choice>>)\n  - textbox \"Stereotype (e.g. <<choice>>)\"\n  - text: Highlight color (#hex or name)\n  - textbox \"Highlight color (#hex or name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Node contents\":\n    - text: Node contents\n    - button \"+ Component\"\n    - button \"+ Artifact\"\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
+    "properties": "- region \"Node — Server\":\n  - heading \"Node — Server\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": Server\n  - text: Display label\n  - textbox \"Display label\": Server\n  - text: Stereotype (e.g. <<service>>)\n  - textbox \"Stereotype (e.g. <<service>>)\"\n  - text: Highlight color (#hex or name)\n  - textbox \"Highlight color (#hex or name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Node contents\":\n    - text: Node contents\n    - button \"+ Component\"\n    - button \"+ Artifact\"\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
     "draft": "@startuml\nnode Server\nnode Database\nServer --> Database\ncallout right of element Server : Why Server matters\n@enduml",
     "selection": [
       "Server"
@@ -185,5 +185,9 @@
       },
       "after": "@startuml\nnode Server\nnode Database\nServer --> Database\ncallout right of element Server : Why Server matters\n@enduml"
     }
-  ]
+  ],
+  "rerecorded": {
+    "date": "2026-11-23",
+    "reason": "Merge of origin/master: the Display label field in Properties (origin/master 5f9541e2); the Stereotype field hint <<service>> (origin/master 71fbaeca)."
+  }
 }

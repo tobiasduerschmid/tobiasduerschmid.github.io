@@ -82,7 +82,7 @@
         "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
       },
       "uml-pg-tool-status": {
-        "text": "Undone."
+        "text": ""
       },
       "uml-pg-class-selection": {
         "text": "Select one class to edit its name or members."
@@ -125,7 +125,7 @@
         "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
       },
       "uml-pg-tool-status": {
-        "text": "Redone."
+        "text": ""
       },
       "uml-pg-class-selection": {
         "text": "Select one class to edit its name or members."
@@ -161,5 +161,9 @@
       "layoutId": "Database.db_in"
     }
   },
-  "operations": []
+  "operations": [],
+  "rerecorded": {
+    "date": "2026-11-23",
+    "reason": "Merge of origin/master: a rename that is refused or changes nothing leaves undo and redo alone (origin/master 71fbaeca)."
+  }
 }

@@ -62,7 +62,7 @@
         "text": ""
       }
     },
-    "properties": "- region \"Class — Invoice\":\n  - heading \"Class — Invoice\" [level=2]\n  - button \"✕ Delete\"\n  - text: Name (id)\n  - textbox \"Name (id)\": Customer\n  - text: Kind\n  - combobox \"Kind\":\n    - option \"Class\" [selected]\n    - option \"Abstract Class\"\n    - option \"Interface\"\n    - option \"Enum\"\n  - text: Stereotype (e.g. <<service>>)\n  - textbox \"Stereotype (e.g. <<service>>)\"\n  - text: Highlight color (#hex or color name)\n  - textbox \"Highlight color (#hex or color name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Members\":\n    - text: Members\n    - button \"+ Add Member\"\n  - button \"Add teaching callout\"",
+    "properties": "- region \"Class — Invoice\":\n  - heading \"Class — Invoice\" [level=2]\n  - button \"✕ Delete\"\n  - text: Name (id)\n  - textbox \"Name (id)\": Customer\n  - text: Display label\n  - textbox \"Display label\": Invoice\n  - text: Kind\n  - combobox \"Kind\":\n    - option \"Class\" [selected]\n    - option \"Abstract Class\"\n    - option \"Interface\"\n    - option \"Enum\"\n  - text: Stereotype (e.g. <<service>>)\n  - textbox \"Stereotype (e.g. <<service>>)\"\n  - text: Highlight color (#hex or color name)\n  - textbox \"Highlight color (#hex or color name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Members\":\n    - text: Members\n    - button \"+ Add Member\"\n  - button \"Add teaching callout\"",
     "draft": "@startuml\nclass Order @pos(80, 80) { -id: int; +total(): float }\nclass Customer @pos(360, 80) { +name: str }\nclass Invoice @pos(80, 300)\n@enduml",
     "selection": [
       "Invoice"
@@ -105,7 +105,7 @@
         "text": ""
       }
     },
-    "properties": "- region \"Class — Invoice\":\n  - heading \"Class — Invoice\" [level=2]\n  - button \"✕ Delete\"\n  - text: Name (id)\n  - textbox \"Name (id)\": Customer\n  - text: Kind\n  - combobox \"Kind\":\n    - option \"Class\" [selected]\n    - option \"Abstract Class\"\n    - option \"Interface\"\n    - option \"Enum\"\n  - text: Stereotype (e.g. <<service>>)\n  - textbox \"Stereotype (e.g. <<service>>)\"\n  - text: Highlight color (#hex or color name)\n  - textbox \"Highlight color (#hex or color name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Members\":\n    - text: Members\n    - button \"+ Add Member\"\n  - button \"Add teaching callout\"",
+    "properties": "- region \"Class — Invoice\":\n  - heading \"Class — Invoice\" [level=2]\n  - button \"✕ Delete\"\n  - text: Name (id)\n  - textbox \"Name (id)\": Customer\n  - text: Display label\n  - textbox \"Display label\": Invoice\n  - text: Kind\n  - combobox \"Kind\":\n    - option \"Class\" [selected]\n    - option \"Abstract Class\"\n    - option \"Interface\"\n    - option \"Enum\"\n  - text: Stereotype (e.g. <<service>>)\n  - textbox \"Stereotype (e.g. <<service>>)\"\n  - text: Highlight color (#hex or color name)\n  - textbox \"Highlight color (#hex or color name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Members\":\n    - text: Members\n    - button \"+ Add Member\"\n  - button \"Add teaching callout\"",
     "draft": "@startuml\nclass Order @pos(80, 80) { -id: int; +total(): float }\nclass Customer @pos(360, 80) { +name: str }\nclass Invoice @pos(80, 300)\n@enduml",
     "selection": [
       "Invoice"
@@ -148,7 +148,7 @@
         "text": ""
       }
     },
-    "properties": "- region \"Class — Invoice\":\n  - heading \"Class — Invoice\" [level=2]\n  - button \"✕ Delete\"\n  - text: Name (id)\n  - textbox \"Name (id)\": Customer\n  - text: Kind\n  - combobox \"Kind\":\n    - option \"Class\" [selected]\n    - option \"Abstract Class\"\n    - option \"Interface\"\n    - option \"Enum\"\n  - text: Stereotype (e.g. <<service>>)\n  - textbox \"Stereotype (e.g. <<service>>)\"\n  - text: Highlight color (#hex or color name)\n  - textbox \"Highlight color (#hex or color name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Members\":\n    - text: Members\n    - button \"+ Add Member\"\n  - button \"Add teaching callout\"",
+    "properties": "- region \"Class — Invoice\":\n  - heading \"Class — Invoice\" [level=2]\n  - button \"✕ Delete\"\n  - text: Name (id)\n  - textbox \"Name (id)\": Customer\n  - text: Display label\n  - textbox \"Display label\": Invoice\n  - text: Kind\n  - combobox \"Kind\":\n    - option \"Class\" [selected]\n    - option \"Abstract Class\"\n    - option \"Interface\"\n    - option \"Enum\"\n  - text: Stereotype (e.g. <<service>>)\n  - textbox \"Stereotype (e.g. <<service>>)\"\n  - text: Highlight color (#hex or color name)\n  - textbox \"Highlight color (#hex or color name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Members\":\n    - text: Members\n    - button \"+ Add Member\"\n  - button \"Add teaching callout\"",
     "draft": "@startuml\nclass Order @pos(80, 80) { -id: int; +total(): float }\nclass Customer @pos(360, 80) { +name: str }\nclass Invoice @pos(80, 300)\n@enduml",
     "selection": [
       "Invoice"
@@ -161,5 +161,9 @@
       "layoutId": null
     }
   },
-  "operations": []
+  "operations": [],
+  "rerecorded": {
+    "date": "2026-11-23",
+    "reason": "Merge of origin/master: the Display label field in Properties (origin/master 5f9541e2)."
+  }
 }

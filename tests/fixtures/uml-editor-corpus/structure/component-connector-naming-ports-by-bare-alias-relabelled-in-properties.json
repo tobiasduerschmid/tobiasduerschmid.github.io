@@ -193,7 +193,9 @@
             "navigability": "navigable",
             "sourceNavigability": "",
             "targetNavigability": "navigable",
-            "stereotype": ""
+            "stereotype": "",
+            "dashed": false,
+            "op": "-->"
           }
         },
         "facts": {},
@@ -203,5 +205,9 @@
       },
       "after": "@startuml\ncomponent Frontend {\n  portout \"httpOut\" as f_out\n}\ncomponent Backend {\n  portin \"httpIn\" as b_in\n  portout \"dbOut\" as b_dbout\n}\ncomponent Database {\n  portin \"dbIn\" as db_in\n}\nf_out --> b_in : REST\nb_dbout --> db_in : HTTPS\n@enduml"
     }
-  ]
+  ],
+  "rerecorded": {
+    "date": "2026-11-23",
+    "reason": "Merge of origin/master: relation edits carry the line style and dashing they keep (origin/master 71fbaeca)."
+  }
 }

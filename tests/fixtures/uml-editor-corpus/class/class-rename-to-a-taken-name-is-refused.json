@@ -69,7 +69,7 @@
         "text": ""
       }
     },
-    "properties": "- region \"Class — Invoice\":\n  - heading \"Class — Invoice\" [level=2]\n  - button \"✕ Delete\"\n  - text: Name (id)\n  - textbox \"Name (id)\": Invoice\n  - text: Kind\n  - combobox \"Kind\":\n    - option \"Class\" [selected]\n    - option \"Abstract Class\"\n    - option \"Interface\"\n    - option \"Enum\"\n  - text: Stereotype (e.g. <<service>>)\n  - textbox \"Stereotype (e.g. <<service>>)\"\n  - text: Highlight color (#hex or color name)\n  - textbox \"Highlight color (#hex or color name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Members\":\n    - text: Members\n    - button \"+ Add Member\"\n  - button \"Add teaching callout\"",
+    "properties": "- region \"Class — Invoice\":\n  - heading \"Class — Invoice\" [level=2]\n  - button \"✕ Delete\"\n  - text: Name (id)\n  - textbox \"Name (id)\": Invoice\n  - text: Display label\n  - textbox \"Display label\": Invoice\n  - text: Kind\n  - combobox \"Kind\":\n    - option \"Class\" [selected]\n    - option \"Abstract Class\"\n    - option \"Interface\"\n    - option \"Enum\"\n  - text: Stereotype (e.g. <<service>>)\n  - textbox \"Stereotype (e.g. <<service>>)\"\n  - text: Highlight color (#hex or color name)\n  - textbox \"Highlight color (#hex or color name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Members\":\n    - text: Members\n    - button \"+ Add Member\"\n  - button \"Add teaching callout\"",
     "draft": null,
     "selection": [
       "Invoice"
@@ -89,7 +89,7 @@
         "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
       },
       "uml-pg-tool-status": {
-        "text": "Undone."
+        "text": "\"Order\" is already used. Pick a different identifier."
       },
       "uml-pg-class-selection": {
         "text": "Selected: Invoice"
@@ -112,7 +112,7 @@
         "text": ""
       }
     },
-    "properties": "- region \"Class — Invoice\":\n  - heading \"Class — Invoice\" [level=2]\n  - button \"✕ Delete\"\n  - text: Name (id)\n  - textbox \"Name (id)\": Invoice\n  - text: Kind\n  - combobox \"Kind\":\n    - option \"Class\" [selected]\n    - option \"Abstract Class\"\n    - option \"Interface\"\n    - option \"Enum\"\n  - text: Stereotype (e.g. <<service>>)\n  - textbox \"Stereotype (e.g. <<service>>)\"\n  - text: Highlight color (#hex or color name)\n  - textbox \"Highlight color (#hex or color name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Members\":\n    - text: Members\n    - button \"+ Add Member\"\n  - button \"Add teaching callout\"",
+    "properties": "- region \"Class — Invoice\":\n  - heading \"Class — Invoice\" [level=2]\n  - button \"✕ Delete\"\n  - text: Name (id)\n  - textbox \"Name (id)\": Invoice\n  - text: Display label\n  - textbox \"Display label\": Invoice\n  - text: Kind\n  - combobox \"Kind\":\n    - option \"Class\" [selected]\n    - option \"Abstract Class\"\n    - option \"Interface\"\n    - option \"Enum\"\n  - text: Stereotype (e.g. <<service>>)\n  - textbox \"Stereotype (e.g. <<service>>)\"\n  - text: Highlight color (#hex or color name)\n  - textbox \"Highlight color (#hex or color name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Members\":\n    - text: Members\n    - button \"+ Add Member\"\n  - button \"Add teaching callout\"",
     "draft": null,
     "selection": [
       "Invoice"
@@ -132,7 +132,7 @@
         "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
       },
       "uml-pg-tool-status": {
-        "text": "Redone."
+        "text": "\"Order\" is already used. Pick a different identifier."
       },
       "uml-pg-class-selection": {
         "text": "Selected: Invoice"
@@ -155,7 +155,7 @@
         "text": ""
       }
     },
-    "properties": "- region \"Class — Invoice\":\n  - heading \"Class — Invoice\" [level=2]\n  - button \"✕ Delete\"\n  - text: Name (id)\n  - textbox \"Name (id)\": Invoice\n  - text: Kind\n  - combobox \"Kind\":\n    - option \"Class\" [selected]\n    - option \"Abstract Class\"\n    - option \"Interface\"\n    - option \"Enum\"\n  - text: Stereotype (e.g. <<service>>)\n  - textbox \"Stereotype (e.g. <<service>>)\"\n  - text: Highlight color (#hex or color name)\n  - textbox \"Highlight color (#hex or color name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Members\":\n    - text: Members\n    - button \"+ Add Member\"\n  - button \"Add teaching callout\"",
+    "properties": "- region \"Class — Invoice\":\n  - heading \"Class — Invoice\" [level=2]\n  - button \"✕ Delete\"\n  - text: Name (id)\n  - textbox \"Name (id)\": Invoice\n  - text: Display label\n  - textbox \"Display label\": Invoice\n  - text: Kind\n  - combobox \"Kind\":\n    - option \"Class\" [selected]\n    - option \"Abstract Class\"\n    - option \"Interface\"\n    - option \"Enum\"\n  - text: Stereotype (e.g. <<service>>)\n  - textbox \"Stereotype (e.g. <<service>>)\"\n  - text: Highlight color (#hex or color name)\n  - textbox \"Highlight color (#hex or color name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Members\":\n    - text: Members\n    - button \"+ Add Member\"\n  - button \"Add teaching callout\"",
     "draft": null,
     "selection": [
       "Invoice"
@@ -168,5 +168,9 @@
       "layoutId": "Invoice"
     }
   },
-  "operations": []
+  "operations": [],
+  "rerecorded": {
+    "date": "2026-11-23",
+    "reason": "Merge of origin/master: the Display label field in Properties (origin/master 5f9541e2); a rename that is refused or changes nothing leaves undo and redo alone (origin/master 71fbaeca)."
+  }
 }

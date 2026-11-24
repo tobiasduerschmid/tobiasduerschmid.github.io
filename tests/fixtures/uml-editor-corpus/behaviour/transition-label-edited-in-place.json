@@ -185,7 +185,9 @@
             "navigability": "navigable",
             "sourceNavigability": "",
             "targetNavigability": "navigable",
-            "stereotype": ""
+            "stereotype": "",
+            "dashed": false,
+            "op": "-->"
           }
         },
         "facts": {},
@@ -195,5 +197,9 @@
       },
       "after": "@startuml\n[*] --> Idle\nIdle --> Busy : begin\nBusy --> Done : finish\nDone --> [*]\n@enduml"
     }
-  ]
+  ],
+  "rerecorded": {
+    "date": "2026-11-23",
+    "reason": "Merge of origin/master: relation edits carry the line style and dashing they keep (origin/master 71fbaeca)."
+  }
 }

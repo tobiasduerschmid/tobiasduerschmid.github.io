@@ -244,7 +244,9 @@ if (MODE === 'verify' && (!FAMILY || FAMILY === R0_CASES_FAMILY)) {
       expect(run.afterRedo.text, 'Redo adds the enum again').toBe(run.after.text);
     });
 
-    test('a participant added with the keyboard to a sequence without its frame lands in a new frame, and Undo returns to the document as it was', async ({ page }) => {
+    // Since the merge of origin/master (71fbaeca) the drawing frames a sequence source as it is typed, so the
+    // participant joins the frame the drawing gave the document, and Undo returns to that framed document.
+    test('a participant added with the keyboard to a sequence without its frame lands in the frame the drawing gave it, and Undo returns to the framed document', async ({ page }) => {
       const gesture = r0Case('participant-added-with-the-keyboard-to-a-sequence-without-its-frame', 'sequence', SEQUENCE_WITHOUT_A_FRAME, [
         { do: 'press', target: PALETTE_PARTICIPANT, key: 'Enter' },
       ]);
@@ -253,7 +255,7 @@ if (MODE === 'verify' && (!FAMILY || FAMILY === R0_CASES_FAMILY)) {
 
       expect(run.after.text, 'the framed document with the participant before @enduml')
         .toBe(framed(`${SEQUENCE_WITHOUT_A_FRAME}\nparticipant p: Participant`));
-      expect(run.afterUndo.text, 'Undo returns to the document without its frame').toBe(SEQUENCE_WITHOUT_A_FRAME);
+      expect(run.afterUndo.text, 'Undo returns to the framed document').toBe(framed(SEQUENCE_WITHOUT_A_FRAME));
       expect(run.afterRedo.text, 'Redo adds the participant again').toBe(run.after.text);
     });
 
@@ -436,7 +438,8 @@ if (MODE === 'verify' && (!FAMILY || FAMILY === R0_CASES_FAMILY)) {
       expect(atOnce, 'the tool status is not the active one').toBe(false);
     });
 
-    test('a message deleted with an activation bar names a line of the document without the bar\'s lines', async ({ page }) => {
+    // Since the merge of origin/master (71fbaeca) a delete resolves every line of a mixed selection before it removes any.
+    test('a message deleted with an activation bar is the message the drawing showed', async ({ page }) => {
       const gesture = r0Case('sequence-activation-bar-and-a-later-message-deleted-together', 'sequence', framed(AN_ACTIVATION.join('\n')), [
         { do: 'press', target: hitButton('Activation of app'), key: 'Enter' },
         { do: 'pointerClick', point: { target: hitButton('Relation segment 1 of seqmsg:7') }, modifiers: ['ControlOrMeta'] },
@@ -445,13 +448,13 @@ if (MODE === 'verify' && (!FAMILY || FAMILY === R0_CASES_FAMILY)) {
 
       const run = await runGesture(page, gesture);
 
-      expect(run.after.text, 'line 7 of what the bar\'s removal left goes: @enduml, not the selected message')
-        .toBe(['@startuml', 'actor user', 'participant app', 'user -> app: login', 'app --> user: token', 'user -> app: logout', 'app --> user: bye'].join('\n'));
+      expect(run.after.text, 'the bar\'s two lines and the selected message go')
+        .toBe(framed(['actor user', 'participant app', 'user -> app: login', 'app --> user: token', 'app --> user: bye'].join('\n')));
       expect(run.after.regions['uml-pg-tool-status'].text).toBe('Deleted 2 items.');
       expect(run.afterUndo.text, 'one Undo gives everything back').toBe(gesture.start);
     });
 
-    test('a fragment deleted with the message above it is looked up after the message went, and stays', async ({ page }) => {
+    test('a fragment deleted with the message above it goes with it', async ({ page }) => {
       const gesture = r0Case('sequence-fragment-and-the-message-above-it-deleted-together', 'sequence', framed(A_FRAGMENT.join('\n')), [
         { do: 'pointerClick', point: { target: hitButton('Fragment frag:4') } },
         { do: 'pointerClick', point: { target: hitButton('Relation segment 1 of seqmsg:3') }, modifiers: ['ControlOrMeta'] },
@@ -460,20 +463,20 @@ if (MODE === 'verify' && (!FAMILY || FAMILY === R0_CASES_FAMILY)) {
 
       const run = await runGesture(page, gesture);
 
-      expect(run.after.text, 'the message goes and the fragment stays').toBe(framed(A_FRAGMENT.filter((line) => line !== 'user -> app: login').join('\n')));
+      expect(run.after.text, 'the message and the whole fragment go').toBe(framed(['actor user', 'participant app', 'user -> app: logout'].join('\n')));
       expect(run.after.regions['uml-pg-tool-status'].text, 'both are counted').toBe('Deleted 2 items.');
     });
   });
 }
 
-// Relations (plan Task 14). Stage R0's relation chooser took no undo step, so the relation it adds
-// joins the step before it, and a Redo waiting before it stays.
+// Relations (plan Task 14). Stage R0's relation chooser took no undo step; since the merge of origin/master
+// (71fbaeca) the relation it adds is one undo step of its own, which drops a Redo waiting before it.
 const CUSTOMERS_AND_ORDERS = ['class Order @pos(80, 80)', 'class Customer @pos(360, 80)', 'class Invoice @pos(80, 300)',
   'Customer "1" -- "*" Order : places'];
 
 if (MODE === 'verify' && (!FAMILY || FAMILY === R0_CASES_FAMILY)) {
   test.describe('Relations on paths no sealed gesture reaches, as at stage R0', () => {
-    test('a relation chosen after an Undo takes no undo step of its own, and the Redo stays', async ({ page }) => {
+    test('a relation chosen after an Undo is one undo step of its own', async ({ page }) => {
       const gesture = r0Case('relation-chosen-after-an-undo-keeps-the-redo', 'class', framed(CUSTOMERS_AND_ORDERS.join('\n')), [
         { do: 'press', target: classBox('Invoice'), key: 'ArrowRight' },
         { do: 'click', target: { role: 'button', name: 'Undo', exact: false } },
@@ -485,10 +488,8 @@ if (MODE === 'verify' && (!FAMILY || FAMILY === R0_CASES_FAMILY)) {
       const run = await runGesture(page, gesture);
 
       expect(run.after.text, 'the dependency is added').toBe(framed([...CUSTOMERS_AND_ORDERS, 'Order ..> Invoice'].join('\n')));
-      expect(run.afterUndo.text, 'Undo finds no step of the dependency\'s own').toBe(run.after.text);
-      expect(run.afterRedo.text, 'Redo brings back the undone move, without the dependency')
-        .toMatch(/^@startuml\nclass Order @pos\(\d+, \d+\)\nclass Customer @pos\(\d+, \d+\)\nclass Invoice @pos\(\d+, \d+\)\nCustomer "1" -- "\*" Order : places\n@enduml$/);
-      expect(run.afterRedo.text, 'the move changed a position').not.toBe(gesture.start);
+      expect(run.afterUndo.text, 'Undo removes the dependency alone').toBe(gesture.start);
+      expect(run.afterRedo.text, 'Redo adds the dependency again').toBe(run.after.text);
     });
   });
 }
@@ -590,7 +591,8 @@ if (MODE === 'verify' && (!FAMILY || FAMILY === R0_CASES_FAMILY)) {
       expect(run.afterRedo.text, 'Redo changes the label again').toBe(run.after.text);
     });
 
-    test('a quick-insert button on a document without its frame adds its line at the end and leaves the document unframed', async ({ page }) => {
+    // Since the merge of origin/master (71fbaeca) the drawing has framed the document before the button is pressed.
+    test('a quick-insert button on a sequence typed without its frame adds its line inside the frame the drawing gave it', async ({ page }) => {
       const gesture = r0Case('sequence-activate-inserted-into-a-document-without-its-frame', 'sequence', SEQUENCE_WITHOUT_A_FRAME, [
         { do: 'pointerClick', point: { target: hitButton('Element app') } },
         { do: 'click', target: inProperties({ role: 'button', name: 'Add an activate app bar' }) },
@@ -598,9 +600,9 @@ if (MODE === 'verify' && (!FAMILY || FAMILY === R0_CASES_FAMILY)) {
 
       const run = await runGesture(page, gesture);
 
-      expect(run.after.text, 'the line follows the last line, with no frame added').toBe(`${SEQUENCE_WITHOUT_A_FRAME}\nactivate app`);
+      expect(run.after.text, 'the line follows the last line, inside the frame').toBe(framed(`${SEQUENCE_WITHOUT_A_FRAME}\nactivate app`));
       expect(run.after.regions['uml-pg-tool-status'].text, 'the insertion is announced').toBe('Inserted: activate app');
-      expect(run.afterUndo.text, 'Undo returns to the document as it was').toBe(SEQUENCE_WITHOUT_A_FRAME);
+      expect(run.afterUndo.text, 'Undo returns to the framed document').toBe(framed(SEQUENCE_WITHOUT_A_FRAME));
     });
   });
 }

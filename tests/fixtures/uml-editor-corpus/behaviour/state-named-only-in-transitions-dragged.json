@@ -59,7 +59,7 @@
         "text": ""
       }
     },
-    "properties": "- region \"Element — Busy\":\n  - heading \"Element — Busy\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": Busy\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
+    "properties": "- region \"Element — Busy\":\n  - heading \"Element — Busy\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": Busy\n  - group \"Behaviour\":\n    - text: Behaviour Entry action\n    - textbox \"Entry action\"\n    - text: Do activity\n    - textbox \"Do activity\"\n    - text: Exit action\n    - textbox \"Exit action\"\n    - text: \"Internal transitions (one per line: trigger [guard] / effect)\"\n    - 'textbox \"Internal transitions (one per line: trigger [guard] / effect)\"'\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
     "draft": null,
     "selection": [
       "Busy"
@@ -102,7 +102,7 @@
         "text": ""
       }
     },
-    "properties": "- region \"Element — Busy\":\n  - heading \"Element — Busy\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": Busy\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
+    "properties": "- region \"Element — Busy\":\n  - heading \"Element — Busy\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": Busy\n  - group \"Behaviour\":\n    - text: Behaviour Entry action\n    - textbox \"Entry action\"\n    - text: Do activity\n    - textbox \"Do activity\"\n    - text: Exit action\n    - textbox \"Exit action\"\n    - text: \"Internal transitions (one per line: trigger [guard] / effect)\"\n    - 'textbox \"Internal transitions (one per line: trigger [guard] / effect)\"'\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
     "draft": null,
     "selection": [
       "Busy"
@@ -145,7 +145,7 @@
         "text": ""
       }
     },
-    "properties": "- region \"Element — Busy\":\n  - heading \"Element — Busy\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": Busy\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
+    "properties": "- region \"Element — Busy\":\n  - heading \"Element — Busy\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": Busy\n  - group \"Behaviour\":\n    - text: Behaviour Entry action\n    - textbox \"Entry action\"\n    - text: Do activity\n    - textbox \"Do activity\"\n    - text: Exit action\n    - textbox \"Exit action\"\n    - text: \"Internal transitions (one per line: trigger [guard] / effect)\"\n    - 'textbox \"Internal transitions (one per line: trigger [guard] / effect)\"'\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
     "draft": null,
     "selection": [
       "Busy"
@@ -203,5 +203,9 @@
       },
       "after": "@startuml\n@layout schema=1 renderer=\"archuml-visual-editor\"\nnode \"__initial__0\" x=82 y=30\nnode \"Idle\" x=30 y=101\nnode \"Busy\" x=180 y=200\nnode \"Done\" x=30 y=307\nnode \"__final__0\" x=79 y=412\n@endlayout\n[*] --> Idle\nIdle --> Busy : start\nBusy --> Done : finish\nDone --> [*]\n@enduml"
     }
-  ]
+  ],
+  "rerecorded": {
+    "date": "2026-11-23",
+    "reason": "Merge of origin/master: a state's Behaviour fields and its region's initial and final states (origin/master 71fbaeca)."
+  }
 }

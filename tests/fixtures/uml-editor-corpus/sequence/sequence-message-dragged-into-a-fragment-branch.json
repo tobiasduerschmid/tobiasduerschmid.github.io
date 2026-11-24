@@ -65,7 +65,7 @@
         "text": ""
       }
     },
-    "properties": "- region \"Relation — user → app\":\n  - heading \"Relation — user → app\" [level=2]\n  - button \"✕ Delete\"\n  - text: Type\n  - combobox \"Type\":\n    - option \"Synchronous\" [selected]\n    - option \"Asynchronous\"\n    - option \"Return\"\n    - option \"Create\"\n    - option \"Lost\"\n    - option \"Found\"\n  - text: Source endpoint\n  - combobox \"Source endpoint\":\n    - option \"user\" [selected]\n    - option \"app\"\n  - text: Target endpoint\n  - combobox \"Target endpoint\":\n    - option \"user\"\n    - option \"app\" [selected]\n  - text: Label\n  - textbox \"Label\": logout\n  - button \"Invert direction\"\n  - group \"Message order\":\n    - text: Message order\n    - button \"Move earlier\"\n    - button \"Move later\"\n  - text: Branch\n  - combobox \"Branch\":\n    - 'option \"1: alt [valid]\"'\n    - 'option \"2: else [invalid]\" [selected]'\n  - paragraph: Drag a message line up or down to reorder it, or press Delete to remove it.\n  - button \"Add teaching callout\"",
+    "properties": "- region \"Relation — user → app\":\n  - heading \"Relation — user → app\" [level=2]\n  - button \"✕ Delete\"\n  - text: Type\n  - combobox \"Type\":\n    - option \"Synchronous\" [selected]\n    - option \"Asynchronous\"\n    - option \"Return\"\n    - option \"Async reply\"\n    - option \"Create\"\n    - option \"Lost\"\n    - option \"Found\"\n  - text: Source endpoint\n  - combobox \"Source endpoint\":\n    - option \"user\" [selected]\n    - option \"app\"\n  - text: Target endpoint\n  - combobox \"Target endpoint\":\n    - option \"user\"\n    - option \"app\" [selected]\n  - text: Label\n  - textbox \"Label\": logout\n  - button \"Invert direction\"\n  - group \"Message order\":\n    - text: Message order\n    - button \"Move earlier\"\n    - button \"Move later\"\n  - text: Branch\n  - combobox \"Branch\":\n    - 'option \"1: alt [valid]\"'\n    - 'option \"2: else [invalid]\" [selected]'\n  - paragraph: Drag a message line up or down to reorder it, or press Delete to remove it.\n  - button \"Add teaching callout\"",
     "draft": null,
     "selection": [
       "seqmsg:8"
@@ -108,7 +108,7 @@
         "text": ""
       }
     },
-    "properties": "- region \"Relation\":\n  - heading \"Relation\" [level=2]\n  - button \"✕ Delete\"\n  - text: Type\n  - combobox \"Type\":\n    - option \"Synchronous\" [selected]\n    - option \"Asynchronous\"\n    - option \"Return\"\n    - option \"Create\"\n    - option \"Lost\"\n    - option \"Found\"\n  - text: Source endpoint\n  - combobox \"Source endpoint\":\n    - option \"user\" [selected]\n    - option \"app\"\n  - text: Target endpoint\n  - combobox \"Target endpoint\":\n    - option \"user\" [selected]\n    - option \"app\"\n  - text: Label\n  - textbox \"Label\"\n  - group \"Message order\":\n    - text: Message order\n    - button \"Move earlier\"\n    - button \"Move later\"\n  - paragraph: Drag a message line up or down to reorder it, or press Delete to remove it.\n  - button \"Add teaching callout\"",
+    "properties": "- region \"Relation\":\n  - heading \"Relation\" [level=2]\n  - button \"✕ Delete\"\n  - text: Type\n  - combobox \"Type\":\n    - option \"Synchronous\" [selected]\n    - option \"Asynchronous\"\n    - option \"Return\"\n    - option \"Async reply\"\n    - option \"Create\"\n    - option \"Lost\"\n    - option \"Found\"\n  - text: Source endpoint\n  - combobox \"Source endpoint\":\n    - option \"user\" [selected]\n    - option \"app\"\n  - text: Target endpoint\n  - combobox \"Target endpoint\":\n    - option \"user\" [selected]\n    - option \"app\"\n  - text: Label\n  - textbox \"Label\"\n  - group \"Message order\":\n    - text: Message order\n    - button \"Move earlier\"\n    - button \"Move later\"\n  - paragraph: Drag a message line up or down to reorder it, or press Delete to remove it.\n  - button \"Add teaching callout\"",
     "draft": null,
     "selection": [],
     "focus": {
@@ -149,7 +149,7 @@
         "text": ""
       }
     },
-    "properties": "- region \"Relation — user → app\":\n  - heading \"Relation — user → app\" [level=2]\n  - button \"✕ Delete\"\n  - text: Type\n  - combobox \"Type\":\n    - option \"Synchronous\" [selected]\n    - option \"Asynchronous\"\n    - option \"Return\"\n    - option \"Create\"\n    - option \"Lost\"\n    - option \"Found\"\n  - text: Source endpoint\n  - combobox \"Source endpoint\":\n    - option \"user\" [selected]\n    - option \"app\"\n  - text: Target endpoint\n  - combobox \"Target endpoint\":\n    - option \"user\"\n    - option \"app\" [selected]\n  - text: Label\n  - textbox \"Label\": logout\n  - button \"Invert direction\"\n  - group \"Message order\":\n    - text: Message order\n    - button \"Move earlier\"\n    - button \"Move later\"\n  - text: Branch\n  - combobox \"Branch\":\n    - 'option \"1: alt [valid]\"'\n    - 'option \"2: else [invalid]\" [selected]'\n  - paragraph: Drag a message line up or down to reorder it, or press Delete to remove it.\n  - button \"Add teaching callout\"",
+    "properties": "- region \"Relation — user → app\":\n  - heading \"Relation — user → app\" [level=2]\n  - button \"✕ Delete\"\n  - text: Type\n  - combobox \"Type\":\n    - option \"Synchronous\" [selected]\n    - option \"Asynchronous\"\n    - option \"Return\"\n    - option \"Async reply\"\n    - option \"Create\"\n    - option \"Lost\"\n    - option \"Found\"\n  - text: Source endpoint\n  - combobox \"Source endpoint\":\n    - option \"user\" [selected]\n    - option \"app\"\n  - text: Target endpoint\n  - combobox \"Target endpoint\":\n    - option \"user\"\n    - option \"app\" [selected]\n  - text: Label\n  - textbox \"Label\": logout\n  - button \"Invert direction\"\n  - group \"Message order\":\n    - text: Message order\n    - button \"Move earlier\"\n    - button \"Move later\"\n  - text: Branch\n  - combobox \"Branch\":\n    - 'option \"1: alt [valid]\"'\n    - 'option \"2: else [invalid]\" [selected]'\n  - paragraph: Drag a message line up or down to reorder it, or press Delete to remove it.\n  - button \"Add teaching callout\"",
     "draft": null,
     "selection": [
       "seqmsg:8"
@@ -186,5 +186,9 @@
       },
       "after": "@startuml\nactor user\nparticipant app\nuser -> app: login\nalt [valid]\n  app --> user: token\nelse [invalid]\n  app --> user: error\nuser -> app: logout\nend\n@enduml"
     }
-  ]
+  ],
+  "rerecorded": {
+    "date": "2026-11-23",
+    "reason": "Merge of origin/master: the Async reply message kind (origin/master 71fbaeca)."
+  }
 }

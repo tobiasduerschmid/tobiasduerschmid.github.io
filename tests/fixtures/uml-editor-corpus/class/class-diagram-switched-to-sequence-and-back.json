@@ -51,7 +51,7 @@
         "hidden": true
       },
       "uml-pg-autosave": {
-        "text": "✓ Saved"
+        "text": ""
       }
     },
     "properties": null,
@@ -147,5 +147,9 @@
       "layoutId": null
     }
   },
-  "operations": []
+  "operations": [],
+  "rerecorded": {
+    "date": "2026-11-23",
+    "reason": "Merge of origin/master: autosave writes only a draft that changed, so writing the same draft again shows no \"Saved\" (origin/master 71fbaeca)."
+  }
 }

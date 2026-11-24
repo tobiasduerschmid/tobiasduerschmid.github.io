@@ -65,10 +65,10 @@
     "draft": null,
     "selection": [],
     "focus": {
-      "tag": "body",
-      "id": "page-top",
-      "role": "generic",
-      "name": "",
+      "tag": "div",
+      "id": "uml-pg-preview-pane",
+      "role": "region",
+      "name": "Diagram preview",
       "layoutId": null
     }
   },
@@ -183,5 +183,9 @@
       },
       "after": "@startuml\nactor Customer\nusecase \"Place Order\" as UC1\nrectangle \"Online Shop\" {\n  usecase \"Pay\" as UC3\n  UC1\n}\nCustomer -- UC1\nUC1 ..> UC3 : <<include>>\nrectangle OnlineShop_copy {\n  usecase \"Pay\" as UC32\n  UC1\n}\n@enduml"
     }
-  ]
+  ],
+  "rerecorded": {
+    "date": "2026-11-23",
+    "reason": "Merge of origin/master: focus stays in the editor after a menu or chooser item (origin/master 71fbaeca); the Stereotype field hint <<service>> (origin/master 71fbaeca)."
+  }
 }

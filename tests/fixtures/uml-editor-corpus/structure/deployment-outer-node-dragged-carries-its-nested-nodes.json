@@ -69,7 +69,7 @@
         "text": ""
       }
     },
-    "properties": "- region \"Node — Cluster\":\n  - heading \"Node — Cluster\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": Cluster\n  - text: Stereotype (e.g. <<choice>>)\n  - textbox \"Stereotype (e.g. <<choice>>)\"\n  - text: Highlight color (#hex or name)\n  - textbox \"Highlight color (#hex or name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Node contents\":\n    - text: Node contents\n    - button \"+ Component\"\n    - button \"+ Artifact\"\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
+    "properties": "- region \"Node — Cluster\":\n  - heading \"Node — Cluster\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": Cluster\n  - text: Display label\n  - textbox \"Display label\": Cluster\n  - text: Stereotype (e.g. <<service>>)\n  - textbox \"Stereotype (e.g. <<service>>)\"\n  - text: Highlight color (#hex or name)\n  - textbox \"Highlight color (#hex or name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Node contents\":\n    - text: Node contents\n    - button \"+ Component\"\n    - button \"+ Artifact\"\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
     "draft": null,
     "selection": [
       "Cluster"
@@ -112,7 +112,7 @@
         "text": ""
       }
     },
-    "properties": "- region \"Node — Cluster\":\n  - heading \"Node — Cluster\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": Cluster\n  - text: Stereotype (e.g. <<choice>>)\n  - textbox \"Stereotype (e.g. <<choice>>)\"\n  - text: Highlight color (#hex or name)\n  - textbox \"Highlight color (#hex or name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Node contents\":\n    - text: Node contents\n    - button \"+ Component\"\n    - button \"+ Artifact\"\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
+    "properties": "- region \"Node — Cluster\":\n  - heading \"Node — Cluster\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": Cluster\n  - text: Display label\n  - textbox \"Display label\": Cluster\n  - text: Stereotype (e.g. <<service>>)\n  - textbox \"Stereotype (e.g. <<service>>)\"\n  - text: Highlight color (#hex or name)\n  - textbox \"Highlight color (#hex or name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Node contents\":\n    - text: Node contents\n    - button \"+ Component\"\n    - button \"+ Artifact\"\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
     "draft": null,
     "selection": [
       "Cluster"
@@ -155,7 +155,7 @@
         "text": ""
       }
     },
-    "properties": "- region \"Node — Cluster\":\n  - heading \"Node — Cluster\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": Cluster\n  - text: Stereotype (e.g. <<choice>>)\n  - textbox \"Stereotype (e.g. <<choice>>)\"\n  - text: Highlight color (#hex or name)\n  - textbox \"Highlight color (#hex or name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Node contents\":\n    - text: Node contents\n    - button \"+ Component\"\n    - button \"+ Artifact\"\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
+    "properties": "- region \"Node — Cluster\":\n  - heading \"Node — Cluster\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": Cluster\n  - text: Display label\n  - textbox \"Display label\": Cluster\n  - text: Stereotype (e.g. <<service>>)\n  - textbox \"Stereotype (e.g. <<service>>)\"\n  - text: Highlight color (#hex or name)\n  - textbox \"Highlight color (#hex or name)\"\n  - text: Texture\n  - combobox \"Texture\":\n    - option \"None\" [selected]\n    - option \"Hatched\"\n    - option \"Crosshatch\"\n    - option \"Dotted\"\n    - option \"Grid\"\n    - option \"Striped\"\n  - group \"Node contents\":\n    - text: Node contents\n    - button \"+ Component\"\n    - button \"+ Artifact\"\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
     "draft": null,
     "selection": [
       "Cluster"
@@ -250,5 +250,9 @@
       },
       "after": "@startuml\nnode Cluster @pos(10, 290) {\n  node WebServer @pos(46, 358) {\n    component AppServer @pos(66, 414)\n  }\n  node DBServer @pos(46, 568) {\n    component PostgreSQL @pos(66, 624)\n  }\n}\nnode Laptop @pos(0, 0) {\n  component Browser @pos(20, 56)\n  artifact app_ui @pos(20, 118)\n}\nLaptop --> WebServer : HTTPS\nWebServer --> DBServer : JDBC\n@enduml"
     }
-  ]
+  ],
+  "rerecorded": {
+    "date": "2026-11-23",
+    "reason": "Merge of origin/master: the Display label field in Properties (origin/master 5f9541e2); the Stereotype field hint <<service>> (origin/master 71fbaeca)."
+  }
 }

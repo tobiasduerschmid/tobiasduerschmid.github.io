@@ -80,7 +80,7 @@
         "text": ""
       }
     },
-    "properties": "- region \"Relation — app → db\":\n  - heading \"Relation — app → db\" [level=2]\n  - button \"✕ Delete\"\n  - text: Type\n  - combobox \"Type\":\n    - option \"Synchronous\" [selected]\n    - option \"Asynchronous\"\n    - option \"Return\"\n    - option \"Create\"\n    - option \"Lost\"\n    - option \"Found\"\n  - text: Source endpoint\n  - combobox \"Source endpoint\":\n    - option \"user\"\n    - option \"app\" [selected]\n    - option \"db\"\n  - text: Target endpoint\n  - combobox \"Target endpoint\":\n    - option \"user\"\n    - option \"app\"\n    - option \"db\" [selected]\n  - text: Label\n  - textbox \"Label\": message()\n  - button \"Invert direction\"\n  - group \"Message order\":\n    - text: Message order\n    - button \"Move earlier\"\n    - button \"Move later\"\n  - paragraph: Drag a message line up or down to reorder it, or press Delete to remove it.\n  - button \"Add teaching callout\"",
+    "properties": "- region \"Relation — app → db\":\n  - heading \"Relation — app → db\" [level=2]\n  - button \"✕ Delete\"\n  - text: Type\n  - combobox \"Type\":\n    - option \"Synchronous\" [selected]\n    - option \"Asynchronous\"\n    - option \"Return\"\n    - option \"Async reply\"\n    - option \"Create\"\n    - option \"Lost\"\n    - option \"Found\"\n  - text: Source endpoint\n  - combobox \"Source endpoint\":\n    - option \"user\"\n    - option \"app\" [selected]\n    - option \"db\"\n  - text: Target endpoint\n  - combobox \"Target endpoint\":\n    - option \"user\"\n    - option \"app\"\n    - option \"db\" [selected]\n  - text: Label\n  - textbox \"Label\": message()\n  - button \"Invert direction\"\n  - group \"Message order\":\n    - text: Message order\n    - button \"Move earlier\"\n    - button \"Move later\"\n  - paragraph: Drag a message line up or down to reorder it, or press Delete to remove it.\n  - button \"Add teaching callout\"",
     "draft": null,
     "selection": [
       "seqmsg:7"
@@ -123,7 +123,7 @@
         "text": ""
       }
     },
-    "properties": "- region \"Relation — app → user\":\n  - heading \"Relation — app → user\" [level=2]\n  - button \"✕ Delete\"\n  - text: Type\n  - combobox \"Type\":\n    - option \"Synchronous\"\n    - option \"Asynchronous\"\n    - option \"Return\" [selected]\n    - option \"Create\"\n    - option \"Lost\"\n    - option \"Found\"\n  - text: Source endpoint\n  - combobox \"Source endpoint\":\n    - option \"user\"\n    - option \"app\" [selected]\n    - option \"db\"\n  - text: Target endpoint\n  - combobox \"Target endpoint\":\n    - option \"user\" [selected]\n    - option \"app\"\n    - option \"db\"\n  - text: Label\n  - textbox \"Label\": ok\n  - button \"Invert direction\"\n  - group \"Message order\":\n    - text: Message order\n    - button \"Move earlier\"\n    - button \"Move later\"\n  - paragraph: Drag a message line up or down to reorder it, or press Delete to remove it.\n  - button \"Add teaching callout\"",
+    "properties": "- region \"Relation — app → user\":\n  - heading \"Relation — app → user\" [level=2]\n  - button \"✕ Delete\"\n  - text: Type\n  - combobox \"Type\":\n    - option \"Synchronous\"\n    - option \"Asynchronous\"\n    - option \"Return\" [selected]\n    - option \"Async reply\"\n    - option \"Create\"\n    - option \"Lost\"\n    - option \"Found\"\n  - text: Source endpoint\n  - combobox \"Source endpoint\":\n    - option \"user\"\n    - option \"app\" [selected]\n    - option \"db\"\n  - text: Target endpoint\n  - combobox \"Target endpoint\":\n    - option \"user\" [selected]\n    - option \"app\"\n    - option \"db\"\n  - text: Label\n  - textbox \"Label\": ok\n  - button \"Invert direction\"\n  - group \"Message order\":\n    - text: Message order\n    - button \"Move earlier\"\n    - button \"Move later\"\n  - paragraph: Drag a message line up or down to reorder it, or press Delete to remove it.\n  - button \"Add teaching callout\"",
     "draft": null,
     "selection": [
       "seqmsg:7"
@@ -166,7 +166,7 @@
         "text": ""
       }
     },
-    "properties": "- region \"Relation — app → db\":\n  - heading \"Relation — app → db\" [level=2]\n  - button \"✕ Delete\"\n  - text: Type\n  - combobox \"Type\":\n    - option \"Synchronous\" [selected]\n    - option \"Asynchronous\"\n    - option \"Return\"\n    - option \"Create\"\n    - option \"Lost\"\n    - option \"Found\"\n  - text: Source endpoint\n  - combobox \"Source endpoint\":\n    - option \"user\"\n    - option \"app\" [selected]\n    - option \"db\"\n  - text: Target endpoint\n  - combobox \"Target endpoint\":\n    - option \"user\"\n    - option \"app\"\n    - option \"db\" [selected]\n  - text: Label\n  - textbox \"Label\": message()\n  - button \"Invert direction\"\n  - group \"Message order\":\n    - text: Message order\n    - button \"Move earlier\"\n    - button \"Move later\"\n  - paragraph: Drag a message line up or down to reorder it, or press Delete to remove it.\n  - button \"Add teaching callout\"",
+    "properties": "- region \"Relation — app → db\":\n  - heading \"Relation — app → db\" [level=2]\n  - button \"✕ Delete\"\n  - text: Type\n  - combobox \"Type\":\n    - option \"Synchronous\" [selected]\n    - option \"Asynchronous\"\n    - option \"Return\"\n    - option \"Async reply\"\n    - option \"Create\"\n    - option \"Lost\"\n    - option \"Found\"\n  - text: Source endpoint\n  - combobox \"Source endpoint\":\n    - option \"user\"\n    - option \"app\" [selected]\n    - option \"db\"\n  - text: Target endpoint\n  - combobox \"Target endpoint\":\n    - option \"user\"\n    - option \"app\"\n    - option \"db\" [selected]\n  - text: Label\n  - textbox \"Label\": message()\n  - button \"Invert direction\"\n  - group \"Message order\":\n    - text: Message order\n    - button \"Move earlier\"\n    - button \"Move later\"\n  - paragraph: Drag a message line up or down to reorder it, or press Delete to remove it.\n  - button \"Add teaching callout\"",
     "draft": null,
     "selection": [
       "seqmsg:7"
@@ -201,5 +201,9 @@
       },
       "after": "@startuml\nactor user\nparticipant app\nparticipant db\nuser -> app: login\napp -> db: query\ndb --> app: rows\napp -> db : message()\napp --> user: ok\n@enduml"
     }
-  ]
+  ],
+  "rerecorded": {
+    "date": "2026-11-23",
+    "reason": "Merge of origin/master: the Async reply message kind (origin/master 71fbaeca)."
+  }
 }

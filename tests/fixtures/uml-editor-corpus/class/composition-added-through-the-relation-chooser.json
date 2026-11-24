@@ -72,21 +72,21 @@
       "rel:5"
     ],
     "focus": {
-      "tag": "body",
-      "id": "page-top",
-      "role": "generic",
-      "name": "",
+      "tag": "div",
+      "id": "uml-pg-preview-pane",
+      "role": "region",
+      "name": "Diagram preview",
       "layoutId": null
     }
   },
   "afterUndo": {
-    "text": "@startuml\nclass Order @pos(80, 80) { -id: int; +total(): float }\nclass Customer @pos(360, 80) { +name: str }\nclass Invoice @pos(80, 300)\ninterface Payable @pos(360, 300) { +pay(): bool }\nOrder *-- Invoice\n@enduml",
+    "text": "@startuml\nclass Order @pos(80, 80) { -id: int; +total(): float }\nclass Customer @pos(360, 80) { +name: str }\nclass Invoice @pos(80, 300)\ninterface Payable @pos(360, 300) { +pay(): bool }\n@enduml",
     "regions": {
       "uml-pg-status": {
         "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
       },
       "uml-pg-tool-status": {
-        "text": "Added Composition from \"Order\" to \"Invoice\"."
+        "text": "Undone."
       },
       "uml-pg-class-selection": {
         "text": "Select one class to edit its name or members."
@@ -109,11 +109,9 @@
         "text": ""
       }
     },
-    "properties": "- region \"Relation — Order → Invoice\":\n  - heading \"Relation — Order → Invoice\" [level=2]\n  - button \"✕ Delete\"\n  - text: Type\n  - combobox \"Type\":\n    - option \"Generalization\"\n    - option \"Realization\"\n    - option \"Composition\" [selected]\n    - option \"Aggregation\"\n    - option \"Association\"\n    - option \"Bidirectional\"\n    - option \"Plain Assoc.\"\n    - option \"Dependency\"\n  - text: Source endpoint\n  - combobox \"Source endpoint\":\n    - option \"Order\" [selected]\n    - option \"Customer\"\n    - option \"Invoice\"\n    - option \"Payable\"\n  - text: Target endpoint\n  - combobox \"Target endpoint\":\n    - option \"Order\"\n    - option \"Customer\"\n    - option \"Invoice\" [selected]\n    - option \"Payable\"\n  - text: Label\n  - textbox \"Label\"\n  - text: Source multiplicity / cardinality\n  - textbox \"Source multiplicity / cardinality\"\n  - text: Target multiplicity / cardinality\n  - textbox \"Target multiplicity / cardinality\"\n  - text: Source navigability\n  - combobox \"Source navigability\":\n    - option \"Unspecified\" [selected]\n    - option \"Navigable\"\n    - option \"Non-navigable\"\n  - text: Target navigability\n  - combobox \"Target navigability\":\n    - option \"Unspecified\" [selected]\n    - option \"Navigable\"\n    - option \"Non-navigable\"\n  - button \"Invert direction\"\n  - paragraph: Drag a line segment to reroute, or press Delete to remove this relation.\n  - button \"Add teaching callout\"",
+    "properties": "- region \"Relation\":\n  - heading \"Relation\" [level=2]\n  - button \"✕ Delete\"\n  - text: Type\n  - combobox \"Type\":\n    - option \"Generalization\" [selected]\n    - option \"Realization\"\n    - option \"Composition\"\n    - option \"Aggregation\"\n    - option \"Association\"\n    - option \"Bidirectional\"\n    - option \"Plain Assoc.\"\n    - option \"Dependency\"\n  - text: Source endpoint\n  - combobox \"Source endpoint\":\n    - option \"Order\" [selected]\n    - option \"Customer\"\n    - option \"Invoice\"\n    - option \"Payable\"\n  - text: Target endpoint\n  - combobox \"Target endpoint\":\n    - option \"Order\" [selected]\n    - option \"Customer\"\n    - option \"Invoice\"\n    - option \"Payable\"\n  - text: Label\n  - textbox \"Label\"\n  - paragraph: Drag a line segment to reroute, or press Delete to remove this relation.\n  - button \"Add teaching callout\"",
     "draft": null,
-    "selection": [
-      "rel:5"
-    ],
+    "selection": [],
     "focus": {
       "tag": "body",
       "id": "page-top",
@@ -129,7 +127,7 @@
         "text": "Drag a highlighted element. Tab to focus, arrows to nudge, Delete to remove."
       },
       "uml-pg-tool-status": {
-        "text": "Added Composition from \"Order\" to \"Invoice\"."
+        "text": "Redone."
       },
       "uml-pg-class-selection": {
         "text": "Select one class to edit its name or members."
@@ -178,11 +176,14 @@
         "label": null,
         "facts": {},
         "undo": {
-          "key": null,
-          "joinsPrevious": true
+          "key": null
         }
       },
       "after": "@startuml\nclass Order @pos(80, 80) { -id: int; +total(): float }\nclass Customer @pos(360, 80) { +name: str }\nclass Invoice @pos(80, 300)\ninterface Payable @pos(360, 300) { +pay(): bool }\nOrder *-- Invoice\n@enduml"
     }
-  ]
+  ],
+  "rerecorded": {
+    "date": "2026-11-23",
+    "reason": "Merge of origin/master: a relation picked from the chooser is one undo step of its own (origin/master 71fbaeca); focus stays in the editor after a menu or chooser item (origin/master 71fbaeca); the Stereotype field hint <<service>> (origin/master 71fbaeca)."
+  }
 }

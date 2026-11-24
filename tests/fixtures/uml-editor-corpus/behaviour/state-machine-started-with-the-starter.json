@@ -47,7 +47,7 @@
         "text": ""
       }
     },
-    "properties": "- region \"Element — Idle\":\n  - heading \"Element — Idle\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": Idle\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
+    "properties": "- region \"Element — Idle\":\n  - heading \"Element — Idle\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": Idle\n  - group \"Behaviour\":\n    - text: Behaviour Entry action\n    - textbox \"Entry action\"\n    - text: Do activity\n    - textbox \"Do activity\"\n    - text: Exit action\n    - textbox \"Exit action\"\n    - text: \"Internal transitions (one per line: trigger [guard] / effect)\"\n    - 'textbox \"Internal transitions (one per line: trigger [guard] / effect)\"'\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
     "draft": null,
     "selection": [
       "Idle"
@@ -90,7 +90,7 @@
         "text": ""
       }
     },
-    "properties": "- region \"Element — Idle\":\n  - heading \"Element — Idle\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": Idle\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
+    "properties": "- region \"Element — Idle\":\n  - heading \"Element — Idle\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": Idle\n  - group \"Behaviour\":\n    - text: Behaviour Entry action\n    - textbox \"Entry action\"\n    - text: Do activity\n    - textbox \"Do activity\"\n    - text: Exit action\n    - textbox \"Exit action\"\n    - text: \"Internal transitions (one per line: trigger [guard] / effect)\"\n    - 'textbox \"Internal transitions (one per line: trigger [guard] / effect)\"'\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
     "draft": null,
     "selection": [],
     "focus": {
@@ -131,7 +131,7 @@
         "text": ""
       }
     },
-    "properties": "- region \"Element — Idle\":\n  - heading \"Element — Idle\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": Idle\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
+    "properties": "- region \"Element — Idle\":\n  - heading \"Element — Idle\" [level=2]\n  - button \"✕ Delete\"\n  - text: Identifier\n  - textbox \"Identifier\": Idle\n  - group \"Behaviour\":\n    - text: Behaviour Entry action\n    - textbox \"Entry action\"\n    - text: Do activity\n    - textbox \"Do activity\"\n    - text: Exit action\n    - textbox \"Exit action\"\n    - text: \"Internal transitions (one per line: trigger [guard] / effect)\"\n    - 'textbox \"Internal transitions (one per line: trigger [guard] / effect)\"'\n  - paragraph: Press Delete to remove. Press F2 to focus the name. Drag to reposition.\n  - button \"Add teaching callout\"",
     "draft": null,
     "selection": [
       "Idle"
@@ -166,5 +166,9 @@
       },
       "after": "@startuml\n[*] --> Idle\nIdle --> Done : success\nDone --> [*]\n@enduml"
     }
-  ]
+  ],
+  "rerecorded": {
+    "date": "2026-11-23",
+    "reason": "Merge of origin/master: a state's Behaviour fields and its region's initial and final states (origin/master 71fbaeca)."
+  }
 }
