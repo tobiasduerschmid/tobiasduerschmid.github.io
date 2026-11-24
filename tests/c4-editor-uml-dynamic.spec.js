@@ -715,6 +715,24 @@ test.describe('selection and in-place editors', () => {
     await page.keyboard.press('F2');
     await expect(canvas(editor).getByRole('textbox', { name: 'Guard of branch 1 of alt', exact: true })).toHaveValue('eligible');
   });
+
+  test('the guard editor starts with the model\'s guard, quotes, braces, and arrow included, and an edit of it saves the rest intact', async ({ page }) => {
+    const guard = 'seats["A"] > {0} -> ok';
+    const text = INTERFACES_REFERENCE.replace('- when: eligible', `- when: '${guard}'`);
+    const editor = await openUmlEditor(page, { view: VIEW, text });
+    await elements(editor).getByRole('option', { name: /^alt: / }).focus();
+
+    await page.keyboard.press('F2');
+    const field = canvas(editor).getByRole('textbox', { name: 'Guard of branch 1 of alt', exact: true });
+    await expect(field).toHaveValue(guard);
+    // The editor opens with its text selected; ArrowRight puts the caret after it (End does not, on macOS).
+    await field.press('ArrowRight');
+    await field.pressSequentially('!');
+    await field.press('Enter');
+
+    const written = await changes(page, 1, 'one undo step');
+    expect(C4.load(written).model.scenarios.get(SCENARIO).steps[ALT.index].branches[0].when).toBe(`${guard}!`);
+  });
 });
 
 // ---- Review Focus 1 and 5 ----------------------------------------------------------------------------------------
