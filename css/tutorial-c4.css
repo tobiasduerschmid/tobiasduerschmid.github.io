@@ -3,7 +3,8 @@
  * switch shows either it ("Visual") or the design file's Monaco editor ("YAML"). The editor's own look comes from
  * js/ArchUML/css/c4-editor.css and css/c4-editor-theme.css. The workspace panels are dark in both site themes
  * (css/tutorial.css), so the switch bar keeps light text on the dark panel in both. Sizes are em or inherited:
- * on this site 1rem is 10 px. Print uses the separate print view (_layouts/print-tutorial.html).
+ * on this site 1rem is 10 px. Print uses the separate print view (_layouts/print-tutorial.html), which loads this
+ * file for C4 tutorials for its print rules at the end.
  */
 
 /* The C4 workspace has no program output: the editor takes the whole workspace column. The splitter script may
@@ -133,4 +134,14 @@ html.dark-mode .c4-submit-review:hover {
   text-align: center;
   font-size: 0.9em;
   color: inherit;
+}
+
+/* The print view of a C4 tutorial. The shared print sheet draws a link in the instructions without an underline, in a
+   blue only 1.77:1 against the text around it (#0060a8 on #383848), so colour alone would mark it (WCAG 1.4.1). Its
+   printed links keep their underline. */
+@media print {
+  .step-instructions a,
+  .step-instructions a:visited {
+    text-decoration: underline;
+  }
 }
