@@ -137,6 +137,7 @@
     partB: 'Answer with the diagram',
     partBHint: 'Your answers from the code are filled in. Change any that the diagram corrects, then check them.',
     partBHintPlan: 'Answer each question with the expert’s views.',
+    partBHintDiagram: 'Read the agent’s diagram, then answer. The code is open if you want to check a detail; you do not need it.',
     check: 'Check my answers',
     checkOne: 'Check my answer',
     answerAll: 'Answer every question first.',
@@ -152,9 +153,11 @@
     continueFollowUp: function (count) { return count > 1 ? 'Continue to the new questions' : 'Continue to the new question'; },
     continueEvidence: 'Continue to the evidence check',
     continueDone: 'Show the comparison',
+    continueReview: 'Show the review',
     skipFollowUp: function (count) { return count > 1 ? 'Skip to the new questions' : 'Skip to the new question'; },
     skipEvidence: 'Skip to the evidence check',
     skipDone: 'Skip to the comparison',
+    skipReview: 'Skip to the review',
     followUp: function (count) { return count > 1 ? 'New questions' : 'A new question'; },
     followUpHint: function (count) { return count > 1 ? 'Answer them with the diagram.' : 'Answer it with the diagram.'; },
     openView: function (label) { return 'Open its view: ' + label; },
@@ -163,11 +166,13 @@
     phases: {
       plan: 'Plan', fromCode: 'From the code', withDiagram: 'With the diagram',
       newQuestion: function (count) { return count > 1 ? 'New questions' : 'New question'; },
-      evidence: 'Evidence check', compare: 'Compare',
+      evidence: 'Evidence check', compare: 'Compare', review: 'Review',
     },
     phaseDone: ', done',
     evidenceCheck: 'Check the diagram against the code',
+    evidenceUngraded: 'Practice: this check sends you into the code and does not count toward your score.',
     done: 'Compare your answers',
+    review: 'Review your answers',
     fromCode: 'From the code',
     withDiagram: 'With the diagram',
     yourPlan: 'Your plan',
@@ -200,6 +205,7 @@
     inProgress: 'In progress',
     notReached: 'Not reached yet',
     noneAsked: 'None',
+    notAsked: 'Not asked',
     resultsEmpty: 'No saved challenge results in this browser yet.',
     instructorNote: 'Instructor mode: work through this step as a student would. It never locks, and nothing you enter is saved. Press Solution to show the answer keys.',
     instructorKeysNote: 'Instructor mode: answer keys and every panel are shown, and this step never locks.',
@@ -212,6 +218,8 @@
     readOnlyStates: {
       exploring: 'Not locked in yet.',
       locked: 'Locked in: the agent’s reply is shown in the main window.',
+      lockedDiagram: 'The agent’s reply is shown in the main window.',
+      doneDiagram: 'Done: the review is shown in the main window.',
       'follow-up': 'Answering the new question in the main window.',
       done: 'Done: the comparison is shown in the main window.',
     },
@@ -597,7 +605,7 @@
 
   Widget.prototype._renderInteractive = function () {
     this._buildStepper();
-    this._buildPartA();
+    if (this.challenge.mode !== 'diagram-first') this._buildPartA();
     this._wireClock();
     this._sync();
     // The pane draws once the step is shown (see _onStepReady).
@@ -644,10 +652,12 @@
   /** The challenge's phases, in order; the current one follows the state. */
   Widget.prototype._phases = function () {
     var challenge = this.challenge;
-    var phases = [challenge.mode === 'plan-first' ? COPY.phases.plan : COPY.phases.fromCode, COPY.phases.withDiagram];
+    var diagramFirst = challenge.mode === 'diagram-first';
+    var phases = diagramFirst ? [] : [challenge.mode === 'plan-first' ? COPY.phases.plan : COPY.phases.fromCode];
+    phases.push(COPY.phases.withDiagram);
     if (challenge.followUp.length) phases.push(COPY.phases.newQuestion(challenge.followUp.length));
     else if (challenge.evidenceQuestions.length) phases.push(COPY.phases.evidence);
-    phases.push(COPY.phases.compare);
+    phases.push(diagramFirst ? COPY.phases.review : COPY.phases.compare);
     return phases;
   };
 
@@ -659,7 +669,9 @@
   Widget.prototype._syncStepper = function () {
     var phases = this._phases();
     var state = this.session.state;
-    var current = state === 'done' ? phases.length - 1 : ['exploring', 'locked', 'follow-up'].indexOf(state);
+    // A diagram-first challenge has no phase before the diagram.
+    var before = this.challenge.mode === 'diagram-first' ? ['locked', 'follow-up'] : ['exploring', 'locked', 'follow-up'];
+    var current = state === 'done' ? phases.length - 1 : before.indexOf(state);
     var passed = this.session.passed;
     this.stepper.replaceChildren.apply(this.stepper, phases.map(function (name, index) {
       var done = index < current || (passed && index === current);
@@ -875,6 +887,7 @@
   };
 
   Widget.prototype._syncPartA = function () {
+    if (!this.partA) return;
     var session = this.session;
     var exploring = session.state === 'exploring';
     var showChoices = session.optionsVisible();
@@ -1265,7 +1278,8 @@
     if (control.hidden) return;
     var next = session.nextState();
     var count = this.challenge.followUp.length;
-    var label = next === 'done' ? (allRight ? COPY.continueDone : COPY.skipDone)
+    var review = this.challenge.mode === 'diagram-first';
+    var label = next === 'done' ? (allRight ? (review ? COPY.continueReview : COPY.continueDone) : (review ? COPY.skipReview : COPY.skipDone))
       : count ? (allRight ? COPY.continueFollowUp(count) : COPY.skipFollowUp(count))
         : (allRight ? COPY.continueEvidence : COPY.skipEvidence);
     control.textContent = label;
@@ -1284,13 +1298,18 @@
     this._focus(group.heading);
   };
 
+  Widget.prototype._partBHint = function () {
+    var mode = this.challenge.mode;
+    return mode === 'plan-first' ? COPY.partBHintPlan : mode === 'diagram-first' ? COPY.partBHintDiagram : COPY.partBHint;
+  };
+
   Widget.prototype._ensurePartB = function () {
     if (this.partB) return;
     var self = this;
     var session = this.session;
     var part = this._section('b', COPY.partB);
     this.partB = part;
-    part.section.appendChild(h('p', { className: C + 'hint', text: this.challenge.mode === 'plan-first' ? COPY.partBHintPlan : COPY.partBHint }));
+    part.section.appendChild(h('p', { className: C + 'hint', text: this._partBHint() }));
     this.bGroup = this._checkGroup(part.section, 'b', this.challenge.questions, {
       pointer: COPY.retryPointer,
       extra: function (question) { return self._viewControl(question); },
@@ -1361,6 +1380,7 @@
         role: count ? 'group' : null, 'aria-labelledby': count ? evidenceTitleId : null,
       });
       if (count) this.evidenceBlock.appendChild(h('h5', { className: C + 'subtitle', id: evidenceTitleId, text: COPY.evidenceCheck }));
+      if (!challenge.evidenceGraded) this.evidenceBlock.appendChild(h('p', { className: C + 'hint', text: COPY.evidenceUngraded }));
       if (this.md.has('evidence:prompt')) this.evidenceBlock.appendChild(h('div', { className: C + 'prompt' }, this.md.block('evidence:prompt')));
       this.eGroup = this._checkGroup(this.evidenceBlock, 'e', challenge.evidenceQuestions, {
         pointer: COPY.retryPointerCode,
@@ -1404,7 +1424,7 @@
       }
     }
     this._syncAdvanceButton(this.fContinue, 'follow-up',
-      (!this.fGroup || allCorrect(followUpResults)) && (!this.eGroup || allCorrect(results)));
+      (!this.fGroup || allCorrect(followUpResults)) && (!this.eGroup || !this.challenge.evidenceGraded || allCorrect(results)));
   };
 
   Widget.prototype._onAdvance = function () {
@@ -1488,10 +1508,17 @@
     var session = this.session;
     var parts = [];
     var planFirst = this.challenge.mode === 'plan-first';
-    parts.push((planFirst ? 'planning ' : 'from the code ') + Core.formatDuration(session.elapsedSeconds('a', now)));
+    if (this.challenge.mode !== 'diagram-first') {
+      parts.push((planFirst ? 'planning ' : 'from the code ') + Core.formatDuration(session.elapsedSeconds('a', now)));
+    }
     parts.push('with the diagram ' + Core.formatDuration(session.elapsedSeconds('b', now)));
     if (this.challenge.followUp.length) parts.push('new question ' + Core.formatDuration(session.elapsedSeconds('f', now)));
     return COPY.timesIntro + parts.join(' · ') + '.';
+  };
+
+  /** Without answers from the code there is nothing to compare, only to review. */
+  Widget.prototype._doneTitle = function () {
+    return this.challenge.mode === 'diagram-first' ? COPY.review : COPY.done;
   };
 
   Widget.prototype._ensureDone = function () {
@@ -1499,7 +1526,7 @@
     var self = this;
     var session = this.session;
     var challenge = this.challenge;
-    var part = this._section('d', COPY.done);
+    var part = this._section('d', this._doneTitle());
     this.donePart = part;
     var section = part.section;
     var comparison = session.comparison();
@@ -1644,12 +1671,12 @@
   function buildResultsTable(md, entries, records) {
     var rows = entries.map(function (entry) {
       var summary = Core.summarize(entry.spec, records && records[entry.key]);
-      var confidence = summary && summary.a.confidence ? CONFIDENCE_LABELS[summary.a.confidence] : '';
+      var confidence = summary && summary.a && summary.a.confidence ? CONFIDENCE_LABELS[summary.a.confidence] : '';
       var followUp = Array.isArray(entry.spec.follow_up) && entry.spec.follow_up.length
         ? resultCell(summary, 'f') : COPY.noneAsked;
       return h('tr', {}, [
         h('th', { scope: 'row' }, md.phrase('results:' + entry.key + ':title', entry.title)),
-        h('td', {}, resultCell(summary, 'a', confidence)),
+        h('td', {}, entry.spec.mode === 'diagram-first' ? COPY.notAsked : resultCell(summary, 'a', confidence)),
         h('td', {}, resultCell(summary, 'b')),
         h('td', {}, followUp),
         h('td', {}, md.phrase('results:' + entry.key + ':hidden_by', '')),
@@ -1731,7 +1758,8 @@
     var self = this;
     var challenge = this.challenge;
     this.body.appendChild(h('p', { className: C + 'notice', text: COPY.instructorKeysNote }));
-    var partA = this._section('a', challenge.mode === 'plan-first' ? COPY.plan : COPY.partA).section;
+    var diagramFirst = challenge.mode === 'diagram-first';
+    var partA = diagramFirst ? null : this._section('a', challenge.mode === 'plan-first' ? COPY.plan : COPY.partA).section;
     var attempt = challenge.attempt;
     var requires = [];
     if (attempt.hypothesis) requires.push(COPY.hypothesisLabel);
@@ -1746,7 +1774,7 @@
         field.showKey(self.md, questionKey('p', entry));
         partA.appendChild(field.fieldset);
       });
-    } else {
+    } else if (partA) {
       this._keyFields(partA, challenge.questions, 'q', 'a');
     }
     if (challenge.predictView && challenge.expertView) {
@@ -1763,13 +1791,14 @@
     if (challenge.contrast) main.appendChild(h('h5', { className: C + 'subtitle', text: COPY.secondReply }));
     this._buildReplyCard(main, false);
     reply.appendChild(main);
+    if (diagramFirst) this._keyFields(this._section('b', COPY.partB).section, challenge.questions, 'q', 'b');
     if (challenge.followUp.length) this._keyFields(this._section('f', COPY.followUp(challenge.followUp.length)).section, challenge.followUp, 'q', 'f');
     if (challenge.evidenceQuestions.length) {
       var evidence = this._section('e', COPY.evidenceCheck).section;
       if (this.md.has('evidence:prompt')) evidence.appendChild(h('div', { className: C + 'prompt' }, this.md.block('evidence:prompt')));
       this._keyFields(evidence, challenge.evidenceQuestions, 'q', 'e');
     }
-    var done = this._section('d', COPY.done).section;
+    var done = this._section('d', this._doneTitle()).section;
     [['debrief:hidden_by', COPY.hiddenBy], ['debrief:find_in_code', COPY.findInCode], ['debrief:view_shows', COPY.viewShows],
       ['debrief:consolidation_prompt', COPY.reflection]].forEach(function (item) {
       if (!self.md.has(item[0])) return;
@@ -1782,13 +1811,19 @@
 
   // ----- Read-only view (instructions popout) -------------------------------------
 
+  Widget.prototype._readOnlyState = function () {
+    var state = this.session.state;
+    var own = this.challenge.mode === 'diagram-first' ? COPY.readOnlyStates[state + 'Diagram'] : null;
+    return own || COPY.readOnlyStates[state];
+  };
+
   Widget.prototype._renderReadOnly = function () {
     var self = this;
     var session = this.session;
     var snapshot = session.snapshot();
     var notice = h('div', { className: C + 'notice' }, [
       h('p', {}, h('strong', { text: COPY.readOnlyNotice })),
-      h('p', { text: session.passed ? COPY.readOnlyPassed : COPY.readOnlyStates[session.state] }),
+      h('p', { text: session.passed ? COPY.readOnlyPassed : this._readOnlyState() }),
     ]);
     if (typeof this.options.onReturn === 'function') {
       var back = button('button', COPY.returnToMain);
