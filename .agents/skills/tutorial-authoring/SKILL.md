@@ -1511,9 +1511,9 @@ steps:
         fix: "..."
         accept_fixes: ["..."]                # Optional; joined with "; " ≤ 220 chars.
       signals:                               # Per criterion: case-insensitive JS
-        flaw: ["regex", ...]                 # regexes; a model YES without any of
-        consequence: [...]                   # them in the comment becomes PARTLY.
-        fix: [...]
+        flaw: ["regex", ...]                 # regexes; a comment with none of them
+        consequence: [...]                   # gets NO for that criterion, whatever
+        fix: [...]                           # the model says. Keep them broad.
       anchors: [{label, pattern}]            # Diagram elements tied to the flaw;
                                              # naming one is needed for "Convincing".
       coach:                                 # Authored coaching per criterion, one
@@ -2073,14 +2073,16 @@ model's ratings never gate.
   it is shown the key's point and answers with a quote from the comment and
   `VERDICT: YES|PARTLY|NO` (evidence first; paraphrases count). The prompt
   wording comes from trials with the real model (docs/browser-llm.md): do not
-  change it without re-running a labeled comment set. A verdict without a quote
-  found in the comment becomes NO; a YES whose comment matches none of the
-  criterion's `signals` becomes PARTLY. Correctness: correct (flaw and fix
-  YES), close, not yet. Convincingness: convincing (consequence YES and an
-  `anchors` element named), partly, not yet. All wording shown is authored
-  (`coach`, `wrong_claims`, rating labels); only verified quotes come from
-  the model. Each prompt fits the ONNX 768-token input limit (comment ≤ 900
-  characters).
+  change it without re-running a labeled comment set. The quote is located in
+  the comment (`locateQuote`: exact words, or the comment's sentences that
+  share most of a miscopied quote's content words); a verdict that points at
+  nothing in the comment becomes NO, and so does any credit for a comment
+  that matches none of the criterion's `signals`. Correctness: correct (flaw
+  and fix YES), close, not yet. Convincingness: convincing (consequence YES
+  and an `anchors` element named), partly, not yet. All wording shown is
+  authored (`coach`, `wrong_claims`, rating labels); the only model-chosen
+  text is the learner's own located words. Each prompt fits the ONNX
+  768-token input limit (comment ≤ 900 characters).
 - **Model add-on:** `llm: true` on `backend: none` mounts the panel (titled
   "Review assistant" on review steps). It dispatches `tvm:llm-state` on the
   tutorial root (`reviewState()`: usable, busy, unavailable) and exposes

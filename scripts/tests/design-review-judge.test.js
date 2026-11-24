@@ -74,30 +74,47 @@ test('verdict replies are read in the requested format and in common variations'
   assert.deepEqual(parseVerdict('The student mentions TCP.'), { verdict: null, quote: '' });
 });
 
-test('a quote counts only when its words occur in the comment', async () => {
-  const { quoteAppearsIn } = await judgeModule();
-  assert.equal(quoteAppearsIn(strongReview, 'every later chunk waits until it is resent'), true);
-  assert.equal(quoteAppearsIn(strongReview, 'Every later CHUNK waits, until it is resent!'), true, 'case and punctuation are ignored');
-  assert.equal(quoteAppearsIn(strongReview, 'TCP POST /audio ... skip lost chunks'), true, 'ellipsis fragments are matched separately');
-  assert.equal(quoteAppearsIn(strongReview, 'when one packet drops every later chunk waits until resent'), true, 'a small paraphrase of a long fragment');
-  assert.equal(quoteAppearsIn(strongReview, 'the server is overloaded by too many requests'), false);
-  assert.equal(quoteAppearsIn(strongReview, 'udp audio'), false, 'two words that never appear together');
-  assert.equal(quoteAppearsIn(strongReview, ''), false);
+test('identifiers keep their underscores, and a repeated format placeholder is no quote', async () => {
+  const { parseVerdict } = await judgeModule();
+  assert.deepEqual(parseVerdict('QUOTE: _cache_put_ keeps the pointer\nVERDICT: YES'), { verdict: 'yes', quote: 'cache_put keeps the pointer' });
+  assert.deepEqual(parseVerdict('QUOTE: <the words of the student comment that make the point>\nVERDICT: <YES, PARTLY, or NO>'), { verdict: null, quote: '' });
 });
 
-test('the guard downgrades unsupported verdicts and keeps supported ones', async () => {
+test('a quote is located in the comment, and the evidence is always the learner\'s own words', async () => {
+  const { locateQuote } = await judgeModule();
+  const [first, second, third] = [
+    'Flaw: the loop sends each chunk with TCP POST /audio, and TCP delivers in order.',
+    'When one packet drops, every later chunk waits until it is resent, so Ben hears a freeze.',
+    'Fix: stream the audio over UDP and skip lost chunks; keep join on HTTPS.',
+  ];
+  assert.equal(locateQuote(strongReview, 'every later chunk waits until it is resent'), 'every later chunk waits until it is resent');
+  assert.equal(locateQuote(strongReview, 'Every later CHUNK waits, until it is resent!'), 'Every later CHUNK waits, until it is resent!', 'case and punctuation are ignored');
+  assert.equal(locateQuote(strongReview, 'TCP POST /audio ... skip lost chunks'), 'TCP POST /audio … skip lost chunks', 'ellipsis fragments are matched separately');
+  assert.equal(locateQuote('free(lines) runs after cache_put stored it', 'cache_put stored it'), 'cache_put stored it', 'identifiers with underscores');
+  assert.equal(locateQuote(strongReview, first + ' When one packet drops, every later chunks waits until it is resent'), first + ' ' + second,
+    'a long quote with a miscopied word points at the sentences it covers');
+  assert.equal(locateQuote(strongReview, 'One lost packet makes every later chunk wait until it is resent, so Ben hears the audio freeze.'), second,
+    'a quote copied from the expected point points at the comment\'s sentence that says the same');
+  assert.equal(locateQuote(strongReview, 'Send audio chunks over UDP so a lost chunk is skipped'), third);
+  assert.equal(locateQuote(strongReview, 'the server is overloaded by too many requests'), '');
+  assert.equal(locateQuote(strongReview, 'skip lost audio chunks over UDP'), '', 'a short quote that is not in the comment, though its words are');
+  assert.equal(locateQuote(strongReview, 'udp audio'), '', 'two words that never appear together');
+  assert.equal(locateQuote(strongReview, ''), '');
+});
+
+test('the guard needs evidence and, when signals are authored, one of them in the comment', async () => {
   const { guardVerdict } = await judgeModule();
   const base = { review: strongReview, signals: signals.flaw };
-  assert.equal(guardVerdict({ ...base, verdict: 'yes', quote: 'TCP delivers in order' }), 'yes');
-  assert.equal(guardVerdict({ ...base, verdict: 'yes', quote: 'the protocol cannot keep up' }), 'no', 'an invented quote earns nothing');
-  assert.equal(guardVerdict({ ...base, verdict: 'partly', quote: 'Ben hears a freeze' }), 'partly');
-  assert.equal(guardVerdict({ ...base, verdict: 'no', quote: 'TCP delivers in order' }), 'no');
-  assert.equal(guardVerdict({ ...base, verdict: null, quote: 'TCP delivers in order' }), 'no');
+  assert.equal(guardVerdict({ ...base, verdict: 'yes', evidence: 'TCP delivers in order' }), 'yes');
+  assert.equal(guardVerdict({ ...base, verdict: 'yes', evidence: '' }), 'no', 'a verdict without evidence in the comment earns nothing');
+  assert.equal(guardVerdict({ ...base, verdict: 'partly', evidence: 'Ben hears a freeze' }), 'partly');
+  assert.equal(guardVerdict({ ...base, verdict: 'no', evidence: 'TCP delivers in order' }), 'no');
+  assert.equal(guardVerdict({ ...base, verdict: null, evidence: 'TCP delivers in order' }), 'no');
   const offTopic = 'The design caches every chunk in Redis, which wastes memory on the relay.';
-  assert.equal(guardVerdict({ review: offTopic, signals: signals.flaw, verdict: 'yes', quote: 'caches every chunk in Redis' }), 'partly',
-    'a YES without any of the concept\'s signal words becomes PARTLY');
-  assert.equal(guardVerdict({ review: offTopic, signals: [], verdict: 'yes', quote: 'caches every chunk in Redis' }), 'yes',
-    'without authored signals the quote check alone applies');
+  assert.equal(guardVerdict({ review: offTopic, signals: signals.flaw, verdict: 'partly', evidence: offTopic }), 'no',
+    'a comment with none of the concept\'s signal words earns nothing');
+  assert.equal(guardVerdict({ review: offTopic, signals: [], verdict: 'yes', evidence: offTopic }), 'yes',
+    'without authored signals the evidence check alone applies');
 });
 
 test('ratings combine the three verdicts', async () => {

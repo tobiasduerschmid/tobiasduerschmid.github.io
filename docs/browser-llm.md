@@ -88,15 +88,18 @@ is sent to a server.
 The model only classifies. `js/browser-llm/design-review-judge.mjs` asks
 three narrow questions, one per criterion (does the comment make the key's
 point about the design flaw; about what goes wrong; about the fix), and asks
-for a quote from the comment followed by `VERDICT: YES|PARTLY|NO` (up to 96
-output tokens, greedy decoding). The app then checks the quote against the comment (an
-unsupported verdict becomes NO), downgrades a YES whose comment contains none
-of the criterion's authored concept signals to PARTLY, and turns the verdicts
-into two ratings: correctness and convincingness (the latter also needs a
-diagram element of the flaw to be named). Everything the learner reads is
-authored coaching selected by these verdicts, except the verified quotes.
-Comments are capped at 900 characters so every prompt stays within the ONNX
-engine's 768-token input limit.
+for a quote from the comment followed by `VERDICT: YES|PARTLY|NO` (up to 160
+output tokens, greedy decoding). The app then locates the quote in the
+comment: its exact words, or, when the model miscopied a long quote or copied
+the expected point instead, the comment's sentences that share most of its
+content words. A verdict that points at nothing in the comment becomes NO, and
+so does any credit for a comment that contains none of the criterion's
+authored concept signals. The verdicts become two ratings: correctness and
+convincingness (the latter also needs a diagram element of the flaw to be
+named). Everything the learner reads is authored coaching selected by these
+verdicts, except the located words of their own comment. Comments are capped
+at 900 characters so every prompt stays within the ONNX engine's 768-token
+input limit.
 
 **Real-model trials (2026-11-24, Chrome, WebLLM 3B, M-series Mac).** With
 the first wording (answer key first, then a yes/no question, verdict before
@@ -110,8 +113,27 @@ comment) it agreed with the labels on 37 of 39 YES-versus-not decisions,
 with no false YES; both misses were a correct point scored PARTLY. Adding
 the authored lists of wrong claims to the prompt made agreement slightly
 worse, so they are not sent. All three questions took 2–4 seconds together.
-These results cover one review, one engine, and authored comments, not
-real students.
+
+**All ten reviews (2026-11-24, same setup).** A second labeled set has 62
+comments, six to eight per review: correct, paraphrased, flaw only, fix only,
+consequence only, a wrong claim from the review's own trap, and off-topic or
+negated comments. The first prompt agreed on 87 of 108 points for six reviews.
+Twenty-one disagreements were traced. Six were the app's fault: Markdown
+stripping removed the underscores of identifiers such as `cache_put`, long
+quotes ran past the 96-token limit before the verdict, and quotes with one
+miscopied word were rejected. Five were format slips: the model quoted the
+expected point instead of the comment, or repeated the format line. Ten were
+the model's own misjudgments. After the fixes above (identifiers kept, 160
+tokens, placeholder format, quote location, signals required for any credit)
+a run over all 62 comments agrees with the labels on 173 of 186 points. There are
+3 false YES, each a fix credited to a comment that only described the flaw,
+and 9 missed YES, where the model hedged PARTLY on a correct, mostly
+paraphrased point. Nine of the ten complete comments are rated Correct and
+Convincing. No wrong, negated, keyword-list, or off-topic comment is rated
+above "Not yet". A check takes about 7 seconds. Asking for sentence numbers
+instead of a quote halved the time but hedged PARTLY far more often (162 of
+186), so the quote stays. These results cover authored comments, one engine,
+and one machine, not real students.
 
 This is formative feedback with known limits: a small model can miss a
 paraphrase or accept a near miss, the signal guard can misjudge unusual
