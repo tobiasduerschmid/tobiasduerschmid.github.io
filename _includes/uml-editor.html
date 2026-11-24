@@ -3216,8 +3216,9 @@ Supported options:
     function setStateBehaviour(before, id, behaviour) {
       var after = sourceWithStateBehaviour(before, id, behaviour);
       if (after === before) return;
-      textAdapter.apply(buildOperation('source.replace', { text: after }, {}, null));
+      // The state stays selected in the drawing the change makes.
       selectAfterRender(id, 'node');
+      textAdapter.apply(buildOperation('source.replace', { text: after }, {}, null));
     }
 
     function parseStateBody(body) {
